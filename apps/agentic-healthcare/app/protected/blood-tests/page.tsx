@@ -1,9 +1,9 @@
 import { createClient } from "@/lib/supabase/server";
 import { redirect } from "next/navigation";
-import { uploadBloodTest } from "./actions";
 import Link from "next/link";
 import { Badge, Box, Card, Flex, Heading, Separator, Text } from "@radix-ui/themes";
 import { Suspense } from "react";
+import { UploadForm } from "./upload-form";
 
 const statusColor: Record<string, "green" | "red" | "yellow" | "gray"> = {
   done: "green",
@@ -57,40 +57,10 @@ export default function BloodTestsPage() {
 
         <Separator size="4" />
 
-        <form action={uploadBloodTest}>
-          <Flex direction="column" gap="4">
-            <Heading size="3">Upload a new test</Heading>
-            <Card>
-              <Flex direction="column" align="center" gap="3" py="4">
-                <Text size="2" color="gray">PDF or image (JPG, PNG)</Text>
-                <input
-                  type="file"
-                  name="file"
-                  accept=".pdf,.jpg,.jpeg,.png"
-                  required
-                  style={{ fontSize: "var(--font-size-2)" }}
-                />
-              </Flex>
-            </Card>
-            <Box>
-              <button
-                type="submit"
-                style={{
-                  backgroundColor: "var(--accent-9)",
-                  color: "white",
-                  border: "none",
-                  borderRadius: "var(--radius-2)",
-                  padding: "var(--space-2) var(--space-4)",
-                  fontSize: "var(--font-size-2)",
-                  fontWeight: "var(--font-weight-medium)",
-                  cursor: "pointer",
-                }}
-              >
-                Upload & Extract
-              </button>
-            </Box>
-          </Flex>
-        </form>
+        <Flex direction="column" gap="3">
+          <Heading size="3">Upload a new test</Heading>
+          <UploadForm />
+        </Flex>
 
         <Suspense fallback={null}>
           <TestsList />
