@@ -1,0 +1,17 @@
+mutation UpdateJournalEntry($id: Int!, $input: UpdateJournalEntryInput!) {
+  updateJournalEntry(id: $id, input: $input) {
+    id
+    createdBy
+    familyMemberId
+    title
+    content
+    mood
+    moodScore
+    tags
+    goalId
+    isPrivate
+    entryDate
+    createdAt
+    updatedAt
+  }
+}

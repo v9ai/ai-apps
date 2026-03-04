@@ -1,0 +1,6 @@
+mutation DeleteRelationship($id: Int!) {
+  deleteRelationship(id: $id) {
+    success
+    message
+  }
+}

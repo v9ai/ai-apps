@@ -1,0 +1,31 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="900" height="200" viewBox="0 0 900 200" role="img" aria-label="nomadically.work">
+  <title>nomadically.work</title>
+
+  <defs>
+    <style>
+      .wordmark {
+        font-family: system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial, "Noto Sans", "Liberation Sans", sans-serif;
+        font-size: 112px;
+        font-weight: 700;
+        letter-spacing: -0.02em;
+        fill: #111111;
+      }
+      .dotwork {
+        font-weight: 500;
+        fill: #666666;
+      }
+      @media (prefers-color-scheme: dark) {
+        .wordmark { fill: #f1f1f1; }
+        .dotwork { fill: #888888; }
+      }
+    </style>
+  </defs>
+
+  <!-- Background (transparent) -->
+  <rect width="100%" height="100%" fill="none"/>
+
+  <!-- Left-aligned text -->
+  <text x="0" y="50%" class="wordmark" dominant-baseline="middle" text-anchor="start" textLength="900" lengthAdjust="spacingAndGlyphs">
+    nomadically<tspan class="dotwork">.work</tspan>
+  </text>
+</svg>

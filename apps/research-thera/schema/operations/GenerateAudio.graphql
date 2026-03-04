@@ -1,0 +1,20 @@
+mutation GenerateAudio(
+  $goalId: Int!
+  $storyId: Int
+  $text: String
+  $language: String
+  $voice: String
+) {
+  generateAudio(
+    goalId: $goalId
+    storyId: $storyId
+    text: $text
+    language: $language
+    voice: $voice
+  ) {
+    success
+    message
+    jobId
+    audioUrl
+  }
+}

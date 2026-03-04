@@ -1,0 +1,128 @@
+mutation GenerateResearch($goalDescription: String!) {
+  generateResearch(goalDescription: $goalDescription) {
+    id
+    title
+    url
+    summary
+    relevance
+  }
+}
+
+mutation CreateTrack($input: CreateTrackInput!) {
+  createTrack(input: $input) {
+    id
+    slug
+    title
+    description
+    level
+    items {
+      id
+    }
+  }
+}
+
+query GetTracks($limit: Int) {
+  tracks(limit: $limit) {
+    id
+    slug
+    title
+    description
+    level
+    items {
+      id
+      kind
+      title
+      position
+      contentRef
+      promptRef
+      difficulty
+      tags
+      prereqs
+      children {
+        id
+        kind
+        title
+        position
+        contentRef
+        promptRef
+        difficulty
+        tags
+        prereqs
+      }
+    }
+  }
+}
+
+query GetTrack($slug: String!) {
+  track(slug: $slug) {
+    id
+    slug
+    title
+    description
+    level
+    items {
+      id
+      kind
+      title
+      position
+      contentRef
+      promptRef
+      difficulty
+      tags
+      prereqs
+      children {
+        id
+        kind
+        title
+        position
+        contentRef
+        promptRef
+        difficulty
+        tags
+        prereqs
+        children {
+          id
+          kind
+          title
+          position
+          contentRef
+          promptRef
+          difficulty
+          tags
+          prereqs
+        }
+      }
+    }
+  }
+}
+
+query GetPrepResources {
+  prepResources {
+    categories {
+      id
+      name
+      emoji
+      description
+      resources {
+        id
+        title
+        href
+        description
+        category
+        tags
+      }
+    }
+    totalResources
+  }
+}
+
+query GetPrepResourcesByCategory($category: String!) {
+  prepResourcesByCategory(category: $category) {
+    id
+    title
+    href
+    description
+    category
+    tags
+  }
+}

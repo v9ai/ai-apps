@@ -1,0 +1,40 @@
+query GetJobs(
+  $sourceType: String
+  $sourceTypes: [String!]
+  $search: String
+  $limit: Int
+  $offset: Int
+  $excludedCompanies: [String!]
+  $skills: [String!]
+  $showAll: Boolean
+) {
+  jobs(
+    sourceType: $sourceType
+    sourceTypes: $sourceTypes
+    search: $search
+    limit: $limit
+    offset: $offset
+    excludedCompanies: $excludedCompanies
+    skills: $skills
+    showAll: $showAll
+  ) {
+    jobs {
+      id
+      external_id
+      source_kind
+      company_key
+      title
+      location
+      url
+      publishedAt
+      status
+      is_remote_eu
+      remote_eu_confidence
+      skills {
+        tag
+        level
+      }
+    }
+    totalCount
+  }
+}

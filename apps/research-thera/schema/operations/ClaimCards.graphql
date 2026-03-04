@@ -1,0 +1,150 @@
+# Build claim cards from text
+mutation BuildClaimCardsFromText {
+  buildClaimCards(
+    input: {
+      text: """
+      Cognitive Behavioral Therapy is effective for treating anxiety disorders.
+      CBT reduces anxiety symptoms by 60-80% in most patients.
+      The effects of CBT persist for years after treatment ends.
+      """
+      perSourceLimit: 10
+      topK: 5
+      useLlmJudge: true
+      sources: [CROSSREF, SEMANTIC_SCHOLAR, PUBMED]
+    }
+  ) {
+    cards {
+      id
+      claim
+      verdict
+      confidence
+      evidence {
+        paper {
+          title
+          authors
+          doi
+          year
+          journal
+          oaUrl
+        }
+        polarity
+        excerpt
+        rationale
+        score
+      }
+      queries
+      provenance {
+        generatedBy
+        model
+        sourceTools
+      }
+      createdAt
+    }
+  }
+}
+
+# Build claim cards from pre-extracted claims
+mutation BuildClaimCardsFromClaims {
+  buildClaimCards(
+    input: {
+      claims: [
+        "Mindfulness meditation reduces stress in adults with GAD"
+        "Exercise therapy improves mood in adults with major depressive disorder"
+      ]
+      perSourceLimit: 8
+      topK: 4
+      useLlmJudge: false
+      sources: [SEMANTIC_SCHOLAR, OPENALEX]
+    }
+  ) {
+    cards {
+      id
+      claim
+      verdict
+      confidence
+      evidence {
+        paper {
+          title
+          doi
+        }
+        polarity
+        score
+      }
+    }
+  }
+}
+
+# Get claim card by ID
+query GetClaimCard {
+  claimCard(id: "claim_abc123def456") {
+    id
+    claim
+    verdict
+    confidence
+    evidence {
+      paper {
+        title
+        authors
+        doi
+        url
+        year
+        journal
+      }
+      polarity
+      excerpt
+      rationale
+      score
+    }
+    scope {
+      population
+      intervention
+      outcome
+    }
+    notes
+    createdAt
+    updatedAt
+  }
+}
+
+# Get all claim cards for a note
+query GetClaimCardsForNote {
+  claimCardsForNote(noteId: 1) {
+    id
+    claim
+    verdict
+    confidence
+    evidence {
+      paper {
+        title
+        doi
+      }
+      polarity
+    }
+    createdAt
+  }
+}
+
+# Refresh a claim card with new evidence
+mutation RefreshClaimCard {
+  refreshClaimCard(id: "claim_abc123def456") {
+    id
+    claim
+    verdict
+    confidence
+    evidence {
+      paper {
+        title
+        doi
+        year
+      }
+      polarity
+      score
+    }
+    updatedAt
+  }
+}
+
+# Delete a claim card
+mutation DeleteClaimCard {
+  deleteClaimCard(id: "claim_abc123def456")
+}

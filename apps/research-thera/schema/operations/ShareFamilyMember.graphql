@@ -1,0 +1,8 @@
+mutation ShareFamilyMember($familyMemberId: Int!, $email: String!, $role: FamilyMemberShareRole) {
+  shareFamilyMember(familyMemberId: $familyMemberId, email: $email, role: $role) {
+    familyMemberId
+    email
+    role
+    createdAt
+  }
+}

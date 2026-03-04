@@ -1,0 +1,42 @@
+query GetFamilyMember($id: Int!) {
+  familyMember(id: $id) {
+    id
+    userId
+    firstName
+    name
+    ageYears
+    relationship
+    email
+    phone
+    location
+    occupation
+    dateOfBirth
+    bio
+    createdAt
+    updatedAt
+    shares {
+      familyMemberId
+      email
+      role
+      createdAt
+      createdBy
+    }
+    goals {
+      id
+      title
+      status
+      description
+      createdAt
+    }
+    behaviorObservations {
+      id
+      observedAt
+      observationType
+      frequency
+      intensity
+      context
+      notes
+      createdAt
+    }
+  }
+}

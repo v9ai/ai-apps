@@ -1,0 +1,5311 @@
+[
+  {
+    "rank": 6,
+    "year": 2026,
+    "title": "SWAA January 2026 Updates",
+    "series_or_venue": "WFH Research",
+    "url": "https://wfhresearch.com/wp-content/uploads/2026/01/WFHResearch_updates_January2026.pdf",
+    "doi": null,
+    "abstract": null,
+    "authors": null,
+    "external_ids": {},
+    "provenance": {
+      "tried": [
+        "crossref:search",
+        "openalex:search"
+      ],
+      "notes": [],
+      "confidence": 0.2
+    }
+  },
+  {
+    "rank": 5,
+    "year": 2026,
+    "title": "Working from home increases work–home distances",
+    "series_or_venue": "Journal of Urban Economics",
+    "url": "https://www.sciencedirect.com/science/article/pii/S0094119026000033",
+    "doi": "10.1016/j.jue.2026.103832",
+    "abstract": "This paper examines how the increased acceptance of working from home during and after the Covid-19 pandemic shapes how labor market and locality choi…",
+    "authors": [
+      "Sena Coskun",
+      "Wolfgang Dauth",
+      "Hermann Gartner",
+      "Michael Stops",
+      "Enzo Weber"
+    ],
+    "external_ids": {
+      "pii": "S0094119026000033",
+      "openalex_id": "https://openalex.org/W7125441622"
+    },
+    "provenance": {
+      "tried": [
+        "scrape",
+        "crossref",
+        "openalex:doi"
+      ],
+      "notes": [],
+      "confidence": 1,
+      "doi": "scrape",
+      "abstract": "scrape",
+      "authors": "crossref"
+    }
+  },
+  {
+    "rank": 4,
+    "year": 2026,
+    "title": "Younger Firms and CEOs Allow More Work from Home",
+    "series_or_venue": "CEPR Discussion Paper 21094",
+    "url": "https://cepr.org/publications/dp21094",
+    "doi": null,
+    "abstract": "We establish three facts about work from home (WFH) in the United States. First, employees WFH more often at younger firms – almost twice as often at firms founded after 2015 than at firms founded before 1990. Second, employees working under younger CEOs have higher levels of WFH. The average WFH rate is 1.4 days per week when the CEO is under 30, compared to 1.1 days when the CEO is 60 or older. Third, the self-employed WFH more than twice as often as wage-and-salary employees. These facts highlight the importance of organizational and managerial attributes for the prevalence of WFH.",
+    "authors": null,
+    "external_ids": {
+      "cepr_dp": "21094"
+    },
+    "provenance": {
+      "tried": [
+        "scrape",
+        "crossref:search",
+        "openalex:search"
+      ],
+      "notes": [],
+      "confidence": 0.4,
+      "abstract": "scrape"
+    }
+  },
+  {
+    "rank": 2,
+    "year": 2026,
+    "title": "The Welfare Implications of Job Retention Schemes",
+    "series_or_venue": "IMF Working Paper 2026/015",
+    "url": "https://www.imf.org/en/publications/wp/issues/2026/01/30/the-welfare-implications-of-job-retention-schemes-573549",
+    "doi": "10.5089/9798229037884.001",
+    "abstract": "This paper examines the welfare implications of job retention schemes, where governments subsidize employers to preserve jobs during downturns. Using EU microdata from 2003 to 2018, we show that such schemes are associated with lower job separation rates, especially among lower-productivity workers. We build a search-and-matching model with occupational choice, calibrated to the United Kingdom during the global financial and sovereign debt crises. Simulations show that a retention policy scheme aimed at reducing unemployment by nearly 1 percentage point would have been both welfare-enhancing and cost-effective. Average welfare would have increased by 0.06 percent in consumption-equivalent terms, with low-income workers benefiting more than twice as much as the median worker by avoiding costly job switches and unemployment spells.",
+    "authors": [
+      "John Bluedorn",
+      "Jorge Mondragon",
+      "Ippei Shibata",
+      "Marina Mendes Tavares"
+    ],
+    "external_ids": {
+      "imf_wp": "2026/015",
+      "openalex_id": "https://openalex.org/W7126248637"
+    },
+    "provenance": {
+      "tried": [
+        "scrape",
+        "crossref",
+        "openalex:doi"
+      ],
+      "notes": [],
+      "confidence": 1,
+      "doi": "scrape",
+      "abstract": "scrape",
+      "authors": "crossref"
+    }
+  },
+  {
+    "rank": 7,
+    "year": 2026,
+    "title": "The Jobs of the Future",
+    "series_or_venue": "IMF Staff Discussion Note 2026/001",
+    "url": "https://www.imf.org/en/publications/staff-discussion-notes",
+    "doi": null,
+    "abstract": null,
+    "authors": null,
+    "external_ids": {},
+    "provenance": {
+      "tried": [
+        "scrape",
+        "crossref:search",
+        "openalex:search"
+      ],
+      "notes": [],
+      "confidence": 0.2
+    }
+  },
+  {
+    "rank": 3,
+    "year": 2026,
+    "title": "Measuring the Ins and Outs of Remote Work: New Evidence from the Gallup Workplace Panel",
+    "series_or_venue": "AEA Annual Meeting 2026 program paper",
+    "url": "https://www.aeaweb.org/conference/2026/program/paper/RNk7i6bR",
+    "doi": "10.2139/ssrn.5938995",
+    "abstract": null,
+    "authors": [
+      "Christos Makridis"
+    ],
+    "external_ids": {},
+    "provenance": {
+      "tried": [
+        "scrape",
+        "crossref:search",
+        "openalex:search"
+      ],
+      "notes": [],
+      "confidence": 0.8,
+      "doi": "crossref-search",
+      "authors": "crossref"
+    }
+  },
+  {
+    "rank": 10,
+    "year": 2025,
+    "title": "Opioids and Post-COVID Labor-Force Participation",
+    "series_or_venue": "NBER Working Paper w33717",
+    "url": "https://www.nber.org/papers/w33717",
+    "doi": "10.3386/w33717",
+    "abstract": "Founded in 1920, the NBER is a private, non-profit, non-partisan organization dedicated to conducting economic research and to disseminating research findings among academics, public policy makers, and business professionals.",
+    "authors": [
+      "Francesco Chiocchio",
+      "Jeremy Greenwood",
+      "Nezih Guner",
+      "Karen Kopecky"
+    ],
+    "external_ids": {
+      "nber_id": "w33717",
+      "openalex_id": "https://openalex.org/W4409879246"
+    },
+    "provenance": {
+      "tried": [
+        "inferred",
+        "scrape",
+        "crossref",
+        "openalex:doi"
+      ],
+      "notes": [],
+      "confidence": 1,
+      "doi": "inferred",
+      "abstract": "scrape",
+      "authors": "scrape"
+    }
+  },
+  {
+    "rank": 11,
+    "year": 2025,
+    "title": "Measuring Work from Home",
+    "series_or_venue": "NBER Working Paper w33508",
+    "url": "https://www.nber.org/papers/w33508",
+    "doi": "10.3386/w33508",
+    "abstract": "Founded in 1920, the NBER is a private, non-profit, non-partisan organization dedicated to conducting economic research and to disseminating research findings among academics, public policy makers, and business professionals.",
+    "authors": [
+      "Shelby R. Buckman",
+      "Jose Maria Barrero",
+      "Nicholas Bloom",
+      "Steven J. Davis"
+    ],
+    "external_ids": {
+      "nber_id": "w33508",
+      "openalex_id": "https://openalex.org/W4407874173"
+    },
+    "provenance": {
+      "tried": [
+        "inferred",
+        "scrape",
+        "crossref",
+        "openalex:doi"
+      ],
+      "notes": [],
+      "confidence": 1,
+      "doi": "inferred",
+      "abstract": "scrape",
+      "authors": "scrape"
+    }
+  },
+  {
+    "rank": 12,
+    "year": 2025,
+    "title": "Has the Rise of Work from Home Reduced the Motherhood Penalty?",
+    "series_or_venue": "NBER Working Paper w34147",
+    "url": "https://www.nber.org/papers/w34147",
+    "doi": "10.3386/w34147",
+    "abstract": "Founded in 1920, the NBER is a private, non-profit, non-partisan organization dedicated to conducting economic research and to disseminating research findings among academics, public policy makers, and business professionals.",
+    "authors": [
+      "Emma Harrington",
+      "Matthew E. Kahn"
+    ],
+    "external_ids": {
+      "nber_id": "w34147",
+      "openalex_id": "https://openalex.org/W4413417503"
+    },
+    "provenance": {
+      "tried": [
+        "inferred",
+        "scrape",
+        "crossref",
+        "openalex:doi"
+      ],
+      "notes": [],
+      "confidence": 1,
+      "doi": "inferred",
+      "abstract": "scrape",
+      "authors": "scrape"
+    }
+  },
+  {
+    "rank": 13,
+    "year": 2025,
+    "title": "Job Amenity Shocks and Labor Reallocation",
+    "series_or_venue": "NBER Working Paper w33787",
+    "url": "https://www.nber.org/papers/w33787",
+    "doi": "10.3386/w33787",
+    "abstract": "Founded in 1920, the NBER is a private, non-profit, non-partisan organization dedicated to conducting economic research and to disseminating research findings among academics, public policy makers, and business professionals.",
+    "authors": [
+      "Sadhika Bagga",
+      "Lukas Friedrich Mann",
+      "Ayşegül Şahin",
+      "Giovanni L. Violante"
+    ],
+    "external_ids": {
+      "nber_id": "w33787",
+      "openalex_id": "https://openalex.org/W4411015197"
+    },
+    "provenance": {
+      "tried": [
+        "inferred",
+        "scrape",
+        "crossref",
+        "openalex:doi"
+      ],
+      "notes": [],
+      "confidence": 1,
+      "doi": "inferred",
+      "abstract": "scrape",
+      "authors": "scrape"
+    }
+  },
+  {
+    "rank": 9,
+    "year": 2025,
+    "title": "World Employment and Social Outlook: Trends 2025",
+    "series_or_venue": "International Labour Organization",
+    "url": "https://www.ilo.org/publications/flagship-reports/world-employment-and-social-outlook-trends-2025",
+    "doi": "10.54394/kqsg9490",
+    "abstract": "The WESO Trends 2025 report provides an in-depth analysis of global labour market trends, highlighting the impacts of slowing economic recovery, persistent youth unemployment, and gender disparities. It examines the structural challenges facing workers worldwide and offers insights into regional and global patterns shaping the future of work.",
+    "authors": [
+      "ILO Regional Office for Asia and the Pacific,"
+    ],
+    "external_ids": {
+      "openalex_id": "https://openalex.org/W4410980525"
+    },
+    "provenance": {
+      "tried": [
+        "scrape",
+        "crossref:search",
+        "openalex:search"
+      ],
+      "notes": [],
+      "confidence": 1,
+      "abstract": "scrape",
+      "doi": "openalex-search",
+      "authors": "openalex"
+    }
+  },
+  {
+    "rank": 1,
+    "year": 2026,
+    "title": "The Work-from-Home Wage Premium",
+    "series_or_venue": "Federal Reserve Bank of San Francisco Working Paper 2026-02 / CEPR DP20996",
+    "url": "https://www.frbsf.org/research-and-insights/publications/working-papers/2026/02/the-work-from-home-wage-premium/",
+    "doi": "10.24148/wp2026-02",
+    "abstract": "Using administrative data from France, we document that within the same detailed occupation, industry, and commuting zone, workers who work from home earn on",
+    "authors": [
+      "Huiyu Li",
+      "Julien Sauvagnat",
+      "Tom Schmitz"
+    ],
+    "external_ids": {
+      "cepr_dp": "20996"
+    },
+    "provenance": {
+      "tried": [
+        "scrape",
+        "crossref",
+        "openalex:doi"
+      ],
+      "notes": [],
+      "confidence": 1,
+      "doi": "scrape",
+      "abstract": "scrape",
+      "authors": "crossref"
+    }
+  },
+  {
+    "rank": 14,
+    "year": 2025,
+    "title": "Technological Disruption in the Labor Market",
+    "series_or_venue": "NBER Working Paper w33323",
+    "url": "https://www.nber.org/papers/w33323",
+    "doi": "10.3386/w33323",
+    "abstract": "Founded in 1920, the NBER is a private, non-profit, non-partisan organization dedicated to conducting economic research and to disseminating research findings among academics, public policy makers, and business professionals.",
+    "authors": [
+      "David J. Deming",
+      "Christopher Ong",
+      "Lawrence H. Summers"
+    ],
+    "external_ids": {
+      "nber_id": "w33323",
+      "openalex_id": "https://openalex.org/W4406107111"
+    },
+    "provenance": {
+      "tried": [
+        "inferred",
+        "scrape",
+        "crossref",
+        "openalex:doi"
+      ],
+      "notes": [],
+      "confidence": 1,
+      "doi": "inferred",
+      "abstract": "scrape",
+      "authors": "scrape"
+    }
+  },
+  {
+    "rank": 15,
+    "year": 2025,
+    "title": "Social Substitution? Time Use Responses to Increased Work from Home",
+    "series_or_venue": "NBER Working Paper w34239",
+    "url": "https://www.nber.org/papers/w34239",
+    "doi": "10.3386/w34239",
+    "abstract": "Founded in 1920, the NBER is a private, non-profit, non-partisan organization dedicated to conducting economic research and to disseminating research findings among academics, public policy makers, and business professionals.",
+    "authors": [
+      "Benjamin W. Cowan",
+      "Todd R. Jones"
+    ],
+    "external_ids": {
+      "nber_id": "w34239",
+      "openalex_id": "https://openalex.org/W4414192400"
+    },
+    "provenance": {
+      "tried": [
+        "inferred",
+        "scrape",
+        "crossref",
+        "openalex:doi"
+      ],
+      "notes": [],
+      "confidence": 1,
+      "doi": "inferred",
+      "abstract": "scrape",
+      "authors": "scrape"
+    }
+  },
+  {
+    "rank": 16,
+    "year": 2025,
+    "title": "Assessing Maximum Employment: A Flow-Based Approach",
+    "series_or_venue": "NBER Working Paper w33878",
+    "url": "https://www.nber.org/papers/w33878",
+    "doi": "10.3386/w33878",
+    "abstract": "Founded in 1920, the NBER is a private, non-profit, non-partisan organization dedicated to conducting economic research and to disseminating research findings among academics, public policy makers, and business professionals.",
+    "authors": [
+      "Stefano Eusepi",
+      "Ayşegül Şahin"
+    ],
+    "external_ids": {
+      "nber_id": "w33878",
+      "openalex_id": "https://openalex.org/W4411015744"
+    },
+    "provenance": {
+      "tried": [
+        "inferred",
+        "scrape",
+        "crossref",
+        "openalex:doi"
+      ],
+      "notes": [],
+      "confidence": 1,
+      "doi": "inferred",
+      "abstract": "scrape",
+      "authors": "scrape"
+    }
+  },
+  {
+    "rank": 17,
+    "year": 2025,
+    "title": "Fraud at a Distance? How Remote Work Shapes Financial Misconduct",
+    "series_or_venue": "NBER Working Paper w34417",
+    "url": "https://www.nber.org/papers/w34417",
+    "doi": "10.3386/w34417",
+    "abstract": "Founded in 1920, the NBER is a private, non-profit, non-partisan organization dedicated to conducting economic research and to disseminating research findings among academics, public policy makers, and business professionals.",
+    "authors": [
+      "John M. Barrios",
+      "Jessie Jianwen Guo",
+      "Yanping Zhu"
+    ],
+    "external_ids": {
+      "nber_id": "w34417",
+      "openalex_id": "https://openalex.org/W4415829901"
+    },
+    "provenance": {
+      "tried": [
+        "inferred",
+        "scrape",
+        "crossref",
+        "openalex:doi"
+      ],
+      "notes": [],
+      "confidence": 1,
+      "doi": "inferred",
+      "abstract": "scrape",
+      "authors": "scrape"
+    }
+  },
+  {
+    "rank": 18,
+    "year": 2025,
+    "title": "Entrepreneurial Spawning from Remote Work",
+    "series_or_venue": "NBER Working Paper w33774",
+    "url": "https://www.nber.org/papers/w33774",
+    "doi": "10.3386/w33774",
+    "abstract": "Founded in 1920, the NBER is a private, non-profit, non-partisan organization dedicated to conducting economic research and to disseminating research findings among academics, public policy makers, and business professionals.",
+    "authors": [
+      "Alan Kwan",
+      "Ben Matthies",
+      "Richard R. Townsend",
+      "Ting Xu"
+    ],
+    "external_ids": {
+      "nber_id": "w33774",
+      "openalex_id": "https://openalex.org/W4411014687"
+    },
+    "provenance": {
+      "tried": [
+        "inferred",
+        "scrape",
+        "crossref",
+        "openalex:doi"
+      ],
+      "notes": [],
+      "confidence": 1,
+      "doi": "inferred",
+      "abstract": "scrape",
+      "authors": "scrape"
+    }
+  },
+  {
+    "rank": 19,
+    "year": 2025,
+    "title": "Recovering from COVID",
+    "series_or_venue": "NBER Working Paper w33857",
+    "url": "https://www.nber.org/papers/w33857",
+    "doi": "10.3386/w33857",
+    "abstract": "Founded in 1920, the NBER is a private, non-profit, non-partisan organization dedicated to conducting economic research and to disseminating research findings among academics, public policy makers, and business professionals.",
+    "authors": [
+      "James H. Stock",
+      "Mark W. Watson"
+    ],
+    "external_ids": {
+      "nber_id": "w33857",
+      "openalex_id": "https://openalex.org/W4411015355"
+    },
+    "provenance": {
+      "tried": [
+        "inferred",
+        "scrape",
+        "crossref",
+        "openalex:doi"
+      ],
+      "notes": [],
+      "confidence": 1,
+      "doi": "inferred",
+      "abstract": "scrape",
+      "authors": "scrape"
+    }
+  },
+  {
+    "rank": 20,
+    "year": 2025,
+    "title": "Labor Market Matching Efficiency and Korea's Low Post-Pandemic Unemployment",
+    "series_or_venue": "IMF Working Paper 2025/082",
+    "url": "https://www.imf.org/en/publications/wp/issues/2025/05/02/labor-market-matching-efficiency-and-koreas-low-post-pandemic-unemployment-566483",
+    "doi": "10.5089/9798229008921.001",
+    "abstract": "Following the COVID-19 pandemic, Korea’s unemployment rate has remained significantly lower than pre-pandemic levels. This paper examines the dynamics of unemployment through a framework of labor market flows incorporating a matching function and identifies a sustained increase in labor market matching efficiency as the primary driver of persistently low post-pandemic unemployment. The framework further suggests that, barring an unlikely reversal of these efficiency gains, the unemployment rate is likely to remain below 3 percent in the medium term. Notably, despite heightened labor market tightness, post-pandemic wage growth in Korea has been modest. The paper develops a variant of the Diamond-Mortensen-Pissarides model, demonstrating that increased labor market matching efficiency helps account for this apparent paradox.",
+    "authors": [
+      "Hua Chai"
+    ],
+    "external_ids": {
+      "imf_wp": "2025/082",
+      "openalex_id": "https://openalex.org/W4410023027"
+    },
+    "provenance": {
+      "tried": [
+        "scrape",
+        "crossref",
+        "openalex:doi"
+      ],
+      "notes": [],
+      "confidence": 1,
+      "doi": "scrape",
+      "abstract": "scrape",
+      "authors": "crossref"
+    }
+  },
+  {
+    "rank": 21,
+    "year": 2025,
+    "title": "Oil Shocks and Labor Market Developments",
+    "series_or_venue": "IMF Working Paper 2025/145",
+    "url": "https://www.imf.org/en/publications/wp/issues/2025/07/18/oil-shocks-and-labor-market-developments-568665",
+    "doi": "10.5089/9798229018128.001",
+    "abstract": "This paper examines how oil shocks shape labor market outcomes across 89 countries from 1975 to 2022. Leveraging a high-frequency oil supply shock series and a rich panel of quarterly labor market data, we find that shocks raising oil prices trigger sharp and persistent employment losses, particularly in oil-importing countries, oil-intensive sectors, and among male workers. Delayed but enduring employment declines also emerge in oil-moderate sectors and among female workers, revealing broader labor market implications. In contrast, employment gains in oil-exporting countries, and following expansionary supply shocks, are comparatively modest. Labor force participation responds less consistently, with patterns displaying higher variability. These findings highlight how oil shocks transmit unevenly through labor markets, with lasting impacts across countries, sectors, and demographic groups, extending well beyond short-term macroeconomic fluctuations.",
+    "authors": [
+      "Diego Gomes",
+      "Lisa Kolovich",
+      "Hannah Yi Wei"
+    ],
+    "external_ids": {
+      "imf_wp": "2025/145",
+      "openalex_id": "https://openalex.org/W4412968119"
+    },
+    "provenance": {
+      "tried": [
+        "scrape",
+        "crossref",
+        "openalex:doi"
+      ],
+      "notes": [],
+      "confidence": 1,
+      "doi": "scrape",
+      "abstract": "scrape",
+      "authors": "crossref"
+    }
+  },
+  {
+    "rank": 22,
+    "year": 2025,
+    "title": "Labor Markets, Migration, and EU Integration in the Western Balkans",
+    "series_or_venue": "IMF Working Paper 2025/226",
+    "url": "https://www.imf.org/en/publications/wp/issues/2025/10/31/labor-markets-migration-and-eu-integration-in-the-western-balkans-571329",
+    "doi": "10.5089/9798229029056.001",
+    "abstract": "This paper develops a structural model of interconnected European labor markets to examine how further EU integration would impact the Western Balkan economies and how policy can improve output and employment in these countries. Risks of increased emigration from further integration can be managed through promoting faster productivity growth, including through structural reforms. Model simulations show that productivity increases of 30 percent, similar to previous EU accession cases, would results in wage growth, help close the unemployment gap, and offset increased emigration through higher immigration and labor participation. Policies to improve the efficiency of the labor market (participation, job search, production) are essential to boost employment and support output.",
+    "authors": [
+      "Stephen Ayerst",
+      "Nina Chebotareva",
+      "Oksana Dynnikova",
+      "Amanda Edwards",
+      "Charles Zhang"
+    ],
+    "external_ids": {
+      "imf_wp": "2025/226",
+      "openalex_id": "https://openalex.org/W4415749672"
+    },
+    "provenance": {
+      "tried": [
+        "scrape",
+        "crossref",
+        "openalex:doi"
+      ],
+      "notes": [],
+      "confidence": 1,
+      "doi": "scrape",
+      "abstract": "scrape",
+      "authors": "crossref"
+    }
+  },
+  {
+    "rank": 23,
+    "year": 2025,
+    "title": "Employment Impacts of the CHIPS Act",
+    "series_or_venue": "IZA Discussion Paper 18334",
+    "url": "https://docs.iza.org/dp18334.pdf",
+    "doi": "10.3386/w34625",
+    "abstract": "The CHIPS and Science Act, enacted in August 2022, is a key element of the revival of U.S. industrial policy. We examine the short-term employment eff...",
+    "authors": [
+      "Bilge Erten",
+      "Joseph Stiglitz",
+      "Eric Verhoogen"
+    ],
+    "external_ids": {
+      "iza_dp": "18334"
+    },
+    "provenance": {
+      "tried": [
+        "scrape",
+        "crossref:search",
+        "openalex:search"
+      ],
+      "notes": [],
+      "confidence": 1,
+      "abstract": "scrape",
+      "doi": "crossref-search",
+      "authors": "crossref"
+    }
+  },
+  {
+    "rank": 24,
+    "year": 2025,
+    "title": "The Rise of Robotic Process Automation in Chile: Technological Adoption, Perceptions, and Potential Social Impact in a Post-COVID Economy",
+    "series_or_venue": "IZA Discussion Paper 18314",
+    "url": "https://docs.iza.org/dp18314.pdf",
+    "doi": "10.2139/ssrn.5935972",
+    "abstract": "This paper reviews RPA adoption in Chile and estimates its future social impact. A survey of 103 professionals—mainly from services, mining, and engin...",
+    "authors": [
+      "Francisco Ríos",
+      "Camilo Peña",
+      "Pablo Agnese"
+    ],
+    "external_ids": {
+      "iza_dp": "18314",
+      "openalex_id": "https://openalex.org/W7116155588"
+    },
+    "provenance": {
+      "tried": [
+        "scrape",
+        "crossref:search",
+        "openalex:search"
+      ],
+      "notes": [],
+      "confidence": 1,
+      "abstract": "scrape",
+      "doi": "crossref-search",
+      "authors": "crossref"
+    }
+  },
+  {
+    "rank": 25,
+    "year": 2025,
+    "title": "Stress Perception of Higher Education Students: A Socioeconomic Analysis of Stress-Related Demands and Resources During Two Different Stages of the COVID-19 Pandemic",
+    "series_or_venue": "IZA Discussion Paper 18180",
+    "url": "https://docs.iza.org/dp18180.pdf",
+    "doi": "10.2139/ssrn.5601326",
+    "abstract": "The number of students experiencing mental health problems has risen across Europe in recent years. Besides a detrimental effect on study success, the...",
+    "authors": [
+      "Dennis Meier",
+      "Stephan Lothar Thomsen",
+      "Martina Kroher"
+    ],
+    "external_ids": {
+      "iza_dp": "18180"
+    },
+    "provenance": {
+      "tried": [
+        "scrape",
+        "crossref:search",
+        "openalex:search"
+      ],
+      "notes": [],
+      "confidence": 1,
+      "abstract": "scrape",
+      "doi": "crossref-search",
+      "authors": "crossref"
+    }
+  },
+  {
+    "rank": 26,
+    "year": 2025,
+    "title": "COVID-19 Induced Asian Discrimination and Health: What Can We Learn from Reported Health Status?",
+    "series_or_venue": "IZA Discussion Paper 18151",
+    "url": "https://docs.iza.org/dp18151.pdf",
+    "doi": "10.2139/ssrn.5577300",
+    "abstract": "There is a growing literature that provides concrete evidence of the effects of the pandemic on both health and socioeconomic outcomes. While the gene...",
+    "authors": [
+      "Abdihafit Shaeye",
+      "Ruth Uwaifo Oyelere"
+    ],
+    "external_ids": {
+      "iza_dp": "18151",
+      "openalex_id": "https://openalex.org/W4414995519"
+    },
+    "provenance": {
+      "tried": [
+        "scrape",
+        "crossref:search",
+        "openalex:search"
+      ],
+      "notes": [],
+      "confidence": 1,
+      "abstract": "scrape",
+      "doi": "crossref-search",
+      "authors": "crossref"
+    }
+  },
+  {
+    "rank": 27,
+    "year": 2025,
+    "title": "Work-from-Home Desires in the Post-COVID Workplace: Managerial and Gender Heterogeneity",
+    "series_or_venue": "IZA Discussion Paper 18089",
+    "url": "https://docs.iza.org/dp18089.pdf",
+    "doi": "10.2139/ssrn.5438238",
+    "abstract": "This study explores preferences for work-from-home (WFH) among U.S. wage and salaried workers in the post-COVID era with a focus on gender and manager...",
+    "authors": [
+      "Benjamin Artz",
+      "Sarinda Siemers",
+      "Tianfang Li"
+    ],
+    "external_ids": {
+      "iza_dp": "18089",
+      "openalex_id": "https://openalex.org/W4414019840"
+    },
+    "provenance": {
+      "tried": [
+        "scrape",
+        "crossref:search",
+        "openalex:search"
+      ],
+      "notes": [],
+      "confidence": 1,
+      "abstract": "scrape",
+      "doi": "crossref-search",
+      "authors": "crossref"
+    }
+  },
+  {
+    "rank": 8,
+    "year": 2026,
+    "title": "A Conceptual Framework for Labor Market Delivery Systems: Evidence and Implementation",
+    "series_or_venue": "World Bank Report",
+    "url": "https://openknowledge.worldbank.org/entities/publication/7ab02b09-5823-46ed-a414-fcc2188c67d9",
+    "doi": null,
+    "abstract": null,
+    "authors": null,
+    "external_ids": {},
+    "provenance": {
+      "tried": [
+        "scrape",
+        "crossref:search",
+        "openalex:search"
+      ],
+      "notes": [],
+      "confidence": 0.2
+    }
+  },
+  {
+    "rank": 30,
+    "year": 2025,
+    "title": "The Demographic Impact of Leadership: Mayoral Education and COVID-19 Excess Mortality in Italy",
+    "series_or_venue": "IZA Discussion Paper 17992",
+    "url": "https://docs.iza.org/dp17992.pdf",
+    "doi": null,
+    "abstract": "This paper investigates whether the characteristics of locally elected officials influenced excess mortality during the COVID-19 pandemic. Using data...",
+    "authors": null,
+    "external_ids": {
+      "iza_dp": "17992"
+    },
+    "provenance": {
+      "tried": [
+        "scrape",
+        "crossref:search",
+        "openalex:search"
+      ],
+      "notes": [],
+      "confidence": 0.4,
+      "abstract": "scrape"
+    }
+  },
+  {
+    "rank": 33,
+    "year": 2025,
+    "title": "Comment on Food Insecurity and Mental Health of Women During COVID-19",
+    "series_or_venue": "IZA Discussion Paper 17784",
+    "url": "https://docs.iza.org/dp17784.pdf",
+    "doi": null,
+    "abstract": "Rahman et al. (2021) study the correlation between mental health and food insecurity during the COVID-19 pandemic in Bangladesh. They report that food...",
+    "authors": null,
+    "external_ids": {
+      "iza_dp": "17784"
+    },
+    "provenance": {
+      "tried": [
+        "scrape",
+        "crossref:search",
+        "openalex:search"
+      ],
+      "notes": [],
+      "confidence": 0.4,
+      "abstract": "scrape"
+    }
+  },
+  {
+    "rank": 29,
+    "year": 2025,
+    "title": "Childcare as Infrastructure: The Impact of COVID-19 on Childcare and Gender Equity",
+    "series_or_venue": "IZA Discussion Paper 18004",
+    "url": "https://docs.iza.org/dp18004.pdf",
+    "doi": "10.2139/ssrn.5351999",
+    "abstract": "Conducting a nationally representative survey of 2,500 working parents between Mother's and Father's Day of 2020, we examine gender differences in the...",
+    "authors": [
+      "Alicia Modestino",
+      "Zachary Finn",
+      "Jamie Ladge",
+      "Alisa Lincoln"
+    ],
+    "external_ids": {
+      "iza_dp": "18004",
+      "openalex_id": "https://openalex.org/W4412471766"
+    },
+    "provenance": {
+      "tried": [
+        "scrape",
+        "crossref:search",
+        "openalex:search"
+      ],
+      "notes": [],
+      "confidence": 1,
+      "abstract": "scrape",
+      "doi": "crossref-search",
+      "authors": "crossref"
+    }
+  },
+  {
+    "rank": 28,
+    "year": 2025,
+    "title": "The Labour Market Impact of the COVID-19 Pandemic on Individuals with Disabilities: The Case of Ireland",
+    "series_or_venue": "IZA Discussion Paper 18088",
+    "url": "https://docs.iza.org/dp18088.pdf",
+    "doi": "10.2139/ssrn.5438237",
+    "abstract": "The COVID-19 health pandemic had a profound impact on labour markets worldwide, disproportionately affecting subgroups of the population, including in...",
+    "authors": [
+      "Elish Kelly",
+      "Bertrand Maitre"
+    ],
+    "external_ids": {
+      "iza_dp": "18088",
+      "openalex_id": "https://openalex.org/W4414020103"
+    },
+    "provenance": {
+      "tried": [
+        "scrape",
+        "crossref:search",
+        "openalex:search"
+      ],
+      "notes": [],
+      "confidence": 1,
+      "abstract": "scrape",
+      "doi": "crossref-search",
+      "authors": "crossref"
+    }
+  },
+  {
+    "rank": 31,
+    "year": 2025,
+    "title": "A New Equilibrium: COVID-19 Lockdowns and WFH Persistence",
+    "series_or_venue": "IZA Discussion Paper 17975",
+    "url": "https://docs.iza.org/dp17975.pdf",
+    "doi": "10.2139/ssrn.5317330",
+    "abstract": "This paper documents a robust link between COVID-19 lockdowns and the uptake and persistence of working from home (WFH) practices. Exploiting rich lon...",
+    "authors": [
+      "Laura Ketter",
+      "Todd Morris",
+      "Lizi Yu"
+    ],
+    "external_ids": {
+      "iza_dp": "17975",
+      "openalex_id": "https://openalex.org/W4417095411"
+    },
+    "provenance": {
+      "tried": [
+        "scrape",
+        "crossref:search",
+        "openalex:search"
+      ],
+      "notes": [],
+      "confidence": 1,
+      "abstract": "scrape",
+      "doi": "crossref-search",
+      "authors": "crossref"
+    }
+  },
+  {
+    "rank": 32,
+    "year": 2025,
+    "title": "COVID-19 and Subjective Well-Being in the United States: Age Matters",
+    "series_or_venue": "IZA Discussion Paper 17915",
+    "url": "https://docs.iza.org/dp17915.pdf",
+    "doi": "10.2139/ssrn.5265626",
+    "abstract": "Although the COVID-19 pandemic has affected everyone’s life, the risk of hospitalization and death from COVID-19 increases exponentially with age. Usi...",
+    "authors": [
+      "Younghwan Song"
+    ],
+    "external_ids": {
+      "iza_dp": "17915",
+      "openalex_id": "https://openalex.org/W4411212123"
+    },
+    "provenance": {
+      "tried": [
+        "scrape",
+        "crossref:search",
+        "openalex:search"
+      ],
+      "notes": [],
+      "confidence": 1,
+      "abstract": "scrape",
+      "doi": "crossref-search",
+      "authors": "crossref"
+    }
+  },
+  {
+    "rank": 36,
+    "year": 2025,
+    "title": "The Mental Health Effects of Living near Overburdened Hospitals During COVID-19 in Perú",
+    "series_or_venue": "IZA Discussion Paper 17662",
+    "url": "https://docs.iza.org/dp17662.pdf",
+    "doi": null,
+    "abstract": "Perú tops the global ranking in terms of mortality rates from COVID-19. This study explores the effects of geographic proximity to overburdened hospit...",
+    "authors": null,
+    "external_ids": {
+      "iza_dp": "17662"
+    },
+    "provenance": {
+      "tried": [
+        "scrape",
+        "crossref:search",
+        "openalex:search"
+      ],
+      "notes": [],
+      "confidence": 0.4,
+      "abstract": "scrape"
+    }
+  },
+  {
+    "rank": 34,
+    "year": 2025,
+    "title": "The Short-Term Effects of COVID-19 on Labour Market Outcomes of Recent Immigrants to Canada",
+    "series_or_venue": "IZA Discussion Paper 17756",
+    "url": "https://docs.iza.org/dp17756.pdf",
+    "doi": "10.2139/ssrn.5173768",
+    "abstract": "Our difference-in-difference analysis indicates that Covid-19 had a disproportionately adverse effect on the employment of recent immigrants relative...",
+    "authors": [
+      "Tony Fang",
+      "Morley Gunderson",
+      "Viet Ha",
+      "Hui Ming"
+    ],
+    "external_ids": {
+      "iza_dp": "17756",
+      "openalex_id": "https://openalex.org/W4408253918"
+    },
+    "provenance": {
+      "tried": [
+        "scrape",
+        "crossref:search",
+        "openalex:search"
+      ],
+      "notes": [],
+      "confidence": 1,
+      "abstract": "scrape",
+      "doi": "crossref-search",
+      "authors": "crossref"
+    }
+  },
+  {
+    "rank": 35,
+    "year": 2025,
+    "title": "The Learning Crisis in the United States Three Years After COVID-19",
+    "series_or_venue": "IZA Discussion Paper 17755",
+    "url": "https://docs.iza.org/dp17755.pdf",
+    "doi": "10.2139/ssrn.5173767",
+    "abstract": "The COVID-19 pandemic caused widespread disruptions to education, with school closures affecting over one billion children. These closures, aimed at r...",
+    "authors": [
+      "Harry Patrinos",
+      "Maciej Jakubowski",
+      "Tomasz Gajderowicz"
+    ],
+    "external_ids": {
+      "iza_dp": "17755",
+      "openalex_id": "https://openalex.org/W4408367955"
+    },
+    "provenance": {
+      "tried": [
+        "scrape",
+        "crossref:search",
+        "openalex:search"
+      ],
+      "notes": [],
+      "confidence": 1,
+      "abstract": "scrape",
+      "doi": "crossref-search",
+      "authors": "crossref"
+    }
+  },
+  {
+    "rank": 39,
+    "year": 2025,
+    "title": "Economic Preferences Predict COVID-19 Vaccination Intentions and Behavior",
+    "series_or_venue": "IZA Discussion Paper 17533",
+    "url": "https://docs.iza.org/dp17533.pdf",
+    "doi": null,
+    "abstract": "This study investigates the relationship between economic preferences and COVID-19 vaccination readiness using two representative samples of the Germa...",
+    "authors": null,
+    "external_ids": {
+      "iza_dp": "17533"
+    },
+    "provenance": {
+      "tried": [
+        "scrape",
+        "crossref:search",
+        "openalex:search"
+      ],
+      "notes": [],
+      "confidence": 0.4,
+      "abstract": "scrape"
+    }
+  },
+  {
+    "rank": 37,
+    "year": 2025,
+    "title": "The Learning Crisis: Three Years After COVID-19",
+    "series_or_venue": "IZA Discussion Paper 17550",
+    "url": "https://docs.iza.org/dp17550.pdf",
+    "doi": "10.21203/rs.3.rs-6566438/v1",
+    "abstract": "The COVID-19 pandemic caused widespread disruptions to education, with school closures affecting over one billion children. These closures, aimed at r...",
+    "authors": [
+      "Harry Patrinos",
+      "Tomasz Gajderowicz",
+      "Maciej Jakubowski",
+      "Alec Kennedy",
+      "Christian Kjeldsen",
+      "Rolf Strietholt"
+    ],
+    "external_ids": {
+      "iza_dp": "17550",
+      "openalex_id": "https://openalex.org/W4411005286"
+    },
+    "provenance": {
+      "tried": [
+        "scrape",
+        "crossref:search",
+        "openalex:search"
+      ],
+      "notes": [],
+      "confidence": 1,
+      "abstract": "scrape",
+      "doi": "crossref-search",
+      "authors": "crossref"
+    }
+  },
+  {
+    "rank": 40,
+    "year": 2025,
+    "title": "Baby Bumps and Abortion Drop: Unpacking Fertility Trends During COVID-19 in Germany",
+    "series_or_venue": "IZA Discussion Paper 17471",
+    "url": "https://docs.iza.org/dp17471.pdf",
+    "doi": null,
+    "abstract": "Although abortion trends can be highly informative for understanding fertility reactions amid COVID-19 pandemic, this perspective is rarely taken yet....",
+    "authors": null,
+    "external_ids": {
+      "iza_dp": "17471"
+    },
+    "provenance": {
+      "tried": [
+        "scrape",
+        "crossref:search",
+        "openalex:search"
+      ],
+      "notes": [],
+      "confidence": 0.4,
+      "abstract": "scrape"
+    }
+  },
+  {
+    "rank": 38,
+    "year": 2025,
+    "title": "Remote Learning during the COVID-19 Pandemic: Evidence from a Three-Level Survey of Italian Schools",
+    "series_or_venue": "IZA Discussion Paper 17545",
+    "url": "https://docs.iza.org/dp17545.pdf",
+    "doi": "10.2139/ssrn.5065250",
+    "abstract": "We used data collected during the COVID-19 pandemic to examine how Italian upper secondary schools organized their activities for remote learning (RL)...",
+    "authors": [
+      "Andrea Caria",
+      "Adriana Di Liberto",
+      "Sara Pau"
+    ],
+    "external_ids": {
+      "iza_dp": "17545"
+    },
+    "provenance": {
+      "tried": [
+        "scrape",
+        "crossref:search",
+        "openalex:search"
+      ],
+      "notes": [],
+      "confidence": 1,
+      "abstract": "scrape",
+      "doi": "crossref-search",
+      "authors": "crossref"
+    }
+  },
+  {
+    "rank": 45,
+    "year": 2024,
+    "title": "Extraordinary Labor Market Developments and the 2022-23 Disinflation",
+    "series_or_venue": "NBER Working Paper w32584",
+    "url": "https://www.nber.org/papers/w32584",
+    "doi": "10.3386/w32584",
+    "abstract": "Founded in 1920, the NBER is a private, non-profit, non-partisan organization dedicated to conducting economic research and to disseminating research findings among academics, public policy makers, and business professionals.",
+    "authors": [
+      "Steven J. Davis"
+    ],
+    "external_ids": {
+      "nber_id": "w32584",
+      "openalex_id": "https://openalex.org/W4399721575"
+    },
+    "provenance": {
+      "tried": [
+        "inferred",
+        "scrape",
+        "crossref",
+        "openalex:doi"
+      ],
+      "notes": [],
+      "confidence": 1,
+      "doi": "inferred",
+      "abstract": "scrape",
+      "authors": "scrape"
+    }
+  },
+  {
+    "rank": 44,
+    "year": 2024,
+    "title": "Cross-Country Analysis of Labor Markets during the COVID-19 Pandemic",
+    "series_or_venue": "NBER Working Paper w33029",
+    "url": "https://www.nber.org/papers/w33029",
+    "doi": "10.3386/w33029",
+    "abstract": "Founded in 1920, the NBER is a private, non-profit, non-partisan organization dedicated to conducting economic research and to disseminating research findings among academics, public policy makers, and business professionals.",
+    "authors": [
+      "Robert Breunig",
+      "Wei Cheng",
+      "Laura Montenovo",
+      "Kyoung Hoon Lee",
+      "Bruce A. Weinberg",
+      "Yinjunjie Zhang"
+    ],
+    "external_ids": {
+      "nber_id": "w33029",
+      "openalex_id": "https://openalex.org/W4403173901"
+    },
+    "provenance": {
+      "tried": [
+        "inferred",
+        "scrape",
+        "crossref",
+        "openalex:doi"
+      ],
+      "notes": [],
+      "confidence": 1,
+      "doi": "inferred",
+      "abstract": "scrape",
+      "authors": "scrape"
+    }
+  },
+  {
+    "rank": 41,
+    "year": 2025,
+    "title": "Teleworking and Travel Purposes: UK Evidence after the COVID-19 Pandemic",
+    "series_or_venue": "IZA Discussion Paper 17413",
+    "url": "https://docs.iza.org/dp17413.pdf",
+    "doi": "10.2139/ssrn.5004718",
+    "abstract": "Telework has gained increasing popularity in recent years, particularly following the COVID-19 pandemic, and is often considered a work practice that...",
+    "authors": [
+      "Ignacio Belloc",
+      "José Ignacio Giménez-Nadal",
+      "Jose Alberto Molina Chueca"
+    ],
+    "external_ids": {
+      "iza_dp": "17413"
+    },
+    "provenance": {
+      "tried": [
+        "scrape",
+        "crossref:search",
+        "openalex:search"
+      ],
+      "notes": [],
+      "confidence": 1,
+      "abstract": "scrape",
+      "doi": "crossref-search",
+      "authors": "crossref"
+    }
+  },
+  {
+    "rank": 43,
+    "year": 2025,
+    "title": "How did the remote work revolution change our work and leisure time?",
+    "series_or_venue": "AEA Annual Meeting 2026 program paper",
+    "url": "https://www.aeaweb.org/conference/2026/program/paper/fnY372QS",
+    "doi": null,
+    "abstract": null,
+    "authors": null,
+    "external_ids": {},
+    "provenance": {
+      "tried": [
+        "scrape",
+        "crossref:search",
+        "openalex:search"
+      ],
+      "notes": [],
+      "confidence": 0.2
+    }
+  },
+  {
+    "rank": 42,
+    "year": 2025,
+    "title": "The Returns to Education over Time and the Effect of COVID-19",
+    "series_or_venue": "IZA Discussion Paper 17313",
+    "url": "https://docs.iza.org/dp17313.pdf",
+    "doi": "10.1080/00036846.2025.2506845",
+    "abstract": "This paper examines the effects of the COVID-19 pandemic on the returns to education in the United States. Using data from the Current Population Surv...",
+    "authors": [
+      "Harry Anthony Patrinos",
+      "Angelica Rivera-Olvera"
+    ],
+    "external_ids": {
+      "iza_dp": "17313",
+      "openalex_id": "https://openalex.org/W4410825939"
+    },
+    "provenance": {
+      "tried": [
+        "scrape",
+        "crossref:search",
+        "openalex:search"
+      ],
+      "notes": [],
+      "confidence": 1,
+      "abstract": "scrape",
+      "doi": "crossref-search",
+      "authors": "crossref"
+    }
+  },
+  {
+    "rank": 46,
+    "year": 2024,
+    "title": "Voluntary Minimum Wages",
+    "series_or_venue": "NBER Working Paper w32546",
+    "url": "https://www.nber.org/papers/w32546",
+    "doi": "10.3386/w32546",
+    "abstract": "Founded in 1920, the NBER is a private, non-profit, non-partisan organization dedicated to conducting economic research and to disseminating research findings among academics, public policy makers, and business professionals.",
+    "authors": [
+      "Ellora Derenoncourt",
+      "David Weil"
+    ],
+    "external_ids": {
+      "nber_id": "w32546",
+      "openalex_id": "https://openalex.org/W4399476842"
+    },
+    "provenance": {
+      "tried": [
+        "inferred",
+        "scrape",
+        "crossref",
+        "openalex:doi"
+      ],
+      "notes": [],
+      "confidence": 1,
+      "doi": "inferred",
+      "abstract": "scrape",
+      "authors": "scrape"
+    }
+  },
+  {
+    "rank": 47,
+    "year": 2024,
+    "title": "Employee Ownership, Employment, and Work-from-Home Locations during the COVID-19 Pandemic",
+    "series_or_venue": "NBER Working Paper w33310",
+    "url": "https://www.nber.org/papers/w33310",
+    "doi": "10.3386/w33310",
+    "abstract": "Founded in 1920, the NBER is a private, non-profit, non-partisan organization dedicated to conducting economic research and to disseminating research findings among academics, public policy makers, and business professionals.",
+    "authors": [
+      "Huanan Xu",
+      "Joseph R. Blasi",
+      "Douglas L. Kruse",
+      "Richard B. Freeman"
+    ],
+    "external_ids": {
+      "nber_id": "w33310",
+      "openalex_id": "https://openalex.org/W4405900982"
+    },
+    "provenance": {
+      "tried": [
+        "inferred",
+        "scrape",
+        "crossref",
+        "openalex:doi"
+      ],
+      "notes": [],
+      "confidence": 1,
+      "doi": "inferred",
+      "abstract": "scrape",
+      "authors": "scrape"
+    }
+  },
+  {
+    "rank": 48,
+    "year": 2024,
+    "title": "Job Search, Wages, and Inflation",
+    "series_or_venue": "NBER Working Paper w33042",
+    "url": "https://www.nber.org/papers/w33042",
+    "doi": "10.3386/w33042",
+    "abstract": "Founded in 1920, the NBER is a private, non-profit, non-partisan organization dedicated to conducting economic research and to disseminating research findings among academics, public policy makers, and business professionals.",
+    "authors": [
+      "Laura Pilossoph",
+      "Jane M. Ryngaert"
+    ],
+    "external_ids": {
+      "nber_id": "w33042",
+      "openalex_id": "https://openalex.org/W4403384946"
+    },
+    "provenance": {
+      "tried": [
+        "inferred",
+        "scrape",
+        "crossref",
+        "openalex:doi"
+      ],
+      "notes": [],
+      "confidence": 1,
+      "doi": "inferred",
+      "abstract": "scrape",
+      "authors": "scrape"
+    }
+  },
+  {
+    "rank": 49,
+    "year": 2024,
+    "title": "Work from Home and Disability Employment",
+    "series_or_venue": "NBER Working Paper w32943",
+    "url": "https://www.nber.org/papers/w32943",
+    "doi": "10.3386/w32943",
+    "abstract": "Founded in 1920, the NBER is a private, non-profit, non-partisan organization dedicated to conducting economic research and to disseminating research findings among academics, public policy makers, and business professionals.",
+    "authors": [
+      "Nicholas Bloom",
+      "Gordon B. Dahl",
+      "Dan-Olof Rooth"
+    ],
+    "external_ids": {
+      "nber_id": "w32943",
+      "openalex_id": "https://openalex.org/W4402559293"
+    },
+    "provenance": {
+      "tried": [
+        "inferred",
+        "scrape",
+        "crossref",
+        "openalex:doi"
+      ],
+      "notes": [],
+      "confidence": 1,
+      "doi": "inferred",
+      "abstract": "scrape",
+      "authors": "scrape"
+    }
+  },
+  {
+    "rank": 50,
+    "year": 2024,
+    "title": "Pandemic layoffs and stay-at-home orders: Evidence from Bangladesh",
+    "series_or_venue": "IZA Discussion Paper 18270",
+    "url": "https://docs.iza.org/dp18270.pdf",
+    "doi": null,
+    "abstract": "This paper examines the stability of self-control over time using nationally-representative longitudinal data from Australia. We track the same indivi...",
+    "authors": null,
+    "external_ids": {
+      "iza_dp": "18270"
+    },
+    "provenance": {
+      "tried": [
+        "scrape",
+        "crossref:search",
+        "openalex:search"
+      ],
+      "notes": [],
+      "confidence": 0.4,
+      "abstract": "scrape"
+    }
+  },
+  {
+    "rank": 52,
+    "year": 2024,
+    "title": "The Determinants and Effects of Remote Work Arrangements on Business and Employees",
+    "series_or_venue": "IZA Discussion Paper 18217",
+    "url": "https://docs.iza.org/dp18217.pdf",
+    "doi": null,
+    "abstract": "We investigate whether exclusionary government rhetoric targeting a minority group affects residents' migration decisions. In 2019, almost 100 local g...",
+    "authors": null,
+    "external_ids": {
+      "iza_dp": "18217"
+    },
+    "provenance": {
+      "tried": [
+        "scrape",
+        "crossref:search",
+        "openalex:search"
+      ],
+      "notes": [],
+      "confidence": 0.4,
+      "abstract": "scrape"
+    }
+  },
+  {
+    "rank": 53,
+    "year": 2024,
+    "title": "The Tale of Two Startups: Surviving COVID-19",
+    "series_or_venue": "IZA Discussion Paper 18199",
+    "url": "https://docs.iza.org/dp18199.pdf",
+    "doi": null,
+    "abstract": "We study the labour market impact of immigration to the United Kingdom, focusing on the large inflows following the 2004 EU enlargement. Using the Lif...",
+    "authors": null,
+    "external_ids": {
+      "iza_dp": "18199"
+    },
+    "provenance": {
+      "tried": [
+        "scrape",
+        "crossref:search",
+        "openalex:search"
+      ],
+      "notes": [],
+      "confidence": 0.4,
+      "abstract": "scrape"
+    }
+  },
+  {
+    "rank": 54,
+    "year": 2024,
+    "title": "A New Equilibrium: COVID-19 Lockdowns and Work From Home Persistence",
+    "series_or_venue": "IZA Discussion Paper 18179",
+    "url": "https://docs.iza.org/dp18179.pdf",
+    "doi": null,
+    "abstract": "We examine EU and UK plans for achieving a fossil-free energy system by 2050, centered on massive electrification and large-scale deployment of wind a...",
+    "authors": null,
+    "external_ids": {
+      "iza_dp": "18179"
+    },
+    "provenance": {
+      "tried": [
+        "scrape",
+        "crossref:search",
+        "openalex:search"
+      ],
+      "notes": [],
+      "confidence": 0.4,
+      "abstract": "scrape"
+    }
+  },
+  {
+    "rank": 55,
+    "year": 2024,
+    "title": "The Short-Term Effects of COVID-19 on Labour Market Outcomes of Recent Immigrants to Canada",
+    "series_or_venue": "IZA Discussion Paper 18147",
+    "url": "https://docs.iza.org/dp18147.pdf",
+    "doi": "10.2139/ssrn.5173768",
+    "abstract": "How should researchers adjust for covariates? We show that if the propensity score is estimated using a specific covariate balancing approach, inverse...",
+    "authors": [
+      "Tony Fang",
+      "Morley Gunderson",
+      "Viet Ha",
+      "Hui Ming"
+    ],
+    "external_ids": {
+      "iza_dp": "18147"
+    },
+    "provenance": {
+      "tried": [
+        "scrape",
+        "crossref:search",
+        "openalex:search"
+      ],
+      "notes": [],
+      "confidence": 1,
+      "abstract": "scrape",
+      "doi": "crossref-search",
+      "authors": "crossref"
+    }
+  },
+  {
+    "rank": 51,
+    "year": 2024,
+    "title": "Wages and Employment in the Netherlands, 2017-2023",
+    "series_or_venue": "IZA Discussion Paper 18269",
+    "url": "https://docs.iza.org/dp18269.pdf",
+    "doi": "10.2139/ssrn.4856928",
+    "abstract": "Early in the COVID-19 pandemic, scientists and policymakers advocated for the reduction of open defecation to curb the disease’s spread. However, SARS...",
+    "authors": [
+      "Iris Klinker",
+      "Bas ter Weel"
+    ],
+    "external_ids": {
+      "iza_dp": "18269",
+      "openalex_id": "https://openalex.org/W4399484295"
+    },
+    "provenance": {
+      "tried": [
+        "scrape",
+        "crossref:search",
+        "openalex:search"
+      ],
+      "notes": [],
+      "confidence": 1,
+      "abstract": "scrape",
+      "doi": "crossref-search",
+      "authors": "crossref"
+    }
+  },
+  {
+    "rank": 58,
+    "year": 2024,
+    "title": "School Closures and Parental Labor Supply: Evidence from the United States",
+    "series_or_venue": "IZA Discussion Paper 17926",
+    "url": "https://docs.iza.org/dp17926.pdf",
+    "doi": null,
+    "abstract": "The transition from sail to steam for emigrant ships on the route to Australia took place in the early 1880s, nearly two decades later than on the rou...",
+    "authors": null,
+    "external_ids": {
+      "iza_dp": "17926"
+    },
+    "provenance": {
+      "tried": [
+        "scrape",
+        "crossref:search",
+        "openalex:search"
+      ],
+      "notes": [],
+      "confidence": 0.4,
+      "abstract": "scrape"
+    }
+  },
+  {
+    "rank": 59,
+    "year": 2023,
+    "title": "Competition at Work in the Low Wage Labor Market",
+    "series_or_venue": "NBER Working Paper w31010",
+    "url": "https://www.nber.org/papers/w31010",
+    "doi": "10.3386/w31010",
+    "abstract": "Founded in 1920, the NBER is a private, non-profit, non-partisan organization dedicated to conducting economic research and to disseminating research findings among academics, public policy makers, and business professionals.",
+    "authors": [
+      "David Autor",
+      "Arindrajit Dube",
+      "Annie McGrew"
+    ],
+    "external_ids": {
+      "nber_id": "w31010",
+      "openalex_id": "https://openalex.org/W4323305175"
+    },
+    "provenance": {
+      "tried": [
+        "inferred",
+        "scrape",
+        "crossref",
+        "openalex:doi"
+      ],
+      "notes": [],
+      "confidence": 1,
+      "doi": "inferred",
+      "abstract": "scrape",
+      "authors": "scrape"
+    }
+  },
+  {
+    "rank": 60,
+    "year": 2023,
+    "title": "Where Are the Workers? From Great Resignation to Quiet Quitting",
+    "series_or_venue": "NBER Working Paper w30833",
+    "url": "https://www.nber.org/papers/w30833",
+    "doi": "10.3386/w30833",
+    "abstract": "Founded in 1920, the NBER is a private, non-profit, non-partisan organization dedicated to conducting economic research and to disseminating research findings among academics, public policy makers, and business professionals.",
+    "authors": [
+      "Dain Lee",
+      "Jinhyeok Park",
+      "Yongseok Shin"
+    ],
+    "external_ids": {
+      "nber_id": "w30833",
+      "openalex_id": "https://openalex.org/W4319997194"
+    },
+    "provenance": {
+      "tried": [
+        "inferred",
+        "scrape",
+        "crossref",
+        "openalex:doi"
+      ],
+      "notes": [],
+      "confidence": 1,
+      "doi": "inferred",
+      "abstract": "scrape",
+      "authors": "scrape"
+    }
+  },
+  {
+    "rank": 61,
+    "year": 2023,
+    "title": "The Evolution of Work from Home",
+    "series_or_venue": "NBER Working Paper w31686",
+    "url": "https://www.nber.org/papers/w31686",
+    "doi": "10.3386/w31686",
+    "abstract": "Founded in 1920, the NBER is a private, non-profit, non-partisan organization dedicated to conducting economic research and to disseminating research findings among academics, public policy makers, and business professionals.",
+    "authors": [
+      "Jose Maria Barrero",
+      "Nicholas Bloom",
+      "Steven J. Davis"
+    ],
+    "external_ids": {
+      "nber_id": "w31686",
+      "openalex_id": "https://openalex.org/W4386840311"
+    },
+    "provenance": {
+      "tried": [
+        "inferred",
+        "scrape",
+        "crossref",
+        "openalex:doi"
+      ],
+      "notes": [],
+      "confidence": 1,
+      "doi": "inferred",
+      "abstract": "scrape",
+      "authors": "scrape"
+    }
+  },
+  {
+    "rank": 63,
+    "year": 2023,
+    "title": "The Impact of COVID-19 on Workers' Expectations and Preferences",
+    "series_or_venue": "NBER Working Paper w30941",
+    "url": "https://www.nber.org/papers/w30941",
+    "doi": "10.3386/w30941",
+    "abstract": "Founded in 1920, the NBER is a private, non-profit, non-partisan organization dedicated to conducting economic research and to disseminating research findings among academics, public policy makers, and business professionals.",
+    "authors": [
+      "Yuting Chen",
+      "Patricia Cortés",
+      "Gizem Koşar",
+      "Jessica Pan",
+      "Basit Zafar"
+    ],
+    "external_ids": {
+      "nber_id": "w30941",
+      "openalex_id": "https://openalex.org/W4320490106"
+    },
+    "provenance": {
+      "tried": [
+        "inferred",
+        "scrape",
+        "crossref",
+        "openalex:doi"
+      ],
+      "notes": [],
+      "confidence": 1,
+      "doi": "inferred",
+      "abstract": "scrape",
+      "authors": "scrape"
+    }
+  },
+  {
+    "rank": 62,
+    "year": 2023,
+    "title": "Remote Work across Jobs, Companies, and Space",
+    "series_or_venue": "NBER Working Paper w31007",
+    "url": "https://www.nber.org/papers/w31007",
+    "doi": "10.3386/w31007",
+    "abstract": "Founded in 1920, the NBER is a private, non-profit, non-partisan organization dedicated to conducting economic research and to disseminating research findings among academics, public policy makers, and business professionals.",
+    "authors": [
+      "Stephen Hansen",
+      "Peter John Lambert",
+      "Nicholas Bloom",
+      "Steven J. Davis",
+      "Raffaella Sadun",
+      "Bledi Taska"
+    ],
+    "external_ids": {
+      "nber_id": "w31007",
+      "openalex_id": "https://openalex.org/W4323309118"
+    },
+    "provenance": {
+      "tried": [
+        "inferred",
+        "scrape",
+        "crossref",
+        "openalex:doi"
+      ],
+      "notes": [],
+      "confidence": 1,
+      "doi": "inferred",
+      "abstract": "scrape",
+      "authors": "scrape"
+    }
+  },
+  {
+    "rank": 65,
+    "year": 2023,
+    "title": "Worker flows and reallocation during the recovery",
+    "series_or_venue": "Labour Economics",
+    "url": "https://www.sciencedirect.com/science/article/abs/pii/S092753712300074X",
+    "doi": "10.1016/j.labeco.2023.102399",
+    "abstract": "Exploiting very rich administrative data covering the period from January 2018 until December 2021, this study analyses the individual employment traj…",
+    "authors": [
+      "Gaetano Basso",
+      "Domenico Depalo",
+      "Salvatore Lattanzio"
+    ],
+    "external_ids": {
+      "pii": "S092753712300074X",
+      "openalex_id": "https://openalex.org/W4378977000"
+    },
+    "provenance": {
+      "tried": [
+        "scrape",
+        "crossref",
+        "openalex:doi"
+      ],
+      "notes": [],
+      "confidence": 1,
+      "doi": "scrape",
+      "abstract": "scrape",
+      "authors": "crossref"
+    }
+  },
+  {
+    "rank": 66,
+    "year": 2023,
+    "title": "The Big Shift in Working Arrangements: Eight Ways in Which the COVID-19 Pandemic Changed Work",
+    "series_or_venue": "IZA Discussion Paper 17653",
+    "url": "https://docs.iza.org/dp17653.pdf",
+    "doi": null,
+    "abstract": "This paper studies how family and firm investments interact to explain gender gaps in career\nachievement. Using Danish administrative data, we first...",
+    "authors": null,
+    "external_ids": {
+      "iza_dp": "17653"
+    },
+    "provenance": {
+      "tried": [
+        "scrape",
+        "crossref:search",
+        "openalex:search"
+      ],
+      "notes": [],
+      "confidence": 0.4,
+      "abstract": "scrape"
+    }
+  },
+  {
+    "rank": 67,
+    "year": 2023,
+    "title": "Did COVID-19 (Permanently) Raise the Demand for Teleworkable Jobs? Evidence from Italy",
+    "series_or_venue": "IZA Discussion Paper 17613",
+    "url": "https://docs.iza.org/dp17613.pdf",
+    "doi": null,
+    "abstract": "This study estimates and decomposes recruitment elasticity, a key measure of employer market power, across job-matching stages using data from Japan's...",
+    "authors": null,
+    "external_ids": {
+      "iza_dp": "17613"
+    },
+    "provenance": {
+      "tried": [
+        "scrape",
+        "crossref:search",
+        "openalex:search"
+      ],
+      "notes": [],
+      "confidence": 0.4,
+      "abstract": "scrape"
+    }
+  },
+  {
+    "rank": 64,
+    "year": 2023,
+    "title": "How Effective were Job-Retention Schemes during the COVID-19 Pandemic? A Microsimulation Approach for European Countries",
+    "series_or_venue": "IMF Working Paper 2023/003",
+    "url": "https://www.imf.org/-/media/files/publications/wp/2023/english/wpiea2023003-print-pdf.pdf",
+    "doi": "10.5089/9798400229985.001",
+    "abstract": "The COVID-19 pandemic had posed a dramatic impact on labor markets across Europe. Forceful fiscal responses have prevented an otherwise sharper contraction. Many countries introduced or expanded job-retention schemes to preserve jobs and support households. This paper uses a microsimulation approach (EUROMOD) and household data to assess the effectiveness of those schemes in stabilizing household income during the pandemic across European countries. Empirical evidence shows that job-retention schemes were effective in stabilizing income and, along with other measures, absorbed nearly 80 percent of market income shocks—almost doubling the extent of the automatic stabilization of the pre-pandemic tax and benefit systems. The large effects are related to the widespread use and scaling up of those schemes and a deep but short-lived disruption to labor markets during the pandemic. Along with other fiscal support measures, job-retention schemes helped mitigate the rise in the unemployment rate, by about 3 percentage points, and income inequality during the pandemic. Our results show that job-retention schemes were largely targeted, in which households more vulnerable to income losses, such as lower-income families, youth, and low-skilled workers, are able to stabilize their income.",
+    "authors": [
+      "Alexandra Solovyeva",
+      "W. Raphael Lam"
+    ],
+    "external_ids": {
+      "imf_wp": "2023/003",
+      "openalex_id": "https://openalex.org/W4320012359"
+    },
+    "provenance": {
+      "tried": [
+        "crossref:search",
+        "openalex:search"
+      ],
+      "notes": [],
+      "confidence": 1,
+      "doi": "crossref-search",
+      "authors": "crossref",
+      "abstract": "openalex"
+    }
+  },
+  {
+    "rank": 68,
+    "year": 2023,
+    "title": "Economic Shocks and Worker Careers: Evidence from the Great Recession and the COVID-19 Pandemic",
+    "series_or_venue": "IZA Discussion Paper 17268",
+    "url": "https://docs.iza.org/dp17268.pdf",
+    "doi": null,
+    "abstract": "Temporary economic shocks can have enduring effects on individuals and their career trajectories. This paper investigates the labour market effects of...",
+    "authors": null,
+    "external_ids": {
+      "iza_dp": "17268"
+    },
+    "provenance": {
+      "tried": [
+        "scrape",
+        "crossref:search",
+        "openalex:search"
+      ],
+      "notes": [],
+      "confidence": 0.4,
+      "abstract": "scrape"
+    }
+  },
+  {
+    "rank": 69,
+    "year": 2023,
+    "title": "An Intersectional Analysis of the Labour Market Impacts of the COVID-19 Pandemic in Canada",
+    "series_or_venue": "IZA Discussion Paper 17235",
+    "url": "https://docs.iza.org/dp17235.pdf",
+    "doi": null,
+    "abstract": "We employ a Gender-Based Plus (GBA+) and intersectionality lens to examine the triple whammy of the differential effect of Covid on the trifecta of be...",
+    "authors": null,
+    "external_ids": {
+      "iza_dp": "17235"
+    },
+    "provenance": {
+      "tried": [
+        "scrape",
+        "crossref:search",
+        "openalex:search"
+      ],
+      "notes": [],
+      "confidence": 0.4,
+      "abstract": "scrape"
+    }
+  },
+  {
+    "rank": 70,
+    "year": 2023,
+    "title": "The Effects of Utility Shutoff and Eviction Moratoria during the COVID-19 Pandemic on the Use of Alternative Financial Services Loans",
+    "series_or_venue": "IZA Discussion Paper 17248",
+    "url": "https://docs.iza.org/dp17248.pdf",
+    "doi": "10.2139/ssrn.4944878",
+    "abstract": "To protect financially distressed families during the COVID-19 pandemic, states implemented emergency measures such as moratoria on evictions and util...",
+    "authors": [
+      "Jennifer Andre",
+      "Breno Braga",
+      "Kassandra Martinchek",
+      "Signe-Mary McKernan"
+    ],
+    "external_ids": {
+      "iza_dp": "17248"
+    },
+    "provenance": {
+      "tried": [
+        "scrape",
+        "crossref:search",
+        "openalex:search"
+      ],
+      "notes": [],
+      "confidence": 1,
+      "abstract": "scrape",
+      "doi": "crossref-search",
+      "authors": "crossref"
+    }
+  },
+  {
+    "rank": 71,
+    "year": 2023,
+    "title": "Loneliness during the COVID-19 Pandemic: Evidence from Five European Countries",
+    "series_or_venue": "IZA Discussion Paper 17223",
+    "url": "https://docs.iza.org/dp17223.pdf",
+    "doi": "10.2139/ssrn.4926541",
+    "abstract": "We use quarterly panel data from the COME-HERE survey covering five European countries to analyse three facets of the experience of loneliness during...",
+    "authors": [
+      "Anthony Lepinteur",
+      "Alessio Rebechi",
+      "Andrew Eric Clark",
+      "Conchita D'Ambrosio",
+      "Nicholas Rohde",
+      "Claus Vögele"
+    ],
+    "external_ids": {
+      "iza_dp": "17223"
+    },
+    "provenance": {
+      "tried": [
+        "scrape",
+        "crossref:search",
+        "openalex:search"
+      ],
+      "notes": [],
+      "confidence": 1,
+      "abstract": "scrape",
+      "doi": "crossref-search",
+      "authors": "crossref"
+    }
+  },
+  {
+    "rank": 72,
+    "year": 2023,
+    "title": "Every Cloud Has a Silver Lining: The Role of Study Time and Class Recordings on University Students' Performance during COVID-19",
+    "series_or_venue": "IZA Discussion Paper 17173",
+    "url": "https://docs.iza.org/dp17173.pdf",
+    "doi": "10.2139/ssrn.4921716",
+    "abstract": "We study the impact of the COVID-19 pandemic and its side effects on the academic achievement of students in a large university located in a northern...",
+    "authors": [
+      "Chiara Binelli",
+      "Simona Comi",
+      "Elena Maschi",
+      "Laura Pagani"
+    ],
+    "external_ids": {
+      "iza_dp": "17173"
+    },
+    "provenance": {
+      "tried": [
+        "scrape",
+        "crossref:search",
+        "openalex:search"
+      ],
+      "notes": [],
+      "confidence": 1,
+      "abstract": "scrape",
+      "doi": "crossref-search",
+      "authors": "crossref"
+    }
+  },
+  {
+    "rank": 73,
+    "year": 2023,
+    "title": "Gender Gaps in Time Use: Pan-European Evidence from School Closures during the COVID-19 Pandemic",
+    "series_or_venue": "IZA Discussion Paper 17151",
+    "url": "https://docs.iza.org/dp17151.pdf",
+    "doi": "10.2139/ssrn.4899856",
+    "abstract": "We study the impact of school closures during the COVID-19 pandemic on the time allocated to paid and unpaid work within households. We use panel data...",
+    "authors": [
+      "Benjamin Elsner",
+      "Manvi Jindal",
+      "Massimiliano Mascherini",
+      "Sanna Nivakoski"
+    ],
+    "external_ids": {
+      "iza_dp": "17151"
+    },
+    "provenance": {
+      "tried": [
+        "scrape",
+        "crossref:search",
+        "openalex:search"
+      ],
+      "notes": [],
+      "confidence": 1,
+      "abstract": "scrape",
+      "doi": "crossref-search",
+      "authors": "crossref"
+    }
+  },
+  {
+    "rank": 74,
+    "year": 2023,
+    "title": "The Impacts of COVID-19 on Female Labor Force Participation in Iran",
+    "series_or_venue": "IZA Discussion Paper 17001",
+    "url": "https://docs.iza.org/dp17001.pdf",
+    "doi": "10.2139/ssrn.4827176",
+    "abstract": "While female labor force participation (LFP) in Iran is among the lowest in the world, there is hardly any study on the COVID-19 pandemic effects on t...",
+    "authors": [
+      "Hai-Anh H. Dang",
+      "Djavad Salehi-Isfahani",
+      "Minh Do"
+    ],
+    "external_ids": {
+      "iza_dp": "17001"
+    },
+    "provenance": {
+      "tried": [
+        "scrape",
+        "crossref:search",
+        "openalex:search"
+      ],
+      "notes": [],
+      "confidence": 1,
+      "abstract": "scrape",
+      "doi": "crossref-search",
+      "authors": "crossref"
+    }
+  },
+  {
+    "rank": 76,
+    "year": 2023,
+    "title": "COVID-19 and Political Preferences through Stages of the Pandemic: The Case of the Czech Republic",
+    "series_or_venue": "IZA Discussion Paper 16939",
+    "url": "https://docs.iza.org/dp16939.pdf",
+    "doi": "10.1177/10659129251324220",
+    "abstract": "We track the effects of the COVID-19 pandemic on political preferences through 'high' and 'low' phases of the pandemic. We ask about the effects of th...",
+    "authors": [
+      "Alena Bičáková",
+      "Štěpán Jurajda"
+    ],
+    "external_ids": {
+      "iza_dp": "16939",
+      "openalex_id": "https://openalex.org/W4408420330"
+    },
+    "provenance": {
+      "tried": [
+        "scrape",
+        "crossref",
+        "openalex:doi"
+      ],
+      "notes": [],
+      "confidence": 1,
+      "doi": "scrape",
+      "abstract": "scrape",
+      "authors": "crossref"
+    }
+  },
+  {
+    "rank": 75,
+    "year": 2023,
+    "title": "COVID-19 Lockdown, Home Environment, Lifestyles, and Mental Health among Preschoolers in China",
+    "series_or_venue": "IZA Discussion Paper 16971",
+    "url": "https://docs.iza.org/dp16971.pdf",
+    "doi": "10.2139/ssrn.4820811",
+    "abstract": "During the first wave of the COVID-19 pandemic, Shanghai implemented lockdown measures to stop transmission of the virus. Over 26 million residents, i...",
+    "authors": [
+      "Yunting Zhang",
+      "Zhangsheng Yu",
+      "Guanghai Wang",
+      "Jun Zhang",
+      "Fan Jiang",
+      "Saishuang Wu",
+      "Yue Zhang",
+      "Donglan Zhang",
+      "Xi Chen"
+    ],
+    "external_ids": {
+      "iza_dp": "16971"
+    },
+    "provenance": {
+      "tried": [
+        "scrape",
+        "crossref:search",
+        "openalex:search"
+      ],
+      "notes": [],
+      "confidence": 1,
+      "abstract": "scrape",
+      "doi": "crossref-search",
+      "authors": "crossref"
+    }
+  },
+  {
+    "rank": 79,
+    "year": 2023,
+    "title": "Immigrant Key Workers: Their Contribution to Europe's COVID-19 Response",
+    "series_or_venue": "IZA Discussion Paper 16884",
+    "url": "https://docs.iza.org/dp16884.pdf",
+    "doi": null,
+    "abstract": "This paper contributes to the literature on the Covid-19 effects on workers and labor markets by focusing on the experience of migrant key workers in...",
+    "authors": null,
+    "external_ids": {
+      "iza_dp": "16884"
+    },
+    "provenance": {
+      "tried": [
+        "scrape",
+        "crossref:search",
+        "openalex:search"
+      ],
+      "notes": [],
+      "confidence": 0.4,
+      "abstract": "scrape"
+    }
+  },
+  {
+    "rank": 77,
+    "year": 2023,
+    "title": "Well-Being throughout the COVID-19 Pandemic in Germany: Gendered Effects of Daycare and School Closures",
+    "series_or_venue": "IZA Discussion Paper 16907",
+    "url": "https://docs.iza.org/dp16907.pdf",
+    "doi": "10.2139/ssrn.4788221",
+    "abstract": "In this chapter, we aim to improve the understanding of the well-being impacts of the COVID-19 pandemic. We provide an overview of the existing litera...",
+    "authors": [
+      "Mathias Huebener",
+      "Sevrin Waights",
+      "C. Katharina Spiess"
+    ],
+    "external_ids": {
+      "iza_dp": "16907"
+    },
+    "provenance": {
+      "tried": [
+        "scrape",
+        "crossref:search",
+        "openalex:search"
+      ],
+      "notes": [],
+      "confidence": 1,
+      "abstract": "scrape",
+      "doi": "crossref-search",
+      "authors": "crossref"
+    }
+  },
+  {
+    "rank": 78,
+    "year": 2023,
+    "title": "Did COVID-19 (Permanently) Raise the Demand for Teleworkable Jobs?",
+    "series_or_venue": "IZA Discussion Paper 16906",
+    "url": "https://docs.iza.org/dp16906.pdf",
+    "doi": "10.53223/inappwp_2024-118",
+    "abstract": "This study leverages detailed administrative data on firms' job flows and variation across Local Labor Markets (LLMs) in the spread of COVID-19 to inv...",
+    "authors": [
+      "Massimiliano Bratti",
+      "Irene Brunetti",
+      "Alessandro Corvasce",
+      "Agata Maida",
+      "Andrea Ricci"
+    ],
+    "external_ids": {
+      "iza_dp": "16906"
+    },
+    "provenance": {
+      "tried": [
+        "scrape",
+        "crossref:search",
+        "openalex:search"
+      ],
+      "notes": [],
+      "confidence": 1,
+      "abstract": "scrape",
+      "doi": "crossref-search",
+      "authors": "crossref"
+    }
+  },
+  {
+    "rank": 83,
+    "year": 2023,
+    "title": "COVID-19, School Closures and (Cyber)Bullying in Germany",
+    "series_or_venue": "IZA Discussion Paper 16650",
+    "url": "https://docs.iza.org/dp16650.pdf",
+    "doi": "10.1080/09645292.2024.2427644",
+    "abstract": "We analyze the prevalence of bullying in Germany during COVID-19, both as a real-life phenomenon (in-person bullying, or in our context: school bullyi...",
+    "authors": [
+      "Helen Rahlff",
+      "Ulf Rinne",
+      "Hendrik Sonnabend"
+    ],
+    "external_ids": {
+      "iza_dp": "16650",
+      "openalex_id": "https://openalex.org/W4404399360"
+    },
+    "provenance": {
+      "tried": [
+        "scrape",
+        "crossref",
+        "openalex:doi"
+      ],
+      "notes": [],
+      "confidence": 1,
+      "doi": "scrape",
+      "abstract": "scrape",
+      "authors": "crossref"
+    }
+  },
+  {
+    "rank": 80,
+    "year": 2023,
+    "title": "Nursing before and after COVID-19: Outflows, Inflows and Self-Employment",
+    "series_or_venue": "IZA Discussion Paper 16772",
+    "url": "https://docs.iza.org/dp16772.pdf",
+    "doi": "10.14264/75e58da",
+    "abstract": "We study nurses' labour dynamics in light of continuing nurse shortages and the COVID-19 pandemic. Using Dutch monthly administrative microdata, all n...",
+    "authors": [
+      "Guyonne Kalb",
+      "Jordy Meekes"
+    ],
+    "external_ids": {
+      "iza_dp": "16772"
+    },
+    "provenance": {
+      "tried": [
+        "scrape",
+        "crossref:search",
+        "openalex:search"
+      ],
+      "notes": [],
+      "confidence": 1,
+      "abstract": "scrape",
+      "doi": "crossref-search",
+      "authors": "crossref"
+    }
+  },
+  {
+    "rank": 81,
+    "year": 2023,
+    "title": "COVID-19, School Closures, and Student Learning Outcomes: New Global Evidence from PISA",
+    "series_or_venue": "IZA Discussion Paper 16731",
+    "url": "https://docs.iza.org/dp16731.pdf",
+    "doi": "10.1596/1813-9450-10666",
+    "abstract": "The COVID-19 pandemic resulted in significant disruption in schooling worldwide. This paper uses global test score data to estimate learning losses. I...",
+    "authors": [
+      "Maciej Jakubowski",
+      "Tomasz Gajderowicz",
+      "Harry Patrinos"
+    ],
+    "external_ids": {
+      "iza_dp": "16731"
+    },
+    "provenance": {
+      "tried": [
+        "scrape",
+        "crossref:search",
+        "openalex:search"
+      ],
+      "notes": [],
+      "confidence": 1,
+      "abstract": "scrape",
+      "doi": "crossref-search",
+      "authors": "crossref"
+    }
+  },
+  {
+    "rank": 82,
+    "year": 2023,
+    "title": "COVID-19 Vaccine and Risk-Taking",
+    "series_or_venue": "IZA Discussion Paper 16707",
+    "url": "https://docs.iza.org/dp16707.pdf",
+    "doi": "10.1007/s11166-023-09424-0",
+    "abstract": "We assess whether the COVID-19 vaccine induces COVID-19 risky behavior (e.g., going to bars and restaurants) and thus reduces vaccine efficacy. A key...",
+    "authors": [
+      "Shanike J. Smart",
+      "Solomon W. Polachek"
+    ],
+    "external_ids": {
+      "iza_dp": "16707"
+    },
+    "provenance": {
+      "tried": [
+        "scrape",
+        "crossref:search",
+        "openalex:search"
+      ],
+      "notes": [],
+      "confidence": 1,
+      "abstract": "scrape",
+      "doi": "crossref-search",
+      "authors": "crossref"
+    }
+  },
+  {
+    "rank": 84,
+    "year": 2023,
+    "title": "Two Pandemic Years Greatly Reduced Young People's Life Satisfaction: Evidence from a Comparison with Pre-COVID-19 Panel Data",
+    "series_or_venue": "IZA Discussion Paper 16636",
+    "url": "https://docs.iza.org/dp16636.pdf",
+    "doi": "10.1093/esr/jcad077",
+    "abstract": "How much did young people suffer from the COVID-19 pandemic? A growing number of studies address this question, but they often lack a comparison group...",
+    "authors": [
+      "Martin Neugebauer",
+      "Alexander Patzina",
+      "Hans Dietrich",
+      "Malte Sandner"
+    ],
+    "external_ids": {
+      "iza_dp": "16636",
+      "openalex_id": "https://openalex.org/W4389247702"
+    },
+    "provenance": {
+      "tried": [
+        "scrape",
+        "crossref",
+        "openalex:doi"
+      ],
+      "notes": [],
+      "confidence": 1,
+      "doi": "scrape",
+      "abstract": "scrape",
+      "authors": "crossref"
+    }
+  },
+  {
+    "rank": 85,
+    "year": 2023,
+    "title": "System Relevance and Firm Performance Due to COVID-19",
+    "series_or_venue": "IZA Discussion Paper 16606",
+    "url": "https://docs.iza.org/dp16606.pdf",
+    "doi": "10.1515/ger-2023-0070",
+    "abstract": "We study the impact of COVID-19 on firm performance. Using financial accounts of a large number of German firms, we document that industry affiliation...",
+    "authors": [
+      "Michael J. Böhm",
+      "Pamela Qendrai"
+    ],
+    "external_ids": {
+      "iza_dp": "16606",
+      "openalex_id": "https://openalex.org/W4389365363"
+    },
+    "provenance": {
+      "tried": [
+        "scrape",
+        "crossref",
+        "openalex:doi"
+      ],
+      "notes": [],
+      "confidence": 1,
+      "doi": "scrape",
+      "abstract": "scrape",
+      "authors": "crossref"
+    }
+  },
+  {
+    "rank": 91,
+    "year": 2023,
+    "title": "Back to Work? The Labor Market Effects of Relaxing COVID-19 Restrictions in Ecuador",
+    "series_or_venue": "IZA Discussion Paper 16325",
+    "url": "https://docs.iza.org/dp16325.pdf",
+    "doi": null,
+    "abstract": "Using the 2021 and 2022 HFPS for Ecuador, the paper investigates the labor market trajectories of different socio-economic groups. The analysis shows...",
+    "authors": null,
+    "external_ids": {
+      "iza_dp": "16325"
+    },
+    "provenance": {
+      "tried": [
+        "scrape",
+        "crossref:search",
+        "openalex:search"
+      ],
+      "notes": [],
+      "confidence": 0.4,
+      "abstract": "scrape"
+    }
+  },
+  {
+    "rank": 86,
+    "year": 2023,
+    "title": "COVID-19 and Mental Health: Natural Experiments of the Costs of Lockdowns",
+    "series_or_venue": "IZA Discussion Paper 16532",
+    "url": "https://docs.iza.org/dp16532.pdf",
+    "doi": "10.2139/ssrn.4608788",
+    "abstract": "The COVID 19 pandemic has profoundly impacted the world, affecting not only physical health and the economy but also mental well being. This chapter p...",
+    "authors": [
+      "Climent Quintana-Domeque",
+      "Jingya Zeng"
+    ],
+    "external_ids": {
+      "iza_dp": "16532",
+      "openalex_id": "https://openalex.org/W4388144578"
+    },
+    "provenance": {
+      "tried": [
+        "scrape",
+        "crossref:search",
+        "openalex:search"
+      ],
+      "notes": [],
+      "confidence": 1,
+      "abstract": "scrape",
+      "doi": "crossref-search",
+      "authors": "crossref"
+    }
+  },
+  {
+    "rank": 87,
+    "year": 2023,
+    "title": "COVID-19 and the European Education Performance Decline: A Focus on Primary School Children's Reading Achievement between 2016 and 2021",
+    "series_or_venue": "IZA Discussion Paper 16531",
+    "url": "https://docs.iza.org/dp16531.pdf",
+    "doi": "10.2139/ssrn.4608787",
+    "abstract": "This study uses the Progress in International Reading Literacy Study (PIRLS) data, the only cross-national data having measured educational achievemen...",
+    "authors": [
+      "Sylke V. Schnepf",
+      "Silvia Granato"
+    ],
+    "external_ids": {
+      "iza_dp": "16531",
+      "openalex_id": "https://openalex.org/W4387916181"
+    },
+    "provenance": {
+      "tried": [
+        "scrape",
+        "crossref:search",
+        "openalex:search"
+      ],
+      "notes": [],
+      "confidence": 1,
+      "abstract": "scrape",
+      "doi": "crossref-search",
+      "authors": "crossref"
+    }
+  },
+  {
+    "rank": 88,
+    "year": 2023,
+    "title": "Teen Social Interactions and Well-Being during the COVID-19 Pandemic",
+    "series_or_venue": "IZA Discussion Paper 16437",
+    "url": "https://docs.iza.org/dp16437.pdf",
+    "doi": "10.2139/ssrn.4568746",
+    "abstract": "Adolescence is an important developmental period when teens begin spending less time with their parents and more time with friends and others outside...",
+    "authors": [
+      "Charlene M. Kalenkoski",
+      "Sabrina Wulff Pabilonia"
+    ],
+    "external_ids": {
+      "iza_dp": "16437",
+      "openalex_id": "https://openalex.org/W4386724040"
+    },
+    "provenance": {
+      "tried": [
+        "scrape",
+        "crossref:search",
+        "openalex:search"
+      ],
+      "notes": [],
+      "confidence": 1,
+      "abstract": "scrape",
+      "doi": "crossref-search",
+      "authors": "crossref"
+    }
+  },
+  {
+    "rank": 89,
+    "year": 2023,
+    "title": "The Impacts of COVID-19 on Racial Inequality in Business Earnings",
+    "series_or_venue": "IZA Discussion Paper 16412",
+    "url": "https://docs.iza.org/dp16412.pdf",
+    "doi": "10.2139/ssrn.4554864",
+    "abstract": "Many small businesses closed in the pandemic, but were economic losses disproportionately felt by businesses owned by people of color? This paper prov...",
+    "authors": [
+      "Robert W. Fairlie"
+    ],
+    "external_ids": {
+      "iza_dp": "16412",
+      "openalex_id": "https://openalex.org/W4386276113"
+    },
+    "provenance": {
+      "tried": [
+        "scrape",
+        "crossref:search",
+        "openalex:search"
+      ],
+      "notes": [],
+      "confidence": 1,
+      "abstract": "scrape",
+      "doi": "crossref-search",
+      "authors": "crossref"
+    }
+  },
+  {
+    "rank": 90,
+    "year": 2023,
+    "title": "Were COVID and the Great Recession Well-Being Reducing?",
+    "series_or_venue": "IZA Discussion Paper 16355",
+    "url": "https://docs.iza.org/dp16355.pdf",
+    "doi": "10.3386/w31497",
+    "abstract": "Using micro-data on six surveys – the Gallup World Poll 2005-2023, the U.S. Behavioral Risk Factor Surveillance System, 1993-2022, Eurobarometer 1991-...",
+    "authors": [
+      "David Blanchflower",
+      "Alex Bryson"
+    ],
+    "external_ids": {
+      "iza_dp": "16355",
+      "openalex_id": "https://openalex.org/W4385191997"
+    },
+    "provenance": {
+      "tried": [
+        "scrape",
+        "crossref:search",
+        "openalex:search"
+      ],
+      "notes": [],
+      "confidence": 1,
+      "abstract": "scrape",
+      "doi": "crossref-search",
+      "authors": "crossref"
+    }
+  },
+  {
+    "rank": 94,
+    "year": 2023,
+    "title": "State-Level Trucking Employment and the COVID-19 Pandemic in the U.S.",
+    "series_or_venue": "IZA Discussion Paper 16265",
+    "url": "https://docs.iza.org/dp16265.pdf",
+    "doi": "10.1002/tjo3.12038",
+    "abstract": "Some of the U.S. states saw sharper declines in truck transportation payrolls at the onset of the COVID-19 shutdown, and others displayed differing tr...",
+    "authors": [
+      "Jonathan Phares",
+      "Jason W. Miller",
+      "Stephen V. Burks"
+    ],
+    "external_ids": {
+      "iza_dp": "16265",
+      "openalex_id": "https://openalex.org/W4405649686"
+    },
+    "provenance": {
+      "tried": [
+        "scrape",
+        "crossref",
+        "openalex:doi"
+      ],
+      "notes": [],
+      "confidence": 1,
+      "doi": "scrape",
+      "abstract": "scrape",
+      "authors": "crossref"
+    }
+  },
+  {
+    "rank": 96,
+    "year": 2023,
+    "title": "Social Gradients in Employment during and after the COVID-19 Pandemic",
+    "series_or_venue": "IZA Discussion Paper 16260",
+    "url": "https://docs.iza.org/dp16260.pdf",
+    "doi": "10.1007/s10888-024-09645-6",
+    "abstract": "We examine employment effects of the COVID-19 crisis in Norway during the initial lockdown, through the subsequent recovery, and after the dust had se...",
+    "authors": [
+      "Annette Alstadsæter",
+      "Bernt Bratsberg",
+      "Simen Markussen",
+      "Oddbjørn Raaum",
+      "Knut Røed"
+    ],
+    "external_ids": {
+      "iza_dp": "16260",
+      "openalex_id": "https://openalex.org/W4402600884"
+    },
+    "provenance": {
+      "tried": [
+        "scrape",
+        "crossref",
+        "openalex:doi"
+      ],
+      "notes": [],
+      "confidence": 1,
+      "doi": "scrape",
+      "abstract": "scrape",
+      "authors": "crossref"
+    }
+  },
+  {
+    "rank": 92,
+    "year": 2023,
+    "title": "Social Connections and COVID-19 Vaccination",
+    "series_or_venue": "IZA Discussion Paper 16307",
+    "url": "https://docs.iza.org/dp16307.pdf",
+    "doi": "10.2139/ssrn.4509723",
+    "abstract": "This paper unpacks the effects of social networks on monthly county-level COVID19 vaccinations in the US. To parse out short-term community-level exte...",
+    "authors": [
+      "Arnab K. Basu",
+      "Nancy H. Chau",
+      "Oleg Firsin"
+    ],
+    "external_ids": {
+      "iza_dp": "16307",
+      "openalex_id": "https://openalex.org/W4385287831"
+    },
+    "provenance": {
+      "tried": [
+        "scrape",
+        "crossref:search",
+        "openalex:search"
+      ],
+      "notes": [],
+      "confidence": 1,
+      "abstract": "scrape",
+      "doi": "crossref-search",
+      "authors": "crossref"
+    }
+  },
+  {
+    "rank": 93,
+    "year": 2023,
+    "title": "The Effect of the COVID-19 Pandemic Recession on Less Educated Women's Human Capital: Some Projections",
+    "series_or_venue": "IZA Discussion Paper 16277",
+    "url": "https://docs.iza.org/dp16277.pdf",
+    "doi": "10.2139/ssrn.4499466",
+    "abstract": "The recession induced by the COVID-19 pandemic resulted in major declines in employment of women, both from the demand side as firms reduced employmen...",
+    "authors": [
+      "Mark Drozd",
+      "Robert Moffitt",
+      "Xinyu Zhao"
+    ],
+    "external_ids": {
+      "iza_dp": "16277",
+      "openalex_id": "https://openalex.org/W4383424252"
+    },
+    "provenance": {
+      "tried": [
+        "scrape",
+        "crossref:search",
+        "openalex:search"
+      ],
+      "notes": [],
+      "confidence": 1,
+      "abstract": "scrape",
+      "doi": "crossref-search",
+      "authors": "crossref"
+    }
+  },
+  {
+    "rank": 98,
+    "year": 2023,
+    "title": "The Impact of COVID-19 on Access to Mental Healthcare Services",
+    "series_or_venue": "IZA Discussion Paper 16162",
+    "url": "https://docs.iza.org/dp16162.pdf",
+    "doi": "10.1257/pandp.20231058",
+    "abstract": "The COVID-19 pandemic increased the rate of mental health disorders, as well as demand for mental health services. It remains unclear, however, the ex...",
+    "authors": [
+      "Benjamin Harrell",
+      "Luca Fumarco",
+      "Patrick Button",
+      "David J. Schwegman",
+      "Kyla Denwood"
+    ],
+    "external_ids": {
+      "iza_dp": "16162",
+      "openalex_id": "https://openalex.org/W4377820327"
+    },
+    "provenance": {
+      "tried": [
+        "scrape",
+        "crossref",
+        "openalex:doi"
+      ],
+      "notes": [],
+      "confidence": 1,
+      "doi": "scrape",
+      "abstract": "scrape",
+      "authors": "crossref"
+    }
+  },
+  {
+    "rank": 95,
+    "year": 2023,
+    "title": "Covid-19 and Income Inequality in OECD Countries: A Methodological Comment",
+    "series_or_venue": "IZA Discussion Paper 16264",
+    "url": "https://docs.iza.org/dp16264.pdf",
+    "doi": "10.2139/ssrn.4492313",
+    "abstract": "Wildman (2021), who identifies \"a clear association between income inequality [measured by the Gini coefficient] and COVID-19 cases and deaths,\" concl...",
+    "authors": [
+      "Oded Stark"
+    ],
+    "external_ids": {
+      "iza_dp": "16264",
+      "openalex_id": "https://openalex.org/W4382565239"
+    },
+    "provenance": {
+      "tried": [
+        "scrape",
+        "crossref:search",
+        "openalex:search"
+      ],
+      "notes": [],
+      "confidence": 1,
+      "abstract": "scrape",
+      "doi": "crossref-search",
+      "authors": "crossref"
+    }
+  },
+  {
+    "rank": 97,
+    "year": 2023,
+    "title": "COVID-19 and Entrepreneurship",
+    "series_or_venue": "IZA Discussion Paper 16201",
+    "url": "https://docs.iza.org/dp16201.pdf",
+    "doi": "10.1007/978-3-319-57365-6_321-1",
+    "abstract": "This chapter presents the results of a systematic review of literature (SLR) on impacts of Covid-19 on entrepreneurship published in the first three y...",
+    "authors": [
+      "Alina Sorgner"
+    ],
+    "external_ids": {
+      "iza_dp": "16201",
+      "openalex_id": "https://openalex.org/W4385964275"
+    },
+    "provenance": {
+      "tried": [
+        "scrape",
+        "crossref:search",
+        "openalex:search"
+      ],
+      "notes": [],
+      "confidence": 1,
+      "abstract": "scrape",
+      "doi": "openalex-search",
+      "authors": "openalex"
+    }
+  },
+  {
+    "rank": 99,
+    "year": 2023,
+    "title": "Labour Market Reallocation Effects of COVID-19 Policies in Spain: A Tale of Two Recessions",
+    "series_or_venue": "IZA Discussion Paper 16095",
+    "url": "https://docs.iza.org/dp16095.pdf",
+    "doi": "10.2139/ssrn.4431368",
+    "abstract": "This paper studies short-time work arrangements (ERTEs) when aggregate risk is partially sector-specific. In Spain, the Great Recession and the pandem...",
+    "authors": [
+      "Antonia Diaz",
+      "Juan Jose Dolado",
+      "Álvaro Jáñez",
+      "Felix Wellschmied"
+    ],
+    "external_ids": {
+      "iza_dp": "16095",
+      "openalex_id": "https://openalex.org/W4367664840"
+    },
+    "provenance": {
+      "tried": [
+        "scrape",
+        "crossref:search",
+        "openalex:search"
+      ],
+      "notes": [],
+      "confidence": 1,
+      "abstract": "scrape",
+      "doi": "crossref-search",
+      "authors": "crossref"
+    }
+  },
+  {
+    "rank": 103,
+    "year": 2023,
+    "title": "Working from Home, COVID-19 and Job Satisfaction",
+    "series_or_venue": "IZA Discussion Paper 16019",
+    "url": "https://docs.iza.org/dp16019.pdf",
+    "doi": "10.1177/00197939241301704",
+    "abstract": "This paper examines the impact of the growth in the incidence of working from home during the COVID-19 pandemic on workers' job satisfaction. Using lo...",
+    "authors": [
+      "Inga Laß",
+      "Esperanza Vera-Toscano",
+      "Mark Wooden"
+    ],
+    "external_ids": {
+      "iza_dp": "16019",
+      "openalex_id": "https://openalex.org/W4405137944"
+    },
+    "provenance": {
+      "tried": [
+        "scrape",
+        "crossref",
+        "openalex:doi"
+      ],
+      "notes": [],
+      "confidence": 1,
+      "doi": "scrape",
+      "abstract": "scrape",
+      "authors": "crossref"
+    }
+  },
+  {
+    "rank": 100,
+    "year": 2023,
+    "title": "Risk Aversion and COVID-19 Vaccine Hesitancy",
+    "series_or_venue": "IZA Discussion Paper 16084",
+    "url": "https://docs.iza.org/dp16084.pdf",
+    "doi": "10.1002/hec.4693",
+    "abstract": "We here investigate the role of risk aversion in COVID-19 vaccine hesitancy. The theoretical effect is ambiguous, as both COVID-19 infection and vacci...",
+    "authors": [
+      "Anthony Lepinteur",
+      "Liyousew G. Borga",
+      "Andrew E. Clark",
+      "Claus Vögele",
+      "Conchita D’Ambrosio"
+    ],
+    "external_ids": {
+      "iza_dp": "16084",
+      "openalex_id": "https://openalex.org/W4372259730"
+    },
+    "provenance": {
+      "tried": [
+        "scrape",
+        "crossref:search",
+        "openalex:search"
+      ],
+      "notes": [],
+      "confidence": 1,
+      "abstract": "scrape",
+      "doi": "crossref-search",
+      "authors": "crossref"
+    }
+  },
+  {
+    "rank": 101,
+    "year": 2023,
+    "title": "Permanent Instability of Preferences after COVID-19 Crisis: A Natural Experiment from Urban Burkina Faso",
+    "series_or_venue": "IZA Discussion Paper 16075",
+    "url": "https://docs.iza.org/dp16075.pdf",
+    "doi": "10.2139/ssrn.4419831",
+    "abstract": "The salience of the first Covid-19 crisis over a well-identified period makes it an unexpected and abrupt change in the environment. This study uses t...",
+    "authors": [
+      "Delphine Boutin",
+      "Laurene Petifour",
+      "Haris Megzari"
+    ],
+    "external_ids": {
+      "iza_dp": "16075",
+      "openalex_id": "https://openalex.org/W4366319447"
+    },
+    "provenance": {
+      "tried": [
+        "scrape",
+        "crossref:search",
+        "openalex:search"
+      ],
+      "notes": [],
+      "confidence": 1,
+      "abstract": "scrape",
+      "doi": "crossref-search",
+      "authors": "crossref"
+    }
+  },
+  {
+    "rank": 102,
+    "year": 2023,
+    "title": "Risk Compensation after COVID-19 Vaccination",
+    "series_or_venue": "IZA Discussion Paper 16053",
+    "url": "https://docs.iza.org/dp16053.pdf",
+    "doi": "10.2139/ssrn.4404558",
+    "abstract": "This paper studies the causal impacts of vaccine eligibility on social distancing behaviors (risk compensation). We apply a regression discontinuity d...",
+    "authors": [
+      "Jisoo Hwang",
+      "Seungsik Hwang",
+      "Hyuncheol Bryant Kim",
+      "Jungmin Lee",
+      "Junseok Lee"
+    ],
+    "external_ids": {
+      "iza_dp": "16053",
+      "openalex_id": "https://openalex.org/W4365398080"
+    },
+    "provenance": {
+      "tried": [
+        "scrape",
+        "crossref:search",
+        "openalex:search"
+      ],
+      "notes": [],
+      "confidence": 1,
+      "abstract": "scrape",
+      "doi": "crossref-search",
+      "authors": "crossref"
+    }
+  },
+  {
+    "rank": 104,
+    "year": 2023,
+    "title": "A Lost Generation? Impact of COVID-19 on High School Students' Achievements",
+    "series_or_venue": "IZA Discussion Paper 16008",
+    "url": "https://docs.iza.org/dp16008.pdf",
+    "doi": "10.2139/ssrn.4390225",
+    "abstract": "This paper estimates the effect of a full year of the COVID-19 pandemic on school performance, focusing on students at the end of upper secondary scho...",
+    "authors": [
+      "Dalit Contini",
+      "Maria L. Di Tommaso",
+      "Daniela Piazzalunga",
+      "Caterina Muratori",
+      "Lucia Schiavon"
+    ],
+    "external_ids": {
+      "iza_dp": "16008",
+      "openalex_id": "https://openalex.org/W4327793946"
+    },
+    "provenance": {
+      "tried": [
+        "scrape",
+        "crossref:search",
+        "openalex:search"
+      ],
+      "notes": [],
+      "confidence": 1,
+      "abstract": "scrape",
+      "doi": "crossref-search",
+      "authors": "crossref"
+    }
+  },
+  {
+    "rank": 107,
+    "year": 2023,
+    "title": "Health System Trust and Compliance with COVID-19 Restrictions",
+    "series_or_venue": "IZA Discussion Paper 15961",
+    "url": "https://docs.iza.org/dp15961.pdf",
+    "doi": "10.1016/j.ehb.2023.101235",
+    "abstract": "We examine the extent to which exposure to higher relative COVID-19 mortality (RM), influences health system trust (HST), and whether changes in HST i...",
+    "authors": [
+      "Joan Costa-Font",
+      "Cristina Vilaplana-Prieto"
+    ],
+    "external_ids": {
+      "iza_dp": "15961",
+      "openalex_id": "https://openalex.org/W4321483544"
+    },
+    "provenance": {
+      "tried": [
+        "scrape",
+        "crossref",
+        "openalex:doi"
+      ],
+      "notes": [],
+      "confidence": 1,
+      "doi": "scrape",
+      "abstract": "scrape",
+      "authors": "crossref"
+    }
+  },
+  {
+    "rank": 105,
+    "year": 2023,
+    "title": "Women in Political Power and School Closure during COVID Times",
+    "series_or_venue": "IZA Discussion Paper 15975",
+    "url": "https://docs.iza.org/dp15975.pdf",
+    "doi": "10.2139/ssrn.4375358",
+    "abstract": "This study explores the relationship between women's representation in political power and school closures during the COVID-19 pandemic. Using a cross...",
+    "authors": [
+      "Natalia Danzer",
+      "Sebastian Garcia-Torres",
+      "Max Friedrich Steinhardt",
+      "Luca Stella"
+    ],
+    "external_ids": {
+      "iza_dp": "15975",
+      "openalex_id": "https://openalex.org/W4323058527"
+    },
+    "provenance": {
+      "tried": [
+        "scrape",
+        "crossref:search",
+        "openalex:search"
+      ],
+      "notes": [],
+      "confidence": 1,
+      "abstract": "scrape",
+      "doi": "crossref-search",
+      "authors": "crossref"
+    }
+  },
+  {
+    "rank": 109,
+    "year": 2022,
+    "title": "Missing Workers and Missing Jobs Since the Pandemic",
+    "series_or_venue": "NBER Working Paper w30717",
+    "url": "https://www.nber.org/papers/w30717",
+    "doi": "10.3386/w30717",
+    "abstract": "Founded in 1920, the NBER is a private, non-profit, non-partisan organization dedicated to conducting economic research and to disseminating research findings among academics, public policy makers, and business professionals.",
+    "authors": [
+      "Bart Hobijn",
+      "Ayşegül Şahin"
+    ],
+    "external_ids": {
+      "nber_id": "w30717",
+      "openalex_id": "https://openalex.org/W4310724315"
+    },
+    "provenance": {
+      "tried": [
+        "inferred",
+        "scrape",
+        "crossref",
+        "openalex:doi"
+      ],
+      "notes": [],
+      "confidence": 1,
+      "doi": "inferred",
+      "abstract": "scrape",
+      "authors": "scrape"
+    }
+  },
+  {
+    "rank": 106,
+    "year": 2023,
+    "title": "Long COVID in the United States",
+    "series_or_venue": "IZA Discussion Paper 15967",
+    "url": "https://docs.iza.org/dp15967.pdf",
+    "doi": "10.3386/w30988",
+    "abstract": "Although yet to be clearly identified as a clinical condition, there is immense concern at the health and wellbeing consequences of long COVID. Using...",
+    "authors": [
+      "David Blanchflower",
+      "Alex Bryson"
+    ],
+    "external_ids": {
+      "iza_dp": "15967",
+      "openalex_id": "https://openalex.org/W4388215436"
+    },
+    "provenance": {
+      "tried": [
+        "scrape",
+        "crossref:search",
+        "openalex:search"
+      ],
+      "notes": [],
+      "confidence": 1,
+      "abstract": "scrape",
+      "doi": "crossref-search",
+      "authors": "crossref"
+    }
+  },
+  {
+    "rank": 108,
+    "year": 2023,
+    "title": "Labour Mobility in German Establishments during the COVID-19 Crisis: Panel Data Analyses with Special Reference to Short-Time Work and Working from Home",
+    "series_or_venue": "IZA Discussion Paper 15935",
+    "url": "https://docs.iza.org/dp15935.pdf",
+    "doi": "10.2139/ssrn.4354412",
+    "abstract": "Using 21 waves of German high-frequency establishment panel data collected during the COVID-19 crisis, we investigate the effects of short-time work (...",
+    "authors": [
+      "Lisa Bellmann",
+      "Lutz Bellmann",
+      "Olaf Hübler"
+    ],
+    "external_ids": {
+      "iza_dp": "15935",
+      "openalex_id": "https://openalex.org/W4320735979"
+    },
+    "provenance": {
+      "tried": [
+        "scrape",
+        "crossref:search",
+        "openalex:search"
+      ],
+      "notes": [],
+      "confidence": 1,
+      "abstract": "scrape",
+      "doi": "crossref-search",
+      "authors": "crossref"
+    }
+  },
+  {
+    "rank": 110,
+    "year": 2022,
+    "title": "Has the Willingness to Work Fallen during the Covid Pandemic?",
+    "series_or_venue": "NBER Working Paper w29784",
+    "url": "https://www.nber.org/papers/w29784",
+    "doi": "10.3386/w29784",
+    "abstract": "Founded in 1920, the NBER is a private, non-profit, non-partisan organization dedicated to conducting economic research and to disseminating research findings among academics, public policy makers, and business professionals.",
+    "authors": [
+      "R. Jason Faberman",
+      "Andreas I. Mueller",
+      "Ayşegül Şahin"
+    ],
+    "external_ids": {
+      "nber_id": "w29784",
+      "openalex_id": "https://openalex.org/W4213210202"
+    },
+    "provenance": {
+      "tried": [
+        "inferred",
+        "scrape",
+        "crossref",
+        "openalex:doi"
+      ],
+      "notes": [],
+      "confidence": 1,
+      "doi": "inferred",
+      "abstract": "scrape",
+      "authors": "scrape"
+    }
+  },
+  {
+    "rank": 111,
+    "year": 2022,
+    "title": "Working from Home Around the World",
+    "series_or_venue": "NBER Working Paper w30446",
+    "url": "https://www.nber.org/papers/w30446",
+    "doi": "10.3386/w30446",
+    "abstract": "Founded in 1920, the NBER is a private, non-profit, non-partisan organization dedicated to conducting economic research and to disseminating research findings among academics, public policy makers, and business professionals.",
+    "authors": [
+      "Cevat Giray Aksoy",
+      "Jose Maria Barrero",
+      "Nicholas Bloom",
+      "Steven J. Davis",
+      "Mathias Dolls",
+      "Pablo Zarate"
+    ],
+    "external_ids": {
+      "nber_id": "w30446",
+      "openalex_id": "https://openalex.org/W4297784282"
+    },
+    "provenance": {
+      "tried": [
+        "inferred",
+        "scrape",
+        "crossref",
+        "openalex:doi"
+      ],
+      "notes": [],
+      "confidence": 1,
+      "doi": "inferred",
+      "abstract": "scrape",
+      "authors": "scrape"
+    }
+  },
+  {
+    "rank": 112,
+    "year": 2022,
+    "title": "Substance Abuse during the Pandemic: Implications for Labor Force Participation",
+    "series_or_venue": "NBER Working Paper w29932",
+    "url": "https://www.nber.org/papers/w29932",
+    "doi": "10.3386/w29932",
+    "abstract": "Founded in 1920, the NBER is a private, non-profit, non-partisan organization dedicated to conducting economic research and to disseminating research findings among academics, public policy makers, and business professionals.",
+    "authors": [
+      "Jeremy Greenwood",
+      "Nezih Guner",
+      "Karen Kopecky"
+    ],
+    "external_ids": {
+      "nber_id": "w29932",
+      "openalex_id": "https://openalex.org/W4223451103"
+    },
+    "provenance": {
+      "tried": [
+        "inferred",
+        "scrape",
+        "crossref",
+        "openalex:doi"
+      ],
+      "notes": [],
+      "confidence": 1,
+      "doi": "inferred",
+      "abstract": "scrape",
+      "authors": "scrape"
+    }
+  },
+  {
+    "rank": 113,
+    "year": 2022,
+    "title": "European Labor Markets and the COVID-19 Pandemic: Fallout and the Path Ahead",
+    "series_or_venue": "IMF Departmental Paper",
+    "url": "https://www.imf.org/en/publications/departmental-papers-policy-papers/issues/2022/03/02/european-labor-markets-and-the-covid-19-pandemic-fallout-and-the-path-ahead-512327",
+    "doi": "10.5089/9798400200960.087",
+    "abstract": "In 2020, the COVID-19 pandemic caused by far the largest shock to European economies since World War II. Yet, astonishingly, the EU unemployment rate had already declined to its pre-crisis level by 2021Q3, and in some countries the labor force participation rate is at a record high. This paper documents that the widespread use of job retention schemes has played an essential role in mitigating the pandemic’s impact on labor markets and thereby facilitating the restart of European economies after the initial lockdowns.",
+    "authors": [
+      "Jean-Jacques Hallaert",
+      "Ravi Balakrishnan",
+      "Bertrand Gruss",
+      "Nir Klein",
+      "Haonan Qu",
+      "La-Bhus Fah Jirasavetakul",
+      "Ana Lariau",
+      "Lucy Qian Liu",
+      "Sakai Ando",
+      "Davide Malacrino",
+      "Koralai Kirabaeva",
+      "Alexandra Solovyeva"
+    ],
+    "external_ids": {
+      "openalex_id": "https://openalex.org/W4315697704"
+    },
+    "provenance": {
+      "tried": [
+        "scrape",
+        "crossref",
+        "openalex:doi"
+      ],
+      "notes": [],
+      "confidence": 1,
+      "doi": "scrape",
+      "abstract": "scrape",
+      "authors": "crossref"
+    }
+  },
+  {
+    "rank": 114,
+    "year": 2022,
+    "title": "Did COVID-19 Deteriorate Mismatch in the Japanese Labor Market? Evidence from Job Board Data",
+    "series_or_venue": "IZA Discussion Paper 15917",
+    "url": "https://docs.iza.org/dp15917.pdf",
+    "doi": null,
+    "abstract": "This study explores how the COVID-19 pandemic deteriorated the mismatch in the Japanese labor market. We first focus on differences in job flows and r...",
+    "authors": null,
+    "external_ids": {
+      "iza_dp": "15917"
+    },
+    "provenance": {
+      "tried": [
+        "scrape",
+        "crossref:search",
+        "openalex:search"
+      ],
+      "notes": [],
+      "confidence": 0.4,
+      "abstract": "scrape"
+    }
+  },
+  {
+    "rank": 115,
+    "year": 2022,
+    "title": "Work Loss and Mental Health during the COVID-19 Pandemic",
+    "series_or_venue": "IZA Discussion Paper 15913",
+    "url": "https://docs.iza.org/dp15913.pdf",
+    "doi": null,
+    "abstract": "We study the impact of work loss on mental health during the COVID-19 pandemic. Combining data on work loss and health care consultations from compreh...",
+    "authors": null,
+    "external_ids": {
+      "iza_dp": "15913"
+    },
+    "provenance": {
+      "tried": [
+        "scrape",
+        "crossref:search",
+        "openalex:search"
+      ],
+      "notes": [],
+      "confidence": 0.4,
+      "abstract": "scrape"
+    }
+  },
+  {
+    "rank": 116,
+    "year": 2022,
+    "title": "Labour Market Expectations and Unemployment in Europe During the COVID-19 Pandemic: Impacts and Policy Implications",
+    "series_or_venue": "IZA Discussion Paper 15905",
+    "url": "https://docs.iza.org/dp15905.pdf",
+    "doi": null,
+    "abstract": "Unemployment is notoriously difficult to predict. In previous studies, once country and year fixed effects are added to panel estimates, few variables...",
+    "authors": null,
+    "external_ids": {
+      "iza_dp": "15905"
+    },
+    "provenance": {
+      "tried": [
+        "scrape",
+        "crossref:search",
+        "openalex:search"
+      ],
+      "notes": [],
+      "confidence": 0.4,
+      "abstract": "scrape"
+    }
+  },
+  {
+    "rank": 117,
+    "year": 2022,
+    "title": "Unions as Insurance: Evidence from the COVID-19 Pandemic",
+    "series_or_venue": "IZA Discussion Paper 15893",
+    "url": "https://docs.iza.org/dp15893.pdf",
+    "doi": null,
+    "abstract": "We investigate to what extent workplace unionisation protects workers from external shocks as predicted by models of implicit contracts. Using the COV...",
+    "authors": null,
+    "external_ids": {
+      "iza_dp": "15893"
+    },
+    "provenance": {
+      "tried": [
+        "scrape",
+        "crossref:search",
+        "openalex:search"
+      ],
+      "notes": [],
+      "confidence": 0.4,
+      "abstract": "scrape"
+    }
+  },
+  {
+    "rank": 119,
+    "year": 2022,
+    "title": "The Gendered Crisis: Livelihoods and Mental Well-Being in India during COVID-19",
+    "series_or_venue": "IZA Discussion Paper 15822",
+    "url": "https://docs.iza.org/dp15822.pdf",
+    "doi": "10.1080/13545701.2023.2186461",
+    "abstract": "This paper studies the impact of the COVID-19 pandemic on the gendered dimensions of employment and mental health among urban informal-sector workers...",
+    "authors": [
+      "Farzana Afridi",
+      "Amrita Dhillon",
+      "Sanchari Roy"
+    ],
+    "external_ids": {
+      "iza_dp": "15822",
+      "openalex_id": "https://openalex.org/W4365513870"
+    },
+    "provenance": {
+      "tried": [
+        "scrape",
+        "crossref",
+        "openalex:doi"
+      ],
+      "notes": [],
+      "confidence": 1,
+      "doi": "scrape",
+      "abstract": "scrape",
+      "authors": "crossref"
+    }
+  },
+  {
+    "rank": 118,
+    "year": 2022,
+    "title": "Time Savings When Working from Home",
+    "series_or_venue": "IZA Discussion Paper 15870",
+    "url": "https://docs.iza.org/dp15870.pdf",
+    "doi": "10.3386/w30866",
+    "abstract": "We quantify the commute time savings associated with work from home, drawing on data for 27 countries. The average daily time savings when working fro...",
+    "authors": [
+      "Cevat Giray Aksoy",
+      "Jose Maria Barrero",
+      "Nicholas Bloom",
+      "Steven Davis",
+      "Mathias Dolls",
+      "Pablo Zarate"
+    ],
+    "external_ids": {
+      "iza_dp": "15870"
+    },
+    "provenance": {
+      "tried": [
+        "scrape",
+        "crossref:search",
+        "openalex:search"
+      ],
+      "notes": [],
+      "confidence": 1,
+      "abstract": "scrape",
+      "doi": "crossref-search",
+      "authors": "crossref"
+    }
+  },
+  {
+    "rank": 123,
+    "year": 2022,
+    "title": "Creative Disruption: Technology, Innovation and Labour Demand in the Wake of COVID-19",
+    "series_or_venue": "IZA Discussion Paper 15762",
+    "url": "https://docs.iza.org/dp15762.pdf",
+    "doi": "10.1111/ecca.70025",
+    "abstract": "We utilize a new survey on Norwegian firms' digitalization and technology investments, linked to population-wide register data, to show that the pande...",
+    "authors": [
+      "Erling Barth",
+      "Alex Bryson",
+      "Harald Dale‐Olsen"
+    ],
+    "external_ids": {
+      "iza_dp": "15762",
+      "openalex_id": "https://openalex.org/W7116682564"
+    },
+    "provenance": {
+      "tried": [
+        "scrape",
+        "crossref",
+        "openalex:doi"
+      ],
+      "notes": [],
+      "confidence": 1,
+      "doi": "scrape",
+      "abstract": "scrape",
+      "authors": "crossref"
+    }
+  },
+  {
+    "rank": 120,
+    "year": 2022,
+    "title": "Information Provision over the Phone Saves Lives: An RCT to Contain COVID-19 in Rural Bangladesh at the Pandemic's Onset",
+    "series_or_venue": "IZA Discussion Paper 15768",
+    "url": "https://docs.iza.org/dp15768.pdf",
+    "doi": "10.2139/ssrn.4294393",
+    "abstract": "Lack of information about COVID-19 and its spread may have contributed to excess mortality at the pandemic's onset. In April and May 2020, we implemen...",
+    "authors": [
+      "Shyamal Chowdhury",
+      "Hannah Schildberg-Hörisch",
+      "Sebastian O. Schneider",
+      "Matthias Sutter"
+    ],
+    "external_ids": {
+      "iza_dp": "15768",
+      "openalex_id": "https://openalex.org/W4312879480"
+    },
+    "provenance": {
+      "tried": [
+        "scrape",
+        "crossref:search",
+        "openalex:search"
+      ],
+      "notes": [],
+      "confidence": 1,
+      "abstract": "scrape",
+      "doi": "crossref-search",
+      "authors": "crossref"
+    }
+  },
+  {
+    "rank": 121,
+    "year": 2022,
+    "title": "Parental Beliefs, Perceived Health Risks, and Time Investment in Children: Evidence from COVID-19",
+    "series_or_venue": "IZA Discussion Paper 15765",
+    "url": "https://docs.iza.org/dp15765.pdf",
+    "doi": "10.1920/wp.ifs.2022.5122",
+    "abstract": "When deciding how to allocate their time among different types of investment in their children, parents weigh up the perceived benefits and costs of d...",
+    "authors": [
+      "Gabriella Conti",
+      "Michele Giannola",
+      "Alessandro Toppeta"
+    ],
+    "external_ids": {
+      "iza_dp": "15765",
+      "openalex_id": "https://openalex.org/W4309960890"
+    },
+    "provenance": {
+      "tried": [
+        "scrape",
+        "crossref:search",
+        "openalex:search"
+      ],
+      "notes": [],
+      "confidence": 1,
+      "abstract": "scrape",
+      "doi": "crossref-search",
+      "authors": "crossref"
+    }
+  },
+  {
+    "rank": 122,
+    "year": 2022,
+    "title": "The Uneven Effect of COVID School Closures: Parents in Teleworkable vs. Non-teleworkable Occupations",
+    "series_or_venue": "IZA Discussion Paper 15754",
+    "url": "https://docs.iza.org/dp15754.pdf",
+    "doi": "10.2139/ssrn.4291691",
+    "abstract": "Teleworking parents can better monitor and help their children with online learning. In this paper, I test whether parents' teleworkability affected c...",
+    "authors": [
+      "Ainoa Aparicio Fenoll"
+    ],
+    "external_ids": {
+      "iza_dp": "15754",
+      "openalex_id": "https://openalex.org/W4312751029"
+    },
+    "provenance": {
+      "tried": [
+        "scrape",
+        "crossref:search",
+        "openalex:search"
+      ],
+      "notes": [],
+      "confidence": 1,
+      "abstract": "scrape",
+      "doi": "crossref-search",
+      "authors": "crossref"
+    }
+  },
+  {
+    "rank": 125,
+    "year": 2022,
+    "title": "Vaccine-Skeptic Physicians and COVID-19 Vaccination Rates",
+    "series_or_venue": "IZA Discussion Paper 15730",
+    "url": "https://docs.iza.org/dp15730.pdf",
+    "doi": "10.1002/hec.4781",
+    "abstract": "What is the role of general practitioners (GPs) in supporting or hindering public health efforts? We investigate the influence of vaccine-skeptic GPs...",
+    "authors": [
+      "Andreas Steinmayr",
+      "Manuel Rossi"
+    ],
+    "external_ids": {
+      "iza_dp": "15730",
+      "openalex_id": "https://openalex.org/W4389099034"
+    },
+    "provenance": {
+      "tried": [
+        "scrape",
+        "crossref",
+        "openalex:doi"
+      ],
+      "notes": [],
+      "confidence": 1,
+      "doi": "scrape",
+      "abstract": "scrape",
+      "authors": "crossref"
+    }
+  },
+  {
+    "rank": 124,
+    "year": 2022,
+    "title": "The Uneven Effect of COVID School Closures: Parents in Teleworkable vs. Non-teleworkable Occupations",
+    "series_or_venue": "IZA Discussion Paper 15734",
+    "url": "https://docs.iza.org/dp15734.pdf",
+    "doi": "10.2139/ssrn.4291691",
+    "abstract": "Using a nationally representative 24-hour diary survey covering the first two years of the pandemic, we explore the mechanisms underlying the changes...",
+    "authors": [
+      "Ainoa Aparicio Fenoll"
+    ],
+    "external_ids": {
+      "iza_dp": "15734",
+      "openalex_id": "https://openalex.org/W4312751029"
+    },
+    "provenance": {
+      "tried": [
+        "scrape",
+        "crossref:search",
+        "openalex:search"
+      ],
+      "notes": [],
+      "confidence": 1,
+      "abstract": "scrape",
+      "doi": "crossref-search",
+      "authors": "crossref"
+    }
+  },
+  {
+    "rank": 127,
+    "year": 2022,
+    "title": "Teleworking and Life Satisfaction during COVID-19: The Importance of Family Structure",
+    "series_or_venue": "IZA Discussion Paper 15715",
+    "url": "https://docs.iza.org/dp15715.pdf",
+    "doi": null,
+    "abstract": "We carry out a difference-in-differences analysis of a representative real-time survey conducted as part of the German Socio-Economic Panel (SOEP) stu...",
+    "authors": null,
+    "external_ids": {
+      "iza_dp": "15715"
+    },
+    "provenance": {
+      "tried": [
+        "scrape",
+        "crossref:search",
+        "openalex:search"
+      ],
+      "notes": [],
+      "confidence": 0.4,
+      "abstract": "scrape"
+    }
+  },
+  {
+    "rank": 128,
+    "year": 2022,
+    "title": "Were Small Businesses More Likely to Permanently Close in the Pandemic?",
+    "series_or_venue": "IZA Discussion Paper 15445",
+    "url": "https://docs.iza.org/dp15445.pdf",
+    "doi": "10.1007/s11187-022-00662-1",
+    "abstract": "Previous estimates indicate that COVID-19 led to a large drop in the number of operating businesses operating early in the pandemic, but surprisingly...",
+    "authors": [
+      "Robert Fairlie",
+      "Frank M. Fossen",
+      "Reid Johnsen",
+      "Gentian Droboniku"
+    ],
+    "external_ids": {
+      "iza_dp": "15445",
+      "openalex_id": "https://openalex.org/W4290631336"
+    },
+    "provenance": {
+      "tried": [
+        "scrape",
+        "crossref",
+        "openalex:doi"
+      ],
+      "notes": [],
+      "confidence": 1,
+      "doi": "scrape",
+      "abstract": "scrape",
+      "authors": "crossref"
+    }
+  },
+  {
+    "rank": 126,
+    "year": 2022,
+    "title": "Physical Isolation and Loneliness: Evidence from COVID Lockdowns in Australia",
+    "series_or_venue": "IZA Discussion Paper 15720",
+    "url": "https://docs.iza.org/dp15720.pdf",
+    "doi": "10.2139/ssrn.4281275",
+    "abstract": "Using mandatory stay-at-home orders in Australia as a natural experiment and data from a long-running panel study, this paper investigates the causal...",
+    "authors": [
+      "Nancy Kong",
+      "Jack Lam"
+    ],
+    "external_ids": {
+      "iza_dp": "15720",
+      "openalex_id": "https://openalex.org/W4312362400"
+    },
+    "provenance": {
+      "tried": [
+        "scrape",
+        "crossref:search",
+        "openalex:search"
+      ],
+      "notes": [],
+      "confidence": 1,
+      "abstract": "scrape",
+      "doi": "crossref-search",
+      "authors": "crossref"
+    }
+  },
+  {
+    "rank": 129,
+    "year": 2022,
+    "title": "Sweden's COVID-19 Recession: How Foreign and Domestic Infections Struck against Firms and Workers",
+    "series_or_venue": "IZA Discussion Paper 15408",
+    "url": "https://docs.iza.org/dp15408.pdf",
+    "doi": "10.2139/ssrn.4154051",
+    "abstract": "Using highly granular micro data, we document very divergent economic effects of the COVID-19 pandemic on Swedish private-sector firms and their worke...",
+    "authors": [
+      "Anders Akerman",
+      "Karolina Ekholm",
+      "Torsten Persson",
+      "Oskar Nordström Skans"
+    ],
+    "external_ids": {
+      "iza_dp": "15408",
+      "openalex_id": "https://openalex.org/W4285160223"
+    },
+    "provenance": {
+      "tried": [
+        "scrape",
+        "crossref:search",
+        "openalex:search"
+      ],
+      "notes": [],
+      "confidence": 1,
+      "abstract": "scrape",
+      "doi": "crossref-search",
+      "authors": "crossref"
+    }
+  },
+  {
+    "rank": 130,
+    "year": 2022,
+    "title": "Inequalities in Job Loss and Income Loss in Sub-Saharan Africa during the COVID-19 Crisis",
+    "series_or_venue": "IZA Discussion Paper 15406",
+    "url": "https://docs.iza.org/dp15406.pdf",
+    "doi": "10.1596/1813-9450-10143",
+    "abstract": "We use high frequency phone survey data from Ethiopia, Malawi, Nigeria, and Uganda to analyze the impacts of the COVID-19 crisis on work (including wa...",
+    "authors": [
+      "Ivette Contreras-Gonzalez",
+      "Gbemisola Oseni",
+      "Amparo Palacios-Lopez",
+      "Pieters Janneke",
+      "Michael Weber"
+    ],
+    "external_ids": {
+      "iza_dp": "15406",
+      "openalex_id": "https://openalex.org/W4295886059"
+    },
+    "provenance": {
+      "tried": [
+        "scrape",
+        "crossref:search",
+        "openalex:search"
+      ],
+      "notes": [],
+      "confidence": 1,
+      "abstract": "scrape",
+      "doi": "crossref-search",
+      "authors": "crossref"
+    }
+  },
+  {
+    "rank": 131,
+    "year": 2022,
+    "title": "The Great Canadian Recovery: The Impact of COVID-19 on Canada's Labour Market",
+    "series_or_venue": "IZA Discussion Paper 15404",
+    "url": "https://docs.iza.org/dp15404.pdf",
+    "doi": "10.2139/ssrn.4154047",
+    "abstract": "The Canadian labour market experienced a period of unprecedented turmoil following the onset of the COVID-19 pandemic. We analyze the main changes usi...",
+    "authors": [
+      "Stephen Robert Glenville Jones",
+      "Fabian Lange",
+      "W. Craig Riddell",
+      "Casey Warman"
+    ],
+    "external_ids": {
+      "iza_dp": "15404",
+      "openalex_id": "https://openalex.org/W4285174172"
+    },
+    "provenance": {
+      "tried": [
+        "scrape",
+        "crossref:search",
+        "openalex:search"
+      ],
+      "notes": [],
+      "confidence": 1,
+      "abstract": "scrape",
+      "doi": "crossref-search",
+      "authors": "crossref"
+    }
+  },
+  {
+    "rank": 132,
+    "year": 2022,
+    "title": "Corporate Training and Skill Gaps: Did COVID-19 Stem EU Convergence in Training Investments?",
+    "series_or_venue": "IZA Discussion Paper 15343",
+    "url": "https://docs.iza.org/dp15343.pdf",
+    "doi": "10.2139/ssrn.4129671",
+    "abstract": "European firms have increasingly invested in training of employees but differences across countries and types of firms remain – and the Covid-19 shock...",
+    "authors": [
+      "Konstantinos Pouliakas",
+      "Patricia Wruuck"
+    ],
+    "external_ids": {
+      "iza_dp": "15343",
+      "openalex_id": "https://openalex.org/W4293196069"
+    },
+    "provenance": {
+      "tried": [
+        "scrape",
+        "crossref:search",
+        "openalex:search"
+      ],
+      "notes": [],
+      "confidence": 1,
+      "abstract": "scrape",
+      "doi": "crossref-search",
+      "authors": "crossref"
+    }
+  },
+  {
+    "rank": 133,
+    "year": 2022,
+    "title": "Perceived Returns to Job Search",
+    "series_or_venue": "IZA Discussion Paper 15307",
+    "url": "https://docs.iza.org/dp15307.pdf",
+    "doi": "10.2139/ssrn.4114894",
+    "abstract": "In this paper we provide the first evidence on workers' perceptions of the returns to job search effort. The perceived job finding probability is near...",
+    "authors": [
+      "Abi Adams-Prassl",
+      "Teodora Boneva",
+      "Marta Golin",
+      "Christopher Rauh"
+    ],
+    "external_ids": {
+      "iza_dp": "15307",
+      "openalex_id": "https://openalex.org/W4313574959"
+    },
+    "provenance": {
+      "tried": [
+        "scrape",
+        "crossref:search",
+        "openalex:search"
+      ],
+      "notes": [],
+      "confidence": 1,
+      "abstract": "scrape",
+      "doi": "crossref-search",
+      "authors": "crossref"
+    }
+  },
+  {
+    "rank": 135,
+    "year": 2022,
+    "title": "Pandemic Depression: COVID-19 and the Mental Health of the Self-Employed",
+    "series_or_venue": "IZA Discussion Paper 15260",
+    "url": "https://docs.iza.org/dp15260.pdf",
+    "doi": "10.1177/10422587221102106",
+    "abstract": "We investigate the effect of the COVID-19 pandemic on self-employed people's mental health. Using representative longitudinal survey data from Germany...",
+    "authors": [
+      "Marco Caliendo",
+      "Daniel Graeber",
+      "Alexander S. Kritikos",
+      "Johannes Seebauer"
+    ],
+    "external_ids": {
+      "iza_dp": "15260",
+      "openalex_id": "https://openalex.org/W4281780462"
+    },
+    "provenance": {
+      "tried": [
+        "scrape",
+        "crossref",
+        "openalex:doi"
+      ],
+      "notes": [],
+      "confidence": 1,
+      "doi": "scrape",
+      "abstract": "scrape",
+      "authors": "crossref"
+    }
+  },
+  {
+    "rank": 134,
+    "year": 2022,
+    "title": "Lockdown and Rural Joblessness in India: Gender Inequality in Employment?",
+    "series_or_venue": "IZA Discussion Paper 15270",
+    "url": "https://docs.iza.org/dp15270.pdf",
+    "doi": "10.2139/ssrn.4114854",
+    "abstract": "India experienced one of the strictest lockdowns during COVID-19 and sections of the workforce seemed overwhelmingly disadvantaged. Given substantial...",
+    "authors": [
+      "Nabamita Dutta",
+      "Saibal Kar"
+    ],
+    "external_ids": {
+      "iza_dp": "15270",
+      "openalex_id": "https://openalex.org/W4285235850"
+    },
+    "provenance": {
+      "tried": [
+        "scrape",
+        "crossref:search",
+        "openalex:search"
+      ],
+      "notes": [],
+      "confidence": 1,
+      "abstract": "scrape",
+      "doi": "crossref-search",
+      "authors": "crossref"
+    }
+  },
+  {
+    "rank": 136,
+    "year": 2022,
+    "title": "Working from Home during a Pandemic – A Discrete Choice Experiment in Poland",
+    "series_or_venue": "IZA Discussion Paper 15251",
+    "url": "https://docs.iza.org/dp15251.pdf",
+    "doi": "10.2139/ssrn.4114827",
+    "abstract": "The COVID-19 pandemic has transformed working from home from a rarity to a widely adopted job amenity. We study workers' willingness to pay for workin...",
+    "authors": [
+      "Piotr Lewandowski",
+      "Katarzyna Lipowska",
+      "Mateusz Smoter"
+    ],
+    "external_ids": {
+      "iza_dp": "15251",
+      "openalex_id": "https://openalex.org/W4285159052"
+    },
+    "provenance": {
+      "tried": [
+        "scrape",
+        "crossref:search",
+        "openalex:search"
+      ],
+      "notes": [],
+      "confidence": 1,
+      "abstract": "scrape",
+      "doi": "crossref-search",
+      "authors": "crossref"
+    }
+  },
+  {
+    "rank": 137,
+    "year": 2022,
+    "title": "The Short-Term Effect of the COVID-19 Crisis on Employment Probabilities of Labour-Market Entrants in the Netherlands",
+    "series_or_venue": "IZA Discussion Paper 15242",
+    "url": "https://docs.iza.org/dp15242.pdf",
+    "doi": "10.2139/ssrn.4092510",
+    "abstract": "This research documents employment opportunities of labour-market entrants during the COVID-19 crisis in the Netherlands. Two recent cohorts of gradua...",
+    "authors": [
+      "Henri Bussink",
+      "Tobias Vervliet",
+      "Bas ter Weel"
+    ],
+    "external_ids": {
+      "iza_dp": "15242",
+      "openalex_id": "https://openalex.org/W4225376272"
+    },
+    "provenance": {
+      "tried": [
+        "scrape",
+        "crossref:search",
+        "openalex:search"
+      ],
+      "notes": [],
+      "confidence": 1,
+      "abstract": "scrape",
+      "doi": "crossref-search",
+      "authors": "crossref"
+    }
+  },
+  {
+    "rank": 138,
+    "year": 2022,
+    "title": "Pandemic-Era Uncertainty",
+    "series_or_venue": "IZA Discussion Paper 15229",
+    "url": "https://docs.iza.org/dp15229.pdf",
+    "doi": "10.3386/w29958",
+    "abstract": "We examine several measures of uncertainty to make five points. First, equity market traders and executives at nonfinancial firms have shared similar...",
+    "authors": [
+      "Brent Meyer",
+      "Emil Mihaylov",
+      "Jose Maria Barrero",
+      "Steven Davis",
+      "David Altig",
+      "Nicholas Bloom"
+    ],
+    "external_ids": {
+      "iza_dp": "15229",
+      "openalex_id": "https://openalex.org/W4289176106"
+    },
+    "provenance": {
+      "tried": [
+        "scrape",
+        "crossref:search",
+        "openalex:search"
+      ],
+      "notes": [],
+      "confidence": 1,
+      "abstract": "scrape",
+      "doi": "crossref-search",
+      "authors": "crossref"
+    }
+  },
+  {
+    "rank": 139,
+    "year": 2022,
+    "title": "What COVID-19 May Leave Behind: Technology-Related Job Postings in Canada",
+    "series_or_venue": "IZA Discussion Paper 15209",
+    "url": "https://docs.iza.org/dp15209.pdf",
+    "doi": "10.2139/ssrn.4114783",
+    "abstract": "We use data from online job postings listed on a job board to study how the demand for jobs linked to new technologies during the COVID-19 crisis resp...",
+    "authors": [
+      "Alejandra Bellatin",
+      "Gabriela Galassi"
+    ],
+    "external_ids": {
+      "iza_dp": "15209",
+      "openalex_id": "https://openalex.org/W4285123144"
+    },
+    "provenance": {
+      "tried": [
+        "scrape",
+        "crossref:search",
+        "openalex:search"
+      ],
+      "notes": [],
+      "confidence": 1,
+      "abstract": "scrape",
+      "doi": "crossref-search",
+      "authors": "crossref"
+    }
+  },
+  {
+    "rank": 140,
+    "year": 2022,
+    "title": "China's Labor Market Demand in the Shadow of COVID-19: Evidence from an Online Job Board",
+    "series_or_venue": "IZA Discussion Paper 15201",
+    "url": "https://docs.iza.org/dp15201.pdf",
+    "doi": "10.2139/ssrn.4114774",
+    "abstract": "Using data of the largest online job board in China, Zhaopin.com, we examine the impacts of the lockdown policy on the Chinese labor market demand dur...",
+    "authors": [
+      "Xiangquan Zeng",
+      "Shuai Chu",
+      "Xuan Chen"
+    ],
+    "external_ids": {
+      "iza_dp": "15201",
+      "openalex_id": "https://openalex.org/W4285268744"
+    },
+    "provenance": {
+      "tried": [
+        "scrape",
+        "crossref:search",
+        "openalex:search"
+      ],
+      "notes": [],
+      "confidence": 1,
+      "abstract": "scrape",
+      "doi": "crossref-search",
+      "authors": "crossref"
+    }
+  },
+  {
+    "rank": 141,
+    "year": 2022,
+    "title": "Gendered Impact of COVID-19 Pandemic on Transitioning from University to Labor Market: Evidence from Turkey",
+    "series_or_venue": "IZA Discussion Paper 15169",
+    "url": "https://docs.iza.org/dp15169.pdf",
+    "doi": "10.2139/ssrn.4114729",
+    "abstract": "The Covid-19 pandemic led to unprecedented disruptions in the labor market. Turkey implemented a worker dismissal ban to mitigate the adverse effects,...",
+    "authors": [
+      "Merve Demirel",
+      "Cagla Okten"
+    ],
+    "external_ids": {
+      "iza_dp": "15169",
+      "openalex_id": "https://openalex.org/W4285242478"
+    },
+    "provenance": {
+      "tried": [
+        "scrape",
+        "crossref:search",
+        "openalex:search"
+      ],
+      "notes": [],
+      "confidence": 1,
+      "abstract": "scrape",
+      "doi": "crossref-search",
+      "authors": "crossref"
+    }
+  },
+  {
+    "rank": 142,
+    "year": 2022,
+    "title": "COVID-19 and the Swedish Labor Market – A Register Perspective",
+    "series_or_venue": "IZA Discussion Paper 15167",
+    "url": "https://docs.iza.org/dp15167.pdf",
+    "doi": "10.2139/ssrn.4114727",
+    "abstract": "The pandemic has mainly affected the state of health and mortality, but has also had effects on the economy and the labor market. This article reports...",
+    "authors": [
+      "Fredrik W. Andersson",
+      "Eskil Wadensjo"
+    ],
+    "external_ids": {
+      "iza_dp": "15167",
+      "openalex_id": "https://openalex.org/W4285148603"
+    },
+    "provenance": {
+      "tried": [
+        "scrape",
+        "crossref:search",
+        "openalex:search"
+      ],
+      "notes": [],
+      "confidence": 1,
+      "abstract": "scrape",
+      "doi": "crossref-search",
+      "authors": "crossref"
+    }
+  },
+  {
+    "rank": 143,
+    "year": 2022,
+    "title": "State-Level Economic Policy Uncertainty",
+    "series_or_venue": "IZA Discussion Paper 15156",
+    "url": "https://docs.iza.org/dp15156.pdf",
+    "doi": "10.3386/w29714",
+    "abstract": "We quantify and study state-level economic policy uncertainty. Tapping digital archives for nearly 3,500 local newspapers, we construct three monthly...",
+    "authors": [
+      "Scott Baker",
+      "Steven Davis",
+      "Jeffrey Levy"
+    ],
+    "external_ids": {
+      "iza_dp": "15156",
+      "openalex_id": "https://openalex.org/W4294001153"
+    },
+    "provenance": {
+      "tried": [
+        "scrape",
+        "crossref:search",
+        "openalex:search"
+      ],
+      "notes": [],
+      "confidence": 1,
+      "abstract": "scrape",
+      "doi": "crossref-search",
+      "authors": "crossref"
+    }
+  },
+  {
+    "rank": 147,
+    "year": 2022,
+    "title": "Artificial Intelligence and Reduced SMEs' Business Risks during the COVID-19 Pandemic",
+    "series_or_venue": "IZA Discussion Paper 15065",
+    "url": "https://docs.iza.org/dp15065.pdf",
+    "doi": "10.1007/s10796-022-10249-6",
+    "abstract": "The study utilises the International Labor Organization's SMEs COVID-19 pandemic business risks scale to determine whether Artificial Intelligence (AI...",
+    "authors": [
+      "Nick Drydakis"
+    ],
+    "external_ids": {
+      "iza_dp": "15065",
+      "openalex_id": "https://openalex.org/W4214942876"
+    },
+    "provenance": {
+      "tried": [
+        "scrape",
+        "crossref",
+        "openalex:doi"
+      ],
+      "notes": [],
+      "confidence": 1,
+      "doi": "scrape",
+      "abstract": "scrape",
+      "authors": "crossref"
+    }
+  },
+  {
+    "rank": 144,
+    "year": 2022,
+    "title": "The Unemployed with Jobs and without Jobs",
+    "series_or_venue": "IZA Discussion Paper 15136",
+    "url": "https://docs.iza.org/dp15136.pdf",
+    "doi": "10.2139/ssrn.4114695",
+    "abstract": "Potential workers are classified as unemployed if they seek work but are not working. The unemployed population contains two groups—those with jobs an...",
+    "authors": [
+      "Robert E. Hall",
+      "Marianna Kudlyak"
+    ],
+    "external_ids": {
+      "iza_dp": "15136",
+      "openalex_id": "https://openalex.org/W3122724862"
+    },
+    "provenance": {
+      "tried": [
+        "scrape",
+        "crossref:search",
+        "openalex:search"
+      ],
+      "notes": [],
+      "confidence": 1,
+      "abstract": "scrape",
+      "doi": "crossref-search",
+      "authors": "crossref"
+    }
+  },
+  {
+    "rank": 145,
+    "year": 2022,
+    "title": "Facing Displacement and a Global Pandemic: Evidence from a Fragile State",
+    "series_or_venue": "IZA Discussion Paper 15134",
+    "url": "https://docs.iza.org/dp15134.pdf",
+    "doi": "10.1017/dem.2023.13",
+    "abstract": "We use novel survey data to assess the impact of COVID-19 pandemic on the Libyan population. In our sample, 9.5% of respondents report that a househol...",
+    "authors": [
+      "Michele Di Maio",
+      "Francesco Fasani",
+      "Valerio Leone Sciabolazza",
+      "Vasco Molini"
+    ],
+    "external_ids": {
+      "iza_dp": "15134"
+    },
+    "provenance": {
+      "tried": [
+        "scrape",
+        "crossref:search",
+        "openalex:search"
+      ],
+      "notes": [],
+      "confidence": 1,
+      "abstract": "scrape",
+      "doi": "crossref-search",
+      "authors": "crossref"
+    }
+  },
+  {
+    "rank": 146,
+    "year": 2022,
+    "title": "From Epidemic to Pandemic: Effects of the COVID-19 Outbreak on High School Program Choices in Sweden",
+    "series_or_venue": "IZA Discussion Paper 15107",
+    "url": "https://docs.iza.org/dp15107.pdf",
+    "doi": "10.2139/ssrn.4114653",
+    "abstract": "We study whether the onset of the COVID-19 crisis affected the program choices of high school applicants in Sweden. Our analysis exploits the fact tha...",
+    "authors": [
+      "Aino-Maija Aalto",
+      "Dagmar Müller",
+      "J. Lucas Tilley"
+    ],
+    "external_ids": {
+      "iza_dp": "15107",
+      "openalex_id": "https://openalex.org/W4285190660"
+    },
+    "provenance": {
+      "tried": [
+        "scrape",
+        "crossref:search",
+        "openalex:search"
+      ],
+      "notes": [],
+      "confidence": 1,
+      "abstract": "scrape",
+      "doi": "crossref-search",
+      "authors": "crossref"
+    }
+  },
+  {
+    "rank": 148,
+    "year": 2021,
+    "title": "Why Working from Home Will Stick",
+    "series_or_venue": "NBER Working Paper w28731",
+    "url": "https://www.nber.org/papers/w28731",
+    "doi": "10.3386/w28731",
+    "abstract": "Founded in 1920, the NBER is a private, non-profit, non-partisan organization dedicated to conducting economic research and to disseminating research findings among academics, public policy makers, and business professionals.",
+    "authors": [
+      "Jose Maria Barrero",
+      "Nicholas Bloom",
+      "Steven J. Davis"
+    ],
+    "external_ids": {
+      "nber_id": "w28731",
+      "openalex_id": "https://openalex.org/W3120397944"
+    },
+    "provenance": {
+      "tried": [
+        "inferred",
+        "scrape",
+        "crossref",
+        "openalex:doi"
+      ],
+      "notes": [],
+      "confidence": 1,
+      "doi": "inferred",
+      "abstract": "scrape",
+      "authors": "scrape"
+    }
+  },
+  {
+    "rank": 149,
+    "year": 2021,
+    "title": "The Gendered Impact of the COVID-19 Recession on the US Labor Market",
+    "series_or_venue": "NBER Working Paper w28505",
+    "url": "https://www.nber.org/papers/w28505",
+    "doi": "10.3386/w28505",
+    "abstract": "Founded in 1920, the NBER is a private, non-profit, non-partisan organization dedicated to conducting economic research and to disseminating research findings among academics, public policy makers, and business professionals.",
+    "authors": [
+      "Stefania Albanesi",
+      "Jiyeon Kim"
+    ],
+    "external_ids": {
+      "nber_id": "w28505",
+      "openalex_id": "https://openalex.org/W3134931203"
+    },
+    "provenance": {
+      "tried": [
+        "inferred",
+        "scrape",
+        "crossref",
+        "openalex:doi"
+      ],
+      "notes": [],
+      "confidence": 1,
+      "doi": "inferred",
+      "abstract": "scrape",
+      "authors": "scrape"
+    }
+  },
+  {
+    "rank": 150,
+    "year": 2021,
+    "title": "Maximum Employment and the Participation Cycle",
+    "series_or_venue": "NBER Working Paper w29222",
+    "url": "https://www.nber.org/papers/w29222",
+    "doi": "10.3386/w29222",
+    "abstract": "Founded in 1920, the NBER is a private, non-profit, non-partisan organization dedicated to conducting economic research and to disseminating research findings among academics, public policy makers, and business professionals.",
+    "authors": [
+      "Bart Hobijn",
+      "Ayşegül Şahin"
+    ],
+    "external_ids": {
+      "nber_id": "w29222",
+      "openalex_id": "https://openalex.org/W3199743511"
+    },
+    "provenance": {
+      "tried": [
+        "inferred",
+        "scrape",
+        "crossref",
+        "openalex:doi"
+      ],
+      "notes": [],
+      "confidence": 1,
+      "doi": "inferred",
+      "abstract": "scrape",
+      "authors": "scrape"
+    }
+  },
+  {
+    "rank": 152,
+    "year": 2021,
+    "title": "Women's Employment in Regular and Pandemic Recessions",
+    "series_or_venue": "NBER Working Paper w28632",
+    "url": "https://www.nber.org/papers/w28632",
+    "doi": "10.3386/w28632",
+    "abstract": "Founded in 1920, the NBER is a private, non-profit, non-partisan organization dedicated to conducting economic research and to disseminating research findings among academics, public policy makers, and business professionals.",
+    "authors": [
+      "Titan Alon",
+      "Sena Coskun",
+      "Matthias Doepke",
+      "David Koll",
+      "Michèle Tertilt"
+    ],
+    "external_ids": {
+      "nber_id": "w28632",
+      "openalex_id": "https://openalex.org/W3164728602"
+    },
+    "provenance": {
+      "tried": [
+        "inferred",
+        "scrape",
+        "crossref",
+        "openalex:doi"
+      ],
+      "notes": [],
+      "confidence": 1,
+      "doi": "inferred",
+      "abstract": "scrape",
+      "authors": "scrape"
+    }
+  },
+  {
+    "rank": 154,
+    "year": 2021,
+    "title": "Who Is Doing the Chores and Childcare in Dual-Earner Couples during the COVID-19 Era of Working from Home?",
+    "series_or_venue": "IZA Discussion Paper 15118",
+    "url": "https://docs.iza.org/dp15118.pdf",
+    "doi": "10.1007/s11150-022-09642-6",
+    "abstract": "In 2020, parents' work-from-home days increased fourfold following the initial COVID-19 pandemic lockdown period compared to 2015â€“2019. At the same...",
+    "authors": [
+      "Sabrina Wulff Pabilonia",
+      "Victoria Vernon"
+    ],
+    "external_ids": {
+      "iza_dp": "15118",
+      "openalex_id": "https://openalex.org/W4313890266"
+    },
+    "provenance": {
+      "tried": [
+        "scrape",
+        "crossref",
+        "openalex:doi"
+      ],
+      "notes": [],
+      "confidence": 1,
+      "doi": "scrape",
+      "abstract": "scrape",
+      "authors": "crossref"
+    }
+  },
+  {
+    "rank": 153,
+    "year": 2021,
+    "title": "The Effectiveness of Job-Retention Schemes: COVID-19 Evidence From the German States",
+    "series_or_venue": "IMF Working Paper 2021/242",
+    "url": "https://www.imf.org/en/publications/wp/issues/2021/10/01/the-effectiveness-of-job-retention-schemes-covid-19-evidence-from-the-german-states-474182",
+    "doi": "10.5089/9781513596174.001",
+    "abstract": "Kurzarbeit (KA), Germany’s short-time work program, is widely credited with saving jobs and supporting domestic demand during the COVID-19 recession. We quantify the impact by exploiting state-level variation in exposure to the pandemic shock and KA take-up. We construct a shift-share measure of the labor demand shock and instrument KA take-up using the pre-existing, state-specific share of workers eligible for KA. We find, first, that KA was crucial in mitigating unemployment: absent its expansion the unemployment rate would have increased by an additional 3 pp on average at the trough of the recession. Second, KA also bolstered domestic demand: the contraction in consumption could have been 2 to 3 times larger absent the program. Finally, we provide preliminary evidence on the sensitivity of the medium-run reallocation of resources to the prevalence of jobretention schemes during the Global Financial Crisis.",
+    "authors": [
+      "Shekhar Aiyar",
+      "Mai Chi Dao"
+    ],
+    "external_ids": {
+      "imf_wp": "2021/242",
+      "openalex_id": "https://openalex.org/W3202098913"
+    },
+    "provenance": {
+      "tried": [
+        "scrape",
+        "crossref",
+        "openalex:doi"
+      ],
+      "notes": [],
+      "confidence": 1,
+      "doi": "scrape",
+      "abstract": "scrape",
+      "authors": "crossref"
+    }
+  },
+  {
+    "rank": 157,
+    "year": 2021,
+    "title": "Personnel Adjustments during the COVID-19 Pandemic: Did Co-Determination Make a Difference?",
+    "series_or_venue": "IZA Discussion Paper 14873",
+    "url": "https://docs.iza.org/dp14873.pdf",
+    "doi": null,
+    "abstract": "Using a unique dataset of establishments in Germany surveyed during the Covid-19 pandemic, this study investigates whether personnel adjustments durin...",
+    "authors": null,
+    "external_ids": {
+      "iza_dp": "14873"
+    },
+    "provenance": {
+      "tried": [
+        "scrape",
+        "crossref:search",
+        "openalex:search"
+      ],
+      "notes": [],
+      "confidence": 0.4,
+      "abstract": "scrape"
+    }
+  },
+  {
+    "rank": 155,
+    "year": 2021,
+    "title": "The COVID-19 Pandemic in Latin American and Caribbean Countries: The Labor Supply Impact by Gender",
+    "series_or_venue": "IZA Discussion Paper 15091",
+    "url": "https://docs.iza.org/dp15091.pdf",
+    "doi": "10.18235/0004490",
+    "abstract": "We study the labor supply impact of the COVID-19 pandemic by gender in four Latin American and Caribbean (LAC) countries: Brazil, Chile, Dominican Rep...",
+    "authors": [
+      "Mariana Viollaz",
+      "Mauricio Salazar-Saenz",
+      "Luca Flabbi",
+      "Monserrat Bustelo",
+      "Mariano Bosch"
+    ],
+    "external_ids": {
+      "iza_dp": "15091"
+    },
+    "provenance": {
+      "tried": [
+        "scrape",
+        "crossref:search",
+        "openalex:search"
+      ],
+      "notes": [],
+      "confidence": 1,
+      "abstract": "scrape",
+      "doi": "crossref-search",
+      "authors": "crossref"
+    }
+  },
+  {
+    "rank": 159,
+    "year": 2021,
+    "title": "Unpacking the Post-lockdown Employment Recovery of Young Women in the Global South",
+    "series_or_venue": "IZA Discussion Paper 14829",
+    "url": "https://docs.iza.org/dp14829.pdf",
+    "doi": "10.1111/rode.13236",
+    "abstract": "This paper analyses the difference in short-term employment recovery between young men and women in India, Peru and Vietnam following the national loc...",
+    "authors": [
+      "Douglas Scott",
+      "Richard Freund",
+      "Marta Favara",
+      "Catherine Porter",
+      "Alan Sánchez"
+    ],
+    "external_ids": {
+      "iza_dp": "14829",
+      "openalex_id": "https://openalex.org/W4410379306"
+    },
+    "provenance": {
+      "tried": [
+        "scrape",
+        "crossref",
+        "openalex:doi"
+      ],
+      "notes": [],
+      "confidence": 1,
+      "doi": "scrape",
+      "abstract": "scrape",
+      "authors": "crossref"
+    }
+  },
+  {
+    "rank": 156,
+    "year": 2021,
+    "title": "Has the Willingness to Work Fallen during the COVID Pandemic?",
+    "series_or_venue": "IZA Discussion Paper 15086",
+    "url": "https://docs.iza.org/dp15086.pdf",
+    "doi": "10.21033/wp-2022-08",
+    "abstract": "We examine the effect of the Covid pandemic on willingness to work along both the extensive and intensive margins of labor supply. Special survey ques...",
+    "authors": [
+      "R. Jason Faberman",
+      "Andreas Mueller",
+      "Ayşegül Şahin"
+    ],
+    "external_ids": {
+      "iza_dp": "15086"
+    },
+    "provenance": {
+      "tried": [
+        "scrape",
+        "crossref:search",
+        "openalex:search"
+      ],
+      "notes": [],
+      "confidence": 1,
+      "abstract": "scrape",
+      "doi": "crossref-search",
+      "authors": "crossref"
+    }
+  },
+  {
+    "rank": 158,
+    "year": 2021,
+    "title": "Did the Australian Jobkeeper Program Save Jobs by Subsidizing Temporary Layoffs?",
+    "series_or_venue": "IZA Discussion Paper 14859",
+    "url": "https://docs.iza.org/dp14859.pdf",
+    "doi": "10.2139/ssrn.5243323",
+    "abstract": "We analyze the JobKeeper lump-sum wage subsidy introduced by the Australian government in response to the COVID-19 pandemic, paying particular attenti...",
+    "authors": [
+      "Jeff Borland",
+      "Jennifer Hunt"
+    ],
+    "external_ids": {
+      "iza_dp": "14859",
+      "openalex_id": "https://openalex.org/W4206719924"
+    },
+    "provenance": {
+      "tried": [
+        "scrape",
+        "crossref:search",
+        "openalex:search"
+      ],
+      "notes": [],
+      "confidence": 1,
+      "abstract": "scrape",
+      "doi": "crossref-search",
+      "authors": "crossref"
+    }
+  },
+  {
+    "rank": 151,
+    "year": 2021,
+    "title": "The Geography of Remote Work",
+    "series_or_venue": "NBER Working Paper w29181",
+    "url": "https://www.nber.org/papers/w29181",
+    "doi": "10.3386/w29181",
+    "abstract": "Founded in 1920, the NBER is a private, non-profit, non-partisan organization dedicated to conducting economic research and to disseminating research findings among academics, public policy makers, and business professionals.",
+    "authors": [
+      "Lukas Althoff",
+      "Fabian Eckert",
+      "Sharat Ganapati",
+      "Conor Walsh"
+    ],
+    "external_ids": {
+      "nber_id": "w29181"
+    },
+    "provenance": {
+      "tried": [
+        "inferred",
+        "scrape",
+        "crossref",
+        "openalex:doi"
+      ],
+      "notes": [],
+      "confidence": 1,
+      "doi": "inferred",
+      "abstract": "scrape",
+      "authors": "scrape"
+    }
+  },
+  {
+    "rank": 160,
+    "year": 2021,
+    "title": "The Evolving Impacts of the COVID-19 Pandemic on Gender Inequality in the U.S. Labor Market: The COVID Motherhood Penalty",
+    "series_or_venue": "IZA Discussion Paper 14811",
+    "url": "https://docs.iza.org/dp14811.pdf",
+    "doi": "10.3386/w29426",
+    "abstract": "We explore whether COVID-19 disproportionately affected women in the labor market using CPS data through the end of 2020. We find that male-female gap...",
+    "authors": [
+      "Robert Fairlie",
+      "Kenneth Couch",
+      "Huanan Xu"
+    ],
+    "external_ids": {
+      "iza_dp": "14811",
+      "openalex_id": "https://openalex.org/W3209708477"
+    },
+    "provenance": {
+      "tried": [
+        "scrape",
+        "crossref:search",
+        "openalex:search"
+      ],
+      "notes": [],
+      "confidence": 1,
+      "abstract": "scrape",
+      "doi": "crossref-search",
+      "authors": "crossref"
+    }
+  },
+  {
+    "rank": 161,
+    "year": 2021,
+    "title": "The Value of Sick Pay",
+    "series_or_venue": "IZA Discussion Paper 14808",
+    "url": "https://docs.iza.org/dp14808.pdf",
+    "doi": "10.2139/ssrn.4114346",
+    "abstract": "Not all countries provide universal access to publicly funded paid sick pay. Amongst countries that do, compensation rates can be low and coverage inc...",
+    "authors": [
+      "Abi Adams-Prassl",
+      "Teodora Boneva",
+      "Marta Golin",
+      "Christopher Rauh"
+    ],
+    "external_ids": {
+      "iza_dp": "14808"
+    },
+    "provenance": {
+      "tried": [
+        "scrape",
+        "crossref:search",
+        "openalex:search"
+      ],
+      "notes": [],
+      "confidence": 1,
+      "abstract": "scrape",
+      "doi": "crossref-search",
+      "authors": "crossref"
+    }
+  },
+  {
+    "rank": 162,
+    "year": 2021,
+    "title": "Remote Working and Mental Health during the First Wave of COVID-19 Pandemic",
+    "series_or_venue": "IZA Discussion Paper 14773",
+    "url": "https://docs.iza.org/dp14773.pdf",
+    "doi": "10.2139/ssrn.4111999",
+    "abstract": "We use longitudinal data from the SHARE survey to estimate the causal effect of remote working during the COVID-19 pandemic on mental health of senior...",
+    "authors": [
+      "Marco Bertoni",
+      "Danilo Cavapozzi",
+      "Giacomo Pasini",
+      "Caterina Pavese"
+    ],
+    "external_ids": {
+      "iza_dp": "14773"
+    },
+    "provenance": {
+      "tried": [
+        "scrape",
+        "crossref:search",
+        "openalex:search"
+      ],
+      "notes": [],
+      "confidence": 1,
+      "abstract": "scrape",
+      "doi": "crossref-search",
+      "authors": "crossref"
+    }
+  },
+  {
+    "rank": 163,
+    "year": 2021,
+    "title": "COVID-19 and the Employment Gender Gap",
+    "series_or_venue": "IZA Discussion Paper 14711",
+    "url": "https://docs.iza.org/dp14711.pdf",
+    "doi": "10.2139/ssrn.3921501",
+    "abstract": "This paper examines how the COVID-19 pandemic affected female employment in Japan. Our estimates indicate that the employment rate of married women wi...",
+    "authors": [
+      "Taiyo Fukai",
+      "Masato Ikeda",
+      "Daiji Kawaguchi",
+      "Shintaro Yamaguchi"
+    ],
+    "external_ids": {
+      "iza_dp": "14711",
+      "openalex_id": "https://openalex.org/W4210278232"
+    },
+    "provenance": {
+      "tried": [
+        "scrape",
+        "crossref:search",
+        "openalex:search"
+      ],
+      "notes": [],
+      "confidence": 1,
+      "abstract": "scrape",
+      "doi": "crossref-search",
+      "authors": "crossref"
+    }
+  },
+  {
+    "rank": 164,
+    "year": 2021,
+    "title": "The Early Effect of the COVID-19 Pandemic on the Labour Market Outcomes of Natives and Migrants in the UK",
+    "series_or_venue": "IZA Discussion Paper 14699",
+    "url": "https://docs.iza.org/dp14699.pdf",
+    "doi": "10.2139/ssrn.3921489",
+    "abstract": "It has been found that migrants and natives are affected differently by fluctuations in the business cycle. This paper analyses whether this is the ca...",
+    "authors": [
+      "Greta Morando"
+    ],
+    "external_ids": {
+      "iza_dp": "14699",
+      "openalex_id": "https://openalex.org/W3198231172"
+    },
+    "provenance": {
+      "tried": [
+        "scrape",
+        "crossref:search",
+        "openalex:search"
+      ],
+      "notes": [],
+      "confidence": 1,
+      "abstract": "scrape",
+      "doi": "crossref-search",
+      "authors": "crossref"
+    }
+  },
+  {
+    "rank": 165,
+    "year": 2021,
+    "title": "The Labour Market Impact of COVID-19 Lockdowns: Evidence from Ghana",
+    "series_or_venue": "IZA Discussion Paper 14692",
+    "url": "https://docs.iza.org/dp14692.pdf",
+    "doi": "10.35188/unu-wider/2021/965-5",
+    "abstract": "In this paper, we provide causal evidence of the immediate and near-term impact of stringent COVID-19 lockdown policies on employment outcomes, using...",
+    "authors": [
+      "Simone Schotte",
+      "Michael Danquah",
+      "Robert Darko Osei",
+      "Kunal Sen"
+    ],
+    "external_ids": {
+      "iza_dp": "14692",
+      "openalex_id": "https://openalex.org/W3126308965"
+    },
+    "provenance": {
+      "tried": [
+        "scrape",
+        "crossref:search",
+        "openalex:search"
+      ],
+      "notes": [],
+      "confidence": 1,
+      "abstract": "scrape",
+      "doi": "crossref-search",
+      "authors": "crossref"
+    }
+  },
+  {
+    "rank": 168,
+    "year": 2021,
+    "title": "Sharing the Caring? The Gender Division of Care Work during the COVID-19 Pandemic in Germany",
+    "series_or_venue": "IZA Discussion Paper 14457",
+    "url": "https://docs.iza.org/dp14457.pdf",
+    "doi": "10.1515/ger-2022-0003",
+    "abstract": "The COVID-19 pandemic and related closures of daycare centers and schools significantly increased the amount of care work done by parents. There is mu...",
+    "authors": [
+      "Jonas Jessen",
+      "C. Katharina Spiess",
+      "Sevrin Waights",
+      "Katharina Wrohlich"
+    ],
+    "external_ids": {
+      "iza_dp": "14457",
+      "openalex_id": "https://openalex.org/W4288066515"
+    },
+    "provenance": {
+      "tried": [
+        "scrape",
+        "crossref",
+        "openalex:doi"
+      ],
+      "notes": [],
+      "confidence": 1,
+      "doi": "scrape",
+      "abstract": "scrape",
+      "authors": "crossref"
+    }
+  },
+  {
+    "rank": 166,
+    "year": 2021,
+    "title": "Minimum Quality Regulations and the Demand for Child Care Labor",
+    "series_or_venue": "IZA Discussion Paper 14684",
+    "url": "https://docs.iza.org/dp14684.pdf",
+    "doi": "10.2139/ssrn.3917299",
+    "abstract": "Minimum quality regulations are often justified in the child care market because of the presence of information frictions between parents and provider...",
+    "authors": [
+      "Umair Ali",
+      "Chris M. Herbst",
+      "Christos Makridis"
+    ],
+    "external_ids": {
+      "iza_dp": "14684",
+      "openalex_id": "https://openalex.org/W3198594575"
+    },
+    "provenance": {
+      "tried": [
+        "scrape",
+        "crossref:search",
+        "openalex:search"
+      ],
+      "notes": [],
+      "confidence": 1,
+      "abstract": "scrape",
+      "doi": "crossref-search",
+      "authors": "crossref"
+    }
+  },
+  {
+    "rank": 167,
+    "year": 2021,
+    "title": "The Effects of the COVID-19 Pandemic on the Mental Health and Subjective Well-Being of Workers: An Event Study Based on High-Frequency Panel Data",
+    "series_or_venue": "IZA Discussion Paper 14638",
+    "url": "https://docs.iza.org/dp14638.pdf",
+    "doi": "10.2139/ssrn.3905073",
+    "abstract": "Using individual monthly panel data from December 2018 to December 2020, we estimate the impact of the Covid-19 pandemic and two lockdowns on the ment...",
+    "authors": [
+      "Julia Schmidtke",
+      "Clemens Hetschko",
+      "Ronnie Schöb",
+      "Gesine Stephan",
+      "Michael Eid",
+      "Mario Lawes"
+    ],
+    "external_ids": {
+      "iza_dp": "14638",
+      "openalex_id": "https://openalex.org/W3193620955"
+    },
+    "provenance": {
+      "tried": [
+        "scrape",
+        "crossref:search",
+        "openalex:search"
+      ],
+      "notes": [],
+      "confidence": 1,
+      "abstract": "scrape",
+      "doi": "crossref-search",
+      "authors": "crossref"
+    }
+  },
+  {
+    "rank": 169,
+    "year": 2021,
+    "title": "Cracking under Pressure? Gender Role Attitudes toward Maternal Employment in Times of a Pandemic",
+    "series_or_venue": "IZA Discussion Paper 14471",
+    "url": "https://docs.iza.org/dp14471.pdf",
+    "doi": "10.2139/ssrn.3870202",
+    "abstract": "This paper studies the effects of Covid-19 related daycare and school closures on gender role attitudes toward maternal employment in Germany. We comp...",
+    "authors": [
+      "Natalia Danzer",
+      "Mathias Huebener",
+      "Astrid Pape",
+      "C. Katharina Spiess",
+      "Nico Siegel",
+      "Gert Wagner"
+    ],
+    "external_ids": {
+      "iza_dp": "14471",
+      "openalex_id": "https://openalex.org/W4285554455"
+    },
+    "provenance": {
+      "tried": [
+        "scrape",
+        "crossref:search",
+        "openalex:search"
+      ],
+      "notes": [],
+      "confidence": 1,
+      "abstract": "scrape",
+      "doi": "crossref-search",
+      "authors": "crossref"
+    }
+  },
+  {
+    "rank": 170,
+    "year": 2021,
+    "title": "UI Generosity and Job Acceptance: Effects of the 2020 CARES Act",
+    "series_or_venue": "IZA Discussion Paper 14454",
+    "url": "https://docs.iza.org/dp14454.pdf",
+    "doi": "10.2139/ssrn.3870185",
+    "abstract": "To provide economic relief following the onset of the COVID-19 pandemic, the U.S. CARES Act granted an extra $600 per week in unemployment insurance (...",
+    "authors": [
+      "Nicolas Petrosky-Nadeau",
+      "Robert G. Valletta"
+    ],
+    "external_ids": {
+      "iza_dp": "14454",
+      "openalex_id": "https://openalex.org/W3161347148"
+    },
+    "provenance": {
+      "tried": [
+        "scrape",
+        "crossref:search",
+        "openalex:search"
+      ],
+      "notes": [],
+      "confidence": 1,
+      "abstract": "scrape",
+      "doi": "crossref-search",
+      "authors": "crossref"
+    }
+  },
+  {
+    "rank": 171,
+    "year": 2021,
+    "title": "Did COVID-19 Affect the Division of Labor within the Household? Evidence from Two Waves of the Pandemic in Italy",
+    "series_or_venue": "IZA Discussion Paper 14453",
+    "url": "https://docs.iza.org/dp14453.pdf",
+    "doi": "10.2139/ssrn.3870183",
+    "abstract": "The COVID-19 pandemic has had a dramatic impact on families' lives, with parents all over the world struggling to meet the increased demands of housew...",
+    "authors": [
+      "Daniela Del Boca",
+      "Noemi Oggero",
+      "Paola Profeta",
+      "Maria Christina Rossi"
+    ],
+    "external_ids": {
+      "iza_dp": "14453",
+      "openalex_id": "https://openalex.org/W3180644357"
+    },
+    "provenance": {
+      "tried": [
+        "scrape",
+        "crossref:search",
+        "openalex:search"
+      ],
+      "notes": [],
+      "confidence": 1,
+      "abstract": "scrape",
+      "doi": "crossref-search",
+      "authors": "crossref"
+    }
+  },
+  {
+    "rank": 173,
+    "year": 2021,
+    "title": "Too Shocked to Search: The COVID-19 Shutdowns' Impact on the Search for Apprenticeships",
+    "series_or_venue": "IZA Discussion Paper 14337",
+    "url": "https://docs.iza.org/dp14337.pdf",
+    "doi": "10.1093/jae/ejac028",
+    "abstract": "The COVID-19 pandemic has resulted in border closures in many countries and a sharp reduction in overall international mobility. However, this disrupt...",
+    "authors": [
+      "Tijan L Bah",
+      "Catia Batista",
+      "Flore Gubert",
+      "David McKenzie"
+    ],
+    "external_ids": {
+      "iza_dp": "14337",
+      "openalex_id": "https://openalex.org/W4312209114"
+    },
+    "provenance": {
+      "tried": [
+        "scrape",
+        "crossref",
+        "openalex:doi"
+      ],
+      "notes": [],
+      "confidence": 1,
+      "doi": "scrape",
+      "abstract": "scrape",
+      "authors": "crossref"
+    }
+  },
+  {
+    "rank": 172,
+    "year": 2021,
+    "title": "Did COVID-19 Affect the Division of Labor within the Household? Evidence from Two Waves of the Pandemic in Italy",
+    "series_or_venue": "IZA Discussion Paper 14419",
+    "url": "https://docs.iza.org/dp14419.pdf",
+    "doi": "10.2139/ssrn.3870183",
+    "abstract": "University students have been particularly affected by the COVID-19 pandemic. We present results from the first wave of the Global COVID-19 Student Su...",
+    "authors": [
+      "Daniela Del Boca",
+      "Noemi Oggero",
+      "Paola Profeta",
+      "Maria Christina Rossi"
+    ],
+    "external_ids": {
+      "iza_dp": "14419",
+      "openalex_id": "https://openalex.org/W3180644357"
+    },
+    "provenance": {
+      "tried": [
+        "scrape",
+        "crossref:search",
+        "openalex:search"
+      ],
+      "notes": [],
+      "confidence": 1,
+      "abstract": "scrape",
+      "doi": "crossref-search",
+      "authors": "crossref"
+    }
+  },
+  {
+    "rank": 175,
+    "year": 2021,
+    "title": "From Mancession to Shecession: Women's Employment in Regular and Pandemic Recessions",
+    "series_or_venue": "IZA Discussion Paper 14223",
+    "url": "https://docs.iza.org/dp14223.pdf",
+    "doi": "10.3386/w28632",
+    "abstract": "We examine the impact of the global recession triggered by the Covid-19 pandemic on women's versus men's employment. Whereas recent recessions in adva...",
+    "authors": [
+      "Titan Alon",
+      "Sena Coskun",
+      "Matthias Doepke",
+      "David Koll",
+      "Michèle Tertilt"
+    ],
+    "external_ids": {
+      "iza_dp": "14223",
+      "openalex_id": "https://openalex.org/W3164728602"
+    },
+    "provenance": {
+      "tried": [
+        "scrape",
+        "crossref:search",
+        "openalex:search"
+      ],
+      "notes": [],
+      "confidence": 1,
+      "abstract": "scrape",
+      "doi": "crossref-search",
+      "authors": "crossref"
+    }
+  },
+  {
+    "rank": 174,
+    "year": 2021,
+    "title": "The Labour Market Impact of COVID-19: Early Evidence for a Sample of Enterprises from Southern Europe",
+    "series_or_venue": "IZA Discussion Paper 14269",
+    "url": "https://docs.iza.org/dp14269.pdf",
+    "doi": "10.2139/ssrn.3823636",
+    "abstract": "This study uses evidence from World Bank enterprise surveys of a sample of firms from six countries in Southern Europe. It examines the early evidence...",
+    "authors": [
+      "Allan Webster",
+      "Sangeeta Khorana",
+      "Francesco Pastore"
+    ],
+    "external_ids": {
+      "iza_dp": "14269",
+      "openalex_id": "https://openalex.org/W3160228205"
+    },
+    "provenance": {
+      "tried": [
+        "scrape",
+        "crossref:search",
+        "openalex:search"
+      ],
+      "notes": [],
+      "confidence": 1,
+      "abstract": "scrape",
+      "doi": "crossref-search",
+      "authors": "crossref"
+    }
+  },
+  {
+    "rank": 179,
+    "year": 2020,
+    "title": "The U.S. Labor Market during the Beginning of the Pandemic Recession",
+    "series_or_venue": "NBER Working Paper w27159",
+    "url": "https://www.nber.org/papers/w27159",
+    "doi": "10.3386/w27159",
+    "abstract": "Founded in 1920, the NBER is a private, non-profit, non-partisan organization dedicated to conducting economic research and to disseminating research findings among academics, public policy makers, and business professionals.",
+    "authors": [
+      "Tomaz Cajner",
+      "Leland D. Crane",
+      "Ryan A. Decker",
+      "John Grigsby",
+      "Adrian Hamins-Puertolas",
+      "Erik Hurst",
+      "Christopher Kurz",
+      "Ahu Yildirmaz"
+    ],
+    "external_ids": {
+      "nber_id": "w27159",
+      "openalex_id": "https://openalex.org/W3022313864"
+    },
+    "provenance": {
+      "tried": [
+        "inferred",
+        "scrape",
+        "crossref",
+        "openalex:doi"
+      ],
+      "notes": [],
+      "confidence": 1,
+      "doi": "inferred",
+      "abstract": "scrape",
+      "authors": "scrape"
+    }
+  },
+  {
+    "rank": 176,
+    "year": 2021,
+    "title": "Testing the Differential Impact of COVID-19 on Self-Employed Women and Men in the United Kingdom",
+    "series_or_venue": "IZA Discussion Paper 14216",
+    "url": "https://docs.iza.org/dp14216.pdf",
+    "doi": "10.2139/ssrn.3813643",
+    "abstract": "This paper investigates whether the female self-employed are more affected by the COVID-19 crisis than the male self-employed using longitudinal data...",
+    "authors": [
+      "Darja Reuschke",
+      "Andrew Henley",
+      "Elizabeth Daniel",
+      "Victoria Price"
+    ],
+    "external_ids": {
+      "iza_dp": "14216",
+      "openalex_id": "https://openalex.org/W3158612611"
+    },
+    "provenance": {
+      "tried": [
+        "scrape",
+        "crossref:search",
+        "openalex:search"
+      ],
+      "notes": [],
+      "confidence": 1,
+      "abstract": "scrape",
+      "doi": "crossref-search",
+      "authors": "crossref"
+    }
+  },
+  {
+    "rank": 177,
+    "year": 2021,
+    "title": "Policies to Help the Working Class in the Aftermath of COVID-19: Lessons from the Great Recession",
+    "series_or_venue": "IZA Discussion Paper 14166",
+    "url": "https://docs.iza.org/dp14166.pdf",
+    "doi": "10.2139/ssrn.3798919",
+    "abstract": "The COVID-19 pandemic and the associated government mandated shutdowns caused a historic shock to the U.S. economy and a disproportionate job loss con...",
+    "authors": [
+      "Richard V. Burkhauser",
+      "Kevin Corinth",
+      "Doug Holtz-Eakin"
+    ],
+    "external_ids": {
+      "iza_dp": "14166",
+      "openalex_id": "https://openalex.org/W3135124167"
+    },
+    "provenance": {
+      "tried": [
+        "scrape",
+        "crossref:search",
+        "openalex:search"
+      ],
+      "notes": [],
+      "confidence": 1,
+      "abstract": "scrape",
+      "doi": "crossref-search",
+      "authors": "crossref"
+    }
+  },
+  {
+    "rank": 180,
+    "year": 2020,
+    "title": "Remote Work and the Heterogeneous Impact of COVID-19 on Employment and Health",
+    "series_or_venue": "NBER Working Paper w27749",
+    "url": "https://www.nber.org/papers/w27749",
+    "doi": "10.3386/w27749",
+    "abstract": "Founded in 1920, the NBER is a private, non-profit, non-partisan organization dedicated to conducting economic research and to disseminating research findings among academics, public policy makers, and business professionals.",
+    "authors": [
+      "Manuela Angelucci",
+      "Marco Angrisani",
+      "Daniel M. Bennett",
+      "Arie Kapteyn",
+      "Simone G. Schaner"
+    ],
+    "external_ids": {
+      "nber_id": "w27749",
+      "openalex_id": "https://openalex.org/W3080638123"
+    },
+    "provenance": {
+      "tried": [
+        "inferred",
+        "scrape",
+        "crossref",
+        "openalex:doi"
+      ],
+      "notes": [],
+      "confidence": 1,
+      "doi": "inferred",
+      "abstract": "scrape",
+      "authors": "scrape"
+    }
+  },
+  {
+    "rank": 178,
+    "year": 2021,
+    "title": "Whether, When and How to Extend Unemployment Benefits: Theory and Application to COVID-19",
+    "series_or_venue": "IZA Discussion Paper 14085",
+    "url": "https://docs.iza.org/dp14085.pdf",
+    "doi": "10.2139/ssrn.3780451",
+    "abstract": "We investigate the optimal response of unemployment insurance to economic shocks, both with and without commitment. The optimal policy with commitment...",
+    "authors": [
+      "Kurt Mitman",
+      "Stanislav Rabinovich"
+    ],
+    "external_ids": {
+      "iza_dp": "14085",
+      "openalex_id": "https://openalex.org/W3126967798"
+    },
+    "provenance": {
+      "tried": [
+        "scrape",
+        "crossref:search",
+        "openalex:search"
+      ],
+      "notes": [],
+      "confidence": 1,
+      "abstract": "scrape",
+      "doi": "crossref-search",
+      "authors": "crossref"
+    }
+  },
+  {
+    "rank": 181,
+    "year": 2020,
+    "title": "What Jobs are Being Done at Home During the Covid-19 Crisis? Evidence from Firm-Level Surveys",
+    "series_or_venue": "NBER Working Paper w27422",
+    "url": "https://www.nber.org/papers/w27422",
+    "doi": "10.3386/w27422",
+    "abstract": "Founded in 1920, the NBER is a private, non-profit, non-partisan organization dedicated to conducting economic research and to disseminating research findings among academics, public policy makers, and business professionals.",
+    "authors": [
+      "Alexander W. Bartik",
+      "Zoe B. Cullen",
+      "Edward L. Glaeser",
+      "Michael Luca",
+      "Christopher T. Stanton"
+    ],
+    "external_ids": {
+      "nber_id": "w27422",
+      "openalex_id": "https://openalex.org/W3037288374"
+    },
+    "provenance": {
+      "tried": [
+        "inferred",
+        "scrape",
+        "crossref",
+        "openalex:doi"
+      ],
+      "notes": [],
+      "confidence": 1,
+      "doi": "inferred",
+      "abstract": "scrape",
+      "authors": "scrape"
+    }
+  },
+  {
+    "rank": 184,
+    "year": 2020,
+    "title": "Remote Work and the Heterogeneous Impact of COVID-19 on Employment and Health",
+    "series_or_venue": "IZA Discussion Paper 13620",
+    "url": "https://docs.iza.org/dp13620.pdf",
+    "doi": "10.3386/w27749",
+    "abstract": "This paper examines the impact of the COVID-19 pandemic on employment and respiratory health for remote workers (i.e. those who can work from home) an...",
+    "authors": [
+      "Manuela Angelucci",
+      "Marco Angrisani",
+      "Daniel Bennett",
+      "Arie Kapteyn",
+      "Simone Schaner"
+    ],
+    "external_ids": {
+      "iza_dp": "13620",
+      "openalex_id": "https://openalex.org/W3080638123"
+    },
+    "provenance": {
+      "tried": [
+        "scrape",
+        "crossref:search",
+        "openalex:search"
+      ],
+      "notes": [],
+      "confidence": 1,
+      "abstract": "scrape",
+      "doi": "crossref-search",
+      "authors": "crossref"
+    }
+  },
+  {
+    "rank": 182,
+    "year": 2020,
+    "title": "The Impact of COVID-19 on Small Business Owners: The First Three Months after Social-Distancing Restrictions",
+    "series_or_venue": "IZA Discussion Paper 13707",
+    "url": "https://docs.iza.org/dp13707.pdf",
+    "doi": "10.3386/w27462",
+    "abstract": "Social distancing restrictions and health- and economic-driven demand shifts from COVID-19 are expected to shutter many small businesses and entrepren...",
+    "authors": [
+      "Robert Fairlie"
+    ],
+    "external_ids": {
+      "iza_dp": "13707",
+      "openalex_id": "https://openalex.org/W3049096954"
+    },
+    "provenance": {
+      "tried": [
+        "scrape",
+        "crossref:search",
+        "openalex:search"
+      ],
+      "notes": [],
+      "confidence": 1,
+      "abstract": "scrape",
+      "doi": "crossref-search",
+      "authors": "crossref"
+    }
+  },
+  {
+    "rank": 183,
+    "year": 2020,
+    "title": "Measuring the Impacts of COVID-19 on Job Postings in Australia Using a Reweighting-Estimation-Transformation Approach",
+    "series_or_venue": "IZA Discussion Paper 13640",
+    "url": "https://docs.iza.org/dp13640.pdf",
+    "doi": "10.2139/ssrn.3682954",
+    "abstract": "We propose a reweighting-estimation-transformation (RWET) approach to estimate the impacts of COVID-19 on job postings in Australia. Contrary to the c...",
+    "authors": [
+      "Kailing Shen",
+      "Bledi Taska"
+    ],
+    "external_ids": {
+      "iza_dp": "13640",
+      "openalex_id": "https://openalex.org/W3082111150"
+    },
+    "provenance": {
+      "tried": [
+        "scrape",
+        "crossref:search",
+        "openalex:search"
+      ],
+      "notes": [],
+      "confidence": 1,
+      "abstract": "scrape",
+      "doi": "crossref-search",
+      "authors": "crossref"
+    }
+  }
+]

@@ -1,0 +1,27 @@
+query GetJournalEntry($id: Int!) {
+  journalEntry(id: $id) {
+    id
+    createdBy
+    familyMemberId
+    familyMember {
+      id
+      firstName
+      name
+    }
+    title
+    content
+    mood
+    moodScore
+    tags
+    goalId
+    goal {
+      id
+      title
+      description
+    }
+    isPrivate
+    entryDate
+    createdAt
+    updatedAt
+  }
+}

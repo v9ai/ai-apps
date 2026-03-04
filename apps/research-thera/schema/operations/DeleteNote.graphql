@@ -1,0 +1,6 @@
+mutation DeleteNote($id: Int!) {
+  deleteNote(id: $id) {
+    success
+    message
+  }
+}

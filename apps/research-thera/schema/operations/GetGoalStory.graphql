@@ -1,0 +1,14 @@
+query GetGoalStory($id: Int!) {
+  goalStory(id: $id) {
+    id
+    goalId
+    language
+    minutes
+    text
+    audioKey
+    audioUrl
+    audioGeneratedAt
+    createdAt
+    updatedAt
+  }
+}

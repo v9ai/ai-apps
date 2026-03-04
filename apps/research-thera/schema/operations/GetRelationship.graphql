@@ -1,0 +1,28 @@
+query GetRelationship($id: Int!) {
+  relationship(id: $id) {
+    id
+    createdBy
+    subjectType
+    subjectId
+    relatedType
+    relatedId
+    relationshipType
+    context
+    startDate
+    status
+    createdAt
+    updatedAt
+    subject {
+      id
+      type
+      firstName
+      lastName
+    }
+    related {
+      id
+      type
+      firstName
+      lastName
+    }
+  }
+}

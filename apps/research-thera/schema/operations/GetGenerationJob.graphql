@@ -1,0 +1,14 @@
+query GetGenerationJob($id: String!) {
+  generationJob(id: $id) {
+    id
+    status
+    progress
+    result {
+      audioUrl
+    }
+    error {
+      message
+    }
+    updatedAt
+  }
+}

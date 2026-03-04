@@ -1,0 +1,11 @@
+query GetMySharedFamilyMembers {
+  mySharedFamilyMembers {
+    id
+    userId
+    firstName
+    name
+    relationship
+    email
+    createdAt
+  }
+}

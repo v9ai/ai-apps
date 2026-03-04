@@ -1,0 +1,55 @@
+{
+  "version": "7",
+  "dialect": "sqlite",
+  "entries": [
+    {
+      "idx": 0,
+      "version": "6",
+      "when": 1770153738785,
+      "tag": "0000_left_solo",
+      "breakpoints": true
+    },
+    {
+      "idx": 1,
+      "version": "6",
+      "when": 1770202419984,
+      "tag": "0001_tiny_union_jack",
+      "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "6",
+      "when": 1770583261523,
+      "tag": "0002_lyrical_the_renegades",
+      "breakpoints": true
+    },
+    {
+      "idx": 3,
+      "version": "6",
+      "when": 1770885791930,
+      "tag": "0003_polite_quicksilver",
+      "breakpoints": true
+    },
+    {
+      "idx": 4,
+      "version": "6",
+      "when": 1770908268775,
+      "tag": "0004_next_karen_page",
+      "breakpoints": true
+    },
+    {
+      "idx": 5,
+      "version": "6",
+      "when": 1770913840942,
+      "tag": "0005_modern_red_shift",
+      "breakpoints": true
+    },
+    {
+      "idx": 6,
+      "version": "6",
+      "when": 1770968472726,
+      "tag": "0006_burly_stranger",
+      "breakpoints": true
+    }
+  ]
+}

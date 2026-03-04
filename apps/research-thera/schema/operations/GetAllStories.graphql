@@ -1,0 +1,18 @@
+query GetAllStories {
+  allStories {
+    id
+    goalId
+    createdBy
+    content
+    audioKey
+    audioUrl
+    audioGeneratedAt
+    createdAt
+    updatedAt
+    goal {
+      id
+      title
+      slug
+    }
+  }
+}

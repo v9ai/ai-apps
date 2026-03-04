@@ -1,0 +1,108 @@
+# Claim Cards GraphQL Types
+# Add these to your schema/schema.graphql
+
+type ClaimScope {
+  population: String
+  intervention: String
+  comparator: String
+  outcome: String
+  timeframe: String
+  setting: String
+}
+
+type EvidenceLocator {
+  section: String
+  page: Int
+  url: String
+}
+
+type EvidenceItem {
+  paper: PaperCandidate!
+  polarity: EvidencePolarity!
+  excerpt: String
+  rationale: String
+  score: Float
+  locator: EvidenceLocator
+}
+
+type ClaimCard {
+  id: ID!
+  claim: String!
+  scope: ClaimScope
+  verdict: ClaimVerdict!
+  confidence: Float!
+  evidence: [EvidenceItem!]!
+  queries: [String!]!
+  createdAt: String!
+  updatedAt: String!
+  provenance: ClaimProvenance!
+  notes: String
+}
+
+type ClaimProvenance {
+  generatedBy: String!
+  model: String
+  sourceTools: [String!]!
+}
+
+type PaperCandidate {
+  title: String!
+  doi: String
+  url: String
+  year: Int
+  source: String!
+  authors: [String!]
+  abstract: String
+  journal: String
+  oaUrl: String
+  oaStatus: String
+}
+
+enum ClaimVerdict {
+  UNVERIFIED
+  SUPPORTED
+  CONTRADICTED
+  MIXED
+  INSUFFICIENT
+}
+
+enum EvidencePolarity {
+  SUPPORTS
+  CONTRADICTS
+  MIXED
+  IRRELEVANT
+}
+
+input BuildClaimCardsInput {
+  text: String
+  claims: [String!]
+  perSourceLimit: Int
+  topK: Int
+  useLlmJudge: Boolean
+  sources: [ResearchSource!]
+}
+
+enum ResearchSource {
+  CROSSREF
+  PUBMED
+  SEMANTIC_SCHOLAR
+  OPENALEX
+  ARXIV
+  EUROPEPMC
+  DATACITE
+}
+
+type BuildClaimCardsResult {
+  cards: [ClaimCard!]!
+}
+
+extend type Query {
+  claimCard(id: ID!): ClaimCard
+  claimCardsForNote(noteId: Int!): [ClaimCard!]!
+}
+
+extend type Mutation {
+  buildClaimCards(input: BuildClaimCardsInput!): BuildClaimCardsResult!
+  refreshClaimCard(id: ID!): ClaimCard!
+  deleteClaimCard(id: ID!): Boolean!
+}

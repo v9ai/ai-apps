@@ -1,0 +1,51 @@
+mutation CheckNoteClaims($input: CheckNoteClaimsInput!) {
+  checkNoteClaims(input: $input) {
+    success
+    message
+    noteId
+    cards {
+      id
+      claim
+      scope {
+        population
+        intervention
+        comparator
+        outcome
+        timeframe
+        setting
+      }
+      verdict
+      confidence
+      evidence {
+        paper {
+          title
+          doi
+          url
+          year
+          source
+          authors
+          abstract
+          journal
+        }
+        polarity
+        excerpt
+        rationale
+        score
+        locator {
+          section
+          page
+          url
+        }
+      }
+      queries
+      createdAt
+      updatedAt
+      provenance {
+        generatedBy
+        model
+        sourceTools
+      }
+      notes
+    }
+  }
+}

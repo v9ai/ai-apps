@@ -1,0 +1,74 @@
+query GetGoal($id: Int, $slug: String) {
+  goal(id: $id, slug: $slug) {
+    id
+    slug
+    title
+    description
+    status
+    familyMemberId
+    familyMember {
+      id
+      firstName
+      name
+      ageYears
+      relationship
+    }
+    createdBy
+    parentGoalId
+    parentGoal {
+      id
+      slug
+      title
+      status
+    }
+    therapeuticText
+    therapeuticTextLanguage
+    therapeuticTextGeneratedAt
+    storyLanguage
+    subGoals {
+      id
+      slug
+      title
+      description
+      status
+      createdAt
+      updatedAt
+    }
+    notes {
+      id
+      slug
+      content
+      noteType
+      tags
+      createdAt
+      updatedAt
+    }
+    research {
+      id
+      title
+      authors
+      year
+      journal
+      url
+    }
+    stories {
+      id
+      goalId
+      language
+      minutes
+      text
+      createdAt
+      updatedAt
+    }
+    userStories {
+      id
+      goalId
+      createdBy
+      content
+      createdAt
+      updatedAt
+    }
+    createdAt
+    updatedAt
+  }
+}

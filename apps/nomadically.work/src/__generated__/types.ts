@@ -1,0 +1,1913 @@
+export type Maybe<T> = T | null | undefined;
+export type InputMaybe<T> = T | null | undefined;
+export type Exact<T extends { [key: string]: unknown }> = { [K in keyof T]: T[K] };
+export type MakeOptional<T, K extends keyof T> = Omit<T, K> & { [SubKey in K]?: Maybe<T[SubKey]> };
+export type MakeMaybe<T, K extends keyof T> = Omit<T, K> & { [SubKey in K]: Maybe<T[SubKey]> };
+export type MakeEmpty<T extends { [key: string]: unknown }, K extends keyof T> = { [_ in K]?: never };
+export type Incremental<T> = T | { [P in keyof T]?: P extends ' $fragmentName' | '__typename' ? T[P] : never };
+/** All built-in and custom scalars, mapped to their actual values */
+export type Scalars = {
+  ID: { input: string; output: string; }
+  String: { input: string; output: string; }
+  Boolean: { input: boolean; output: boolean; }
+  Int: { input: number; output: number; }
+  Float: { input: number; output: number; }
+  DateTime: { input: string; output: string; }
+  EmailAddress: { input: string; output: string; }
+  JSON: { input: any; output: any; }
+  URL: { input: string; output: string; }
+  Upload: { input: File; output: File; }
+};
+
+export type AiBackendPrep = {
+  __typename: 'AIBackendPrep';
+  aiMlIntegration: Maybe<BackendPrepSection>;
+  apiDesign: Maybe<BackendPrepSection>;
+  authSecurity: Maybe<BackendPrepSection>;
+  caching: Maybe<BackendPrepSection>;
+  concurrencyAsync: Maybe<BackendPrepSection>;
+  databaseDesign: Maybe<BackendPrepSection>;
+  devops: Maybe<BackendPrepSection>;
+  distributedSystems: Maybe<BackendPrepSection>;
+  eventDriven: Maybe<BackendPrepSection>;
+  generatedAt: Scalars['String']['output'];
+  messageQueues: Maybe<BackendPrepSection>;
+  microservices: Maybe<BackendPrepSection>;
+  nosqlPatterns: Maybe<BackendPrepSection>;
+  observability: Maybe<BackendPrepSection>;
+  performance: Maybe<BackendPrepSection>;
+  securityOwasp: Maybe<BackendPrepSection>;
+  serverlessEdge: Maybe<BackendPrepSection>;
+  sqlOptimization: Maybe<BackendPrepSection>;
+  systemDesign: Maybe<BackendPrepSection>;
+  testing: Maybe<BackendPrepSection>;
+  typescriptNode: Maybe<BackendPrepSection>;
+};
+
+export type AiInterviewPrep = {
+  __typename: 'AIInterviewPrep';
+  generatedAt: Scalars['String']['output'];
+  requirements: Array<AiInterviewPrepRequirement>;
+  summary: Scalars['String']['output'];
+};
+
+export type AiInterviewPrepRequirement = {
+  __typename: 'AIInterviewPrepRequirement';
+  deepDive: Maybe<Scalars['String']['output']>;
+  questions: Array<Scalars['String']['output']>;
+  requirement: Scalars['String']['output'];
+  sourceQuote: Maybe<Scalars['String']['output']>;
+  studyTopicDeepDives: Array<AiStudyTopicDeepDive>;
+  studyTopics: Array<Scalars['String']['output']>;
+};
+
+export type AiInterviewQuestion = {
+  __typename: 'AIInterviewQuestion';
+  category: Scalars['String']['output'];
+  question: Scalars['String']['output'];
+  reason: Scalars['String']['output'];
+};
+
+export type AiInterviewQuestions = {
+  __typename: 'AIInterviewQuestions';
+  companyContext: Scalars['String']['output'];
+  recruiterGeneratedAt: Maybe<Scalars['String']['output']>;
+  recruiterQuestions: Array<AiInterviewQuestion>;
+  technicalGeneratedAt: Maybe<Scalars['String']['output']>;
+  technicalQuestions: Array<AiInterviewQuestion>;
+};
+
+export type AiStudyTopicDeepDive = {
+  __typename: 'AIStudyTopicDeepDive';
+  deepDive: Scalars['String']['output'];
+  topic: Scalars['String']['output'];
+};
+
+export type AtsBoard = {
+  __typename: 'ATSBoard';
+  board_type: AtsBoardType;
+  company_id: Scalars['Int']['output'];
+  confidence: Scalars['Float']['output'];
+  created_at: Scalars['String']['output'];
+  evidence: Evidence;
+  first_seen_at: Scalars['String']['output'];
+  id: Scalars['Int']['output'];
+  is_active: Scalars['Boolean']['output'];
+  last_seen_at: Scalars['String']['output'];
+  updated_at: Scalars['String']['output'];
+  url: Scalars['String']['output'];
+  vendor: AtsVendor;
+};
+
+export type AtsBoardType =
+  | 'BOARD_API'
+  | 'BOARD_WIDGET'
+  | 'JOBS_PAGE'
+  | 'UNKNOWN';
+
+export type AtsBoardUpsertInput = {
+  board_type: AtsBoardType;
+  confidence: Scalars['Float']['input'];
+  evidence: EvidenceInput;
+  is_active: Scalars['Boolean']['input'];
+  last_seen_at: Scalars['String']['input'];
+  url: Scalars['String']['input'];
+  vendor: AtsVendor;
+};
+
+export type AtsVendor =
+  | 'ASHBY'
+  | 'BREEZYHR'
+  | 'GREENHOUSE'
+  | 'ICIMS'
+  | 'JAZZHR'
+  | 'JOBVITE'
+  | 'LEVER'
+  | 'ORACLE_TALEO'
+  | 'OTHER'
+  | 'SAP_SUCCESSFACTORS'
+  | 'SMARTRECRUITERS'
+  | 'TEAMTAILOR'
+  | 'WORKABLE';
+
+export type AgenticCoding = {
+  __typename: 'AgenticCoding';
+  exercises: Array<AgenticCodingExercise>;
+  failureModes: Maybe<Array<AgenticCodingFailureMode>>;
+  generatedAt: Scalars['String']['output'];
+  measurableOutcomes: Maybe<Array<AgenticCodingOutcome>>;
+  overview: Scalars['String']['output'];
+  promptTemplates: Maybe<Array<AgenticCodingPromptTemplate>>;
+  qaApproach: Maybe<Scalars['String']['output']>;
+  resources: Array<AgenticCodingResource>;
+  teamPractices: Maybe<Scalars['String']['output']>;
+  workflowPattern: Maybe<Scalars['String']['output']>;
+};
+
+export type AgenticCodingExercise = {
+  __typename: 'AgenticCodingExercise';
+  agentPrompt: Scalars['String']['output'];
+  description: Scalars['String']['output'];
+  difficulty: Scalars['String']['output'];
+  hints: Array<Scalars['String']['output']>;
+  skills: Array<Scalars['String']['output']>;
+  title: Scalars['String']['output'];
+};
+
+export type AgenticCodingFailureMode = {
+  __typename: 'AgenticCodingFailureMode';
+  alternative: Scalars['String']['output'];
+  scenario: Scalars['String']['output'];
+  why: Scalars['String']['output'];
+};
+
+export type AgenticCodingOutcome = {
+  __typename: 'AgenticCodingOutcome';
+  afterTime: Scalars['String']['output'];
+  beforeTime: Scalars['String']['output'];
+  improvement: Scalars['String']['output'];
+  task: Scalars['String']['output'];
+};
+
+export type AgenticCodingPromptTemplate = {
+  __typename: 'AgenticCodingPromptTemplate';
+  prompt: Scalars['String']['output'];
+  purpose: Scalars['String']['output'];
+  stackContext: Scalars['String']['output'];
+  title: Scalars['String']['output'];
+};
+
+export type AgenticCodingResource = {
+  __typename: 'AgenticCodingResource';
+  description: Scalars['String']['output'];
+  title: Scalars['String']['output'];
+  url: Scalars['String']['output'];
+};
+
+export type Application = {
+  __typename: 'Application';
+  agenticCoding: Maybe<AgenticCoding>;
+  aiBackendPrep: Maybe<AiBackendPrep>;
+  aiInterviewPrep: Maybe<AiInterviewPrep>;
+  aiInterviewQuestions: Maybe<AiInterviewQuestions>;
+  companyKey: Maybe<Scalars['String']['output']>;
+  companyName: Maybe<Scalars['String']['output']>;
+  createdAt: Scalars['String']['output'];
+  email: Scalars['EmailAddress']['output'];
+  id: Scalars['Int']['output'];
+  interviewPrep: Array<Track>;
+  jobDescription: Maybe<Scalars['String']['output']>;
+  jobId: Scalars['String']['output'];
+  jobTitle: Maybe<Scalars['String']['output']>;
+  notes: Maybe<Scalars['String']['output']>;
+  questions: Array<QuestionAnswer>;
+  resume: Maybe<Scalars['Upload']['output']>;
+  status: ApplicationStatus;
+};
+
+export type ApplicationInput = {
+  companyName?: InputMaybe<Scalars['String']['input']>;
+  jobId?: InputMaybe<Scalars['String']['input']>;
+  jobTitle?: InputMaybe<Scalars['String']['input']>;
+  questions: Array<QuestionAnswerInput>;
+  resume?: InputMaybe<Scalars['Upload']['input']>;
+};
+
+/**
+ * Pipeline status for a tracked job application.
+ * Maps to a kanban column in the UI.
+ */
+export type ApplicationStatus =
+  | 'accepted'
+  | 'pending'
+  | 'rejected'
+  | 'reviewed'
+  | 'submitted';
+
+export type ApplyEmailPatternResult = {
+  __typename: 'ApplyEmailPatternResult';
+  contacts: Array<Contact>;
+  contactsUpdated: Scalars['Int']['output'];
+  message: Scalars['String']['output'];
+  pattern: Maybe<Scalars['String']['output']>;
+  success: Scalars['Boolean']['output'];
+};
+
+export type AshbyAddress = {
+  __typename: 'AshbyAddress';
+  postalAddress: Maybe<AshbyPostalAddress>;
+};
+
+export type AshbyCompensation = {
+  __typename: 'AshbyCompensation';
+  compensationTierSummary: Maybe<Scalars['String']['output']>;
+  compensationTiers: Array<AshbyCompensationTier>;
+  scrapeableCompensationSalarySummary: Maybe<Scalars['String']['output']>;
+  summaryComponents: Array<AshbyCompensationComponent>;
+};
+
+export type AshbyCompensationComponent = {
+  __typename: 'AshbyCompensationComponent';
+  compensationType: Maybe<Scalars['String']['output']>;
+  currencyCode: Maybe<Scalars['String']['output']>;
+  id: Maybe<Scalars['String']['output']>;
+  interval: Maybe<Scalars['String']['output']>;
+  maxValue: Maybe<Scalars['Float']['output']>;
+  minValue: Maybe<Scalars['Float']['output']>;
+  summary: Maybe<Scalars['String']['output']>;
+};
+
+export type AshbyCompensationTier = {
+  __typename: 'AshbyCompensationTier';
+  additionalInformation: Maybe<Scalars['String']['output']>;
+  components: Array<AshbyCompensationComponent>;
+  id: Maybe<Scalars['String']['output']>;
+  tierSummary: Maybe<Scalars['String']['output']>;
+  title: Maybe<Scalars['String']['output']>;
+};
+
+export type AshbyEnrichment = {
+  __typename: 'AshbyEnrichment';
+  company_name: Maybe<Scalars['String']['output']>;
+  enriched_at: Maybe<Scalars['String']['output']>;
+  industry_tags: Array<Scalars['String']['output']>;
+  size_signal: Maybe<Scalars['String']['output']>;
+  tech_signals: Array<Scalars['String']['output']>;
+};
+
+export type AshbyPostalAddress = {
+  __typename: 'AshbyPostalAddress';
+  addressCountry: Maybe<Scalars['String']['output']>;
+  addressLocality: Maybe<Scalars['String']['output']>;
+  addressRegion: Maybe<Scalars['String']['output']>;
+};
+
+export type AshbySecondaryLocation = {
+  __typename: 'AshbySecondaryLocation';
+  address: Maybe<AshbyPostalAddress>;
+  location: Scalars['String']['output'];
+};
+
+export type BackendPrepCodeExample = {
+  __typename: 'BackendPrepCodeExample';
+  code: Scalars['String']['output'];
+  explanation: Scalars['String']['output'];
+  language: Scalars['String']['output'];
+  title: Scalars['String']['output'];
+};
+
+export type BackendPrepInterviewQuestion = {
+  __typename: 'BackendPrepInterviewQuestion';
+  difficulty: Scalars['String']['output'];
+  followUps: Array<Scalars['String']['output']>;
+  idealAnswer: Scalars['String']['output'];
+  question: Scalars['String']['output'];
+};
+
+export type BackendPrepSection = {
+  __typename: 'BackendPrepSection';
+  codeExamples: Array<BackendPrepCodeExample>;
+  commonPitfalls: Array<Scalars['String']['output']>;
+  deepDive: Scalars['String']['output'];
+  interviewQuestions: Array<BackendPrepInterviewQuestion>;
+  keyConcepts: Array<Scalars['String']['output']>;
+  overview: Scalars['String']['output'];
+  researchInsights: Maybe<Scalars['String']['output']>;
+  talkingPoints: Array<Scalars['String']['output']>;
+  title: Scalars['String']['output'];
+};
+
+export type ChatMessage = {
+  __typename: 'ChatMessage';
+  content: Scalars['String']['output'];
+  role: Scalars['String']['output'];
+};
+
+export type ChatMessageInput = {
+  content: Scalars['String']['input'];
+  role: Scalars['String']['input'];
+};
+
+/** Confidence level of a classification result. */
+export type ClassificationConfidence =
+  | 'high'
+  | 'low'
+  | 'medium';
+
+export type CompaniesResponse = {
+  __typename: 'CompaniesResponse';
+  companies: Array<Company>;
+  totalCount: Scalars['Int']['output'];
+};
+
+export type Company = {
+  __typename: 'Company';
+  ai_classification_confidence: Scalars['Float']['output'];
+  ai_classification_reason: Maybe<Scalars['String']['output']>;
+  ai_tier: Scalars['Int']['output'];
+  ashby_enrichment: Maybe<AshbyEnrichment>;
+  ats_boards: Array<AtsBoard>;
+  category: CompanyCategory;
+  contacts: Array<Contact>;
+  created_at: Scalars['String']['output'];
+  description: Maybe<Scalars['String']['output']>;
+  facts: Array<CompanyFact>;
+  facts_count: Scalars['Int']['output'];
+  id: Scalars['Int']['output'];
+  industries: Array<Scalars['String']['output']>;
+  industry: Maybe<Scalars['String']['output']>;
+  is_hidden: Scalars['Boolean']['output'];
+  job_board_url: Maybe<Scalars['String']['output']>;
+  key: Scalars['String']['output'];
+  last_seen_capture_timestamp: Maybe<Scalars['String']['output']>;
+  last_seen_crawl_id: Maybe<Scalars['String']['output']>;
+  last_seen_source_url: Maybe<Scalars['String']['output']>;
+  linkedin_url: Maybe<Scalars['String']['output']>;
+  location: Maybe<Scalars['String']['output']>;
+  logo_url: Maybe<Scalars['String']['output']>;
+  name: Scalars['String']['output'];
+  opportunities: Array<Opportunity>;
+  score: Scalars['Float']['output'];
+  score_reasons: Array<Scalars['String']['output']>;
+  service_taxonomy: Array<Scalars['String']['output']>;
+  services: Array<Scalars['String']['output']>;
+  size: Maybe<Scalars['String']['output']>;
+  snapshots: Array<CompanySnapshot>;
+  snapshots_count: Scalars['Int']['output'];
+  tags: Array<Scalars['String']['output']>;
+  updated_at: Scalars['String']['output'];
+  website: Maybe<Scalars['String']['output']>;
+};
+
+
+export type CompanyFactsArgs = {
+  field?: InputMaybe<Scalars['String']['input']>;
+  limit?: InputMaybe<Scalars['Int']['input']>;
+  offset?: InputMaybe<Scalars['Int']['input']>;
+};
+
+
+export type CompanySnapshotsArgs = {
+  limit?: InputMaybe<Scalars['Int']['input']>;
+  offset?: InputMaybe<Scalars['Int']['input']>;
+};
+
+export type CompanyCategory =
+  | 'AGENCY'
+  | 'CONSULTANCY'
+  | 'DIRECTORY'
+  | 'OTHER'
+  | 'PRODUCT'
+  | 'STAFFING'
+  | 'UNKNOWN';
+
+export type CompanyFact = {
+  __typename: 'CompanyFact';
+  company_id: Scalars['Int']['output'];
+  confidence: Scalars['Float']['output'];
+  created_at: Scalars['String']['output'];
+  evidence: Evidence;
+  field: Scalars['String']['output'];
+  id: Scalars['Int']['output'];
+  normalized_value: Maybe<Scalars['JSON']['output']>;
+  value_json: Maybe<Scalars['JSON']['output']>;
+  value_text: Maybe<Scalars['String']['output']>;
+};
+
+export type CompanyFactInput = {
+  confidence: Scalars['Float']['input'];
+  evidence: EvidenceInput;
+  field: Scalars['String']['input'];
+  normalized_value?: InputMaybe<Scalars['JSON']['input']>;
+  value_json?: InputMaybe<Scalars['JSON']['input']>;
+  value_text?: InputMaybe<Scalars['String']['input']>;
+};
+
+export type CompanyFilterInput = {
+  category_in?: InputMaybe<Array<CompanyCategory>>;
+  has_ats_boards?: InputMaybe<Scalars['Boolean']['input']>;
+  is_hidden?: InputMaybe<Scalars['Boolean']['input']>;
+  min_ai_tier?: InputMaybe<Scalars['Int']['input']>;
+  min_score?: InputMaybe<Scalars['Float']['input']>;
+  service_taxonomy_any?: InputMaybe<Array<Scalars['String']['input']>>;
+  text?: InputMaybe<Scalars['String']['input']>;
+};
+
+export type CompanyOrderBy =
+  | 'CREATED_AT_DESC'
+  | 'NAME_ASC'
+  | 'SCORE_DESC'
+  | 'UPDATED_AT_DESC';
+
+export type CompanySnapshot = {
+  __typename: 'CompanySnapshot';
+  capture_timestamp: Maybe<Scalars['String']['output']>;
+  company_id: Scalars['Int']['output'];
+  content_hash: Maybe<Scalars['String']['output']>;
+  crawl_id: Maybe<Scalars['String']['output']>;
+  created_at: Scalars['String']['output'];
+  evidence: Evidence;
+  extracted: Maybe<Scalars['JSON']['output']>;
+  fetched_at: Scalars['String']['output'];
+  http_status: Maybe<Scalars['Int']['output']>;
+  id: Scalars['Int']['output'];
+  jsonld: Maybe<Scalars['JSON']['output']>;
+  mime: Maybe<Scalars['String']['output']>;
+  source_url: Scalars['String']['output'];
+  text_sample: Maybe<Scalars['String']['output']>;
+};
+
+export type Contact = {
+  __typename: 'Contact';
+  bouncedEmails: Array<Scalars['String']['output']>;
+  company: Maybe<Scalars['String']['output']>;
+  companyId: Maybe<Scalars['Int']['output']>;
+  createdAt: Scalars['String']['output'];
+  doNotContact: Scalars['Boolean']['output'];
+  email: Maybe<Scalars['String']['output']>;
+  emailVerified: Maybe<Scalars['Boolean']['output']>;
+  emails: Array<Scalars['String']['output']>;
+  firstName: Scalars['String']['output'];
+  githubHandle: Maybe<Scalars['String']['output']>;
+  id: Scalars['Int']['output'];
+  lastName: Scalars['String']['output'];
+  linkedinUrl: Maybe<Scalars['String']['output']>;
+  nbExecutionTimeMs: Maybe<Scalars['Int']['output']>;
+  nbFlags: Array<Scalars['String']['output']>;
+  nbResult: Maybe<Scalars['String']['output']>;
+  nbRetryToken: Maybe<Scalars['String']['output']>;
+  nbStatus: Maybe<Scalars['String']['output']>;
+  nbSuggestedCorrection: Maybe<Scalars['String']['output']>;
+  position: Maybe<Scalars['String']['output']>;
+  tags: Array<Scalars['String']['output']>;
+  telegramHandle: Maybe<Scalars['String']['output']>;
+  updatedAt: Scalars['String']['output'];
+  userId: Maybe<Scalars['String']['output']>;
+};
+
+export type ContactEmail = {
+  __typename: 'ContactEmail';
+  contactId: Scalars['Int']['output'];
+  createdAt: Scalars['String']['output'];
+  fromEmail: Scalars['String']['output'];
+  id: Scalars['Int']['output'];
+  recipientName: Maybe<Scalars['String']['output']>;
+  resendId: Scalars['String']['output'];
+  sentAt: Maybe<Scalars['String']['output']>;
+  status: Scalars['String']['output'];
+  subject: Scalars['String']['output'];
+  textContent: Maybe<Scalars['String']['output']>;
+  toEmails: Array<Scalars['String']['output']>;
+  updatedAt: Scalars['String']['output'];
+};
+
+export type ContactInput = {
+  company?: InputMaybe<Scalars['String']['input']>;
+  companyId?: InputMaybe<Scalars['Int']['input']>;
+  email?: InputMaybe<Scalars['String']['input']>;
+  emails?: InputMaybe<Array<Scalars['String']['input']>>;
+  firstName: Scalars['String']['input'];
+  githubHandle?: InputMaybe<Scalars['String']['input']>;
+  lastName: Scalars['String']['input'];
+  linkedinUrl?: InputMaybe<Scalars['String']['input']>;
+  position?: InputMaybe<Scalars['String']['input']>;
+  tags?: InputMaybe<Array<Scalars['String']['input']>>;
+  telegramHandle?: InputMaybe<Scalars['String']['input']>;
+};
+
+export type ContactsResult = {
+  __typename: 'ContactsResult';
+  contacts: Array<Contact>;
+  totalCount: Scalars['Int']['output'];
+};
+
+export type CreateCompanyInput = {
+  ai_classification_confidence?: InputMaybe<Scalars['Float']['input']>;
+  ai_classification_reason?: InputMaybe<Scalars['String']['input']>;
+  ai_tier?: InputMaybe<Scalars['Int']['input']>;
+  category?: InputMaybe<CompanyCategory>;
+  description?: InputMaybe<Scalars['String']['input']>;
+  industries?: InputMaybe<Array<Scalars['String']['input']>>;
+  industry?: InputMaybe<Scalars['String']['input']>;
+  key: Scalars['String']['input'];
+  linkedin_url?: InputMaybe<Scalars['String']['input']>;
+  location?: InputMaybe<Scalars['String']['input']>;
+  logo_url?: InputMaybe<Scalars['String']['input']>;
+  name: Scalars['String']['input'];
+  service_taxonomy?: InputMaybe<Array<Scalars['String']['input']>>;
+  services?: InputMaybe<Array<Scalars['String']['input']>>;
+  size?: InputMaybe<Scalars['String']['input']>;
+  tags?: InputMaybe<Array<Scalars['String']['input']>>;
+  website?: InputMaybe<Scalars['String']['input']>;
+};
+
+export type CreateContactInput = {
+  companyId?: InputMaybe<Scalars['Int']['input']>;
+  email?: InputMaybe<Scalars['String']['input']>;
+  emails?: InputMaybe<Array<Scalars['String']['input']>>;
+  firstName: Scalars['String']['input'];
+  githubHandle?: InputMaybe<Scalars['String']['input']>;
+  lastName?: InputMaybe<Scalars['String']['input']>;
+  linkedinUrl?: InputMaybe<Scalars['String']['input']>;
+  position?: InputMaybe<Scalars['String']['input']>;
+  tags?: InputMaybe<Array<Scalars['String']['input']>>;
+  telegramHandle?: InputMaybe<Scalars['String']['input']>;
+};
+
+export type CreateLangSmithPromptInput = {
+  description?: InputMaybe<Scalars['String']['input']>;
+  isPublic?: InputMaybe<Scalars['Boolean']['input']>;
+  readme?: InputMaybe<Scalars['String']['input']>;
+  tags?: InputMaybe<Array<Scalars['String']['input']>>;
+};
+
+export type CreateOpportunityInput = {
+  applicationNotes?: InputMaybe<Scalars['String']['input']>;
+  companyId?: InputMaybe<Scalars['Int']['input']>;
+  contactId?: InputMaybe<Scalars['Int']['input']>;
+  deadline?: InputMaybe<Scalars['String']['input']>;
+  endDate?: InputMaybe<Scalars['String']['input']>;
+  rewardText?: InputMaybe<Scalars['String']['input']>;
+  rewardUsd?: InputMaybe<Scalars['Float']['input']>;
+  source?: InputMaybe<Scalars['String']['input']>;
+  startDate?: InputMaybe<Scalars['String']['input']>;
+  status?: InputMaybe<Scalars['String']['input']>;
+  tags?: InputMaybe<Array<Scalars['String']['input']>>;
+  title: Scalars['String']['input'];
+  url?: InputMaybe<Scalars['String']['input']>;
+};
+
+export type CreatePromptInput = {
+  chatMessages?: InputMaybe<Array<ChatMessageInput>>;
+  config?: InputMaybe<PromptConfigInput>;
+  labels?: InputMaybe<Array<Scalars['String']['input']>>;
+  name: Scalars['String']['input'];
+  prompt?: InputMaybe<Scalars['String']['input']>;
+  tags?: InputMaybe<Array<Scalars['String']['input']>>;
+  type: PromptType;
+};
+
+export type CreateTrackInput = {
+  description?: InputMaybe<Scalars['String']['input']>;
+  level?: InputMaybe<Scalars['String']['input']>;
+  slug: Scalars['String']['input'];
+  title: Scalars['String']['input'];
+};
+
+export type DeleteApplicationResponse = {
+  __typename: 'DeleteApplicationResponse';
+  message: Maybe<Scalars['String']['output']>;
+  success: Scalars['Boolean']['output'];
+};
+
+export type DeleteCompanyResponse = {
+  __typename: 'DeleteCompanyResponse';
+  message: Maybe<Scalars['String']['output']>;
+  success: Scalars['Boolean']['output'];
+};
+
+export type DeleteContactResult = {
+  __typename: 'DeleteContactResult';
+  message: Scalars['String']['output'];
+  success: Scalars['Boolean']['output'];
+};
+
+export type DeleteJobResponse = {
+  __typename: 'DeleteJobResponse';
+  message: Maybe<Scalars['String']['output']>;
+  success: Scalars['Boolean']['output'];
+};
+
+export type DeleteOpportunityResult = {
+  __typename: 'DeleteOpportunityResult';
+  message: Maybe<Scalars['String']['output']>;
+  success: Scalars['Boolean']['output'];
+};
+
+export type EnhanceAllContactsResult = {
+  __typename: 'EnhanceAllContactsResult';
+  companiesProcessed: Scalars['Int']['output'];
+  errors: Array<Scalars['String']['output']>;
+  message: Scalars['String']['output'];
+  success: Scalars['Boolean']['output'];
+  totalContactsProcessed: Scalars['Int']['output'];
+  totalEmailsFound: Scalars['Int']['output'];
+};
+
+export type EnhanceCompanyResponse = {
+  __typename: 'EnhanceCompanyResponse';
+  companyId: Maybe<Scalars['Int']['output']>;
+  companyKey: Maybe<Scalars['String']['output']>;
+  message: Maybe<Scalars['String']['output']>;
+  success: Scalars['Boolean']['output'];
+};
+
+/** Response from enhancing a job with ATS data */
+export type EnhanceJobResponse = {
+  __typename: 'EnhanceJobResponse';
+  /** The updated job record with enhanced data from the ATS */
+  job: Maybe<Job>;
+  /** Human-readable message about the operation result */
+  message: Maybe<Scalars['String']['output']>;
+  /** Whether the enhancement was successful */
+  success: Scalars['Boolean']['output'];
+};
+
+export type Evidence = {
+  __typename: 'Evidence';
+  capture_timestamp: Maybe<Scalars['String']['output']>;
+  content_hash: Maybe<Scalars['String']['output']>;
+  crawl_id: Maybe<Scalars['String']['output']>;
+  extractor_version: Maybe<Scalars['String']['output']>;
+  http_status: Maybe<Scalars['Int']['output']>;
+  method: ExtractMethod;
+  mime: Maybe<Scalars['String']['output']>;
+  observed_at: Scalars['String']['output'];
+  source_type: SourceType;
+  source_url: Scalars['String']['output'];
+  warc: Maybe<WarcPointer>;
+};
+
+export type EvidenceInput = {
+  capture_timestamp?: InputMaybe<Scalars['String']['input']>;
+  content_hash?: InputMaybe<Scalars['String']['input']>;
+  crawl_id?: InputMaybe<Scalars['String']['input']>;
+  extractor_version?: InputMaybe<Scalars['String']['input']>;
+  http_status?: InputMaybe<Scalars['Int']['input']>;
+  method: ExtractMethod;
+  mime?: InputMaybe<Scalars['String']['input']>;
+  observed_at: Scalars['String']['input'];
+  source_type: SourceType;
+  source_url: Scalars['String']['input'];
+  warc?: InputMaybe<WarcPointerInput>;
+};
+
+export type ExtractMethod =
+  | 'DOM'
+  | 'HEURISTIC'
+  | 'JSONLD'
+  | 'LLM'
+  | 'META';
+
+export type FindContactEmailResult = {
+  __typename: 'FindContactEmailResult';
+  candidatesTried: Scalars['Int']['output'];
+  email: Maybe<Scalars['String']['output']>;
+  emailFound: Scalars['Boolean']['output'];
+  message: Scalars['String']['output'];
+  success: Scalars['Boolean']['output'];
+  verified: Maybe<Scalars['Boolean']['output']>;
+};
+
+export type GreenhouseCompliance = {
+  __typename: 'GreenhouseCompliance';
+  description: Maybe<Scalars['String']['output']>;
+  questions: Maybe<Array<GreenhouseQuestion>>;
+  type: Scalars['String']['output'];
+};
+
+export type GreenhouseDataCompliance = {
+  __typename: 'GreenhouseDataCompliance';
+  demographic_data_consent_applies: Scalars['Boolean']['output'];
+  requires_consent: Scalars['Boolean']['output'];
+  requires_processing_consent: Scalars['Boolean']['output'];
+  requires_retention_consent: Scalars['Boolean']['output'];
+  retention_period: Maybe<Scalars['Int']['output']>;
+  type: Scalars['String']['output'];
+};
+
+export type GreenhouseDemographicQuestions = {
+  __typename: 'GreenhouseDemographicQuestions';
+  description: Maybe<Scalars['String']['output']>;
+  header: Maybe<Scalars['String']['output']>;
+  questions: Maybe<Array<GreenhouseQuestion>>;
+};
+
+export type GreenhouseDepartment = {
+  __typename: 'GreenhouseDepartment';
+  child_ids: Maybe<Array<Scalars['String']['output']>>;
+  id: Scalars['String']['output'];
+  name: Scalars['String']['output'];
+  parent_id: Maybe<Scalars['String']['output']>;
+};
+
+export type GreenhouseMetadata = {
+  __typename: 'GreenhouseMetadata';
+  id: Scalars['String']['output'];
+  name: Scalars['String']['output'];
+  value: Maybe<Scalars['String']['output']>;
+  value_type: Maybe<Scalars['String']['output']>;
+};
+
+export type GreenhouseOffice = {
+  __typename: 'GreenhouseOffice';
+  child_ids: Maybe<Array<Scalars['String']['output']>>;
+  id: Scalars['String']['output'];
+  location: Maybe<Scalars['String']['output']>;
+  name: Scalars['String']['output'];
+  parent_id: Maybe<Scalars['String']['output']>;
+};
+
+export type GreenhouseQuestion = {
+  __typename: 'GreenhouseQuestion';
+  description: Maybe<Scalars['String']['output']>;
+  fields: Maybe<Array<GreenhouseQuestionField>>;
+  label: Scalars['String']['output'];
+  required: Scalars['Boolean']['output'];
+};
+
+export type GreenhouseQuestionField = {
+  __typename: 'GreenhouseQuestionField';
+  name: Maybe<Scalars['String']['output']>;
+  type: Scalars['String']['output'];
+};
+
+export type ImportContactsResult = {
+  __typename: 'ImportContactsResult';
+  errors: Array<Scalars['String']['output']>;
+  failed: Scalars['Int']['output'];
+  imported: Scalars['Int']['output'];
+  success: Scalars['Boolean']['output'];
+};
+
+export type Job = {
+  __typename: 'Job';
+  absolute_url: Maybe<Scalars['String']['output']>;
+  ashby_address: Maybe<AshbyAddress>;
+  ashby_apply_url: Maybe<Scalars['String']['output']>;
+  ashby_compensation: Maybe<AshbyCompensation>;
+  ashby_department: Maybe<Scalars['String']['output']>;
+  ashby_employment_type: Maybe<Scalars['String']['output']>;
+  ashby_is_listed: Maybe<Scalars['Boolean']['output']>;
+  ashby_is_remote: Maybe<Scalars['Boolean']['output']>;
+  ashby_job_url: Maybe<Scalars['String']['output']>;
+  ashby_secondary_locations: Maybe<Array<AshbySecondaryLocation>>;
+  ashby_team: Maybe<Scalars['String']['output']>;
+  company: Maybe<Company>;
+  company_id: Maybe<Scalars['Int']['output']>;
+  company_key: Scalars['String']['output'];
+  company_name: Maybe<Scalars['String']['output']>;
+  compliance: Maybe<Array<GreenhouseCompliance>>;
+  created_at: Scalars['String']['output'];
+  data_compliance: Maybe<Array<GreenhouseDataCompliance>>;
+  demographic_questions: Maybe<GreenhouseDemographicQuestions>;
+  departments: Maybe<Array<GreenhouseDepartment>>;
+  description: Maybe<Scalars['String']['output']>;
+  external_id: Scalars['String']['output'];
+  id: Scalars['Int']['output'];
+  internal_job_id: Maybe<Scalars['String']['output']>;
+  /** Whether this job is classified as Remote EU — read directly from the DB column. */
+  is_remote_eu: Scalars['Boolean']['output'];
+  language: Maybe<Scalars['String']['output']>;
+  location: Maybe<Scalars['String']['output']>;
+  location_questions: Maybe<Array<GreenhouseQuestion>>;
+  metadata: Maybe<Array<GreenhouseMetadata>>;
+  offices: Maybe<Array<GreenhouseOffice>>;
+  /**
+   * Canonical publication date. All ATS sources (Greenhouse, Ashby)
+   * write to the unified first_published DB column at ingestion time.
+   * Falls back to posted_at (ingestion timestamp) when no ATS date exists.
+   */
+  publishedAt: Scalars['String']['output'];
+  questions: Maybe<Array<GreenhouseQuestion>>;
+  remote_eu_confidence: Maybe<ClassificationConfidence>;
+  remote_eu_reason: Maybe<Scalars['String']['output']>;
+  requisition_id: Maybe<Scalars['String']['output']>;
+  score: Maybe<Scalars['Float']['output']>;
+  score_reason: Maybe<Scalars['String']['output']>;
+  skillMatch: Maybe<SkillMatch>;
+  skills: Maybe<Array<JobSkill>>;
+  source_id: Maybe<Scalars['String']['output']>;
+  source_kind: Scalars['String']['output'];
+  status: Maybe<JobStatus>;
+  title: Scalars['String']['output'];
+  updated_at: Scalars['String']['output'];
+  url: Scalars['String']['output'];
+};
+
+export type JobSkill = {
+  __typename: 'JobSkill';
+  confidence: Maybe<Scalars['Float']['output']>;
+  evidence: Maybe<Scalars['String']['output']>;
+  level: Scalars['String']['output'];
+  tag: Scalars['String']['output'];
+};
+
+/**
+ * Pipeline status for a job posting.
+ * Mirrors workers/process-jobs/src/entry.py JobStatus enum — values must stay in sync.
+ */
+export type JobStatus =
+  | 'enhanced'
+  | 'error'
+  | 'eu_remote'
+  | 'new'
+  | 'non_eu'
+  | 'reported'
+  | 'role_match'
+  | 'role_nomatch';
+
+export type JobsResponse = {
+  __typename: 'JobsResponse';
+  jobs: Array<Job>;
+  totalCount: Scalars['Int']['output'];
+};
+
+export type LangSmithPrompt = {
+  __typename: 'LangSmithPrompt';
+  createdAt: Scalars['String']['output'];
+  description: Maybe<Scalars['String']['output']>;
+  fullName: Scalars['String']['output'];
+  id: Scalars['String']['output'];
+  isArchived: Scalars['Boolean']['output'];
+  isPublic: Scalars['Boolean']['output'];
+  lastCommitHash: Maybe<Scalars['String']['output']>;
+  likedByAuthUser: Scalars['Boolean']['output'];
+  numCommits: Scalars['Int']['output'];
+  numDownloads: Scalars['Int']['output'];
+  numLikes: Scalars['Int']['output'];
+  numViews: Scalars['Int']['output'];
+  owner: Maybe<Scalars['String']['output']>;
+  promptHandle: Scalars['String']['output'];
+  readme: Maybe<Scalars['String']['output']>;
+  tags: Array<Scalars['String']['output']>;
+  tenantId: Scalars['String']['output'];
+  updatedAt: Scalars['String']['output'];
+};
+
+export type LangSmithPromptCommit = {
+  __typename: 'LangSmithPromptCommit';
+  commitHash: Scalars['String']['output'];
+  examples: Array<Scalars['JSON']['output']>;
+  manifest: Scalars['JSON']['output'];
+  owner: Scalars['String']['output'];
+  promptName: Scalars['String']['output'];
+};
+
+export type Mutation = {
+  __typename: 'Mutation';
+  add_company_facts: Array<CompanyFact>;
+  applyEmailPattern: ApplyEmailPatternResult;
+  createApplication: Application;
+  createCompany: Company;
+  createContact: Contact;
+  createLangSmithPrompt: LangSmithPrompt;
+  createOpportunity: Opportunity;
+  createPrompt: Prompt;
+  createStudyTopic: StudyTopic;
+  createTrack: Track;
+  deleteAllJobs: DeleteJobResponse;
+  deleteApplication: DeleteApplicationResponse;
+  deleteCompany: DeleteCompanyResponse;
+  deleteContact: DeleteContactResult;
+  deleteJob: DeleteJobResponse;
+  deleteLangSmithPrompt: Scalars['Boolean']['output'];
+  deleteOpportunity: DeleteOpportunityResult;
+  deleteStackEntry: StackMutationResponse;
+  enhanceAllContacts: EnhanceAllContactsResult;
+  enhanceCompany: EnhanceCompanyResponse;
+  /**
+   * Enhance a job posting by fetching detailed data from the ATS (Applicant Tracking System).
+   *
+   * Supported ATS sources:
+   * - greenhouse: Greenhouse ATS (https://greenhouse.io)
+   * - ashby: Ashby ATS (https://ashbyhq.com)
+   *
+   * For Greenhouse:
+   * - jobId: The job posting ID from the URL (e.g., "5802159004" from https://job-boards.greenhouse.io/grafanalabs/jobs/5802159004)
+   * - company: The board token (e.g., "grafanalabs")
+   *
+   * For Ashby:
+   * - jobId: The posting ID
+   * - company: The board name
+   *
+   * The mutation will:
+   * 1. Fetch comprehensive job data from the ATS API
+   * 2. Save enhanced fields (description, departments, offices, questions, etc.)
+   * 3. Return the updated job with full ATS data
+   */
+  enhanceJobFromATS: EnhanceJobResponse;
+  findCompanyEmails: EnhanceAllContactsResult;
+  findContactEmail: FindContactEmailResult;
+  generateAgenticCoding: Application;
+  generateBackendPrep: Application;
+  generateInterviewPrep: Application;
+  generateInterviewQuestions: Application;
+  generateRequirementFromSelection: Application;
+  generateResearch: Array<ResearchItem>;
+  generateStudyConceptExplanation: StudyConceptExplanation;
+  generateStudyDeepDive: StudyTopic;
+  generateStudyTopicDeepDive: Application;
+  generateStudyTopicsForCategory: Array<StudyTopic>;
+  generateTopicDeepDive: Application;
+  importContacts: ImportContactsResult;
+  ingestResumeParse: Maybe<ResumeIngestResult>;
+  ingest_company_snapshot: CompanySnapshot;
+  linkSelectionToRequirement: Application;
+  linkTrackToApplication: Application;
+  /**
+   * Trigger classification/enhancement of all unprocessed jobs via the Cloudflare Worker.
+   * Calls the classify-jobs CF worker (POST) which runs DeepSeek-based classification
+   * for remote-EU eligibility on every unclassified job.
+   */
+  processAllJobs: ProcessAllJobsResponse;
+  pushLangSmithPrompt: Scalars['String']['output'];
+  rateResumeAnswer: Maybe<Scalars['Boolean']['output']>;
+  /**
+   * Report a job as irrelevant, spam, or incorrectly classified.
+   * Sets the job status to "reported" so it can be reviewed or excluded.
+   * Requires authentication.
+   */
+  reportJob: Maybe<Job>;
+  unlinkTrackFromApplication: Application;
+  updateApplication: Application;
+  updateCompany: Company;
+  updateContact: Contact;
+  updateLangSmithPrompt: LangSmithPrompt;
+  updateOpportunity: Opportunity;
+  updatePromptLabel: Prompt;
+  updateUserSettings: UserSettings;
+  uploadResume: Maybe<ResumeUploadResult>;
+  upsert_company_ats_boards: Array<AtsBoard>;
+};
+
+
+export type MutationAdd_Company_FactsArgs = {
+  company_id: Scalars['Int']['input'];
+  facts: Array<CompanyFactInput>;
+};
+
+
+export type MutationApplyEmailPatternArgs = {
+  companyId: Scalars['Int']['input'];
+};
+
+
+export type MutationCreateApplicationArgs = {
+  input: ApplicationInput;
+};
+
+
+export type MutationCreateCompanyArgs = {
+  input: CreateCompanyInput;
+};
+
+
+export type MutationCreateContactArgs = {
+  input: CreateContactInput;
+};
+
+
+export type MutationCreateLangSmithPromptArgs = {
+  input?: InputMaybe<CreateLangSmithPromptInput>;
+  promptIdentifier: Scalars['String']['input'];
+};
+
+
+export type MutationCreateOpportunityArgs = {
+  input: CreateOpportunityInput;
+};
+
+
+export type MutationCreatePromptArgs = {
+  input: CreatePromptInput;
+};
+
+
+export type MutationCreateStudyTopicArgs = {
+  category?: InputMaybe<Scalars['String']['input']>;
+  difficulty?: InputMaybe<Scalars['String']['input']>;
+  summary?: InputMaybe<Scalars['String']['input']>;
+  tags?: InputMaybe<Array<Scalars['String']['input']>>;
+  title?: InputMaybe<Scalars['String']['input']>;
+  topic?: InputMaybe<Scalars['String']['input']>;
+};
+
+
+export type MutationCreateTrackArgs = {
+  input: CreateTrackInput;
+};
+
+
+export type MutationDeleteApplicationArgs = {
+  id: Scalars['Int']['input'];
+};
+
+
+export type MutationDeleteCompanyArgs = {
+  id: Scalars['Int']['input'];
+};
+
+
+export type MutationDeleteContactArgs = {
+  id: Scalars['Int']['input'];
+};
+
+
+export type MutationDeleteJobArgs = {
+  id: Scalars['Int']['input'];
+};
+
+
+export type MutationDeleteLangSmithPromptArgs = {
+  promptIdentifier: Scalars['String']['input'];
+};
+
+
+export type MutationDeleteOpportunityArgs = {
+  id: Scalars['String']['input'];
+};
+
+
+export type MutationDeleteStackEntryArgs = {
+  name: Scalars['String']['input'];
+};
+
+
+export type MutationEnhanceCompanyArgs = {
+  id?: InputMaybe<Scalars['Int']['input']>;
+  key?: InputMaybe<Scalars['String']['input']>;
+};
+
+
+export type MutationEnhanceJobFromAtsArgs = {
+  company: Scalars['String']['input'];
+  jobId: Scalars['String']['input'];
+  source: Scalars['String']['input'];
+};
+
+
+export type MutationFindCompanyEmailsArgs = {
+  companyId: Scalars['Int']['input'];
+};
+
+
+export type MutationFindContactEmailArgs = {
+  contactId: Scalars['Int']['input'];
+};
+
+
+export type MutationGenerateAgenticCodingArgs = {
+  applicationId: Scalars['Int']['input'];
+};
+
+
+export type MutationGenerateBackendPrepArgs = {
+  applicationId: Scalars['Int']['input'];
+};
+
+
+export type MutationGenerateInterviewPrepArgs = {
+  applicationId: Scalars['Int']['input'];
+};
+
+
+export type MutationGenerateInterviewQuestionsArgs = {
+  applicationId: Scalars['Int']['input'];
+  type: Scalars['String']['input'];
+};
+
+
+export type MutationGenerateRequirementFromSelectionArgs = {
+  applicationId: Scalars['Int']['input'];
+  selectedText: Scalars['String']['input'];
+};
+
+
+export type MutationGenerateResearchArgs = {
+  goalDescription: Scalars['String']['input'];
+};
+
+
+export type MutationGenerateStudyConceptExplanationArgs = {
+  context?: InputMaybe<Scalars['String']['input']>;
+  selectedText: Scalars['String']['input'];
+  studyTopicId: Scalars['ID']['input'];
+};
+
+
+export type MutationGenerateStudyDeepDiveArgs = {
+  force?: InputMaybe<Scalars['Boolean']['input']>;
+  studyTopicId: Scalars['ID']['input'];
+};
+
+
+export type MutationGenerateStudyTopicDeepDiveArgs = {
+  applicationId: Scalars['Int']['input'];
+  force?: InputMaybe<Scalars['Boolean']['input']>;
+  requirement: Scalars['String']['input'];
+  studyTopic: Scalars['String']['input'];
+};
+
+
+export type MutationGenerateStudyTopicsForCategoryArgs = {
+  category: Scalars['String']['input'];
+  count?: InputMaybe<Scalars['Int']['input']>;
+};
+
+
+export type MutationGenerateTopicDeepDiveArgs = {
+  applicationId: Scalars['Int']['input'];
+  force?: InputMaybe<Scalars['Boolean']['input']>;
+  requirement: Scalars['String']['input'];
+};
+
+
+export type MutationImportContactsArgs = {
+  contacts: Array<ContactInput>;
+};
+
+
+export type MutationIngestResumeParseArgs = {
+  email: Scalars['String']['input'];
+  filename: Scalars['String']['input'];
+  job_id: Scalars['String']['input'];
+};
+
+
+export type MutationIngest_Company_SnapshotArgs = {
+  capture_timestamp?: InputMaybe<Scalars['String']['input']>;
+  company_id: Scalars['Int']['input'];
+  content_hash?: InputMaybe<Scalars['String']['input']>;
+  crawl_id?: InputMaybe<Scalars['String']['input']>;
+  evidence: EvidenceInput;
+  extracted?: InputMaybe<Scalars['JSON']['input']>;
+  fetched_at: Scalars['String']['input'];
+  http_status?: InputMaybe<Scalars['Int']['input']>;
+  jsonld?: InputMaybe<Scalars['JSON']['input']>;
+  mime?: InputMaybe<Scalars['String']['input']>;
+  source_url: Scalars['String']['input'];
+  text_sample?: InputMaybe<Scalars['String']['input']>;
+};
+
+
+export type MutationLinkSelectionToRequirementArgs = {
+  applicationId: Scalars['Int']['input'];
+  requirement: Scalars['String']['input'];
+  sourceQuote: Scalars['String']['input'];
+};
+
+
+export type MutationLinkTrackToApplicationArgs = {
+  applicationId: Scalars['Int']['input'];
+  trackSlug: Scalars['String']['input'];
+};
+
+
+export type MutationProcessAllJobsArgs = {
+  limit?: InputMaybe<Scalars['Int']['input']>;
+};
+
+
+export type MutationPushLangSmithPromptArgs = {
+  input?: InputMaybe<PushLangSmithPromptInput>;
+  promptIdentifier: Scalars['String']['input'];
+};
+
+
+export type MutationRateResumeAnswerArgs = {
+  helpful: Scalars['Boolean']['input'];
+  traceId: Scalars['ID']['input'];
+};
+
+
+export type MutationReportJobArgs = {
+  id: Scalars['Int']['input'];
+};
+
+
+export type MutationUnlinkTrackFromApplicationArgs = {
+  applicationId: Scalars['Int']['input'];
+  trackSlug: Scalars['String']['input'];
+};
+
+
+export type MutationUpdateApplicationArgs = {
+  id: Scalars['Int']['input'];
+  input: UpdateApplicationInput;
+};
+
+
+export type MutationUpdateCompanyArgs = {
+  id: Scalars['Int']['input'];
+  input: UpdateCompanyInput;
+};
+
+
+export type MutationUpdateContactArgs = {
+  id: Scalars['Int']['input'];
+  input: UpdateContactInput;
+};
+
+
+export type MutationUpdateLangSmithPromptArgs = {
+  input: UpdateLangSmithPromptInput;
+  promptIdentifier: Scalars['String']['input'];
+};
+
+
+export type MutationUpdateOpportunityArgs = {
+  id: Scalars['String']['input'];
+  input: UpdateOpportunityInput;
+};
+
+
+export type MutationUpdatePromptLabelArgs = {
+  label: Scalars['String']['input'];
+  name: Scalars['String']['input'];
+  version: Scalars['Int']['input'];
+};
+
+
+export type MutationUpdateUserSettingsArgs = {
+  settings: UserSettingsInput;
+  userId: Scalars['String']['input'];
+};
+
+
+export type MutationUploadResumeArgs = {
+  email: Scalars['String']['input'];
+  filename: Scalars['String']['input'];
+  resumePdf: Scalars['String']['input'];
+};
+
+
+export type MutationUpsert_Company_Ats_BoardsArgs = {
+  boards: Array<AtsBoardUpsertInput>;
+  company_id: Scalars['Int']['input'];
+};
+
+export type OpportunitiesResult = {
+  __typename: 'OpportunitiesResult';
+  opportunities: Array<Opportunity>;
+  totalCount: Scalars['Int']['output'];
+};
+
+export type Opportunity = {
+  __typename: 'Opportunity';
+  applicationNotes: Maybe<Scalars['String']['output']>;
+  applicationStatus: Maybe<Scalars['String']['output']>;
+  applied: Scalars['Boolean']['output'];
+  appliedAt: Maybe<Scalars['String']['output']>;
+  company: Maybe<Company>;
+  companyId: Maybe<Scalars['Int']['output']>;
+  contactId: Maybe<Scalars['Int']['output']>;
+  createdAt: Scalars['String']['output'];
+  deadline: Maybe<Scalars['String']['output']>;
+  endDate: Maybe<Scalars['String']['output']>;
+  firstSeen: Maybe<Scalars['String']['output']>;
+  id: Scalars['String']['output'];
+  lastSeen: Maybe<Scalars['String']['output']>;
+  metadata: Maybe<Scalars['JSON']['output']>;
+  rawContext: Maybe<Scalars['String']['output']>;
+  rewardText: Maybe<Scalars['String']['output']>;
+  rewardUsd: Maybe<Scalars['Float']['output']>;
+  score: Maybe<Scalars['Int']['output']>;
+  source: Maybe<Scalars['String']['output']>;
+  startDate: Maybe<Scalars['String']['output']>;
+  status: Scalars['String']['output'];
+  tags: Array<Scalars['String']['output']>;
+  title: Scalars['String']['output'];
+  updatedAt: Scalars['String']['output'];
+  url: Maybe<Scalars['String']['output']>;
+};
+
+export type PrepCategory = {
+  __typename: 'PrepCategory';
+  description: Scalars['String']['output'];
+  emoji: Scalars['String']['output'];
+  id: Scalars['String']['output'];
+  name: Scalars['String']['output'];
+  resources: Array<PrepResource>;
+};
+
+export type PrepContent = {
+  __typename: 'PrepContent';
+  categories: Array<PrepCategory>;
+  totalResources: Scalars['Int']['output'];
+};
+
+export type PrepResource = {
+  __typename: 'PrepResource';
+  category: Scalars['String']['output'];
+  description: Scalars['String']['output'];
+  href: Scalars['URL']['output'];
+  id: Scalars['String']['output'];
+  tags: Array<Scalars['String']['output']>;
+  title: Scalars['String']['output'];
+};
+
+/** Response from triggering the classify-jobs Cloudflare Worker */
+export type ProcessAllJobsResponse = {
+  __typename: 'ProcessAllJobsResponse';
+  /** Number of errors during ATS enhancement */
+  enhanceErrors: Maybe<Scalars['Int']['output']>;
+  /** Number of jobs enhanced with ATS data in this run */
+  enhanced: Maybe<Scalars['Int']['output']>;
+  /** Number of errors encountered during classification */
+  errors: Maybe<Scalars['Int']['output']>;
+  /** Number of jobs classified as EU-remote */
+  euRemote: Maybe<Scalars['Int']['output']>;
+  message: Maybe<Scalars['String']['output']>;
+  /** Number of jobs classified as non-EU */
+  nonEuRemote: Maybe<Scalars['Int']['output']>;
+  /** Number of jobs classified in this run */
+  processed: Maybe<Scalars['Int']['output']>;
+  success: Scalars['Boolean']['output'];
+};
+
+export type Prompt = {
+  __typename: 'Prompt';
+  chatMessages: Maybe<Array<ChatMessage>>;
+  config: Maybe<PromptConfig>;
+  createdAt: Maybe<Scalars['String']['output']>;
+  createdBy: Maybe<Scalars['String']['output']>;
+  isUserSpecific: Scalars['Boolean']['output'];
+  labels: Maybe<Array<Scalars['String']['output']>>;
+  name: Scalars['String']['output'];
+  prompt: Maybe<Scalars['String']['output']>;
+  tags: Maybe<Array<Scalars['String']['output']>>;
+  type: PromptType;
+  updatedAt: Maybe<Scalars['String']['output']>;
+  version: Maybe<Scalars['Int']['output']>;
+};
+
+export type PromptConfig = {
+  __typename: 'PromptConfig';
+  max_tokens: Maybe<Scalars['Int']['output']>;
+  model: Maybe<Scalars['String']['output']>;
+  temperature: Maybe<Scalars['Float']['output']>;
+  top_p: Maybe<Scalars['Float']['output']>;
+};
+
+export type PromptConfigInput = {
+  max_tokens?: InputMaybe<Scalars['Int']['input']>;
+  model?: InputMaybe<Scalars['String']['input']>;
+  temperature?: InputMaybe<Scalars['Float']['input']>;
+  top_p?: InputMaybe<Scalars['Float']['input']>;
+};
+
+export type PromptType =
+  | 'CHAT'
+  | 'TEXT';
+
+export type PromptUsage = {
+  __typename: 'PromptUsage';
+  label: Maybe<Scalars['String']['output']>;
+  promptName: Scalars['String']['output'];
+  traceId: Maybe<Scalars['String']['output']>;
+  usedAt: Scalars['String']['output'];
+  userEmail: Scalars['String']['output'];
+  version: Maybe<Scalars['Int']['output']>;
+};
+
+export type PushLangSmithPromptInput = {
+  description?: InputMaybe<Scalars['String']['input']>;
+  isPublic?: InputMaybe<Scalars['Boolean']['input']>;
+  object?: InputMaybe<Scalars['JSON']['input']>;
+  parentCommitHash?: InputMaybe<Scalars['String']['input']>;
+  readme?: InputMaybe<Scalars['String']['input']>;
+  tags?: InputMaybe<Array<Scalars['String']['input']>>;
+};
+
+export type Query = {
+  __typename: 'Query';
+  application: Maybe<Application>;
+  applications: Array<Application>;
+  askAboutResume: Maybe<ResumeAnswer>;
+  companies: CompaniesResponse;
+  company: Maybe<Company>;
+  company_ats_boards: Array<AtsBoard>;
+  company_facts: Array<CompanyFact>;
+  company_snapshots: Array<CompanySnapshot>;
+  contact: Maybe<Contact>;
+  contactByEmail: Maybe<Contact>;
+  contactEmails: Array<ContactEmail>;
+  contacts: ContactsResult;
+  executeSql: TextToSqlResult;
+  job: Maybe<Job>;
+  jobs: JobsResponse;
+  langsmithPrompt: Maybe<LangSmithPrompt>;
+  langsmithPromptCommit: Maybe<LangSmithPromptCommit>;
+  langsmithPrompts: Array<LangSmithPrompt>;
+  myPromptUsage: Array<PromptUsage>;
+  opportunities: OpportunitiesResult;
+  opportunity: Maybe<Opportunity>;
+  prepResources: PrepContent;
+  prepResourcesByCategory: Array<PrepResource>;
+  prompt: Maybe<Prompt>;
+  prompts: Array<RegisteredPrompt>;
+  resendEmail: Maybe<ResendEmailDetail>;
+  resumeStatus: Maybe<ResumeStatus>;
+  studyCategories: Array<Scalars['String']['output']>;
+  studyTopic: Maybe<StudyTopic>;
+  studyTopics: Array<StudyTopic>;
+  textToSql: TextToSqlResult;
+  track: Maybe<Track>;
+  tracks: Array<Track>;
+  userSettings: Maybe<UserSettings>;
+};
+
+
+export type QueryApplicationArgs = {
+  id: Scalars['Int']['input'];
+};
+
+
+export type QueryAskAboutResumeArgs = {
+  email: Scalars['String']['input'];
+  question: Scalars['String']['input'];
+};
+
+
+export type QueryCompaniesArgs = {
+  filter?: InputMaybe<CompanyFilterInput>;
+  limit?: InputMaybe<Scalars['Int']['input']>;
+  offset?: InputMaybe<Scalars['Int']['input']>;
+  order_by?: InputMaybe<CompanyOrderBy>;
+};
+
+
+export type QueryCompanyArgs = {
+  id?: InputMaybe<Scalars['Int']['input']>;
+  key?: InputMaybe<Scalars['String']['input']>;
+};
+
+
+export type QueryCompany_Ats_BoardsArgs = {
+  company_id: Scalars['Int']['input'];
+};
+
+
+export type QueryCompany_FactsArgs = {
+  company_id: Scalars['Int']['input'];
+  field?: InputMaybe<Scalars['String']['input']>;
+  limit?: InputMaybe<Scalars['Int']['input']>;
+  offset?: InputMaybe<Scalars['Int']['input']>;
+};
+
+
+export type QueryCompany_SnapshotsArgs = {
+  company_id: Scalars['Int']['input'];
+  limit?: InputMaybe<Scalars['Int']['input']>;
+  offset?: InputMaybe<Scalars['Int']['input']>;
+};
+
+
+export type QueryContactArgs = {
+  id: Scalars['Int']['input'];
+};
+
+
+export type QueryContactByEmailArgs = {
+  email: Scalars['String']['input'];
+};
+
+
+export type QueryContactEmailsArgs = {
+  contactId: Scalars['Int']['input'];
+};
+
+
+export type QueryContactsArgs = {
+  companyId?: InputMaybe<Scalars['Int']['input']>;
+  limit?: InputMaybe<Scalars['Int']['input']>;
+  offset?: InputMaybe<Scalars['Int']['input']>;
+  search?: InputMaybe<Scalars['String']['input']>;
+};
+
+
+export type QueryExecuteSqlArgs = {
+  sql: Scalars['String']['input'];
+};
+
+
+export type QueryJobArgs = {
+  id: Scalars['String']['input'];
+};
+
+
+export type QueryJobsArgs = {
+  excludedCompanies?: InputMaybe<Array<Scalars['String']['input']>>;
+  limit?: InputMaybe<Scalars['Int']['input']>;
+  offset?: InputMaybe<Scalars['Int']['input']>;
+  remoteEuConfidence?: InputMaybe<Scalars['String']['input']>;
+  search?: InputMaybe<Scalars['String']['input']>;
+  showAll?: InputMaybe<Scalars['Boolean']['input']>;
+  skills?: InputMaybe<Array<Scalars['String']['input']>>;
+  sourceType?: InputMaybe<Scalars['String']['input']>;
+  sourceTypes?: InputMaybe<Array<Scalars['String']['input']>>;
+};
+
+
+export type QueryLangsmithPromptArgs = {
+  promptIdentifier: Scalars['String']['input'];
+};
+
+
+export type QueryLangsmithPromptCommitArgs = {
+  includeModel?: InputMaybe<Scalars['Boolean']['input']>;
+  promptIdentifier: Scalars['String']['input'];
+};
+
+
+export type QueryLangsmithPromptsArgs = {
+  isArchived?: InputMaybe<Scalars['Boolean']['input']>;
+  isPublic?: InputMaybe<Scalars['Boolean']['input']>;
+  query?: InputMaybe<Scalars['String']['input']>;
+};
+
+
+export type QueryMyPromptUsageArgs = {
+  limit?: InputMaybe<Scalars['Int']['input']>;
+};
+
+
+export type QueryOpportunitiesArgs = {
+  companyId?: InputMaybe<Scalars['Int']['input']>;
+  limit?: InputMaybe<Scalars['Int']['input']>;
+  offset?: InputMaybe<Scalars['Int']['input']>;
+  status?: InputMaybe<Scalars['String']['input']>;
+};
+
+
+export type QueryOpportunityArgs = {
+  id: Scalars['String']['input'];
+};
+
+
+export type QueryPrepResourcesByCategoryArgs = {
+  category: Scalars['String']['input'];
+};
+
+
+export type QueryPromptArgs = {
+  label?: InputMaybe<Scalars['String']['input']>;
+  name: Scalars['String']['input'];
+  version?: InputMaybe<Scalars['Int']['input']>;
+};
+
+
+export type QueryResendEmailArgs = {
+  resendId: Scalars['String']['input'];
+};
+
+
+export type QueryResumeStatusArgs = {
+  email: Scalars['String']['input'];
+};
+
+
+export type QueryStudyTopicArgs = {
+  category: Scalars['String']['input'];
+  topic: Scalars['String']['input'];
+};
+
+
+export type QueryStudyTopicsArgs = {
+  category: Scalars['String']['input'];
+};
+
+
+export type QueryTextToSqlArgs = {
+  question: Scalars['String']['input'];
+};
+
+
+export type QueryTrackArgs = {
+  slug: Scalars['String']['input'];
+};
+
+
+export type QueryTracksArgs = {
+  limit?: InputMaybe<Scalars['Int']['input']>;
+};
+
+
+export type QueryUserSettingsArgs = {
+  userId: Scalars['String']['input'];
+};
+
+export type QuestionAnswer = {
+  __typename: 'QuestionAnswer';
+  answerText: Scalars['String']['output'];
+  questionId: Scalars['String']['output'];
+  questionText: Scalars['String']['output'];
+};
+
+export type QuestionAnswerInput = {
+  answerText: Scalars['String']['input'];
+  questionId: Scalars['String']['input'];
+  questionText: Scalars['String']['input'];
+};
+
+export type RegisteredPrompt = {
+  __typename: 'RegisteredPrompt';
+  content: Maybe<Scalars['JSON']['output']>;
+  labels: Array<Scalars['String']['output']>;
+  lastConfig: Maybe<Scalars['JSON']['output']>;
+  lastUpdatedAt: Scalars['String']['output'];
+  lastUsedBy: Maybe<Scalars['String']['output']>;
+  name: Scalars['String']['output'];
+  tags: Array<Scalars['String']['output']>;
+  type: Scalars['String']['output'];
+  usageCount: Maybe<Scalars['Int']['output']>;
+  versions: Array<Scalars['Int']['output']>;
+};
+
+export type ResearchItem = {
+  __typename: 'ResearchItem';
+  id: Scalars['String']['output'];
+  relevance: Maybe<Scalars['String']['output']>;
+  summary: Scalars['String']['output'];
+  title: Scalars['String']['output'];
+  url: Scalars['URL']['output'];
+};
+
+export type ResendEmailDetail = {
+  __typename: 'ResendEmailDetail';
+  bcc: Maybe<Array<Scalars['String']['output']>>;
+  cc: Maybe<Array<Scalars['String']['output']>>;
+  createdAt: Scalars['String']['output'];
+  from: Scalars['String']['output'];
+  html: Maybe<Scalars['String']['output']>;
+  id: Scalars['String']['output'];
+  lastEvent: Maybe<Scalars['String']['output']>;
+  scheduledAt: Maybe<Scalars['String']['output']>;
+  subject: Maybe<Scalars['String']['output']>;
+  text: Maybe<Scalars['String']['output']>;
+  to: Array<Scalars['String']['output']>;
+};
+
+export type ResumeAnswer = {
+  __typename: 'ResumeAnswer';
+  answer: Scalars['String']['output'];
+  context_count: Scalars['Int']['output'];
+  trace_id: Maybe<Scalars['String']['output']>;
+};
+
+export type ResumeIngestResult = {
+  __typename: 'ResumeIngestResult';
+  chunks_stored: Maybe<Scalars['Int']['output']>;
+  error: Maybe<Scalars['String']['output']>;
+  job_id: Scalars['String']['output'];
+  resume_id: Maybe<Scalars['String']['output']>;
+  status: Scalars['String']['output'];
+  success: Scalars['Boolean']['output'];
+};
+
+export type ResumeStatus = {
+  __typename: 'ResumeStatus';
+  chunk_count: Maybe<Scalars['Int']['output']>;
+  exists: Scalars['Boolean']['output'];
+  filename: Maybe<Scalars['String']['output']>;
+  ingested_at: Maybe<Scalars['String']['output']>;
+  resume_id: Maybe<Scalars['String']['output']>;
+};
+
+export type ResumeUploadResult = {
+  __typename: 'ResumeUploadResult';
+  job_id: Scalars['String']['output'];
+  status: Scalars['String']['output'];
+  success: Scalars['Boolean']['output'];
+  tier: Scalars['String']['output'];
+};
+
+export type SkillMatch = {
+  __typename: 'SkillMatch';
+  details: Array<SkillMatchDetail>;
+  jobCoverage: Scalars['Float']['output'];
+  matchedCount: Scalars['Int']['output'];
+  requiredCoverage: Scalars['Float']['output'];
+  score: Scalars['Float']['output'];
+  totalPreferred: Scalars['Int']['output'];
+  userCoverage: Scalars['Float']['output'];
+};
+
+export type SkillMatchDetail = {
+  __typename: 'SkillMatchDetail';
+  level: Scalars['String']['output'];
+  matched: Scalars['Boolean']['output'];
+  tag: Scalars['String']['output'];
+};
+
+export type SourceType =
+  | 'COMMONCRAWL'
+  | 'LIVE_FETCH'
+  | 'MANUAL'
+  | 'PARTNER';
+
+export type StackMutationResponse = {
+  __typename: 'StackMutationResponse';
+  message: Maybe<Scalars['String']['output']>;
+  success: Scalars['Boolean']['output'];
+};
+
+export type StudyConceptExplanation = {
+  __typename: 'StudyConceptExplanation';
+  createdAt: Scalars['DateTime']['output'];
+  explanation: Scalars['String']['output'];
+  id: Scalars['ID']['output'];
+  selectedText: Scalars['String']['output'];
+};
+
+export type StudyTopic = {
+  __typename: 'StudyTopic';
+  bodyMd: Maybe<Scalars['String']['output']>;
+  category: Scalars['String']['output'];
+  createdAt: Scalars['DateTime']['output'];
+  deepDive: Maybe<Scalars['String']['output']>;
+  difficulty: Scalars['String']['output'];
+  id: Scalars['ID']['output'];
+  summary: Maybe<Scalars['String']['output']>;
+  tags: Array<Scalars['String']['output']>;
+  title: Scalars['String']['output'];
+  topic: Scalars['String']['output'];
+};
+
+export type TextToSqlResult = {
+  __typename: 'TextToSqlResult';
+  columns: Array<Scalars['String']['output']>;
+  drilldownSearchQuery: Maybe<Scalars['String']['output']>;
+  explanation: Maybe<Scalars['String']['output']>;
+  rows: Array<Maybe<Array<Maybe<Scalars['JSON']['output']>>>>;
+  sql: Scalars['String']['output'];
+};
+
+export type Track = {
+  __typename: 'Track';
+  description: Maybe<Scalars['String']['output']>;
+  id: Scalars['ID']['output'];
+  items: Array<TrackItem>;
+  level: Maybe<Scalars['String']['output']>;
+  slug: Scalars['String']['output'];
+  title: Scalars['String']['output'];
+};
+
+export type TrackItem = {
+  __typename: 'TrackItem';
+  children: Array<TrackItem>;
+  contentRef: Maybe<Scalars['String']['output']>;
+  difficulty: Maybe<Scalars['Int']['output']>;
+  id: Scalars['ID']['output'];
+  kind: Scalars['String']['output'];
+  position: Scalars['Int']['output'];
+  prereqs: Array<Scalars['ID']['output']>;
+  promptRef: Maybe<Scalars['String']['output']>;
+  tags: Array<Scalars['String']['output']>;
+  title: Scalars['String']['output'];
+};
+
+export type UpdateApplicationInput = {
+  companyName?: InputMaybe<Scalars['String']['input']>;
+  jobDescription?: InputMaybe<Scalars['String']['input']>;
+  notes?: InputMaybe<Scalars['String']['input']>;
+  status?: InputMaybe<ApplicationStatus>;
+};
+
+export type UpdateCompanyInput = {
+  ai_classification_confidence?: InputMaybe<Scalars['Float']['input']>;
+  ai_classification_reason?: InputMaybe<Scalars['String']['input']>;
+  ai_tier?: InputMaybe<Scalars['Int']['input']>;
+  category?: InputMaybe<CompanyCategory>;
+  description?: InputMaybe<Scalars['String']['input']>;
+  industries?: InputMaybe<Array<Scalars['String']['input']>>;
+  industry?: InputMaybe<Scalars['String']['input']>;
+  is_hidden?: InputMaybe<Scalars['Boolean']['input']>;
+  job_board_url?: InputMaybe<Scalars['String']['input']>;
+  key?: InputMaybe<Scalars['String']['input']>;
+  linkedin_url?: InputMaybe<Scalars['String']['input']>;
+  location?: InputMaybe<Scalars['String']['input']>;
+  logo_url?: InputMaybe<Scalars['String']['input']>;
+  name?: InputMaybe<Scalars['String']['input']>;
+  score?: InputMaybe<Scalars['Float']['input']>;
+  score_reasons?: InputMaybe<Array<Scalars['String']['input']>>;
+  service_taxonomy?: InputMaybe<Array<Scalars['String']['input']>>;
+  services?: InputMaybe<Array<Scalars['String']['input']>>;
+  size?: InputMaybe<Scalars['String']['input']>;
+  tags?: InputMaybe<Array<Scalars['String']['input']>>;
+  website?: InputMaybe<Scalars['String']['input']>;
+};
+
+export type UpdateContactInput = {
+  doNotContact?: InputMaybe<Scalars['Boolean']['input']>;
+  email?: InputMaybe<Scalars['String']['input']>;
+  emails?: InputMaybe<Array<Scalars['String']['input']>>;
+  firstName?: InputMaybe<Scalars['String']['input']>;
+  githubHandle?: InputMaybe<Scalars['String']['input']>;
+  lastName?: InputMaybe<Scalars['String']['input']>;
+  linkedinUrl?: InputMaybe<Scalars['String']['input']>;
+  position?: InputMaybe<Scalars['String']['input']>;
+  tags?: InputMaybe<Array<Scalars['String']['input']>>;
+  telegramHandle?: InputMaybe<Scalars['String']['input']>;
+};
+
+export type UpdateLangSmithPromptInput = {
+  description?: InputMaybe<Scalars['String']['input']>;
+  isArchived?: InputMaybe<Scalars['Boolean']['input']>;
+  isPublic?: InputMaybe<Scalars['Boolean']['input']>;
+  readme?: InputMaybe<Scalars['String']['input']>;
+  tags?: InputMaybe<Array<Scalars['String']['input']>>;
+};
+
+export type UpdateOpportunityInput = {
+  applicationNotes?: InputMaybe<Scalars['String']['input']>;
+  applicationStatus?: InputMaybe<Scalars['String']['input']>;
+  applied?: InputMaybe<Scalars['Boolean']['input']>;
+  appliedAt?: InputMaybe<Scalars['String']['input']>;
+  companyId?: InputMaybe<Scalars['Int']['input']>;
+  contactId?: InputMaybe<Scalars['Int']['input']>;
+  deadline?: InputMaybe<Scalars['String']['input']>;
+  endDate?: InputMaybe<Scalars['String']['input']>;
+  rewardText?: InputMaybe<Scalars['String']['input']>;
+  rewardUsd?: InputMaybe<Scalars['Float']['input']>;
+  score?: InputMaybe<Scalars['Int']['input']>;
+  source?: InputMaybe<Scalars['String']['input']>;
+  startDate?: InputMaybe<Scalars['String']['input']>;
+  status?: InputMaybe<Scalars['String']['input']>;
+  tags?: InputMaybe<Array<Scalars['String']['input']>>;
+  title?: InputMaybe<Scalars['String']['input']>;
+  url?: InputMaybe<Scalars['String']['input']>;
+};
+
+export type UserSettings = {
+  __typename: 'UserSettings';
+  created_at: Scalars['String']['output'];
+  daily_digest: Scalars['Boolean']['output'];
+  dark_mode: Scalars['Boolean']['output'];
+  email_notifications: Scalars['Boolean']['output'];
+  excluded_companies: Maybe<Array<Scalars['String']['output']>>;
+  id: Scalars['Int']['output'];
+  jobs_per_page: Scalars['Int']['output'];
+  new_job_alerts: Scalars['Boolean']['output'];
+  preferred_locations: Maybe<Array<Scalars['String']['output']>>;
+  preferred_skills: Maybe<Array<Scalars['String']['output']>>;
+  updated_at: Scalars['String']['output'];
+  user_id: Scalars['String']['output'];
+};
+
+export type UserSettingsInput = {
+  daily_digest?: InputMaybe<Scalars['Boolean']['input']>;
+  dark_mode?: InputMaybe<Scalars['Boolean']['input']>;
+  email_notifications?: InputMaybe<Scalars['Boolean']['input']>;
+  excluded_companies?: InputMaybe<Array<Scalars['String']['input']>>;
+  jobs_per_page?: InputMaybe<Scalars['Int']['input']>;
+  new_job_alerts?: InputMaybe<Scalars['Boolean']['input']>;
+  preferred_locations?: InputMaybe<Array<Scalars['String']['input']>>;
+  preferred_skills?: InputMaybe<Array<Scalars['String']['input']>>;
+};
+
+export type WarcPointer = {
+  __typename: 'WarcPointer';
+  digest: Maybe<Scalars['String']['output']>;
+  filename: Scalars['String']['output'];
+  length: Scalars['Int']['output'];
+  offset: Scalars['Int']['output'];
+};
+
+export type WarcPointerInput = {
+  digest?: InputMaybe<Scalars['String']['input']>;
+  filename: Scalars['String']['input'];
+  length: Scalars['Int']['input'];
+  offset: Scalars['Int']['input'];
+};

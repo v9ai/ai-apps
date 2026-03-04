@@ -1,0 +1,6 @@
+mutation DeleteFamilyMember($id: Int!) {
+  deleteFamilyMember(id: $id) {
+    success
+    message
+  }
+}

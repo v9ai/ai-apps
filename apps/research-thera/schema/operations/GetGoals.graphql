@@ -1,0 +1,26 @@
+query GetGoals($familyMemberId: Int, $status: String) {
+  goals(familyMemberId: $familyMemberId, status: $status) {
+    id
+    title
+    description
+    status
+    familyMemberId
+    familyMember {
+      id
+      firstName
+      name
+      relationship
+    }
+    createdBy
+    parentGoalId
+    notes {
+      id
+      slug
+      noteType
+      tags
+      createdAt
+    }
+    createdAt
+    updatedAt
+  }
+}

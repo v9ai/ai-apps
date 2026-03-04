@@ -1,0 +1,461 @@
+/* ============================================================
+   Nomadically.Work — Dark-mode design system
+   ============================================================
+   Uses ONLY Radix Themes built-in color tokens.
+   <Theme appearance="dark"> uses default accent color (indigo).
+
+   Radix color mapping:
+     --accent-9              primary action / topbar
+     --accent-10             hover state for accent CTAs
+     --accent-contrast       text on accent backgrounds
+     --color-background      page background
+     --gray-2                card / row surface
+     --gray-3                hover tint on interactive rows
+     --gray-6                hairline borders (1px)
+     --gray-12               body text
+     --gray-11               meta / secondary text
+     --gray-9                tertiary / timestamps
+     --green-9               positive status
+
+   Typography
+   ----------
+   Uses Radix Themes default system font stack.
+   CTAs:  lowercase, no "!" or "Now"
+
+   Density
+   -------
+   Job rows: 60–70px total height
+   All metadata inline on one line; descriptions hidden behind click
+   ============================================================ */
+
+:root {
+  /* ---------- spacing ---------- */
+  --yc-row-height: 64px; /* target 60-70px per row */
+  --yc-topbar-height: 36px; /* the accent strip     */
+}
+
+/* ---------- base resets ---------- */
+body {
+  font-family: var(--font-inter, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif);
+  color: var(--gray-12);
+  background: var(--color-background);
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+/* ---------- links ---------- */
+a img {
+  transition: opacity 0.15s;
+}
+a:hover img {
+  opacity: 0.85;
+}
+a svg {
+  transition: color 0.15s;
+}
+a:hover svg {
+  color: var(--gray-12) !important;
+}
+
+/* ---------- YC topbar ---------- */
+.yc-topbar {
+  height: var(--yc-topbar-height);
+  background: var(--accent-9);
+  display: flex;
+  align-items: center;
+  padding: 0 16px;
+  font-size: 11px;
+  font-weight: 700;
+  color: var(--accent-contrast);
+  letter-spacing: 0.02em;
+}
+.yc-topbar a {
+  color: var(--accent-contrast);
+  text-decoration: none;
+  margin-right: 14px;
+}
+.yc-topbar a:hover {
+  text-decoration: underline;
+}
+
+/* ---------- sidebar nav links ---------- */
+nav a {
+  color: var(--gray-11);
+  text-decoration: none;
+  text-transform: lowercase;
+  transition: color 0.15s;
+  padding: 5px 8px;
+  display: block;
+}
+nav a:hover {
+  color: var(--gray-12);
+  background: var(--gray-3);
+}
+
+/* ---------- flat rows (jobs, companies) ---------- */
+.yc-row {
+  display: flex;
+  align-items: center;
+  min-height: var(--yc-row-height);
+  padding: 8px 12px;
+  border-bottom: 1px solid var(--gray-6);
+  background: var(--gray-2);
+  transition: background 0.1s;
+  text-decoration: none;
+  color: inherit;
+  cursor: pointer;
+}
+.yc-row:hover {
+  background: var(--gray-3);
+}
+.yc-row-title {
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--gray-12);
+  margin: 0;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.yc-row-meta {
+  font-size: 12px;
+  color: var(--gray-11);
+  white-space: nowrap;
+}
+
+/* dot separator between job meta items — complex selector kept in globals */
+.job-row-meta-line > * + *::before {
+  content: "·";
+  margin-right: 8px;
+  color: var(--gray-10);
+  font-size: 11px;
+}
+
+/* ---------- CTA buttons ---------- */
+.yc-cta {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  background: var(--accent-9);
+  color: var(--accent-contrast);
+  border: none;
+  font-weight: 700;
+  text-transform: lowercase;
+  padding: 4px 12px;
+  cursor: pointer;
+  transition: background 0.15s;
+  /* flat — no border-radius, no shadow */
+  border-radius: 0;
+  box-shadow: none;
+}
+.yc-cta:hover {
+  background: var(--accent-10);
+}
+
+/* secondary action — ghost style */
+.yc-cta-ghost {
+  background: transparent;
+  color: var(--gray-11);
+  border: 1px solid var(--gray-6);
+  text-transform: lowercase;
+  padding: 4px 12px;
+  cursor: pointer;
+  border-radius: 0;
+  box-shadow: none;
+  transition:
+    background 0.15s,
+    color 0.15s;
+}
+.yc-cta-ghost:hover {
+  background: var(--gray-3);
+  color: var(--gray-12);
+}
+
+/* ---------- badges (skill tags, status) ---------- */
+.yc-badge {
+  font-size: 11px;
+  padding: 1px 6px;
+  border: 1px solid var(--gray-6);
+  background: transparent;
+  color: var(--gray-11);
+  border-radius: 0;
+}
+.yc-badge--orange {
+  border-color: var(--accent-9);
+  color: var(--accent-9);
+}
+.yc-badge--green {
+  border-color: var(--green-9);
+  color: var(--green-9);
+}
+
+/* ---------- cards → flat panels ---------- */
+.yc-panel {
+  background: var(--gray-2);
+  border: 1px solid var(--gray-6);
+  border-radius: 0;
+  box-shadow: none;
+  padding: 12px;
+}
+
+/* ---------- search input ---------- */
+.yc-search input {
+  background: var(--gray-2);
+  border: 1px solid var(--gray-6);
+  color: var(--gray-12);
+  padding: 6px 10px;
+  border-radius: 0;
+  outline: none;
+  width: 100%;
+}
+.yc-search input::placeholder {
+  color: var(--gray-9);
+}
+.yc-search input:focus {
+  border-color: var(--accent-9);
+}
+
+/* ---------- Radix theme overrides (flatten everything) ---------- */
+
+/* kill rounded corners on all Radix cards */
+.rt-Card {
+  border-radius: 0 !important;
+  box-shadow: none !important;
+  border: 1px solid var(--gray-6) !important;
+  background: var(--gray-2) !important;
+}
+.rt-Card:hover {
+  background: var(--gray-3) !important;
+}
+
+/* kill rounded corners on buttons */
+.rt-Button {
+  border-radius: 0 !important;
+  box-shadow: none !important;
+  text-transform: lowercase !important;
+}
+
+/* primary variant → accent */
+.rt-Button:where(.rt-variant-solid) {
+  background: var(--accent-9) !important;
+  color: var(--accent-contrast) !important;
+}
+.rt-Button:where(.rt-variant-solid):hover {
+  background: var(--accent-10) !important;
+}
+
+/* soft / ghost variant → flat borders */
+.rt-Button:where(.rt-variant-soft),
+.rt-Button:where(.rt-variant-ghost) {
+  background: transparent !important;
+  color: var(--gray-11) !important;
+  border: 1px solid var(--gray-6) !important;
+}
+.rt-Button:where(.rt-variant-soft):hover,
+.rt-Button:where(.rt-variant-ghost):hover {
+  background: var(--gray-3) !important;
+  color: var(--gray-12) !important;
+}
+
+/* flatten badges */
+.rt-Badge {
+  border-radius: 0 !important;
+  font-size: 11px !important;
+}
+
+/* flatten text fields */
+.rt-TextFieldRoot,
+.rt-TextFieldInput {
+  border-radius: 0 !important;
+}
+.rt-TextFieldInput:focus {
+  box-shadow: none !important;
+  border-color: var(--accent-9) !important;
+}
+
+/* ---------- shimmer animation (loading) ---------- */
+.animate-mask {
+  animation: mask 3.4s cubic-bezier(0.33, 1, 0.68, 1) infinite both;
+}
+
+@keyframes mask {
+  0% {
+    mask-image: linear-gradient(
+      60deg,
+      #000 25%,
+      rgba(0, 0, 0, 0.4) 50%,
+      #000 75%
+    );
+    mask-size: 400%;
+    mask-position: 100%;
+  }
+  70%,
+  100% {
+    mask-image: linear-gradient(
+      60deg,
+      #000 25%,
+      rgba(0, 0, 0, 0.4) 50%,
+      #000 75%
+    );
+    mask-size: 400%;
+    mask-position: 0;
+  }
+}
+
+
+/* ---------- responsive ---------- */
+@media (max-width: 968px) {
+  .job-detail-grid {
+    grid-template-columns: 1fr !important;
+  }
+  .yc-topbar {
+    font-size: 10px;
+    padding: 0 8px;
+  }
+}
+
+/* ---------- iPad / tablet touch improvements ---------- */
+@media (pointer: coarse) {
+  /* Larger tap targets for badges used as buttons */
+  .rt-Badge {
+    min-height: 32px !important;
+    padding: 4px 10px !important;
+    font-size: 12px !important;
+  }
+
+  /* Larger touch targets on small buttons */
+  .rt-Button:where([data-size="1"]) {
+    min-height: 36px !important;
+    padding: 6px 12px !important;
+  }
+
+  /* Smooth momentum scrolling for overflow containers */
+  .deep-dive-content pre,
+  .deep-dive-content table {
+    -webkit-overflow-scrolling: touch;
+  }
+}
+
+/* Ensure tables don't break layout on narrow viewports */
+.deep-dive-content table {
+  display: block;
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+}
+
+/* Code blocks scroll gracefully on touch */
+.deep-dive-content pre {
+  -webkit-overflow-scrolling: touch;
+  max-width: 100%;
+}
+
+@keyframes pulse {
+  0%, 100% { opacity: 0.3; transform: scale(0.85); }
+  50% { opacity: 1; transform: scale(1); }
+}
+
+/* Deep dive markdown rendering */
+.deep-dive-content {
+  font-size: var(--font-size-2);
+  line-height: 1.75;
+  color: var(--gray-12);
+}
+.deep-dive-content h1,
+.deep-dive-content h2,
+.deep-dive-content h3 {
+  font-weight: 700;
+  margin-top: 1.25em;
+  margin-bottom: 0.4em;
+  color: var(--gray-12);
+}
+.deep-dive-content h1 { font-size: var(--font-size-6); }
+.deep-dive-content h2 { font-size: var(--font-size-4); }
+.deep-dive-content h3 { font-size: var(--font-size-3); }
+.deep-dive-content p { margin-bottom: 0.75em; }
+.deep-dive-content ul,
+.deep-dive-content ol {
+  padding-left: 1.4em;
+  margin-bottom: 0.75em;
+}
+.deep-dive-content li { margin-bottom: 0.25em; }
+.deep-dive-content strong { font-weight: 700; color: var(--gray-12); }
+.deep-dive-content em { font-style: italic; }
+.deep-dive-content code {
+  font-family: var(--font-mono, monospace);
+  font-size: 0.875em;
+  background: var(--gray-3);
+  border-radius: 3px;
+  padding: 1px 5px;
+}
+.deep-dive-content pre {
+  background: var(--gray-3);
+  border-radius: var(--radius-2);
+  padding: 0.75em 1em;
+  overflow-x: auto;
+  margin-bottom: 0.75em;
+}
+.deep-dive-content pre code {
+  background: none;
+  padding: 0;
+}
+.deep-dive-content blockquote {
+  border-left: 3px solid var(--accent-6);
+  padding-left: 0.75em;
+  color: var(--gray-11);
+  font-style: italic;
+  margin-bottom: 0.75em;
+}
+.deep-dive-content hr {
+  border: none;
+  border-top: 1px solid var(--gray-4);
+  margin: 1em 0;
+}
+.deep-dive-content table {
+  border-collapse: collapse;
+  width: 100%;
+  margin: 1em 0;
+  font-size: var(--font-size-2);
+}
+.deep-dive-content th,
+.deep-dive-content td {
+  border: 1px solid var(--gray-5);
+  padding: 0.5em 0.75em;
+  text-align: left;
+  vertical-align: top;
+}
+.deep-dive-content th {
+  background: var(--gray-3);
+  font-weight: 700;
+  color: var(--gray-12);
+}
+.deep-dive-content tr:nth-child(even) td {
+  background: var(--gray-2);
+}
+
+/* NFR11: Disable skeleton pulse animation for users who prefer reduced motion */
+@media (prefers-reduced-motion: reduce) {
+  .rt-Skeleton {
+    animation: none !important;
+  }
+}
+
+@keyframes toolbar-enter {
+  from {
+    opacity: 0;
+    transform: translateY(4px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes toolbar-pulse {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.5; }
+}
+
+@keyframes toolbar-spin {
+  from { transform: rotate(0deg); }
+  to { transform: rotate(360deg); }
+}

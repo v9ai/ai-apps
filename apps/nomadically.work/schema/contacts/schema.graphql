@@ -1,0 +1,157 @@
+extend type Query {
+  contacts(companyId: Int, search: String, limit: Int, offset: Int): ContactsResult!
+  contact(id: Int!): Contact
+  contactByEmail(email: String!): Contact
+  contactEmails(contactId: Int!): [ContactEmail!]!
+  resendEmail(resendId: String!): ResendEmailDetail
+}
+
+type ResendEmailDetail {
+  id: String!
+  from: String!
+  to: [String!]!
+  subject: String
+  text: String
+  html: String
+  lastEvent: String
+  createdAt: String!
+  scheduledAt: String
+  cc: [String!]
+  bcc: [String!]
+}
+
+extend type Mutation {
+  createContact(input: CreateContactInput!): Contact!
+  updateContact(id: Int!, input: UpdateContactInput!): Contact!
+  deleteContact(id: Int!): DeleteContactResult!
+  importContacts(contacts: [ContactInput!]!): ImportContactsResult!
+  findContactEmail(contactId: Int!): FindContactEmailResult!
+  findCompanyEmails(companyId: Int!): EnhanceAllContactsResult!
+  enhanceAllContacts: EnhanceAllContactsResult!
+  applyEmailPattern(companyId: Int!): ApplyEmailPatternResult!
+}
+
+type Contact {
+  id: Int!
+  firstName: String!
+  lastName: String!
+  linkedinUrl: String
+  email: String
+  emails: [String!]!
+  bouncedEmails: [String!]!
+  company: String
+  companyId: Int
+  position: String
+  userId: String
+  nbStatus: String
+  nbResult: String
+  nbFlags: [String!]!
+  nbSuggestedCorrection: String
+  nbRetryToken: String
+  nbExecutionTimeMs: Int
+  emailVerified: Boolean
+  githubHandle: String
+  telegramHandle: String
+  doNotContact: Boolean!
+  tags: [String!]!
+  createdAt: String!
+  updatedAt: String!
+}
+
+type ContactsResult {
+  contacts: [Contact!]!
+  totalCount: Int!
+}
+
+type DeleteContactResult {
+  success: Boolean!
+  message: String!
+}
+
+type ImportContactsResult {
+  success: Boolean!
+  imported: Int!
+  failed: Int!
+  errors: [String!]!
+}
+
+input ContactInput {
+  firstName: String!
+  lastName: String!
+  linkedinUrl: String
+  email: String
+  emails: [String!]
+  company: String
+  companyId: Int
+  position: String
+  githubHandle: String
+  telegramHandle: String
+  tags: [String!]
+}
+
+input CreateContactInput {
+  firstName: String!
+  lastName: String
+  email: String
+  emails: [String!]
+  linkedinUrl: String
+  position: String
+  githubHandle: String
+  telegramHandle: String
+  companyId: Int
+  tags: [String!]
+}
+
+input UpdateContactInput {
+  firstName: String
+  lastName: String
+  email: String
+  emails: [String!]
+  linkedinUrl: String
+  position: String
+  githubHandle: String
+  telegramHandle: String
+  doNotContact: Boolean
+  tags: [String!]
+}
+
+type FindContactEmailResult {
+  success: Boolean!
+  emailFound: Boolean!
+  email: String
+  verified: Boolean
+  message: String!
+  candidatesTried: Int!
+}
+
+type EnhanceAllContactsResult {
+  success: Boolean!
+  message: String!
+  companiesProcessed: Int!
+  totalContactsProcessed: Int!
+  totalEmailsFound: Int!
+  errors: [String!]!
+}
+
+type ApplyEmailPatternResult {
+  success: Boolean!
+  message: String!
+  contactsUpdated: Int!
+  pattern: String
+  contacts: [Contact!]!
+}
+
+type ContactEmail {
+  id: Int!
+  contactId: Int!
+  resendId: String!
+  fromEmail: String!
+  toEmails: [String!]!
+  subject: String!
+  textContent: String
+  status: String!
+  sentAt: String
+  recipientName: String
+  createdAt: String!
+  updatedAt: String!
+}

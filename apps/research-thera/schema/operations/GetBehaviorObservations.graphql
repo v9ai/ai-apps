@@ -1,0 +1,25 @@
+query GetBehaviorObservations($familyMemberId: Int!, $goalId: Int) {
+  behaviorObservations(familyMemberId: $familyMemberId, goalId: $goalId) {
+    id
+    familyMemberId
+    goalId
+    createdBy
+    observedAt
+    observationType
+    frequency
+    intensity
+    context
+    notes
+    createdAt
+    updatedAt
+    familyMember {
+      id
+      firstName
+      name
+    }
+    goal {
+      id
+      title
+    }
+  }
+}

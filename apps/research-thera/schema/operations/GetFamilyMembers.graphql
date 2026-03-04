@@ -1,0 +1,25 @@
+query GetFamilyMembers {
+  familyMembers {
+    id
+    userId
+    firstName
+    name
+    ageYears
+    relationship
+    email
+    phone
+    location
+    occupation
+    dateOfBirth
+    bio
+    createdAt
+    updatedAt
+    shares {
+      familyMemberId
+      email
+      role
+      createdAt
+      createdBy
+    }
+  }
+}
