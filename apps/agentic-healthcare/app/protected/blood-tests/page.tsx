@@ -4,6 +4,8 @@ import Link from "next/link";
 import { Badge, Box, Card, Flex, Heading, Separator, Text } from "@radix-ui/themes";
 import { Suspense } from "react";
 import { UploadForm } from "./upload-form";
+import { gqlQuery } from "@/lib/graphql/execute";
+import { GetBloodTestsDocument } from "@/lib/graphql/__generated__/graphql";
 
 const statusColor: Record<string, "green" | "red" | "yellow" | "gray"> = {
   done: "green",
@@ -14,15 +16,13 @@ const statusColor: Record<string, "green" | "red" | "yellow" | "gray"> = {
 
 async function TestsList() {
   const supabase = await createClient();
-  const { data: { user } } = await supabase.auth.getUser();
-  if (!user) redirect("/auth/login");
+  const { data: { session } } = await supabase.auth.getSession();
+  if (!session) redirect("/auth/login");
 
-  const { data: tests } = await supabase
-    .from("blood_tests")
-    .select("*")
-    .order("uploaded_at", { ascending: false });
+  const data = await gqlQuery(GetBloodTestsDocument, {}, session.access_token);
+  const tests = data.blood_testsCollection?.edges.map((e) => e.node) ?? [];
 
-  if (!tests || tests.length === 0) return null;
+  if (tests.length === 0) return null;
 
   return (
     <>

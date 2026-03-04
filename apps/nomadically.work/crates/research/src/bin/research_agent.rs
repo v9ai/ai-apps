@@ -1,8 +1,10 @@
 use anyhow::{Context, Result};
 use clap::{Parser, Subcommand};
 use chrono::Utc;
+use research::agent::Client;
+use research::scholar::SemanticScholarClient;
+use research::tools::{GetPaperDetail, SearchPapers};
 use research_agent::{
-    agent::Client,
     app_context::{AppContext, graphql_url_from_app_url},
     backend,
     d1::D1Client,
@@ -10,9 +12,7 @@ use research_agent::{
     remote_job_search,
     research_context::ResearchContext,
     study,
-    tools::{GetPaperDetail, SearchPapers},
 };
-use semantic_scholar::SemanticScholarClient;
 use std::path::PathBuf;
 use tracing::info;
 
@@ -211,8 +211,8 @@ Research standards:
             let agent = client
                 .agent("deepseek-reasoner")
                 .preamble(preamble)
-                .tool(SearchPapers(scholar.clone()))
-                .tool(GetPaperDetail(scholar))
+                .tool(SearchPapers::new(scholar.clone()))
+                .tool(GetPaperDetail::new(scholar))
                 .build();
 
             let prompt = context.build_agent_prompt();

@@ -3,3 +3,68 @@ mutation DeleteBloodTest($id: UUID!) {
     affectedCount
   }
 }
+
+mutation InsertBloodTest(
+  $user_id: UUID!
+  $file_name: String!
+  $file_path: String!
+  $status: String!
+  $test_date: Date
+) {
+  insertIntoblood_testsCollection(
+    objects: [
+      {
+        user_id: $user_id
+        file_name: $file_name
+        file_path: $file_path
+        status: $status
+        test_date: $test_date
+      }
+    ]
+  ) {
+    records {
+      id
+      file_name
+      file_path
+      status
+      test_date
+    }
+  }
+}
+
+mutation InsertBloodMarkers($objects: [blood_markersInsertInput!]!) {
+  insertIntoblood_markersCollection(objects: $objects) {
+    records {
+      id
+    }
+  }
+}
+
+mutation UpdateBloodTestStatus($id: UUID!, $status: String!, $error_message: String) {
+  updateblood_testsCollection(
+    filter: { id: { eq: $id } }
+    set: { status: $status, error_message: $error_message }
+  ) {
+    records {
+      id
+      status
+    }
+  }
+}
+
+mutation InsertCondition($user_id: UUID!, $name: String!, $notes: String) {
+  insertIntoconditionsCollection(
+    objects: [{ user_id: $user_id, name: $name, notes: $notes }]
+  ) {
+    records {
+      id
+      name
+    }
+  }
+}
+
+mutation DeleteCondition($id: UUID!) {
+  deleteFromconditionsCollection(filter: { id: { eq: $id } }) {
+    affectedCount
+  }
+}

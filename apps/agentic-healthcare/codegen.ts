@@ -17,8 +17,11 @@ const config: CodegenConfig = {
   },
   documents: ["lib/graphql/**/*.graphql"],
   generates: {
-    "lib/graphql/generated.ts": {
-      plugins: ["typescript", "typescript-operations", "typed-document-node"],
+    "./lib/graphql/__generated__/": {
+      preset: "client",
+      presetConfig: {
+        gqlTagName: "gql",
+      },
       config: {
         scalars: {
           UUID: "string",

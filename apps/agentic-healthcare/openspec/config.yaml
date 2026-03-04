@@ -1,0 +1,4 @@
+project: agentic-healthcare
+version: "1.0"
+spec_dir: specs
+change_dir: changes

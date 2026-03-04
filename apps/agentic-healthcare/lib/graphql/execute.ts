@@ -1,7 +1,7 @@
 import { print } from "graphql";
 import type { TypedDocumentNode } from "@graphql-typed-document-node/core";
 
-export async function gqlMutate<TData, TVariables>(
+async function gqlFetch<TData, TVariables>(
   document: TypedDocumentNode<TData, TVariables>,
   variables: TVariables,
   accessToken: string,
@@ -21,4 +21,20 @@ export async function gqlMutate<TData, TVariables>(
   const json = await res.json();
   if (json.errors?.length) throw new Error(json.errors[0].message);
   return json.data as TData;
+}
+
+export async function gqlQuery<TData, TVariables>(
+  document: TypedDocumentNode<TData, TVariables>,
+  variables: TVariables,
+  accessToken: string,
+): Promise<TData> {
+  return gqlFetch(document, variables, accessToken);
+}
+
+export async function gqlMutate<TData, TVariables>(
+  document: TypedDocumentNode<TData, TVariables>,
+  variables: TVariables,
+  accessToken: string,
+): Promise<TData> {
+  return gqlFetch(document, variables, accessToken);
 }

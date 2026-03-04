@@ -1,0 +1,42 @@
+[package]
+name = "research"
+version = "0.1.0"
+edition = "2021"
+description = "Shared research infrastructure: Semantic Scholar client, DeepSeek agent framework, and paper search tools"
+
+[dependencies]
+serde = { version = "1", features = ["derive"] }
+serde_json = "1"
+tokio = { version = "1", features = ["full"] }
+anyhow = "1"
+thiserror = "2"
+tracing = "0.1"
+async-trait = "0.1"
+reqwest = { version = "0.12", features = ["json"] }
+clap = { version = "4", features = ["derive"], optional = true }
+dotenvy = "0.15"
+sdd = { path = "../sdd" }
+
+[[bin]]
+name = "scholar-cli"
+path = "src/bin/scholar_cli.rs"
+required-features = ["cli"]
+
+[[bin]]
+name = "repo-research"
+path = "src/bin/repo_research.rs"
+
+[[bin]]
+name = "sdd-research"
+path = "src/bin/sdd_research.rs"
+
+[[bin]]
+name = "bs-detector"
+path = "src/bin/bs_detector.rs"
+
+[[bin]]
+name = "parallel-sdd-research"
+path = "src/bin/parallel_sdd_research.rs"
+
+[features]
+cli = ["dep:clap"]

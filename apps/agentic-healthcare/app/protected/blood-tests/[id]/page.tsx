@@ -4,6 +4,8 @@ import { Badge, Box, Button, Callout, Flex, Heading, Separator, Table, Text } fr
 import Link from "next/link";
 import { Suspense } from "react";
 import { deleteBloodTest } from "../actions";
+import { gqlQuery } from "@/lib/graphql/execute";
+import { GetBloodTestDocument } from "@/lib/graphql/__generated__/graphql";
 
 const statusColor: Record<string, "green" | "red" | "yellow" | "gray"> = {
   done: "green",
@@ -20,22 +22,15 @@ const flagColor: Record<string, "blue" | "red" | "green"> = {
 
 async function TestDetail({ id }: { id: string }) {
   const supabase = await createClient();
-  const { data: { user } } = await supabase.auth.getUser();
-  if (!user) redirect("/auth/login");
+  const { data: { session } } = await supabase.auth.getSession();
+  if (!session) redirect("/auth/login");
 
-  const { data: test } = await supabase
-    .from("blood_tests")
-    .select("*")
-    .eq("id", id)
-    .single();
+  const data = await gqlQuery(GetBloodTestDocument, { id }, session.access_token);
+  const test = data.blood_testsCollection?.edges[0]?.node;
 
-  if (!test || test.user_id !== user.id) notFound();
+  if (!test || test.user_id !== session.user.id) notFound();
 
-  const { data: markers } = await supabase
-    .from("blood_markers")
-    .select("*")
-    .eq("test_id", id)
-    .order("name");
+  const markers = data.blood_markersCollection?.edges.map((e) => e.node) ?? [];
 
   return (
     <>

@@ -16,10 +16,16 @@ struct Cli {
     /// How many articles to produce in one run (topics are picked in parallel)
     #[arg(long, default_value_t = 1)]
     count: usize,
+
+    /// Publish finished articles to vadim.blog and run `vercel deploy --prod`
+    #[arg(long, default_value_t = true)]
+    publish: bool,
 }
 
 #[tokio::main]
 async fn main() -> Result<()> {
+    dotenvy::dotenv().ok();
+
     tracing_subscriber::fmt()
         .with_env_filter("agentic_press=info")
         .init();
@@ -33,6 +39,7 @@ async fn main() -> Result<()> {
 
     Pipeline::new(cli.niche, cli.output_dir)
         .with_count(cli.count)
+        .with_publish(cli.publish)
         .run()
         .await
 }

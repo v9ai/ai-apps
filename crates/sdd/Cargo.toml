@@ -1,0 +1,16 @@
+[package]
+name = "sdd"
+version = "0.1.0"
+edition = "2021"
+license = "MIT"
+description = "Spec-Driven Development pipeline — runtime-agnostic core library"
+
+[dependencies]
+serde = { version = "1", features = ["derive"] }
+serde_json = "1"
+futures = "0.3"
+async-trait = "0.1"
+thiserror = "2"
+
+[dev-dependencies]
+tokio = { version = "1", features = ["rt", "macros", "time"] }

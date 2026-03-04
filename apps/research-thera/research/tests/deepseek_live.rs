@@ -4,11 +4,11 @@
 ///   DEEPSEEK_API_KEY=sk-... cargo test -p research -- --include-ignored live_ds_
 ///
 /// An optional `SEMANTIC_SCHOLAR_API_KEY` raises the rate-limit cap for tool tests.
-use research_agent::{
+use research::{
     agent::Client,
+    scholar::SemanticScholarClient,
     tools::{GetPaperDetail, SearchPapers},
 };
-use semantic_scholar::SemanticScholarClient;
 
 // ─── Helper ──────────────────────────────────────────────────────────────────
 
@@ -68,7 +68,7 @@ async fn live_ds_tool_call_triggers_search_papers() {
     let agent = Client::new(&api_key())
         .agent("deepseek-chat")
         .preamble("You must call search_papers at least once, then answer.")
-        .tool(SearchPapers(scholar()))
+        .tool(SearchPapers::new(scholar()))
         .build();
 
     let result = agent
@@ -91,7 +91,7 @@ async fn live_ds_tool_call_get_paper_detail() {
     let agent = Client::new(&api_key())
         .agent("deepseek-chat")
         .preamble("You must call get_paper_detail, then answer.")
-        .tool(GetPaperDetail(scholar()))
+        .tool(GetPaperDetail::new(scholar()))
         .build();
 
     let result = agent
@@ -123,8 +123,8 @@ async fn live_ds_full_research_loop_returns_structured_output() {
              then get_paper_detail on the most promising one. Return a brief markdown summary \
              with: paper title, year, key finding, and therapeutic technique recommendation.",
         )
-        .tool(SearchPapers(scholar()))
-        .tool(GetPaperDetail(scholar()))
+        .tool(SearchPapers::new(scholar()))
+        .tool(GetPaperDetail::new(scholar()))
         .build();
 
     let result = agent

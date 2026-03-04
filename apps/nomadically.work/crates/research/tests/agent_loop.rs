@@ -15,7 +15,7 @@ use axum::{
     response::{IntoResponse, Response},
     routing::post,
 };
-use research_agent::agent::{Client, Tool, ToolDefinition};
+use research::agent::{Client, Tool, ToolDefinition};
 use serde_json::{Value, json};
 use tokio::net::TcpListener;
 

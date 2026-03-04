@@ -37,6 +37,7 @@ returns table (
 )
 language sql stable
 security invoker
+set search_path = extensions, public, pg_catalog
 as $$
   select
     bte.id,

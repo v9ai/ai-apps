@@ -3,13 +3,13 @@
 ///
 /// Uses [`TeamLead`] + [`TaskQueue`] for dynamic claiming, retry (max 2 attempts),
 /// and cooperative shutdown — matching the agent-teams coordination model.
-use crate::agent::Client;
 use crate::app_context::AppContext;
 use crate::d1::D1Client;
 use crate::team::{shutdown_pair, Mailbox, TaskQueue, TeamLead};
-use crate::tools::{GetPaperDetail, SearchPapers};
 use anyhow::{Context, Result};
-use semantic_scholar::SemanticScholarClient;
+use research::agent::Client;
+use research::scholar::SemanticScholarClient;
+use research::tools::{GetPaperDetail, SearchPapers};
 use serde::{Deserialize, Serialize};
 use serde_json::{json, Value};
 use std::sync::Arc;
@@ -372,8 +372,8 @@ async fn run_section_agent(
         let agent = client
             .agent("deepseek-chat")
             .preamble(&system_scholar)
-            .tool(SearchPapers(scholar.clone()))
-            .tool(GetPaperDetail(scholar.clone()))
+            .tool(SearchPapers::new(scholar.clone()))
+            .tool(GetPaperDetail::new(scholar.clone()))
             .build();
 
         let raw = agent.prompt(prompt).await?;

@@ -20,6 +20,9 @@ export default function ProtectedLayout({ children }: { children: React.ReactNod
                 <Text size="2" color="gray" asChild>
                   <Link href="/protected/conditions">Conditions</Link>
                 </Text>
+                <Text size="2" color="gray" asChild>
+                  <Link href="/protected/search">Search</Link>
+                </Text>
               </Flex>
               <Suspense>
                 <AuthButton />

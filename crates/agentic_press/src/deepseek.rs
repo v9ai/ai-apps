@@ -14,11 +14,14 @@ pub struct DeepSeekClient {
 }
 
 impl DeepSeekClient {
-    /// Production constructor — reads `DEEPSEEK_API_KEY` from the environment.
+    /// Production constructor — reads `DEEPSEEK_API_KEY` (and optionally
+    /// `DEEPSEEK_BASE_URL`) from the environment.
     pub fn from_env() -> Result<Self> {
         let api_key = std::env::var("DEEPSEEK_API_KEY")
             .context("DEEPSEEK_API_KEY environment variable not set")?;
-        Ok(Self::new(api_key, DEFAULT_BASE_URL))
+        let base_url = std::env::var("DEEPSEEK_BASE_URL")
+            .unwrap_or_else(|_| DEFAULT_BASE_URL.to_string());
+        Ok(Self::new(api_key, base_url))
     }
 
     /// Explicit constructor — use in tests to point at a mock server.

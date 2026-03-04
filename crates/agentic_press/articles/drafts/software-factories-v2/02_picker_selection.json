@@ -1,0 +1,7 @@
+[
+  {
+    "topic": "The \"Platform Engineering Failure Mode\" Report & Conway's Law's Revenge",
+    "angle": "Platform teams must design internal developer platforms to mirror existing team structures (embracing Conway's Law) rather than dictating top-down architectures, as data proves ignoring this causes adoption failure.",
+    "why_viral": "It uses authoritative CNCF report data to debunk the common belief that platform design can override organizational reality, resonating with senior engineers battling adoption issues."
+  }
+]

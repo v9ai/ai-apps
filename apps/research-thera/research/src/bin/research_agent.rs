@@ -1,12 +1,10 @@
 use anyhow::{Context, Result};
 use clap::{Parser, Subcommand};
 use chrono::Utc;
-use research_agent::{
-    agent::Client,
-    therapy_context::TherapyContext,
-    tools::{GetPaperDetail, SearchPapers},
-};
-use semantic_scholar::SemanticScholarClient;
+use research::agent::Client;
+use research::tools::{GetPaperDetail, SearchPapers, SearchToolConfig};
+use research::scholar::SemanticScholarClient;
+use research_agent::therapy_context::TherapyContext;
 use std::path::PathBuf;
 use tracing::info;
 
@@ -50,6 +48,31 @@ enum Commands {
         #[arg(long)]
         population: Option<String>,
     },
+}
+
+fn therapy_tool_config() -> SearchToolConfig {
+    SearchToolConfig {
+        default_limit: 10,
+        abstract_max_chars: 400,
+        max_authors: 5,
+        include_fields_of_study: true,
+        include_venue: true,
+        search_description: Some(
+            "Search 214M+ academic papers on Semantic Scholar for therapeutic, psychological, \
+             and clinical research. Returns titles, authors, citation counts, abstracts, and PDF \
+             links. Call multiple times with different query terms to cover the topic \
+             from different angles (e.g., 'CBT anxiety children', 'exposure therapy meta-analysis')."
+                .into(),
+        ),
+        detail_description: Some(
+            "Get full details for a specific paper: complete abstract, AI-generated \
+             TLDR summary, all authors, venue, citation context, and PDF link. \
+             Use this on the most relevant papers from search_papers to extract \
+             therapeutic techniques, outcome measures, and evidence level before \
+             writing your final report."
+                .into(),
+        ),
+    }
 }
 
 #[tokio::main]
@@ -131,11 +154,12 @@ Evidence levels:
         "Therapy context loaded"
     );
 
+    let config = therapy_tool_config();
     let agent = client
         .agent("deepseek-reasoner")
         .preamble(preamble)
-        .tool(SearchPapers(scholar.clone()))
-        .tool(GetPaperDetail(scholar))
+        .tool(SearchPapers::with_config(scholar.clone(), config.clone()))
+        .tool(GetPaperDetail::with_config(scholar, config))
         .build();
 
     let prompt = context.build_agent_prompt();

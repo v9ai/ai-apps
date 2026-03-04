@@ -1,0 +1,7 @@
+[
+  {
+    "topic": "CNCF's 'Platform Engineering Metrics' Whitepaper and the DORA Misconception",
+    "angle": "Platform success is measured by reducing variance in DORA metrics across teams, not by uniformly improving them for all teams.",
+    "why_viral": "It corrects a widespread misconception that misguides platform teams, offering a clearer, more actionable framework for measuring impact."
+  }
+]

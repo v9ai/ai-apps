@@ -8,6 +8,7 @@ use tracing::info;
 use crate::agent_teams::{run_parallel, Agent};
 use crate::deepseek::DeepSeekClient;
 use crate::prompts;
+use crate::publisher;
 
 // ── picker output ────────────────────────────────────────────────────────────
 
@@ -24,6 +25,8 @@ pub struct Pipeline {
     output_dir: String,
     /// How many topics to produce per run (default: 1).
     count: usize,
+    /// Publish to vadim.blog + run `vercel deploy --prod` when true.
+    publish: bool,
     /// Pre-built client injected by tests; `None` → create from env at run time.
     client: Option<Arc<DeepSeekClient>>,
 }
@@ -34,12 +37,18 @@ impl Pipeline {
             niche: niche.into(),
             output_dir: output_dir.into(),
             count: 1,
+            publish: false,
             client: None,
         }
     }
 
     pub fn with_count(mut self, count: usize) -> Self {
         self.count = count.max(1);
+        self
+    }
+
+    pub fn with_publish(mut self, publish: bool) -> Self {
+        self.publish = publish;
         self
     }
 
@@ -105,6 +114,7 @@ impl Pipeline {
             let niche      = self.niche.clone();
             let output_dir = self.output_dir.clone();
 
+            let do_publish = self.publish;
             set.spawn(async move {
                 let researcher = Agent::new(
                     format!("researcher[{i}]"),
@@ -134,6 +144,10 @@ impl Pipeline {
                 let (blog, li) = run_parallel(&writer, &linkedin, &notes).await?;
                 save(&topic_dir, "blog.md",     &blog).await?;
                 save(&topic_dir, "linkedin.md", &li).await?;
+
+                if do_publish {
+                    publisher::publish(&blog, &sel.topic, true).await?;
+                }
 
                 anyhow::Ok((sel.topic, blog, li))
             });

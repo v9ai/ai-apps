@@ -1,0 +1,74 @@
+query GetBloodTests {
+  blood_testsCollection(orderBy: [{ uploaded_at: DescNullsLast }]) {
+    edges {
+      node {
+        id
+        file_name
+        file_path
+        status
+        test_date
+        uploaded_at
+        error_message
+      }
+    }
+  }
+}
+
+query GetBloodTest($id: UUID!) {
+  blood_testsCollection(filter: { id: { eq: $id } }) {
+    edges {
+      node {
+        id
+        file_name
+        file_path
+        status
+        test_date
+        uploaded_at
+        error_message
+        user_id
+      }
+    }
+  }
+  blood_markersCollection(
+    filter: { test_id: { eq: $id } }
+    orderBy: [{ name: AscNullsLast }]
+  ) {
+    edges {
+      node {
+        id
+        name
+        value
+        unit
+        reference_range
+        flag
+      }
+    }
+  }
+}
+
+query GetConditions {
+  conditionsCollection(orderBy: [{ created_at: DescNullsLast }]) {
+    edges {
+      node {
+        id
+        name
+        notes
+        created_at
+      }
+    }
+  }
+}
+
+query GetCondition($id: UUID!) {
+  conditionsCollection(filter: { id: { eq: $id } }) {
+    edges {
+      node {
+        id
+        name
+        notes
+        created_at
+        user_id
+      }
+    }
+  }
+}

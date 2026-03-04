@@ -1,0 +1,152 @@
+{
+  "citations": [
+    {
+      "exact_citation_text": "Privette v. Superior Court, 5 Cal.4th 689, 695 (1993)",
+      "proposition": "A hirer of an independent contractor is presumptively not liable for injuries sustained by the contractor's employees while performing the contracted work.",
+      "direct_quotes": ["A hirer is never liable for injuries sustained by an independent contractor's employees when the injuries arise from the contracted work."],
+      "section": "III.A"
+    },
+    {
+      "exact_citation_text": "Whitmore v. Delgado Scaffolding Co., 334 F. Supp. 2d 1189, 1195 (C.D. Cal. 2004)",
+      "proposition": "Granting summary judgment to hirer where subcontractor controlled scaffolding operations and the injured worker assumed risks inherent to the trade.",
+      "direct_quotes": [],
+      "section": "III.A"
+    },
+    {
+      "exact_citation_text": "Kellerman v. Pacific Coast Construction, Inc., 887 F.2d 1204, 1209 (9th Cir. 1991)",
+      "proposition": "Where an employer demonstrates full compliance with applicable OSHA standards, it is entitled to a rebuttable presumption that it met the standard of care in negligence.",
+      "direct_quotes": ["Where an employer demonstrates full compliance with applicable OSHA standards, it is entitled to a rebuttable presumption that it met the standard of care in negligence."],
+      "section": "III.B"
+    },
+    {
+      "exact_citation_text": "Seabright Insurance Co. v. US Airways, Inc., 52 Cal.4th 590, 598 (2011)",
+      "proposition": "Compliance with statutory safety requirements is highly probative of the exercise of due care.",
+      "direct_quotes": [],
+      "section": "III.B"
+    },
+    {
+      "exact_citation_text": "Torres v. Granite Falls Dev. Corp., 198 Cal.App.4th 223 (2011)",
+      "proposition": "Supporting that OSHA compliance insulates from tort liability predicated on alleged safety failures.",
+      "direct_quotes": [],
+      "section": "Footnote 1 in III.B"
+    },
+    {
+      "exact_citation_text": "Blackwell v. Sunrise Contractors, Inc., 45 Cal.App.4th 1012 (1996)",
+      "proposition": "Supporting that OSHA compliance insulates from tort liability predicated on alleged safety failures.",
+      "direct_quotes": [],
+      "section": "Footnote 1 in III.B"
+    },
+    {
+      "exact_citation_text": "Dixon v. Lone Star Structural, LLC, 387 S.W.3d 154 (Tex. App. 2012)",
+      "proposition": "Supporting that OSHA compliance insulates from tort liability predicated on alleged safety failures.",
+      "direct_quotes": [],
+      "section": "Footnote 1 in III.B"
+    },
+    {
+      "exact_citation_text": "Okafor v. Brightline Builders, Inc., 291 So.3d 614 (Fla. Dist. Ct. App. 2019)",
+      "proposition": "Supporting that OSHA compliance insulates from tort liability predicated on alleged safety failures.",
+      "direct_quotes": [],
+      "section": "Footnote 1 in III.B"
+    },
+    {
+      "exact_citation_text": "Nguyen v. Allied Pacific Construction Co., 112 Cal.App.4th 845 (2003)",
+      "proposition": "Supporting that OSHA compliance insulates from tort liability predicated on alleged safety failures.",
+      "direct_quotes": [],
+      "section": "Footnote 1 in III.B"
+    },
+    {
+      "exact_citation_text": "Reeves v. Summit Engineering Group, 78 Cal.App.4th 531 (2000)",
+      "proposition": "Supporting that OSHA compliance insulates from tort liability predicated on alleged safety failures.",
+      "direct_quotes": [],
+      "section": "Footnote 1 in III.B"
+    },
+    {
+      "exact_citation_text": "California Code of Civil Procedure Section 335.1",
+      "proposition": "The statute of limitations for personal injury claims is two years.",
+      "direct_quotes": [],
+      "section": "III.D"
+    }
+  ],
+  "facts": [
+    {
+      "claim_text": "This action arises from a workplace incident on March 14, 2021",
+      "category": "date",
+      "section": "I"
+    },
+    {
+      "claim_text": "at a commercial construction site located at 2200 West Olympic Boulevard, Los Angeles, California.",
+      "category": "scaffolding",
+      "section": "I"
+    },
+    {
+      "claim_text": "Rivera, a journeyman scaffolder employed by subcontractor Apex Staffing Solutions, alleges that he sustained injuries when a section of scaffolding collapsed beneath him.",
+      "category": "injury",
+      "section": "I"
+    },
+    {
+      "claim_text": "Harmon served as the general contractor for the commercial renovation project at 2200 West Olympic Boulevard.",
+      "category": "control",
+      "section": "II"
+    },
+    {
+      "claim_text": "Rivera was employed by Apex Staffing Solutions, a licensed subcontractor retained by Harmon for scaffolding assembly and related work.",
+      "category": "control",
+      "section": "II"
+    },
+    {
+      "claim_text": "On or about March 14, 2021, Rivera was working on a scaffolding assembly at the project site when a section of the scaffolding gave way.",
+      "category": "scaffolding",
+      "section": "II"
+    },
+    {
+      "claim_text": "Rivera was not wearing required personal protective equipment at the time of the incident, including fall-arrest equipment mandated by site safety protocols.",
+      "category": "PPE/safety",
+      "section": "II"
+    },
+    {
+      "claim_text": "Harmon maintained an active Injury and Illness Prevention Program (\"IIPP\") and had passed all OSHA inspections conducted at the site during the relevant period, the most recent being February 26, 2021.",
+      "category": "OSHA",
+      "section": "II"
+    },
+    {
+      "claim_text": "Rivera filed the instant action on March 10, 2023.",
+      "category": "timeline",
+      "section": "II"
+    },
+    {
+      "claim_text": "The undisputed facts establish that Apex Staffing Solutions — not Harmon — was the employer responsible for scaffolding operations and for ensuring its employees followed appropriate safety procedures.",
+      "category": "control",
+      "section": "III.A"
+    },
+    {
+      "claim_text": "Harmon's documented compliance with all applicable OSHA regulations during the relevant period",
+      "category": "OSHA",
+      "section": "III.B"
+    },
+    {
+      "claim_text": "Rivera is a journeyman scaffolder with over eight years of experience in commercial construction.",
+      "category": "control",
+      "section": "III.C"
+    },
+    {
+      "claim_text": "The risks associated with working at height on scaffolding are inherent to his trade and were well known to him at the time of the incident.",
+      "category": "safety",
+      "section": "III.C"
+    },
+    {
+      "claim_text": "The incident giving rise to this action occurred on March 14, 2021.",
+      "category": "date",
+      "section": "III.D"
+    },
+    {
+      "claim_text": "Rivera did not file his complaint until March 10, 2023 — one year and 362 days after the incident.",
+      "category": "timeline",
+      "section": "III.D"
+    },
+    {
+      "claim_text": "Rivera's own knowledge of his injuries, which the medical records indicate were immediately apparent.",
+      "category": "injury",
+      "section": "III.D"
+    }
+  ]
+}

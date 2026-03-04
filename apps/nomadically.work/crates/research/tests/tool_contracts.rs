@@ -5,19 +5,19 @@
 /// No network calls are made — all tests that would hit real APIs
 /// are either testing the error path (bad args → serde fail before I/O)
 /// or are marked `#[ignore]`.
-use research_agent::{
+use research::{
     agent::{Tool, ToolDefinition},
+    scholar::SemanticScholarClient,
     tools::{GetPaperDetail, SearchPapers},
 };
-use semantic_scholar::SemanticScholarClient;
 use serde_json::json;
 
 fn search_tool() -> SearchPapers {
-    SearchPapers(SemanticScholarClient::new(None))
+    SearchPapers::new(SemanticScholarClient::new(None))
 }
 
 fn detail_tool() -> GetPaperDetail {
-    GetPaperDetail(SemanticScholarClient::new(None))
+    GetPaperDetail::new(SemanticScholarClient::new(None))
 }
 
 // ─── Names ───────────────────────────────────────────────────────────────────

@@ -1,8 +1,9 @@
-import OpenAI from "openai";
+import { QwenClient } from "@repo/qwen";
+import { SupabaseClient } from "@supabase/supabase-js";
 
-const deepseek = new OpenAI({
-  baseURL: process.env.DEEPSEEK_BASE_URL ?? "http://localhost:19836/v1",
-  apiKey: process.env.DEEPSEEK_API_KEY ?? "local",
+const qwen = new QwenClient({
+  apiKey: process.env.DASHSCOPE_API_KEY!,
+  baseURL: process.env.DASHSCOPE_BASE_URL,
 });
 
 export type MarkerInput = {
@@ -12,6 +13,8 @@ export type MarkerInput = {
   reference_range: string;
   flag: string;
 };
+
+export type MarkerWithId = MarkerInput & { id: string };
 
 export function formatTestForEmbedding(
   markers: MarkerInput[],
@@ -37,12 +40,101 @@ export function formatTestForEmbedding(
   ].join("\n");
 }
 
-export async function generateEmbedding(text: string): Promise<number[]> {
-  const res = await deepseek.embeddings.create({
-    model: process.env.DEEPSEEK_EMBEDDING_MODEL ?? "text-embedding",
-    input: text,
-  });
-  return res.data[0].embedding;
+export function formatMarkerForEmbedding(
+  marker: MarkerInput,
+  meta: { fileName: string; testDate: string }
+): string {
+  return [
+    `Marker: ${marker.name}`,
+    `Value: ${marker.value} ${marker.unit}`,
+    `Reference range: ${marker.reference_range || "N/A"}`,
+    `Flag: ${marker.flag}`,
+    `Test: ${meta.fileName}`,
+    `Date: ${meta.testDate}`,
+  ].join("\n");
 }
 
-export { deepseek };
+export function formatConditionForEmbedding(
+  name: string,
+  notes: string | null
+): string {
+  return notes
+    ? `Health condition: ${name}\nNotes: ${notes}`
+    : `Health condition: ${name}`;
+}
+
+export async function generateEmbedding(text: string): Promise<number[]> {
+  return qwen.embedOne(text);
+}
+
+/** Embed an entire blood test (summary of all markers). */
+export async function embedBloodTest(
+  supabase: SupabaseClient,
+  testId: string,
+  userId: string,
+  markers: MarkerInput[],
+  meta: { fileName: string; uploadedAt: string }
+) {
+  const content = formatTestForEmbedding(markers, meta);
+  const embedding = await generateEmbedding(content);
+
+  await supabase.from("blood_test_embeddings").upsert(
+    {
+      test_id: testId,
+      user_id: userId,
+      content,
+      embedding: JSON.stringify(embedding),
+    },
+    { onConflict: "test_id" }
+  );
+}
+
+/** Embed each marker individually for fine-grained search. */
+export async function embedBloodMarkers(
+  supabase: SupabaseClient,
+  testId: string,
+  userId: string,
+  markers: MarkerWithId[],
+  meta: { fileName: string; testDate: string }
+) {
+  for (const marker of markers) {
+    const content = formatMarkerForEmbedding(marker, meta);
+    const embedding = await generateEmbedding(content);
+
+    await supabase.from("blood_marker_embeddings").upsert(
+      {
+        marker_id: marker.id,
+        test_id: testId,
+        user_id: userId,
+        marker_name: marker.name,
+        content,
+        embedding: JSON.stringify(embedding),
+      },
+      { onConflict: "marker_id" }
+    );
+  }
+}
+
+/** Embed a health condition. */
+export async function embedCondition(
+  supabase: SupabaseClient,
+  conditionId: string,
+  userId: string,
+  name: string,
+  notes: string | null
+) {
+  const content = formatConditionForEmbedding(name, notes);
+  const embedding = await generateEmbedding(content);
+
+  await supabase.from("condition_embeddings").upsert(
+    {
+      condition_id: conditionId,
+      user_id: userId,
+      content,
+      embedding: JSON.stringify(embedding),
+    },
+    { onConflict: "condition_id" }
+  );
+}
+
+export { qwen };
