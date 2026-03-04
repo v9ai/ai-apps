@@ -1,0 +1,16 @@
+query GetGenerationJobs($goalId: Int, $status: String) {
+  generationJobs(goalId: $goalId, status: $status) {
+    id
+    type
+    storyId
+    status
+    progress
+    result {
+      audioUrl
+    }
+    error {
+      message
+    }
+    updatedAt
+  }
+}

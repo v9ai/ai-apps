@@ -1,0 +1,16 @@
+mutation UpdateRelationship($id: Int!, $input: UpdateRelationshipInput!) {
+  updateRelationship(id: $id, input: $input) {
+    id
+    createdBy
+    subjectType
+    subjectId
+    relatedType
+    relatedId
+    relationshipType
+    context
+    startDate
+    status
+    createdAt
+    updatedAt
+  }
+}

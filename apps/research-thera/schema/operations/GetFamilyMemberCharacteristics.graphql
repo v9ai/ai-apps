@@ -1,0 +1,12 @@
+query GetFamilyMemberCharacteristics($familyMemberId: Int!, $category: CharacteristicCategory) {
+  familyMemberCharacteristics(familyMemberId: $familyMemberId, category: $category) {
+    id
+    familyMemberId
+    createdBy
+    category
+    title
+    description
+    createdAt
+    updatedAt
+  }
+}

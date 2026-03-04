@@ -1,0 +1,6 @@
+mutation DeleteFamilyMemberCharacteristic($id: Int!) {
+  deleteFamilyMemberCharacteristic(id: $id) {
+    success
+    message
+  }
+}

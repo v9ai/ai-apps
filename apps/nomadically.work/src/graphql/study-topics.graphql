@@ -1,0 +1,91 @@
+query StudyCategories {
+  studyCategories
+}
+
+query StudyTopic($category: String!, $topic: String!) {
+  studyTopic(category: $category, topic: $topic) {
+    id
+    category
+    topic
+    title
+    summary
+    bodyMd
+    deepDive
+    difficulty
+    tags
+    createdAt
+  }
+}
+
+query StudyTopics($category: String!) {
+  studyTopics(category: $category) {
+    id
+    topic
+    title
+    summary
+    difficulty
+    tags
+  }
+}
+
+mutation CreateStudyTopic(
+  $category: String
+  $topic: String
+  $title: String
+  $summary: String
+  $difficulty: String
+  $tags: [String!]
+) {
+  createStudyTopic(
+    category: $category
+    topic: $topic
+    title: $title
+    summary: $summary
+    difficulty: $difficulty
+    tags: $tags
+  ) {
+    id
+    category
+    topic
+    title
+    summary
+    difficulty
+    tags
+    createdAt
+  }
+}
+
+mutation GenerateStudyConceptExplanation(
+  $studyTopicId: ID!
+  $selectedText: String!
+  $context: String
+) {
+  generateStudyConceptExplanation(
+    studyTopicId: $studyTopicId
+    selectedText: $selectedText
+    context: $context
+  ) {
+    id
+    selectedText
+    explanation
+    createdAt
+  }
+}
+
+mutation GenerateStudyDeepDive($studyTopicId: ID!, $force: Boolean) {
+  generateStudyDeepDive(studyTopicId: $studyTopicId, force: $force) {
+    id
+    deepDive
+  }
+}
+
+mutation GenerateStudyTopicsForCategory($category: String!, $count: Int) {
+  generateStudyTopicsForCategory(category: $category, count: $count) {
+    id
+    topic
+    title
+    summary
+    difficulty
+    tags
+  }
+}

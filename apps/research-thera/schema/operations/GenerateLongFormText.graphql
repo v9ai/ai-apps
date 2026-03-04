@@ -1,0 +1,17 @@
+mutation GenerateLongFormText($goalId: Int!, $characteristicId: Int, $language: String, $minutes: Int) {
+  generateLongFormText(
+    goalId: $goalId
+    characteristicId: $characteristicId
+    language: $language
+    minutes: $minutes
+  ) {
+    success
+    message
+    jobId
+    storyId
+    text
+    audioUrl
+    manifestUrl
+    segmentUrls
+  }
+}

@@ -1,0 +1,6 @@
+mutation DeleteBehaviorObservation($id: Int!) {
+  deleteBehaviorObservation(id: $id) {
+    success
+    message
+  }
+}

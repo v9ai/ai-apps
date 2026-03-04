@@ -1,0 +1,6 @@
+mutation DeleteStory($id: Int!) {
+  deleteStory(id: $id) {
+    success
+    message
+  }
+}

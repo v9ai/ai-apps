@@ -1,0 +1,32 @@
+query GetJournalEntries($familyMemberId: Int, $goalId: Int, $mood: String, $fromDate: String, $toDate: String) {
+  journalEntries(
+    familyMemberId: $familyMemberId
+    goalId: $goalId
+    mood: $mood
+    fromDate: $fromDate
+    toDate: $toDate
+  ) {
+    id
+    createdBy
+    familyMemberId
+    familyMember {
+      id
+      firstName
+      name
+    }
+    title
+    content
+    mood
+    moodScore
+    tags
+    goalId
+    goal {
+      id
+      title
+    }
+    isPrivate
+    entryDate
+    createdAt
+    updatedAt
+  }
+}

@@ -1,0 +1,88 @@
+# See https://help.github.com/articles/ignoring-files/ for more about ignoring files.
+
+# dependencies
+/node_modules
+/.pnp
+.pnp.*
+.yarn/*
+!.yarn/patches
+!.yarn/plugins
+!.yarn/releases
+!.yarn/versions
+
+# testing
+/coverage
+
+# next.js
+/.next/
+/out/
+
+# production
+/build
+
+# misc
+.DS_Store
+*.pem
+
+# debug
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# env files (can opt-in for commiting if needed)
+.env
+.env.local
+.env.local.*
+.env.local.backup
+.env.development
+.dev.vars
+
+# vercel
+.vercel
+
+# typescript
+*.tsbuildinfo
+next-env.d.ts
+
+# mastra
+.mastra/
+.env.vercel.local
+
+# wrangler
+.wrangler/
+.env*.local
+
+# python workers
+python_modules/
+workers/*/node_modules/
+workers/job-matcher/.venv/
+workers/job-matcher/.venv-workers/
+workers/job-matcher/.wheels_temp/
+*.pyc
+__pycache__/
+.venv/
+.venv-workers/
+
+# better-auth configuration (can include secrets)
+
+# script logs
+scripts/*.log
+
+# workspace runtime files
+workspace/*
+!workspace/.gitkeep
+src/workspace/skills/*
+!src/workspace/skills/*.md
+results/*.json
+
+.trigger
+
+# MCP / Playwright MCP
+.mcp.json
+.playwright-mcp/
+
+# Claude Code local settings (may contain secrets)
+.claude/settings.local.json
+
+# Rust build artifacts
+**/target/

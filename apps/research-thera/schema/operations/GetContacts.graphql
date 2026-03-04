@@ -1,0 +1,13 @@
+query GetContacts {
+  contacts {
+    id
+    createdBy
+    firstName
+    lastName
+    role
+    ageYears
+    notes
+    createdAt
+    updatedAt
+  }
+}

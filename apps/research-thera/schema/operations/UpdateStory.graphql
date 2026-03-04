@@ -1,0 +1,10 @@
+mutation UpdateStory($id: Int!, $input: UpdateStoryInput!) {
+  updateStory(id: $id, input: $input) {
+    id
+    goalId
+    createdBy
+    content
+    createdAt
+    updatedAt
+  }
+}

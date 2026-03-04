@@ -1,0 +1,6 @@
+mutation DeleteJournalEntry($id: Int!) {
+  deleteJournalEntry(id: $id) {
+    success
+    message
+  }
+}

@@ -1,0 +1,22 @@
+query GetAllNotes {
+  allNotes {
+    id
+    entityId
+    entityType
+    createdBy
+    noteType
+    slug
+    title
+    content
+    createdBy
+    tags
+    goal {
+      id
+      title
+      description
+      status
+    }
+    createdAt
+    updatedAt
+  }
+}

@@ -1,0 +1,16 @@
+mutation CreateBehaviorObservation($input: CreateBehaviorObservationInput!) {
+  createBehaviorObservation(input: $input) {
+    id
+    familyMemberId
+    goalId
+    createdBy
+    observedAt
+    observationType
+    frequency
+    intensity
+    context
+    notes
+    createdAt
+    updatedAt
+  }
+}

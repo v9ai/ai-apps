@@ -1,0 +1,21 @@
+mutation CreateFamilyMemberCharacteristic($input: CreateFamilyMemberCharacteristicInput!) {
+  createFamilyMemberCharacteristic(input: $input) {
+    id
+    familyMemberId
+    createdBy
+    category
+    title
+    description
+    severity
+    frequencyPerWeek
+    durationWeeks
+    ageOfOnset
+    impairmentDomains
+    formulationStatus
+    externalizedName
+    strengths
+    riskTier
+    createdAt
+    updatedAt
+  }
+}

@@ -1,0 +1,16 @@
+query GetAudioFromR2($key: String!) {
+  audioFromR2(key: $key) {
+    success
+    message
+    audioUrl
+    key
+    metadata {
+      voice
+      model
+      textLength
+      chunks
+      generatedBy
+      instructions
+    }
+  }
+}

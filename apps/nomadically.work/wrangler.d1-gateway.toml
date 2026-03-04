@@ -1,0 +1,27 @@
+name = "d1-gateway"
+main = "workers/d1-gateway.ts"
+compatibility_date = "2026-02-01"
+
+# D1 Database binding
+[[d1_databases]]
+binding = "DB"
+database_name = "nomadically-db"
+database_id = "632b9c57-8262-40bd-86c2-bc08beab713b"
+
+# Environment variables
+[vars]
+# API_KEY is set via `wrangler secret put API_KEY`
+# Generate a strong random key: openssl rand -hex 32
+
+# Observability
+[observability]
+enabled = true
+
+[observability.logs]
+enabled = true
+invocation_logs = true
+
+# Optional: Custom domains
+# [[routes]]
+# pattern = "api.yourdomain.com/*"
+# zone_name = "yourdomain.com"

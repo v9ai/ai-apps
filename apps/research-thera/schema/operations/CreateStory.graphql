@@ -1,0 +1,10 @@
+mutation CreateStory($input: CreateStoryInput!) {
+  createStory(input: $input) {
+    id
+    goalId
+    createdBy
+    content
+    createdAt
+    updatedAt
+  }
+}

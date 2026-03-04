@@ -1,0 +1,1090 @@
+type Query {
+  goals(familyMemberId: Int, status: String): [Goal!]!
+  goal(id: Int, slug: String): Goal
+  research(goalId: Int!): [Research!]!
+  therapeuticQuestions(goalId: Int!): [TherapeuticQuestion!]!
+  notes(entityId: Int!, entityType: String!): [Note!]!
+  allNotes: [Note!]!
+  note(id: Int, slug: String): Note
+  mySharedNotes: [Note!]!
+
+  allStories: [Story!]!
+  stories(goalId: Int!): [Story!]!
+  story(id: Int!): Story
+  goalStory(id: Int!): GoalStory
+  generationJob(id: String!): GenerationJob
+  generationJobs(goalId: Int, status: String): [GenerationJob!]!
+
+  # Family Members
+  familyMembers: [FamilyMember!]!
+  familyMember(id: Int!): FamilyMember
+  mySharedFamilyMembers: [FamilyMember!]!
+
+  # Journal Entries
+  journalEntries(familyMemberId: Int, goalId: Int, mood: String, fromDate: String, toDate: String): [JournalEntry!]!
+  journalEntry(id: Int!): JournalEntry
+
+  # Behavior Observations
+  behaviorObservations(familyMemberId: Int!, goalId: Int): [BehaviorObservation!]!
+  behaviorObservation(id: Int!): BehaviorObservation
+
+  # Family Member Characteristics
+  familyMemberCharacteristics(familyMemberId: Int!, category: CharacteristicCategory): [FamilyMemberCharacteristic!]!
+  familyMemberCharacteristic(id: Int!): FamilyMemberCharacteristic
+
+  # Contacts
+  contacts: [Contact!]!
+  contact(id: Int!): Contact
+
+  # Relationships
+  relationships(subjectType: PersonType!, subjectId: Int!): [Relationship!]!
+  relationship(id: Int!): Relationship
+
+  # Claim Cards
+  claimCard(id: ID!): ClaimCard
+  claimCardsForNote(noteId: Int!): [ClaimCard!]!
+
+  # R2 Audio
+  audioFromR2(key: String!): AudioFromR2Result
+
+  # User Settings
+  userSettings: UserSettings!
+}
+
+type Mutation {
+  # Goals
+  createGoal(input: CreateGoalInput!): Goal!
+  updateGoal(id: Int!, input: UpdateGoalInput!): Goal!
+  deleteGoal(id: Int!): DeleteGoalResult!
+
+  createSubGoal(goalId: Int!, input: CreateSubGoalInput!): Goal!
+
+  # Async generation workflows
+  generateResearch(goalId: Int!): GenerateResearchResult!
+  deleteResearch(goalId: Int!): DeleteResearchResult!
+  generateTherapeuticQuestions(goalId: Int!): GenerateQuestionsResult!
+  deleteTherapeuticQuestions(goalId: Int!): DeleteQuestionsResult!
+  generateLongFormText(
+    goalId: Int!
+    characteristicId: Int
+    language: String
+    minutes: Int
+  ): GenerateLongFormTextResult!
+  generateAudio(
+    goalId: Int!
+    storyId: Int
+    text: String
+    language: String
+    voice: String
+  ): GenerateAudioResult!
+
+  # Notes
+  createNote(input: CreateNoteInput!): Note!
+  updateNote(id: Int!, input: UpdateNoteInput!): Note!
+  deleteNote(id: Int!): DeleteNoteResult!
+  setNoteVisibility(noteId: Int!, visibility: NoteVisibility!): Note!
+  shareNote(noteId: Int!, email: String!, role: NoteShareRole): NoteShare!
+  unshareNote(noteId: Int!, email: String!): Boolean!
+
+  # Stories
+  createStory(input: CreateStoryInput!): Story!
+  updateStory(id: Int!, input: UpdateStoryInput!): Story!
+  deleteStory(id: Int!): DeleteStoryResult!
+
+  # Claim Cards
+  buildClaimCards(input: BuildClaimCardsInput!): BuildClaimCardsResult!
+  checkNoteClaims(input: CheckNoteClaimsInput!): CheckNoteClaimsResult!
+  refreshClaimCard(id: ID!): ClaimCard!
+  deleteClaimCard(id: ID!): Boolean!
+
+  # OpenAI TTS
+  generateOpenAIAudio(
+    input: GenerateOpenAIAudioInput!
+  ): GenerateOpenAIAudioResult!
+
+  # Family Members
+  createFamilyMember(input: CreateFamilyMemberInput!): FamilyMember!
+  updateFamilyMember(id: Int!, input: UpdateFamilyMemberInput!): FamilyMember!
+  deleteFamilyMember(id: Int!): DeleteFamilyMemberResult!
+  shareFamilyMember(familyMemberId: Int!, email: String!, role: FamilyMemberShareRole): FamilyMemberShare!
+  unshareFamilyMember(familyMemberId: Int!, email: String!): Boolean!
+
+  # Journal Entries
+  createJournalEntry(input: CreateJournalEntryInput!): JournalEntry!
+  updateJournalEntry(id: Int!, input: UpdateJournalEntryInput!): JournalEntry!
+  deleteJournalEntry(id: Int!): DeleteJournalEntryResult!
+
+  # Behavior Observations
+  createBehaviorObservation(input: CreateBehaviorObservationInput!): BehaviorObservation!
+  updateBehaviorObservation(id: Int!, input: UpdateBehaviorObservationInput!): BehaviorObservation!
+  deleteBehaviorObservation(id: Int!): DeleteBehaviorObservationResult!
+
+  # Family Member Characteristics
+  createFamilyMemberCharacteristic(input: CreateFamilyMemberCharacteristicInput!): FamilyMemberCharacteristic!
+  updateFamilyMemberCharacteristic(id: Int!, input: UpdateFamilyMemberCharacteristicInput!): FamilyMemberCharacteristic!
+  deleteFamilyMemberCharacteristic(id: Int!): DeleteFamilyMemberCharacteristicResult!
+
+  # Unique Outcomes
+  createUniqueOutcome(input: CreateUniqueOutcomeInput!): UniqueOutcome!
+  updateUniqueOutcome(id: Int!, input: UpdateUniqueOutcomeInput!): UniqueOutcome!
+  deleteUniqueOutcome(id: Int!): DeleteUniqueOutcomeResult!
+
+  # Contacts
+  createContact(input: CreateContactInput!): Contact!
+  updateContact(id: Int!, input: UpdateContactInput!): Contact!
+  deleteContact(id: Int!): DeleteContactResult!
+
+  # Relationships
+  createRelationship(input: CreateRelationshipInput!): Relationship!
+  updateRelationship(id: Int!, input: UpdateRelationshipInput!): Relationship!
+  deleteRelationship(id: Int!): DeleteRelationshipResult!
+
+  # User Settings
+  updateUserSettings(storyLanguage: String!, storyMinutes: Int): UserSettings!
+}
+
+type Subscription {
+  researchJobStatus(jobId: String!): GenerationJob!
+  audioJobStatus(jobId: String!): GenerationJob!
+}
+
+# ============================================
+# Core Types
+# ============================================
+
+enum NoteVisibility {
+  PRIVATE
+  PUBLIC
+}
+
+enum NoteShareRole {
+  READER
+  EDITOR
+}
+
+type NoteShare {
+  noteId: Int!
+  email: String!
+  role: NoteShareRole!
+  createdAt: String!
+  createdBy: String!
+}
+
+type NoteAccess {
+  canRead: Boolean!
+  canEdit: Boolean!
+  reason: String
+}
+
+type Goal {
+  id: Int!
+  familyMemberId: Int!
+  familyMember: FamilyMember
+  createdBy: String!
+  slug: String
+  title: String!
+  description: String
+  status: String!
+  parentGoalId: Int
+  parentGoal: Goal
+  subGoals: [Goal!]!
+  createdAt: String!
+  updatedAt: String!
+  research: [Research!]!
+  questions: [TherapeuticQuestion!]!
+  stories: [GoalStory!]!
+  userStories: [Story!]!
+  notes: [Note!]!
+  therapeuticText: String
+  therapeuticTextLanguage: String
+  therapeuticTextGeneratedAt: String
+  storyLanguage: String
+}
+
+type Story {
+  id: Int!
+  goalId: Int!
+  createdBy: String!
+  content: String!
+  audioKey: String
+  audioUrl: String
+  audioGeneratedAt: String
+  createdAt: String!
+  updatedAt: String!
+  goal: Goal
+}
+
+type GoalStory {
+  id: Int!
+  goalId: Int!
+  language: String!
+  minutes: Int!
+  text: String!
+  audioKey: String
+  audioUrl: String
+  audioGeneratedAt: String
+  createdAt: String!
+  updatedAt: String!
+  segments: [TextSegment!]!
+  audioAssets: [AudioAsset!]!
+}
+
+type TextSegment {
+  id: Int!
+  goalId: Int!
+  storyId: Int
+  idx: Int!
+  text: String!
+  createdAt: String!
+}
+
+type Research {
+  id: Int!
+  goalId: Int!
+  therapeuticGoalType: String!
+  title: String!
+  authors: [String!]!
+  year: Int
+  journal: String
+  doi: String
+  url: String
+  abstract: String
+  keyFindings: [String!]!
+  therapeuticTechniques: [String!]!
+  evidenceLevel: String
+  relevanceScore: Float!
+  extractedBy: String!
+  extractionConfidence: Float!
+  createdAt: String!
+  updatedAt: String!
+  goal: Goal
+}
+
+type TherapeuticQuestion {
+  id: Int!
+  goalId: Int!
+  question: String!
+  researchId: Int
+  researchTitle: String
+  rationale: String!
+  generatedAt: String!
+  createdAt: String!
+  updatedAt: String!
+}
+
+type Note {
+  id: Int!
+  entityId: Int!
+  entityType: String!
+  createdBy: String!
+  noteType: String
+  slug: String
+  title: String
+  content: String!
+  tags: [String!]
+  visibility: NoteVisibility!
+  linkedResearch: [Research!]
+  claimCards: [ClaimCard!]
+  goal: Goal
+  shares: [NoteShare!]!
+  viewerAccess: NoteAccess!
+  createdAt: String!
+  updatedAt: String!
+}
+
+# ============================================
+# Audio & Job Types
+# ============================================
+
+type GenerationJob {
+  id: String!
+  userId: String!
+  type: JobType!
+  goalId: Int!
+  storyId: Int
+  status: JobStatus!
+  progress: Float!
+  result: JobResult
+  error: JobError
+  createdAt: String!
+  updatedAt: String!
+}
+
+enum JobType {
+  AUDIO
+  RESEARCH
+  QUESTIONS
+  LONGFORM
+}
+
+enum JobStatus {
+  RUNNING
+  SUCCEEDED
+  FAILED
+}
+
+type JobResult {
+  audioUrl: String
+  manifestUrl: String
+  segmentUrls: [String!]
+  assetId: String
+  count: Int
+  text: String
+  questions: [TherapeuticQuestion!]
+}
+
+type JobError {
+  message: String!
+  code: String
+  details: String
+}
+
+type AudioAsset {
+  id: String!
+  createdBy: String!
+  goalId: Int!
+  storyId: Int
+  language: String!
+  voice: String!
+  mimeType: String!
+  manifest: AudioManifest!
+  createdAt: String!
+}
+
+type AudioManifest {
+  segmentCount: Int!
+  totalDuration: Float
+  segments: [AudioSegmentInfo!]!
+}
+
+type AudioSegmentInfo {
+  idx: Int!
+  duration: Float
+  url: String!
+}
+
+# ============================================
+# Input Types
+# ============================================
+
+input CreateGoalInput {
+  familyMemberId: Int!
+  title: String!
+  description: String
+}
+
+input CreateSubGoalInput {
+  title: String!
+  description: String
+}
+
+input UpdateGoalInput {
+  familyMemberId: Int
+  title: String
+  description: String
+  status: String
+  storyLanguage: String
+}
+
+input CreateNoteInput {
+  entityId: Int!
+  entityType: String!
+  noteType: String
+  slug: String
+  title: String
+  content: String!
+  tags: [String!]
+  linkedResearchIds: [Int!]
+}
+
+input UpdateNoteInput {
+  noteType: String
+  title: String
+  content: String
+  createdBy: String
+  tags: [String!]
+  linkedResearchIds: [Int!]
+}
+
+input CreateStoryInput {
+  goalId: Int!
+  content: String!
+}
+
+input UpdateStoryInput {
+  content: String
+}
+
+# ============================================
+# Result Types
+# ============================================
+
+type GenerateResearchResult {
+  success: Boolean!
+  message: String
+  jobId: String
+  count: Int
+}
+
+type GenerateLongFormTextResult {
+  success: Boolean!
+  message: String
+  jobId: String
+  storyId: Int
+  text: String
+  audioUrl: String
+  manifestUrl: String
+  segmentUrls: [String!]
+}
+
+type GenerateAudioResult {
+  success: Boolean!
+  message: String
+  jobId: String!
+  audioUrl: String
+}
+
+type GenerateQuestionsResult {
+  success: Boolean!
+  message: String
+  jobId: String
+  questions: [TherapeuticQuestion!]!
+}
+
+type DeleteGoalResult {
+  success: Boolean!
+  message: String
+}
+
+type DeleteQuestionsResult {
+  success: Boolean!
+  message: String
+  deletedCount: Int!
+}
+
+type DeleteResearchResult {
+  success: Boolean!
+  message: String
+  deletedCount: Int!
+}
+
+type DeleteNoteResult {
+  success: Boolean!
+  message: String
+}
+
+type DeleteStoryResult {
+  success: Boolean!
+  message: String
+}
+
+# ============================================
+# Claim Cards
+# ============================================
+
+type ClaimScope {
+  population: String
+  intervention: String
+  comparator: String
+  outcome: String
+  timeframe: String
+  setting: String
+}
+
+type EvidenceLocator {
+  section: String
+  page: Int
+  url: String
+}
+
+type EvidenceItem {
+  paper: PaperCandidate!
+  polarity: EvidencePolarity!
+  excerpt: String
+  rationale: String
+  score: Float
+  locator: EvidenceLocator
+}
+
+type ClaimCard {
+  id: ID!
+  claim: String!
+  scope: ClaimScope
+  verdict: ClaimVerdict!
+  confidence: Float!
+  evidence: [EvidenceItem!]!
+  queries: [String!]!
+  createdAt: String!
+  updatedAt: String!
+  provenance: ClaimProvenance!
+  notes: String
+}
+
+type ClaimProvenance {
+  generatedBy: String!
+  model: String
+  sourceTools: [String!]!
+}
+
+type PaperCandidate {
+  title: String!
+  doi: String
+  url: String
+  year: Int
+  source: String!
+  authors: [String!]
+  abstract: String
+  journal: String
+  oaUrl: String
+  oaStatus: String
+}
+
+enum ClaimVerdict {
+  UNVERIFIED
+  SUPPORTED
+  CONTRADICTED
+  MIXED
+  INSUFFICIENT
+}
+
+enum EvidencePolarity {
+  SUPPORTS
+  CONTRADICTS
+  MIXED
+  IRRELEVANT
+}
+
+input BuildClaimCardsInput {
+  text: String
+  claims: [String!]
+  perSourceLimit: Int
+  topK: Int
+  useLlmJudge: Boolean
+  sources: [ResearchSource!]
+}
+
+input CheckNoteClaimsInput {
+  noteId: Int!
+  maxClaims: Int
+  maxSourcesToResolve: Int
+  evidenceTopK: Int
+  useJudge: Boolean
+  sources: [ResearchSource!]
+}
+
+enum ResearchSource {
+  CROSSREF
+  PUBMED
+  SEMANTIC_SCHOLAR
+  OPENALEX
+  ARXIV
+  EUROPEPMC
+  DATACITE
+}
+
+type BuildClaimCardsResult {
+  cards: [ClaimCard!]!
+}
+
+type CheckNoteClaimsResult {
+  success: Boolean!
+  message: String
+  cards: [ClaimCard!]!
+  noteId: Int!
+}
+
+# ============================================
+# OpenAI TTS Types
+# ============================================
+
+enum OpenAITTSVoice {
+  ALLOY
+  ASH
+  BALLAD
+  CORAL
+  ECHO
+  FABLE
+  ONYX
+  NOVA
+  SAGE
+  SHIMMER
+  VERSE
+  MARIN
+  CEDAR
+}
+
+enum OpenAITTSModel {
+  TTS_1
+  TTS_1_HD
+  GPT_4O_MINI_TTS
+}
+
+enum OpenAIAudioFormat {
+  MP3
+  OPUS
+  AAC
+  FLAC
+  WAV
+  PCM
+}
+
+enum OpenAIStreamFormat {
+  SSE
+  AUDIO
+}
+
+input GenerateOpenAIAudioInput {
+  text: String!
+  storyId: Int
+  goalStoryId: Int
+  voice: OpenAITTSVoice
+  model: OpenAITTSModel
+  speed: Float
+  responseFormat: OpenAIAudioFormat
+  uploadToCloud: Boolean
+  streamFormat: OpenAIStreamFormat
+  instructions: String
+}
+
+type GenerateOpenAIAudioResult {
+  success: Boolean!
+  message: String
+  jobId: String
+  audioBuffer: String
+  audioUrl: String
+  key: String
+  sizeBytes: Int
+  duration: Float
+}
+
+type AudioFromR2Result {
+  success: Boolean!
+  message: String
+  audioUrl: String
+  key: String
+  metadata: AudioMetadata
+}
+
+# ============================================
+# Family Members
+# ============================================
+
+type FamilyMember {
+  id: Int!
+  userId: String!
+  firstName: String!
+  name: String
+  ageYears: Int
+  relationship: String
+  dateOfBirth: String
+  bio: String
+  email: String
+  phone: String
+  location: String
+  occupation: String
+  createdAt: String!
+  updatedAt: String!
+  goals: [Goal!]!
+  shares: [FamilyMemberShare!]!
+  behaviorObservations(goalId: Int): [BehaviorObservation!]!
+}
+
+input CreateFamilyMemberInput {
+  firstName: String!
+  name: String
+  ageYears: Int
+  relationship: String
+  dateOfBirth: String
+  bio: String
+  email: String
+  phone: String
+  location: String
+  occupation: String
+}
+
+input UpdateFamilyMemberInput {
+  firstName: String
+  name: String
+  ageYears: Int
+  relationship: String
+  dateOfBirth: String
+  bio: String
+  email: String
+  phone: String
+  location: String
+  occupation: String
+}
+
+type DeleteFamilyMemberResult {
+  success: Boolean!
+  message: String
+}
+
+enum FamilyMemberShareRole {
+  VIEWER
+  EDITOR
+}
+
+type FamilyMemberShare {
+  familyMemberId: Int!
+  email: String!
+  role: FamilyMemberShareRole!
+  createdAt: String!
+  createdBy: String!
+}
+
+type AudioMetadata {
+  voice: String
+  model: String
+  textLength: String
+  chunks: String
+  generatedBy: String
+  instructions: String
+}
+
+# ============================================
+# Journal Entries
+# ============================================
+
+type JournalEntry {
+  id: Int!
+  createdBy: String!
+  familyMemberId: Int
+  familyMember: FamilyMember
+  title: String
+  content: String!
+  mood: String
+  moodScore: Int
+  tags: [String!]
+  goalId: Int
+  goal: Goal
+  isPrivate: Boolean!
+  entryDate: String!
+  createdAt: String!
+  updatedAt: String!
+}
+
+input CreateJournalEntryInput {
+  familyMemberId: Int
+  title: String
+  content: String!
+  mood: String
+  moodScore: Int
+  tags: [String!]
+  goalId: Int
+  isPrivate: Boolean
+  entryDate: String!
+}
+
+input UpdateJournalEntryInput {
+  familyMemberId: Int
+  title: String
+  content: String
+  mood: String
+  moodScore: Int
+  tags: [String!]
+  goalId: Int
+  isPrivate: Boolean
+  entryDate: String
+}
+
+type DeleteJournalEntryResult {
+  success: Boolean!
+  message: String
+}
+
+# ============================================
+# Behavior Observations
+# ============================================
+
+enum BehaviorObservationType {
+  REFUSAL
+  TARGET_OCCURRED
+  AVOIDANCE
+  PARTIAL
+}
+
+enum BehaviorIntensity {
+  LOW
+  MEDIUM
+  HIGH
+}
+
+type BehaviorObservation {
+  id: Int!
+  familyMemberId: Int!
+  goalId: Int
+  characteristicId: Int
+  createdBy: String!
+  observedAt: String!
+  observationType: BehaviorObservationType!
+  frequency: Int
+  intensity: BehaviorIntensity
+  context: String
+  notes: String
+  createdAt: String!
+  updatedAt: String!
+  familyMember: FamilyMember
+  goal: Goal
+}
+
+input CreateBehaviorObservationInput {
+  familyMemberId: Int!
+  goalId: Int
+  characteristicId: Int
+  observedAt: String!
+  observationType: BehaviorObservationType!
+  frequency: Int
+  intensity: BehaviorIntensity
+  context: String
+  notes: String
+}
+
+input UpdateBehaviorObservationInput {
+  observedAt: String
+  observationType: BehaviorObservationType
+  frequency: Int
+  intensity: BehaviorIntensity
+  context: String
+  notes: String
+}
+
+type DeleteBehaviorObservationResult {
+  success: Boolean!
+  message: String
+}
+
+# ============================================
+# Family Member Characteristics
+# ============================================
+
+enum CharacteristicCategory {
+  STRENGTH
+  SUPPORT_NEED
+  PRIORITY_CONCERN
+}
+
+enum SeverityLevel {
+  MILD
+  MODERATE
+  SEVERE
+  PROFOUND
+}
+
+enum ImpairmentDomain {
+  ACADEMIC
+  PEER
+  FAMILY
+  SELF_CARE
+  SAFETY
+}
+
+enum FormulationStatus {
+  DRAFT
+  ASSESSED
+  FORMULATED
+}
+
+enum RiskTier {
+  NONE
+  WATCH
+  CONCERN
+  SAFEGUARDING_ALERT
+}
+
+enum DevelopmentalTier {
+  EARLY_CHILDHOOD
+  MIDDLE_CHILDHOOD
+  EARLY_ADOLESCENCE
+  LATE_ADOLESCENCE
+  ADULT
+}
+
+type FamilyMemberCharacteristic {
+  id: Int!
+  familyMemberId: Int!
+  createdBy: String!
+  category: CharacteristicCategory!
+  title: String!
+  description: String
+  severity: SeverityLevel
+  frequencyPerWeek: Int
+  durationWeeks: Int
+  ageOfOnset: Int
+  impairmentDomains: [ImpairmentDomain!]!
+  formulationStatus: FormulationStatus!
+  externalizedName: String
+  strengths: String
+  riskTier: RiskTier!
+  uniqueOutcomes: [UniqueOutcome!]!
+  behaviorObservations: [BehaviorObservation!]!
+  createdAt: String!
+  updatedAt: String!
+  familyMember: FamilyMember
+}
+
+type UniqueOutcome {
+  id: Int!
+  characteristicId: Int!
+  createdBy: String!
+  observedAt: String!
+  description: String!
+  createdAt: String!
+  updatedAt: String!
+}
+
+input CreateUniqueOutcomeInput {
+  characteristicId: Int!
+  observedAt: String!
+  description: String!
+}
+
+input UpdateUniqueOutcomeInput {
+  observedAt: String
+  description: String
+}
+
+type DeleteUniqueOutcomeResult {
+  success: Boolean!
+  message: String
+}
+
+input CreateFamilyMemberCharacteristicInput {
+  familyMemberId: Int!
+  category: CharacteristicCategory!
+  title: String!
+  description: String
+  severity: SeverityLevel
+  frequencyPerWeek: Int
+  durationWeeks: Int
+  ageOfOnset: Int
+  impairmentDomains: [ImpairmentDomain!]
+  formulationStatus: FormulationStatus
+  externalizedName: String
+  strengths: String
+  riskTier: RiskTier
+}
+
+input UpdateFamilyMemberCharacteristicInput {
+  category: CharacteristicCategory
+  title: String
+  description: String
+  severity: SeverityLevel
+  frequencyPerWeek: Int
+  durationWeeks: Int
+  ageOfOnset: Int
+  impairmentDomains: [ImpairmentDomain!]
+  formulationStatus: FormulationStatus
+  externalizedName: String
+  strengths: String
+  riskTier: RiskTier
+}
+
+type DeleteFamilyMemberCharacteristicResult {
+  success: Boolean!
+  message: String
+}
+
+# ============================================
+# Contacts & Relationships
+# ============================================
+
+enum PersonType {
+  FAMILY_MEMBER
+  CONTACT
+}
+
+enum RelationshipStatus {
+  ACTIVE
+  ENDED
+}
+
+type Contact {
+  id: Int!
+  createdBy: String!
+  firstName: String!
+  lastName: String
+  role: String
+  ageYears: Int
+  notes: String
+  createdAt: String!
+  updatedAt: String!
+}
+
+type Relationship {
+  id: Int!
+  createdBy: String!
+  subjectType: PersonType!
+  subjectId: Int!
+  relatedType: PersonType!
+  relatedId: Int!
+  relationshipType: String!
+  context: String
+  startDate: String
+  status: RelationshipStatus!
+  createdAt: String!
+  updatedAt: String!
+  subject: RelationshipPerson
+  related: RelationshipPerson
+}
+
+type RelationshipPerson {
+  id: Int!
+  type: PersonType!
+  firstName: String!
+  lastName: String
+}
+
+input CreateContactInput {
+  firstName: String!
+  lastName: String
+  role: String
+  ageYears: Int
+  notes: String
+}
+
+input UpdateContactInput {
+  firstName: String
+  lastName: String
+  role: String
+  ageYears: Int
+  notes: String
+}
+
+type DeleteContactResult {
+  success: Boolean!
+  message: String
+}
+
+input CreateRelationshipInput {
+  subjectType: PersonType!
+  subjectId: Int!
+  relatedType: PersonType!
+  relatedId: Int!
+  relationshipType: String!
+  context: String
+  startDate: String
+  status: RelationshipStatus
+}
+
+input UpdateRelationshipInput {
+  relationshipType: String
+  context: String
+  startDate: String
+  status: RelationshipStatus
+}
+
+type DeleteRelationshipResult {
+  success: Boolean!
+  message: String
+}
+
+# ============================================
+# User Settings
+# ============================================
+
+type UserSettings {
+  userId: String!
+  storyLanguage: String!
+  storyMinutes: Int!
+}

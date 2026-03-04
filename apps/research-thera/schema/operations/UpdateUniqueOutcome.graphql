@@ -1,0 +1,11 @@
+mutation UpdateUniqueOutcome($id: Int!, $input: UpdateUniqueOutcomeInput!) {
+  updateUniqueOutcome(id: $id, input: $input) {
+    id
+    characteristicId
+    createdBy
+    observedAt
+    description
+    createdAt
+    updatedAt
+  }
+}

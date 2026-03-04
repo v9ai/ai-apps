@@ -1,0 +1,10 @@
+mutation GenerateLongFormTextRomanian($goalId: Int!) {
+  generateLongFormText(goalId: $goalId, language: "Romanian") {
+    success
+    message
+    text
+    audioUrl
+    manifestUrl
+    segmentUrls
+  }
+}

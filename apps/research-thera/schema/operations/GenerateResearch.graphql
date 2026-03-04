@@ -1,0 +1,8 @@
+mutation GenerateResearch($goalId: Int!) {
+  generateResearch(goalId: $goalId) {
+    success
+    message
+    jobId
+    count
+  }
+}

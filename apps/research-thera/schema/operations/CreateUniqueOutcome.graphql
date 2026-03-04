@@ -1,0 +1,11 @@
+mutation CreateUniqueOutcome($input: CreateUniqueOutcomeInput!) {
+  createUniqueOutcome(input: $input) {
+    id
+    characteristicId
+    createdBy
+    observedAt
+    description
+    createdAt
+    updatedAt
+  }
+}

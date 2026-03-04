@@ -1,0 +1,171 @@
+/* Section dividers */
+.SectionDivider {
+  height: 1px;
+  background: var(--gray-6);
+}
+
+/* Accordion base */
+.AccordionRoot {
+  width: 100%;
+}
+
+.AccordionItem {
+  border-bottom: 1px solid var(--gray-6);
+}
+
+.AccordionHeader {
+  all: unset;
+}
+
+/* Clickable row (bigger target + hover/focus polish) */
+.AccordionTrigger {
+  all: unset;
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 12px;
+
+  padding: 12px 10px;
+  border-radius: 10px;
+  cursor: pointer;
+}
+
+.AccordionTrigger:hover {
+  background: var(--gray-2);
+}
+
+.AccordionTrigger:focus-visible {
+  outline: 2px solid var(--indigo-9);
+  outline-offset: 2px;
+}
+
+/* Chevron animation */
+.AccordionChevron {
+  transition: transform 180ms ease;
+  margin-top: 4px;
+  color: var(--gray-10);
+}
+
+.AccordionTrigger[data-state="open"] .AccordionChevron {
+  transform: rotate(180deg);
+}
+
+/* Content */
+.AccordionContent {
+  overflow: hidden;
+}
+
+.AccordionContentBox {
+  padding: 12px 12px 14px 12px;
+  border-radius: 10px;
+  background: var(--gray-2);
+  margin: 0 10px 12px 10px;
+}
+
+/* Tooltip */
+.TooltipContent {
+  background: var(--gray-12);
+  color: var(--gray-1);
+  padding: 8px 12px;
+  border-radius: 8px;
+  font-size: 13px;
+  max-width: 220px;
+}
+
+.TooltipArrow {
+  fill: var(--gray-12);
+}
+
+/* Line clamps for scannability */
+.LineClamp1,
+.LineClamp2,
+.LineClamp3 {
+  overflow: hidden;
+  display: -webkit-box;
+  -webkit-box-orient: vertical;
+}
+
+.LineClamp1 {
+  -webkit-line-clamp: 1;
+}
+
+.LineClamp2 {
+  -webkit-line-clamp: 2;
+}
+
+.LineClamp3 {
+  -webkit-line-clamp: 3;
+}
+
+/* Small icon link inside row */
+.RowIconLink {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 28px;
+  height: 28px;
+  border-radius: 8px;
+  color: var(--gray-11);
+}
+
+.RowIconLink:hover {
+  background: var(--gray-3);
+  color: var(--gray-12);
+}
+
+/* Scope box */
+.ScopeBox {
+  background: var(--gray-3);
+  border: 1px solid var(--gray-6);
+  border-radius: 10px;
+  padding: 12px;
+}
+
+/* Evidence rows */
+.EvidenceRow {
+  border-radius: 10px;
+  padding: 10px 10px;
+  border: 1px solid var(--gray-6);
+  background: var(--gray-1);
+}
+
+.EvidenceSupport {
+  border-left: 3px solid var(--green-9);
+  background: var(--green-2);
+}
+
+.EvidenceContradict {
+  border-left: 3px solid var(--red-9);
+  background: var(--red-2);
+}
+
+.EvidenceOther {
+  border-left: 3px solid var(--gray-9);
+  background: var(--gray-2);
+}
+
+.EvidenceExcerpt {
+  font-style: italic;
+  color: var(--gray-11);
+}
+
+/* Goal card polish */
+.GoalCard {
+  background: var(--indigo-3);
+  cursor: pointer;
+  border: 1px solid var(--indigo-6);
+  transition:
+    transform 120ms ease,
+    background 120ms ease;
+}
+
+.GoalCard:hover {
+  background: var(--indigo-4);
+  transform: translateY(-1px);
+}
+
+.GoalDivider {
+  height: 1px;
+  background: var(--indigo-6);
+  margin: 6px 0;
+}

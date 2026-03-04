@@ -1,0 +1,16 @@
+mutation CreateRelationship($input: CreateRelationshipInput!) {
+  createRelationship(input: $input) {
+    id
+    createdBy
+    subjectType
+    subjectId
+    relatedType
+    relatedId
+    relationshipType
+    context
+    startDate
+    status
+    createdAt
+    updatedAt
+  }
+}

@@ -1,0 +1,13 @@
+mutation UpdateContact($id: Int!, $input: UpdateContactInput!) {
+  updateContact(id: $id, input: $input) {
+    id
+    createdBy
+    firstName
+    lastName
+    role
+    ageYears
+    notes
+    createdAt
+    updatedAt
+  }
+}

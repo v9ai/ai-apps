@@ -1,0 +1,17 @@
+mutation UpdateFamilyMember($id: Int!, $input: UpdateFamilyMemberInput!) {
+  updateFamilyMember(id: $id, input: $input) {
+    id
+    firstName
+    name
+    relationship
+    email
+    phone
+    location
+    occupation
+    ageYears
+    dateOfBirth
+    bio
+    createdAt
+    updatedAt
+  }
+}

@@ -1,0 +1,30 @@
+name = "ats-crawler"
+main = "build/worker/shim.mjs"
+compatibility_date = "2026-02-01"
+
+[build]
+command = "cargo install -q worker-build && worker-build --release"
+
+# Cron trigger — run daily at 02:00 UTC (offset 2h from main cron to avoid contention)
+# Crawls the latest Common Crawl index for Ashby + Greenhouse boards (5 pages/provider/run, resumable)
+[triggers]
+crons = ["0 2 * * *"]
+
+# D1 Database — same database as the main app (remote binding for local dev)
+[[d1_databases]]
+binding = "DB"
+database_name = "nomadically-work-db"
+database_id = "632b9c57-8262-40bd-86c2-bc08beab713b"
+remote = true
+
+# Observability
+[observability]
+enabled = true
+
+[observability.logs]
+enabled = true
+invocation_logs = true
+
+# Secrets (set via: wrangler secret put SECRET_NAME --config workers/ashby-crawler/wrangler.toml)
+# None required — the worker only calls the public Common Crawl CDX API.
+# Add CRON_SECRET here if you later add a scheduled trigger with auth.

@@ -1,0 +1,16 @@
+mutation UpdateBehaviorObservation($id: Int!, $input: UpdateBehaviorObservationInput!) {
+  updateBehaviorObservation(id: $id, input: $input) {
+    id
+    familyMemberId
+    goalId
+    createdBy
+    observedAt
+    observationType
+    frequency
+    intensity
+    context
+    notes
+    createdAt
+    updatedAt
+  }
+}

@@ -1,0 +1,179 @@
+#import "./CompanyFields.graphql"
+
+query GetJob($id: String!) {
+  job(id: $id) {
+    id
+    external_id
+    source_id
+    source_kind
+    company_id
+    company_key
+    company {
+      ...CompanyFields
+    }
+    title
+    location
+    url
+    description
+    publishedAt
+    score
+    score_reason
+    status
+    is_remote_eu
+    remote_eu_confidence
+    remote_eu_reason
+    skills {
+      tag
+      level
+      confidence
+      evidence
+    }
+    skillMatch {
+      score
+      userCoverage
+      jobCoverage
+      requiredCoverage
+      matchedCount
+      totalPreferred
+      details {
+        tag
+        level
+        matched
+      }
+    }
+
+    # Greenhouse ATS fields
+    absolute_url
+    internal_job_id
+    requisition_id
+    company_name
+    publishedAt
+    language
+    metadata {
+      id
+      name
+      value
+      value_type
+    }
+    departments {
+      id
+      name
+      child_ids
+      parent_id
+    }
+    offices {
+      id
+      name
+      location
+      child_ids
+      parent_id
+    }
+    questions {
+      description
+      label
+      required
+      fields {
+        type
+        name
+      }
+    }
+    location_questions {
+      description
+      label
+      required
+      fields {
+        type
+        name
+      }
+    }
+    compliance {
+      type
+      description
+      questions {
+        description
+        label
+        required
+        fields {
+          type
+          name
+        }
+      }
+    }
+    demographic_questions {
+      header
+      description
+      questions {
+        description
+        label
+        required
+        fields {
+          type
+          name
+        }
+      }
+    }
+    data_compliance {
+      type
+      requires_consent
+      requires_processing_consent
+      requires_retention_consent
+      retention_period
+      demographic_data_consent_applies
+    }
+
+    # Ashby ATS fields
+    ashby_department
+    ashby_team
+    ashby_employment_type
+    ashby_is_remote
+    ashby_is_listed
+    ashby_job_url
+    ashby_apply_url
+    ashby_secondary_locations {
+      location
+      address {
+        addressLocality
+        addressRegion
+        addressCountry
+      }
+    }
+    ashby_compensation {
+      compensationTierSummary
+      scrapeableCompensationSalarySummary
+      compensationTiers {
+        id
+        tierSummary
+        title
+        additionalInformation
+        components {
+          id
+          summary
+          compensationType
+          interval
+          currencyCode
+          minValue
+          maxValue
+        }
+      }
+      summaryComponents {
+        id
+        summary
+        compensationType
+        interval
+        currencyCode
+        minValue
+        maxValue
+      }
+    }
+    ashby_address {
+      postalAddress {
+        addressLocality
+        addressRegion
+        addressCountry
+      }
+    }
+
+    created_at
+    updated_at
+  }
+}

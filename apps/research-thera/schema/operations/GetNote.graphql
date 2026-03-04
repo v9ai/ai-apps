@@ -1,0 +1,78 @@
+query GetNote($id: Int, $slug: String) {
+  note(id: $id, slug: $slug) {
+    id
+    entityId
+    entityType
+    createdBy
+    noteType
+    slug
+    title
+    content
+    createdBy
+    tags
+    goal {
+      id
+      title
+      description
+      status
+      createdAt
+    }
+    linkedResearch {
+      id
+      title
+      authors
+      year
+      journal
+      url
+      therapeuticGoalType
+      relevanceScore
+    }
+    claimCards {
+      id
+      claim
+      verdict
+      confidence
+      scope {
+        population
+        intervention
+        comparator
+        outcome
+        timeframe
+        setting
+      }
+      evidence {
+        polarity
+        score
+        excerpt
+        rationale
+        locator {
+          page
+          section
+          url
+        }
+        paper {
+          title
+          year
+          doi
+          url
+          oaUrl
+          source
+          authors
+          abstract
+          journal
+        }
+      }
+      queries
+      createdAt
+      updatedAt
+      provenance {
+        generatedBy
+        model
+        sourceTools
+      }
+      notes
+    }
+    createdAt
+    updatedAt
+  }
+}

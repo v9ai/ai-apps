@@ -1,0 +1,45 @@
+query GetFamilyMemberCharacteristic($id: Int!) {
+  familyMemberCharacteristic(id: $id) {
+    id
+    familyMemberId
+    createdBy
+    category
+    title
+    description
+    severity
+    frequencyPerWeek
+    durationWeeks
+    ageOfOnset
+    impairmentDomains
+    formulationStatus
+    externalizedName
+    strengths
+    riskTier
+    uniqueOutcomes {
+      id
+      characteristicId
+      createdBy
+      observedAt
+      description
+      createdAt
+      updatedAt
+    }
+    behaviorObservations {
+      id
+      familyMemberId
+      goalId
+      characteristicId
+      createdBy
+      observedAt
+      observationType
+      frequency
+      intensity
+      context
+      notes
+      createdAt
+      updatedAt
+    }
+    createdAt
+    updatedAt
+  }
+}
