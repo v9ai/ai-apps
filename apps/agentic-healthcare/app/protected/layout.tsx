@@ -1,5 +1,5 @@
 import { AuthButton } from "@/components/auth-button";
-import { Box, Container, Flex, Heading, Separator } from "@radix-ui/themes";
+import { Box, Container, Flex, Heading, Separator, Text } from "@radix-ui/themes";
 import Link from "next/link";
 import { Suspense } from "react";
 
@@ -14,9 +14,12 @@ export default function ProtectedLayout({ children }: { children: React.ReactNod
                 <Heading size="4" asChild>
                   <Link href="/protected">Agentic Healthcare</Link>
                 </Heading>
-                <Link href="/protected/blood-tests" style={{ fontSize: "var(--font-size-2)", color: "var(--gray-11)" }}>
-                  Blood Tests
-                </Link>
+                <Text size="2" color="gray" asChild>
+                  <Link href="/protected/blood-tests">Blood Tests</Link>
+                </Text>
+                <Text size="2" color="gray" asChild>
+                  <Link href="/protected/conditions">Conditions</Link>
+                </Text>
               </Flex>
               <Suspense>
                 <AuthButton />

@@ -5,6 +5,8 @@ import { redirect } from "next/navigation";
 import { UnstructuredClient } from "unstructured-client";
 import { Strategy } from "unstructured-client/sdk/models/shared";
 import { parseMarkers } from "./parsers";
+import { gqlMutate } from "@/lib/graphql/execute";
+import { DeleteBloodTestDocument } from "@/lib/graphql/generated";
 
 const unstructured = new UnstructuredClient({
   security: { apiKeyAuth: process.env.UNSTRUCTURED_API_KEY! },
@@ -20,6 +22,8 @@ export async function uploadBloodTest(formData: FormData) {
   const file = formData.get("file") as File;
   if (!file) throw new Error("No file provided");
 
+  const testDate = (formData.get("test_date") as string) || null;
+
   const filePath = `${user.id}/${Date.now()}_${file.name}`;
 
   const { error: uploadError } = await supabase.storage
@@ -34,6 +38,7 @@ export async function uploadBloodTest(formData: FormData) {
       file_name: file.name,
       file_path: filePath,
       status: "processing",
+      test_date: testDate,
     })
     .select()
     .single();
@@ -69,4 +74,31 @@ export async function uploadBloodTest(formData: FormData) {
   }
 
   redirect(`/protected/blood-tests/${test.id}`);
+}
+
+export async function deleteBloodTest(id: string) {
+  const supabase = await createClient();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+  if (!user) redirect("/auth/login");
+
+  const { data: test } = await supabase
+    .from("blood_tests")
+    .select("file_path")
+    .eq("id", id)
+    .single();
+
+  const {
+    data: { session },
+  } = await supabase.auth.getSession();
+  if (!session) redirect("/auth/login");
+
+  await gqlMutate(DeleteBloodTestDocument, { id }, session.access_token);
+
+  if (test?.file_path) {
+    await supabase.storage.from("blood-tests").remove([test.file_path]);
+  }
+
+  redirect("/protected/blood-tests");
 }

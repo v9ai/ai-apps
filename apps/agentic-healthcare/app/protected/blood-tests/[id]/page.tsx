@@ -1,8 +1,9 @@
 import { createClient } from "@/lib/supabase/server";
 import { redirect, notFound } from "next/navigation";
-import { Badge, Box, Callout, Flex, Heading, Separator, Table, Text } from "@radix-ui/themes";
+import { Badge, Box, Button, Callout, Flex, Heading, Separator, Table, Text } from "@radix-ui/themes";
 import Link from "next/link";
 import { Suspense } from "react";
+import { deleteBloodTest } from "../actions";
 
 const statusColor: Record<string, "green" | "red" | "yellow" | "gray"> = {
   done: "green",
@@ -41,11 +42,27 @@ async function TestDetail({ id }: { id: string }) {
       <Flex justify="between" align="start">
         <Flex direction="column" gap="1">
           <Heading size="6">{test.file_name}</Heading>
-          <Text size="2" color="gray">{new Date(test.uploaded_at).toLocaleString()}</Text>
+          <Text size="2" color="gray">
+            {test.test_date
+              ? new Date(test.test_date).toLocaleDateString()
+              : new Date(test.uploaded_at).toLocaleString()}
+          </Text>
         </Flex>
-        <Badge color={statusColor[test.status] ?? "gray"} variant="soft">
-          {test.status}
-        </Badge>
+        <Flex align="center" gap="3">
+          <Badge color={statusColor[test.status] ?? "gray"} variant="soft">
+            {test.status}
+          </Badge>
+          <form
+            action={async () => {
+              "use server";
+              await deleteBloodTest(id);
+            }}
+          >
+            <Button type="submit" color="red" variant="soft" size="1">
+              Delete
+            </Button>
+          </form>
+        </Flex>
       </Flex>
 
       <Separator size="4" />

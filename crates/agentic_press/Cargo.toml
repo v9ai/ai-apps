@@ -1,0 +1,28 @@
+[package]
+name = "agentic_press"
+version = "0.1.0"
+edition = "2021"
+description = "5-agent content pipeline powered by deepseek-reasoner"
+license = "MIT"
+
+[lib]
+name = "agentic_press"
+path = "src/lib.rs"
+
+[[bin]]
+name = "agentic_press"
+path = "src/main.rs"
+
+[dependencies]
+tokio = { version = "1", features = ["full"] }
+serde = { version = "1", features = ["derive"] }
+serde_json = "1"
+anyhow = "1"
+tracing = "0.1"
+tracing-subscriber = { version = "0.3", features = ["env-filter"] }
+clap = { version = "4", features = ["derive"] }
+reqwest = { version = "0.12", features = ["json", "rustls-tls"], default-features = false }
+
+[dev-dependencies]
+wiremock = "0.6"
+tempfile = "3"

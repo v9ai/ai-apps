@@ -76,26 +76,22 @@ impl ImageSource {
 // ─── Qwen Image Max — generation ──────────────────────────────────────────────
 
 /// Valid output sizes for Qwen Image Max.
+/// Exact values accepted by the API (16:9, 4:3, 1:1, 3:4, 9:16).
 #[derive(Debug, Clone, Serialize)]
 pub enum QwenImageMaxSize {
+    /// 16:9 landscape
     #[serde(rename = "1664*928")]
     W1664H928,
-    #[serde(rename = "1440*1080")]
-    W1440H1080,
-    #[serde(rename = "1280*960")]
-    W1280H960,
-    #[serde(rename = "1152*864")]
-    W1152H864,
-    #[serde(rename = "1024*1024")]
-    W1024H1024,
-    #[serde(rename = "960*1280")]
-    W960H1280,
-    #[serde(rename = "864*1152")]
-    W864H1152,
-    #[serde(rename = "768*1024")]
-    W768H1024,
-    #[serde(rename = "720*1440")]
-    W720H1440,
+    /// 4:3 landscape
+    #[serde(rename = "1472*1104")]
+    W1472H1104,
+    /// 1:1 square
+    #[serde(rename = "1328*1328")]
+    W1328H1328,
+    /// 3:4 portrait
+    #[serde(rename = "1104*1472")]
+    W1104H1472,
+    /// 9:16 portrait
     #[serde(rename = "928*1664")]
     W928H1664,
 }
@@ -156,7 +152,61 @@ impl QwenImageEditMaxRequest {
     }
 }
 
-// ─── Completed task result ─────────────────────────────────────────────────────
+// ─── Chat completions (OpenAI-compatible) ────────────────────────────────────
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct ChatMessage {
+    pub role: String,
+    pub content: String,
+}
+
+impl ChatMessage {
+    pub fn user(content: impl Into<String>) -> Self {
+        Self { role: "user".into(), content: content.into() }
+    }
+    pub fn system(content: impl Into<String>) -> Self {
+        Self { role: "system".into(), content: content.into() }
+    }
+}
+
+#[derive(Debug, Clone, Serialize)]
+pub struct ChatRequest {
+    pub model: String,
+    pub messages: Vec<ChatMessage>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub max_completion_tokens: Option<u32>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub temperature: Option<f32>,
+}
+
+impl ChatRequest {
+    pub fn new(model: impl Into<String>, messages: Vec<ChatMessage>) -> Self {
+        Self { model: model.into(), messages, max_completion_tokens: None, temperature: None }
+    }
+}
+
+#[derive(Debug, Clone, Deserialize)]
+pub struct ChatChoice {
+    pub index: u32,
+    pub message: ChatMessage,
+    pub finish_reason: Option<String>,
+}
+
+#[derive(Debug, Clone, Deserialize)]
+pub struct ChatResponse {
+    pub id: String,
+    pub model: String,
+    pub choices: Vec<ChatChoice>,
+}
+
+impl ChatResponse {
+    /// Text of the first choice, if present.
+    pub fn text(&self) -> Option<&str> {
+        self.choices.first().map(|c| c.message.content.as_str())
+    }
+}
+
+// ─── Completed task result ────────────────────────────────────────────────────
 
 /// A completed task including its raw result payload.
 #[derive(Debug, Clone, Deserialize)]
@@ -166,4 +216,144 @@ pub struct CompletedTask {
     /// `serde_json::from_value` into a model-specific type if needed.
     #[serde(flatten)]
     pub result: serde_json::Value,
+}
+
+// ─── Unit tests ───────────────────────────────────────────────────────────────
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    // ── TaskStatus ──────────────────────────────────────────────────────────
+
+    #[test]
+    fn task_status_deserializes_all_variants() {
+        let cases = [
+            ("\"pending\"", TaskStatus::Pending),
+            ("\"processing\"", TaskStatus::Processing),
+            ("\"queued\"", TaskStatus::Queued),
+            ("\"running\"", TaskStatus::Running),
+            ("\"completed\"", TaskStatus::Completed),
+            ("\"succeeded\"", TaskStatus::Succeeded),
+            ("\"failed\"", TaskStatus::Failed),
+        ];
+        for (json, expected) in cases {
+            let got: TaskStatus = serde_json::from_str(json)
+                .unwrap_or_else(|_| panic!("failed to parse {json}"));
+            assert_eq!(got, expected);
+        }
+    }
+
+    #[test]
+    fn task_status_is_terminal() {
+        assert!(TaskStatus::Completed.is_terminal());
+        assert!(TaskStatus::Succeeded.is_terminal());
+        assert!(TaskStatus::Failed.is_terminal());
+        assert!(!TaskStatus::Pending.is_terminal());
+        assert!(!TaskStatus::Processing.is_terminal());
+        assert!(!TaskStatus::Queued.is_terminal());
+        assert!(!TaskStatus::Running.is_terminal());
+    }
+
+    #[test]
+    fn task_status_is_success() {
+        assert!(TaskStatus::Completed.is_success());
+        assert!(TaskStatus::Succeeded.is_success());
+        assert!(!TaskStatus::Failed.is_success());
+        assert!(!TaskStatus::Pending.is_success());
+    }
+
+    // ── QwenImageMaxRequest serialization ───────────────────────────────────
+
+    #[test]
+    fn qwen_image_max_request_minimal_serializes_only_prompt() {
+        let req = QwenImageMaxRequest::new("a red fox");
+        let v: serde_json::Value = serde_json::to_value(&req).unwrap();
+        assert_eq!(v["prompt"], "a red fox");
+        assert!(v.get("negative_prompt").is_none());
+        assert!(v.get("size").is_none());
+        assert!(v.get("seed").is_none());
+    }
+
+    #[test]
+    fn qwen_image_max_request_full_round_trips() {
+        let req = QwenImageMaxRequest {
+            prompt: "a blue whale".into(),
+            negative_prompt: Some("blurry".into()),
+            size: Some(QwenImageMaxSize::W1024H1024),
+            prompt_extend: Some(false),
+            seed: Some(42),
+        };
+        let v: serde_json::Value = serde_json::to_value(&req).unwrap();
+        assert_eq!(v["prompt"], "a blue whale");
+        assert_eq!(v["negative_prompt"], "blurry");
+        assert_eq!(v["size"], "1024*1024");
+        assert_eq!(v["prompt_extend"], false);
+        assert_eq!(v["seed"], 42);
+    }
+
+    #[test]
+    fn qwen_image_max_size_serializes_correctly() {
+        let cases = [
+            (QwenImageMaxSize::W1664H928, "1664*928"),
+            (QwenImageMaxSize::W1328H1328, "1328*1328"),
+            (QwenImageMaxSize::W928H1664, "928*1664"),
+        ];
+        for (size, expected) in cases {
+            let s = serde_json::to_string(&size).unwrap();
+            assert_eq!(s, format!("\"{expected}\""));
+        }
+    }
+
+    // ── QwenImageEditMaxRequest serialization ────────────────────────────────
+
+    #[test]
+    fn qwen_image_edit_max_request_serializes_url_images() {
+        let req = QwenImageEditMaxRequest::new(
+            vec![ImageSource::url("https://example.com/img.png")],
+            "add a hat",
+        );
+        let v: serde_json::Value = serde_json::to_value(&req).unwrap();
+        assert_eq!(v["images"][0], "https://example.com/img.png");
+        assert_eq!(v["prompt"], "add a hat");
+    }
+
+    #[test]
+    fn qwen_image_edit_max_skips_none_fields() {
+        let req = QwenImageEditMaxRequest::new(
+            vec![ImageSource::url("https://example.com/img.png")],
+            "make it darker",
+        );
+        let v: serde_json::Value = serde_json::to_value(&req).unwrap();
+        assert!(v.get("negative_prompt").is_none());
+        assert!(v.get("size").is_none());
+        assert!(v.get("n").is_none());
+        assert!(v.get("seed").is_none());
+    }
+
+    // ── ImageSource ─────────────────────────────────────────────────────────
+
+    #[test]
+    fn image_source_url_serializes_as_plain_string() {
+        let src = ImageSource::url("https://example.com/photo.jpg");
+        let s = serde_json::to_string(&src).unwrap();
+        assert_eq!(s, "\"https://example.com/photo.jpg\"");
+    }
+
+    #[test]
+    fn image_source_from_bytes_produces_data_uri() {
+        let bytes = b"fake-png-data";
+        let src = ImageSource::from_bytes(bytes, "image/png");
+        let ImageSource::Base64(s) = src else {
+            panic!("expected Base64 variant");
+        };
+        assert!(s.starts_with("data:image/png;base64,"));
+        // Verify the payload decodes back to the original bytes
+        use base64::Engine;
+        let payload = s.strip_prefix("data:image/png;base64,").unwrap();
+        let decoded = base64::engine::general_purpose::STANDARD
+            .decode(payload)
+            .unwrap();
+        assert_eq!(decoded, bytes);
+    }
 }

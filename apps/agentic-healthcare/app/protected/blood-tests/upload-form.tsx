@@ -21,6 +21,14 @@ export function UploadForm() {
             />
           </Flex>
         </Card>
+        <Flex direction="column" gap="1">
+          <Text size="2" color="gray">Test date</Text>
+          <input
+            type="date"
+            name="test_date"
+            style={{ fontSize: "var(--font-size-2)", color: "var(--gray-12)" }}
+          />
+        </Flex>
         <Box>
           <Button type="submit">Upload & Extract</Button>
         </Box>

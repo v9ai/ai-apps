@@ -80,3 +80,61 @@ pub enum Error {
 }
 
 pub type Result<T> = std::result::Result<T, Error>;
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn api_error_code_maps_known_codes() {
+        assert_eq!(ApiErrorCode::from(1000), ApiErrorCode::CreatorAccessDenied);
+        assert_eq!(ApiErrorCode::from(1001), ApiErrorCode::InvalidOrExpiredToken);
+        assert_eq!(ApiErrorCode::from(1002), ApiErrorCode::InsufficientCredits);
+        assert_eq!(ApiErrorCode::from(2000), ApiErrorCode::ModelDoesNotExist);
+        assert_eq!(ApiErrorCode::from(2001), ApiErrorCode::ModelUnsupportedOrUnavailable);
+        assert_eq!(ApiErrorCode::from(2002), ApiErrorCode::ModelDoesNotSupportParameter);
+        assert_eq!(ApiErrorCode::from(3000), ApiErrorCode::TaskDoesNotExist);
+        assert_eq!(ApiErrorCode::from(3001), ApiErrorCode::TaskExecutionFailed);
+        assert_eq!(ApiErrorCode::from(3002), ApiErrorCode::TaskCancelledOrAborted);
+    }
+
+    #[test]
+    fn api_error_code_unknown_wraps_value() {
+        assert_eq!(ApiErrorCode::from(9999), ApiErrorCode::Unknown(9999));
+        assert_eq!(ApiErrorCode::from(0), ApiErrorCode::Unknown(0));
+    }
+
+    #[test]
+    fn api_problem_deserializes_partial_json() {
+        let json = r#"{"status":401,"title":"Unauthorized","detail":"The token is invalid or expired","code":1001}"#;
+        let p: ApiProblem = serde_json::from_str(json).unwrap();
+        assert_eq!(p.status, Some(401));
+        assert_eq!(p.title.as_deref(), Some("Unauthorized"));
+        assert_eq!(p.code, Some(1001));
+    }
+
+    #[test]
+    fn api_problem_tolerates_missing_fields() {
+        let p: ApiProblem = serde_json::from_str("{}").unwrap();
+        assert!(p.status.is_none());
+        assert!(p.title.is_none());
+        assert!(p.code.is_none());
+    }
+
+    #[test]
+    fn error_display_task_failed_shows_detail() {
+        let err = Error::TaskFailed {
+            code: Some(ApiErrorCode::TaskExecutionFailed),
+            title: Some("Task failed".into()),
+            detail: Some("out of memory".into()),
+        };
+        let msg = err.to_string();
+        assert!(msg.contains("out of memory"), "got: {msg}");
+    }
+
+    #[test]
+    fn error_display_poll_timeout() {
+        let err = Error::PollTimeout { attempts: 10 };
+        assert!(err.to_string().contains("10"));
+    }
+}

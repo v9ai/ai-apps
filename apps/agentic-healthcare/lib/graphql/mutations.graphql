@@ -1,0 +1,5 @@
+mutation DeleteBloodTest($id: UUID!) {
+  deleteFromblood_testsCollection(filter: { id: { eq: $id } }) {
+    affectedCount
+  }
+}

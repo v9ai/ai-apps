@@ -35,7 +35,11 @@ async function TestsList() {
               <Flex justify="between" align="center">
                 <Flex direction="column" gap="1">
                   <Text size="2" weight="medium">{test.file_name}</Text>
-                  <Text size="1" color="gray">{new Date(test.uploaded_at).toLocaleDateString()}</Text>
+                  <Text size="1" color="gray">
+                    {test.test_date
+                      ? new Date(test.test_date).toLocaleDateString()
+                      : new Date(test.uploaded_at).toLocaleDateString()}
+                  </Text>
                 </Flex>
                 <Badge color={statusColor[test.status] ?? "gray"} variant="soft">
                   {test.status}

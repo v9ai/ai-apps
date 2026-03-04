@@ -1,13 +1,13 @@
 use std::time::Duration;
 
-use reqwest::{header, Response, StatusCode};
+use reqwest::{header, Response};
 use serde::de::DeserializeOwned;
 use serde::Serialize;
 
 use crate::error::{ApiErrorCode, ApiProblem, Error, Result};
 use crate::types::{
-    CompletedTask, QwenImageEditMaxRequest, QwenImageMaxRequest, TaskCreatedResponse, TaskError,
-    TaskInfo, TaskStatus,
+    ChatRequest, ChatResponse, CompletedTask, QwenImageEditMaxRequest, QwenImageMaxRequest,
+    TaskCreatedResponse, TaskStatus,
 };
 
 const BASE_URL: &str = "https://api.mulerouter.ai";
@@ -18,15 +18,19 @@ const DEFAULT_MAX_ATTEMPTS: u32 = 120; // ~6 min
 ///
 /// # Example
 /// ```no_run
-/// # tokio_test::block_on(async {
 /// use mulerouter::{Client, QwenImageMaxRequest};
 ///
-/// let client = Client::new("your-api-key");
-/// let task = client.qwen_image_max_generate(
-///     QwenImageMaxRequest::new("A serene mountain landscape at dawn"),
-/// ).await.unwrap();
-/// let result = client.wait_for_task(&task.task_info).await.unwrap();
-/// # });
+/// #[tokio::main]
+/// async fn main() {
+///     let client = Client::new("your-api-key");
+///     let result = client
+///         .qwen_image_max_generate_and_wait(
+///             QwenImageMaxRequest::new("A serene mountain landscape at dawn"),
+///         )
+///         .await
+///         .unwrap();
+///     println!("{:?}", result.task_info.status);
+/// }
 /// ```
 #[derive(Clone)]
 pub struct Client {
@@ -116,20 +120,6 @@ impl Client {
 
     // ─── Task polling ─────────────────────────────────────────────────────────
 
-    /// Poll a task until it reaches a terminal state or the poll limit is hit.
-    pub async fn wait_for_task(&self, task: &TaskInfo) -> Result<CompletedTask> {
-        self.wait_for_task_at(&task.id.to_string(), task).await
-    }
-
-    /// Poll using a known base path (vendor + model + resource).
-    async fn wait_for_task_at(&self, _task_id: &str, initial: &TaskInfo) -> Result<CompletedTask> {
-        // We don't store the path in TaskInfo, so the caller must use
-        // the model-specific poll helpers. This is kept as a shared
-        // body once the path is resolved.
-        let _ = initial;
-        unreachable!("use model-specific poll helpers")
-    }
-
     /// Generic poll loop. `path` must be the full vendor path including
     /// the task UUID, e.g.
     /// `/vendors/alibaba/v1/qwen-image-max/generation/{id}`.
@@ -137,7 +127,7 @@ impl Client {
         for attempt in 0..self.max_poll_attempts {
             let task: CompletedTask = self.get(path).await?;
             match task.task_info.status {
-                s if s.is_success() => return Ok(task),
+                ref s if s.is_success() => return Ok(task),
                 TaskStatus::Failed => {
                     let err = task.task_info.error.as_ref();
                     return Err(Error::TaskFailed {
@@ -155,6 +145,14 @@ impl Client {
         Err(Error::PollTimeout {
             attempts: self.max_poll_attempts,
         })
+    }
+
+    // ─── Chat completions ─────────────────────────────────────────────────────
+
+    /// Send a chat completion request (OpenAI-compatible endpoint).
+    /// Synchronous — returns the full response immediately.
+    pub async fn chat_complete(&self, req: ChatRequest) -> Result<ChatResponse> {
+        self.post("/vendors/openai/v1/chat/completions", &req).await
     }
 
     // ─── Qwen Image Max ───────────────────────────────────────────────────────
