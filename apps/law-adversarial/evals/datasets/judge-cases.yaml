@@ -1,0 +1,283 @@
+# Judge test cases — each provides brief + attacker output + defender output
+- vars:
+    brief: |
+      MEMORANDUM OF LAW IN SUPPORT OF MOTION FOR SPECIFIC PERFORMANCE
+
+      Plaintiff seeks specific performance of the Purchase Agreement for 123 Oak Street, New York, NY ($2,500,000). Plaintiff tendered full payment on closing. Defendant refused, claiming a "change of heart."
+
+      Real property is always unique and monetary damages are always inadequate. See Van Wagner Advertising Corp. v. S&M Enterprises, 67 N.Y.2d 186 (1986). Plaintiff is entitled to specific performance as a matter of right.
+    attackerOutput: |
+      {
+        "attacks": [
+          {
+            "claim": "Real property is always unique and monetary damages are always inadequate.",
+            "weakness": "Van Wagner held uniqueness is a rebuttable presumption, not absolute. The brief mischaracterizes the holding.",
+            "type": "legal",
+            "evidence": "Van Wagner, 67 N.Y.2d at 191: uniqueness is 'at best, a rebuttable presumption.'"
+          },
+          {
+            "claim": "Plaintiff is entitled to specific performance as a matter of right.",
+            "weakness": "Specific performance is an equitable remedy, never available 'as a matter of right.' It is discretionary with the court.",
+            "type": "legal",
+            "evidence": "Restatement (Second) of Contracts Section 357; see also In re Estate of Hennessy, 7 N.Y.3d 601 (2006)."
+          }
+        ]
+      }
+    defenderOutput: |
+      {
+        "rebuttals": [
+          {
+            "attack_ref": "Real property is always unique and monetary damages are always inadequate.",
+            "defense": "While Van Wagner introduced nuance to the uniqueness presumption, it remains the prevailing rule in New York that residential property is presumptively unique. The brief's framing, while imprecise, reflects the operative presumption for this type of property. The brief should clarify this is a residential property to strengthen the point.",
+            "supporting_citations": ["Van Wagner Advertising Corp. v. S&M Enterprises, 67 N.Y.2d 186, 193 (1986)", "Sokoloff v. Harriman Estates Dev. Corp., 96 N.Y.2d 409 (2001)"],
+            "strength": 0.45
+          },
+          {
+            "attack_ref": "Plaintiff is entitled to specific performance as a matter of right.",
+            "defense": "The attacker is correct that specific performance is equitable and discretionary. The brief's language is legally imprecise. However, in New York real property transactions, specific performance is routinely granted where the buyer has performed, and denial is the exception rather than the rule.",
+            "supporting_citations": ["EMF General Contracting Corp. v. Bisbee, 6 A.D.3d 45 (1st Dep't 2004)"],
+            "strength": 0.3
+          }
+        ]
+      }
+    jurisdiction: "New York"
+    round: "1"
+    previousFindings: "[]"
+  assert:
+    - type: javascript
+      value: "file://assertions/validate-judge.js"
+    - type: llm-rubric
+      value: >
+        The judge should credit the attacker on both points — the brief does mischaracterize
+        Van Wagner and specific performance is indeed discretionary. The judge should also
+        credit the defender's acknowledgment that the brief is imprecise but the underlying
+        position has merit for residential property. The overall score should reflect a brief
+        with real legal errors but a salvageable position (expect 40-70 range). Findings
+        should be actionable with specific fix recommendations.
+
+- vars:
+    brief: |
+      BRIEF IN SUPPORT OF MOTION TO DISMISS — FIRST AMENDMENT
+
+      Defendant Professor published an article criticizing the university's diversity policies and was terminated. The First Amendment protects academic speech absolutely under strict scrutiny. Pickering v. Board of Education, 391 U.S. 563 (1968). The university's interest in "institutional harmony" cannot survive strict scrutiny. See Tinker v. Des Moines, 393 U.S. 503 (1969). Garcetti does not apply to academic speech per Demers v. Austin, 746 F.3d 402 (9th Cir. 2014).
+    attackerOutput: |
+      {
+        "attacks": [
+          {
+            "claim": "The First Amendment protects academic speech absolutely under strict scrutiny.",
+            "weakness": "Strict scrutiny is wrong. Public employee speech uses the Pickering-Connick balancing test, not strict scrutiny. The brief fundamentally misidentifies the governing framework.",
+            "type": "legal",
+            "evidence": "Connick v. Myers, 461 U.S. 138 (1983); Pickering v. Board of Ed., 391 U.S. 563 (1968). The two-step test asks (1) whether the speech is on a matter of public concern and (2) whether the employee's interest outweighs the employer's."
+          },
+          {
+            "claim": "See Tinker v. Des Moines, 393 U.S. 503 (1969)",
+            "weakness": "Tinker governs student speech in K-12 schools, not public employee speech. This citation is inapposite.",
+            "type": "citation",
+            "evidence": "Tinker's 'substantial disruption' test applies to students, not professors. The controlling framework is Pickering-Connick."
+          },
+          {
+            "claim": "Garcetti does not apply to academic speech per Demers v. Austin",
+            "weakness": "The Supreme Court explicitly reserved whether Garcetti applies to academic speech. Demers is Ninth Circuit only, and other circuits have not adopted this categorical exemption. The brief presents a circuit-specific holding as settled law.",
+            "type": "legal",
+            "evidence": "Garcetti v. Ceballos, 547 U.S. 410, 425 (2006) ('We need not, and for that reason do not, decide whether the analysis we conduct today would apply in the same manner to a case involving speech related to scholarship or teaching.')"
+          }
+        ]
+      }
+    defenderOutput: |
+      {
+        "rebuttals": [
+          {
+            "attack_ref": "Strict scrutiny is wrong. Public employee speech uses the Pickering-Connick balancing test.",
+            "defense": "The attacker is correct that Pickering-Connick, not strict scrutiny, is the governing test. However, under the Pickering balance, the professor's speech on university diversity policies is plainly a matter of public concern, and the employee's First Amendment interest is likely to outweigh the university's interest in this context.",
+            "supporting_citations": ["Pickering v. Board of Ed., 391 U.S. 563 (1968)", "Rankin v. McPherson, 483 U.S. 378 (1987)"],
+            "strength": 0.15
+          },
+          {
+            "attack_ref": "Tinker governs student speech in K-12 schools, not public employee speech.",
+            "defense": "The attacker is correct. Tinker is inapposite. No viable defense for this citation error.",
+            "supporting_citations": [],
+            "strength": 0.0
+          },
+          {
+            "attack_ref": "The Supreme Court explicitly reserved whether Garcetti applies to academic speech.",
+            "defense": "While the Supreme Court reserved the question, the trend in the circuits is toward protecting academic speech from Garcetti. Beyond Demers, the Fourth Circuit in Adams v. Trustees of UNC-Wilmington also recognized academic freedom concerns. The brief should frame this as the emerging trend rather than settled law.",
+            "supporting_citations": ["Demers v. Austin, 746 F.3d 402 (9th Cir. 2014)", "Adams v. Trs. of the Univ. of N.C.-Wilmington, 640 F.3d 550 (4th Cir. 2011)"],
+            "strength": 0.35
+          }
+        ]
+      }
+    jurisdiction: "Federal"
+    round: "1"
+    previousFindings: "[]"
+  assert:
+    - type: javascript
+      value: "file://assertions/validate-judge.js"
+    - type: llm-rubric
+      value: >
+        The judge should find critical/high severity issues for the wrong legal framework
+        (strict scrutiny instead of Pickering-Connick) and the inapposite Tinker citation.
+        The Garcetti issue should be high/medium since the underlying position has some merit
+        even if overstated. The overall score should be low (20-45) given the fundamental
+        doctrinal errors. The judge should credit the defender's honest concessions.
+
+# --- Edge Cases ---
+
+# Pro se filing — judge must balance thoroughness with fairness
+- vars:
+    brief: |
+      TO THE HONORABLE COURT
+
+      I am James Walker filing pro se. CPS took my children on December 10, 2025 because my neighbor called. The CPS worker said my house was messy. I got no paperwork for three weeks. The Constitution protects parental rights. Fathers face discrimination. I ask the court to return my children.
+    attackerOutput: |
+      {
+        "attacks": [
+          {
+            "claim": "The Constitution protects parental rights",
+            "weakness": "No case law cited. The standard is Santosky v. Kramer (clear and convincing evidence). The brief conflates removal with termination.",
+            "type": "legal",
+            "evidence": "Santosky v. Kramer, 455 U.S. 745 (1982); Tex. Fam. Code Ch. 262."
+          },
+          {
+            "claim": "Fathers face discrimination",
+            "weakness": "Statistical disparity alone does not establish an Equal Protection violation without showing discriminatory intent. Washington v. Davis, 426 U.S. 229 (1976).",
+            "type": "legal",
+            "evidence": "Washington v. Davis; Village of Arlington Heights v. Metro. Housing Dev. Corp., 429 U.S. 252 (1977)."
+          },
+          {
+            "claim": "I got no paperwork for three weeks",
+            "weakness": "Valid due process concern but not properly framed. Texas Family Code Section 262.101 requires sworn petition and court order.",
+            "type": "procedural",
+            "evidence": "Tex. Fam. Code Section 262.101-262.107."
+          }
+        ]
+      }
+    defenderOutput: |
+      {
+        "rebuttals": [
+          {
+            "attack_ref": "No case law cited. The standard is Santosky v. Kramer.",
+            "defense": "While the brief lacks citations, courts apply liberal construction to pro se filings under Haines v. Kerner, 404 U.S. 519 (1972). The substance — that parental rights are constitutionally protected — is correct. The brief should add Troxel v. Granville and Santosky citations but the core claim has merit.",
+            "supporting_citations": ["Haines v. Kerner, 404 U.S. 519 (1972)", "Troxel v. Granville, 530 U.S. 57 (2000)"],
+            "strength": 0.4
+          },
+          {
+            "attack_ref": "Statistical disparity alone does not establish an Equal Protection violation.",
+            "defense": "The attacker is correct. The EP argument as framed is legally insufficient. However, the brief could be reframed as a due process argument about procedural fairness in CPS proceedings.",
+            "supporting_citations": [],
+            "strength": 0.1
+          },
+          {
+            "attack_ref": "Valid due process concern but not properly framed.",
+            "defense": "The attacker concedes this is a valid concern. The three-week delay in providing paperwork is a serious procedural issue. Texas Family Code requires prompt notice and hearing. This is the brief's strongest argument and should be developed with specific statutory citations.",
+            "supporting_citations": ["Tex. Fam. Code Section 262.201 (requiring adversary hearing within 14 days)", "Mathews v. Eldridge, 424 U.S. 319 (1976)"],
+            "strength": 0.65
+          }
+        ]
+      }
+    jurisdiction: "Texas"
+    round: "1"
+    previousFindings: "[]"
+  assert:
+    - type: javascript
+      value: "file://assertions/validate-judge.js"
+    - type: llm-rubric
+      value: >
+        The judge should: (1) apply Haines v. Kerner liberal construction but still flag the
+        citation gap as high severity — pro se status explains but doesn't excuse; (2) find
+        the EP argument as a medium-high severity issue — fundamentally flawed but with
+        reframing potential; (3) find the paperwork delay as a genuinely strong point (medium
+        severity for form only since substance is sound). The overall score should be low
+        (25-45) reflecting serious deficiencies but with a salvageable procedural argument.
+        The judge should note which issues are fixable by adding citations vs. requiring
+        new legal theories.
+
+# Multi-round eval — round 2 with previous findings
+- vars:
+    brief: |
+      REVISED MEMORANDUM IN SUPPORT OF MOTION FOR SPECIFIC PERFORMANCE
+
+      Plaintiff seeks specific performance of the Purchase Agreement for 123 Oak Street, New York, NY ($2,500,000).
+
+      I. ARGUMENT
+      A. The Property Is Unique Under New York Law
+      In New York, residential real property is presumptively unique, and specific performance is the preferred remedy for breach of a real property contract. Van Wagner Advertising Corp. v. S&M Enterprises, 67 N.Y.2d 186 (1986), clarified that while uniqueness is not absolute, residential property retains a strong presumption of uniqueness. Plaintiff's property has particular characteristics — historic designation, proximity to family — that reinforce its uniqueness beyond the general presumption.
+
+      B. Specific Performance Is Appropriate in the Court's Discretion
+      Specific performance is an equitable remedy within the court's discretion. EMF General Contracting Corp. v. Bisbee, 6 A.D.3d 45 (1st Dep't 2004). Plaintiff has demonstrated readiness to perform and clean hands throughout the transaction.
+
+      C. Defendant Lacks Equitable Defenses
+      Defendant's sole stated reason — "change of heart" — does not constitute laches, unclean hands, unconscionability, or any recognized equitable defense.
+    attackerOutput: |
+      {
+        "attacks": [
+          {
+            "claim": "residential property retains a strong presumption of uniqueness",
+            "weakness": "The revision improves the Van Wagner characterization but still overstates. Van Wagner's presumption language was dicta, and the court's actual holding turned on the specific facts. The brief should directly apply the multi-factor analysis rather than relying on the presumption.",
+            "type": "legal",
+            "evidence": "Van Wagner, 67 N.Y.2d at 193 (the holding focused on whether the specific property interest could be adequately compensated by money damages)."
+          },
+          {
+            "claim": "Defendant's sole stated reason does not constitute any recognized equitable defense",
+            "weakness": "While improved, the brief only addresses defenses Defendant has not raised. A thorough brief should also preemptively address potential defenses the court might consider sua sponte, such as whether the purchase price reflects fair market value.",
+            "type": "legal",
+            "evidence": "Courts may decline specific performance if the price is inadequate. See Pomeroy's Equity Jurisprudence Section 1405."
+          }
+        ]
+      }
+    defenderOutput: |
+      {
+        "rebuttals": [
+          {
+            "attack_ref": "Van Wagner's presumption language was dicta",
+            "defense": "The characterization of Van Wagner's presumption language as dicta is debatable. Subsequent First Department cases have treated it as the operative framework. Moreover, the brief now supplements the presumption with property-specific characteristics, which is the correct approach.",
+            "supporting_citations": ["Sokoloff v. Harriman Estates Dev. Corp., 96 N.Y.2d 409 (2001)", "EMF General Contracting Corp. v. Bisbee, 6 A.D.3d 45 (1st Dep't 2004)"],
+            "strength": 0.65
+          },
+          {
+            "attack_ref": "should also preemptively address potential defenses the court might consider sua sponte",
+            "defense": "While preemptive defense is good practice, there is no legal requirement to address defenses not raised by the opposing party. The brief properly addresses the only defense Defendant has asserted. Adding speculative defenses could dilute the brief's focus.",
+            "supporting_citations": [],
+            "strength": 0.55
+          }
+        ]
+      }
+    jurisdiction: "New York"
+    round: "2"
+    previousFindings: |
+      [{
+        "findings": [
+          {
+            "type": "legal",
+            "severity": "high",
+            "description": "The brief mischaracterized Van Wagner, stating uniqueness is absolute when the court held it is a rebuttable presumption.",
+            "confidence": 0.95,
+            "suggested_fix": "Reframe the argument to acknowledge the presumption and supplement with property-specific uniqueness factors."
+          },
+          {
+            "type": "legal",
+            "severity": "high",
+            "description": "The brief claimed specific performance is available 'as a matter of right' when it is discretionary.",
+            "confidence": 0.9,
+            "suggested_fix": "Reframe as requesting the court to exercise its discretion, citing factors that favor granting the remedy."
+          },
+          {
+            "type": "legal",
+            "severity": "medium",
+            "description": "The brief failed to address potential equitable defenses beyond 'change of heart.'",
+            "confidence": 0.8,
+            "suggested_fix": "Add a section preemptively addressing laches, unclean hands, and unconscionability."
+          }
+        ],
+        "overall_score": 45
+      }]
+  assert:
+    - type: javascript
+      value: "file://assertions/validate-judge.js"
+    - type: llm-rubric
+      value: >
+        This is a round 2 eval. The judge MUST: (1) credit the improvements — Van Wagner
+        is now more accurately characterized, and the "as a matter of right" language is fixed;
+        (2) note that round 1 high-severity issues have been partially addressed — the severity
+        should decrease; (3) flag remaining refinement issues at medium severity; (4) the overall
+        score should be notably higher than round 1's 45 (expect 60-75). Rate on the judge's
+        ability to detect improvement across rounds and calibrate severity accordingly.

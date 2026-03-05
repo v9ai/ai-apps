@@ -1,0 +1,189 @@
+# Defender test cases — each provides a brief + pre-crafted attacker output to rebut
+- vars:
+    brief: |
+      MEMORANDUM OF LAW IN SUPPORT OF MOTION FOR SPECIFIC PERFORMANCE
+
+      Plaintiff seeks specific performance of the Purchase Agreement dated January 15, 2024, requiring Defendant to convey the property at 123 Oak Street, New York, NY.
+
+      I. STATEMENT OF FACTS
+      Plaintiff and Defendant entered into a Purchase Agreement for the sale of 123 Oak Street for $2,500,000. Plaintiff tendered full payment on the closing date. Defendant refused to close, claiming a "change of heart."
+
+      II. ARGUMENT
+      A. Specific Performance Is Warranted Because Real Property Is Unique
+      It is well established that real property is always unique and that monetary damages are therefore always inadequate. See Van Wagner Advertising Corp. v. S&M Enterprises, 67 N.Y.2d 186 (1986). Because the property is unique, Plaintiff is entitled to specific performance as a matter of right.
+
+      B. Defendant Has No Valid Defense
+      Defendant's claim of "change of heart" is not a recognized defense to breach of contract.
+
+      III. CONCLUSION
+      For the foregoing reasons, the Court should grant Plaintiff's motion for specific performance.
+    attackerOutput: |
+      {
+        "attacks": [
+          {
+            "claim": "It is well established that real property is always unique and that monetary damages are therefore always inadequate.",
+            "weakness": "This is a mischaracterization of the law. Van Wagner actually held that uniqueness of real property is a rebuttable presumption, not an absolute rule. The court must evaluate whether monetary damages would be adequate in the specific case.",
+            "type": "legal",
+            "evidence": "Van Wagner Advertising Corp. v. S&M Enterprises, 67 N.Y.2d 186, 191 (1986): The court stated that 'the uniqueness of real property as a legal construct is, at best, a rebuttable presumption' and that courts should conduct a case-specific analysis."
+          },
+          {
+            "claim": "Defendant's claim of 'change of heart' is not a recognized defense to breach of contract.",
+            "weakness": "The brief fails to address potential equitable defenses that Defendant may raise, including laches, unclean hands, unconscionability, or impracticability.",
+            "type": "legal",
+            "evidence": "In equity, a court may deny specific performance based on defenses unique to equitable relief even where breach of contract is established. See Pomeroy's Equity Jurisprudence, Section 1405."
+          },
+          {
+            "claim": "The court should compel performance because Plaintiff will suffer harm without the property.",
+            "weakness": "The brief asserts harm conclusorily without demonstrating the specific, irreparable nature of the harm or why monetary damages cannot make Plaintiff whole.",
+            "type": "logical",
+            "evidence": "A conclusory assertion of harm is insufficient. The movant must demonstrate specific facts showing that the legal remedy is inadequate and that equitable relief is necessary."
+          }
+        ]
+      }
+    jurisdiction: "New York"
+    round: "1"
+    previousFindings: "[]"
+  assert:
+    - type: javascript
+      value: "file://assertions/validate-defender.js"
+    - type: llm-rubric
+      value: >
+        The defender should provide a rebuttal for each of the 3 attacks. For the Van Wagner
+        attack, the defense should acknowledge the nuance but argue the presumption still
+        favors the plaintiff for residential property. Strength scores should be honest —
+        the Van Wagner mischaracterization is hard to fully defend (expect 0.3-0.6).
+        The equitable defenses attack should get a moderate strength since the brief's
+        omission is real. Rate on legal quality and honesty of strength scores.
+
+- vars:
+    brief: |
+      COMPLAINT FOR NEGLIGENCE
+
+      Plaintiff resides in San Francisco, California. Defendant Corporation is incorporated in Delaware with its principal place of business in San Francisco, California.
+
+      This Court has jurisdiction under 28 U.S.C. 1332 because the parties are diverse and the amount in controversy exceeds $75,000.
+
+      On March 1, 2025, Plaintiff was walking on the sidewalk adjacent to Defendant's construction site. A steel beam fell and struck Plaintiff. Defendant was negligent because the beam fell. Res ipsa loquitur applies. See Escola v. Coca Cola Bottling Co., 24 Cal.2d 453 (1944).
+    attackerOutput: |
+      {
+        "attacks": [
+          {
+            "claim": "This Court has jurisdiction under 28 U.S.C. 1332 because the parties are diverse",
+            "weakness": "Diversity jurisdiction requires complete diversity. Plaintiff is a citizen of California. Defendant is incorporated in Delaware but has its principal place of business in California, making it a citizen of both Delaware AND California under 28 U.S.C. 1332(c)(1). Both parties are California citizens — no diversity.",
+            "type": "procedural",
+            "evidence": "28 U.S.C. 1332(c)(1); Hertz Corp. v. Friend, 559 U.S. 77 (2010) (principal place of business is the 'nerve center')."
+          },
+          {
+            "claim": "See Escola v. Coca Cola Bottling Co., 24 Cal.2d 453 (1944)",
+            "weakness": "Escola is a products liability case involving an exploding bottle. It is inapposite to a construction negligence claim. The citation does not support the proposition for which it is cited.",
+            "type": "citation",
+            "evidence": "Escola involved strict products liability theory (Justice Traynor's concurrence). For construction site negligence and res ipsa loquitur, the proper authority would be cases like Brown v. Poway Unified School District, 4 Cal.4th 820 (1993)."
+          }
+        ]
+      }
+    jurisdiction: "California"
+    round: "1"
+    previousFindings: "[]"
+  assert:
+    - type: javascript
+      value: "file://assertions/validate-defender.js"
+    - type: llm-rubric
+      value: >
+        The defender should attempt rebuttals for both attacks. The diversity jurisdiction
+        attack is very strong and hard to defend — expect a low strength score (0.0-0.3).
+        The Escola citation attack is also strong. An honest defender should acknowledge these
+        weaknesses rather than manufacturing bad arguments. Rate on intellectual honesty
+        and quality of whatever limited defense can be mounted.
+
+# --- Edge Cases ---
+
+# Pro se filing — defender must work with weak material
+- vars:
+    brief: |
+      TO THE HONORABLE COURT
+
+      I am James Walker filing pro se. CPS took my children on December 10, 2025 because my neighbor called after an argument. The CPS worker said my house was messy. I did not receive paperwork for three weeks. The Constitution protects parental rights. I ask the court to return my children and sanction CPS.
+    attackerOutput: |
+      {
+        "attacks": [
+          {
+            "claim": "The Constitution protects parental rights",
+            "weakness": "The brief fails to cite any specific case law. The relevant standard is Santosky v. Kramer, 455 U.S. 745 (1982), requiring clear and convincing evidence for termination. The brief also conflates temporary removal with termination, which have different standards.",
+            "type": "legal",
+            "evidence": "Santosky v. Kramer, 455 U.S. 745 (1982); Troxel v. Granville, 530 U.S. 57 (2000). Texas Family Code Chapter 262 governs emergency removal procedures."
+          },
+          {
+            "claim": "CPS is biased against fathers. Statistics show that mothers get custody more often.",
+            "weakness": "Statistical disparity alone does not establish an Equal Protection violation. Under Washington v. Davis, 426 U.S. 229 (1976), discriminatory intent must be shown, not merely disparate impact.",
+            "type": "legal",
+            "evidence": "Washington v. Davis, 426 U.S. 229 (1976); Village of Arlington Heights v. Metro. Housing Dev. Corp., 429 U.S. 252 (1977)."
+          },
+          {
+            "claim": "I did not receive paperwork for three weeks",
+            "weakness": "Texas Family Code Section 262.101 requires a sworn petition and court order for non-emergency removal. If CPS failed to follow statutory procedure, this is a valid due process argument, but the brief does not cite the specific provisions or explain the procedural timeline.",
+            "type": "procedural",
+            "evidence": "Tex. Fam. Code Section 262.101-262.107."
+          }
+        ]
+      }
+    jurisdiction: "Texas"
+    round: "1"
+    previousFindings: "[]"
+  assert:
+    - type: javascript
+      value: "file://assertions/validate-defender.js"
+    - type: llm-rubric
+      value: >
+        The defender should: (1) acknowledge the citation gap but note that courts apply
+        liberal construction to pro se filings (Haines v. Kerner); (2) concede the EP argument
+        is weak but suggest reframing as a due process claim; (3) strongly defend the procedural
+        delay argument as the brief's strongest point — late paperwork is a real due process
+        issue under Texas Family Code. Strength scores should be honest: low for the EP claim,
+        moderate-high for the procedural claim. Rate on ability to find the best arguments
+        within weak material.
+
+# Novel legal theory — AI evidence exclusion
+- vars:
+    brief: |
+      MOTION IN LIMINE TO EXCLUDE AI-GENERATED EVIDENCE
+
+      AI systems are "black boxes" that fail Daubert. AI cannot be cross-examined under Crawford. AI exhibits racial bias per Buolamwini & Gebru (2018). The Court should adopt a per se exclusion rule for all AI evidence.
+    attackerOutput: |
+      {
+        "attacks": [
+          {
+            "claim": "AI systems are 'black boxes' whose internal reasoning cannot be tested",
+            "weakness": "This is overbroad. Many AI systems (linear regression, decision trees, LIME/SHAP explanations) are interpretable. Daubert's factors are flexible, not a rigid checklist. Kumho Tire Co. v. Carmichael, 526 U.S. 137 (1999).",
+            "type": "legal",
+            "evidence": "Kumho Tire, 526 U.S. at 141-42 (Daubert factors are flexible and fact-specific). Many courts have admitted AI-assisted evidence after proper foundation."
+          },
+          {
+            "claim": "An AI system cannot be cross-examined",
+            "weakness": "Crawford applies to testimonial hearsay from human declarants. Machine-generated evidence is not 'testimonial' under Crawford. The operator or designer can be cross-examined about methodology.",
+            "type": "legal",
+            "evidence": "Melendez-Diaz v. Massachusetts, 557 U.S. 305 (2009) (addressing human certifications); United States v. Washington, 498 F.3d 225 (4th Cir. 2007) (machine-generated records not testimonial)."
+          },
+          {
+            "claim": "The Court should adopt a per se rule excluding all AI-generated evidence",
+            "weakness": "FRE 702 requires case-by-case analysis. A per se rule contradicts the flexible framework Congress intended. Different AI applications have different reliability profiles.",
+            "type": "legal",
+            "evidence": "FRE 702 advisory committee notes; Daubert, 509 U.S. at 594-95 (emphasizing flexible inquiry)."
+          }
+        ]
+      }
+    jurisdiction: "Federal"
+    round: "1"
+    previousFindings: "[]"
+  assert:
+    - type: javascript
+      value: "file://assertions/validate-defender.js"
+    - type: llm-rubric
+      value: >
+        The defender should: (1) concede the "black box" claim is overbroad but argue that
+        deep neural networks DO present genuine interpretability challenges that distinguish
+        them from simpler models; (2) acknowledge machine-generated evidence distinction but
+        argue AI systems trained on human decisions may encode testimonial-like judgments;
+        (3) defend the per se rule by analogy to polygraph exclusion (United States v. Scheffer)
+        or argue for at least heightened scrutiny. Strength scores should reflect the brief's
+        underlying policy merit despite analytical weaknesses. Rate on creativity in defending
+        a novel but poorly executed argument.

@@ -1,0 +1,8 @@
+node_modules
+.next
+.env
+.env.local
+.env.evals
+promptfoo-output/
+.vercel
+.env*.local

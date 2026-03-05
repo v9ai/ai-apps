@@ -1,0 +1,169 @@
+# Cross-agent consistency cases — test that judge scores correlate with brief quality
+# Each case gives the judge the same brief with different quality attacker/defender outputs
+
+# Case 1: Strong brief, weak attacks, strong defense — expect HIGH score (75-95)
+- vars:
+    brief: |
+      MEMORANDUM IN SUPPORT OF MOTION TO COMPEL ARBITRATION
+
+      Defendant moves to compel arbitration pursuant to the Federal Arbitration Act, 9 U.S.C. Sections 1-16.
+
+      I. The Parties Agreed to Arbitrate
+      The Employment Agreement (Exhibit A), signed by Plaintiff on January 3, 2024, contains an arbitration clause at Section 12.1 requiring all disputes arising out of or relating to the employment relationship to be resolved by binding arbitration under AAA Employment Rules.
+
+      II. The FAA Mandates Enforcement
+      Under AT&T Mobility LLC v. Concepcion, 563 U.S. 333 (2011), the FAA preempts state-law rules that discriminate against arbitration agreements. The clause is not unconscionable — it provides for neutral arbitrator selection, adequate discovery, and full remedies. See Armendariz v. Foundation Health Psychcare Services, Inc., 24 Cal.4th 83 (2000) (outlining minimum requirements for enforceable employment arbitration).
+
+      III. Plaintiff's Claims Fall Within the Clause
+      The clause covers "all disputes arising out of or relating to" the employment relationship. Plaintiff's wage-and-hour and discrimination claims arise from the employment relationship and are arbitrable. See Gilmer v. Interstate/Johnson Lane Corp., 500 U.S. 20 (1991).
+    attackerOutput: |
+      {
+        "attacks": [
+          {
+            "claim": "The clause is not unconscionable",
+            "weakness": "The brief asserts non-unconscionability without analyzing the specific procedural and substantive prongs. A court would want to see analysis of whether the contract was an adhesion contract and whether the terms were one-sided.",
+            "type": "legal",
+            "evidence": "Armendariz requires analysis of both procedural and substantive unconscionability."
+          }
+        ]
+      }
+    defenderOutput: |
+      {
+        "rebuttals": [
+          {
+            "attack_ref": "The brief asserts non-unconscionability without analyzing the specific procedural and substantive prongs.",
+            "defense": "The brief does address the Armendariz factors by noting neutral arbitrator selection, adequate discovery, and full remedies — these go directly to substantive unconscionability. The procedural prong (adhesion) could be addressed more explicitly, but the brief provides the substance. Moreover, the burden of proving unconscionability rests on the party opposing arbitration.",
+            "supporting_citations": ["Armendariz v. Foundation Health Psychcare Services, Inc., 24 Cal.4th 83 (2000)", "Pinnacle Museum Tower Assn. v. Pinnacle Market Dev., 55 Cal.4th 223 (2012)"],
+            "strength": 0.75
+          }
+        ]
+      }
+    jurisdiction: "California"
+    round: "1"
+    previousFindings: "[]"
+  assert:
+    - type: javascript
+      value: "file://assertions/validate-judge.js"
+    - type: javascript
+      value: |
+        module.exports = (output) => {
+          const parsed = typeof output === 'string' ? JSON.parse(output) : output;
+          if (parsed.overall_score < 70) {
+            return { pass: false, score: 0, reason: `Score ${parsed.overall_score} too low for a strong brief with weak attacks — expected >= 70` };
+          }
+          const hasCritical = parsed.findings.some(f => f.severity === 'critical');
+          if (hasCritical) {
+            return { pass: false, score: 0, reason: 'Should not have critical findings for a well-constructed brief' };
+          }
+          return { pass: true, score: 1, reason: `Score ${parsed.overall_score} — appropriate for strong brief` };
+        };
+    - type: llm-rubric
+      value: >
+        This brief is well-constructed with proper citations and sound legal reasoning. The
+        single attack (unconscionability analysis depth) is minor and well-rebutted. The judge
+        should score this 75-95. No critical or high findings expected. The judge should
+        recognize that the attack, while technically valid, is a refinement issue rather than
+        a substantive flaw.
+
+# Case 2: Terrible brief, strong attacks, weak defense — expect LOW score (10-35)
+- vars:
+    brief: |
+      MOTION FOR JUDGMENT
+
+      Your Honor I believe the defendant owes me money because he promised to pay me back the $50,000 I lent him. He told me at a barbecue that he would pay me back. I have witnesses who were at the barbecue. Under the law a promise is a promise and must be kept. The Bible says let your yes be yes. I demand judgment plus punitive damages and emotional distress.
+    attackerOutput: |
+      {
+        "attacks": [
+          {
+            "claim": "he promised to pay me back the $50,000 I lent him",
+            "weakness": "A $50,000 oral loan agreement likely falls within the Statute of Frauds, which in most jurisdictions requires written agreements for debts exceeding a certain amount or not performable within one year. UCC 1-206 (now repealed but similar state provisions exist) and common-law SOF may bar enforcement.",
+            "type": "legal",
+            "evidence": "Statute of Frauds; see also Restatement (Second) of Contracts Section 110."
+          },
+          {
+            "claim": "Under the law a promise is a promise and must be kept",
+            "weakness": "This is not a legal standard. Contract formation requires offer, acceptance, consideration, and (for this amount) likely a writing. The brief demonstrates no understanding of contract law fundamentals.",
+            "type": "legal",
+            "evidence": "Restatement (Second) of Contracts Sections 17, 71 (consideration), 110 (Statute of Frauds)."
+          },
+          {
+            "claim": "The Bible says let your yes be yes",
+            "weakness": "Religious text is not legal authority. The Establishment Clause would preclude relying on religious doctrine as a basis for legal obligation.",
+            "type": "legal",
+            "evidence": "U.S. Const. amend. I; Lemon v. Kurtzman, 403 U.S. 602 (1971)."
+          },
+          {
+            "claim": "I demand punitive damages and emotional distress",
+            "weakness": "Punitive damages are generally unavailable in ordinary breach of contract actions. Emotional distress damages require either intentional or negligent infliction of emotional distress — a separate tort with its own elements, not a contract remedy.",
+            "type": "legal",
+            "evidence": "Restatement (Second) of Contracts Section 353; Erlich v. Menezes, 21 Cal.4th 543 (1999)."
+          },
+          {
+            "claim": "He told me at a barbecue that he would pay me back",
+            "weakness": "An oral promise to repay at an indefinite future time may lack the definiteness required for contract formation. When is payment due? What are the terms? The brief alleges no consideration, no definite terms, and no meeting of the minds.",
+            "type": "logical",
+            "evidence": "Joseph Martin Jr., Delicatessen, Inc. v. Schumacher, 52 N.Y.2d 105 (1981) (indefinite material terms)."
+          }
+        ]
+      }
+    defenderOutput: |
+      {
+        "rebuttals": [
+          {
+            "attack_ref": "A $50,000 oral loan agreement likely falls within the Statute of Frauds",
+            "defense": "The Statute of Frauds may not apply if the loan is performable within one year (payable on demand). Also, partial performance or detrimental reliance may take the agreement outside the SOF.",
+            "supporting_citations": ["Restatement (Second) of Contracts Section 139"],
+            "strength": 0.35
+          },
+          {
+            "attack_ref": "This is not a legal standard",
+            "defense": "No defense. The attacker is correct that the brief fails to articulate contract law elements.",
+            "supporting_citations": [],
+            "strength": 0.0
+          },
+          {
+            "attack_ref": "Religious text is not legal authority",
+            "defense": "No defense. Religious text cannot serve as legal authority.",
+            "supporting_citations": [],
+            "strength": 0.0
+          },
+          {
+            "attack_ref": "Punitive damages are generally unavailable in ordinary breach of contract",
+            "defense": "The attacker is correct. These damages are not available in this context.",
+            "supporting_citations": [],
+            "strength": 0.0
+          },
+          {
+            "attack_ref": "An oral promise to repay at an indefinite future time may lack definiteness",
+            "defense": "A loan at an indefinite time could be construed as a demand note, which is enforceable. However, the brief fails to frame it this way.",
+            "supporting_citations": ["UCC Section 3-108 (demand instruments)"],
+            "strength": 0.2
+          }
+        ]
+      }
+    jurisdiction: "General"
+    round: "1"
+    previousFindings: "[]"
+  assert:
+    - type: javascript
+      value: "file://assertions/validate-judge.js"
+    - type: javascript
+      value: |
+        module.exports = (output) => {
+          const parsed = typeof output === 'string' ? JSON.parse(output) : output;
+          if (parsed.overall_score > 40) {
+            return { pass: false, score: 0, reason: `Score ${parsed.overall_score} too high for a terrible brief — expected <= 40` };
+          }
+          const criticalCount = parsed.findings.filter(f => f.severity === 'critical').length;
+          if (criticalCount === 0) {
+            return { pass: false, score: 0, reason: 'Expected at least one critical finding for a fundamentally deficient brief' };
+          }
+          return { pass: true, score: 1, reason: `Score ${parsed.overall_score} with ${criticalCount} critical findings — appropriate for terrible brief` };
+        };
+    - type: llm-rubric
+      value: >
+        This brief is fundamentally deficient — no legal citations, no contract law framework,
+        religious authority cited, improper damages demanded, likely SOF problems. The judge
+        should score this 10-35 with multiple critical findings. The defender's honest
+        concessions (strength 0.0 on most points) should be credited. The few partial defenses
+        (SOF exception, demand note theory) should be acknowledged but not rescue the score.

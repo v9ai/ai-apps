@@ -1,0 +1,233 @@
+# Attacker test cases — each provides a legal brief for adversarial analysis
+- vars:
+    brief: |
+      MEMORANDUM OF LAW IN SUPPORT OF MOTION FOR SPECIFIC PERFORMANCE
+
+      Plaintiff seeks specific performance of the Purchase Agreement dated January 15, 2024, requiring Defendant to convey the property at 123 Oak Street, New York, NY.
+
+      I. STATEMENT OF FACTS
+      Plaintiff and Defendant entered into a Purchase Agreement for the sale of 123 Oak Street for $2,500,000. Plaintiff tendered full payment on the closing date. Defendant refused to close, claiming a "change of heart."
+
+      II. ARGUMENT
+      A. Specific Performance Is Warranted Because Real Property Is Unique
+      It is well established that real property is always unique and that monetary damages are therefore always inadequate. See Van Wagner Advertising Corp. v. S&M Enterprises, 67 N.Y.2d 186 (1986). Because the property is unique, Plaintiff is entitled to specific performance as a matter of right.
+
+      B. Defendant Has No Valid Defense
+      Defendant's claim of "change of heart" is not a recognized defense to breach of contract. The Statute of Frauds is satisfied because the Purchase Agreement is in writing. No other defenses apply.
+
+      C. The Balance of Equities Favors Plaintiff
+      Plaintiff has been ready, willing, and able to perform. Defendant simply does not want to sell. The court should compel performance because Plaintiff will suffer harm without the property.
+
+      III. CONCLUSION
+      For the foregoing reasons, the Court should grant Plaintiff's motion for specific performance.
+    jurisdiction: "New York"
+    round: "1"
+    previousFindings: "[]"
+  assert:
+    - type: javascript
+      value: "file://assertions/validate-attacker.js"
+    - type: llm-rubric
+      value: >
+        The attacker should identify that Van Wagner v. S&M Enterprises actually held that
+        not all real property is unique and that uniqueness must be demonstrated — the brief
+        mischaracterizes this holding. The attacker should also note the brief fails to
+        address equitable defenses like laches, unclean hands, or unconscionability.
+        Rate the quality of the attacks on specificity, legal accuracy, and thoroughness.
+
+- vars:
+    brief: |
+      BRIEF IN SUPPORT OF MOTION TO DISMISS
+
+      Defendant moves to dismiss the Complaint under the First Amendment to the United States Constitution.
+
+      I. STATEMENT OF FACTS
+      Plaintiff, a state university, terminated Defendant Professor's employment after Defendant published an article criticizing the university's diversity policies. The article was published in an academic journal and expressed Defendant's scholarly opinion.
+
+      II. ARGUMENT
+      A. Defendant's Speech Is Protected Under Strict Scrutiny
+      The First Amendment protects academic speech absolutely. All speech by professors at public universities is protected under strict scrutiny. Pickering v. Board of Education, 391 U.S. 563 (1968). Because the university is a state actor, any adverse employment action based on speech must survive strict scrutiny, which requires the government to show a compelling interest and narrow tailoring.
+
+      B. The University Cannot Show a Compelling Interest
+      The university's interest in "institutional harmony" does not rise to the level of a compelling government interest. See Tinker v. Des Moines, 393 U.S. 503 (1969). The university bears the burden of proving its interest is compelling, and mere disagreement with the content of speech cannot suffice.
+
+      C. The Garcetti Exception Does Not Apply
+      In Garcetti v. Ceballos, 547 U.S. 410 (2006), the Supreme Court held that employee speech made pursuant to official duties is not protected. However, academic speech is categorically exempt from Garcetti. The Ninth Circuit has held that Garcetti does not apply to academic speech. See Demers v. Austin, 746 F.3d 402 (9th Cir. 2014).
+
+      III. CONCLUSION
+      Defendant's speech is fully protected and the motion to dismiss should be granted.
+    jurisdiction: "Federal"
+    round: "1"
+    previousFindings: "[]"
+  assert:
+    - type: javascript
+      value: "file://assertions/validate-attacker.js"
+    - type: llm-rubric
+      value: >
+        The attacker should identify: (1) strict scrutiny is not the correct framework —
+        Pickering-Connick balancing test applies to public employee speech; (2) Tinker is a
+        student speech case, not a public employee case; (3) the categorical exemption of
+        academic speech from Garcetti is NOT settled — the Supreme Court explicitly reserved
+        this question and circuits are split; (4) the brief conflates different categories
+        of First Amendment analysis. Rate on legal precision and identification of doctrinal errors.
+
+- vars:
+    brief: |
+      COMPLAINT FOR NEGLIGENCE
+
+      I. PARTIES
+      Plaintiff resides in San Francisco, California. Defendant Corporation is incorporated in Delaware with its principal place of business in San Francisco, California.
+
+      II. JURISDICTION
+      This Court has jurisdiction under 28 U.S.C. 1332 because the parties are diverse and the amount in controversy exceeds $75,000.
+
+      III. FACTS
+      On March 1, 2025, Plaintiff was walking on the sidewalk adjacent to Defendant's construction site. A steel beam fell from the site and struck Plaintiff, causing severe injuries. Defendant was negligent because the beam fell. The injuries speak for themselves.
+
+      IV. ARGUMENT
+      A. Defendant Owed a Duty of Care
+      All persons owe a duty of reasonable care to everyone. This is a universal principle.
+
+      B. Defendant Breached Its Duty
+      The beam fell. Therefore, Defendant was negligent. Res ipsa loquitur applies because beams do not fall from construction sites without negligence. See Escola v. Coca Cola Bottling Co., 24 Cal.2d 453 (1944).
+
+      C. Causation and Damages
+      The beam caused Plaintiff's injuries. But for the beam falling, Plaintiff would not have been injured. Plaintiff suffered damages including medical bills, lost wages, and pain and suffering totaling approximately $500,000.
+
+      V. CONCLUSION
+      Defendant is liable for negligence and Plaintiff is entitled to damages.
+    jurisdiction: "California"
+    round: "1"
+    previousFindings: "[]"
+  assert:
+    - type: javascript
+      value: "file://assertions/validate-attacker.js"
+    - type: llm-rubric
+      value: >
+        The attacker should identify: (1) diversity jurisdiction fails — both parties appear
+        to be citizens of California (plaintiff resides in CA, defendant has principal place
+        of business in CA); (2) the duty formulation is overbroad — California uses the
+        Rowland v. Christian multi-factor test; (3) Escola is a products liability case about
+        exploding bottles, not a construction negligence case; (4) "injuries speak for
+        themselves" is not a legal standard; (5) res ipsa loquitur has specific elements
+        beyond "things don't normally happen." Rate on thoroughness catching obvious flaws.
+
+# --- Edge Cases ---
+
+# Pro se filing with emotional arguments and procedural gaps
+- vars:
+    brief: |
+      TO THE HONORABLE COURT
+
+      My name is James Walker and I am filing this motion myself because I cannot afford a lawyer. I am asking the court to give me back custody of my two children who were taken by CPS on December 10, 2025.
+
+      THE FACTS
+      CPS came to my house because my neighbor called them after we had an argument. The CPS worker looked around and said the house was messy. That is not a reason to take children. My house is clean enough. My kids were happy and healthy. They had food and clothes and went to school every day.
+
+      The CPS worker did not give me any paperwork at the time. I only got papers three weeks later when I went to the CPS office to ask what happened. I believe my rights were violated.
+
+      WHY I SHOULD GET MY KIDS BACK
+      The Constitution says parents have a right to raise their children. The Supreme Court said this in some case I read about online. The government cannot take your kids just because your house is messy. I am a good father and everyone in my church will say so.
+
+      Also CPS is biased against fathers. Statistics show that mothers get custody more often. This is discrimination under the Equal Protection Clause.
+
+      I ask the court to return my children immediately and sanction CPS for violating my rights.
+    jurisdiction: "Texas"
+    round: "1"
+    previousFindings: "[]"
+  assert:
+    - type: javascript
+      value: "file://assertions/validate-attacker.js"
+    - type: llm-rubric
+      value: >
+        The attacker should identify: (1) no specific case law cited — the "some case"
+        reference is likely Troxel v. Granville but it's not properly cited; (2) the
+        constitutional standard for termination/removal is Santosky v. Kramer (clear and
+        convincing evidence), not mentioned; (3) the due process argument about late
+        paperwork has merit but needs to cite the specific Texas Family Code provisions
+        (Chapter 262); (4) the equal protection argument about gender bias lacks legal
+        foundation — statistical disparity alone doesn't establish an EP violation without
+        showing discriminatory intent; (5) church character witnesses are not a legal standard
+        for fitness. The attacker should be respectful of the pro se posture while still
+        being thorough. Rate on balance between thoroughness and fairness to a pro se litigant.
+
+# Novel legal theory — AI-generated evidence
+- vars:
+    brief: |
+      MOTION IN LIMINE TO EXCLUDE AI-GENERATED EVIDENCE
+
+      Defendant moves to exclude all evidence generated by, or substantially derived from, artificial intelligence systems, including but not limited to: AI-generated summaries of surveillance footage, AI-assisted forensic analysis of DNA evidence, and AI-generated predictive risk assessments.
+
+      I. ARGUMENT
+
+      A. AI-Generated Evidence Fails the Daubert Standard
+      Under Daubert v. Merrell Dow Pharmaceuticals, 509 U.S. 579 (1993), expert testimony must be based on reliable methodology. AI systems are "black boxes" whose internal reasoning cannot be tested, subjected to peer review, or assigned a known error rate. Therefore, all AI evidence fails Daubert as a matter of law.
+
+      B. AI Evidence Violates the Confrontation Clause
+      Under Crawford v. Washington, 541 U.S. 36 (2004), testimonial statements are inadmissible unless the declarant is available for cross-examination. An AI system cannot be cross-examined. Therefore, any AI-generated output that is testimonial in nature violates the Sixth Amendment.
+
+      C. AI Evidence Is Inherently Unreliable Due to Bias
+      Studies have shown that AI systems exhibit racial and socioeconomic bias. See generally Buolamwini & Gebru, "Gender Shades" (2018). Any evidence generated by a biased system is unreliable and should be excluded under FRE 403 as unfairly prejudicial.
+
+      D. The Court Should Adopt a Per Se Rule of Exclusion
+      Given the fundamental unreliability and constitutional concerns, this Court should adopt a per se rule excluding all AI-generated evidence in criminal proceedings.
+
+      II. CONCLUSION
+      Defendant's motion should be granted.
+    jurisdiction: "Federal"
+    round: "1"
+    previousFindings: "[]"
+  assert:
+    - type: javascript
+      value: "file://assertions/validate-attacker.js"
+    - type: llm-rubric
+      value: >
+        The attacker should identify: (1) the Daubert argument is overbroad — not all AI is
+        a "black box," and Daubert's factors are flexible, not a rigid checklist (Kumho Tire);
+        (2) the Confrontation Clause argument conflates machine-generated evidence with
+        testimonial hearsay — Melendez-Diaz and Bullcoming address human certifications, not
+        algorithmic outputs; (3) the bias argument cites a facial recognition study but applies
+        it to ALL AI including DNA analysis and surveillance — overbroad generalization;
+        (4) a per se exclusion rule has no support in federal evidence law — FRE 702 requires
+        case-by-case analysis; (5) the brief lumps fundamentally different AI applications
+        together. The attacker should credit the legitimate concerns while identifying the
+        analytical weaknesses. Rate on nuance in handling a novel but poorly argued theory.
+
+# Multi-party dispute with complex procedure
+- vars:
+    brief: |
+      CROSS-CLAIM AND THIRD-PARTY COMPLAINT
+
+      Cross-Claimant ABC Construction Co. ("ABC") asserts this cross-claim against Co-Defendant XYZ Engineering ("XYZ") and third-party complaint against FastBuild Materials Inc. ("FastBuild").
+
+      I. FACTUAL BACKGROUND
+      Plaintiff homeowner sued ABC and XYZ for structural defects in a residential building. ABC contends that all defects are attributable to (a) XYZ's defective engineering plans and (b) FastBuild's defective building materials.
+
+      II. CROSS-CLAIM AGAINST XYZ (FRCP 13(g))
+      XYZ provided engineering plans that failed to account for the soil conditions at the building site. Under Spearin doctrine, XYZ impliedly warranted the adequacy of its plans. United States v. Spearin, 248 U.S. 132 (1918). ABC relied on these plans and is entitled to full indemnification from XYZ for any liability to Plaintiff.
+
+      III. THIRD-PARTY COMPLAINT AGAINST FASTBUILD (FRCP 14(a))
+      FastBuild supplied steel reinforcement bars that failed to meet ASTM A615 specifications. Under strict products liability, FastBuild is liable for any damages caused by its defective materials. ABC impleads FastBuild for contribution and indemnification.
+
+      ABC is also entitled to attorneys' fees against both XYZ and FastBuild under the "common fund" doctrine because this litigation benefits all parties by resolving the allocation of fault.
+
+      IV. CONCLUSION
+      ABC is entitled to judgment against XYZ and FastBuild for full indemnification, contribution, and attorneys' fees.
+    jurisdiction: "Federal"
+    round: "1"
+    previousFindings: "[]"
+  assert:
+    - type: javascript
+      value: "file://assertions/validate-attacker.js"
+    - type: llm-rubric
+      value: >
+        The attacker should identify: (1) Spearin applies to government contracts where the
+        government provides specs — it does not automatically apply to private engineering
+        contracts; (2) FRCP 14(a) impleader requires that the third party "is or may be liable
+        to the third-party plaintiff for all or part of the claim against it" — ABC needs to
+        establish this nexus more clearly; (3) the "common fund" doctrine applies when
+        litigation creates a fund benefiting non-parties, not to fee-shifting between adverse
+        parties in the same case; (4) seeking "full indemnification" from both XYZ AND FastBuild
+        simultaneously is potentially inconsistent — if each is fully responsible, the claims
+        are contradictory; (5) strict products liability against FastBuild requires showing the
+        product was defective AND unreasonably dangerous, not just off-spec. Rate on ability
+        to handle multi-party procedural complexity.

@@ -1,0 +1,28 @@
+description: "Cross-Agent Consistency — Judge findings correlate with attacker/defender quality"
+sharing: false
+
+prompts:
+  - "file://../prompts/judge.ts"
+
+providers:
+  - id: openai:chat:deepseek-reasoner
+    label: deepseek-reasoner
+    config:
+      apiKeyEnvar: DEEPSEEK_API_KEY
+      apiBaseUrl: https://api.deepseek.com/v1
+      temperature: 0
+      response_format:
+        type: json_object
+
+defaultTest:
+  options:
+    provider:
+      id: openai:chat:deepseek-chat
+      config:
+        apiKeyEnvar: DEEPSEEK_API_KEY
+        apiBaseUrl: https://api.deepseek.com/v1
+        temperature: 0
+
+tests: "file://datasets/consistency-cases.yaml"
+
+outputPath: ../promptfoo-output/consistency-latest.json

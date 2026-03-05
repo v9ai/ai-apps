@@ -1,0 +1,146 @@
+@import "@radix-ui/themes/styles.css";
+
+/* Sticky nav with blur */
+.nav-blur {
+  position: sticky;
+  top: 0;
+  z-index: 50;
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  background: rgba(17, 17, 19, 0.75);
+  border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+}
+
+/* Hero gradient background */
+.hero-gradient {
+  position: relative;
+  min-height: auto;
+  display: flex;
+  align-items: center;
+  overflow: hidden;
+}
+
+.hero-gradient::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background:
+    radial-gradient(ellipse 80% 60% at 50% -10%, rgba(224, 49, 49, 0.12) 0%, transparent 60%),
+    radial-gradient(ellipse 50% 40% at 80% 50%, rgba(224, 49, 49, 0.06) 0%, transparent 50%),
+    radial-gradient(ellipse 40% 50% at 10% 60%, rgba(150, 30, 30, 0.05) 0%, transparent 50%);
+  pointer-events: none;
+  z-index: 0;
+}
+
+.hero-gradient > * {
+  position: relative;
+  z-index: 1;
+}
+
+/* Hero headline */
+.hero-headline {
+  font-size: clamp(2rem, 5vw, 3.5rem);
+  font-weight: 800;
+  line-height: 1.05;
+  letter-spacing: -0.03em;
+  max-width: 900px;
+  text-align: center;
+  color: var(--gray-12);
+  margin: 0;
+}
+
+/* Score ring badge */
+.score-ring {
+  width: 56px;
+  height: 56px;
+  border-radius: 50%;
+  border: 3px solid var(--score-color, var(--gray-9));
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 18px;
+  font-weight: 800;
+  color: var(--score-color, var(--gray-9));
+  flex-shrink: 0;
+  letter-spacing: -0.02em;
+}
+
+/* Case card hover */
+.case-card {
+  transition: border-color 0.2s ease, transform 0.2s ease;
+}
+
+.case-card:hover {
+  border-color: rgba(224, 49, 49, 0.25) !important;
+  transform: translateY(-2px);
+}
+
+/* Feature card hover (kept for other pages) */
+.feature-card {
+  transition: border-color 0.2s ease, transform 0.2s ease;
+}
+
+.feature-card:hover {
+  border-color: rgba(224, 49, 49, 0.25) !important;
+  transform: translateY(-2px);
+}
+
+/* Score progress bar */
+.score-bar {
+  height: 4px;
+  background: var(--gray-4);
+  border-radius: 999px;
+  overflow: hidden;
+}
+
+.score-bar-fill {
+  height: 100%;
+  border-radius: 999px;
+}
+
+/* Fade-in animation */
+@keyframes fadeInUp {
+  from {
+    opacity: 0;
+    transform: translateY(20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.fade-in {
+  animation: fadeInUp 0.6s ease-out both;
+}
+
+.fade-in-delay-1 { animation-delay: 0.1s; }
+.fade-in-delay-2 { animation-delay: 0.2s; }
+.fade-in-delay-3 { animation-delay: 0.3s; }
+
+/* Pipeline step icon */
+.pipeline-icon {
+  width: 40px;
+  height: 40px;
+  border-radius: 10px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: color-mix(in srgb, var(--pipe-color, var(--gray-9)) 12%, transparent);
+  color: var(--pipe-color, var(--gray-9));
+  flex-shrink: 0;
+}
+
+/* Differentiator icon */
+.diff-icon {
+  width: 36px;
+  height: 36px;
+  border-radius: 8px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: color-mix(in srgb, var(--crimson-9) 10%, transparent);
+  color: var(--crimson-9);
+  flex-shrink: 0;
+  margin-top: 2px;
+}
