@@ -14,7 +14,8 @@ import {
   TextField,
   Select,
 } from "@radix-ui/themes";
-import { PlayIcon, PlusIcon } from "@radix-ui/react-icons";
+import { PlayIcon, PlusIcon, ArrowRightIcon } from "@radix-ui/react-icons";
+import NextLink from "next/link";
 import {
   useGetTracksQuery,
   useCreateTrackMutation,
@@ -158,6 +159,36 @@ function PrepPageContent() {
 
         <Flex justify="end">
           <AddTrackDialog onCreated={() => refetch()} />
+        </Flex>
+
+        {/* Quick links */}
+        <Flex direction="column" gap="3">
+          <NextLink href="/interview-prep/behavioral" style={{ textDecoration: "none" }}>
+            <Card style={{ backgroundColor: "var(--teal-3)", cursor: "pointer" }}>
+              <Flex justify="between" align="center">
+                <Flex direction="column" gap="1">
+                  <Heading size="4">Behavioral Interview Questions</Heading>
+                  <Text size="2" color="gray">
+                    20+ STAR-guided questions across 7 categories — leadership, conflict, teamwork, and more.
+                  </Text>
+                </Flex>
+                <ArrowRightIcon width={20} height={20} />
+              </Flex>
+            </Card>
+          </NextLink>
+          <NextLink href="/interview-prep/exercises" style={{ textDecoration: "none" }}>
+            <Card style={{ backgroundColor: "var(--violet-3)", cursor: "pointer" }}>
+              <Flex justify="between" align="center">
+                <Flex direction="column" gap="1">
+                  <Heading size="4">RLHF Practice Exercises</Heading>
+                  <Text size="2" color="gray">
+                    Timed exercises for prompt crafting, AI code review, and tricky example creation.
+                  </Text>
+                </Flex>
+                <ArrowRightIcon width={20} height={20} />
+              </Flex>
+            </Card>
+          </NextLink>
         </Flex>
 
         {tracks.length === 0 ? (

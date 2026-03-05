@@ -8,7 +8,7 @@ export default function SearchPage() {
     <Box py="8" style={{ maxWidth: 800, margin: "0 auto" }}>
       <Flex direction="column" gap="6">
         <Flex direction="column" gap="1">
-          <Heading size="6">Search & Health Q&A</Heading>
+          <Heading size="7" weight="bold">Search & Health Q&A</Heading>
           <Text size="2" color="gray">
             Search your blood tests, track marker trends, and ask AI-powered
             health questions.

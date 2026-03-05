@@ -1,6 +1,5 @@
 use crate::agent::{Tool, ToolDefinition};
 use crate::scholar::{SemanticScholarClient, types::{PAPER_FIELDS_FULL, SEARCH_FIELDS}};
-use async_trait::async_trait;
 use serde::{Deserialize, Serialize};
 
 /// Configuration for search/detail tool behaviour.
@@ -58,7 +57,7 @@ impl SearchPapers {
     }
 }
 
-#[async_trait]
+#[async_trait::async_trait]
 impl Tool for SearchPapers {
     fn name(&self) -> &str {
         "search_papers"
@@ -102,8 +101,8 @@ impl Tool for SearchPapers {
         }
     }
 
-    async fn call_json(&self, args: serde_json::Value) -> anyhow::Result<String> {
-        let args: SearchArgs = serde_json::from_value(args)?;
+    async fn call_json(&self, args: serde_json::Value) -> Result<String, String> {
+        let args: SearchArgs = serde_json::from_value(args).map_err(|e| e.to_string())?;
         let limit = args.limit.unwrap_or(self.config.default_limit).min(20);
 
         let resp = self.client
@@ -115,7 +114,8 @@ impl Tool for SearchPapers {
                 Some("citationCount:desc"),
                 limit,
             )
-            .await?;
+            .await
+            .map_err(|e| e.to_string())?;
 
         let max_chars = self.config.abstract_max_chars;
         let max_authors = self.config.max_authors;
@@ -155,12 +155,12 @@ impl Tool for SearchPapers {
             })
             .collect();
 
-        Ok(serde_json::to_string_pretty(&serde_json::json!({
+        serde_json::to_string_pretty(&serde_json::json!({
             "query": args.query,
             "total_available": resp.total,
             "returned": papers.len(),
             "papers": papers,
-        }))?)
+        })).map_err(|e| e.to_string())
     }
 }
 
@@ -186,7 +186,7 @@ impl GetPaperDetail {
     }
 }
 
-#[async_trait]
+#[async_trait::async_trait]
 impl Tool for GetPaperDetail {
     fn name(&self) -> &str {
         "get_paper_detail"
@@ -216,9 +216,9 @@ impl Tool for GetPaperDetail {
         }
     }
 
-    async fn call_json(&self, args: serde_json::Value) -> anyhow::Result<String> {
-        let args: PaperDetailArgs = serde_json::from_value(args)?;
-        let p = self.client.get_paper(&args.paper_id, PAPER_FIELDS_FULL).await?;
+    async fn call_json(&self, args: serde_json::Value) -> Result<String, String> {
+        let args: PaperDetailArgs = serde_json::from_value(args).map_err(|e| e.to_string())?;
+        let p = self.client.get_paper(&args.paper_id, PAPER_FIELDS_FULL).await.map_err(|e| e.to_string())?;
 
         let mut obj = serde_json::json!({
             "paper_id": p.paper_id,
@@ -242,6 +242,6 @@ impl Tool for GetPaperDetail {
             obj["fields_of_study"] = serde_json::json!(p.fields_of_study);
         }
 
-        Ok(serde_json::to_string_pretty(&obj)?)
+        serde_json::to_string_pretty(&obj).map_err(|e| e.to_string())
     }
 }

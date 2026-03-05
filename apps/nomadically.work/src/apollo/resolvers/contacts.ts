@@ -769,6 +769,22 @@ export const contactResolvers = {
         };
       }
     },
+
+    async unverifyCompanyContacts(
+      _parent: unknown,
+      args: { companyId: number },
+      context: GraphQLContext,
+    ) {
+      if (!context.userId || !isAdminEmail(context.userEmail)) {
+        throw new Error("Forbidden");
+      }
+      const rows = await context.db
+        .update(contacts)
+        .set({ email_verified: false, updated_at: new Date().toISOString() })
+        .where(eq(contacts.company_id, args.companyId))
+        .returning({ id: contacts.id });
+      return { success: true, count: rows.length };
+    },
   },
 
   // Company.contacts field resolver

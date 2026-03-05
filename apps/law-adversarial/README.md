@@ -15,6 +15,9 @@ graph LR
     N --> V[D3 Visualization]
     DB --> UI[Live SSE Feed]
     S -.->|rounds 1..N| A
+    J --> CV[Citation Verifier - DeepSeek R1]
+    J --> JE[Jurisdiction Expert - DeepSeek R1]
+    CV & JE --> BR[Brief Rewriter - Qwen Plus]
 ```
 
 ## Why These Models
@@ -24,6 +27,9 @@ graph LR
 | Attacker | DeepSeek R1 (reasoner) | Extended chain-of-thought reasoning excels at finding subtle logical, factual, and legal weaknesses in arguments |
 | Defender | Qwen Plus | Broad training corpus and strong instruction-following for mounting comprehensive legal defenses with citations |
 | Judge | DeepSeek Chat | Balanced, fast inference for weighing both sides impartially and producing structured severity assessments |
+| Citation Verifier | DeepSeek R1 (reasoner) | Deep reasoning catches mischaracterized holdings, overruled cases, and fabricated citations |
+| Jurisdiction Expert | DeepSeek R1 (reasoner) | Chain-of-thought reasoning maps precedent hierarchies and jurisdiction-specific procedural rules |
+| Brief Rewriter | Qwen Plus | Strong instruction-following produces precise, minimal-intervention revisions with tracked changes |
 
 ## Why Neo4j for Argument Graphs
 
@@ -36,6 +42,9 @@ The project uses [Promptfoo](https://promptfoo.dev) for systematic prompt evalua
 - **Attacker evals** -- Verify attacks are exhaustive, correctly typed, and cite real legal principles
 - **Defender evals** -- Verify rebuttals address each attack, cite valid authority, and self-assess strength honestly
 - **Judge evals** -- Verify findings are balanced, severity is calibrated, and fixes are actionable
+- **Citation Verifier evals** -- Verify fabrication detection, overruled case identification, and mischaracterization catching
+- **Jurisdiction Expert evals** -- Verify jurisdiction-specific analysis depth, binding authority identification, and procedural compliance checking
+- **Brief Rewriter evals** -- Verify revisions are legally accurate, minimal-intervention, and address all findings
 - **Red-team evals** -- Test prompt injection resistance and adversarial robustness
 - **Consistency evals** -- Verify same brief produces consistent scores across runs
 
@@ -87,7 +96,7 @@ npm run test:prompts:all
 ## What I Would Build Next
 
 - **RAG with legal embeddings** -- Embed case law databases (CourtListener, Casetext) to ground attacker evidence and defender citations in real precedent rather than model knowledge
-- **Citation verification** -- Cross-reference every cited case against a legal database to detect hallucinated citations, verify holdings match the proposition cited, and flag overruled cases
-- **Brief diff mode** -- After findings, auto-generate a revised brief with tracked changes showing exactly what was modified and why
-- **Multi-jurisdiction comparison** -- Run the same brief through jurisdiction-specific rule sets in parallel and surface jurisdiction-dependent vulnerabilities
+- ~~**Citation verification**~~ -- DONE: Citation Verifier agent detects fabricated citations, mischaracterized holdings, and overruled cases
+- ~~**Brief diff mode**~~ -- DONE: Brief Rewriter agent generates revised briefs with tracked changes and finding references
+- ~~**Multi-jurisdiction comparison**~~ -- DONE: Jurisdiction Expert agent performs deep jurisdiction-specific analysis with binding authority gaps and procedural compliance checking
 - **Collaborative sessions** -- Allow multiple attorneys to view the same stress test in real-time, annotate findings, and mark issues as resolved

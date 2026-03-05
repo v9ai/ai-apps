@@ -184,6 +184,18 @@ dependencies = [
 ]
 
 [[package]]
+name = "deepseek"
+version = "0.1.0"
+dependencies = [
+ "async-trait",
+ "reqwest",
+ "serde",
+ "serde_json",
+ "thiserror",
+ "tracing",
+]
+
+[[package]]
 name = "digest"
 version = "0.10.7"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -339,6 +351,7 @@ dependencies = [
  "anyhow",
  "axum",
  "dashmap",
+ "deepseek",
  "dirs",
  "dotenvy",
  "regex",

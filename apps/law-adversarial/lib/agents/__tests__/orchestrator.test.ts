@@ -55,9 +55,27 @@ vi.mock("../runner", () => ({
     ],
     overall_score: 65,
   }),
+  runCitationVerifier: vi.fn().mockResolvedValue({
+    citations: [{ citation: "Smith v. Jones", status: "valid", actual_holding: "test", brief_characterization: "test", issue: "None", confidence: 0.9 }],
+    fabrication_risk: 0.1,
+    summary: "Citations are valid",
+  }),
+  runJurisdictionExpert: vi.fn().mockResolvedValue({
+    jurisdiction_analysis: "Brief is appropriate for this jurisdiction",
+    issues: [],
+    binding_authority_gaps: [],
+    procedural_compliance: [],
+    overall_jurisdiction_fitness: 80,
+  }),
+  runBriefRewriter: vi.fn().mockResolvedValue({
+    revised_brief: "Revised brief text",
+    changes: [{ original_text: "old", revised_text: "new", change_type: "rewrite", reason: "test", finding_ref: "F1" }],
+    improvement_score: 75,
+    change_summary: "Minor revisions",
+  }),
 }));
 
-vi.mock("@/lib/neo4j/argument-graph", () => ({
+vi.mock("@/lib/argument-graph", () => ({
   createClaim: vi.fn().mockResolvedValue("mock-node-id"),
   createAttack: vi.fn().mockResolvedValue(undefined),
   createSupport: vi.fn().mockResolvedValue(undefined),

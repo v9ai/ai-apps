@@ -960,6 +960,7 @@ export type Mutation = {
    */
   reportJob: Maybe<Job>;
   unlinkTrackFromApplication: Application;
+  unverifyCompanyContacts: UnverifyContactsResult;
   updateApplication: Application;
   updateCompany: Company;
   updateContact: Contact;
@@ -1219,6 +1220,11 @@ export type MutationReportJobArgs = {
 export type MutationUnlinkTrackFromApplicationArgs = {
   applicationId: Scalars['Int']['input'];
   trackSlug: Scalars['String']['input'];
+};
+
+
+export type MutationUnverifyCompanyContactsArgs = {
+  companyId: Scalars['Int']['input'];
 };
 
 
@@ -1796,6 +1802,12 @@ export type TrackItem = {
   promptRef: Maybe<Scalars['String']['output']>;
   tags: Array<Scalars['String']['output']>;
   title: Scalars['String']['output'];
+};
+
+export type UnverifyContactsResult = {
+  __typename: 'UnverifyContactsResult';
+  count: Scalars['Int']['output'];
+  success: Scalars['Boolean']['output'];
 };
 
 export type UpdateApplicationInput = {

@@ -963,6 +963,7 @@ export type Mutation = {
    */
   reportJob: Maybe<Job>;
   unlinkTrackFromApplication: Application;
+  unverifyCompanyContacts: UnverifyContactsResult;
   updateApplication: Application;
   updateCompany: Company;
   updateContact: Contact;
@@ -1222,6 +1223,11 @@ export type MutationReportJobArgs = {
 export type MutationUnlinkTrackFromApplicationArgs = {
   applicationId: Scalars['Int']['input'];
   trackSlug: Scalars['String']['input'];
+};
+
+
+export type MutationUnverifyCompanyContactsArgs = {
+  companyId: Scalars['Int']['input'];
 };
 
 
@@ -1801,6 +1807,12 @@ export type TrackItem = {
   title: Scalars['String']['output'];
 };
 
+export type UnverifyContactsResult = {
+  __typename?: 'UnverifyContactsResult';
+  count: Scalars['Int']['output'];
+  success: Scalars['Boolean']['output'];
+};
+
 export type UpdateApplicationInput = {
   companyName?: InputMaybe<Scalars['String']['input']>;
   jobDescription?: InputMaybe<Scalars['String']['input']>;
@@ -2326,6 +2338,13 @@ export type ApplyEmailPatternMutationVariables = Exact<{
 
 
 export type ApplyEmailPatternMutation = { __typename?: 'Mutation', applyEmailPattern: { __typename?: 'ApplyEmailPatternResult', success: boolean, message: string, contactsUpdated: number, pattern: string | null, contacts: Array<{ __typename?: 'Contact', id: number, email: string | null, emailVerified: boolean | null }> } };
+
+export type UnverifyCompanyContactsMutationVariables = Exact<{
+  companyId: Scalars['Int']['input'];
+}>;
+
+
+export type UnverifyCompanyContactsMutation = { __typename?: 'Mutation', unverifyCompanyContacts: { __typename?: 'UnverifyContactsResult', success: boolean, count: number } };
 
 export type CreateContactMutationVariables = Exact<{
   input: CreateContactInput;
@@ -5399,6 +5418,40 @@ export function useApplyEmailPatternMutation(baseOptions?: Apollo.MutationHookOp
 export type ApplyEmailPatternMutationHookResult = ReturnType<typeof useApplyEmailPatternMutation>;
 export type ApplyEmailPatternMutationResult = Apollo.MutationResult<ApplyEmailPatternMutation>;
 export type ApplyEmailPatternMutationOptions = Apollo.BaseMutationOptions<ApplyEmailPatternMutation, ApplyEmailPatternMutationVariables>;
+export const UnverifyCompanyContactsDocument = gql`
+    mutation UnverifyCompanyContacts($companyId: Int!) {
+  unverifyCompanyContacts(companyId: $companyId) {
+    success
+    count
+  }
+}
+    `;
+export type UnverifyCompanyContactsMutationFn = Apollo.MutationFunction<UnverifyCompanyContactsMutation, UnverifyCompanyContactsMutationVariables>;
+
+/**
+ * __useUnverifyCompanyContactsMutation__
+ *
+ * To run a mutation, you first call `useUnverifyCompanyContactsMutation` within a React component and pass it any options that fit your needs.
+ * When your component renders, `useUnverifyCompanyContactsMutation` returns a tuple that includes:
+ * - A mutate function that you can call at any time to execute the mutation
+ * - An object with fields that represent the current status of the mutation's execution
+ *
+ * @param baseOptions options that will be passed into the mutation, supported options are listed on: https://www.apollographql.com/docs/react/api/react-hooks/#options-2;
+ *
+ * @example
+ * const [unverifyCompanyContactsMutation, { data, loading, error }] = useUnverifyCompanyContactsMutation({
+ *   variables: {
+ *      companyId: // value for 'companyId'
+ *   },
+ * });
+ */
+export function useUnverifyCompanyContactsMutation(baseOptions?: Apollo.MutationHookOptions<UnverifyCompanyContactsMutation, UnverifyCompanyContactsMutationVariables>) {
+        const options = {...defaultOptions, ...baseOptions}
+        return Apollo.useMutation<UnverifyCompanyContactsMutation, UnverifyCompanyContactsMutationVariables>(UnverifyCompanyContactsDocument, options);
+      }
+export type UnverifyCompanyContactsMutationHookResult = ReturnType<typeof useUnverifyCompanyContactsMutation>;
+export type UnverifyCompanyContactsMutationResult = Apollo.MutationResult<UnverifyCompanyContactsMutation>;
+export type UnverifyCompanyContactsMutationOptions = Apollo.BaseMutationOptions<UnverifyCompanyContactsMutation, UnverifyCompanyContactsMutationVariables>;
 export const CreateContactDocument = gql`
     mutation CreateContact($input: CreateContactInput!) {
   createContact(input: $input) {

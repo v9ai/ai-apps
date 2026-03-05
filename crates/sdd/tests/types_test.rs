@@ -311,3 +311,70 @@ fn test_sdd_error_verify_failed_display() {
     assert!(msg.contains("3"));
     assert!(msg.contains("missing tests"));
 }
+
+#[test]
+fn test_sdd_error_validation_failed_display() {
+    let err = SddError::ValidationFailed {
+        rules_failed: vec!["requirements_present".into(), "scenarios_present".into()],
+        details: "Missing ADDED section; Missing Given/When/Then".into(),
+    };
+    let msg = err.to_string();
+    assert!(msg.contains("2 rules failed"));
+    assert!(msg.contains("Missing ADDED"));
+}
+
+#[test]
+fn test_sdd_error_contract_incompatible_display() {
+    let err = SddError::ContractIncompatible {
+        contract: "auth-api".into(),
+        reason: "REQ-002 removed".into(),
+    };
+    let msg = err.to_string();
+    assert!(msg.contains("auth-api"));
+    assert!(msg.contains("REQ-002 removed"));
+}
+
+#[test]
+fn test_dod_category_compatibility_as_str() {
+    assert_eq!(DodCategory::Compatibility.as_str(), "compatibility");
+}
+
+#[test]
+fn test_dod_category_contract_compliance_as_str() {
+    assert_eq!(DodCategory::ContractCompliance.as_str(), "contract_compliance");
+}
+
+#[test]
+fn test_research_enhanced_dod_has_six_criteria() {
+    let dod = DefinitionOfDone::research_enhanced_dod();
+    assert_eq!(dod.criteria.len(), 6);
+}
+
+#[test]
+fn test_research_enhanced_dod_first_four_required() {
+    let dod = DefinitionOfDone::research_enhanced_dod();
+    for c in &dod.criteria[..4] {
+        assert!(c.required, "{} should be required", c.id);
+    }
+}
+
+#[test]
+fn test_research_enhanced_dod_last_two_advisory() {
+    let dod = DefinitionOfDone::research_enhanced_dod();
+    assert_eq!(dod.criteria[4].id, "compatibility");
+    assert!(!dod.criteria[4].required);
+    assert_eq!(dod.criteria[4].category, DodCategory::Compatibility);
+
+    assert_eq!(dod.criteria[5].id, "contract_compliance");
+    assert!(!dod.criteria[5].required);
+    assert_eq!(dod.criteria[5].category, DodCategory::ContractCompliance);
+}
+
+#[test]
+fn test_research_enhanced_dod_prompt_section() {
+    let dod = DefinitionOfDone::research_enhanced_dod();
+    let section = dod.to_prompt_section();
+    assert!(section.contains("[compatibility]"));
+    assert!(section.contains("[contract_compliance]"));
+    assert!(section.contains("[ADVISORY]"));
+}

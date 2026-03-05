@@ -29,6 +29,7 @@ extend type Mutation {
   findCompanyEmails(companyId: Int!): EnhanceAllContactsResult!
   enhanceAllContacts: EnhanceAllContactsResult!
   applyEmailPattern(companyId: Int!): ApplyEmailPatternResult!
+  unverifyCompanyContacts(companyId: Int!): UnverifyContactsResult!
 }
 
 type Contact {
@@ -139,6 +140,11 @@ type ApplyEmailPatternResult {
   contactsUpdated: Int!
   pattern: String
   contacts: [Contact!]!
+}
+
+type UnverifyContactsResult {
+  success: Boolean!
+  count: Int!
 }
 
 type ContactEmail {

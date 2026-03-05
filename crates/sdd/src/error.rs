@@ -23,11 +23,20 @@ pub enum SddError {
     #[error("Max turns ({0}) exceeded")]
     MaxTurnsExceeded(u32),
 
+    #[error("Structured output failed for node `{node}` after {attempts} attempt(s)")]
+    StructuredOutputFailed { node: String, attempts: u32 },
+
     #[error("Token budget of {budget} exceeded (used {used})")]
     BudgetExceeded { budget: u32, used: u32 },
 
     #[error("Verify returned FAIL after {attempts} attempt(s): {reason}")]
     VerifyFailed { attempts: u32, reason: String },
+
+    #[error("Spec validation failed ({n} rules failed): {details}", n = rules_failed.len())]
+    ValidationFailed { rules_failed: Vec<String>, details: String },
+
+    #[error("Contract `{contract}` incompatible: {reason}")]
+    ContractIncompatible { contract: String, reason: String },
 
     #[error("{0}")]
     Other(String),

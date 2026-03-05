@@ -1,5 +1,6 @@
 import { AuthButton } from "@/components/auth-button";
 import { Box, Container, Flex, Heading, Text, Button, Grid } from "@radix-ui/themes";
+import { HeartPulse } from "lucide-react";
 import Link from "next/link";
 import { Suspense } from "react";
 import { WhyTrajectory } from "./protected/why-trajectory";
@@ -20,14 +21,37 @@ const steps = [
 export default function Home() {
   return (
     <Box style={{ minHeight: "100vh" }}>
+      {/* Accent bar */}
+      <Box
+        style={{
+          height: 3,
+          background: "linear-gradient(90deg, var(--indigo-9), var(--indigo-6))",
+        }}
+      />
+
       {/* Nav */}
-      <Box asChild style={{ borderBottom: "1px solid var(--gray-a3)" }}>
+      <Box
+        asChild
+        style={{
+          position: "sticky",
+          top: 0,
+          zIndex: 10,
+          borderBottom: "1px solid var(--gray-a4)",
+          background:
+            "linear-gradient(180deg, color-mix(in srgb, var(--indigo-2) 60%, transparent) 0%, color-mix(in srgb, var(--color-background) 85%, transparent) 100%)",
+          backdropFilter: "blur(12px)",
+          WebkitBackdropFilter: "blur(12px)",
+        }}
+      >
         <header>
           <Container size="3">
             <Flex justify="between" align="center" py="3" px="4">
-              <Heading size="4" style={{ letterSpacing: "-0.02em" }}>
-                Agentic Healthcare
-              </Heading>
+              <Flex align="center" gap="2">
+                <HeartPulse size={20} style={{ color: "var(--indigo-9)" }} />
+                <Heading size="4" style={{ letterSpacing: "-0.02em" }}>
+                  Agentic Healthcare
+                </Heading>
+              </Flex>
               <Suspense>
                 <AuthButton />
               </Suspense>

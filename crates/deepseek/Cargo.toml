@@ -1,0 +1,32 @@
+[package]
+name = "deepseek"
+version = "0.1.0"
+edition = "2021"
+license = "MIT"
+description = "Shared DeepSeek API client — types, reqwest transport, WASM transport, agent loop, and caching"
+
+[features]
+default = ["reqwest-client"]
+reqwest-client = ["dep:reqwest"]
+wasm = ["dep:worker", "dep:js-sys"]
+cache = ["dep:dashmap", "dep:sha2", "dep:tokio"]
+agent = []
+
+[dependencies]
+serde = { version = "1", features = ["derive"] }
+serde_json = "1"
+thiserror = "2"
+async-trait = "0.1"
+tracing = "0.1"
+
+# reqwest-client feature
+reqwest = { version = "0.12", features = ["json", "rustls-tls"], default-features = false, optional = true }
+
+# wasm feature
+worker = { version = "0.7", optional = true }
+js-sys = { version = "0.3", optional = true }
+
+# cache feature
+dashmap = { version = "6", optional = true }
+sha2 = { version = "0.10", optional = true }
+tokio = { version = "1", features = ["sync"], optional = true }

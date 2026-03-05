@@ -99,6 +99,23 @@ export default function InterviewPrepPage() {
           </Card>
         </NextLink>
 
+        {/* Behavioral Questions CTA */}
+        <NextLink href="/interview-prep/behavioral" style={{ textDecoration: "none" }}>
+          <Card style={{ backgroundColor: "var(--teal-3)", cursor: "pointer" }}>
+            <Flex justify="between" align="center">
+              <Box>
+                <Heading size="5" mb="1">
+                  Behavioral Interview Questions
+                </Heading>
+                <Text size="3" color="gray">
+                  20+ STAR-guided questions across 7 categories — leadership, conflict, teamwork, adaptability, problem solving, communication, and remote work.
+                </Text>
+              </Box>
+              <ArrowRightIcon width={24} height={24} />
+            </Flex>
+          </Card>
+        </NextLink>
+
         {/* Dynamic Categories from GraphQL */}
         {categories.map((category) => (
           <Card key={category.id}>

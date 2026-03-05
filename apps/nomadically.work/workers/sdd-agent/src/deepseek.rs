@@ -3,11 +3,7 @@
 // ═══════════════════════════════════════════════════════════════════════════
 //
 // Uses worker::Fetch (CF Workers native fetch) instead of reqwest.
-// DeepSeek API is OpenAI-compatible: POST /v1/chat/completions
-//
-// Model routing (parity with Anthropic multi-model):
-//   - deepseek-reasoner (R1) ← deep thinking, architecture, complex analysis
-//   - deepseek-chat (V3)     ← fast responses, tool use, standard tasks
+// Types come from the shared `deepseek` crate via `crate::types::*`.
 // ═══════════════════════════════════════════════════════════════════════════
 
 use worker::*;
@@ -27,7 +23,6 @@ impl DeepSeekClient {
         Self { api_key }
     }
 
-    /// Create client from CF Worker environment secrets
     pub fn from_env(env: &Env) -> Result<Self> {
         let api_key = env.secret("DEEPSEEK_API_KEY")
             .map_err(|_| Error::RustError("DEEPSEEK_API_KEY secret not set".into()))?
@@ -35,8 +30,6 @@ impl DeepSeekClient {
         Ok(Self::new(api_key))
     }
 
-    /// Send a chat completion request to DeepSeek API.
-    /// Supports tool/function calling via OpenAI-compatible format.
     pub async fn chat(&self, request: &ChatRequest) -> Result<ChatResponse> {
         let body = serde_json::to_string(request)
             .map_err(|e| Error::RustError(format!("Serialize error: {e}")))?;
@@ -67,75 +60,7 @@ impl DeepSeekClient {
         Ok(chat_response)
     }
 
-    /// Build a ChatRequest with tool schemas for function calling.
-    pub fn build_request(
-        model: &DeepSeekModel,
-        messages: Vec<ChatMessage>,
-        tools: Option<Vec<ToolSchema>>,
-        effort: &EffortLevel,
-    ) -> ChatRequest {
-        let has_tools = tools.is_some();
-        ChatRequest {
-            model: model.as_str().to_string(),
-            messages,
-            tools,
-            tool_choice: if has_tools { Some(json!("auto")) } else { None },
-            temperature: Some(effort.temperature()),
-            max_tokens: Some(effort.max_tokens()),
-            stream: Some(false),
-        }
-    }
-
-    /// Create a system message
-    pub fn system_msg(content: &str) -> ChatMessage {
-        ChatMessage {
-            role: "system".into(),
-            content: ChatContent::Text(content.into()),
-            reasoning_content: None,
-            tool_calls: None,
-            tool_call_id: None,
-            name: None,
-        }
-    }
-
-    /// Create a user message
-    pub fn user_msg(content: &str) -> ChatMessage {
-        ChatMessage {
-            role: "user".into(),
-            content: ChatContent::Text(content.into()),
-            reasoning_content: None,
-            tool_calls: None,
-            tool_call_id: None,
-            name: None,
-        }
-    }
-
-    /// Create an assistant message
-    pub fn assistant_msg(content: &str) -> ChatMessage {
-        ChatMessage {
-            role: "assistant".into(),
-            content: ChatContent::Text(content.into()),
-            reasoning_content: None,
-            tool_calls: None,
-            tool_call_id: None,
-            name: None,
-        }
-    }
-
-    /// Create a tool result message
-    pub fn tool_result_msg(tool_call_id: &str, content: &str) -> ChatMessage {
-        ChatMessage {
-            role: "tool".into(),
-            content: ChatContent::Text(content.into()),
-            reasoning_content: None,
-            tool_calls: None,
-            tool_call_id: Some(tool_call_id.into()),
-            name: None,
-        }
-    }
-
     /// Run the agent loop: send prompt, handle tool calls, iterate until done.
-    /// This is the core query() equivalent from the Anthropic Agent SDK.
     pub async fn agent_loop<F, Fut>(
         &self,
         system_prompt: &str,
@@ -151,8 +76,8 @@ impl DeepSeekClient {
         Fut: std::future::Future<Output = std::result::Result<serde_json::Value, String>>,
     {
         let mut messages = vec![
-            Self::system_msg(system_prompt),
-            Self::user_msg(user_prompt),
+            system_msg(system_prompt),
+            user_msg(user_prompt),
         ];
 
         let tool_schemas = if tools.is_empty() { None } else { Some(tools.to_vec()) };
@@ -173,10 +98,11 @@ impl DeepSeekClient {
                 });
             }
 
-            let request = Self::build_request(model, messages.clone(), tool_schemas.clone(), effort);
+            let request = deepseek::build_request(
+                model, messages.clone(), tool_schemas.clone(), effort,
+            );
             let response = self.chat(&request).await?;
 
-            // Accumulate usage
             if let Some(usage) = &response.usage {
                 total_usage.prompt_tokens += usage.prompt_tokens;
                 total_usage.completion_tokens += usage.completion_tokens;
@@ -186,11 +112,8 @@ impl DeepSeekClient {
             let choice = response.choices.first()
                 .ok_or_else(|| Error::RustError("No choices in response".into()))?;
 
-            // Check if the model wants to call tools
             if let Some(ref calls) = choice.message.tool_calls {
                 if !calls.is_empty() {
-                    // Add assistant message with tool calls to history
-                    // DeepSeek Reasoner requires reasoning_content on assistant messages
                     messages.push(ChatMessage {
                         role: "assistant".into(),
                         content: choice.message.content.clone(),
@@ -200,7 +123,6 @@ impl DeepSeekClient {
                         name: None,
                     });
 
-                    // Execute each tool call and add results
                     for call in calls {
                         tool_calls_made.push(call.function.name.clone());
 
@@ -213,7 +135,7 @@ impl DeepSeekClient {
                             Err(e) => json!({"error": e}).to_string(),
                         };
 
-                        messages.push(Self::tool_result_msg(&call.id, &result_str));
+                        messages.push(tool_result_msg(&call.id, &result_str));
                     }
 
                     turn += 1;
@@ -221,7 +143,6 @@ impl DeepSeekClient {
                 }
             }
 
-            // No tool calls — model is done, return result
             let result_text = choice.message.content.as_str().to_string();
             return Ok(AgentResult {
                 success: true,
@@ -236,11 +157,7 @@ impl DeepSeekClient {
     }
 }
 
-// ── Tool Executor ─────────────────────────────────────────────────────────
-
 /// Tool executor function type for the agent loop.
-/// In WASM, the caller provides an async closure that dispatches tool calls.
-/// Use with `agent_loop()` which accepts generic `Fn(String, Value) -> Future`.
 pub type ToolExecutorFn = Box<dyn Fn(String, serde_json::Value) -> std::pin::Pin<
     Box<dyn std::future::Future<Output = std::result::Result<serde_json::Value, String>>>
 >>;

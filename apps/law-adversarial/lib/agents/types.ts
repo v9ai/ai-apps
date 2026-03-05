@@ -1,4 +1,4 @@
-export type AgentRole = 'attacker' | 'defender' | 'judge';
+export type AgentRole = 'attacker' | 'defender' | 'judge' | 'citation_verifier' | 'jurisdiction_expert' | 'brief_rewriter';
 
 export type AttackType =
   | 'logical'
@@ -49,4 +49,64 @@ export interface RoundContext {
   jurisdiction?: string;
   round: number;
   previousFindings: JudgeOutput[];
+}
+
+// --- Citation Verifier ---
+
+export type CitationStatus = 'valid' | 'mischaracterized' | 'overruled' | 'distinguished' | 'fabricated' | 'inapposite';
+
+export interface CitationCheck {
+  citation: string;
+  status: CitationStatus;
+  actual_holding: string;
+  brief_characterization: string;
+  issue: string;
+  confidence: number;
+}
+
+export interface CitationVerifierOutput {
+  citations: CitationCheck[];
+  fabrication_risk: number;
+  summary: string;
+}
+
+// --- Jurisdiction Expert ---
+
+export type JurisdictionIssueCategory = 'precedent_hierarchy' | 'procedural_rule' | 'local_rule' | 'standard_of_review' | 'burden_allocation' | 'statutory_interpretation';
+
+export interface JurisdictionIssue {
+  category: JurisdictionIssueCategory;
+  description: string;
+  controlling_authority: string;
+  brief_treatment: string;
+  recommendation: string;
+  severity: Severity;
+  confidence: number;
+}
+
+export interface JurisdictionExpertOutput {
+  jurisdiction_analysis: string;
+  issues: JurisdictionIssue[];
+  binding_authority_gaps: string[];
+  procedural_compliance: { rule: string; status: 'compliant' | 'non_compliant' | 'unclear'; note: string }[];
+  overall_jurisdiction_fitness: number;
+}
+
+// --- Brief Rewriter ---
+
+export type ChangeType = 'rewrite' | 'addition' | 'deletion' | 'citation_fix' | 'structural';
+
+export interface BriefChange {
+  original_text: string;
+  revised_text: string;
+  change_type: ChangeType;
+  reason: string;
+  finding_ref: string;
+}
+
+export interface BriefRewriterOutput {
+  revised_brief: string;
+  changes: BriefChange[];
+  improvement_score: number; // estimated new score 0-100
+  change_summary: string;
 }

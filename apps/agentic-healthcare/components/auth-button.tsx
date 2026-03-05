@@ -1,7 +1,12 @@
 import { createClient } from "@/lib/supabase/server";
-import { Button, Flex, Text } from "@radix-ui/themes";
+import { Avatar, Box, Button, Flex, Text } from "@radix-ui/themes";
 import Link from "next/link";
 import { LogoutButton } from "./logout-button";
+
+function truncateEmail(email: string, max = 20): string {
+  if (email.length <= max) return email;
+  return email.slice(0, max) + "\u2026";
+}
 
 export async function AuthButton() {
   const supabase = await createClient();
@@ -9,9 +14,33 @@ export async function AuthButton() {
   const user = data?.claims;
 
   if (user) {
+    const email = (user.email as string) ?? "";
+    const initial = email.charAt(0).toUpperCase();
+
     return (
       <Flex align="center" gap="3">
-        <Text size="2" color="gray">{user.email}</Text>
+        <Box
+          px="3"
+          py="1"
+          style={{
+            display: "flex",
+            alignItems: "center",
+            gap: "var(--space-2)",
+            borderRadius: "var(--radius-4)",
+            border: "1px solid var(--gray-a5)",
+            backgroundColor: "var(--gray-a2)",
+          }}
+        >
+          <Avatar
+            size="1"
+            radius="full"
+            fallback={initial}
+            color="indigo"
+          />
+          <Text size="1" color="gray" title={email}>
+            {truncateEmail(email)}
+          </Text>
+        </Box>
         <LogoutButton />
       </Flex>
     );

@@ -1,0 +1,647 @@
+{
+  "evalId": "eval-enO-2026-03-05T11:18:09",
+  "results": {
+    "version": 3,
+    "timestamp": "2026-03-05T11:18:09.888Z",
+    "prompts": [
+      {
+        "raw": "function ({ vars }                                  )         {\n  const previousFindings                = vars.previousFindings\n    ? JSON.parse(vars.previousFindings)\n    : [];\n\n  const ctx               = {\n    brief: vars.brief,\n    jurisdiction: vars.jurisdiction || undefined,\n    round: Number(vars.round) || 1,\n    previousFindings,\n  };\n\n  return buildAttackerPrompt(ctx);\n}",
+        "label": "prompts/attacker.ts",
+        "config": {},
+        "id": "8ed8bb83b7e3ae2c0c1eef6a501aaea28cde87bc4b22cf9cfbe9b393945dc55b",
+        "provider": "deepseek-reasoner",
+        "metrics": {
+          "score": 0.5,
+          "testPassCount": 0,
+          "testFailCount": 1,
+          "testErrorCount": 0,
+          "assertPassCount": 1,
+          "assertFailCount": 1,
+          "totalLatencyMs": 346,
+          "tokenUsage": {
+            "prompt": 955,
+            "completion": 1024,
+            "cached": 0,
+            "total": 1979,
+            "numRequests": 1,
+            "completionDetails": {
+              "reasoning": 1024,
+              "acceptedPrediction": 0,
+              "rejectedPrediction": 0
+            },
+            "assertions": {
+              "total": 1361,
+              "prompt": 1277,
+              "completion": 84,
+              "cached": 0,
+              "numRequests": 0,
+              "completionDetails": {
+                "reasoning": 0,
+                "acceptedPrediction": 0,
+                "rejectedPrediction": 0
+              }
+            }
+          },
+          "namedScores": {},
+          "namedScoresCount": {},
+          "cost": 0
+        }
+      },
+      {
+        "raw": "function ({ vars }                                  )         {\n  const previousFindings                = vars.previousFindings\n    ? JSON.parse(vars.previousFindings)\n    : [];\n\n  const ctx               = {\n    brief: vars.brief,\n    jurisdiction: vars.jurisdiction || undefined,\n    round: Number(vars.round) || 1,\n    previousFindings,\n  };\n\n  return buildAttackerPrompt(ctx);\n}",
+        "label": "prompts/attacker.ts",
+        "config": {},
+        "id": "8ed8bb83b7e3ae2c0c1eef6a501aaea28cde87bc4b22cf9cfbe9b393945dc55b",
+        "provider": "qwen-plus",
+        "metrics": {
+          "score": 0.425,
+          "testPassCount": 0,
+          "testFailCount": 1,
+          "testErrorCount": 0,
+          "assertPassCount": 1,
+          "assertFailCount": 1,
+          "totalLatencyMs": 20014,
+          "tokenUsage": {
+            "prompt": 967,
+            "completion": 1024,
+            "cached": 0,
+            "total": 1991,
+            "numRequests": 1,
+            "completionDetails": {
+              "reasoning": 0,
+              "acceptedPrediction": 0,
+              "rejectedPrediction": 0
+            },
+            "assertions": {
+              "total": 1394,
+              "prompt": 1227,
+              "completion": 167,
+              "cached": 0,
+              "numRequests": 0,
+              "completionDetails": {
+                "reasoning": 0,
+                "acceptedPrediction": 0,
+                "rejectedPrediction": 0
+              }
+            }
+          },
+          "namedScores": {},
+          "namedScoresCount": {},
+          "cost": 0
+        }
+      }
+    ],
+    "results": [
+      {
+        "cost": 0,
+        "error": "Output is not valid JSON",
+        "gradingResult": {
+          "pass": false,
+          "score": 0.425,
+          "reason": "Output is not valid JSON",
+          "namedScores": {},
+          "tokensUsed": {
+            "total": 1394,
+            "prompt": 1227,
+            "completion": 167,
+            "cached": 0,
+            "numRequests": 1
+          },
+          "componentResults": [
+            {
+              "pass": false,
+              "score": 0,
+              "reason": "Output is not valid JSON"
+            },
+            {
+              "assertion": {
+                "type": "llm-rubric",
+                "value": "The attacker should identify that Van Wagner v. S&M Enterprises actually held that not all real property is unique and that uniqueness must be demonstrated — the brief mischaracterizes this holding. The attacker should also note the brief fails to address equitable defenses like laches, unclean hands, or unconscionability. Rate the quality of the attacks on specificity, legal accuracy, and thoroughness.\n"
+              },
+              "pass": true,
+              "score": 0.85,
+              "reason": "The attacker correctly identifies that Van Wagner v. S&M Enterprises does not automatically entitle plaintiffs to specific performance for real property, noting that uniqueness is necessary but not sufficient and that equitable discretion applies. However, the attacker does not explicitly state that Van Wagner held 'not all real property is unique and uniqueness must be demonstrated,' which is a specific nuance in the rubric. The attacker does address the failure to consider equitable defenses like unclean hands and implicitly others, though laches and unconscionability are mentioned in a broader context rather than as a direct critique of the brief's omission. The attacks are specific, legally accurate, and thorough in analyzing weaknesses, but they slightly miss the precise wording on Van Wagner's holding about demonstrating uniqueness.",
+              "tokensUsed": {
+                "total": 1394,
+                "prompt": 1227,
+                "completion": 167,
+                "cached": 0,
+                "numRequests": 1,
+                "completionDetails": {
+                  "reasoning": 0,
+                  "acceptedPrediction": 0,
+                  "rejectedPrediction": 0
+                }
+              },
+              "metadata": {
+                "renderedGradingPrompt": "[{\"role\":\"system\",\"content\":\"You are grading output according to a user-specified rubric. If the statement in the rubric is true, then the output passes the test. You respond with a JSON object with this structure: {reason: string, pass: boolean, score: number}\\n\\nExamples:\\n\\n<Output>Hello world</Output>\\n<Rubric>Content contains a greeting</Rubric>\\n{\\\"reason\\\": \\\"the content contains the word 'Hello'\\\", \\\"pass\\\": true, \\\"score\\\": 1.0}\\n\\n<Output>Avast ye swabs, repel the invaders!</Output>\\n<Rubric>Does not speak like a pirate</Rubric>\\n{\\\"reason\\\": \\\"'avast ye' is a common pirate term\\\", \\\"pass\\\": false, \\\"score\\\": 0.0}\"},{\"role\":\"user\",\"content\":\"<Output>\\n{\\n  \\\"attacks\\\": [\\n    {\\n      \\\"claim\\\": \\\"It is well established that real property is always unique and that monetary damages are therefore always inadequate. See Van Wagner Advertising Corp. v. S&M Enterprises, 67 N.Y.2d 186 (1986). Because the property is unique, Plaintiff is entitled to specific performance as a matter of right.\\\",\\n      \\\"weakness\\\": \\\"The brief misstates New York law by asserting that uniqueness of real property *automatically* renders damages inadequate and entitles plaintiff to specific performance 'as a matter of right.' Uniqueness is a necessary but not sufficient condition; courts retain equitable discretion and require proof of inadequacy of damages, readiness/willingness/ability, absence of unclean hands, and favorable balance of equities — none of which is conclusively established here.\\\",\\n      \\\"type\\\": \\\"legal\\\",\\n      \\\"evidence\\\": \\\"Van Wagner itself states: 'Specific performance is an equitable remedy, discretionary in nature... The mere fact that the subject matter is real property does not automatically entitle the plaintiff to specific performance.' 67 N.Y.2d at 193–94. Controlling authority holds that 'uniqueness is only the first step' and 'the plaintiff must still satisfy the traditional equitable prerequisites.' De Luca v. P & M Realty Corp., 105 A.D.3d 869, 871 (2d Dep’t 2013); see also 11 N.Y. Prac., Real Estate Trans. Law § 12:12 ('Uniqueness alone does not mandate specific performance; it merely removes one barrier to relief.'). The brief erroneously converts a threshold prerequisite into a dispositive entitlement.\\\"\\n    },\\n    {\\n      \\\"claim\\\": \\\"Plaintiff tendered full payment on the closing date.\\\",\\n      \\\"weakness\\\": \\\"This factual assertion is unsupported by any evidentiary submission referenced in the brief (e.g., no affidavit, wire confirmation, certified check, or escrow statement is cited or attached), rendering it a bare legal conclusion insufficient to satisfy the burden on a motion for specific performance.\\\",\\n      \\\"type\\\": \\\"factual\\\",\\n      \\\"evidence\\\": \\\"Under CPLR 402(a) and case law, a moving party on a motion for specific performance must submit admissible evidence establishing each element — including tender — by competent proof. See Lien v. Kusnir, 195 A.D.3d 712, 714 (2d Dep’t 2021) ('Mere assertions in a pleading or memorandum are insufficient to establish tender.'); see also CPLR 2214(b) (requiring affidavits supporting facts asserted in motion papers). The brief cites no record evidence, exhibits, or sworn statements verifying tender occurred — a fatal omission under New York’s strict evidentiary standards for equitable relief.\\\"\\n    },\\n    {\\n      \\\"claim\\\": \\\"Defendant's claim of 'change of heart' is not a recognized defense to breach of contract.\\\",\\n      \\\"weakness\\\": \\\"This mischaracterizes the legal significance of Defendant’s stated reason: while 'change of heart' is not a legal defense *per se*, it may signal the presence of affirmative equitable defenses (e.g., unconscionability, lack of capacity, fraud in the inducement, or mutual mistake) that Plaintiff bears the burden to negate — yet the brief fails to address any such potential defenses or affirmatively plead their nonexistence.\\\",\\n      \\\"type\\\": \\\"legal\\\",\\n      \\\"evidence\\\": \\\"New York courts require plaintiffs seeking specific performance to plead and prove the *absence* of equitable bars. See 11 N.Y. Prac., Real Estate Trans. Law § 12:15 ('The plaintiff must affirmatively establish the absence of unclean hands, laches, or other equitable defenses.'); see also Matter of Healy v. Healy, 120 A.D.3d 1329, 1331 (3d Dep’t 2014) ('The burden rests upon the plaintiff to show that no equitable defense defeats the claim.'). A defendant’s subjective motive may be relevant to assessing good faith, duress, or whether the contract was entered into under circumstances warranting equitable denial — yet the brief treats the statement as irrelevant rather than triggering Plaintiff’s burden to rebut.\\\"\\n    },\\n    {\\n      \\\"claim\\\": \\\"The Statute of Frauds is satisfied because the Purchase Agreement is in writing.\\\",\\n      \\\"weakness\\\": \\\"The brief assumes — without citation to the agreement’s text or verification — that the writing satisfies all elements of NY Gen. Oblig. Law § 5-703(1), particularly the requirement that it identify the parties, describe the property with reasonable certainty, state the price, and be signed by the party to be charged (Defendant). No excerpt, exhibit number\\n</Output>\\n<Rubric>\\nThe attacker should identify that Van Wagner v. S&M Enterprises actually held that not all real property is unique and that uniqueness must be demonstrated — the brief mischaracterizes this holding. The attacker should also note the brief fails to address equitable defenses like laches, unclean hands, or unconscionability. Rate the quality of the attacks on specificity, legal accuracy, and thoroughness.\\n\\n</Rubric>\"}]"
+              }
+            }
+          ]
+        },
+        "id": "6c6783c5-b3ee-4629-bbbe-35ca695b1f5e",
+        "latencyMs": 20014,
+        "namedScores": {},
+        "prompt": {
+          "raw": "You are an expert legal adversary tasked with stress-testing a legal brief. Your role is to find every weakness, gap, and vulnerability in the arguments presented. You are thorough, precise, and ruthless in your analysis — but always intellectually honest. You do not fabricate weaknesses that do not exist.\n\n## Context\n\n- **Round**: 1\n- **Jurisdiction**: New York\n- The brief is filed in **New York**. Apply jurisdiction-specific rules of civil procedure, evidence codes, and precedent hierarchy for that jurisdiction. Flag any authority cited from outside this jurisdiction that lacks persuasive weight.\n\n## Previous Findings\n\nNone. This is the first round of analysis.\n\n\n\n## The Legal Brief\n\n<brief>\nMEMORANDUM OF LAW IN SUPPORT OF MOTION FOR SPECIFIC PERFORMANCE\n\nPlaintiff seeks specific performance of the Purchase Agreement dated January 15, 2024, requiring Defendant to convey the property at 123 Oak Street, New York, NY.\n\nI. STATEMENT OF FACTS\nPlaintiff and Defendant entered into a Purchase Agreement for the sale of 123 Oak Street for $2,500,000. Plaintiff tendered full payment on the closing date. Defendant refused to close, claiming a \"change of heart.\"\n\nII. ARGUMENT\nA. Specific Performance Is Warranted Because Real Property Is Unique\nIt is well established that real property is always unique and that monetary damages are therefore always inadequate. See Van Wagner Advertising Corp. v. S&M Enterprises, 67 N.Y.2d 186 (1986). Because the property is unique, Plaintiff is entitled to specific performance as a matter of right.\n\nB. Defendant Has No Valid Defense\nDefendant's claim of \"change of heart\" is not a recognized defense to breach of contract. The Statute of Frauds is satisfied because the Purchase Agreement is in writing. No other defenses apply.\n\nC. The Balance of Equities Favors Plaintiff\nPlaintiff has been ready, willing, and able to perform. Defendant simply does not want to sell. The court should compel performance because Plaintiff will suffer harm without the property.\n\nIII. CONCLUSION\nFor the foregoing reasons, the Court should grant Plaintiff's motion for specific performance.\n\n</brief>\n\n## Your Task\n\nAnalyze the brief above and identify every weakness you can find. For each weakness, provide:\n\n1. **claim** — The specific claim, sentence, or argument from the brief that is vulnerable. Quote it directly when possible.\n2. **weakness** — A precise description of why this claim is weak, wrong, or unsupported.\n3. **type** — Classify as one of: logical | factual | legal | procedural | citation\n4. **evidence** — Your reasoning, counter-authority, or counter-argument that exposes the weakness. Cite specific case law, statutes, rules, or logical principles where applicable.\n\n## Attack Categories\n\n- **logical**: Identify formal and informal logical fallacies — non sequiturs, circular reasoning, false dichotomies, slippery slopes, straw man arguments, post hoc reasoning, hasty generalizations, equivocation, and failures of deductive or inductive reasoning.\n- **factual**: Identify unsupported factual assertions, cherry-picked facts, mischaracterized evidence, omitted material facts, facts contradicted by the record, and factual claims that require but lack evidentiary support.\n- **legal**: Identify misstatements of law, misapplication of legal standards, reliance on overruled or distinguished precedent, failure to address controlling authority, incorrect burden-of-proof framing, and misinterpretation of statutory language or holdings.\n- **procedural**: Identify procedural deficiencies — missed deadlines, wrong court, standing issues, mootness, ripeness, failure to exhaust administrative remedies, improper party joinder, insufficient service, and failure to comply with local rules.\n- **citation**: Identify citations that are outdated (superseded or overruled), inapposite (distinguishable on material facts), from non-binding jurisdictions without persuasive analysis, improperly formatted, or that do not actually support the proposition for which they are cited (citation bluffing).\n\n## Output Format\n\nRespond with a valid JSON object matching this schema exactly:\n\n{\n  \"attacks\": [\n    {\n      \"claim\": \"string — the vulnerable claim from the brief\",\n      \"weakness\": \"string — description of the weakness\",\n      \"type\": \"logical | factual | legal | procedural | citation\",\n      \"evidence\": \"string — your counter-argument, counter-authority, or reasoning\"\n    }\n  ]\n}\n\nBe exhaustive. Do not hold back. Every real weakness matters.",
+          "label": "prompts/attacker.ts",
+          "config": {
+            "provider": {
+              "id": "openai:chat:deepseek-chat",
+              "config": {
+                "apiKeyEnvar": "DEEPSEEK_API_KEY",
+                "apiBaseUrl": "https://api.deepseek.com/v1",
+                "temperature": 0
+              }
+            }
+          }
+        },
+        "promptId": "8ed8bb83b7e3ae2c0c1eef6a501aaea28cde87bc4b22cf9cfbe9b393945dc55b",
+        "promptIdx": 1,
+        "provider": {
+          "id": "openai:chat:qwen-plus",
+          "label": "qwen-plus"
+        },
+        "response": {
+          "output": "{\n  \"attacks\": [\n    {\n      \"claim\": \"It is well established that real property is always unique and that monetary damages are therefore always inadequate. See Van Wagner Advertising Corp. v. S&M Enterprises, 67 N.Y.2d 186 (1986). Because the property is unique, Plaintiff is entitled to specific performance as a matter of right.\",\n      \"weakness\": \"The brief misstates New York law by asserting that uniqueness of real property *automatically* renders damages inadequate and entitles plaintiff to specific performance 'as a matter of right.' Uniqueness is a necessary but not sufficient condition; courts retain equitable discretion and require proof of inadequacy of damages, readiness/willingness/ability, absence of unclean hands, and favorable balance of equities — none of which is conclusively established here.\",\n      \"type\": \"legal\",\n      \"evidence\": \"Van Wagner itself states: 'Specific performance is an equitable remedy, discretionary in nature... The mere fact that the subject matter is real property does not automatically entitle the plaintiff to specific performance.' 67 N.Y.2d at 193–94. Controlling authority holds that 'uniqueness is only the first step' and 'the plaintiff must still satisfy the traditional equitable prerequisites.' De Luca v. P & M Realty Corp., 105 A.D.3d 869, 871 (2d Dep’t 2013); see also 11 N.Y. Prac., Real Estate Trans. Law § 12:12 ('Uniqueness alone does not mandate specific performance; it merely removes one barrier to relief.'). The brief erroneously converts a threshold prerequisite into a dispositive entitlement.\"\n    },\n    {\n      \"claim\": \"Plaintiff tendered full payment on the closing date.\",\n      \"weakness\": \"This factual assertion is unsupported by any evidentiary submission referenced in the brief (e.g., no affidavit, wire confirmation, certified check, or escrow statement is cited or attached), rendering it a bare legal conclusion insufficient to satisfy the burden on a motion for specific performance.\",\n      \"type\": \"factual\",\n      \"evidence\": \"Under CPLR 402(a) and case law, a moving party on a motion for specific performance must submit admissible evidence establishing each element — including tender — by competent proof. See Lien v. Kusnir, 195 A.D.3d 712, 714 (2d Dep’t 2021) ('Mere assertions in a pleading or memorandum are insufficient to establish tender.'); see also CPLR 2214(b) (requiring affidavits supporting facts asserted in motion papers). The brief cites no record evidence, exhibits, or sworn statements verifying tender occurred — a fatal omission under New York’s strict evidentiary standards for equitable relief.\"\n    },\n    {\n      \"claim\": \"Defendant's claim of 'change of heart' is not a recognized defense to breach of contract.\",\n      \"weakness\": \"This mischaracterizes the legal significance of Defendant’s stated reason: while 'change of heart' is not a legal defense *per se*, it may signal the presence of affirmative equitable defenses (e.g., unconscionability, lack of capacity, fraud in the inducement, or mutual mistake) that Plaintiff bears the burden to negate — yet the brief fails to address any such potential defenses or affirmatively plead their nonexistence.\",\n      \"type\": \"legal\",\n      \"evidence\": \"New York courts require plaintiffs seeking specific performance to plead and prove the *absence* of equitable bars. See 11 N.Y. Prac., Real Estate Trans. Law § 12:15 ('The plaintiff must affirmatively establish the absence of unclean hands, laches, or other equitable defenses.'); see also Matter of Healy v. Healy, 120 A.D.3d 1329, 1331 (3d Dep’t 2014) ('The burden rests upon the plaintiff to show that no equitable defense defeats the claim.'). A defendant’s subjective motive may be relevant to assessing good faith, duress, or whether the contract was entered into under circumstances warranting equitable denial — yet the brief treats the statement as irrelevant rather than triggering Plaintiff’s burden to rebut.\"\n    },\n    {\n      \"claim\": \"The Statute of Frauds is satisfied because the Purchase Agreement is in writing.\",\n      \"weakness\": \"The brief assumes — without citation to the agreement’s text or verification — that the writing satisfies all elements of NY Gen. Oblig. Law § 5-703(1), particularly the requirement that it identify the parties, describe the property with reasonable certainty, state the price, and be signed by the party to be charged (Defendant). No excerpt, exhibit number",
+          "tokenUsage": {
+            "total": 1991,
+            "prompt": 967,
+            "completion": 1024,
+            "numRequests": 1
+          },
+          "cached": false,
+          "latencyMs": 20014,
+          "finishReason": "length",
+          "guardrails": {
+            "flagged": false
+          },
+          "metadata": {
+            "http": {
+              "status": 200,
+              "statusText": "OK",
+              "headers": {
+                "content-encoding": "gzip",
+                "content-type": "application/json",
+                "date": "Thu, 05 Mar 2026 11:18:29 GMT",
+                "req-arrive-time": "1772709490994",
+                "req-cost-time": "18788",
+                "resp-start-time": "1772709509783",
+                "server": "istio-envoy",
+                "set-cookie": "acw_tc=838414c4-404e-9a70-a9af-f250d53ae25cf940cf10d604f41ddae941af468afa7a;path=/;HttpOnly;Max-Age=1800",
+                "transfer-encoding": "chunked",
+                "vary": "Origin,Access-Control-Request-Method,Access-Control-Request-Headers, Accept-Encoding",
+                "x-dashscope-call-gateway": "true",
+                "x-envoy-upstream-service-time": "18788",
+                "x-request-id": "838414c4-404e-9a70-a9af-f250d53ae25c"
+              }
+            }
+          }
+        },
+        "score": 0.425,
+        "success": false,
+        "testCase": {
+          "vars": {
+            "brief": "MEMORANDUM OF LAW IN SUPPORT OF MOTION FOR SPECIFIC PERFORMANCE\n\nPlaintiff seeks specific performance of the Purchase Agreement dated January 15, 2024, requiring Defendant to convey the property at 123 Oak Street, New York, NY.\n\nI. STATEMENT OF FACTS\nPlaintiff and Defendant entered into a Purchase Agreement for the sale of 123 Oak Street for $2,500,000. Plaintiff tendered full payment on the closing date. Defendant refused to close, claiming a \"change of heart.\"\n\nII. ARGUMENT\nA. Specific Performance Is Warranted Because Real Property Is Unique\nIt is well established that real property is always unique and that monetary damages are therefore always inadequate. See Van Wagner Advertising Corp. v. S&M Enterprises, 67 N.Y.2d 186 (1986). Because the property is unique, Plaintiff is entitled to specific performance as a matter of right.\n\nB. Defendant Has No Valid Defense\nDefendant's claim of \"change of heart\" is not a recognized defense to breach of contract. The Statute of Frauds is satisfied because the Purchase Agreement is in writing. No other defenses apply.\n\nC. The Balance of Equities Favors Plaintiff\nPlaintiff has been ready, willing, and able to perform. Defendant simply does not want to sell. The court should compel performance because Plaintiff will suffer harm without the property.\n\nIII. CONCLUSION\nFor the foregoing reasons, the Court should grant Plaintiff's motion for specific performance.\n",
+            "jurisdiction": "New York",
+            "round": "1",
+            "previousFindings": "[]"
+          },
+          "assert": [
+            {
+              "type": "javascript",
+              "value": "file://assertions/validate-attacker.js"
+            },
+            {
+              "type": "llm-rubric",
+              "value": "The attacker should identify that Van Wagner v. S&M Enterprises actually held that not all real property is unique and that uniqueness must be demonstrated — the brief mischaracterizes this holding. The attacker should also note the brief fails to address equitable defenses like laches, unclean hands, or unconscionability. Rate the quality of the attacks on specificity, legal accuracy, and thoroughness.\n"
+            }
+          ],
+          "options": {
+            "provider": {
+              "id": "openai:chat:deepseek-chat",
+              "config": {
+                "apiKeyEnvar": "DEEPSEEK_API_KEY",
+                "apiBaseUrl": "https://api.deepseek.com/v1",
+                "temperature": 0
+              }
+            }
+          },
+          "metadata": {}
+        },
+        "testIdx": 0,
+        "vars": {
+          "brief": "MEMORANDUM OF LAW IN SUPPORT OF MOTION FOR SPECIFIC PERFORMANCE\n\nPlaintiff seeks specific performance of the Purchase Agreement dated January 15, 2024, requiring Defendant to convey the property at 123 Oak Street, New York, NY.\n\nI. STATEMENT OF FACTS\nPlaintiff and Defendant entered into a Purchase Agreement for the sale of 123 Oak Street for $2,500,000. Plaintiff tendered full payment on the closing date. Defendant refused to close, claiming a \"change of heart.\"\n\nII. ARGUMENT\nA. Specific Performance Is Warranted Because Real Property Is Unique\nIt is well established that real property is always unique and that monetary damages are therefore always inadequate. See Van Wagner Advertising Corp. v. S&M Enterprises, 67 N.Y.2d 186 (1986). Because the property is unique, Plaintiff is entitled to specific performance as a matter of right.\n\nB. Defendant Has No Valid Defense\nDefendant's claim of \"change of heart\" is not a recognized defense to breach of contract. The Statute of Frauds is satisfied because the Purchase Agreement is in writing. No other defenses apply.\n\nC. The Balance of Equities Favors Plaintiff\nPlaintiff has been ready, willing, and able to perform. Defendant simply does not want to sell. The court should compel performance because Plaintiff will suffer harm without the property.\n\nIII. CONCLUSION\nFor the foregoing reasons, the Court should grant Plaintiff's motion for specific performance.\n",
+          "jurisdiction": "New York",
+          "round": "1",
+          "previousFindings": "[]"
+        },
+        "metadata": {
+          "http": {
+            "status": 200,
+            "statusText": "OK",
+            "headers": {
+              "content-encoding": "gzip",
+              "content-type": "application/json",
+              "date": "Thu, 05 Mar 2026 11:18:29 GMT",
+              "req-arrive-time": "1772709490994",
+              "req-cost-time": "18788",
+              "resp-start-time": "1772709509783",
+              "server": "istio-envoy",
+              "set-cookie": "acw_tc=838414c4-404e-9a70-a9af-f250d53ae25cf940cf10d604f41ddae941af468afa7a;path=/;HttpOnly;Max-Age=1800",
+              "transfer-encoding": "chunked",
+              "vary": "Origin,Access-Control-Request-Method,Access-Control-Request-Headers, Accept-Encoding",
+              "x-dashscope-call-gateway": "true",
+              "x-envoy-upstream-service-time": "18788",
+              "x-request-id": "838414c4-404e-9a70-a9af-f250d53ae25c"
+            }
+          },
+          "_promptfooFileMetadata": {}
+        },
+        "failureReason": 1
+      },
+      {
+        "cost": 0,
+        "error": "Output is not valid JSON",
+        "gradingResult": {
+          "pass": false,
+          "score": 0.5,
+          "reason": "Output is not valid JSON",
+          "namedScores": {},
+          "tokensUsed": {
+            "total": 1361,
+            "prompt": 1277,
+            "completion": 84,
+            "cached": 0,
+            "numRequests": 1
+          },
+          "componentResults": [
+            {
+              "pass": false,
+              "score": 0,
+              "reason": "Output is not valid JSON"
+            },
+            {
+              "assertion": {
+                "type": "llm-rubric",
+                "value": "The attacker should identify that Van Wagner v. S&M Enterprises actually held that not all real property is unique and that uniqueness must be demonstrated — the brief mischaracterizes this holding. The attacker should also note the brief fails to address equitable defenses like laches, unclean hands, or unconscionability. Rate the quality of the attacks on specificity, legal accuracy, and thoroughness.\n"
+              },
+              "pass": true,
+              "score": 1,
+              "reason": "The attacker correctly identifies that Van Wagner v. S&M Enterprises requires demonstration of uniqueness, not an absolute rule, and notes the omission of equitable defenses like laches, unclean hands, or unconscionability. The attacks are specific, legally accurate, and thorough in addressing key weaknesses in the brief's arguments.",
+              "tokensUsed": {
+                "total": 1361,
+                "prompt": 1277,
+                "completion": 84,
+                "cached": 0,
+                "numRequests": 1,
+                "completionDetails": {
+                  "reasoning": 0,
+                  "acceptedPrediction": 0,
+                  "rejectedPrediction": 0
+                }
+              },
+              "metadata": {
+                "renderedGradingPrompt": "[{\"role\":\"system\",\"content\":\"You are grading output according to a user-specified rubric. If the statement in the rubric is true, then the output passes the test. You respond with a JSON object with this structure: {reason: string, pass: boolean, score: number}\\n\\nExamples:\\n\\n<Output>Hello world</Output>\\n<Rubric>Content contains a greeting</Rubric>\\n{\\\"reason\\\": \\\"the content contains the word 'Hello'\\\", \\\"pass\\\": true, \\\"score\\\": 1.0}\\n\\n<Output>Avast ye swabs, repel the invaders!</Output>\\n<Rubric>Does not speak like a pirate</Rubric>\\n{\\\"reason\\\": \\\"'avast ye' is a common pirate term\\\", \\\"pass\\\": false, \\\"score\\\": 0.0}\"},{\"role\":\"user\",\"content\":\"<Output>\\nThinking: First, I am considering the context: I'm an expert legal adversary stress-testing a brief in New York jurisdiction. This is the first round, so no previous findings. I need to analyze the brief and output JSON with attacks, each containing claim, weakness, type, and evidence.\\n\\nThe brief is about a motion for specific performance of a purchase agreement for real property. I need to find every weakness, gap, and vulnerability.\\n\\nLet me break down the brief:\\n\\n- Title: Memorandum in support of motion for specific performance.\\n\\n- I. Statement of Facts: Describes the purchase agreement, Plaintiff's payment, Defendant's refusal to close due to \\\"change of heart.\\\"\\n\\n- II. Argument:\\n\\n  A. Specific performance is warranted because real property is unique. Cites Van Wagner Advertising Corp. v. S&M Enterprises, 67 N.Y.2d 186 (1986). Claims that real property is always unique and monetary damages are always inadequate.\\n\\n  B. Defendant has no valid defense. Mentions \\\"change of heart\\\" not a recognized defense, Statute of Frauds satisfied.\\n\\n  C. Balance of equities favors Plaintiff. Plaintiff ready, willing, and able; Defendant doesn't want to sell; Plaintiff will suffer harm.\\n\\n- III. Conclusion: Grant motion.\\n\\nNow, I need to identify weaknesses. I'll go through each part systematically.\\n\\nStart with the Statement of Facts:\\n\\n- Claim: \\\"Plaintiff tendered full payment on the closing date. Defendant refused to close, claiming a 'change of heart.'\\\"\\n\\n  - Is there any weakness? Facts seem stated, but is it supported? In a legal brief, facts should be supported by evidence, but here it's just stated. However, in this analysis, I'm supposed to attack the brief's arguments, not just missing evidence unless it's a factual claim in the argument. The brief states facts, but in a motion, these should be based on affidavits or evidence. But the task says to identify weaknesses in the arguments presented. I should focus on the argument sections.\\n\\n  - The statement might be incomplete. For example, no details about the purchase agreement, whether conditions were met, etc. But since it's a summary, might be okay. However, as an adversary, I should point out if facts are assumed without evidence.\\n\\n  - Type: factual, if unsupported.\\n\\n  - Evidence: In a motion for specific performance, Plaintiff must prove readiness, willingness, and ability. The brief asserts Plaintiff tendered full payment, but no evidence cited. Could be a weakness.\\n\\nNext, Argument A:\\n\\n- Claim: \\\"It is well established that real property is always unique and that monetary damages are therefore always inadequate. See Van Wagner Advertising Corp. v. S&M Enterprises, 67 N.Y.2d 186 (1986). Because the property is unique, Plaintiff is entitled to specific performance as a matter of right.\\\"\\n\\n  - Weakness: The citation might be misinterpreted. Van Wagner is about specific performance, but is it absolute? In New York, specific performance for real property is generally granted, but not always as a matter of right. Courts consider equity.\\n\\n  - Check the case: Van Wagner Advertising Corp. v. S&M Enterprises, 67 N.Y.2d 186 (1986). I recall that case is about specific performance for real estate, but it might not say it's always unique. Actually, the case often cited for the uniqueness of real property, but courts can still deny specific performance if it's inequitable.\\n\\n  - In New York, specific performance is not automatic; courts have discretion. For example, in some cases, if the property is not unique or monetary damages are adequate, it can be denied.\\n\\n  - The brief claims \\\"always unique\\\" and \\\"always inadequate.\\\" This might be an overstatement.\\n\\n  - Type: legal and citation.\\n\\n  - Evidence: Cases where specific performance was denied for real property in New York. For instance, if the property is of a common type, like a standard residential home, some courts might find it not unique. But generally, real property is presumed unique. However, the brief says \\\"always,\\\" which is too broad. Counter-authority: The court in Van Wagner might not have said \\\"always.\\\" Let me recall: In New York, the rule is that real property is generally considered unique, but not in all cases. For example, in \\\"Brown v. Lee,\\\" or other cases, there might be exceptions.\\n\\n  - I should cite specific New York law. The case \\\"Wegman v. Dairylea Cooperative, Inc.\\\" or something. I need to use general knowledge. As an AI, I can reference common legal principles.\\n\\n  - Better: In New York, specific performance is equitable and discretionary. The court must balance equities. The brief's claim that it's a matter of right might be wrong.\\n\\nArgument B:\\n\\n- Claim: \\\"Defendant's claim of 'change of heart' is not a recognized defense to breach of contract. The Statute of Frauds is satisfied\\n\\n\\n</Output>\\n<Rubric>\\nThe attacker should identify that Van Wagner v. S&M Enterprises actually held that not all real property is unique and that uniqueness must be demonstrated — the brief mischaracterizes this holding. The attacker should also note the brief fails to address equitable defenses like laches, unclean hands, or unconscionability. Rate the quality of the attacks on specificity, legal accuracy, and thoroughness.\\n\\n</Rubric>\"}]"
+              }
+            }
+          ]
+        },
+        "id": "785099e9-3b78-4677-b61c-be483ad3c6a9",
+        "latencyMs": 346,
+        "namedScores": {},
+        "prompt": {
+          "raw": "You are an expert legal adversary tasked with stress-testing a legal brief. Your role is to find every weakness, gap, and vulnerability in the arguments presented. You are thorough, precise, and ruthless in your analysis — but always intellectually honest. You do not fabricate weaknesses that do not exist.\n\n## Context\n\n- **Round**: 1\n- **Jurisdiction**: New York\n- The brief is filed in **New York**. Apply jurisdiction-specific rules of civil procedure, evidence codes, and precedent hierarchy for that jurisdiction. Flag any authority cited from outside this jurisdiction that lacks persuasive weight.\n\n## Previous Findings\n\nNone. This is the first round of analysis.\n\n\n\n## The Legal Brief\n\n<brief>\nMEMORANDUM OF LAW IN SUPPORT OF MOTION FOR SPECIFIC PERFORMANCE\n\nPlaintiff seeks specific performance of the Purchase Agreement dated January 15, 2024, requiring Defendant to convey the property at 123 Oak Street, New York, NY.\n\nI. STATEMENT OF FACTS\nPlaintiff and Defendant entered into a Purchase Agreement for the sale of 123 Oak Street for $2,500,000. Plaintiff tendered full payment on the closing date. Defendant refused to close, claiming a \"change of heart.\"\n\nII. ARGUMENT\nA. Specific Performance Is Warranted Because Real Property Is Unique\nIt is well established that real property is always unique and that monetary damages are therefore always inadequate. See Van Wagner Advertising Corp. v. S&M Enterprises, 67 N.Y.2d 186 (1986). Because the property is unique, Plaintiff is entitled to specific performance as a matter of right.\n\nB. Defendant Has No Valid Defense\nDefendant's claim of \"change of heart\" is not a recognized defense to breach of contract. The Statute of Frauds is satisfied because the Purchase Agreement is in writing. No other defenses apply.\n\nC. The Balance of Equities Favors Plaintiff\nPlaintiff has been ready, willing, and able to perform. Defendant simply does not want to sell. The court should compel performance because Plaintiff will suffer harm without the property.\n\nIII. CONCLUSION\nFor the foregoing reasons, the Court should grant Plaintiff's motion for specific performance.\n\n</brief>\n\n## Your Task\n\nAnalyze the brief above and identify every weakness you can find. For each weakness, provide:\n\n1. **claim** — The specific claim, sentence, or argument from the brief that is vulnerable. Quote it directly when possible.\n2. **weakness** — A precise description of why this claim is weak, wrong, or unsupported.\n3. **type** — Classify as one of: logical | factual | legal | procedural | citation\n4. **evidence** — Your reasoning, counter-authority, or counter-argument that exposes the weakness. Cite specific case law, statutes, rules, or logical principles where applicable.\n\n## Attack Categories\n\n- **logical**: Identify formal and informal logical fallacies — non sequiturs, circular reasoning, false dichotomies, slippery slopes, straw man arguments, post hoc reasoning, hasty generalizations, equivocation, and failures of deductive or inductive reasoning.\n- **factual**: Identify unsupported factual assertions, cherry-picked facts, mischaracterized evidence, omitted material facts, facts contradicted by the record, and factual claims that require but lack evidentiary support.\n- **legal**: Identify misstatements of law, misapplication of legal standards, reliance on overruled or distinguished precedent, failure to address controlling authority, incorrect burden-of-proof framing, and misinterpretation of statutory language or holdings.\n- **procedural**: Identify procedural deficiencies — missed deadlines, wrong court, standing issues, mootness, ripeness, failure to exhaust administrative remedies, improper party joinder, insufficient service, and failure to comply with local rules.\n- **citation**: Identify citations that are outdated (superseded or overruled), inapposite (distinguishable on material facts), from non-binding jurisdictions without persuasive analysis, improperly formatted, or that do not actually support the proposition for which they are cited (citation bluffing).\n\n## Output Format\n\nRespond with a valid JSON object matching this schema exactly:\n\n{\n  \"attacks\": [\n    {\n      \"claim\": \"string — the vulnerable claim from the brief\",\n      \"weakness\": \"string — description of the weakness\",\n      \"type\": \"logical | factual | legal | procedural | citation\",\n      \"evidence\": \"string — your counter-argument, counter-authority, or reasoning\"\n    }\n  ]\n}\n\nBe exhaustive. Do not hold back. Every real weakness matters.",
+          "label": "prompts/attacker.ts",
+          "config": {
+            "provider": {
+              "id": "openai:chat:deepseek-chat",
+              "config": {
+                "apiKeyEnvar": "DEEPSEEK_API_KEY",
+                "apiBaseUrl": "https://api.deepseek.com/v1",
+                "temperature": 0
+              }
+            }
+          }
+        },
+        "promptId": "8ed8bb83b7e3ae2c0c1eef6a501aaea28cde87bc4b22cf9cfbe9b393945dc55b",
+        "promptIdx": 0,
+        "provider": {
+          "id": "openai:chat:deepseek-reasoner",
+          "label": "deepseek-reasoner"
+        },
+        "response": {
+          "output": "Thinking: First, I am considering the context: I'm an expert legal adversary stress-testing a brief in New York jurisdiction. This is the first round, so no previous findings. I need to analyze the brief and output JSON with attacks, each containing claim, weakness, type, and evidence.\n\nThe brief is about a motion for specific performance of a purchase agreement for real property. I need to find every weakness, gap, and vulnerability.\n\nLet me break down the brief:\n\n- Title: Memorandum in support of motion for specific performance.\n\n- I. Statement of Facts: Describes the purchase agreement, Plaintiff's payment, Defendant's refusal to close due to \"change of heart.\"\n\n- II. Argument:\n\n  A. Specific performance is warranted because real property is unique. Cites Van Wagner Advertising Corp. v. S&M Enterprises, 67 N.Y.2d 186 (1986). Claims that real property is always unique and monetary damages are always inadequate.\n\n  B. Defendant has no valid defense. Mentions \"change of heart\" not a recognized defense, Statute of Frauds satisfied.\n\n  C. Balance of equities favors Plaintiff. Plaintiff ready, willing, and able; Defendant doesn't want to sell; Plaintiff will suffer harm.\n\n- III. Conclusion: Grant motion.\n\nNow, I need to identify weaknesses. I'll go through each part systematically.\n\nStart with the Statement of Facts:\n\n- Claim: \"Plaintiff tendered full payment on the closing date. Defendant refused to close, claiming a 'change of heart.'\"\n\n  - Is there any weakness? Facts seem stated, but is it supported? In a legal brief, facts should be supported by evidence, but here it's just stated. However, in this analysis, I'm supposed to attack the brief's arguments, not just missing evidence unless it's a factual claim in the argument. The brief states facts, but in a motion, these should be based on affidavits or evidence. But the task says to identify weaknesses in the arguments presented. I should focus on the argument sections.\n\n  - The statement might be incomplete. For example, no details about the purchase agreement, whether conditions were met, etc. But since it's a summary, might be okay. However, as an adversary, I should point out if facts are assumed without evidence.\n\n  - Type: factual, if unsupported.\n\n  - Evidence: In a motion for specific performance, Plaintiff must prove readiness, willingness, and ability. The brief asserts Plaintiff tendered full payment, but no evidence cited. Could be a weakness.\n\nNext, Argument A:\n\n- Claim: \"It is well established that real property is always unique and that monetary damages are therefore always inadequate. See Van Wagner Advertising Corp. v. S&M Enterprises, 67 N.Y.2d 186 (1986). Because the property is unique, Plaintiff is entitled to specific performance as a matter of right.\"\n\n  - Weakness: The citation might be misinterpreted. Van Wagner is about specific performance, but is it absolute? In New York, specific performance for real property is generally granted, but not always as a matter of right. Courts consider equity.\n\n  - Check the case: Van Wagner Advertising Corp. v. S&M Enterprises, 67 N.Y.2d 186 (1986). I recall that case is about specific performance for real estate, but it might not say it's always unique. Actually, the case often cited for the uniqueness of real property, but courts can still deny specific performance if it's inequitable.\n\n  - In New York, specific performance is not automatic; courts have discretion. For example, in some cases, if the property is not unique or monetary damages are adequate, it can be denied.\n\n  - The brief claims \"always unique\" and \"always inadequate.\" This might be an overstatement.\n\n  - Type: legal and citation.\n\n  - Evidence: Cases where specific performance was denied for real property in New York. For instance, if the property is of a common type, like a standard residential home, some courts might find it not unique. But generally, real property is presumed unique. However, the brief says \"always,\" which is too broad. Counter-authority: The court in Van Wagner might not have said \"always.\" Let me recall: In New York, the rule is that real property is generally considered unique, but not in all cases. For example, in \"Brown v. Lee,\" or other cases, there might be exceptions.\n\n  - I should cite specific New York law. The case \"Wegman v. Dairylea Cooperative, Inc.\" or something. I need to use general knowledge. As an AI, I can reference common legal principles.\n\n  - Better: In New York, specific performance is equitable and discretionary. The court must balance equities. The brief's claim that it's a matter of right might be wrong.\n\nArgument B:\n\n- Claim: \"Defendant's claim of 'change of heart' is not a recognized defense to breach of contract. The Statute of Frauds is satisfied\n\n",
+          "tokenUsage": {
+            "total": 1979,
+            "prompt": 955,
+            "completion": 1024,
+            "numRequests": 1,
+            "completionDetails": {
+              "reasoning": 1024
+            }
+          },
+          "cached": false,
+          "latencyMs": 346,
+          "finishReason": "length",
+          "guardrails": {
+            "flagged": false
+          },
+          "metadata": {
+            "http": {
+              "status": 200,
+              "statusText": "OK",
+              "headers": {
+                "access-control-allow-credentials": "true",
+                "connection": "keep-alive",
+                "content-encoding": "br",
+                "content-type": "application/json",
+                "date": "Thu, 05 Mar 2026 11:18:10 GMT",
+                "server": "elb",
+                "strict-transport-security": "max-age=31536000; includeSubDomains; preload",
+                "transfer-encoding": "chunked",
+                "vary": "origin, access-control-request-method, access-control-request-headers",
+                "via": "1.1 63f49fb8153ef60b0374321d41a091c6.cloudfront.net (CloudFront)",
+                "x-amz-cf-id": "0XD5ZHVY2rIPBawehoqcP3pd6lltVnkeXYyQMF3erG3ExAdnfxzIBw==",
+                "x-amz-cf-pop": "BUD50-P2",
+                "x-cache": "Miss from cloudfront",
+                "x-content-type-options": "nosniff",
+                "x-ds-trace-id": "17aabb591e29e976903a8851f5003ca7"
+              }
+            }
+          }
+        },
+        "score": 0.5,
+        "success": false,
+        "testCase": {
+          "vars": {
+            "brief": "MEMORANDUM OF LAW IN SUPPORT OF MOTION FOR SPECIFIC PERFORMANCE\n\nPlaintiff seeks specific performance of the Purchase Agreement dated January 15, 2024, requiring Defendant to convey the property at 123 Oak Street, New York, NY.\n\nI. STATEMENT OF FACTS\nPlaintiff and Defendant entered into a Purchase Agreement for the sale of 123 Oak Street for $2,500,000. Plaintiff tendered full payment on the closing date. Defendant refused to close, claiming a \"change of heart.\"\n\nII. ARGUMENT\nA. Specific Performance Is Warranted Because Real Property Is Unique\nIt is well established that real property is always unique and that monetary damages are therefore always inadequate. See Van Wagner Advertising Corp. v. S&M Enterprises, 67 N.Y.2d 186 (1986). Because the property is unique, Plaintiff is entitled to specific performance as a matter of right.\n\nB. Defendant Has No Valid Defense\nDefendant's claim of \"change of heart\" is not a recognized defense to breach of contract. The Statute of Frauds is satisfied because the Purchase Agreement is in writing. No other defenses apply.\n\nC. The Balance of Equities Favors Plaintiff\nPlaintiff has been ready, willing, and able to perform. Defendant simply does not want to sell. The court should compel performance because Plaintiff will suffer harm without the property.\n\nIII. CONCLUSION\nFor the foregoing reasons, the Court should grant Plaintiff's motion for specific performance.\n",
+            "jurisdiction": "New York",
+            "round": "1",
+            "previousFindings": "[]"
+          },
+          "assert": [
+            {
+              "type": "javascript",
+              "value": "file://assertions/validate-attacker.js"
+            },
+            {
+              "type": "llm-rubric",
+              "value": "The attacker should identify that Van Wagner v. S&M Enterprises actually held that not all real property is unique and that uniqueness must be demonstrated — the brief mischaracterizes this holding. The attacker should also note the brief fails to address equitable defenses like laches, unclean hands, or unconscionability. Rate the quality of the attacks on specificity, legal accuracy, and thoroughness.\n"
+            }
+          ],
+          "options": {
+            "provider": {
+              "id": "openai:chat:deepseek-chat",
+              "config": {
+                "apiKeyEnvar": "DEEPSEEK_API_KEY",
+                "apiBaseUrl": "https://api.deepseek.com/v1",
+                "temperature": 0
+              }
+            }
+          },
+          "metadata": {}
+        },
+        "testIdx": 0,
+        "vars": {
+          "brief": "MEMORANDUM OF LAW IN SUPPORT OF MOTION FOR SPECIFIC PERFORMANCE\n\nPlaintiff seeks specific performance of the Purchase Agreement dated January 15, 2024, requiring Defendant to convey the property at 123 Oak Street, New York, NY.\n\nI. STATEMENT OF FACTS\nPlaintiff and Defendant entered into a Purchase Agreement for the sale of 123 Oak Street for $2,500,000. Plaintiff tendered full payment on the closing date. Defendant refused to close, claiming a \"change of heart.\"\n\nII. ARGUMENT\nA. Specific Performance Is Warranted Because Real Property Is Unique\nIt is well established that real property is always unique and that monetary damages are therefore always inadequate. See Van Wagner Advertising Corp. v. S&M Enterprises, 67 N.Y.2d 186 (1986). Because the property is unique, Plaintiff is entitled to specific performance as a matter of right.\n\nB. Defendant Has No Valid Defense\nDefendant's claim of \"change of heart\" is not a recognized defense to breach of contract. The Statute of Frauds is satisfied because the Purchase Agreement is in writing. No other defenses apply.\n\nC. The Balance of Equities Favors Plaintiff\nPlaintiff has been ready, willing, and able to perform. Defendant simply does not want to sell. The court should compel performance because Plaintiff will suffer harm without the property.\n\nIII. CONCLUSION\nFor the foregoing reasons, the Court should grant Plaintiff's motion for specific performance.\n",
+          "jurisdiction": "New York",
+          "round": "1",
+          "previousFindings": "[]"
+        },
+        "metadata": {
+          "http": {
+            "status": 200,
+            "statusText": "OK",
+            "headers": {
+              "access-control-allow-credentials": "true",
+              "connection": "keep-alive",
+              "content-encoding": "br",
+              "content-type": "application/json",
+              "date": "Thu, 05 Mar 2026 11:18:10 GMT",
+              "server": "elb",
+              "strict-transport-security": "max-age=31536000; includeSubDomains; preload",
+              "transfer-encoding": "chunked",
+              "vary": "origin, access-control-request-method, access-control-request-headers",
+              "via": "1.1 63f49fb8153ef60b0374321d41a091c6.cloudfront.net (CloudFront)",
+              "x-amz-cf-id": "0XD5ZHVY2rIPBawehoqcP3pd6lltVnkeXYyQMF3erG3ExAdnfxzIBw==",
+              "x-amz-cf-pop": "BUD50-P2",
+              "x-cache": "Miss from cloudfront",
+              "x-content-type-options": "nosniff",
+              "x-ds-trace-id": "17aabb591e29e976903a8851f5003ca7"
+            }
+          },
+          "_promptfooFileMetadata": {}
+        },
+        "failureReason": 1
+      }
+    ],
+    "stats": {
+      "successes": 0,
+      "failures": 2,
+      "errors": 0,
+      "tokenUsage": {
+        "prompt": 1922,
+        "completion": 2048,
+        "cached": 0,
+        "total": 3970,
+        "numRequests": 2,
+        "completionDetails": {
+          "reasoning": 1024,
+          "acceptedPrediction": 0,
+          "rejectedPrediction": 0
+        },
+        "assertions": {
+          "total": 2755,
+          "prompt": 2504,
+          "completion": 251,
+          "cached": 0,
+          "numRequests": 0,
+          "completionDetails": {
+            "reasoning": 0,
+            "acceptedPrediction": 0,
+            "rejectedPrediction": 0
+          }
+        }
+      },
+      "durationMs": 51594,
+      "evaluationDurationMs": 51594
+    }
+  },
+  "config": {
+    "tags": {},
+    "description": "Attacker Agent Eval",
+    "prompts": [
+      "file:///Users/vadimnicolai/Public/ai-apps/apps/law-adversarial/prompts/attacker.ts"
+    ],
+    "providers": [
+      {
+        "id": "openai:chat:deepseek-reasoner",
+        "label": "deepseek-reasoner",
+        "config": {
+          "apiKeyEnvar": "DEEPSEEK_API_KEY",
+          "apiBaseUrl": "https://api.deepseek.com/v1",
+          "temperature": 0,
+          "response_format": {
+            "type": "json_object"
+          }
+        }
+      },
+      {
+        "id": "openai:chat:qwen-plus",
+        "label": "qwen-plus",
+        "config": {
+          "apiKeyEnvar": "DASHSCOPE_API_KEY",
+          "apiBaseUrl": "https://dashscope-intl.aliyuncs.com/compatible-mode/v1",
+          "temperature": 0,
+          "response_format": {
+            "type": "json_object"
+          }
+        }
+      }
+    ],
+    "tests": [
+      {
+        "vars": {
+          "brief": "MEMORANDUM OF LAW IN SUPPORT OF MOTION FOR SPECIFIC PERFORMANCE\n\nPlaintiff seeks specific performance of the Purchase Agreement dated January 15, 2024, requiring Defendant to convey the property at 123 Oak Street, New York, NY.\n\nI. STATEMENT OF FACTS\nPlaintiff and Defendant entered into a Purchase Agreement for the sale of 123 Oak Street for $2,500,000. Plaintiff tendered full payment on the closing date. Defendant refused to close, claiming a \"change of heart.\"\n\nII. ARGUMENT\nA. Specific Performance Is Warranted Because Real Property Is Unique\nIt is well established that real property is always unique and that monetary damages are therefore always inadequate. See Van Wagner Advertising Corp. v. S&M Enterprises, 67 N.Y.2d 186 (1986). Because the property is unique, Plaintiff is entitled to specific performance as a matter of right.\n\nB. Defendant Has No Valid Defense\nDefendant's claim of \"change of heart\" is not a recognized defense to breach of contract. The Statute of Frauds is satisfied because the Purchase Agreement is in writing. No other defenses apply.\n\nC. The Balance of Equities Favors Plaintiff\nPlaintiff has been ready, willing, and able to perform. Defendant simply does not want to sell. The court should compel performance because Plaintiff will suffer harm without the property.\n\nIII. CONCLUSION\nFor the foregoing reasons, the Court should grant Plaintiff's motion for specific performance.\n",
+          "jurisdiction": "New York",
+          "round": "1",
+          "previousFindings": "[]"
+        },
+        "assert": [
+          {
+            "type": "javascript",
+            "value": "file://assertions/validate-attacker.js"
+          },
+          {
+            "type": "llm-rubric",
+            "value": "The attacker should identify that Van Wagner v. S&M Enterprises actually held that not all real property is unique and that uniqueness must be demonstrated — the brief mischaracterizes this holding. The attacker should also note the brief fails to address equitable defenses like laches, unclean hands, or unconscionability. Rate the quality of the attacks on specificity, legal accuracy, and thoroughness.\n"
+          }
+        ]
+      },
+      {
+        "vars": {
+          "brief": "BRIEF IN SUPPORT OF MOTION TO DISMISS\n\nDefendant moves to dismiss the Complaint under the First Amendment to the United States Constitution.\n\nI. STATEMENT OF FACTS\nPlaintiff, a state university, terminated Defendant Professor's employment after Defendant published an article criticizing the university's diversity policies. The article was published in an academic journal and expressed Defendant's scholarly opinion.\n\nII. ARGUMENT\nA. Defendant's Speech Is Protected Under Strict Scrutiny\nThe First Amendment protects academic speech absolutely. All speech by professors at public universities is protected under strict scrutiny. Pickering v. Board of Education, 391 U.S. 563 (1968). Because the university is a state actor, any adverse employment action based on speech must survive strict scrutiny, which requires the government to show a compelling interest and narrow tailoring.\n\nB. The University Cannot Show a Compelling Interest\nThe university's interest in \"institutional harmony\" does not rise to the level of a compelling government interest. See Tinker v. Des Moines, 393 U.S. 503 (1969). The university bears the burden of proving its interest is compelling, and mere disagreement with the content of speech cannot suffice.\n\nC. The Garcetti Exception Does Not Apply\nIn Garcetti v. Ceballos, 547 U.S. 410 (2006), the Supreme Court held that employee speech made pursuant to official duties is not protected. However, academic speech is categorically exempt from Garcetti. The Ninth Circuit has held that Garcetti does not apply to academic speech. See Demers v. Austin, 746 F.3d 402 (9th Cir. 2014).\n\nIII. CONCLUSION\nDefendant's speech is fully protected and the motion to dismiss should be granted.\n",
+          "jurisdiction": "Federal",
+          "round": "1",
+          "previousFindings": "[]"
+        },
+        "assert": [
+          {
+            "type": "javascript",
+            "value": "file://assertions/validate-attacker.js"
+          },
+          {
+            "type": "llm-rubric",
+            "value": "The attacker should identify: (1) strict scrutiny is not the correct framework — Pickering-Connick balancing test applies to public employee speech; (2) Tinker is a student speech case, not a public employee case; (3) the categorical exemption of academic speech from Garcetti is NOT settled — the Supreme Court explicitly reserved this question and circuits are split; (4) the brief conflates different categories of First Amendment analysis. Rate on legal precision and identification of doctrinal errors.\n"
+          }
+        ]
+      },
+      {
+        "vars": {
+          "brief": "COMPLAINT FOR NEGLIGENCE\n\nI. PARTIES\nPlaintiff resides in San Francisco, California. Defendant Corporation is incorporated in Delaware with its principal place of business in San Francisco, California.\n\nII. JURISDICTION\nThis Court has jurisdiction under 28 U.S.C. 1332 because the parties are diverse and the amount in controversy exceeds $75,000.\n\nIII. FACTS\nOn March 1, 2025, Plaintiff was walking on the sidewalk adjacent to Defendant's construction site. A steel beam fell from the site and struck Plaintiff, causing severe injuries. Defendant was negligent because the beam fell. The injuries speak for themselves.\n\nIV. ARGUMENT\nA. Defendant Owed a Duty of Care\nAll persons owe a duty of reasonable care to everyone. This is a universal principle.\n\nB. Defendant Breached Its Duty\nThe beam fell. Therefore, Defendant was negligent. Res ipsa loquitur applies because beams do not fall from construction sites without negligence. See Escola v. Coca Cola Bottling Co., 24 Cal.2d 453 (1944).\n\nC. Causation and Damages\nThe beam caused Plaintiff's injuries. But for the beam falling, Plaintiff would not have been injured. Plaintiff suffered damages including medical bills, lost wages, and pain and suffering totaling approximately $500,000.\n\nV. CONCLUSION\nDefendant is liable for negligence and Plaintiff is entitled to damages.\n",
+          "jurisdiction": "California",
+          "round": "1",
+          "previousFindings": "[]"
+        },
+        "assert": [
+          {
+            "type": "javascript",
+            "value": "file://assertions/validate-attacker.js"
+          },
+          {
+            "type": "llm-rubric",
+            "value": "The attacker should identify: (1) diversity jurisdiction fails — both parties appear to be citizens of California (plaintiff resides in CA, defendant has principal place of business in CA); (2) the duty formulation is overbroad — California uses the Rowland v. Christian multi-factor test; (3) Escola is a products liability case about exploding bottles, not a construction negligence case; (4) \"injuries speak for themselves\" is not a legal standard; (5) res ipsa loquitur has specific elements beyond \"things don't normally happen.\" Rate on thoroughness catching obvious flaws.\n"
+          }
+        ]
+      },
+      {
+        "vars": {
+          "brief": "TO THE HONORABLE COURT\n\nMy name is James Walker and I am filing this motion myself because I cannot afford a lawyer. I am asking the court to give me back custody of my two children who were taken by CPS on December 10, 2025.\n\nTHE FACTS\nCPS came to my house because my neighbor called them after we had an argument. The CPS worker looked around and said the house was messy. That is not a reason to take children. My house is clean enough. My kids were happy and healthy. They had food and clothes and went to school every day.\n\nThe CPS worker did not give me any paperwork at the time. I only got papers three weeks later when I went to the CPS office to ask what happened. I believe my rights were violated.\n\nWHY I SHOULD GET MY KIDS BACK\nThe Constitution says parents have a right to raise their children. The Supreme Court said this in some case I read about online. The government cannot take your kids just because your house is messy. I am a good father and everyone in my church will say so.\n\nAlso CPS is biased against fathers. Statistics show that mothers get custody more often. This is discrimination under the Equal Protection Clause.\n\nI ask the court to return my children immediately and sanction CPS for violating my rights.\n",
+          "jurisdiction": "Texas",
+          "round": "1",
+          "previousFindings": "[]"
+        },
+        "assert": [
+          {
+            "type": "javascript",
+            "value": "file://assertions/validate-attacker.js"
+          },
+          {
+            "type": "llm-rubric",
+            "value": "The attacker should identify: (1) no specific case law cited — the \"some case\" reference is likely Troxel v. Granville but it's not properly cited; (2) the constitutional standard for termination/removal is Santosky v. Kramer (clear and convincing evidence), not mentioned; (3) the due process argument about late paperwork has merit but needs to cite the specific Texas Family Code provisions (Chapter 262); (4) the equal protection argument about gender bias lacks legal foundation — statistical disparity alone doesn't establish an EP violation without showing discriminatory intent; (5) church character witnesses are not a legal standard for fitness. The attacker should be respectful of the pro se posture while still being thorough. Rate on balance between thoroughness and fairness to a pro se litigant.\n"
+          }
+        ]
+      },
+      {
+        "vars": {
+          "brief": "MOTION IN LIMINE TO EXCLUDE AI-GENERATED EVIDENCE\n\nDefendant moves to exclude all evidence generated by, or substantially derived from, artificial intelligence systems, including but not limited to: AI-generated summaries of surveillance footage, AI-assisted forensic analysis of DNA evidence, and AI-generated predictive risk assessments.\n\nI. ARGUMENT\n\nA. AI-Generated Evidence Fails the Daubert Standard\nUnder Daubert v. Merrell Dow Pharmaceuticals, 509 U.S. 579 (1993), expert testimony must be based on reliable methodology. AI systems are \"black boxes\" whose internal reasoning cannot be tested, subjected to peer review, or assigned a known error rate. Therefore, all AI evidence fails Daubert as a matter of law.\n\nB. AI Evidence Violates the Confrontation Clause\nUnder Crawford v. Washington, 541 U.S. 36 (2004), testimonial statements are inadmissible unless the declarant is available for cross-examination. An AI system cannot be cross-examined. Therefore, any AI-generated output that is testimonial in nature violates the Sixth Amendment.\n\nC. AI Evidence Is Inherently Unreliable Due to Bias\nStudies have shown that AI systems exhibit racial and socioeconomic bias. See generally Buolamwini & Gebru, \"Gender Shades\" (2018). Any evidence generated by a biased system is unreliable and should be excluded under FRE 403 as unfairly prejudicial.\n\nD. The Court Should Adopt a Per Se Rule of Exclusion\nGiven the fundamental unreliability and constitutional concerns, this Court should adopt a per se rule excluding all AI-generated evidence in criminal proceedings.\n\nII. CONCLUSION\nDefendant's motion should be granted.\n",
+          "jurisdiction": "Federal",
+          "round": "1",
+          "previousFindings": "[]"
+        },
+        "assert": [
+          {
+            "type": "javascript",
+            "value": "file://assertions/validate-attacker.js"
+          },
+          {
+            "type": "llm-rubric",
+            "value": "The attacker should identify: (1) the Daubert argument is overbroad — not all AI is a \"black box,\" and Daubert's factors are flexible, not a rigid checklist (Kumho Tire); (2) the Confrontation Clause argument conflates machine-generated evidence with testimonial hearsay — Melendez-Diaz and Bullcoming address human certifications, not algorithmic outputs; (3) the bias argument cites a facial recognition study but applies it to ALL AI including DNA analysis and surveillance — overbroad generalization; (4) a per se exclusion rule has no support in federal evidence law — FRE 702 requires case-by-case analysis; (5) the brief lumps fundamentally different AI applications together. The attacker should credit the legitimate concerns while identifying the analytical weaknesses. Rate on nuance in handling a novel but poorly argued theory.\n"
+          }
+        ]
+      },
+      {
+        "vars": {
+          "brief": "CROSS-CLAIM AND THIRD-PARTY COMPLAINT\n\nCross-Claimant ABC Construction Co. (\"ABC\") asserts this cross-claim against Co-Defendant XYZ Engineering (\"XYZ\") and third-party complaint against FastBuild Materials Inc. (\"FastBuild\").\n\nI. FACTUAL BACKGROUND\nPlaintiff homeowner sued ABC and XYZ for structural defects in a residential building. ABC contends that all defects are attributable to (a) XYZ's defective engineering plans and (b) FastBuild's defective building materials.\n\nII. CROSS-CLAIM AGAINST XYZ (FRCP 13(g))\nXYZ provided engineering plans that failed to account for the soil conditions at the building site. Under Spearin doctrine, XYZ impliedly warranted the adequacy of its plans. United States v. Spearin, 248 U.S. 132 (1918). ABC relied on these plans and is entitled to full indemnification from XYZ for any liability to Plaintiff.\n\nIII. THIRD-PARTY COMPLAINT AGAINST FASTBUILD (FRCP 14(a))\nFastBuild supplied steel reinforcement bars that failed to meet ASTM A615 specifications. Under strict products liability, FastBuild is liable for any damages caused by its defective materials. ABC impleads FastBuild for contribution and indemnification.\n\nABC is also entitled to attorneys' fees against both XYZ and FastBuild under the \"common fund\" doctrine because this litigation benefits all parties by resolving the allocation of fault.\n\nIV. CONCLUSION\nABC is entitled to judgment against XYZ and FastBuild for full indemnification, contribution, and attorneys' fees.\n",
+          "jurisdiction": "Federal",
+          "round": "1",
+          "previousFindings": "[]"
+        },
+        "assert": [
+          {
+            "type": "javascript",
+            "value": "file://assertions/validate-attacker.js"
+          },
+          {
+            "type": "llm-rubric",
+            "value": "The attacker should identify: (1) Spearin applies to government contracts where the government provides specs — it does not automatically apply to private engineering contracts; (2) FRCP 14(a) impleader requires that the third party \"is or may be liable to the third-party plaintiff for all or part of the claim against it\" — ABC needs to establish this nexus more clearly; (3) the \"common fund\" doctrine applies when litigation creates a fund benefiting non-parties, not to fee-shifting between adverse parties in the same case; (4) seeking \"full indemnification\" from both XYZ AND FastBuild simultaneously is potentially inconsistent — if each is fully responsible, the claims are contradictory; (5) strict products liability against FastBuild requires showing the product was defective AND unreasonably dangerous, not just off-spec. Rate on ability to handle multi-party procedural complexity.\n"
+          }
+        ]
+      }
+    ],
+    "scenarios": [],
+    "env": {},
+    "sharing": false,
+    "defaultTest": {
+      "options": {
+        "provider": {
+          "id": "openai:chat:deepseek-chat",
+          "config": {
+            "apiKeyEnvar": "DEEPSEEK_API_KEY",
+            "apiBaseUrl": "https://api.deepseek.com/v1",
+            "temperature": 0
+          }
+        }
+      },
+      "vars": {},
+      "assert": [],
+      "metadata": {}
+    },
+    "outputPath": [
+      "../promptfoo-output/attacker-latest.json"
+    ],
+    "extensions": [],
+    "metadata": {},
+    "evaluateOptions": {}
+  },
+  "shareableUrl": null,
+  "metadata": {
+    "promptfooVersion": "0.120.26",
+    "nodeVersion": "v24.12.0",
+    "platform": "darwin",
+    "arch": "arm64",
+    "exportedAt": "2026-03-05T11:19:01.646Z",
+    "evaluationCreatedAt": "2026-03-05T11:18:09.888Z"
+  }
+}

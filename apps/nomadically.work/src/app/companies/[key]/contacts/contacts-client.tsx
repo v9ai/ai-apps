@@ -10,6 +10,7 @@ import {
   useFindCompanyEmailsMutation,
   useApplyEmailPatternMutation,
   useCreateContactMutation,
+  useUnverifyCompanyContactsMutation,
 } from "@/__generated__/hooks";
 import Link from "next/link";
 import { useAuth } from "@/lib/auth-hooks";
@@ -499,6 +500,7 @@ export function CompanyContactsClient({
   const [importContacts, { loading: importing }] = useImportContactsMutation();
   const [findCompanyEmails, { loading: enhancing }] = useFindCompanyEmailsMutation();
   const [applyEmailPattern, { loading: applyingPattern }] = useApplyEmailPatternMutation();
+  const [unverifyCompanyContacts, { loading: unverifying }] = useUnverifyCompanyContactsMutation();
 
   const handleImportContacts = useCallback(async () => {
     if (!linkedinHtml || !company) return;
@@ -596,6 +598,21 @@ export function CompanyContactsClient({
       setEmailDiscoveryStatus({ type: "error", message: msg });
     }
   }, [applyEmailPattern, company, refetch]);
+
+  const handleUnverifyAll = useCallback(async () => {
+    if (!company) return;
+    try {
+      const { data: result, errors } = await unverifyCompanyContacts({ variables: { companyId: company.id } });
+      if (errors?.length) {
+        setEmailDiscoveryStatus({ type: "error", message: errors[0].message });
+        return;
+      }
+      setEmailDiscoveryStatus({ type: "success", message: `Unverified ${result?.unverifyCompanyContacts?.count ?? 0} contacts` });
+      await refetch();
+    } catch (err: unknown) {
+      setEmailDiscoveryStatus({ type: "error", message: err instanceof Error ? err.message : "Unverify failed" });
+    }
+  }, [company, unverifyCompanyContacts, refetch]);
 
   // Admin guard
   if (!isAdmin) {
@@ -709,6 +726,17 @@ export function CompanyContactsClient({
             >
               {applyingPattern ? <Spinner size="1" /> : <UpdateIcon />}
               Apply pattern
+            </Button>
+
+            <Button
+              size="2"
+              variant="soft"
+              color="gray"
+              onClick={handleUnverifyAll}
+              disabled={unverifying}
+            >
+              {unverifying ? <Spinner size="1" /> : null}
+              Unverify all
             </Button>
 
             <Button

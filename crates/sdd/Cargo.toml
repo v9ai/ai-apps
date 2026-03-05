@@ -6,6 +6,7 @@ license = "MIT"
 description = "Spec-Driven Development pipeline — runtime-agnostic core library"
 
 [dependencies]
+deepseek = { path = "../deepseek", default-features = false }
 serde = { version = "1", features = ["derive"] }
 serde_json = "1"
 futures = "0.3"

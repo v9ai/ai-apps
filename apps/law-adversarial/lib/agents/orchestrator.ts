@@ -1,10 +1,10 @@
 import { createClient } from "@/lib/supabase/server";
-import { runAttacker, runDefender, runJudge } from "./runner";
+import { runAttacker, runDefender, runJudge, runCitationVerifier, runJurisdictionExpert, runBriefRewriter } from "./runner";
 import {
   createClaim,
   createAttack,
   createSupport,
-} from "@/lib/neo4j/argument-graph";
+} from "@/lib/argument-graph";
 import type { JudgeOutput, RoundContext } from "./types";
 
 export type StressTestEvent =
@@ -12,6 +12,9 @@ export type StressTestEvent =
   | { type: "attacker_complete"; round: number; attackCount: number }
   | { type: "defender_complete"; round: number; rebuttalCount: number }
   | { type: "judge_complete"; round: number; findingCount: number; score: number }
+  | { type: "citation_verifier_complete"; citationCount: number; fabricationRisk: number }
+  | { type: "jurisdiction_expert_complete"; issueCount: number; fitness: number }
+  | { type: "brief_rewriter_complete"; changeCount: number; improvementScore: number }
   | { type: "session_complete"; overallScore: number }
   | { type: "error"; message: string };
 
@@ -122,6 +125,63 @@ export async function runStressTest(
       }
     }
 
+    // Expert agents — run in parallel after adversarial rounds
+    const finalCtx: RoundContext = {
+      brief: briefText,
+      jurisdiction: stressSession.jurisdiction ?? undefined,
+      round: maxRounds,
+      previousFindings,
+    };
+
+    const [citationResult, jurisdictionResult] = await Promise.all([
+      runCitationVerifier(finalCtx).catch(() => null),
+      runJurisdictionExpert(finalCtx).catch(() => null),
+    ]);
+
+    if (citationResult) {
+      await writeAudit(
+        supabase, sessionId, "citation_verifier", "verification_complete",
+        null,
+        `${citationResult.citations.length} citations checked, fabrication risk: ${(citationResult.fabrication_risk * 100).toFixed(0)}%`,
+      );
+      emit?.({
+        type: "citation_verifier_complete",
+        citationCount: citationResult.citations.length,
+        fabricationRisk: citationResult.fabrication_risk,
+      });
+    }
+
+    if (jurisdictionResult) {
+      await writeAudit(
+        supabase, sessionId, "jurisdiction_expert", "analysis_complete",
+        null,
+        `${jurisdictionResult.issues.length} jurisdiction issues, fitness: ${jurisdictionResult.overall_jurisdiction_fitness}/100`,
+      );
+      emit?.({
+        type: "jurisdiction_expert_complete",
+        issueCount: jurisdictionResult.issues.length,
+        fitness: jurisdictionResult.overall_jurisdiction_fitness,
+      });
+    }
+
+    // Brief Rewriter — uses judge findings to produce a revised brief
+    const lastJudgment = previousFindings[previousFindings.length - 1];
+    if (lastJudgment) {
+      const rewriteResult = await runBriefRewriter(finalCtx, lastJudgment).catch(() => null);
+      if (rewriteResult) {
+        await writeAudit(
+          supabase, sessionId, "brief_rewriter", "rewrite_complete",
+          null,
+          `${rewriteResult.changes.length} changes, estimated improvement: ${rewriteResult.improvement_score}/100`,
+        );
+        emit?.({
+          type: "brief_rewriter_complete",
+          changeCount: rewriteResult.changes.length,
+          improvementScore: rewriteResult.improvement_score,
+        });
+      }
+    }
+
     // Complete
     await supabase
       .from("stress_test_sessions")
@@ -129,7 +189,6 @@ export async function runStressTest(
         status: "completed",
         overall_score: lastScore,
         completed_at: new Date().toISOString(),
-        neo4j_graph_id: sessionId,
       })
       .eq("id", sessionId);
 
@@ -150,7 +209,7 @@ export async function runStressTest(
 async function writeAudit(
   supabase: Awaited<ReturnType<typeof createClient>>,
   sessionId: string,
-  agent: "attacker" | "defender" | "judge" | "system",
+  agent: "attacker" | "defender" | "judge" | "citation_verifier" | "jurisdiction_expert" | "brief_rewriter" | "system",
   action: string,
   inputSummary: string | null,
   outputSummary: string,
@@ -201,7 +260,7 @@ async function populateGraph(
 
     // Link defender rebuttal to the attacker claim it addresses
     if (attackNodeIds[i]) {
-      await createAttack(defId, attackNodeIds[i], {
+      await createAttack(sessionId, defId, attackNodeIds[i], {
         strength: reb.strength,
         type: "rebut",
         created_by: "defender",
@@ -224,7 +283,7 @@ async function populateGraph(
 
     // Link judge finding to a related attacker claim if one exists
     if (attackNodeIds[i]) {
-      await createSupport(judgeId, attackNodeIds[i], {
+      await createSupport(sessionId, judgeId, attackNodeIds[i], {
         strength: finding.confidence,
         type: "evidential",
         created_by: "judge",

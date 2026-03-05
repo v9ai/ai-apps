@@ -13,30 +13,25 @@ thiserror = "2"
 tracing = "0.1"
 async-trait = "0.1"
 reqwest = { version = "0.12", features = ["json"] }
-clap = { version = "4", features = ["derive"], optional = true }
 dotenvy = "0.15"
+tracing-subscriber = "0.3"
+walkdir = "2"
+ast-grep-core = "0.41"
+ast-grep-language = "0.41"
 sdd = { path = "../sdd" }
+deepseek = { path = "../deepseek", features = ["agent"] }
+
+[dev-dependencies]
+tempfile = "3"
 
 [[bin]]
-name = "scholar-cli"
-path = "src/bin/scholar_cli.rs"
-required-features = ["cli"]
+name = "healthcare-research"
+path = "src/bin/healthcare_research.rs"
 
 [[bin]]
-name = "repo-research"
-path = "src/bin/repo_research.rs"
+name = "code-research"
+path = "src/bin/code_research.rs"
 
 [[bin]]
-name = "sdd-research"
-path = "src/bin/sdd_research.rs"
-
-[[bin]]
-name = "bs-detector"
-path = "src/bin/bs_detector.rs"
-
-[[bin]]
-name = "parallel-sdd-research"
-path = "src/bin/parallel_sdd_research.rs"
-
-[features]
-cli = ["dep:clap"]
+name = "law-research"
+path = "src/bin/law_research.rs"

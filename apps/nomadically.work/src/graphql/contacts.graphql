@@ -161,6 +161,13 @@ mutation ApplyEmailPattern($companyId: Int!) {
   }
 }
 
+mutation UnverifyCompanyContacts($companyId: Int!) {
+  unverifyCompanyContacts(companyId: $companyId) {
+    success
+    count
+  }
+}
+
 mutation CreateContact($input: CreateContactInput!) {
   createContact(input: $input) {
     id

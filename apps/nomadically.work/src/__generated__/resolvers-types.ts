@@ -963,6 +963,7 @@ export type Mutation = {
    */
   reportJob: Maybe<Job>;
   unlinkTrackFromApplication: Application;
+  unverifyCompanyContacts: UnverifyContactsResult;
   updateApplication: Application;
   updateCompany: Company;
   updateContact: Contact;
@@ -1222,6 +1223,11 @@ export type MutationReportJobArgs = {
 export type MutationUnlinkTrackFromApplicationArgs = {
   applicationId: Scalars['Int']['input'];
   trackSlug: Scalars['String']['input'];
+};
+
+
+export type MutationUnverifyCompanyContactsArgs = {
+  companyId: Scalars['Int']['input'];
 };
 
 
@@ -1801,6 +1807,12 @@ export type TrackItem = {
   title: Scalars['String']['output'];
 };
 
+export type UnverifyContactsResult = {
+  __typename?: 'UnverifyContactsResult';
+  count: Scalars['Int']['output'];
+  success: Scalars['Boolean']['output'];
+};
+
 export type UpdateApplicationInput = {
   companyName?: InputMaybe<Scalars['String']['input']>;
   jobDescription?: InputMaybe<Scalars['String']['input']>;
@@ -2107,6 +2119,7 @@ export type ResolversTypes = {
   Track: ResolverTypeWrapper<Partial<Track>>;
   TrackItem: ResolverTypeWrapper<Partial<TrackItem>>;
   URL: ResolverTypeWrapper<Partial<Scalars['URL']['output']>>;
+  UnverifyContactsResult: ResolverTypeWrapper<Partial<UnverifyContactsResult>>;
   UpdateApplicationInput: ResolverTypeWrapper<Partial<UpdateApplicationInput>>;
   UpdateCompanyInput: ResolverTypeWrapper<Partial<UpdateCompanyInput>>;
   UpdateContactInput: ResolverTypeWrapper<Partial<UpdateContactInput>>;
@@ -2230,6 +2243,7 @@ export type ResolversParentTypes = {
   Track: Partial<Track>;
   TrackItem: Partial<TrackItem>;
   URL: Partial<Scalars['URL']['output']>;
+  UnverifyContactsResult: Partial<UnverifyContactsResult>;
   UpdateApplicationInput: Partial<UpdateApplicationInput>;
   UpdateCompanyInput: Partial<UpdateCompanyInput>;
   UpdateContactInput: Partial<UpdateContactInput>;
@@ -2867,6 +2881,7 @@ export type MutationResolvers<ContextType = GraphQLContext, ParentType extends R
   rateResumeAnswer?: Resolver<Maybe<ResolversTypes['Boolean']>, ParentType, ContextType, RequireFields<MutationRateResumeAnswerArgs, 'helpful' | 'traceId'>>;
   reportJob?: Resolver<Maybe<ResolversTypes['Job']>, ParentType, ContextType, RequireFields<MutationReportJobArgs, 'id'>>;
   unlinkTrackFromApplication?: Resolver<ResolversTypes['Application'], ParentType, ContextType, RequireFields<MutationUnlinkTrackFromApplicationArgs, 'applicationId' | 'trackSlug'>>;
+  unverifyCompanyContacts?: Resolver<ResolversTypes['UnverifyContactsResult'], ParentType, ContextType, RequireFields<MutationUnverifyCompanyContactsArgs, 'companyId'>>;
   updateApplication?: Resolver<ResolversTypes['Application'], ParentType, ContextType, RequireFields<MutationUpdateApplicationArgs, 'id' | 'input'>>;
   updateCompany?: Resolver<ResolversTypes['Company'], ParentType, ContextType, RequireFields<MutationUpdateCompanyArgs, 'id' | 'input'>>;
   updateContact?: Resolver<ResolversTypes['Contact'], ParentType, ContextType, RequireFields<MutationUpdateContactArgs, 'id' | 'input'>>;
@@ -3158,6 +3173,11 @@ export interface UrlScalarConfig extends GraphQLScalarTypeConfig<ResolversTypes[
   name: 'URL';
 }
 
+export type UnverifyContactsResultResolvers<ContextType = GraphQLContext, ParentType extends ResolversParentTypes['UnverifyContactsResult'] = ResolversParentTypes['UnverifyContactsResult']> = {
+  count?: Resolver<ResolversTypes['Int'], ParentType, ContextType>;
+  success?: Resolver<ResolversTypes['Boolean'], ParentType, ContextType>;
+};
+
 export interface UploadScalarConfig extends GraphQLScalarTypeConfig<ResolversTypes['Upload'], any> {
   name: 'Upload';
 }
@@ -3273,6 +3293,7 @@ export type Resolvers<ContextType = GraphQLContext> = {
   Track?: TrackResolvers<ContextType>;
   TrackItem?: TrackItemResolvers<ContextType>;
   URL?: GraphQLScalarType;
+  UnverifyContactsResult?: UnverifyContactsResultResolvers<ContextType>;
   Upload?: GraphQLScalarType;
   UserSettings?: UserSettingsResolvers<ContextType>;
   WarcPointer?: WarcPointerResolvers<ContextType>;

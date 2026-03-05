@@ -80,6 +80,7 @@
     "remark-gfm": "^4.0.1",
     "resend": "^6.9.2",
     "ulid": "^3.0.2",
+    "@repo/deepseek": "workspace:*",
     "zod": "^3.25.76"
   },
   "devDependencies": {

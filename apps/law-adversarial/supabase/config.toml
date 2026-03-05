@@ -1,2 +1,5 @@
-[project]
-id = "law-adversarial"
+project_id = "law-adversarial"
+
+[api]
+enabled = true
+port = 54321

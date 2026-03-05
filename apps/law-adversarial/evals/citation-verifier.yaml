@@ -1,0 +1,36 @@
+description: "Citation Verifier Agent Eval"
+sharing: false
+
+prompts:
+  - "file://../prompts/citation-verifier.ts"
+
+providers:
+  - id: openai:chat:deepseek-reasoner
+    label: deepseek-reasoner
+    config:
+      apiKeyEnvar: DEEPSEEK_API_KEY
+      apiBaseUrl: https://api.deepseek.com/v1
+      temperature: 0
+      response_format:
+        type: json_object
+  - id: openai:chat:qwen-plus
+    label: qwen-plus
+    config:
+      apiKeyEnvar: DASHSCOPE_API_KEY
+      apiBaseUrl: https://dashscope-intl.aliyuncs.com/compatible-mode/v1
+      temperature: 0
+      response_format:
+        type: json_object
+
+defaultTest:
+  options:
+    provider:
+      id: openai:chat:deepseek-chat
+      config:
+        apiKeyEnvar: DEEPSEEK_API_KEY
+        apiBaseUrl: https://api.deepseek.com/v1
+        temperature: 0
+
+tests: "file://datasets/citation-verifier-cases.yaml"
+
+outputPath: ../promptfoo-output/citation-verifier-latest.json

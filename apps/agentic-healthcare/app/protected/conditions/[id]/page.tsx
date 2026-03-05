@@ -1,12 +1,14 @@
 import { createClient } from "@/lib/supabase/server";
 import { redirect, notFound } from "next/navigation";
-import { Box, Flex, Heading, IconButton, Separator, Text } from "@radix-ui/themes";
+import { Box, Flex, Heading, Separator, Skeleton, Text } from "@radix-ui/themes";
 import Link from "next/link";
 import { Suspense } from "react";
 import { gqlQuery } from "@/lib/graphql/execute";
 import { GetConditionDocument } from "@/lib/graphql/__generated__/graphql";
 import { deleteCondition } from "../actions";
-import { Cross2Icon } from "@radix-ui/react-icons";
+import { DeleteConfirmButton } from "@/components/delete-confirm-button";
+import { EditNotesForm } from "../edit-notes-form";
+import { RelatedMarkers } from "../related-markers";
 
 async function ConditionDetail({ id }: { id: string }) {
   const supabase = await createClient();
@@ -27,29 +29,26 @@ async function ConditionDetail({ id }: { id: string }) {
             Added {new Date(condition.created_at).toLocaleDateString()}
           </Text>
         </Flex>
-        <form
+        <DeleteConfirmButton
           action={async () => {
             "use server";
             await deleteCondition(id);
             redirect("/protected/conditions");
           }}
-        >
-          <IconButton type="submit" variant="soft" color="red" size="2" aria-label="Delete condition">
-            <Cross2Icon />
-          </IconButton>
-        </form>
+          description="This condition and its notes will be permanently deleted."
+          variant="icon-red"
+        />
       </Flex>
 
       <Separator size="4" />
 
-      {condition.notes ? (
-        <Flex direction="column" gap="1">
-          <Text size="2" weight="medium" color="gray">Notes</Text>
-          <Text size="3">{condition.notes}</Text>
-        </Flex>
-      ) : (
-        <Text size="2" color="gray">No notes added.</Text>
-      )}
+      <EditNotesForm conditionId={condition.id} initialNotes={condition.notes ?? null} />
+
+      <Separator size="4" />
+
+      <Suspense fallback={<Text size="2" color="gray">Finding related markers...</Text>}>
+        <RelatedMarkers conditionId={condition.id} />
+      </Suspense>
     </>
   );
 }
@@ -69,7 +68,12 @@ export default async function ConditionDetailPage({
             ← Back
           </Link>
         </Text>
-        <Suspense fallback={<Text size="2" color="gray">Loading...</Text>}>
+        <Suspense fallback={
+          <Flex direction="column" gap="4">
+            <Skeleton height="32px" width="200px" />
+            <Skeleton height="120px" />
+          </Flex>
+        }>
           <ConditionDetail id={id} />
         </Suspense>
       </Flex>

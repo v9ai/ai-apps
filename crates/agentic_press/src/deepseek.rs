@@ -1,83 +1,9 @@
 use anyhow::{Context, Result};
-use serde::{Deserialize, Serialize};
 use tracing::debug;
 
-const DEFAULT_BASE_URL: &str = "https://api.deepseek.com/v1";
+use deepseek::{ChatRequest, DeepSeekClient, ReqwestClient, DEFAULT_BASE_URL};
+
 const MODEL: &str = "deepseek-reasoner";
-
-pub struct DeepSeekClient {
-    client: reqwest::Client,
-    api_key: String,
-    /// Base URL, e.g. "https://api.deepseek.com/v1".
-    /// Overridable for tests via [`DeepSeekClient::new`].
-    base_url: String,
-}
-
-impl DeepSeekClient {
-    /// Production constructor — reads `DEEPSEEK_API_KEY` (and optionally
-    /// `DEEPSEEK_BASE_URL`) from the environment.
-    pub fn from_env() -> Result<Self> {
-        let api_key = std::env::var("DEEPSEEK_API_KEY")
-            .context("DEEPSEEK_API_KEY environment variable not set")?;
-        let base_url = std::env::var("DEEPSEEK_BASE_URL")
-            .unwrap_or_else(|_| DEFAULT_BASE_URL.to_string());
-        Ok(Self::new(api_key, base_url))
-    }
-
-    /// Explicit constructor — use in tests to point at a mock server.
-    pub fn new(api_key: impl Into<String>, base_url: impl Into<String>) -> Self {
-        Self {
-            client: reqwest::Client::new(),
-            api_key: api_key.into(),
-            base_url: base_url.into(),
-        }
-    }
-
-    /// Returns (reasoning_content, final_content).
-    pub async fn reason(&self, system: &str, user: &str) -> Result<ReasonerOutput> {
-        let url = format!("{}/chat/completions", self.base_url);
-
-        let body = ChatRequest {
-            model: MODEL.to_string(),
-            messages: vec![
-                Message { role: "system".into(), content: system.into() },
-                Message { role: "user".into(),   content: user.into() },
-            ],
-            max_tokens: 8192,
-            temperature: 0.6,
-        };
-
-        debug!("deepseek-reasoner call: system={:.80}…", system);
-
-        let resp = self
-            .client
-            .post(&url)
-            .bearer_auth(&self.api_key)
-            .json(&body)
-            .send()
-            .await
-            .context("DeepSeek API request failed")?;
-
-        let status = resp.status();
-        if !status.is_success() {
-            let text = resp.text().await.unwrap_or_default();
-            anyhow::bail!("DeepSeek API error {}: {}", status, text);
-        }
-
-        let chat_resp: ChatResponse = resp
-            .json()
-            .await
-            .context("Failed to parse DeepSeek response")?;
-
-        let choice = chat_resp.choices.into_iter().next()
-            .context("No choices in DeepSeek response")?;
-
-        Ok(ReasonerOutput {
-            reasoning: choice.message.reasoning_content.unwrap_or_default(),
-            content:   choice.message.content,
-        })
-    }
-}
 
 pub struct ReasonerOutput {
     /// R1 chain-of-thought — logged at DEBUG, not passed to next agent.
@@ -86,32 +12,50 @@ pub struct ReasonerOutput {
     pub content: String,
 }
 
-#[derive(Serialize)]
-struct ChatRequest {
-    model: String,
-    messages: Vec<Message>,
-    max_tokens: u32,
-    temperature: f32,
+/// Production constructor — reads `DEEPSEEK_API_KEY` (and optionally
+/// `DEEPSEEK_BASE_URL`) from the environment.
+pub fn client_from_env() -> Result<DeepSeekClient<ReqwestClient>> {
+    let api_key = std::env::var("DEEPSEEK_API_KEY")
+        .context("DEEPSEEK_API_KEY environment variable not set")?;
+    let base_url = std::env::var("DEEPSEEK_BASE_URL")
+        .unwrap_or_else(|_| DEFAULT_BASE_URL.to_string());
+    Ok(DeepSeekClient::new(ReqwestClient::new(), api_key).with_base_url(base_url))
 }
 
-#[derive(Serialize)]
-struct Message {
-    role: String,
-    content: String,
-}
+/// Thin wrapper that builds a ChatRequest for deepseek-reasoner and calls `client.chat()`.
+pub async fn reason(
+    client: &DeepSeekClient<ReqwestClient>,
+    system: &str,
+    user: &str,
+) -> Result<ReasonerOutput> {
+    debug!("deepseek-reasoner call: system={:.80}…", system);
 
-#[derive(Deserialize)]
-struct ChatResponse {
-    choices: Vec<Choice>,
-}
+    let request = ChatRequest {
+        model: MODEL.to_string(),
+        messages: vec![
+            deepseek::system_msg(system),
+            deepseek::user_msg(user),
+        ],
+        tools: None,
+        tool_choice: None,
+        temperature: Some(0.6),
+        max_tokens: Some(8192),
+        stream: Some(false),
+    };
 
-#[derive(Deserialize)]
-struct Choice {
-    message: AssistantMessage,
-}
+    let resp = client
+        .chat(&request)
+        .await
+        .map_err(|e| anyhow::anyhow!("{e}"))?;
 
-#[derive(Deserialize)]
-struct AssistantMessage {
-    content: String,
-    reasoning_content: Option<String>,
+    let choice = resp
+        .choices
+        .into_iter()
+        .next()
+        .context("No choices in DeepSeek response")?;
+
+    Ok(ReasonerOutput {
+        reasoning: choice.message.reasoning_content.unwrap_or_default(),
+        content: choice.message.content.as_str().to_string(),
+    })
 }

@@ -5,7 +5,7 @@ import { redirect } from "next/navigation";
 import { UnstructuredClient } from "unstructured-client";
 import { Strategy } from "unstructured-client/sdk/models/shared";
 import { parseMarkers } from "./parsers";
-import { embedBloodTest, embedBloodMarkers } from "@/lib/embeddings";
+import { embedBloodTest, embedBloodMarkers, embedHealthState } from "@/lib/embeddings";
 import { gqlMutate, gqlQuery } from "@/lib/graphql/execute";
 import {
   DeleteBloodTestDocument,
@@ -95,6 +95,8 @@ export async function uploadBloodTest(formData: FormData) {
           fileName: file.name,
           testDate: testDate ?? new Date().toISOString(),
         });
+
+        await embedHealthState(supabase, test.id, session.user.id, markers, meta);
       } catch {
         // Embedding failure is non-blocking
       }

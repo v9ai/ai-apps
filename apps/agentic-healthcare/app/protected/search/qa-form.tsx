@@ -18,6 +18,21 @@ type QAResult = {
     content: string;
     similarity: number;
   }>;
+  medications?: Array<{
+    medicationId: string;
+    content: string;
+    similarity: number;
+  }>;
+  symptoms?: Array<{
+    symptomId: string;
+    content: string;
+    similarity: number;
+  }>;
+  appointments?: Array<{
+    appointmentId: string;
+    content: string;
+    similarity: number;
+  }>;
 };
 
 export function QAForm() {
@@ -90,6 +105,54 @@ export function QAForm() {
                   <Badge key={c.conditionId} color="orange" variant="soft">
                     {c.content.replace("Health condition: ", "").split("\n")[0]} (
                     {(c.similarity * 100).toFixed(0)}%)
+                  </Badge>
+                ))}
+              </Flex>
+            </Flex>
+          )}
+
+          {result.medications && result.medications.length > 0 && (
+            <Flex direction="column" gap="2">
+              <Text size="2" weight="bold">
+                Related Medications
+              </Text>
+              <Flex gap="2" wrap="wrap">
+                {result.medications.map((m) => (
+                  <Badge key={m.medicationId} color="purple" variant="soft">
+                    {m.content.replace("Medication: ", "").split("\n")[0]} (
+                    {(m.similarity * 100).toFixed(0)}%)
+                  </Badge>
+                ))}
+              </Flex>
+            </Flex>
+          )}
+
+          {result.symptoms && result.symptoms.length > 0 && (
+            <Flex direction="column" gap="2">
+              <Text size="2" weight="bold">
+                Related Symptoms
+              </Text>
+              <Flex gap="2" wrap="wrap">
+                {result.symptoms.map((s) => (
+                  <Badge key={s.symptomId} color="red" variant="soft">
+                    {s.content.replace("Symptom: ", "").split("\n")[0]} (
+                    {(s.similarity * 100).toFixed(0)}%)
+                  </Badge>
+                ))}
+              </Flex>
+            </Flex>
+          )}
+
+          {result.appointments && result.appointments.length > 0 && (
+            <Flex direction="column" gap="2">
+              <Text size="2" weight="bold">
+                Related Appointments
+              </Text>
+              <Flex gap="2" wrap="wrap">
+                {result.appointments.map((a) => (
+                  <Badge key={a.appointmentId} color="green" variant="soft">
+                    {a.content.replace("Appointment: ", "").split("\n")[0]} (
+                    {(a.similarity * 100).toFixed(0)}%)
                   </Badge>
                 ))}
               </Flex>

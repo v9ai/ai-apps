@@ -1,5 +1,6 @@
 import {
   Box,
+  Button,
   Card,
   Flex,
   Grid,
@@ -8,9 +9,10 @@ import {
   Badge,
   Separator,
 } from "@radix-ui/themes";
-import { Shield, AlertTriangle, BarChart3, FileSearch } from "lucide-react";
+import { Shield, AlertTriangle, BarChart3, FileSearch, Scale } from "lucide-react";
 import Link from "next/link";
 import { getDemoSessions, getDemoFindings } from "@/lib/demo-data";
+import { WhyThisWorks } from "./why-this-works";
 
 function scoreColor(score: number): string {
   if (score >= 70) return "var(--green-9)";
@@ -55,11 +57,24 @@ export default function ProtectedPage() {
   return (
     <Box py="8" style={{ maxWidth: 1100, margin: "0 auto" }}>
       <Flex direction="column" gap="6">
-        <Flex direction="column" gap="1">
-          <Heading size="7">Dashboard</Heading>
-          <Text size="2" color="gray">
-            Stress-test your legal briefs with adversarial analysis.
-          </Text>
+        <Flex justify="between" align="end">
+          <Flex direction="column" gap="1">
+            <Flex align="center" gap="2">
+              <Scale size={24} />
+              <Heading size="7">Dashboard</Heading>
+            </Flex>
+            <Text size="3" weight="medium">
+              Find every weakness before opposing counsel does.
+            </Text>
+            <Text size="2" color="gray">
+              AI plays opposing counsel — attacking every claim, citation, and legal theory in your brief.
+            </Text>
+          </Flex>
+          <Link href="/sessions">
+            <Button size="3" variant="solid">
+              Analyze New Brief
+            </Button>
+          </Link>
         </Flex>
 
         {/* Stats Row */}
@@ -265,6 +280,11 @@ export default function ProtectedPage() {
             })}
           </Flex>
         </Flex>
+
+        <Separator size="4" />
+
+        {/* Why This Works - Research Section */}
+        <WhyThisWorks />
       </Flex>
     </Box>
   );

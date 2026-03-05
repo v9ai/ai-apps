@@ -43,7 +43,13 @@ export function ArgumentGraph({ sessionId }: { sessionId: string }) {
   useEffect(() => {
     fetch(`/api/sessions/${sessionId}/graph`)
       .then((r) => r.json())
-      .then(setData)
+      .then((json) => {
+        if (json.nodes && json.links) {
+          setData(json);
+        } else {
+          setError(true);
+        }
+      })
       .catch(() => setError(true));
   }, [sessionId]);
 

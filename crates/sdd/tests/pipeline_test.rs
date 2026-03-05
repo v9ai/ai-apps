@@ -634,6 +634,127 @@ fn test_sdd_change_new_tokens_used_starts_zero() {
     assert_eq!(change.tokens_used(), 0);
 }
 
+// ── Spec Validation Gate Tests ────────────────────────────────────────────
+
+#[tokio::test]
+async fn test_spec_validation_gate_blocks_invalid_spec() {
+    let client = MockLlmClient::new(vec![
+        "proposal".into(),
+        "plain text with no requirements".into(),  // Spec output without structure
+    ]);
+    let pipeline = SddPipeline::new(client)
+        .with_spec_validation(sdd::validate::builtin_rules());
+    let mut change = empty_change("test");
+
+    // Propose succeeds
+    pipeline.execute_phase(SddPhase::Propose, &mut change, "").await.unwrap();
+
+    // Spec should fail validation gate
+    let result = pipeline.execute_phase(SddPhase::Spec, &mut change, "").await;
+    assert!(result.is_err());
+    let err = result.unwrap_err();
+    assert!(matches!(err, SddError::ValidationFailed { .. }));
+    assert!(err.to_string().contains("rules failed"));
+}
+
+#[tokio::test]
+async fn test_spec_validation_gate_passes_valid_spec() {
+    // Spec output that satisfies all 4 built-in rules
+    let valid_spec = r#"
+## ADDED
+- REQ-001: New auth endpoint
+
+## Scenarios
+Given a user with credentials
+When they submit the login form
+Then a token MUST be returned
+"#;
+    let client = MockLlmClient::new(vec![
+        "proposal".into(),
+        valid_spec.into(),
+    ]);
+    let pipeline = SddPipeline::new(client)
+        .with_spec_validation(sdd::validate::builtin_rules());
+    let mut change = empty_change("test");
+
+    pipeline.execute_phase(SddPhase::Propose, &mut change, "").await.unwrap();
+    let result = pipeline.execute_phase(SddPhase::Spec, &mut change, "").await;
+    assert!(result.is_ok());
+}
+
+#[tokio::test]
+async fn test_spec_validation_gate_skipped_when_not_configured() {
+    let client = MockLlmClient::new(vec![
+        "proposal".into(),
+        "plain text with no structure".into(),
+    ]);
+    // No with_spec_validation — gate should not fire
+    let pipeline = SddPipeline::new(client);
+    let mut change = empty_change("test");
+
+    pipeline.execute_phase(SddPhase::Propose, &mut change, "").await.unwrap();
+    let result = pipeline.execute_phase(SddPhase::Spec, &mut change, "").await;
+    assert!(result.is_ok()); // Should pass — no validation configured
+}
+
+#[tokio::test]
+async fn test_spec_validation_gate_in_fast_forward() {
+    let client = MockLlmClient::new(vec![
+        "proposal".into(),
+        "no structure spec".into(),  // Spec
+        "design output".into(),      // Design
+    ]);
+    let pipeline = SddPipeline::new(client)
+        .with_spec_validation(sdd::validate::builtin_rules());
+    let mut change = empty_change("test");
+
+    let result = pipeline.fast_forward(&mut change, "").await;
+    assert!(result.is_err());
+    assert!(matches!(result.unwrap_err(), SddError::ValidationFailed { .. }));
+}
+
+#[tokio::test]
+async fn test_spec_validation_gate_in_full_pipeline() {
+    let client = MockLlmClient::new(vec![
+        "proposal".into(),
+        "no structure spec".into(),
+        "design output".into(),
+    ]);
+    let pipeline = SddPipeline::new(client)
+        .with_spec_validation(sdd::validate::builtin_rules());
+    let mut change = empty_change("test");
+
+    let result = pipeline.full_pipeline(&mut change, "").await;
+    assert!(result.is_err());
+    assert!(matches!(result.unwrap_err(), SddError::ValidationFailed { .. }));
+}
+
+#[tokio::test]
+async fn test_spec_validation_with_custom_single_rule() {
+    let client = MockLlmClient::new(vec![
+        "proposal".into(),
+        "spec with REQ-001".into(),
+    ]);
+    // Custom rule: just check for "REQ-" pattern
+    let custom_rules = vec![
+        sdd::validate::ValidationRule {
+            name: "has_req_id",
+            check: |spec: &str| sdd::validate::RuleResult {
+                rule: "has_req_id".into(),
+                passed: spec.contains("REQ-"),
+                message: if spec.contains("REQ-") { "OK".into() } else { "No REQ IDs".into() },
+            },
+        },
+    ];
+    let pipeline = SddPipeline::new(client)
+        .with_spec_validation(custom_rules);
+    let mut change = empty_change("test");
+
+    pipeline.execute_phase(SddPhase::Propose, &mut change, "").await.unwrap();
+    let result = pipeline.execute_phase(SddPhase::Spec, &mut change, "").await;
+    assert!(result.is_ok());
+}
+
 // ── execute_phase mutation Tests ──────────────────────────────────────────
 
 #[tokio::test]

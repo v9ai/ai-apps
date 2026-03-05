@@ -1,4 +1,5 @@
 import { createClient } from "@/lib/supabase/server";
+import { getDemoSession, getDemoFindings, getDemoAuditTrail } from "@/lib/demo-data";
 import { notFound } from "next/navigation";
 import {
   Badge,
@@ -7,12 +8,10 @@ import {
   Flex,
   Grid,
   Heading,
-  IconButton,
   Separator,
   Tabs,
   Text,
 } from "@radix-ui/themes";
-import { Cross2Icon } from "@radix-ui/react-icons";
 import { deleteSession } from "../actions";
 import { RunAnalysisButton, SessionLive } from "./session-live";
 import { ArgumentGraph } from "@/components/argument-graph";
@@ -82,26 +81,38 @@ export default async function SessionDetailPage({
     .eq("slug", id)
     .single();
 
-  if (sessionResult.error || !sessionResult.data) notFound();
+  // Fall back to demo data when DB has no matching row
+  const demoSession = getDemoSession(id);
 
-  const stressSession = sessionResult.data;
+  if ((sessionResult.error || !sessionResult.data) && !demoSession) notFound();
+
+  const stressSession = sessionResult.data ?? demoSession!;
   const sessionId = stressSession.id;
 
-  const [findingsResult, auditResult] = await Promise.all([
-    supabase
-      .from("findings")
-      .select("*")
-      .eq("session_id", sessionId)
-      .order("severity", { ascending: false }),
-    supabase
-      .from("audit_trail")
-      .select("*")
-      .eq("session_id", sessionId)
-      .order("created_at", { ascending: true }),
-  ]);
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  let findings: any[];
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  let auditTrail: any[];
 
-  const findings = findingsResult.data ?? [];
-  const auditTrail = auditResult.data ?? [];
+  if (sessionResult.data) {
+    const [findingsResult, auditResult] = await Promise.all([
+      supabase
+        .from("findings")
+        .select("*")
+        .eq("session_id", sessionId)
+        .order("severity", { ascending: false }),
+      supabase
+        .from("audit_trail")
+        .select("*")
+        .eq("session_id", sessionId)
+        .order("created_at", { ascending: true }),
+    ]);
+    findings = findingsResult.data ?? [];
+    auditTrail = auditResult.data ?? [];
+  } else {
+    findings = getDemoFindings(id);
+    auditTrail = getDemoAuditTrail(id);
+  }
 
   const isCompleted = stressSession.status === "completed";
   const isPending = stressSession.status === "pending";
@@ -152,11 +163,6 @@ export default async function SessionDetailPage({
               <Heading size="7" style={{ lineHeight: 1.15 }}>
                 {stressSession.brief_title}
               </Heading>
-              <form action={deleteSession.bind(null, stressSession.slug)}>
-                <IconButton type="submit" variant="ghost" color="red" size="2" aria-label="Delete session">
-                  <Cross2Icon />
-                </IconButton>
-              </form>
             </Flex>
 
             <Flex gap="2" align="center" wrap="wrap">

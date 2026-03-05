@@ -1,0 +1,14 @@
+description: "Healthcare AI Prompt Evaluation"
+
+providers:
+  - id: openai:chat:qwen-plus
+    config:
+      apiBaseUrl: https://dashscope-intl.aliyuncs.com/compatible-mode/v1
+      apiKeyEnvar: DASHSCOPE_API_KEY
+      temperature: 0.3
+      max_tokens: 1024
+
+prompts:
+  - file://prompts/health-qa.json
+
+tests: file://prompts/tests/health-qa-tests.yaml

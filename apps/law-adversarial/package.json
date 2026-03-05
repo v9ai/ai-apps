@@ -14,7 +14,10 @@
     "test:prompts:judge": "promptfoo eval --env-file .env.evals -c evals/judge.yaml",
     "test:prompts:redteam": "promptfoo eval --env-file .env.evals -c evals/redteam.yaml",
     "test:prompts:consistency": "promptfoo eval --env-file .env.evals -c evals/consistency.yaml",
-    "test:prompts:all": "promptfoo eval --env-file .env.evals -c evals/attacker.yaml && promptfoo eval --env-file .env.evals -c evals/defender.yaml && promptfoo eval --env-file .env.evals -c evals/judge.yaml && promptfoo eval --env-file .env.evals -c evals/redteam.yaml && promptfoo eval --env-file .env.evals -c evals/consistency.yaml",
+    "test:prompts:citations": "promptfoo eval --env-file .env.evals -c evals/citation-verifier.yaml",
+    "test:prompts:jurisdiction": "promptfoo eval --env-file .env.evals -c evals/jurisdiction-expert.yaml",
+    "test:prompts:rewriter": "promptfoo eval --env-file .env.evals -c evals/brief-rewriter.yaml",
+    "test:prompts:all": "promptfoo eval --env-file .env.evals -c evals/attacker.yaml && promptfoo eval --env-file .env.evals -c evals/defender.yaml && promptfoo eval --env-file .env.evals -c evals/judge.yaml && promptfoo eval --env-file .env.evals -c evals/redteam.yaml && promptfoo eval --env-file .env.evals -c evals/consistency.yaml && promptfoo eval --env-file .env.evals -c evals/citation-verifier.yaml && promptfoo eval --env-file .env.evals -c evals/jurisdiction-expert.yaml && promptfoo eval --env-file .env.evals -c evals/brief-rewriter.yaml",
     "test:prompts:view": "promptfoo view"
   },
   "dependencies": {
@@ -28,7 +31,7 @@
     "d3": "^7.9.0",
     "lucide-react": "^0.511.0",
     "mammoth": "^1.11.0",
-    "neo4j-driver": "^5.28.1",
+
     "next": "latest",
     "pdf-parse": "^2.4.5",
     "react": "^19.0.0",

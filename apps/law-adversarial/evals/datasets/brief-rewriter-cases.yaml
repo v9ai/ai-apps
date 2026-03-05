@@ -1,0 +1,134 @@
+# Brief Rewriter test cases — each provides a brief + findings to address
+
+# Van Wagner mischaracterization fix
+- vars:
+    brief: |
+      MEMORANDUM OF LAW IN SUPPORT OF MOTION FOR SPECIFIC PERFORMANCE
+
+      Plaintiff seeks specific performance of the Purchase Agreement dated January 15, 2024, requiring Defendant to convey the property at 123 Oak Street, New York, NY.
+
+      I. ARGUMENT
+      A. Specific Performance Is Warranted Because Real Property Is Unique
+      It is well established that real property is always unique and that monetary damages are therefore always inadequate. See Van Wagner Advertising Corp. v. S&M Enterprises, 67 N.Y.2d 186 (1986). Because the property is unique, Plaintiff is entitled to specific performance as a matter of right.
+
+      B. Defendant Has No Valid Defense
+      Defendant's claim of "change of heart" is not a recognized defense to breach of contract. The Statute of Frauds is satisfied because the Purchase Agreement is in writing. No other defenses apply.
+
+      C. The Balance of Equities Favors Plaintiff
+      Plaintiff has been ready, willing, and able to perform. Defendant simply does not want to sell.
+
+      II. CONCLUSION
+      For the foregoing reasons, the Court should grant Plaintiff's motion for specific performance.
+    findingsSummary: |
+      Finding 1: [LEGAL] (high, confidence: 0.95)
+        Description: The brief mischaracterizes Van Wagner. The case held that uniqueness of real property is a rebuttable presumption, not an absolute rule.
+        Suggested fix: Reframe the argument to acknowledge the presumption and supplement with property-specific uniqueness factors.
+
+      Finding 2: [LEGAL] (high, confidence: 0.9)
+        Description: The brief claims specific performance is available "as a matter of right" when it is discretionary.
+        Suggested fix: Reframe as requesting the court to exercise its discretion, citing factors that favor granting the remedy.
+
+      Finding 3: [LEGAL] (medium, confidence: 0.8)
+        Description: The brief fails to address potential equitable defenses beyond "change of heart."
+        Suggested fix: Add a section preemptively addressing laches, unclean hands, and unconscionability.
+    jurisdiction: "New York"
+    round: "1"
+    previousFindings: "[]"
+  assert:
+    - type: javascript
+      value: "file://assertions/validate-brief-rewriter.js"
+    - type: llm-rubric
+      value: >
+        The rewriter should: (1) fix the Van Wagner characterization to acknowledge it establishes
+        a rebuttable presumption, not an absolute rule; (2) remove "as a matter of right" and
+        reframe as discretionary equitable relief; (3) add a section addressing equitable defenses;
+        (4) the revised brief should be complete and filing-ready; (5) each change should reference
+        the specific finding it addresses; (6) improvement_score should be notably higher than
+        the original (expect 65-80). Rate on quality of legal revisions and minimal intervention.
+
+# First Amendment doctrinal error fix
+- vars:
+    brief: |
+      BRIEF IN SUPPORT OF MOTION TO DISMISS
+
+      Defendant Professor published an article criticizing the university's diversity policies and was terminated.
+
+      I. ARGUMENT
+      A. Defendant's Speech Is Protected Under Strict Scrutiny
+      The First Amendment protects academic speech absolutely. All speech by professors at public universities is protected under strict scrutiny. Pickering v. Board of Education, 391 U.S. 563 (1968).
+
+      B. The University Cannot Show a Compelling Interest
+      The university's interest in "institutional harmony" does not rise to the level of a compelling government interest. See Tinker v. Des Moines, 393 U.S. 503 (1969).
+
+      C. The Garcetti Exception Does Not Apply
+      Garcetti does not apply to academic speech. See Demers v. Austin, 746 F.3d 402 (9th Cir. 2014).
+
+      II. CONCLUSION
+      Defendant's speech is fully protected and the motion to dismiss should be granted.
+    findingsSummary: |
+      Finding 1: [LEGAL] (critical, confidence: 0.95)
+        Description: Strict scrutiny is the wrong framework. Public employee speech uses the Pickering-Connick balancing test.
+        Suggested fix: Replace strict scrutiny framework with Pickering-Connick two-step test. Show speech is on a matter of public concern and employee interest outweighs employer interest.
+
+      Finding 2: [CITATION] (high, confidence: 0.92)
+        Description: Tinker v. Des Moines governs student speech in K-12 schools, not public employee speech.
+        Suggested fix: Remove Tinker citation and replace with Connick v. Myers and Rankin v. McPherson for the public concern analysis.
+
+      Finding 3: [LEGAL] (high, confidence: 0.88)
+        Description: The Supreme Court explicitly reserved whether Garcetti applies to academic speech. Demers is Ninth Circuit only.
+        Suggested fix: Reframe as an emerging trend across circuits rather than settled law. Cite the Garcetti reservation and multiple circuit authorities.
+    jurisdiction: "Federal"
+    round: "1"
+    previousFindings: "[]"
+  assert:
+    - type: javascript
+      value: "file://assertions/validate-brief-rewriter.js"
+    - type: llm-rubric
+      value: >
+        The rewriter should: (1) completely replace the strict scrutiny framework with
+        Pickering-Connick; (2) remove Tinker citation entirely and replace with appropriate
+        public employee speech authority; (3) reframe Garcetti section to acknowledge the Supreme
+        Court reservation while arguing the emerging trend; (4) changes should be tracked with
+        the correct finding_ref; (5) the revised brief should use the correct legal framework
+        throughout. Rate on doctrinal accuracy of the revised brief.
+
+# Pro se brief improvement
+- vars:
+    brief: |
+      TO THE HONORABLE COURT
+
+      My name is James Walker and I am filing this motion myself because I cannot afford a lawyer. I am asking the court to give me back custody of my two children who were taken by CPS on December 10, 2025.
+
+      CPS came to my house because my neighbor called them. The CPS worker said the house was messy. That is not a reason to take children. My kids were happy and healthy.
+
+      The Constitution says parents have a right to raise their children. The Supreme Court said this in some case I read about online. The government cannot take your kids just because your house is messy.
+
+      Also CPS is biased against fathers. Statistics show that mothers get custody more often. This is discrimination.
+
+      I ask the court to return my children immediately and sanction CPS for violating my rights.
+    findingsSummary: |
+      Finding 1: [LEGAL] (high, confidence: 0.88)
+        Description: No specific case law cited. The relevant standards are Santosky v. Kramer and Troxel v. Granville for parental rights.
+        Suggested fix: Add proper citations to Santosky v. Kramer and Troxel v. Granville. Cite Texas Family Code Chapter 262 for removal procedures.
+
+      Finding 2: [LEGAL] (high, confidence: 0.85)
+        Description: The equal protection argument about gender bias lacks legal foundation — statistical disparity alone does not establish an EP violation without showing discriminatory intent.
+        Suggested fix: Either drop the EP argument or reframe as a due process claim about procedural fairness.
+
+      Finding 3: [PROCEDURAL] (medium, confidence: 0.79)
+        Description: The brief does not cite the specific Texas Family Code provisions governing emergency removal and adversary hearings.
+        Suggested fix: Cite Texas Family Code Sections 262.101-262.201 and argue the three-week paperwork delay violated the 14-day adversary hearing requirement.
+    jurisdiction: "Texas"
+    round: "1"
+    previousFindings: "[]"
+  assert:
+    - type: javascript
+      value: "file://assertions/validate-brief-rewriter.js"
+    - type: llm-rubric
+      value: >
+        The rewriter should: (1) add proper constitutional citations (Santosky, Troxel) while
+        maintaining the pro se voice — don't turn it into a law firm brief; (2) either drop or
+        significantly rework the EP argument; (3) strengthen the procedural argument with Texas
+        Family Code citations; (4) the revised brief should be respectful of the pro se posture;
+        (5) improvement_score should reflect significant improvement but acknowledge remaining
+        weaknesses. Rate on balancing legal improvement with voice preservation.

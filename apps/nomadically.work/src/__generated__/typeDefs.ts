@@ -893,6 +893,7 @@ type Mutation {
   """
   reportJob(id: Int!): Job
   unlinkTrackFromApplication(applicationId: Int!, trackSlug: String!): Application!
+  unverifyCompanyContacts(companyId: Int!): UnverifyContactsResult!
   updateApplication(id: Int!, input: UpdateApplicationInput!): Application!
   updateCompany(id: Int!, input: UpdateCompanyInput!): Company!
   updateContact(id: Int!, input: UpdateContactInput!): Contact!
@@ -1222,6 +1223,11 @@ type TrackItem {
 }
 
 scalar URL
+
+type UnverifyContactsResult {
+  count: Int!
+  success: Boolean!
+}
 
 input UpdateApplicationInput {
   companyName: String

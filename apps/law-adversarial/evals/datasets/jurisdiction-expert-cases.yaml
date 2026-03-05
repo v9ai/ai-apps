@@ -1,0 +1,92 @@
+# Jurisdiction Expert test cases
+
+# New York specific performance
+- vars:
+    brief: |
+      MEMORANDUM OF LAW IN SUPPORT OF MOTION FOR SPECIFIC PERFORMANCE
+
+      Plaintiff seeks specific performance of the Purchase Agreement for 123 Oak Street, New York, NY ($2,500,000).
+
+      Real property is always unique and monetary damages are always inadequate. See Van Wagner Advertising Corp. v. S&M Enterprises, 67 N.Y.2d 186 (1986). Plaintiff is entitled to specific performance as a matter of right. The Statute of Frauds is satisfied because the agreement is in writing.
+    jurisdiction: "New York"
+    round: "1"
+    previousFindings: "[]"
+  assert:
+    - type: javascript
+      value: "file://assertions/validate-jurisdiction-expert.js"
+    - type: llm-rubric
+      value: >
+        The jurisdiction expert should identify NY-specific issues: (1) Van Wagner is a NY Court
+        of Appeals case but is mischaracterized -- in NY the presumption of uniqueness for
+        residential real property is strong but rebuttable; (2) NY CPLR Article 63 governs
+        equitable relief with specific procedural requirements; (3) the brief should cite
+        NY-specific precedent like Sokoloff v. Harriman Estates; (4) NY Statute of Frauds
+        (GOL Section 5-703) applies specifically to real property contracts.
+
+# Federal Second Circuit First Amendment
+- vars:
+    brief: |
+      BRIEF IN SUPPORT OF MOTION TO DISMISS -- FIRST AMENDMENT
+
+      The First Amendment protects academic speech absolutely under strict scrutiny. Pickering v. Board of Education, 391 U.S. 563 (1968). The university's interest in "institutional harmony" cannot survive strict scrutiny. See Tinker v. Des Moines, 393 U.S. 503 (1969). Garcetti does not apply to academic speech per Demers v. Austin, 746 F.3d 402 (9th Cir. 2014).
+    jurisdiction: "Federal -- Second Circuit"
+    round: "1"
+    previousFindings: "[]"
+  assert:
+    - type: javascript
+      value: "file://assertions/validate-jurisdiction-expert.js"
+    - type: llm-rubric
+      value: >
+        The jurisdiction expert should flag: (1) Demers v. Austin is Ninth Circuit -- not
+        binding in the Second Circuit; the Second Circuit has its own Garcetti academic freedom
+        jurisprudence; (2) the Second Circuit applies Pickering-Connick, not strict scrutiny;
+        (3) Tinker is Supreme Court but governs student speech -- the Second Circuit has specific
+        teacher/professor speech cases; (4) the brief should cite Second Circuit authority like
+        Jackler v. Byrne or Weintraub v. Board of Education. The overall_jurisdiction_fitness
+        should be low.
+
+# Texas family law
+- vars:
+    brief: |
+      TO THE HONORABLE COURT
+
+      I am James Walker filing pro se. CPS took my children on December 10, 2025 because my neighbor called. The CPS worker said my house was messy. I got no paperwork for three weeks. The Constitution protects parental rights. Fathers face discrimination. I ask the court to return my children.
+    jurisdiction: "Texas"
+    round: "1"
+    previousFindings: "[]"
+  assert:
+    - type: javascript
+      value: "file://assertions/validate-jurisdiction-expert.js"
+    - type: llm-rubric
+      value: >
+        The jurisdiction expert should identify Texas-specific issues: (1) Texas Family Code
+        Chapter 262 governs emergency removal -- Section 262.201 requires an adversary hearing
+        within 14 days; (2) the three-week paperwork delay may violate specific Texas notice
+        requirements; (3) Texas applies the "best interest of the child" standard (Holley v.
+        Adams factors); (4) Texas Family Code Section 153.131 provides gender-neutral
+        presumption favoring joint managing conservators; (5) procedural_compliance should
+        check each relevant Texas Family Code provision.
+
+# California negligence with diversity jurisdiction failure
+- vars:
+    brief: |
+      COMPLAINT FOR NEGLIGENCE
+
+      Plaintiff resides in San Francisco, California. Defendant Corporation is incorporated in Delaware with its principal place of business in San Francisco, California.
+
+      This Court has jurisdiction under 28 U.S.C. 1332 because the parties are diverse. On March 1, 2025, a steel beam fell from Defendant's construction site and struck Plaintiff. All persons owe a duty of reasonable care to everyone. Res ipsa loquitur applies. See Escola v. Coca Cola Bottling Co., 24 Cal.2d 453 (1944).
+    jurisdiction: "California"
+    round: "1"
+    previousFindings: "[]"
+  assert:
+    - type: javascript
+      value: "file://assertions/validate-jurisdiction-expert.js"
+    - type: llm-rubric
+      value: >
+        The jurisdiction expert should identify California-specific issues: (1) diversity
+        jurisdiction FAILS -- both parties are California citizens (plaintiff resides in CA,
+        defendant has PPB in CA) -- this should be critical; (2) California uses the Rowland v.
+        Christian multi-factor balancing test for duty, not a universal duty rule; (3) Escola is
+        a products liability case not construction negligence; (4) res ipsa loquitur in California
+        has specific elements under Evidence Code and case law; (5) Privette doctrine for
+        independent contractor construction site liability may apply.

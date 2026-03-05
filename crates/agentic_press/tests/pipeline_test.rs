@@ -5,18 +5,28 @@ use tempfile::TempDir;
 use wiremock::matchers::{body_string_contains, method, path};
 use wiremock::{Mock, MockServer, ResponseTemplate};
 
-use agentic_press::{deepseek::DeepSeekClient, pipeline::Pipeline};
+use deepseek::{DeepSeekClient, ReqwestClient};
+use agentic_press::pipeline::Pipeline;
 
 // ── helpers ───────────────────────────────────────────────────────────────────
 
 fn chat_response(content: &str) -> serde_json::Value {
     serde_json::json!({
+        "id": "test-id",
         "choices": [{
+            "index": 0,
             "message": {
+                "role": "assistant",
                 "content": content,
                 "reasoning_content": "internal reasoning"
-            }
-        }]
+            },
+            "finish_reason": "stop"
+        }],
+        "usage": {
+            "prompt_tokens": 10,
+            "completion_tokens": 20,
+            "total_tokens": 30
+        }
     })
 }
 
@@ -48,7 +58,10 @@ async fn mount_standard_mocks(server: &MockServer, picker_json: &str) {
 }
 
 fn pipeline(server: &MockServer, tmp: &TempDir) -> Pipeline {
-    let client = Arc::new(DeepSeekClient::new("test-key", server.uri()));
+    let client = Arc::new(
+        DeepSeekClient::new(ReqwestClient::new(), "test-key")
+            .with_base_url(server.uri()),
+    );
     Pipeline::new("test niche", tmp.path().to_str().unwrap()).with_client(client)
 }
 

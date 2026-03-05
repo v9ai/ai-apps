@@ -1,0 +1,124 @@
+# Citation Verifier test cases
+
+# Brief with a mischaracterized citation (Van Wagner)
+- vars:
+    brief: |
+      MEMORANDUM OF LAW IN SUPPORT OF MOTION FOR SPECIFIC PERFORMANCE
+
+      It is well established that real property is always unique and that monetary damages are therefore always inadequate. See Van Wagner Advertising Corp. v. S&M Enterprises, 67 N.Y.2d 186 (1986). Because the property is unique, Plaintiff is entitled to specific performance as a matter of right.
+
+      The Statute of Frauds is satisfied because the Purchase Agreement is in writing. No other defenses apply. See Restatement (Second) of Contracts Section 357.
+    jurisdiction: "New York"
+    round: "1"
+    previousFindings: "[]"
+  assert:
+    - type: javascript
+      value: "file://assertions/validate-citation-verifier.js"
+    - type: llm-rubric
+      value: >
+        The citation verifier should identify: (1) Van Wagner is real but MISCHARACTERIZED --
+        the case actually held that uniqueness is a rebuttable presumption, not that real property
+        is "always unique"; (2) Restatement (Second) of Contracts Section 357 should be flagged
+        as valid or noted that the Restatement is not binding authority but is properly cited as
+        persuasive. The fabrication_risk should be low (0.0-0.2) since all citations are real.
+
+# Brief with fabricated citations
+- vars:
+    brief: |
+      MEMORANDUM IN SUPPORT OF SUMMARY JUDGMENT
+
+      Plaintiff is entitled to summary judgment under the landmark decision in Henderson v. National Consumer Rights Board, 587 U.S. 412 (2024), which established that all consumer protection claims are subject to strict liability. See also Martinez v. Federal Trade Alliance, 892 F.3d 1045 (9th Cir. 2023), which extended Henderson to state-law claims.
+
+      Under the Henderson framework, Defendant's knowledge or intent is irrelevant. The mere sale of a defective product triggers automatic liability with treble damages.
+    jurisdiction: "Federal"
+    round: "1"
+    previousFindings: "[]"
+  assert:
+    - type: javascript
+      value: "file://assertions/validate-citation-verifier.js"
+    - type: javascript
+      value: |
+        module.exports = (output) => {
+          const parsed = typeof output === 'string' ? JSON.parse(output) : output;
+          const fabricated = parsed.citations.filter(c => c.status === 'fabricated');
+          if (fabricated.length < 2) {
+            return { pass: false, score: 0, reason: `Expected at least 2 fabricated citations, found ${fabricated.length}` };
+          }
+          if (parsed.fabrication_risk < 0.7) {
+            return { pass: false, score: 0, reason: `fabrication_risk ${parsed.fabrication_risk} too low -- expected >= 0.7 for a brief with 2 fake citations` };
+          }
+          return { pass: true, score: 1, reason: `Correctly identified ${fabricated.length} fabricated citations` };
+        };
+    - type: llm-rubric
+      value: >
+        The verifier MUST flag Henderson v. National Consumer Rights Board and Martinez v. Federal
+        Trade Alliance as FABRICATED. The "National Consumer Rights Board" and "Federal Trade
+        Alliance" are not real entities. The fabrication_risk should be high (0.7+). The verifier
+        should NOT hallucinate details about these fake cases.
+
+# Brief with mixed valid and problematic citations
+- vars:
+    brief: |
+      BRIEF IN SUPPORT OF MOTION TO DISMISS -- FIRST AMENDMENT
+
+      The First Amendment protects academic speech absolutely under strict scrutiny. Pickering v. Board of Education, 391 U.S. 563 (1968). The university's interest in "institutional harmony" cannot survive strict scrutiny. See Tinker v. Des Moines, 393 U.S. 503 (1969). Garcetti does not apply to academic speech per Demers v. Austin, 746 F.3d 402 (9th Cir. 2014).
+    jurisdiction: "Federal"
+    round: "1"
+    previousFindings: "[]"
+  assert:
+    - type: javascript
+      value: "file://assertions/validate-citation-verifier.js"
+    - type: llm-rubric
+      value: >
+        The verifier should identify: (1) Pickering is REAL but MISCHARACTERIZED -- it does not
+        establish strict scrutiny for all academic speech; it established a balancing test for
+        public employee speech; (2) Tinker is REAL but INAPPOSITE -- it governs student speech
+        in K-12 schools, not public employee speech at universities; (3) Demers v. Austin is
+        REAL but should be flagged as limited -- it is a Ninth Circuit holding and the Supreme
+        Court explicitly reserved whether Garcetti applies to academic speech. fabrication_risk
+        should be low.
+
+# Brief with overruled and superseded citations
+- vars:
+    brief: |
+      MOTION TO SUPPRESS EVIDENCE
+
+      Under Aguilar v. Texas, 378 U.S. 108 (1964), the warrant in this case is invalid because the affidavit fails the two-pronged test requiring demonstration of both the informant's basis of knowledge and veracity. The affidavit relies solely on an anonymous tip without corroboration.
+
+      Additionally, under Bivens v. Six Unknown Named Agents, 403 U.S. 388 (1971), the defendant is entitled to damages for the unconstitutional search. Bivens provides a private right of action for Fourth Amendment violations by federal agents.
+
+      See also Lemon v. Kurtzman, 403 U.S. 602 (1971), which established the three-part test for Establishment Clause analysis.
+    jurisdiction: "Federal"
+    round: "1"
+    previousFindings: "[]"
+  assert:
+    - type: javascript
+      value: "file://assertions/validate-citation-verifier.js"
+    - type: llm-rubric
+      value: >
+        The verifier should identify: (1) Aguilar v. Texas is OVERRULED -- replaced by
+        Illinois v. Gates (1983) totality-of-the-circumstances test; (2) Bivens should be
+        flagged as DISTINGUISHED or limited -- Egbert v. Boule and Hernandez v. Mesa severely
+        limited Bivens extensions; (3) Lemon v. Kurtzman should be flagged as OVERRULED or
+        undermined -- Kennedy v. Bremerton School District (2022) effectively replaced the
+        Lemon test.
+
+# Pro se brief with no proper citations
+- vars:
+    brief: |
+      TO THE HONORABLE COURT
+
+      My name is James Walker. CPS took my children because my neighbor called after an argument. The Supreme Court said parents have rights in some case I read about online. The Constitution says the government cannot take your kids without due process. Also CPS is biased against fathers -- statistics prove this.
+    jurisdiction: "Texas"
+    round: "1"
+    previousFindings: "[]"
+  assert:
+    - type: javascript
+      value: "file://assertions/validate-citation-verifier.js"
+    - type: llm-rubric
+      value: >
+        The verifier should note: (1) "some case I read about online" is not a proper citation
+        but likely refers to Troxel v. Granville or Santosky v. Kramer; (2) the due process
+        reference to the Constitution lacks specificity; (3) "statistics prove this" is not a
+        legal citation. The fabrication_risk should be low since the pro se litigant is not
+        fabricating -- they are just not citing properly.

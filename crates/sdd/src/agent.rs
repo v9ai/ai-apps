@@ -24,54 +24,6 @@ pub fn build_request(
     }
 }
 
-/// Create a system message
-pub fn system_msg(content: &str) -> ChatMessage {
-    ChatMessage {
-        role: "system".into(),
-        content: ChatContent::Text(content.into()),
-        reasoning_content: None,
-        tool_calls: None,
-        tool_call_id: None,
-        name: None,
-    }
-}
-
-/// Create a user message
-pub fn user_msg(content: &str) -> ChatMessage {
-    ChatMessage {
-        role: "user".into(),
-        content: ChatContent::Text(content.into()),
-        reasoning_content: None,
-        tool_calls: None,
-        tool_call_id: None,
-        name: None,
-    }
-}
-
-/// Create an assistant message
-pub fn assistant_msg(content: &str) -> ChatMessage {
-    ChatMessage {
-        role: "assistant".into(),
-        content: ChatContent::Text(content.into()),
-        reasoning_content: None,
-        tool_calls: None,
-        tool_call_id: None,
-        name: None,
-    }
-}
-
-/// Create a tool result message
-pub fn tool_result_msg(tool_call_id: &str, content: &str) -> ChatMessage {
-    ChatMessage {
-        role: "tool".into(),
-        content: ChatContent::Text(content.into()),
-        reasoning_content: None,
-        tool_calls: None,
-        tool_call_id: Some(tool_call_id.into()),
-        name: None,
-    }
-}
-
 /// Run the agent loop: send prompt, handle tool calls, iterate until done.
 /// Generic over any `LlmClient` implementation.
 pub async fn agent_loop<C, F, Fut>(

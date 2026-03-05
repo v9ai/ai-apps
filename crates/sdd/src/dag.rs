@@ -10,10 +10,11 @@ use futures::future::join_all;
 use serde::{Deserialize, Serialize};
 use serde_json::Value;
 
-use crate::agent::{build_request, system_msg, user_msg};
+use crate::agent::build_request;
 use crate::error::{Result, SddError};
+use crate::extract::extract_json;
 use crate::hooks::HookRegistry;
-use crate::types::{DeepSeekModel, EffortLevel, HookEvent, HookInput, HookOutput};
+use crate::types::{DeepSeekModel, EffortLevel, HookEvent, HookInput, HookOutput, system_msg, user_msg};
 use crate::traits::LlmClient;
 
 // ── Types ──────────────────────────────────────────────────────────────
@@ -31,6 +32,14 @@ pub struct DagNode {
     pub effort: EffortLevel,
     #[serde(default)]
     pub tools: Vec<String>,
+    /// JSON schema describing the expected structured output. When set, format
+    /// instructions are appended to the system prompt and the LLM response is
+    /// parsed as JSON.
+    #[serde(default)]
+    pub output_schema: Option<Value>,
+    /// Maximum number of retries when a node fails (default 0 = no retry).
+    #[serde(default)]
+    pub max_retries: u32,
 }
 
 /// A complete DAG definition with validation.
@@ -143,17 +152,54 @@ impl DagBuilder {
     }
 }
 
+/// Metadata recorded for each executed node.
+#[derive(Debug, Clone, Default, Serialize, Deserialize)]
+pub struct NodeMeta {
+    /// Number of attempts (1 = succeeded first try).
+    pub attempts: u32,
+    /// Timestamp when the node started (ISO 8601 string).
+    #[serde(default)]
+    pub started_at: Option<String>,
+    /// Timestamp when the node completed (ISO 8601 string).
+    #[serde(default)]
+    pub completed_at: Option<String>,
+    /// Arbitrary per-node metadata.
+    #[serde(default)]
+    pub metadata: HashMap<String, Value>,
+}
+
 /// Tracks execution state for a DAG run.
 #[derive(Debug, Clone, Default, Serialize, Deserialize)]
 pub struct DagExecution {
     pub nodes_completed: Vec<String>,
     pub nodes_in_progress: Vec<String>,
     pub artifacts: HashMap<String, Value>,
+    /// Per-node inputs for root nodes (nodes with no dependencies).
+    #[serde(default)]
+    pub inputs: HashMap<String, Value>,
+    /// Per-node execution metadata.
+    #[serde(default)]
+    pub node_meta: HashMap<String, NodeMeta>,
+    /// Pipeline-level metadata.
+    #[serde(default)]
+    pub metadata: HashMap<String, Value>,
 }
 
 impl DagExecution {
     pub fn new() -> Self {
         Self::default()
+    }
+
+    /// Provide input data for a specific node (typically a root node).
+    pub fn with_input(mut self, node_name: &str, data: Value) -> Self {
+        self.inputs.insert(node_name.to_string(), data);
+        self
+    }
+
+    /// Attach pipeline-level metadata.
+    pub fn with_metadata(mut self, key: &str, value: Value) -> Self {
+        self.metadata.insert(key.to_string(), value);
+        self
     }
 
     pub fn is_complete(&self, dag: &DagDefinition) -> bool {
@@ -230,7 +276,7 @@ impl<C: LlmClient> DagPipeline<C> {
             }
         }
 
-        // Build user prompt from upstream artifacts
+        // Build user prompt from upstream artifacts or inputs
         let mut user_parts: Vec<String> = Vec::new();
         for dep in &node.dependencies {
             if let Some(artifact) = execution.artifacts.get(dep) {
@@ -242,13 +288,29 @@ impl<C: LlmClient> DagPipeline<C> {
             }
         }
         let user_prompt = if user_parts.is_empty() {
-            "Begin.".to_string()
+            // Root node: use provided input if available, otherwise "Begin."
+            if let Some(input) = execution.inputs.get(&node.name) {
+                serde_json::to_string_pretty(input).unwrap_or_else(|_| "Begin.".to_string())
+            } else {
+                "Begin.".to_string()
+            }
         } else {
             user_parts.join("\n\n")
         };
 
+        // Build system prompt, appending JSON format instructions if output_schema is set
+        let system_prompt = if let Some(schema) = &node.output_schema {
+            format!(
+                "{}\n\nYou MUST respond with valid JSON matching this schema:\n{}",
+                node.system_prompt,
+                serde_json::to_string_pretty(schema).unwrap_or_default()
+            )
+        } else {
+            node.system_prompt.clone()
+        };
+
         let messages = vec![
-            system_msg(&node.system_prompt),
+            system_msg(&system_prompt),
             user_msg(&user_prompt),
         ];
         let request = build_request(&node.model, messages, None, &node.effort);
@@ -260,7 +322,12 @@ impl<C: LlmClient> DagPipeline<C> {
             .map(|c| c.message.content.as_str().to_string())
             .unwrap_or_default();
 
-        let result = Value::String(text);
+        // If output_schema is set, try to extract JSON; fall back to Value::String
+        let result = if node.output_schema.is_some() {
+            extract_json(&text).unwrap_or_else(|| Value::String(text))
+        } else {
+            Value::String(text)
+        };
 
         // Fire PostPhase hook
         if let Some(hooks) = &self.hooks {
@@ -278,6 +345,23 @@ impl<C: LlmClient> DagPipeline<C> {
         }
 
         Ok(result)
+    }
+
+    /// Run a node with retry support.
+    async fn run_node_with_retry(
+        &self,
+        node: &DagNode,
+        execution: &DagExecution,
+    ) -> (Result<Value>, u32) {
+        let max_attempts = node.max_retries + 1;
+        let mut last_err = None;
+        for attempt in 1..=max_attempts {
+            match self.run_node(node, execution).await {
+                Ok(value) => return (Ok(value), attempt),
+                Err(e) => last_err = Some(e),
+            }
+        }
+        (Err(last_err.unwrap()), max_attempts)
     }
 
     /// Execute a single node with dependency validation.
@@ -302,13 +386,28 @@ impl<C: LlmClient> DagPipeline<C> {
         }
 
         execution.nodes_in_progress.push(node_name.to_string());
-        let result = self.run_node(node, execution).await?;
+
+        let (result, attempts) = self.run_node_with_retry(node, execution).await;
 
         execution.nodes_in_progress.retain(|n| n != node_name);
-        execution.nodes_completed.push(node_name.to_string());
-        execution.artifacts.insert(node_name.to_string(), result.clone());
 
-        Ok(result)
+        // Record node meta
+        let meta = NodeMeta {
+            attempts,
+            started_at: None,
+            completed_at: None,
+            metadata: HashMap::new(),
+        };
+        execution.node_meta.insert(node_name.to_string(), meta);
+
+        match result {
+            Ok(value) => {
+                execution.nodes_completed.push(node_name.to_string());
+                execution.artifacts.insert(node_name.to_string(), value.clone());
+                Ok(value)
+            }
+            Err(e) => Err(e),
+        }
     }
 
     /// Detect all ready nodes and run them in parallel.
@@ -334,8 +433,8 @@ impl<C: LlmClient> DagPipeline<C> {
             .map(|node| {
                 let snap = snapshot.clone();
                 async move {
-                    let result = self.run_node(node, &snap).await;
-                    (node.name.clone(), result)
+                    let (result, attempts) = self.run_node_with_retry(node, &snap).await;
+                    (node.name.clone(), result, attempts)
                 }
             })
             .collect();
@@ -343,8 +442,17 @@ impl<C: LlmClient> DagPipeline<C> {
         let results = join_all(futures).await;
 
         let mut outputs = Vec::new();
-        for (name, result) in results {
+        for (name, result, attempts) in results {
             execution.nodes_in_progress.retain(|n| n != &name);
+
+            let meta = NodeMeta {
+                attempts,
+                started_at: None,
+                completed_at: None,
+                metadata: HashMap::new(),
+            };
+            execution.node_meta.insert(name.clone(), meta);
+
             match result {
                 Ok(value) => {
                     execution.nodes_completed.push(name.clone());

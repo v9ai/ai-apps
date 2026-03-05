@@ -1,0 +1,22 @@
+description: "Health Trajectory Analysis Evaluation"
+
+providers:
+  - id: openai:chat:qwen-plus
+    config:
+      apiBaseUrl: https://dashscope-intl.aliyuncs.com/compatible-mode/v1
+      apiKeyEnvar: DASHSCOPE_API_KEY
+      temperature: 0.3
+      max_tokens: 1500
+
+defaultTest:
+  options:
+    provider:
+      id: openai:chat:qwen-plus
+      config:
+        apiBaseUrl: https://dashscope-intl.aliyuncs.com/compatible-mode/v1
+        apiKeyEnvar: DASHSCOPE_API_KEY
+
+prompts:
+  - file://prompts/trajectory.json
+
+tests: file://prompts/tests/trajectory-tests.yaml

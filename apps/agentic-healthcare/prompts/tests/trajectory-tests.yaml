@@ -1,0 +1,354 @@
+# --- Improving cholesterol with risk classification ---
+- vars:
+    stateCount: "3"
+    context: |
+      --- State 1 (2025-06-15) | similarity to latest: 72.3% ---
+      File: blood_test_2025_06.pdf
+      Derived metrics: TC/HDL Ratio: 5.8000 [elevated], HDL/LDL Ratio: 0.2571 [low], TG/HDL Ratio: 4.2222 [elevated]
+      Total Cholesterol: 260 mg/dL, LDL: 175 mg/dL, HDL: 45 mg/dL, Triglycerides: 190 mg/dL
+
+      --- State 2 (2025-12-10) | similarity to latest: 88.1% ---
+      File: blood_test_2025_12.pdf
+      Derived metrics: TC/HDL Ratio: 4.4000 [optimal], HDL/LDL Ratio: 0.3571 [borderline], TG/HDL Ratio: 3.0000 [borderline]
+      Total Cholesterol: 220 mg/dL, LDL: 140 mg/dL, HDL: 50 mg/dL, Triglycerides: 150 mg/dL
+
+      --- State 3 (2026-03-01) | similarity to latest: 100.0% ---
+      File: blood_test_2026_03.pdf
+      Derived metrics: TC/HDL Ratio: 3.5455 [optimal], HDL/LDL Ratio: 0.4783 [optimal], TG/HDL Ratio: 2.1818 [borderline]
+      Total Cholesterol: 195 mg/dL, LDL: 115 mg/dL, HDL: 55 mg/dL, Triglycerides: 120 mg/dL
+    velocityContext: |
+
+      Rate of change (per day) between consecutive states:
+      2025-06-15 -> 2025-12-10 (178d): TC/HDL Ratio: -0.00787/day, HDL/LDL Ratio: 0.00056/day, TG/HDL Ratio: -0.00687/day
+      2025-12-10 -> 2026-03-01 (81d): TC/HDL Ratio: -0.01056/day, HDL/LDL Ratio: 0.00150/day, TG/HDL Ratio: -0.01010/day
+  assert:
+    - type: javascript
+      value: output.toLowerCase().includes("improv") || output.toLowerCase().includes("decreas") || output.toLowerCase().includes("better") || output.toLowerCase().includes("positive")
+    - type: javascript
+      value: output.toLowerCase().includes("cholesterol") || output.toLowerCase().includes("lipid") || output.toLowerCase().includes("hdl") || output.toLowerCase().includes("ldl") || output.toLowerCase().includes("tc/hdl")
+    - type: javascript
+      value: output.toLowerCase().includes("doctor") || output.toLowerCase().includes("healthcare provider") || output.toLowerCase().includes("physician") || output.toLowerCase().includes("medical") || output.toLowerCase().includes("consult") || output.toLowerCase().includes("professional")
+    - type: javascript
+      value: >
+        output.includes("Castelli") || output.includes("Millán") || output.includes("Millan") || output.includes("McLaughlin") || output.toLowerCase().includes("tc/hdl") || output.toLowerCase().includes("tg/hdl")
+    - type: not-icontains
+      value: "I am not a doctor"
+    - type: javascript
+      value: output.toLowerCase().includes("elevated") || output.toLowerCase().includes("optimal") || output.toLowerCase().includes("borderline")
+
+# --- Worsening metabolic markers with TyG index ---
+- vars:
+    stateCount: "3"
+    context: |
+      --- State 1 (2025-06-15) | similarity to latest: 78.5% ---
+      File: blood_test_2025_06.pdf
+      Derived metrics: TyG Index: 8.2451 [optimal], TG/HDL Ratio: 1.8000 [optimal]
+      Fasting Glucose: 95 mg/dL, Triglycerides: 108 mg/dL, HDL: 60 mg/dL
+
+      --- State 2 (2025-12-10) | similarity to latest: 85.2% ---
+      File: blood_test_2025_12.pdf
+      Derived metrics: TyG Index: 8.6721 [borderline], TG/HDL Ratio: 2.9455 [borderline]
+      Fasting Glucose: 112 mg/dL, Triglycerides: 162 mg/dL, HDL: 55 mg/dL
+
+      --- State 3 (2026-03-01) | similarity to latest: 100.0% ---
+      File: blood_test_2026_03.pdf
+      Derived metrics: TyG Index: 9.1532 [elevated], TG/HDL Ratio: 4.1600 [elevated]
+      Fasting Glucose: 138 mg/dL, Triglycerides: 208 mg/dL, HDL: 50 mg/dL
+    velocityContext: |
+
+      Rate of change (per day) between consecutive states:
+      2025-06-15 -> 2025-12-10 (178d): TyG Index: 0.00240/day, TG/HDL Ratio: 0.00643/day
+      2025-12-10 -> 2026-03-01 (81d): TyG Index: 0.00594/day, TG/HDL Ratio: 0.01500/day
+  assert:
+    - type: javascript
+      value: output.toLowerCase().includes("worsen") || output.toLowerCase().includes("increas") || output.toLowerCase().includes("rising") || output.toLowerCase().includes("deteriorat") || output.toLowerCase().includes("elevated")
+    - type: javascript
+      value: output.toLowerCase().includes("glucose") || output.toLowerCase().includes("tyg") || output.toLowerCase().includes("triglyceride")
+    - type: javascript
+      value: output.toLowerCase().includes("insulin resistance") || output.toLowerCase().includes("metabolic")
+    - type: javascript
+      value: output.toLowerCase().includes("doctor") || output.toLowerCase().includes("healthcare provider") || output.toLowerCase().includes("physician") || output.toLowerCase().includes("medical") || output.toLowerCase().includes("consult") || output.toLowerCase().includes("professional")
+    - type: javascript
+      value: >
+        output.includes("McLaughlin") || output.includes("Simental") || output.toLowerCase().includes("tg/hdl") || output.toLowerCase().includes("tyg")
+    - type: not-icontains
+      value: "I am not a doctor"
+    - type: llm-rubric
+      value: "The response identifies the TyG index and TG/HDL ratio as progressively worsening from optimal to elevated over three time points. It mentions insulin resistance as a concern and notes the accelerating rate of change. It does not diagnose."
+
+# --- Stable trajectory with high similarity ---
+- vars:
+    stateCount: "3"
+    context: |
+      --- State 1 (2025-06-15) | similarity to latest: 96.2% ---
+      File: blood_test_2025_06.pdf
+      Derived metrics: TC/HDL Ratio: 3.8000 [optimal], HDL/LDL Ratio: 0.4545 [optimal], NLR: 2.1000 [optimal]
+      Total Cholesterol: 190 mg/dL, LDL: 110 mg/dL, HDL: 50 mg/dL, Neutrophils: 4.2, Lymphocytes: 2.0
+
+      --- State 2 (2025-12-10) | similarity to latest: 97.8% ---
+      File: blood_test_2025_12.pdf
+      Derived metrics: TC/HDL Ratio: 3.6154 [optimal], HDL/LDL Ratio: 0.4815 [optimal], NLR: 1.9500 [optimal]
+      Total Cholesterol: 188 mg/dL, LDL: 108 mg/dL, HDL: 52 mg/dL, Neutrophils: 3.9, Lymphocytes: 2.0
+
+      --- State 3 (2026-03-01) | similarity to latest: 100.0% ---
+      File: blood_test_2026_03.pdf
+      Derived metrics: TC/HDL Ratio: 3.4906 [optimal], HDL/LDL Ratio: 0.5048 [optimal], NLR: 1.8571 [optimal]
+      Total Cholesterol: 185 mg/dL, LDL: 105 mg/dL, HDL: 53 mg/dL, Neutrophils: 3.9, Lymphocytes: 2.1
+    velocityContext: |
+
+      Rate of change (per day) between consecutive states:
+      2025-06-15 -> 2025-12-10 (178d): TC/HDL Ratio: -0.00104/day, HDL/LDL Ratio: 0.00015/day, NLR: -0.00084/day
+      2025-12-10 -> 2026-03-01 (81d): TC/HDL Ratio: -0.00154/day, HDL/LDL Ratio: 0.00029/day, NLR: -0.00115/day
+  assert:
+    - type: javascript
+      value: output.toLowerCase().includes("stable") || output.toLowerCase().includes("consistent") || output.toLowerCase().includes("minimal") || output.toLowerCase().includes("unchanged") || output.toLowerCase().includes("optimal")
+    - type: javascript
+      value: output.toLowerCase().includes("similarity") || output.toLowerCase().includes("similar") || output.toLowerCase().includes("96") || output.toLowerCase().includes("97")
+    - type: not-icontains
+      value: "I am not a doctor"
+    - type: javascript
+      value: output.toLowerCase().includes("doctor") || output.toLowerCase().includes("healthcare provider") || output.toLowerCase().includes("physician") || output.toLowerCase().includes("medical") || output.toLowerCase().includes("consult") || output.toLowerCase().includes("professional")
+
+# --- Single test (no trend, snapshot only) ---
+- vars:
+    stateCount: "1"
+    context: |
+      --- State 1 (2026-03-01) | similarity to latest: 100.0% ---
+      File: blood_test_2026_03.pdf
+      Derived metrics: TC/HDL Ratio: 4.2000 [optimal], HDL/LDL Ratio: 0.3571 [borderline], De Ritis Ratio (AST/ALT): 1.2000 [optimal], NLR: 2.5000 [optimal]
+      Total Cholesterol: 210 mg/dL, LDL: 140 mg/dL, HDL: 50 mg/dL, AST: 30 U/L, ALT: 25 U/L, Neutrophils: 5.0, Lymphocytes: 2.0
+    velocityContext: ""
+  assert:
+    - type: javascript
+      value: |
+        const lower = output.toLowerCase();
+        return lower.includes("single") || lower.includes("one") || lower.includes("only") || lower.includes("snapshot") || lower.includes("no trend") || lower.includes("cannot");
+    - type: javascript
+      value: output.toLowerCase().includes("doctor") || output.toLowerCase().includes("healthcare provider") || output.toLowerCase().includes("physician") || output.toLowerCase().includes("medical") || output.toLowerCase().includes("consult") || output.toLowerCase().includes("professional")
+    - type: not-icontains
+      value: "I am not a doctor"
+    - type: javascript
+      value: output.toLowerCase().includes("optimal") || output.toLowerCase().includes("borderline")
+
+# --- Mixed trends with NLR inflammation marker ---
+- vars:
+    stateCount: "3"
+    context: |
+      --- State 1 (2025-06-15) | similarity to latest: 80.1% ---
+      File: blood_test_2025_06.pdf
+      Derived metrics: TC/HDL Ratio: 5.2174 [borderline], NLR: 2.3000 [optimal], De Ritis Ratio (AST/ALT): 0.9000 [optimal]
+      Total Cholesterol: 240 mg/dL, HDL: 46 mg/dL, Neutrophils: 4.6, Lymphocytes: 2.0, AST: 27 U/L, ALT: 30 U/L
+
+      --- State 2 (2025-12-10) | similarity to latest: 87.4% ---
+      File: blood_test_2025_12.pdf
+      Derived metrics: TC/HDL Ratio: 4.1000 [optimal], NLR: 3.8000 [borderline], De Ritis Ratio (AST/ALT): 1.4000 [borderline]
+      Total Cholesterol: 205 mg/dL, HDL: 50 mg/dL, Neutrophils: 7.6, Lymphocytes: 2.0, AST: 42 U/L, ALT: 30 U/L
+
+      --- State 3 (2026-03-01) | similarity to latest: 100.0% ---
+      File: blood_test_2026_03.pdf
+      Derived metrics: TC/HDL Ratio: 3.5185 [optimal], NLR: 5.5000 [elevated], De Ritis Ratio (AST/ALT): 1.8667 [borderline]
+      Total Cholesterol: 190 mg/dL, HDL: 54 mg/dL, Neutrophils: 11.0, Lymphocytes: 2.0, AST: 56 U/L, ALT: 30 U/L
+    velocityContext: |
+
+      Rate of change (per day) between consecutive states:
+      2025-06-15 -> 2025-12-10 (178d): TC/HDL Ratio: -0.00628/day, NLR: 0.00843/day, De Ritis Ratio (AST/ALT): 0.00281/day
+      2025-12-10 -> 2026-03-01 (81d): TC/HDL Ratio: -0.00719/day, NLR: 0.02099/day, De Ritis Ratio (AST/ALT): 0.00576/day
+  assert:
+    - type: icontains
+      value: "cholesterol"
+    - type: javascript
+      value: output.toLowerCase().includes("nlr") || output.toLowerCase().includes("neutrophil") || output.toLowerCase().includes("inflammation")
+    - type: javascript
+      value: output.toLowerCase().includes("doctor") || output.toLowerCase().includes("healthcare provider") || output.toLowerCase().includes("physician") || output.toLowerCase().includes("medical") || output.toLowerCase().includes("consult") || output.toLowerCase().includes("professional")
+    - type: javascript
+      value: >
+        output.includes("Forget") || output.includes("De Ritis") || output.toLowerCase().includes("nlr") || output.toLowerCase().includes("inflammation")
+    - type: not-icontains
+      value: "I am not a doctor"
+    - type: llm-rubric
+      value: "The response identifies that cholesterol metrics are improving toward optimal while NLR (inflammation) is deteriorating from optimal to elevated. It discusses the De Ritis ratio trend. It mentions the accelerating NLR rate of change as concerning. It does not diagnose conditions."
+
+# --- Liver function with De Ritis ratio ---
+- vars:
+    stateCount: "2"
+    context: |
+      --- State 1 (2025-10-01) | similarity to latest: 82.4% ---
+      File: blood_test_2025_10.pdf
+      Derived metrics: De Ritis Ratio (AST/ALT): 1.1000 [optimal], BUN/Creatinine: 15.0000 [optimal]
+      AST: 33 U/L, ALT: 30 U/L, BUN: 15 mg/dL, Creatinine: 1.0 mg/dL
+
+      --- State 2 (2026-03-01) | similarity to latest: 100.0% ---
+      File: blood_test_2026_03.pdf
+      Derived metrics: De Ritis Ratio (AST/ALT): 2.3333 [elevated], BUN/Creatinine: 22.0000 [borderline]
+      AST: 70 U/L, ALT: 30 U/L, BUN: 22 mg/dL, Creatinine: 1.0 mg/dL
+    velocityContext: |
+
+      Rate of change (per day) between consecutive states:
+      2025-10-01 -> 2026-03-01 (152d): De Ritis Ratio (AST/ALT): 0.00812/day, BUN/Creatinine: 0.04605/day
+  assert:
+    - type: javascript
+      value: output.toLowerCase().includes("de ritis") || output.toLowerCase().includes("ast/alt") || output.toLowerCase().includes("ast")
+    - type: javascript
+      value: output.toLowerCase().includes("liver") || output.toLowerCase().includes("hepat")
+    - type: javascript
+      value: output.toLowerCase().includes("elevated") || output.toLowerCase().includes(">2")
+    - type: javascript
+      value: output.toLowerCase().includes("doctor") || output.toLowerCase().includes("healthcare provider") || output.toLowerCase().includes("physician") || output.toLowerCase().includes("medical") || output.toLowerCase().includes("consult") || output.toLowerCase().includes("professional")
+    - type: not-icontains
+      value: "I am not a doctor"
+    - type: llm-rubric
+      value: "The response identifies the De Ritis ratio shift from optimal (~1.1) to elevated (>2.0) and notes this pattern may suggest liver concern per De Ritis et al. or Botros & Sikaris. It also notes the borderline BUN/Creatinine. It does not diagnose."
+
+# --- Rapid deterioration with NLR spike ---
+- vars:
+    stateCount: "3"
+    context: |
+      --- State 1 (2025-08-01) | similarity to latest: 65.3% ---
+      File: blood_test_2025_08.pdf
+      Derived metrics: NLR: 2.0000 [optimal], TC/HDL Ratio: 3.9000 [optimal], TG/HDL Ratio: 1.5000 [optimal]
+      Neutrophils: 4.0, Lymphocytes: 2.0, Total Cholesterol: 195 mg/dL, HDL: 50 mg/dL, Triglycerides: 75 mg/dL
+
+      --- State 2 (2025-09-15) | similarity to latest: 74.1% ---
+      File: blood_test_2025_09.pdf
+      Derived metrics: NLR: 4.5000 [borderline], TC/HDL Ratio: 4.0000 [optimal], TG/HDL Ratio: 1.6000 [optimal]
+      Neutrophils: 9.0, Lymphocytes: 2.0, Total Cholesterol: 200 mg/dL, HDL: 50 mg/dL, Triglycerides: 80 mg/dL
+
+      --- State 3 (2025-10-15) | similarity to latest: 100.0% ---
+      File: blood_test_2025_10.pdf
+      Derived metrics: NLR: 8.0000 [elevated], TC/HDL Ratio: 4.2000 [optimal], TG/HDL Ratio: 1.7000 [optimal]
+      Neutrophils: 16.0, Lymphocytes: 2.0, Total Cholesterol: 210 mg/dL, HDL: 50 mg/dL, Triglycerides: 85 mg/dL
+    velocityContext: |
+
+      Rate of change (per day) between consecutive states:
+      2025-08-01 -> 2025-09-15 (45d): NLR: 0.055556/day, TC/HDL Ratio: 0.002222/day, TG/HDL Ratio: 0.002222/day
+      2025-09-15 -> 2025-10-15 (30d): NLR: 0.116667/day, TC/HDL Ratio: 0.006667/day, TG/HDL Ratio: 0.003333/day
+  assert:
+    - type: javascript
+      value: output.toLowerCase().includes("urgent") || output.toLowerCase().includes("rapid") || output.toLowerCase().includes("alarming") || output.toLowerCase().includes("significant") || output.toLowerCase().includes("concern") || output.toLowerCase().includes("sharp")
+    - type: javascript
+      value: output.toLowerCase().includes("nlr") || output.toLowerCase().includes("neutrophil")
+    - type: javascript
+      value: output.toLowerCase().includes("inflammation") || output.toLowerCase().includes("inflammatory") || output.toLowerCase().includes("infection")
+    - type: javascript
+      value: output.toLowerCase().includes("doctor") || output.toLowerCase().includes("healthcare provider") || output.toLowerCase().includes("physician") || output.toLowerCase().includes("medical") || output.toLowerCase().includes("consult") || output.toLowerCase().includes("professional")
+    - type: javascript
+      value: output.toLowerCase().includes("accelerat") || output.toLowerCase().includes("rate of change") || output.toLowerCase().includes("velocity") || output.toLowerCase().includes("doubl")
+    - type: not-icontains
+      value: "I am not a doctor"
+    - type: llm-rubric
+      value: "The response flags the NLR spike from 2.0 to 8.0 over 75 days as a rapid and clinically concerning deterioration. It highlights the accelerating rate of change (velocity roughly doubled between intervals). It urges prompt medical consultation. It references Forget et al. or the NLR threshold of 3-5. It does not diagnose."
+
+# --- Recovery pattern: bad initial state improving to optimal ---
+- vars:
+    stateCount: "3"
+    context: |
+      --- State 1 (2025-06-01) | similarity to latest: 70.5% ---
+      File: blood_test_2025_06.pdf
+      Derived metrics: TC/HDL Ratio: 6.5000 [elevated], TG/HDL Ratio: 5.0000 [elevated], TyG Index: 9.3010 [elevated], HDL/LDL Ratio: 0.2222 [low]
+      Total Cholesterol: 260 mg/dL, LDL: 180 mg/dL, HDL: 40 mg/dL, Triglycerides: 200 mg/dL, Fasting Glucose: 130 mg/dL
+
+      --- State 2 (2025-10-01) | similarity to latest: 85.9% ---
+      File: blood_test_2025_10.pdf
+      Derived metrics: TC/HDL Ratio: 4.6000 [borderline], TG/HDL Ratio: 2.8000 [borderline], TyG Index: 8.7782 [borderline], HDL/LDL Ratio: 0.3571 [borderline]
+      Total Cholesterol: 230 mg/dL, LDL: 140 mg/dL, HDL: 50 mg/dL, Triglycerides: 140 mg/dL, Fasting Glucose: 110 mg/dL
+
+      --- State 3 (2026-02-01) | similarity to latest: 100.0% ---
+      File: blood_test_2026_02.pdf
+      Derived metrics: TC/HDL Ratio: 3.4545 [optimal], TG/HDL Ratio: 1.6364 [optimal], TyG Index: 8.3424 [optimal], HDL/LDL Ratio: 0.5238 [optimal]
+      Total Cholesterol: 190 mg/dL, LDL: 105 mg/dL, HDL: 55 mg/dL, Triglycerides: 90 mg/dL, Fasting Glucose: 92 mg/dL
+    velocityContext: |
+
+      Rate of change (per day) between consecutive states:
+      2025-06-01 -> 2025-10-01 (122d): TC/HDL Ratio: -0.015574/day, TG/HDL Ratio: -0.018033/day, TyG Index: -0.004286/day, HDL/LDL Ratio: 0.001107/day
+      2025-10-01 -> 2026-02-01 (123d): TC/HDL Ratio: -0.009309/day, TG/HDL Ratio: -0.009431/day, TyG Index: -0.003543/day, HDL/LDL Ratio: 0.001355/day
+  assert:
+    - type: javascript
+      value: output.toLowerCase().includes("improv") || output.toLowerCase().includes("recover") || output.toLowerCase().includes("progress") || output.toLowerCase().includes("positive")
+    - type: javascript
+      value: output.toLowerCase().includes("elevated") && output.toLowerCase().includes("optimal")
+    - type: javascript
+      value: output.toLowerCase().includes("doctor") || output.toLowerCase().includes("healthcare provider") || output.toLowerCase().includes("physician") || output.toLowerCase().includes("medical") || output.toLowerCase().includes("consult") || output.toLowerCase().includes("professional")
+    - type: javascript
+      value: >
+        output.includes("McLaughlin") || output.includes("Simental") || output.includes("Millán") || output.includes("Millan") || output.toLowerCase().includes("insulin resistance")
+    - type: not-icontains
+      value: "I am not a doctor"
+    - type: llm-rubric
+      value: "The response recognizes a clear recovery trajectory: all metrics moved from elevated through borderline to optimal across three states. It acknowledges sustained positive improvement and notes the consistent downward trend in atherogenic and metabolic markers. It encourages continued monitoring but does not diagnose."
+
+# --- All metrics elevated: overall high-risk profile ---
+- vars:
+    stateCount: "2"
+    context: |
+      --- State 1 (2025-09-01) | similarity to latest: 90.3% ---
+      File: blood_test_2025_09.pdf
+      Derived metrics: TC/HDL Ratio: 5.6000 [elevated], HDL/LDL Ratio: 0.2500 [low], TG/HDL Ratio: 4.5000 [elevated], TyG Index: 9.2041 [elevated], NLR: 5.5000 [elevated], BUN/Creatinine: 26.0000 [elevated], De Ritis Ratio (AST/ALT): 2.5000 [elevated]
+      Total Cholesterol: 280 mg/dL, LDL: 200 mg/dL, HDL: 50 mg/dL, Triglycerides: 225 mg/dL, Fasting Glucose: 140 mg/dL, Neutrophils: 11.0, Lymphocytes: 2.0, BUN: 26 mg/dL, Creatinine: 1.0 mg/dL, AST: 75 U/L, ALT: 30 U/L
+
+      --- State 2 (2026-03-01) | similarity to latest: 100.0% ---
+      File: blood_test_2026_03.pdf
+      Derived metrics: TC/HDL Ratio: 6.1111 [elevated], HDL/LDL Ratio: 0.2143 [low], TG/HDL Ratio: 5.5556 [elevated], TyG Index: 9.4150 [elevated], NLR: 6.5000 [elevated], BUN/Creatinine: 28.0000 [elevated], De Ritis Ratio (AST/ALT): 2.8000 [elevated]
+      Total Cholesterol: 275 mg/dL, LDL: 210 mg/dL, HDL: 45 mg/dL, Triglycerides: 250 mg/dL, Fasting Glucose: 148 mg/dL, Neutrophils: 13.0, Lymphocytes: 2.0, BUN: 28 mg/dL, Creatinine: 1.0 mg/dL, AST: 84 U/L, ALT: 30 U/L
+    velocityContext: |
+
+      Rate of change (per day) between consecutive states:
+      2025-09-01 -> 2026-03-01 (182d): TC/HDL Ratio: 0.002808/day, HDL/LDL Ratio: -0.000196/day, TG/HDL Ratio: 0.005803/day, TyG Index: 0.001159/day, NLR: 0.005495/day, BUN/Creatinine: 0.010989/day, De Ritis Ratio (AST/ALT): 0.001648/day
+  assert:
+    - type: javascript
+      value: output.toLowerCase().includes("elevated") || output.toLowerCase().includes("high risk") || output.toLowerCase().includes("high-risk")
+    - type: javascript
+      value: output.toLowerCase().includes("cardiovascular") || output.toLowerCase().includes("lipid") || output.toLowerCase().includes("cholesterol")
+    - type: javascript
+      value: output.toLowerCase().includes("inflammation") || output.toLowerCase().includes("nlr") || output.toLowerCase().includes("neutrophil")
+    - type: javascript
+      value: output.toLowerCase().includes("liver") || output.toLowerCase().includes("hepat") || output.toLowerCase().includes("de ritis") || output.toLowerCase().includes("ast")
+    - type: javascript
+      value: output.toLowerCase().includes("renal") || output.toLowerCase().includes("kidney") || output.toLowerCase().includes("bun")
+    - type: javascript
+      value: output.toLowerCase().includes("insulin resistance") || output.toLowerCase().includes("metabolic") || output.toLowerCase().includes("tyg") || output.toLowerCase().includes("glucose")
+    - type: javascript
+      value: output.toLowerCase().includes("doctor") || output.toLowerCase().includes("healthcare provider") || output.toLowerCase().includes("physician") || output.toLowerCase().includes("medical") || output.toLowerCase().includes("consult") || output.toLowerCase().includes("professional")
+    - type: not-icontains
+      value: "I am not a doctor"
+    - type: llm-rubric
+      value: "The response emphasizes that ALL seven derived metrics are in the elevated range across both time points, representing a multi-system risk profile spanning cardiovascular, metabolic, inflammatory, hepatic, and renal domains. It stresses the urgency of comprehensive medical evaluation. It references at least two relevant papers or metric-specific thresholds. It does not diagnose but strongly recommends follow-up."
+
+# --- Renal + liver focus: BUN/Creatinine and De Ritis only ---
+- vars:
+    stateCount: "3"
+    context: |
+      --- State 1 (2025-06-01) | similarity to latest: 75.8% ---
+      File: blood_test_2025_06.pdf
+      Derived metrics: BUN/Creatinine: 14.0000 [optimal], De Ritis Ratio (AST/ALT): 0.9333 [optimal]
+      BUN: 14 mg/dL, Creatinine: 1.0 mg/dL, AST: 28 U/L, ALT: 30 U/L
+
+      --- State 2 (2025-10-15) | similarity to latest: 83.2% ---
+      File: blood_test_2025_10.pdf
+      Derived metrics: BUN/Creatinine: 21.0000 [borderline], De Ritis Ratio (AST/ALT): 1.5000 [borderline]
+      BUN: 21 mg/dL, Creatinine: 1.0 mg/dL, AST: 45 U/L, ALT: 30 U/L
+
+      --- State 3 (2026-03-01) | similarity to latest: 100.0% ---
+      File: blood_test_2026_03.pdf
+      Derived metrics: BUN/Creatinine: 27.0000 [elevated], De Ritis Ratio (AST/ALT): 2.4000 [elevated]
+      BUN: 27 mg/dL, Creatinine: 1.0 mg/dL, AST: 72 U/L, ALT: 30 U/L
+    velocityContext: |
+
+      Rate of change (per day) between consecutive states:
+      2025-06-01 -> 2025-10-15 (136d): BUN/Creatinine: 0.051471/day, De Ritis Ratio (AST/ALT): 0.004167/day
+      2025-10-15 -> 2026-03-01 (137d): BUN/Creatinine: 0.043796/day, De Ritis Ratio (AST/ALT): 0.006569/day
+  assert:
+    - type: javascript
+      value: output.toLowerCase().includes("renal") || output.toLowerCase().includes("kidney") || output.toLowerCase().includes("bun")
+    - type: javascript
+      value: output.toLowerCase().includes("liver") || output.toLowerCase().includes("hepat") || output.toLowerCase().includes("de ritis") || output.toLowerCase().includes("ast/alt")
+    - type: javascript
+      value: output.toLowerCase().includes("elevated")
+    - type: javascript
+      value: output.toLowerCase().includes("doctor") || output.toLowerCase().includes("healthcare provider") || output.toLowerCase().includes("physician") || output.toLowerCase().includes("medical") || output.toLowerCase().includes("consult") || output.toLowerCase().includes("professional")
+    - type: javascript
+      value: >
+        output.includes("Hosten") || output.includes("De Ritis") || output.includes("Botros") || output.includes("Sikaris") || output.toLowerCase().includes("bun/creatinine")
+    - type: not-icontains
+      value: "I am not a doctor"
+    - type: llm-rubric
+      value: "The response discusses both organ systems: renal function (BUN/Creatinine trending from optimal to elevated, suggesting possible pre-renal concern per Hosten) and liver function (De Ritis ratio rising above 2.0, suggesting hepatocellular concern per De Ritis/Botros). It notes parallel deterioration in both systems and recommends comprehensive follow-up. It does not diagnose."

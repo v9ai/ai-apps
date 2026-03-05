@@ -1,9 +1,10 @@
 import { createClient } from "@/lib/supabase/server";
 import { redirect, notFound } from "next/navigation";
-import { Badge, Box, Button, Callout, Flex, Heading, Separator, Table, Text } from "@radix-ui/themes";
+import { Badge, Box, Callout, Flex, Heading, Separator, Skeleton, Table, Text } from "@radix-ui/themes";
 import Link from "next/link";
 import { Suspense } from "react";
 import { deleteBloodTest } from "../actions";
+import { DeleteConfirmButton } from "@/components/delete-confirm-button";
 import { gqlQuery } from "@/lib/graphql/execute";
 import { GetBloodTestDocument } from "@/lib/graphql/__generated__/graphql";
 
@@ -47,16 +48,14 @@ async function TestDetail({ id }: { id: string }) {
           <Badge color={statusColor[test.status] ?? "gray"} variant="soft">
             {test.status}
           </Badge>
-          <form
+          <DeleteConfirmButton
             action={async () => {
               "use server";
               await deleteBloodTest(id);
             }}
-          >
-            <Button type="submit" color="red" variant="soft" size="1">
-              Delete
-            </Button>
-          </form>
+            description="This blood test and its markers will be permanently deleted."
+            variant="button"
+          />
         </Flex>
       </Flex>
 
@@ -127,7 +126,12 @@ export default async function BloodTestDetailPage({
             ← Back
           </Link>
         </Text>
-        <Suspense fallback={<Text size="2" color="gray">Loading...</Text>}>
+        <Suspense fallback={
+          <Flex direction="column" gap="4">
+            <Skeleton height="32px" width="200px" />
+            <Skeleton height="300px" />
+          </Flex>
+        }>
           <TestDetail id={id} />
         </Suspense>
       </Flex>

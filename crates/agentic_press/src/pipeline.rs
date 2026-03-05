@@ -5,8 +5,9 @@ use std::sync::Arc;
 use tokio::fs;
 use tracing::info;
 
+use deepseek::{DeepSeekClient, ReqwestClient};
+
 use crate::agent_teams::{run_parallel, Agent};
-use crate::deepseek::DeepSeekClient;
 use crate::prompts;
 use crate::publisher;
 
@@ -28,7 +29,7 @@ pub struct Pipeline {
     /// Publish to vadim.blog + run `vercel deploy --prod` when true.
     publish: bool,
     /// Pre-built client injected by tests; `None` → create from env at run time.
-    client: Option<Arc<DeepSeekClient>>,
+    client: Option<Arc<DeepSeekClient<ReqwestClient>>>,
 }
 
 impl Pipeline {
@@ -53,7 +54,7 @@ impl Pipeline {
     }
 
     /// Inject a pre-built client (used in tests to point at a mock server).
-    pub fn with_client(mut self, client: Arc<DeepSeekClient>) -> Self {
+    pub fn with_client(mut self, client: Arc<DeepSeekClient<ReqwestClient>>) -> Self {
         self.client = Some(client);
         self
     }
@@ -63,7 +64,7 @@ impl Pipeline {
 
         let client = match &self.client {
             Some(c) => Arc::clone(c),
-            None => Arc::new(DeepSeekClient::from_env()?),
+            None => Arc::new(crate::deepseek::client_from_env()?),
         };
 
         info!("═══ agentic_press pipeline starting ═══");

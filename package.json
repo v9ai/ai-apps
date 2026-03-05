@@ -6,6 +6,7 @@
     "clean": "turbo run clean",
     "dev": "turbo run dev",
     "dev:h": "turbo run dev --filter=agentic-healthcare",
+    "dev:l": "turbo run dev --filter=law-adversarial",
     "dev:n": "turbo run dev --filter=nomadically.work",
     "dev:r": "turbo run dev --filter=research-thera",
     "dev:b": "turbo run dev --filter=vadim.blog",
@@ -13,7 +14,8 @@
     "lint": "turbo run lint",
     "test": "turbo run test",
     "check-types": "turbo run check-types",
-    "deploy:blog": "vercel deploy --prod --cwd apps/vadim.blog"
+    "deploy:blog": "vercel deploy --prod --cwd apps/vadim.blog",
+    "deploy:l": "vercel deploy --prod --cwd apps/law-adversarial"
   },
   "devDependencies": {
     "prettier": "^3.6.0",

@@ -1,8 +1,9 @@
 import { createClient } from "@/lib/supabase/server";
 import { redirect } from "next/navigation";
 import Link from "next/link";
-import { Badge, Box, Card, Flex, Heading, Separator, Text } from "@radix-ui/themes";
+import { Badge, Box, Card, Flex, Heading, Separator, Skeleton, Text } from "@radix-ui/themes";
 import { Suspense } from "react";
+import { Droplet } from "lucide-react";
 import { UploadForm } from "./upload-form";
 import { gqlQuery } from "@/lib/graphql/execute";
 import { GetBloodTestsDocument } from "@/lib/graphql/__generated__/graphql";
@@ -22,15 +23,23 @@ async function TestsList() {
   const data = await gqlQuery(GetBloodTestsDocument, {}, session.access_token);
   const tests = data.blood_testsCollection?.edges.map((e) => e.node) ?? [];
 
-  if (tests.length === 0) return null;
+  if (tests.length === 0) {
+    return (
+      <Flex direction="column" align="center" gap="3" py="6">
+        <Droplet size={48} color="var(--gray-8)" />
+        <Heading size="4">No blood tests yet</Heading>
+        <Text size="2" color="gray">Upload your first blood test to start tracking your markers.</Text>
+      </Flex>
+    );
+  }
 
   return (
     <>
       <Separator size="4" />
       <Flex direction="column" gap="2">
-        <Heading size="3">History</Heading>
+        <Heading size="4">History</Heading>
         {tests.map((test) => (
-          <Card key={test.id} asChild>
+          <Card key={test.id} asChild className="card-hover">
             <Link href={`/protected/blood-tests/${test.id}`} style={{ textDecoration: "none" }}>
               <Flex justify="between" align="center">
                 <Flex direction="column" gap="1">
@@ -57,16 +66,25 @@ export default function BloodTestsPage() {
   return (
     <Box py="8" style={{ maxWidth: 600, margin: "0 auto" }}>
       <Flex direction="column" gap="6">
-        <Heading size="6">Blood Tests</Heading>
+        <Flex direction="column" gap="1">
+          <Heading size="7" weight="bold">Blood Tests</Heading>
+          <Text size="2" color="gray">Upload and review your blood test results.</Text>
+        </Flex>
 
         <Separator size="4" />
 
         <Flex direction="column" gap="3">
-          <Heading size="3">Upload a new test</Heading>
+          <Heading size="4">Upload a new test</Heading>
           <UploadForm />
         </Flex>
 
-        <Suspense fallback={null}>
+        <Suspense fallback={
+          <Flex direction="column" gap="2">
+            <Skeleton height="52px" />
+            <Skeleton height="52px" />
+            <Skeleton height="52px" />
+          </Flex>
+        }>
           <TestsList />
         </Suspense>
       </Flex>

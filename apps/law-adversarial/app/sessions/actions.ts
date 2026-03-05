@@ -3,7 +3,7 @@
 import { createClient } from "@/lib/supabase/server";
 import { redirect } from "next/navigation";
 import { revalidatePath } from "next/cache";
-import { deleteArgumentGraph } from "@/lib/neo4j/argument-graph";
+import { deleteArgumentGraph } from "@/lib/argument-graph";
 import { parseBrief } from "@/lib/brief-parser";
 
 function toSlug(title: string): string {
@@ -77,19 +77,17 @@ export async function deleteSession(slug: string) {
 
   const { data: sessionData } = await supabase
     .from("stress_test_sessions")
-    .select("id, brief_storage_path, neo4j_graph_id")
+    .select("id, brief_storage_path")
     .eq("slug", slug)
     .single();
 
   if (!sessionData) throw new Error("Session not found");
 
-  // Delete Neo4j argument graph if exists
-  if (sessionData?.neo4j_graph_id) {
-    try {
-      await deleteArgumentGraph(sessionData.neo4j_graph_id);
-    } catch {
-      // Non-blocking
-    }
+  // Delete argument graph (cascade handles it, but explicit is clearer)
+  try {
+    await deleteArgumentGraph(sessionData.id);
+  } catch {
+    // Non-blocking
   }
 
   // Delete storage file if exists

@@ -1,7 +1,7 @@
 use futures::future::{join, join_all};
 use serde_json::{json, Value};
 
-use crate::agent::{build_request, system_msg, user_msg};
+use crate::agent::build_request;
 use crate::error::{Result, SddError};
 use crate::hooks::HookRegistry;
 use crate::integrations::WorkflowDocs;
@@ -80,11 +80,14 @@ pub struct SddPipeline<C: LlmClient> {
     /// How many times to retry Apply+Verify when Verify returns FAIL.
     /// Set to 0 to disable retries. Defaults to 2.
     verify_retries: u32,
+    /// Optional spec validation rules. When set, the pipeline validates the
+    /// spec artifact after the Spec phase completes, before Tasks begins.
+    spec_validation_rules: Option<Vec<crate::validate::ValidationRule>>,
 }
 
 impl<C: LlmClient> SddPipeline<C> {
     pub fn new(client: C) -> Self {
-        Self { client, hooks: None, workflow_docs: None, verify_retries: 0 }
+        Self { client, hooks: None, workflow_docs: None, verify_retries: 0, spec_validation_rules: None }
     }
 
     pub fn with_hooks(mut self, hooks: HookRegistry) -> Self {
@@ -94,6 +97,14 @@ impl<C: LlmClient> SddPipeline<C> {
 
     pub fn with_workflow_docs(mut self, docs: WorkflowDocs) -> Self {
         self.workflow_docs = Some(docs);
+        self
+    }
+
+    /// Enable spec validation gate: after Spec phase completes, run
+    /// these rules against the spec artifact. Fails with `ValidationFailed`
+    /// if any rule fails.
+    pub fn with_spec_validation(mut self, rules: Vec<crate::validate::ValidationRule>) -> Self {
+        self.spec_validation_rules = Some(rules);
         self
     }
 
@@ -217,6 +228,26 @@ impl<C: LlmClient> SddPipeline<C> {
         }
     }
 
+    /// If spec validation rules are configured, validate the spec artifact.
+    /// Called right after Spec phase commits, before Tasks can begin.
+    fn run_spec_validation_gate(&self, change: &SddChange) -> Result<()> {
+        if let Some(ref rules) = self.spec_validation_rules {
+            let spec_text = change.artifacts.get("spec")
+                .and_then(|v| v["result"].as_str())
+                .unwrap_or("");
+            let result = crate::validate::validate_spec(spec_text, rules);
+            if !result.passed {
+                let failed: Vec<String> = result.results.iter()
+                    .filter(|r| !r.passed)
+                    .map(|r| r.rule.clone())
+                    .collect();
+                let details = result.warnings.join("; ");
+                return Err(SddError::ValidationFailed { rules_failed: failed, details });
+            }
+        }
+        Ok(())
+    }
+
     // ── Pipeline Execution Modes ──────────────────────────────────────────
 
     /// Execute a single phase with dependency validation.
@@ -238,6 +269,12 @@ impl<C: LlmClient> SddPipeline<C> {
 
         let result = self.run_phase(phase, change, context).await?;
         commit_phase(change, phase, result.clone())?;
+
+        // Validation gate: after Spec completes, validate before Tasks can proceed
+        if phase == SddPhase::Spec {
+            self.run_spec_validation_gate(change)?;
+        }
+
         Ok(result)
     }
 
@@ -286,6 +323,9 @@ impl<C: LlmClient> SddPipeline<C> {
             results.push(design.clone());
             commit_phase(change, SddPhase::Spec, spec)?;
             commit_phase(change, SddPhase::Design, design)?;
+
+            // Validation gate after Spec
+            self.run_spec_validation_gate(change)?;
         }
 
         // Phase 3: Tasks
@@ -389,6 +429,9 @@ impl<C: LlmClient> SddPipeline<C> {
             results.push(design.clone());
             commit_phase(change, SddPhase::Spec, spec)?;
             commit_phase(change, SddPhase::Design, design)?;
+
+            // Validation gate after Spec
+            self.run_spec_validation_gate(change)?;
         }
 
         // Tasks

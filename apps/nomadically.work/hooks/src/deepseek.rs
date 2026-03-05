@@ -1,54 +1,22 @@
-use anyhow::{bail, Context, Result};
+use anyhow::{Context, Result};
 use dashmap::DashMap;
-use reqwest::Client;
 use serde::{Deserialize, Serialize};
 use std::sync::Arc;
-use std::time::{Duration, Instant};
+use std::time::Instant;
 use tokio::sync::{broadcast, Semaphore};
 use tracing::{info, warn};
 
+use deepseek::{DeepSeekClient, ReqwestClient, ChatContent};
 use crate::cache::Cache;
-use crate::config::{BASE_URL, MODEL, TEMPERATURE};
+use crate::config::{MODEL, TEMPERATURE};
 use crate::metrics::Metrics;
 
 #[derive(Clone)]
 pub struct DeepSeek {
-    client: Client,
-    api_key: Arc<String>,
+    client: DeepSeekClient<ReqwestClient>,
     semaphore: Arc<Semaphore>,
     in_flight: Arc<DashMap<String, broadcast::Sender<Decision>>>,
     pub cache: Cache,
-}
-
-#[derive(Serialize)]
-struct ChatRequest {
-    model: &'static str,
-    messages: Vec<Message>,
-    max_tokens: u32,
-    temperature: f32,
-}
-
-#[derive(Serialize, Deserialize, Clone)]
-struct Message {
-    role: String,
-    content: String,
-}
-
-#[derive(Deserialize)]
-struct ChatResponse {
-    choices: Vec<Choice>,
-}
-
-#[derive(Deserialize)]
-struct Choice {
-    message: MessageContent,
-}
-
-#[derive(Deserialize)]
-struct MessageContent {
-    content: String,
-    #[serde(default)]
-    reasoning_content: Option<String>,
 }
 
 #[derive(Debug, Clone, Deserialize, Serialize)]
@@ -62,7 +30,9 @@ pub struct Decision {
 
 impl DeepSeek {
     pub fn new(api_key: String, config: &crate::config::DeepSeekConfig, cache: Cache) -> Self {
-        let client = Client::builder()
+        use std::time::Duration;
+
+        let http_client = reqwest::Client::builder()
             .timeout(Duration::from_secs(config.timeout_secs))
             .pool_max_idle_per_host(config.max_concurrent)
             .pool_idle_timeout(Duration::from_secs(90))
@@ -70,11 +40,15 @@ impl DeepSeek {
             .build()
             .expect("failed to build HTTP client");
 
+        let client = DeepSeekClient::new(
+            ReqwestClient::with_client(http_client),
+            api_key,
+        ).with_base_url(crate::config::BASE_URL);
+
         let semaphore = Arc::new(Semaphore::new(config.max_concurrent));
 
         Self {
             client,
-            api_key: Arc::new(api_key),
             semaphore,
             in_flight: Arc::new(DashMap::with_shard_amount(32)),
             cache,
@@ -171,44 +145,29 @@ impl DeepSeek {
     ) -> Result<Decision> {
         let _permit = self.semaphore.acquire().await.context("semaphore closed")?;
 
-        let body = ChatRequest {
-            model: MODEL,
+        let request = deepseek::ChatRequest {
+            model: MODEL.to_string(),
             messages: vec![
-                Message {
-                    role: "system".into(),
-                    content: system_prompt.to_string(),
-                },
-                Message {
-                    role: "user".into(),
-                    content: user_prompt.to_string(),
-                },
+                deepseek::system_msg(system_prompt),
+                deepseek::user_msg(user_prompt),
             ],
-            max_tokens: 1024,
-            temperature: TEMPERATURE,
+            tools: None,
+            tool_choice: None,
+            temperature: Some(TEMPERATURE as f64),
+            max_tokens: Some(1024),
+            stream: None,
         };
 
-        let resp = self
-            .client
-            .post(format!("{BASE_URL}/chat/completions"))
-            .bearer_auth(self.api_key.as_str())
-            .json(&body)
-            .send()
-            .await
-            .context("DeepSeek API request failed")?;
+        let resp = self.client.chat(&request).await
+            .map_err(|e| anyhow::anyhow!("{e}"))?;
 
-        if !resp.status().is_success() {
-            let status = resp.status();
-            let text = resp.text().await.unwrap_or_default();
-            bail!("DeepSeek API error {status}: {text}");
-        }
-
-        let chat_resp: ChatResponse = resp.json().await.context("parsing DeepSeek response")?;
-        let choice = chat_resp
-            .choices
-            .into_iter()
-            .next()
+        let choice = resp.choices.into_iter().next()
             .context("empty response from DeepSeek")?;
-        let content = choice.message.content.trim().to_string();
+
+        let content = match &choice.message.content {
+            ChatContent::Text(s) => s.trim().to_string(),
+            ChatContent::Null => String::new(),
+        };
 
         let mut decision: Decision = parse_decision(&content).unwrap_or_else(|e| {
             warn!("failed to parse decision JSON, defaulting to ok=true: {e}");

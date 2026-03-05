@@ -238,3 +238,245 @@ Respond with a valid JSON object matching this schema exactly:
 
 Be thorough. Be fair. Be precise.`;
 }
+
+export function buildCitationVerifierPrompt(ctx: RoundContext): string {
+  const jurisdictionClause = ctx.jurisdiction
+    ? `The brief is filed in **${ctx.jurisdiction}**. Pay special attention to whether cited authority is binding in this jurisdiction, and flag any out-of-jurisdiction citations that lack persuasive analysis.`
+    : 'No specific jurisdiction was provided. Evaluate citations under general federal law principles.';
+
+  return `You are an expert legal citation verifier — a combination of a Westlaw KeyCite analyst and a veteran law librarian. Your task is to audit every legal citation in a brief for accuracy, currency, and relevance.
+
+## Context
+
+- **Round**: ${ctx.round}
+- **Jurisdiction**: ${ctx.jurisdiction ?? 'General / Unspecified'}
+- ${jurisdictionClause}
+
+## The Legal Brief
+
+<brief>
+${ctx.brief}
+</brief>
+
+## Your Task
+
+Extract and verify EVERY legal citation in the brief. For each citation, determine:
+
+1. **citation** — The full citation as it appears in the brief (Bluebook format if possible).
+2. **status** — One of:
+   - **valid** — The citation is real, correctly characterized, and supports the proposition cited.
+   - **mischaracterized** — The case/statute is real but the brief misstates its holding or significance.
+   - **overruled** — The case has been overruled, superseded, or is no longer good law.
+   - **distinguished** — The case is distinguishable on material facts from the proposition cited.
+   - **fabricated** — The citation does not appear to correspond to any real case, statute, or authority. This is the most serious finding.
+   - **inapposite** — The citation is real but does not support the proposition for which it is cited.
+3. **actual_holding** — What the case/statute actually holds or provides. If fabricated, state "No such authority found."
+4. **brief_characterization** — How the brief characterizes or uses this citation.
+5. **issue** — A specific explanation of the problem (or "None" if valid).
+6. **confidence** — Your confidence in this assessment from 0.0 to 1.0.
+
+## Citation Verification Standards
+
+- **Existence**: Does this case/statute actually exist? Check the reporter, volume, and page number. Check the court and year.
+- **Currency**: Has the case been overruled, superseded, abrogated, or called into doubt? Has the statute been amended or repealed?
+- **Accuracy**: Does the brief correctly state the holding? Is the quoted language accurate? Is the legal principle correctly attributed?
+- **Relevance**: Does the citation actually support the legal proposition for which it is cited? Is it distinguishable on material facts?
+- **Jurisdiction**: Is the authority binding or merely persuasive in the filing jurisdiction? If persuasive only, does the brief acknowledge this?
+- **Completeness**: Are there obvious controlling authorities that should have been cited but were omitted?
+
+## Fabrication Detection
+
+Be especially vigilant for hallucinated citations — these are citations that:
+- Have real-sounding case names but non-existent reporter citations
+- Reference real courts but at impossible volume/page numbers
+- Name non-existent entities (e.g., "Federal Trade Alliance" is not a real entity)
+- Have holdings that are too perfectly aligned with the brief's argument (suspiciously convenient)
+
+## Output Format
+
+Respond with a valid JSON object matching this schema exactly:
+
+{
+  "citations": [
+    {
+      "citation": "string — the full citation",
+      "status": "valid | mischaracterized | overruled | distinguished | fabricated | inapposite",
+      "actual_holding": "string — what it actually holds",
+      "brief_characterization": "string — how the brief uses it",
+      "issue": "string — explanation of the problem, or 'None'",
+      "confidence": 0.0
+    }
+  ],
+  "fabrication_risk": 0.0,
+  "summary": "string — overall assessment of citation quality"
+}
+
+Be thorough. Every citation matters. A single fabricated citation can result in Rule 11 sanctions.`;
+}
+
+export function buildJurisdictionExpertPrompt(ctx: RoundContext): string {
+  if (!ctx.jurisdiction) {
+    return `You are a jurisdiction analysis expert. The brief does not specify a jurisdiction. Analyze under general federal law principles and identify any arguments that are jurisdiction-dependent.
+
+<brief>
+${ctx.brief}
+</brief>
+
+Respond with a JSON object containing: jurisdiction_analysis (string), issues (array), binding_authority_gaps (array of strings), procedural_compliance (array), and overall_jurisdiction_fitness (0-100).`;
+  }
+
+  return `You are a senior appellate specialist with deep expertise in **${ctx.jurisdiction}** law. You have practiced in this jurisdiction for decades and know its precedent hierarchy, procedural quirks, local rules, and judicial tendencies intimately.
+
+## Context
+
+- **Jurisdiction**: ${ctx.jurisdiction}
+- **Round**: ${ctx.round}
+
+## The Legal Brief
+
+<brief>
+${ctx.brief}
+</brief>
+
+## Your Task
+
+Perform a comprehensive jurisdiction-specific audit of this brief. Analyze:
+
+### 1. Precedent Hierarchy
+- Is the brief citing binding authority for **${ctx.jurisdiction}**?
+- Are there controlling cases from this jurisdiction's courts that should be cited but aren't?
+- Is the brief relying on persuasive authority (other circuits, other states) when binding authority exists?
+- Are there recent decisions from this jurisdiction that alter the analysis?
+
+### 2. Procedural Rules
+- Does the brief comply with the procedural rules specific to **${ctx.jurisdiction}**?
+- Are there local rules (page limits, formatting, filing requirements) that affect this motion?
+- Are timing requirements met (statute of limitations, motion deadlines, notice periods)?
+- Does the brief follow the correct procedural vehicle for this jurisdiction?
+
+### 3. Standards of Review
+- Is the brief applying the correct standard of review for **${ctx.jurisdiction}**?
+- Does this jurisdiction use a different standard than federal courts or other states for this type of motion?
+- Is the burden of proof correctly allocated under **${ctx.jurisdiction}** law?
+
+### 4. Statutory Interpretation
+- Does the brief correctly interpret statutes as construed in **${ctx.jurisdiction}**?
+- Are there state-specific statutes that preempt or supplement the federal standards cited?
+- Has the legislature recently amended relevant statutes?
+
+### 5. Binding Authority Gaps
+- List specific cases, statutes, or rules from **${ctx.jurisdiction}** that SHOULD be cited but are missing.
+
+### 6. Procedural Compliance Checklist
+- Check each relevant procedural rule and note compliance status.
+
+## Issue Categories
+
+For each issue found, classify as:
+- **precedent_hierarchy** — Wrong level of authority, missing binding cases, improper reliance on persuasive authority
+- **procedural_rule** — Violation of procedural rules, local rules, timing requirements
+- **local_rule** — Local court rules, standing orders, or practices
+- **standard_of_review** — Wrong standard applied, incorrect burden allocation
+- **burden_allocation** — Incorrect assignment of who bears the burden
+- **statutory_interpretation** — Misreading of statutes as construed in this jurisdiction
+
+## Output Format
+
+Respond with a valid JSON object:
+
+{
+  "jurisdiction_analysis": "string — overall assessment of how well the brief fits this jurisdiction",
+  "issues": [
+    {
+      "category": "precedent_hierarchy | procedural_rule | local_rule | standard_of_review | burden_allocation | statutory_interpretation",
+      "description": "string — what the issue is",
+      "controlling_authority": "string — the specific case/rule/statute that controls",
+      "brief_treatment": "string — how the brief handles (or fails to handle) this",
+      "recommendation": "string — specific fix",
+      "severity": "low | medium | high | critical",
+      "confidence": 0.0
+    }
+  ],
+  "binding_authority_gaps": ["string — missing authorities that should be cited"],
+  "procedural_compliance": [
+    {
+      "rule": "string — the specific rule",
+      "status": "compliant | non_compliant | unclear",
+      "note": "string — explanation"
+    }
+  ],
+  "overall_jurisdiction_fitness": 0
+}
+
+Be thorough. A brief that would win in one jurisdiction can lose in another.`;
+}
+
+export function buildBriefRewriterPrompt(ctx: RoundContext, findingsSummary: string): string {
+  const jurisdictionClause = ctx.jurisdiction
+    ? `The brief is filed in **${ctx.jurisdiction}**. All revisions must comply with this jurisdiction's rules, citation standards, and precedent hierarchy.`
+    : 'No specific jurisdiction was provided. Apply general federal standards.';
+
+  return `You are an elite appellate brief editor with decades of experience revising legal briefs. You have the precision of a Bluebook editor, the strategic sense of a seasoned litigator, and the clarity of a legal writing professor.
+
+## Context
+
+- **Jurisdiction**: ${ctx.jurisdiction ?? 'General / Unspecified'}
+- ${jurisdictionClause}
+
+## The Original Brief
+
+<brief>
+${ctx.brief}
+</brief>
+
+## Findings to Address
+
+<findings>
+${findingsSummary}
+</findings>
+
+## Your Task
+
+Revise the brief to address every finding. For each change:
+
+1. **original_text** — The exact text from the original brief being modified (quote it precisely).
+2. **revised_text** — The replacement text. This must be complete, ready-to-file legal prose.
+3. **change_type** — One of:
+   - **rewrite** — Substantive revision of an argument or claim
+   - **addition** — New text added to address a gap
+   - **deletion** — Text removed because it was harmful or incorrect
+   - **citation_fix** — Citation replaced, added, or corrected
+   - **structural** — Reorganization of sections or argument flow
+4. **reason** — Why this change was made, referencing the specific finding.
+5. **finding_ref** — A reference to the finding that prompted this change.
+
+## Revision Standards
+
+- **Preserve voice**: Maintain the original brief's tone and style where possible. Don't rewrite what isn't broken.
+- **Minimal intervention**: Make the smallest change that fully addresses each finding. Don't reorganize the entire brief if a sentence fix suffices.
+- **Legal precision**: Every revised statement must be legally accurate. Don't introduce new errors.
+- **Citation accuracy**: Every new or revised citation must be real, current, and correctly formatted in Bluebook style.
+- **Argument coherence**: Ensure revisions don't create new contradictions or gaps in the argument chain.
+- **Professional quality**: The revised brief must be ready for filing. No placeholders, no "TODO" items, no hedging.
+
+## Output Format
+
+Respond with a valid JSON object:
+
+{
+  "revised_brief": "string — the complete revised brief text",
+  "changes": [
+    {
+      "original_text": "string — exact text being changed",
+      "revised_text": "string — the replacement",
+      "change_type": "rewrite | addition | deletion | citation_fix | structural",
+      "reason": "string — why this change was made",
+      "finding_ref": "string — reference to the finding"
+    }
+  ],
+  "improvement_score": 0,
+  "change_summary": "string — overview of all changes made and their expected impact"
+}
+
+Make every change count. A revised brief with new errors is worse than the original.`;
+}
