@@ -1,3 +1,4 @@
+const { parseOutput } = require('./parse-output');
 const VALID_CATEGORIES = ['precedent_hierarchy', 'procedural_rule', 'local_rule', 'standard_of_review', 'burden_allocation', 'statutory_interpretation'];
 const VALID_SEVERITIES = ['low', 'medium', 'high', 'critical'];
 const VALID_COMPLIANCE = ['compliant', 'non_compliant', 'unclear'];
@@ -5,7 +6,7 @@ const VALID_COMPLIANCE = ['compliant', 'non_compliant', 'unclear'];
 module.exports = (output) => {
   let parsed;
   try {
-    parsed = typeof output === 'string' ? JSON.parse(output) : output;
+    parsed = parseOutput(output);
   } catch {
     return { pass: false, score: 0, reason: 'Output is not valid JSON' };
   }

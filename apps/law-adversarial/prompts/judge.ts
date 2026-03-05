@@ -1,5 +1,5 @@
-import { buildJudgePrompt } from '../lib/agents/prompts';
-import type { RoundContext, JudgeOutput } from '../lib/agents/types';
+import { buildJudgePrompt } from '../lib/agents/prompts.ts';
+import type { RoundContext, JudgeOutput } from '../lib/agents/types.ts';
 
 export default function ({ vars }: { vars: Record<string, string> }): string {
   const previousFindings: JudgeOutput[] = vars.previousFindings

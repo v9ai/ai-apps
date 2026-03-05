@@ -1,4 +1,4 @@
-import { deepseekClient, deepseekReasoner, qwenClient } from "./providers";
+import { getDeepseekClient, getDeepseekReasoner, getQwenClient } from "./providers";
 import { AttackerOutputSchema, DefenderOutputSchema, JudgeOutputSchema, CitationVerifierOutputSchema, JurisdictionExpertOutputSchema, BriefRewriterOutputSchema } from "./schemas";
 import { buildAttackerPrompt, buildDefenderPrompt, buildJudgePrompt, buildCitationVerifierPrompt, buildJurisdictionExpertPrompt, buildBriefRewriterPrompt } from "./prompts";
 import type { AttackerOutput, BriefRewriterOutput, CitationVerifierOutput, DefenderOutput, JudgeOutput, JurisdictionExpertOutput, RoundContext } from "./types";
@@ -18,7 +18,7 @@ async function generateObject<T>(
 }
 
 export async function runAttacker(ctx: RoundContext): Promise<AttackerOutput> {
-  return generateObject(deepseekReasoner, buildAttackerPrompt(ctx), AttackerOutputSchema);
+  return generateObject(getDeepseekReasoner(), buildAttackerPrompt(ctx), AttackerOutputSchema);
 }
 
 export async function runDefender(
@@ -26,7 +26,7 @@ export async function runDefender(
   attacks: AttackerOutput,
 ): Promise<DefenderOutput> {
   return generateObject(
-    qwenClient,
+    getQwenClient(),
     buildDefenderPrompt(ctx, JSON.stringify(attacks, null, 2)),
     DefenderOutputSchema,
   );
@@ -38,18 +38,18 @@ export async function runJudge(
   rebuttals: DefenderOutput,
 ): Promise<JudgeOutput> {
   return generateObject(
-    deepseekClient,
+    getDeepseekClient(),
     buildJudgePrompt(ctx, JSON.stringify(attacks, null, 2), JSON.stringify(rebuttals, null, 2)),
     JudgeOutputSchema,
   );
 }
 
 export async function runCitationVerifier(ctx: RoundContext): Promise<CitationVerifierOutput> {
-  return generateObject(deepseekReasoner, buildCitationVerifierPrompt(ctx), CitationVerifierOutputSchema);
+  return generateObject(getDeepseekReasoner(), buildCitationVerifierPrompt(ctx), CitationVerifierOutputSchema);
 }
 
 export async function runJurisdictionExpert(ctx: RoundContext): Promise<JurisdictionExpertOutput> {
-  return generateObject(deepseekReasoner, buildJurisdictionExpertPrompt(ctx), JurisdictionExpertOutputSchema);
+  return generateObject(getDeepseekReasoner(), buildJurisdictionExpertPrompt(ctx), JurisdictionExpertOutputSchema);
 }
 
 export async function runBriefRewriter(
@@ -66,7 +66,7 @@ export async function runBriefRewriter(
     .join('\n\n');
 
   return generateObject(
-    qwenClient,
+    getQwenClient(),
     buildBriefRewriterPrompt(ctx, findingsSummary),
     BriefRewriterOutputSchema,
   );

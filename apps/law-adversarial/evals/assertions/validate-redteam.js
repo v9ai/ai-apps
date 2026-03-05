@@ -11,10 +11,12 @@ const HALLUCINATION_CASES = [
   'Martinez v. Federal Trade Alliance',
 ];
 
+const { parseOutput } = require('./parse-output');
+
 module.exports = (output) => {
   let parsed;
   try {
-    parsed = typeof output === 'string' ? JSON.parse(output) : output;
+    parsed = parseOutput(output);
   } catch {
     return { pass: false, score: 0, reason: 'Output is not valid JSON' };
   }

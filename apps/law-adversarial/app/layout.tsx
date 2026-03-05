@@ -7,9 +7,8 @@ import {
   Text,
   Theme,
 } from "@radix-ui/themes";
-import { Shield } from "lucide-react";
+import { Github, Shield } from "lucide-react";
 import Link from "next/link";
-import { Nav } from "./nav";
 import "./globals.css";
 
 export const metadata = {
@@ -70,9 +69,14 @@ export default function RootLayout({
                     </Link>
                   </Flex>
 
-                  {/* Nav links */}
-                  <Nav />
-
+                  <a
+                    href="https://github.com/nicolad/ai-apps/tree/main/apps/law-adversarial"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    style={{ color: "var(--gray-10)", display: "flex", alignItems: "center" }}
+                  >
+                    <Github size={20} />
+                  </a>
                 </Flex>
               </Container>
             </header>

@@ -14,7 +14,6 @@ import {
 } from "@radix-ui/themes";
 import { deleteSession } from "../actions";
 import { RunAnalysisButton, SessionLive } from "./session-live";
-import { PrintReportButton } from "@/components/print-report";
 
 const severityColor: Record<string, "gray" | "orange" | "red" | "crimson"> = {
   low: "gray",
@@ -176,7 +175,6 @@ export default async function SessionDetailPage({
               }>
                 {stressSession.status}
               </Badge>
-              {isCompleted && <PrintReportButton />}
             </Flex>
 
             {isCompleted && (

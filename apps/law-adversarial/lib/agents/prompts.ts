@@ -1,4 +1,4 @@
-import type { RoundContext, JudgeOutput } from './types';
+import type { RoundContext, JudgeOutput } from './types.ts';
 
 function formatPreviousFindings(findings: JudgeOutput[]): string {
   if (findings.length === 0) return 'None. This is the first round of analysis.';
