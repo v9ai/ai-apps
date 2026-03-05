@@ -1,12 +1,7 @@
 [
   {
-    "topic": "The Rise of 'Rust for the Runtime, Python for the Agents' Hybrid Orchestration",
-    "angle": "The Rust vs. Python language war is misguided; the optimal path is a hybrid architecture where Rust handles high-performance orchestration while Python defines agent logic, debunking the either-or fallacy.",
-    "why_viral": "Senior engineers crave practical solutions to the performance-flexibility trade-off in scalable agent systems, making this hybrid pattern a timely and actionable insight."
-  },
-  {
-    "topic": "LLM Evaluation Frameworks Struggle with Multi-Agent & Cost Metrics",
-    "angle": "Current LLM eval frameworks fail to capture the complexity of multi-agent workflows, forcing engineers to DIY cost and interaction tracking, and correcting the belief that existing tools are sufficient.",
-    "why_viral": "This exposes a critical, under-discussed pain point for teams deploying AI agents, resonating with those frustrated by evaluation gaps in production systems."
+    "topic": "DeepSeek-V3 Benchmarking Reveals 'Data Contamination Mirage'",
+    "angle": "Common LLM benchmarks are misleading due to inconsistent prompt formatting; the alleged data contamination is often a mirage caused by evaluation methodology, not actual training data issues.",
+    "why_viral": "This will resonate because it challenges the foundation of model comparison, forcing engineers to rethink how they trust and use benchmark results in production decisions."
   }
 ]
