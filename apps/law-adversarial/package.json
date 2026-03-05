@@ -48,7 +48,6 @@
     "eslint-config-next": "15.3.1",
     "promptfoo": "^0.120.26",
     "typescript": "^5",
-    "napi-postinstall": "^0.2.3",
     "vitest": "^4.0.18"
   }
 }
