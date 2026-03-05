@@ -11,8 +11,6 @@ graph LR
     A -->|attacks| D[Defender - Qwen Plus]
     D -->|rebuttals| J[Judge - DeepSeek Chat]
     J -->|findings| DB[(Supabase)]
-    J -->|graph| N[(Neo4j)]
-    N --> V[D3 Visualization]
     DB --> UI[Live SSE Feed]
     S -.->|rounds 1..N| A
     J --> CV[Citation Verifier - DeepSeek R1]
@@ -30,10 +28,6 @@ graph LR
 | Citation Verifier | DeepSeek R1 (reasoner) | Deep reasoning catches mischaracterized holdings, overruled cases, and fabricated citations |
 | Jurisdiction Expert | DeepSeek R1 (reasoner) | Chain-of-thought reasoning maps precedent hierarchies and jurisdiction-specific procedural rules |
 | Brief Rewriter | Qwen Plus | Strong instruction-following produces precise, minimal-intervention revisions with tracked changes |
-
-## Why Neo4j for Argument Graphs
-
-Legal arguments form a directed graph: claims support or attack other claims, evidence nodes back assertions, and judicial findings reference both sides. A property graph database captures these relationships naturally, enabling queries like "find all undefended critical attacks" or "trace the evidence chain for a specific finding." The D3 force-directed visualization renders this graph interactively with color-coded nodes (red = attacker, blue = defender, gold = judge) and typed edges (dashed red = attacks, solid green = supports).
 
 ## Evaluation Framework
 
@@ -66,9 +60,6 @@ Run evals: `npm run test:prompts:all`
    ```
    NEXT_PUBLIC_SUPABASE_URL=...
    NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY=...
-   NEO4J_URI=bolt://localhost:7687
-   NEO4J_USER=neo4j
-   NEO4J_PASSWORD=...
    DEEPSEEK_API_KEY=...
    DASHSCOPE_API_KEY=...
    ```
