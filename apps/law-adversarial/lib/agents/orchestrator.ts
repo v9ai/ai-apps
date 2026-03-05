@@ -1,10 +1,5 @@
 import { createClient } from "@/lib/supabase/server";
 import { runAttacker, runDefender, runJudge, runCitationVerifier, runJurisdictionExpert, runBriefRewriter } from "./runner";
-import {
-  createClaim,
-  createAttack,
-  createSupport,
-} from "@/lib/argument-graph";
 import type { JudgeOutput, RoundContext } from "./types";
 
 export type StressTestEvent =
@@ -117,12 +112,6 @@ export async function runStressTest(
         });
       }
 
-      // Populate Neo4j argument graph
-      try {
-        await populateGraph(sessionId, round, attacks, defense, judgment);
-      } catch {
-        // Neo4j is optional — don't fail the pipeline
-      }
     }
 
     // Expert agents — run in parallel after adversarial rounds
@@ -225,70 +214,3 @@ async function writeAudit(
   });
 }
 
-async function populateGraph(
-  sessionId: string,
-  round: number,
-  attacks: { attacks: { claim: string; weakness: string; type: string }[] },
-  defense: { rebuttals: { attack_ref: string; defense: string; strength: number }[] },
-  judgment: { findings: { description: string; severity: string; confidence: number }[] },
-) {
-  // Create attacker claim nodes
-  const attackNodeIds: string[] = [];
-  for (const atk of attacks.attacks) {
-    const id = await createClaim({
-      text: atk.weakness,
-      strength: 0.8,
-      confidence: 0.7,
-      source_agent: "attacker",
-      round,
-      session_id: sessionId,
-    });
-    attackNodeIds.push(id);
-  }
-
-  // Create defender claim nodes + ATTACKS edges from defense to attacker claims
-  for (let i = 0; i < defense.rebuttals.length; i++) {
-    const reb = defense.rebuttals[i];
-    const defId = await createClaim({
-      text: reb.defense,
-      strength: reb.strength,
-      confidence: reb.strength,
-      source_agent: "defender",
-      round,
-      session_id: sessionId,
-    });
-
-    // Link defender rebuttal to the attacker claim it addresses
-    if (attackNodeIds[i]) {
-      await createAttack(sessionId, defId, attackNodeIds[i], {
-        strength: reb.strength,
-        type: "rebut",
-        created_by: "defender",
-        round,
-      });
-    }
-  }
-
-  // Create judge finding nodes + SUPPORTS edges from judge to attacker claims
-  for (let i = 0; i < judgment.findings.length; i++) {
-    const finding = judgment.findings[i];
-    const judgeId = await createClaim({
-      text: finding.description,
-      strength: finding.confidence,
-      confidence: finding.confidence,
-      source_agent: "judge",
-      round,
-      session_id: sessionId,
-    });
-
-    // Link judge finding to a related attacker claim if one exists
-    if (attackNodeIds[i]) {
-      await createSupport(sessionId, judgeId, attackNodeIds[i], {
-        strength: finding.confidence,
-        type: "evidential",
-        created_by: "judge",
-        round,
-      });
-    }
-  }
-}

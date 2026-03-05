@@ -3,7 +3,6 @@
 import { createClient } from "@/lib/supabase/server";
 import { redirect } from "next/navigation";
 import { revalidatePath } from "next/cache";
-import { deleteArgumentGraph } from "@/lib/argument-graph";
 import { parseBrief } from "@/lib/brief-parser";
 
 function toSlug(title: string): string {
@@ -83,13 +82,6 @@ export async function deleteSession(slug: string) {
 
   if (!sessionData) throw new Error("Session not found");
 
-  // Delete argument graph (cascade handles it, but explicit is clearer)
-  try {
-    await deleteArgumentGraph(sessionData.id);
-  } catch {
-    // Non-blocking
-  }
-
   // Delete storage file if exists
   if (sessionData?.brief_storage_path) {
     await supabase.storage
@@ -145,8 +137,6 @@ export async function getSessionWithFindings(slug: string) {
       .eq("session_id", sessionId)
       .order("created_at", { ascending: true }),
   ]);
-
-  if (sessionResult.error) throw new Error(sessionResult.error.message);
 
   return {
     session: sessionResult.data,

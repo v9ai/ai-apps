@@ -14,7 +14,7 @@ import {
 } from "@radix-ui/themes";
 import { deleteSession } from "../actions";
 import { RunAnalysisButton, SessionLive } from "./session-live";
-import { ArgumentGraph } from "@/components/argument-graph";
+import { PrintReportButton } from "@/components/print-report";
 
 const severityColor: Record<string, "gray" | "orange" | "red" | "crimson"> = {
   low: "gray",
@@ -176,6 +176,7 @@ export default async function SessionDetailPage({
               }>
                 {stressSession.status}
               </Badge>
+              {isCompleted && <PrintReportButton />}
             </Flex>
 
             {isCompleted && (
@@ -200,7 +201,7 @@ export default async function SessionDetailPage({
 
         {/* ===== RUN ANALYSIS (pending) ===== */}
         {isPending && (
-          <>
+          <div className="no-print">
             <Separator size="4" />
             <Flex direction="column" gap="3">
               <Heading size="4">Run Analysis</Heading>
@@ -212,15 +213,15 @@ export default async function SessionDetailPage({
                 </Text>
               )}
             </Flex>
-          </>
+          </div>
         )}
 
         {/* ===== LIVE FEED (running) ===== */}
         {isRunning && (
-          <>
+          <div className="no-print">
             <Separator size="4" />
             <SessionLive sessionId={sessionId} />
-          </>
+          </div>
         )}
 
         {/* ===== SEVERITY DISTRIBUTION (completed) ===== */}
@@ -270,7 +271,6 @@ export default async function SessionDetailPage({
           <Tabs.List size="2">
             <Tabs.Trigger value="findings">Findings ({findings.length})</Tabs.Trigger>
             <Tabs.Trigger value="timeline">Timeline ({auditTrail.length})</Tabs.Trigger>
-            <Tabs.Trigger value="graph">Argument Graph</Tabs.Trigger>
           </Tabs.List>
 
           {/* FINDINGS TAB */}
@@ -355,12 +355,6 @@ export default async function SessionDetailPage({
             </Flex>
           </Tabs.Content>
 
-          {/* ARGUMENT GRAPH TAB */}
-          <Tabs.Content value="graph">
-            <Flex direction="column" gap="3" pt="4">
-              <ArgumentGraph sessionId={sessionId} />
-            </Flex>
-          </Tabs.Content>
         </Tabs.Root>
       </Flex>
     </Box>

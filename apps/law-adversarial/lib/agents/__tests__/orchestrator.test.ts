@@ -75,12 +75,6 @@ vi.mock("../runner", () => ({
   }),
 }));
 
-vi.mock("@/lib/argument-graph", () => ({
-  createClaim: vi.fn().mockResolvedValue("mock-node-id"),
-  createAttack: vi.fn().mockResolvedValue(undefined),
-  createSupport: vi.fn().mockResolvedValue(undefined),
-}));
-
 vi.mock("@/lib/supabase/server", () => ({
   createClient: vi.fn().mockResolvedValue({
     from: vi.fn().mockReturnValue({
