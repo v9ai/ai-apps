@@ -1,6 +1,7 @@
 import { AuthButton } from "@/components/auth-button";
 import { Box, Container, Flex, Heading, Text, Separator } from "@radix-ui/themes";
 import { Suspense } from "react";
+import { WhyTrajectory } from "./protected/why-trajectory";
 
 export default function Home() {
   return (
@@ -25,6 +26,14 @@ export default function Home() {
             Upload your blood tests and get instant structured insights.
           </Text>
         </Flex>
+      </Container>
+
+      <Separator size="4" />
+
+      <Container size="2">
+        <Box py="8">
+          <WhyTrajectory />
+        </Box>
       </Container>
 
       <Separator size="4" />
