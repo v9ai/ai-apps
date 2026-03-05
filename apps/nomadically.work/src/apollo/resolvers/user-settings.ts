@@ -5,15 +5,23 @@ import type { GraphQLContext } from "../context";
 export const userSettingsResolvers = {
   Query: {
     async userSettings(
-      _parent: any,
+      _parent: unknown,
       args: { userId: string },
       context: GraphQLContext,
     ) {
       try {
+        // Enforce ownership: users can only read their own settings
+        if (!context.userId) {
+          throw new Error("Authentication required");
+        }
+        if (args.userId !== context.userId) {
+          throw new Error("Forbidden: cannot access another user's settings");
+        }
+
         const [settings] = await context.db
           .select()
           .from(userSettings)
-          .where(eq(userSettings.user_id, args.userId));
+          .where(eq(userSettings.user_id, context.userId));
 
         if (!settings) {
           return null;
@@ -41,7 +49,7 @@ export const userSettingsResolvers = {
 
   Mutation: {
     async updateUserSettings(
-      _parent: any,
+      _parent: unknown,
       args: {
         userId: string;
         settings: {
@@ -58,7 +66,16 @@ export const userSettingsResolvers = {
       context: GraphQLContext,
     ) {
       try {
-        const { userId, settings: settingsInput } = args;
+        // Enforce ownership: users can only update their own settings
+        if (!context.userId) {
+          throw new Error("Authentication required");
+        }
+        if (args.userId !== context.userId) {
+          throw new Error("Forbidden: cannot modify another user's settings");
+        }
+
+        const { settings: settingsInput } = args;
+        const userId = context.userId;
 
         // Check if settings exist
         const [existingSettings] = await context.db

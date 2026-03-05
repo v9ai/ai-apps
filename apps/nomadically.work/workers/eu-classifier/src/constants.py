@@ -46,6 +46,12 @@ COUNTRY_NAME_TO_ISO: dict[str, str] = {
     "canada": "CA", "australia": "AU", "new zealand": "NZ",
     "japan": "JP", "singapore": "SG", "india": "IN", "brazil": "BR",
     "israel": "IL", "south korea": "KR", "china": "CN",
+    # LatAm / other non-EU countries
+    "mexico": "MX", "argentina": "AR", "colombia": "CO", "panama": "PA",
+    "chile": "CL", "peru": "PE", "costa rica": "CR", "uruguay": "UY",
+    "philippines": "PH", "vietnam": "VN", "turkey": "TR", "türkiye": "TR",
+    "south africa": "ZA", "nigeria": "NG", "kenya": "KE",
+    "united arab emirates": "AE", "uae": "AE",
 }
 
 
@@ -102,6 +108,32 @@ EU_TIMEZONE_PATTERN = re.compile(
     r"|[+-]\s*\d+\s*hours?\s*cet"
     r"|\boverlap with (?:cet|european)\b"
     r")",
+    re.IGNORECASE,
+)
+
+# Non-EU location patterns — city/region names that indicate non-EU positions
+# when found in the location string (not description)
+NON_EU_LOCATION_PATTERN = re.compile(
+    r"\b("
+    r"nyc|new york|denver|miami|san francisco|los angeles|chicago|seattle|austin"
+    r"|boston|atlanta|dallas|houston|portland|phoenix|minneapolis|minnesota"
+    r"|toronto|vancouver|montreal|calgary"
+    r"|mumbai|bangalore|bengaluru|hyderabad|delhi|chennai|pune"
+    r"|são paulo|sao paulo|buenos aires|bogota|bogotá|lima|santiago"
+    r"|manila|ho chi minh|jakarta"
+    r"|latam|latin america"
+    r")\b",
+    re.IGNORECASE,
+)
+
+# JD-level signals that indicate non-EU regional focus (check first ~500 chars)
+NON_EU_JD_PATTERN = re.compile(
+    r"\b("
+    r"latam|latin america|nearshore|staff augmentation"
+    r"|us(?:\s+|-)?(?:based|only)|united states only"
+    r"|canada(?:\s+|-)?(?:based|only)|india(?:\s+|-)?(?:based|only)"
+    r"|scale u\.?s\.? startups?"
+    r")\b",
     re.IGNORECASE,
 )
 

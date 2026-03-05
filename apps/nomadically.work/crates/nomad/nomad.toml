@@ -1,0 +1,75 @@
+# devserver.toml — local dev orchestration config
+# Each [[service]] spawns in parallel. All output is prefixed with colored tags.
+
+[[service]]
+name = "nextjs"
+command = "pnpm dev"
+color = "green"
+ready_pattern = "Ready in"
+
+[[service]]
+name = "d1-gw"
+command = "npx wrangler dev --config wrangler.d1-gateway.toml --port 8787"
+color = "cyan"
+ready_pattern = "Ready on"
+
+[[service]]
+name = "janitor"
+command = "npx wrangler dev --port 8788"
+color = "yellow"
+ready_pattern = "Ready on"
+
+[[service]]
+name = "eu-class"
+command = "cargo run --manifest-path crates/nomad/Cargo.toml --bin nomad-classify --release"
+color = "magenta"
+ready_pattern = "classifier ready"
+
+[[service]]
+name = "proc-jobs"
+command = "cargo run --manifest-path crates/nomad/Cargo.toml --bin nomad-process --release"
+color = "blue"
+ready_pattern = "pipeline ready"
+
+[[service]]
+name = "cleanup"
+command = "cargo run --manifest-path crates/nomad/Cargo.toml --bin nomad-cleanup --release"
+color = "cyan"
+ready_pattern = "cleanup ready"
+
+[[service]]
+name = "reporter"
+command = "cargo run --manifest-path crates/nomad/Cargo.toml --bin nomad-report --release"
+color = "yellow"
+ready_pattern = "reporter ready"
+
+# Python workers kept as-is (deferred to Phase 2)
+[[service]]
+name = "job-match"
+command = "npx wrangler dev --config workers/job-matcher/wrangler.jsonc --port 8791"
+color = "red"
+ready_pattern = "Ready on"
+
+[[service]]
+name = "resume"
+command = "npx wrangler dev --config workers/resume-rag/wrangler.jsonc --port 8792"
+color = "white"
+ready_pattern = "Ready on"
+
+[[service]]
+name = "crawler"
+command = "npx wrangler dev --config workers/ashby-crawler/wrangler.toml --port 8795"
+color = "green"
+ready_pattern = "Ready on"
+
+[[service]]
+name = "sdd-agent"
+command = "npx wrangler dev --config workers/sdd-agent/wrangler.toml --port 8796"
+color = "magenta"
+ready_pattern = "Ready on"
+
+[[service]]
+name = "hooks"
+command = "cargo run --manifest-path hooks/Cargo.toml --release"
+color = "red"
+ready_pattern = "listening on"

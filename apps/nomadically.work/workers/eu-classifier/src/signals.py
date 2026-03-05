@@ -90,7 +90,7 @@ def extract_eu_signals(job: dict) -> dict:
 
     # Fallback: extract country from location string (e.g. "USA | Remote")
     if not signals["country_code"] and location_lower:
-        for token in re.split(r"[|,/\-\u2013\u2014]+", location_lower):
+        for token in re.split(r"[|,/()\-\u2013\u2014]+", location_lower):
             token = token.strip().rstrip(".")
             if not token or token == "remote":
                 continue

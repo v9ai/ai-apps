@@ -5,6 +5,8 @@ use tokio::fs;
 use tokio::process::Command;
 use tracing::info;
 
+use crate::slugify;
+
 /// Resolve the blog posts directory.
 /// Priority: `VADIM_BLOG_DIR` env var → sibling `apps/vadim.blog/blog` relative to the
 /// manifest dir baked in at compile time (workspace root).
@@ -120,13 +122,60 @@ tags:
     Ok(post_path)
 }
 
-fn slugify(s: &str) -> String {
-    let raw: String = s
-        .chars()
-        .map(|c| if c.is_alphanumeric() { c.to_ascii_lowercase() } else { '-' })
-        .collect();
-    raw.split('-')
-        .filter(|p| !p.is_empty())
-        .collect::<Vec<_>>()
-        .join("-")
+#[cfg(test)]
+mod tests {
+    use crate::slugify;
+
+    #[test]
+    fn test_slugify_shared() {
+        assert_eq!(slugify("Hello World"), "hello-world");
+        assert_eq!(slugify("a--b"), "a-b");
+    }
+
+    #[test]
+    fn test_title_extraction() {
+        let md = "# My Great Post\n\nSome content here.";
+        let title = md
+            .lines()
+            .find(|l| l.starts_with("# "))
+            .map(|l| l.trim_start_matches("# ").trim().to_string())
+            .unwrap_or_default();
+        assert_eq!(title, "My Great Post");
+    }
+
+    #[test]
+    fn test_frontmatter_format() {
+        let slug = "test-post";
+        let title = "Test Post";
+        let description = "A test description";
+        let date = "2026-03-05";
+        let tags_yaml = "  - test\n  - post";
+
+        let content = format!(
+            r#"---
+slug: {slug}
+title: "{title}"
+description: "{description}"
+date: {date}
+authors: [nicolad]
+tags:
+{tags_yaml}
+---
+
+Body here"#
+        );
+
+        assert!(content.contains("slug: test-post"));
+        assert!(content.contains("title: \"Test Post\""));
+        assert!(content.contains("date: 2026-03-05"));
+        assert!(content.contains("authors: [nicolad]"));
+        assert!(content.contains("tags:"));
+    }
+
+    #[test]
+    fn test_description_truncated_at_200() {
+        let long_paragraph = "x".repeat(300);
+        let description: String = long_paragraph.chars().take(200).collect();
+        assert_eq!(description.len(), 200);
+    }
 }

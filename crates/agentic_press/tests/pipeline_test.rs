@@ -283,3 +283,97 @@ async fn test_invalid_picker_json_returns_descriptive_error() {
         "error should mention the parse failure; got: {err}"
     );
 }
+
+/// Picker wraps its JSON in markdown fences — pipeline should strip them and proceed.
+#[tokio::test]
+async fn test_picker_fenced_json_is_handled() {
+    let fenced = format!("```json\n{SINGLE_TOPIC_JSON}\n```");
+    let server = MockServer::start().await;
+
+    // Scout responds normally
+    Mock::given(method("POST"))
+        .and(path("/chat/completions"))
+        .and(body_string_contains("Scout agent"))
+        .respond_with(ResponseTemplate::new(200).set_body_json(chat_response("1. Topic A")))
+        .mount(&server)
+        .await;
+
+    // Picker returns fenced JSON
+    Mock::given(method("POST"))
+        .and(path("/chat/completions"))
+        .and(body_string_contains("Picker agent"))
+        .respond_with(ResponseTemplate::new(200).set_body_json(chat_response(&fenced)))
+        .mount(&server)
+        .await;
+
+    // Researcher, Writer, LinkedIn respond normally
+    for (phrase, content) in [
+        ("Researcher agent", "## Research\nNotes."),
+        ("Writer agent", "# Blog\nContent."),
+        ("LinkedIn Drafter", "Post content.\n#Hashtag"),
+    ] {
+        Mock::given(method("POST"))
+            .and(path("/chat/completions"))
+            .and(body_string_contains(phrase))
+            .respond_with(ResponseTemplate::new(200).set_body_json(chat_response(content)))
+            .mount(&server)
+            .await;
+    }
+
+    let tmp = TempDir::new().unwrap();
+    pipeline(&server, &tmp).run().await.expect("pipeline should handle fenced JSON");
+
+    assert!(
+        tmp.path().join("claude-code-testing").join("blog.md").exists(),
+        "blog.md should exist after stripping fences"
+    );
+}
+
+/// First API call returns 500, subsequent calls return 200 — pipeline should succeed via retry.
+#[tokio::test]
+async fn test_retry_on_transient_500() {
+    let server = MockServer::start().await;
+
+    // Scout: first call returns 500, second returns 200
+    Mock::given(method("POST"))
+        .and(path("/chat/completions"))
+        .and(body_string_contains("Scout agent"))
+        .respond_with(ResponseTemplate::new(500).set_body_string("Internal Server Error"))
+        .up_to_n_times(1)
+        .mount(&server)
+        .await;
+
+    Mock::given(method("POST"))
+        .and(path("/chat/completions"))
+        .and(body_string_contains("Scout agent"))
+        .respond_with(ResponseTemplate::new(200).set_body_json(chat_response("1. Topic A")))
+        .mount(&server)
+        .await;
+
+    // All other agents respond normally
+    Mock::given(method("POST"))
+        .and(path("/chat/completions"))
+        .and(body_string_contains("Picker agent"))
+        .respond_with(ResponseTemplate::new(200).set_body_json(chat_response(SINGLE_TOPIC_JSON)))
+        .mount(&server)
+        .await;
+
+    for (phrase, content) in [
+        ("Researcher agent", "## Research\nNotes."),
+        ("Writer agent", "# Blog\nContent."),
+        ("LinkedIn Drafter", "Post.\n#Tag"),
+    ] {
+        Mock::given(method("POST"))
+            .and(path("/chat/completions"))
+            .and(body_string_contains(phrase))
+            .respond_with(ResponseTemplate::new(200).set_body_json(chat_response(content)))
+            .mount(&server)
+            .await;
+    }
+
+    let tmp = TempDir::new().unwrap();
+    pipeline(&server, &tmp)
+        .run()
+        .await
+        .expect("pipeline should succeed after retrying the transient 500");
+}

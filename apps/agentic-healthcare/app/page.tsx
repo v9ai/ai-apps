@@ -1,5 +1,13 @@
 import { AuthButton } from "@/components/auth-button";
-import { Box, Container, Flex, Heading, Text, Button, Grid } from "@radix-ui/themes";
+import {
+  Box,
+  Container,
+  Flex,
+  Heading,
+  Text,
+  Button,
+  Grid,
+} from "@radix-ui/themes";
 import { HeartPulse } from "lucide-react";
 import Link from "next/link";
 import { Suspense } from "react";
@@ -14,22 +22,21 @@ const stats = [
 
 const steps = [
   { number: "1", title: "Upload", description: "Drop your blood test PDF" },
-  { number: "2", title: "Analyze", description: "AI extracts markers, computes 7 clinical ratios" },
-  { number: "3", title: "Track", description: "Watch your trajectory evolve across panels" },
+  {
+    number: "2",
+    title: "Analyze",
+    description: "AI extracts markers, computes 7 clinical ratios",
+  },
+  {
+    number: "3",
+    title: "Track",
+    description: "Watch your trajectory evolve across panels",
+  },
 ];
 
 export default function Home() {
   return (
     <Box style={{ minHeight: "100vh" }}>
-      {/* Accent bar */}
-      <Box
-        style={{
-          height: 3,
-          background: "linear-gradient(90deg, var(--indigo-9), var(--indigo-6))",
-        }}
-      />
-
-      {/* Nav */}
       <Box
         asChild
         style={{
@@ -67,7 +74,11 @@ export default function Home() {
             <Heading
               size="9"
               align="center"
-              style={{ letterSpacing: "-0.04em", lineHeight: 1.1, maxWidth: 720 }}
+              style={{
+                letterSpacing: "-0.04em",
+                lineHeight: 1.1,
+                maxWidth: 720,
+              }}
             >
               Don&apos;t just test your blood.{" "}
               <span className="gradient-text">Track your trajectory.</span>
@@ -78,7 +89,8 @@ export default function Home() {
               align="center"
               style={{ maxWidth: 480 }}
             >
-              Upload panels. Compute clinical ratios. See where your health is heading.
+              Upload panels. Compute clinical ratios. See where your health is
+              heading.
             </Text>
             <Flex gap="3" mt="4" wrap="wrap" justify="center">
               <Button size="3" asChild className="cta-button">
@@ -93,12 +105,21 @@ export default function Home() {
       </Box>
 
       {/* Credibility Strip */}
-      <Box style={{ borderTop: "1px solid var(--gray-a3)", borderBottom: "1px solid var(--gray-a3)" }}>
+      <Box
+        style={{
+          borderTop: "1px solid var(--gray-a3)",
+          borderBottom: "1px solid var(--gray-a3)",
+        }}
+      >
         <Container size="3">
           <Grid columns={{ initial: "2", sm: "4" }} gap="4" py="7" px="4">
             {stats.map((stat) => (
               <Flex key={stat.label} direction="column" align="center" gap="1">
-                <Text size="8" weight="bold" style={{ letterSpacing: "-0.03em" }}>
+                <Text
+                  size="8"
+                  weight="bold"
+                  style={{ letterSpacing: "-0.03em" }}
+                >
                   {stat.value}
                 </Text>
                 <Text size="2" color="gray">
@@ -114,7 +135,11 @@ export default function Home() {
       <Box id="how-it-works" py="9">
         <Container size="3">
           <Flex direction="column" align="center" gap="7" px="4">
-            <Heading size="7" align="center" style={{ letterSpacing: "-0.03em" }}>
+            <Heading
+              size="7"
+              align="center"
+              style={{ letterSpacing: "-0.03em" }}
+            >
               How it works
             </Heading>
             <Grid columns={{ initial: "1", sm: "3" }} gap="6" width="100%">
@@ -168,7 +193,11 @@ export default function Home() {
       <Box className="cta-banner" py="9">
         <Container size="2">
           <Flex direction="column" align="center" gap="5">
-            <Heading size="7" align="center" style={{ letterSpacing: "-0.03em" }}>
+            <Heading
+              size="7"
+              align="center"
+              style={{ letterSpacing: "-0.03em" }}
+            >
               Start tracking your health trajectory today
             </Heading>
             <Button size="3" asChild className="cta-button">

@@ -152,6 +152,7 @@ export const jobs = sqliteTable("jobs", {
     .default(sql`(datetime('now'))`),
 }, (table) => ({
   sourceCompanyExternalIdx: uniqueIndex("idx_jobs_source_company_external").on(table.source_kind, table.company_key, table.external_id),
+  externalIdIdx: index("idx_jobs_external_id").on(table.external_id),
   postedAtIdx: index("idx_jobs_posted_at_created_at").on(table.posted_at, table.created_at),
   isRemoteEuIdx: index("idx_jobs_is_remote_eu").on(table.is_remote_eu),
   companyKeyIdx: index("idx_jobs_company_key").on(table.company_key),

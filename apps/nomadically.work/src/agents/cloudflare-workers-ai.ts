@@ -88,7 +88,7 @@ export async function embedWithWorkersAI(
     throw new Error(`Cloudflare API error (${response.status}): ${errorText}`);
   }
 
-  const result = await response.json();
+  const result = (await response.json()) as { success?: boolean; result?: { data?: number[][] } };
 
   if (!result.success || !result.result?.data) {
     throw new Error(

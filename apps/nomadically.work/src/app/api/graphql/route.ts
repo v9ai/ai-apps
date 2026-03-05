@@ -1,12 +1,45 @@
 import { ApolloServer } from "@apollo/server";
 import { startServerAndCreateNextHandler } from "@as-integrations/next";
 import { NextRequest, NextResponse } from "next/server";
+import { Kind, GraphQLError, type DocumentNode, type ValidationContext } from "graphql";
 import { schema } from "@/apollo/schema";
 import { GraphQLContext } from "@/apollo/context";
 import { auth, clerkClient } from "@clerk/nextjs/server";
 import { getDb } from "@/db";
 import { createD1HttpClient } from "@/db/d1-http";
 import { createLoaders } from "@/apollo/loaders";
+
+const MAX_DEPTH = 10;
+
+function depthLimitRule(context: ValidationContext) {
+  function measure(selections: readonly any[], depth: number): number {
+    let max = depth;
+    for (const sel of selections) {
+      if (sel.kind === Kind.FIELD && sel.selectionSet) {
+        max = Math.max(max, measure(sel.selectionSet.selections, depth + 1));
+      } else if ((sel.kind === Kind.INLINE_FRAGMENT || sel.kind === Kind.FRAGMENT_SPREAD) && sel.selectionSet) {
+        max = Math.max(max, measure(sel.selectionSet.selections, depth));
+      }
+    }
+    return max;
+  }
+  return {
+    Document(node: DocumentNode) {
+      for (const def of node.definitions) {
+        if (def.kind === Kind.OPERATION_DEFINITION && def.selectionSet) {
+          const depth = measure(def.selectionSet.selections, 1);
+          if (depth > MAX_DEPTH) {
+            context.reportError(
+              new GraphQLError(
+                `Query depth ${depth} exceeds maximum allowed depth of ${MAX_DEPTH}`,
+              ),
+            );
+          }
+        }
+      }
+    },
+  };
+}
 
 // Use Node.js runtime - better performance for I/O operations like D1 gateway calls
 // See: https://vercel.com/docs/functions/runtimes/node-js
@@ -52,7 +85,10 @@ setInterval(() => {
   }
 }, RATE_LIMIT.WINDOW_MS);
 
-const apolloServer = new ApolloServer<GraphQLContext>({ schema });
+const apolloServer = new ApolloServer<GraphQLContext>({
+  schema,
+  validationRules: [depthLimitRule],
+});
 
 const handler = startServerAndCreateNextHandler<NextRequest, GraphQLContext>(
   apolloServer,

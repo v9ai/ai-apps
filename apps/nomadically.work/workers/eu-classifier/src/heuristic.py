@@ -6,7 +6,7 @@ Returns None for anything ambiguous, signalling escalation to the LLM tier.
 
 import re
 
-from constants import normalize_text_for_signals
+from constants import normalize_text_for_signals, NON_EU_LOCATION_PATTERN, NON_EU_JD_PATTERN
 from models import JobClassification
 
 
@@ -89,6 +89,14 @@ def keyword_eu_classify(job: dict, signals: dict) -> JobClassification | None:
             and not signals["eu_countries_in_location"]):
         return None
 
+    # Pre-screen: check location string and JD intro for non-EU regional signals.
+    # If found, escalate to LLM instead of auto-accepting as worldwide/global.
+    location_raw = job.get("location") or ""
+    desc_raw = (job.get("description") or "")
+    _has_non_eu_location = bool(NON_EU_LOCATION_PATTERN.search(location_raw))
+    _has_hybrid_location = "hybrid" in location
+    _has_non_eu_jd = bool(NON_EU_JD_PATTERN.search(desc_raw[:500]))
+
     # Worldwide remote: ATS remote flag + no country code + no negative signals.
     # Require a meaningful description and a plausible company key (not a raw
     # ATS board token filled with digits) before auto-accepting.
@@ -97,6 +105,9 @@ def keyword_eu_classify(job: dict, signals: dict) -> JobClassification | None:
     if signals["ats_remote"] and not signals["country_code"]:
         if is_aggregator:
             # Aggregator worldwide jobs need LLM review — too many false positives
+            return None
+        # Non-EU location or JD signals → escalate to LLM
+        if _has_non_eu_location or _has_hybrid_location or _has_non_eu_jd:
             return None
         company_key = (job.get("company_key") or "")
         digit_ratio = (
@@ -127,6 +138,9 @@ def keyword_eu_classify(job: dict, signals: dict) -> JobClassification | None:
         )
         explicit_match = _explicit_worldwide_pattern.search(desc_lower)
         if explicit_match:
+            # Don't auto-accept if JD/location contradicts worldwide claim
+            if _has_non_eu_location or _has_non_eu_jd:
+                return None  # Escalate to LLM
             return JobClassification(
                 isRemoteEU=True,
                 confidence="medium",

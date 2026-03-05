@@ -1,4 +1,4 @@
-import { opportunities, companies } from "@/db/schema";
+import { opportunities } from "@/db/schema";
 import { eq, and, count, desc } from "drizzle-orm";
 import type { GraphQLContext } from "../context";
 import { isAdminEmail } from "@/lib/admin";
@@ -37,14 +37,9 @@ function mapOpp(row: typeof opportunities.$inferSelect) {
 
 export const opportunityResolvers = {
   Opportunity: {
-    async company(parent: any, _args: any, context: GraphQLContext) {
+    async company(parent: ReturnType<typeof mapOpp>, _args: unknown, context: GraphQLContext) {
       if (!parent.companyId) return null;
-      const rows = await context.db
-        .select()
-        .from(companies)
-        .where(and(eq(companies.id, parent.companyId), eq(companies.is_hidden, false)))
-        .limit(1);
-      return rows[0] ?? null;
+      return context.loaders.company.load(parent.companyId);
     },
   },
 

@@ -1,14 +1,22 @@
 import { NextRequest, NextResponse } from "next/server";
+import { auth } from "@clerk/nextjs/server";
 import { sqlAgent } from "@/agents/sql";
+import { isAdminEmail } from "@/lib/admin";
 
 /**
  * Text-to-SQL API endpoint
  *
  * Accepts a natural language question and returns a structured SQL query.
  * Uses structuredOutput to guarantee schema-constrained LLM responses.
+ * Requires admin authentication.
  */
 export async function POST(request: NextRequest) {
   try {
+    const { userId } = await auth();
+    if (!userId) {
+      return NextResponse.json({ error: "Authentication required" }, { status: 401 });
+    }
+
     const body = await request.json();
     const { question } = body;
 
@@ -35,7 +43,6 @@ export async function POST(request: NextRequest) {
     return NextResponse.json(
       {
         error: error instanceof Error ? error.message : "Failed to process SQL query",
-        details: error instanceof Error ? error.stack : String(error),
       },
       { status: 500 }
     );

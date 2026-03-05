@@ -20,7 +20,7 @@ pub use types::*;
 pub use client::{HttpClient, DeepSeekClient, DEFAULT_BASE_URL, build_request};
 
 #[cfg(feature = "reqwest-client")]
-pub use reqwest_client::ReqwestClient;
+pub use reqwest_client::{ReqwestClient, client_from_env, reason, reason_with_retry};
 
 #[cfg(feature = "wasm")]
 pub use wasm::WasmClient;

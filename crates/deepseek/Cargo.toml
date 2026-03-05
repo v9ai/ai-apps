@@ -7,7 +7,7 @@ description = "Shared DeepSeek API client — types, reqwest transport, WASM tra
 
 [features]
 default = ["reqwest-client"]
-reqwest-client = ["dep:reqwest"]
+reqwest-client = ["dep:reqwest", "dep:anyhow", "dep:tokio"]
 wasm = ["dep:worker", "dep:js-sys"]
 cache = ["dep:dashmap", "dep:sha2", "dep:tokio"]
 agent = []
@@ -29,4 +29,5 @@ js-sys = { version = "0.3", optional = true }
 # cache feature
 dashmap = { version = "6", optional = true }
 sha2 = { version = "0.10", optional = true }
-tokio = { version = "1", features = ["sync"], optional = true }
+tokio = { version = "1", features = ["sync", "time"], optional = true }
+anyhow = { version = "1", optional = true }

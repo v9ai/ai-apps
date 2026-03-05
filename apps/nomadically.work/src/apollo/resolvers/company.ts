@@ -230,6 +230,8 @@ export const companyResolvers = {
           service_taxonomy_any?: string[];
           ai_native_only?: boolean;
           ai_first_only?: boolean;
+          is_hidden?: boolean;
+          min_ai_tier?: number;
         };
         order_by?: string;
         limit?: number;

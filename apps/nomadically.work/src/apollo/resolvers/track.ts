@@ -813,16 +813,19 @@ let nextId = String(mockTracks.length + 1);
 export const trackResolvers = {
   Mutation: {
     generateResearch: async (
-      _: any,
+      _: unknown,
       { goalDescription }: { goalDescription: string },
-      _context: GraphQLContext,
+      context: GraphQLContext,
     ): Promise<ResearchItem[]> => {
+      if (!context.userId) {
+        throw new Error("Authentication required");
+      }
       // Return curated resources (Brave Search removed — ATS scraping is the primary discovery channel)
       return CURATED_RESEARCH;
     },
 
     createTrack: async (
-      _: any,
+      _: unknown,
       {
         input,
       }: {
@@ -833,8 +836,11 @@ export const trackResolvers = {
           level?: string;
         };
       },
-      _context: GraphQLContext,
+      context: GraphQLContext,
     ) => {
+      if (!context.userId) {
+        throw new Error("Authentication required");
+      }
       // TODO: Replace with actual DB insert
       const newTrack = {
         id: nextId,

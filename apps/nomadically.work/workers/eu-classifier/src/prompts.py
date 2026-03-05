@@ -71,6 +71,11 @@ CLASSIFICATION RULES (apply in order):
    - UK only (post-Brexit) -> isRemoteEU: false
    - Switzerland only -> isRemoteEU: false
 
+9b. EEA COUNTRIES (Norway, Iceland, Liechtenstein):
+    - These are NOT EU members but have EU labour market access via the EEA agreement
+    - Remote + EEA country -> isRemoteEU: true (MEDIUM confidence, not high)
+    - Reason should note "EEA, not EU member"
+
 10. CONFIDENCE LEVELS:
    - HIGH: Explicit EU mention, clear remote status, work authorization required, all-EU region, negative signals
    - MEDIUM: Mixed regions (includes EU), EEA, Europe, EMEA, DACH, Nordics, EU timezone, CET+/-N

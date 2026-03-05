@@ -12,6 +12,8 @@ from src.constants import (
     normalize_text_for_signals,
     COUNTRY_NAME_TO_ISO,
     US_IMPLICIT_PATTERN,
+    NON_EU_LOCATION_PATTERN,
+    NON_EU_JD_PATTERN,
     EU_ISO_CODES,
     EU_COUNTRY_NAMES,
 )
@@ -419,7 +421,11 @@ class TestAshbyAddressParsing:
 class TestWorldwideRemoteHeuristic:
 
     def test_worldwide_remote_no_country(self):
-        job = _make_job(ashby_is_remote=1, country="")
+        job = _make_job(
+            ashby_is_remote=1,
+            country="",
+            description="We are a fully remote company building developer tools. Join our distributed engineering team and work on cutting-edge problems.",
+        )
         signals = extract_eu_signals(job)
         result = keyword_eu_classify(job, signals)
 
@@ -429,7 +435,11 @@ class TestWorldwideRemoteHeuristic:
         assert "worldwide" in result.reason.lower()
 
     def test_worldwide_remote_workplace_type(self):
-        job = _make_job(workplace_type="remote", country="")
+        job = _make_job(
+            workplace_type="remote",
+            country="",
+            description="We are a fully remote company building developer tools. Join our distributed engineering team and work on cutting-edge problems.",
+        )
         signals = extract_eu_signals(job)
         result = keyword_eu_classify(job, signals)
 
@@ -898,4 +908,160 @@ class TestHyphenatedWorldwideSignals:
         signals = extract_eu_signals(job)
         result = keyword_eu_classify(job, signals)
 
+        assert result is None
+
+
+# =========================================================================
+# NON_EU_LOCATION_PATTERN regex
+# =========================================================================
+
+class TestNonEULocationPattern:
+
+    @pytest.mark.parametrize("city", [
+        "nyc", "new york", "denver", "miami", "san francisco",
+        "toronto", "bangalore", "latam",
+    ])
+    def test_matches_non_eu_cities(self, city):
+        assert NON_EU_LOCATION_PATTERN.search(city)
+
+    @pytest.mark.parametrize("city", [
+        "remote", "berlin", "amsterdam", "oslo",
+    ])
+    def test_does_not_match_eu_or_generic(self, city):
+        assert not NON_EU_LOCATION_PATTERN.search(city)
+
+
+# =========================================================================
+# NON_EU_JD_PATTERN regex
+# =========================================================================
+
+class TestNonEUJDPattern:
+
+    @pytest.mark.parametrize("text", [
+        "latam", "latin america", "nearshore", "staff augmentation",
+        "us-based", "canada-only",
+    ])
+    def test_matches_non_eu_jd_signals(self, text):
+        assert NON_EU_JD_PATTERN.search(text)
+
+    @pytest.mark.parametrize("text", [
+        "remote-first", "global team", "work from anywhere",
+    ])
+    def test_does_not_match_generic_remote(self, text):
+        assert not NON_EU_JD_PATTERN.search(text)
+
+
+# =========================================================================
+# LatAm countries in COUNTRY_NAME_TO_ISO
+# =========================================================================
+
+class TestLatAmCountryMapping:
+
+    def test_colombia(self):
+        assert COUNTRY_NAME_TO_ISO["colombia"] == "CO"
+
+    def test_argentina(self):
+        assert COUNTRY_NAME_TO_ISO["argentina"] == "AR"
+
+    def test_panama(self):
+        assert COUNTRY_NAME_TO_ISO["panama"] == "PA"
+
+    def test_mexico(self):
+        assert COUNTRY_NAME_TO_ISO["mexico"] == "MX"
+
+
+# =========================================================================
+# Audit false positive regressions
+# =========================================================================
+
+class TestAuditFalsePositives:
+    """Regression tests for false positives found in the classifier audit."""
+
+    def test_nyc_hybrid_escalates(self):
+        """NYC (Hybrid) should not auto-accept as worldwide remote."""
+        job = _make_job(
+            ashby_is_remote=1,
+            location="NYC (Hybrid)",
+            description="We are a fully remote company building developer tools. Join our distributed engineering team and work on cutting-edge problems.",
+        )
+        signals = extract_eu_signals(job)
+        result = keyword_eu_classify(job, signals)
+
+        assert result is None
+
+    def test_canada_remote_escalates(self):
+        """Canada (Remote) -> country_code=CA, non-EU -> escalate."""
+        job = _make_job(
+            ashby_is_remote=1,
+            location="Canada (Remote)",
+            description="Join our team building great products for the Canadian market.",
+        )
+        signals = extract_eu_signals(job)
+        assert signals["country_code"] == "CA"
+
+        result = keyword_eu_classify(job, signals)
+        assert result is None
+
+    def test_remote_denver_escalates(self):
+        """Remote - Denver should be caught by NON_EU_LOCATION_PATTERN."""
+        job = _make_job(
+            ashby_is_remote=1,
+            location="Remote - Denver",
+            description="We are a fully remote company building developer tools. Join our distributed engineering team and work on cutting-edge problems.",
+        )
+        signals = extract_eu_signals(job)
+        result = keyword_eu_classify(job, signals)
+
+        assert result is None
+
+    def test_remote_us_escalates(self):
+        """Remote - US -> country_code=US -> non-EU path."""
+        job = _make_job(
+            ashby_is_remote=1,
+            location="Remote - US",
+            description="Join our team building great products.",
+        )
+        signals = extract_eu_signals(job)
+        assert signals["country_code"] == "US"
+
+        result = keyword_eu_classify(job, signals)
+        assert result is None
+
+    def test_colombia_latam_staffing_escalates(self):
+        """Colombia + LATAM staffing JD -> NON_EU_JD_PATTERN -> escalate."""
+        job = _make_job(
+            ashby_is_remote=1,
+            country="Colombia",
+            description="We connect LATAM talent to help scale U.S. startups. Work from anywhere in Latin America.",
+        )
+        signals = extract_eu_signals(job)
+        assert signals["country_code"] == "CO"
+
+        result = keyword_eu_classify(job, signals)
+        assert result is None
+
+    def test_panama_nearshore_escalates(self):
+        """Panama + nearshore staff augmentation -> escalate."""
+        job = _make_job(
+            ashby_is_remote=1,
+            country="Panama",
+            description="Nearshore staff augmentation for US tech companies. Work from anywhere in Central America.",
+        )
+        signals = extract_eu_signals(job)
+        assert signals["country_code"] == "PA"
+
+        result = keyword_eu_classify(job, signals)
+        assert result is None
+
+    def test_india_work_from_anywhere_with_india_jd_escalates(self):
+        """India + 'work from anywhere' but JD says India-based -> escalate."""
+        job = _make_job(
+            ashby_is_remote=1,
+            country="India",
+            description="India-based engineering team. Work from anywhere within India. Flexible hours and great benefits for our Bangalore office.",
+        )
+        signals = extract_eu_signals(job)
+        assert signals["country_code"] == "IN"
+
+        result = keyword_eu_classify(job, signals)
         assert result is None

@@ -2,7 +2,7 @@ import type { GraphQLContext } from "../context";
 import { applications, applicationTracks, jobs, companies } from "@/db/schema";
 import { eq, desc, and, sql } from "drizzle-orm";
 import { mockTracks } from "./track";
-import { createDeepSeekClient, DEEPSEEK_MODELS } from "@/deepseek";
+import { createDeepSeekClient, DEEPSEEK_MODELS } from "@repo/deepseek";
 import { isAdminEmail } from "@/lib/admin";
 
 function mapApplication(
@@ -761,12 +761,22 @@ A real production scenario (incident, design decision, or architectural choice) 
       const companyName = row.app.company_name ?? "the company";
       const jobTitle = row.app.job_title ?? "software engineer";
 
-      // Fetch company website content if available
+      // Fetch company website content if available (with SSRF protection)
       let companyContext = "";
       if (companyWebsite) {
         try {
+          const parsed = new URL(companyWebsite);
+          // Only allow HTTPS to public websites — block private/internal URLs
+          if (parsed.protocol !== "https:" || parsed.hostname === "localhost" ||
+              parsed.hostname.startsWith("127.") || parsed.hostname.startsWith("10.") ||
+              parsed.hostname.startsWith("192.168.") || parsed.hostname.startsWith("172.") ||
+              parsed.hostname === "169.254.169.254" || parsed.hostname.endsWith(".internal") ||
+              parsed.hostname === "[::1]") {
+            throw new Error("Blocked: private/internal URL");
+          }
           const res = await fetch(companyWebsite, {
             headers: { "User-Agent": "Mozilla/5.0 (compatible; InterviewPrepBot/1.0)" },
+            redirect: "manual",
             signal: AbortSignal.timeout(10000),
           });
           if (res.ok) {

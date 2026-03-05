@@ -4,8 +4,7 @@ import { studyTopics, studyConceptExplanations } from "@/db/schema";
 import { isAdminEmail } from "@/lib/admin";
 import { generateText } from "ai";
 import { deepseek } from "@ai-sdk/deepseek";
-import { createDeepSeekClient, DEEPSEEK_MODELS } from "@/deepseek";
-import type { ChatMessage } from "@/deepseek/types";
+import { createDeepSeekClient, DEEPSEEK_MODELS, type ChatMessage } from "@repo/deepseek";
 import { aiTelemetry } from "@/lib/telemetry";
 
 function toSlug(s: string): string {

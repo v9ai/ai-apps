@@ -50,4 +50,5 @@ export interface CompanyUpdateData {
   ai_tier?: number;
   ai_classification_reason?: string;
   ai_classification_confidence?: number;
+  canonical_domain?: string;
 }

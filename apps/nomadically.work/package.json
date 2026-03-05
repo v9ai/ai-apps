@@ -5,6 +5,7 @@
   "scripts": {
     "stack": "cd crates/agentic-search && cargo run --release -- --root ../.. discover --output ../../src/app/stack/discovery.json",
     "dev": "next dev --webpack",
+    "dev:all": "cargo run --manifest-path crates/nomad/Cargo.toml --release",
     "build": "next build --webpack",
     "start": "next start",
     "lint": "next lint",
@@ -37,7 +38,7 @@
     "db:studio": "drizzle-kit studio"
   },
   "dependencies": {
-    "@ai-sdk/anthropic": "latest",
+    "@ai-sdk/anthropic": "^3.0.35",
     "@ai-sdk/deepseek": "^2.0.17",
     "@ai-sdk/openai": "^3.0.26",
     "@apollo/client": "^3.14.0",
@@ -66,7 +67,7 @@
     "dotenv": "^17.2.3",
     "drizzle-orm": "^0.45.1",
     "graphql": "^16.12.0",
-    "graphql-ws": "^6.0.7",
+
     "langfuse": "^3.38.6",
     "langsmith": "^0.5.2",
     "llama-parse": "^0.1.0",

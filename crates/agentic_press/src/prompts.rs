@@ -104,3 +104,40 @@ by a primary source they hadn't seen, written with the confidence of someone
 who actually read the source material. Match that energy."#
         .to_string()
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn test_scout_contains_niche() {
+        let prompt = scout("Rust async");
+        assert!(prompt.contains("Rust async"), "scout prompt should interpolate niche");
+    }
+
+    #[test]
+    fn test_picker_contains_count() {
+        let prompt = picker("AI safety", 3);
+        assert!(prompt.contains("3"), "picker prompt should interpolate count");
+    }
+
+    #[test]
+    fn test_researcher_contains_niche() {
+        let prompt = researcher("WebAssembly");
+        assert!(prompt.contains("WebAssembly"), "researcher prompt should interpolate niche");
+    }
+
+    #[test]
+    fn test_writer_is_static() {
+        let prompt = writer();
+        assert!(!prompt.is_empty(), "writer prompt should be non-empty");
+        assert!(prompt.contains("Writer agent"), "writer prompt should identify the agent");
+    }
+
+    #[test]
+    fn test_linkedin_is_static() {
+        let prompt = linkedin();
+        assert!(!prompt.is_empty(), "linkedin prompt should be non-empty");
+        assert!(prompt.contains("LinkedIn"), "linkedin prompt should identify the agent");
+    }
+}

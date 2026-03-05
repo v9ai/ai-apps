@@ -165,6 +165,7 @@ export const skillsTaxonomy = sqliteTable("skills_taxonomy", {
 	metadata: text().default("{}"),
 },
 (table) => [
+	// @ts-expect-error — generated migration: vector index has no column in Drizzle schema
 	index("skills_taxonomy_vector_idx").on(),
 ]);
 

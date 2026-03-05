@@ -252,6 +252,15 @@ pub fn assistant_msg(content: &str) -> ChatMessage {
     }
 }
 
+// ── Reasoner output ───────────────────────────────────────────────────────
+
+pub struct ReasonerOutput {
+    /// R1 chain-of-thought — logged at DEBUG, not passed to next agent.
+    pub reasoning: String,
+    /// Final answer — passed forward in the pipeline.
+    pub content: String,
+}
+
 pub fn tool_result_msg(tool_call_id: &str, content: &str) -> ChatMessage {
     ChatMessage {
         role: "tool".into(),

@@ -64,7 +64,7 @@ impl Pipeline {
 
         let client = match &self.client {
             Some(c) => Arc::clone(c),
-            None => Arc::new(crate::deepseek::client_from_env()?),
+            None => Arc::new(deepseek::client_from_env()?),
         };
 
         info!("═══ agentic_press pipeline starting ═══");
@@ -91,7 +91,8 @@ impl Pipeline {
         let selection = picker.run(&topics).await?;
         save(&self.output_dir, "02_picker_selection.json", &selection).await?;
 
-        let selections: Vec<TopicSelection> = serde_json::from_str(&selection)
+        let cleaned = crate::strip_fences(&selection);
+        let selections: Vec<TopicSelection> = serde_json::from_str(cleaned)
             .with_context(|| format!("Picker output is not a valid JSON array:\n{selection}"))?;
 
         // ── Phase 3–5 — per-topic: Researcher → (Writer ∥ LinkedIn) ──────────
@@ -134,7 +135,7 @@ impl Pipeline {
                 );
 
                 let brief     = format!("Topic: {}\nAngle: {}\n", sel.topic, sel.angle);
-                let slug      = slugify(&sel.topic);
+                let slug      = crate::slugify(&sel.topic);
                 let topic_dir = format!("{output_dir}/{slug}");
                 fs::create_dir_all(&topic_dir).await?;
 
@@ -177,20 +178,48 @@ impl Pipeline {
 
 // ── helpers ───────────────────────────────────────────────────────────────────
 
-fn slugify(s: &str) -> String {
-    let raw: String = s
-        .chars()
-        .map(|c| if c.is_alphanumeric() { c.to_ascii_lowercase() } else { '-' })
-        .collect();
-    raw.split('-')
-        .filter(|p| !p.is_empty())
-        .collect::<Vec<_>>()
-        .join("-")
-}
-
 async fn save(dir: &str, filename: &str, content: &str) -> Result<()> {
     let path = Path::new(dir).join(filename);
     fs::write(&path, content).await?;
     info!("  Saved → {}", path.display());
     Ok(())
+}
+
+#[cfg(test)]
+mod tests {
+    use crate::{slugify, strip_fences};
+    use super::*;
+
+    #[test]
+    fn test_slugify_basic() {
+        assert_eq!(slugify("Hello World"), "hello-world");
+    }
+
+    #[test]
+    fn test_slugify_special_chars() {
+        assert_eq!(slugify("Rust 2024: What's New?"), "rust-2024-what-s-new");
+    }
+
+    #[test]
+    fn test_slugify_consecutive_dashes() {
+        assert_eq!(slugify("a--b"), "a-b");
+    }
+
+    #[test]
+    fn test_strip_fences_json() {
+        let input = "```json\n[{\"topic\":\"test\"}]\n```";
+        assert_eq!(strip_fences(input), "[{\"topic\":\"test\"}]");
+    }
+
+    #[test]
+    fn test_strip_fences_no_fences() {
+        let input = "[{\"topic\":\"test\"}]";
+        assert_eq!(strip_fences(input), input);
+    }
+
+    #[test]
+    fn test_count_floor_is_one() {
+        let p = Pipeline::new("niche", "/tmp/test").with_count(0);
+        assert_eq!(p.count, 1, "count should be at least 1");
+    }
 }

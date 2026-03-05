@@ -26,7 +26,7 @@ impl Agent {
     pub async fn run(&self, input: &str) -> Result<String> {
         info!("[{}] starting…", self.name);
 
-        let output = crate::deepseek::reason(&self.client, &self.system_prompt, input).await?;
+        let output = deepseek::reason_with_retry(&self.client, &self.system_prompt, input).await?;
 
         if !output.reasoning.is_empty() {
             debug!(
