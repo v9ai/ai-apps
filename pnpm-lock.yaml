@@ -190,9 +190,6 @@ importers:
       eslint-config-next:
         specifier: 15.3.1
         version: 15.3.1(eslint@9.39.3)(typescript@5.9.3)
-      napi-postinstall:
-        specifier: ^0.2.3
-        version: 0.2.5
       promptfoo:
         specifier: ^0.120.26
         version: 0.120.26(@types/json-schema@7.0.15)(@types/node@20.19.35)(@types/react@19.2.14)(pg@8.20.0)
