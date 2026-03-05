@@ -1,1 +1,45 @@
 @import "@radix-ui/themes/styles.css";
+
+.card-hover {
+  cursor: pointer;
+  transition: transform 150ms ease, box-shadow 150ms ease;
+}
+.card-hover:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+}
+
+/* Landing page: gradient text for hero accent */
+.gradient-text {
+  background: linear-gradient(135deg, var(--accent-9), var(--accent-11));
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+/* Landing page: hero background */
+.hero-bg {
+  background: radial-gradient(
+    ellipse 80% 60% at 50% 0%,
+    var(--accent-a2) 0%,
+    transparent 70%
+  );
+}
+
+/* Landing page: CTA button transitions */
+.cta-button {
+  transition: transform 150ms ease, box-shadow 150ms ease;
+}
+.cta-button:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 4px 16px var(--accent-a4);
+}
+
+/* Landing page: CTA banner */
+.cta-banner {
+  background: linear-gradient(
+    180deg,
+    transparent 0%,
+    var(--accent-a2) 100%
+  );
+}
