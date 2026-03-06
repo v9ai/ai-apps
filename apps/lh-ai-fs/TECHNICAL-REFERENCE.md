@@ -3041,3 +3041,5969 @@ This is modest (< 5MB per request). However, with many concurrent requests, memo
 - The `keyword_plus_signal` mode (lines 225-228) requires BOTH a keyword and a signal word. If the LLM identifies the Privette issue but does not use words like "misquot" or "presumpt," the match fails even though the finding is correct.
 
 **Impact**: Keyword-based recall measurement is a lower bound. The actual pipeline recall may be higher than what the eval reports. This is why the LLM-as-judge evaluation (harness.py, opt-in with `LLM_JUDGE=1`) exists — it catches semantic matches that keywords miss.
+
+
+---
+
+## 34. Why Exactly Five Agents
+
+### Beginner Level
+
+The BS Detector pipeline uses exactly five LLM-powered agents, orchestrated by a deterministic control plane (the `PipelineOrchestrator`). The agents, in execution order, are:
+
+| # | Agent | File | Cognitive Mode | Input Source | Output |
+|---|-------|------|---------------|--------------|--------|
+| 1 | DocumentParserAgent | `document_parser.py` | **Comprehensive extraction** | Raw MSJ text | Citations + Facts |
+| 2 | CitationVerifierAgent | `citation_verifier.py` | **Skeptical verification** | Citations from Agent 1 | VerifiedCitations |
+| 3 | FactCheckerAgent | `fact_checker.py` | **Cross-referential skepticism** | Raw docs + case context | VerifiedFacts |
+| 4 | ReportSynthesizerAgent | `report_synthesizer.py` | **Analytical distillation** | Results from Agents 2+3 | Findings + Scores |
+| 5 | JudicialMemoAgent | `judicial_memo.py` | **Persuasive legal writing** | Findings from Agent 4 | Judicial Memo |
+
+The orchestrator (`orchestrator.py`) is **not** an agent -- it is a deterministic control plane that wires the agents together, manages error handling, and tracks timing. It never calls the LLM itself.
+
+**The key insight**: each agent operates in a distinct "cognitive mode" -- a specific mindset that shapes how the LLM processes information. Trying to combine these modes into a single prompt degrades all of them.
+
+---
+
+### Intermediate Level
+
+#### The Empirical Case: Single-Prompt vs. Multi-Agent
+
+When all five tasks are collapsed into a single monolithic prompt, empirical testing shows the LLM catches roughly **3-4 out of 8** planted errors in a test MSJ document. With the five-agent pipeline, detection rises to **6-8 out of 8**.
+
+Why? A single prompt forces the LLM to simultaneously:
+1. Parse a legal document comprehensively (don't miss any citation)
+2. Verify each citation skeptically (assume it might be wrong)
+3. Cross-reference facts across 4 documents (hold contradictions in memory)
+4. Rank and synthesize findings (decide what matters)
+5. Write formal legal prose (switch to persuasive tone)
+
+These are cognitively **antagonistic** modes. Comprehensive extraction ("find everything") conflicts with skeptical verification ("assume everything is wrong"). Analytical distillation ("be concise") conflicts with persuasive writing ("be thorough and formal"). A single prompt forces the LLM to context-switch between these modes within one generation, and it drops balls.
+
+#### The Five Cognitive Modes
+
+Each agent embodies a distinct cognitive stance, enforced by its dedicated prompt:
+
+**1. Comprehensive Extraction (DocumentParserAgent)**
+
+The parser's job is exhaustive coverage -- find *every* citation in the MSJ, missing none. Its prompt at `prompts.py:1-12` instructs:
+
+```python
+CITATION_EXTRACTION_PROMPT = """Extract ALL legal citations from this Motion for Summary Judgment.
+
+For each citation identify:
+1. The exact citation text (case name, volume, reporter, page)
+2. The proposition it is claimed to support (what the brief says the case stands for)
+3. Any direct quotes attributed to the cited authority
+4. The section/paragraph where it appears
+
+Motion for Summary Judgment:
+{msj_text}
+
+Return a JSON object with a "citations" array. Each citation must have: citation_text,
+claimed_proposition, source_location, context (the surrounding sentence)."""
+```
+
+Note the emphasis on "ALL" and the detailed field requirements. This is a **recall-maximizing** prompt -- it prioritizes not missing anything over precision.
+
+**2. Skeptical Verification (CitationVerifierAgent)**
+
+The verifier's cognitive mode is the opposite: assume each citation might be wrong and look for specific failure modes. From `prompts.py:14-28`:
+
+```python
+CITATION_VERIFICATION_PROMPT = """Verify whether this legal citation actually supports
+the proposition claimed in the brief.
+
+Citation: {citation_text}
+Claimed proposition: {claimed_proposition}
+Direct quote (if any): {context}
+
+Check for:
+1. Does the cited case actually hold what the brief claims? Look for mischaracterization.
+2. If a direct quote is provided, is it accurate? Look for inserted or omitted words.
+3. Is the cited authority binding in the relevant jurisdiction?
+4. Does the citation actually exist, or could it be fabricated?
+...
+```
+
+This prompt is **precision-maximizing** -- it provides a checklist of specific fraud patterns (mischaracterization, fabricated citations, jurisdiction mismatch). The LLM is told to be suspicious.
+
+**3. Cross-Referential Skepticism (FactCheckerAgent)**
+
+The fact checker operates in a different mode from the citation verifier. Rather than checking individual items against legal knowledge, it cross-references claims across **four different documents** simultaneously. From `prompts.py:30-67`:
+
+```python
+FACT_CHECKING_PROMPT = """Cross-reference the factual claims from the Motion for
+Summary Judgment against the supporting documents.
+
+MSJ Claims:
+{msj_facts}
+
+Police Report:
+{police_text}
+
+Medical Records:
+{medical_text}
+
+Witness Statement:
+{witness_text}
+
+IMPORTANT: The MSJ is the document being verified. When the police report, medical
+records, or witness statement contradict what the MSJ claims or implies, mark the fact
+as "contradictory"...
+```
+
+This prompt includes 8 specific categories to check (DATE_CONSISTENCY, PPE_SAFETY, WORK_CONTROL, etc.) and detailed "PRECISION RULES" to avoid false flags. It is the most complex prompt in the system at ~60 lines.
+
+**4. Analytical Distillation (ReportSynthesizerAgent)**
+
+The synthesizer switches to a completely different mode: given raw verification results, rank and distill. From `prompts.py:69-82`:
+
+```python
+REPORT_SYNTHESIS_PROMPT = """Synthesize the citation verification and fact-checking
+results into a final verification report.
+...
+1. Lists the top findings ranked by severity and confidence. Only include actual
+   discrepancies, contradictions, mischaracterizations...
+2. Calculates overall confidence scores...
+3. Flags items that could not be verified ONLY if they represent material unverifiable claims
+```
+
+Note the explicit instruction to **exclude** consistent items and only surface real problems. This is the opposite of the parser's "find everything" mode.
+
+**5. Persuasive Legal Writing (JudicialMemoAgent)**
+
+The memo agent writes for a specific audience (a judge) in a specific register (formal legal language). From `prompts.py:84-100`:
+
+```python
+JUDICIAL_MEMO_PROMPT = """Based on these verification findings, write a structured
+judicial memo summarizing the most critical issues found in the legal brief.
+...
+Write in formal legal language. Be specific about which claims are contradicted
+and by what evidence.
+```
+
+This is the only agent whose output is meant for human consumption in its raw form. All other agents produce structured data.
+
+---
+
+### Expert Level
+
+#### Code Evidence: The execute() Methods
+
+Each agent has a compact `execute()` method that defines its I/O contract. Here are the exact signatures and line numbers:
+
+| Agent | File:Line | Input Type | Return Type |
+|-------|-----------|------------|-------------|
+| DocumentParserAgent | `document_parser.py:17` | `Dict[str, str]` (documents) | `Dict[str, Any]` (citations + facts) |
+| CitationVerifierAgent | `citation_verifier.py:60` | `Dict[str, Any]` (citations + case_context) | `List[Dict]` (verified citations) |
+| FactCheckerAgent | `fact_checker.py:16` | `Dict[str, str]` (all docs + case_context) | `List[Dict]` (verified facts) |
+| ReportSynthesizerAgent | `report_synthesizer.py:19` | `Dict[str, Any]` (citation_results + fact_results) | `Dict[str, Any]` (findings + scores) |
+| JudicialMemoAgent | `judicial_memo.py:20` | `Dict[str, Any]` (findings + scores + case_context) | `Dict[str, Any]` (memo) |
+
+Each agent inherits from `BaseAgent` (`base_agent.py:12-34`), which provides:
+
+```python
+class BaseAgent(ABC):
+    def __init__(self, name: str, llm_service=None):
+        self.name = name
+        self.llm_service = llm_service
+        self.logger = logging.getLogger(f"agent.{name}")
+
+    @abstractmethod
+    async def execute(self, input_data: Any, context: Dict[str, Any] = None) -> Any:
+        pass
+
+    async def _call_llm(self, prompt: str, response_model: Type[BaseModel],
+                        system_prompt: str = "", timeout: int = 120) -> BaseModel:
+        try:
+            return await asyncio.wait_for(
+                self.llm_service.get_structured_response(
+                    prompt=prompt, response_model=response_model, system_prompt=system_prompt
+                ),
+                timeout=timeout,
+            )
+        except asyncio.TimeoutError:
+            raise AgentError(f"{self.name}: LLM call timed out after {timeout}s")
+```
+
+Note the 120-second default timeout at `base_agent.py:23` -- this is the per-agent budget for LLM calls.
+
+#### The Pydantic Output Contracts
+
+Each agent enforces a **structured output contract** via Pydantic models passed to `_call_llm()`:
+
+| Agent | Pydantic Model | File:Line | Key Fields |
+|-------|---------------|-----------|------------|
+| DocumentParser | `ExtractionResult` | `document_parser.py:8-10` | `citations: List[Citation]`, `facts: List[Fact]` |
+| CitationVerifier | `VerificationResult` | `citation_verifier.py:9-16` | `is_supported: bool`, `confidence: float`, `discrepancies: List[str]`, `status: str` |
+| FactChecker | `FactCheckResult` | `fact_checker.py:8-9` | `verified_facts: List[Dict[str, Any]]` |
+| ReportSynthesizer | `SynthesisResult` | `report_synthesizer.py:9-13` | `top_findings: List[Dict]`, `confidence_scores: Dict[str, float]`, `unknown_issues: List[str]` |
+| JudicialMemo | `JudicialMemoResult` | `judicial_memo.py:9-14` | `memo: str`, `key_issues: List[str]`, `recommended_actions: List[str]`, `overall_assessment: str` |
+
+These contracts mean each agent's output is **machine-parseable** and type-safe. The orchestrator never has to guess what shape the data will be in.
+
+#### Why Removing Any One Agent Degrades the Pipeline
+
+The agents are **not independent** -- they form a directed acyclic graph (DAG) of data dependencies:
+
+```
+DocumentParser
+    |
+    +---> CitationVerifier ----+
+    |                          |
+    +---> FactChecker ---------+
+                               |
+                        ReportSynthesizer
+                               |
+                        JudicialMemo
+```
+
+Tracing the data flow through `orchestrator.py`:
+
+1. **Parser -> Verifier** (`orchestrator.py:78-79,105-106`): The parser extracts `citations`, which become the input to `CitationVerifierAgent`. Without the parser, the verifier has nothing to verify.
+
+```python
+# orchestrator.py:78-79
+parse_result = await self.parser.execute(docs)
+citations = parse_result.get("citations", [])
+
+# orchestrator.py:105-106
+citation_task = self.citation_verifier.execute(
+    {"citations": citations, "case_context": case_context}
+)
+```
+
+2. **Parser -> FactChecker (indirect)** (`orchestrator.py:108`): The fact checker receives the raw documents, not parser output. This is an intentional design -- the fact checker works directly against source documents, not pre-extracted claims.
+
+```python
+# orchestrator.py:108
+fact_task = self.fact_checker.execute({**docs, "case_context": case_context})
+```
+
+3. **Verifier + FactChecker -> Synthesizer** (`orchestrator.py:134-138`): The synthesizer consumes both verification results in parallel. Removing either one means the synthesizer operates on half the evidence.
+
+```python
+# orchestrator.py:134-138
+synthesis = await self.synthesizer.execute({
+    "citation_results": citation_results,
+    "fact_results": fact_results,
+})
+```
+
+4. **Synthesizer -> Memo** (`orchestrator.py:160-164`): The memo agent receives distilled findings, not raw verification data. This prevents the memo from being overwhelmed by low-level detail.
+
+```python
+# orchestrator.py:160-164
+memo_data = await self.memo_agent.execute({
+    "top_findings": top_findings,
+    "confidence_scores": confidence_scores,
+    "case_context": case_context,
+})
+```
+
+**What happens if you remove each agent:**
+
+| Removed Agent | Impact |
+|---------------|--------|
+| DocumentParser | Pipeline halts immediately -- no citations to verify (`orchestrator.py:85-93` returns error report) |
+| CitationVerifier | Synthesizer receives empty `citation_results` -- no citation fraud detection |
+| FactChecker | Synthesizer receives empty `fact_results` -- no cross-document contradiction detection |
+| ReportSynthesizer | No ranked findings -- JudicialMemo receives raw unranked data or empty findings |
+| JudicialMemo | No human-readable output -- judge gets raw JSON instead of a memo |
+
+#### The Vestigial Design: Parser Extracts Facts It Never Uses
+
+Look carefully at `document_parser.py:8-10`:
+
+```python
+class ExtractionResult(BaseModel):
+    citations: List[Citation] = Field(default_factory=list)
+    facts: List[Fact] = Field(default_factory=list)
+```
+
+The parser extracts both `citations` and `facts`. But in `orchestrator.py:79`, only citations are used:
+
+```python
+citations = parse_result.get("citations", [])
+```
+
+The `facts` field is extracted by the LLM, returned in the result, and then **silently discarded**. The fact checker (`orchestrator.py:108`) works directly on raw documents, not on parser-extracted facts:
+
+```python
+fact_task = self.fact_checker.execute({**docs, "case_context": case_context})
+```
+
+**Interview question**: "Why does the parser extract facts it never uses?"
+
+**Answer**: This is vestigial design from an earlier architecture where the fact checker consumed pre-extracted facts from the parser. When the fact checker was redesigned to work directly on source documents (for better accuracy -- it can find contradictions the parser might miss), the parser's fact extraction was never removed. The `facts` field in `ExtractionResult` and the `Fact` import at `document_parser.py:4` are dead code.
+
+This is a common pattern in iterative development: the interface contract expands faster than it contracts. A production cleanup would either (a) remove the `facts` field from `ExtractionResult` and the extraction prompt, saving ~20% of the parser's token budget, or (b) feed the extracted facts to the fact checker as a "hypothesis list" to check against source documents.
+
+#### Why the Orchestrator Is NOT an Agent
+
+The `PipelineOrchestrator` at `orchestrator.py:45` inherits from **nothing** -- it is a plain Python class, not a `BaseAgent` subclass:
+
+```python
+class PipelineOrchestrator:       # No BaseAgent inheritance
+    def __init__(self, llm_service: LLMService = None):
+        self.llm = llm_service or LLMService()
+        self.doc_service = DocumentService()
+        self.parser = DocumentParserAgent(self.llm)
+        self.citation_verifier = CitationVerifierAgent(self.llm)
+        self.fact_checker = FactCheckerAgent(self.llm)
+        self.synthesizer = ReportSynthesizerAgent(self.llm)
+        self.memo_agent = JudicialMemoAgent(self.llm)
+```
+
+Key differences from agents:
+
+| Property | Agents | Orchestrator |
+|----------|--------|-------------|
+| Inherits `BaseAgent` | Yes | No |
+| Calls LLM | Yes (via `_call_llm`) | Never |
+| Has `execute()` | Yes (abstract method) | Has `analyze()` instead |
+| Deterministic | No (LLM output varies) | Yes (fixed control flow) |
+| Has Pydantic output model | Yes | No (builds `VerificationReport` manually) |
+
+The orchestrator is a **deterministic control plane**. Its `analyze()` method (`orchestrator.py:55-188`) follows a fixed sequence:
+1. Load documents (line 66-72)
+2. Run parser (line 78)
+3. Run verifier + fact checker in parallel via `asyncio.gather` (line 110-112)
+4. Run synthesizer (line 135)
+5. Run memo agent (line 160)
+6. Build final `VerificationReport` (line 171-188)
+
+There are no conditional branches, no LLM-driven routing, no dynamic agent selection. This is intentional: the orchestrator's job is **reliability**, not intelligence. If the orchestrator were an LLM-powered agent that decided which agents to run, a single hallucination could skip critical verification steps.
+
+**Interview question**: "Why not make the orchestrator an agent that dynamically decides which checks to run?"
+
+**Answer**: Because the orchestrator's determinism is a **safety property**. In a legal verification system, you want to guarantee that every citation is checked and every fact is cross-referenced. A dynamic orchestrator might decide "these citations look fine, skip verification" -- exactly the kind of reasoning a deceptive MSJ is designed to exploit. The fixed pipeline ensures comprehensive coverage regardless of how convincing the input looks.
+
+#### Cost Breakdown Per Agent
+
+Estimated per-agent costs (based on typical MSJ document sizes and GPT-4-class pricing):
+
+| Agent | Input Tokens (est.) | Output Tokens (est.) | Latency (est.) | Cost (est.) |
+|-------|-------------------|---------------------|----------------|-------------|
+| DocumentParser | ~4,000 (MSJ text) | ~1,500 (citations JSON) | 5-10s | ~$0.06 |
+| CitationVerifier | ~500/citation x N | ~200/citation x N | 3-8s (parallel) | ~$0.02-0.10 |
+| FactChecker | ~24,000 (4 docs x 6k) | ~2,000 (verified facts) | 10-20s | ~$0.25 |
+| ReportSynthesizer | ~10,000 (results JSON) | ~1,500 (findings) | 5-10s | ~$0.12 |
+| JudicialMemo | ~6,000 (findings) | ~800 (memo) | 3-8s | ~$0.07 |
+| **Total** | **~45,000-50,000** | **~6,000-8,000** | **~15-30s** | **~$0.50-0.60** |
+
+Key observations:
+
+1. **FactChecker is the most expensive agent** because it ingests four documents (with a 6,000-char truncation limit per doc, visible at `fact_checker.py:25`). Its prompt at ~60 lines is also the most complex.
+
+2. **CitationVerifier has variable cost** because it makes **one LLM call per citation** via `asyncio.gather` at `citation_verifier.py:72-74`. For an MSJ with 15 citations, that's 15 parallel LLM calls. This is visible in the `_verify_one` method at `citation_verifier.py:29-58`.
+
+3. **The parallel step (Agents 2+3) dominates latency** but not wall-clock time, because `asyncio.gather` at `orchestrator.py:110` runs them concurrently:
+
+```python
+citation_results, fact_results = await asyncio.gather(
+    citation_task, fact_task, return_exceptions=True
+)
+```
+
+4. **Total pipeline cost (~$0.50-0.60) is roughly 2x a single-prompt approach** (~$0.25-0.30) but catches 50-100% more errors. The cost-per-detected-error is actually *lower* with five agents.
+
+#### Why Not Four Agents? Why Not Six?
+
+**Could you merge the Synthesizer and Memo agents (4 agents)?**
+
+Yes, technically. The synthesizer produces structured findings; the memo converts them to prose. But merging them means the LLM must simultaneously (a) decide what matters and (b) write persuasive legal language about it. In practice, merged agents produce either good analysis with poor writing, or good writing that buries important findings. Separation lets each excel at its mode.
+
+**Could you add a sixth "precedent checker" agent?**
+
+Yes, and for a production system you probably should. The current citation verifier checks citations against the LLM's training data, but a dedicated precedent checker with access to a legal database (Westlaw, CourtListener) would provide ground-truth verification. The current five-agent design is optimized for what an LLM can verify without external tools.
+
+**Could you merge the Parser and FactChecker (4 agents)?**
+
+No. The parser operates on the MSJ alone; the fact checker cross-references across four documents. More importantly, the parser's "find everything" mode conflicts with the fact checker's "flag contradictions" mode. Merging them would either miss citations (if the model focuses on contradictions) or miss contradictions (if it focuses on exhaustive extraction).
+
+**Could you split the FactChecker into per-category agents (10+ agents)?**
+
+You could create separate agents for DATE_CONSISTENCY, PPE_SAFETY, WORK_CONTROL, etc. But this would multiply LLM calls (8 categories x 4 documents = 32 calls) with marginal quality improvement. The current single fact-checker prompt with 8 enumerated categories is a good balance -- the categories are related enough that seeing them together helps the LLM spot cross-category patterns (e.g., a date inconsistency that explains a statute of limitations error).
+
+#### The "Agent Independence Myth"
+
+A common misconception is that the five agents operate independently and could be run in any order. In reality:
+
+1. **Only Agents 2 and 3 are independent** -- the citation verifier and fact checker have no data dependency on each other. This is why the orchestrator runs them in parallel (`orchestrator.py:110-112`).
+
+2. **Agent 1 is a hard prerequisite** -- if the parser fails, the orchestrator returns an error report immediately (`orchestrator.py:85-93`):
+
+```python
+except Exception as e:
+    _fail(parser_st, t0, e)
+    logger.error(f"Parser failed: {e}")
+    return json.loads(VerificationReport(
+        motion_id=motion_id,
+        timestamp=datetime.now(),
+        confidence_scores=ConfidenceScores(),
+        unknown_issues=[f"Parser failed: {e}"],
+        pipeline_status=pipeline_status,
+        metadata={"documents_analyzed": list(docs.keys()), "error": str(e)},
+    ).model_dump_json())
+```
+
+3. **Agent 4 depends on both Agent 2 and 3** -- the synthesizer receives both `citation_results` and `fact_results`. If either parallel task fails, the orchestrator substitutes an empty list (`orchestrator.py:115-127`) and continues, but the synthesis is degraded.
+
+4. **Agent 5 depends on Agent 4** -- the memo agent receives `top_findings` from the synthesizer. If the synthesizer fails, the memo operates on empty findings (`orchestrator.py:144-148`).
+
+The dependency chain means the pipeline has **graceful degradation** but not **independence**. Each agent adds information that downstream agents need. The orchestrator's error handling (`return_exceptions=True` at line 111, exception-to-empty-list conversion at lines 115-127) ensures partial results are still produced, but with reduced quality.
+
+#### Error Handling: Per-Agent Isolation
+
+Each agent is isolated in its own try/except block within the orchestrator. The tracking functions at `orchestrator.py:22-42` provide per-agent status:
+
+```python
+def _track(statuses: List[AgentStatus], name: str) -> AgentStatus:
+    entry = AgentStatus(agent_name=name, status="pending")
+    statuses.append(entry)
+    return entry
+
+def _start(entry: AgentStatus) -> float:
+    entry.status = "running"
+    return time.time()
+
+def _succeed(entry: AgentStatus, t0: float):
+    entry.status = "success"
+    entry.duration_ms = int((time.time() - t0) * 1000)
+
+def _fail(entry: AgentStatus, t0: float, err: Exception):
+    entry.status = "failed"
+    entry.error = str(err)
+    entry.duration_ms = int((time.time() - t0) * 1000)
+```
+
+This means the final `VerificationReport` always includes `pipeline_status` -- a list of `AgentStatus` objects showing which agents succeeded, which failed, and how long each took. A consumer of the report can see exactly where the pipeline degraded.
+
+The CitationVerifierAgent has an additional layer of per-citation error isolation at `citation_verifier.py:72-89`:
+
+```python
+results = await asyncio.gather(
+    *(self._verify_one(cit, case_context) for cit in citations),
+    return_exceptions=True,
+)
+final = []
+for i, r in enumerate(results):
+    if isinstance(r, Exception):
+        self.logger.warning(f"Citation {i} verification raised: {r}")
+        final.append(VerifiedCitation(
+            citation=citations[i],
+            is_supported=False,
+            confidence=0.0,
+            status=VerificationStatus.COULD_NOT_VERIFY,
+            notes=f"Verification failed: {r}",
+        ).model_dump())
+    else:
+        final.append(r)
+```
+
+If one citation verification fails, the others still complete. This is the finest-grained error isolation in the system.
+
+---
+
+### Interview Cheat Sheet
+
+**Q: Why five agents instead of one big prompt?**
+A: Cognitive mode separation. Each agent operates in a distinct mindset (extract vs. verify vs. cross-reference vs. synthesize vs. write). A single prompt forces the LLM to context-switch between antagonistic modes, dropping from 6-8/8 error detection to 3-4/8. The 2x cost increase is justified by the 50-100% improvement in detection.
+
+**Q: Why is the orchestrator not an agent?**
+A: Determinism as a safety property. In legal verification, you want guaranteed coverage, not LLM-decided coverage. A dynamic orchestrator might skip checks that "look fine" -- exactly what a deceptive brief exploits.
+
+**Q: What's the data dependency graph?**
+A: Parser -> [Verifier || FactChecker] -> Synthesizer -> Memo. Only Agents 2 and 3 are independent (run in parallel). Everything else is sequential.
+
+**Q: What's the vestigial design in the parser?**
+A: The parser extracts `facts` (`document_parser.py:10`) that are never consumed. The fact checker works on raw documents instead. This is dead code from an earlier architecture.
+
+**Q: What would you change for production?**
+A: (1) Add a precedent-checking agent with Westlaw/CourtListener API access. (2) Remove the vestigial `facts` extraction from the parser to save tokens. (3) Add a caching layer for repeated citation lookups. (4) Consider splitting the fact checker if documents grow beyond the 6,000-char truncation limit.
+
+**Q: How does error isolation work?**
+A: Three levels: (1) per-agent try/except in the orchestrator, (2) per-citation `asyncio.gather(return_exceptions=True)` in the citation verifier, (3) per-fact try/except in the fact checker's result processing loop (`fact_checker.py:80-81`). Each level ensures partial results survive individual failures.
+
+
+---
+
+## 35. Parallel Execution Mechanics
+
+The BS Detector pipeline uses a two-level parallelism strategy: at the **orchestrator level**, `asyncio.gather` runs the citation verifier and fact checker concurrently; at the **per-citation level**, the citation verifier fans out individual LLM calls for each citation. This section dissects both levels, traces the fan-in barrier that blocks the synthesizer, and identifies the missing concurrency throttle that would become a production bottleneck.
+
+---
+
+### Beginner Level
+
+#### What Does "Parallel" Mean Here?
+
+The pipeline follows a sequential-then-parallel-then-sequential shape:
+
+```
+document_parser  -->  [citation_verifier || fact_checker]  -->  report_synthesizer  -->  judicial_memo
+```
+
+The `||` symbol means the two agents run at the same time. The metadata string in the orchestrator confirms this architecture explicitly:
+
+```python
+# orchestrator.py:184
+"pipeline": "document_parser -> [citation_verifier || fact_checker] -> report_synthesizer -> judicial_memo",
+```
+
+#### Why Run Things in Parallel?
+
+Citation verification and fact checking are **independent** — neither needs the other's output. Running them sequentially would waste time: if citation verification takes 30 seconds and fact checking takes 20 seconds, sequential execution takes 50 seconds. Parallel execution takes ~30 seconds (the slower of the two).
+
+#### The Core Mechanism: `asyncio.gather`
+
+The orchestrator launches both agents as coroutines and waits for both to finish:
+
+```python
+# orchestrator.py:105-112
+citation_task = self.citation_verifier.execute(
+    {"citations": citations, "case_context": case_context}
+)
+fact_task = self.fact_checker.execute({**docs, "case_context": case_context})
+
+citation_results, fact_results = await asyncio.gather(
+    citation_task, fact_task, return_exceptions=True
+)
+```
+
+`asyncio.gather` takes multiple awaitables (coroutines, tasks, futures) and runs them concurrently within a single thread. It returns a list of results in the same order as the input awaitables.
+
+#### What `return_exceptions=True` Does
+
+Without `return_exceptions=True`, if either task raises an exception, `asyncio.gather` immediately re-raises that exception and **cancels** the other tasks. This would mean:
+
+- If citation verification fails, you lose the fact-checking results too.
+- The entire parallel step blows up from a single failure.
+
+With `return_exceptions=True`, exceptions are **returned as values** instead of being raised. The orchestrator then checks each result individually:
+
+```python
+# orchestrator.py:115-127
+if isinstance(citation_results, Exception):
+    _fail(cit_st, cit_t0, citation_results)
+    logger.error(f"Citation verification failed: {citation_results}")
+    citation_results = []
+else:
+    _succeed(cit_st, cit_t0)
+
+if isinstance(fact_results, Exception):
+    _fail(fact_st, fact_t0, fact_results)
+    logger.error(f"Fact checking failed: {fact_results}")
+    fact_results = []
+else:
+    _succeed(fact_st, fact_t0)
+```
+
+This is a **graceful degradation** pattern: if one agent fails, the pipeline continues with an empty result list rather than crashing entirely.
+
+---
+
+### Intermediate Level
+
+#### Two-Level Parallelism Architecture
+
+The system has parallelism at two distinct levels:
+
+| Level | Where | Mechanism | Granularity |
+|-------|-------|-----------|-------------|
+| **Level 1: Orchestrator** | `orchestrator.py:110-112` | `asyncio.gather(citation_task, fact_task)` | 2 concurrent agents |
+| **Level 2: Per-citation** | `citation_verifier.py:72-75` | `asyncio.gather(*[_verify_one(...) for cit in citations])` | N concurrent LLM calls |
+
+The fact checker does NOT have Level 2 parallelism — it makes a single LLM call with all documents packed into one prompt.
+
+##### Level 2: Per-Citation Fan-Out
+
+Inside the citation verifier, each citation gets its own LLM call:
+
+```python
+# citation_verifier.py:60-75
+async def execute(self, input_data: Dict[str, Any], context: Dict[str, Any] = None) -> List[Dict]:
+    citations_data = input_data.get("citations", [])
+    case_context = input_data.get("case_context", "")
+    if not citations_data:
+        return []
+
+    self.logger.info(f"Verifying {len(citations_data)} citations")
+
+    citations = [
+        Citation(**c) if isinstance(c, dict) else c
+        for c in citations_data
+    ]
+    results = await asyncio.gather(
+        *(self._verify_one(cit, case_context) for cit in citations),
+        return_exceptions=True,
+    )
+```
+
+Each `_verify_one` call builds a unique prompt and calls the LLM:
+
+```python
+# citation_verifier.py:29-47
+async def _verify_one(self, citation: Citation, case_context: str) -> Dict:
+    try:
+        prompt = CITATION_VERIFICATION_PROMPT.format(
+            citation_text=citation.citation_text,
+            claimed_proposition=citation.claimed_proposition,
+            context=citation.context or "",
+            case_context=case_context,
+        )
+        vr = await self._call_llm(prompt, VerificationResult)
+        verified = VerifiedCitation(
+            citation=citation,
+            is_supported=vr.is_supported,
+            confidence=vr.confidence,
+            confidence_reasoning=vr.confidence_reasoning or None,
+            discrepancies=vr.discrepancies,
+            status=STATUS_MAP.get(vr.status, VerificationStatus.COULD_NOT_VERIFY),
+            notes=vr.notes,
+        )
+        return verified.model_dump()
+```
+
+This means if the parser extracts 50 citations, the citation verifier fires **50 simultaneous LLM calls** — there is no concurrency limit.
+
+#### The Fan-In Barrier
+
+The `await asyncio.gather(...)` on line 110 of the orchestrator acts as a **fan-in barrier**: the synthesizer (Step 4) cannot begin until BOTH parallel agents have completed.
+
+```
+Timeline:
+                                                        Fan-In Barrier
+                                                              |
+Parser -----> [Citation Verifier (N parallel LLM calls)] ----+----> Synthesizer ----> Memo
+              [Fact Checker (1 LLM call)              ] ----+
+```
+
+The synthesizer starts at orchestrator.py:134-138:
+
+```python
+# orchestrator.py:134-138
+synthesis = await self.synthesizer.execute({
+    "citation_results": citation_results,
+    "fact_results": fact_results,
+})
+```
+
+It receives both result sets as input, so it structurally cannot start until both are available. This is an inherent data dependency, not a design limitation.
+
+#### Critical Path Analysis
+
+Which agent determines total latency? Consider the work each does:
+
+| Agent | LLM Calls | Call Complexity | Likely Latency |
+|-------|-----------|-----------------|----------------|
+| **Fact Checker** | 1 | Single large prompt with 4 document sections (each up to 6000 chars) | 10-30s |
+| **Citation Verifier** | N (one per citation) | N smaller prompts, each with one citation | Depends on N and concurrency |
+
+The fact checker (`fact_checker.py:41-47`) builds a single prompt from truncated document sections:
+
+```python
+# fact_checker.py:41-47
+prompt = FACT_CHECKING_PROMPT.format(
+    msj_facts=msj_text[:max_chars],
+    police_text=police_text[:max_chars],
+    medical_text=medical_text[:max_chars],
+    witness_text=witness_text[:max_chars],
+    case_context=case_context,
+) + truncation_notice
+```
+
+With a 6000-char limit per document (`fact_checker.py:25`: `max_chars = 6000`), this prompt could be up to ~24,000 characters plus the template. A single LLM call with a large prompt typically takes 10-30 seconds.
+
+The citation verifier, by contrast, fires N parallel calls. If N is small (5-10), all calls complete quickly (the LLM API handles them concurrently). If N is large (50+), the LLM provider may throttle or queue requests, making the citation verifier the bottleneck.
+
+**Typical scenario** (10-20 citations): The fact checker's single large call is the critical path. The citation verifier's per-citation calls are smaller and complete faster in parallel, so the citation verifier finishes first and waits at the barrier.
+
+**High-citation scenario** (50+ citations): The citation verifier becomes the critical path due to API rate limits and cumulative latency.
+
+#### Timeout at the LLM Call Level
+
+Each individual LLM call has a 120-second timeout enforced by `base_agent.py:25`:
+
+```python
+# base_agent.py:22-34
+async def _call_llm(self, prompt: str, response_model: Type[BaseModel],
+                    system_prompt: str = "", timeout: int = 120) -> BaseModel:
+    try:
+        return await asyncio.wait_for(
+            self.llm_service.get_structured_response(
+                prompt=prompt, response_model=response_model, system_prompt=system_prompt
+            ),
+            timeout=timeout,
+        )
+    except asyncio.TimeoutError:
+        raise AgentError(f"{self.name}: LLM call timed out after {timeout}s")
+    except Exception as e:
+        raise AgentError(f"{self.name}: LLM call failed: {e}")
+```
+
+This timeout applies **per call**, not per agent. So the citation verifier could theoretically wait up to 120 seconds for each of its N parallel calls. However, since they run concurrently, the wall-clock time for N parallel calls is bounded by the slowest individual call (up to 120 seconds), not N * 120 seconds.
+
+#### Error Handling at Both Levels
+
+The system has error handling at **both** parallelism levels:
+
+**Level 1 (Orchestrator)**: `return_exceptions=True` on `asyncio.gather` (line 111) means if an entire agent fails, the result is an `Exception` object. The orchestrator replaces it with an empty list:
+
+```python
+# orchestrator.py:115-118
+if isinstance(citation_results, Exception):
+    _fail(cit_st, cit_t0, citation_results)
+    logger.error(f"Citation verification failed: {citation_results}")
+    citation_results = []
+```
+
+**Level 2 (Per-citation)**: The citation verifier also uses `return_exceptions=True` on its inner gather (line 74) and handles individual citation failures:
+
+```python
+# citation_verifier.py:77-89
+final = []
+for i, r in enumerate(results):
+    if isinstance(r, Exception):
+        self.logger.warning(f"Citation {i} verification raised: {r}")
+        final.append(VerifiedCitation(
+            citation=citations[i],
+            is_supported=False,
+            confidence=0.0,
+            status=VerificationStatus.COULD_NOT_VERIFY,
+            notes=f"Verification failed: {r}",
+        ).model_dump())
+    else:
+        final.append(r)
+```
+
+Additionally, each `_verify_one` call has its own try/except (line 30-58) that catches exceptions before they even reach the gather's `return_exceptions` handling. This means Level 2 exceptions are triple-protected:
+
+1. `_verify_one` try/except catches and returns a `COULD_NOT_VERIFY` entry
+2. `asyncio.gather(return_exceptions=True)` catches anything `_verify_one` misses
+3. The post-gather loop (`citation_verifier.py:78-89`) catches leftover exceptions
+
+---
+
+### Expert Level
+
+#### The Missing Concurrency Throttle
+
+This is the most significant production concern in the current design. The citation verifier's `execute` method creates an unbounded fan-out:
+
+```python
+# citation_verifier.py:72-75
+results = await asyncio.gather(
+    *(self._verify_one(cit, case_context) for cit in citations),
+    return_exceptions=True,
+)
+```
+
+If the parser extracts 50 citations, this creates **50 concurrent coroutines**, each making an LLM API call. There is no semaphore, no rate limiter, and no backpressure mechanism.
+
+**Why this matters:**
+
+| Concern | Impact |
+|---------|--------|
+| **LLM API rate limits** | Most providers enforce tokens-per-minute or requests-per-minute limits. 50 simultaneous calls will likely trigger 429 (Too Many Requests) responses. |
+| **Connection exhaustion** | The underlying HTTP client (likely `httpx` or `aiohttp`) may run out of connection pool slots. |
+| **Memory pressure** | 50 concurrent prompts + 50 concurrent response parsings consume significant memory. |
+| **Cost explosion** | No circuit breaker means a parsing error that extracts 500 "citations" fires 500 LLM calls. |
+
+**Production fix — Semaphore-based throttle:**
+
+```python
+class CitationVerifierAgent(BaseAgent):
+    MAX_CONCURRENT = 10  # Tune based on LLM provider limits
+
+    def __init__(self, llm_service=None):
+        super().__init__("citation_verifier", llm_service)
+        self._semaphore = asyncio.Semaphore(self.MAX_CONCURRENT)
+
+    async def _verify_one_throttled(self, citation: Citation, case_context: str) -> Dict:
+        async with self._semaphore:
+            return await self._verify_one(citation, case_context)
+
+    async def execute(self, input_data, context=None):
+        # ... same setup ...
+        results = await asyncio.gather(
+            *(self._verify_one_throttled(cit, case_context) for cit in citations),
+            return_exceptions=True,
+        )
+        # ... same post-processing ...
+```
+
+The `asyncio.Semaphore` acts as a gate: at most `MAX_CONCURRENT` coroutines can hold the semaphore at once. Others wait until a slot opens. This provides backpressure without changing the gather pattern.
+
+#### Timing Instrumentation Gap
+
+The orchestrator tracks timing at the **agent level** using the `_start`/`_succeed`/`_fail` helpers:
+
+```python
+# orchestrator.py:29-42
+def _start(entry: AgentStatus) -> float:
+    entry.status = "running"
+    return time.time()
+
+def _succeed(entry: AgentStatus, t0: float):
+    entry.status = "success"
+    entry.duration_ms = int((time.time() - t0) * 1000)
+
+def _fail(entry: AgentStatus, t0: float, err: Exception):
+    entry.status = "failed"
+    entry.error = str(err)
+    entry.duration_ms = int((time.time() - t0) * 1000)
+```
+
+But there is **no per-citation latency tracking**. When the citation verifier takes 45 seconds, you cannot tell whether:
+
+- All 20 citations took ~2 seconds each (healthy)
+- 19 citations took 1 second and 1 citation took 26 seconds (one stuck call)
+- The first 10 completed in 5 seconds but the last 10 waited in an API queue for 40 seconds (rate limiting)
+
+**Production fix — Per-citation timing:**
+
+```python
+async def _verify_one(self, citation: Citation, case_context: str) -> Dict:
+    t0 = time.time()
+    try:
+        # ... existing verification logic ...
+        verified = VerifiedCitation(...)
+        result = verified.model_dump()
+        result["_latency_ms"] = int((time.time() - t0) * 1000)
+        return result
+    except Exception as e:
+        # ... existing error handling ...
+        result = verified.model_dump()
+        result["_latency_ms"] = int((time.time() - t0) * 1000)
+        return result
+```
+
+This enables latency percentile analysis (p50, p95, p99) and helps identify slow calls or rate-limiting patterns.
+
+#### The Fan-In Barrier: Structural Analysis
+
+The fan-in barrier at `orchestrator.py:110` is the most consequential scheduling decision in the pipeline. Let's trace what happens in detail:
+
+```
+T=0s    : Parser completes, both agents start simultaneously
+T=0s    : Fact checker begins single LLM call
+T=0s    : Citation verifier fires N parallel _verify_one calls
+T=2s    : First citation results arrive (not visible to anyone yet)
+T=5s    : 80% of citations verified (still waiting at barrier)
+T=15s   : Fact checker completes (still waiting for remaining citations)
+T=22s   : Last citation returns, fan-in barrier releases
+T=22s   : Synthesizer starts with both result sets
+```
+
+**Key insight**: Even though most citations complete quickly, the barrier waits for the **slowest** task across both agents. The tail latency of the citation verifier dominates.
+
+#### What Partial Streaming Would Look Like
+
+In the current design, the synthesizer is blocked until both agents are done. A streaming approach would allow early results to flow to the user:
+
+**Phase 1: Incremental citation display**
+
+Instead of gathering all results, the citation verifier could yield results as they complete:
+
+```python
+async def execute_streaming(self, input_data, callback):
+    """Yield citation results as they complete."""
+    citations = [...]
+    pending = {
+        asyncio.create_task(self._verify_one(cit, case_ctx)): i
+        for i, cit in enumerate(citations)
+    }
+    results = [None] * len(citations)
+
+    for coro in asyncio.as_completed(pending.keys()):
+        result = await coro
+        idx = pending[... ]  # map task back to index
+        results[idx] = result
+        await callback(result)  # Push to client immediately
+
+    return results
+```
+
+**Phase 2: Partial synthesis**
+
+The synthesizer could accept partial data:
+
+```python
+# Streaming pipeline (hypothetical)
+async def analyze_streaming(self, documents, ws):
+    # Parser runs first (required)
+    citations = await self.parser.execute(docs)
+
+    # Start both agents
+    citation_task = asyncio.create_task(self.citation_verifier.execute(...))
+    fact_task = asyncio.create_task(self.fact_checker.execute(...))
+
+    # Stream citation results as they arrive
+    done, pending = await asyncio.wait(
+        [citation_task, fact_task],
+        return_when=asyncio.FIRST_COMPLETED,
+    )
+
+    for task in done:
+        if task is citation_task:
+            await ws.send_json({"type": "citations_ready", "data": task.result()})
+        elif task is fact_task:
+            await ws.send_json({"type": "facts_ready", "data": task.result()})
+
+    # Wait for remaining
+    for task in pending:
+        result = await task
+        await ws.send_json({"type": "partial_result", "data": result})
+
+    # Final synthesis once both are done
+    synthesis = await self.synthesizer.execute({...})
+    await ws.send_json({"type": "final_report", "data": synthesis})
+```
+
+This changes the user experience from "wait 30 seconds, see everything" to "see citations trickling in at 2 seconds, facts at 15 seconds, final report at 20 seconds."
+
+#### Queue-Based Distribution (Production Architecture)
+
+For high-volume deployment, the fan-out pattern should use a task queue rather than in-process coroutines:
+
+```
+Current (in-process):
+  Orchestrator --> asyncio.gather([verify_1, verify_2, ..., verify_50])
+  All 50 calls happen in the same Python process
+
+Production (queue-based):
+  Orchestrator --> Task Queue (Redis/SQS/Celery)
+                       |
+            +----------+-----------+
+            |          |           |
+         Worker 1   Worker 2   Worker 3
+         (10 cits)  (10 cits)  (10 cits) ...
+```
+
+Benefits:
+
+| Feature | In-process `asyncio.gather` | Queue-based |
+|---------|---------------------------|-------------|
+| Horizontal scaling | No (single process) | Yes (add workers) |
+| Backpressure | None (unbounded) | Queue depth limits |
+| Retry logic | Manual per-coroutine | Built into queue (e.g., Celery retry) |
+| Observability | Custom logging | Queue metrics (depth, throughput, latency) |
+| Failure isolation | Exception in one coroutine is caught | Worker crash doesn't affect others |
+
+#### Race Condition: Status Tracking
+
+The orchestrator starts both agent timers before launching gather:
+
+```python
+# orchestrator.py:102-103
+cit_t0 = _start(cit_st)
+fact_t0 = _start(fact_st)
+```
+
+Both are marked "running" at the same instant (line 30: `entry.status = "running"`). Then:
+
+```python
+# orchestrator.py:105-112
+citation_task = self.citation_verifier.execute(...)
+fact_task = self.fact_checker.execute(...)
+citation_results, fact_results = await asyncio.gather(
+    citation_task, fact_task, return_exceptions=True
+)
+```
+
+Note that `citation_task` and `fact_task` are coroutine objects created on lines 105 and 108 — they do NOT begin executing until `asyncio.gather` schedules them on line 110. This means the timers start slightly before actual execution begins. In practice, the difference is negligible (microseconds), but it is technically imprecise.
+
+A more accurate approach would wrap each task to self-time:
+
+```python
+async def _timed_execute(agent, input_data, status_entry):
+    t0 = _start(status_entry)
+    try:
+        result = await agent.execute(input_data)
+        _succeed(status_entry, t0)
+        return result
+    except Exception as e:
+        _fail(status_entry, t0, e)
+        raise
+```
+
+#### Exception Propagation Trace
+
+Let's trace what happens when a single citation's LLM call raises an `httpx.ReadTimeout`:
+
+1. **`base_agent.py:31-32`**: `asyncio.wait_for` catches the timeout, raises `AgentError("citation_verifier: LLM call timed out after 120s")`.
+
+2. **`citation_verifier.py:48-58`**: The `_verify_one` try/except catches `AgentError`, logs a warning, and returns a `VerifiedCitation` with `status=COULD_NOT_VERIFY`:
+   ```python
+   except Exception as e:
+       self.logger.warning(f"Failed to verify citation: {e}")
+       verified = VerifiedCitation(
+           citation=citation,
+           is_supported=False,
+           confidence=0.0,
+           ...
+           notes=f"Verification failed: {e}",
+       )
+       return verified.model_dump()
+   ```
+
+3. **`citation_verifier.py:72-75`**: Because `_verify_one` caught the exception and returned a dict, the gather sees a **successful** result, not an exception. The `isinstance(r, Exception)` check on line 79 is False — the result passes through as a normal entry.
+
+4. **`orchestrator.py:115`**: The `isinstance(citation_results, Exception)` check is False — the citation verifier returned a list (containing one degraded entry). The orchestrator marks it as success.
+
+**The net effect**: A single citation timeout is completely invisible at the orchestrator level. It shows up only as a `COULD_NOT_VERIFY` entry with `confidence=0.0` in the final results. This is good for resilience but bad for observability — the orchestrator has no way to know that 30% of citations failed to verify without parsing the results list.
+
+#### Asymmetric Error Handling: Fact Checker vs. Citation Verifier
+
+The fact checker's error handling is structurally different:
+
+```python
+# fact_checker.py:83-85
+except Exception as e:
+    self.logger.error(f"Fact checking failed: {e}")
+    return []
+```
+
+The entire `execute` method is wrapped in a try/except that returns an empty list on failure. This means the fact checker **never** propagates an exception to the orchestrator's gather. The `isinstance(fact_results, Exception)` check on orchestrator.py:122 will **never** be True in practice.
+
+The citation verifier's `execute` method does NOT have a top-level try/except — it could theoretically raise if something fails before the gather (e.g., the `Citation(**c)` parsing on line 69). In that case, the orchestrator's `isinstance(citation_results, Exception)` on line 115 would be True.
+
+| Agent | Can return Exception to orchestrator? | When? |
+|-------|--------------------------------------|-------|
+| Fact Checker | No | Top-level try/except catches everything |
+| Citation Verifier | Yes | If citation parsing fails before gather |
+
+#### Interview Questions
+
+**Q: Why does the orchestrator use `return_exceptions=True` instead of try/except around gather?**
+
+A: With `return_exceptions=False` (the default), the first exception cancels all other tasks. This means if citation verification fails, the fact-checking results are lost. `return_exceptions=True` allows both tasks to complete independently, enabling graceful degradation where the pipeline continues with partial results.
+
+**Q: What is the maximum number of concurrent LLM calls this system can make?**
+
+A: If the parser extracts N citations, the system makes N + 1 concurrent LLM calls: N from the citation verifier's per-citation fan-out, plus 1 from the fact checker. There is no semaphore or concurrency limit. For a motion with 50 citations, that is 51 simultaneous LLM API calls.
+
+**Q: How would you add backpressure to the citation verifier without changing its public API?**
+
+A: Add an `asyncio.Semaphore` to `__init__` and wrap each `_verify_one` call. The gather pattern stays the same, but at most K coroutines actively call the LLM at once. The remaining coroutines await the semaphore, creating natural backpressure. The `execute` method signature and return type are unchanged.
+
+**Q: If the fact checker typically takes 20 seconds and each citation takes 2 seconds, at what number of citations does the citation verifier become the critical path?**
+
+A: With unlimited concurrency, never — all citation calls run in parallel and complete in ~2 seconds regardless of N. But with a semaphore of K=10, N=100 citations require 10 batches of 10, taking ~20 seconds total. So the crossover point is approximately K * (fact_checker_time / per_citation_time) = 10 * (20/2) = 100 citations. Above that, the citation verifier dominates.
+
+**Q: The fan-in barrier means the synthesizer waits for both agents. Could you run synthesis on partial data?**
+
+A: Yes, but it requires restructuring. Use `asyncio.wait(return_when=FIRST_COMPLETED)` to detect when each agent finishes, then stream partial results to the client. The synthesizer still needs both result sets, but you can show the user citation results or fact results as they arrive. An `asyncio.as_completed` pattern in the citation verifier could go further and stream individual citation results.
+
+**Q: Trace the behavior when the LLM provider returns HTTP 429 for 10 of 50 citation verification calls.**
+
+A: The 429 causes the HTTP client to raise an exception in each of those 10 coroutines. Each exception hits the `_verify_one` try/except (`citation_verifier.py:48`), which catches it and returns a `VerifiedCitation` with `status=COULD_NOT_VERIFY`, `confidence=0.0`, and `notes="Verification failed: ..."`. The gather collects all 50 results (40 real, 10 degraded). The orchestrator sees a successful list of 50 entries. The synthesizer processes all 50, but 10 have zero confidence. No retry is attempted.
+
+
+---
+
+## 36. Typed Contracts & Schema Engineering
+
+### Why This Section Matters
+
+Every LLM-powered pipeline has a "trust boundary" between unstructured model output and the typed data structures the rest of the system depends on. In the BS Detector, Pydantic models define that boundary. Schema engineering determines whether a field rename causes a silent data loss or a loud, catchable error -- and whether the pipeline degrades gracefully or crashes in production.
+
+---
+
+### Beginner: The Pydantic Model Graph
+
+#### 36.1 Which Model Feeds Which Agent
+
+The BS Detector has a strict data-flow graph. Each agent declares a **local response model** (what the LLM returns) and converts it into **shared schema models** (from `models/schemas.py`) before passing data downstream. Every inter-agent boundary uses `dict`, not Pydantic objects.
+
+```
+DocumentParserAgent          CitationVerifierAgent       FactCheckerAgent
+  ExtractionResult ──┐        VerificationResult           FactCheckResult
+  (local model)      │        (local model)                (local model)
+        │            │              │                            │
+        ▼            │              ▼                            ▼
+  Citation, Fact     │        VerifiedCitation              VerifiedFact, Fact
+  (shared schemas)   │        (shared schema)               (shared schemas)
+        │            │              │                            │
+        ▼            │              ▼                            ▼
+   List[Dict] ───────┘         List[Dict] ──────┐         List[Dict] ──┐
+                                                 │                      │
+                                                 ▼                      ▼
+                                          ReportSynthesizerAgent
+                                            SynthesisResult
+                                            (local model)
+                                                 │
+                                                 ▼
+                                          Finding, ConfidenceScores
+                                          (shared schemas)
+                                                 │
+                                                 ▼
+                                              Dict ─────────────┐
+                                                                │
+                                                                ▼
+                                                       JudicialMemoAgent
+                                                         JudicialMemoResult
+                                                         (local model)
+                                                                │
+                                                                ▼
+                                                          JudicialMemo
+                                                          (shared schema)
+                                                                │
+                                                                ▼
+                                                       VerificationReport
+                                                       (final assembly in
+                                                        orchestrator.py)
+```
+
+**Key insight**: There are two layers of models at every agent boundary:
+
+| Layer | Purpose | Location | Example |
+|-------|---------|----------|---------|
+| **Local response model** | Matches the JSON the LLM actually returns | Defined inside each agent file | `VerificationResult` (citation_verifier.py:9-15) |
+| **Shared schema model** | Canonical type for inter-agent data flow | `models/schemas.py` | `VerifiedCitation` (schemas.py:28-36) |
+
+The local model is lenient (matches LLM quirks). The shared model is canonical (enforces invariants). The agent is the translation layer.
+
+#### 36.2 Complete Schema Inventory
+
+All models from `models/schemas.py` with their fields and defaults:
+
+| Model (line) | Fields | Default | Used By |
+|---|---|---|---|
+| `VerificationStatus` (7-11) | SUPPORTED, NOT_SUPPORTED, COULD_NOT_VERIFY, MISLEADING | -- | citation_verifier via STATUS_MAP |
+| `ConsistencyStatus` (14-18) | CONSISTENT, CONTRADICTORY, PARTIAL, COULD_NOT_VERIFY | -- | fact_checker via status_map |
+| `Citation` (21-25) | citation_text, claimed_proposition, source_location, context | `source_location=""` | document_parser, citation_verifier |
+| `VerifiedCitation` (28-36) | citation, is_supported, confidence, confidence_reasoning, discrepancies, supporting_evidence, status, notes | `is_supported=False`, `confidence=0.5`, `status="could_not_verify"` | citation_verifier output |
+| `Fact` (39-43) | fact_text, source_document, location, category | `fact_text=""`, `source_document=""`, `location=""` | document_parser, fact_checker |
+| `VerifiedFact` (46-61) | fact, is_consistent, confidence, confidence_reasoning, contradictory_sources, supporting_sources, status, summary | `is_consistent=True`, `confidence=0.5`, `status="could_not_verify"` | fact_checker output |
+| `Finding` (64-84) | id, type, description, severity, confidence, confidence_reasoning, evidence, recommendation | `severity="medium"`, `confidence=0.5` | report_synthesizer output |
+| `ConfidenceScores` (87-90) | citation_verification, fact_consistency, overall | all `0.0` | report_synthesizer, orchestrator |
+| `JudicialMemo` (93-97) | memo, key_issues, recommended_actions, overall_assessment | all `""` or `[]` | judicial_memo output |
+| `AgentStatus` (100-104) | agent_name, status, duration_ms, error | `status="pending"` | orchestrator tracking |
+| `VerificationReport` (107-117) | motion_id, timestamp, verified_citations, verified_facts, confidence_scores, top_findings, unknown_issues, judicial_memo, pipeline_status, metadata | -- | final pipeline output |
+
+**Interview question**: "Why does `VerifiedCitation.status` have type `str` (line 35) instead of `VerificationStatus`?"
+
+**Answer**: Because the `STATUS_MAP.get()` call in `citation_verifier.py:44` returns `VerificationStatus` enum values, and `VerifiedCitation` stores whatever comes through. The schema is permissive at the storage layer -- the enum mapping is enforced at the agent layer. This is a deliberate design trade-off: schema validators do not reject unknown status strings, which means a new status value can be added without changing the schema. The downside is that typos pass silently.
+
+---
+
+### Intermediate: Enum Mapping, Null Handling, and Coercion
+
+#### 36.3 The STATUS_MAP Pattern
+
+Both `citation_verifier.py` and `fact_checker.py` use the same pattern to convert LLM-returned status strings into typed enums, but they implement it slightly differently.
+
+**citation_verifier.py (lines 18-22):**
+
+```python
+STATUS_MAP = {
+    "supported": VerificationStatus.SUPPORTED,
+    "not_supported": VerificationStatus.NOT_SUPPORTED,
+    "misleading": VerificationStatus.MISLEADING,
+}
+```
+
+Usage at line 44:
+```python
+status=STATUS_MAP.get(vr.status, VerificationStatus.COULD_NOT_VERIFY),
+```
+
+**fact_checker.py (lines 52-56):**
+
+```python
+status_map = {
+    "consistent": ConsistencyStatus.CONSISTENT,
+    "contradictory": ConsistencyStatus.CONTRADICTORY,
+    "partial": ConsistencyStatus.PARTIAL,
+}
+```
+
+Usage at line 76:
+```python
+status=status_map.get(status_str, ConsistencyStatus.COULD_NOT_VERIFY),
+```
+
+**Critical analysis of the STATUS_MAP pattern:**
+
+| Property | Behavior | Risk |
+|----------|----------|------|
+| Case sensitivity | `"Supported"` falls through to `COULD_NOT_VERIFY` | LLMs sometimes capitalize; this silently degrades |
+| Typo handling | `"suported"` (typo) falls through to `COULD_NOT_VERIFY` | No logging when fallback triggers -- silent data loss |
+| Missing enum values | `"could_not_verify"` is NOT in the citation map | Intentional: it's the fallback default |
+| Scope | Citation map is module-level; fact map is local | No functional difference, but inconsistent style |
+
+**What breaks**: If the LLM returns `"Supported"` (capital S), the STATUS_MAP lookup fails, and the citation is marked `COULD_NOT_VERIFY` even though the LLM meant `SUPPORTED`. There is no warning logged. In a production system, you would want:
+
+```python
+# Robust version (not in current code)
+status_key = vr.status.lower().strip()
+mapped = STATUS_MAP.get(status_key, VerificationStatus.COULD_NOT_VERIFY)
+if status_key not in STATUS_MAP:
+    self.logger.warning(f"Unmapped status '{vr.status}' -> COULD_NOT_VERIFY")
+```
+
+**Interview question**: "The STATUS_MAP in citation_verifier.py omits `could_not_verify`. Is this a bug?"
+
+**Answer**: No. `COULD_NOT_VERIFY` is the fallback default in the `.get()` call. Including it in the map would be redundant. However, omitting it means the string `"could_not_verify"` maps to the same value whether it's in the map or not -- the semantics are correct but the intent is implicit.
+
+#### 36.4 The Null Handling Cascade
+
+When an LLM returns `null` for a boolean field, the system has a three-layer defense:
+
+**Layer 1 -- Agent-level derivation (fact_checker.py:59-63):**
+
+```python
+raw_consistent = item.get("is_consistent")
+status_str = item.get("status", "")
+# Derive is_consistent from status when LLM returns null
+if raw_consistent is None:
+    raw_consistent = status_str == "consistent"
+```
+
+If the LLM returns `{"is_consistent": null, "status": "contradictory"}`, the agent derives `is_consistent = False` from the status string. This is the **primary defense** and the most semantically correct one.
+
+**Layer 2 -- Pydantic validator (schemas.py:56-61):**
+
+```python
+@field_validator("is_consistent", mode="before")
+@classmethod
+def coerce_is_consistent(cls, v):
+    if v is None:
+        return True
+    return v
+```
+
+If the agent layer somehow passes `None` through (e.g., both `is_consistent` and `status` are null), the Pydantic validator defaults to `True`. This is a **safety net**, not the primary logic.
+
+**Layer 3 -- Field default (schemas.py:48):**
+
+```python
+is_consistent: bool = True
+```
+
+If the field is entirely missing from the dict (not `None`, but absent), Pydantic uses the field default of `True`.
+
+**The null cascade in order:**
+
+```
+LLM returns null for is_consistent
+         │
+         ▼
+fact_checker.py:62-63  ──  Derives from status string
+         │                  (False if status != "consistent")
+         ▼
+schemas.py:56-61      ──  Validator coerces None → True
+         │                  (only reached if agent passes None)
+         ▼
+schemas.py:48         ──  Field default = True
+                           (only reached if key is absent)
+```
+
+**Danger zone**: Layer 2 defaults to `True` (optimistic). Layer 1 derives from status (accurate). If a code change bypasses Layer 1 (e.g., passing raw LLM dicts directly to `VerifiedFact`), null `is_consistent` silently becomes `True`, hiding contradictions. The optimistic default was chosen because `is_consistent=True` is the "no finding" case -- it's better to miss a contradiction than to flag a false positive in a judicial context.
+
+#### 36.5 The `coerce_id` and `coerce_evidence` Validators
+
+**`coerce_id` (schemas.py:74-77):**
+
+```python
+@field_validator("id", mode="before")
+@classmethod
+def coerce_id(cls, v):
+    return str(v)
+```
+
+**What it fixes**: LLMs sometimes return numeric IDs (`1`, `2`) instead of string IDs (`"F-1"`, `"F-2"`). The `Finding.id` field is typed as `str`, but without this validator, Pydantic would reject `{"id": 1}` with a validation error. The coercion converts any value to its string representation.
+
+**Where it matters**: In `report_synthesizer.py:36`, findings are constructed from LLM output:
+
+```python
+Finding(
+    id=f.get("id", f"F-{i+1}"),
+    ...
+)
+```
+
+The `.get()` fallback already provides a string, but if the LLM provides an `id` field, it might be an integer. The validator catches this.
+
+**`coerce_evidence` (schemas.py:79-84):**
+
+```python
+@field_validator("evidence", mode="before")
+@classmethod
+def coerce_evidence(cls, v):
+    if isinstance(v, str):
+        return [v]
+    return v
+```
+
+**What it fixes**: `Finding.evidence` is `List[str]`, but LLMs often return a single string instead of a list when there's only one piece of evidence. For example:
+
+```json
+{"evidence": "Police report contradicts MSJ on date"}
+```
+
+Without the validator, Pydantic would reject this (string is not a list). The coercion wraps a lone string in a list.
+
+**Where it matters**: In `report_synthesizer.py:42`:
+
+```python
+evidence=f.get("evidence", []),
+```
+
+The `.get()` fallback handles missing keys, but the LLM might return `"evidence": "some string"` instead of `"evidence": ["some string"]`. The validator catches this structural mismatch.
+
+---
+
+### Expert: Schema Injection, Cascade Analysis, and Production Patterns
+
+#### 36.6 Schema Injection into Prompts
+
+The `_schema_prompt()` method in `llm_service.py:80-86` is the mechanism that tells the LLM what JSON structure to return:
+
+```python
+def _schema_prompt(self, response_model: Type[BaseModel]) -> str:
+    schema = response_model.model_json_schema()
+    return (
+        "You are a precise legal analysis assistant.\n"
+        f"Respond with valid JSON matching this schema:\n{json.dumps(schema, indent=2)}\n"
+        "Output ONLY valid JSON, no markdown fences, no explanation."
+    )
+```
+
+**How it works**: `model_json_schema()` generates a JSON Schema from the Pydantic model. This schema is injected into the system prompt, so the LLM knows the expected field names, types, and constraints.
+
+The `get_structured_response()` method (llm_service.py:88-118) handles two paths:
+
+| Path | Condition | System prompt construction |
+|------|-----------|---------------------------|
+| Custom system prompt | `system_prompt` is truthy (line 95) | Appends schema to the caller's system prompt (lines 96-101) |
+| Default | No system prompt provided (line 104) | Uses `_schema_prompt()` which includes the "precise legal analysis assistant" persona |
+
+**The full chain from agent to LLM:**
+
+```
+Agent calls self._call_llm(prompt, ResponseModel)
+  → BaseAgent._call_llm (base_agent.py:22-28)
+    → LLMService.get_structured_response (llm_service.py:88-118)
+      → Generates JSON Schema from ResponseModel
+      → Injects schema into system prompt
+      → Calls LLM via get_completion()
+      → Parses raw text → extracts JSON → validates against ResponseModel
+    → Returns typed Pydantic instance
+```
+
+**Critical detail**: The schema injected into the prompt is generated from the **local response model** (e.g., `VerificationResult`), NOT from the shared schema model (e.g., `VerifiedCitation`). This is why the local models can have different field names or simpler structures than the shared schemas -- the agent translates between them.
+
+#### 36.7 Why Dicts, Not Pydantic Objects, Between Agents
+
+Every agent's `execute()` method returns `List[Dict]` or `Dict[str, Any]`, not typed Pydantic objects. The conversion happens via `.model_dump()`:
+
+**citation_verifier.py:47:**
+```python
+return verified.model_dump()
+```
+
+**fact_checker.py:79:**
+```python
+verified.append(vf.model_dump())
+```
+
+**report_synthesizer.py:44:**
+```python
+).model_dump())
+```
+
+**judicial_memo.py:41:**
+```python
+return memo.model_dump()
+```
+
+**Three reasons for this design:**
+
+1. **JSON-serializability**: The orchestrator (orchestrator.py:188) calls `report.model_dump_json()` to serialize the final result. Intermediate dicts are already JSON-serializable; Pydantic objects with custom types (enums, datetime) require special handling. Dicts avoid `TypeError` on `json.dumps()`.
+
+2. **Loose coupling**: Agents don't import each other's types. `ReportSynthesizerAgent` receives `citation_results` and `fact_results` as `List[Dict]` (orchestrator.py:135-137). It doesn't need to import `VerifiedCitation` or `VerifiedFact`. This means agents can be developed, tested, and versioned independently.
+
+3. **Distributability**: If agents were to run on separate processes or services (e.g., behind a message queue), dicts serialize trivially. Pydantic objects would require shared model packages or serialization protocols.
+
+**The trade-off**: Type safety is lost between agents. When `report_synthesizer.py:34` iterates over `result.top_findings`, each `f` is a `Dict[str, Any]` -- field access is via `.get()` with fallbacks, not attribute access with IDE autocomplete. Typos in field names (e.g., `f.get("desciption")`) fail silently with the default value.
+
+#### 36.8 What Breaks If You Change a Field Name
+
+Consider renaming `is_consistent` to `is_verified` in `VerifiedFact`. Here is the cascade:
+
+| File | Line | What references `is_consistent` | Impact |
+|------|------|---------------------------------|--------|
+| `schemas.py` | 48 | Field declaration | Changed |
+| `schemas.py` | 56-61 | `@field_validator("is_consistent")` | **Breaks**: validator silently stops running (no field to validate) |
+| `fact_checker.py` | 59 | `item.get("is_consistent")` | **Breaks**: always returns `None` (LLM still returns old name) |
+| `fact_checker.py` | 71 | `is_consistent=bool(raw_consistent)` | **Breaks**: constructor kwarg name mismatch |
+| `utils/prompts.py` | 67 | Prompt text says `is_consistent (bool)` | **Breaks**: LLM returns `is_consistent` in JSON, but schema now expects `is_verified` |
+| `orchestrator.py` | 174-175 | Consumes `fact_results` as `List[Dict]` | **Silent failure**: dict still has `is_consistent` key, `VerificationReport` model accepts it |
+| eval scripts | -- | May assert on `is_consistent` | **Breaks**: eval assertions fail |
+
+**Total blast radius**: 5+ files, with 2 silent failures (the most dangerous kind).
+
+**The prompt coupling problem**: The prompt in `FACT_CHECKING_PROMPT` (prompts.py:67) literally says `is_consistent (bool)`. The LLM reads this and returns `{"is_consistent": true}`. If you rename the Pydantic field but not the prompt text, the LLM still returns the old name. If you update the prompt but not the Pydantic field, validation fails. The schema and the prompt are **implicitly coupled** through string matching -- there is no compile-time check.
+
+**Interview question**: "How would you safely rename a field in this pipeline?"
+
+**Answer**:
+1. Add the new field name with `alias` in the Pydantic model (`Field(alias="is_consistent")`)
+2. Update the prompt text
+3. Add a `@field_validator` that handles both old and new names during migration
+4. Update all `.get()` calls in agents
+5. Update eval assertions
+6. Deploy, verify, then remove the alias
+
+#### 36.9 Schema Injection and the LLM Response Cycle
+
+The exact sequence from prompt to validated output:
+
+```
+1. Agent builds prompt text from PROMPT template (utils/prompts.py)
+2. Agent calls _call_llm(prompt, LocalResponseModel)
+3. BaseAgent._call_llm → LLMService.get_structured_response()
+4. LLMService generates JSON Schema from LocalResponseModel:
+     response_model.model_json_schema()   ← llm_service.py:81/96
+5. Schema is injected into system prompt:
+     "Respond with valid JSON matching this schema:\n{schema}"
+6. LLM receives: system=schema_prompt, user=agent_prompt
+7. LLM returns raw text (may include markdown fences)
+8. _extract_json() strips fences and finds JSON  ← llm_service.py:24-51
+9. json.loads() parses string to dict             ← llm_service.py:111
+10. response_model.model_validate(data)            ← llm_service.py:115
+11. Returns typed Pydantic instance to agent
+12. Agent translates LocalModel → SharedModel → dict
+```
+
+**Where validation errors are (not) logged**: At step 9, a `json.JSONDecodeError` is caught and logged at ERROR level (llm_service.py:112-114). At step 10, a Pydantic `ValidationError` is NOT explicitly caught -- it propagates up to `BaseAgent._call_llm` (base_agent.py:33), which catches `Exception` and wraps it in `AgentError`. The original validation error details (which fields failed, what values were provided) are stringified into the error message but not structured for monitoring.
+
+**Gap**: There is no validation error classification. A missing required field, a type mismatch, and a constraint violation (e.g., `confidence > 1.0`) all produce the same `AgentError`. In production, you'd want to distinguish these because they have different root causes and remedies.
+
+#### 36.10 Production: Schema Versioning and Discriminated Unions
+
+**Current state**: There is no schema versioning. All models are at an implicit v1. The `VerificationReport.metadata` field (schemas.py:117) could carry a version tag, but currently does not.
+
+**What schema versioning would look like:**
+
+```python
+# Not in current code -- production improvement
+class VerificationReportV2(BaseModel):
+    schema_version: Literal["2"] = "2"
+    motion_id: str
+    # ... fields with breaking changes ...
+
+ReportType = Annotated[
+    Union[VerificationReport, VerificationReportV2],
+    Field(discriminator="schema_version")
+]
+```
+
+**Why it matters**: If the report schema changes (e.g., adding a required field), stored reports from before the change become invalid. Without versioning, you can't deserialize old reports. With discriminated unions, you can route to the correct model based on a version tag.
+
+**Validation error classification (production pattern):**
+
+```python
+# Not in current code -- production improvement
+class ValidationFailure(BaseModel):
+    agent: str
+    model: str
+    field: str
+    error_type: Literal["missing", "type_mismatch", "constraint", "unknown"]
+    raw_value: Any
+    timestamp: datetime
+```
+
+This would enable dashboards showing "citation_verifier has 15% type_mismatch errors on the `confidence` field this week" -- actionable signal for prompt tuning.
+
+#### 36.11 The Two-Model Pattern: Why Local + Shared
+
+Every agent follows the same structural pattern:
+
+```python
+# 1. Define a LOCAL response model (matches LLM output)
+class VerificationResult(BaseModel):      # citation_verifier.py:9
+    is_supported: bool
+    confidence: float = Field(ge=0, le=1)
+    confidence_reasoning: str = ""
+    discrepancies: List[str] = Field(default_factory=list)
+    status: str = "could_not_verify"
+    notes: str = ""
+
+# 2. Call LLM with local model as response_model
+vr = await self._call_llm(prompt, VerificationResult)    # line 37
+
+# 3. Translate to SHARED schema model
+verified = VerifiedCitation(                               # line 38
+    citation=citation,
+    is_supported=vr.is_supported,
+    confidence=vr.confidence,
+    ...
+    status=STATUS_MAP.get(vr.status, ...),                 # line 44 -- enum mapping
+)
+
+# 4. Return as dict
+return verified.model_dump()                               # line 47
+```
+
+**Why not use the shared model directly as the response_model?**
+
+| Reason | Example |
+|--------|---------|
+| Shared model has fields the LLM shouldn't fill | `VerifiedCitation.citation` is set by the agent, not the LLM |
+| Shared model uses enums the LLM can't produce | `VerificationStatus.SUPPORTED` vs string `"supported"` |
+| Shared model has nested objects | `VerifiedFact.fact` is a `Fact` object; LLM returns flat dicts |
+| Local model can be more permissive | `VerificationResult.notes: str = ""` vs `VerifiedCitation.notes: Optional[str] = None` |
+
+The local model is the LLM's "contract". The shared model is the system's "contract". The agent translates between them.
+
+#### 36.12 Summary: Schema Engineering Principles in Practice
+
+| Principle | Implementation | Risk if violated |
+|-----------|---------------|------------------|
+| Two-model pattern | Local response model + shared schema model | LLM output shapes leak into system types |
+| Enum mapping with fallback | `STATUS_MAP.get(key, default)` | Unknown statuses crash instead of degrading |
+| Null coercion chain | Agent derives > validator coerces > field default | Silent data corruption (wrong booleans) |
+| Dict boundaries between agents | `.model_dump()` at every agent output | Tight coupling, serialization failures |
+| Schema injection | `model_json_schema()` in system prompt | LLM returns wrong structure |
+| Validators for LLM quirks | `coerce_id`, `coerce_evidence`, `coerce_is_consistent` | Validation errors on valid-intent data |
+| Implicit prompt-schema coupling | Field names in prompts must match response model | Silent mismatches after rename |
+
+**Interview-ready summary**: The BS Detector uses a two-model pattern at every agent boundary: a lenient local model matching LLM output, and a strict shared model for inter-agent data flow. Enum mapping via `STATUS_MAP.get()` with fallback provides resilience against LLM string variations, though it lacks case-normalization and logging. Null handling uses a three-layer cascade (agent derivation, Pydantic validators, field defaults) that defaults optimistically to avoid false judicial findings. All inter-agent data flows as plain dicts for JSON-serializability and loose coupling, at the cost of type safety. The main production gaps are: no schema versioning for stored reports, no validation error classification for monitoring, case-sensitive enum mapping, and implicit coupling between prompt text and Pydantic field names that makes renames dangerous.
+
+
+---
+
+## 37. Graceful Degradation Architecture
+
+### Beginner: The Safety Net Philosophy
+
+**What happens when things go wrong in a 5-agent pipeline?**
+
+The BS Detector pipeline chains five agents sequentially and in parallel. Any one of them can fail -- the LLM might time out, return malformed JSON, or crash entirely. The graceful degradation architecture ensures the system always returns *something useful* rather than a blank screen or a 500 error.
+
+**The Pipeline Flow and Its Failure Points**
+
+```
+Document Parser --> [Citation Verifier || Fact Checker] --> Report Synthesizer --> Judicial Memo
+     (must)              (can degrade)                       (can degrade)       (optional)
+```
+
+Each arrow is a potential failure point. The architecture answers: "If agent X fails, what does the user still get?"
+
+**Degradation Hierarchy Overview**
+
+| Level | Name | What Failed | User Gets |
+|-------|------|-------------|-----------|
+| 0 | Full Success | Nothing | Complete report with judicial memo |
+| 1 | No Memo | Judicial memo agent | Full report, no judicial memo |
+| 2 | Partial Verification | One parallel agent (citation OR fact) | Report with partial data, zeroed-out scores for missing half |
+| 3 | Raw Data Only | Both parallel agents + synthesizer | Error report with document list and parser output |
+| 4 | Error Report | Parser (Stage 1 failure) | Skeleton `VerificationReport` with `unknown_issues` only |
+
+---
+
+### Intermediate: 4-Layer Error Handling Traced Through Code
+
+The error handling architecture has four distinct layers, each operating at a different granularity.
+
+#### Layer 1: LLM Call Wrapper (Base Agent)
+
+Every LLM interaction passes through `BaseAgent._call_llm()` or `_call_llm_text()` in `base_agent.py`. These methods wrap every outbound call with a timeout and a catch-all:
+
+```python
+# base_agent.py:22-34
+async def _call_llm(self, prompt: str, response_model: Type[BaseModel],
+                    system_prompt: str = "", timeout: int = 120) -> BaseModel:
+    try:
+        return await asyncio.wait_for(
+            self.llm_service.get_structured_response(
+                prompt=prompt, response_model=response_model, system_prompt=system_prompt
+            ),
+            timeout=timeout,
+        )
+    except asyncio.TimeoutError:
+        raise AgentError(f"{self.name}: LLM call timed out after {timeout}s")
+    except Exception as e:
+        raise AgentError(f"{self.name}: LLM call failed: {e}")
+```
+
+**Key design decisions:**
+
+1. **Uniform `AgentError` wrapping** -- both timeout and arbitrary exceptions are converted into `AgentError`. This means upstream code never has to distinguish between "the LLM was slow" and "the LLM returned garbage." Both propagate identically.
+2. **120-second default timeout** (`base_agent.py:23`, `base_agent.py:36`) -- every LLM call has a hard 2-minute ceiling via `asyncio.wait_for`.
+3. **No retry** -- if the call fails once, it fails. There is no backoff or retry loop at this layer.
+
+The same pattern exists for unstructured text calls:
+
+```python
+# base_agent.py:36-45
+async def _call_llm_text(self, system: str, user: str, timeout: int = 120) -> str:
+    try:
+        return await asyncio.wait_for(
+            self.llm_service.get_completion(system=system, user=user),
+            timeout=timeout,
+        )
+    except asyncio.TimeoutError:
+        raise AgentError(f"{self.name}: LLM call timed out after {timeout}s")
+    except Exception as e:
+        raise AgentError(f"{self.name}: LLM call failed: {e}")
+```
+
+#### Layer 2: Per-Agent Internal Error Handling
+
+Each agent has its own `try/except` inside `execute()` that catches failures from `_call_llm` and decides what to return. The behavior differs by agent:
+
+**Document Parser -- returns empty with error flag:**
+
+```python
+# document_parser.py:25-33
+try:
+    result = await self._call_llm(prompt, ExtractionResult)
+    return {
+        "citations": [c.model_dump() for c in result.citations],
+        "facts": [f.model_dump() for f in result.facts],
+    }
+except Exception as e:
+    self.logger.error(f"Extraction failed: {e}")
+    return {"citations": [], "facts": [], "error": str(e)}
+```
+
+The parser returns an empty list for `citations` on failure. This is critical because the orchestrator checks `parse_result.get("citations", [])` at `orchestrator.py:79` -- an empty citations list means downstream agents have nothing to work with.
+
+**Citation Verifier -- per-citation graceful fallback:**
+
+```python
+# citation_verifier.py:48-58
+except Exception as e:
+    self.logger.warning(f"Failed to verify citation: {e}")
+    verified = VerifiedCitation(
+        citation=citation,
+        is_supported=False,
+        confidence=0.0,
+        discrepancies=[],
+        status=VerificationStatus.COULD_NOT_VERIFY,
+        notes=f"Verification failed: {e}",
+    )
+    return verified.model_dump()
+```
+
+Individual citation failures produce a `COULD_NOT_VERIFY` entry with zero confidence. The citation still appears in the final report -- it is not silently dropped. This is the **partial failure** pattern: one citation failing does not kill the entire verification pass.
+
+Additionally, the `execute()` method in `citation_verifier.py:72-90` uses `asyncio.gather(..., return_exceptions=True)` to run all citation verifications in parallel and then handles any exception results in a post-processing loop:
+
+```python
+# citation_verifier.py:72-90
+results = await asyncio.gather(
+    *(self._verify_one(cit, case_context) for cit in citations),
+    return_exceptions=True,
+)
+# Replace any unexpected exceptions with error entries
+final = []
+for i, r in enumerate(results):
+    if isinstance(r, Exception):
+        self.logger.warning(f"Citation {i} verification raised: {r}")
+        final.append(VerifiedCitation(
+            citation=citations[i],
+            is_supported=False,
+            confidence=0.0,
+            status=VerificationStatus.COULD_NOT_VERIFY,
+            notes=f"Verification failed: {r}",
+        ).model_dump())
+    else:
+        final.append(r)
+return final
+```
+
+This is a **double safety net**: `_verify_one` already catches exceptions internally (Layer 2), but if something leaks past that (e.g., a bug in the Pydantic model construction), the `gather` loop catches it again.
+
+**Fact Checker -- returns empty list on failure:**
+
+```python
+# fact_checker.py:83-85
+except Exception as e:
+    self.logger.error(f"Fact checking failed: {e}")
+    return []
+```
+
+Unlike the citation verifier, the fact checker does not have per-item fallback. If the single LLM call at `fact_checker.py:50` fails, the entire fact-checking result is an empty list. Individual malformed facts within a successful response are handled separately:
+
+```python
+# fact_checker.py:80-81
+except Exception as item_err:
+    self.logger.warning(f"Skipping malformed fact: {item_err}")
+```
+
+**Report Synthesizer -- returns zeroed scores on failure:**
+
+```python
+# report_synthesizer.py:57-63
+except Exception as e:
+    self.logger.error(f"Synthesis failed: {e}")
+    return {
+        "top_findings": [],
+        "confidence_scores": {"citation_verification": 0, "fact_consistency": 0, "overall": 0},
+        "unknown_issues": [f"Synthesis failed: {e}"],
+    }
+```
+
+**Judicial Memo -- returns fallback memo on failure:**
+
+```python
+# judicial_memo.py:43-49
+except Exception as e:
+    self.logger.error(f"Judicial memo generation failed: {e}")
+    return JudicialMemo(
+        memo=f"Memo generation failed: {e}",
+        key_issues=[],
+        recommended_actions=[],
+        overall_assessment="Unable to assess",
+    ).model_dump()
+```
+
+#### Layer 3: Orchestrator-Level Exception Handling
+
+The orchestrator (`orchestrator.py`) wraps each agent invocation and converts failures into degraded-but-valid pipeline state.
+
+**Parser failure is immediately fatal:**
+
+```python
+# orchestrator.py:77-93
+try:
+    parse_result = await self.parser.execute(docs)
+    citations = parse_result.get("citations", [])
+    _succeed(parser_st, t0)
+    logger.info(f"Extracted {len(citations)} citations")
+except Exception as e:
+    _fail(parser_st, t0, e)
+    logger.error(f"Parser failed: {e}")
+    # Can't continue without citations -- return error report
+    return json.loads(VerificationReport(
+        motion_id=motion_id,
+        timestamp=datetime.now(),
+        confidence_scores=ConfidenceScores(),
+        unknown_issues=[f"Parser failed: {e}"],
+        pipeline_status=pipeline_status,
+        metadata={"documents_analyzed": list(docs.keys()), "error": str(e)},
+    ).model_dump_json())
+```
+
+This is the **only** place where the pipeline short-circuits entirely. The comment at `orchestrator.py:85` explains why: "Can't continue without citations." If the parser cannot extract citations, the citation verifier has nothing to verify, the fact checker has no facts to cross-reference, and the synthesizer has nothing to synthesize. Rather than running three more agents on empty data, the orchestrator returns a Level 4 error report immediately.
+
+**Parallel agent failures are tolerated via `asyncio.gather`:**
+
+```python
+# orchestrator.py:110-127
+citation_results, fact_results = await asyncio.gather(
+    citation_task, fact_task, return_exceptions=True
+)
+
+# Handle exceptions from parallel tasks
+if isinstance(citation_results, Exception):
+    _fail(cit_st, cit_t0, citation_results)
+    logger.error(f"Citation verification failed: {citation_results}")
+    citation_results = []
+else:
+    _succeed(cit_st, cit_t0)
+
+if isinstance(fact_results, Exception):
+    _fail(fact_st, fact_t0, fact_results)
+    logger.error(f"Fact checking failed: {fact_results}")
+    fact_results = []
+else:
+    _succeed(fact_st, fact_t0)
+```
+
+The `return_exceptions=True` at `orchestrator.py:111` is the critical flag. Without it, `asyncio.gather` would raise the first exception and cancel the other task. With it, exceptions are returned as values, allowing both tasks to complete (or fail) independently.
+
+**Synthesizer failure produces a minimal report:**
+
+```python
+# orchestrator.py:134-148
+try:
+    synthesis = await self.synthesizer.execute({
+        "citation_results": citation_results,
+        "fact_results": fact_results,
+    })
+    _succeed(synth_st, t0)
+except Exception as e:
+    _fail(synth_st, t0, e)
+    logger.error(f"Synthesis failed: {e}")
+    # Build minimal report from raw verified data
+    synthesis = {
+        "top_findings": [],
+        "confidence_scores": {"citation_verification": 0, "fact_consistency": 0, "overall": 0},
+        "unknown_issues": [f"Synthesis failed: {e}"],
+    }
+```
+
+**Memo failure is silently tolerated:**
+
+```python
+# orchestrator.py:156-168
+memo_data = None
+try:
+    memo_data = await self.memo_agent.execute({
+        "top_findings": top_findings,
+        "confidence_scores": confidence_scores,
+        "case_context": case_context,
+    })
+    _succeed(memo_st, t0)
+except Exception as e:
+    _fail(memo_st, t0, e)
+    logger.error(f"Judicial memo failed: {e}")
+```
+
+When memo generation fails, `memo_data` stays `None`. At `orchestrator.py:179`, this is handled:
+
+```python
+judicial_memo=JudicialMemo(**memo_data) if memo_data else None,
+```
+
+The final report simply omits the judicial memo field. This is Level 1 degradation.
+
+#### Layer 4: Status Tracking Infrastructure
+
+The four helper functions at the top of `orchestrator.py` provide real-time status tracking:
+
+```python
+# orchestrator.py:22-42
+def _track(statuses: List[AgentStatus], name: str) -> AgentStatus:
+    """Create and register an AgentStatus entry."""
+    entry = AgentStatus(agent_name=name, status="pending")
+    statuses.append(entry)
+    return entry
+
+
+def _start(entry: AgentStatus) -> float:
+    entry.status = "running"
+    return time.time()
+
+
+def _succeed(entry: AgentStatus, t0: float):
+    entry.status = "success"
+    entry.duration_ms = int((time.time() - t0) * 1000)
+
+
+def _fail(entry: AgentStatus, t0: float, err: Exception):
+    entry.status = "failed"
+    entry.error = str(err)
+    entry.duration_ms = int((time.time() - t0) * 1000)
+```
+
+Every agent goes through the lifecycle: `pending` -> `running` -> `success` | `failed`. The `pipeline_status` list is always included in the final `VerificationReport` (even error reports at `orchestrator.py:91`), so the caller can see exactly which agents succeeded and which failed, with timing and error details.
+
+**Example `pipeline_status` output when fact checker fails:**
+
+```json
+[
+  {"agent_name": "document_parser", "status": "success", "duration_ms": 3420},
+  {"agent_name": "citation_verifier", "status": "success", "duration_ms": 8910},
+  {"agent_name": "fact_checker", "status": "failed", "error": "fact_checker: LLM call timed out after 120s", "duration_ms": 120034},
+  {"agent_name": "report_synthesizer", "status": "success", "duration_ms": 2100},
+  {"agent_name": "judicial_memo", "status": "success", "duration_ms": 1800}
+]
+```
+
+---
+
+### Expert: Failure Taxonomy and Production Gaps
+
+#### Complete Failure Taxonomy
+
+Every failure in this system falls into one of four categories:
+
+| Category | Examples | Current Handling | Recovery Strategy |
+|----------|----------|-----------------|-------------------|
+| **Transient** | Timeout (`asyncio.TimeoutError`), rate limit (429), network blip | Wrapped as `AgentError`, no retry | Should retry with exponential backoff |
+| **Permanent** | Bad JSON from LLM, Pydantic validation error, missing required field | Wrapped as `AgentError`, logged | Correct; no point retrying |
+| **Partial** | One citation out of 15 fails verification | `COULD_NOT_VERIFY` entry with 0.0 confidence | Correct; other citations proceed |
+| **Total** | Agent crashes (import error, OOM, unhandled exception type) | `asyncio.gather` catches via `return_exceptions=True` | Empty list substituted |
+
+**The system currently treats all four identically** -- every failure becomes an `AgentError` string at `base_agent.py:32-34`. This means a transient timeout (which might succeed on retry) gets the same treatment as a permanent validation error (which will never succeed).
+
+#### Why Parser Failure Is Immediately Fatal
+
+The parser occupies a unique position in the dependency graph. Every downstream agent depends on its output:
+
+```
+Parser output --> citations --> Citation Verifier
+Parser output --> docs (already loaded, but no structure) --> Fact Checker (uses raw docs)
+```
+
+Wait -- the fact checker actually uses raw documents (`orchestrator.py:108`), not parsed citations. So why is parser failure fatal for the entire pipeline?
+
+The answer is at `orchestrator.py:79`:
+
+```python
+citations = parse_result.get("citations", [])
+```
+
+If the parser fails (exception at `orchestrator.py:78`), the orchestrator returns immediately at `orchestrator.py:86-93`. It never reaches the parallel stage. The fact checker *could* theoretically run on raw documents even without parsed citations, but the current architecture does not attempt this. This is a deliberate design choice: a failed parser means the system cannot provide citation verification, which is the core value proposition. Running fact-checking alone would produce an incomplete report that might mislead the user about the thoroughness of the analysis.
+
+#### What Happens When BOTH Parallel Agents Fail
+
+This is a critical edge case. When both `citation_results` and `fact_results` are exceptions:
+
+1. `orchestrator.py:115-118`: `citation_results` becomes `[]`
+2. `orchestrator.py:122-125`: `fact_results` becomes `[]`
+3. `orchestrator.py:135-138`: The synthesizer receives `{"citation_results": [], "fact_results": []}`
+4. The synthesizer calls the LLM with two empty JSON arrays
+5. The LLM generates a synthesis of... nothing
+
+The synthesizer prompt at `report_synthesizer.py:25-28` receives:
+
+```python
+prompt = REPORT_SYNTHESIS_PROMPT.format(
+    citation_results=json.dumps(citation_results, indent=2, default=str)[:10000],  # "[]"
+    fact_results=json.dumps(fact_results, indent=2, default=str)[:10000],          # "[]"
+)
+```
+
+The LLM will likely return empty findings and zero scores, which is the correct behavior -- but it wastes an LLM call to arrive at this conclusion. The orchestrator does not short-circuit when both inputs are empty.
+
+**The resulting report would look like:**
+
+```json
+{
+  "motion_id": "Rivera_v_Harmon_MSJ",
+  "verified_citations": [],
+  "verified_facts": [],
+  "confidence_scores": {"citation_verification": 0, "fact_consistency": 0, "overall": 0},
+  "top_findings": [],
+  "unknown_issues": [],
+  "pipeline_status": [
+    {"agent_name": "document_parser", "status": "success"},
+    {"agent_name": "citation_verifier", "status": "failed", "error": "..."},
+    {"agent_name": "fact_checker", "status": "failed", "error": "..."},
+    {"agent_name": "report_synthesizer", "status": "success"},
+    {"agent_name": "judicial_memo", "status": "success"}
+  ]
+}
+```
+
+Note: synthesizer and memo show "success" even though they operated on empty data. The `pipeline_status` reveals the truth, but `unknown_issues` may be empty (since the synthesizer did not itself fail). This is a gap -- the orchestrator should inject failure notices into `unknown_issues` when upstream agents fail.
+
+#### Detailed Degradation Walkthrough
+
+**Level 0 -- Full Success:**
+All five agents succeed. The report contains verified citations, verified facts, findings with confidence scores, and a judicial memo. The `pipeline_status` shows all `"success"`.
+
+**Level 1 -- No Memo:**
+The judicial memo agent fails at `orchestrator.py:166-168`. The orchestrator sets `memo_data = None` (initialized at `orchestrator.py:158`). At `orchestrator.py:179`:
+
+```python
+judicial_memo=JudicialMemo(**memo_data) if memo_data else None,
+```
+
+The report is complete except the `judicial_memo` field is `null`. Everything else (citations, facts, findings, scores) is present.
+
+**Level 2 -- Partial Verification:**
+One of the parallel agents fails. Either `citation_results` or `fact_results` is replaced with `[]` at `orchestrator.py:118` or `orchestrator.py:125`. The synthesizer operates on one real dataset and one empty list. The confidence scores will reflect the gap (e.g., `fact_consistency: 0` if fact checker failed). The `pipeline_status` shows which agent failed.
+
+**Level 3 -- Raw Data Only:**
+Both parallel agents fail AND the synthesizer also fails (or produces empty output). The report contains only metadata from `orchestrator.py:181-185`:
+
+```python
+metadata={
+    "documents_analyzed": list(docs.keys()),
+    "citations_extracted": len(citations),
+    "pipeline": "document_parser -> [citation_verifier || fact_checker] -> report_synthesizer -> judicial_memo",
+},
+```
+
+The user sees which documents were loaded and how many citations were extracted, but no verification or analysis.
+
+**Level 4 -- Error Report:**
+The parser fails. The orchestrator returns immediately at `orchestrator.py:86-93` with a skeleton `VerificationReport`:
+
+```python
+return json.loads(VerificationReport(
+    motion_id=motion_id,
+    timestamp=datetime.now(),
+    confidence_scores=ConfidenceScores(),
+    unknown_issues=[f"Parser failed: {e}"],
+    pipeline_status=pipeline_status,
+    metadata={"documents_analyzed": list(docs.keys()), "error": str(e)},
+).model_dump_json())
+```
+
+`ConfidenceScores()` uses Pydantic defaults (all zeros or defaults). The only useful information is the document list and the error message.
+
+---
+
+### Expert: Production Gaps and Missing Patterns
+
+#### Gap 1: No Circuit Breaker Pattern
+
+**Current state:** Every request runs the full pipeline regardless of recent failure history. If the LLM provider is down, every request will wait 120 seconds (the default timeout at `base_agent.py:23`) before failing.
+
+**What's missing:** A circuit breaker that tracks failure rates and "opens" after N consecutive failures, immediately returning an error without attempting the LLM call.
+
+**Production implementation:**
+
+```python
+class CircuitBreaker:
+    """Three-state circuit breaker: closed (normal), open (failing fast), half-open (testing)."""
+
+    def __init__(self, failure_threshold: int = 5, recovery_timeout: float = 60.0):
+        self.failure_threshold = failure_threshold
+        self.recovery_timeout = recovery_timeout
+        self.failure_count = 0
+        self.last_failure_time = 0.0
+        self.state = "closed"  # closed | open | half-open
+
+    def record_success(self):
+        self.failure_count = 0
+        self.state = "closed"
+
+    def record_failure(self):
+        self.failure_count += 1
+        self.last_failure_time = time.time()
+        if self.failure_count >= self.failure_threshold:
+            self.state = "open"
+
+    def can_execute(self) -> bool:
+        if self.state == "closed":
+            return True
+        if self.state == "open":
+            if time.time() - self.last_failure_time > self.recovery_timeout:
+                self.state = "half-open"
+                return True
+            return False
+        # half-open: allow one request to test recovery
+        return True
+```
+
+**Where to integrate:** In `BaseAgent._call_llm()` before `asyncio.wait_for()`. Each agent instance would maintain its own circuit breaker, so a citation verifier outage does not block the fact checker.
+
+#### Gap 2: No Retry with Backoff
+
+**Current state:** A single failure at `base_agent.py:31-34` is final. Transient errors (network blips, rate limits) are treated the same as permanent errors.
+
+**What's missing:** Exponential backoff with jitter for transient errors:
+
+```python
+async def _call_llm_with_retry(self, prompt, response_model,
+                                max_retries=3, base_delay=1.0):
+    for attempt in range(max_retries + 1):
+        try:
+            return await self._call_llm(prompt, response_model)
+        except AgentError as e:
+            if attempt == max_retries:
+                raise
+            if self._is_transient(e):
+                delay = base_delay * (2 ** attempt) + random.uniform(0, 1)
+                self.logger.warning(f"Transient error, retry {attempt+1} in {delay:.1f}s: {e}")
+                await asyncio.sleep(delay)
+            else:
+                raise  # Permanent errors should not be retried
+
+    def _is_transient(self, error: AgentError) -> bool:
+        msg = str(error).lower()
+        return any(kw in msg for kw in ["timeout", "429", "rate limit", "connection"])
+```
+
+**Impact:** Without retry, a single network hiccup causes an entire agent to report failure, even though a retry 2 seconds later would likely succeed. For a system processing legal documents where accuracy matters, this is a significant gap.
+
+#### Gap 3: Timeout Is Too Long (120 Seconds)
+
+**Current state:** The default timeout is 120 seconds at `base_agent.py:23` and `base_agent.py:36`. This means:
+
+- A single timed-out citation verification blocks the citation verifier for 2 minutes
+- If 15 citations are verified in parallel and the LLM is slow, all 15 run their own 120-second timeout
+- The parallel stage (`orchestrator.py:110-112`) has no aggregate timeout -- if both agents each take 119 seconds, the parallel stage takes 119 seconds (since they run concurrently), but there is no explicit cap on the overall pipeline duration
+
+**What's missing:**
+
+| Timeout Level | Current | Recommended | Rationale |
+|---------------|---------|-------------|-----------|
+| Per-LLM call | 120s | 30s | Single LLM structured output should complete in < 20s |
+| Per-agent aggregate | None | 60s | Citation verifier running 15 parallel calls should complete in 60s |
+| Pipeline total | None | 180s | User-facing request should not hang for > 3 minutes |
+| Per-citation | 120s | 15s | Individual citation verification is a focused task |
+
+**Production implementation:** Wrap the `asyncio.gather` in the orchestrator with its own `asyncio.wait_for`:
+
+```python
+# Proposed: orchestrator.py parallel stage with aggregate timeout
+try:
+    citation_results, fact_results = await asyncio.wait_for(
+        asyncio.gather(citation_task, fact_task, return_exceptions=True),
+        timeout=90,  # 90-second cap on the entire parallel stage
+    )
+except asyncio.TimeoutError:
+    logger.error("Parallel verification stage timed out after 90s")
+    citation_results = []
+    fact_results = []
+```
+
+#### Gap 4: No Alerting or Health Check
+
+**Current state:** Failures are logged via Python's `logging` module. There is no structured error reporting, no health check endpoint, and no alerting mechanism.
+
+**What's missing:**
+
+1. **Structured error reporting:** Failures should emit structured events (not just log lines) that can be consumed by monitoring systems:
+
+```python
+# Proposed: structured failure event
+{
+    "event": "agent_failure",
+    "agent": "citation_verifier",
+    "error_type": "timeout",
+    "duration_ms": 120034,
+    "pipeline_id": "Rivera_v_Harmon_MSJ",
+    "timestamp": "2026-03-06T14:23:01Z",
+    "retry_attempted": false,
+    "circuit_breaker_state": "closed"
+}
+```
+
+2. **Health check endpoint:** A `/health` endpoint that reports:
+   - LLM provider reachability (can we ping the API?)
+   - Circuit breaker states for each agent
+   - Recent failure rates (last 5 min, last 1 hour)
+   - Average response times per agent
+
+3. **Asymmetric failure alerting:** Not all failures are equal. A parser failure (Level 4 degradation) should trigger an immediate alert. A single citation verification failure (partial) should only alert if the failure rate exceeds a threshold:
+
+| Failure | Alert Level | Threshold |
+|---------|------------|-----------|
+| Parser failure | Critical | Any occurrence |
+| Both parallel agents fail | High | Any occurrence |
+| Single parallel agent fail | Medium | > 3 in 5 minutes |
+| Synthesizer failure | Medium | > 2 in 5 minutes |
+| Memo failure | Low | > 5 in 5 minutes |
+| Single citation fail | Info | > 20% failure rate |
+
+#### Gap 5: No Failure Budget
+
+**Current state:** The pipeline does not track cumulative degradation. If 14 out of 15 citations fail verification, the pipeline still reports "success" for the citation verifier agent (because `execute()` returns a list with 14 `COULD_NOT_VERIFY` entries and 1 verified entry -- no exception is raised).
+
+**What's missing:** A failure budget that triggers degradation when partial failures exceed a threshold:
+
+```python
+# Proposed: failure budget check in citation_verifier.py
+failed_count = sum(1 for r in final if r.get("status") == "could_not_verify")
+total_count = len(final)
+if total_count > 0 and failed_count / total_count > 0.5:
+    self.logger.warning(
+        f"Citation verification failure budget exceeded: "
+        f"{failed_count}/{total_count} ({failed_count/total_count:.0%}) failed"
+    )
+    # Optionally: raise AgentError to trigger orchestrator-level handling
+```
+
+#### Gap 6: Missing Short-Circuit for Empty Parallel Results
+
+As discussed above, when both parallel agents fail, the orchestrator still calls the synthesizer and memo agent with empty data. This wastes two LLM calls. A production system should detect this:
+
+```python
+# Proposed: orchestrator.py after parallel stage
+if not citation_results and not fact_results:
+    logger.error("Both verification agents failed -- skipping synthesis")
+    # Skip directly to building a degraded report
+    return json.loads(VerificationReport(
+        motion_id=motion_id,
+        timestamp=datetime.now(),
+        confidence_scores=ConfidenceScores(),
+        unknown_issues=[
+            f"Citation verification failed: {cit_st.error}",
+            f"Fact checking failed: {fact_st.error}",
+        ],
+        pipeline_status=pipeline_status,
+        metadata={"documents_analyzed": list(docs.keys())},
+    ).model_dump_json())
+```
+
+---
+
+### Expert: Per-Agent Status Tracking Deep Dive
+
+The status tracking helpers are module-level functions in `orchestrator.py:22-42`, not methods on `PipelineOrchestrator`. This is a deliberate design choice: they are stateless utilities that operate on `AgentStatus` objects passed by reference.
+
+**State machine for each agent:**
+
+```
+pending ──_start()──> running ──_succeed()──> success
+                          │
+                          └──_fail()──> failed
+```
+
+**Timing precision:** `_start()` returns `time.time()` (float seconds). `_succeed()` and `_fail()` compute `duration_ms` as `int((time.time() - t0) * 1000)`. This gives millisecond resolution but is subject to system clock precision. In production, `time.monotonic()` would be more appropriate to avoid issues with clock adjustments.
+
+**Error capture:** `_fail()` at `orchestrator.py:39-42` stores `str(err)` in `entry.error`. This captures the exception message but not the traceback. For production debugging, storing `traceback.format_exc()` would be more useful:
+
+```python
+import traceback
+
+def _fail(entry: AgentStatus, t0: float, err: Exception):
+    entry.status = "failed"
+    entry.error = str(err)
+    entry.traceback = traceback.format_exc()  # Full stack trace
+    entry.duration_ms = int((time.time() - t0) * 1000)
+```
+
+**Registration order:** The `_track()` function at `orchestrator.py:22-26` appends to `pipeline_status` in call order. The orchestrator calls `_track` in pipeline order:
+
+1. `orchestrator.py:75`: `_track(pipeline_status, "document_parser")`
+2. `orchestrator.py:99-100`: `_track(pipeline_status, "citation_verifier")` and `_track(pipeline_status, "fact_checker")`
+3. `orchestrator.py:132`: `_track(pipeline_status, "report_synthesizer")`
+4. `orchestrator.py:156`: `_track(pipeline_status, "judicial_memo")`
+
+This means `pipeline_status` always has agents listed in execution order, making it easy for the frontend to render a pipeline visualization.
+
+---
+
+### Interview-Ready Summary
+
+**Q: How does the BS Detector handle agent failures?**
+
+A: Four-layer error handling. Layer 1: `BaseAgent._call_llm()` wraps every LLM call with a 120-second `asyncio.wait_for` timeout and catches all exceptions as `AgentError`. Layer 2: Each agent's `execute()` method catches `AgentError` and returns a degraded response (empty lists, zero scores, `COULD_NOT_VERIFY` status). Layer 3: The orchestrator uses `asyncio.gather(return_exceptions=True)` for parallel agents and wraps sequential agents in try/except, substituting fallback values on failure. Layer 4: Status tracking records pending/running/success/failed state with timing for every agent.
+
+**Q: What's the degradation hierarchy?**
+
+A: Five levels. Level 0 is full success. Level 1 drops the judicial memo (optional enrichment). Level 2 runs with partial verification data when one parallel agent fails. Level 3 returns raw metadata when synthesis fails. Level 4 returns immediately if the parser fails, since no downstream agent can function without parsed citations.
+
+**Q: Why is parser failure immediately fatal?**
+
+A: The parser extracts citations that drive the entire pipeline. Without citations, the citation verifier has nothing to verify. The orchestrator short-circuits at `orchestrator.py:86-93` rather than running three more agents on empty data. This is a deliberate design choice -- producing a report without citation verification would misrepresent the analysis's completeness.
+
+**Q: What happens when both parallel agents fail?**
+
+A: Both `citation_results` and `fact_results` are replaced with empty lists at `orchestrator.py:118,125`. The synthesizer then receives two empty arrays and calls the LLM anyway. This is a gap -- the orchestrator should short-circuit here to avoid wasting an LLM call. The resulting report has all-zero confidence scores and empty findings, but the `pipeline_status` array reveals which agents failed.
+
+**Q: What production patterns are missing?**
+
+A: Five major gaps. (1) No circuit breaker -- the system retries the full pipeline on every request even during outages, wasting 120 seconds per attempt. (2) No retry with backoff -- transient errors (timeouts, rate limits) are treated as permanent. (3) The 120-second timeout is too long for individual LLM calls and there is no aggregate pipeline timeout. (4) No structured alerting -- failures are logged but not surfaced to monitoring systems. (5) No failure budget -- if 14/15 citations fail, the agent still reports "success."
+
+**Q: How would you add a circuit breaker?**
+
+A: Implement a three-state circuit breaker (closed/open/half-open) per agent instance. After N consecutive failures, the breaker opens and immediately returns an error without calling the LLM. After a recovery timeout, it enters half-open state and allows one test request. On success, it resets to closed. Integrate it in `BaseAgent._call_llm()` before `asyncio.wait_for()`. Each agent maintains its own breaker so one agent's outage does not block others.
+
+**Q: What about adaptive timeouts?**
+
+A: Track a rolling average of successful LLM call durations per agent. Set the timeout to 3x the p95 latency. This means fast agents (like the memo generator, which typically runs ~2s) get a 6-second timeout instead of 120 seconds, allowing failures to surface faster. Slow agents (like the fact checker processing large documents) get a proportionally longer timeout based on observed behavior.
+
+
+---
+
+## 38. Eval Harness Complete Internals
+
+### Beginner: What Does the Eval Harness Do?
+
+The eval harness answers one question: **does the BS Detector actually catch the errors we planted?** It runs the full pipeline against test documents with known problems, then checks whether the output identifies each one. It also runs against *clean* documents to verify the system does not cry wolf.
+
+There are **two independent eval systems** that complement each other:
+
+| System | Entry Point | What It Measures |
+|--------|-------------|------------------|
+| Python harness (`run_evals.py`) | `python run_evals.py` | Recall, precision, hallucination, consistency, uncertainty, structure |
+| Promptfoo YAML configs | `npx promptfoo eval` | Per-agent assertion suites, A/B prompt comparison, LLM-as-judge rubrics |
+
+Both can run together (`python run_evals.py` triggers promptfoo at the end unless `--quick` is passed) or independently.
+
+**Key concept: ground truth items.** Eight errors were deliberately planted in the Rivera v. Harmon test case. Each has an ID (D-01 through D-08), keywords to search for, and a `match_mode` that controls how detection is verified.
+
+---
+
+### Intermediate: Ground Truth, Matching, and Metrics
+
+#### 38.1 The GROUND_TRUTH Registry
+
+Defined at `run_evals.py:41-110`, the `GROUND_TRUTH` list contains 8 planted discrepancies. Each entry is a dict with these fields:
+
+| Field | Type | Purpose |
+|-------|------|---------|
+| `id` | `str` | Identifier like `"D-01"` |
+| `label` | `str` | Human-readable description |
+| `keywords` | `list[str]` | Terms to search for in pipeline output |
+| `require_also` | `list[str]` (optional) | Secondary signal words for `keyword_plus_signal` mode |
+| `match_mode` | `"any"` or `"keyword_plus_signal"` | Matching strategy |
+| `search_in` | `list[str]` | Which report sections to search: `"top_findings"`, `"verified_facts"`, `"verified_citations"` |
+| `weight` | `int` | Importance weight for recall calculation (1 or 2) |
+
+**Verbatim GROUND_TRUTH entries** (`run_evals.py:41-110`):
+
+```python
+GROUND_TRUTH = [
+    {
+        "id": "D-01",
+        "label": "DATE: March 14 vs March 12 discrepancy",
+        "keywords": ["march 12", "march 14", "date discrepancy", "date inconsisten"],
+        "match_mode": "any",
+        "search_in": ["top_findings", "verified_facts"],
+        "weight": 2,
+    },
+    {
+        "id": "D-02",
+        "label": "PPE: Rivera was wearing harness (MSJ falsely claims no PPE)",
+        "keywords": ["harness", "ppe", "hard hat", "protective equipment"],
+        "require_also": ["contradict", "wearing", "false", "inconsisten", "not_supported"],
+        "match_mode": "keyword_plus_signal",
+        "search_in": ["top_findings", "verified_facts"],
+        "weight": 2,
+    },
+    {
+        "id": "D-03",
+        "label": "PRIVETTE: 'never' misquotation not in actual holding",
+        "keywords": ["privette"],
+        "require_also": ["never", "presumpt", "misquot", "mischaract"],
+        "match_mode": "keyword_plus_signal",
+        "search_in": ["top_findings", "verified_citations"],
+        "weight": 2,
+    },
+    {
+        "id": "D-04",
+        "label": "SOL: Statute of limitations uses wrong incident date",
+        "keywords": ["362", "statute", "limitation", "time-bar"],
+        "match_mode": "any",
+        "search_in": ["top_findings", "verified_facts"],
+        "weight": 1,
+    },
+    {
+        "id": "D-05",
+        "label": "CTRL: Harmon retained control - Donner directed work",
+        "keywords": ["donner", "control", "directed"],
+        "require_also": ["harmon", "foreman", "retain", "contradict"],
+        "match_mode": "keyword_plus_signal",
+        "search_in": ["top_findings", "verified_facts"],
+        "weight": 2,
+    },
+    {
+        "id": "D-06",
+        "label": "JURISDICTION: Non-binding Texas/Florida citations",
+        "keywords": ["dixon", "okafor", "texas", "florida"],
+        "require_also": ["jurisdiction", "binding", "persuasive", "not binding"],
+        "match_mode": "keyword_plus_signal",
+        "search_in": ["top_findings", "verified_citations"],
+        "weight": 1,
+    },
+    {
+        "id": "D-07",
+        "label": "SCAFFOLDING: Condition omission - rust/plywood documented",
+        "keywords": ["rust", "plywood", "scaffolding condition", "defect", "base plate"],
+        "match_mode": "any",
+        "search_in": ["top_findings", "verified_facts"],
+        "weight": 1,
+    },
+    {
+        "id": "D-08",
+        "label": "SPOLIATION: Post-incident scaffolding rebuild",
+        "keywords": ["rebuilt", "new components", "replaced", "spoliation", "remedial"],
+        "match_mode": "any",
+        "search_in": ["top_findings", "verified_facts"],
+        "weight": 1,
+    },
+]
+```
+
+**Weight distribution:** D-01, D-02, D-03, D-05 have weight 2 (critical); D-04, D-06, D-07, D-08 have weight 1 (medium). Total possible weight = 12.
+
+#### 38.2 The `_check_ground_truth()` Algorithm
+
+Defined at `run_evals.py:217-230`:
+
+```python
+def _check_ground_truth(report: dict, gt: dict) -> bool:
+    texts = _extract_searchable_text(report, gt["search_in"])
+    all_text = " ".join(texts)
+
+    if gt["match_mode"] == "any":
+        return any(kw in all_text for kw in gt["keywords"])
+
+    elif gt["match_mode"] == "keyword_plus_signal":
+        has_keyword = any(kw in all_text for kw in gt["keywords"])
+        has_signal = any(sig in all_text for sig in gt.get("require_also", []))
+        return has_keyword and has_signal
+
+    return False
+```
+
+**Two matching modes:**
+
+| Mode | Logic | Example |
+|------|-------|---------|
+| `"any"` | Any single keyword found in concatenated text = pass | D-01: finding "march 14" anywhere in top_findings or verified_facts = detected |
+| `"keyword_plus_signal"` | Must find at least one keyword AND at least one signal from `require_also` | D-02: must find "harness" AND "contradict" in the same text blob |
+
+**Why `keyword_plus_signal` exists:** For items like PPE (D-02), merely mentioning "harness" is not enough -- the pipeline must also indicate it's a *contradiction*. This prevents false matches where the system mentions PPE descriptively but fails to flag the inconsistency.
+
+#### 38.3 The `_extract_searchable_text()` Pipeline
+
+Defined at `run_evals.py:179-214`, this function converts structured report sections into searchable lowercase text blobs:
+
+```python
+def _extract_searchable_text(report: dict, sections: List[str]) -> List[str]:
+    texts = []
+    if "top_findings" in sections:
+        for f in report.get("top_findings", []):
+            evidence = f.get("evidence") or []
+            blob = " ".join([
+                f.get("description") or "",
+                f.get("type") or "",
+                " ".join(str(e) for e in evidence if e),
+                f.get("recommendation") or "",
+            ])
+            texts.append(blob.lower())
+
+    if "verified_facts" in sections:
+        for vf in report.get("verified_facts", []):
+            blob = " ".join([
+                vf.get("summary") or "",
+                (vf.get("fact") or {}).get("fact_text") or "",
+                " ".join(s for s in (vf.get("contradictory_sources") or []) if s),
+                vf.get("status") or "",
+            ])
+            texts.append(blob.lower())
+
+    if "verified_citations" in sections:
+        for vc in report.get("verified_citations", []):
+            blob = " ".join([
+                vc.get("notes") or "",
+                " ".join(d for d in (vc.get("discrepancies") or []) if d),
+                (vc.get("citation") or {}).get("citation_text") or "",
+                (vc.get("citation") or {}).get("claimed_proposition") or "",
+                vc.get("status") or "",
+            ])
+            texts.append(blob.lower())
+
+    return texts
+```
+
+**Which fields feed which checks:**
+
+| Section | Fields Concatenated Into Each Blob |
+|---------|------------------------------------|
+| `top_findings` | `description` + `type` + `evidence[*]` + `recommendation` |
+| `verified_facts` | `summary` + `fact.fact_text` + `contradictory_sources[*]` + `status` |
+| `verified_citations` | `notes` + `discrepancies[*]` + `citation.citation_text` + `citation.claimed_proposition` + `status` |
+
+All text is `.lower()`'d before keyword matching. Each finding/fact/citation produces a separate blob, but `_check_ground_truth()` joins them all into one string with `" ".join(texts)`.
+
+#### 38.4 Weighted Recall Formula
+
+Defined at `run_evals.py:143-146`:
+
+```python
+def recall_score(self) -> float:
+    total = sum(r.weight for r in self.recall_results)
+    caught = sum(r.weight for r in self.recall_results if r.passed)
+    return caught / total if total else 0.0
+```
+
+**Formula:** `weighted_recall = sum(weight for passed items) / sum(all weights)`
+
+With current weights, denominator is always 12 (= 2+2+2+1+2+1+1+1). Catching all four weight-2 items but missing all weight-1 items gives recall = 8/12 = 67%.
+
+The aggregate display (`run_evals.py:600-602`) prints both percentage and fraction:
+```python
+recall_caught = sum(r.weight for r in summary.recall_results if r.passed)
+recall_total = sum(r.weight for r in summary.recall_results)
+print(f"  Recall:            {recall:.0%}  ({recall_caught}/{recall_total} weighted)")
+```
+
+---
+
+### Expert: All Assertions, Metrics Internals, and Persistence
+
+#### 38.5 Complete Assertion Catalog (Python Harness)
+
+The Python harness in `run_evals.py` runs **28 individual assertions** across 6 categories:
+
+**Recall (8 checks)** -- `eval_recall()` at line 249-260:
+Each of the 8 GROUND_TRUTH items becomes one `EvalResult`. Weight carried from ground truth.
+
+**Precision (4 checks)** -- `eval_precision()` at lines 263-306:
+
+| ID | Assertion | Threshold | Line |
+|----|-----------|-----------|------|
+| P-01 | Clean docs produce <=1 finding | `len(findings) <= 1` | 268-273 |
+| P-02 | No contradictory facts on clean docs | `len(contradictory) == 0` | 276-284 |
+| P-03 | No bad citations flagged on clean docs | `len(bad_citations) == 0` where status in `("not_supported", "misleading")` | 287-295 |
+| P-04 | High overall confidence on clean docs | `overall >= 0.6` | 298-304 |
+
+**Hallucination (4 checks)** -- `eval_hallucinations()` at lines 309-373:
+
+| ID | Assertion | Logic | Line |
+|----|-----------|-------|------|
+| H-01 | No fabricated case names | Checks 6 hardcoded fake names against `verified_citations` JSON | 313-324 |
+| H-02 | Citations reference known cases | At least 2 of 8 `KNOWN_CASE_NAMES` found in citation text | 328-342 |
+| H-03 | >=50% findings grounded with evidence | Each finding must have at least one evidence item >10 chars | 345-361 |
+| H-04 | No invented document types | Checks for "deposition", "expert report", "surveillance", "tax return" | 364-371 |
+
+The fabricated name list (`run_evals.py:315-318`):
+```python
+fabricated_names = [
+    "smith v. jones", "garcia v. acme", "wilson v. buildright",
+    "johnson v. safety", "martinez v. construct", "brown v. steel",
+]
+```
+
+The known case names (`run_evals.py:113-116`):
+```python
+KNOWN_CASE_NAMES = [
+    "privette", "seabright", "whitmore", "kellerman",
+    "dixon", "okafor", "rivera", "harmon",
+]
+```
+
+**Cross-Document Consistency (5 checks)** -- `eval_cross_document_consistency()` at lines 376-436:
+
+| ID | Assertion | Logic | Line |
+|----|-----------|-------|------|
+| C-01 | Facts cross-reference multiple documents | At least 1 fact has `contradictory_sources` or >1 `supporting_sources` | 381-389 |
+| C-02 | Pipeline references police report | "police" appears in any fact's `contradictory_sources` or `supporting_sources` | 393-402 |
+| C-03 | Pipeline references witness statement | "witness" appears in sources | 405-414 |
+| C-04 | Pipeline references medical records | "medical" appears in sources | 417-426 |
+| C-05 | All 4 document types analyzed | `metadata.documents_analyzed` has length 4 | 429-434 |
+
+**Uncertainty Expression (4 checks)** -- `eval_uncertainty()` at lines 439-483:
+
+| ID | Assertion | Logic | Line |
+|----|-----------|-------|------|
+| U-01 | At least one citation has confidence < 1.0 | Checks `confidence` field on `verified_citations` | 444-452 |
+| U-02 | Confidence scores show appropriate spread | Not all 1.0 AND not all 0.0 | 455-461 |
+| U-03 | Unknown issues list exists | `isinstance(unknown, list)` | 464-468 |
+| U-04 | Flagged citations don't claim 100% confidence | No citation with `confidence==1.0` and status in `("not_supported", "misleading")` | 472-480 |
+
+**Structure Validation (6 checks)** -- `eval_structure()` at lines 486-558:
+
+| ID | Assertion | Logic | Line |
+|----|-----------|-------|------|
+| S-01 | Required top-level fields | `motion_id`, `verified_citations`, `verified_facts`, `top_findings`, `confidence_scores` | 491-498 |
+| S-02 | Citations are structured objects | Each citation has a nested `citation` dict, not raw text | 501-509 |
+| S-03 | Facts are structured objects | Each fact has a nested `fact` dict | 513-522 |
+| S-04 | Confidence scores are valid [0,1] floats | Checks `citation_verification`, `fact_consistency`, `overall` | 525-533 |
+| S-05 | Judicial memo is structured dict | `isinstance(memo, dict)` and `memo["memo"]` length > 50 | 537-547 |
+| S-06 | Finding IDs present and unique | `len(ids) == len(set(ids)) == len(findings)` | 550-556 |
+
+#### 38.6 Evidence Grounding Check (metrics.py)
+
+`calculate_grounding()` at `metrics.py:59-109` verifies that pipeline findings reference actual source document text via **substring matching**:
+
+```python
+def calculate_grounding(findings, source_texts):
+    combined_sources = normalize(" ".join(source_texts))
+    grounded = 0
+
+    for i, finding in enumerate(findings):
+        evidence = finding.get("evidence", [])
+        is_grounded = False
+        for ev in evidence:
+            ev_normalized = normalize(ev_text)
+            # Primary check: 10+ char substring
+            if len(ev_normalized) >= 10 and ev_normalized in combined_sources:
+                is_grounded = True
+                break
+            # Fallback: 15+ char sentence fragments
+            for fragment in ev_normalized.split("."):
+                fragment = fragment.strip()
+                if len(fragment) >= 15 and fragment in combined_sources:
+                    is_grounded = True
+                    break
+```
+
+**Two-tier substring matching:**
+1. If the entire normalized evidence string (>=10 chars) is a substring of the combined source text: grounded
+2. If any period-delimited fragment (>=15 chars) is a substring: grounded
+
+The grounding rate = `grounded / total` findings. Ungrounded items are tracked with index and truncated description for debugging.
+
+#### 38.7 Keyword Metrics (metrics.py)
+
+`calculate_metrics()` at `metrics.py:21-56` implements the secondary keyword-based evaluation used by `harness.py`:
+
+```python
+def finding_matches_discrepancy(finding, discrepancy):
+    finding_text = normalize(
+        f"{finding.get('description', '')} {finding.get('type', '')} "
+        f"{' '.join(finding.get('evidence', []))}"
+    )
+    keywords = discrepancy.get("keywords", [])
+    matches = sum(1 for kw in keywords if kw in finding_text)
+    return matches >= 2  # At least 2 keyword matches
+```
+
+This is stricter than `_check_ground_truth()` in `run_evals.py` -- it requires **at least 2 keyword matches** per finding (vs. "any" mode which requires only 1). The `harness.py` path uses this for the `KNOWN_DISCREPANCIES` list from `test_cases.py`, which is a parallel ground truth registry with richer metadata (expected reasoning, evidence dicts, categories).
+
+Standard precision/recall/F1 formulas:
+- `precision = TP / (TP + FP)`
+- `recall = TP / (TP + FN)`
+- `F1 = 2 * precision * recall / (precision + recall)`
+- `false_discovery_rate = FP / total_findings`
+
+#### 38.8 LLM-as-Judge (llm_judge.py)
+
+Defined at `llm_judge.py:1-117`. Activated via `LLM_JUDGE=1` environment variable (`harness.py:124`).
+
+**System prompt** (`llm_judge.py:12-18`):
+```python
+JUDGE_SYSTEM_PROMPT = """You are an evaluation judge for a legal brief verification system.
+You will compare a pipeline finding against a ground truth discrepancy and determine if they match.
+
+A match means the finding correctly identifies the same issue described in the ground truth,
+even if it uses different wording. Focus on semantic equivalence, not exact keyword matching.
+
+Respond with JSON: {"match": true/false, "confidence": 0.0-1.0, "reasoning": "..."}"""
+```
+
+**User prompt template** (`llm_judge.py:20-36`) -- provides the judge with:
+- Ground truth: ID, description, category, expected evidence, expected reasoning
+- Pipeline finding: description, type, evidence, confidence
+- Three evaluation criteria: same factual/legal issue? Similar evidence? Would a legal professional agree?
+
+**Confidence threshold** (`llm_judge.py:94`):
+```python
+if result["match"] and result["confidence"] >= 0.5:
+    matched_gt.add(j)
+    matched_findings.add(i)
+    break
+```
+
+A finding-to-ground-truth match requires `match: true` AND `confidence >= 0.5`. The first match wins (greedy assignment with `break`), and matched ground truth items are skipped for subsequent findings (`if j in matched_gt: continue` at line 87).
+
+**Temperature:** 0.0 for deterministic judging (`llm_judge.py:62`).
+
+#### 38.9 Combined Metrics: Union Strategy (metrics.py)
+
+`calculate_combined_metrics()` at `metrics.py:112-143` merges keyword and LLM-judge results:
+
+```python
+def calculate_combined_metrics(keyword_metrics, llm_metrics):
+    kw_matched = set(keyword_metrics.get("matched_discrepancies", []))
+    llm_matched = set(llm_metrics.get("llm_matched_discrepancies", []))
+    combined_matched = kw_matched | llm_matched  # UNION
+```
+
+**Union strategy:** A discrepancy is considered detected if **either** the keyword matcher or the LLM judge found it. This compensates for keyword matching's false negatives (e.g., a finding that uses different terminology than expected keywords) and the LLM judge's potential false negatives (e.g., low confidence on a valid match).
+
+Output includes diagnostic breakdowns:
+- `keyword_only`: matched by keywords but not LLM
+- `llm_only`: matched by LLM but not keywords
+- `both`: agreed by both methods
+- `combined_missed`: missed by both
+
+#### 38.10 SQLite Persistence (db.py)
+
+Defined at `evals/db.py:1-135`. Every eval run is persisted to `evals/evals.db`.
+
+**WAL mode** (`db.py:39`):
+```python
+conn.execute("PRAGMA journal_mode=WAL")
+```
+Write-Ahead Logging enables concurrent reads during writes -- important if the eval runner and a dashboard query the DB simultaneously.
+
+**Schema** (`db.py:41-57`):
+```sql
+CREATE TABLE IF NOT EXISTS eval_runs (
+    run_id             TEXT PRIMARY KEY,
+    timestamp          TEXT NOT NULL,
+    git_sha            TEXT,
+    precision          REAL,
+    recall             REAL,
+    f1_score           REAL,
+    hallucination_rate REAL,
+    true_positives     INTEGER,
+    false_positives    INTEGER,
+    false_negatives    INTEGER,
+    metrics            TEXT NOT NULL,   -- full JSON blob
+    findings           TEXT NOT NULL,   -- full JSON blob
+    report             TEXT             -- full pipeline report JSON
+)
+```
+
+**Git SHA tracking** (`db.py:19-28`):
+```python
+def _get_git_sha() -> Optional[str]:
+    try:
+        result = subprocess.run(
+            ["git", "rev-parse", "--short", "HEAD"],
+            capture_output=True, text=True, timeout=3,
+        )
+        return result.stdout.strip() if result.returncode == 0 else None
+    except Exception:
+        return None
+```
+
+This links each eval run to the exact code commit, enabling regression tracking across deploys. The 3-second timeout prevents hangs in non-git environments.
+
+**Retrieval** (`db.py:111-134`): `get_runs(limit=10)` returns the N most recent runs ordered by timestamp DESC, with JSON columns (`metrics`, `findings`, `report`) deserialized back to Python objects.
+
+#### 38.11 Clean Document Precision Test
+
+The clean documents are defined in `test_cases.py:118-159` as `CLEAN_DOCUMENTS` -- a dict with keys `msj`, `police_report`, `medical_records`, `witness_statement`. They describe a completely consistent, uneventful case ("Smith v. ABC Corp") where:
+
+- All documents agree on the date (June 15, 2022)
+- All documents confirm PPE was worn
+- No safety violations, no injuries, no contradictions
+
+The precision tests (`run_evals.py:263-306`) expect:
+- P-01: At most 1 top finding (ideally 0)
+- P-02: Zero contradictory facts
+- P-03: Zero not_supported/misleading citations
+- P-04: Overall confidence >= 0.6
+
+#### 38.12 The Harness Runner (harness.py)
+
+`evals/harness.py` is the **original eval runner** that predates `run_evals.py`. It uses the `KNOWN_DISCREPANCIES` list from `test_cases.py` (8 items with rich metadata) rather than the `GROUND_TRUTH` list in `run_evals.py`.
+
+Key differences from `run_evals.py`:
+
+| Aspect | `run_evals.py` | `harness.py` |
+|--------|----------------|--------------|
+| Ground truth source | `GROUND_TRUTH` (in-file) | `KNOWN_DISCREPANCIES` (test_cases.py) |
+| Matching | `_check_ground_truth()` with "any" and "keyword_plus_signal" | `finding_matches_discrepancy()` requiring >=2 keyword matches |
+| Findings extraction | Direct from `report["top_findings"]` | `extract_findings()` also pulls from flagged `verified_citations` and `verified_facts` |
+| LLM-as-judge | Not integrated | Integrated via `LLM_JUDGE=1` |
+| Grounding | Not checked | `calculate_grounding()` against source .txt files |
+| Combined metrics | Not computed | Union of keyword + LLM matches |
+| Persistence | Not integrated | Saves to SQLite |
+
+`extract_findings()` at `harness.py:26-59` enriches the finding set by pulling in:
+1. All `top_findings` directly
+2. `verified_citations` with status `not_supported`, `misleading`, or `could_not_verify`
+3. `verified_facts` with status `contradictory`, `partial`, or `could_not_verify`
+
+This gives the keyword matcher more surface area to detect ground truth items.
+
+---
+
+### Expert: Promptfoo Configuration Deep Dive
+
+#### 38.13 Root Promptfoo Config (promptfooconfig.yaml)
+
+Two promptfoo configs exist:
+
+1. **`backend/promptfooconfig.yaml`** -- the root config invoked by `run_evals.py:634`:
+   ```python
+   cmd = ["npx", "promptfoo", "eval", "--no-cache", "--config", "promptfooconfig.yaml"]
+   result = subprocess.run(cmd, check=False, cwd=_BACKEND_DIR)
+   ```
+   Uses a Python provider (`evals/provider.py`) that runs the full pipeline and returns the complete report. Tests are JavaScript assertions checking structural properties and discrepancy detection against the live pipeline output.
+
+2. **`evals/promptfoo/*.yaml`** -- individual per-agent configs for isolated testing.
+
+**Root config test categories:**
+
+| Category | Tests | What They Check |
+|----------|-------|----------------|
+| Structural (S-01 to S-07) | 7 | Required fields, citation/fact counts, confidence ranges, memo presence, metadata |
+| Discrepancy (D-01 to D-08) | 8 | Each of the 8 planted errors, using JavaScript with structural location targeting |
+| Quality (Q-01 to Q-05) | 5 | No fabricated cases, high-confidence findings exist, contradictions flagged, evidence grounding |
+| Negative (N-01) | 1 | Clean docs produce <=1 finding, 0 contradictory facts, 0 bad citations |
+
+The D-tests in promptfoo use a different search strategy than `_check_ground_truth()`. For example, D-02 (`promptfooconfig.yaml:77-87`):
+```javascript
+(() => {
+  const tf = (output.report.top_findings || []).map(f =>
+    (f.description || '').toLowerCase());
+  const vf = (output.report.verified_facts || [])
+    .filter(f => ['contradictory','partial','could_not_verify'].includes(f.status))
+    .map(f => ((f.summary || '') + ' ' + ((f.fact || {}).fact_text || '')).toLowerCase());
+  const all = tf.concat(vf);
+  return all.some(t =>
+    (t.includes('harness') || t.includes('hard hat') || t.includes('ppe')) &&
+    (t.includes('contradict') || t.includes('wearing') || t.includes('false')));
+})()
+```
+
+This explicitly filters `verified_facts` to only those with flagged status (`contradictory`, `partial`, `could_not_verify`) before keyword matching -- a tighter check than the Python harness which includes the status field in the searchable text blob.
+
+#### 38.14 Per-Agent Promptfoo Configs
+
+Five YAML configs test individual agents in isolation:
+
+**1. Citation Extraction (`evals/promptfoo/citation-extraction.yaml`)**
+
+Tests `DocumentParserAgent`'s extraction completeness. Provider: `deepseek-chat` at temperature 0.1.
+
+| Test | Metrics | What It Asserts |
+|------|---------|-----------------|
+| "Finds Privette with fabricated 'never' quote" | `extract/finds_privette`, `extract/captures_never_quote`, `extract/finds_out_of_state_citations` | Extracts Privette citation, captures the "never" quote in context, finds Dixon + Okafor |
+| "Must not invent citations absent from text" | `extract/finds_kellerman`, `extract/no_hallucinated_citations` | Finds Kellerman (which IS in text), does NOT hallucinate Privette or Dixon (which are NOT in text) |
+
+**2. Fact Checking (`evals/promptfoo/fact-checking.yaml`)**
+
+Tests `FactCheckerAgent`. Covers 6 ground truth items: DATE-001, PPE-001, CTRL-001, SCAF-001, POST-001, SOL-001. Each test case provides isolated MSJ facts plus relevant excerpts from police, medical, and witness documents.
+
+Each test has 3 assertion types:
+1. `is-json` -- valid JSON output
+2. `javascript` -- keyword + status check (e.g., `f.status === 'contradictory'`)
+3. `llm-rubric` -- semantic accuracy judged by DeepSeek at temperature 0.0
+
+Example rubric for DATE-001 (`fact-checking.yaml:60-63`):
+```yaml
+- type: llm-rubric
+  value: >-
+    The response must identify the date discrepancy: the MSJ states March
+    14, 2021 but the police report, medical records, and witness statement
+    all record March 12, 2021. This should be marked contradictory.
+  metric: date001/semantic_accuracy
+```
+
+**3. Prompt Precision A/B -- Citations (`evals/promptfoo/prompt-precision-citations.yaml`)**
+
+Runs **two prompts** side-by-side:
+- `prompts/citation_verification.txt` (precise)
+- `prompts/citation_verification_imprecise.txt` (imprecise)
+
+4 test cases with metrics across 4 dimensions:
+
+| Dimension | Metrics | What Precise Prompt Should Win On |
+|-----------|---------|-----------------------------------|
+| Schema | `schema/valid_json`, `schema/has_is_supported`, `schema/enum_compliance` | Valid JSON with required fields and correct enum values |
+| Recall | `recall/cit001_correct_status`, `recall/cit001_flags_never`, `recall/cit001_semantic` | Correctly flags Privette "never" misquote |
+| Jurisdiction | `jurisdiction/flags_texas`, `jurisdiction/reasoning` | Flags Dixon as non-binding Texas case |
+| Precision | `precision/no_false_flag`, `precision/correct_no_flag` | Does NOT false-flag a valid Privette presumption claim |
+| Uncertainty | `uncertainty/expresses_doubt`, `uncertainty/no_hallucinated_verdict` | Hedges on fictitious "Marchetti v. Western Bay" citation |
+
+The uncertainty test (`prompt-precision-citations.yaml:161-197`) uses a **completely fictitious citation** ("Marchetti v. Western Bay Developers, 12 Cal.App.5th 441 (2019)") to test whether the model fabricates a holding or appropriately says "could not verify."
+
+Pass conditions for uncertainty:
+```javascript
+return r.status === 'could_not_verify' ||
+       r.status === 'not_supported' ||
+       r.is_supported === false ||
+       (typeof r.confidence === 'number' && r.confidence < 0.5);
+```
+
+**4. Prompt Precision A/B -- Facts (`evals/promptfoo/prompt-precision-facts.yaml`)**
+
+Runs `fact_checking.txt` vs `fact_checking_imprecise.txt`. 3 test cases (DATE-001, PPE-001, CTRL-001) with schema and recall metrics.
+
+Key advantage of precise prompt documented in comments:
+- DATE-001: "precise prompt has '1. DATE CONSISTENCY' as an explicit numbered category"
+- PPE-001: "precise prompt has '2. PPE/SAFETY EQUIPMENT' as an explicit category"
+- CTRL-001: "precise prompt has '3. WHO DIRECTED THE WORK' category"
+
+**5. Reflection Honesty (`evals/promptfoo/reflection-honesty.yaml`)**
+
+The most unusual eval -- it judges the project's own `REFLECTION.md` for intellectual honesty.
+
+**Provider:** `python:providers/reflection_provider.py` (reads the file, no LLM cost for generation).
+
+**Judge:** `deepseek-reasoner` (DeepSeek-R1) with `max_tokens: 8192`. The `showThinking: false` config suppresses chain-of-thought output in results (can be flipped to `true` for debugging).
+
+**6 dimensions with weighted scoring:**
+
+| Metric | Weight | What It Tests |
+|--------|--------|---------------|
+| `real_weaknesses` | 3 | Names specific technical failures, not just time constraints. Requires at least 2 genuine weaknesses with reproducible detail. |
+| `qualified_numbers` | 2 | Quantitative claims include methodology or caveats. Unqualified precise numbers = fail. No numbers = pass by default. |
+| `eval_self_critique` | 2 | Acknowledges eval methodology limitations. Must identify at least one way the evaluation could mislead. |
+| `scope_honesty` | 1 | Distinguishes completed vs. partially implemented vs. descoped features. |
+| `future_specificity` | 1 | Future work suggestions tied to specific observed failures. Generic "add more tests" = fail. |
+| `not_performative` | 1 | No performative humility. "Of course in production..." without substance = fail. |
+
+**Composite formula** (`reflection-honesty.yaml:97-101`):
+```yaml
+derivedMetrics:
+  - name: honesty_composite
+    value: >-
+      (real_weaknesses * 3 + qualified_numbers * 2 + eval_self_critique * 2
+      + scope_honesty * 1 + future_specificity * 1 + not_performative * 1) / 10
+```
+
+Total weight denominator = 3+2+2+1+1+1 = 10. `real_weaknesses` alone accounts for 30% of the composite score.
+
+---
+
+### Interview-Ready Summary
+
+**Q: "Your eval only tests one case. How do you know it generalizes?"**
+
+A: It does not -- and the harness is honest about that. The Rivera v. Harmon case is a planted-error regression test, not a statistical sample. The clean-docs precision test (Smith v. ABC) adds a second data point. The promptfoo per-agent configs test individual agent behaviors in isolation with varied inputs. The reflection honesty eval (`eval_self_critique` dimension) explicitly requires acknowledging this single-case limitation. For real generalization, you would need a corpus of real legal briefs with known errors -- which is expensive and legally sensitive to obtain.
+
+**Q: "Keyword matching has false negatives. What if the pipeline finds the issue using different words?"**
+
+A: Three mitigations:
+1. `keyword_plus_signal` mode uses broad keyword sets plus signal words (e.g., D-02 checks for "harness" OR "ppe" OR "hard hat" OR "protective equipment" as keywords, combined with "contradict" OR "wearing" OR "false" OR "inconsisten" OR "not_supported" as signals)
+2. `harness.py` supports LLM-as-judge (`LLM_JUDGE=1`) for semantic matching with confidence >= 0.5 threshold
+3. Combined metrics use **union strategy** -- if either keyword or LLM judge detects a match, it counts
+4. Promptfoo `llm-rubric` assertions provide semantic evaluation by a separate LLM judge for every test case
+
+**Q: "Where are the adversarial tests?"**
+
+A: The eval does not include adversarial inputs (e.g., prompt injection in legal documents, Unicode tricks, deliberately misleading formatting). The closest is the fictitious citation test ("Marchetti v. Western Bay") which tests whether the model fabricates holdings. The fabricated case name checks (H-01) verify the pipeline does not invent names like "Smith v. Jones." The clean-docs precision test verifies no false positives on benign input. True adversarial testing (e.g., a document that looks like a valid citation but contains injected instructions) remains a gap.
+
+**Q: "How do you track eval regression across deploys?"**
+
+A: SQLite persistence (`evals/db.py`) stores every run with git SHA, timestamp, and full metrics JSON. WAL mode enables concurrent reads. The `get_runs(limit)` API retrieves recent history ordered by timestamp. The promptfoo `--no-cache` flag ensures fresh pipeline runs. Git SHA tracking links each result to the exact commit.
+
+**Q: "What is the difference between the two eval entry points?"**
+
+A: `run_evals.py` is the comprehensive runner (28 Python assertions + promptfoo integration). `evals/harness.py` is the original runner with richer finding extraction, keyword+LLM-judge combined metrics, grounding checks, and SQLite persistence. They share ground truth data but use different matching algorithms and different ground truth registries (`GROUND_TRUTH` vs `KNOWN_DISCREPANCIES`). The duplication exists because `run_evals.py` was built as the streamlined "run everything" entry point while `harness.py` evolved as the detailed metrics workbench.
+
+
+---
+
+## 39. Citation Verification: From Demo to Production
+
+### Beginner: What the System Does Today
+
+The BS Detector's citation verification pipeline answers one question: **does the cited case actually say what the brief claims it says?** This section traces the current implementation, exposes its fundamental limitations, and maps a concrete migration path from hardcoded context to production-grade legal research infrastructure.
+
+#### 39.1 The `case_context.py` Module -- Hardcoded Legal Knowledge
+
+The entire "database" for citation verification lives in a single file. Here it is verbatim:
+
+**File: `backend/utils/case_context.py` (lines 1-18)**
+
+```python
+"""Case-specific context for legal brief verification.
+
+Provides domain knowledge that helps agents verify case-specific claims.
+For generic cases, returns empty context so the pipeline works on any brief.
+"""
+
+RIVERA_V_HARMON_CONTEXT = """IMPORTANT LEGAL KNOWLEDGE FOR THIS CASE:
+- Privette v. Superior Court, 5 Cal.4th 689 (1993) established a PRESUMPTION against hirer liability, NOT absolute immunity. The word "never" does NOT appear in the holding. The actual holding is that hirers are presumptively not liable, but exceptions exist for retained control, concealed hazards, and non-delegable duties.
+- Seabright Insurance Co. v. US Airways, Inc., 52 Cal.4th 590 (2011) actually NARROWED the retained control exception, it did not broadly endorse OSHA compliance as a shield.
+- This is a California state court case. Out-of-state citations (Texas, Florida) are non-binding persuasive authority only."""
+
+
+def get_case_context(case_id: str) -> str:
+    """Return case-specific context for known cases, or empty string for generic cases."""
+    contexts = {
+        "Rivera_v_Harmon_MSJ": RIVERA_V_HARMON_CONTEXT,
+    }
+    return contexts.get(case_id, "")
+```
+
+**What to notice:**
+
+1. The `contexts` dictionary (line 15-17) maps exactly one case ID to exactly one block of handwritten legal knowledge.
+2. For any case ID that is not `"Rivera_v_Harmon_MSJ"`, `get_case_context()` returns `""` -- an empty string. The pipeline still runs, but the LLM receives zero domain knowledge to verify against.
+3. The context string itself is a prompt fragment -- it will be injected verbatim into the `{case_context}` placeholder in the verification prompt (see Section 39.2 below).
+
+**Interview question:** "How does the system verify citations for a case it hasn't seen before?"
+
+**Answer:** It doesn't -- not really. Without case-specific context, the LLM falls back on its training data, which may contain outdated, incomplete, or hallucinated case law. Every verification for an unknown case is fundamentally `COULD_NOT_VERIFY` masquerading as analysis.
+
+#### 39.2 The `{case_context}` Placeholder Pattern
+
+The hardcoded context string flows through every agent prompt via a `{case_context}` placeholder. Here is the citation verification prompt where it lands:
+
+**File: `backend/utils/prompts.py` (lines 14-28)**
+
+```python
+CITATION_VERIFICATION_PROMPT = """Verify whether this legal citation actually supports the proposition claimed in the brief.
+
+Citation: {citation_text}
+Claimed proposition: {claimed_proposition}
+Direct quote (if any): {context}
+
+Check for:
+1. Does the cited case actually hold what the brief claims? Look for mischaracterization of holdings.
+2. If a direct quote is provided, is it accurate? Look for inserted or omitted words that change meaning.
+3. Is the cited authority binding in the relevant jurisdiction? Flag federal cases, out-of-state cases.
+4. Does the citation actually exist, or could it be fabricated?
+
+{case_context}
+
+Return JSON with: is_supported (bool), confidence (0-1), confidence_reasoning (1-2 sentences explaining why you assigned this confidence level), discrepancies (list of strings), status (supported/not_supported/misleading/could_not_verify), notes."""
+```
+
+The placeholder `{case_context}` on line 26 receives one of two values:
+- **Known case:** The full `RIVERA_V_HARMON_CONTEXT` string, giving the LLM specific knowledge about Privette holdings and jurisdiction.
+- **Unknown case:** An empty string `""`, meaning the LLM sees a blank line and must rely entirely on parametric knowledge.
+
+The same pattern repeats in `FACT_CHECKING_PROMPT` (line 65) and `JUDICIAL_MEMO_PROMPT` (line 92).
+
+#### 39.3 How Context Flows Through the Pipeline
+
+The orchestrator loads context and passes it to every agent:
+
+**File: `backend/agents/orchestrator.py` (lines 96-108)**
+
+```python
+from utils.case_context import get_case_context
+case_context = get_case_context(motion_id)
+# ...
+{"citations": citations, "case_context": case_context}   # line 106 -> citation_verifier
+# ...
+fact_task = self.fact_checker.execute({**docs, "case_context": case_context})  # line 108
+```
+
+And later at line 163, the same `case_context` flows to the judicial memo agent. Every agent in the pipeline receives the same hardcoded string.
+
+#### 39.4 The CitationVerifierAgent in Detail
+
+**File: `backend/agents/citation_verifier.py` (lines 1-90)**
+
+```python
+class VerificationResult(BaseModel):
+    is_supported: bool
+    confidence: float = Field(ge=0, le=1)
+    confidence_reasoning: str = ""
+    discrepancies: List[str] = Field(default_factory=list)
+    status: str = "could_not_verify"
+    notes: str = ""
+```
+
+The `VerificationResult` Pydantic model (lines 9-15) defines what the LLM must return. Note the default `status` on line 14: `"could_not_verify"`. If the LLM returns any status not in the `STATUS_MAP`, it falls through to `COULD_NOT_VERIFY`:
+
+```python
+STATUS_MAP = {
+    "supported": VerificationStatus.SUPPORTED,
+    "not_supported": VerificationStatus.NOT_SUPPORTED,
+    "misleading": VerificationStatus.MISLEADING,
+}
+```
+
+Lines 18-22: The map has three entries. `"could_not_verify"` is intentionally absent -- any unrecognized status (including the LLM literally returning `"could_not_verify"`) maps to the enum default at line 44:
+
+```python
+status=STATUS_MAP.get(vr.status, VerificationStatus.COULD_NOT_VERIFY),
+```
+
+The `_verify_one` method (lines 29-58) handles a single citation. The critical path:
+1. Format the prompt with `{citation_text}`, `{claimed_proposition}`, `{context}`, and `{case_context}` (lines 31-36).
+2. Call the LLM via `_call_llm()` requesting structured output as `VerificationResult` (line 37).
+3. Map the result to a `VerifiedCitation` schema (lines 38-46).
+4. On any exception, return a `VerifiedCitation` with `status=COULD_NOT_VERIFY` and `confidence=0.0` (lines 48-58).
+
+The `execute` method (lines 60-90) runs all citations in parallel via `asyncio.gather` with `return_exceptions=True`, then catches any that raised exceptions and wraps them in `COULD_NOT_VERIFY` entries (lines 78-89).
+
+---
+
+### Intermediate: The `COULD_NOT_VERIFY` Conflation Problem
+
+#### 39.5 One Status, Three Distinct Failure Modes
+
+The current `VerificationStatus` enum from `backend/models/schemas.py` (lines 7-11):
+
+```python
+class VerificationStatus(str, Enum):
+    SUPPORTED = "supported"
+    NOT_SUPPORTED = "not_supported"
+    COULD_NOT_VERIFY = "could_not_verify"
+    MISLEADING = "misleading"
+```
+
+`COULD_NOT_VERIFY` currently conflates three fundamentally different situations:
+
+| Situation | What Actually Happened | User Impact |
+|-----------|----------------------|-------------|
+| **Case doesn't exist** | Citation is fabricated (hallucinated) | Should be flagged as `FABRICATED` -- this is a serious ethical violation |
+| **Case exists but not in database** | System has no access to verify | Should be `DATABASE_NOT_FOUND` -- actionable: expand data sources |
+| **Case exists, retrieved, but LLM uncertain** | Model couldn't determine if holding matches claim | Should be `LLM_UNCERTAIN` -- lower severity, may resolve with better model |
+
+**Why this matters in practice:**
+
+A lawyer submitting a brief with a fabricated citation (a "Mattel v. Doe" that doesn't exist) and a brief citing a real but obscure case ("County of Santa Clara v. Superior Court, 2 Cal.App.5th 1172") both produce the same output: `COULD_NOT_VERIFY`. The judge sees the same yellow flag for both. This is dangerous: one is potential sanctionable fraud (FRCP Rule 11), the other is a system limitation.
+
+#### 39.6 Proposed Status Expansion
+
+```python
+class VerificationStatus(str, Enum):
+    SUPPORTED = "supported"
+    NOT_SUPPORTED = "not_supported"
+    MISLEADING = "misleading"
+    FABRICATED = "fabricated"             # Citation does not exist in any database
+    DATABASE_NOT_FOUND = "database_not_found"  # Not in our sources, but may exist
+    LLM_UNCERTAIN = "llm_uncertain"       # Retrieved but model confidence too low
+    OVERRULED = "overruled"               # Case exists but has been overruled
+    SUPERSEDED = "superseded"             # Statute amended or replaced
+```
+
+The triage logic would be:
+
+```
+1. Parse citation -> extract volume/reporter/page
+2. Query database (CourtListener, Westlaw, etc.)
+   - No results in ANY database -> FABRICATED
+   - No results in OUR database -> DATABASE_NOT_FOUND
+   - Results found -> continue
+3. Retrieve opinion text
+4. LLM compares brief's characterization vs actual opinion
+   - Confidence >= 0.7 and matches -> SUPPORTED
+   - Confidence >= 0.7 and doesn't match -> NOT_SUPPORTED or MISLEADING
+   - Confidence < 0.7 -> LLM_UNCERTAIN
+5. Check treatment (Shepard's/KeyCite)
+   - Overruled -> OVERRULED
+   - Superseded -> SUPERSEDED
+```
+
+---
+
+### Intermediate: Citation Normalization
+
+#### 39.7 Parsing Legal Citations Into Structured Components
+
+Legal citations follow specific formats, but briefs cite them inconsistently. The same case might appear as:
+
+| Format | Example |
+|--------|---------|
+| California Official | Privette v. Superior Court (1993) 5 Cal.4th 689 |
+| Standard (volume-reporter-page) | Privette v. Superior Court, 5 Cal.4th 689 (1993) |
+| With pinpoint | Privette v. Superior Court, 5 Cal.4th 689, 695 (1993) |
+| Short form | Privette, 5 Cal.4th at 695 |
+| Supra | Privette, supra, 5 Cal.4th 689 |
+| Id. reference | Id. at 695 |
+
+A production citation verifier needs a normalization layer that parses any format into a canonical structure:
+
+```python
+@dataclass
+class ParsedCitation:
+    case_name: str           # "Privette v. Superior Court"
+    volume: int              # 5
+    reporter: str            # "Cal.4th"
+    page: int                # 689
+    pinpoint: Optional[int]  # 695 or None
+    year: Optional[int]      # 1993
+    court: Optional[str]     # "Cal." (inferred from reporter)
+    parallel_cites: list     # e.g., Pacific Reporter cite for same case
+```
+
+**Normalization rules:**
+
+1. **California-style parenthetical year first:** `(1993) 5 Cal.4th 689` -> year=1993, vol=5, reporter=Cal.4th, page=689
+2. **Standard style year last:** `5 Cal.4th 689 (1993)` -> same result
+3. **Reporter normalization:** `Cal. 4th` = `Cal.4th` = `Cal. Fourth`; `S.Ct.` = `S. Ct.`
+4. **Short forms and supra:** Link back to the most recent full citation of the same case in the document
+5. **Id. citations:** Resolve to the immediately preceding citation (requires document-order tracking)
+
+**Regex sketch for the standard form:**
+
+```python
+CITE_PATTERN = re.compile(
+    r'(?P<name>[A-Z][^,]+?)\s*'
+    r'(?:\((?P<year_pre>\d{4})\)\s*)?'
+    r'(?P<volume>\d+)\s+'
+    r'(?P<reporter>[A-Z][A-Za-z.]+(?:\s*\d+[a-z]{2})?)\s+'
+    r'(?P<page>\d+)'
+    r'(?:,\s*(?P<pinpoint>\d+))?'
+    r'(?:\s*\((?P<year_post>\d{4})\))?'
+)
+```
+
+This is a simplified sketch. Production systems like `eyecite` (the Free Law Project's open-source citation parser) handle hundreds of reporter abbreviations, parallel citations, and edge cases.
+
+---
+
+### Intermediate: Multi-Jurisdictional Complexity
+
+#### 39.8 Binding vs. Persuasive Authority
+
+The current system includes a single jurisdictional note in `case_context.py` line 10:
+
+```
+- This is a California state court case. Out-of-state citations (Texas, Florida) are non-binding persuasive authority only.
+```
+
+This is hardcoded knowledge for one case. A production system needs to determine authority status dynamically.
+
+**Court hierarchy for a California Superior Court case:**
+
+| Source | Authority Type | Weight |
+|--------|---------------|--------|
+| U.S. Supreme Court (constitutional) | Binding | Highest |
+| California Supreme Court | Binding | High |
+| California Court of Appeal (same district) | Binding | Medium-High |
+| California Court of Appeal (different district) | Persuasive | Medium |
+| 9th Circuit (on state law) | Persuasive | Medium |
+| Other state supreme courts | Persuasive | Low |
+| Other state appellate courts | Persuasive | Very Low |
+| Federal district courts | Persuasive | Low |
+| Law reviews, treatises | Secondary | Variable |
+
+**Key complications:**
+
+1. **Which court is the brief filed in?** The system currently doesn't track this. The `motion_id` of `"Rivera_v_Harmon_MSJ"` doesn't encode the filing court. A production system needs metadata: `filing_court: "CA Superior Court, Los Angeles County"`.
+
+2. **Federal vs. state claims:** A single brief may assert both federal constitutional claims (14th Amendment due process) and state tort claims. Federal authority is binding on the federal claims; state authority is binding on the state claims.
+
+3. **Splits in authority:** California's six appellate districts can reach conflicting conclusions on the same legal question. Until the California Supreme Court resolves the split, a case from District 2 may not bind District 4.
+
+4. **Date sensitivity:** A case decided in 1993 may have been superseded by statute or overruled. The system must check the current treatment status, not just whether the citation exists.
+
+#### 39.9 What a Jurisdiction-Aware Verification Looks Like
+
+```python
+@dataclass
+class JurisdictionContext:
+    filing_court: str                    # "CA Superior Court, Los Angeles"
+    filing_state: str                    # "CA"
+    appellate_district: Optional[str]    # "2nd Appellate District"
+    federal_circuit: Optional[str]       # "9th Circuit" (if federal claims)
+    claim_types: List[str]               # ["state_tort", "federal_civil_rights"]
+
+def classify_authority(
+    cited_court: str,
+    jurisdiction: JurisdictionContext
+) -> str:
+    """Returns 'binding', 'persuasive', or 'inapplicable'."""
+    # Implementation maps court hierarchies
+    ...
+```
+
+For each citation, the verifier would:
+1. Parse the citation to extract the court (from the reporter abbreviation).
+2. Look up the filing court's hierarchy.
+3. Classify the cited case as binding, persuasive, or inapplicable.
+4. Flag citations presented as authoritative that are only persuasive (a common litigation tactic).
+
+---
+
+### Expert: Phase-by-Phase Migration to Production
+
+#### 39.10 Phase 1: Hardcoded Context (Current State)
+
+**What we have:**
+
+| Component | Implementation | Limitation |
+|-----------|---------------|------------|
+| Case knowledge | `RIVERA_V_HARMON_CONTEXT` string | Works for exactly 1 case |
+| Citation parsing | None -- raw text passed to LLM | LLM must parse "5 Cal.4th 689" itself |
+| Database lookup | None | LLM uses training data only |
+| Treatment checking | None | No way to detect overruled cases |
+| Jurisdiction awareness | Hardcoded in context string | Single-case, single-jurisdiction |
+
+**Failure mode:** For any case other than Rivera v. Harmon, the system produces plausible-sounding but ungrounded verification results. The LLM's training data is stale (knowledge cutoff) and unreliable for precise legal holdings.
+
+#### 39.11 Phase 2: CourtListener API Integration
+
+**CourtListener** (courtlistener.com) is a free, open-source legal research platform maintained by the Free Law Project. It provides:
+
+- REST API with opinion search by citation, case name, or docket number
+- Full text of millions of opinions
+- Citation network (which cases cite which)
+- No API key required for basic access (rate-limited)
+
+**Integration sketch:**
+
+```python
+import httpx
+
+COURTLISTENER_BASE = "https://www.courtlistener.com/api/rest/v4"
+
+async def lookup_citation(volume: int, reporter: str, page: int) -> Optional[dict]:
+    """Query CourtListener for a specific citation."""
+    async with httpx.AsyncClient() as client:
+        # Search by citation
+        resp = await client.get(
+            f"{COURTLISTENER_BASE}/search/",
+            params={
+                "type": "o",  # opinions
+                "citation": f"{volume} {reporter} {page}",
+            }
+        )
+        results = resp.json().get("results", [])
+        if not results:
+            return None
+        # Fetch full opinion text
+        opinion_url = results[0]["absolute_url"]
+        opinion_resp = await client.get(
+            f"{COURTLISTENER_BASE}/opinions/{results[0]['id']}/"
+        )
+        return opinion_resp.json()
+```
+
+**What this buys us:**
+
+1. **Existence check:** If CourtListener returns no results, we have evidence (not proof) the citation may be fabricated. CourtListener has ~8 million opinions but doesn't have everything.
+2. **Full opinion text:** The LLM can compare the brief's characterization against the actual holding, rather than relying on parametric memory.
+3. **Free.** No licensing cost.
+
+**What it doesn't solve:**
+
+- CourtListener's coverage is incomplete for state trial courts, unpublished opinions, and recent decisions.
+- No treatment/Shepardizing data.
+- Rate limits for high-volume use.
+
+**Modified verification flow:**
+
+```
+1. Parse citation -> (volume=5, reporter="Cal.4th", page=689)
+2. Query CourtListener
+   - No results -> status = DATABASE_NOT_FOUND
+   - Results found -> retrieve opinion text
+3. Inject opinion text into prompt (replacing {case_context})
+4. LLM compares brief claim vs. actual opinion
+5. Return structured result with higher confidence
+```
+
+#### 39.12 Phase 3: Redis Cache Layer
+
+Once you're querying an external API per citation, caching becomes essential. A single brief may cite the same case 10+ times with different pinpoint citations.
+
+**Cache strategy:**
+
+```python
+import redis.asyncio as redis
+import json
+import hashlib
+
+class CitationCache:
+    def __init__(self, redis_url: str = "redis://localhost:6379"):
+        self.redis = redis.from_url(redis_url)
+        self.ttl = 86400 * 7  # 7 days -- opinions don't change
+
+    def _key(self, volume: int, reporter: str, page: int) -> str:
+        raw = f"{volume}:{reporter}:{page}"
+        return f"citation:{hashlib.sha256(raw.encode()).hexdigest()[:16]}"
+
+    async def get(self, volume: int, reporter: str, page: int) -> Optional[dict]:
+        key = self._key(volume, reporter, page)
+        data = await self.redis.get(key)
+        return json.loads(data) if data else None
+
+    async def set(self, volume: int, reporter: str, page: int, opinion: dict):
+        key = self._key(volume, reporter, page)
+        await self.redis.setex(key, self.ttl, json.dumps(opinion))
+```
+
+**Why 7-day TTL:** Published opinions are immutable -- once "5 Cal.4th 689" is published, it doesn't change. But the treatment status (whether it's been overruled) can change, so the cache shouldn't be indefinite.
+
+**Cache hit rates in practice:** A typical MSJ cites 15-30 cases. In our demo, some cases (like Privette) are cited 3-4 times. Expected cache hit rate: 30-50% within a single brief verification run.
+
+#### 39.13 Phase 4: Full RAG Pipeline with Vector Search
+
+The highest-fidelity approach: build a legal citation RAG system.
+
+**Architecture:**
+
+```
+Brief Text
+    |
+    v
+Citation Extractor (existing agent)
+    |
+    v
+Citation Parser (new: regex + eyecite)
+    |
+    v
+Structured Query: {volume: 5, reporter: "Cal.4th", page: 689}
+    |
+    +---> Exact Match (CourtListener API / local DB)
+    |         |
+    |         v
+    |     Full Opinion Text
+    |         |
+    |         v
+    +---> Vector Store (chunked opinions)
+    |         |
+    |         v
+    |     Relevant Passages (top-k by proposition similarity)
+    |
+    v
+Verification Prompt (enriched with actual opinion text)
+    |
+    v
+Structured Result with GROUNDED confidence
+```
+
+**Vector store considerations:**
+
+| Store | Pros | Cons |
+|-------|------|------|
+| pgvector (Postgres) | Familiar, transactional, metadata filtering | Slower for large collections |
+| Pinecone | Managed, fast, metadata filtering | Cost, vendor lock-in |
+| Qdrant | Self-hosted, filtering, payload storage | Ops overhead |
+| ChromaDB | Simple, embedded | Limited scale |
+
+**Chunking strategy for legal opinions:**
+
+Legal opinions have natural structure: syllabus, majority opinion, concurrence, dissent. Chunk by:
+1. Section headers (I, II, III or A, B, C)
+2. Paragraph boundaries within sections
+3. Overlap of 2 sentences between chunks to preserve context
+4. Store metadata: case name, citation, section type (holding vs. dicta vs. dissent), page number
+
+**The proposition-level verification problem (Section 39.15) requires this level of granularity.**
+
+---
+
+### Expert: Treatment Checking and the Proposition-Level Problem
+
+#### 39.14 Shepard's, KeyCite, and Cost Reality
+
+"Shepardizing" a case means checking its subsequent history: has it been affirmed, distinguished, criticized, or overruled? This is the gold standard of legal research and the most expensive component.
+
+| Service | Provider | Cost | Coverage |
+|---------|----------|------|----------|
+| Shepard's Citations | LexisNexis | $5K-50K/month (firm license) | Most comprehensive |
+| KeyCite | Westlaw/Thomson Reuters | $5K-50K/month (firm license) | Comparable to Shepard's |
+| CourtListener citator | Free Law Project | Free | Limited -- shows citing cases but not editorial treatment signals |
+| CaseMine | CaseMine | $100-500/month | Growing coverage, AI-powered |
+| PACER | U.S. Courts | $0.10/page | Federal only, no treatment analysis |
+
+**Why treatment matters for the BS Detector:**
+
+A brief that cites an overruled case as binding authority is making a materially misleading argument. The current system cannot detect this at all. The LLM might know from training data that a landmark case was overruled, but it won't know about a 2024 opinion overruling an obscure 2019 appellate decision.
+
+**Cost analysis for different deployment scenarios:**
+
+| Scenario | Monthly Volume | Recommended Stack | Estimated Monthly Cost |
+|----------|---------------|-------------------|----------------------|
+| Demo / hackathon | 10 briefs | CourtListener only | $0 |
+| Small firm pilot | 100 briefs | CourtListener + CaseMine | $200-500 |
+| Mid-size firm | 1,000 briefs | CourtListener + Westlaw API | $10K-25K |
+| Court system deployment | 10,000+ briefs | Full Westlaw/Lexis integration + custom DB | $50K+ |
+
+**PACER costs add up fast:** A single federal case docket can be 500+ pages at $0.10/page. PACER caps at $3.00 per document, but batch downloading for a RAG pipeline can still cost hundreds of dollars per day.
+
+#### 39.15 The Proposition-Level Verification Problem
+
+This is the hardest problem in citation verification and the one the current system handles most poorly. The question isn't just "does this case exist?" -- it's "does this case actually stand for what the brief says it stands for?"
+
+**Example from the demo case:**
+
+The MSJ claims: *"Under Privette, the hirer of an independent contractor is never liable for injuries sustained by the contractor's employees."*
+
+The actual holding (Privette v. Superior Court, 5 Cal.4th 689): The hirer is **presumptively** not liable, subject to exceptions for retained control, concealed hazards, and non-delegable duties.
+
+The word "never" transforms a rebuttable presumption into an absolute rule. This is a **mischaracterization of the holding**, not a fabricated citation. The case exists. The citation is real. The proposition is wrong.
+
+**Why this is hard for LLMs:**
+
+1. **The brief's characterization sounds plausible.** Privette *does* limit hirer liability. The mischaracterization is subtle -- "never liable" vs. "presumptively not liable."
+2. **The LLM must compare two things:** the brief's claim (a single sentence) against the actual opinion (potentially 20+ pages). It must find the specific holding language and evaluate whether the brief's characterization is faithful.
+3. **Legal nuance matters:** "presumption" vs. "rule," "holding" vs. "dicta," "majority" vs. "concurrence" -- these distinctions determine whether a characterization is accurate.
+
+**How the current system handles this:**
+
+With the hardcoded context in `case_context.py` (lines 7-10), the LLM receives explicit instructions:
+
+```
+The word "never" does NOT appear in the holding. The actual holding is that
+hirers are presumptively not liable, but exceptions exist...
+```
+
+This is essentially a human legal researcher doing the verification and encoding the result as a prompt. It works perfectly for this one citation in this one case. It scales to zero other cases.
+
+**How a production system would handle this:**
+
+```
+1. Parse citation: Privette v. Superior Court, 5 Cal.4th 689
+2. Retrieve full opinion text from CourtListener / Westlaw
+3. Chunk opinion into sections (syllabus, holding, analysis, dicta)
+4. Embed brief's claimed proposition: "hirer is never liable..."
+5. Vector search: find top-5 most similar chunks in the opinion
+6. Inject retrieved chunks into verification prompt:
+   "The brief claims: [proposition]
+    The actual opinion states: [retrieved chunks]
+    Does the brief accurately characterize the holding?"
+7. LLM compares and returns structured result
+```
+
+**The key insight:** RAG transforms citation verification from "ask the LLM what it remembers" to "show the LLM the actual text and ask it to compare." This is the difference between a library patron reciting from memory and a librarian with the book open.
+
+#### 39.16 Accuracy Expectations at Each Phase
+
+| Phase | Fabricated Citations | Mischaracterized Holdings | Overruled Cases | Jurisdiction Errors |
+|-------|---------------------|--------------------------|-----------------|-------------------|
+| 1. Hardcoded (current) | Detects ~30% (LLM memory) | Detects for 1 case only | Not detected | Detects for 1 case only |
+| 2. CourtListener API | Detects ~70% (coverage gaps) | Detects ~50% (full text available) | Not detected | Partially (court metadata) |
+| 3. + Redis Cache | Same accuracy, 3-5x faster | Same | Not detected | Same |
+| 4. Full RAG | Detects ~85%+ | Detects ~70-80% (proposition-level) | Requires Shepard's integration | Detects ~90%+ (structured metadata) |
+| 5. + Shepard's/KeyCite | Detects ~90%+ | Detects ~80%+ | Detects ~95%+ | Detects ~95%+ |
+
+---
+
+### Expert: Implementation Details and Edge Cases
+
+#### 39.17 The Exception Handler as Silent Failure
+
+Look at the exception handling in `_verify_one` (citation_verifier.py, lines 48-58):
+
+```python
+except Exception as e:
+    self.logger.warning(f"Failed to verify citation: {e}")
+    verified = VerifiedCitation(
+        citation=citation,
+        is_supported=False,
+        confidence=0.0,
+        discrepancies=[],
+        status=VerificationStatus.COULD_NOT_VERIFY,
+        notes=f"Verification failed: {e}",
+    )
+    return verified.model_dump()
+```
+
+And the parallel execution handler (lines 78-89):
+
+```python
+for i, r in enumerate(results):
+    if isinstance(r, Exception):
+        self.logger.warning(f"Citation {i} verification raised: {r}")
+        final.append(VerifiedCitation(
+            citation=citations[i],
+            is_supported=False,
+            confidence=0.0,
+            status=VerificationStatus.COULD_NOT_VERIFY,
+            notes=f"Verification failed: {r}",
+        ).model_dump())
+    else:
+        final.append(r)
+```
+
+**The problem:** Both handlers produce the same `COULD_NOT_VERIFY` output regardless of whether the failure was:
+- An LLM API timeout (transient -- should retry)
+- A malformed citation that couldn't be parsed (permanent -- need different handling)
+- A rate limit error from the LLM provider (transient -- should backoff)
+- An actual verification where the LLM returned invalid JSON (model issue -- should log for eval)
+
+A production system should distinguish these:
+
+```python
+class VerificationError(BaseModel):
+    error_type: Literal["transient", "permanent", "model_error"]
+    error_message: str
+    retryable: bool
+    retry_after_seconds: Optional[int] = None
+```
+
+#### 39.18 The `STATUS_MAP` Gap
+
+The `STATUS_MAP` on lines 18-22 of `citation_verifier.py`:
+
+```python
+STATUS_MAP = {
+    "supported": VerificationStatus.SUPPORTED,
+    "not_supported": VerificationStatus.NOT_SUPPORTED,
+    "misleading": VerificationStatus.MISLEADING,
+}
+```
+
+And its usage on line 44:
+
+```python
+status=STATUS_MAP.get(vr.status, VerificationStatus.COULD_NOT_VERIFY),
+```
+
+If the LLM returns `status: "could_not_verify"` (which is a valid response per the prompt), it hits the `.get()` default because `"could_not_verify"` is not a key in the map. This is **intentional but confusing** -- it works correctly (the result is `COULD_NOT_VERIFY`), but only by accident of the default value matching the missing key's intended mapping.
+
+**Interview question:** "Walk me through what happens when the LLM returns `status: 'misleading'` vs. `status: 'partially_supported'`."
+
+**Answer:** `"misleading"` maps to `VerificationStatus.MISLEADING` via `STATUS_MAP`. `"partially_supported"` is not in the map, so `.get()` returns the default `VerificationStatus.COULD_NOT_VERIFY`. This is a silent data loss -- the LLM's nuanced judgment ("partially supported") is collapsed into the catch-all bucket. The prompt should constrain the LLM to only the four valid statuses, or the map should handle common LLM variations.
+
+#### 39.19 The VerifiedCitation Schema Mismatch
+
+Compare `VerificationResult` (the LLM response model in `citation_verifier.py`, lines 9-15) with `VerifiedCitation` (the pipeline schema in `schemas.py`, lines 28-36):
+
+| Field | VerificationResult | VerifiedCitation |
+|-------|-------------------|------------------|
+| `is_supported` | `bool` | `bool` (default `False`) |
+| `confidence` | `float` (0-1) | `float` (default 0.5, 0-1) |
+| `confidence_reasoning` | `str` (default `""`) | `Optional[str]` (default `None`) |
+| `discrepancies` | `List[str]` | `List[str]` |
+| `supporting_evidence` | Not present | `Optional[str]` (default `None`) |
+| `status` | `str` (default `"could_not_verify"`) | `str` (default `"could_not_verify"`) |
+| `notes` | `str` (default `""`) | `Optional[str]` (default `None`) |
+| `citation` | Not present | `Optional[Citation]` (wraps original) |
+
+The `supporting_evidence` field on `VerifiedCitation` (schemas.py, line 34) is never populated by the verifier agent. It exists in the schema but is always `None`. In a production system with RAG, this field would hold the retrieved opinion text that supports or contradicts the claim -- making it one of the most important fields for transparency and auditability.
+
+#### 39.20 Interview Cheat Sheet: Citation Verification
+
+**Q: "The system returns `COULD_NOT_VERIFY` for a citation. What are the possible causes and how would you triage?"**
+
+**A (structured response):**
+
+1. **Check the logs.** If `notes` contains "Verification failed:", it was an exception -- look at the error message. API timeout? Parse error? Rate limit?
+2. **Check the citation format.** Is it a valid legal citation or garbled text the extractor picked up? (e.g., "See generally, various sources" is not a citation.)
+3. **Check the case_context.** Was this a known case with hardcoded context, or an unknown case where the LLM had no domain knowledge?
+4. **In a production system:** Query CourtListener. If no results, consider `FABRICATED`. If results found but LLM still uncertain, it's `LLM_UNCERTAIN` -- check retrieved text quality.
+
+**Q: "How would you test this system? What would your eval set look like?"**
+
+**A:**
+
+| Test Case Type | Input | Expected Output | Why It's Important |
+|---------------|-------|-----------------|-------------------|
+| Fabricated citation | "Smith v. Jones, 999 F.3d 1 (2023)" | `FABRICATED` or `COULD_NOT_VERIFY` | Catches hallucinated cases |
+| Accurate characterization | Privette cite with correct "presumptively not liable" | `SUPPORTED`, confidence > 0.8 | Baseline correctness |
+| Mischaracterized holding | Privette cite with "never liable" | `MISLEADING`, confidence > 0.7 | Core detection capability |
+| Out-of-jurisdiction cite | Texas case in California brief | `SUPPORTED` but flagged as persuasive only | Jurisdiction awareness |
+| Overruled case | Citing a case overruled in 2020 | `OVERRULED` (Phase 5 only) | Treatment checking |
+| Id. citation | "Id. at 695" | Resolves to preceding cite, verifies | Citation chain tracking |
+| String cite | "5 Cal.4th 689, 695-96" | Parses pinpoint correctly | Citation parsing robustness |
+
+**Q: "What's the business case for upgrading from Phase 1 to Phase 2?"**
+
+**A:** Phase 1 works for demos. Phase 2 (CourtListener integration) is the minimum viable product for any real deployment because:
+- CourtListener is free, eliminating the "it costs too much" objection.
+- It transforms the system from "LLM guessing" to "LLM comparing against source text."
+- It enables the `FABRICATED` vs `DATABASE_NOT_FOUND` distinction, which is the highest-impact improvement for user trust.
+- Implementation effort is ~2-3 days: HTTP client, citation parser, cache, modified prompt.
+
+**Q: "Why not just use GPT-4/Claude with a really detailed prompt instead of building all this infrastructure?"**
+
+**A:** Because LLMs hallucinate case law. This is not a theoretical concern -- it has led to lawyer sanctions (Mata v. Avianca, S.D.N.Y. 2023, where ChatGPT fabricated six cases). No amount of prompt engineering eliminates the fundamental problem: the model's training data is static, incomplete, and not authoritative. The infrastructure exists to give the model authoritative source text to compare against, not to replace the model's judgment. The model is excellent at *comparing* two texts; it is unreliable at *recalling* specific legal holdings from memory. Build the pipeline to play to the model's strengths.
+
+
+---
+
+## 40. Reflection-to-Code Mapping
+
+### Why This Section Exists
+
+Vienna's feedback praised "honest reflection matched actual code quality." This section provides a **claim-by-claim audit** of every assertion in `REFLECTION.md`, mapped to specific code with line numbers and verbatim snippets. If you can defend this mapping in an interview, you prove that your self-assessment is grounded in reality rather than aspiration.
+
+---
+
+### 40.1 Claim: "4 Specialized Agents + 1 Orchestrator, Then Added a 5th Agent"
+
+**REFLECTION.md, line 6:**
+> I chose 4 specialized agents (Document Parser, Citation Verifier, Fact Checker, Report Synthesizer) plus an orchestrator, then added a 5th agent (Judicial Memo)
+
+**Code evidence -- agent files in `backend/agents/`:**
+
+| Agent | File | Class | Line |
+|-------|------|-------|------|
+| Document Parser | `document_parser.py` | `DocumentParserAgent` | Line 13 |
+| Citation Verifier | `citation_verifier.py` | `CitationVerifierAgent` | Line 25 |
+| Fact Checker | `fact_checker.py` | `FactCheckerAgent` | Line 12 |
+| Report Synthesizer | `report_synthesizer.py` | `ReportSynthesizerAgent` | Line 15 |
+| Judicial Memo (5th) | `judicial_memo.py` | `JudicialMemoAgent` | Line 16 |
+| Orchestrator | `orchestrator.py` | `PipelineOrchestrator` | Line 45 |
+
+All five agents inherit from `BaseAgent` (`base_agent.py:12`). The orchestrator instantiates all five at `orchestrator.py:49-53`:
+
+```python
+self.parser = DocumentParserAgent(self.llm)          # line 49
+self.citation_verifier = CitationVerifierAgent(self.llm)  # line 50
+self.fact_checker = FactCheckerAgent(self.llm)        # line 51
+self.synthesizer = ReportSynthesizerAgent(self.llm)   # line 52
+self.memo_agent = JudicialMemoAgent(self.llm)         # line 53
+```
+
+**Verdict:** CONFIRMED. Exactly 5 agents + 1 orchestrator. The 5th agent (`JudicialMemoAgent`) is a separate class in its own file with distinct responsibilities.
+
+---
+
+### 40.2 Claim: "Parallel Execution via asyncio.gather()"
+
+**REFLECTION.md, line 8:**
+> citation verification and fact checking run in parallel via `asyncio.gather()`
+
+**Code evidence -- `orchestrator.py:95-112`:**
+
+```python
+# Step 3: Run citation verification and fact checking IN PARALLEL
+from utils.case_context import get_case_context
+case_context = get_case_context(motion_id)
+
+cit_st = _track(pipeline_status, "citation_verifier")
+fact_st = _track(pipeline_status, "fact_checker")
+
+cit_t0 = _start(cit_st)
+fact_t0 = _start(fact_st)
+
+citation_task = self.citation_verifier.execute(
+    {"citations": citations, "case_context": case_context}
+)
+fact_task = self.fact_checker.execute({**docs, "case_context": case_context})
+
+citation_results, fact_results = await asyncio.gather(
+    citation_task, fact_task, return_exceptions=True
+)
+```
+
+Key details:
+- Both tasks are created **before** `await` (lines 105-108), so they are launched concurrently
+- `return_exceptions=True` prevents one failure from canceling the other
+- Exception handling for each task is separate (lines 115-127)
+
+**Verdict:** CONFIRMED. The `asyncio.gather()` call is verbatim on line 110. The two tasks are genuinely independent -- citation verification uses extracted citations while fact checking uses raw documents.
+
+---
+
+### 40.3 Claim: "~40% Execution Time Improvement"
+
+**REFLECTION.md, line 8:**
+> parallelizing them cuts ~40% off pipeline execution time
+
+**Timing evidence analysis:**
+
+Serial: `T_parser + T_citation + T_fact + T_synth + T_memo`
+Parallel: `T_parser + max(T_citation, T_fact) + T_synth + T_memo`
+
+With equal-time agents, the improvement is 20%. For 40%, the citation + fact stages must dominate total time. This is plausible because the citation verifier runs **N parallel sub-calls** per citation (`citation_verifier.py:72-75`) making it the longest stage, and the fact checker processes a large prompt (~24K chars) in one call (`fact_checker.py:50`).
+
+**Verdict:** PLAUSIBLE. The 40% figure is not directly measured (no benchmark harness exists), but architecture supports it. A more honest claim would say "up to 40% depending on citation count."
+
+---
+
+### 40.4 Claim: "Case Context Injection via Lookup Table"
+
+**REFLECTION.md, line 16:**
+> I extracted it into `case_context.py` with a `get_case_context(case_id)` lookup
+
+**Code evidence -- `case_context.py` (entire file, 18 lines):**
+
+```python
+RIVERA_V_HARMON_CONTEXT = """IMPORTANT LEGAL KNOWLEDGE FOR THIS CASE:
+- Privette v. Superior Court, 5 Cal.4th 689 (1993) established a PRESUMPTION ...
+- Seabright Insurance Co. v. US Airways, Inc., 52 Cal.4th 590 (2011) ...
+- This is a California state court case. ..."""
+
+def get_case_context(case_id: str) -> str:
+    """Return case-specific context for known cases, or empty string for generic cases."""
+    contexts = {
+        "Rivera_v_Harmon_MSJ": RIVERA_V_HARMON_CONTEXT,
+    }
+    return contexts.get(case_id, "")
+```
+
+The lookup table (`contexts` dict at line 15-17) has exactly **1 entry**. For unknown `case_id` values, `dict.get(case_id, "")` returns an empty string, so the pipeline works generically.
+
+Consumed at `orchestrator.py:96-97` and passed to citation verification (line 106), fact checking (line 108), and judicial memo (line 163).
+
+**Verdict:** CONFIRMED. A 1-entry dictionary in 19 lines of code. The "lookup table" description is accurate, if generous.
+
+---
+
+### 40.5 Claim: "Dual-Evaluation Approach"
+
+**REFLECTION.md, lines 22-27:**
+> The dual-evaluation approach (keyword matching + LLM-as-judge) addresses a real gap
+
+**Code evidence -- two evaluation modules:**
+
+| Method | File | Entry Function | Lines |
+|--------|------|----------------|-------|
+| Keyword matching | `evals/metrics.py` | `calculate_metrics()` | Lines 21-56 |
+| LLM-as-judge | `evals/llm_judge.py` | `judge_all()` | Lines 74-117 |
+| Combined | `evals/metrics.py` | `calculate_combined_metrics()` | Lines 112-143 |
+
+**Keyword matching** (`metrics.py:9-18`):
+
+```python
+def finding_matches_discrepancy(finding, discrepancy):
+    finding_text = normalize(
+        f"{finding.get('description', '')} {finding.get('type', '')} "
+        f"{' '.join(finding.get('evidence', []))}"
+    )
+    keywords = discrepancy.get("keywords", [])
+    matches = sum(1 for kw in keywords if kw in finding_text)
+    return matches >= 2  # At least 2 keyword matches
+```
+
+Requires at least 2 keyword hits from the ground truth's keyword list. This is deterministic and fast.
+
+**LLM-as-judge** (`llm_judge.py:39-71`):
+
+```python
+async def judge_finding(finding, ground_truth, llm_service):
+    prompt = JUDGE_USER_PROMPT.format(
+        gt_id=ground_truth.get("id", ""),
+        gt_description=ground_truth.get("description", ""),
+        ...
+    )
+    result = await llm_service.get_completion(
+        system=JUDGE_SYSTEM_PROMPT,
+        user=prompt,
+        temperature=0.0,
+    )
+```
+
+Uses `temperature=0.0` for maximum determinism. Requires `match=True` AND `confidence >= 0.5` (`llm_judge.py:94`):
+
+```python
+if result["match"] and result["confidence"] >= 0.5:
+    matched_gt.add(j)
+    matched_findings.add(i)
+    break
+```
+
+**Combined metrics** (`metrics.py:112-143`) takes the **union** of both methods (`kw_matched | llm_matched`) and reports which discrepancies were caught by `keyword_only`, `llm_only`, or `both` (lines 140-142).
+
+**Verdict:** CONFIRMED. Two distinct evaluation methods with union-based combination. The LLM judge prompt explicitly asks "Would a legal professional consider these to be about the same problem?" (line 35).
+
+---
+
+### 40.6 Remaining Limitations Audit
+
+The REFLECTION.md lists 7 limitations (lines 53-60). Here is a claim-by-claim verification against code.
+
+#### Limitation 1: "Only Accepts Plain Text"
+
+**REFLECTION.md, line 54:**
+> Document format: Only accepts plain text, not PDF or DOCX
+
+**Code evidence -- `document_service.py:10-15, 17-23`:**
+
+```python
+FILENAMES = {
+    "msj": "motion_for_summary_judgment.txt",
+    "police_report": "police_report.txt",
+    "medical_records": "medical_records_excerpt.txt",
+    "witness_statement": "witness_statement.txt",
+}
+
+def load_all(self) -> Dict[str, str]:
+    docs = {}
+    for key, filename in self.FILENAMES.items():
+        path = self.documents_dir / filename
+        if path.exists():
+            docs[key] = path.read_text()
+    return docs
+```
+
+All filenames end in `.txt`. The `load_all()` method uses `path.read_text()` (line 22) -- a plain text reader with no PDF/DOCX parsing. The `load_from_dict()` static method (lines 25-33) accepts raw strings:
+
+```python
+return {k: v for k, v in docs.items() if isinstance(v, str) and v.strip()}
+```
+
+No `PyPDF2`, `python-docx`, `pdfminer`, or any document parsing library is imported anywhere.
+
+**Verdict:** CONFIRMED. The system is plaintext-only by design.
+
+#### Limitation 2: "Hardcoded Field References"
+
+**REFLECTION.md, line 55:**
+> Fact-checking prompt: Still has hardcoded field references (PPE, scaffolding) in the checking categories
+
+**Code evidence -- `prompts.py:54-64`, the 8 hardcoded categories:**
+
+```
+1. DATE CONSISTENCY
+2. PPE/SAFETY EQUIPMENT
+3. WHO DIRECTED THE WORK
+4. SCAFFOLDING CONDITION
+5. OSHA COMPLIANCE
+6. INJURY DETAILS
+7. STATUTE OF LIMITATIONS ARITHMETIC
+8. STRATEGIC OMISSIONS
+```
+
+These are embedded directly in the `FACT_CHECKING_PROMPT` string constant. They are not dynamically generated from document content. The prompt does include a mitigation: "SKIP any category that does not apply to the documents provided" (line 54), but the categories themselves are construction-accident-specific (PPE, scaffolding, OSHA).
+
+**Verdict:** CONFIRMED. Exactly 8 categories hardcoded at `prompts.py:56-64`. The "SKIP" instruction is a prompt-level workaround, not a code-level solution.
+
+#### Limitation 3: "No Legal Database Integration"
+
+**REFLECTION.md, line 56:**
+> Citation verification: For unknown cases, relies entirely on LLM training data for case law knowledge. A legal database integration (Westlaw, LexisNexis) would be far more reliable.
+
+**Code evidence -- `case_context.py` (entire file is 18 lines):**
+
+The `contexts` dictionary (lines 15-17) contains exactly **1 hardcoded entry**:
+
+```python
+contexts = {
+    "Rivera_v_Harmon_MSJ": RIVERA_V_HARMON_CONTEXT,
+}
+return contexts.get(case_id, "")
+```
+
+For any case_id other than `"Rivera_v_Harmon_MSJ"`, the return value is `""` -- an empty string. The citation verification prompt (`prompts.py:26`) has a `{case_context}` placeholder that receives this empty string, meaning the LLM gets zero domain-specific guidance.
+
+No imports of any legal database SDK, no API calls to Westlaw/LexisNexis/CourtListener, no web scraping of case law databases anywhere in the codebase.
+
+**Verdict:** CONFIRMED. Legal knowledge is either hardcoded (1 case) or absent (all others). The 19-line file is the entire "knowledge base."
+
+#### Limitation 4: "Single-Pass Analysis"
+
+**REFLECTION.md, line 57:**
+> Each agent makes one LLM call per item
+
+**Code evidence -- each agent's `execute()` method:**
+
+| Agent | LLM Call | Location | Single Call? |
+|-------|----------|----------|-------------|
+| DocumentParserAgent | `self._call_llm(prompt, ExtractionResult)` | `document_parser.py:26` | Yes -- 1 call total |
+| CitationVerifierAgent | `self._call_llm(prompt, VerificationResult)` | `citation_verifier.py:37` | 1 call **per citation** |
+| FactCheckerAgent | `self._call_llm(prompt, FactCheckResult)` | `fact_checker.py:50` | Yes -- 1 call total |
+| ReportSynthesizerAgent | `self._call_llm(prompt, SynthesisResult)` | `report_synthesizer.py:31` | Yes -- 1 call total |
+| JudicialMemoAgent | `self._call_llm(prompt, JudicialMemoResult)` | `judicial_memo.py:34` | Yes -- 1 call total |
+
+The `_call_llm` method in `BaseAgent` (`base_agent.py:22-33`) wraps a single `get_structured_response` call:
+
+```python
+async def _call_llm(self, prompt: str, response_model: Type[BaseModel],
+                    system_prompt: str = "", timeout: int = 120) -> BaseModel:
+    try:
+        return await asyncio.wait_for(
+            self.llm_service.get_structured_response(
+                prompt=prompt, response_model=response_model, system_prompt=system_prompt
+            ),
+            timeout=timeout,
+        )
+```
+
+No agent loops, retries on content quality, or multi-turn conversations. Each agent fires one LLM call and accepts whatever comes back.
+
+**Nuance:** The citation verifier calls `_call_llm` once **per citation** (via `_verify_one` at `citation_verifier.py:29-58`), but each individual citation is still single-pass.
+
+**Verdict:** CONFIRMED. No multi-turn verification, no self-correction, no iterative refinement.
+
+#### Limitation 5: "No Confidence Calibration"
+
+**REFLECTION.md, line 58:**
+> Confidence scores are LLM-generated estimates, not calibrated probabilities
+
+**Code evidence:**
+
+Confidence values flow through the system as raw floats with no transformation:
+
+- Citation verifier receives raw `confidence: float` from LLM (`citation_verifier.py:11`):
+  ```python
+  confidence: float = Field(ge=0, le=1)
+  ```
+- Fact checker extracts raw `confidence` from LLM output (`fact_checker.py:72`):
+  ```python
+  confidence=item.get("confidence") or 0.5,
+  ```
+- Report synthesizer passes through raw scores (`report_synthesizer.py:46-50`):
+  ```python
+  scores = ConfidenceScores(
+      citation_verification=result.confidence_scores.get("citation_verification", 0.5),
+      fact_consistency=result.confidence_scores.get("fact_consistency", 0.5),
+      overall=result.confidence_scores.get("overall", 0.5),
+  )
+  ```
+
+No Platt scaling, isotonic regression, or any calibration transform. The `Field(ge=0, le=1)` constraint clamps range but does not calibrate.
+
+**Verdict:** CONFIRMED. Raw LLM floats with zero mathematical transformation.
+
+---
+
+### 40.7 Claim: "5th Agent Separation Improved Memo Quality"
+
+**REFLECTION.md, lines 10-11:**
+> The Report Synthesizer was doing two distinct jobs: (1) aggregating findings and confidence scores, and (2) writing a judicial memo. These require different skills -- analytical aggregation vs. persuasive legal writing
+
+**Code evidence -- clear separation of concerns:**
+
+**ReportSynthesizerAgent** (`report_synthesizer.py:19-63`) -- analytical aggregation only:
+- Input: `citation_results`, `fact_results` (line 20-21)
+- Output: `top_findings`, `confidence_scores`, `unknown_issues` (lines 52-56)
+- Prompt: "Synthesize the citation verification and fact-checking results into a final verification report" (`prompts.py:69`)
+- No memo writing -- returns structured data, not prose
+
+**JudicialMemoAgent** (`judicial_memo.py:16-49`) -- persuasive legal writing only:
+- Input: `top_findings`, `confidence_scores`, `case_context` (lines 21-23)
+- Output: `memo`, `key_issues`, `recommended_actions`, `overall_assessment` (lines 35-40)
+- Prompt: "Write in formal legal language. Be specific about which claims are contradicted" (`prompts.py:94`)
+- Receives pre-computed findings, does not re-analyze citations or facts
+
+**Pipeline order in orchestrator** (`orchestrator.py:131-168`):
+1. Synthesizer runs first (line 135) -- produces findings and scores
+2. Memo agent runs after (line 160) -- consumes synthesizer output
+
+```python
+# Step 4: Synthesize report
+synthesis = await self.synthesizer.execute({
+    "citation_results": citation_results,
+    "fact_results": fact_results,
+})
+
+# Step 5: Generate judicial memo
+memo_data = await self.memo_agent.execute({
+    "top_findings": top_findings,
+    "confidence_scores": confidence_scores,
+    "case_context": case_context,
+})
+```
+
+**Verdict:** CONFIRMED. Clean separation. The synthesizer does not write prose; the memo agent does not analyze raw data. The data flows from synthesizer output to memo input.
+
+---
+
+### 40.8 Claim: "Backward Compatibility Preserved"
+
+**REFLECTION.md, line 18:**
+> Empty POST body still loads from disk and uses the Rivera context, so existing eval harnesses work unchanged.
+
+**Code evidence -- `orchestrator.py:55-71`:**
+
+```python
+async def analyze(
+    self,
+    documents: Optional[Dict[str, str]] = None,
+    case_id: Optional[str] = None,
+) -> Dict[str, Any]:
+    ...
+    if documents:
+        docs = DocumentService.load_from_dict(documents)
+    else:
+        docs = self.doc_service.load_all()      # loads .txt files from disk
+        if not case_id:
+            motion_id = "Rivera_v_Harmon_MSJ"   # defaults to known case
+```
+
+When `documents` is `None` (empty POST body):
+1. `load_all()` reads the 4 `.txt` files from disk (line 69)
+2. `motion_id` defaults to `"Rivera_v_Harmon_MSJ"` (line 71)
+3. `get_case_context("Rivera_v_Harmon_MSJ")` returns the hardcoded legal context (case_context.py:16)
+
+**Verdict:** CONFIRMED. The fallback path preserves exact pre-genericization behavior.
+
+---
+
+### 40.9 Time Allocation Honesty
+
+**REFLECTION.md, lines 102-109:**
+> - Foundation (models, services): ~1 hour
+> - Agent implementation: ~2 hours
+> - 5th agent + genericization: ~1.5 hours
+> - Eval harness improvements: ~1 hour
+> - UI rebuild: ~1 hour
+> - Stretch (confidence reasoning, graceful failure, pipeline status): ~1 hour
+> - Reflection + polish: ~0.5 hours
+
+**Total: 8 hours**
+
+**Plausibility assessment:** Foundation ~80 LOC, 4 agents ~250 LOC sharing a base class, 5th agent + generics ~85 LOC, eval harness ~260 LOC. Each phase's claimed time is consistent with its code volume. The 2hr agent phase is the most ambitious but benefits from the shared `BaseAgent` pattern.
+
+**Verdict:** PLAUSIBLE. No phase claims an unrealistically short time for its scope.
+
+---
+
+### 40.10 Claim: "Graceful Failure Handling"
+
+**REFLECTION.md, lines 79-86:**
+> The orchestrator now tracks every agent's status (`pending -> running -> success/failed`)
+
+**Code evidence -- `orchestrator.py:22-43`:** Four helper functions (`_track`, `_start`, `_succeed`, `_fail`) manage `AgentStatus` objects through `pending -> running -> success/failed` transitions with `duration_ms` timing.
+
+**Failure behavior per agent:**
+
+| Agent | On Failure | Code Location |
+|-------|-----------|---------------|
+| Parser | Immediate error report returned | `orchestrator.py:82-93` |
+| Citation Verifier | Sets `citation_results = []`, pipeline continues | `orchestrator.py:115-118` |
+| Fact Checker | Sets `fact_results = []`, pipeline continues | `orchestrator.py:122-125` |
+| Synthesizer | Builds minimal report with zero scores | `orchestrator.py:140-148` |
+| Judicial Memo | Report returned without memo (`memo_data = None`) | `orchestrator.py:166-168` |
+
+Parser failure short-circuits at lines 86-93 (returns `VerificationReport` with error). Memo failure is non-fatal at lines 158-168 (`memo_data = None`). Final report conditionally includes memo at line 179: `JudicialMemo(**memo_data) if memo_data else None`.
+
+**Verdict:** CONFIRMED. Every agent has explicit try/except handling. The degradation hierarchy matches what REFLECTION.md claims. Parser failure is fatal; all other failures allow partial results.
+
+---
+
+### 40.11 Claim: "Per-Flag Confidence Reasoning"
+
+**REFLECTION.md, line 77:**
+> Each verified citation, fact, and finding now includes a `confidence_reasoning` field
+
+**Code evidence:** The `confidence_reasoning` field is requested in three prompts -- citation verification (`prompts.py:28`), fact checking (`prompts.py:67`), and report synthesis (`prompts.py:82`) -- all with identical wording: "1-2 sentences explaining why you assigned this confidence level." The field is defined in the Pydantic model at `citation_verifier.py:12` as `confidence_reasoning: str = ""`.
+
+**Verdict:** CONFIRMED. Present in prompts, models, and passed through the pipeline.
+
+---
+
+### 40.12 Complete Mapping Summary Table
+
+| REFLECTION.md Claim | Line | Code Location | Status |
+|---------------------|------|---------------|--------|
+| 4 specialized agents + orchestrator | 6 | `backend/agents/*.py` (5 files) | CONFIRMED |
+| 5th agent = JudicialMemoAgent | 10 | `judicial_memo.py:16` | CONFIRMED |
+| Parallel via asyncio.gather() | 8 | `orchestrator.py:110` | CONFIRMED |
+| ~40% time improvement | 8 | Architecture analysis | PLAUSIBLE |
+| Case context lookup table | 16 | `case_context.py:13-18` | CONFIRMED |
+| Dual evaluation (keyword + LLM) | 22 | `metrics.py` + `llm_judge.py` | CONFIRMED |
+| Combined metrics (union) | 26 | `metrics.py:112-143` | CONFIRMED |
+| Plain text only | 54 | `document_service.py:10-22` | CONFIRMED |
+| Hardcoded field references (8 cats) | 55 | `prompts.py:56-64` | CONFIRMED |
+| No legal database integration | 56 | `case_context.py` (19 lines total) | CONFIRMED |
+| Single-pass analysis | 57 | `base_agent.py:22-33`, all agents | CONFIRMED |
+| No confidence calibration | 58 | Raw floats, no transforms | CONFIRMED |
+| Backward compatibility | 18 | `orchestrator.py:66-71` | CONFIRMED |
+| Graceful failure handling | 79-86 | `orchestrator.py:22-43, 82-168` | CONFIRMED |
+| Per-flag confidence reasoning | 77 | `prompts.py:28,67,82`, verifier/checker models | CONFIRMED |
+| Time allocation (8hr total) | 102-109 | Code volume analysis | PLAUSIBLE |
+
+---
+
+### 40.13 Interview Angles
+
+**Beginner -- "Walk me through how your reflection matches your code"**
+
+Pick the strongest claim and trace it end-to-end: "I claimed parallel execution via asyncio.gather(). Here is where it happens -- orchestrator.py line 110. Tasks created on lines 105-108 without await, gathered with return_exceptions=True. Each exception handled separately on lines 115-127."
+
+**Intermediate -- "How do you know your limitations section is honest?"**
+
+Point to specifics: "Single-pass analysis -- base_agent._call_llm on line 22 is one call, no retry loop. No confidence calibration -- the float goes from citation_verifier.py line 11 to report_synthesizer.py line 47 with zero transformation."
+
+**Expert -- "What would you change about your reflection?"**
+
+1. **The ~40% claim is not measured.** The orchestrator tracks `duration_ms` per agent (line 36), but no test compares serial vs. parallel. Should say "estimated 20-40%."
+2. **The citation verifier has internal parallelism not mentioned.** `citation_verifier.py:72-75` uses its own `asyncio.gather()`. The reflection mentions orchestrator-level parallelism but misses this agent-level parallelism -- actually a strength.
+3. **The LLM-as-judge cost claim ("doubles eval time") is understated.** The judge runs up to `N * M` LLM calls (N findings * M ground truths), though the `break` on `llm_judge.py:97` short-circuits after a match.
+4. **"Structured output" claim understates fragility.** `FactCheckResult` uses `List[Dict[str, Any]]` (fact_checker.py:9) -- structured in prompt, loose in code.
+
+---
+
+### 40.14 The Meta-Lesson
+
+An interviewer who reads your reflection and reviews your code is doing this exact mapping. One unverifiable claim tanks credibility for every claim. The strongest signal here: **the limitations section is brutally accurate**. Every limitation can be trivially confirmed by reading the code. The system does not pretend to have capabilities it lacks.
+
+
+---
+
+## 41. Prompt Engineering Deep Dive
+
+### Why This Section Matters
+
+The five prompt templates in `backend/utils/prompts.py` (lines 1-100) are the business logic of BS Detector. Every pipeline decision -- what gets flagged, what gets ignored, how confidence is expressed -- is determined by prompt wording, not by Python code. This section reproduces each prompt verbatim, annotates every design choice line-by-line, and traces precision rules back to the specific false-positive patterns they were written to prevent.
+
+**Interview angle:** "Where does the business logic live in this system?" The answer is not the agent code -- it is the prompts. The agents are orchestration scaffolding; the prompts define what the LLM actually does.
+
+---
+
+### 41.1 Prompt Inventory
+
+| # | Constant | File Line | Agent Consumer | Purpose |
+|---|----------|-----------|----------------|---------|
+| 1 | `CITATION_EXTRACTION_PROMPT` | `prompts.py:1-12` | `DocumentParserAgent` | Extract all legal citations from an MSJ |
+| 2 | `CITATION_VERIFICATION_PROMPT` | `prompts.py:14-28` | `CitationVerifierAgent` | Verify each citation against its claimed proposition |
+| 3 | `FACT_CHECKING_PROMPT` | `prompts.py:30-67` | `FactCheckerAgent` | Cross-reference MSJ facts against supporting documents |
+| 4 | `REPORT_SYNTHESIS_PROMPT` | `prompts.py:69-82` | `ReportSynthesisAgent` | Merge citation + fact results into a unified report |
+| 5 | `JUDICIAL_MEMO_PROMPT` | `prompts.py:84-100` | `JudicialMemoAgent` | Generate a formal judicial memo from findings |
+
+---
+
+### 41.2 CITATION_EXTRACTION_PROMPT (Lines 1-12)
+
+**Level: Beginner**
+
+#### Verbatim Prompt
+
+```python
+CITATION_EXTRACTION_PROMPT = """Extract ALL legal citations from this Motion for Summary Judgment.
+
+For each citation identify:
+1. The exact citation text (case name, volume, reporter, page)
+2. The proposition it is claimed to support (what the brief says the case stands for)
+3. Any direct quotes attributed to the cited authority
+4. The section/paragraph where it appears
+
+Motion for Summary Judgment:
+{msj_text}
+
+Return a JSON object with a "citations" array. Each citation must have: citation_text,
+claimed_proposition, source_location, context (the surrounding sentence)."""
+```
+
+#### Line-by-Line Annotation
+
+| Line | Text | Design Rationale |
+|------|------|------------------|
+| 1 | `Extract ALL legal citations` | The word "ALL" prevents the model from summarizing or sampling. Without it, LLMs tend to return 3-5 "representative" citations and skip the rest. |
+| 1 | `from this Motion for Summary Judgment` | Anchors the domain. The model knows it is reading a legal brief, not a research paper or news article. This primes legal-citation parsing heuristics. |
+| 3-4 | `exact citation text (case name, volume, reporter, page)` | Specifies the Bluebook citation format the model should extract. Without the parenthetical examples, models sometimes return only case names without reporters. |
+| 5 | `The proposition it is claimed to support` | Critical distinction: this asks what the *brief claims* the case stands for, not what the case actually holds. This separation is what makes verification possible downstream. |
+| 6 | `Any direct quotes attributed to the cited authority` | Captures fabricated quotes. If the brief says `"A hirer is never liable..."` and attributes it to Privette, this field preserves the alleged quote for verification. |
+| 7 | `The section/paragraph where it appears` | Enables traceability. The judicial memo can reference "paragraph 3 of the MSJ" rather than just "somewhere in the brief." |
+| 9-10 | `Motion for Summary Judgment: {msj_text}` | Single injection point. The variable `{msj_text}` is the only dynamic input. |
+| 12 | `citation_text, claimed_proposition, source_location, context` | Explicit field names enforce a schema contract. The downstream `CitationVerifierAgent` expects exactly these four fields. |
+
+#### Why These Four Fields?
+
+The schema `{citation_text, claimed_proposition, source_location, context}` was designed for the verification pipeline:
+
+1. **`citation_text`** -- Fed to the verification prompt as the case to look up
+2. **`claimed_proposition`** -- Fed as the claim to verify against the actual holding
+3. **`source_location`** -- Used in the judicial memo for page/paragraph references
+4. **`context`** -- The surrounding sentence captures direct quotes and framing that may themselves be misleading (e.g., the word "never" inserted into a Privette quote)
+
+Without `context`, the system would miss quote fabrication -- one of the most common forms of legal brief manipulation.
+
+---
+
+### 41.3 CITATION_VERIFICATION_PROMPT (Lines 14-28)
+
+**Level: Intermediate**
+
+#### Verbatim Prompt
+
+```python
+CITATION_VERIFICATION_PROMPT = """Verify whether this legal citation actually supports
+the proposition claimed in the brief.
+
+Citation: {citation_text}
+Claimed proposition: {claimed_proposition}
+Direct quote (if any): {context}
+
+Check for:
+1. Does the cited case actually hold what the brief claims? Look for mischaracterization
+   of holdings.
+2. If a direct quote is provided, is it accurate? Look for inserted or omitted words
+   that change meaning.
+3. Is the cited authority binding in the relevant jurisdiction? Flag federal cases,
+   out-of-state cases.
+4. Does the citation actually exist, or could it be fabricated?
+
+{case_context}
+
+Return JSON with: is_supported (bool), confidence (0-1), confidence_reasoning (1-2
+sentences explaining why you assigned this confidence level), discrepancies (list of
+strings), status (supported/not_supported/misleading/could_not_verify), notes."""
+```
+
+#### Line-by-Line Annotation
+
+| Line | Text | Design Rationale |
+|------|------|------------------|
+| 14 | `Verify whether this legal citation actually supports` | The word "actually" is deliberate. It frames the task as adversarial verification, not summarization. The model is primed to look for problems. |
+| 16-18 | Three injection points: `{citation_text}`, `{claimed_proposition}`, `{context}` | One citation at a time. This prompt runs N times (once per extracted citation). Single-citation focus prevents the model from confusing claims across citations. |
+| 20-21 | `Look for mischaracterization of holdings` | Explicit instruction to check whether the brief's description of a case matches the case's actual holding. Without this, models tend to verify only that the case exists. |
+| 22-23 | `Look for inserted or omitted words that change meaning` | Targets the "never" insertion pattern. In the Rivera test case, the MSJ inserts the word "never" into the Privette holding -- changing a rebuttable presumption into absolute immunity. |
+| 24-25 | `Flag federal cases, out-of-state cases` | Jurisdiction checking. A Texas appellate decision (e.g., Dixon v. Lone Star) has no binding authority in California state court. Without this line, models accept any real case as "valid." |
+| 26 | `Does the citation actually exist, or could it be fabricated?` | Hallucination detection. LLMs can be confident about fabricated citations. This line forces the model to consider the possibility of wholesale fabrication. |
+| 27 | `{case_context}` | Optional context injection point. When the system has additional context about the case (e.g., jurisdiction, parties), it is injected here. This is the only prompt with a flexible context block. |
+| 28 | `status (supported/not_supported/misleading/could_not_verify)` | Four-way status enum. The `misleading` status is critical -- it captures citations that technically exist but are misrepresented. The `could_not_verify` status prevents the model from hallucinating a verdict on unknown citations. |
+| 28 | `confidence_reasoning (1-2 sentences)` | Forces the model to justify its confidence score. Without this, confidence values cluster at 0.9 regardless of actual certainty. The reasoning constraint produces calibrated scores. |
+
+#### The `{case_context}` Injection Point
+
+This is the most architecturally significant variable across all five prompts. It serves as a **knowledge augmentation slot**:
+
+- When the system has retrieved actual case law (from a legal database or RAG retrieval), the real holding is injected here
+- When no external knowledge is available, the field is empty and the model relies on parametric knowledge
+- This design means the same prompt works in both RAG-augmented and standalone modes
+
+The injection is at the end of the prompt, after the checklist, so the model has already been instructed *what to look for* before receiving the reference material. This ordering prevents the model from simply parroting the injected context.
+
+#### The Four-Way Status Enum
+
+```
+supported          -- Citation exists, holds what brief claims, binding in jurisdiction
+not_supported      -- Citation exists but does NOT support the claimed proposition
+misleading         -- Citation exists, partially relevant, but brief mischaracterizes it
+could_not_verify   -- Cannot determine if citation is real or if holding matches
+```
+
+The `misleading` status is where the Privette "never" misquote lands: the case is real, the page number is real, but the brief inserted a word that changes a presumption into an absolute rule. This is neither "supported" nor "not_supported" -- it is a distinct failure mode.
+
+---
+
+### 41.4 FACT_CHECKING_PROMPT (Lines 30-67)
+
+**Level: Expert**
+
+This is the longest prompt at 38 lines. Every line traces to a specific false-positive pattern discovered during development and eval iteration.
+
+#### Verbatim Prompt
+
+```python
+FACT_CHECKING_PROMPT = """Cross-reference the factual claims from the Motion for
+Summary Judgment against the supporting documents.
+
+MSJ Claims:
+{msj_facts}
+
+Police Report:
+{police_text}
+
+Medical Records:
+{medical_text}
+
+Witness Statement:
+{witness_text}
+
+IMPORTANT: The MSJ is the document being verified. When the police report, medical
+records, or witness statement contradict what the MSJ claims or implies, mark the fact
+as "contradictory" — even if those other documents agree with each other. The question
+is always "does the evidence support or contradict the MSJ?"
+
+PRECISION RULES — avoid false flags:
+- "contradictory" means the MSJ makes a SPECIFIC CLAIM that is directly refuted by
+  another document. Example: MSJ says "no PPE worn" but witness says "wore harness"
+  = contradictory.
+- An omission is only "contradictory" if the MSJ ACTIVELY HIDES material evidence
+  that would change the legal outcome (e.g., omitting evidence of retained control,
+  omitting post-incident evidence destruction).
+- An omission is NOT contradictory if the MSJ simply doesn't mention routine,
+  non-material facts that appear in other documents (e.g., a routine inspection,
+  a scheduled physical exam, arrival times, the purpose of a visit). Mark these as
+  "consistent" — the MSJ is not required to recite every fact from every document.
+- If all documents agree and the MSJ does not misstate any fact, mark the fact as
+  "consistent" regardless of whether the MSJ mentions every detail. Consistent
+  documents should produce ONLY "consistent" facts.
+- The purpose or context of a document (e.g., "routine inspection" vs "incident
+  response") is NOT a factual claim in the MSJ. Do not flag differences in document
+  framing as contradictions.
+- When in doubt, prefer "consistent" or "could_not_verify" over "contradictory".
+  Only flag real contradictions.
+
+Check the following categories. SKIP any category that does not apply to the
+documents provided — if the documents don't discuss a topic (e.g., no scaffolding
+mentioned anywhere, no contractor control discussed), do NOT produce a fact entry
+for that category. Only produce entries for categories where the MSJ actually makes
+a relevant claim AND the supporting documents address the same topic.
+
+1. DATE CONSISTENCY: Does the MSJ's stated incident date match the other documents?
+   If dates differ, mark contradictory.
+2. PPE/SAFETY EQUIPMENT: Does the MSJ's claim about PPE match the other documents?
+   Only check if PPE or safety equipment is discussed.
+3. WHO DIRECTED THE WORK: If the MSJ claims an independent contractor controlled
+   work, do the other documents show the hirer directed or controlled work instead?
+   Only check if the MSJ discusses contractor vs. hirer control.
+4. SCAFFOLDING CONDITION: If the MSJ discusses or implies safe scaffolding conditions,
+   do the other documents reveal scaffolding defects (rust, plywood, bent pins)?
+   Only check if scaffolding is mentioned.
+5. OSHA COMPLIANCE: If the MSJ references OSHA inspections, is this verifiable from
+   other documents?
+6. INJURY DETAILS: If injuries are discussed, are they consistently described across
+   documents?
+7. STATUTE OF LIMITATIONS ARITHMETIC: If the MSJ states a specific elapsed time
+   (e.g. "362 days" or "one year and 362 days"), verify the math using the CORRECT
+   incident date from the police report/medical records. If the MSJ used the wrong
+   incident date, the day count is wrong — mark this CONTRADICTORY.
+8. STRATEGIC OMISSIONS: Identify MATERIAL facts in the other documents that the MSJ
+   fails to mention AND that would undermine the MSJ's legal arguments — especially
+   post-incident remedial measures, evidence destruction or rebuilding (spoliation),
+   and witness observations that directly contradict MSJ claims. Mark these as
+   contradictory ONLY if the omitted fact would change the legal analysis. Do NOT
+   flag routine details.
+
+{case_context}
+
+Return JSON with a "verified_facts" array. Each must have: fact_text,
+source_document, category (one of: DATE_CONSISTENCY, PPE_SAFETY, WORK_CONTROL,
+SCAFFOLDING_CONDITION, OSHA_COMPLIANCE, INJURY_DETAILS, STATUTE_OF_LIMITATIONS,
+STRATEGIC_OMISSION), is_consistent (bool), confidence (0-1), confidence_reasoning
+(1-2 sentences explaining why you assigned this confidence level),
+contradictory_sources (list), supporting_sources (list), status
+(consistent/contradictory/could_not_verify), summary."""
+```
+
+#### The MSJ-Centric Framing (Lines 44-45)
+
+```
+IMPORTANT: The MSJ is the document being verified. When the police report, medical
+records, or witness statement contradict what the MSJ claims or implies, mark the
+fact as "contradictory" — even if those other documents agree with each other.
+The question is always "does the evidence support or contradict the MSJ?"
+```
+
+**Why this exists:** Without this instruction, the model treats all four documents as equal peers and looks for *any* disagreement between *any* two documents. This produces findings like "the police report mentions arrival time but the medical records don't" -- true but useless. The MSJ-centric framing makes every comparison one-directional: MSJ claim vs. evidence.
+
+This is the single most important design decision in the entire prompt. It transforms the task from "find inconsistencies across documents" into "verify the MSJ's claims against evidence."
+
+#### Precision Rules -- Traced to False-Positive Patterns
+
+Each precision rule was added to eliminate a specific class of false positives observed during development:
+
+| Rule (Line) | False-Positive Pattern It Prevents | Example |
+|---|---|---|
+| `"contradictory" means SPECIFIC CLAIM directly refuted` (line 47) | Model flagging vague thematic differences as contradictions | MSJ discusses "workplace safety" and police report discusses "response time" -- model flags as contradictory because "safety narratives differ" |
+| `omission is only contradictory if MSJ ACTIVELY HIDES material evidence` (line 48) | Model flagging every fact present in evidence but absent from MSJ | Police report mentions weather conditions; MSJ doesn't mention weather; model flags "strategic omission of weather data" |
+| `omission is NOT contradictory if MSJ doesn't mention routine facts` (lines 49-50) | Model flagging routine administrative details as suspicious omissions | Medical record notes a "scheduled physical exam"; MSJ doesn't mention it; model flags as "omitted medical evidence" |
+| `Consistent documents should produce ONLY consistent facts` (line 51) | Model finding phantom contradictions even when all documents agree | All documents agree on the facts; model still produces 2-3 "contradictory" findings by over-reading implications |
+| `purpose or context of a document is NOT a factual claim` (line 52) | Model flagging differences in document framing as factual contradictions | Police report is an "incident response"; MSJ calls a visit a "routine inspection"; model flags framing difference as contradiction |
+| `When in doubt, prefer consistent or could_not_verify` (line 53) | Model defaulting to "contradictory" when uncertain | Model is unsure whether a detail is material; defaults to flagging it rather than acknowledging uncertainty |
+
+#### The Eight Fact Categories -- Ordered by Objectivity
+
+The categories are numbered 1-8 in deliberate order, from most objectively verifiable to most subjectively assessed:
+
+| # | Category | Objectivity | Why This Order |
+|---|----------|-------------|----------------|
+| 1 | `DATE_CONSISTENCY` | Purely objective | A date either matches or it doesn't. No interpretation needed. |
+| 2 | `PPE_SAFETY` | Highly objective | Either the worker wore a harness or didn't. Documents either agree or they don't. |
+| 3 | `WORK_CONTROL` | Moderate | Requires interpreting whether "directing" constitutes "control." Legal nuance increases. |
+| 4 | `SCAFFOLDING_CONDITION` | Moderate | Physical evidence (rust, plywood) is objective, but "safe condition" is partly subjective. |
+| 5 | `OSHA_COMPLIANCE` | Moderate | Compliance is binary but may require external verification. |
+| 6 | `INJURY_DETAILS` | Moderate | Medical descriptions may use different terminology for the same injury. |
+| 7 | `STATUTE_OF_LIMITATIONS` | High (math) | Arithmetic is objective, but requires correctly identifying the base date first. |
+| 8 | `STRATEGIC_OMISSION` | Most subjective | Requires judging whether an omission is "material" -- the most interpretation-heavy category. |
+
+**Why objectivity ordering matters:** LLMs process instructions sequentially. By placing the most objective categories first, the model establishes a pattern of rigorous, evidence-based reasoning before encountering the subjective categories. This anchoring effect reduces hallucinated contradictions in categories 7-8.
+
+#### The SKIP Instruction (Lines 54-56)
+
+```
+SKIP any category that does not apply to the documents provided — if the documents
+don't discuss a topic (e.g., no scaffolding mentioned anywhere, no contractor control
+discussed), do NOT produce a fact entry for that category.
+```
+
+**Why this exists:** Without this instruction, the model generates 8 entries every time -- one per category -- even when the documents contain no relevant information. For example, if no document mentions scaffolding, the model would generate: `{category: "SCAFFOLDING_CONDITION", status: "could_not_verify", summary: "No scaffolding information found"}`. This noise dilutes the report and wastes tokens. The SKIP instruction produces variable-length output that contains only actionable findings.
+
+#### Category 7: Statute of Limitations Arithmetic (Lines 62-63)
+
+```
+7. STATUTE OF LIMITATIONS ARITHMETIC: If the MSJ states a specific elapsed time
+   (e.g. "362 days" or "one year and 362 days"), verify the math using the CORRECT
+   incident date from the police report/medical records. If the MSJ used the wrong
+   incident date, the day count is wrong — mark this CONTRADICTORY. Show: (a) the
+   MSJ's claimed day count, (b) the correct day count using the real date, (c) why
+   they differ.
+```
+
+This category is uniquely powerful because it chains two errors: the date error (category 1) propagates into a calculation error (category 7). If the MSJ states March 14 instead of March 12, the "362 days" calculation is based on the wrong start date. The prompt explicitly instructs the model to re-derive the arithmetic using the correct date from other documents. This turns a simple date discrepancy into a demonstrated pattern of cascading inaccuracy.
+
+#### Category 8: Strategic Omissions (Lines 63-64)
+
+```
+8. STRATEGIC OMISSIONS: Identify MATERIAL facts in the other documents that the MSJ
+   fails to mention AND that would undermine the MSJ's legal arguments — especially
+   post-incident remedial measures, evidence destruction or rebuilding (spoliation),
+   and witness observations that directly contradict MSJ claims.
+```
+
+The three specific examples -- remedial measures, spoliation, contradicting witness observations -- are the three most common patterns in bad-faith MSJ filings. The "ONLY if the omitted fact would change the legal analysis" qualifier prevents the model from flagging every missing detail. This is the precision/recall tradeoff in a single sentence: cast a wide net (look for omissions) but filter aggressively (only material ones).
+
+---
+
+### 41.5 REPORT_SYNTHESIS_PROMPT (Lines 69-82)
+
+**Level: Intermediate**
+
+#### Verbatim Prompt
+
+```python
+REPORT_SYNTHESIS_PROMPT = """Synthesize the citation verification and fact-checking
+results into a final verification report.
+
+Citation Results:
+{citation_results}
+
+Fact-Checking Results:
+{fact_results}
+
+Create a structured report that:
+1. Lists the top findings ranked by severity and confidence. Only include actual
+   discrepancies, contradictions, mischaracterizations, or concerns — do NOT include
+   mere summaries of consistent or unproblematic facts. If no issues are found, return
+   an empty top_findings array. Do NOT promote "could_not_verify" items to findings
+   unless they represent a material gap. Items that are simply irrelevant to the case
+   (e.g., scaffolding not mentioned in an electrician case) should be excluded entirely.
+2. Calculates overall confidence scores. If all facts are consistent and no citation
+   issues are found, set fact_consistency and overall scores HIGH (0.8-1.0). Only
+   lower scores when real discrepancies exist.
+3. Flags items that could not be verified ONLY if they represent material unverifiable
+   claims
+
+Return JSON with: top_findings (array of {{id, type, description, severity, confidence,
+confidence_reasoning (1-2 sentences explaining why you assigned this confidence level),
+evidence, recommendation}}), confidence_scores ({{citation_verification, fact_consistency,
+overall}}), unknown_issues (array of strings)."""
+```
+
+#### Anti-Noise Instructions
+
+The synthesis prompt contains three explicit anti-noise directives:
+
+**1. Positive-finding exclusion (line 78):**
+```
+do NOT include mere summaries of consistent or unproblematic facts
+```
+Without this, the report is 80% "Date is consistent across documents" and 20% actual findings. The model's default behavior is to summarize everything it checked, not just what failed.
+
+**2. could_not_verify suppression (line 79):**
+```
+Do NOT promote "could_not_verify" items to findings unless they represent a material gap
+```
+Without this, every `could_not_verify` status gets promoted to a "finding," creating alarm about items the system simply couldn't check. The word "material" is the filter.
+
+**3. Irrelevance exclusion (line 79):**
+```
+Items that are simply irrelevant to the case (e.g., scaffolding not mentioned in an
+electrician case) should be excluded entirely
+```
+This handles the case where the SKIP instruction in the fact-checking prompt failed -- if the fact-checker produced an entry for an irrelevant category, the synthesis prompt filters it out.
+
+**4. Confidence calibration (line 80):**
+```
+If all facts are consistent and no citation issues are found, set fact_consistency
+and overall scores HIGH (0.8-1.0). Only lower scores when real discrepancies exist.
+```
+Without this instruction, models default to moderate confidence (0.5-0.7) even when everything checks out. This creates a "boy who cried wolf" problem where every report looks concerning. The explicit calibration instruction ensures that a clean brief gets a clean score.
+
+---
+
+### 41.6 JUDICIAL_MEMO_PROMPT (Lines 84-100)
+
+**Level: Intermediate**
+
+#### Verbatim Prompt
+
+```python
+JUDICIAL_MEMO_PROMPT = """Based on these verification findings, write a structured
+judicial memo summarizing the most critical issues found in the legal brief.
+
+Top Findings:
+{findings}
+
+Confidence Scores:
+{confidence_scores}
+
+{case_context}
+
+Write in formal legal language. Be specific about which claims are contradicted and
+by what evidence.
+
+Return JSON with:
+- memo: A 3-5 sentence paragraph for a judge highlighting the most material
+  discrepancies
+- key_issues: An array of 3-5 bullet-point strings summarizing each critical issue
+- recommended_actions: An array of 2-3 strings suggesting what the court should do
+- overall_assessment: A one-sentence assessment of the brief's reliability"""
+```
+
+#### Formal Legal Writing vs. Analytical Aggregation
+
+This prompt serves a fundamentally different purpose from the synthesis prompt:
+
+| Dimension | `REPORT_SYNTHESIS_PROMPT` | `JUDICIAL_MEMO_PROMPT` |
+|-----------|--------------------------|----------------------|
+| Audience | Internal pipeline (machine-readable) | Judge (human-readable) |
+| Format | Structured JSON arrays | Formal legal prose + bullet points |
+| Tone | Analytical, neutral | Formal legal language |
+| Content | All findings with metadata | Only the "most critical" issues |
+| Output | `top_findings[]`, `confidence_scores{}` | `memo`, `key_issues[]`, `recommended_actions[]` |
+
+The key design choice is that the judicial memo does **not** receive raw citation/fact data. It receives the already-synthesized `{findings}` and `{confidence_scores}` from the synthesis step. This two-stage filtering (fact-check -> synthesize -> memo) means the memo only sees findings that survived both the precision rules and the anti-noise filters.
+
+**"Write in formal legal language"** -- This single instruction shifts the model's register from analytical to judicial. Without it, the memo reads like a data science report. With it, the output uses phrases like "the Court should note," "material discrepancies exist between," and "the moving party's representations regarding."
+
+**"Be specific about which claims are contradicted and by what evidence"** -- Prevents vague memos like "several inconsistencies were found." Forces the model to name names: "The MSJ's assertion that Rivera wore no PPE (paragraph 4) is contradicted by the police report (Ex. B) and witness statement (Ex. D), both of which confirm Rivera was wearing a hard hat, safety harness, and high-visibility vest."
+
+---
+
+### 41.7 Why Prompt Rules > Code Rules
+
+**Level: Expert -- Interview Ready**
+
+A common architectural question: why encode precision rules in prompts rather than in post-processing code?
+
+#### The Fundamental Asymmetry
+
+```
+Prompt rules:    influence GENERATION    (the model never produces the error)
+Code rules:      filter OUTPUT           (the model produces the error, code removes it)
+```
+
+**Generation-side control is strictly superior for three reasons:**
+
+1. **Token efficiency.** A false positive prevented at generation time costs zero tokens. A false positive caught by post-processing still consumed generation tokens for the incorrect finding, its confidence reasoning, its evidence trail, and its summary. In the fact-checking prompt, a single false-positive finding costs ~150 tokens. With 4-6 categories, uncontrolled generation can waste 600+ tokens per document on findings that will be filtered out.
+
+2. **Coherence preservation.** When code filters out a finding after generation, the remaining findings may reference the removed one. For example: "This date error (Finding 1) compounds the statute of limitations miscalculation (Finding 3)." If Finding 1 is filtered out, Finding 3's reasoning is broken. Generation-side prevention keeps the model's reasoning graph intact.
+
+3. **Confidence calibration.** If the model generates 8 findings and code removes 5, the model's confidence scores were calculated in the context of 8 findings. The scores become miscalibrated for the remaining 3. Generation-side rules mean the model assigns confidence in the context of only the real findings.
+
+#### Concrete Example: The Omission Rule
+
+Consider the precision rule at `prompts.py:49-50`:
+
+```
+An omission is NOT contradictory if the MSJ simply doesn't mention routine,
+non-material facts
+```
+
+**If this were a code rule:**
+```python
+# Post-processing approach (inferior)
+findings = [f for f in findings if not is_routine_omission(f)]
+```
+
+The function `is_routine_omission()` would need to:
+- Parse the finding's `fact_text` and `summary` fields
+- Determine whether the omitted fact is "routine" or "material"
+- Make a legal judgment about materiality using... another LLM call
+
+You end up needing an LLM to check the LLM's output -- doubling cost and latency. The prompt rule eliminates this entirely by preventing the model from flagging routine omissions in the first place.
+
+---
+
+### 41.8 Promptfoo A/B Testing: Precise vs. Imprecise Prompts
+
+**Level: Expert -- Interview Ready**
+
+The `evals/promptfoo/` directory contains two A/B comparison suites that quantify the impact of prompt precision.
+
+#### Test Configuration
+
+Both suites use the same structure:
+
+```yaml
+prompts:
+  - "file://prompts/fact_checking.txt"           # Precise
+  - "file://prompts/fact_checking_imprecise.txt"  # Imprecise
+```
+
+Promptfoo runs **every test case against both prompts**, producing side-by-side metrics.
+
+#### The Imprecise Prompts
+
+**Citation verification -- imprecise** (`citation_verification_imprecise.txt`):
+```
+You are a legal assistant. Review the citation below and tell me if it's valid.
+
+Citation: {{citation_text}}
+Proposition: {{claimed_proposition}}
+Quote: {{context}}
+
+Check if the citation supports the proposition and return your findings as JSON.
+```
+
+**Fact checking -- imprecise** (`fact_checking_imprecise.txt`):
+```
+You are a legal assistant. Compare these documents and find any inconsistencies.
+
+MSJ Claims:
+{{msj_facts}}
+
+Police Report:
+{{police_text}}
+
+Medical Records:
+{{medical_text}}
+
+Witness Statement:
+{{witness_text}}
+
+Return your findings as JSON.
+```
+
+#### What the Imprecise Prompts Lack
+
+| Feature | Precise Prompt | Imprecise Prompt | Impact |
+|---------|---------------|-----------------|--------|
+| Role specificity | "precise legal fact-checker" | "legal assistant" | Less domain focus |
+| JSON enforcement | "Always respond with valid JSON only" | "Return your findings as JSON" | Higher JSON parse failures |
+| Schema specification | Exact field names, types, enums | None | Unpredictable output schema |
+| Numbered categories | 6 explicit categories (DATE, PPE, etc.) | None | Model decides what to check |
+| Precision rules | 6 rules with examples | None | Higher false-positive rate |
+| Status enum | `consistent/contradictory/could_not_verify` | None | Freeform status values |
+| MSJ-centric framing | "The MSJ is the document being verified" | "Compare these documents" | Bidirectional comparisons |
+| Embedded legal knowledge | Privette holding, "never" warning | None | Misses known manipulation patterns |
+| `could_not_verify` status | Explicit in enum | Not mentioned | Model fabricates verdicts on unknown cases |
+
+#### Citation Verification A/B: Metric Categories
+
+From `prompt-precision-citations.yaml`, the test suite measures four dimensions:
+
+| Metric Category | What It Measures | Key Test Case |
+|-----------------|-----------------|---------------|
+| `schema/*` | Valid JSON, required fields present, enum compliance | All test cases |
+| `recall/*` | Correctly flags the Privette misquote and out-of-state citations | CIT-001: "never" insertion; CIT-002a: Dixon (TX) |
+| `precision/*` | Does NOT false-flag a valid citation | PRECISION: Accurate Privette presumption claim |
+| `uncertainty/*` | Says `could_not_verify` on a fictitious case rather than hallucinating | UNCERTAINTY: Marchetti v. Western Bay (fabricated) |
+
+**CIT-001 -- The "never" Insertion Test:**
+The precise prompt contains embedded legal knowledge (line 16-17 of `citation_verification.txt`):
+```
+Privette v. Superior Court, 5 Cal.4th 689 (1993) established a PRESUMPTION against
+hirer liability, NOT absolute immunity. The word "never" does NOT appear in the holding.
+```
+The imprecise prompt has no such knowledge. Without it, the model must rely on parametric knowledge alone, which may or may not recall that "never" was fabricated.
+
+**PRECISION -- The False-Positive Test:**
+This test provides an *accurate* description of Privette's holding ("presumptively not liable") and asserts that the model must mark it as `supported`. The imprecise prompt, lacking schema guidance and embedded knowledge, may over-correct and flag even accurate citations as suspicious.
+
+**UNCERTAINTY -- The Fabricated Citation Test:**
+Marchetti v. Western Bay Developers is entirely fictitious. The precise prompt includes `could_not_verify` as an explicit status option, guiding the model to hedge. The imprecise prompt has no such escape hatch, so the model either fabricates a verdict or shoehorns uncertainty into `supported`/`not_supported`.
+
+#### Fact Checking A/B: Metric Categories
+
+From `prompt-precision-facts.yaml`:
+
+| Metric Category | What It Measures | Key Test Case |
+|-----------------|-----------------|---------------|
+| `schema/*` | Has `verified_facts` array with correct structure | All test cases |
+| `recall/*` | Catches date, PPE, and control contradictions | DATE-001, PPE-001, CTRL-001 |
+
+**DATE-001 -- The Date Discrepancy:**
+The precise prompt has "1. DATE CONSISTENCY" as an explicit numbered category (line 56), forcing the model to check dates. The imprecise prompt says only "find any inconsistencies" -- the model may or may not prioritize date comparison.
+
+**PPE-001 -- The PPE Contradiction:**
+The precise prompt has "2. PPE/SAFETY EQUIPMENT" as an explicit category (line 57). The imprecise prompt provides no structure, so the model may describe the PPE discrepancy in narrative form that doesn't match the expected JSON schema.
+
+**CTRL-001 -- Retained Control:**
+The precise prompt has "3. WHO DIRECTED THE WORK" with the specific question: "do the other documents show the hirer directed or controlled work instead?" This frames the check in legal terms (retained control doctrine). The imprecise prompt has no such framing -- the model may notice Donner's involvement but fail to connect it to the legal concept of retained control.
+
+#### How to Read the A/B Results
+
+When running `promptfoo eval`, each test case produces a pass/fail for each prompt variant. The comparison table looks like:
+
+```
+Test Case               | Precise Prompt | Imprecise Prompt
+------------------------|----------------|------------------
+schema/valid_json       | PASS           | PASS
+schema/has_verified_facts| PASS          | FAIL (no array)
+recall/date001          | PASS           | PASS
+recall/ppe001           | PASS           | FAIL (narrative)
+recall/ctrl001          | PASS           | FAIL (missed)
+```
+
+The precise prompt should score higher on every metric. The imprecise prompt typically:
+- Fails `schema/*` metrics because it produces freeform JSON without the required field names
+- Passes some `recall/*` metrics because obvious contradictions (dates) are hard to miss
+- Fails subtle `recall/*` metrics (retained control) because it lacks the legal framing
+- Fails `precision/*` metrics because it false-flags valid citations
+- Fails `uncertainty/*` metrics because it fabricates verdicts on unknown citations
+
+---
+
+### 41.9 Cross-Prompt Architecture: How the Five Prompts Chain
+
+```
+MSJ Text
+  |
+  v
+[1] CITATION_EXTRACTION_PROMPT
+  |
+  | citations[] (citation_text, claimed_proposition, source_location, context)
+  |
+  v                                    MSJ + Police + Medical + Witness
+[2] CITATION_VERIFICATION_PROMPT       |
+  | (runs N times, once per citation)  v
+  |                              [3] FACT_CHECKING_PROMPT
+  |                                    |
+  | citation_results                   | fact_results
+  |                                    |
+  +------------------------------------+
+  |
+  v
+[4] REPORT_SYNTHESIS_PROMPT
+  |
+  | top_findings, confidence_scores
+  |
+  v
+[5] JUDICIAL_MEMO_PROMPT
+  |
+  v
+Final memo + key_issues + recommended_actions
+```
+
+Each prompt produces a JSON contract that the next prompt consumes. The schema fields specified in the `Return JSON with:` line of each prompt are not arbitrary -- they are the input fields expected by the downstream prompt.
+
+---
+
+### 41.10 Interview Questions and Answers
+
+**Q: Why are there five separate prompts instead of one large prompt?**
+
+A: Separation of concerns, token budget management, and independent testability. A single mega-prompt would (1) exceed context windows for large MSJs, (2) conflate extraction with verification, making errors harder to trace, and (3) be impossible to A/B test individual stages. Each prompt can be independently evaluated with Promptfoo.
+
+**Q: What is the most impactful single line across all five prompts?**
+
+A: Line 44: `"The MSJ is the document being verified."` This single sentence transforms every downstream comparison from bidirectional ("find inconsistencies between documents") to unidirectional ("does the evidence support the MSJ's claims?"). Without it, the system produces noise about inter-document differences that have nothing to do with the MSJ's veracity.
+
+**Q: Why embed legal knowledge directly in the citation verification prompt?**
+
+A: Because the Privette "never" insertion is the single most common manipulation pattern in construction-injury MSJs. Parametric knowledge alone is unreliable -- the model may or may not recall the exact holding. Embedding the knowledge eliminates this variance. The tradeoff is that the prompt is case-type-specific, but since BS Detector targets construction-injury MSJs, this specialization is acceptable.
+
+**Q: How do you measure prompt quality without human evaluation?**
+
+A: Promptfoo A/B testing with four metric categories: `schema` (structural correctness), `recall` (catches known issues), `precision` (avoids false flags), and `uncertainty` (hedges on unknowns). Each category has programmatic assertions (JavaScript checks on JSON fields) and LLM-as-judge rubrics for semantic accuracy. Running both precise and imprecise prompts against the same test cases quantifies the impact of each precision rule.
+
+**Q: What would you change if switching from DeepSeek to GPT-4 or Claude?**
+
+A: The precision rules would need recalibration because different models have different false-positive profiles. The embedded legal knowledge block would likely need expansion (DeepSeek may need more guidance than Claude on US case law). The confidence calibration instruction in the synthesis prompt might need adjustment, as different models have different default confidence distributions. The A/B eval suite would remain identical -- it measures behavior, not implementation.
+
+---
+
+### 41.11 Summary Table: Prompt Design Patterns
+
+| Pattern | Where Used | Purpose |
+|---------|-----------|---------|
+| ALL-caps emphasis | "Extract ALL", "IMPORTANT", "PRECISION RULES" | Prevents LLM tendency to sample/summarize |
+| Explicit field schemas | Every prompt's `Return JSON with:` line | Enforces contracts between pipeline stages |
+| Negative instructions | "do NOT include", "do NOT promote", "do NOT flag" | Suppresses specific known failure modes |
+| Embedded domain knowledge | Citation verification: Privette holding | Eliminates reliance on unreliable parametric knowledge |
+| MSJ-centric framing | Fact-checking: "The MSJ is the document being verified" | Converts bidirectional comparison to unidirectional verification |
+| Ordered categories | Fact-checking: 8 numbered categories | Anchors reasoning in objective facts before subjective judgment |
+| SKIP instruction | Fact-checking: "SKIP any category that does not apply" | Prevents noise entries for irrelevant categories |
+| Confidence reasoning | Every prompt: `confidence_reasoning (1-2 sentences)` | Forces calibrated confidence scores instead of default 0.9 |
+| Four-way status enum | `supported/not_supported/misleading/could_not_verify` | Captures nuanced outcomes that binary pass/fail cannot |
+| Anti-noise directives | Synthesis: three explicit exclusion rules | Prevents report dilution with non-findings |
+| Two-stage filtering | Fact-check -> Synthesize -> Memo | Each stage filters noise before the next stage sees it |
+
+
+---
+
+## 42. Production Cost & Interpretability Analysis
+
+### Why This Section Exists
+
+The BS Detector pipeline makes multiple LLM calls per case through a five-agent architecture. Without a cost model, it is impossible to evaluate whether the system is economically viable for court deployment. Without an interpretability framework, judges have no reason to trust opaque confidence numbers. This section addresses both gaps with exact numbers derived from the codebase.
+
+---
+
+### 42.1 Token Usage Per Agent
+
+**Beginner Explanation:** Every LLM call sends text (tokens) in and receives text (tokens) out. We pay per token. Each agent in the pipeline has different prompt sizes and expected response sizes, so each agent has a different cost profile.
+
+**Source files analyzed:**
+- `backend/utils/prompts.py:1-101` -- all four prompt templates
+- `backend/agents/fact_checker.py:25-47` -- document truncation at 6,000 chars per document
+- `backend/agents/report_synthesizer.py:26-27` -- result truncation at 10,000 chars
+- `backend/agents/judicial_memo.py:28-29` -- findings truncation at 6,000 chars
+
+**Token estimation methodology:** 1 token ~= 4 characters (English text). All estimates assume a typical MSJ case with 4 documents, 8-12 citations, and 6-8 fact categories.
+
+#### Agent-by-Agent Token Budget
+
+| Agent | System Prompt (tokens) | User Prompt (tokens) | Response (tokens) | Total per call | Calls per case |
+|-------|----------------------|---------------------|-------------------|----------------|----------------|
+| **Document Parser** | ~80 (schema prompt, `llm_service.py:80-86`) | ~250 (template) + ~2,500 (MSJ text) = ~2,750 | ~800 (JSON array of 8-12 citations) | ~3,630 | 1 |
+| **Citation Verifier** | ~80 (schema prompt) | ~200 (template) + ~100 (citation data) + ~200 (case context) = ~500 | ~150 (per citation JSON) | ~730 | 8-12 (one per citation, `citation_verifier.py:72-75`) |
+| **Fact Checker** | ~80 (schema prompt) | ~1,200 (template with 8 categories) + ~6,000 (4 docs x 1,500 each, capped at 6,000 chars = ~1,500 tokens each) = ~7,200 | ~1,500 (6-8 verified facts) | ~8,780 | 1 |
+| **Report Synthesizer** | ~80 (schema prompt) | ~300 (template) + ~5,000 (truncated results at 10,000 chars each, `report_synthesizer.py:26-27`) = ~5,300 | ~800 (findings + scores) | ~6,180 | 1 |
+| **Judicial Memo** | ~80 (schema prompt) | ~200 (template) + ~1,500 (truncated findings at 6,000 chars, `judicial_memo.py:28`) + ~200 (case context) = ~1,900 | ~500 (memo + key issues) | ~2,480 | 1 |
+
+#### Total Pipeline Token Budget (Typical Case)
+
+```
+Document Parser:        1 call  x  3,630 tokens  =   3,630
+Citation Verifier:     10 calls x    730 tokens  =   7,300
+Fact Checker:           1 call  x  8,780 tokens  =   8,780
+Report Synthesizer:     1 call  x  6,180 tokens  =   6,180
+Judicial Memo:          1 call  x  2,480 tokens  =   2,480
+                                                   --------
+TOTAL PER CASE:                                    ~28,370 tokens
+```
+
+**Breakdown by input vs. output:**
+- Input tokens: ~22,000 (prompts + documents + context)
+- Output tokens: ~6,370 (structured JSON responses)
+
+**Expert Note:** The Citation Verifier dominates call count because it uses `asyncio.gather` to verify each citation independently (`citation_verifier.py:72-75`). This is architecturally correct -- each citation verification is an independent task -- but it means a case with 20 citations doubles the Citation Verifier cost from ~7,300 to ~14,600 tokens. The Fact Checker is the heaviest single call because it ingests four documents simultaneously, each capped at 6,000 characters (`fact_checker.py:25`).
+
+---
+
+### 42.2 Cost Per Case at DeepSeek Rates
+
+**DeepSeek API pricing (deepseek-chat model, as configured in `llm_service.py:16`):**
+
+| Component | Rate |
+|-----------|------|
+| Input tokens | $0.14 per 1M tokens |
+| Output tokens | $0.28 per 1M tokens |
+
+#### Per-Case Cost Calculation
+
+```
+Input cost:   22,000 tokens x ($0.14 / 1,000,000) = $0.00308
+Output cost:   6,370 tokens x ($0.28 / 1,000,000) = $0.00178
+                                                      --------
+TOTAL PER CASE:                                       $0.00486
+```
+
+**That is approximately $0.005 per case -- half a penny.**
+
+For scale:
+
+| Volume | Cost |
+|--------|------|
+| 1 case | $0.005 |
+| 100 cases/month | $0.49 |
+| 1,000 cases/month | $4.86 |
+| 10,000 cases/month | $48.60 |
+| 100,000 cases/month | $486.00 |
+
+**Interview-Ready Framing:** "The entire five-agent BS Detector pipeline costs less than half a cent per case on DeepSeek. A busy metropolitan court processing 10,000 motions per month would spend under $50/month on LLM inference. This makes the AI verification cost effectively zero compared to law clerk labor."
+
+---
+
+### 42.3 Cost Comparison: DeepSeek vs. GPT-4 vs. Claude
+
+**Intermediate Explanation:** DeepSeek's pricing is dramatically lower than Western frontier models. This is the primary reason the system uses DeepSeek -- not because it is better at legal reasoning, but because the cost difference enables deployment at court scale.
+
+| Model | Input (per 1M) | Output (per 1M) | Per-Case Cost | Multiplier vs. DeepSeek |
+|-------|----------------|-----------------|---------------|------------------------|
+| **DeepSeek Chat** (`llm_service.py:16`) | $0.14 | $0.28 | $0.005 | 1x (baseline) |
+| **GPT-4o** | $2.50 | $10.00 | $0.119 | **24x** |
+| **GPT-4 Turbo** | $10.00 | $30.00 | $0.411 | **84x** |
+| **Claude 3.5 Sonnet** | $3.00 | $15.00 | $0.162 | **33x** |
+| **Claude Opus 4** | $15.00 | $75.00 | $0.808 | **165x** |
+| **Ollama (local)** (`llm_service.py:20-21`) | $0.00 | $0.00 | $0.00 (hardware only) | 0x (free inference) |
+
+#### Per-Case Cost at 10,000 Cases/Month
+
+| Model | Monthly LLM Cost |
+|-------|-----------------|
+| DeepSeek Chat | $49 |
+| GPT-4o | $1,190 |
+| GPT-4 Turbo | $4,110 |
+| Claude 3.5 Sonnet | $1,620 |
+| Claude Opus 4 | $8,080 |
+| Ollama (local qwen2.5:7b) | $0 (+ ~$200/mo GPU amortization) |
+
+**Expert Note on Model Selection:** The codebase supports three providers via `LLMService.__init__` (`llm_service.py:55-69`):
+
+```python
+# llm_service.py:55-69
+def __init__(self, api_key: Optional[str] = None, model: Optional[str] = None):
+    if ollama_model := (model or os.getenv("OLLAMA_MODEL")):
+        self.api_key = "ollama"
+        self.model = ollama_model
+        self.base_url = OLLAMA_BASE_URL
+    elif key := (api_key or os.getenv("DEEPSEEK_API_KEY")):
+        self.api_key = key
+        self.model = model or DEEPSEEK_MODEL
+        self.base_url = DEEPSEEK_BASE_URL
+```
+
+The Ollama path (`OLLAMA_MODEL=qwen2.5:7b`) enables zero-API-cost deployment for evaluation and development. In production, DeepSeek provides the best cost/quality tradeoff. The system is designed so that switching models requires only an environment variable change, not code modifications.
+
+**Interview-Ready Framing:** "We chose DeepSeek because at $0.005/case, a court can verify every motion it receives for the cost of a single law clerk's daily coffee. GPT-4 would cost 24-84x more. The architecture supports model swapping via environment variables, so if a court requires a US-hosted model for data sovereignty, they can switch to GPT-4o and absorb the ~24x cost increase -- still under $1,200/month at 10K cases."
+
+---
+
+### 42.4 Infrastructure Cost Estimate
+
+**Beyond LLM API costs, the system requires hosting infrastructure.**
+
+#### Minimum Viable Deployment
+
+| Component | Service | Monthly Cost |
+|-----------|---------|-------------|
+| **Application server** (FastAPI + agents) | 1x t3.medium (2 vCPU, 4 GB) | $30 |
+| **PostgreSQL** (case storage, audit logs) | RDS db.t3.micro | $15 |
+| **Redis** (optional caching) | ElastiCache t3.micro | $13 |
+| **Document storage** (uploaded PDFs) | S3 (~10 GB) | $0.23 |
+| **Load balancer** | ALB | $16 |
+| **Monitoring** (CloudWatch) | Basic metrics | $5 |
+| | **Total** | **~$79/month** |
+
+#### Production Deployment (K8s)
+
+| Component | Configuration | Monthly Cost |
+|-----------|--------------|-------------|
+| **EKS cluster** | Control plane | $73 |
+| **Worker nodes** | 2x t3.large (2 vCPU, 8 GB) | $120 |
+| **PostgreSQL** | RDS db.t3.medium, Multi-AZ | $70 |
+| **Redis** | ElastiCache r6g.large | $100 |
+| **S3** (documents + logs) | ~100 GB | $2.30 |
+| **ALB + WAF** | Standard | $40 |
+| **CloudWatch + alarms** | Enhanced | $20 |
+| **Secrets Manager** | API keys | $2 |
+| | **Total** | **~$427/month** |
+
+#### Self-Hosted Ollama Deployment (Air-Gapped Courts)
+
+| Component | Configuration | Monthly Cost |
+|-----------|--------------|-------------|
+| **GPU server** | 1x g4dn.xlarge (T4 GPU) or on-prem equivalent | $380 (or amortized hardware) |
+| **Application server** | t3.medium | $30 |
+| **PostgreSQL** | Local or RDS | $15-70 |
+| **Storage** | Local SSD | Amortized |
+| | **Total** | **~$425-480/month** |
+
+**Expert Note:** The Ollama path is significant for courts with data sovereignty requirements. Family courts, sealed records, HIPAA-adjacent medical records -- these cannot transit third-party APIs. The `OLLAMA_MODEL=qwen2.5:7b` configuration (`llm_service.py:20-21`) enables fully air-gapped deployment where no document data leaves the court's network.
+
+---
+
+### 42.5 Total Cost of Ownership Per Court
+
+| Deployment Tier | LLM Cost (10K cases) | Infrastructure | Monthly Total | Annual Total |
+|----------------|---------------------|----------------|--------------|-------------|
+| **Minimal** (DeepSeek, single server) | $49 | $79 | **$128** | **$1,536** |
+| **Production** (DeepSeek, K8s) | $49 | $427 | **$476** | **$5,712** |
+| **Air-Gapped** (Ollama, on-prem GPU) | $0 | $480 | **$480** | **$5,760** |
+| **Premium** (GPT-4o, K8s) | $1,190 | $427 | **$1,617** | **$19,404** |
+
+**Perspective:** A single law clerk costs $50,000-$80,000/year in salary plus benefits. The BS Detector at production tier costs ~$5,700/year.
+
+---
+
+### 42.6 ROI: Law Clerk Hours Saved vs. System Cost
+
+#### Current Manual Process (Without BS Detector)
+
+A law clerk verifying a Motion for Summary Judgment manually:
+
+| Task | Time (hours) |
+|------|-------------|
+| Read MSJ and identify citations | 0.5 |
+| Verify each citation in Westlaw/LexisNexis | 2.0-4.0 (depending on count) |
+| Cross-reference facts against exhibits | 1.0-2.0 |
+| Draft memo for judge | 0.5-1.0 |
+| **Total per motion** | **4.0-7.5 hours** |
+
+At $35-50/hour (loaded cost for a law clerk), that is **$140-$375 per motion**.
+
+#### With BS Detector
+
+| Task | Time (hours) |
+|------|-------------|
+| Upload documents to system | 0.1 |
+| Pipeline runs (~30-60 seconds) | 0.0 |
+| Review AI-generated report | 0.5-1.0 |
+| Spot-check flagged issues in Westlaw | 0.5-1.0 |
+| Edit judicial memo | 0.25 |
+| **Total per motion** | **1.35-2.35 hours** |
+
+**Time savings: 2.65-5.15 hours per motion (63-69% reduction)**
+
+#### Annual ROI Calculation
+
+| Metric | Value |
+|--------|-------|
+| Motions per year (medium court) | 2,400 (200/month) |
+| Hours saved per motion | 3.9 hours (midpoint) |
+| Total hours saved per year | 9,360 hours |
+| Law clerk loaded cost | $42.50/hour (midpoint) |
+| **Labor savings per year** | **$397,800** |
+| System cost per year (production) | $5,712 |
+| **Net savings** | **$392,088** |
+| **ROI** | **6,867%** |
+
+**Interview-Ready Framing:** "The ROI is not close. At $5,700/year for the system versus nearly $400,000 in saved labor hours, even if we are off by 5x on savings estimates, the system pays for itself 14 times over. The real value proposition is not cost savings alone -- it is that the system catches things humans miss when fatigued at hour six of citation checking."
+
+---
+
+### 42.7 Interpretability for Judges: The Confidence Score Problem
+
+**Beginner Explanation:** When the BS Detector reports that a citation has "confidence: 0.73," what does that mean? If a judge cannot understand where a number comes from, the number is worse than useless -- it creates false precision that erodes trust.
+
+#### The Problem: Opaque Confidence Scores
+
+The current schema stores confidence as a bare float:
+
+```python
+# schemas.py:31
+confidence: float = Field(default=0.5, ge=0, le=1)
+```
+
+This appears in `VerifiedCitation` (`schemas.py:28-36`), `VerifiedFact` (`schemas.py:46-54`), and `Finding` (`schemas.py:64-72`). When rendered to a judge, `0.73` communicates nothing about:
+
+1. **What was checked** -- Was this verified against a database, or is the AI guessing?
+2. **Why this number** -- What evidence pushed it to 0.73 instead of 0.95 or 0.40?
+3. **What the judge should do** -- Is 0.73 good enough to rely on, or should the clerk manually verify?
+
+**Expert Analysis:** The system mitigates this partially through the `confidence_reasoning` field:
+
+```python
+# schemas.py:32 (VerifiedCitation)
+confidence_reasoning: Optional[str] = None
+
+# schemas.py:50 (VerifiedFact)
+confidence_reasoning: Optional[str] = None
+
+# schemas.py:70 (Finding)
+confidence_reasoning: Optional[str] = None
+```
+
+The prompts explicitly request this reasoning. For example, the citation verification prompt (`prompts.py:28`):
+
+```
+confidence_reasoning (1-2 sentences explaining why you assigned this confidence level)
+```
+
+And the fact-checking prompt (`prompts.py:67`):
+
+```
+confidence_reasoning (1-2 sentences explaining why you assigned this confidence level)
+```
+
+This is the right instinct, but the reasoning is LLM-generated text that the judge still has to interpret. The confidence score needs a **verification method label** to be truly interpretable.
+
+#### The Solution: Labeled Confidence Categories
+
+Instead of presenting raw floats, confidence should be displayed with its verification basis:
+
+| Raw Score | Judge-Facing Label | Meaning |
+|-----------|-------------------|---------|
+| 0.90-1.0 | **HIGH (database-verified)** | Citation found in case law database with matching holding |
+| 0.70-0.89 | **MEDIUM (cross-referenced)** | Facts consistent across multiple uploaded documents |
+| 0.50-0.69 | **LOW (AI-estimated)** | LLM assessment only, no external verification |
+| 0.00-0.49 | **FLAGGED (contradicted)** | Evidence directly contradicts the claim |
+
+**Why this matters:** A judge who sees "MEDIUM (cross-referenced): The MSJ's incident date matches the police report and medical records" can evaluate reliability. A judge who sees "0.73" cannot.
+
+The `confidence_reasoning` field (`schemas.py:32,50,70`) should always be displayed alongside the score. The prompts already request this reasoning -- the presentation layer must not strip it.
+
+---
+
+### 42.8 Evidence Trails: Linking Findings to Source Documents
+
+**Intermediate Explanation:** Every claim in the verification report must trace back to a specific location in a specific document. Without this, the report is an AI opinion, not a verification tool.
+
+#### Current Source Tracking in the Schema
+
+The system already has the primitives for source tracking:
+
+```python
+# schemas.py:21-25 -- Citation tracks its location in the MSJ
+class Citation(BaseModel):
+    citation_text: str
+    claimed_proposition: Optional[str] = None
+    source_location: str = ""          # <-- section/paragraph in MSJ
+    context: Optional[str] = None      # <-- surrounding sentence
+
+# schemas.py:39-43 -- Fact tracks its source document
+class Fact(BaseModel):
+    fact_text: str = ""
+    source_document: str = ""          # <-- which document (MSJ, police report, etc.)
+    location: str = ""                 # <-- location within that document
+    category: Optional[str] = None     # <-- e.g., DATE_CONSISTENCY, PPE_SAFETY
+
+# schemas.py:46-54 -- VerifiedFact tracks supporting AND contradicting sources
+class VerifiedFact(BaseModel):
+    contradictory_sources: List[str] = Field(default_factory=list)
+    supporting_sources: List[str] = Field(default_factory=list)
+```
+
+The `Finding` model also tracks evidence:
+
+```python
+# schemas.py:64-72
+class Finding(BaseModel):
+    evidence: List[str] = Field(default_factory=list)  # <-- evidence strings
+```
+
+#### What the Evidence Trail Should Look Like
+
+For a judge reviewing a finding, the ideal evidence trail is:
+
+```
+FINDING F-3: Date Inconsistency (SEVERITY: HIGH, CONFIDENCE: 0.92)
+ |
+ +-- MSJ Claims: "The incident occurred on March 15, 2024"
+ |   Source: MSJ, Page 3, Paragraph 2
+ |
+ +-- Police Report States: "Officers responded to incident on March 14, 2024"
+ |   Source: Police Report, Page 1, Incident Summary
+ |
+ +-- Medical Records State: "Patient admitted 03/14/2024 at 14:32"
+ |   Source: Medical Records, Page 1, Admission Record
+ |
+ +-- Confidence Reasoning: "Three independent documents (police report,
+ |   medical records, witness statement) all record March 14. The MSJ's
+ |   March 15 date is contradicted by all available evidence."
+ |
+ +-- Recommendation: "Court should verify the correct incident date;
+     the one-day discrepancy may affect statute of limitations analysis."
+```
+
+The schema supports this via:
+- `Citation.source_location` (`schemas.py:24`) for where in the MSJ
+- `Fact.source_document` and `Fact.location` (`schemas.py:41-42`) for cross-references
+- `VerifiedFact.contradictory_sources` and `supporting_sources` (`schemas.py:51-52`) for which documents agree/disagree
+- `VerifiedFact.summary` (`schemas.py:54`) for the explanation
+- `Finding.evidence` (`schemas.py:71`) for the evidence strings passed to the report
+
+**Gap Identified:** The `evidence` field in `Finding` (`schemas.py:71`) is `List[str]` -- free-text strings. There is no structured link back to document + page + paragraph. The LLM generates these strings in the Report Synthesizer (`report_synthesizer.py:25-27`), and their quality depends on what the upstream agents included. The prompts request location data (`prompts.py:4`: "The section/paragraph where it appears"), but the LLM may or may not comply consistently.
+
+---
+
+### 42.9 The "Click Any Statement to See the Source" Pattern
+
+**Beginner Explanation:** The gold standard for legal AI interpretability is that every statement in the AI's output should be clickable, taking the user directly to the source document, page, and paragraph that supports or contradicts the claim.
+
+#### How Learned Hand Implements This
+
+The pipeline architecture naturally supports this pattern through the data flow:
+
+```
+MSJ Upload
+    |
+    v
+Document Parser (extracts citations with source_location)
+    |
+    +--> Citation Verifier (produces VerifiedCitation with citation.source_location)
+    |
+    +--> Fact Checker (produces VerifiedFact with fact.source_document + fact.location)
+    |
+    v
+Report Synthesizer (aggregates into Finding with evidence[])
+    |
+    v
+Judicial Memo (narrative summary linking back to findings)
+```
+
+At each stage, the source metadata flows through:
+
+1. **Document Parser** (`document_parser.py:23`): The `CITATION_EXTRACTION_PROMPT` requests "The section/paragraph where it appears" (`prompts.py:4`), stored in `Citation.source_location`.
+
+2. **Citation Verifier** (`citation_verifier.py:38-46`): The `VerifiedCitation` preserves the full `Citation` object, including `source_location`, so the UI can link back to the exact MSJ paragraph.
+
+3. **Fact Checker** (`fact_checker.py:64-69`): Each `VerifiedFact` contains `Fact.source_document` (e.g., "police_report") and cross-reference lists (`contradictory_sources`, `supporting_sources`).
+
+4. **Report Synthesizer** (`report_synthesizer.py:34-44`): The `Finding` aggregates evidence strings, but -- critically -- these are serialized from the upstream verified citations and facts (`report_synthesizer.py:26-27`), which carry their source metadata.
+
+5. **Judicial Memo** (`judicial_memo.py:27-29`): The memo receives the top findings (with evidence) and generates a narrative. The prompt instructs: "Be specific about which claims are contradicted and by what evidence" (`prompts.py:94`).
+
+#### UI Implementation Pattern
+
+For the frontend to implement "click any statement to see the source":
+
+```
++-------------------------------------------------------------------+
+| FINDING: Date Inconsistency                           [HIGH] 0.92 |
+|-------------------------------------------------------------------|
+| The MSJ states the incident occurred on March 15, but three       |
+| documents record March 14.                                        |
+|                                                                   |
+| Evidence:                                                         |
+|   [MSJ p.3 para.2]  "incident occurred on March 15, 2024"        |
+|   [Police Report p.1] "incident on March 14, 2024"               |
+|   [Medical Records p.1] "admitted 03/14/2024 at 14:32"           |
+|                                                                   |
+| Each bracketed reference is a clickable link that scrolls to the  |
+| relevant passage in the document viewer panel.                    |
++-------------------------------------------------------------------+
+```
+
+This requires:
+- **Document-level anchors**: Each uploaded document needs paragraph-level IDs (generated during parsing)
+- **Finding-to-document links**: The `evidence` list in `Finding` needs structured references, not just free text
+- **Split-pane UI**: Left panel shows the report; right panel shows the source document with the relevant passage highlighted
+
+**Expert Note:** The current `evidence: List[str]` in `Finding` (`schemas.py:71`) is the weakest link. Converting this to a structured type (e.g., `List[EvidenceRef]` with `document`, `page`, `paragraph`, `quote` fields) would enable automatic hyperlinking. The LLM already generates location information in its responses -- it just needs to be parsed into structured fields rather than left as free text.
+
+---
+
+### 42.10 Why Opaque Confidence Is Worse Than Labeled Confidence
+
+**Expert Analysis:** This is the core interpretability argument for judicial AI systems.
+
+#### The Spectrum of Confidence Presentation
+
+**Level 1 -- Opaque (worst):**
+```
+Citation: Smith v. Jones, 123 F.3d 456
+Confidence: 0.73
+```
+
+A judge cannot distinguish: Was 0.73 assigned because the LLM found the case but the holding was slightly different? Or because the LLM could not find the case at all and is guessing? Or because the case exists but is from a non-binding jurisdiction?
+
+**Level 2 -- With reasoning (current system):**
+```
+Citation: Smith v. Jones, 123 F.3d 456
+Confidence: 0.73
+Reasoning: "The case exists and addresses the legal principle cited,
+but the holding is narrower than the brief suggests. The brief claims
+the case establishes a bright-line rule, while the actual holding
+applies a multi-factor balancing test."
+```
+
+This is what the current system provides via `confidence_reasoning` (`schemas.py:32`). The prompts explicitly request it (`prompts.py:28,67,82`). It is a significant improvement over bare numbers, but still requires the judge to read and evaluate LLM-generated prose.
+
+**Level 3 -- Labeled and categorized (recommended):**
+```
+Citation: Smith v. Jones, 123 F.3d 456
+Confidence: MEDIUM (AI-assessed, not database-verified)
+Verification: Holding exists but is narrower than claimed
+Category: HOLDING_MISCHARACTERIZATION
+Action: Clerk should verify on Westlaw -- search "Smith v. Jones" 123 F.3d 456
+```
+
+**Level 4 -- Full evidence trail (gold standard):**
+```
+Citation: Smith v. Jones, 123 F.3d 456
+Confidence: MEDIUM (AI-assessed)
+ |
+ +-- Brief claims (MSJ p.7 para.3): "Smith established that employers
+ |   bear strict liability for workplace injuries"
+ |
+ +-- AI assessment: The Smith court applied a negligence standard with
+ |   burden-shifting, not strict liability. The brief overstates the
+ |   holding.
+ |
+ +-- Status: MISLEADING (holding mischaracterized)
+ +-- Recommended action: Verify holding in Smith v. Jones, 123 F.3d at 461-463
+```
+
+#### How the Current Schema Supports Each Level
+
+| Level | Schema Fields Used | Supported? |
+|-------|-------------------|------------|
+| Level 1 (opaque) | `confidence: float` | Yes (`schemas.py:31,49,69`) |
+| Level 2 (with reasoning) | `confidence_reasoning: Optional[str]` | Yes (`schemas.py:32,50,70`) |
+| Level 3 (labeled) | `status: str` + `confidence` | Partially -- `status` exists (`schemas.py:35,53`) but has limited values |
+| Level 4 (full trail) | `citation.source_location` + `evidence` + `confidence_reasoning` | Partially -- data exists but is not structured for rendering |
+
+The `VerificationStatus` enum (`schemas.py:7-11`) provides four meaningful labels:
+
+```python
+# schemas.py:7-11
+class VerificationStatus(str, Enum):
+    SUPPORTED = "supported"
+    NOT_SUPPORTED = "not_supported"
+    COULD_NOT_VERIFY = "could_not_verify"
+    MISLEADING = "misleading"
+```
+
+And for facts, the `ConsistencyStatus` enum (`schemas.py:14-18`):
+
+```python
+# schemas.py:14-18
+class ConsistencyStatus(str, Enum):
+    CONSISTENT = "consistent"
+    CONTRADICTORY = "contradictory"
+    PARTIAL = "partial"
+    COULD_NOT_VERIFY = "could_not_verify"
+```
+
+**These enum labels are far more useful to a judge than raw floats.** A finding labeled `MISLEADING` with `confidence_reasoning` explaining why is actionable. A finding labeled `0.73` is not.
+
+#### The Judicial Trust Equation
+
+```
+Trust = f(transparency, consistency, verifiability)
+```
+
+- **Transparency**: Can the judge see WHY the system flagged something? --> `confidence_reasoning`
+- **Consistency**: Does the system flag the same issues every time? --> Deterministic pipeline, `temperature=0.1` (`llm_service.py:72-78`)
+- **Verifiability**: Can the judge independently check the system's claims? --> Source links, document references
+
+The system's low temperature setting (`temperature=0.1` in `llm_service.py:72`) is a deliberate design choice for consistency. Legal verification should not produce different results on different runs. Combined with structured output parsing (`llm_service.py:88-118`), this gives reproducible verification results.
+
+---
+
+### 42.11 Cost Optimization Strategies
+
+**For teams looking to reduce costs further:**
+
+#### Strategy 1: Citation Batching
+
+Currently, the Citation Verifier makes one LLM call per citation (`citation_verifier.py:72-75`). Batching 3-5 citations per call would reduce overhead:
+
+- **Current**: 10 citations x 730 tokens = 7,300 tokens across 10 calls
+- **Batched**: 3 calls x ~2,000 tokens = 6,000 tokens across 3 calls
+- **Savings**: ~18% token reduction + 70% fewer API calls (reduced latency)
+
+The tradeoff: batched verification may produce lower-quality individual assessments because the LLM must context-switch between citations.
+
+#### Strategy 2: Tiered Model Routing
+
+Use a cheaper/faster model for initial screening and a more capable model only for flagged items:
+
+```
+Document Parser  --> DeepSeek Chat (cheap, good at extraction)
+Citation Verifier --> DeepSeek Chat for initial pass
+                     --> GPT-4o ONLY for citations flagged as "misleading" or "could_not_verify"
+Fact Checker     --> DeepSeek Chat (single pass with all documents)
+Report Synthesizer --> DeepSeek Chat
+Judicial Memo    --> DeepSeek Chat (or GPT-4o for higher-quality prose)
+```
+
+This could reduce GPT-4o usage to ~2-3 calls per case (only flagged items), keeping the average cost under $0.05/case even with selective premium model usage.
+
+#### Strategy 3: Caching
+
+Identical citations across different motions (e.g., "Celotex Corp. v. Catrett, 477 U.S. 317") can be cached. Common legal citations repeat across hundreds of motions. A Redis cache keyed on `(citation_text, claimed_proposition)` could reduce Citation Verifier calls by 30-50% in steady state.
+
+The infrastructure already includes Redis in the production deployment estimate. Implementing a cache layer between the `CitationVerifierAgent` and the `LLMService` would require minimal code changes.
+
+---
+
+### 42.12 Summary Table: Cost & Interpretability Quick Reference
+
+| Metric | Value | Source |
+|--------|-------|--------|
+| Tokens per case | ~28,370 | Section 42.1 |
+| Cost per case (DeepSeek) | $0.005 | Section 42.2 |
+| Cost per case (GPT-4o) | $0.119 | Section 42.3 |
+| DeepSeek vs GPT-4 multiplier | 24-165x | Section 42.3 |
+| Infrastructure (production K8s) | $427/month | Section 42.4 |
+| TCO per court per year | $5,712 | Section 42.5 |
+| Law clerk hours saved per motion | 3.9 hours | Section 42.6 |
+| Annual labor savings (medium court) | $397,800 | Section 42.6 |
+| ROI | 6,867% | Section 42.6 |
+| Confidence fields in schema | `confidence`, `confidence_reasoning`, `status` | `schemas.py:31-35,49-53,69-70` |
+| Verification status labels | SUPPORTED, NOT_SUPPORTED, COULD_NOT_VERIFY, MISLEADING | `schemas.py:7-11` |
+| Temperature setting | 0.1 (deterministic) | `llm_service.py:72` |
+| Max document size (fact checker) | 6,000 chars per document | `fact_checker.py:25` |
+| LLM calls per case | 13-15 (1 + N_citations + 1 + 1 + 1) | Pipeline architecture |
+
+---
+
+### 42.13 Interview Questions & Answers
+
+**Q: "How much does it cost to run your system per case?"**
+
+A: "Half a penny on DeepSeek. The five-agent pipeline uses approximately 28,000 tokens per case -- 22,000 input, 6,000 output. At DeepSeek's rates of $0.14/$0.28 per million tokens, that is $0.005 per case. A court processing 10,000 motions per month would spend $49/month on LLM inference. Total infrastructure including hosting is under $500/month."
+
+**Q: "Why not use GPT-4 for better quality?"**
+
+A: "The cost multiplier is 24-165x depending on which GPT-4 variant. For a system that needs to verify every motion a court receives, cost-per-case must be near-zero. DeepSeek at $0.005/case enables universal verification. GPT-4o at $0.12/case is still viable for smaller courts, and the architecture supports model swapping via environment variables. We also support local Ollama inference for air-gapped deployments where no document data can leave the court network."
+
+**Q: "How do you make confidence scores meaningful for judges?"**
+
+A: "We never present bare floats. Every confidence score ships with three things: a human-readable status label (SUPPORTED, MISLEADING, CONTRADICTORY from our enum types), a confidence_reasoning field with 1-2 sentences explaining the assessment, and an evidence trail linking back to specific documents and passages. A judge sees 'MISLEADING: The brief overstates the holding in Smith v. Jones -- the court applied a balancing test, not strict liability (MSJ p.7, para.3)' rather than '0.73'."
+
+**Q: "What is the ROI for a court?"**
+
+A: "A law clerk spending 4-7 hours manually verifying a motion costs $140-$375. The BS Detector reduces that to 1.5-2.5 hours of review time, at a system cost of $0.005 per case. For a medium court with 2,400 motions per year, that is nearly $400,000 in saved labor at a system cost of $5,700. Even being conservative by 5x, the system pays for itself 14 times over."
+
+**Q: "What about data privacy for sensitive court documents?"**
+
+A: "The system supports three deployment modes. Cloud DeepSeek for cost-optimal processing, cloud GPT-4o/Claude for US-hosted requirements, and fully air-gapped Ollama deployment where the qwen2.5:7b model runs on the court's own hardware. The air-gapped path is configured with a single environment variable -- `OLLAMA_MODEL=qwen2.5:7b` -- and no document data ever leaves the court's network. The cost is approximately $480/month for the GPU server, with zero per-token charges."
+
+
+---
+
+## 43. Frontend Architecture & Judge UX
+
+### Beginner: Component Tree and Data Flow
+
+The BS Detector frontend is a React single-page application that renders the verification report returned by the backend API. It uses no CSS framework -- all styling is inline JavaScript objects, which keeps the dependency footprint minimal for a demo/prototype.
+
+#### Entry Point
+
+`frontend/src/main.jsx` (lines 1-9):
+
+```jsx
+import React from 'react'
+import ReactDOM from 'react-dom/client'
+import App from './App.jsx'
+
+ReactDOM.createRoot(document.getElementById('root')).render(
+  <React.StrictMode>
+    <App />
+  </React.StrictMode>,
+)
+```
+
+Standard Vite + React 18 setup with `createRoot` and StrictMode. No router, no state management library -- the entire app is a single view.
+
+#### Component Tree
+
+```
+App                          (App.jsx)
+ |-- FileUpload              (components/FileUpload.jsx)
+ |-- [error banner]          (inline in App.jsx)
+ |-- [loading indicator]     (inline in App.jsx)
+ +-- ReportView              (components/ReportView.jsx)
+      |-- PipelineStatus     (components/PipelineStatus.jsx)
+      |-- ConfidenceGauge    (components/ConfidenceGauge.jsx)
+      |-- JudicialMemo       (components/JudicialMemo.jsx)
+      |-- FindingCard[]      (components/FindingCard.jsx)  -- one per finding
+      |-- [Citations table]  (inline in ReportView.jsx)
+      +-- [Facts table]      (inline in ReportView.jsx)
+```
+
+#### State Management
+
+All state lives in `App.jsx` via three `useState` hooks (lines 8-10):
+
+```jsx
+const [report, setReport] = useState(null)
+const [loading, setLoading] = useState(false)
+const [error, setError] = useState(null)
+```
+
+| State    | Type            | Purpose                                    |
+|----------|-----------------|--------------------------------------------|
+| `report` | `object | null` | Full verification report from `/analyze`   |
+| `loading`| `boolean`       | Disables buttons, shows spinner text       |
+| `error`  | `string | null` | Displayed in red error banner when non-null |
+
+Data flows one way: `App` passes `report` down to `ReportView`, which destructures it and passes subsections to child components. There is no upward data flow except `FileUpload` triggering `onAnalyze` / `onDemo` callbacks.
+
+#### API Communication
+
+`App.jsx` lines 12-44 define `runAnalysis`, the sole API call in the frontend:
+
+```jsx
+const runAnalysis = async (body) => {
+  setLoading(true)
+  setError(null)
+  setReport(null)
+
+  const controller = new AbortController()
+  const timeoutId = setTimeout(() => controller.abort(), 600_000) // 10 min
+
+  try {
+    const response = await fetch(`${API_URL}/analyze`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(body || {}),
+      signal: controller.signal,
+    })
+    // ...
+    const data = await response.json()
+    setReport(data.report)
+  } catch (err) {
+    if (err.name === 'AbortError') {
+      setError('Analysis timed out after 10 minutes.')
+    } else {
+      setError(err.message)
+    }
+  } finally {
+    clearTimeout(timeoutId)
+    setLoading(false)
+  }
+}
+```
+
+Key design choices:
+- **10-minute timeout** via `AbortController` (`App.jsx:18`) -- the multi-agent pipeline with LLM calls can take several minutes for complex documents
+- **Single endpoint** `POST /analyze` -- no websocket, no streaming, no polling. The frontend blocks until the full report is ready
+- **No authentication** -- demo-grade; a production system would require judge session tokens
+- The `API_URL` is hardcoded to `http://localhost:8002` (`App.jsx:5`)
+
+**Interview question:** *Why not use Server-Sent Events or WebSocket for a pipeline that takes minutes?*
+
+> For a demo, the blocking POST is simpler and sufficient. In production, you would want SSE or WebSocket to stream per-agent progress updates in real time (the `PipelineStatus` component is already designed to show per-agent status, but currently only renders post-hoc). See Section 44 for the streaming architecture discussion.
+
+---
+
+### Intermediate: Component Deep-Dives
+
+#### FileUpload Component
+
+**File:** `frontend/src/components/FileUpload.jsx` (133 lines)
+
+This component collects case documents from the user. It manages its own local state for form fields (`FileUpload.jsx:65-66`):
+
+```jsx
+const [caseId, setCaseId] = useState('')
+const [docs, setDocs] = useState({
+  msj: '', police_report: '', medical_records: '', witness_statement: ''
+})
+```
+
+The document types are defined as a static array (`FileUpload.jsx:82-87`):
+
+```jsx
+const docFields = [
+  { key: 'msj', label: 'Motion for Summary Judgment' },
+  { key: 'police_report', label: 'Police Report' },
+  { key: 'medical_records', label: 'Medical Records' },
+  { key: 'witness_statement', label: 'Witness Statement' },
+]
+```
+
+On submit, empty fields are filtered out (`FileUpload.jsx:72-79`):
+
+```jsx
+const handleAnalyze = () => {
+  const filledDocs = Object.fromEntries(
+    Object.entries(docs).filter(([, v]) => v.trim())
+  )
+  onAnalyze({
+    case_id: caseId || undefined,
+    documents: Object.keys(filledDocs).length > 0 ? filledDocs : undefined,
+  })
+}
+```
+
+When `documents` is `undefined`, the backend falls back to the built-in Rivera v. Harmon demo case. The "Run Demo Case" button calls `onDemo` directly (`App.jsx:46`), which sends an empty body `{}`.
+
+| Prop        | Type       | Purpose                                |
+|-------------|------------|----------------------------------------|
+| `onAnalyze` | `function` | Called with `{case_id, documents}`     |
+| `onDemo`    | `function` | Called with no args for demo case      |
+| `loading`   | `boolean`  | Disables both buttons, dims opacity    |
+
+**Input method:** Paste-only text areas, not file upload. This means documents must be plain text. A production system would accept PDF, DOCX, and provide an extraction layer.
+
+#### PipelineStatus Component
+
+**File:** `frontend/src/components/PipelineStatus.jsx` (107 lines)
+
+Renders a horizontal flow diagram showing the status of each agent in the pipeline. This is one of the most information-dense components.
+
+**Status icons** (`PipelineStatus.jsx:1-7`):
+
+```jsx
+const statusIcons = {
+  success: { symbol: '\u2713', color: '#16a34a', bg: '#dcfce7' },  // green checkmark
+  failed:  { symbol: '\u2717', color: '#dc2626', bg: '#fef2f2' },  // red X
+  skipped: { symbol: '\u2013', color: '#6b7280', bg: '#f3f4f6' },  // grey dash
+  running: { symbol: '\u25cf', color: '#2563eb', bg: '#dbeafe' },  // blue dot
+  pending: { symbol: '\u25cb', color: '#9ca3af', bg: '#f9fafb' },  // grey circle
+}
+```
+
+| Status    | Symbol | Color  | Meaning                        |
+|-----------|--------|--------|--------------------------------|
+| `success` | checkmark  | Green  | Agent completed successfully   |
+| `failed`  | X      | Red    | Agent threw an error           |
+| `skipped` | dash   | Grey   | Agent was not needed           |
+| `running` | filled circle | Blue   | Agent currently executing      |
+| `pending` | empty circle | Grey   | Agent has not started yet      |
+
+**Agent labels** (`PipelineStatus.jsx:9-15`):
+
+```jsx
+const agentLabels = {
+  document_parser: 'Parser',
+  citation_verifier: 'Citation Verifier',
+  fact_checker: 'Fact Checker',
+  report_synthesizer: 'Synthesizer',
+  judicial_memo: 'Judicial Memo',
+}
+```
+
+**Parallel agent rendering** -- The component has special logic for showing that `citation_verifier` and `fact_checker` run in parallel (`PipelineStatus.jsx:40-41`):
+
+```jsx
+const isParallelStart = s.agent_name === 'citation_verifier'
+const isParallelEnd = s.agent_name === 'fact_checker'
+```
+
+This renders as:
+
+```
+Parser --> [ Citation Verifier || Fact Checker ] --> Synthesizer --> Judicial Memo
+```
+
+The `[` bracket appears before Citation Verifier, `||` (parallel bars) appears before Fact Checker, and `]` appears after Fact Checker. Regular arrows (`-->`) connect sequential stages.
+
+**Duration display** (`PipelineStatus.jsx:74-79`): Each agent badge shows its execution time. Times under 1 second display as `ms`, times over 1 second as `X.Xs`:
+
+```jsx
+{s.duration_ms < 1000
+  ? `${s.duration_ms}ms`
+  : `${(s.duration_ms / 1000).toFixed(1)}s`}
+```
+
+**Error details** (`PipelineStatus.jsx:89-104`): If any agent failed, a red error panel appears below the flow diagram listing each failed agent and its error message. The `title` attribute on each badge also shows the error on hover (`PipelineStatus.jsx:57`).
+
+#### ConfidenceGauge Component
+
+**File:** `frontend/src/components/ConfidenceGauge.jsx` (51 lines)
+
+Renders three horizontal progress bars for confidence scores. Uses a traffic-light color scheme.
+
+**Color thresholds** (`ConfidenceGauge.jsx:1-11`):
+
+```jsx
+const colors = {
+  high: '#22c55e',    // green
+  medium: '#eab308',  // yellow
+  low: '#ef4444',     // red
+}
+
+function getColor(value) {
+  if (value >= 0.7) return colors.high
+  if (value >= 0.4) return colors.medium
+  return colors.low
+}
+```
+
+| Score Range | Color  | Meaning                                      |
+|-------------|--------|----------------------------------------------|
+| >= 0.7      | Green  | High confidence, findings well-supported     |
+| 0.4 - 0.69 | Yellow | Medium confidence, some concerns             |
+| < 0.4       | Red    | Low confidence, significant credibility gaps |
+
+**Bars rendered** (`ConfidenceGauge.jsx:46-48`):
+
+```jsx
+<Bar label="Overall" value={scores.overall || 0} />
+<Bar label="Citation Verification" value={scores.citation_verification || 0} />
+<Bar label="Fact Consistency" value={scores.fact_consistency || 0} />
+```
+
+The `Bar` sub-component (`ConfidenceGauge.jsx:13-33`) renders each bar with:
+- Label and percentage on the left/right of a header row
+- A grey track (`#e5e7eb`) with a colored fill
+- CSS transition on width (`transition: 'width 0.5s ease'`) for smooth animation when the report loads
+
+**Interview question:** *Why show three separate bars instead of a single overall score?*
+
+> A judge needs to distinguish between "the citations are fake" (citation_verification low) and "the facts contradict each other" (fact_consistency low). A single number hides which dimension failed. This is critical for judicial trust -- the judge must understand *what kind* of problem was detected.
+
+#### FindingCard Component
+
+**File:** `frontend/src/components/FindingCard.jsx` (99 lines)
+
+Each finding gets its own color-coded card. The severity determines the entire visual treatment.
+
+**Severity color scheme** (`FindingCard.jsx:1-6`):
+
+```jsx
+const severityStyles = {
+  critical: { bg: '#fef2f2', border: '#fecaca', badge: '#dc2626', text: '#991b1b' },
+  high:     { bg: '#fff7ed', border: '#fed7aa', badge: '#ea580c', text: '#9a3412' },
+  medium:   { bg: '#fefce8', border: '#fde68a', badge: '#ca8a04', text: '#854d0e' },
+  low:      { bg: '#f0fdf4', border: '#bbf7d0', badge: '#16a34a', text: '#166534' },
+}
+```
+
+| Severity   | Background | Badge    | Visual impression        |
+|------------|------------|----------|--------------------------|
+| `critical` | Light red  | Red      | Urgent, demands attention|
+| `high`     | Light orange | Orange | Significant concern      |
+| `medium`   | Light yellow | Yellow | Moderate issue           |
+| `low`      | Light green  | Green  | Minor or informational   |
+
+**Card anatomy** (from top to bottom):
+
+1. **Header row** (`FindingCard.jsx:19-42`): Severity badge (pill-shaped, uppercase), finding type label, and finding ID right-aligned
+2. **Description** (`FindingCard.jsx:44-46`): Main finding text, color matches severity
+3. **Evidence list** (`FindingCard.jsx:48-55`): Bulleted list of supporting evidence strings, only rendered if `finding.evidence` array is non-empty
+4. **Confidence bar** (`FindingCard.jsx:57-76`): Mini progress bar using the severity badge color, with percentage label
+5. **Confidence reasoning** (`FindingCard.jsx:78-90`): Italic grey text with a left border, explaining why the confidence level was assigned
+6. **Recommendation** (`FindingCard.jsx:92-96`): Italic grey text with the suggested action
+
+**Interview question:** *How does the confidence bar in FindingCard differ from ConfidenceGauge?*
+
+> `ConfidenceGauge` uses traffic-light colors (green/yellow/red based on value). `FindingCard` uses the *severity* color for its bar regardless of the confidence value. A critical finding at 95% confidence renders as a red bar. This is intentional: the bar color communicates "how bad is this" while the percentage communicates "how sure are we."
+
+#### JudicialMemo Component
+
+**File:** `frontend/src/components/JudicialMemo.jsx` (67 lines)
+
+Displays the synthesized judicial memo in a distinctive amber/gold theme that visually separates it from the analytical findings.
+
+**Dual-format handling** (`JudicialMemo.jsx:5-8`):
+
+```jsx
+const memoText = typeof memo === 'string' ? memo : memo.memo
+const keyIssues = typeof memo === 'object' ? memo.key_issues : null
+const actions = typeof memo === 'object' ? memo.recommended_actions : null
+const assessment = typeof memo === 'object' ? memo.overall_assessment : null
+```
+
+The memo can arrive as either a plain string (legacy format) or a structured object with `memo`, `key_issues`, `recommended_actions`, and `overall_assessment` fields. This backward compatibility means the component works regardless of which synthesizer version generated the report.
+
+**Visual structure:**
+
+1. **Amber container** (`JudicialMemo.jsx:13-18`): `background: '#fffbeb'` with `border: '1px solid #fde68a'` -- warm gold tone that evokes legal document formality
+2. **Header** (`JudicialMemo.jsx:20-22`): "Judicial Memo" in dark amber (`#92400e`)
+3. **Memo body** (`JudicialMemo.jsx:24-32`): Italic text in dark brown (`#78350f`) with generous line-height (1.7) for readability
+4. **Key Issues list** (`JudicialMemo.jsx:34-41`): Bulleted list in amber tones
+5. **Recommended Actions list** (`JudicialMemo.jsx:43-50`): Same style as key issues
+6. **Overall Assessment** (`JudicialMemo.jsx:52-63`): Highlighted box with darker amber background (`#fef3c7`), bold text
+
+The amber color scheme was chosen deliberately to distinguish the memo from the red/orange/yellow/green findings. It signals "this is a summary for the decision-maker" rather than "this is a detected problem."
+
+#### ReportView Component
+
+**File:** `frontend/src/components/ReportView.jsx` (191 lines)
+
+The orchestrator component that assembles all report sub-components. It receives the full `report` object and destructures it:
+
+```jsx
+const citations = report.verified_citations || []
+const facts = report.verified_facts || []
+const findings = report.top_findings || []
+```
+
+**Rendering order** (`ReportView.jsx:14-147`):
+
+| Order | Component/Section  | Data Source                | Lines    |
+|-------|--------------------|----------------------------|----------|
+| 1     | Header + metadata  | `report.motion_id`, `report.timestamp` | 15-25 |
+| 2     | PipelineStatus     | `report.pipeline_status`   | 27       |
+| 3     | ConfidenceGauge    | `report.confidence_scores` | 29       |
+| 4     | JudicialMemo       | `report.judicial_memo`     | 31       |
+| 5     | Top Findings       | `report.top_findings`      | 33-40    |
+| 6     | Citations table    | `report.verified_citations`| 42-86    |
+| 7     | Facts table        | `report.verified_facts`    | 88-132   |
+| 8     | Unknown Issues     | `report.unknown_issues`    | 134-146  |
+
+This order is deliberately designed for a judge's workflow: start with the big picture (pipeline health, confidence), then the executive summary (memo), then specific problems (findings), then detailed evidence (citations/facts), then edge cases (unknowns).
+
+**StatusBadge helper** (`ReportView.jsx:175-190`):
+
+```jsx
+const statusColors = {
+  supported:         { bg: '#dcfce7', color: '#166534' },  // green
+  not_supported:     { bg: '#fef2f2', color: '#991b1b' },  // red
+  misleading:        { bg: '#fff7ed', color: '#9a3412' },  // orange
+  could_not_verify:  { bg: '#f3f4f6', color: '#6b7280' },  // grey
+  consistent:        { bg: '#dcfce7', color: '#166534' },  // green
+  contradictory:     { bg: '#fef2f2', color: '#991b1b' },  // red
+  partial:           { bg: '#fefce8', color: '#854d0e' },  // yellow
+}
+```
+
+This maps verification statuses to colored pill badges in the citation and fact tables. Note that `supported` and `consistent` share the same green, while `not_supported` and `contradictory` share red -- establishing a consistent color language across citation verification and fact checking.
+
+**Table styling** (`ReportView.jsx:151-163`):
+
+```jsx
+const th = {
+  textAlign: 'left',
+  padding: '10px 12px',
+  fontWeight: 600,
+  color: '#374151',
+  borderBottom: '2px solid #e5e7eb',
+}
+
+const td = {
+  padding: '10px 12px',
+  color: '#374151',
+  verticalAlign: 'top',
+}
+```
+
+Both citation and fact tables include a `confidence_reasoning` field rendered as small italic text below the main content in each row (`ReportView.jsx:74-77` for citations, `ReportView.jsx:120-123` for facts).
+
+---
+
+### Expert: Design Decisions, Trust Signals, and Production Gaps
+
+#### Why Inline Styles (No CSS Framework)
+
+The entire frontend uses JavaScript style objects passed to React's `style` prop. No Tailwind, no CSS modules, no styled-components.
+
+**Advantages for a demo/prototype:**
+- Zero build configuration beyond Vite defaults
+- Styles are co-located with the component logic they affect
+- No class name collisions, no CSS specificity wars
+- Easy to understand for someone reading the code for the first time
+- The style objects in `FileUpload.jsx:3-62` demonstrate the pattern: a single `styles` constant with named sub-objects
+
+**Disadvantages that matter in production:**
+- No responsive design (the `maxWidth: '960px'` in `App.jsx:50` is the only layout constraint)
+- No dark mode support
+- No hover/focus/active states (the buttons have no `:hover` style)
+- No media queries possible inline
+- Style duplication across components (similar card patterns repeated)
+- No CSS extraction for production optimization
+
+**Interview question:** *If you were to productionize this UI, what would you change first?*
+
+> Move to a design system (e.g., Radix + Tailwind or shadcn/ui). The current inline styles make it impossible to add responsive behavior, keyboard accessibility, or theme support without a complete rewrite.
+
+#### Trust Signals: What Works and What's Missing
+
+The current UI communicates trustworthiness through several mechanisms:
+
+**What currently works:**
+
+1. **Multi-dimensional confidence** -- Three separate bars (overall, citation, fact) prevent the "single score" trap where 70% overall could mask a 30% citation score
+2. **Per-finding confidence with reasoning** -- Each `FindingCard` shows not just a percentage but a `confidence_reasoning` string explaining *why* (e.g., "Based on direct contradiction between police report timestamp and medical records admission time")
+3. **Evidence lists** -- Findings include evidence arrays that give the judge specific textual references
+4. **Severity color coding** -- The four-level severity system (critical/high/medium/low) uses an intuitive color gradient that does not require training to interpret
+5. **Pipeline transparency** -- `PipelineStatus` shows which agents ran, which failed, and how long each took. A judge can see "the citation verifier failed" rather than just getting a lower confidence score
+6. **Status badges on citations/facts** -- Each verified citation/fact has a semantic status (`supported`, `not_supported`, `misleading`, `contradictory`, `partial`, `could_not_verify`) rendered as a color-coded badge
+
+**What's missing for production judicial use:**
+
+| Missing Feature | Why It Matters | Implementation Sketch |
+|-----------------|----------------|-----------------------|
+| Source document links | Judge cannot click through to the original text | Add document viewer with anchor links per citation |
+| Side-by-side comparison | Judge needs to see brief claim next to source document | Split-pane layout with synchronized scrolling |
+| Annotation/notes | Judge needs to mark findings as reviewed/disputed | Local state or backend persistence per finding |
+| Evidence provenance | "Based on 3 documents" vs "AI estimation" distinction | Tag each evidence item with source type and confidence |
+| Confidence calibration | 85% should mean "correct 85% of the time" | Requires evaluation dataset; see Section 40 |
+| Audit trail | Record of every LLM call and intermediate result | Backend already has agent_outputs; expose in UI |
+| Accessibility | Screen readers, keyboard navigation, WCAG compliance | Requires semantic HTML, ARIA attributes, focus management |
+| Print/export | Judges need to attach reports to case files | PDF generation from report data |
+
+#### Evidence Provenance: The Critical Missing Piece
+
+The current `FindingCard` shows evidence as a flat list of strings (`FindingCard.jsx:48-55`):
+
+```jsx
+{finding.evidence.map((e, i) => <li key={i}>{e}</li>)}
+```
+
+A production system needs each evidence item to carry metadata:
+
+```typescript
+// Current (demo)
+evidence: string[]
+
+// Production requirement
+evidence: {
+  text: string
+  source_document: string     // "police_report" | "medical_records" | ...
+  source_location: string     // page number, paragraph, or character offset
+  extraction_method: string   // "direct_quote" | "paraphrase" | "inference"
+  confidence: number          // how confident are we this evidence is real
+}[]
+```
+
+This distinction between "direct quote from document" and "AI inference" is the single most important trust signal for judicial users. A judge who sees "this finding is backed by 3 direct quotes from the police report" trusts it differently than "this finding was inferred by the AI from patterns across documents."
+
+#### Color System Summary
+
+The frontend uses a consistent but informal color language across all components:
+
+| Color Family | Hex Range | Semantic Meaning | Components Using It |
+|-------------|-----------|------------------|---------------------|
+| Red | `#dc2626` - `#fef2f2` | Danger, failure, unsupported | FindingCard (critical), StatusBadge (not_supported, contradictory), PipelineStatus (failed), Error banner |
+| Orange | `#ea580c` - `#fff7ed` | Warning, high severity | FindingCard (high), StatusBadge (misleading) |
+| Yellow/Amber | `#ca8a04` - `#fefce8` | Caution, medium severity | FindingCard (medium), StatusBadge (partial), ConfidenceGauge (medium range), JudicialMemo (amber theme) |
+| Green | `#16a34a` - `#f0fdf4` | Success, supported | FindingCard (low), StatusBadge (supported, consistent), PipelineStatus (success), ConfidenceGauge (high range) |
+| Blue | `#2563eb` - `#dbeafe` | Active, in-progress | PipelineStatus (running), Primary button |
+| Grey | `#6b7280` - `#f9fafb` | Neutral, unknown | PipelineStatus (pending, skipped), StatusBadge (could_not_verify) |
+
+Note that "low severity" is green, not red. This is correct: a low-severity finding is a *good* thing (minor issue), so it gets the positive color.
+
+#### App Layout Architecture
+
+The top-level `App.jsx` establishes a centered, single-column layout (`App.jsx:49-55`):
+
+```jsx
+<div style={{
+  maxWidth: '960px',
+  margin: '0 auto',
+  padding: '32px 20px',
+  fontFamily: 'system-ui, -apple-system, sans-serif',
+  color: '#111827',
+}}>
+```
+
+The layout is strictly vertical: header, file upload form, error/loading states, then the full report. There is no sidebar, no navigation, no tabs. This works for a demo but would not scale to a production tool where judges need to:
+- Switch between cases
+- Compare multiple reports
+- Navigate large reports with many findings
+- Pin/bookmark specific findings
+
+#### Conditional Rendering Pattern
+
+The app uses a clean conditional rendering hierarchy (`App.jsx:63-96`):
+
+```
+Always: FileUpload
+If error: Error banner
+If loading: Loading message
+Always: ReportView (renders null internally if no report)
+If !report && !loading && !error: Empty state prompt
+```
+
+The empty state (`App.jsx:92-96`) provides clear guidance:
+
+```jsx
+<p style={{ textAlign: 'center', color: '#9ca3af', marginTop: '48px' }}>
+  Upload documents or click "Run Demo Case" to analyze the Rivera v. Harmon test case.
+</p>
+```
+
+This is important UX: the user always knows what to do next.
+
+#### Interview Quick-Reference Table
+
+| Topic | Key Detail | File:Line |
+|-------|-----------|-----------|
+| API timeout | 10 minutes via AbortController | `App.jsx:18` |
+| API endpoint | `POST http://localhost:8002/analyze` | `App.jsx:5,21` |
+| State management | Three useState hooks, no external library | `App.jsx:8-10` |
+| Confidence thresholds | >= 0.7 green, >= 0.4 yellow, < 0.4 red | `ConfidenceGauge.jsx:7-11` |
+| Severity levels | critical, high, medium, low | `FindingCard.jsx:1-6` |
+| Pipeline agents | Parser, Citation Verifier, Fact Checker, Synthesizer, Judicial Memo | `PipelineStatus.jsx:9-15` |
+| Parallel agents | citation_verifier and fact_checker shown with `[` `||` `]` | `PipelineStatus.jsx:40-41` |
+| Memo format | Supports both string and structured object | `JudicialMemo.jsx:5-8` |
+| Document types | MSJ, police report, medical records, witness statement | `FileUpload.jsx:82-87` |
+| Citation statuses | supported, not_supported, misleading, could_not_verify | `ReportView.jsx:165-173` |
+| Fact statuses | consistent, contradictory, partial, could_not_verify | `ReportView.jsx:165-173` |
+| Styling approach | Inline JS style objects, no CSS framework | All components |
+| Layout | Single column, 960px max-width, centered | `App.jsx:49-55` |
+
+---
+
+### Interview Scenario: "How Would You Redesign This for Production?"
+
+**Expected answer structure:**
+
+1. **Streaming pipeline updates**: Replace the blocking POST with SSE or WebSocket. The `PipelineStatus` component already renders per-agent status; it just needs real-time updates instead of post-hoc rendering.
+
+2. **Document viewer with highlighting**: Side-by-side pane showing the original document with evidence passages highlighted. Each `FindingCard` evidence item becomes a clickable link that scrolls the source document to the relevant passage.
+
+3. **Evidence provenance tags**: Every evidence item tagged as "direct quote," "paraphrase," or "AI inference" with distinct visual treatment. Judges need to know which evidence is machine-verified vs. machine-generated.
+
+4. **Accessibility overhaul**: Replace inline styles with a component library that handles ARIA attributes, keyboard navigation, screen reader announcements, and high-contrast mode. Judicial tools must meet Section 508 / WCAG 2.1 AA.
+
+5. **Case management**: Add routing, a case list view, and persistent storage so judges can review reports across sessions, add notes, and track which findings they have reviewed.
+
+6. **Confidence calibration display**: Show not just the confidence percentage but its calibration context: "85% confidence means: in our test suite of 200 motions, findings at this confidence level were correct 83-87% of the time."
+
+7. **Audit log viewer**: Expose the full chain-of-thought from each agent. The backend already stores agent outputs; the frontend needs a collapsible "show AI reasoning" section per finding.
+
+
+---
+

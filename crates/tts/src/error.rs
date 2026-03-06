@@ -33,12 +33,38 @@ pub enum Error {
 
     #[error("Base64 decode error: {0}")]
     Base64(#[from] base64::DecodeError),
+
+    #[error("IO error: {0}")]
+    Io(#[from] std::io::Error),
+
+    #[error("{0}")]
+    Other(String),
 }
 
 impl Error {
     /// Returns `true` if the DashScope free-tier quota is exhausted (403 / AllocationQuota.FreeTierOnly).
     pub fn is_quota_exhausted(&self) -> bool {
         matches!(self, Error::QuotaExhausted)
+    }
+
+    /// Returns `true` if the request was rate-limited (429).
+    pub fn is_rate_limited(&self) -> bool {
+        match self {
+            Error::Api { status, .. } | Error::Http { status, .. } => *status == reqwest::StatusCode::TOO_MANY_REQUESTS,
+            _ => false,
+        }
+    }
+
+    /// Returns `true` if the error is likely transient and worth retrying
+    /// (429 rate limit, 5xx server errors, or network errors).
+    pub fn is_retryable(&self) -> bool {
+        match self {
+            Error::Api { status, .. } | Error::Http { status, .. } => {
+                status.as_u16() == 429 || status.is_server_error()
+            }
+            Error::Network(_) => true,
+            _ => false,
+        }
     }
 }
 

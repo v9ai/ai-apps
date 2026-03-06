@@ -56,7 +56,7 @@ export async function getHealthTrajectory(): Promise<TrajectoryState[]> {
 /**
  * Classify all metrics in a state and attach their research references.
  */
-export function classifyStateMetrics(
+function classifyStateMetrics(
   derivedMetrics: Record<string, number | null>
 ): TrajectoryMetricDetail[] {
   return Object.entries(derivedMetrics)
@@ -82,7 +82,7 @@ export function classifyStateMetrics(
  * Lacher DA, et al. "Temporal trends in US adults: serial analysis of NHANES."
  * Clin Chem. 2005;51(7):1232-1239. doi:10.1373/clinchem.2005.048918
  */
-export function computeTrajectoryVelocities(
+function computeTrajectoryVelocities(
   trajectory: TrajectoryState[]
 ): TrajectoryVelocity[] {
   const velocities: TrajectoryVelocity[] = [];

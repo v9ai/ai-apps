@@ -6,6 +6,36 @@ import { revalidatePath } from "next/cache";
 import { embedCondition } from "@/lib/embeddings";
 import { generateEmbedding } from "@/lib/embeddings";
 
+export async function updateConditionName(id: string, formData: FormData) {
+  const supabase = await createClient();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+  if (!user) redirect("/auth/login");
+
+  const name = (formData.get("name") as string)?.trim();
+  if (!name) return;
+
+  const { data: condition } = await supabase
+    .from("conditions")
+    .select("notes")
+    .eq("id", id)
+    .single();
+
+  if (!condition) return;
+
+  await supabase.from("conditions").update({ name }).eq("id", id);
+
+  try {
+    await embedCondition(supabase, id, user.id, name, condition.notes);
+  } catch {
+    // Re-embed failure is non-blocking
+  }
+
+  revalidatePath(`/protected/conditions/${id}`);
+  revalidatePath("/protected/conditions");
+}
+
 export async function updateConditionNotes(id: string, formData: FormData) {
   const supabase = await createClient();
   const {
