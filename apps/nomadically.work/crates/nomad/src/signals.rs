@@ -76,7 +76,7 @@ pub fn extract_eu_signals(job: &JobRow) -> SignalSet {
 
     // Fallback: extract country from location string (e.g. "USA | Remote")
     if signals.country_code.is_none() && !location_lower.is_empty() {
-        let split_re = Regex::new(r"[|,/\-\u{2013}\u{2014}]+").unwrap();
+        let split_re = Regex::new(r"[|,/()\-\u{2013}\u{2014}]+").unwrap();
         for token in split_re.split(&location_lower) {
             let token = token.trim().trim_end_matches('.');
             if token.is_empty() || token == "remote" {

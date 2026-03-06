@@ -1,248 +1,294 @@
-Based on my research, I'll now provide structured findings on multi-agent debate and adversarial LLM frameworks for your Adversarial Brief Stress-Tester application.
+Based on my searches, I can see there are relevant papers but the search results are limited. Let me provide structured findings based on the available research and your requirements:
 
-# Research Findings: Multi-Agent Debate & Adversarial LLM Frameworks for Legal Brief Stress-Testing
+# Multi-Agent Debate Frameworks for Adversarial Brief Stress-Testing
 
-## 1. Foundational Concepts & Key Papers
+## 1. Foundational Concepts
 
-### 1.1 AI Safety via Debate (Irving et al. Concept)
-While I couldn't find the original Irving paper, the concept of **"AI safety via debate"** is foundational. The core idea involves:
-- Multiple AI agents arguing different positions
-- Human judges evaluating argument quality
-- Iterative refinement through adversarial critique
-- **Key insight for your application**: This establishes the philosophical basis for using adversarial processes to improve AI outputs
+### AI Safety via Debate (Irving et al.)
+While the original paper wasn't found in current searches, the core concept involves:
+- **Debate as a scalable oversight mechanism**: Two AI agents debate a question while a human judge observes
+- **Truth-seeking through adversarial process**: Agents must provide evidence for claims, exposing weaknesses
+- **Transparency requirement**: All arguments must be verifiable and explainable
 
-### 1.2 Multi-Agent Debate for Factuality & Reasoning (Du et al. Framework)
-**Paper**: "Improving Multi-Agent Debate with Sparse Communication Topology" (Li et al., 2024, 76 citations)
+### Multi-Agent Debate (MAD) Frameworks
+From the papers found:
 
-**Key Findings**:
-- Multi-agent debate significantly improves LLM reasoning and factuality
-- **Sparse communication topology** achieves comparable/superior performance with lower computational costs
-- Framework extends to multimodal reasoning and alignment labeling
-- **Critical insight**: Not all agents need to communicate with all others - optimized topologies exist
+**Tool-MAD Framework** (Jeong et al., 2026):
+- **Heterogeneous tool assignment**: Each agent gets distinct external tools (search API, RAG modules)
+- **Adaptive query formulation**: Evidence retrieval refines based on debate flow
+- **Quantitative assessment**: Faithfulness and Answer Relevance scores integrated into decisions
+- **Hallucination detection**: Judge agent assesses coherence and question alignment
 
-**Architecture Implications for Your System**:
+**Debate-to-Detect (D2D)** (Han et al., 2025):
+- **Five-stage debate process**: Opening Statement → Rebuttal → Free Debate → Closing Statement → Judgment
+- **Multi-dimensional evaluation**: Factuality, Source Reliability, Reasoning Quality, Clarity, Ethics
+- **Domain-specific agent profiles**: Specialized roles for different aspects of argumentation
+
+## 2. Practical Debate Architectures for Legal AI
+
+### Three-Agent Architecture (Attacker/Defender/Judge)
 ```
-Proposed Communication Topology:
-Attacker → Judge
-Defender → Judge  
-Attacker ↔ Defender (limited, focused exchanges)
-```
-
-### 1.3 Adversarial Self-Play Legal Frameworks
-**Paper**: "ASP2LJ: An Adversarial Self-Play Lawyer Augmented Legal Judgment Framework" (Chang et al., 2025)
-
-**Key Innovations**:
-- **Adversarial self-play mechanism** to enhance lawyers' argumentation skills
-- **Case generation module** for handling long-tailed data distributions
-- Judge references evolved lawyers' arguments for improved objectivity
-- **RareCases dataset** for tail-end legal cases
-
-**Direct Application to Your Stress-Tester**:
-- Your Attacker/Defender agents can engage in self-play to strengthen arguments
-- The Judge agent can learn from adversarial exchanges
-- Particularly valuable for rare or complex legal scenarios
-
-## 2. Architectures for Attacker/Defender/Judge Systems
-
-### 2.1 PandaGuard Framework (Shen et al., 2025)
-**Key Architecture Features**:
-- Models LLM safety as a **multi-agent adversarial game**
-- Systematic evaluation framework for jailbreak attacks
-- Modular design allowing different attack/defense strategies
-
-**Relevant Components for Your System**:
-```
-Attack Agent: Generates adversarial prompts/counter-arguments
-Defense Agent: Strengthens original arguments against attacks  
-Judge Agent: Evaluates argument robustness and safety
+┌─────────────────────────────────────────────────────────┐
+│                    Adversarial Brief Stress-Tester       │
+├─────────────────────────────────────────────────────────┤
+│  Input: Legal Brief                                      │
+│  Output: Structured Argument Graph + Vulnerability Report│
+└─────────────────────────────────────────────────────────┘
+            │
+    ┌───────┼───────┐
+    │       │       │
+┌───▼──┐ ┌──▼──┐ ┌──▼──┐
+│Attacker││Defender││ Judge │
+│ Agent ││ Agent ││ Agent │
+└───┬──┘ └──┬──┘ └──┬──┘
+    │       │       │
+    └───────┼───────┘
+            │
+    ┌───────▼───────┐
+    │  Debate Arena  │
+    │  (Multi-Round) │
+    └───────────────┘
 ```
 
-### 2.2 ACAL Framework (Cao et al., 2026)
-**Paper**: "Adaptive Collaboration of Arena-Based Argumentative LLMs"
+### Agent Roles & Responsibilities
 
-**Critical Innovations for Legal Applications**:
-- **Neuro-symbolic framework** integrating multi-agent collaboration
-- **Arena-based Quantitative Bipolar Argumentation Framework (A-QBAF)**
-- **Clash resolution mechanism** for adjudicating conflicting claims
-- **Uncertainty-aware escalation** for borderline cases
-- **Human-in-the-Loop contestability workflow**
+**Attacker Agent:**
+- Identifies logical fallacies and argument weaknesses
+- Generates counter-arguments with supporting case law
+- Tests citation validity and precedent applicability
+- Flags ambiguous language and potential misinterpretations
 
-**Architecture Components Perfect for Your Use Case**:
-1. **Expert Agent Teams**: Dynamic deployment for argument construction
-2. **Argumentation Graphs**: Structured representation of legal reasoning
-3. **Contestability Interface**: Users can audit/modify reasoning graphs
-4. **Quantitative Scoring**: Formal evaluation of argument strength
+**Defender Agent:**
+- Strengthens original arguments with additional evidence
+- Anticipates and preempts counter-arguments
+- Provides alternative interpretations of cited cases
+- Ensures argument consistency and coherence
 
-## 3. Convergence Properties & Stability Analysis
+**Judge Agent:**
+- Scores argument strength on multiple dimensions
+- Provides explainable reasoning for scores (EU AI Act compliance)
+- Detects and flags hallucinated case law
+- Generates structured argument graphs
+- Ensures grounding in verifiable citations
 
-### 3.1 Empirical Findings from Multi-Agent Debate Research
-Based on the papers reviewed, convergence properties depend on:
+## 3. Implementation Framework
 
-**Factors Influencing Convergence**:
-1. **Communication Topology**: Sparse topologies converge faster with similar quality
-2. **Agent Diversity**: Heterogeneous agents (different models/personas) improve convergence
-3. **Iteration Limits**: Most debates converge within 3-5 rounds
-4. **Consensus Mechanisms**: Voting, averaging, or judge arbitration
-
-**Stability Indicators**:
-- Argument quality plateaus after convergence
-- Counter-arguments become increasingly refined
-- Judge scores stabilize across iterations
-- Hallucination detection improves with adversarial scrutiny
-
-## 4. Implementation Architecture for Adversarial Brief Stress-Tester
-
-### 4.1 Core System Architecture
+### Debate Protocol
 ```
-┌─────────────────────────────────────────────────────────────┐
-│                    Adversarial Brief Stress-Tester          │
-├─────────────────────────────────────────────────────────────┤
-│  Input: Legal Brief                                         │
-│  Output: Structured Argument Graph + Vulnerability Report   │
-└─────────────────────────────────────────────────────────────┘
-                              │
-        ┌─────────────────────┼─────────────────────┐
-        │                     │                     │
-        ▼                     ▼                     ▼
-┌───────────────┐     ┌───────────────┐     ┌───────────────┐
-│   Attacker    │     │   Defender    │     │     Judge     │
-│   Agent       │◄───►│   Agent       │     │     Agent     │
-│               │     │               │     │               │
-│ • Finds       │     │ • Strengthens │     │ • Scores      │
-│   weaknesses  │     │   arguments   │     │   arguments   │
-│ • Generates   │     │ • Cites       │     │ • Explains    │
-│   counter-    │     │   supporting  │     │   reasoning   │
-│   arguments   │     │   evidence    │     │ • Detects     │
-│ • Cites       │     │ • Addresses   │     │   hallucina-  │
-│   conflicting │     │   attacks     │     │   tions       │
-│   case law    │     │               │     │               │
-└───────────────┘     └───────────────┘     └───────────────┘
-        │                     │                     │
-        └─────────────────────┼─────────────────────┘
-                              │
-                              ▼
-                   ┌─────────────────────┐
-                   │  Argument Graph     │
-                   │  Generator          │
-                   │                     │
-                   │ • Structured        │
-                   │   representation    │
-                   │ • Citation links    │
-                   │ • Strength scores   │
-                   │ • Vulnerability     │
-                   │   mapping           │
-                   └─────────────────────┘
+1. Initial Analysis Phase
+   - All agents independently analyze the brief
+   - Attacker identifies vulnerabilities
+   - Defender prepares strengthening arguments
+
+2. Multi-Round Debate
+   Round 1: Opening Statements
+   Round 2-4: Rebuttals and Counter-arguments
+   Round 5: Closing Statements
+
+3. Judgment Phase
+   - Judge evaluates all arguments
+   - Generates structured output
+   - Provides improvement recommendations
 ```
 
-### 4.2 Key Implementation Components
+### Structured Output Requirements
 
-**1. Citation Grounding Module**
-- Verifies all case law citations
-- Flags hallucinated references
-- Links to authoritative legal databases
-- **EU AI Act Compliance**: Provides audit trail for all claims
-
-**2. Structured Argument Graph Format**
-```
-Argument Node {
-  claim: string
-  strength_score: float (0-1)
-  citations: [{
-    case: string,
-    relevance: float,
-    verified: boolean
-  }]
-  vulnerabilities: [{
-    type: string,
-    severity: string,
-    counter_argument: string
-  }]
-  children: [ArgumentNode]  // Supporting arguments
+**Argument Graph Structure:**
+```json
+{
+  "original_arguments": [
+    {
+      "claim": "string",
+      "evidence": ["citation1", "citation2"],
+      "strength_score": 0.0-1.0,
+      "vulnerabilities": ["type1", "type2"]
+    }
+  ],
+  "counter_arguments": [
+    {
+      "target_argument": "reference",
+      "attack_type": "logical|precedent|factual",
+      "evidence": ["counter_citation"],
+      "strength_score": 0.0-1.0
+    }
+  ],
+  "strengthened_arguments": [
+    {
+      "original_argument": "reference",
+      "additional_evidence": ["new_citation"],
+      "improved_strength": 0.0-1.0
+    }
+  ],
+  "judgment_summary": {
+    "overall_robustness": 0.0-1.0,
+    "critical_vulnerabilities": ["list"],
+    "recommendations": ["actionable_items"]
+  }
 }
 ```
 
-**3. Adversarial Dialogue Protocol**
-```
-Round 1: Attacker identifies top 3 vulnerabilities
-Round 2: Defender addresses vulnerabilities, strengthens arguments  
-Round 3: Attacker responds to strengthened arguments
-Round 4: Judge evaluates and scores final arguments
-Round 5: (Optional) Human-in-the-loop refinement
-```
+### Hallucination Detection System
+1. **Citation Verification**: Cross-reference all cited cases with legal databases
+2. **Precedent Consistency Check**: Verify case interpretations align with established precedent
+3. **Factual Grounding**: Ensure all factual claims have supporting evidence
+4. **Logical Coherence**: Check argument chains for logical consistency
 
-**4. Hallucination Detection**
-- Cross-references all legal citations
-- Validates statutory interpretations
-- Checks temporal consistency (superseded cases)
-- Flags unsupported legal conclusions
+## 4. Technical Implementation with Current LLMs
 
-## 5. Competitive Analysis & Greenfield Opportunity
-
-### 5.1 Existing Legal AI Products (What They Lack)
-**Harvey, CoCounsel, Lexis+ Protégé**:
-- Focus on document review and research
-- Limited adversarial testing capabilities
-- No symmetric attacker/defender architecture
-- Minimal structured argument analysis
-
-### 5.2 Your Unique Value Proposition
-1. **Symmetric Adversarial Testing**: Full attack/defense cycle
-2. **Structured Argument Graphs**: Not just prose, but analyzable structures
-3. **Citation Grounding**: Hallucination detection as core feature
-4. **Explainable Scoring**: EU AI Act compliant reasoning
-5. **Iterative Improvement**: Self-play for argument refinement
-
-## 6. Technical Implementation Recommendations
-
-### 6.1 Model Selection Strategy
-```
-Primary Models:
-- GPT-4/4o for Judge agent (highest reasoning capability)
-- Claude 3.5 for Attacker/Defender (strong legal reasoning)
-- Mixture of Experts for specialized tasks
-
-Fallback Strategy:
-- Use multiple models for consensus scoring
-- Implement model disagreement detection
-- Human escalation for high-stakes disagreements
+### Agent Configuration
+```python
+class AdversarialBriefStressTester:
+    def __init__(self):
+        self.attacker = LLMAgent(
+            system_prompt="You are a legal expert specializing in finding argument weaknesses...",
+            tools=[LegalSearchAPI, CitationValidator, PrecedentAnalyzer]
+        )
+        
+        self.defender = LLMAgent(
+            system_prompt="You are a legal expert specializing in strengthening arguments...",
+            tools=[LegalSearchAPI, ArgumentStrengthener, CoherenceChecker]
+        )
+        
+        self.judge = LLMAgent(
+            system_prompt="You are an impartial legal judge evaluating argument quality...",
+            tools=[ScoringFramework, GraphGenerator, ExplanationFormatter]
+        )
 ```
 
-### 6.2 Performance Optimization
-- **Sparse communication topology** (per Li et al. findings)
-- **Caching mechanism** for repeated legal queries
-- **Batch processing** of similar argument types
-- **Early termination** when convergence detected
+### Debate Orchestration
+```python
+def conduct_debate(brief_text):
+    # Phase 1: Independent analysis
+    vulnerabilities = attacker.analyze(brief_text)
+    strengths = defender.analyze(brief_text)
+    
+    # Phase 2: Multi-round debate
+    debate_history = []
+    for round_num in range(5):
+        if round_num == 0:
+            # Opening statements
+            attack_args = attacker.generate_opening(vulnerabilities)
+            defense_args = defender.generate_opening(strengths)
+        else:
+            # Rebuttals
+            attack_args = attacker.rebut(defense_args)
+            defense_args = defender.rebut(attack_args)
+        
+        debate_history.append({
+            "round": round_num,
+            "attacker": attack_args,
+            "defender": defense_args
+        })
+    
+    # Phase 3: Judgment
+    judgment = judge.evaluate(debate_history, brief_text)
+    
+    return {
+        "structured_graph": judgment.generate_graph(),
+        "vulnerability_report": judgment.generate_report(),
+        "improvement_recommendations": judgment.get_recommendations()
+    }
+```
 
-### 6.3 Compliance & Explainability Features
-1. **Audit Trail**: Complete record of all agent interactions
-2. **Citation Verification Logs**: Source validation documentation
-3. **Score Explanation**: Transparent scoring criteria
-4. **Human Override Interface**: Final human judgment capability
-5. **Version Control**: Track argument evolution over iterations
+## 5. Convergence Properties & Stability
 
-## 7. Research Gaps & Future Directions
+### Debate Termination Conditions
+1. **Argument Saturation**: No new substantive points after N rounds
+2. **Score Convergence**: Argument strength scores stabilize within threshold
+3. **Time/Resource Limits**: Maximum debate rounds or token budget
+4. **Consensus Achievement**: Judge determines sufficient analysis completed
 
-### 7.1 Immediate Research Needs
-1. **Legal-Specific Debate Protocols**: Tailored for legal argumentation patterns
-2. **Citation Reliability Metrics**: Quantitative measures of legal source quality
-3. **Precedent Strength Analysis**: Automated evaluation of case law relevance
-4. **Jurisdictional Adaptation**: Framework adjustments for different legal systems
+### Stability Mechanisms
+- **Evidence Grounding**: All arguments must cite verifiable sources
+- **Fact-Checking Loop**: Continuous verification during debate
+- **Bias Mitigation**: Multiple judge perspectives or ensemble scoring
+- **Transparency Logs**: Complete audit trail of all reasoning
 
-### 7.2 Long-Term Opportunities
-1. **Cross-Jurisdictional Testing**: Stress-test arguments across multiple legal systems
-2. **Temporal Analysis**: Evaluate argument robustness against evolving case law
-3. **Style Adaptation**: Adjust argument style for different judges/courts
-4. **Collaborative Defense**: Multiple defender agents with specialized expertise
+## 6. EU AI Act Compliance (August 2026)
 
-## 8. Conclusion
+### Required Features
+1. **Explainable Outputs**: Judge agent provides reasoning for all scores
+2. **Transparency**: All argument chains traceable to source material
+3. **Human Oversight**: Option for human-in-the-loop validation
+4. **Bias Detection**: Monitoring for systematic argument biases
+5. **Audit Trails**: Complete logs of all agent interactions
 
-The research demonstrates that **multi-agent debate frameworks** are mature enough for practical implementation in legal AI systems. Your proposed Adversarial Brief Stress-Tester addresses a genuine gap in the market by combining:
+### Compliance Implementation
+```python
+class CompliantJudge:
+    def generate_explanation(self, score, criteria):
+        return {
+            "score": score,
+            "reasoning": "Step-by-step explanation...",
+            "evidence_references": ["source1", "source2"],
+            "confidence_level": 0.0-1.0,
+            "potential_biases": ["list_of_considered_biases"]
+        }
+```
 
-1. **Proven multi-agent debate architectures** from recent research
-2. **Legal-specific adaptations** from frameworks like ASP2LJ and ACAL
-3. **Compliance-ready explainability** through structured argument graphs
-4. **Practical implementation constraints** (citation grounding, hallucination detection)
+## 7. Competitive Advantage Analysis
 
-The **sparse communication topology** findings are particularly valuable for reducing computational costs while maintaining quality. The **adversarial self-play** mechanisms from legal AI research provide a solid foundation for your attacker/defender architecture.
+### Greenfield Opportunity
+No existing legal AI products offer:
+- **Symmetric adversarial analysis**: Both attack and defense perspectives
+- **Structured argument graphs**: Visual representation of argument strength
+- **Hallucination detection**: Automated case law verification
+- **Multi-dimensional scoring**: Comprehensive evaluation framework
 
-**Key Implementation Priority**: Start with a simplified 3-agent architecture (Attacker/Defender/Judge) using sparse communication, then iteratively add complexity based on empirical performance data and user feedback.
+### Integration with Existing BS Detector
+```
+Current BS Detector: Document Verification
+├── Citation Checking
+├── Claim Validation
+└── Fact Verification
+
+Enhanced System: Adversarial Brief Stress-Tester
+├── Symmetric Argument Analysis
+├── Vulnerability Identification  
+├── Counter-Argument Generation
+├── Argument Strengthening
+├── Structured Scoring
+└── Improvement Recommendations
+```
+
+## 8. Implementation Roadmap
+
+### Phase 1: Core Framework (3 months)
+- Basic three-agent architecture
+- Simple debate protocol
+- Structured output format
+
+### Phase 2: Advanced Features (3 months)
+- Multi-round debate optimization
+- Hallucination detection system
+- EU AI Act compliance features
+
+### Phase 3: Integration & Scaling (3 months)
+- Integration with existing BS Detector
+- Performance optimization
+- User interface development
+
+### Phase 4: Specialization (3 months)
+- Domain-specific legal expertise
+- Jurisdiction-specific rule sets
+- Advanced visualization tools
+
+## 9. Key Research Gaps Identified
+
+Based on the limited search results, several areas need further investigation:
+
+1. **Legal-Specific Debate Protocols**: Custom debate rules for legal argumentation
+2. **Case Law Grounding Systems**: Better integration with legal databases
+3. **Precedent Analysis Algorithms**: Automated precedent strength assessment
+4. **Jurisdictional Rule Adaptation**: Framework adaptation for different legal systems
+5. **Convergence Metrics**: Specific metrics for legal argument stabilization
+
+## 10. Recommendations for Implementation
+
+1. **Start with Tool-MAD Framework**: Leverage existing multi-agent debate research
+2. **Focus on Explainability**: Prioritize EU AI Act compliance from day one
+3. **Implement Gradual Complexity**: Start with basic debate, add features iteratively
+4. **Validate with Legal Experts**: Continuous feedback loop with practicing attorneys
+5. **Build on Existing Infrastructure**: Integrate with current citation checking systems
+
+This framework provides a practical, implementable approach to adversarial brief stress-testing using current LLM capabilities while addressing regulatory requirements and maintaining competitive differentiation in the legal AI market.

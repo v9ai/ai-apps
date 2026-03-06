@@ -12,7 +12,7 @@ export function AuthHeader() {
 
   if (!isLoaded) {
     return (
-      <Text size="1" color="gray" px="1">
+      <Text size="1" color="gray" style={{ paddingLeft: 4, paddingRight: 4 }}>
         …
       </Text>
     );

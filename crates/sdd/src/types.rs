@@ -104,6 +104,7 @@ impl SddPhase {
         }
     }
 
+    #[allow(clippy::should_implement_trait)]
     pub fn from_str(s: &str) -> Option<Self> {
         match s {
             "explore" => Some(Self::Explore),
@@ -476,15 +477,12 @@ impl DodReport {
 
 // ── Permission Mode (parity with Anthropic PermissionMode) ────────────────
 
-#[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]
+#[derive(Debug, Clone, Default, Serialize, Deserialize, PartialEq)]
 pub enum PermissionMode {
+    #[default]
     Default,
     AcceptEdits,
     BypassPermissions,
     Plan,
     DontAsk,
-}
-
-impl Default for PermissionMode {
-    fn default() -> Self { Self::Default }
 }

@@ -4,8 +4,8 @@
   "private": true,
   "license": "MIT",
   "files": [
-    "browser/jest-preset.ts",
-    "node/jest-preset.ts"
+    "browser/jest-preset.mjs",
+    "node/jest-preset.mjs"
   ],
   "dependencies": {
     "jest": "^30.2.0",

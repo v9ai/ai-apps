@@ -1,4 +1,4 @@
-import { jobs, companies } from "@/db/schema";
+import { jobs, companies, contacts } from "@/db/schema";
 import type { Job } from "@/db/schema";
 import { eq, and, like, ne, notInArray, sql } from "drizzle-orm";
 import type { GraphQLContext } from "../../context";
@@ -92,7 +92,7 @@ const Job: JobResolvers<GraphQLContext, Job> = {
       return [];
     }
   },
-  async company(parent, _args, context) {
+  async company(parent, _args, context): Promise<any> {
     try {
       if (!parent.company_id) {
         return null;
@@ -214,6 +214,26 @@ const Job: JobResolvers<GraphQLContext, Job> = {
       return parent.ashby_address;
     }
     return safeJsonParse(parent.ashby_address, null);
+  },
+
+  // Job application tracking
+  applied(parent) {
+    return (parent.applied as unknown) === 1 || parent.applied === true;
+  },
+  appliedAt(parent) {
+    return parent.applied_at ?? null;
+  },
+  archived(parent) {
+    return (parent.archived as unknown) === 1 || parent.archived === true;
+  },
+  async recruiter(parent, _args, context): Promise<any> {
+    if (!parent.recruiter_id) return null;
+    const rows = await context.db
+      .select()
+      .from(contacts)
+      .where(eq(contacts.id, parent.recruiter_id))
+      .limit(1);
+    return rows[0] ?? null;
   },
 
   async skillMatch(parent, _args, context) {
@@ -417,6 +437,46 @@ const Mutation: MutationResolvers = {
     }
 
     return updated as any;
+  },
+
+  async markJobApplied(_parent, args, context) {
+    if (!context.userId || !isAdminEmail(context.userEmail)) {
+      throw new Error("Forbidden");
+    }
+    const now = new Date().toISOString();
+    const rows = await context.db
+      .update(jobs)
+      .set({ applied: true, applied_at: now, updated_at: sql`datetime('now')` })
+      .where(eq(jobs.id, args.id))
+      .returning();
+    if (!rows[0]) throw new Error("Job not found");
+    return rows[0] as any;
+  },
+
+  async archiveJob(_parent, args, context) {
+    if (!context.userId || !isAdminEmail(context.userEmail)) {
+      throw new Error("Forbidden");
+    }
+    const rows = await context.db
+      .update(jobs)
+      .set({ archived: true, updated_at: sql`datetime('now')` })
+      .where(eq(jobs.id, args.id))
+      .returning();
+    if (!rows[0]) throw new Error("Job not found");
+    return rows[0] as any;
+  },
+
+  async unarchiveJob(_parent, args, context) {
+    if (!context.userId || !isAdminEmail(context.userEmail)) {
+      throw new Error("Forbidden");
+    }
+    const rows = await context.db
+      .update(jobs)
+      .set({ archived: false, updated_at: sql`datetime('now')` })
+      .where(eq(jobs.id, args.id))
+      .returning();
+    if (!rows[0]) throw new Error("Job not found");
+    return rows[0] as any;
   },
 };
 

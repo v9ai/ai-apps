@@ -15,9 +15,11 @@ import { JobDescriptionTab } from "@/components/app-detail/JobDescriptionTab";
 import { InterviewPrepTab } from "@/components/app-detail/InterviewPrepTab";
 import { CodingTab } from "@/components/app-detail/CodingTab";
 import { BackendPrepTab } from "@/components/app-detail/BackendPrepTab";
+import { DeepResearchTab } from "@/components/app-detail/DeepResearchTab";
 import { StudyTab } from "@/components/app-detail/StudyTab";
+import { LearningDashboard } from "@/components/app-detail/LearningDashboard";
 
-const TAB_VALUES = ["description", "interview", "coding", "backend", "study"] as const;
+const TAB_VALUES = ["description", "interview", "coding", "backend", "research", "study", "learn"] as const;
 type TabValue = (typeof TAB_VALUES)[number];
 
 function ApplicationDetailInner() {
@@ -26,7 +28,7 @@ function ApplicationDetailInner() {
   const searchParams = useSearchParams();
   const id = Number(params.id);
 
-  const { data, loading, refetch } = useGetApplicationQuery({
+  const { data, loading, error, refetch } = useGetApplicationQuery({
     variables: { id },
     skip: isNaN(id),
   });
@@ -37,7 +39,7 @@ function ApplicationDetailInner() {
 
   // Tab state persisted to URL
   const rawTab = searchParams.get("tab") ?? "description";
-  const activeTab: TabValue = TAB_VALUES.includes(rawTab as TabValue) ? (rawTab as TabValue) : "overview";
+  const activeTab: TabValue = TAB_VALUES.includes(rawTab as TabValue) ? (rawTab as TabValue) : "description";
   const setActiveTab = useCallback(
     (tab: string) => {
       const url = new URL(window.location.href);
@@ -66,6 +68,20 @@ function ApplicationDetailInner() {
     const t = setTimeout(() => setFlashRequirement(null), 2000);
     return () => clearTimeout(t);
   }, [flashRequirement]);
+
+  // Keyboard shortcuts 1-7 to switch tabs
+  useEffect(() => {
+    const handler = (e: KeyboardEvent) => {
+      const tag = (e.target as HTMLElement)?.tagName;
+      if (tag === "INPUT" || tag === "TEXTAREA" || tag === "SELECT") return;
+      const idx = Number(e.key) - 1;
+      if (idx >= 0 && idx < TAB_VALUES.length) {
+        setActiveTab(TAB_VALUES[idx]);
+      }
+    };
+    window.addEventListener("keydown", handler);
+    return () => window.removeEventListener("keydown", handler);
+  }, [setActiveTab]);
 
   const handleOpenTopic = useCallback(
     (req: AiInterviewPrepRequirement) => {
@@ -152,6 +168,20 @@ function ApplicationDetailInner() {
     );
   }
 
+  if (error) {
+    return (
+      <Container size="3" p="8">
+        <Card>
+          <Flex direction="column" align="center" gap="4" p="6">
+            <Heading size="5">Error Loading Application</Heading>
+            <Text color="gray">{error.message}</Text>
+            <Button onClick={() => refetch()}>Retry</Button>
+          </Flex>
+        </Card>
+      </Container>
+    );
+  }
+
   if (!app) {
     return (
       <Container size="3" p="8">
@@ -169,6 +199,7 @@ function ApplicationDetailInner() {
   }
 
   const reqCount = app.aiInterviewPrep?.requirements?.length ?? 0;
+  const readyCount = app.aiInterviewPrep?.requirements?.filter((r) => r.deepDive).length ?? 0;
   const exerciseCount = app.agenticCoding?.exercises?.length ?? 0;
   const backendSectionCount = app.aiBackendPrep
     ? [
@@ -181,27 +212,71 @@ function ApplicationDetailInner() {
         app.aiBackendPrep.typescriptNode, app.aiBackendPrep.aiMlIntegration,
       ].filter((s) => s?.title || s?.overview).length
     : 0;
+  const researchQuestionCount = app.aiDeepResearch?.questions?.length ?? 0;
 
   return (
     <Container size="3" p={{ initial: "4", md: "8" }}>
       <ApplicationHeader app={app} isAdmin={isAdmin} />
 
       <Tabs.Root value={activeTab} onValueChange={setActiveTab}>
-        <Tabs.List>
-          <Tabs.Trigger value="description">Job Description</Tabs.Trigger>
+        <Tabs.List style={{ borderBottom: "1px solid var(--gray-6)" }}>
+          <Tabs.Trigger value="description">
+            <Flex direction="column" align="center" gap="0">
+              <Text>Job Description</Text>
+              <span className="tab-shortcut-hint">1</span>
+            </Flex>
+          </Tabs.Trigger>
           <Tabs.Trigger value="interview">
-            Interview Prep
-            {reqCount > 0 && <Badge size="1" variant="soft" color="blue" ml="2">{reqCount}</Badge>}
+            <Flex direction="column" align="center" gap="0">
+              <Flex align="center" gap="1">
+                <Text>Interview Prep</Text>
+                {reqCount > 0 && <Badge size="1" variant="soft" color="blue" ml="1">{readyCount}/{reqCount}</Badge>}
+              </Flex>
+              <span className="tab-shortcut-hint">2</span>
+            </Flex>
           </Tabs.Trigger>
           <Tabs.Trigger value="coding">
-            Coding
-            {exerciseCount > 0 && <Badge size="1" variant="soft" color="violet" ml="2">{exerciseCount}</Badge>}
+            <Flex direction="column" align="center" gap="0">
+              <Flex align="center" gap="1">
+                <Text>Coding</Text>
+                {exerciseCount > 0 && <Badge size="1" variant="soft" color="violet" ml="1">{exerciseCount}</Badge>}
+              </Flex>
+              <span className="tab-shortcut-hint">3</span>
+            </Flex>
           </Tabs.Trigger>
           <Tabs.Trigger value="backend">
-            Backend Prep
-            {backendSectionCount > 0 && <Badge size="1" variant="soft" color="teal" ml="2">{backendSectionCount}</Badge>}
+            <Flex direction="column" align="center" gap="0">
+              <Flex align="center" gap="1">
+                <Text>Backend Prep</Text>
+                {backendSectionCount > 0 && <Badge size="1" variant="soft" color="teal" ml="1">{backendSectionCount}/20</Badge>}
+              </Flex>
+              <span className="tab-shortcut-hint">4</span>
+            </Flex>
           </Tabs.Trigger>
-          <Tabs.Trigger value="study">Study</Tabs.Trigger>
+          <Tabs.Trigger value="research">
+            <Flex direction="column" align="center" gap="0">
+              <Flex align="center" gap="1">
+                <Text>Deep Research</Text>
+                {researchQuestionCount > 0 && <Badge size="1" variant="soft" color="purple" ml="1">{researchQuestionCount}</Badge>}
+              </Flex>
+              <span className="tab-shortcut-hint">5</span>
+            </Flex>
+          </Tabs.Trigger>
+          <Tabs.Trigger value="study">
+            <Flex direction="column" align="center" gap="0">
+              <Text>Study</Text>
+              <span className="tab-shortcut-hint">6</span>
+            </Flex>
+          </Tabs.Trigger>
+          <Tabs.Trigger value="learn">
+            <Flex direction="column" align="center" gap="0">
+              <Flex align="center" gap="1">
+                <Text>Learn</Text>
+                <Badge size="1" variant="soft" color="violet" ml="1">New</Badge>
+              </Flex>
+              <span className="tab-shortcut-hint">7</span>
+            </Flex>
+          </Tabs.Trigger>
         </Tabs.List>
 
         <Box pt="4">
@@ -230,8 +305,14 @@ function ApplicationDetailInner() {
           <Tabs.Content value="backend">
             <BackendPrepTab app={app} isAdmin={isAdmin} />
           </Tabs.Content>
+          <Tabs.Content value="research">
+            <DeepResearchTab app={app} isAdmin={isAdmin} />
+          </Tabs.Content>
           <Tabs.Content value="study">
             <StudyTab app={app} isAdmin={isAdmin} />
+          </Tabs.Content>
+          <Tabs.Content value="learn">
+            <LearningDashboard app={app} isAdmin={isAdmin} />
           </Tabs.Content>
         </Box>
       </Tabs.Root>

@@ -42,7 +42,7 @@ export default function WorkersPage() {
     if (!isAdmin) return;
     fetch("/api/admin/resume-count")
       .then((r) => r.json())
-      .then((d) => setResumeCount(d.count ?? 0))
+      .then((d) => setResumeCount((d as { count?: number }).count ?? 0))
       .catch(() => setResumeCount(null));
   }, [isAdmin]);
 

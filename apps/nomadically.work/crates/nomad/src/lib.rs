@@ -8,6 +8,7 @@ pub mod ats_enhance;
 pub mod pipeline;
 pub mod cleanup;
 pub mod reporter;
+pub mod enrichment;
 
 use serde::{Deserialize, Serialize};
 
@@ -150,6 +151,7 @@ pub mod status {
     pub const ROLE_NOMATCH: &str = "role-nomatch";
     pub const EU_REMOTE: &str = "eu-remote";
     pub const NON_EU: &str = "non-eu";
+    pub const ENRICHED: &str = "enriched";
 }
 
 /// Default LLM model for classification, role tagging, and reporting.

@@ -8,10 +8,15 @@ import {
   Button,
   Card,
   Container,
+  Dialog,
   Flex,
   Heading,
+  Spinner,
+  Switch,
   Tabs,
   Text,
+  TextArea,
+  TextField,
 } from "@radix-ui/themes";
 import {
   ExternalLinkIcon,
@@ -19,6 +24,10 @@ import {
   ExclamationTriangleIcon,
   EnvelopeClosedIcon,
   EnvelopeOpenIcon,
+  PlusIcon,
+  TrashIcon,
+  RocketIcon,
+  FileTextIcon,
 } from "@radix-ui/react-icons";
 import Link from "next/link";
 import { useAuth } from "@/lib/auth-hooks";
@@ -26,6 +35,15 @@ import { ADMIN_EMAIL } from "@/lib/constants";
 import { getSentEmails, getReceivedEmails, getEmailSubscribers } from "./actions";
 import type { EmailSubscriber } from "./actions";
 import { BatchEmailModal } from "@/components/admin/BatchEmailModal";
+import {
+  useGetEmailCampaignsQuery,
+  useCreateDraftCampaignMutation,
+  useDeleteCampaignMutation,
+  useGetEmailTemplatesQuery,
+  useCreateEmailTemplateMutation,
+  useDeleteEmailTemplateMutation,
+  useUpdateEmailTemplateMutation,
+} from "@/__generated__/hooks";
 
 type SentEmail = {
   id: string;
@@ -244,6 +262,181 @@ function ReceivedList() {
   );
 }
 
+const CAMPAIGN_STATUS_COLORS: Record<string, "gray" | "blue" | "green" | "red" | "orange"> = {
+  draft: "gray",
+  pending: "blue",
+  running: "orange",
+  completed: "green",
+  failed: "red",
+  stopped: "gray",
+};
+
+function CampaignsList() {
+  const { data, loading, refetch } = useGetEmailCampaignsQuery({ fetchPolicy: "cache-and-network" });
+  const [createCampaign, { loading: creating }] = useCreateDraftCampaignMutation();
+  const [deleteCampaign] = useDeleteCampaignMutation();
+  const [createOpen, setCreateOpen] = useState(false);
+
+  const campaigns = data?.emailCampaigns?.campaigns ?? [];
+
+  async function handleCreate(e: React.FormEvent<HTMLFormElement>) {
+    e.preventDefault();
+    const fd = new FormData(e.currentTarget);
+    await createCampaign({
+      variables: { input: { name: fd.get("name") as string, fromEmail: fd.get("fromEmail") as string || undefined } },
+    });
+    setCreateOpen(false);
+    refetch();
+  }
+
+  async function handleDelete(id: string) {
+    if (!confirm("Delete this campaign?")) return;
+    await deleteCampaign({ variables: { id } });
+    refetch();
+  }
+
+  if (loading) return <Text color="gray" size="2">Loading…</Text>;
+
+  return (
+    <Flex direction="column" gap="3">
+      <Flex justify="between" align="center">
+        <Badge color="gray" size="2" variant="soft">{campaigns.length} campaigns</Badge>
+        <Dialog.Root open={createOpen} onOpenChange={setCreateOpen}>
+          <Dialog.Trigger>
+            <Button size="1"><PlusIcon /> New Campaign</Button>
+          </Dialog.Trigger>
+          <Dialog.Content maxWidth="400px">
+            <Dialog.Title>New Campaign</Dialog.Title>
+            <form onSubmit={handleCreate}>
+              <Flex direction="column" gap="3" mt="3">
+                <TextField.Root name="name" placeholder="Campaign name *" required />
+                <TextField.Root name="fromEmail" placeholder="From email" type="email" />
+                <Flex gap="3" justify="end" mt="2">
+                  <Dialog.Close><Button variant="soft" color="gray">Cancel</Button></Dialog.Close>
+                  <Button type="submit" disabled={creating}>{creating ? "Creating…" : "Create"}</Button>
+                </Flex>
+              </Flex>
+            </form>
+          </Dialog.Content>
+        </Dialog.Root>
+      </Flex>
+      {campaigns.length === 0 ? (
+        <Card><Text color="gray" size="2">No campaigns yet.</Text></Card>
+      ) : (
+        campaigns.map((c) => (
+          <Card key={c.id}>
+            <Flex justify="between" align="center" gap="3">
+              <Box style={{ flex: 1 }}>
+                <Flex align="center" gap="2" mb="1">
+                  <Text size="2" weight="bold">{c.name}</Text>
+                  <Badge color={CAMPAIGN_STATUS_COLORS[c.status] ?? "gray"} size="1" variant="soft">{c.status}</Badge>
+                </Flex>
+                <Flex gap="3" wrap="wrap">
+                  <Text size="1" color="gray">Sent: {c.emailsSent}/{c.totalRecipients}</Text>
+                  {c.emailsFailed > 0 && <Text size="1" color="red">Failed: {c.emailsFailed}</Text>}
+                  <Text size="1" color="gray">{new Date(c.createdAt).toLocaleDateString()}</Text>
+                </Flex>
+              </Box>
+              <Button size="1" variant="ghost" color="red" onClick={() => handleDelete(c.id)}><TrashIcon /></Button>
+            </Flex>
+          </Card>
+        ))
+      )}
+    </Flex>
+  );
+}
+
+function EmailTemplatesList() {
+  const { data, loading, refetch } = useGetEmailTemplatesQuery({ fetchPolicy: "cache-and-network" });
+  const [createTemplate, { loading: creating }] = useCreateEmailTemplateMutation();
+  const [deleteTemplate] = useDeleteEmailTemplateMutation();
+  const [updateTemplate] = useUpdateEmailTemplateMutation();
+  const [createOpen, setCreateOpen] = useState(false);
+
+  const templates = data?.emailTemplates?.templates ?? [];
+
+  async function handleCreate(e: React.FormEvent<HTMLFormElement>) {
+    e.preventDefault();
+    const fd = new FormData(e.currentTarget);
+    await createTemplate({
+      variables: {
+        input: {
+          name: fd.get("name") as string,
+          subject: fd.get("subject") as string || undefined,
+          category: fd.get("category") as string || undefined,
+          textContent: fd.get("textContent") as string || undefined,
+        },
+      },
+    });
+    setCreateOpen(false);
+    refetch();
+  }
+
+  async function handleDelete(id: number) {
+    if (!confirm("Delete this template?")) return;
+    await deleteTemplate({ variables: { id } });
+    refetch();
+  }
+
+  async function handleToggleActive(id: number, isActive: boolean) {
+    await updateTemplate({ variables: { id, input: { isActive: !isActive } } });
+    refetch();
+  }
+
+  if (loading) return <Text color="gray" size="2">Loading…</Text>;
+
+  return (
+    <Flex direction="column" gap="3">
+      <Flex justify="between" align="center">
+        <Badge color="gray" size="2" variant="soft">{templates.length} templates</Badge>
+        <Dialog.Root open={createOpen} onOpenChange={setCreateOpen}>
+          <Dialog.Trigger>
+            <Button size="1"><PlusIcon /> New Template</Button>
+          </Dialog.Trigger>
+          <Dialog.Content maxWidth="500px">
+            <Dialog.Title>New Email Template</Dialog.Title>
+            <form onSubmit={handleCreate}>
+              <Flex direction="column" gap="3" mt="3">
+                <TextField.Root name="name" placeholder="Template name *" required />
+                <TextField.Root name="subject" placeholder="Subject line" />
+                <TextField.Root name="category" placeholder="Category (e.g. outreach, follow-up)" />
+                <TextArea name="textContent" placeholder="Email body text" rows={6} />
+                <Flex gap="3" justify="end" mt="2">
+                  <Dialog.Close><Button variant="soft" color="gray">Cancel</Button></Dialog.Close>
+                  <Button type="submit" disabled={creating}>{creating ? "Creating…" : "Create"}</Button>
+                </Flex>
+              </Flex>
+            </form>
+          </Dialog.Content>
+        </Dialog.Root>
+      </Flex>
+      {templates.length === 0 ? (
+        <Card><Text color="gray" size="2">No templates yet.</Text></Card>
+      ) : (
+        templates.map((t) => (
+          <Card key={t.id}>
+            <Flex justify="between" align="center" gap="3">
+              <Box style={{ flex: 1 }}>
+                <Flex align="center" gap="2" mb="1">
+                  <Text size="2" weight="bold">{t.name}</Text>
+                  {t.category && <Badge color="gray" variant="surface" size="1">{t.category}</Badge>}
+                  {!t.isActive && <Badge color="red" variant="soft" size="1">inactive</Badge>}
+                </Flex>
+                {t.subject && <Text size="1" color="gray" as="p">Subject: {t.subject}</Text>}
+                <Text size="1" color="gray" as="p">{new Date(t.createdAt).toLocaleDateString()}</Text>
+              </Box>
+              <Flex align="center" gap="2">
+                <Switch checked={t.isActive} onCheckedChange={() => handleToggleActive(t.id, t.isActive)} />
+                <Button size="1" variant="ghost" color="red" onClick={() => handleDelete(t.id)}><TrashIcon /></Button>
+              </Flex>
+            </Flex>
+          </Card>
+        ))
+      )}
+    </Flex>
+  );
+}
+
 function EmailsPageContent() {
   const searchParams = useSearchParams();
   const router = useRouter();
@@ -311,6 +504,14 @@ function EmailsPageContent() {
             <EnvelopeOpenIcon />
             &nbsp;Received
           </Tabs.Trigger>
+          <Tabs.Trigger value="campaigns">
+            <RocketIcon />
+            &nbsp;Campaigns
+          </Tabs.Trigger>
+          <Tabs.Trigger value="templates">
+            <FileTextIcon />
+            &nbsp;Templates
+          </Tabs.Trigger>
         </Tabs.List>
 
         <Tabs.Content value="sent">
@@ -319,6 +520,14 @@ function EmailsPageContent() {
 
         <Tabs.Content value="received">
           <ReceivedList />
+        </Tabs.Content>
+
+        <Tabs.Content value="campaigns">
+          <CampaignsList />
+        </Tabs.Content>
+
+        <Tabs.Content value="templates">
+          <EmailTemplatesList />
         </Tabs.Content>
       </Tabs.Root>
     </Container>

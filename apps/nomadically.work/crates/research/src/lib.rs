@@ -1,6 +1,7 @@
 pub mod app_context;
 pub mod backend;
 pub mod d1;
+pub mod deep_research;
 pub mod enhance;
 pub mod regime_context;
 pub mod research_context;

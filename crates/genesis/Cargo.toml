@@ -1,0 +1,31 @@
+[package]
+name = "genesis"
+version = "0.1.0"
+edition = "2021"
+license = "MIT"
+description = "Self-improving code generation system — wraps SDD pipeline in a learning layer"
+
+[[bin]]
+name = "genesis"
+path = "src/bin/genesis.rs"
+
+[dependencies]
+sdd = { path = "../sdd" }
+deepseek = { path = "../deepseek", features = ["agent", "cache"] }
+research = { path = "../research" }
+qwen = { path = "../qwen" }
+
+serde = { version = "1", features = ["derive"] }
+serde_json = "1"
+tokio = { version = "1", features = ["full"] }
+tracing = "0.1"
+tracing-subscriber = "0.3"
+async-trait = "0.1"
+thiserror = "2"
+clap = { version = "4", features = ["derive"] }
+chrono = { version = "0.4", features = ["serde"] }
+rand = "0.8"
+uuid = { version = "1", features = ["v4"] }
+
+[dev-dependencies]
+tempfile = "3"

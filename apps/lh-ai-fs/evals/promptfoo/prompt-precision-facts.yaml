@@ -1,0 +1,191 @@
+description: "Prompt Precision A/B — Fact Checking (precise vs. imprecise)"
+
+# Compares fact_checking.txt (precise) against fact_checking_imprecise.txt.
+# Both prompts run against every test case. The precise prompt should score higher on:
+#   schema/*   — produces a verified_facts array with correct field names
+#   recall/*   — catches contradictions in date, PPE, and control
+
+providers:
+  - id: openai:chat:deepseek-chat
+    config:
+      apiBaseUrl: https://api.deepseek.com/v1
+      temperature: 0.1
+      max_tokens: 8192
+
+defaultTest:
+  options:
+    transform: "output.replace(/^```(?:json)?\\s*/m, '').replace(/\\s*```\\s*$/m, '').trim()"
+    provider:
+      id: openai:chat:deepseek-chat
+      config:
+        apiBaseUrl: https://api.deepseek.com/v1
+        temperature: 0.0
+
+prompts:
+  - "file://prompts/fact_checking.txt"
+  - "file://prompts/fact_checking_imprecise.txt"
+
+tests:
+
+  # ── DATE-001: March 14 vs. March 12 ────────────────────────────
+  # Key advantage: precise prompt has "1. DATE CONSISTENCY" as an
+  # explicit numbered category, forcing the model to check dates.
+  - description: "DATE-001 | MSJ says March 14; all other docs say March 12"
+    vars:
+      msj_facts: |
+        This action arises from a workplace incident on March 14, 2021, at a
+        commercial construction site. Rivera did not file his complaint until
+        March 10, 2023 — one year and 362 days after the incident.
+      police_text: |
+        Date of Incident: March 12, 2021
+        On March 12, 2021, at approximately 10:45 AM, officers responded to a
+        report of an industrial accident at 2200 West Olympic Boulevard.
+      medical_text: |
+        DATE OF ADMISSION: March 12, 2021
+        Patient was brought in by LAFD paramedics following a workplace accident
+        occurring at approximately 10:45 AM on March 12, 2021.
+      witness_text: |
+        I provide the following statement regarding the incident that occurred
+        on March 12, 2021. On the morning of March 12, 2021, our crew arrived
+        at the site at approximately 7:00 AM.
+    assert:
+      - type: is-json
+        metric: schema/valid_json
+
+      - type: javascript
+        value: |
+          try {
+            const r = JSON.parse(output);
+            return Array.isArray(r.verified_facts);
+          } catch { return false; }
+        metric: schema/has_verified_facts_array
+
+      - type: javascript
+        value: |
+          try {
+            const r = JSON.parse(output);
+            const facts = r.verified_facts || [];
+            return facts.some(f => {
+              const text = JSON.stringify(f).toLowerCase();
+              return (text.includes('march 14') || text.includes('date')) &&
+                     (f.status === 'contradictory' || f.is_consistent === false);
+            });
+          } catch { return false; }
+        metric: recall/date001_flags_contradiction
+
+      - type: llm-rubric
+        value: >-
+          The response must identify the date discrepancy: the MSJ states
+          March 14, 2021 but the police report, medical records, and witness
+          statement all record March 12, 2021. This should be marked
+          contradictory with is_consistent=false.
+        metric: recall/date001_semantic
+
+  # ── PPE-001: MSJ claims no PPE; docs confirm PPE worn ───────────
+  # Key advantage: precise prompt has "2. PPE/SAFETY EQUIPMENT" as an
+  # explicit category, directing the model to look for PPE evidence.
+  - description: "PPE-001 | MSJ claims no PPE; police + witness confirm full PPE"
+    vars:
+      msj_facts: |
+        Rivera was not wearing required personal protective equipment at the
+        time of the incident, including fall-arrest equipment mandated by
+        site safety protocols.
+      police_text: |
+        Site supervisor Mark Ellison confirmed that Rivera was wearing a hard
+        hat and harness consistent with site requirements at the time of the
+        collapse. The harness lanyard was found still attached to Rivera.
+      medical_text: |
+        36-year-old male presenting following a fall from scaffolding at a
+        construction site. Patient fell approximately 14 feet.
+      witness_text: |
+        Carlos was wearing his hard hat, safety harness, and high-visibility
+        vest, consistent with site PPE requirements.
+    assert:
+      - type: is-json
+        metric: schema/valid_json
+
+      - type: javascript
+        value: |
+          try {
+            const r = JSON.parse(output);
+            return Array.isArray(r.verified_facts);
+          } catch { return false; }
+        metric: schema/has_verified_facts_array
+
+      - type: javascript
+        value: |
+          try {
+            const r = JSON.parse(output);
+            const facts = r.verified_facts || [];
+            return facts.some(f => {
+              const text = JSON.stringify(f).toLowerCase();
+              return (text.includes('ppe') || text.includes('hard hat') ||
+                      text.includes('harness') || text.includes('protective')) &&
+                     (f.status === 'contradictory' || f.is_consistent === false);
+            });
+          } catch { return false; }
+        metric: recall/ppe001_flags_contradiction
+
+      - type: llm-rubric
+        value: >-
+          The response must flag the PPE contradiction: the MSJ claims Rivera
+          was not wearing PPE but both the police report and witness statement
+          confirm he wore a hard hat, safety harness, and high-visibility
+          vest. This should be marked contradictory.
+        metric: recall/ppe001_semantic
+
+  # ── CTRL-001: Harmon retained control via Donner ────────────────
+  # Key advantage: precise prompt has "3. WHO DIRECTED THE WORK"
+  # category, which directly surfaces the Donner evidence.
+  - description: "CTRL-001 | Harmon foreman Donner directed work — MSJ claims no control"
+    vars:
+      msj_facts: |
+        The independent contractor — not the hirer — controls the manner and
+        method of work performance. Apex Staffing Solutions — not Harmon —
+        was responsible for scaffolding operations and employee safety.
+      police_text: |
+        Ray Donner, the Harmon Construction Group project foreman, stated that
+        he had directed Rivera and his crew to begin work on the east-side
+        scaffolding section earlier that morning. Donner indicated the section
+        needed to be operational by end of day.
+      medical_text: |
+        Patient was working on scaffolding at a commercial construction site
+        when the structure gave way. He fell approximately 14 feet.
+      witness_text: |
+        Ray Donner told us the east-side scaffolding needed to be fully
+        operational by end of day. I mentioned the base plate issue directly
+        to Donner. Donner told me, "We don't have time to re-do the base.
+        It's been fine. Just get up there and get it done."
+    assert:
+      - type: is-json
+        metric: schema/valid_json
+
+      - type: javascript
+        value: |
+          try {
+            const r = JSON.parse(output);
+            return Array.isArray(r.verified_facts);
+          } catch { return false; }
+        metric: schema/has_verified_facts_array
+
+      - type: javascript
+        value: |
+          try {
+            const r = JSON.parse(output);
+            const facts = r.verified_facts || [];
+            return facts.some(f => {
+              const text = JSON.stringify(f).toLowerCase();
+              return (text.includes('control') || text.includes('donner') ||
+                      text.includes('directed') || text.includes('retained')) &&
+                     (f.status === 'contradictory' || f.is_consistent === false);
+            });
+          } catch { return false; }
+        metric: recall/ctrl001_flags_retained_control
+
+      - type: llm-rubric
+        value: >-
+          The response must identify that the MSJ's claim that the independent
+          contractor controlled the work is contradicted by evidence that
+          Harmon's foreman Ray Donner directed the crew and dismissed safety
+          concerns — strong indicators of retained control.
+        metric: recall/ctrl001_semantic

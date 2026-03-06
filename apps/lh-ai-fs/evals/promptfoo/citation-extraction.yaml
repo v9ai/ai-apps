@@ -1,0 +1,107 @@
+description: "BS Detector — Citation Extraction Evals (DocumentParserAgent)"
+
+# Tests extraction completeness and hallucination prevention
+
+providers:
+  - id: openai:chat:deepseek-chat
+    config:
+      apiBaseUrl: https://api.deepseek.com/v1
+      temperature: 0.1
+
+defaultTest:
+  options:
+    transform: "output.replace(/^```(?:json)?\\s*/m, '').replace(/\\s*```\\s*$/m, '').trim()"
+    provider:
+      id: openai:chat:deepseek-chat
+      config:
+        apiBaseUrl: https://api.deepseek.com/v1
+        temperature: 0.0
+
+prompts:
+  - "file://prompts/citation_extraction.txt"
+
+tests:
+
+  - description: "EXTRACT | Finds Privette with fabricated 'never' quote in context"
+    vars:
+      msj_text: |
+        Under California law, a hirer of an independent contractor is
+        presumptively not liable for injuries sustained by the contractor's
+        employees while performing the contracted work. Privette v. Superior
+        Court, 5 Cal.4th 689, 695 (1993). As the Supreme Court held, "A hirer
+        is never liable for injuries sustained by an independent contractor's
+        employees when the injuries arise from the contracted work." Id. at 702.
+
+        See also Dixon v. Lone Star Structural, LLC, 387 S.W.3d 154
+        (Tex. App. 2012); Okafor v. Brightline Builders, Inc., 291 So.3d 614
+        (Fla. Dist. Ct. App. 2019).
+    assert:
+      - type: is-json
+        metric: json/validity
+
+      - type: javascript
+        value: |
+          const r = JSON.parse(output);
+          const citations = r.citations || [];
+          return citations.some(c =>
+            c.citation_text && c.citation_text.toLowerCase().includes('privette')
+          );
+        metric: extract/finds_privette
+
+      - type: javascript
+        value: |
+          const r = JSON.parse(output);
+          const citations = r.citations || [];
+          const text = JSON.stringify(citations).toLowerCase();
+          return text.includes('privette') && text.includes('never');
+        metric: extract/captures_never_quote
+
+      - type: javascript
+        value: |
+          const r = JSON.parse(output);
+          const citations = r.citations || [];
+          const hasTexas = citations.some(c =>
+            c.citation_text && c.citation_text.includes('Dixon')
+          );
+          const hasFlorida = citations.some(c =>
+            c.citation_text && c.citation_text.includes('Okafor')
+          );
+          return hasTexas && hasFlorida;
+        metric: extract/finds_out_of_state_citations
+
+  - description: "HALLUCINATION | Must not invent citations absent from the text"
+    vars:
+      msj_text: |
+        Harmon maintained an active Injury and Illness Prevention Program and
+        had passed all OSHA inspections conducted at the site during the
+        relevant period. Harmon's compliance with all applicable OSHA
+        regulations creates a rebuttable presumption of reasonable care.
+        Kellerman v. Pacific Coast Construction, Inc., 887 F.2d 1204, 1209
+        (9th Cir. 1991) ("Where an employer demonstrates full compliance with
+        applicable OSHA standards, it is entitled to a rebuttable presumption
+        that it met the standard of care in negligence.").
+    assert:
+      - type: is-json
+        metric: json/validity
+
+      - type: javascript
+        value: |
+          const r = JSON.parse(output);
+          const citations = r.citations || [];
+          return citations.some(c =>
+            c.citation_text && c.citation_text.toLowerCase().includes('kellerman')
+          );
+        metric: extract/finds_kellerman
+
+      - type: javascript
+        value: |
+          const r = JSON.parse(output);
+          const citations = r.citations || [];
+          const hasPrivette = citations.some(c =>
+            c.citation_text && c.citation_text.toLowerCase().includes('privette')
+          );
+          const hasDixon = citations.some(c =>
+            c.citation_text && c.citation_text.toLowerCase().includes('dixon')
+          );
+          return !hasPrivette && !hasDixon;
+        metric: extract/no_hallucinated_citations

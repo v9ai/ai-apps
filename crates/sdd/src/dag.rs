@@ -324,7 +324,7 @@ impl<C: LlmClient> DagPipeline<C> {
 
         // If output_schema is set, try to extract JSON; fall back to Value::String
         let result = if node.output_schema.is_some() {
-            extract_json(&text).unwrap_or_else(|| Value::String(text))
+            extract_json(&text).unwrap_or(Value::String(text))
         } else {
             Value::String(text)
         };

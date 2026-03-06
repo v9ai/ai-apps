@@ -14,7 +14,7 @@ export async function GET(
     return new Response("Resume not found", { status: 404 });
   }
 
-  return new Response(pdf, {
+  return new Response(new Uint8Array(pdf), {
     headers: {
       "Content-Type": "application/pdf",
       "Content-Disposition": `inline; filename="${slug}-resume.pdf"`,

@@ -111,6 +111,15 @@ fragment ApplicationFields on Application {
     aiMlIntegration { ...BackendPrepSectionFields }
     generatedAt
   }
+  aiDeepResearch {
+    questions {
+      question
+      category
+      deepseek { model content reasoning }
+      qwen { model content reasoning }
+    }
+    generatedAt
+  }
 }
 
 fragment BackendPrepSectionFields on BackendPrepSection {
@@ -356,6 +365,21 @@ mutation GenerateBackendPrep($applicationId: Int!) {
       serverlessEdge { ...BackendPrepSectionFields }
       typescriptNode { ...BackendPrepSectionFields }
       aiMlIntegration { ...BackendPrepSectionFields }
+      generatedAt
+    }
+  }
+}
+
+mutation GenerateDeepResearch($applicationId: Int!) {
+  generateDeepResearch(applicationId: $applicationId) {
+    id
+    aiDeepResearch {
+      questions {
+        question
+        category
+        deepseek { model content reasoning }
+        qwen { model content reasoning }
+      }
       generatedAt
     }
   }

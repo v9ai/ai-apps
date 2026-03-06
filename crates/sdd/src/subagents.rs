@@ -11,6 +11,12 @@ pub struct SubagentRegistry {
     agents: HashMap<String, AgentDefinition>,
 }
 
+impl Default for SubagentRegistry {
+    fn default() -> Self {
+        Self::new()
+    }
+}
+
 impl SubagentRegistry {
     pub fn new() -> Self {
         Self { agents: HashMap::new() }

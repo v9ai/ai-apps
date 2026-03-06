@@ -60,6 +60,9 @@ extend type Mutation {
   Requires authentication.
   """
   reportJob(id: Int!): Job
+  markJobApplied(id: Int!): Job!
+  archiveJob(id: Int!): Job!
+  unarchiveJob(id: Int!): Job!
 }
 
 type JobSkill {
@@ -260,6 +263,12 @@ type Job {
   ashby_secondary_locations: [AshbySecondaryLocation!]
   ashby_compensation: AshbyCompensation
   ashby_address: AshbyAddress
+
+  # Job application tracking
+  applied: Boolean!
+  appliedAt: String
+  recruiter: Contact
+  archived: Boolean!
 
   created_at: String!
   updated_at: String!

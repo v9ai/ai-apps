@@ -218,7 +218,7 @@ function StatusSection({
 
       {/* Rows */}
       {open && apps.length > 0 && (
-        <Box style={{ border: "1px solid var(--gray-5)", borderRadius: 8, overflow: "hidden", ml: 6 }}>
+        <Box style={{ border: "1px solid var(--gray-5)", borderRadius: 8, overflow: "hidden", marginLeft: 6 }}>
           {apps.map((app, i) => (
             <ApplicationRow
               key={app.id}
@@ -373,6 +373,8 @@ export default function ApplicationsPage() {
           notes: null,
           jobTitle: null,
           companyName: null,
+          companyKey: null,
+          jobDescription: null,
         },
       },
       update(cache, { data: mutData }) {

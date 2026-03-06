@@ -4,6 +4,7 @@ use tracing::info;
 use crate::ats_enhance;
 use crate::classifier;
 use crate::d1::D1Client;
+use crate::enrichment;
 use crate::role_tagger;
 
 /// Run the full 4-phase pipeline:
@@ -70,6 +71,24 @@ pub async fn run_pipeline(
         }
     }
 
+    // Phase 5 — Knowledge Enrichment
+    info!("=== Phase 5: Knowledge Enrichment ===");
+    match enrichment::enrich_batch(db, limit).await {
+        Ok(s) => {
+            info!(
+                "Phase 5 complete: {} processed, {} enriched, {} skipped",
+                s.processed, s.enriched, s.skipped
+            );
+            stats.enriched_knowledge = s.enriched;
+            stats.enrich_skipped = s.skipped;
+            stats.enrich_errors = s.errors;
+        }
+        Err(e) => {
+            tracing::error!("Phase 5 failed: {e}");
+            stats.enrich_errors += 1;
+        }
+    }
+
     // Phase 4 — Skill Extraction (TODO: implement in skill_extract.rs)
     info!("=== Phase 4: Skill Extraction (skipped — not yet implemented) ===");
 
@@ -89,6 +108,9 @@ pub struct PipelineStats {
     pub eu_remote: u32,
     pub non_eu: u32,
     pub classify_errors: u32,
+    pub enriched_knowledge: u32,
+    pub enrich_skipped: u32,
+    pub enrich_errors: u32,
 }
 
 impl std::fmt::Display for PipelineStats {
@@ -96,7 +118,8 @@ impl std::fmt::Display for PipelineStats {
         write!(
             f,
             "Pipeline: enhanced={} role_tagged={} (target={}, irrelevant={}) \
-             classified={} (eu={}, non_eu={}) errors={}",
+             classified={} (eu={}, non_eu={}) \
+             enriched={} (skipped={}) errors={}",
             self.enhanced,
             self.role_tagged,
             self.role_target,
@@ -104,7 +127,9 @@ impl std::fmt::Display for PipelineStats {
             self.classified,
             self.eu_remote,
             self.non_eu,
-            self.enhance_errors + self.role_errors + self.classify_errors,
+            self.enriched_knowledge,
+            self.enrich_skipped,
+            self.enhance_errors + self.role_errors + self.classify_errors + self.enrich_errors,
         )
     }
 }

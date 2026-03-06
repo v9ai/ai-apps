@@ -89,6 +89,7 @@ fragment CompanyFields on Company {
 
   # Golden record fields
   linkedin_url
+  job_board_url
   category
   tags
   services
@@ -96,6 +97,7 @@ fragment CompanyFields on Company {
   industries
   score
   score_reasons
+  deep_analysis
 
   # Common Crawl metadata
   last_seen_crawl_id
@@ -109,5 +111,10 @@ fragment CompanyFields on Company {
     tech_signals
     size_signal
     enriched_at
+  }
+
+  # Related ATS boards
+  ats_boards {
+    ...ATSBoardFields
   }
 }

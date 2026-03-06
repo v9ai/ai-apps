@@ -69,7 +69,7 @@ function SourceFilterChips({ selected, onChange }: SourceFilterProps) {
       {selected.length > 1 && (
         <Badge
           size="2"
-          variant="ghost"
+          variant="soft"
           color="gray"
           style={{ cursor: "pointer", userSelect: "none" }}
           onClick={() => onChange([])}

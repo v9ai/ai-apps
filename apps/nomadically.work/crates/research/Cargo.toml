@@ -23,6 +23,7 @@ reqwest = { version = "0.12", features = ["json"] }
 dotenvy = "0.15"
 url = "2"
 research = { path = "../../../../crates/research" }
+deepseek = { path = "../../../../crates/deepseek" }
 
 [dev-dependencies]
 axum = "0.8"

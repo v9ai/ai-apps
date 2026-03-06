@@ -1,6 +1,7 @@
 import { task, logger } from "@trigger.dev/sdk/v3";
 import { drizzle } from "drizzle-orm/d1";
 import { eq } from "drizzle-orm";
+import * as schema from "../db/schema";
 import { jobs } from "../db/schema";
 import { createD1HttpClient } from "../db/d1-http";
 import {
@@ -27,7 +28,7 @@ export interface EnhanceJobPayload {
 
 function getDb() {
   const d1Client = createD1HttpClient();
-  return drizzle(d1Client as any);
+  return drizzle(d1Client as any, { schema });
 }
 
 export const enhanceJobTask = task({

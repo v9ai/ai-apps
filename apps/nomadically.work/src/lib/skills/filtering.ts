@@ -1,6 +1,13 @@
 // TODO: Update to use D1 database
 
+interface LegacyDbClient {
+  execute(params: { sql: string; args: unknown[] }): Promise<{
+    rows: Record<string, unknown>[];
+  }>;
+}
+
 export type SkillFilteredJobsParams = {
+  db: LegacyDbClient;
   userId: string;
   limit?: number;
   offset?: number;
@@ -25,7 +32,7 @@ export type SkillFilteredJobsResult = {
 export async function getSkillFilteredJobs(
   params: SkillFilteredJobsParams,
 ): Promise<SkillFilteredJobsResult> {
-  const { userId, limit = 20, offset = 0 } = params;
+  const { db, userId, limit = 20, offset = 0 } = params;
 
   // 1) Load user settings
   const settingsRes = await db.execute({
@@ -104,7 +111,7 @@ export async function getSkillFilteredJobs(
 /**
  * Get all skill tags for a specific job (useful for displaying job details)
  */
-export async function getJobSkills(jobId: number): Promise<any[]> {
+export async function getJobSkills(db: LegacyDbClient, jobId: number): Promise<Record<string, unknown>[]> {
   const res = await db.execute({
     sql: `
       SELECT tag, level, confidence, evidence, extracted_at, version
@@ -121,5 +128,5 @@ export async function getJobSkills(jobId: number): Promise<any[]> {
     args: [jobId],
   });
 
-  return res.rows as any[];
+  return res.rows;
 }

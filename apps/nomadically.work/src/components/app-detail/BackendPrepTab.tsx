@@ -16,6 +16,19 @@ import { useState } from "react";
 import { useGenerateBackendPrepMutation } from "@/__generated__/hooks";
 import type { TabBaseProps } from "./types";
 
+interface TopicGroup {
+  label: string;
+  keys: string[];
+}
+
+const TOPIC_GROUPS: TopicGroup[] = [
+  { label: "Architecture", keys: ["systemDesign", "distributedSystems", "microservices", "eventDriven"] },
+  { label: "Data", keys: ["databaseDesign", "sqlOptimization", "nosqlPatterns", "caching"] },
+  { label: "API & Security", keys: ["apiDesign", "authSecurity", "securityOwasp"] },
+  { label: "Infrastructure", keys: ["devops", "messageQueues", "serverlessEdge", "observability"] },
+  { label: "Code Quality", keys: ["testing", "performance", "concurrencyAsync", "typescriptNode", "aiMlIntegration"] },
+];
+
 export function BackendPrepTab({ app, isAdmin }: TabBaseProps) {
   const [generateBackendPrep] = useGenerateBackendPrepMutation();
   const [backendTopicOpen, setBackendTopicOpen] = useState<string | null>(null);
@@ -53,7 +66,7 @@ export function BackendPrepTab({ app, isAdmin }: TabBaseProps) {
 
       {app.aiBackendPrep && (() => {
         const bp = app.aiBackendPrep;
-        const sections: { key: string; label: string; color: "teal" | "blue" | "violet" | "cyan" | "green" | "orange" | "red" | "amber" | "indigo" | "plum"; data: typeof bp.systemDesign }[] = [
+        const allSections: { key: string; label: string; color: "teal" | "blue" | "violet" | "cyan" | "green" | "orange" | "red" | "amber" | "indigo" | "plum"; data: typeof bp.systemDesign }[] = [
           { key: "systemDesign", label: "System Design", color: "teal", data: bp.systemDesign },
           { key: "distributedSystems", label: "Distributed Systems", color: "blue", data: bp.distributedSystems },
           { key: "databaseDesign", label: "Database Design", color: "violet", data: bp.databaseDesign },
@@ -76,30 +89,78 @@ export function BackendPrepTab({ app, isAdmin }: TabBaseProps) {
           { key: "aiMlIntegration", label: "AI/ML Integration", color: "plum", data: bp.aiMlIntegration },
         ];
 
-        const activeSections = sections.filter((s) => s.data?.title || s.data?.overview);
+        const sectionMap = new Map(allSections.map((s) => [s.key, s]));
+        const activeSections = allSections.filter((s) => s.data?.title || s.data?.overview);
+        const activeKeys = new Set(activeSections.map((s) => s.key));
+
+        // Count available sub-sections for content richness indicator
+        const contentCount = (data: typeof bp.systemDesign): number => {
+          if (!data) return 0;
+          let n = 0;
+          if (data.overview) n++;
+          if (data.deepDive) n++;
+          if (data.keyConcepts?.length) n += data.keyConcepts.length;
+          if (data.interviewQuestions?.length) n += data.interviewQuestions.length;
+          if (data.codeExamples?.length) n += data.codeExamples.length;
+          if (data.commonPitfalls?.length) n += data.commonPitfalls.length;
+          if (data.talkingPoints?.length) n += data.talkingPoints.length;
+          if (data.researchInsights) n++;
+          return n;
+        };
+
+        // Map group labels to their accent color (first topic's color)
+        const groupAccent: Record<string, string> = {};
+        for (const group of TOPIC_GROUPS) {
+          const first = group.keys.find((k) => sectionMap.has(k) && activeKeys.has(k));
+          if (first) {
+            const s = sectionMap.get(first)!;
+            groupAccent[group.label] = s.color;
+          }
+        }
 
         return (
           <Box>
-            <Flex gap="2" wrap="wrap" mb="4">
-              {activeSections.map((s) => (
-                <Badge
-                  key={s.key}
-                  size="2"
-                  variant={backendTopicOpen === s.key ? "solid" : "soft"}
-                  color={s.color}
-                  style={{ cursor: "pointer", padding: "6px 12px" }}
-                  onClick={() => setBackendTopicOpen(backendTopicOpen === s.key ? null : s.key)}
-                >
-                  {s.label}
-                </Badge>
-              ))}
-            </Flex>
+            {/* Grouped topic badges */}
+            {TOPIC_GROUPS.map((group) => {
+              const groupSections = group.keys
+                .map((k) => sectionMap.get(k))
+                .filter((s): s is NonNullable<typeof s> => !!s && activeKeys.has(s.key));
+              if (groupSections.length === 0) return null;
+              return (
+                <Box key={group.label} mb="3" pb="3" style={{ borderBottom: "1px solid var(--gray-4)" }}>
+                  <Flex align="center" gap="2" mb="1">
+                    <Box style={{ width: 6, height: 6, display: "inline-block", backgroundColor: `var(--${groupAccent[group.label] || "gray"}-9)`, flexShrink: 0 }} />
+                    <Text size="1" weight="medium" color="gray" as="div">
+                      {group.label}
+                    </Text>
+                  </Flex>
+                  <Flex gap="2" wrap="wrap">
+                    {groupSections.map((s) => {
+                      const count = contentCount(s.data);
+                      return (
+                        <Badge
+                          key={s.key}
+                          size="2"
+                          variant={backendTopicOpen === s.key ? "solid" : "soft"}
+                          color={s.color}
+                          className="backend-topic-badge"
+                          style={{ cursor: "pointer", padding: "6px 12px" }}
+                          onClick={() => setBackendTopicOpen(backendTopicOpen === s.key ? null : s.key)}
+                        >
+                          {s.label}{count > 0 && ` (${count})`}
+                        </Badge>
+                      );
+                    })}
+                  </Flex>
+                </Box>
+              );
+            })}
 
             {activeSections.map((s) => {
               if (backendTopicOpen !== s.key || !s.data) return null;
               const sec = s.data;
               return (
-                <Box key={s.key}>
+                <Box key={s.key} mt="4">
                   {/* Overview */}
                   {sec.overview && (
                     <Box mb="4">
@@ -167,7 +228,7 @@ export function BackendPrepTab({ app, isAdmin }: TabBaseProps) {
                                   {q.difficulty}
                                 </Badge>
                               </Flex>
-                              <Button size="2" variant="soft" color={s.color} onClick={() => setBackendQuestionOpen(backendQuestionOpen === qKey ? null : qKey)}>
+                              <Button size="1" variant="soft" color={s.color} onClick={() => setBackendQuestionOpen(backendQuestionOpen === qKey ? null : qKey)}>
                                 {backendQuestionOpen === qKey ? "Hide answer" : "Show ideal answer"}
                               </Button>
                               {backendQuestionOpen === qKey && (
@@ -228,7 +289,9 @@ export function BackendPrepTab({ app, isAdmin }: TabBaseProps) {
                       <Flex direction="column" gap="1">
                         {sec.commonPitfalls.map((p, pi) => (
                           <Flex key={pi} align="start" gap="2" p="2" style={{ backgroundColor: "var(--red-2)", borderRadius: "var(--radius-2)" }}>
-                            <Text size="2" color="red" style={{ flexShrink: 0 }}>!</Text>
+                            <Box style={{ width: 16, height: 16, backgroundColor: "var(--red-9)", display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0, marginTop: 2 }}>
+                              <Text size="1" style={{ color: "white", fontWeight: 700, lineHeight: 1 }}>!</Text>
+                            </Box>
                             <Text size="2">{p}</Text>
                           </Flex>
                         ))}
@@ -245,7 +308,9 @@ export function BackendPrepTab({ app, isAdmin }: TabBaseProps) {
                       <Flex direction="column" gap="1">
                         {sec.talkingPoints.map((tp, tpi) => (
                           <Flex key={tpi} align="start" gap="2" p="2" style={{ backgroundColor: "var(--green-2)", borderRadius: "var(--radius-2)" }}>
-                            <Text size="2" color="green" style={{ flexShrink: 0 }}>+</Text>
+                            <Box style={{ width: 16, height: 16, backgroundColor: "var(--green-9)", display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0, marginTop: 2 }}>
+                              <Text size="1" style={{ color: "white", fontWeight: 700, lineHeight: 1 }}>{"\u2713"}</Text>
+                            </Box>
                             <Text size="2">{tp}</Text>
                           </Flex>
                         ))}

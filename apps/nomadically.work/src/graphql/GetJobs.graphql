@@ -30,6 +30,8 @@ query GetJobs(
       status
       is_remote_eu
       remote_eu_confidence
+      applied
+      archived
       skills {
         tag
         level

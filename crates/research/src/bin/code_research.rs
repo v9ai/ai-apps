@@ -14,12 +14,10 @@ fn research_tasks(code_root: &str) -> Vec<ResearchTask> {
         ResearchTask {
             id: 1,
             subject: "error-handling-literature".into(),
-            description: format!(
-                "Research best practices for error handling in Rust. Focus on: \
+            description: "Research best practices for error handling in Rust. Focus on: \
                 (1) Result vs panic patterns, (2) thiserror vs anyhow design decisions, \
                 (3) error propagation in async code, (4) error hierarchy design. \
-                Search for papers and well-cited blog posts on Rust error handling (2020-2026)."
-            ),
+                Search for papers and well-cited blog posts on Rust error handling (2020-2026).".into(),
             preamble: "You are a Rust programming researcher. Produce structured findings \
                 in Markdown focusing on evidence-backed patterns."
                 .into(),

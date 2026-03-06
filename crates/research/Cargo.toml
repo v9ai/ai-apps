@@ -2,7 +2,7 @@
 name = "research"
 version = "0.1.0"
 edition = "2021"
-description = "Shared research infrastructure: Semantic Scholar client, DeepSeek agent framework, and paper search tools"
+description = "Shared research infrastructure: Semantic Scholar client, DeepSeek + Qwen dual-model agent framework, and paper search tools"
 
 [dependencies]
 serde = { version = "1", features = ["derive"] }
@@ -20,6 +20,7 @@ ast-grep-core = "0.41"
 ast-grep-language = "0.41"
 sdd = { path = "../sdd" }
 deepseek = { path = "../deepseek", features = ["agent"] }
+qwen = { path = "../qwen" }
 
 [dev-dependencies]
 tempfile = "3"
@@ -35,3 +36,7 @@ path = "src/bin/code_research.rs"
 [[bin]]
 name = "law-research"
 path = "src/bin/law_research.rs"
+
+[[bin]]
+name = "interview-prep"
+path = "src/bin/interview_prep.rs"

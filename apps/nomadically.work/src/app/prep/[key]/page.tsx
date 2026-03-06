@@ -179,7 +179,7 @@ export default function PrepByCompanyPage() {
       <PrepEmptyState
         type={!app ? "not-found" : "no-prep"}
         companyKey={key}
-        appId={app?.id}
+        appId={app?.id != null ? String(app.id) : undefined}
       />
     );
   }
@@ -284,7 +284,7 @@ export default function PrepByCompanyPage() {
       <PrepHeader
         displayTitle={displayTitle}
         displayCompany={displayCompany}
-        appId={app.id}
+        appId={String(app.id)}
         requirementCount={requirementCount}
         topicCount={topicCount}
         overallPercent={overallPercent}

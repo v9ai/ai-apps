@@ -12,6 +12,11 @@ import { contactResolvers } from "./resolvers/contacts";
 import { studyTopicResolvers } from "./resolvers/study-topics";
 import { opportunityResolvers } from "./resolvers/opportunities";
 import { stackResolvers } from "./resolvers/stack";
+import { taskResolvers } from "./resolvers/tasks";
+import { emailCampaignResolvers } from "./resolvers/email-campaigns";
+import { emailTemplateResolvers } from "./resolvers/email-templates";
+import { blockedCompanyResolvers } from "./resolvers/blocked-companies";
+import { knowledgeSquadResolvers } from "./resolvers/knowledge-squad";
 import { merge } from "lodash";
 
 export const resolvers = merge(
@@ -30,4 +35,9 @@ export const resolvers = merge(
   studyTopicResolvers,
   opportunityResolvers,
   stackResolvers,
+  taskResolvers,
+  emailCampaignResolvers,
+  emailTemplateResolvers,
+  blockedCompanyResolvers,
+  knowledgeSquadResolvers,
 );

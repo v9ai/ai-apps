@@ -34,7 +34,7 @@ export const promptResolvers = {
         // Convert short name to user-namespaced name if needed
         const fullName = name.includes("/")
           ? name
-          : toUserPromptName(context.userEmail, name);
+          : toUserPromptName(context.userEmail ?? "", name);
 
         // Enforce ACL
         if (context.userEmail) {
@@ -89,7 +89,7 @@ export const promptResolvers = {
       }
 
       try {
-        const apiResponse = await listLangfusePrompts(context.userEmail);
+        const apiResponse = await listLangfusePrompts(context.userEmail ?? undefined);
 
         // Fetch full details for each prompt to get the content
         const registeredPrompts = await Promise.all(

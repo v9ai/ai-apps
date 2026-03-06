@@ -1,6 +1,6 @@
 -- Seed React Auth / JWT study topics (deep dive content)
 
-INSERT INTO study_topics (category, topic, title, summary, body_md, difficulty, tags, created_at, updated_at) VALUES
+INSERT OR IGNORE INTO study_topics (category, topic, title, summary, body_md, difficulty, tags, created_at, updated_at) VALUES
 ('react', 'jwt-basics', 'JWT Basics', 'A JSON Web Token is a compact, URL-safe token that encodes claims as a signed JSON payload. Understanding its structure is the foundation of every React auth implementation.', '## JWT Basics
 
 ```
@@ -98,7 +98,7 @@ Refresh token → long TTL, stored securely, used only to get new access tokens
 3. **How do you invalidate a JWT before expiry?** JWTs are stateless — you must maintain a deny-list (Redis set of revoked `jti` claims) or use very short expiry + refresh token rotation.
 4. **HS256 vs RS256 — when to prefer each?** HS256 is faster but requires every verifier to share the secret. RS256 lets you publish a JWKS endpoint so any service can verify tokens without the private key.', 'intermediate', '["jwt","authentication","security","base64","claims","tokens"]', datetime('now'), datetime('now'));
 
-INSERT INTO study_topics (category, topic, title, summary, body_md, difficulty, tags, created_at, updated_at) VALUES
+INSERT OR IGNORE INTO study_topics (category, topic, title, summary, body_md, difficulty, tags, created_at, updated_at) VALUES
 ('react', 'auth-context', 'Auth Context Pattern', 'The canonical React pattern for sharing auth state: a Context + Provider that wraps the app, exposing user, token, login(), logout(), and isLoading.', '## Auth Context Pattern
 
 The goal is a single source of truth for authentication state that any component can read without prop drilling.
@@ -230,7 +230,7 @@ function Header() {
 2. **How do you handle token expiry while the user is active?** Use an Axios/fetch interceptor that detects 401 responses, calls `/api/auth/refresh`, and retries the original request transparently.
 3. **What is the `isLoading` flag for?** Prevents the app from rendering a "not logged in" flash before the async session restoration completes.', 'intermediate', '["context","auth","provider","jwt","useContext","session"]', datetime('now'), datetime('now'));
 
-INSERT INTO study_topics (category, topic, title, summary, body_md, difficulty, tags, created_at, updated_at) VALUES
+INSERT OR IGNORE INTO study_topics (category, topic, title, summary, body_md, difficulty, tags, created_at, updated_at) VALUES
 ('react', 'protected-routes', 'Protected Routes', 'Route-level access control in React: redirect unauthenticated users, enforce role-based access, and prevent flash of protected content.', '## Protected Routes
 
 A protected route renders its children only when the user meets the access criteria; otherwise it redirects.
@@ -358,7 +358,7 @@ export default async function AdminLayout({ children }: { children: React.ReactN
 2. **How do you prevent a flash of protected content?** Keep `isLoading: true` in AuthContext until session restoration completes — render a spinner instead of the protected content.
 3. **What is the difference between client-side and server-side route protection?** Client-side only prevents rendering; the data is still accessible via direct API calls. Server-side (middleware/server components) enforces access before any response is sent.', 'intermediate', '["routing","react-router","Next.js","protected routes","RBAC","redirect"]', datetime('now'), datetime('now'));
 
-INSERT INTO study_topics (category, topic, title, summary, body_md, difficulty, tags, created_at, updated_at) VALUES
+INSERT OR IGNORE INTO study_topics (category, topic, title, summary, body_md, difficulty, tags, created_at, updated_at) VALUES
 ('react', 'token-storage', 'Token Storage Strategies', 'Where to store JWTs in the browser — localStorage, sessionStorage, httpOnly cookies, and in-memory — with the security tradeoffs of each.', '## Token Storage Strategies
 
 Where a token lives determines what attacks can steal it.
@@ -471,7 +471,7 @@ On page load: call `/api/auth/refresh` (cookie sent automatically) → receive n
 2. **Does httpOnly eliminate CSRF?** No — add `SameSite=Strict` and/or CSRF tokens. `SameSite=Strict` is sufficient for most SPAs.
 3. **Can you store the access token in an httpOnly cookie?** Yes, but then all API calls are stateful (cookie attached automatically) and you lose the ability to inspect the token client-side. In-memory access token + httpOnly refresh token is the preferred hybrid.', 'advanced', '["security","jwt","localStorage","httpOnly","cookies","XSS","CSRF","token storage"]', datetime('now'), datetime('now'));
 
-INSERT INTO study_topics (category, topic, title, summary, body_md, difficulty, tags, created_at, updated_at) VALUES
+INSERT OR IGNORE INTO study_topics (category, topic, title, summary, body_md, difficulty, tags, created_at, updated_at) VALUES
 ('react', 'token-refresh', 'Silent Token Refresh', 'Keep users logged in without interruption by automatically renewing short-lived access tokens using a refresh token, typically via an Axios/fetch interceptor.', '## Silent Token Refresh
 
 Access tokens should be short-lived (5–15 min). Silent refresh renews them transparently so users are never logged out mid-session.
@@ -598,7 +598,7 @@ If an attacker steals a refresh token and uses it, the next legitimate refresh w
 2. **What happens if the refresh token itself expires?** Redirect to login. The user must authenticate again. This is the intended behavior.
 3. **What is refresh token rotation and why does it matter?** Each use of a refresh token issues a new one and invalidates the old. If a stolen refresh token is ever used, the next legitimate use triggers a conflict, allowing the server to detect and terminate the compromised session.', 'advanced', '["jwt","refresh token","interceptor","axios","silent refresh","token rotation","security"]', datetime('now'), datetime('now'));
 
-INSERT INTO study_topics (category, topic, title, summary, body_md, difficulty, tags, created_at, updated_at) VALUES
+INSERT OR IGNORE INTO study_topics (category, topic, title, summary, body_md, difficulty, tags, created_at, updated_at) VALUES
 ('react', 'auth-hooks', 'Custom Auth Hooks', 'Extract auth logic into composable hooks — useAuth, useUser, usePermissions, useRequireAuth — to keep components thin and testable.', '## Custom Auth Hooks
 
 Thin, single-purpose hooks on top of AuthContext keep components clean and make auth logic independently testable.
@@ -766,7 +766,7 @@ test(''admin can manage:users'', () => {
 2. **How do you test hooks that depend on auth context?** Use `renderHook` from `@testing-library/react` with a custom `wrapper` that provides a mocked `AuthContext.Provider`.
 3. **What is the benefit of `usePermissions` over checking `user.role` directly in components?** Centralises the role→permission mapping. When permissions change, you update one place instead of every component.', 'intermediate', '["hooks","auth","permissions","RBAC","useContext","testing","custom hooks"]', datetime('now'), datetime('now'));
 
-INSERT INTO study_topics (category, topic, title, summary, body_md, difficulty, tags, created_at, updated_at) VALUES
+INSERT OR IGNORE INTO study_topics (category, topic, title, summary, body_md, difficulty, tags, created_at, updated_at) VALUES
 ('react', 'oauth-pkce', 'OAuth 2.0 / PKCE Flow', 'How the Authorization Code + PKCE flow works in a React SPA — from redirect through token exchange — and why it replaced the implicit flow.', '## OAuth 2.0 / PKCE Flow
 
 OAuth 2.0 delegates authentication to a trusted provider (Google, GitHub, etc.). SPAs use **Authorization Code + PKCE** (Proof Key for Code Exchange) — the implicit flow was deprecated in 2019.
@@ -902,7 +902,7 @@ const claims = jwtDecode<IdTokenClaims>(idToken)
 2. **What does the `state` parameter protect against?** CSRF attacks. Generate a random value, store it in `sessionStorage`, and verify it matches when the redirect comes back before exchanging the code.
 3. **Should a SPA ever store a client secret?** No — SPAs are public clients. The secret would be visible in the JavaScript bundle. PKCE is specifically designed for public clients.', 'advanced', '["OAuth","PKCE","OpenID Connect","authorization code","security","JWT","social login"]', datetime('now'), datetime('now'));
 
-INSERT INTO study_topics (category, topic, title, summary, body_md, difficulty, tags, created_at, updated_at) VALUES
+INSERT OR IGNORE INTO study_topics (category, topic, title, summary, body_md, difficulty, tags, created_at, updated_at) VALUES
 ('react', 'clerk-auth', 'Clerk Auth Integration', 'Clerk is a drop-in auth provider for Next.js and React. It handles JWTs, sessions, social login, MFA, and organisations — with both client and server-side APIs.', '## Clerk Auth Integration
 
 Clerk manages auth infrastructure (tokens, sessions, user management, MFA) so you focus on the app.

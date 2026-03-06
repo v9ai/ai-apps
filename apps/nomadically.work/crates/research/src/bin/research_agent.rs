@@ -8,6 +8,7 @@ use research_agent::{
     app_context::{AppContext, graphql_url_from_app_url},
     backend,
     d1::D1Client,
+    deep_research,
     enhance,
     remote_job_search,
     research_context::ResearchContext,
@@ -160,6 +161,12 @@ enum Command {
         /// DeepSeek API key (or set DEEPSEEK_API_KEY env var)
         #[arg(long)]
         api_key: Option<String>,
+    },
+
+    /// Dual-model deep research: DeepSeek Reasoner + Qwen Max in parallel
+    DeepResearch {
+        #[command(flatten)]
+        source: AppSource,
     },
 }
 
@@ -409,6 +416,15 @@ Research standards:
             info!(app_id = app_ctx.app_id, "Starting backend interview prep (20 parallel agents)");
             backend::run(&app_ctx, &api_key, &scholar, &d1).await?;
             info!(app_id = app_ctx.app_id, "Backend prep data saved to D1");
+        }
+
+        Command::DeepResearch { source } => {
+            let d1 = D1Client::from_env()?;
+            let app_ctx = resolve_app_context(&source, &d1).await?;
+
+            info!(app_id = app_ctx.app_id, "Starting dual-model deep research (DeepSeek Reasoner + Qwen Max)");
+            deep_research::run(&app_ctx, &d1).await?;
+            info!(app_id = app_ctx.app_id, "Deep research saved to D1");
         }
     }
 

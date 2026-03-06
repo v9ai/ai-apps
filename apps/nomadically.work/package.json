@@ -82,6 +82,7 @@
     "resend": "^6.9.2",
     "ulid": "^3.0.2",
     "@repo/deepseek": "workspace:*",
+    "@repo/qwen": "workspace:*",
     "zod": "^3.25.76"
   },
   "devDependencies": {

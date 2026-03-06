@@ -1,0 +1,21 @@
+mutation MarkJobApplied($id: Int!) {
+  markJobApplied(id: $id) {
+    id
+    applied
+    appliedAt
+  }
+}
+
+mutation ArchiveJob($id: Int!) {
+  archiveJob(id: $id) {
+    id
+    archived
+  }
+}
+
+mutation UnarchiveJob($id: Int!) {
+  unarchiveJob(id: $id) {
+    id
+    archived
+  }
+}

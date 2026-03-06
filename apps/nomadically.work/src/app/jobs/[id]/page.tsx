@@ -11,6 +11,9 @@ import {
   useCreateApplicationMutation,
   useGetApplicationsQuery,
   useReportJobMutation,
+  useMarkJobAppliedMutation,
+  useArchiveJobMutation,
+  useUnarchiveJobMutation,
 } from "@/__generated__/hooks";
 import { orderBy } from "lodash";
 import { extractJobSlug } from "@/lib/job-utils";
@@ -81,6 +84,9 @@ function JobPageContent() {
   const [enhanceJobMutation] = useEnhanceJobFromAtsMutation();
   const [createApplicationMutation] = useCreateApplicationMutation();
   const [reportJobMutation] = useReportJobMutation();
+  const [markJobApplied] = useMarkJobAppliedMutation();
+  const [archiveJob] = useArchiveJobMutation();
+  const [unarchiveJob] = useUnarchiveJobMutation();
   const { data: appsData } = useGetApplicationsQuery({ skip: !user });
 
   const { data: relatedJobsData } = useGetJobsQuery({
@@ -294,6 +300,30 @@ function JobPageContent() {
     }
   };
 
+  const handleMarkApplied = async () => {
+    if (!job.id) return;
+    try {
+      await markJobApplied({ variables: { id: job.id } });
+      await refetch();
+    } catch (err) {
+      console.error("Error marking job applied:", err);
+    }
+  };
+
+  const handleToggleArchive = async () => {
+    if (!job.id) return;
+    try {
+      if (job.archived) {
+        await unarchiveJob({ variables: { id: job.id } });
+      } else {
+        await archiveJob({ variables: { id: job.id } });
+      }
+      await refetch();
+    } catch (err) {
+      console.error("Error toggling archive:", err);
+    }
+  };
+
   return (
     <Container size="4" p="8" style={{ maxWidth: "1400px", width: "100%" }}>
       <Box mb="6">
@@ -342,6 +372,26 @@ function JobPageContent() {
                   {isReported ? "Reported" : "Report"}
                 </Button>
               </Tooltip>
+            )}
+            {isAdmin && !job.applied && (
+              <Button
+                size="2"
+                variant="soft"
+                color="green"
+                onClick={handleMarkApplied}
+              >
+                Mark Applied
+              </Button>
+            )}
+            {isAdmin && (
+              <Button
+                size="2"
+                variant="soft"
+                color="gray"
+                onClick={handleToggleArchive}
+              >
+                {job.archived ? "Unarchive" : "Archive"}
+              </Button>
             )}
             {isAdmin && (
               <IconButton
@@ -432,6 +482,12 @@ function JobPageContent() {
           {job.source_kind && <Badge>{job.source_kind}</Badge>}
           {job.score && (
             <Badge color="blue">Score: {(job.score * 100).toFixed(0)}%</Badge>
+          )}
+          {job.applied && (
+            <Badge color="green" variant="soft">Applied{job.appliedAt ? ` ${new Date(job.appliedAt).toLocaleDateString()}` : ""}</Badge>
+          )}
+          {job.archived && (
+            <Badge color="gray" variant="soft">Archived</Badge>
           )}
         </Flex>
 

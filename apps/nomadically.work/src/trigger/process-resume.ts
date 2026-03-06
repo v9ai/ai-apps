@@ -74,12 +74,13 @@ export const processResumeTask = task({
       await wait.for({ seconds: 3 });
 
       const status = await client.pipelines.getStatus(pipelineId);
-      logger.info("Pipeline status", { attempt, status: status.status });
+      const pipelineStatus = status.status as string;
+      logger.info("Pipeline status", { attempt, status: pipelineStatus });
 
       if (
-        status.status === "SUCCESS" ||
-        status.status === "success" ||
-        status.status === "IDLE"
+        pipelineStatus === "SUCCESS" ||
+        pipelineStatus === "success" ||
+        pipelineStatus === "IDLE"
       ) {
         logger.info("Resume indexed successfully", { email });
         return {
@@ -90,7 +91,7 @@ export const processResumeTask = task({
         };
       }
 
-      if (status.status === "ERROR") {
+      if (pipelineStatus === "ERROR") {
         throw new Error("Pipeline ingestion failed");
       }
     }

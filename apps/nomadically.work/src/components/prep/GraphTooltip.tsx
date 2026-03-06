@@ -1,3 +1,5 @@
+import type React from "react";
+
 export type TooltipData = {
   x: number;
   y: number;
@@ -37,7 +39,7 @@ function borderColorForType(type: string, data: Record<string, unknown>): string
   return "var(--gray-6)";
 }
 
-export function GraphTooltip({ tooltip }: { tooltip: TooltipData }): JSX.Element {
+export function GraphTooltip({ tooltip }: { tooltip: TooltipData }): React.JSX.Element {
   ensureAnimation();
 
   const { x, y, type, data } = tooltip;

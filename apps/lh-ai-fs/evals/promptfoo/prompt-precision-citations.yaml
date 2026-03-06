@@ -1,0 +1,197 @@
+description: "Prompt Precision A/B — Citation Verification (precise vs. imprecise)"
+
+# Compares citation_verification.txt (precise) against citation_verification_imprecise.txt.
+# Both prompts run against every test case. The precise prompt should score higher on:
+#   schema/*        — valid JSON with required fields and correct enum values
+#   recall/*        — correctly flags the Privette misquote and out-of-state citations
+#   precision/*     — does NOT false-flag a valid citation
+#   uncertainty/*   — says could_not_verify on a fictitious case rather than hallucinating
+
+providers:
+  - id: openai:chat:deepseek-chat
+    config:
+      apiBaseUrl: https://api.deepseek.com/v1
+      temperature: 0.1
+      max_tokens: 8192
+
+defaultTest:
+  options:
+    transform: "output.replace(/^```(?:json)?\\s*/m, '').replace(/\\s*```\\s*$/m, '').trim()"
+    provider:
+      id: openai:chat:deepseek-chat
+      config:
+        apiBaseUrl: https://api.deepseek.com/v1
+        temperature: 0.0
+
+prompts:
+  - "file://prompts/citation_verification.txt"
+  - "file://prompts/citation_verification_imprecise.txt"
+
+tests:
+
+  # ── CIT-001: Privette "never" misquote ─────────────────────────
+  # Key advantage of precise prompt: IMPORTANT LEGAL KNOWLEDGE block
+  # names the exact case and states "never" does NOT appear.
+  - description: "CIT-001 | 'never' inserted in Privette quote"
+    vars:
+      citation_text: "Privette v. Superior Court, 5 Cal.4th 689, 702 (1993)"
+      claimed_proposition: >-
+        A hirer is never liable for injuries sustained by an independent
+        contractor's employees when the injuries arise from the contracted work
+      context: >-
+        As the Supreme Court held, "A hirer is never liable for injuries
+        sustained by an independent contractor's employees when the injuries
+        arise from the contracted work." Id. at 702.
+    assert:
+      - type: is-json
+        metric: schema/valid_json
+
+      - type: javascript
+        value: |
+          try {
+            const r = JSON.parse(output);
+            return typeof r.is_supported === 'boolean';
+          } catch { return false; }
+        metric: schema/has_is_supported
+
+      - type: javascript
+        value: |
+          try {
+            const r = JSON.parse(output);
+            const valid = ['supported','not_supported','misleading','could_not_verify'];
+            return valid.includes(r.status);
+          } catch { return false; }
+        metric: schema/enum_compliance
+
+      - type: javascript
+        value: |
+          try {
+            const r = JSON.parse(output);
+            return ['misleading','not_supported'].includes(r.status);
+          } catch { return false; }
+        metric: recall/cit001_correct_status
+
+      - type: javascript
+        value: |
+          try {
+            const r = JSON.parse(output);
+            return JSON.stringify(r).toLowerCase().includes('never') && r.status !== 'supported';
+          } catch { return false; }
+        metric: recall/cit001_flags_never
+
+      - type: llm-rubric
+        value: >-
+          The response must identify that the word "never" does not appear in
+          the actual Privette v. Superior Court holding. The real holding
+          creates a rebuttable presumption of non-liability, not absolute
+          immunity. Status should be misleading or not_supported.
+        metric: recall/cit001_semantic
+
+  # ── CIT-002a: Dixon (TX) — non-binding in California ───────────
+  # Key advantage: precise prompt says "Flag federal cases, out-of-state cases"
+  # and explicitly sets jurisdiction to California state court.
+  - description: "CIT-002a | Dixon (TX) — not binding in California"
+    vars:
+      citation_text: "Dixon v. Lone Star Structural, LLC, 387 S.W.3d 154 (Tex. App. 2012)"
+      claimed_proposition: "Supports hirer non-liability under independent contractor doctrine"
+      context: "See also Dixon v. Lone Star Structural, LLC, 387 S.W.3d 154 (Tex. App. 2012)"
+    assert:
+      - type: is-json
+        metric: schema/valid_json
+
+      - type: javascript
+        value: |
+          try {
+            const r = JSON.parse(output);
+            const valid = ['supported','not_supported','misleading','could_not_verify'];
+            return valid.includes(r.status);
+          } catch { return false; }
+        metric: schema/enum_compliance
+
+      - type: javascript
+        value: |
+          const text = output.toLowerCase();
+          return text.includes('texas') || text.includes('jurisdiction') ||
+                 text.includes('not binding') || text.includes('non-binding') ||
+                 text.includes('persuasive');
+        metric: jurisdiction/flags_texas
+
+      - type: llm-rubric
+        value: >-
+          The response must flag that Dixon v. Lone Star is a Texas Court of
+          Appeals decision. It carries no binding authority in California
+          state court — at best it is persuasive.
+        metric: jurisdiction/reasoning
+
+  # ── PRECISION: Valid Privette claim — must NOT be flagged ────────
+  # Tests false-positive rate. Both prompts should pass; the imprecise
+  # prompt may incorrectly flag this because it lacks schema guidance.
+  - description: "PRECISION | Accurate Privette presumption claim — must not be flagged"
+    vars:
+      citation_text: "Privette v. Superior Court, 5 Cal.4th 689, 695 (1993)"
+      claimed_proposition: >-
+        Under California law, a hirer of an independent contractor is
+        presumptively not liable for injuries sustained by the contractor's
+        employees while performing the contracted work
+      context: >-
+        Under California law, a hirer of an independent contractor is
+        presumptively not liable for injuries sustained by the contractor's
+        employees. Privette v. Superior Court, 5 Cal.4th 689, 695 (1993).
+    assert:
+      - type: is-json
+        metric: schema/valid_json
+
+      - type: javascript
+        value: |
+          try {
+            return JSON.parse(output).status === 'supported';
+          } catch { return false; }
+        metric: precision/no_false_flag
+
+      - type: llm-rubric
+        value: >-
+          This accurately states Privette's rebuttable presumption of
+          non-liability. The response MUST mark this as supported and must
+          NOT flag it as misleading or not_supported.
+        metric: precision/correct_no_flag
+
+  # ── UNCERTAINTY: Fictitious citation ────────────────────────────
+  # Key advantage: precise prompt includes explicit "could_not_verify"
+  # status in the schema, guiding the model to hedge on unknown cases.
+  - description: "UNCERTAINTY | Fictitious citation — must hedge, not hallucinate"
+    vars:
+      citation_text: "Marchetti v. Western Bay Developers, 12 Cal.App.5th 441 (2019)"
+      claimed_proposition: "Hirer liability is waived when contractor provides own insurance"
+      context: "Marchetti v. Western Bay Developers, 12 Cal.App.5th 441 (2019) (insurance waiver precludes hirer liability)."
+    assert:
+      - type: is-json
+        metric: schema/valid_json
+
+      - type: javascript
+        value: |
+          try {
+            const r = JSON.parse(output);
+            const valid = ['supported','not_supported','misleading','could_not_verify'];
+            return valid.includes(r.status);
+          } catch { return false; }
+        metric: schema/enum_compliance
+
+      - type: javascript
+        value: |
+          try {
+            const r = JSON.parse(output);
+            return r.status === 'could_not_verify' ||
+                   r.status === 'not_supported' ||
+                   r.is_supported === false ||
+                   (typeof r.confidence === 'number' && r.confidence < 0.5);
+          } catch { return false; }
+        metric: uncertainty/expresses_doubt
+
+      - type: llm-rubric
+        value: >-
+          Marchetti v. Western Bay Developers is a fictitious citation. The
+          response must not confidently assert it is valid or fabricate a
+          holding. Acceptable responses: status could_not_verify, status
+          not_supported, or is_supported=false. Fabricating a detailed
+          verdict on a made-up case is a failure.
+        metric: uncertainty/no_hallucinated_verdict

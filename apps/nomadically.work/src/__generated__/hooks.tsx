@@ -47,6 +47,12 @@ export type AiBackendPrep = {
   typescriptNode: Maybe<BackendPrepSection>;
 };
 
+export type AiDeepResearch = {
+  __typename?: 'AIDeepResearch';
+  generatedAt: Scalars['String']['output'];
+  questions: Array<DeepResearchQuestion>;
+};
+
 export type AiInterviewPrep = {
   __typename?: 'AIInterviewPrep';
   generatedAt: Scalars['String']['output'];
@@ -187,12 +193,22 @@ export type AgenticCodingResource = {
   url: Scalars['String']['output'];
 };
 
+export type AnalyzeCompanyResponse = {
+  __typename?: 'AnalyzeCompanyResponse';
+  companyId: Maybe<Scalars['Int']['output']>;
+  companyKey: Maybe<Scalars['String']['output']>;
+  message: Maybe<Scalars['String']['output']>;
+  success: Scalars['Boolean']['output'];
+};
+
 export type Application = {
   __typename?: 'Application';
   agenticCoding: Maybe<AgenticCoding>;
   aiBackendPrep: Maybe<AiBackendPrep>;
+  aiDeepResearch: Maybe<AiDeepResearch>;
   aiInterviewPrep: Maybe<AiInterviewPrep>;
   aiInterviewQuestions: Maybe<AiInterviewQuestions>;
+  applicationStrategy: Maybe<ApplicationStrategy>;
   companyKey: Maybe<Scalars['String']['output']>;
   companyName: Maybe<Scalars['String']['output']>;
   createdAt: Scalars['String']['output'];
@@ -202,10 +218,13 @@ export type Application = {
   jobDescription: Maybe<Scalars['String']['output']>;
   jobId: Scalars['String']['output'];
   jobTitle: Maybe<Scalars['String']['output']>;
+  learningOverview: Maybe<LearningOverview>;
   notes: Maybe<Scalars['String']['output']>;
   questions: Array<QuestionAnswer>;
+  recentSessions: Array<LearningSessionEntry>;
   resume: Maybe<Scalars['Upload']['output']>;
   status: ApplicationStatus;
+  topicMasteryList: Array<TopicMasteryEntry>;
 };
 
 export type ApplicationInput = {
@@ -226,6 +245,17 @@ export type ApplicationStatus =
   | 'rejected'
   | 'reviewed'
   | 'submitted';
+
+export type ApplicationStrategy = {
+  __typename?: 'ApplicationStrategy';
+  coverLetterAngles: Array<CoverLetterAngle>;
+  generatedAt: Scalars['String']['output'];
+  interviewTopics: Array<InterviewTopic>;
+  keyDifferentiators: Array<Scalars['String']['output']>;
+  networkingSuggestions: Array<NetworkingSuggestion>;
+  recommendedApproach: Scalars['String']['output'];
+  riskFactors: Array<RiskFactor>;
+};
 
 export type ApplyEmailPatternResult = {
   __typename?: 'ApplyEmailPatternResult';
@@ -320,6 +350,14 @@ export type BackendPrepSection = {
   title: Scalars['String']['output'];
 };
 
+export type BlockedCompany = {
+  __typename?: 'BlockedCompany';
+  createdAt: Scalars['String']['output'];
+  id: Scalars['Int']['output'];
+  name: Scalars['String']['output'];
+  reason: Maybe<Scalars['String']['output']>;
+};
+
 export type ChatMessage = {
   __typename?: 'ChatMessage';
   content: Scalars['String']['output'];
@@ -353,9 +391,13 @@ export type Company = {
   category: CompanyCategory;
   contacts: Array<Contact>;
   created_at: Scalars['String']['output'];
+  deep_analysis: Maybe<Scalars['String']['output']>;
   description: Maybe<Scalars['String']['output']>;
+  email: Maybe<Scalars['String']['output']>;
+  emailsList: Array<Scalars['String']['output']>;
   facts: Array<CompanyFact>;
   facts_count: Scalars['Int']['output'];
+  githubUrl: Maybe<Scalars['String']['output']>;
   id: Scalars['Int']['output'];
   industries: Array<Scalars['String']['output']>;
   industry: Maybe<Scalars['String']['output']>;
@@ -524,12 +566,33 @@ export type ContactsResult = {
   totalCount: Scalars['Int']['output'];
 };
 
+export type CoverLetterAngle = {
+  __typename?: 'CoverLetterAngle';
+  angle: Scalars['String']['output'];
+  exampleOpener: Scalars['String']['output'];
+  reasoning: Scalars['String']['output'];
+};
+
+export type CreateCampaignInput = {
+  companyId?: InputMaybe<Scalars['Int']['input']>;
+  delayDays?: InputMaybe<Scalars['JSON']['input']>;
+  fromEmail?: InputMaybe<Scalars['String']['input']>;
+  mode?: InputMaybe<Scalars['String']['input']>;
+  name: Scalars['String']['input'];
+  recipientEmails?: InputMaybe<Array<Scalars['String']['input']>>;
+  replyTo?: InputMaybe<Scalars['String']['input']>;
+  sequence?: InputMaybe<Scalars['JSON']['input']>;
+};
+
 export type CreateCompanyInput = {
   ai_classification_confidence?: InputMaybe<Scalars['Float']['input']>;
   ai_classification_reason?: InputMaybe<Scalars['String']['input']>;
   ai_tier?: InputMaybe<Scalars['Int']['input']>;
   category?: InputMaybe<CompanyCategory>;
   description?: InputMaybe<Scalars['String']['input']>;
+  email?: InputMaybe<Scalars['String']['input']>;
+  emails?: InputMaybe<Array<Scalars['String']['input']>>;
+  github_url?: InputMaybe<Scalars['String']['input']>;
   industries?: InputMaybe<Array<Scalars['String']['input']>>;
   industry?: InputMaybe<Scalars['String']['input']>;
   key: Scalars['String']['input'];
@@ -555,6 +618,17 @@ export type CreateContactInput = {
   position?: InputMaybe<Scalars['String']['input']>;
   tags?: InputMaybe<Array<Scalars['String']['input']>>;
   telegramHandle?: InputMaybe<Scalars['String']['input']>;
+};
+
+export type CreateEmailTemplateInput = {
+  category?: InputMaybe<Scalars['String']['input']>;
+  description?: InputMaybe<Scalars['String']['input']>;
+  htmlContent?: InputMaybe<Scalars['String']['input']>;
+  name: Scalars['String']['input'];
+  subject?: InputMaybe<Scalars['String']['input']>;
+  tags?: InputMaybe<Array<Scalars['String']['input']>>;
+  textContent?: InputMaybe<Scalars['String']['input']>;
+  variables?: InputMaybe<Array<Scalars['String']['input']>>;
 };
 
 export type CreateLangSmithPromptInput = {
@@ -590,6 +664,17 @@ export type CreatePromptInput = {
   type: PromptType;
 };
 
+export type CreateTaskInput = {
+  description?: InputMaybe<Scalars['String']['input']>;
+  dueDate?: InputMaybe<Scalars['String']['input']>;
+  entityId?: InputMaybe<Scalars['String']['input']>;
+  entityType?: InputMaybe<Scalars['String']['input']>;
+  priority?: InputMaybe<Scalars['String']['input']>;
+  status?: InputMaybe<Scalars['String']['input']>;
+  tags?: InputMaybe<Array<Scalars['String']['input']>>;
+  title: Scalars['String']['input'];
+};
+
 export type CreateTrackInput = {
   description?: InputMaybe<Scalars['String']['input']>;
   level?: InputMaybe<Scalars['String']['input']>;
@@ -597,8 +682,35 @@ export type CreateTrackInput = {
   title: Scalars['String']['input'];
 };
 
+export type DeepResearchModelResponse = {
+  __typename?: 'DeepResearchModelResponse';
+  content: Scalars['String']['output'];
+  model: Scalars['String']['output'];
+  reasoning: Maybe<Scalars['String']['output']>;
+};
+
+export type DeepResearchQuestion = {
+  __typename?: 'DeepResearchQuestion';
+  category: Scalars['String']['output'];
+  deepseek: DeepResearchModelResponse;
+  question: Scalars['String']['output'];
+  qwen: DeepResearchModelResponse;
+};
+
 export type DeleteApplicationResponse = {
   __typename?: 'DeleteApplicationResponse';
+  message: Maybe<Scalars['String']['output']>;
+  success: Scalars['Boolean']['output'];
+};
+
+export type DeleteBlockedCompanyResult = {
+  __typename?: 'DeleteBlockedCompanyResult';
+  message: Maybe<Scalars['String']['output']>;
+  success: Scalars['Boolean']['output'];
+};
+
+export type DeleteCampaignResult = {
+  __typename?: 'DeleteCampaignResult';
   message: Maybe<Scalars['String']['output']>;
   success: Scalars['Boolean']['output'];
 };
@@ -615,6 +727,12 @@ export type DeleteContactResult = {
   success: Scalars['Boolean']['output'];
 };
 
+export type DeleteEmailTemplateResult = {
+  __typename?: 'DeleteEmailTemplateResult';
+  message: Maybe<Scalars['String']['output']>;
+  success: Scalars['Boolean']['output'];
+};
+
 export type DeleteJobResponse = {
   __typename?: 'DeleteJobResponse';
   message: Maybe<Scalars['String']['output']>;
@@ -625,6 +743,61 @@ export type DeleteOpportunityResult = {
   __typename?: 'DeleteOpportunityResult';
   message: Maybe<Scalars['String']['output']>;
   success: Scalars['Boolean']['output'];
+};
+
+export type DeleteTaskResult = {
+  __typename?: 'DeleteTaskResult';
+  message: Maybe<Scalars['String']['output']>;
+  success: Scalars['Boolean']['output'];
+};
+
+export type EmailCampaign = {
+  __typename?: 'EmailCampaign';
+  companyId: Maybe<Scalars['Int']['output']>;
+  createdAt: Scalars['String']['output'];
+  delayDays: Maybe<Scalars['JSON']['output']>;
+  emailsFailed: Scalars['Int']['output'];
+  emailsScheduled: Scalars['Int']['output'];
+  emailsSent: Scalars['Int']['output'];
+  fromEmail: Maybe<Scalars['String']['output']>;
+  id: Scalars['String']['output'];
+  mode: Maybe<Scalars['String']['output']>;
+  name: Scalars['String']['output'];
+  recipientEmails: Array<Scalars['String']['output']>;
+  replyTo: Maybe<Scalars['String']['output']>;
+  sequence: Maybe<Scalars['JSON']['output']>;
+  startAt: Maybe<Scalars['String']['output']>;
+  status: Scalars['String']['output'];
+  totalRecipients: Scalars['Int']['output'];
+  updatedAt: Scalars['String']['output'];
+};
+
+export type EmailCampaignsResult = {
+  __typename?: 'EmailCampaignsResult';
+  campaigns: Array<EmailCampaign>;
+  totalCount: Scalars['Int']['output'];
+};
+
+export type EmailTemplate = {
+  __typename?: 'EmailTemplate';
+  category: Maybe<Scalars['String']['output']>;
+  createdAt: Scalars['String']['output'];
+  description: Maybe<Scalars['String']['output']>;
+  htmlContent: Maybe<Scalars['String']['output']>;
+  id: Scalars['Int']['output'];
+  isActive: Scalars['Boolean']['output'];
+  name: Scalars['String']['output'];
+  subject: Maybe<Scalars['String']['output']>;
+  tags: Array<Scalars['String']['output']>;
+  textContent: Maybe<Scalars['String']['output']>;
+  updatedAt: Scalars['String']['output'];
+  variables: Array<Scalars['String']['output']>;
+};
+
+export type EmailTemplatesResult = {
+  __typename?: 'EmailTemplatesResult';
+  templates: Array<EmailTemplate>;
+  totalCount: Scalars['Int']['output'];
 };
 
 export type EnhanceAllContactsResult = {
@@ -702,6 +875,30 @@ export type FindContactEmailResult = {
   verified: Maybe<Scalars['Boolean']['output']>;
 };
 
+export type GenerateEmailInput = {
+  companyName?: InputMaybe<Scalars['String']['input']>;
+  purpose: Scalars['String']['input'];
+  recipientName: Scalars['String']['input'];
+  recipientRole?: InputMaybe<Scalars['String']['input']>;
+  templateId?: InputMaybe<Scalars['Int']['input']>;
+  tone?: InputMaybe<Scalars['String']['input']>;
+};
+
+export type GenerateEmailResult = {
+  __typename?: 'GenerateEmailResult';
+  html: Scalars['String']['output'];
+  subject: Scalars['String']['output'];
+  text: Scalars['String']['output'];
+};
+
+export type GeneratedQuiz = {
+  __typename?: 'GeneratedQuiz';
+  domain: LearningDomain;
+  generatedAt: Scalars['String']['output'];
+  questions: Array<QuizQuestion>;
+  topicKey: Scalars['String']['output'];
+};
+
 export type GreenhouseCompliance = {
   __typename?: 'GreenhouseCompliance';
   description: Maybe<Scalars['String']['output']>;
@@ -773,9 +970,19 @@ export type ImportContactsResult = {
   success: Scalars['Boolean']['output'];
 };
 
+export type InterviewTopic = {
+  __typename?: 'InterviewTopic';
+  importance: Scalars['String']['output'];
+  prepNotes: Scalars['String']['output'];
+  topic: Scalars['String']['output'];
+};
+
 export type Job = {
   __typename?: 'Job';
   absolute_url: Maybe<Scalars['String']['output']>;
+  applied: Scalars['Boolean']['output'];
+  appliedAt: Maybe<Scalars['String']['output']>;
+  archived: Scalars['Boolean']['output'];
   ashby_address: Maybe<AshbyAddress>;
   ashby_apply_url: Maybe<Scalars['String']['output']>;
   ashby_compensation: Maybe<AshbyCompensation>;
@@ -796,6 +1003,7 @@ export type Job = {
   demographic_questions: Maybe<GreenhouseDemographicQuestions>;
   departments: Maybe<Array<GreenhouseDepartment>>;
   description: Maybe<Scalars['String']['output']>;
+  enrichment: Maybe<JobEnrichment>;
   external_id: Scalars['String']['output'];
   id: Scalars['Int']['output'];
   internal_job_id: Maybe<Scalars['String']['output']>;
@@ -813,6 +1021,7 @@ export type Job = {
    */
   publishedAt: Scalars['String']['output'];
   questions: Maybe<Array<GreenhouseQuestion>>;
+  recruiter: Maybe<Contact>;
   remote_eu_confidence: Maybe<ClassificationConfidence>;
   remote_eu_reason: Maybe<Scalars['String']['output']>;
   requisition_id: Maybe<Scalars['String']['output']>;
@@ -826,6 +1035,15 @@ export type Job = {
   title: Scalars['String']['output'];
   updated_at: Scalars['String']['output'];
   url: Scalars['String']['output'];
+};
+
+export type JobEnrichment = {
+  __typename?: 'JobEnrichment';
+  enrichmentStatus: Maybe<Scalars['String']['output']>;
+  salaryCurrency: Maybe<Scalars['String']['output']>;
+  salaryMax: Maybe<Scalars['Int']['output']>;
+  salaryMin: Maybe<Scalars['Int']['output']>;
+  visaSponsorship: Maybe<Scalars['Boolean']['output']>;
 };
 
 export type JobSkill = {
@@ -887,26 +1105,94 @@ export type LangSmithPromptCommit = {
   promptName: Scalars['String']['output'];
 };
 
+export type LearningDomain =
+  | 'backend'
+  | 'coding'
+  | 'concepts'
+  | 'interview';
+
+export type LearningOverview = {
+  __typename?: 'LearningOverview';
+  currentStreak: Scalars['Int']['output'];
+  overallReadiness: Scalars['Float']['output'];
+  teams: Array<LearningTeamStatus>;
+  totalSessions: Scalars['Int']['output'];
+};
+
+export type LearningSessionEntry = {
+  __typename?: 'LearningSessionEntry';
+  confidence: Maybe<MasteryLevel>;
+  correctAnswers: Maybe<Scalars['Int']['output']>;
+  createdAt: Scalars['String']['output'];
+  domain: LearningDomain;
+  durationMs: Maybe<Scalars['Int']['output']>;
+  id: Scalars['Int']['output'];
+  score: Maybe<Scalars['Float']['output']>;
+  sessionType: SessionType;
+  topicKey: Scalars['String']['output'];
+  totalQuestions: Maybe<Scalars['Int']['output']>;
+};
+
+export type LearningSessionInput = {
+  answersJson?: InputMaybe<Scalars['String']['input']>;
+  confidence?: InputMaybe<MasteryLevel>;
+  correctAnswers?: InputMaybe<Scalars['Int']['input']>;
+  domain: LearningDomain;
+  durationMs?: InputMaybe<Scalars['Int']['input']>;
+  score?: InputMaybe<Scalars['Float']['input']>;
+  sessionType: SessionType;
+  topicKey: Scalars['String']['input'];
+  totalQuestions?: InputMaybe<Scalars['Int']['input']>;
+};
+
+export type LearningTeamStatus = {
+  __typename?: 'LearningTeamStatus';
+  domain: LearningDomain;
+  familiarTopics: Scalars['Int']['output'];
+  label: Scalars['String']['output'];
+  lastStudiedAt: Maybe<Scalars['String']['output']>;
+  masteredTopics: Scalars['Int']['output'];
+  nextReviewTopics: Array<Scalars['String']['output']>;
+  streakDays: Scalars['Int']['output'];
+  totalTopics: Scalars['Int']['output'];
+};
+
+export type MasteryLevel =
+  | 'confident'
+  | 'familiar'
+  | 'mastery'
+  | 'unfamiliar';
+
 export type Mutation = {
   __typename?: 'Mutation';
   add_company_facts: Array<CompanyFact>;
+  analyzeCompany: AnalyzeCompanyResponse;
   applyEmailPattern: ApplyEmailPatternResult;
+  archiveJob: Job;
+  blockCompany: BlockedCompany;
+  completeTask: Task;
   createApplication: Application;
   createCompany: Company;
   createContact: Contact;
+  createDraftCampaign: EmailCampaign;
+  createEmailTemplate: EmailTemplate;
   createLangSmithPrompt: LangSmithPrompt;
   createOpportunity: Opportunity;
   createPrompt: Prompt;
   createStudyTopic: StudyTopic;
+  createTask: Task;
   createTrack: Track;
   deleteAllJobs: DeleteJobResponse;
   deleteApplication: DeleteApplicationResponse;
+  deleteCampaign: DeleteCampaignResult;
   deleteCompany: DeleteCompanyResponse;
   deleteContact: DeleteContactResult;
+  deleteEmailTemplate: DeleteEmailTemplateResult;
   deleteJob: DeleteJobResponse;
   deleteLangSmithPrompt: Scalars['Boolean']['output'];
   deleteOpportunity: DeleteOpportunityResult;
   deleteStackEntry: StackMutationResponse;
+  deleteTask: DeleteTaskResult;
   enhanceAllContacts: EnhanceAllContactsResult;
   enhanceCompany: EnhanceCompanyResponse;
   /**
@@ -933,9 +1219,13 @@ export type Mutation = {
   findCompanyEmails: EnhanceAllContactsResult;
   findContactEmail: FindContactEmailResult;
   generateAgenticCoding: Application;
+  generateApplicationStrategy: Application;
   generateBackendPrep: Application;
+  generateDeepResearch: Application;
+  generateEmail: GenerateEmailResult;
   generateInterviewPrep: Application;
   generateInterviewQuestions: Application;
+  generateQuiz: GeneratedQuiz;
   generateRequirementFromSelection: Application;
   generateResearch: Array<ResearchItem>;
   generateStudyConceptExplanation: StudyConceptExplanation;
@@ -946,8 +1236,10 @@ export type Mutation = {
   importContacts: ImportContactsResult;
   ingestResumeParse: Maybe<ResumeIngestResult>;
   ingest_company_snapshot: CompanySnapshot;
+  launchEmailCampaign: EmailCampaign;
   linkSelectionToRequirement: Application;
   linkTrackToApplication: Application;
+  markJobApplied: Job;
   /**
    * Trigger classification/enhancement of all unprocessed jobs via the Cloudflare Worker.
    * Calls the classify-jobs CF worker (POST) which runs DeepSeek-based classification
@@ -956,20 +1248,28 @@ export type Mutation = {
   processAllJobs: ProcessAllJobsResponse;
   pushLangSmithPrompt: Scalars['String']['output'];
   rateResumeAnswer: Maybe<Scalars['Boolean']['output']>;
+  recordLearningSession: Application;
   /**
    * Report a job as irrelevant, spam, or incorrectly classified.
    * Sets the job status to "reported" so it can be reviewed or excluded.
    * Requires authentication.
    */
   reportJob: Maybe<Job>;
+  sendEmail: SendEmailResult;
+  unarchiveJob: Job;
+  unblockCompany: DeleteBlockedCompanyResult;
   unlinkTrackFromApplication: Application;
   unverifyCompanyContacts: UnverifyContactsResult;
   updateApplication: Application;
+  updateCampaign: EmailCampaign;
   updateCompany: Company;
   updateContact: Contact;
+  updateEmailTemplate: EmailTemplate;
   updateLangSmithPrompt: LangSmithPrompt;
   updateOpportunity: Opportunity;
   updatePromptLabel: Prompt;
+  updateTask: Task;
+  updateTopicMastery: Application;
   updateUserSettings: UserSettings;
   uploadResume: Maybe<ResumeUploadResult>;
   upsert_company_ats_boards: Array<AtsBoard>;
@@ -982,8 +1282,30 @@ export type MutationAdd_Company_FactsArgs = {
 };
 
 
+export type MutationAnalyzeCompanyArgs = {
+  id?: InputMaybe<Scalars['Int']['input']>;
+  key?: InputMaybe<Scalars['String']['input']>;
+};
+
+
 export type MutationApplyEmailPatternArgs = {
   companyId: Scalars['Int']['input'];
+};
+
+
+export type MutationArchiveJobArgs = {
+  id: Scalars['Int']['input'];
+};
+
+
+export type MutationBlockCompanyArgs = {
+  name: Scalars['String']['input'];
+  reason?: InputMaybe<Scalars['String']['input']>;
+};
+
+
+export type MutationCompleteTaskArgs = {
+  id: Scalars['Int']['input'];
 };
 
 
@@ -999,6 +1321,16 @@ export type MutationCreateCompanyArgs = {
 
 export type MutationCreateContactArgs = {
   input: CreateContactInput;
+};
+
+
+export type MutationCreateDraftCampaignArgs = {
+  input: CreateCampaignInput;
+};
+
+
+export type MutationCreateEmailTemplateArgs = {
+  input: CreateEmailTemplateInput;
 };
 
 
@@ -1028,6 +1360,11 @@ export type MutationCreateStudyTopicArgs = {
 };
 
 
+export type MutationCreateTaskArgs = {
+  input: CreateTaskInput;
+};
+
+
 export type MutationCreateTrackArgs = {
   input: CreateTrackInput;
 };
@@ -1038,12 +1375,22 @@ export type MutationDeleteApplicationArgs = {
 };
 
 
+export type MutationDeleteCampaignArgs = {
+  id: Scalars['String']['input'];
+};
+
+
 export type MutationDeleteCompanyArgs = {
   id: Scalars['Int']['input'];
 };
 
 
 export type MutationDeleteContactArgs = {
+  id: Scalars['Int']['input'];
+};
+
+
+export type MutationDeleteEmailTemplateArgs = {
   id: Scalars['Int']['input'];
 };
 
@@ -1065,6 +1412,11 @@ export type MutationDeleteOpportunityArgs = {
 
 export type MutationDeleteStackEntryArgs = {
   name: Scalars['String']['input'];
+};
+
+
+export type MutationDeleteTaskArgs = {
+  id: Scalars['Int']['input'];
 };
 
 
@@ -1096,8 +1448,23 @@ export type MutationGenerateAgenticCodingArgs = {
 };
 
 
+export type MutationGenerateApplicationStrategyArgs = {
+  applicationId: Scalars['Int']['input'];
+};
+
+
 export type MutationGenerateBackendPrepArgs = {
   applicationId: Scalars['Int']['input'];
+};
+
+
+export type MutationGenerateDeepResearchArgs = {
+  applicationId: Scalars['Int']['input'];
+};
+
+
+export type MutationGenerateEmailArgs = {
+  input: GenerateEmailInput;
 };
 
 
@@ -1109,6 +1476,14 @@ export type MutationGenerateInterviewPrepArgs = {
 export type MutationGenerateInterviewQuestionsArgs = {
   applicationId: Scalars['Int']['input'];
   type: Scalars['String']['input'];
+};
+
+
+export type MutationGenerateQuizArgs = {
+  applicationId: Scalars['Int']['input'];
+  count?: InputMaybe<Scalars['Int']['input']>;
+  domain: LearningDomain;
+  topicKey: Scalars['String']['input'];
 };
 
 
@@ -1185,6 +1560,11 @@ export type MutationIngest_Company_SnapshotArgs = {
 };
 
 
+export type MutationLaunchEmailCampaignArgs = {
+  id: Scalars['String']['input'];
+};
+
+
 export type MutationLinkSelectionToRequirementArgs = {
   applicationId: Scalars['Int']['input'];
   requirement: Scalars['String']['input'];
@@ -1195,6 +1575,11 @@ export type MutationLinkSelectionToRequirementArgs = {
 export type MutationLinkTrackToApplicationArgs = {
   applicationId: Scalars['Int']['input'];
   trackSlug: Scalars['String']['input'];
+};
+
+
+export type MutationMarkJobAppliedArgs = {
+  id: Scalars['Int']['input'];
 };
 
 
@@ -1215,7 +1600,28 @@ export type MutationRateResumeAnswerArgs = {
 };
 
 
+export type MutationRecordLearningSessionArgs = {
+  applicationId: Scalars['Int']['input'];
+  input: LearningSessionInput;
+};
+
+
 export type MutationReportJobArgs = {
+  id: Scalars['Int']['input'];
+};
+
+
+export type MutationSendEmailArgs = {
+  input: SendEmailInput;
+};
+
+
+export type MutationUnarchiveJobArgs = {
+  id: Scalars['Int']['input'];
+};
+
+
+export type MutationUnblockCompanyArgs = {
   id: Scalars['Int']['input'];
 };
 
@@ -1237,6 +1643,12 @@ export type MutationUpdateApplicationArgs = {
 };
 
 
+export type MutationUpdateCampaignArgs = {
+  id: Scalars['String']['input'];
+  input: UpdateCampaignInput;
+};
+
+
 export type MutationUpdateCompanyArgs = {
   id: Scalars['Int']['input'];
   input: UpdateCompanyInput;
@@ -1246,6 +1658,12 @@ export type MutationUpdateCompanyArgs = {
 export type MutationUpdateContactArgs = {
   id: Scalars['Int']['input'];
   input: UpdateContactInput;
+};
+
+
+export type MutationUpdateEmailTemplateArgs = {
+  id: Scalars['Int']['input'];
+  input: UpdateEmailTemplateInput;
 };
 
 
@@ -1268,6 +1686,20 @@ export type MutationUpdatePromptLabelArgs = {
 };
 
 
+export type MutationUpdateTaskArgs = {
+  id: Scalars['Int']['input'];
+  input: UpdateTaskInput;
+};
+
+
+export type MutationUpdateTopicMasteryArgs = {
+  applicationId: Scalars['Int']['input'];
+  domain: LearningDomain;
+  masteryLevel: MasteryLevel;
+  topicKey: Scalars['String']['input'];
+};
+
+
 export type MutationUpdateUserSettingsArgs = {
   settings: UserSettingsInput;
   userId: Scalars['String']['input'];
@@ -1284,6 +1716,13 @@ export type MutationUploadResumeArgs = {
 export type MutationUpsert_Company_Ats_BoardsArgs = {
   boards: Array<AtsBoardUpsertInput>;
   company_id: Scalars['Int']['input'];
+};
+
+export type NetworkingSuggestion = {
+  __typename?: 'NetworkingSuggestion';
+  action: Scalars['String']['output'];
+  reasoning: Scalars['String']['output'];
+  target: Scalars['String']['output'];
 };
 
 export type OpportunitiesResult = {
@@ -1424,6 +1863,7 @@ export type Query = {
   application: Maybe<Application>;
   applications: Array<Application>;
   askAboutResume: Maybe<ResumeAnswer>;
+  blockedCompanies: Array<BlockedCompany>;
   companies: CompaniesResponse;
   company: Maybe<Company>;
   company_ats_boards: Array<AtsBoard>;
@@ -1433,6 +1873,10 @@ export type Query = {
   contactByEmail: Maybe<Contact>;
   contactEmails: Array<ContactEmail>;
   contacts: ContactsResult;
+  emailCampaign: Maybe<EmailCampaign>;
+  emailCampaigns: EmailCampaignsResult;
+  emailTemplate: Maybe<EmailTemplate>;
+  emailTemplates: EmailTemplatesResult;
   executeSql: TextToSqlResult;
   job: Maybe<Job>;
   jobs: JobsResponse;
@@ -1451,6 +1895,8 @@ export type Query = {
   studyCategories: Array<Scalars['String']['output']>;
   studyTopic: Maybe<StudyTopic>;
   studyTopics: Array<StudyTopic>;
+  task: Maybe<Task>;
+  tasks: TasksResult;
   textToSql: TextToSqlResult;
   track: Maybe<Track>;
   tracks: Array<Track>;
@@ -1523,6 +1969,30 @@ export type QueryContactsArgs = {
   limit?: InputMaybe<Scalars['Int']['input']>;
   offset?: InputMaybe<Scalars['Int']['input']>;
   search?: InputMaybe<Scalars['String']['input']>;
+};
+
+
+export type QueryEmailCampaignArgs = {
+  id: Scalars['String']['input'];
+};
+
+
+export type QueryEmailCampaignsArgs = {
+  limit?: InputMaybe<Scalars['Int']['input']>;
+  offset?: InputMaybe<Scalars['Int']['input']>;
+  status?: InputMaybe<Scalars['String']['input']>;
+};
+
+
+export type QueryEmailTemplateArgs = {
+  id: Scalars['Int']['input'];
+};
+
+
+export type QueryEmailTemplatesArgs = {
+  category?: InputMaybe<Scalars['String']['input']>;
+  limit?: InputMaybe<Scalars['Int']['input']>;
+  offset?: InputMaybe<Scalars['Int']['input']>;
 };
 
 
@@ -1618,6 +2088,19 @@ export type QueryStudyTopicsArgs = {
 };
 
 
+export type QueryTaskArgs = {
+  id: Scalars['Int']['input'];
+};
+
+
+export type QueryTasksArgs = {
+  limit?: InputMaybe<Scalars['Int']['input']>;
+  offset?: InputMaybe<Scalars['Int']['input']>;
+  priority?: InputMaybe<Scalars['String']['input']>;
+  status?: InputMaybe<Scalars['String']['input']>;
+};
+
+
 export type QueryTextToSqlArgs = {
   question: Scalars['String']['input'];
 };
@@ -1648,6 +2131,17 @@ export type QuestionAnswerInput = {
   answerText: Scalars['String']['input'];
   questionId: Scalars['String']['input'];
   questionText: Scalars['String']['input'];
+};
+
+export type QuizQuestion = {
+  __typename?: 'QuizQuestion';
+  correctIndex: Scalars['Int']['output'];
+  difficulty: Scalars['String']['output'];
+  explanation: Scalars['String']['output'];
+  id: Scalars['String']['output'];
+  options: Array<Scalars['String']['output']>;
+  question: Scalars['String']['output'];
+  topicKey: Scalars['String']['output'];
 };
 
 export type RegisteredPrompt = {
@@ -1722,6 +2216,53 @@ export type ResumeUploadResult = {
   tier: Scalars['String']['output'];
 };
 
+export type RiskFactor = {
+  __typename?: 'RiskFactor';
+  mitigation: Scalars['String']['output'];
+  risk: Scalars['String']['output'];
+};
+
+export type SendEmailInput = {
+  from?: InputMaybe<Scalars['String']['input']>;
+  html: Scalars['String']['input'];
+  replyTo?: InputMaybe<Scalars['String']['input']>;
+  scheduledAt?: InputMaybe<Scalars['String']['input']>;
+  subject: Scalars['String']['input'];
+  text?: InputMaybe<Scalars['String']['input']>;
+  to: Scalars['String']['input'];
+};
+
+export type SendEmailResult = {
+  __typename?: 'SendEmailResult';
+  error: Maybe<Scalars['String']['output']>;
+  id: Maybe<Scalars['String']['output']>;
+  success: Scalars['Boolean']['output'];
+};
+
+export type SessionType =
+  | 'flashcard'
+  | 'mock_interview'
+  | 'quiz'
+  | 'study';
+
+export type SkillGap = {
+  __typename?: 'SkillGap';
+  currentLevel: Scalars['String']['output'];
+  frequencyInJobs: Scalars['Int']['output'];
+  priority: Scalars['Int']['output'];
+  resources: Array<SkillGapResource>;
+  skill: Scalars['String']['output'];
+  targetLevel: Scalars['String']['output'];
+};
+
+export type SkillGapResource = {
+  __typename?: 'SkillGapResource';
+  estimatedHours: Scalars['Float']['output'];
+  title: Scalars['String']['output'];
+  type: Scalars['String']['output'];
+  url: Scalars['String']['output'];
+};
+
 export type SkillMatch = {
   __typename?: 'SkillMatch';
   details: Array<SkillMatchDetail>;
@@ -1760,6 +2301,13 @@ export type StudyConceptExplanation = {
   selectedText: Scalars['String']['output'];
 };
 
+export type StudyPlan = {
+  __typename?: 'StudyPlan';
+  generatedAt: Scalars['String']['output'];
+  recommendations: Array<Scalars['String']['output']>;
+  skillGaps: Array<SkillGap>;
+};
+
 export type StudyTopic = {
   __typename?: 'StudyTopic';
   bodyMd: Maybe<Scalars['String']['output']>;
@@ -1774,6 +2322,28 @@ export type StudyTopic = {
   topic: Scalars['String']['output'];
 };
 
+export type Task = {
+  __typename?: 'Task';
+  completedAt: Maybe<Scalars['String']['output']>;
+  createdAt: Scalars['String']['output'];
+  description: Maybe<Scalars['String']['output']>;
+  dueDate: Maybe<Scalars['String']['output']>;
+  entityId: Maybe<Scalars['String']['output']>;
+  entityType: Maybe<Scalars['String']['output']>;
+  id: Scalars['Int']['output'];
+  priority: Scalars['String']['output'];
+  status: Scalars['String']['output'];
+  tags: Array<Scalars['String']['output']>;
+  title: Scalars['String']['output'];
+  updatedAt: Scalars['String']['output'];
+};
+
+export type TasksResult = {
+  __typename?: 'TasksResult';
+  tasks: Array<Task>;
+  totalCount: Scalars['Int']['output'];
+};
+
 export type TextToSqlResult = {
   __typename?: 'TextToSqlResult';
   columns: Array<Scalars['String']['output']>;
@@ -1781,6 +2351,19 @@ export type TextToSqlResult = {
   explanation: Maybe<Scalars['String']['output']>;
   rows: Array<Maybe<Array<Maybe<Scalars['JSON']['output']>>>>;
   sql: Scalars['String']['output'];
+};
+
+export type TopicMasteryEntry = {
+  __typename?: 'TopicMasteryEntry';
+  confidenceScore: Scalars['Float']['output'];
+  domain: LearningDomain;
+  lastQuizScore: Maybe<Scalars['Float']['output']>;
+  lastStudiedAt: Maybe<Scalars['String']['output']>;
+  masteryLevel: MasteryLevel;
+  nextReviewAt: Maybe<Scalars['String']['output']>;
+  streakDays: Scalars['Int']['output'];
+  topicKey: Scalars['String']['output'];
+  totalSessions: Scalars['Int']['output'];
 };
 
 export type Track = {
@@ -1820,12 +2403,27 @@ export type UpdateApplicationInput = {
   status?: InputMaybe<ApplicationStatus>;
 };
 
+export type UpdateCampaignInput = {
+  delayDays?: InputMaybe<Scalars['JSON']['input']>;
+  fromEmail?: InputMaybe<Scalars['String']['input']>;
+  mode?: InputMaybe<Scalars['String']['input']>;
+  name?: InputMaybe<Scalars['String']['input']>;
+  recipientEmails?: InputMaybe<Array<Scalars['String']['input']>>;
+  replyTo?: InputMaybe<Scalars['String']['input']>;
+  sequence?: InputMaybe<Scalars['JSON']['input']>;
+  startAt?: InputMaybe<Scalars['String']['input']>;
+  status?: InputMaybe<Scalars['String']['input']>;
+};
+
 export type UpdateCompanyInput = {
   ai_classification_confidence?: InputMaybe<Scalars['Float']['input']>;
   ai_classification_reason?: InputMaybe<Scalars['String']['input']>;
   ai_tier?: InputMaybe<Scalars['Int']['input']>;
   category?: InputMaybe<CompanyCategory>;
   description?: InputMaybe<Scalars['String']['input']>;
+  email?: InputMaybe<Scalars['String']['input']>;
+  emails?: InputMaybe<Array<Scalars['String']['input']>>;
+  github_url?: InputMaybe<Scalars['String']['input']>;
   industries?: InputMaybe<Array<Scalars['String']['input']>>;
   industry?: InputMaybe<Scalars['String']['input']>;
   is_hidden?: InputMaybe<Scalars['Boolean']['input']>;
@@ -1857,6 +2455,18 @@ export type UpdateContactInput = {
   telegramHandle?: InputMaybe<Scalars['String']['input']>;
 };
 
+export type UpdateEmailTemplateInput = {
+  category?: InputMaybe<Scalars['String']['input']>;
+  description?: InputMaybe<Scalars['String']['input']>;
+  htmlContent?: InputMaybe<Scalars['String']['input']>;
+  isActive?: InputMaybe<Scalars['Boolean']['input']>;
+  name?: InputMaybe<Scalars['String']['input']>;
+  subject?: InputMaybe<Scalars['String']['input']>;
+  tags?: InputMaybe<Array<Scalars['String']['input']>>;
+  textContent?: InputMaybe<Scalars['String']['input']>;
+  variables?: InputMaybe<Array<Scalars['String']['input']>>;
+};
+
 export type UpdateLangSmithPromptInput = {
   description?: InputMaybe<Scalars['String']['input']>;
   isArchived?: InputMaybe<Scalars['Boolean']['input']>;
@@ -1883,6 +2493,17 @@ export type UpdateOpportunityInput = {
   tags?: InputMaybe<Array<Scalars['String']['input']>>;
   title?: InputMaybe<Scalars['String']['input']>;
   url?: InputMaybe<Scalars['String']['input']>;
+};
+
+export type UpdateTaskInput = {
+  description?: InputMaybe<Scalars['String']['input']>;
+  dueDate?: InputMaybe<Scalars['String']['input']>;
+  entityId?: InputMaybe<Scalars['String']['input']>;
+  entityType?: InputMaybe<Scalars['String']['input']>;
+  priority?: InputMaybe<Scalars['String']['input']>;
+  status?: InputMaybe<Scalars['String']['input']>;
+  tags?: InputMaybe<Array<Scalars['String']['input']>>;
+  title?: InputMaybe<Scalars['String']['input']>;
 };
 
 export type UserSettings = {
@@ -1963,7 +2584,7 @@ export type GetJobQueryVariables = Exact<{
 }>;
 
 
-export type GetJobQuery = { __typename?: 'Query', job: { __typename?: 'Job', id: number, external_id: string, source_id: string | null, source_kind: string, company_id: number | null, company_key: string, title: string, location: string | null, url: string, description: string | null, publishedAt: string, score: number | null, score_reason: string | null, status: JobStatus | null, is_remote_eu: boolean, remote_eu_confidence: ClassificationConfidence | null, remote_eu_reason: string | null, absolute_url: string | null, internal_job_id: string | null, requisition_id: string | null, company_name: string | null, language: string | null, ashby_department: string | null, ashby_team: string | null, ashby_employment_type: string | null, ashby_is_remote: boolean | null, ashby_is_listed: boolean | null, ashby_job_url: string | null, ashby_apply_url: string | null, created_at: string, updated_at: string, company: { __typename?: 'Company', id: number, key: string, name: string, logo_url: string | null, website: string | null, description: string | null, industry: string | null, size: string | null, location: string | null, created_at: string, updated_at: string, linkedin_url: string | null, category: CompanyCategory, tags: Array<string>, services: Array<string>, service_taxonomy: Array<string>, industries: Array<string>, score: number, score_reasons: Array<string>, last_seen_crawl_id: string | null, last_seen_capture_timestamp: string | null, last_seen_source_url: string | null, ashby_enrichment: { __typename?: 'AshbyEnrichment', company_name: string | null, industry_tags: Array<string>, tech_signals: Array<string>, size_signal: string | null, enriched_at: string | null } | null } | null, skills: Array<{ __typename?: 'JobSkill', tag: string, level: string, confidence: number | null, evidence: string | null }> | null, skillMatch: { __typename?: 'SkillMatch', score: number, userCoverage: number, jobCoverage: number, requiredCoverage: number, matchedCount: number, totalPreferred: number, details: Array<{ __typename?: 'SkillMatchDetail', tag: string, level: string, matched: boolean }> } | null, metadata: Array<{ __typename?: 'GreenhouseMetadata', id: string, name: string, value: string | null, value_type: string | null }> | null, departments: Array<{ __typename?: 'GreenhouseDepartment', id: string, name: string, child_ids: Array<string> | null, parent_id: string | null }> | null, offices: Array<{ __typename?: 'GreenhouseOffice', id: string, name: string, location: string | null, child_ids: Array<string> | null, parent_id: string | null }> | null, questions: Array<{ __typename?: 'GreenhouseQuestion', description: string | null, label: string, required: boolean, fields: Array<{ __typename?: 'GreenhouseQuestionField', type: string, name: string | null }> | null }> | null, location_questions: Array<{ __typename?: 'GreenhouseQuestion', description: string | null, label: string, required: boolean, fields: Array<{ __typename?: 'GreenhouseQuestionField', type: string, name: string | null }> | null }> | null, compliance: Array<{ __typename?: 'GreenhouseCompliance', type: string, description: string | null, questions: Array<{ __typename?: 'GreenhouseQuestion', description: string | null, label: string, required: boolean, fields: Array<{ __typename?: 'GreenhouseQuestionField', type: string, name: string | null }> | null }> | null }> | null, demographic_questions: { __typename?: 'GreenhouseDemographicQuestions', header: string | null, description: string | null, questions: Array<{ __typename?: 'GreenhouseQuestion', description: string | null, label: string, required: boolean, fields: Array<{ __typename?: 'GreenhouseQuestionField', type: string, name: string | null }> | null }> | null } | null, data_compliance: Array<{ __typename?: 'GreenhouseDataCompliance', type: string, requires_consent: boolean, requires_processing_consent: boolean, requires_retention_consent: boolean, retention_period: number | null, demographic_data_consent_applies: boolean }> | null, ashby_secondary_locations: Array<{ __typename?: 'AshbySecondaryLocation', location: string, address: { __typename?: 'AshbyPostalAddress', addressLocality: string | null, addressRegion: string | null, addressCountry: string | null } | null }> | null, ashby_compensation: { __typename?: 'AshbyCompensation', compensationTierSummary: string | null, scrapeableCompensationSalarySummary: string | null, compensationTiers: Array<{ __typename?: 'AshbyCompensationTier', id: string | null, tierSummary: string | null, title: string | null, additionalInformation: string | null, components: Array<{ __typename?: 'AshbyCompensationComponent', id: string | null, summary: string | null, compensationType: string | null, interval: string | null, currencyCode: string | null, minValue: number | null, maxValue: number | null }> }>, summaryComponents: Array<{ __typename?: 'AshbyCompensationComponent', id: string | null, summary: string | null, compensationType: string | null, interval: string | null, currencyCode: string | null, minValue: number | null, maxValue: number | null }> } | null, ashby_address: { __typename?: 'AshbyAddress', postalAddress: { __typename?: 'AshbyPostalAddress', addressLocality: string | null, addressRegion: string | null, addressCountry: string | null } | null } | null } | null };
+export type GetJobQuery = { __typename?: 'Query', job: { __typename?: 'Job', id: number, external_id: string, source_id: string | null, source_kind: string, company_id: number | null, company_key: string, title: string, location: string | null, url: string, description: string | null, publishedAt: string, score: number | null, score_reason: string | null, status: JobStatus | null, is_remote_eu: boolean, remote_eu_confidence: ClassificationConfidence | null, remote_eu_reason: string | null, absolute_url: string | null, internal_job_id: string | null, requisition_id: string | null, company_name: string | null, language: string | null, ashby_department: string | null, ashby_team: string | null, ashby_employment_type: string | null, ashby_is_remote: boolean | null, ashby_is_listed: boolean | null, ashby_job_url: string | null, ashby_apply_url: string | null, applied: boolean, appliedAt: string | null, archived: boolean, created_at: string, updated_at: string, company: { __typename?: 'Company', id: number, key: string, name: string, logo_url: string | null, website: string | null, description: string | null, industry: string | null, size: string | null, location: string | null, created_at: string, updated_at: string, linkedin_url: string | null, job_board_url: string | null, category: CompanyCategory, tags: Array<string>, services: Array<string>, service_taxonomy: Array<string>, industries: Array<string>, score: number, score_reasons: Array<string>, deep_analysis: string | null, last_seen_crawl_id: string | null, last_seen_capture_timestamp: string | null, last_seen_source_url: string | null, ashby_enrichment: { __typename?: 'AshbyEnrichment', company_name: string | null, industry_tags: Array<string>, tech_signals: Array<string>, size_signal: string | null, enriched_at: string | null } | null, ats_boards: Array<{ __typename?: 'ATSBoard', id: number, company_id: number, url: string, vendor: AtsVendor, board_type: AtsBoardType, confidence: number, is_active: boolean, first_seen_at: string, last_seen_at: string, created_at: string, updated_at: string, evidence: { __typename?: 'Evidence', source_type: SourceType, source_url: string, crawl_id: string | null, capture_timestamp: string | null, observed_at: string, method: ExtractMethod, extractor_version: string | null, http_status: number | null, mime: string | null, content_hash: string | null, warc: { __typename?: 'WarcPointer', filename: string, offset: number, length: number, digest: string | null } | null } }> } | null, skills: Array<{ __typename?: 'JobSkill', tag: string, level: string, confidence: number | null, evidence: string | null }> | null, skillMatch: { __typename?: 'SkillMatch', score: number, userCoverage: number, jobCoverage: number, requiredCoverage: number, matchedCount: number, totalPreferred: number, details: Array<{ __typename?: 'SkillMatchDetail', tag: string, level: string, matched: boolean }> } | null, metadata: Array<{ __typename?: 'GreenhouseMetadata', id: string, name: string, value: string | null, value_type: string | null }> | null, departments: Array<{ __typename?: 'GreenhouseDepartment', id: string, name: string, child_ids: Array<string> | null, parent_id: string | null }> | null, offices: Array<{ __typename?: 'GreenhouseOffice', id: string, name: string, location: string | null, child_ids: Array<string> | null, parent_id: string | null }> | null, questions: Array<{ __typename?: 'GreenhouseQuestion', description: string | null, label: string, required: boolean, fields: Array<{ __typename?: 'GreenhouseQuestionField', type: string, name: string | null }> | null }> | null, location_questions: Array<{ __typename?: 'GreenhouseQuestion', description: string | null, label: string, required: boolean, fields: Array<{ __typename?: 'GreenhouseQuestionField', type: string, name: string | null }> | null }> | null, compliance: Array<{ __typename?: 'GreenhouseCompliance', type: string, description: string | null, questions: Array<{ __typename?: 'GreenhouseQuestion', description: string | null, label: string, required: boolean, fields: Array<{ __typename?: 'GreenhouseQuestionField', type: string, name: string | null }> | null }> | null }> | null, demographic_questions: { __typename?: 'GreenhouseDemographicQuestions', header: string | null, description: string | null, questions: Array<{ __typename?: 'GreenhouseQuestion', description: string | null, label: string, required: boolean, fields: Array<{ __typename?: 'GreenhouseQuestionField', type: string, name: string | null }> | null }> | null } | null, data_compliance: Array<{ __typename?: 'GreenhouseDataCompliance', type: string, requires_consent: boolean, requires_processing_consent: boolean, requires_retention_consent: boolean, retention_period: number | null, demographic_data_consent_applies: boolean }> | null, ashby_secondary_locations: Array<{ __typename?: 'AshbySecondaryLocation', location: string, address: { __typename?: 'AshbyPostalAddress', addressLocality: string | null, addressRegion: string | null, addressCountry: string | null } | null }> | null, ashby_compensation: { __typename?: 'AshbyCompensation', compensationTierSummary: string | null, scrapeableCompensationSalarySummary: string | null, compensationTiers: Array<{ __typename?: 'AshbyCompensationTier', id: string | null, tierSummary: string | null, title: string | null, additionalInformation: string | null, components: Array<{ __typename?: 'AshbyCompensationComponent', id: string | null, summary: string | null, compensationType: string | null, interval: string | null, currencyCode: string | null, minValue: number | null, maxValue: number | null }> }>, summaryComponents: Array<{ __typename?: 'AshbyCompensationComponent', id: string | null, summary: string | null, compensationType: string | null, interval: string | null, currencyCode: string | null, minValue: number | null, maxValue: number | null }> } | null, ashby_address: { __typename?: 'AshbyAddress', postalAddress: { __typename?: 'AshbyPostalAddress', addressLocality: string | null, addressRegion: string | null, addressCountry: string | null } | null } | null } | null };
 
 export type GetJobsQueryVariables = Exact<{
   sourceType?: InputMaybe<Scalars['String']['input']>;
@@ -1977,7 +2598,7 @@ export type GetJobsQueryVariables = Exact<{
 }>;
 
 
-export type GetJobsQuery = { __typename?: 'Query', jobs: { __typename?: 'JobsResponse', totalCount: number, jobs: Array<{ __typename?: 'Job', id: number, external_id: string, source_kind: string, company_key: string, title: string, location: string | null, url: string, publishedAt: string, status: JobStatus | null, is_remote_eu: boolean, remote_eu_confidence: ClassificationConfidence | null, skills: Array<{ __typename?: 'JobSkill', tag: string, level: string }> | null }> } };
+export type GetJobsQuery = { __typename?: 'Query', jobs: { __typename?: 'JobsResponse', totalCount: number, jobs: Array<{ __typename?: 'Job', id: number, external_id: string, source_kind: string, company_key: string, title: string, location: string | null, url: string, publishedAt: string, status: JobStatus | null, is_remote_eu: boolean, remote_eu_confidence: ClassificationConfidence | null, applied: boolean, archived: boolean, skills: Array<{ __typename?: 'JobSkill', tag: string, level: string }> | null }> } };
 
 export type GetUserSettingsQueryVariables = Exact<{
   userId: Scalars['String']['input'];
@@ -2015,28 +2636,28 @@ export type UpdateUserSettingsMutationVariables = Exact<{
 
 export type UpdateUserSettingsMutation = { __typename?: 'Mutation', updateUserSettings: { __typename?: 'UserSettings', id: number, user_id: string, email_notifications: boolean, daily_digest: boolean, new_job_alerts: boolean, preferred_locations: Array<string> | null, preferred_skills: Array<string> | null, excluded_companies: Array<string> | null, dark_mode: boolean, jobs_per_page: number, created_at: string, updated_at: string } };
 
-export type ApplicationFieldsFragment = { __typename?: 'Application', id: number, email: string, jobId: string, resume: File | null, status: ApplicationStatus, notes: string | null, jobTitle: string | null, companyName: string | null, companyKey: string | null, jobDescription: string | null, createdAt: string, questions: Array<{ __typename?: 'QuestionAnswer', questionId: string, questionText: string, answerText: string }>, interviewPrep: Array<{ __typename?: 'Track', id: string, slug: string, title: string, description: string | null, level: string | null }>, aiInterviewPrep: { __typename?: 'AIInterviewPrep', summary: string, generatedAt: string, requirements: Array<{ __typename?: 'AIInterviewPrepRequirement', requirement: string, questions: Array<string>, studyTopics: Array<string>, sourceQuote: string | null, deepDive: string | null, studyTopicDeepDives: Array<{ __typename?: 'AIStudyTopicDeepDive', topic: string, deepDive: string }> }> } | null, aiInterviewQuestions: { __typename?: 'AIInterviewQuestions', companyContext: string, recruiterGeneratedAt: string | null, technicalGeneratedAt: string | null, recruiterQuestions: Array<{ __typename?: 'AIInterviewQuestion', question: string, reason: string, category: string }>, technicalQuestions: Array<{ __typename?: 'AIInterviewQuestion', question: string, reason: string, category: string }> } | null, agenticCoding: { __typename?: 'AgenticCoding', overview: string, workflowPattern: string | null, qaApproach: string | null, teamPractices: string | null, generatedAt: string, exercises: Array<{ __typename?: 'AgenticCodingExercise', title: string, description: string, difficulty: string, skills: Array<string>, hints: Array<string>, agentPrompt: string }>, promptTemplates: Array<{ __typename?: 'AgenticCodingPromptTemplate', title: string, purpose: string, stackContext: string, prompt: string }> | null, failureModes: Array<{ __typename?: 'AgenticCodingFailureMode', scenario: string, why: string, alternative: string }> | null, measurableOutcomes: Array<{ __typename?: 'AgenticCodingOutcome', task: string, beforeTime: string, afterTime: string, improvement: string }> | null, resources: Array<{ __typename?: 'AgenticCodingResource', title: string, url: string, description: string }> } | null, aiBackendPrep: { __typename?: 'AIBackendPrep', generatedAt: string, systemDesign: { __typename?: 'BackendPrepSection', title: string, overview: string, keyConcepts: Array<string>, deepDive: string, commonPitfalls: Array<string>, talkingPoints: Array<string>, researchInsights: string | null, interviewQuestions: Array<{ __typename?: 'BackendPrepInterviewQuestion', question: string, idealAnswer: string, followUps: Array<string>, difficulty: string }>, codeExamples: Array<{ __typename?: 'BackendPrepCodeExample', title: string, language: string, code: string, explanation: string }> } | null, distributedSystems: { __typename?: 'BackendPrepSection', title: string, overview: string, keyConcepts: Array<string>, deepDive: string, commonPitfalls: Array<string>, talkingPoints: Array<string>, researchInsights: string | null, interviewQuestions: Array<{ __typename?: 'BackendPrepInterviewQuestion', question: string, idealAnswer: string, followUps: Array<string>, difficulty: string }>, codeExamples: Array<{ __typename?: 'BackendPrepCodeExample', title: string, language: string, code: string, explanation: string }> } | null, databaseDesign: { __typename?: 'BackendPrepSection', title: string, overview: string, keyConcepts: Array<string>, deepDive: string, commonPitfalls: Array<string>, talkingPoints: Array<string>, researchInsights: string | null, interviewQuestions: Array<{ __typename?: 'BackendPrepInterviewQuestion', question: string, idealAnswer: string, followUps: Array<string>, difficulty: string }>, codeExamples: Array<{ __typename?: 'BackendPrepCodeExample', title: string, language: string, code: string, explanation: string }> } | null, sqlOptimization: { __typename?: 'BackendPrepSection', title: string, overview: string, keyConcepts: Array<string>, deepDive: string, commonPitfalls: Array<string>, talkingPoints: Array<string>, researchInsights: string | null, interviewQuestions: Array<{ __typename?: 'BackendPrepInterviewQuestion', question: string, idealAnswer: string, followUps: Array<string>, difficulty: string }>, codeExamples: Array<{ __typename?: 'BackendPrepCodeExample', title: string, language: string, code: string, explanation: string }> } | null, nosqlPatterns: { __typename?: 'BackendPrepSection', title: string, overview: string, keyConcepts: Array<string>, deepDive: string, commonPitfalls: Array<string>, talkingPoints: Array<string>, researchInsights: string | null, interviewQuestions: Array<{ __typename?: 'BackendPrepInterviewQuestion', question: string, idealAnswer: string, followUps: Array<string>, difficulty: string }>, codeExamples: Array<{ __typename?: 'BackendPrepCodeExample', title: string, language: string, code: string, explanation: string }> } | null, apiDesign: { __typename?: 'BackendPrepSection', title: string, overview: string, keyConcepts: Array<string>, deepDive: string, commonPitfalls: Array<string>, talkingPoints: Array<string>, researchInsights: string | null, interviewQuestions: Array<{ __typename?: 'BackendPrepInterviewQuestion', question: string, idealAnswer: string, followUps: Array<string>, difficulty: string }>, codeExamples: Array<{ __typename?: 'BackendPrepCodeExample', title: string, language: string, code: string, explanation: string }> } | null, authSecurity: { __typename?: 'BackendPrepSection', title: string, overview: string, keyConcepts: Array<string>, deepDive: string, commonPitfalls: Array<string>, talkingPoints: Array<string>, researchInsights: string | null, interviewQuestions: Array<{ __typename?: 'BackendPrepInterviewQuestion', question: string, idealAnswer: string, followUps: Array<string>, difficulty: string }>, codeExamples: Array<{ __typename?: 'BackendPrepCodeExample', title: string, language: string, code: string, explanation: string }> } | null, caching: { __typename?: 'BackendPrepSection', title: string, overview: string, keyConcepts: Array<string>, deepDive: string, commonPitfalls: Array<string>, talkingPoints: Array<string>, researchInsights: string | null, interviewQuestions: Array<{ __typename?: 'BackendPrepInterviewQuestion', question: string, idealAnswer: string, followUps: Array<string>, difficulty: string }>, codeExamples: Array<{ __typename?: 'BackendPrepCodeExample', title: string, language: string, code: string, explanation: string }> } | null, messageQueues: { __typename?: 'BackendPrepSection', title: string, overview: string, keyConcepts: Array<string>, deepDive: string, commonPitfalls: Array<string>, talkingPoints: Array<string>, researchInsights: string | null, interviewQuestions: Array<{ __typename?: 'BackendPrepInterviewQuestion', question: string, idealAnswer: string, followUps: Array<string>, difficulty: string }>, codeExamples: Array<{ __typename?: 'BackendPrepCodeExample', title: string, language: string, code: string, explanation: string }> } | null, microservices: { __typename?: 'BackendPrepSection', title: string, overview: string, keyConcepts: Array<string>, deepDive: string, commonPitfalls: Array<string>, talkingPoints: Array<string>, researchInsights: string | null, interviewQuestions: Array<{ __typename?: 'BackendPrepInterviewQuestion', question: string, idealAnswer: string, followUps: Array<string>, difficulty: string }>, codeExamples: Array<{ __typename?: 'BackendPrepCodeExample', title: string, language: string, code: string, explanation: string }> } | null, testing: { __typename?: 'BackendPrepSection', title: string, overview: string, keyConcepts: Array<string>, deepDive: string, commonPitfalls: Array<string>, talkingPoints: Array<string>, researchInsights: string | null, interviewQuestions: Array<{ __typename?: 'BackendPrepInterviewQuestion', question: string, idealAnswer: string, followUps: Array<string>, difficulty: string }>, codeExamples: Array<{ __typename?: 'BackendPrepCodeExample', title: string, language: string, code: string, explanation: string }> } | null, devops: { __typename?: 'BackendPrepSection', title: string, overview: string, keyConcepts: Array<string>, deepDive: string, commonPitfalls: Array<string>, talkingPoints: Array<string>, researchInsights: string | null, interviewQuestions: Array<{ __typename?: 'BackendPrepInterviewQuestion', question: string, idealAnswer: string, followUps: Array<string>, difficulty: string }>, codeExamples: Array<{ __typename?: 'BackendPrepCodeExample', title: string, language: string, code: string, explanation: string }> } | null, securityOwasp: { __typename?: 'BackendPrepSection', title: string, overview: string, keyConcepts: Array<string>, deepDive: string, commonPitfalls: Array<string>, talkingPoints: Array<string>, researchInsights: string | null, interviewQuestions: Array<{ __typename?: 'BackendPrepInterviewQuestion', question: string, idealAnswer: string, followUps: Array<string>, difficulty: string }>, codeExamples: Array<{ __typename?: 'BackendPrepCodeExample', title: string, language: string, code: string, explanation: string }> } | null, performance: { __typename?: 'BackendPrepSection', title: string, overview: string, keyConcepts: Array<string>, deepDive: string, commonPitfalls: Array<string>, talkingPoints: Array<string>, researchInsights: string | null, interviewQuestions: Array<{ __typename?: 'BackendPrepInterviewQuestion', question: string, idealAnswer: string, followUps: Array<string>, difficulty: string }>, codeExamples: Array<{ __typename?: 'BackendPrepCodeExample', title: string, language: string, code: string, explanation: string }> } | null, concurrencyAsync: { __typename?: 'BackendPrepSection', title: string, overview: string, keyConcepts: Array<string>, deepDive: string, commonPitfalls: Array<string>, talkingPoints: Array<string>, researchInsights: string | null, interviewQuestions: Array<{ __typename?: 'BackendPrepInterviewQuestion', question: string, idealAnswer: string, followUps: Array<string>, difficulty: string }>, codeExamples: Array<{ __typename?: 'BackendPrepCodeExample', title: string, language: string, code: string, explanation: string }> } | null, observability: { __typename?: 'BackendPrepSection', title: string, overview: string, keyConcepts: Array<string>, deepDive: string, commonPitfalls: Array<string>, talkingPoints: Array<string>, researchInsights: string | null, interviewQuestions: Array<{ __typename?: 'BackendPrepInterviewQuestion', question: string, idealAnswer: string, followUps: Array<string>, difficulty: string }>, codeExamples: Array<{ __typename?: 'BackendPrepCodeExample', title: string, language: string, code: string, explanation: string }> } | null, eventDriven: { __typename?: 'BackendPrepSection', title: string, overview: string, keyConcepts: Array<string>, deepDive: string, commonPitfalls: Array<string>, talkingPoints: Array<string>, researchInsights: string | null, interviewQuestions: Array<{ __typename?: 'BackendPrepInterviewQuestion', question: string, idealAnswer: string, followUps: Array<string>, difficulty: string }>, codeExamples: Array<{ __typename?: 'BackendPrepCodeExample', title: string, language: string, code: string, explanation: string }> } | null, serverlessEdge: { __typename?: 'BackendPrepSection', title: string, overview: string, keyConcepts: Array<string>, deepDive: string, commonPitfalls: Array<string>, talkingPoints: Array<string>, researchInsights: string | null, interviewQuestions: Array<{ __typename?: 'BackendPrepInterviewQuestion', question: string, idealAnswer: string, followUps: Array<string>, difficulty: string }>, codeExamples: Array<{ __typename?: 'BackendPrepCodeExample', title: string, language: string, code: string, explanation: string }> } | null, typescriptNode: { __typename?: 'BackendPrepSection', title: string, overview: string, keyConcepts: Array<string>, deepDive: string, commonPitfalls: Array<string>, talkingPoints: Array<string>, researchInsights: string | null, interviewQuestions: Array<{ __typename?: 'BackendPrepInterviewQuestion', question: string, idealAnswer: string, followUps: Array<string>, difficulty: string }>, codeExamples: Array<{ __typename?: 'BackendPrepCodeExample', title: string, language: string, code: string, explanation: string }> } | null, aiMlIntegration: { __typename?: 'BackendPrepSection', title: string, overview: string, keyConcepts: Array<string>, deepDive: string, commonPitfalls: Array<string>, talkingPoints: Array<string>, researchInsights: string | null, interviewQuestions: Array<{ __typename?: 'BackendPrepInterviewQuestion', question: string, idealAnswer: string, followUps: Array<string>, difficulty: string }>, codeExamples: Array<{ __typename?: 'BackendPrepCodeExample', title: string, language: string, code: string, explanation: string }> } | null } | null };
+export type ApplicationFieldsFragment = { __typename?: 'Application', id: number, email: string, jobId: string, resume: File | null, status: ApplicationStatus, notes: string | null, jobTitle: string | null, companyName: string | null, companyKey: string | null, jobDescription: string | null, createdAt: string, questions: Array<{ __typename?: 'QuestionAnswer', questionId: string, questionText: string, answerText: string }>, interviewPrep: Array<{ __typename?: 'Track', id: string, slug: string, title: string, description: string | null, level: string | null }>, aiInterviewPrep: { __typename?: 'AIInterviewPrep', summary: string, generatedAt: string, requirements: Array<{ __typename?: 'AIInterviewPrepRequirement', requirement: string, questions: Array<string>, studyTopics: Array<string>, sourceQuote: string | null, deepDive: string | null, studyTopicDeepDives: Array<{ __typename?: 'AIStudyTopicDeepDive', topic: string, deepDive: string }> }> } | null, aiInterviewQuestions: { __typename?: 'AIInterviewQuestions', companyContext: string, recruiterGeneratedAt: string | null, technicalGeneratedAt: string | null, recruiterQuestions: Array<{ __typename?: 'AIInterviewQuestion', question: string, reason: string, category: string }>, technicalQuestions: Array<{ __typename?: 'AIInterviewQuestion', question: string, reason: string, category: string }> } | null, agenticCoding: { __typename?: 'AgenticCoding', overview: string, workflowPattern: string | null, qaApproach: string | null, teamPractices: string | null, generatedAt: string, exercises: Array<{ __typename?: 'AgenticCodingExercise', title: string, description: string, difficulty: string, skills: Array<string>, hints: Array<string>, agentPrompt: string }>, promptTemplates: Array<{ __typename?: 'AgenticCodingPromptTemplate', title: string, purpose: string, stackContext: string, prompt: string }> | null, failureModes: Array<{ __typename?: 'AgenticCodingFailureMode', scenario: string, why: string, alternative: string }> | null, measurableOutcomes: Array<{ __typename?: 'AgenticCodingOutcome', task: string, beforeTime: string, afterTime: string, improvement: string }> | null, resources: Array<{ __typename?: 'AgenticCodingResource', title: string, url: string, description: string }> } | null, aiBackendPrep: { __typename?: 'AIBackendPrep', generatedAt: string, systemDesign: { __typename?: 'BackendPrepSection', title: string, overview: string, keyConcepts: Array<string>, deepDive: string, commonPitfalls: Array<string>, talkingPoints: Array<string>, researchInsights: string | null, interviewQuestions: Array<{ __typename?: 'BackendPrepInterviewQuestion', question: string, idealAnswer: string, followUps: Array<string>, difficulty: string }>, codeExamples: Array<{ __typename?: 'BackendPrepCodeExample', title: string, language: string, code: string, explanation: string }> } | null, distributedSystems: { __typename?: 'BackendPrepSection', title: string, overview: string, keyConcepts: Array<string>, deepDive: string, commonPitfalls: Array<string>, talkingPoints: Array<string>, researchInsights: string | null, interviewQuestions: Array<{ __typename?: 'BackendPrepInterviewQuestion', question: string, idealAnswer: string, followUps: Array<string>, difficulty: string }>, codeExamples: Array<{ __typename?: 'BackendPrepCodeExample', title: string, language: string, code: string, explanation: string }> } | null, databaseDesign: { __typename?: 'BackendPrepSection', title: string, overview: string, keyConcepts: Array<string>, deepDive: string, commonPitfalls: Array<string>, talkingPoints: Array<string>, researchInsights: string | null, interviewQuestions: Array<{ __typename?: 'BackendPrepInterviewQuestion', question: string, idealAnswer: string, followUps: Array<string>, difficulty: string }>, codeExamples: Array<{ __typename?: 'BackendPrepCodeExample', title: string, language: string, code: string, explanation: string }> } | null, sqlOptimization: { __typename?: 'BackendPrepSection', title: string, overview: string, keyConcepts: Array<string>, deepDive: string, commonPitfalls: Array<string>, talkingPoints: Array<string>, researchInsights: string | null, interviewQuestions: Array<{ __typename?: 'BackendPrepInterviewQuestion', question: string, idealAnswer: string, followUps: Array<string>, difficulty: string }>, codeExamples: Array<{ __typename?: 'BackendPrepCodeExample', title: string, language: string, code: string, explanation: string }> } | null, nosqlPatterns: { __typename?: 'BackendPrepSection', title: string, overview: string, keyConcepts: Array<string>, deepDive: string, commonPitfalls: Array<string>, talkingPoints: Array<string>, researchInsights: string | null, interviewQuestions: Array<{ __typename?: 'BackendPrepInterviewQuestion', question: string, idealAnswer: string, followUps: Array<string>, difficulty: string }>, codeExamples: Array<{ __typename?: 'BackendPrepCodeExample', title: string, language: string, code: string, explanation: string }> } | null, apiDesign: { __typename?: 'BackendPrepSection', title: string, overview: string, keyConcepts: Array<string>, deepDive: string, commonPitfalls: Array<string>, talkingPoints: Array<string>, researchInsights: string | null, interviewQuestions: Array<{ __typename?: 'BackendPrepInterviewQuestion', question: string, idealAnswer: string, followUps: Array<string>, difficulty: string }>, codeExamples: Array<{ __typename?: 'BackendPrepCodeExample', title: string, language: string, code: string, explanation: string }> } | null, authSecurity: { __typename?: 'BackendPrepSection', title: string, overview: string, keyConcepts: Array<string>, deepDive: string, commonPitfalls: Array<string>, talkingPoints: Array<string>, researchInsights: string | null, interviewQuestions: Array<{ __typename?: 'BackendPrepInterviewQuestion', question: string, idealAnswer: string, followUps: Array<string>, difficulty: string }>, codeExamples: Array<{ __typename?: 'BackendPrepCodeExample', title: string, language: string, code: string, explanation: string }> } | null, caching: { __typename?: 'BackendPrepSection', title: string, overview: string, keyConcepts: Array<string>, deepDive: string, commonPitfalls: Array<string>, talkingPoints: Array<string>, researchInsights: string | null, interviewQuestions: Array<{ __typename?: 'BackendPrepInterviewQuestion', question: string, idealAnswer: string, followUps: Array<string>, difficulty: string }>, codeExamples: Array<{ __typename?: 'BackendPrepCodeExample', title: string, language: string, code: string, explanation: string }> } | null, messageQueues: { __typename?: 'BackendPrepSection', title: string, overview: string, keyConcepts: Array<string>, deepDive: string, commonPitfalls: Array<string>, talkingPoints: Array<string>, researchInsights: string | null, interviewQuestions: Array<{ __typename?: 'BackendPrepInterviewQuestion', question: string, idealAnswer: string, followUps: Array<string>, difficulty: string }>, codeExamples: Array<{ __typename?: 'BackendPrepCodeExample', title: string, language: string, code: string, explanation: string }> } | null, microservices: { __typename?: 'BackendPrepSection', title: string, overview: string, keyConcepts: Array<string>, deepDive: string, commonPitfalls: Array<string>, talkingPoints: Array<string>, researchInsights: string | null, interviewQuestions: Array<{ __typename?: 'BackendPrepInterviewQuestion', question: string, idealAnswer: string, followUps: Array<string>, difficulty: string }>, codeExamples: Array<{ __typename?: 'BackendPrepCodeExample', title: string, language: string, code: string, explanation: string }> } | null, testing: { __typename?: 'BackendPrepSection', title: string, overview: string, keyConcepts: Array<string>, deepDive: string, commonPitfalls: Array<string>, talkingPoints: Array<string>, researchInsights: string | null, interviewQuestions: Array<{ __typename?: 'BackendPrepInterviewQuestion', question: string, idealAnswer: string, followUps: Array<string>, difficulty: string }>, codeExamples: Array<{ __typename?: 'BackendPrepCodeExample', title: string, language: string, code: string, explanation: string }> } | null, devops: { __typename?: 'BackendPrepSection', title: string, overview: string, keyConcepts: Array<string>, deepDive: string, commonPitfalls: Array<string>, talkingPoints: Array<string>, researchInsights: string | null, interviewQuestions: Array<{ __typename?: 'BackendPrepInterviewQuestion', question: string, idealAnswer: string, followUps: Array<string>, difficulty: string }>, codeExamples: Array<{ __typename?: 'BackendPrepCodeExample', title: string, language: string, code: string, explanation: string }> } | null, securityOwasp: { __typename?: 'BackendPrepSection', title: string, overview: string, keyConcepts: Array<string>, deepDive: string, commonPitfalls: Array<string>, talkingPoints: Array<string>, researchInsights: string | null, interviewQuestions: Array<{ __typename?: 'BackendPrepInterviewQuestion', question: string, idealAnswer: string, followUps: Array<string>, difficulty: string }>, codeExamples: Array<{ __typename?: 'BackendPrepCodeExample', title: string, language: string, code: string, explanation: string }> } | null, performance: { __typename?: 'BackendPrepSection', title: string, overview: string, keyConcepts: Array<string>, deepDive: string, commonPitfalls: Array<string>, talkingPoints: Array<string>, researchInsights: string | null, interviewQuestions: Array<{ __typename?: 'BackendPrepInterviewQuestion', question: string, idealAnswer: string, followUps: Array<string>, difficulty: string }>, codeExamples: Array<{ __typename?: 'BackendPrepCodeExample', title: string, language: string, code: string, explanation: string }> } | null, concurrencyAsync: { __typename?: 'BackendPrepSection', title: string, overview: string, keyConcepts: Array<string>, deepDive: string, commonPitfalls: Array<string>, talkingPoints: Array<string>, researchInsights: string | null, interviewQuestions: Array<{ __typename?: 'BackendPrepInterviewQuestion', question: string, idealAnswer: string, followUps: Array<string>, difficulty: string }>, codeExamples: Array<{ __typename?: 'BackendPrepCodeExample', title: string, language: string, code: string, explanation: string }> } | null, observability: { __typename?: 'BackendPrepSection', title: string, overview: string, keyConcepts: Array<string>, deepDive: string, commonPitfalls: Array<string>, talkingPoints: Array<string>, researchInsights: string | null, interviewQuestions: Array<{ __typename?: 'BackendPrepInterviewQuestion', question: string, idealAnswer: string, followUps: Array<string>, difficulty: string }>, codeExamples: Array<{ __typename?: 'BackendPrepCodeExample', title: string, language: string, code: string, explanation: string }> } | null, eventDriven: { __typename?: 'BackendPrepSection', title: string, overview: string, keyConcepts: Array<string>, deepDive: string, commonPitfalls: Array<string>, talkingPoints: Array<string>, researchInsights: string | null, interviewQuestions: Array<{ __typename?: 'BackendPrepInterviewQuestion', question: string, idealAnswer: string, followUps: Array<string>, difficulty: string }>, codeExamples: Array<{ __typename?: 'BackendPrepCodeExample', title: string, language: string, code: string, explanation: string }> } | null, serverlessEdge: { __typename?: 'BackendPrepSection', title: string, overview: string, keyConcepts: Array<string>, deepDive: string, commonPitfalls: Array<string>, talkingPoints: Array<string>, researchInsights: string | null, interviewQuestions: Array<{ __typename?: 'BackendPrepInterviewQuestion', question: string, idealAnswer: string, followUps: Array<string>, difficulty: string }>, codeExamples: Array<{ __typename?: 'BackendPrepCodeExample', title: string, language: string, code: string, explanation: string }> } | null, typescriptNode: { __typename?: 'BackendPrepSection', title: string, overview: string, keyConcepts: Array<string>, deepDive: string, commonPitfalls: Array<string>, talkingPoints: Array<string>, researchInsights: string | null, interviewQuestions: Array<{ __typename?: 'BackendPrepInterviewQuestion', question: string, idealAnswer: string, followUps: Array<string>, difficulty: string }>, codeExamples: Array<{ __typename?: 'BackendPrepCodeExample', title: string, language: string, code: string, explanation: string }> } | null, aiMlIntegration: { __typename?: 'BackendPrepSection', title: string, overview: string, keyConcepts: Array<string>, deepDive: string, commonPitfalls: Array<string>, talkingPoints: Array<string>, researchInsights: string | null, interviewQuestions: Array<{ __typename?: 'BackendPrepInterviewQuestion', question: string, idealAnswer: string, followUps: Array<string>, difficulty: string }>, codeExamples: Array<{ __typename?: 'BackendPrepCodeExample', title: string, language: string, code: string, explanation: string }> } | null } | null, aiDeepResearch: { __typename?: 'AIDeepResearch', generatedAt: string, questions: Array<{ __typename?: 'DeepResearchQuestion', question: string, category: string, deepseek: { __typename?: 'DeepResearchModelResponse', model: string, content: string, reasoning: string | null }, qwen: { __typename?: 'DeepResearchModelResponse', model: string, content: string, reasoning: string | null } }> } | null };
 
 export type BackendPrepSectionFieldsFragment = { __typename?: 'BackendPrepSection', title: string, overview: string, keyConcepts: Array<string>, deepDive: string, commonPitfalls: Array<string>, talkingPoints: Array<string>, researchInsights: string | null, interviewQuestions: Array<{ __typename?: 'BackendPrepInterviewQuestion', question: string, idealAnswer: string, followUps: Array<string>, difficulty: string }>, codeExamples: Array<{ __typename?: 'BackendPrepCodeExample', title: string, language: string, code: string, explanation: string }> };
 
 export type GetApplicationsQueryVariables = Exact<{ [key: string]: never; }>;
 
 
-export type GetApplicationsQuery = { __typename?: 'Query', applications: Array<{ __typename?: 'Application', id: number, email: string, jobId: string, resume: File | null, status: ApplicationStatus, notes: string | null, jobTitle: string | null, companyName: string | null, companyKey: string | null, jobDescription: string | null, createdAt: string, questions: Array<{ __typename?: 'QuestionAnswer', questionId: string, questionText: string, answerText: string }>, interviewPrep: Array<{ __typename?: 'Track', id: string, slug: string, title: string, description: string | null, level: string | null }>, aiInterviewPrep: { __typename?: 'AIInterviewPrep', summary: string, generatedAt: string, requirements: Array<{ __typename?: 'AIInterviewPrepRequirement', requirement: string, questions: Array<string>, studyTopics: Array<string>, sourceQuote: string | null, deepDive: string | null, studyTopicDeepDives: Array<{ __typename?: 'AIStudyTopicDeepDive', topic: string, deepDive: string }> }> } | null, aiInterviewQuestions: { __typename?: 'AIInterviewQuestions', companyContext: string, recruiterGeneratedAt: string | null, technicalGeneratedAt: string | null, recruiterQuestions: Array<{ __typename?: 'AIInterviewQuestion', question: string, reason: string, category: string }>, technicalQuestions: Array<{ __typename?: 'AIInterviewQuestion', question: string, reason: string, category: string }> } | null, agenticCoding: { __typename?: 'AgenticCoding', overview: string, workflowPattern: string | null, qaApproach: string | null, teamPractices: string | null, generatedAt: string, exercises: Array<{ __typename?: 'AgenticCodingExercise', title: string, description: string, difficulty: string, skills: Array<string>, hints: Array<string>, agentPrompt: string }>, promptTemplates: Array<{ __typename?: 'AgenticCodingPromptTemplate', title: string, purpose: string, stackContext: string, prompt: string }> | null, failureModes: Array<{ __typename?: 'AgenticCodingFailureMode', scenario: string, why: string, alternative: string }> | null, measurableOutcomes: Array<{ __typename?: 'AgenticCodingOutcome', task: string, beforeTime: string, afterTime: string, improvement: string }> | null, resources: Array<{ __typename?: 'AgenticCodingResource', title: string, url: string, description: string }> } | null, aiBackendPrep: { __typename?: 'AIBackendPrep', generatedAt: string, systemDesign: { __typename?: 'BackendPrepSection', title: string, overview: string, keyConcepts: Array<string>, deepDive: string, commonPitfalls: Array<string>, talkingPoints: Array<string>, researchInsights: string | null, interviewQuestions: Array<{ __typename?: 'BackendPrepInterviewQuestion', question: string, idealAnswer: string, followUps: Array<string>, difficulty: string }>, codeExamples: Array<{ __typename?: 'BackendPrepCodeExample', title: string, language: string, code: string, explanation: string }> } | null, distributedSystems: { __typename?: 'BackendPrepSection', title: string, overview: string, keyConcepts: Array<string>, deepDive: string, commonPitfalls: Array<string>, talkingPoints: Array<string>, researchInsights: string | null, interviewQuestions: Array<{ __typename?: 'BackendPrepInterviewQuestion', question: string, idealAnswer: string, followUps: Array<string>, difficulty: string }>, codeExamples: Array<{ __typename?: 'BackendPrepCodeExample', title: string, language: string, code: string, explanation: string }> } | null, databaseDesign: { __typename?: 'BackendPrepSection', title: string, overview: string, keyConcepts: Array<string>, deepDive: string, commonPitfalls: Array<string>, talkingPoints: Array<string>, researchInsights: string | null, interviewQuestions: Array<{ __typename?: 'BackendPrepInterviewQuestion', question: string, idealAnswer: string, followUps: Array<string>, difficulty: string }>, codeExamples: Array<{ __typename?: 'BackendPrepCodeExample', title: string, language: string, code: string, explanation: string }> } | null, sqlOptimization: { __typename?: 'BackendPrepSection', title: string, overview: string, keyConcepts: Array<string>, deepDive: string, commonPitfalls: Array<string>, talkingPoints: Array<string>, researchInsights: string | null, interviewQuestions: Array<{ __typename?: 'BackendPrepInterviewQuestion', question: string, idealAnswer: string, followUps: Array<string>, difficulty: string }>, codeExamples: Array<{ __typename?: 'BackendPrepCodeExample', title: string, language: string, code: string, explanation: string }> } | null, nosqlPatterns: { __typename?: 'BackendPrepSection', title: string, overview: string, keyConcepts: Array<string>, deepDive: string, commonPitfalls: Array<string>, talkingPoints: Array<string>, researchInsights: string | null, interviewQuestions: Array<{ __typename?: 'BackendPrepInterviewQuestion', question: string, idealAnswer: string, followUps: Array<string>, difficulty: string }>, codeExamples: Array<{ __typename?: 'BackendPrepCodeExample', title: string, language: string, code: string, explanation: string }> } | null, apiDesign: { __typename?: 'BackendPrepSection', title: string, overview: string, keyConcepts: Array<string>, deepDive: string, commonPitfalls: Array<string>, talkingPoints: Array<string>, researchInsights: string | null, interviewQuestions: Array<{ __typename?: 'BackendPrepInterviewQuestion', question: string, idealAnswer: string, followUps: Array<string>, difficulty: string }>, codeExamples: Array<{ __typename?: 'BackendPrepCodeExample', title: string, language: string, code: string, explanation: string }> } | null, authSecurity: { __typename?: 'BackendPrepSection', title: string, overview: string, keyConcepts: Array<string>, deepDive: string, commonPitfalls: Array<string>, talkingPoints: Array<string>, researchInsights: string | null, interviewQuestions: Array<{ __typename?: 'BackendPrepInterviewQuestion', question: string, idealAnswer: string, followUps: Array<string>, difficulty: string }>, codeExamples: Array<{ __typename?: 'BackendPrepCodeExample', title: string, language: string, code: string, explanation: string }> } | null, caching: { __typename?: 'BackendPrepSection', title: string, overview: string, keyConcepts: Array<string>, deepDive: string, commonPitfalls: Array<string>, talkingPoints: Array<string>, researchInsights: string | null, interviewQuestions: Array<{ __typename?: 'BackendPrepInterviewQuestion', question: string, idealAnswer: string, followUps: Array<string>, difficulty: string }>, codeExamples: Array<{ __typename?: 'BackendPrepCodeExample', title: string, language: string, code: string, explanation: string }> } | null, messageQueues: { __typename?: 'BackendPrepSection', title: string, overview: string, keyConcepts: Array<string>, deepDive: string, commonPitfalls: Array<string>, talkingPoints: Array<string>, researchInsights: string | null, interviewQuestions: Array<{ __typename?: 'BackendPrepInterviewQuestion', question: string, idealAnswer: string, followUps: Array<string>, difficulty: string }>, codeExamples: Array<{ __typename?: 'BackendPrepCodeExample', title: string, language: string, code: string, explanation: string }> } | null, microservices: { __typename?: 'BackendPrepSection', title: string, overview: string, keyConcepts: Array<string>, deepDive: string, commonPitfalls: Array<string>, talkingPoints: Array<string>, researchInsights: string | null, interviewQuestions: Array<{ __typename?: 'BackendPrepInterviewQuestion', question: string, idealAnswer: string, followUps: Array<string>, difficulty: string }>, codeExamples: Array<{ __typename?: 'BackendPrepCodeExample', title: string, language: string, code: string, explanation: string }> } | null, testing: { __typename?: 'BackendPrepSection', title: string, overview: string, keyConcepts: Array<string>, deepDive: string, commonPitfalls: Array<string>, talkingPoints: Array<string>, researchInsights: string | null, interviewQuestions: Array<{ __typename?: 'BackendPrepInterviewQuestion', question: string, idealAnswer: string, followUps: Array<string>, difficulty: string }>, codeExamples: Array<{ __typename?: 'BackendPrepCodeExample', title: string, language: string, code: string, explanation: string }> } | null, devops: { __typename?: 'BackendPrepSection', title: string, overview: string, keyConcepts: Array<string>, deepDive: string, commonPitfalls: Array<string>, talkingPoints: Array<string>, researchInsights: string | null, interviewQuestions: Array<{ __typename?: 'BackendPrepInterviewQuestion', question: string, idealAnswer: string, followUps: Array<string>, difficulty: string }>, codeExamples: Array<{ __typename?: 'BackendPrepCodeExample', title: string, language: string, code: string, explanation: string }> } | null, securityOwasp: { __typename?: 'BackendPrepSection', title: string, overview: string, keyConcepts: Array<string>, deepDive: string, commonPitfalls: Array<string>, talkingPoints: Array<string>, researchInsights: string | null, interviewQuestions: Array<{ __typename?: 'BackendPrepInterviewQuestion', question: string, idealAnswer: string, followUps: Array<string>, difficulty: string }>, codeExamples: Array<{ __typename?: 'BackendPrepCodeExample', title: string, language: string, code: string, explanation: string }> } | null, performance: { __typename?: 'BackendPrepSection', title: string, overview: string, keyConcepts: Array<string>, deepDive: string, commonPitfalls: Array<string>, talkingPoints: Array<string>, researchInsights: string | null, interviewQuestions: Array<{ __typename?: 'BackendPrepInterviewQuestion', question: string, idealAnswer: string, followUps: Array<string>, difficulty: string }>, codeExamples: Array<{ __typename?: 'BackendPrepCodeExample', title: string, language: string, code: string, explanation: string }> } | null, concurrencyAsync: { __typename?: 'BackendPrepSection', title: string, overview: string, keyConcepts: Array<string>, deepDive: string, commonPitfalls: Array<string>, talkingPoints: Array<string>, researchInsights: string | null, interviewQuestions: Array<{ __typename?: 'BackendPrepInterviewQuestion', question: string, idealAnswer: string, followUps: Array<string>, difficulty: string }>, codeExamples: Array<{ __typename?: 'BackendPrepCodeExample', title: string, language: string, code: string, explanation: string }> } | null, observability: { __typename?: 'BackendPrepSection', title: string, overview: string, keyConcepts: Array<string>, deepDive: string, commonPitfalls: Array<string>, talkingPoints: Array<string>, researchInsights: string | null, interviewQuestions: Array<{ __typename?: 'BackendPrepInterviewQuestion', question: string, idealAnswer: string, followUps: Array<string>, difficulty: string }>, codeExamples: Array<{ __typename?: 'BackendPrepCodeExample', title: string, language: string, code: string, explanation: string }> } | null, eventDriven: { __typename?: 'BackendPrepSection', title: string, overview: string, keyConcepts: Array<string>, deepDive: string, commonPitfalls: Array<string>, talkingPoints: Array<string>, researchInsights: string | null, interviewQuestions: Array<{ __typename?: 'BackendPrepInterviewQuestion', question: string, idealAnswer: string, followUps: Array<string>, difficulty: string }>, codeExamples: Array<{ __typename?: 'BackendPrepCodeExample', title: string, language: string, code: string, explanation: string }> } | null, serverlessEdge: { __typename?: 'BackendPrepSection', title: string, overview: string, keyConcepts: Array<string>, deepDive: string, commonPitfalls: Array<string>, talkingPoints: Array<string>, researchInsights: string | null, interviewQuestions: Array<{ __typename?: 'BackendPrepInterviewQuestion', question: string, idealAnswer: string, followUps: Array<string>, difficulty: string }>, codeExamples: Array<{ __typename?: 'BackendPrepCodeExample', title: string, language: string, code: string, explanation: string }> } | null, typescriptNode: { __typename?: 'BackendPrepSection', title: string, overview: string, keyConcepts: Array<string>, deepDive: string, commonPitfalls: Array<string>, talkingPoints: Array<string>, researchInsights: string | null, interviewQuestions: Array<{ __typename?: 'BackendPrepInterviewQuestion', question: string, idealAnswer: string, followUps: Array<string>, difficulty: string }>, codeExamples: Array<{ __typename?: 'BackendPrepCodeExample', title: string, language: string, code: string, explanation: string }> } | null, aiMlIntegration: { __typename?: 'BackendPrepSection', title: string, overview: string, keyConcepts: Array<string>, deepDive: string, commonPitfalls: Array<string>, talkingPoints: Array<string>, researchInsights: string | null, interviewQuestions: Array<{ __typename?: 'BackendPrepInterviewQuestion', question: string, idealAnswer: string, followUps: Array<string>, difficulty: string }>, codeExamples: Array<{ __typename?: 'BackendPrepCodeExample', title: string, language: string, code: string, explanation: string }> } | null } | null }> };
+export type GetApplicationsQuery = { __typename?: 'Query', applications: Array<{ __typename?: 'Application', id: number, email: string, jobId: string, resume: File | null, status: ApplicationStatus, notes: string | null, jobTitle: string | null, companyName: string | null, companyKey: string | null, jobDescription: string | null, createdAt: string, questions: Array<{ __typename?: 'QuestionAnswer', questionId: string, questionText: string, answerText: string }>, interviewPrep: Array<{ __typename?: 'Track', id: string, slug: string, title: string, description: string | null, level: string | null }>, aiInterviewPrep: { __typename?: 'AIInterviewPrep', summary: string, generatedAt: string, requirements: Array<{ __typename?: 'AIInterviewPrepRequirement', requirement: string, questions: Array<string>, studyTopics: Array<string>, sourceQuote: string | null, deepDive: string | null, studyTopicDeepDives: Array<{ __typename?: 'AIStudyTopicDeepDive', topic: string, deepDive: string }> }> } | null, aiInterviewQuestions: { __typename?: 'AIInterviewQuestions', companyContext: string, recruiterGeneratedAt: string | null, technicalGeneratedAt: string | null, recruiterQuestions: Array<{ __typename?: 'AIInterviewQuestion', question: string, reason: string, category: string }>, technicalQuestions: Array<{ __typename?: 'AIInterviewQuestion', question: string, reason: string, category: string }> } | null, agenticCoding: { __typename?: 'AgenticCoding', overview: string, workflowPattern: string | null, qaApproach: string | null, teamPractices: string | null, generatedAt: string, exercises: Array<{ __typename?: 'AgenticCodingExercise', title: string, description: string, difficulty: string, skills: Array<string>, hints: Array<string>, agentPrompt: string }>, promptTemplates: Array<{ __typename?: 'AgenticCodingPromptTemplate', title: string, purpose: string, stackContext: string, prompt: string }> | null, failureModes: Array<{ __typename?: 'AgenticCodingFailureMode', scenario: string, why: string, alternative: string }> | null, measurableOutcomes: Array<{ __typename?: 'AgenticCodingOutcome', task: string, beforeTime: string, afterTime: string, improvement: string }> | null, resources: Array<{ __typename?: 'AgenticCodingResource', title: string, url: string, description: string }> } | null, aiBackendPrep: { __typename?: 'AIBackendPrep', generatedAt: string, systemDesign: { __typename?: 'BackendPrepSection', title: string, overview: string, keyConcepts: Array<string>, deepDive: string, commonPitfalls: Array<string>, talkingPoints: Array<string>, researchInsights: string | null, interviewQuestions: Array<{ __typename?: 'BackendPrepInterviewQuestion', question: string, idealAnswer: string, followUps: Array<string>, difficulty: string }>, codeExamples: Array<{ __typename?: 'BackendPrepCodeExample', title: string, language: string, code: string, explanation: string }> } | null, distributedSystems: { __typename?: 'BackendPrepSection', title: string, overview: string, keyConcepts: Array<string>, deepDive: string, commonPitfalls: Array<string>, talkingPoints: Array<string>, researchInsights: string | null, interviewQuestions: Array<{ __typename?: 'BackendPrepInterviewQuestion', question: string, idealAnswer: string, followUps: Array<string>, difficulty: string }>, codeExamples: Array<{ __typename?: 'BackendPrepCodeExample', title: string, language: string, code: string, explanation: string }> } | null, databaseDesign: { __typename?: 'BackendPrepSection', title: string, overview: string, keyConcepts: Array<string>, deepDive: string, commonPitfalls: Array<string>, talkingPoints: Array<string>, researchInsights: string | null, interviewQuestions: Array<{ __typename?: 'BackendPrepInterviewQuestion', question: string, idealAnswer: string, followUps: Array<string>, difficulty: string }>, codeExamples: Array<{ __typename?: 'BackendPrepCodeExample', title: string, language: string, code: string, explanation: string }> } | null, sqlOptimization: { __typename?: 'BackendPrepSection', title: string, overview: string, keyConcepts: Array<string>, deepDive: string, commonPitfalls: Array<string>, talkingPoints: Array<string>, researchInsights: string | null, interviewQuestions: Array<{ __typename?: 'BackendPrepInterviewQuestion', question: string, idealAnswer: string, followUps: Array<string>, difficulty: string }>, codeExamples: Array<{ __typename?: 'BackendPrepCodeExample', title: string, language: string, code: string, explanation: string }> } | null, nosqlPatterns: { __typename?: 'BackendPrepSection', title: string, overview: string, keyConcepts: Array<string>, deepDive: string, commonPitfalls: Array<string>, talkingPoints: Array<string>, researchInsights: string | null, interviewQuestions: Array<{ __typename?: 'BackendPrepInterviewQuestion', question: string, idealAnswer: string, followUps: Array<string>, difficulty: string }>, codeExamples: Array<{ __typename?: 'BackendPrepCodeExample', title: string, language: string, code: string, explanation: string }> } | null, apiDesign: { __typename?: 'BackendPrepSection', title: string, overview: string, keyConcepts: Array<string>, deepDive: string, commonPitfalls: Array<string>, talkingPoints: Array<string>, researchInsights: string | null, interviewQuestions: Array<{ __typename?: 'BackendPrepInterviewQuestion', question: string, idealAnswer: string, followUps: Array<string>, difficulty: string }>, codeExamples: Array<{ __typename?: 'BackendPrepCodeExample', title: string, language: string, code: string, explanation: string }> } | null, authSecurity: { __typename?: 'BackendPrepSection', title: string, overview: string, keyConcepts: Array<string>, deepDive: string, commonPitfalls: Array<string>, talkingPoints: Array<string>, researchInsights: string | null, interviewQuestions: Array<{ __typename?: 'BackendPrepInterviewQuestion', question: string, idealAnswer: string, followUps: Array<string>, difficulty: string }>, codeExamples: Array<{ __typename?: 'BackendPrepCodeExample', title: string, language: string, code: string, explanation: string }> } | null, caching: { __typename?: 'BackendPrepSection', title: string, overview: string, keyConcepts: Array<string>, deepDive: string, commonPitfalls: Array<string>, talkingPoints: Array<string>, researchInsights: string | null, interviewQuestions: Array<{ __typename?: 'BackendPrepInterviewQuestion', question: string, idealAnswer: string, followUps: Array<string>, difficulty: string }>, codeExamples: Array<{ __typename?: 'BackendPrepCodeExample', title: string, language: string, code: string, explanation: string }> } | null, messageQueues: { __typename?: 'BackendPrepSection', title: string, overview: string, keyConcepts: Array<string>, deepDive: string, commonPitfalls: Array<string>, talkingPoints: Array<string>, researchInsights: string | null, interviewQuestions: Array<{ __typename?: 'BackendPrepInterviewQuestion', question: string, idealAnswer: string, followUps: Array<string>, difficulty: string }>, codeExamples: Array<{ __typename?: 'BackendPrepCodeExample', title: string, language: string, code: string, explanation: string }> } | null, microservices: { __typename?: 'BackendPrepSection', title: string, overview: string, keyConcepts: Array<string>, deepDive: string, commonPitfalls: Array<string>, talkingPoints: Array<string>, researchInsights: string | null, interviewQuestions: Array<{ __typename?: 'BackendPrepInterviewQuestion', question: string, idealAnswer: string, followUps: Array<string>, difficulty: string }>, codeExamples: Array<{ __typename?: 'BackendPrepCodeExample', title: string, language: string, code: string, explanation: string }> } | null, testing: { __typename?: 'BackendPrepSection', title: string, overview: string, keyConcepts: Array<string>, deepDive: string, commonPitfalls: Array<string>, talkingPoints: Array<string>, researchInsights: string | null, interviewQuestions: Array<{ __typename?: 'BackendPrepInterviewQuestion', question: string, idealAnswer: string, followUps: Array<string>, difficulty: string }>, codeExamples: Array<{ __typename?: 'BackendPrepCodeExample', title: string, language: string, code: string, explanation: string }> } | null, devops: { __typename?: 'BackendPrepSection', title: string, overview: string, keyConcepts: Array<string>, deepDive: string, commonPitfalls: Array<string>, talkingPoints: Array<string>, researchInsights: string | null, interviewQuestions: Array<{ __typename?: 'BackendPrepInterviewQuestion', question: string, idealAnswer: string, followUps: Array<string>, difficulty: string }>, codeExamples: Array<{ __typename?: 'BackendPrepCodeExample', title: string, language: string, code: string, explanation: string }> } | null, securityOwasp: { __typename?: 'BackendPrepSection', title: string, overview: string, keyConcepts: Array<string>, deepDive: string, commonPitfalls: Array<string>, talkingPoints: Array<string>, researchInsights: string | null, interviewQuestions: Array<{ __typename?: 'BackendPrepInterviewQuestion', question: string, idealAnswer: string, followUps: Array<string>, difficulty: string }>, codeExamples: Array<{ __typename?: 'BackendPrepCodeExample', title: string, language: string, code: string, explanation: string }> } | null, performance: { __typename?: 'BackendPrepSection', title: string, overview: string, keyConcepts: Array<string>, deepDive: string, commonPitfalls: Array<string>, talkingPoints: Array<string>, researchInsights: string | null, interviewQuestions: Array<{ __typename?: 'BackendPrepInterviewQuestion', question: string, idealAnswer: string, followUps: Array<string>, difficulty: string }>, codeExamples: Array<{ __typename?: 'BackendPrepCodeExample', title: string, language: string, code: string, explanation: string }> } | null, concurrencyAsync: { __typename?: 'BackendPrepSection', title: string, overview: string, keyConcepts: Array<string>, deepDive: string, commonPitfalls: Array<string>, talkingPoints: Array<string>, researchInsights: string | null, interviewQuestions: Array<{ __typename?: 'BackendPrepInterviewQuestion', question: string, idealAnswer: string, followUps: Array<string>, difficulty: string }>, codeExamples: Array<{ __typename?: 'BackendPrepCodeExample', title: string, language: string, code: string, explanation: string }> } | null, observability: { __typename?: 'BackendPrepSection', title: string, overview: string, keyConcepts: Array<string>, deepDive: string, commonPitfalls: Array<string>, talkingPoints: Array<string>, researchInsights: string | null, interviewQuestions: Array<{ __typename?: 'BackendPrepInterviewQuestion', question: string, idealAnswer: string, followUps: Array<string>, difficulty: string }>, codeExamples: Array<{ __typename?: 'BackendPrepCodeExample', title: string, language: string, code: string, explanation: string }> } | null, eventDriven: { __typename?: 'BackendPrepSection', title: string, overview: string, keyConcepts: Array<string>, deepDive: string, commonPitfalls: Array<string>, talkingPoints: Array<string>, researchInsights: string | null, interviewQuestions: Array<{ __typename?: 'BackendPrepInterviewQuestion', question: string, idealAnswer: string, followUps: Array<string>, difficulty: string }>, codeExamples: Array<{ __typename?: 'BackendPrepCodeExample', title: string, language: string, code: string, explanation: string }> } | null, serverlessEdge: { __typename?: 'BackendPrepSection', title: string, overview: string, keyConcepts: Array<string>, deepDive: string, commonPitfalls: Array<string>, talkingPoints: Array<string>, researchInsights: string | null, interviewQuestions: Array<{ __typename?: 'BackendPrepInterviewQuestion', question: string, idealAnswer: string, followUps: Array<string>, difficulty: string }>, codeExamples: Array<{ __typename?: 'BackendPrepCodeExample', title: string, language: string, code: string, explanation: string }> } | null, typescriptNode: { __typename?: 'BackendPrepSection', title: string, overview: string, keyConcepts: Array<string>, deepDive: string, commonPitfalls: Array<string>, talkingPoints: Array<string>, researchInsights: string | null, interviewQuestions: Array<{ __typename?: 'BackendPrepInterviewQuestion', question: string, idealAnswer: string, followUps: Array<string>, difficulty: string }>, codeExamples: Array<{ __typename?: 'BackendPrepCodeExample', title: string, language: string, code: string, explanation: string }> } | null, aiMlIntegration: { __typename?: 'BackendPrepSection', title: string, overview: string, keyConcepts: Array<string>, deepDive: string, commonPitfalls: Array<string>, talkingPoints: Array<string>, researchInsights: string | null, interviewQuestions: Array<{ __typename?: 'BackendPrepInterviewQuestion', question: string, idealAnswer: string, followUps: Array<string>, difficulty: string }>, codeExamples: Array<{ __typename?: 'BackendPrepCodeExample', title: string, language: string, code: string, explanation: string }> } | null } | null, aiDeepResearch: { __typename?: 'AIDeepResearch', generatedAt: string, questions: Array<{ __typename?: 'DeepResearchQuestion', question: string, category: string, deepseek: { __typename?: 'DeepResearchModelResponse', model: string, content: string, reasoning: string | null }, qwen: { __typename?: 'DeepResearchModelResponse', model: string, content: string, reasoning: string | null } }> } | null }> };
 
 export type GetApplicationQueryVariables = Exact<{
   id: Scalars['Int']['input'];
 }>;
 
 
-export type GetApplicationQuery = { __typename?: 'Query', application: { __typename?: 'Application', id: number, email: string, jobId: string, resume: File | null, status: ApplicationStatus, notes: string | null, jobTitle: string | null, companyName: string | null, companyKey: string | null, jobDescription: string | null, createdAt: string, questions: Array<{ __typename?: 'QuestionAnswer', questionId: string, questionText: string, answerText: string }>, interviewPrep: Array<{ __typename?: 'Track', id: string, slug: string, title: string, description: string | null, level: string | null }>, aiInterviewPrep: { __typename?: 'AIInterviewPrep', summary: string, generatedAt: string, requirements: Array<{ __typename?: 'AIInterviewPrepRequirement', requirement: string, questions: Array<string>, studyTopics: Array<string>, sourceQuote: string | null, deepDive: string | null, studyTopicDeepDives: Array<{ __typename?: 'AIStudyTopicDeepDive', topic: string, deepDive: string }> }> } | null, aiInterviewQuestions: { __typename?: 'AIInterviewQuestions', companyContext: string, recruiterGeneratedAt: string | null, technicalGeneratedAt: string | null, recruiterQuestions: Array<{ __typename?: 'AIInterviewQuestion', question: string, reason: string, category: string }>, technicalQuestions: Array<{ __typename?: 'AIInterviewQuestion', question: string, reason: string, category: string }> } | null, agenticCoding: { __typename?: 'AgenticCoding', overview: string, workflowPattern: string | null, qaApproach: string | null, teamPractices: string | null, generatedAt: string, exercises: Array<{ __typename?: 'AgenticCodingExercise', title: string, description: string, difficulty: string, skills: Array<string>, hints: Array<string>, agentPrompt: string }>, promptTemplates: Array<{ __typename?: 'AgenticCodingPromptTemplate', title: string, purpose: string, stackContext: string, prompt: string }> | null, failureModes: Array<{ __typename?: 'AgenticCodingFailureMode', scenario: string, why: string, alternative: string }> | null, measurableOutcomes: Array<{ __typename?: 'AgenticCodingOutcome', task: string, beforeTime: string, afterTime: string, improvement: string }> | null, resources: Array<{ __typename?: 'AgenticCodingResource', title: string, url: string, description: string }> } | null, aiBackendPrep: { __typename?: 'AIBackendPrep', generatedAt: string, systemDesign: { __typename?: 'BackendPrepSection', title: string, overview: string, keyConcepts: Array<string>, deepDive: string, commonPitfalls: Array<string>, talkingPoints: Array<string>, researchInsights: string | null, interviewQuestions: Array<{ __typename?: 'BackendPrepInterviewQuestion', question: string, idealAnswer: string, followUps: Array<string>, difficulty: string }>, codeExamples: Array<{ __typename?: 'BackendPrepCodeExample', title: string, language: string, code: string, explanation: string }> } | null, distributedSystems: { __typename?: 'BackendPrepSection', title: string, overview: string, keyConcepts: Array<string>, deepDive: string, commonPitfalls: Array<string>, talkingPoints: Array<string>, researchInsights: string | null, interviewQuestions: Array<{ __typename?: 'BackendPrepInterviewQuestion', question: string, idealAnswer: string, followUps: Array<string>, difficulty: string }>, codeExamples: Array<{ __typename?: 'BackendPrepCodeExample', title: string, language: string, code: string, explanation: string }> } | null, databaseDesign: { __typename?: 'BackendPrepSection', title: string, overview: string, keyConcepts: Array<string>, deepDive: string, commonPitfalls: Array<string>, talkingPoints: Array<string>, researchInsights: string | null, interviewQuestions: Array<{ __typename?: 'BackendPrepInterviewQuestion', question: string, idealAnswer: string, followUps: Array<string>, difficulty: string }>, codeExamples: Array<{ __typename?: 'BackendPrepCodeExample', title: string, language: string, code: string, explanation: string }> } | null, sqlOptimization: { __typename?: 'BackendPrepSection', title: string, overview: string, keyConcepts: Array<string>, deepDive: string, commonPitfalls: Array<string>, talkingPoints: Array<string>, researchInsights: string | null, interviewQuestions: Array<{ __typename?: 'BackendPrepInterviewQuestion', question: string, idealAnswer: string, followUps: Array<string>, difficulty: string }>, codeExamples: Array<{ __typename?: 'BackendPrepCodeExample', title: string, language: string, code: string, explanation: string }> } | null, nosqlPatterns: { __typename?: 'BackendPrepSection', title: string, overview: string, keyConcepts: Array<string>, deepDive: string, commonPitfalls: Array<string>, talkingPoints: Array<string>, researchInsights: string | null, interviewQuestions: Array<{ __typename?: 'BackendPrepInterviewQuestion', question: string, idealAnswer: string, followUps: Array<string>, difficulty: string }>, codeExamples: Array<{ __typename?: 'BackendPrepCodeExample', title: string, language: string, code: string, explanation: string }> } | null, apiDesign: { __typename?: 'BackendPrepSection', title: string, overview: string, keyConcepts: Array<string>, deepDive: string, commonPitfalls: Array<string>, talkingPoints: Array<string>, researchInsights: string | null, interviewQuestions: Array<{ __typename?: 'BackendPrepInterviewQuestion', question: string, idealAnswer: string, followUps: Array<string>, difficulty: string }>, codeExamples: Array<{ __typename?: 'BackendPrepCodeExample', title: string, language: string, code: string, explanation: string }> } | null, authSecurity: { __typename?: 'BackendPrepSection', title: string, overview: string, keyConcepts: Array<string>, deepDive: string, commonPitfalls: Array<string>, talkingPoints: Array<string>, researchInsights: string | null, interviewQuestions: Array<{ __typename?: 'BackendPrepInterviewQuestion', question: string, idealAnswer: string, followUps: Array<string>, difficulty: string }>, codeExamples: Array<{ __typename?: 'BackendPrepCodeExample', title: string, language: string, code: string, explanation: string }> } | null, caching: { __typename?: 'BackendPrepSection', title: string, overview: string, keyConcepts: Array<string>, deepDive: string, commonPitfalls: Array<string>, talkingPoints: Array<string>, researchInsights: string | null, interviewQuestions: Array<{ __typename?: 'BackendPrepInterviewQuestion', question: string, idealAnswer: string, followUps: Array<string>, difficulty: string }>, codeExamples: Array<{ __typename?: 'BackendPrepCodeExample', title: string, language: string, code: string, explanation: string }> } | null, messageQueues: { __typename?: 'BackendPrepSection', title: string, overview: string, keyConcepts: Array<string>, deepDive: string, commonPitfalls: Array<string>, talkingPoints: Array<string>, researchInsights: string | null, interviewQuestions: Array<{ __typename?: 'BackendPrepInterviewQuestion', question: string, idealAnswer: string, followUps: Array<string>, difficulty: string }>, codeExamples: Array<{ __typename?: 'BackendPrepCodeExample', title: string, language: string, code: string, explanation: string }> } | null, microservices: { __typename?: 'BackendPrepSection', title: string, overview: string, keyConcepts: Array<string>, deepDive: string, commonPitfalls: Array<string>, talkingPoints: Array<string>, researchInsights: string | null, interviewQuestions: Array<{ __typename?: 'BackendPrepInterviewQuestion', question: string, idealAnswer: string, followUps: Array<string>, difficulty: string }>, codeExamples: Array<{ __typename?: 'BackendPrepCodeExample', title: string, language: string, code: string, explanation: string }> } | null, testing: { __typename?: 'BackendPrepSection', title: string, overview: string, keyConcepts: Array<string>, deepDive: string, commonPitfalls: Array<string>, talkingPoints: Array<string>, researchInsights: string | null, interviewQuestions: Array<{ __typename?: 'BackendPrepInterviewQuestion', question: string, idealAnswer: string, followUps: Array<string>, difficulty: string }>, codeExamples: Array<{ __typename?: 'BackendPrepCodeExample', title: string, language: string, code: string, explanation: string }> } | null, devops: { __typename?: 'BackendPrepSection', title: string, overview: string, keyConcepts: Array<string>, deepDive: string, commonPitfalls: Array<string>, talkingPoints: Array<string>, researchInsights: string | null, interviewQuestions: Array<{ __typename?: 'BackendPrepInterviewQuestion', question: string, idealAnswer: string, followUps: Array<string>, difficulty: string }>, codeExamples: Array<{ __typename?: 'BackendPrepCodeExample', title: string, language: string, code: string, explanation: string }> } | null, securityOwasp: { __typename?: 'BackendPrepSection', title: string, overview: string, keyConcepts: Array<string>, deepDive: string, commonPitfalls: Array<string>, talkingPoints: Array<string>, researchInsights: string | null, interviewQuestions: Array<{ __typename?: 'BackendPrepInterviewQuestion', question: string, idealAnswer: string, followUps: Array<string>, difficulty: string }>, codeExamples: Array<{ __typename?: 'BackendPrepCodeExample', title: string, language: string, code: string, explanation: string }> } | null, performance: { __typename?: 'BackendPrepSection', title: string, overview: string, keyConcepts: Array<string>, deepDive: string, commonPitfalls: Array<string>, talkingPoints: Array<string>, researchInsights: string | null, interviewQuestions: Array<{ __typename?: 'BackendPrepInterviewQuestion', question: string, idealAnswer: string, followUps: Array<string>, difficulty: string }>, codeExamples: Array<{ __typename?: 'BackendPrepCodeExample', title: string, language: string, code: string, explanation: string }> } | null, concurrencyAsync: { __typename?: 'BackendPrepSection', title: string, overview: string, keyConcepts: Array<string>, deepDive: string, commonPitfalls: Array<string>, talkingPoints: Array<string>, researchInsights: string | null, interviewQuestions: Array<{ __typename?: 'BackendPrepInterviewQuestion', question: string, idealAnswer: string, followUps: Array<string>, difficulty: string }>, codeExamples: Array<{ __typename?: 'BackendPrepCodeExample', title: string, language: string, code: string, explanation: string }> } | null, observability: { __typename?: 'BackendPrepSection', title: string, overview: string, keyConcepts: Array<string>, deepDive: string, commonPitfalls: Array<string>, talkingPoints: Array<string>, researchInsights: string | null, interviewQuestions: Array<{ __typename?: 'BackendPrepInterviewQuestion', question: string, idealAnswer: string, followUps: Array<string>, difficulty: string }>, codeExamples: Array<{ __typename?: 'BackendPrepCodeExample', title: string, language: string, code: string, explanation: string }> } | null, eventDriven: { __typename?: 'BackendPrepSection', title: string, overview: string, keyConcepts: Array<string>, deepDive: string, commonPitfalls: Array<string>, talkingPoints: Array<string>, researchInsights: string | null, interviewQuestions: Array<{ __typename?: 'BackendPrepInterviewQuestion', question: string, idealAnswer: string, followUps: Array<string>, difficulty: string }>, codeExamples: Array<{ __typename?: 'BackendPrepCodeExample', title: string, language: string, code: string, explanation: string }> } | null, serverlessEdge: { __typename?: 'BackendPrepSection', title: string, overview: string, keyConcepts: Array<string>, deepDive: string, commonPitfalls: Array<string>, talkingPoints: Array<string>, researchInsights: string | null, interviewQuestions: Array<{ __typename?: 'BackendPrepInterviewQuestion', question: string, idealAnswer: string, followUps: Array<string>, difficulty: string }>, codeExamples: Array<{ __typename?: 'BackendPrepCodeExample', title: string, language: string, code: string, explanation: string }> } | null, typescriptNode: { __typename?: 'BackendPrepSection', title: string, overview: string, keyConcepts: Array<string>, deepDive: string, commonPitfalls: Array<string>, talkingPoints: Array<string>, researchInsights: string | null, interviewQuestions: Array<{ __typename?: 'BackendPrepInterviewQuestion', question: string, idealAnswer: string, followUps: Array<string>, difficulty: string }>, codeExamples: Array<{ __typename?: 'BackendPrepCodeExample', title: string, language: string, code: string, explanation: string }> } | null, aiMlIntegration: { __typename?: 'BackendPrepSection', title: string, overview: string, keyConcepts: Array<string>, deepDive: string, commonPitfalls: Array<string>, talkingPoints: Array<string>, researchInsights: string | null, interviewQuestions: Array<{ __typename?: 'BackendPrepInterviewQuestion', question: string, idealAnswer: string, followUps: Array<string>, difficulty: string }>, codeExamples: Array<{ __typename?: 'BackendPrepCodeExample', title: string, language: string, code: string, explanation: string }> } | null } | null } | null };
+export type GetApplicationQuery = { __typename?: 'Query', application: { __typename?: 'Application', id: number, email: string, jobId: string, resume: File | null, status: ApplicationStatus, notes: string | null, jobTitle: string | null, companyName: string | null, companyKey: string | null, jobDescription: string | null, createdAt: string, questions: Array<{ __typename?: 'QuestionAnswer', questionId: string, questionText: string, answerText: string }>, interviewPrep: Array<{ __typename?: 'Track', id: string, slug: string, title: string, description: string | null, level: string | null }>, aiInterviewPrep: { __typename?: 'AIInterviewPrep', summary: string, generatedAt: string, requirements: Array<{ __typename?: 'AIInterviewPrepRequirement', requirement: string, questions: Array<string>, studyTopics: Array<string>, sourceQuote: string | null, deepDive: string | null, studyTopicDeepDives: Array<{ __typename?: 'AIStudyTopicDeepDive', topic: string, deepDive: string }> }> } | null, aiInterviewQuestions: { __typename?: 'AIInterviewQuestions', companyContext: string, recruiterGeneratedAt: string | null, technicalGeneratedAt: string | null, recruiterQuestions: Array<{ __typename?: 'AIInterviewQuestion', question: string, reason: string, category: string }>, technicalQuestions: Array<{ __typename?: 'AIInterviewQuestion', question: string, reason: string, category: string }> } | null, agenticCoding: { __typename?: 'AgenticCoding', overview: string, workflowPattern: string | null, qaApproach: string | null, teamPractices: string | null, generatedAt: string, exercises: Array<{ __typename?: 'AgenticCodingExercise', title: string, description: string, difficulty: string, skills: Array<string>, hints: Array<string>, agentPrompt: string }>, promptTemplates: Array<{ __typename?: 'AgenticCodingPromptTemplate', title: string, purpose: string, stackContext: string, prompt: string }> | null, failureModes: Array<{ __typename?: 'AgenticCodingFailureMode', scenario: string, why: string, alternative: string }> | null, measurableOutcomes: Array<{ __typename?: 'AgenticCodingOutcome', task: string, beforeTime: string, afterTime: string, improvement: string }> | null, resources: Array<{ __typename?: 'AgenticCodingResource', title: string, url: string, description: string }> } | null, aiBackendPrep: { __typename?: 'AIBackendPrep', generatedAt: string, systemDesign: { __typename?: 'BackendPrepSection', title: string, overview: string, keyConcepts: Array<string>, deepDive: string, commonPitfalls: Array<string>, talkingPoints: Array<string>, researchInsights: string | null, interviewQuestions: Array<{ __typename?: 'BackendPrepInterviewQuestion', question: string, idealAnswer: string, followUps: Array<string>, difficulty: string }>, codeExamples: Array<{ __typename?: 'BackendPrepCodeExample', title: string, language: string, code: string, explanation: string }> } | null, distributedSystems: { __typename?: 'BackendPrepSection', title: string, overview: string, keyConcepts: Array<string>, deepDive: string, commonPitfalls: Array<string>, talkingPoints: Array<string>, researchInsights: string | null, interviewQuestions: Array<{ __typename?: 'BackendPrepInterviewQuestion', question: string, idealAnswer: string, followUps: Array<string>, difficulty: string }>, codeExamples: Array<{ __typename?: 'BackendPrepCodeExample', title: string, language: string, code: string, explanation: string }> } | null, databaseDesign: { __typename?: 'BackendPrepSection', title: string, overview: string, keyConcepts: Array<string>, deepDive: string, commonPitfalls: Array<string>, talkingPoints: Array<string>, researchInsights: string | null, interviewQuestions: Array<{ __typename?: 'BackendPrepInterviewQuestion', question: string, idealAnswer: string, followUps: Array<string>, difficulty: string }>, codeExamples: Array<{ __typename?: 'BackendPrepCodeExample', title: string, language: string, code: string, explanation: string }> } | null, sqlOptimization: { __typename?: 'BackendPrepSection', title: string, overview: string, keyConcepts: Array<string>, deepDive: string, commonPitfalls: Array<string>, talkingPoints: Array<string>, researchInsights: string | null, interviewQuestions: Array<{ __typename?: 'BackendPrepInterviewQuestion', question: string, idealAnswer: string, followUps: Array<string>, difficulty: string }>, codeExamples: Array<{ __typename?: 'BackendPrepCodeExample', title: string, language: string, code: string, explanation: string }> } | null, nosqlPatterns: { __typename?: 'BackendPrepSection', title: string, overview: string, keyConcepts: Array<string>, deepDive: string, commonPitfalls: Array<string>, talkingPoints: Array<string>, researchInsights: string | null, interviewQuestions: Array<{ __typename?: 'BackendPrepInterviewQuestion', question: string, idealAnswer: string, followUps: Array<string>, difficulty: string }>, codeExamples: Array<{ __typename?: 'BackendPrepCodeExample', title: string, language: string, code: string, explanation: string }> } | null, apiDesign: { __typename?: 'BackendPrepSection', title: string, overview: string, keyConcepts: Array<string>, deepDive: string, commonPitfalls: Array<string>, talkingPoints: Array<string>, researchInsights: string | null, interviewQuestions: Array<{ __typename?: 'BackendPrepInterviewQuestion', question: string, idealAnswer: string, followUps: Array<string>, difficulty: string }>, codeExamples: Array<{ __typename?: 'BackendPrepCodeExample', title: string, language: string, code: string, explanation: string }> } | null, authSecurity: { __typename?: 'BackendPrepSection', title: string, overview: string, keyConcepts: Array<string>, deepDive: string, commonPitfalls: Array<string>, talkingPoints: Array<string>, researchInsights: string | null, interviewQuestions: Array<{ __typename?: 'BackendPrepInterviewQuestion', question: string, idealAnswer: string, followUps: Array<string>, difficulty: string }>, codeExamples: Array<{ __typename?: 'BackendPrepCodeExample', title: string, language: string, code: string, explanation: string }> } | null, caching: { __typename?: 'BackendPrepSection', title: string, overview: string, keyConcepts: Array<string>, deepDive: string, commonPitfalls: Array<string>, talkingPoints: Array<string>, researchInsights: string | null, interviewQuestions: Array<{ __typename?: 'BackendPrepInterviewQuestion', question: string, idealAnswer: string, followUps: Array<string>, difficulty: string }>, codeExamples: Array<{ __typename?: 'BackendPrepCodeExample', title: string, language: string, code: string, explanation: string }> } | null, messageQueues: { __typename?: 'BackendPrepSection', title: string, overview: string, keyConcepts: Array<string>, deepDive: string, commonPitfalls: Array<string>, talkingPoints: Array<string>, researchInsights: string | null, interviewQuestions: Array<{ __typename?: 'BackendPrepInterviewQuestion', question: string, idealAnswer: string, followUps: Array<string>, difficulty: string }>, codeExamples: Array<{ __typename?: 'BackendPrepCodeExample', title: string, language: string, code: string, explanation: string }> } | null, microservices: { __typename?: 'BackendPrepSection', title: string, overview: string, keyConcepts: Array<string>, deepDive: string, commonPitfalls: Array<string>, talkingPoints: Array<string>, researchInsights: string | null, interviewQuestions: Array<{ __typename?: 'BackendPrepInterviewQuestion', question: string, idealAnswer: string, followUps: Array<string>, difficulty: string }>, codeExamples: Array<{ __typename?: 'BackendPrepCodeExample', title: string, language: string, code: string, explanation: string }> } | null, testing: { __typename?: 'BackendPrepSection', title: string, overview: string, keyConcepts: Array<string>, deepDive: string, commonPitfalls: Array<string>, talkingPoints: Array<string>, researchInsights: string | null, interviewQuestions: Array<{ __typename?: 'BackendPrepInterviewQuestion', question: string, idealAnswer: string, followUps: Array<string>, difficulty: string }>, codeExamples: Array<{ __typename?: 'BackendPrepCodeExample', title: string, language: string, code: string, explanation: string }> } | null, devops: { __typename?: 'BackendPrepSection', title: string, overview: string, keyConcepts: Array<string>, deepDive: string, commonPitfalls: Array<string>, talkingPoints: Array<string>, researchInsights: string | null, interviewQuestions: Array<{ __typename?: 'BackendPrepInterviewQuestion', question: string, idealAnswer: string, followUps: Array<string>, difficulty: string }>, codeExamples: Array<{ __typename?: 'BackendPrepCodeExample', title: string, language: string, code: string, explanation: string }> } | null, securityOwasp: { __typename?: 'BackendPrepSection', title: string, overview: string, keyConcepts: Array<string>, deepDive: string, commonPitfalls: Array<string>, talkingPoints: Array<string>, researchInsights: string | null, interviewQuestions: Array<{ __typename?: 'BackendPrepInterviewQuestion', question: string, idealAnswer: string, followUps: Array<string>, difficulty: string }>, codeExamples: Array<{ __typename?: 'BackendPrepCodeExample', title: string, language: string, code: string, explanation: string }> } | null, performance: { __typename?: 'BackendPrepSection', title: string, overview: string, keyConcepts: Array<string>, deepDive: string, commonPitfalls: Array<string>, talkingPoints: Array<string>, researchInsights: string | null, interviewQuestions: Array<{ __typename?: 'BackendPrepInterviewQuestion', question: string, idealAnswer: string, followUps: Array<string>, difficulty: string }>, codeExamples: Array<{ __typename?: 'BackendPrepCodeExample', title: string, language: string, code: string, explanation: string }> } | null, concurrencyAsync: { __typename?: 'BackendPrepSection', title: string, overview: string, keyConcepts: Array<string>, deepDive: string, commonPitfalls: Array<string>, talkingPoints: Array<string>, researchInsights: string | null, interviewQuestions: Array<{ __typename?: 'BackendPrepInterviewQuestion', question: string, idealAnswer: string, followUps: Array<string>, difficulty: string }>, codeExamples: Array<{ __typename?: 'BackendPrepCodeExample', title: string, language: string, code: string, explanation: string }> } | null, observability: { __typename?: 'BackendPrepSection', title: string, overview: string, keyConcepts: Array<string>, deepDive: string, commonPitfalls: Array<string>, talkingPoints: Array<string>, researchInsights: string | null, interviewQuestions: Array<{ __typename?: 'BackendPrepInterviewQuestion', question: string, idealAnswer: string, followUps: Array<string>, difficulty: string }>, codeExamples: Array<{ __typename?: 'BackendPrepCodeExample', title: string, language: string, code: string, explanation: string }> } | null, eventDriven: { __typename?: 'BackendPrepSection', title: string, overview: string, keyConcepts: Array<string>, deepDive: string, commonPitfalls: Array<string>, talkingPoints: Array<string>, researchInsights: string | null, interviewQuestions: Array<{ __typename?: 'BackendPrepInterviewQuestion', question: string, idealAnswer: string, followUps: Array<string>, difficulty: string }>, codeExamples: Array<{ __typename?: 'BackendPrepCodeExample', title: string, language: string, code: string, explanation: string }> } | null, serverlessEdge: { __typename?: 'BackendPrepSection', title: string, overview: string, keyConcepts: Array<string>, deepDive: string, commonPitfalls: Array<string>, talkingPoints: Array<string>, researchInsights: string | null, interviewQuestions: Array<{ __typename?: 'BackendPrepInterviewQuestion', question: string, idealAnswer: string, followUps: Array<string>, difficulty: string }>, codeExamples: Array<{ __typename?: 'BackendPrepCodeExample', title: string, language: string, code: string, explanation: string }> } | null, typescriptNode: { __typename?: 'BackendPrepSection', title: string, overview: string, keyConcepts: Array<string>, deepDive: string, commonPitfalls: Array<string>, talkingPoints: Array<string>, researchInsights: string | null, interviewQuestions: Array<{ __typename?: 'BackendPrepInterviewQuestion', question: string, idealAnswer: string, followUps: Array<string>, difficulty: string }>, codeExamples: Array<{ __typename?: 'BackendPrepCodeExample', title: string, language: string, code: string, explanation: string }> } | null, aiMlIntegration: { __typename?: 'BackendPrepSection', title: string, overview: string, keyConcepts: Array<string>, deepDive: string, commonPitfalls: Array<string>, talkingPoints: Array<string>, researchInsights: string | null, interviewQuestions: Array<{ __typename?: 'BackendPrepInterviewQuestion', question: string, idealAnswer: string, followUps: Array<string>, difficulty: string }>, codeExamples: Array<{ __typename?: 'BackendPrepCodeExample', title: string, language: string, code: string, explanation: string }> } | null } | null, aiDeepResearch: { __typename?: 'AIDeepResearch', generatedAt: string, questions: Array<{ __typename?: 'DeepResearchQuestion', question: string, category: string, deepseek: { __typename?: 'DeepResearchModelResponse', model: string, content: string, reasoning: string | null }, qwen: { __typename?: 'DeepResearchModelResponse', model: string, content: string, reasoning: string | null } }> } | null } | null };
 
 export type CreateApplicationMutationVariables = Exact<{
   input: ApplicationInput;
 }>;
 
 
-export type CreateApplicationMutation = { __typename?: 'Mutation', createApplication: { __typename?: 'Application', id: number, email: string, jobId: string, resume: File | null, status: ApplicationStatus, notes: string | null, jobTitle: string | null, companyName: string | null, companyKey: string | null, jobDescription: string | null, createdAt: string, questions: Array<{ __typename?: 'QuestionAnswer', questionId: string, questionText: string, answerText: string }>, interviewPrep: Array<{ __typename?: 'Track', id: string, slug: string, title: string, description: string | null, level: string | null }>, aiInterviewPrep: { __typename?: 'AIInterviewPrep', summary: string, generatedAt: string, requirements: Array<{ __typename?: 'AIInterviewPrepRequirement', requirement: string, questions: Array<string>, studyTopics: Array<string>, sourceQuote: string | null, deepDive: string | null, studyTopicDeepDives: Array<{ __typename?: 'AIStudyTopicDeepDive', topic: string, deepDive: string }> }> } | null, aiInterviewQuestions: { __typename?: 'AIInterviewQuestions', companyContext: string, recruiterGeneratedAt: string | null, technicalGeneratedAt: string | null, recruiterQuestions: Array<{ __typename?: 'AIInterviewQuestion', question: string, reason: string, category: string }>, technicalQuestions: Array<{ __typename?: 'AIInterviewQuestion', question: string, reason: string, category: string }> } | null, agenticCoding: { __typename?: 'AgenticCoding', overview: string, workflowPattern: string | null, qaApproach: string | null, teamPractices: string | null, generatedAt: string, exercises: Array<{ __typename?: 'AgenticCodingExercise', title: string, description: string, difficulty: string, skills: Array<string>, hints: Array<string>, agentPrompt: string }>, promptTemplates: Array<{ __typename?: 'AgenticCodingPromptTemplate', title: string, purpose: string, stackContext: string, prompt: string }> | null, failureModes: Array<{ __typename?: 'AgenticCodingFailureMode', scenario: string, why: string, alternative: string }> | null, measurableOutcomes: Array<{ __typename?: 'AgenticCodingOutcome', task: string, beforeTime: string, afterTime: string, improvement: string }> | null, resources: Array<{ __typename?: 'AgenticCodingResource', title: string, url: string, description: string }> } | null, aiBackendPrep: { __typename?: 'AIBackendPrep', generatedAt: string, systemDesign: { __typename?: 'BackendPrepSection', title: string, overview: string, keyConcepts: Array<string>, deepDive: string, commonPitfalls: Array<string>, talkingPoints: Array<string>, researchInsights: string | null, interviewQuestions: Array<{ __typename?: 'BackendPrepInterviewQuestion', question: string, idealAnswer: string, followUps: Array<string>, difficulty: string }>, codeExamples: Array<{ __typename?: 'BackendPrepCodeExample', title: string, language: string, code: string, explanation: string }> } | null, distributedSystems: { __typename?: 'BackendPrepSection', title: string, overview: string, keyConcepts: Array<string>, deepDive: string, commonPitfalls: Array<string>, talkingPoints: Array<string>, researchInsights: string | null, interviewQuestions: Array<{ __typename?: 'BackendPrepInterviewQuestion', question: string, idealAnswer: string, followUps: Array<string>, difficulty: string }>, codeExamples: Array<{ __typename?: 'BackendPrepCodeExample', title: string, language: string, code: string, explanation: string }> } | null, databaseDesign: { __typename?: 'BackendPrepSection', title: string, overview: string, keyConcepts: Array<string>, deepDive: string, commonPitfalls: Array<string>, talkingPoints: Array<string>, researchInsights: string | null, interviewQuestions: Array<{ __typename?: 'BackendPrepInterviewQuestion', question: string, idealAnswer: string, followUps: Array<string>, difficulty: string }>, codeExamples: Array<{ __typename?: 'BackendPrepCodeExample', title: string, language: string, code: string, explanation: string }> } | null, sqlOptimization: { __typename?: 'BackendPrepSection', title: string, overview: string, keyConcepts: Array<string>, deepDive: string, commonPitfalls: Array<string>, talkingPoints: Array<string>, researchInsights: string | null, interviewQuestions: Array<{ __typename?: 'BackendPrepInterviewQuestion', question: string, idealAnswer: string, followUps: Array<string>, difficulty: string }>, codeExamples: Array<{ __typename?: 'BackendPrepCodeExample', title: string, language: string, code: string, explanation: string }> } | null, nosqlPatterns: { __typename?: 'BackendPrepSection', title: string, overview: string, keyConcepts: Array<string>, deepDive: string, commonPitfalls: Array<string>, talkingPoints: Array<string>, researchInsights: string | null, interviewQuestions: Array<{ __typename?: 'BackendPrepInterviewQuestion', question: string, idealAnswer: string, followUps: Array<string>, difficulty: string }>, codeExamples: Array<{ __typename?: 'BackendPrepCodeExample', title: string, language: string, code: string, explanation: string }> } | null, apiDesign: { __typename?: 'BackendPrepSection', title: string, overview: string, keyConcepts: Array<string>, deepDive: string, commonPitfalls: Array<string>, talkingPoints: Array<string>, researchInsights: string | null, interviewQuestions: Array<{ __typename?: 'BackendPrepInterviewQuestion', question: string, idealAnswer: string, followUps: Array<string>, difficulty: string }>, codeExamples: Array<{ __typename?: 'BackendPrepCodeExample', title: string, language: string, code: string, explanation: string }> } | null, authSecurity: { __typename?: 'BackendPrepSection', title: string, overview: string, keyConcepts: Array<string>, deepDive: string, commonPitfalls: Array<string>, talkingPoints: Array<string>, researchInsights: string | null, interviewQuestions: Array<{ __typename?: 'BackendPrepInterviewQuestion', question: string, idealAnswer: string, followUps: Array<string>, difficulty: string }>, codeExamples: Array<{ __typename?: 'BackendPrepCodeExample', title: string, language: string, code: string, explanation: string }> } | null, caching: { __typename?: 'BackendPrepSection', title: string, overview: string, keyConcepts: Array<string>, deepDive: string, commonPitfalls: Array<string>, talkingPoints: Array<string>, researchInsights: string | null, interviewQuestions: Array<{ __typename?: 'BackendPrepInterviewQuestion', question: string, idealAnswer: string, followUps: Array<string>, difficulty: string }>, codeExamples: Array<{ __typename?: 'BackendPrepCodeExample', title: string, language: string, code: string, explanation: string }> } | null, messageQueues: { __typename?: 'BackendPrepSection', title: string, overview: string, keyConcepts: Array<string>, deepDive: string, commonPitfalls: Array<string>, talkingPoints: Array<string>, researchInsights: string | null, interviewQuestions: Array<{ __typename?: 'BackendPrepInterviewQuestion', question: string, idealAnswer: string, followUps: Array<string>, difficulty: string }>, codeExamples: Array<{ __typename?: 'BackendPrepCodeExample', title: string, language: string, code: string, explanation: string }> } | null, microservices: { __typename?: 'BackendPrepSection', title: string, overview: string, keyConcepts: Array<string>, deepDive: string, commonPitfalls: Array<string>, talkingPoints: Array<string>, researchInsights: string | null, interviewQuestions: Array<{ __typename?: 'BackendPrepInterviewQuestion', question: string, idealAnswer: string, followUps: Array<string>, difficulty: string }>, codeExamples: Array<{ __typename?: 'BackendPrepCodeExample', title: string, language: string, code: string, explanation: string }> } | null, testing: { __typename?: 'BackendPrepSection', title: string, overview: string, keyConcepts: Array<string>, deepDive: string, commonPitfalls: Array<string>, talkingPoints: Array<string>, researchInsights: string | null, interviewQuestions: Array<{ __typename?: 'BackendPrepInterviewQuestion', question: string, idealAnswer: string, followUps: Array<string>, difficulty: string }>, codeExamples: Array<{ __typename?: 'BackendPrepCodeExample', title: string, language: string, code: string, explanation: string }> } | null, devops: { __typename?: 'BackendPrepSection', title: string, overview: string, keyConcepts: Array<string>, deepDive: string, commonPitfalls: Array<string>, talkingPoints: Array<string>, researchInsights: string | null, interviewQuestions: Array<{ __typename?: 'BackendPrepInterviewQuestion', question: string, idealAnswer: string, followUps: Array<string>, difficulty: string }>, codeExamples: Array<{ __typename?: 'BackendPrepCodeExample', title: string, language: string, code: string, explanation: string }> } | null, securityOwasp: { __typename?: 'BackendPrepSection', title: string, overview: string, keyConcepts: Array<string>, deepDive: string, commonPitfalls: Array<string>, talkingPoints: Array<string>, researchInsights: string | null, interviewQuestions: Array<{ __typename?: 'BackendPrepInterviewQuestion', question: string, idealAnswer: string, followUps: Array<string>, difficulty: string }>, codeExamples: Array<{ __typename?: 'BackendPrepCodeExample', title: string, language: string, code: string, explanation: string }> } | null, performance: { __typename?: 'BackendPrepSection', title: string, overview: string, keyConcepts: Array<string>, deepDive: string, commonPitfalls: Array<string>, talkingPoints: Array<string>, researchInsights: string | null, interviewQuestions: Array<{ __typename?: 'BackendPrepInterviewQuestion', question: string, idealAnswer: string, followUps: Array<string>, difficulty: string }>, codeExamples: Array<{ __typename?: 'BackendPrepCodeExample', title: string, language: string, code: string, explanation: string }> } | null, concurrencyAsync: { __typename?: 'BackendPrepSection', title: string, overview: string, keyConcepts: Array<string>, deepDive: string, commonPitfalls: Array<string>, talkingPoints: Array<string>, researchInsights: string | null, interviewQuestions: Array<{ __typename?: 'BackendPrepInterviewQuestion', question: string, idealAnswer: string, followUps: Array<string>, difficulty: string }>, codeExamples: Array<{ __typename?: 'BackendPrepCodeExample', title: string, language: string, code: string, explanation: string }> } | null, observability: { __typename?: 'BackendPrepSection', title: string, overview: string, keyConcepts: Array<string>, deepDive: string, commonPitfalls: Array<string>, talkingPoints: Array<string>, researchInsights: string | null, interviewQuestions: Array<{ __typename?: 'BackendPrepInterviewQuestion', question: string, idealAnswer: string, followUps: Array<string>, difficulty: string }>, codeExamples: Array<{ __typename?: 'BackendPrepCodeExample', title: string, language: string, code: string, explanation: string }> } | null, eventDriven: { __typename?: 'BackendPrepSection', title: string, overview: string, keyConcepts: Array<string>, deepDive: string, commonPitfalls: Array<string>, talkingPoints: Array<string>, researchInsights: string | null, interviewQuestions: Array<{ __typename?: 'BackendPrepInterviewQuestion', question: string, idealAnswer: string, followUps: Array<string>, difficulty: string }>, codeExamples: Array<{ __typename?: 'BackendPrepCodeExample', title: string, language: string, code: string, explanation: string }> } | null, serverlessEdge: { __typename?: 'BackendPrepSection', title: string, overview: string, keyConcepts: Array<string>, deepDive: string, commonPitfalls: Array<string>, talkingPoints: Array<string>, researchInsights: string | null, interviewQuestions: Array<{ __typename?: 'BackendPrepInterviewQuestion', question: string, idealAnswer: string, followUps: Array<string>, difficulty: string }>, codeExamples: Array<{ __typename?: 'BackendPrepCodeExample', title: string, language: string, code: string, explanation: string }> } | null, typescriptNode: { __typename?: 'BackendPrepSection', title: string, overview: string, keyConcepts: Array<string>, deepDive: string, commonPitfalls: Array<string>, talkingPoints: Array<string>, researchInsights: string | null, interviewQuestions: Array<{ __typename?: 'BackendPrepInterviewQuestion', question: string, idealAnswer: string, followUps: Array<string>, difficulty: string }>, codeExamples: Array<{ __typename?: 'BackendPrepCodeExample', title: string, language: string, code: string, explanation: string }> } | null, aiMlIntegration: { __typename?: 'BackendPrepSection', title: string, overview: string, keyConcepts: Array<string>, deepDive: string, commonPitfalls: Array<string>, talkingPoints: Array<string>, researchInsights: string | null, interviewQuestions: Array<{ __typename?: 'BackendPrepInterviewQuestion', question: string, idealAnswer: string, followUps: Array<string>, difficulty: string }>, codeExamples: Array<{ __typename?: 'BackendPrepCodeExample', title: string, language: string, code: string, explanation: string }> } | null } | null } };
+export type CreateApplicationMutation = { __typename?: 'Mutation', createApplication: { __typename?: 'Application', id: number, email: string, jobId: string, resume: File | null, status: ApplicationStatus, notes: string | null, jobTitle: string | null, companyName: string | null, companyKey: string | null, jobDescription: string | null, createdAt: string, questions: Array<{ __typename?: 'QuestionAnswer', questionId: string, questionText: string, answerText: string }>, interviewPrep: Array<{ __typename?: 'Track', id: string, slug: string, title: string, description: string | null, level: string | null }>, aiInterviewPrep: { __typename?: 'AIInterviewPrep', summary: string, generatedAt: string, requirements: Array<{ __typename?: 'AIInterviewPrepRequirement', requirement: string, questions: Array<string>, studyTopics: Array<string>, sourceQuote: string | null, deepDive: string | null, studyTopicDeepDives: Array<{ __typename?: 'AIStudyTopicDeepDive', topic: string, deepDive: string }> }> } | null, aiInterviewQuestions: { __typename?: 'AIInterviewQuestions', companyContext: string, recruiterGeneratedAt: string | null, technicalGeneratedAt: string | null, recruiterQuestions: Array<{ __typename?: 'AIInterviewQuestion', question: string, reason: string, category: string }>, technicalQuestions: Array<{ __typename?: 'AIInterviewQuestion', question: string, reason: string, category: string }> } | null, agenticCoding: { __typename?: 'AgenticCoding', overview: string, workflowPattern: string | null, qaApproach: string | null, teamPractices: string | null, generatedAt: string, exercises: Array<{ __typename?: 'AgenticCodingExercise', title: string, description: string, difficulty: string, skills: Array<string>, hints: Array<string>, agentPrompt: string }>, promptTemplates: Array<{ __typename?: 'AgenticCodingPromptTemplate', title: string, purpose: string, stackContext: string, prompt: string }> | null, failureModes: Array<{ __typename?: 'AgenticCodingFailureMode', scenario: string, why: string, alternative: string }> | null, measurableOutcomes: Array<{ __typename?: 'AgenticCodingOutcome', task: string, beforeTime: string, afterTime: string, improvement: string }> | null, resources: Array<{ __typename?: 'AgenticCodingResource', title: string, url: string, description: string }> } | null, aiBackendPrep: { __typename?: 'AIBackendPrep', generatedAt: string, systemDesign: { __typename?: 'BackendPrepSection', title: string, overview: string, keyConcepts: Array<string>, deepDive: string, commonPitfalls: Array<string>, talkingPoints: Array<string>, researchInsights: string | null, interviewQuestions: Array<{ __typename?: 'BackendPrepInterviewQuestion', question: string, idealAnswer: string, followUps: Array<string>, difficulty: string }>, codeExamples: Array<{ __typename?: 'BackendPrepCodeExample', title: string, language: string, code: string, explanation: string }> } | null, distributedSystems: { __typename?: 'BackendPrepSection', title: string, overview: string, keyConcepts: Array<string>, deepDive: string, commonPitfalls: Array<string>, talkingPoints: Array<string>, researchInsights: string | null, interviewQuestions: Array<{ __typename?: 'BackendPrepInterviewQuestion', question: string, idealAnswer: string, followUps: Array<string>, difficulty: string }>, codeExamples: Array<{ __typename?: 'BackendPrepCodeExample', title: string, language: string, code: string, explanation: string }> } | null, databaseDesign: { __typename?: 'BackendPrepSection', title: string, overview: string, keyConcepts: Array<string>, deepDive: string, commonPitfalls: Array<string>, talkingPoints: Array<string>, researchInsights: string | null, interviewQuestions: Array<{ __typename?: 'BackendPrepInterviewQuestion', question: string, idealAnswer: string, followUps: Array<string>, difficulty: string }>, codeExamples: Array<{ __typename?: 'BackendPrepCodeExample', title: string, language: string, code: string, explanation: string }> } | null, sqlOptimization: { __typename?: 'BackendPrepSection', title: string, overview: string, keyConcepts: Array<string>, deepDive: string, commonPitfalls: Array<string>, talkingPoints: Array<string>, researchInsights: string | null, interviewQuestions: Array<{ __typename?: 'BackendPrepInterviewQuestion', question: string, idealAnswer: string, followUps: Array<string>, difficulty: string }>, codeExamples: Array<{ __typename?: 'BackendPrepCodeExample', title: string, language: string, code: string, explanation: string }> } | null, nosqlPatterns: { __typename?: 'BackendPrepSection', title: string, overview: string, keyConcepts: Array<string>, deepDive: string, commonPitfalls: Array<string>, talkingPoints: Array<string>, researchInsights: string | null, interviewQuestions: Array<{ __typename?: 'BackendPrepInterviewQuestion', question: string, idealAnswer: string, followUps: Array<string>, difficulty: string }>, codeExamples: Array<{ __typename?: 'BackendPrepCodeExample', title: string, language: string, code: string, explanation: string }> } | null, apiDesign: { __typename?: 'BackendPrepSection', title: string, overview: string, keyConcepts: Array<string>, deepDive: string, commonPitfalls: Array<string>, talkingPoints: Array<string>, researchInsights: string | null, interviewQuestions: Array<{ __typename?: 'BackendPrepInterviewQuestion', question: string, idealAnswer: string, followUps: Array<string>, difficulty: string }>, codeExamples: Array<{ __typename?: 'BackendPrepCodeExample', title: string, language: string, code: string, explanation: string }> } | null, authSecurity: { __typename?: 'BackendPrepSection', title: string, overview: string, keyConcepts: Array<string>, deepDive: string, commonPitfalls: Array<string>, talkingPoints: Array<string>, researchInsights: string | null, interviewQuestions: Array<{ __typename?: 'BackendPrepInterviewQuestion', question: string, idealAnswer: string, followUps: Array<string>, difficulty: string }>, codeExamples: Array<{ __typename?: 'BackendPrepCodeExample', title: string, language: string, code: string, explanation: string }> } | null, caching: { __typename?: 'BackendPrepSection', title: string, overview: string, keyConcepts: Array<string>, deepDive: string, commonPitfalls: Array<string>, talkingPoints: Array<string>, researchInsights: string | null, interviewQuestions: Array<{ __typename?: 'BackendPrepInterviewQuestion', question: string, idealAnswer: string, followUps: Array<string>, difficulty: string }>, codeExamples: Array<{ __typename?: 'BackendPrepCodeExample', title: string, language: string, code: string, explanation: string }> } | null, messageQueues: { __typename?: 'BackendPrepSection', title: string, overview: string, keyConcepts: Array<string>, deepDive: string, commonPitfalls: Array<string>, talkingPoints: Array<string>, researchInsights: string | null, interviewQuestions: Array<{ __typename?: 'BackendPrepInterviewQuestion', question: string, idealAnswer: string, followUps: Array<string>, difficulty: string }>, codeExamples: Array<{ __typename?: 'BackendPrepCodeExample', title: string, language: string, code: string, explanation: string }> } | null, microservices: { __typename?: 'BackendPrepSection', title: string, overview: string, keyConcepts: Array<string>, deepDive: string, commonPitfalls: Array<string>, talkingPoints: Array<string>, researchInsights: string | null, interviewQuestions: Array<{ __typename?: 'BackendPrepInterviewQuestion', question: string, idealAnswer: string, followUps: Array<string>, difficulty: string }>, codeExamples: Array<{ __typename?: 'BackendPrepCodeExample', title: string, language: string, code: string, explanation: string }> } | null, testing: { __typename?: 'BackendPrepSection', title: string, overview: string, keyConcepts: Array<string>, deepDive: string, commonPitfalls: Array<string>, talkingPoints: Array<string>, researchInsights: string | null, interviewQuestions: Array<{ __typename?: 'BackendPrepInterviewQuestion', question: string, idealAnswer: string, followUps: Array<string>, difficulty: string }>, codeExamples: Array<{ __typename?: 'BackendPrepCodeExample', title: string, language: string, code: string, explanation: string }> } | null, devops: { __typename?: 'BackendPrepSection', title: string, overview: string, keyConcepts: Array<string>, deepDive: string, commonPitfalls: Array<string>, talkingPoints: Array<string>, researchInsights: string | null, interviewQuestions: Array<{ __typename?: 'BackendPrepInterviewQuestion', question: string, idealAnswer: string, followUps: Array<string>, difficulty: string }>, codeExamples: Array<{ __typename?: 'BackendPrepCodeExample', title: string, language: string, code: string, explanation: string }> } | null, securityOwasp: { __typename?: 'BackendPrepSection', title: string, overview: string, keyConcepts: Array<string>, deepDive: string, commonPitfalls: Array<string>, talkingPoints: Array<string>, researchInsights: string | null, interviewQuestions: Array<{ __typename?: 'BackendPrepInterviewQuestion', question: string, idealAnswer: string, followUps: Array<string>, difficulty: string }>, codeExamples: Array<{ __typename?: 'BackendPrepCodeExample', title: string, language: string, code: string, explanation: string }> } | null, performance: { __typename?: 'BackendPrepSection', title: string, overview: string, keyConcepts: Array<string>, deepDive: string, commonPitfalls: Array<string>, talkingPoints: Array<string>, researchInsights: string | null, interviewQuestions: Array<{ __typename?: 'BackendPrepInterviewQuestion', question: string, idealAnswer: string, followUps: Array<string>, difficulty: string }>, codeExamples: Array<{ __typename?: 'BackendPrepCodeExample', title: string, language: string, code: string, explanation: string }> } | null, concurrencyAsync: { __typename?: 'BackendPrepSection', title: string, overview: string, keyConcepts: Array<string>, deepDive: string, commonPitfalls: Array<string>, talkingPoints: Array<string>, researchInsights: string | null, interviewQuestions: Array<{ __typename?: 'BackendPrepInterviewQuestion', question: string, idealAnswer: string, followUps: Array<string>, difficulty: string }>, codeExamples: Array<{ __typename?: 'BackendPrepCodeExample', title: string, language: string, code: string, explanation: string }> } | null, observability: { __typename?: 'BackendPrepSection', title: string, overview: string, keyConcepts: Array<string>, deepDive: string, commonPitfalls: Array<string>, talkingPoints: Array<string>, researchInsights: string | null, interviewQuestions: Array<{ __typename?: 'BackendPrepInterviewQuestion', question: string, idealAnswer: string, followUps: Array<string>, difficulty: string }>, codeExamples: Array<{ __typename?: 'BackendPrepCodeExample', title: string, language: string, code: string, explanation: string }> } | null, eventDriven: { __typename?: 'BackendPrepSection', title: string, overview: string, keyConcepts: Array<string>, deepDive: string, commonPitfalls: Array<string>, talkingPoints: Array<string>, researchInsights: string | null, interviewQuestions: Array<{ __typename?: 'BackendPrepInterviewQuestion', question: string, idealAnswer: string, followUps: Array<string>, difficulty: string }>, codeExamples: Array<{ __typename?: 'BackendPrepCodeExample', title: string, language: string, code: string, explanation: string }> } | null, serverlessEdge: { __typename?: 'BackendPrepSection', title: string, overview: string, keyConcepts: Array<string>, deepDive: string, commonPitfalls: Array<string>, talkingPoints: Array<string>, researchInsights: string | null, interviewQuestions: Array<{ __typename?: 'BackendPrepInterviewQuestion', question: string, idealAnswer: string, followUps: Array<string>, difficulty: string }>, codeExamples: Array<{ __typename?: 'BackendPrepCodeExample', title: string, language: string, code: string, explanation: string }> } | null, typescriptNode: { __typename?: 'BackendPrepSection', title: string, overview: string, keyConcepts: Array<string>, deepDive: string, commonPitfalls: Array<string>, talkingPoints: Array<string>, researchInsights: string | null, interviewQuestions: Array<{ __typename?: 'BackendPrepInterviewQuestion', question: string, idealAnswer: string, followUps: Array<string>, difficulty: string }>, codeExamples: Array<{ __typename?: 'BackendPrepCodeExample', title: string, language: string, code: string, explanation: string }> } | null, aiMlIntegration: { __typename?: 'BackendPrepSection', title: string, overview: string, keyConcepts: Array<string>, deepDive: string, commonPitfalls: Array<string>, talkingPoints: Array<string>, researchInsights: string | null, interviewQuestions: Array<{ __typename?: 'BackendPrepInterviewQuestion', question: string, idealAnswer: string, followUps: Array<string>, difficulty: string }>, codeExamples: Array<{ __typename?: 'BackendPrepCodeExample', title: string, language: string, code: string, explanation: string }> } | null } | null, aiDeepResearch: { __typename?: 'AIDeepResearch', generatedAt: string, questions: Array<{ __typename?: 'DeepResearchQuestion', question: string, category: string, deepseek: { __typename?: 'DeepResearchModelResponse', model: string, content: string, reasoning: string | null }, qwen: { __typename?: 'DeepResearchModelResponse', model: string, content: string, reasoning: string | null } }> } | null } };
 
 export type UpdateApplicationMutationVariables = Exact<{
   id: Scalars['Int']['input'];
@@ -2126,6 +2747,13 @@ export type GenerateBackendPrepMutationVariables = Exact<{
 
 export type GenerateBackendPrepMutation = { __typename?: 'Mutation', generateBackendPrep: { __typename?: 'Application', id: number, aiBackendPrep: { __typename?: 'AIBackendPrep', generatedAt: string, systemDesign: { __typename?: 'BackendPrepSection', title: string, overview: string, keyConcepts: Array<string>, deepDive: string, commonPitfalls: Array<string>, talkingPoints: Array<string>, researchInsights: string | null, interviewQuestions: Array<{ __typename?: 'BackendPrepInterviewQuestion', question: string, idealAnswer: string, followUps: Array<string>, difficulty: string }>, codeExamples: Array<{ __typename?: 'BackendPrepCodeExample', title: string, language: string, code: string, explanation: string }> } | null, distributedSystems: { __typename?: 'BackendPrepSection', title: string, overview: string, keyConcepts: Array<string>, deepDive: string, commonPitfalls: Array<string>, talkingPoints: Array<string>, researchInsights: string | null, interviewQuestions: Array<{ __typename?: 'BackendPrepInterviewQuestion', question: string, idealAnswer: string, followUps: Array<string>, difficulty: string }>, codeExamples: Array<{ __typename?: 'BackendPrepCodeExample', title: string, language: string, code: string, explanation: string }> } | null, databaseDesign: { __typename?: 'BackendPrepSection', title: string, overview: string, keyConcepts: Array<string>, deepDive: string, commonPitfalls: Array<string>, talkingPoints: Array<string>, researchInsights: string | null, interviewQuestions: Array<{ __typename?: 'BackendPrepInterviewQuestion', question: string, idealAnswer: string, followUps: Array<string>, difficulty: string }>, codeExamples: Array<{ __typename?: 'BackendPrepCodeExample', title: string, language: string, code: string, explanation: string }> } | null, sqlOptimization: { __typename?: 'BackendPrepSection', title: string, overview: string, keyConcepts: Array<string>, deepDive: string, commonPitfalls: Array<string>, talkingPoints: Array<string>, researchInsights: string | null, interviewQuestions: Array<{ __typename?: 'BackendPrepInterviewQuestion', question: string, idealAnswer: string, followUps: Array<string>, difficulty: string }>, codeExamples: Array<{ __typename?: 'BackendPrepCodeExample', title: string, language: string, code: string, explanation: string }> } | null, nosqlPatterns: { __typename?: 'BackendPrepSection', title: string, overview: string, keyConcepts: Array<string>, deepDive: string, commonPitfalls: Array<string>, talkingPoints: Array<string>, researchInsights: string | null, interviewQuestions: Array<{ __typename?: 'BackendPrepInterviewQuestion', question: string, idealAnswer: string, followUps: Array<string>, difficulty: string }>, codeExamples: Array<{ __typename?: 'BackendPrepCodeExample', title: string, language: string, code: string, explanation: string }> } | null, apiDesign: { __typename?: 'BackendPrepSection', title: string, overview: string, keyConcepts: Array<string>, deepDive: string, commonPitfalls: Array<string>, talkingPoints: Array<string>, researchInsights: string | null, interviewQuestions: Array<{ __typename?: 'BackendPrepInterviewQuestion', question: string, idealAnswer: string, followUps: Array<string>, difficulty: string }>, codeExamples: Array<{ __typename?: 'BackendPrepCodeExample', title: string, language: string, code: string, explanation: string }> } | null, authSecurity: { __typename?: 'BackendPrepSection', title: string, overview: string, keyConcepts: Array<string>, deepDive: string, commonPitfalls: Array<string>, talkingPoints: Array<string>, researchInsights: string | null, interviewQuestions: Array<{ __typename?: 'BackendPrepInterviewQuestion', question: string, idealAnswer: string, followUps: Array<string>, difficulty: string }>, codeExamples: Array<{ __typename?: 'BackendPrepCodeExample', title: string, language: string, code: string, explanation: string }> } | null, caching: { __typename?: 'BackendPrepSection', title: string, overview: string, keyConcepts: Array<string>, deepDive: string, commonPitfalls: Array<string>, talkingPoints: Array<string>, researchInsights: string | null, interviewQuestions: Array<{ __typename?: 'BackendPrepInterviewQuestion', question: string, idealAnswer: string, followUps: Array<string>, difficulty: string }>, codeExamples: Array<{ __typename?: 'BackendPrepCodeExample', title: string, language: string, code: string, explanation: string }> } | null, messageQueues: { __typename?: 'BackendPrepSection', title: string, overview: string, keyConcepts: Array<string>, deepDive: string, commonPitfalls: Array<string>, talkingPoints: Array<string>, researchInsights: string | null, interviewQuestions: Array<{ __typename?: 'BackendPrepInterviewQuestion', question: string, idealAnswer: string, followUps: Array<string>, difficulty: string }>, codeExamples: Array<{ __typename?: 'BackendPrepCodeExample', title: string, language: string, code: string, explanation: string }> } | null, microservices: { __typename?: 'BackendPrepSection', title: string, overview: string, keyConcepts: Array<string>, deepDive: string, commonPitfalls: Array<string>, talkingPoints: Array<string>, researchInsights: string | null, interviewQuestions: Array<{ __typename?: 'BackendPrepInterviewQuestion', question: string, idealAnswer: string, followUps: Array<string>, difficulty: string }>, codeExamples: Array<{ __typename?: 'BackendPrepCodeExample', title: string, language: string, code: string, explanation: string }> } | null, testing: { __typename?: 'BackendPrepSection', title: string, overview: string, keyConcepts: Array<string>, deepDive: string, commonPitfalls: Array<string>, talkingPoints: Array<string>, researchInsights: string | null, interviewQuestions: Array<{ __typename?: 'BackendPrepInterviewQuestion', question: string, idealAnswer: string, followUps: Array<string>, difficulty: string }>, codeExamples: Array<{ __typename?: 'BackendPrepCodeExample', title: string, language: string, code: string, explanation: string }> } | null, devops: { __typename?: 'BackendPrepSection', title: string, overview: string, keyConcepts: Array<string>, deepDive: string, commonPitfalls: Array<string>, talkingPoints: Array<string>, researchInsights: string | null, interviewQuestions: Array<{ __typename?: 'BackendPrepInterviewQuestion', question: string, idealAnswer: string, followUps: Array<string>, difficulty: string }>, codeExamples: Array<{ __typename?: 'BackendPrepCodeExample', title: string, language: string, code: string, explanation: string }> } | null, securityOwasp: { __typename?: 'BackendPrepSection', title: string, overview: string, keyConcepts: Array<string>, deepDive: string, commonPitfalls: Array<string>, talkingPoints: Array<string>, researchInsights: string | null, interviewQuestions: Array<{ __typename?: 'BackendPrepInterviewQuestion', question: string, idealAnswer: string, followUps: Array<string>, difficulty: string }>, codeExamples: Array<{ __typename?: 'BackendPrepCodeExample', title: string, language: string, code: string, explanation: string }> } | null, performance: { __typename?: 'BackendPrepSection', title: string, overview: string, keyConcepts: Array<string>, deepDive: string, commonPitfalls: Array<string>, talkingPoints: Array<string>, researchInsights: string | null, interviewQuestions: Array<{ __typename?: 'BackendPrepInterviewQuestion', question: string, idealAnswer: string, followUps: Array<string>, difficulty: string }>, codeExamples: Array<{ __typename?: 'BackendPrepCodeExample', title: string, language: string, code: string, explanation: string }> } | null, concurrencyAsync: { __typename?: 'BackendPrepSection', title: string, overview: string, keyConcepts: Array<string>, deepDive: string, commonPitfalls: Array<string>, talkingPoints: Array<string>, researchInsights: string | null, interviewQuestions: Array<{ __typename?: 'BackendPrepInterviewQuestion', question: string, idealAnswer: string, followUps: Array<string>, difficulty: string }>, codeExamples: Array<{ __typename?: 'BackendPrepCodeExample', title: string, language: string, code: string, explanation: string }> } | null, observability: { __typename?: 'BackendPrepSection', title: string, overview: string, keyConcepts: Array<string>, deepDive: string, commonPitfalls: Array<string>, talkingPoints: Array<string>, researchInsights: string | null, interviewQuestions: Array<{ __typename?: 'BackendPrepInterviewQuestion', question: string, idealAnswer: string, followUps: Array<string>, difficulty: string }>, codeExamples: Array<{ __typename?: 'BackendPrepCodeExample', title: string, language: string, code: string, explanation: string }> } | null, eventDriven: { __typename?: 'BackendPrepSection', title: string, overview: string, keyConcepts: Array<string>, deepDive: string, commonPitfalls: Array<string>, talkingPoints: Array<string>, researchInsights: string | null, interviewQuestions: Array<{ __typename?: 'BackendPrepInterviewQuestion', question: string, idealAnswer: string, followUps: Array<string>, difficulty: string }>, codeExamples: Array<{ __typename?: 'BackendPrepCodeExample', title: string, language: string, code: string, explanation: string }> } | null, serverlessEdge: { __typename?: 'BackendPrepSection', title: string, overview: string, keyConcepts: Array<string>, deepDive: string, commonPitfalls: Array<string>, talkingPoints: Array<string>, researchInsights: string | null, interviewQuestions: Array<{ __typename?: 'BackendPrepInterviewQuestion', question: string, idealAnswer: string, followUps: Array<string>, difficulty: string }>, codeExamples: Array<{ __typename?: 'BackendPrepCodeExample', title: string, language: string, code: string, explanation: string }> } | null, typescriptNode: { __typename?: 'BackendPrepSection', title: string, overview: string, keyConcepts: Array<string>, deepDive: string, commonPitfalls: Array<string>, talkingPoints: Array<string>, researchInsights: string | null, interviewQuestions: Array<{ __typename?: 'BackendPrepInterviewQuestion', question: string, idealAnswer: string, followUps: Array<string>, difficulty: string }>, codeExamples: Array<{ __typename?: 'BackendPrepCodeExample', title: string, language: string, code: string, explanation: string }> } | null, aiMlIntegration: { __typename?: 'BackendPrepSection', title: string, overview: string, keyConcepts: Array<string>, deepDive: string, commonPitfalls: Array<string>, talkingPoints: Array<string>, researchInsights: string | null, interviewQuestions: Array<{ __typename?: 'BackendPrepInterviewQuestion', question: string, idealAnswer: string, followUps: Array<string>, difficulty: string }>, codeExamples: Array<{ __typename?: 'BackendPrepCodeExample', title: string, language: string, code: string, explanation: string }> } | null } | null } };
 
+export type GenerateDeepResearchMutationVariables = Exact<{
+  applicationId: Scalars['Int']['input'];
+}>;
+
+
+export type GenerateDeepResearchMutation = { __typename?: 'Mutation', generateDeepResearch: { __typename?: 'Application', id: number, aiDeepResearch: { __typename?: 'AIDeepResearch', generatedAt: string, questions: Array<{ __typename?: 'DeepResearchQuestion', question: string, category: string, deepseek: { __typename?: 'DeepResearchModelResponse', model: string, content: string, reasoning: string | null }, qwen: { __typename?: 'DeepResearchModelResponse', model: string, content: string, reasoning: string | null } }> } | null } };
+
 export type GenerateInterviewQuestionsMutationVariables = Exact<{
   applicationId: Scalars['Int']['input'];
   type: Scalars['String']['input'];
@@ -2133,6 +2761,26 @@ export type GenerateInterviewQuestionsMutationVariables = Exact<{
 
 
 export type GenerateInterviewQuestionsMutation = { __typename?: 'Mutation', generateInterviewQuestions: { __typename?: 'Application', id: number, aiInterviewQuestions: { __typename?: 'AIInterviewQuestions', companyContext: string, recruiterGeneratedAt: string | null, technicalGeneratedAt: string | null, recruiterQuestions: Array<{ __typename?: 'AIInterviewQuestion', question: string, reason: string, category: string }>, technicalQuestions: Array<{ __typename?: 'AIInterviewQuestion', question: string, reason: string, category: string }> } | null } };
+
+export type GetBlockedCompaniesQueryVariables = Exact<{ [key: string]: never; }>;
+
+
+export type GetBlockedCompaniesQuery = { __typename?: 'Query', blockedCompanies: Array<{ __typename?: 'BlockedCompany', id: number, name: string, reason: string | null, createdAt: string }> };
+
+export type BlockCompanyMutationVariables = Exact<{
+  name: Scalars['String']['input'];
+  reason?: InputMaybe<Scalars['String']['input']>;
+}>;
+
+
+export type BlockCompanyMutation = { __typename?: 'Mutation', blockCompany: { __typename?: 'BlockedCompany', id: number, name: string, reason: string | null, createdAt: string } };
+
+export type UnblockCompanyMutationVariables = Exact<{
+  id: Scalars['Int']['input'];
+}>;
+
+
+export type UnblockCompanyMutation = { __typename?: 'Mutation', unblockCompany: { __typename?: 'DeleteBlockedCompanyResult', success: boolean, message: string | null } };
 
 export type EvidenceFieldsFragment = { __typename?: 'Evidence', source_type: SourceType, source_url: string, crawl_id: string | null, capture_timestamp: string | null, observed_at: string, method: ExtractMethod, extractor_version: string | null, http_status: number | null, mime: string | null, content_hash: string | null, warc: { __typename?: 'WarcPointer', filename: string, offset: number, length: number, digest: string | null } | null };
 
@@ -2142,14 +2790,14 @@ export type CompanyFactFieldsFragment = { __typename?: 'CompanyFact', id: number
 
 export type CompanySnapshotFieldsFragment = { __typename?: 'CompanySnapshot', id: number, company_id: number, source_url: string, crawl_id: string | null, capture_timestamp: string | null, fetched_at: string, http_status: number | null, mime: string | null, content_hash: string | null, text_sample: string | null, jsonld: any | null, extracted: any | null, created_at: string, evidence: { __typename?: 'Evidence', source_type: SourceType, source_url: string, crawl_id: string | null, capture_timestamp: string | null, observed_at: string, method: ExtractMethod, extractor_version: string | null, http_status: number | null, mime: string | null, content_hash: string | null, warc: { __typename?: 'WarcPointer', filename: string, offset: number, length: number, digest: string | null } | null } };
 
-export type CompanyFieldsFragment = { __typename?: 'Company', id: number, key: string, name: string, logo_url: string | null, website: string | null, description: string | null, industry: string | null, size: string | null, location: string | null, created_at: string, updated_at: string, linkedin_url: string | null, category: CompanyCategory, tags: Array<string>, services: Array<string>, service_taxonomy: Array<string>, industries: Array<string>, score: number, score_reasons: Array<string>, last_seen_crawl_id: string | null, last_seen_capture_timestamp: string | null, last_seen_source_url: string | null, ashby_enrichment: { __typename?: 'AshbyEnrichment', company_name: string | null, industry_tags: Array<string>, tech_signals: Array<string>, size_signal: string | null, enriched_at: string | null } | null };
+export type CompanyFieldsFragment = { __typename?: 'Company', id: number, key: string, name: string, logo_url: string | null, website: string | null, description: string | null, industry: string | null, size: string | null, location: string | null, created_at: string, updated_at: string, linkedin_url: string | null, job_board_url: string | null, category: CompanyCategory, tags: Array<string>, services: Array<string>, service_taxonomy: Array<string>, industries: Array<string>, score: number, score_reasons: Array<string>, deep_analysis: string | null, last_seen_crawl_id: string | null, last_seen_capture_timestamp: string | null, last_seen_source_url: string | null, ashby_enrichment: { __typename?: 'AshbyEnrichment', company_name: string | null, industry_tags: Array<string>, tech_signals: Array<string>, size_signal: string | null, enriched_at: string | null } | null, ats_boards: Array<{ __typename?: 'ATSBoard', id: number, company_id: number, url: string, vendor: AtsVendor, board_type: AtsBoardType, confidence: number, is_active: boolean, first_seen_at: string, last_seen_at: string, created_at: string, updated_at: string, evidence: { __typename?: 'Evidence', source_type: SourceType, source_url: string, crawl_id: string | null, capture_timestamp: string | null, observed_at: string, method: ExtractMethod, extractor_version: string | null, http_status: number | null, mime: string | null, content_hash: string | null, warc: { __typename?: 'WarcPointer', filename: string, offset: number, length: number, digest: string | null } | null } }> };
 
 export type CreateCompanyMutationVariables = Exact<{
   input: CreateCompanyInput;
 }>;
 
 
-export type CreateCompanyMutation = { __typename?: 'Mutation', createCompany: { __typename?: 'Company', id: number, key: string, name: string, logo_url: string | null, website: string | null, description: string | null, industry: string | null, size: string | null, location: string | null, created_at: string, updated_at: string, linkedin_url: string | null, category: CompanyCategory, tags: Array<string>, services: Array<string>, service_taxonomy: Array<string>, industries: Array<string>, score: number, score_reasons: Array<string>, last_seen_crawl_id: string | null, last_seen_capture_timestamp: string | null, last_seen_source_url: string | null, ashby_enrichment: { __typename?: 'AshbyEnrichment', company_name: string | null, industry_tags: Array<string>, tech_signals: Array<string>, size_signal: string | null, enriched_at: string | null } | null } };
+export type CreateCompanyMutation = { __typename?: 'Mutation', createCompany: { __typename?: 'Company', id: number, key: string, name: string, logo_url: string | null, website: string | null, description: string | null, industry: string | null, size: string | null, location: string | null, created_at: string, updated_at: string, linkedin_url: string | null, job_board_url: string | null, category: CompanyCategory, tags: Array<string>, services: Array<string>, service_taxonomy: Array<string>, industries: Array<string>, score: number, score_reasons: Array<string>, deep_analysis: string | null, last_seen_crawl_id: string | null, last_seen_capture_timestamp: string | null, last_seen_source_url: string | null, ashby_enrichment: { __typename?: 'AshbyEnrichment', company_name: string | null, industry_tags: Array<string>, tech_signals: Array<string>, size_signal: string | null, enriched_at: string | null } | null, ats_boards: Array<{ __typename?: 'ATSBoard', id: number, company_id: number, url: string, vendor: AtsVendor, board_type: AtsBoardType, confidence: number, is_active: boolean, first_seen_at: string, last_seen_at: string, created_at: string, updated_at: string, evidence: { __typename?: 'Evidence', source_type: SourceType, source_url: string, crawl_id: string | null, capture_timestamp: string | null, observed_at: string, method: ExtractMethod, extractor_version: string | null, http_status: number | null, mime: string | null, content_hash: string | null, warc: { __typename?: 'WarcPointer', filename: string, offset: number, length: number, digest: string | null } | null } }> } };
 
 export type UpdateCompanyMutationVariables = Exact<{
   id: Scalars['Int']['input'];
@@ -2157,7 +2805,7 @@ export type UpdateCompanyMutationVariables = Exact<{
 }>;
 
 
-export type UpdateCompanyMutation = { __typename?: 'Mutation', updateCompany: { __typename?: 'Company', id: number, key: string, name: string, logo_url: string | null, website: string | null, description: string | null, industry: string | null, size: string | null, location: string | null, created_at: string, updated_at: string, linkedin_url: string | null, category: CompanyCategory, tags: Array<string>, services: Array<string>, service_taxonomy: Array<string>, industries: Array<string>, score: number, score_reasons: Array<string>, last_seen_crawl_id: string | null, last_seen_capture_timestamp: string | null, last_seen_source_url: string | null, ashby_enrichment: { __typename?: 'AshbyEnrichment', company_name: string | null, industry_tags: Array<string>, tech_signals: Array<string>, size_signal: string | null, enriched_at: string | null } | null } };
+export type UpdateCompanyMutation = { __typename?: 'Mutation', updateCompany: { __typename?: 'Company', id: number, key: string, name: string, logo_url: string | null, website: string | null, description: string | null, industry: string | null, size: string | null, location: string | null, created_at: string, updated_at: string, linkedin_url: string | null, job_board_url: string | null, category: CompanyCategory, tags: Array<string>, services: Array<string>, service_taxonomy: Array<string>, industries: Array<string>, score: number, score_reasons: Array<string>, deep_analysis: string | null, last_seen_crawl_id: string | null, last_seen_capture_timestamp: string | null, last_seen_source_url: string | null, ashby_enrichment: { __typename?: 'AshbyEnrichment', company_name: string | null, industry_tags: Array<string>, tech_signals: Array<string>, size_signal: string | null, enriched_at: string | null } | null, ats_boards: Array<{ __typename?: 'ATSBoard', id: number, company_id: number, url: string, vendor: AtsVendor, board_type: AtsBoardType, confidence: number, is_active: boolean, first_seen_at: string, last_seen_at: string, created_at: string, updated_at: string, evidence: { __typename?: 'Evidence', source_type: SourceType, source_url: string, crawl_id: string | null, capture_timestamp: string | null, observed_at: string, method: ExtractMethod, extractor_version: string | null, http_status: number | null, mime: string | null, content_hash: string | null, warc: { __typename?: 'WarcPointer', filename: string, offset: number, length: number, digest: string | null } | null } }> } };
 
 export type DeleteCompanyMutationVariables = Exact<{
   id: Scalars['Int']['input'];
@@ -2173,6 +2821,14 @@ export type EnhanceCompanyMutationVariables = Exact<{
 
 
 export type EnhanceCompanyMutation = { __typename?: 'Mutation', enhanceCompany: { __typename?: 'EnhanceCompanyResponse', success: boolean, message: string | null, companyId: number | null, companyKey: string | null } };
+
+export type AnalyzeCompanyMutationVariables = Exact<{
+  id?: InputMaybe<Scalars['Int']['input']>;
+  key?: InputMaybe<Scalars['String']['input']>;
+}>;
+
+
+export type AnalyzeCompanyMutation = { __typename?: 'Mutation', analyzeCompany: { __typename?: 'AnalyzeCompanyResponse', success: boolean, message: string | null, companyId: number | null, companyKey: string | null } };
 
 export type AddCompanyFactsMutationVariables = Exact<{
   company_id: Scalars['Int']['input'];
@@ -2214,7 +2870,7 @@ export type GetCompanyQueryVariables = Exact<{
 }>;
 
 
-export type GetCompanyQuery = { __typename?: 'Query', company: { __typename?: 'Company', id: number, key: string, name: string, logo_url: string | null, website: string | null, description: string | null, industry: string | null, size: string | null, location: string | null, created_at: string, updated_at: string, linkedin_url: string | null, category: CompanyCategory, tags: Array<string>, services: Array<string>, service_taxonomy: Array<string>, industries: Array<string>, score: number, score_reasons: Array<string>, last_seen_crawl_id: string | null, last_seen_capture_timestamp: string | null, last_seen_source_url: string | null, ashby_enrichment: { __typename?: 'AshbyEnrichment', company_name: string | null, industry_tags: Array<string>, tech_signals: Array<string>, size_signal: string | null, enriched_at: string | null } | null } | null };
+export type GetCompanyQuery = { __typename?: 'Query', company: { __typename?: 'Company', id: number, key: string, name: string, logo_url: string | null, website: string | null, description: string | null, industry: string | null, size: string | null, location: string | null, created_at: string, updated_at: string, linkedin_url: string | null, job_board_url: string | null, category: CompanyCategory, tags: Array<string>, services: Array<string>, service_taxonomy: Array<string>, industries: Array<string>, score: number, score_reasons: Array<string>, deep_analysis: string | null, last_seen_crawl_id: string | null, last_seen_capture_timestamp: string | null, last_seen_source_url: string | null, ashby_enrichment: { __typename?: 'AshbyEnrichment', company_name: string | null, industry_tags: Array<string>, tech_signals: Array<string>, size_signal: string | null, enriched_at: string | null } | null, ats_boards: Array<{ __typename?: 'ATSBoard', id: number, company_id: number, url: string, vendor: AtsVendor, board_type: AtsBoardType, confidence: number, is_active: boolean, first_seen_at: string, last_seen_at: string, created_at: string, updated_at: string, evidence: { __typename?: 'Evidence', source_type: SourceType, source_url: string, crawl_id: string | null, capture_timestamp: string | null, observed_at: string, method: ExtractMethod, extractor_version: string | null, http_status: number | null, mime: string | null, content_hash: string | null, warc: { __typename?: 'WarcPointer', filename: string, offset: number, length: number, digest: string | null } | null } }> } | null };
 
 export type GetCompaniesQueryVariables = Exact<{
   text?: InputMaybe<Scalars['String']['input']>;
@@ -2224,7 +2880,7 @@ export type GetCompaniesQueryVariables = Exact<{
 }>;
 
 
-export type GetCompaniesQuery = { __typename?: 'Query', companies: { __typename?: 'CompaniesResponse', totalCount: number, companies: Array<{ __typename?: 'Company', id: number, key: string, name: string, logo_url: string | null, website: string | null, description: string | null, industry: string | null, size: string | null, location: string | null, created_at: string, updated_at: string, linkedin_url: string | null, category: CompanyCategory, tags: Array<string>, services: Array<string>, service_taxonomy: Array<string>, industries: Array<string>, score: number, score_reasons: Array<string>, last_seen_crawl_id: string | null, last_seen_capture_timestamp: string | null, last_seen_source_url: string | null, ashby_enrichment: { __typename?: 'AshbyEnrichment', company_name: string | null, industry_tags: Array<string>, tech_signals: Array<string>, size_signal: string | null, enriched_at: string | null } | null }> } };
+export type GetCompaniesQuery = { __typename?: 'Query', companies: { __typename?: 'CompaniesResponse', totalCount: number, companies: Array<{ __typename?: 'Company', id: number, key: string, name: string, logo_url: string | null, website: string | null, description: string | null, industry: string | null, size: string | null, location: string | null, created_at: string, updated_at: string, linkedin_url: string | null, job_board_url: string | null, category: CompanyCategory, tags: Array<string>, services: Array<string>, service_taxonomy: Array<string>, industries: Array<string>, score: number, score_reasons: Array<string>, deep_analysis: string | null, last_seen_crawl_id: string | null, last_seen_capture_timestamp: string | null, last_seen_source_url: string | null, ashby_enrichment: { __typename?: 'AshbyEnrichment', company_name: string | null, industry_tags: Array<string>, tech_signals: Array<string>, size_signal: string | null, enriched_at: string | null } | null, ats_boards: Array<{ __typename?: 'ATSBoard', id: number, company_id: number, url: string, vendor: AtsVendor, board_type: AtsBoardType, confidence: number, is_active: boolean, first_seen_at: string, last_seen_at: string, created_at: string, updated_at: string, evidence: { __typename?: 'Evidence', source_type: SourceType, source_url: string, crawl_id: string | null, capture_timestamp: string | null, observed_at: string, method: ExtractMethod, extractor_version: string | null, http_status: number | null, mime: string | null, content_hash: string | null, warc: { __typename?: 'WarcPointer', filename: string, offset: number, length: number, digest: string | null } | null } }> }> } };
 
 export type SearchCompaniesQueryVariables = Exact<{
   filter: CompanyFilterInput;
@@ -2234,7 +2890,7 @@ export type SearchCompaniesQueryVariables = Exact<{
 }>;
 
 
-export type SearchCompaniesQuery = { __typename?: 'Query', companies: { __typename?: 'CompaniesResponse', totalCount: number, companies: Array<{ __typename?: 'Company', id: number, key: string, name: string, logo_url: string | null, website: string | null, description: string | null, industry: string | null, size: string | null, location: string | null, created_at: string, updated_at: string, linkedin_url: string | null, category: CompanyCategory, tags: Array<string>, services: Array<string>, service_taxonomy: Array<string>, industries: Array<string>, score: number, score_reasons: Array<string>, last_seen_crawl_id: string | null, last_seen_capture_timestamp: string | null, last_seen_source_url: string | null, ashby_enrichment: { __typename?: 'AshbyEnrichment', company_name: string | null, industry_tags: Array<string>, tech_signals: Array<string>, size_signal: string | null, enriched_at: string | null } | null }> } };
+export type SearchCompaniesQuery = { __typename?: 'Query', companies: { __typename?: 'CompaniesResponse', totalCount: number, companies: Array<{ __typename?: 'Company', id: number, key: string, name: string, logo_url: string | null, website: string | null, description: string | null, industry: string | null, size: string | null, location: string | null, created_at: string, updated_at: string, linkedin_url: string | null, job_board_url: string | null, category: CompanyCategory, tags: Array<string>, services: Array<string>, service_taxonomy: Array<string>, industries: Array<string>, score: number, score_reasons: Array<string>, deep_analysis: string | null, last_seen_crawl_id: string | null, last_seen_capture_timestamp: string | null, last_seen_source_url: string | null, ashby_enrichment: { __typename?: 'AshbyEnrichment', company_name: string | null, industry_tags: Array<string>, tech_signals: Array<string>, size_signal: string | null, enriched_at: string | null } | null, ats_boards: Array<{ __typename?: 'ATSBoard', id: number, company_id: number, url: string, vendor: AtsVendor, board_type: AtsBoardType, confidence: number, is_active: boolean, first_seen_at: string, last_seen_at: string, created_at: string, updated_at: string, evidence: { __typename?: 'Evidence', source_type: SourceType, source_url: string, crawl_id: string | null, capture_timestamp: string | null, observed_at: string, method: ExtractMethod, extractor_version: string | null, http_status: number | null, mime: string | null, content_hash: string | null, warc: { __typename?: 'WarcPointer', filename: string, offset: number, length: number, digest: string | null } | null } }> }> } };
 
 export type GetCompanyFactsQueryVariables = Exact<{
   company_id: Scalars['Int']['input'];
@@ -2258,7 +2914,7 @@ export type CompanyAuditQueryVariables = Exact<{
 }>;
 
 
-export type CompanyAuditQuery = { __typename?: 'Query', company: { __typename?: 'Company', facts_count: number, snapshots_count: number, id: number, key: string, name: string, logo_url: string | null, website: string | null, description: string | null, industry: string | null, size: string | null, location: string | null, created_at: string, updated_at: string, linkedin_url: string | null, category: CompanyCategory, tags: Array<string>, services: Array<string>, service_taxonomy: Array<string>, industries: Array<string>, score: number, score_reasons: Array<string>, last_seen_crawl_id: string | null, last_seen_capture_timestamp: string | null, last_seen_source_url: string | null, facts: Array<{ __typename?: 'CompanyFact', id: number, company_id: number, field: string, value_json: any | null, value_text: string | null, normalized_value: any | null, confidence: number, created_at: string, evidence: { __typename?: 'Evidence', source_type: SourceType, source_url: string, crawl_id: string | null, capture_timestamp: string | null, observed_at: string, method: ExtractMethod, extractor_version: string | null, http_status: number | null, mime: string | null, content_hash: string | null, warc: { __typename?: 'WarcPointer', filename: string, offset: number, length: number, digest: string | null } | null } }>, snapshots: Array<{ __typename?: 'CompanySnapshot', id: number, company_id: number, source_url: string, crawl_id: string | null, capture_timestamp: string | null, fetched_at: string, http_status: number | null, mime: string | null, content_hash: string | null, text_sample: string | null, jsonld: any | null, extracted: any | null, created_at: string, evidence: { __typename?: 'Evidence', source_type: SourceType, source_url: string, crawl_id: string | null, capture_timestamp: string | null, observed_at: string, method: ExtractMethod, extractor_version: string | null, http_status: number | null, mime: string | null, content_hash: string | null, warc: { __typename?: 'WarcPointer', filename: string, offset: number, length: number, digest: string | null } | null } }>, ashby_enrichment: { __typename?: 'AshbyEnrichment', company_name: string | null, industry_tags: Array<string>, tech_signals: Array<string>, size_signal: string | null, enriched_at: string | null } | null } | null };
+export type CompanyAuditQuery = { __typename?: 'Query', company: { __typename?: 'Company', facts_count: number, snapshots_count: number, id: number, key: string, name: string, logo_url: string | null, website: string | null, description: string | null, industry: string | null, size: string | null, location: string | null, created_at: string, updated_at: string, linkedin_url: string | null, job_board_url: string | null, category: CompanyCategory, tags: Array<string>, services: Array<string>, service_taxonomy: Array<string>, industries: Array<string>, score: number, score_reasons: Array<string>, deep_analysis: string | null, last_seen_crawl_id: string | null, last_seen_capture_timestamp: string | null, last_seen_source_url: string | null, facts: Array<{ __typename?: 'CompanyFact', id: number, company_id: number, field: string, value_json: any | null, value_text: string | null, normalized_value: any | null, confidence: number, created_at: string, evidence: { __typename?: 'Evidence', source_type: SourceType, source_url: string, crawl_id: string | null, capture_timestamp: string | null, observed_at: string, method: ExtractMethod, extractor_version: string | null, http_status: number | null, mime: string | null, content_hash: string | null, warc: { __typename?: 'WarcPointer', filename: string, offset: number, length: number, digest: string | null } | null } }>, snapshots: Array<{ __typename?: 'CompanySnapshot', id: number, company_id: number, source_url: string, crawl_id: string | null, capture_timestamp: string | null, fetched_at: string, http_status: number | null, mime: string | null, content_hash: string | null, text_sample: string | null, jsonld: any | null, extracted: any | null, created_at: string, evidence: { __typename?: 'Evidence', source_type: SourceType, source_url: string, crawl_id: string | null, capture_timestamp: string | null, observed_at: string, method: ExtractMethod, extractor_version: string | null, http_status: number | null, mime: string | null, content_hash: string | null, warc: { __typename?: 'WarcPointer', filename: string, offset: number, length: number, digest: string | null } | null } }>, ashby_enrichment: { __typename?: 'AshbyEnrichment', company_name: string | null, industry_tags: Array<string>, tech_signals: Array<string>, size_signal: string | null, enriched_at: string | null } | null, ats_boards: Array<{ __typename?: 'ATSBoard', id: number, company_id: number, url: string, vendor: AtsVendor, board_type: AtsBoardType, confidence: number, is_active: boolean, first_seen_at: string, last_seen_at: string, created_at: string, updated_at: string, evidence: { __typename?: 'Evidence', source_type: SourceType, source_url: string, crawl_id: string | null, capture_timestamp: string | null, observed_at: string, method: ExtractMethod, extractor_version: string | null, http_status: number | null, mime: string | null, content_hash: string | null, warc: { __typename?: 'WarcPointer', filename: string, offset: number, length: number, digest: string | null } | null } }> } | null };
 
 export type GetContactQueryVariables = Exact<{
   id: Scalars['Int']['input'];
@@ -2353,6 +3009,103 @@ export type CreateContactMutationVariables = Exact<{
 
 export type CreateContactMutation = { __typename?: 'Mutation', createContact: { __typename?: 'Contact', id: number, firstName: string, lastName: string, email: string | null, linkedinUrl: string | null, position: string | null, companyId: number | null, githubHandle: string | null, telegramHandle: string | null, tags: Array<string> } };
 
+export type GetEmailCampaignsQueryVariables = Exact<{
+  status?: InputMaybe<Scalars['String']['input']>;
+  limit?: InputMaybe<Scalars['Int']['input']>;
+  offset?: InputMaybe<Scalars['Int']['input']>;
+}>;
+
+
+export type GetEmailCampaignsQuery = { __typename?: 'Query', emailCampaigns: { __typename?: 'EmailCampaignsResult', totalCount: number, campaigns: Array<{ __typename?: 'EmailCampaign', id: string, companyId: number | null, name: string, status: string, mode: string | null, fromEmail: string | null, totalRecipients: number, emailsSent: number, emailsScheduled: number, emailsFailed: number, createdAt: string, updatedAt: string }> } };
+
+export type GetEmailCampaignQueryVariables = Exact<{
+  id: Scalars['String']['input'];
+}>;
+
+
+export type GetEmailCampaignQuery = { __typename?: 'Query', emailCampaign: { __typename?: 'EmailCampaign', id: string, companyId: number | null, name: string, status: string, sequence: any | null, delayDays: any | null, startAt: string | null, mode: string | null, fromEmail: string | null, replyTo: string | null, totalRecipients: number, emailsSent: number, emailsScheduled: number, emailsFailed: number, recipientEmails: Array<string>, createdAt: string, updatedAt: string } | null };
+
+export type CreateDraftCampaignMutationVariables = Exact<{
+  input: CreateCampaignInput;
+}>;
+
+
+export type CreateDraftCampaignMutation = { __typename?: 'Mutation', createDraftCampaign: { __typename?: 'EmailCampaign', id: string, name: string, status: string, createdAt: string } };
+
+export type UpdateCampaignMutationVariables = Exact<{
+  id: Scalars['String']['input'];
+  input: UpdateCampaignInput;
+}>;
+
+
+export type UpdateCampaignMutation = { __typename?: 'Mutation', updateCampaign: { __typename?: 'EmailCampaign', id: string, name: string, status: string, updatedAt: string } };
+
+export type DeleteCampaignMutationVariables = Exact<{
+  id: Scalars['String']['input'];
+}>;
+
+
+export type DeleteCampaignMutation = { __typename?: 'Mutation', deleteCampaign: { __typename?: 'DeleteCampaignResult', success: boolean, message: string | null } };
+
+export type LaunchEmailCampaignMutationVariables = Exact<{
+  id: Scalars['String']['input'];
+}>;
+
+
+export type LaunchEmailCampaignMutation = { __typename?: 'Mutation', launchEmailCampaign: { __typename?: 'EmailCampaign', id: string, name: string, status: string, emailsSent: number, emailsScheduled: number, emailsFailed: number, updatedAt: string } };
+
+export type SendEmailMutationVariables = Exact<{
+  input: SendEmailInput;
+}>;
+
+
+export type SendEmailMutation = { __typename?: 'Mutation', sendEmail: { __typename?: 'SendEmailResult', success: boolean, id: string | null, error: string | null } };
+
+export type GenerateEmailMutationVariables = Exact<{
+  input: GenerateEmailInput;
+}>;
+
+
+export type GenerateEmailMutation = { __typename?: 'Mutation', generateEmail: { __typename?: 'GenerateEmailResult', subject: string, html: string, text: string } };
+
+export type GetEmailTemplatesQueryVariables = Exact<{
+  category?: InputMaybe<Scalars['String']['input']>;
+  limit?: InputMaybe<Scalars['Int']['input']>;
+  offset?: InputMaybe<Scalars['Int']['input']>;
+}>;
+
+
+export type GetEmailTemplatesQuery = { __typename?: 'Query', emailTemplates: { __typename?: 'EmailTemplatesResult', totalCount: number, templates: Array<{ __typename?: 'EmailTemplate', id: number, name: string, description: string | null, subject: string | null, category: string | null, tags: Array<string>, isActive: boolean, createdAt: string, updatedAt: string }> } };
+
+export type GetEmailTemplateQueryVariables = Exact<{
+  id: Scalars['Int']['input'];
+}>;
+
+
+export type GetEmailTemplateQuery = { __typename?: 'Query', emailTemplate: { __typename?: 'EmailTemplate', id: number, name: string, description: string | null, subject: string | null, htmlContent: string | null, textContent: string | null, category: string | null, tags: Array<string>, variables: Array<string>, isActive: boolean, createdAt: string, updatedAt: string } | null };
+
+export type CreateEmailTemplateMutationVariables = Exact<{
+  input: CreateEmailTemplateInput;
+}>;
+
+
+export type CreateEmailTemplateMutation = { __typename?: 'Mutation', createEmailTemplate: { __typename?: 'EmailTemplate', id: number, name: string, subject: string | null, category: string | null, createdAt: string } };
+
+export type UpdateEmailTemplateMutationVariables = Exact<{
+  id: Scalars['Int']['input'];
+  input: UpdateEmailTemplateInput;
+}>;
+
+
+export type UpdateEmailTemplateMutation = { __typename?: 'Mutation', updateEmailTemplate: { __typename?: 'EmailTemplate', id: number, name: string, subject: string | null, isActive: boolean, updatedAt: string } };
+
+export type DeleteEmailTemplateMutationVariables = Exact<{
+  id: Scalars['Int']['input'];
+}>;
+
+
+export type DeleteEmailTemplateMutation = { __typename?: 'Mutation', deleteEmailTemplate: { __typename?: 'DeleteEmailTemplateResult', success: boolean, message: string | null } };
+
 export type GetGreenhouseJobsQueryVariables = Exact<{
   search?: InputMaybe<Scalars['String']['input']>;
   limit?: InputMaybe<Scalars['Int']['input']>;
@@ -2360,14 +3113,14 @@ export type GetGreenhouseJobsQueryVariables = Exact<{
 }>;
 
 
-export type GetGreenhouseJobsQuery = { __typename?: 'Query', jobs: { __typename?: 'JobsResponse', totalCount: number, jobs: Array<{ __typename?: 'Job', id: number, external_id: string, source_id: string | null, source_kind: string, company_id: number | null, company_key: string, title: string, location: string | null, url: string, description: string | null, publishedAt: string, score: number | null, score_reason: string | null, is_remote_eu: boolean, remote_eu_confidence: ClassificationConfidence | null, remote_eu_reason: string | null, created_at: string, updated_at: string, company: { __typename?: 'Company', id: number, key: string, name: string, logo_url: string | null, website: string | null, description: string | null, industry: string | null, size: string | null, location: string | null, created_at: string, updated_at: string, linkedin_url: string | null, category: CompanyCategory, tags: Array<string>, services: Array<string>, service_taxonomy: Array<string>, industries: Array<string>, score: number, score_reasons: Array<string>, last_seen_crawl_id: string | null, last_seen_capture_timestamp: string | null, last_seen_source_url: string | null, ashby_enrichment: { __typename?: 'AshbyEnrichment', company_name: string | null, industry_tags: Array<string>, tech_signals: Array<string>, size_signal: string | null, enriched_at: string | null } | null } | null, skills: Array<{ __typename?: 'JobSkill', tag: string, level: string, confidence: number | null, evidence: string | null }> | null }> } };
+export type GetGreenhouseJobsQuery = { __typename?: 'Query', jobs: { __typename?: 'JobsResponse', totalCount: number, jobs: Array<{ __typename?: 'Job', id: number, external_id: string, source_id: string | null, source_kind: string, company_id: number | null, company_key: string, title: string, location: string | null, url: string, description: string | null, publishedAt: string, score: number | null, score_reason: string | null, is_remote_eu: boolean, remote_eu_confidence: ClassificationConfidence | null, remote_eu_reason: string | null, created_at: string, updated_at: string, company: { __typename?: 'Company', id: number, key: string, name: string, logo_url: string | null, website: string | null, description: string | null, industry: string | null, size: string | null, location: string | null, created_at: string, updated_at: string, linkedin_url: string | null, job_board_url: string | null, category: CompanyCategory, tags: Array<string>, services: Array<string>, service_taxonomy: Array<string>, industries: Array<string>, score: number, score_reasons: Array<string>, deep_analysis: string | null, last_seen_crawl_id: string | null, last_seen_capture_timestamp: string | null, last_seen_source_url: string | null, ashby_enrichment: { __typename?: 'AshbyEnrichment', company_name: string | null, industry_tags: Array<string>, tech_signals: Array<string>, size_signal: string | null, enriched_at: string | null } | null, ats_boards: Array<{ __typename?: 'ATSBoard', id: number, company_id: number, url: string, vendor: AtsVendor, board_type: AtsBoardType, confidence: number, is_active: boolean, first_seen_at: string, last_seen_at: string, created_at: string, updated_at: string, evidence: { __typename?: 'Evidence', source_type: SourceType, source_url: string, crawl_id: string | null, capture_timestamp: string | null, observed_at: string, method: ExtractMethod, extractor_version: string | null, http_status: number | null, mime: string | null, content_hash: string | null, warc: { __typename?: 'WarcPointer', filename: string, offset: number, length: number, digest: string | null } | null } }> } | null, skills: Array<{ __typename?: 'JobSkill', tag: string, level: string, confidence: number | null, evidence: string | null }> | null }> } };
 
 export type GetGreenhouseJobByIdQueryVariables = Exact<{
   id: Scalars['String']['input'];
 }>;
 
 
-export type GetGreenhouseJobByIdQuery = { __typename?: 'Query', job: { __typename?: 'Job', id: number, external_id: string, source_id: string | null, source_kind: string, company_id: number | null, company_key: string, title: string, location: string | null, url: string, description: string | null, publishedAt: string, score: number | null, score_reason: string | null, is_remote_eu: boolean, remote_eu_confidence: ClassificationConfidence | null, remote_eu_reason: string | null, created_at: string, updated_at: string, company: { __typename?: 'Company', id: number, key: string, name: string, logo_url: string | null, website: string | null, description: string | null, industry: string | null, size: string | null, location: string | null, created_at: string, updated_at: string, linkedin_url: string | null, category: CompanyCategory, tags: Array<string>, services: Array<string>, service_taxonomy: Array<string>, industries: Array<string>, score: number, score_reasons: Array<string>, last_seen_crawl_id: string | null, last_seen_capture_timestamp: string | null, last_seen_source_url: string | null, ashby_enrichment: { __typename?: 'AshbyEnrichment', company_name: string | null, industry_tags: Array<string>, tech_signals: Array<string>, size_signal: string | null, enriched_at: string | null } | null } | null, skills: Array<{ __typename?: 'JobSkill', tag: string, level: string, confidence: number | null, evidence: string | null }> | null } | null };
+export type GetGreenhouseJobByIdQuery = { __typename?: 'Query', job: { __typename?: 'Job', id: number, external_id: string, source_id: string | null, source_kind: string, company_id: number | null, company_key: string, title: string, location: string | null, url: string, description: string | null, publishedAt: string, score: number | null, score_reason: string | null, is_remote_eu: boolean, remote_eu_confidence: ClassificationConfidence | null, remote_eu_reason: string | null, created_at: string, updated_at: string, company: { __typename?: 'Company', id: number, key: string, name: string, logo_url: string | null, website: string | null, description: string | null, industry: string | null, size: string | null, location: string | null, created_at: string, updated_at: string, linkedin_url: string | null, job_board_url: string | null, category: CompanyCategory, tags: Array<string>, services: Array<string>, service_taxonomy: Array<string>, industries: Array<string>, score: number, score_reasons: Array<string>, deep_analysis: string | null, last_seen_crawl_id: string | null, last_seen_capture_timestamp: string | null, last_seen_source_url: string | null, ashby_enrichment: { __typename?: 'AshbyEnrichment', company_name: string | null, industry_tags: Array<string>, tech_signals: Array<string>, size_signal: string | null, enriched_at: string | null } | null, ats_boards: Array<{ __typename?: 'ATSBoard', id: number, company_id: number, url: string, vendor: AtsVendor, board_type: AtsBoardType, confidence: number, is_active: boolean, first_seen_at: string, last_seen_at: string, created_at: string, updated_at: string, evidence: { __typename?: 'Evidence', source_type: SourceType, source_url: string, crawl_id: string | null, capture_timestamp: string | null, observed_at: string, method: ExtractMethod, extractor_version: string | null, http_status: number | null, mime: string | null, content_hash: string | null, warc: { __typename?: 'WarcPointer', filename: string, offset: number, length: number, digest: string | null } | null } }> } | null, skills: Array<{ __typename?: 'JobSkill', tag: string, level: string, confidence: number | null, evidence: string | null }> | null } | null };
 
 export type EnhanceJobFromAtsMutationVariables = Exact<{
   jobId: Scalars['String']['input'];
@@ -2376,7 +3129,28 @@ export type EnhanceJobFromAtsMutationVariables = Exact<{
 }>;
 
 
-export type EnhanceJobFromAtsMutation = { __typename?: 'Mutation', enhanceJobFromATS: { __typename?: 'EnhanceJobResponse', success: boolean, message: string | null, job: { __typename?: 'Job', id: number, external_id: string, source_id: string | null, source_kind: string, company_id: number | null, company_key: string, title: string, location: string | null, url: string, description: string | null, publishedAt: string, score: number | null, score_reason: string | null, is_remote_eu: boolean, remote_eu_confidence: ClassificationConfidence | null, remote_eu_reason: string | null, absolute_url: string | null, internal_job_id: string | null, requisition_id: string | null, company_name: string | null, language: string | null, created_at: string, updated_at: string, company: { __typename?: 'Company', id: number, key: string, name: string, logo_url: string | null, website: string | null, description: string | null, industry: string | null, size: string | null, location: string | null, created_at: string, updated_at: string, linkedin_url: string | null, category: CompanyCategory, tags: Array<string>, services: Array<string>, service_taxonomy: Array<string>, industries: Array<string>, score: number, score_reasons: Array<string>, last_seen_crawl_id: string | null, last_seen_capture_timestamp: string | null, last_seen_source_url: string | null, ashby_enrichment: { __typename?: 'AshbyEnrichment', company_name: string | null, industry_tags: Array<string>, tech_signals: Array<string>, size_signal: string | null, enriched_at: string | null } | null } | null, skills: Array<{ __typename?: 'JobSkill', tag: string, level: string, confidence: number | null, evidence: string | null }> | null, metadata: Array<{ __typename?: 'GreenhouseMetadata', id: string, name: string, value: string | null, value_type: string | null }> | null, departments: Array<{ __typename?: 'GreenhouseDepartment', id: string, name: string, child_ids: Array<string> | null, parent_id: string | null }> | null, offices: Array<{ __typename?: 'GreenhouseOffice', id: string, name: string, location: string | null, child_ids: Array<string> | null, parent_id: string | null }> | null, questions: Array<{ __typename?: 'GreenhouseQuestion', description: string | null, label: string, required: boolean, fields: Array<{ __typename?: 'GreenhouseQuestionField', type: string, name: string | null }> | null }> | null, location_questions: Array<{ __typename?: 'GreenhouseQuestion', description: string | null, label: string, required: boolean, fields: Array<{ __typename?: 'GreenhouseQuestionField', type: string, name: string | null }> | null }> | null, compliance: Array<{ __typename?: 'GreenhouseCompliance', type: string, description: string | null, questions: Array<{ __typename?: 'GreenhouseQuestion', description: string | null, label: string, required: boolean, fields: Array<{ __typename?: 'GreenhouseQuestionField', type: string, name: string | null }> | null }> | null }> | null, demographic_questions: { __typename?: 'GreenhouseDemographicQuestions', header: string | null, description: string | null, questions: Array<{ __typename?: 'GreenhouseQuestion', description: string | null, label: string, required: boolean, fields: Array<{ __typename?: 'GreenhouseQuestionField', type: string, name: string | null }> | null }> | null } | null, data_compliance: Array<{ __typename?: 'GreenhouseDataCompliance', type: string, requires_consent: boolean, requires_processing_consent: boolean, requires_retention_consent: boolean, retention_period: number | null, demographic_data_consent_applies: boolean }> | null } | null } };
+export type EnhanceJobFromAtsMutation = { __typename?: 'Mutation', enhanceJobFromATS: { __typename?: 'EnhanceJobResponse', success: boolean, message: string | null, job: { __typename?: 'Job', id: number, external_id: string, source_id: string | null, source_kind: string, company_id: number | null, company_key: string, title: string, location: string | null, url: string, description: string | null, publishedAt: string, score: number | null, score_reason: string | null, is_remote_eu: boolean, remote_eu_confidence: ClassificationConfidence | null, remote_eu_reason: string | null, absolute_url: string | null, internal_job_id: string | null, requisition_id: string | null, company_name: string | null, language: string | null, created_at: string, updated_at: string, company: { __typename?: 'Company', id: number, key: string, name: string, logo_url: string | null, website: string | null, description: string | null, industry: string | null, size: string | null, location: string | null, created_at: string, updated_at: string, linkedin_url: string | null, job_board_url: string | null, category: CompanyCategory, tags: Array<string>, services: Array<string>, service_taxonomy: Array<string>, industries: Array<string>, score: number, score_reasons: Array<string>, deep_analysis: string | null, last_seen_crawl_id: string | null, last_seen_capture_timestamp: string | null, last_seen_source_url: string | null, ashby_enrichment: { __typename?: 'AshbyEnrichment', company_name: string | null, industry_tags: Array<string>, tech_signals: Array<string>, size_signal: string | null, enriched_at: string | null } | null, ats_boards: Array<{ __typename?: 'ATSBoard', id: number, company_id: number, url: string, vendor: AtsVendor, board_type: AtsBoardType, confidence: number, is_active: boolean, first_seen_at: string, last_seen_at: string, created_at: string, updated_at: string, evidence: { __typename?: 'Evidence', source_type: SourceType, source_url: string, crawl_id: string | null, capture_timestamp: string | null, observed_at: string, method: ExtractMethod, extractor_version: string | null, http_status: number | null, mime: string | null, content_hash: string | null, warc: { __typename?: 'WarcPointer', filename: string, offset: number, length: number, digest: string | null } | null } }> } | null, skills: Array<{ __typename?: 'JobSkill', tag: string, level: string, confidence: number | null, evidence: string | null }> | null, metadata: Array<{ __typename?: 'GreenhouseMetadata', id: string, name: string, value: string | null, value_type: string | null }> | null, departments: Array<{ __typename?: 'GreenhouseDepartment', id: string, name: string, child_ids: Array<string> | null, parent_id: string | null }> | null, offices: Array<{ __typename?: 'GreenhouseOffice', id: string, name: string, location: string | null, child_ids: Array<string> | null, parent_id: string | null }> | null, questions: Array<{ __typename?: 'GreenhouseQuestion', description: string | null, label: string, required: boolean, fields: Array<{ __typename?: 'GreenhouseQuestionField', type: string, name: string | null }> | null }> | null, location_questions: Array<{ __typename?: 'GreenhouseQuestion', description: string | null, label: string, required: boolean, fields: Array<{ __typename?: 'GreenhouseQuestionField', type: string, name: string | null }> | null }> | null, compliance: Array<{ __typename?: 'GreenhouseCompliance', type: string, description: string | null, questions: Array<{ __typename?: 'GreenhouseQuestion', description: string | null, label: string, required: boolean, fields: Array<{ __typename?: 'GreenhouseQuestionField', type: string, name: string | null }> | null }> | null }> | null, demographic_questions: { __typename?: 'GreenhouseDemographicQuestions', header: string | null, description: string | null, questions: Array<{ __typename?: 'GreenhouseQuestion', description: string | null, label: string, required: boolean, fields: Array<{ __typename?: 'GreenhouseQuestionField', type: string, name: string | null }> | null }> | null } | null, data_compliance: Array<{ __typename?: 'GreenhouseDataCompliance', type: string, requires_consent: boolean, requires_processing_consent: boolean, requires_retention_consent: boolean, retention_period: number | null, demographic_data_consent_applies: boolean }> | null } | null } };
+
+export type MarkJobAppliedMutationVariables = Exact<{
+  id: Scalars['Int']['input'];
+}>;
+
+
+export type MarkJobAppliedMutation = { __typename?: 'Mutation', markJobApplied: { __typename?: 'Job', id: number, applied: boolean, appliedAt: string | null } };
+
+export type ArchiveJobMutationVariables = Exact<{
+  id: Scalars['Int']['input'];
+}>;
+
+
+export type ArchiveJobMutation = { __typename?: 'Mutation', archiveJob: { __typename?: 'Job', id: number, archived: boolean } };
+
+export type UnarchiveJobMutationVariables = Exact<{
+  id: Scalars['Int']['input'];
+}>;
+
+
+export type UnarchiveJobMutation = { __typename?: 'Mutation', unarchiveJob: { __typename?: 'Job', id: number, archived: boolean } };
 
 export type GetLangSmithPromptsQueryVariables = Exact<{
   isPublic?: InputMaybe<Scalars['Boolean']['input']>;
@@ -2580,6 +3354,52 @@ export type GenerateStudyTopicsForCategoryMutationVariables = Exact<{
 
 
 export type GenerateStudyTopicsForCategoryMutation = { __typename?: 'Mutation', generateStudyTopicsForCategory: Array<{ __typename?: 'StudyTopic', id: string, topic: string, title: string, summary: string | null, difficulty: string, tags: Array<string> }> };
+
+export type GetTasksQueryVariables = Exact<{
+  status?: InputMaybe<Scalars['String']['input']>;
+  priority?: InputMaybe<Scalars['String']['input']>;
+  limit?: InputMaybe<Scalars['Int']['input']>;
+  offset?: InputMaybe<Scalars['Int']['input']>;
+}>;
+
+
+export type GetTasksQuery = { __typename?: 'Query', tasks: { __typename?: 'TasksResult', totalCount: number, tasks: Array<{ __typename?: 'Task', id: number, title: string, description: string | null, status: string, priority: string, dueDate: string | null, completedAt: string | null, entityType: string | null, entityId: string | null, tags: Array<string>, createdAt: string, updatedAt: string }> } };
+
+export type GetTaskQueryVariables = Exact<{
+  id: Scalars['Int']['input'];
+}>;
+
+
+export type GetTaskQuery = { __typename?: 'Query', task: { __typename?: 'Task', id: number, title: string, description: string | null, status: string, priority: string, dueDate: string | null, completedAt: string | null, entityType: string | null, entityId: string | null, tags: Array<string>, createdAt: string, updatedAt: string } | null };
+
+export type CreateTaskMutationVariables = Exact<{
+  input: CreateTaskInput;
+}>;
+
+
+export type CreateTaskMutation = { __typename?: 'Mutation', createTask: { __typename?: 'Task', id: number, title: string, status: string, priority: string, dueDate: string | null, tags: Array<string>, createdAt: string } };
+
+export type UpdateTaskMutationVariables = Exact<{
+  id: Scalars['Int']['input'];
+  input: UpdateTaskInput;
+}>;
+
+
+export type UpdateTaskMutation = { __typename?: 'Mutation', updateTask: { __typename?: 'Task', id: number, title: string, status: string, priority: string, dueDate: string | null, tags: Array<string>, updatedAt: string } };
+
+export type CompleteTaskMutationVariables = Exact<{
+  id: Scalars['Int']['input'];
+}>;
+
+
+export type CompleteTaskMutation = { __typename?: 'Mutation', completeTask: { __typename?: 'Task', id: number, status: string, completedAt: string | null } };
+
+export type DeleteTaskMutationVariables = Exact<{
+  id: Scalars['Int']['input'];
+}>;
+
+
+export type DeleteTaskMutation = { __typename?: 'Mutation', deleteTask: { __typename?: 'DeleteTaskResult', success: boolean, message: string | null } };
 
 export type GenerateResearchMutationVariables = Exact<{
   goalDescription: Scalars['String']['input'];
@@ -2794,6 +3614,23 @@ export const ApplicationFieldsFragmentDoc = gql`
     }
     generatedAt
   }
+  aiDeepResearch {
+    questions {
+      question
+      category
+      deepseek {
+        model
+        content
+        reasoning
+      }
+      qwen {
+        model
+        content
+        reasoning
+      }
+    }
+    generatedAt
+  }
 }
     ${BackendPrepSectionFieldsFragmentDoc}`;
 export const EvidenceFieldsFragmentDoc = gql`
@@ -2816,24 +3653,6 @@ export const EvidenceFieldsFragmentDoc = gql`
   }
 }
     `;
-export const AtsBoardFieldsFragmentDoc = gql`
-    fragment ATSBoardFields on ATSBoard {
-  id
-  company_id
-  url
-  vendor
-  board_type
-  confidence
-  is_active
-  first_seen_at
-  last_seen_at
-  evidence {
-    ...EvidenceFields
-  }
-  created_at
-  updated_at
-}
-    ${EvidenceFieldsFragmentDoc}`;
 export const CompanyFactFieldsFragmentDoc = gql`
     fragment CompanyFactFields on CompanyFact {
   id
@@ -2869,6 +3688,24 @@ export const CompanySnapshotFieldsFragmentDoc = gql`
   created_at
 }
     ${EvidenceFieldsFragmentDoc}`;
+export const AtsBoardFieldsFragmentDoc = gql`
+    fragment ATSBoardFields on ATSBoard {
+  id
+  company_id
+  url
+  vendor
+  board_type
+  confidence
+  is_active
+  first_seen_at
+  last_seen_at
+  evidence {
+    ...EvidenceFields
+  }
+  created_at
+  updated_at
+}
+    ${EvidenceFieldsFragmentDoc}`;
 export const CompanyFieldsFragmentDoc = gql`
     fragment CompanyFields on Company {
   id
@@ -2883,6 +3720,7 @@ export const CompanyFieldsFragmentDoc = gql`
   created_at
   updated_at
   linkedin_url
+  job_board_url
   category
   tags
   services
@@ -2890,6 +3728,7 @@ export const CompanyFieldsFragmentDoc = gql`
   industries
   score
   score_reasons
+  deep_analysis
   last_seen_crawl_id
   last_seen_capture_timestamp
   last_seen_source_url
@@ -2900,8 +3739,11 @@ export const CompanyFieldsFragmentDoc = gql`
     size_signal
     enriched_at
   }
+  ats_boards {
+    ...ATSBoardFields
+  }
 }
-    `;
+    ${AtsBoardFieldsFragmentDoc}`;
 export const GetPrepResourcesDocument = gql`
     query GetPrepResources {
   prepResources {
@@ -3275,6 +4117,9 @@ export const GetJobDocument = gql`
         addressCountry
       }
     }
+    applied
+    appliedAt
+    archived
     created_at
     updated_at
   }
@@ -3340,6 +4185,8 @@ export const GetJobsDocument = gql`
       status
       is_remote_eu
       remote_eu_confidence
+      applied
+      archived
       skills {
         tag
         level
@@ -4309,6 +5156,56 @@ export function useGenerateBackendPrepMutation(baseOptions?: Apollo.MutationHook
 export type GenerateBackendPrepMutationHookResult = ReturnType<typeof useGenerateBackendPrepMutation>;
 export type GenerateBackendPrepMutationResult = Apollo.MutationResult<GenerateBackendPrepMutation>;
 export type GenerateBackendPrepMutationOptions = Apollo.BaseMutationOptions<GenerateBackendPrepMutation, GenerateBackendPrepMutationVariables>;
+export const GenerateDeepResearchDocument = gql`
+    mutation GenerateDeepResearch($applicationId: Int!) {
+  generateDeepResearch(applicationId: $applicationId) {
+    id
+    aiDeepResearch {
+      questions {
+        question
+        category
+        deepseek {
+          model
+          content
+          reasoning
+        }
+        qwen {
+          model
+          content
+          reasoning
+        }
+      }
+      generatedAt
+    }
+  }
+}
+    `;
+export type GenerateDeepResearchMutationFn = Apollo.MutationFunction<GenerateDeepResearchMutation, GenerateDeepResearchMutationVariables>;
+
+/**
+ * __useGenerateDeepResearchMutation__
+ *
+ * To run a mutation, you first call `useGenerateDeepResearchMutation` within a React component and pass it any options that fit your needs.
+ * When your component renders, `useGenerateDeepResearchMutation` returns a tuple that includes:
+ * - A mutate function that you can call at any time to execute the mutation
+ * - An object with fields that represent the current status of the mutation's execution
+ *
+ * @param baseOptions options that will be passed into the mutation, supported options are listed on: https://www.apollographql.com/docs/react/api/react-hooks/#options-2;
+ *
+ * @example
+ * const [generateDeepResearchMutation, { data, loading, error }] = useGenerateDeepResearchMutation({
+ *   variables: {
+ *      applicationId: // value for 'applicationId'
+ *   },
+ * });
+ */
+export function useGenerateDeepResearchMutation(baseOptions?: Apollo.MutationHookOptions<GenerateDeepResearchMutation, GenerateDeepResearchMutationVariables>) {
+        const options = {...defaultOptions, ...baseOptions}
+        return Apollo.useMutation<GenerateDeepResearchMutation, GenerateDeepResearchMutationVariables>(GenerateDeepResearchDocument, options);
+      }
+export type GenerateDeepResearchMutationHookResult = ReturnType<typeof useGenerateDeepResearchMutation>;
+export type GenerateDeepResearchMutationResult = Apollo.MutationResult<GenerateDeepResearchMutation>;
+export type GenerateDeepResearchMutationOptions = Apollo.BaseMutationOptions<GenerateDeepResearchMutation, GenerateDeepResearchMutationVariables>;
 export const GenerateInterviewQuestionsDocument = gql`
     mutation GenerateInterviewQuestions($applicationId: Int!, $type: String!) {
   generateInterviewQuestions(applicationId: $applicationId, type: $type) {
@@ -4358,6 +5255,122 @@ export function useGenerateInterviewQuestionsMutation(baseOptions?: Apollo.Mutat
 export type GenerateInterviewQuestionsMutationHookResult = ReturnType<typeof useGenerateInterviewQuestionsMutation>;
 export type GenerateInterviewQuestionsMutationResult = Apollo.MutationResult<GenerateInterviewQuestionsMutation>;
 export type GenerateInterviewQuestionsMutationOptions = Apollo.BaseMutationOptions<GenerateInterviewQuestionsMutation, GenerateInterviewQuestionsMutationVariables>;
+export const GetBlockedCompaniesDocument = gql`
+    query GetBlockedCompanies {
+  blockedCompanies {
+    id
+    name
+    reason
+    createdAt
+  }
+}
+    `;
+
+/**
+ * __useGetBlockedCompaniesQuery__
+ *
+ * To run a query within a React component, call `useGetBlockedCompaniesQuery` and pass it any options that fit your needs.
+ * When your component renders, `useGetBlockedCompaniesQuery` returns an object from Apollo Client that contains loading, error, and data properties
+ * you can use to render your UI.
+ *
+ * @param baseOptions options that will be passed into the query, supported options are listed on: https://www.apollographql.com/docs/react/api/react-hooks/#options;
+ *
+ * @example
+ * const { data, loading, error } = useGetBlockedCompaniesQuery({
+ *   variables: {
+ *   },
+ * });
+ */
+export function useGetBlockedCompaniesQuery(baseOptions?: Apollo.QueryHookOptions<GetBlockedCompaniesQuery, GetBlockedCompaniesQueryVariables>) {
+        const options = {...defaultOptions, ...baseOptions}
+        return Apollo.useQuery<GetBlockedCompaniesQuery, GetBlockedCompaniesQueryVariables>(GetBlockedCompaniesDocument, options);
+      }
+export function useGetBlockedCompaniesLazyQuery(baseOptions?: Apollo.LazyQueryHookOptions<GetBlockedCompaniesQuery, GetBlockedCompaniesQueryVariables>) {
+          const options = {...defaultOptions, ...baseOptions}
+          return Apollo.useLazyQuery<GetBlockedCompaniesQuery, GetBlockedCompaniesQueryVariables>(GetBlockedCompaniesDocument, options);
+        }
+// @ts-ignore
+export function useGetBlockedCompaniesSuspenseQuery(baseOptions?: Apollo.SuspenseQueryHookOptions<GetBlockedCompaniesQuery, GetBlockedCompaniesQueryVariables>): Apollo.UseSuspenseQueryResult<GetBlockedCompaniesQuery, GetBlockedCompaniesQueryVariables>;
+export function useGetBlockedCompaniesSuspenseQuery(baseOptions?: Apollo.SkipToken | Apollo.SuspenseQueryHookOptions<GetBlockedCompaniesQuery, GetBlockedCompaniesQueryVariables>): Apollo.UseSuspenseQueryResult<GetBlockedCompaniesQuery | undefined, GetBlockedCompaniesQueryVariables>;
+export function useGetBlockedCompaniesSuspenseQuery(baseOptions?: Apollo.SkipToken | Apollo.SuspenseQueryHookOptions<GetBlockedCompaniesQuery, GetBlockedCompaniesQueryVariables>) {
+          const options = baseOptions === Apollo.skipToken ? baseOptions : {...defaultOptions, ...baseOptions}
+          return Apollo.useSuspenseQuery<GetBlockedCompaniesQuery, GetBlockedCompaniesQueryVariables>(GetBlockedCompaniesDocument, options);
+        }
+export type GetBlockedCompaniesQueryHookResult = ReturnType<typeof useGetBlockedCompaniesQuery>;
+export type GetBlockedCompaniesLazyQueryHookResult = ReturnType<typeof useGetBlockedCompaniesLazyQuery>;
+export type GetBlockedCompaniesSuspenseQueryHookResult = ReturnType<typeof useGetBlockedCompaniesSuspenseQuery>;
+export type GetBlockedCompaniesQueryResult = Apollo.QueryResult<GetBlockedCompaniesQuery, GetBlockedCompaniesQueryVariables>;
+export const BlockCompanyDocument = gql`
+    mutation BlockCompany($name: String!, $reason: String) {
+  blockCompany(name: $name, reason: $reason) {
+    id
+    name
+    reason
+    createdAt
+  }
+}
+    `;
+export type BlockCompanyMutationFn = Apollo.MutationFunction<BlockCompanyMutation, BlockCompanyMutationVariables>;
+
+/**
+ * __useBlockCompanyMutation__
+ *
+ * To run a mutation, you first call `useBlockCompanyMutation` within a React component and pass it any options that fit your needs.
+ * When your component renders, `useBlockCompanyMutation` returns a tuple that includes:
+ * - A mutate function that you can call at any time to execute the mutation
+ * - An object with fields that represent the current status of the mutation's execution
+ *
+ * @param baseOptions options that will be passed into the mutation, supported options are listed on: https://www.apollographql.com/docs/react/api/react-hooks/#options-2;
+ *
+ * @example
+ * const [blockCompanyMutation, { data, loading, error }] = useBlockCompanyMutation({
+ *   variables: {
+ *      name: // value for 'name'
+ *      reason: // value for 'reason'
+ *   },
+ * });
+ */
+export function useBlockCompanyMutation(baseOptions?: Apollo.MutationHookOptions<BlockCompanyMutation, BlockCompanyMutationVariables>) {
+        const options = {...defaultOptions, ...baseOptions}
+        return Apollo.useMutation<BlockCompanyMutation, BlockCompanyMutationVariables>(BlockCompanyDocument, options);
+      }
+export type BlockCompanyMutationHookResult = ReturnType<typeof useBlockCompanyMutation>;
+export type BlockCompanyMutationResult = Apollo.MutationResult<BlockCompanyMutation>;
+export type BlockCompanyMutationOptions = Apollo.BaseMutationOptions<BlockCompanyMutation, BlockCompanyMutationVariables>;
+export const UnblockCompanyDocument = gql`
+    mutation UnblockCompany($id: Int!) {
+  unblockCompany(id: $id) {
+    success
+    message
+  }
+}
+    `;
+export type UnblockCompanyMutationFn = Apollo.MutationFunction<UnblockCompanyMutation, UnblockCompanyMutationVariables>;
+
+/**
+ * __useUnblockCompanyMutation__
+ *
+ * To run a mutation, you first call `useUnblockCompanyMutation` within a React component and pass it any options that fit your needs.
+ * When your component renders, `useUnblockCompanyMutation` returns a tuple that includes:
+ * - A mutate function that you can call at any time to execute the mutation
+ * - An object with fields that represent the current status of the mutation's execution
+ *
+ * @param baseOptions options that will be passed into the mutation, supported options are listed on: https://www.apollographql.com/docs/react/api/react-hooks/#options-2;
+ *
+ * @example
+ * const [unblockCompanyMutation, { data, loading, error }] = useUnblockCompanyMutation({
+ *   variables: {
+ *      id: // value for 'id'
+ *   },
+ * });
+ */
+export function useUnblockCompanyMutation(baseOptions?: Apollo.MutationHookOptions<UnblockCompanyMutation, UnblockCompanyMutationVariables>) {
+        const options = {...defaultOptions, ...baseOptions}
+        return Apollo.useMutation<UnblockCompanyMutation, UnblockCompanyMutationVariables>(UnblockCompanyDocument, options);
+      }
+export type UnblockCompanyMutationHookResult = ReturnType<typeof useUnblockCompanyMutation>;
+export type UnblockCompanyMutationResult = Apollo.MutationResult<UnblockCompanyMutation>;
+export type UnblockCompanyMutationOptions = Apollo.BaseMutationOptions<UnblockCompanyMutation, UnblockCompanyMutationVariables>;
 export const CreateCompanyDocument = gql`
     mutation CreateCompany($input: CreateCompanyInput!) {
   createCompany(input: $input) {
@@ -4496,6 +5509,43 @@ export function useEnhanceCompanyMutation(baseOptions?: Apollo.MutationHookOptio
 export type EnhanceCompanyMutationHookResult = ReturnType<typeof useEnhanceCompanyMutation>;
 export type EnhanceCompanyMutationResult = Apollo.MutationResult<EnhanceCompanyMutation>;
 export type EnhanceCompanyMutationOptions = Apollo.BaseMutationOptions<EnhanceCompanyMutation, EnhanceCompanyMutationVariables>;
+export const AnalyzeCompanyDocument = gql`
+    mutation AnalyzeCompany($id: Int, $key: String) {
+  analyzeCompany(id: $id, key: $key) {
+    success
+    message
+    companyId
+    companyKey
+  }
+}
+    `;
+export type AnalyzeCompanyMutationFn = Apollo.MutationFunction<AnalyzeCompanyMutation, AnalyzeCompanyMutationVariables>;
+
+/**
+ * __useAnalyzeCompanyMutation__
+ *
+ * To run a mutation, you first call `useAnalyzeCompanyMutation` within a React component and pass it any options that fit your needs.
+ * When your component renders, `useAnalyzeCompanyMutation` returns a tuple that includes:
+ * - A mutate function that you can call at any time to execute the mutation
+ * - An object with fields that represent the current status of the mutation's execution
+ *
+ * @param baseOptions options that will be passed into the mutation, supported options are listed on: https://www.apollographql.com/docs/react/api/react-hooks/#options-2;
+ *
+ * @example
+ * const [analyzeCompanyMutation, { data, loading, error }] = useAnalyzeCompanyMutation({
+ *   variables: {
+ *      id: // value for 'id'
+ *      key: // value for 'key'
+ *   },
+ * });
+ */
+export function useAnalyzeCompanyMutation(baseOptions?: Apollo.MutationHookOptions<AnalyzeCompanyMutation, AnalyzeCompanyMutationVariables>) {
+        const options = {...defaultOptions, ...baseOptions}
+        return Apollo.useMutation<AnalyzeCompanyMutation, AnalyzeCompanyMutationVariables>(AnalyzeCompanyDocument, options);
+      }
+export type AnalyzeCompanyMutationHookResult = ReturnType<typeof useAnalyzeCompanyMutation>;
+export type AnalyzeCompanyMutationResult = Apollo.MutationResult<AnalyzeCompanyMutation>;
+export type AnalyzeCompanyMutationOptions = Apollo.BaseMutationOptions<AnalyzeCompanyMutation, AnalyzeCompanyMutationVariables>;
 export const AddCompanyFactsDocument = gql`
     mutation AddCompanyFacts($company_id: Int!, $facts: [CompanyFactInput!]!) {
   add_company_facts(company_id: $company_id, facts: $facts) {
@@ -5494,6 +6544,559 @@ export function useCreateContactMutation(baseOptions?: Apollo.MutationHookOption
 export type CreateContactMutationHookResult = ReturnType<typeof useCreateContactMutation>;
 export type CreateContactMutationResult = Apollo.MutationResult<CreateContactMutation>;
 export type CreateContactMutationOptions = Apollo.BaseMutationOptions<CreateContactMutation, CreateContactMutationVariables>;
+export const GetEmailCampaignsDocument = gql`
+    query GetEmailCampaigns($status: String, $limit: Int, $offset: Int) {
+  emailCampaigns(status: $status, limit: $limit, offset: $offset) {
+    campaigns {
+      id
+      companyId
+      name
+      status
+      mode
+      fromEmail
+      totalRecipients
+      emailsSent
+      emailsScheduled
+      emailsFailed
+      createdAt
+      updatedAt
+    }
+    totalCount
+  }
+}
+    `;
+
+/**
+ * __useGetEmailCampaignsQuery__
+ *
+ * To run a query within a React component, call `useGetEmailCampaignsQuery` and pass it any options that fit your needs.
+ * When your component renders, `useGetEmailCampaignsQuery` returns an object from Apollo Client that contains loading, error, and data properties
+ * you can use to render your UI.
+ *
+ * @param baseOptions options that will be passed into the query, supported options are listed on: https://www.apollographql.com/docs/react/api/react-hooks/#options;
+ *
+ * @example
+ * const { data, loading, error } = useGetEmailCampaignsQuery({
+ *   variables: {
+ *      status: // value for 'status'
+ *      limit: // value for 'limit'
+ *      offset: // value for 'offset'
+ *   },
+ * });
+ */
+export function useGetEmailCampaignsQuery(baseOptions?: Apollo.QueryHookOptions<GetEmailCampaignsQuery, GetEmailCampaignsQueryVariables>) {
+        const options = {...defaultOptions, ...baseOptions}
+        return Apollo.useQuery<GetEmailCampaignsQuery, GetEmailCampaignsQueryVariables>(GetEmailCampaignsDocument, options);
+      }
+export function useGetEmailCampaignsLazyQuery(baseOptions?: Apollo.LazyQueryHookOptions<GetEmailCampaignsQuery, GetEmailCampaignsQueryVariables>) {
+          const options = {...defaultOptions, ...baseOptions}
+          return Apollo.useLazyQuery<GetEmailCampaignsQuery, GetEmailCampaignsQueryVariables>(GetEmailCampaignsDocument, options);
+        }
+// @ts-ignore
+export function useGetEmailCampaignsSuspenseQuery(baseOptions?: Apollo.SuspenseQueryHookOptions<GetEmailCampaignsQuery, GetEmailCampaignsQueryVariables>): Apollo.UseSuspenseQueryResult<GetEmailCampaignsQuery, GetEmailCampaignsQueryVariables>;
+export function useGetEmailCampaignsSuspenseQuery(baseOptions?: Apollo.SkipToken | Apollo.SuspenseQueryHookOptions<GetEmailCampaignsQuery, GetEmailCampaignsQueryVariables>): Apollo.UseSuspenseQueryResult<GetEmailCampaignsQuery | undefined, GetEmailCampaignsQueryVariables>;
+export function useGetEmailCampaignsSuspenseQuery(baseOptions?: Apollo.SkipToken | Apollo.SuspenseQueryHookOptions<GetEmailCampaignsQuery, GetEmailCampaignsQueryVariables>) {
+          const options = baseOptions === Apollo.skipToken ? baseOptions : {...defaultOptions, ...baseOptions}
+          return Apollo.useSuspenseQuery<GetEmailCampaignsQuery, GetEmailCampaignsQueryVariables>(GetEmailCampaignsDocument, options);
+        }
+export type GetEmailCampaignsQueryHookResult = ReturnType<typeof useGetEmailCampaignsQuery>;
+export type GetEmailCampaignsLazyQueryHookResult = ReturnType<typeof useGetEmailCampaignsLazyQuery>;
+export type GetEmailCampaignsSuspenseQueryHookResult = ReturnType<typeof useGetEmailCampaignsSuspenseQuery>;
+export type GetEmailCampaignsQueryResult = Apollo.QueryResult<GetEmailCampaignsQuery, GetEmailCampaignsQueryVariables>;
+export const GetEmailCampaignDocument = gql`
+    query GetEmailCampaign($id: String!) {
+  emailCampaign(id: $id) {
+    id
+    companyId
+    name
+    status
+    sequence
+    delayDays
+    startAt
+    mode
+    fromEmail
+    replyTo
+    totalRecipients
+    emailsSent
+    emailsScheduled
+    emailsFailed
+    recipientEmails
+    createdAt
+    updatedAt
+  }
+}
+    `;
+
+/**
+ * __useGetEmailCampaignQuery__
+ *
+ * To run a query within a React component, call `useGetEmailCampaignQuery` and pass it any options that fit your needs.
+ * When your component renders, `useGetEmailCampaignQuery` returns an object from Apollo Client that contains loading, error, and data properties
+ * you can use to render your UI.
+ *
+ * @param baseOptions options that will be passed into the query, supported options are listed on: https://www.apollographql.com/docs/react/api/react-hooks/#options;
+ *
+ * @example
+ * const { data, loading, error } = useGetEmailCampaignQuery({
+ *   variables: {
+ *      id: // value for 'id'
+ *   },
+ * });
+ */
+export function useGetEmailCampaignQuery(baseOptions: Apollo.QueryHookOptions<GetEmailCampaignQuery, GetEmailCampaignQueryVariables> & ({ variables: GetEmailCampaignQueryVariables; skip?: boolean; } | { skip: boolean; }) ) {
+        const options = {...defaultOptions, ...baseOptions}
+        return Apollo.useQuery<GetEmailCampaignQuery, GetEmailCampaignQueryVariables>(GetEmailCampaignDocument, options);
+      }
+export function useGetEmailCampaignLazyQuery(baseOptions?: Apollo.LazyQueryHookOptions<GetEmailCampaignQuery, GetEmailCampaignQueryVariables>) {
+          const options = {...defaultOptions, ...baseOptions}
+          return Apollo.useLazyQuery<GetEmailCampaignQuery, GetEmailCampaignQueryVariables>(GetEmailCampaignDocument, options);
+        }
+// @ts-ignore
+export function useGetEmailCampaignSuspenseQuery(baseOptions?: Apollo.SuspenseQueryHookOptions<GetEmailCampaignQuery, GetEmailCampaignQueryVariables>): Apollo.UseSuspenseQueryResult<GetEmailCampaignQuery, GetEmailCampaignQueryVariables>;
+export function useGetEmailCampaignSuspenseQuery(baseOptions?: Apollo.SkipToken | Apollo.SuspenseQueryHookOptions<GetEmailCampaignQuery, GetEmailCampaignQueryVariables>): Apollo.UseSuspenseQueryResult<GetEmailCampaignQuery | undefined, GetEmailCampaignQueryVariables>;
+export function useGetEmailCampaignSuspenseQuery(baseOptions?: Apollo.SkipToken | Apollo.SuspenseQueryHookOptions<GetEmailCampaignQuery, GetEmailCampaignQueryVariables>) {
+          const options = baseOptions === Apollo.skipToken ? baseOptions : {...defaultOptions, ...baseOptions}
+          return Apollo.useSuspenseQuery<GetEmailCampaignQuery, GetEmailCampaignQueryVariables>(GetEmailCampaignDocument, options);
+        }
+export type GetEmailCampaignQueryHookResult = ReturnType<typeof useGetEmailCampaignQuery>;
+export type GetEmailCampaignLazyQueryHookResult = ReturnType<typeof useGetEmailCampaignLazyQuery>;
+export type GetEmailCampaignSuspenseQueryHookResult = ReturnType<typeof useGetEmailCampaignSuspenseQuery>;
+export type GetEmailCampaignQueryResult = Apollo.QueryResult<GetEmailCampaignQuery, GetEmailCampaignQueryVariables>;
+export const CreateDraftCampaignDocument = gql`
+    mutation CreateDraftCampaign($input: CreateCampaignInput!) {
+  createDraftCampaign(input: $input) {
+    id
+    name
+    status
+    createdAt
+  }
+}
+    `;
+export type CreateDraftCampaignMutationFn = Apollo.MutationFunction<CreateDraftCampaignMutation, CreateDraftCampaignMutationVariables>;
+
+/**
+ * __useCreateDraftCampaignMutation__
+ *
+ * To run a mutation, you first call `useCreateDraftCampaignMutation` within a React component and pass it any options that fit your needs.
+ * When your component renders, `useCreateDraftCampaignMutation` returns a tuple that includes:
+ * - A mutate function that you can call at any time to execute the mutation
+ * - An object with fields that represent the current status of the mutation's execution
+ *
+ * @param baseOptions options that will be passed into the mutation, supported options are listed on: https://www.apollographql.com/docs/react/api/react-hooks/#options-2;
+ *
+ * @example
+ * const [createDraftCampaignMutation, { data, loading, error }] = useCreateDraftCampaignMutation({
+ *   variables: {
+ *      input: // value for 'input'
+ *   },
+ * });
+ */
+export function useCreateDraftCampaignMutation(baseOptions?: Apollo.MutationHookOptions<CreateDraftCampaignMutation, CreateDraftCampaignMutationVariables>) {
+        const options = {...defaultOptions, ...baseOptions}
+        return Apollo.useMutation<CreateDraftCampaignMutation, CreateDraftCampaignMutationVariables>(CreateDraftCampaignDocument, options);
+      }
+export type CreateDraftCampaignMutationHookResult = ReturnType<typeof useCreateDraftCampaignMutation>;
+export type CreateDraftCampaignMutationResult = Apollo.MutationResult<CreateDraftCampaignMutation>;
+export type CreateDraftCampaignMutationOptions = Apollo.BaseMutationOptions<CreateDraftCampaignMutation, CreateDraftCampaignMutationVariables>;
+export const UpdateCampaignDocument = gql`
+    mutation UpdateCampaign($id: String!, $input: UpdateCampaignInput!) {
+  updateCampaign(id: $id, input: $input) {
+    id
+    name
+    status
+    updatedAt
+  }
+}
+    `;
+export type UpdateCampaignMutationFn = Apollo.MutationFunction<UpdateCampaignMutation, UpdateCampaignMutationVariables>;
+
+/**
+ * __useUpdateCampaignMutation__
+ *
+ * To run a mutation, you first call `useUpdateCampaignMutation` within a React component and pass it any options that fit your needs.
+ * When your component renders, `useUpdateCampaignMutation` returns a tuple that includes:
+ * - A mutate function that you can call at any time to execute the mutation
+ * - An object with fields that represent the current status of the mutation's execution
+ *
+ * @param baseOptions options that will be passed into the mutation, supported options are listed on: https://www.apollographql.com/docs/react/api/react-hooks/#options-2;
+ *
+ * @example
+ * const [updateCampaignMutation, { data, loading, error }] = useUpdateCampaignMutation({
+ *   variables: {
+ *      id: // value for 'id'
+ *      input: // value for 'input'
+ *   },
+ * });
+ */
+export function useUpdateCampaignMutation(baseOptions?: Apollo.MutationHookOptions<UpdateCampaignMutation, UpdateCampaignMutationVariables>) {
+        const options = {...defaultOptions, ...baseOptions}
+        return Apollo.useMutation<UpdateCampaignMutation, UpdateCampaignMutationVariables>(UpdateCampaignDocument, options);
+      }
+export type UpdateCampaignMutationHookResult = ReturnType<typeof useUpdateCampaignMutation>;
+export type UpdateCampaignMutationResult = Apollo.MutationResult<UpdateCampaignMutation>;
+export type UpdateCampaignMutationOptions = Apollo.BaseMutationOptions<UpdateCampaignMutation, UpdateCampaignMutationVariables>;
+export const DeleteCampaignDocument = gql`
+    mutation DeleteCampaign($id: String!) {
+  deleteCampaign(id: $id) {
+    success
+    message
+  }
+}
+    `;
+export type DeleteCampaignMutationFn = Apollo.MutationFunction<DeleteCampaignMutation, DeleteCampaignMutationVariables>;
+
+/**
+ * __useDeleteCampaignMutation__
+ *
+ * To run a mutation, you first call `useDeleteCampaignMutation` within a React component and pass it any options that fit your needs.
+ * When your component renders, `useDeleteCampaignMutation` returns a tuple that includes:
+ * - A mutate function that you can call at any time to execute the mutation
+ * - An object with fields that represent the current status of the mutation's execution
+ *
+ * @param baseOptions options that will be passed into the mutation, supported options are listed on: https://www.apollographql.com/docs/react/api/react-hooks/#options-2;
+ *
+ * @example
+ * const [deleteCampaignMutation, { data, loading, error }] = useDeleteCampaignMutation({
+ *   variables: {
+ *      id: // value for 'id'
+ *   },
+ * });
+ */
+export function useDeleteCampaignMutation(baseOptions?: Apollo.MutationHookOptions<DeleteCampaignMutation, DeleteCampaignMutationVariables>) {
+        const options = {...defaultOptions, ...baseOptions}
+        return Apollo.useMutation<DeleteCampaignMutation, DeleteCampaignMutationVariables>(DeleteCampaignDocument, options);
+      }
+export type DeleteCampaignMutationHookResult = ReturnType<typeof useDeleteCampaignMutation>;
+export type DeleteCampaignMutationResult = Apollo.MutationResult<DeleteCampaignMutation>;
+export type DeleteCampaignMutationOptions = Apollo.BaseMutationOptions<DeleteCampaignMutation, DeleteCampaignMutationVariables>;
+export const LaunchEmailCampaignDocument = gql`
+    mutation LaunchEmailCampaign($id: String!) {
+  launchEmailCampaign(id: $id) {
+    id
+    name
+    status
+    emailsSent
+    emailsScheduled
+    emailsFailed
+    updatedAt
+  }
+}
+    `;
+export type LaunchEmailCampaignMutationFn = Apollo.MutationFunction<LaunchEmailCampaignMutation, LaunchEmailCampaignMutationVariables>;
+
+/**
+ * __useLaunchEmailCampaignMutation__
+ *
+ * To run a mutation, you first call `useLaunchEmailCampaignMutation` within a React component and pass it any options that fit your needs.
+ * When your component renders, `useLaunchEmailCampaignMutation` returns a tuple that includes:
+ * - A mutate function that you can call at any time to execute the mutation
+ * - An object with fields that represent the current status of the mutation's execution
+ *
+ * @param baseOptions options that will be passed into the mutation, supported options are listed on: https://www.apollographql.com/docs/react/api/react-hooks/#options-2;
+ *
+ * @example
+ * const [launchEmailCampaignMutation, { data, loading, error }] = useLaunchEmailCampaignMutation({
+ *   variables: {
+ *      id: // value for 'id'
+ *   },
+ * });
+ */
+export function useLaunchEmailCampaignMutation(baseOptions?: Apollo.MutationHookOptions<LaunchEmailCampaignMutation, LaunchEmailCampaignMutationVariables>) {
+        const options = {...defaultOptions, ...baseOptions}
+        return Apollo.useMutation<LaunchEmailCampaignMutation, LaunchEmailCampaignMutationVariables>(LaunchEmailCampaignDocument, options);
+      }
+export type LaunchEmailCampaignMutationHookResult = ReturnType<typeof useLaunchEmailCampaignMutation>;
+export type LaunchEmailCampaignMutationResult = Apollo.MutationResult<LaunchEmailCampaignMutation>;
+export type LaunchEmailCampaignMutationOptions = Apollo.BaseMutationOptions<LaunchEmailCampaignMutation, LaunchEmailCampaignMutationVariables>;
+export const SendEmailDocument = gql`
+    mutation SendEmail($input: SendEmailInput!) {
+  sendEmail(input: $input) {
+    success
+    id
+    error
+  }
+}
+    `;
+export type SendEmailMutationFn = Apollo.MutationFunction<SendEmailMutation, SendEmailMutationVariables>;
+
+/**
+ * __useSendEmailMutation__
+ *
+ * To run a mutation, you first call `useSendEmailMutation` within a React component and pass it any options that fit your needs.
+ * When your component renders, `useSendEmailMutation` returns a tuple that includes:
+ * - A mutate function that you can call at any time to execute the mutation
+ * - An object with fields that represent the current status of the mutation's execution
+ *
+ * @param baseOptions options that will be passed into the mutation, supported options are listed on: https://www.apollographql.com/docs/react/api/react-hooks/#options-2;
+ *
+ * @example
+ * const [sendEmailMutation, { data, loading, error }] = useSendEmailMutation({
+ *   variables: {
+ *      input: // value for 'input'
+ *   },
+ * });
+ */
+export function useSendEmailMutation(baseOptions?: Apollo.MutationHookOptions<SendEmailMutation, SendEmailMutationVariables>) {
+        const options = {...defaultOptions, ...baseOptions}
+        return Apollo.useMutation<SendEmailMutation, SendEmailMutationVariables>(SendEmailDocument, options);
+      }
+export type SendEmailMutationHookResult = ReturnType<typeof useSendEmailMutation>;
+export type SendEmailMutationResult = Apollo.MutationResult<SendEmailMutation>;
+export type SendEmailMutationOptions = Apollo.BaseMutationOptions<SendEmailMutation, SendEmailMutationVariables>;
+export const GenerateEmailDocument = gql`
+    mutation GenerateEmail($input: GenerateEmailInput!) {
+  generateEmail(input: $input) {
+    subject
+    html
+    text
+  }
+}
+    `;
+export type GenerateEmailMutationFn = Apollo.MutationFunction<GenerateEmailMutation, GenerateEmailMutationVariables>;
+
+/**
+ * __useGenerateEmailMutation__
+ *
+ * To run a mutation, you first call `useGenerateEmailMutation` within a React component and pass it any options that fit your needs.
+ * When your component renders, `useGenerateEmailMutation` returns a tuple that includes:
+ * - A mutate function that you can call at any time to execute the mutation
+ * - An object with fields that represent the current status of the mutation's execution
+ *
+ * @param baseOptions options that will be passed into the mutation, supported options are listed on: https://www.apollographql.com/docs/react/api/react-hooks/#options-2;
+ *
+ * @example
+ * const [generateEmailMutation, { data, loading, error }] = useGenerateEmailMutation({
+ *   variables: {
+ *      input: // value for 'input'
+ *   },
+ * });
+ */
+export function useGenerateEmailMutation(baseOptions?: Apollo.MutationHookOptions<GenerateEmailMutation, GenerateEmailMutationVariables>) {
+        const options = {...defaultOptions, ...baseOptions}
+        return Apollo.useMutation<GenerateEmailMutation, GenerateEmailMutationVariables>(GenerateEmailDocument, options);
+      }
+export type GenerateEmailMutationHookResult = ReturnType<typeof useGenerateEmailMutation>;
+export type GenerateEmailMutationResult = Apollo.MutationResult<GenerateEmailMutation>;
+export type GenerateEmailMutationOptions = Apollo.BaseMutationOptions<GenerateEmailMutation, GenerateEmailMutationVariables>;
+export const GetEmailTemplatesDocument = gql`
+    query GetEmailTemplates($category: String, $limit: Int, $offset: Int) {
+  emailTemplates(category: $category, limit: $limit, offset: $offset) {
+    templates {
+      id
+      name
+      description
+      subject
+      category
+      tags
+      isActive
+      createdAt
+      updatedAt
+    }
+    totalCount
+  }
+}
+    `;
+
+/**
+ * __useGetEmailTemplatesQuery__
+ *
+ * To run a query within a React component, call `useGetEmailTemplatesQuery` and pass it any options that fit your needs.
+ * When your component renders, `useGetEmailTemplatesQuery` returns an object from Apollo Client that contains loading, error, and data properties
+ * you can use to render your UI.
+ *
+ * @param baseOptions options that will be passed into the query, supported options are listed on: https://www.apollographql.com/docs/react/api/react-hooks/#options;
+ *
+ * @example
+ * const { data, loading, error } = useGetEmailTemplatesQuery({
+ *   variables: {
+ *      category: // value for 'category'
+ *      limit: // value for 'limit'
+ *      offset: // value for 'offset'
+ *   },
+ * });
+ */
+export function useGetEmailTemplatesQuery(baseOptions?: Apollo.QueryHookOptions<GetEmailTemplatesQuery, GetEmailTemplatesQueryVariables>) {
+        const options = {...defaultOptions, ...baseOptions}
+        return Apollo.useQuery<GetEmailTemplatesQuery, GetEmailTemplatesQueryVariables>(GetEmailTemplatesDocument, options);
+      }
+export function useGetEmailTemplatesLazyQuery(baseOptions?: Apollo.LazyQueryHookOptions<GetEmailTemplatesQuery, GetEmailTemplatesQueryVariables>) {
+          const options = {...defaultOptions, ...baseOptions}
+          return Apollo.useLazyQuery<GetEmailTemplatesQuery, GetEmailTemplatesQueryVariables>(GetEmailTemplatesDocument, options);
+        }
+// @ts-ignore
+export function useGetEmailTemplatesSuspenseQuery(baseOptions?: Apollo.SuspenseQueryHookOptions<GetEmailTemplatesQuery, GetEmailTemplatesQueryVariables>): Apollo.UseSuspenseQueryResult<GetEmailTemplatesQuery, GetEmailTemplatesQueryVariables>;
+export function useGetEmailTemplatesSuspenseQuery(baseOptions?: Apollo.SkipToken | Apollo.SuspenseQueryHookOptions<GetEmailTemplatesQuery, GetEmailTemplatesQueryVariables>): Apollo.UseSuspenseQueryResult<GetEmailTemplatesQuery | undefined, GetEmailTemplatesQueryVariables>;
+export function useGetEmailTemplatesSuspenseQuery(baseOptions?: Apollo.SkipToken | Apollo.SuspenseQueryHookOptions<GetEmailTemplatesQuery, GetEmailTemplatesQueryVariables>) {
+          const options = baseOptions === Apollo.skipToken ? baseOptions : {...defaultOptions, ...baseOptions}
+          return Apollo.useSuspenseQuery<GetEmailTemplatesQuery, GetEmailTemplatesQueryVariables>(GetEmailTemplatesDocument, options);
+        }
+export type GetEmailTemplatesQueryHookResult = ReturnType<typeof useGetEmailTemplatesQuery>;
+export type GetEmailTemplatesLazyQueryHookResult = ReturnType<typeof useGetEmailTemplatesLazyQuery>;
+export type GetEmailTemplatesSuspenseQueryHookResult = ReturnType<typeof useGetEmailTemplatesSuspenseQuery>;
+export type GetEmailTemplatesQueryResult = Apollo.QueryResult<GetEmailTemplatesQuery, GetEmailTemplatesQueryVariables>;
+export const GetEmailTemplateDocument = gql`
+    query GetEmailTemplate($id: Int!) {
+  emailTemplate(id: $id) {
+    id
+    name
+    description
+    subject
+    htmlContent
+    textContent
+    category
+    tags
+    variables
+    isActive
+    createdAt
+    updatedAt
+  }
+}
+    `;
+
+/**
+ * __useGetEmailTemplateQuery__
+ *
+ * To run a query within a React component, call `useGetEmailTemplateQuery` and pass it any options that fit your needs.
+ * When your component renders, `useGetEmailTemplateQuery` returns an object from Apollo Client that contains loading, error, and data properties
+ * you can use to render your UI.
+ *
+ * @param baseOptions options that will be passed into the query, supported options are listed on: https://www.apollographql.com/docs/react/api/react-hooks/#options;
+ *
+ * @example
+ * const { data, loading, error } = useGetEmailTemplateQuery({
+ *   variables: {
+ *      id: // value for 'id'
+ *   },
+ * });
+ */
+export function useGetEmailTemplateQuery(baseOptions: Apollo.QueryHookOptions<GetEmailTemplateQuery, GetEmailTemplateQueryVariables> & ({ variables: GetEmailTemplateQueryVariables; skip?: boolean; } | { skip: boolean; }) ) {
+        const options = {...defaultOptions, ...baseOptions}
+        return Apollo.useQuery<GetEmailTemplateQuery, GetEmailTemplateQueryVariables>(GetEmailTemplateDocument, options);
+      }
+export function useGetEmailTemplateLazyQuery(baseOptions?: Apollo.LazyQueryHookOptions<GetEmailTemplateQuery, GetEmailTemplateQueryVariables>) {
+          const options = {...defaultOptions, ...baseOptions}
+          return Apollo.useLazyQuery<GetEmailTemplateQuery, GetEmailTemplateQueryVariables>(GetEmailTemplateDocument, options);
+        }
+// @ts-ignore
+export function useGetEmailTemplateSuspenseQuery(baseOptions?: Apollo.SuspenseQueryHookOptions<GetEmailTemplateQuery, GetEmailTemplateQueryVariables>): Apollo.UseSuspenseQueryResult<GetEmailTemplateQuery, GetEmailTemplateQueryVariables>;
+export function useGetEmailTemplateSuspenseQuery(baseOptions?: Apollo.SkipToken | Apollo.SuspenseQueryHookOptions<GetEmailTemplateQuery, GetEmailTemplateQueryVariables>): Apollo.UseSuspenseQueryResult<GetEmailTemplateQuery | undefined, GetEmailTemplateQueryVariables>;
+export function useGetEmailTemplateSuspenseQuery(baseOptions?: Apollo.SkipToken | Apollo.SuspenseQueryHookOptions<GetEmailTemplateQuery, GetEmailTemplateQueryVariables>) {
+          const options = baseOptions === Apollo.skipToken ? baseOptions : {...defaultOptions, ...baseOptions}
+          return Apollo.useSuspenseQuery<GetEmailTemplateQuery, GetEmailTemplateQueryVariables>(GetEmailTemplateDocument, options);
+        }
+export type GetEmailTemplateQueryHookResult = ReturnType<typeof useGetEmailTemplateQuery>;
+export type GetEmailTemplateLazyQueryHookResult = ReturnType<typeof useGetEmailTemplateLazyQuery>;
+export type GetEmailTemplateSuspenseQueryHookResult = ReturnType<typeof useGetEmailTemplateSuspenseQuery>;
+export type GetEmailTemplateQueryResult = Apollo.QueryResult<GetEmailTemplateQuery, GetEmailTemplateQueryVariables>;
+export const CreateEmailTemplateDocument = gql`
+    mutation CreateEmailTemplate($input: CreateEmailTemplateInput!) {
+  createEmailTemplate(input: $input) {
+    id
+    name
+    subject
+    category
+    createdAt
+  }
+}
+    `;
+export type CreateEmailTemplateMutationFn = Apollo.MutationFunction<CreateEmailTemplateMutation, CreateEmailTemplateMutationVariables>;
+
+/**
+ * __useCreateEmailTemplateMutation__
+ *
+ * To run a mutation, you first call `useCreateEmailTemplateMutation` within a React component and pass it any options that fit your needs.
+ * When your component renders, `useCreateEmailTemplateMutation` returns a tuple that includes:
+ * - A mutate function that you can call at any time to execute the mutation
+ * - An object with fields that represent the current status of the mutation's execution
+ *
+ * @param baseOptions options that will be passed into the mutation, supported options are listed on: https://www.apollographql.com/docs/react/api/react-hooks/#options-2;
+ *
+ * @example
+ * const [createEmailTemplateMutation, { data, loading, error }] = useCreateEmailTemplateMutation({
+ *   variables: {
+ *      input: // value for 'input'
+ *   },
+ * });
+ */
+export function useCreateEmailTemplateMutation(baseOptions?: Apollo.MutationHookOptions<CreateEmailTemplateMutation, CreateEmailTemplateMutationVariables>) {
+        const options = {...defaultOptions, ...baseOptions}
+        return Apollo.useMutation<CreateEmailTemplateMutation, CreateEmailTemplateMutationVariables>(CreateEmailTemplateDocument, options);
+      }
+export type CreateEmailTemplateMutationHookResult = ReturnType<typeof useCreateEmailTemplateMutation>;
+export type CreateEmailTemplateMutationResult = Apollo.MutationResult<CreateEmailTemplateMutation>;
+export type CreateEmailTemplateMutationOptions = Apollo.BaseMutationOptions<CreateEmailTemplateMutation, CreateEmailTemplateMutationVariables>;
+export const UpdateEmailTemplateDocument = gql`
+    mutation UpdateEmailTemplate($id: Int!, $input: UpdateEmailTemplateInput!) {
+  updateEmailTemplate(id: $id, input: $input) {
+    id
+    name
+    subject
+    isActive
+    updatedAt
+  }
+}
+    `;
+export type UpdateEmailTemplateMutationFn = Apollo.MutationFunction<UpdateEmailTemplateMutation, UpdateEmailTemplateMutationVariables>;
+
+/**
+ * __useUpdateEmailTemplateMutation__
+ *
+ * To run a mutation, you first call `useUpdateEmailTemplateMutation` within a React component and pass it any options that fit your needs.
+ * When your component renders, `useUpdateEmailTemplateMutation` returns a tuple that includes:
+ * - A mutate function that you can call at any time to execute the mutation
+ * - An object with fields that represent the current status of the mutation's execution
+ *
+ * @param baseOptions options that will be passed into the mutation, supported options are listed on: https://www.apollographql.com/docs/react/api/react-hooks/#options-2;
+ *
+ * @example
+ * const [updateEmailTemplateMutation, { data, loading, error }] = useUpdateEmailTemplateMutation({
+ *   variables: {
+ *      id: // value for 'id'
+ *      input: // value for 'input'
+ *   },
+ * });
+ */
+export function useUpdateEmailTemplateMutation(baseOptions?: Apollo.MutationHookOptions<UpdateEmailTemplateMutation, UpdateEmailTemplateMutationVariables>) {
+        const options = {...defaultOptions, ...baseOptions}
+        return Apollo.useMutation<UpdateEmailTemplateMutation, UpdateEmailTemplateMutationVariables>(UpdateEmailTemplateDocument, options);
+      }
+export type UpdateEmailTemplateMutationHookResult = ReturnType<typeof useUpdateEmailTemplateMutation>;
+export type UpdateEmailTemplateMutationResult = Apollo.MutationResult<UpdateEmailTemplateMutation>;
+export type UpdateEmailTemplateMutationOptions = Apollo.BaseMutationOptions<UpdateEmailTemplateMutation, UpdateEmailTemplateMutationVariables>;
+export const DeleteEmailTemplateDocument = gql`
+    mutation DeleteEmailTemplate($id: Int!) {
+  deleteEmailTemplate(id: $id) {
+    success
+    message
+  }
+}
+    `;
+export type DeleteEmailTemplateMutationFn = Apollo.MutationFunction<DeleteEmailTemplateMutation, DeleteEmailTemplateMutationVariables>;
+
+/**
+ * __useDeleteEmailTemplateMutation__
+ *
+ * To run a mutation, you first call `useDeleteEmailTemplateMutation` within a React component and pass it any options that fit your needs.
+ * When your component renders, `useDeleteEmailTemplateMutation` returns a tuple that includes:
+ * - A mutate function that you can call at any time to execute the mutation
+ * - An object with fields that represent the current status of the mutation's execution
+ *
+ * @param baseOptions options that will be passed into the mutation, supported options are listed on: https://www.apollographql.com/docs/react/api/react-hooks/#options-2;
+ *
+ * @example
+ * const [deleteEmailTemplateMutation, { data, loading, error }] = useDeleteEmailTemplateMutation({
+ *   variables: {
+ *      id: // value for 'id'
+ *   },
+ * });
+ */
+export function useDeleteEmailTemplateMutation(baseOptions?: Apollo.MutationHookOptions<DeleteEmailTemplateMutation, DeleteEmailTemplateMutationVariables>) {
+        const options = {...defaultOptions, ...baseOptions}
+        return Apollo.useMutation<DeleteEmailTemplateMutation, DeleteEmailTemplateMutationVariables>(DeleteEmailTemplateDocument, options);
+      }
+export type DeleteEmailTemplateMutationHookResult = ReturnType<typeof useDeleteEmailTemplateMutation>;
+export type DeleteEmailTemplateMutationResult = Apollo.MutationResult<DeleteEmailTemplateMutation>;
+export type DeleteEmailTemplateMutationOptions = Apollo.BaseMutationOptions<DeleteEmailTemplateMutation, DeleteEmailTemplateMutationVariables>;
 export const GetGreenhouseJobsDocument = gql`
     query GetGreenhouseJobs($search: String, $limit: Int, $offset: Int) {
   jobs(sourceType: "greenhouse", search: $search, limit: $limit, offset: $offset) {
@@ -5779,6 +7382,109 @@ export function useEnhanceJobFromAtsMutation(baseOptions?: Apollo.MutationHookOp
 export type EnhanceJobFromAtsMutationHookResult = ReturnType<typeof useEnhanceJobFromAtsMutation>;
 export type EnhanceJobFromAtsMutationResult = Apollo.MutationResult<EnhanceJobFromAtsMutation>;
 export type EnhanceJobFromAtsMutationOptions = Apollo.BaseMutationOptions<EnhanceJobFromAtsMutation, EnhanceJobFromAtsMutationVariables>;
+export const MarkJobAppliedDocument = gql`
+    mutation MarkJobApplied($id: Int!) {
+  markJobApplied(id: $id) {
+    id
+    applied
+    appliedAt
+  }
+}
+    `;
+export type MarkJobAppliedMutationFn = Apollo.MutationFunction<MarkJobAppliedMutation, MarkJobAppliedMutationVariables>;
+
+/**
+ * __useMarkJobAppliedMutation__
+ *
+ * To run a mutation, you first call `useMarkJobAppliedMutation` within a React component and pass it any options that fit your needs.
+ * When your component renders, `useMarkJobAppliedMutation` returns a tuple that includes:
+ * - A mutate function that you can call at any time to execute the mutation
+ * - An object with fields that represent the current status of the mutation's execution
+ *
+ * @param baseOptions options that will be passed into the mutation, supported options are listed on: https://www.apollographql.com/docs/react/api/react-hooks/#options-2;
+ *
+ * @example
+ * const [markJobAppliedMutation, { data, loading, error }] = useMarkJobAppliedMutation({
+ *   variables: {
+ *      id: // value for 'id'
+ *   },
+ * });
+ */
+export function useMarkJobAppliedMutation(baseOptions?: Apollo.MutationHookOptions<MarkJobAppliedMutation, MarkJobAppliedMutationVariables>) {
+        const options = {...defaultOptions, ...baseOptions}
+        return Apollo.useMutation<MarkJobAppliedMutation, MarkJobAppliedMutationVariables>(MarkJobAppliedDocument, options);
+      }
+export type MarkJobAppliedMutationHookResult = ReturnType<typeof useMarkJobAppliedMutation>;
+export type MarkJobAppliedMutationResult = Apollo.MutationResult<MarkJobAppliedMutation>;
+export type MarkJobAppliedMutationOptions = Apollo.BaseMutationOptions<MarkJobAppliedMutation, MarkJobAppliedMutationVariables>;
+export const ArchiveJobDocument = gql`
+    mutation ArchiveJob($id: Int!) {
+  archiveJob(id: $id) {
+    id
+    archived
+  }
+}
+    `;
+export type ArchiveJobMutationFn = Apollo.MutationFunction<ArchiveJobMutation, ArchiveJobMutationVariables>;
+
+/**
+ * __useArchiveJobMutation__
+ *
+ * To run a mutation, you first call `useArchiveJobMutation` within a React component and pass it any options that fit your needs.
+ * When your component renders, `useArchiveJobMutation` returns a tuple that includes:
+ * - A mutate function that you can call at any time to execute the mutation
+ * - An object with fields that represent the current status of the mutation's execution
+ *
+ * @param baseOptions options that will be passed into the mutation, supported options are listed on: https://www.apollographql.com/docs/react/api/react-hooks/#options-2;
+ *
+ * @example
+ * const [archiveJobMutation, { data, loading, error }] = useArchiveJobMutation({
+ *   variables: {
+ *      id: // value for 'id'
+ *   },
+ * });
+ */
+export function useArchiveJobMutation(baseOptions?: Apollo.MutationHookOptions<ArchiveJobMutation, ArchiveJobMutationVariables>) {
+        const options = {...defaultOptions, ...baseOptions}
+        return Apollo.useMutation<ArchiveJobMutation, ArchiveJobMutationVariables>(ArchiveJobDocument, options);
+      }
+export type ArchiveJobMutationHookResult = ReturnType<typeof useArchiveJobMutation>;
+export type ArchiveJobMutationResult = Apollo.MutationResult<ArchiveJobMutation>;
+export type ArchiveJobMutationOptions = Apollo.BaseMutationOptions<ArchiveJobMutation, ArchiveJobMutationVariables>;
+export const UnarchiveJobDocument = gql`
+    mutation UnarchiveJob($id: Int!) {
+  unarchiveJob(id: $id) {
+    id
+    archived
+  }
+}
+    `;
+export type UnarchiveJobMutationFn = Apollo.MutationFunction<UnarchiveJobMutation, UnarchiveJobMutationVariables>;
+
+/**
+ * __useUnarchiveJobMutation__
+ *
+ * To run a mutation, you first call `useUnarchiveJobMutation` within a React component and pass it any options that fit your needs.
+ * When your component renders, `useUnarchiveJobMutation` returns a tuple that includes:
+ * - A mutate function that you can call at any time to execute the mutation
+ * - An object with fields that represent the current status of the mutation's execution
+ *
+ * @param baseOptions options that will be passed into the mutation, supported options are listed on: https://www.apollographql.com/docs/react/api/react-hooks/#options-2;
+ *
+ * @example
+ * const [unarchiveJobMutation, { data, loading, error }] = useUnarchiveJobMutation({
+ *   variables: {
+ *      id: // value for 'id'
+ *   },
+ * });
+ */
+export function useUnarchiveJobMutation(baseOptions?: Apollo.MutationHookOptions<UnarchiveJobMutation, UnarchiveJobMutationVariables>) {
+        const options = {...defaultOptions, ...baseOptions}
+        return Apollo.useMutation<UnarchiveJobMutation, UnarchiveJobMutationVariables>(UnarchiveJobDocument, options);
+      }
+export type UnarchiveJobMutationHookResult = ReturnType<typeof useUnarchiveJobMutation>;
+export type UnarchiveJobMutationResult = Apollo.MutationResult<UnarchiveJobMutation>;
+export type UnarchiveJobMutationOptions = Apollo.BaseMutationOptions<UnarchiveJobMutation, UnarchiveJobMutationVariables>;
 export const GetLangSmithPromptsDocument = gql`
     query GetLangSmithPrompts($isPublic: Boolean, $isArchived: Boolean, $query: String) {
   langsmithPrompts(isPublic: $isPublic, isArchived: $isArchived, query: $query) {
@@ -6992,6 +8698,268 @@ export function useGenerateStudyTopicsForCategoryMutation(baseOptions?: Apollo.M
 export type GenerateStudyTopicsForCategoryMutationHookResult = ReturnType<typeof useGenerateStudyTopicsForCategoryMutation>;
 export type GenerateStudyTopicsForCategoryMutationResult = Apollo.MutationResult<GenerateStudyTopicsForCategoryMutation>;
 export type GenerateStudyTopicsForCategoryMutationOptions = Apollo.BaseMutationOptions<GenerateStudyTopicsForCategoryMutation, GenerateStudyTopicsForCategoryMutationVariables>;
+export const GetTasksDocument = gql`
+    query GetTasks($status: String, $priority: String, $limit: Int, $offset: Int) {
+  tasks(status: $status, priority: $priority, limit: $limit, offset: $offset) {
+    tasks {
+      id
+      title
+      description
+      status
+      priority
+      dueDate
+      completedAt
+      entityType
+      entityId
+      tags
+      createdAt
+      updatedAt
+    }
+    totalCount
+  }
+}
+    `;
+
+/**
+ * __useGetTasksQuery__
+ *
+ * To run a query within a React component, call `useGetTasksQuery` and pass it any options that fit your needs.
+ * When your component renders, `useGetTasksQuery` returns an object from Apollo Client that contains loading, error, and data properties
+ * you can use to render your UI.
+ *
+ * @param baseOptions options that will be passed into the query, supported options are listed on: https://www.apollographql.com/docs/react/api/react-hooks/#options;
+ *
+ * @example
+ * const { data, loading, error } = useGetTasksQuery({
+ *   variables: {
+ *      status: // value for 'status'
+ *      priority: // value for 'priority'
+ *      limit: // value for 'limit'
+ *      offset: // value for 'offset'
+ *   },
+ * });
+ */
+export function useGetTasksQuery(baseOptions?: Apollo.QueryHookOptions<GetTasksQuery, GetTasksQueryVariables>) {
+        const options = {...defaultOptions, ...baseOptions}
+        return Apollo.useQuery<GetTasksQuery, GetTasksQueryVariables>(GetTasksDocument, options);
+      }
+export function useGetTasksLazyQuery(baseOptions?: Apollo.LazyQueryHookOptions<GetTasksQuery, GetTasksQueryVariables>) {
+          const options = {...defaultOptions, ...baseOptions}
+          return Apollo.useLazyQuery<GetTasksQuery, GetTasksQueryVariables>(GetTasksDocument, options);
+        }
+// @ts-ignore
+export function useGetTasksSuspenseQuery(baseOptions?: Apollo.SuspenseQueryHookOptions<GetTasksQuery, GetTasksQueryVariables>): Apollo.UseSuspenseQueryResult<GetTasksQuery, GetTasksQueryVariables>;
+export function useGetTasksSuspenseQuery(baseOptions?: Apollo.SkipToken | Apollo.SuspenseQueryHookOptions<GetTasksQuery, GetTasksQueryVariables>): Apollo.UseSuspenseQueryResult<GetTasksQuery | undefined, GetTasksQueryVariables>;
+export function useGetTasksSuspenseQuery(baseOptions?: Apollo.SkipToken | Apollo.SuspenseQueryHookOptions<GetTasksQuery, GetTasksQueryVariables>) {
+          const options = baseOptions === Apollo.skipToken ? baseOptions : {...defaultOptions, ...baseOptions}
+          return Apollo.useSuspenseQuery<GetTasksQuery, GetTasksQueryVariables>(GetTasksDocument, options);
+        }
+export type GetTasksQueryHookResult = ReturnType<typeof useGetTasksQuery>;
+export type GetTasksLazyQueryHookResult = ReturnType<typeof useGetTasksLazyQuery>;
+export type GetTasksSuspenseQueryHookResult = ReturnType<typeof useGetTasksSuspenseQuery>;
+export type GetTasksQueryResult = Apollo.QueryResult<GetTasksQuery, GetTasksQueryVariables>;
+export const GetTaskDocument = gql`
+    query GetTask($id: Int!) {
+  task(id: $id) {
+    id
+    title
+    description
+    status
+    priority
+    dueDate
+    completedAt
+    entityType
+    entityId
+    tags
+    createdAt
+    updatedAt
+  }
+}
+    `;
+
+/**
+ * __useGetTaskQuery__
+ *
+ * To run a query within a React component, call `useGetTaskQuery` and pass it any options that fit your needs.
+ * When your component renders, `useGetTaskQuery` returns an object from Apollo Client that contains loading, error, and data properties
+ * you can use to render your UI.
+ *
+ * @param baseOptions options that will be passed into the query, supported options are listed on: https://www.apollographql.com/docs/react/api/react-hooks/#options;
+ *
+ * @example
+ * const { data, loading, error } = useGetTaskQuery({
+ *   variables: {
+ *      id: // value for 'id'
+ *   },
+ * });
+ */
+export function useGetTaskQuery(baseOptions: Apollo.QueryHookOptions<GetTaskQuery, GetTaskQueryVariables> & ({ variables: GetTaskQueryVariables; skip?: boolean; } | { skip: boolean; }) ) {
+        const options = {...defaultOptions, ...baseOptions}
+        return Apollo.useQuery<GetTaskQuery, GetTaskQueryVariables>(GetTaskDocument, options);
+      }
+export function useGetTaskLazyQuery(baseOptions?: Apollo.LazyQueryHookOptions<GetTaskQuery, GetTaskQueryVariables>) {
+          const options = {...defaultOptions, ...baseOptions}
+          return Apollo.useLazyQuery<GetTaskQuery, GetTaskQueryVariables>(GetTaskDocument, options);
+        }
+// @ts-ignore
+export function useGetTaskSuspenseQuery(baseOptions?: Apollo.SuspenseQueryHookOptions<GetTaskQuery, GetTaskQueryVariables>): Apollo.UseSuspenseQueryResult<GetTaskQuery, GetTaskQueryVariables>;
+export function useGetTaskSuspenseQuery(baseOptions?: Apollo.SkipToken | Apollo.SuspenseQueryHookOptions<GetTaskQuery, GetTaskQueryVariables>): Apollo.UseSuspenseQueryResult<GetTaskQuery | undefined, GetTaskQueryVariables>;
+export function useGetTaskSuspenseQuery(baseOptions?: Apollo.SkipToken | Apollo.SuspenseQueryHookOptions<GetTaskQuery, GetTaskQueryVariables>) {
+          const options = baseOptions === Apollo.skipToken ? baseOptions : {...defaultOptions, ...baseOptions}
+          return Apollo.useSuspenseQuery<GetTaskQuery, GetTaskQueryVariables>(GetTaskDocument, options);
+        }
+export type GetTaskQueryHookResult = ReturnType<typeof useGetTaskQuery>;
+export type GetTaskLazyQueryHookResult = ReturnType<typeof useGetTaskLazyQuery>;
+export type GetTaskSuspenseQueryHookResult = ReturnType<typeof useGetTaskSuspenseQuery>;
+export type GetTaskQueryResult = Apollo.QueryResult<GetTaskQuery, GetTaskQueryVariables>;
+export const CreateTaskDocument = gql`
+    mutation CreateTask($input: CreateTaskInput!) {
+  createTask(input: $input) {
+    id
+    title
+    status
+    priority
+    dueDate
+    tags
+    createdAt
+  }
+}
+    `;
+export type CreateTaskMutationFn = Apollo.MutationFunction<CreateTaskMutation, CreateTaskMutationVariables>;
+
+/**
+ * __useCreateTaskMutation__
+ *
+ * To run a mutation, you first call `useCreateTaskMutation` within a React component and pass it any options that fit your needs.
+ * When your component renders, `useCreateTaskMutation` returns a tuple that includes:
+ * - A mutate function that you can call at any time to execute the mutation
+ * - An object with fields that represent the current status of the mutation's execution
+ *
+ * @param baseOptions options that will be passed into the mutation, supported options are listed on: https://www.apollographql.com/docs/react/api/react-hooks/#options-2;
+ *
+ * @example
+ * const [createTaskMutation, { data, loading, error }] = useCreateTaskMutation({
+ *   variables: {
+ *      input: // value for 'input'
+ *   },
+ * });
+ */
+export function useCreateTaskMutation(baseOptions?: Apollo.MutationHookOptions<CreateTaskMutation, CreateTaskMutationVariables>) {
+        const options = {...defaultOptions, ...baseOptions}
+        return Apollo.useMutation<CreateTaskMutation, CreateTaskMutationVariables>(CreateTaskDocument, options);
+      }
+export type CreateTaskMutationHookResult = ReturnType<typeof useCreateTaskMutation>;
+export type CreateTaskMutationResult = Apollo.MutationResult<CreateTaskMutation>;
+export type CreateTaskMutationOptions = Apollo.BaseMutationOptions<CreateTaskMutation, CreateTaskMutationVariables>;
+export const UpdateTaskDocument = gql`
+    mutation UpdateTask($id: Int!, $input: UpdateTaskInput!) {
+  updateTask(id: $id, input: $input) {
+    id
+    title
+    status
+    priority
+    dueDate
+    tags
+    updatedAt
+  }
+}
+    `;
+export type UpdateTaskMutationFn = Apollo.MutationFunction<UpdateTaskMutation, UpdateTaskMutationVariables>;
+
+/**
+ * __useUpdateTaskMutation__
+ *
+ * To run a mutation, you first call `useUpdateTaskMutation` within a React component and pass it any options that fit your needs.
+ * When your component renders, `useUpdateTaskMutation` returns a tuple that includes:
+ * - A mutate function that you can call at any time to execute the mutation
+ * - An object with fields that represent the current status of the mutation's execution
+ *
+ * @param baseOptions options that will be passed into the mutation, supported options are listed on: https://www.apollographql.com/docs/react/api/react-hooks/#options-2;
+ *
+ * @example
+ * const [updateTaskMutation, { data, loading, error }] = useUpdateTaskMutation({
+ *   variables: {
+ *      id: // value for 'id'
+ *      input: // value for 'input'
+ *   },
+ * });
+ */
+export function useUpdateTaskMutation(baseOptions?: Apollo.MutationHookOptions<UpdateTaskMutation, UpdateTaskMutationVariables>) {
+        const options = {...defaultOptions, ...baseOptions}
+        return Apollo.useMutation<UpdateTaskMutation, UpdateTaskMutationVariables>(UpdateTaskDocument, options);
+      }
+export type UpdateTaskMutationHookResult = ReturnType<typeof useUpdateTaskMutation>;
+export type UpdateTaskMutationResult = Apollo.MutationResult<UpdateTaskMutation>;
+export type UpdateTaskMutationOptions = Apollo.BaseMutationOptions<UpdateTaskMutation, UpdateTaskMutationVariables>;
+export const CompleteTaskDocument = gql`
+    mutation CompleteTask($id: Int!) {
+  completeTask(id: $id) {
+    id
+    status
+    completedAt
+  }
+}
+    `;
+export type CompleteTaskMutationFn = Apollo.MutationFunction<CompleteTaskMutation, CompleteTaskMutationVariables>;
+
+/**
+ * __useCompleteTaskMutation__
+ *
+ * To run a mutation, you first call `useCompleteTaskMutation` within a React component and pass it any options that fit your needs.
+ * When your component renders, `useCompleteTaskMutation` returns a tuple that includes:
+ * - A mutate function that you can call at any time to execute the mutation
+ * - An object with fields that represent the current status of the mutation's execution
+ *
+ * @param baseOptions options that will be passed into the mutation, supported options are listed on: https://www.apollographql.com/docs/react/api/react-hooks/#options-2;
+ *
+ * @example
+ * const [completeTaskMutation, { data, loading, error }] = useCompleteTaskMutation({
+ *   variables: {
+ *      id: // value for 'id'
+ *   },
+ * });
+ */
+export function useCompleteTaskMutation(baseOptions?: Apollo.MutationHookOptions<CompleteTaskMutation, CompleteTaskMutationVariables>) {
+        const options = {...defaultOptions, ...baseOptions}
+        return Apollo.useMutation<CompleteTaskMutation, CompleteTaskMutationVariables>(CompleteTaskDocument, options);
+      }
+export type CompleteTaskMutationHookResult = ReturnType<typeof useCompleteTaskMutation>;
+export type CompleteTaskMutationResult = Apollo.MutationResult<CompleteTaskMutation>;
+export type CompleteTaskMutationOptions = Apollo.BaseMutationOptions<CompleteTaskMutation, CompleteTaskMutationVariables>;
+export const DeleteTaskDocument = gql`
+    mutation DeleteTask($id: Int!) {
+  deleteTask(id: $id) {
+    success
+    message
+  }
+}
+    `;
+export type DeleteTaskMutationFn = Apollo.MutationFunction<DeleteTaskMutation, DeleteTaskMutationVariables>;
+
+/**
+ * __useDeleteTaskMutation__
+ *
+ * To run a mutation, you first call `useDeleteTaskMutation` within a React component and pass it any options that fit your needs.
+ * When your component renders, `useDeleteTaskMutation` returns a tuple that includes:
+ * - A mutate function that you can call at any time to execute the mutation
+ * - An object with fields that represent the current status of the mutation's execution
+ *
+ * @param baseOptions options that will be passed into the mutation, supported options are listed on: https://www.apollographql.com/docs/react/api/react-hooks/#options-2;
+ *
+ * @example
+ * const [deleteTaskMutation, { data, loading, error }] = useDeleteTaskMutation({
+ *   variables: {
+ *      id: // value for 'id'
+ *   },
+ * });
+ */
+export function useDeleteTaskMutation(baseOptions?: Apollo.MutationHookOptions<DeleteTaskMutation, DeleteTaskMutationVariables>) {
+        const options = {...defaultOptions, ...baseOptions}
+        return Apollo.useMutation<DeleteTaskMutation, DeleteTaskMutationVariables>(DeleteTaskDocument, options);
+      }
+export type DeleteTaskMutationHookResult = ReturnType<typeof useDeleteTaskMutation>;
+export type DeleteTaskMutationResult = Apollo.MutationResult<DeleteTaskMutation>;
+export type DeleteTaskMutationOptions = Apollo.BaseMutationOptions<DeleteTaskMutation, DeleteTaskMutationVariables>;
 export const GenerateResearchDocument = gql`
     mutation GenerateResearch($goalDescription: String!) {
   generateResearch(goalDescription: $goalDescription) {

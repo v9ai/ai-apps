@@ -85,7 +85,7 @@ class TestRoboflow:
             workplace_type="",
             ashby_is_remote=0,
             ashby_address='{"postalAddress":{}}',
-            description="We are building a diverse Satellite team that is distributed across the globe.",
+            description="We are building a diverse Satellite team that is distributed across the globe. Join us to work on computer vision and AI infrastructure.",
         )
         signals = extract_eu_signals(job)
 
@@ -101,7 +101,7 @@ class TestRoboflow:
             workplace_type="",
             ashby_is_remote=0,
             ashby_address='{"postalAddress":{}}',
-            description="We are building a diverse Satellite team that is distributed across the globe.",
+            description="We are building a diverse Satellite team that is distributed across the globe. Join us to work on computer vision and AI infrastructure.",
         )
         signals = extract_eu_signals(job)
         result = keyword_eu_classify(job, signals)
@@ -322,7 +322,7 @@ class TestDescriptionSignals:
     def test_eu_work_authorization_in_description(self):
         job = _make_job(
             ashby_is_remote=1,
-            description="EU work authorization required for this role.",
+            description="EU work authorization required for this role. You will work on our platform team building scalable distributed systems.",
         )
         signals = extract_eu_signals(job)
         result = keyword_eu_classify(job, signals)
@@ -749,7 +749,7 @@ class TestUSImplicitBlocksAutoAccept:
         job = _make_job(
             ashby_is_remote=1,
             country="",
-            description="$150k salary. Must overlap with EU timezone.",
+            description="$150k salary. Must overlap with EU timezone. You will work on our platform team building scalable distributed systems.",
         )
         signals = extract_eu_signals(job)
         result = keyword_eu_classify(job, signals)

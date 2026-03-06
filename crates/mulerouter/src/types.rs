@@ -280,14 +280,14 @@ mod tests {
         let req = QwenImageMaxRequest {
             prompt: "a blue whale".into(),
             negative_prompt: Some("blurry".into()),
-            size: Some(QwenImageMaxSize::W1024H1024),
+            size: Some(QwenImageMaxSize::W1328H1328),
             prompt_extend: Some(false),
             seed: Some(42),
         };
         let v: serde_json::Value = serde_json::to_value(&req).unwrap();
         assert_eq!(v["prompt"], "a blue whale");
         assert_eq!(v["negative_prompt"], "blurry");
-        assert_eq!(v["size"], "1024*1024");
+        assert_eq!(v["size"], "1328*1328");
         assert_eq!(v["prompt_extend"], false);
         assert_eq!(v["seed"], 42);
     }

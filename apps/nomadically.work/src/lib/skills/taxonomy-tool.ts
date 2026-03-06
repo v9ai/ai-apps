@@ -33,7 +33,10 @@ async function embedText(text: string): Promise<number[]> {
     throw new Error(`Cloudflare API error (${response.status}): ${errorText}`);
   }
 
-  const result = await response.json();
+  const result = (await response.json()) as {
+    success: boolean;
+    result?: { data: number[][] };
+  };
 
   if (!result.success || !result.result?.data?.[0]) {
     throw new Error(

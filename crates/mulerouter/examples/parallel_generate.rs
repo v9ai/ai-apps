@@ -19,7 +19,7 @@ async fn main() {
         .iter()
         .map(|p| QwenImageMaxRequest {
             prompt: p.to_string(),
-            size: Some(QwenImageMaxSize::W1024H1024),
+            size: Some(QwenImageMaxSize::W1328H1328),
             ..Default::default()
         })
         .collect();

@@ -1,0 +1,254 @@
+description: "BS Detector — Fact Checking Evals (FactCheckerAgent)"
+
+# Ground truth covered: DATE-001, PPE-001, CTRL-001, SCAF-001, POST-001, SOL-001
+
+providers:
+  - id: openai:chat:deepseek-chat
+    config:
+      apiBaseUrl: https://api.deepseek.com/v1
+      temperature: 0.1
+      max_tokens: 8192
+
+defaultTest:
+  options:
+    transform: "output.replace(/^```(?:json)?\\s*/m, '').replace(/\\s*```\\s*$/m, '').trim()"
+    provider:
+      id: openai:chat:deepseek-chat
+      config:
+        apiBaseUrl: https://api.deepseek.com/v1
+        temperature: 0.0
+
+prompts:
+  - "file://prompts/fact_checking.txt"
+
+tests:
+
+  - description: "DATE-001 | MSJ says March 14; all other docs say March 12"
+    vars:
+      msj_facts: |
+        This action arises from a workplace incident on March 14, 2021, at a
+        commercial construction site. Rivera did not file his complaint until
+        March 10, 2023 — one year and 362 days after the incident.
+      police_text: |
+        Date of Incident: March 12, 2021
+        On March 12, 2021, at approximately 10:45 AM, officers responded to a
+        report of an industrial accident at 2200 West Olympic Boulevard.
+      medical_text: |
+        DATE OF ADMISSION: March 12, 2021
+        Patient was brought in by LAFD paramedics following a workplace accident
+        occurring at approximately 10:45 AM on March 12, 2021.
+      witness_text: |
+        I provide the following statement regarding the incident that occurred
+        on March 12, 2021. On the morning of March 12, 2021, our crew arrived
+        at the site at approximately 7:00 AM.
+    assert:
+      - type: is-json
+        metric: json/validity
+
+      - type: javascript
+        value: |
+          const r = JSON.parse(output);
+          const facts = r.verified_facts || [];
+          return facts.some(f => {
+            const text = JSON.stringify(f).toLowerCase();
+            return (text.includes('march 14') || text.includes('date')) &&
+                   (f.status === 'contradictory' || f.is_consistent === false);
+          });
+        metric: date001/flags_contradiction
+
+      - type: llm-rubric
+        value: >-
+          The response must identify the date discrepancy: the MSJ states March
+          14, 2021 but the police report, medical records, and witness statement
+          all record March 12, 2021. This should be marked contradictory.
+        metric: date001/semantic_accuracy
+
+  - description: "PPE-001 | MSJ claims no PPE; police + witness confirm Rivera wore full PPE"
+    vars:
+      msj_facts: |
+        Rivera was not wearing required personal protective equipment at the
+        time of the incident, including fall-arrest equipment mandated by site
+        safety protocols.
+      police_text: |
+        Site supervisor Mark Ellison confirmed that Rivera was wearing a hard
+        hat and harness consistent with site requirements at the time of the
+        collapse. The harness lanyard was found still attached to Rivera.
+      medical_text: |
+        36-year-old male presenting following a fall from scaffolding at a
+        construction site. Patient fell approximately 14 feet.
+      witness_text: |
+        Carlos was wearing his hard hat, safety harness, and high-visibility
+        vest, consistent with site PPE requirements.
+    assert:
+      - type: is-json
+        metric: json/validity
+
+      - type: javascript
+        value: |
+          const r = JSON.parse(output);
+          const facts = r.verified_facts || [];
+          return facts.some(f => {
+            const text = JSON.stringify(f).toLowerCase();
+            return (text.includes('ppe') || text.includes('hard hat') ||
+                    text.includes('harness') || text.includes('protective')) &&
+                   (f.status === 'contradictory' || f.is_consistent === false);
+          });
+        metric: ppe001/flags_contradiction
+
+      - type: llm-rubric
+        value: >-
+          The response must flag the contradiction: the MSJ claims Rivera was not
+          wearing PPE, but both the police report and witness statement confirm he
+          was wearing a hard hat, safety harness, and high-visibility vest.
+        metric: ppe001/semantic_accuracy
+
+  - description: "CTRL-001 | MSJ claims no control; Donner directed work and dismissed safety concern"
+    vars:
+      msj_facts: |
+        The independent contractor — not the hirer — controls the manner and
+        method of work performance. Apex Staffing Solutions — not Harmon — was
+        responsible for scaffolding operations and employee safety.
+      police_text: |
+        Ray Donner, the Harmon Construction Group project foreman, stated that
+        he had directed Rivera and his crew to begin work on the east-side
+        scaffolding section earlier that morning. Donner indicated the section
+        needed to be operational by end of day. When asked whether he had
+        inspected the scaffolding before directing the crew, Donner stated,
+        "That's Apex's responsibility. I told them where we needed them working."
+      medical_text: |
+        Patient was working on scaffolding at a commercial construction site
+        when the structure gave way. He fell approximately 14 feet.
+      witness_text: |
+        Ray Donner told us the east-side scaffolding needed to be fully
+        operational by end of day. I mentioned the base plate issue directly
+        to Donner. Donner told me, "We don't have time to re-do the base.
+        It's been fine. Just get up there and get it done."
+    assert:
+      - type: is-json
+        metric: json/validity
+
+      - type: javascript
+        value: |
+          const r = JSON.parse(output);
+          const facts = r.verified_facts || [];
+          return facts.some(f => {
+            const text = JSON.stringify(f).toLowerCase();
+            return (text.includes('control') || text.includes('donner') ||
+                    text.includes('directed') || text.includes('retained')) &&
+                   (f.status === 'contradictory' || f.is_consistent === false);
+          });
+        metric: ctrl001/flags_contradiction
+
+      - type: llm-rubric
+        value: >-
+          The response must identify that the MSJ's claim that the independent
+          contractor controlled the work is contradicted by evidence that
+          Harmon's foreman Ray Donner directed the crew and dismissed safety
+          concerns — strong indicators of retained control.
+        metric: ctrl001/identifies_retained_control
+
+  - description: "SCAF-001 | MSJ silent on scaffold defects; docs document rust, plywood, bent pins"
+    vars:
+      msj_facts: |
+        Harmon maintained an active IIPP and had passed all OSHA inspections.
+        Rivera is a journeyman scaffolder with over eight years of experience.
+        The risks of working at height are inherent to his trade.
+      police_text: |
+        The base plates on the failed section appeared to be resting on uneven
+        ground, with one plate sitting on a loose plywood sheet. Officers
+        observed that portions of the scaffolding showed visible rust and wear.
+        Several cross-braces were found detached on the ground.
+      medical_text: |
+        Patient fell approximately 14 feet when the scaffolding structure he
+        was working on collapsed beneath him.
+      witness_text: |
+        Some of the cross-braces had significant surface rust. The base plate
+        was sitting on a piece of plywood rather than a proper footing. Two
+        coupling pins looked bent or worn. I raised these concerns with Donner.
+        Donner told me, "We don't have time to re-do the base."
+    assert:
+      - type: is-json
+        metric: json/validity
+
+      - type: javascript
+        value: |
+          const text = output.toLowerCase();
+          return text.includes('rust') || text.includes('plywood') ||
+                 text.includes('scaffold') || text.includes('defect') ||
+                 text.includes('omit') || text.includes('condition');
+        metric: scaf001/mentions_defects
+
+      - type: llm-rubric
+        value: >-
+          The response should note that the MSJ omits any mention of scaffolding
+          defects, while the police report and witness statement document visible
+          rust, a plywood base, and bent coupling pins that were reported before
+          the incident.
+        metric: scaf001/identifies_omission
+
+  - description: "POST-001 | Scaffolding rebuilt post-incident — spoliation risk"
+    vars:
+      msj_facts: |
+        Harmon maintained an active IIPP and passed all OSHA inspections.
+        The independent contractor controlled all scaffolding operations.
+      police_text: |
+        Cal/OSHA was notified of the incident. A separate investigation is
+        expected.
+      medical_text: |
+        Patient underwent intramedullary nailing of the left tibial shaft
+        fracture on March 13, 2021.
+      witness_text: |
+        In the days following the incident, I observed that the remaining
+        east-side scaffolding was taken down and rebuilt from scratch with new
+        components. The plywood base was replaced with proper concrete footings.
+    assert:
+      - type: is-json
+        metric: json/validity
+
+      - type: javascript
+        value: |
+          const text = output.toLowerCase();
+          return text.includes('rebuilt') || text.includes('replaced') ||
+                 text.includes('new components') || text.includes('spoliation') ||
+                 text.includes('post-incident') || text.includes('concrete');
+        metric: post001/mentions_rebuild
+
+      - type: llm-rubric
+        value: >-
+          The response should flag that the witness statement reveals the
+          scaffolding was rebuilt from scratch after the incident, replacing the
+          plywood base with concrete footings. This is potential spoliation of
+          evidence not disclosed in the MSJ.
+        metric: post001/flags_spoliation
+
+  - description: "SOL-001 | Statute calc uses wrong date — 362 days based on March 14 not March 12"
+    vars:
+      msj_facts: |
+        The incident occurred on March 14, 2021. Rivera filed on March 10, 2023
+        — one year and 362 days after the incident. Under CCP Section 335.1,
+        the statute of limitations for personal injury is two years.
+      police_text: |
+        Date of Incident: March 12, 2021. Report prepared: March 12, 2021.
+      medical_text: |
+        DATE OF ADMISSION: March 12, 2021.
+      witness_text: |
+        I provide this statement regarding the incident on March 12, 2021.
+    assert:
+      - type: is-json
+        metric: json/validity
+
+      - type: javascript
+        value: |
+          const text = output.toLowerCase();
+          return text.includes('362') || text.includes('date') ||
+                 text.includes('statute') || text.includes('calculation') ||
+                 text.includes('limitations');
+        metric: sol001/mentions_calculation
+
+      - type: llm-rubric
+        value: >-
+          The response should identify that the statute of limitations
+          calculation uses the incorrect date of March 14, 2021. Using the
+          correct date of March 12 (from police report and medical records),
+          the elapsed time differs, making the "362 days" figure inaccurate.
+        metric: sol001/flags_wrong_calculation

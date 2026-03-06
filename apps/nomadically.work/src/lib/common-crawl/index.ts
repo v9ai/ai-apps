@@ -4,12 +4,12 @@ const SYSTEM_ROUTES = new Set(["api", "static", "favicon.ico", "robots.txt", "si
 
 export async function discoverAshbyBoards(): Promise<Set<string>> {
   // 1. Get latest index
-  const indexes = await fetch(`${CDX_API}/collinfo.json`).then((r) => r.json());
+  const indexes = (await fetch(`${CDX_API}/collinfo.json`).then((r) => r.json())) as Array<{ id: string }>;
   const crawlId = indexes[0]?.id ?? "CC-MAIN-2025-52";
 
   // 2. Get page count
   const countUrl = `${CDX_API}/${crawlId}-index?url=${encodeURIComponent(ASHBY_DOMAIN)}&output=json&showNumPages=true`;
-  const { pages } = await fetch(countUrl).then((r) => r.json());
+  const { pages } = (await fetch(countUrl).then((r) => r.json())) as { pages: number };
 
   // 3. Paginate CDX API
   const slugs = new Set<string>();

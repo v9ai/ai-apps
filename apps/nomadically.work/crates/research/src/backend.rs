@@ -7,7 +7,7 @@ use crate::app_context::AppContext;
 use crate::d1::D1Client;
 use crate::team::{shutdown_pair, Mailbox, TaskQueue, TeamLead};
 use anyhow::{Context, Result};
-use research::agent::Client;
+use research::agent::agent_builder;
 use research::scholar::SemanticScholarClient;
 use research::tools::{GetPaperDetail, SearchPapers};
 use serde::{Deserialize, Serialize};
@@ -368,9 +368,7 @@ async fn run_section_agent(
             def.title,
         );
 
-        let client = Client::new(api_key);
-        let agent = client
-            .agent("deepseek-chat")
+        let agent = agent_builder(api_key, "deepseek-chat")
             .preamble(&system_scholar)
             .tool(SearchPapers::new(scholar.clone()))
             .tool(GetPaperDetail::new(scholar.clone()))

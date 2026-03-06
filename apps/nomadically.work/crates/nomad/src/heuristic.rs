@@ -1,6 +1,9 @@
 use regex::Regex;
 
-use crate::constants::{normalize_text_for_signals, AGGREGATOR_SOURCE_KINDS};
+use crate::constants::{
+    normalize_text_for_signals, AGGREGATOR_SOURCE_KINDS, NON_EU_JD_PATTERN,
+    NON_EU_LOCATION_PATTERN,
+};
 use crate::{Confidence, JobClassification, JobRow, SignalSet};
 
 /// Tier 0: Deterministic keyword heuristic for EU remote classification.
@@ -90,10 +93,21 @@ pub fn keyword_eu_classify(job: &JobRow, signals: &SignalSet) -> Option<JobClass
         return None;
     }
 
+    // Pre-screen: check location string and JD intro for non-EU regional signals.
+    let location_raw = job.get_str("location");
+    let desc_raw = job.get_str("description");
+    let has_non_eu_location = NON_EU_LOCATION_PATTERN.is_match(location_raw);
+    let has_hybrid_location = location.contains("hybrid");
+    let has_non_eu_jd = NON_EU_JD_PATTERN.is_match(&desc_raw[..desc_raw.len().min(500)]);
+
     // Worldwide remote: ATS remote flag + no country code + no negative signals
     if signals.ats_remote && signals.country_code.is_none() {
         if is_aggregator {
             return None; // Aggregator worldwide jobs need LLM review
+        }
+        // Non-EU location or JD signals → escalate to LLM
+        if has_non_eu_location || has_hybrid_location || has_non_eu_jd {
+            return None;
         }
         let company_key = job.get_str("company_key");
         if !company_key.is_empty() {
@@ -124,6 +138,10 @@ pub fn keyword_eu_classify(job: &JobRow, signals: &SignalSet) -> Option<JobClass
         )
         .unwrap();
         if let Some(m) = explicit_re.find(&desc_lower) {
+            // Don't auto-accept if JD/location contradicts worldwide claim
+            if has_non_eu_location || has_non_eu_jd {
+                return None; // Escalate to LLM
+            }
             let cc = signals.country_code.as_deref().unwrap_or("??");
             return Some(JobClassification {
                 is_remote_eu: true,
@@ -245,5 +263,108 @@ mod tests {
         let result = keyword_eu_classify(&job, &signals).unwrap();
         assert!(result.is_remote_eu);
         assert_eq!(result.confidence, Confidence::Medium);
+    }
+
+    // =====================================================================
+    // Audit false positive regressions
+    // =====================================================================
+
+    #[test]
+    fn nyc_hybrid_escalates() {
+        let mut job = make_job(
+            "Engineer",
+            "NYC (Hybrid)",
+            "We are a fully remote company building developer tools. Join our distributed engineering team and work on cutting-edge problems.",
+        );
+        job.ashby_is_remote = Some(serde_json::Value::Bool(true));
+        let signals = crate::signals::extract_eu_signals(&job);
+        let result = keyword_eu_classify(&job, &signals);
+        assert!(result.is_none());
+    }
+
+    #[test]
+    fn canada_remote_escalates() {
+        let mut job = make_job(
+            "Engineer",
+            "Canada (Remote)",
+            "Join our team building great products for the Canadian market.",
+        );
+        job.ashby_is_remote = Some(serde_json::Value::Bool(true));
+        let signals = crate::signals::extract_eu_signals(&job);
+        assert_eq!(signals.country_code, Some("CA".to_string()));
+        let result = keyword_eu_classify(&job, &signals);
+        assert!(result.is_none());
+    }
+
+    #[test]
+    fn remote_denver_escalates() {
+        let mut job = make_job(
+            "Engineer",
+            "Remote - Denver",
+            "We are a fully remote company building developer tools. Join our distributed engineering team and work on cutting-edge problems.",
+        );
+        job.ashby_is_remote = Some(serde_json::Value::Bool(true));
+        let signals = crate::signals::extract_eu_signals(&job);
+        let result = keyword_eu_classify(&job, &signals);
+        assert!(result.is_none());
+    }
+
+    #[test]
+    fn remote_us_escalates() {
+        let mut job = make_job(
+            "Engineer",
+            "Remote - US",
+            "Join our team building great products.",
+        );
+        job.ashby_is_remote = Some(serde_json::Value::Bool(true));
+        let signals = crate::signals::extract_eu_signals(&job);
+        assert_eq!(signals.country_code, Some("US".to_string()));
+        let result = keyword_eu_classify(&job, &signals);
+        assert!(result.is_none());
+    }
+
+    #[test]
+    fn colombia_latam_staffing_escalates() {
+        let mut job = make_job(
+            "Engineer",
+            "Remote",
+            "We connect LATAM talent to help scale U.S. startups. Work from anywhere in Latin America.",
+        );
+        job.country = Some("Colombia".to_string());
+        job.ashby_is_remote = Some(serde_json::Value::Bool(true));
+        let signals = crate::signals::extract_eu_signals(&job);
+        assert_eq!(signals.country_code, Some("CO".to_string()));
+        let result = keyword_eu_classify(&job, &signals);
+        assert!(result.is_none());
+    }
+
+    #[test]
+    fn panama_nearshore_escalates() {
+        let mut job = make_job(
+            "Engineer",
+            "Remote",
+            "Nearshore staff augmentation for US tech companies. Work from anywhere in Central America.",
+        );
+        job.country = Some("Panama".to_string());
+        job.ashby_is_remote = Some(serde_json::Value::Bool(true));
+        let signals = crate::signals::extract_eu_signals(&job);
+        assert_eq!(signals.country_code, Some("PA".to_string()));
+        let result = keyword_eu_classify(&job, &signals);
+        assert!(result.is_none());
+    }
+
+    #[test]
+    fn india_work_from_anywhere_with_india_jd_escalates() {
+        let mut job = make_job(
+            "Engineer",
+            "Remote",
+            "India-based engineering team. Work from anywhere within India. Flexible hours and great benefits for our Bangalore office.",
+        );
+        job.country = Some("India".to_string());
+        job.ashby_is_remote = Some(serde_json::Value::Bool(true));
+        let signals = crate::signals::extract_eu_signals(&job);
+        assert_eq!(signals.country_code, Some("IN".to_string()));
+        let result = keyword_eu_classify(&job, &signals);
+        assert!(result.is_none());
     }
 }

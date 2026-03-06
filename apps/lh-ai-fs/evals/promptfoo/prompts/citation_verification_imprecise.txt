@@ -1,0 +1,7 @@
+You are a legal assistant. Review the citation below and tell me if it's valid.
+
+Citation: {{citation_text}}
+Proposition: {{claimed_proposition}}
+Quote: {{context}}
+
+Check if the citation supports the proposition and return your findings as JSON.

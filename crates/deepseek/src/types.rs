@@ -3,13 +3,14 @@ use serde::{Deserialize, Serialize};
 // ── DeepSeek Models ───────────────────────────────────────────────────────
 
 /// DeepSeek model identifiers — parity with Anthropic's multi-model routing
-#[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]
+#[derive(Debug, Clone, Default, Serialize, Deserialize, PartialEq)]
 pub enum DeepSeekModel {
     /// DeepSeek-R1 — Reasoning model (equivalent to Opus for deep thinking)
     #[serde(rename = "deepseek-reasoner")]
     Reasoner,
     /// DeepSeek-V3 — Fast chat model (equivalent to Sonnet for speed)
     #[serde(rename = "deepseek-chat")]
+    #[default]
     Chat,
 }
 
@@ -28,10 +29,6 @@ impl DeepSeekModel {
             _ => Self::Chat,
         }
     }
-}
-
-impl Default for DeepSeekModel {
-    fn default() -> Self { Self::Chat }
 }
 
 // ── DeepSeek API Types (OpenAI-compatible) ────────────────────────────────
@@ -183,10 +180,11 @@ pub struct AgentDefinition {
 
 // ── Effort Level (parity with Anthropic adaptive thinking) ────────────────
 
-#[derive(Debug, Clone, Serialize, Deserialize)]
+#[derive(Debug, Clone, Default, Serialize, Deserialize)]
 pub enum EffortLevel {
     Low,
     Medium,
+    #[default]
     High,
     Max,
 }
@@ -211,10 +209,6 @@ impl EffortLevel {
             Self::Max => 16384,
         }
     }
-}
-
-impl Default for EffortLevel {
-    fn default() -> Self { Self::High }
 }
 
 // ── Message constructors ──────────────────────────────────────────────────

@@ -1,0 +1,213 @@
+description: "BS Detector — Legal Brief Verification Pipeline Evaluation"
+
+providers:
+  - id: python:evals/provider.py
+    label: bs-detector-pipeline
+
+prompts:
+  - "Analyze the Rivera v. Harmon Construction Group MSJ for legal citation accuracy and factual consistency"
+
+defaultTest:
+  options:
+    transformVars: ""
+
+tests:
+  # ═══════════════════════════════════════════════════════════════════
+  # STRUCTURAL CHECKS — verify the pipeline produces valid output
+  # ═══════════════════════════════════════════════════════════════════
+  - description: "S-01: Report contains required top-level fields"
+    assert:
+      - type: javascript
+        value: "output.report && output.report.motion_id && output.report.verified_citations !== undefined && output.report.verified_facts !== undefined && output.report.top_findings !== undefined && output.report.confidence_scores !== undefined"
+
+  - description: "S-01b: Motion ID matches expected value"
+    assert:
+      - type: javascript
+        value: "output.report.motion_id === 'Rivera_v_Harmon_MSJ'"
+
+  - description: "S-02: Extracted at least 3 citations"
+    assert:
+      - type: javascript
+        value: "(output.report.verified_citations || []).length >= 3"
+
+  - description: "S-03: Identified at least 3 factual claims"
+    assert:
+      - type: javascript
+        value: "(output.report.verified_facts || []).length >= 3"
+
+  - description: "S-04: Top findings array is populated"
+    assert:
+      - type: javascript
+        value: "(output.report.top_findings || []).length >= 1"
+
+  - description: "S-05: Confidence scores are valid numbers between 0 and 1"
+    assert:
+      - type: javascript
+        value: "output.report.confidence_scores && typeof output.report.confidence_scores.citation_verification === 'number' && output.report.confidence_scores.citation_verification >= 0 && output.report.confidence_scores.citation_verification <= 1 && output.report.confidence_scores.overall >= 0 && output.report.confidence_scores.overall <= 1"
+
+  - description: "S-06: Judicial memo is present and non-empty"
+    assert:
+      - type: javascript
+        value: "(typeof output.report.judicial_memo === 'string' ? output.report.judicial_memo.length > 50 : (output.report.judicial_memo && output.report.judicial_memo.memo ? output.report.judicial_memo.memo.length > 50 : false))"
+
+  - description: "S-07: Metadata includes 4 documents analyzed"
+    assert:
+      - type: javascript
+        value: "output.report.metadata && output.report.metadata.documents_analyzed && output.report.metadata.documents_analyzed.length === 4"
+
+  # ═══════════════════════════════════════════════════════════════════
+  # DISCREPANCY DETECTION — the 8 known planted errors
+  # ═══════════════════════════════════════════════════════════════════
+  # Helper: _tf = top_findings descriptions, _vf = verified_facts (contradictory/partial/could_not_verify),
+  #         _vc = verified_citations (not_supported/misleading/could_not_verify)
+  # Each D-test checks these structural locations instead of the full JSON blob.
+
+  - description: "D-01 DATE: March 14 vs March 12 date discrepancy"
+    assert:
+      - type: javascript
+        value: >
+          (() => {
+            const tf = (output.report.top_findings || []).map(f => (f.description || '').toLowerCase());
+            const vf = (output.report.verified_facts || []).filter(f => ['contradictory','partial','could_not_verify'].includes(f.status)).map(f => ((f.summary || '') + ' ' + ((f.fact || {}).fact_text || '')).toLowerCase());
+            const all = tf.concat(vf);
+            return all.some(t => t.includes('march 12') || t.includes('march 14') || t.includes('date discrepancy'));
+          })()
+        weight: 2
+
+  - description: "D-02 PPE: Rivera was wearing harness (MSJ falsely claims no PPE)"
+    assert:
+      - type: javascript
+        value: >
+          (() => {
+            const tf = (output.report.top_findings || []).map(f => (f.description || '').toLowerCase());
+            const vf = (output.report.verified_facts || []).filter(f => ['contradictory','partial','could_not_verify'].includes(f.status)).map(f => ((f.summary || '') + ' ' + ((f.fact || {}).fact_text || '')).toLowerCase());
+            const all = tf.concat(vf);
+            return all.some(t => (t.includes('harness') || t.includes('hard hat') || t.includes('ppe')) && (t.includes('contradict') || t.includes('wearing') || t.includes('false')));
+          })()
+        weight: 2
+
+  - description: "D-03 PRIVETTE: Misquotation — 'never' not in actual holding"
+    assert:
+      - type: javascript
+        value: >
+          (() => {
+            const tf = (output.report.top_findings || []).map(f => (f.description || '').toLowerCase());
+            const vc = (output.report.verified_citations || []).filter(c => ['not_supported','misleading','could_not_verify'].includes(c.status)).map(c => ((c.notes || '') + ' ' + (c.discrepancies || []).join(' ')).toLowerCase());
+            const all = tf.concat(vc);
+            return all.some(t => t.includes('privette') && (t.includes('never') || t.includes('presumpt') || t.includes('misquot')));
+          })()
+        weight: 2
+
+  - description: "D-04 SOL: Statute of limitations calculation uses wrong date"
+    assert:
+      - type: javascript
+        value: >
+          (() => {
+            const tf = (output.report.top_findings || []).map(f => (f.description || '').toLowerCase());
+            const vf = (output.report.verified_facts || []).filter(f => ['contradictory','partial','could_not_verify'].includes(f.status)).map(f => ((f.summary || '') + ' ' + ((f.fact || {}).fact_text || '')).toLowerCase());
+            const all = tf.concat(vf);
+            return all.some(t => t.includes('362') || t.includes('statute') || t.includes('limitation'));
+          })()
+        weight: 1
+
+  - description: "D-05 CTRL: Harmon retained control — Donner directed work"
+    assert:
+      - type: javascript
+        value: >
+          (() => {
+            const tf = (output.report.top_findings || []).map(f => (f.description || '').toLowerCase());
+            const vf = (output.report.verified_facts || []).filter(f => ['contradictory','partial','could_not_verify'].includes(f.status)).map(f => ((f.summary || '') + ' ' + ((f.fact || {}).fact_text || '')).toLowerCase());
+            const all = tf.concat(vf);
+            return all.some(t => (t.includes('donner') || t.includes('control') || t.includes('directed')) && (t.includes('harmon') || t.includes('foreman')));
+          })()
+        weight: 2
+
+  - description: "D-06 JURISDICTION: Non-binding Texas/Florida citations"
+    assert:
+      - type: javascript
+        value: >
+          (() => {
+            const tf = (output.report.top_findings || []).map(f => (f.description || '').toLowerCase());
+            const vc = (output.report.verified_citations || []).filter(c => ['not_supported','misleading','could_not_verify'].includes(c.status)).map(c => ((c.notes || '') + ' ' + (c.discrepancies || []).join(' ')).toLowerCase());
+            const all = tf.concat(vc);
+            return all.some(t => (t.includes('dixon') || t.includes('okafor') || t.includes('texas') || t.includes('florida')) && (t.includes('jurisdiction') || t.includes('binding') || t.includes('persuasive')));
+          })()
+        weight: 1
+
+  - description: "D-07 SCAFFOLDING: Condition omission — rust/plywood documented"
+    assert:
+      - type: javascript
+        value: >
+          (() => {
+            const tf = (output.report.top_findings || []).map(f => (f.description || '').toLowerCase());
+            const vf = (output.report.verified_facts || []).filter(f => ['contradictory','partial','could_not_verify'].includes(f.status)).map(f => ((f.summary || '') + ' ' + ((f.fact || {}).fact_text || '')).toLowerCase());
+            const all = tf.concat(vf);
+            return all.some(t => t.includes('rust') || t.includes('plywood') || t.includes('scaffolding condition'));
+          })()
+        weight: 1
+
+  - description: "D-08 SPOLIATION: Post-incident scaffolding rebuild"
+    assert:
+      - type: javascript
+        value: >
+          (() => {
+            const tf = (output.report.top_findings || []).map(f => (f.description || '').toLowerCase());
+            const vf = (output.report.verified_facts || []).filter(f => ['contradictory','partial','could_not_verify'].includes(f.status)).map(f => ((f.summary || '') + ' ' + ((f.fact || {}).fact_text || '')).toLowerCase());
+            const all = tf.concat(vf);
+            return all.some(t => t.includes('rebuilt') || t.includes('new components') || t.includes('replaced') || t.includes('spoliation'));
+          })()
+        weight: 1
+
+  # ═══════════════════════════════════════════════════════════════════
+  # QUALITY CHECKS — no hallucinations, proper uncertainty
+  # ═══════════════════════════════════════════════════════════════════
+  - description: "Q-01: No fabricated case names in citations"
+    assert:
+      - type: javascript
+        value: "!JSON.stringify(output.report.verified_citations || []).toLowerCase().includes('smith v. jones scaffolding') && !JSON.stringify(output.report.verified_citations || []).toLowerCase().includes('garcia v. acme construction') && !JSON.stringify(output.report.verified_citations || []).toLowerCase().includes('wilson v. buildright')"
+
+  - description: "Q-02: At least one finding has confidence >= 0.8"
+    assert:
+      - type: javascript
+        value: "(output.report.top_findings || []).some(f => f.confidence >= 0.8)"
+
+  - description: "Q-03: At least one verified fact marked contradictory"
+    assert:
+      - type: javascript
+        value: "(output.report.verified_facts || []).some(f => f.status === 'contradictory')"
+
+  - description: "Q-04: At least one citation marked not_supported or misleading"
+    assert:
+      - type: javascript
+        value: "(output.report.verified_citations || []).some(c => c.status === 'not_supported' || c.status === 'misleading')"
+
+  - description: "Q-05: Evidence grounding — each top finding references text from source documents"
+    assert:
+      - type: javascript
+        value: >
+          (() => {
+            const findings = output.report.top_findings || [];
+            if (findings.length === 0) return false;
+            const grounded = findings.filter(f => {
+              const evidence = f.evidence || f.supporting_evidence || [];
+              const evidenceArr = Array.isArray(evidence) ? evidence : [evidence];
+              return evidenceArr.length > 0 && evidenceArr.some(e => typeof e === 'string' ? e.trim().length > 10 : (e && (e.text || e.quote || e.source || '').length > 10));
+            });
+            return grounded.length / findings.length >= 0.5;
+          })()
+
+  # ═══════════════════════════════════════════════════════════════════
+  # NEGATIVE TEST — clean document, expect zero or near-zero findings
+  # ═══════════════════════════════════════════════════════════════════
+  - description: "N-01 PRECISION: Clean, consistent documents produce zero or near-zero findings"
+    vars:
+      mode: clean
+    assert:
+      - type: javascript
+        value: >
+          (() => {
+            const findings = output.report.top_findings || [];
+            const contradictory = (output.report.verified_facts || []).filter(f => f.status === 'contradictory');
+            const badCitations = (output.report.verified_citations || []).filter(c => c.status === 'not_supported' || c.status === 'misleading');
+            return findings.length <= 1 && contradictory.length === 0 && badCitations.length === 0;
+          })()

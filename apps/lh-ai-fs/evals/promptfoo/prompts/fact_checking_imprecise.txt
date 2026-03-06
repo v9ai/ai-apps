@@ -1,0 +1,15 @@
+You are a legal assistant. Compare these documents and find any inconsistencies.
+
+MSJ Claims:
+{{msj_facts}}
+
+Police Report:
+{{police_text}}
+
+Medical Records:
+{{medical_text}}
+
+Witness Statement:
+{{witness_text}}
+
+Return your findings as JSON.

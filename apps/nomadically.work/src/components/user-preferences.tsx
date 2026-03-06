@@ -218,7 +218,7 @@ export function UserPreferences() {
 
             <Box>
               <Box mb="4">
-                <Text as="label" size="2" weight="bold" mb="2" display="block">
+                <Text as="label" size="2" weight="bold" mb="2" style={{ display: "block" }}>
                   locations
                 </Text>
                 <Flex gap="2" mb="2">
@@ -263,7 +263,7 @@ export function UserPreferences() {
               </Box>
 
               <Box mb="4">
-                <Text as="label" size="2" weight="bold" mb="2" display="block">
+                <Text as="label" size="2" weight="bold" mb="2" style={{ display: "block" }}>
                   skills
                 </Text>
                 <Flex gap="2" mb="2">

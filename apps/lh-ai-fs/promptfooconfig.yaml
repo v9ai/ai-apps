@@ -1,0 +1,132 @@
+description: "BS Detector — Citation Verification Evals (CitationVerifierAgent)"
+
+# Ground truth covered: CIT-001, CIT-002 (4 tests, plus 1 precision/false-positive check)
+
+providers:
+  - id: openai:chat:deepseek-chat
+    config:
+      apiBaseUrl: https://api.deepseek.com/v1
+      temperature: 0.1
+
+defaultTest:
+  options:
+    # Strip markdown code fences DeepSeek wraps around JSON
+    transform: "output.replace(/^```(?:json)?\\s*/m, '').replace(/\\s*```\\s*$/m, '').trim()"
+    provider:
+      id: openai:chat:deepseek-chat
+      config:
+        apiBaseUrl: https://api.deepseek.com/v1
+        temperature: 0.0
+
+prompts:
+  - "file://evals/promptfoo/prompts/citation_verification.txt"
+
+tests:
+
+  - description: "CIT-001 | Privette 'never liable' — word never not in actual holding"
+    vars:
+      citation_text: "Privette v. Superior Court, 5 Cal.4th 689, 702 (1993)"
+      claimed_proposition: >-
+        A hirer is never liable for injuries sustained by an independent
+        contractor's employees when the injuries arise from the contracted work
+      context: >-
+        As the Supreme Court held, "A hirer is never liable for injuries
+        sustained by an independent contractor's employees when the injuries
+        arise from the contracted work." Id. at 702.
+    assert:
+      - type: is-json
+        metric: json/validity
+
+      - type: javascript
+        value: |
+          const r = JSON.parse(output);
+          return ['misleading', 'not_supported'].includes(r.status);
+        metric: cit001/correct_status
+
+      - type: javascript
+        value: |
+          const r = JSON.parse(output);
+          const text = JSON.stringify(r).toLowerCase();
+          return text.includes('never') && r.status !== 'supported';
+        metric: cit001/flags_never_keyword
+
+      - type: llm-rubric
+        value: >-
+          The response must identify that the word "never" does not appear in the
+          actual Privette v. Superior Court holding. The real holding creates a
+          rebuttable presumption of non-liability, not absolute immunity.
+          The response should mark this as misleading or not_supported.
+        metric: cit001/semantic_accuracy
+
+  - description: "CIT-002a | Dixon v. Lone Star (TX) — non-binding in California"
+    vars:
+      citation_text: "Dixon v. Lone Star Structural, LLC, 387 S.W.3d 154 (Tex. App. 2012)"
+      claimed_proposition: "Supports hirer non-liability under independent contractor doctrine"
+      context: "See also Dixon v. Lone Star Structural, LLC, 387 S.W.3d 154 (Tex. App. 2012)"
+    assert:
+      - type: is-json
+        metric: json/validity
+
+      - type: javascript
+        value: |
+          const text = output.toLowerCase();
+          return text.includes('texas') || text.includes('jurisdiction') ||
+                 text.includes('not binding') || text.includes('non-binding') ||
+                 text.includes('persuasive');
+        metric: cit002a/flags_jurisdiction
+
+      - type: llm-rubric
+        value: >-
+          The response must flag that Dixon v. Lone Star is a Texas Court of
+          Appeals decision and carries no binding authority in California state
+          court. It may note the citation is at best persuasive.
+        metric: cit002a/jurisdiction_reasoning
+
+  - description: "CIT-002b | Okafor v. Brightline (FL) — non-binding in California"
+    vars:
+      citation_text: "Okafor v. Brightline Builders, Inc., 291 So.3d 614 (Fla. Dist. Ct. App. 2019)"
+      claimed_proposition: "Supports hirer non-liability under independent contractor doctrine"
+      context: "Okafor v. Brightline Builders, Inc., 291 So.3d 614 (Fla. Dist. Ct. App. 2019)"
+    assert:
+      - type: is-json
+        metric: json/validity
+
+      - type: javascript
+        value: |
+          const text = output.toLowerCase();
+          return text.includes('florida') || text.includes('jurisdiction') ||
+                 text.includes('not binding') || text.includes('non-binding') ||
+                 text.includes('persuasive');
+        metric: cit002b/flags_jurisdiction
+
+      - type: llm-rubric
+        value: >-
+          The response must flag that Okafor v. Brightline is a Florida District
+          Court of Appeal decision and is not binding authority in California.
+        metric: cit002b/jurisdiction_reasoning
+
+  - description: "PRECISION | Valid Privette presumption claim — must NOT be flagged"
+    vars:
+      citation_text: "Privette v. Superior Court, 5 Cal.4th 689, 695 (1993)"
+      claimed_proposition: >-
+        Under California law, a hirer of an independent contractor is
+        presumptively not liable for injuries sustained by the contractor's
+        employees while performing the contracted work
+      context: >-
+        Under California law, a hirer of an independent contractor is
+        presumptively not liable for injuries sustained by the contractor's
+        employees. Privette v. Superior Court, 5 Cal.4th 689, 695 (1993).
+    assert:
+      - type: is-json
+        metric: json/validity
+
+      - type: javascript
+        value: "JSON.parse(output).status === 'supported'"
+        metric: precision/not_false_flagged
+
+      - type: llm-rubric
+        value: >-
+          This accurately cites Privette's rebuttable presumption of
+          non-liability. The response should mark this as SUPPORTED and must
+          NOT flag it as misleading.
+        metric: precision/correct_no_flag

@@ -439,6 +439,58 @@ nav a:hover {
   }
 }
 
+/* ---------- collapsible sections (CSS grid transition) ---------- */
+.collapsible-body {
+  display: grid;
+  grid-template-rows: 0fr;
+  transition: grid-template-rows 0.25s ease;
+}
+.collapsible-body.collapsible-open {
+  grid-template-rows: 1fr;
+}
+.collapsible-inner {
+  overflow: hidden;
+}
+
+/* ---------- sticky coding TOC ---------- */
+.coding-toc {
+  position: sticky;
+  top: 0;
+  z-index: 10;
+  background: var(--gray-2);
+  padding: 8px 0;
+  margin: 0 -12px;
+  padding-left: 12px;
+  padding-right: 12px;
+}
+
+/* ---------- backend topic badge hover ---------- */
+.backend-topic-badge {
+  transition: transform 0.15s;
+}
+.backend-topic-badge:hover {
+  transform: scale(1.05);
+}
+
+/* ---------- mobile scrollable tabs ---------- */
+@media (max-width: 640px) {
+  .rt-TabsList {
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+    scrollbar-width: none;
+    flex-wrap: nowrap !important;
+    scroll-snap-type: x mandatory;
+  }
+  .rt-TabsList::-webkit-scrollbar {
+    display: none;
+  }
+  .rt-TabsTrigger {
+    flex-shrink: 0;
+    white-space: nowrap;
+    scroll-snap-align: start;
+  }
+}
+
 @keyframes toolbar-enter {
   from {
     opacity: 0;
@@ -458,4 +510,112 @@ nav a:hover {
 @keyframes toolbar-spin {
   from { transform: rotate(0deg); }
   to { transform: rotate(360deg); }
+}
+
+/* ---------- tab content fade-in ---------- */
+.rt-TabsContent {
+  animation: tab-fade-in 0.2s ease;
+}
+
+@keyframes tab-fade-in {
+  from {
+    opacity: 0;
+    transform: translateY(4px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* ---------- keyboard shortcut hints on tabs ---------- */
+.tab-shortcut-hint {
+  display: none;
+  font-size: 10px;
+  line-height: 1;
+  color: var(--gray-9);
+  margin-top: 2px;
+}
+
+@media (min-width: 641px) {
+  .tab-shortcut-hint {
+    display: block;
+  }
+}
+
+/* ---------- interactive card hover lift ---------- */
+.rt-Card[style*="cursor: pointer"]:hover,
+.rt-Card:has(a):hover {
+  transform: translateY(-1px);
+  transition: transform 0.15s ease;
+}
+
+/* ---------- focus-visible styles ---------- */
+.rt-Button:focus-visible,
+.rt-Badge:focus-visible,
+[role="button"]:focus-visible {
+  outline: 2px solid var(--accent-9) !important;
+  outline-offset: 2px;
+}
+
+/* ---------- text selection color ---------- */
+::selection {
+  background: var(--accent-5);
+  color: var(--gray-12);
+}
+
+/* ---------- improved code blocks in deep-dive-content ---------- */
+.deep-dive-content pre {
+  position: relative;
+  border: 1px solid var(--gray-5);
+}
+.deep-dive-content pre::before {
+  content: attr(data-language);
+  position: absolute;
+  top: 0;
+  right: 0;
+  padding: 2px 8px;
+  font-size: 10px;
+  color: var(--gray-9);
+  background: var(--gray-3);
+}
+
+/* ---------- print styles ---------- */
+@media print {
+  .yc-topbar, nav, .rt-TabsList { display: none !important; }
+  .collapsible-body { grid-template-rows: 1fr !important; }
+  .rt-Card { break-inside: avoid; border: 1px solid #ccc !important; }
+}
+
+/* ---------- reduced motion coverage ---------- */
+@media (prefers-reduced-motion: reduce) {
+  .rt-TabsContent,
+  .collapsible-body,
+  .backend-topic-badge,
+  .rt-Card {
+    animation: none !important;
+    transition: none !important;
+  }
+}
+
+/* ---------- badge overflow fade ---------- */
+.badge-overflow-container {
+  position: relative;
+  overflow: hidden;
+}
+.badge-overflow-container::after {
+  content: "";
+  position: absolute;
+  right: 0;
+  top: 0;
+  bottom: 0;
+  width: 40px;
+  background: linear-gradient(to right, transparent, var(--gray-2));
+  pointer-events: none;
+}
+
+/* ---------- chevron rotation for collapsible sections ---------- */
+.collapsible-body .rt-IconButton svg,
+[data-state="open"] > svg {
+  transition: transform 0.25s ease;
 }

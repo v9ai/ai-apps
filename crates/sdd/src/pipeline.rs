@@ -453,7 +453,7 @@ impl<C: LlmClient> SddPipeline<C> {
                 let apply_ctx = if attempt > 1 {
                     // Inject previous failure into context
                     let failure = change.artifacts.get("verify")
-                        .map(|v| verify_failure_summary(v))
+                        .map(verify_failure_summary)
                         .unwrap_or_default();
                     format!(
                         "{context}\n\n## Previous Verify Failure (attempt {prev})\n\
@@ -489,7 +489,7 @@ impl<C: LlmClient> SddPipeline<C> {
 
         if !verify_passed {
             let reason = change.artifacts.get("verify")
-                .map(|v| verify_failure_summary(v))
+                .map(verify_failure_summary)
                 .unwrap_or_else(|| "No verify artifact".into());
             return Err(SddError::VerifyFailed { attempts: total_attempts, reason });
         }

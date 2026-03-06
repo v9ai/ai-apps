@@ -1,0 +1,40 @@
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+venv/
+.env
+
+# Node
+node_modules/
+dist/
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+.DS_Store
+
+# Claude
+.claude/
+
+# Plans
+docs/plans/
+
+# Runtime output artifacts
+backend/output/
+backend/provider_out.json
+backend/provider_stderr.log
+
+# Eval artifacts
+evals.db
+evals.db-wal
+evals.db-shm
+promptfoo-results.json
+.promptfoo_pipeline_cache.json
+.report_cache.json
+.report_cache.json.*
+.report_cache.lock
+.report_cache.lock.*
+eval_results.json

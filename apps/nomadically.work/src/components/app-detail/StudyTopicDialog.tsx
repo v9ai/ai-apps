@@ -10,6 +10,7 @@ import {
   Dialog,
 } from "@radix-ui/themes";
 import { PlusIcon, ReloadIcon } from "@radix-ui/react-icons";
+import { LoadingDots } from "./LoadingDots";
 import type { AiInterviewPrepRequirement } from "@/__generated__/hooks";
 
 interface StudyTopicDialogProps {
@@ -37,28 +38,19 @@ export function StudyTopicDialog({
       <Dialog.Content maxWidth="680px" style={{ maxHeight: "85vh", overflowY: "auto", width: "calc(100vw - 48px)" }}>
         {selectedStudyTopic && (
           <>
+            <Box style={{ height: "4px", backgroundColor: "var(--violet-9)", marginBottom: "16px" }} />
             <Dialog.Title>{selectedStudyTopic.topic}</Dialog.Title>
-            <Text size="1" color="gray" mb="4" as="div">
-              Part of: {selectedStudyTopic.req.requirement}
-            </Text>
+            <Flex align="center" gap="2" mb="4">
+              <Text size="1" color="gray" as="div">Part of:</Text>
+              <Text size="1" color="violet" weight="medium" as="div" style={{ cursor: "default" }}>
+                {selectedStudyTopic.req.requirement}
+              </Text>
+            </Flex>
             <Box pt="2">
               {studyTopicLoading ? (
                 <Flex direction="column" gap="3" py="4" align="center">
                   <Text size="2" color="gray">Generating focused deep-dive…</Text>
-                  <Flex gap="2">
-                    {[0, 1, 2].map((i) => (
-                      <Box
-                        key={i}
-                        style={{
-                          width: 8,
-                          height: 8,
-                          borderRadius: "50%",
-                          backgroundColor: "var(--accent-9)",
-                          animation: `pulse 1.2s ease-in-out ${i * 0.2}s infinite`,
-                        }}
-                      />
-                    ))}
-                  </Flex>
+                  <LoadingDots />
                 </Flex>
               ) : studyTopicError ? (
                 <Flex direction="column" gap="2">
@@ -92,7 +84,7 @@ export function StudyTopicDialog({
                 );
               })()}
             </Box>
-            <Flex justify="end" mt="4">
+            <Flex justify="end" mt="4" pt="4" style={{ borderTop: "1px solid var(--gray-4)" }}>
               <Dialog.Close>
                 <Button variant="soft" color="gray" size="2">
                   Close

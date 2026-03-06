@@ -20,10 +20,10 @@ export interface ListReceivingEmail {
  */
 export interface ReceivedEmailAttachment {
   id: string;
-  filename: string;
+  filename: string | null;
   size: number;
   content_type: string;
-  content_id: string;
+  content_id: string | null;
   content_disposition: string;
 }
 
@@ -39,7 +39,7 @@ export interface ReceivedEmail {
   subject: string;
   html: string | null;
   text: string | null;
-  headers?: Record<string, string>;
+  headers?: Record<string, string> | null;
   bcc?: string[] | null;
   cc?: string[] | null;
   reply_to?: string[] | null;

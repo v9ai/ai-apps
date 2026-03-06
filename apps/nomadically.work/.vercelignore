@@ -1,0 +1,24 @@
+# Rust crates (not used in Next.js build)
+crates/
+
+# Cloudflare Workers (deployed separately via wrangler)
+workers/
+
+# Rust hooks (local dev only)
+hooks/
+
+# Python virtualenvs
+.venv/
+.venv-workers/
+
+# Build artifacts
+**/target/
+.wrangler/
+.trigger
+.next/
+
+# Dev files
+.env*
+.dev.vars
+*.pem
+.DS_Store

@@ -201,32 +201,6 @@ function SettingsPageContent() {
     }
   };
 
-  // Handle save with keyboard shortcut
-  useEffect(() => {
-    const handleKeyDown = (e: KeyboardEvent) => {
-      if ((e.metaKey || e.ctrlKey) && e.key === "Enter") {
-        e.preventDefault();
-        if (hasUnsavedChanges()) {
-          handleSave();
-        }
-      } else if (e.key === "Escape") {
-        handleCancel();
-      }
-    };
-
-    window.addEventListener("keydown", handleKeyDown);
-    return () => window.removeEventListener("keydown", handleKeyDown);
-  }, [
-    locationChips,
-    skillChips,
-    excludedCompaniesChips,
-    initialLocations,
-    initialSkills,
-    initialExcludedCompanies,
-    handleSave,
-    handleCancel,
-  ]);
-
   const handleSave = useCallback(async () => {
     if (!user?.id) {
       showToast("You must be signed in to save settings", "error");
@@ -281,6 +255,23 @@ function SettingsPageContent() {
       router.push("/");
     }
   }, [hasUnsavedChanges, router]);
+
+  // Handle save with keyboard shortcut
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if ((e.metaKey || e.ctrlKey) && e.key === "Enter") {
+        e.preventDefault();
+        if (hasUnsavedChanges()) {
+          handleSave();
+        }
+      } else if (e.key === "Escape") {
+        handleCancel();
+      }
+    };
+
+    window.addEventListener("keydown", handleKeyDown);
+    return () => window.removeEventListener("keydown", handleKeyDown);
+  }, [handleSave, handleCancel, hasUnsavedChanges]);
 
   const handleDiscard = () => {
     setLocationChips(initialLocations);

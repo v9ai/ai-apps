@@ -273,7 +273,7 @@ What mid-level engineers say that reveals shallow understanding. Be blunt.
 
 ## One Concrete Example
 A real production scenario where this concept was the crux. What happened, why, and what to learn from it.`,
-        maxTokens: 2500,
+        maxOutputTokens: 2500,
         experimental_telemetry: aiTelemetry("study-deep-dive", {
           userId: context.userId,
           topicId: String(topicId),

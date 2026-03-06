@@ -24,6 +24,12 @@ pub struct HookRegistry {
     hooks: HashMap<HookEvent, Vec<HookMatcher>>,
 }
 
+impl Default for HookRegistry {
+    fn default() -> Self {
+        Self::new()
+    }
+}
+
 impl HookRegistry {
     pub fn new() -> Self {
         Self { hooks: HashMap::new() }
@@ -87,7 +93,7 @@ impl HookRegistry {
 
     /// Check if any hooks are registered for an event
     pub fn has_hooks(&self, event: &HookEvent) -> bool {
-        self.hooks.get(event).map_or(false, |m| !m.is_empty())
+        self.hooks.get(event).is_some_and(|m| !m.is_empty())
     }
 }
 
@@ -148,6 +154,12 @@ pub fn sdd_phase_guard_hook(completed_phases: Vec<SddPhase>) -> HookCallback {
 /// Builder for constructing a HookRegistry with a fluent API.
 pub struct HookBuilder {
     registry: HookRegistry,
+}
+
+impl Default for HookBuilder {
+    fn default() -> Self {
+        Self::new()
+    }
 }
 
 impl HookBuilder {

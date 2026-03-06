@@ -1,0 +1,75 @@
+query GetTasks($status: String, $priority: String, $limit: Int, $offset: Int) {
+  tasks(status: $status, priority: $priority, limit: $limit, offset: $offset) {
+    tasks {
+      id
+      title
+      description
+      status
+      priority
+      dueDate
+      completedAt
+      entityType
+      entityId
+      tags
+      createdAt
+      updatedAt
+    }
+    totalCount
+  }
+}
+
+query GetTask($id: Int!) {
+  task(id: $id) {
+    id
+    title
+    description
+    status
+    priority
+    dueDate
+    completedAt
+    entityType
+    entityId
+    tags
+    createdAt
+    updatedAt
+  }
+}
+
+mutation CreateTask($input: CreateTaskInput!) {
+  createTask(input: $input) {
+    id
+    title
+    status
+    priority
+    dueDate
+    tags
+    createdAt
+  }
+}
+
+mutation UpdateTask($id: Int!, $input: UpdateTaskInput!) {
+  updateTask(id: $id, input: $input) {
+    id
+    title
+    status
+    priority
+    dueDate
+    tags
+    updatedAt
+  }
+}
+
+mutation CompleteTask($id: Int!) {
+  completeTask(id: $id) {
+    id
+    status
+    completedAt
+  }
+}
+
+mutation DeleteTask($id: Int!) {
+  deleteTask(id: $id) {
+    success
+    message
+  }
+}

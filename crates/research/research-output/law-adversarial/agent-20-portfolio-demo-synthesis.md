@@ -1,471 +1,397 @@
-# PORTFOLIO DEMO BLUEPRINT: Adversarial Brief Stress-Tester
-## Capstone Deliverable - Legal AI Engineering Portfolio
+Based on the comprehensive research findings from all teammates, I'll now synthesize the complete portfolio demo blueprint.
 
----
+# PORTFOLIO DEMO BLUEPRINT: Adversarial Brief Stress-Tester
 
 ## 1. EXECUTIVE SUMMARY
 
-### **What It Is**
-The **Adversarial Brief Stress-Tester** is a multi-agent legal AI system that performs symmetric adversarial analysis on legal briefs before filing. Three specialized AI agents (Attacker, Defender, Judge) engage in formal argumentation to identify weaknesses, strengthen arguments, and provide explainable scoring—all while ensuring EU AI Act compliance, citation grounding, and hallucination detection.
+### What It Is
+The **Adversarial Brief Stress-Tester** is a multi-agent legal AI system that performs symmetric adversarial analysis of legal briefs before filing. It extends the existing BS Detector app (apps/law/) by adding three specialized AI agents that simulate courtroom dynamics:
 
-### **Why It's Novel**
-**Greenfield Innovation**: No existing legal AI product (Harvey, CoCounsel, Lexis+ Protégé) implements symmetric adversarial testing. Current systems focus on retrieval and drafting assistance, lacking systematic stress-testing capabilities.
+- **Attacker Agent**: Identifies weaknesses and generates counter-arguments
+- **Defender Agent**: Strengthens arguments and anticipates attacks  
+- **Judge Agent**: Scores argument strength with explainable reasoning
+
+### Why It's Novel
+**Greenfield Innovation**: No existing legal AI product (Harvey, CoCounsel, Lexis+ Protégé) performs symmetric adversarial stress-testing. Current systems focus on document review, research, and drafting—missing the critical adversarial dimension that defines legal practice.
 
 **Key Differentiators**:
-1. **Symmetric adversarial analysis**: Full attack/defense cycle simulation
-2. **Formal argumentation frameworks**: Dung AFs, ASPIC+, Bipolar Argumentation
-3. **EU AI Act compliance by design**: Built-in explainability for August 2026 deadline
-4. **Structured argument graphs**: Visual, analyzable outputs vs. prose-only
-5. **Citation grounding with hallucination detection**: Multi-layer verification
+1. **Symmetric adversarial testing** (attack/defense/judge perspectives)
+2. **Hallucination detection** specifically for legal citations (17-33% hallucination rate in current legal AI)
+3. **EU AI Act compliance** built-in from design (legal domain = high-risk category)
+4. **Structured argument graphs** with temporal reasoning, not just prose
 
-### **Market Positioning**
-- **Target Market**: Law firms, corporate legal departments, solo practitioners
-- **Pain Point Addressed**: Inadequate brief preparation leading to courtroom surprises
-- **Value Proposition**: Reduce litigation risk by 40-60% through comprehensive stress-testing
-- **Revenue Model**: SaaS subscription ($500-$5,000/month based on firm size)
-- **Competitive Moats**: Formal argumentation expertise, EU AI Act compliance, multi-agent architecture
+### Market Positioning
+**Target Market**: Law firms ($120B+ legal tech market), corporate legal departments, solo practitioners
+**Price Point**: $500-5,000/month per user (enterprise tier)
+**Competitive Gap**: Addresses the "pre-filing anxiety" that attorneys face—uncertainty about argument robustness before submission
 
----
+**Unique Value Proposition**: "Know your brief's weaknesses before opposing counsel does."
 
 ## 2. COMPLETE TECHNICAL SPECIFICATION
 
-### **2.1 System Architecture**
+### 2.1 Core Architecture
 
 ```
-┌─────────────────────────────────────────────────────────────────────────────┐
-│                    Adversarial Brief Stress-Tester                          │
-├─────────────────────────────────────────────────────────────────────────────┤
-│  LAYER 1: INPUT PROCESSING                                                 │
-│  • Document parsing (PDF/DOCX with OCR)                                    │
-│  • Citation extraction & temporal validation                               │
-│  • IRAC structure detection (Legal-BERT fine-tuned)                        │
-│  • Argument component segmentation                                         │
-│  • Jurisdiction identification                                             │
-├─────────────────────────────────────────────────────────────────────────────┤
-│  LAYER 2: KNOWLEDGE GROUNDING                                              │
-│  • Temporal Legal Knowledge Graph (Neo4j/Amazon Neptune)                   │
-│  • Real-time citation verification (Westlaw/Lexis APIs)                    │
-│  • Precedent network analysis with Shepardizing automation                 │
-│  • Statute version tracking with amendment chains                          │
-├─────────────────────────────────────────────────────────────────────────────┤
-│  LAYER 3: MULTI-AGENT REASONING                                            │
-│  ┌─────────────┐  ┌─────────────┐  ┌─────────────┐                       │
-│  │  ATTACKER   │  │  DEFENDER   │  │    JUDGE    │                       │
-│  │   AGENT     │◄─┤   AGENT     │◄─┤    AGENT    │                       │
-│  │             │  │             │  │             │                       │
-│  │ • Weakness  │  │ • Argument  │  │ • Bayesian  │                       │
-│  │   detection │  │   strength- │  │   scoring   │                       │
-│  │ • Counter-  │  │   ening     │  │ • Formal    │                       │
-│  │   argument  │  │ • Rebuttal  │  │   semantics │                       │
-│  │   generation│  │   generation│  │ • Uncertainty│                       │
-│  │ • Citation  │  │ • Citation  │  │   quantifi- │                       │
-│  │   attacks   │  │   enhance-  │  │   cation    │                       │
-│  │             │  │   ment      │  │             │                       │
-│  └─────────────┘  └─────────────┘  └─────────────┘                       │
-├─────────────────────────────────────────────────────────────────────────────┤
-│  LAYER 4: RELIABILITY & COMPLIANCE                                         │
-│  • Hallucination detection pipeline (4-layer verification)                 │
-│  • Confidence calibration (temperature scaling, Bayesian)                  │
-│  • Bias detection and mitigation                                           │
-│  • EU AI Act documentation generation                                      │
-│  • Audit trail management                                                  │
-├─────────────────────────────────────────────────────────────────────────────┤
-│  LAYER 5: OUTPUT GENERATION                                                │
-│  • Structured argument graphs (Dung AFs/ASPIC+ visualizations)             │
-│  • Vulnerability reports with confidence scores                            │
-│  • Strengthening recommendations with specific citations                   │
-│  • Hallucination detection flags with verification logs                    │
-│  • Compliance documentation (Article 13 explanations)                      │
-└─────────────────────────────────────────────────────────────────────────────┘
+┌─────────────────────────────────────────────────────────────────────────┐
+│                     Adversarial Brief Stress-Tester                      │
+├─────────────────────────────────────────────────────────────────────────┤
+│  INPUT LAYER                                                             │
+│  ├── Document Parser: PDF/DOCX/plain text parsing                       │
+│  ├── Citation Extractor: Bluebook/ALWD format detection                 │
+│  ├── IRAC Detector: Issue-Rule-Application-Conclusion segmentation      │
+│  └── Temporal Context: Brief filing date, facts date, jurisdiction      │
+│                                                                          │
+│  KNOWLEDGE LAYER                                                         │
+│  ├── Temporal Legal KG: SAT-Graph RAG for evolving legal norms          │
+│  ├── Precedent Network: Citation chains with strength decay modeling    │
+│  ├── Doctrine Evolution: Legal principle tracking over time             │
+│  └── Jurisdiction Rules: Court-specific procedural requirements         │
+│                                                                          │
+│  MULTI-AGENT CORE                                                        │
+│  ├── Attacker Agent: Weakness detection + counter-argument generation   │
+│  │   ├── Legal analogy engine (Law-Match framework)                     │
+│  │   ├── Fact-pattern matching (56 similarity methods)                  │
+│  │   ├── Logical fallacy detection                                      │
+│  │   └── Dynamic strategy adaptation (RL optimization)                  │
+│  ├── Defender Agent: Argument strengthening + rebuttal generation       │
+│  │   ├── Evidence augmentation (CLERC dataset integration)              │
+│  │   ├── Preemptive defense generation                                  │
+│  │   ├── Alternative interpretation engine                              │
+│  │   └── Coherence gap filling                                          │
+│  └── Judge Agent: Scoring + explainable evaluation                      │
+│      ├── Multi-dimensional scoring (evidence, logic, rhetoric, legal)   │
+│      ├── HalluGraph integration (AUC 0.979 hallucination detection)     │
+│      ├── Judicial prediction (Martin-Quinn scores, circuit patterns)    │
+│      └── EU AI Act compliance enforcement                               │
+│                                                                          │
+│  VERIFICATION LAYER                                                      │
+│  ├── Hallucination Prevention: 5-layer verification pipeline            │
+│  ├── Citation Validation: Real-time Westlaw/Lexis API integration       │
+│  ├── Temporal Validity: Precedent status at brief filing date           │
+│  └── Jurisdiction Checking: Applicable law verification                 │
+│                                                                          │
+│  OUTPUT LAYER                                                            │
+│  ├── Structured Argument Graph: JSON/GraphML with temporal properties   │
+│  ├── Vulnerability Report: Prioritized weaknesses with confidence scores│
+│  ├── Improvement Recommendations: Actionable strengthening suggestions  │
+│  └── Compliance Documentation: EU AI Act audit trail                    │
+└─────────────────────────────────────────────────────────────────────────┘
 ```
 
-### **2.2 Core Technical Components**
+### 2.2 Technical Stack
 
-#### **Formal Argumentation Engine**
-```python
-class FormalArgumentationEngine:
-    """Implements Dung AFs, ASPIC+, and Bipolar Argumentation"""
-    
-    def __init__(self):
-        self.dung_af = DungArgumentationFramework()
-        self.aspic_plus = ASPICPlusFramework()
-        self.baf = BipolarArgumentationFramework()
-    
-    def evaluate_arguments(self, arguments, attacks, supports):
-        # Compute extensions
-        grounded = self.dung_af.grounded_extension(arguments, attacks)
-        preferred = self.dung_af.preferred_extensions(arguments, attacks)
-        
-        # Apply ASPIC+ structured reasoning
-        structured = self.aspic_plus.evaluate(
-            arguments, 
-            attacks, 
-            supports,
-            preference_ordering=self.legal_preference_order()
-        )
-        
-        # Generate quantitative scores
-        scores = self.baf.quantitative_evaluation(
-            arguments, attacks, supports
-        )
-        
-        return {
-            "grounded_extension": grounded,
-            "preferred_extensions": preferred,
-            "structured_evaluation": structured,
-            "quantitative_scores": scores,
-            "acceptability_labels": self.label_arguments(arguments, attacks)
+**Backend**:
+- FastAPI + Pydantic (async API with OpenAPI docs)
+- PostgreSQL + TimescaleDB (temporal legal data)
+- Neo4j/Amazon Neptune (argument graph storage)
+- Redis (real-time agent state)
+
+**AI/ML**:
+- Legal-BERT variants (domain-adapted transformers)
+- HalluGraph framework (hallucination detection)
+- SAT-Graph RAG (temporal legal reasoning)
+- KRAG framework (knowledge-representation augmented generation)
+- Tool-MAD framework (multi-agent debate adaptation)
+
+**Compliance**:
+- EU AI Act compliance module (Article 13 explainability)
+- Audit trail generator (10-year retention)
+- Human oversight interfaces (attorney review points)
+
+### 2.3 Research-Grounded Implementation Choices
+
+| **Component** | **Research Basis** | **Why Chosen** | **Performance Target** |
+|---------------|-------------------|----------------|------------------------|
+| **Hallucination Detection** | HalluGraph (2025) | AUC 0.979, entity grounding + relation preservation | AUC > 0.99 for legal docs |
+| **Temporal Reasoning** | SAT-Graph RAG (2025) | Structure-aware, prevents anachronistic answers | 95% temporal accuracy |
+| **Case Similarity** | Law-Match (Sun et al., 2022) | Causal decomposition using law articles | 85% recall@100 |
+| **Argumentation Framework** | ASPIC+ with bipolar extensions | Formal foundations + legal applicability | Complete semantics support |
+| **Confidence Calibration** | Bayesian + ensemble methods | Legal uncertainty requires sophisticated handling | 0.9 correlation with experts |
+
+### 2.4 Data Model: Structured Argument Graph
+
+```json
+{
+  "argument_graph": {
+    "nodes": [
+      {
+        "id": "claim_001",
+        "type": "legal_claim",
+        "text": "Defendant breached duty of care under negligence standard",
+        "strength": 0.75,
+        "confidence": 0.82,
+        "temporal_properties": {
+          "valid_from": "2024-01-15",
+          "jurisdiction": "CA_State",
+          "precedent_support": [
+            {"case": "Rowland v. Christian", "strength": 0.85, "valid": true}
+          ]
         }
+      }
+    ],
+    "edges": [
+      {
+        "source": "evidence_001",
+        "target": "claim_001",
+        "type": "supports",
+        "strength": 0.90,
+        "explanation": "Binding precedent establishes duty of care standard"
+      }
+    ],
+    "metadata": {
+      "eu_ai_act_compliant": true,
+      "hallucination_checked": true,
+      "citation_verified": true,
+      "audit_trail_id": "audit_123456"
+    }
+  }
+}
 ```
-
-#### **Multi-Agent Coordination Protocol**
-```python
-class AdversarialDebateProtocol:
-    """Sparse communication topology for efficient multi-agent debate"""
-    
-    def __init__(self, max_rounds=5, convergence_threshold=0.05):
-        self.max_rounds = max_rounds
-        self.convergence_threshold = convergence_threshold
-        self.communication_topology = {
-            "attacker": ["judge", "defender"],  # Sparse connections
-            "defender": ["judge", "attacker"],
-            "judge": ["attacker", "defender"]
-        }
-    
-    async def execute_debate(self, initial_brief):
-        """Execute adversarial rounds until convergence"""
-        current_state = initial_brief
-        debate_history = []
-        
-        for round_num in range(self.max_rounds):
-            # Attacker phase
-            attacks = await self.attacker.generate_attacks(current_state)
-            
-            # Defender phase
-            defense = await self.defender.defend(current_state, attacks)
-            
-            # Judge evaluation
-            evaluation = await self.judge.evaluate(
-                current_state, attacks, defense
-            )
-            
-            # Update state
-            updated_state = self.update_argument_graph(
-                current_state, attacks, defense, evaluation
-            )
-            
-            # Check convergence
-            if self.check_convergence(debate_history, evaluation):
-                break
-            
-            debate_history.append({
-                "round": round_num,
-                "attacks": attacks,
-                "defense": defense,
-                "evaluation": evaluation
-            })
-        
-        return self.generate_final_report(debate_history)
-```
-
-#### **Hallucination Detection Pipeline**
-```python
-class HallucinationDetector:
-    """4-layer verification system for legal citations"""
-    
-    def __init__(self):
-        self.legal_dbs = [WestlawAPI(), LexisAPI(), CaselawAccessProject()]
-        self.citation_parser = BluebookCitationParser()
-        self.semantic_validator = SemanticValidator()
-    
-    async def verify_citation(self, citation, context):
-        """Multi-stage citation verification"""
-        
-        # Layer 1: Format validation
-        if not self.citation_parser.validate_format(citation):
-            return {"verified": False, "reason": "Invalid format"}
-        
-        # Layer 2: Existence check across multiple sources
-        existence_results = await asyncio.gather(*[
-            db.check_citation_exists(citation) for db in self.legal_dbs
-        ])
-        
-        if not any(existence_results):
-            return {"verified": False, "reason": "Citation not found"}
-        
-        # Layer 3: Context validation
-        holding_match = await self.validate_holding_match(citation, context)
-        if holding_match < 0.7:
-            return {
-                "verified": False, 
-                "reason": "Holding misalignment",
-                "confidence": holding_match
-            }
-        
-        # Layer 4: Temporal and jurisdictional validation
-        temporal_valid = self.check_temporal_validity(citation)
-        jurisdictional_valid = self.check_jurisdiction(citation)
-        
-        confidence = (
-            0.4 * (sum(existence_results) / len(existence_results)) +
-            0.3 * holding_match +
-            0.2 * temporal_valid +
-            0.1 * jurisdictional_valid
-        )
-        
-        return {
-            "verified": confidence >= 0.7,
-            "confidence": confidence,
-            "details": {
-                "existence": existence_results,
-                "holding_match": holding_match,
-                "temporal_validity": temporal_valid,
-                "jurisdictional_validity": jurisdictional_valid
-            }
-        }
-```
-
-### **2.3 Knowledge Layer Architecture**
-
-#### **Temporal Legal Knowledge Graph Schema**
-```yaml
-# Core entity types with temporal validity
-Case:
-  id: uuid
-  citation: "Smith v. Jones, 543 U.S. 462 (2005)"
-  court: "Supreme"
-  jurisdiction: "US_Federal"
-  decision_date: "2005-06-15"
-  holding: "Text of holding..."
-  status: "Active" | "Overruled" | "Distinguished"
-  valid_from: decision_date
-  valid_to: overruling_date or null
-  precedential_weight: 0.95
-
-Statute:
-  id: uuid  
-  citation: "42 U.S.C. §1983"
-  current_version: "Version_2024"
-  amendment_chain: ["v1→v2→v3"]
-  temporal_coverage: "1980-present"
-
-LegalPrinciple:
-  id: uuid
-  name: "Strict Scrutiny"
-  evolution_timeline: [
-    {"case": "Case_A", "year": 1942, "development": "established"},
-    {"case": "Case_B", "year": 1976, "development": "refined"}
-  ]
-
-# Temporal relations
-Relations:
-  overrules: (Case_A, Case_B, date, explicit)
-  amends: (Statute_v1, Statute_v2, effective_date)
-  interprets: (Case, Statute, interpretation_date)
-  distinguishes: (Case_A, Case_B, distinguishing_factors)
-```
-
-#### **Case Similarity Engine**
-```python
-class LegalAnalogyEngine:
-    """Multi-dimensional similarity for precedent finding"""
-    
-    def find_analogous_cases(self, target_case, strategy="attack"):
-        # Fact-pattern similarity
-        fact_similarity = self.compute_fact_similarity(target_case)
-        
-        # Legal issue similarity
-        issue_similarity = self.compute_issue_similarity(target_case)
-        
-        # Outcome-based retrieval
-        if strategy == "attack":
-            # Find cases with similar facts but different outcomes
-            return self.find_distinguishing_cases(
-                target_case, fact_similarity, issue_similarity
-            )
-        elif strategy == "defense":
-            # Find cases with similar facts and supporting outcomes
-            return self.find_supporting_cases(
-                target_case, fact_similarity, issue_similarity
-            )
-    
-    def compute_fact_similarity(self, case1, case2):
-        """Weighted fact-pattern matching"""
-        return (
-            0.4 * self.entity_alignment(case1.entities, case2.entities) +
-            0.3 * self.relation_similarity(case1.relations, case2.relations) +
-            0.2 * self.temporal_alignment(case1.timeline, case2.timeline) +
-            0.1 * self.jurisdictional_proximity(case1.court, case2.court)
-        )
-```
-
----
 
 ## 3. MVP SCOPE DEFINITION
 
-### **3.1 MVP Feature Set**
+### 3.1 MVP Core Features (3-Month Development)
 
-#### **Core Capabilities (Must Have)**
-1. **Basic Argument Extraction**
-   - IRAC structure detection (85%+ accuracy)
-   - Claim-premise-conclusion identification
-   - Citation extraction and basic validation
+**Phase 1: Foundation (Month 1)**
+- Basic three-agent architecture with simple debate protocol
+- Citation extraction and validation against free legal databases (CourtListener API)
+- HalluGraph integration for basic hallucination detection
+- Structured output in JSON format (no visualization)
 
-2. **Simplified Multi-Agent System**
-   - Attacker: Identify top 3 vulnerabilities
-   - Defender: Generate basic strengthening suggestions
-   - Judge: Simple scoring (1-10 scale)
+**Phase 2: Core Testing (Month 2)**
+- Multi-round debate protocol (3 rounds: open → rebuttal → close)
+- Basic argument strength scoring (evidence, logic, coherence)
+- Integration with existing BS Detector citation checking
+- Command-line interface for testing
 
-3. **Essential Outputs**
-   - Structured vulnerability report
-   - Basic argument graph visualization
-   - Citation verification status
+**Phase 3: Demo Polish (Month 3)**
+- Web interface for brief upload and results display
+- Simple argument graph visualization (D3.js basic)
+- One jurisdiction specialization (California civil procedure)
+- Demo dataset of 10 pre-annotated briefs
 
-4. **Minimum Viable Compliance**
-   - Basic explainability (reasoning chains)
-   - Citation grounding verification
-   - Hallucination flagging
+### 3.2 MVP Technical Constraints
 
-#### **Technical Constraints for MVP**
-- Processing time: < 5 minutes per brief
-- Citation verification: Basic existence check only
-- Agent complexity: Rule-based + simple LLM prompting
-- Output format: JSON + basic visualization
+**Limited Scope**:
+- Single jurisdiction (California)
+- Civil procedure focus (negligence, contract disputes)
+- 3-round debate maximum
+- Citation verification against free APIs only
+- Basic confidence scoring (no Bayesian calibration)
 
-### **3.2 MVP Architecture**
+**Performance Targets**:
+- Processing time: < 2 minutes per brief
+- Citation accuracy: > 90% validation rate
+- Hallucination detection: > 95% precision
+- User interface: Simple web form + results display
 
-```
-MVP ARCHITECTURE:
-┌─────────────────────────────────────────┐
-│           MVP Stress-Tester             │
-├─────────────────────────────────────────┤
-│ 1. Brief Upload & Parsing               │
-│    • PDF/DOCX support                   │
-│    • Basic text extraction              │
-│    • Citation pattern matching          │
-├─────────────────────────────────────────┤
-│ 2. Simplified Analysis Pipeline         │
-│    • Rule-based IRAC detection          │
-│    • Template-based weakness detection  │
-│    • Basic citation validation          │
-├─────────────────────────────────────────┤
-│ 3. Lightweight Multi-Agent System       │
-│    • Attacker: Template counter-args    │
-│    • Defender: Rule-based strengthening │
-│    • Judge: Simple scoring algorithm    │
-├─────────────────────────────────────────┤
-│ 4. Basic Output Generation              │
-│    • JSON vulnerability report          │
-│    • Simple argument graph              │
-│    • Citation verification status       │
-└─────────────────────────────────────────┘
-```
+### 3.3 MVP Success Metrics
 
-### **3.3 MVP Success Metrics**
-- **Accuracy**: 75% agreement with human expert vulnerability identification
-- **Speed**: < 5 minutes processing for 20-page brief
-- **Citation Accuracy**: 85% correct verification
-- **User Satisfaction**: 4.0/5.0 on utility assessment
-- **Technical Debt**: < 20% of codebase requiring refactoring for Phase 2
+**Technical Success**:
+- Complete end-to-end processing pipeline
+- All three agents produce coherent outputs
+- Structured argument graph generation
+- Basic hallucination detection working
 
----
+**Demo Success**:
+- Clear vulnerability identification in test briefs
+- Actionable improvement recommendations
+- Professional-looking output format
+- Smooth user workflow (upload → process → view results)
 
 ## 4. IMPLEMENTATION ROADMAP
 
-### **Phase 1: Foundation (Months 1-3) - $120K Engineer Focus**
-**Objective**: Build MVP with core adversarial testing capability
+### Phase 1: Foundation (Months 1-3) - $150K Budget
+**Deliverable**: Working MVP with core adversarial testing
+- **M1**: Basic agent architecture + citation validation
+- **M2**: Multi-round debate protocol + scoring
+- **M3**: Web interface + demo polish
 
-**Milestones**:
-1. **Month 1**: Basic document processing pipeline
-   - Legal text extraction and segmentation
-   - Citation pattern matching (regex-based)
-   - Simple IRAC detection
+**Team**: 1 Senior AI Engineer, 1 Full-Stack Developer, 0.5 Legal Expert
 
-2. **Month 2**: Core multi-agent system
-   - Attacker agent with template-based attacks
-   - Defender agent with rule-based strengthening
-   - Judge agent with simple scoring
+### Phase 2: Enhanced Capabilities (Months 4-6) - $200K Budget
+**Deliverable**: Production-ready system with advanced features
+- **M4**: Temporal knowledge graph integration
+- **M5**: Advanced hallucination detection (HalluGraph)
+- **M6**: EU AI Act compliance features
 
-3. **Month 3**: MVP integration and testing
-   - End-to-end pipeline
-   - Basic user interface
-   - Initial validation with sample briefs
+**Team**: Add 1 ML Engineer, 0.5 Compliance Specialist
 
-**Technical Stack**:
-- Backend: Python/FastAPI, Legal-BERT, Neo4j
-- Frontend: React/TypeScript, D3.js for graphs
-- Infrastructure: Docker, AWS/GCP, PostgreSQL
+### Phase 3: Scaling & Specialization (Months 7-9) - $180K Budget
+**Deliverable**: Multi-jurisdiction, practice-area specialization
+- **M7**: Federal jurisdiction support
+- **M8**: Criminal law module
+- **M9**: Enterprise API development
 
-### **Phase 2: Enhancement (Months 4-6) - $180K Senior Engineer Focus**
-**Objective**: Add advanced NLP and formal argumentation
+**Team**: Add 1 Backend Engineer, 0.5 Product Manager
 
-**Milestones**:
-1. **Month 4**: Advanced NLP integration
-   - Fine-tuned Legal-BERT for argument extraction
-   - Rhetorical role labeling
-   - Temporal reasoning components
+### Phase 4: Market Launch (Months 10-12) - $120K Budget
+**Deliverable**: Commercial product with sales/marketing
+- **M10**: Beta testing with law firms
+- **M11**: Pricing model + sales materials
+- **M12**: Official launch + first customers
 
-2. **Month 5**: Formal argumentation frameworks
-   - Dung AFs implementation
-   - ASPIC+ structured reasoning
-   - Quantitative bipolar argumentation
+**Total Year 1 Budget**: $650K
+**Expected Revenue Year 2**: $2M+ (100 enterprise customers @ $20K/year)
 
-3. **Month 6**: Enhanced multi-agent coordination
-   - Sparse communication topology optimization
-   - Reinforcement learning for strategy adaptation
-   - Bayesian belief updating
+## 5. DEMO SCENARIO: NEGLIGENCE BRIEF STRESS-TEST
 
-### **Phase 3: Reliability & Compliance (Months 7-9) - $250K Lead Engineer Focus**
-**Objective**: Implement EU AI Act compliance and reliability features
+### 5.1 Input Brief (Simplified)
+```
+Case: Smith v. Jones Construction
+Jurisdiction: California Superior Court
+Filing Date: March 20, 2024
+Facts Date: June 15, 2023
 
-**Milestones**:
-1. **Month 7**: Hallucination detection system
-   - Multi-layer citation verification
-   - Real-time legal database integration
-   - Confidence calibration
+CLAIM: Defendant Jones Construction breached duty of care by failing to 
+secure construction site, leading to plaintiff's injury.
 
-2. **Month 8**: EU AI Act compliance features
-   - Explainability layer implementation
-   - Audit trail generation
-   - Human oversight interfaces
+SUPPORTING PRECEDENT: Rowland v. Christian (1968) - establishes duty of 
+care for property owners to prevent foreseeable harm.
 
-3. **Month 9**: Performance optimization
-   - Real-time processing capabilities
-   - Scalability improvements
-   - Cross-jurisdictional adaptation
+ARGUMENT: Under Rowland, defendant owed duty to secure site. Failure to 
+do so constitutes negligence per se.
+```
 
-### **Phase 4: Production & Scaling (Months 10-12) - $300K+ Architect Focus**
-**Objective**: Enterprise readiness and market launch
+### 5.2 Multi-Agent Debate Simulation
 
-**Milestones**:
-1. **Month 10**: Enterprise features
-   - Multi-user collaboration
-   - Integration with legal research platforms
-   - Advanced reporting and analytics
+**Round 1: Initial Analysis**
+```
+ATTACKER AGENT:
+- Vulnerability: Rowland v. Christian is 56 years old - potential for 
+  distinguishing based on modern construction standards
+- Counter-argument: Recent case Martinez v. BuildRight (2022) limited 
+  Rowland's application to residential properties, not commercial sites
+- Confidence: 0.85 (high - recent contrary precedent)
 
-2. **Month 11**: Compliance certification
-   - EU AI Act formal certification
-   - Security and privacy audits
-   - Performance benchmarking
+DEFENDER AGENT:
+- Strengthening: Add citation to Perez v. Construction Co. (2019) that 
+  extended Rowland to commercial contexts
+- Preemptive defense: Distinguish Martinez as involving different fact pattern
+- Improved strength: 0.78 → 0.85
 
-3. **Month 12**: Market launch and scaling
-   - Production deployment
-   - Customer onboarding
-   - Continuous improvement framework
+JUDGE AGENT:
+- Initial scoring: Evidence: 0.70, Logic: 0.75, Coherence: 0.80
+- Hallucination check: All citations verified
+- Temporal validity: Rowland still good law, Martinez binding
+```
 
----
+**Round 2: Rebuttal**
+```
+ATTACKER (responding to defense):
+- Attack: Perez is appellate decision, not Supreme Court - lower authority
+- New vulnerability: Plaintiff assumed risk by entering marked construction zone
+- Supporting: California assumption of risk doctrine (Knight v. Jewett)
 
-## 5. DEMO SCENARIO: Employment Discrimination Brief Stress-Test
+DEFENDER (responding to attack):
+- Rebuttal: Assumption of risk requires knowledge of specific danger
+- Evidence: Site had inadequate warning signs per OSHA regulations
+- Additional: Cite OSHA violation as negligence per se
 
-### **Scenario Setup**
-**Case**: *Smith v. TechCorp* - Wrongful termination based on age discrimination
-**Jurisdiction**: 9th Circuit, California Federal Court
-**Target Judge**: Known for textualist interpretation style
-**Brief Length**: 25 pages with 45 citations
+JUDGE (updated scoring):
+- Evidence: 0.75 → 0.82 (added OSHA citation)
+- Logic: 0.75 → 0.80 (addressed assumption of risk)
+- Overall: 0.72 → 0.78 (moderate improvement)
+```
 
-### **5.1 Input Brief Analysis**
+**Round 3: Closing & Final Judgment**
+```
+JUDGE FINAL EVALUATION:
+Overall Robustness Score: 0.78/1.00 (Moderate-High)
 
-**Extracted Arguments**:
-1. **Primary Claim**: TechCorp violated ADEA by terminating 58-year-old Smith
-2. **Supporting Evidence**: Statistical evidence of age-based termination pattern
-3
+CRITICAL VULNERABILITIES:
+1. Reliance on aged precedent (Rowland, 1968) - Severity: High
+2. Potential assumption of risk defense - Severity: Medium
+3. Authority level of supporting cases - Severity: Low
+
+IMPROVEMENT RECOMMENDATIONS:
+1. Add recent Supreme Court citation affirming Rowland principles
+2. Strengthen factual evidence about warning sign inadequacy  
+3. Preemptively address assumption of risk with specific facts
+
+HALLUCINATION CHECK: PASSED (0 flagged citations)
+EU AI ACT COMPLIANCE: FULL (explainable scoring, audit trail)
+```
+
+### 5.3 Structured Output Example
+
+```json
+{
+  "stress_test_report": {
+    "brief_id": "smith_v_jones_2024",
+    "overall_robustness": 0.78,
+    "confidence_interval": [0.72, 0.84],
+    "critical_vulnerabilities": [
+      {
+        "id": "vuln_001",
+        "type": "aged_precedent",
+        "severity": "high",
+        "location": "Rowland v. Christian citation",
+        "explanation": "56-year-old precedent may be distinguishable",
+        "recommendation": "Cite recent affirming cases",
+        "confidence": 0.85
+      }
+    ],
+    "improvement_opportunities": [
+      {
+        "action": "add_recent_citation",
+        "target": "duty_of_care_argument",
+        "suggested_citation": "Garcia v. Property Mgmt (2021)",
+        "expected_improvement": 0.08,
+        "priority": "high"
+      }
+    ],
+    "argument_graph": {
+      "nodes": 15,
+      "edges": 22,
+      "visualization_url": "/graphs/smith_v_jones.html"
+    },
+    "compliance_documentation": {
+      "eu_ai_act_status": "compliant",
+      "explainability_score": 0.92,
+      "audit_trail_id": "audit_789012",
+      "human_review_recommended": false
+    }
+  }
+}
+```
+
+## 6. HIRING PITCH FOR LEGAL AI ENGINEER ROLES ($120K-$300K+)
+
+### 6.1 Interview Presentation Structure
+
+**Opening (30 seconds)**:
+"Hi, I'm [Name], and I've architected an Adversarial Brief Stress-Tester—a multi-agent legal AI system that performs symmetric adversarial testing of legal briefs. It addresses the critical gap in current legal AI: no existing product stress-tests arguments from both attack and defense perspectives before filing."
+
+**Problem Statement (1 minute)**:
+"Attorneys face 'pre-filing anxiety'—uncertainty about whether their arguments will withstand opposing counsel's attacks. Current legal AI (Harvey, CoCounsel, Lexis+) only helps with research and drafting, not adversarial testing. Meanwhile, legal AI hallucinates case law 17-33% of the time (Magesh et al., 2024), and the EU AI Act requires explainability for high-risk legal systems by August 2026."
+
+**Solution Architecture (2 minutes)**:
+"My system uses three specialized AI agents in a debate framework:
+1. **Attacker Agent** finds weaknesses using legal analogy detection (Law-Match framework)
+2. **Defender Agent** strengthens arguments with evidence augmentation (CLERC dataset)  
+3. **Judge Agent** scores with explainable reasoning (HalluGraph integration)
+
+The technical innovation is in the **symmetric adversarial testing**—simulating real courtroom dynamics—combined with **multi-layer hallucination prevention** and **built-in EU AI Act compliance**."
+
+**Technical Depth (2 minutes)**:
+"I implemented research-grounded components:
+- **HalluGraph framework** (AUC 0.979) for hallucination detection
+- **SAT-Graph RAG** for temporal legal reasoning  
+- **ASPIC+ argumentation framework** with bipolar extensions
+- **Bayesian confidence calibration** for legal uncertainty
+
+The system produces **structured argument graphs with temporal properties**, not just prose, meeting EU AI Act Article 13 explainability requirements."
+
+**Business Impact (1 minute)**:
+"This addresses a $120B+ legal tech market with a unique value proposition: 'Know your brief's weaknesses before opposing counsel does.' Target pricing is $500-5,000/month with enterprise adoption path. The MVP can be built in 3 months for $150K, with Year 2 revenue potential of $2M+."
+
+**Closing (30 seconds)**:
+"This system demonstrates my ability to: 1) Architect complex multi-agent AI systems, 2) Integrate cutting-edge research into production applications, 3) Address regulatory compliance from design, and 4) Identify and solve genuine market gaps in legal technology."
+
+### 6.2 What Makes It Stand Out vs. Competitors
+
+| **Aspect** | **Harvey/CoCounsel/Lexis+** | **This Stress-Tester** | **Why It Matters** |
+|------------|-----------------------------|------------------------|-------------------|
+| **Core Function** | Document review, research, drafting | Symmetric adversarial testing | Addresses pre-filing anxiety |
+|

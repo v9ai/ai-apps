@@ -25,6 +25,7 @@ extend type Mutation {
   updateCompany(id: Int!, input: UpdateCompanyInput!): Company!
   deleteCompany(id: Int!): DeleteCompanyResponse!
   enhanceCompany(id: Int, key: String): EnhanceCompanyResponse!
+  analyzeCompany(id: Int, key: String): AnalyzeCompanyResponse!
   add_company_facts(
     company_id: Int!
     facts: [CompanyFactInput!]!
@@ -180,6 +181,9 @@ type Company {
   location: String
   linkedin_url: String
   job_board_url: String
+  email: String
+  emailsList: [String!]!
+  githubUrl: String
   created_at: String!
   updated_at: String!
 
@@ -202,6 +206,9 @@ type Company {
   ai_tier: Int!
   ai_classification_reason: String
   ai_classification_confidence: Float!
+
+  # Deep company analysis (Markdown narrative)
+  deep_analysis: String
 
   # Ashby crawler enrichment (matched by company key = ashby board slug)
   ashby_enrichment: AshbyEnrichment
@@ -239,6 +246,9 @@ input CreateCompanyInput {
   ai_tier: Int
   ai_classification_reason: String
   ai_classification_confidence: Float
+  email: String
+  emails: [String!]
+  github_url: String
 }
 
 input UpdateCompanyInput {
@@ -263,6 +273,9 @@ input UpdateCompanyInput {
   ai_tier: Int
   ai_classification_reason: String
   ai_classification_confidence: Float
+  email: String
+  emails: [String!]
+  github_url: String
 }
 
 input WarcPointerInput {
@@ -321,6 +334,13 @@ type DeleteCompanyResponse {
 }
 
 type EnhanceCompanyResponse {
+  success: Boolean!
+  message: String
+  companyId: Int
+  companyKey: String
+}
+
+type AnalyzeCompanyResponse {
   success: Boolean!
   message: String
   companyId: Int

@@ -8,7 +8,7 @@ use crate::d1::{D1Client, StudyTopicRow};
 use crate::study::TopicDef;
 use crate::team::{shutdown_pair, Mailbox, TaskQueue, TeamLead};
 use anyhow::{Context, Result};
-use research::agent::Client;
+use research::agent::agent_builder;
 use research::scholar::SemanticScholarClient;
 use research::tools::{GetPaperDetail, SearchPapers};
 use std::sync::Arc;
@@ -216,8 +216,6 @@ pub async fn run_synthesis(api_key: &str, d1: &D1Client) -> Result<()> {
         combined.push_str(&format!("\n\n---\n# {title}\n\n{body}"));
     }
 
-    let client = Client::new(api_key);
-
     let preamble = r#"You are a career strategy advisor for a senior software engineer seeking a fully remote AI/ML engineering position in the European Union in 2026.
 
 You have just read 15 research reports covering every aspect of this job search — from market analysis to interview prep to salary negotiation.
@@ -258,7 +256,7 @@ The most compelling data points from across all reports, cited with context.
 
 Be specific, actionable, and data-backed. No fluff. This is a senior engineer's battle plan."#;
 
-    let agent = client.agent("deepseek-chat").preamble(preamble).build();
+    let agent = agent_builder(api_key, "deepseek-chat").preamble(preamble).build();
 
     let body_md = agent
         .prompt(format!(
@@ -405,8 +403,6 @@ async fn search_topic_papers(
     scholar: &SemanticScholarClient,
     api_key: &str,
 ) -> Result<String> {
-    let client = Client::new(api_key);
-
     let system = format!(
         "You are a research assistant helping a senior software engineer find a fully remote \
          AI/ML engineering position in the European Union.\n\n\
@@ -437,8 +433,7 @@ async fn search_topic_papers(
         queries = queries_str,
     );
 
-    let agent = client
-        .agent("deepseek-chat")
+    let agent = agent_builder(api_key, "deepseek-chat")
         .preamble(&system)
         .tool(SearchPapers::new(scholar.clone()))
         .tool(GetPaperDetail::new(scholar.clone()))
@@ -457,8 +452,6 @@ async fn write_strategy_report(
     findings: &str,
     api_key: &str,
 ) -> Result<StudyTopicRow> {
-    let client = Client::new(api_key);
-
     let preamble = format!(
         r#"You are a career strategy advisor for a senior software engineer seeking a fully remote AI/ML engineering position in the European Union in 2026.
 
@@ -493,7 +486,7 @@ Write at a senior engineer level. Be precise, actionable, and grounded in the re
         findings = findings,
     );
 
-    let agent = client.agent("deepseek-chat").preamble(&preamble).build();
+    let agent = agent_builder(api_key, "deepseek-chat").preamble(&preamble).build();
 
     let body_md = agent
         .prompt(user_prompt)

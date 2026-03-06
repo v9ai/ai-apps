@@ -55,6 +55,20 @@ type PromptFetchOptions = {
   fallback?: string | Array<{ role: string; content: string }>;
 };
 
+export type LangfusePrompt = {
+  name: string;
+  version: number;
+  type: "text" | "chat";
+  prompt: string | Array<{ role: string; content: string }>;
+  labels: string[];
+  tags: string[];
+  config?: Record<string, unknown>;
+  compile(
+    variables: Record<string, unknown>,
+    placeholders?: Record<string, Array<{ role: string; content: string }>>,
+  ): string | Array<{ role: string; content: string }>;
+};
+
 export type ChatMessage =
   | { role: string; content: string }
   | { type: "placeholder"; name: string };
@@ -119,13 +133,38 @@ export function assertPromptAccess(
  * Compile a prompt with variables and placeholders.
  * Supports both text and chat prompts.
  */
-export function compilePrompt(prompt: any, input: CompileInput = {}) {
+export function compilePrompt(prompt: LangfusePrompt, input: CompileInput = {}) {
   const vars = input.variables ?? {};
   const placeholders = input.placeholders;
 
   // Message placeholders are compiled via compile(vars, placeholders) for chat prompts
   if (placeholders) return prompt.compile(vars, placeholders);
   return prompt.compile(vars);
+}
+
+function makeFallbackPrompt(
+  name: string,
+  version: number,
+  type: "text" | "chat",
+  prompt: string | Array<{ role: string; content: string }>,
+): LangfusePrompt {
+  return {
+    name,
+    version,
+    type,
+    prompt,
+    labels: [],
+    tags: [],
+    compile(variables: Record<string, unknown>) {
+      if (typeof prompt === "string") {
+        return Object.entries(variables).reduce<string>(
+          (text, [k, v]) => text.replaceAll(`{{${k}}}`, String(v ?? "")),
+          prompt,
+        );
+      }
+      return prompt;
+    },
+  };
 }
 
 /**
@@ -135,7 +174,7 @@ export function compilePrompt(prompt: any, input: CompileInput = {}) {
 export async function fetchLangfusePrompt(
   name: string,
   options: PromptFetchOptions = {},
-) {
+): Promise<LangfusePrompt> {
   const baseUrl = LANGFUSE_BASE_URL.replace(/\/+$/, "");
   const url = new URL(`${baseUrl}/api/public/prompts/${encodeURIComponent(name)}`);
 
@@ -157,19 +196,12 @@ export async function fetchLangfusePrompt(
   if (!response.ok) {
     // If fallback is provided and request failed, return fallback
     if (options.fallback !== undefined) {
-      return {
-        name,
-        version: options.version ?? 1,
-        type: options.type ?? "text",
-        prompt: options.fallback,
-        labels: [],
-        tags: [],
-      };
+      return makeFallbackPrompt(name, options.version ?? 1, options.type ?? "text", options.fallback);
     }
     throw new Error(`Langfuse API error: ${response.status} ${response.statusText}`);
   }
 
-  return response.json();
+  return (await response.json()) as LangfusePrompt;
 }
 
 /**
@@ -248,7 +280,7 @@ export function extractPromptConfig(config: unknown): PromptConfig {
   return { ...cfg, ...promptConfig } as PromptConfig;
 }
 
-export async function listLangfusePrompts(userEmail?: string) {
+export async function listLangfusePrompts(userEmail?: string): Promise<{ data: Array<{ name: string; labels?: string[]; tags?: string[] }> }> {
   requireLangfuse();
 
   const userTag = userEmail ? `user:${userEmail}` : null;
@@ -270,7 +302,7 @@ export async function listLangfusePrompts(userEmail?: string) {
     throw new Error(`Langfuse API error: ${response.statusText}`);
   }
 
-  return response.json();
+  return (await response.json()) as { data: Array<{ name: string; labels?: string[]; tags?: string[] }> };
 }
 
 export async function createLangfusePrompt(promptData: any) {

@@ -14,8 +14,12 @@
     "lint": "turbo run lint",
     "test": "turbo run test",
     "check-types": "turbo run check-types",
-    "deploy:blog": "vercel deploy --prod --cwd apps/vadim.blog",
-    "deploy:l": "vercel deploy --prod --cwd apps/law-adversarial"
+    "deploy:blog": "vercel deploy --prod --archive=tgz --cwd apps/vadim.blog",
+    "deploy:l": "vercel deploy --prod --archive=tgz --cwd apps/law-adversarial",
+    "deploy:n": "vercel deploy --prod --archive=tgz --cwd apps/nomadically.work",
+    "deploy:h": "vercel deploy --prod --archive=tgz --cwd apps/agentic-healthcare",
+    "deploy:r": "vercel deploy --prod --archive=tgz --cwd apps/research-thera",
+    "deploy:all": "pnpm deploy:n && pnpm deploy:l && pnpm deploy:h && pnpm deploy:r && pnpm deploy:blog"
   },
   "devDependencies": {
     "napi-postinstall": "^0.2.4",

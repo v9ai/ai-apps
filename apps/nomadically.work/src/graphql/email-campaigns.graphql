@@ -1,0 +1,94 @@
+query GetEmailCampaigns($status: String, $limit: Int, $offset: Int) {
+  emailCampaigns(status: $status, limit: $limit, offset: $offset) {
+    campaigns {
+      id
+      companyId
+      name
+      status
+      mode
+      fromEmail
+      totalRecipients
+      emailsSent
+      emailsScheduled
+      emailsFailed
+      createdAt
+      updatedAt
+    }
+    totalCount
+  }
+}
+
+query GetEmailCampaign($id: String!) {
+  emailCampaign(id: $id) {
+    id
+    companyId
+    name
+    status
+    sequence
+    delayDays
+    startAt
+    mode
+    fromEmail
+    replyTo
+    totalRecipients
+    emailsSent
+    emailsScheduled
+    emailsFailed
+    recipientEmails
+    createdAt
+    updatedAt
+  }
+}
+
+mutation CreateDraftCampaign($input: CreateCampaignInput!) {
+  createDraftCampaign(input: $input) {
+    id
+    name
+    status
+    createdAt
+  }
+}
+
+mutation UpdateCampaign($id: String!, $input: UpdateCampaignInput!) {
+  updateCampaign(id: $id, input: $input) {
+    id
+    name
+    status
+    updatedAt
+  }
+}
+
+mutation DeleteCampaign($id: String!) {
+  deleteCampaign(id: $id) {
+    success
+    message
+  }
+}
+
+mutation LaunchEmailCampaign($id: String!) {
+  launchEmailCampaign(id: $id) {
+    id
+    name
+    status
+    emailsSent
+    emailsScheduled
+    emailsFailed
+    updatedAt
+  }
+}
+
+mutation SendEmail($input: SendEmailInput!) {
+  sendEmail(input: $input) {
+    success
+    id
+    error
+  }
+}
+
+mutation GenerateEmail($input: GenerateEmailInput!) {
+  generateEmail(input: $input) {
+    subject
+    html
+    text
+  }
+}

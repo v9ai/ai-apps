@@ -6,7 +6,7 @@
 use crate::d1::{D1Client, StudyTopicRow};
 use crate::team::{shutdown_pair, Mailbox, TaskQueue, TeamLead};
 use anyhow::{Context, Result};
-use research::agent::Client;
+use research::agent::agent_builder;
 use research::scholar::SemanticScholarClient;
 use research::tools::{GetPaperDetail, SearchPapers};
 use std::sync::Arc;
@@ -321,7 +321,7 @@ pub async fn run_prep(api_key: &str, _scholar: &SemanticScholarClient, d1: &D1Cl
 ///          body_md content. Uses the same `TeamLead` + `TaskQueue` pattern as `run_prep`.
 pub async fn run_gen(category: &str, count: usize, api_key: &str, d1: &D1Client) -> Result<()> {
     // ── Phase 1: DeepSeek Reasoner → stubs ────────────────────────────────────
-    let client = Client::new(api_key);
+
 
     let system = "You are a technical interview coach. \
         Output ONLY valid JSON — a JSON array, no markdown, no code fences, no extra text.";
@@ -338,7 +338,7 @@ pub async fn run_gen(category: &str, count: usize, api_key: &str, d1: &D1Client)
     );
 
     info!(category, count, "Phase 1 — DeepSeek Reasoner generating stubs");
-    let agent = client.agent("deepseek-reasoner").preamble(system).build();
+    let agent = agent_builder(api_key, "deepseek-reasoner").preamble(system).build();
     let raw = agent
         .prompt(prompt)
         .await
@@ -422,7 +422,7 @@ async fn write_gen_topic(
     category: &str,
     api_key: &str,
 ) -> Result<StudyTopicRow> {
-    let client = Client::new(api_key);
+
 
     let preamble = format!(
         r#"You are a senior technical writer creating practical study material for a software engineer preparing for interviews.
@@ -460,7 +460,7 @@ Write at a senior engineer level. Be precise, no fluff."#,
         focus = focus,
     );
 
-    let agent = client.agent("deepseek-chat").preamble(&preamble).build();
+    let agent = agent_builder(api_key, "deepseek-chat").preamble(&preamble).build();
     let body_md = agent
         .prompt(user_prompt)
         .await
@@ -490,7 +490,7 @@ async fn run_direct_agent(
     topic_def: TopicDef,
     api_key: &str,
 ) -> Result<StudyTopicRow> {
-    let client = Client::new(api_key);
+
 
     let preamble = format!(
         r#"You are a senior technical writer creating practical study material for a software engineer preparing for a Fullstack Developer interview at Plan A Technologies.
@@ -533,8 +533,7 @@ Write at a senior engineer level. Be precise, avoid fluff. Focus on practical kn
     );
 
     // No tools — direct DeepSeek generation
-    let agent = client
-        .agent("deepseek-chat")
+    let agent = agent_builder(api_key, "deepseek-chat")
         .preamble(&preamble)
         .build();
 
@@ -676,7 +675,7 @@ async fn search_topic_papers(
     scholar: &SemanticScholarClient,
     api_key: &str,
 ) -> Result<String> {
-    let client = Client::new(api_key);
+
 
     let system = format!(
         "You are a research assistant. Find the most relevant academic papers on \"{title}\". \
@@ -704,8 +703,7 @@ async fn search_topic_papers(
         queries = queries_str,
     );
 
-    let agent = client
-        .agent("deepseek-chat")
+    let agent = agent_builder(api_key, "deepseek-chat")
         .preamble(&system)
         .tool(SearchPapers::new(scholar.clone()))
         .tool(GetPaperDetail::new(scholar.clone()))
@@ -726,7 +724,7 @@ async fn write_study_guide(
     findings: &str,
     api_key: &str,
 ) -> Result<StudyTopicRow> {
-    let client = Client::new(api_key);
+
 
     let preamble = format!(
         r#"You are a technical writer creating study material on agentic coding for software engineers preparing for AI engineering interviews.
@@ -774,7 +772,7 @@ Write at a senior engineer level. Be precise, avoid fluff. Include real examples
     );
 
     // Pure writing — no tools needed; findings are already in the prompt.
-    let agent = client.agent("deepseek-chat").preamble(&preamble).build();
+    let agent = agent_builder(api_key, "deepseek-chat").preamble(&preamble).build();
 
     let body_md = agent
         .prompt(user_prompt)

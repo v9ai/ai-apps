@@ -132,8 +132,8 @@ export default function ReportedJobsPage() {
         fetch("/api/admin/reported-jobs?type=stats"),
       ]);
       if (!jobsRes.ok) throw new Error(`${jobsRes.status} ${jobsRes.statusText}`);
-      const jobsData = await jobsRes.json();
-      const statsData = await statsRes.json();
+      const jobsData = (await jobsRes.json()) as { jobs?: ReportedJob[] };
+      const statsData = (await statsRes.json()) as { stats?: ReportStats | null };
       setJobs(jobsData.jobs ?? []);
       setStats(statsData.stats ?? null);
     } catch (err) {
@@ -160,7 +160,7 @@ export default function ReportedJobsPage() {
         body: JSON.stringify({ jobId, action, confirmedReason }),
       });
       if (!res.ok) {
-        const d = await res.json();
+        const d = (await res.json()) as { error?: string };
         throw new Error(d.error ?? "Action failed");
       }
       // Remove resolved job from local list optimistically

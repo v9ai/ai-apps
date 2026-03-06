@@ -8,15 +8,29 @@ export type EmbeddingVector = number[];
 // Re-export Cloudflare config for use in other skill modules
 export { CLOUDFLARE_ACCOUNT_ID, CLOUDFLARE_WORKERS_AI_KEY };
 
+export type VectorQueryResult = {
+  id: string;
+  score: number;
+  metadata?: Record<string, unknown>;
+};
+
+interface VectorStore {
+  query(params: {
+    indexName: string;
+    queryVector: number[];
+    topK: number;
+  }): Promise<VectorQueryResult[]>;
+}
+
 // Vector storage now managed via D1 Vectorize
 // This is a placeholder for the vector store interface
-export const skillsVector = null;
+let skillsVector: VectorStore | null = null;
 
 /**
  * Get the skills vector store instance
  * @deprecated Vector storage moved to D1 Vectorize
  */
-export function getSkillsVector() {
+export function getSkillsVector(): VectorStore {
   if (!skillsVector) {
     throw new Error(
       "Skills vector store not initialized. Vector storage has been moved to D1 Vectorize.",
@@ -63,7 +77,10 @@ export async function embedWithCloudflareBgeSmall(
     throw new Error(`Cloudflare API error (${response.status}): ${errorText}`);
   }
 
-  const result = await response.json();
+  const result = (await response.json()) as {
+    success: boolean;
+    result?: { shape: number[]; data: number[][] };
+  };
 
   // Cloudflare returns { result: { shape: [n, 384], data: [[...], [...]] } }
   if (!result.success || !result.result?.data) {
@@ -72,7 +89,7 @@ export async function embedWithCloudflareBgeSmall(
     );
   }
 
-  return result.result.data as number[][];
+  return result.result.data;
 }
 
 // Note: Vector index management is now handled externally via D1 Vectorize

@@ -7,9 +7,11 @@ import {
   Button,
   Box,
   Text,
+  Badge,
   Dialog,
 } from "@radix-ui/themes";
 import { Link2Icon, PlusIcon, ReloadIcon } from "@radix-ui/react-icons";
+import { LoadingDots } from "./LoadingDots";
 import type { AiInterviewPrepRequirement } from "@/__generated__/hooks";
 import Link from "next/link";
 
@@ -64,9 +66,11 @@ export function RequirementDialog({
             )}
 
             {/* Interview questions */}
-            <Text size="1" color="gray" weight="medium" mb="2" as="div">
-              INTERVIEW QUESTIONS
-            </Text>
+            <Flex align="center" gap="2" mb="2" style={{ borderLeft: "3px solid var(--accent-6)", paddingLeft: "8px" }}>
+              <Text size="1" color="gray" weight="medium" as="div">
+                INTERVIEW QUESTIONS
+              </Text>
+            </Flex>
             <Flex direction="column" gap="2" mb="4">
               {selectedReq.questions.map((q, i) => (
                 <Text key={q} size="2" as="div">
@@ -76,31 +80,33 @@ export function RequirementDialog({
             </Flex>
 
             {/* Study topics */}
-            <Text size="1" color="gray" weight="medium" mb="2" as="div">
-              STUDY TOPICS
-            </Text>
+            <Flex align="center" gap="2" mb="2" style={{ borderLeft: "3px solid var(--accent-6)", paddingLeft: "8px" }}>
+              <Text size="1" color="gray" weight="medium" as="div">
+                STUDY TOPICS
+              </Text>
+              <Text size="1" color="gray" as="div">
+                {selectedReq.studyTopicDeepDives?.filter((d) => d.deepDive).length ?? 0}/{selectedReq.studyTopics.length} studied
+              </Text>
+            </Flex>
             <Flex gap="2" wrap="wrap" mb="4">
               {selectedReq.studyTopics.map((t) => {
                 const hasDeepDive = selectedReq.studyTopicDeepDives?.some((d) => d.topic === t && d.deepDive);
                 return (
-                  <Text
+                  <Badge
                     key={t}
                     size="1"
+                    variant={hasDeepDive ? "soft" : "outline"}
+                    color="violet"
                     role="button"
                     tabIndex={0}
                     onClick={(e) => onOpenStudyTopic(e, selectedReq, t)}
                     onKeyDown={(e) => {
                       if (e.key === "Enter" || e.key === " ") onOpenStudyTopic(e as any, selectedReq, t);
                     }}
-                    style={{
-                      padding: "2px 8px",
-                      backgroundColor: hasDeepDive ? "var(--violet-5)" : "var(--violet-3)",
-                      borderRadius: "4px",
-                      cursor: "pointer",
-                    }}
+                    style={{ cursor: "pointer" }}
                   >
                     {t}
-                  </Text>
+                  </Badge>
                 );
               })}
             </Flex>
@@ -108,9 +114,11 @@ export function RequirementDialog({
             {/* Deep dive section */}
             <Box pt="4" style={{ borderTop: "1px solid var(--gray-4)" }}>
               <Flex justify="between" align="center" mb="3">
-                <Text size="1" color="gray" weight="medium" as="div">
-                  DEEP DIVE
-                </Text>
+                <Flex align="center" gap="2" style={{ borderLeft: "3px solid var(--accent-6)", paddingLeft: "8px" }}>
+                  <Text size="1" color="gray" weight="medium" as="div">
+                    DEEP DIVE
+                  </Text>
+                </Flex>
                 {selectedReq.deepDive && !deepDiveLoading && (
                   <Button variant="ghost" size="1" color="gray" onClick={onGenerateDeepDive}>
                     <ReloadIcon /> Regenerate
@@ -120,20 +128,7 @@ export function RequirementDialog({
               {deepDiveLoading ? (
                 <Flex direction="column" gap="3" py="4" align="center">
                   <Text size="2" color="gray">Generating deep-dive…</Text>
-                  <Flex gap="2">
-                    {[0, 1, 2].map((i) => (
-                      <Box
-                        key={i}
-                        style={{
-                          width: 8,
-                          height: 8,
-                          borderRadius: "50%",
-                          backgroundColor: "var(--accent-9)",
-                          animation: `pulse 1.2s ease-in-out ${i * 0.2}s infinite`,
-                        }}
-                      />
-                    ))}
-                  </Flex>
+                  <LoadingDots />
                 </Flex>
               ) : deepDiveError ? (
                 <Flex direction="column" gap="2">
@@ -156,14 +151,14 @@ export function RequirementDialog({
               )}
             </Box>
 
-            <Flex justify="between" mt="4" align="center">
+            <Flex justify="between" mt="4" pt="4" align="center" style={{ borderTop: "1px solid var(--gray-4)" }}>
               <Flex gap="2" align="center">
                 {companyKey && (
                   <Button variant="ghost" size="2" asChild>
                     <Link href={`/prep/${companyKey}`}>View full prep →</Link>
                   </Button>
                 )}
-                <Dialog.Close asChild>
+                <Dialog.Close>
                   <Button
                     variant="ghost"
                     size="2"

@@ -5,10 +5,14 @@ import { useCallback, useMemo, useState } from "react";
 import {
   useGetCompanyQuery,
   useEnhanceCompanyMutation,
+  useAnalyzeCompanyMutation,
   useUpdateCompanyMutation,
   useGetJobsQuery,
+  useGetApplicationsQuery,
 } from "@/__generated__/hooks";
 import type { CompanyCategory } from "@/__generated__/graphql";
+import ReactMarkdown from "react-markdown";
+import remarkGfm from "remark-gfm";
 import Link from "next/link";
 import { useAuth } from "@/lib/auth-hooks";
 import { ADMIN_EMAIL } from "@/lib/constants";
@@ -616,6 +620,20 @@ export function CompanyDetail({ companyKey, companyId }: Props) {
     },
   });
 
+  const [analyzeError, setAnalyzeError] = useState<string | null>(null);
+  const [analyzeSuccess, setAnalyzeSuccess] = useState<string | null>(null);
+  const [analyzeCompany, { loading: isAnalyzing }] = useAnalyzeCompanyMutation({
+    onCompleted: async () => {
+      setAnalyzeError(null);
+      setAnalyzeSuccess("Deep analysis completed.");
+      await refetch();
+    },
+    onError: (err) => {
+      setAnalyzeSuccess(null);
+      setAnalyzeError(err.message || "Analysis failed.");
+    },
+  });
+
   const company = data?.company ?? null;
   // When a numeric ID is passed, derive the slug from the loaded company record
   const effectiveKey = companyKey ?? company?.key;
@@ -626,6 +644,11 @@ export function CompanyDetail({ companyKey, companyId }: Props) {
   });
   const companyJobs = (jobsData?.jobs?.jobs ?? []).filter(
     (j) => j.company_key === effectiveKey,
+  );
+
+  const { data: appsData } = useGetApplicationsQuery();
+  const companyApps = (appsData?.applications ?? []).filter(
+    (a) => a.companyKey === effectiveKey || a.companyName?.toLowerCase().replace(/\s+/g, "-") === effectiveKey,
   );
 
   const remoteEuConfirmed = companyJobs.some(
@@ -657,6 +680,19 @@ export function CompanyDetail({ companyKey, companyId }: Props) {
       console.error("Enhancement error:", e);
     }
   }, [company, enhanceCompany]);
+
+  const handleAnalyze = useCallback(async () => {
+    if (!company) return;
+    setAnalyzeError(null);
+    setAnalyzeSuccess(null);
+    try {
+      await analyzeCompany({
+        variables: { id: company.id, key: company.key },
+      });
+    } catch (e) {
+      console.error("Analysis error:", e);
+    }
+  }, [company, analyzeCompany]);
 
   if (loading) {
     return (
@@ -796,6 +832,26 @@ export function CompanyDetail({ companyKey, companyId }: Props) {
           </Callout.Root>
         )}
 
+        {analyzeError && (
+          <Callout.Root color="red">
+            <Callout.Icon>
+              <InfoCircledIcon />
+            </Callout.Icon>
+            <Callout.Text>
+              <Strong>Analysis error:</Strong> {analyzeError}
+            </Callout.Text>
+          </Callout.Root>
+        )}
+
+        {analyzeSuccess && (
+          <Callout.Root color="green">
+            <Callout.Icon>
+              <InfoCircledIcon />
+            </Callout.Icon>
+            <Callout.Text>{analyzeSuccess}</Callout.Text>
+          </Callout.Root>
+        )}
+
         {/* Header */}
         <Flex
           direction={{ initial: "column", sm: "row" }}
@@ -891,6 +947,17 @@ export function CompanyDetail({ companyKey, companyId }: Props) {
                 {isEnhancing ? "Enhancing…" : "Enhance"}
               </Button>
             )}
+            {isAdmin && company.website && (
+              <Button
+                onClick={handleAnalyze}
+                disabled={isAnalyzing}
+                color="violet"
+                variant="solid"
+              >
+                <MagicWandIcon />
+                {isAnalyzing ? "Analyzing…" : company.deep_analysis ? "Re-analyze" : "Deep Analysis"}
+              </Button>
+            )}
           </Flex>
         </Flex>
 
@@ -904,6 +971,11 @@ export function CompanyDetail({ companyKey, companyId }: Props) {
               Jobs{companyJobs.length > 0 ? ` (${companyJobs.length})` : ""}
             </Tabs.Trigger>
             <Tabs.Trigger value="overview">Overview</Tabs.Trigger>
+            {companyApps.length > 0 && (
+              <Tabs.Trigger value="applications">
+                Applications ({companyApps.length})
+              </Tabs.Trigger>
+            )}
           </Tabs.List>
 
           {/* Jobs tab */}
@@ -959,6 +1031,89 @@ export function CompanyDetail({ companyKey, companyId }: Props) {
             </Box>
           </Tabs.Content>
 
+          {/* Applications tab */}
+          {companyApps.length > 0 && (
+            <Tabs.Content value="applications">
+              <Box pt="4">
+                <Flex direction="column">
+                  {companyApps.map((app, idx) => {
+                    const statusColor: Record<string, "gray" | "blue" | "orange" | "green" | "red"> = {
+                      pending: "gray",
+                      submitted: "blue",
+                      reviewed: "orange",
+                      accepted: "green",
+                      rejected: "red",
+                    };
+                    const statusLabel: Record<string, string> = {
+                      pending: "Saved",
+                      submitted: "Applied",
+                      reviewed: "Interviewing",
+                      accepted: "Offer",
+                      rejected: "Rejected",
+                    };
+                    return (
+                      <Box key={app.id}>
+                        <Link
+                          href={`/applications/${app.id}`}
+                          style={{ textDecoration: "none", color: "inherit" }}
+                        >
+                          <Flex
+                            justify="between"
+                            align="center"
+                            gap="4"
+                            py="2"
+                            style={{ cursor: "pointer" }}
+                          >
+                            <Flex direction="column" gap="1" style={{ minWidth: 0 }}>
+                              <Text
+                                size="3"
+                                weight="medium"
+                                style={{
+                                  overflow: "hidden",
+                                  textOverflow: "ellipsis",
+                                  whiteSpace: "nowrap",
+                                }}
+                              >
+                                {app.jobTitle ?? app.jobId}
+                              </Text>
+                              <Flex gap="2" align="center">
+                                <Badge
+                                  color={statusColor[app.status] ?? "gray"}
+                                  variant="soft"
+                                  size="1"
+                                >
+                                  {statusLabel[app.status] ?? app.status}
+                                </Badge>
+                                {app.notes && (
+                                  <Text size="1" color="gray" style={{
+                                    overflow: "hidden",
+                                    textOverflow: "ellipsis",
+                                    whiteSpace: "nowrap",
+                                    maxWidth: 300,
+                                  }}>
+                                    {app.notes}
+                                  </Text>
+                                )}
+                              </Flex>
+                            </Flex>
+                            <Text
+                              size="1"
+                              color="gray"
+                              style={{ whiteSpace: "nowrap", flexShrink: 0 }}
+                            >
+                              {new Date(app.createdAt).toLocaleDateString()}
+                            </Text>
+                          </Flex>
+                        </Link>
+                        {idx < companyApps.length - 1 ? <Separator size="4" /> : null}
+                      </Box>
+                    );
+                  })}
+                </Flex>
+              </Box>
+            </Tabs.Content>
+          )}
+
           {/* Overview tab */}
           <Tabs.Content value="overview">
             <Box pt="4">
@@ -971,6 +1126,16 @@ export function CompanyDetail({ companyKey, companyId }: Props) {
                 >
                   <Box style={{ flex: 2, minWidth: 0 }}>
                     <Flex direction="column" gap="4">
+                      {company.deep_analysis && (
+                        <SectionCard title="Deep Analysis">
+                          <Box className="prose prose-sm prose-gray max-w-none">
+                            <ReactMarkdown remarkPlugins={[remarkGfm]}>
+                              {company.deep_analysis}
+                            </ReactMarkdown>
+                          </Box>
+                        </SectionCard>
+                      )}
+
                       {company.description ? (
                         <SectionCard title="About">
                           <Text

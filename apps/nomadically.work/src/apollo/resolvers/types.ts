@@ -20,6 +20,18 @@ export interface EnhanceCompanyResponse {
   companyKey: string;
 }
 
+export interface AnalyzeCompanyArgs {
+  id?: number;
+  key?: string;
+}
+
+export interface AnalyzeCompanyResponse {
+  success: boolean;
+  message: string;
+  companyId: number;
+  companyKey: string;
+}
+
 /**
  * Mapping of ATS vendor names to database enum values
  */

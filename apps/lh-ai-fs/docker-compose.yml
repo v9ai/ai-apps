@@ -1,0 +1,57 @@
+services:
+  backend:
+    build: ./backend
+    ports:
+      - "8002:8002"
+    volumes:
+      - ./backend:/app
+    env_file:
+      - path: .env
+        required: false
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8002/health"]
+      interval: 10s
+      timeout: 5s
+      retries: 3
+      start_period: 10s
+
+  frontend:
+    build: ./frontend
+    ports:
+      - "5175:5175"
+    volumes:
+      - ./frontend:/app
+      - /app/node_modules
+    depends_on:
+      backend:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "node", "-e", "fetch('http://localhost:5175').then(r=>{process.exit(r.ok?0:1)}).catch(()=>process.exit(1))"]
+      interval: 10s
+      timeout: 5s
+      retries: 3
+      start_period: 15s
+
+  evals:
+    build: ./backend
+    volumes:
+      - ./backend:/app
+    env_file:
+      - path: .env
+        required: false
+    command: ["python", "run_evals.py"]
+    profiles:
+      - evals
+
+  evals-promptfoo:
+    image: node:20-alpine
+    working_dir: /workspace
+    volumes:
+      - ./:/workspace
+      - /workspace/node_modules
+    env_file:
+      - path: .env
+        required: false
+    command: ["sh", "-c", "npx --yes promptfoo@0.120.26 eval --config evals/promptfoo/prompt-precision-citations.yaml; npx --yes promptfoo@0.120.26 eval --config evals/promptfoo/prompt-precision-facts.yaml"]
+    profiles:
+      - evals-promptfoo

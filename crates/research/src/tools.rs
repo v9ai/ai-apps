@@ -65,12 +65,10 @@ impl Tool for SearchPapers {
 
     fn definition(&self) -> ToolDefinition {
         let description = self.config.search_description.clone().unwrap_or_else(|| {
-            format!(
-                "Search 214M+ academic papers on Semantic Scholar sorted by citation \
+            "Search 214M+ academic papers on Semantic Scholar sorted by citation \
                  impact. Returns titles, authors, citation counts, abstracts, and PDF \
                  links. Call multiple times with different query terms to cover the topic \
-                 from different angles.",
-            )
+                 from different angles.".to_string()
         });
 
         ToolDefinition {

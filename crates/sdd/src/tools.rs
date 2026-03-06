@@ -62,6 +62,12 @@ pub struct ToolRegistry {
     tools: HashMap<String, (ToolDefinition, ToolFn)>,
 }
 
+impl Default for ToolRegistry {
+    fn default() -> Self {
+        Self::new()
+    }
+}
+
 impl ToolRegistry {
     pub fn new() -> Self {
         Self { tools: HashMap::new() }

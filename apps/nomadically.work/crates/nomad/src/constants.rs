@@ -48,6 +48,12 @@ pub static COUNTRY_NAME_TO_ISO: Lazy<HashMap<&'static str, &'static str>> = Lazy
         ("canada", "CA"), ("australia", "AU"), ("new zealand", "NZ"),
         ("japan", "JP"), ("singapore", "SG"), ("india", "IN"), ("brazil", "BR"),
         ("israel", "IL"), ("south korea", "KR"), ("china", "CN"),
+        // LatAm / other non-EU countries
+        ("mexico", "MX"), ("argentina", "AR"), ("colombia", "CO"), ("panama", "PA"),
+        ("chile", "CL"), ("peru", "PE"), ("costa rica", "CR"), ("uruguay", "UY"),
+        ("philippines", "PH"), ("vietnam", "VN"), ("turkey", "TR"), ("türkiye", "TR"),
+        ("south africa", "ZA"), ("nigeria", "NG"), ("kenya", "KE"),
+        ("united arab emirates", "AE"), ("uae", "AE"),
     ])
 });
 
@@ -95,6 +101,35 @@ pub static EU_TIMEZONE_PATTERN: Lazy<Regex> = Lazy::new(|| {
         r"|[+-]\s*\d+\s*hours?\s*cet",
         r"|\boverlap with (?:cet|european)\b",
         r")",
+    ))
+    .unwrap()
+});
+
+/// Non-EU location patterns — city/region names indicating non-EU positions.
+pub static NON_EU_LOCATION_PATTERN: Lazy<Regex> = Lazy::new(|| {
+    Regex::new(concat!(
+        r"(?i)\b(",
+        r"nyc|new york|denver|miami|san francisco|los angeles|chicago|seattle|austin",
+        r"|boston|atlanta|dallas|houston|portland|phoenix|minneapolis|minnesota",
+        r"|toronto|vancouver|montreal|calgary",
+        r"|mumbai|bangalore|bengaluru|hyderabad|delhi|chennai|pune",
+        r"|são paulo|sao paulo|buenos aires|bogota|bogotá|lima|santiago",
+        r"|manila|ho chi minh|jakarta",
+        r"|latam|latin america",
+        r")\b",
+    ))
+    .unwrap()
+});
+
+/// JD-level signals indicating non-EU regional focus (check first ~500 chars).
+pub static NON_EU_JD_PATTERN: Lazy<Regex> = Lazy::new(|| {
+    Regex::new(concat!(
+        r"(?i)\b(",
+        r"latam|latin america|nearshore|staff augmentation",
+        r"|us(?:\s+|-)?(?:based|only)|united states only",
+        r"|canada(?:\s+|-)?(?:based|only)|india(?:\s+|-)?(?:based|only)",
+        r"|scale u\.?s\.? startups?",
+        r")\b",
     ))
     .unwrap()
 });
@@ -156,6 +191,41 @@ mod tests {
         assert!(EU_TIMEZONE_PATTERN.is_match("CET +2"));
         assert!(EU_TIMEZONE_PATTERN.is_match("CET -3"));
         assert!(!EU_TIMEZONE_PATTERN.is_match("PST timezone"));
+    }
+
+    #[test]
+    fn latam_countries_in_map() {
+        assert_eq!(COUNTRY_NAME_TO_ISO.get("colombia"), Some(&"CO"));
+        assert_eq!(COUNTRY_NAME_TO_ISO.get("argentina"), Some(&"AR"));
+        assert_eq!(COUNTRY_NAME_TO_ISO.get("panama"), Some(&"PA"));
+        assert_eq!(COUNTRY_NAME_TO_ISO.get("mexico"), Some(&"MX"));
+    }
+
+    #[test]
+    fn non_eu_location_pattern_matches() {
+        assert!(NON_EU_LOCATION_PATTERN.is_match("nyc"));
+        assert!(NON_EU_LOCATION_PATTERN.is_match("new york"));
+        assert!(NON_EU_LOCATION_PATTERN.is_match("denver"));
+        assert!(NON_EU_LOCATION_PATTERN.is_match("toronto"));
+        assert!(NON_EU_LOCATION_PATTERN.is_match("bangalore"));
+        assert!(NON_EU_LOCATION_PATTERN.is_match("latam"));
+        assert!(!NON_EU_LOCATION_PATTERN.is_match("remote"));
+        assert!(!NON_EU_LOCATION_PATTERN.is_match("berlin"));
+        assert!(!NON_EU_LOCATION_PATTERN.is_match("amsterdam"));
+        assert!(!NON_EU_LOCATION_PATTERN.is_match("oslo"));
+    }
+
+    #[test]
+    fn non_eu_jd_pattern_matches() {
+        assert!(NON_EU_JD_PATTERN.is_match("latam"));
+        assert!(NON_EU_JD_PATTERN.is_match("latin america"));
+        assert!(NON_EU_JD_PATTERN.is_match("nearshore"));
+        assert!(NON_EU_JD_PATTERN.is_match("staff augmentation"));
+        assert!(NON_EU_JD_PATTERN.is_match("us-based"));
+        assert!(NON_EU_JD_PATTERN.is_match("canada-only"));
+        assert!(!NON_EU_JD_PATTERN.is_match("remote-first"));
+        assert!(!NON_EU_JD_PATTERN.is_match("global team"));
+        assert!(!NON_EU_JD_PATTERN.is_match("work from anywhere"));
     }
 
     #[test]

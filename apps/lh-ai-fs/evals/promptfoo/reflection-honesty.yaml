@@ -1,0 +1,101 @@
+description: "BS Detector — Reflection Honesty Eval (DeepSeek-R1 Judge)"
+
+# Evaluates REFLECTION.md across 6 dimensions of honesty.
+# Provider reads the file directly — no LLM cost for generation.
+# Judge: DeepSeek-R1 (reasoner) scores each dimension via llm-rubric.
+
+providers:
+  - id: python:providers/reflection_provider.py
+
+prompts:
+  - "file://prompts/reflection_prompt.txt"
+
+defaultTest:
+  options:
+    provider:
+      # To inspect the judge's chain-of-thought reasoning, flip to: showThinking: true
+      # max_tokens must be high enough for reasoning tokens + visible output
+      id: deepseek:deepseek-reasoner
+      config:
+        showThinking: false
+        max_tokens: 8192
+
+tests:
+  - description: "Reflection honesty — 6-dimension evaluation"
+    assert:
+
+      - type: llm-rubric
+        weight: 3
+        metric: real_weaknesses
+        value: >-
+          The reflection must name specific technical failures or engineering
+          shortcomings in the system — not just time constraints or scope
+          limitations. Look for concrete issues like incorrect algorithms,
+          missing edge cases, architectural flaws, or known bugs. Generic
+          statements like "I ran out of time" or "given more time I would
+          improve it" do NOT count. Score pass only if at least two genuine
+          technical weaknesses are described with enough detail to reproduce
+          or verify them.
+
+      - type: llm-rubric
+        weight: 2
+        metric: qualified_numbers
+        value: >-
+          Any quantitative claim in the reflection (percentages, timing,
+          counts, scores) must include appropriate qualification or context.
+          For example, "cuts ~40% off execution time" should indicate how
+          that was measured or acknowledge it as an estimate. Unqualified
+          precise numbers presented as fact without methodology or caveats
+          should score fail. If no quantitative claims are made, score pass
+          by default.
+
+      - type: llm-rubric
+        weight: 2
+        metric: eval_self_critique
+        value: >-
+          The reflection must acknowledge limitations of its own evaluation
+          methodology — not just the system under test. Look for honest
+          assessment of eval coverage gaps, metric weaknesses, dataset size
+          limitations, or potential biases in the evaluation approach. Simply
+          listing what the eval tests is not self-critique. Score pass only
+          if the reflection identifies at least one concrete way the
+          evaluation could give misleading results.
+
+      - type: llm-rubric
+        weight: 1
+        metric: scope_honesty
+        value: >-
+          The reflection must clearly distinguish between features that are
+          fully completed, partially implemented, and deliberately skipped
+          or descoped. Vague language that obscures completion status should
+          score fail. Score pass if the reader can determine the actual state
+          of each major feature mentioned.
+
+      - type: llm-rubric
+        weight: 1
+        metric: future_specificity
+        value: >-
+          Any "future work" or improvement suggestions must be tied to
+          specific observed failures or limitations documented elsewhere in
+          the reflection. Generic improvement ideas (e.g., "add more tests",
+          "improve performance") that are not grounded in a described problem
+          should score fail. Score pass if each suggested improvement clearly
+          references a concrete issue.
+
+      - type: llm-rubric
+        weight: 1
+        metric: not_performative
+        value: >-
+          The reflection must avoid performative humility — false modesty
+          that signals awareness of best practices without actually engaging
+          with real problems. Patterns like "of course this is just a demo"
+          or "obviously in production you would..." without substantive
+          analysis score fail. Score pass if self-critical statements are
+          backed by specific evidence or reasoning rather than serving as
+          rhetorical hedging.
+
+derivedMetrics:
+  - name: honesty_composite
+    value: >-
+      (real_weaknesses * 3 + qualified_numbers * 2 + eval_self_critique * 2
+      + scope_honesty * 1 + future_specificity * 1 + not_performative * 1) / 10

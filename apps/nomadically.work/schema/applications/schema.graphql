@@ -16,6 +16,10 @@ extend type Mutation {
   generateInterviewQuestions(applicationId: Int!, type: String!): Application!
   generateAgenticCoding(applicationId: Int!): Application!
   generateBackendPrep(applicationId: Int!): Application!
+  generateDeepResearch(applicationId: Int!): Application!
+  recordLearningSession(applicationId: Int!, input: LearningSessionInput!): Application!
+  updateTopicMastery(applicationId: Int!, domain: LearningDomain!, topicKey: String!, masteryLevel: MasteryLevel!): Application!
+  generateQuiz(applicationId: Int!, domain: LearningDomain!, topicKey: String!, count: Int): GeneratedQuiz!
   deleteApplication(id: Int!): DeleteApplicationResponse!
 }
 
@@ -113,6 +117,24 @@ type BackendPrepSection {
   researchInsights: String
 }
 
+type DeepResearchModelResponse {
+  model: String!
+  content: String!
+  reasoning: String
+}
+
+type DeepResearchQuestion {
+  question: String!
+  category: String!
+  deepseek: DeepResearchModelResponse!
+  qwen: DeepResearchModelResponse!
+}
+
+type AIDeepResearch {
+  questions: [DeepResearchQuestion!]!
+  generatedAt: String!
+}
+
 type AIBackendPrep {
   systemDesign: BackendPrepSection
   distributedSystems: BackendPrepSection
@@ -162,6 +184,87 @@ type QuestionAnswer {
   answerText: String!
 }
 
+enum MasteryLevel {
+  unfamiliar
+  familiar
+  confident
+  mastery
+}
+
+enum LearningDomain {
+  concepts
+  interview
+  coding
+  backend
+}
+
+enum SessionType {
+  study
+  quiz
+  flashcard
+  mock_interview
+}
+
+type TopicMasteryEntry {
+  domain: LearningDomain!
+  topicKey: String!
+  masteryLevel: MasteryLevel!
+  confidenceScore: Float!
+  totalSessions: Int!
+  lastQuizScore: Float
+  streakDays: Int!
+  nextReviewAt: String
+  lastStudiedAt: String
+}
+
+type LearningSessionEntry {
+  id: Int!
+  sessionType: SessionType!
+  domain: LearningDomain!
+  topicKey: String!
+  score: Float
+  totalQuestions: Int
+  correctAnswers: Int
+  confidence: MasteryLevel
+  durationMs: Int
+  createdAt: String!
+}
+
+type QuizQuestion {
+  id: String!
+  question: String!
+  options: [String!]!
+  correctIndex: Int!
+  explanation: String!
+  difficulty: String!
+  topicKey: String!
+}
+
+type GeneratedQuiz {
+  domain: LearningDomain!
+  topicKey: String!
+  questions: [QuizQuestion!]!
+  generatedAt: String!
+}
+
+type LearningTeamStatus {
+  domain: LearningDomain!
+  label: String!
+  totalTopics: Int!
+  masteredTopics: Int!
+  familiarTopics: Int!
+  lastStudiedAt: String
+  streakDays: Int!
+  nextReviewTopics: [String!]!
+}
+
+type LearningOverview {
+  teams: [LearningTeamStatus!]!
+  overallReadiness: Float!
+  totalSessions: Int!
+  currentStreak: Int!
+}
+
 """
 Pipeline status for a tracked job application.
 Maps to a kanban column in the UI.
@@ -193,6 +296,10 @@ type Application {
   aiInterviewQuestions: AIInterviewQuestions
   agenticCoding: AgenticCoding
   aiBackendPrep: AIBackendPrep
+  aiDeepResearch: AIDeepResearch
+  learningOverview: LearningOverview
+  topicMasteryList: [TopicMasteryEntry!]!
+  recentSessions: [LearningSessionEntry!]!
 }
 
 input QuestionAnswerInput {
@@ -207,6 +314,18 @@ input ApplicationInput {
   questions: [QuestionAnswerInput!]!
   jobTitle: String
   companyName: String
+}
+
+input LearningSessionInput {
+  sessionType: SessionType!
+  domain: LearningDomain!
+  topicKey: String!
+  score: Float
+  totalQuestions: Int
+  correctAnswers: Int
+  confidence: MasteryLevel
+  durationMs: Int
+  answersJson: String
 }
 
 input UpdateApplicationInput {

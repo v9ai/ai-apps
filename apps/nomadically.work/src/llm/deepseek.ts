@@ -92,9 +92,9 @@ export async function generateDeepSeekWithLangfuse(
   const generationId = crypto.randomUUID();
   const startTime = new Date().toISOString();
 
-  const messages: OpenAI.Chat.CompletionCreateParams["messages"] =
+  const messages: OpenAI.Chat.ChatCompletionCreateParams["messages"] =
     langfusePrompt.type === "chat"
-      ? (compiled as OpenAI.Chat.CompletionCreateParams["messages"])
+      ? (compiled as OpenAI.Chat.ChatCompletionCreateParams["messages"])
       : [{ role: "user", content: String(compiled) }];
 
   if (isLangfuseConfigured()) {

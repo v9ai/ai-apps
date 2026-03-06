@@ -1,0 +1,24 @@
+query GetBlockedCompanies {
+  blockedCompanies {
+    id
+    name
+    reason
+    createdAt
+  }
+}
+
+mutation BlockCompany($name: String!, $reason: String) {
+  blockCompany(name: $name, reason: $reason) {
+    id
+    name
+    reason
+    createdAt
+  }
+}
+
+mutation UnblockCompany($id: Int!) {
+  unblockCompany(id: $id) {
+    success
+    message
+  }
+}

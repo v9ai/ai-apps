@@ -11,11 +11,16 @@ import {
   Text,
   Dialog,
   IconButton,
+  Avatar,
+  Badge,
+  DropdownMenu,
 } from "@radix-ui/themes";
 import {
-  ArrowLeftIcon,
   Pencil1Icon,
+  DotsHorizontalIcon,
   TrashIcon,
+  ExternalLinkIcon,
+  ChevronDownIcon,
 } from "@radix-ui/react-icons";
 import {
   useDeleteApplicationMutation,
@@ -23,9 +28,10 @@ import {
   useUpdateCompanyMutation,
   useGetCompanyQuery,
 } from "@/__generated__/hooks";
+import type { ApplicationStatus } from "@/__generated__/hooks";
 import { CompanyPicker } from "@/components/company-picker";
 import type { AppData } from "./types";
-import { formatDate, companyInitials } from "./constants";
+import { formatDate, companyInitials, COLUMNS } from "./constants";
 
 interface ApplicationHeaderProps {
   app: AppData;
@@ -54,6 +60,17 @@ export function ApplicationHeader({ app, isAdmin }: ApplicationHeaderProps) {
   const displayName = app.companyName ?? app.jobId;
   const displayTitle = app.jobTitle ?? "Job application";
   const initials = companyInitials(displayName);
+  const statusCol = COLUMNS.find((c) => c.status === app.status);
+  const statusColorToken = statusCol?.color ?? "gray";
+  const statusCssColor = `var(--${statusColorToken}-9)`;
+  const jobUrl = app.jobId.startsWith("http") ? app.jobId : null;
+
+  const handleStatusChange = async (status: ApplicationStatus) => {
+    await updateApplication({
+      variables: { id: app.id, input: { status } },
+      refetchQueries: ["GetApplication"],
+    });
+  };
 
   const handleSaveCompany = async () => {
     const company = companyData?.company;
@@ -76,18 +93,40 @@ export function ApplicationHeader({ app, isAdmin }: ApplicationHeaderProps) {
     }
   };
 
+  const readiness = [
+    { label: "Prep", done: !!app.aiInterviewPrep },
+    { label: "Coding", done: !!app.agenticCoding },
+    { label: "Backend", done: !!app.aiBackendPrep },
+    { label: "Questions", done: (app.aiInterviewQuestions?.technicalQuestions?.length ?? 0) > 0 },
+  ];
+
   return (
     <>
-      {/* Back link */}
-      <Flex justify="between" align="center" mb="6">
-        <Button variant="ghost" asChild>
-          <Link href="/applications">
-            <ArrowLeftIcon /> Back to Applications
-          </Link>
-        </Button>
-        <Button variant="soft" color="red" size="2" onClick={() => setDeleteDialogOpen(true)}>
-          <TrashIcon /> Delete
-        </Button>
+      {/* Breadcrumb + overflow menu */}
+      <Flex justify="between" align="center" mb="4">
+        <Flex align="center" gap="1">
+          <Text size="1" color="gray" asChild>
+            <Link href="/applications" style={{ color: "inherit", textDecoration: "none" }}>
+              Applications
+            </Link>
+          </Text>
+          <Text size="1" color="gray">/</Text>
+          <Text size="1" weight="medium" title={displayTitle}>
+            {displayTitle.length > 40 ? displayTitle.slice(0, 40) + "\u2026" : displayTitle}
+          </Text>
+        </Flex>
+        <DropdownMenu.Root>
+          <DropdownMenu.Trigger>
+            <IconButton size="2" variant="ghost" color="gray">
+              <DotsHorizontalIcon />
+            </IconButton>
+          </DropdownMenu.Trigger>
+          <DropdownMenu.Content size="1">
+            <DropdownMenu.Item color="red" onClick={() => setDeleteDialogOpen(true)}>
+              <TrashIcon /> Delete application
+            </DropdownMenu.Item>
+          </DropdownMenu.Content>
+        </DropdownMenu.Root>
       </Flex>
 
       {/* Delete confirmation dialog */}
@@ -123,24 +162,23 @@ export function ApplicationHeader({ app, isAdmin }: ApplicationHeaderProps) {
       </Dialog.Root>
 
       {/* Header */}
-      <Flex gap="4" align="start" mb="6">
-        <Box
-          style={{
-            width: 48,
-            height: 48,
-            borderRadius: 8,
-            backgroundColor: "var(--accent-3)",
-            display: "flex",
-            alignItems: "center",
-            justifyContent: "center",
-            flexShrink: 0,
-            fontWeight: 700,
-            fontSize: 16,
-            color: "var(--accent-11)",
-          }}
-        >
-          {initials}
-        </Box>
+      <Flex
+        gap="4"
+        align="start"
+        mb="2"
+        direction={{ initial: "column", sm: "row" }}
+        style={{
+          borderLeft: `3px solid ${statusCssColor}`,
+          paddingLeft: 16,
+        }}
+      >
+        <Avatar
+          size="4"
+          fallback={initials}
+          variant="soft"
+          color="indigo"
+          style={{ flexShrink: 0 }}
+        />
         <Box style={{ flex: 1 }}>
           <Heading size="7" mb="1">
             {displayTitle}
@@ -156,6 +194,36 @@ export function ApplicationHeader({ app, isAdmin }: ApplicationHeaderProps) {
               )}{" "}
               &middot; Added {formatDate(app.createdAt)}
             </Text>
+            <Badge
+              color={statusCol?.color ?? "gray"}
+              variant="soft"
+              size="2"
+              style={{
+                boxShadow: `0 0 6px ${statusCssColor}`,
+              }}
+            >
+              {statusCol?.label ?? app.status}
+            </Badge>
+            {isAdmin && (
+              <DropdownMenu.Root>
+                <DropdownMenu.Trigger>
+                  <Button variant="ghost" size="1" color="gray">
+                    <ChevronDownIcon />
+                  </Button>
+                </DropdownMenu.Trigger>
+                <DropdownMenu.Content size="1">
+                  {COLUMNS.map((col) => (
+                    <DropdownMenu.Item
+                      key={col.status}
+                      disabled={col.status === app.status}
+                      onClick={() => handleStatusChange(col.status)}
+                    >
+                      <Badge color={col.color} variant="soft" size="1">{col.label}</Badge>
+                    </DropdownMenu.Item>
+                  ))}
+                </DropdownMenu.Content>
+              </DropdownMenu.Root>
+            )}
             {isAdmin && app.companyKey && (
               <IconButton
                 size="1"
@@ -184,8 +252,81 @@ export function ApplicationHeader({ app, isAdmin }: ApplicationHeaderProps) {
               />
             )}
           </Flex>
+
+          {/* Inline job URL + resume */}
+          {(jobUrl || app.resume) && (
+            <Flex align="center" gap="3" mt="1" wrap="wrap">
+              {jobUrl && (
+                <a
+                  href={jobUrl}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  style={{ display: "inline-flex", alignItems: "center", gap: 4, color: "var(--accent-11)", textDecoration: "none" }}
+                >
+                  <Text size="1">Job posting</Text>
+                  <ExternalLinkIcon width={12} height={12} />
+                </a>
+              )}
+              {app.resume && (
+                <a
+                  href={app.resume as unknown as string}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  style={{ display: "inline-flex", alignItems: "center", gap: 4, color: "var(--accent-11)", textDecoration: "none" }}
+                >
+                  <Text size="1">Resume</Text>
+                  <ExternalLinkIcon width={12} height={12} />
+                </a>
+              )}
+            </Flex>
+          )}
         </Box>
       </Flex>
+
+      {/* Readiness strip */}
+      <Flex gap="1" mb="6">
+        {readiness.map((r, i) => (
+          <Flex
+            key={r.label}
+            direction="column"
+            align="center"
+            style={{ flex: 1 }}
+          >
+            <Box
+              title={r.label}
+              style={{
+                width: "100%",
+                height: 8,
+                backgroundColor: r.done ? "var(--green-9)" : "var(--gray-5)",
+                transition: "background-color 0.3s",
+                animation: `readinessIn 0.4s ease both`,
+                animationDelay: `${i * 120}ms`,
+              }}
+            />
+            <Text
+              size="1"
+              color="gray"
+              style={{
+                marginTop: 4,
+                fontSize: 10,
+                letterSpacing: "0.02em",
+                textTransform: "lowercase" as const,
+                opacity: r.done ? 1 : 0.5,
+                animation: `readinessIn 0.4s ease both`,
+                animationDelay: `${i * 120 + 100}ms`,
+              }}
+            >
+              {r.label}
+            </Text>
+          </Flex>
+        ))}
+      </Flex>
+      <style>{`
+        @keyframes readinessIn {
+          from { opacity: 0; transform: translateY(4px); }
+          to { opacity: 1; transform: translateY(0); }
+        }
+      `}</style>
 
       {/* Company edit dialog */}
       <Dialog.Root open={editingCompany} onOpenChange={(o) => { if (!o) setEditingCompany(false); }}>

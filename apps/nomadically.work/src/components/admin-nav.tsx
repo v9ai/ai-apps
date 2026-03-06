@@ -1,6 +1,14 @@
 "use client";
 
-import { ExclamationTriangleIcon, EnvelopeClosedIcon, GearIcon } from "@radix-ui/react-icons";
+import {
+  ExclamationTriangleIcon,
+  EnvelopeClosedIcon,
+  GearIcon,
+  PersonIcon,
+  TargetIcon,
+  CheckboxIcon,
+  Cross2Icon,
+} from "@radix-ui/react-icons";
 import { Flex } from "@radix-ui/themes";
 import { useUser } from "@clerk/nextjs";
 import { NavLink } from "@/components/ui";
@@ -20,10 +28,34 @@ export function AdminNav() {
 
   return (
     <>
+      <NavLink href="/admin/contacts" title="Contacts">
+        <Flex align="center" gap="2">
+          <PersonIcon width={14} height={14} />
+          contacts
+        </Flex>
+      </NavLink>
+      <NavLink href="/admin/opportunities" title="Opportunities">
+        <Flex align="center" gap="2">
+          <TargetIcon width={14} height={14} />
+          opportunities
+        </Flex>
+      </NavLink>
+      <NavLink href="/admin/tasks" title="Tasks">
+        <Flex align="center" gap="2">
+          <CheckboxIcon width={14} height={14} />
+          tasks
+        </Flex>
+      </NavLink>
       <NavLink href="/admin/emails" title="Emails">
         <Flex align="center" gap="2">
           <EnvelopeClosedIcon width={14} height={14} />
           emails
+        </Flex>
+      </NavLink>
+      <NavLink href="/admin/blocked-companies" title="Blocked Companies">
+        <Flex align="center" gap="2">
+          <Cross2Icon width={14} height={14} />
+          blocked
         </Flex>
       </NavLink>
       <NavLink href="/admin/reported-jobs" title="Reported jobs review">

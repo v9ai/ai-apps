@@ -1,4 +1,5 @@
 use anyhow::{Context, Result};
+use rayon::prelude::*;
 use regex::Regex;
 use serde_json::json;
 use tracing::info;
@@ -6,7 +7,7 @@ use tracing::info;
 use crate::d1::D1Client;
 use crate::heuristic::keyword_eu_classify;
 use crate::signals::{extract_eu_signals, format_signals};
-use crate::{Confidence, JobClassification, JobRow, status};
+use crate::{Confidence, JobClassification, JobRow, SignalSet, status};
 
 /// Classification prompt — system message.
 const SYSTEM_PROMPT: &str = "\
@@ -85,21 +86,13 @@ pub fn extract_json_object(raw: &str) -> Result<&str> {
     Ok(&raw[raw.find('{').unwrap()..=raw.rfind('}').unwrap()])
 }
 
-/// Classify a single job using the 2-tier pipeline (heuristic -> DeepSeek).
-/// Workers AI tier is skipped in native Rust — only available in CF Workers.
-pub async fn classify_single_job(
+/// Classify a single job via LLM only (signals already extracted).
+async fn classify_with_llm(
     job: &JobRow,
+    signals: &SignalSet,
     deepseek: &deepseek::DeepSeekClient<deepseek::ReqwestClient>,
-) -> Result<(JobClassification, &'static str)> {
-    let signals = extract_eu_signals(job);
-    let signals_text = format_signals(&signals);
-
-    // Tier 0 — Keyword heuristic
-    if let Some(result) = keyword_eu_classify(job, &signals) {
-        return Ok((result, "heuristic"));
-    }
-
-    // Tier 1 — DeepSeek LLM
+) -> Result<JobClassification> {
+    let signals_text = format_signals(signals);
     let title = job.title.as_deref().unwrap_or("N/A");
     let location = job.location.as_deref().unwrap_or("Not specified");
     let desc = job.description.as_deref().unwrap_or("");
@@ -139,21 +132,22 @@ pub async fn classify_single_job(
     let classification: JobClassification =
         serde_json::from_str(json_str).context("Failed to parse classification JSON")?;
 
-    Ok((classification, "deepseek"))
+    Ok(classification)
 }
 
-/// Classify a single job and persist the result to D1.
-pub async fn classify_job_and_persist(
+/// Persist a classification result to D1.
+async fn persist_classification(
     db: &D1Client,
     job: &JobRow,
-    deepseek: &deepseek::DeepSeekClient<deepseek::ReqwestClient>,
-) -> Result<ClassifyResult> {
-    let (classification, source) = classify_single_job(job, deepseek).await?;
-
+    classification: &JobClassification,
+    source: &str,
+) -> Result<()> {
+    let title = job.title.as_deref().unwrap_or("");
+    let loc = job.location.as_deref().unwrap_or("N/A");
     let evidence = format!(
         "title:{} | loc:{}",
-        job.title.as_deref().unwrap_or("")[..job.title.as_deref().unwrap_or("").len().min(100)].to_string(),
-        job.location.as_deref().unwrap_or("N/A")[..job.location.as_deref().unwrap_or("N/A").len().min(80)].to_string(),
+        &title[..title.len().min(100)],
+        &loc[..loc.len().min(80)],
     );
     let reason = format!("[{source}] {} | evidence:{evidence}", classification.reason);
     let score = classification.confidence.score();
@@ -179,6 +173,37 @@ pub async fn classify_job_and_persist(
     )
     .await?;
 
+    Ok(())
+}
+
+/// Classify a single job using the 2-tier pipeline (heuristic -> DeepSeek).
+/// Workers AI tier is skipped in native Rust — only available in CF Workers.
+pub async fn classify_single_job(
+    job: &JobRow,
+    deepseek: &deepseek::DeepSeekClient<deepseek::ReqwestClient>,
+) -> Result<(JobClassification, &'static str)> {
+    let signals = extract_eu_signals(job);
+
+    // Tier 0 — Keyword heuristic
+    if let Some(result) = keyword_eu_classify(job, &signals) {
+        return Ok((result, "heuristic"));
+    }
+
+    // Tier 1 — DeepSeek LLM
+    let classification = classify_with_llm(job, &signals, deepseek).await?;
+    Ok((classification, "deepseek"))
+}
+
+/// Classify a single job and persist the result to D1.
+pub async fn classify_job_and_persist(
+    db: &D1Client,
+    job: &JobRow,
+    deepseek: &deepseek::DeepSeekClient<deepseek::ReqwestClient>,
+) -> Result<ClassifyResult> {
+    let (classification, source) = classify_single_job(job, deepseek).await?;
+
+    persist_classification(db, job, &classification, source).await?;
+
     Ok(ClassifyResult {
         is_remote_eu: classification.is_remote_eu,
         confidence: classification.confidence,
@@ -186,7 +211,30 @@ pub async fn classify_job_and_persist(
     })
 }
 
+/// Result of the parallel heuristic pass — either resolved or needs LLM.
+enum HeuristicOutcome {
+    Resolved(JobClassification),
+    NeedsLlm(SignalSet),
+}
+
+/// Run heuristic classification on all jobs in parallel using rayon.
+/// Returns (job, outcome) pairs preserving original order.
+fn parallel_heuristic_pass(jobs: &[JobRow]) -> Vec<(&JobRow, HeuristicOutcome)> {
+    jobs.par_iter()
+        .map(|job| {
+            let signals = extract_eu_signals(job);
+            match keyword_eu_classify(job, &signals) {
+                Some(result) => (job, HeuristicOutcome::Resolved(result)),
+                None => (job, HeuristicOutcome::NeedsLlm(signals)),
+            }
+        })
+        .collect()
+}
+
 /// Batch classify all jobs at status='role-match'.
+///
+/// Phase 1: Parallel heuristic pass (rayon) — resolves unambiguous jobs on all cores.
+/// Phase 2: Sequential LLM pass — only ambiguous jobs hit DeepSeek (rate-limited).
 pub async fn classify_batch(
     db: &D1Client,
     deepseek: &deepseek::DeepSeekClient<deepseek::ReqwestClient>,
@@ -205,39 +253,87 @@ pub async fn classify_batch(
         .await?;
 
     info!("Found {} jobs to classify", jobs.len());
-
     let mut stats = BatchStats::default();
 
-    for job in &jobs {
-        info!("Classifying job {}: {:?}", job.id, job.title);
+    // Phase 1: Parallel heuristic classification (rayon)
+    let outcomes = parallel_heuristic_pass(&jobs);
 
-        match classify_job_and_persist(db, job, deepseek).await {
-            Ok(result) => {
+    let mut heuristic_updates: Vec<(&JobRow, &JobClassification)> = Vec::new();
+    let mut llm_queue: Vec<(&JobRow, SignalSet)> = Vec::new();
+
+    for (job, outcome) in &outcomes {
+        match outcome {
+            HeuristicOutcome::Resolved(result) => {
+                heuristic_updates.push((job, result));
+            }
+            HeuristicOutcome::NeedsLlm(signals) => {
+                llm_queue.push((job, signals.clone()));
+            }
+        }
+    }
+
+    info!(
+        "Heuristic pass: {} resolved, {} need LLM",
+        heuristic_updates.len(),
+        llm_queue.len()
+    );
+
+    // Persist heuristic results
+    for (job, result) in &heuristic_updates {
+        match persist_classification(db, job, result, "heuristic").await {
+            Ok(_) => {
                 stats.processed += 1;
+                stats.heuristic += 1;
                 if result.is_remote_eu {
                     stats.eu_remote += 1;
                 } else {
                     stats.non_eu += 1;
                 }
-                match result.source.as_str() {
-                    "heuristic" => stats.heuristic += 1,
-                    "deepseek" => stats.deepseek += 1,
-                    _ => {}
-                }
                 info!(
-                    "  {} ({}) [{}]",
+                    "Job {}: {} ({}) [heuristic]",
+                    job.id,
                     if result.is_remote_eu { "EU Remote" } else { "Non-EU" },
-                    result.confidence,
-                    result.source
+                    result.confidence
                 );
-
-                // Rate limit for DeepSeek
-                if result.source == "deepseek" {
-                    tokio::time::sleep(std::time::Duration::from_millis(200)).await;
-                }
             }
             Err(e) => {
-                tracing::error!("Error classifying job {}: {e}", job.id);
+                tracing::error!("Error persisting heuristic result for job {}: {e}", job.id);
+                stats.errors += 1;
+            }
+        }
+    }
+
+    // Phase 2: Sequential LLM classification for ambiguous jobs
+    for (job, signals) in &llm_queue {
+        info!("LLM classifying job {}: {:?}", job.id, job.title);
+
+        match classify_with_llm(job, signals, deepseek).await {
+            Ok(result) => {
+                match persist_classification(db, job, &result, "deepseek").await {
+                    Ok(_) => {
+                        stats.processed += 1;
+                        stats.deepseek += 1;
+                        if result.is_remote_eu {
+                            stats.eu_remote += 1;
+                        } else {
+                            stats.non_eu += 1;
+                        }
+                        info!(
+                            "  {} ({}) [deepseek]",
+                            if result.is_remote_eu { "EU Remote" } else { "Non-EU" },
+                            result.confidence
+                        );
+                    }
+                    Err(e) => {
+                        tracing::error!("Error persisting LLM result for job {}: {e}", job.id);
+                        stats.errors += 1;
+                    }
+                }
+                // Rate limit
+                tokio::time::sleep(std::time::Duration::from_millis(200)).await;
+            }
+            Err(e) => {
+                tracing::error!("Error LLM classifying job {}: {e}", job.id);
                 stats.errors += 1;
             }
         }
@@ -247,6 +343,10 @@ pub async fn classify_batch(
 }
 
 /// Batch classify jobs from any non-terminal status, enhancing first if needed.
+///
+/// Phase 1: Sequential ATS enhancement for jobs missing descriptions.
+/// Phase 2: Parallel heuristic pass (rayon) — resolves unambiguous jobs on all cores.
+/// Phase 3: Sequential LLM pass — only ambiguous jobs hit DeepSeek (rate-limited).
 pub async fn classify_batch_all(
     db: &D1Client,
     deepseek: &deepseek::DeepSeekClient<deepseek::ReqwestClient>,
@@ -254,7 +354,7 @@ pub async fn classify_batch_all(
 ) -> Result<BatchStats> {
     info!("Fetching jobs ready for enhance+classify pipeline...");
 
-    let jobs: Vec<JobRow> = db
+    let mut jobs: Vec<JobRow> = db
         .query_as(
             &format!(
                 "SELECT {} FROM jobs WHERE status NOT IN (?, ?) ORDER BY created_at DESC LIMIT ?",
@@ -270,59 +370,107 @@ pub async fn classify_batch_all(
 
     info!("Found {} jobs to process", jobs.len());
 
+    // Phase 1: Sequential ATS enhancement for jobs missing descriptions
+    for job in jobs.iter_mut() {
+        let desc_len = job.description.as_deref().map(|d| d.len()).unwrap_or(0);
+        let is_ats = matches!(
+            job.source_kind.as_deref(),
+            Some("greenhouse") | Some("lever") | Some("ashby")
+        );
+        if desc_len < 100 && is_ats {
+            info!("  Enhancing job {} (desc len: {})", job.id, desc_len);
+            match crate::ats_enhance::enhance_single_by_id(db, job.id).await {
+                Ok(enhanced) => *job = enhanced,
+                Err(e) => {
+                    tracing::warn!(
+                        "Enhancement failed for job {}, using existing data: {e}",
+                        job.id
+                    );
+                }
+            }
+        }
+    }
+
     let mut stats = BatchStats::default();
 
-    for job in &jobs {
-        info!("Processing job {}: {:?}", job.id, job.title);
+    // Phase 2: Parallel heuristic classification (rayon)
+    let outcomes = parallel_heuristic_pass(&jobs);
 
-        // Enhance first if description is missing/short and source is ATS
-        let job = {
-            let desc_len = job.description.as_deref().map(|d| d.len()).unwrap_or(0);
-            let is_ats = matches!(
-                job.source_kind.as_deref(),
-                Some("greenhouse") | Some("lever") | Some("ashby")
-            );
+    let mut heuristic_updates: Vec<(&JobRow, &JobClassification)> = Vec::new();
+    let mut llm_queue: Vec<(&JobRow, SignalSet)> = Vec::new();
 
-            if desc_len < 100 && is_ats {
-                info!("  Enhancing job {} (desc len: {})", job.id, desc_len);
-                match crate::ats_enhance::enhance_single_by_id(db, job.id).await {
-                    Ok(enhanced) => enhanced,
-                    Err(e) => {
-                        tracing::warn!("Enhancement failed for job {}, using existing data: {e}", job.id);
-                        job.clone()
-                    }
-                }
-            } else {
-                job.clone()
+    for (job, outcome) in &outcomes {
+        match outcome {
+            HeuristicOutcome::Resolved(result) => {
+                heuristic_updates.push((job, result));
             }
-        };
+            HeuristicOutcome::NeedsLlm(signals) => {
+                llm_queue.push((job, signals.clone()));
+            }
+        }
+    }
 
-        match classify_job_and_persist(db, &job, deepseek).await {
-            Ok(result) => {
+    info!(
+        "Heuristic pass: {} resolved, {} need LLM",
+        heuristic_updates.len(),
+        llm_queue.len()
+    );
+
+    // Persist heuristic results
+    for (job, result) in &heuristic_updates {
+        match persist_classification(db, job, result, "heuristic").await {
+            Ok(_) => {
                 stats.processed += 1;
+                stats.heuristic += 1;
                 if result.is_remote_eu {
                     stats.eu_remote += 1;
                 } else {
                     stats.non_eu += 1;
                 }
-                match result.source.as_str() {
-                    "heuristic" => stats.heuristic += 1,
-                    "deepseek" => stats.deepseek += 1,
-                    _ => {}
-                }
                 info!(
-                    "  {} ({}) [{}]",
+                    "Job {}: {} ({}) [heuristic]",
+                    job.id,
                     if result.is_remote_eu { "EU Remote" } else { "Non-EU" },
-                    result.confidence,
-                    result.source
+                    result.confidence
                 );
-
-                if result.source == "deepseek" {
-                    tokio::time::sleep(std::time::Duration::from_millis(200)).await;
-                }
             }
             Err(e) => {
-                tracing::error!("Error classifying job {}: {e}", job.id);
+                tracing::error!("Error persisting heuristic result for job {}: {e}", job.id);
+                stats.errors += 1;
+            }
+        }
+    }
+
+    // Phase 3: Sequential LLM classification for ambiguous jobs
+    for (job, signals) in &llm_queue {
+        info!("LLM classifying job {}: {:?}", job.id, job.title);
+
+        match classify_with_llm(job, signals, deepseek).await {
+            Ok(result) => {
+                match persist_classification(db, job, &result, "deepseek").await {
+                    Ok(_) => {
+                        stats.processed += 1;
+                        stats.deepseek += 1;
+                        if result.is_remote_eu {
+                            stats.eu_remote += 1;
+                        } else {
+                            stats.non_eu += 1;
+                        }
+                        info!(
+                            "  {} ({}) [deepseek]",
+                            if result.is_remote_eu { "EU Remote" } else { "Non-EU" },
+                            result.confidence
+                        );
+                    }
+                    Err(e) => {
+                        tracing::error!("Error persisting LLM result for job {}: {e}", job.id);
+                        stats.errors += 1;
+                    }
+                }
+                tokio::time::sleep(std::time::Duration::from_millis(200)).await;
+            }
+            Err(e) => {
+                tracing::error!("Error LLM classifying job {}: {e}", job.id);
                 stats.errors += 1;
             }
         }

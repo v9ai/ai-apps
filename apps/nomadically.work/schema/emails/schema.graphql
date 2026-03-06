@@ -1,0 +1,150 @@
+extend type Query {
+  emailCampaigns(status: String, limit: Int, offset: Int): EmailCampaignsResult!
+  emailCampaign(id: String!): EmailCampaign
+  emailTemplates(category: String, limit: Int, offset: Int): EmailTemplatesResult!
+  emailTemplate(id: Int!): EmailTemplate
+}
+
+extend type Mutation {
+  createDraftCampaign(input: CreateCampaignInput!): EmailCampaign!
+  updateCampaign(id: String!, input: UpdateCampaignInput!): EmailCampaign!
+  deleteCampaign(id: String!): DeleteCampaignResult!
+  launchEmailCampaign(id: String!): EmailCampaign!
+  sendEmail(input: SendEmailInput!): SendEmailResult!
+  generateEmail(input: GenerateEmailInput!): GenerateEmailResult!
+  createEmailTemplate(input: CreateEmailTemplateInput!): EmailTemplate!
+  updateEmailTemplate(id: Int!, input: UpdateEmailTemplateInput!): EmailTemplate!
+  deleteEmailTemplate(id: Int!): DeleteEmailTemplateResult!
+}
+
+type EmailCampaign {
+  id: String!
+  companyId: Int
+  name: String!
+  status: String!
+  sequence: JSON
+  delayDays: JSON
+  startAt: String
+  mode: String
+  fromEmail: String
+  replyTo: String
+  totalRecipients: Int!
+  emailsSent: Int!
+  emailsScheduled: Int!
+  emailsFailed: Int!
+  recipientEmails: [String!]!
+  createdAt: String!
+  updatedAt: String!
+}
+
+type EmailCampaignsResult {
+  campaigns: [EmailCampaign!]!
+  totalCount: Int!
+}
+
+type DeleteCampaignResult {
+  success: Boolean!
+  message: String
+}
+
+input CreateCampaignInput {
+  name: String!
+  companyId: Int
+  fromEmail: String
+  replyTo: String
+  mode: String
+  sequence: JSON
+  delayDays: JSON
+  recipientEmails: [String!]
+}
+
+input UpdateCampaignInput {
+  name: String
+  status: String
+  fromEmail: String
+  replyTo: String
+  mode: String
+  sequence: JSON
+  delayDays: JSON
+  startAt: String
+  recipientEmails: [String!]
+}
+
+type EmailTemplate {
+  id: Int!
+  name: String!
+  description: String
+  subject: String
+  htmlContent: String
+  textContent: String
+  category: String
+  tags: [String!]!
+  variables: [String!]!
+  isActive: Boolean!
+  createdAt: String!
+  updatedAt: String!
+}
+
+type EmailTemplatesResult {
+  templates: [EmailTemplate!]!
+  totalCount: Int!
+}
+
+type DeleteEmailTemplateResult {
+  success: Boolean!
+  message: String
+}
+
+input CreateEmailTemplateInput {
+  name: String!
+  description: String
+  subject: String
+  htmlContent: String
+  textContent: String
+  category: String
+  tags: [String!]
+  variables: [String!]
+}
+
+input UpdateEmailTemplateInput {
+  name: String
+  description: String
+  subject: String
+  htmlContent: String
+  textContent: String
+  category: String
+  tags: [String!]
+  variables: [String!]
+  isActive: Boolean
+}
+
+input SendEmailInput {
+  to: String!
+  subject: String!
+  html: String!
+  text: String
+  replyTo: String
+  from: String
+  scheduledAt: String
+}
+
+type SendEmailResult {
+  success: Boolean!
+  id: String
+  error: String
+}
+
+input GenerateEmailInput {
+  recipientName: String!
+  recipientRole: String
+  companyName: String
+  purpose: String!
+  tone: String
+  templateId: Int
+}
+
+type GenerateEmailResult {
+  subject: String!
+  html: String!
+  text: String!
+}

@@ -8,6 +8,7 @@ import { eq, and, or, like, asc, desc, gte, inArray } from "drizzle-orm";
 import type { GraphQLContext } from "../context";
 import { isAdminEmail } from "@/lib/admin";
 import { enhanceCompany } from "./enhance-company";
+import { analyzeCompany } from "./analyze-company";
 
 /**
  * Safely parse JSON strings with proper error handling and logging
@@ -69,6 +70,15 @@ export const companyResolvers = {
     },
     score_reasons(parent: any) {
       return safeJsonParse(parent.score_reasons, []);
+    },
+    email(parent: any) {
+      return parent.email ?? null;
+    },
+    emailsList(parent: any) {
+      return safeJsonParse(parent.emails, []);
+    },
+    githubUrl(parent: any) {
+      return parent.github_url ?? null;
     },
     async ats_boards(parent: any, _args: any, context: GraphQLContext) {
       try {
@@ -615,6 +625,7 @@ export const companyResolvers = {
     },
 
     enhanceCompany,
+    analyzeCompany,
 
     async add_company_facts(
       _parent: any,

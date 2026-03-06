@@ -48,7 +48,7 @@ export async function getPrompt(config: PromptConfig): Promise<PromptResult> {
     : config.name;
 
   if (promptCache.has(cacheKey)) {
-    return { text: promptCache.get(cacheKey) };
+    return { text: promptCache.get(cacheKey)! };
   }
 
   try {

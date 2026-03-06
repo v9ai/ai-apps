@@ -1,0 +1,33 @@
+schema: spec-driven
+
+context: |
+  Project: BS Detector — legal brief verification pipeline (Rivera v. Harmon)
+  Backend: Python 3, FastAPI, OpenAI SDK, Pydantic v2, tenacity
+  Frontend: React 18, Vite 5 (port 5175)
+  Infra: Docker Compose; backend on :8002, frontend on :8175
+  Agents: DocumentParser → [CitationVerifier ∥ FactChecker] → ReportSynthesizer
+  Evals: custom harness in backend/evals/ (precision/recall/F1/hallucination rate)
+  Entry points: POST /analyze; python run_evals.py
+
+rules:
+  proposal:
+    - Include rollback plan for risky changes
+    - Identify affected modules/packages
+  specs:
+    - Use Given/When/Then format for scenarios
+    - Use RFC 2119 keywords (MUST, SHALL, SHOULD, MAY)
+  design:
+    - Include sequence diagrams for complex flows
+    - Document architecture decisions with rationale
+  tasks:
+    - Group tasks by phase (infrastructure, implementation, testing)
+    - Use hierarchical numbering (1.1, 1.2, etc.)
+    - Keep tasks small enough to complete in one session
+  apply:
+    - Follow existing Python patterns (async, Pydantic models, typed dicts)
+    - Keep eval harness runnable via single command
+  verify:
+    - Run python run_evals.py to confirm metrics pass
+    - Compare implementation against every spec scenario
+  archive:
+    - Warn before merging destructive deltas (large removals)

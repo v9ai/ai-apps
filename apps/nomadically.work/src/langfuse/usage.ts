@@ -57,7 +57,7 @@ export async function getRecentGenerationsForUser(params: {
     );
   }
 
-  const json = await res.json();
+  const json = (await res.json()) as { data?: unknown[] };
   const data = Array.isArray(json?.data) ? json.data : [];
 
   return data.map((o: any) => ({

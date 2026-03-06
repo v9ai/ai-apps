@@ -1,0 +1,60 @@
+query GetEmailTemplates($category: String, $limit: Int, $offset: Int) {
+  emailTemplates(category: $category, limit: $limit, offset: $offset) {
+    templates {
+      id
+      name
+      description
+      subject
+      category
+      tags
+      isActive
+      createdAt
+      updatedAt
+    }
+    totalCount
+  }
+}
+
+query GetEmailTemplate($id: Int!) {
+  emailTemplate(id: $id) {
+    id
+    name
+    description
+    subject
+    htmlContent
+    textContent
+    category
+    tags
+    variables
+    isActive
+    createdAt
+    updatedAt
+  }
+}
+
+mutation CreateEmailTemplate($input: CreateEmailTemplateInput!) {
+  createEmailTemplate(input: $input) {
+    id
+    name
+    subject
+    category
+    createdAt
+  }
+}
+
+mutation UpdateEmailTemplate($id: Int!, $input: UpdateEmailTemplateInput!) {
+  updateEmailTemplate(id: $id, input: $input) {
+    id
+    name
+    subject
+    isActive
+    updatedAt
+  }
+}
+
+mutation DeleteEmailTemplate($id: Int!) {
+  deleteEmailTemplate(id: $id) {
+    success
+    message
+  }
+}

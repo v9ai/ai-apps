@@ -64,8 +64,8 @@ export async function resumeStatus(
   if (rows.length > 0 && rows[0].raw_text?.trim()) {
     const row = rows[0];
     const updatedAt =
-      row.updated_at instanceof Date
-        ? row.updated_at.toISOString()
+      typeof row.updated_at === "string"
+        ? row.updated_at
         : new Date(Number(row.updated_at) * 1000).toISOString();
     return {
       exists: true,

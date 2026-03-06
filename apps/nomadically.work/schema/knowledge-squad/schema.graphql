@@ -1,0 +1,76 @@
+## Knowledge Squad types
+
+type JobEnrichment {
+  salaryMin: Int
+  salaryMax: Int
+  salaryCurrency: String
+  visaSponsorship: Boolean
+  enrichmentStatus: String
+}
+
+type CoverLetterAngle {
+  angle: String!
+  reasoning: String!
+  exampleOpener: String!
+}
+
+type InterviewTopic {
+  topic: String!
+  importance: String!
+  prepNotes: String!
+}
+
+type NetworkingSuggestion {
+  action: String!
+  target: String!
+  reasoning: String!
+}
+
+type RiskFactor {
+  risk: String!
+  mitigation: String!
+}
+
+type ApplicationStrategy {
+  coverLetterAngles: [CoverLetterAngle!]!
+  interviewTopics: [InterviewTopic!]!
+  networkingSuggestions: [NetworkingSuggestion!]!
+  keyDifferentiators: [String!]!
+  riskFactors: [RiskFactor!]!
+  recommendedApproach: String!
+  generatedAt: String!
+}
+
+type SkillGapResource {
+  title: String!
+  url: String!
+  type: String!
+  estimatedHours: Float!
+}
+
+type SkillGap {
+  skill: String!
+  currentLevel: String!
+  targetLevel: String!
+  frequencyInJobs: Int!
+  priority: Int!
+  resources: [SkillGapResource!]!
+}
+
+type StudyPlan {
+  skillGaps: [SkillGap!]!
+  recommendations: [String!]!
+  generatedAt: String!
+}
+
+extend type Job {
+  enrichment: JobEnrichment
+}
+
+extend type Application {
+  applicationStrategy: ApplicationStrategy
+}
+
+extend type Mutation {
+  generateApplicationStrategy(applicationId: Int!): Application!
+}

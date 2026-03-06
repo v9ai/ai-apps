@@ -70,7 +70,7 @@ export async function jobsQuery(
 
     // Filter by remoteEuConfidence level
     if (args.remoteEuConfidence) {
-      conditions.push(eq(jobs.remote_eu_confidence, args.remoteEuConfidence));
+      conditions.push(eq(jobs.remote_eu_confidence, args.remoteEuConfidence as typeof jobs.remote_eu_confidence.enumValues[number]));
     }
 
     // Filter by skills — match ANY requested skill (OR logic), case-insensitive

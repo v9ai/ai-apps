@@ -1,0 +1,25 @@
+You are a precise legal fact-checker. Always respond with valid JSON only. Output ONLY a JSON object — no prose, no markdown, no explanation outside the JSON.
+
+Cross-reference the factual claims from the Motion for Summary Judgment against the supporting documents.
+
+MSJ Claims:
+{{msj_facts}}
+
+Police Report:
+{{police_text}}
+
+Medical Records:
+{{medical_text}}
+
+Witness Statement:
+{{witness_text}}
+
+For each MSJ claim, check:
+1. DATE CONSISTENCY: Does the date match across all documents?
+2. PPE/SAFETY EQUIPMENT: What does each document say about Rivera's equipment?
+3. WHO DIRECTED THE WORK: Did Harmon exercise control over the work?
+4. SCAFFOLDING CONDITION: What do the documents say about the scaffolding state?
+5. OSHA COMPLIANCE: Is the OSHA inspection record accurately represented?
+6. INJURY DETAILS: Are injuries consistently described?
+
+Return a JSON object with a "verified_facts" array. Each element must have: fact_text (string), source_document (string), is_consistent (bool), confidence (number 0-1), contradictory_sources (array of strings), supporting_sources (array of strings), status (one of: consistent/contradictory/could_not_verify), summary (string).

@@ -1,496 +1,501 @@
-Based on the comprehensive research synthesis from all teammates, I'll now produce a detailed, implementable architecture document for the Adversarial Brief Stress-Tester. This document synthesizes findings from argumentation frameworks, legal NLP, multi-agent debate, counter-argument generation, argument strength prediction, explainable reasoning, knowledge-grounded generation, and all other research areas covered.
+Based on the comprehensive research findings from all prior analyses, I'll now synthesize these into a detailed, implementable architecture document for the Adversarial Brief Stress-Tester.
 
 # Adversarial Brief Stress-Tester: Complete Architecture Document
 
 ## Executive Summary
 
-The Adversarial Brief Stress-Tester is a multi-agent legal AI system that performs symmetric adversarial analysis on legal briefs before filing. It extends the existing BS Detector app by adding three specialized AI agents (Attacker, Defender, Judge) that stress-test legal arguments through formal argumentation frameworks, ensuring EU AI Act compliance (August 2026), citation grounding, hallucination detection, and structured argument graph outputs.
+The Adversarial Brief Stress-Tester is a multi-agent legal AI system that performs symmetric adversarial analysis of legal briefs before filing. It extends the existing BS Detector app by adding three specialized AI agents (Attacker, Defender, Judge) that simulate courtroom adversarial dynamics to identify vulnerabilities, strengthen arguments, and provide explainable scoring. The system addresses the critical gap in current legal AI products (Harvey, CoCounsel, Lexis+ Protégé) by providing comprehensive adversarial testing with EU AI Act compliance built-in from design.
 
 ## 1. System Architecture Overview
 
 ### 1.1 High-Level Architecture Diagram
 
 ```
-┌─────────────────────────────────────────────────────────────────────────────┐
-│                        Adversarial Brief Stress-Tester                      │
-├─────────────────────────────────────────────────────────────────────────────┤
-│  Input Layer                                                                │
-│  ┌─────────────────────────────────────────────────────────────────────┐   │
-│  │  Legal Brief Ingestion & Preprocessing                              │   │
-│  │  • Document parsing (PDF/DOCX)                                      │   │
-│  │  • Citation extraction & validation                                 │   │
-│  │  • Argument structure analysis (IRAC detection)                     │   │
-│  │  • Temporal legal context establishment                             │   │
-│  └─────────────────────────────────────────────────────────────────────┘   │
-│                                    ↓                                        │
-│  Core Processing Layer                                                      │
-│  ┌─────────────────────────────────────────────────────────────────────┐   │
-│  │  Multi-Agent Coordination Framework                                 │   │
-│  │  ┌─────────────┐  ┌─────────────┐  ┌─────────────┐                │   │
-│  │  │  Attacker   │  │  Defender   │  │    Judge    │                │   │
-│  │  │   Agent     │◄─┤   Agent     │◄─┤    Agent    │                │   │
-│  │  │             │  │             │  │             │                │   │
-│  │  └─────────────┘  └─────────────┘  └─────────────┘                │   │
-│  │         │                 │                 │                      │   │
-│  │         └─────────────────┼─────────────────┘                      │   │
-│  │                           │                                        │   │
-│  │         ┌─────────────────┼─────────────────┐                      │   │
-│  │         ▼                 ▼                 ▼                      │   │
-│  │  ┌─────────────┐  ┌─────────────┐  ┌─────────────┐                │   │
-│  │  │  Temporal   │  │  Knowledge  │  │  Uncertainty│                │   │
-│  │  │  Legal KG   │  │  Grounding  │  │  Engine     │                │   │
-│  │  │             │  │   Module    │  │             │                │   │
-│  │  └─────────────┘  └─────────────┘  └─────────────┘                │   │
-│  └─────────────────────────────────────────────────────────────────────┘   │
-│                                    ↓                                        │
-│  Output Layer                                                               │
-│  ┌─────────────────────────────────────────────────────────────────────┐   │
-│  │  Structured Output Generation                                       │   │
-│  │  • Argument graphs (Dung AFs/ASPIC+/BAFs)                          │   │
-│  │  • Vulnerability reports with confidence scores                     │   │
-│  │  • Strengthening recommendations                                    │   │
-│  │  • EU AI Act compliance documentation                              │   │
-│  │  • Hallucination detection flags                                    │   │
-│  └─────────────────────────────────────────────────────────────────────┘   │
-└─────────────────────────────────────────────────────────────────────────────┘
+┌─────────────────────────────────────────────────────────────────────────┐
+│                     Adversarial Brief Stress-Tester                      │
+├─────────────────────────────────────────────────────────────────────────┤
+│  Input Layer                                                             │
+│  ├── Legal Brief Upload/API                                              │
+│  ├── Document Parser & Preprocessor                                      │
+│  └── Citation Extraction & Validation                                    │
+│                                                                          │
+│  Core Processing Pipeline                                                │
+│  ├── Argument Mining Engine (Legal NLP)                                  │
+│  ├── Temporal Knowledge Graph Service                                    │
+│  ├── Multi-Agent Debate Orchestrator                                     │
+│  └── Real-Time Adaptation Controller                                     │
+│                                                                          │
+│  Multi-Agent System                                                      │
+│  ├── Attacker Agent: Weakness Identification & Counter-Argument Generation│
+│  ├── Defender Agent: Argument Strengthening & Rebuttal Generation        │
+│  ├── Judge Agent: Scoring & Explainable Evaluation                       │
+│  └── Agent Communication Bus                                             │
+│                                                                          │
+│  Verification & Compliance Layer                                         │
+│  ├── Hallucination Detection System (HalluGraph)                         │
+│  ├── Citation Verification Pipeline                                      │
+│  ├── EU AI Act Compliance Checker                                        │
+│  └── Audit Trail Generator                                               │
+│                                                                          │
+│  Output Layer                                                            │
+│  ├── Structured Argument Graph Generator                                 │
+│  ├── Vulnerability Report Formatter                                      │
+│  ├── Improvement Recommendation Engine                                   │
+│  └── API/UI Response Handler                                             │
+└─────────────────────────────────────────────────────────────────────────┘
 ```
 
 ### 1.2 Agent Specifications
 
 #### **Attacker Agent**
-**Primary Function**: Identify weaknesses and generate counter-arguments
-**Capabilities**:
-- Vulnerability detection across logical, factual, and legal dimensions
-- Multi-type attack generation (undermine, undercut, rebut)
-- Citation-based attacks using conflicting precedents
-- Temporal attacks on outdated authorities
-- Jurisdictional attacks on inapplicable case law
-- Strength-controlled counter-argument generation
+**Primary Role**: Identify weaknesses and generate counter-arguments
+**Core Capabilities**:
+- Legal analogy detection for undermining cited precedents
+- Fact-pattern matching to find distinguishing cases
+- Logical fallacy detection
+- Citation vulnerability analysis
+- Dynamic strategy adaptation based on defender responses
 
 **Technical Implementation**:
 ```python
 class AttackerAgent:
     def __init__(self):
-        self.weakness_detector = WeaknessDetector()
-        self.counter_argument_generator = CounterArgumentGenerator()
-        self.precedent_finder = PrecedentFinder()
-        self.citation_validator = CitationValidator()
-        self.strategy_optimizer = RLStrategyOptimizer()
-    
-    def attack_brief(self, brief: LegalBrief) -> AttackReport:
-        weaknesses = self.detect_weaknesses(brief)
-        counter_arguments = self.generate_counter_arguments(brief, weaknesses)
-        attacks = self.generate_attacks(counter_arguments)
-        return AttackReport(weaknesses, counter_arguments, attacks)
+        self.analogy_engine = LegalAnalogyDetector()
+        self.fact_matcher = FactPatternMatcher()
+        self.fallacy_detector = LogicalFallacyIdentifier()
+        self.citation_analyzer = CitationVulnerabilityAnalyzer()
+        self.strategy_adapter = DynamicStrategyAdjuster(role="attacker")
+        
+    def analyze_brief(self, brief):
+        vulnerabilities = self.identify_vulnerabilities(brief)
+        counter_arguments = self.generate_counter_arguments(vulnerabilities)
+        return {
+            "vulnerabilities": vulnerabilities,
+            "counter_arguments": counter_arguments,
+            "confidence_scores": self.calculate_confidence(vulnerabilities)
+        }
 ```
 
 #### **Defender Agent**
-**Primary Function**: Strengthen brief against identified attacks
-**Capabilities**:
-- Preemptive strengthening of weak points
-- Rebuttal generation for potential counter-arguments
-- Additional authority retrieval and citation
-- Argument restructuring for robustness
-- Alternative legal theory development
-- Style adaptation for specific judges/courts
+**Primary Role**: Strengthen arguments and anticipate attacks
+**Core Capabilities**:
+- Argument strengthening with additional evidence
+- Preemptive counter-argument addressing
+- Alternative legal interpretations
+- Coherence checking and logical gap filling
+- Real-time adaptation to attacker strategies
 
 **Technical Implementation**:
 ```python
 class DefenderAgent:
     def __init__(self):
-        self.argument_strengthener = ArgumentStrengthener()
-        self.evidence_adder = EvidenceAdder()
-        self.rebuttal_generator = RebuttalGenerator()
-        self.style_adapter = StyleAdapter()
-        self.citation_enhancer = CitationEnhancer()
-    
-    def defend_brief(self, brief: LegalBrief, attacks: List[Attack]) -> DefenseReport:
-        strengthened_brief = self.strengthen_arguments(brief, attacks)
-        rebuttals = self.generate_rebuttals(attacks)
-        enhanced_brief = self.add_supporting_evidence(strengthened_brief)
-        return DefenseReport(enhanced_brief, rebuttals)
+        self.strengthener = ArgumentStrengthener()
+        self.preemptive_defense = PreemptiveDefenseGenerator()
+        self.interpretation_engine = LegalInterpretationEngine()
+        self.coherence_checker = LogicalCoherenceAnalyzer()
+        self.strategy_adapter = DynamicStrategyAdjuster(role="defender")
+        
+    def strengthen_brief(self, brief, vulnerabilities):
+        strengthened = self.strengthen_arguments(brief, vulnerabilities)
+        preemptive = self.generate_preemptive_defenses(vulnerabilities)
+        return {
+            "strengthened_arguments": strengthened,
+            "preemptive_defenses": preemptive,
+            "improvement_scores": self.calculate_improvements(strengthened)
+        }
 ```
 
 #### **Judge Agent**
-**Primary Function**: Score argument strength with explainable reasoning
-**Capabilities**:
-- Multi-dimensional scoring (logical, legal, structural, persuasive)
-- Formal argumentation framework application (Dung AFs, ASPIC+)
-- Bayesian belief updating during debates
-- Uncertainty quantification and confidence scoring
-- Explainable assessment generation
-- Hallucination detection and flagging
+**Primary Role**: Impartial evaluation with explainable scoring
+**Core Capabilities**:
+- Multi-dimensional argument scoring
+- Hallucination detection and citation verification
+- Judicial decision pattern prediction
+- Explainable reasoning chain generation
+- EU AI Act compliance enforcement
 
 **Technical Implementation**:
 ```python
 class JudgeAgent:
     def __init__(self):
-        self.strength_scorer = ArgumentStrengthScorer()
-        self.explainability_module = ExplainabilityGenerator()
-        self.citation_verifier = CitationVerifier()
-        self.uncertainty_quantifier = UncertaintyQuantifier()
-        self.bayesian_updater = BayesianUpdater()
-    
-    def evaluate_arguments(self, arguments: List[Argument]) -> EvaluationReport:
-        scores = self.score_arguments(arguments)
-        explanations = self.generate_explanations(scores)
-        confidence_intervals = self.quantify_uncertainty(scores)
-        return EvaluationReport(scores, explanations, confidence_intervals)
+        self.scoring_framework = MultiDimensionalScorer()
+        self.hallucination_detector = HalluGraphIntegration()
+        self.judicial_predictor = JudicialDecisionPredictor()
+        self.explanation_generator = ExplainableReasoningGenerator()
+        self.compliance_checker = EUAIActComplianceVerifier()
+        
+    def evaluate_debate(self, debate_history, original_brief):
+        scores = self.score_arguments(debate_history)
+        hallucinations = self.detect_hallucinations(debate_history)
+        explanations = self.generate_explanations(scores, debate_history)
+        
+        return {
+            "scores": scores,
+            "hallucination_report": hallucinations,
+            "explanations": explanations,
+            "compliance_status": self.check_compliance(),
+            "recommendations": self.generate_recommendations(scores)
+        }
 ```
 
 ## 2. Argument Graph Data Model
 
 ### 2.1 Core Node Types
 
-```typescript
-interface ArgumentNode {
-  id: string;
-  type: NodeType; // 'claim' | 'evidence' | 'rule' | 'authority' | 'premise' | 'conclusion'
-  text: string;
-  metadata: {
-    strength: number; // 0-1
-    confidence: number; // 0-1 with uncertainty
-    citations: Citation[];
-    temporal_validity: TemporalRange;
-    jurisdiction: Jurisdiction;
-    source: 'original' | 'attacker' | 'defender';
-    creation_round: number;
-  };
-  embeddings: {
-    semantic: number[];
-    legal: number[];
-    temporal: number[];
-  };
-}
-
-interface Citation {
-  id: string;
-  type: 'case' | 'statute' | 'regulation' | 'secondary';
-  reference: string;
-  verified: boolean;
-  verification_source: string;
-  relevance_score: number;
-  authority_weight: number;
-  temporal_validity: TemporalRange;
-  holding_summary: string;
-}
-
-interface TemporalRange {
-  start_date: Date;
-  end_date: Date | null; // null for current
-  effective_at_case_date: boolean;
+```json
+{
+  "node_types": {
+    "claim": {
+      "properties": ["id", "text", "type", "strength", "confidence", "jurisdiction"],
+      "constraints": "Must be a legal assertion with supporting evidence"
+    },
+    "evidence": {
+      "properties": ["id", "type", "citation", "authority", "relevance", "validity"],
+      "constraints": "Must be verifiable legal source (case, statute, regulation)"
+    },
+    "rule": {
+      "properties": ["id", "text", "source", "interpretation", "applicability"],
+      "constraints": "Legal rule or principle from authoritative source"
+    },
+    "premise": {
+      "properties": ["id", "text", "type", "support_level", "logical_form"],
+      "constraints": "Supporting statement for a claim"
+    },
+    "counter_argument": {
+      "properties": ["id", "text", "attack_type", "strength", "target", "evidence"],
+      "constraints": "Must directly address and undermine target argument"
+    }
+  }
 }
 ```
 
-### 2.2 Edge Types and Relations
+### 2.2 Edge Types & Relations
 
-```typescript
-interface ArgumentEdge {
-  id: string;
-  source: string; // Node ID
-  target: string; // Node ID
-  relation: EdgeRelation;
-  strength: number; // 0-1
-  metadata: {
-    attack_type?: 'undermine' | 'undercut' | 'rebut';
-    support_type?: 'evidential' | 'inferential' | 'authoritative';
-    temporal_constraint?: TemporalConstraint;
-    jurisdiction_constraint?: JurisdictionConstraint;
-    created_by: 'attacker' | 'defender' | 'judge';
-    creation_round: number;
-  };
-}
-
-type EdgeRelation = 
-  | 'supports'        // Positive support
-  | 'attacks'         // Direct contradiction
-  | 'undermines'      // Attacks premises
-  | 'undercuts'       // Attacks inference
-  | 'distinguishes'   // Factual distinction
-  | 'overrules'       // Supersedes authority
-  | 'interprets'      // Statutory interpretation
-  | 'applies'         // Rule application
-  | 'analogizes'      // Analogical reasoning
-  | 'cites';          // Citation reference
-```
-
-### 2.3 Graph Semantics and Extensions
-
-```typescript
-interface ArgumentGraph {
-  nodes: ArgumentNode[];
-  edges: ArgumentEdge[];
-  semantics: {
-    // Dung Abstract Argumentation Framework extensions
-    extensions: {
-      grounded: string[];      // Node IDs in grounded extension
-      preferred: string[][];   // Multiple preferred extensions
-      stable: string[][];      // Stable extensions
-    };
-    // Quantitative Bipolar Argumentation Framework
-    qbaf_scores: Map<string, number>;
-    // Temporal extensions
-    temporal_validity: Map<string, TemporalRange>;
-    // Jurisdictional constraints
-    jurisdiction_map: Map<string, Jurisdiction[]>;
-  };
-  metadata: {
-    created_at: Date;
-    updated_at: Date;
-    debate_rounds: number;
-    convergence_status: 'converged' | 'diverging' | 'stable';
-    overall_strength: number;
-    top_vulnerabilities: Vulnerability[];
-  };
-}
-
-interface Vulnerability {
-  node_id: string;
-  type: 'logical' | 'factual' | 'legal' | 'procedural' | 'citation';
-  severity: 'low' | 'medium' | 'high' | 'critical';
-  description: string;
-  suggested_fix: string;
-  confidence: number;
+```json
+{
+  "edge_types": {
+    "supports": {
+      "properties": ["strength", "type", "explanation"],
+      "semantics": "Source node provides support for target node"
+    },
+    "attacks": {
+      "properties": ["attack_type", "strength", "vulnerability_targeted"],
+      "semantics": "Source node undermines or contradicts target node"
+    },
+    "undermines": {
+      "properties": ["undermining_type", "severity", "evidence"],
+      "semantics": "Source node weakens the foundation of target node"
+    },
+    "distinguishes": {
+      "properties": ["distinction_type", "relevance", "impact"],
+      "semantics": "Source node shows target is not applicable due to differences"
+    },
+    "strengthens": {
+      "properties": ["improvement_type", "magnitude", "additional_evidence"],
+      "semantics": "Source node enhances the strength of target node"
+    },
+    "cites": {
+      "properties": ["citation_type", "relevance", "interpretation"],
+      "semantics": "Source node references target as authority"
+    }
+  }
 }
 ```
 
-## 3. Pipeline Flow
+### 2.3 Temporal Properties
+
+```json
+{
+  "temporal_properties": {
+    "validity_period": {
+      "start_date": "ISO8601",
+      "end_date": "ISO8601 or null",
+      "overruled_by": ["node_ids"],
+      "superseded_parts": ["node_ids"]
+    },
+    "jurisdiction_evolution": {
+      "applicable_jurisdictions": ["list"],
+      "jurisdiction_changes": [{"date": "ISO8601", "change": "description"}]
+    },
+    "precedent_strength_decay": {
+      "initial_strength": 0.0-1.0,
+      "decay_function": "exponential/linear",
+      "current_strength": 0.0-1.0
+    }
+  }
+}
+```
+
+## 3. Pipeline Flow Architecture
 
 ### 3.1 Complete Processing Pipeline
 
 ```
 1. BRIEF INGESTION & PREPROCESSING
-   └─ Input: Legal brief (PDF/DOCX)
-   └─ Processing:
-       1.1 Document parsing and segmentation
-       1.2 Citation extraction and validation
-       1.3 IRAC structure detection
-       1.4 Temporal context establishment
-       1.5 Jurisdiction identification
-   └─ Output: Structured legal document with verified citations
+   ├── Input: Legal brief (PDF/DOCX/plain text)
+   ├── Document parsing and segmentation
+   ├── Citation extraction and validation
+   ├── IRAC structure detection
+   └── Output: Structured document representation
 
-2. ARGUMENT EXTRACTION & REPRESENTATION
-   └─ Input: Structured legal document
-   └─ Processing:
-       2.1 Claim extraction using Legal-BERT
-       2.2 Evidence identification and linking
-       2.3 Rule extraction from statutes/cases
-       2.4 Premise-conclusion structure mapping
-       2.5 Initial argument graph construction
-   └─ Output: Initial argument graph (Dung AF representation)
+2. ARGUMENT EXTRACTION & GRAPH CONSTRUCTION
+   ├── Argument component identification (claims, premises, evidence)
+   ├── Relation extraction (support, attack, citation)
+   ├── Temporal knowledge graph population
+   ├── Initial strength scoring
+   └── Output: Initial argument graph
 
-3. ADVERSARIAL ROUNDS (Iterative)
-   └─ Round 1: Initial Attack
-       3.1.1 Attacker: Identify top vulnerabilities
-       3.1.2 Attacker: Generate counter-arguments
-       3.1.3 Judge: Score initial arguments
-   
-   └─ Round 2: Defense & Strengthening
-       3.2.1 Defender: Address identified vulnerabilities
-       3.2.2 Defender: Add supporting evidence
-       3.2.3 Judge: Score strengthened arguments
-   
-   └─ Round 3: Counter-Response
-       3.3.1 Attacker: Respond to strengthened arguments
-       3.3.2 Attacker: Find new weaknesses
-       3.3.3 Judge: Score counter-responses
-   
-   └─ Round N: Until convergence (max 5 rounds)
-       3.N.1 Multi-agent coordination
-       3.N.2 Bayesian belief updating
-       3.N.3 Strategy adaptation
-       3.N.4 Convergence checking
+3. MULTI-AGENT ADVERSARIAL ROUNDS
+   ├── Round 0: Independent analysis by all agents
+   ├── Round 1-3: Attack/Defense exchanges
+   │   ├── Attacker: Generate counter-arguments
+   │   ├── Defender: Strengthen and rebut
+   │   └── Judge: Preliminary scoring
+   ├── Round 4: Closing arguments
+   └── Output: Debate history with all agent interactions
 
 4. SCORING & EVALUATION
-   └─ Input: Final argument graph after N rounds
-   └─ Processing:
-       4.1 Multi-dimensional scoring (logical, legal, structural, persuasive)
-       4.2 Formal semantics application (grounded/preferred extensions)
-       4.3 Uncertainty quantification
-       4.4 Hallucination detection and flagging
-       4.5 Citation reliability assessment
-   └─ Output: Comprehensive evaluation scores with confidence intervals
+   ├── Multi-dimensional scoring (evidence, logic, rhetoric, legal soundness)
+   ├── Hallucination detection and verification
+   ├── Judicial prediction integration
+   ├── Confidence calibration and uncertainty quantification
+   └── Output: Comprehensive scoring report
 
-5. REPORT GENERATION
-   └─ Input: Evaluation results + argument graph
-   └─ Processing:
-       5.1 Structured argument graph visualization
-       5.2 Vulnerability report generation
-       5.3 Strengthening recommendations
-       5.4 EU AI Act compliance documentation
-       5.5 Hallucination detection report
-   └─ Output: Comprehensive stress-test report
+5. REPORT GENERATION & OUTPUT
+   ├── Structured argument graph (JSON/GraphML)
+   ├── Vulnerability report with prioritization
+   ├── Improvement recommendations
+   ├── EU AI Act compliance documentation
+   └── Human-readable summary
 ```
 
 ### 3.2 Real-Time Adaptation Flow
 
 ```
-Dynamic Adaptation Loop:
-   Current State → Strategy Evaluation → Bayesian Update → 
-   Reinforcement Learning → Strategy Adjustment → Next Action
-   
-Key Adaptation Mechanisms:
-   1. Opponent Response Pattern Recognition
-   2. Judge Feedback Integration
-   3. Citation Effectiveness Tracking
-   4. Logical Vulnerability Dynamic Detection
-   5. Game-Theoretic Strategy Optimization
+During each debate round:
+1. MONITOR DEBATE STATE
+   ├── Track argument positions
+   ├── Monitor citation usage
+   ├── Analyze opponent patterns
+   └── Update belief states
+
+2. ADAPT STRATEGY
+   ├── Attacker: Adjust attack types based on defender responses
+   ├── Defender: Modify defense strategies based on attack patterns
+   ├── Judge: Refine scoring criteria based on argument complexity
+   └── All: Update confidence levels based on verification results
+
+3. GENERATE RESPONSES
+   ├── Ground all arguments in verified citations
+   ├── Apply adapted strategies
+   ├── Maintain logical coherence
+   └── Ensure regulatory compliance
+
+4. UPDATE KNOWLEDGE GRAPH
+   ├── Add new argument nodes
+   ├── Update edge strengths
+   ├── Revise temporal validity
+   └── Track provenance and audit trail
 ```
 
-## 4. API Design
+## 4. API Design & Interface Specifications
 
-### 4.1 Core System API
+### 4.1 Core REST API Endpoints
 
 ```python
-# Main System Interface
-class AdversarialBriefStressTester:
-    def __init__(self, config: SystemConfig):
-        self.attacker = AttackerAgent(config.attacker_config)
-        self.defender = DefenderAgent(config.defender_config)
-        self.judge = JudgeAgent(config.judge_config)
-        self.knowledge_base = LegalKnowledgeBase(config.kb_config)
-        self.uncertainty_engine = UncertaintyEngine(config.uncertainty_config)
-    
-    async def stress_test(
-        self,
-        brief: LegalBrief,
-        params: StressTestParams
-    ) -> StressTestReport:
-        """Main entry point for stress testing a legal brief"""
-        # Pipeline execution
-        processed_brief = await self.preprocess_brief(brief)
-        initial_graph = await self.extract_arguments(processed_brief)
-        
-        # Adversarial rounds
-        for round_num in range(params.max_rounds):
-            attack_report = await self.attacker.attack(initial_graph, round_num)
-            defense_report = await self.defender.defend(initial_graph, attack_report)
-            evaluation = await self.judge.evaluate(
-                initial_graph, attack_report, defense_report
-            )
-            
-            # Update graph and check convergence
-            updated_graph = self.update_argument_graph(
-                initial_graph, attack_report, defense_report
-            )
-            
-            if self.check_convergence(updated_graph, evaluation):
-                break
-        
-        # Generate final report
-        final_report = await self.generate_report(
-            updated_graph, evaluation, params
-        )
-        return final_report
-    
-    async def streaming_stress_test(
-        self,
-        brief: LegalBrief,
-        callback: Callable[[StreamingUpdate], None]
-    ) -> StressTestReport:
-        """Real-time streaming version with progress updates"""
-        # Implementation for interactive use
-        pass
+# Main API endpoints
+API_BASE = "/api/v1/stress-tester"
+
+# Document Processing
+POST /api/v1/upload-brief
+POST /api/v1/analyze-url
+GET  /api/v1/analysis/{analysis_id}/status
+
+# Adversarial Testing
+POST /api/v1/analysis/{analysis_id}/start-debate
+GET  /api/v1/debate/{debate_id}/rounds
+POST /api/v1/debate/{debate_id}/custom-round
+
+# Results & Reports
+GET  /api/v1/analysis/{analysis_id}/full-report
+GET  /api/v1/analysis/{analysis_id}/argument-graph
+GET  /api/v1/analysis/{analysis_id}/vulnerabilities
+GET  /api/v1/analysis/{analysis_id}/improvements
+
+# Configuration & Customization
+POST /api/v1/configure-judge-profile
+POST /api/v1/set-jurisdiction
+POST /api/v1/adjust-confidence-thresholds
 ```
 
-### 4.2 Attacker Agent API
+### 4.2 Agent-Specific Interfaces
 
+#### **Attacker Agent API**
 ```python
 class AttackerAgentAPI:
-    @abstractmethod
-    async def find_weaknesses(
-        self,
-        argument_graph: ArgumentGraph,
-        context: AttackContext
-    ) -> List[Weakness]:
-        """Identify vulnerabilities in arguments"""
-        pass
-    
-    @abstractmethod
-    async def generate_counter_arguments(
-        self,
-        argument_graph: ArgumentGraph,
-        weaknesses: List[Weakness],
-        strategy: AttackStrategy
-    ) -> List[CounterArgument]:
-        """Generate counter-arguments targeting weaknesses"""
-        pass
-    
-    @abstractmethod
-    async def generate_attacks(
-        self,
-        counter_arguments: List[CounterArgument],
-        attack_types: List[AttackType]
-    ) -> List[Attack]:
-        """Formalize counter-arguments as attacks in argumentation framework"""
-        pass
-    
-    @abstractmethod
+    @post("/attacker/analyze")
+    async def analyze_brief(self, brief: LegalBrief) -> VulnerabilityReport:
+        """Analyze brief for vulnerabilities"""
+        
+    @post("/attacker/generate-counter")
+    async def generate_counter_argument(
+        self, 
+        target_argument: ArgumentNode,
+        attack_type: AttackType
+    ) -> CounterArgument:
+        """Generate counter-argument for specific target"""
+        
+    @post("/attacker/adapt-strategy")
     async def adapt_strategy(
         self,
-        previous_round: AttackRound,
-        judge_feedback: JudgeFeedback,
-        opponent_response: DefenseResponse
-    ) -> AttackStrategy:
-        """Adapt attack strategy based on debate progress"""
-        pass
+        debate_history: DebateHistory,
+        opponent_profile: AgentProfile
+    ) -> StrategyUpdate:
+        """Dynamically adapt attack strategy"""
 ```
 
-### 4.3 Defender Agent API
-
+#### **Defender Agent API**
 ```python
 class DefenderAgentAPI:
-    @abstractmethod
-    async def strengthen_arguments(
+    @post("/defender/strengthen")
+    async def strengthen_argument(
         self,
-        argument_graph: ArgumentGraph,
-        attacks: List[Attack],
-        strategy: DefenseStrategy
-    ) -> ArgumentGraph:
-        """Strengthen arguments against identified attacks"""
-        pass
-    
-    @abstractmethod
-    async def generate_rebuttals(
+        argument: ArgumentNode,
+        vulnerabilities: List[Vulnerability]
+    ) -> StrengthenedArgument:
+        """Strengthen argument against identified vulnerabilities"""
+        
+    @post("/defender/generate-rebuttal")
+    async def generate_rebuttal(
         self,
-        attacks: List[Attack],
-        context: DefenseContext
-    ) -> List[Rebuttal]:
-        """Generate rebuttals to counter-arguments"""
-        pass
-    
-    @abstractmethod
-    async def add_supporting_evidence(
+        counter_argument: CounterArgument,
+        original_argument: ArgumentNode
+    ) -> Rebuttal:
+        """Generate rebuttal to counter-argument"""
+        
+    @post("/defender/preemptive-defense")
+    async def generate_preemptive_defense(
         self,
-        argument_graph: ArgumentGraph,
-        evidence_sources: List[EvidenceSource]
-    ) -> ArgumentGraph:
-        """Add additional supporting evidence to arguments"""
-        pass
-    
-    @abstractmethod
-    async def adapt_style(
-        self,
-        argument_graph: ArgumentGraph,
-        target_judge: JudgeProfile,
-        court_rules: CourtRules
-    ) -> ArgumentGraph:
-        """Adapt argument style for specific judge/court"""
-        pass
+        argument: ArgumentNode,
+        potential_attacks: List[AttackType]
+    ) -> PreemptiveDefense:
+        """Generate defenses against potential attacks"""
 ```
 
-### 4.4 Judge Agent API
-
+#### **Judge Agent API**
 ```python
 class JudgeAgentAPI:
-    @abstractmethod
-    async def score_arguments(
+    @post("/judge/score-argument")
+    async def score_argument(
         self,
-        arguments: List[Argument],
-        scoring_rubric: ScoringRubric
-    ) -> Dict[str, ArgumentScore]:
-        """Score arguments using multi-dimensional rubric"""
-        pass
-    
-    @abstractmethod
-    async
+        argument: ArgumentNode,
+        context: DebateContext
+    ) -> ArgumentScore:
+        """Score individual argument on multiple dimensions"""
+        
+    @post("/judge/evaluate-debate")
+    async def evaluate_debate(
+        self,
+        debate_history: DebateHistory,
+        scoring_criteria: ScoringCriteria
+    ) -> DebateEvaluation:
+        """Comprehensive evaluation of complete debate"""
+        
+    @post("/judge/generate-explanation")
+    async def generate_explanation(
+        self,
+        score: ArgumentScore,
+        reasoning_chain: List[ReasoningStep]
+    ) -> Explanation:
+        """Generate explainable reasoning for scoring decisions"""
+        
+    @post("/judge/verify-citations")
+    async def verify_citations(
+        self,
+        citations: List[Citation],
+        jurisdiction: Jurisdiction
+    ) -> CitationVerificationReport:
+        """Verify all citations against legal databases"""
+```
+
+### 4.3 Streaming/WebSocket Interface
+
+```python
+class StreamingDebateAPI:
+    @websocket("/debate/stream/{debate_id}")
+    async def stream_debate(self, websocket: WebSocket):
+        """Real-time streaming of debate progress"""
+        await websocket.accept()
+        
+        while True:
+            # Send real-time updates
+            update = await get_debate_update(debate_id)
+            await websocket.send_json(update)
+            
+            # Receive user interventions
+            data = await websocket.receive_json()
+            if data.get("type") == "intervention":
+                await process_user_intervention(data)
+```
+
+## 5. Technology Stack & Implementation Choices
+
+### 5.1 Core Technology Stack
+
+**Backend Framework**:
+- **FastAPI**: For high-performance async API with automatic OpenAPI documentation
+- **Pydantic**: For robust data validation and serialization
+- **PostgreSQL + TimescaleDB**: For temporal legal data with time-series capabilities
+- **Redis**: For real-time caching and agent state management
+
+**AI/ML Stack**:
+- **Legal-BERT variants**: Domain-adapted transformers for legal NLP
+- **PyTorch/TensorFlow**: For custom model development
+- **LangChain/LlamaIndex**: For RAG pipeline orchestration
+- **Hugging Face Transformers**: For pre-trained model integration
+
+**Knowledge Graph & Reasoning**:
+- **Neo4j/Amazon Neptune**: For argument graph storage and querying
+- **NetworkX**: For graph algorithm implementation
+- **SPARQL/RDF**: For legal ontology representation
+- **Datalog/ASP**: For formal argumentation reasoning
+
+**Verification & Compliance**:
+- **HalluGraph implementation**: For hallucination detection
+- **Legal database APIs**: Westlaw/LexisNexis integration for citation verification
+- **SAT-Graph RAG**: For temporal legal reasoning
+- **KRAG framework**: For knowledge-representation augmented generation
+
+### 5.2 Research-Grounded Implementation Choices
+
+Based on the comprehensive research findings:
+
+#### **Argumentation Framework Choice**: ASPIC+ with Bipolar Extensions
+- **Why**: Combines structured argumentation with support/attack relations
+- **Research Basis**: Formal argumentation frameworks for legal reasoning
+- **Implementation**: Extend with temporal reasoning and uncertainty quantification
+
+#### **Hallucination Detection**: HalluGraph Framework
+- **Why**: State-of-the-art graph-theoretic approach with 0.979 AUC
+- **Research Basis**: HalluGraph (2025) provides entity grounding and relation preservation
+- **Implementation**: Integrate with citation verification pipeline
+
+#### **Temporal Reasoning**: SAT-Graph RAG
+- **Why**: Addresses hierarchical, diachronic nature of legal norms
+- **Research Basis**: Structure-Aware Temporal Graph RAG for legal norms (2025)
+- **Implementation**: Temporal knowledge graph with version-aware reasoning
+
+#### **Multi-Agent Debate**: Tool-MAD Framework Adaptation
+- **Why**: Heterogeneous tool assignment with adaptive query formulation
+- **Research Basis**: Tool-MAD (2026) with quantitative assessment
+- **Implementation**: Specialized tools for each agent role
+
+#### **Confidence Calibration**: Bayesian + Ensemble Methods
+- **Why**: Legal domain requires sophisticated uncertainty handling
+- **Research Basis**: Bayesian argumentation frameworks with selective prediction
+- **Implementation**: Multi-method uncertainty quantification with explainable outputs
+
+### 5.3 EU AI Act Compliance Implementation
+
+#### **Required Components**:
+1. **Explainability Engine**: KRAG framework integration

@@ -26,6 +26,7 @@ pub fn build_request(
 
 /// Run the agent loop: send prompt, handle tool calls, iterate until done.
 /// Generic over any `LlmClient` implementation.
+#[allow(clippy::too_many_arguments)]
 pub async fn agent_loop<C, F, Fut>(
     client: &C,
     system_prompt: &str,
