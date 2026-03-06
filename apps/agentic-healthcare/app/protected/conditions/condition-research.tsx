@@ -2,6 +2,8 @@ import { Badge, Callout, Card, Flex, Heading, Text } from "@radix-ui/themes";
 import { createClient } from "@/lib/supabase/server";
 import { redirect } from "next/navigation";
 import { BookOpen, ExternalLink } from "lucide-react";
+import { MarkdownProse } from "@/components/markdown-prose";
+import { ResearchButton } from "./research-button";
 
 type Paper = {
   paper_id: string;
@@ -23,7 +25,7 @@ async function getConditionResearch(conditionId: string) {
 
   const { data } = await supabase
     .from("condition_researches")
-    .select("synthesis, papers, paper_count, search_query, created_at")
+    .select("synthesis, papers, paper_count, search_query, created_at, updated_at")
     .eq("condition_id", conditionId)
     .single();
 
@@ -33,6 +35,7 @@ async function getConditionResearch(conditionId: string) {
     paper_count: number;
     search_query: string | null;
     created_at: string;
+    updated_at: string | null;
   } | null;
 }
 
@@ -47,12 +50,15 @@ export async function ConditionResearch({ conditionId }: { conditionId: string }
 
   if (!research) {
     return (
-      <Callout.Root color="gray">
-        <Callout.Icon>
-          <BookOpen size={16} />
-        </Callout.Icon>
-        <Callout.Text>No academic research yet.</Callout.Text>
-      </Callout.Root>
+      <Flex direction="column" gap="3">
+        <Callout.Root color="gray">
+          <Callout.Icon>
+            <BookOpen size={16} />
+          </Callout.Icon>
+          <Callout.Text>No academic research yet.</Callout.Text>
+        </Callout.Root>
+        <ResearchButton conditionId={conditionId} hasExisting={false} />
+      </Flex>
     );
   }
 
@@ -68,15 +74,11 @@ export async function ConditionResearch({ conditionId }: { conditionId: string }
                 {research.paper_count} papers
               </Badge>
             </Flex>
-            <Text
-              as="p"
-              size="2"
-              style={{ whiteSpace: "pre-wrap", lineHeight: 1.7 }}
-            >
-              {research.synthesis}
-            </Text>
+            <MarkdownProse content={research.synthesis} />
             <Text size="1" color="gray">
-              Generated {new Date(research.created_at).toLocaleDateString()}
+              {research.updated_at && new Date(research.updated_at).getTime() > new Date(research.created_at).getTime() + 1000
+                ? `Updated ${new Date(research.updated_at).toLocaleDateString()}`
+                : `Generated ${new Date(research.created_at).toLocaleDateString()}`}
               {research.search_query && ` from query: "${research.search_query}"`}
             </Text>
           </Flex>
@@ -141,6 +143,8 @@ export async function ConditionResearch({ conditionId }: { conditionId: string }
           </Flex>
         </Card>
       )}
+
+      <ResearchButton conditionId={conditionId} hasExisting={true} />
     </Flex>
   );
 }

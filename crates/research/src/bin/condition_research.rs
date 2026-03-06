@@ -1,5 +1,5 @@
 use anyhow::{bail, Context, Result};
-use research::dual::{format_prep_document, DualModelResearcher};
+use research::dual::{format_unified_synthesis, DualModelResearcher};
 use research::scholar::{SemanticScholarClient, PAPER_FIELDS_FULL, SEARCH_FIELDS};
 use serde::{Deserialize, Serialize};
 
@@ -76,7 +76,17 @@ async fn main() -> Result<()> {
     );
 
     // 2. Search Semantic Scholar
-    let search_query = condition.name.clone();
+    let search_query = match &condition.notes {
+        Some(notes) if !notes.is_empty() => {
+            let max = notes.len().min(200);
+            let mut end = max;
+            while !notes.is_char_boundary(end) && end > 0 {
+                end -= 1;
+            }
+            format!("{} {}", condition.name, &notes[..end])
+        }
+        _ => condition.name.clone(),
+    };
     eprintln!("Searching Semantic Scholar for: {search_query}");
 
     let scholar = SemanticScholarClient::new(scholar_key.as_deref());
@@ -201,10 +211,7 @@ async fn main() -> Result<()> {
     );
 
     let response = researcher.query(system_prompt, &user_prompt).await?;
-    let synthesis = format_prep_document(
-        &format!("Research Synthesis: {}", condition.name),
-        &[response],
-    );
+    let synthesis = format_unified_synthesis(&response);
 
     eprintln!("Synthesis complete ({} chars)", synthesis.len());
 

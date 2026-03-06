@@ -158,6 +158,34 @@ pub fn format_prep_document(title: &str, responses: &[DualResponse]) -> String {
     doc
 }
 
+/// Pick the best unified synthesis from a dual-model response.
+///
+/// If both models succeeded, use the longer (richer) response.
+/// If one failed (content starts with `[…error:`), use the other.
+/// If both failed, return a clean error message.
+pub fn format_unified_synthesis(resp: &DualResponse) -> String {
+    let ds_ok = !resp.deepseek.content.starts_with("[DeepSeek error:");
+    let qw_ok = !resp.qwen.content.starts_with("[Qwen error:");
+
+    match (ds_ok, qw_ok) {
+        (true, true) => {
+            // Pick the longer response as the richer synthesis
+            if resp.deepseek.content.len() >= resp.qwen.content.len() {
+                resp.deepseek.content.clone()
+            } else {
+                resp.qwen.content.clone()
+            }
+        }
+        (true, false) => resp.deepseek.content.clone(),
+        (false, true) => resp.qwen.content.clone(),
+        (false, false) => {
+            "Research synthesis could not be generated — both models failed. \
+             Please try again later."
+                .to_string()
+        }
+    }
+}
+
 fn chrono_now() -> String {
     let now = std::time::SystemTime::now()
         .duration_since(std::time::UNIX_EPOCH)

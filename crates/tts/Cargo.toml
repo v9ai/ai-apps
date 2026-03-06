@@ -12,8 +12,11 @@ serde_json = "1"
 thiserror = "2"
 base64 = "0.22"
 futures = "0.3"
-tokio = { version = "1", features = ["sync", "time"] }
+tokio = { version = "1", features = ["sync", "time", "rt-multi-thread"] }
+dotenvy = "0.15"
 
 [dev-dependencies]
 tokio = { version = "1", features = ["full"] }
-dotenvy = "0.15"
+
+[[bin]]
+name = "interview_prep"
