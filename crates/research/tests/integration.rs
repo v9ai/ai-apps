@@ -1,5 +1,9 @@
 use serial_test::serial;
 
+use research::dual::{
+    format_multi_unified_synthesis, format_unified_synthesis, ModelResponse, MultiResponse,
+    DualResponse,
+};
 use research::openalex::OpenAlexClient;
 use research::crossref::CrossrefClient;
 use research::core_api::CoreClient;
@@ -169,4 +173,249 @@ async fn scholar_to_research_paper() {
     let rp: ResearchPaper = paper.into();
     assert!(!rp.title.is_empty());
     assert!(!rp.authors.is_empty());
+}
+
+// ── Paper deduplication ──────────────────────────────────────────────
+
+#[test]
+fn dedup_papers_by_normalized_title() {
+    use research::paper::PaperSource;
+
+    let make = |title: &str, source: PaperSource, cites: u64| ResearchPaper {
+        title: title.to_string(),
+        abstract_text: None,
+        authors: vec![],
+        year: Some(2023),
+        doi: None,
+        citation_count: Some(cites),
+        url: None,
+        pdf_url: None,
+        source,
+        source_id: format!("id-{title}"),
+    };
+
+    let mut papers = vec![
+        make("Attention Is All You Need", PaperSource::SemanticScholar, 100),
+        make("attention is all you need", PaperSource::OpenAlex, 50),
+        make("  Attention Is All You Need  ", PaperSource::Crossref, 30),
+        make("A Different Paper", PaperSource::Core, 10),
+    ];
+
+    let mut seen = std::collections::HashSet::new();
+    papers.retain(|p| {
+        let key = p.title.trim().to_lowercase();
+        if key.is_empty() { return false; }
+        seen.insert(key)
+    });
+
+    assert_eq!(papers.len(), 2, "expected 2 unique papers after dedup");
+    assert_eq!(papers[0].title, "Attention Is All You Need");
+    assert_eq!(papers[1].title, "A Different Paper");
+}
+
+#[test]
+fn dedup_removes_empty_titles() {
+    use research::paper::PaperSource;
+
+    let papers_raw = vec![
+        ResearchPaper {
+            title: "".to_string(),
+            abstract_text: None,
+            authors: vec![],
+            year: None,
+            doi: None,
+            citation_count: None,
+            url: None,
+            pdf_url: None,
+            source: PaperSource::OpenAlex,
+            source_id: "empty".into(),
+        },
+        ResearchPaper {
+            title: "   ".to_string(),
+            abstract_text: None,
+            authors: vec![],
+            year: None,
+            doi: None,
+            citation_count: None,
+            url: None,
+            pdf_url: None,
+            source: PaperSource::Core,
+            source_id: "blank".into(),
+        },
+    ];
+
+    let mut papers = papers_raw;
+    let mut seen = std::collections::HashSet::new();
+    papers.retain(|p| {
+        let key = p.title.trim().to_lowercase();
+        if key.is_empty() { return false; }
+        seen.insert(key)
+    });
+
+    assert!(papers.is_empty(), "empty/blank titles should be removed");
+}
+
+#[test]
+fn papers_sort_by_citations_descending() {
+    use research::paper::PaperSource;
+
+    let make = |title: &str, cites: Option<u64>| ResearchPaper {
+        title: title.into(),
+        abstract_text: None,
+        authors: vec![],
+        year: None,
+        doi: None,
+        citation_count: cites,
+        url: None,
+        pdf_url: None,
+        source: PaperSource::SemanticScholar,
+        source_id: title.into(),
+    };
+
+    let mut papers = vec![
+        make("low", Some(5)),
+        make("none", None),
+        make("high", Some(999)),
+        make("mid", Some(50)),
+    ];
+
+    papers.sort_by(|a, b| b.citation_count.unwrap_or(0).cmp(&a.citation_count.unwrap_or(0)));
+
+    assert_eq!(papers[0].title, "high");
+    assert_eq!(papers[1].title, "mid");
+    assert_eq!(papers[2].title, "low");
+    assert_eq!(papers[3].title, "none");
+}
+
+// ── Synthesis selection ──────────────────────────────────────────────
+
+#[test]
+fn multi_synthesis_picks_longest_successful() {
+    let resp = MultiResponse {
+        question: "test".into(),
+        responses: vec![
+            ModelResponse {
+                model: "deepseek-reasoner".into(),
+                content: "Short answer.".into(),
+                reasoning: String::new(),
+            },
+            ModelResponse {
+                model: "qwen-max".into(),
+                content: "This is a much longer and more detailed answer with lots of content.".into(),
+                reasoning: String::new(),
+            },
+        ],
+    };
+
+    let result = format_multi_unified_synthesis(&resp);
+    assert!(result.contains("much longer"), "should pick the longer response");
+}
+
+#[test]
+fn multi_synthesis_skips_errors() {
+    let resp = MultiResponse {
+        question: "test".into(),
+        responses: vec![
+            ModelResponse {
+                model: "deepseek-reasoner".into(),
+                content: "[DeepSeek error: timeout]".into(),
+                reasoning: String::new(),
+            },
+            ModelResponse {
+                model: "qwen-max".into(),
+                content: "Valid synthesis content here.".into(),
+                reasoning: String::new(),
+            },
+        ],
+    };
+
+    let result = format_multi_unified_synthesis(&resp);
+    assert_eq!(result, "Valid synthesis content here.");
+}
+
+#[test]
+fn multi_synthesis_all_errors_fallback() {
+    let resp = MultiResponse {
+        question: "test".into(),
+        responses: vec![
+            ModelResponse {
+                model: "deepseek-reasoner".into(),
+                content: "[DeepSeek error: fail]".into(),
+                reasoning: String::new(),
+            },
+            ModelResponse {
+                model: "qwen-max".into(),
+                content: "[Qwen error: fail]".into(),
+                reasoning: String::new(),
+            },
+        ],
+    };
+
+    let result = format_multi_unified_synthesis(&resp);
+    assert!(result.contains("could not be generated"), "should return fallback message");
+}
+
+#[test]
+fn dual_synthesis_prefers_longer() {
+    let resp = DualResponse {
+        question: "test".into(),
+        deepseek: ModelResponse {
+            model: "deepseek-reasoner".into(),
+            content: "A very detailed deepseek response with many insights.".into(),
+            reasoning: String::new(),
+        },
+        qwen: ModelResponse {
+            model: "qwen-max".into(),
+            content: "Short qwen.".into(),
+            reasoning: String::new(),
+        },
+    };
+
+    let result = format_unified_synthesis(&resp);
+    assert!(result.contains("deepseek"), "should pick longer deepseek response");
+}
+
+#[test]
+fn dual_synthesis_falls_back_on_single_error() {
+    let resp = DualResponse {
+        question: "test".into(),
+        deepseek: ModelResponse {
+            model: "deepseek-reasoner".into(),
+            content: "[DeepSeek error: rate limited]".into(),
+            reasoning: String::new(),
+        },
+        qwen: ModelResponse {
+            model: "qwen-max".into(),
+            content: "Qwen provided this synthesis.".into(),
+            reasoning: String::new(),
+        },
+    };
+
+    let result = format_unified_synthesis(&resp);
+    assert_eq!(result, "Qwen provided this synthesis.");
+}
+
+// ── Crossref abstract cleaning ───────────────────────────────────────
+
+#[test]
+fn crossref_strips_jats_tags() {
+    use research::crossref::CrossrefWork;
+
+    let work = CrossrefWork {
+        doi: Some("10.1234/test".into()),
+        title: Some(vec!["Test".into()]),
+        abstract_text: Some("<jats:p>This is <jats:italic>important</jats:italic> text.</jats:p>".into()),
+        author: None,
+        published: None,
+        is_referenced_by_count: None,
+        url: None,
+        link: None,
+        container_title: None,
+        work_type: None,
+    };
+
+    let paper: ResearchPaper = work.into();
+    let abs = paper.abstract_text.unwrap();
+    assert!(!abs.contains('<'), "JATS tags should be stripped: {abs}");
+    assert!(abs.contains("important"), "content should remain");
 }

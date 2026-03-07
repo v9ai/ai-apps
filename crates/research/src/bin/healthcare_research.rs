@@ -151,6 +151,8 @@ async fn main() -> Result<()> {
         base_url,
         scholar_key,
         code_root: None,
+        synthesis_preamble: None,
+        synthesis_prompt_template: None,
     });
 
     let result = lead.run(tasks).await?;

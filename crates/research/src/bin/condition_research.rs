@@ -1,6 +1,8 @@
 use anyhow::{bail, Context, Result};
-use research::dual::{format_unified_synthesis, DualModelResearcher};
+use research::paper::ResearchPaper;
 use research::scholar::{SemanticScholarClient, PAPER_FIELDS_FULL, SEARCH_FIELDS};
+use research::team::{ResearchTask, TaskStatus, TeamConfig, TeamLead};
+use research::{CoreClient, CrossrefClient, OpenAlexClient};
 use serde::{Deserialize, Serialize};
 
 #[derive(Debug, Deserialize)]
@@ -22,6 +24,7 @@ struct PaperRecord {
     tldr: Option<String>,
     url: Option<String>,
     authors: Vec<String>,
+    source: String,
 }
 
 #[derive(Debug, Serialize)]
@@ -32,6 +35,22 @@ struct UpsertBody {
     synthesis: String,
     paper_count: usize,
     search_query: String,
+}
+
+impl From<ResearchPaper> for PaperRecord {
+    fn from(p: ResearchPaper) -> Self {
+        Self {
+            paper_id: p.source_id,
+            title: p.title,
+            year: p.year,
+            citation_count: p.citation_count,
+            abstract_text: p.abstract_text,
+            tldr: None,
+            url: p.url.or(p.pdf_url),
+            authors: p.authors,
+            source: format!("{:?}", p.source),
+        }
+    }
 }
 
 #[tokio::main]
@@ -75,7 +94,7 @@ async fn main() -> Result<()> {
         condition.name, condition.user_id
     );
 
-    // 2. Search Semantic Scholar
+    // 2. Search all research APIs in parallel
     let search_query = match &condition.notes {
         Some(notes) if !notes.is_empty() => {
             let max = notes.len().min(200);
@@ -87,131 +106,162 @@ async fn main() -> Result<()> {
         }
         _ => condition.name.clone(),
     };
-    eprintln!("Searching Semantic Scholar for: {search_query}");
+    eprintln!("Searching all research APIs for: {search_query}");
 
     let scholar = SemanticScholarClient::new(scholar_key.as_deref());
-    let bulk = scholar
-        .search_bulk(
-            &search_query,
-            SEARCH_FIELDS,
-            Some("2019-"),
-            Some(3),
-            Some("citationCount:desc"),
-            15,
-        )
-        .await
-        .context("Semantic Scholar bulk search failed")?;
+    let openalex = OpenAlexClient::new(std::env::var("OPENALEX_MAILTO").ok().as_deref());
+    let crossref = CrossrefClient::new(std::env::var("CROSSREF_MAILTO").ok().as_deref());
+    let core = CoreClient::new(std::env::var("CORE_API_KEY").ok().as_deref());
 
-    eprintln!(
-        "Found {} papers (total: {})",
-        bulk.data.len(),
-        bulk.total.unwrap_or(0)
+    let (scholar_res, openalex_res, crossref_res, core_res) = tokio::join!(
+        async {
+            scholar
+                .search_bulk(&search_query, SEARCH_FIELDS, Some("2019-"), Some(3), Some("citationCount:desc"), 15)
+                .await
+                .map(|r| {
+                    eprintln!("  Semantic Scholar: {} papers", r.data.len());
+                    r.data.into_iter().map(ResearchPaper::from).collect::<Vec<_>>()
+                })
+                .unwrap_or_else(|e| { eprintln!("  Semantic Scholar failed: {e}"); vec![] })
+        },
+        async {
+            openalex.search(&search_query, 1, 10).await
+                .map(|r| {
+                    eprintln!("  OpenAlex: {} papers", r.results.len());
+                    r.results.into_iter().map(ResearchPaper::from).collect::<Vec<_>>()
+                })
+                .unwrap_or_else(|e| { eprintln!("  OpenAlex failed: {e}"); vec![] })
+        },
+        async {
+            crossref.search(&search_query, 10, 0).await
+                .map(|r| {
+                    let items = r.message.and_then(|m| m.items).unwrap_or_default();
+                    eprintln!("  Crossref: {} papers", items.len());
+                    items.into_iter().map(ResearchPaper::from).collect::<Vec<_>>()
+                })
+                .unwrap_or_else(|e| { eprintln!("  Crossref failed: {e}"); vec![] })
+        },
+        async {
+            core.search(&search_query, 10, 0).await
+                .map(|r| {
+                    eprintln!("  CORE: {} papers", r.results.len());
+                    r.results.into_iter().map(ResearchPaper::from).collect::<Vec<_>>()
+                })
+                .unwrap_or_else(|e| { eprintln!("  CORE failed: {e}"); vec![] })
+        },
     );
 
-    if bulk.data.is_empty() {
-        bail!("No papers found for query: {search_query}");
+    // Merge and deduplicate by normalized title
+    let mut all_papers: Vec<ResearchPaper> = Vec::new();
+    all_papers.extend(scholar_res);
+    all_papers.extend(openalex_res);
+    all_papers.extend(crossref_res);
+    all_papers.extend(core_res);
+
+    // Deduplicate: prefer first occurrence (Semantic Scholar first = has TLDRs)
+    let mut seen_titles = std::collections::HashSet::new();
+    all_papers.retain(|p| {
+        let key = p.title.trim().to_lowercase();
+        if key.is_empty() { return false; }
+        seen_titles.insert(key)
+    });
+
+    // Sort by citations descending, take top 15
+    all_papers.sort_by(|a, b| b.citation_count.unwrap_or(0).cmp(&a.citation_count.unwrap_or(0)));
+    all_papers.truncate(15);
+
+    eprintln!("Merged: {} unique papers after deduplication", all_papers.len());
+
+    if all_papers.is_empty() {
+        bail!("No papers found across any API for query: {search_query}");
     }
 
-    // 3. Get full details on top 3 papers (for TLDRs)
-    let top_ids: Vec<String> = bulk
-        .data
-        .iter()
+    // Get TLDRs for top 3 Semantic Scholar papers
+    let top_scholar_ids: Vec<String> = all_papers.iter()
+        .filter(|p| matches!(p.source, research::paper::PaperSource::SemanticScholar))
         .take(3)
-        .filter_map(|p| p.paper_id.clone())
+        .map(|p| p.source_id.clone())
+        .filter(|id| !id.is_empty())
         .collect();
 
-    let mut detailed_papers = Vec::new();
-    for pid in &top_ids {
-        eprintln!("Fetching details for paper {pid}...");
+    let mut tldrs = std::collections::HashMap::new();
+    for pid in &top_scholar_ids {
+        eprintln!("Fetching TLDR for paper {pid}...");
         match scholar.get_paper(pid, PAPER_FIELDS_FULL).await {
-            Ok(p) => detailed_papers.push(p),
+            Ok(p) => {
+                if let Some(tldr) = p.tldr.and_then(|t| t.text) {
+                    tldrs.insert(pid.clone(), tldr);
+                }
+            }
             Err(e) => eprintln!("  Warning: failed to fetch {pid}: {e}"),
         }
     }
 
-    // Build paper records for storage (top 15 only)
-    let paper_records: Vec<PaperRecord> = bulk
-        .data
-        .iter()
-        .take(15)
+    // Convert to PaperRecords with TLDRs
+    let paper_records: Vec<PaperRecord> = all_papers
+        .into_iter()
         .map(|p| {
-            let tldr = detailed_papers
-                .iter()
-                .find(|d| d.paper_id == p.paper_id)
-                .and_then(|d| d.tldr.as_ref())
-                .and_then(|t| t.text.clone());
-
-            PaperRecord {
-                paper_id: p.paper_id.clone().unwrap_or_default(),
-                title: p.title.clone().unwrap_or_default(),
-                year: p.year,
-                citation_count: p.citation_count,
-                abstract_text: p.abstract_text.clone(),
-                tldr,
-                url: p.url.clone(),
-                authors: p
-                    .authors
-                    .as_ref()
-                    .map(|a| a.iter().filter_map(|a| a.name.clone()).collect())
-                    .unwrap_or_default(),
-            }
+            let tldr = tldrs.get(&p.source_id).cloned();
+            let mut record = PaperRecord::from(p);
+            record.tldr = tldr;
+            record
         })
         .collect();
 
-    // 4. Synthesize with DualModelResearcher
-    eprintln!("Running dual-model synthesis...");
-    let researcher = DualModelResearcher::from_env()?;
+    // 4. Synthesize with team-based research agents
+    let api_key = std::env::var("DEEPSEEK_API_KEY").context("DEEPSEEK_API_KEY must be set")?;
+    let base_url = std::env::var("DEEPSEEK_BASE_URL")
+        .unwrap_or_else(|_| "https://api.deepseek.com".to_string());
 
-    let mut paper_text = String::new();
-    for (i, pr) in paper_records.iter().enumerate() {
-        paper_text.push_str(&format!(
-            "### Paper {} — {} ({})\n",
-            i + 1,
-            pr.title,
-            pr.year.map(|y| y.to_string()).unwrap_or("n/a".into())
-        ));
-        paper_text.push_str(&format!(
-            "Citations: {}\n",
-            pr.citation_count.unwrap_or(0)
-        ));
-        if let Some(tldr) = &pr.tldr {
-            paper_text.push_str(&format!("TLDR: {tldr}\n"));
-        }
-        if let Some(abs) = &pr.abstract_text {
-            let truncated = if abs.len() > 500 {
-                let mut end = 500;
-                while !abs.is_char_boundary(end) { end -= 1; }
-                &abs[..end]
-            } else { abs };
-            paper_text.push_str(&format!("Abstract: {truncated}\n"));
-        }
-        paper_text.push('\n');
-    }
+    let paper_context = build_paper_context(&paper_records);
+    let tasks = condition_tasks(&condition.name, condition.notes.as_deref(), &paper_context);
+    let team_size = 5;
 
-    let system_prompt = "You are a medical research synthesizer. Given a health condition and \
-        relevant academic papers, produce a clear, evidence-based synthesis that: \
-        (1) summarizes the key findings across papers, \
-        (2) identifies consensus and disagreements, \
-        (3) highlights practical clinical implications, \
-        (4) notes gaps in the research. \
-        Write for a knowledgeable but non-specialist audience. Use Markdown.";
-
-    let notes_section = condition
-        .notes
-        .as_deref()
-        .map(|n| format!("\n\nPatient notes: {n}"))
-        .unwrap_or_default();
-
-    let user_prompt = format!(
-        "Condition: {}{notes_section}\n\n\
-         Academic papers found ({} total):\n\n{paper_text}\n\n\
-         Please synthesize the research findings for this condition.",
-        condition.name,
-        paper_records.len()
+    eprintln!(
+        "Launching condition research team: {team_size} workers, {} tasks",
+        tasks.len()
     );
 
-    let response = researcher.query(system_prompt, &user_prompt).await?;
-    let synthesis = format_unified_synthesis(&response);
+    let lead = TeamLead::new(TeamConfig {
+        team_size,
+        api_key,
+        base_url,
+        scholar_key,
+        code_root: None,
+        synthesis_preamble: Some(
+            "You are a principal medical research synthesiser. You combine findings from \
+             specialist research agents into a coherent, evidence-based clinical report. \
+             Write in Markdown. Be concise but comprehensive. Cite specific papers where \
+             possible and highlight the strength of evidence."
+                .to_string(),
+        ),
+        synthesis_prompt_template: Some(format!(
+            r#"# Synthesis Request: {condition_name} — Comprehensive Research Report
+
+You have received findings from {{count}} parallel research agents, each covering a different
+aspect of **{condition_name}**.
+
+Your task: produce a **master clinical research synthesis** with:
+
+1. **Executive Summary** — key findings in 3-5 bullet points
+2. **Pathophysiology** — mechanisms and disease biology
+3. **Diagnosis & Biomarkers** — how the condition is identified and monitored
+4. **Current Treatment Landscape** — evidence-based management approaches
+5. **Emerging Research & Clinical Trials** — promising new directions
+6. **Clinical Implications** — practical takeaways for patient care
+7. **Evidence Gaps** — what the literature has not resolved
+8. **Top Papers** — the most impactful papers synthesised from all agents
+
+## Agent Findings
+
+{{combined}}
+"#,
+            condition_name = condition.name,
+        )),
+    });
+
+    let result = lead.run(tasks).await?;
+    let synthesis = result.synthesis;
 
     eprintln!("Synthesis complete ({} chars)", synthesis.len());
 
@@ -249,4 +299,146 @@ async fn main() -> Result<()> {
     );
 
     Ok(())
+}
+
+fn build_paper_context(papers: &[PaperRecord]) -> String {
+    let mut text = String::new();
+    for (i, pr) in papers.iter().enumerate() {
+        text.push_str(&format!(
+            "### Paper {} — {} ({}) [{}]\n",
+            i + 1,
+            pr.title,
+            pr.year.map(|y| y.to_string()).unwrap_or("n/a".into()),
+            pr.source,
+        ));
+        text.push_str(&format!("Citations: {}\n", pr.citation_count.unwrap_or(0)));
+        if let Some(tldr) = &pr.tldr {
+            text.push_str(&format!("TLDR: {tldr}\n"));
+        }
+        if let Some(abs) = &pr.abstract_text {
+            let truncated = if abs.len() > 500 {
+                let mut end = 500;
+                while !abs.is_char_boundary(end) {
+                    end -= 1;
+                }
+                &abs[..end]
+            } else {
+                abs
+            };
+            text.push_str(&format!("Abstract: {truncated}\n"));
+        }
+        text.push('\n');
+    }
+    text
+}
+
+fn condition_tasks(name: &str, notes: Option<&str>, paper_context: &str) -> Vec<ResearchTask> {
+    let notes_section = notes
+        .map(|n| format!("\nPatient notes: {n}\n"))
+        .unwrap_or_default();
+
+    let context_block = format!(
+        "Condition: {name}\n{notes_section}\n\
+         The following papers have already been retrieved from academic APIs. \
+         Use them as seed context and search for additional relevant papers.\n\n{paper_context}"
+    );
+
+    vec![
+        ResearchTask {
+            id: 1,
+            subject: "pathophysiology-mechanisms".into(),
+            description: format!(
+                "Research the pathophysiology and biological mechanisms of {name}. Focus on: \
+                 (1) underlying disease mechanisms and pathways, \
+                 (2) genetic and molecular factors, \
+                 (3) risk factors and disease progression models, \
+                 (4) comorbidity relationships. \
+                 Search for recent high-impact papers (2019-2026).\n\n{context_block}"
+            ),
+            preamble: "You are a biomedical researcher specialising in disease mechanisms \
+                and pathophysiology. Produce structured findings in Markdown with paper citations."
+                .into(),
+            status: TaskStatus::Pending,
+            owner: None,
+            dependencies: vec![],
+            result: None,
+        },
+        ResearchTask {
+            id: 2,
+            subject: "diagnosis-biomarkers".into(),
+            description: format!(
+                "Research diagnostic approaches and biomarkers for {name}. Focus on: \
+                 (1) established and emerging diagnostic criteria, \
+                 (2) blood-based and molecular biomarkers, \
+                 (3) screening recommendations and early detection, \
+                 (4) differential diagnosis challenges. \
+                 Search for recent clinical and laboratory papers (2019-2026).\n\n{context_block}"
+            ),
+            preamble: "You are a clinical diagnostics researcher specialising in biomarkers \
+                and laboratory medicine. Produce structured findings in Markdown with citations."
+                .into(),
+            status: TaskStatus::Pending,
+            owner: None,
+            dependencies: vec![],
+            result: None,
+        },
+        ResearchTask {
+            id: 3,
+            subject: "treatment-management".into(),
+            description: format!(
+                "Research current treatment and management approaches for {name}. Focus on: \
+                 (1) evidence-based pharmacological treatments, \
+                 (2) non-pharmacological interventions (lifestyle, diet, exercise), \
+                 (3) treatment guidelines and protocols, \
+                 (4) comparative effectiveness of different approaches. \
+                 Search for recent clinical trials and meta-analyses (2019-2026).\n\n{context_block}"
+            ),
+            preamble: "You are a clinical researcher specialising in treatment protocols \
+                and evidence-based medicine. Produce structured findings in Markdown with citations."
+                .into(),
+            status: TaskStatus::Pending,
+            owner: None,
+            dependencies: vec![],
+            result: None,
+        },
+        ResearchTask {
+            id: 4,
+            subject: "emerging-research-trials".into(),
+            description: format!(
+                "Research emerging therapies and active clinical trials for {name}. Focus on: \
+                 (1) novel therapeutic targets and drug candidates, \
+                 (2) gene therapy and precision medicine approaches, \
+                 (3) ongoing phase II/III clinical trials, \
+                 (4) breakthrough findings in the last 2 years. \
+                 Search for the most recent papers and trial results (2023-2026).\n\n{context_block}"
+            ),
+            preamble: "You are a translational medicine researcher tracking cutting-edge \
+                therapies and clinical trials. Produce forward-looking findings in Markdown."
+                .into(),
+            status: TaskStatus::Pending,
+            owner: None,
+            dependencies: vec![],
+            result: None,
+        },
+        ResearchTask {
+            id: 5,
+            subject: "clinical-implications-synthesis".into(),
+            description: format!(
+                "Based on the findings from tasks 1-4, synthesise the key clinical implications \
+                 for {name}. Address: \
+                 (1) what patients and clinicians should know now, \
+                 (2) which emerging approaches are most promising and realistic, \
+                 (3) practical monitoring and management recommendations, \
+                 (4) where the evidence is strong vs. where gaps remain. \
+                 Integrate findings across all research angles.\n\n{context_block}"
+            ),
+            preamble: "You are a senior clinical advisor synthesising research findings into \
+                actionable clinical guidance. Produce a clear, balanced assessment in Markdown."
+                .into(),
+            status: TaskStatus::Pending,
+            owner: None,
+            dependencies: vec![1, 2, 3, 4],
+            result: None,
+        },
+    ]
 }

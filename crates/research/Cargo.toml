@@ -45,3 +45,7 @@ path = "src/bin/interview_prep.rs"
 [[bin]]
 name = "condition-research"
 path = "src/bin/condition_research.rs"
+
+[[bin]]
+name = "tts-research"
+path = "src/bin/tts_research.rs"

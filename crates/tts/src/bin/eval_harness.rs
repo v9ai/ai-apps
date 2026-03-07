@@ -1,7 +1,7 @@
-//! Synthesize the TTS-optimized interview prep script to a WAV file.
+//! Synthesize the TTS-optimized eval harness script to a WAV file.
 //!
 //! Usage:
-//!   DASHSCOPE_API_KEY=... cargo run --bin interview_prep
+//!   DASHSCOPE_API_KEY=... cargo run --bin eval_harness
 //!
 //! Env vars:
 //!   DASHSCOPE_API_KEY  — required
@@ -16,7 +16,6 @@ use std::time::Instant;
 use tts::{Client, Voice};
 
 fn main() -> Result<(), Box<dyn std::error::Error>> {
-    // Load .env from crate root
     let _ = dotenvy::from_filename(Path::new(env!("CARGO_MANIFEST_DIR")).join(".env"));
 
     let api_key =
@@ -24,19 +23,16 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
 
     let client = Client::new(api_key);
 
-    // Read the TTS-optimized markdown
     let doc_path = Path::new(env!("CARGO_MANIFEST_DIR"))
-        .join("../../apps/lh-ai-fs/INTERVIEW-PREP-TTS.md");
+        .join("../../apps/lh-ai-fs/EVAL-HARNESS-TTS.md");
     let text = std::fs::read_to_string(&doc_path)?;
 
     let word_count = text.split_whitespace().count();
     eprintln!("Read {} words from {}", word_count, doc_path.display());
 
-    // Split into chunks
     let mut chunks = tts::split_text(&text);
     eprintln!("Split into {} chunks", chunks.len());
 
-    // Optional truncation for testing
     if let Ok(max) = std::env::var("MAX_CHUNKS") {
         if let Ok(n) = max.parse::<usize>() {
             chunks.truncate(n);
@@ -55,14 +51,13 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
     let start = Instant::now();
 
     let out_path =
-        Path::new(env!("CARGO_MANIFEST_DIR")).join("interview_prep.wav");
+        Path::new(env!("CARGO_MANIFEST_DIR")).join("eval_harness.wav");
 
     eprintln!(
         "Synthesizing {} chunks with concurrency={} ...",
         total, concurrency
     );
 
-    // Build a tokio runtime manually (avoids needing tokio/macros feature)
     let rt = tokio::runtime::Builder::new_multi_thread()
         .enable_all()
         .build()?;
@@ -74,8 +69,9 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
             .model("qwen3-tts-instruct-flash")
             .instructions(
                 "Speak in a clear, calm, authoritative male American voice \
-                 at a moderate pace, as if coaching someone through interview \
-                 preparation. Use natural pauses between paragraphs.",
+                 at a moderate pace, as if delivering a technical lecture on \
+                 software evaluation systems. Use natural pauses between \
+                 paragraphs and slight emphasis on key technical terms.",
             )
             .concurrency(concurrency)
             .retries(3)
@@ -109,7 +105,7 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
     eprintln!(
         "  Output         : {}",
         Path::new(env!("CARGO_MANIFEST_DIR"))
-            .join("interview_prep.wav")
+            .join("eval_harness.wav")
             .display()
     );
 

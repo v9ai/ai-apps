@@ -18,6 +18,11 @@ pub struct TeamConfig {
     pub scholar_key: Option<String>,
     /// When `Some`, enables code analysis tools on each teammate.
     pub code_root: Option<PathBuf>,
+    /// Custom preamble for the synthesis agent. Falls back to a default if `None`.
+    pub synthesis_preamble: Option<String>,
+    /// Custom synthesis prompt template. Use `{count}` and `{combined}` placeholders.
+    /// Falls back to the default SDD-oriented prompt if `None`.
+    pub synthesis_prompt_template: Option<String>,
 }
 
 /// Result of a full team research run.
@@ -140,19 +145,30 @@ impl TeamLead {
             })
             .collect();
 
-        let agent = agent_builder(&self.config.api_key, "deepseek-chat")
-            .preamble(
-                "You are a principal researcher synthesising findings from specialist \
+        let default_preamble = "You are a principal researcher synthesising findings from specialist \
                  research agents into a coherent, actionable report. Write in Markdown. \
                  Be concise but comprehensive. Identify cross-cutting themes, convergences, \
-                 and contradictions across the findings.",
-            )
+                 and contradictions across the findings.";
+
+        let preamble = self
+            .config
+            .synthesis_preamble
+            .as_deref()
+            .unwrap_or(default_preamble);
+
+        let agent = agent_builder(&self.config.api_key, "deepseek-chat")
+            .preamble(preamble)
             .base_url(&self.config.base_url)
             .worker_id("synthesis")
             .build();
 
-        let prompt = format!(
-            r#"# Synthesis Request: Parallel Spec-Driven Development
+        let prompt = if let Some(template) = &self.config.synthesis_prompt_template {
+            template
+                .replace("{count}", &findings.len().to_string())
+                .replace("{combined}", &combined)
+        } else {
+            format!(
+                r#"# Synthesis Request: Parallel Spec-Driven Development
 
 You have received findings from {count} parallel research agents, each covering a different
 angle of **Parallel Spec-Driven Development (SDD)**.
@@ -171,8 +187,9 @@ Your task: produce a **master synthesis report** with:
 
 {combined}
 "#,
-            count = findings.len(),
-        );
+                count = findings.len(),
+            )
+        };
 
         agent
             .prompt(prompt)

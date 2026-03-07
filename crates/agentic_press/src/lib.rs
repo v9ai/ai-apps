@@ -2,6 +2,7 @@ pub mod agent_teams;
 pub mod pipeline;
 pub mod prompts;
 pub mod publisher;
+pub mod research_phase;
 
 /// Convert a title/string into a URL-safe slug.
 pub fn slugify(s: &str) -> String {

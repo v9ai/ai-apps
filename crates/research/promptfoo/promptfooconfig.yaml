@@ -1,0 +1,182 @@
+description: "Condition research synthesis prompt evaluation"
+
+prompts:
+  - id: synthesis
+    raw: |
+      {{system}}
+      ---
+      {{prompt}}
+
+providers:
+  - id: openai:compatible:deepseek-reasoner
+    config:
+      apiBaseUrl: https://api.deepseek.com
+      apiKeyEnvar: DEEPSEEK_API_KEY
+      temperature: 0
+      max_tokens: 4096
+  - id: openai:compatible:qwen-max
+    config:
+      apiBaseUrl: https://dashscope.aliyuncs.com/compatible-mode/v1
+      apiKeyEnvar: DASHSCOPE_API_KEY
+      temperature: 0.3
+      max_tokens: 4096
+
+defaultTest:
+  vars:
+    system: >
+      You are a medical research synthesizer. Given a health condition and
+      relevant academic papers, produce a clear, evidence-based synthesis that:
+      (1) summarizes the key findings across papers,
+      (2) identifies consensus and disagreements,
+      (3) highlights practical clinical implications,
+      (4) notes gaps in the research.
+      Write for a knowledgeable but non-specialist audience. Use Markdown.
+  assert:
+    # Every synthesis must use Markdown headings
+    - type: contains
+      value: "##"
+    # Must be substantive (>500 chars)
+    - type: javascript
+      value: "output.length > 500"
+    # Must not be an error response
+    - type: not-contains
+      value: "[DeepSeek error:"
+    - type: not-contains
+      value: "[Qwen error:"
+
+tests:
+  - vars:
+      prompt: |
+        Condition: Androgenic alopecia
+
+        Academic papers found (3 total):
+
+        ### Paper 1 — Advances in Regenerative Stem Cell Therapy in Androgenic Alopecia (2020) [SemanticScholar]
+        Citations: 150
+        TLDR: This review discusses the Wnt signaling pathway and mesenchymal stem cells as promising avenues for treating androgenic alopecia.
+        Abstract: Androgenic alopecia (AGA) is the most common form of hair loss, affecting both men and women. Current treatments include minoxidil and finasteride, but these have limitations. Regenerative approaches using stem cells show promise.
+
+        ### Paper 2 — Minoxidil and its use in hair disorders: a review (2019) [OpenAlex]
+        Citations: 89
+        Abstract: Minoxidil remains one of the most widely used treatments for hair loss. This review examines its mechanism of action, efficacy, and side effects across different hair disorders including AGA.
+
+        ### Paper 3 — The role of androgens in androgenetic alopecia (2021) [Crossref]
+        Citations: 65
+        Abstract: This paper reviews the role of dihydrotestosterone (DHT) and androgen receptors in the pathogenesis of AGA, and discusses current and emerging anti-androgen therapies.
+
+        Please synthesize the research findings for this condition.
+    assert:
+      # Should mention key treatments
+      - type: contains-any
+        value:
+          - minoxidil
+          - Minoxidil
+      - type: contains-any
+        value:
+          - finasteride
+          - Finasteride
+          - DHT
+          - dihydrotestosterone
+      # Should reference stem cell research
+      - type: contains-any
+        value:
+          - stem cell
+          - Wnt
+          - regenerative
+      # Should have structured sections
+      - type: llm-rubric
+        value: >
+          The response should be a well-structured medical research synthesis that:
+          1. Summarizes key findings across the provided papers
+          2. Identifies areas of consensus (e.g., established treatments)
+          3. Notes emerging approaches (e.g., stem cell therapy)
+          4. Mentions clinical implications for patients
+          5. Uses professional medical language accessible to an educated reader
+
+  - vars:
+      prompt: |
+        Condition: Type 2 Diabetes
+
+        Patient notes: Recently diagnosed, interested in lifestyle interventions
+
+        Academic papers found (3 total):
+
+        ### Paper 1 — Effect of diet and exercise in preventing NIDDM (2022) [SemanticScholar]
+        Citations: 3200
+        Abstract: This landmark study demonstrated that lifestyle interventions including diet modification and increased physical activity reduced the incidence of type 2 diabetes by 58% compared to control groups.
+
+        ### Paper 2 — Metformin in the prevention of type 2 diabetes (2020) [OpenAlex]
+        Citations: 1800
+        Abstract: Metformin reduced the incidence of diabetes by 31% compared with placebo. The drug was effective in younger, heavier participants but lifestyle intervention was more effective overall.
+
+        ### Paper 3 — Gut microbiome and type 2 diabetes: a review (2023) [Crossref]
+        Citations: 45
+        Abstract: Emerging research links gut microbiome composition to insulin resistance and T2D risk. Dietary fiber and probiotic interventions show promise in modulating the microbiome to improve glycemic control.
+
+        Please synthesize the research findings for this condition.
+    assert:
+      # Must discuss lifestyle interventions (patient's interest)
+      - type: contains-any
+        value:
+          - lifestyle
+          - diet
+          - exercise
+          - physical activity
+      # Must mention metformin as pharmacological option
+      - type: contains-any
+        value:
+          - metformin
+          - Metformin
+      # Should mention emerging microbiome research
+      - type: contains-any
+        value:
+          - microbiome
+          - gut
+          - probiotic
+      - type: llm-rubric
+        value: >
+          Given the patient notes mention interest in lifestyle interventions,
+          the synthesis should emphasize lifestyle-based findings prominently
+          and explain the relative effectiveness compared to pharmacological options.
+
+  - vars:
+      prompt: |
+        Condition: Rheumatoid Arthritis
+
+        Academic papers found (3 total):
+
+        ### Paper 1 — Methotrexate for rheumatoid arthritis (2019) [SemanticScholar]
+        Citations: 500
+        Abstract: Methotrexate remains the anchor drug for RA treatment. This review covers optimal dosing, monitoring protocols, and combination strategies with biological DMARDs.
+
+        ### Paper 2 — JAK inhibitors in rheumatoid arthritis (2022) [OpenAlex]
+        Citations: 120
+        Abstract: Janus kinase (JAK) inhibitors represent a new class of targeted synthetic DMARDs. Tofacitinib and baricitinib have shown efficacy comparable to biologics in clinical trials.
+
+        ### Paper 3 — Early treatment of rheumatoid arthritis (2021) [Crossref]
+        Citations: 200
+        Abstract: Early aggressive treatment within the first 3-6 months ("window of opportunity") significantly improves long-term outcomes. Treat-to-target strategies are recommended.
+
+        Please synthesize the research findings for this condition.
+    assert:
+      - type: contains-any
+        value:
+          - methotrexate
+          - Methotrexate
+          - MTX
+      - type: contains-any
+        value:
+          - JAK
+          - tofacitinib
+          - baricitinib
+      - type: contains-any
+        value:
+          - early treatment
+          - window of opportunity
+          - treat-to-target
+      - type: llm-rubric
+        value: >
+          The synthesis should explain the treatment landscape from established
+          therapies (methotrexate) through newer options (JAK inhibitors) and
+          emphasize the importance of early intervention. It should note clinical
+          consensus on treat-to-target strategies.

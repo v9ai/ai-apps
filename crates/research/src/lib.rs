@@ -11,7 +11,7 @@ pub mod tools;
 
 pub use core_api::CoreClient;
 pub use crossref::CrossrefClient;
-pub use dual::DualModelResearcher;
+pub use dual::{DualModelResearcher, MultiModelResearcher, MultiResponse};
 pub use openalex::OpenAlexClient;
 pub use paper::ResearchPaper;
 pub use scholar::SemanticScholarClient;

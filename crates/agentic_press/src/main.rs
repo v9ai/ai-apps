@@ -1,4 +1,5 @@
 use agentic_press::pipeline::Pipeline;
+use agentic_press::research_phase::ResearchConfig;
 use anyhow::Result;
 use clap::Parser;
 use tracing::info;
@@ -20,6 +21,10 @@ struct Cli {
     /// Publish finished articles to vadim.blog and run `vercel deploy --prod`
     #[arg(long, default_value_t = true)]
     publish: bool,
+
+    /// Enable paper search + multi-model research synthesis
+    #[arg(long, default_value_t = false)]
+    research: bool,
 }
 
 #[tokio::main]
@@ -37,9 +42,14 @@ async fn main() -> Result<()> {
         if std::env::var("DEEPSEEK_API_KEY").is_ok() { "set" } else { "NOT SET" }
     );
 
-    Pipeline::new(cli.niche, cli.output_dir)
+    let mut pipeline = Pipeline::new(cli.niche, cli.output_dir)
         .with_count(cli.count)
-        .with_publish(cli.publish)
-        .run()
-        .await
+        .with_publish(cli.publish);
+
+    if cli.research {
+        info!("Research mode enabled: paper search + multi-model synthesis");
+        pipeline = pipeline.with_research(ResearchConfig::default());
+    }
+
+    pipeline.run().await
 }

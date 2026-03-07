@@ -10,6 +10,7 @@ use deepseek::{DeepSeekClient, ReqwestClient};
 use crate::agent_teams::{run_parallel, Agent};
 use crate::prompts;
 use crate::publisher;
+use crate::research_phase::{self, ResearchConfig};
 
 // ── picker output ────────────────────────────────────────────────────────────
 
@@ -28,6 +29,8 @@ pub struct Pipeline {
     count: usize,
     /// Publish to vadim.blog + run `vercel deploy --prod` when true.
     publish: bool,
+    /// Enable paper search + multi-model research synthesis.
+    research_config: Option<ResearchConfig>,
     /// Pre-built client injected by tests; `None` → create from env at run time.
     client: Option<Arc<DeepSeekClient<ReqwestClient>>>,
 }
@@ -39,6 +42,7 @@ impl Pipeline {
             output_dir: output_dir.into(),
             count: 1,
             publish: false,
+            research_config: None,
             client: None,
         }
     }
@@ -50,6 +54,11 @@ impl Pipeline {
 
     pub fn with_publish(mut self, publish: bool) -> Self {
         self.publish = publish;
+        self
+    }
+
+    pub fn with_research(mut self, config: ResearchConfig) -> Self {
+        self.research_config = Some(config);
         self
     }
 
@@ -109,6 +118,14 @@ impl Pipeline {
             selections.len().min(self.count)
         );
 
+        let use_research = self.research_config.is_some();
+        let research_paper_search = self.research_config.as_ref().map_or(false, |c| c.enable_paper_search);
+        let research_multi_model = self.research_config.as_ref().map_or(false, |c| c.enable_multi_model);
+
+        if use_research {
+            info!("Research mode: paper_search={research_paper_search}, multi_model={research_multi_model}");
+        }
+
         let mut set = tokio::task::JoinSet::new();
 
         for (i, sel) in selections.into_iter().take(self.count).enumerate() {
@@ -118,11 +135,6 @@ impl Pipeline {
 
             let do_publish = self.publish;
             set.spawn(async move {
-                let researcher = Agent::new(
-                    format!("researcher[{i}]"),
-                    prompts::researcher(&niche),
-                    Arc::clone(&client),
-                );
                 let writer = Agent::new(
                     format!("writer[{i}]"),
                     prompts::writer(),
@@ -134,12 +146,30 @@ impl Pipeline {
                     Arc::clone(&client),
                 );
 
-                let brief     = format!("Topic: {}\nAngle: {}\n", sel.topic, sel.angle);
                 let slug      = crate::slugify(&sel.topic);
                 let topic_dir = format!("{output_dir}/{slug}");
                 fs::create_dir_all(&topic_dir).await?;
 
-                let notes = researcher.run(&brief).await?;
+                let (notes, paper_count) = if use_research {
+                    let config = ResearchConfig {
+                        enable_paper_search: research_paper_search,
+                        enable_multi_model: research_multi_model,
+                    };
+                    let output = research_phase::research_phase(
+                        &sel.topic, &sel.angle, &niche, &config, &client,
+                    ).await?;
+                    (output.notes, output.paper_count)
+                } else {
+                    let researcher = Agent::new(
+                        format!("researcher[{i}]"),
+                        prompts::researcher(&niche),
+                        Arc::clone(&client),
+                    );
+                    let brief = format!("Topic: {}\nAngle: {}\n", sel.topic, sel.angle);
+                    let notes = researcher.run(&brief).await?;
+                    (notes, 0usize)
+                };
+
                 save(&topic_dir, "research.md", &notes).await?;
 
                 // Writer and LinkedIn run concurrently — both take research notes.
@@ -151,7 +181,7 @@ impl Pipeline {
                     publisher::publish(&blog, &sel.topic, true).await?;
                 }
 
-                anyhow::Ok((sel.topic, blog, li))
+                anyhow::Ok((sel.topic, blog, li, paper_count))
             });
         }
 
@@ -164,9 +194,14 @@ impl Pipeline {
         println!("║       agentic_press — Run Complete   ║");
         println!("╚══════════════════════════════════════╝");
         println!("\nModel:  deepseek-reasoner  |  Topics: {}", results.len());
-        for (topic, blog, li) in &results {
+        for (topic, blog, li, paper_count) in &results {
+            let papers_info = if *paper_count > 0 {
+                format!("  |  papers: {paper_count}")
+            } else {
+                String::new()
+            };
             println!(
-                "\n  [{topic}]\n  blog: ~{} words  |  linkedin: {} lines",
+                "\n  [{topic}]\n  blog: ~{} words  |  linkedin: {} lines{papers_info}",
                 blog.split_whitespace().count(),
                 li.lines().count()
             );

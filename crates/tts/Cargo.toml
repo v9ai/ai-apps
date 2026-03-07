@@ -20,3 +20,6 @@ tokio = { version = "1", features = ["full"] }
 
 [[bin]]
 name = "interview_prep"
+
+[[bin]]
+name = "eval_harness"

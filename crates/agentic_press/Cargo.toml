@@ -13,6 +13,10 @@ path = "src/lib.rs"
 name = "agentic_press"
 path = "src/main.rs"
 
+[[bin]]
+name = "deep_dive"
+path = "src/bin/deep_dive.rs"
+
 [dependencies]
 tokio = { version = "1", features = ["full"] }
 serde = { version = "1", features = ["derive"] }
@@ -22,6 +26,7 @@ tracing = "0.1"
 tracing-subscriber = { version = "0.3", features = ["env-filter"] }
 clap = { version = "4", features = ["derive"] }
 deepseek = { path = "../deepseek" }
+research = { path = "../research" }
 dotenvy = "0.15"
 chrono = "0.4"
 
