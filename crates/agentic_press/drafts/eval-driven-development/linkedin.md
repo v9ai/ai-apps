@@ -1,16 +1,17 @@
-The biggest mistake you can make with legal AI isn't ignoring hallucinations. It's evaluating them the wrong way.
+90% of LLM apps in production have no real evaluation harness. They shipped on vibes.
 
-In legal tech, a false positive—accusing an attorney of a citation error they didn't make—is catastrophic for trust. A false negative is just a missed opportunity. The cost of error is wildly asymmetric.
+That works for chatbots. It does not work when your system triages patients, flags compliance violations, or reviews financial disclosures. In high-stakes domains, a false positive can trigger a regulatory investigation. A hallucination can end a career. The cost of error is wildly asymmetric — and a single "accuracy" score hides it completely.
 
-The solution? Flip the standard AI development script. You must build the evaluation harness *before* you write a single prompt. Measurement first, optimization second.
+The fix is counterintuitive: build your evaluation harness before you write a single prompt. Measurement first, optimization second. I call it Eval-Driven Development, and after building it out with weighted ground truth, multi-layer diagnostics, and mechanistic grounding checks, I'm convinced it's the only sane approach.
 
-• Separate precision from recall. Measure them against different documents. Precision failures destroy judicial trust faster than recall failures save time.
-• Use weighted ground truth. Not all legal errors are equal. A fabricated holding is more dangerous than an omitted detail. Your metrics must reflect that.
-• Enforce evidence grounding. At least 50% of findings must have verbatim text from source docs. This prevents plausible-sounding hallucinations with no basis in reality.
-• Layer your evals. Use deterministic keyword matching for primary scoring, LLM-as-judge for semantic validation, and agent-level tests for fast iteration. One script can’t catch everything.
+Three things that changed how I build:
 
-The philosophy is simple: if your eval harness is less reliable than the system it's measuring, you have no signal, just noise.
+Separate precision from recall — and test them on different datasets. Use clean documents to measure false positives, dirty ones for detection. One test set cannot do both.
 
-See the full breakdown of the four-layer architecture, the matching algorithm, and the 31 structured assertions in the blog.
+Enforce evidence grounding. At least 50% of findings must trace back to verbatim source text. This is the single best guardrail against plausible-sounding hallucinations with no basis in reality.
 
-#LegalAI #AIAssurance #EvaluationHarness #LegalTech #PromptEngineering #RAGSystems
+Layer your evals. Deterministic keyword matching for primary scoring, LLM-as-judge for semantic validation, isolated agent tests for fast iteration. One monolithic script cannot catch everything.
+
+The full breakdown — four-layer architecture, matching algorithms, weighted scoring — is in the blog.
+
+#EvalDrivenDevelopment #LLMEvaluation #AIReliability #PromptEngineering #RAGSystems #MLOps
