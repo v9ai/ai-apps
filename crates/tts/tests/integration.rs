@@ -418,6 +418,135 @@ async fn test_synthesize_technical_reference() {
     );
 }
 
+// ─── R2 upload (feature = "r2") ─────────────────────────────────────────────
+
+#[cfg(feature = "r2")]
+mod r2_tests {
+    use super::*;
+    use tts::{R2Config, r2};
+
+    /// Load `.env` and return `R2Config` if all required R2 env vars are set.
+    fn try_r2_config() -> Option<R2Config> {
+        let _ = dotenvy::from_filename(
+            std::path::Path::new(env!("CARGO_MANIFEST_DIR")).join(".env"),
+        );
+        R2Config::from_env().ok()
+    }
+
+    /// Build a minimal valid WAV file (44-byte header + 100 samples of silence).
+    fn minimal_wav() -> Vec<u8> {
+        let num_samples: u32 = 100;
+        let data_size = num_samples * 2; // 16-bit mono
+        let file_size = 36 + data_size;
+        let mut buf = Vec::with_capacity(44 + data_size as usize);
+        buf.extend_from_slice(b"RIFF");
+        buf.extend_from_slice(&file_size.to_le_bytes());
+        buf.extend_from_slice(b"WAVE");
+        buf.extend_from_slice(b"fmt ");
+        buf.extend_from_slice(&16u32.to_le_bytes()); // chunk size
+        buf.extend_from_slice(&1u16.to_le_bytes()); // PCM
+        buf.extend_from_slice(&1u16.to_le_bytes()); // mono
+        buf.extend_from_slice(&24000u32.to_le_bytes()); // sample rate
+        buf.extend_from_slice(&48000u32.to_le_bytes()); // byte rate
+        buf.extend_from_slice(&2u16.to_le_bytes()); // block align
+        buf.extend_from_slice(&16u16.to_le_bytes()); // bits per sample
+        buf.extend_from_slice(b"data");
+        buf.extend_from_slice(&data_size.to_le_bytes());
+        buf.extend(vec![0u8; data_size as usize]); // silence
+        buf
+    }
+
+    /// `R2Config::from_env()` succeeds and fields are populated.
+    #[tokio::test]
+    async fn test_r2_config_from_env() {
+        let Some(config) = try_r2_config() else {
+            eprintln!("SKIPPED: R2 env vars not set");
+            return;
+        };
+
+        assert!(!config.account_id.is_empty(), "account_id should be set");
+        assert!(!config.access_key_id.is_empty(), "access_key_id should be set");
+        assert!(!config.secret_access_key.is_empty(), "secret_access_key should be set");
+        assert!(!config.bucket_name.is_empty(), "bucket_name should be set");
+        eprintln!("R2Config loaded: bucket={}, prefix={}", config.bucket_name, config.key_prefix);
+    }
+
+    /// Upload a minimal WAV file and verify the result.
+    #[tokio::test]
+    async fn test_r2_upload_small_wav() {
+        let Some(config) = try_r2_config() else {
+            eprintln!("SKIPPED: R2 env vars not set");
+            return;
+        };
+
+        let wav = minimal_wav();
+        let slug = format!("test-small-{}", std::time::SystemTime::now()
+            .duration_since(std::time::UNIX_EPOCH).unwrap().as_millis());
+
+        let result = r2::upload(&config, &slug, &wav).await
+            .expect("R2 upload should succeed");
+
+        assert!(result.key.ends_with(".wav"), "key should end with .wav: {}", result.key);
+        assert!(result.key.contains(&slug), "key should contain slug");
+        assert_eq!(result.size_bytes, wav.len(), "size should match uploaded bytes");
+        eprintln!("uploaded: key={}, size={}, url={:?}", result.key, result.size_bytes, result.public_url);
+    }
+
+    /// Upload then download via public URL to verify data integrity.
+    #[tokio::test]
+    async fn test_r2_upload_roundtrip() {
+        let Some(config) = try_r2_config() else {
+            eprintln!("SKIPPED: R2 env vars not set");
+            return;
+        };
+        if config.public_domain.is_none() {
+            eprintln!("SKIPPED: R2_PUBLIC_DOMAIN not set, cannot verify roundtrip");
+            return;
+        }
+
+        let wav = minimal_wav();
+        let slug = format!("test-roundtrip-{}", std::time::SystemTime::now()
+            .duration_since(std::time::UNIX_EPOCH).unwrap().as_millis());
+
+        let result = r2::upload(&config, &slug, &wav).await
+            .expect("R2 upload should succeed");
+
+        let url = result.public_url.as_ref().expect("should have public URL");
+        let downloaded = reqwest::get(url).await
+            .expect("GET should succeed")
+            .bytes().await
+            .expect("should read body");
+
+        assert_eq!(downloaded.as_ref(), wav.as_slice(), "downloaded bytes should match uploaded");
+        eprintln!("roundtrip OK: {} bytes via {}", downloaded.len(), url);
+    }
+
+    /// Full builder pipeline: synthesize short phrase → upload to R2.
+    #[tokio::test]
+    async fn test_builder_upload_r2() {
+        let Some(client) = super::try_client() else { return };
+        let Some(config) = try_r2_config() else {
+            eprintln!("SKIPPED: R2 env vars not set");
+            return;
+        };
+
+        let slug = format!("test-builder-{}", std::time::SystemTime::now()
+            .duration_since(std::time::UNIX_EPOCH).unwrap().as_millis());
+
+        let result = client
+            .long(Voice::Cherry)
+            .text("Hello, this is a short R2 upload test.")
+            .upload_r2(config, &slug)
+            .synthesize()
+            .await;
+
+        let Some(bytes) = super::expect_or_skip(result, "builder upload_r2") else { return };
+
+        assert_eq!(&bytes[..4], b"RIFF", "should be WAV format");
+        eprintln!("builder upload_r2: {} bytes, slug={}", bytes.len(), slug);
+    }
+}
+
 // ─── Error handling ─────────────────────────────────────────────────────────
 
 /// Invalid API key returns an error.

@@ -11,6 +11,8 @@ tags:
   - engineering
 ---
 
+<AudioPlayer src="https://pub-dce8469a10bc41b08c963ff216ba6c24.r2.dev/vadim-blog/ai-agent-reflection-loops.wav" />
+
 I built a journalism pipeline where four LLM agents — Researcher, SEO Strategist, Writer, Editor — collaborate to produce articles. The Editor reviews the Writer's draft against the research brief and either approves or requests revisions. On the first real run, the Editor correctly flagged fabricated statistics that the SEO agent had hallucinated. It requested a revision. The Writer revised. The Editor reviewed again. The revision was worse.
 
 The Writer hadn't fixed the core problem. It had paraphrased the same draft, shuffled paragraphs, softened claims. The token cost tripled. The article quality didn't move.
