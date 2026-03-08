@@ -10,6 +10,8 @@ tags:
   - development
 ---
 
+<AudioPlayer src="https://tts.vadim.blog/vadim-blog/eval-driven-development-1772974854311.mp3" />
+
 Here's the counterintuitive premise: for any LLM application where errors have real consequences, you must build your evaluation harness *before* you write a single prompt. You don't prompt-engineer by vibes, tweaking until an output looks good. You start by defining what "good" means, instrumenting its measurement, and only then do you optimize. This is Eval-Driven Development. It's the only sane way to build reliable, high-stakes AI systems.
 
 In most software, a bug might crash an app. In high-stakes AI, a bug can trigger a misdiagnosis, approve a fraudulent transaction, deploy vulnerable code to production, or greenlight a toxic post to millions of users. The consequences are not hypothetical. An AI-generated radiology summary that fabricates a nodule sends a patient into an unnecessary biopsy. A compliance pipeline that hallucinates a regulatory citation exposes a bank to enforcement action. A code review agent that misses a SQL injection in a PR puts an entire user base at risk. The tolerance for error in these domains is asymptotically approaching zero. This changes everything about how you build.
