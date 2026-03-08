@@ -10,7 +10,7 @@ tags:
   - development
 ---
 
-<AudioPlayer src="https://tts.vadim.blog/vadim-blog/eval-driven-development-1772974854311.mp3" />
+<AudioPlayer src="https://tts.vadim.blog/vadim-blog/eval-driven-development.wav" />
 
 Here's the counterintuitive premise: for any LLM application where errors have real consequences, you must build your evaluation harness *before* you write a single prompt. You don't prompt-engineer by vibes, tweaking until an output looks good. You start by defining what "good" means, instrumenting its measurement, and only then do you optimize. This is Eval-Driven Development. It's the only sane way to build reliable, high-stakes AI systems.
 

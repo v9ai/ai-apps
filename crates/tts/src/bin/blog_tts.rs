@@ -114,8 +114,10 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
         .enable_all()
         .build()?;
 
+    let upload_r2 = std::env::args().any(|a| a == "--upload");
+
     let wav = rt.block_on(async {
-        client
+        let mut builder = client
             .long(Voice::Ethan)
             .chunks(chunks)
             .model("qwen3-tts-instruct-flash")
@@ -130,9 +132,16 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
                 let done = completed_cb.fetch_add(1, Ordering::Relaxed) + 1;
                 eprintln!("  [{done:>3}/{}] chunk {:.1}s", p.total_chunks, p.duration_secs);
             })
-            .output_file(&out_path)
-            .synthesize()
-            .await
+            .output_file(&out_path);
+
+        #[cfg(feature = "r2")]
+        if upload_r2 {
+            let r2_config = tts::R2Config::from_env().expect("R2 env vars required for --upload");
+            builder = builder.upload_r2(r2_config, &slug);
+        }
+
+        let _ = upload_r2; // suppress unused warning when r2 feature is off
+        builder.synthesize().await
     })?;
 
     let elapsed = start.elapsed();
@@ -145,9 +154,11 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
     eprintln!("  File size      : {size_mb:.1} MB");
     eprintln!("  Wall time      : {:.0}s", elapsed.as_secs_f64());
     eprintln!("  Output         : {}", out_path.display());
-    eprintln!();
-    eprintln!("Upload with:");
-    eprintln!("  wrangler r2 object put longform-tts/vadim-blog/{slug}.wav --file {}", out_path.display());
+    if !upload_r2 {
+        eprintln!();
+        eprintln!("Upload with --upload flag or manually:");
+        eprintln!("  wrangler r2 object put longform-tts/vadim-blog/{slug}.wav --file {}", out_path.display());
+    }
 
     Ok(())
 }
