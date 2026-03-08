@@ -9,6 +9,7 @@ use wiremock::{Mock, MockServer, ResponseTemplate};
 use async_trait::async_trait;
 use deepseek::{DeepSeekClient, ReqwestClient};
 use agentic_press::pipeline::Pipeline;
+use agentic_press::PipelineMode;
 use agentic_press::publisher::Publisher;
 
 // ── helpers ───────────────────────────────────────────────────────────────────
@@ -16,6 +17,7 @@ use agentic_press::publisher::Publisher;
 fn chat_response(content: &str) -> serde_json::Value {
     serde_json::json!({
         "id": "test-id",
+        "model": "test-model",
         "choices": [{
             "index": 0,
             "message": {
@@ -61,11 +63,17 @@ async fn mount_standard_mocks(server: &MockServer, picker_json: &str) {
 }
 
 fn pipeline(server: &MockServer, tmp: &TempDir) -> Pipeline {
-    let client = Arc::new(
+    let ds_client = Arc::new(
         DeepSeekClient::new(ReqwestClient::new(), "test-key")
             .with_base_url(server.uri()),
     );
-    Pipeline::new("test niche", tmp.path().to_str().unwrap()).with_client(client)
+    let qw_client = Arc::new(
+        qwen::Client::new("test-key").with_base_url(server.uri()),
+    );
+    Pipeline::new("test niche", tmp.path().to_str().unwrap())
+        .with_deepseek_client(ds_client)
+        .with_qwen_client(qw_client)
+        .with_mode(PipelineMode::Blog)
 }
 
 // ── MockPublisher ────────────────────────────────────────────────────────────
@@ -85,13 +93,13 @@ impl MockPublisher {
 
 #[async_trait]
 impl Publisher for MockPublisher {
-    async fn publish_post(&self, blog_md: &str, topic: &str, _deploy: bool) -> anyhow::Result<PathBuf> {
+    async fn publish_post(&self, blog_md: &str, topic: &str, _deploy: bool, _audio_url: Option<&str>) -> anyhow::Result<PathBuf> {
         self.calls.lock().unwrap().push((blog_md.to_string(), topic.to_string()));
         Ok(PathBuf::from("/mock/published"))
     }
 }
 
-// ── tests ─────────────────────────────────────────────────────────────────────
+// ── blog mode tests ──────────────────────────────────────────────────────────
 
 /// Happy path: single topic creates scout + picker files and a slug directory
 /// with research.md, blog.md, linkedin.md.
@@ -113,11 +121,14 @@ async fn test_single_topic_creates_expected_files() {
     assert!(slug_dir.join("linkedin.md").exists(), "linkedin.md missing");
 
     // Verify structured result
-    assert_eq!(result.topics.len(), 1);
-    assert_eq!(result.topics[0].topic, "Claude Code Testing");
-    assert_eq!(result.topics[0].slug, "claude-code-testing");
-    assert!(!result.scout_output.is_empty());
-    assert!(!result.picker_output.is_empty());
+    let agentic_press::PipelineResult::Blog(blog) = result else {
+        panic!("expected Blog result");
+    };
+    assert_eq!(blog.topics.len(), 1);
+    assert_eq!(blog.topics[0].topic, "Claude Code Testing");
+    assert_eq!(blog.topics[0].slug, "claude-code-testing");
+    assert!(!blog.scout_output.is_empty());
+    assert!(!blog.picker_output.is_empty());
 }
 
 /// Output files contain the mock content (pipeline passes data forward correctly).
@@ -129,19 +140,23 @@ async fn test_output_files_contain_agent_content() {
     let tmp = TempDir::new().unwrap();
     let result = pipeline(&server, &tmp).run().await.unwrap();
 
-    let blog = std::fs::read_to_string(
+    let blog_content = std::fs::read_to_string(
         tmp.path().join("claude-code-testing").join("blog.md"),
     )
     .unwrap();
-    assert!(blog.contains("Blog Post"), "blog.md should contain writer output");
-    assert!(result.topics[0].blog.contains("Blog Post"));
+    assert!(blog_content.contains("Blog Post"), "blog.md should contain writer output");
 
     let li = std::fs::read_to_string(
         tmp.path().join("claude-code-testing").join("linkedin.md"),
     )
     .unwrap();
     assert!(li.contains("RustLang"), "linkedin.md should contain linkedin output");
-    assert!(result.topics[0].linkedin.contains("RustLang"));
+
+    let agentic_press::PipelineResult::Blog(blog) = result else {
+        panic!("expected Blog result");
+    };
+    assert!(blog.topics[0].blog.contains("Blog Post"));
+    assert!(blog.topics[0].linkedin.contains("RustLang"));
 }
 
 /// With count=2, both topic directories must exist after the run.
@@ -160,7 +175,11 @@ async fn test_multi_topic_creates_all_directories() {
     let out = tmp.path();
     assert!(out.join("rust-async-runtime").join("blog.md").exists(), "topic 1 blog missing");
     assert!(out.join("multi-agent-systems").join("blog.md").exists(), "topic 2 blog missing");
-    assert_eq!(result.topics.len(), 2);
+
+    let agentic_press::PipelineResult::Blog(blog) = result else {
+        panic!("expected Blog result");
+    };
+    assert_eq!(blog.topics.len(), 2);
 }
 
 /// Writer and LinkedIn run *concurrently* — each mock has a 200 ms delay but
@@ -458,7 +477,7 @@ async fn test_no_publish_skips_publisher() {
     assert_eq!(calls.len(), 0, "publisher should NOT be called when publish=false");
 }
 
-/// PipelineResult contains scout and picker raw output.
+/// PipelineResult::Blog contains scout and picker raw output.
 #[tokio::test]
 async fn test_pipeline_result_contains_phase_outputs() {
     let server = MockServer::start().await;
@@ -467,8 +486,11 @@ async fn test_pipeline_result_contains_phase_outputs() {
     let tmp = TempDir::new().unwrap();
     let result = pipeline(&server, &tmp).run().await.unwrap();
 
-    assert!(result.scout_output.contains("Topic A"), "scout_output should have scout content");
-    assert!(result.picker_output.contains("Claude Code Testing"), "picker_output should have picker content");
+    let agentic_press::PipelineResult::Blog(blog) = result else {
+        panic!("expected Blog result");
+    };
+    assert!(blog.scout_output.contains("Topic A"), "scout_output should have scout content");
+    assert!(blog.picker_output.contains("Claude Code Testing"), "picker_output should have picker content");
 }
 
 /// Multi-topic run populates all TopicResult fields.
@@ -484,13 +506,16 @@ async fn test_multi_topic_result_fields() {
         .await
         .unwrap();
 
-    assert_eq!(result.topics.len(), 2);
+    let agentic_press::PipelineResult::Blog(blog) = result else {
+        panic!("expected Blog result");
+    };
+    assert_eq!(blog.topics.len(), 2);
 
-    let slugs: Vec<&str> = result.topics.iter().map(|t| t.slug.as_str()).collect();
+    let slugs: Vec<&str> = blog.topics.iter().map(|t| t.slug.as_str()).collect();
     assert!(slugs.contains(&"rust-async-runtime"));
     assert!(slugs.contains(&"multi-agent-systems"));
 
-    for t in &result.topics {
+    for t in &blog.topics {
         assert!(!t.blog.is_empty(), "blog should not be empty for {}", t.topic);
         assert!(!t.linkedin.is_empty(), "linkedin should not be empty for {}", t.topic);
         assert_eq!(t.paper_count, 0, "paper_count should be 0 without research mode");
@@ -541,5 +566,238 @@ async fn test_empty_picker_selection() {
     let tmp = TempDir::new().unwrap();
     let result = pipeline(&server, &tmp).run().await.unwrap();
 
-    assert!(result.topics.is_empty(), "empty picker selection should produce no topics");
+    let agentic_press::PipelineResult::Blog(blog) = result else {
+        panic!("expected Blog result");
+    };
+    assert!(blog.topics.is_empty(), "empty picker selection should produce no topics");
+}
+
+// ── journalism mode helpers ─────────────────────────────────────────────────
+
+fn journalism_pipeline(server: &MockServer, tmp: &TempDir, topic: &str) -> Pipeline {
+    let ds_client = Arc::new(
+        DeepSeekClient::new(ReqwestClient::new(), "test-key")
+            .with_base_url(server.uri()),
+    );
+    let qw_client = Arc::new(
+        qwen::Client::new("test-key").with_base_url(server.uri()),
+    );
+    Pipeline::new(topic, tmp.path().to_str().unwrap())
+        .with_deepseek_client(ds_client)
+        .with_qwen_client(qw_client)
+        .with_mode(PipelineMode::Journalism)
+}
+
+/// Mount journalism agent mocks (researcher, seo, writer, editor).
+async fn mount_journalism_mocks(server: &MockServer, editor_verdict: &str) {
+    for (phrase, body) in [
+        ("Researcher for a journalism team", chat_response("# Research Brief\n\n## Summary\nKey findings.")),
+        ("SEO Strategist for a journalism team", chat_response("# SEO Strategy\n\n## Target Keywords\nremote jobs europe.")),
+        ("Writer for a journalism team", chat_response("---\ntitle: \"Test Article\"\nstatus: draft\n---\n\n# Test Article\n\nDraft body.")),
+        ("Editor for a journalism team", chat_response(editor_verdict)),
+    ] {
+        Mock::given(method("POST"))
+            .and(path("/chat/completions"))
+            .and(body_string_contains(phrase))
+            .respond_with(ResponseTemplate::new(200).set_body_json(body))
+            .mount(server)
+            .await;
+    }
+}
+
+// ── journalism mode tests ───────────────────────────────────────────────────
+
+/// Journalism happy path: creates research, draft, and published files.
+#[tokio::test]
+async fn test_journalism_happy_path_approved() {
+    let server = MockServer::start().await;
+    mount_journalism_mocks(
+        &server,
+        "APPROVE\n\n---\ntitle: \"Final Article\"\nstatus: published\n---\n\n# Final Article\n\nEdited body.",
+    )
+    .await;
+
+    let tmp = TempDir::new().unwrap();
+    let result = journalism_pipeline(&server, &tmp, "Remote work in Germany")
+        .with_topic("Remote work in Germany")
+        .run()
+        .await
+        .unwrap();
+
+    let agentic_press::PipelineResult::Journalism(j) = result else {
+        panic!("expected Journalism result");
+    };
+    assert!(j.article.approved, "editor should approve");
+    assert_eq!(j.article.revision_rounds, 0, "no revision rounds needed");
+    assert_eq!(j.article.topic, "Remote work in Germany");
+    assert_eq!(j.article.slug, "remote-work-in-germany");
+    assert!(!j.article.research.is_empty());
+    assert!(!j.article.seo.is_empty());
+    assert!(!j.article.draft.is_empty());
+
+    let out = tmp.path();
+    assert!(out.join("research/remote-work-in-germany-research.md").exists());
+    assert!(out.join("research/remote-work-in-germany-seo.md").exists());
+    assert!(out.join("drafts/remote-work-in-germany.md").exists());
+    assert!(out.join("published/remote-work-in-germany.md").exists());
+}
+
+/// Editor says REVISE → Writer retries → Editor APPROVEs on second round.
+#[tokio::test]
+async fn test_journalism_revision_loop_approve_on_retry() {
+    let server = MockServer::start().await;
+
+    // Researcher and SEO respond normally.
+    for (phrase, body) in [
+        ("Researcher for a journalism team", chat_response("# Research Brief\n\n## Summary\nKey findings.")),
+        ("SEO Strategist for a journalism team", chat_response("# SEO Strategy\n\n## Target Keywords\nkeywords.")),
+    ] {
+        Mock::given(method("POST"))
+            .and(path("/chat/completions"))
+            .and(body_string_contains(phrase))
+            .respond_with(ResponseTemplate::new(200).set_body_json(body))
+            .mount(&server)
+            .await;
+    }
+
+    // Writer always returns a draft.
+    Mock::given(method("POST"))
+        .and(path("/chat/completions"))
+        .and(body_string_contains("Writer for a journalism team"))
+        .respond_with(ResponseTemplate::new(200).set_body_json(
+            chat_response("---\ntitle: \"Test\"\nstatus: draft\n---\n\n# Test\n\nRevised draft body."),
+        ))
+        .mount(&server)
+        .await;
+
+    // Editor: first call returns REVISE, second returns APPROVE.
+    Mock::given(method("POST"))
+        .and(path("/chat/completions"))
+        .and(body_string_contains("Editor for a journalism team"))
+        .respond_with(ResponseTemplate::new(200).set_body_json(
+            chat_response("**DECISION: REVISE**\n## Critical Issues (must fix)\n- [ ] Fix the lede"),
+        ))
+        .up_to_n_times(1)
+        .mount(&server)
+        .await;
+
+    Mock::given(method("POST"))
+        .and(path("/chat/completions"))
+        .and(body_string_contains("Editor for a journalism team"))
+        .respond_with(ResponseTemplate::new(200).set_body_json(
+            chat_response("**DECISION: APPROVE**\n\n---\ntitle: \"Final\"\nstatus: published\n---\n\n# Final\n\nApproved."),
+        ))
+        .mount(&server)
+        .await;
+
+    let tmp = TempDir::new().unwrap();
+    let result = journalism_pipeline(&server, &tmp, "Revision test")
+        .with_topic("Revision test")
+        .run()
+        .await
+        .unwrap();
+
+    let agentic_press::PipelineResult::Journalism(j) = result else {
+        panic!("expected Journalism result");
+    };
+    assert!(j.article.approved, "editor should approve after revision");
+    assert_eq!(j.article.revision_rounds, 1, "should have done 1 revision round");
+
+    let out = tmp.path();
+    assert!(out.join("published/revision-test.md").exists(), "published file should exist");
+    assert!(out.join("drafts/revision-test-revisions.md").exists(), "revision notes should be saved");
+}
+
+/// Editor says REVISE twice → pipeline exits with approved=false after max 1 revision.
+#[tokio::test]
+async fn test_journalism_max_revision_cap() {
+    let server = MockServer::start().await;
+    mount_journalism_mocks(
+        &server,
+        "**DECISION: REVISE**\n## Critical Issues (must fix)\n- [ ] Unfixable problem",
+    )
+    .await;
+
+    let tmp = TempDir::new().unwrap();
+    let result = journalism_pipeline(&server, &tmp, "EU visa rules")
+        .with_topic("EU visa rules")
+        .run()
+        .await
+        .unwrap();
+
+    let agentic_press::PipelineResult::Journalism(j) = result else {
+        panic!("expected Journalism result");
+    };
+    assert!(!j.article.approved, "should not approve after max revisions");
+    assert_eq!(j.article.revision_rounds, 1, "should cap at 1 revision round");
+
+    let out = tmp.path();
+    assert!(out.join("drafts/eu-visa-rules-revisions.md").exists());
+    assert!(!out.join("published/eu-visa-rules.md").exists());
+}
+
+/// Researcher and SEO run in parallel — each takes 200 ms, together ≈200 ms.
+#[tokio::test]
+async fn test_journalism_researcher_seo_parallel() {
+    let server = MockServer::start().await;
+
+    // Researcher and SEO each take 200 ms.
+    for phrase in [
+        "Researcher for a journalism team",
+        "SEO Strategist for a journalism team",
+    ] {
+        Mock::given(method("POST"))
+            .and(path("/chat/completions"))
+            .and(body_string_contains(phrase))
+            .respond_with(
+                ResponseTemplate::new(200)
+                    .set_delay(Duration::from_millis(200))
+                    .set_body_json(chat_response("output")),
+            )
+            .mount(&server)
+            .await;
+    }
+
+    // Writer and Editor respond immediately.
+    for phrase in [
+        "Writer for a journalism team",
+        "Editor for a journalism team",
+    ] {
+        Mock::given(method("POST"))
+            .and(path("/chat/completions"))
+            .and(body_string_contains(phrase))
+            .respond_with(ResponseTemplate::new(200).set_body_json(chat_response("APPROVE\noutput")))
+            .mount(&server)
+            .await;
+    }
+
+    let tmp = TempDir::new().unwrap();
+    let start = Instant::now();
+    journalism_pipeline(&server, &tmp, "test topic")
+        .with_topic("Parallel test")
+        .run()
+        .await
+        .unwrap();
+    let elapsed = start.elapsed();
+
+    assert!(
+        elapsed < Duration::from_millis(350),
+        "Researcher + SEO should run in parallel, but took {elapsed:?}"
+    );
+}
+
+/// Missing topic in journalism mode returns an error.
+#[tokio::test]
+async fn test_journalism_missing_topic_error() {
+    let server = MockServer::start().await;
+    let tmp = TempDir::new().unwrap();
+    let err = journalism_pipeline(&server, &tmp, "test topic")
+        .run()
+        .await
+        .unwrap_err();
+
+    assert!(
+        err.to_string().contains("--topic"),
+        "should mention --topic; got: {err}"
+    );
 }

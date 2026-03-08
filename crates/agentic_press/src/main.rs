@@ -1,30 +1,18 @@
 use agentic_press::pipeline::Pipeline;
-use agentic_press::research_phase::ResearchConfig;
 use anyhow::Result;
 use clap::Parser;
 use tracing::info;
 
 #[derive(Parser)]
 #[command(name = "agentic_press")]
-#[command(about = "5-agent content pipeline powered by deepseek-reasoner")]
+#[command(about = "Agentic journalism pipeline")]
 struct Cli {
-    #[arg(long, default_value = "agentic AI, Claude Code, Rust, multi-agent systems, developer tooling")]
-    niche: String,
+    /// Topic to write about
+    #[arg(long)]
+    topic: String,
 
-    #[arg(long, default_value = "./drafts")]
+    #[arg(long, default_value = "./articles")]
     output_dir: String,
-
-    /// How many articles to produce in one run (topics are picked in parallel)
-    #[arg(long, default_value_t = 1)]
-    count: usize,
-
-    /// Publish finished articles to vadim.blog and run `vercel deploy --prod`
-    #[arg(long, default_value_t = false)]
-    publish: bool,
-
-    /// Enable paper search + multi-model research synthesis
-    #[arg(long, default_value_t = false)]
-    research: bool,
 }
 
 #[tokio::main]
@@ -41,34 +29,55 @@ async fn main() -> Result<()> {
         "DEEPSEEK_API_KEY: {}",
         if std::env::var("DEEPSEEK_API_KEY").is_ok() { "set" } else { "NOT SET" }
     );
+    info!(
+        "DASHSCOPE_API_KEY: {}",
+        if std::env::var("DASHSCOPE_API_KEY").is_ok() { "set (qwen enabled)" } else { "NOT SET (deepseek-only)" }
+    );
 
-    let mut pipeline = Pipeline::new(cli.niche, cli.output_dir)
-        .with_count(cli.count)
-        .with_publish(cli.publish);
-
-    if cli.research {
-        info!("Research mode enabled: paper search + multi-model synthesis");
-        pipeline = pipeline.with_research(ResearchConfig::default());
-    }
+    let pipeline = Pipeline::new(&cli.topic, &cli.output_dir)
+        .with_topic(&cli.topic)
+        .with_publish(true);
 
     let result = pipeline.run().await?;
 
     println!("\n╔══════════════════════════════════════╗");
     println!("║       agentic_press — Run Complete   ║");
     println!("╚══════════════════════════════════════╝");
-    println!("\nModel:  deepseek-reasoner  |  Topics: {}", result.topics.len());
-    for t in &result.topics {
-        let papers_info = if t.paper_count > 0 {
-            format!("  |  papers: {}", t.paper_count)
-        } else {
-            String::new()
-        };
-        println!(
-            "\n  [{}]\n  blog: ~{} words  |  linkedin: {} lines{papers_info}",
-            t.topic,
-            t.blog.split_whitespace().count(),
-            t.linkedin.lines().count()
-        );
+
+    let has_qwen = std::env::var("DASHSCOPE_API_KEY").is_ok();
+    let models = if has_qwen {
+        "deepseek-reasoner + qwen-plus"
+    } else {
+        "deepseek-reasoner"
+    };
+
+    match result {
+        agentic_press::PipelineResult::Blog(blog) => {
+            println!("\nModels: {models}  |  Topics: {}", blog.topics.len());
+            for t in &blog.topics {
+                let papers_info = if t.paper_count > 0 {
+                    format!("  |  papers: {}", t.paper_count)
+                } else {
+                    String::new()
+                };
+                println!(
+                    "\n  [{}]\n  blog: ~{} words  |  linkedin: {} lines{papers_info}",
+                    t.topic,
+                    t.blog.split_whitespace().count(),
+                    t.linkedin.lines().count()
+                );
+            }
+        }
+        agentic_press::PipelineResult::Journalism(j) => {
+            let status = if j.article.approved { "APPROVED" } else { "NEEDS REVISION" };
+            println!("\nModels: {models}");
+            println!(
+                "\n  [{}]\n  draft: ~{} words  |  status: {status}  |  revisions: {}",
+                j.article.topic,
+                j.article.draft.split_whitespace().count(),
+                j.article.revision_rounds,
+            );
+        }
     }
 
     Ok(())

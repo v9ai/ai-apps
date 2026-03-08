@@ -7,10 +7,20 @@ use tracing::info;
 
 use deepseek::{DeepSeekClient, ReqwestClient};
 
-use crate::agent_teams::{run_parallel, Agent};
+use crate::agent_teams::{run_parallel, AgentTeam, ModelClient, ModelPool, TeamRole};
 use crate::prompts;
 use crate::publisher::{FsPublisher, Publisher};
 use crate::research_phase::{self, ResearchConfig};
+use crate::task_list::TaskList;
+
+// ── pipeline mode ────────────────────────────────────────────────────────────
+
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Default)]
+pub enum PipelineMode {
+    #[default]
+    Journalism,
+    Blog,
+}
 
 // ── picker output ────────────────────────────────────────────────────────────
 
@@ -32,10 +42,33 @@ pub struct TopicResult {
 }
 
 #[derive(Debug)]
-pub struct PipelineResult {
+pub struct BlogResult {
     pub scout_output: String,
     pub picker_output: String,
     pub topics: Vec<TopicResult>,
+}
+
+#[derive(Debug)]
+pub struct JournalismArticle {
+    pub topic: String,
+    pub slug: String,
+    pub research: String,
+    pub seo: String,
+    pub draft: String,
+    pub editor_output: String,
+    pub approved: bool,
+    pub revision_rounds: usize,
+}
+
+#[derive(Debug)]
+pub struct JournalismResult {
+    pub article: JournalismArticle,
+}
+
+#[derive(Debug)]
+pub enum PipelineResult {
+    Blog(BlogResult),
+    Journalism(JournalismResult),
 }
 
 // ── pipeline ─────────────────────────────────────────────────────────────────
@@ -49,10 +82,16 @@ pub struct Pipeline {
     publish: bool,
     /// Enable paper search + multi-model research synthesis.
     research_config: Option<ResearchConfig>,
-    /// Pre-built client injected by tests; `None` → create from env at run time.
-    client: Option<Arc<DeepSeekClient<ReqwestClient>>>,
+    /// Pre-built DeepSeek client injected by tests; `None` → create from env at run time.
+    deepseek_client: Option<Arc<DeepSeekClient<ReqwestClient>>>,
+    /// Pre-built Qwen client; `None` → create from DASHSCOPE_API_KEY if available.
+    qwen_client: Option<Arc<qwen::Client>>,
     /// Custom publisher implementation (default: FsPublisher).
     publisher: Option<Box<dyn Publisher>>,
+    /// Pipeline mode: Journalism (default) or Blog.
+    mode: PipelineMode,
+    /// Topic for journalism mode.
+    topic: Option<String>,
 }
 
 impl Pipeline {
@@ -63,8 +102,11 @@ impl Pipeline {
             count: 1,
             publish: false,
             research_config: None,
-            client: None,
+            deepseek_client: None,
+            qwen_client: None,
             publisher: None,
+            mode: PipelineMode::default(),
+            topic: None,
         }
     }
 
@@ -83,9 +125,15 @@ impl Pipeline {
         self
     }
 
-    /// Inject a pre-built client (used in tests to point at a mock server).
-    pub fn with_client(mut self, client: Arc<DeepSeekClient<ReqwestClient>>) -> Self {
-        self.client = Some(client);
+    /// Inject a pre-built DeepSeek client (used in tests to point at a mock server).
+    pub fn with_deepseek_client(mut self, client: Arc<DeepSeekClient<ReqwestClient>>) -> Self {
+        self.deepseek_client = Some(client);
+        self
+    }
+
+    /// Inject a pre-built Qwen client (used in tests to point at a mock server).
+    pub fn with_qwen_client(mut self, client: Arc<qwen::Client>) -> Self {
+        self.qwen_client = Some(client);
         self
     }
 
@@ -95,39 +143,91 @@ impl Pipeline {
         self
     }
 
-    pub async fn run(&self) -> Result<PipelineResult> {
-        fs::create_dir_all(&self.output_dir).await?;
+    pub fn with_mode(mut self, mode: PipelineMode) -> Self {
+        self.mode = mode;
+        self
+    }
 
-        let client = match &self.client {
+    pub fn with_topic(mut self, topic: impl Into<String>) -> Self {
+        self.topic = Some(topic.into());
+        self
+    }
+
+    pub async fn run(&self) -> Result<PipelineResult> {
+        match self.mode {
+            PipelineMode::Journalism => self.run_journalism().await,
+            PipelineMode::Blog => self.run_blog().await,
+        }
+    }
+
+    /// Build a ModelPool from injected or env-based clients.
+    fn build_pool(&self) -> Result<ModelPool> {
+        let ds_client = match &self.deepseek_client {
             Some(c) => Arc::clone(c),
             None => Arc::new(deepseek::client_from_env()?),
         };
 
+        let qw_client = match &self.qwen_client {
+            Some(c) => Some(Arc::clone(c)),
+            None => std::env::var("DASHSCOPE_API_KEY")
+                .ok()
+                .map(|key| Arc::new(qwen::Client::new(key))),
+        };
+
+        let ds = ModelClient::deepseek(Arc::clone(&ds_client));
+        let qw = qw_client
+            .map(ModelClient::qwen)
+            .unwrap_or_else(|| ds.clone());
+
+        Ok(ModelPool::new(ds, qw))
+    }
+
+    async fn run_blog(&self) -> Result<PipelineResult> {
+        fs::create_dir_all(&self.output_dir).await?;
+
+        let pool = self.build_pool()?;
+        let ds_client = pool.deepseek_client()
+            .context("ModelPool must have a DeepSeek reasoner")?;
+
         info!("═══ agentic_press pipeline starting ═══");
         info!(
-            "Model: deepseek-reasoner  |  Niche: {}  |  Count: {}",
-            self.niche, self.count
+            "Models: {}  |  Niche: {}  |  Count: {}",
+            pool.label(),
+            self.niche,
+            self.count
         );
 
-        // ── Phase 1 — Scout ──────────────────────────────────────────────────
+        // ── Create team ─────────────────────────────────────────────────────
+        let mut team = AgentTeam::new("blog-team");
+
+        // ── TaskList ─────────────────────────────────────────────────────────
+        let mut tasks = TaskList::new();
+
+        // ── Phase 1 — Scout (Fast) ──────────────────────────────────────────
+        let scout_idx = team.spawn("scout", prompts::scout(&self.niche), TeamRole::Fast, &pool);
+        let scout_task = tasks.add("scout", vec![]);
+
         info!("Phase 1 — Scout");
-        let scout = Agent::new("scout", prompts::scout(&self.niche), Arc::clone(&client));
-        let scout_output = scout
-            .run(&format!(
-                "Find 5 trending topics in this niche: {}",
-                self.niche
-            ))
+        tasks.claim(scout_task);
+        let scout_output = team.agent(scout_idx)
+            .run(&format!("Find 5 trending topics in this niche: {}", self.niche))
             .await?;
+        tasks.complete(scout_task, scout_output.clone());
         save(&self.output_dir, "01_scout_topics.md", &scout_output).await?;
 
-        // ── Phase 2 — Picker ─────────────────────────────────────────────────
-        info!("Phase 2 — Picker (selecting {})", self.count);
-        let picker = Agent::new(
+        // ── Phase 2 — Picker (Fast) ─────────────────────────────────────────
+        let picker_idx = team.spawn(
             "picker",
             prompts::picker(&self.niche, self.count),
-            Arc::clone(&client),
+            TeamRole::Fast,
+            &pool,
         );
-        let picker_output = picker.run(&scout_output).await?;
+        let picker_task = tasks.add("picker", vec![scout_task]);
+
+        info!("Phase 2 — Picker (selecting {})", self.count);
+        tasks.claim(picker_task);
+        let picker_output = team.agent(picker_idx).run(&scout_output).await?;
+        tasks.complete(picker_task, picker_output.clone());
         save(&self.output_dir, "02_picker_selection.json", &picker_output).await?;
 
         let cleaned = crate::strip_fences(&picker_output);
@@ -136,7 +236,7 @@ impl Pipeline {
                 format!("Picker output is not a valid JSON array:\n{picker_output}")
             })?;
 
-        // ── Phase 3–5 — per-topic: Researcher → (Writer ∥ LinkedIn) ──────────
+        // ── Phase 3–5 — per-topic: Researcher → (Writer ∥ LinkedIn) ────────
         info!(
             "Phase 3–5 — {} topic(s) running concurrently",
             selections.len().min(self.count)
@@ -161,20 +261,25 @@ impl Pipeline {
         let mut set = tokio::task::JoinSet::new();
 
         for (i, sel) in selections.into_iter().take(self.count).enumerate() {
-            let client = Arc::clone(&client);
+            let ds_client = Arc::clone(&ds_client);
+            let pool = pool.clone();
             let niche = self.niche.clone();
             let output_dir = self.output_dir.clone();
 
             set.spawn(async move {
-                let writer = Agent::new(
+                // Create per-topic sub-team with role-based routing.
+                let mut sub_team = AgentTeam::new(format!("topic-{i}"));
+                let writer_idx = sub_team.spawn(
                     format!("writer[{i}]"),
                     prompts::writer(),
-                    Arc::clone(&client),
+                    TeamRole::Reasoner,
+                    &pool,
                 );
-                let linkedin = Agent::new(
+                let linkedin_idx = sub_team.spawn(
                     format!("linkedin[{i}]"),
                     prompts::linkedin(),
-                    Arc::clone(&client),
+                    TeamRole::Fast,
+                    &pool,
                 );
 
                 let slug = crate::slugify(&sel.topic);
@@ -187,25 +292,30 @@ impl Pipeline {
                         enable_multi_model: research_multi_model,
                     };
                     let output = research_phase::research_phase(
-                        &sel.topic, &sel.angle, &niche, &config, &client,
+                        &sel.topic, &sel.angle, &niche, &config, &ds_client,
                     )
                     .await?;
                     (output.notes, output.paper_count)
                 } else {
-                    let researcher = Agent::new(
+                    let researcher_idx = sub_team.spawn(
                         format!("researcher[{i}]"),
                         prompts::researcher(&niche),
-                        Arc::clone(&client),
+                        TeamRole::Reasoner,
+                        &pool,
                     );
                     let brief = format!("Topic: {}\nAngle: {}\n", sel.topic, sel.angle);
-                    let notes = researcher.run(&brief).await?;
+                    let notes = sub_team.agent(researcher_idx).run(&brief).await?;
                     (notes, 0usize)
                 };
 
                 save(&topic_dir, "research.md", &notes).await?;
 
-                // Writer and LinkedIn run concurrently — both take research notes.
-                let (blog, li) = run_parallel(&writer, &linkedin, &notes).await?;
+                // Writer and LinkedIn run concurrently via run_parallel.
+                let (blog, li) = run_parallel(
+                    sub_team.agent(writer_idx),
+                    sub_team.agent(linkedin_idx),
+                    &notes,
+                ).await?;
                 save(&topic_dir, "blog.md", &blog).await?;
                 save(&topic_dir, "linkedin.md", &li).await?;
 
@@ -230,18 +340,192 @@ impl Pipeline {
                     None => &default_pub,
                 };
                 pub_impl
-                    .publish_post(&topic_result.blog, &topic_result.topic, true)
+                    .publish_post(&topic_result.blog, &topic_result.topic, true, None)
                     .await?;
             }
 
             topics.push(topic_result);
         }
 
-        Ok(PipelineResult {
+        Ok(PipelineResult::Blog(BlogResult {
             scout_output,
             picker_output,
             topics,
-        })
+        }))
+    }
+
+    async fn run_journalism(&self) -> Result<PipelineResult> {
+        let topic = self
+            .topic
+            .as_deref()
+            .ok_or_else(|| anyhow::anyhow!("--topic is required for journalism mode"))?;
+
+        let slug = crate::slugify(topic);
+
+        // Create output directories.
+        let research_dir = format!("{}/research", self.output_dir);
+        let drafts_dir = format!("{}/drafts", self.output_dir);
+        let published_dir = format!("{}/published", self.output_dir);
+        for d in [&research_dir, &drafts_dir, &published_dir] {
+            fs::create_dir_all(d).await?;
+        }
+
+        let pool = self.build_pool()?;
+
+        info!("═══ agentic_press journalism pipeline starting ═══");
+        info!("Models: {}  |  Topic: {topic}", pool.label());
+
+        // ── Create team + task list ─────────────────────────────────────────
+        let mut team = AgentTeam::new("journalism-team");
+        let mut tasks = TaskList::new();
+
+        // ── Phase 1 — Researcher (Reasoner) ∥ SEO (Fast) ───────────────────
+        let researcher_idx = team.spawn(
+            "journalist-researcher",
+            prompts::journalism_researcher(topic),
+            TeamRole::Reasoner,
+            &pool,
+        );
+        let seo_idx = team.spawn(
+            "journalist-seo",
+            prompts::journalism_seo(topic),
+            TeamRole::Fast,
+            &pool,
+        );
+        let research_task = tasks.add("researcher", vec![]);
+        let seo_task = tasks.add("seo", vec![]);
+
+        info!("Phase 1 — Researcher ∥ SEO (parallel)");
+        tasks.claim(research_task);
+        tasks.claim(seo_task);
+
+        let research_input = format!("Research this topic: {topic}");
+        let (research_output, seo_output) =
+            run_parallel(team.agent(researcher_idx), team.agent(seo_idx), &research_input).await?;
+
+        tasks.complete(research_task, research_output.clone());
+        tasks.complete(seo_task, seo_output.clone());
+        save(&research_dir, &format!("{slug}-research.md"), &research_output).await?;
+        save(&research_dir, &format!("{slug}-seo.md"), &seo_output).await?;
+
+        // ── Phase 2 — Writer (Reasoner) ────────────────────────────────────
+        let writer_idx = team.spawn(
+            "journalist-writer",
+            prompts::journalism_writer(),
+            TeamRole::Reasoner,
+            &pool,
+        );
+        let writer_task = tasks.add("writer", vec![research_task, seo_task]);
+
+        info!("Phase 2 — Writer");
+        tasks.claim(writer_task);
+        let writer_input = format!(
+            "## Research Brief\n\n{research_output}\n\n---\n\n## SEO Strategy\n\n{seo_output}"
+        );
+        let mut draft = team.agent(writer_idx).run(&writer_input).await?;
+        tasks.complete(writer_task, draft.clone());
+        save(&drafts_dir, &format!("{slug}.md"), &draft).await?;
+
+        // ── Phase 3 — Editor (Reviewer) with revision loop ─────────────────
+        let mut revision_rounds: usize = 0;
+        let mut editor_output;
+        let mut approved;
+
+        loop {
+            let editor_idx = team.spawn(
+                format!("journalist-editor-r{revision_rounds}"),
+                prompts::journalism_editor(),
+                TeamRole::Reviewer,
+                &pool,
+            );
+            let editor_task = tasks.add(
+                &format!("editor-r{revision_rounds}"),
+                vec![writer_task],
+            );
+
+            info!("Phase 3 — Editor (round {})", revision_rounds + 1);
+            tasks.claim(editor_task);
+            let editor_input = format!(
+                "## Draft\n\n{draft}\n\n---\n\n## Research Brief\n\n{research_output}\n\n---\n\n## SEO Strategy\n\n{seo_output}"
+            );
+            editor_output = team.agent(editor_idx).run(&editor_input).await?;
+            tasks.complete(editor_task, editor_output.clone());
+
+            approved = editor_output.contains("APPROVE")
+                || editor_output.contains("status: published");
+
+            if approved || revision_rounds >= 1 {
+                break;
+            }
+
+            // ── Revision: feed editor notes back to Writer ──────────────
+            revision_rounds += 1;
+            info!("Editor requested revision — round {revision_rounds}");
+
+            let revision_writer_idx = team.spawn(
+                format!("journalist-writer-r{revision_rounds}"),
+                prompts::journalism_writer(),
+                TeamRole::Reasoner,
+                &pool,
+            );
+            let revision_task = tasks.add(
+                &format!("writer-r{revision_rounds}"),
+                vec![editor_task],
+            );
+
+            tasks.claim(revision_task);
+            let revision_input = format!(
+                "## Revision Notes from Editor\n\n{editor_output}\n\n---\n\n\
+                 ## Original Research Brief\n\n{research_output}\n\n---\n\n\
+                 ## SEO Strategy\n\n{seo_output}\n\n---\n\n\
+                 ## Previous Draft (revise this, don't start from scratch)\n\n{draft}"
+            );
+            draft = team.agent(revision_writer_idx).run(&revision_input).await?;
+            tasks.complete(revision_task, draft.clone());
+            save(
+                &drafts_dir,
+                &format!("{slug}-revisions.md"),
+                &editor_output,
+            )
+            .await?;
+            save(&drafts_dir, &format!("{slug}.md"), &draft).await?;
+        }
+
+        if approved {
+            save(&published_dir, &format!("{slug}.md"), &editor_output).await?;
+        } else {
+            save(
+                &drafts_dir,
+                &format!("{slug}-revisions.md"),
+                &editor_output,
+            )
+            .await?;
+        }
+
+        // ── Optional publish ────────────────────────────────────────────────
+        if self.publish && approved {
+            let default_pub = FsPublisher;
+            let pub_impl: &dyn Publisher = match &self.publisher {
+                Some(p) => p.as_ref(),
+                None => &default_pub,
+            };
+            pub_impl.publish_post(&editor_output, topic, true, None).await?;
+        }
+
+        assert!(tasks.is_all_done(), "all journalism tasks should be complete");
+
+        let article = JournalismArticle {
+            topic: topic.to_string(),
+            slug,
+            research: research_output,
+            seo: seo_output,
+            draft,
+            editor_output,
+            approved,
+            revision_rounds,
+        };
+
+        Ok(PipelineResult::Journalism(JournalismResult { article }))
     }
 }
 
@@ -382,8 +666,11 @@ mod tests {
         assert_eq!(p.count, 1);
         assert!(!p.publish);
         assert!(p.research_config.is_none());
-        assert!(p.client.is_none());
+        assert!(p.deepseek_client.is_none());
+        assert!(p.qwen_client.is_none());
         assert!(p.publisher.is_none());
+        assert_eq!(p.mode, PipelineMode::Journalism);
+        assert!(p.topic.is_none());
     }
 
     #[test]
@@ -407,5 +694,22 @@ mod tests {
         let cfg = p.research_config.unwrap();
         assert!(cfg.enable_paper_search);
         assert!(cfg.enable_multi_model);
+    }
+
+    #[test]
+    fn test_with_mode() {
+        let p = Pipeline::new("n", "/tmp").with_mode(PipelineMode::Blog);
+        assert_eq!(p.mode, PipelineMode::Blog);
+    }
+
+    #[test]
+    fn test_with_topic() {
+        let p = Pipeline::new("n", "/tmp").with_topic("Remote work in Germany");
+        assert_eq!(p.topic.as_deref(), Some("Remote work in Germany"));
+    }
+
+    #[test]
+    fn test_default_mode_is_journalism() {
+        assert_eq!(PipelineMode::default(), PipelineMode::Journalism);
     }
 }

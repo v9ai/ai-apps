@@ -3,8 +3,11 @@ pub mod pipeline;
 pub mod prompts;
 pub mod publisher;
 pub mod research_phase;
+pub mod task_list;
 
-pub use pipeline::{PipelineResult, TopicResult};
+pub use pipeline::{
+    BlogResult, JournalismArticle, JournalismResult, PipelineMode, PipelineResult, TopicResult,
+};
 
 /// Convert a title/string into a URL-safe slug.
 pub fn slugify(s: &str) -> String {

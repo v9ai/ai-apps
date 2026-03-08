@@ -1,110 +1,88 @@
 ---
-slug: reflection-is-mostly-stalling
+slug: ai-agent-reflection-loops
 title: "Reflection Is Mostly Stalling"
-description: "If your AI agent is “reflecting,” there’s a 90% chance you’re burning three times the tokens for a quality improvement you can’t measure. The industry has latched onto a metaphor—the LLM thoughtfully "
+description: "I built a 4-agent journalism pipeline and watched the editor loop burn tokens without improving the draft. Here's what the research says about why LLM self-correction loops fail — and what to do instead."
 date: 2026-03-08
 authors: [nicolad]
 tags:
   - reflection
-  - mostly
-  - stalling
+  - ai-agents
+  - llm
+  - engineering
 ---
 
-If your AI agent is “reflecting,” there’s a 90% chance you’re burning three times the tokens for a quality improvement you can’t measure. The industry has latched onto a metaphor—the LLM thoughtfully reviewing its own work—and turned it into a cargo cult. Teams wire up multi-step loops where a model critiques its own output, then revises it, believing this mimics rigorous human review. The data says otherwise. Without a hard, external signal telling the model it’s wrong, these loops are just expensive stalling. They add latency, multiply cost, and often make outputs blander or less accurate. The pattern that actually works isn’t introspection; it’s **verification**.
+I built a journalism pipeline where four LLM agents — Researcher, SEO Strategist, Writer, Editor — collaborate to produce articles. The Editor reviews the Writer's draft against the research brief and either approves or requests revisions. On the first real run, the Editor correctly flagged fabricated statistics that the SEO agent had hallucinated. It requested a revision. The Writer revised. The Editor reviewed again. The revision was worse.
 
-## The Cargo Cult of Self-Correction
+The Writer hadn't fixed the core problem. It had paraphrased the same draft, shuffled paragraphs, softened claims. The token cost tripled. The article quality didn't move.
 
-You’ve seen the demos. An agent writes a function, pauses, “thinks” about potential edge cases, and then emits a corrected version. The narrative is compelling: it’s checking its work, just like a human would. The reality under the hood is usually a simple `generate → critique → revise` loop, where the same model, with the same weights, the same training data, and the same inherent biases, is asked to spot errors it just made. This is not a recipe for improvement; it’s a recipe for confidently re-stating mistakes.
+That experience sent me down a rabbit hole into the research on LLM self-correction. What I found is that my pipeline's failure isn't a bug — it's the default behavior.
 
-The research community has been meticulously documenting this for over a year. The most definitive blow came from Huang et al. in their 2023 paper, “Large Language Models Cannot Self-Correct Reasoning Yet.” Their controlled experiments on math (GSM8K) and multi-step QA (MultiArQ) tasks showed that asking GPT-4 to review and correct its own answers **consistently decreased accuracy**. The model was more likely to change a correct answer to a wrong one than to fix an actual error. This happens because LLMs are poorly calibrated—they aren’t reliable judges of their own correctness. If the faulty reasoning that produced a wrong answer is embedded in the model’s weights, that same faulty framework will be applied during the “critique” phase. You’re asking a system to find a bug using the same buggy logic.
+## The model can't debug itself with its own broken debugger
 
-This finding dismantles the foundation of naïve reflection. The intuition that “reviewing should help” fails because the reviewer isn’t bringing a fresh perspective or new information. It’s the same entity, instantly replaying its process with marginally different phrasing. In engineering terms, you haven’t added a test; you’ve just added a redundant, biased computation.
+The intuition behind reflection is compelling: if a model can reason, it should be able to review its own reasoning. Generate, critique, revise. A virtuous cycle.
 
-## When “Reflection” Is Actually Verification in Disguise
+[Huang et al. (2023)](https://arxiv.org/abs/2310.01798) tested this directly. They asked GPT-4 to review and correct its own answers on GSM8K and MultiArQ. The result: accuracy **decreased**. The model changed correct answers to wrong ones more often than it fixed actual errors. The same flawed reasoning that produced the wrong answer gets applied during the critique. You're asking a buggy compiler to find its own bugs.
 
-Scrutinize any paper or system that shows impressive gains from reflection, and you’ll almost always find an external tool doing the real work. The gains are attributed to the introspective loop, but they’re enabled by new, objective information.
+This isn't surprising if you think about it mechanically. The critique step uses the same weights, the same training distribution, the same blind spots. Without new information entering the loop, the model is just talking to itself.
 
-Take **Reflexion** (Shinn et al., 2023), often cited as a landmark in agentic reflection. It achieved a striking 91% pass@1 on the HumanEval coding benchmark. The mechanism? An episodic memory buffer where the agent stores “reflections” on past failures. But the critical ingredient wasn’t free-form thought; it was the **test execution feedback**. The agent would write code, run the provided unit tests, and receive concrete failure output like `AssertionError: Expected 10, got 9`. That failure trace is a high-quality, diagnostic signal the model did not have during its initial generation. The “reflection” was simply the process of integrating that new signal. Strip out the test execution—ask the model to critique its code without running it—and the gains evaporate. This pattern repeats in the literature. **CRITIC** (Gou et al., 2024) explicitly separates verification: the model generates a claim, uses a search engine or code interpreter to verify it, and then revises. The paper’s ablation study is clear: remove the tool verification step and rely only on self-evaluation, and most of the improvement disappears.
+## Four patterns of stalling
 
-Even **Constitutional AI** (Bai et al., 2022), which popularized large-scale self-critique, works because it provides an external reference frame—the constitution. The model isn’t asking “Is this good?” in a vacuum. It’s checking “Does this response violate Principle X: ‘Please avoid making harmful statements’?” The constitution acts as a pseudo-verification tool, a set of rules against which output can be objectively scored.
+After reading the research and watching my own pipeline fail, I see four recurring failure modes.
 
-The lesson is binary: if your reflection loop doesn’t have a mechanism to introduce **new, objective information**, it’s theater. You are paying for the model to talk to itself.
+**Critiques target the wrong layer.** The agent nitpicks style, formatting, and word choice while missing the actual problem. In my pipeline, the Editor caught the fabricated statistics — but the Writer's "revision" focused on tone and paragraph structure. The factual errors survived.
 
-## The Steep and Often Worthless Economics of Introspection
+**Circular reasoning.** The model uses its flawed reasoning to evaluate its flawed reasoning. There's no external ground truth to break the loop. As Huang et al. showed, the buggy logic that produced a wrong answer is baked into the weights — the same logic runs during critique.
 
-Let’s translate this into the language of production: tokens, latency, and dollars. A typical reflection loop for generating a 2000-token document looks like this:
-- **Pass 1 (Generate):** Prompt (1k tokens) + Output (2k tokens) = ~3k tokens.
-- **Pass 2 (Critique):** You must resubmit the original prompt, the first output, and a critique instruction. This balloons to ~6k tokens of input, plus another 1-2k tokens for the critique output.
-- **Pass 3 (Revise):** Now you submit all of the above *plus* a revision instruction. Input tokens can hit ~9k, with another 2k output.
+**Hallucinated errors.** The agent sometimes invents problems that don't exist, then "fixes" them by corrupting previously correct output. In my case, the SEO agent invented statistics ("68% of reflection steps produce no semantic change" — ironic, given the topic). The Writer dutifully included them. The Editor caught them. But on revision, the Writer introduced new unsourced claims to replace the old ones.
 
-A single round of reflection triples your token consumption. Two rounds can multiply it by six. At Claude 3 Sonnet pricing ($3 per million input tokens, $15 per million output tokens), a complex two-round reflection on a substantial piece of text can easily turn a $0.10 call into a $0.60 call. For GPT-4, it’s worse. You are buying a lottery ticket for a marginal, unguaranteed improvement.
+**Semantic no-ops.** The most common outcome: the agent performs the computational work — burning tokens, adding latency — but the core content is unchanged. The reflection loop is pure overhead.
 
-Latency compounds just as brutally. Each round is a sequential API call. If one generation takes 3 seconds, a critique+revise cycle adds 6-10 seconds. Users perceive 12-second responses as fundamentally broken, no matter how “polished” the final output is. The diminishing returns are severe. Data from the **Self-Refine** paper shows most gains come from the first refinement round. The second round might capture 20% of the remaining gap, and the third round is noise. In practice, I’ve seen systems running five refinement loops “for completeness,” burning $5 of compute for a change no human would ever notice.
+## When reflection actually works (and why)
 
-## The Pathologies of Open-Ended Reflection
+The technique isn't universally useless. But the cases where it works share one property: **external verification enters the loop.**
 
-Reflection fails catastrophically on creative and open-ended tasks. The reason is straightforward: in the absence of objective criteria, the model’s critique defaults to optimizing for safety and convention. Anything distinctive, bold, or unusual is flagged as “potentially problematic” and sanded down. The process converges on the most generic, inoffensive point in the solution space—the local optimum of corporate blandness.
+[Reflexion (Shinn et al., 2023)](https://arxiv.org/abs/2303.11366) achieved 91% pass@1 on HumanEval. Impressive — but it worked because the loop ran unit tests and fed concrete failure traces back to the model. Strip out the test execution and the gains evaporate. The model wasn't reflecting. It was reading error messages.
 
-Empirical studies back this up. In user preference tests for dialogue and creative writing, participants consistently rated **first-draft outputs higher** than self-refined versions. The refined responses were judged as more “correct” but less engaging, original, or useful. The model, acting as its own editor, becomes a nervous committee member, stripping away all character to avoid hypothetical faults. This “blandification” is a direct, measurable cost of unguided reflection. You are trading signal for a false sense of security.
+[CRITIC (Gou et al., 2024)](https://arxiv.org/abs/2305.11738) separates generation from verification explicitly: generate a claim, verify it with a search engine or code interpreter, then revise. Remove the tool verification step and most of the improvement disappears.
 
-This pathology extends to factual correction. An LLM cannot self-correct a factual hallucination if the false fact is consistent with its training data. If the model’s internal knowledge says the Tesla Model S was released in 2008 (it was 2012), asking it to reflect on a sentence containing that error won’t help. The same weights that produced the error will validate it. You need an external knowledge source—a retrieval system or search tool—to break the cycle.
+The pattern is binary. If your reflection loop introduces new, objective information — test results, API responses, database lookups — it can work. If the model is just re-reading its own output, you're paying for it to talk to itself.
 
-## The Patterns That Actually Work: Verification-First Architecture
+## The cost math is brutal
 
-So what should you build instead? Focus on systems that provide external verification, then feed that signal back in the most efficient way possible.
+A typical reflection loop for a 2,000-token document:
 
-1.  **Generate + Verify (The Simplest Win).** Generate an output. Run it through an external validator. If it passes, ship it. If it fails, **regenerate from scratch** with the failure signal included in the prompt. This is superior to iterative patching for many tasks.
-    *   **Code:** Generate function → run unit tests → if tests fail, prepend the error trace to the prompt and regenerate.
-    *   **Structured Data:** Generate JSON → validate against schema → if invalid, prepend the validation error and regenerate.
-    This is often cheaper than a full critique loop and prevents the model from getting stuck patching a fundamentally broken first attempt.
+| Step | Input tokens | Output tokens | Running total |
+|---|---|---|---|
+| Generate | ~1,000 | ~2,000 | ~3,000 |
+| Critique | ~4,000 (prompt + output + critique instruction) | ~1,500 | ~8,500 |
+| Revise | ~7,000 (all of the above + revision instruction) | ~2,000 | ~17,500 |
 
-2.  **Tool-Assisted Critique (The CRITIC Pattern).** This is the one form of “reflection” that earns its keep. Generate an answer. Then, use tools to verify its constituent parts.
-    *   For a research summary: extract claims → run a web search for each → flag unsupported statements.
-    *   For a data analysis: generate Python code to calculate a metric → execute the code → check the result.
-    The key is that the tool output is **new, objective information**. Feed this directly into a single revision step. Do not loop.
+One round of reflection multiplies token consumption by roughly 3x. Two rounds push it past 5x. And each round is a sequential API call — if generation takes three seconds, a critique-plus-revise cycle adds six to 10 seconds of latency.
 
-3.  **Best-of-N Sampling Over Iterative Refinement.** You have a compute budget of, say, 50,000 tokens. You can either:
-    *   **Option A (Reflection):** Generate one 2k-token output, critique it (6k tokens), revise it (9k tokens). You’re mostly re-processing the same idea.
-    *   **Option B (Sampling):** Generate 10 independent 2k-token outputs (20k tokens). Score them with a cheap verifier (a small model, a rule-based checker, or tool execution). Pick the best.
-    Option B consistently wins. Diversity of independent samples explores the solution space more effectively than iterative tweaking, which gets stuck in a local optimum. Self-Consistency (Wang et al., 2023)—generating many reasoning paths and taking a majority vote—is a stellar example of this and is often mislabeled as “reflection.” It’s just statistics.
+In my journalism pipeline, a single article with one revision round cost approximately 45,000 tokens across four agents. The approved-on-first-pass version costs about 15,000. The revision didn't improve the article. It tripled the bill.
 
-4.  **Specialized Multi-Agent Critique.** If you must have a critique step, use a different “agent” with a specialized role and prompt. The generator writes code. The critic, prompted as a “security auditor looking for injection vulnerabilities,” reviews it. The perspective shift, enforced by the system prompt, partially mitigates the “same biases” problem. The debate protocol formalizes this further, creating adversarial pressure that pure self-talk cannot generate.
+## What I actually did instead
 
-## A Decision Framework for Engineers
+After the reflection loop failed, I redesigned the pipeline around two principles: prevent bad input from entering the system, and cap revision to one round.
 
-This isn’t about banning reflection. It’s about applying it surgically, only when the conditions for success are met. Use this checklist:
+**Anti-hallucination at the prompt level.** Instead of relying on the Editor to catch fabricated data, I rewrote the SEO agent's prompt to explicitly forbid inventing statistics: "NEVER invent proprietary data claims, survey results, or analysis statistics." I added a cross-reference rule to the Writer: "ONLY use facts that appear in the Research Brief. If the SEO Strategy mentions data claims not in the Research Brief, DO NOT include them." Prevention beats correction.
 
-**✅ Use Reflection When:**
-*   You have an **external, objective verification signal** (test results, tool output, classifier score) to feed back.
-*   The task’s failure modes are **diagnosable** from that signal (e.g., a test failure points to a specific line).
-*   The cost of an error justifies the 3x token overhead.
-*   You enforce a **hard cap of one revision round**.
+**One revision maximum.** If the Editor says revise, the Writer gets one retry with the Editor's structured feedback, the original research, and the previous draft. If the Editor still rejects after that, the problem is upstream — in the research, the topic, or the prompt design. No amount of looping will fix it.
 
-**🛠 Use Better Prompts Instead When:**
-*   The issue is formatting, tone, length, or structure. Specifying “output in valid JSON” or “use a professional tone” in the initial prompt is free and works.
+**Structured editor output.** Instead of free-form "please fix this," the Editor returns a checklist: Critical Issues (must fix), Suggestions (should fix), Minor Notes (nice to have). The Writer can mechanically address each item. This turns vague reflection into specific, actionable feedback.
 
-**🔍 Use Verification-Only When:**
-*   You can automatically validate output (schema, test, fact-check). A binary accept/reject is sufficient.
-*   Regeneration is cheap (short outputs, fast model).
-*   Latency is critical (single pass + validation is faster than any loop).
+The result: the pipeline produces better articles on the first pass because the inputs are cleaner. The revision loop exists as a safety net, not as the primary quality mechanism.
 
-**🚫 Never Use Reflection When:**
-*   **No external signal exists.** You’re gambling with quality.
-*   The task is **open-ended or creative.** You will induce blandification.
-*   You need to correct **factual hallucinations** from the same model’s knowledge.
-*   **Latency** matters more than a marginal quality bump.
-*   You’re past the **first revision round.** You’re burning money.
+## Practical takeaways
 
-## Practical Takeaways for Your Stack
+1. **Audit your loops.** If the critique step doesn't call a tool, run a test, or query an external source, turn it off. Measure quality for 100 examples with and without it. If the difference is unmeasurable, delete it.
 
-1.  **Audit Your Loops.** Look at every `generate → critique → revise` pipeline. If the critique step doesn’t call a tool, test, or external validator, turn it off. Measure quality and cost for 100 examples with it on and off. If the difference is unmeasurable, delete it.
-2.  **Instrument Verification.** Invest in the infrastructure that provides ground truth: test suites for code, calculators for math, search APIs for facts, validation schemas for data. This is your quality multiplier, not the reflection wrapper.
-3.  **Cap the Rounds.** Make one revision the system-wide maximum. If one round with proper feedback doesn’t fix it, the problem is likely in the prompt, the context, or the model itself—not a lack of introspection.
-4.  **Prefer Sampling to Looping.** Given a fixed budget, allocate it to generating more diverse candidates and picking the best, not to iteratively polishing a single candidate.
-5.  **Budget Honestly.** Acknowledge that reflection is a 3x+ cost multiplier. If you’re spending $10k/month on a reflected agent, ask if that $7k premium over a single-pass agent would be better spent on a larger context window, a better retrieval system, or simply a more powerful base model.
+2. **Invest in verification, not reflection.** Test suites for code. Schema validators for structured data. Search APIs for factual claims. These are your quality multipliers — not the reflection wrapper.
 
-## Conclusion: Build Verification, Not Mirrors
+3. **Cap revisions at one.** If one round with proper feedback doesn't fix it, the problem is in the prompt or the context, not the writing. Looping won't help.
 
-The trajectory of improvement for LLM applications isn’t deeper introspection; it’s richer verification. The model’s weakness isn’t a lack of self-awareness—it’s a lack of access to ground truth. Our job as engineers is to build the pipelines that provide that truth: the test runners, the symbol calculators, the fact-checkers, the schema validators. Feed those signals back, and you get real improvement.
+4. **Prefer sampling to looping.** Given a fixed compute budget, generate multiple independent candidates and pick the best. Diversity of independent samples explores the solution space better than iterative polishing, which gets stuck in local optima.
 
-Reflection without verification is an LLM talking to itself in a mirror, concluding that it looks great while confidently wearing its shirt inside out. It’s the most expensive way to achieve nothing. Stop building mirrors. Start building linters, compilers, and test suites. That’s the engineering path forward.
+5. **Prevent, don't correct.** Anti-hallucination guardrails in prompts are cheaper and more reliable than post-hoc reflection. A model that never fabricates data doesn't need an editor to catch fabrications.
+
+The trajectory for better LLM applications isn't deeper introspection — it's richer verification and cleaner inputs. Stop building mirrors. Start building linters.
