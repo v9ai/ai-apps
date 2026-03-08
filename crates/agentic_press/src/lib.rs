@@ -4,6 +4,8 @@ pub mod prompts;
 pub mod publisher;
 pub mod research_phase;
 
+pub use pipeline::{PipelineResult, TopicResult};
+
 /// Convert a title/string into a URL-safe slug.
 pub fn slugify(s: &str) -> String {
     let raw: String = s
@@ -16,15 +18,15 @@ pub fn slugify(s: &str) -> String {
         .join("-")
 }
 
-/// Strip leading ` ```json\n` and trailing ` ``` ` markdown fences from a string.
+/// Strip leading ` ```<tag>\n ` and trailing ` ``` ` markdown fences from a string.
+/// Handles any fence type: ```json, ```markdown, ```md, ```text, bare ```, etc.
 /// Returns the input unchanged if no fences are found.
 pub fn strip_fences(s: &str) -> &str {
     let trimmed = s.trim();
-    let body = trimmed
-        .strip_prefix("```json")
-        .or_else(|| trimmed.strip_prefix("```"))
-        .unwrap_or(trimmed);
-    let body = body.trim_start_matches('\n');
-    let body = body.strip_suffix("```").unwrap_or(body);
-    body.trim()
+    let body = if trimmed.starts_with("```") {
+        trimmed.find('\n').map(|i| &trimmed[i + 1..]).unwrap_or(trimmed)
+    } else {
+        trimmed
+    };
+    body.strip_suffix("```").unwrap_or(body).trim()
 }

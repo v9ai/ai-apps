@@ -19,7 +19,7 @@ struct Cli {
     count: usize,
 
     /// Publish finished articles to vadim.blog and run `vercel deploy --prod`
-    #[arg(long, default_value_t = true)]
+    #[arg(long, default_value_t = false)]
     publish: bool,
 
     /// Enable paper search + multi-model research synthesis
@@ -51,5 +51,25 @@ async fn main() -> Result<()> {
         pipeline = pipeline.with_research(ResearchConfig::default());
     }
 
-    pipeline.run().await
+    let result = pipeline.run().await?;
+
+    println!("\n╔══════════════════════════════════════╗");
+    println!("║       agentic_press — Run Complete   ║");
+    println!("╚══════════════════════════════════════╝");
+    println!("\nModel:  deepseek-reasoner  |  Topics: {}", result.topics.len());
+    for t in &result.topics {
+        let papers_info = if t.paper_count > 0 {
+            format!("  |  papers: {}", t.paper_count)
+        } else {
+            String::new()
+        };
+        println!(
+            "\n  [{}]\n  blog: ~{} words  |  linkedin: {} lines{papers_info}",
+            t.topic,
+            t.blog.split_whitespace().count(),
+            t.linkedin.lines().count()
+        );
+    }
+
+    Ok(())
 }

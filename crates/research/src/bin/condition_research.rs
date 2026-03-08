@@ -2,6 +2,7 @@ use anyhow::{bail, Context, Result};
 use research::paper::ResearchPaper;
 use research::scholar::{SemanticScholarClient, PAPER_FIELDS_FULL, SEARCH_FIELDS};
 use research::team::{ResearchTask, TaskStatus, TeamConfig, TeamLead};
+use research::tools::SearchToolConfig;
 use research::{CoreClient, CrossrefClient, OpenAlexClient};
 use serde::{Deserialize, Serialize};
 
@@ -116,10 +117,10 @@ async fn main() -> Result<()> {
     let (scholar_res, openalex_res, crossref_res, core_res) = tokio::join!(
         async {
             scholar
-                .search_bulk(&search_query, SEARCH_FIELDS, Some("2019-"), Some(3), Some("citationCount:desc"), 15)
+                .search(&search_query, SEARCH_FIELDS, 15, 0)
                 .await
                 .map(|r| {
-                    eprintln!("  Semantic Scholar: {} papers", r.data.len());
+                    eprintln!("  Semantic Scholar: {} papers (relevance-ranked)", r.data.len());
                     r.data.into_iter().map(ResearchPaper::from).collect::<Vec<_>>()
                 })
                 .unwrap_or_else(|e| { eprintln!("  Semantic Scholar failed: {e}"); vec![] })
@@ -164,6 +165,15 @@ async fn main() -> Result<()> {
         let key = p.title.trim().to_lowercase();
         if key.is_empty() { return false; }
         seen_titles.insert(key)
+    });
+
+    // Filter by medical relevance (keep papers from non-Scholar APIs that lack field data)
+    const MEDICAL_FIELDS: &[&str] = &["Medicine", "Biology", "Chemistry", "Psychology"];
+    all_papers.retain(|p| {
+        match &p.fields_of_study {
+            Some(fields) => fields.iter().any(|f| MEDICAL_FIELDS.iter().any(|m| f.contains(m))),
+            None => true,
+        }
     });
 
     // Sort by citations descending, take top 15
@@ -228,6 +238,15 @@ async fn main() -> Result<()> {
         base_url,
         scholar_key,
         code_root: None,
+        tool_config: Some(SearchToolConfig {
+            default_limit: 12,
+            abstract_max_chars: 800,
+            max_authors: 6,
+            include_fields_of_study: true,
+            include_venue: true,
+            search_description: None,
+            detail_description: None,
+        }),
         synthesis_preamble: Some(
             "You are a principal medical research synthesiser. You combine findings from \
              specialist research agents into a coherent, evidence-based clinical report. \
@@ -243,14 +262,17 @@ aspect of **{condition_name}**.
 
 Your task: produce a **master clinical research synthesis** with:
 
-1. **Executive Summary** — key findings in 3-5 bullet points
+1. **Executive Summary** — 3-5 bullet points
 2. **Pathophysiology** — mechanisms and disease biology
-3. **Diagnosis & Biomarkers** — how the condition is identified and monitored
-4. **Current Treatment Landscape** — evidence-based management approaches
-5. **Emerging Research & Clinical Trials** — promising new directions
-6. **Clinical Implications** — practical takeaways for patient care
-7. **Evidence Gaps** — what the literature has not resolved
-8. **Top Papers** — the most impactful papers synthesised from all agents
+3. **Diagnosis & Biomarkers** — identification and monitoring
+4. **Differential Diagnosis** — overlapping conditions and distinguishing features
+5. **Current Treatment Landscape** — evidence-based management
+6. **Monitoring & Response Assessment** — what to track and how often
+7. **Emerging Research & Clinical Trials** — promising new directions
+8. **Patient Quality of Life** — psychological impact, lifestyle considerations
+9. **Clinical Implications** — practical takeaways
+10. **Evidence Gaps** — what the literature hasn't resolved
+11. **Top Papers** — most impactful, with evidence strength ratings [Strong/Moderate/Limited/Emerging]
 
 ## Agent Findings
 
@@ -316,8 +338,8 @@ fn build_paper_context(papers: &[PaperRecord]) -> String {
             text.push_str(&format!("TLDR: {tldr}\n"));
         }
         if let Some(abs) = &pr.abstract_text {
-            let truncated = if abs.len() > 500 {
-                let mut end = 500;
+            let truncated = if abs.len() > 800 {
+                let mut end = 800;
                 while !abs.is_char_boundary(end) {
                     end -= 1;
                 }
@@ -337,8 +359,12 @@ fn condition_tasks(name: &str, notes: Option<&str>, paper_context: &str) -> Vec<
         .map(|n| format!("\nPatient notes: {n}\n"))
         .unwrap_or_default();
 
+    let evidence_grading = "\nRate evidence strength: [Strong] systematic reviews/meta-analyses, \
+         [Moderate] RCTs/large cohorts, [Limited] case series/expert opinion, \
+         [Emerging] pre-clinical/early trials.\n";
+
     let context_block = format!(
-        "Condition: {name}\n{notes_section}\n\
+        "Condition: {name}\n{notes_section}\n{evidence_grading}\n\
          The following papers have already been retrieved from academic APIs. \
          Use them as seed context and search for additional relevant papers.\n\n{paper_context}"
     );
@@ -371,7 +397,8 @@ fn condition_tasks(name: &str, notes: Option<&str>, paper_context: &str) -> Vec<
                  (1) established and emerging diagnostic criteria, \
                  (2) blood-based and molecular biomarkers, \
                  (3) screening recommendations and early detection, \
-                 (4) differential diagnosis challenges. \
+                 (4) differential diagnosis challenges, \
+                 (5) differential diagnosis — conditions with overlapping presentation and distinguishing features. \
                  Search for recent clinical and laboratory papers (2019-2026).\n\n{context_block}"
             ),
             preamble: "You are a clinical diagnostics researcher specialising in biomarkers \

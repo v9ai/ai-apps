@@ -2,6 +2,9 @@ use crate::agent::{Tool, ToolDefinition};
 use crate::scholar::{SemanticScholarClient, types::{PAPER_FIELDS_FULL, SEARCH_FIELDS}};
 use serde::{Deserialize, Serialize};
 
+// Re-export for convenience
+pub use SearchToolConfig as ToolConfig;
+
 /// Configuration for search/detail tool behaviour.
 ///
 /// Different apps use different defaults (e.g. research-thera wants longer
@@ -241,5 +244,108 @@ impl Tool for GetPaperDetail {
         }
 
         serde_json::to_string_pretty(&obj).map_err(|e| e.to_string())
+    }
+}
+
+// ─── GetRecommendations ─────────────────────────────────────────────────────
+
+#[derive(Deserialize, Serialize)]
+pub struct RecommendationsArgs {
+    pub paper_id: String,
+    pub limit: Option<u32>,
+}
+
+pub struct GetRecommendations {
+    client: SemanticScholarClient,
+    config: SearchToolConfig,
+}
+
+impl GetRecommendations {
+    pub fn new(client: SemanticScholarClient) -> Self {
+        Self { client, config: SearchToolConfig::default() }
+    }
+
+    pub fn with_config(client: SemanticScholarClient, config: SearchToolConfig) -> Self {
+        Self { client, config }
+    }
+}
+
+#[async_trait::async_trait]
+impl Tool for GetRecommendations {
+    fn name(&self) -> &str {
+        "get_recommendations"
+    }
+
+    fn definition(&self) -> ToolDefinition {
+        ToolDefinition {
+            name: self.name().into(),
+            description: "Get papers similar to a given paper using SPECTER2 embeddings. \
+                Use on the most relevant paper from search results to discover closely \
+                related work that keyword search might miss.".into(),
+            parameters: serde_json::json!({
+                "type": "object",
+                "properties": {
+                    "paper_id": {
+                        "type": "string",
+                        "description": "Paper ID from search results (S2PaperId), or arXiv:xxxx, DOI:xxx/yyy"
+                    },
+                    "limit": {
+                        "type": "integer",
+                        "description": "Max papers to return (default 5, max 10)"
+                    }
+                },
+                "required": ["paper_id"]
+            }),
+        }
+    }
+
+    async fn call_json(&self, args: serde_json::Value) -> Result<String, String> {
+        let args: RecommendationsArgs = serde_json::from_value(args).map_err(|e| e.to_string())?;
+        let limit = args.limit.unwrap_or(5).min(10);
+
+        let resp = self.client
+            .get_recommendations(&args.paper_id, SEARCH_FIELDS, limit)
+            .await
+            .map_err(|e| e.to_string())?;
+
+        let max_chars = self.config.abstract_max_chars;
+        let max_authors = self.config.max_authors;
+        let include_fields = self.config.include_fields_of_study;
+
+        let papers: Vec<serde_json::Value> = resp
+            .recommended_papers
+            .iter()
+            .map(|p| {
+                let abstract_snippet = p.abstract_text.as_ref().map(|a| {
+                    if a.chars().count() > max_chars {
+                        a.chars().take(max_chars).collect::<String>() + "…"
+                    } else {
+                        a.clone()
+                    }
+                });
+                let mut obj = serde_json::json!({
+                    "paper_id": p.paper_id,
+                    "title": p.title,
+                    "year": p.year,
+                    "citations": p.citation_count,
+                    "abstract": abstract_snippet,
+                    "pdf_url": p.open_access_pdf.as_ref().and_then(|x| x.url.as_deref()),
+                    "url": p.url,
+                    "authors": p.authors.as_ref().map(|a| {
+                        a.iter().filter_map(|au| au.name.as_deref()).take(max_authors).collect::<Vec<_>>()
+                    }),
+                });
+                if include_fields {
+                    obj["fields"] = serde_json::json!(p.fields_of_study);
+                }
+                obj
+            })
+            .collect();
+
+        serde_json::to_string_pretty(&serde_json::json!({
+            "source_paper": args.paper_id,
+            "returned": papers.len(),
+            "papers": papers,
+        })).map_err(|e| e.to_string())
     }
 }

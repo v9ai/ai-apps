@@ -14,6 +14,7 @@ type Paper = {
   tldr?: string;
   url: string;
   authors: string[];
+  source?: string;
 };
 
 async function getConditionResearch(conditionId: string) {
@@ -130,10 +131,34 @@ export async function ConditionResearch({ conditionId }: { conditionId: string }
                           {paper.citation_count.toLocaleString()} citations
                         </Text>
                       )}
+                      {paper.source && (
+                        <Badge
+                          color={
+                            paper.source === "SemanticScholar"
+                              ? "blue"
+                              : paper.source === "OpenAlex"
+                                ? "green"
+                                : paper.source === "Crossref"
+                                  ? "orange"
+                                  : "violet"
+                          }
+                          variant="outline"
+                          size="1"
+                        >
+                          {paper.source}
+                        </Badge>
+                      )}
                     </Flex>
                     {paper.tldr && (
                       <Text size="1" color="gray" style={{ lineHeight: 1.5 }}>
                         {paper.tldr}
+                      </Text>
+                    )}
+                    {!paper.tldr && paper.abstract && (
+                      <Text size="1" color="gray" style={{ lineHeight: 1.5 }}>
+                        {paper.abstract.length > 300
+                          ? paper.abstract.slice(0, 300) + "\u2026"
+                          : paper.abstract}
                       </Text>
                     )}
                   </Flex>

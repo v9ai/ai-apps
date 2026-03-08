@@ -25,6 +25,7 @@ qwen = { path = "../qwen" }
 [dev-dependencies]
 tempfile = "3"
 serial_test = "3"
+wiremock = "0.6"
 
 [[bin]]
 name = "healthcare-research"

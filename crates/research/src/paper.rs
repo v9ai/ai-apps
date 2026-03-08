@@ -25,6 +25,7 @@ pub struct ResearchPaper {
     pub pdf_url: Option<String>,
     pub source: PaperSource,
     pub source_id: String,
+    pub fields_of_study: Option<Vec<String>>,
 }
 
 impl From<Paper> for ResearchPaper {
@@ -47,6 +48,7 @@ impl From<Paper> for ResearchPaper {
             pdf_url,
             source: PaperSource::SemanticScholar,
             source_id: p.paper_id.unwrap_or_default(),
+            fields_of_study: p.fields_of_study,
         }
     }
 }
@@ -81,6 +83,7 @@ impl From<OpenAlexWork> for ResearchPaper {
             pdf_url,
             source: PaperSource::OpenAlex,
             source_id,
+            fields_of_study: None,
         }
     }
 }
@@ -134,6 +137,7 @@ impl From<CrossrefWork> for ResearchPaper {
             pdf_url,
             source: PaperSource::Crossref,
             source_id: w.doi.unwrap_or_default(),
+            fields_of_study: None,
         }
     }
 }
@@ -169,6 +173,7 @@ impl From<CoreWork> for ResearchPaper {
             pdf_url,
             source: PaperSource::Core,
             source_id,
+            fields_of_study: None,
         }
     }
 }

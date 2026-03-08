@@ -14,10 +14,15 @@ const MAX_RETRIES: u32 = 3;
 pub struct CrossrefClient {
     http: reqwest::Client,
     mailto: Option<String>,
+    base_url: String,
 }
 
 impl CrossrefClient {
     pub fn new(mailto: Option<&str>) -> Self {
+        Self::with_base_url(BASE_URL, mailto)
+    }
+
+    pub fn with_base_url(base_url: &str, mailto: Option<&str>) -> Self {
         let user_agent = match mailto {
             Some(email) => format!("research-crate/0.1 (mailto:{email})"),
             None => "research-crate/0.1".to_string(),
@@ -30,6 +35,7 @@ impl CrossrefClient {
         Self {
             http,
             mailto: mailto.map(|s| s.to_string()),
+            base_url: base_url.to_string(),
         }
     }
 
@@ -80,7 +86,7 @@ impl CrossrefClient {
         rows: u32,
         offset: u32,
     ) -> Result<CrossrefResponse, Error> {
-        let url = format!("{BASE_URL}/works");
+        let url = format!("{}/works", self.base_url);
         let mut params = vec![
             ("query".into(), query.to_string()),
             ("rows".into(), rows.to_string()),
@@ -95,7 +101,7 @@ impl CrossrefClient {
 
     /// Get a single work by DOI.
     pub async fn get_work(&self, doi: &str) -> Result<CrossrefWork, Error> {
-        let url = format!("{BASE_URL}/works/{doi}");
+        let url = format!("{}/works/{doi}", self.base_url);
         let params = vec![];
         let val = self.get_json(&url, params).await?;
         let work: CrossrefWork = serde_json::from_value(val["message"].clone())?;

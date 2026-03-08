@@ -4,7 +4,7 @@ use tracing::info;
 use crate::agent::agent_builder;
 use crate::code::CodeAnalysisConfig;
 use crate::code::tools::{AnalyzeStructure, FindAntiPatterns, SearchPattern};
-use crate::tools::{GetPaperDetail, SearchPapers, SearchToolConfig};
+use crate::tools::{GetPaperDetail, GetRecommendations, SearchPapers, SearchToolConfig};
 use crate::SemanticScholarClient;
 
 use super::mailbox::{Mailbox, MessageKind, TeamMessage};
@@ -17,6 +17,8 @@ pub struct TeammateConfig {
     pub scholar_key: Option<String>,
     /// When `Some`, code analysis tools are attached to the agent.
     pub code_analysis: Option<CodeAnalysisConfig>,
+    /// When `Some`, overrides the default search tool configuration.
+    pub tool_config: Option<SearchToolConfig>,
 }
 
 /// A teammate agent that claims tasks, injects prior findings, and runs the
@@ -93,7 +95,7 @@ impl Teammate {
 
             // Build and run the agent.
             let scholar = SemanticScholarClient::new(self.config.scholar_key.as_deref());
-            let tool_config = SearchToolConfig {
+            let tool_config = self.config.tool_config.clone().unwrap_or(SearchToolConfig {
                 default_limit: 10,
                 abstract_max_chars: 500,
                 max_authors: 5,
@@ -101,7 +103,7 @@ impl Teammate {
                 include_venue: true,
                 search_description: None,
                 detail_description: None,
-            };
+            });
 
             let mut builder = agent_builder(&self.config.api_key, "deepseek-chat")
                 .preamble(&task.preamble)
@@ -109,7 +111,8 @@ impl Teammate {
                     scholar.clone(),
                     tool_config.clone(),
                 ))
-                .tool(GetPaperDetail::with_config(scholar, tool_config))
+                .tool(GetPaperDetail::with_config(scholar.clone(), tool_config.clone()))
+                .tool(GetRecommendations::with_config(scholar, tool_config))
                 .base_url(&self.config.base_url)
                 .worker_id(&self.worker_id);
 

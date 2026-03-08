@@ -21,10 +21,15 @@ const MAX_RETRIES: u32 = 3;
 #[derive(Clone)]
 pub struct SemanticScholarClient {
     http: reqwest::Client,
+    base_url: String,
 }
 
 impl SemanticScholarClient {
     pub fn new(api_key: Option<&str>) -> Self {
+        Self::with_base_url(BASE_URL, api_key)
+    }
+
+    pub fn with_base_url(base_url: &str, api_key: Option<&str>) -> Self {
         let mut headers = reqwest::header::HeaderMap::new();
         if let Some(key) = api_key {
             if let Ok(val) = reqwest::header::HeaderValue::from_str(key) {
@@ -36,7 +41,7 @@ impl SemanticScholarClient {
             .timeout(Duration::from_secs(30))
             .build()
             .expect("failed to build reqwest client");
-        Self { http }
+        Self { http, base_url: base_url.to_string() }
     }
 
     /// Low-level GET with exponential-backoff retry on 429.
@@ -99,7 +104,7 @@ impl SemanticScholarClient {
         sort: Option<&str>,
         limit: u32,
     ) -> Result<BulkSearchResponse, Error> {
-        let url = format!("{BASE_URL}/graph/v1/paper/search/bulk");
+        let url = format!("{}/graph/v1/paper/search/bulk", self.base_url);
         let mut params = vec![
             ("query".into(), query.to_string()),
             ("fields".into(), fields.to_string()),
@@ -128,7 +133,7 @@ impl SemanticScholarClient {
         limit: u32,
         offset: u32,
     ) -> Result<SearchResponse, Error> {
-        let url = format!("{BASE_URL}/graph/v1/paper/search");
+        let url = format!("{}/graph/v1/paper/search", self.base_url);
         let params = vec![
             ("query".into(), query.to_string()),
             ("fields".into(), fields.to_string()),
@@ -144,7 +149,7 @@ impl SemanticScholarClient {
     /// `paper_id` accepts any format: S2PaperId, `DOI:10.xxx/yyy`, `arXiv:1705.10311`,
     /// `PMID:12345`, `ACL:P19-1002`, etc.
     pub async fn get_paper(&self, paper_id: &str, fields: &str) -> Result<Paper, Error> {
-        let url = format!("{BASE_URL}/graph/v1/paper/{paper_id}");
+        let url = format!("{}/graph/v1/paper/{paper_id}", self.base_url);
         let params = vec![("fields".into(), fields.to_string())];
         let val = self.get_json(&url, params).await?;
         Ok(serde_json::from_value(val)?)
@@ -159,7 +164,7 @@ impl SemanticScholarClient {
         fields: &str,
         limit: u32,
     ) -> Result<CitationsResponse, Error> {
-        let url = format!("{BASE_URL}/graph/v1/paper/{paper_id}/citations");
+        let url = format!("{}/graph/v1/paper/{paper_id}/citations", self.base_url);
         let params = vec![
             ("fields".into(), fields.to_string()),
             ("limit".into(), limit.to_string()),
@@ -175,7 +180,7 @@ impl SemanticScholarClient {
         fields: &str,
         limit: u32,
     ) -> Result<ReferencesResponse, Error> {
-        let url = format!("{BASE_URL}/graph/v1/paper/{paper_id}/references");
+        let url = format!("{}/graph/v1/paper/{paper_id}/references", self.base_url);
         let params = vec![
             ("fields".into(), fields.to_string()),
             ("limit".into(), limit.to_string()),
@@ -194,7 +199,7 @@ impl SemanticScholarClient {
         limit: u32,
     ) -> Result<RecommendationsResponse, Error> {
         let url =
-            format!("{BASE_URL}/recommendations/v1/papers/forpaper/{paper_id}");
+            format!("{}/recommendations/v1/papers/forpaper/{paper_id}", self.base_url);
         let params = vec![
             ("fields".into(), fields.to_string()),
             ("limit".into(), limit.to_string()),

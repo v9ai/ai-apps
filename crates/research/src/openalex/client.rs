@@ -13,10 +13,15 @@ const MAX_RETRIES: u32 = 3;
 #[derive(Clone)]
 pub struct OpenAlexClient {
     http: reqwest::Client,
+    base_url: String,
 }
 
 impl OpenAlexClient {
     pub fn new(mailto: Option<&str>) -> Self {
+        Self::with_base_url(BASE_URL, mailto)
+    }
+
+    pub fn with_base_url(base_url: &str, mailto: Option<&str>) -> Self {
         let user_agent = match mailto {
             Some(email) => format!("research-crate/0.1 (mailto:{email})"),
             None => "research-crate/0.1".to_string(),
@@ -26,7 +31,7 @@ impl OpenAlexClient {
             .timeout(Duration::from_secs(30))
             .build()
             .expect("failed to build reqwest client");
-        Self { http }
+        Self { http, base_url: base_url.to_string() }
     }
 
     async fn get_json(
@@ -75,7 +80,7 @@ impl OpenAlexClient {
         page: u32,
         per_page: u32,
     ) -> Result<SearchResponse, Error> {
-        let url = format!("{BASE_URL}/works");
+        let url = format!("{}/works", self.base_url);
         let params = vec![
             ("search".into(), query.to_string()),
             ("page".into(), page.to_string()),
@@ -87,7 +92,7 @@ impl OpenAlexClient {
 
     /// Get a single work by OpenAlex ID or DOI.
     pub async fn get_work(&self, id: &str) -> Result<Work, Error> {
-        let url = format!("{BASE_URL}/works/{id}");
+        let url = format!("{}/works/{id}", self.base_url);
         let val = self.get_json(&url, vec![]).await?;
         Ok(serde_json::from_value(val)?)
     }

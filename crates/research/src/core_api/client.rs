@@ -13,10 +13,15 @@ const MAX_RETRIES: u32 = 3;
 #[derive(Clone)]
 pub struct CoreClient {
     http: reqwest::Client,
+    base_url: String,
 }
 
 impl CoreClient {
     pub fn new(api_key: Option<&str>) -> Self {
+        Self::with_base_url(BASE_URL, api_key)
+    }
+
+    pub fn with_base_url(base_url: &str, api_key: Option<&str>) -> Self {
         let mut headers = reqwest::header::HeaderMap::new();
         if let Some(key) = api_key {
             if let Ok(val) = reqwest::header::HeaderValue::from_str(&format!("Bearer {key}")) {
@@ -28,7 +33,7 @@ impl CoreClient {
             .timeout(Duration::from_secs(30))
             .build()
             .expect("failed to build reqwest client");
-        Self { http }
+        Self { http, base_url: base_url.to_string() }
     }
 
     async fn get_json(
@@ -76,7 +81,7 @@ impl CoreClient {
         limit: u32,
         offset: u32,
     ) -> Result<CoreSearchResponse, Error> {
-        let url = format!("{BASE_URL}/search/works/");
+        let url = format!("{}/search/works/", self.base_url);
         let params = vec![
             ("q".into(), query.to_string()),
             ("limit".into(), limit.to_string()),
@@ -87,7 +92,7 @@ impl CoreClient {
     }
 
     pub async fn get_work(&self, id: &str) -> Result<CoreWork, Error> {
-        let url = format!("{BASE_URL}/works/{id}");
+        let url = format!("{}/works/{id}", self.base_url);
         let val = self.get_json(&url, vec![]).await?;
         Ok(serde_json::from_value(val)?)
     }

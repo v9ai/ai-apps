@@ -29,7 +29,9 @@ deepseek = { path = "../deepseek" }
 research = { path = "../research" }
 dotenvy = "0.15"
 chrono = "0.4"
+async-trait = "0.1"
 
 [dev-dependencies]
 wiremock = "0.6"
 tempfile = "3"
+async-trait = "0.1"

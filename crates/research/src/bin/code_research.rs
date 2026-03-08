@@ -122,6 +122,7 @@ async fn main() -> Result<()> {
         code_root: Some(code_root_path),
         synthesis_preamble: None,
         synthesis_prompt_template: None,
+        tool_config: None,
     });
 
     let result = lead.run(tasks).await?;

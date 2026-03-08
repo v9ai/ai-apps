@@ -1,12 +1,15 @@
-use std::sync::Arc;
+use std::path::PathBuf;
+use std::sync::{Arc, Mutex};
 use std::time::{Duration, Instant};
 
 use tempfile::TempDir;
 use wiremock::matchers::{body_string_contains, method, path};
 use wiremock::{Mock, MockServer, ResponseTemplate};
 
+use async_trait::async_trait;
 use deepseek::{DeepSeekClient, ReqwestClient};
 use agentic_press::pipeline::Pipeline;
+use agentic_press::publisher::Publisher;
 
 // ── helpers ───────────────────────────────────────────────────────────────────
 
@@ -65,6 +68,29 @@ fn pipeline(server: &MockServer, tmp: &TempDir) -> Pipeline {
     Pipeline::new("test niche", tmp.path().to_str().unwrap()).with_client(client)
 }
 
+// ── MockPublisher ────────────────────────────────────────────────────────────
+
+#[derive(Clone)]
+struct MockPublisher {
+    calls: Arc<Mutex<Vec<(String, String)>>>,
+}
+
+impl MockPublisher {
+    fn new() -> Self {
+        Self {
+            calls: Arc::new(Mutex::new(Vec::new())),
+        }
+    }
+}
+
+#[async_trait]
+impl Publisher for MockPublisher {
+    async fn publish_post(&self, blog_md: &str, topic: &str, _deploy: bool) -> anyhow::Result<PathBuf> {
+        self.calls.lock().unwrap().push((blog_md.to_string(), topic.to_string()));
+        Ok(PathBuf::from("/mock/published"))
+    }
+}
+
 // ── tests ─────────────────────────────────────────────────────────────────────
 
 /// Happy path: single topic creates scout + picker files and a slug directory
@@ -75,7 +101,7 @@ async fn test_single_topic_creates_expected_files() {
     mount_standard_mocks(&server, SINGLE_TOPIC_JSON).await;
 
     let tmp = TempDir::new().unwrap();
-    pipeline(&server, &tmp).run().await.unwrap();
+    let result = pipeline(&server, &tmp).run().await.unwrap();
 
     let out = tmp.path();
     assert!(out.join("01_scout_topics.md").exists(),      "scout file missing");
@@ -85,6 +111,13 @@ async fn test_single_topic_creates_expected_files() {
     assert!(slug_dir.join("research.md").exists(), "research.md missing");
     assert!(slug_dir.join("blog.md").exists(),     "blog.md missing");
     assert!(slug_dir.join("linkedin.md").exists(), "linkedin.md missing");
+
+    // Verify structured result
+    assert_eq!(result.topics.len(), 1);
+    assert_eq!(result.topics[0].topic, "Claude Code Testing");
+    assert_eq!(result.topics[0].slug, "claude-code-testing");
+    assert!(!result.scout_output.is_empty());
+    assert!(!result.picker_output.is_empty());
 }
 
 /// Output files contain the mock content (pipeline passes data forward correctly).
@@ -94,19 +127,21 @@ async fn test_output_files_contain_agent_content() {
     mount_standard_mocks(&server, SINGLE_TOPIC_JSON).await;
 
     let tmp = TempDir::new().unwrap();
-    pipeline(&server, &tmp).run().await.unwrap();
+    let result = pipeline(&server, &tmp).run().await.unwrap();
 
     let blog = std::fs::read_to_string(
         tmp.path().join("claude-code-testing").join("blog.md"),
     )
     .unwrap();
     assert!(blog.contains("Blog Post"), "blog.md should contain writer output");
+    assert!(result.topics[0].blog.contains("Blog Post"));
 
     let li = std::fs::read_to_string(
         tmp.path().join("claude-code-testing").join("linkedin.md"),
     )
     .unwrap();
     assert!(li.contains("RustLang"), "linkedin.md should contain linkedin output");
+    assert!(result.topics[0].linkedin.contains("RustLang"));
 }
 
 /// With count=2, both topic directories must exist after the run.
@@ -116,7 +151,7 @@ async fn test_multi_topic_creates_all_directories() {
     mount_standard_mocks(&server, TWO_TOPICS_JSON).await;
 
     let tmp = TempDir::new().unwrap();
-    pipeline(&server, &tmp)
+    let result = pipeline(&server, &tmp)
         .with_count(2)
         .run()
         .await
@@ -125,6 +160,7 @@ async fn test_multi_topic_creates_all_directories() {
     let out = tmp.path();
     assert!(out.join("rust-async-runtime").join("blog.md").exists(), "topic 1 blog missing");
     assert!(out.join("multi-agent-systems").join("blog.md").exists(), "topic 2 blog missing");
+    assert_eq!(result.topics.len(), 2);
 }
 
 /// Writer and LinkedIn run *concurrently* — each mock has a 200 ms delay but
@@ -376,4 +412,134 @@ async fn test_retry_on_transient_500() {
         .run()
         .await
         .expect("pipeline should succeed after retrying the transient 500");
+}
+
+/// MockPublisher is called with the correct blog content and topic.
+#[tokio::test]
+async fn test_publisher_receives_correct_content() {
+    let server = MockServer::start().await;
+    mount_standard_mocks(&server, SINGLE_TOPIC_JSON).await;
+
+    let tmp = TempDir::new().unwrap();
+    let mock_pub = MockPublisher::new();
+    let calls = Arc::clone(&mock_pub.calls);
+
+    pipeline(&server, &tmp)
+        .with_publish(true)
+        .with_publisher(mock_pub)
+        .run()
+        .await
+        .unwrap();
+
+    let calls = calls.lock().unwrap();
+    assert_eq!(calls.len(), 1, "publisher should have been called once");
+    assert!(calls[0].0.contains("Blog Post"), "blog content should be passed to publisher");
+    assert_eq!(calls[0].1, "Claude Code Testing", "topic should be passed to publisher");
+}
+
+/// When publish=false, the publisher is never called.
+#[tokio::test]
+async fn test_no_publish_skips_publisher() {
+    let server = MockServer::start().await;
+    mount_standard_mocks(&server, SINGLE_TOPIC_JSON).await;
+
+    let tmp = TempDir::new().unwrap();
+    let mock_pub = MockPublisher::new();
+    let calls = Arc::clone(&mock_pub.calls);
+
+    pipeline(&server, &tmp)
+        .with_publish(false)
+        .with_publisher(mock_pub)
+        .run()
+        .await
+        .unwrap();
+
+    let calls = calls.lock().unwrap();
+    assert_eq!(calls.len(), 0, "publisher should NOT be called when publish=false");
+}
+
+/// PipelineResult contains scout and picker raw output.
+#[tokio::test]
+async fn test_pipeline_result_contains_phase_outputs() {
+    let server = MockServer::start().await;
+    mount_standard_mocks(&server, SINGLE_TOPIC_JSON).await;
+
+    let tmp = TempDir::new().unwrap();
+    let result = pipeline(&server, &tmp).run().await.unwrap();
+
+    assert!(result.scout_output.contains("Topic A"), "scout_output should have scout content");
+    assert!(result.picker_output.contains("Claude Code Testing"), "picker_output should have picker content");
+}
+
+/// Multi-topic run populates all TopicResult fields.
+#[tokio::test]
+async fn test_multi_topic_result_fields() {
+    let server = MockServer::start().await;
+    mount_standard_mocks(&server, TWO_TOPICS_JSON).await;
+
+    let tmp = TempDir::new().unwrap();
+    let result = pipeline(&server, &tmp)
+        .with_count(2)
+        .run()
+        .await
+        .unwrap();
+
+    assert_eq!(result.topics.len(), 2);
+
+    let slugs: Vec<&str> = result.topics.iter().map(|t| t.slug.as_str()).collect();
+    assert!(slugs.contains(&"rust-async-runtime"));
+    assert!(slugs.contains(&"multi-agent-systems"));
+
+    for t in &result.topics {
+        assert!(!t.blog.is_empty(), "blog should not be empty for {}", t.topic);
+        assert!(!t.linkedin.is_empty(), "linkedin should not be empty for {}", t.topic);
+        assert_eq!(t.paper_count, 0, "paper_count should be 0 without research mode");
+    }
+}
+
+/// Publisher called once per topic with count=2.
+#[tokio::test]
+async fn test_publisher_called_per_topic() {
+    let server = MockServer::start().await;
+    mount_standard_mocks(&server, TWO_TOPICS_JSON).await;
+
+    let tmp = TempDir::new().unwrap();
+    let mock_pub = MockPublisher::new();
+    let calls = Arc::clone(&mock_pub.calls);
+
+    pipeline(&server, &tmp)
+        .with_count(2)
+        .with_publish(true)
+        .with_publisher(mock_pub)
+        .run()
+        .await
+        .unwrap();
+
+    let calls = calls.lock().unwrap();
+    assert_eq!(calls.len(), 2, "publisher should be called once per topic");
+}
+
+/// Empty picker selection (0 topics) should return empty topics vec.
+#[tokio::test]
+async fn test_empty_picker_selection() {
+    let server = MockServer::start().await;
+
+    Mock::given(method("POST"))
+        .and(path("/chat/completions"))
+        .and(body_string_contains("Scout agent"))
+        .respond_with(ResponseTemplate::new(200).set_body_json(chat_response("topics")))
+        .mount(&server)
+        .await;
+
+    Mock::given(method("POST"))
+        .and(path("/chat/completions"))
+        .and(body_string_contains("Picker agent"))
+        .respond_with(ResponseTemplate::new(200).set_body_json(chat_response("[]")))
+        .mount(&server)
+        .await;
+
+    let tmp = TempDir::new().unwrap();
+    let result = pipeline(&server, &tmp).run().await.unwrap();
+
+    assert!(result.topics.is_empty(), "empty picker selection should produce no topics");
 }

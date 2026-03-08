@@ -210,4 +210,36 @@ mod tests {
         assert!(prompt.contains("Deep-Dive Writer"));
         assert!(prompt.contains("2000–3000"));
     }
+
+    #[test]
+    fn test_researcher_with_papers_contains_niche() {
+        let prompt = researcher_with_papers("distributed systems");
+        assert!(prompt.contains("distributed systems"));
+        assert!(prompt.contains("Researcher agent"));
+        assert!(prompt.contains("citations"));
+    }
+
+    #[test]
+    fn test_picker_mentions_json_array() {
+        let prompt = picker("Rust", 2);
+        assert!(prompt.contains("JSON array"), "picker should instruct JSON array output");
+    }
+
+    #[test]
+    fn test_scout_mentions_five_topics() {
+        let prompt = scout("AI");
+        assert!(prompt.contains("5 trending topics"));
+    }
+
+    #[test]
+    fn test_linkedin_word_count_guidance() {
+        let prompt = linkedin();
+        assert!(prompt.contains("150–220 words"));
+    }
+
+    #[test]
+    fn test_writer_word_count_guidance() {
+        let prompt = writer();
+        assert!(prompt.contains("700–1000 words"));
+    }
 }

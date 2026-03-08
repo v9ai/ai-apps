@@ -9,7 +9,7 @@ use deepseek::{DeepSeekClient, ReqwestClient};
 
 use crate::agent_teams::{run_parallel, Agent};
 use crate::prompts;
-use crate::publisher;
+use crate::publisher::{FsPublisher, Publisher};
 use crate::research_phase::{self, ResearchConfig};
 
 // ── picker output ────────────────────────────────────────────────────────────
@@ -18,6 +18,24 @@ use crate::research_phase::{self, ResearchConfig};
 struct TopicSelection {
     topic: String,
     angle: String,
+}
+
+// ── structured results ──────────────────────────────────────────────────────
+
+#[derive(Debug)]
+pub struct TopicResult {
+    pub topic: String,
+    pub slug: String,
+    pub blog: String,
+    pub linkedin: String,
+    pub paper_count: usize,
+}
+
+#[derive(Debug)]
+pub struct PipelineResult {
+    pub scout_output: String,
+    pub picker_output: String,
+    pub topics: Vec<TopicResult>,
 }
 
 // ── pipeline ─────────────────────────────────────────────────────────────────
@@ -33,6 +51,8 @@ pub struct Pipeline {
     research_config: Option<ResearchConfig>,
     /// Pre-built client injected by tests; `None` → create from env at run time.
     client: Option<Arc<DeepSeekClient<ReqwestClient>>>,
+    /// Custom publisher implementation (default: FsPublisher).
+    publisher: Option<Box<dyn Publisher>>,
 }
 
 impl Pipeline {
@@ -44,6 +64,7 @@ impl Pipeline {
             publish: false,
             research_config: None,
             client: None,
+            publisher: None,
         }
     }
 
@@ -68,7 +89,13 @@ impl Pipeline {
         self
     }
 
-    pub async fn run(&self) -> Result<()> {
+    /// Inject a custom publisher (used in tests to avoid filesystem side effects).
+    pub fn with_publisher(mut self, publisher: impl Publisher + 'static) -> Self {
+        self.publisher = Some(Box::new(publisher));
+        self
+    }
+
+    pub async fn run(&self) -> Result<PipelineResult> {
         fs::create_dir_all(&self.output_dir).await?;
 
         let client = match &self.client {
@@ -85,10 +112,13 @@ impl Pipeline {
         // ── Phase 1 — Scout ──────────────────────────────────────────────────
         info!("Phase 1 — Scout");
         let scout = Agent::new("scout", prompts::scout(&self.niche), Arc::clone(&client));
-        let topics = scout
-            .run(&format!("Find 5 trending topics in this niche: {}", self.niche))
+        let scout_output = scout
+            .run(&format!(
+                "Find 5 trending topics in this niche: {}",
+                self.niche
+            ))
             .await?;
-        save(&self.output_dir, "01_scout_topics.md", &topics).await?;
+        save(&self.output_dir, "01_scout_topics.md", &scout_output).await?;
 
         // ── Phase 2 — Picker ─────────────────────────────────────────────────
         info!("Phase 2 — Picker (selecting {})", self.count);
@@ -97,43 +127,44 @@ impl Pipeline {
             prompts::picker(&self.niche, self.count),
             Arc::clone(&client),
         );
-        let selection = picker.run(&topics).await?;
-        save(&self.output_dir, "02_picker_selection.json", &selection).await?;
+        let picker_output = picker.run(&scout_output).await?;
+        save(&self.output_dir, "02_picker_selection.json", &picker_output).await?;
 
-        let cleaned = crate::strip_fences(&selection);
+        let cleaned = crate::strip_fences(&picker_output);
         let selections: Vec<TopicSelection> = serde_json::from_str(cleaned)
-            .with_context(|| format!("Picker output is not a valid JSON array:\n{selection}"))?;
+            .with_context(|| {
+                format!("Picker output is not a valid JSON array:\n{picker_output}")
+            })?;
 
         // ── Phase 3–5 — per-topic: Researcher → (Writer ∥ LinkedIn) ──────────
-        //
-        // All topic tasks are spawned at once so their Researcher calls run
-        // concurrently; within each task Writer + LinkedIn also run in parallel.
-        //
-        //   Scout → Picker → ┌─ Researcher[0] → Writer[0] ─┐
-        //                    │               ↘ LinkedIn[0]─┤ (join_all)
-        //                    └─ Researcher[1] → Writer[1] ─┤
-        //                                    ↘ LinkedIn[1]─┘
         info!(
             "Phase 3–5 — {} topic(s) running concurrently",
             selections.len().min(self.count)
         );
 
         let use_research = self.research_config.is_some();
-        let research_paper_search = self.research_config.as_ref().map_or(false, |c| c.enable_paper_search);
-        let research_multi_model = self.research_config.as_ref().map_or(false, |c| c.enable_multi_model);
+        let research_paper_search = self
+            .research_config
+            .as_ref()
+            .is_some_and(|c| c.enable_paper_search);
+        let research_multi_model = self
+            .research_config
+            .as_ref()
+            .is_some_and(|c| c.enable_multi_model);
 
         if use_research {
-            info!("Research mode: paper_search={research_paper_search}, multi_model={research_multi_model}");
+            info!(
+                "Research mode: paper_search={research_paper_search}, multi_model={research_multi_model}"
+            );
         }
 
         let mut set = tokio::task::JoinSet::new();
 
         for (i, sel) in selections.into_iter().take(self.count).enumerate() {
-            let client     = Arc::clone(&client);
-            let niche      = self.niche.clone();
+            let client = Arc::clone(&client);
+            let niche = self.niche.clone();
             let output_dir = self.output_dir.clone();
 
-            let do_publish = self.publish;
             set.spawn(async move {
                 let writer = Agent::new(
                     format!("writer[{i}]"),
@@ -146,7 +177,7 @@ impl Pipeline {
                     Arc::clone(&client),
                 );
 
-                let slug      = crate::slugify(&sel.topic);
+                let slug = crate::slugify(&sel.topic);
                 let topic_dir = format!("{output_dir}/{slug}");
                 fs::create_dir_all(&topic_dir).await?;
 
@@ -157,7 +188,8 @@ impl Pipeline {
                     };
                     let output = research_phase::research_phase(
                         &sel.topic, &sel.angle, &niche, &config, &client,
-                    ).await?;
+                    )
+                    .await?;
                     (output.notes, output.paper_count)
                 } else {
                     let researcher = Agent::new(
@@ -174,40 +206,42 @@ impl Pipeline {
 
                 // Writer and LinkedIn run concurrently — both take research notes.
                 let (blog, li) = run_parallel(&writer, &linkedin, &notes).await?;
-                save(&topic_dir, "blog.md",     &blog).await?;
+                save(&topic_dir, "blog.md", &blog).await?;
                 save(&topic_dir, "linkedin.md", &li).await?;
 
-                if do_publish {
-                    publisher::publish(&blog, &sel.topic, true).await?;
-                }
-
-                anyhow::Ok((sel.topic, blog, li, paper_count))
+                anyhow::Ok(TopicResult {
+                    topic: sel.topic,
+                    slug,
+                    blog,
+                    linkedin: li,
+                    paper_count,
+                })
             });
         }
 
-        let mut results = Vec::new();
+        let mut topics = Vec::new();
         while let Some(res) = set.join_next().await {
-            results.push(res??); // flatten JoinError + anyhow::Error
+            let topic_result = res??;
+
+            if self.publish {
+                let default_pub = FsPublisher;
+                let pub_impl: &dyn Publisher = match &self.publisher {
+                    Some(p) => p.as_ref(),
+                    None => &default_pub,
+                };
+                pub_impl
+                    .publish_post(&topic_result.blog, &topic_result.topic, true)
+                    .await?;
+            }
+
+            topics.push(topic_result);
         }
 
-        println!("\n╔══════════════════════════════════════╗");
-        println!("║       agentic_press — Run Complete   ║");
-        println!("╚══════════════════════════════════════╝");
-        println!("\nModel:  deepseek-reasoner  |  Topics: {}", results.len());
-        for (topic, blog, li, paper_count) in &results {
-            let papers_info = if *paper_count > 0 {
-                format!("  |  papers: {paper_count}")
-            } else {
-                String::new()
-            };
-            println!(
-                "\n  [{topic}]\n  blog: ~{} words  |  linkedin: {} lines{papers_info}",
-                blog.split_whitespace().count(),
-                li.lines().count()
-            );
-        }
-
-        Ok(())
+        Ok(PipelineResult {
+            scout_output,
+            picker_output,
+            topics,
+        })
     }
 }
 
@@ -253,8 +287,125 @@ mod tests {
     }
 
     #[test]
+    fn test_strip_fences_markdown() {
+        let input = "```markdown\n# Hello\n```";
+        assert_eq!(strip_fences(input), "# Hello");
+    }
+
+    #[test]
+    fn test_strip_fences_md() {
+        let input = "```md\n# Hello\n```";
+        assert_eq!(strip_fences(input), "# Hello");
+    }
+
+    #[test]
+    fn test_strip_fences_text() {
+        let input = "```text\nHello world\n```";
+        assert_eq!(strip_fences(input), "Hello world");
+    }
+
+    #[test]
+    fn test_strip_fences_bare() {
+        let input = "```\nHello world\n```";
+        assert_eq!(strip_fences(input), "Hello world");
+    }
+
+    #[test]
     fn test_count_floor_is_one() {
         let p = Pipeline::new("niche", "/tmp/test").with_count(0);
         assert_eq!(p.count, 1, "count should be at least 1");
+    }
+
+    #[test]
+    fn test_strip_fences_empty_string() {
+        assert_eq!(strip_fences(""), "");
+    }
+
+    #[test]
+    fn test_strip_fences_whitespace_only() {
+        assert_eq!(strip_fences("   \n  "), "");
+    }
+
+    #[test]
+    fn test_strip_fences_no_closing() {
+        let input = "```json\n{\"key\": \"value\"}";
+        assert_eq!(strip_fences(input), "{\"key\": \"value\"}");
+    }
+
+    #[test]
+    fn test_strip_fences_surrounding_whitespace() {
+        let input = "  \n```json\n[1,2,3]\n```\n  ";
+        assert_eq!(strip_fences(input), "[1,2,3]");
+    }
+
+    #[test]
+    fn test_strip_fences_multiline_body() {
+        let input = "```json\n{\n  \"a\": 1,\n  \"b\": 2\n}\n```";
+        assert_eq!(strip_fences(input), "{\n  \"a\": 1,\n  \"b\": 2\n}");
+    }
+
+    #[test]
+    fn test_strip_fences_rust() {
+        let input = "```rust\nfn main() {}\n```";
+        assert_eq!(strip_fences(input), "fn main() {}");
+    }
+
+    #[test]
+    fn test_slugify_empty_string() {
+        assert_eq!(slugify(""), "");
+    }
+
+    #[test]
+    fn test_slugify_all_special_chars() {
+        assert_eq!(slugify("!@#$%^&*()"), "");
+    }
+
+    #[test]
+    fn test_slugify_leading_trailing_whitespace() {
+        assert_eq!(slugify("  Hello World  "), "hello-world");
+    }
+
+    #[test]
+    fn test_slugify_numbers_only() {
+        assert_eq!(slugify("2024"), "2024");
+    }
+
+    #[test]
+    fn test_slugify_unicode() {
+        // Unicode alphanumeric chars are preserved (lowercased)
+        assert_eq!(slugify("café résumé"), "café-résumé");
+    }
+
+    #[test]
+    fn test_pipeline_defaults() {
+        let p = Pipeline::new("test", "/tmp");
+        assert_eq!(p.count, 1);
+        assert!(!p.publish);
+        assert!(p.research_config.is_none());
+        assert!(p.client.is_none());
+        assert!(p.publisher.is_none());
+    }
+
+    #[test]
+    fn test_with_publish_toggle() {
+        let p = Pipeline::new("n", "/tmp").with_publish(true);
+        assert!(p.publish);
+        let p = p.with_publish(false);
+        assert!(!p.publish);
+    }
+
+    #[test]
+    fn test_with_count_preserves_large_values() {
+        let p = Pipeline::new("n", "/tmp").with_count(100);
+        assert_eq!(p.count, 100);
+    }
+
+    #[test]
+    fn test_with_research_sets_config() {
+        let p = Pipeline::new("n", "/tmp").with_research(ResearchConfig::default());
+        assert!(p.research_config.is_some());
+        let cfg = p.research_config.unwrap();
+        assert!(cfg.enable_paper_search);
+        assert!(cfg.enable_multi_model);
     }
 }

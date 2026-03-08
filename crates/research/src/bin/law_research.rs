@@ -521,6 +521,7 @@ async fn main() -> Result<()> {
         code_root: None,
         synthesis_preamble: None,
         synthesis_prompt_template: None,
+        tool_config: None,
     });
 
     let result = lead.run(tasks).await?;

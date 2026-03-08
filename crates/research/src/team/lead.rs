@@ -8,6 +8,8 @@ use crate::code::CodeAnalysisConfig;
 
 use super::mailbox::{Mailbox, MessageKind, TeamMessage};
 use super::task::{ResearchTask, SharedTaskList};
+use crate::tools::SearchToolConfig;
+
 use super::teammate::{Teammate, TeammateConfig};
 
 /// Configuration for the research team.
@@ -23,6 +25,8 @@ pub struct TeamConfig {
     /// Custom synthesis prompt template. Use `{count}` and `{combined}` placeholders.
     /// Falls back to the default SDD-oriented prompt if `None`.
     pub synthesis_prompt_template: Option<String>,
+    /// When `Some`, overrides the default search tool configuration for all teammates.
+    pub tool_config: Option<SearchToolConfig>,
 }
 
 /// Result of a full team research run.
@@ -70,6 +74,7 @@ impl TeamLead {
                     base_url: self.config.base_url.clone(),
                     scholar_key: self.config.scholar_key.clone(),
                     code_analysis: code_analysis.clone(),
+                    tool_config: self.config.tool_config.clone(),
                 },
                 task_list.clone(),
                 mailbox.clone(),

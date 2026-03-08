@@ -7,7 +7,6 @@ use agentic_press::slugify;
 use anyhow::{Context, Result};
 use clap::Parser;
 use tokio::fs;
-use tokio::process::Command;
 use tracing::info;
 
 #[derive(Parser)]
@@ -27,8 +26,12 @@ struct Cli {
     output_dir: String,
 
     /// Publish to vadim.blog and run vercel deploy
-    #[arg(long, default_value_t = true)]
+    #[arg(long, default_value_t = false)]
     publish: bool,
+
+    /// Git add, commit, and push in the vadim.blog repo after publishing
+    #[arg(long, default_value_t = false)]
+    git_push: bool,
 }
 
 #[tokio::main]
@@ -43,7 +46,11 @@ async fn main() -> Result<()> {
 
     info!(
         "DEEPSEEK_API_KEY: {}",
-        if std::env::var("DEEPSEEK_API_KEY").is_ok() { "set" } else { "NOT SET" }
+        if std::env::var("DEEPSEEK_API_KEY").is_ok() {
+            "set"
+        } else {
+            "NOT SET"
+        }
     );
 
     // 1. Read source material
@@ -56,7 +63,11 @@ async fn main() -> Result<()> {
     let client = Arc::new(deepseek::client_from_env()?);
 
     // 3. Create agents
-    let writer = Agent::new("DeepDiveWriter", prompts::deep_dive_writer(&cli.title), client.clone());
+    let writer = Agent::new(
+        "DeepDiveWriter",
+        prompts::deep_dive_writer(&cli.title),
+        client.clone(),
+    );
     let linkedin = Agent::new("LinkedIn", prompts::linkedin(), client);
 
     // 4. Run both in parallel
@@ -79,44 +90,25 @@ async fn main() -> Result<()> {
     // 6. Publish
     if cli.publish {
         let post_path = publisher::publish(&blog, &cli.title, true).await?;
+        info!("Published: {}", post_path.display());
 
-        // Git add + commit + push in vadim.blog repo
-        let blog_repo = post_path
-            .ancestors()
-            .find(|p| p.join(".git").exists())
-            .map(|p| p.to_path_buf())
-            .context("Could not find vadim.blog git root")?;
+        // 7. Git push (only if both --publish and --git-push are set)
+        if cli.git_push {
+            let blog_repo = post_path
+                .ancestors()
+                .find(|p| p.join(".git").exists())
+                .map(|p| p.to_path_buf())
+                .context("Could not find vadim.blog git root")?;
 
-        info!("Git commit in {}", blog_repo.display());
-
-        let add = Command::new("git")
-            .args(["add", "."])
-            .current_dir(&blog_repo)
-            .status()
+            info!("Git commit+push in {}", blog_repo.display());
+            publisher::git_commit_and_push(
+                &blog_repo,
+                &format!("deep-dive: {}", cli.title),
+            )
             .await?;
-        if !add.success() {
-            anyhow::bail!("git add failed");
-        }
 
-        let commit = Command::new("git")
-            .args(["commit", "-m", &format!("deep-dive: {}", cli.title)])
-            .current_dir(&blog_repo)
-            .status()
-            .await?;
-        if !commit.success() {
-            info!("git commit exited non-zero (may be nothing to commit)");
+            info!("Published and deployed: {}", post_path.display());
         }
-
-        let push = Command::new("git")
-            .args(["push"])
-            .current_dir(&blog_repo)
-            .status()
-            .await?;
-        if !push.success() {
-            anyhow::bail!("git push failed");
-        }
-
-        info!("Published and deployed: {}", post_path.display());
     }
 
     info!("Done. Blog: {blog_path} | LinkedIn: {linkedin_path}");
