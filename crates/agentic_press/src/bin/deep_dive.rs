@@ -1,6 +1,4 @@
-use std::sync::Arc;
-
-use agentic_press::agent_teams::{run_parallel, Agent};
+use agentic_press::agent_teams::{AgentTeam, ModelPool, TeamRole};
 use agentic_press::prompts;
 use agentic_press::publisher;
 use agentic_press::slugify;
@@ -52,6 +50,14 @@ async fn main() -> Result<()> {
             "NOT SET"
         }
     );
+    info!(
+        "DASHSCOPE_API_KEY: {}",
+        if std::env::var("DASHSCOPE_API_KEY").is_ok() {
+            "set (qwen enabled)"
+        } else {
+            "NOT SET (deepseek-only)"
+        }
+    );
 
     // 1. Read source material
     let source_material = fs::read_to_string(&cli.input)
@@ -59,21 +65,31 @@ async fn main() -> Result<()> {
         .with_context(|| format!("Cannot read input file: {}", cli.input))?;
     info!("Read {} chars from {}", source_material.len(), cli.input);
 
-    // 2. Create client
-    let client = Arc::new(deepseek::client_from_env()?);
-
-    // 3. Create agents
-    let writer = Agent::new(
+    // 2. Create model pool + team
+    let pool = ModelPool::from_env()?;
+    let mut team = AgentTeam::new("deep-dive");
+    let writer_idx = team.spawn(
         "DeepDiveWriter",
         prompts::deep_dive_writer(&cli.title),
-        client.clone(),
+        TeamRole::Reasoner,
+        &pool,
     );
-    let linkedin = Agent::new("LinkedIn", prompts::linkedin(), client);
+    let linkedin_idx = team.spawn(
+        "LinkedIn",
+        prompts::linkedin(),
+        TeamRole::Fast,
+        &pool,
+    );
 
-    // 4. Run both in parallel
-    let (blog, linkedin_post) = run_parallel(&writer, &linkedin, &source_material).await?;
+    // 3. Run both in parallel
+    let results = agentic_press::agent_teams::run_all_same_input(
+        &[team.agent(writer_idx), team.agent(linkedin_idx)],
+        &source_material,
+    ).await?;
+    let blog = &results[0];
+    let linkedin_post = &results[1];
 
-    // 5. Save drafts
+    // 4. Save drafts
     let slug = slugify(&cli.title);
     let draft_dir = format!("{}/{}", cli.output_dir, slug);
     fs::create_dir_all(&draft_dir)
@@ -82,17 +98,17 @@ async fn main() -> Result<()> {
 
     let blog_path = format!("{draft_dir}/blog.md");
     let linkedin_path = format!("{draft_dir}/linkedin.md");
-    fs::write(&blog_path, &blog).await?;
-    fs::write(&linkedin_path, &linkedin_post).await?;
+    fs::write(&blog_path, blog).await?;
+    fs::write(&linkedin_path, linkedin_post).await?;
     info!("Saved blog draft → {blog_path}");
     info!("Saved LinkedIn draft → {linkedin_path}");
 
-    // 6. Publish
+    // 5. Publish
     if cli.publish {
-        let post_path = publisher::publish(&blog, &cli.title, true).await?;
+        let post_path = publisher::publish(blog, &cli.title, true, None).await?;
         info!("Published: {}", post_path.display());
 
-        // 7. Git push (only if both --publish and --git-push are set)
+        // 6. Git push (only if both --publish and --git-push are set)
         if cli.git_push {
             let blog_repo = post_path
                 .ancestors()

@@ -9,11 +9,17 @@ src/
   client.rs    — Client::new(), synthesize(), synthesize_bytes(), long() builder
   types.rs     — TtsRequest, TtsResponse, Voice enum (17 voices)
   error.rs     — Error enum with is_retryable()/is_quota_exhausted() helpers
-  long.rs      — SynthesizeLongBuilder (concurrent chunked synthesis with retry + progress)
+  long.rs      — SynthesizeLongBuilder (concurrent chunked synthesis with retry + progress + R2 upload)
+  r2.rs        — R2Config, R2UploadResult, upload() (behind `r2` feature flag)
   split.rs     — split_text() — sentence-aware chunking (~500 chars, under 600-char API limit)
   wav.rs       — WAV header constants, fix_header_sizes(), estimate_duration_secs()
   bin/interview_prep.rs — CLI binary that synthesizes apps/lh-ai-fs/TECHNICAL-REFERENCE-TTS.md
 ```
+
+## Feature flags
+
+- `default` — no extra features
+- `r2` — Cloudflare R2 upload via `rust-s3` (adds `R2Config`, `R2UploadResult`, `.upload_r2()` builder method)
 
 ## API
 
@@ -39,6 +45,16 @@ client.long(Voice::Ethan)
     .instructions("Speak calmly")
     .synthesize()
     .await?;
+
+// With R2 upload (requires `r2` feature)
+let r2 = R2Config::from_env()?;
+let wav = client.long(Voice::Ethan)
+    .text("Article text...")
+    .instructions("Clear narration")
+    .upload_r2(r2, "eval-driven-development")
+    .synthesize()
+    .await?;
+// Uploads to: vadim-blog/eval-driven-development.wav
 ```
 
 ## Voices
@@ -61,6 +77,15 @@ Cherry, Ethan, Nofish, Jennifer, Ryan, Katerina, Elias, Jada, Dylan, Sunny, Li, 
 - `MAX_CHUNKS` — optional, limit chunk count for testing
 - `CONCURRENCY` — optional, max parallel requests (default: 8)
 - `.env` file: `crates/tts/.env`
+
+### R2 env vars (feature = "r2")
+
+- `R2_ACCOUNT_ID` — required, Cloudflare account ID
+- `R2_ACCESS_KEY_ID` — required, R2 API token key ID
+- `R2_SECRET_ACCESS_KEY` — required, R2 API token secret
+- `R2_BUCKET_NAME` — optional (default: `longform-tts`)
+- `R2_PUBLIC_DOMAIN` — optional, custom domain for public URLs
+- `R2_KEY_PREFIX` — optional (default: `vadim-blog`)
 
 ## Binary
 

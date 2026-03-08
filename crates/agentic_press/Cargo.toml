@@ -2,7 +2,7 @@
 name = "agentic_press"
 version = "0.1.0"
 edition = "2021"
-description = "5-agent content pipeline powered by deepseek-reasoner"
+description = "5-agent content pipeline powered by deepseek-reasoner + qwen"
 license = "MIT"
 
 [lib]
@@ -26,6 +26,7 @@ tracing = "0.1"
 tracing-subscriber = { version = "0.3", features = ["env-filter"] }
 clap = { version = "4", features = ["derive"] }
 deepseek = { path = "../deepseek" }
+qwen = { path = "../qwen" }
 research = { path = "../research" }
 dotenvy = "0.15"
 chrono = "0.4"

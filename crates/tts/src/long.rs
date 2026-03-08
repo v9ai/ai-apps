@@ -46,6 +46,10 @@ pub struct SynthesizeLongBuilder {
     retries: u32,
     progress_cb: Option<Arc<dyn Fn(Progress) + Send + Sync>>,
     output_file: Option<PathBuf>,
+    #[cfg(feature = "r2")]
+    r2_config: Option<crate::r2::R2Config>,
+    #[cfg(feature = "r2")]
+    r2_slug: Option<String>,
 }
 
 impl SynthesizeLongBuilder {
@@ -61,6 +65,10 @@ impl SynthesizeLongBuilder {
             retries: 3,
             progress_cb: None,
             output_file: None,
+            #[cfg(feature = "r2")]
+            r2_config: None,
+            #[cfg(feature = "r2")]
+            r2_slug: None,
         }
     }
 
@@ -109,6 +117,16 @@ impl SynthesizeLongBuilder {
     /// Write the final WAV to a file instead of returning bytes.
     pub fn output_file(mut self, path: impl Into<PathBuf>) -> Self {
         self.output_file = Some(path.into());
+        self
+    }
+
+    /// Upload the final WAV to Cloudflare R2 after synthesis.
+    ///
+    /// The key will be `{prefix}/{slug}.wav` (e.g. `vadim-blog/eval-driven-development.wav`).
+    #[cfg(feature = "r2")]
+    pub fn upload_r2(mut self, config: crate::r2::R2Config, slug: impl Into<String>) -> Self {
+        self.r2_config = Some(config);
+        self.r2_slug = Some(slug.into());
         self
     }
 
@@ -192,6 +210,16 @@ impl SynthesizeLongBuilder {
         // Write to file if requested
         if let Some(path) = self.output_file {
             std::fs::write(&path, &wav)?;
+        }
+
+        // Upload to R2 if configured
+        #[cfg(feature = "r2")]
+        if let (Some(config), Some(slug)) = (self.r2_config, self.r2_slug) {
+            let result = crate::r2::upload(&config, &slug, &wav).await?;
+            eprintln!("R2 uploaded: {} ({} bytes)", result.key, result.size_bytes);
+            if let Some(url) = &result.public_url {
+                eprintln!("Public URL: {url}");
+            }
         }
 
         Ok(wav)

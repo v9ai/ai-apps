@@ -5,6 +5,10 @@ edition = "2021"
 description = "Async Rust client for Qwen TTS via Alibaba DashScope API"
 license = "MIT"
 
+[features]
+default = []
+r2 = ["dep:rust-s3"]
+
 [dependencies]
 reqwest = { version = "0.12", features = ["json"] }
 serde = { version = "1", features = ["derive"] }
@@ -14,6 +18,7 @@ base64 = "0.22"
 futures = "0.3"
 tokio = { version = "1", features = ["sync", "time", "rt-multi-thread"] }
 dotenvy = "0.15"
+rust-s3 = { version = "0.35", optional = true, default-features = false, features = ["tokio-rustls-tls"] }
 
 [dev-dependencies]
 tokio = { version = "1", features = ["full"] }

@@ -12,7 +12,13 @@ use crate::slugify;
 
 #[async_trait]
 pub trait Publisher: Send + Sync {
-    async fn publish_post(&self, blog_md: &str, topic: &str, deploy: bool) -> Result<PathBuf>;
+    async fn publish_post(
+        &self,
+        blog_md: &str,
+        topic: &str,
+        deploy: bool,
+        audio_url: Option<&str>,
+    ) -> Result<PathBuf>;
 }
 
 // ── FsPublisher (default) ───────────────────────────────────────────────────
@@ -21,8 +27,14 @@ pub struct FsPublisher;
 
 #[async_trait]
 impl Publisher for FsPublisher {
-    async fn publish_post(&self, blog_md: &str, topic: &str, deploy: bool) -> Result<PathBuf> {
-        publish(blog_md, topic, deploy).await
+    async fn publish_post(
+        &self,
+        blog_md: &str,
+        topic: &str,
+        deploy: bool,
+        audio_url: Option<&str>,
+    ) -> Result<PathBuf> {
+        publish(blog_md, topic, deploy, audio_url).await
     }
 }
 
@@ -47,7 +59,12 @@ fn blog_root() -> PathBuf {
 /// `blog_md`   — raw markdown content produced by the Writer agent
 /// `topic`     — topic string (used to derive slug if title is missing)
 /// `vercel`    — if true, run `vercel deploy --prod` in the blog root
-pub async fn publish(blog_md: &str, topic: &str, vercel: bool) -> Result<PathBuf> {
+pub async fn publish(
+    blog_md: &str,
+    topic: &str,
+    vercel: bool,
+    audio_url: Option<&str>,
+) -> Result<PathBuf> {
     // ── 1. Extract title from first `# …` heading ─────────────────────────
     let title = blog_md
         .lines()
@@ -94,7 +111,14 @@ pub async fn publish(blog_md: &str, topic: &str, vercel: bool) -> Result<PathBuf
         .collect::<Vec<_>>()
         .join("\n");
 
-    // ── 6. Compose the full MDX file ──────────────────────────────────────
+    // ── 6. Inject audio player if URL provided ────────────────────────────
+    let body = if let Some(url) = audio_url {
+        format!("<AudioPlayer src=\"{url}\" />\n\n{body}")
+    } else {
+        body
+    };
+
+    // ── 7. Compose the full MDX file ──────────────────────────────────────
     let content = format!(
         r#"---
 slug: {slug}
@@ -109,7 +133,7 @@ tags:
 {body}"#
     );
 
-    // ── 7. Write to vadim.blog ─────────────────────────────────────────────
+    // ── 8. Write to vadim.blog ─────────────────────────────────────────────
     let blog_dir = blog_root().join(&year).join(&dir_name);
     fs::create_dir_all(&blog_dir)
         .await
@@ -122,7 +146,7 @@ tags:
 
     info!("Published → {}", post_path.display());
 
-    // ── 8. Vercel deploy ───────────────────────────────────────────────────
+    // ── 9. Vercel deploy ───────────────────────────────────────────────────
     if vercel {
         let blog_root = blog_root().join(".."); // apps/vadim.blog
         info!("Running vercel deploy --prod in {}", blog_root.display());
@@ -291,7 +315,7 @@ Body here"#
         std::env::set_var("VADIM_BLOG_DIR", tmp.path().to_str().unwrap());
 
         let blog_md = "# Test Post Title\n\nFirst paragraph of the post.\n\n## Section\n\nMore content.";
-        let result = super::publish(blog_md, "fallback topic", false).await;
+        let result = super::publish(blog_md, "fallback topic", false, None).await;
 
         std::env::remove_var("VADIM_BLOG_DIR");
 
@@ -312,7 +336,7 @@ Body here"#
         std::env::set_var("VADIM_BLOG_DIR", tmp.path().to_str().unwrap());
 
         let blog_md = "No heading, just content.";
-        let result = super::publish(blog_md, "My Fallback Topic", false).await;
+        let result = super::publish(blog_md, "My Fallback Topic", false, None).await;
 
         std::env::remove_var("VADIM_BLOG_DIR");
 
@@ -320,5 +344,37 @@ Body here"#
         let content = std::fs::read_to_string(&post_path).unwrap();
         assert!(content.contains("title: \"My Fallback Topic\""));
         assert!(content.contains("slug: my-fallback-topic"));
+    }
+
+    #[tokio::test]
+    async fn test_publish_with_audio_url_embeds_player() {
+        let tmp = tempfile::TempDir::new().unwrap();
+        std::env::set_var("VADIM_BLOG_DIR", tmp.path().to_str().unwrap());
+
+        let blog_md = "# Audio Post\n\nSome content here.";
+        let audio = "https://pub.example.com/vadim-blog/audio-post.wav";
+        let result = super::publish(blog_md, "audio post", false, Some(audio)).await;
+
+        std::env::remove_var("VADIM_BLOG_DIR");
+
+        let post_path = result.unwrap();
+        let content = std::fs::read_to_string(&post_path).unwrap();
+        assert!(content.contains("<AudioPlayer"), "should contain AudioPlayer component");
+        assert!(content.contains(audio), "should contain the audio URL");
+    }
+
+    #[tokio::test]
+    async fn test_publish_without_audio_url_has_no_player() {
+        let tmp = tempfile::TempDir::new().unwrap();
+        std::env::set_var("VADIM_BLOG_DIR", tmp.path().to_str().unwrap());
+
+        let blog_md = "# Plain Post\n\nNo audio.";
+        let result = super::publish(blog_md, "plain post", false, None).await;
+        let post_path = result.unwrap();
+        let content = std::fs::read_to_string(&post_path).unwrap();
+
+        std::env::remove_var("VADIM_BLOG_DIR");
+
+        assert!(!content.contains("<AudioPlayer"), "should not contain AudioPlayer component");
     }
 }

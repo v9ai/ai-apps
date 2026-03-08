@@ -37,6 +37,10 @@ pub enum Error {
     #[error("IO error: {0}")]
     Io(#[from] std::io::Error),
 
+    #[cfg(feature = "r2")]
+    #[error("R2 upload error: {0}")]
+    R2(String),
+
     #[error("{0}")]
     Other(String),
 }

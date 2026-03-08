@@ -104,7 +104,6 @@ const config: Config = {
       respectPrefersColorScheme: false,
     },
     navbar: {
-      title: "Vadim's blog",
       logo: {
         alt: "Vadim's blog logo",
         src: "img/logo.svg",

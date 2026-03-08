@@ -12,6 +12,7 @@ dependencies = [
  "clap",
  "deepseek",
  "dotenvy",
+ "qwen",
  "research",
  "serde",
  "serde_json",
