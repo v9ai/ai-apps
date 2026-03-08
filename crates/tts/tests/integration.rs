@@ -425,12 +425,18 @@ mod r2_tests {
     use super::*;
     use tts::{R2Config, r2};
 
-    /// Load `.env` and return `R2Config` if all required R2 env vars are set.
+    /// Load `.env` and return `R2Config` if all required R2 env vars are set
+    /// with real (non-placeholder) values.
     fn try_r2_config() -> Option<R2Config> {
         let _ = dotenvy::from_filename(
             std::path::Path::new(env!("CARGO_MANIFEST_DIR")).join(".env"),
         );
-        R2Config::from_env().ok()
+        let config = R2Config::from_env().ok()?;
+        // Skip if still using placeholder values
+        if config.account_id == "..." || config.access_key_id == "..." || config.secret_access_key == "..." {
+            return None;
+        }
+        Some(config)
     }
 
     /// Build a minimal valid WAV file (44-byte header + 100 samples of silence).
