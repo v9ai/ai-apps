@@ -1,15 +1,19 @@
-Most “reflection” loops in AI add cost and latency without improving quality. The papers that claim gains are almost always smuggling in an external verification signal—a test suite, a search engine, a tool—doing the real work.
+"Reflection" loops in AI systems often triple your costs while degrading output quality. The research is clear: true gains come from external verification, not introspective self-critique.
 
-True self-reflection—an LLM critiquing its own output with no new information—rarely works. Without an external signal, it often makes outputs worse. The pattern that actually moves the needle is verification, not introspection.
+Most impressive "reflection" demos are actually verification in disguise. The model isn't improving by thinking harder—it's reacting to new signals from compilers, test suites, or search results. Without that external check, the same model just recycles its own biases.
 
-- Audit your reflection loops: if there’s no test, tool, or classifier in the loop, you’re burning tokens for theater.
-- Cap refinement at one round; gains diminish sharply and costs multiply.
-- Prefer verification (run tests, compute answers, search facts) over self-evaluation.
-- On creative tasks, reflection typically produces blander, more generic outputs.
-- If you can’t verify, generate multiple candidates and pick the best—it’s cheaper and more effective.
+Here's what the literature (Bai '22, Shinn '23, Huang '23, Gou '24) actually proves:
+• Self-correction *without* external feedback often reduces accuracy. The model second-guesses correct answers.
+• The Reflexion paper’s 91% pass@1 on HumanEval came from **test execution feedback**, not free-form reflection.
+• For creative tasks, self-refinement produces blander, more generic outputs. Users prefer the first draft.
+• Effective patterns are **generate → verify with tools → revise once**. More rounds have diminishing returns.
 
-The research is clear: build verification infrastructure, not introspection loops. Want the full breakdown—including the Huang et al. paper that shows self-correction *hurts* performance? I’ve annotated the key findings.
+Stop cargo-culting academic papers. Audit your loops: if there's no external signal (tests, tools, classifiers), you're likely burning tokens for theater. Build verification infrastructure, not introspection loops.
 
-Read the full research notes here: [Link to your blog]
+Engineers: Cap refinement at one round. Prefer best-of-N sampling over multiple reflections. Always measure the delta—if you can’t quantify the improvement, it doesn’t exist.
 
-#AIEngineering #LLMOps #AgenticAI #PromptEngineering #MLOps #CodeGeneration
+Dive into the full analysis with research breakdowns and a practical decision framework.
+
+Read the full post. [Link to blog]
+
+#AgenticAI #LLMOperations #AIEngineering #Verification #LLMDevelopment #ProductionAI
