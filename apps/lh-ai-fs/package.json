@@ -8,7 +8,7 @@
     "eval:extract": "promptfoo eval --config evals/promptfoo/citation-extraction.yaml",
     "eval:precision": "promptfoo eval --config evals/promptfoo/prompt-precision-citations.yaml && promptfoo eval --config evals/promptfoo/prompt-precision-facts.yaml",
     "eval:reflection": "promptfoo eval --config evals/promptfoo/reflection-honesty.yaml",
-    "eval:all": "npm run eval && npm run eval:precision && npm run eval:reflection",
+    "eval:all": "pnpm run eval && pnpm run eval:precision && pnpm run eval:reflection",
     "eval:view": "promptfoo view"
   },
   "devDependencies": {

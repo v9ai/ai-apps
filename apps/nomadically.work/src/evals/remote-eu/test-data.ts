@@ -219,9 +219,9 @@ export const remoteEUTestCases: RemoteEUTestCase[] = [
         "We hire talented professionals from anywhere in the world.",
     },
     expectedClassification: {
-      isRemoteEU: true,
+      isRemoteEU: false,
       confidence: "medium",
-      reason: "Worldwide/global remote roles are accessible to EU workers",
+      reason: "Generic worldwide with no EU-specific signals — not curated for EU workers",
     },
   },
   {
@@ -495,9 +495,9 @@ export const remoteEUTestCases: RemoteEUTestCase[] = [
         "Work from anywhere in the world. No location requirements. We are a fully distributed company with team members across 30 countries.",
     },
     expectedClassification: {
-      isRemoteEU: true,
-      confidence: "low",
-      reason: "Global remote with no EU-specific signals — EU workers can technically apply but no EU focus",
+      isRemoteEU: false,
+      confidence: "medium",
+      reason: "Global remote with no EU-specific signals — no evidence of EU eligibility",
     },
   },
   {
@@ -593,6 +593,88 @@ export const remoteEUTestCases: RemoteEUTestCase[] = [
       reason: "EU country code (NL) + ATS remote flag = high-confidence EU remote",
     },
   },
+  // --- Production-derived false positive cases ---
+
+  {
+    id: "latam-staffing-remote-1",
+    description: "LatAm staffing company posting generic 'Remote' (Scale Army pattern)",
+    jobPosting: {
+      title: "Senior Software Engineer",
+      location: "Remote",
+      description:
+        "Scale Army helps US startups hire top LatAm talent. We're looking for a Senior Software Engineer to join one of our US-based clients. Nearshore team, competitive USD salary. Must be located in Latin America.",
+    },
+    expectedClassification: {
+      isRemoteEU: false,
+      confidence: "high",
+      reason: "LatAm staffing company — explicitly targets Latin America, not EU",
+    },
+  },
+  {
+    id: "argentina-ashby-remote-1",
+    description: "Argentina location with ashby_is_remote=True (Silver pattern)",
+    jobPosting: {
+      title: "Full Stack Developer",
+      location: "Argentina",
+      description:
+        "Join Silver's team in Argentina. We offer competitive compensation in USD for top talent in Buenos Aires and across Argentina. Remote-friendly within Argentina.",
+      is_remote: true,
+    },
+    expectedClassification: {
+      isRemoteEU: false,
+      confidence: "high",
+      reason: "Argentina is not an EU country — remote flag is for within-country remote",
+    },
+  },
+  {
+    id: "us-company-generic-remote-1",
+    description: "US company posting generic 'Remote' with no description geo signals",
+    jobPosting: {
+      title: "Backend Engineer",
+      location: "Remote",
+      description:
+        "We're a Series B startup building the future of fintech. Looking for a backend engineer to join our growing team. Competitive salary, equity, 401(k), medical, dental, and vision insurance.",
+      is_remote: true,
+    },
+    expectedClassification: {
+      isRemoteEU: false,
+      confidence: "high",
+      reason: "US benefits (401k, medical/dental/vision) indicate US-only position",
+    },
+  },
+  {
+    id: "aggregator-generic-remote-1",
+    description: "Aggregator posting 'Remote' with no EU curation (jobgether pattern)",
+    jobPosting: {
+      title: "Product Manager",
+      location: "Remote",
+      description:
+        "Found on Jobgether. This role is open to candidates worldwide. The company is headquartered in San Francisco. No specific location requirements mentioned.",
+      is_remote: true,
+    },
+    expectedClassification: {
+      isRemoteEU: false,
+      confidence: "medium",
+      reason: "Generic worldwide from aggregator with US HQ — no EU-specific signals",
+    },
+  },
+  {
+    id: "remote-united-states-1",
+    description: "Remote United States location (clearly not EU)",
+    jobPosting: {
+      title: "Machine Learning Engineer",
+      location: "Remote, United States",
+      description:
+        "Fully remote position within the United States. Must be authorized to work in the US. We offer competitive compensation and benefits.",
+      is_remote: true,
+    },
+    expectedClassification: {
+      isRemoteEU: false,
+      confidence: "high",
+      reason: "Explicitly 'Remote, United States' — restricted to US",
+    },
+  },
+
   {
     id: "european-business-hours",
     description: "European business hours requirement without EU mention",
@@ -606,6 +688,207 @@ export const remoteEUTestCases: RemoteEUTestCase[] = [
       isRemoteEU: true,
       confidence: "medium",
       reason: "European business hours requirement targets EU-timezone workers",
+    },
+  },
+
+  // --- Aggregator, ATS enrichment, and edge-case scenarios ---
+
+  {
+    id: "aggregator-multi-posting-1",
+    description: "Same job posted on multiple aggregators (Jobgether + Otta pattern)",
+    jobPosting: {
+      title: "Senior ML Engineer",
+      location: "Remote - Europe",
+      description:
+        "This role was sourced via Jobgether and also appears on Otta. Our Berlin-based team is looking for an ML engineer to join remotely from anywhere in the EU. EU work authorization required.",
+      is_remote: true,
+    },
+    expectedClassification: {
+      isRemoteEU: true,
+      confidence: "high",
+      reason: "Multi-aggregator posting with explicit EU work auth and Berlin team",
+    },
+  },
+  {
+    id: "ats-country-code-contradiction-1",
+    description: "Country code says DE but description says US only",
+    jobPosting: {
+      title: "Backend Developer",
+      location: "Remote",
+      description:
+        "Fully remote position. Must be located in the United States. US citizens and green card holders only. No international candidates.",
+      country: "DE",
+      workplace_type: "remote",
+      is_remote: true,
+    },
+    expectedClassification: {
+      isRemoteEU: false,
+      confidence: "high",
+      reason: "Description explicitly restricts to US — ATS country code is likely a data error",
+    },
+  },
+  {
+    id: "salary-currency-eur-1",
+    description: "Salary listed in EUR with no explicit location",
+    jobPosting: {
+      title: "Product Analyst",
+      location: "Remote",
+      description:
+        "Competitive salary: 65,000-85,000 EUR/year. Fully remote. We offer 25 days PTO, home office stipend, and team retreats in Lisbon.",
+      is_remote: true,
+    },
+    expectedClassification: {
+      isRemoteEU: true,
+      confidence: "medium",
+      reason: "EUR salary and Lisbon retreats suggest EU-based company hiring EU workers",
+    },
+  },
+  {
+    id: "salary-currency-usd-1",
+    description: "Salary in USD with European timezone requirement",
+    jobPosting: {
+      title: "DevOps Engineer",
+      location: "Remote",
+      description:
+        "Salary: $120,000-$160,000 USD. Must overlap with CET timezone for at least 4 hours daily. Distributed team across Europe and North America.",
+      is_remote: true,
+    },
+    expectedClassification: {
+      isRemoteEU: true,
+      confidence: "medium",
+      reason: "CET timezone overlap requirement targets EU-compatible workers despite USD salary",
+    },
+  },
+  {
+    id: "aggregator-jobgether-eu-1",
+    description: "Jobgether posting with EU curation signals",
+    jobPosting: {
+      title: "Staff Software Engineer",
+      location: "Remote - EU (via Jobgether)",
+      description:
+        "Curated by Jobgether for EU-based remote professionals. The hiring company is a Series B fintech with offices in Amsterdam and Berlin. Must have EU work authorization.",
+      is_remote: true,
+    },
+    expectedClassification: {
+      isRemoteEU: true,
+      confidence: "high",
+      reason: "Jobgether EU curation + EU offices + EU work auth requirement",
+    },
+  },
+  {
+    id: "multi-posting-duplicate-1",
+    description: "Exact duplicate posted with different locations",
+    jobPosting: {
+      title: "Frontend Engineer",
+      location: "Remote - Global",
+      description:
+        "Note: This role is also posted as 'Remote - EU' and 'Remote - US'. This is the global version. We hire in 30+ countries. No specific region requirement for this posting.",
+      is_remote: true,
+    },
+    expectedClassification: {
+      isRemoteEU: false,
+      confidence: "medium",
+      reason: "Global variant of multi-posting — no EU-specific signals in this version",
+    },
+  },
+  {
+    id: "ats-greenhouse-remote-1",
+    description: "Greenhouse ATS with remote flag and EU office",
+    jobPosting: {
+      title: "Infrastructure Engineer",
+      location: "Remote",
+      description:
+        "Join our infrastructure team. We have offices in Dublin, Ireland and Warsaw, Poland. This is a fully remote position open to candidates in any EU member state. Greenhouse application.",
+      country: "IE",
+      workplace_type: "remote",
+      is_remote: true,
+    },
+    expectedClassification: {
+      isRemoteEU: true,
+      confidence: "high",
+      reason: "EU country code (IE) + remote flag + explicit EU member state eligibility",
+    },
+  },
+  {
+    id: "ats-lever-hybrid-1",
+    description: "Lever ATS posting marked remote but hybrid in description",
+    jobPosting: {
+      title: "UX Designer",
+      location: "Berlin, Germany",
+      description:
+        "Hybrid role: 3 days in our Berlin office, 2 days remote. Must be based in Berlin or willing to relocate. German or EU work authorization required. Applied via Lever.",
+      country: "DE",
+      workplace_type: "remote",
+      is_remote: true,
+    },
+    expectedClassification: {
+      isRemoteEU: false,
+      confidence: "high",
+      reason: "Description says hybrid (3 days in office) — ATS remote flag is misleading",
+    },
+  },
+  {
+    id: "balkan-countries-1",
+    description: "Balkan countries (some EU, some not)",
+    jobPosting: {
+      title: "QA Automation Engineer",
+      location: "Remote - Balkans",
+      description:
+        "Hiring across the Balkans: Serbia, Croatia, Bosnia, North Macedonia, Montenegro, Albania. Competitive salaries adjusted for local cost of living. Fully remote.",
+      is_remote: true,
+    },
+    expectedClassification: {
+      isRemoteEU: true,
+      confidence: "medium",
+      reason: "Croatia is EU; mixed Balkan group includes at least one EU member state",
+    },
+  },
+  {
+    id: "baltic-states-1",
+    description: "Baltic states (all EU)",
+    jobPosting: {
+      title: "Cloud Engineer",
+      location: "Remote - Baltics",
+      description:
+        "Open to candidates in Estonia, Latvia, or Lithuania. Fully remote position with competitive local salary. Our HQ is in Tallinn.",
+      is_remote: true,
+    },
+    expectedClassification: {
+      isRemoteEU: true,
+      confidence: "high",
+      reason: "All Baltic states (Estonia, Latvia, Lithuania) are EU member states",
+    },
+  },
+  {
+    id: "remote-contractor-eu-1",
+    description: "EU contractor (not employee) position",
+    jobPosting: {
+      title: "Contract Data Engineer",
+      location: "Remote - EU",
+      description:
+        "6-month contract position. Must invoice from an EU-registered business or be an EU-based freelancer. B2B contract, not employment. Rate: 500-700 EUR/day.",
+      is_remote: true,
+    },
+    expectedClassification: {
+      isRemoteEU: true,
+      confidence: "high",
+      reason: "EU-based contractor role — requires EU business registration or EU residency",
+    },
+  },
+  {
+    id: "startup-relocation-eu-1",
+    description: "EU startup offering relocation assistance",
+    jobPosting: {
+      title: "Founding Engineer",
+      location: "Remote (EU) or Barcelona, Spain",
+      description:
+        "Join our pre-seed startup in Barcelona. Fully remote from anywhere in the EU, or relocate to Barcelona — we cover relocation costs. EU work authorization required. Equity: 0.5-1.5%.",
+      is_remote: true,
+    },
+    expectedClassification: {
+      isRemoteEU: true,
+      confidence: "high",
+      reason: "Remote EU option + Barcelona relocation — EU work auth required",
     },
   },
 ];

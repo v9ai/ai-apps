@@ -1,5 +1,7 @@
 use anyhow::{Context, Result};
+use std::collections::HashMap;
 use std::path::PathBuf;
+use std::time::Instant;
 use tokio::task::JoinSet;
 use tracing::info;
 
@@ -48,6 +50,7 @@ impl TeamLead {
     }
 
     pub async fn run(self, tasks: Vec<ResearchTask>) -> Result<TeamResult> {
+        let team_start = Instant::now();
         let task_count = tasks.len();
         let task_list = SharedTaskList::new(tasks);
         let mailbox = Mailbox::new(128);
@@ -82,20 +85,66 @@ impl TeamLead {
             join_set.spawn(teammate.run());
         }
 
+        // Track task start times for duration measurement.
+        let task_start_times: std::sync::Arc<std::sync::Mutex<HashMap<usize, Instant>>> =
+            std::sync::Arc::new(std::sync::Mutex::new(HashMap::new()));
+
         // Monitor mailbox in the background.
         let monitor_mailbox = mailbox.clone();
+        let monitor_times = task_start_times.clone();
         let monitor_handle = tokio::spawn(async move {
             let mut rx = monitor_mailbox.subscribe();
             loop {
                 match rx.recv().await {
                     Ok(TeamMessage { from, kind, .. }) => match &kind {
                         MessageKind::Finding { task_id, summary } => {
+                            let duration_ms = {
+                                let times = monitor_times.lock().unwrap();
+                                times.get(task_id).map(|start| start.elapsed().as_millis() as u64)
+                            };
+                            if let Some(dur) = duration_ms {
+                                info!(
+                                    task_id = task_id,
+                                    worker = %from,
+                                    summary = %summary,
+                                    duration_ms = dur,
+                                    status = "completed",
+                                    "task completed"
+                                );
+                            } else {
+                                info!(
+                                    task_id = task_id,
+                                    worker = %from,
+                                    summary = %summary,
+                                    status = "completed",
+                                    "task completed"
+                                );
+                            }
                             eprintln!("[lead] {from} completed task {task_id}: {summary}");
                         }
                         MessageKind::StatusUpdate(msg) => {
+                            // Record task start time when a StatusUpdate indicates task start
+                            if msg.starts_with("Starting task ") {
+                                if let Some(task_id_str) = msg
+                                    .strip_prefix("Starting task ")
+                                    .and_then(|s| s.split(':').next())
+                                {
+                                    if let Ok(task_id) = task_id_str.trim().parse::<usize>() {
+                                        let mut times = monitor_times.lock().unwrap();
+                                        times.insert(task_id, Instant::now());
+                                        info!(
+                                            task_id = task_id,
+                                            worker = %from,
+                                            status = "started",
+                                            "task started"
+                                        );
+                                    }
+                                }
+                            }
                             eprintln!("[lead] {from}: {msg}");
                         }
                         MessageKind::Error(msg) => {
+                            info!(worker = %from, error = %msg, "task error");
                             eprintln!("[lead] ERROR from {from}: {msg}");
                         }
                     },
@@ -124,6 +173,15 @@ impl TeamLead {
         findings.sort_by_key(|(id, _, _)| *id);
 
         let successful = findings.len();
+        let team_elapsed_ms = team_start.elapsed().as_millis() as u64;
+
+        info!(
+            tasks_completed = successful,
+            tasks_total = task_count,
+            total_duration_ms = team_elapsed_ms,
+            "team completed"
+        );
+
         eprintln!(
             "\n[lead] All teammates done ({successful}/{task_count} succeeded). Running synthesis…\n"
         );
@@ -141,7 +199,7 @@ impl TeamLead {
     }
 
     async fn synthesize(&self, findings: &[(usize, String, String)]) -> Result<String> {
-        info!("running synthesis across {} findings", findings.len());
+        info!(finding_count = findings.len(), "starting synthesis");
 
         let combined: String = findings
             .iter()
@@ -196,9 +254,12 @@ Your task: produce a **master synthesis report** with:
             )
         };
 
-        agent
+        let synthesis = agent
             .prompt(prompt)
             .await
-            .context("[synthesis] DeepSeek call failed")
+            .context("[synthesis] DeepSeek call failed")?;
+
+        info!(synthesis_len = synthesis.len(), "synthesis complete");
+        Ok(synthesis)
     }
 }

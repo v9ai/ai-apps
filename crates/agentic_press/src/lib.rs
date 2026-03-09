@@ -6,7 +6,8 @@ pub mod research_phase;
 pub mod task_list;
 
 pub use pipeline::{
-    BlogResult, JournalismArticle, JournalismResult, PipelineMode, PipelineResult, TopicResult,
+    BlogResult, DeepDiveArticle, DeepDiveResult, JournalismArticle, JournalismResult, PipelineMode,
+    PipelineResult, TopicResult,
 };
 
 /// Convert a title/string into a URL-safe slug.

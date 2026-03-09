@@ -50,3 +50,11 @@ path = "src/bin/condition_research.rs"
 [[bin]]
 name = "tts-research"
 path = "src/bin/tts_research.rs"
+
+[[bin]]
+name = "therapeutic-research"
+path = "src/bin/therapeutic_research.rs"
+
+[[bin]]
+name = "eval-therapeutic"
+path = "src/bin/eval_therapeutic.rs"

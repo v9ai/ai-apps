@@ -121,6 +121,7 @@ NON_EU_LOCATION_PATTERN = re.compile(
     r"|mumbai|bangalore|bengaluru|hyderabad|delhi|chennai|pune"
     r"|são paulo|sao paulo|buenos aires|bogota|bogotá|lima|santiago"
     r"|manila|ho chi minh|jakarta"
+    r"|argentina|uruguay|costa rica|panama|colombia|chile|peru|mexico"
     r"|latam|latin america"
     r")\b",
     re.IGNORECASE,

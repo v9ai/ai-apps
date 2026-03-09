@@ -6,7 +6,7 @@
     "email": "nicolai.vadim@gmail.com",
     "phone": "+40774005428",
     "url": "https://github.com/nicolad",
-    "summary": "Senior Full Stack Engineer with 12+ years of experience building scalable web applications using React, TypeScript, Go, and Rust. Expert in modern frontend architectures, microservices, GraphQL APIs, and performance-critical systems. Shipping AI-powered personal projects (Nomadically.work, ResearchThera.com) with multi-model LLM orchestration, agentic pipelines, RAG search, and production observability. Domain expertise in E-commerce, FinTech, AI/ML, and enterprise SaaS.",
+    "summary": "Senior Full Stack Engineer with 12+ years of experience building scalable web applications using React, TypeScript, Go, and Rust. Expert in modern frontend architectures, microservices, GraphQL APIs, and performance-critical systems. Shipping 4 AI-powered personal projects with multi-model LLM orchestration, agentic pipelines, RAG search, eval-driven development, and production observability. Domain expertise in E-commerce, FinTech, AI/ML, and enterprise SaaS.",
     "keySkills": "React • TypeScript • JavaScript • Next.js • Node.js • Go • Rust • GraphQL • Apollo • REST API • Microservices • gRPC • AWS • Cloudflare • MongoDB • DynamoDB • Docker • CI/CD • Jest • Git • AI/LLM Orchestration",
     "location": {
       "address": "",
@@ -84,7 +84,7 @@
       "startDate": "March 2022",
       "endDate": "December 2025",
       "highlights": [],
-      "summary": "<ul><li>Architected and delivered micro-frontend portal architecture using Go microservices with gRPC and OpenAPI, integrating shared React components across multiple teams to improve development velocity and code reusability.</li><li>Led API migration from OpenAPI REST to GraphQL, implementing Apollo Server in Go and Apollo Client in React, reducing data over-fetching and improving frontend performance.</li><li>Drove frontend architecture decisions and technical leadership across multiple teams, establishing consistent design patterns and enforcing code quality through comprehensive PR reviews.</li><li>Optimized monorepo infrastructure by migrating from npm to PNPM with Turborepo caching, reducing CI/CD build times and improving developer productivity.</li><li>Designed and implemented integration testing strategy using Jest and React Testing Library, establishing automated test pipelines in CI/CD.</li><li><strong>Tech stack:</strong> Go, Echo, gRPC, GraphQL, Apollo Server, OpenAPI, React, TypeScript, Apollo Client, React Query, Ant Design, Turborepo, PNPM, MongoDB, Jest, React Testing Library</li></ul>",
+      "summary": "<ul><li>Architected micro-frontend portal using Go microservices with gRPC and OpenAPI, integrating shared React components across multiple teams.</li><li>Led API migration from REST to GraphQL, implementing Apollo Server in Go and Apollo Client in React, reducing over-fetching and improving performance.</li><li>Drove frontend architecture and technical leadership across teams, establishing design patterns and enforcing quality through PR reviews.</li><li>Migrated monorepo from npm to PNPM with Turborepo caching, reducing CI/CD build times.</li><li>Integration testing strategy with Jest and React Testing Library, automated in CI/CD.</li><li><strong>Tech stack:</strong> Go, Echo, gRPC, GraphQL, Apollo Server, OpenAPI, React, TypeScript, Apollo Client, React Query, Ant Design, Turborepo, PNPM, MongoDB, Jest, React Testing Library</li></ul>",
       "years": "3 yrs 10 mos"
     },
     {
@@ -96,7 +96,7 @@
       "isWorkingHere": false,
       "endDate": "Jan 2022",
       "highlights": [],
-      "summary": "<ul><li>Built high-performance e-commerce components for shopping cart and checkout flow using React and TypeScript.</li><li>Implemented SSR with Next.js for improved SEO and page load performance.</li><li>Developed reusable UI components with Styled Components following atomic design principles.</li><li>Integrated payment gateway APIs (Stripe, PayPal) with PCI compliance.</li><li>Implemented compound components and custom hooks patterns for maintainable, scalable code.</li><li><strong>Tech stack:</strong> React 17, Next.js 10, TypeScript, Styled Components, Jest, React Testing Library, Git, Agile/Scrum</li></ul>",
+      "summary": "<ul><li>Built e-commerce shopping cart and checkout components using React and TypeScript.</li><li>SSR with Next.js for SEO and page load performance.</li><li>Reusable UI components with Styled Components and atomic design.</li><li>Payment gateway integration (Stripe, PayPal) with PCI compliance.</li><li><strong>Tech stack:</strong> React 17, Next.js 10, TypeScript, Styled Components, Jest, React Testing Library</li></ul>",
       "years": "6 months"
     },
     {
@@ -108,7 +108,7 @@
       "isWorkingHere": false,
       "endDate": "Apr 2021",
       "highlights": [],
-      "summary": "<ul><li>Modernized legacy WordPress plugin admin interface with React and GraphQL, serving thousands of users on Event Smart SaaS platform.</li><li>Contributed open-source code to public GitHub repositories with 50+ merged PRs.</li><li>Established SASS/BEM architecture, component library patterns, and React best practices.</li><li>Improved code quality through unit testing with Jest and E2E testing with Playwright.</li><li>Collaborated with product team to design user interfaces for event registration and ticketing workflows.</li><li><strong>Tech stack:</strong> React 16, React Apollo, GraphQL, WPGraphQL, WordPress, PHP, MySQL, Jest, Playwright.</li></ul>",
+      "summary": "<ul><li>Modernized WordPress plugin admin with React and GraphQL for Event Smart SaaS platform.</li><li>50+ merged PRs to open-source repositories.</li><li>Established SASS/BEM architecture and component library patterns.</li><li>Unit testing (Jest) and E2E testing (Playwright).</li><li><strong>Tech stack:</strong> React 16, React Apollo, GraphQL, WPGraphQL, WordPress, PHP, MySQL, Jest, Playwright</li></ul>",
       "years": "1.5 years"
     },
     {
@@ -120,7 +120,7 @@
       "isWorkingHere": false,
       "endDate": "Oct 2019",
       "highlights": [],
-      "summary": "<ul><li><strong>Project: AARP Money Map</strong> - Built scalable financial planning platform for AARP, helping millions of users navigate financial decisions.</li><li>Designed component-based UI library with 40+ reusable React components in collaboration with UX designers, ensuring WCAG 2.1 AA accessibility.</li><li>Implemented responsive design patterns with CSS Grid and Flexbox for optimal cross-device experience.</li><li>Developed state management solution using React Context API and custom hooks.</li><li>Configured CI/CD pipeline with Bitbucket Pipelines, Sentry, SonarQube, and AWS CodePipeline for automated testing and deployments.</li><li>Developed serverless backend APIs using AWS Lambda, API Gateway, and DynamoDB for real-time data processing.</li><li><strong>Tech stack:</strong> React 16.8, Hooks, Context API, React Apollo, Serverless Framework, GraphQL, DynamoDB, AWS Lambda, JavaScript ES6+</li></ul>",
+      "summary": "<ul><li><strong>Project: AARP Money Map</strong> — Financial planning platform for AARP, millions of users.</li><li>UI library with 40+ React components, WCAG 2.1 AA accessible.</li><li>CI/CD with Bitbucket Pipelines, Sentry, SonarQube, and AWS CodePipeline.</li><li>Serverless APIs using AWS Lambda, API Gateway, and DynamoDB.</li><li><strong>Tech stack:</strong> React 16.8, Hooks, Context API, React Apollo, Serverless Framework, GraphQL, DynamoDB, AWS Lambda</li></ul>",
       "years": "8 months"
     },
     {
@@ -132,7 +132,7 @@
       "isWorkingHere": false,
       "endDate": "Feb 2019",
       "highlights": [],
-      "summary": "<ul><li><strong>Project: Travlrr</strong> - Built reusable React component library using advanced patterns including Higher-Order Components (HOCs), render props, and compound components.</li><li>Implemented secure authentication system with AWS Lambda, Auth0, JWT tokens, and MongoDB.</li><li>Designed and built RESTful APIs using Node.js and Express.js following JSON:API specification.</li><li>Conducted code reviews and improved test coverage with Jest and Enzyme, reducing production bugs by 30%.</li><li>Optimized application performance through code splitting, lazy loading, and tree shaking, reducing initial bundle size by 45%.</li><li>Collaborated with UI/UX designers to implement pixel-perfect, responsive UI components with seamless mobile experience.</li><li><strong>Tech stack:</strong> React 16, JavaScript ES6+, Node.js, Express.js, MongoDB, AWS Lambda, Auth0, Redux, Webpack</li></ul>",
+      "summary": "<ul><li><strong>Project: Travlrr</strong> — React component library with HOCs, render props, and compound components.</li><li>Auth system with AWS Lambda, Auth0, JWT, and MongoDB.</li><li>RESTful APIs with Node.js and Express.js (JSON:API spec).</li><li>Code reviews and testing (Jest, Enzyme), reducing production bugs by 30%.</li><li>Code splitting, lazy loading, tree shaking — 45% smaller bundle.</li><li><strong>Tech stack:</strong> React 16, Node.js, Express.js, MongoDB, AWS Lambda, Auth0, Redux, Webpack</li></ul>",
       "years": "9 months"
     },
     {
@@ -182,28 +182,57 @@
       {
         "id": "1",
         "name": "Nomadically.work",
-        "description": "AI job board aggregator for remote EU roles -- Next.js 16, GraphQL, Cloudflare D1, multi-model LLM pipeline.",
+        "description": "AI job board aggregator for remote EU roles — agentic classification, hybrid RAG search, Langfuse eval-driven prompt tuning with 38-case dataset and 80% accuracy threshold. Next.js 16, GraphQL, Cloudflare D1, multi-model LLM pipeline.",
         "githubUrl": "https://github.com/nicolad/nomadically.work",
         "websiteUrl": "https://nomadically.work",
         "highlights": [
-          "Architected multi-LLM routing layer (Claude, DeepSeek, OpenAI) with Promptfoo + Mastra Evals for accuracy validation, zero-downtime model swaps, and cost-optimized inference.",
-          "Engineered agentic AI pipeline using Mastra agents, LangGraph, and Vercel AI SDK v6 for real-time job classification, skill extraction, and EU remote categorization.",
-          "Built RAG-powered hybrid search combining BM25 lexical scoring with vector embeddings (LlamaIndex) and text-to-SQL converting natural language queries into parameterized Drizzle ORM expressions.",
-          "Implemented event-driven ingestion from 3 ATS platforms (Greenhouse, Lever, Ashby) via Trigger.dev with retry policies, dead-letter queues, and CI/CD-integrated pipeline validation.",
-          "Designed GraphQL API with DataLoader batching, end-to-end TypeScript type safety (Drizzle ORM + GraphQL Codegen), and Cloudflare D1 Gateway Worker with 10-100x throughput improvement via batch queries and stale-while-revalidate caching."
+          "Multi-LLM routing (Claude, DeepSeek, Workers AI) with Langfuse dataset evals (38 test cases, 80% accuracy gate), A/B prompt routing, zero-downtime model swaps, cost-optimized multi-tier inference.",
+          "4 specialized agents (SQL query, SQL generation, admin assistant, strategy enforcer) via Mastra, LangGraph, Vercel AI SDK v6 — real-time job classification, skill extraction, EU remote categorization with 20+ edge-case test suite.",
+          "Hybrid RAG search: BM25 lexical + 1024-dim BGE vector embeddings (LlamaIndex) + text-to-SQL converting natural language into parameterized Drizzle ORM expressions.",
+          "Event-driven ingestion from 3 ATS platforms (Greenhouse, Lever, Ashby) via Trigger.dev — retry policies, dead-letter queues, CI/CD pipeline validation.",
+          "GraphQL API (Apollo Server 5) with DataLoader batching, 10+ API routes, TypeScript type safety (Drizzle ORM + GraphQL Codegen), Cloudflare D1 Gateway Worker — 10-100x throughput via batch queries and stale-while-revalidate caching."
         ]
       },
       {
         "id": "2",
         "name": "ResearchThera.com",
-        "description": "AI therapeutic journaling platform -- agentic orchestration, 7-source research pipeline, clinical NLP, RAG, voice synthesis. Next.js 16, GraphQL, Cloudflare D1/R2.",
+        "description": "AI therapeutic journaling — agentic orchestration, 7-source research pipeline, clinical NLP, RAG, voice synthesis, Harbor containerized eval trials for multi-agent non-determinism. Next.js 16, GraphQL, Cloudflare D1/R2.",
         "githubUrl": "https://github.com/nicolad/research-thera",
         "websiteUrl": "https://researchthera.com",
         "highlights": [
-          "Designed multi-stage agentic workflow: clinical NLP normalization -> parallel 7-source research ingestion -> OpenAlex enrichment (300 candidates) -> LLM quality gate -> top-20 persistence to D1 + vector store for RAG retrieval.",
-          "Built custom evaluation scorer using DeepSeek-as-judge for evidence validation; tuned 3-threshold gating (relevance 0.75, confidence 0.55, blended 0.72) to filter unsupported clinical claims.",
-          "Implemented Langfuse prompt versioning with runtime registry loading for no-deploy prompt updates, distributed tracing, per-model cost tracking, and A/B prompt evaluation.",
-          "Engineered serverless TTS microservice with RAG-based content chunking, streaming audio to R2 via Trigger.dev v4 durable background tasks."
+          "Multi-stage agentic workflow (6-20 agents per session): clinical NLP normalization → parallel 7-source ingestion → OpenAlex enrichment (300 candidates) → LLM quality gate → top-20 persistence to D1 + vector store for RAG.",
+          "DeepSeek-as-judge evaluation scorer; 3-threshold gating (relevance 0.75, confidence 0.55, blended 0.72) filtering unsupported clinical claims.",
+          "Langfuse prompt versioning with runtime registry, no-deploy updates, distributed tracing, per-model cost tracking, A/B evaluation across LangChain/LangGraph Python workers.",
+          "Serverless TTS microservice: RAG-based content chunking, streaming audio to R2 via Trigger.dev v4 durable tasks.",
+          "Harbor eval harness: containerized trials-at-scale across 6-20 non-deterministic agents, standardized task/grader format mapped to ResearchTask definitions."
+        ]
+      },
+      {
+        "id": "3",
+        "name": "Agentic Healthcare",
+        "description": "AI health trajectory platform — blood test marker analysis, risk classification, medication tracking, Braintrust Factuality/Relevance scorers for clinical accuracy. Next.js 16, Supabase, Qwen embeddings.",
+        "githubUrl": "https://github.com/nicolad/agentic-healthcare",
+        "websiteUrl": "https://agentic-healthcare.vercel.app",
+        "highlights": [
+          "Longitudinal biomarker trajectory analysis across 7 derived clinical metrics (HDL/LDL ratio, TyG Index, NLR, De Ritis ratio), abnormal flag detection, metric velocity computation with evidence-based thresholds from 6+ peer-reviewed papers.",
+          "Risk classification (\"optimal\", \"borderline\", \"elevated\", \"low\") with cosine similarity scoring (threshold 0.3) against 1024-dim Qwen embeddings across 7 embedding tables.",
+          "7 protected server actions (blood tests, conditions, medications, symptoms, appointments, trajectory, search) with 15 trajectory test cases covering diverse metabolic profiles.",
+          "Braintrust autoevals: Factuality and Relevance scorers validating clinical accuracy, experiment tracking for model version comparison.",
+          "Supabase + pgvector backend with Row Level Security, Drizzle ORM, medication tracking, appointment scheduling, diagnosis management."
+        ]
+      },
+      {
+        "id": "4",
+        "name": "Law Adversarial",
+        "description": "Multi-agent adversarial brief stress-tester — Attacker/Defender/Judge debate, citation verification, jurisdiction analysis, tracked-change rewriting, 8-suite Promptfoo eval harness. Next.js 16, Supabase, DeepSeek + Qwen.",
+        "githubUrl": "https://github.com/nicolad/law-adversarial",
+        "websiteUrl": "https://law-adversarial.vercel.app",
+        "highlights": [
+          "6-agent adversarial debate pipeline: DeepSeek R1 Attacker surfaces weaknesses, Qwen Plus Defender rebuts, DeepSeek Chat Judge scores with severity ratings, plus citation-verifier, jurisdiction-expert, and brief-rewriter agents.",
+          "Citation verification and fabrication detection via DeepSeek R1 extended reasoning with chain-of-thought audit trails.",
+          "Jurisdiction-specific precedent hierarchy mapping with specialized expert agent, multi-jurisdiction comparison.",
+          "Real-time SSE streaming of round progress with per-agent audit logging and structured action metadata.",
+          "Promptfoo: 8 declarative YAML suites (attacker, defender, judge, citations, jurisdiction, rewriter, red-team, consistency), custom JS assertions, LLM-as-judge rubrics validating structured JSON across all 6 agents."
         ]
       }
     ]

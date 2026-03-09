@@ -1,0 +1,372 @@
+description: "E2E Pipeline — Attacker → Defender → Judge coherence"
+sharing: false
+
+prompts:
+  - "file://../prompts/judge.ts"
+
+providers:
+  - id: openai:chat:deepseek-reasoner
+    label: deepseek-reasoner
+    config:
+      apiKeyEnvar: DEEPSEEK_API_KEY
+      apiBaseUrl: https://api.deepseek.com/v1
+      temperature: 0
+      response_format:
+        type: json_object
+  - id: openai:chat:qwen-plus
+    label: qwen-plus
+    config:
+      apiKeyEnvar: DASHSCOPE_API_KEY
+      apiBaseUrl: https://dashscope-intl.aliyuncs.com/compatible-mode/v1
+      temperature: 0
+      response_format:
+        type: json_object
+
+defaultTest:
+  options:
+    provider:
+      id: openai:chat:deepseek-chat
+      config:
+        apiKeyEnvar: DEEPSEEK_API_KEY
+        apiBaseUrl: https://api.deepseek.com/v1
+        temperature: 0
+
+tests:
+  # Case 1: Well-structured brief — moderate attacker findings, strong defense
+  # Expected judge score: 65-85
+  - vars:
+      brief: |
+        MEMORANDUM IN SUPPORT OF MOTION FOR PRELIMINARY INJUNCTION
+
+        I. INTRODUCTION
+        Plaintiff TechNova Inc. seeks a preliminary injunction restraining Defendant Apex Solutions LLC from continuing to use Plaintiff's proprietary customer-matching algorithm (the "Algorithm") in Defendant's competing product, "MatchPro."
+
+        II. LIKELIHOOD OF SUCCESS ON THE MERITS
+        A. Trade Secret Misappropriation (Defend Trade Secrets Act, 18 U.S.C. Section 1836)
+        The Algorithm qualifies as a trade secret under the DTSA. Plaintiff has maintained its secrecy through: (1) restricting access to a need-to-know basis; (2) requiring all employees and contractors to sign NDAs; (3) encrypting the source code at rest and in transit. See Ruckelshaus v. Monsanto Co., 467 U.S. 986 (1984) (information derives economic value from not being generally known).
+
+        Defendant's former CTO, Sarah Chen, was employed by Plaintiff from 2021-2024 and had access to the Algorithm. Within three months of joining Defendant, Apex launched MatchPro with functionality substantially identical to Plaintiff's Algorithm. The temporal proximity and functional similarity establish misappropriation by inevitable disclosure. See PepsiCo, Inc. v. Redmond, 54 F.3d 1262 (7th Cir. 1995).
+
+        B. Irreparable Harm
+        Loss of trade secret status, once it occurs, is irreparable because it cannot be undone by monetary damages. Faiveley Transp. Malmo AB v. Wabtec Corp., 559 F.3d 110 (2d Cir. 2009). Every day Defendant operates MatchPro, Plaintiff's competitive advantage erodes.
+
+        C. Balance of Hardships
+        Defendant can continue its business without using Plaintiff's Algorithm. Plaintiff, by contrast, faces permanent loss of a core competitive asset. The balance tips decisively in Plaintiff's favor.
+
+        D. Public Interest
+        Enforcing trade secret protections incentivizes innovation and deters employee poaching for proprietary knowledge. The public interest favors the injunction.
+      attackerOutput: |
+        {
+          "attacks": [
+            {
+              "claim": "The temporal proximity and functional similarity establish misappropriation by inevitable disclosure",
+              "weakness": "The inevitable disclosure doctrine is highly disfavored in many circuits and has been rejected outright in some jurisdictions. The Seventh Circuit's PepsiCo decision is the high-water mark, but courts in the Second and Third Circuits have applied it narrowly or not at all. The brief presents inevitable disclosure as an established standard without acknowledging the circuit split.",
+              "type": "legal",
+              "evidence": "Bimbo Bakeries USA, Inc. v. Botticella, 613 F.3d 102 (3d Cir. 2010) (inevitable disclosure must be carefully limited); EarthWeb, Inc. v. Schlack, 71 F. Supp. 2d 299 (S.D.N.Y. 1999) (rejecting inevitable disclosure in Second Circuit)."
+            },
+            {
+              "claim": "Loss of trade secret status, once it occurs, is irreparable because it cannot be undone by monetary damages",
+              "weakness": "The brief assumes irreparable harm without demonstrating actual ongoing disclosure. The DTSA requires a showing that the trade secret is 'threatened' with misappropriation, not merely that misappropriation occurred in the past. The brief fails to distinguish between past and ongoing harm.",
+              "type": "legal",
+              "evidence": "18 U.S.C. Section 1836(b)(3)(A) requires a showing of 'actual or threatened misappropriation.' See also Winter v. NRDC, 555 U.S. 7 (2008) (irreparable harm must be 'likely,' not just 'possible')."
+            },
+            {
+              "claim": "Defendant's former CTO, Sarah Chen, was employed by Plaintiff from 2021-2024 and had access to the Algorithm",
+              "weakness": "Access alone does not establish misappropriation. The brief does not allege that Chen actually took documents, files, or code — only that she 'had access' and Defendant later launched a similar product. Circumstantial evidence of misappropriation requires more than access plus similarity.",
+              "type": "factual",
+              "evidence": "Silvaco Data Sys. v. Intel Corp., 184 Cal. App. 4th 210 (2010) (access and similarity insufficient without evidence of actual taking)."
+            }
+          ]
+        }
+      defenderOutput: |
+        {
+          "rebuttals": [
+            {
+              "attack_ref": "The inevitable disclosure doctrine is highly disfavored in many circuits",
+              "defense": "While the circuit split is real, the brief need not address every circuit's position — only the governing circuit's law. If this case is in the Seventh Circuit, PepsiCo is directly controlling. Even in circuits skeptical of the doctrine, the combination of temporal proximity and near-identical functionality meets the heightened standard those courts require. The brief should specify the governing circuit and tailor the argument accordingly.",
+              "supporting_citations": ["PepsiCo, Inc. v. Redmond, 54 F.3d 1262 (7th Cir. 1995)", "Bimbo Bakeries USA, Inc. v. Botticella, 613 F.3d 102, 118 (3d Cir. 2010) (applying inevitable disclosure on stronger facts)"],
+              "strength": 0.55
+            },
+            {
+              "attack_ref": "The brief assumes irreparable harm without demonstrating actual ongoing disclosure",
+              "defense": "The attacker raises a valid point about the past/ongoing distinction. However, the brief does allege ongoing harm — MatchPro is currently operating and using the Algorithm. The Faiveley citation supports that ongoing competitive harm from trade secret use constitutes irreparable injury. The brief should make the ongoing nature of the harm more explicit.",
+              "supporting_citations": ["Faiveley Transp. Malmo AB v. Wabtec Corp., 559 F.3d 110, 118 (2d Cir. 2009)", "Syntel Sterling Best Shores (Mauritius) Ltd. v. TriZetto Grp., Inc., 2020 WL 4355969 (S.D.N.Y. 2020)"],
+              "strength": 0.6
+            },
+            {
+              "attack_ref": "Access alone does not establish misappropriation",
+              "defense": "The attacker is partially correct that access plus similarity is circumstantial. However, the brief does allege more than mere access — it alleges (1) access to the specific trade secret, (2) departure to a direct competitor, (3) launch of a functionally identical product within three months. This combination has been held sufficient to survive a preliminary injunction standard. The brief should strengthen this by alleging specific evidence of taking if available.",
+              "supporting_citations": ["Integrated Cash Mgmt. Servs., Inc. v. Digital Transactions, Inc., 920 F.2d 171 (2d Cir. 1990)", "Composite Marine Propellers, Inc. v. Van Der Woude, 962 F.2d 1263 (7th Cir. 1992)"],
+              "strength": 0.5
+            }
+          ]
+        }
+      jurisdiction: "Federal"
+      round: "1"
+      previousFindings: "[]"
+    assert:
+      - type: javascript
+        value: "file://assertions/validate-judge.js"
+      - type: javascript
+        value: "file://assertions/validate-e2e.js"
+      - type: javascript
+        value: |
+          module.exports = (output) => {
+            const parsed = typeof output === 'string' ? JSON.parse(output) : output;
+            if (parsed.overall_score < 65 || parsed.overall_score > 85) {
+              return { pass: false, score: 0, reason: `Score ${parsed.overall_score} outside expected 65-85 range for well-structured brief with moderate issues` };
+            }
+            return { pass: true, score: 1, reason: `Score ${parsed.overall_score} in expected range` };
+          };
+      - type: llm-rubric
+        value: >
+          This is an E2E pipeline eval. The brief is well-structured with proper DTSA elements
+          and real citations. The attacker raises three legitimate issues: circuit split on inevitable
+          disclosure, past vs. ongoing harm distinction, and access-plus-similarity sufficiency.
+          The defender mounts a competent defense on all three, with strengths averaging ~0.55.
+          The judge should: (1) reference the specific attacker points in its findings; (2) credit
+          the defender's rebuttals where appropriate; (3) score in the 65-85 range reflecting a
+          strong brief with real but addressable weaknesses. Findings should be medium severity
+          at most — no critical defects. Rate on cross-agent coherence: does the judge engage with
+          both sides rather than evaluating the brief in isolation?
+
+  # Case 2: Brief with fabricated citations — attacker flags, defender concedes
+  # Expected judge score: 15-35 with critical citation findings
+  - vars:
+      brief: |
+        MEMORANDUM IN OPPOSITION TO MOTION TO DISMISS
+
+        I. STATEMENT OF THE CASE
+        Plaintiff brings this action for securities fraud under Section 10(b) of the Securities Exchange Act of 1934. Defendant Corp issued materially misleading financial statements for Q3 and Q4 2024, inflating revenue by approximately $340 million through fictitious "channel-stuffing" transactions.
+
+        II. LEGAL STANDARD
+        Under the Supreme Court's holding in Blackwell v. SEC Enforcement Division, 601 U.S. 228 (2025), plaintiffs in securities fraud actions need only demonstrate "substantial probability of material misrepresentation" rather than the traditional "strong inference" scienter standard of the PSLRA. Blackwell effectively overruled Tellabs, Inc. v. Makor Issues & Rights, Ltd., 551 U.S. 308 (2007).
+
+        III. SCIENTER
+        Defendant's CFO personally certified the accuracy of the financial statements under SOX Section 302. Under Patterson v. Global Financial Systems Inc., 894 F.3d 1122 (2d Cir. 2024), CFO certification creates a rebuttable presumption of scienter. Combined with the magnitude of the restatement ($340M), scienter is established.
+
+        IV. LOSS CAUSATION
+        When Defendant issued its restatement on February 3, 2025, its stock price dropped 42% in a single trading session. Under Rodriguez v. Automated Trading Platforms, LLC, 78 F.4th 890 (9th Cir. 2024), a corrective disclosure followed by a statistically significant stock decline is per se sufficient to establish loss causation.
+      attackerOutput: |
+        {
+          "attacks": [
+            {
+              "claim": "Blackwell v. SEC Enforcement Division, 601 U.S. 228 (2025)",
+              "weakness": "This case does not exist. There is no Supreme Court decision by this name or citation. The 'substantial probability' standard is fabricated. Tellabs remains good law — the PSLRA's 'strong inference' scienter standard has not been overruled.",
+              "type": "citation",
+              "evidence": "No Supreme Court case with this caption exists in any reporter. Tellabs, Inc. v. Makor Issues & Rights, Ltd., 551 U.S. 308 (2007) remains controlling."
+            },
+            {
+              "claim": "Patterson v. Global Financial Systems Inc., 894 F.3d 1122 (2d Cir. 2024)",
+              "weakness": "This case does not exist. There is no Second Circuit decision creating a 'rebuttable presumption of scienter' from CFO certification. SOX Section 302 certification is relevant evidence but does not create any presumption.",
+              "type": "citation",
+              "evidence": "No such case in the Federal Reporter. The actual law: In re Scholastic Corp. Sec. Litig., 252 F.3d 63 (2d Cir. 2001) — SOX certification is one factor, not a presumption."
+            },
+            {
+              "claim": "Rodriguez v. Automated Trading Platforms, LLC, 78 F.4th 890 (9th Cir. 2024)",
+              "weakness": "This case does not exist. There is no 'per se' loss causation standard. Loss causation requires showing the stock decline was caused by the revelation of the fraud, not merely temporal proximity. See Dura Pharmaceuticals, Inc. v. Broudo, 544 U.S. 336 (2005).",
+              "type": "citation",
+              "evidence": "Dura Pharmaceuticals remains controlling on loss causation. No circuit has adopted a 'per se' standard."
+            },
+            {
+              "claim": "Plaintiffs need only demonstrate 'substantial probability of material misrepresentation'",
+              "weakness": "The entire legal framework in this brief is built on fabricated case law. The actual standard under the PSLRA, 15 U.S.C. Section 78u-4(b)(2), requires facts giving rise to a 'strong inference' of scienter — a demanding standard that the Supreme Court interpreted in Tellabs.",
+              "type": "legal",
+              "evidence": "15 U.S.C. Section 78u-4(b)(2); Tellabs, 551 U.S. at 314."
+            }
+          ]
+        }
+      defenderOutput: |
+        {
+          "rebuttals": [
+            {
+              "attack_ref": "Blackwell v. SEC Enforcement Division does not exist",
+              "defense": "No defense. If this case is fabricated, citing it is sanctionable under Rule 11, Fed. R. Civ. P. The brief's entire legal framework collapses without this authority.",
+              "supporting_citations": ["Fed. R. Civ. P. 11(b)(2)"],
+              "strength": 0.0
+            },
+            {
+              "attack_ref": "Patterson v. Global Financial Systems Inc. does not exist",
+              "defense": "No defense. Another fabricated citation. While SOX 302 certification is legitimately relevant to scienter, the 'rebuttable presumption' framework is invented.",
+              "supporting_citations": [],
+              "strength": 0.0
+            },
+            {
+              "attack_ref": "Rodriguez v. Automated Trading Platforms does not exist",
+              "defense": "No defense. A third fabricated citation. The underlying facts (42% stock drop after restatement) may actually support loss causation under Dura Pharmaceuticals, but the brief cites fake law instead of real authority.",
+              "supporting_citations": ["Dura Pharmaceuticals, Inc. v. Broudo, 544 U.S. 336 (2005)"],
+              "strength": 0.05
+            },
+            {
+              "attack_ref": "The entire legal framework is built on fabricated case law",
+              "defense": "The attacker is correct. The brief must be entirely rewritten using real authority. The factual allegations (revenue inflation, CFO certification, stock drop) may have merit, but the legal analysis is worthless.",
+              "supporting_citations": [],
+              "strength": 0.0
+            }
+          ]
+        }
+      jurisdiction: "Federal"
+      round: "1"
+      previousFindings: "[]"
+    assert:
+      - type: javascript
+        value: "file://assertions/validate-judge.js"
+      - type: javascript
+        value: "file://assertions/validate-e2e.js"
+      - type: javascript
+        value: |
+          module.exports = (output) => {
+            const parsed = typeof output === 'string' ? JSON.parse(output) : output;
+            if (parsed.overall_score < 15 || parsed.overall_score > 35) {
+              return { pass: false, score: 0, reason: `Score ${parsed.overall_score} outside expected 15-35 range for brief with fabricated citations` };
+            }
+            const criticalCount = parsed.findings.filter(f => f.severity === 'critical').length;
+            if (criticalCount < 2) {
+              return { pass: false, score: 0, reason: `Expected at least 2 critical findings for fabricated citations, got ${criticalCount}` };
+            }
+            return { pass: true, score: 1, reason: `Score ${parsed.overall_score}, ${criticalCount} critical findings — appropriate for fabricated citations` };
+          };
+      - type: llm-rubric
+        value: >
+          This E2E eval tests a brief built entirely on fabricated case law. Three fake cases
+          (Blackwell, Patterson, Rodriguez) are cited as authority. The attacker correctly flags all
+          three as nonexistent. The defender concedes completely (strength 0.0 on all points).
+          The judge MUST: (1) find critical-severity citation issues for each fabricated case;
+          (2) note that the entire legal framework collapses; (3) acknowledge that the underlying
+          facts (revenue inflation, SOX certification, stock drop) have some merit even though the
+          legal analysis is worthless; (4) score 15-35 — not zero because the factual allegations
+          have substance, but very low because the law is fabricated. The judge should reference
+          Rule 11 sanctions risk. Rate on whether the judge correctly synthesizes attacker findings
+          and defender concessions.
+
+  # Case 3: Mixed brief — some good law, some bad procedure — attacker/defender disagree
+  # Expected: nuanced findings with mixed severity
+  - vars:
+      brief: |
+        MEMORANDUM IN SUPPORT OF MOTION FOR CLASS CERTIFICATION
+        Federal Rule of Civil Procedure 23
+
+        I. INTRODUCTION
+        Plaintiffs, on behalf of a putative class of approximately 12,000 current and former employees, move for class certification of their claims that Defendant MegaCorp Inc. systematically misclassified them as exempt employees under the FLSA and failed to pay overtime compensation.
+
+        II. NUMEROSITY — Rule 23(a)(1)
+        The proposed class includes approximately 12,000 employees across 14 states. Numerosity is plainly satisfied. See Consol. Rail Corp. v. Town of Hyde Park, 47 F.3d 473, 483 (2d Cir. 1995) (numerosity presumed above 40 members).
+
+        III. COMMONALITY — Rule 23(a)(2)
+        The common question is whether Defendant's uniform job classification policy — which classified all "Client Services Associates" as exempt regardless of their actual duties — violates the FLSA. Under Wal-Mart Stores, Inc. v. Dukes, 564 U.S. 338 (2011), commonality requires a common contention capable of classwide resolution. Here, the uniform policy provides that common contention.
+
+        IV. TYPICALITY — Rule 23(a)(3)
+        Named Plaintiffs performed the same duties as absent class members and were subject to the same classification policy. Their claims are typical. See Marisol A. v. Giuliani, 126 F.3d 372, 376 (2d Cir. 1997).
+
+        V. ADEQUACY — Rule 23(a)(4)
+        Named Plaintiffs have no conflicts with the class and have retained experienced class action counsel.
+
+        VI. PREDOMINANCE — Rule 23(b)(3)
+        Common questions predominate because liability turns on the legality of the uniform classification policy, not individualized inquiries. The Supreme Court has not addressed whether FLSA exemption status can vary by individual job duties within a single classification.
+
+        VII. SUPERIORITY — Rule 23(b)(3)
+        A class action is superior to individual litigation given the number of claimants and the relatively small individual damages.
+
+        VIII. NOTICE PLAN
+        [No notice plan included]
+
+        IX. CONCLUSION
+        Class certification should be granted.
+      attackerOutput: |
+        {
+          "attacks": [
+            {
+              "claim": "Common questions predominate because liability turns on the legality of the uniform classification policy",
+              "weakness": "FLSA exemption analysis is inherently individualized. The Supreme Court in Encino Motorcars, LLC v. Navarro, 584 U.S. 79 (2018), emphasized that exemption status depends on the actual duties performed, not the employer's classification. A class of 12,000 employees across 14 states performing potentially different duties faces serious predominance problems. The brief ignores Tyson Foods, Inc. v. Bouaphakeo, 577 U.S. 442 (2016), which addressed this exact tension.",
+              "type": "legal",
+              "evidence": "Encino Motorcars, 584 U.S. at 87; Tyson Foods, 577 U.S. at 453-54 (representative evidence may establish liability classwide only if class members' situations are sufficiently similar)."
+            },
+            {
+              "claim": "The Supreme Court has not addressed whether FLSA exemption status can vary by individual job duties",
+              "weakness": "This is incorrect. Tyson Foods directly addresses the use of representative evidence in FLSA class actions. The brief's claim that the Supreme Court has not addressed this issue is a factual error that undermines credibility.",
+              "type": "factual",
+              "evidence": "Tyson Foods, Inc. v. Bouaphakeo, 577 U.S. 442 (2016)."
+            },
+            {
+              "claim": "[No notice plan included]",
+              "weakness": "Rule 23(c)(2)(B) requires the court to 'direct to class members the best notice that is practicable.' The complete absence of a notice plan is a procedural deficiency. While the court can address this separately, its absence weakens the motion.",
+              "type": "procedural",
+              "evidence": "Fed. R. Civ. P. 23(c)(2)(B); Eisen v. Carlisle & Jacquelin, 417 U.S. 156 (1974)."
+            },
+            {
+              "claim": "Plaintiffs across 14 states subject to the same classification policy",
+              "weakness": "Multi-state classes face choice-of-law problems. Different states have different overtime exemption standards. The brief fails to address which state's law applies or whether variations in state law defeat predominance. See Castano v. American Tobacco Co., 84 F.3d 734 (5th Cir. 1996).",
+              "type": "legal",
+              "evidence": "Castano, 84 F.3d at 741 (variations in state law may overwhelm common questions); Phillips Petroleum Co. v. Shutts, 472 U.S. 797 (1985)."
+            }
+          ]
+        }
+      defenderOutput: |
+        {
+          "rebuttals": [
+            {
+              "attack_ref": "FLSA exemption analysis is inherently individualized",
+              "defense": "While exemption analysis can be individualized, the key issue here is whether the employer's uniform classification policy is lawful. Tyson Foods itself allowed class treatment where a uniform policy was challenged. The brief should cite Tyson Foods and argue that the uniform policy makes this a suitable case for class treatment despite some individual variation.",
+              "supporting_citations": ["Tyson Foods, Inc. v. Bouaphakeo, 577 U.S. 442 (2016)", "Scott v. Family Dollar Stores, Inc., 733 F.3d 105 (4th Cir. 2013)"],
+              "strength": 0.5
+            },
+            {
+              "attack_ref": "Tyson Foods directly addresses the use of representative evidence in FLSA class actions",
+              "defense": "The attacker is correct that the brief's statement is factually wrong. Tyson Foods is directly on point and should be cited. However, the brief's failure to cite it is a drafting error, not a fatal flaw — Tyson Foods actually supports the plaintiff's position on class certification.",
+              "supporting_citations": ["Tyson Foods, Inc. v. Bouaphakeo, 577 U.S. 442 (2016)"],
+              "strength": 0.3
+            },
+            {
+              "attack_ref": "Complete absence of a notice plan is a procedural deficiency",
+              "defense": "The notice plan issue is real but not fatal. Many courts address notice separately after granting certification. See Manual for Complex Litigation Section 21.311. The brief should include a proposed notice plan, but its absence does not defeat certification.",
+              "supporting_citations": ["Manual for Complex Litigation (Fourth) Section 21.311"],
+              "strength": 0.6
+            },
+            {
+              "attack_ref": "Multi-state classes face choice-of-law problems",
+              "defense": "The choice-of-law problem is real for state-law claims but less acute for the FLSA claims, which are governed by federal law. The brief should distinguish between the FLSA claims (federal question, no choice-of-law issue) and any state-law overtime claims (where Castano's concerns apply). If the class is limited to FLSA claims, this attack is significantly weakened.",
+              "supporting_citations": ["29 U.S.C. Section 207 (FLSA overtime)", "Genesis Healthcare Corp. v. Symczyk, 569 U.S. 66 (2013)"],
+              "strength": 0.65
+            }
+          ]
+        }
+      jurisdiction: "Federal"
+      round: "1"
+      previousFindings: "[]"
+    assert:
+      - type: javascript
+        value: "file://assertions/validate-judge.js"
+      - type: javascript
+        value: "file://assertions/validate-e2e.js"
+      - type: javascript
+        value: |
+          module.exports = (output) => {
+            const parsed = typeof output === 'string' ? JSON.parse(output) : output;
+            // Should have mixed severity findings
+            const severities = parsed.findings.map(f => f.severity);
+            const hasMixed = (severities.includes('high') || severities.includes('critical')) &&
+                             (severities.includes('medium') || severities.includes('low'));
+            if (!hasMixed) {
+              return { pass: false, score: 0, reason: `Expected mixed severity findings for a mixed-quality brief, got: ${severities.join(', ')}` };
+            }
+            // Score should be in the moderate range
+            if (parsed.overall_score < 35 || parsed.overall_score > 65) {
+              return { pass: false, score: 0, reason: `Score ${parsed.overall_score} outside expected 35-65 range for a mixed brief` };
+            }
+            return { pass: true, score: 1, reason: `Score ${parsed.overall_score} with mixed severities — appropriate for mixed-quality brief` };
+          };
+      - type: llm-rubric
+        value: >
+          This E2E eval tests a mixed-quality brief. The Rule 23(a) analysis (numerosity,
+          commonality, typicality, adequacy) is competent with real citations. The Rule 23(b)
+          predominance analysis has real problems: ignoring Tyson Foods, failing to address
+          choice-of-law, and a factual error about Supreme Court precedent. The notice plan is
+          missing. The attacker and defender disagree on severity — defender argues the notice
+          plan and choice-of-law issues are manageable, while conceding the Tyson Foods omission.
+          The judge should produce nuanced findings: (1) high severity for the factual error about
+          Tyson Foods; (2) medium severity for predominance and choice-of-law gaps; (3) low/medium
+          for the missing notice plan; (4) credit the strong Rule 23(a) analysis. Score should be
+          35-65. Rate on whether the judge produces truly differentiated findings rather than
+          treating everything as equally severe.
+
+outputPath: ../promptfoo-output/e2e-pipeline-latest.json

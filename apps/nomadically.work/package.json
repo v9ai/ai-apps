@@ -19,8 +19,12 @@
     "deploy": "tsx scripts/deploy.ts",
     "codegen": "graphql-codegen",
     "schema:generate": "tsx scripts/generate-worker-types.ts",
+    "test:evals": "tsx src/evals/remote-eu/__tests__/run-local.ts",
     "test:openrouter": "tsx src/openrouter/test-integration.ts",
     "eval": "tsx --env-file=.env.local scripts/eval-remote-eu-langfuse.ts",
+    "eval:langfuse": "tsx --env-file=.env.local scripts/eval-remote-eu-langfuse.ts",
+    "eval:heuristic": "tsx --env-file=.env.local scripts/eval-heuristic-comparison.ts",
+    "eval:ab": "tsx --env-file=.env.local scripts/eval-prompt-ab.ts",
     "janitor:trigger": "tsx scripts/trigger-janitor.ts",
     "boards:discover": "tsx scripts/discover-ashby-boards.ts",
     "skills:seed": "tsx scripts/seed-skill-taxonomy.ts",
@@ -114,6 +118,5 @@
     "vitest": "^4.0.18",
     "wrangler": "^4.61.1"
   },
-  "version": "0.0.1",
-  "packageManager": "pnpm@10.10.0+sha512.d615db246fe70f25dcfea6d8d73dee782ce23e2245e3c4f6f888249fb568149318637dca73c2c5c8ef2a4ca0d5657fb9567188bfab47f566d1ee6ce987815c39"
+  "version": "0.0.1"
 }

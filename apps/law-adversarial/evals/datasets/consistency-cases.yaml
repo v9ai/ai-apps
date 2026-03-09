@@ -167,3 +167,544 @@
         should score this 10-35 with multiple critical findings. The defender's honest
         concessions (strength 0.0 on most points) should be credited. The few partial defenses
         (SOF exception, demand note theory) should be acknowledged but not rescue the score.
+
+# Case 3: Strong brief (50-70 expected) — well-researched employment discrimination with minor procedural gaps
+- vars:
+    brief: |
+      MEMORANDUM IN SUPPORT OF MOTION FOR PARTIAL SUMMARY JUDGMENT
+      Title VII Disparate Treatment — Race Discrimination
+
+      I. UNDISPUTED FACTS
+      Plaintiff, an African-American senior engineer with 12 years of exemplary performance reviews, was passed over for promotion to Engineering Director in favor of a white candidate with 3 years of experience. The decision-maker, VP of Engineering Marcus Webb, made the selection without a formal interview process. Three other African-American engineers in the department were similarly passed over during 2023-2024. Statistical analysis by Dr. Elena Rodriguez (Plaintiff's expert) shows the promotion rate for African-American engineers was 4.2% versus 18.7% for white engineers during 2020-2024 (p < 0.01).
+
+      II. MCDONNELL DOUGLAS FRAMEWORK
+      Under McDonnell Douglas Corp. v. Green, 411 U.S. 792 (1973), Plaintiff establishes a prima facie case: (1) member of a protected class; (2) qualified for the position — 12 years experience, exemplary reviews; (3) suffered adverse action — denied promotion; (4) position filled by someone outside the protected class.
+
+      III. PRETEXT
+      Defendant's stated reason — "better cultural fit" — is pretextual. In Ash v. Tyson Foods, Inc., 546 U.S. 454 (2006), the Supreme Court held that subjective criteria like "cultural fit" can be evidence of pretext when applied inconsistently. Here, "cultural fit" was never used in prior promotion decisions and was first invoked to deny Plaintiff's promotion. See also Reeves v. Sanderson Plumbing Products, Inc., 530 U.S. 133, 147 (2000) (prima facie case plus disbelief of employer's reason may suffice for judgment as a matter of law).
+
+      IV. STATISTICAL EVIDENCE
+      The statistical disparity (4.2% vs. 18.7%, p < 0.01) corroborates the individual claim. Bazemore v. Friday, 478 U.S. 385, 400 (1986) (statistical evidence admissible in Title VII cases). Defendant has offered no rebuttal expert.
+    attackerOutput: |
+      {
+        "attacks": [
+          {
+            "claim": "Plaintiff establishes a prima facie case under McDonnell Douglas",
+            "weakness": "The prima facie case is well-pled but the brief does not address Defendant's likely argument that the position required specific technical skills or leadership certifications that the selected candidate possessed. The brief should preemptively address qualifications comparisons beyond just years of experience.",
+            "type": "legal",
+            "evidence": "Texas Dep't of Cmty. Affairs v. Burdine, 450 U.S. 248, 254 (1981) (employer's burden is only production, not persuasion — the brief must anticipate legitimate reasons)."
+          },
+          {
+            "claim": "Statistical evidence corroborates the individual claim",
+            "weakness": "The statistical analysis may face a Daubert challenge. The brief does not address: (1) whether the sample size is sufficient for the specific department; (2) whether the analysis controls for relevant variables (education, certifications, performance tier); (3) the expert's methodology. A Daubert motion could exclude the statistics.",
+            "type": "factual",
+            "evidence": "Daubert v. Merrell Dow Pharmaceuticals, Inc., 509 U.S. 579 (1993); Wal-Mart Stores v. Dukes, 564 U.S. 338, 357 (2011) (statistical evidence must account for relevant distinctions)."
+          }
+        ]
+      }
+    defenderOutput: |
+      {
+        "rebuttals": [
+          {
+            "attack_ref": "brief does not address Defendant's likely argument about specific technical skills",
+            "defense": "On summary judgment, Plaintiff need not disprove every conceivable justification — only show that the stated reason is pretextual. The brief properly focuses on the 'cultural fit' reason actually given. If Defendant raises new reasons in opposition, Plaintiff can address them in reply.",
+            "supporting_citations": ["Reeves v. Sanderson Plumbing Products, Inc., 530 U.S. 133 (2000)", "Burdine, 450 U.S. at 256"],
+            "strength": 0.6
+          },
+          {
+            "attack_ref": "statistical analysis may face a Daubert challenge",
+            "defense": "The Daubert concern is valid and the brief should be stronger on methodology. However, the statistics are supplementary to the individual claim — even without them, the McDonnell Douglas case is strong. The brief should add a paragraph on Dr. Rodriguez's methodology and controls.",
+            "supporting_citations": ["Bazemore v. Friday, 478 U.S. 385 (1986)", "Teamsters v. United States, 431 U.S. 324 (1977)"],
+            "strength": 0.5
+          }
+        ]
+      }
+    jurisdiction: "Federal"
+    round: "1"
+    previousFindings: "[]"
+  assert:
+    - type: javascript
+      value: "file://assertions/validate-judge.js"
+    - type: javascript
+      value: |
+        module.exports = (output) => {
+          const parsed = typeof output === 'string' ? JSON.parse(output) : output;
+          if (parsed.overall_score < 50 || parsed.overall_score > 70) {
+            return { pass: false, score: 0, reason: `Score ${parsed.overall_score} outside expected 50-70 range for a strong brief with minor gaps` };
+          }
+          const hasCritical = parsed.findings.some(f => f.severity === 'critical');
+          if (hasCritical) {
+            return { pass: false, score: 0, reason: 'No critical findings expected for a well-researched brief with minor gaps' };
+          }
+          return { pass: true, score: 1, reason: `Score ${parsed.overall_score} — appropriate for strong brief` };
+        };
+    - type: llm-rubric
+      value: >
+        This is a well-researched Title VII brief with proper McDonnell Douglas framework,
+        real citations (Ash v. Tyson Foods, Reeves, Bazemore), and strong factual allegations.
+        The attacker raises two valid but non-fatal points: (1) anticipating alternative
+        qualifications arguments and (2) Daubert vulnerability of the statistics. The defender
+        mounts reasonable rebuttals. The judge should score 50-70 with medium-severity findings
+        only — no critical defects. The brief demonstrates competent legal research with
+        refinement-level gaps. Rate on whether the judge correctly calibrates severity for
+        a genuinely strong brief.
+
+# Case 4: Procedural-only flaw (60-80 expected) — good law, bad filing procedure
+- vars:
+    brief: |
+      MOTION FOR TEMPORARY RESTRAINING ORDER
+      Environmental Contamination — Clean Water Act
+
+      I. FACTUAL BACKGROUND
+      Defendant ChemFlow Industries has been discharging industrial wastewater containing PFAS compounds into the Cedar River since approximately January 2024. EPA monitoring data (attached as Exhibit A) shows PFAS levels at 127 ppt, exceeding the EPA's health advisory level of 70 ppt by 81%. The discharge point is 2.3 miles upstream of the municipal water intake for the City of Riverside (population 45,000).
+
+      II. LIKELIHOOD OF SUCCESS — Clean Water Act Section 505
+      Citizen suits under CWA Section 505, 33 U.S.C. Section 1365, are authorized when the EPA has not commenced enforcement. Gwaltney of Smithfield, Ltd. v. Chesapeake Bay Foundation, 484 U.S. 49, 56 (1987) (citizen suits require allegation of ongoing or intermittent violation). The discharge is ongoing — EPA's most recent sampling (February 2025) confirmed continued exceedance.
+
+      III. IRREPARABLE HARM
+      PFAS contamination of drinking water supplies constitutes irreparable harm. These compounds are persistent, bioaccumulative, and linked to cancer, thyroid disease, and immune suppression. Monetary damages cannot restore water quality or reverse public health exposure. See Amoco Production Co. v. Village of Gambell, 480 U.S. 531, 545 (1987) (environmental harm may be irreparable).
+
+      IV. BALANCE OF EQUITIES AND PUBLIC INTEREST
+      The balance favors Plaintiff. Defendant can install filtration systems; the public cannot un-drink contaminated water. The public interest in clean drinking water is paramount. See Tennessee Valley Authority v. Hill, 437 U.S. 153 (1978) (environmental protection reflects congressional policy priority).
+
+      V. RELIEF REQUESTED
+      Plaintiff requests the Court immediately order Defendant to cease all discharges into Cedar River.
+    attackerOutput: |
+      {
+        "attacks": [
+          {
+            "claim": "Citizen suits under CWA Section 505 are authorized when the EPA has not commenced enforcement",
+            "weakness": "The brief fails to demonstrate compliance with CWA Section 505(b)(1)(A), which requires 60 days' notice to the EPA, the state, and the alleged violator before filing a citizen suit. This is a jurisdictional prerequisite. If notice was not given, the court lacks subject matter jurisdiction. Hallstrom v. Tillamook County, 493 U.S. 20 (1989).",
+            "type": "procedural",
+            "evidence": "33 U.S.C. Section 1365(b)(1)(A); Hallstrom v. Tillamook County, 493 U.S. 20 (1989) (60-day notice is mandatory and jurisdictional)."
+          },
+          {
+            "claim": "Plaintiff requests the Court immediately order Defendant to cease all discharges",
+            "weakness": "A TRO cannot be issued ex parte unless the movant certifies that immediate and irreparable injury will result before the adverse party can be heard. FRCP 65(b)(1). The brief does not address whether notice was given to Defendant or why ex parte relief is necessary. Also, the brief does not include the required security bond under FRCP 65(c).",
+            "type": "procedural",
+            "evidence": "Fed. R. Civ. P. 65(b)(1) (ex parte TRO requirements); Fed. R. Civ. P. 65(c) (security requirement)."
+          }
+        ]
+      }
+    defenderOutput: |
+      {
+        "rebuttals": [
+          {
+            "attack_ref": "fails to demonstrate compliance with CWA Section 505(b)(1)(A) 60-day notice requirement",
+            "defense": "The attacker raises a critical procedural point. However, an exception to the 60-day notice requirement exists for citizen suits alleging violations of Sections 301(a) and 306 — if the violation is of an effluent standard or limitation. The brief should address whether this exception applies and, if 60-day notice was sent, should attach proof of notice.",
+            "supporting_citations": ["33 U.S.C. Section 1365(b)(1)(A)", "Natural Resources Defense Council v. Southwest Marine, Inc., 236 F.3d 985 (9th Cir. 2000)"],
+            "strength": 0.35
+          },
+          {
+            "attack_ref": "brief does not address ex parte TRO requirements or security bond",
+            "defense": "The FRCP 65(b) and (c) issues are valid procedural omissions. The brief should be refiled with: (1) a certification explaining why immediate relief is needed before a hearing; (2) a proposed security bond amount; (3) proof of notice to Defendant or explanation of why ex parte relief is warranted. These are fixable drafting deficiencies, not substantive legal flaws.",
+            "supporting_citations": ["Fed. R. Civ. P. 65(b)(1)", "Fed. R. Civ. P. 65(c)"],
+            "strength": 0.25
+          }
+        ]
+      }
+    jurisdiction: "Federal"
+    round: "1"
+    previousFindings: "[]"
+  assert:
+    - type: javascript
+      value: "file://assertions/validate-judge.js"
+    - type: javascript
+      value: |
+        module.exports = (output) => {
+          const parsed = typeof output === 'string' ? JSON.parse(output) : output;
+          if (parsed.overall_score < 60 || parsed.overall_score > 80) {
+            return { pass: false, score: 0, reason: `Score ${parsed.overall_score} outside expected 60-80 range — good law but bad procedure` };
+          }
+          // Should have procedural findings
+          const procFindings = parsed.findings.filter(f => f.type === 'procedural');
+          if (procFindings.length === 0) {
+            return { pass: false, score: 0, reason: 'Expected procedural findings for a brief with filing procedure deficiencies' };
+          }
+          return { pass: true, score: 1, reason: `Score ${parsed.overall_score}, ${procFindings.length} procedural findings — appropriate` };
+        };
+    - type: llm-rubric
+      value: >
+        This brief has excellent substantive law — CWA Section 505, Gwaltney, proper
+        irreparable harm and balance analysis with real citations. However, it has significant
+        procedural omissions: (1) no evidence of 60-day notice requirement compliance (Hallstrom
+        makes this jurisdictional); (2) no FRCP 65(b) ex parte certification; (3) no FRCP 65(c)
+        security bond. The judge should score 60-80: the law is sound, the facts are compelling,
+        but the procedural gaps could be case-ending if not cured. Procedural findings should be
+        high severity (60-day notice) and medium severity (FRCP 65 requirements). Legal findings
+        should be low/none — the substantive analysis is competent.
+
+# Case 5: Fabricated citations (5-20 expected) — multiple fake cases cited
+- vars:
+    brief: |
+      MEMORANDUM IN SUPPORT OF MOTION FOR NEW TRIAL
+      Federal Rule of Civil Procedure 59
+
+      The jury's verdict of $2.1 million in compensatory damages should be set aside because it is against the manifest weight of the evidence.
+
+      I. STANDARD OF REVIEW
+      Under the Supreme Court's decision in Blackstone v. American Jury Systems, Inc., 603 U.S. 115 (2025), trial courts have an enhanced duty to scrutinize jury verdicts in complex commercial litigation. Blackstone established a three-part "reliability inquiry" requiring courts to assess: (1) whether the jury received adequate expert guidance, (2) whether the damages methodology was scientifically valid, and (3) whether the verdict amount falls within a "zone of reasonableness."
+
+      II. THE VERDICT FAILS THE BLACKSTONE RELIABILITY INQUIRY
+      A. Inadequate Expert Guidance
+      The jury was presented with competing damage estimates of $500,000 and $4.2 million. Under Whitfield v. National Damages Assessment Board, 891 F.3d 445 (3d Cir. 2024), when expert testimony spans an order of magnitude, the court must provide enhanced jury instructions on damages methodology. No such instruction was given.
+
+      B. Invalid Damages Methodology
+      Plaintiff's expert used a "contingent revenue projection" model. In Crawford v. Financial Analytics Corp., 45 F.4th 1089 (7th Cir. 2024), the Seventh Circuit held that contingent revenue projections are inherently speculative and inadmissible under Daubert when the contingency probability exceeds 60%.
+
+      C. Verdict Outside Zone of Reasonableness
+      The $2.1 million verdict falls outside the "zone of reasonableness" established in Blackstone. Under Patel v. Consolidated Industries Group, 912 F.3d 778 (5th Cir. 2024), a verdict that is more than 2x the lower expert estimate triggers a presumption of excessiveness.
+    attackerOutput: |
+      {
+        "attacks": [
+          {
+            "claim": "Blackstone v. American Jury Systems, Inc., 603 U.S. 115 (2025)",
+            "weakness": "This case does not exist. There is no Supreme Court decision establishing a 'reliability inquiry' for jury verdicts. The actual standard for new trials under Rule 59 is whether the verdict is 'against the clear weight of the evidence.' See Gasperini v. Center for Humanities, Inc., 518 U.S. 415 (1996).",
+            "type": "citation",
+            "evidence": "No such case exists in U.S. Reports. The 'reliability inquiry' framework is fabricated."
+          },
+          {
+            "claim": "Whitfield v. National Damages Assessment Board, 891 F.3d 445 (3d Cir. 2024)",
+            "weakness": "This case does not exist. The 'National Damages Assessment Board' is a fictitious entity. There is no 'enhanced jury instruction' requirement when expert estimates diverge.",
+            "type": "citation",
+            "evidence": "No Third Circuit case with this caption or citation exists."
+          },
+          {
+            "claim": "Crawford v. Financial Analytics Corp., 45 F.4th 1089 (7th Cir. 2024)",
+            "weakness": "This case does not exist. There is no Seventh Circuit rule excluding damages models when 'contingency probability exceeds 60%.' Daubert admissibility does not turn on a numerical probability threshold.",
+            "type": "citation",
+            "evidence": "No such case in the Federal Reporter. Daubert analysis applies to methodology, not probability thresholds."
+          },
+          {
+            "claim": "Patel v. Consolidated Industries Group, 912 F.3d 778 (5th Cir. 2024)",
+            "weakness": "This case does not exist. There is no '2x lower estimate' presumption of excessiveness. Remittitur standards vary by circuit but none apply a mechanical multiplier test.",
+            "type": "citation",
+            "evidence": "No Fifth Circuit case matches this citation. Remittitur standards require case-specific analysis."
+          }
+        ]
+      }
+    defenderOutput: |
+      {
+        "rebuttals": [
+          {
+            "attack_ref": "Blackstone v. American Jury Systems does not exist",
+            "defense": "No defense. The cornerstone of the entire brief is a fabricated Supreme Court case. The 'reliability inquiry' framework does not exist. This is sanctionable under Rule 11.",
+            "supporting_citations": ["Fed. R. Civ. P. 11(b)(2)"],
+            "strength": 0.0
+          },
+          {
+            "attack_ref": "Whitfield v. National Damages Assessment Board does not exist",
+            "defense": "No defense. A second fabricated citation. The 'enhanced jury instruction' requirement is invented.",
+            "supporting_citations": [],
+            "strength": 0.0
+          },
+          {
+            "attack_ref": "Crawford v. Financial Analytics Corp. does not exist",
+            "defense": "No defense. A third fabricated citation. The '60% contingency probability' threshold has no basis in Daubert or any circuit precedent.",
+            "supporting_citations": [],
+            "strength": 0.0
+          },
+          {
+            "attack_ref": "Patel v. Consolidated Industries Group does not exist",
+            "defense": "No defense. A fourth fabricated citation. The entire brief is built on fabricated case law. Every legal proposition is supported only by nonexistent authorities.",
+            "supporting_citations": [],
+            "strength": 0.0
+          }
+        ]
+      }
+    jurisdiction: "Federal"
+    round: "1"
+    previousFindings: "[]"
+  assert:
+    - type: javascript
+      value: "file://assertions/validate-judge.js"
+    - type: javascript
+      value: |
+        module.exports = (output) => {
+          const parsed = typeof output === 'string' ? JSON.parse(output) : output;
+          if (parsed.overall_score < 5 || parsed.overall_score > 20) {
+            return { pass: false, score: 0, reason: `Score ${parsed.overall_score} outside expected 5-20 range for brief with entirely fabricated citations` };
+          }
+          const criticalCount = parsed.findings.filter(f => f.severity === 'critical').length;
+          if (criticalCount < 3) {
+            return { pass: false, score: 0, reason: `Expected at least 3 critical findings for 4 fabricated citations, got ${criticalCount}` };
+          }
+          return { pass: true, score: 1, reason: `Score ${parsed.overall_score}, ${criticalCount} critical findings — appropriate for all-fabricated brief` };
+        };
+    - type: llm-rubric
+      value: >
+        This brief cites four entirely fabricated cases as its sole legal authorities.
+        Every legal proposition rests on nonexistent law. The defender concedes completely
+        (strength 0.0 on all points). The judge must score 5-20 — near the bottom, with
+        multiple critical-severity citation findings. The judge should note Rule 11
+        sanctions risk and recommend the brief be entirely rewritten with real authority.
+        Unlike the E2E fabricated citations case, this brief has NO salvageable legal
+        analysis — even the factual background is structured around fake legal frameworks.
+
+# Case 6: Wrong jurisdiction (30-50 expected) — applies state law in federal case
+- vars:
+    brief: |
+      MEMORANDUM IN SUPPORT OF MOTION FOR SUMMARY JUDGMENT
+      Breach of Non-Compete Agreement — Diversity Jurisdiction
+
+      I. JURISDICTION
+      This Court has diversity jurisdiction under 28 U.S.C. Section 1332. Plaintiff is a Delaware corporation with its principal place of business in New York. Defendant is a citizen of New Jersey. Amount in controversy exceeds $75,000.
+
+      II. THE NON-COMPETE IS ENFORCEABLE UNDER CALIFORNIA LAW
+      The Employment Agreement contains a choice-of-law provision selecting California law. Under California Business and Professions Code Section 16600, non-compete agreements are generally enforceable when they are reasonable in scope, duration, and geographic reach. Edwards v. Arthur Andersen LLP, 44 Cal.4th 937 (2008), confirmed that California courts apply a three-factor reasonableness test: (1) duration no longer than necessary to protect legitimate interests; (2) geographic scope limited to areas of actual competition; (3) activity restrictions limited to the specific competitive activity.
+
+      III. THE NON-COMPETE IS REASONABLE
+      The 18-month duration, tri-state geographic scope, and restriction to direct competitors are all reasonable. The agreement protects Plaintiff's legitimate business interests in customer relationships and confidential pricing data.
+
+      IV. DEFENDANT BREACHED THE NON-COMPETE
+      Defendant joined a direct competitor within 3 months of departure and solicited 12 of Plaintiff's clients. Plaintiff has suffered $340,000 in lost revenue.
+    attackerOutput: |
+      {
+        "attacks": [
+          {
+            "claim": "Under California Business and Professions Code Section 16600, non-compete agreements are generally enforceable when they are reasonable",
+            "weakness": "This is exactly backwards. California Business and Professions Code Section 16600 provides that 'every contract by which anyone is restrained from engaging in a lawful profession, trade, or business of any kind is to that extent void.' Edwards v. Arthur Andersen held that Section 16600 invalidates non-compete agreements categorically — there is no 'reasonableness' test in California. The brief fundamentally mischaracterizes California law.",
+            "type": "legal",
+            "evidence": "Cal. Bus. & Prof. Code Section 16600; Edwards v. Arthur Andersen LLP, 44 Cal.4th 937, 945 (2008) ('Section 16600 represents a strong public policy of the State of California' — non-competes are void, period, with narrow statutory exceptions)."
+          },
+          {
+            "claim": "California courts apply a three-factor reasonableness test",
+            "weakness": "No such test exists in California. The 'reasonableness' test for non-competes is used in states like New York, Texas, and Florida — not California. The brief appears to have confused California law with another jurisdiction's framework.",
+            "type": "legal",
+            "evidence": "The Restatement (Second) of Contracts Section 188 reasonableness test is applied in most states but explicitly rejected in California. See Hill Medical Corp. v. Wycoff, 86 Cal. App. 4th 895 (2001)."
+          },
+          {
+            "claim": "Choice-of-law provision selecting California law",
+            "weakness": "If the choice-of-law provision selects California law and California law voids the non-compete, the brief's own choice-of-law argument is self-defeating. Under Erie, the federal court sitting in diversity must apply state substantive law. If California law applies, the non-compete is void.",
+            "type": "logical",
+            "evidence": "Erie R.R. Co. v. Tompkins, 304 U.S. 64 (1938); Klaxon Co. v. Stentor Elec. Mfg. Co., 313 U.S. 487 (1941)."
+          }
+        ]
+      }
+    defenderOutput: |
+      {
+        "rebuttals": [
+          {
+            "attack_ref": "Section 16600 invalidates non-compete agreements categorically",
+            "defense": "The attacker is correct. California law categorically voids non-competes under Section 16600. The brief fundamentally mischaracterizes California law. The only viable strategy would be to argue that California law should not apply (despite the choice-of-law clause) and that New York or New Jersey law — which do use a reasonableness test — should govern instead.",
+            "supporting_citations": ["Edwards v. Arthur Andersen LLP, 44 Cal.4th 937 (2008)", "Application Group, Inc. v. Hunter Group, Inc., 61 Cal. App. 4th 881 (1998)"],
+            "strength": 0.05
+          },
+          {
+            "attack_ref": "No three-factor reasonableness test exists in California",
+            "defense": "The attacker is correct. The brief describes a test that does not exist under California law. No defense available.",
+            "supporting_citations": [],
+            "strength": 0.0
+          },
+          {
+            "attack_ref": "the brief's own choice-of-law argument is self-defeating",
+            "defense": "The attacker identifies a fatal logical contradiction. Arguing for California law application while seeking to enforce a non-compete is internally incoherent. The only path forward is to argue against applying California law, using the Section 187 Restatement factors to apply New York or New Jersey law instead.",
+            "supporting_citations": ["Restatement (Second) of Conflict of Laws Section 187"],
+            "strength": 0.1
+          }
+        ]
+      }
+    jurisdiction: "Federal"
+    round: "1"
+    previousFindings: "[]"
+  assert:
+    - type: javascript
+      value: "file://assertions/validate-judge.js"
+    - type: javascript
+      value: |
+        module.exports = (output) => {
+          const parsed = typeof output === 'string' ? JSON.parse(output) : output;
+          if (parsed.overall_score < 30 || parsed.overall_score > 50) {
+            return { pass: false, score: 0, reason: `Score ${parsed.overall_score} outside expected 30-50 range for wrong-jurisdiction brief` };
+          }
+          // Should have at least one high or critical finding for the fundamental legal error
+          const severeFindings = parsed.findings.filter(f => f.severity === 'critical' || f.severity === 'high');
+          if (severeFindings.length === 0) {
+            return { pass: false, score: 0, reason: 'Expected at least one high/critical finding for fundamentally mischaracterized jurisdiction law' };
+          }
+          return { pass: true, score: 1, reason: `Score ${parsed.overall_score}, ${severeFindings.length} severe findings — appropriate for wrong-jurisdiction brief` };
+        };
+    - type: llm-rubric
+      value: >
+        This brief fundamentally mischaracterizes California non-compete law. Section 16600
+        voids non-competes categorically — there is no "reasonableness" test. The brief
+        describes a legal framework that does not exist in California. Additionally, the
+        choice-of-law argument is self-defeating: invoking California law kills the non-compete.
+        The judge should score 30-50 because: (1) the factual allegations and damages are
+        properly pled; (2) the jurisdictional basis is sound; but (3) the substantive legal
+        analysis is fatally wrong. The judge should flag the California law mischaracterization
+        as critical/high and recommend either abandoning the California choice-of-law argument
+        or rewriting under New York/New Jersey law.
+
+# Case 7: Pro se with merit (40-60 expected) — poorly written but legally sound arguments
+- vars:
+    brief: |
+      Your Honor,
+
+      My name is Maria Santos and I am writing to the court because my landlord Mr. Garrison has not fixed anything in my apartment for over a year. I have three children and the conditions are dangerous.
+
+      Since March 2024 I have had: no heat in winter (radiators broken), rats in the kitchen (I have pictures), lead paint peeling in the kids bedroom, and a broken front door lock. I have called the landlord over 40 times and sent certified letters on April 2, June 15, August 8, and October 1, 2024 (receipts attached as Exhibits 1-4). The city building inspector came on September 12, 2024 and cited violations for all of these problems (Exhibit 5).
+
+      I have been paying rent of $1,800/month on time every month. I am asking the court to:
+      1. Order the landlord to fix everything
+      2. Reduce my rent until repairs are made
+      3. Award me damages for what my family has suffered
+
+      I know tenants have rights. I read that New York requires landlords to keep apartments safe and livable. I cannot afford a lawyer but I believe my case is strong because I have documented everything and the city already found violations.
+
+      Respectfully submitted,
+      Maria Santos, Pro Se
+    attackerOutput: |
+      {
+        "attacks": [
+          {
+            "claim": "New York requires landlords to keep apartments safe and livable",
+            "weakness": "The brief fails to cite the warranty of habitability (NY Real Property Law Section 235-b) or the specific Housing Maintenance Code provisions violated. While pro se pleadings are liberally construed, the legal basis must be identified. The brief also does not cite Park West Management Corp. v. Mitchell, 47 N.Y.2d 316 (1979), the leading case on habitability.",
+            "type": "legal",
+            "evidence": "NY Real Prop. Law Section 235-b; Park West Management Corp. v. Mitchell, 47 N.Y.2d 316 (1979); NYC Admin. Code Section 27-2005."
+          },
+          {
+            "claim": "Order the landlord to fix everything — Reduce my rent — Award me damages",
+            "weakness": "The remedies requested are available but not properly framed. Rent abatement requires establishing the diminished rental value. Specific performance (repair order) requires showing legal remedies are inadequate. The brief does not quantify damages or distinguish between the legal theories supporting each remedy.",
+            "type": "procedural",
+            "evidence": "NY Real Prop. Law Section 235-b(2) (rent abatement); Solow v. Wellner, 86 N.Y.2d 582 (1995) (damages calculation for habitability violations)."
+          }
+        ]
+      }
+    defenderOutput: |
+      {
+        "rebuttals": [
+          {
+            "attack_ref": "fails to cite the warranty of habitability or Housing Maintenance Code",
+            "defense": "Under Haines v. Kerner, 404 U.S. 519 (1972), pro se pleadings are held to 'less stringent standards.' The factual allegations — no heat, vermin, lead paint, broken lock — squarely invoke the warranty of habitability even without citation. The city inspector's violation report (Exhibit 5) corroborates the claims. A court should liberally construe this as a Section 235-b claim.",
+            "supporting_citations": ["Haines v. Kerner, 404 U.S. 519 (1972)", "Hughes v. Rowe, 449 U.S. 5, 9-10 (1980)"],
+            "strength": 0.55
+          },
+          {
+            "attack_ref": "remedies not properly framed",
+            "defense": "The attacker's point about remedy framing is technically correct but harsh for a pro se filing. The petitioner's documentation is actually stronger than many counseled filings: 4 certified demand letters, a city inspection report, rent payment records. The court can shape the remedy. The lack of damages quantification is a real gap but not fatal.",
+            "supporting_citations": ["Solow v. Wellner, 86 N.Y.2d 582 (1995)", "NY CPLR Section 3025(c) (liberal amendment)"],
+            "strength": 0.45
+          }
+        ]
+      }
+    jurisdiction: "New York"
+    round: "1"
+    previousFindings: "[]"
+  assert:
+    - type: javascript
+      value: "file://assertions/validate-judge.js"
+    - type: javascript
+      value: |
+        module.exports = (output) => {
+          const parsed = typeof output === 'string' ? JSON.parse(output) : output;
+          if (parsed.overall_score < 40 || parsed.overall_score > 60) {
+            return { pass: false, score: 0, reason: `Score ${parsed.overall_score} outside expected 40-60 range for pro se brief with merit` };
+          }
+          return { pass: true, score: 1, reason: `Score ${parsed.overall_score} — appropriate for a pro se brief with strong facts but weak legal framing` };
+        };
+    - type: llm-rubric
+      value: >
+        This is a pro se brief with strong factual documentation but no legal citations or
+        formal structure. The judge must apply Haines v. Kerner liberal construction. The
+        factual record is actually strong: certified demand letters, city inspection violations,
+        contemporaneous evidence. The legal claims (habitability, rent abatement, damages) are
+        all viable but unarticulat The judge should score 40-60: (1) credit the
+        excellent factual documentation; (2) flag the missing legal citations as high severity
+        but note they are fixable; (3) note the remedy framing gap at medium severity; (4)
+        acknowledge that the underlying claims have substantial merit. The judge should
+        recommend specific citations to add rather than dismissing the filing.
+
+# Case 8: Novel AI-evidence theory (40-65 expected) — untested legal theory about AI-generated evidence
+- vars:
+    brief: |
+      MEMORANDUM IN SUPPORT OF MOTION IN LIMINE
+      Admissibility of AI-Generated Evidence Under Federal Rules of Evidence
+
+      I. INTRODUCTION
+      Defendant seeks to exclude Plaintiff's Exhibit 14 — a damage assessment report generated by Plaintiff's proprietary "LegalMind AI" system. The report purports to calculate Plaintiff's lost profits using machine learning analysis of industry data.
+
+      II. AI-GENERATED REPORTS ARE NOT ADMISSIBLE UNDER THE FEDERAL RULES
+      A. Hearsay — Rule 802
+      The AI-generated report constitutes hearsay under FRE 801(c). It is an out-of-court "statement" offered for the truth of the matter asserted — namely, the damage amount. While traditional computer-generated evidence may be non-hearsay under the "machine-generated" exception, AI systems that exercise judgment-like functions cross the line into assertive conduct. See Lorraine v. Markel American Insurance Co., 241 F.R.D. 534 (D. Md. 2007) (comprehensive framework for electronic evidence admissibility).
+
+      B. Confrontation — Sixth Amendment (if applicable)
+      In criminal cases, AI-generated evidence raises Confrontation Clause issues under Crawford v. Washington, 541 U.S. 36 (2004). While this is a civil case, the due process analogue applies: Plaintiff cannot rely on a "witness" that cannot be cross-examined. The AI system's reasoning is opaque — a "black box" — and Defendant has no meaningful opportunity to challenge its conclusions.
+
+      C. Expert Testimony — Rule 702 and Daubert
+      If treated as expert opinion, the AI report must satisfy Daubert v. Merrell Dow Pharmaceuticals, Inc., 509 U.S. 579 (1993). The report fails because: (1) the methodology cannot be tested — the model's weights and architecture are proprietary; (2) the error rate is unknown; (3) there is no peer review of this specific model; (4) the "general acceptance" prong fails because AI damage assessment lacks acceptance in the legal community.
+
+      III. POLICY CONSIDERATIONS
+      Admitting AI-generated evidence without adequate safeguards creates a risk of "automation bias" — the tendency to over-rely on computer-generated outputs. Courts should require, at minimum: disclosure of training data, model architecture, and validation methodology before admitting AI evidence.
+    attackerOutput: |
+      {
+        "attacks": [
+          {
+            "claim": "The AI-generated report constitutes hearsay under FRE 801(c)",
+            "weakness": "The hearsay argument is novel but faces a strong counterargument. FRE 801(a) defines a 'statement' as a 'person's oral assertion.' AI systems are not 'persons' under the Rules. Most courts have treated computer-generated outputs as non-hearsay. The brief's distinction between traditional computer output and 'judgment-like' AI functions is creative but unsupported by case law.",
+            "type": "legal",
+            "evidence": "FRE 801(a) (limiting 'statements' to persons); United States v. Lizarraga-Tirado, 789 F.3d 1107 (9th Cir. 2015) (machine-generated evidence is not hearsay because machines are not 'declarants')."
+          },
+          {
+            "claim": "In criminal cases, AI-generated evidence raises Confrontation Clause issues — the due process analogue applies in civil cases",
+            "weakness": "The Confrontation Clause does not apply in civil cases. The 'due process analogue' argument is speculative and unsupported by precedent. No court has held that the Confrontation Clause has a civil analog for AI evidence. This argument could undermine credibility.",
+            "type": "legal",
+            "evidence": "The Sixth Amendment Confrontation Clause is limited to criminal prosecutions. See Crawford v. Washington, 541 U.S. 36 (2004) (discussing the Clause in criminal context only)."
+          },
+          {
+            "claim": "If treated as expert opinion, the AI report must satisfy Daubert",
+            "weakness": "The Daubert argument is the brief's strongest point but it conflates the AI system with the expert. Under FRE 702, the relevant inquiry is whether the human expert who used the AI tool can explain and defend the methodology. The Daubert factors apply to the expert's testimony about the tool, not to the tool itself in isolation. See In re Zoloft Products Liability Litigation, 858 F.3d 787 (3d Cir. 2017).",
+            "type": "legal",
+            "evidence": "FRE 702 (as amended 2023, requiring expert to demonstrate reliable application); Zoloft, 858 F.3d at 796."
+          }
+        ]
+      }
+    defenderOutput: |
+      {
+        "rebuttals": [
+          {
+            "attack_ref": "AI systems are not 'persons' under the Rules — most courts treat computer output as non-hearsay",
+            "defense": "The attacker raises the orthodox position, but the brief's distinction between traditional computer output (deterministic) and AI output (probabilistic, judgment-like) is a genuinely novel argument that courts will need to address. The brief is ahead of the case law rather than wrong about it. However, the brief should acknowledge the current majority position and argue for its evolution.",
+            "supporting_citations": ["Lorraine v. Markel, 241 F.R.D. at 564", "People v. Goldsmith, 59 Cal.4th 258 (2014) (foundational requirements for computer evidence)"],
+            "strength": 0.4
+          },
+          {
+            "attack_ref": "The Confrontation Clause does not apply in civil cases",
+            "defense": "The attacker is correct that the Confrontation Clause is limited to criminal cases. The 'due process analogue' argument is weak and should be dropped or reframed as a purely due process argument under the Fifth/Fourteenth Amendment right to meaningful opportunity to be heard, without invoking the Sixth Amendment.",
+            "supporting_citations": [],
+            "strength": 0.15
+          },
+          {
+            "attack_ref": "Daubert factors apply to the expert's testimony about the tool, not the tool itself",
+            "defense": "The attacker makes a valid distinction, but the brief's concern is legitimate: if the expert cannot explain the AI's methodology because it is a black box, the expert fails Daubert regardless. The 2023 amendment to Rule 702 strengthens this argument by requiring the expert to demonstrate 'reliable application' of the methodology. The brief should reframe: the issue is not that the AI fails Daubert, but that no expert can satisfy Daubert when relying on an unexplainable tool.",
+            "supporting_citations": ["FRE 702 (2023 amendment)", "Daubert, 509 U.S. at 593-94"],
+            "strength": 0.55
+          }
+        ]
+      }
+    jurisdiction: "Federal"
+    round: "1"
+    previousFindings: "[]"
+  assert:
+    - type: javascript
+      value: "file://assertions/validate-judge.js"
+    - type: javascript
+      value: |
+        module.exports = (output) => {
+          const parsed = typeof output === 'string' ? JSON.parse(output) : output;
+          if (parsed.overall_score < 40 || parsed.overall_score > 65) {
+            return { pass: false, score: 0, reason: `Score ${parsed.overall_score} outside expected 40-65 range for novel AI-evidence theory` };
+          }
+          return { pass: true, score: 1, reason: `Score ${parsed.overall_score} — appropriate for novel legal theory with mixed execution` };
+        };
+    - type: llm-rubric
+      value: >
+        This brief presents a novel legal theory about AI-generated evidence admissibility.
+        It has one strong argument (Daubert/black-box), one creative-but-unsupported argument
+        (AI hearsay), and one weak argument (civil Confrontation Clause analogue). The judge
+        should score 40-65: (1) credit the Daubert analysis as the strongest point, especially
+        with the 2023 Rule 702 amendment; (2) note the hearsay argument as creative but ahead
+        of case law — medium severity for lacking supporting precedent; (3) flag the Confrontation
+        Clause argument as a high-severity error that should be dropped; (4) credit the policy
+        considerations as appropriate advocacy. The judge should recognize this as a brief
+        making a cutting-edge argument with uneven execution, not a fundamentally deficient brief.

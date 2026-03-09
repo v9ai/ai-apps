@@ -345,7 +345,7 @@ export const METRIC_REFERENCES: Record<
     // Botros M, Sikaris KA. "The De Ritis Ratio: The Test of Time."
     // Clin Biochem Rev. 2013;34(3):117-130. PMID: 24353357
     reference:
-      "De Ritis F et al. Clin Chim Acta. 1957;2(1):70-74; Botros M, Sikaris KA. Clin Biochem Rev. 2013;34(3):117-130",
+      "De Ritis F et al. Clin Chim Acta. 1957;2(1):70-74. doi:10.1016/0009-8981(57)90027-X; Botros M, Sikaris KA. Clin Biochem Rev. 2013;34(3):117-130. PMID:24353357",
   },
 };
 
