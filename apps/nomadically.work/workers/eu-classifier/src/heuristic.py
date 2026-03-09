@@ -14,6 +14,19 @@ from models import JobClassification
 # location signals before heuristic can auto-accept.
 AGGREGATOR_SOURCE_KINDS = frozenset({"remoteok", "remotive", "himalayas", "jobicy"})
 
+# Compiled once — matches explicit EU eligibility signals in job descriptions.
+# Used in both the no-country and has-country paths.
+_eu_desc_pattern = re.compile(
+    r"\b(eu\s+(?:based|eligible|residents?|citizens?|work\s*(?:authorization|permit))"
+    r"|european\s+(?:union|economic\s+area)"
+    r"|remote.*\beu\b"
+    r"|emea"
+    r"|eu\s+timezone"
+    r"|european\s+business\s+hours)"
+    r"\b",
+    re.IGNORECASE,
+)
+
 
 def keyword_eu_classify(job: dict, signals: dict) -> JobClassification | None:
     """Tier 0: deterministic EU classification heuristic.
@@ -97,38 +110,32 @@ def keyword_eu_classify(job: dict, signals: dict) -> JobClassification | None:
     _has_hybrid_location = "hybrid" in location
     _has_non_eu_jd = bool(NON_EU_JD_PATTERN.search(desc_raw[:500]))
 
+    # Compute normalized description once — used by both no-country and has-country paths.
+    desc_lower = normalize_text_for_signals((job.get("description") or "").lower())
+
     # Worldwide remote: ATS remote flag + no country code + no negative signals.
-    # Require a meaningful description and a plausible company key (not a raw
-    # ATS board token filled with digits) before auto-accepting.
-    # For remote aggregator sources, escalate to LLM unless explicit EU signals present —
-    # "Worldwide" from remoteok/remotive is too broad to auto-accept.
+    # Too ambiguous to auto-accept UNLESS there are explicit EU signals in the
+    # description (e.g. "EU work authorization", "EU timezone").
     if signals["ats_remote"] and not signals["country_code"]:
-        if is_aggregator:
-            # Aggregator worldwide jobs need LLM review — too many false positives
-            return None
-        # Non-EU location or JD signals → escalate to LLM
-        if _has_non_eu_location or _has_hybrid_location or _has_non_eu_jd:
-            return None
-        company_key = (job.get("company_key") or "")
-        digit_ratio = (
-            sum(1 for c in company_key if c.isdigit()) / len(company_key)
-            if company_key else 0.0
-        )
-        if digit_ratio > 0.4:
-            # Suspicious board token — escalate to LLM rather than auto-accept
-            return None
-        desc_len = len((job.get("description") or "").strip())
-        if desc_len < 100:
-            # Near-empty description — not enough signal to auto-accept
-            return None
-        return JobClassification(
-            isRemoteEU=True,
-            confidence="medium",
-            reason="Heuristic: worldwide remote (ATS remote flag, no country restriction)",
-        )
+        # Fast-path: eu_timezone signal already extracted -> accept
+        if signals["eu_timezone"]:
+            return JobClassification(
+                isRemoteEU=True,
+                confidence="medium",
+                reason="Heuristic: EU timezone signal + remote (no country code)",
+            )
+        # Check description for explicit EU eligibility signals
+        if _eu_desc_pattern.search(desc_lower):
+            return JobClassification(
+                isRemoteEU=True,
+                confidence="medium",
+                reason=f"Heuristic: EU signal in description ({_eu_desc_pattern.search(desc_lower).group(0)})",
+            )
+        # No EU signals — too ambiguous, escalate to LLM.
+        # Previously auto-accepted these as "EU remote" — caused 121 false positives.
+        return None
 
     # Non-EU country but ATS remote + description signals worldwide/global scope
-    desc_lower = normalize_text_for_signals((job.get("description") or "").lower())
     if signals["ats_remote"] and signals["country_code"] and not signals["eu_country_code"]:
         # Tier A: Explicit "work from anywhere" phrases -> auto-accept
         _explicit_worldwide_pattern = re.compile(
@@ -138,14 +145,9 @@ def keyword_eu_classify(job: dict, signals: dict) -> JobClassification | None:
         )
         explicit_match = _explicit_worldwide_pattern.search(desc_lower)
         if explicit_match:
-            # Don't auto-accept if JD/location contradicts worldwide claim
-            if _has_non_eu_location or _has_non_eu_jd:
-                return None  # Escalate to LLM
-            return JobClassification(
-                isRemoteEU=True,
-                confidence="medium",
-                reason=f"Heuristic: non-EU HQ ({signals['country_code']}) but worldwide remote ({explicit_match.group(0)})",
-            )
+            # "Work from anywhere" with non-EU HQ is ambiguous — escalate to LLM
+            # to check for EU-specific signals (office, timezone, work auth)
+            return None
 
         # Tier B: Vague phrases -> escalate to LLM
         _vague_worldwide_pattern = re.compile(
@@ -157,17 +159,9 @@ def keyword_eu_classify(job: dict, signals: dict) -> JobClassification | None:
         if vague_match:
             return None
 
-    # Check description for explicit EU eligibility even without ATS signals
+    # Check description for explicit EU eligibility (has-country-code path)
     if signals["ats_remote"]:
-        eu_desc_match = re.search(
-            r"\b(eu\s+(?:based|eligible|residents?|citizens?|work\s*(?:authorization|permit))"
-            r"|european\s+(?:union|economic\s+area)"
-            r"|remote.*\beu\b"
-            r"|emea)"
-            r"\b",
-            desc_lower if 'desc_lower' in dir() else (job.get("description") or "").lower(),
-            re.IGNORECASE,
-        )
+        eu_desc_match = _eu_desc_pattern.search(desc_lower)
         if eu_desc_match:
             return JobClassification(
                 isRemoteEU=True,

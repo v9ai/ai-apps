@@ -93,7 +93,7 @@ class TestRoboflow:
         assert signals["country_code"] is None
 
     def test_classified_as_eu_remote(self):
-        """location='Remote' + no country + 'distributed across the globe' -> EU-remote."""
+        """location='Remote' + no country + 'distributed across the globe' -> escalate (no EU signal)."""
         job = _make_job(
             title="Full Stack Engineer, AI Agents @ Roboflow",
             country="",
@@ -106,10 +106,7 @@ class TestRoboflow:
         signals = extract_eu_signals(job)
         result = keyword_eu_classify(job, signals)
 
-        assert result is not None
-        assert result.isRemoteEU is True
-        assert result.confidence == "medium"
-        assert "worldwide" in result.reason.lower()
+        assert result is None
 
     def test_location_remote_without_ats_flag(self):
         """Even without ashby_is_remote, location='Remote' should be treated as remote."""
@@ -203,7 +200,8 @@ class TestNonEUCanadaRegression:
 
         assert result is None
 
-    def test_canada_work_from_anywhere_accepts(self):
+    def test_canada_work_from_anywhere_escalates(self):
+        """Canada + 'work from anywhere' but no EU signal -> escalate to LLM."""
         job = _make_job(
             ashby_is_remote=1,
             country="Canada",
@@ -212,9 +210,7 @@ class TestNonEUCanadaRegression:
         signals = extract_eu_signals(job)
         result = keyword_eu_classify(job, signals)
 
-        assert result is not None
-        assert result.isRemoteEU is True
-        assert result.confidence == "medium"
+        assert result is None
 
 
 # =========================================================================
@@ -297,6 +293,7 @@ class TestDescriptionSignals:
         assert result is None
 
     def test_work_from_anywhere_in_description(self):
+        """US + 'work from anywhere' but no EU signal -> escalate to LLM."""
         job = _make_job(
             ashby_is_remote=1,
             country="US",
@@ -305,8 +302,7 @@ class TestDescriptionSignals:
         signals = extract_eu_signals(job)
         result = keyword_eu_classify(job, signals)
 
-        assert result is not None
-        assert result.isRemoteEU is True
+        assert result is None
 
     def test_remote_friendly_in_description(self):
         job = _make_job(
@@ -421,6 +417,7 @@ class TestAshbyAddressParsing:
 class TestWorldwideRemoteHeuristic:
 
     def test_worldwide_remote_no_country(self):
+        """Remote + no country + vague 'fully remote' -> escalate (no EU signal)."""
         job = _make_job(
             ashby_is_remote=1,
             country="",
@@ -429,12 +426,10 @@ class TestWorldwideRemoteHeuristic:
         signals = extract_eu_signals(job)
         result = keyword_eu_classify(job, signals)
 
-        assert result is not None
-        assert result.isRemoteEU is True
-        assert result.confidence == "medium"
-        assert "worldwide" in result.reason.lower()
+        assert result is None
 
     def test_worldwide_remote_workplace_type(self):
+        """workplace_type=remote + no country + vague -> escalate (no EU signal)."""
         job = _make_job(
             workplace_type="remote",
             country="",
@@ -443,9 +438,7 @@ class TestWorldwideRemoteHeuristic:
         signals = extract_eu_signals(job)
         result = keyword_eu_classify(job, signals)
 
-        assert result is not None
-        assert result.isRemoteEU is True
-        assert result.confidence == "medium"
+        assert result is None
 
 
 # =========================================================================
@@ -875,6 +868,7 @@ class TestCountryAbbreviations:
 class TestHyphenatedWorldwideSignals:
 
     def test_work_from_anywhere_hyphenated(self):
+        """US + 'work-from-anywhere' but no EU signal -> escalate to LLM."""
         job = _make_job(
             ashby_is_remote=1,
             country="US",
@@ -883,11 +877,10 @@ class TestHyphenatedWorldwideSignals:
         signals = extract_eu_signals(job)
         result = keyword_eu_classify(job, signals)
 
-        assert result is not None
-        assert result.isRemoteEU is True
-        assert result.confidence == "medium"
+        assert result is None
 
     def test_digital_nomad_in_description(self):
+        """US + 'digital nomad' but no EU signal -> escalate to LLM."""
         job = _make_job(
             ashby_is_remote=1,
             country="US",
@@ -896,8 +889,7 @@ class TestHyphenatedWorldwideSignals:
         signals = extract_eu_signals(job)
         result = keyword_eu_classify(job, signals)
 
-        assert result is not None
-        assert result.isRemoteEU is True
+        assert result is None
 
     def test_remote_first_hyphenated_with_country(self):
         job = _make_job(
