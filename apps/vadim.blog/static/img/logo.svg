@@ -1,52 +1,31 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 300 60" width="300" height="60">
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 240 60" width="240" height="60">
   <defs>
-    <style>
-      @import url('https://fonts.googleapis.com/css2?family=Syne:wght@700&amp;family=Instrument+Sans:wght@500;700&amp;display=swap');
-    </style>
-
-    <linearGradient id="aiGrad" x1="0%" y1="0%" x2="100%" y2="100%">
-      <stop offset="0%" stop-color="#a78bfa"/>
-      <stop offset="50%" stop-color="#7dd3fc"/>
-      <stop offset="100%" stop-color="#22d3ee"/>
-    </linearGradient>
-
-    <filter id="aiGlow" x="-30%" y="-30%" width="160%" height="160%">
-      <feGaussianBlur in="SourceGraphic" stdDeviation="3" result="b"/>
-      <feColorMatrix in="b" type="matrix"
-        values="0.4 0 0 0 0.4  0 0.4 0 0 0.6  0 0 0.7 0 1  0 0 0 0.45 0"/>
-      <feMerge><feMergeNode/><feMergeNode in="SourceGraphic"/></feMerge>
-    </filter>
-
     <linearGradient id="blogGrad" x1="0%" y1="0%" x2="100%" y2="0%">
       <stop offset="0%" stop-color="#7dd3fc"/>
       <stop offset="100%" stop-color="#22d3ee"/>
     </linearGradient>
-
-    <linearGradient id="barGrad" x1="0%" y1="0%" x2="0%" y2="100%">
+    <linearGradient id="dotGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#a78bfa"/>
+      <stop offset="100%" stop-color="#22d3ee"/>
+    </linearGradient>
+    <linearGradient id="underline" x1="0%" y1="0%" x2="100%" y2="0%">
       <stop offset="0%" stop-color="#a78bfa" stop-opacity="0"/>
-      <stop offset="50%" stop-color="#7dd3fc" stop-opacity="0.4"/>
+      <stop offset="20%" stop-color="#a78bfa" stop-opacity="0.6"/>
+      <stop offset="50%" stop-color="#7dd3fc" stop-opacity="0.5"/>
+      <stop offset="80%" stop-color="#22d3ee" stop-opacity="0.6"/>
       <stop offset="100%" stop-color="#22d3ee" stop-opacity="0"/>
     </linearGradient>
   </defs>
 
   <!-- VADIM -->
-  <text x="0" y="42"
-    font-family="'Instrument Sans', sans-serif"
-    font-size="36" font-weight="700" letter-spacing="2"
-    fill="#f8fafc">VADIM</text>
+  <text x="0" y="42" font-family="'Instrument Sans', sans-serif" font-size="36" font-weight="700" letter-spacing="3" fill="#f8fafc">VADIM</text>
 
-  <!-- .blog -->
-  <text x="138" y="42"
-    font-family="'Instrument Sans', sans-serif"
-    font-size="36" font-weight="500" letter-spacing="0"
-    fill="url(#blogGrad)">.blog</text>
+  <!-- dot accent -->
+  <circle cx="139" cy="40" r="3.5" fill="url(#dotGrad)"/>
 
-  <!-- Separator bar — gradient fade -->
-  <rect x="230" y="12" width="1.5" height="34" rx="1" fill="url(#barGrad)"/>
+  <!-- blog -->
+  <text x="147" y="42" font-family="'Instrument Sans', sans-serif" font-size="36" font-weight="500" letter-spacing="0.5" fill="url(#blogGrad)">blog</text>
 
-  <!-- AI -->
-  <text x="244" y="42"
-    font-family="'Syne', sans-serif"
-    font-size="36" font-weight="700"
-    fill="url(#aiGrad)" filter="url(#aiGlow)">AI</text>
+  <!-- subtle underline accent -->
+  <rect x="0" y="50" width="232" height="1.2" rx="0.6" fill="url(#underline)"/>
 </svg>
