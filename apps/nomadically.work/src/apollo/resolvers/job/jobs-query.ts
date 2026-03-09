@@ -55,8 +55,10 @@ export async function jobsQuery(
       conditions.push(eq(jobs.is_remote_eu, true));
     }
 
-    // TODO: re-enable role_ai_engineer filter once classification pipeline produces AI-tagged jobs
-    // conditions.push(or(isNull(jobs.role_ai_engineer), eq(jobs.role_ai_engineer, true))!);
+    // Filter out non-tech roles (SDR, Account Executive, etc.) while keeping unclassified jobs visible
+    conditions.push(
+      or(isNull(jobs.role_ai_engineer), eq(jobs.role_ai_engineer, true))!
+    );
 
     // Filter by sourceType (ATS provider) — single value, kept for backward compat
     if (args.sourceType) {

@@ -1,5 +1,7 @@
 @import "@radix-ui/themes/styles.css";
 
+/* ── Existing ── */
+
 .card-hover {
   cursor: pointer;
   transition: transform 150ms ease, box-shadow 150ms ease;
@@ -9,37 +11,305 @@
   box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
 }
 
-/* Landing page: gradient text for hero accent */
+/* ── Scroll progress bar (CSS-only, progressive enhancement) ── */
+
+.scroll-progress {
+  position: fixed;
+  top: 0;
+  left: 0;
+  height: 2px;
+  background: var(--indigo-9);
+  z-index: 100;
+  width: 100%;
+  transform-origin: left;
+  animation: scroll-progress linear;
+  animation-timeline: scroll();
+}
+@keyframes scroll-progress {
+  from {
+    transform: scaleX(0);
+  }
+  to {
+    transform: scaleX(1);
+  }
+}
+
+/* ── Gradient text ── */
+
 .gradient-text {
-  background: linear-gradient(135deg, var(--accent-9), var(--accent-11));
+  background: linear-gradient(135deg, var(--indigo-9), var(--indigo-11));
   -webkit-background-clip: text;
   -webkit-text-fill-color: transparent;
   background-clip: text;
+  background-size: 200% 100%;
+  animation: shimmer 6s ease-in-out infinite;
+}
+@keyframes shimmer {
+  0%,
+  100% {
+    background-position: 0% 50%;
+  }
+  50% {
+    background-position: 100% 50%;
+  }
 }
 
-/* Landing page: hero background */
+/* ── Hero background ── */
+
 .hero-bg {
+  position: relative;
+  overflow: hidden;
   background: radial-gradient(
     ellipse 80% 60% at 50% 0%,
-    var(--accent-a2) 0%,
+    var(--indigo-a2) 0%,
     transparent 70%
   );
 }
+.hero-bg::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background: repeating-linear-gradient(
+      90deg,
+      var(--gray-a2) 0px,
+      var(--gray-a2) 1px,
+      transparent 1px,
+      transparent 60px
+    ),
+    repeating-linear-gradient(
+      0deg,
+      var(--gray-a2) 0px,
+      var(--gray-a2) 1px,
+      transparent 1px,
+      transparent 60px
+    );
+  mask-image: radial-gradient(ellipse 60% 50% at 50% 40%, black, transparent);
+  -webkit-mask-image: radial-gradient(
+    ellipse 60% 50% at 50% 40%,
+    black,
+    transparent
+  );
+  pointer-events: none;
+}
 
-/* Landing page: CTA button transitions */
+/* ── Pulse rings ── */
+
+.pulse-rings {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  pointer-events: none;
+  overflow: hidden;
+}
+.pulse-rings span {
+  position: absolute;
+  border-radius: 50%;
+  border: 1px solid var(--indigo-a3);
+  animation: pulse-ring 4s ease-out infinite;
+}
+.pulse-rings span:nth-child(1) {
+  width: 200px;
+  height: 200px;
+  animation-delay: 0s;
+}
+.pulse-rings span:nth-child(2) {
+  width: 400px;
+  height: 400px;
+  animation-delay: 1s;
+}
+.pulse-rings span:nth-child(3) {
+  width: 600px;
+  height: 600px;
+  animation-delay: 2s;
+}
+@keyframes pulse-ring {
+  0% {
+    opacity: 0.4;
+    transform: scale(0.8);
+  }
+  100% {
+    opacity: 0;
+    transform: scale(1.2);
+  }
+}
+
+/* ── Trajectory line ── */
+
+.trajectory-line {
+  width: 100%;
+  max-width: 480px;
+  height: 2px;
+  background: linear-gradient(90deg, transparent, var(--indigo-9), transparent);
+  transform-origin: left;
+  animation: trace-line 1.5s ease-out forwards;
+}
+@keyframes trace-line {
+  from {
+    transform: scaleX(0);
+    opacity: 0;
+  }
+  to {
+    transform: scaleX(1);
+    opacity: 1;
+  }
+}
+
+/* ── Floating badges ── */
+
+.floating-badges {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  justify-content: center;
+}
+.floating-badge {
+  padding: 6px 14px;
+  border-radius: var(--radius-2);
+  border: 1px solid var(--gray-a4);
+  background: var(--color-surface);
+  font-size: 13px;
+  font-family: var(--font-mono, monospace);
+  color: var(--gray-11);
+  letter-spacing: -0.01em;
+  animation: badge-float 3s ease-in-out infinite;
+}
+.floating-badge:nth-child(2) {
+  animation-delay: 0.5s;
+}
+.floating-badge:nth-child(3) {
+  animation-delay: 1s;
+}
+.floating-badge:nth-child(4) {
+  animation-delay: 1.5s;
+}
+@keyframes badge-float {
+  0%,
+  100% {
+    transform: translateY(0);
+  }
+  50% {
+    transform: translateY(-4px);
+  }
+}
+
+/* ── Heartbeat icon ── */
+
+.heartbeat {
+  animation: heartbeat 2.5s ease-in-out infinite;
+}
+@keyframes heartbeat {
+  0%,
+  100% {
+    transform: scale(1);
+  }
+  14% {
+    transform: scale(1.15);
+  }
+  28% {
+    transform: scale(1);
+  }
+  42% {
+    transform: scale(1.1);
+  }
+  56% {
+    transform: scale(1);
+  }
+}
+
+/* ── CTA button ── */
+
 .cta-button {
   transition: transform 150ms ease, box-shadow 150ms ease;
 }
 .cta-button:hover {
   transform: translateY(-1px);
-  box-shadow: 0 4px 16px var(--accent-a4);
+  box-shadow: 0 4px 16px var(--indigo-a4);
+}
+.cta-button:active {
+  transform: scale(0.98);
 }
 
-/* Landing page: CTA banner */
+/* ── CTA banner ── */
+
 .cta-banner {
-  background: linear-gradient(
-    180deg,
-    transparent 0%,
-    var(--accent-a2) 100%
-  );
+  background: linear-gradient(180deg, transparent 0%, var(--indigo-a2) 100%);
+}
+
+/* ── Scroll reveal ── */
+
+.scroll-reveal {
+  opacity: 0;
+  transform: translateY(20px);
+  transition: opacity 0.6s ease-out, transform 0.6s ease-out;
+}
+.scroll-reveal[data-visible="true"] {
+  opacity: 1;
+  transform: translateY(0);
+}
+
+/* ── Step cards ── */
+
+.step-card {
+  border-radius: var(--radius-3);
+  border: 1px solid var(--gray-a3);
+  background: var(--color-surface);
+  transition: transform 200ms ease, border-color 200ms ease,
+    box-shadow 200ms ease;
+}
+.step-card:hover {
+  transform: translateY(-3px);
+  border-color: var(--indigo-a6);
+  box-shadow: 0 0 20px var(--indigo-a3), inset 0 0 20px var(--indigo-a2);
+}
+
+/* ── Feature cards ── */
+
+.feature-card {
+  border-radius: var(--radius-3);
+  border: 1px solid var(--gray-a3);
+  background: var(--color-surface);
+  transition: transform 200ms ease, border-color 200ms ease,
+    box-shadow 200ms ease;
+}
+.feature-card:hover {
+  transform: translateY(-3px);
+  border-color: var(--indigo-a6);
+  box-shadow: 0 0 20px var(--indigo-a3), inset 0 0 20px var(--indigo-a2);
+}
+
+/* ── Steps connecting line (desktop) ── */
+
+.steps-grid {
+  position: relative;
+}
+@media (min-width: 768px) {
+  .steps-grid::before {
+    content: "";
+    position: absolute;
+    top: 42px;
+    left: 18%;
+    right: 18%;
+    height: 0;
+    border-top: 2px dashed var(--gray-a5);
+    pointer-events: none;
+    z-index: 0;
+  }
+  .steps-grid > * {
+    position: relative;
+    z-index: 1;
+  }
+}
+
+/* ── Research card ── */
+
+.research-card {
+  border-radius: var(--radius-3);
+  border: 1px solid var(--gray-a3);
+  background: var(--color-surface);
+  transition: border-color 200ms ease;
+}
+.research-card:hover {
+  border-color: var(--indigo-a5);
 }

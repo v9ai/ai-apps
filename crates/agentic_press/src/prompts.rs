@@ -419,6 +419,25 @@ Research requirements:
 - Discuss at least 5 papers in substantive detail, not just name-drops
 - Include a decision framework grounded in the evidence
 
+Anti-hallucination rules:
+- Cross-reference rule: ONLY use facts from the Source Article and Academic Research
+  sections provided in your input
+- NEVER fabricate paper titles, author names, statistics, or study results
+- If the Academic Research section is thin or empty, rely solely on the Source Article
+- Flag uncertain claims with `[NEEDS VERIFICATION]`
+- Use exact author names and years from the research brief — do not guess or approximate
+- If a claim cannot be attributed to a specific source, do not include it
+
+You will receive input in this format:
+## Source Article
+[The original article to rewrite]
+
+## Academic Research
+[Papers and research findings — may be empty]
+
+## SEO Strategy
+[Keyword and structure guidance]
+
 Rules:
 - Write the full post — do not summarise or outline
 - Use concrete examples, code snippets, and data points from the source
@@ -469,7 +488,7 @@ mod tests {
         let prompt = deep_dive_writer("Eval Driven Development");
         assert!(prompt.contains("Eval Driven Development"));
         assert!(prompt.contains("Deep-Dive Writer"));
-        assert!(prompt.contains("2000–3000"));
+        assert!(prompt.contains("2500–3500"));
     }
 
     #[test]

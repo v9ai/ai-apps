@@ -1,0 +1,47 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 630" width="1200" height="630">
+  <defs>
+    <linearGradient id="blogGrad" x1="0%" y1="0%" x2="100%" y2="0%">
+      <stop offset="0%" stop-color="#7dd3fc"/>
+      <stop offset="100%" stop-color="#22d3ee"/>
+    </linearGradient>
+    <linearGradient id="dotGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#a78bfa"/>
+      <stop offset="100%" stop-color="#22d3ee"/>
+    </linearGradient>
+    <linearGradient id="underline" x1="0%" y1="0%" x2="100%" y2="0%">
+      <stop offset="0%" stop-color="#a78bfa" stop-opacity="0"/>
+      <stop offset="20%" stop-color="#a78bfa" stop-opacity="0.6"/>
+      <stop offset="50%" stop-color="#7dd3fc" stop-opacity="0.5"/>
+      <stop offset="80%" stop-color="#22d3ee" stop-opacity="0.6"/>
+      <stop offset="100%" stop-color="#22d3ee" stop-opacity="0"/>
+    </linearGradient>
+    <radialGradient id="glow" cx="50%" cy="45%" r="40%">
+      <stop offset="0%" stop-color="#a78bfa" stop-opacity="0.08"/>
+      <stop offset="100%" stop-color="#0f172a" stop-opacity="0"/>
+    </radialGradient>
+  </defs>
+
+  <!-- Background -->
+  <rect width="1200" height="630" fill="#0f172a"/>
+
+  <!-- Radial glow -->
+  <rect width="1200" height="630" fill="url(#glow)"/>
+
+  <!-- Wordmark group, centered -->
+  <g transform="translate(600, 290)">
+    <!-- VADIM -->
+    <text x="-260" y="0" font-family="'Instrument Sans', 'Inter', sans-serif" font-size="96" font-weight="700" letter-spacing="8" fill="#f8fafc">VADIM</text>
+
+    <!-- dot accent -->
+    <circle cx="42" cy="-2" r="8" fill="url(#dotGrad)"/>
+
+    <!-- blog -->
+    <text x="66" y="0" font-family="'Instrument Sans', 'Inter', sans-serif" font-size="96" font-weight="500" letter-spacing="1" fill="url(#blogGrad)">blog</text>
+  </g>
+
+  <!-- Subtle underline accent -->
+  <rect x="310" y="310" width="580" height="2.5" rx="1.25" fill="url(#underline)"/>
+
+  <!-- Tagline -->
+  <text x="600" y="370" text-anchor="middle" font-family="'Instrument Sans', 'Inter', sans-serif" font-size="24" font-weight="400" letter-spacing="1.5" fill="#94a3b8">Software engineering, AI &amp; web development</text>
+</svg>

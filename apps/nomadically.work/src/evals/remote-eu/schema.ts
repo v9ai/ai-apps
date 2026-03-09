@@ -59,6 +59,23 @@ export type RemoteEUScoreResult = {
 };
 
 /**
+ * Result structure from confidence calibration scoring.
+ *
+ * ECE (Expected Calibration Error) measures how well the model's
+ * confidence levels align with its actual accuracy per tier.
+ * Lower ECE = better calibrated.
+ */
+export type ConfidenceCalibrationResult = {
+  /** Expected Calibration Error: 0 = perfectly calibrated, 1 = worst */
+  ece: number;
+  tiers: {
+    high: { accuracy: number; count: number };
+    medium: { accuracy: number; count: number };
+    low: { accuracy: number; count: number };
+  };
+};
+
+/**
  * Test case structure for Remote EU classification evaluation.
  */
 export type RemoteEUTestCase = {

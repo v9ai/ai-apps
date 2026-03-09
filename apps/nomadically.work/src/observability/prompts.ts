@@ -131,10 +131,6 @@ MEDIUM confidence (isRemoteEU: true):
 - Worldwide/global remote with a European office or EU hiring history
 - Nordic countries (Denmark, Sweden, Finland — all EU members)
 
-LOW confidence (isRemoteEU: true):
-- "Remote - Worldwide" or "Work from anywhere" with NO explicit regional exclusions
-- Ambiguous postings that seem open globally without mentioning EU restrictions
-
 NOT Remote EU (isRemoteEU: false):
 - Office-based or hybrid with mandatory in-office requirements
 - Explicitly excludes EU ("US only", "Americas only", "must be US resident")
@@ -142,17 +138,20 @@ NOT Remote EU (isRemoteEU: false):
 - Switzerland-only (not EU member)
 - "CEST hours only" with "must be based in specific non-EU country"
 - Requires US work authorization or SSN
+- "Remote - Worldwide" or "Work from anywhere" with NO EU-specific signals (medium confidence)
+- Generic global remote with no EU office, timezone, or work auth mention
 
-KEY INSIGHT: A job does NOT need to be "EU-only" to be Remote EU. It just needs to be accessible to someone living in the EU. Worldwide remote jobs are Remote EU unless they explicitly exclude EU workers.
+KEY INSIGHT: The burden of proof is on EU eligibility. A worldwide/global remote job is NOT Remote EU unless there are positive EU signals (EU office, EU timezone, EU work auth, EU country mentions). Generic "work from anywhere" with no EU connection defaults to NOT Remote EU.
 
 EXAMPLES:
 
 ❌ "Utrecht, Netherlands" = Office job (NOT Remote EU)
 ❌ "Berlin, Germany - Hybrid" = Hybrid office job (NOT Remote EU)
 ❌ "Remote - US only" = Remote but US-only (NOT Remote EU)
+❌ "Remote - Worldwide" (no EU signals) = No evidence of EU eligibility (NOT Remote EU - MEDIUM)
 ✅ "Remote - EU" = Fully remote, EU-restricted (Remote EU - HIGH)
 ✅ "Remote - EMEA" = Remote, EU is within EMEA (Remote EU - MEDIUM)
-✅ "Remote - Worldwide" = Open to EU workers (Remote EU - LOW)
+✅ "Remote - Worldwide" + EU office/timezone = EU signals present (Remote EU - MEDIUM)
 ✅ "CET timezone" = EU workers can work this schedule (Remote EU - MEDIUM)
 ✅ "Remote - Europe" = EU is in Europe (Remote EU - MEDIUM)
 

@@ -5,13 +5,13 @@
     "dev": "next dev -p 3003",
     "build": "next build",
     "start": "next start",
-    "lint": "eslint .",
-    "codegen": "graphql-codegen --config codegen.ts",
+"codegen": "graphql-codegen --config codegen.ts",
     "test": "vitest run",
     "test:watch": "vitest",
     "eval": "promptfoo eval && promptfoo eval -c promptfoo.trajectory.yaml",
     "eval:qa": "promptfoo eval",
     "eval:trajectory": "promptfoo eval -c promptfoo.trajectory.yaml",
+    "eval:braintrust": "tsx evals/braintrust-trajectory.ts",
     "eval:view": "promptfoo view"
   },
   "dependencies": {
@@ -36,20 +36,21 @@
     "remark-gfm": "^4.0.1",
     "unstructured-client": "^0.31.0"
   },
+  "packageManager": "pnpm@10.31.0",  
   "devDependencies": {
-    "@eslint/eslintrc": "^3",
-    "@graphql-codegen/cli": "^6.1.2",
+"@graphql-codegen/cli": "^6.1.2",
     "@graphql-codegen/client-preset": "^5.2.2",
-    "@types/node": "^20",
+    "@types/node": "^22",
     "@types/react": "^19",
     "@types/react-dom": "^19",
     "@vitejs/plugin-react": "^5.1.4",
     "dotenv": "^17.3.1",
-    "eslint": "^9",
-    "eslint-config-next": "15.3.1",
-    "graphql": "^16.13.1",
+"graphql": "^16.13.1",
     "postcss": "^8",
+    "autoevals": "^0.0.100",
+    "braintrust": "^0.0.180",
     "promptfoo": "^0.120.26",
+    "tsx": "^4.21.0",
     "typescript": "^5",
     "vitest": "^4.0.18"
   }

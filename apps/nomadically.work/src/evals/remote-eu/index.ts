@@ -11,3 +11,4 @@
 export * from "./schema";
 export * from "./test-data";
 export * from "./scorers";
+export * from "./heuristic-comparison";

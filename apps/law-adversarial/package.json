@@ -17,7 +17,9 @@
     "test:prompts:citations": "promptfoo eval --env-file .env.evals -c evals/citation-verifier.yaml",
     "test:prompts:jurisdiction": "promptfoo eval --env-file .env.evals -c evals/jurisdiction-expert.yaml",
     "test:prompts:rewriter": "promptfoo eval --env-file .env.evals -c evals/brief-rewriter.yaml",
-    "test:prompts:all": "promptfoo eval --env-file .env.evals -c evals/attacker.yaml && promptfoo eval --env-file .env.evals -c evals/defender.yaml && promptfoo eval --env-file .env.evals -c evals/judge.yaml && promptfoo eval --env-file .env.evals -c evals/redteam.yaml && promptfoo eval --env-file .env.evals -c evals/consistency.yaml && promptfoo eval --env-file .env.evals -c evals/citation-verifier.yaml && promptfoo eval --env-file .env.evals -c evals/jurisdiction-expert.yaml && promptfoo eval --env-file .env.evals -c evals/brief-rewriter.yaml",
+    "test:prompts:e2e": "promptfoo eval --env-file .env.evals -c evals/e2e-pipeline.yaml",
+    "test:prompts:round2": "promptfoo eval --env-file .env.evals -c evals/round2-consistency.yaml",
+    "test:prompts:all": "promptfoo eval --env-file .env.evals -c evals/attacker.yaml && promptfoo eval --env-file .env.evals -c evals/defender.yaml && promptfoo eval --env-file .env.evals -c evals/judge.yaml && promptfoo eval --env-file .env.evals -c evals/redteam.yaml && promptfoo eval --env-file .env.evals -c evals/consistency.yaml && promptfoo eval --env-file .env.evals -c evals/citation-verifier.yaml && promptfoo eval --env-file .env.evals -c evals/jurisdiction-expert.yaml && promptfoo eval --env-file .env.evals -c evals/brief-rewriter.yaml && promptfoo eval --env-file .env.evals -c evals/e2e-pipeline.yaml && promptfoo eval --env-file .env.evals -c evals/round2-consistency.yaml",
     "test:prompts:view": "promptfoo view"
   },
   "dependencies": {
@@ -26,7 +28,7 @@
     "@radix-ui/react-icons": "^1.3.2",
     "@radix-ui/themes": "^3.3.0",
     "@types/d3": "^7.4.3",
-    "@repo/deepseek": "file:./repo-deepseek-0.1.0.tgz",
+    "@repo/deepseek": "workspace:*",
     "zod": "^3.25.0",
     "d3": "^7.9.0",
     "lucide-react": "^0.511.0",

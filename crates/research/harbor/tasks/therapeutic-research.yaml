@@ -1,0 +1,9 @@
+name: therapeutic-research
+description: Multi-agent therapeutic AI research
+entrypoint: cargo run --bin therapeutic_research
+output_dir: research-output/therapeutic/
+graders:
+  - harbor/graders/citation_verifier.py
+  - harbor/graders/synthesis_completeness.py
+  - harbor/graders/research_grounding.py
+  - harbor/graders/team_efficiency.py

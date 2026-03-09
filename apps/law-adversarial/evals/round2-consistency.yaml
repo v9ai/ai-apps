@@ -1,0 +1,307 @@
+description: "Round 2 Consistency — Judge incorporates prior round findings"
+sharing: false
+
+prompts:
+  - "file://../prompts/judge.ts"
+
+providers:
+  - id: openai:chat:deepseek-reasoner
+    label: deepseek-reasoner
+    config:
+      apiKeyEnvar: DEEPSEEK_API_KEY
+      apiBaseUrl: https://api.deepseek.com/v1
+      temperature: 0
+      response_format:
+        type: json_object
+  - id: openai:chat:qwen-plus
+    label: qwen-plus
+    config:
+      apiKeyEnvar: DASHSCOPE_API_KEY
+      apiBaseUrl: https://dashscope-intl.aliyuncs.com/compatible-mode/v1
+      temperature: 0
+      response_format:
+        type: json_object
+
+defaultTest:
+  options:
+    provider:
+      id: openai:chat:deepseek-chat
+      config:
+        apiKeyEnvar: DEEPSEEK_API_KEY
+        apiBaseUrl: https://api.deepseek.com/v1
+        temperature: 0
+
+tests:
+  # Case 1: First Amendment brief revised after round 1 flagged wrong framework
+  # Round 1 score was 30. Round 2 should differ meaningfully and reference prior findings.
+  - vars:
+      brief: |
+        REVISED BRIEF IN SUPPORT OF MOTION TO DISMISS — FIRST AMENDMENT RETALIATION
+
+        I. STATEMENT OF THE CASE
+        Defendant Professor David Park published an op-ed in the campus newspaper criticizing the university's diversity hiring targets. The university terminated his employment three weeks later, citing "disruption to the academic environment."
+
+        II. LEGAL FRAMEWORK: PICKERING-CONNICK BALANCING TEST
+        Public employee speech claims are governed by the two-step Pickering-Connick framework, not strict scrutiny. First, the speech must address a matter of public concern. Connick v. Myers, 461 U.S. 138, 146 (1983). Second, the employee's First Amendment interest must outweigh the employer's interest in efficient operations. Pickering v. Board of Education, 391 U.S. 563, 568 (1968).
+
+        III. PROFESSOR PARK'S SPEECH IS ON A MATTER OF PUBLIC CONCERN
+        University diversity policies are a matter of public concern. Criticism of institutional policies involves "issues about which information is needed or appropriate to enable the members of society to make informed decisions about the operation of their government." Connick, 461 U.S. at 148. Professor Park's op-ed was published in a public forum and addressed policy, not personal grievances.
+
+        IV. THE PICKERING BALANCE FAVORS PROFESSOR PARK
+        The university's asserted interest in "institutional harmony" is insufficient to outweigh a professor's core academic speech. Rankin v. McPherson, 483 U.S. 378, 388-89 (1987) (government must show actual disruption, not mere apprehension). The op-ed did not impair Park's ability to perform his duties or disrupt university operations.
+
+        V. GARCETTI'S APPLICATION TO ACADEMIC SPEECH REMAINS UNRESOLVED
+        The Supreme Court expressly reserved whether Garcetti v. Ceballos, 547 U.S. 410, 425 (2006), applies to "speech related to scholarship or teaching." The Ninth Circuit held it does not. Demers v. Austin, 746 F.3d 402 (9th Cir. 2014). The Fourth Circuit has recognized similar academic freedom concerns. Adams v. Trs. of the Univ. of N.C.-Wilmington, 640 F.3d 550 (4th Cir. 2011). This court should follow the emerging trend protecting academic speech from Garcetti.
+
+        VI. THE TINKER CITATION HAS BEEN REMOVED
+        [Counsel acknowledges that the prior draft erroneously cited Tinker v. Des Moines, which governs student speech in K-12 schools and is inapposite to this case.]
+      attackerOutput: |
+        {
+          "attacks": [
+            {
+              "claim": "The university's asserted interest in 'institutional harmony' is insufficient",
+              "weakness": "The revised brief cites Rankin for the 'actual disruption' standard but does not apply the full multi-factor Pickering balance. The Fourth factor — whether the speech impairs close working relationships requiring loyalty and confidentiality — is not addressed. For a tenured professor this may be less relevant, but the brief should acknowledge and dismiss it rather than ignore it.",
+              "type": "legal",
+              "evidence": "Pickering, 391 U.S. at 570; Rankin, 483 U.S. at 388 (listing relevant factors including nature of the working relationship)."
+            },
+            {
+              "claim": "This court should follow the emerging trend protecting academic speech from Garcetti",
+              "weakness": "Framing the Garcetti exception as an 'emerging trend' is advocacy-appropriate but the brief fails to address circuits that have declined to adopt the exception, such as the Sixth Circuit. A candid assessment of the split strengthens credibility.",
+              "type": "legal",
+              "evidence": "Evans-Marshall v. Bd. of Educ., 624 F.3d 332 (6th Cir. 2010) (applying Garcetti to teacher's curricular speech)."
+            }
+          ]
+        }
+      defenderOutput: |
+        {
+          "rebuttals": [
+            {
+              "attack_ref": "does not apply the full multi-factor Pickering balance",
+              "defense": "The brief's Pickering analysis is significantly improved from round 1 (which used strict scrutiny entirely). The remaining gap — not addressing the close-working-relationship factor — is a refinement issue. For an op-ed by a professor about institutional policy (not a personal workplace dispute), this factor is unlikely to cut against the employee.",
+              "supporting_citations": ["Rankin v. McPherson, 483 U.S. 378, 388 (1987)", "Lane v. Franks, 573 U.S. 228 (2014)"],
+              "strength": 0.65
+            },
+            {
+              "attack_ref": "the brief fails to address circuits that have declined to adopt the exception",
+              "defense": "The criticism is valid — the brief should acknowledge Evans-Marshall. However, the brief correctly identifies the Supreme Court reservation and two circuits favoring the academic exception. The omission of contrary authority is a common advocacy practice, though courts appreciate candor. The brief should add a footnote distinguishing Evans-Marshall.",
+              "supporting_citations": ["Garcetti v. Ceballos, 547 U.S. 410, 425 (2006)", "Adams v. Trs. of UNC-Wilmington, 640 F.3d 550 (4th Cir. 2011)"],
+              "strength": 0.5
+            }
+          ]
+        }
+      jurisdiction: "Federal"
+      round: "2"
+      previousFindings: |
+        [{
+          "findings": [
+            {
+              "type": "legal",
+              "severity": "critical",
+              "description": "The brief applies strict scrutiny instead of the Pickering-Connick balancing test. This is the wrong legal framework for public employee speech.",
+              "confidence": 0.98,
+              "suggested_fix": "Replace strict scrutiny analysis with the two-step Pickering-Connick framework: (1) public concern, (2) balance employee's interest against employer's."
+            },
+            {
+              "type": "citation",
+              "severity": "high",
+              "description": "Tinker v. Des Moines is cited but governs K-12 student speech, not public employee speech. It is inapposite.",
+              "confidence": 0.95,
+              "suggested_fix": "Remove Tinker citation. Replace with Connick v. Myers and Rankin v. McPherson."
+            },
+            {
+              "type": "legal",
+              "severity": "high",
+              "description": "The Garcetti academic speech exception is presented as settled law. The Supreme Court reserved the question, and only some circuits have adopted the exception.",
+              "confidence": 0.9,
+              "suggested_fix": "Frame the Garcetti exception as the emerging position in the circuits, not settled law. Cite Demers and Adams but acknowledge the reservation."
+            }
+          ],
+          "overall_score": 30
+        }]
+    assert:
+      - type: javascript
+        value: "file://assertions/validate-judge.js"
+      - type: javascript
+        value: |
+          module.exports = (output) => {
+            const parsed = typeof output === 'string' ? JSON.parse(output) : output;
+            const ROUND_1_SCORE = 30;
+
+            // Round 2 score must differ from round 1 by at least 15 points
+            const diff = Math.abs(parsed.overall_score - ROUND_1_SCORE);
+            if (diff < 15) {
+              return { pass: false, score: 0, reason: `Round 2 score ${parsed.overall_score} too close to round 1 score ${ROUND_1_SCORE} (diff ${diff}, need >= 15)` };
+            }
+
+            // Round 2 should be higher — the brief was substantially improved
+            if (parsed.overall_score <= ROUND_1_SCORE) {
+              return { pass: false, score: 0, reason: `Round 2 score ${parsed.overall_score} should be higher than round 1 score ${ROUND_1_SCORE} after substantial improvements` };
+            }
+
+            // Check that findings reference prior round
+            const findingsText = JSON.stringify(parsed.findings).toLowerCase();
+            const priorRoundIndicators = [
+              'round 1', 'prior', 'previous', 'earlier', 'revised', 'improved',
+              'corrected', 'addressed', 'resolved', 'fixed', 'originally', 'initial',
+              'prior round', 'first round', 'preceding'
+            ];
+            const referencesRound1 = priorRoundIndicators.some(term => findingsText.includes(term));
+            if (!referencesRound1) {
+              return { pass: false, score: 0, reason: 'Round 2 findings do not reference the prior round — expected acknowledgment of improvements' };
+            }
+
+            return { pass: true, score: 1, reason: `Round 2 score ${parsed.overall_score} (up from ${ROUND_1_SCORE}), references prior round` };
+          };
+      - type: llm-rubric
+        value: >
+          This is a round 2 consistency eval. Round 1 scored 30 with critical/high findings for:
+          (1) wrong legal framework (strict scrutiny instead of Pickering-Connick), (2) inapposite
+          Tinker citation, (3) Garcetti exception presented as settled law. The revised brief:
+          (A) correctly uses Pickering-Connick framework — critical issue FIXED; (B) removes
+          Tinker citation and explicitly acknowledges the error — high issue FIXED; (C) reframes
+          Garcetti as unresolved with circuit trend — high issue PARTIALLY FIXED (still omits
+          contrary circuits). The judge MUST: (1) credit the substantial improvements; (2) note
+          that the prior critical and high findings have been addressed; (3) identify remaining
+          refinement issues (incomplete Pickering factors, one-sided Garcetti framing) at lower
+          severity; (4) score significantly higher than 30 (expect 55-75). Rate on the judge's
+          ability to track improvement across rounds and produce differentiated severity.
+
+  # Case 2: Securities fraud brief revised after round 1 flagged insufficient scienter
+  # Round 1 score was 50. Round 2 should show refinement, not just repetition.
+  - vars:
+      brief: |
+        REVISED MEMORANDUM IN OPPOSITION TO MOTION TO DISMISS — SECURITIES FRAUD
+
+        I. STATEMENT OF THE CASE
+        Plaintiff brings this securities fraud class action under Section 10(b) of the Securities Exchange Act of 1934 and SEC Rule 10b-5. Defendant PharmaCo Inc. concealed adverse clinical trial results for its flagship drug Curanol while its executives sold $89 million in company stock.
+
+        II. SCIENTER — STRONG INFERENCE STANDARD
+        Under Tellabs, Inc. v. Makor Issues & Rights, Ltd., 551 U.S. 308 (2007), a complaint must allege facts giving rise to a "strong inference" of scienter — meaning an inference "at least as compelling as any opposing inference." 15 U.S.C. Section 78u-4(b)(2).
+
+        A. Motive and Opportunity
+        Defendant's CEO and CFO sold $89 million in stock during the class period — representing 65% of their holdings. Insider sales of this magnitude and proportion create a strong inference of scienter. See In re Scholastic Corp. Sec. Litig., 252 F.3d 63, 74 (2d Cir. 2001); Novak v. Kasaks, 216 F.3d 300, 311 (2d Cir. 2000) (sales must be "unusual in scope or timing").
+
+        B. Conscious Misbehavior or Recklessness
+        Internal emails obtained in discovery show the CEO wrote to the CFO: "The Phase III results are devastating. We need to control the narrative until after the secondary offering." This direct evidence of knowledge and intent to conceal makes scienter beyond dispute.
+
+        C. GAAP Violations
+        Defendant failed to write down the Curanol asset despite knowing the clinical trial failure, violating ASC 360-10 (impairment of long-lived assets). The CFO signed SOX 302 certifications attesting to the accuracy of financials that omitted this material impairment. See In re WorldCom, Inc. Sec. Litig., 346 F. Supp. 2d 628 (S.D.N.Y. 2004).
+
+        III. MATERIAL MISREPRESENTATION
+        Defendant's 10-K stated: "Curanol clinical trials continue to demonstrate promising efficacy." This statement was materially false when made — the Phase III trial had already failed.
+
+        IV. LOSS CAUSATION
+        When Defendant disclosed the trial failure on March 15, 2025, its stock dropped 38% in one day. This corrective disclosure establishes loss causation under Dura Pharmaceuticals, Inc. v. Broudo, 544 U.S. 336 (2005). Plaintiff has retained a financial expert to isolate the fraud-related decline from general market movements per the Dura methodology.
+      attackerOutput: |
+        {
+          "attacks": [
+            {
+              "claim": "Internal emails show CEO wrote 'The Phase III results are devastating. We need to control the narrative'",
+              "weakness": "While the email is powerful evidence, the brief does not address potential alternative interpretations. The 'control the narrative' language could arguably refer to legitimate investor relations strategy, not concealment. A rigorous brief would preemptively address and rebut the innocent explanation per Tellabs' requirement to consider competing inferences.",
+              "type": "legal",
+              "evidence": "Tellabs, 551 U.S. at 314 (courts must consider 'plausible, nonculpable explanations for the defendant's conduct')."
+            },
+            {
+              "claim": "Defendant failed to write down the Curanol asset despite knowing the clinical trial failure, violating ASC 360-10",
+              "weakness": "The GAAP violation argument could be stronger. ASC 360-10 requires impairment testing when events suggest carrying value may not be recoverable, but the timing and magnitude of the required write-down are judgment calls. The brief should address whether the trial failure constituted a 'triggering event' under the standard and when the obligation to write down arose.",
+              "type": "factual",
+              "evidence": "ASC 360-10-35-21 (impairment indicators); see also In re Suprema Specialties, Inc. Sec. Litig., 438 F.3d 256 (3d Cir. 2006)."
+            }
+          ]
+        }
+      defenderOutput: |
+        {
+          "rebuttals": [
+            {
+              "attack_ref": "the brief does not address potential alternative interpretations of the email",
+              "defense": "The attacker's point about Tellabs competing inferences is well-taken but the email combined with the $89M insider sales and the false 10-K statement makes the culpable inference overwhelmingly more compelling than any innocent reading. The brief should add a paragraph rebutting the 'legitimate IR' interpretation, but its absence does not undermine the overall scienter showing.",
+              "supporting_citations": ["Tellabs, 551 U.S. at 314", "Matrixx Initiatives, Inc. v. Siracusano, 563 U.S. 27 (2011)"],
+              "strength": 0.7
+            },
+            {
+              "attack_ref": "timing and magnitude of the required write-down are judgment calls",
+              "defense": "The attacker raises a valid refinement point. However, a complete Phase III trial failure for a flagship drug is about as clear a triggering event as exists under ASC 360-10. The brief should add more specificity about when the failure was known versus when the write-down should have occurred, but the core argument is sound.",
+              "supporting_citations": ["ASC 360-10-35-21", "In re WorldCom, Inc. Sec. Litig., 346 F. Supp. 2d 628 (S.D.N.Y. 2004)"],
+              "strength": 0.65
+            }
+          ]
+        }
+      jurisdiction: "Federal"
+      round: "2"
+      previousFindings: |
+        [{
+          "findings": [
+            {
+              "type": "legal",
+              "severity": "high",
+              "description": "The scienter analysis relies too heavily on motive-and-opportunity without direct evidence of fraudulent intent. Insider sales alone may be insufficient under Tellabs.",
+              "confidence": 0.85,
+              "suggested_fix": "Add direct evidence of knowledge — internal communications, whistleblower testimony, or contemporaneous analyst reports showing the company knew the truth."
+            },
+            {
+              "type": "legal",
+              "severity": "medium",
+              "description": "Loss causation is asserted but not developed. The brief should address potential confounding factors for the stock drop and the Dura methodology for isolating fraud-related losses.",
+              "confidence": 0.8,
+              "suggested_fix": "Retain a financial expert or cite event study methodology to isolate the fraud-specific impact from general market movements."
+            },
+            {
+              "type": "procedural",
+              "severity": "medium",
+              "description": "The brief does not address the PSLRA's heightened pleading standard with sufficient specificity.",
+              "confidence": 0.75,
+              "suggested_fix": "Quote 15 U.S.C. Section 78u-4(b)(2) and explicitly walk through the Tellabs framework step by step."
+            }
+          ],
+          "overall_score": 50
+        }]
+    assert:
+      - type: javascript
+        value: "file://assertions/validate-judge.js"
+      - type: javascript
+        value: |
+          module.exports = (output) => {
+            const parsed = typeof output === 'string' ? JSON.parse(output) : output;
+            const ROUND_1_SCORE = 50;
+
+            // Round 2 score must differ from round 1
+            const diff = Math.abs(parsed.overall_score - ROUND_1_SCORE);
+            if (diff < 10) {
+              return { pass: false, score: 0, reason: `Round 2 score ${parsed.overall_score} too close to round 1 score ${ROUND_1_SCORE} (diff ${diff}, need >= 10)` };
+            }
+
+            // Round 2 should be higher — the brief added direct evidence and improved structure
+            if (parsed.overall_score <= ROUND_1_SCORE) {
+              return { pass: false, score: 0, reason: `Round 2 score ${parsed.overall_score} should be higher than round 1 score ${ROUND_1_SCORE} after improvements` };
+            }
+
+            // Check that findings show refinement — should have new or updated issues, not just repeats
+            const findingsText = JSON.stringify(parsed.findings).toLowerCase();
+            const refinementIndicators = [
+              'round 1', 'prior', 'previous', 'earlier', 'revised', 'improved',
+              'addressed', 'resolved', 'strengthened', 'now', 'added', 'refined',
+              'remaining', 'still', 'however', 'although'
+            ];
+            const showsRefinement = refinementIndicators.some(term => findingsText.includes(term));
+            if (!showsRefinement) {
+              return { pass: false, score: 0, reason: 'Round 2 findings do not show refinement from round 1 — expected references to improvements or remaining issues' };
+            }
+
+            return { pass: true, score: 1, reason: `Round 2 score ${parsed.overall_score} (up from ${ROUND_1_SCORE}), shows refinement` };
+          };
+      - type: llm-rubric
+        value: >
+          This is a round 2 consistency eval for a securities fraud brief. Round 1 scored 50 with:
+          (1) high — scienter relied too much on motive-and-opportunity without direct evidence;
+          (2) medium — loss causation underdeveloped; (3) medium — insufficient PSLRA specificity.
+          The revised brief: (A) adds devastating internal email evidence and $89M insider sales —
+          addressing the scienter gap SUBSTANTIALLY; (B) adds Dura methodology and expert retention
+          for loss causation — addressing the medium issue; (C) explicitly quotes the PSLRA standard
+          and walks through Tellabs — addressing the procedural issue. The remaining attacker points
+          are refinement-level (competing inferences, ASC 360-10 triggering event timing). The judge
+          MUST: (1) credit all three round 1 issues as addressed; (2) identify new refinement issues
+          at medium/low severity; (3) score significantly higher than 50 (expect 65-80); (4) not
+          simply repeat round 1 findings. Rate on whether the judge demonstrates genuine round-over-round
+          progression rather than treating this as a fresh evaluation.
+
+outputPath: ../promptfoo-output/round2-consistency-latest.json

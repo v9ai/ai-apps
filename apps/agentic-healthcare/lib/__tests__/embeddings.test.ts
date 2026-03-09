@@ -329,6 +329,115 @@ describe("classifyMetricRisk", () => {
   it("classifies TyG index borderline", () => {
     expect(classifyMetricRisk("glucose_triglyceride_index", 8.7)).toBe("borderline");
   });
+
+  // --- Boundary value tests ---
+  it("HDL/LDL at 0.3 is low (below optimal lower bound of 0.4)", () => {
+    expect(classifyMetricRisk("hdl_ldl_ratio", 0.3)).toBe("low");
+  });
+
+  it("HDL/LDL at 0.4 boundary (optimal low end)", () => {
+    expect(classifyMetricRisk("hdl_ldl_ratio", 0.4)).toBe("optimal");
+  });
+
+  it("HDL/LDL below 0.3 is low", () => {
+    expect(classifyMetricRisk("hdl_ldl_ratio", 0.29)).toBe("low");
+  });
+
+  it("TC/HDL at 4.5 boundary (optimal high end)", () => {
+    expect(classifyMetricRisk("total_cholesterol_hdl_ratio", 4.5)).toBe("optimal");
+  });
+
+  it("TC/HDL at 5.5 boundary (borderline high end)", () => {
+    expect(classifyMetricRisk("total_cholesterol_hdl_ratio", 5.5)).toBe("borderline");
+  });
+
+  it("TC/HDL above 5.5 is elevated", () => {
+    expect(classifyMetricRisk("total_cholesterol_hdl_ratio", 5.6)).toBe("elevated");
+  });
+
+  it("TG/HDL at 2.0 boundary (optimal high end)", () => {
+    expect(classifyMetricRisk("triglyceride_hdl_ratio", 2.0)).toBe("optimal");
+  });
+
+  it("TG/HDL at 3.5 boundary (borderline high end)", () => {
+    expect(classifyMetricRisk("triglyceride_hdl_ratio", 3.5)).toBe("borderline");
+  });
+
+  it("TyG at 8.5 boundary (optimal high end)", () => {
+    expect(classifyMetricRisk("glucose_triglyceride_index", 8.5)).toBe("optimal");
+  });
+
+  it("TyG at 9.0 boundary (borderline high end)", () => {
+    expect(classifyMetricRisk("glucose_triglyceride_index", 9.0)).toBe("borderline");
+  });
+
+  it("TyG above 9.0 is elevated", () => {
+    expect(classifyMetricRisk("glucose_triglyceride_index", 9.1)).toBe("elevated");
+  });
+
+  it("NLR at 1.0 boundary (optimal low end)", () => {
+    expect(classifyMetricRisk("neutrophil_lymphocyte_ratio", 1.0)).toBe("optimal");
+  });
+
+  it("NLR at 3.0 boundary (optimal high end)", () => {
+    expect(classifyMetricRisk("neutrophil_lymphocyte_ratio", 3.0)).toBe("optimal");
+  });
+
+  it("NLR at 5.0 boundary (borderline high end)", () => {
+    expect(classifyMetricRisk("neutrophil_lymphocyte_ratio", 5.0)).toBe("borderline");
+  });
+
+  it("NLR above 5.0 is elevated", () => {
+    expect(classifyMetricRisk("neutrophil_lymphocyte_ratio", 5.1)).toBe("elevated");
+  });
+
+  it("BUN/Cr at 10 boundary (optimal low end)", () => {
+    expect(classifyMetricRisk("bun_creatinine_ratio", 10)).toBe("optimal");
+  });
+
+  it("BUN/Cr at 20 boundary (optimal high end)", () => {
+    expect(classifyMetricRisk("bun_creatinine_ratio", 20)).toBe("optimal");
+  });
+
+  it("BUN/Cr at 25 boundary (borderline high end)", () => {
+    expect(classifyMetricRisk("bun_creatinine_ratio", 25)).toBe("borderline");
+  });
+
+  it("BUN/Cr above 25 is elevated", () => {
+    expect(classifyMetricRisk("bun_creatinine_ratio", 26)).toBe("elevated");
+  });
+
+  it("BUN/Cr below 10 is low", () => {
+    expect(classifyMetricRisk("bun_creatinine_ratio", 9)).toBe("low");
+  });
+
+  it("De Ritis at 0.8 boundary (optimal low end)", () => {
+    expect(classifyMetricRisk("ast_alt_ratio", 0.8)).toBe("optimal");
+  });
+
+  it("De Ritis at 1.2 boundary (optimal high end)", () => {
+    expect(classifyMetricRisk("ast_alt_ratio", 1.2)).toBe("optimal");
+  });
+
+  it("De Ritis at 2.0 boundary (borderline high end)", () => {
+    expect(classifyMetricRisk("ast_alt_ratio", 2.0)).toBe("borderline");
+  });
+
+  it("De Ritis above 2.0 is elevated", () => {
+    expect(classifyMetricRisk("ast_alt_ratio", 2.1)).toBe("elevated");
+  });
+
+  it("De Ritis below 0.8 is low", () => {
+    expect(classifyMetricRisk("ast_alt_ratio", 0.7)).toBe("low");
+  });
+
+  it("zero value", () => {
+    expect(classifyMetricRisk("triglyceride_hdl_ratio", 0)).toBe("optimal");
+  });
+
+  it("negative value is classified as low for metrics with positive optimal lower bound", () => {
+    expect(classifyMetricRisk("neutrophil_lymphocyte_ratio", -1)).toBe("low");
+  });
 });
 
 // ---------------------------------------------------------------------------
@@ -353,6 +462,28 @@ describe("computeMetricVelocity", () => {
   it("handles both nulls", () => {
     const vel = computeMetricVelocity({ a: null }, { a: null }, 10);
     expect(vel.a).toBeNull();
+  });
+
+  it("returns empty object for negative days", () => {
+    const vel = computeMetricVelocity({ a: 1 }, { a: 2 }, -5);
+    expect(vel).toEqual({});
+  });
+
+  it("handles large numbers with precision", () => {
+    const vel = computeMetricVelocity({ a: 1000000 }, { a: 1000001 }, 1);
+    expect(vel.a).toBeCloseTo(1);
+  });
+
+  it("keys only in prev but not curr are not included", () => {
+    const vel = computeMetricVelocity({ a: 1, b: 2 }, { a: 3 }, 10);
+    expect(vel).toHaveProperty("a");
+    expect(vel).not.toHaveProperty("b");
+  });
+
+  it("keys only in curr yield null if not in prev", () => {
+    const vel = computeMetricVelocity({ a: 1 }, { a: 2, b: 5 }, 10);
+    expect(vel.a).toBeCloseTo(0.1);
+    expect(vel.b).toBeNull();
   });
 });
 
@@ -392,6 +523,98 @@ describe("computeDerivedMetrics", () => {
     ];
     const metrics = computeDerivedMetrics(markers);
     expect(metrics.ast_alt_ratio).toBeCloseTo(1.2);
+  });
+
+  it("resolves 'HDL Cholesterol' alias", () => {
+    const markers: MarkerInput[] = [
+      { name: "HDL Cholesterol", value: "50", unit: "mg/dL", reference_range: "", flag: "normal" },
+      { name: "LDL", value: "100", unit: "mg/dL", reference_range: "", flag: "normal" },
+    ];
+    const metrics = computeDerivedMetrics(markers);
+    expect(metrics.hdl_ldl_ratio).toBeCloseTo(0.5);
+  });
+
+  it("resolves 'HDL-C' alias", () => {
+    const markers: MarkerInput[] = [
+      { name: "HDL-C", value: "60", unit: "mg/dL", reference_range: "", flag: "normal" },
+      { name: "LDL", value: "120", unit: "mg/dL", reference_range: "", flag: "normal" },
+    ];
+    const metrics = computeDerivedMetrics(markers);
+    expect(metrics.hdl_ldl_ratio).toBeCloseTo(0.5);
+  });
+
+  it("resolves SGOT/SGPT aliases for AST/ALT", () => {
+    const markers: MarkerInput[] = [
+      { name: "SGOT", value: "30", unit: "U/L", reference_range: "", flag: "normal" },
+      { name: "SGPT", value: "20", unit: "U/L", reference_range: "", flag: "normal" },
+    ];
+    const metrics = computeDerivedMetrics(markers);
+    expect(metrics.ast_alt_ratio).toBeCloseTo(1.5);
+  });
+
+  it("resolves Neut/Lymph short aliases", () => {
+    const markers: MarkerInput[] = [
+      { name: "Neut", value: "4.0", unit: "x10^3", reference_range: "", flag: "normal" },
+      { name: "Lymph", value: "2.0", unit: "x10^3", reference_range: "", flag: "normal" },
+    ];
+    const metrics = computeDerivedMetrics(markers);
+    expect(metrics.neutrophil_lymphocyte_ratio).toBeCloseTo(2.0);
+  });
+
+  it("returns null for zero denominator (LDL=0)", () => {
+    const markers: MarkerInput[] = [
+      { name: "HDL", value: "50", unit: "mg/dL", reference_range: "", flag: "normal" },
+      { name: "LDL", value: "0", unit: "mg/dL", reference_range: "", flag: "normal" },
+    ];
+    const metrics = computeDerivedMetrics(markers);
+    expect(metrics.hdl_ldl_ratio).toBeNull();
+  });
+
+  it("returns null for zero denominator (ALT=0)", () => {
+    const markers: MarkerInput[] = [
+      { name: "AST", value: "30", unit: "U/L", reference_range: "", flag: "normal" },
+      { name: "ALT", value: "0", unit: "U/L", reference_range: "", flag: "normal" },
+    ];
+    const metrics = computeDerivedMetrics(markers);
+    expect(metrics.ast_alt_ratio).toBeNull();
+  });
+
+  it("skips non-numeric marker values (NaN)", () => {
+    const markers: MarkerInput[] = [
+      { name: "HDL", value: "pending", unit: "mg/dL", reference_range: "", flag: "normal" },
+      { name: "LDL", value: "120", unit: "mg/dL", reference_range: "", flag: "normal" },
+    ];
+    const metrics = computeDerivedMetrics(markers);
+    expect(metrics.hdl_ldl_ratio).toBeNull();
+  });
+
+  it("duplicate markers — last wins (Map.set overwrites)", () => {
+    const markers: MarkerInput[] = [
+      { name: "HDL", value: "60", unit: "mg/dL", reference_range: "", flag: "normal" },
+      { name: "HDL", value: "99", unit: "mg/dL", reference_range: "", flag: "normal" },
+      { name: "LDL", value: "120", unit: "mg/dL", reference_range: "", flag: "normal" },
+    ];
+    const metrics = computeDerivedMetrics(markers);
+    // Map.set overwrites, so the last HDL (99) wins → 99/120
+    expect(metrics.hdl_ldl_ratio).toBeCloseTo(99 / 120);
+  });
+
+  it("handles whitespace in marker names", () => {
+    const markers: MarkerInput[] = [
+      { name: "  HDL  ", value: "50", unit: "mg/dL", reference_range: "", flag: "normal" },
+      { name: "LDL", value: "100", unit: "mg/dL", reference_range: "", flag: "normal" },
+    ];
+    const metrics = computeDerivedMetrics(markers);
+    expect(metrics.hdl_ldl_ratio).toBeCloseTo(0.5);
+  });
+
+  it("handles lowercase marker names", () => {
+    const markers: MarkerInput[] = [
+      { name: "hdl", value: "50", unit: "mg/dL", reference_range: "", flag: "normal" },
+      { name: "ldl", value: "100", unit: "mg/dL", reference_range: "", flag: "normal" },
+    ];
+    const metrics = computeDerivedMetrics(markers);
+    expect(metrics.hdl_ldl_ratio).toBeCloseTo(0.5);
   });
 });
 

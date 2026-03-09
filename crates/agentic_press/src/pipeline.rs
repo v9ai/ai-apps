@@ -20,6 +20,7 @@ pub enum PipelineMode {
     #[default]
     Journalism,
     Blog,
+    DeepDive,
 }
 
 // ── picker output ────────────────────────────────────────────────────────────
@@ -66,9 +67,30 @@ pub struct JournalismResult {
 }
 
 #[derive(Debug)]
+pub struct DeepDiveArticle {
+    pub title: String,
+    pub slug: String,
+    pub source_content: String,
+    pub research: String,
+    pub seo: String,
+    pub draft: String,
+    pub linkedin: String,
+    pub editor_output: String,
+    pub approved: bool,
+    pub revision_rounds: usize,
+    pub paper_count: usize,
+}
+
+#[derive(Debug)]
+pub struct DeepDiveResult {
+    pub article: DeepDiveArticle,
+}
+
+#[derive(Debug)]
 pub enum PipelineResult {
     Blog(BlogResult),
     Journalism(JournalismResult),
+    DeepDive(DeepDiveResult),
 }
 
 // ── pipeline ─────────────────────────────────────────────────────────────────
@@ -92,6 +114,8 @@ pub struct Pipeline {
     mode: PipelineMode,
     /// Topic for journalism mode.
     topic: Option<String>,
+    /// Input file path for deep-dive mode.
+    input_file: Option<String>,
 }
 
 impl Pipeline {
@@ -107,6 +131,7 @@ impl Pipeline {
             publisher: None,
             mode: PipelineMode::default(),
             topic: None,
+            input_file: None,
         }
     }
 
@@ -153,10 +178,16 @@ impl Pipeline {
         self
     }
 
+    pub fn with_input_file(mut self, path: impl Into<String>) -> Self {
+        self.input_file = Some(path.into());
+        self
+    }
+
     pub async fn run(&self) -> Result<PipelineResult> {
         match self.mode {
             PipelineMode::Journalism => self.run_journalism().await,
             PipelineMode::Blog => self.run_blog().await,
+            PipelineMode::DeepDive => self.run_deep_dive().await,
         }
     }
 
@@ -527,6 +558,245 @@ impl Pipeline {
 
         Ok(PipelineResult::Journalism(JournalismResult { article }))
     }
+
+    async fn run_deep_dive(&self) -> Result<PipelineResult> {
+        let input_path = self
+            .input_file
+            .as_deref()
+            .ok_or_else(|| anyhow::anyhow!("--input is required for deep-dive mode"))?;
+
+        let title = self
+            .topic
+            .as_deref()
+            .ok_or_else(|| anyhow::anyhow!("--title/--topic is required for deep-dive mode"))?;
+
+        let slug = crate::slugify(title);
+
+        // Read source article.
+        let source_content = fs::read_to_string(input_path)
+            .await
+            .with_context(|| format!("Cannot read input file: {input_path}"))?;
+        info!("Read {} chars from {input_path}", source_content.len());
+
+        // Create output directories.
+        let research_dir = format!("{}/research", self.output_dir);
+        let drafts_dir = format!("{}/drafts", self.output_dir);
+        let published_dir = format!("{}/published", self.output_dir);
+        for d in [&research_dir, &drafts_dir, &published_dir] {
+            fs::create_dir_all(d).await?;
+        }
+
+        let pool = self.build_pool()?;
+        let ds_client = pool
+            .deepseek_client()
+            .context("ModelPool must have a DeepSeek reasoner")?;
+
+        info!("═══ agentic_press deep-dive pipeline starting ═══");
+        info!("Models: {}  |  Title: {title}", pool.label());
+
+        let mut team = AgentTeam::new("deep-dive-team");
+        let mut tasks = TaskList::new();
+
+        // ── Phase 1 — Research ∥ SEO (parallel) ────────────────────────────
+        let seo_idx = team.spawn(
+            "deep-dive-seo",
+            prompts::journalism_seo(title),
+            TeamRole::Fast,
+            &pool,
+        );
+        let research_task = tasks.add("research", vec![]);
+        let seo_task = tasks.add("seo", vec![]);
+
+        info!("Phase 1 — Research ∥ SEO (parallel)");
+        tasks.claim(research_task);
+        tasks.claim(seo_task);
+
+        let use_research = self.research_config.is_some();
+        let research_paper_search = self
+            .research_config
+            .as_ref()
+            .is_some_and(|c| c.enable_paper_search);
+        let research_multi_model = self
+            .research_config
+            .as_ref()
+            .is_some_and(|c| c.enable_multi_model);
+
+        // Run research and SEO in parallel.
+        let seo_input = format!("Analyze SEO strategy for: {title}");
+        let (research_output, paper_count, seo_output) = if use_research {
+            let config = ResearchConfig {
+                enable_paper_search: research_paper_search,
+                enable_multi_model: research_multi_model,
+            };
+            let (research_result, seo_result) = tokio::try_join!(
+                research_phase::research_phase(title, title, &self.niche, &config, &ds_client),
+                team.agent(seo_idx).run(&seo_input),
+            )?;
+            (research_result.notes, research_result.paper_count, seo_result)
+        } else {
+            // No research configured — run a simple researcher agent in parallel with SEO.
+            let researcher_idx = team.spawn(
+                "deep-dive-researcher",
+                prompts::journalism_researcher(title),
+                TeamRole::Reasoner,
+                &pool,
+            );
+            let research_input = format!("Research this topic: {title}");
+            let (research_result, seo_result) = run_parallel(
+                team.agent(researcher_idx),
+                team.agent(seo_idx),
+                &research_input,
+            )
+            .await?;
+            (research_result, 0usize, seo_result)
+        };
+
+        tasks.complete(research_task, research_output.clone());
+        tasks.complete(seo_task, seo_output.clone());
+        save(&research_dir, &format!("{slug}-research.md"), &research_output).await?;
+        save(&research_dir, &format!("{slug}-seo.md"), &seo_output).await?;
+
+        // ── Phase 2 — DeepDiveWriter (Reasoner) ────────────────────────────
+        let writer_idx = team.spawn(
+            "deep-dive-writer",
+            prompts::deep_dive_writer(title),
+            TeamRole::Reasoner,
+            &pool,
+        );
+        let writer_task = tasks.add("writer", vec![research_task, seo_task]);
+
+        info!("Phase 2 — DeepDiveWriter");
+        tasks.claim(writer_task);
+        let writer_input = format!(
+            "## Source Article\n\n{source_content}\n\n---\n\n## Academic Research\n\n{research_output}\n\n---\n\n## SEO Strategy\n\n{seo_output}"
+        );
+        let mut draft = team.agent(writer_idx).run(&writer_input).await?;
+        tasks.complete(writer_task, draft.clone());
+        save(&drafts_dir, &format!("{slug}.md"), &draft).await?;
+
+        // ── Phase 3 — Editor (Reviewer) with revision loop ─────────────────
+        let mut revision_rounds: usize = 0;
+        let mut editor_output;
+        let mut approved;
+
+        loop {
+            let editor_idx = team.spawn(
+                format!("deep-dive-editor-r{revision_rounds}"),
+                prompts::journalism_editor(),
+                TeamRole::Reviewer,
+                &pool,
+            );
+            let editor_task = tasks.add(
+                &format!("editor-r{revision_rounds}"),
+                vec![writer_task],
+            );
+
+            info!("Phase 3 — Editor (round {})", revision_rounds + 1);
+            tasks.claim(editor_task);
+            let editor_input = format!(
+                "## Draft\n\n{draft}\n\n---\n\n## Research Brief\n\n{research_output}\n\n---\n\n## SEO Strategy\n\n{seo_output}"
+            );
+            editor_output = team.agent(editor_idx).run(&editor_input).await?;
+            tasks.complete(editor_task, editor_output.clone());
+
+            approved = editor_output.contains("APPROVE")
+                || editor_output.contains("status: published");
+
+            if approved || revision_rounds >= 1 {
+                break;
+            }
+
+            // ── Revision: feed editor notes back to Writer ──────────────
+            revision_rounds += 1;
+            info!("Editor requested revision — round {revision_rounds}");
+
+            let revision_writer_idx = team.spawn(
+                format!("deep-dive-writer-r{revision_rounds}"),
+                prompts::deep_dive_writer(title),
+                TeamRole::Reasoner,
+                &pool,
+            );
+            let revision_task = tasks.add(
+                &format!("writer-r{revision_rounds}"),
+                vec![editor_task],
+            );
+
+            tasks.claim(revision_task);
+            let revision_input = format!(
+                "## Revision Notes from Editor\n\n{editor_output}\n\n---\n\n\
+                 ## Source Article\n\n{source_content}\n\n---\n\n\
+                 ## Academic Research\n\n{research_output}\n\n---\n\n\
+                 ## SEO Strategy\n\n{seo_output}\n\n---\n\n\
+                 ## Previous Draft (revise this, don't start from scratch)\n\n{draft}"
+            );
+            draft = team.agent(revision_writer_idx).run(&revision_input).await?;
+            tasks.complete(revision_task, draft.clone());
+            save(
+                &drafts_dir,
+                &format!("{slug}-revisions.md"),
+                &editor_output,
+            )
+            .await?;
+            save(&drafts_dir, &format!("{slug}.md"), &draft).await?;
+        }
+
+        if approved {
+            save(&published_dir, &format!("{slug}.md"), &editor_output).await?;
+        } else {
+            save(
+                &drafts_dir,
+                &format!("{slug}-revisions.md"),
+                &editor_output,
+            )
+            .await?;
+        }
+
+        // ── Phase 4 — LinkedIn (Fast) from final content ───────────────────
+        let final_content = if approved { &editor_output } else { &draft };
+        let linkedin_idx = team.spawn(
+            "deep-dive-linkedin",
+            prompts::linkedin(),
+            TeamRole::Fast,
+            &pool,
+        );
+        let linkedin_task = tasks.add("linkedin", vec![]);
+
+        info!("Phase 4 — LinkedIn");
+        tasks.claim(linkedin_task);
+        let linkedin = team.agent(linkedin_idx).run(final_content).await?;
+        tasks.complete(linkedin_task, linkedin.clone());
+        save(&drafts_dir, &format!("{slug}-linkedin.md"), &linkedin).await?;
+
+        // ── Optional publish ────────────────────────────────────────────────
+        if self.publish && approved {
+            let default_pub = FsPublisher;
+            let pub_impl: &dyn Publisher = match &self.publisher {
+                Some(p) => p.as_ref(),
+                None => &default_pub,
+            };
+            pub_impl
+                .publish_post(&editor_output, title, true, None)
+                .await?;
+        }
+
+        assert!(tasks.is_all_done(), "all deep-dive tasks should be complete");
+
+        let article = DeepDiveArticle {
+            title: title.to_string(),
+            slug,
+            source_content,
+            research: research_output,
+            seo: seo_output,
+            draft,
+            linkedin,
+            editor_output,
+            approved,
+            revision_rounds,
+            paper_count,
+        };
+
+        Ok(PipelineResult::DeepDive(DeepDiveResult { article }))
+    }
 }
 
 // ── helpers ───────────────────────────────────────────────────────────────────
@@ -671,6 +941,7 @@ mod tests {
         assert!(p.publisher.is_none());
         assert_eq!(p.mode, PipelineMode::Journalism);
         assert!(p.topic.is_none());
+        assert!(p.input_file.is_none());
     }
 
     #[test]

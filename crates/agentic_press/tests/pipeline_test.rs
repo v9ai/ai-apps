@@ -801,3 +801,255 @@ async fn test_journalism_missing_topic_error() {
         "should mention --topic; got: {err}"
     );
 }
+
+// ── deep-dive mode helpers ──────────────────────────────────────────────────
+
+fn deep_dive_pipeline(server: &MockServer, tmp: &TempDir, title: &str, input_file: &str) -> Pipeline {
+    let ds_client = Arc::new(
+        DeepSeekClient::new(ReqwestClient::new(), "test-key")
+            .with_base_url(server.uri()),
+    );
+    let qw_client = Arc::new(
+        qwen::Client::new("test-key").with_base_url(server.uri()),
+    );
+    Pipeline::new(title, tmp.path().to_str().unwrap())
+        .with_deepseek_client(ds_client)
+        .with_qwen_client(qw_client)
+        .with_mode(PipelineMode::DeepDive)
+        .with_topic(title)
+        .with_input_file(input_file)
+        .with_research(agentic_press::research_phase::ResearchConfig {
+            enable_paper_search: false,
+            enable_multi_model: false,
+        })
+}
+
+/// Mount deep-dive agent mocks (researcher, seo, deep-dive writer, editor, linkedin).
+/// Note: with `enable_paper_search: false, enable_multi_model: false`,
+/// `research_phase` falls back to `fallback_deepseek` which uses `prompts::researcher(niche)`
+/// containing "Researcher agent" (not "Researcher for a journalism team").
+async fn mount_deep_dive_mocks(server: &MockServer, editor_verdict: &str) {
+    for (phrase, body) in [
+        ("Researcher agent", chat_response("# Research Brief\n\n## Summary\nDeep-dive research findings.")),
+        ("SEO Strategist for a journalism team", chat_response("# SEO Strategy\n\n## Target Keywords\neval driven development.")),
+        ("Deep-Dive Writer", chat_response("# Eval Driven Development\n\nDraft body with research insights.\n\n## Section 1\n\nContent.")),
+        ("Editor for a journalism team", chat_response(editor_verdict)),
+        ("LinkedIn Drafter", chat_response("Eval-driven development changes everything.\n\nKey insight 1\nKey insight 2\n\n#EvalDriven #LLM")),
+    ] {
+        Mock::given(method("POST"))
+            .and(path("/chat/completions"))
+            .and(body_string_contains(phrase))
+            .respond_with(ResponseTemplate::new(200).set_body_json(body))
+            .mount(server)
+            .await;
+    }
+}
+
+// ── deep-dive mode tests ────────────────────────────────────────────────────
+
+/// Deep-dive happy path: creates research, draft, published, and linkedin files.
+#[tokio::test]
+async fn test_deep_dive_happy_path_approved() {
+    let server = MockServer::start().await;
+    mount_deep_dive_mocks(
+        &server,
+        "APPROVE\n\n---\ntitle: \"Final Deep Dive\"\nstatus: published\n---\n\n# Eval Driven Development\n\nEdited body.",
+    )
+    .await;
+
+    let tmp = TempDir::new().unwrap();
+    // Create a source file for the pipeline to read.
+    let source_file = tmp.path().join("source.md");
+    std::fs::write(&source_file, "# Original Article\n\nSource content here.").unwrap();
+
+    let result = deep_dive_pipeline(&server, &tmp, "Eval Driven Development", source_file.to_str().unwrap())
+        .run()
+        .await
+        .unwrap();
+
+    let agentic_press::PipelineResult::DeepDive(d) = result else {
+        panic!("expected DeepDive result");
+    };
+    assert!(d.article.approved, "editor should approve");
+    assert_eq!(d.article.revision_rounds, 0, "no revision rounds needed");
+    assert_eq!(d.article.title, "Eval Driven Development");
+    assert_eq!(d.article.slug, "eval-driven-development");
+    assert!(!d.article.research.is_empty());
+    assert!(!d.article.seo.is_empty());
+    assert!(!d.article.draft.is_empty());
+    assert!(!d.article.linkedin.is_empty());
+
+    let out = tmp.path();
+    assert!(out.join("research/eval-driven-development-research.md").exists());
+    assert!(out.join("research/eval-driven-development-seo.md").exists());
+    assert!(out.join("drafts/eval-driven-development.md").exists());
+    assert!(out.join("published/eval-driven-development.md").exists());
+    assert!(out.join("drafts/eval-driven-development-linkedin.md").exists());
+}
+
+/// Deep-dive revision loop: REVISE → APPROVE, revision_rounds == 1.
+#[tokio::test]
+async fn test_deep_dive_revision_loop() {
+    let server = MockServer::start().await;
+
+    // Researcher and SEO respond normally.
+    for (phrase, body) in [
+        ("Researcher agent", chat_response("# Research Brief\nFindings.")),
+        ("SEO Strategist for a journalism team", chat_response("# SEO Strategy\nKeywords.")),
+    ] {
+        Mock::given(method("POST"))
+            .and(path("/chat/completions"))
+            .and(body_string_contains(phrase))
+            .respond_with(ResponseTemplate::new(200).set_body_json(body))
+            .mount(&server)
+            .await;
+    }
+
+    // Writer always returns a draft.
+    Mock::given(method("POST"))
+        .and(path("/chat/completions"))
+        .and(body_string_contains("Deep-Dive Writer"))
+        .respond_with(ResponseTemplate::new(200).set_body_json(
+            chat_response("# Eval Driven Development\n\nRevised draft body."),
+        ))
+        .mount(&server)
+        .await;
+
+    // Editor: first call returns REVISE, second returns APPROVE.
+    Mock::given(method("POST"))
+        .and(path("/chat/completions"))
+        .and(body_string_contains("Editor for a journalism team"))
+        .respond_with(ResponseTemplate::new(200).set_body_json(
+            chat_response("**DECISION: REVISE**\n## Critical Issues (must fix)\n- [ ] Fix the lede"),
+        ))
+        .up_to_n_times(1)
+        .mount(&server)
+        .await;
+
+    Mock::given(method("POST"))
+        .and(path("/chat/completions"))
+        .and(body_string_contains("Editor for a journalism team"))
+        .respond_with(ResponseTemplate::new(200).set_body_json(
+            chat_response("**DECISION: APPROVE**\n\n---\nstatus: published\n---\n\n# Final\n\nApproved."),
+        ))
+        .mount(&server)
+        .await;
+
+    // LinkedIn responds normally.
+    Mock::given(method("POST"))
+        .and(path("/chat/completions"))
+        .and(body_string_contains("LinkedIn Drafter"))
+        .respond_with(ResponseTemplate::new(200).set_body_json(
+            chat_response("LinkedIn post.\n#EvalDriven"),
+        ))
+        .mount(&server)
+        .await;
+
+    let tmp = TempDir::new().unwrap();
+    let source_file = tmp.path().join("source.md");
+    std::fs::write(&source_file, "# Source\nContent.").unwrap();
+
+    let result = deep_dive_pipeline(&server, &tmp, "Eval Driven Development", source_file.to_str().unwrap())
+        .run()
+        .await
+        .unwrap();
+
+    let agentic_press::PipelineResult::DeepDive(d) = result else {
+        panic!("expected DeepDive result");
+    };
+    assert!(d.article.approved, "editor should approve after revision");
+    assert_eq!(d.article.revision_rounds, 1, "should have done 1 revision round");
+
+    let out = tmp.path();
+    assert!(out.join("published/eval-driven-development.md").exists(), "published file should exist");
+    assert!(out.join("drafts/eval-driven-development-revisions.md").exists(), "revision notes should be saved");
+}
+
+/// Deep-dive max revision cap: always REVISE, exits approved=false.
+#[tokio::test]
+async fn test_deep_dive_max_revision_cap() {
+    let server = MockServer::start().await;
+    mount_deep_dive_mocks(
+        &server,
+        "**DECISION: REVISE**\n## Critical Issues (must fix)\n- [ ] Unfixable problem",
+    )
+    .await;
+
+    let tmp = TempDir::new().unwrap();
+    let source_file = tmp.path().join("source.md");
+    std::fs::write(&source_file, "# Source\nContent.").unwrap();
+
+    let result = deep_dive_pipeline(&server, &tmp, "Eval Driven Development", source_file.to_str().unwrap())
+        .run()
+        .await
+        .unwrap();
+
+    let agentic_press::PipelineResult::DeepDive(d) = result else {
+        panic!("expected DeepDive result");
+    };
+    assert!(!d.article.approved, "should not approve after max revisions");
+    assert_eq!(d.article.revision_rounds, 1, "should cap at 1 revision round");
+
+    let out = tmp.path();
+    assert!(out.join("drafts/eval-driven-development-revisions.md").exists());
+    assert!(!out.join("published/eval-driven-development.md").exists());
+}
+
+/// Missing input file in deep-dive mode returns an error.
+#[tokio::test]
+async fn test_deep_dive_missing_input_file_error() {
+    let server = MockServer::start().await;
+    let tmp = TempDir::new().unwrap();
+
+    let ds_client = Arc::new(
+        DeepSeekClient::new(ReqwestClient::new(), "test-key")
+            .with_base_url(server.uri()),
+    );
+    let qw_client = Arc::new(
+        qwen::Client::new("test-key").with_base_url(server.uri()),
+    );
+
+    let err = Pipeline::new("test", tmp.path().to_str().unwrap())
+        .with_deepseek_client(ds_client)
+        .with_qwen_client(qw_client)
+        .with_mode(PipelineMode::DeepDive)
+        .with_topic("Test")
+        .run()
+        .await
+        .unwrap_err();
+
+    assert!(
+        err.to_string().contains("--input"),
+        "should mention --input; got: {err}"
+    );
+}
+
+/// Publisher receives correct content when deep-dive is approved.
+#[tokio::test]
+async fn test_deep_dive_publisher_receives_content() {
+    let server = MockServer::start().await;
+    mount_deep_dive_mocks(
+        &server,
+        "APPROVE\n\n# Final Deep Dive\n\nApproved editor output.",
+    )
+    .await;
+
+    let tmp = TempDir::new().unwrap();
+    let source_file = tmp.path().join("source.md");
+    std::fs::write(&source_file, "# Source\nContent.").unwrap();
+
+    let mock_pub = MockPublisher::new();
+    let calls = Arc::clone(&mock_pub.calls);
+
+    deep_dive_pipeline(&server, &tmp, "Eval Driven Development", source_file.to_str().unwrap())
+        .with_publish(true)
+        .with_publisher(mock_pub)
+        .run()
+        .await
+        .unwrap();
+
+    let calls = calls.lock().unwrap();
+    assert_eq!(calls.len(), 1, "publisher should have been called once");
+    assert!(calls[0].0.contains("APPROVE"), "editor output should be passed to publisher");
+    assert_eq!(calls[0].1, "Eval Driven Development", "title should be passed to publisher");
+}

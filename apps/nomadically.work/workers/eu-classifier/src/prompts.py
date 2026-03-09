@@ -64,8 +64,8 @@ CLASSIFICATION RULES (apply in order):
 
 8. WORLDWIDE / GLOBAL:
    - Worldwide + negative signals (US only etc.) -> isRemoteEU: false (high confidence)
-   - Worldwide + EU country/office in signals -> isRemoteEU: true (medium confidence)
-   - Worldwide + no EU specifics -> isRemoteEU: true (LOW confidence -- downgraded)
+   - Worldwide + EU country/office/timezone in signals -> isRemoteEU: true (medium confidence)
+   - Worldwide + no EU specifics -> isRemoteEU: FALSE (medium confidence -- burden of proof is on EU eligibility)
 
 9. SPECIFIC COUNTRIES/REGIONS:
    - UK only (post-Brexit) -> isRemoteEU: false

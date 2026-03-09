@@ -1,0 +1,10 @@
+name: therapeutic-research-benchmark
+tasks:
+  - harbor/tasks/therapeutic-research.yaml
+weights:
+  citation_accuracy: 0.3
+  research_grounding: 0.3
+  synthesis_completeness: 0.2
+  team_efficiency: 0.2
+trials: 3
+aggregation: median
