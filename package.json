@@ -10,6 +10,7 @@
     "dev:n": "turbo run dev --filter=nomadically.work",
     "dev:r": "turbo run dev --filter=research-thera",
     "dev:b": "turbo run dev --filter=vadim.blog",
+    "dev:re": "turbo run dev --filter=real-estate",
     "format": "prettier --write \"**/*.{ts,tsx,md}\"",
     "check-types": "turbo run check-types",
     "lint": "turbo run lint",
@@ -20,7 +21,8 @@
     "deploy:n": "vercel deploy --prod --archive=tgz --cwd apps/nomadically.work",
     "deploy:h": "vercel deploy --prod --archive=tgz --cwd apps/agentic-healthcare",
     "deploy:r": "vercel deploy --prod --archive=tgz --cwd apps/research-thera",
-    "deploy:all": "pnpm deploy:n && pnpm deploy:l && pnpm deploy:h && pnpm deploy:r && pnpm deploy:blog"
+    "deploy:re": "vercel deploy --prod --archive=tgz --cwd apps/real-estate",
+    "deploy:all": "pnpm deploy:n && pnpm deploy:l && pnpm deploy:h && pnpm deploy:r && pnpm deploy:re && pnpm deploy:blog"
   },
   "devDependencies": {
     "napi-postinstall": "^0.2.4",

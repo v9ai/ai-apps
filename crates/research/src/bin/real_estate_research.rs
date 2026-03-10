@@ -2101,28 +2101,25 @@ fn research_tasks() -> Vec<ResearchTask> {
         },
         ResearchTask {
             id: 100,
-            subject: "real-estate-ai-capstone".into(),
+            subject: "agentic-ai-autonomous-real-estate".into(),
             description: format!(
-                "Produce the GRAND CAPSTONE report for Real Estate AI/ML Deep Research. \
-                This is the executive-level deliverable synthesizing everything. Include: \
-                (1) Executive Summary — landscape, opportunity, readiness, \
-                (2) Cross-Cutting Themes — techniques, data, ethics that span all domains, \
-                (3) Top 100 Papers — key references with domain mapping, \
-                (4) Emerging Trends — what's next in 2026-2030, \
-                (5) Datasets & Benchmarks — essential resources, \
-                (6) Research Gaps — highest-impact open problems, \
-                (7) Cross-Market Analysis — global adoption patterns, \
-                (8) Ethics & Governance — responsible AI in real estate, \
-                (9) Implementation Roadmap — from research to production, \
-                (10) Market Opportunity — hiring, startups, investment thesis. {ctx}"
+                "Write a deep-dive research article on Agentic AI & Autonomous Real Estate Systems. \
+                Cover: (1) foundations of agentic AI — ReAct, Reflexion, tool-use paradigms, \
+                (2) property search agents — autonomous browsing, filtering, scheduling viewings, \
+                (3) automated due diligence — title search, zoning checks, environmental reports, \
+                (4) negotiation orchestration — multi-party offer/counter-offer agents, \
+                (5) autonomous property management — maintenance dispatch, tenant communication, rent optimization, \
+                (6) multi-agent platforms — agent-to-agent coordination, shared memory, task decomposition, \
+                (7) agent architectures — planning (LLM-based), memory (RAG + vector stores), tool integration (MCP, function calling), \
+                (8) evaluation & safety — hallucination in high-stakes transactions, human-in-the-loop guardrails, \
+                (9) case studies & industry adoption — startups, enterprise platforms, regulatory considerations. {ctx}"
             ),
-            preamble: "You are a world-class research director producing the definitive \
-                landscape report on AI/ML in real estate. Make it comprehensive, \
-                actionable, and suitable for executive and technical audiences alike."
+            preamble: "You are a research scientist specializing in LLM-based autonomous agents \
+                and their applications in real estate. Produce a rigorous, technically detailed article."
                 .into(),
             status: TaskStatus::Pending,
             owner: None,
-            dependencies: vec![93, 94, 95, 96, 97, 98, 99],
+            dependencies: vec![38, 59, 80],
             result: None,
         },
     ]
