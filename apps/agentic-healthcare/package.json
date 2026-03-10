@@ -24,8 +24,7 @@
     "@radix-ui/react-separator": "^1.1.8",
     "@radix-ui/react-slot": "^1.2.2",
     "@radix-ui/themes": "^3.3.0",
-    "@repo/qwen": "workspace:*",
-    "@supabase/ssr": "latest",
+"@supabase/ssr": "latest",
     "@supabase/supabase-js": "latest",
     "lucide-react": "^0.511.0",
     "next": "latest",
@@ -36,7 +35,7 @@
     "remark-gfm": "^4.0.1",
     "unstructured-client": "^0.31.0"
   },
-  "packageManager": "pnpm@10.31.0",  
+  "packageManager": "pnpm@10.31.0",
   "devDependencies": {
 "@graphql-codegen/cli": "^6.1.2",
     "@graphql-codegen/client-preset": "^5.2.2",

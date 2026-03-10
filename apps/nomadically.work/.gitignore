@@ -84,5 +84,8 @@ results/*.json
 # Claude Code local settings (may contain secrets)
 .claude/settings.local.json
 
+# Generated docs (build-lh-docs.ts)
+public/docs/
+
 # Rust build artifacts
 **/target/

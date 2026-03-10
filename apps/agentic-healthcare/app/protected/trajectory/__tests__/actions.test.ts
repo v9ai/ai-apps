@@ -3,7 +3,7 @@ import {
   classifyStateMetrics,
   computeTrajectoryVelocities,
   type TrajectoryState,
-} from "../actions";
+} from "../utils";
 
 // ---------------------------------------------------------------------------
 // Helper to build a TrajectoryState for testing

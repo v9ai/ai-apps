@@ -18,11 +18,20 @@ class ConsistencyStatus(str, Enum):
     COULD_NOT_VERIFY = "could_not_verify"
 
 
+class QuoteAccuracy(BaseModel):
+    has_direct_quote: bool = False
+    quoted_text: Optional[str] = None
+    accuracy_status: str = "not_applicable"  # accurate | inaccurate | suspected_fabricated | could_not_verify | not_applicable
+    issues: List[str] = Field(default_factory=list)
+    risk_level: str = "none"  # none | low | medium | high | critical
+
+
 class Citation(BaseModel):
     citation_text: str
     claimed_proposition: Optional[str] = None
     source_location: str = ""
     context: Optional[str] = None
+    direct_quote: Optional[str] = None
 
 
 class VerifiedCitation(BaseModel):
@@ -34,6 +43,9 @@ class VerifiedCitation(BaseModel):
     supporting_evidence: Optional[str] = None
     status: str = "could_not_verify"
     notes: Optional[str] = None
+    quote_accuracy: Optional[QuoteAccuracy] = None
+    fabrication_risk: str = "unknown"  # none | low | medium | high
+    is_binding: Optional[bool] = None  # None=unknown; True=binding in CA
 
 
 class Fact(BaseModel):

@@ -1,14 +1,20 @@
+use std::sync::Arc;
+
 use anyhow::{Context, Result};
+use tokio::sync::Semaphore;
 use tracing::info;
 
 use crate::agent::agent_builder;
 use crate::code::CodeAnalysisConfig;
 use crate::code::tools::{AnalyzeStructure, FindAntiPatterns, SearchPattern};
-use crate::tools::{GetPaperDetail, GetRecommendations, SearchPapers, SearchToolConfig};
+use crate::tools::{FallbackClients, GetPaperDetail, GetRecommendations, SearchPapers, SearchToolConfig};
 use crate::SemanticScholarClient;
 
 use super::mailbox::{Mailbox, MessageKind, TeamMessage};
 use super::task::SharedTaskList;
+
+/// Maximum total characters for injected context (~100K tokens, safe under DeepSeek's 131K limit).
+pub(crate) const MAX_CONTEXT_CHARS: usize = 400_000;
 
 /// Configuration passed to each teammate.
 pub struct TeammateConfig {
@@ -19,6 +25,10 @@ pub struct TeammateConfig {
     pub code_analysis: Option<CodeAnalysisConfig>,
     /// When `Some`, overrides the default search tool configuration.
     pub tool_config: Option<SearchToolConfig>,
+    /// Shared semaphore for Semantic Scholar rate limiting across workers.
+    pub scholar_rate_limiter: Option<Arc<Semaphore>>,
+    /// Fallback clients for when Semantic Scholar is rate-limited.
+    pub fallback: Option<FallbackClients>,
 }
 
 /// A teammate agent that claims tasks, injects prior findings, and runs the
@@ -78,8 +88,11 @@ impl Teammate {
                 timestamp: std::time::Instant::now(),
             });
 
-            // Build context from prior findings.
-            let prior = self.tasks.completed_findings();
+            // Build context from dependency findings only (not all completed tasks).
+            let prior = truncate_context(
+                self.tasks.completed_findings_for(&task.dependencies),
+                MAX_CONTEXT_CHARS,
+            );
             let context_section = if prior.is_empty() {
                 String::new()
             } else {
@@ -94,7 +107,13 @@ impl Teammate {
             };
 
             // Build and run the agent.
-            let scholar = SemanticScholarClient::new(self.config.scholar_key.as_deref());
+            let scholar = match &self.config.scholar_rate_limiter {
+                Some(limiter) => SemanticScholarClient::with_rate_limiter(
+                    self.config.scholar_key.as_deref(),
+                    Arc::clone(limiter),
+                ),
+                None => SemanticScholarClient::new(self.config.scholar_key.as_deref()),
+            };
             let tool_config = self.config.tool_config.clone().unwrap_or(SearchToolConfig {
                 default_limit: 10,
                 abstract_max_chars: 500,
@@ -105,13 +124,19 @@ impl Teammate {
                 detail_description: None,
             });
 
+            let search_tool = match &self.config.fallback {
+                Some(fb) => SearchPapers::with_fallback(scholar.clone(), tool_config.clone(), fb.clone()),
+                None => SearchPapers::with_config(scholar.clone(), tool_config.clone()),
+            };
+            let detail_tool = match &self.config.fallback {
+                Some(fb) => GetPaperDetail::with_fallback(scholar.clone(), tool_config.clone(), fb.clone()),
+                None => GetPaperDetail::with_config(scholar.clone(), tool_config.clone()),
+            };
+
             let mut builder = agent_builder(&self.config.api_key, "deepseek-chat")
                 .preamble(&task.preamble)
-                .tool(SearchPapers::with_config(
-                    scholar.clone(),
-                    tool_config.clone(),
-                ))
-                .tool(GetPaperDetail::with_config(scholar.clone(), tool_config.clone()))
+                .tool(search_tool)
+                .tool(detail_tool)
                 .tool(GetRecommendations::with_config(scholar, tool_config))
                 .base_url(&self.config.base_url)
                 .worker_id(&self.worker_id);
@@ -161,4 +186,35 @@ impl Teammate {
             }
         }
     }
+}
+
+/// Truncate context entries so their combined size stays within `max_chars`.
+/// Each entry that exceeds its proportional budget is trimmed with a suffix.
+pub(crate) fn truncate_context(
+    entries: Vec<(String, String)>,
+    max_chars: usize,
+) -> Vec<(String, String)> {
+    if entries.is_empty() {
+        return entries;
+    }
+    let total: usize = entries.iter().map(|(s, r)| s.len() + r.len()).sum();
+    if total <= max_chars {
+        return entries;
+    }
+    let per_entry = max_chars / entries.len();
+    entries
+        .into_iter()
+        .map(|(subject, result)| {
+            let budget = per_entry.saturating_sub(subject.len());
+            if result.len() <= budget {
+                (subject, result)
+            } else {
+                let truncated: String = result.chars().take(budget).collect();
+                (
+                    subject,
+                    format!("{truncated}\n\n[...truncated to fit context window...]"),
+                )
+            }
+        })
+        .collect()
 }

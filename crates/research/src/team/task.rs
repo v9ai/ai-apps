@@ -90,6 +90,20 @@ impl SharedTaskList {
             .collect()
     }
 
+    /// Return completed findings only for the given dependency IDs.
+    pub fn completed_findings_for(&self, dep_ids: &[usize]) -> Vec<(String, String)> {
+        let tasks = self.inner.lock().unwrap();
+        tasks
+            .iter()
+            .filter(|t| dep_ids.contains(&t.id) && t.status == TaskStatus::Completed)
+            .filter_map(|t| {
+                t.result
+                    .as_ref()
+                    .map(|r| (t.subject.clone(), r.clone()))
+            })
+            .collect()
+    }
+
     /// Return all completed tasks as (id, subject, result) triples.
     pub fn completed_tasks(&self) -> Vec<(usize, String, String)> {
         let tasks = self.inner.lock().unwrap();
@@ -110,5 +124,50 @@ impl SharedTaskList {
         tasks
             .iter()
             .all(|t| t.status == TaskStatus::Completed || t.status == TaskStatus::Failed)
+    }
+
+    /// Resume from previously saved results. For each saved file matching
+    /// `agent-{id:02}-{subject}.md` in `dir`, mark the task as completed
+    /// with the file contents as the result. Returns the count of resumed tasks.
+    pub fn resume_from_dir(&self, dir: &str) -> usize {
+        let mut tasks = self.inner.lock().unwrap();
+        let mut resumed = 0;
+        for task in tasks.iter_mut() {
+            if task.status != TaskStatus::Pending {
+                continue;
+            }
+            // Try both 2-digit and 3-digit padding patterns
+            let candidates = [
+                format!("{dir}/agent-{:02}-{}.md", task.id, task.subject),
+                format!("{dir}/agent-{:03}-{}.md", task.id, task.subject),
+            ];
+            for path in &candidates {
+                if let Ok(content) = std::fs::read_to_string(path) {
+                    if !content.is_empty() {
+                        task.status = TaskStatus::Completed;
+                        task.result = Some(content);
+                        task.owner = Some("resumed".into());
+                        resumed += 1;
+                        break;
+                    }
+                }
+            }
+        }
+        resumed
+    }
+
+    /// Reset failed tasks back to Pending so they can be retried.
+    pub fn reset_failed(&self) -> usize {
+        let mut tasks = self.inner.lock().unwrap();
+        let mut count = 0;
+        for task in tasks.iter_mut() {
+            if task.status == TaskStatus::Failed {
+                task.status = TaskStatus::Pending;
+                task.owner = None;
+                task.result = None;
+                count += 1;
+            }
+        }
+        count
     }
 }

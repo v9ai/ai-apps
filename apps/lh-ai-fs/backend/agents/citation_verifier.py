@@ -1,9 +1,17 @@
 import asyncio
-from typing import Any, Dict, List
+from typing import Any, Dict, List, Optional
 from pydantic import BaseModel, Field
 from agents.base_agent import BaseAgent
-from models.schemas import Citation, VerifiedCitation, VerificationStatus
+from models.schemas import Citation, QuoteAccuracy, VerifiedCitation, VerificationStatus
 from utils.prompts import CITATION_VERIFICATION_PROMPT
+
+
+class QuoteAccuracyResult(BaseModel):
+    has_direct_quote: bool = False
+    quoted_text: Optional[str] = None
+    accuracy_status: str = "not_applicable"
+    issues: List[str] = Field(default_factory=list)
+    risk_level: str = "none"
 
 
 class VerificationResult(BaseModel):
@@ -13,6 +21,9 @@ class VerificationResult(BaseModel):
     discrepancies: List[str] = Field(default_factory=list)
     status: str = "could_not_verify"
     notes: str = ""
+    quote_accuracy: Optional[QuoteAccuracyResult] = None
+    fabrication_risk: str = "unknown"
+    is_binding: Optional[bool] = None
 
 
 STATUS_MAP = {
@@ -32,9 +43,20 @@ class CitationVerifierAgent(BaseAgent):
                 citation_text=citation.citation_text,
                 claimed_proposition=citation.claimed_proposition,
                 context=citation.context or "",
+                direct_quote=citation.direct_quote or "",
                 case_context=case_context,
             )
             vr = await self._call_llm(prompt, VerificationResult)
+            quote_accuracy = None
+            if vr.quote_accuracy is not None:
+                qa = vr.quote_accuracy
+                quote_accuracy = QuoteAccuracy(
+                    has_direct_quote=qa.has_direct_quote,
+                    quoted_text=qa.quoted_text,
+                    accuracy_status=qa.accuracy_status,
+                    issues=qa.issues,
+                    risk_level=qa.risk_level,
+                )
             verified = VerifiedCitation(
                 citation=citation,
                 is_supported=vr.is_supported,
@@ -43,6 +65,9 @@ class CitationVerifierAgent(BaseAgent):
                 discrepancies=vr.discrepancies,
                 status=STATUS_MAP.get(vr.status, VerificationStatus.COULD_NOT_VERIFY),
                 notes=vr.notes,
+                quote_accuracy=quote_accuracy,
+                fabrication_risk=vr.fabrication_risk,
+                is_binding=vr.is_binding,
             )
             return verified.model_dump()
         except Exception as e:

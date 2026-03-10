@@ -9,6 +9,9 @@ import {
   useUpdateCompanyMutation,
   useGetJobsQuery,
   useGetApplicationsQuery,
+  useCreateContactMutation,
+  useCreateOpportunityMutation,
+  useGetOpportunitiesQuery,
 } from "@/__generated__/hooks";
 import type { CompanyCategory } from "@/__generated__/graphql";
 import ReactMarkdown from "react-markdown";
@@ -44,6 +47,7 @@ import {
   MagicWandIcon,
   ChevronDownIcon,
   ChevronUpIcon,
+  Link2Icon,
   Pencil1Icon,
   PersonIcon,
 } from "@radix-ui/react-icons";
@@ -358,6 +362,281 @@ const CATEGORY_OPTIONS: CompanyCategory[] = [
   "UNKNOWN",
 ];
 
+function LinkedInLeadDialog({
+  companyId,
+  companyName,
+  onCreated,
+}: {
+  companyId: number;
+  companyName: string;
+  onCreated?: () => void;
+}) {
+  const [open, setOpen] = useState(false);
+  const [phase, setPhase] = useState<"paste" | "review">("paste");
+  const [postUrl, setPostUrl] = useState("");
+  const [rawText, setRawText] = useState("");
+  const [firstName, setFirstName] = useState("");
+  const [lastName, setLastName] = useState("");
+  const [email, setEmail] = useState("");
+  const [linkedinProfile, setLinkedinProfile] = useState("");
+  const [error, setError] = useState<string | null>(null);
+  const [success, setSuccess] = useState<string | null>(null);
+
+  const [createContact, { loading: contactLoading }] =
+    useCreateContactMutation();
+  const [createOpportunity, { loading: oppLoading }] =
+    useCreateOpportunityMutation();
+
+  const saving = contactLoading || oppLoading;
+
+  const handleExtract = () => {
+    setError(null);
+    const emailMatch = rawText.match(
+      /[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}/
+    );
+    if (!emailMatch) {
+      setError("No email address found in the pasted text.");
+      return;
+    }
+    setEmail(emailMatch[0]);
+
+    // Guess name from email local part
+    const local = emailMatch[0].split("@")[0];
+    const parts = local.split(/[._-]/).filter(Boolean);
+    if (parts.length >= 2) {
+      setFirstName(parts[0].charAt(0).toUpperCase() + parts[0].slice(1));
+      setLastName(parts[1].charAt(0).toUpperCase() + parts[1].slice(1));
+    } else if (parts.length === 1) {
+      setFirstName(parts[0].charAt(0).toUpperCase() + parts[0].slice(1));
+      setLastName("");
+    }
+
+    // Try to find a LinkedIn profile URL in the text
+    const profileMatch = rawText.match(
+      /https?:\/\/(?:www\.)?linkedin\.com\/in\/[a-zA-Z0-9\-_%]+\/?/
+    );
+    if (profileMatch) {
+      setLinkedinProfile(profileMatch[0]);
+    }
+
+    setPhase("review");
+  };
+
+  const handleSave = async () => {
+    setError(null);
+    if (!firstName.trim()) {
+      setError("First name is required.");
+      return;
+    }
+    if (!email.trim()) {
+      setError("Email is required.");
+      return;
+    }
+
+    try {
+      const contactResult = await createContact({
+        variables: {
+          input: {
+            firstName: firstName.trim(),
+            lastName: lastName.trim() || undefined,
+            email: email.trim(),
+            companyId,
+            linkedinUrl: linkedinProfile.trim() || undefined,
+            tags: ["linkedin-lead"],
+          },
+        },
+      });
+
+      const contactId = contactResult.data?.createContact?.id;
+
+      await createOpportunity({
+        variables: {
+          input: {
+            title: `LinkedIn lead – ${companyName}`,
+            companyId,
+            contactId: contactId ?? undefined,
+            url: postUrl.trim() || undefined,
+            source: "linkedin",
+            applicationNotes: rawText.trim() || undefined,
+          },
+        },
+      });
+
+      setSuccess(
+        `Contact created (ID ${contactId}) and opportunity saved.`
+      );
+      onCreated?.();
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Something went wrong.");
+    }
+  };
+
+  const handleOpenChange = (nextOpen: boolean) => {
+    setOpen(nextOpen);
+    if (nextOpen) {
+      setPhase("paste");
+      setPostUrl("");
+      setRawText("");
+      setFirstName("");
+      setLastName("");
+      setEmail("");
+      setLinkedinProfile("");
+      setError(null);
+      setSuccess(null);
+    }
+  };
+
+  return (
+    <Dialog.Root open={open} onOpenChange={handleOpenChange}>
+      <Dialog.Trigger>
+        <Button size="2" variant="soft" color="blue">
+          <Link2Icon />
+          Import Lead
+        </Button>
+      </Dialog.Trigger>
+
+      <Dialog.Content maxWidth="520px">
+        <Dialog.Title>Import LinkedIn Lead</Dialog.Title>
+        <Dialog.Description size="2" color="gray" mb="4">
+          Paste a LinkedIn post to extract contact info for {companyName}.
+        </Dialog.Description>
+
+        {success ? (
+          <Flex direction="column" gap="3">
+            <Callout.Root color="green" size="1">
+              <Callout.Icon>
+                <CheckCircledIcon />
+              </Callout.Icon>
+              <Callout.Text>{success}</Callout.Text>
+            </Callout.Root>
+            <Flex justify="end">
+              <Dialog.Close>
+                <Button variant="soft" color="gray">
+                  Close
+                </Button>
+              </Dialog.Close>
+            </Flex>
+          </Flex>
+        ) : phase === "paste" ? (
+          <Flex direction="column" gap="3">
+            {error && (
+              <Callout.Root color="red" size="1">
+                <Callout.Icon>
+                  <InfoCircledIcon />
+                </Callout.Icon>
+                <Callout.Text>{error}</Callout.Text>
+              </Callout.Root>
+            )}
+
+            <Flex direction="column" gap="1">
+              <Text size="2" weight="medium">
+                LinkedIn post URL
+              </Text>
+              <TextField.Root
+                value={postUrl}
+                onChange={(e) => setPostUrl(e.target.value)}
+                placeholder="https://linkedin.com/feed/update/..."
+              />
+            </Flex>
+
+            <Flex direction="column" gap="1">
+              <Text size="2" weight="medium">
+                Post text
+              </Text>
+              <TextArea
+                value={rawText}
+                onChange={(e) => setRawText(e.target.value)}
+                placeholder="Paste the LinkedIn post text here..."
+                rows={8}
+              />
+            </Flex>
+
+            <Flex justify="end" gap="2">
+              <Dialog.Close>
+                <Button variant="soft" color="gray">
+                  Cancel
+                </Button>
+              </Dialog.Close>
+              <Button
+                onClick={handleExtract}
+                disabled={!rawText.trim()}
+              >
+                Extract email
+              </Button>
+            </Flex>
+          </Flex>
+        ) : (
+          <Flex direction="column" gap="3">
+            {error && (
+              <Callout.Root color="red" size="1">
+                <Callout.Icon>
+                  <InfoCircledIcon />
+                </Callout.Icon>
+                <Callout.Text>{error}</Callout.Text>
+              </Callout.Root>
+            )}
+
+            <Flex gap="3">
+              <Flex direction="column" gap="1" style={{ flex: 1 }}>
+                <Text size="2" weight="medium">
+                  First name
+                </Text>
+                <TextField.Root
+                  value={firstName}
+                  onChange={(e) => setFirstName(e.target.value)}
+                />
+              </Flex>
+              <Flex direction="column" gap="1" style={{ flex: 1 }}>
+                <Text size="2" weight="medium">
+                  Last name
+                </Text>
+                <TextField.Root
+                  value={lastName}
+                  onChange={(e) => setLastName(e.target.value)}
+                />
+              </Flex>
+            </Flex>
+
+            <Flex direction="column" gap="1">
+              <Text size="2" weight="medium">
+                Email
+              </Text>
+              <TextField.Root
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
+              />
+            </Flex>
+
+            <Flex direction="column" gap="1">
+              <Text size="2" weight="medium">
+                LinkedIn profile URL
+              </Text>
+              <TextField.Root
+                value={linkedinProfile}
+                onChange={(e) => setLinkedinProfile(e.target.value)}
+                placeholder="https://linkedin.com/in/..."
+              />
+            </Flex>
+
+            <Flex justify="end" gap="2">
+              <Button
+                variant="soft"
+                color="gray"
+                onClick={() => setPhase("paste")}
+              >
+                Back
+              </Button>
+              <Button onClick={handleSave} disabled={saving}>
+                {saving ? "Saving..." : "Create contact + opportunity"}
+              </Button>
+            </Flex>
+          </Flex>
+        )}
+      </Dialog.Content>
+    </Dialog.Root>
+  );
+}
+
 type EditDialogProps = {
   company: NonNullable<ReturnType<typeof useGetCompanyQuery>["data"]>["company"];
   onSaved: () => void;
@@ -651,6 +930,12 @@ export function CompanyDetail({ companyKey, companyId }: Props) {
     (a) => a.companyKey === effectiveKey || a.companyName?.toLowerCase().replace(/\s+/g, "-") === effectiveKey,
   );
 
+  const { data: oppsData, refetch: refetchOpps } = useGetOpportunitiesQuery({
+    variables: { companyId: company?.id },
+    skip: !company?.id || !isAdmin,
+  });
+  const companyOpps = oppsData?.opportunities?.opportunities ?? [];
+
   const remoteEuConfirmed = companyJobs.some(
     (j) => j.is_remote_eu === true && j.remote_eu_confidence === "high",
   );
@@ -933,6 +1218,13 @@ export function CompanyDetail({ companyKey, companyId }: Props) {
                 </Button>
               </Link>
             )}
+            {isAdmin && company && (
+              <LinkedInLeadDialog
+                companyId={company.id}
+                companyName={company.name}
+                onCreated={refetchOpps}
+              />
+            )}
             {isAdmin && (
               <CompanyEditDialog company={company} onSaved={refetch} />
             )}
@@ -974,6 +1266,11 @@ export function CompanyDetail({ companyKey, companyId }: Props) {
             {companyApps.length > 0 && (
               <Tabs.Trigger value="applications">
                 Applications ({companyApps.length})
+              </Tabs.Trigger>
+            )}
+            {isAdmin && companyOpps.length > 0 && (
+              <Tabs.Trigger value="opportunities">
+                Opportunities ({companyOpps.length})
               </Tabs.Trigger>
             )}
           </Tabs.List>
@@ -1106,6 +1403,81 @@ export function CompanyDetail({ companyKey, companyId }: Props) {
                           </Flex>
                         </Link>
                         {idx < companyApps.length - 1 ? <Separator size="4" /> : null}
+                      </Box>
+                    );
+                  })}
+                </Flex>
+              </Box>
+            </Tabs.Content>
+          )}
+
+          {/* Opportunities tab */}
+          {isAdmin && companyOpps.length > 0 && (
+            <Tabs.Content value="opportunities">
+              <Box pt="4">
+                <Flex direction="column">
+                  {companyOpps.map((opp, idx) => {
+                    const statusColor: Record<string, "gray" | "blue" | "orange" | "green" | "red"> = {
+                      open: "blue",
+                      applied: "orange",
+                      won: "green",
+                      lost: "red",
+                      archived: "gray",
+                    };
+                    return (
+                      <Box key={opp.id}>
+                        <Flex justify="between" align="center" gap="4" py="2">
+                          <Flex direction="column" gap="1" style={{ minWidth: 0 }}>
+                            <Text
+                              size="3"
+                              weight="medium"
+                              style={{
+                                overflow: "hidden",
+                                textOverflow: "ellipsis",
+                                whiteSpace: "nowrap",
+                              }}
+                            >
+                              {opp.title}
+                            </Text>
+                            <Flex gap="2" align="center" wrap="wrap">
+                              <Badge
+                                color={statusColor[opp.status] ?? "gray"}
+                                variant="soft"
+                                size="1"
+                              >
+                                {opp.status}
+                              </Badge>
+                              {opp.source && (
+                                <Badge color="gray" variant="outline" size="1">
+                                  {opp.source}
+                                </Badge>
+                              )}
+                              {opp.url && (
+                                <RadixLink
+                                  href={opp.url}
+                                  target="_blank"
+                                  rel="noopener noreferrer"
+                                  size="1"
+                                >
+                                  <Flex align="center" gap="1">
+                                    <Link2Icon />
+                                    Link
+                                  </Flex>
+                                </RadixLink>
+                              )}
+                            </Flex>
+                          </Flex>
+                          <Text
+                            size="1"
+                            color="gray"
+                            style={{ whiteSpace: "nowrap", flexShrink: 0 }}
+                          >
+                            {new Date(opp.createdAt).toLocaleDateString()}
+                          </Text>
+                        </Flex>
+                        {idx < companyOpps.length - 1 ? (
+                          <Separator size="4" />
+                        ) : null}
                       </Box>
                     );
                   })}
