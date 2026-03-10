@@ -19,76 +19,6 @@ export type Scalars = {
   Upload: { input: File; output: File; }
 };
 
-export type AiBackendPrep = {
-  __typename: 'AIBackendPrep';
-  aiMlIntegration: Maybe<BackendPrepSection>;
-  apiDesign: Maybe<BackendPrepSection>;
-  authSecurity: Maybe<BackendPrepSection>;
-  caching: Maybe<BackendPrepSection>;
-  concurrencyAsync: Maybe<BackendPrepSection>;
-  databaseDesign: Maybe<BackendPrepSection>;
-  devops: Maybe<BackendPrepSection>;
-  distributedSystems: Maybe<BackendPrepSection>;
-  eventDriven: Maybe<BackendPrepSection>;
-  generatedAt: Scalars['String']['output'];
-  messageQueues: Maybe<BackendPrepSection>;
-  microservices: Maybe<BackendPrepSection>;
-  nosqlPatterns: Maybe<BackendPrepSection>;
-  observability: Maybe<BackendPrepSection>;
-  performance: Maybe<BackendPrepSection>;
-  securityOwasp: Maybe<BackendPrepSection>;
-  serverlessEdge: Maybe<BackendPrepSection>;
-  sqlOptimization: Maybe<BackendPrepSection>;
-  systemDesign: Maybe<BackendPrepSection>;
-  testing: Maybe<BackendPrepSection>;
-  typescriptNode: Maybe<BackendPrepSection>;
-};
-
-export type AiDeepResearch = {
-  __typename: 'AIDeepResearch';
-  generatedAt: Scalars['String']['output'];
-  questions: Array<DeepResearchQuestion>;
-};
-
-export type AiInterviewPrep = {
-  __typename: 'AIInterviewPrep';
-  generatedAt: Scalars['String']['output'];
-  requirements: Array<AiInterviewPrepRequirement>;
-  summary: Scalars['String']['output'];
-};
-
-export type AiInterviewPrepRequirement = {
-  __typename: 'AIInterviewPrepRequirement';
-  deepDive: Maybe<Scalars['String']['output']>;
-  questions: Array<Scalars['String']['output']>;
-  requirement: Scalars['String']['output'];
-  sourceQuote: Maybe<Scalars['String']['output']>;
-  studyTopicDeepDives: Array<AiStudyTopicDeepDive>;
-  studyTopics: Array<Scalars['String']['output']>;
-};
-
-export type AiInterviewQuestion = {
-  __typename: 'AIInterviewQuestion';
-  category: Scalars['String']['output'];
-  question: Scalars['String']['output'];
-  reason: Scalars['String']['output'];
-};
-
-export type AiInterviewQuestions = {
-  __typename: 'AIInterviewQuestions';
-  companyContext: Scalars['String']['output'];
-  recruiterGeneratedAt: Maybe<Scalars['String']['output']>;
-  recruiterQuestions: Array<AiInterviewQuestion>;
-  technicalGeneratedAt: Maybe<Scalars['String']['output']>;
-  technicalQuestions: Array<AiInterviewQuestion>;
-};
-
-export type AiStudyTopicDeepDive = {
-  __typename: 'AIStudyTopicDeepDive';
-  deepDive: Scalars['String']['output'];
-  topic: Scalars['String']['output'];
-};
-
 export type AtsBoard = {
   __typename: 'ATSBoard';
   board_type: AtsBoardType;
@@ -136,60 +66,6 @@ export type AtsVendor =
   | 'TEAMTAILOR'
   | 'WORKABLE';
 
-export type AgenticCoding = {
-  __typename: 'AgenticCoding';
-  exercises: Array<AgenticCodingExercise>;
-  failureModes: Maybe<Array<AgenticCodingFailureMode>>;
-  generatedAt: Scalars['String']['output'];
-  measurableOutcomes: Maybe<Array<AgenticCodingOutcome>>;
-  overview: Scalars['String']['output'];
-  promptTemplates: Maybe<Array<AgenticCodingPromptTemplate>>;
-  qaApproach: Maybe<Scalars['String']['output']>;
-  resources: Array<AgenticCodingResource>;
-  teamPractices: Maybe<Scalars['String']['output']>;
-  workflowPattern: Maybe<Scalars['String']['output']>;
-};
-
-export type AgenticCodingExercise = {
-  __typename: 'AgenticCodingExercise';
-  agentPrompt: Scalars['String']['output'];
-  description: Scalars['String']['output'];
-  difficulty: Scalars['String']['output'];
-  hints: Array<Scalars['String']['output']>;
-  skills: Array<Scalars['String']['output']>;
-  title: Scalars['String']['output'];
-};
-
-export type AgenticCodingFailureMode = {
-  __typename: 'AgenticCodingFailureMode';
-  alternative: Scalars['String']['output'];
-  scenario: Scalars['String']['output'];
-  why: Scalars['String']['output'];
-};
-
-export type AgenticCodingOutcome = {
-  __typename: 'AgenticCodingOutcome';
-  afterTime: Scalars['String']['output'];
-  beforeTime: Scalars['String']['output'];
-  improvement: Scalars['String']['output'];
-  task: Scalars['String']['output'];
-};
-
-export type AgenticCodingPromptTemplate = {
-  __typename: 'AgenticCodingPromptTemplate';
-  prompt: Scalars['String']['output'];
-  purpose: Scalars['String']['output'];
-  stackContext: Scalars['String']['output'];
-  title: Scalars['String']['output'];
-};
-
-export type AgenticCodingResource = {
-  __typename: 'AgenticCodingResource';
-  description: Scalars['String']['output'];
-  title: Scalars['String']['output'];
-  url: Scalars['String']['output'];
-};
-
 export type AnalyzeCompanyResponse = {
   __typename: 'AnalyzeCompanyResponse';
   companyId: Maybe<Scalars['Int']['output']>;
@@ -200,28 +76,18 @@ export type AnalyzeCompanyResponse = {
 
 export type Application = {
   __typename: 'Application';
-  agenticCoding: Maybe<AgenticCoding>;
-  aiBackendPrep: Maybe<AiBackendPrep>;
-  aiDeepResearch: Maybe<AiDeepResearch>;
-  aiInterviewPrep: Maybe<AiInterviewPrep>;
-  aiInterviewQuestions: Maybe<AiInterviewQuestions>;
-  applicationStrategy: Maybe<ApplicationStrategy>;
   companyKey: Maybe<Scalars['String']['output']>;
   companyName: Maybe<Scalars['String']['output']>;
   createdAt: Scalars['String']['output'];
   email: Scalars['EmailAddress']['output'];
   id: Scalars['Int']['output'];
-  interviewPrep: Array<Track>;
   jobDescription: Maybe<Scalars['String']['output']>;
   jobId: Scalars['String']['output'];
   jobTitle: Maybe<Scalars['String']['output']>;
-  learningOverview: Maybe<LearningOverview>;
   notes: Maybe<Scalars['String']['output']>;
   questions: Array<QuestionAnswer>;
-  recentSessions: Array<LearningSessionEntry>;
   resume: Maybe<Scalars['Upload']['output']>;
   status: ApplicationStatus;
-  topicMasteryList: Array<TopicMasteryEntry>;
 };
 
 export type ApplicationInput = {
@@ -242,17 +108,6 @@ export type ApplicationStatus =
   | 'rejected'
   | 'reviewed'
   | 'submitted';
-
-export type ApplicationStrategy = {
-  __typename: 'ApplicationStrategy';
-  coverLetterAngles: Array<CoverLetterAngle>;
-  generatedAt: Scalars['String']['output'];
-  interviewTopics: Array<InterviewTopic>;
-  keyDifferentiators: Array<Scalars['String']['output']>;
-  networkingSuggestions: Array<NetworkingSuggestion>;
-  recommendedApproach: Scalars['String']['output'];
-  riskFactors: Array<RiskFactor>;
-};
 
 export type ApplyEmailPatternResult = {
   __typename: 'ApplyEmailPatternResult';
@@ -316,35 +171,6 @@ export type AshbySecondaryLocation = {
   __typename: 'AshbySecondaryLocation';
   address: Maybe<AshbyPostalAddress>;
   location: Scalars['String']['output'];
-};
-
-export type BackendPrepCodeExample = {
-  __typename: 'BackendPrepCodeExample';
-  code: Scalars['String']['output'];
-  explanation: Scalars['String']['output'];
-  language: Scalars['String']['output'];
-  title: Scalars['String']['output'];
-};
-
-export type BackendPrepInterviewQuestion = {
-  __typename: 'BackendPrepInterviewQuestion';
-  difficulty: Scalars['String']['output'];
-  followUps: Array<Scalars['String']['output']>;
-  idealAnswer: Scalars['String']['output'];
-  question: Scalars['String']['output'];
-};
-
-export type BackendPrepSection = {
-  __typename: 'BackendPrepSection';
-  codeExamples: Array<BackendPrepCodeExample>;
-  commonPitfalls: Array<Scalars['String']['output']>;
-  deepDive: Scalars['String']['output'];
-  interviewQuestions: Array<BackendPrepInterviewQuestion>;
-  keyConcepts: Array<Scalars['String']['output']>;
-  overview: Scalars['String']['output'];
-  researchInsights: Maybe<Scalars['String']['output']>;
-  talkingPoints: Array<Scalars['String']['output']>;
-  title: Scalars['String']['output'];
 };
 
 export type BlockedCompany = {
@@ -563,13 +389,6 @@ export type ContactsResult = {
   totalCount: Scalars['Int']['output'];
 };
 
-export type CoverLetterAngle = {
-  __typename: 'CoverLetterAngle';
-  angle: Scalars['String']['output'];
-  exampleOpener: Scalars['String']['output'];
-  reasoning: Scalars['String']['output'];
-};
-
 export type CreateCampaignInput = {
   companyId?: InputMaybe<Scalars['Int']['input']>;
   delayDays?: InputMaybe<Scalars['JSON']['input']>;
@@ -670,28 +489,6 @@ export type CreateTaskInput = {
   status?: InputMaybe<Scalars['String']['input']>;
   tags?: InputMaybe<Array<Scalars['String']['input']>>;
   title: Scalars['String']['input'];
-};
-
-export type CreateTrackInput = {
-  description?: InputMaybe<Scalars['String']['input']>;
-  level?: InputMaybe<Scalars['String']['input']>;
-  slug: Scalars['String']['input'];
-  title: Scalars['String']['input'];
-};
-
-export type DeepResearchModelResponse = {
-  __typename: 'DeepResearchModelResponse';
-  content: Scalars['String']['output'];
-  model: Scalars['String']['output'];
-  reasoning: Maybe<Scalars['String']['output']>;
-};
-
-export type DeepResearchQuestion = {
-  __typename: 'DeepResearchQuestion';
-  category: Scalars['String']['output'];
-  deepseek: DeepResearchModelResponse;
-  question: Scalars['String']['output'];
-  qwen: DeepResearchModelResponse;
 };
 
 export type DeleteApplicationResponse = {
@@ -888,14 +685,6 @@ export type GenerateEmailResult = {
   text: Scalars['String']['output'];
 };
 
-export type GeneratedQuiz = {
-  __typename: 'GeneratedQuiz';
-  domain: LearningDomain;
-  generatedAt: Scalars['String']['output'];
-  questions: Array<QuizQuestion>;
-  topicKey: Scalars['String']['output'];
-};
-
 export type GreenhouseCompliance = {
   __typename: 'GreenhouseCompliance';
   description: Maybe<Scalars['String']['output']>;
@@ -967,13 +756,6 @@ export type ImportContactsResult = {
   success: Scalars['Boolean']['output'];
 };
 
-export type InterviewTopic = {
-  __typename: 'InterviewTopic';
-  importance: Scalars['String']['output'];
-  prepNotes: Scalars['String']['output'];
-  topic: Scalars['String']['output'];
-};
-
 export type Job = {
   __typename: 'Job';
   absolute_url: Maybe<Scalars['String']['output']>;
@@ -1000,7 +782,6 @@ export type Job = {
   demographic_questions: Maybe<GreenhouseDemographicQuestions>;
   departments: Maybe<Array<GreenhouseDepartment>>;
   description: Maybe<Scalars['String']['output']>;
-  enrichment: Maybe<JobEnrichment>;
   external_id: Scalars['String']['output'];
   id: Scalars['Int']['output'];
   internal_job_id: Maybe<Scalars['String']['output']>;
@@ -1032,15 +813,6 @@ export type Job = {
   title: Scalars['String']['output'];
   updated_at: Scalars['String']['output'];
   url: Scalars['String']['output'];
-};
-
-export type JobEnrichment = {
-  __typename: 'JobEnrichment';
-  enrichmentStatus: Maybe<Scalars['String']['output']>;
-  salaryCurrency: Maybe<Scalars['String']['output']>;
-  salaryMax: Maybe<Scalars['Int']['output']>;
-  salaryMin: Maybe<Scalars['Int']['output']>;
-  visaSponsorship: Maybe<Scalars['Boolean']['output']>;
 };
 
 export type JobSkill = {
@@ -1102,64 +874,6 @@ export type LangSmithPromptCommit = {
   promptName: Scalars['String']['output'];
 };
 
-export type LearningDomain =
-  | 'backend'
-  | 'coding'
-  | 'concepts'
-  | 'interview';
-
-export type LearningOverview = {
-  __typename: 'LearningOverview';
-  currentStreak: Scalars['Int']['output'];
-  overallReadiness: Scalars['Float']['output'];
-  teams: Array<LearningTeamStatus>;
-  totalSessions: Scalars['Int']['output'];
-};
-
-export type LearningSessionEntry = {
-  __typename: 'LearningSessionEntry';
-  confidence: Maybe<MasteryLevel>;
-  correctAnswers: Maybe<Scalars['Int']['output']>;
-  createdAt: Scalars['String']['output'];
-  domain: LearningDomain;
-  durationMs: Maybe<Scalars['Int']['output']>;
-  id: Scalars['Int']['output'];
-  score: Maybe<Scalars['Float']['output']>;
-  sessionType: SessionType;
-  topicKey: Scalars['String']['output'];
-  totalQuestions: Maybe<Scalars['Int']['output']>;
-};
-
-export type LearningSessionInput = {
-  answersJson?: InputMaybe<Scalars['String']['input']>;
-  confidence?: InputMaybe<MasteryLevel>;
-  correctAnswers?: InputMaybe<Scalars['Int']['input']>;
-  domain: LearningDomain;
-  durationMs?: InputMaybe<Scalars['Int']['input']>;
-  score?: InputMaybe<Scalars['Float']['input']>;
-  sessionType: SessionType;
-  topicKey: Scalars['String']['input'];
-  totalQuestions?: InputMaybe<Scalars['Int']['input']>;
-};
-
-export type LearningTeamStatus = {
-  __typename: 'LearningTeamStatus';
-  domain: LearningDomain;
-  familiarTopics: Scalars['Int']['output'];
-  label: Scalars['String']['output'];
-  lastStudiedAt: Maybe<Scalars['String']['output']>;
-  masteredTopics: Scalars['Int']['output'];
-  nextReviewTopics: Array<Scalars['String']['output']>;
-  streakDays: Scalars['Int']['output'];
-  totalTopics: Scalars['Int']['output'];
-};
-
-export type MasteryLevel =
-  | 'confident'
-  | 'familiar'
-  | 'mastery'
-  | 'unfamiliar';
-
 export type Mutation = {
   __typename: 'Mutation';
   add_company_facts: Array<CompanyFact>;
@@ -1176,9 +890,7 @@ export type Mutation = {
   createLangSmithPrompt: LangSmithPrompt;
   createOpportunity: Opportunity;
   createPrompt: Prompt;
-  createStudyTopic: StudyTopic;
   createTask: Task;
-  createTrack: Track;
   deleteAllJobs: DeleteJobResponse;
   deleteApplication: DeleteApplicationResponse;
   deleteCampaign: DeleteCampaignResult;
@@ -1215,27 +927,11 @@ export type Mutation = {
   enhanceJobFromATS: EnhanceJobResponse;
   findCompanyEmails: EnhanceAllContactsResult;
   findContactEmail: FindContactEmailResult;
-  generateAgenticCoding: Application;
-  generateApplicationStrategy: Application;
-  generateBackendPrep: Application;
-  generateDeepResearch: Application;
   generateEmail: GenerateEmailResult;
-  generateInterviewPrep: Application;
-  generateInterviewQuestions: Application;
-  generateQuiz: GeneratedQuiz;
-  generateRequirementFromSelection: Application;
-  generateResearch: Array<ResearchItem>;
-  generateStudyConceptExplanation: StudyConceptExplanation;
-  generateStudyDeepDive: StudyTopic;
-  generateStudyTopicDeepDive: Application;
-  generateStudyTopicsForCategory: Array<StudyTopic>;
-  generateTopicDeepDive: Application;
   importContacts: ImportContactsResult;
   ingestResumeParse: Maybe<ResumeIngestResult>;
   ingest_company_snapshot: CompanySnapshot;
   launchEmailCampaign: EmailCampaign;
-  linkSelectionToRequirement: Application;
-  linkTrackToApplication: Application;
   markJobApplied: Job;
   /**
    * Trigger classification/enhancement of all unprocessed jobs via the Cloudflare Worker.
@@ -1245,7 +941,6 @@ export type Mutation = {
   processAllJobs: ProcessAllJobsResponse;
   pushLangSmithPrompt: Scalars['String']['output'];
   rateResumeAnswer: Maybe<Scalars['Boolean']['output']>;
-  recordLearningSession: Application;
   /**
    * Report a job as irrelevant, spam, or incorrectly classified.
    * Sets the job status to "reported" so it can be reviewed or excluded.
@@ -1255,7 +950,6 @@ export type Mutation = {
   sendEmail: SendEmailResult;
   unarchiveJob: Job;
   unblockCompany: DeleteBlockedCompanyResult;
-  unlinkTrackFromApplication: Application;
   unverifyCompanyContacts: UnverifyContactsResult;
   updateApplication: Application;
   updateCampaign: EmailCampaign;
@@ -1266,7 +960,6 @@ export type Mutation = {
   updateOpportunity: Opportunity;
   updatePromptLabel: Prompt;
   updateTask: Task;
-  updateTopicMastery: Application;
   updateUserSettings: UserSettings;
   uploadResume: Maybe<ResumeUploadResult>;
   upsert_company_ats_boards: Array<AtsBoard>;
@@ -1347,23 +1040,8 @@ export type MutationCreatePromptArgs = {
 };
 
 
-export type MutationCreateStudyTopicArgs = {
-  category?: InputMaybe<Scalars['String']['input']>;
-  difficulty?: InputMaybe<Scalars['String']['input']>;
-  summary?: InputMaybe<Scalars['String']['input']>;
-  tags?: InputMaybe<Array<Scalars['String']['input']>>;
-  title?: InputMaybe<Scalars['String']['input']>;
-  topic?: InputMaybe<Scalars['String']['input']>;
-};
-
-
 export type MutationCreateTaskArgs = {
   input: CreateTaskInput;
-};
-
-
-export type MutationCreateTrackArgs = {
-  input: CreateTrackInput;
 };
 
 
@@ -1440,92 +1118,8 @@ export type MutationFindContactEmailArgs = {
 };
 
 
-export type MutationGenerateAgenticCodingArgs = {
-  applicationId: Scalars['Int']['input'];
-};
-
-
-export type MutationGenerateApplicationStrategyArgs = {
-  applicationId: Scalars['Int']['input'];
-};
-
-
-export type MutationGenerateBackendPrepArgs = {
-  applicationId: Scalars['Int']['input'];
-};
-
-
-export type MutationGenerateDeepResearchArgs = {
-  applicationId: Scalars['Int']['input'];
-};
-
-
 export type MutationGenerateEmailArgs = {
   input: GenerateEmailInput;
-};
-
-
-export type MutationGenerateInterviewPrepArgs = {
-  applicationId: Scalars['Int']['input'];
-};
-
-
-export type MutationGenerateInterviewQuestionsArgs = {
-  applicationId: Scalars['Int']['input'];
-  type: Scalars['String']['input'];
-};
-
-
-export type MutationGenerateQuizArgs = {
-  applicationId: Scalars['Int']['input'];
-  count?: InputMaybe<Scalars['Int']['input']>;
-  domain: LearningDomain;
-  topicKey: Scalars['String']['input'];
-};
-
-
-export type MutationGenerateRequirementFromSelectionArgs = {
-  applicationId: Scalars['Int']['input'];
-  selectedText: Scalars['String']['input'];
-};
-
-
-export type MutationGenerateResearchArgs = {
-  goalDescription: Scalars['String']['input'];
-};
-
-
-export type MutationGenerateStudyConceptExplanationArgs = {
-  context?: InputMaybe<Scalars['String']['input']>;
-  selectedText: Scalars['String']['input'];
-  studyTopicId: Scalars['ID']['input'];
-};
-
-
-export type MutationGenerateStudyDeepDiveArgs = {
-  force?: InputMaybe<Scalars['Boolean']['input']>;
-  studyTopicId: Scalars['ID']['input'];
-};
-
-
-export type MutationGenerateStudyTopicDeepDiveArgs = {
-  applicationId: Scalars['Int']['input'];
-  force?: InputMaybe<Scalars['Boolean']['input']>;
-  requirement: Scalars['String']['input'];
-  studyTopic: Scalars['String']['input'];
-};
-
-
-export type MutationGenerateStudyTopicsForCategoryArgs = {
-  category: Scalars['String']['input'];
-  count?: InputMaybe<Scalars['Int']['input']>;
-};
-
-
-export type MutationGenerateTopicDeepDiveArgs = {
-  applicationId: Scalars['Int']['input'];
-  force?: InputMaybe<Scalars['Boolean']['input']>;
-  requirement: Scalars['String']['input'];
 };
 
 
@@ -1562,19 +1156,6 @@ export type MutationLaunchEmailCampaignArgs = {
 };
 
 
-export type MutationLinkSelectionToRequirementArgs = {
-  applicationId: Scalars['Int']['input'];
-  requirement: Scalars['String']['input'];
-  sourceQuote: Scalars['String']['input'];
-};
-
-
-export type MutationLinkTrackToApplicationArgs = {
-  applicationId: Scalars['Int']['input'];
-  trackSlug: Scalars['String']['input'];
-};
-
-
 export type MutationMarkJobAppliedArgs = {
   id: Scalars['Int']['input'];
 };
@@ -1597,12 +1178,6 @@ export type MutationRateResumeAnswerArgs = {
 };
 
 
-export type MutationRecordLearningSessionArgs = {
-  applicationId: Scalars['Int']['input'];
-  input: LearningSessionInput;
-};
-
-
 export type MutationReportJobArgs = {
   id: Scalars['Int']['input'];
 };
@@ -1620,12 +1195,6 @@ export type MutationUnarchiveJobArgs = {
 
 export type MutationUnblockCompanyArgs = {
   id: Scalars['Int']['input'];
-};
-
-
-export type MutationUnlinkTrackFromApplicationArgs = {
-  applicationId: Scalars['Int']['input'];
-  trackSlug: Scalars['String']['input'];
 };
 
 
@@ -1689,14 +1258,6 @@ export type MutationUpdateTaskArgs = {
 };
 
 
-export type MutationUpdateTopicMasteryArgs = {
-  applicationId: Scalars['Int']['input'];
-  domain: LearningDomain;
-  masteryLevel: MasteryLevel;
-  topicKey: Scalars['String']['input'];
-};
-
-
 export type MutationUpdateUserSettingsArgs = {
   settings: UserSettingsInput;
   userId: Scalars['String']['input'];
@@ -1713,13 +1274,6 @@ export type MutationUploadResumeArgs = {
 export type MutationUpsert_Company_Ats_BoardsArgs = {
   boards: Array<AtsBoardUpsertInput>;
   company_id: Scalars['Int']['input'];
-};
-
-export type NetworkingSuggestion = {
-  __typename: 'NetworkingSuggestion';
-  action: Scalars['String']['output'];
-  reasoning: Scalars['String']['output'];
-  target: Scalars['String']['output'];
 };
 
 export type OpportunitiesResult = {
@@ -1755,31 +1309,6 @@ export type Opportunity = {
   title: Scalars['String']['output'];
   updatedAt: Scalars['String']['output'];
   url: Maybe<Scalars['String']['output']>;
-};
-
-export type PrepCategory = {
-  __typename: 'PrepCategory';
-  description: Scalars['String']['output'];
-  emoji: Scalars['String']['output'];
-  id: Scalars['String']['output'];
-  name: Scalars['String']['output'];
-  resources: Array<PrepResource>;
-};
-
-export type PrepContent = {
-  __typename: 'PrepContent';
-  categories: Array<PrepCategory>;
-  totalResources: Scalars['Int']['output'];
-};
-
-export type PrepResource = {
-  __typename: 'PrepResource';
-  category: Scalars['String']['output'];
-  description: Scalars['String']['output'];
-  href: Scalars['URL']['output'];
-  id: Scalars['String']['output'];
-  tags: Array<Scalars['String']['output']>;
-  title: Scalars['String']['output'];
 };
 
 /** Response from triggering the classify-jobs Cloudflare Worker */
@@ -1883,20 +1412,13 @@ export type Query = {
   myPromptUsage: Array<PromptUsage>;
   opportunities: OpportunitiesResult;
   opportunity: Maybe<Opportunity>;
-  prepResources: PrepContent;
-  prepResourcesByCategory: Array<PrepResource>;
   prompt: Maybe<Prompt>;
   prompts: Array<RegisteredPrompt>;
   resendEmail: Maybe<ResendEmailDetail>;
   resumeStatus: Maybe<ResumeStatus>;
-  studyCategories: Array<Scalars['String']['output']>;
-  studyTopic: Maybe<StudyTopic>;
-  studyTopics: Array<StudyTopic>;
   task: Maybe<Task>;
   tasks: TasksResult;
   textToSql: TextToSqlResult;
-  track: Maybe<Track>;
-  tracks: Array<Track>;
   userSettings: Maybe<UserSettings>;
 };
 
@@ -2052,11 +1574,6 @@ export type QueryOpportunityArgs = {
 };
 
 
-export type QueryPrepResourcesByCategoryArgs = {
-  category: Scalars['String']['input'];
-};
-
-
 export type QueryPromptArgs = {
   label?: InputMaybe<Scalars['String']['input']>;
   name: Scalars['String']['input'];
@@ -2071,17 +1588,6 @@ export type QueryResendEmailArgs = {
 
 export type QueryResumeStatusArgs = {
   email: Scalars['String']['input'];
-};
-
-
-export type QueryStudyTopicArgs = {
-  category: Scalars['String']['input'];
-  topic: Scalars['String']['input'];
-};
-
-
-export type QueryStudyTopicsArgs = {
-  category: Scalars['String']['input'];
 };
 
 
@@ -2103,16 +1609,6 @@ export type QueryTextToSqlArgs = {
 };
 
 
-export type QueryTrackArgs = {
-  slug: Scalars['String']['input'];
-};
-
-
-export type QueryTracksArgs = {
-  limit?: InputMaybe<Scalars['Int']['input']>;
-};
-
-
 export type QueryUserSettingsArgs = {
   userId: Scalars['String']['input'];
 };
@@ -2130,17 +1626,6 @@ export type QuestionAnswerInput = {
   questionText: Scalars['String']['input'];
 };
 
-export type QuizQuestion = {
-  __typename: 'QuizQuestion';
-  correctIndex: Scalars['Int']['output'];
-  difficulty: Scalars['String']['output'];
-  explanation: Scalars['String']['output'];
-  id: Scalars['String']['output'];
-  options: Array<Scalars['String']['output']>;
-  question: Scalars['String']['output'];
-  topicKey: Scalars['String']['output'];
-};
-
 export type RegisteredPrompt = {
   __typename: 'RegisteredPrompt';
   content: Maybe<Scalars['JSON']['output']>;
@@ -2153,15 +1638,6 @@ export type RegisteredPrompt = {
   type: Scalars['String']['output'];
   usageCount: Maybe<Scalars['Int']['output']>;
   versions: Array<Scalars['Int']['output']>;
-};
-
-export type ResearchItem = {
-  __typename: 'ResearchItem';
-  id: Scalars['String']['output'];
-  relevance: Maybe<Scalars['String']['output']>;
-  summary: Scalars['String']['output'];
-  title: Scalars['String']['output'];
-  url: Scalars['URL']['output'];
 };
 
 export type ResendEmailDetail = {
@@ -2213,12 +1689,6 @@ export type ResumeUploadResult = {
   tier: Scalars['String']['output'];
 };
 
-export type RiskFactor = {
-  __typename: 'RiskFactor';
-  mitigation: Scalars['String']['output'];
-  risk: Scalars['String']['output'];
-};
-
 export type SendEmailInput = {
   from?: InputMaybe<Scalars['String']['input']>;
   html: Scalars['String']['input'];
@@ -2234,30 +1704,6 @@ export type SendEmailResult = {
   error: Maybe<Scalars['String']['output']>;
   id: Maybe<Scalars['String']['output']>;
   success: Scalars['Boolean']['output'];
-};
-
-export type SessionType =
-  | 'flashcard'
-  | 'mock_interview'
-  | 'quiz'
-  | 'study';
-
-export type SkillGap = {
-  __typename: 'SkillGap';
-  currentLevel: Scalars['String']['output'];
-  frequencyInJobs: Scalars['Int']['output'];
-  priority: Scalars['Int']['output'];
-  resources: Array<SkillGapResource>;
-  skill: Scalars['String']['output'];
-  targetLevel: Scalars['String']['output'];
-};
-
-export type SkillGapResource = {
-  __typename: 'SkillGapResource';
-  estimatedHours: Scalars['Float']['output'];
-  title: Scalars['String']['output'];
-  type: Scalars['String']['output'];
-  url: Scalars['String']['output'];
 };
 
 export type SkillMatch = {
@@ -2290,35 +1736,6 @@ export type StackMutationResponse = {
   success: Scalars['Boolean']['output'];
 };
 
-export type StudyConceptExplanation = {
-  __typename: 'StudyConceptExplanation';
-  createdAt: Scalars['DateTime']['output'];
-  explanation: Scalars['String']['output'];
-  id: Scalars['ID']['output'];
-  selectedText: Scalars['String']['output'];
-};
-
-export type StudyPlan = {
-  __typename: 'StudyPlan';
-  generatedAt: Scalars['String']['output'];
-  recommendations: Array<Scalars['String']['output']>;
-  skillGaps: Array<SkillGap>;
-};
-
-export type StudyTopic = {
-  __typename: 'StudyTopic';
-  bodyMd: Maybe<Scalars['String']['output']>;
-  category: Scalars['String']['output'];
-  createdAt: Scalars['DateTime']['output'];
-  deepDive: Maybe<Scalars['String']['output']>;
-  difficulty: Scalars['String']['output'];
-  id: Scalars['ID']['output'];
-  summary: Maybe<Scalars['String']['output']>;
-  tags: Array<Scalars['String']['output']>;
-  title: Scalars['String']['output'];
-  topic: Scalars['String']['output'];
-};
-
 export type Task = {
   __typename: 'Task';
   completedAt: Maybe<Scalars['String']['output']>;
@@ -2348,43 +1765,6 @@ export type TextToSqlResult = {
   explanation: Maybe<Scalars['String']['output']>;
   rows: Array<Maybe<Array<Maybe<Scalars['JSON']['output']>>>>;
   sql: Scalars['String']['output'];
-};
-
-export type TopicMasteryEntry = {
-  __typename: 'TopicMasteryEntry';
-  confidenceScore: Scalars['Float']['output'];
-  domain: LearningDomain;
-  lastQuizScore: Maybe<Scalars['Float']['output']>;
-  lastStudiedAt: Maybe<Scalars['String']['output']>;
-  masteryLevel: MasteryLevel;
-  nextReviewAt: Maybe<Scalars['String']['output']>;
-  streakDays: Scalars['Int']['output'];
-  topicKey: Scalars['String']['output'];
-  totalSessions: Scalars['Int']['output'];
-};
-
-export type Track = {
-  __typename: 'Track';
-  description: Maybe<Scalars['String']['output']>;
-  id: Scalars['ID']['output'];
-  items: Array<TrackItem>;
-  level: Maybe<Scalars['String']['output']>;
-  slug: Scalars['String']['output'];
-  title: Scalars['String']['output'];
-};
-
-export type TrackItem = {
-  __typename: 'TrackItem';
-  children: Array<TrackItem>;
-  contentRef: Maybe<Scalars['String']['output']>;
-  difficulty: Maybe<Scalars['Int']['output']>;
-  id: Scalars['ID']['output'];
-  kind: Scalars['String']['output'];
-  position: Scalars['Int']['output'];
-  prereqs: Array<Scalars['ID']['output']>;
-  promptRef: Maybe<Scalars['String']['output']>;
-  tags: Array<Scalars['String']['output']>;
-  title: Scalars['String']['output'];
 };
 
 export type UnverifyContactsResult = {

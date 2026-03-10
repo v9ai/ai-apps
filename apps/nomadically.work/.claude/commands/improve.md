@@ -24,13 +24,6 @@ You are the orchestrator for a **goal-driven self-improvement team**. The goal: 
         │    Skill     │◄────────────────────┘
         │  Optimizer   │
         │(improve-app) │
-        └──────┬───────┘
-               │ taxonomy + extraction
-               ▼
-        ┌──────────────┐
-        │ Application  │
-        │    Coach     │
-        │(improve-ver) │
         └──────────────┘
 ```
 
@@ -40,7 +33,6 @@ You are the orchestrator for a **goal-driven self-improvement team**. The goal: 
 | **Discovery Expander** | `improve-audit` | Find more companies hiring AI engineers remotely in EU |
 | **Classifier Tuner** | `improve-evolve` | Reduce missed opportunities (false negatives in classification) |
 | **Skill Optimizer** | `improve-apply` | Better AI/ML skill taxonomy, extraction, and matching |
-| **Application Coach** | `improve-verify` | Learn from application patterns, improve interview prep |
 | **Strategy Brain** | `improve-meta` | Coordinate toward the goal: get hired |
 
 ## Execution Modes
@@ -67,18 +59,12 @@ Run Classifier Tuner to analyze errors and improve accuracy.
 
 Run Skill Optimizer to improve taxonomy and extraction for AI/ML roles.
 
-### `/improve coach` — Application Coaching
-
-Run Application Coach to analyze patterns and improve prep quality.
-
 ## Goal Phases
 
 | Phase | Focus | When |
 |---|---|---|
 | **BUILDING** | Discovery + classification | Pipeline produces < 5 AI jobs/week |
 | **OPTIMIZING** | Classifier + skills | Jobs flowing but relevance is low |
-| **APPLYING** | Coaching + prep | Good jobs surfacing, need to convert |
-| **INTERVIEWING** | Deep prep + research | Applications converting to interviews |
 
 ## Orchestrator Rules
 
@@ -115,7 +101,6 @@ Task tool call:
 | `discovery-report.json` | Discovery Expander | New sources, coverage gaps |
 | `classifier-tuning-report.json` | Classifier Tuner | Accuracy, errors, prompt changes |
 | `skill-optimization-report.json` | Skill Optimizer | Taxonomy, extraction quality |
-| `coaching-report.json` | Application Coach | Patterns, preferences, skill gaps |
 | `meta-state.json` | Strategy Brain | Progress tracking, phase, history |
 | `meta-action-plan.json` | Strategy Brain | Current action plan |
 

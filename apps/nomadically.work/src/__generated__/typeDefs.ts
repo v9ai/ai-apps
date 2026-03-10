@@ -7,69 +7,6 @@ schema {
   mutation: Mutation
 }
 
-type AIBackendPrep {
-  aiMlIntegration: BackendPrepSection
-  apiDesign: BackendPrepSection
-  authSecurity: BackendPrepSection
-  caching: BackendPrepSection
-  concurrencyAsync: BackendPrepSection
-  databaseDesign: BackendPrepSection
-  devops: BackendPrepSection
-  distributedSystems: BackendPrepSection
-  eventDriven: BackendPrepSection
-  generatedAt: String!
-  messageQueues: BackendPrepSection
-  microservices: BackendPrepSection
-  nosqlPatterns: BackendPrepSection
-  observability: BackendPrepSection
-  performance: BackendPrepSection
-  securityOwasp: BackendPrepSection
-  serverlessEdge: BackendPrepSection
-  sqlOptimization: BackendPrepSection
-  systemDesign: BackendPrepSection
-  testing: BackendPrepSection
-  typescriptNode: BackendPrepSection
-}
-
-type AIDeepResearch {
-  generatedAt: String!
-  questions: [DeepResearchQuestion!]!
-}
-
-type AIInterviewPrep {
-  generatedAt: String!
-  requirements: [AIInterviewPrepRequirement!]!
-  summary: String!
-}
-
-type AIInterviewPrepRequirement {
-  deepDive: String
-  questions: [String!]!
-  requirement: String!
-  sourceQuote: String
-  studyTopicDeepDives: [AIStudyTopicDeepDive!]!
-  studyTopics: [String!]!
-}
-
-type AIInterviewQuestion {
-  category: String!
-  question: String!
-  reason: String!
-}
-
-type AIInterviewQuestions {
-  companyContext: String!
-  recruiterGeneratedAt: String
-  recruiterQuestions: [AIInterviewQuestion!]!
-  technicalGeneratedAt: String
-  technicalQuestions: [AIInterviewQuestion!]!
-}
-
-type AIStudyTopicDeepDive {
-  deepDive: String!
-  topic: String!
-}
-
 type ATSBoard {
   board_type: ATSBoardType!
   company_id: Int!
@@ -118,54 +55,6 @@ enum ATSVendor {
   WORKABLE
 }
 
-type AgenticCoding {
-  exercises: [AgenticCodingExercise!]!
-  failureModes: [AgenticCodingFailureMode!]
-  generatedAt: String!
-  measurableOutcomes: [AgenticCodingOutcome!]
-  overview: String!
-  promptTemplates: [AgenticCodingPromptTemplate!]
-  qaApproach: String
-  resources: [AgenticCodingResource!]!
-  teamPractices: String
-  workflowPattern: String
-}
-
-type AgenticCodingExercise {
-  agentPrompt: String!
-  description: String!
-  difficulty: String!
-  hints: [String!]!
-  skills: [String!]!
-  title: String!
-}
-
-type AgenticCodingFailureMode {
-  alternative: String!
-  scenario: String!
-  why: String!
-}
-
-type AgenticCodingOutcome {
-  afterTime: String!
-  beforeTime: String!
-  improvement: String!
-  task: String!
-}
-
-type AgenticCodingPromptTemplate {
-  prompt: String!
-  purpose: String!
-  stackContext: String!
-  title: String!
-}
-
-type AgenticCodingResource {
-  description: String!
-  title: String!
-  url: String!
-}
-
 type AnalyzeCompanyResponse {
   companyId: Int
   companyKey: String
@@ -174,28 +63,18 @@ type AnalyzeCompanyResponse {
 }
 
 type Application {
-  agenticCoding: AgenticCoding
-  aiBackendPrep: AIBackendPrep
-  aiDeepResearch: AIDeepResearch
-  aiInterviewPrep: AIInterviewPrep
-  aiInterviewQuestions: AIInterviewQuestions
-  applicationStrategy: ApplicationStrategy
   companyKey: String
   companyName: String
   createdAt: String!
   email: EmailAddress!
   id: Int!
-  interviewPrep: [Track!]!
   jobDescription: String
   jobId: String!
   jobTitle: String
-  learningOverview: LearningOverview
   notes: String
   questions: [QuestionAnswer!]!
-  recentSessions: [LearningSessionEntry!]!
   resume: Upload
   status: ApplicationStatus!
-  topicMasteryList: [TopicMasteryEntry!]!
 }
 
 input ApplicationInput {
@@ -216,16 +95,6 @@ enum ApplicationStatus {
   rejected
   reviewed
   submitted
-}
-
-type ApplicationStrategy {
-  coverLetterAngles: [CoverLetterAngle!]!
-  generatedAt: String!
-  interviewTopics: [InterviewTopic!]!
-  keyDifferentiators: [String!]!
-  networkingSuggestions: [NetworkingSuggestion!]!
-  recommendedApproach: String!
-  riskFactors: [RiskFactor!]!
 }
 
 type ApplyEmailPatternResult {
@@ -282,32 +151,6 @@ type AshbyPostalAddress {
 type AshbySecondaryLocation {
   address: AshbyPostalAddress
   location: String!
-}
-
-type BackendPrepCodeExample {
-  code: String!
-  explanation: String!
-  language: String!
-  title: String!
-}
-
-type BackendPrepInterviewQuestion {
-  difficulty: String!
-  followUps: [String!]!
-  idealAnswer: String!
-  question: String!
-}
-
-type BackendPrepSection {
-  codeExamples: [BackendPrepCodeExample!]!
-  commonPitfalls: [String!]!
-  deepDive: String!
-  interviewQuestions: [BackendPrepInterviewQuestion!]!
-  keyConcepts: [String!]!
-  overview: String!
-  researchInsights: String
-  talkingPoints: [String!]!
-  title: String!
 }
 
 type BlockedCompany {
@@ -507,12 +350,6 @@ type ContactsResult {
   totalCount: Int!
 }
 
-type CoverLetterAngle {
-  angle: String!
-  exampleOpener: String!
-  reasoning: String!
-}
-
 input CreateCampaignInput {
   companyId: Int
   delayDays: JSON
@@ -615,27 +452,7 @@ input CreateTaskInput {
   title: String!
 }
 
-input CreateTrackInput {
-  description: String
-  level: String
-  slug: String!
-  title: String!
-}
-
 scalar DateTime
-
-type DeepResearchModelResponse {
-  content: String!
-  model: String!
-  reasoning: String
-}
-
-type DeepResearchQuestion {
-  category: String!
-  deepseek: DeepResearchModelResponse!
-  question: String!
-  qwen: DeepResearchModelResponse!
-}
 
 type DeleteApplicationResponse {
   message: String
@@ -815,13 +632,6 @@ type GenerateEmailResult {
   text: String!
 }
 
-type GeneratedQuiz {
-  domain: LearningDomain!
-  generatedAt: String!
-  questions: [QuizQuestion!]!
-  topicKey: String!
-}
-
 type GreenhouseCompliance {
   description: String
   questions: [GreenhouseQuestion!]
@@ -884,12 +694,6 @@ type ImportContactsResult {
   success: Boolean!
 }
 
-type InterviewTopic {
-  importance: String!
-  prepNotes: String!
-  topic: String!
-}
-
 scalar JSON
 
 type Job {
@@ -917,7 +721,6 @@ type Job {
   demographic_questions: GreenhouseDemographicQuestions
   departments: [GreenhouseDepartment!]
   description: String
-  enrichment: JobEnrichment
   external_id: String!
   id: Int!
   internal_job_id: String
@@ -951,14 +754,6 @@ type Job {
   title: String!
   updated_at: String!
   url: String!
-}
-
-type JobEnrichment {
-  enrichmentStatus: String
-  salaryCurrency: String
-  salaryMax: Int
-  salaryMin: Int
-  visaSponsorship: Boolean
 }
 
 type JobSkill {
@@ -1017,63 +812,6 @@ type LangSmithPromptCommit {
   promptName: String!
 }
 
-enum LearningDomain {
-  backend
-  coding
-  concepts
-  interview
-}
-
-type LearningOverview {
-  currentStreak: Int!
-  overallReadiness: Float!
-  teams: [LearningTeamStatus!]!
-  totalSessions: Int!
-}
-
-type LearningSessionEntry {
-  confidence: MasteryLevel
-  correctAnswers: Int
-  createdAt: String!
-  domain: LearningDomain!
-  durationMs: Int
-  id: Int!
-  score: Float
-  sessionType: SessionType!
-  topicKey: String!
-  totalQuestions: Int
-}
-
-input LearningSessionInput {
-  answersJson: String
-  confidence: MasteryLevel
-  correctAnswers: Int
-  domain: LearningDomain!
-  durationMs: Int
-  score: Float
-  sessionType: SessionType!
-  topicKey: String!
-  totalQuestions: Int
-}
-
-type LearningTeamStatus {
-  domain: LearningDomain!
-  familiarTopics: Int!
-  label: String!
-  lastStudiedAt: String
-  masteredTopics: Int!
-  nextReviewTopics: [String!]!
-  streakDays: Int!
-  totalTopics: Int!
-}
-
-enum MasteryLevel {
-  confident
-  familiar
-  mastery
-  unfamiliar
-}
-
 type Mutation {
   add_company_facts(company_id: Int!, facts: [CompanyFactInput!]!): [CompanyFact!]!
   analyzeCompany(id: Int, key: String): AnalyzeCompanyResponse!
@@ -1089,9 +827,7 @@ type Mutation {
   createLangSmithPrompt(input: CreateLangSmithPromptInput, promptIdentifier: String!): LangSmithPrompt!
   createOpportunity(input: CreateOpportunityInput!): Opportunity!
   createPrompt(input: CreatePromptInput!): Prompt!
-  createStudyTopic(category: String, difficulty: String, summary: String, tags: [String!], title: String, topic: String): StudyTopic!
   createTask(input: CreateTaskInput!): Task!
-  createTrack(input: CreateTrackInput!): Track!
   deleteAllJobs: DeleteJobResponse!
   deleteApplication(id: Int!): DeleteApplicationResponse!
   deleteCampaign(id: String!): DeleteCampaignResult!
@@ -1128,27 +864,11 @@ type Mutation {
   enhanceJobFromATS(company: String!, jobId: String!, source: String!): EnhanceJobResponse!
   findCompanyEmails(companyId: Int!): EnhanceAllContactsResult!
   findContactEmail(contactId: Int!): FindContactEmailResult!
-  generateAgenticCoding(applicationId: Int!): Application!
-  generateApplicationStrategy(applicationId: Int!): Application!
-  generateBackendPrep(applicationId: Int!): Application!
-  generateDeepResearch(applicationId: Int!): Application!
   generateEmail(input: GenerateEmailInput!): GenerateEmailResult!
-  generateInterviewPrep(applicationId: Int!): Application!
-  generateInterviewQuestions(applicationId: Int!, type: String!): Application!
-  generateQuiz(applicationId: Int!, count: Int, domain: LearningDomain!, topicKey: String!): GeneratedQuiz!
-  generateRequirementFromSelection(applicationId: Int!, selectedText: String!): Application!
-  generateResearch(goalDescription: String!): [ResearchItem!]!
-  generateStudyConceptExplanation(context: String, selectedText: String!, studyTopicId: ID!): StudyConceptExplanation!
-  generateStudyDeepDive(force: Boolean, studyTopicId: ID!): StudyTopic!
-  generateStudyTopicDeepDive(applicationId: Int!, force: Boolean, requirement: String!, studyTopic: String!): Application!
-  generateStudyTopicsForCategory(category: String!, count: Int): [StudyTopic!]!
-  generateTopicDeepDive(applicationId: Int!, force: Boolean, requirement: String!): Application!
   importContacts(contacts: [ContactInput!]!): ImportContactsResult!
   ingestResumeParse(email: String!, filename: String!, job_id: String!): ResumeIngestResult
   ingest_company_snapshot(capture_timestamp: String, company_id: Int!, content_hash: String, crawl_id: String, evidence: EvidenceInput!, extracted: JSON, fetched_at: String!, http_status: Int, jsonld: JSON, mime: String, source_url: String!, text_sample: String): CompanySnapshot!
   launchEmailCampaign(id: String!): EmailCampaign!
-  linkSelectionToRequirement(applicationId: Int!, requirement: String!, sourceQuote: String!): Application!
-  linkTrackToApplication(applicationId: Int!, trackSlug: String!): Application!
   markJobApplied(id: Int!): Job!
   """
   Trigger classification/enhancement of all unprocessed jobs via the Cloudflare Worker.
@@ -1158,7 +878,6 @@ type Mutation {
   processAllJobs(limit: Int): ProcessAllJobsResponse!
   pushLangSmithPrompt(input: PushLangSmithPromptInput, promptIdentifier: String!): String!
   rateResumeAnswer(helpful: Boolean!, traceId: ID!): Boolean
-  recordLearningSession(applicationId: Int!, input: LearningSessionInput!): Application!
   """
   Report a job as irrelevant, spam, or incorrectly classified.
   Sets the job status to "reported" so it can be reviewed or excluded.
@@ -1168,7 +887,6 @@ type Mutation {
   sendEmail(input: SendEmailInput!): SendEmailResult!
   unarchiveJob(id: Int!): Job!
   unblockCompany(id: Int!): DeleteBlockedCompanyResult!
-  unlinkTrackFromApplication(applicationId: Int!, trackSlug: String!): Application!
   unverifyCompanyContacts(companyId: Int!): UnverifyContactsResult!
   updateApplication(id: Int!, input: UpdateApplicationInput!): Application!
   updateCampaign(id: String!, input: UpdateCampaignInput!): EmailCampaign!
@@ -1179,16 +897,9 @@ type Mutation {
   updateOpportunity(id: String!, input: UpdateOpportunityInput!): Opportunity!
   updatePromptLabel(label: String!, name: String!, version: Int!): Prompt!
   updateTask(id: Int!, input: UpdateTaskInput!): Task!
-  updateTopicMastery(applicationId: Int!, domain: LearningDomain!, masteryLevel: MasteryLevel!, topicKey: String!): Application!
   updateUserSettings(settings: UserSettingsInput!, userId: String!): UserSettings!
   uploadResume(email: String!, filename: String!, resumePdf: String!): ResumeUploadResult
   upsert_company_ats_boards(boards: [ATSBoardUpsertInput!]!, company_id: Int!): [ATSBoard!]!
-}
-
-type NetworkingSuggestion {
-  action: String!
-  reasoning: String!
-  target: String!
 }
 
 type OpportunitiesResult {
@@ -1222,28 +933,6 @@ type Opportunity {
   title: String!
   updatedAt: String!
   url: String
-}
-
-type PrepCategory {
-  description: String!
-  emoji: String!
-  id: String!
-  name: String!
-  resources: [PrepResource!]!
-}
-
-type PrepContent {
-  categories: [PrepCategory!]!
-  totalResources: Int!
-}
-
-type PrepResource {
-  category: String!
-  description: String!
-  href: URL!
-  id: String!
-  tags: [String!]!
-  title: String!
 }
 
 """Response from triggering the classify-jobs Cloudflare Worker"""
@@ -1343,20 +1032,13 @@ type Query {
   myPromptUsage(limit: Int): [PromptUsage!]!
   opportunities(companyId: Int, limit: Int, offset: Int, status: String): OpportunitiesResult!
   opportunity(id: String!): Opportunity
-  prepResources: PrepContent!
-  prepResourcesByCategory(category: String!): [PrepResource!]!
   prompt(label: String, name: String!, version: Int): Prompt
   prompts: [RegisteredPrompt!]!
   resendEmail(resendId: String!): ResendEmailDetail
   resumeStatus(email: String!): ResumeStatus
-  studyCategories: [String!]!
-  studyTopic(category: String!, topic: String!): StudyTopic
-  studyTopics(category: String!): [StudyTopic!]!
   task(id: Int!): Task
   tasks(limit: Int, offset: Int, priority: String, status: String): TasksResult!
   textToSql(question: String!): TextToSqlResult!
-  track(slug: String!): Track
-  tracks(limit: Int = 50): [Track!]!
   userSettings(userId: String!): UserSettings
 }
 
@@ -1372,16 +1054,6 @@ input QuestionAnswerInput {
   questionText: String!
 }
 
-type QuizQuestion {
-  correctIndex: Int!
-  difficulty: String!
-  explanation: String!
-  id: String!
-  options: [String!]!
-  question: String!
-  topicKey: String!
-}
-
 type RegisteredPrompt {
   content: JSON
   labels: [String!]!
@@ -1393,14 +1065,6 @@ type RegisteredPrompt {
   type: String!
   usageCount: Int
   versions: [Int!]!
-}
-
-type ResearchItem {
-  id: String!
-  relevance: String
-  summary: String!
-  title: String!
-  url: URL!
 }
 
 type ResendEmailDetail {
@@ -1447,11 +1111,6 @@ type ResumeUploadResult {
   tier: String!
 }
 
-type RiskFactor {
-  mitigation: String!
-  risk: String!
-}
-
 input SendEmailInput {
   from: String
   html: String!
@@ -1466,29 +1125,6 @@ type SendEmailResult {
   error: String
   id: String
   success: Boolean!
-}
-
-enum SessionType {
-  flashcard
-  mock_interview
-  quiz
-  study
-}
-
-type SkillGap {
-  currentLevel: String!
-  frequencyInJobs: Int!
-  priority: Int!
-  resources: [SkillGapResource!]!
-  skill: String!
-  targetLevel: String!
-}
-
-type SkillGapResource {
-  estimatedHours: Float!
-  title: String!
-  type: String!
-  url: String!
 }
 
 type SkillMatch {
@@ -1519,32 +1155,6 @@ type StackMutationResponse {
   success: Boolean!
 }
 
-type StudyConceptExplanation {
-  createdAt: DateTime!
-  explanation: String!
-  id: ID!
-  selectedText: String!
-}
-
-type StudyPlan {
-  generatedAt: String!
-  recommendations: [String!]!
-  skillGaps: [SkillGap!]!
-}
-
-type StudyTopic {
-  bodyMd: String
-  category: String!
-  createdAt: DateTime!
-  deepDive: String
-  difficulty: String!
-  id: ID!
-  summary: String
-  tags: [String!]!
-  title: String!
-  topic: String!
-}
-
 type Task {
   completedAt: String
   createdAt: String!
@@ -1571,40 +1181,6 @@ type TextToSqlResult {
   explanation: String
   rows: [[JSON]]!
   sql: String!
-}
-
-type TopicMasteryEntry {
-  confidenceScore: Float!
-  domain: LearningDomain!
-  lastQuizScore: Float
-  lastStudiedAt: String
-  masteryLevel: MasteryLevel!
-  nextReviewAt: String
-  streakDays: Int!
-  topicKey: String!
-  totalSessions: Int!
-}
-
-type Track {
-  description: String
-  id: ID!
-  items: [TrackItem!]!
-  level: String
-  slug: String!
-  title: String!
-}
-
-type TrackItem {
-  children: [TrackItem!]!
-  contentRef: String
-  difficulty: Int
-  id: ID!
-  kind: String!
-  position: Int!
-  prereqs: [ID!]!
-  promptRef: String
-  tags: [String!]!
-  title: String!
 }
 
 scalar URL

@@ -226,7 +226,7 @@ Uses [agent-teams-lite](https://github.com/Gentleman-Programming/agent-teams-lit
 |---|---|
 | `.claude/commands/sdd.md` | SDD orchestrator — routing, DAG detection, team/subagent dispatch |
 | `.claude/skills/sdd-*/SKILL.md` | 9 SDD sub-agent skill files (explore, propose, spec, design, tasks, apply, verify, archive, init) |
-| `.claude/skills/improve-*/SKILL.md` | 6 job search self-improvement skills (mine, audit, evolve, apply, verify, meta) |
+| `.claude/skills/improve-*/SKILL.md` | 5 job search self-improvement skills (mine, audit, evolve, apply, meta) |
 | `.claude/skills/codefix-*/SKILL.md` | 6 codebase self-improvement skills (mine, audit, evolve, apply, verify, meta) |
 | `openspec/` | Specs, change proposals, designs, and task breakdowns (created by `sdd-init`) |
 | `.claude/commands/` | Project-specific commands (build-and-push, gql-agent, improve, codefix, sdd) |
@@ -268,7 +268,7 @@ Specs and design run in parallel (agent team in `/sdd:ff`); tasks depends on bot
 
 ## Autonomous Self-Improvement Team
 
-Goal-driven team of 6 specialists focused on helping find a fully remote EU AI engineering role. Grounded in autonomous agent research (AutoRefine, Meta Context Engineering, CASTER, ROMA, Phase Transition theory).
+Goal-driven team of 5 specialists focused on helping find a fully remote EU AI engineering role. Grounded in autonomous agent research (AutoRefine, Meta Context Engineering, CASTER, ROMA, Phase Transition theory).
 
 ### Structure
 
@@ -278,7 +278,6 @@ Goal-driven team of 6 specialists focused on helping find a fully remote EU AI e
 | `.claude/skills/improve-audit/SKILL.md` | Discovery Expander | Find more companies hiring AI engineers remotely in EU |
 | `.claude/skills/improve-evolve/SKILL.md` | Classifier Tuner | Reduce missed opportunities in remote EU classification |
 | `.claude/skills/improve-apply/SKILL.md` | Skill Optimizer | Better AI/ML skill taxonomy, extraction, and matching |
-| `.claude/skills/improve-verify/SKILL.md` | Application Coach | Learn from application patterns, improve interview prep |
 | `.claude/skills/improve-meta/SKILL.md` | Strategy Brain | Coordinate toward the goal: get hired |
 | `.claude/commands/improve.md` | Orchestrator | Entry point and team coordination |
 
@@ -291,7 +290,6 @@ Goal-driven team of 6 specialists focused on helping find a fully remote EU AI e
 | `/improve discover` | Find new AI engineering job sources |
 | `/improve classify` | Tune classification accuracy |
 | `/improve skills` | Optimize AI/ML skill matching |
-| `/improve coach` | Application coaching and prep improvement |
 
 ### Goal Phases
 
@@ -299,8 +297,6 @@ Goal-driven team of 6 specialists focused on helping find a fully remote EU AI e
 |---|---|---|
 | **BUILDING** | Discovery + classification | < 5 AI jobs/week |
 | **OPTIMIZING** | Classifier + skills | Jobs flowing but low relevance |
-| **APPLYING** | Coaching + prep | Good jobs surfacing, need to convert |
-| **INTERVIEWING** | Deep prep + research | Applications converting to interviews |
 
 ### Integration
 
