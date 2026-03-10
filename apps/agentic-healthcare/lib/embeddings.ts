@@ -1,4 +1,4 @@
-import { QwenClient } from "@repo/qwen";
+import { QwenClient } from "./qwen-client";
 import { SupabaseClient } from "@supabase/supabase-js";
 
 const qwen = new QwenClient({

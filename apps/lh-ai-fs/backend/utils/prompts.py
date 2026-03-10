@@ -3,19 +3,20 @@ CITATION_EXTRACTION_PROMPT = """Extract ALL legal citations from this Motion for
 For each citation identify:
 1. The exact citation text (case name, volume, reporter, page)
 2. The proposition it is claimed to support (what the brief says the case stands for)
-3. Any direct quotes attributed to the cited authority
+3. Any direct quotes attributed to the cited authority — extract the verbatim quoted text as a separate field
 4. The section/paragraph where it appears
 
 Motion for Summary Judgment:
 {msj_text}
 
-Return a JSON object with a "citations" array. Each citation must have: citation_text, claimed_proposition, source_location, context (the surrounding sentence)."""
+Return a JSON object with a "citations" array. Each citation must have: citation_text, claimed_proposition, source_location, context (the surrounding sentence), direct_quote (the verbatim quoted text from the cited authority, or null if no direct quote is present)."""
 
 CITATION_VERIFICATION_PROMPT = """Verify whether this legal citation actually supports the proposition claimed in the brief.
 
 Citation: {citation_text}
 Claimed proposition: {claimed_proposition}
-Direct quote (if any): {context}
+Surrounding context: {context}
+Direct quote (if any): {direct_quote}
 
 Check for:
 1. Does the cited case actually hold what the brief claims? Look for mischaracterization of holdings.
@@ -25,7 +26,16 @@ Check for:
 
 {case_context}
 
-Return JSON with: is_supported (bool), confidence (0-1), confidence_reasoning (1-2 sentences explaining why you assigned this confidence level), discrepancies (list of strings), status (supported/not_supported/misleading/could_not_verify), notes."""
+Return JSON with:
+- is_supported (bool)
+- confidence (0-1)
+- confidence_reasoning (1-2 sentences explaining why you assigned this confidence level)
+- discrepancies (list of strings)
+- status (supported/not_supported/misleading/could_not_verify)
+- notes (string)
+- quote_accuracy (object with: has_direct_quote (bool), quoted_text (string or null), accuracy_status ("accurate" | "inaccurate" | "suspected_fabricated" | "could_not_verify" | "not_applicable"), issues (list of strings describing quote problems), risk_level ("none" | "low" | "medium" | "high" | "critical"))
+- fabrication_risk ("none" | "low" | "medium" | "high") — how likely the case itself is fabricated or the citation details are invented
+- is_binding (true | false | null) — whether this authority is binding in California courts; null if unknown"""
 
 FACT_CHECKING_PROMPT = """Cross-reference the factual claims from the Motion for Summary Judgment against the supporting documents.
 

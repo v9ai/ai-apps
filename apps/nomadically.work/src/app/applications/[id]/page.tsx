@@ -18,8 +18,14 @@ import { BackendPrepTab } from "@/components/app-detail/BackendPrepTab";
 import { DeepResearchTab } from "@/components/app-detail/DeepResearchTab";
 import { StudyTab } from "@/components/app-detail/StudyTab";
 import { LearningDashboard } from "@/components/app-detail/LearningDashboard";
+import dynamic from "next/dynamic";
 
-const TAB_VALUES = ["description", "interview", "coding", "backend", "research", "study", "learn"] as const;
+const ProjectDocsTab = dynamic(
+  () => import("@/components/app-detail/ProjectDocsTab").then((m) => ({ default: m.ProjectDocsTab })),
+  { loading: () => <Skeleton height="400px" /> },
+);
+
+const TAB_VALUES = ["description", "interview", "coding", "backend", "research", "study", "learn", "docs"] as const;
 type TabValue = (typeof TAB_VALUES)[number];
 
 function ApplicationDetailInner() {
@@ -277,6 +283,17 @@ function ApplicationDetailInner() {
               <span className="tab-shortcut-hint">7</span>
             </Flex>
           </Tabs.Trigger>
+          {app.id === 13 && (
+            <Tabs.Trigger value="docs">
+              <Flex direction="column" align="center" gap="0">
+                <Flex align="center" gap="1">
+                  <Text>Docs</Text>
+                  <Badge size="1" variant="soft" color="teal" ml="1">56</Badge>
+                </Flex>
+                <span className="tab-shortcut-hint">8</span>
+              </Flex>
+            </Tabs.Trigger>
+          )}
         </Tabs.List>
 
         <Box pt="4">
@@ -314,6 +331,11 @@ function ApplicationDetailInner() {
           <Tabs.Content value="learn">
             <LearningDashboard app={app} isAdmin={isAdmin} />
           </Tabs.Content>
+          {app.id === 13 && (
+            <Tabs.Content value="docs">
+              <ProjectDocsTab app={app} isAdmin={isAdmin} />
+            </Tabs.Content>
+          )}
         </Box>
       </Tabs.Root>
 

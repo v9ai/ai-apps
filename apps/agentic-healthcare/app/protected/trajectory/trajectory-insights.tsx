@@ -3,7 +3,7 @@
 import { useState, useTransition } from "react";
 import { Badge, Button, Card, Flex, Text, Tooltip } from "@radix-ui/themes";
 import { getTrajectoryInsights } from "./actions";
-import type { TrajectoryMetricDetail, TrajectoryVelocity } from "./actions";
+import type { TrajectoryMetricDetail, TrajectoryVelocity } from "./utils";
 
 function riskColor(
   risk: string

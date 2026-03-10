@@ -154,6 +154,9 @@ async fn main() -> Result<()> {
         synthesis_preamble: None,
         synthesis_prompt_template: None,
         tool_config: None,
+        scholar_concurrency: Some(3),
+        mailto: std::env::var("RESEARCH_MAILTO").ok(),
+        output_dir: Some(OUT_DIR.into()),
     });
 
     let result = lead.run(tasks).await?;

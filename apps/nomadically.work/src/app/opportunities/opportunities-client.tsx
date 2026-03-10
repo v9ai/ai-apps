@@ -25,7 +25,7 @@ type Opportunity = NonNullable<
   GetOpportunitiesQuery["opportunities"]["opportunities"]
 >[number];
 
-const STATUS_OPTIONS = ["", "open", "applied", "rejected", "offer", "closed"] as const;
+const STATUS_OPTIONS = ["open", "applied", "rejected", "offer", "closed"] as const;
 
 const STATUS_COLORS: Record<string, "gray" | "blue" | "red" | "green" | "orange"> = {
   open: "blue",
@@ -94,11 +94,11 @@ export function OpportunitiesClient() {
         <Heading size="5">Opportunities</Heading>
         <Flex align="center" gap="3">
           <Text size="2" color="gray">{totalCount} total</Text>
-          <Select.Root value={statusFilter} onValueChange={(v) => { setStatusFilter(v); setPage(0); }}>
+          <Select.Root value={statusFilter || "all"} onValueChange={(v) => { setStatusFilter(v === "all" ? "" : v); setPage(0); }}>
             <Select.Trigger placeholder="All statuses" />
             <Select.Content>
-              <Select.Item value="">All statuses</Select.Item>
-              {STATUS_OPTIONS.filter(Boolean).map((s) => (
+              <Select.Item value="all">All statuses</Select.Item>
+              {STATUS_OPTIONS.map((s) => (
                 <Select.Item key={s} value={s}>{s}</Select.Item>
               ))}
             </Select.Content>
@@ -152,7 +152,7 @@ export function OpportunitiesClient() {
                       </Badge>
                     </Select.Trigger>
                     <Select.Content>
-                      {STATUS_OPTIONS.filter(Boolean).map((s) => (
+                      {STATUS_OPTIONS.map((s) => (
                         <Select.Item key={s} value={s}>{s}</Select.Item>
                       ))}
                     </Select.Content>

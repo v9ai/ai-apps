@@ -3,7 +3,7 @@ import { redirect } from "next/navigation";
 import { Badge, Card, Flex, Text, Tooltip } from "@radix-ui/themes";
 import Link from "next/link";
 import { METRIC_REFERENCES, classifyMetricRisk } from "@/lib/embeddings";
-import type { TrajectoryState, MetricRisk } from "./actions";
+import type { TrajectoryState, MetricRisk } from "./utils";
 
 function similarityColor(sim: number): "green" | "yellow" | "orange" | "red" {
   if (sim >= 0.95) return "green";

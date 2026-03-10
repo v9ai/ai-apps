@@ -247,6 +247,9 @@ async fn main() -> Result<()> {
             search_description: None,
             detail_description: None,
         }),
+        scholar_concurrency: Some(3),
+        mailto: std::env::var("RESEARCH_MAILTO").ok(),
+        output_dir: None,
         synthesis_preamble: Some(
             "You are a principal medical research synthesiser. You combine findings from \
              specialist research agents into a coherent, evidence-based clinical report. \

@@ -1,9 +1,19 @@
 use crate::agent::{Tool, ToolDefinition};
+use crate::crossref::CrossrefClient;
+use crate::openalex::OpenAlexClient;
+use crate::paper::ResearchPaper;
 use crate::scholar::{SemanticScholarClient, types::{PAPER_FIELDS_FULL, SEARCH_FIELDS}};
 use serde::{Deserialize, Serialize};
 
 // Re-export for convenience
 pub use SearchToolConfig as ToolConfig;
+
+/// Fallback API clients for when Semantic Scholar is rate-limited.
+#[derive(Clone)]
+pub struct FallbackClients {
+    pub openalex: OpenAlexClient,
+    pub crossref: CrossrefClient,
+}
 
 /// Configuration for search/detail tool behaviour.
 ///
@@ -48,15 +58,20 @@ pub struct SearchArgs {
 pub struct SearchPapers {
     client: SemanticScholarClient,
     config: SearchToolConfig,
+    fallback: Option<FallbackClients>,
 }
 
 impl SearchPapers {
     pub fn new(client: SemanticScholarClient) -> Self {
-        Self { client, config: SearchToolConfig::default() }
+        Self { client, config: SearchToolConfig::default(), fallback: None }
     }
 
     pub fn with_config(client: SemanticScholarClient, config: SearchToolConfig) -> Self {
-        Self { client, config }
+        Self { client, config, fallback: None }
+    }
+
+    pub fn with_fallback(client: SemanticScholarClient, config: SearchToolConfig, fallback: FallbackClients) -> Self {
+        Self { client, config, fallback: Some(fallback) }
     }
 }
 
@@ -106,6 +121,31 @@ impl Tool for SearchPapers {
         let args: SearchArgs = serde_json::from_value(args).map_err(|e| e.to_string())?;
         let limit = args.limit.unwrap_or(self.config.default_limit).min(20);
 
+        // Prefer OpenAlex (no rate-limit issues) when available, fall back to S2.
+        if let Some(fb) = &self.fallback {
+            if let Ok(oa_resp) = fb.openalex.search(&args.query, 1, limit).await {
+                if !oa_resp.results.is_empty() {
+                    let papers: Vec<ResearchPaper> = oa_resp.results.into_iter().map(Into::into).collect();
+                    let total = papers.len() as u64;
+                    return Ok(format_research_papers(&papers, &self.config, &args.query, total));
+                }
+            }
+
+            // OpenAlex empty — try Crossref before S2
+            if let Ok(cr_resp) = fb.crossref.search(&args.query, limit, 0).await {
+                if let Some(items) = cr_resp.message.and_then(|m| m.items) {
+                    if !items.is_empty() {
+                        let papers: Vec<ResearchPaper> = items.into_iter().map(Into::into).collect();
+                        let total = papers.len() as u64;
+                        return Ok(format_research_papers(&papers, &self.config, &args.query, total));
+                    }
+                }
+            }
+
+            tracing::warn!("OpenAlex + Crossref returned no results, falling back to Semantic Scholar");
+        }
+
+        // S2 as last resort (or only provider when no fallback configured)
         let resp = self.client
             .search_bulk(
                 &args.query,
@@ -118,51 +158,78 @@ impl Tool for SearchPapers {
             .await
             .map_err(|e| e.to_string())?;
 
-        let max_chars = self.config.abstract_max_chars;
-        let max_authors = self.config.max_authors;
-        let include_fields = self.config.include_fields_of_study;
-        let include_venue = self.config.include_venue;
-
-        let papers: Vec<serde_json::Value> = resp
-            .data
-            .iter()
-            .map(|p| {
-                let abstract_snippet = p.abstract_text.as_ref().map(|a| {
-                    if a.chars().count() > max_chars {
-                        a.chars().take(max_chars).collect::<String>() + "…"
-                    } else {
-                        a.clone()
-                    }
-                });
-                let mut obj = serde_json::json!({
-                    "paper_id": p.paper_id,
-                    "title": p.title,
-                    "year": p.year,
-                    "citations": p.citation_count,
-                    "abstract": abstract_snippet,
-                    "pdf_url": p.open_access_pdf.as_ref().and_then(|x| x.url.as_deref()),
-                    "url": p.url,
-                    "authors": p.authors.as_ref().map(|a| {
-                        a.iter().filter_map(|au| au.name.as_deref()).take(max_authors).collect::<Vec<_>>()
-                    }),
-                });
-                if include_fields {
-                    obj["fields"] = serde_json::json!(p.fields_of_study);
-                }
-                if include_venue {
-                    obj["venue"] = serde_json::json!(p.venue);
-                }
-                obj
-            })
-            .collect();
-
-        serde_json::to_string_pretty(&serde_json::json!({
-            "query": args.query,
-            "total_available": resp.total,
-            "returned": papers.len(),
-            "papers": papers,
-        })).map_err(|e| e.to_string())
+        let papers: Vec<ResearchPaper> = resp.data.into_iter().map(Into::into).collect();
+        Ok(format_research_papers(&papers, &self.config, &args.query, resp.total.unwrap_or(papers.len() as u64)))
     }
+}
+
+/// Format a list of `ResearchPaper`s into the JSON response expected by the agent.
+pub fn format_research_papers(
+    papers: &[ResearchPaper],
+    config: &SearchToolConfig,
+    query: &str,
+    total: u64,
+) -> String {
+    let max_chars = config.abstract_max_chars;
+    let max_authors = config.max_authors;
+    let include_fields = config.include_fields_of_study;
+    let include_venue = config.include_venue;
+
+    let formatted: Vec<serde_json::Value> = papers
+        .iter()
+        .map(|p| {
+            let abstract_snippet = p.abstract_text.as_ref().map(|a| {
+                if a.chars().count() > max_chars {
+                    a.chars().take(max_chars).collect::<String>() + "…"
+                } else {
+                    a.clone()
+                }
+            });
+            let mut obj = serde_json::json!({
+                "paper_id": p.source_id,
+                "title": p.title,
+                "year": p.year,
+                "citations": p.citation_count,
+                "abstract": abstract_snippet,
+                "pdf_url": p.pdf_url,
+                "url": p.url,
+                "authors": p.authors.iter().take(max_authors).collect::<Vec<_>>(),
+                "source": format!("{:?}", p.source),
+            });
+            if include_fields {
+                obj["fields"] = serde_json::json!(p.fields_of_study);
+            }
+            if include_venue {
+                // ResearchPaper doesn't have venue, omit
+            }
+            obj
+        })
+        .collect();
+
+    serde_json::to_string_pretty(&serde_json::json!({
+        "query": query,
+        "total_available": total,
+        "returned": formatted.len(),
+        "papers": formatted,
+    })).unwrap_or_default()
+}
+
+/// Format a single `ResearchPaper` into the detail JSON response.
+pub fn format_paper_detail(paper: &ResearchPaper) -> String {
+    let obj = serde_json::json!({
+        "paper_id": paper.source_id,
+        "title": paper.title,
+        "year": paper.year,
+        "citations": paper.citation_count,
+        "abstract": paper.abstract_text,
+        "authors": paper.authors,
+        "doi": paper.doi,
+        "url": paper.url,
+        "pdf_url": paper.pdf_url,
+        "source": format!("{:?}", paper.source),
+        "fields_of_study": paper.fields_of_study,
+    });
+    serde_json::to_string_pretty(&obj).unwrap_or_default()
 }
 
 // ─── GetPaperDetail ──────────────────────────────────────────────────────────
@@ -175,15 +242,20 @@ pub struct PaperDetailArgs {
 pub struct GetPaperDetail {
     client: SemanticScholarClient,
     config: SearchToolConfig,
+    fallback: Option<FallbackClients>,
 }
 
 impl GetPaperDetail {
     pub fn new(client: SemanticScholarClient) -> Self {
-        Self { client, config: SearchToolConfig::default() }
+        Self { client, config: SearchToolConfig::default(), fallback: None }
     }
 
     pub fn with_config(client: SemanticScholarClient, config: SearchToolConfig) -> Self {
-        Self { client, config }
+        Self { client, config, fallback: None }
+    }
+
+    pub fn with_fallback(client: SemanticScholarClient, config: SearchToolConfig, fallback: FallbackClients) -> Self {
+        Self { client, config, fallback: Some(fallback) }
     }
 }
 
@@ -219,8 +291,30 @@ impl Tool for GetPaperDetail {
 
     async fn call_json(&self, args: serde_json::Value) -> Result<String, String> {
         let args: PaperDetailArgs = serde_json::from_value(args).map_err(|e| e.to_string())?;
-        let p = self.client.get_paper(&args.paper_id, PAPER_FIELDS_FULL).await.map_err(|e| e.to_string())?;
 
+        // Try DOI-based lookup via OpenAlex/Crossref first (no rate limits).
+        let doi = if args.paper_id.starts_with("DOI:") {
+            Some(args.paper_id.strip_prefix("DOI:").unwrap().to_string())
+        } else if args.paper_id.starts_with("10.") {
+            Some(args.paper_id.clone())
+        } else {
+            None
+        };
+
+        if let (Some(fb), Some(doi)) = (&self.fallback, &doi) {
+            if let Ok(work) = fb.openalex.get_work(&format!("https://doi.org/{doi}")).await {
+                let paper: ResearchPaper = work.into();
+                return Ok(format_paper_detail(&paper));
+            }
+            if let Ok(work) = fb.crossref.get_work(doi).await {
+                let paper: ResearchPaper = work.into();
+                return Ok(format_paper_detail(&paper));
+            }
+            tracing::warn!("OpenAlex + Crossref failed for DOI {doi}, falling back to S2");
+        }
+
+        // S2 as last resort (or only provider when no fallback/DOI)
+        let p = self.client.get_paper(&args.paper_id, PAPER_FIELDS_FULL).await.map_err(|e| e.to_string())?;
         let mut obj = serde_json::json!({
             "paper_id": p.paper_id,
             "title": p.title,
@@ -238,11 +332,9 @@ impl Tool for GetPaperDetail {
             "pdf_url": p.open_access_pdf.as_ref().and_then(|x| x.url.as_deref()),
             "url": p.url,
         });
-
         if self.config.include_fields_of_study {
             obj["fields_of_study"] = serde_json::json!(p.fields_of_study);
         }
-
         serde_json::to_string_pretty(&obj).map_err(|e| e.to_string())
     }
 }

@@ -1,18 +1,23 @@
 use anyhow::{Context, Result};
 use std::collections::HashMap;
 use std::path::PathBuf;
+use std::sync::Arc;
 use std::time::Instant;
+use tokio::sync::Semaphore;
 use tokio::task::JoinSet;
 use tracing::info;
 
 use crate::agent::agent_builder;
 use crate::code::CodeAnalysisConfig;
+use crate::crossref::CrossrefClient;
+use crate::openalex::OpenAlexClient;
+use crate::tools::FallbackClients;
 
 use super::mailbox::{Mailbox, MessageKind, TeamMessage};
 use super::task::{ResearchTask, SharedTaskList};
 use crate::tools::SearchToolConfig;
 
-use super::teammate::{Teammate, TeammateConfig};
+use super::teammate::{Teammate, TeammateConfig, truncate_context};
 
 /// Configuration for the research team.
 pub struct TeamConfig {
@@ -29,6 +34,14 @@ pub struct TeamConfig {
     pub synthesis_prompt_template: Option<String>,
     /// When `Some`, overrides the default search tool configuration for all teammates.
     pub tool_config: Option<SearchToolConfig>,
+    /// Max concurrent Semantic Scholar requests. `Some(3)` recommended with API key.
+    pub scholar_concurrency: Option<usize>,
+    /// Polite-pool email for OpenAlex/Crossref. Enables provider fallback when set.
+    pub mailto: Option<String>,
+    /// Output directory for incremental saving. When set, each task result is written
+    /// to disk as it completes, and on startup previously completed results are loaded
+    /// to resume from the failure point.
+    pub output_dir: Option<String>,
 }
 
 /// Result of a full team research run.
@@ -55,6 +68,15 @@ impl TeamLead {
         let task_list = SharedTaskList::new(tasks);
         let mailbox = Mailbox::new(128);
 
+        // Resume from previously saved results if output_dir exists.
+        if let Some(ref dir) = self.config.output_dir {
+            let resumed = task_list.resume_from_dir(dir);
+            if resumed > 0 {
+                info!(resumed, "resumed tasks from {dir}");
+                eprintln!("[lead] Resumed {resumed}/{task_count} tasks from {dir}");
+            }
+        }
+
         info!(
             team_size = self.config.team_size,
             tasks = task_count,
@@ -68,6 +90,21 @@ impl TeamLead {
             ..CodeAnalysisConfig::default()
         });
 
+        // Create shared rate limiter.
+        let scholar_rate_limiter = self
+            .config
+            .scholar_concurrency
+            .map(|n| Arc::new(Semaphore::new(n)));
+
+        // Always create fallback clients (OpenAlex + Crossref are primary providers).
+        // Mailto enables the polite pool but is optional.
+        let mailto = self.config.mailto.as_deref();
+        info!(mailto = mailto, "fallback clients enabled (OpenAlex + Crossref)");
+        let fallback = Some(FallbackClients {
+            openalex: OpenAlexClient::new(mailto),
+            crossref: CrossrefClient::new(mailto),
+        });
+
         for i in 0..self.config.team_size {
             let worker_id = format!("worker-{:02}", i + 1);
             let teammate = Teammate::new(
@@ -78,6 +115,8 @@ impl TeamLead {
                     scholar_key: self.config.scholar_key.clone(),
                     code_analysis: code_analysis.clone(),
                     tool_config: self.config.tool_config.clone(),
+                    scholar_rate_limiter: scholar_rate_limiter.clone(),
+                    fallback: fallback.clone(),
                 },
                 task_list.clone(),
                 mailbox.clone(),
@@ -92,6 +131,8 @@ impl TeamLead {
         // Monitor mailbox in the background.
         let monitor_mailbox = mailbox.clone();
         let monitor_times = task_start_times.clone();
+        let monitor_task_list = task_list.clone();
+        let monitor_output_dir = self.config.output_dir.clone();
         let monitor_handle = tokio::spawn(async move {
             let mut rx = monitor_mailbox.subscribe();
             loop {
@@ -119,6 +160,18 @@ impl TeamLead {
                                     status = "completed",
                                     "task completed"
                                 );
+                            }
+                            // Incrementally save to disk if output_dir is set.
+                            if let Some(ref dir) = monitor_output_dir {
+                                let findings = monitor_task_list.completed_tasks();
+                                if let Some((_, subject, content)) = findings.iter().find(|(id, _, _)| id == task_id) {
+                                    let path = format!("{dir}/agent-{task_id:02}-{subject}.md");
+                                    if let Err(e) = std::fs::write(&path, content) {
+                                        eprintln!("[lead] failed to save {path}: {e}");
+                                    } else {
+                                        eprintln!("[lead] saved {path} ({} bytes)", content.len());
+                                    }
+                                }
                             }
                             eprintln!("[lead] {from} completed task {task_id}: {summary}");
                         }
@@ -201,9 +254,18 @@ impl TeamLead {
     async fn synthesize(&self, findings: &[(usize, String, String)]) -> Result<String> {
         info!(finding_count = findings.len(), "starting synthesis");
 
+        // Truncate findings to fit within context window.
+        let truncated = truncate_context(
+            findings
+                .iter()
+                .map(|(_, subject, content)| (subject.clone(), content.clone()))
+                .collect(),
+            super::teammate::MAX_CONTEXT_CHARS,
+        );
         let combined: String = findings
             .iter()
-            .map(|(id, subject, content)| {
+            .zip(truncated.iter())
+            .map(|((id, _, _), (subject, content))| {
                 format!("## Agent {id}: {subject}\n\n{content}\n\n---\n\n")
             })
             .collect();
