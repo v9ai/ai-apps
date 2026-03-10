@@ -22,76 +22,6 @@ export type Scalars = {
   Upload: { input: File; output: File; }
 };
 
-export type AiBackendPrep = {
-  __typename?: 'AIBackendPrep';
-  aiMlIntegration: Maybe<BackendPrepSection>;
-  apiDesign: Maybe<BackendPrepSection>;
-  authSecurity: Maybe<BackendPrepSection>;
-  caching: Maybe<BackendPrepSection>;
-  concurrencyAsync: Maybe<BackendPrepSection>;
-  databaseDesign: Maybe<BackendPrepSection>;
-  devops: Maybe<BackendPrepSection>;
-  distributedSystems: Maybe<BackendPrepSection>;
-  eventDriven: Maybe<BackendPrepSection>;
-  generatedAt: Scalars['String']['output'];
-  messageQueues: Maybe<BackendPrepSection>;
-  microservices: Maybe<BackendPrepSection>;
-  nosqlPatterns: Maybe<BackendPrepSection>;
-  observability: Maybe<BackendPrepSection>;
-  performance: Maybe<BackendPrepSection>;
-  securityOwasp: Maybe<BackendPrepSection>;
-  serverlessEdge: Maybe<BackendPrepSection>;
-  sqlOptimization: Maybe<BackendPrepSection>;
-  systemDesign: Maybe<BackendPrepSection>;
-  testing: Maybe<BackendPrepSection>;
-  typescriptNode: Maybe<BackendPrepSection>;
-};
-
-export type AiDeepResearch = {
-  __typename?: 'AIDeepResearch';
-  generatedAt: Scalars['String']['output'];
-  questions: Array<DeepResearchQuestion>;
-};
-
-export type AiInterviewPrep = {
-  __typename?: 'AIInterviewPrep';
-  generatedAt: Scalars['String']['output'];
-  requirements: Array<AiInterviewPrepRequirement>;
-  summary: Scalars['String']['output'];
-};
-
-export type AiInterviewPrepRequirement = {
-  __typename?: 'AIInterviewPrepRequirement';
-  deepDive: Maybe<Scalars['String']['output']>;
-  questions: Array<Scalars['String']['output']>;
-  requirement: Scalars['String']['output'];
-  sourceQuote: Maybe<Scalars['String']['output']>;
-  studyTopicDeepDives: Array<AiStudyTopicDeepDive>;
-  studyTopics: Array<Scalars['String']['output']>;
-};
-
-export type AiInterviewQuestion = {
-  __typename?: 'AIInterviewQuestion';
-  category: Scalars['String']['output'];
-  question: Scalars['String']['output'];
-  reason: Scalars['String']['output'];
-};
-
-export type AiInterviewQuestions = {
-  __typename?: 'AIInterviewQuestions';
-  companyContext: Scalars['String']['output'];
-  recruiterGeneratedAt: Maybe<Scalars['String']['output']>;
-  recruiterQuestions: Array<AiInterviewQuestion>;
-  technicalGeneratedAt: Maybe<Scalars['String']['output']>;
-  technicalQuestions: Array<AiInterviewQuestion>;
-};
-
-export type AiStudyTopicDeepDive = {
-  __typename?: 'AIStudyTopicDeepDive';
-  deepDive: Scalars['String']['output'];
-  topic: Scalars['String']['output'];
-};
-
 export type AtsBoard = {
   __typename?: 'ATSBoard';
   board_type: AtsBoardType;
@@ -139,60 +69,6 @@ export type AtsVendor =
   | 'TEAMTAILOR'
   | 'WORKABLE';
 
-export type AgenticCoding = {
-  __typename?: 'AgenticCoding';
-  exercises: Array<AgenticCodingExercise>;
-  failureModes: Maybe<Array<AgenticCodingFailureMode>>;
-  generatedAt: Scalars['String']['output'];
-  measurableOutcomes: Maybe<Array<AgenticCodingOutcome>>;
-  overview: Scalars['String']['output'];
-  promptTemplates: Maybe<Array<AgenticCodingPromptTemplate>>;
-  qaApproach: Maybe<Scalars['String']['output']>;
-  resources: Array<AgenticCodingResource>;
-  teamPractices: Maybe<Scalars['String']['output']>;
-  workflowPattern: Maybe<Scalars['String']['output']>;
-};
-
-export type AgenticCodingExercise = {
-  __typename?: 'AgenticCodingExercise';
-  agentPrompt: Scalars['String']['output'];
-  description: Scalars['String']['output'];
-  difficulty: Scalars['String']['output'];
-  hints: Array<Scalars['String']['output']>;
-  skills: Array<Scalars['String']['output']>;
-  title: Scalars['String']['output'];
-};
-
-export type AgenticCodingFailureMode = {
-  __typename?: 'AgenticCodingFailureMode';
-  alternative: Scalars['String']['output'];
-  scenario: Scalars['String']['output'];
-  why: Scalars['String']['output'];
-};
-
-export type AgenticCodingOutcome = {
-  __typename?: 'AgenticCodingOutcome';
-  afterTime: Scalars['String']['output'];
-  beforeTime: Scalars['String']['output'];
-  improvement: Scalars['String']['output'];
-  task: Scalars['String']['output'];
-};
-
-export type AgenticCodingPromptTemplate = {
-  __typename?: 'AgenticCodingPromptTemplate';
-  prompt: Scalars['String']['output'];
-  purpose: Scalars['String']['output'];
-  stackContext: Scalars['String']['output'];
-  title: Scalars['String']['output'];
-};
-
-export type AgenticCodingResource = {
-  __typename?: 'AgenticCodingResource';
-  description: Scalars['String']['output'];
-  title: Scalars['String']['output'];
-  url: Scalars['String']['output'];
-};
-
 export type AnalyzeCompanyResponse = {
   __typename?: 'AnalyzeCompanyResponse';
   companyId: Maybe<Scalars['Int']['output']>;
@@ -203,28 +79,18 @@ export type AnalyzeCompanyResponse = {
 
 export type Application = {
   __typename?: 'Application';
-  agenticCoding: Maybe<AgenticCoding>;
-  aiBackendPrep: Maybe<AiBackendPrep>;
-  aiDeepResearch: Maybe<AiDeepResearch>;
-  aiInterviewPrep: Maybe<AiInterviewPrep>;
-  aiInterviewQuestions: Maybe<AiInterviewQuestions>;
-  applicationStrategy: Maybe<ApplicationStrategy>;
   companyKey: Maybe<Scalars['String']['output']>;
   companyName: Maybe<Scalars['String']['output']>;
   createdAt: Scalars['String']['output'];
   email: Scalars['EmailAddress']['output'];
   id: Scalars['Int']['output'];
-  interviewPrep: Array<Track>;
   jobDescription: Maybe<Scalars['String']['output']>;
   jobId: Scalars['String']['output'];
   jobTitle: Maybe<Scalars['String']['output']>;
-  learningOverview: Maybe<LearningOverview>;
   notes: Maybe<Scalars['String']['output']>;
   questions: Array<QuestionAnswer>;
-  recentSessions: Array<LearningSessionEntry>;
   resume: Maybe<Scalars['Upload']['output']>;
   status: ApplicationStatus;
-  topicMasteryList: Array<TopicMasteryEntry>;
 };
 
 export type ApplicationInput = {
@@ -245,17 +111,6 @@ export type ApplicationStatus =
   | 'rejected'
   | 'reviewed'
   | 'submitted';
-
-export type ApplicationStrategy = {
-  __typename?: 'ApplicationStrategy';
-  coverLetterAngles: Array<CoverLetterAngle>;
-  generatedAt: Scalars['String']['output'];
-  interviewTopics: Array<InterviewTopic>;
-  keyDifferentiators: Array<Scalars['String']['output']>;
-  networkingSuggestions: Array<NetworkingSuggestion>;
-  recommendedApproach: Scalars['String']['output'];
-  riskFactors: Array<RiskFactor>;
-};
 
 export type ApplyEmailPatternResult = {
   __typename?: 'ApplyEmailPatternResult';
@@ -319,35 +174,6 @@ export type AshbySecondaryLocation = {
   __typename?: 'AshbySecondaryLocation';
   address: Maybe<AshbyPostalAddress>;
   location: Scalars['String']['output'];
-};
-
-export type BackendPrepCodeExample = {
-  __typename?: 'BackendPrepCodeExample';
-  code: Scalars['String']['output'];
-  explanation: Scalars['String']['output'];
-  language: Scalars['String']['output'];
-  title: Scalars['String']['output'];
-};
-
-export type BackendPrepInterviewQuestion = {
-  __typename?: 'BackendPrepInterviewQuestion';
-  difficulty: Scalars['String']['output'];
-  followUps: Array<Scalars['String']['output']>;
-  idealAnswer: Scalars['String']['output'];
-  question: Scalars['String']['output'];
-};
-
-export type BackendPrepSection = {
-  __typename?: 'BackendPrepSection';
-  codeExamples: Array<BackendPrepCodeExample>;
-  commonPitfalls: Array<Scalars['String']['output']>;
-  deepDive: Scalars['String']['output'];
-  interviewQuestions: Array<BackendPrepInterviewQuestion>;
-  keyConcepts: Array<Scalars['String']['output']>;
-  overview: Scalars['String']['output'];
-  researchInsights: Maybe<Scalars['String']['output']>;
-  talkingPoints: Array<Scalars['String']['output']>;
-  title: Scalars['String']['output'];
 };
 
 export type BlockedCompany = {
@@ -566,13 +392,6 @@ export type ContactsResult = {
   totalCount: Scalars['Int']['output'];
 };
 
-export type CoverLetterAngle = {
-  __typename?: 'CoverLetterAngle';
-  angle: Scalars['String']['output'];
-  exampleOpener: Scalars['String']['output'];
-  reasoning: Scalars['String']['output'];
-};
-
 export type CreateCampaignInput = {
   companyId?: InputMaybe<Scalars['Int']['input']>;
   delayDays?: InputMaybe<Scalars['JSON']['input']>;
@@ -673,28 +492,6 @@ export type CreateTaskInput = {
   status?: InputMaybe<Scalars['String']['input']>;
   tags?: InputMaybe<Array<Scalars['String']['input']>>;
   title: Scalars['String']['input'];
-};
-
-export type CreateTrackInput = {
-  description?: InputMaybe<Scalars['String']['input']>;
-  level?: InputMaybe<Scalars['String']['input']>;
-  slug: Scalars['String']['input'];
-  title: Scalars['String']['input'];
-};
-
-export type DeepResearchModelResponse = {
-  __typename?: 'DeepResearchModelResponse';
-  content: Scalars['String']['output'];
-  model: Scalars['String']['output'];
-  reasoning: Maybe<Scalars['String']['output']>;
-};
-
-export type DeepResearchQuestion = {
-  __typename?: 'DeepResearchQuestion';
-  category: Scalars['String']['output'];
-  deepseek: DeepResearchModelResponse;
-  question: Scalars['String']['output'];
-  qwen: DeepResearchModelResponse;
 };
 
 export type DeleteApplicationResponse = {
@@ -891,14 +688,6 @@ export type GenerateEmailResult = {
   text: Scalars['String']['output'];
 };
 
-export type GeneratedQuiz = {
-  __typename?: 'GeneratedQuiz';
-  domain: LearningDomain;
-  generatedAt: Scalars['String']['output'];
-  questions: Array<QuizQuestion>;
-  topicKey: Scalars['String']['output'];
-};
-
 export type GreenhouseCompliance = {
   __typename?: 'GreenhouseCompliance';
   description: Maybe<Scalars['String']['output']>;
@@ -970,13 +759,6 @@ export type ImportContactsResult = {
   success: Scalars['Boolean']['output'];
 };
 
-export type InterviewTopic = {
-  __typename?: 'InterviewTopic';
-  importance: Scalars['String']['output'];
-  prepNotes: Scalars['String']['output'];
-  topic: Scalars['String']['output'];
-};
-
 export type Job = {
   __typename?: 'Job';
   absolute_url: Maybe<Scalars['String']['output']>;
@@ -1003,7 +785,6 @@ export type Job = {
   demographic_questions: Maybe<GreenhouseDemographicQuestions>;
   departments: Maybe<Array<GreenhouseDepartment>>;
   description: Maybe<Scalars['String']['output']>;
-  enrichment: Maybe<JobEnrichment>;
   external_id: Scalars['String']['output'];
   id: Scalars['Int']['output'];
   internal_job_id: Maybe<Scalars['String']['output']>;
@@ -1035,15 +816,6 @@ export type Job = {
   title: Scalars['String']['output'];
   updated_at: Scalars['String']['output'];
   url: Scalars['String']['output'];
-};
-
-export type JobEnrichment = {
-  __typename?: 'JobEnrichment';
-  enrichmentStatus: Maybe<Scalars['String']['output']>;
-  salaryCurrency: Maybe<Scalars['String']['output']>;
-  salaryMax: Maybe<Scalars['Int']['output']>;
-  salaryMin: Maybe<Scalars['Int']['output']>;
-  visaSponsorship: Maybe<Scalars['Boolean']['output']>;
 };
 
 export type JobSkill = {
@@ -1105,64 +877,6 @@ export type LangSmithPromptCommit = {
   promptName: Scalars['String']['output'];
 };
 
-export type LearningDomain =
-  | 'backend'
-  | 'coding'
-  | 'concepts'
-  | 'interview';
-
-export type LearningOverview = {
-  __typename?: 'LearningOverview';
-  currentStreak: Scalars['Int']['output'];
-  overallReadiness: Scalars['Float']['output'];
-  teams: Array<LearningTeamStatus>;
-  totalSessions: Scalars['Int']['output'];
-};
-
-export type LearningSessionEntry = {
-  __typename?: 'LearningSessionEntry';
-  confidence: Maybe<MasteryLevel>;
-  correctAnswers: Maybe<Scalars['Int']['output']>;
-  createdAt: Scalars['String']['output'];
-  domain: LearningDomain;
-  durationMs: Maybe<Scalars['Int']['output']>;
-  id: Scalars['Int']['output'];
-  score: Maybe<Scalars['Float']['output']>;
-  sessionType: SessionType;
-  topicKey: Scalars['String']['output'];
-  totalQuestions: Maybe<Scalars['Int']['output']>;
-};
-
-export type LearningSessionInput = {
-  answersJson?: InputMaybe<Scalars['String']['input']>;
-  confidence?: InputMaybe<MasteryLevel>;
-  correctAnswers?: InputMaybe<Scalars['Int']['input']>;
-  domain: LearningDomain;
-  durationMs?: InputMaybe<Scalars['Int']['input']>;
-  score?: InputMaybe<Scalars['Float']['input']>;
-  sessionType: SessionType;
-  topicKey: Scalars['String']['input'];
-  totalQuestions?: InputMaybe<Scalars['Int']['input']>;
-};
-
-export type LearningTeamStatus = {
-  __typename?: 'LearningTeamStatus';
-  domain: LearningDomain;
-  familiarTopics: Scalars['Int']['output'];
-  label: Scalars['String']['output'];
-  lastStudiedAt: Maybe<Scalars['String']['output']>;
-  masteredTopics: Scalars['Int']['output'];
-  nextReviewTopics: Array<Scalars['String']['output']>;
-  streakDays: Scalars['Int']['output'];
-  totalTopics: Scalars['Int']['output'];
-};
-
-export type MasteryLevel =
-  | 'confident'
-  | 'familiar'
-  | 'mastery'
-  | 'unfamiliar';
-
 export type Mutation = {
   __typename?: 'Mutation';
   add_company_facts: Array<CompanyFact>;
@@ -1179,9 +893,7 @@ export type Mutation = {
   createLangSmithPrompt: LangSmithPrompt;
   createOpportunity: Opportunity;
   createPrompt: Prompt;
-  createStudyTopic: StudyTopic;
   createTask: Task;
-  createTrack: Track;
   deleteAllJobs: DeleteJobResponse;
   deleteApplication: DeleteApplicationResponse;
   deleteCampaign: DeleteCampaignResult;
@@ -1218,27 +930,11 @@ export type Mutation = {
   enhanceJobFromATS: EnhanceJobResponse;
   findCompanyEmails: EnhanceAllContactsResult;
   findContactEmail: FindContactEmailResult;
-  generateAgenticCoding: Application;
-  generateApplicationStrategy: Application;
-  generateBackendPrep: Application;
-  generateDeepResearch: Application;
   generateEmail: GenerateEmailResult;
-  generateInterviewPrep: Application;
-  generateInterviewQuestions: Application;
-  generateQuiz: GeneratedQuiz;
-  generateRequirementFromSelection: Application;
-  generateResearch: Array<ResearchItem>;
-  generateStudyConceptExplanation: StudyConceptExplanation;
-  generateStudyDeepDive: StudyTopic;
-  generateStudyTopicDeepDive: Application;
-  generateStudyTopicsForCategory: Array<StudyTopic>;
-  generateTopicDeepDive: Application;
   importContacts: ImportContactsResult;
   ingestResumeParse: Maybe<ResumeIngestResult>;
   ingest_company_snapshot: CompanySnapshot;
   launchEmailCampaign: EmailCampaign;
-  linkSelectionToRequirement: Application;
-  linkTrackToApplication: Application;
   markJobApplied: Job;
   /**
    * Trigger classification/enhancement of all unprocessed jobs via the Cloudflare Worker.
@@ -1248,7 +944,6 @@ export type Mutation = {
   processAllJobs: ProcessAllJobsResponse;
   pushLangSmithPrompt: Scalars['String']['output'];
   rateResumeAnswer: Maybe<Scalars['Boolean']['output']>;
-  recordLearningSession: Application;
   /**
    * Report a job as irrelevant, spam, or incorrectly classified.
    * Sets the job status to "reported" so it can be reviewed or excluded.
@@ -1258,7 +953,6 @@ export type Mutation = {
   sendEmail: SendEmailResult;
   unarchiveJob: Job;
   unblockCompany: DeleteBlockedCompanyResult;
-  unlinkTrackFromApplication: Application;
   unverifyCompanyContacts: UnverifyContactsResult;
   updateApplication: Application;
   updateCampaign: EmailCampaign;
@@ -1269,7 +963,6 @@ export type Mutation = {
   updateOpportunity: Opportunity;
   updatePromptLabel: Prompt;
   updateTask: Task;
-  updateTopicMastery: Application;
   updateUserSettings: UserSettings;
   uploadResume: Maybe<ResumeUploadResult>;
   upsert_company_ats_boards: Array<AtsBoard>;
@@ -1350,23 +1043,8 @@ export type MutationCreatePromptArgs = {
 };
 
 
-export type MutationCreateStudyTopicArgs = {
-  category?: InputMaybe<Scalars['String']['input']>;
-  difficulty?: InputMaybe<Scalars['String']['input']>;
-  summary?: InputMaybe<Scalars['String']['input']>;
-  tags?: InputMaybe<Array<Scalars['String']['input']>>;
-  title?: InputMaybe<Scalars['String']['input']>;
-  topic?: InputMaybe<Scalars['String']['input']>;
-};
-
-
 export type MutationCreateTaskArgs = {
   input: CreateTaskInput;
-};
-
-
-export type MutationCreateTrackArgs = {
-  input: CreateTrackInput;
 };
 
 
@@ -1443,92 +1121,8 @@ export type MutationFindContactEmailArgs = {
 };
 
 
-export type MutationGenerateAgenticCodingArgs = {
-  applicationId: Scalars['Int']['input'];
-};
-
-
-export type MutationGenerateApplicationStrategyArgs = {
-  applicationId: Scalars['Int']['input'];
-};
-
-
-export type MutationGenerateBackendPrepArgs = {
-  applicationId: Scalars['Int']['input'];
-};
-
-
-export type MutationGenerateDeepResearchArgs = {
-  applicationId: Scalars['Int']['input'];
-};
-
-
 export type MutationGenerateEmailArgs = {
   input: GenerateEmailInput;
-};
-
-
-export type MutationGenerateInterviewPrepArgs = {
-  applicationId: Scalars['Int']['input'];
-};
-
-
-export type MutationGenerateInterviewQuestionsArgs = {
-  applicationId: Scalars['Int']['input'];
-  type: Scalars['String']['input'];
-};
-
-
-export type MutationGenerateQuizArgs = {
-  applicationId: Scalars['Int']['input'];
-  count?: InputMaybe<Scalars['Int']['input']>;
-  domain: LearningDomain;
-  topicKey: Scalars['String']['input'];
-};
-
-
-export type MutationGenerateRequirementFromSelectionArgs = {
-  applicationId: Scalars['Int']['input'];
-  selectedText: Scalars['String']['input'];
-};
-
-
-export type MutationGenerateResearchArgs = {
-  goalDescription: Scalars['String']['input'];
-};
-
-
-export type MutationGenerateStudyConceptExplanationArgs = {
-  context?: InputMaybe<Scalars['String']['input']>;
-  selectedText: Scalars['String']['input'];
-  studyTopicId: Scalars['ID']['input'];
-};
-
-
-export type MutationGenerateStudyDeepDiveArgs = {
-  force?: InputMaybe<Scalars['Boolean']['input']>;
-  studyTopicId: Scalars['ID']['input'];
-};
-
-
-export type MutationGenerateStudyTopicDeepDiveArgs = {
-  applicationId: Scalars['Int']['input'];
-  force?: InputMaybe<Scalars['Boolean']['input']>;
-  requirement: Scalars['String']['input'];
-  studyTopic: Scalars['String']['input'];
-};
-
-
-export type MutationGenerateStudyTopicsForCategoryArgs = {
-  category: Scalars['String']['input'];
-  count?: InputMaybe<Scalars['Int']['input']>;
-};
-
-
-export type MutationGenerateTopicDeepDiveArgs = {
-  applicationId: Scalars['Int']['input'];
-  force?: InputMaybe<Scalars['Boolean']['input']>;
-  requirement: Scalars['String']['input'];
 };
 
 
@@ -1565,19 +1159,6 @@ export type MutationLaunchEmailCampaignArgs = {
 };
 
 
-export type MutationLinkSelectionToRequirementArgs = {
-  applicationId: Scalars['Int']['input'];
-  requirement: Scalars['String']['input'];
-  sourceQuote: Scalars['String']['input'];
-};
-
-
-export type MutationLinkTrackToApplicationArgs = {
-  applicationId: Scalars['Int']['input'];
-  trackSlug: Scalars['String']['input'];
-};
-
-
 export type MutationMarkJobAppliedArgs = {
   id: Scalars['Int']['input'];
 };
@@ -1600,12 +1181,6 @@ export type MutationRateResumeAnswerArgs = {
 };
 
 
-export type MutationRecordLearningSessionArgs = {
-  applicationId: Scalars['Int']['input'];
-  input: LearningSessionInput;
-};
-
-
 export type MutationReportJobArgs = {
   id: Scalars['Int']['input'];
 };
@@ -1623,12 +1198,6 @@ export type MutationUnarchiveJobArgs = {
 
 export type MutationUnblockCompanyArgs = {
   id: Scalars['Int']['input'];
-};
-
-
-export type MutationUnlinkTrackFromApplicationArgs = {
-  applicationId: Scalars['Int']['input'];
-  trackSlug: Scalars['String']['input'];
 };
 
 
@@ -1692,14 +1261,6 @@ export type MutationUpdateTaskArgs = {
 };
 
 
-export type MutationUpdateTopicMasteryArgs = {
-  applicationId: Scalars['Int']['input'];
-  domain: LearningDomain;
-  masteryLevel: MasteryLevel;
-  topicKey: Scalars['String']['input'];
-};
-
-
 export type MutationUpdateUserSettingsArgs = {
   settings: UserSettingsInput;
   userId: Scalars['String']['input'];
@@ -1716,13 +1277,6 @@ export type MutationUploadResumeArgs = {
 export type MutationUpsert_Company_Ats_BoardsArgs = {
   boards: Array<AtsBoardUpsertInput>;
   company_id: Scalars['Int']['input'];
-};
-
-export type NetworkingSuggestion = {
-  __typename?: 'NetworkingSuggestion';
-  action: Scalars['String']['output'];
-  reasoning: Scalars['String']['output'];
-  target: Scalars['String']['output'];
 };
 
 export type OpportunitiesResult = {
@@ -1758,31 +1312,6 @@ export type Opportunity = {
   title: Scalars['String']['output'];
   updatedAt: Scalars['String']['output'];
   url: Maybe<Scalars['String']['output']>;
-};
-
-export type PrepCategory = {
-  __typename?: 'PrepCategory';
-  description: Scalars['String']['output'];
-  emoji: Scalars['String']['output'];
-  id: Scalars['String']['output'];
-  name: Scalars['String']['output'];
-  resources: Array<PrepResource>;
-};
-
-export type PrepContent = {
-  __typename?: 'PrepContent';
-  categories: Array<PrepCategory>;
-  totalResources: Scalars['Int']['output'];
-};
-
-export type PrepResource = {
-  __typename?: 'PrepResource';
-  category: Scalars['String']['output'];
-  description: Scalars['String']['output'];
-  href: Scalars['URL']['output'];
-  id: Scalars['String']['output'];
-  tags: Array<Scalars['String']['output']>;
-  title: Scalars['String']['output'];
 };
 
 /** Response from triggering the classify-jobs Cloudflare Worker */
@@ -1886,20 +1415,13 @@ export type Query = {
   myPromptUsage: Array<PromptUsage>;
   opportunities: OpportunitiesResult;
   opportunity: Maybe<Opportunity>;
-  prepResources: PrepContent;
-  prepResourcesByCategory: Array<PrepResource>;
   prompt: Maybe<Prompt>;
   prompts: Array<RegisteredPrompt>;
   resendEmail: Maybe<ResendEmailDetail>;
   resumeStatus: Maybe<ResumeStatus>;
-  studyCategories: Array<Scalars['String']['output']>;
-  studyTopic: Maybe<StudyTopic>;
-  studyTopics: Array<StudyTopic>;
   task: Maybe<Task>;
   tasks: TasksResult;
   textToSql: TextToSqlResult;
-  track: Maybe<Track>;
-  tracks: Array<Track>;
   userSettings: Maybe<UserSettings>;
 };
 
@@ -2055,11 +1577,6 @@ export type QueryOpportunityArgs = {
 };
 
 
-export type QueryPrepResourcesByCategoryArgs = {
-  category: Scalars['String']['input'];
-};
-
-
 export type QueryPromptArgs = {
   label?: InputMaybe<Scalars['String']['input']>;
   name: Scalars['String']['input'];
@@ -2074,17 +1591,6 @@ export type QueryResendEmailArgs = {
 
 export type QueryResumeStatusArgs = {
   email: Scalars['String']['input'];
-};
-
-
-export type QueryStudyTopicArgs = {
-  category: Scalars['String']['input'];
-  topic: Scalars['String']['input'];
-};
-
-
-export type QueryStudyTopicsArgs = {
-  category: Scalars['String']['input'];
 };
 
 
@@ -2106,16 +1612,6 @@ export type QueryTextToSqlArgs = {
 };
 
 
-export type QueryTrackArgs = {
-  slug: Scalars['String']['input'];
-};
-
-
-export type QueryTracksArgs = {
-  limit?: InputMaybe<Scalars['Int']['input']>;
-};
-
-
 export type QueryUserSettingsArgs = {
   userId: Scalars['String']['input'];
 };
@@ -2133,17 +1629,6 @@ export type QuestionAnswerInput = {
   questionText: Scalars['String']['input'];
 };
 
-export type QuizQuestion = {
-  __typename?: 'QuizQuestion';
-  correctIndex: Scalars['Int']['output'];
-  difficulty: Scalars['String']['output'];
-  explanation: Scalars['String']['output'];
-  id: Scalars['String']['output'];
-  options: Array<Scalars['String']['output']>;
-  question: Scalars['String']['output'];
-  topicKey: Scalars['String']['output'];
-};
-
 export type RegisteredPrompt = {
   __typename?: 'RegisteredPrompt';
   content: Maybe<Scalars['JSON']['output']>;
@@ -2156,15 +1641,6 @@ export type RegisteredPrompt = {
   type: Scalars['String']['output'];
   usageCount: Maybe<Scalars['Int']['output']>;
   versions: Array<Scalars['Int']['output']>;
-};
-
-export type ResearchItem = {
-  __typename?: 'ResearchItem';
-  id: Scalars['String']['output'];
-  relevance: Maybe<Scalars['String']['output']>;
-  summary: Scalars['String']['output'];
-  title: Scalars['String']['output'];
-  url: Scalars['URL']['output'];
 };
 
 export type ResendEmailDetail = {
@@ -2216,12 +1692,6 @@ export type ResumeUploadResult = {
   tier: Scalars['String']['output'];
 };
 
-export type RiskFactor = {
-  __typename?: 'RiskFactor';
-  mitigation: Scalars['String']['output'];
-  risk: Scalars['String']['output'];
-};
-
 export type SendEmailInput = {
   from?: InputMaybe<Scalars['String']['input']>;
   html: Scalars['String']['input'];
@@ -2237,30 +1707,6 @@ export type SendEmailResult = {
   error: Maybe<Scalars['String']['output']>;
   id: Maybe<Scalars['String']['output']>;
   success: Scalars['Boolean']['output'];
-};
-
-export type SessionType =
-  | 'flashcard'
-  | 'mock_interview'
-  | 'quiz'
-  | 'study';
-
-export type SkillGap = {
-  __typename?: 'SkillGap';
-  currentLevel: Scalars['String']['output'];
-  frequencyInJobs: Scalars['Int']['output'];
-  priority: Scalars['Int']['output'];
-  resources: Array<SkillGapResource>;
-  skill: Scalars['String']['output'];
-  targetLevel: Scalars['String']['output'];
-};
-
-export type SkillGapResource = {
-  __typename?: 'SkillGapResource';
-  estimatedHours: Scalars['Float']['output'];
-  title: Scalars['String']['output'];
-  type: Scalars['String']['output'];
-  url: Scalars['String']['output'];
 };
 
 export type SkillMatch = {
@@ -2293,35 +1739,6 @@ export type StackMutationResponse = {
   success: Scalars['Boolean']['output'];
 };
 
-export type StudyConceptExplanation = {
-  __typename?: 'StudyConceptExplanation';
-  createdAt: Scalars['DateTime']['output'];
-  explanation: Scalars['String']['output'];
-  id: Scalars['ID']['output'];
-  selectedText: Scalars['String']['output'];
-};
-
-export type StudyPlan = {
-  __typename?: 'StudyPlan';
-  generatedAt: Scalars['String']['output'];
-  recommendations: Array<Scalars['String']['output']>;
-  skillGaps: Array<SkillGap>;
-};
-
-export type StudyTopic = {
-  __typename?: 'StudyTopic';
-  bodyMd: Maybe<Scalars['String']['output']>;
-  category: Scalars['String']['output'];
-  createdAt: Scalars['DateTime']['output'];
-  deepDive: Maybe<Scalars['String']['output']>;
-  difficulty: Scalars['String']['output'];
-  id: Scalars['ID']['output'];
-  summary: Maybe<Scalars['String']['output']>;
-  tags: Array<Scalars['String']['output']>;
-  title: Scalars['String']['output'];
-  topic: Scalars['String']['output'];
-};
-
 export type Task = {
   __typename?: 'Task';
   completedAt: Maybe<Scalars['String']['output']>;
@@ -2351,43 +1768,6 @@ export type TextToSqlResult = {
   explanation: Maybe<Scalars['String']['output']>;
   rows: Array<Maybe<Array<Maybe<Scalars['JSON']['output']>>>>;
   sql: Scalars['String']['output'];
-};
-
-export type TopicMasteryEntry = {
-  __typename?: 'TopicMasteryEntry';
-  confidenceScore: Scalars['Float']['output'];
-  domain: LearningDomain;
-  lastQuizScore: Maybe<Scalars['Float']['output']>;
-  lastStudiedAt: Maybe<Scalars['String']['output']>;
-  masteryLevel: MasteryLevel;
-  nextReviewAt: Maybe<Scalars['String']['output']>;
-  streakDays: Scalars['Int']['output'];
-  topicKey: Scalars['String']['output'];
-  totalSessions: Scalars['Int']['output'];
-};
-
-export type Track = {
-  __typename?: 'Track';
-  description: Maybe<Scalars['String']['output']>;
-  id: Scalars['ID']['output'];
-  items: Array<TrackItem>;
-  level: Maybe<Scalars['String']['output']>;
-  slug: Scalars['String']['output'];
-  title: Scalars['String']['output'];
-};
-
-export type TrackItem = {
-  __typename?: 'TrackItem';
-  children: Array<TrackItem>;
-  contentRef: Maybe<Scalars['String']['output']>;
-  difficulty: Maybe<Scalars['Int']['output']>;
-  id: Scalars['ID']['output'];
-  kind: Scalars['String']['output'];
-  position: Scalars['Int']['output'];
-  prereqs: Array<Scalars['ID']['output']>;
-  promptRef: Maybe<Scalars['String']['output']>;
-  tags: Array<Scalars['String']['output']>;
-  title: Scalars['String']['output'];
 };
 
 export type UnverifyContactsResult = {
@@ -2621,28 +2001,14 @@ export type DirectiveResolverFn<TResult = Record<PropertyKey, never>, TParent = 
 
 /** Mapping between all available schema types and the resolvers types */
 export type ResolversTypes = {
-  AIBackendPrep: ResolverTypeWrapper<Partial<AiBackendPrep>>;
-  AIDeepResearch: ResolverTypeWrapper<Partial<AiDeepResearch>>;
-  AIInterviewPrep: ResolverTypeWrapper<Partial<AiInterviewPrep>>;
-  AIInterviewPrepRequirement: ResolverTypeWrapper<Partial<AiInterviewPrepRequirement>>;
-  AIInterviewQuestion: ResolverTypeWrapper<Partial<AiInterviewQuestion>>;
-  AIInterviewQuestions: ResolverTypeWrapper<Partial<AiInterviewQuestions>>;
-  AIStudyTopicDeepDive: ResolverTypeWrapper<Partial<AiStudyTopicDeepDive>>;
   ATSBoard: ResolverTypeWrapper<Partial<AtsBoard>>;
   ATSBoardType: ResolverTypeWrapper<Partial<AtsBoardType>>;
   ATSBoardUpsertInput: ResolverTypeWrapper<Partial<AtsBoardUpsertInput>>;
   ATSVendor: ResolverTypeWrapper<Partial<AtsVendor>>;
-  AgenticCoding: ResolverTypeWrapper<Partial<AgenticCoding>>;
-  AgenticCodingExercise: ResolverTypeWrapper<Partial<AgenticCodingExercise>>;
-  AgenticCodingFailureMode: ResolverTypeWrapper<Partial<AgenticCodingFailureMode>>;
-  AgenticCodingOutcome: ResolverTypeWrapper<Partial<AgenticCodingOutcome>>;
-  AgenticCodingPromptTemplate: ResolverTypeWrapper<Partial<AgenticCodingPromptTemplate>>;
-  AgenticCodingResource: ResolverTypeWrapper<Partial<AgenticCodingResource>>;
   AnalyzeCompanyResponse: ResolverTypeWrapper<Partial<AnalyzeCompanyResponse>>;
   Application: ResolverTypeWrapper<Partial<Application>>;
   ApplicationInput: ResolverTypeWrapper<Partial<ApplicationInput>>;
   ApplicationStatus: ResolverTypeWrapper<Partial<ApplicationStatus>>;
-  ApplicationStrategy: ResolverTypeWrapper<Partial<ApplicationStrategy>>;
   ApplyEmailPatternResult: ResolverTypeWrapper<Partial<ApplyEmailPatternResult>>;
   AshbyAddress: ResolverTypeWrapper<Partial<AshbyAddress>>;
   AshbyCompensation: ResolverTypeWrapper<Partial<AshbyCompensation>>;
@@ -2651,9 +2017,6 @@ export type ResolversTypes = {
   AshbyEnrichment: ResolverTypeWrapper<Partial<AshbyEnrichment>>;
   AshbyPostalAddress: ResolverTypeWrapper<Partial<AshbyPostalAddress>>;
   AshbySecondaryLocation: ResolverTypeWrapper<Partial<AshbySecondaryLocation>>;
-  BackendPrepCodeExample: ResolverTypeWrapper<Partial<BackendPrepCodeExample>>;
-  BackendPrepInterviewQuestion: ResolverTypeWrapper<Partial<BackendPrepInterviewQuestion>>;
-  BackendPrepSection: ResolverTypeWrapper<Partial<BackendPrepSection>>;
   BlockedCompany: ResolverTypeWrapper<Partial<BlockedCompany>>;
   Boolean: ResolverTypeWrapper<Partial<Scalars['Boolean']['output']>>;
   ChatMessage: ResolverTypeWrapper<Partial<ChatMessage>>;
@@ -2671,7 +2034,6 @@ export type ResolversTypes = {
   ContactEmail: ResolverTypeWrapper<Partial<ContactEmail>>;
   ContactInput: ResolverTypeWrapper<Partial<ContactInput>>;
   ContactsResult: ResolverTypeWrapper<Partial<ContactsResult>>;
-  CoverLetterAngle: ResolverTypeWrapper<Partial<CoverLetterAngle>>;
   CreateCampaignInput: ResolverTypeWrapper<Partial<CreateCampaignInput>>;
   CreateCompanyInput: ResolverTypeWrapper<Partial<CreateCompanyInput>>;
   CreateContactInput: ResolverTypeWrapper<Partial<CreateContactInput>>;
@@ -2680,10 +2042,7 @@ export type ResolversTypes = {
   CreateOpportunityInput: ResolverTypeWrapper<Partial<CreateOpportunityInput>>;
   CreatePromptInput: ResolverTypeWrapper<Partial<CreatePromptInput>>;
   CreateTaskInput: ResolverTypeWrapper<Partial<CreateTaskInput>>;
-  CreateTrackInput: ResolverTypeWrapper<Partial<CreateTrackInput>>;
   DateTime: ResolverTypeWrapper<Partial<Scalars['DateTime']['output']>>;
-  DeepResearchModelResponse: ResolverTypeWrapper<Partial<DeepResearchModelResponse>>;
-  DeepResearchQuestion: ResolverTypeWrapper<Partial<DeepResearchQuestion>>;
   DeleteApplicationResponse: ResolverTypeWrapper<Partial<DeleteApplicationResponse>>;
   DeleteBlockedCompanyResult: ResolverTypeWrapper<Partial<DeleteBlockedCompanyResult>>;
   DeleteCampaignResult: ResolverTypeWrapper<Partial<DeleteCampaignResult>>;
@@ -2708,7 +2067,6 @@ export type ResolversTypes = {
   Float: ResolverTypeWrapper<Partial<Scalars['Float']['output']>>;
   GenerateEmailInput: ResolverTypeWrapper<Partial<GenerateEmailInput>>;
   GenerateEmailResult: ResolverTypeWrapper<Partial<GenerateEmailResult>>;
-  GeneratedQuiz: ResolverTypeWrapper<Partial<GeneratedQuiz>>;
   GreenhouseCompliance: ResolverTypeWrapper<Partial<GreenhouseCompliance>>;
   GreenhouseDataCompliance: ResolverTypeWrapper<Partial<GreenhouseDataCompliance>>;
   GreenhouseDemographicQuestions: ResolverTypeWrapper<Partial<GreenhouseDemographicQuestions>>;
@@ -2720,28 +2078,16 @@ export type ResolversTypes = {
   ID: ResolverTypeWrapper<Partial<Scalars['ID']['output']>>;
   ImportContactsResult: ResolverTypeWrapper<Partial<ImportContactsResult>>;
   Int: ResolverTypeWrapper<Partial<Scalars['Int']['output']>>;
-  InterviewTopic: ResolverTypeWrapper<Partial<InterviewTopic>>;
   JSON: ResolverTypeWrapper<Partial<Scalars['JSON']['output']>>;
   Job: ResolverTypeWrapper<Partial<Job>>;
-  JobEnrichment: ResolverTypeWrapper<Partial<JobEnrichment>>;
   JobSkill: ResolverTypeWrapper<Partial<JobSkill>>;
   JobStatus: ResolverTypeWrapper<Partial<JobStatus>>;
   JobsResponse: ResolverTypeWrapper<Partial<JobsResponse>>;
   LangSmithPrompt: ResolverTypeWrapper<Partial<LangSmithPrompt>>;
   LangSmithPromptCommit: ResolverTypeWrapper<Partial<LangSmithPromptCommit>>;
-  LearningDomain: ResolverTypeWrapper<Partial<LearningDomain>>;
-  LearningOverview: ResolverTypeWrapper<Partial<LearningOverview>>;
-  LearningSessionEntry: ResolverTypeWrapper<Partial<LearningSessionEntry>>;
-  LearningSessionInput: ResolverTypeWrapper<Partial<LearningSessionInput>>;
-  LearningTeamStatus: ResolverTypeWrapper<Partial<LearningTeamStatus>>;
-  MasteryLevel: ResolverTypeWrapper<Partial<MasteryLevel>>;
   Mutation: ResolverTypeWrapper<Record<PropertyKey, never>>;
-  NetworkingSuggestion: ResolverTypeWrapper<Partial<NetworkingSuggestion>>;
   OpportunitiesResult: ResolverTypeWrapper<Partial<OpportunitiesResult>>;
   Opportunity: ResolverTypeWrapper<Partial<Opportunity>>;
-  PrepCategory: ResolverTypeWrapper<Partial<PrepCategory>>;
-  PrepContent: ResolverTypeWrapper<Partial<PrepContent>>;
-  PrepResource: ResolverTypeWrapper<Partial<PrepResource>>;
   ProcessAllJobsResponse: ResolverTypeWrapper<Partial<ProcessAllJobsResponse>>;
   Prompt: ResolverTypeWrapper<Partial<Prompt>>;
   PromptConfig: ResolverTypeWrapper<Partial<PromptConfig>>;
@@ -2752,34 +2098,22 @@ export type ResolversTypes = {
   Query: ResolverTypeWrapper<Record<PropertyKey, never>>;
   QuestionAnswer: ResolverTypeWrapper<Partial<QuestionAnswer>>;
   QuestionAnswerInput: ResolverTypeWrapper<Partial<QuestionAnswerInput>>;
-  QuizQuestion: ResolverTypeWrapper<Partial<QuizQuestion>>;
   RegisteredPrompt: ResolverTypeWrapper<Partial<RegisteredPrompt>>;
-  ResearchItem: ResolverTypeWrapper<Partial<ResearchItem>>;
   ResendEmailDetail: ResolverTypeWrapper<Partial<ResendEmailDetail>>;
   ResumeAnswer: ResolverTypeWrapper<Partial<ResumeAnswer>>;
   ResumeIngestResult: ResolverTypeWrapper<Partial<ResumeIngestResult>>;
   ResumeStatus: ResolverTypeWrapper<Partial<ResumeStatus>>;
   ResumeUploadResult: ResolverTypeWrapper<Partial<ResumeUploadResult>>;
-  RiskFactor: ResolverTypeWrapper<Partial<RiskFactor>>;
   SendEmailInput: ResolverTypeWrapper<Partial<SendEmailInput>>;
   SendEmailResult: ResolverTypeWrapper<Partial<SendEmailResult>>;
-  SessionType: ResolverTypeWrapper<Partial<SessionType>>;
-  SkillGap: ResolverTypeWrapper<Partial<SkillGap>>;
-  SkillGapResource: ResolverTypeWrapper<Partial<SkillGapResource>>;
   SkillMatch: ResolverTypeWrapper<Partial<SkillMatch>>;
   SkillMatchDetail: ResolverTypeWrapper<Partial<SkillMatchDetail>>;
   SourceType: ResolverTypeWrapper<Partial<SourceType>>;
   StackMutationResponse: ResolverTypeWrapper<Partial<StackMutationResponse>>;
   String: ResolverTypeWrapper<Partial<Scalars['String']['output']>>;
-  StudyConceptExplanation: ResolverTypeWrapper<Partial<StudyConceptExplanation>>;
-  StudyPlan: ResolverTypeWrapper<Partial<StudyPlan>>;
-  StudyTopic: ResolverTypeWrapper<Partial<StudyTopic>>;
   Task: ResolverTypeWrapper<Partial<Task>>;
   TasksResult: ResolverTypeWrapper<Partial<TasksResult>>;
   TextToSqlResult: ResolverTypeWrapper<Partial<TextToSqlResult>>;
-  TopicMasteryEntry: ResolverTypeWrapper<Partial<TopicMasteryEntry>>;
-  Track: ResolverTypeWrapper<Partial<Track>>;
-  TrackItem: ResolverTypeWrapper<Partial<TrackItem>>;
   URL: ResolverTypeWrapper<Partial<Scalars['URL']['output']>>;
   UnverifyContactsResult: ResolverTypeWrapper<Partial<UnverifyContactsResult>>;
   UpdateApplicationInput: ResolverTypeWrapper<Partial<UpdateApplicationInput>>;
@@ -2799,25 +2133,11 @@ export type ResolversTypes = {
 
 /** Mapping between all available schema types and the resolvers parents */
 export type ResolversParentTypes = {
-  AIBackendPrep: Partial<AiBackendPrep>;
-  AIDeepResearch: Partial<AiDeepResearch>;
-  AIInterviewPrep: Partial<AiInterviewPrep>;
-  AIInterviewPrepRequirement: Partial<AiInterviewPrepRequirement>;
-  AIInterviewQuestion: Partial<AiInterviewQuestion>;
-  AIInterviewQuestions: Partial<AiInterviewQuestions>;
-  AIStudyTopicDeepDive: Partial<AiStudyTopicDeepDive>;
   ATSBoard: Partial<AtsBoard>;
   ATSBoardUpsertInput: Partial<AtsBoardUpsertInput>;
-  AgenticCoding: Partial<AgenticCoding>;
-  AgenticCodingExercise: Partial<AgenticCodingExercise>;
-  AgenticCodingFailureMode: Partial<AgenticCodingFailureMode>;
-  AgenticCodingOutcome: Partial<AgenticCodingOutcome>;
-  AgenticCodingPromptTemplate: Partial<AgenticCodingPromptTemplate>;
-  AgenticCodingResource: Partial<AgenticCodingResource>;
   AnalyzeCompanyResponse: Partial<AnalyzeCompanyResponse>;
   Application: Partial<Application>;
   ApplicationInput: Partial<ApplicationInput>;
-  ApplicationStrategy: Partial<ApplicationStrategy>;
   ApplyEmailPatternResult: Partial<ApplyEmailPatternResult>;
   AshbyAddress: Partial<AshbyAddress>;
   AshbyCompensation: Partial<AshbyCompensation>;
@@ -2826,9 +2146,6 @@ export type ResolversParentTypes = {
   AshbyEnrichment: Partial<AshbyEnrichment>;
   AshbyPostalAddress: Partial<AshbyPostalAddress>;
   AshbySecondaryLocation: Partial<AshbySecondaryLocation>;
-  BackendPrepCodeExample: Partial<BackendPrepCodeExample>;
-  BackendPrepInterviewQuestion: Partial<BackendPrepInterviewQuestion>;
-  BackendPrepSection: Partial<BackendPrepSection>;
   BlockedCompany: Partial<BlockedCompany>;
   Boolean: Partial<Scalars['Boolean']['output']>;
   ChatMessage: Partial<ChatMessage>;
@@ -2843,7 +2160,6 @@ export type ResolversParentTypes = {
   ContactEmail: Partial<ContactEmail>;
   ContactInput: Partial<ContactInput>;
   ContactsResult: Partial<ContactsResult>;
-  CoverLetterAngle: Partial<CoverLetterAngle>;
   CreateCampaignInput: Partial<CreateCampaignInput>;
   CreateCompanyInput: Partial<CreateCompanyInput>;
   CreateContactInput: Partial<CreateContactInput>;
@@ -2852,10 +2168,7 @@ export type ResolversParentTypes = {
   CreateOpportunityInput: Partial<CreateOpportunityInput>;
   CreatePromptInput: Partial<CreatePromptInput>;
   CreateTaskInput: Partial<CreateTaskInput>;
-  CreateTrackInput: Partial<CreateTrackInput>;
   DateTime: Partial<Scalars['DateTime']['output']>;
-  DeepResearchModelResponse: Partial<DeepResearchModelResponse>;
-  DeepResearchQuestion: Partial<DeepResearchQuestion>;
   DeleteApplicationResponse: Partial<DeleteApplicationResponse>;
   DeleteBlockedCompanyResult: Partial<DeleteBlockedCompanyResult>;
   DeleteCampaignResult: Partial<DeleteCampaignResult>;
@@ -2879,7 +2192,6 @@ export type ResolversParentTypes = {
   Float: Partial<Scalars['Float']['output']>;
   GenerateEmailInput: Partial<GenerateEmailInput>;
   GenerateEmailResult: Partial<GenerateEmailResult>;
-  GeneratedQuiz: Partial<GeneratedQuiz>;
   GreenhouseCompliance: Partial<GreenhouseCompliance>;
   GreenhouseDataCompliance: Partial<GreenhouseDataCompliance>;
   GreenhouseDemographicQuestions: Partial<GreenhouseDemographicQuestions>;
@@ -2891,25 +2203,15 @@ export type ResolversParentTypes = {
   ID: Partial<Scalars['ID']['output']>;
   ImportContactsResult: Partial<ImportContactsResult>;
   Int: Partial<Scalars['Int']['output']>;
-  InterviewTopic: Partial<InterviewTopic>;
   JSON: Partial<Scalars['JSON']['output']>;
   Job: Partial<Job>;
-  JobEnrichment: Partial<JobEnrichment>;
   JobSkill: Partial<JobSkill>;
   JobsResponse: Partial<JobsResponse>;
   LangSmithPrompt: Partial<LangSmithPrompt>;
   LangSmithPromptCommit: Partial<LangSmithPromptCommit>;
-  LearningOverview: Partial<LearningOverview>;
-  LearningSessionEntry: Partial<LearningSessionEntry>;
-  LearningSessionInput: Partial<LearningSessionInput>;
-  LearningTeamStatus: Partial<LearningTeamStatus>;
   Mutation: Record<PropertyKey, never>;
-  NetworkingSuggestion: Partial<NetworkingSuggestion>;
   OpportunitiesResult: Partial<OpportunitiesResult>;
   Opportunity: Partial<Opportunity>;
-  PrepCategory: Partial<PrepCategory>;
-  PrepContent: Partial<PrepContent>;
-  PrepResource: Partial<PrepResource>;
   ProcessAllJobsResponse: Partial<ProcessAllJobsResponse>;
   Prompt: Partial<Prompt>;
   PromptConfig: Partial<PromptConfig>;
@@ -2919,32 +2221,21 @@ export type ResolversParentTypes = {
   Query: Record<PropertyKey, never>;
   QuestionAnswer: Partial<QuestionAnswer>;
   QuestionAnswerInput: Partial<QuestionAnswerInput>;
-  QuizQuestion: Partial<QuizQuestion>;
   RegisteredPrompt: Partial<RegisteredPrompt>;
-  ResearchItem: Partial<ResearchItem>;
   ResendEmailDetail: Partial<ResendEmailDetail>;
   ResumeAnswer: Partial<ResumeAnswer>;
   ResumeIngestResult: Partial<ResumeIngestResult>;
   ResumeStatus: Partial<ResumeStatus>;
   ResumeUploadResult: Partial<ResumeUploadResult>;
-  RiskFactor: Partial<RiskFactor>;
   SendEmailInput: Partial<SendEmailInput>;
   SendEmailResult: Partial<SendEmailResult>;
-  SkillGap: Partial<SkillGap>;
-  SkillGapResource: Partial<SkillGapResource>;
   SkillMatch: Partial<SkillMatch>;
   SkillMatchDetail: Partial<SkillMatchDetail>;
   StackMutationResponse: Partial<StackMutationResponse>;
   String: Partial<Scalars['String']['output']>;
-  StudyConceptExplanation: Partial<StudyConceptExplanation>;
-  StudyPlan: Partial<StudyPlan>;
-  StudyTopic: Partial<StudyTopic>;
   Task: Partial<Task>;
   TasksResult: Partial<TasksResult>;
   TextToSqlResult: Partial<TextToSqlResult>;
-  TopicMasteryEntry: Partial<TopicMasteryEntry>;
-  Track: Partial<Track>;
-  TrackItem: Partial<TrackItem>;
   URL: Partial<Scalars['URL']['output']>;
   UnverifyContactsResult: Partial<UnverifyContactsResult>;
   UpdateApplicationInput: Partial<UpdateApplicationInput>;
@@ -2962,69 +2253,6 @@ export type ResolversParentTypes = {
   WarcPointerInput: Partial<WarcPointerInput>;
 };
 
-export type AiBackendPrepResolvers<ContextType = GraphQLContext, ParentType extends ResolversParentTypes['AIBackendPrep'] = ResolversParentTypes['AIBackendPrep']> = {
-  aiMlIntegration?: Resolver<Maybe<ResolversTypes['BackendPrepSection']>, ParentType, ContextType>;
-  apiDesign?: Resolver<Maybe<ResolversTypes['BackendPrepSection']>, ParentType, ContextType>;
-  authSecurity?: Resolver<Maybe<ResolversTypes['BackendPrepSection']>, ParentType, ContextType>;
-  caching?: Resolver<Maybe<ResolversTypes['BackendPrepSection']>, ParentType, ContextType>;
-  concurrencyAsync?: Resolver<Maybe<ResolversTypes['BackendPrepSection']>, ParentType, ContextType>;
-  databaseDesign?: Resolver<Maybe<ResolversTypes['BackendPrepSection']>, ParentType, ContextType>;
-  devops?: Resolver<Maybe<ResolversTypes['BackendPrepSection']>, ParentType, ContextType>;
-  distributedSystems?: Resolver<Maybe<ResolversTypes['BackendPrepSection']>, ParentType, ContextType>;
-  eventDriven?: Resolver<Maybe<ResolversTypes['BackendPrepSection']>, ParentType, ContextType>;
-  generatedAt?: Resolver<ResolversTypes['String'], ParentType, ContextType>;
-  messageQueues?: Resolver<Maybe<ResolversTypes['BackendPrepSection']>, ParentType, ContextType>;
-  microservices?: Resolver<Maybe<ResolversTypes['BackendPrepSection']>, ParentType, ContextType>;
-  nosqlPatterns?: Resolver<Maybe<ResolversTypes['BackendPrepSection']>, ParentType, ContextType>;
-  observability?: Resolver<Maybe<ResolversTypes['BackendPrepSection']>, ParentType, ContextType>;
-  performance?: Resolver<Maybe<ResolversTypes['BackendPrepSection']>, ParentType, ContextType>;
-  securityOwasp?: Resolver<Maybe<ResolversTypes['BackendPrepSection']>, ParentType, ContextType>;
-  serverlessEdge?: Resolver<Maybe<ResolversTypes['BackendPrepSection']>, ParentType, ContextType>;
-  sqlOptimization?: Resolver<Maybe<ResolversTypes['BackendPrepSection']>, ParentType, ContextType>;
-  systemDesign?: Resolver<Maybe<ResolversTypes['BackendPrepSection']>, ParentType, ContextType>;
-  testing?: Resolver<Maybe<ResolversTypes['BackendPrepSection']>, ParentType, ContextType>;
-  typescriptNode?: Resolver<Maybe<ResolversTypes['BackendPrepSection']>, ParentType, ContextType>;
-};
-
-export type AiDeepResearchResolvers<ContextType = GraphQLContext, ParentType extends ResolversParentTypes['AIDeepResearch'] = ResolversParentTypes['AIDeepResearch']> = {
-  generatedAt?: Resolver<ResolversTypes['String'], ParentType, ContextType>;
-  questions?: Resolver<Array<ResolversTypes['DeepResearchQuestion']>, ParentType, ContextType>;
-};
-
-export type AiInterviewPrepResolvers<ContextType = GraphQLContext, ParentType extends ResolversParentTypes['AIInterviewPrep'] = ResolversParentTypes['AIInterviewPrep']> = {
-  generatedAt?: Resolver<ResolversTypes['String'], ParentType, ContextType>;
-  requirements?: Resolver<Array<ResolversTypes['AIInterviewPrepRequirement']>, ParentType, ContextType>;
-  summary?: Resolver<ResolversTypes['String'], ParentType, ContextType>;
-};
-
-export type AiInterviewPrepRequirementResolvers<ContextType = GraphQLContext, ParentType extends ResolversParentTypes['AIInterviewPrepRequirement'] = ResolversParentTypes['AIInterviewPrepRequirement']> = {
-  deepDive?: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType>;
-  questions?: Resolver<Array<ResolversTypes['String']>, ParentType, ContextType>;
-  requirement?: Resolver<ResolversTypes['String'], ParentType, ContextType>;
-  sourceQuote?: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType>;
-  studyTopicDeepDives?: Resolver<Array<ResolversTypes['AIStudyTopicDeepDive']>, ParentType, ContextType>;
-  studyTopics?: Resolver<Array<ResolversTypes['String']>, ParentType, ContextType>;
-};
-
-export type AiInterviewQuestionResolvers<ContextType = GraphQLContext, ParentType extends ResolversParentTypes['AIInterviewQuestion'] = ResolversParentTypes['AIInterviewQuestion']> = {
-  category?: Resolver<ResolversTypes['String'], ParentType, ContextType>;
-  question?: Resolver<ResolversTypes['String'], ParentType, ContextType>;
-  reason?: Resolver<ResolversTypes['String'], ParentType, ContextType>;
-};
-
-export type AiInterviewQuestionsResolvers<ContextType = GraphQLContext, ParentType extends ResolversParentTypes['AIInterviewQuestions'] = ResolversParentTypes['AIInterviewQuestions']> = {
-  companyContext?: Resolver<ResolversTypes['String'], ParentType, ContextType>;
-  recruiterGeneratedAt?: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType>;
-  recruiterQuestions?: Resolver<Array<ResolversTypes['AIInterviewQuestion']>, ParentType, ContextType>;
-  technicalGeneratedAt?: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType>;
-  technicalQuestions?: Resolver<Array<ResolversTypes['AIInterviewQuestion']>, ParentType, ContextType>;
-};
-
-export type AiStudyTopicDeepDiveResolvers<ContextType = GraphQLContext, ParentType extends ResolversParentTypes['AIStudyTopicDeepDive'] = ResolversParentTypes['AIStudyTopicDeepDive']> = {
-  deepDive?: Resolver<ResolversTypes['String'], ParentType, ContextType>;
-  topic?: Resolver<ResolversTypes['String'], ParentType, ContextType>;
-};
-
 export type AtsBoardResolvers<ContextType = GraphQLContext, ParentType extends ResolversParentTypes['ATSBoard'] = ResolversParentTypes['ATSBoard']> = {
   board_type?: Resolver<ResolversTypes['ATSBoardType'], ParentType, ContextType>;
   company_id?: Resolver<ResolversTypes['Int'], ParentType, ContextType>;
@@ -3040,54 +2268,6 @@ export type AtsBoardResolvers<ContextType = GraphQLContext, ParentType extends R
   vendor?: Resolver<ResolversTypes['ATSVendor'], ParentType, ContextType>;
 };
 
-export type AgenticCodingResolvers<ContextType = GraphQLContext, ParentType extends ResolversParentTypes['AgenticCoding'] = ResolversParentTypes['AgenticCoding']> = {
-  exercises?: Resolver<Array<ResolversTypes['AgenticCodingExercise']>, ParentType, ContextType>;
-  failureModes?: Resolver<Maybe<Array<ResolversTypes['AgenticCodingFailureMode']>>, ParentType, ContextType>;
-  generatedAt?: Resolver<ResolversTypes['String'], ParentType, ContextType>;
-  measurableOutcomes?: Resolver<Maybe<Array<ResolversTypes['AgenticCodingOutcome']>>, ParentType, ContextType>;
-  overview?: Resolver<ResolversTypes['String'], ParentType, ContextType>;
-  promptTemplates?: Resolver<Maybe<Array<ResolversTypes['AgenticCodingPromptTemplate']>>, ParentType, ContextType>;
-  qaApproach?: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType>;
-  resources?: Resolver<Array<ResolversTypes['AgenticCodingResource']>, ParentType, ContextType>;
-  teamPractices?: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType>;
-  workflowPattern?: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType>;
-};
-
-export type AgenticCodingExerciseResolvers<ContextType = GraphQLContext, ParentType extends ResolversParentTypes['AgenticCodingExercise'] = ResolversParentTypes['AgenticCodingExercise']> = {
-  agentPrompt?: Resolver<ResolversTypes['String'], ParentType, ContextType>;
-  description?: Resolver<ResolversTypes['String'], ParentType, ContextType>;
-  difficulty?: Resolver<ResolversTypes['String'], ParentType, ContextType>;
-  hints?: Resolver<Array<ResolversTypes['String']>, ParentType, ContextType>;
-  skills?: Resolver<Array<ResolversTypes['String']>, ParentType, ContextType>;
-  title?: Resolver<ResolversTypes['String'], ParentType, ContextType>;
-};
-
-export type AgenticCodingFailureModeResolvers<ContextType = GraphQLContext, ParentType extends ResolversParentTypes['AgenticCodingFailureMode'] = ResolversParentTypes['AgenticCodingFailureMode']> = {
-  alternative?: Resolver<ResolversTypes['String'], ParentType, ContextType>;
-  scenario?: Resolver<ResolversTypes['String'], ParentType, ContextType>;
-  why?: Resolver<ResolversTypes['String'], ParentType, ContextType>;
-};
-
-export type AgenticCodingOutcomeResolvers<ContextType = GraphQLContext, ParentType extends ResolversParentTypes['AgenticCodingOutcome'] = ResolversParentTypes['AgenticCodingOutcome']> = {
-  afterTime?: Resolver<ResolversTypes['String'], ParentType, ContextType>;
-  beforeTime?: Resolver<ResolversTypes['String'], ParentType, ContextType>;
-  improvement?: Resolver<ResolversTypes['String'], ParentType, ContextType>;
-  task?: Resolver<ResolversTypes['String'], ParentType, ContextType>;
-};
-
-export type AgenticCodingPromptTemplateResolvers<ContextType = GraphQLContext, ParentType extends ResolversParentTypes['AgenticCodingPromptTemplate'] = ResolversParentTypes['AgenticCodingPromptTemplate']> = {
-  prompt?: Resolver<ResolversTypes['String'], ParentType, ContextType>;
-  purpose?: Resolver<ResolversTypes['String'], ParentType, ContextType>;
-  stackContext?: Resolver<ResolversTypes['String'], ParentType, ContextType>;
-  title?: Resolver<ResolversTypes['String'], ParentType, ContextType>;
-};
-
-export type AgenticCodingResourceResolvers<ContextType = GraphQLContext, ParentType extends ResolversParentTypes['AgenticCodingResource'] = ResolversParentTypes['AgenticCodingResource']> = {
-  description?: Resolver<ResolversTypes['String'], ParentType, ContextType>;
-  title?: Resolver<ResolversTypes['String'], ParentType, ContextType>;
-  url?: Resolver<ResolversTypes['String'], ParentType, ContextType>;
-};
-
 export type AnalyzeCompanyResponseResolvers<ContextType = GraphQLContext, ParentType extends ResolversParentTypes['AnalyzeCompanyResponse'] = ResolversParentTypes['AnalyzeCompanyResponse']> = {
   companyId?: Resolver<Maybe<ResolversTypes['Int']>, ParentType, ContextType>;
   companyKey?: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType>;
@@ -3096,38 +2276,18 @@ export type AnalyzeCompanyResponseResolvers<ContextType = GraphQLContext, Parent
 };
 
 export type ApplicationResolvers<ContextType = GraphQLContext, ParentType extends ResolversParentTypes['Application'] = ResolversParentTypes['Application']> = {
-  agenticCoding?: Resolver<Maybe<ResolversTypes['AgenticCoding']>, ParentType, ContextType>;
-  aiBackendPrep?: Resolver<Maybe<ResolversTypes['AIBackendPrep']>, ParentType, ContextType>;
-  aiDeepResearch?: Resolver<Maybe<ResolversTypes['AIDeepResearch']>, ParentType, ContextType>;
-  aiInterviewPrep?: Resolver<Maybe<ResolversTypes['AIInterviewPrep']>, ParentType, ContextType>;
-  aiInterviewQuestions?: Resolver<Maybe<ResolversTypes['AIInterviewQuestions']>, ParentType, ContextType>;
-  applicationStrategy?: Resolver<Maybe<ResolversTypes['ApplicationStrategy']>, ParentType, ContextType>;
   companyKey?: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType>;
   companyName?: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType>;
   createdAt?: Resolver<ResolversTypes['String'], ParentType, ContextType>;
   email?: Resolver<ResolversTypes['EmailAddress'], ParentType, ContextType>;
   id?: Resolver<ResolversTypes['Int'], ParentType, ContextType>;
-  interviewPrep?: Resolver<Array<ResolversTypes['Track']>, ParentType, ContextType>;
   jobDescription?: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType>;
   jobId?: Resolver<ResolversTypes['String'], ParentType, ContextType>;
   jobTitle?: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType>;
-  learningOverview?: Resolver<Maybe<ResolversTypes['LearningOverview']>, ParentType, ContextType>;
   notes?: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType>;
   questions?: Resolver<Array<ResolversTypes['QuestionAnswer']>, ParentType, ContextType>;
-  recentSessions?: Resolver<Array<ResolversTypes['LearningSessionEntry']>, ParentType, ContextType>;
   resume?: Resolver<Maybe<ResolversTypes['Upload']>, ParentType, ContextType>;
   status?: Resolver<ResolversTypes['ApplicationStatus'], ParentType, ContextType>;
-  topicMasteryList?: Resolver<Array<ResolversTypes['TopicMasteryEntry']>, ParentType, ContextType>;
-};
-
-export type ApplicationStrategyResolvers<ContextType = GraphQLContext, ParentType extends ResolversParentTypes['ApplicationStrategy'] = ResolversParentTypes['ApplicationStrategy']> = {
-  coverLetterAngles?: Resolver<Array<ResolversTypes['CoverLetterAngle']>, ParentType, ContextType>;
-  generatedAt?: Resolver<ResolversTypes['String'], ParentType, ContextType>;
-  interviewTopics?: Resolver<Array<ResolversTypes['InterviewTopic']>, ParentType, ContextType>;
-  keyDifferentiators?: Resolver<Array<ResolversTypes['String']>, ParentType, ContextType>;
-  networkingSuggestions?: Resolver<Array<ResolversTypes['NetworkingSuggestion']>, ParentType, ContextType>;
-  recommendedApproach?: Resolver<ResolversTypes['String'], ParentType, ContextType>;
-  riskFactors?: Resolver<Array<ResolversTypes['RiskFactor']>, ParentType, ContextType>;
 };
 
 export type ApplyEmailPatternResultResolvers<ContextType = GraphQLContext, ParentType extends ResolversParentTypes['ApplyEmailPatternResult'] = ResolversParentTypes['ApplyEmailPatternResult']> = {
@@ -3184,32 +2344,6 @@ export type AshbyPostalAddressResolvers<ContextType = GraphQLContext, ParentType
 export type AshbySecondaryLocationResolvers<ContextType = GraphQLContext, ParentType extends ResolversParentTypes['AshbySecondaryLocation'] = ResolversParentTypes['AshbySecondaryLocation']> = {
   address?: Resolver<Maybe<ResolversTypes['AshbyPostalAddress']>, ParentType, ContextType>;
   location?: Resolver<ResolversTypes['String'], ParentType, ContextType>;
-};
-
-export type BackendPrepCodeExampleResolvers<ContextType = GraphQLContext, ParentType extends ResolversParentTypes['BackendPrepCodeExample'] = ResolversParentTypes['BackendPrepCodeExample']> = {
-  code?: Resolver<ResolversTypes['String'], ParentType, ContextType>;
-  explanation?: Resolver<ResolversTypes['String'], ParentType, ContextType>;
-  language?: Resolver<ResolversTypes['String'], ParentType, ContextType>;
-  title?: Resolver<ResolversTypes['String'], ParentType, ContextType>;
-};
-
-export type BackendPrepInterviewQuestionResolvers<ContextType = GraphQLContext, ParentType extends ResolversParentTypes['BackendPrepInterviewQuestion'] = ResolversParentTypes['BackendPrepInterviewQuestion']> = {
-  difficulty?: Resolver<ResolversTypes['String'], ParentType, ContextType>;
-  followUps?: Resolver<Array<ResolversTypes['String']>, ParentType, ContextType>;
-  idealAnswer?: Resolver<ResolversTypes['String'], ParentType, ContextType>;
-  question?: Resolver<ResolversTypes['String'], ParentType, ContextType>;
-};
-
-export type BackendPrepSectionResolvers<ContextType = GraphQLContext, ParentType extends ResolversParentTypes['BackendPrepSection'] = ResolversParentTypes['BackendPrepSection']> = {
-  codeExamples?: Resolver<Array<ResolversTypes['BackendPrepCodeExample']>, ParentType, ContextType>;
-  commonPitfalls?: Resolver<Array<ResolversTypes['String']>, ParentType, ContextType>;
-  deepDive?: Resolver<ResolversTypes['String'], ParentType, ContextType>;
-  interviewQuestions?: Resolver<Array<ResolversTypes['BackendPrepInterviewQuestion']>, ParentType, ContextType>;
-  keyConcepts?: Resolver<Array<ResolversTypes['String']>, ParentType, ContextType>;
-  overview?: Resolver<ResolversTypes['String'], ParentType, ContextType>;
-  researchInsights?: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType>;
-  talkingPoints?: Resolver<Array<ResolversTypes['String']>, ParentType, ContextType>;
-  title?: Resolver<ResolversTypes['String'], ParentType, ContextType>;
 };
 
 export type BlockedCompanyResolvers<ContextType = GraphQLContext, ParentType extends ResolversParentTypes['BlockedCompany'] = ResolversParentTypes['BlockedCompany']> = {
@@ -3347,28 +2481,9 @@ export type ContactsResultResolvers<ContextType = GraphQLContext, ParentType ext
   totalCount?: Resolver<ResolversTypes['Int'], ParentType, ContextType>;
 };
 
-export type CoverLetterAngleResolvers<ContextType = GraphQLContext, ParentType extends ResolversParentTypes['CoverLetterAngle'] = ResolversParentTypes['CoverLetterAngle']> = {
-  angle?: Resolver<ResolversTypes['String'], ParentType, ContextType>;
-  exampleOpener?: Resolver<ResolversTypes['String'], ParentType, ContextType>;
-  reasoning?: Resolver<ResolversTypes['String'], ParentType, ContextType>;
-};
-
 export interface DateTimeScalarConfig extends GraphQLScalarTypeConfig<ResolversTypes['DateTime'], any> {
   name: 'DateTime';
 }
-
-export type DeepResearchModelResponseResolvers<ContextType = GraphQLContext, ParentType extends ResolversParentTypes['DeepResearchModelResponse'] = ResolversParentTypes['DeepResearchModelResponse']> = {
-  content?: Resolver<ResolversTypes['String'], ParentType, ContextType>;
-  model?: Resolver<ResolversTypes['String'], ParentType, ContextType>;
-  reasoning?: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType>;
-};
-
-export type DeepResearchQuestionResolvers<ContextType = GraphQLContext, ParentType extends ResolversParentTypes['DeepResearchQuestion'] = ResolversParentTypes['DeepResearchQuestion']> = {
-  category?: Resolver<ResolversTypes['String'], ParentType, ContextType>;
-  deepseek?: Resolver<ResolversTypes['DeepResearchModelResponse'], ParentType, ContextType>;
-  question?: Resolver<ResolversTypes['String'], ParentType, ContextType>;
-  qwen?: Resolver<ResolversTypes['DeepResearchModelResponse'], ParentType, ContextType>;
-};
 
 export type DeleteApplicationResponseResolvers<ContextType = GraphQLContext, ParentType extends ResolversParentTypes['DeleteApplicationResponse'] = ResolversParentTypes['DeleteApplicationResponse']> = {
   message?: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType>;
@@ -3515,13 +2630,6 @@ export type GenerateEmailResultResolvers<ContextType = GraphQLContext, ParentTyp
   text?: Resolver<ResolversTypes['String'], ParentType, ContextType>;
 };
 
-export type GeneratedQuizResolvers<ContextType = GraphQLContext, ParentType extends ResolversParentTypes['GeneratedQuiz'] = ResolversParentTypes['GeneratedQuiz']> = {
-  domain?: Resolver<ResolversTypes['LearningDomain'], ParentType, ContextType>;
-  generatedAt?: Resolver<ResolversTypes['String'], ParentType, ContextType>;
-  questions?: Resolver<Array<ResolversTypes['QuizQuestion']>, ParentType, ContextType>;
-  topicKey?: Resolver<ResolversTypes['String'], ParentType, ContextType>;
-};
-
 export type GreenhouseComplianceResolvers<ContextType = GraphQLContext, ParentType extends ResolversParentTypes['GreenhouseCompliance'] = ResolversParentTypes['GreenhouseCompliance']> = {
   description?: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType>;
   questions?: Resolver<Maybe<Array<ResolversTypes['GreenhouseQuestion']>>, ParentType, ContextType>;
@@ -3584,12 +2692,6 @@ export type ImportContactsResultResolvers<ContextType = GraphQLContext, ParentTy
   success?: Resolver<ResolversTypes['Boolean'], ParentType, ContextType>;
 };
 
-export type InterviewTopicResolvers<ContextType = GraphQLContext, ParentType extends ResolversParentTypes['InterviewTopic'] = ResolversParentTypes['InterviewTopic']> = {
-  importance?: Resolver<ResolversTypes['String'], ParentType, ContextType>;
-  prepNotes?: Resolver<ResolversTypes['String'], ParentType, ContextType>;
-  topic?: Resolver<ResolversTypes['String'], ParentType, ContextType>;
-};
-
 export interface JsonScalarConfig extends GraphQLScalarTypeConfig<ResolversTypes['JSON'], any> {
   name: 'JSON';
 }
@@ -3619,7 +2721,6 @@ export type JobResolvers<ContextType = GraphQLContext, ParentType extends Resolv
   demographic_questions?: Resolver<Maybe<ResolversTypes['GreenhouseDemographicQuestions']>, ParentType, ContextType>;
   departments?: Resolver<Maybe<Array<ResolversTypes['GreenhouseDepartment']>>, ParentType, ContextType>;
   description?: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType>;
-  enrichment?: Resolver<Maybe<ResolversTypes['JobEnrichment']>, ParentType, ContextType>;
   external_id?: Resolver<ResolversTypes['String'], ParentType, ContextType>;
   id?: Resolver<ResolversTypes['Int'], ParentType, ContextType>;
   internal_job_id?: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType>;
@@ -3645,14 +2746,6 @@ export type JobResolvers<ContextType = GraphQLContext, ParentType extends Resolv
   title?: Resolver<ResolversTypes['String'], ParentType, ContextType>;
   updated_at?: Resolver<ResolversTypes['String'], ParentType, ContextType>;
   url?: Resolver<ResolversTypes['String'], ParentType, ContextType>;
-};
-
-export type JobEnrichmentResolvers<ContextType = GraphQLContext, ParentType extends ResolversParentTypes['JobEnrichment'] = ResolversParentTypes['JobEnrichment']> = {
-  enrichmentStatus?: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType>;
-  salaryCurrency?: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType>;
-  salaryMax?: Resolver<Maybe<ResolversTypes['Int']>, ParentType, ContextType>;
-  salaryMin?: Resolver<Maybe<ResolversTypes['Int']>, ParentType, ContextType>;
-  visaSponsorship?: Resolver<Maybe<ResolversTypes['Boolean']>, ParentType, ContextType>;
 };
 
 export type JobSkillResolvers<ContextType = GraphQLContext, ParentType extends ResolversParentTypes['JobSkill'] = ResolversParentTypes['JobSkill']> = {
@@ -3696,37 +2789,6 @@ export type LangSmithPromptCommitResolvers<ContextType = GraphQLContext, ParentT
   promptName?: Resolver<ResolversTypes['String'], ParentType, ContextType>;
 };
 
-export type LearningOverviewResolvers<ContextType = GraphQLContext, ParentType extends ResolversParentTypes['LearningOverview'] = ResolversParentTypes['LearningOverview']> = {
-  currentStreak?: Resolver<ResolversTypes['Int'], ParentType, ContextType>;
-  overallReadiness?: Resolver<ResolversTypes['Float'], ParentType, ContextType>;
-  teams?: Resolver<Array<ResolversTypes['LearningTeamStatus']>, ParentType, ContextType>;
-  totalSessions?: Resolver<ResolversTypes['Int'], ParentType, ContextType>;
-};
-
-export type LearningSessionEntryResolvers<ContextType = GraphQLContext, ParentType extends ResolversParentTypes['LearningSessionEntry'] = ResolversParentTypes['LearningSessionEntry']> = {
-  confidence?: Resolver<Maybe<ResolversTypes['MasteryLevel']>, ParentType, ContextType>;
-  correctAnswers?: Resolver<Maybe<ResolversTypes['Int']>, ParentType, ContextType>;
-  createdAt?: Resolver<ResolversTypes['String'], ParentType, ContextType>;
-  domain?: Resolver<ResolversTypes['LearningDomain'], ParentType, ContextType>;
-  durationMs?: Resolver<Maybe<ResolversTypes['Int']>, ParentType, ContextType>;
-  id?: Resolver<ResolversTypes['Int'], ParentType, ContextType>;
-  score?: Resolver<Maybe<ResolversTypes['Float']>, ParentType, ContextType>;
-  sessionType?: Resolver<ResolversTypes['SessionType'], ParentType, ContextType>;
-  topicKey?: Resolver<ResolversTypes['String'], ParentType, ContextType>;
-  totalQuestions?: Resolver<Maybe<ResolversTypes['Int']>, ParentType, ContextType>;
-};
-
-export type LearningTeamStatusResolvers<ContextType = GraphQLContext, ParentType extends ResolversParentTypes['LearningTeamStatus'] = ResolversParentTypes['LearningTeamStatus']> = {
-  domain?: Resolver<ResolversTypes['LearningDomain'], ParentType, ContextType>;
-  familiarTopics?: Resolver<ResolversTypes['Int'], ParentType, ContextType>;
-  label?: Resolver<ResolversTypes['String'], ParentType, ContextType>;
-  lastStudiedAt?: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType>;
-  masteredTopics?: Resolver<ResolversTypes['Int'], ParentType, ContextType>;
-  nextReviewTopics?: Resolver<Array<ResolversTypes['String']>, ParentType, ContextType>;
-  streakDays?: Resolver<ResolversTypes['Int'], ParentType, ContextType>;
-  totalTopics?: Resolver<ResolversTypes['Int'], ParentType, ContextType>;
-};
-
 export type MutationResolvers<ContextType = GraphQLContext, ParentType extends ResolversParentTypes['Mutation'] = ResolversParentTypes['Mutation']> = {
   add_company_facts?: Resolver<Array<ResolversTypes['CompanyFact']>, ParentType, ContextType, RequireFields<MutationAdd_Company_FactsArgs, 'company_id' | 'facts'>>;
   analyzeCompany?: Resolver<ResolversTypes['AnalyzeCompanyResponse'], ParentType, ContextType, Partial<MutationAnalyzeCompanyArgs>>;
@@ -3742,9 +2804,7 @@ export type MutationResolvers<ContextType = GraphQLContext, ParentType extends R
   createLangSmithPrompt?: Resolver<ResolversTypes['LangSmithPrompt'], ParentType, ContextType, RequireFields<MutationCreateLangSmithPromptArgs, 'promptIdentifier'>>;
   createOpportunity?: Resolver<ResolversTypes['Opportunity'], ParentType, ContextType, RequireFields<MutationCreateOpportunityArgs, 'input'>>;
   createPrompt?: Resolver<ResolversTypes['Prompt'], ParentType, ContextType, RequireFields<MutationCreatePromptArgs, 'input'>>;
-  createStudyTopic?: Resolver<ResolversTypes['StudyTopic'], ParentType, ContextType, Partial<MutationCreateStudyTopicArgs>>;
   createTask?: Resolver<ResolversTypes['Task'], ParentType, ContextType, RequireFields<MutationCreateTaskArgs, 'input'>>;
-  createTrack?: Resolver<ResolversTypes['Track'], ParentType, ContextType, RequireFields<MutationCreateTrackArgs, 'input'>>;
   deleteAllJobs?: Resolver<ResolversTypes['DeleteJobResponse'], ParentType, ContextType>;
   deleteApplication?: Resolver<ResolversTypes['DeleteApplicationResponse'], ParentType, ContextType, RequireFields<MutationDeleteApplicationArgs, 'id'>>;
   deleteCampaign?: Resolver<ResolversTypes['DeleteCampaignResult'], ParentType, ContextType, RequireFields<MutationDeleteCampaignArgs, 'id'>>;
@@ -3761,37 +2821,19 @@ export type MutationResolvers<ContextType = GraphQLContext, ParentType extends R
   enhanceJobFromATS?: Resolver<ResolversTypes['EnhanceJobResponse'], ParentType, ContextType, RequireFields<MutationEnhanceJobFromAtsArgs, 'company' | 'jobId' | 'source'>>;
   findCompanyEmails?: Resolver<ResolversTypes['EnhanceAllContactsResult'], ParentType, ContextType, RequireFields<MutationFindCompanyEmailsArgs, 'companyId'>>;
   findContactEmail?: Resolver<ResolversTypes['FindContactEmailResult'], ParentType, ContextType, RequireFields<MutationFindContactEmailArgs, 'contactId'>>;
-  generateAgenticCoding?: Resolver<ResolversTypes['Application'], ParentType, ContextType, RequireFields<MutationGenerateAgenticCodingArgs, 'applicationId'>>;
-  generateApplicationStrategy?: Resolver<ResolversTypes['Application'], ParentType, ContextType, RequireFields<MutationGenerateApplicationStrategyArgs, 'applicationId'>>;
-  generateBackendPrep?: Resolver<ResolversTypes['Application'], ParentType, ContextType, RequireFields<MutationGenerateBackendPrepArgs, 'applicationId'>>;
-  generateDeepResearch?: Resolver<ResolversTypes['Application'], ParentType, ContextType, RequireFields<MutationGenerateDeepResearchArgs, 'applicationId'>>;
   generateEmail?: Resolver<ResolversTypes['GenerateEmailResult'], ParentType, ContextType, RequireFields<MutationGenerateEmailArgs, 'input'>>;
-  generateInterviewPrep?: Resolver<ResolversTypes['Application'], ParentType, ContextType, RequireFields<MutationGenerateInterviewPrepArgs, 'applicationId'>>;
-  generateInterviewQuestions?: Resolver<ResolversTypes['Application'], ParentType, ContextType, RequireFields<MutationGenerateInterviewQuestionsArgs, 'applicationId' | 'type'>>;
-  generateQuiz?: Resolver<ResolversTypes['GeneratedQuiz'], ParentType, ContextType, RequireFields<MutationGenerateQuizArgs, 'applicationId' | 'domain' | 'topicKey'>>;
-  generateRequirementFromSelection?: Resolver<ResolversTypes['Application'], ParentType, ContextType, RequireFields<MutationGenerateRequirementFromSelectionArgs, 'applicationId' | 'selectedText'>>;
-  generateResearch?: Resolver<Array<ResolversTypes['ResearchItem']>, ParentType, ContextType, RequireFields<MutationGenerateResearchArgs, 'goalDescription'>>;
-  generateStudyConceptExplanation?: Resolver<ResolversTypes['StudyConceptExplanation'], ParentType, ContextType, RequireFields<MutationGenerateStudyConceptExplanationArgs, 'selectedText' | 'studyTopicId'>>;
-  generateStudyDeepDive?: Resolver<ResolversTypes['StudyTopic'], ParentType, ContextType, RequireFields<MutationGenerateStudyDeepDiveArgs, 'studyTopicId'>>;
-  generateStudyTopicDeepDive?: Resolver<ResolversTypes['Application'], ParentType, ContextType, RequireFields<MutationGenerateStudyTopicDeepDiveArgs, 'applicationId' | 'requirement' | 'studyTopic'>>;
-  generateStudyTopicsForCategory?: Resolver<Array<ResolversTypes['StudyTopic']>, ParentType, ContextType, RequireFields<MutationGenerateStudyTopicsForCategoryArgs, 'category'>>;
-  generateTopicDeepDive?: Resolver<ResolversTypes['Application'], ParentType, ContextType, RequireFields<MutationGenerateTopicDeepDiveArgs, 'applicationId' | 'requirement'>>;
   importContacts?: Resolver<ResolversTypes['ImportContactsResult'], ParentType, ContextType, RequireFields<MutationImportContactsArgs, 'contacts'>>;
   ingestResumeParse?: Resolver<Maybe<ResolversTypes['ResumeIngestResult']>, ParentType, ContextType, RequireFields<MutationIngestResumeParseArgs, 'email' | 'filename' | 'job_id'>>;
   ingest_company_snapshot?: Resolver<ResolversTypes['CompanySnapshot'], ParentType, ContextType, RequireFields<MutationIngest_Company_SnapshotArgs, 'company_id' | 'evidence' | 'fetched_at' | 'source_url'>>;
   launchEmailCampaign?: Resolver<ResolversTypes['EmailCampaign'], ParentType, ContextType, RequireFields<MutationLaunchEmailCampaignArgs, 'id'>>;
-  linkSelectionToRequirement?: Resolver<ResolversTypes['Application'], ParentType, ContextType, RequireFields<MutationLinkSelectionToRequirementArgs, 'applicationId' | 'requirement' | 'sourceQuote'>>;
-  linkTrackToApplication?: Resolver<ResolversTypes['Application'], ParentType, ContextType, RequireFields<MutationLinkTrackToApplicationArgs, 'applicationId' | 'trackSlug'>>;
   markJobApplied?: Resolver<ResolversTypes['Job'], ParentType, ContextType, RequireFields<MutationMarkJobAppliedArgs, 'id'>>;
   processAllJobs?: Resolver<ResolversTypes['ProcessAllJobsResponse'], ParentType, ContextType, Partial<MutationProcessAllJobsArgs>>;
   pushLangSmithPrompt?: Resolver<ResolversTypes['String'], ParentType, ContextType, RequireFields<MutationPushLangSmithPromptArgs, 'promptIdentifier'>>;
   rateResumeAnswer?: Resolver<Maybe<ResolversTypes['Boolean']>, ParentType, ContextType, RequireFields<MutationRateResumeAnswerArgs, 'helpful' | 'traceId'>>;
-  recordLearningSession?: Resolver<ResolversTypes['Application'], ParentType, ContextType, RequireFields<MutationRecordLearningSessionArgs, 'applicationId' | 'input'>>;
   reportJob?: Resolver<Maybe<ResolversTypes['Job']>, ParentType, ContextType, RequireFields<MutationReportJobArgs, 'id'>>;
   sendEmail?: Resolver<ResolversTypes['SendEmailResult'], ParentType, ContextType, RequireFields<MutationSendEmailArgs, 'input'>>;
   unarchiveJob?: Resolver<ResolversTypes['Job'], ParentType, ContextType, RequireFields<MutationUnarchiveJobArgs, 'id'>>;
   unblockCompany?: Resolver<ResolversTypes['DeleteBlockedCompanyResult'], ParentType, ContextType, RequireFields<MutationUnblockCompanyArgs, 'id'>>;
-  unlinkTrackFromApplication?: Resolver<ResolversTypes['Application'], ParentType, ContextType, RequireFields<MutationUnlinkTrackFromApplicationArgs, 'applicationId' | 'trackSlug'>>;
   unverifyCompanyContacts?: Resolver<ResolversTypes['UnverifyContactsResult'], ParentType, ContextType, RequireFields<MutationUnverifyCompanyContactsArgs, 'companyId'>>;
   updateApplication?: Resolver<ResolversTypes['Application'], ParentType, ContextType, RequireFields<MutationUpdateApplicationArgs, 'id' | 'input'>>;
   updateCampaign?: Resolver<ResolversTypes['EmailCampaign'], ParentType, ContextType, RequireFields<MutationUpdateCampaignArgs, 'id' | 'input'>>;
@@ -3802,16 +2844,9 @@ export type MutationResolvers<ContextType = GraphQLContext, ParentType extends R
   updateOpportunity?: Resolver<ResolversTypes['Opportunity'], ParentType, ContextType, RequireFields<MutationUpdateOpportunityArgs, 'id' | 'input'>>;
   updatePromptLabel?: Resolver<ResolversTypes['Prompt'], ParentType, ContextType, RequireFields<MutationUpdatePromptLabelArgs, 'label' | 'name' | 'version'>>;
   updateTask?: Resolver<ResolversTypes['Task'], ParentType, ContextType, RequireFields<MutationUpdateTaskArgs, 'id' | 'input'>>;
-  updateTopicMastery?: Resolver<ResolversTypes['Application'], ParentType, ContextType, RequireFields<MutationUpdateTopicMasteryArgs, 'applicationId' | 'domain' | 'masteryLevel' | 'topicKey'>>;
   updateUserSettings?: Resolver<ResolversTypes['UserSettings'], ParentType, ContextType, RequireFields<MutationUpdateUserSettingsArgs, 'settings' | 'userId'>>;
   uploadResume?: Resolver<Maybe<ResolversTypes['ResumeUploadResult']>, ParentType, ContextType, RequireFields<MutationUploadResumeArgs, 'email' | 'filename' | 'resumePdf'>>;
   upsert_company_ats_boards?: Resolver<Array<ResolversTypes['ATSBoard']>, ParentType, ContextType, RequireFields<MutationUpsert_Company_Ats_BoardsArgs, 'boards' | 'company_id'>>;
-};
-
-export type NetworkingSuggestionResolvers<ContextType = GraphQLContext, ParentType extends ResolversParentTypes['NetworkingSuggestion'] = ResolversParentTypes['NetworkingSuggestion']> = {
-  action?: Resolver<ResolversTypes['String'], ParentType, ContextType>;
-  reasoning?: Resolver<ResolversTypes['String'], ParentType, ContextType>;
-  target?: Resolver<ResolversTypes['String'], ParentType, ContextType>;
 };
 
 export type OpportunitiesResultResolvers<ContextType = GraphQLContext, ParentType extends ResolversParentTypes['OpportunitiesResult'] = ResolversParentTypes['OpportunitiesResult']> = {
@@ -3845,28 +2880,6 @@ export type OpportunityResolvers<ContextType = GraphQLContext, ParentType extend
   title?: Resolver<ResolversTypes['String'], ParentType, ContextType>;
   updatedAt?: Resolver<ResolversTypes['String'], ParentType, ContextType>;
   url?: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType>;
-};
-
-export type PrepCategoryResolvers<ContextType = GraphQLContext, ParentType extends ResolversParentTypes['PrepCategory'] = ResolversParentTypes['PrepCategory']> = {
-  description?: Resolver<ResolversTypes['String'], ParentType, ContextType>;
-  emoji?: Resolver<ResolversTypes['String'], ParentType, ContextType>;
-  id?: Resolver<ResolversTypes['String'], ParentType, ContextType>;
-  name?: Resolver<ResolversTypes['String'], ParentType, ContextType>;
-  resources?: Resolver<Array<ResolversTypes['PrepResource']>, ParentType, ContextType>;
-};
-
-export type PrepContentResolvers<ContextType = GraphQLContext, ParentType extends ResolversParentTypes['PrepContent'] = ResolversParentTypes['PrepContent']> = {
-  categories?: Resolver<Array<ResolversTypes['PrepCategory']>, ParentType, ContextType>;
-  totalResources?: Resolver<ResolversTypes['Int'], ParentType, ContextType>;
-};
-
-export type PrepResourceResolvers<ContextType = GraphQLContext, ParentType extends ResolversParentTypes['PrepResource'] = ResolversParentTypes['PrepResource']> = {
-  category?: Resolver<ResolversTypes['String'], ParentType, ContextType>;
-  description?: Resolver<ResolversTypes['String'], ParentType, ContextType>;
-  href?: Resolver<ResolversTypes['URL'], ParentType, ContextType>;
-  id?: Resolver<ResolversTypes['String'], ParentType, ContextType>;
-  tags?: Resolver<Array<ResolversTypes['String']>, ParentType, ContextType>;
-  title?: Resolver<ResolversTypes['String'], ParentType, ContextType>;
 };
 
 export type ProcessAllJobsResponseResolvers<ContextType = GraphQLContext, ParentType extends ResolversParentTypes['ProcessAllJobsResponse'] = ResolversParentTypes['ProcessAllJobsResponse']> = {
@@ -3938,20 +2951,13 @@ export type QueryResolvers<ContextType = GraphQLContext, ParentType extends Reso
   myPromptUsage?: Resolver<Array<ResolversTypes['PromptUsage']>, ParentType, ContextType, Partial<QueryMyPromptUsageArgs>>;
   opportunities?: Resolver<ResolversTypes['OpportunitiesResult'], ParentType, ContextType, Partial<QueryOpportunitiesArgs>>;
   opportunity?: Resolver<Maybe<ResolversTypes['Opportunity']>, ParentType, ContextType, RequireFields<QueryOpportunityArgs, 'id'>>;
-  prepResources?: Resolver<ResolversTypes['PrepContent'], ParentType, ContextType>;
-  prepResourcesByCategory?: Resolver<Array<ResolversTypes['PrepResource']>, ParentType, ContextType, RequireFields<QueryPrepResourcesByCategoryArgs, 'category'>>;
   prompt?: Resolver<Maybe<ResolversTypes['Prompt']>, ParentType, ContextType, RequireFields<QueryPromptArgs, 'name'>>;
   prompts?: Resolver<Array<ResolversTypes['RegisteredPrompt']>, ParentType, ContextType>;
   resendEmail?: Resolver<Maybe<ResolversTypes['ResendEmailDetail']>, ParentType, ContextType, RequireFields<QueryResendEmailArgs, 'resendId'>>;
   resumeStatus?: Resolver<Maybe<ResolversTypes['ResumeStatus']>, ParentType, ContextType, RequireFields<QueryResumeStatusArgs, 'email'>>;
-  studyCategories?: Resolver<Array<ResolversTypes['String']>, ParentType, ContextType>;
-  studyTopic?: Resolver<Maybe<ResolversTypes['StudyTopic']>, ParentType, ContextType, RequireFields<QueryStudyTopicArgs, 'category' | 'topic'>>;
-  studyTopics?: Resolver<Array<ResolversTypes['StudyTopic']>, ParentType, ContextType, RequireFields<QueryStudyTopicsArgs, 'category'>>;
   task?: Resolver<Maybe<ResolversTypes['Task']>, ParentType, ContextType, RequireFields<QueryTaskArgs, 'id'>>;
   tasks?: Resolver<ResolversTypes['TasksResult'], ParentType, ContextType, Partial<QueryTasksArgs>>;
   textToSql?: Resolver<ResolversTypes['TextToSqlResult'], ParentType, ContextType, RequireFields<QueryTextToSqlArgs, 'question'>>;
-  track?: Resolver<Maybe<ResolversTypes['Track']>, ParentType, ContextType, RequireFields<QueryTrackArgs, 'slug'>>;
-  tracks?: Resolver<Array<ResolversTypes['Track']>, ParentType, ContextType, RequireFields<QueryTracksArgs, 'limit'>>;
   userSettings?: Resolver<Maybe<ResolversTypes['UserSettings']>, ParentType, ContextType, RequireFields<QueryUserSettingsArgs, 'userId'>>;
 };
 
@@ -3959,16 +2965,6 @@ export type QuestionAnswerResolvers<ContextType = GraphQLContext, ParentType ext
   answerText?: Resolver<ResolversTypes['String'], ParentType, ContextType>;
   questionId?: Resolver<ResolversTypes['String'], ParentType, ContextType>;
   questionText?: Resolver<ResolversTypes['String'], ParentType, ContextType>;
-};
-
-export type QuizQuestionResolvers<ContextType = GraphQLContext, ParentType extends ResolversParentTypes['QuizQuestion'] = ResolversParentTypes['QuizQuestion']> = {
-  correctIndex?: Resolver<ResolversTypes['Int'], ParentType, ContextType>;
-  difficulty?: Resolver<ResolversTypes['String'], ParentType, ContextType>;
-  explanation?: Resolver<ResolversTypes['String'], ParentType, ContextType>;
-  id?: Resolver<ResolversTypes['String'], ParentType, ContextType>;
-  options?: Resolver<Array<ResolversTypes['String']>, ParentType, ContextType>;
-  question?: Resolver<ResolversTypes['String'], ParentType, ContextType>;
-  topicKey?: Resolver<ResolversTypes['String'], ParentType, ContextType>;
 };
 
 export type RegisteredPromptResolvers<ContextType = GraphQLContext, ParentType extends ResolversParentTypes['RegisteredPrompt'] = ResolversParentTypes['RegisteredPrompt']> = {
@@ -3982,14 +2978,6 @@ export type RegisteredPromptResolvers<ContextType = GraphQLContext, ParentType e
   type?: Resolver<ResolversTypes['String'], ParentType, ContextType>;
   usageCount?: Resolver<Maybe<ResolversTypes['Int']>, ParentType, ContextType>;
   versions?: Resolver<Array<ResolversTypes['Int']>, ParentType, ContextType>;
-};
-
-export type ResearchItemResolvers<ContextType = GraphQLContext, ParentType extends ResolversParentTypes['ResearchItem'] = ResolversParentTypes['ResearchItem']> = {
-  id?: Resolver<ResolversTypes['String'], ParentType, ContextType>;
-  relevance?: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType>;
-  summary?: Resolver<ResolversTypes['String'], ParentType, ContextType>;
-  title?: Resolver<ResolversTypes['String'], ParentType, ContextType>;
-  url?: Resolver<ResolversTypes['URL'], ParentType, ContextType>;
 };
 
 export type ResendEmailDetailResolvers<ContextType = GraphQLContext, ParentType extends ResolversParentTypes['ResendEmailDetail'] = ResolversParentTypes['ResendEmailDetail']> = {
@@ -4036,31 +3024,10 @@ export type ResumeUploadResultResolvers<ContextType = GraphQLContext, ParentType
   tier?: Resolver<ResolversTypes['String'], ParentType, ContextType>;
 };
 
-export type RiskFactorResolvers<ContextType = GraphQLContext, ParentType extends ResolversParentTypes['RiskFactor'] = ResolversParentTypes['RiskFactor']> = {
-  mitigation?: Resolver<ResolversTypes['String'], ParentType, ContextType>;
-  risk?: Resolver<ResolversTypes['String'], ParentType, ContextType>;
-};
-
 export type SendEmailResultResolvers<ContextType = GraphQLContext, ParentType extends ResolversParentTypes['SendEmailResult'] = ResolversParentTypes['SendEmailResult']> = {
   error?: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType>;
   id?: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType>;
   success?: Resolver<ResolversTypes['Boolean'], ParentType, ContextType>;
-};
-
-export type SkillGapResolvers<ContextType = GraphQLContext, ParentType extends ResolversParentTypes['SkillGap'] = ResolversParentTypes['SkillGap']> = {
-  currentLevel?: Resolver<ResolversTypes['String'], ParentType, ContextType>;
-  frequencyInJobs?: Resolver<ResolversTypes['Int'], ParentType, ContextType>;
-  priority?: Resolver<ResolversTypes['Int'], ParentType, ContextType>;
-  resources?: Resolver<Array<ResolversTypes['SkillGapResource']>, ParentType, ContextType>;
-  skill?: Resolver<ResolversTypes['String'], ParentType, ContextType>;
-  targetLevel?: Resolver<ResolversTypes['String'], ParentType, ContextType>;
-};
-
-export type SkillGapResourceResolvers<ContextType = GraphQLContext, ParentType extends ResolversParentTypes['SkillGapResource'] = ResolversParentTypes['SkillGapResource']> = {
-  estimatedHours?: Resolver<ResolversTypes['Float'], ParentType, ContextType>;
-  title?: Resolver<ResolversTypes['String'], ParentType, ContextType>;
-  type?: Resolver<ResolversTypes['String'], ParentType, ContextType>;
-  url?: Resolver<ResolversTypes['String'], ParentType, ContextType>;
 };
 
 export type SkillMatchResolvers<ContextType = GraphQLContext, ParentType extends ResolversParentTypes['SkillMatch'] = ResolversParentTypes['SkillMatch']> = {
@@ -4082,32 +3049,6 @@ export type SkillMatchDetailResolvers<ContextType = GraphQLContext, ParentType e
 export type StackMutationResponseResolvers<ContextType = GraphQLContext, ParentType extends ResolversParentTypes['StackMutationResponse'] = ResolversParentTypes['StackMutationResponse']> = {
   message?: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType>;
   success?: Resolver<ResolversTypes['Boolean'], ParentType, ContextType>;
-};
-
-export type StudyConceptExplanationResolvers<ContextType = GraphQLContext, ParentType extends ResolversParentTypes['StudyConceptExplanation'] = ResolversParentTypes['StudyConceptExplanation']> = {
-  createdAt?: Resolver<ResolversTypes['DateTime'], ParentType, ContextType>;
-  explanation?: Resolver<ResolversTypes['String'], ParentType, ContextType>;
-  id?: Resolver<ResolversTypes['ID'], ParentType, ContextType>;
-  selectedText?: Resolver<ResolversTypes['String'], ParentType, ContextType>;
-};
-
-export type StudyPlanResolvers<ContextType = GraphQLContext, ParentType extends ResolversParentTypes['StudyPlan'] = ResolversParentTypes['StudyPlan']> = {
-  generatedAt?: Resolver<ResolversTypes['String'], ParentType, ContextType>;
-  recommendations?: Resolver<Array<ResolversTypes['String']>, ParentType, ContextType>;
-  skillGaps?: Resolver<Array<ResolversTypes['SkillGap']>, ParentType, ContextType>;
-};
-
-export type StudyTopicResolvers<ContextType = GraphQLContext, ParentType extends ResolversParentTypes['StudyTopic'] = ResolversParentTypes['StudyTopic']> = {
-  bodyMd?: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType>;
-  category?: Resolver<ResolversTypes['String'], ParentType, ContextType>;
-  createdAt?: Resolver<ResolversTypes['DateTime'], ParentType, ContextType>;
-  deepDive?: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType>;
-  difficulty?: Resolver<ResolversTypes['String'], ParentType, ContextType>;
-  id?: Resolver<ResolversTypes['ID'], ParentType, ContextType>;
-  summary?: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType>;
-  tags?: Resolver<Array<ResolversTypes['String']>, ParentType, ContextType>;
-  title?: Resolver<ResolversTypes['String'], ParentType, ContextType>;
-  topic?: Resolver<ResolversTypes['String'], ParentType, ContextType>;
 };
 
 export type TaskResolvers<ContextType = GraphQLContext, ParentType extends ResolversParentTypes['Task'] = ResolversParentTypes['Task']> = {
@@ -4136,40 +3077,6 @@ export type TextToSqlResultResolvers<ContextType = GraphQLContext, ParentType ex
   explanation?: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType>;
   rows?: Resolver<Array<Maybe<Array<Maybe<ResolversTypes['JSON']>>>>, ParentType, ContextType>;
   sql?: Resolver<ResolversTypes['String'], ParentType, ContextType>;
-};
-
-export type TopicMasteryEntryResolvers<ContextType = GraphQLContext, ParentType extends ResolversParentTypes['TopicMasteryEntry'] = ResolversParentTypes['TopicMasteryEntry']> = {
-  confidenceScore?: Resolver<ResolversTypes['Float'], ParentType, ContextType>;
-  domain?: Resolver<ResolversTypes['LearningDomain'], ParentType, ContextType>;
-  lastQuizScore?: Resolver<Maybe<ResolversTypes['Float']>, ParentType, ContextType>;
-  lastStudiedAt?: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType>;
-  masteryLevel?: Resolver<ResolversTypes['MasteryLevel'], ParentType, ContextType>;
-  nextReviewAt?: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType>;
-  streakDays?: Resolver<ResolversTypes['Int'], ParentType, ContextType>;
-  topicKey?: Resolver<ResolversTypes['String'], ParentType, ContextType>;
-  totalSessions?: Resolver<ResolversTypes['Int'], ParentType, ContextType>;
-};
-
-export type TrackResolvers<ContextType = GraphQLContext, ParentType extends ResolversParentTypes['Track'] = ResolversParentTypes['Track']> = {
-  description?: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType>;
-  id?: Resolver<ResolversTypes['ID'], ParentType, ContextType>;
-  items?: Resolver<Array<ResolversTypes['TrackItem']>, ParentType, ContextType>;
-  level?: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType>;
-  slug?: Resolver<ResolversTypes['String'], ParentType, ContextType>;
-  title?: Resolver<ResolversTypes['String'], ParentType, ContextType>;
-};
-
-export type TrackItemResolvers<ContextType = GraphQLContext, ParentType extends ResolversParentTypes['TrackItem'] = ResolversParentTypes['TrackItem']> = {
-  children?: Resolver<Array<ResolversTypes['TrackItem']>, ParentType, ContextType>;
-  contentRef?: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType>;
-  difficulty?: Resolver<Maybe<ResolversTypes['Int']>, ParentType, ContextType>;
-  id?: Resolver<ResolversTypes['ID'], ParentType, ContextType>;
-  kind?: Resolver<ResolversTypes['String'], ParentType, ContextType>;
-  position?: Resolver<ResolversTypes['Int'], ParentType, ContextType>;
-  prereqs?: Resolver<Array<ResolversTypes['ID']>, ParentType, ContextType>;
-  promptRef?: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType>;
-  tags?: Resolver<Array<ResolversTypes['String']>, ParentType, ContextType>;
-  title?: Resolver<ResolversTypes['String'], ParentType, ContextType>;
 };
 
 export interface UrlScalarConfig extends GraphQLScalarTypeConfig<ResolversTypes['URL'], any> {
@@ -4208,23 +3115,9 @@ export type WarcPointerResolvers<ContextType = GraphQLContext, ParentType extend
 };
 
 export type Resolvers<ContextType = GraphQLContext> = {
-  AIBackendPrep?: AiBackendPrepResolvers<ContextType>;
-  AIDeepResearch?: AiDeepResearchResolvers<ContextType>;
-  AIInterviewPrep?: AiInterviewPrepResolvers<ContextType>;
-  AIInterviewPrepRequirement?: AiInterviewPrepRequirementResolvers<ContextType>;
-  AIInterviewQuestion?: AiInterviewQuestionResolvers<ContextType>;
-  AIInterviewQuestions?: AiInterviewQuestionsResolvers<ContextType>;
-  AIStudyTopicDeepDive?: AiStudyTopicDeepDiveResolvers<ContextType>;
   ATSBoard?: AtsBoardResolvers<ContextType>;
-  AgenticCoding?: AgenticCodingResolvers<ContextType>;
-  AgenticCodingExercise?: AgenticCodingExerciseResolvers<ContextType>;
-  AgenticCodingFailureMode?: AgenticCodingFailureModeResolvers<ContextType>;
-  AgenticCodingOutcome?: AgenticCodingOutcomeResolvers<ContextType>;
-  AgenticCodingPromptTemplate?: AgenticCodingPromptTemplateResolvers<ContextType>;
-  AgenticCodingResource?: AgenticCodingResourceResolvers<ContextType>;
   AnalyzeCompanyResponse?: AnalyzeCompanyResponseResolvers<ContextType>;
   Application?: ApplicationResolvers<ContextType>;
-  ApplicationStrategy?: ApplicationStrategyResolvers<ContextType>;
   ApplyEmailPatternResult?: ApplyEmailPatternResultResolvers<ContextType>;
   AshbyAddress?: AshbyAddressResolvers<ContextType>;
   AshbyCompensation?: AshbyCompensationResolvers<ContextType>;
@@ -4233,9 +3126,6 @@ export type Resolvers<ContextType = GraphQLContext> = {
   AshbyEnrichment?: AshbyEnrichmentResolvers<ContextType>;
   AshbyPostalAddress?: AshbyPostalAddressResolvers<ContextType>;
   AshbySecondaryLocation?: AshbySecondaryLocationResolvers<ContextType>;
-  BackendPrepCodeExample?: BackendPrepCodeExampleResolvers<ContextType>;
-  BackendPrepInterviewQuestion?: BackendPrepInterviewQuestionResolvers<ContextType>;
-  BackendPrepSection?: BackendPrepSectionResolvers<ContextType>;
   BlockedCompany?: BlockedCompanyResolvers<ContextType>;
   ChatMessage?: ChatMessageResolvers<ContextType>;
   CompaniesResponse?: CompaniesResponseResolvers<ContextType>;
@@ -4245,10 +3135,7 @@ export type Resolvers<ContextType = GraphQLContext> = {
   Contact?: ContactResolvers<ContextType>;
   ContactEmail?: ContactEmailResolvers<ContextType>;
   ContactsResult?: ContactsResultResolvers<ContextType>;
-  CoverLetterAngle?: CoverLetterAngleResolvers<ContextType>;
   DateTime?: GraphQLScalarType;
-  DeepResearchModelResponse?: DeepResearchModelResponseResolvers<ContextType>;
-  DeepResearchQuestion?: DeepResearchQuestionResolvers<ContextType>;
   DeleteApplicationResponse?: DeleteApplicationResponseResolvers<ContextType>;
   DeleteBlockedCompanyResult?: DeleteBlockedCompanyResultResolvers<ContextType>;
   DeleteCampaignResult?: DeleteCampaignResultResolvers<ContextType>;
@@ -4269,7 +3156,6 @@ export type Resolvers<ContextType = GraphQLContext> = {
   Evidence?: EvidenceResolvers<ContextType>;
   FindContactEmailResult?: FindContactEmailResultResolvers<ContextType>;
   GenerateEmailResult?: GenerateEmailResultResolvers<ContextType>;
-  GeneratedQuiz?: GeneratedQuizResolvers<ContextType>;
   GreenhouseCompliance?: GreenhouseComplianceResolvers<ContextType>;
   GreenhouseDataCompliance?: GreenhouseDataComplianceResolvers<ContextType>;
   GreenhouseDemographicQuestions?: GreenhouseDemographicQuestionsResolvers<ContextType>;
@@ -4279,54 +3165,34 @@ export type Resolvers<ContextType = GraphQLContext> = {
   GreenhouseQuestion?: GreenhouseQuestionResolvers<ContextType>;
   GreenhouseQuestionField?: GreenhouseQuestionFieldResolvers<ContextType>;
   ImportContactsResult?: ImportContactsResultResolvers<ContextType>;
-  InterviewTopic?: InterviewTopicResolvers<ContextType>;
   JSON?: GraphQLScalarType;
   Job?: JobResolvers<ContextType>;
-  JobEnrichment?: JobEnrichmentResolvers<ContextType>;
   JobSkill?: JobSkillResolvers<ContextType>;
   JobsResponse?: JobsResponseResolvers<ContextType>;
   LangSmithPrompt?: LangSmithPromptResolvers<ContextType>;
   LangSmithPromptCommit?: LangSmithPromptCommitResolvers<ContextType>;
-  LearningOverview?: LearningOverviewResolvers<ContextType>;
-  LearningSessionEntry?: LearningSessionEntryResolvers<ContextType>;
-  LearningTeamStatus?: LearningTeamStatusResolvers<ContextType>;
   Mutation?: MutationResolvers<ContextType>;
-  NetworkingSuggestion?: NetworkingSuggestionResolvers<ContextType>;
   OpportunitiesResult?: OpportunitiesResultResolvers<ContextType>;
   Opportunity?: OpportunityResolvers<ContextType>;
-  PrepCategory?: PrepCategoryResolvers<ContextType>;
-  PrepContent?: PrepContentResolvers<ContextType>;
-  PrepResource?: PrepResourceResolvers<ContextType>;
   ProcessAllJobsResponse?: ProcessAllJobsResponseResolvers<ContextType>;
   Prompt?: PromptResolvers<ContextType>;
   PromptConfig?: PromptConfigResolvers<ContextType>;
   PromptUsage?: PromptUsageResolvers<ContextType>;
   Query?: QueryResolvers<ContextType>;
   QuestionAnswer?: QuestionAnswerResolvers<ContextType>;
-  QuizQuestion?: QuizQuestionResolvers<ContextType>;
   RegisteredPrompt?: RegisteredPromptResolvers<ContextType>;
-  ResearchItem?: ResearchItemResolvers<ContextType>;
   ResendEmailDetail?: ResendEmailDetailResolvers<ContextType>;
   ResumeAnswer?: ResumeAnswerResolvers<ContextType>;
   ResumeIngestResult?: ResumeIngestResultResolvers<ContextType>;
   ResumeStatus?: ResumeStatusResolvers<ContextType>;
   ResumeUploadResult?: ResumeUploadResultResolvers<ContextType>;
-  RiskFactor?: RiskFactorResolvers<ContextType>;
   SendEmailResult?: SendEmailResultResolvers<ContextType>;
-  SkillGap?: SkillGapResolvers<ContextType>;
-  SkillGapResource?: SkillGapResourceResolvers<ContextType>;
   SkillMatch?: SkillMatchResolvers<ContextType>;
   SkillMatchDetail?: SkillMatchDetailResolvers<ContextType>;
   StackMutationResponse?: StackMutationResponseResolvers<ContextType>;
-  StudyConceptExplanation?: StudyConceptExplanationResolvers<ContextType>;
-  StudyPlan?: StudyPlanResolvers<ContextType>;
-  StudyTopic?: StudyTopicResolvers<ContextType>;
   Task?: TaskResolvers<ContextType>;
   TasksResult?: TasksResultResolvers<ContextType>;
   TextToSqlResult?: TextToSqlResultResolvers<ContextType>;
-  TopicMasteryEntry?: TopicMasteryEntryResolvers<ContextType>;
-  Track?: TrackResolvers<ContextType>;
-  TrackItem?: TrackItemResolvers<ContextType>;
   URL?: GraphQLScalarType;
   UnverifyContactsResult?: UnverifyContactsResultResolvers<ContextType>;
   Upload?: GraphQLScalarType;

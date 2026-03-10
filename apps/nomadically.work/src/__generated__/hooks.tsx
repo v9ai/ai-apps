@@ -22,76 +22,6 @@ export type Scalars = {
   Upload: { input: File; output: File; }
 };
 
-export type AiBackendPrep = {
-  __typename?: 'AIBackendPrep';
-  aiMlIntegration: Maybe<BackendPrepSection>;
-  apiDesign: Maybe<BackendPrepSection>;
-  authSecurity: Maybe<BackendPrepSection>;
-  caching: Maybe<BackendPrepSection>;
-  concurrencyAsync: Maybe<BackendPrepSection>;
-  databaseDesign: Maybe<BackendPrepSection>;
-  devops: Maybe<BackendPrepSection>;
-  distributedSystems: Maybe<BackendPrepSection>;
-  eventDriven: Maybe<BackendPrepSection>;
-  generatedAt: Scalars['String']['output'];
-  messageQueues: Maybe<BackendPrepSection>;
-  microservices: Maybe<BackendPrepSection>;
-  nosqlPatterns: Maybe<BackendPrepSection>;
-  observability: Maybe<BackendPrepSection>;
-  performance: Maybe<BackendPrepSection>;
-  securityOwasp: Maybe<BackendPrepSection>;
-  serverlessEdge: Maybe<BackendPrepSection>;
-  sqlOptimization: Maybe<BackendPrepSection>;
-  systemDesign: Maybe<BackendPrepSection>;
-  testing: Maybe<BackendPrepSection>;
-  typescriptNode: Maybe<BackendPrepSection>;
-};
-
-export type AiDeepResearch = {
-  __typename?: 'AIDeepResearch';
-  generatedAt: Scalars['String']['output'];
-  questions: Array<DeepResearchQuestion>;
-};
-
-export type AiInterviewPrep = {
-  __typename?: 'AIInterviewPrep';
-  generatedAt: Scalars['String']['output'];
-  requirements: Array<AiInterviewPrepRequirement>;
-  summary: Scalars['String']['output'];
-};
-
-export type AiInterviewPrepRequirement = {
-  __typename?: 'AIInterviewPrepRequirement';
-  deepDive: Maybe<Scalars['String']['output']>;
-  questions: Array<Scalars['String']['output']>;
-  requirement: Scalars['String']['output'];
-  sourceQuote: Maybe<Scalars['String']['output']>;
-  studyTopicDeepDives: Array<AiStudyTopicDeepDive>;
-  studyTopics: Array<Scalars['String']['output']>;
-};
-
-export type AiInterviewQuestion = {
-  __typename?: 'AIInterviewQuestion';
-  category: Scalars['String']['output'];
-  question: Scalars['String']['output'];
-  reason: Scalars['String']['output'];
-};
-
-export type AiInterviewQuestions = {
-  __typename?: 'AIInterviewQuestions';
-  companyContext: Scalars['String']['output'];
-  recruiterGeneratedAt: Maybe<Scalars['String']['output']>;
-  recruiterQuestions: Array<AiInterviewQuestion>;
-  technicalGeneratedAt: Maybe<Scalars['String']['output']>;
-  technicalQuestions: Array<AiInterviewQuestion>;
-};
-
-export type AiStudyTopicDeepDive = {
-  __typename?: 'AIStudyTopicDeepDive';
-  deepDive: Scalars['String']['output'];
-  topic: Scalars['String']['output'];
-};
-
 export type AtsBoard = {
   __typename?: 'ATSBoard';
   board_type: AtsBoardType;
@@ -139,60 +69,6 @@ export type AtsVendor =
   | 'TEAMTAILOR'
   | 'WORKABLE';
 
-export type AgenticCoding = {
-  __typename?: 'AgenticCoding';
-  exercises: Array<AgenticCodingExercise>;
-  failureModes: Maybe<Array<AgenticCodingFailureMode>>;
-  generatedAt: Scalars['String']['output'];
-  measurableOutcomes: Maybe<Array<AgenticCodingOutcome>>;
-  overview: Scalars['String']['output'];
-  promptTemplates: Maybe<Array<AgenticCodingPromptTemplate>>;
-  qaApproach: Maybe<Scalars['String']['output']>;
-  resources: Array<AgenticCodingResource>;
-  teamPractices: Maybe<Scalars['String']['output']>;
-  workflowPattern: Maybe<Scalars['String']['output']>;
-};
-
-export type AgenticCodingExercise = {
-  __typename?: 'AgenticCodingExercise';
-  agentPrompt: Scalars['String']['output'];
-  description: Scalars['String']['output'];
-  difficulty: Scalars['String']['output'];
-  hints: Array<Scalars['String']['output']>;
-  skills: Array<Scalars['String']['output']>;
-  title: Scalars['String']['output'];
-};
-
-export type AgenticCodingFailureMode = {
-  __typename?: 'AgenticCodingFailureMode';
-  alternative: Scalars['String']['output'];
-  scenario: Scalars['String']['output'];
-  why: Scalars['String']['output'];
-};
-
-export type AgenticCodingOutcome = {
-  __typename?: 'AgenticCodingOutcome';
-  afterTime: Scalars['String']['output'];
-  beforeTime: Scalars['String']['output'];
-  improvement: Scalars['String']['output'];
-  task: Scalars['String']['output'];
-};
-
-export type AgenticCodingPromptTemplate = {
-  __typename?: 'AgenticCodingPromptTemplate';
-  prompt: Scalars['String']['output'];
-  purpose: Scalars['String']['output'];
-  stackContext: Scalars['String']['output'];
-  title: Scalars['String']['output'];
-};
-
-export type AgenticCodingResource = {
-  __typename?: 'AgenticCodingResource';
-  description: Scalars['String']['output'];
-  title: Scalars['String']['output'];
-  url: Scalars['String']['output'];
-};
-
 export type AnalyzeCompanyResponse = {
   __typename?: 'AnalyzeCompanyResponse';
   companyId: Maybe<Scalars['Int']['output']>;
@@ -203,28 +79,18 @@ export type AnalyzeCompanyResponse = {
 
 export type Application = {
   __typename?: 'Application';
-  agenticCoding: Maybe<AgenticCoding>;
-  aiBackendPrep: Maybe<AiBackendPrep>;
-  aiDeepResearch: Maybe<AiDeepResearch>;
-  aiInterviewPrep: Maybe<AiInterviewPrep>;
-  aiInterviewQuestions: Maybe<AiInterviewQuestions>;
-  applicationStrategy: Maybe<ApplicationStrategy>;
   companyKey: Maybe<Scalars['String']['output']>;
   companyName: Maybe<Scalars['String']['output']>;
   createdAt: Scalars['String']['output'];
   email: Scalars['EmailAddress']['output'];
   id: Scalars['Int']['output'];
-  interviewPrep: Array<Track>;
   jobDescription: Maybe<Scalars['String']['output']>;
   jobId: Scalars['String']['output'];
   jobTitle: Maybe<Scalars['String']['output']>;
-  learningOverview: Maybe<LearningOverview>;
   notes: Maybe<Scalars['String']['output']>;
   questions: Array<QuestionAnswer>;
-  recentSessions: Array<LearningSessionEntry>;
   resume: Maybe<Scalars['Upload']['output']>;
   status: ApplicationStatus;
-  topicMasteryList: Array<TopicMasteryEntry>;
 };
 
 export type ApplicationInput = {
@@ -245,17 +111,6 @@ export type ApplicationStatus =
   | 'rejected'
   | 'reviewed'
   | 'submitted';
-
-export type ApplicationStrategy = {
-  __typename?: 'ApplicationStrategy';
-  coverLetterAngles: Array<CoverLetterAngle>;
-  generatedAt: Scalars['String']['output'];
-  interviewTopics: Array<InterviewTopic>;
-  keyDifferentiators: Array<Scalars['String']['output']>;
-  networkingSuggestions: Array<NetworkingSuggestion>;
-  recommendedApproach: Scalars['String']['output'];
-  riskFactors: Array<RiskFactor>;
-};
 
 export type ApplyEmailPatternResult = {
   __typename?: 'ApplyEmailPatternResult';
@@ -319,35 +174,6 @@ export type AshbySecondaryLocation = {
   __typename?: 'AshbySecondaryLocation';
   address: Maybe<AshbyPostalAddress>;
   location: Scalars['String']['output'];
-};
-
-export type BackendPrepCodeExample = {
-  __typename?: 'BackendPrepCodeExample';
-  code: Scalars['String']['output'];
-  explanation: Scalars['String']['output'];
-  language: Scalars['String']['output'];
-  title: Scalars['String']['output'];
-};
-
-export type BackendPrepInterviewQuestion = {
-  __typename?: 'BackendPrepInterviewQuestion';
-  difficulty: Scalars['String']['output'];
-  followUps: Array<Scalars['String']['output']>;
-  idealAnswer: Scalars['String']['output'];
-  question: Scalars['String']['output'];
-};
-
-export type BackendPrepSection = {
-  __typename?: 'BackendPrepSection';
-  codeExamples: Array<BackendPrepCodeExample>;
-  commonPitfalls: Array<Scalars['String']['output']>;
-  deepDive: Scalars['String']['output'];
-  interviewQuestions: Array<BackendPrepInterviewQuestion>;
-  keyConcepts: Array<Scalars['String']['output']>;
-  overview: Scalars['String']['output'];
-  researchInsights: Maybe<Scalars['String']['output']>;
-  talkingPoints: Array<Scalars['String']['output']>;
-  title: Scalars['String']['output'];
 };
 
 export type BlockedCompany = {
@@ -566,13 +392,6 @@ export type ContactsResult = {
   totalCount: Scalars['Int']['output'];
 };
 
-export type CoverLetterAngle = {
-  __typename?: 'CoverLetterAngle';
-  angle: Scalars['String']['output'];
-  exampleOpener: Scalars['String']['output'];
-  reasoning: Scalars['String']['output'];
-};
-
 export type CreateCampaignInput = {
   companyId?: InputMaybe<Scalars['Int']['input']>;
   delayDays?: InputMaybe<Scalars['JSON']['input']>;
@@ -673,28 +492,6 @@ export type CreateTaskInput = {
   status?: InputMaybe<Scalars['String']['input']>;
   tags?: InputMaybe<Array<Scalars['String']['input']>>;
   title: Scalars['String']['input'];
-};
-
-export type CreateTrackInput = {
-  description?: InputMaybe<Scalars['String']['input']>;
-  level?: InputMaybe<Scalars['String']['input']>;
-  slug: Scalars['String']['input'];
-  title: Scalars['String']['input'];
-};
-
-export type DeepResearchModelResponse = {
-  __typename?: 'DeepResearchModelResponse';
-  content: Scalars['String']['output'];
-  model: Scalars['String']['output'];
-  reasoning: Maybe<Scalars['String']['output']>;
-};
-
-export type DeepResearchQuestion = {
-  __typename?: 'DeepResearchQuestion';
-  category: Scalars['String']['output'];
-  deepseek: DeepResearchModelResponse;
-  question: Scalars['String']['output'];
-  qwen: DeepResearchModelResponse;
 };
 
 export type DeleteApplicationResponse = {
@@ -891,14 +688,6 @@ export type GenerateEmailResult = {
   text: Scalars['String']['output'];
 };
 
-export type GeneratedQuiz = {
-  __typename?: 'GeneratedQuiz';
-  domain: LearningDomain;
-  generatedAt: Scalars['String']['output'];
-  questions: Array<QuizQuestion>;
-  topicKey: Scalars['String']['output'];
-};
-
 export type GreenhouseCompliance = {
   __typename?: 'GreenhouseCompliance';
   description: Maybe<Scalars['String']['output']>;
@@ -970,13 +759,6 @@ export type ImportContactsResult = {
   success: Scalars['Boolean']['output'];
 };
 
-export type InterviewTopic = {
-  __typename?: 'InterviewTopic';
-  importance: Scalars['String']['output'];
-  prepNotes: Scalars['String']['output'];
-  topic: Scalars['String']['output'];
-};
-
 export type Job = {
   __typename?: 'Job';
   absolute_url: Maybe<Scalars['String']['output']>;
@@ -1003,7 +785,6 @@ export type Job = {
   demographic_questions: Maybe<GreenhouseDemographicQuestions>;
   departments: Maybe<Array<GreenhouseDepartment>>;
   description: Maybe<Scalars['String']['output']>;
-  enrichment: Maybe<JobEnrichment>;
   external_id: Scalars['String']['output'];
   id: Scalars['Int']['output'];
   internal_job_id: Maybe<Scalars['String']['output']>;
@@ -1035,15 +816,6 @@ export type Job = {
   title: Scalars['String']['output'];
   updated_at: Scalars['String']['output'];
   url: Scalars['String']['output'];
-};
-
-export type JobEnrichment = {
-  __typename?: 'JobEnrichment';
-  enrichmentStatus: Maybe<Scalars['String']['output']>;
-  salaryCurrency: Maybe<Scalars['String']['output']>;
-  salaryMax: Maybe<Scalars['Int']['output']>;
-  salaryMin: Maybe<Scalars['Int']['output']>;
-  visaSponsorship: Maybe<Scalars['Boolean']['output']>;
 };
 
 export type JobSkill = {
@@ -1105,64 +877,6 @@ export type LangSmithPromptCommit = {
   promptName: Scalars['String']['output'];
 };
 
-export type LearningDomain =
-  | 'backend'
-  | 'coding'
-  | 'concepts'
-  | 'interview';
-
-export type LearningOverview = {
-  __typename?: 'LearningOverview';
-  currentStreak: Scalars['Int']['output'];
-  overallReadiness: Scalars['Float']['output'];
-  teams: Array<LearningTeamStatus>;
-  totalSessions: Scalars['Int']['output'];
-};
-
-export type LearningSessionEntry = {
-  __typename?: 'LearningSessionEntry';
-  confidence: Maybe<MasteryLevel>;
-  correctAnswers: Maybe<Scalars['Int']['output']>;
-  createdAt: Scalars['String']['output'];
-  domain: LearningDomain;
-  durationMs: Maybe<Scalars['Int']['output']>;
-  id: Scalars['Int']['output'];
-  score: Maybe<Scalars['Float']['output']>;
-  sessionType: SessionType;
-  topicKey: Scalars['String']['output'];
-  totalQuestions: Maybe<Scalars['Int']['output']>;
-};
-
-export type LearningSessionInput = {
-  answersJson?: InputMaybe<Scalars['String']['input']>;
-  confidence?: InputMaybe<MasteryLevel>;
-  correctAnswers?: InputMaybe<Scalars['Int']['input']>;
-  domain: LearningDomain;
-  durationMs?: InputMaybe<Scalars['Int']['input']>;
-  score?: InputMaybe<Scalars['Float']['input']>;
-  sessionType: SessionType;
-  topicKey: Scalars['String']['input'];
-  totalQuestions?: InputMaybe<Scalars['Int']['input']>;
-};
-
-export type LearningTeamStatus = {
-  __typename?: 'LearningTeamStatus';
-  domain: LearningDomain;
-  familiarTopics: Scalars['Int']['output'];
-  label: Scalars['String']['output'];
-  lastStudiedAt: Maybe<Scalars['String']['output']>;
-  masteredTopics: Scalars['Int']['output'];
-  nextReviewTopics: Array<Scalars['String']['output']>;
-  streakDays: Scalars['Int']['output'];
-  totalTopics: Scalars['Int']['output'];
-};
-
-export type MasteryLevel =
-  | 'confident'
-  | 'familiar'
-  | 'mastery'
-  | 'unfamiliar';
-
 export type Mutation = {
   __typename?: 'Mutation';
   add_company_facts: Array<CompanyFact>;
@@ -1179,9 +893,7 @@ export type Mutation = {
   createLangSmithPrompt: LangSmithPrompt;
   createOpportunity: Opportunity;
   createPrompt: Prompt;
-  createStudyTopic: StudyTopic;
   createTask: Task;
-  createTrack: Track;
   deleteAllJobs: DeleteJobResponse;
   deleteApplication: DeleteApplicationResponse;
   deleteCampaign: DeleteCampaignResult;
@@ -1218,27 +930,11 @@ export type Mutation = {
   enhanceJobFromATS: EnhanceJobResponse;
   findCompanyEmails: EnhanceAllContactsResult;
   findContactEmail: FindContactEmailResult;
-  generateAgenticCoding: Application;
-  generateApplicationStrategy: Application;
-  generateBackendPrep: Application;
-  generateDeepResearch: Application;
   generateEmail: GenerateEmailResult;
-  generateInterviewPrep: Application;
-  generateInterviewQuestions: Application;
-  generateQuiz: GeneratedQuiz;
-  generateRequirementFromSelection: Application;
-  generateResearch: Array<ResearchItem>;
-  generateStudyConceptExplanation: StudyConceptExplanation;
-  generateStudyDeepDive: StudyTopic;
-  generateStudyTopicDeepDive: Application;
-  generateStudyTopicsForCategory: Array<StudyTopic>;
-  generateTopicDeepDive: Application;
   importContacts: ImportContactsResult;
   ingestResumeParse: Maybe<ResumeIngestResult>;
   ingest_company_snapshot: CompanySnapshot;
   launchEmailCampaign: EmailCampaign;
-  linkSelectionToRequirement: Application;
-  linkTrackToApplication: Application;
   markJobApplied: Job;
   /**
    * Trigger classification/enhancement of all unprocessed jobs via the Cloudflare Worker.
@@ -1248,7 +944,6 @@ export type Mutation = {
   processAllJobs: ProcessAllJobsResponse;
   pushLangSmithPrompt: Scalars['String']['output'];
   rateResumeAnswer: Maybe<Scalars['Boolean']['output']>;
-  recordLearningSession: Application;
   /**
    * Report a job as irrelevant, spam, or incorrectly classified.
    * Sets the job status to "reported" so it can be reviewed or excluded.
@@ -1258,7 +953,6 @@ export type Mutation = {
   sendEmail: SendEmailResult;
   unarchiveJob: Job;
   unblockCompany: DeleteBlockedCompanyResult;
-  unlinkTrackFromApplication: Application;
   unverifyCompanyContacts: UnverifyContactsResult;
   updateApplication: Application;
   updateCampaign: EmailCampaign;
@@ -1269,7 +963,6 @@ export type Mutation = {
   updateOpportunity: Opportunity;
   updatePromptLabel: Prompt;
   updateTask: Task;
-  updateTopicMastery: Application;
   updateUserSettings: UserSettings;
   uploadResume: Maybe<ResumeUploadResult>;
   upsert_company_ats_boards: Array<AtsBoard>;
@@ -1350,23 +1043,8 @@ export type MutationCreatePromptArgs = {
 };
 
 
-export type MutationCreateStudyTopicArgs = {
-  category?: InputMaybe<Scalars['String']['input']>;
-  difficulty?: InputMaybe<Scalars['String']['input']>;
-  summary?: InputMaybe<Scalars['String']['input']>;
-  tags?: InputMaybe<Array<Scalars['String']['input']>>;
-  title?: InputMaybe<Scalars['String']['input']>;
-  topic?: InputMaybe<Scalars['String']['input']>;
-};
-
-
 export type MutationCreateTaskArgs = {
   input: CreateTaskInput;
-};
-
-
-export type MutationCreateTrackArgs = {
-  input: CreateTrackInput;
 };
 
 
@@ -1443,92 +1121,8 @@ export type MutationFindContactEmailArgs = {
 };
 
 
-export type MutationGenerateAgenticCodingArgs = {
-  applicationId: Scalars['Int']['input'];
-};
-
-
-export type MutationGenerateApplicationStrategyArgs = {
-  applicationId: Scalars['Int']['input'];
-};
-
-
-export type MutationGenerateBackendPrepArgs = {
-  applicationId: Scalars['Int']['input'];
-};
-
-
-export type MutationGenerateDeepResearchArgs = {
-  applicationId: Scalars['Int']['input'];
-};
-
-
 export type MutationGenerateEmailArgs = {
   input: GenerateEmailInput;
-};
-
-
-export type MutationGenerateInterviewPrepArgs = {
-  applicationId: Scalars['Int']['input'];
-};
-
-
-export type MutationGenerateInterviewQuestionsArgs = {
-  applicationId: Scalars['Int']['input'];
-  type: Scalars['String']['input'];
-};
-
-
-export type MutationGenerateQuizArgs = {
-  applicationId: Scalars['Int']['input'];
-  count?: InputMaybe<Scalars['Int']['input']>;
-  domain: LearningDomain;
-  topicKey: Scalars['String']['input'];
-};
-
-
-export type MutationGenerateRequirementFromSelectionArgs = {
-  applicationId: Scalars['Int']['input'];
-  selectedText: Scalars['String']['input'];
-};
-
-
-export type MutationGenerateResearchArgs = {
-  goalDescription: Scalars['String']['input'];
-};
-
-
-export type MutationGenerateStudyConceptExplanationArgs = {
-  context?: InputMaybe<Scalars['String']['input']>;
-  selectedText: Scalars['String']['input'];
-  studyTopicId: Scalars['ID']['input'];
-};
-
-
-export type MutationGenerateStudyDeepDiveArgs = {
-  force?: InputMaybe<Scalars['Boolean']['input']>;
-  studyTopicId: Scalars['ID']['input'];
-};
-
-
-export type MutationGenerateStudyTopicDeepDiveArgs = {
-  applicationId: Scalars['Int']['input'];
-  force?: InputMaybe<Scalars['Boolean']['input']>;
-  requirement: Scalars['String']['input'];
-  studyTopic: Scalars['String']['input'];
-};
-
-
-export type MutationGenerateStudyTopicsForCategoryArgs = {
-  category: Scalars['String']['input'];
-  count?: InputMaybe<Scalars['Int']['input']>;
-};
-
-
-export type MutationGenerateTopicDeepDiveArgs = {
-  applicationId: Scalars['Int']['input'];
-  force?: InputMaybe<Scalars['Boolean']['input']>;
-  requirement: Scalars['String']['input'];
 };
 
 
@@ -1565,19 +1159,6 @@ export type MutationLaunchEmailCampaignArgs = {
 };
 
 
-export type MutationLinkSelectionToRequirementArgs = {
-  applicationId: Scalars['Int']['input'];
-  requirement: Scalars['String']['input'];
-  sourceQuote: Scalars['String']['input'];
-};
-
-
-export type MutationLinkTrackToApplicationArgs = {
-  applicationId: Scalars['Int']['input'];
-  trackSlug: Scalars['String']['input'];
-};
-
-
 export type MutationMarkJobAppliedArgs = {
   id: Scalars['Int']['input'];
 };
@@ -1600,12 +1181,6 @@ export type MutationRateResumeAnswerArgs = {
 };
 
 
-export type MutationRecordLearningSessionArgs = {
-  applicationId: Scalars['Int']['input'];
-  input: LearningSessionInput;
-};
-
-
 export type MutationReportJobArgs = {
   id: Scalars['Int']['input'];
 };
@@ -1623,12 +1198,6 @@ export type MutationUnarchiveJobArgs = {
 
 export type MutationUnblockCompanyArgs = {
   id: Scalars['Int']['input'];
-};
-
-
-export type MutationUnlinkTrackFromApplicationArgs = {
-  applicationId: Scalars['Int']['input'];
-  trackSlug: Scalars['String']['input'];
 };
 
 
@@ -1692,14 +1261,6 @@ export type MutationUpdateTaskArgs = {
 };
 
 
-export type MutationUpdateTopicMasteryArgs = {
-  applicationId: Scalars['Int']['input'];
-  domain: LearningDomain;
-  masteryLevel: MasteryLevel;
-  topicKey: Scalars['String']['input'];
-};
-
-
 export type MutationUpdateUserSettingsArgs = {
   settings: UserSettingsInput;
   userId: Scalars['String']['input'];
@@ -1716,13 +1277,6 @@ export type MutationUploadResumeArgs = {
 export type MutationUpsert_Company_Ats_BoardsArgs = {
   boards: Array<AtsBoardUpsertInput>;
   company_id: Scalars['Int']['input'];
-};
-
-export type NetworkingSuggestion = {
-  __typename?: 'NetworkingSuggestion';
-  action: Scalars['String']['output'];
-  reasoning: Scalars['String']['output'];
-  target: Scalars['String']['output'];
 };
 
 export type OpportunitiesResult = {
@@ -1758,31 +1312,6 @@ export type Opportunity = {
   title: Scalars['String']['output'];
   updatedAt: Scalars['String']['output'];
   url: Maybe<Scalars['String']['output']>;
-};
-
-export type PrepCategory = {
-  __typename?: 'PrepCategory';
-  description: Scalars['String']['output'];
-  emoji: Scalars['String']['output'];
-  id: Scalars['String']['output'];
-  name: Scalars['String']['output'];
-  resources: Array<PrepResource>;
-};
-
-export type PrepContent = {
-  __typename?: 'PrepContent';
-  categories: Array<PrepCategory>;
-  totalResources: Scalars['Int']['output'];
-};
-
-export type PrepResource = {
-  __typename?: 'PrepResource';
-  category: Scalars['String']['output'];
-  description: Scalars['String']['output'];
-  href: Scalars['URL']['output'];
-  id: Scalars['String']['output'];
-  tags: Array<Scalars['String']['output']>;
-  title: Scalars['String']['output'];
 };
 
 /** Response from triggering the classify-jobs Cloudflare Worker */
@@ -1886,20 +1415,13 @@ export type Query = {
   myPromptUsage: Array<PromptUsage>;
   opportunities: OpportunitiesResult;
   opportunity: Maybe<Opportunity>;
-  prepResources: PrepContent;
-  prepResourcesByCategory: Array<PrepResource>;
   prompt: Maybe<Prompt>;
   prompts: Array<RegisteredPrompt>;
   resendEmail: Maybe<ResendEmailDetail>;
   resumeStatus: Maybe<ResumeStatus>;
-  studyCategories: Array<Scalars['String']['output']>;
-  studyTopic: Maybe<StudyTopic>;
-  studyTopics: Array<StudyTopic>;
   task: Maybe<Task>;
   tasks: TasksResult;
   textToSql: TextToSqlResult;
-  track: Maybe<Track>;
-  tracks: Array<Track>;
   userSettings: Maybe<UserSettings>;
 };
 
@@ -2055,11 +1577,6 @@ export type QueryOpportunityArgs = {
 };
 
 
-export type QueryPrepResourcesByCategoryArgs = {
-  category: Scalars['String']['input'];
-};
-
-
 export type QueryPromptArgs = {
   label?: InputMaybe<Scalars['String']['input']>;
   name: Scalars['String']['input'];
@@ -2074,17 +1591,6 @@ export type QueryResendEmailArgs = {
 
 export type QueryResumeStatusArgs = {
   email: Scalars['String']['input'];
-};
-
-
-export type QueryStudyTopicArgs = {
-  category: Scalars['String']['input'];
-  topic: Scalars['String']['input'];
-};
-
-
-export type QueryStudyTopicsArgs = {
-  category: Scalars['String']['input'];
 };
 
 
@@ -2106,16 +1612,6 @@ export type QueryTextToSqlArgs = {
 };
 
 
-export type QueryTrackArgs = {
-  slug: Scalars['String']['input'];
-};
-
-
-export type QueryTracksArgs = {
-  limit?: InputMaybe<Scalars['Int']['input']>;
-};
-
-
 export type QueryUserSettingsArgs = {
   userId: Scalars['String']['input'];
 };
@@ -2133,17 +1629,6 @@ export type QuestionAnswerInput = {
   questionText: Scalars['String']['input'];
 };
 
-export type QuizQuestion = {
-  __typename?: 'QuizQuestion';
-  correctIndex: Scalars['Int']['output'];
-  difficulty: Scalars['String']['output'];
-  explanation: Scalars['String']['output'];
-  id: Scalars['String']['output'];
-  options: Array<Scalars['String']['output']>;
-  question: Scalars['String']['output'];
-  topicKey: Scalars['String']['output'];
-};
-
 export type RegisteredPrompt = {
   __typename?: 'RegisteredPrompt';
   content: Maybe<Scalars['JSON']['output']>;
@@ -2156,15 +1641,6 @@ export type RegisteredPrompt = {
   type: Scalars['String']['output'];
   usageCount: Maybe<Scalars['Int']['output']>;
   versions: Array<Scalars['Int']['output']>;
-};
-
-export type ResearchItem = {
-  __typename?: 'ResearchItem';
-  id: Scalars['String']['output'];
-  relevance: Maybe<Scalars['String']['output']>;
-  summary: Scalars['String']['output'];
-  title: Scalars['String']['output'];
-  url: Scalars['URL']['output'];
 };
 
 export type ResendEmailDetail = {
@@ -2216,12 +1692,6 @@ export type ResumeUploadResult = {
   tier: Scalars['String']['output'];
 };
 
-export type RiskFactor = {
-  __typename?: 'RiskFactor';
-  mitigation: Scalars['String']['output'];
-  risk: Scalars['String']['output'];
-};
-
 export type SendEmailInput = {
   from?: InputMaybe<Scalars['String']['input']>;
   html: Scalars['String']['input'];
@@ -2237,30 +1707,6 @@ export type SendEmailResult = {
   error: Maybe<Scalars['String']['output']>;
   id: Maybe<Scalars['String']['output']>;
   success: Scalars['Boolean']['output'];
-};
-
-export type SessionType =
-  | 'flashcard'
-  | 'mock_interview'
-  | 'quiz'
-  | 'study';
-
-export type SkillGap = {
-  __typename?: 'SkillGap';
-  currentLevel: Scalars['String']['output'];
-  frequencyInJobs: Scalars['Int']['output'];
-  priority: Scalars['Int']['output'];
-  resources: Array<SkillGapResource>;
-  skill: Scalars['String']['output'];
-  targetLevel: Scalars['String']['output'];
-};
-
-export type SkillGapResource = {
-  __typename?: 'SkillGapResource';
-  estimatedHours: Scalars['Float']['output'];
-  title: Scalars['String']['output'];
-  type: Scalars['String']['output'];
-  url: Scalars['String']['output'];
 };
 
 export type SkillMatch = {
@@ -2293,35 +1739,6 @@ export type StackMutationResponse = {
   success: Scalars['Boolean']['output'];
 };
 
-export type StudyConceptExplanation = {
-  __typename?: 'StudyConceptExplanation';
-  createdAt: Scalars['DateTime']['output'];
-  explanation: Scalars['String']['output'];
-  id: Scalars['ID']['output'];
-  selectedText: Scalars['String']['output'];
-};
-
-export type StudyPlan = {
-  __typename?: 'StudyPlan';
-  generatedAt: Scalars['String']['output'];
-  recommendations: Array<Scalars['String']['output']>;
-  skillGaps: Array<SkillGap>;
-};
-
-export type StudyTopic = {
-  __typename?: 'StudyTopic';
-  bodyMd: Maybe<Scalars['String']['output']>;
-  category: Scalars['String']['output'];
-  createdAt: Scalars['DateTime']['output'];
-  deepDive: Maybe<Scalars['String']['output']>;
-  difficulty: Scalars['String']['output'];
-  id: Scalars['ID']['output'];
-  summary: Maybe<Scalars['String']['output']>;
-  tags: Array<Scalars['String']['output']>;
-  title: Scalars['String']['output'];
-  topic: Scalars['String']['output'];
-};
-
 export type Task = {
   __typename?: 'Task';
   completedAt: Maybe<Scalars['String']['output']>;
@@ -2351,43 +1768,6 @@ export type TextToSqlResult = {
   explanation: Maybe<Scalars['String']['output']>;
   rows: Array<Maybe<Array<Maybe<Scalars['JSON']['output']>>>>;
   sql: Scalars['String']['output'];
-};
-
-export type TopicMasteryEntry = {
-  __typename?: 'TopicMasteryEntry';
-  confidenceScore: Scalars['Float']['output'];
-  domain: LearningDomain;
-  lastQuizScore: Maybe<Scalars['Float']['output']>;
-  lastStudiedAt: Maybe<Scalars['String']['output']>;
-  masteryLevel: MasteryLevel;
-  nextReviewAt: Maybe<Scalars['String']['output']>;
-  streakDays: Scalars['Int']['output'];
-  topicKey: Scalars['String']['output'];
-  totalSessions: Scalars['Int']['output'];
-};
-
-export type Track = {
-  __typename?: 'Track';
-  description: Maybe<Scalars['String']['output']>;
-  id: Scalars['ID']['output'];
-  items: Array<TrackItem>;
-  level: Maybe<Scalars['String']['output']>;
-  slug: Scalars['String']['output'];
-  title: Scalars['String']['output'];
-};
-
-export type TrackItem = {
-  __typename?: 'TrackItem';
-  children: Array<TrackItem>;
-  contentRef: Maybe<Scalars['String']['output']>;
-  difficulty: Maybe<Scalars['Int']['output']>;
-  id: Scalars['ID']['output'];
-  kind: Scalars['String']['output'];
-  position: Scalars['Int']['output'];
-  prereqs: Array<Scalars['ID']['output']>;
-  promptRef: Maybe<Scalars['String']['output']>;
-  tags: Array<Scalars['String']['output']>;
-  title: Scalars['String']['output'];
 };
 
 export type UnverifyContactsResult = {
@@ -2548,11 +1928,6 @@ export type WarcPointerInput = {
   offset: Scalars['Int']['input'];
 };
 
-export type GetPrepResourcesQueryVariables = Exact<{ [key: string]: never; }>;
-
-
-export type GetPrepResourcesQuery = { __typename?: 'Query', prepResources: { __typename?: 'PrepContent', totalResources: number, categories: Array<{ __typename?: 'PrepCategory', id: string, name: string, emoji: string, description: string, resources: Array<{ __typename?: 'PrepResource', id: string, title: string, href: string, description: string, category: string, tags: Array<string> }> }> } };
-
 export type DeleteAllJobsMutationVariables = Exact<{ [key: string]: never; }>;
 
 
@@ -2636,28 +2011,26 @@ export type UpdateUserSettingsMutationVariables = Exact<{
 
 export type UpdateUserSettingsMutation = { __typename?: 'Mutation', updateUserSettings: { __typename?: 'UserSettings', id: number, user_id: string, email_notifications: boolean, daily_digest: boolean, new_job_alerts: boolean, preferred_locations: Array<string> | null, preferred_skills: Array<string> | null, excluded_companies: Array<string> | null, dark_mode: boolean, jobs_per_page: number, created_at: string, updated_at: string } };
 
-export type ApplicationFieldsFragment = { __typename?: 'Application', id: number, email: string, jobId: string, resume: File | null, status: ApplicationStatus, notes: string | null, jobTitle: string | null, companyName: string | null, companyKey: string | null, jobDescription: string | null, createdAt: string, questions: Array<{ __typename?: 'QuestionAnswer', questionId: string, questionText: string, answerText: string }>, interviewPrep: Array<{ __typename?: 'Track', id: string, slug: string, title: string, description: string | null, level: string | null }>, aiInterviewPrep: { __typename?: 'AIInterviewPrep', summary: string, generatedAt: string, requirements: Array<{ __typename?: 'AIInterviewPrepRequirement', requirement: string, questions: Array<string>, studyTopics: Array<string>, sourceQuote: string | null, deepDive: string | null, studyTopicDeepDives: Array<{ __typename?: 'AIStudyTopicDeepDive', topic: string, deepDive: string }> }> } | null, aiInterviewQuestions: { __typename?: 'AIInterviewQuestions', companyContext: string, recruiterGeneratedAt: string | null, technicalGeneratedAt: string | null, recruiterQuestions: Array<{ __typename?: 'AIInterviewQuestion', question: string, reason: string, category: string }>, technicalQuestions: Array<{ __typename?: 'AIInterviewQuestion', question: string, reason: string, category: string }> } | null, agenticCoding: { __typename?: 'AgenticCoding', overview: string, workflowPattern: string | null, qaApproach: string | null, teamPractices: string | null, generatedAt: string, exercises: Array<{ __typename?: 'AgenticCodingExercise', title: string, description: string, difficulty: string, skills: Array<string>, hints: Array<string>, agentPrompt: string }>, promptTemplates: Array<{ __typename?: 'AgenticCodingPromptTemplate', title: string, purpose: string, stackContext: string, prompt: string }> | null, failureModes: Array<{ __typename?: 'AgenticCodingFailureMode', scenario: string, why: string, alternative: string }> | null, measurableOutcomes: Array<{ __typename?: 'AgenticCodingOutcome', task: string, beforeTime: string, afterTime: string, improvement: string }> | null, resources: Array<{ __typename?: 'AgenticCodingResource', title: string, url: string, description: string }> } | null, aiBackendPrep: { __typename?: 'AIBackendPrep', generatedAt: string, systemDesign: { __typename?: 'BackendPrepSection', title: string, overview: string, keyConcepts: Array<string>, deepDive: string, commonPitfalls: Array<string>, talkingPoints: Array<string>, researchInsights: string | null, interviewQuestions: Array<{ __typename?: 'BackendPrepInterviewQuestion', question: string, idealAnswer: string, followUps: Array<string>, difficulty: string }>, codeExamples: Array<{ __typename?: 'BackendPrepCodeExample', title: string, language: string, code: string, explanation: string }> } | null, distributedSystems: { __typename?: 'BackendPrepSection', title: string, overview: string, keyConcepts: Array<string>, deepDive: string, commonPitfalls: Array<string>, talkingPoints: Array<string>, researchInsights: string | null, interviewQuestions: Array<{ __typename?: 'BackendPrepInterviewQuestion', question: string, idealAnswer: string, followUps: Array<string>, difficulty: string }>, codeExamples: Array<{ __typename?: 'BackendPrepCodeExample', title: string, language: string, code: string, explanation: string }> } | null, databaseDesign: { __typename?: 'BackendPrepSection', title: string, overview: string, keyConcepts: Array<string>, deepDive: string, commonPitfalls: Array<string>, talkingPoints: Array<string>, researchInsights: string | null, interviewQuestions: Array<{ __typename?: 'BackendPrepInterviewQuestion', question: string, idealAnswer: string, followUps: Array<string>, difficulty: string }>, codeExamples: Array<{ __typename?: 'BackendPrepCodeExample', title: string, language: string, code: string, explanation: string }> } | null, sqlOptimization: { __typename?: 'BackendPrepSection', title: string, overview: string, keyConcepts: Array<string>, deepDive: string, commonPitfalls: Array<string>, talkingPoints: Array<string>, researchInsights: string | null, interviewQuestions: Array<{ __typename?: 'BackendPrepInterviewQuestion', question: string, idealAnswer: string, followUps: Array<string>, difficulty: string }>, codeExamples: Array<{ __typename?: 'BackendPrepCodeExample', title: string, language: string, code: string, explanation: string }> } | null, nosqlPatterns: { __typename?: 'BackendPrepSection', title: string, overview: string, keyConcepts: Array<string>, deepDive: string, commonPitfalls: Array<string>, talkingPoints: Array<string>, researchInsights: string | null, interviewQuestions: Array<{ __typename?: 'BackendPrepInterviewQuestion', question: string, idealAnswer: string, followUps: Array<string>, difficulty: string }>, codeExamples: Array<{ __typename?: 'BackendPrepCodeExample', title: string, language: string, code: string, explanation: string }> } | null, apiDesign: { __typename?: 'BackendPrepSection', title: string, overview: string, keyConcepts: Array<string>, deepDive: string, commonPitfalls: Array<string>, talkingPoints: Array<string>, researchInsights: string | null, interviewQuestions: Array<{ __typename?: 'BackendPrepInterviewQuestion', question: string, idealAnswer: string, followUps: Array<string>, difficulty: string }>, codeExamples: Array<{ __typename?: 'BackendPrepCodeExample', title: string, language: string, code: string, explanation: string }> } | null, authSecurity: { __typename?: 'BackendPrepSection', title: string, overview: string, keyConcepts: Array<string>, deepDive: string, commonPitfalls: Array<string>, talkingPoints: Array<string>, researchInsights: string | null, interviewQuestions: Array<{ __typename?: 'BackendPrepInterviewQuestion', question: string, idealAnswer: string, followUps: Array<string>, difficulty: string }>, codeExamples: Array<{ __typename?: 'BackendPrepCodeExample', title: string, language: string, code: string, explanation: string }> } | null, caching: { __typename?: 'BackendPrepSection', title: string, overview: string, keyConcepts: Array<string>, deepDive: string, commonPitfalls: Array<string>, talkingPoints: Array<string>, researchInsights: string | null, interviewQuestions: Array<{ __typename?: 'BackendPrepInterviewQuestion', question: string, idealAnswer: string, followUps: Array<string>, difficulty: string }>, codeExamples: Array<{ __typename?: 'BackendPrepCodeExample', title: string, language: string, code: string, explanation: string }> } | null, messageQueues: { __typename?: 'BackendPrepSection', title: string, overview: string, keyConcepts: Array<string>, deepDive: string, commonPitfalls: Array<string>, talkingPoints: Array<string>, researchInsights: string | null, interviewQuestions: Array<{ __typename?: 'BackendPrepInterviewQuestion', question: string, idealAnswer: string, followUps: Array<string>, difficulty: string }>, codeExamples: Array<{ __typename?: 'BackendPrepCodeExample', title: string, language: string, code: string, explanation: string }> } | null, microservices: { __typename?: 'BackendPrepSection', title: string, overview: string, keyConcepts: Array<string>, deepDive: string, commonPitfalls: Array<string>, talkingPoints: Array<string>, researchInsights: string | null, interviewQuestions: Array<{ __typename?: 'BackendPrepInterviewQuestion', question: string, idealAnswer: string, followUps: Array<string>, difficulty: string }>, codeExamples: Array<{ __typename?: 'BackendPrepCodeExample', title: string, language: string, code: string, explanation: string }> } | null, testing: { __typename?: 'BackendPrepSection', title: string, overview: string, keyConcepts: Array<string>, deepDive: string, commonPitfalls: Array<string>, talkingPoints: Array<string>, researchInsights: string | null, interviewQuestions: Array<{ __typename?: 'BackendPrepInterviewQuestion', question: string, idealAnswer: string, followUps: Array<string>, difficulty: string }>, codeExamples: Array<{ __typename?: 'BackendPrepCodeExample', title: string, language: string, code: string, explanation: string }> } | null, devops: { __typename?: 'BackendPrepSection', title: string, overview: string, keyConcepts: Array<string>, deepDive: string, commonPitfalls: Array<string>, talkingPoints: Array<string>, researchInsights: string | null, interviewQuestions: Array<{ __typename?: 'BackendPrepInterviewQuestion', question: string, idealAnswer: string, followUps: Array<string>, difficulty: string }>, codeExamples: Array<{ __typename?: 'BackendPrepCodeExample', title: string, language: string, code: string, explanation: string }> } | null, securityOwasp: { __typename?: 'BackendPrepSection', title: string, overview: string, keyConcepts: Array<string>, deepDive: string, commonPitfalls: Array<string>, talkingPoints: Array<string>, researchInsights: string | null, interviewQuestions: Array<{ __typename?: 'BackendPrepInterviewQuestion', question: string, idealAnswer: string, followUps: Array<string>, difficulty: string }>, codeExamples: Array<{ __typename?: 'BackendPrepCodeExample', title: string, language: string, code: string, explanation: string }> } | null, performance: { __typename?: 'BackendPrepSection', title: string, overview: string, keyConcepts: Array<string>, deepDive: string, commonPitfalls: Array<string>, talkingPoints: Array<string>, researchInsights: string | null, interviewQuestions: Array<{ __typename?: 'BackendPrepInterviewQuestion', question: string, idealAnswer: string, followUps: Array<string>, difficulty: string }>, codeExamples: Array<{ __typename?: 'BackendPrepCodeExample', title: string, language: string, code: string, explanation: string }> } | null, concurrencyAsync: { __typename?: 'BackendPrepSection', title: string, overview: string, keyConcepts: Array<string>, deepDive: string, commonPitfalls: Array<string>, talkingPoints: Array<string>, researchInsights: string | null, interviewQuestions: Array<{ __typename?: 'BackendPrepInterviewQuestion', question: string, idealAnswer: string, followUps: Array<string>, difficulty: string }>, codeExamples: Array<{ __typename?: 'BackendPrepCodeExample', title: string, language: string, code: string, explanation: string }> } | null, observability: { __typename?: 'BackendPrepSection', title: string, overview: string, keyConcepts: Array<string>, deepDive: string, commonPitfalls: Array<string>, talkingPoints: Array<string>, researchInsights: string | null, interviewQuestions: Array<{ __typename?: 'BackendPrepInterviewQuestion', question: string, idealAnswer: string, followUps: Array<string>, difficulty: string }>, codeExamples: Array<{ __typename?: 'BackendPrepCodeExample', title: string, language: string, code: string, explanation: string }> } | null, eventDriven: { __typename?: 'BackendPrepSection', title: string, overview: string, keyConcepts: Array<string>, deepDive: string, commonPitfalls: Array<string>, talkingPoints: Array<string>, researchInsights: string | null, interviewQuestions: Array<{ __typename?: 'BackendPrepInterviewQuestion', question: string, idealAnswer: string, followUps: Array<string>, difficulty: string }>, codeExamples: Array<{ __typename?: 'BackendPrepCodeExample', title: string, language: string, code: string, explanation: string }> } | null, serverlessEdge: { __typename?: 'BackendPrepSection', title: string, overview: string, keyConcepts: Array<string>, deepDive: string, commonPitfalls: Array<string>, talkingPoints: Array<string>, researchInsights: string | null, interviewQuestions: Array<{ __typename?: 'BackendPrepInterviewQuestion', question: string, idealAnswer: string, followUps: Array<string>, difficulty: string }>, codeExamples: Array<{ __typename?: 'BackendPrepCodeExample', title: string, language: string, code: string, explanation: string }> } | null, typescriptNode: { __typename?: 'BackendPrepSection', title: string, overview: string, keyConcepts: Array<string>, deepDive: string, commonPitfalls: Array<string>, talkingPoints: Array<string>, researchInsights: string | null, interviewQuestions: Array<{ __typename?: 'BackendPrepInterviewQuestion', question: string, idealAnswer: string, followUps: Array<string>, difficulty: string }>, codeExamples: Array<{ __typename?: 'BackendPrepCodeExample', title: string, language: string, code: string, explanation: string }> } | null, aiMlIntegration: { __typename?: 'BackendPrepSection', title: string, overview: string, keyConcepts: Array<string>, deepDive: string, commonPitfalls: Array<string>, talkingPoints: Array<string>, researchInsights: string | null, interviewQuestions: Array<{ __typename?: 'BackendPrepInterviewQuestion', question: string, idealAnswer: string, followUps: Array<string>, difficulty: string }>, codeExamples: Array<{ __typename?: 'BackendPrepCodeExample', title: string, language: string, code: string, explanation: string }> } | null } | null, aiDeepResearch: { __typename?: 'AIDeepResearch', generatedAt: string, questions: Array<{ __typename?: 'DeepResearchQuestion', question: string, category: string, deepseek: { __typename?: 'DeepResearchModelResponse', model: string, content: string, reasoning: string | null }, qwen: { __typename?: 'DeepResearchModelResponse', model: string, content: string, reasoning: string | null } }> } | null };
-
-export type BackendPrepSectionFieldsFragment = { __typename?: 'BackendPrepSection', title: string, overview: string, keyConcepts: Array<string>, deepDive: string, commonPitfalls: Array<string>, talkingPoints: Array<string>, researchInsights: string | null, interviewQuestions: Array<{ __typename?: 'BackendPrepInterviewQuestion', question: string, idealAnswer: string, followUps: Array<string>, difficulty: string }>, codeExamples: Array<{ __typename?: 'BackendPrepCodeExample', title: string, language: string, code: string, explanation: string }> };
+export type ApplicationFieldsFragment = { __typename?: 'Application', id: number, email: string, jobId: string, resume: File | null, status: ApplicationStatus, notes: string | null, jobTitle: string | null, companyName: string | null, companyKey: string | null, jobDescription: string | null, createdAt: string, questions: Array<{ __typename?: 'QuestionAnswer', questionId: string, questionText: string, answerText: string }> };
 
 export type GetApplicationsQueryVariables = Exact<{ [key: string]: never; }>;
 
 
-export type GetApplicationsQuery = { __typename?: 'Query', applications: Array<{ __typename?: 'Application', id: number, email: string, jobId: string, resume: File | null, status: ApplicationStatus, notes: string | null, jobTitle: string | null, companyName: string | null, companyKey: string | null, jobDescription: string | null, createdAt: string, questions: Array<{ __typename?: 'QuestionAnswer', questionId: string, questionText: string, answerText: string }>, interviewPrep: Array<{ __typename?: 'Track', id: string, slug: string, title: string, description: string | null, level: string | null }>, aiInterviewPrep: { __typename?: 'AIInterviewPrep', summary: string, generatedAt: string, requirements: Array<{ __typename?: 'AIInterviewPrepRequirement', requirement: string, questions: Array<string>, studyTopics: Array<string>, sourceQuote: string | null, deepDive: string | null, studyTopicDeepDives: Array<{ __typename?: 'AIStudyTopicDeepDive', topic: string, deepDive: string }> }> } | null, aiInterviewQuestions: { __typename?: 'AIInterviewQuestions', companyContext: string, recruiterGeneratedAt: string | null, technicalGeneratedAt: string | null, recruiterQuestions: Array<{ __typename?: 'AIInterviewQuestion', question: string, reason: string, category: string }>, technicalQuestions: Array<{ __typename?: 'AIInterviewQuestion', question: string, reason: string, category: string }> } | null, agenticCoding: { __typename?: 'AgenticCoding', overview: string, workflowPattern: string | null, qaApproach: string | null, teamPractices: string | null, generatedAt: string, exercises: Array<{ __typename?: 'AgenticCodingExercise', title: string, description: string, difficulty: string, skills: Array<string>, hints: Array<string>, agentPrompt: string }>, promptTemplates: Array<{ __typename?: 'AgenticCodingPromptTemplate', title: string, purpose: string, stackContext: string, prompt: string }> | null, failureModes: Array<{ __typename?: 'AgenticCodingFailureMode', scenario: string, why: string, alternative: string }> | null, measurableOutcomes: Array<{ __typename?: 'AgenticCodingOutcome', task: string, beforeTime: string, afterTime: string, improvement: string }> | null, resources: Array<{ __typename?: 'AgenticCodingResource', title: string, url: string, description: string }> } | null, aiBackendPrep: { __typename?: 'AIBackendPrep', generatedAt: string, systemDesign: { __typename?: 'BackendPrepSection', title: string, overview: string, keyConcepts: Array<string>, deepDive: string, commonPitfalls: Array<string>, talkingPoints: Array<string>, researchInsights: string | null, interviewQuestions: Array<{ __typename?: 'BackendPrepInterviewQuestion', question: string, idealAnswer: string, followUps: Array<string>, difficulty: string }>, codeExamples: Array<{ __typename?: 'BackendPrepCodeExample', title: string, language: string, code: string, explanation: string }> } | null, distributedSystems: { __typename?: 'BackendPrepSection', title: string, overview: string, keyConcepts: Array<string>, deepDive: string, commonPitfalls: Array<string>, talkingPoints: Array<string>, researchInsights: string | null, interviewQuestions: Array<{ __typename?: 'BackendPrepInterviewQuestion', question: string, idealAnswer: string, followUps: Array<string>, difficulty: string }>, codeExamples: Array<{ __typename?: 'BackendPrepCodeExample', title: string, language: string, code: string, explanation: string }> } | null, databaseDesign: { __typename?: 'BackendPrepSection', title: string, overview: string, keyConcepts: Array<string>, deepDive: string, commonPitfalls: Array<string>, talkingPoints: Array<string>, researchInsights: string | null, interviewQuestions: Array<{ __typename?: 'BackendPrepInterviewQuestion', question: string, idealAnswer: string, followUps: Array<string>, difficulty: string }>, codeExamples: Array<{ __typename?: 'BackendPrepCodeExample', title: string, language: string, code: string, explanation: string }> } | null, sqlOptimization: { __typename?: 'BackendPrepSection', title: string, overview: string, keyConcepts: Array<string>, deepDive: string, commonPitfalls: Array<string>, talkingPoints: Array<string>, researchInsights: string | null, interviewQuestions: Array<{ __typename?: 'BackendPrepInterviewQuestion', question: string, idealAnswer: string, followUps: Array<string>, difficulty: string }>, codeExamples: Array<{ __typename?: 'BackendPrepCodeExample', title: string, language: string, code: string, explanation: string }> } | null, nosqlPatterns: { __typename?: 'BackendPrepSection', title: string, overview: string, keyConcepts: Array<string>, deepDive: string, commonPitfalls: Array<string>, talkingPoints: Array<string>, researchInsights: string | null, interviewQuestions: Array<{ __typename?: 'BackendPrepInterviewQuestion', question: string, idealAnswer: string, followUps: Array<string>, difficulty: string }>, codeExamples: Array<{ __typename?: 'BackendPrepCodeExample', title: string, language: string, code: string, explanation: string }> } | null, apiDesign: { __typename?: 'BackendPrepSection', title: string, overview: string, keyConcepts: Array<string>, deepDive: string, commonPitfalls: Array<string>, talkingPoints: Array<string>, researchInsights: string | null, interviewQuestions: Array<{ __typename?: 'BackendPrepInterviewQuestion', question: string, idealAnswer: string, followUps: Array<string>, difficulty: string }>, codeExamples: Array<{ __typename?: 'BackendPrepCodeExample', title: string, language: string, code: string, explanation: string }> } | null, authSecurity: { __typename?: 'BackendPrepSection', title: string, overview: string, keyConcepts: Array<string>, deepDive: string, commonPitfalls: Array<string>, talkingPoints: Array<string>, researchInsights: string | null, interviewQuestions: Array<{ __typename?: 'BackendPrepInterviewQuestion', question: string, idealAnswer: string, followUps: Array<string>, difficulty: string }>, codeExamples: Array<{ __typename?: 'BackendPrepCodeExample', title: string, language: string, code: string, explanation: string }> } | null, caching: { __typename?: 'BackendPrepSection', title: string, overview: string, keyConcepts: Array<string>, deepDive: string, commonPitfalls: Array<string>, talkingPoints: Array<string>, researchInsights: string | null, interviewQuestions: Array<{ __typename?: 'BackendPrepInterviewQuestion', question: string, idealAnswer: string, followUps: Array<string>, difficulty: string }>, codeExamples: Array<{ __typename?: 'BackendPrepCodeExample', title: string, language: string, code: string, explanation: string }> } | null, messageQueues: { __typename?: 'BackendPrepSection', title: string, overview: string, keyConcepts: Array<string>, deepDive: string, commonPitfalls: Array<string>, talkingPoints: Array<string>, researchInsights: string | null, interviewQuestions: Array<{ __typename?: 'BackendPrepInterviewQuestion', question: string, idealAnswer: string, followUps: Array<string>, difficulty: string }>, codeExamples: Array<{ __typename?: 'BackendPrepCodeExample', title: string, language: string, code: string, explanation: string }> } | null, microservices: { __typename?: 'BackendPrepSection', title: string, overview: string, keyConcepts: Array<string>, deepDive: string, commonPitfalls: Array<string>, talkingPoints: Array<string>, researchInsights: string | null, interviewQuestions: Array<{ __typename?: 'BackendPrepInterviewQuestion', question: string, idealAnswer: string, followUps: Array<string>, difficulty: string }>, codeExamples: Array<{ __typename?: 'BackendPrepCodeExample', title: string, language: string, code: string, explanation: string }> } | null, testing: { __typename?: 'BackendPrepSection', title: string, overview: string, keyConcepts: Array<string>, deepDive: string, commonPitfalls: Array<string>, talkingPoints: Array<string>, researchInsights: string | null, interviewQuestions: Array<{ __typename?: 'BackendPrepInterviewQuestion', question: string, idealAnswer: string, followUps: Array<string>, difficulty: string }>, codeExamples: Array<{ __typename?: 'BackendPrepCodeExample', title: string, language: string, code: string, explanation: string }> } | null, devops: { __typename?: 'BackendPrepSection', title: string, overview: string, keyConcepts: Array<string>, deepDive: string, commonPitfalls: Array<string>, talkingPoints: Array<string>, researchInsights: string | null, interviewQuestions: Array<{ __typename?: 'BackendPrepInterviewQuestion', question: string, idealAnswer: string, followUps: Array<string>, difficulty: string }>, codeExamples: Array<{ __typename?: 'BackendPrepCodeExample', title: string, language: string, code: string, explanation: string }> } | null, securityOwasp: { __typename?: 'BackendPrepSection', title: string, overview: string, keyConcepts: Array<string>, deepDive: string, commonPitfalls: Array<string>, talkingPoints: Array<string>, researchInsights: string | null, interviewQuestions: Array<{ __typename?: 'BackendPrepInterviewQuestion', question: string, idealAnswer: string, followUps: Array<string>, difficulty: string }>, codeExamples: Array<{ __typename?: 'BackendPrepCodeExample', title: string, language: string, code: string, explanation: string }> } | null, performance: { __typename?: 'BackendPrepSection', title: string, overview: string, keyConcepts: Array<string>, deepDive: string, commonPitfalls: Array<string>, talkingPoints: Array<string>, researchInsights: string | null, interviewQuestions: Array<{ __typename?: 'BackendPrepInterviewQuestion', question: string, idealAnswer: string, followUps: Array<string>, difficulty: string }>, codeExamples: Array<{ __typename?: 'BackendPrepCodeExample', title: string, language: string, code: string, explanation: string }> } | null, concurrencyAsync: { __typename?: 'BackendPrepSection', title: string, overview: string, keyConcepts: Array<string>, deepDive: string, commonPitfalls: Array<string>, talkingPoints: Array<string>, researchInsights: string | null, interviewQuestions: Array<{ __typename?: 'BackendPrepInterviewQuestion', question: string, idealAnswer: string, followUps: Array<string>, difficulty: string }>, codeExamples: Array<{ __typename?: 'BackendPrepCodeExample', title: string, language: string, code: string, explanation: string }> } | null, observability: { __typename?: 'BackendPrepSection', title: string, overview: string, keyConcepts: Array<string>, deepDive: string, commonPitfalls: Array<string>, talkingPoints: Array<string>, researchInsights: string | null, interviewQuestions: Array<{ __typename?: 'BackendPrepInterviewQuestion', question: string, idealAnswer: string, followUps: Array<string>, difficulty: string }>, codeExamples: Array<{ __typename?: 'BackendPrepCodeExample', title: string, language: string, code: string, explanation: string }> } | null, eventDriven: { __typename?: 'BackendPrepSection', title: string, overview: string, keyConcepts: Array<string>, deepDive: string, commonPitfalls: Array<string>, talkingPoints: Array<string>, researchInsights: string | null, interviewQuestions: Array<{ __typename?: 'BackendPrepInterviewQuestion', question: string, idealAnswer: string, followUps: Array<string>, difficulty: string }>, codeExamples: Array<{ __typename?: 'BackendPrepCodeExample', title: string, language: string, code: string, explanation: string }> } | null, serverlessEdge: { __typename?: 'BackendPrepSection', title: string, overview: string, keyConcepts: Array<string>, deepDive: string, commonPitfalls: Array<string>, talkingPoints: Array<string>, researchInsights: string | null, interviewQuestions: Array<{ __typename?: 'BackendPrepInterviewQuestion', question: string, idealAnswer: string, followUps: Array<string>, difficulty: string }>, codeExamples: Array<{ __typename?: 'BackendPrepCodeExample', title: string, language: string, code: string, explanation: string }> } | null, typescriptNode: { __typename?: 'BackendPrepSection', title: string, overview: string, keyConcepts: Array<string>, deepDive: string, commonPitfalls: Array<string>, talkingPoints: Array<string>, researchInsights: string | null, interviewQuestions: Array<{ __typename?: 'BackendPrepInterviewQuestion', question: string, idealAnswer: string, followUps: Array<string>, difficulty: string }>, codeExamples: Array<{ __typename?: 'BackendPrepCodeExample', title: string, language: string, code: string, explanation: string }> } | null, aiMlIntegration: { __typename?: 'BackendPrepSection', title: string, overview: string, keyConcepts: Array<string>, deepDive: string, commonPitfalls: Array<string>, talkingPoints: Array<string>, researchInsights: string | null, interviewQuestions: Array<{ __typename?: 'BackendPrepInterviewQuestion', question: string, idealAnswer: string, followUps: Array<string>, difficulty: string }>, codeExamples: Array<{ __typename?: 'BackendPrepCodeExample', title: string, language: string, code: string, explanation: string }> } | null } | null, aiDeepResearch: { __typename?: 'AIDeepResearch', generatedAt: string, questions: Array<{ __typename?: 'DeepResearchQuestion', question: string, category: string, deepseek: { __typename?: 'DeepResearchModelResponse', model: string, content: string, reasoning: string | null }, qwen: { __typename?: 'DeepResearchModelResponse', model: string, content: string, reasoning: string | null } }> } | null }> };
+export type GetApplicationsQuery = { __typename?: 'Query', applications: Array<{ __typename?: 'Application', id: number, email: string, jobId: string, resume: File | null, status: ApplicationStatus, notes: string | null, jobTitle: string | null, companyName: string | null, companyKey: string | null, jobDescription: string | null, createdAt: string, questions: Array<{ __typename?: 'QuestionAnswer', questionId: string, questionText: string, answerText: string }> }> };
 
 export type GetApplicationQueryVariables = Exact<{
   id: Scalars['Int']['input'];
 }>;
 
 
-export type GetApplicationQuery = { __typename?: 'Query', application: { __typename?: 'Application', id: number, email: string, jobId: string, resume: File | null, status: ApplicationStatus, notes: string | null, jobTitle: string | null, companyName: string | null, companyKey: string | null, jobDescription: string | null, createdAt: string, questions: Array<{ __typename?: 'QuestionAnswer', questionId: string, questionText: string, answerText: string }>, interviewPrep: Array<{ __typename?: 'Track', id: string, slug: string, title: string, description: string | null, level: string | null }>, aiInterviewPrep: { __typename?: 'AIInterviewPrep', summary: string, generatedAt: string, requirements: Array<{ __typename?: 'AIInterviewPrepRequirement', requirement: string, questions: Array<string>, studyTopics: Array<string>, sourceQuote: string | null, deepDive: string | null, studyTopicDeepDives: Array<{ __typename?: 'AIStudyTopicDeepDive', topic: string, deepDive: string }> }> } | null, aiInterviewQuestions: { __typename?: 'AIInterviewQuestions', companyContext: string, recruiterGeneratedAt: string | null, technicalGeneratedAt: string | null, recruiterQuestions: Array<{ __typename?: 'AIInterviewQuestion', question: string, reason: string, category: string }>, technicalQuestions: Array<{ __typename?: 'AIInterviewQuestion', question: string, reason: string, category: string }> } | null, agenticCoding: { __typename?: 'AgenticCoding', overview: string, workflowPattern: string | null, qaApproach: string | null, teamPractices: string | null, generatedAt: string, exercises: Array<{ __typename?: 'AgenticCodingExercise', title: string, description: string, difficulty: string, skills: Array<string>, hints: Array<string>, agentPrompt: string }>, promptTemplates: Array<{ __typename?: 'AgenticCodingPromptTemplate', title: string, purpose: string, stackContext: string, prompt: string }> | null, failureModes: Array<{ __typename?: 'AgenticCodingFailureMode', scenario: string, why: string, alternative: string }> | null, measurableOutcomes: Array<{ __typename?: 'AgenticCodingOutcome', task: string, beforeTime: string, afterTime: string, improvement: string }> | null, resources: Array<{ __typename?: 'AgenticCodingResource', title: string, url: string, description: string }> } | null, aiBackendPrep: { __typename?: 'AIBackendPrep', generatedAt: string, systemDesign: { __typename?: 'BackendPrepSection', title: string, overview: string, keyConcepts: Array<string>, deepDive: string, commonPitfalls: Array<string>, talkingPoints: Array<string>, researchInsights: string | null, interviewQuestions: Array<{ __typename?: 'BackendPrepInterviewQuestion', question: string, idealAnswer: string, followUps: Array<string>, difficulty: string }>, codeExamples: Array<{ __typename?: 'BackendPrepCodeExample', title: string, language: string, code: string, explanation: string }> } | null, distributedSystems: { __typename?: 'BackendPrepSection', title: string, overview: string, keyConcepts: Array<string>, deepDive: string, commonPitfalls: Array<string>, talkingPoints: Array<string>, researchInsights: string | null, interviewQuestions: Array<{ __typename?: 'BackendPrepInterviewQuestion', question: string, idealAnswer: string, followUps: Array<string>, difficulty: string }>, codeExamples: Array<{ __typename?: 'BackendPrepCodeExample', title: string, language: string, code: string, explanation: string }> } | null, databaseDesign: { __typename?: 'BackendPrepSection', title: string, overview: string, keyConcepts: Array<string>, deepDive: string, commonPitfalls: Array<string>, talkingPoints: Array<string>, researchInsights: string | null, interviewQuestions: Array<{ __typename?: 'BackendPrepInterviewQuestion', question: string, idealAnswer: string, followUps: Array<string>, difficulty: string }>, codeExamples: Array<{ __typename?: 'BackendPrepCodeExample', title: string, language: string, code: string, explanation: string }> } | null, sqlOptimization: { __typename?: 'BackendPrepSection', title: string, overview: string, keyConcepts: Array<string>, deepDive: string, commonPitfalls: Array<string>, talkingPoints: Array<string>, researchInsights: string | null, interviewQuestions: Array<{ __typename?: 'BackendPrepInterviewQuestion', question: string, idealAnswer: string, followUps: Array<string>, difficulty: string }>, codeExamples: Array<{ __typename?: 'BackendPrepCodeExample', title: string, language: string, code: string, explanation: string }> } | null, nosqlPatterns: { __typename?: 'BackendPrepSection', title: string, overview: string, keyConcepts: Array<string>, deepDive: string, commonPitfalls: Array<string>, talkingPoints: Array<string>, researchInsights: string | null, interviewQuestions: Array<{ __typename?: 'BackendPrepInterviewQuestion', question: string, idealAnswer: string, followUps: Array<string>, difficulty: string }>, codeExamples: Array<{ __typename?: 'BackendPrepCodeExample', title: string, language: string, code: string, explanation: string }> } | null, apiDesign: { __typename?: 'BackendPrepSection', title: string, overview: string, keyConcepts: Array<string>, deepDive: string, commonPitfalls: Array<string>, talkingPoints: Array<string>, researchInsights: string | null, interviewQuestions: Array<{ __typename?: 'BackendPrepInterviewQuestion', question: string, idealAnswer: string, followUps: Array<string>, difficulty: string }>, codeExamples: Array<{ __typename?: 'BackendPrepCodeExample', title: string, language: string, code: string, explanation: string }> } | null, authSecurity: { __typename?: 'BackendPrepSection', title: string, overview: string, keyConcepts: Array<string>, deepDive: string, commonPitfalls: Array<string>, talkingPoints: Array<string>, researchInsights: string | null, interviewQuestions: Array<{ __typename?: 'BackendPrepInterviewQuestion', question: string, idealAnswer: string, followUps: Array<string>, difficulty: string }>, codeExamples: Array<{ __typename?: 'BackendPrepCodeExample', title: string, language: string, code: string, explanation: string }> } | null, caching: { __typename?: 'BackendPrepSection', title: string, overview: string, keyConcepts: Array<string>, deepDive: string, commonPitfalls: Array<string>, talkingPoints: Array<string>, researchInsights: string | null, interviewQuestions: Array<{ __typename?: 'BackendPrepInterviewQuestion', question: string, idealAnswer: string, followUps: Array<string>, difficulty: string }>, codeExamples: Array<{ __typename?: 'BackendPrepCodeExample', title: string, language: string, code: string, explanation: string }> } | null, messageQueues: { __typename?: 'BackendPrepSection', title: string, overview: string, keyConcepts: Array<string>, deepDive: string, commonPitfalls: Array<string>, talkingPoints: Array<string>, researchInsights: string | null, interviewQuestions: Array<{ __typename?: 'BackendPrepInterviewQuestion', question: string, idealAnswer: string, followUps: Array<string>, difficulty: string }>, codeExamples: Array<{ __typename?: 'BackendPrepCodeExample', title: string, language: string, code: string, explanation: string }> } | null, microservices: { __typename?: 'BackendPrepSection', title: string, overview: string, keyConcepts: Array<string>, deepDive: string, commonPitfalls: Array<string>, talkingPoints: Array<string>, researchInsights: string | null, interviewQuestions: Array<{ __typename?: 'BackendPrepInterviewQuestion', question: string, idealAnswer: string, followUps: Array<string>, difficulty: string }>, codeExamples: Array<{ __typename?: 'BackendPrepCodeExample', title: string, language: string, code: string, explanation: string }> } | null, testing: { __typename?: 'BackendPrepSection', title: string, overview: string, keyConcepts: Array<string>, deepDive: string, commonPitfalls: Array<string>, talkingPoints: Array<string>, researchInsights: string | null, interviewQuestions: Array<{ __typename?: 'BackendPrepInterviewQuestion', question: string, idealAnswer: string, followUps: Array<string>, difficulty: string }>, codeExamples: Array<{ __typename?: 'BackendPrepCodeExample', title: string, language: string, code: string, explanation: string }> } | null, devops: { __typename?: 'BackendPrepSection', title: string, overview: string, keyConcepts: Array<string>, deepDive: string, commonPitfalls: Array<string>, talkingPoints: Array<string>, researchInsights: string | null, interviewQuestions: Array<{ __typename?: 'BackendPrepInterviewQuestion', question: string, idealAnswer: string, followUps: Array<string>, difficulty: string }>, codeExamples: Array<{ __typename?: 'BackendPrepCodeExample', title: string, language: string, code: string, explanation: string }> } | null, securityOwasp: { __typename?: 'BackendPrepSection', title: string, overview: string, keyConcepts: Array<string>, deepDive: string, commonPitfalls: Array<string>, talkingPoints: Array<string>, researchInsights: string | null, interviewQuestions: Array<{ __typename?: 'BackendPrepInterviewQuestion', question: string, idealAnswer: string, followUps: Array<string>, difficulty: string }>, codeExamples: Array<{ __typename?: 'BackendPrepCodeExample', title: string, language: string, code: string, explanation: string }> } | null, performance: { __typename?: 'BackendPrepSection', title: string, overview: string, keyConcepts: Array<string>, deepDive: string, commonPitfalls: Array<string>, talkingPoints: Array<string>, researchInsights: string | null, interviewQuestions: Array<{ __typename?: 'BackendPrepInterviewQuestion', question: string, idealAnswer: string, followUps: Array<string>, difficulty: string }>, codeExamples: Array<{ __typename?: 'BackendPrepCodeExample', title: string, language: string, code: string, explanation: string }> } | null, concurrencyAsync: { __typename?: 'BackendPrepSection', title: string, overview: string, keyConcepts: Array<string>, deepDive: string, commonPitfalls: Array<string>, talkingPoints: Array<string>, researchInsights: string | null, interviewQuestions: Array<{ __typename?: 'BackendPrepInterviewQuestion', question: string, idealAnswer: string, followUps: Array<string>, difficulty: string }>, codeExamples: Array<{ __typename?: 'BackendPrepCodeExample', title: string, language: string, code: string, explanation: string }> } | null, observability: { __typename?: 'BackendPrepSection', title: string, overview: string, keyConcepts: Array<string>, deepDive: string, commonPitfalls: Array<string>, talkingPoints: Array<string>, researchInsights: string | null, interviewQuestions: Array<{ __typename?: 'BackendPrepInterviewQuestion', question: string, idealAnswer: string, followUps: Array<string>, difficulty: string }>, codeExamples: Array<{ __typename?: 'BackendPrepCodeExample', title: string, language: string, code: string, explanation: string }> } | null, eventDriven: { __typename?: 'BackendPrepSection', title: string, overview: string, keyConcepts: Array<string>, deepDive: string, commonPitfalls: Array<string>, talkingPoints: Array<string>, researchInsights: string | null, interviewQuestions: Array<{ __typename?: 'BackendPrepInterviewQuestion', question: string, idealAnswer: string, followUps: Array<string>, difficulty: string }>, codeExamples: Array<{ __typename?: 'BackendPrepCodeExample', title: string, language: string, code: string, explanation: string }> } | null, serverlessEdge: { __typename?: 'BackendPrepSection', title: string, overview: string, keyConcepts: Array<string>, deepDive: string, commonPitfalls: Array<string>, talkingPoints: Array<string>, researchInsights: string | null, interviewQuestions: Array<{ __typename?: 'BackendPrepInterviewQuestion', question: string, idealAnswer: string, followUps: Array<string>, difficulty: string }>, codeExamples: Array<{ __typename?: 'BackendPrepCodeExample', title: string, language: string, code: string, explanation: string }> } | null, typescriptNode: { __typename?: 'BackendPrepSection', title: string, overview: string, keyConcepts: Array<string>, deepDive: string, commonPitfalls: Array<string>, talkingPoints: Array<string>, researchInsights: string | null, interviewQuestions: Array<{ __typename?: 'BackendPrepInterviewQuestion', question: string, idealAnswer: string, followUps: Array<string>, difficulty: string }>, codeExamples: Array<{ __typename?: 'BackendPrepCodeExample', title: string, language: string, code: string, explanation: string }> } | null, aiMlIntegration: { __typename?: 'BackendPrepSection', title: string, overview: string, keyConcepts: Array<string>, deepDive: string, commonPitfalls: Array<string>, talkingPoints: Array<string>, researchInsights: string | null, interviewQuestions: Array<{ __typename?: 'BackendPrepInterviewQuestion', question: string, idealAnswer: string, followUps: Array<string>, difficulty: string }>, codeExamples: Array<{ __typename?: 'BackendPrepCodeExample', title: string, language: string, code: string, explanation: string }> } | null } | null, aiDeepResearch: { __typename?: 'AIDeepResearch', generatedAt: string, questions: Array<{ __typename?: 'DeepResearchQuestion', question: string, category: string, deepseek: { __typename?: 'DeepResearchModelResponse', model: string, content: string, reasoning: string | null }, qwen: { __typename?: 'DeepResearchModelResponse', model: string, content: string, reasoning: string | null } }> } | null } | null };
+export type GetApplicationQuery = { __typename?: 'Query', application: { __typename?: 'Application', id: number, email: string, jobId: string, resume: File | null, status: ApplicationStatus, notes: string | null, jobTitle: string | null, companyName: string | null, companyKey: string | null, jobDescription: string | null, createdAt: string, questions: Array<{ __typename?: 'QuestionAnswer', questionId: string, questionText: string, answerText: string }> } | null };
 
 export type CreateApplicationMutationVariables = Exact<{
   input: ApplicationInput;
 }>;
 
 
-export type CreateApplicationMutation = { __typename?: 'Mutation', createApplication: { __typename?: 'Application', id: number, email: string, jobId: string, resume: File | null, status: ApplicationStatus, notes: string | null, jobTitle: string | null, companyName: string | null, companyKey: string | null, jobDescription: string | null, createdAt: string, questions: Array<{ __typename?: 'QuestionAnswer', questionId: string, questionText: string, answerText: string }>, interviewPrep: Array<{ __typename?: 'Track', id: string, slug: string, title: string, description: string | null, level: string | null }>, aiInterviewPrep: { __typename?: 'AIInterviewPrep', summary: string, generatedAt: string, requirements: Array<{ __typename?: 'AIInterviewPrepRequirement', requirement: string, questions: Array<string>, studyTopics: Array<string>, sourceQuote: string | null, deepDive: string | null, studyTopicDeepDives: Array<{ __typename?: 'AIStudyTopicDeepDive', topic: string, deepDive: string }> }> } | null, aiInterviewQuestions: { __typename?: 'AIInterviewQuestions', companyContext: string, recruiterGeneratedAt: string | null, technicalGeneratedAt: string | null, recruiterQuestions: Array<{ __typename?: 'AIInterviewQuestion', question: string, reason: string, category: string }>, technicalQuestions: Array<{ __typename?: 'AIInterviewQuestion', question: string, reason: string, category: string }> } | null, agenticCoding: { __typename?: 'AgenticCoding', overview: string, workflowPattern: string | null, qaApproach: string | null, teamPractices: string | null, generatedAt: string, exercises: Array<{ __typename?: 'AgenticCodingExercise', title: string, description: string, difficulty: string, skills: Array<string>, hints: Array<string>, agentPrompt: string }>, promptTemplates: Array<{ __typename?: 'AgenticCodingPromptTemplate', title: string, purpose: string, stackContext: string, prompt: string }> | null, failureModes: Array<{ __typename?: 'AgenticCodingFailureMode', scenario: string, why: string, alternative: string }> | null, measurableOutcomes: Array<{ __typename?: 'AgenticCodingOutcome', task: string, beforeTime: string, afterTime: string, improvement: string }> | null, resources: Array<{ __typename?: 'AgenticCodingResource', title: string, url: string, description: string }> } | null, aiBackendPrep: { __typename?: 'AIBackendPrep', generatedAt: string, systemDesign: { __typename?: 'BackendPrepSection', title: string, overview: string, keyConcepts: Array<string>, deepDive: string, commonPitfalls: Array<string>, talkingPoints: Array<string>, researchInsights: string | null, interviewQuestions: Array<{ __typename?: 'BackendPrepInterviewQuestion', question: string, idealAnswer: string, followUps: Array<string>, difficulty: string }>, codeExamples: Array<{ __typename?: 'BackendPrepCodeExample', title: string, language: string, code: string, explanation: string }> } | null, distributedSystems: { __typename?: 'BackendPrepSection', title: string, overview: string, keyConcepts: Array<string>, deepDive: string, commonPitfalls: Array<string>, talkingPoints: Array<string>, researchInsights: string | null, interviewQuestions: Array<{ __typename?: 'BackendPrepInterviewQuestion', question: string, idealAnswer: string, followUps: Array<string>, difficulty: string }>, codeExamples: Array<{ __typename?: 'BackendPrepCodeExample', title: string, language: string, code: string, explanation: string }> } | null, databaseDesign: { __typename?: 'BackendPrepSection', title: string, overview: string, keyConcepts: Array<string>, deepDive: string, commonPitfalls: Array<string>, talkingPoints: Array<string>, researchInsights: string | null, interviewQuestions: Array<{ __typename?: 'BackendPrepInterviewQuestion', question: string, idealAnswer: string, followUps: Array<string>, difficulty: string }>, codeExamples: Array<{ __typename?: 'BackendPrepCodeExample', title: string, language: string, code: string, explanation: string }> } | null, sqlOptimization: { __typename?: 'BackendPrepSection', title: string, overview: string, keyConcepts: Array<string>, deepDive: string, commonPitfalls: Array<string>, talkingPoints: Array<string>, researchInsights: string | null, interviewQuestions: Array<{ __typename?: 'BackendPrepInterviewQuestion', question: string, idealAnswer: string, followUps: Array<string>, difficulty: string }>, codeExamples: Array<{ __typename?: 'BackendPrepCodeExample', title: string, language: string, code: string, explanation: string }> } | null, nosqlPatterns: { __typename?: 'BackendPrepSection', title: string, overview: string, keyConcepts: Array<string>, deepDive: string, commonPitfalls: Array<string>, talkingPoints: Array<string>, researchInsights: string | null, interviewQuestions: Array<{ __typename?: 'BackendPrepInterviewQuestion', question: string, idealAnswer: string, followUps: Array<string>, difficulty: string }>, codeExamples: Array<{ __typename?: 'BackendPrepCodeExample', title: string, language: string, code: string, explanation: string }> } | null, apiDesign: { __typename?: 'BackendPrepSection', title: string, overview: string, keyConcepts: Array<string>, deepDive: string, commonPitfalls: Array<string>, talkingPoints: Array<string>, researchInsights: string | null, interviewQuestions: Array<{ __typename?: 'BackendPrepInterviewQuestion', question: string, idealAnswer: string, followUps: Array<string>, difficulty: string }>, codeExamples: Array<{ __typename?: 'BackendPrepCodeExample', title: string, language: string, code: string, explanation: string }> } | null, authSecurity: { __typename?: 'BackendPrepSection', title: string, overview: string, keyConcepts: Array<string>, deepDive: string, commonPitfalls: Array<string>, talkingPoints: Array<string>, researchInsights: string | null, interviewQuestions: Array<{ __typename?: 'BackendPrepInterviewQuestion', question: string, idealAnswer: string, followUps: Array<string>, difficulty: string }>, codeExamples: Array<{ __typename?: 'BackendPrepCodeExample', title: string, language: string, code: string, explanation: string }> } | null, caching: { __typename?: 'BackendPrepSection', title: string, overview: string, keyConcepts: Array<string>, deepDive: string, commonPitfalls: Array<string>, talkingPoints: Array<string>, researchInsights: string | null, interviewQuestions: Array<{ __typename?: 'BackendPrepInterviewQuestion', question: string, idealAnswer: string, followUps: Array<string>, difficulty: string }>, codeExamples: Array<{ __typename?: 'BackendPrepCodeExample', title: string, language: string, code: string, explanation: string }> } | null, messageQueues: { __typename?: 'BackendPrepSection', title: string, overview: string, keyConcepts: Array<string>, deepDive: string, commonPitfalls: Array<string>, talkingPoints: Array<string>, researchInsights: string | null, interviewQuestions: Array<{ __typename?: 'BackendPrepInterviewQuestion', question: string, idealAnswer: string, followUps: Array<string>, difficulty: string }>, codeExamples: Array<{ __typename?: 'BackendPrepCodeExample', title: string, language: string, code: string, explanation: string }> } | null, microservices: { __typename?: 'BackendPrepSection', title: string, overview: string, keyConcepts: Array<string>, deepDive: string, commonPitfalls: Array<string>, talkingPoints: Array<string>, researchInsights: string | null, interviewQuestions: Array<{ __typename?: 'BackendPrepInterviewQuestion', question: string, idealAnswer: string, followUps: Array<string>, difficulty: string }>, codeExamples: Array<{ __typename?: 'BackendPrepCodeExample', title: string, language: string, code: string, explanation: string }> } | null, testing: { __typename?: 'BackendPrepSection', title: string, overview: string, keyConcepts: Array<string>, deepDive: string, commonPitfalls: Array<string>, talkingPoints: Array<string>, researchInsights: string | null, interviewQuestions: Array<{ __typename?: 'BackendPrepInterviewQuestion', question: string, idealAnswer: string, followUps: Array<string>, difficulty: string }>, codeExamples: Array<{ __typename?: 'BackendPrepCodeExample', title: string, language: string, code: string, explanation: string }> } | null, devops: { __typename?: 'BackendPrepSection', title: string, overview: string, keyConcepts: Array<string>, deepDive: string, commonPitfalls: Array<string>, talkingPoints: Array<string>, researchInsights: string | null, interviewQuestions: Array<{ __typename?: 'BackendPrepInterviewQuestion', question: string, idealAnswer: string, followUps: Array<string>, difficulty: string }>, codeExamples: Array<{ __typename?: 'BackendPrepCodeExample', title: string, language: string, code: string, explanation: string }> } | null, securityOwasp: { __typename?: 'BackendPrepSection', title: string, overview: string, keyConcepts: Array<string>, deepDive: string, commonPitfalls: Array<string>, talkingPoints: Array<string>, researchInsights: string | null, interviewQuestions: Array<{ __typename?: 'BackendPrepInterviewQuestion', question: string, idealAnswer: string, followUps: Array<string>, difficulty: string }>, codeExamples: Array<{ __typename?: 'BackendPrepCodeExample', title: string, language: string, code: string, explanation: string }> } | null, performance: { __typename?: 'BackendPrepSection', title: string, overview: string, keyConcepts: Array<string>, deepDive: string, commonPitfalls: Array<string>, talkingPoints: Array<string>, researchInsights: string | null, interviewQuestions: Array<{ __typename?: 'BackendPrepInterviewQuestion', question: string, idealAnswer: string, followUps: Array<string>, difficulty: string }>, codeExamples: Array<{ __typename?: 'BackendPrepCodeExample', title: string, language: string, code: string, explanation: string }> } | null, concurrencyAsync: { __typename?: 'BackendPrepSection', title: string, overview: string, keyConcepts: Array<string>, deepDive: string, commonPitfalls: Array<string>, talkingPoints: Array<string>, researchInsights: string | null, interviewQuestions: Array<{ __typename?: 'BackendPrepInterviewQuestion', question: string, idealAnswer: string, followUps: Array<string>, difficulty: string }>, codeExamples: Array<{ __typename?: 'BackendPrepCodeExample', title: string, language: string, code: string, explanation: string }> } | null, observability: { __typename?: 'BackendPrepSection', title: string, overview: string, keyConcepts: Array<string>, deepDive: string, commonPitfalls: Array<string>, talkingPoints: Array<string>, researchInsights: string | null, interviewQuestions: Array<{ __typename?: 'BackendPrepInterviewQuestion', question: string, idealAnswer: string, followUps: Array<string>, difficulty: string }>, codeExamples: Array<{ __typename?: 'BackendPrepCodeExample', title: string, language: string, code: string, explanation: string }> } | null, eventDriven: { __typename?: 'BackendPrepSection', title: string, overview: string, keyConcepts: Array<string>, deepDive: string, commonPitfalls: Array<string>, talkingPoints: Array<string>, researchInsights: string | null, interviewQuestions: Array<{ __typename?: 'BackendPrepInterviewQuestion', question: string, idealAnswer: string, followUps: Array<string>, difficulty: string }>, codeExamples: Array<{ __typename?: 'BackendPrepCodeExample', title: string, language: string, code: string, explanation: string }> } | null, serverlessEdge: { __typename?: 'BackendPrepSection', title: string, overview: string, keyConcepts: Array<string>, deepDive: string, commonPitfalls: Array<string>, talkingPoints: Array<string>, researchInsights: string | null, interviewQuestions: Array<{ __typename?: 'BackendPrepInterviewQuestion', question: string, idealAnswer: string, followUps: Array<string>, difficulty: string }>, codeExamples: Array<{ __typename?: 'BackendPrepCodeExample', title: string, language: string, code: string, explanation: string }> } | null, typescriptNode: { __typename?: 'BackendPrepSection', title: string, overview: string, keyConcepts: Array<string>, deepDive: string, commonPitfalls: Array<string>, talkingPoints: Array<string>, researchInsights: string | null, interviewQuestions: Array<{ __typename?: 'BackendPrepInterviewQuestion', question: string, idealAnswer: string, followUps: Array<string>, difficulty: string }>, codeExamples: Array<{ __typename?: 'BackendPrepCodeExample', title: string, language: string, code: string, explanation: string }> } | null, aiMlIntegration: { __typename?: 'BackendPrepSection', title: string, overview: string, keyConcepts: Array<string>, deepDive: string, commonPitfalls: Array<string>, talkingPoints: Array<string>, researchInsights: string | null, interviewQuestions: Array<{ __typename?: 'BackendPrepInterviewQuestion', question: string, idealAnswer: string, followUps: Array<string>, difficulty: string }>, codeExamples: Array<{ __typename?: 'BackendPrepCodeExample', title: string, language: string, code: string, explanation: string }> } | null } | null, aiDeepResearch: { __typename?: 'AIDeepResearch', generatedAt: string, questions: Array<{ __typename?: 'DeepResearchQuestion', question: string, category: string, deepseek: { __typename?: 'DeepResearchModelResponse', model: string, content: string, reasoning: string | null }, qwen: { __typename?: 'DeepResearchModelResponse', model: string, content: string, reasoning: string | null } }> } | null } };
+export type CreateApplicationMutation = { __typename?: 'Mutation', createApplication: { __typename?: 'Application', id: number, email: string, jobId: string, resume: File | null, status: ApplicationStatus, notes: string | null, jobTitle: string | null, companyName: string | null, companyKey: string | null, jobDescription: string | null, createdAt: string, questions: Array<{ __typename?: 'QuestionAnswer', questionId: string, questionText: string, answerText: string }> } };
 
 export type UpdateApplicationMutationVariables = Exact<{
   id: Scalars['Int']['input'];
@@ -2667,100 +2040,12 @@ export type UpdateApplicationMutationVariables = Exact<{
 
 export type UpdateApplicationMutation = { __typename?: 'Mutation', updateApplication: { __typename?: 'Application', id: number, jobId: string, status: ApplicationStatus, notes: string | null, jobTitle: string | null, companyName: string | null, companyKey: string | null, jobDescription: string | null } };
 
-export type LinkTrackToApplicationMutationVariables = Exact<{
-  applicationId: Scalars['Int']['input'];
-  trackSlug: Scalars['String']['input'];
-}>;
-
-
-export type LinkTrackToApplicationMutation = { __typename?: 'Mutation', linkTrackToApplication: { __typename?: 'Application', id: number, interviewPrep: Array<{ __typename?: 'Track', id: string, slug: string, title: string, description: string | null, level: string | null }> } };
-
-export type UnlinkTrackFromApplicationMutationVariables = Exact<{
-  applicationId: Scalars['Int']['input'];
-  trackSlug: Scalars['String']['input'];
-}>;
-
-
-export type UnlinkTrackFromApplicationMutation = { __typename?: 'Mutation', unlinkTrackFromApplication: { __typename?: 'Application', id: number, interviewPrep: Array<{ __typename?: 'Track', id: string, slug: string, title: string, description: string | null, level: string | null }> } };
-
-export type GenerateInterviewPrepMutationVariables = Exact<{
-  applicationId: Scalars['Int']['input'];
-}>;
-
-
-export type GenerateInterviewPrepMutation = { __typename?: 'Mutation', generateInterviewPrep: { __typename?: 'Application', id: number, aiInterviewPrep: { __typename?: 'AIInterviewPrep', summary: string, generatedAt: string, requirements: Array<{ __typename?: 'AIInterviewPrepRequirement', requirement: string, questions: Array<string>, studyTopics: Array<string>, sourceQuote: string | null, deepDive: string | null, studyTopicDeepDives: Array<{ __typename?: 'AIStudyTopicDeepDive', topic: string, deepDive: string }> }> } | null } };
-
-export type GenerateTopicDeepDiveMutationVariables = Exact<{
-  applicationId: Scalars['Int']['input'];
-  requirement: Scalars['String']['input'];
-  force?: InputMaybe<Scalars['Boolean']['input']>;
-}>;
-
-
-export type GenerateTopicDeepDiveMutation = { __typename?: 'Mutation', generateTopicDeepDive: { __typename?: 'Application', id: number, aiInterviewPrep: { __typename?: 'AIInterviewPrep', summary: string, generatedAt: string, requirements: Array<{ __typename?: 'AIInterviewPrepRequirement', requirement: string, questions: Array<string>, studyTopics: Array<string>, sourceQuote: string | null, deepDive: string | null, studyTopicDeepDives: Array<{ __typename?: 'AIStudyTopicDeepDive', topic: string, deepDive: string }> }> } | null } };
-
-export type GenerateStudyTopicDeepDiveMutationVariables = Exact<{
-  applicationId: Scalars['Int']['input'];
-  requirement: Scalars['String']['input'];
-  studyTopic: Scalars['String']['input'];
-  force?: InputMaybe<Scalars['Boolean']['input']>;
-}>;
-
-
-export type GenerateStudyTopicDeepDiveMutation = { __typename?: 'Mutation', generateStudyTopicDeepDive: { __typename?: 'Application', id: number, aiInterviewPrep: { __typename?: 'AIInterviewPrep', summary: string, generatedAt: string, requirements: Array<{ __typename?: 'AIInterviewPrepRequirement', requirement: string, questions: Array<string>, studyTopics: Array<string>, sourceQuote: string | null, deepDive: string | null, studyTopicDeepDives: Array<{ __typename?: 'AIStudyTopicDeepDive', topic: string, deepDive: string }> }> } | null } };
-
-export type GenerateRequirementFromSelectionMutationVariables = Exact<{
-  applicationId: Scalars['Int']['input'];
-  selectedText: Scalars['String']['input'];
-}>;
-
-
-export type GenerateRequirementFromSelectionMutation = { __typename?: 'Mutation', generateRequirementFromSelection: { __typename?: 'Application', id: number, aiInterviewPrep: { __typename?: 'AIInterviewPrep', summary: string, generatedAt: string, requirements: Array<{ __typename?: 'AIInterviewPrepRequirement', requirement: string, questions: Array<string>, studyTopics: Array<string>, sourceQuote: string | null, deepDive: string | null, studyTopicDeepDives: Array<{ __typename?: 'AIStudyTopicDeepDive', topic: string, deepDive: string }> }> } | null } };
-
 export type DeleteApplicationMutationVariables = Exact<{
   id: Scalars['Int']['input'];
 }>;
 
 
 export type DeleteApplicationMutation = { __typename?: 'Mutation', deleteApplication: { __typename?: 'DeleteApplicationResponse', success: boolean, message: string | null } };
-
-export type LinkSelectionToRequirementMutationVariables = Exact<{
-  applicationId: Scalars['Int']['input'];
-  requirement: Scalars['String']['input'];
-  sourceQuote: Scalars['String']['input'];
-}>;
-
-
-export type LinkSelectionToRequirementMutation = { __typename?: 'Mutation', linkSelectionToRequirement: { __typename?: 'Application', id: number, aiInterviewPrep: { __typename?: 'AIInterviewPrep', summary: string, generatedAt: string, requirements: Array<{ __typename?: 'AIInterviewPrepRequirement', requirement: string, questions: Array<string>, studyTopics: Array<string>, sourceQuote: string | null, deepDive: string | null, studyTopicDeepDives: Array<{ __typename?: 'AIStudyTopicDeepDive', topic: string, deepDive: string }> }> } | null } };
-
-export type GenerateAgenticCodingMutationVariables = Exact<{
-  applicationId: Scalars['Int']['input'];
-}>;
-
-
-export type GenerateAgenticCodingMutation = { __typename?: 'Mutation', generateAgenticCoding: { __typename?: 'Application', id: number, agenticCoding: { __typename?: 'AgenticCoding', overview: string, workflowPattern: string | null, qaApproach: string | null, teamPractices: string | null, generatedAt: string, exercises: Array<{ __typename?: 'AgenticCodingExercise', title: string, description: string, difficulty: string, skills: Array<string>, hints: Array<string>, agentPrompt: string }>, promptTemplates: Array<{ __typename?: 'AgenticCodingPromptTemplate', title: string, purpose: string, stackContext: string, prompt: string }> | null, failureModes: Array<{ __typename?: 'AgenticCodingFailureMode', scenario: string, why: string, alternative: string }> | null, measurableOutcomes: Array<{ __typename?: 'AgenticCodingOutcome', task: string, beforeTime: string, afterTime: string, improvement: string }> | null, resources: Array<{ __typename?: 'AgenticCodingResource', title: string, url: string, description: string }> } | null } };
-
-export type GenerateBackendPrepMutationVariables = Exact<{
-  applicationId: Scalars['Int']['input'];
-}>;
-
-
-export type GenerateBackendPrepMutation = { __typename?: 'Mutation', generateBackendPrep: { __typename?: 'Application', id: number, aiBackendPrep: { __typename?: 'AIBackendPrep', generatedAt: string, systemDesign: { __typename?: 'BackendPrepSection', title: string, overview: string, keyConcepts: Array<string>, deepDive: string, commonPitfalls: Array<string>, talkingPoints: Array<string>, researchInsights: string | null, interviewQuestions: Array<{ __typename?: 'BackendPrepInterviewQuestion', question: string, idealAnswer: string, followUps: Array<string>, difficulty: string }>, codeExamples: Array<{ __typename?: 'BackendPrepCodeExample', title: string, language: string, code: string, explanation: string }> } | null, distributedSystems: { __typename?: 'BackendPrepSection', title: string, overview: string, keyConcepts: Array<string>, deepDive: string, commonPitfalls: Array<string>, talkingPoints: Array<string>, researchInsights: string | null, interviewQuestions: Array<{ __typename?: 'BackendPrepInterviewQuestion', question: string, idealAnswer: string, followUps: Array<string>, difficulty: string }>, codeExamples: Array<{ __typename?: 'BackendPrepCodeExample', title: string, language: string, code: string, explanation: string }> } | null, databaseDesign: { __typename?: 'BackendPrepSection', title: string, overview: string, keyConcepts: Array<string>, deepDive: string, commonPitfalls: Array<string>, talkingPoints: Array<string>, researchInsights: string | null, interviewQuestions: Array<{ __typename?: 'BackendPrepInterviewQuestion', question: string, idealAnswer: string, followUps: Array<string>, difficulty: string }>, codeExamples: Array<{ __typename?: 'BackendPrepCodeExample', title: string, language: string, code: string, explanation: string }> } | null, sqlOptimization: { __typename?: 'BackendPrepSection', title: string, overview: string, keyConcepts: Array<string>, deepDive: string, commonPitfalls: Array<string>, talkingPoints: Array<string>, researchInsights: string | null, interviewQuestions: Array<{ __typename?: 'BackendPrepInterviewQuestion', question: string, idealAnswer: string, followUps: Array<string>, difficulty: string }>, codeExamples: Array<{ __typename?: 'BackendPrepCodeExample', title: string, language: string, code: string, explanation: string }> } | null, nosqlPatterns: { __typename?: 'BackendPrepSection', title: string, overview: string, keyConcepts: Array<string>, deepDive: string, commonPitfalls: Array<string>, talkingPoints: Array<string>, researchInsights: string | null, interviewQuestions: Array<{ __typename?: 'BackendPrepInterviewQuestion', question: string, idealAnswer: string, followUps: Array<string>, difficulty: string }>, codeExamples: Array<{ __typename?: 'BackendPrepCodeExample', title: string, language: string, code: string, explanation: string }> } | null, apiDesign: { __typename?: 'BackendPrepSection', title: string, overview: string, keyConcepts: Array<string>, deepDive: string, commonPitfalls: Array<string>, talkingPoints: Array<string>, researchInsights: string | null, interviewQuestions: Array<{ __typename?: 'BackendPrepInterviewQuestion', question: string, idealAnswer: string, followUps: Array<string>, difficulty: string }>, codeExamples: Array<{ __typename?: 'BackendPrepCodeExample', title: string, language: string, code: string, explanation: string }> } | null, authSecurity: { __typename?: 'BackendPrepSection', title: string, overview: string, keyConcepts: Array<string>, deepDive: string, commonPitfalls: Array<string>, talkingPoints: Array<string>, researchInsights: string | null, interviewQuestions: Array<{ __typename?: 'BackendPrepInterviewQuestion', question: string, idealAnswer: string, followUps: Array<string>, difficulty: string }>, codeExamples: Array<{ __typename?: 'BackendPrepCodeExample', title: string, language: string, code: string, explanation: string }> } | null, caching: { __typename?: 'BackendPrepSection', title: string, overview: string, keyConcepts: Array<string>, deepDive: string, commonPitfalls: Array<string>, talkingPoints: Array<string>, researchInsights: string | null, interviewQuestions: Array<{ __typename?: 'BackendPrepInterviewQuestion', question: string, idealAnswer: string, followUps: Array<string>, difficulty: string }>, codeExamples: Array<{ __typename?: 'BackendPrepCodeExample', title: string, language: string, code: string, explanation: string }> } | null, messageQueues: { __typename?: 'BackendPrepSection', title: string, overview: string, keyConcepts: Array<string>, deepDive: string, commonPitfalls: Array<string>, talkingPoints: Array<string>, researchInsights: string | null, interviewQuestions: Array<{ __typename?: 'BackendPrepInterviewQuestion', question: string, idealAnswer: string, followUps: Array<string>, difficulty: string }>, codeExamples: Array<{ __typename?: 'BackendPrepCodeExample', title: string, language: string, code: string, explanation: string }> } | null, microservices: { __typename?: 'BackendPrepSection', title: string, overview: string, keyConcepts: Array<string>, deepDive: string, commonPitfalls: Array<string>, talkingPoints: Array<string>, researchInsights: string | null, interviewQuestions: Array<{ __typename?: 'BackendPrepInterviewQuestion', question: string, idealAnswer: string, followUps: Array<string>, difficulty: string }>, codeExamples: Array<{ __typename?: 'BackendPrepCodeExample', title: string, language: string, code: string, explanation: string }> } | null, testing: { __typename?: 'BackendPrepSection', title: string, overview: string, keyConcepts: Array<string>, deepDive: string, commonPitfalls: Array<string>, talkingPoints: Array<string>, researchInsights: string | null, interviewQuestions: Array<{ __typename?: 'BackendPrepInterviewQuestion', question: string, idealAnswer: string, followUps: Array<string>, difficulty: string }>, codeExamples: Array<{ __typename?: 'BackendPrepCodeExample', title: string, language: string, code: string, explanation: string }> } | null, devops: { __typename?: 'BackendPrepSection', title: string, overview: string, keyConcepts: Array<string>, deepDive: string, commonPitfalls: Array<string>, talkingPoints: Array<string>, researchInsights: string | null, interviewQuestions: Array<{ __typename?: 'BackendPrepInterviewQuestion', question: string, idealAnswer: string, followUps: Array<string>, difficulty: string }>, codeExamples: Array<{ __typename?: 'BackendPrepCodeExample', title: string, language: string, code: string, explanation: string }> } | null, securityOwasp: { __typename?: 'BackendPrepSection', title: string, overview: string, keyConcepts: Array<string>, deepDive: string, commonPitfalls: Array<string>, talkingPoints: Array<string>, researchInsights: string | null, interviewQuestions: Array<{ __typename?: 'BackendPrepInterviewQuestion', question: string, idealAnswer: string, followUps: Array<string>, difficulty: string }>, codeExamples: Array<{ __typename?: 'BackendPrepCodeExample', title: string, language: string, code: string, explanation: string }> } | null, performance: { __typename?: 'BackendPrepSection', title: string, overview: string, keyConcepts: Array<string>, deepDive: string, commonPitfalls: Array<string>, talkingPoints: Array<string>, researchInsights: string | null, interviewQuestions: Array<{ __typename?: 'BackendPrepInterviewQuestion', question: string, idealAnswer: string, followUps: Array<string>, difficulty: string }>, codeExamples: Array<{ __typename?: 'BackendPrepCodeExample', title: string, language: string, code: string, explanation: string }> } | null, concurrencyAsync: { __typename?: 'BackendPrepSection', title: string, overview: string, keyConcepts: Array<string>, deepDive: string, commonPitfalls: Array<string>, talkingPoints: Array<string>, researchInsights: string | null, interviewQuestions: Array<{ __typename?: 'BackendPrepInterviewQuestion', question: string, idealAnswer: string, followUps: Array<string>, difficulty: string }>, codeExamples: Array<{ __typename?: 'BackendPrepCodeExample', title: string, language: string, code: string, explanation: string }> } | null, observability: { __typename?: 'BackendPrepSection', title: string, overview: string, keyConcepts: Array<string>, deepDive: string, commonPitfalls: Array<string>, talkingPoints: Array<string>, researchInsights: string | null, interviewQuestions: Array<{ __typename?: 'BackendPrepInterviewQuestion', question: string, idealAnswer: string, followUps: Array<string>, difficulty: string }>, codeExamples: Array<{ __typename?: 'BackendPrepCodeExample', title: string, language: string, code: string, explanation: string }> } | null, eventDriven: { __typename?: 'BackendPrepSection', title: string, overview: string, keyConcepts: Array<string>, deepDive: string, commonPitfalls: Array<string>, talkingPoints: Array<string>, researchInsights: string | null, interviewQuestions: Array<{ __typename?: 'BackendPrepInterviewQuestion', question: string, idealAnswer: string, followUps: Array<string>, difficulty: string }>, codeExamples: Array<{ __typename?: 'BackendPrepCodeExample', title: string, language: string, code: string, explanation: string }> } | null, serverlessEdge: { __typename?: 'BackendPrepSection', title: string, overview: string, keyConcepts: Array<string>, deepDive: string, commonPitfalls: Array<string>, talkingPoints: Array<string>, researchInsights: string | null, interviewQuestions: Array<{ __typename?: 'BackendPrepInterviewQuestion', question: string, idealAnswer: string, followUps: Array<string>, difficulty: string }>, codeExamples: Array<{ __typename?: 'BackendPrepCodeExample', title: string, language: string, code: string, explanation: string }> } | null, typescriptNode: { __typename?: 'BackendPrepSection', title: string, overview: string, keyConcepts: Array<string>, deepDive: string, commonPitfalls: Array<string>, talkingPoints: Array<string>, researchInsights: string | null, interviewQuestions: Array<{ __typename?: 'BackendPrepInterviewQuestion', question: string, idealAnswer: string, followUps: Array<string>, difficulty: string }>, codeExamples: Array<{ __typename?: 'BackendPrepCodeExample', title: string, language: string, code: string, explanation: string }> } | null, aiMlIntegration: { __typename?: 'BackendPrepSection', title: string, overview: string, keyConcepts: Array<string>, deepDive: string, commonPitfalls: Array<string>, talkingPoints: Array<string>, researchInsights: string | null, interviewQuestions: Array<{ __typename?: 'BackendPrepInterviewQuestion', question: string, idealAnswer: string, followUps: Array<string>, difficulty: string }>, codeExamples: Array<{ __typename?: 'BackendPrepCodeExample', title: string, language: string, code: string, explanation: string }> } | null } | null } };
-
-export type GenerateDeepResearchMutationVariables = Exact<{
-  applicationId: Scalars['Int']['input'];
-}>;
-
-
-export type GenerateDeepResearchMutation = { __typename?: 'Mutation', generateDeepResearch: { __typename?: 'Application', id: number, aiDeepResearch: { __typename?: 'AIDeepResearch', generatedAt: string, questions: Array<{ __typename?: 'DeepResearchQuestion', question: string, category: string, deepseek: { __typename?: 'DeepResearchModelResponse', model: string, content: string, reasoning: string | null }, qwen: { __typename?: 'DeepResearchModelResponse', model: string, content: string, reasoning: string | null } }> } | null } };
-
-export type GenerateInterviewQuestionsMutationVariables = Exact<{
-  applicationId: Scalars['Int']['input'];
-  type: Scalars['String']['input'];
-}>;
-
-
-export type GenerateInterviewQuestionsMutation = { __typename?: 'Mutation', generateInterviewQuestions: { __typename?: 'Application', id: number, aiInterviewQuestions: { __typename?: 'AIInterviewQuestions', companyContext: string, recruiterGeneratedAt: string | null, technicalGeneratedAt: string | null, recruiterQuestions: Array<{ __typename?: 'AIInterviewQuestion', question: string, reason: string, category: string }>, technicalQuestions: Array<{ __typename?: 'AIInterviewQuestion', question: string, reason: string, category: string }> } | null } };
 
 export type GetBlockedCompaniesQueryVariables = Exact<{ [key: string]: never; }>;
 
@@ -3298,63 +2583,6 @@ export type AskAboutResumeQueryVariables = Exact<{
 
 export type AskAboutResumeQuery = { __typename?: 'Query', askAboutResume: { __typename?: 'ResumeAnswer', answer: string, context_count: number } | null };
 
-export type StudyCategoriesQueryVariables = Exact<{ [key: string]: never; }>;
-
-
-export type StudyCategoriesQuery = { __typename?: 'Query', studyCategories: Array<string> };
-
-export type StudyTopicQueryVariables = Exact<{
-  category: Scalars['String']['input'];
-  topic: Scalars['String']['input'];
-}>;
-
-
-export type StudyTopicQuery = { __typename?: 'Query', studyTopic: { __typename?: 'StudyTopic', id: string, category: string, topic: string, title: string, summary: string | null, bodyMd: string | null, deepDive: string | null, difficulty: string, tags: Array<string>, createdAt: string } | null };
-
-export type StudyTopicsQueryVariables = Exact<{
-  category: Scalars['String']['input'];
-}>;
-
-
-export type StudyTopicsQuery = { __typename?: 'Query', studyTopics: Array<{ __typename?: 'StudyTopic', id: string, topic: string, title: string, summary: string | null, difficulty: string, tags: Array<string> }> };
-
-export type CreateStudyTopicMutationVariables = Exact<{
-  category?: InputMaybe<Scalars['String']['input']>;
-  topic?: InputMaybe<Scalars['String']['input']>;
-  title?: InputMaybe<Scalars['String']['input']>;
-  summary?: InputMaybe<Scalars['String']['input']>;
-  difficulty?: InputMaybe<Scalars['String']['input']>;
-  tags?: InputMaybe<Array<Scalars['String']['input']> | Scalars['String']['input']>;
-}>;
-
-
-export type CreateStudyTopicMutation = { __typename?: 'Mutation', createStudyTopic: { __typename?: 'StudyTopic', id: string, category: string, topic: string, title: string, summary: string | null, difficulty: string, tags: Array<string>, createdAt: string } };
-
-export type GenerateStudyConceptExplanationMutationVariables = Exact<{
-  studyTopicId: Scalars['ID']['input'];
-  selectedText: Scalars['String']['input'];
-  context?: InputMaybe<Scalars['String']['input']>;
-}>;
-
-
-export type GenerateStudyConceptExplanationMutation = { __typename?: 'Mutation', generateStudyConceptExplanation: { __typename?: 'StudyConceptExplanation', id: string, selectedText: string, explanation: string, createdAt: string } };
-
-export type GenerateStudyDeepDiveMutationVariables = Exact<{
-  studyTopicId: Scalars['ID']['input'];
-  force?: InputMaybe<Scalars['Boolean']['input']>;
-}>;
-
-
-export type GenerateStudyDeepDiveMutation = { __typename?: 'Mutation', generateStudyDeepDive: { __typename?: 'StudyTopic', id: string, deepDive: string | null } };
-
-export type GenerateStudyTopicsForCategoryMutationVariables = Exact<{
-  category: Scalars['String']['input'];
-  count?: InputMaybe<Scalars['Int']['input']>;
-}>;
-
-
-export type GenerateStudyTopicsForCategoryMutation = { __typename?: 'Mutation', generateStudyTopicsForCategory: Array<{ __typename?: 'StudyTopic', id: string, topic: string, title: string, summary: string | null, difficulty: string, tags: Array<string> }> };
-
 export type GetTasksQueryVariables = Exact<{
   status?: InputMaybe<Scalars['String']['input']>;
   priority?: InputMaybe<Scalars['String']['input']>;
@@ -3401,64 +2629,6 @@ export type DeleteTaskMutationVariables = Exact<{
 
 export type DeleteTaskMutation = { __typename?: 'Mutation', deleteTask: { __typename?: 'DeleteTaskResult', success: boolean, message: string | null } };
 
-export type GenerateResearchMutationVariables = Exact<{
-  goalDescription: Scalars['String']['input'];
-}>;
-
-
-export type GenerateResearchMutation = { __typename?: 'Mutation', generateResearch: Array<{ __typename?: 'ResearchItem', id: string, title: string, url: string, summary: string, relevance: string | null }> };
-
-export type CreateTrackMutationVariables = Exact<{
-  input: CreateTrackInput;
-}>;
-
-
-export type CreateTrackMutation = { __typename?: 'Mutation', createTrack: { __typename?: 'Track', id: string, slug: string, title: string, description: string | null, level: string | null, items: Array<{ __typename?: 'TrackItem', id: string }> } };
-
-export type GetTracksQueryVariables = Exact<{
-  limit?: InputMaybe<Scalars['Int']['input']>;
-}>;
-
-
-export type GetTracksQuery = { __typename?: 'Query', tracks: Array<{ __typename?: 'Track', id: string, slug: string, title: string, description: string | null, level: string | null, items: Array<{ __typename?: 'TrackItem', id: string, kind: string, title: string, position: number, contentRef: string | null, promptRef: string | null, difficulty: number | null, tags: Array<string>, prereqs: Array<string>, children: Array<{ __typename?: 'TrackItem', id: string, kind: string, title: string, position: number, contentRef: string | null, promptRef: string | null, difficulty: number | null, tags: Array<string>, prereqs: Array<string> }> }> }> };
-
-export type GetTrackQueryVariables = Exact<{
-  slug: Scalars['String']['input'];
-}>;
-
-
-export type GetTrackQuery = { __typename?: 'Query', track: { __typename?: 'Track', id: string, slug: string, title: string, description: string | null, level: string | null, items: Array<{ __typename?: 'TrackItem', id: string, kind: string, title: string, position: number, contentRef: string | null, promptRef: string | null, difficulty: number | null, tags: Array<string>, prereqs: Array<string>, children: Array<{ __typename?: 'TrackItem', id: string, kind: string, title: string, position: number, contentRef: string | null, promptRef: string | null, difficulty: number | null, tags: Array<string>, prereqs: Array<string>, children: Array<{ __typename?: 'TrackItem', id: string, kind: string, title: string, position: number, contentRef: string | null, promptRef: string | null, difficulty: number | null, tags: Array<string>, prereqs: Array<string> }> }> }> } | null };
-
-export type GetPrepResourcesByCategoryQueryVariables = Exact<{
-  category: Scalars['String']['input'];
-}>;
-
-
-export type GetPrepResourcesByCategoryQuery = { __typename?: 'Query', prepResourcesByCategory: Array<{ __typename?: 'PrepResource', id: string, title: string, href: string, description: string, category: string, tags: Array<string> }> };
-
-export const BackendPrepSectionFieldsFragmentDoc = gql`
-    fragment BackendPrepSectionFields on BackendPrepSection {
-  title
-  overview
-  keyConcepts
-  deepDive
-  interviewQuestions {
-    question
-    idealAnswer
-    followUps
-    difficulty
-  }
-  codeExamples {
-    title
-    language
-    code
-    explanation
-  }
-  commonPitfalls
-  talkingPoints
-  researchInsights
-}
-    `;
 export const ApplicationFieldsFragmentDoc = gql`
     fragment ApplicationFields on Application {
   id
@@ -3477,162 +2647,8 @@ export const ApplicationFieldsFragmentDoc = gql`
   companyKey
   jobDescription
   createdAt
-  interviewPrep {
-    id
-    slug
-    title
-    description
-    level
-  }
-  aiInterviewPrep {
-    summary
-    requirements {
-      requirement
-      questions
-      studyTopics
-      studyTopicDeepDives {
-        topic
-        deepDive
-      }
-      sourceQuote
-      deepDive
-    }
-    generatedAt
-  }
-  aiInterviewQuestions {
-    companyContext
-    recruiterQuestions {
-      question
-      reason
-      category
-    }
-    technicalQuestions {
-      question
-      reason
-      category
-    }
-    recruiterGeneratedAt
-    technicalGeneratedAt
-  }
-  agenticCoding {
-    overview
-    workflowPattern
-    exercises {
-      title
-      description
-      difficulty
-      skills
-      hints
-      agentPrompt
-    }
-    promptTemplates {
-      title
-      purpose
-      stackContext
-      prompt
-    }
-    qaApproach
-    failureModes {
-      scenario
-      why
-      alternative
-    }
-    teamPractices
-    measurableOutcomes {
-      task
-      beforeTime
-      afterTime
-      improvement
-    }
-    resources {
-      title
-      url
-      description
-    }
-    generatedAt
-  }
-  aiBackendPrep {
-    systemDesign {
-      ...BackendPrepSectionFields
-    }
-    distributedSystems {
-      ...BackendPrepSectionFields
-    }
-    databaseDesign {
-      ...BackendPrepSectionFields
-    }
-    sqlOptimization {
-      ...BackendPrepSectionFields
-    }
-    nosqlPatterns {
-      ...BackendPrepSectionFields
-    }
-    apiDesign {
-      ...BackendPrepSectionFields
-    }
-    authSecurity {
-      ...BackendPrepSectionFields
-    }
-    caching {
-      ...BackendPrepSectionFields
-    }
-    messageQueues {
-      ...BackendPrepSectionFields
-    }
-    microservices {
-      ...BackendPrepSectionFields
-    }
-    testing {
-      ...BackendPrepSectionFields
-    }
-    devops {
-      ...BackendPrepSectionFields
-    }
-    securityOwasp {
-      ...BackendPrepSectionFields
-    }
-    performance {
-      ...BackendPrepSectionFields
-    }
-    concurrencyAsync {
-      ...BackendPrepSectionFields
-    }
-    observability {
-      ...BackendPrepSectionFields
-    }
-    eventDriven {
-      ...BackendPrepSectionFields
-    }
-    serverlessEdge {
-      ...BackendPrepSectionFields
-    }
-    typescriptNode {
-      ...BackendPrepSectionFields
-    }
-    aiMlIntegration {
-      ...BackendPrepSectionFields
-    }
-    generatedAt
-  }
-  aiDeepResearch {
-    questions {
-      question
-      category
-      deepseek {
-        model
-        content
-        reasoning
-      }
-      qwen {
-        model
-        content
-        reasoning
-      }
-    }
-    generatedAt
-  }
 }
-    ${BackendPrepSectionFieldsFragmentDoc}`;
+    `;
 export const EvidenceFieldsFragmentDoc = gql`
     fragment EvidenceFields on Evidence {
   source_type
@@ -3744,62 +2760,6 @@ export const CompanyFieldsFragmentDoc = gql`
   }
 }
     ${AtsBoardFieldsFragmentDoc}`;
-export const GetPrepResourcesDocument = gql`
-    query GetPrepResources {
-  prepResources {
-    categories {
-      id
-      name
-      emoji
-      description
-      resources {
-        id
-        title
-        href
-        description
-        category
-        tags
-      }
-    }
-    totalResources
-  }
-}
-    `;
-
-/**
- * __useGetPrepResourcesQuery__
- *
- * To run a query within a React component, call `useGetPrepResourcesQuery` and pass it any options that fit your needs.
- * When your component renders, `useGetPrepResourcesQuery` returns an object from Apollo Client that contains loading, error, and data properties
- * you can use to render your UI.
- *
- * @param baseOptions options that will be passed into the query, supported options are listed on: https://www.apollographql.com/docs/react/api/react-hooks/#options;
- *
- * @example
- * const { data, loading, error } = useGetPrepResourcesQuery({
- *   variables: {
- *   },
- * });
- */
-export function useGetPrepResourcesQuery(baseOptions?: Apollo.QueryHookOptions<GetPrepResourcesQuery, GetPrepResourcesQueryVariables>) {
-        const options = {...defaultOptions, ...baseOptions}
-        return Apollo.useQuery<GetPrepResourcesQuery, GetPrepResourcesQueryVariables>(GetPrepResourcesDocument, options);
-      }
-export function useGetPrepResourcesLazyQuery(baseOptions?: Apollo.LazyQueryHookOptions<GetPrepResourcesQuery, GetPrepResourcesQueryVariables>) {
-          const options = {...defaultOptions, ...baseOptions}
-          return Apollo.useLazyQuery<GetPrepResourcesQuery, GetPrepResourcesQueryVariables>(GetPrepResourcesDocument, options);
-        }
-// @ts-ignore
-export function useGetPrepResourcesSuspenseQuery(baseOptions?: Apollo.SuspenseQueryHookOptions<GetPrepResourcesQuery, GetPrepResourcesQueryVariables>): Apollo.UseSuspenseQueryResult<GetPrepResourcesQuery, GetPrepResourcesQueryVariables>;
-export function useGetPrepResourcesSuspenseQuery(baseOptions?: Apollo.SkipToken | Apollo.SuspenseQueryHookOptions<GetPrepResourcesQuery, GetPrepResourcesQueryVariables>): Apollo.UseSuspenseQueryResult<GetPrepResourcesQuery | undefined, GetPrepResourcesQueryVariables>;
-export function useGetPrepResourcesSuspenseQuery(baseOptions?: Apollo.SkipToken | Apollo.SuspenseQueryHookOptions<GetPrepResourcesQuery, GetPrepResourcesQueryVariables>) {
-          const options = baseOptions === Apollo.skipToken ? baseOptions : {...defaultOptions, ...baseOptions}
-          return Apollo.useSuspenseQuery<GetPrepResourcesQuery, GetPrepResourcesQueryVariables>(GetPrepResourcesDocument, options);
-        }
-export type GetPrepResourcesQueryHookResult = ReturnType<typeof useGetPrepResourcesQuery>;
-export type GetPrepResourcesLazyQueryHookResult = ReturnType<typeof useGetPrepResourcesLazyQuery>;
-export type GetPrepResourcesSuspenseQueryHookResult = ReturnType<typeof useGetPrepResourcesSuspenseQuery>;
-export type GetPrepResourcesQueryResult = Apollo.QueryResult<GetPrepResourcesQuery, GetPrepResourcesQueryVariables>;
 export const DeleteAllJobsDocument = gql`
     mutation DeleteAllJobs {
   deleteAllJobs {
@@ -4610,298 +3570,6 @@ export function useUpdateApplicationMutation(baseOptions?: Apollo.MutationHookOp
 export type UpdateApplicationMutationHookResult = ReturnType<typeof useUpdateApplicationMutation>;
 export type UpdateApplicationMutationResult = Apollo.MutationResult<UpdateApplicationMutation>;
 export type UpdateApplicationMutationOptions = Apollo.BaseMutationOptions<UpdateApplicationMutation, UpdateApplicationMutationVariables>;
-export const LinkTrackToApplicationDocument = gql`
-    mutation LinkTrackToApplication($applicationId: Int!, $trackSlug: String!) {
-  linkTrackToApplication(applicationId: $applicationId, trackSlug: $trackSlug) {
-    id
-    interviewPrep {
-      id
-      slug
-      title
-      description
-      level
-    }
-  }
-}
-    `;
-export type LinkTrackToApplicationMutationFn = Apollo.MutationFunction<LinkTrackToApplicationMutation, LinkTrackToApplicationMutationVariables>;
-
-/**
- * __useLinkTrackToApplicationMutation__
- *
- * To run a mutation, you first call `useLinkTrackToApplicationMutation` within a React component and pass it any options that fit your needs.
- * When your component renders, `useLinkTrackToApplicationMutation` returns a tuple that includes:
- * - A mutate function that you can call at any time to execute the mutation
- * - An object with fields that represent the current status of the mutation's execution
- *
- * @param baseOptions options that will be passed into the mutation, supported options are listed on: https://www.apollographql.com/docs/react/api/react-hooks/#options-2;
- *
- * @example
- * const [linkTrackToApplicationMutation, { data, loading, error }] = useLinkTrackToApplicationMutation({
- *   variables: {
- *      applicationId: // value for 'applicationId'
- *      trackSlug: // value for 'trackSlug'
- *   },
- * });
- */
-export function useLinkTrackToApplicationMutation(baseOptions?: Apollo.MutationHookOptions<LinkTrackToApplicationMutation, LinkTrackToApplicationMutationVariables>) {
-        const options = {...defaultOptions, ...baseOptions}
-        return Apollo.useMutation<LinkTrackToApplicationMutation, LinkTrackToApplicationMutationVariables>(LinkTrackToApplicationDocument, options);
-      }
-export type LinkTrackToApplicationMutationHookResult = ReturnType<typeof useLinkTrackToApplicationMutation>;
-export type LinkTrackToApplicationMutationResult = Apollo.MutationResult<LinkTrackToApplicationMutation>;
-export type LinkTrackToApplicationMutationOptions = Apollo.BaseMutationOptions<LinkTrackToApplicationMutation, LinkTrackToApplicationMutationVariables>;
-export const UnlinkTrackFromApplicationDocument = gql`
-    mutation UnlinkTrackFromApplication($applicationId: Int!, $trackSlug: String!) {
-  unlinkTrackFromApplication(applicationId: $applicationId, trackSlug: $trackSlug) {
-    id
-    interviewPrep {
-      id
-      slug
-      title
-      description
-      level
-    }
-  }
-}
-    `;
-export type UnlinkTrackFromApplicationMutationFn = Apollo.MutationFunction<UnlinkTrackFromApplicationMutation, UnlinkTrackFromApplicationMutationVariables>;
-
-/**
- * __useUnlinkTrackFromApplicationMutation__
- *
- * To run a mutation, you first call `useUnlinkTrackFromApplicationMutation` within a React component and pass it any options that fit your needs.
- * When your component renders, `useUnlinkTrackFromApplicationMutation` returns a tuple that includes:
- * - A mutate function that you can call at any time to execute the mutation
- * - An object with fields that represent the current status of the mutation's execution
- *
- * @param baseOptions options that will be passed into the mutation, supported options are listed on: https://www.apollographql.com/docs/react/api/react-hooks/#options-2;
- *
- * @example
- * const [unlinkTrackFromApplicationMutation, { data, loading, error }] = useUnlinkTrackFromApplicationMutation({
- *   variables: {
- *      applicationId: // value for 'applicationId'
- *      trackSlug: // value for 'trackSlug'
- *   },
- * });
- */
-export function useUnlinkTrackFromApplicationMutation(baseOptions?: Apollo.MutationHookOptions<UnlinkTrackFromApplicationMutation, UnlinkTrackFromApplicationMutationVariables>) {
-        const options = {...defaultOptions, ...baseOptions}
-        return Apollo.useMutation<UnlinkTrackFromApplicationMutation, UnlinkTrackFromApplicationMutationVariables>(UnlinkTrackFromApplicationDocument, options);
-      }
-export type UnlinkTrackFromApplicationMutationHookResult = ReturnType<typeof useUnlinkTrackFromApplicationMutation>;
-export type UnlinkTrackFromApplicationMutationResult = Apollo.MutationResult<UnlinkTrackFromApplicationMutation>;
-export type UnlinkTrackFromApplicationMutationOptions = Apollo.BaseMutationOptions<UnlinkTrackFromApplicationMutation, UnlinkTrackFromApplicationMutationVariables>;
-export const GenerateInterviewPrepDocument = gql`
-    mutation GenerateInterviewPrep($applicationId: Int!) {
-  generateInterviewPrep(applicationId: $applicationId) {
-    id
-    aiInterviewPrep {
-      summary
-      requirements {
-        requirement
-        questions
-        studyTopics
-        studyTopicDeepDives {
-          topic
-          deepDive
-        }
-        sourceQuote
-        deepDive
-      }
-      generatedAt
-    }
-  }
-}
-    `;
-export type GenerateInterviewPrepMutationFn = Apollo.MutationFunction<GenerateInterviewPrepMutation, GenerateInterviewPrepMutationVariables>;
-
-/**
- * __useGenerateInterviewPrepMutation__
- *
- * To run a mutation, you first call `useGenerateInterviewPrepMutation` within a React component and pass it any options that fit your needs.
- * When your component renders, `useGenerateInterviewPrepMutation` returns a tuple that includes:
- * - A mutate function that you can call at any time to execute the mutation
- * - An object with fields that represent the current status of the mutation's execution
- *
- * @param baseOptions options that will be passed into the mutation, supported options are listed on: https://www.apollographql.com/docs/react/api/react-hooks/#options-2;
- *
- * @example
- * const [generateInterviewPrepMutation, { data, loading, error }] = useGenerateInterviewPrepMutation({
- *   variables: {
- *      applicationId: // value for 'applicationId'
- *   },
- * });
- */
-export function useGenerateInterviewPrepMutation(baseOptions?: Apollo.MutationHookOptions<GenerateInterviewPrepMutation, GenerateInterviewPrepMutationVariables>) {
-        const options = {...defaultOptions, ...baseOptions}
-        return Apollo.useMutation<GenerateInterviewPrepMutation, GenerateInterviewPrepMutationVariables>(GenerateInterviewPrepDocument, options);
-      }
-export type GenerateInterviewPrepMutationHookResult = ReturnType<typeof useGenerateInterviewPrepMutation>;
-export type GenerateInterviewPrepMutationResult = Apollo.MutationResult<GenerateInterviewPrepMutation>;
-export type GenerateInterviewPrepMutationOptions = Apollo.BaseMutationOptions<GenerateInterviewPrepMutation, GenerateInterviewPrepMutationVariables>;
-export const GenerateTopicDeepDiveDocument = gql`
-    mutation GenerateTopicDeepDive($applicationId: Int!, $requirement: String!, $force: Boolean) {
-  generateTopicDeepDive(
-    applicationId: $applicationId
-    requirement: $requirement
-    force: $force
-  ) {
-    id
-    aiInterviewPrep {
-      summary
-      requirements {
-        requirement
-        questions
-        studyTopics
-        studyTopicDeepDives {
-          topic
-          deepDive
-        }
-        sourceQuote
-        deepDive
-      }
-      generatedAt
-    }
-  }
-}
-    `;
-export type GenerateTopicDeepDiveMutationFn = Apollo.MutationFunction<GenerateTopicDeepDiveMutation, GenerateTopicDeepDiveMutationVariables>;
-
-/**
- * __useGenerateTopicDeepDiveMutation__
- *
- * To run a mutation, you first call `useGenerateTopicDeepDiveMutation` within a React component and pass it any options that fit your needs.
- * When your component renders, `useGenerateTopicDeepDiveMutation` returns a tuple that includes:
- * - A mutate function that you can call at any time to execute the mutation
- * - An object with fields that represent the current status of the mutation's execution
- *
- * @param baseOptions options that will be passed into the mutation, supported options are listed on: https://www.apollographql.com/docs/react/api/react-hooks/#options-2;
- *
- * @example
- * const [generateTopicDeepDiveMutation, { data, loading, error }] = useGenerateTopicDeepDiveMutation({
- *   variables: {
- *      applicationId: // value for 'applicationId'
- *      requirement: // value for 'requirement'
- *      force: // value for 'force'
- *   },
- * });
- */
-export function useGenerateTopicDeepDiveMutation(baseOptions?: Apollo.MutationHookOptions<GenerateTopicDeepDiveMutation, GenerateTopicDeepDiveMutationVariables>) {
-        const options = {...defaultOptions, ...baseOptions}
-        return Apollo.useMutation<GenerateTopicDeepDiveMutation, GenerateTopicDeepDiveMutationVariables>(GenerateTopicDeepDiveDocument, options);
-      }
-export type GenerateTopicDeepDiveMutationHookResult = ReturnType<typeof useGenerateTopicDeepDiveMutation>;
-export type GenerateTopicDeepDiveMutationResult = Apollo.MutationResult<GenerateTopicDeepDiveMutation>;
-export type GenerateTopicDeepDiveMutationOptions = Apollo.BaseMutationOptions<GenerateTopicDeepDiveMutation, GenerateTopicDeepDiveMutationVariables>;
-export const GenerateStudyTopicDeepDiveDocument = gql`
-    mutation GenerateStudyTopicDeepDive($applicationId: Int!, $requirement: String!, $studyTopic: String!, $force: Boolean) {
-  generateStudyTopicDeepDive(
-    applicationId: $applicationId
-    requirement: $requirement
-    studyTopic: $studyTopic
-    force: $force
-  ) {
-    id
-    aiInterviewPrep {
-      summary
-      requirements {
-        requirement
-        questions
-        studyTopics
-        studyTopicDeepDives {
-          topic
-          deepDive
-        }
-        sourceQuote
-        deepDive
-      }
-      generatedAt
-    }
-  }
-}
-    `;
-export type GenerateStudyTopicDeepDiveMutationFn = Apollo.MutationFunction<GenerateStudyTopicDeepDiveMutation, GenerateStudyTopicDeepDiveMutationVariables>;
-
-/**
- * __useGenerateStudyTopicDeepDiveMutation__
- *
- * To run a mutation, you first call `useGenerateStudyTopicDeepDiveMutation` within a React component and pass it any options that fit your needs.
- * When your component renders, `useGenerateStudyTopicDeepDiveMutation` returns a tuple that includes:
- * - A mutate function that you can call at any time to execute the mutation
- * - An object with fields that represent the current status of the mutation's execution
- *
- * @param baseOptions options that will be passed into the mutation, supported options are listed on: https://www.apollographql.com/docs/react/api/react-hooks/#options-2;
- *
- * @example
- * const [generateStudyTopicDeepDiveMutation, { data, loading, error }] = useGenerateStudyTopicDeepDiveMutation({
- *   variables: {
- *      applicationId: // value for 'applicationId'
- *      requirement: // value for 'requirement'
- *      studyTopic: // value for 'studyTopic'
- *      force: // value for 'force'
- *   },
- * });
- */
-export function useGenerateStudyTopicDeepDiveMutation(baseOptions?: Apollo.MutationHookOptions<GenerateStudyTopicDeepDiveMutation, GenerateStudyTopicDeepDiveMutationVariables>) {
-        const options = {...defaultOptions, ...baseOptions}
-        return Apollo.useMutation<GenerateStudyTopicDeepDiveMutation, GenerateStudyTopicDeepDiveMutationVariables>(GenerateStudyTopicDeepDiveDocument, options);
-      }
-export type GenerateStudyTopicDeepDiveMutationHookResult = ReturnType<typeof useGenerateStudyTopicDeepDiveMutation>;
-export type GenerateStudyTopicDeepDiveMutationResult = Apollo.MutationResult<GenerateStudyTopicDeepDiveMutation>;
-export type GenerateStudyTopicDeepDiveMutationOptions = Apollo.BaseMutationOptions<GenerateStudyTopicDeepDiveMutation, GenerateStudyTopicDeepDiveMutationVariables>;
-export const GenerateRequirementFromSelectionDocument = gql`
-    mutation GenerateRequirementFromSelection($applicationId: Int!, $selectedText: String!) {
-  generateRequirementFromSelection(
-    applicationId: $applicationId
-    selectedText: $selectedText
-  ) {
-    id
-    aiInterviewPrep {
-      summary
-      requirements {
-        requirement
-        questions
-        studyTopics
-        studyTopicDeepDives {
-          topic
-          deepDive
-        }
-        sourceQuote
-        deepDive
-      }
-      generatedAt
-    }
-  }
-}
-    `;
-export type GenerateRequirementFromSelectionMutationFn = Apollo.MutationFunction<GenerateRequirementFromSelectionMutation, GenerateRequirementFromSelectionMutationVariables>;
-
-/**
- * __useGenerateRequirementFromSelectionMutation__
- *
- * To run a mutation, you first call `useGenerateRequirementFromSelectionMutation` within a React component and pass it any options that fit your needs.
- * When your component renders, `useGenerateRequirementFromSelectionMutation` returns a tuple that includes:
- * - A mutate function that you can call at any time to execute the mutation
- * - An object with fields that represent the current status of the mutation's execution
- *
- * @param baseOptions options that will be passed into the mutation, supported options are listed on: https://www.apollographql.com/docs/react/api/react-hooks/#options-2;
- *
- * @example
- * const [generateRequirementFromSelectionMutation, { data, loading, error }] = useGenerateRequirementFromSelectionMutation({
- *   variables: {
- *      applicationId: // value for 'applicationId'
- *      selectedText: // value for 'selectedText'
- *   },
- * });
- */
-export function useGenerateRequirementFromSelectionMutation(baseOptions?: Apollo.MutationHookOptions<GenerateRequirementFromSelectionMutation, GenerateRequirementFromSelectionMutationVariables>) {
-        const options = {...defaultOptions, ...baseOptions}
-        return Apollo.useMutation<GenerateRequirementFromSelectionMutation, GenerateRequirementFromSelectionMutationVariables>(GenerateRequirementFromSelectionDocument, options);
-      }
-export type GenerateRequirementFromSelectionMutationHookResult = ReturnType<typeof useGenerateRequirementFromSelectionMutation>;
-export type GenerateRequirementFromSelectionMutationResult = Apollo.MutationResult<GenerateRequirementFromSelectionMutation>;
-export type GenerateRequirementFromSelectionMutationOptions = Apollo.BaseMutationOptions<GenerateRequirementFromSelectionMutation, GenerateRequirementFromSelectionMutationVariables>;
 export const DeleteApplicationDocument = gql`
     mutation DeleteApplication($id: Int!) {
   deleteApplication(id: $id) {
@@ -4936,325 +3604,6 @@ export function useDeleteApplicationMutation(baseOptions?: Apollo.MutationHookOp
 export type DeleteApplicationMutationHookResult = ReturnType<typeof useDeleteApplicationMutation>;
 export type DeleteApplicationMutationResult = Apollo.MutationResult<DeleteApplicationMutation>;
 export type DeleteApplicationMutationOptions = Apollo.BaseMutationOptions<DeleteApplicationMutation, DeleteApplicationMutationVariables>;
-export const LinkSelectionToRequirementDocument = gql`
-    mutation LinkSelectionToRequirement($applicationId: Int!, $requirement: String!, $sourceQuote: String!) {
-  linkSelectionToRequirement(
-    applicationId: $applicationId
-    requirement: $requirement
-    sourceQuote: $sourceQuote
-  ) {
-    id
-    aiInterviewPrep {
-      summary
-      requirements {
-        requirement
-        questions
-        studyTopics
-        studyTopicDeepDives {
-          topic
-          deepDive
-        }
-        sourceQuote
-        deepDive
-      }
-      generatedAt
-    }
-  }
-}
-    `;
-export type LinkSelectionToRequirementMutationFn = Apollo.MutationFunction<LinkSelectionToRequirementMutation, LinkSelectionToRequirementMutationVariables>;
-
-/**
- * __useLinkSelectionToRequirementMutation__
- *
- * To run a mutation, you first call `useLinkSelectionToRequirementMutation` within a React component and pass it any options that fit your needs.
- * When your component renders, `useLinkSelectionToRequirementMutation` returns a tuple that includes:
- * - A mutate function that you can call at any time to execute the mutation
- * - An object with fields that represent the current status of the mutation's execution
- *
- * @param baseOptions options that will be passed into the mutation, supported options are listed on: https://www.apollographql.com/docs/react/api/react-hooks/#options-2;
- *
- * @example
- * const [linkSelectionToRequirementMutation, { data, loading, error }] = useLinkSelectionToRequirementMutation({
- *   variables: {
- *      applicationId: // value for 'applicationId'
- *      requirement: // value for 'requirement'
- *      sourceQuote: // value for 'sourceQuote'
- *   },
- * });
- */
-export function useLinkSelectionToRequirementMutation(baseOptions?: Apollo.MutationHookOptions<LinkSelectionToRequirementMutation, LinkSelectionToRequirementMutationVariables>) {
-        const options = {...defaultOptions, ...baseOptions}
-        return Apollo.useMutation<LinkSelectionToRequirementMutation, LinkSelectionToRequirementMutationVariables>(LinkSelectionToRequirementDocument, options);
-      }
-export type LinkSelectionToRequirementMutationHookResult = ReturnType<typeof useLinkSelectionToRequirementMutation>;
-export type LinkSelectionToRequirementMutationResult = Apollo.MutationResult<LinkSelectionToRequirementMutation>;
-export type LinkSelectionToRequirementMutationOptions = Apollo.BaseMutationOptions<LinkSelectionToRequirementMutation, LinkSelectionToRequirementMutationVariables>;
-export const GenerateAgenticCodingDocument = gql`
-    mutation GenerateAgenticCoding($applicationId: Int!) {
-  generateAgenticCoding(applicationId: $applicationId) {
-    id
-    agenticCoding {
-      overview
-      workflowPattern
-      exercises {
-        title
-        description
-        difficulty
-        skills
-        hints
-        agentPrompt
-      }
-      promptTemplates {
-        title
-        purpose
-        stackContext
-        prompt
-      }
-      qaApproach
-      failureModes {
-        scenario
-        why
-        alternative
-      }
-      teamPractices
-      measurableOutcomes {
-        task
-        beforeTime
-        afterTime
-        improvement
-      }
-      resources {
-        title
-        url
-        description
-      }
-      generatedAt
-    }
-  }
-}
-    `;
-export type GenerateAgenticCodingMutationFn = Apollo.MutationFunction<GenerateAgenticCodingMutation, GenerateAgenticCodingMutationVariables>;
-
-/**
- * __useGenerateAgenticCodingMutation__
- *
- * To run a mutation, you first call `useGenerateAgenticCodingMutation` within a React component and pass it any options that fit your needs.
- * When your component renders, `useGenerateAgenticCodingMutation` returns a tuple that includes:
- * - A mutate function that you can call at any time to execute the mutation
- * - An object with fields that represent the current status of the mutation's execution
- *
- * @param baseOptions options that will be passed into the mutation, supported options are listed on: https://www.apollographql.com/docs/react/api/react-hooks/#options-2;
- *
- * @example
- * const [generateAgenticCodingMutation, { data, loading, error }] = useGenerateAgenticCodingMutation({
- *   variables: {
- *      applicationId: // value for 'applicationId'
- *   },
- * });
- */
-export function useGenerateAgenticCodingMutation(baseOptions?: Apollo.MutationHookOptions<GenerateAgenticCodingMutation, GenerateAgenticCodingMutationVariables>) {
-        const options = {...defaultOptions, ...baseOptions}
-        return Apollo.useMutation<GenerateAgenticCodingMutation, GenerateAgenticCodingMutationVariables>(GenerateAgenticCodingDocument, options);
-      }
-export type GenerateAgenticCodingMutationHookResult = ReturnType<typeof useGenerateAgenticCodingMutation>;
-export type GenerateAgenticCodingMutationResult = Apollo.MutationResult<GenerateAgenticCodingMutation>;
-export type GenerateAgenticCodingMutationOptions = Apollo.BaseMutationOptions<GenerateAgenticCodingMutation, GenerateAgenticCodingMutationVariables>;
-export const GenerateBackendPrepDocument = gql`
-    mutation GenerateBackendPrep($applicationId: Int!) {
-  generateBackendPrep(applicationId: $applicationId) {
-    id
-    aiBackendPrep {
-      systemDesign {
-        ...BackendPrepSectionFields
-      }
-      distributedSystems {
-        ...BackendPrepSectionFields
-      }
-      databaseDesign {
-        ...BackendPrepSectionFields
-      }
-      sqlOptimization {
-        ...BackendPrepSectionFields
-      }
-      nosqlPatterns {
-        ...BackendPrepSectionFields
-      }
-      apiDesign {
-        ...BackendPrepSectionFields
-      }
-      authSecurity {
-        ...BackendPrepSectionFields
-      }
-      caching {
-        ...BackendPrepSectionFields
-      }
-      messageQueues {
-        ...BackendPrepSectionFields
-      }
-      microservices {
-        ...BackendPrepSectionFields
-      }
-      testing {
-        ...BackendPrepSectionFields
-      }
-      devops {
-        ...BackendPrepSectionFields
-      }
-      securityOwasp {
-        ...BackendPrepSectionFields
-      }
-      performance {
-        ...BackendPrepSectionFields
-      }
-      concurrencyAsync {
-        ...BackendPrepSectionFields
-      }
-      observability {
-        ...BackendPrepSectionFields
-      }
-      eventDriven {
-        ...BackendPrepSectionFields
-      }
-      serverlessEdge {
-        ...BackendPrepSectionFields
-      }
-      typescriptNode {
-        ...BackendPrepSectionFields
-      }
-      aiMlIntegration {
-        ...BackendPrepSectionFields
-      }
-      generatedAt
-    }
-  }
-}
-    ${BackendPrepSectionFieldsFragmentDoc}`;
-export type GenerateBackendPrepMutationFn = Apollo.MutationFunction<GenerateBackendPrepMutation, GenerateBackendPrepMutationVariables>;
-
-/**
- * __useGenerateBackendPrepMutation__
- *
- * To run a mutation, you first call `useGenerateBackendPrepMutation` within a React component and pass it any options that fit your needs.
- * When your component renders, `useGenerateBackendPrepMutation` returns a tuple that includes:
- * - A mutate function that you can call at any time to execute the mutation
- * - An object with fields that represent the current status of the mutation's execution
- *
- * @param baseOptions options that will be passed into the mutation, supported options are listed on: https://www.apollographql.com/docs/react/api/react-hooks/#options-2;
- *
- * @example
- * const [generateBackendPrepMutation, { data, loading, error }] = useGenerateBackendPrepMutation({
- *   variables: {
- *      applicationId: // value for 'applicationId'
- *   },
- * });
- */
-export function useGenerateBackendPrepMutation(baseOptions?: Apollo.MutationHookOptions<GenerateBackendPrepMutation, GenerateBackendPrepMutationVariables>) {
-        const options = {...defaultOptions, ...baseOptions}
-        return Apollo.useMutation<GenerateBackendPrepMutation, GenerateBackendPrepMutationVariables>(GenerateBackendPrepDocument, options);
-      }
-export type GenerateBackendPrepMutationHookResult = ReturnType<typeof useGenerateBackendPrepMutation>;
-export type GenerateBackendPrepMutationResult = Apollo.MutationResult<GenerateBackendPrepMutation>;
-export type GenerateBackendPrepMutationOptions = Apollo.BaseMutationOptions<GenerateBackendPrepMutation, GenerateBackendPrepMutationVariables>;
-export const GenerateDeepResearchDocument = gql`
-    mutation GenerateDeepResearch($applicationId: Int!) {
-  generateDeepResearch(applicationId: $applicationId) {
-    id
-    aiDeepResearch {
-      questions {
-        question
-        category
-        deepseek {
-          model
-          content
-          reasoning
-        }
-        qwen {
-          model
-          content
-          reasoning
-        }
-      }
-      generatedAt
-    }
-  }
-}
-    `;
-export type GenerateDeepResearchMutationFn = Apollo.MutationFunction<GenerateDeepResearchMutation, GenerateDeepResearchMutationVariables>;
-
-/**
- * __useGenerateDeepResearchMutation__
- *
- * To run a mutation, you first call `useGenerateDeepResearchMutation` within a React component and pass it any options that fit your needs.
- * When your component renders, `useGenerateDeepResearchMutation` returns a tuple that includes:
- * - A mutate function that you can call at any time to execute the mutation
- * - An object with fields that represent the current status of the mutation's execution
- *
- * @param baseOptions options that will be passed into the mutation, supported options are listed on: https://www.apollographql.com/docs/react/api/react-hooks/#options-2;
- *
- * @example
- * const [generateDeepResearchMutation, { data, loading, error }] = useGenerateDeepResearchMutation({
- *   variables: {
- *      applicationId: // value for 'applicationId'
- *   },
- * });
- */
-export function useGenerateDeepResearchMutation(baseOptions?: Apollo.MutationHookOptions<GenerateDeepResearchMutation, GenerateDeepResearchMutationVariables>) {
-        const options = {...defaultOptions, ...baseOptions}
-        return Apollo.useMutation<GenerateDeepResearchMutation, GenerateDeepResearchMutationVariables>(GenerateDeepResearchDocument, options);
-      }
-export type GenerateDeepResearchMutationHookResult = ReturnType<typeof useGenerateDeepResearchMutation>;
-export type GenerateDeepResearchMutationResult = Apollo.MutationResult<GenerateDeepResearchMutation>;
-export type GenerateDeepResearchMutationOptions = Apollo.BaseMutationOptions<GenerateDeepResearchMutation, GenerateDeepResearchMutationVariables>;
-export const GenerateInterviewQuestionsDocument = gql`
-    mutation GenerateInterviewQuestions($applicationId: Int!, $type: String!) {
-  generateInterviewQuestions(applicationId: $applicationId, type: $type) {
-    id
-    aiInterviewQuestions {
-      companyContext
-      recruiterQuestions {
-        question
-        reason
-        category
-      }
-      technicalQuestions {
-        question
-        reason
-        category
-      }
-      recruiterGeneratedAt
-      technicalGeneratedAt
-    }
-  }
-}
-    `;
-export type GenerateInterviewQuestionsMutationFn = Apollo.MutationFunction<GenerateInterviewQuestionsMutation, GenerateInterviewQuestionsMutationVariables>;
-
-/**
- * __useGenerateInterviewQuestionsMutation__
- *
- * To run a mutation, you first call `useGenerateInterviewQuestionsMutation` within a React component and pass it any options that fit your needs.
- * When your component renders, `useGenerateInterviewQuestionsMutation` returns a tuple that includes:
- * - A mutate function that you can call at any time to execute the mutation
- * - An object with fields that represent the current status of the mutation's execution
- *
- * @param baseOptions options that will be passed into the mutation, supported options are listed on: https://www.apollographql.com/docs/react/api/react-hooks/#options-2;
- *
- * @example
- * const [generateInterviewQuestionsMutation, { data, loading, error }] = useGenerateInterviewQuestionsMutation({
- *   variables: {
- *      applicationId: // value for 'applicationId'
- *      type: // value for 'type'
- *   },
- * });
- */
-export function useGenerateInterviewQuestionsMutation(baseOptions?: Apollo.MutationHookOptions<GenerateInterviewQuestionsMutation, GenerateInterviewQuestionsMutationVariables>) {
-        const options = {...defaultOptions, ...baseOptions}
-        return Apollo.useMutation<GenerateInterviewQuestionsMutation, GenerateInterviewQuestionsMutationVariables>(GenerateInterviewQuestionsDocument, options);
-      }
-export type GenerateInterviewQuestionsMutationHookResult = ReturnType<typeof useGenerateInterviewQuestionsMutation>;
-export type GenerateInterviewQuestionsMutationResult = Apollo.MutationResult<GenerateInterviewQuestionsMutation>;
-export type GenerateInterviewQuestionsMutationOptions = Apollo.BaseMutationOptions<GenerateInterviewQuestionsMutation, GenerateInterviewQuestionsMutationVariables>;
 export const GetBlockedCompaniesDocument = gql`
     query GetBlockedCompanies {
   blockedCompanies {
@@ -8389,315 +6738,6 @@ export type AskAboutResumeQueryHookResult = ReturnType<typeof useAskAboutResumeQ
 export type AskAboutResumeLazyQueryHookResult = ReturnType<typeof useAskAboutResumeLazyQuery>;
 export type AskAboutResumeSuspenseQueryHookResult = ReturnType<typeof useAskAboutResumeSuspenseQuery>;
 export type AskAboutResumeQueryResult = Apollo.QueryResult<AskAboutResumeQuery, AskAboutResumeQueryVariables>;
-export const StudyCategoriesDocument = gql`
-    query StudyCategories {
-  studyCategories
-}
-    `;
-
-/**
- * __useStudyCategoriesQuery__
- *
- * To run a query within a React component, call `useStudyCategoriesQuery` and pass it any options that fit your needs.
- * When your component renders, `useStudyCategoriesQuery` returns an object from Apollo Client that contains loading, error, and data properties
- * you can use to render your UI.
- *
- * @param baseOptions options that will be passed into the query, supported options are listed on: https://www.apollographql.com/docs/react/api/react-hooks/#options;
- *
- * @example
- * const { data, loading, error } = useStudyCategoriesQuery({
- *   variables: {
- *   },
- * });
- */
-export function useStudyCategoriesQuery(baseOptions?: Apollo.QueryHookOptions<StudyCategoriesQuery, StudyCategoriesQueryVariables>) {
-        const options = {...defaultOptions, ...baseOptions}
-        return Apollo.useQuery<StudyCategoriesQuery, StudyCategoriesQueryVariables>(StudyCategoriesDocument, options);
-      }
-export function useStudyCategoriesLazyQuery(baseOptions?: Apollo.LazyQueryHookOptions<StudyCategoriesQuery, StudyCategoriesQueryVariables>) {
-          const options = {...defaultOptions, ...baseOptions}
-          return Apollo.useLazyQuery<StudyCategoriesQuery, StudyCategoriesQueryVariables>(StudyCategoriesDocument, options);
-        }
-// @ts-ignore
-export function useStudyCategoriesSuspenseQuery(baseOptions?: Apollo.SuspenseQueryHookOptions<StudyCategoriesQuery, StudyCategoriesQueryVariables>): Apollo.UseSuspenseQueryResult<StudyCategoriesQuery, StudyCategoriesQueryVariables>;
-export function useStudyCategoriesSuspenseQuery(baseOptions?: Apollo.SkipToken | Apollo.SuspenseQueryHookOptions<StudyCategoriesQuery, StudyCategoriesQueryVariables>): Apollo.UseSuspenseQueryResult<StudyCategoriesQuery | undefined, StudyCategoriesQueryVariables>;
-export function useStudyCategoriesSuspenseQuery(baseOptions?: Apollo.SkipToken | Apollo.SuspenseQueryHookOptions<StudyCategoriesQuery, StudyCategoriesQueryVariables>) {
-          const options = baseOptions === Apollo.skipToken ? baseOptions : {...defaultOptions, ...baseOptions}
-          return Apollo.useSuspenseQuery<StudyCategoriesQuery, StudyCategoriesQueryVariables>(StudyCategoriesDocument, options);
-        }
-export type StudyCategoriesQueryHookResult = ReturnType<typeof useStudyCategoriesQuery>;
-export type StudyCategoriesLazyQueryHookResult = ReturnType<typeof useStudyCategoriesLazyQuery>;
-export type StudyCategoriesSuspenseQueryHookResult = ReturnType<typeof useStudyCategoriesSuspenseQuery>;
-export type StudyCategoriesQueryResult = Apollo.QueryResult<StudyCategoriesQuery, StudyCategoriesQueryVariables>;
-export const StudyTopicDocument = gql`
-    query StudyTopic($category: String!, $topic: String!) {
-  studyTopic(category: $category, topic: $topic) {
-    id
-    category
-    topic
-    title
-    summary
-    bodyMd
-    deepDive
-    difficulty
-    tags
-    createdAt
-  }
-}
-    `;
-
-/**
- * __useStudyTopicQuery__
- *
- * To run a query within a React component, call `useStudyTopicQuery` and pass it any options that fit your needs.
- * When your component renders, `useStudyTopicQuery` returns an object from Apollo Client that contains loading, error, and data properties
- * you can use to render your UI.
- *
- * @param baseOptions options that will be passed into the query, supported options are listed on: https://www.apollographql.com/docs/react/api/react-hooks/#options;
- *
- * @example
- * const { data, loading, error } = useStudyTopicQuery({
- *   variables: {
- *      category: // value for 'category'
- *      topic: // value for 'topic'
- *   },
- * });
- */
-export function useStudyTopicQuery(baseOptions: Apollo.QueryHookOptions<StudyTopicQuery, StudyTopicQueryVariables> & ({ variables: StudyTopicQueryVariables; skip?: boolean; } | { skip: boolean; }) ) {
-        const options = {...defaultOptions, ...baseOptions}
-        return Apollo.useQuery<StudyTopicQuery, StudyTopicQueryVariables>(StudyTopicDocument, options);
-      }
-export function useStudyTopicLazyQuery(baseOptions?: Apollo.LazyQueryHookOptions<StudyTopicQuery, StudyTopicQueryVariables>) {
-          const options = {...defaultOptions, ...baseOptions}
-          return Apollo.useLazyQuery<StudyTopicQuery, StudyTopicQueryVariables>(StudyTopicDocument, options);
-        }
-// @ts-ignore
-export function useStudyTopicSuspenseQuery(baseOptions?: Apollo.SuspenseQueryHookOptions<StudyTopicQuery, StudyTopicQueryVariables>): Apollo.UseSuspenseQueryResult<StudyTopicQuery, StudyTopicQueryVariables>;
-export function useStudyTopicSuspenseQuery(baseOptions?: Apollo.SkipToken | Apollo.SuspenseQueryHookOptions<StudyTopicQuery, StudyTopicQueryVariables>): Apollo.UseSuspenseQueryResult<StudyTopicQuery | undefined, StudyTopicQueryVariables>;
-export function useStudyTopicSuspenseQuery(baseOptions?: Apollo.SkipToken | Apollo.SuspenseQueryHookOptions<StudyTopicQuery, StudyTopicQueryVariables>) {
-          const options = baseOptions === Apollo.skipToken ? baseOptions : {...defaultOptions, ...baseOptions}
-          return Apollo.useSuspenseQuery<StudyTopicQuery, StudyTopicQueryVariables>(StudyTopicDocument, options);
-        }
-export type StudyTopicQueryHookResult = ReturnType<typeof useStudyTopicQuery>;
-export type StudyTopicLazyQueryHookResult = ReturnType<typeof useStudyTopicLazyQuery>;
-export type StudyTopicSuspenseQueryHookResult = ReturnType<typeof useStudyTopicSuspenseQuery>;
-export type StudyTopicQueryResult = Apollo.QueryResult<StudyTopicQuery, StudyTopicQueryVariables>;
-export const StudyTopicsDocument = gql`
-    query StudyTopics($category: String!) {
-  studyTopics(category: $category) {
-    id
-    topic
-    title
-    summary
-    difficulty
-    tags
-  }
-}
-    `;
-
-/**
- * __useStudyTopicsQuery__
- *
- * To run a query within a React component, call `useStudyTopicsQuery` and pass it any options that fit your needs.
- * When your component renders, `useStudyTopicsQuery` returns an object from Apollo Client that contains loading, error, and data properties
- * you can use to render your UI.
- *
- * @param baseOptions options that will be passed into the query, supported options are listed on: https://www.apollographql.com/docs/react/api/react-hooks/#options;
- *
- * @example
- * const { data, loading, error } = useStudyTopicsQuery({
- *   variables: {
- *      category: // value for 'category'
- *   },
- * });
- */
-export function useStudyTopicsQuery(baseOptions: Apollo.QueryHookOptions<StudyTopicsQuery, StudyTopicsQueryVariables> & ({ variables: StudyTopicsQueryVariables; skip?: boolean; } | { skip: boolean; }) ) {
-        const options = {...defaultOptions, ...baseOptions}
-        return Apollo.useQuery<StudyTopicsQuery, StudyTopicsQueryVariables>(StudyTopicsDocument, options);
-      }
-export function useStudyTopicsLazyQuery(baseOptions?: Apollo.LazyQueryHookOptions<StudyTopicsQuery, StudyTopicsQueryVariables>) {
-          const options = {...defaultOptions, ...baseOptions}
-          return Apollo.useLazyQuery<StudyTopicsQuery, StudyTopicsQueryVariables>(StudyTopicsDocument, options);
-        }
-// @ts-ignore
-export function useStudyTopicsSuspenseQuery(baseOptions?: Apollo.SuspenseQueryHookOptions<StudyTopicsQuery, StudyTopicsQueryVariables>): Apollo.UseSuspenseQueryResult<StudyTopicsQuery, StudyTopicsQueryVariables>;
-export function useStudyTopicsSuspenseQuery(baseOptions?: Apollo.SkipToken | Apollo.SuspenseQueryHookOptions<StudyTopicsQuery, StudyTopicsQueryVariables>): Apollo.UseSuspenseQueryResult<StudyTopicsQuery | undefined, StudyTopicsQueryVariables>;
-export function useStudyTopicsSuspenseQuery(baseOptions?: Apollo.SkipToken | Apollo.SuspenseQueryHookOptions<StudyTopicsQuery, StudyTopicsQueryVariables>) {
-          const options = baseOptions === Apollo.skipToken ? baseOptions : {...defaultOptions, ...baseOptions}
-          return Apollo.useSuspenseQuery<StudyTopicsQuery, StudyTopicsQueryVariables>(StudyTopicsDocument, options);
-        }
-export type StudyTopicsQueryHookResult = ReturnType<typeof useStudyTopicsQuery>;
-export type StudyTopicsLazyQueryHookResult = ReturnType<typeof useStudyTopicsLazyQuery>;
-export type StudyTopicsSuspenseQueryHookResult = ReturnType<typeof useStudyTopicsSuspenseQuery>;
-export type StudyTopicsQueryResult = Apollo.QueryResult<StudyTopicsQuery, StudyTopicsQueryVariables>;
-export const CreateStudyTopicDocument = gql`
-    mutation CreateStudyTopic($category: String, $topic: String, $title: String, $summary: String, $difficulty: String, $tags: [String!]) {
-  createStudyTopic(
-    category: $category
-    topic: $topic
-    title: $title
-    summary: $summary
-    difficulty: $difficulty
-    tags: $tags
-  ) {
-    id
-    category
-    topic
-    title
-    summary
-    difficulty
-    tags
-    createdAt
-  }
-}
-    `;
-export type CreateStudyTopicMutationFn = Apollo.MutationFunction<CreateStudyTopicMutation, CreateStudyTopicMutationVariables>;
-
-/**
- * __useCreateStudyTopicMutation__
- *
- * To run a mutation, you first call `useCreateStudyTopicMutation` within a React component and pass it any options that fit your needs.
- * When your component renders, `useCreateStudyTopicMutation` returns a tuple that includes:
- * - A mutate function that you can call at any time to execute the mutation
- * - An object with fields that represent the current status of the mutation's execution
- *
- * @param baseOptions options that will be passed into the mutation, supported options are listed on: https://www.apollographql.com/docs/react/api/react-hooks/#options-2;
- *
- * @example
- * const [createStudyTopicMutation, { data, loading, error }] = useCreateStudyTopicMutation({
- *   variables: {
- *      category: // value for 'category'
- *      topic: // value for 'topic'
- *      title: // value for 'title'
- *      summary: // value for 'summary'
- *      difficulty: // value for 'difficulty'
- *      tags: // value for 'tags'
- *   },
- * });
- */
-export function useCreateStudyTopicMutation(baseOptions?: Apollo.MutationHookOptions<CreateStudyTopicMutation, CreateStudyTopicMutationVariables>) {
-        const options = {...defaultOptions, ...baseOptions}
-        return Apollo.useMutation<CreateStudyTopicMutation, CreateStudyTopicMutationVariables>(CreateStudyTopicDocument, options);
-      }
-export type CreateStudyTopicMutationHookResult = ReturnType<typeof useCreateStudyTopicMutation>;
-export type CreateStudyTopicMutationResult = Apollo.MutationResult<CreateStudyTopicMutation>;
-export type CreateStudyTopicMutationOptions = Apollo.BaseMutationOptions<CreateStudyTopicMutation, CreateStudyTopicMutationVariables>;
-export const GenerateStudyConceptExplanationDocument = gql`
-    mutation GenerateStudyConceptExplanation($studyTopicId: ID!, $selectedText: String!, $context: String) {
-  generateStudyConceptExplanation(
-    studyTopicId: $studyTopicId
-    selectedText: $selectedText
-    context: $context
-  ) {
-    id
-    selectedText
-    explanation
-    createdAt
-  }
-}
-    `;
-export type GenerateStudyConceptExplanationMutationFn = Apollo.MutationFunction<GenerateStudyConceptExplanationMutation, GenerateStudyConceptExplanationMutationVariables>;
-
-/**
- * __useGenerateStudyConceptExplanationMutation__
- *
- * To run a mutation, you first call `useGenerateStudyConceptExplanationMutation` within a React component and pass it any options that fit your needs.
- * When your component renders, `useGenerateStudyConceptExplanationMutation` returns a tuple that includes:
- * - A mutate function that you can call at any time to execute the mutation
- * - An object with fields that represent the current status of the mutation's execution
- *
- * @param baseOptions options that will be passed into the mutation, supported options are listed on: https://www.apollographql.com/docs/react/api/react-hooks/#options-2;
- *
- * @example
- * const [generateStudyConceptExplanationMutation, { data, loading, error }] = useGenerateStudyConceptExplanationMutation({
- *   variables: {
- *      studyTopicId: // value for 'studyTopicId'
- *      selectedText: // value for 'selectedText'
- *      context: // value for 'context'
- *   },
- * });
- */
-export function useGenerateStudyConceptExplanationMutation(baseOptions?: Apollo.MutationHookOptions<GenerateStudyConceptExplanationMutation, GenerateStudyConceptExplanationMutationVariables>) {
-        const options = {...defaultOptions, ...baseOptions}
-        return Apollo.useMutation<GenerateStudyConceptExplanationMutation, GenerateStudyConceptExplanationMutationVariables>(GenerateStudyConceptExplanationDocument, options);
-      }
-export type GenerateStudyConceptExplanationMutationHookResult = ReturnType<typeof useGenerateStudyConceptExplanationMutation>;
-export type GenerateStudyConceptExplanationMutationResult = Apollo.MutationResult<GenerateStudyConceptExplanationMutation>;
-export type GenerateStudyConceptExplanationMutationOptions = Apollo.BaseMutationOptions<GenerateStudyConceptExplanationMutation, GenerateStudyConceptExplanationMutationVariables>;
-export const GenerateStudyDeepDiveDocument = gql`
-    mutation GenerateStudyDeepDive($studyTopicId: ID!, $force: Boolean) {
-  generateStudyDeepDive(studyTopicId: $studyTopicId, force: $force) {
-    id
-    deepDive
-  }
-}
-    `;
-export type GenerateStudyDeepDiveMutationFn = Apollo.MutationFunction<GenerateStudyDeepDiveMutation, GenerateStudyDeepDiveMutationVariables>;
-
-/**
- * __useGenerateStudyDeepDiveMutation__
- *
- * To run a mutation, you first call `useGenerateStudyDeepDiveMutation` within a React component and pass it any options that fit your needs.
- * When your component renders, `useGenerateStudyDeepDiveMutation` returns a tuple that includes:
- * - A mutate function that you can call at any time to execute the mutation
- * - An object with fields that represent the current status of the mutation's execution
- *
- * @param baseOptions options that will be passed into the mutation, supported options are listed on: https://www.apollographql.com/docs/react/api/react-hooks/#options-2;
- *
- * @example
- * const [generateStudyDeepDiveMutation, { data, loading, error }] = useGenerateStudyDeepDiveMutation({
- *   variables: {
- *      studyTopicId: // value for 'studyTopicId'
- *      force: // value for 'force'
- *   },
- * });
- */
-export function useGenerateStudyDeepDiveMutation(baseOptions?: Apollo.MutationHookOptions<GenerateStudyDeepDiveMutation, GenerateStudyDeepDiveMutationVariables>) {
-        const options = {...defaultOptions, ...baseOptions}
-        return Apollo.useMutation<GenerateStudyDeepDiveMutation, GenerateStudyDeepDiveMutationVariables>(GenerateStudyDeepDiveDocument, options);
-      }
-export type GenerateStudyDeepDiveMutationHookResult = ReturnType<typeof useGenerateStudyDeepDiveMutation>;
-export type GenerateStudyDeepDiveMutationResult = Apollo.MutationResult<GenerateStudyDeepDiveMutation>;
-export type GenerateStudyDeepDiveMutationOptions = Apollo.BaseMutationOptions<GenerateStudyDeepDiveMutation, GenerateStudyDeepDiveMutationVariables>;
-export const GenerateStudyTopicsForCategoryDocument = gql`
-    mutation GenerateStudyTopicsForCategory($category: String!, $count: Int) {
-  generateStudyTopicsForCategory(category: $category, count: $count) {
-    id
-    topic
-    title
-    summary
-    difficulty
-    tags
-  }
-}
-    `;
-export type GenerateStudyTopicsForCategoryMutationFn = Apollo.MutationFunction<GenerateStudyTopicsForCategoryMutation, GenerateStudyTopicsForCategoryMutationVariables>;
-
-/**
- * __useGenerateStudyTopicsForCategoryMutation__
- *
- * To run a mutation, you first call `useGenerateStudyTopicsForCategoryMutation` within a React component and pass it any options that fit your needs.
- * When your component renders, `useGenerateStudyTopicsForCategoryMutation` returns a tuple that includes:
- * - A mutate function that you can call at any time to execute the mutation
- * - An object with fields that represent the current status of the mutation's execution
- *
- * @param baseOptions options that will be passed into the mutation, supported options are listed on: https://www.apollographql.com/docs/react/api/react-hooks/#options-2;
- *
- * @example
- * const [generateStudyTopicsForCategoryMutation, { data, loading, error }] = useGenerateStudyTopicsForCategoryMutation({
- *   variables: {
- *      category: // value for 'category'
- *      count: // value for 'count'
- *   },
- * });
- */
-export function useGenerateStudyTopicsForCategoryMutation(baseOptions?: Apollo.MutationHookOptions<GenerateStudyTopicsForCategoryMutation, GenerateStudyTopicsForCategoryMutationVariables>) {
-        const options = {...defaultOptions, ...baseOptions}
-        return Apollo.useMutation<GenerateStudyTopicsForCategoryMutation, GenerateStudyTopicsForCategoryMutationVariables>(GenerateStudyTopicsForCategoryDocument, options);
-      }
-export type GenerateStudyTopicsForCategoryMutationHookResult = ReturnType<typeof useGenerateStudyTopicsForCategoryMutation>;
-export type GenerateStudyTopicsForCategoryMutationResult = Apollo.MutationResult<GenerateStudyTopicsForCategoryMutation>;
-export type GenerateStudyTopicsForCategoryMutationOptions = Apollo.BaseMutationOptions<GenerateStudyTopicsForCategoryMutation, GenerateStudyTopicsForCategoryMutationVariables>;
 export const GetTasksDocument = gql`
     query GetTasks($status: String, $priority: String, $limit: Int, $offset: Int) {
   tasks(status: $status, priority: $priority, limit: $limit, offset: $offset) {
@@ -8960,277 +7000,3 @@ export function useDeleteTaskMutation(baseOptions?: Apollo.MutationHookOptions<D
 export type DeleteTaskMutationHookResult = ReturnType<typeof useDeleteTaskMutation>;
 export type DeleteTaskMutationResult = Apollo.MutationResult<DeleteTaskMutation>;
 export type DeleteTaskMutationOptions = Apollo.BaseMutationOptions<DeleteTaskMutation, DeleteTaskMutationVariables>;
-export const GenerateResearchDocument = gql`
-    mutation GenerateResearch($goalDescription: String!) {
-  generateResearch(goalDescription: $goalDescription) {
-    id
-    title
-    url
-    summary
-    relevance
-  }
-}
-    `;
-export type GenerateResearchMutationFn = Apollo.MutationFunction<GenerateResearchMutation, GenerateResearchMutationVariables>;
-
-/**
- * __useGenerateResearchMutation__
- *
- * To run a mutation, you first call `useGenerateResearchMutation` within a React component and pass it any options that fit your needs.
- * When your component renders, `useGenerateResearchMutation` returns a tuple that includes:
- * - A mutate function that you can call at any time to execute the mutation
- * - An object with fields that represent the current status of the mutation's execution
- *
- * @param baseOptions options that will be passed into the mutation, supported options are listed on: https://www.apollographql.com/docs/react/api/react-hooks/#options-2;
- *
- * @example
- * const [generateResearchMutation, { data, loading, error }] = useGenerateResearchMutation({
- *   variables: {
- *      goalDescription: // value for 'goalDescription'
- *   },
- * });
- */
-export function useGenerateResearchMutation(baseOptions?: Apollo.MutationHookOptions<GenerateResearchMutation, GenerateResearchMutationVariables>) {
-        const options = {...defaultOptions, ...baseOptions}
-        return Apollo.useMutation<GenerateResearchMutation, GenerateResearchMutationVariables>(GenerateResearchDocument, options);
-      }
-export type GenerateResearchMutationHookResult = ReturnType<typeof useGenerateResearchMutation>;
-export type GenerateResearchMutationResult = Apollo.MutationResult<GenerateResearchMutation>;
-export type GenerateResearchMutationOptions = Apollo.BaseMutationOptions<GenerateResearchMutation, GenerateResearchMutationVariables>;
-export const CreateTrackDocument = gql`
-    mutation CreateTrack($input: CreateTrackInput!) {
-  createTrack(input: $input) {
-    id
-    slug
-    title
-    description
-    level
-    items {
-      id
-    }
-  }
-}
-    `;
-export type CreateTrackMutationFn = Apollo.MutationFunction<CreateTrackMutation, CreateTrackMutationVariables>;
-
-/**
- * __useCreateTrackMutation__
- *
- * To run a mutation, you first call `useCreateTrackMutation` within a React component and pass it any options that fit your needs.
- * When your component renders, `useCreateTrackMutation` returns a tuple that includes:
- * - A mutate function that you can call at any time to execute the mutation
- * - An object with fields that represent the current status of the mutation's execution
- *
- * @param baseOptions options that will be passed into the mutation, supported options are listed on: https://www.apollographql.com/docs/react/api/react-hooks/#options-2;
- *
- * @example
- * const [createTrackMutation, { data, loading, error }] = useCreateTrackMutation({
- *   variables: {
- *      input: // value for 'input'
- *   },
- * });
- */
-export function useCreateTrackMutation(baseOptions?: Apollo.MutationHookOptions<CreateTrackMutation, CreateTrackMutationVariables>) {
-        const options = {...defaultOptions, ...baseOptions}
-        return Apollo.useMutation<CreateTrackMutation, CreateTrackMutationVariables>(CreateTrackDocument, options);
-      }
-export type CreateTrackMutationHookResult = ReturnType<typeof useCreateTrackMutation>;
-export type CreateTrackMutationResult = Apollo.MutationResult<CreateTrackMutation>;
-export type CreateTrackMutationOptions = Apollo.BaseMutationOptions<CreateTrackMutation, CreateTrackMutationVariables>;
-export const GetTracksDocument = gql`
-    query GetTracks($limit: Int) {
-  tracks(limit: $limit) {
-    id
-    slug
-    title
-    description
-    level
-    items {
-      id
-      kind
-      title
-      position
-      contentRef
-      promptRef
-      difficulty
-      tags
-      prereqs
-      children {
-        id
-        kind
-        title
-        position
-        contentRef
-        promptRef
-        difficulty
-        tags
-        prereqs
-      }
-    }
-  }
-}
-    `;
-
-/**
- * __useGetTracksQuery__
- *
- * To run a query within a React component, call `useGetTracksQuery` and pass it any options that fit your needs.
- * When your component renders, `useGetTracksQuery` returns an object from Apollo Client that contains loading, error, and data properties
- * you can use to render your UI.
- *
- * @param baseOptions options that will be passed into the query, supported options are listed on: https://www.apollographql.com/docs/react/api/react-hooks/#options;
- *
- * @example
- * const { data, loading, error } = useGetTracksQuery({
- *   variables: {
- *      limit: // value for 'limit'
- *   },
- * });
- */
-export function useGetTracksQuery(baseOptions?: Apollo.QueryHookOptions<GetTracksQuery, GetTracksQueryVariables>) {
-        const options = {...defaultOptions, ...baseOptions}
-        return Apollo.useQuery<GetTracksQuery, GetTracksQueryVariables>(GetTracksDocument, options);
-      }
-export function useGetTracksLazyQuery(baseOptions?: Apollo.LazyQueryHookOptions<GetTracksQuery, GetTracksQueryVariables>) {
-          const options = {...defaultOptions, ...baseOptions}
-          return Apollo.useLazyQuery<GetTracksQuery, GetTracksQueryVariables>(GetTracksDocument, options);
-        }
-// @ts-ignore
-export function useGetTracksSuspenseQuery(baseOptions?: Apollo.SuspenseQueryHookOptions<GetTracksQuery, GetTracksQueryVariables>): Apollo.UseSuspenseQueryResult<GetTracksQuery, GetTracksQueryVariables>;
-export function useGetTracksSuspenseQuery(baseOptions?: Apollo.SkipToken | Apollo.SuspenseQueryHookOptions<GetTracksQuery, GetTracksQueryVariables>): Apollo.UseSuspenseQueryResult<GetTracksQuery | undefined, GetTracksQueryVariables>;
-export function useGetTracksSuspenseQuery(baseOptions?: Apollo.SkipToken | Apollo.SuspenseQueryHookOptions<GetTracksQuery, GetTracksQueryVariables>) {
-          const options = baseOptions === Apollo.skipToken ? baseOptions : {...defaultOptions, ...baseOptions}
-          return Apollo.useSuspenseQuery<GetTracksQuery, GetTracksQueryVariables>(GetTracksDocument, options);
-        }
-export type GetTracksQueryHookResult = ReturnType<typeof useGetTracksQuery>;
-export type GetTracksLazyQueryHookResult = ReturnType<typeof useGetTracksLazyQuery>;
-export type GetTracksSuspenseQueryHookResult = ReturnType<typeof useGetTracksSuspenseQuery>;
-export type GetTracksQueryResult = Apollo.QueryResult<GetTracksQuery, GetTracksQueryVariables>;
-export const GetTrackDocument = gql`
-    query GetTrack($slug: String!) {
-  track(slug: $slug) {
-    id
-    slug
-    title
-    description
-    level
-    items {
-      id
-      kind
-      title
-      position
-      contentRef
-      promptRef
-      difficulty
-      tags
-      prereqs
-      children {
-        id
-        kind
-        title
-        position
-        contentRef
-        promptRef
-        difficulty
-        tags
-        prereqs
-        children {
-          id
-          kind
-          title
-          position
-          contentRef
-          promptRef
-          difficulty
-          tags
-          prereqs
-        }
-      }
-    }
-  }
-}
-    `;
-
-/**
- * __useGetTrackQuery__
- *
- * To run a query within a React component, call `useGetTrackQuery` and pass it any options that fit your needs.
- * When your component renders, `useGetTrackQuery` returns an object from Apollo Client that contains loading, error, and data properties
- * you can use to render your UI.
- *
- * @param baseOptions options that will be passed into the query, supported options are listed on: https://www.apollographql.com/docs/react/api/react-hooks/#options;
- *
- * @example
- * const { data, loading, error } = useGetTrackQuery({
- *   variables: {
- *      slug: // value for 'slug'
- *   },
- * });
- */
-export function useGetTrackQuery(baseOptions: Apollo.QueryHookOptions<GetTrackQuery, GetTrackQueryVariables> & ({ variables: GetTrackQueryVariables; skip?: boolean; } | { skip: boolean; }) ) {
-        const options = {...defaultOptions, ...baseOptions}
-        return Apollo.useQuery<GetTrackQuery, GetTrackQueryVariables>(GetTrackDocument, options);
-      }
-export function useGetTrackLazyQuery(baseOptions?: Apollo.LazyQueryHookOptions<GetTrackQuery, GetTrackQueryVariables>) {
-          const options = {...defaultOptions, ...baseOptions}
-          return Apollo.useLazyQuery<GetTrackQuery, GetTrackQueryVariables>(GetTrackDocument, options);
-        }
-// @ts-ignore
-export function useGetTrackSuspenseQuery(baseOptions?: Apollo.SuspenseQueryHookOptions<GetTrackQuery, GetTrackQueryVariables>): Apollo.UseSuspenseQueryResult<GetTrackQuery, GetTrackQueryVariables>;
-export function useGetTrackSuspenseQuery(baseOptions?: Apollo.SkipToken | Apollo.SuspenseQueryHookOptions<GetTrackQuery, GetTrackQueryVariables>): Apollo.UseSuspenseQueryResult<GetTrackQuery | undefined, GetTrackQueryVariables>;
-export function useGetTrackSuspenseQuery(baseOptions?: Apollo.SkipToken | Apollo.SuspenseQueryHookOptions<GetTrackQuery, GetTrackQueryVariables>) {
-          const options = baseOptions === Apollo.skipToken ? baseOptions : {...defaultOptions, ...baseOptions}
-          return Apollo.useSuspenseQuery<GetTrackQuery, GetTrackQueryVariables>(GetTrackDocument, options);
-        }
-export type GetTrackQueryHookResult = ReturnType<typeof useGetTrackQuery>;
-export type GetTrackLazyQueryHookResult = ReturnType<typeof useGetTrackLazyQuery>;
-export type GetTrackSuspenseQueryHookResult = ReturnType<typeof useGetTrackSuspenseQuery>;
-export type GetTrackQueryResult = Apollo.QueryResult<GetTrackQuery, GetTrackQueryVariables>;
-export const GetPrepResourcesByCategoryDocument = gql`
-    query GetPrepResourcesByCategory($category: String!) {
-  prepResourcesByCategory(category: $category) {
-    id
-    title
-    href
-    description
-    category
-    tags
-  }
-}
-    `;
-
-/**
- * __useGetPrepResourcesByCategoryQuery__
- *
- * To run a query within a React component, call `useGetPrepResourcesByCategoryQuery` and pass it any options that fit your needs.
- * When your component renders, `useGetPrepResourcesByCategoryQuery` returns an object from Apollo Client that contains loading, error, and data properties
- * you can use to render your UI.
- *
- * @param baseOptions options that will be passed into the query, supported options are listed on: https://www.apollographql.com/docs/react/api/react-hooks/#options;
- *
- * @example
- * const { data, loading, error } = useGetPrepResourcesByCategoryQuery({
- *   variables: {
- *      category: // value for 'category'
- *   },
- * });
- */
-export function useGetPrepResourcesByCategoryQuery(baseOptions: Apollo.QueryHookOptions<GetPrepResourcesByCategoryQuery, GetPrepResourcesByCategoryQueryVariables> & ({ variables: GetPrepResourcesByCategoryQueryVariables; skip?: boolean; } | { skip: boolean; }) ) {
-        const options = {...defaultOptions, ...baseOptions}
-        return Apollo.useQuery<GetPrepResourcesByCategoryQuery, GetPrepResourcesByCategoryQueryVariables>(GetPrepResourcesByCategoryDocument, options);
-      }
-export function useGetPrepResourcesByCategoryLazyQuery(baseOptions?: Apollo.LazyQueryHookOptions<GetPrepResourcesByCategoryQuery, GetPrepResourcesByCategoryQueryVariables>) {
-          const options = {...defaultOptions, ...baseOptions}
-          return Apollo.useLazyQuery<GetPrepResourcesByCategoryQuery, GetPrepResourcesByCategoryQueryVariables>(GetPrepResourcesByCategoryDocument, options);
-        }
-// @ts-ignore
-export function useGetPrepResourcesByCategorySuspenseQuery(baseOptions?: Apollo.SuspenseQueryHookOptions<GetPrepResourcesByCategoryQuery, GetPrepResourcesByCategoryQueryVariables>): Apollo.UseSuspenseQueryResult<GetPrepResourcesByCategoryQuery, GetPrepResourcesByCategoryQueryVariables>;
-export function useGetPrepResourcesByCategorySuspenseQuery(baseOptions?: Apollo.SkipToken | Apollo.SuspenseQueryHookOptions<GetPrepResourcesByCategoryQuery, GetPrepResourcesByCategoryQueryVariables>): Apollo.UseSuspenseQueryResult<GetPrepResourcesByCategoryQuery | undefined, GetPrepResourcesByCategoryQueryVariables>;
-export function useGetPrepResourcesByCategorySuspenseQuery(baseOptions?: Apollo.SkipToken | Apollo.SuspenseQueryHookOptions<GetPrepResourcesByCategoryQuery, GetPrepResourcesByCategoryQueryVariables>) {
-          const options = baseOptions === Apollo.skipToken ? baseOptions : {...defaultOptions, ...baseOptions}
-          return Apollo.useSuspenseQuery<GetPrepResourcesByCategoryQuery, GetPrepResourcesByCategoryQueryVariables>(GetPrepResourcesByCategoryDocument, options);
-        }
-export type GetPrepResourcesByCategoryQueryHookResult = ReturnType<typeof useGetPrepResourcesByCategoryQuery>;
-export type GetPrepResourcesByCategoryLazyQueryHookResult = ReturnType<typeof useGetPrepResourcesByCategoryLazyQuery>;
-export type GetPrepResourcesByCategorySuspenseQueryHookResult = ReturnType<typeof useGetPrepResourcesByCategorySuspenseQuery>;
-export type GetPrepResourcesByCategoryQueryResult = Apollo.QueryResult<GetPrepResourcesByCategoryQuery, GetPrepResourcesByCategoryQueryVariables>;

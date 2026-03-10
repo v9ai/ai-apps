@@ -501,12 +501,6 @@ export const applications = sqliteTable("applications", {
   job_title: text("job_title"), // Denormalized job title for display
   company_name: text("company_name"), // Denormalized company name for display
   job_description: text("job_description"), // User-supplied job description override
-  ai_interview_prep: text("ai_interview_prep"), // JSON: AIInterviewPrep shape
-  ai_interview_questions: text("ai_interview_questions"), // JSON: AIInterviewQuestions shape
-  ai_agentic_coding: text("ai_agentic_coding"), // JSON: AgenticCoding shape
-  ai_backend_prep: text("ai_backend_prep"), // JSON: BackendPrep shape (20-section backend interview prep)
-  ai_deep_research: text("ai_deep_research"), // JSON: AIDeepResearch shape
-  ai_application_strategy: text("ai_application_strategy"), // JSON: ApplicationStrategy shape (Knowledge Squad)
   created_at: text("created_at")
     .notNull()
     .default(sql`(datetime('now'))`),
@@ -517,30 +511,6 @@ export const applications = sqliteTable("applications", {
 
 export type Application = typeof applications.$inferSelect;
 export type NewApplication = typeof applications.$inferInsert;
-
-// Application-Track linking (many-to-many)
-export const applicationTracks = sqliteTable(
-  "application_tracks",
-  {
-    id: integer("id").primaryKey({ autoIncrement: true }),
-    application_id: integer("application_id")
-      .notNull()
-      .references(() => applications.id, { onDelete: "cascade" }),
-    track_slug: text("track_slug").notNull(),
-    created_at: text("created_at")
-      .notNull()
-      .default(sql`(datetime('now'))`),
-  },
-  (table) => ({
-    uniqueAppTrack: uniqueIndex("idx_application_tracks_unique").on(
-      table.application_id,
-      table.track_slug,
-    ),
-  }),
-);
-
-export type ApplicationTrack = typeof applicationTracks.$inferSelect;
-export type NewApplicationTrack = typeof applicationTracks.$inferInsert;
 
 // Job report audit log (written by job-reporter-llm worker)
 export const jobReportEvents = sqliteTable(
@@ -681,57 +651,6 @@ export const opportunities = sqliteTable(
 export type Opportunity = typeof opportunities.$inferSelect;
 export type NewOpportunity = typeof opportunities.$inferInsert;
 
-// Study Topics (curated technical study content)
-export const studyTopics = sqliteTable("study_topics", {
-  id: integer("id").primaryKey({ autoIncrement: true }),
-  category: text("category").notNull(),
-  topic: text("topic").notNull(),
-  title: text("title").notNull(),
-  summary: text("summary"),
-  body_md: text("body_md"),
-  difficulty: text("difficulty", {
-    enum: ["beginner", "intermediate", "advanced"],
-  }).notNull().default("intermediate"),
-  tags: text("tags"), // JSON array of strings
-  deep_dive_md: text("deep_dive_md"),
-  created_at: text("created_at")
-    .notNull()
-    .default(sql`(datetime('now'))`),
-  updated_at: text("updated_at")
-    .notNull()
-    .default(sql`(datetime('now'))`),
-}, (table) => ({
-  categoryTopicIdx: uniqueIndex("idx_study_topics_category_topic")
-    .on(table.category, table.topic),
-}));
-
-export type StudyTopic = typeof studyTopics.$inferSelect;
-export type NewStudyTopic = typeof studyTopics.$inferInsert;
-
-// Study Concept Explanations (LLM-generated, cached by SHA-256 of selected text)
-export const studyConceptExplanations = sqliteTable(
-  "study_concept_explanations",
-  {
-    id: integer("id").primaryKey({ autoIncrement: true }),
-    study_topic_id: integer("study_topic_id")
-      .notNull()
-      .references(() => studyTopics.id, { onDelete: "cascade" }),
-    text_hash: text("text_hash").notNull(), // SHA-256 hex of selected_text
-    selected_text: text("selected_text").notNull(),
-    explanation_md: text("explanation_md").notNull(),
-    created_at: text("created_at")
-      .notNull()
-      .default(sql`(datetime('now'))`),
-  },
-  (table) => ({
-    topicHashIdx: uniqueIndex("idx_study_concept_explanations_topic_hash")
-      .on(table.study_topic_id, table.text_hash),
-  }),
-);
-
-export type StudyConceptExplanation = typeof studyConceptExplanations.$inferSelect;
-export type NewStudyConceptExplanation = typeof studyConceptExplanations.$inferInsert;
-
 // Resumes (skill profile uploads, stored as raw text for D1 fallback)
 export const resumes = sqliteTable("resumes", {
   id: text("id").primaryKey(), // UUID
@@ -869,87 +788,6 @@ export const blockedCompanies = sqliteTable(
 export type BlockedCompany = typeof blockedCompanies.$inferSelect;
 export type NewBlockedCompany = typeof blockedCompanies.$inferInsert;
 
-// Learning Sessions (interactive study/quiz/review tracking)
-export const learningSessions = sqliteTable(
-  "learning_sessions",
-  {
-    id: integer("id").primaryKey({ autoIncrement: true }),
-    application_id: integer("application_id")
-      .notNull()
-      .references(() => applications.id, { onDelete: "cascade" }),
-    user_email: text("user_email").notNull(),
-    session_type: text("session_type", {
-      enum: ["study", "quiz", "flashcard", "mock_interview"],
-    }).notNull(),
-    domain: text("domain", {
-      enum: ["concepts", "interview", "coding", "backend"],
-    }).notNull(),
-    topic_key: text("topic_key").notNull(),
-    score: real("score"),
-    total_questions: integer("total_questions"),
-    correct_answers: integer("correct_answers"),
-    confidence: text("confidence", {
-      enum: ["not_ready", "familiar", "confident", "mastery"],
-    }),
-    duration_ms: integer("duration_ms"),
-    answers_json: text("answers_json"),
-    created_at: text("created_at")
-      .notNull()
-      .default(sql`(datetime('now'))`),
-  },
-  (table) => ({
-    appIdx: index("idx_learning_sessions_app").on(table.application_id),
-    userIdx: index("idx_learning_sessions_user").on(table.user_email),
-    domainIdx: index("idx_learning_sessions_domain").on(table.application_id, table.domain),
-  }),
-);
-
-export type LearningSession = typeof learningSessions.$inferSelect;
-export type NewLearningSession = typeof learningSessions.$inferInsert;
-
-// Topic Mastery (aggregated mastery per topic per application)
-export const topicMastery = sqliteTable(
-  "topic_mastery",
-  {
-    id: integer("id").primaryKey({ autoIncrement: true }),
-    application_id: integer("application_id")
-      .notNull()
-      .references(() => applications.id, { onDelete: "cascade" }),
-    user_email: text("user_email").notNull(),
-    domain: text("domain", {
-      enum: ["concepts", "interview", "coding", "backend"],
-    }).notNull(),
-    topic_key: text("topic_key").notNull(),
-    mastery_level: text("mastery_level", {
-      enum: ["unfamiliar", "familiar", "confident", "mastery"],
-    }).notNull().default("unfamiliar"),
-    confidence_score: real("confidence_score").default(0),
-    total_sessions: integer("total_sessions").default(0),
-    last_quiz_score: real("last_quiz_score"),
-    streak_days: integer("streak_days").default(0),
-    next_review_at: text("next_review_at"),
-    last_studied_at: text("last_studied_at"),
-    created_at: text("created_at")
-      .notNull()
-      .default(sql`(datetime('now'))`),
-    updated_at: text("updated_at")
-      .notNull()
-      .default(sql`(datetime('now'))`),
-  },
-  (table) => ({
-    uniqueMastery: uniqueIndex("idx_topic_mastery_unique").on(
-      table.application_id,
-      table.user_email,
-      table.domain,
-      table.topic_key,
-    ),
-    reviewIdx: index("idx_topic_mastery_review").on(table.next_review_at),
-  }),
-);
-
-export type TopicMastery = typeof topicMastery.$inferSelect;
-export type NewTopicMastery = typeof topicMastery.$inferInsert;
-
 // ---------------------------------------------------------------------------
 // Drizzle relations() declarations
 // ---------------------------------------------------------------------------
@@ -1012,33 +850,6 @@ export const companySnapshotsRelations = relations(companySnapshots, ({ one }) =
   }),
 }));
 
-export const applicationsRelations = relations(applications, ({ many }) => ({
-  tracks: many(applicationTracks),
-  learningSessions: many(learningSessions),
-  topicMastery: many(topicMastery),
-}));
-
-export const applicationTracksRelations = relations(applicationTracks, ({ one }) => ({
-  application: one(applications, {
-    fields: [applicationTracks.application_id],
-    references: [applications.id],
-  }),
-}));
-
-export const learningSessionsRelations = relations(learningSessions, ({ one }) => ({
-  application: one(applications, {
-    fields: [learningSessions.application_id],
-    references: [applications.id],
-  }),
-}));
-
-export const topicMasteryRelations = relations(topicMastery, ({ one }) => ({
-  application: one(applications, {
-    fields: [topicMastery.application_id],
-    references: [applications.id],
-  }),
-}));
-
 export const contactsRelations = relations(contacts, ({ one, many }) => ({
   company: one(companies, {
     fields: [contacts.company_id],
@@ -1074,17 +885,6 @@ export const userPreferencesRelations = relations(userPreferences, ({ one }) => 
   userSettings: one(userSettings, {
     fields: [userPreferences.user_id],
     references: [userSettings.user_id],
-  }),
-}));
-
-export const studyTopicsRelations = relations(studyTopics, ({ many }) => ({
-  conceptExplanations: many(studyConceptExplanations),
-}));
-
-export const studyConceptExplanationsRelations = relations(studyConceptExplanations, ({ one }) => ({
-  studyTopic: one(studyTopics, {
-    fields: [studyConceptExplanations.study_topic_id],
-    references: [studyTopics.id],
   }),
 }));
 

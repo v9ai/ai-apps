@@ -93,13 +93,6 @@ export function ApplicationHeader({ app, isAdmin }: ApplicationHeaderProps) {
     }
   };
 
-  const readiness = [
-    { label: "Prep", done: !!app.aiInterviewPrep },
-    { label: "Coding", done: !!app.agenticCoding },
-    { label: "Backend", done: !!app.aiBackendPrep },
-    { label: "Questions", done: (app.aiInterviewQuestions?.technicalQuestions?.length ?? 0) > 0 },
-  ];
-
   return (
     <>
       {/* Breadcrumb + overflow menu */}
@@ -282,51 +275,6 @@ export function ApplicationHeader({ app, isAdmin }: ApplicationHeaderProps) {
           )}
         </Box>
       </Flex>
-
-      {/* Readiness strip */}
-      <Flex gap="1" mb="6">
-        {readiness.map((r, i) => (
-          <Flex
-            key={r.label}
-            direction="column"
-            align="center"
-            style={{ flex: 1 }}
-          >
-            <Box
-              title={r.label}
-              style={{
-                width: "100%",
-                height: 8,
-                backgroundColor: r.done ? "var(--green-9)" : "var(--gray-5)",
-                transition: "background-color 0.3s",
-                animation: `readinessIn 0.4s ease both`,
-                animationDelay: `${i * 120}ms`,
-              }}
-            />
-            <Text
-              size="1"
-              color="gray"
-              style={{
-                marginTop: 4,
-                fontSize: 10,
-                letterSpacing: "0.02em",
-                textTransform: "lowercase" as const,
-                opacity: r.done ? 1 : 0.5,
-                animation: `readinessIn 0.4s ease both`,
-                animationDelay: `${i * 120 + 100}ms`,
-              }}
-            >
-              {r.label}
-            </Text>
-          </Flex>
-        ))}
-      </Flex>
-      <style>{`
-        @keyframes readinessIn {
-          from { opacity: 0; transform: translateY(4px); }
-          to { opacity: 1; transform: translateY(0); }
-        }
-      `}</style>
 
       {/* Company edit dialog */}
       <Dialog.Root open={editingCompany} onOpenChange={(o) => { if (!o) setEditingCompany(false); }}>

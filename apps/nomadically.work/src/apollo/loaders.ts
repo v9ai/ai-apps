@@ -9,7 +9,6 @@ import {
   companySnapshots,
   userSettings,
   contacts,
-  applicationTracks,
 } from "@/db/schema";
 import type {
   JobSkillTag,
@@ -19,7 +18,6 @@ import type {
   CompanySnapshot,
   UserSettings,
   Contact,
-  ApplicationTrack,
 } from "@/db/schema";
 
 // D1/SQLite safe upper bound for IN (...) variable bindings
@@ -145,22 +143,6 @@ export function createLoaders(db: DbInstance) {
       { maxBatchSize: BATCH_SIZE },
     ),
 
-    applicationTracks: new DataLoader<number, ApplicationTrack[]>(
-      async (applicationIds) => {
-        const rows = await db
-          .select()
-          .from(applicationTracks)
-          .where(inArray(applicationTracks.application_id, [...applicationIds]));
-        const byApplication = new Map<number, ApplicationTrack[]>();
-        for (const row of rows) {
-          const arr = byApplication.get(row.application_id);
-          if (arr) arr.push(row);
-          else byApplication.set(row.application_id, [row]);
-        }
-        return applicationIds.map((id) => byApplication.get(id) ?? []);
-      },
-      { maxBatchSize: BATCH_SIZE },
-    ),
   };
 }
 

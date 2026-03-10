@@ -6,263 +6,12 @@ extend type Query {
 extend type Mutation {
   createApplication(input: ApplicationInput!): Application!
   updateApplication(id: Int!, input: UpdateApplicationInput!): Application!
-  linkTrackToApplication(applicationId: Int!, trackSlug: String!): Application!
-  unlinkTrackFromApplication(applicationId: Int!, trackSlug: String!): Application!
-  generateInterviewPrep(applicationId: Int!): Application!
-  generateTopicDeepDive(applicationId: Int!, requirement: String!, force: Boolean): Application!
-  generateStudyTopicDeepDive(applicationId: Int!, requirement: String!, studyTopic: String!, force: Boolean): Application!
-  generateRequirementFromSelection(applicationId: Int!, selectedText: String!): Application!
-  linkSelectionToRequirement(applicationId: Int!, requirement: String!, sourceQuote: String!): Application!
-  generateInterviewQuestions(applicationId: Int!, type: String!): Application!
-  generateAgenticCoding(applicationId: Int!): Application!
-  generateBackendPrep(applicationId: Int!): Application!
-  generateDeepResearch(applicationId: Int!): Application!
-  recordLearningSession(applicationId: Int!, input: LearningSessionInput!): Application!
-  updateTopicMastery(applicationId: Int!, domain: LearningDomain!, topicKey: String!, masteryLevel: MasteryLevel!): Application!
-  generateQuiz(applicationId: Int!, domain: LearningDomain!, topicKey: String!, count: Int): GeneratedQuiz!
   deleteApplication(id: Int!): DeleteApplicationResponse!
 }
 
 type DeleteApplicationResponse {
   success: Boolean!
   message: String
-}
-
-type AIStudyTopicDeepDive {
-  topic: String!
-  deepDive: String!
-}
-
-type AIInterviewPrepRequirement {
-  requirement: String!
-  questions: [String!]!
-  studyTopics: [String!]!
-  studyTopicDeepDives: [AIStudyTopicDeepDive!]!
-  sourceQuote: String
-  deepDive: String
-}
-
-type AIInterviewQuestion {
-  question: String!
-  reason: String!
-  category: String!
-}
-
-type AIInterviewQuestions {
-  recruiterQuestions: [AIInterviewQuestion!]!
-  technicalQuestions: [AIInterviewQuestion!]!
-  companyContext: String!
-  recruiterGeneratedAt: String
-  technicalGeneratedAt: String
-}
-
-type AgenticCodingExercise {
-  title: String!
-  description: String!
-  difficulty: String!
-  skills: [String!]!
-  hints: [String!]!
-  agentPrompt: String!
-}
-
-type AgenticCodingResource {
-  title: String!
-  url: String!
-  description: String!
-}
-
-type AgenticCodingPromptTemplate {
-  title: String!
-  purpose: String!
-  stackContext: String!
-  prompt: String!
-}
-
-type AgenticCodingFailureMode {
-  scenario: String!
-  why: String!
-  alternative: String!
-}
-
-type AgenticCodingOutcome {
-  task: String!
-  beforeTime: String!
-  afterTime: String!
-  improvement: String!
-}
-
-type BackendPrepInterviewQuestion {
-  question: String!
-  idealAnswer: String!
-  followUps: [String!]!
-  difficulty: String!
-}
-
-type BackendPrepCodeExample {
-  title: String!
-  language: String!
-  code: String!
-  explanation: String!
-}
-
-type BackendPrepSection {
-  title: String!
-  overview: String!
-  keyConcepts: [String!]!
-  deepDive: String!
-  interviewQuestions: [BackendPrepInterviewQuestion!]!
-  codeExamples: [BackendPrepCodeExample!]!
-  commonPitfalls: [String!]!
-  talkingPoints: [String!]!
-  researchInsights: String
-}
-
-type DeepResearchModelResponse {
-  model: String!
-  content: String!
-  reasoning: String
-}
-
-type DeepResearchQuestion {
-  question: String!
-  category: String!
-  deepseek: DeepResearchModelResponse!
-  qwen: DeepResearchModelResponse!
-}
-
-type AIDeepResearch {
-  questions: [DeepResearchQuestion!]!
-  generatedAt: String!
-}
-
-type AIBackendPrep {
-  systemDesign: BackendPrepSection
-  distributedSystems: BackendPrepSection
-  databaseDesign: BackendPrepSection
-  sqlOptimization: BackendPrepSection
-  nosqlPatterns: BackendPrepSection
-  apiDesign: BackendPrepSection
-  authSecurity: BackendPrepSection
-  caching: BackendPrepSection
-  messageQueues: BackendPrepSection
-  microservices: BackendPrepSection
-  testing: BackendPrepSection
-  devops: BackendPrepSection
-  securityOwasp: BackendPrepSection
-  performance: BackendPrepSection
-  concurrencyAsync: BackendPrepSection
-  observability: BackendPrepSection
-  eventDriven: BackendPrepSection
-  serverlessEdge: BackendPrepSection
-  typescriptNode: BackendPrepSection
-  aiMlIntegration: BackendPrepSection
-  generatedAt: String!
-}
-
-type AgenticCoding {
-  overview: String!
-  workflowPattern: String
-  exercises: [AgenticCodingExercise!]!
-  promptTemplates: [AgenticCodingPromptTemplate!]
-  qaApproach: String
-  failureModes: [AgenticCodingFailureMode!]
-  teamPractices: String
-  measurableOutcomes: [AgenticCodingOutcome!]
-  resources: [AgenticCodingResource!]!
-  generatedAt: String!
-}
-
-type AIInterviewPrep {
-  summary: String!
-  requirements: [AIInterviewPrepRequirement!]!
-  generatedAt: String!
-}
-
-type QuestionAnswer {
-  questionId: String!
-  questionText: String!
-  answerText: String!
-}
-
-enum MasteryLevel {
-  unfamiliar
-  familiar
-  confident
-  mastery
-}
-
-enum LearningDomain {
-  concepts
-  interview
-  coding
-  backend
-}
-
-enum SessionType {
-  study
-  quiz
-  flashcard
-  mock_interview
-}
-
-type TopicMasteryEntry {
-  domain: LearningDomain!
-  topicKey: String!
-  masteryLevel: MasteryLevel!
-  confidenceScore: Float!
-  totalSessions: Int!
-  lastQuizScore: Float
-  streakDays: Int!
-  nextReviewAt: String
-  lastStudiedAt: String
-}
-
-type LearningSessionEntry {
-  id: Int!
-  sessionType: SessionType!
-  domain: LearningDomain!
-  topicKey: String!
-  score: Float
-  totalQuestions: Int
-  correctAnswers: Int
-  confidence: MasteryLevel
-  durationMs: Int
-  createdAt: String!
-}
-
-type QuizQuestion {
-  id: String!
-  question: String!
-  options: [String!]!
-  correctIndex: Int!
-  explanation: String!
-  difficulty: String!
-  topicKey: String!
-}
-
-type GeneratedQuiz {
-  domain: LearningDomain!
-  topicKey: String!
-  questions: [QuizQuestion!]!
-  generatedAt: String!
-}
-
-type LearningTeamStatus {
-  domain: LearningDomain!
-  label: String!
-  totalTopics: Int!
-  masteredTopics: Int!
-  familiarTopics: Int!
-  lastStudiedAt: String
-  streakDays: Int!
-  nextReviewTopics: [String!]!
-}
-
-type LearningOverview {
-  teams: [LearningTeamStatus!]!
-  overallReadiness: Float!
-  totalSessions: Int!
-  currentStreak: Int!
 }
 
 """
@@ -291,15 +40,12 @@ type Application {
   companyKey: String
   jobDescription: String
   createdAt: String!
-  interviewPrep: [Track!]!
-  aiInterviewPrep: AIInterviewPrep
-  aiInterviewQuestions: AIInterviewQuestions
-  agenticCoding: AgenticCoding
-  aiBackendPrep: AIBackendPrep
-  aiDeepResearch: AIDeepResearch
-  learningOverview: LearningOverview
-  topicMasteryList: [TopicMasteryEntry!]!
-  recentSessions: [LearningSessionEntry!]!
+}
+
+type QuestionAnswer {
+  questionId: String!
+  questionText: String!
+  answerText: String!
 }
 
 input QuestionAnswerInput {
@@ -314,18 +60,6 @@ input ApplicationInput {
   questions: [QuestionAnswerInput!]!
   jobTitle: String
   companyName: String
-}
-
-input LearningSessionInput {
-  sessionType: SessionType!
-  domain: LearningDomain!
-  topicKey: String!
-  score: Float
-  totalQuestions: Int
-  correctAnswers: Int
-  confidence: MasteryLevel
-  durationMs: Int
-  answersJson: String
 }
 
 input UpdateApplicationInput {
