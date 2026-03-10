@@ -62,3 +62,7 @@ path = "src/bin/eval_therapeutic.rs"
 [[bin]]
 name = "real-estate-research"
 path = "src/bin/real_estate_research.rs"
+
+[[bin]]
+name = "knowledge-research"
+path = "src/bin/knowledge_research.rs"
