@@ -301,12 +301,6 @@ importers:
       '@react-pdf/renderer':
         specifier: ^4.3.2
         version: 4.3.2(react@19.1.1)
-      '@repo/deepseek':
-        specifier: workspace:*
-        version: link:../../packages/deepseek
-      '@repo/qwen':
-        specifier: workspace:*
-        version: link:../../packages/qwen
       '@trigger.dev/sdk':
         specifier: 4.3.3
         version: 4.3.3(ai@6.0.116(zod@3.25.76))(typescript@5.9.3)(zod@3.25.76)
