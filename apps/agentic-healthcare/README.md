@@ -1,109 +1,129 @@
-<a href="https://demo-nextjs-with-supabase.vercel.app/">
-  <img alt="Next.js and Supabase Starter Kit - the fastest way to build apps with Next.js and Supabase" src="https://demo-nextjs-with-supabase.vercel.app/opengraph-image.png">
-  <h1 align="center">Next.js and Supabase Starter Kit</h1>
-</a>
+# Agentic Healthcare
 
-<p align="center">
- The fastest way to build apps with Next.js and Supabase
-</p>
+**Your blood test is a snapshot. Your health is a story.**
 
-<p align="center">
-  <a href="#features"><strong>Features</strong></a> ·
-  <a href="#demo"><strong>Demo</strong></a> ·
-  <a href="#deploy-to-vercel"><strong>Deploy to Vercel</strong></a> ·
-  <a href="#clone-and-run-locally"><strong>Clone and run locally</strong></a> ·
-  <a href="#feedback-and-issues"><strong>Feedback and issues</strong></a>
-  <a href="#more-supabase-examples"><strong>More Examples</strong></a>
-</p>
-<br/>
+Longitudinal blood test intelligence that transforms isolated lab results into health trajectories. Upload your blood panels, track 7 clinical ratios over time, and see where your health is heading — grounded in 8 peer-reviewed papers.
 
 ## Features
 
-- Works across the entire [Next.js](https://nextjs.org) stack
-  - App Router
-  - Pages Router
-  - Proxy
-  - Client
-  - Server
-  - It just works!
-- supabase-ssr. A package to configure Supabase Auth to use cookies
-- Password-based authentication block installed via the [Supabase UI Library](https://supabase.com/ui/docs/nextjs/password-based-auth)
-- Styling with [Tailwind CSS](https://tailwindcss.com)
-- Components with [shadcn/ui](https://ui.shadcn.com/)
-- Optional deployment with [Supabase Vercel Integration and Vercel deploy](#deploy-your-own)
-  - Environment variables automatically assigned to Vercel project
+- **Clinical Ratios** — 7 ratios with published thresholds: TG/HDL, NLR, De Ritis, BUN/Creatinine, TC/HDL, HDL/LDL, TyG Index
+- **Health Trajectory** — 1024-dimensional vectors capture your full biomarker profile; cosine similarity tracks drift between panels
+- **Velocity Alerts** — Per-day rate-of-change for every marker catches accelerating trends before they become clinical findings
+- **AI Health Q&A** — Natural language questions about your results, answered with your actual lab values via multi-modal RAG
+- **Condition Research** — Semantic Scholar integration surfaces peer-reviewed papers relevant to your biomarker patterns
+- **Full Health Record** — Conditions, medications, symptoms, and appointments alongside lab results
 
-## Demo
+## Architecture
 
-You can view a fully working demo at [demo-nextjs-with-supabase.vercel.app](https://demo-nextjs-with-supabase.vercel.app/).
+```mermaid
+flowchart LR
+    Upload["PDF Upload"] --> Extractor["PDF Extractor<br/><i>Unstructured.io HiRes + OCR</i>"]
+    Extractor --> Ratios["Ratio Calculator<br/><i>7 clinical ratios</i>"]
+    Ratios --> Encoder["Vector Encoder<br/><i>Qwen text-embedding-v4</i>"]
+    Encoder --> DB[("Supabase<br/>pgvector HNSW<br/>1024-dim")]
+    DB --> Similarity["Similarity Analyzer<br/><i>cosine distance</i>"]
+    DB --> Velocity["Velocity Monitor<br/><i>per-day Δ</i>"]
+    Similarity --> Analyst["Trajectory Analyst<br/><i>Qwen Plus · temp 0.3</i>"]
+    Velocity --> Analyst
+    Analyst --> Insights["Improving · Stable · Deteriorating"]
+```
 
-## Deploy to Vercel
+### Pipeline Agents
 
-Vercel deployment will guide you through creating a Supabase account and project.
+| Agent | Role | Research Basis |
+|-------|------|----------------|
+| PDF Extractor | 3-tier parser (HTML table → FormKeysValues → free-text) with alias normalization | Unstructured.io |
+| Ratio Calculator | 7 ratios with METRIC_REFERENCES thresholds → optimal/borderline/elevated/low | Giannini, Fest, Botros & Sikaris |
+| Vector Encoder | 1024-dim embeddings via Qwen text-embedding-v4 (test, marker, health-state) | Blyuss et al. |
+| Similarity Analyzer | pgvector HNSW cosine distance, similarity-to-latest timeline | Inker et al. |
+| Velocity Monitor | Per-day rate-of-change, range-aware direction interpretation | Giannini, Fest |
+| Trajectory Analyst | Qwen Plus classification with inline citations and risk tiers | All 8 papers |
 
-After installation of the Supabase integration, all relevant environment variables will be assigned to the project so the deployment is fully functioning.
+## Clinical Ratios
 
-[![Deploy with Vercel](https://vercel.com/button)](https://vercel.com/new/clone?repository-url=https%3A%2F%2Fgithub.com%2Fvercel%2Fnext.js%2Ftree%2Fcanary%2Fexamples%2Fwith-supabase&project-name=nextjs-with-supabase&repository-name=nextjs-with-supabase&demo-title=nextjs-with-supabase&demo-description=This+starter+configures+Supabase+Auth+to+use+cookies%2C+making+the+user%27s+session+available+throughout+the+entire+Next.js+app+-+Client+Components%2C+Server+Components%2C+Route+Handlers%2C+Server+Actions+and+Middleware.&demo-url=https%3A%2F%2Fdemo-nextjs-with-supabase.vercel.app%2F&external-id=https%3A%2F%2Fgithub.com%2Fvercel%2Fnext.js%2Ftree%2Fcanary%2Fexamples%2Fwith-supabase&demo-image=https%3A%2F%2Fdemo-nextjs-with-supabase.vercel.app%2Fopengraph-image.png)
+| Ratio | Optimal | What It Measures | Citation |
+|-------|---------|------------------|----------|
+| TG/HDL | < 2.0 | Insulin resistance, metabolic risk | Giannini et al., Diabetes Care 2011 |
+| NLR | 1.0–3.0 | Systemic inflammation | Fest et al., Eur J Epidemiol 2018 |
+| De Ritis (AST/ALT) | 0.8–1.2 | Liver pathology discrimination | Botros & Sikaris, Clin Biochem Rev 2013 |
+| BUN/Creatinine | 10–20 | Renal function | Inker et al., NEJM 2021 |
+| TC/HDL | < 4.5 | Atherogenic risk | Millan et al., Vasc Health Risk Manag 2009 |
+| HDL/LDL | > 0.4 | Lipid balance | Millan et al. |
+| TyG Index | < 8.5 | Triglyceride-glucose metabolic index | Gonzalez-Chavez et al., Biomedicines 2024 |
 
-The above will also clone the Starter kit to your GitHub, you can clone that locally and develop locally.
+## Research Foundation
 
-If you wish to just develop locally and not deploy to Vercel, [follow the steps below](#clone-and-run-locally).
+8 peer-reviewed papers power the ratio thresholds and trajectory methodology:
 
-## Clone and run locally
+1. **Blyuss et al.** (2019) — 87% sensitivity via longitudinal biomarker tracking — *Clin Cancer Res*
+2. **Inker et al.** (2021) — R²=0.97 eGFR estimation across 186K patients — *NEJM*
+3. **Giannini et al.** (2011) — 6× insulin resistance detection via TG/HDL — *Diabetes Care*
+4. **Luo et al.** (2021) — 2.14× cardiovascular risk via TG/HDL — *Front Cardiovasc Med*
+5. **Fest et al.** (2018) — 1.64× mortality prediction via NLR — *Eur J Epidemiol*
+6. **Botros & Sikaris** (2013) — De Ritis ratio for liver pathology — *Clin Biochem Rev*
+7. **Gonzalez-Chavez et al.** (2024) — TG/HDL validation across populations — *Biomedicines*
+8. **Millan et al.** (2009) — Lipid ratios outperform individual markers — *Vasc Health Risk Manag*
 
-1. You'll first need a Supabase project which can be made [via the Supabase dashboard](https://database.new)
+## Evaluation
 
-2. Create a Next.js app using the Supabase Starter template npx command
+Three-layer eval pipeline with custom clinical scorers:
 
-   ```bash
-   npx create-next-app --example with-supabase with-supabase-app
-   ```
+- **Promptfoo** — Health Q&A + trajectory prompt evaluation
+- **Braintrust** — End-to-end trajectory evaluation across 15 test cases
+- **Custom Scorers** — `RiskClassification` (metric tiers vs METRIC_REFERENCES), `TrajectoryDirection` (improving/stable/deteriorating vs velocity), `ClinicalFactuality` (21 citation pattern regex)
 
-   ```bash
-   yarn create next-app --example with-supabase with-supabase-app
-   ```
+```bash
+pnpm eval            # Run all evals
+pnpm eval:qa         # Health Q&A evals only
+pnpm eval:trajectory # Trajectory evals only
+pnpm eval:braintrust # Braintrust end-to-end
+```
 
-   ```bash
-   pnpm create next-app --example with-supabase with-supabase-app
-   ```
+## Tech Stack
 
-3. Use `cd` to change into the app's directory
+| Layer | Technology |
+|-------|-----------|
+| Framework | Next.js (App Router), React 19, TypeScript |
+| UI | Radix UI + Radix Themes |
+| Database | Supabase (Postgres + pgvector + RLS) |
+| Auth | Supabase Auth (cookie-based SSR) |
+| LLM | Qwen Plus (DashScope API) |
+| Embeddings | Qwen text-embedding-v4 (1024-dim) |
+| PDF Parsing | Unstructured.io (HiRes + OCR) |
+| Research | Semantic Scholar API |
+| Testing | Vitest + Promptfoo + Braintrust |
+| Monorepo | pnpm + Turborepo |
 
-   ```bash
-   cd with-supabase-app
-   ```
+## Getting Started
 
-4. Rename `.env.example` to `.env.local` and update the following:
+### Prerequisites
 
-  ```env
-  NEXT_PUBLIC_SUPABASE_URL=[INSERT SUPABASE PROJECT URL]
-  NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY=[INSERT SUPABASE PROJECT API PUBLISHABLE OR ANON KEY]
-  ```
-  > [!NOTE]
-  > This example uses `NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY`, which refers to Supabase's new **publishable** key format.
-  > Both legacy **anon** keys and new **publishable** keys can be used with this variable name during the transition period. Supabase's dashboard may show `NEXT_PUBLIC_SUPABASE_ANON_KEY`; its value can be used in this example.
-  > See the [full announcement](https://github.com/orgs/supabase/discussions/29260) for more information.
+- Node.js 18+
+- pnpm 10+
+- A [Supabase](https://supabase.com) project with pgvector enabled
 
-  Both `NEXT_PUBLIC_SUPABASE_URL` and `NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY` can be found in [your Supabase project's API settings](https://supabase.com/dashboard/project/_?showConnect=true)
+### Environment Variables
 
-5. You can now run the Next.js local development server:
+```env
+NEXT_PUBLIC_SUPABASE_URL=
+NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY=
+DASHSCOPE_API_KEY=
+UNSTRUCTURED_API_KEY=
+```
 
-   ```bash
-   npm run dev
-   ```
+### Development
 
-   The starter kit should now be running on [localhost:3000](http://localhost:3000/).
+```bash
+pnpm install
+pnpm dev          # Starts on http://localhost:3003
+pnpm test         # Run unit tests
+pnpm eval         # Run evaluation suite
+```
 
-6. This template comes with the default shadcn/ui style initialized. If you instead want other ui.shadcn styles, delete `components.json` and [re-install shadcn/ui](https://ui.shadcn.com/docs/installation/next)
+### Database Migrations
 
-> Check out [the docs for Local Development](https://supabase.com/docs/guides/getting-started/local-development) to also run Supabase locally.
+The `supabase/migrations/` directory contains 16 migrations covering blood tests, pgvector embeddings, conditions, medications, symptoms, appointments, health trajectory, hybrid search, and trend detection.
 
-## Feedback and issues
+## Disclaimer
 
-Please file feedback and issues over on the [Supabase GitHub org](https://github.com/supabase/supabase/issues/new/choose).
-
-## More Supabase examples
-
-- [Next.js Subscription Payments Starter](https://github.com/vercel/nextjs-subscription-payments)
-- [Cookie-based Auth and the Next.js 13 App Router (free course)](https://youtube.com/playlist?list=PL5S4mPUpp4OtMhpnp93EFSo42iQ40XjbF)
-- [Supabase Auth and the Next.js App Router](https://github.com/supabase/supabase/tree/master/examples/auth/nextjs)
+This tool is for informational purposes only. It is not medical advice. Always consult your physician for clinical decisions.
