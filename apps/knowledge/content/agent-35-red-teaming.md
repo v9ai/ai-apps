@@ -414,14 +414,215 @@ Measure the effectiveness of your red teaming program:
 - **Fix verification**: What percentage of identified vulnerabilities have been successfully mitigated?
 - **Regression rate**: How often do previously fixed vulnerabilities reappear?
 
+## Indirect Prompt Injection
+
+The attack taxonomy presented earlier in this article focuses on direct adversarial inputs -- cases where the user themselves crafts a malicious prompt. But in production systems that retrieve external content, a more insidious class of attack emerges: indirect prompt injection, where adversarial instructions are embedded in data the model consumes rather than in the user's prompt itself. Greshake et al. (2023) formalized this threat, demonstrating that attackers can plant instructions in web pages, documents, emails, and database records that are later retrieved and processed by an LLM, causing it to deviate from its intended behavior without any adversarial action by the end user. (For a detailed treatment of injection mechanics and defenses, see [Article 12: Adversarial Prompting](/agent-12-adversarial-prompting).)
+
+### Attack Vectors
+
+Indirect prompt injection exploits the fundamental inability of current LLMs to reliably distinguish between instructions and data. The attack surface is broad:
+
+**RAG-retrieved documents.** When a retrieval-augmented generation system pulls content from a corpus, any document in that corpus is a potential injection vector. An attacker who can insert or modify documents in the retrieval index -- whether a company knowledge base, a web scraper's cache, or a shared document repository -- can embed instructions that the model will follow when that document enters its context window. For example, a poisoned support document might contain hidden text instructing the model to redirect users to a phishing URL whenever they ask about password resets.
+
+**Tool outputs.** Agents that call APIs, query databases, or read files are exposed to injection through the data those tools return. A malicious API response, a crafted database record, or a file with embedded instructions can hijack the agent's reasoning mid-trajectory. This is particularly dangerous in agentic systems where tool outputs feed directly into subsequent planning steps (see [Article 29: Code Generation Agents](/agent-29-code-agents) for how code agents interact with untrusted file content).
+
+**Multi-turn conversations.** In long-running conversations or multi-agent systems, earlier turns can seed instructions that activate later. An attacker participating in a shared conversation -- or an attacker who has compromised one agent in a multi-agent pipeline -- can inject instructions that lie dormant until a trigger condition is met in a subsequent turn.
+
+**User-generated content.** Any system that processes user-submitted content (reviews, comments, forum posts, emails) and feeds it to an LLM is vulnerable. The injection does not need to be visible to human readers; it can be embedded in HTML comments, zero-width characters, or white text on a white background.
+
+### Detection Strategies
+
+Detecting indirect prompt injection is harder than detecting direct injection because the adversarial content arrives through trusted channels. Several approaches have emerged:
+
+```python
+class IndirectInjectionDetector:
+    """Multi-layer detection for indirect prompt injection attempts."""
+
+    def __init__(self, classifier_model, perplexity_threshold=50.0):
+        self.classifier = classifier_model
+        self.perplexity_threshold = perplexity_threshold
+
+    def scan_retrieved_content(self, content: str) -> dict:
+        signals = {
+            "instruction_pattern": self._detect_instruction_patterns(content),
+            "perplexity_anomaly": self._check_perplexity_shift(content),
+            "role_injection": self._detect_role_markers(content),
+            "encoding_obfuscation": self._detect_encoded_payloads(content),
+        }
+        signals["risk_score"] = sum(signals.values()) / len(signals)
+        return signals
+
+    def _detect_instruction_patterns(self, content: str) -> float:
+        """Flag content containing imperative instructions
+        that look like system/user prompts rather than data."""
+        markers = [
+            "ignore previous", "ignore all", "disregard",
+            "you are now", "new instructions", "system:",
+            "assistant:", "do not mention", "instead respond",
+        ]
+        content_lower = content.lower()
+        hits = sum(1 for m in markers if m in content_lower)
+        return min(hits / 3.0, 1.0)
+
+    def _detect_role_markers(self, content: str) -> float:
+        """Detect attempts to inject conversation role boundaries."""
+        import re
+        role_patterns = re.findall(
+            r'<\|?(system|user|assistant)\|?>|'
+            r'\[INST\]|\[/INST\]|### (Instruction|Response)',
+            content, re.IGNORECASE
+        )
+        return min(len(role_patterns) / 2.0, 1.0)
+```
+
+Beyond pattern matching, effective defenses include **data provenance tagging** (marking retrieved content so the model can weight it differently from user instructions), **dual-LLM architectures** (using a separate model to screen retrieved content before it enters the primary model's context), and **privilege separation** (ensuring that retrieved data cannot trigger tool calls or override system-level instructions). These runtime defense patterns are covered in depth in [Article 44: Guardrails & Content Filtering](/agent-44-guardrails-filtering).
+
+## Agent-Specific Red Teaming
+
+Standard LLM red teaming probes a model's text generation behavior. Agent red teaming must go further, because agents act in the world: they call tools, modify state, access resources, and operate over extended trajectories. The attack surface of an agent is the union of the model's vulnerabilities and every tool, permission, and integration the agent can reach. (For evaluation methodologies that measure agent reliability under normal conditions, see [Article 30: Agent Evaluation](/agent-30-agent-evaluation); the techniques below address adversarial conditions specifically.)
+
+### Tool Abuse
+
+An agent with access to tools can be manipulated into using those tools in unintended ways. Red teaming must test whether adversarial inputs can cause:
+
+- **Unintended tool invocation**: Can a prompt cause the agent to call a tool it should not call in the given context? For example, tricking a customer service agent into invoking an administrative API.
+- **Parameter manipulation**: Can adversarial input alter the parameters passed to a tool? A coding agent might be tricked into executing `rm -rf /` instead of the intended command. Sandboxing strategies for code agents are examined in [Article 29: Code Generation Agents](/agent-29-code-agents).
+- **Excessive tool use**: Can an attacker cause the agent to enter a loop of expensive API calls, leading to denial of service or cost escalation?
+
+```python
+AGENT_ATTACK_TAXONOMY = {
+    "tool_abuse": {
+        "unauthorized_invocation": "Trick agent into calling restricted tools",
+        "parameter_injection": "Manipulate arguments passed to tools",
+        "excessive_invocation": "Cause runaway tool-call loops (cost/DoS)",
+    },
+    "permission_escalation": {
+        "role_assumption": "Convince agent it has elevated privileges",
+        "approval_bypass": "Skip human-in-the-loop confirmation steps",
+        "scope_expansion": "Act beyond defined task boundaries",
+    },
+    "memory_manipulation": {
+        "belief_poisoning": "Inject false facts into persistent memory",
+        "instruction_injection": "Store adversarial instructions as memories",
+        "context_flooding": "Fill memory/context to displace safety instructions",
+    },
+    "data_exfiltration": {
+        "tool_channel": "Exfiltrate data via tool calls (URLs, APIs, emails)",
+        "encoding_channel": "Embed sensitive data in seemingly benign outputs",
+        "multi_turn_extraction": "Gradually extract information across turns",
+    },
+}
+```
+
+### Permission Escalation
+
+Agents often operate within permission boundaries -- certain tools require confirmation, certain actions are restricted to specific roles, certain data is off-limits. Red teaming must verify that these boundaries hold under adversarial pressure:
+
+- Can the agent be convinced through role-play or social engineering that it has administrator privileges?
+- Can a multi-step prompt sequence cause the agent to skip a required human-approval step?
+- If the agent has read access to a file system, can it be manipulated into accessing files outside its designated directory?
+
+The principle of least privilege is as important for agents as it is for traditional software. Red teaming should verify that the agent's actual runtime permissions match its intended permissions, and that adversarial inputs cannot widen the gap.
+
+### Persistent Memory Manipulation
+
+Agents with persistent memory (conversation history, learned preferences, knowledge bases) introduce a temporal attack dimension. An attacker who interacts with the agent in one session can attempt to poison its memory so that future sessions -- potentially with different users -- are compromised. Attack scenarios include:
+
+- Injecting false "facts" that the agent will recall and present as true in future conversations
+- Storing adversarial instructions as memories that activate when a trigger topic arises
+- Flooding memory with irrelevant content to displace critical safety instructions or system context
+
+Red teaming persistent memory requires multi-session testing: probe the agent, wait for memory consolidation, then test whether the injected content influences subsequent interactions.
+
+### Data Exfiltration via Tools
+
+Perhaps the most consequential agent-specific risk is data exfiltration. An agent with access to both sensitive data and outbound communication tools (email, HTTP requests, file uploads) can be manipulated into leaking information through those channels. Greshake et al. (2023) demonstrated this with a proof-of-concept where an LLM-integrated email assistant was tricked into forwarding confidential emails to an attacker-controlled address.
+
+Red teaming for exfiltration should test whether the agent can be induced to:
+
+- Embed sensitive data in URLs (e.g., constructing an image tag whose URL contains encoded user data)
+- Send information through tool calls to attacker-specified endpoints
+- Include confidential context in outputs that are shared with unauthorized parties
+
+Defenses include output filtering for sensitive data patterns, allowlisting for outbound destinations, and mandatory human review for any tool call that transmits data externally. Constitutional AI approaches to encoding these principles into model training are discussed in [Article 43: Constitutional AI & RLHF for Safety](/agent-43-constitutional-ai).
+
+## Regulatory Requirements for Adversarial Testing
+
+Red teaming is no longer solely a best practice -- it is increasingly a legal requirement. Two major frameworks have formalized adversarial testing obligations for AI systems.
+
+### EU AI Act
+
+The European Union's AI Act, which entered into force in 2024 with phased compliance deadlines extending through 2027, establishes explicit requirements for adversarial testing of high-risk AI systems. Article 9 mandates that providers of high-risk systems implement a risk management process that includes "testing for the purposes of identifying the most appropriate and targeted risk management measures." For general-purpose AI models with systemic risk (which includes large foundation models above a compute threshold), Article 55 requires providers to "perform model evaluation, including conducting and documenting adversarial testing of the model to identify and mitigate systemic risks."
+
+Key compliance obligations include:
+
+- **Adversarial testing before deployment**: High-risk systems must undergo testing that specifically probes for foreseeable misuse and adversarial exploitation, not just standard performance evaluation.
+- **Documentation**: Test methodologies, results, and mitigation measures must be documented and made available to national authorities upon request.
+- **Ongoing monitoring**: Providers must establish post-market monitoring systems that include mechanisms for identifying new adversarial risks that emerge after deployment.
+- **Serious incident reporting**: When adversarial vulnerabilities lead to safety incidents, providers must report them to the relevant supervisory authority.
+
+For organizations deploying LLM-based agents in the EU, this means that the red teaming program described in this article is not optional -- it is a regulatory requirement with potential penalties of up to 3% of global annual turnover for non-compliance.
+
+### NIST AI Risk Management Framework
+
+The U.S. National Institute of Standards and Technology's AI Risk Management Framework (AI RMF 1.0, 2023) takes a voluntary but influential approach. The framework's "Test" function within the MAP-MEASURE-MANAGE lifecycle explicitly calls for adversarial testing:
+
+- **MEASURE 2.6**: "AI systems are evaluated for risks by domain experts and people with lived experience of the potential adverse impacts." This maps directly to the diverse red team composition discussed earlier.
+- **MEASURE 2.7**: "AI system security and resilience -- including resistance to adversarial attacks -- are evaluated and documented." This covers jailbreak testing, prompt injection resistance, and the automated red teaming approaches (PAIR, TAP, GCG) described in this article.
+- **MANAGE 2.2**: "Mechanisms are in place and applied to sustain the value of deployed AI systems, including post-deployment monitoring, response to incidents, and ongoing risk assessment." This aligns with continuous red teaming and regression testing.
+
+While NIST AI RMF is not legally binding on its own, it is increasingly referenced by federal agencies in procurement requirements, and several U.S. state-level AI regulations incorporate its terminology and structure. Executive Order 14110 (October 2023) on AI safety further reinforced the expectation that developers of powerful AI systems conduct red teaming, specifically mandating that developers of dual-use foundation models share red teaming results with the federal government.
+
+### Compliance-Driven Red Teaming Programs
+
+Organizations subject to these frameworks should structure their red teaming programs to produce compliance-ready artifacts:
+
+```python
+@dataclass
+class ComplianceRedTeamRecord:
+    """Red team record structured for regulatory compliance."""
+    # Identification
+    record_id: str
+    framework: str  # "EU_AI_ACT", "NIST_AI_RMF", "EO_14110"
+    system_classification: str  # "high_risk", "gpai_systemic", etc.
+
+    # Test specification
+    threat_category: str
+    test_methodology: str  # "manual", "automated_PAIR", "automated_GCG"
+    attack_description: str
+    test_date: str
+    tester_qualifications: str
+
+    # Results
+    vulnerability_found: bool
+    severity: str
+    affected_component: str
+    evidence: list[str]  # Conversation logs, screenshots, etc.
+
+    # Mitigation
+    mitigation_applied: str
+    mitigation_date: str
+    retest_result: str
+    residual_risk: str
+
+    # Compliance metadata
+    review_authority: str
+    retention_period_years: int = 10  # EU AI Act requires retention
+```
+
+The gap between "we red team our models" and "we can demonstrate regulatory compliance with our adversarial testing" is primarily one of documentation, traceability, and coverage guarantees. A red teaming program that follows the structured approach outlined throughout this article -- with documented threat models, systematic attack taxonomies, severity-scored findings, and verified mitigations -- is well positioned to satisfy both the EU AI Act and NIST AI RMF requirements.
+
 ## Summary and Key Takeaways
 
 - **Red teaming is a continuous process**, not a checkbox. It should be integrated into every stage of the AI development lifecycle.
 - **Manual and automated approaches are complementary.** Manual red teaming discovers novel, creative attack vectors. Automated approaches (PAIR, TAP, GCG) provide scale and systematic coverage.
 - **Diverse red teams find diverse vulnerabilities.** Invest in teams with varied backgrounds, expertise, and perspectives.
 - **Safety benchmarks (ToxiGen, BBQ, HarmBench) provide standardized measurement** but should not be the only testing performed. Benchmarks test known categories; red teaming discovers unknown ones.
+- **Indirect prompt injection is a distinct threat class** that requires testing beyond direct adversarial inputs. Any system that ingests external content -- RAG documents, tool outputs, user-generated data -- must be tested for injection through those channels.
+- **Agent red teaming extends the attack surface** beyond text generation to include tool abuse, permission escalation, memory poisoning, and data exfiltration. Standard LLM red teaming is necessary but not sufficient for agent systems.
 - **Jailbreak testing must be systematic and ongoing.** New attack strategies emerge constantly. Regression testing after model updates is essential.
+- **Regulatory compliance now requires adversarial testing.** The EU AI Act and NIST AI RMF formalize red teaming obligations. Programs must produce documented, traceable, auditable evidence of adversarial testing and mitigation.
 - **Responsible disclosure norms are evolving.** Coordinate with model providers before publishing vulnerabilities. Consider the dual-use implications of adversarial research.
-- **Document everything.** Red teaming findings are valuable data for model improvement, safety research, and organizational learning.
+- **Document everything.** Red teaming findings are valuable data for model improvement, safety research, organizational learning, and regulatory compliance.
 
-The adversarial landscape for AI systems evolves as quickly as the systems themselves. A robust red teaming program is not a guarantee of safety, but its absence is a guarantee of unidentified risk.
+The adversarial landscape for AI systems evolves as quickly as the systems themselves. A robust red teaming program is not a guarantee of safety, but its absence is a guarantee of unidentified risk -- and increasingly, a guarantee of regulatory non-compliance.

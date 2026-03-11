@@ -331,15 +331,168 @@ For production VLM applications:
 - **Caching**: Store embeddings and common query results
 - **Model selection**: Use smaller VLMs (e.g., LLaVA-7B, MiniCPM-V) for simpler tasks, reserving larger models for complex reasoning
 
+## Open-Source VLM Landscape (2025)
+
+The open-source VLM ecosystem has matured rapidly, with several model families now rivaling proprietary systems on standard benchmarks. Understanding the relative strengths of each family is essential for practitioners selecting models for production workloads.
+
+### InternVL
+
+InternVL (Chen et al., 2024) from Shanghai AI Lab represents one of the most capable open-source VLM families. InternVL 2.5 scales from 1B to 78B parameters, with the flagship model matching or exceeding GPT-4V on benchmarks like MMMU and MathVista. Key architectural decisions include:
+
+- **Dynamic high-resolution**: InternVL uses a dynamic tiling strategy that adapts the number of image tiles based on aspect ratio and resolution, supporting inputs up to 4K without fixed resolution constraints
+- **Unfrozen vision encoder**: Unlike LLaVA, InternVL fine-tunes its InternViT vision encoder during training, which significantly improves fine-grained visual understanding (document text, small objects, chart details)
+- **Strong multilingual support**: Trained on multilingual visual instruction data, making it well-suited for non-English document AI and OCR tasks
+
+### Qwen-VL
+
+Alibaba's Qwen-VL series integrates vision capabilities directly into the Qwen language model family. Qwen2-VL introduced several notable innovations:
+
+- **Naive Dynamic Resolution**: Rather than cropping images into fixed tiles, Qwen2-VL dynamically maps images to variable-length token sequences, reducing visual token waste for non-square images
+- **Multimodal RoPE (M-RoPE)**: Extends rotary position embeddings to jointly encode temporal, height, and width positional information, unifying the handling of images and video within a single positional encoding scheme
+- **Strong video understanding**: Qwen2-VL handles video natively by processing frame sequences with temporal position encoding, achieving competitive results on video QA benchmarks without separate video-specific modules
+
+### CogVLM
+
+CogVLM (Wang et al., 2024) from Tsinghua and Zhipu AI takes a different architectural approach by adding a dedicated visual expert module to each Transformer layer. Rather than projecting visual tokens into the LLM's input space and hoping the language model adapts, CogVLM uses separate QKV matrices for visual and text tokens within the same attention computation. This preserves the language model's original text capabilities while adding deep visual reasoning without interference. CogVLM2 extended this with higher resolution support and improved grounding capabilities.
+
+### MiniCPM-V
+
+MiniCPM-V from OpenBMB targets efficient deployment without sacrificing capability. MiniCPM-V 2.6, at roughly 8B parameters, achieves performance competitive with much larger models through:
+
+- **Adaptive visual encoding**: A cross-attention-based token compression scheme that adjusts the number of visual tokens based on image complexity
+- **End-side deployment**: Optimized for on-device inference on mobile hardware, achieving real-time image understanding on smartphones — a practical consideration for applications requiring privacy or offline capability (see Article 41 on edge deployment)
+- **Efficient training**: Strong performance from relatively modest training compute, demonstrating that data curation and architecture choices can compensate for scale
+
+### Choosing Between Open-Source VLMs
+
+| Model Family | Best For | Parameters | Key Strength |
+|-------------|----------|-----------|--------------|
+| InternVL 2.5 | General-purpose, documents | 1B-78B | Benchmark-leading accuracy |
+| Qwen2-VL | Video + multilingual | 2B-72B | Native video, M-RoPE |
+| CogVLM2 | Visual grounding | 19B | Visual expert architecture |
+| MiniCPM-V | Edge / mobile deployment | 3B-8B | Efficiency per parameter |
+| LLaVA-NeXT | Research, fine-tuning | 7B-34B | Simple architecture, extensible |
+
+## Multimodal RAG
+
+Standard RAG systems retrieve text chunks and feed them to an LLM for synthesis. Multimodal RAG extends this to handle images, diagrams, charts, and other visual content alongside text — a critical capability for knowledge bases where information is encoded visually (technical manuals, research papers with figures, slide decks).
+
+### Architecture Patterns
+
+There are three primary approaches to multimodal RAG, each with distinct tradeoffs:
+
+**Approach 1 — Caption and embed**: Use a VLM to generate text captions for all images at indexing time, then embed the captions alongside document text in a standard vector store. At query time, retrieval operates entirely in text space. This is the simplest approach and works well when images primarily supplement text, but loses visual details that captions fail to capture.
+
+**Approach 2 — Multimodal embeddings**: Use a model like CLIP, SigLIP, or Nomic Embed Vision to embed images directly into the same vector space as text (see Article 13 on embedding models). Queries can retrieve both text chunks and images based on semantic similarity. This preserves visual information but requires careful calibration of cross-modal similarity scores.
+
+**Approach 3 — Late fusion with VLM reasoning**: Retrieve candidate images and text chunks separately, then pass both to a VLM for joint reasoning. This is the most capable approach but also the most expensive, as it requires VLM inference at query time:
+
+```python
+class MultimodalRAG:
+    def __init__(self, text_index, image_index, vlm):
+        self.text_index = text_index      # Standard text vector store
+        self.image_index = image_index    # CLIP-based image index
+        self.vlm = vlm
+
+    def query(self, question, top_k_text=5, top_k_images=3):
+        # Retrieve relevant text chunks
+        text_results = self.text_index.search(question, top_k=top_k_text)
+
+        # Retrieve relevant images via CLIP similarity
+        image_results = self.image_index.search(question, top_k=top_k_images)
+
+        # Compose multimodal prompt for VLM
+        prompt = f"Based on the following context, answer: {question}\n\n"
+        prompt += "Text context:\n"
+        for chunk in text_results:
+            prompt += f"- {chunk.text}\n"
+
+        # Pass images as interleaved visual tokens
+        response = self.vlm.generate(
+            prompt=prompt,
+            images=[img.data for img in image_results],
+            image_descriptions=[img.metadata for img in image_results],
+        )
+        return response
+```
+
+For production multimodal RAG pipelines, combining Approach 1 (captioning at index time) with Approach 3 (VLM reasoning at query time) provides the best balance: captioned images are retrievable via text search, while the VLM can also reason directly over the retrieved image pixels for visual details the caption missed. For a deeper treatment of retrieval strategies and reranking, see Article 17 on advanced RAG.
+
+## Visual Grounding
+
+Visual grounding connects VLM text outputs to specific regions within an image — bounding boxes, segmentation masks, or point coordinates. This capability is essential for applications where knowing *where* in the image the model's answer refers to is as important as the answer itself: object detection, robotic manipulation, visual inspection, and interactive image editing.
+
+### Region-Level Output Formats
+
+Modern grounding-capable VLMs output spatial references in several formats:
+
+- **Normalized bounding boxes**: Coordinates as `[x_min, y_min, x_max, y_max]` normalized to [0, 1000] or [0, 1]. Models like Qwen2-VL and CogVLM2 natively produce bounding box coordinates interleaved with text tokens
+- **Point coordinates**: Single (x, y) points indicating object centers, used in referring expression comprehension
+- **Segmentation tokens**: Some models (like LISA and GLaMM) generate special tokens that decode into pixel-level segmentation masks via a separate mask decoder
+
+### Grounding Architectures
+
+**Kosmos-2** (Microsoft) was an early model to integrate grounding directly into the language model's vocabulary by adding special location tokens (`<loc_XXX>`) that represent discretized spatial coordinates. The model can both describe regions given bounding boxes (grounded captioning) and produce bounding boxes given referring expressions (referring expression comprehension).
+
+**Grounding DINO + VLM**: A modular approach that combines an open-vocabulary object detector (Grounding DINO) with a VLM. The detector localizes objects based on text prompts, then the VLM reasons about the detected regions:
+
+```python
+# Modular grounding pipeline
+from groundingdino.util.inference import load_model, predict
+
+# Step 1: Detect objects with Grounding DINO
+boxes, logits, phrases = predict(
+    model=grounding_model,
+    image=image,
+    caption="the red car near the building",
+    box_threshold=0.3,
+    text_threshold=0.25,
+)
+
+# Step 2: Crop detected regions and pass to VLM for detailed analysis
+for box in boxes:
+    region = crop_image(image, box)
+    description = vlm.describe(region, prompt="Describe this vehicle in detail")
+```
+
+**GLaMM** (Rasheed et al., 2024) and **LISA** (Lai et al., 2024) extend VLM architectures with segmentation decoders, enabling pixel-level grounding. The language model generates a special `<SEG>` token, which triggers a SAM-like mask decoder to produce a segmentation mask for the referenced object. This bridges the gap between language understanding and pixel-precise localization.
+
+Grounding also serves as a hallucination mitigation mechanism (see Article 45): if a model claims an object exists in an image, requiring it to also produce a bounding box provides a verifiable check. Models are far less likely to hallucinate objects when forced to spatially localize them.
+
+## Video Understanding Architectures
+
+The naive approach to video understanding — sampling frames uniformly and processing each as an independent image — discards temporal relationships that are often critical for answering questions about actions, causality, and event sequences. Modern video VLMs introduce explicit temporal modeling to address this limitation.
+
+### Temporal Encoding Strategies
+
+**Token-level temporal embeddings**: Models like Video-LLaVA and LLaVA-NeXT-Video add temporal position embeddings to visual tokens from each frame, allowing the language model's attention to learn temporal relationships implicitly. Each frame produces a set of spatial tokens, and frame index embeddings distinguish tokens from different points in time.
+
+**Temporal attention layers**: VideoChat and Video-ChatGPT insert dedicated temporal attention modules between spatial attention layers in the vision encoder. After standard spatial self-attention within each frame, temporal attention operates across frames at each spatial position, capturing motion and state changes.
+
+**Hierarchical encoding**: PLLaVA and similar architectures process video at multiple temporal scales — dense sampling for short clips, sparse keyframe sampling for longer videos — then merge representations through pooling or cross-attention. This handles the tension between temporal detail and context length:
+
+```
+Short video (<30s):  Dense sampling -> 1-2 fps -> All frames encoded
+Medium video (1-5m): Adaptive sampling -> keyframes + motion segments
+Long video (>5m):    Hierarchical -> scene-level summaries + detail on demand
+
+Token budget management:
+  - 8 frames x 256 tokens/frame = 2048 visual tokens (manageable)
+  - 64 frames x 256 tokens/frame = 16384 visual tokens (requires compression)
+  - Temporal token merging: merge similar adjacent frame tokens -> 4-8x reduction
+```
+
+### Long Video Understanding
+
+Handling videos longer than a few minutes requires strategies beyond simple frame sampling:
+
+- **Memory-augmented models**: Maintain a compressed memory of past frames, attending to it when processing new frames (similar to how streaming language models handle long documents)
+- **Retrieval-based video QA**: Index frames or clips with embeddings, retrieve the most relevant segments for a given question, then process only those segments with a VLM. This is effectively multimodal RAG applied to video
+- **Scene graph accumulation**: Build a structured representation of entities and their relationships across frames, enabling reasoning over long temporal spans without retaining all visual tokens
+
+Models like LWM (Large World Model) and Gemini 1.5 Pro demonstrate that extremely long context windows (up to 1M+ tokens) can accommodate hour-length videos directly, though this approach trades compute cost for architectural simplicity.
+
 ## Emerging Directions
-
-### Video Understanding
-
-Extending VLMs to video introduces temporal reasoning challenges. Approaches include:
-
-- **Frame sampling**: Selecting keyframes and processing them as multiple images (simple but loses temporal information)
-- **Video-specific encoders**: Models like VideoMAE that capture temporal dynamics
-- **Streaming architectures**: Processing video frames incrementally for real-time understanding
 
 ### Embodied Vision-Language Models
 
@@ -353,13 +506,23 @@ VLMs are increasingly being integrated into robotics and embodied AI:
 
 The frontier of VLM research is moving toward world models that don't just describe what they see but can predict what will happen next. Models like Sora and Genie demonstrate that visual generation models trained at scale develop implicit physical understanding, suggesting a path toward VLMs that truly understand the visual world rather than merely describing it.
 
+## Cross-References
+
+- **Article 13 — Embedding Models**: Multimodal embedding spaces (CLIP, SigLIP, Nomic Embed Vision) build on the same contrastive pretraining foundations covered in the embedding models article. Understanding embedding similarity and fine-tuning is essential for multimodal retrieval.
+- **Article 17 — Advanced RAG**: Multimodal RAG extends the retrieval-augmented generation patterns discussed in Article 17, adding image retrieval and VLM-based synthesis to text-centric pipelines.
+- **Article 45 — Hallucination Mitigation**: Visual grounding provides a spatial verification mechanism for hallucination detection — models forced to localize claims in bounding boxes hallucinate less. POPE and contrastive decoding connect directly to the hallucination mitigation strategies covered there.
+- **Article 41 — Edge Deployment**: Efficient VLMs like MiniCPM-V target on-device deployment scenarios. The quantization, ONNX export, and runtime optimization strategies from Article 41 apply directly to deploying vision-language models on mobile and embedded hardware.
+
 ## Summary and Key Takeaways
 
 - **CLIP's contrastive pretraining** established the foundation for connecting vision and language through shared embedding spaces, with SigLIP and OpenCLIP providing practical improvements
 - **The LLaVA architecture** (vision encoder + projection + LLM) has become the dominant pattern for open-source VLMs due to its simplicity and effectiveness
 - **Visual instruction tuning** data quality matters more than architecture choices; GPT-4-generated instruction data bootstrapped the entire field
+- **The open-source VLM landscape** has diversified significantly, with InternVL, Qwen-VL, CogVLM, and MiniCPM-V each offering distinct architectural innovations and deployment profiles
+- **Multimodal RAG** extends text-centric retrieval to handle images and diagrams, with approaches ranging from simple captioning to full VLM-based visual reasoning at query time
+- **Visual grounding** connects VLM outputs to specific image regions through bounding boxes and segmentation masks, serving both practical applications and hallucination mitigation
+- **Video understanding** has moved beyond frame sampling to dedicated temporal modeling, with hierarchical encoding and memory-augmented architectures handling long-form video
 - **Document AI** benefits enormously from VLMs that can reason over layout and content simultaneously, reducing the need for complex OCR pipelines
 - **Hallucination** remains the primary challenge for production VLM deployment; benchmarks like POPE and techniques like contrastive decoding help address it
 - **Deployment optimization** requires independent treatment of vision and language components, with visual token compression being critical for cost management
-- **The field is rapidly expanding** into video understanding, embodied AI, and world models, with each direction presenting unique architectural challenges
 - For practitioners, the choice between proprietary APIs (GPT-4V, Gemini) and open models (LLaVA, InternVL) depends on latency requirements, data privacy constraints, and the specific visual understanding capabilities needed

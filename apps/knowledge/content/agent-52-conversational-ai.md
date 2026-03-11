@@ -742,6 +742,326 @@ BAD proactive behavior:
 - Support keyboard navigation in chat interfaces
 - Maintain reasonable response lengths for users with cognitive disabilities
 
+## Tool-Augmented Conversations
+
+### From Text to Action
+
+The most significant leap in conversational AI is the shift from systems that can only talk to systems that can act. Function calling (see [Article 25: Function Calling & Tool Integration](agent-25-function-calling.md) for the underlying mechanics) enables chatbots to look up order status, book reservations, process refunds, and query databases -- all within the natural flow of conversation. This transforms the chatbot from an information kiosk into a genuine transactional agent.
+
+The architectural challenge is weaving tool execution into dialogue without breaking conversational coherence. A user who says "Where's my package?" expects a direct answer, not a narration of the bot's internal API calls.
+
+### Conversation-Aware Tool Orchestration
+
+Tool calls in conversational context differ from standalone function calling in a critical way: the tool invocation must be informed by dialogue history, not just the current utterance.
+
+```python
+class ConversationalToolRouter:
+    """Routes user intent to tools while maintaining dialogue context."""
+
+    def __init__(self, llm_client, tool_registry):
+        self.llm = llm_client
+        self.tools = tool_registry
+
+    async def handle_turn(self, user_message, dialogue_state, history):
+        # Resolve implicit references from conversation context.
+        # "What about my other order?" requires history to identify
+        # which "other order" the user means.
+        resolved_message = await self.resolve_references(
+            user_message, dialogue_state, history
+        )
+
+        # Determine whether the turn requires a tool call or a
+        # purely conversational response.
+        plan = await self.llm.plan_action(
+            message=resolved_message,
+            available_tools=self.tools.list_schemas(),
+            user_context=dialogue_state.to_dict(),
+        )
+
+        if plan.requires_tool:
+            result = await self.tools.execute(
+                plan.tool_name, plan.tool_args
+            )
+            # Generate a natural-language response that incorporates
+            # the tool result without exposing raw JSON to the user.
+            response = await self.llm.synthesize_response(
+                tool_result=result,
+                user_message=resolved_message,
+                history=history,
+                persona=dialogue_state.persona,
+            )
+        else:
+            response = plan.conversational_response
+
+        return response
+
+    async def resolve_references(self, message, state, history):
+        """Resolve pronouns and implicit references against dialogue state.
+
+        'Cancel it' -> 'Cancel order #4821'
+        'Same address' -> '742 Evergreen Terrace'
+        """
+        return await self.llm.resolve(
+            message=message,
+            known_entities=state.slot_values,
+            recent_turns=history[-6:],
+        )
+```
+
+### Architecture Patterns for Tool-Augmented Chat
+
+Three patterns dominate production deployments:
+
+**Inline execution**: The bot calls tools mid-conversation and responds with the result in the same turn. Best for fast, low-risk lookups (order status, account balance, store hours). Latency must stay under two seconds or users lose confidence.
+
+**Confirm-then-execute**: For consequential actions (cancellations, payments, bookings), the bot presents what it intends to do, waits for user confirmation, then executes. This matches the "Confirmation Before Action" pattern discussed earlier and is essential for building trust.
+
+**Background execution with follow-up**: For long-running operations (generating a report, processing a bulk update), the bot acknowledges the request, executes asynchronously, and follows up when done. This requires persistent session state and a notification mechanism -- the conversation cannot simply block.
+
+The key design principle across all three patterns: tool execution is an implementation detail. The user should experience a conversation, not a command-line interface with a friendly wrapper.
+
+## Knowledge-Grounded Dialogue
+
+### RAG in Multi-Turn Context
+
+Retrieval-augmented generation is well-established for single-turn question answering, but multi-turn conversations introduce challenges that naive RAG pipelines do not handle (see [Article 17: Advanced RAG](agent-17-advanced-rag.md) for the foundational retrieval patterns). The core problem: what the user means on turn five often depends on what was discussed on turns one through four.
+
+Consider this exchange:
+
+```
+Turn 1 - User: "Tell me about your enterprise plan."
+Turn 2 - Bot:  [Retrieves and presents enterprise plan details]
+Turn 3 - User: "How does SSO work with it?"
+Turn 4 - Bot:  [Retrieves SSO documentation for enterprise tier]
+Turn 5 - User: "What about for the team plan instead?"
+```
+
+On turn five, the raw query "What about for the team plan instead?" is meaningless without conversational context. A conversation-aware retrieval system must rewrite this to something like "How does SSO work with the team plan?" before hitting the retrieval index.
+
+### Conversation-Aware Retrieval
+
+```python
+class ConversationalRetriever:
+    """Rewrites queries using dialogue context before retrieval."""
+
+    def __init__(self, llm_client, retriever):
+        self.llm = llm_client
+        self.retriever = retriever
+
+    async def retrieve(self, user_message, history, top_k=5):
+        # Step 1: Rewrite the query to be self-contained.
+        standalone_query = await self.llm.rewrite_query(
+            current_message=user_message,
+            conversation_history=history[-8:],
+            instruction=(
+                "Rewrite the user's message as a standalone search query "
+                "that captures the full intent, resolving all pronouns "
+                "and implicit references from the conversation history."
+            ),
+        )
+
+        # Step 2: Retrieve against the rewritten query.
+        documents = await self.retriever.search(
+            standalone_query, top_k=top_k
+        )
+
+        # Step 3: Filter out documents already presented in this
+        # conversation to avoid repeating information.
+        seen_doc_ids = self.extract_cited_docs(history)
+        fresh_documents = [
+            doc for doc in documents if doc.id not in seen_doc_ids
+        ]
+
+        # Fall back to full results if filtering removes everything.
+        return fresh_documents if fresh_documents else documents
+
+    def extract_cited_docs(self, history):
+        """Track which documents have already been surfaced."""
+        cited = set()
+        for turn in history:
+            if hasattr(turn, "source_documents"):
+                cited.update(doc.id for doc in turn.source_documents)
+        return cited
+```
+
+### Grounding Without Derailing the Conversation
+
+A common failure mode is the "knowledge dump" -- the bot retrieves relevant content and dumps it wholesale, breaking conversational flow. Grounded dialogue requires synthesizing retrieved information into contextually appropriate responses. If the user asked a yes/no question, the answer should lead with yes or no, even if the supporting document is a 2,000-word policy page. If the user is in the middle of a troubleshooting flow, the retrieved content should be presented as the next diagnostic step, not a standalone article.
+
+This is where the tiered memory architecture described earlier intersects with retrieval. Working memory holds the conversation flow and user intent. The retrieval system provides factual grounding. The LLM's job is to merge these two streams into a response that is both factually accurate and conversationally coherent. For deeper coverage of how memory systems support this kind of persistent, context-rich interaction, see [Article 28: Agent Memory](agent-28-agent-memory.md).
+
+## Conversation Analytics
+
+### Mining Conversations for Product Insights
+
+Every conversation between a user and a chatbot is a rich signal about product quality, user confusion, and unmet needs. At scale, conversation logs become one of the most valuable feedback loops available to product teams -- but only if they are systematically analyzed rather than left in cold storage.
+
+### Topic Clustering
+
+Automated topic discovery surfaces what users actually talk about, which frequently diverges from what product teams expect:
+
+```python
+class ConversationTopicAnalyzer:
+    """Cluster conversation logs to discover emergent topics."""
+
+    def __init__(self, embedding_model, min_cluster_size=20):
+        self.embedder = embedding_model
+        self.min_cluster_size = min_cluster_size
+
+    def analyze(self, conversations):
+        # Embed the first user message of each conversation
+        # (strongest signal of user intent).
+        first_messages = [c.turns[0].user_message for c in conversations]
+        embeddings = self.embedder.encode(first_messages)
+
+        # Cluster with HDBSCAN for variable-density clusters.
+        clusterer = hdbscan.HDBSCAN(
+            min_cluster_size=self.min_cluster_size,
+            metric="cosine",
+        )
+        labels = clusterer.fit_predict(embeddings)
+
+        # Label clusters using LLM summarization.
+        clusters = defaultdict(list)
+        for msg, label in zip(first_messages, labels):
+            if label != -1:  # Exclude noise
+                clusters[label].append(msg)
+
+        labeled_topics = {}
+        for label, messages in clusters.items():
+            sample = random.sample(messages, min(10, len(messages)))
+            topic_name = self.llm.summarize_topic(sample)
+            labeled_topics[topic_name] = {
+                "count": len(messages),
+                "sample_messages": sample,
+                "trend": self.compute_trend(messages, conversations),
+            }
+
+        return labeled_topics
+```
+
+### Sentiment Tracking and Escalation Detection
+
+Aggregate sentiment trajectories reveal systemic issues. A product change that causes a spike in negative sentiment on turn three of conversations about billing is a precise, actionable signal:
+
+```python
+class ConversationSentimentTracker:
+    def compute_session_trajectory(self, conversation):
+        """Return per-turn sentiment scores for a single conversation."""
+        return [
+            self.score_sentiment(turn.user_message)
+            for turn in conversation.turns
+        ]
+
+    def detect_escalation_signals(self, conversation):
+        """Identify conversations heading toward human escalation."""
+        trajectory = self.compute_session_trajectory(conversation)
+        signals = {
+            "sentiment_decline": (
+                len(trajectory) >= 3
+                and trajectory[-1] - trajectory[0] < -0.4
+            ),
+            "repeated_intent": self.has_repeated_intent(conversation),
+            "explicit_escalation": any(
+                kw in turn.user_message.lower()
+                for turn in conversation.turns
+                for kw in ["speak to a human", "agent", "manager"]
+            ),
+            "high_turn_count": len(conversation.turns) > 10,
+        }
+        return signals
+
+    def aggregate_dashboard(self, conversations, period="daily"):
+        """Produce aggregate metrics for a monitoring dashboard."""
+        return {
+            "avg_sentiment_by_turn": self.average_trajectories(conversations),
+            "escalation_rate": self.escalation_rate(conversations),
+            "top_negative_topics": self.topics_by_sentiment(
+                conversations, direction="negative", top_k=10
+            ),
+            "resolution_rate": self.resolution_rate(conversations),
+            "median_turns_to_resolution": self.median_resolution_turns(
+                conversations
+            ),
+        }
+```
+
+These analytics close the feedback loop: topic clusters reveal what users need, sentiment tracking reveals how well the bot meets those needs, and escalation detection identifies where the system is failing in real time. Together, they transform conversation logs from a compliance artifact into a product development tool.
+
+## Omnichannel Deployment
+
+### One Brain, Many Interfaces
+
+Production conversational AI rarely lives on a single channel. The same underlying dialogue system must serve a web chat widget, a mobile app, SMS, WhatsApp Business, and increasingly voice interfaces (see [Article 50: Audio & Speech AI](agent-50-audio-speech-ai.md) for the ASR and TTS pipeline that enables voice channels). Each channel imposes different constraints on message format, length, latency, and interaction patterns.
+
+### Channel-Specific Constraints
+
+| Channel | Max Message Length | Rich Media | Typing Indicators | Session Persistence | Latency Expectation |
+|---------|-------------------|------------|-------------------|--------------------|--------------------|
+| Web chat | Unlimited | Full (HTML, images, buttons) | Yes | Tab lifetime | 1-3s |
+| Mobile app | Unlimited | Full (native components) | Yes | Persistent | 1-3s |
+| SMS | 160 chars (or segmented) | None | No | Stateless | 5-10s acceptable |
+| WhatsApp | 4096 chars | Images, buttons, lists | Yes | 24h session window | 3-5s |
+| Voice | ~15s of speech | None (audio only) | Implicit (silence) | Call duration | <1s (streaming) |
+
+These constraints require an adaptation layer between the dialogue engine and the delivery channel:
+
+```python
+class ChannelAdapter:
+    """Adapt dialogue engine output to channel-specific constraints."""
+
+    MAX_LENGTHS = {
+        "sms": 160,
+        "whatsapp": 4096,
+        "web": None,
+        "voice": 200,  # ~15 seconds of speech
+    }
+
+    def adapt(self, response, channel, dialogue_state):
+        max_len = self.MAX_LENGTHS.get(channel)
+
+        if channel == "sms":
+            # Strip markdown, compress to SMS length, split if needed.
+            plain = self.strip_formatting(response)
+            if len(plain) > 160:
+                segments = self.segment_sms(plain)
+                return [{"type": "sms", "body": seg} for seg in segments]
+            return [{"type": "sms", "body": plain}]
+
+        elif channel == "whatsapp":
+            # Convert markdown lists to WhatsApp interactive list
+            # messages where applicable.
+            if self.contains_options(response):
+                return self.to_whatsapp_list_message(response)
+            return [{"type": "whatsapp_text", "body": response[:4096]}]
+
+        elif channel == "voice":
+            # Rewrite for spoken delivery: expand abbreviations,
+            # convert lists to natural enumeration, add pauses.
+            spoken = self.to_spoken_form(response)
+            return [{"type": "ssml", "body": spoken}]
+
+        else:  # web, mobile
+            return [{"type": "rich", "body": response}]
+
+    def to_spoken_form(self, text):
+        """Convert text response to SSML for voice delivery."""
+        # Numbers, abbreviations, and lists need different treatment
+        # in spoken form vs. written form.
+        spoken = self.expand_abbreviations(text)
+        spoken = self.numbers_to_words(spoken)
+        spoken = self.lists_to_enumeration(spoken)
+        return f"<speak>{spoken}</speak>"
+```
+
+### Shared State, Channel-Specific Rendering
+
+The critical architectural decision is separating dialogue state from presentation. A user might start a conversation on web chat, continue over WhatsApp from their phone, and call the voice line for a final confirmation. The dialogue state -- authenticated identity, active intent, filled slots, conversation history -- must persist across channels. Only the rendering changes.
+
+This means the dialogue engine should produce channel-agnostic structured output (intent, entities, response content, suggested actions), and a per-channel adapter translates that structure into the appropriate format. The dialogue state itself lives in a session store keyed by user identity, not by channel or connection ID.
+
+Latency requirements also vary dramatically. Web chat users tolerate two to three seconds. Voice callers perceive anything over 800 milliseconds of silence as a system failure. This means voice channels may need streaming token delivery and partial response strategies, while SMS can afford to run a full retrieval-augmented generation pipeline before responding.
+
 ## Summary and Key Takeaways
 
 - **Conversation design** is a discipline, not an afterthought; Grice's maxims provide a framework for evaluating whether bot responses are appropriately informative, truthful, relevant, and clear

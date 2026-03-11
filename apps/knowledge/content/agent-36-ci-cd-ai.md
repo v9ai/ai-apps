@@ -678,6 +678,443 @@ class EvalSuiteManager:
         self.save_tests()
 ```
 
+## Prompt Version Management
+
+Prompts are the primary interface between intent and behavior in AI systems. Yet many teams manage prompts as inline strings buried in application code -- invisible to version control, impossible to audit, and disconnected from the performance data they produce. Treating prompts as first-class artifacts transforms CI/CD for AI from a testing exercise into a full configuration management discipline.
+
+### Git-Based Prompt Versioning
+
+The simplest and most robust approach to prompt versioning is storing prompts as standalone files in version control. This gives you the full power of git: diffs, blame, branching, pull request review, and rollback.
+
+```
+prompts/
+  rag-system/
+    v1.txt
+    v2.txt
+    v3.txt
+    metadata.json        # Maps versions to performance baselines
+  classifier/
+    v1.txt
+    v2.txt
+    metadata.json
+```
+
+```python
+import json
+from pathlib import Path
+
+class PromptRegistry:
+    def __init__(self, prompts_dir: str = "prompts"):
+        self.prompts_dir = Path(prompts_dir)
+
+    def get_prompt(self, name: str, version: str = "latest") -> str:
+        """Load a specific prompt version from the filesystem."""
+        prompt_dir = self.prompts_dir / name
+        metadata = json.loads((prompt_dir / "metadata.json").read_text())
+
+        if version == "latest":
+            version = metadata["latest_version"]
+
+        prompt_file = prompt_dir / f"{version}.txt"
+        return prompt_file.read_text()
+
+    def get_performance_baseline(self, name: str, version: str) -> dict:
+        """Retrieve the stored eval scores for a prompt version."""
+        metadata_path = self.prompts_dir / name / "metadata.json"
+        metadata = json.loads(metadata_path.read_text())
+        return metadata.get("baselines", {}).get(version, {})
+
+    def record_baseline(self, name: str, version: str, scores: dict):
+        """Store eval results as the baseline for a prompt version."""
+        metadata_path = self.prompts_dir / name / "metadata.json"
+        metadata = json.loads(metadata_path.read_text())
+        metadata.setdefault("baselines", {})[version] = scores
+        metadata_path.write_text(json.dumps(metadata, indent=2))
+```
+
+This approach integrates naturally with the CI/CD pipeline described earlier. When a PR modifies a prompt file, the `paths` trigger in your GitHub Actions workflow fires the evaluation suite. The diff in the PR review shows exactly what changed, and the eval results comment shows the performance impact. Engineers review both together.
+
+### Prompt Management with Langfuse
+
+For teams that need to iterate on prompts without code deployments, Langfuse provides a managed prompt registry with built-in versioning, environment promotion, and traceability. See [Article 40: Observability](./agent-40-observability.md) for a deeper treatment of Langfuse's tracing and prompt management capabilities.
+
+```python
+from langfuse import Langfuse
+
+langfuse = Langfuse()
+
+# Fetch the production prompt (Langfuse resolves the active version)
+prompt = langfuse.get_prompt("rag-system-prompt", label="production")
+compiled = prompt.compile(domain="finance", max_length=500)
+
+# Create a generation linked to this prompt version
+trace = langfuse.trace(name="rag-query")
+generation = trace.generation(
+    name="llm-call",
+    model="claude-sonnet-4-20250514",
+    prompt=prompt,  # Links this generation to the prompt version
+    input=[{"role": "system", "content": compiled}],
+)
+
+# Later: Langfuse dashboard shows quality metrics broken down by prompt version
+```
+
+The critical capability here is the link between prompt version and generation quality. When you deploy prompt v7, you can query Langfuse to compare the quality distribution of v7 responses against v6 -- broken down by use case, user segment, or input difficulty. This closes the feedback loop that git-based versioning alone cannot provide.
+
+### Prompt-to-Performance Mapping
+
+The most valuable pattern in prompt version management is maintaining an explicit mapping between prompt versions and their measured performance. This mapping serves as the acceptance criterion for prompt changes in CI/CD:
+
+```python
+class PromptPerformanceTracker:
+    """Track the causal link between prompt versions and eval results."""
+
+    def __init__(self, langfuse_client):
+        self.langfuse = langfuse_client
+
+    def compare_versions(self, prompt_name: str,
+                          version_a: str, version_b: str) -> dict:
+        """Compare eval scores between two prompt versions."""
+        scores_a = self._fetch_scores(prompt_name, version_a)
+        scores_b = self._fetch_scores(prompt_name, version_b)
+
+        comparison = {}
+        for metric in set(scores_a.keys()) | set(scores_b.keys()):
+            a_vals = scores_a.get(metric, [])
+            b_vals = scores_b.get(metric, [])
+            if a_vals and b_vals:
+                from scipy import stats
+                t_stat, p_value = stats.ttest_ind(a_vals, b_vals)
+                comparison[metric] = {
+                    "version_a_mean": sum(a_vals) / len(a_vals),
+                    "version_b_mean": sum(b_vals) / len(b_vals),
+                    "p_value": p_value,
+                    "significant": p_value < 0.05,
+                    "recommendation": "upgrade" if (
+                        sum(b_vals) / len(b_vals) > sum(a_vals) / len(a_vals)
+                        and p_value < 0.05
+                    ) else "hold"
+                }
+        return comparison
+```
+
+This approach treats prompt engineering as an empirical discipline. Every prompt change is a hypothesis -- "this rewording will improve accuracy on financial queries" -- and the CI/CD pipeline tests that hypothesis against data before deployment. See [Article 31: LLM Evaluation Fundamentals](./agent-31-eval-fundamentals.md) for the evaluation metrics and methodology that underpin these measurements, and [Article 33: LLM-as-Judge](./agent-33-llm-as-judge.md) for automated scoring techniques that make continuous prompt evaluation practical.
+
+## Feature Flags for AI
+
+Traditional feature flags control binary code paths: show the new button or do not. AI systems need feature flags that control a much richer configuration space: which model to use, which prompt variant to serve, which tools to make available, what temperature to set, and how aggressively to apply safety filters. This is the LaunchDarkly pattern applied to the AI stack.
+
+### Why AI Feature Flags Differ
+
+Code feature flags toggle between two implementations of the same interface. AI feature flags control a configuration surface with multiple interacting dimensions:
+
+- **Model selection**: Route 10% of traffic to Claude Opus, 90% to Claude Sonnet
+- **Prompt variants**: Serve prompt v3 to enterprise users, prompt v2 to free-tier
+- **Tool availability**: Enable code execution tool for beta users, disable for general availability
+- **Parameter tuning**: Higher temperature for creative tasks, lower for analytical
+- **Guardrail sensitivity**: Stricter content filtering for specific industries
+
+These dimensions interact. A prompt optimized for GPT-4 may perform poorly on Claude. A tool configuration tested with one model may fail with another. Feature flags for AI must manage these interactions explicitly.
+
+### Implementation
+
+```python
+from dataclasses import dataclass, field
+from typing import Optional
+import hashlib
+
+@dataclass
+class AIFeatureConfig:
+    model: str = "claude-sonnet-4-20250514"
+    prompt_version: str = "v3"
+    temperature: float = 0.7
+    max_tokens: int = 1024
+    available_tools: list[str] = field(default_factory=list)
+    guardrail_level: str = "standard"  # "strict", "standard", "relaxed"
+
+class AIFeatureFlags:
+    def __init__(self, flag_definitions: dict):
+        self.flags = flag_definitions
+
+    def resolve_config(self, user_id: str,
+                        context: dict) -> AIFeatureConfig:
+        """Resolve the AI configuration for a specific user and context."""
+        config = AIFeatureConfig()
+
+        for flag_name, flag_def in self.flags.items():
+            if self._is_enabled(flag_def, user_id, context):
+                self._apply_flag(config, flag_def["overrides"])
+
+        return config
+
+    def _is_enabled(self, flag_def: dict, user_id: str,
+                     context: dict) -> bool:
+        """Check if a flag is enabled for this user/context."""
+        # Percentage-based rollout
+        if "rollout_percentage" in flag_def:
+            hash_val = int(hashlib.sha256(
+                f"{flag_def['name']}:{user_id}".encode()
+            ).hexdigest(), 16)
+            if (hash_val % 100) >= flag_def["rollout_percentage"]:
+                return False
+
+        # Segment targeting
+        if "segments" in flag_def:
+            user_segment = context.get("segment", "default")
+            if user_segment not in flag_def["segments"]:
+                return False
+
+        return flag_def.get("enabled", False)
+
+    def _apply_flag(self, config: AIFeatureConfig, overrides: dict):
+        for key, value in overrides.items():
+            if hasattr(config, key):
+                setattr(config, key, value)
+
+# Define flags declaratively (or load from a flag management service)
+flags = AIFeatureFlags({
+    "opus-rollout": {
+        "name": "opus-rollout",
+        "enabled": True,
+        "rollout_percentage": 10,
+        "overrides": {"model": "claude-opus-4-20250514"},
+        "segments": ["enterprise"]
+    },
+    "new-system-prompt": {
+        "name": "new-system-prompt",
+        "enabled": True,
+        "rollout_percentage": 50,
+        "overrides": {"prompt_version": "v4"},
+    },
+    "code-execution-beta": {
+        "name": "code-execution-beta",
+        "enabled": True,
+        "rollout_percentage": 100,
+        "overrides": {"available_tools": ["code_interpreter", "web_search"]},
+        "segments": ["beta"]
+    }
+})
+```
+
+### Gradual Rollouts Without Code Deploys
+
+The power of AI feature flags lies in decoupling configuration changes from code deployments. A prompt engineer can promote a new prompt version from 5% to 50% to 100% of traffic without touching the application code, without a CI build, and without a deployment. The only thing that changes is the flag configuration.
+
+This pattern enables a rollout cadence that would be impractical with code deploys:
+
+1. **Deploy prompt v4 to 5% of traffic** via flag change
+2. **Monitor quality metrics** for 24 hours (see the monitoring section above)
+3. **Compare v4 against v3** using production quality data
+4. **Ramp to 25%** if metrics are neutral or positive
+5. **Ramp to 100%** after statistical significance is reached
+6. **Instant rollback** to v3 if problems emerge at any stage
+
+This rollout workflow connects directly to the A/B testing infrastructure described earlier in this article. The feature flag assigns the variant, the monitoring system collects quality scores, and the A/B analysis framework determines statistical significance.
+
+For teams building agentic applications, feature flags become essential for controlling tool availability and agent behavior during rollouts. See [Article 30: Agent Evaluation](./agent-30-agent-evaluation.md) for evaluation strategies that validate agent configurations before and during rollout.
+
+## Cost Monitoring in CI/CD
+
+API costs are among the few AI-specific metrics that are entirely deterministic: every token has a price, and every API call returns a usage object. Yet most teams discover cost problems only at invoice time. Integrating cost tracking into the CI/CD pipeline transforms cost from a monthly surprise into a per-PR, per-experiment, per-deployment metric.
+
+### Cost Tracking per PR
+
+Every evaluation run in CI/CD consumes API tokens. Tracking this consumption per PR provides visibility into the cost of changes before they reach production:
+
+```python
+from dataclasses import dataclass, field
+
+@dataclass
+class CostTracker:
+    """Track API costs across an evaluation run."""
+    costs: list[dict] = field(default_factory=list)
+
+    # Pricing per 1M tokens (as of early 2026, approximate)
+    PRICING = {
+        "claude-sonnet-4-20250514": {"input": 3.0, "output": 15.0},
+        "claude-opus-4-20250514": {"input": 15.0, "output": 75.0},
+        "claude-haiku-35-20241022": {"input": 0.80, "output": 4.0},
+        "gpt-4o": {"input": 2.50, "output": 10.0},
+    }
+
+    def record_call(self, model: str, input_tokens: int,
+                     output_tokens: int, context: str = ""):
+        pricing = self.PRICING.get(model, {"input": 0, "output": 0})
+        cost = (
+            (input_tokens / 1_000_000) * pricing["input"] +
+            (output_tokens / 1_000_000) * pricing["output"]
+        )
+        self.costs.append({
+            "model": model,
+            "input_tokens": input_tokens,
+            "output_tokens": output_tokens,
+            "cost_usd": cost,
+            "context": context
+        })
+
+    @property
+    def total_cost(self) -> float:
+        return sum(c["cost_usd"] for c in self.costs)
+
+    def summary_by_context(self) -> dict:
+        """Break down costs by context (e.g., eval suite, test category)."""
+        by_context = {}
+        for c in self.costs:
+            ctx = c["context"] or "uncategorized"
+            if ctx not in by_context:
+                by_context[ctx] = {"cost_usd": 0, "calls": 0, "tokens": 0}
+            by_context[ctx]["cost_usd"] += c["cost_usd"]
+            by_context[ctx]["calls"] += 1
+            by_context[ctx]["tokens"] += c["input_tokens"] + c["output_tokens"]
+        return by_context
+
+    def format_pr_comment(self) -> str:
+        """Format cost data for a GitHub PR comment."""
+        lines = ["## Eval Cost Report", ""]
+        lines.append(f"**Total cost**: ${self.total_cost:.4f}")
+        lines.append("")
+        lines.append("| Context | Calls | Tokens | Cost |")
+        lines.append("|---------|-------|--------|------|")
+        for ctx, data in self.summary_by_context().items():
+            lines.append(
+                f"| {ctx} | {data['calls']} | "
+                f"{data['tokens']:,} | ${data['cost_usd']:.4f} |"
+            )
+        return "\n".join(lines)
+```
+
+### Cost Gates in CI/CD
+
+Cost gates prevent runaway spending from poorly constructed prompts or accidental infinite loops in agent pipelines. They function like quality gates but for budget:
+
+```yaml
+# .github/workflows/ai-eval.yml (extended)
+  cost-gate:
+    name: Cost Gate Check
+    needs: full-eval
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check eval costs
+        run: |
+          python -m eval.cost_check \
+            --results results/full-eval.json \
+            --max-cost-per-pr 5.00 \
+            --max-cost-per-test 0.50 \
+            --alert-threshold 3.00
+
+      - name: Check projected production cost
+        run: |
+          python -m eval.project_production_cost \
+            --results results/full-eval.json \
+            --daily-request-volume 100000 \
+            --max-daily-budget 500.00
+```
+
+```python
+class CostGate:
+    """Enforce cost limits in CI/CD pipelines."""
+
+    def __init__(self, max_cost_per_pr: float, max_cost_per_test: float,
+                 alert_threshold: float):
+        self.max_cost_per_pr = max_cost_per_pr
+        self.max_cost_per_test = max_cost_per_test
+        self.alert_threshold = alert_threshold
+
+    def check(self, cost_tracker: CostTracker) -> dict:
+        total = cost_tracker.total_cost
+        max_single = max(
+            (c["cost_usd"] for c in cost_tracker.costs), default=0
+        )
+
+        violations = []
+        warnings = []
+
+        if total > self.max_cost_per_pr:
+            violations.append(
+                f"Total eval cost ${total:.4f} exceeds "
+                f"limit ${self.max_cost_per_pr:.2f}"
+            )
+        elif total > self.alert_threshold:
+            warnings.append(
+                f"Total eval cost ${total:.4f} approaching "
+                f"limit ${self.max_cost_per_pr:.2f}"
+            )
+
+        if max_single > self.max_cost_per_test:
+            violations.append(
+                f"Single test cost ${max_single:.4f} exceeds "
+                f"limit ${self.max_cost_per_test:.2f}"
+            )
+
+        return {
+            "passed": len(violations) == 0,
+            "total_cost": total,
+            "violations": violations,
+            "warnings": warnings
+        }
+```
+
+### Production Cost Monitoring
+
+Cost tracking does not stop at CI/CD. Production cost monitoring completes the picture by connecting deployment decisions to their financial impact. See [Article 39: Cost Optimization](./agent-39-cost-optimization.md) for comprehensive strategies on token economics, caching, and model routing that reduce production costs.
+
+```python
+class ProductionCostMonitor:
+    """Monitor and alert on production API costs."""
+
+    def __init__(self, daily_budget: float, hourly_spike_threshold: float):
+        self.daily_budget = daily_budget
+        self.hourly_spike_threshold = hourly_spike_threshold
+        self.hourly_costs = []
+
+    def record_request_cost(self, cost: float, model: str,
+                             feature: str, user_tier: str):
+        """Record cost with dimensional breakdown."""
+        self.hourly_costs.append({
+            "cost": cost,
+            "model": model,
+            "feature": feature,
+            "user_tier": user_tier
+        })
+
+    def check_budget(self) -> dict:
+        hourly_total = sum(c["cost"] for c in self.hourly_costs)
+        projected_daily = hourly_total * 24
+
+        alerts = []
+        if projected_daily > self.daily_budget:
+            alerts.append({
+                "type": "budget_exceeded",
+                "message": f"Projected daily cost ${projected_daily:.2f} "
+                           f"exceeds budget ${self.daily_budget:.2f}",
+                "severity": "critical"
+            })
+
+        if hourly_total > self.hourly_spike_threshold:
+            alerts.append({
+                "type": "hourly_spike",
+                "message": f"Hourly cost ${hourly_total:.2f} exceeds "
+                           f"threshold ${self.hourly_spike_threshold:.2f}",
+                "severity": "warning"
+            })
+
+        # Cost by feature helps identify which changes drove cost increases
+        by_feature = {}
+        for c in self.hourly_costs:
+            feat = c["feature"]
+            by_feature[feat] = by_feature.get(feat, 0) + c["cost"]
+
+        return {
+            "hourly_total": hourly_total,
+            "projected_daily": projected_daily,
+            "budget_remaining": self.daily_budget - projected_daily,
+            "cost_by_feature": by_feature,
+            "alerts": alerts
+        }
+```
+
+The cost-by-feature breakdown is particularly valuable after deployments. When a new prompt version ships, the production cost monitor shows whether it is cheaper or more expensive per request, immediately and by feature. Combined with the quality metrics from the monitoring section above, this gives teams the full picture: did the change improve quality, and at what cost?
+
 ## Summary and Key Takeaways
 
 - **Traditional CI/CD is necessary but insufficient** for AI applications. Extend it with evaluation primitives that handle non-determinism, gradual degradation, and multi-dimensional quality.
@@ -686,6 +1123,17 @@ class EvalSuiteManager:
 - **Modern eval platforms** (Braintrust, LangSmith, Langfuse) provide the infrastructure for tracking evaluations over time, comparing experiments, and monitoring production quality.
 - **Production monitoring must include quality metrics**, not just operational metrics. Use statistical process control techniques to detect gradual degradation.
 - **A/B testing AI features** requires larger sample sizes and safety guardrails beyond standard product experimentation.
+- **Prompts are first-class artifacts** that deserve version control, performance baselines, and the same review rigor as application code. Git-based versioning and managed prompt registries like Langfuse provide complementary capabilities.
+- **Feature flags for AI** decouple configuration changes from code deployments, enabling gradual rollouts of model upgrades, prompt variants, and tool availability without CI builds or deployment risk.
+- **Cost monitoring belongs in CI/CD**, not just on invoices. Track API costs per PR, enforce cost gates before deployment, and monitor production spend by feature to connect deployment decisions to their financial impact.
 - **Eval-driven development** -- writing evaluations before making changes -- provides the confidence needed to iterate quickly on AI systems without shipping regressions.
 
 The organizations that invest in robust CI/CD for AI will iterate faster and ship more reliably than those that treat evaluation as an afterthought. The tooling is maturing rapidly, and the methodology is well-established. The remaining challenge is cultural: treating evals with the same rigor and discipline that the software industry learned to apply to tests.
+
+## Related Articles
+
+- [Article 30: Agent Evaluation](./agent-30-agent-evaluation.md) -- Reliability metrics, tool use accuracy, and trajectory analysis for evaluating agentic systems
+- [Article 31: LLM Evaluation Fundamentals](./agent-31-eval-fundamentals.md) -- Metrics, datasets, and methodology that underpin CI/CD evaluation suites
+- [Article 33: LLM-as-Judge](./agent-33-llm-as-judge.md) -- Automated evaluation and calibration techniques for continuous eval pipelines
+- [Article 39: Cost Optimization](./agent-39-cost-optimization.md) -- Token economics, caching, and model routing strategies for controlling production costs
+- [Article 40: Observability](./agent-40-observability.md) -- Tracing, logging, prompt management, and LLM monitoring in production

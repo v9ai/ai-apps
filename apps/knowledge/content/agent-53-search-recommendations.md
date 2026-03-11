@@ -667,6 +667,201 @@ client.create_collection(
 )
 ```
 
+## ColBERT and Late Interaction Models
+
+### The Retrieval Accuracy-Efficiency Tradeoff
+
+The search architecture described above relies on a sharp division of labor: bi-encoders (fast, independent encoding of queries and documents) handle first-stage retrieval, and cross-encoders (slow, joint encoding of query-document pairs) handle re-ranking. This works, but it creates a structural bottleneck. The bi-encoder's single-vector representation compresses an entire document into one point in embedding space, inevitably losing fine-grained token-level information. The cross-encoder recovers that information but at a cost that limits it to scoring a few hundred candidates at most.
+
+Late interaction models, pioneered by ColBERT (Khattab & Zaharia, 2020), occupy the middle ground. Instead of compressing a document into a single vector, ColBERT produces one embedding per token for both query and document. At search time, each query token finds its maximum similarity against all document tokens, and these per-token scores are summed to produce a final relevance score. This "MaxSim" operation preserves token-level matching while remaining decomposable -- document token embeddings can be precomputed and indexed offline.
+
+```python
+import torch
+
+class ColBERTScorer:
+    """Simplified ColBERT-style late interaction scoring"""
+
+    def maxsim_score(self, query_embeddings, doc_embeddings):
+        """
+        query_embeddings: (num_query_tokens, dim)
+        doc_embeddings: (num_doc_tokens, dim)
+
+        For each query token, find max similarity across all doc tokens,
+        then sum. This preserves token-level matching granularity.
+        """
+        # Compute all pairwise similarities
+        similarity_matrix = torch.matmul(
+            query_embeddings, doc_embeddings.T
+        )  # (num_query_tokens, num_doc_tokens)
+
+        # Max similarity for each query token
+        max_similarities = similarity_matrix.max(dim=1).values
+
+        # Sum across query tokens
+        return max_similarities.sum().item()
+```
+
+The practical result is significant: ColBERT typically achieves 95% or more of cross-encoder quality while being 100-1000x faster at scoring, because the expensive per-token encoding is done offline during indexing. Only the lightweight MaxSim aggregation happens at query time.
+
+### Deploying ColBERT in Practice
+
+The main deployment challenge with ColBERT is storage. A single-vector model stores one 768-dimensional vector per passage. ColBERT stores one 128-dimensional vector per token -- for a 200-token passage, that is 200 vectors. On a corpus of 10 million passages, this can reach hundreds of gigabytes.
+
+ColBERTv2 (Santhanam et al., 2022) addressed this with residual compression: instead of storing full per-token embeddings, it clusters them and stores only the residual difference from the cluster centroid, reducing storage by 6-10x with minimal quality loss. The PLAID engine further optimized this with centroid-based candidate pruning, enabling ColBERT to serve as a first-stage retriever rather than just a re-ranker.
+
+For teams evaluating late interaction models, the RAGatouille library provides a practical entry point, wrapping ColBERTv2 with a scikit-learn-style API that handles indexing, compression, and search. If your domain involves queries where exact term matching matters alongside semantic understanding -- legal search, medical literature, technical documentation -- ColBERT-style models are worth serious evaluation. For a deeper treatment of embedding architectures and training objectives, see [Article 13: Embedding Models](agent-13-embedding-models.md). For the ANN indexing infrastructure that supports multi-vector retrieval, see [Article 14: Vector Databases](agent-14-vector-databases.md).
+
+## Learned Sparse Retrieval
+
+### SPLADE and the Sparse-Dense Convergence
+
+BM25 has a property that dense retrieval models lack: explicit, interpretable term matching. When BM25 fails to retrieve a relevant document, you can inspect the term overlap and understand exactly why. Dense models are opaque -- a document might be missed because its embedding landed in a distant region of the space, and there is no clear diagnostic path.
+
+Learned sparse retrieval models, most notably SPLADE (SParse Lexical AnD Expansion model, Formal et al., 2021), bring the advantages of neural learning to the sparse retrieval paradigm. SPLADE uses a masked language model (typically a BERT variant) to produce a sparse vector for each document, where dimensions correspond to vocabulary terms and values represent learned term importance weights. Critically, the model learns to expand documents with semantically related terms that do not appear in the original text.
+
+```python
+# Conceptual SPLADE representation
+# Document: "The cat sat on the mat"
+# BM25 representation (only exact terms):
+bm25_sparse = {
+    "cat": 1.2, "sat": 0.8, "mat": 1.1
+    # stopwords removed
+}
+
+# SPLADE representation (learned expansion + importance):
+splade_sparse = {
+    "cat": 2.1, "sat": 0.5, "mat": 1.8,
+    "feline": 1.4,        # Learned expansion
+    "kitten": 0.9,        # Learned expansion
+    "rug": 0.7,           # Learned expansion (mat -> rug)
+    "animal": 1.1,        # Learned expansion
+    "sitting": 0.6,       # Morphological expansion
+    "pet": 0.8,           # Learned expansion
+    # Hundreds of other terms with small but non-zero weights
+}
+```
+
+The key innovation is that SPLADE representations can be stored and searched using standard inverted indexes -- the same infrastructure that powers Elasticsearch, OpenSearch, and Lucene. This means teams with mature BM25 infrastructure can adopt learned sparse retrieval without replacing their search stack. Both Elasticsearch and OpenSearch now support ELSER (Elastic Learned Sparse EncodeR) and neural sparse search respectively, bringing learned sparse retrieval into managed services.
+
+### When Learned Sparse Beats Dense
+
+Learned sparse retrieval excels in scenarios where lexical precision matters. In e-commerce search, a query for "iPhone 15 Pro Max 256GB" needs exact matching on model numbers and specifications -- dense models may retrieve the right product family but confuse variants. In legal and compliance search, specific statutory references, case numbers, and defined terms carry precise meaning that single-vector compression can lose. SPLADE handles these cases naturally because its vocabulary-aligned representation preserves individual term signals while adding semantic expansion.
+
+In hybrid retrieval pipelines, SPLADE can replace BM25 as the sparse component, improving the quality of the sparse retrieval signal without changing the fusion architecture. Teams already running hybrid search with BM25 + dense retrieval can substitute SPLADE for BM25, use the same Reciprocal Rank Fusion strategy, and typically see 3-8% improvement in retrieval recall. For how this fits into multi-stage RAG pipelines, see [Article 17: Advanced RAG](agent-17-advanced-rag.md).
+
+## MTEB and Embedding Model Evaluation
+
+### Navigating the MTEB Leaderboard
+
+The Massive Text Embedding Benchmark (Muennighoff et al., 2023) standardized how the community evaluates embedding models, testing them across dozens of datasets spanning retrieval, classification, clustering, pair classification, re-ranking, summarization, and semantic textual similarity. The MTEB leaderboard on Hugging Face has become the default reference point for model selection, but interpreting it correctly requires care.
+
+Several pitfalls catch teams that select models purely by leaderboard rank:
+
+**Task mismatch**: MTEB aggregates scores across very different tasks. A model that dominates classification and clustering may underperform on retrieval, which is what most production search systems actually need. Always filter the leaderboard by the task category that matches your use case. For search and recommendation systems, the retrieval subset (using BEIR benchmark datasets) is the most relevant signal.
+
+**Domain gap**: MTEB evaluates on general-domain datasets. A model ranked first on MTEB may underperform a lower-ranked model that was fine-tuned on your domain. Financial, medical, legal, and scientific text each have vocabulary and relationship patterns that general-purpose models struggle with. The evaluation framework described earlier in this article -- building domain-specific test queries with relevance judgments and measuring NDCG@10, MRR, and recall -- remains essential.
+
+**Multilingual considerations**: If your system serves multiple languages, filter for multilingual models and check per-language performance. Models like multilingual-e5-large or BGE-M3 are designed for cross-lingual retrieval, but their per-language performance varies significantly. A monolingual model for your primary language may outperform a multilingual model on that specific language.
+
+**Model size vs. quality tradeoffs**: The top of the leaderboard is dominated by large models (1B+ parameters) that are impractical for latency-sensitive production search. Models in the 100-350M parameter range (e.g., bge-large, e5-large-v2, gte-large) typically offer the best quality-per-FLOP for online serving. For a comprehensive treatment of embedding architectures, training objectives, and fine-tuning strategies, see [Article 13: Embedding Models](agent-13-embedding-models.md).
+
+### Practical Model Selection Workflow
+
+A disciplined selection process starts broad and narrows quickly:
+
+1. **Define your task**: retrieval, similarity, clustering, or classification. Filter MTEB accordingly.
+2. **Set constraints**: maximum model size, maximum latency budget, required language support, deployment target (GPU, CPU, edge).
+3. **Shortlist 3-5 candidates** from MTEB that meet your constraints.
+4. **Evaluate on domain data**: use at least 200 representative queries with relevance judgments from your domain. Automated relevance labels from a strong LLM (GPT-4 or Claude) can bootstrap this process, but human review of edge cases is important.
+5. **Measure operational metrics**: encoding throughput (queries per second, documents per second), memory footprint, and index build time. A model with 2% better NDCG but 5x slower encoding may not be the right choice.
+6. **Test quantization tolerance**: if you plan to use int8, binary, or Matryoshka dimension reduction, evaluate quality after compression, not before. Some models degrade gracefully; others collapse.
+
+## Recommendation Fairness and Diversity
+
+### The Filter Bubble Problem
+
+Embedding-based recommendation systems have a structural tendency toward homogeneity. The user embedding model described earlier in this article computes a preference vector as a weighted average of interacted item embeddings, then retrieves items nearest to that vector. This mechanism is effective at surfacing more of what the user already likes, but it creates a feedback loop: the user interacts with recommended items, which reinforces the preference vector, which produces more similar recommendations.
+
+Over time, the user's exposure narrows. A reader who clicked on a few articles about Python web frameworks will see their feed converge on Flask and Django tutorials, even if they would genuinely enjoy content about systems programming, data engineering, or language design. In e-commerce, a customer who purchased running shoes may be shown nothing but running gear, missing cross-sell opportunities in adjacent categories they would have explored organically.
+
+This is not merely a product quality problem. In contexts like news, job listings, housing, and lending, filter bubbles become fairness issues. A job recommendation system that narrows candidates' exposure to roles similar to their past positions can entrench occupational segregation along demographic lines. For a thorough examination of how bias manifests in AI systems and frameworks for measuring it, see [Article 46: Bias, Fairness & Responsible AI](agent-46-bias-fairness.md).
+
+### Diversity-Aware Retrieval
+
+Several techniques break the feedback loop without abandoning relevance:
+
+**Maximal Marginal Relevance (MMR)** re-ranks results by balancing relevance to the query against redundancy with already-selected results:
+
+```python
+def mmr_rerank(query_embedding, candidate_embeddings, candidate_docs,
+               lambda_param=0.5, top_k=10):
+    """Maximal Marginal Relevance: balance relevance and diversity"""
+    selected = []
+    remaining = list(range(len(candidate_docs)))
+
+    for _ in range(top_k):
+        best_score = -float('inf')
+        best_idx = None
+
+        for idx in remaining:
+            # Relevance to query
+            relevance = cosine_similarity(
+                query_embedding, candidate_embeddings[idx]
+            )
+
+            # Maximum similarity to any already-selected item
+            if selected:
+                redundancy = max(
+                    cosine_similarity(
+                        candidate_embeddings[idx],
+                        candidate_embeddings[s]
+                    )
+                    for s in selected
+                )
+            else:
+                redundancy = 0.0
+
+            # MMR score: relevance minus redundancy
+            mmr_score = lambda_param * relevance - (1 - lambda_param) * redundancy
+
+            if mmr_score > best_score:
+                best_score = mmr_score
+                best_idx = idx
+
+        selected.append(best_idx)
+        remaining.remove(best_idx)
+
+    return [candidate_docs[i] for i in selected]
+```
+
+**Exposure fairness** ensures that items from different providers, categories, or demographic groups receive proportional visibility. In a job recommendation system, this might mean ensuring that job postings from employers of different sizes, industries, and locations receive fair representation rather than letting a few dominant employers monopolize the recommendation slots. Calibrated exposure targets -- ensuring each group receives recommendation share proportional to its relevance, not just its popularity -- can be enforced as constraints during the re-ranking step.
+
+**Exploration-exploitation balancing** borrows from the multi-armed bandit literature. Instead of always recommending the highest-scoring items, the system occasionally introduces items with high uncertainty (items the model has not seen enough interactions with to be confident about) alongside high-confidence recommendations. Thompson sampling and epsilon-greedy strategies are straightforward to implement on top of an existing re-ranking pipeline:
+
+```python
+class DiverseRecommender:
+    def __init__(self, base_recommender, exploration_rate=0.1):
+        self.recommender = base_recommender
+        self.exploration_rate = exploration_rate
+
+    def recommend(self, user, top_k=20):
+        # Get base recommendations (exploitation)
+        exploit_k = int(top_k * (1 - self.exploration_rate))
+        exploit_items = self.recommender.recommend(user, top_k=exploit_k)
+
+        # Sample from underexposed categories (exploration)
+        explore_k = top_k - exploit_k
+        underexposed = self.get_underexposed_categories(user)
+        explore_items = self.sample_from_categories(
+            underexposed, k=explore_k, strategy="thompson"
+        )
+
+        # Interleave to avoid clustering all exploration at the end
+        return self.interleave(exploit_items, explore_items)
+```
+
+The tension between relevance and diversity is real but often overstated. In practice, moderate diversity interventions (10-20% exploration, MMR with lambda 0.5-0.7) typically improve long-term engagement metrics even as they slightly reduce short-term click-through rates. Users who discover new interests through diverse recommendations tend to be more active and retained than users whose feeds calcify around a narrow set of topics.
+
 ## Evaluation and Monitoring
 
 ### Online Metrics

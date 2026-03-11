@@ -291,6 +291,94 @@ DGX H100 Node Topology:
        Other Nodes
 ```
 
+### Heterogeneous GPU Clusters
+
+Production clusters rarely consist of a single GPU generation. Organizations accumulate hardware over successive procurement cycles, resulting in mixed fleets -- A100s purchased in 2022 running alongside H100s from 2023 and B200s arriving in 2025. Managing these heterogeneous clusters effectively is a significant operational challenge.
+
+The core problem is that different GPU generations have different memory capacities, compute throughputs, and interconnect bandwidths. An A100-80GB can serve a quantized 70B model at TP=2, but its lower memory bandwidth (2 TB/s vs. H100's 3.35 TB/s) means ~40% lower decode throughput per GPU. Naive scheduling that treats all GPUs as interchangeable wastes capacity or creates latency variance.
+
+**Workload placement strategies** for mixed clusters typically follow a tiered approach:
+
+```
+Workload Placement Matrix:
+
+┌─────────────────────┬──────────────┬──────────────┬──────────────┐
+│ Workload Type       │ B200/H100    │ A100-80GB    │ A100-40GB    │
+├─────────────────────┼──────────────┼──────────────┼──────────────┤
+│ Latency-critical    │ Primary      │ Overflow     │ ---          │
+│ (real-time chat)    │              │              │              │
+├─────────────────────┼──────────────┼──────────────┼──────────────┤
+│ Throughput-oriented │ If available │ Primary      │ If quantized │
+│ (batch, async)      │              │              │              │
+├─────────────────────┼──────────────┼──────────────┼──────────────┤
+│ Small models        │ ---          │ If available │ Primary      │
+│ (7B-13B)            │              │              │              │
+├─────────────────────┼──────────────┼──────────────┼──────────────┤
+│ Long-context (128K+)│ Primary      │ ---          │ ---          │
+│                     │ (more VRAM)  │              │              │
+└─────────────────────┴──────────────┴──────────────┴──────────────┘
+```
+
+The load balancer must be GPU-generation-aware. A token-aware router that also knows the hardware behind each backend can weight routing decisions by expected throughput rather than treating all replicas equally. If an H100 backend processes tokens at 1.6x the rate of an A100 backend, it should receive proportionally more traffic. Some teams implement this as a weighted least-connections strategy, where weights are derived from hardware benchmarks:
+
+```python
+class HeterogeneousLoadBalancer:
+    GPU_THROUGHPUT_WEIGHTS = {
+        "B200": 2.5,   # Relative to A100 baseline
+        "H100": 1.6,
+        "A100_80GB": 1.0,
+        "A100_40GB": 0.7,
+    }
+
+    async def route(self, request: LLMRequest) -> Backend:
+        best_backend = min(
+            self.backends,
+            key=lambda b: (
+                b.pending_token_load
+                / self.GPU_THROUGHPUT_WEIGHTS[b.gpu_type]
+            ),
+        )
+        return best_backend
+```
+
+Model versioning across GPU types adds another layer of complexity. The same logical model may be deployed as FP16 on H100s (where memory is sufficient) and INT4 on A100-40GBs (where it is not). The load balancer needs to understand that these are quality-equivalent but performance-different replicas, and route accordingly. See [Article 39: Cost Optimization](./agent-39-cost-optimization.md) for a broader analysis of how hardware mix decisions affect per-token economics.
+
+### GPU Disaggregation and Pooling
+
+Traditional GPU allocation follows a static model: GPUs are assigned to specific workloads at deployment time and remain dedicated until the workload is removed. This creates poor utilization -- a serving deployment sized for peak traffic may run at 30% utilization during off-hours, while a fine-tuning job queued overnight cannot access those idle GPUs.
+
+GPU disaggregation and pooling, pioneered by platforms like Run.ai and CoreWeave, treats GPUs as a shared resource pool that can be dynamically allocated and reclaimed across workloads. The key insight is separating the GPU resource from the workload lifecycle:
+
+```
+Static Allocation (traditional):
+┌──────────┐  ┌──────────┐  ┌──────────┐
+│ Serving  │  │ Training │  │  Idle    │
+│ 8x H100  │  │ 4x H100  │  │ 4x H100  │
+│ (40% util)│  │ (95% util)│  │ (0% util) │
+└──────────┘  └──────────┘  └──────────┘
+
+Pooled Allocation (disaggregated):
+┌─────────────────────────────────────────┐
+│          GPU Pool (16x H100)            │
+│  ┌────────┐  ┌──────┐  ┌────────────┐  │
+│  │Serving │  │Train │  │  Serving   │  │
+│  │  4x    │  │ 4x   │  │  overflow  │  │
+│  │ (peak) │  │      │  │    8x      │  │
+│  └────────┘  └──────┘  └────────────┘  │
+│   Allocations shift based on demand     │
+└─────────────────────────────────────────┘
+```
+
+**Dynamic allocation patterns** in practice involve several mechanisms:
+
+1. **Time-slicing**: Multiple workloads share the same physical GPU with temporal multiplexing. NVIDIA's MIG (Multi-Instance GPU) on A100/H100/B200 provides hardware-level isolation, partitioning a single GPU into up to 7 independent instances with dedicated memory and compute. This is useful for smaller models or development workloads.
+
+2. **Preemption-based sharing**: Low-priority workloads (batch scoring, offline evaluation) are preempted when high-priority workloads (real-time serving) need additional GPUs. The preempted workload checkpoints its state and resumes when resources become available.
+
+3. **Fractional GPU allocation**: Platforms expose GPUs in fractional units, allowing a workload to request 0.5 GPUs when a full GPU would be wasteful. This is implemented via MIG, time-slicing, or vGPU technologies.
+
+The challenge with disaggregation for LLM serving specifically is the cold-start penalty. Loading a 70B model into GPU memory takes 2-5 minutes, so GPUs cannot be freely reclaimed and reassigned without significant downtime. Production systems address this through model-aware scheduling: the orchestrator tracks which models are loaded on which GPUs and preferentially routes new requests to GPUs that already have the required model in memory, falling back to cold-start only when all warm instances are overloaded.
+
 ### Multi-GPU Resource Allocation
 
 Kubernetes with the NVIDIA GPU Operator provides the infrastructure for GPU scheduling, but LLM workloads need additional constraints:
@@ -390,16 +478,22 @@ For batch workloads and non-latency-sensitive traffic, spot/preemptible instance
 
 ## Summary and Key Takeaways
 
-1. **Tensor parallelism splits layers across GPUs** and requires high-bandwidth interconnects like NVLink. Use it within a single node for latency-sensitive serving.
+1. **Tensor parallelism splits layers across GPUs** and requires high-bandwidth interconnects like NVLink. Use it within a single node for latency-sensitive serving. GB200 NVL72 extends the NVLink domain to an entire rack, changing where the TP/PP boundary falls.
 
 2. **Pipeline parallelism splits layers sequentially** across GPUs/nodes and tolerates lower bandwidth. Use it across nodes in combination with intra-node tensor parallelism.
 
-3. **Data parallelism (replication) scales throughput** by running independent model replicas. More replicas generally yield more aggregate throughput at the cost of more GPUs.
+3. **Context parallelism partitions the sequence dimension** via ring attention, enabling 128K-1M+ token serving that would otherwise exceed single-GPU memory. It complements TP and PP as a third parallelism axis.
 
-4. **Token-aware load balancing outperforms round-robin** for LLM workloads because request costs vary by orders of magnitude. Factor in prompt length, expected output length, and current backend KV-cache utilization.
+4. **Data parallelism (replication) scales throughput** by running independent model replicas. More replicas generally yield more aggregate throughput at the cost of more GPUs.
 
-5. **Prefix/session-aware routing improves cache hit rates** by directing requests with similar prompts or the same conversation to the same backend, avoiding redundant KV-cache computation.
+5. **Token-aware load balancing outperforms round-robin** for LLM workloads because request costs vary by orders of magnitude. Factor in prompt length, expected output length, and current backend KV-cache utilization.
 
-6. **Autoscaling LLM workloads requires patience** -- model loading takes minutes, so scale-up must be predictive or use warm standby pools. Scale-down should be conservative to avoid thrashing.
+6. **Prefix/session-aware routing improves cache hit rates** by directing requests with similar prompts or the same conversation to the same backend, avoiding redundant KV-cache computation.
 
-7. **Cost optimization is a first-class concern**: choosing the right parallelism configuration, using spot instances for batch work, and right-sizing replicas can reduce serving costs by 2-5x without sacrificing quality.
+7. **Heterogeneous clusters require generation-aware scheduling** -- route latency-critical work to newest hardware, throughput-oriented batch work to older GPUs, and weight load balancing by hardware capability rather than treating all replicas equally.
+
+8. **GPU disaggregation improves fleet utilization** by pooling GPUs across workloads and dynamically reallocating based on demand, though LLM serving's cold-start penalty requires model-aware scheduling.
+
+9. **Autoscaling LLM workloads requires patience** -- model loading takes minutes, so scale-up must be predictive or use warm standby pools. Scale-down should be conservative to avoid thrashing.
+
+10. **Cost optimization is a first-class concern**: choosing the right parallelism configuration, using spot instances for batch work, and right-sizing replicas can reduce serving costs by 2-5x without sacrificing quality. See [Article 39: Cost Optimization](./agent-39-cost-optimization.md) for detailed economic analysis.

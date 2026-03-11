@@ -206,12 +206,12 @@ WebLLM's architecture:
 
 **Limitations**: WebGPU is not yet universally supported (notably absent in Firefox as of early 2026), model download sizes are large (2-8GB for useful models), and browser memory constraints limit model size. Performance is typically 60-80% of native llama.cpp on the same hardware.
 
-### Transformers.js
+### Transformers.js (@huggingface/transformers)
 
-Hugging Face's Transformers.js runs transformer models in the browser using ONNX Runtime Web (WASM + WebGPU backends). It focuses on smaller models for tasks like text classification, named entity recognition, and embeddings rather than full conversational LLM inference.
+Hugging Face's Transformers.js -- now published as `@huggingface/transformers` (the `@xenova/transformers` package is deprecated) -- runs transformer models in the browser using ONNX Runtime Web (WASM + WebGPU backends). Version 3.x added WebGPU acceleration, text-generation pipelines, and multimodal model support, significantly expanding beyond the original focus on classification and embedding tasks.
 
 ```javascript
-import { pipeline } from "@xenova/transformers";
+import { pipeline } from "@huggingface/transformers";
 
 // Text classification in the browser
 const classifier = await pipeline(
@@ -230,6 +230,14 @@ const embedding = await embedder("Hello world", {
     pooling: "mean",
     normalize: true,
 });
+
+// Text generation (new in v3)
+const generator = await pipeline(
+    "text-generation",
+    "onnx-community/Qwen2.5-0.5B-Instruct",
+    { dtype: "q4", device: "webgpu" }
+);
+const output = await generator("Explain edge inference:", { max_new_tokens: 128 });
 ```
 
 ## Mobile Deployment
@@ -502,6 +510,131 @@ class EdgeBenchmarkResult:
     battery_impact: str       # Estimated battery life impact
 ```
 
+## On-Device Model Ecosystems
+
+The major platform providers have moved beyond treating on-device AI as an afterthought. Apple, Google, and Samsung now ship integrated model ecosystems that blur the line between operating system and inference runtime.
+
+### Apple Intelligence
+
+Apple Intelligence, introduced with iOS 18 and macOS Sequoia, runs a family of Apple-trained foundation models directly on-device. The system routes requests between a ~3B parameter on-device model and Apple's Private Cloud Compute servers based on task complexity -- an approach conceptually similar to the tiered processing pattern described earlier in this article. On-device processing handles text rewriting, summarization, priority classification in Mail, and smart reply generation. Tasks requiring greater capability (such as complex multi-step reasoning) are routed to server-side models running on Apple Silicon servers, with a cryptographic guarantee that user data is not stored or accessible to Apple.
+
+The on-device model runs through Core ML on the Apple Neural Engine, with 4-bit palettized weights and grouped query attention to fit within mobile memory constraints. Apple's approach is notable for its tight integration: the model is embedded in the OS, invisible to the user, and invoked through system APIs rather than a standalone app. Third-party developers access Apple Intelligence through system frameworks (like the Writing Tools API) rather than running models directly.
+
+### Gemini Nano
+
+Google's Gemini Nano is the on-device member of the Gemini model family, available through Android's AICore system service. Gemini Nano powers Smart Reply in Gboard, summarization in Recorder, and contextual suggestions across Google apps. Unlike Apple's approach, Google exposes Gemini Nano to third-party developers through the ML Kit On-Device AI API, allowing any Android app to run inference without bundling a model.
+
+Gemini Nano uses 4-bit quantization and runs on supported hardware through Android's NNAPI, which dispatches operations to the most capable available accelerator -- GPU, DSP, or NPU. The model is downloaded and updated through Google Play Services, meaning it shares storage across apps and receives updates independently of the OS version.
+
+### Samsung Galaxy AI
+
+Samsung's Galaxy AI, featured on the S24 series and newer, combines on-device models with cloud-based processing. The on-device stack runs on Qualcomm's AI Engine (Hexagon NPU + Adreno GPU), handling real-time tasks like Live Translate (on-device speech translation during phone calls), transcript summarization, and photo editing suggestions. Samsung partners with both Google (Gemini Nano integration) and its own proprietary models (Samsung Gauss) to power different features.
+
+The common pattern across all three ecosystems: platform providers treat on-device models as a system capability rather than an app-level concern, manage model lifecycle and updates through OS-level infrastructure, and use hybrid routing to balance capability against latency and privacy.
+
+## ExecuTorch and PyTorch Mobile
+
+Meta's ExecuTorch is the successor to PyTorch Mobile, providing a unified framework for deploying PyTorch models on mobile and edge devices. Where the earlier PyTorch Mobile used TorchScript (a restricted Python subset) for model serialization, ExecuTorch uses `torch.export` to capture a clean computation graph as an ExportedProgram, then compiles it for target hardware through a delegate system.
+
+The deployment workflow follows a clear pipeline:
+
+```python
+import torch
+from executorch.exir import to_edge
+from executorch.backends.xnnpack.partition import XnnpackPartitioner
+
+# 1. Export the model using torch.export
+model = MyModel()
+example_inputs = (torch.randn(1, 3, 224, 224),)
+exported = torch.export.export(model, example_inputs)
+
+# 2. Lower to edge representation and delegate to backend
+edge_program = to_edge(exported)
+edge_program = edge_program.to_backend(XnnpackPartitioner())
+
+# 3. Convert to ExecuTorch program
+et_program = edge_program.to_executorch()
+
+# 4. Save the .pte file for deployment
+with open("model.pte", "wb") as f:
+    f.write(et_program.buffer)
+```
+
+ExecuTorch supports multiple backend delegates: XNNPACK for optimized CPU inference, Core ML for Apple Neural Engine dispatch, Qualcomm QNN for Hexagon NPU, and Vulkan for cross-platform GPU. The key design decision is that delegation is composable -- operations not supported by a given accelerator fall back to a portable CPU implementation, ensuring the model always runs even on unfamiliar hardware.
+
+For LLM-scale models, Meta has demonstrated Llama 3.2 1B and 3B running through ExecuTorch on recent Android and iOS devices, with 4-bit groupwise quantization (via the `torchao` library) bringing the 3B model under 2GB on disk. The ExecuTorch runtime itself is under 1MB, making it feasible to embed in mobile apps without significant size overhead.
+
+ExecuTorch represents the direction PyTorch deployment is heading: a single export path from research to production, with hardware-specific optimization handled by the delegate layer rather than requiring separate model formats for each target platform. For teams already in the PyTorch ecosystem, this eliminates the conversion step to ONNX or Core ML and preserves the ability to debug inference issues in the same framework used for training.
+
+## NPU / Neural Accelerator Landscape
+
+Modern mobile and laptop SoCs include dedicated neural processing units (NPUs) -- fixed-function or semi-programmable accelerators designed for high-throughput, energy-efficient matrix operations. These NPUs are critical for practical edge inference because they deliver significantly better performance-per-watt than running the same operations on the CPU or GPU.
+
+| Accelerator | Vendor | Found In | Peak TOPS (INT8) | Key Characteristics |
+|---|---|---|---|---|
+| Apple Neural Engine (ANE) | Apple | M1-M4, A15-A18 Pro | 38 (M4) / 35 (A18 Pro) | 16-core engine; tight Core ML integration; excels at conv/matmul but limited control flow |
+| Hexagon NPU | Qualcomm | Snapdragon 8 Gen 3/Elite X | 45 (8 Gen 3) / 75 (Elite X) | Scalar + vector + tensor cores; QNN SDK; best Android NPU ecosystem |
+| Google TPU Mobile (Tensor G) | Google | Pixel 8/9 series | ~10-12 (estimated) | Derived from cloud TPU architecture; tightly coupled with AICore/NNAPI; powers Gemini Nano |
+| Samsung NPU (Exynos) | Samsung | Exynos 2400/2500 | 14.7 (Exynos 2400) | Dual NPU cores; used alongside Qualcomm AI Engine in Galaxy S24 (market-dependent) |
+| Intel NPU | Intel | Core Ultra (Meteor Lake+) | 10-11 | Integrated in laptop SoCs; OpenVINO SDK; targets sustained low-power workloads |
+| AMD XDNA (Ryzen AI) | AMD | Ryzen AI 300 series | 50 (Ryzen AI 9 HX 370) | Block FP16 support; targets Copilot+ PC workloads via DirectML |
+
+**Key considerations when targeting NPUs:**
+
+**Operator coverage varies widely.** NPUs accelerate a subset of operations -- typically matrix multiplications, convolutions, and element-wise activations. Transformer-specific operations like rotary positional embeddings, KV-cache manipulation, or custom attention patterns may fall back to the CPU or GPU. This means that simply compiling a model for NPU dispatch does not guarantee full acceleration; profiling actual operator placement is essential.
+
+**Programming models are fragmented.** Apple requires Core ML format. Qualcomm uses QNN. Google routes through NNAPI (soon to be replaced by the ML Accelerator API on Android 16). Intel uses OpenVINO. There is no universal NPU programming interface, which is why cross-platform runtimes like ONNX Runtime (with per-vendor execution providers) and ExecuTorch (with per-vendor delegates) are valuable -- they abstract the backend while exposing a single developer-facing API.
+
+**Power efficiency is the real advantage.** NPUs typically deliver 5-10x better performance-per-watt than the GPU for supported operations. For always-on or battery-sensitive tasks (voice detection, background text analysis, on-device search indexing), NPU dispatch is the difference between a feature being practical and draining the battery in two hours.
+
+## Model Selection for Edge
+
+Choosing the right model for edge deployment requires balancing capability, size, and hardware fit. The landscape of small language models has expanded rapidly, with multiple model families targeting the sub-10B parameter range. Here is a decision framework based on practical deployment constraints.
+
+### Sub-1B: Extreme Edge
+
+For devices with under 2GB of available memory (low-end phones, embedded systems, browser contexts):
+
+- **Qwen 2.5 0.5B**: Strongest multilingual capability at this scale. Performs well on classification, extraction, and simple instruction following. Available in GGUF, ONNX, and ExecuTorch formats.
+- **SmolLM2 360M/1.7B** (Hugging Face): Purpose-built for edge. The 360M variant runs comfortably in-browser via Transformers.js with WebGPU.
+
+### 1B-4B: Mobile Sweet Spot
+
+For flagship phones, tablets, and resource-constrained laptops:
+
+- **Llama 3.2 1B/3B**: Meta's purpose-built mobile models. First-class ExecuTorch support. The 3B variant at Q4 fits in ~2GB and handles summarization, instruction following, and tool use. Limited multilingual capability compared to Qwen.
+- **Gemma 2 2B / Gemma 3 1B/4B**: Google's compact models optimized for mobile deployment. Gemma 3 4B offers strong multilingual and multimodal (vision) capability. Well-supported through MediaPipe and LiteRT on Android.
+- **Phi-3.5 Mini 3.8B / Phi-4 Mini 3.8B**: Microsoft's small models punch above their weight on reasoning benchmarks. Phi-4 Mini adds improved instruction following and function calling. Available in ONNX format with ONNX Runtime GenAI, making them straightforward to deploy cross-platform.
+
+### 4B-10B: Laptop and Desktop
+
+For devices with 8GB+ RAM (M-series Macs, gaming laptops, workstations):
+
+- **Llama 3.1 8B**: The general-purpose workhorse. Extensive ecosystem support (GGUF, MLX, ONNX, ExecuTorch). Strong instruction following and tool use.
+- **Qwen 2.5 7B**: Best-in-class for multilingual use cases and coding tasks at this scale. Excellent GGUF quantization quality.
+- **Gemma 2 9B**: Strong reasoning capability. Higher quality than its size suggests due to distillation from larger Gemma models (see [Article 24: Distillation & Model Compression](./agent-24-distillation-compression.md) for distillation techniques).
+- **Mistral 7B / Mistral Nemo 12B**: Efficient architectures with sliding window attention. Nemo 12B pushes the upper bound of what runs comfortably on 16GB devices at Q4.
+
+### Decision Matrix
+
+| Constraint | Recommended Model | Quantization | Approx. Size | Runtime |
+|---|---|---|---|---|
+| Browser, no server | Qwen 2.5 0.5B | Q4 | ~400 MB | WebLLM or @huggingface/transformers |
+| Mobile, 3GB RAM budget | Llama 3.2 1B | Q4 | ~800 MB | ExecuTorch / Core ML |
+| Mobile, 6GB RAM budget | Gemma 3 4B or Phi-4 Mini | Q4 | ~2.5 GB | MediaPipe / ONNX Runtime |
+| Laptop, 8GB RAM | Llama 3.1 8B | Q4_K_M | ~4.9 GB | llama.cpp / MLX |
+| Laptop, 16GB+ RAM | Qwen 2.5 14B or Mistral Nemo 12B | Q4_K_M | ~8-9 GB | llama.cpp / MLX |
+
+The quantization technique matters as much as the model choice. INT4 quantization (Q4_K_M in GGUF, 4-bit groupwise in ExecuTorch, INT4 in ONNX Runtime) is the default recommendation for edge -- it halves memory again versus INT8 with only 1-3% quality degradation on most benchmarks. For a detailed treatment of quantization algorithms and their quality/size trade-offs, see [Article 05: Inference Optimization](./agent-05-inference-optimization.md).
+
+## Cross-References
+
+This article connects to several other topics in this series:
+
+- **[Article 05: Inference Optimization](./agent-05-inference-optimization.md)** covers quantization algorithms (GPTQ, AWQ, SmoothQuant), KV-cache management, and speculative decoding in depth -- all techniques that directly apply to edge inference, just at a different scale.
+- **[Article 24: Distillation & Model Compression](./agent-24-distillation-compression.md)** explores the compression pipeline (distillation, pruning, quantization-aware training) that produces the small models used in edge deployment. Many of the sub-4B models recommended above are themselves distilled from larger teachers.
+- **[Article 50: Audio & Speech AI](./agent-50-audio-speech-ai.md)** covers ASR and TTS pipelines, which are among the most compelling on-device use cases. Whisper Tiny/Base running locally via llama.cpp or Core ML enables fully offline voice transcription, and on-device TTS eliminates round-trip latency for voice agents.
+
 ## Summary and Key Takeaways
 
 1. **llama.cpp is the universal edge runtime**: its C/C++ implementation with no dependencies runs on virtually every platform, and GGUF has become the standard format for quantized model distribution.
@@ -514,6 +647,12 @@ class EdgeBenchmarkResult:
 
 5. **Hybrid edge-cloud architectures** offer the best of both worlds -- use edge models for latency-sensitive preprocessing, privacy-preserving PII filtering, and offline capability, while escalating complex generation to cloud models.
 
-6. **Mobile deployment** is maturing rapidly through Core ML (iOS) and MediaPipe/LiteRT (Android), with dedicated neural accelerators (Apple Neural Engine, Qualcomm Hexagon) providing energy-efficient inference.
+6. **Mobile deployment** is maturing rapidly through Core ML (iOS), MediaPipe/LiteRT (Android), and ExecuTorch (cross-platform), with dedicated neural accelerators (Apple Neural Engine, Qualcomm Hexagon) providing energy-efficient inference.
 
-7. **The edge deployment decision** hinges on four factors: latency requirements, privacy constraints, cost at scale, and offline needs. If none of these are compelling, cloud inference remains simpler to operate and offers access to larger, more capable models.
+7. **Platform providers are integrating on-device AI at the OS level.** Apple Intelligence, Gemini Nano, and Samsung Galaxy AI treat models as system capabilities, managing lifecycle and routing complexity transparently.
+
+8. **NPU/neural accelerators deliver 5-10x better perf-per-watt** than GPU for supported operations, but operator coverage is incomplete and programming models are fragmented across vendors. Cross-platform runtimes (ONNX Runtime, ExecuTorch) are the practical answer.
+
+9. **Model selection for edge** is a solved problem at every scale: Qwen 2.5 0.5B for browsers, Llama 3.2 1B/3B or Gemma 3 4B for mobile, Llama 3.1 8B or Qwen 2.5 7B for laptops. INT4 quantization is the default.
+
+10. **The edge deployment decision** hinges on four factors: latency requirements, privacy constraints, cost at scale, and offline needs. If none of these are compelling, cloud inference remains simpler to operate and offers access to larger, more capable models.

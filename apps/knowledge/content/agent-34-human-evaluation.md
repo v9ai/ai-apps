@@ -4,7 +4,7 @@ Despite advances in automated metrics and LLM-as-Judge systems, human evaluation
 
 ## Why Human Evaluation Still Matters
 
-Automated metrics optimize for what can be measured, not necessarily what matters. BLEU score does not capture whether a translation sounds natural. BERTScore does not assess whether an explanation is actually helpful. Even LLM-as-Judge systems inherit biases and cannot reliably verify factual claims.
+Automated metrics optimize for what can be measured, not necessarily what matters. BLEU score does not capture whether a translation sounds natural. BERTScore does not assess whether an explanation is actually helpful. Even LLM-as-Judge systems (see Article 33 for a detailed treatment of their capabilities and limitations) inherit biases and cannot reliably verify factual claims.
 
 Human evaluation provides three things that automated approaches cannot:
 
@@ -41,7 +41,7 @@ Factual Accuracy Scale:
 1 - Predominantly incorrect. The response would cause harm if relied upon.
 ```
 
-**Worked examples**: Provide 3-5 annotated examples for each scale point, with explanations of why they received that rating. These examples serve as shared reference points that anchor annotator calibration.
+**Worked examples**: Provide 3-5 annotated examples for each scale point, with explanations of why they received that rating. These examples serve as shared reference points that anchor annotator calibration. When building annotation protocols for dataset curation specifically, Article 22 covers the broader pipeline from data collection through quality filtering.
 
 ### Likert Scales vs. Pairwise Comparison
 
@@ -265,7 +265,7 @@ The InstructGPT paper used approximately 40 contractors for annotation. The team
 
 ### Constitutional AI and Reduced Human Dependence
 
-Anthropic's Constitutional AI (Bai et al., 2022) reduces the annotation burden by replacing some human feedback with AI-generated feedback based on a set of principles. However, the principles themselves are human-authored, and human evaluation is still needed to validate that the constitutional approach produces aligned behavior.
+Anthropic's Constitutional AI (Bai et al., 2022) reduces the annotation burden by replacing some human feedback with AI-generated feedback based on a set of principles. However, the principles themselves are human-authored, and human evaluation is still needed to validate that the constitutional approach produces aligned behavior. For the full technical picture of how preference data flows into reward models and policy optimization, see Article 21.
 
 The trend in the field is toward hybrid approaches: human annotation for the highest-leverage decisions (defining principles, validating edge cases, evaluating safety) combined with AI-assisted annotation for scale.
 
@@ -333,7 +333,7 @@ Bad practices:
 
 ### Annotator Wellbeing
 
-For safety evaluation and red teaming tasks, annotators may be exposed to harmful, disturbing, or offensive content. Ethical considerations include:
+For safety evaluation and red teaming tasks (see Article 35 for adversarial testing methodology), annotators may be exposed to harmful, disturbing, or offensive content. Ethical considerations include:
 
 - Informed consent about the nature of the content
 - Content warnings and opt-out provisions
@@ -349,8 +349,8 @@ The Partnership on AI's guidelines on responsible practices for synthetic media 
 The optimal evaluation strategy is rarely purely human or purely automated. A layered approach:
 
 1. **Automated metrics** (BLEU, ROUGE, BERTScore) for rapid iteration during development
-2. **LLM-as-Judge** for medium-stakes decisions (prompt selection, parameter tuning)
-3. **Human evaluation** for high-stakes decisions (model release, safety assessment) and to calibrate the layers above
+2. **LLM-as-Judge** (see Article 33) for medium-stakes decisions (prompt selection, parameter tuning)
+3. **Human evaluation** for high-stakes decisions (model release, safety assessment, red teaming as described in Article 35) and to calibrate the layers above
 4. **Ongoing human monitoring** of production outputs to detect drift
 
 ```python
@@ -375,6 +375,159 @@ class LayeredEvaluation:
         return human_scores
 ```
 
+## LLM-Assisted Annotation
+
+The most significant development in human evaluation methodology is the emergence of hybrid human-AI annotation workflows. Rather than treating human and automated evaluation as separate tiers, LLM-assisted annotation uses language models to pre-annotate data that humans then review and correct. This approach can reduce annotation cost by 40-60% while maintaining or even improving quality compared to purely human workflows.
+
+### Pre-Annotation with Human Correction
+
+The core pattern is straightforward: run an LLM judge (see Article 33 for judge design and calibration) over all items first, then route items to human annotators based on the model's confidence.
+
+```python
+class LLMPreAnnotationPipeline:
+    def __init__(self, llm_judge, confidence_threshold: float = 0.85):
+        self.llm_judge = llm_judge
+        self.confidence_threshold = confidence_threshold
+
+    def pre_annotate(self, items: list[dict]) -> dict:
+        """
+        Pre-annotate items and split into auto-accepted
+        and human-review queues.
+        """
+        auto_accepted = []
+        human_review = []
+
+        for item in items:
+            judgment = self.llm_judge.evaluate(item)
+            item["llm_label"] = judgment["label"]
+            item["llm_confidence"] = judgment["confidence"]
+            item["llm_rationale"] = judgment["rationale"]
+
+            if judgment["confidence"] >= self.confidence_threshold:
+                auto_accepted.append(item)
+            else:
+                human_review.append(item)
+
+        return {
+            "auto_accepted": auto_accepted,
+            "human_review": human_review,
+            "auto_rate": len(auto_accepted) / len(items),
+        }
+
+    def human_correction_pass(self, human_review: list[dict],
+                               human_labels: dict) -> list[dict]:
+        """
+        Merge human corrections, tracking where humans
+        overrode the LLM.
+        """
+        corrected = []
+        override_count = 0
+        for item in human_review:
+            human_label = human_labels.get(item["id"])
+            if human_label and human_label != item["llm_label"]:
+                override_count += 1
+                item["final_label"] = human_label
+                item["source"] = "human_override"
+            else:
+                item["final_label"] = item["llm_label"]
+                item["source"] = "human_confirmed"
+            corrected.append(item)
+
+        override_rate = override_count / len(human_review) if human_review else 0
+        print(f"Human override rate: {override_rate:.1%}")
+        return corrected
+```
+
+The key design decisions in this pipeline:
+
+**Confidence thresholds determine the cost-quality tradeoff.** A threshold of 0.85 might auto-accept 60% of items, sending only 40% to human review. Lowering it to 0.70 auto-accepts more but risks propagating LLM errors. The right threshold depends on your tolerance for label noise and should be calibrated against a fully human-annotated validation set.
+
+**Human annotators see the LLM's pre-annotation and rationale.** This is deliberately a review-and-correct task, not an independent annotation. Showing the LLM's reasoning speeds up agreement cases (the annotator confirms and moves on) while still allowing correction of errors. However, this introduces anchoring bias -- annotators may be reluctant to override the LLM's suggestion. Mitigate this by explicitly instructing annotators that correction is expected and valued, and by tracking override rates as a quality signal.
+
+**Override rate monitoring is essential.** If humans override the LLM on fewer than 5% of reviewed items, either the LLM is genuinely excellent or your annotators are rubber-stamping. Inject known LLM errors as verification items to distinguish these cases.
+
+### Workflow Variants
+
+Several hybrid workflow designs have emerged in practice:
+
+**LLM-first, human-audit**: The LLM labels everything. A random sample (10-20%) goes to human review. If the human agreement rate on the sample exceeds a threshold (typically 90%+), the full batch is accepted. This is the most cost-efficient approach but provides less per-item quality assurance.
+
+**Confidence-routed**: Items above the confidence threshold are auto-accepted; items below go to human review. This concentrates human effort on genuinely ambiguous cases where human judgment adds the most value.
+
+**Parallel-then-adjudicate**: Both the LLM and a human annotate independently. A second human (or senior annotator) adjudicates only the disagreements. This produces the highest-quality labels but is more expensive than confidence routing.
+
+**Cascaded difficulty**: The LLM pre-classifies items by difficulty. Easy items get LLM-only labels. Medium items get LLM pre-annotation with crowd-worker review. Hard items go to domain experts. This tiered approach aligns annotator expertise (and cost) with task difficulty.
+
+For tasks that feed into RLHF preference data (see Article 21), the confidence-routed approach is most common. Preference pairs where the LLM judge strongly agrees on a winner can be auto-accepted, while close calls -- which are also the most informative training examples -- receive human judgment.
+
+## Cost Benchmarking
+
+Human evaluation costs are frequently underestimated, leading to underpowered studies or budget overruns. The following benchmarks, drawn from published research and industry practice as of 2025, provide realistic planning figures.
+
+### Per-Annotation Cost by Task Type
+
+| Task Type | Platform | Cost per Annotation | Annotations/Hour | Notes |
+|-----------|----------|-------------------|-------------------|-------|
+| Binary preference (A vs B) | Prolific | $0.30-$0.60 | 40-60 | Simplest judgment task |
+| Likert rating (single dimension) | Prolific | $0.20-$0.50 | 50-80 | Fast with clear rubrics |
+| Multi-dimension rubric (3-5 dims) | Prolific | $0.80-$2.00 | 15-25 | Complexity scales linearly with dimensions |
+| Pairwise with written rationale | Surge AI | $1.50-$3.00 | 10-20 | Rationales slow annotation but improve quality |
+| Safety/harm evaluation | Surge AI | $2.00-$5.00 | 8-15 | Requires trained annotators, content moderation protocols |
+| Domain expert (medical, legal) | Direct hire | $15-$50 | 5-15 | Highly variable by domain and expertise level |
+| RLHF preference ranking (4-7 responses) | Scale AI | $3.00-$8.00 | 5-10 | Reading and ranking multiple responses is time-intensive |
+
+### Study-Level Cost Estimates
+
+A typical human evaluation study for comparing two LLM systems involves:
+
+**Minimum viable study** (detecting a 10% win-rate difference):
+- ~200 pairwise comparisons at 3 annotators each = 600 annotations
+- Using Prolific at $0.50/annotation: **$300** in annotation cost
+- Plus platform fees, qualification screening: **$400-$500 total**
+- Turnaround: 2-4 days
+
+**Standard academic study** (detecting a 5% difference, publishable statistical power):
+- ~400 comparisons at 3-5 annotators each = 1,200-2,000 annotations
+- Using Prolific at $0.50/annotation: **$600-$1,000** in annotation cost
+- With pilot studies and calibration rounds: **$1,200-$2,000 total**
+- Turnaround: 1-2 weeks
+
+**Enterprise evaluation** (multi-dimension, high confidence, safety-inclusive):
+- ~1,000 items across 3-5 evaluation dimensions, 3-5 annotators per item
+- Mixed annotator tiers (crowd + expert for safety dimensions)
+- Annotation cost: **$5,000-$15,000**
+- Including pipeline development, annotator training, quality monitoring: **$15,000-$40,000 total**
+- Turnaround: 3-6 weeks
+
+**RLHF data collection** (sufficient for reward model training):
+- 50,000-100,000 preference pairs (InstructGPT scale)
+- Using managed annotation (Scale AI / Surge AI): **$150,000-$500,000**
+- Turnaround: 2-4 months with a dedicated annotation team
+
+### Reducing Cost with Hybrid Approaches
+
+LLM pre-annotation (described in the previous section) can substantially reduce these costs. The savings depend on the auto-acceptance rate and the quality requirements:
+
+| Approach | Relative Cost | Quality Impact | Best For |
+|----------|--------------|----------------|----------|
+| Fully human | 1.0x (baseline) | Highest | Safety-critical, novel tasks |
+| LLM-first, human audit (20%) | 0.25-0.35x | Slight risk of undetected errors | High-volume, well-defined tasks |
+| Confidence-routed (60% auto) | 0.45-0.55x | Minimal if threshold is calibrated | General evaluation |
+| Parallel + adjudication | 1.2-1.5x | Highest (exceeds fully human) | Ground truth dataset creation |
+
+The economics are clear: for tasks where an LLM judge achieves above 85% agreement with human annotators (see Article 33 for how to measure this), hybrid approaches dominate purely human evaluation on cost-adjusted quality. The savings compound with scale -- a team running continuous evaluation as part of a dataset curation pipeline (see Article 22) can redirect human annotator budget toward the genuinely hard cases where expert judgment is irreplaceable.
+
+### Budget Planning Checklist
+
+When scoping a human evaluation project, account for these commonly overlooked costs:
+
+1. **Pilot study**: 50-100 items to test and refine the annotation protocol. Budget 10-15% of total annotation cost.
+2. **Calibration rounds**: 2-4 rounds of annotator calibration before the main study. Budget 5-10%.
+3. **Platform fees**: Prolific charges ~33% on top of participant pay. Surge AI and Scale AI bundle fees into per-annotation pricing.
+4. **Qualification screening**: Pre-screening tasks to filter annotator quality. Budget $50-$200 per screening round.
+5. **Disagreement adjudication**: Expert review of annotator disagreements. Budget 5-10% of total.
+6. **Analysis time**: Your team's time to analyze results, compute IRR, and iterate. Often exceeds the annotation cost itself.
+
 ## Summary and Key Takeaways
 
 - **Annotation protocol design is the foundation.** Invest in specific dimensions, anchored scales, worked examples, and iterative refinement. Vague instructions produce noisy data.
@@ -383,6 +536,8 @@ class LayeredEvaluation:
 - **Crowdsourcing works for general tasks** with proper quality control (gold questions, redundancy, fair pay). Expert evaluation is essential for specialized domains.
 - **Plan sample sizes in advance.** Detecting small differences between models requires hundreds of annotations. Underpowered studies waste resources.
 - **RLHF annotation pipelines** require careful annotator selection, training, and ongoing calibration to produce useful training signal.
-- **Combine human and automated evaluation** in layers, using human judgment for the highest-stakes decisions and to calibrate cheaper automated methods.
+- **Combine human and automated evaluation** in layers, using human judgment for the highest-stakes decisions and to calibrate cheaper automated methods (see Article 33 for the LLM-as-Judge layer).
+- **LLM pre-annotation with human correction** reduces cost by 40-60% for well-defined tasks. Confidence-routed workflows concentrate human effort on genuinely ambiguous cases where it adds the most value.
+- **Budget realistically.** A publishable academic study costs $1,200-$2,000. Enterprise-scale evaluation with safety dimensions costs $15,000-$40,000. Pilot studies, calibration rounds, and analysis time are commonly overlooked line items.
 
 Human evaluation is expensive, slow, and imperfect -- and there is no substitute for it. The methodology described here aims to make it as reliable, efficient, and informative as possible.

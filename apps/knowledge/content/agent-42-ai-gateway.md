@@ -770,6 +770,442 @@ class ModelAccessControl:
         return True
 ```
 
+## ML-Based Model Routing
+
+The routing strategies discussed so far -- cost-optimized, latency-optimized, hedge -- rely on static heuristics. A newer class of systems uses trained classifiers to dynamically route each request to the model most likely to produce the best result for that specific input. This shifts routing from "which provider is cheapest/fastest right now" to "which model will answer this particular question best."
+
+### The Routing Problem
+
+Not all prompts are created equal. A simple factual lookup ("What is the capital of France?") can be handled perfectly by a small, fast model, while a complex multi-step reasoning problem benefits from a frontier model. Sending every request to the most capable model wastes money; sending every request to the cheapest model sacrifices quality. The optimal strategy routes each request individually based on its characteristics.
+
+```python
+class MLModelRouter:
+    """Route requests to the optimal model using a trained classifier."""
+
+    def __init__(self, classifier_path: str):
+        self.classifier = load_model(classifier_path)
+        self.model_configs = {
+            "simple": ProviderConfig(provider="openai", model="gpt-4o-mini"),
+            "moderate": ProviderConfig(provider="anthropic", model="claude-haiku-3-5"),
+            "complex": ProviderConfig(provider="anthropic", model="claude-sonnet-4-20250514"),
+            "frontier": ProviderConfig(provider="anthropic", model="claude-opus-4-20250514"),
+        }
+
+    async def select_provider(self, request: GatewayRequest) -> ProviderConfig:
+        # Extract features from the request
+        features = self._extract_features(request)
+
+        # Classify difficulty tier
+        tier_probabilities = self.classifier.predict_proba(features)
+        selected_tier = self._select_tier(tier_probabilities, request.quality_target)
+
+        return self.model_configs[selected_tier]
+
+    def _extract_features(self, request: GatewayRequest) -> dict:
+        prompt_text = " ".join(m["content"] for m in request.messages)
+        return {
+            "prompt_length": len(prompt_text.split()),
+            "num_messages": len(request.messages),
+            "has_system_prompt": any(m["role"] == "system" for m in request.messages),
+            "has_tools": bool(request.tools),
+            "num_tools": len(request.tools or []),
+            "contains_code": bool(re.search(r"```|def |function |class ", prompt_text)),
+            "contains_math": bool(re.search(r"\d+[\+\-\*/]\d+|equation|calculate", prompt_text)),
+            "question_complexity": self._estimate_complexity(prompt_text),
+            "embedding": self._get_prompt_embedding(prompt_text),
+        }
+
+    def _select_tier(self, probabilities: dict, quality_target: float) -> str:
+        """Select the cheapest tier that meets the quality target."""
+        tiers_by_cost = ["simple", "moderate", "complex", "frontier"]
+        cumulative_quality = 0.0
+
+        for tier in tiers_by_cost:
+            cumulative_quality += probabilities.get(tier, 0)
+            if cumulative_quality >= quality_target:
+                return tier
+
+        return "frontier"  # Default to highest quality
+```
+
+### Production Routing Systems
+
+Several companies have built production routing systems around this idea:
+
+**Martian** trains routing models on large-scale evaluation datasets, learning which LLM performs best on which types of inputs. Their router takes a prompt, evaluates it against learned performance profiles, and selects the model with the highest expected quality at the lowest cost. The key insight is that routing decisions can be made in under 5ms, adding negligible latency while potentially cutting costs by 40-60% at equivalent quality.
+
+**Not Diamond** approaches routing as a recommendation problem. Their system maintains performance matrices across models and task types, updated continuously from production feedback. When a request arrives, the router predicts which model will score highest on that specific task and routes accordingly. They publish benchmarks showing their router outperforming any single model because it selects the best model per-question.
+
+**Unify** provides a routing API that lets developers specify quality/cost/latency tradeoffs as constraints. Given a prompt and a target like "maximize quality with cost under $0.002 per request," their router selects the optimal model from their supported set. This constraint-based interface is particularly useful because it lets product teams express business requirements directly rather than choosing models manually.
+
+### Training the Router
+
+The classifier itself is typically a lightweight model -- a fine-tuned BERT, a small feedforward network over embeddings, or even a logistic regression over engineered features. Training data comes from running evaluation suites across all candidate models and recording which model produced the best output for each input. The router's accuracy improves over time as production feedback (user ratings, downstream task success) augments the training data. This creates a flywheel: more routing decisions generate more performance data, which trains a better router, which makes better decisions. For a deeper treatment of how model selection interacts with cost management, see [Article 39: Cost Optimization](/knowledge/agent-39-cost-optimization).
+
+## Prompt Adaptation
+
+Routing between providers is not just a matter of swapping model names and API endpoints. Different providers handle prompts differently in subtle ways that can significantly affect output quality. A gateway that routes between providers without adapting prompts risks degraded performance that erases the benefits of routing.
+
+### System Prompt Handling
+
+The most visible difference across providers is system prompt handling. OpenAI and Google accept system prompts as a message with `role: "system"` in the messages array. Anthropic uses a top-level `system` field separate from the messages array. This structural difference is straightforward to handle in the request transformer, but the behavioral implications are subtler.
+
+Different models respond differently to system prompt instructions. A system prompt that works well with Claude -- perhaps relying on its tendency to follow detailed instructions closely -- may need restructuring for GPT-4o, which may respond better to shorter, more directive system prompts. A production gateway can maintain provider-specific system prompt variants:
+
+```python
+class PromptAdapter:
+    """Adapt prompts when routing between providers."""
+
+    def __init__(self):
+        self.system_prompt_variants = {}
+        self.tool_format_registry = {}
+
+    def adapt_request(self, request: GatewayRequest,
+                      target_provider: str) -> GatewayRequest:
+        adapted = request.copy()
+
+        # Adapt system prompt if variants exist
+        adapted.messages = self._adapt_system_prompt(
+            request.messages, target_provider, request.prompt_id
+        )
+
+        # Adapt tool definitions to target provider format
+        if request.tools:
+            adapted.tools = self._adapt_tools(request.tools, target_provider)
+
+        # Adapt provider-specific parameters
+        adapted = self._adapt_parameters(adapted, target_provider)
+
+        return adapted
+
+    def _adapt_system_prompt(self, messages: list, provider: str,
+                              prompt_id: str = None) -> list:
+        if not prompt_id or prompt_id not in self.system_prompt_variants:
+            return messages  # No variants registered, pass through
+
+        variants = self.system_prompt_variants[prompt_id]
+        if provider not in variants:
+            return messages  # No variant for this provider
+
+        adapted_messages = []
+        for msg in messages:
+            if msg["role"] == "system":
+                adapted_messages.append({
+                    "role": "system",
+                    "content": variants[provider],
+                })
+            else:
+                adapted_messages.append(msg)
+
+        return adapted_messages
+```
+
+### Tool Format Differences
+
+Tool calling -- function calling in OpenAI's terminology -- is where provider APIs diverge most significantly. The schema structure, parameter naming, and response format all differ:
+
+```python
+class ToolFormatAdapter:
+    def to_openai_tools(self, canonical_tools: list[dict]) -> list[dict]:
+        return [{
+            "type": "function",
+            "function": {
+                "name": tool["name"],
+                "description": tool["description"],
+                "parameters": tool["input_schema"],
+            }
+        } for tool in canonical_tools]
+
+    def to_anthropic_tools(self, canonical_tools: list[dict]) -> list[dict]:
+        return [{
+            "name": tool["name"],
+            "description": tool["description"],
+            "input_schema": tool["input_schema"],
+        } for tool in canonical_tools]
+
+    def to_google_tools(self, canonical_tools: list[dict]) -> list[dict]:
+        return [{
+            "functionDeclarations": [{
+                "name": tool["name"],
+                "description": tool["description"],
+                "parameters": self._convert_to_google_schema(tool["input_schema"]),
+            } for tool in canonical_tools]
+        }]
+
+    def normalize_tool_response(self, response: dict, provider: str) -> dict:
+        """Normalize tool call responses back to canonical format."""
+        if provider == "openai":
+            tool_calls = response["choices"][0]["message"].get("tool_calls", [])
+            return [{
+                "id": tc["id"],
+                "name": tc["function"]["name"],
+                "arguments": json.loads(tc["function"]["arguments"]),
+            } for tc in tool_calls]
+
+        elif provider == "anthropic":
+            content_blocks = response.get("content", [])
+            return [{
+                "id": block["id"],
+                "name": block["name"],
+                "arguments": block["input"],
+            } for block in content_blocks if block["type"] == "tool_use"]
+```
+
+Beyond structural differences, models also vary in how reliably they follow tool schemas. Some models require explicit instructions in the system prompt to prefer tool use over text responses, while others default to structured tool calls when tools are available. A mature gateway tracks tool call success rates per provider and adjusts routing accordingly -- if a particular model frequently generates malformed tool arguments for a given function schema, the router should learn to avoid that pairing.
+
+## Gateway Observability and Analytics
+
+An AI gateway occupies a unique position in the infrastructure stack: every LLM request flows through it, making it the single richest source of operational data about an organization's AI usage. The gateway sees what no individual service can -- aggregate patterns across all teams, providers, and models.
+
+### Unified Cost and Latency Dashboards
+
+Because the gateway normalizes requests across providers, it can produce apples-to-apples comparisons that would be impossible when teams manage their own provider integrations:
+
+```python
+class GatewayAnalytics:
+    """Aggregate analytics across all gateway traffic."""
+
+    async def record_request(self, context: RequestContext, response: GatewayResponse):
+        metrics = {
+            "timestamp": datetime.utcnow().isoformat(),
+            "org_id": context.auth.org_id,
+            "team_id": context.auth.team_id,
+            "user_id": context.auth.user_id,
+            "provider": context.selected_provider,
+            "model": context.resolved_model,
+            "canonical_model": context.canonical_model,
+            "input_tokens": response.usage.input_tokens,
+            "output_tokens": response.usage.output_tokens,
+            "total_tokens": response.usage.total_tokens,
+            "cost_usd": self._calculate_cost(
+                context.selected_provider,
+                context.resolved_model,
+                response.usage,
+            ),
+            "ttft_ms": response.time_to_first_token_ms,
+            "total_latency_ms": response.total_latency_ms,
+            "cache_hit": context.cache_hit,
+            "fallback_used": context.fallback_used,
+            "fallback_reason": context.fallback_reason,
+            "status": "success" if not response.error else "error",
+            "error_type": response.error_type,
+        }
+
+        await self.metrics_store.write(metrics)
+        await self._update_real_time_counters(metrics)
+
+    async def get_cost_breakdown(self, org_id: str,
+                                  period: str = "30d") -> dict:
+        return await self.metrics_store.query(f"""
+            SELECT
+                team_id,
+                provider,
+                canonical_model,
+                COUNT(*) as request_count,
+                SUM(cost_usd) as total_cost,
+                AVG(total_latency_ms) as avg_latency,
+                SUM(CASE WHEN cache_hit THEN 1 ELSE 0 END)::float
+                    / COUNT(*) as cache_hit_rate,
+                SUM(CASE WHEN fallback_used THEN 1 ELSE 0 END)::float
+                    / COUNT(*) as fallback_rate
+            FROM gateway_metrics
+            WHERE org_id = '{org_id}'
+              AND timestamp > NOW() - INTERVAL '{period}'
+            GROUP BY team_id, provider, canonical_model
+            ORDER BY total_cost DESC
+        """)
+```
+
+### Connecting to Observability Platforms
+
+The gateway should export traces in standard formats (OpenTelemetry) so they integrate with existing observability infrastructure. For LLM-specific observability, platforms like Langfuse provide purpose-built tooling for tracing multi-step LLM pipelines, tracking prompt versions, and measuring output quality. A gateway can push structured trace data directly into these platforms:
+
+```python
+class GatewayTraceExporter:
+    """Export gateway traces to observability platforms."""
+
+    def __init__(self, langfuse_client=None, otel_exporter=None):
+        self.langfuse = langfuse_client
+        self.otel = otel_exporter
+
+    async def export_trace(self, context: RequestContext,
+                           response: GatewayResponse):
+        # OpenTelemetry span for general observability
+        if self.otel:
+            with self.otel.start_span("llm.gateway.request") as span:
+                span.set_attribute("llm.provider", context.selected_provider)
+                span.set_attribute("llm.model", context.resolved_model)
+                span.set_attribute("llm.tokens.input", response.usage.input_tokens)
+                span.set_attribute("llm.tokens.output", response.usage.output_tokens)
+                span.set_attribute("llm.cost.usd", response.cost_usd)
+                span.set_attribute("llm.latency.ttft_ms", response.time_to_first_token_ms)
+
+        # Langfuse trace for LLM-specific observability
+        if self.langfuse:
+            trace = self.langfuse.trace(
+                name=f"gateway.{context.canonical_model}",
+                metadata={
+                    "gateway_request_id": context.request_id,
+                    "team_id": context.auth.team_id,
+                    "routing_strategy": context.routing_strategy,
+                    "fallback_used": context.fallback_used,
+                },
+            )
+            trace.generation(
+                name=context.resolved_model,
+                model=context.resolved_model,
+                input=context.request.messages,
+                output=response.content,
+                usage={
+                    "input": response.usage.input_tokens,
+                    "output": response.usage.output_tokens,
+                    "total": response.usage.total_tokens,
+                    "unit": "TOKENS",
+                },
+                metadata={
+                    "provider": context.selected_provider,
+                    "cost_usd": response.cost_usd,
+                    "cache_hit": context.cache_hit,
+                },
+            )
+```
+
+The gateway-to-observability pipeline is particularly powerful because it provides a single integration point. Rather than instrumenting every service that calls an LLM, you instrument the gateway once and get visibility into all LLM usage across the organization. For a comprehensive treatment of LLM observability beyond the gateway layer, see [Article 40: Observability](/knowledge/agent-40-observability).
+
+## Compliance and Data Residency
+
+As AI regulation matures, gateways become the natural enforcement point for compliance requirements. Because every LLM request passes through the gateway, it can enforce data handling policies consistently without requiring changes to application code.
+
+### Geographic Routing for Regulatory Compliance
+
+Data residency regulations -- the EU's GDPR, Germany's BSI requirements, financial sector rules like DORA -- may require that certain data never leaves a geographic region. A gateway can enforce geographic routing policies based on the data's classification or the user's jurisdiction:
+
+```python
+class ComplianceRouter:
+    """Route requests based on data residency and compliance requirements."""
+
+    def __init__(self):
+        self.region_providers = {
+            "eu": [
+                ProviderConfig(provider="azure-eu", model="gpt-4o",
+                              endpoint="https://eu-west.api.cognitive.microsoft.com"),
+                ProviderConfig(provider="self-hosted-eu", model="llama-3.1-70b",
+                              endpoint="https://llm.eu-west-1.internal"),
+            ],
+            "us": [
+                ProviderConfig(provider="openai", model="gpt-4o"),
+                ProviderConfig(provider="anthropic", model="claude-sonnet-4-20250514"),
+            ],
+            "ap": [
+                ProviderConfig(provider="azure-ap", model="gpt-4o",
+                              endpoint="https://ap-southeast.api.cognitive.microsoft.com"),
+            ],
+        }
+
+    async def select_provider(self, request: GatewayRequest,
+                               auth: AuthContext) -> ProviderConfig:
+        required_region = self._determine_required_region(request, auth)
+
+        if required_region:
+            eligible = self.region_providers.get(required_region, [])
+            if not eligible:
+                raise ComplianceError(
+                    f"No providers available in required region: {required_region}"
+                )
+            # Apply normal routing logic within the eligible set
+            return self._select_best(eligible, request)
+
+        # No residency requirement -- use global routing
+        return self._global_select(request)
+
+    def _determine_required_region(self, request: GatewayRequest,
+                                    auth: AuthContext) -> str | None:
+        # Check user jurisdiction
+        if auth.jurisdiction == "eu":
+            return "eu"
+
+        # Check data classification
+        if request.metadata.get("data_classification") == "eu_pii":
+            return "eu"
+
+        # Check team-level compliance policy
+        team_policy = self.compliance_policies.get(auth.team_id)
+        if team_policy and team_policy.required_region:
+            return team_policy.required_region
+
+        return None
+```
+
+### PII Filtering at the Gateway Layer
+
+A gateway can inspect and sanitize requests before they reach external LLM providers, stripping or masking personally identifiable information. This is especially important when using third-party API providers where data may be logged or used for training:
+
+```python
+class PIIFilter:
+    """Detect and mask PII before requests reach external providers."""
+
+    def __init__(self):
+        self.patterns = {
+            "email": re.compile(r'\b[\w.+-]+@[\w-]+\.[\w.-]+\b'),
+            "phone": re.compile(r'\b\d{3}[-.]?\d{3}[-.]?\d{4}\b'),
+            "ssn": re.compile(r'\b\d{3}-\d{2}-\d{4}\b'),
+            "credit_card": re.compile(r'\b\d{4}[\s-]?\d{4}[\s-]?\d{4}[\s-]?\d{4}\b'),
+        }
+        # For production use, supplement regex with NER models
+        self.ner_model = load_ner_model("pii-detection-v2")
+
+    async def filter_request(self, request: GatewayRequest,
+                              policy: PIIPolicy) -> GatewayRequest:
+        if policy.mode == "disabled":
+            return request
+
+        filtered = request.copy()
+        pii_detections = []
+
+        for i, message in enumerate(filtered.messages):
+            content = message["content"]
+
+            # Regex-based detection
+            for pii_type, pattern in self.patterns.items():
+                matches = pattern.findall(content)
+                for match in matches:
+                    pii_detections.append(PIIDetection(
+                        type=pii_type, value=match, message_index=i
+                    ))
+
+            # NER-based detection for names, addresses, etc.
+            ner_results = self.ner_model.predict(content)
+            for entity in ner_results:
+                if entity.label in ("PERSON", "ADDRESS", "ORG"):
+                    pii_detections.append(PIIDetection(
+                        type=entity.label.lower(), value=entity.text,
+                        message_index=i
+                    ))
+
+        if not pii_detections:
+            return filtered
+
+        if policy.mode == "block":
+            raise PIIBlockedError(
+                f"Request blocked: {len(pii_detections)} PII instances detected. "
+                f"Types: {set(d.type for d in pii_detections)}"
+            )
+
+        elif policy.mode == "mask":
+            for detection in pii_detections:
+                msg = filtered.messages[detection.message_index]
+                placeholder = f"[{detection.type.upper()}_REDACTED]"
+                msg["content"] = msg["content"].replace(
+                    detection.value, placeholder
+                )
+
+        return filtered
+```
+
+The gateway can apply different PII policies per team or data classification level. An internal HR chatbot processing employee records might require strict PII masking when calling external providers but allow unmasked calls to self-hosted models within the organization's own infrastructure. Audit logs at the gateway layer record which requests contained PII, which policy was applied, and whether data was masked or blocked -- critical evidence for regulatory compliance audits.
+
+For organizations operating under the EU AI Act or similar regulatory frameworks, the gateway's compliance layer provides the technical controls that governance policies require. The gateway's centralized audit log, combined with its PII filtering and geographic routing capabilities, directly addresses the transparency and accountability obligations that AI regulations impose. For a thorough examination of AI governance requirements and how to build compliant systems, see [Article 47: AI Governance](/knowledge/agent-47-ai-governance).
+
 ## Summary and Key Takeaways
 
 1. **AI gateways are the control plane for LLM traffic**, providing centralized management of provider keys, rate limiting, fallback logic, cost tracking, and request transformation across an organization.
@@ -784,6 +1220,14 @@ class ModelAccessControl:
 
 6. **The gateway is the optimal caching location** because it sees all traffic across all services, maximizing cache hit rates through exact-match and semantic caching.
 
-7. **LiteLLM, Portkey, and Cloudflare AI Gateway** represent three approaches: open-source self-hosted (LiteLLM), managed SaaS (Portkey), and edge-native (Cloudflare). The right choice depends on operational maturity, latency requirements, and preference for managed vs. self-hosted infrastructure.
+7. **ML-based model routing** (Martian, Not Diamond, Unify) goes beyond static heuristics by using trained classifiers to select the optimal model per-request, cutting costs by 40-60% at equivalent quality.
 
-8. **Start with a gateway early**: retrofitting gateway patterns into an organization where teams have already built direct provider integrations is significantly harder than starting with a gateway from day one.
+8. **Prompt adaptation is essential for multi-provider routing** -- system prompt handling, tool calling formats, and parameter semantics differ across providers, and naive routing without adaptation degrades output quality.
+
+9. **The gateway is the richest observability data source** in the AI stack. A single instrumentation point captures cost, latency, cache hit rates, and fallback frequency across all teams, providers, and models.
+
+10. **Compliance and data residency** enforcement belongs at the gateway layer. Geographic routing, PII filtering, and audit logging can be applied consistently to all LLM traffic without modifying application code.
+
+11. **LiteLLM, Portkey, and Cloudflare AI Gateway** represent three approaches: open-source self-hosted (LiteLLM), managed SaaS (Portkey), and edge-native (Cloudflare). The right choice depends on operational maturity, latency requirements, and preference for managed vs. self-hosted infrastructure.
+
+12. **Start with a gateway early**: retrofitting gateway patterns into an organization where teams have already built direct provider integrations is significantly harder than starting with a gateway from day one.

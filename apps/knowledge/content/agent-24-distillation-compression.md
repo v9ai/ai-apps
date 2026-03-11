@@ -527,14 +527,142 @@ Typical quality retention at different compression levels (relative to full-prec
 | Pruning 50% + INT8 | 8x | 93-96% |
 | Distillation + GPTQ 4-bit | 16x | 90-95% |
 
+## Deployment Formats: GGUF and ExLlamaV2
+
+Quantization algorithms like GPTQ and AWQ produce compressed weights, but those weights need a runtime and a file format to actually reach end users. Two ecosystems dominate deployment on consumer and edge hardware.
+
+### GGUF and the llama.cpp Ecosystem
+
+GGUF (GPT-Generated Unified Format) is the file format used by llama.cpp, the C/C++ inference engine created by Georgi Gerganov. It replaced the earlier GGML format in August 2023 and has become the de facto standard for running quantized models on consumer hardware -- laptops, desktops, and edge devices with limited or no GPU memory (see [Article 41: Edge Deployment](./agent-41-edge-deployment.md) for the broader edge inference landscape).
+
+GGUF stores model weights, tokenizer configuration, and metadata in a single self-contained file. Its key strength is flexibility in quantization granularity. Rather than applying a uniform bit-width across the entire model, GGUF supports mixed quantization: different layers or tensor types can use different precisions. The naming convention encodes the quantization scheme -- Q4_K_M means 4-bit quantization with K-quant (importance-weighted) at medium quality, Q5_K_S is 5-bit at small quality, and so on.
+
+```bash
+# Convert a Hugging Face model to GGUF and quantize
+# (using llama.cpp's convert and quantize tools)
+python convert_hf_to_gguf.py meta-llama/Llama-3-8B --outfile llama3-8b-f16.gguf
+
+# Quantize to various bit-widths
+./llama-quantize llama3-8b-f16.gguf llama3-8b-Q4_K_M.gguf Q4_K_M
+./llama-quantize llama3-8b-f16.gguf llama3-8b-Q5_K_M.gguf Q5_K_M
+
+# Run inference (CPU + partial GPU offload)
+./llama-cli -m llama3-8b-Q4_K_M.gguf -p "Explain distillation" \
+    -ngl 20  # Offload 20 layers to GPU
+```
+
+The llama.cpp runtime supports CPU inference via optimized SIMD kernels (AVX2, AVX-512, ARM NEON), partial or full GPU offload via CUDA, Metal, and Vulkan, and even hybrid CPU-GPU splits where some layers run on the GPU and others on the CPU. This makes it possible to run a 70B-parameter model on a machine with only 8GB of VRAM by offloading most layers to system RAM, accepting higher latency in exchange for accessibility.
+
+K-quant methods (Q4_K, Q5_K, Q6_K) allocate more bits to layers that are more sensitive to quantization error and fewer bits to layers that are robust, achieving better quality than uniform quantization at the same average bit-width. In practice, Q4_K_M (roughly 4.8 bits per weight on average) provides the best trade-off for most users, while Q5_K_M is the conservative choice when quality is paramount.
+
+### ExLlamaV2 for GPU Inference
+
+ExLlamaV2 is a highly optimized inference engine for running quantized models entirely on GPU. Where llama.cpp emphasizes broad hardware compatibility, ExLlamaV2 focuses on maximizing throughput on NVIDIA GPUs using custom CUDA kernels for dequantization and matrix multiplication.
+
+ExLlamaV2 uses its own EXL2 quantization format, which extends the mixed-precision idea further: it supports arbitrary average bit-widths (e.g., 3.5, 4.25, 5.0 bits per weight) by varying precision at the individual layer and group level. The quantization process uses calibration data to determine which layers need more bits, similar in spirit to AWQ's activation-awareness but applied at the format level.
+
+```python
+from exllamav2 import ExLlamaV2, ExLlamaV2Config, ExLlamaV2Tokenizer
+from exllamav2.generator import ExLlamaV2StreamingGenerator
+
+# Load an EXL2 quantized model
+config = ExLlamaV2Config("Llama-3-8B-exl2-4.0bpw")
+model = ExLlamaV2(config)
+model.load()
+tokenizer = ExLlamaV2Tokenizer(config)
+
+# Stream tokens with high throughput
+generator = ExLlamaV2StreamingGenerator(model, tokenizer)
+generator.set_stop_conditions([tokenizer.eos_token_id])
+output = generator.generate_simple("Explain knowledge distillation:", max_new_tokens=256)
+```
+
+For single-user inference on a desktop GPU, ExLlamaV2 typically achieves 1.5-2x the tokens-per-second of GPTQ through the standard Hugging Face pipeline, thanks to its fused kernels and aggressive memory management. For multi-user serving, however, engines like vLLM and TensorRT-LLM (covered in [Article 37: LLM Serving](./agent-37-llm-serving.md)) are better suited because they add continuous batching and PagedAttention.
+
+## Speculative Decoding as Deployment Optimization
+
+Speculative decoding is an inference-time technique that uses a small, fast "draft" model to propose multiple tokens in parallel, which are then verified by the full-size "target" model in a single forward pass. When the draft model's proposals are accepted, the system generates multiple tokens for the cost of one target model forward pass, delivering wall-clock speedups of 2-3x without any change to the output distribution.
+
+The algorithm works as follows:
+
+1. The draft model autoregressively generates $K$ candidate tokens (typically $K = 4$-$8$).
+2. The target model evaluates all $K$ tokens in a single forward pass (this is efficient because the target model processes the entire sequence in parallel, similar to a prefill operation).
+3. Each draft token is accepted or rejected by comparing the draft and target probability distributions. Tokens are accepted from left to right; once a token is rejected, a corrected token is sampled from an adjusted distribution and all subsequent draft tokens are discarded.
+
+The mathematical guarantee is exact: speculative decoding produces the same output distribution as running the target model alone. There is no quality loss whatsoever. The speedup comes from the asymmetry between the draft model's fast sequential generation and the target model's ability to verify a batch of tokens in parallel.
+
+```python
+def speculative_decode(draft_model, target_model, prompt_ids, K=5):
+    """Simplified speculative decoding loop."""
+    generated = prompt_ids.clone()
+
+    while not is_finished(generated):
+        # Step 1: Draft model generates K candidate tokens
+        draft_probs = []
+        draft_tokens = []
+        current = generated.clone()
+        for _ in range(K):
+            logits = draft_model(current).logits[:, -1, :]
+            p = torch.softmax(logits, dim=-1)
+            token = torch.multinomial(p, 1)
+            draft_probs.append(p)
+            draft_tokens.append(token)
+            current = torch.cat([current, token], dim=-1)
+
+        # Step 2: Target model scores all K tokens in one pass
+        target_logits = target_model(current).logits
+        target_probs = [
+            torch.softmax(target_logits[:, len(generated) + i - 1, :], dim=-1)
+            for i in range(K)
+        ]
+
+        # Step 3: Accept/reject each draft token
+        accepted = 0
+        for i in range(K):
+            token = draft_tokens[i]
+            r = torch.rand(1)
+            accept_prob = (target_probs[i].gather(-1, token)
+                          / draft_probs[i].gather(-1, token)).clamp(max=1.0)
+            if r < accept_prob:
+                generated = torch.cat([generated, token], dim=-1)
+                accepted += 1
+            else:
+                # Sample corrected token from adjusted distribution
+                adjusted = torch.clamp(target_probs[i] - draft_probs[i], min=0)
+                adjusted = adjusted / adjusted.sum()
+                corrected = torch.multinomial(adjusted, 1)
+                generated = torch.cat([generated, corrected], dim=-1)
+                break
+
+    return generated
+```
+
+The connection to distillation is direct: the draft model is often a distilled version of the target model, specifically trained to approximate the target's distribution as closely as possible. The higher the agreement rate between draft and target, the more tokens are accepted per verification step, and the greater the speedup. This creates a virtuous cycle where better distillation directly translates to faster inference.
+
+In practice, speculative decoding is most effective when: (1) the task involves predictable token sequences (code completion, structured output, formulaic text) where the draft model's acceptance rate is high, (2) the target model is large enough that its forward pass dominates wall-clock time, and (3) the draft model is at least 5-10x smaller than the target. Google's production deployment of speculative decoding in Gemini and DeepMind's work on "distillation-based speculative decoding" have validated this approach at scale. For a deeper treatment of inference-time optimization techniques including KV cache management and batching strategies, see [Article 05: Inference Optimization](./agent-05-inference-optimization.md).
+
+## Cross-References
+
+This article connects to several other topics in the series:
+
+- **[Article 05: Inference Optimization](./agent-05-inference-optimization.md)** covers the broader inference pipeline -- KV cache management, prefix caching, continuous batching, and attention optimizations -- within which quantized and distilled models operate.
+- **[Article 20: LoRA, QLoRA & Adapter Methods](./agent-20-lora-adapters.md)** explores parameter-efficient fine-tuning. QLoRA in particular combines NF4 quantization with LoRA adapters, directly building on the quantization techniques discussed here.
+- **[Article 23: Continual Learning](./agent-23-continual-learning.md)** examines catastrophic forgetting and knowledge retention. Knowledge distillation is one of the key strategies for preserving prior capabilities during continual pre-training.
+- **[Article 37: LLM Serving](./agent-37-llm-serving.md)** covers the serving infrastructure -- API design, batching, streaming -- that sits on top of compressed models in production deployments.
+- **[Article 41: Edge Deployment](./agent-41-edge-deployment.md)** details on-device inference runtimes (llama.cpp, ONNX, WebLLM) where the deployment formats and quantization methods from this article are essential for making models fit within device constraints.
+
 ## Summary and Key Takeaways
 
 - **Knowledge distillation** transfers the "dark knowledge" in a teacher's soft probability distributions to a smaller student model. Temperature scaling reveals inter-class relationships. Students with half the teacher's layers can retain 95-97% of performance.
+- **Distillation from proprietary models** (the Orca/Phi approach) uses generated text rather than logit distributions, enabling distillation from closed APIs. Quality results can be impressive, but licensing and legal risks remain largely unresolved.
 - **Unstructured pruning** zeros individual weights and can achieve 50-90% sparsity, but requires sparse hardware/kernels for actual speedup. SparseGPT achieves this in a single pass.
 - **Structured pruning** removes entire attention heads, neurons, or layers, producing dense models with real speedups on standard hardware.
 - **GPTQ** uses second-order information to quantize models to 4 bits with minimal quality loss, compensating for each weight's quantization error in the remaining weights.
 - **AWQ** protects important weight channels (identified via activation magnitudes) during quantization, achieving comparable quality to GPTQ with faster quantization and better generalization.
+- **FP8** on H100/H200 hardware delivers roughly 2x throughput over FP16/BF16 with quality typically better than INT8 PTQ, making it the emerging default for inference on Hopper-class GPUs.
 - **QAT** integrates quantization into training for better quality at very low bit-widths but requires a full training run.
 - **Model merging** (TIES, DARE, SLERP) combines specialized fine-tunes without additional training. TIES resolves sign conflicts; DARE randomly prunes redundant updates; SLERP interpolates on the hypersphere.
+- **GGUF** (via llama.cpp) and **ExLlamaV2** (EXL2 format) are the dominant deployment formats for quantized models on consumer and edge hardware. GGUF emphasizes broad hardware compatibility with CPU/GPU hybrid execution; ExLlamaV2 maximizes GPU throughput with custom CUDA kernels.
+- **Speculative decoding** uses a small draft model (often a distilled version of the target) to propose tokens verified by the larger model in a single pass, yielding 2-3x speedups with mathematically identical output distributions.
 - The practical compression pipeline is: **distill (if architecture change needed) -> prune (structural redundancy) -> quantize (precision reduction) -> merge (combine specializations)**. Each step compounds the compression with diminishing quality costs.
 - For most deployment scenarios, **AWQ or GPTQ at 4 bits** is the sweet spot, offering 4x memory reduction with negligible quality loss on modern LLMs.
