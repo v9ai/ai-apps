@@ -401,7 +401,76 @@ legal_model.save_pretrained("legal-adapter")
 # Base model knowledge is perfectly preserved in both cases
 ```
 
-This approach trades off integrated multi-task performance (the model can only do one domain at a time) for guaranteed knowledge retention.
+This approach trades off integrated multi-task performance (the model can only do one domain at a time) for guaranteed knowledge retention. For a full treatment of LoRA mechanics, rank selection, and QLoRA, see [LoRA, QLoRA & Adapter Methods](/knowledge/agent-20-lora-adapters).
+
+## Case Studies in Domain Adaptation
+
+The continual pre-training pipeline -- base model, continued pre-training on domain data, supervised fine-tuning, alignment -- is now well-established enough that several high-profile models serve as instructive case studies. Each illustrates different trade-offs in data curation, training duration, and forgetting mitigation.
+
+### CodeLlama: Code Domain Adaptation
+
+Meta's CodeLlama (Roziere et al., 2023) adapted Llama 2 to code through a multi-stage pipeline that demonstrates the full continual learning arc:
+
+1. **Continual pre-training**: Starting from Llama 2 7B/13B/34B checkpoints, the team performed continued pre-training on 500B tokens of primarily code data (publicly available code repositories, with a small fraction of natural language data mixed in for retention). The learning rate was set significantly lower than the original Llama 2 pre-training, following the standard continual pre-training practice.
+2. **Long-context fine-tuning**: A dedicated stage extended the context window from 4K to 16K tokens using a modified RoPE frequency base, trained on an additional 20B tokens of long code sequences. This is a form of capability extension that required careful learning rate management to avoid regressing short-context performance.
+3. **Instruction tuning**: CodeLlama-Instruct variants received SFT on a mixture of code-specific instruction data and general instruction data, preserving both coding ability and conversational quality.
+4. **Infilling specialization**: A separate variant was trained with a fill-in-the-middle (FIM) objective, demonstrating that you can branch the continual learning pipeline to produce multiple specialists from the same intermediate checkpoint.
+
+The key lesson from CodeLlama is the importance of data volume: 500B tokens of code data -- roughly 10-15x the code data in the original Llama 2 pre-training mix -- was necessary to achieve strong coding performance. Shorter continual pre-training runs produced models that improved at code but fell short of dedicated code models. On general benchmarks (MMLU, common-sense reasoning), CodeLlama retained most of Llama 2's capabilities, with regressions under 2% on most tasks -- a testament to the natural-language data mixed into training and the conservative learning rate.
+
+### BioMistral: Medical Domain Adaptation
+
+BioMistral (Labrak et al., 2024) adapted Mistral 7B to the biomedical domain, providing a case study in domain adaptation at moderate scale with a narrower target domain:
+
+1. **Continual pre-training**: The team trained on PubMed Central articles -- approximately 3B tokens of biomedical text. This is a much smaller corpus than CodeLlama's, reflecting the constrained size of high-quality medical text relative to code. The data mix included no general-domain replay, relying instead on the relatively short training duration (roughly 1 epoch over the PubMed data) to limit forgetting.
+2. **Evaluation-driven iteration**: BioMistral was evaluated on a suite of medical QA benchmarks (MedQA, PubMedQA, MedMCQA) and general benchmarks (MMLU) at regular intervals during training. The team observed that medical performance improved steadily while general performance showed modest degradation, consistent with the absence of general-domain replay data.
+3. **SFT and alignment**: Medical instruction tuning used a curated dataset of medical question-answer pairs. The SFT stage recovered some general capability by including a small fraction of general instruction data.
+
+BioMistral demonstrates both the power and the risk of domain-specialized continual pre-training without replay. Medical benchmark performance improved substantially (5-10% on MedQA variants), but general MMLU performance dropped by 3-5% -- more than the CodeLlama case, likely because no general data was mixed into the continual pre-training stage. This underscores the practical recommendation from the data mixing section above: even a 20-30% general data component during continual pre-training significantly reduces regression.
+
+### Multilingual Adaptation: Extending to New Languages
+
+Adapting English-centric models to new languages represents a particularly challenging continual learning problem because the new "domain" (a different language) has minimal lexical overlap with the source. Several projects illustrate the pattern:
+
+The typical pipeline for multilingual adaptation adds a preliminary step: **vocabulary extension**. The base model's tokenizer is augmented with tokens from the target language to reduce the fertility rate (tokens per word), which directly affects both training efficiency and inference cost. After vocabulary extension, the embedding layer is resized and new embeddings are randomly initialized, while existing embeddings remain frozen or are updated with a much lower learning rate.
+
+Continual pre-training then proceeds on a mix of target-language text (60-80%) and English text (20-40%), with the English component serving as both a retention mechanism and a cross-lingual alignment signal. Learning rates are typically higher than in same-language domain adaptation because the model must learn fundamentally new representations (new token embeddings, new syntactic patterns) rather than refining existing ones.
+
+A common failure mode in multilingual adaptation is "translationese" -- the model learns to generate the target language but with English syntax and phrasing patterns, producing text that is grammatically correct but stylistically unnatural. This is mitigated by ensuring the target-language training data includes diverse registers and native text rather than translated content. This connects to the broader pre-training data quality concerns discussed in [Pre-training: Data Curation, Objectives & Curriculum](/knowledge/agent-06-pretraining-data), where data provenance and quality filtering directly affect model behavior.
+
+## Model Merging as an Alternative to Sequential Training
+
+The continual learning methods discussed above -- EWC, replay, distillation, data mixing -- all address forgetting within a single sequential training run. Model merging takes a fundamentally different approach: train multiple specialized models independently from the same base, then combine their weights into a single multi-domain model without any additional training. For a detailed treatment of merging algorithms and tooling, see [Distillation & Model Compression](/knowledge/agent-24-distillation-compression).
+
+### Why Merging Sidesteps Forgetting
+
+The core insight is that merging avoids the sequential training problem entirely. Instead of training on domain A then domain B (risking forgetting of A), you train model-A on domain A and model-B on domain B independently, both starting from the same base checkpoint. Merging then combines the two sets of learned "task vectors" (the delta between each fine-tuned model and the base). Because neither model was ever exposed to the other's data during training, there is no opportunity for gradient interference during learning.
+
+The trade-off is different from continual learning: merging does not guarantee that the combined model retains the full performance of either specialist. When task vectors conflict (a parameter that model-A pushed up and model-B pushed down), the merged model must compromise. The severity of these conflicts depends on how different the two domains are and how much the fine-tuning modified overlapping parameters.
+
+### TIES, DARE, and SLERP for Multi-Domain Models
+
+The three dominant merging strategies address task-vector conflicts in different ways:
+
+- **TIES** (Trim, Elect Sign, Merge) resolves sign conflicts by majority vote and trims low-magnitude deltas as noise. This is most effective when merging 3+ models, where sign election has enough "voters" to produce a reliable consensus. For two-model merges, TIES often reduces to simple averaging with pruning.
+- **DARE** (Drop and Rescale) randomly drops 90-99% of each task vector's parameters before merging, then rescales the survivors. This works because fine-tuning produces highly redundant parameter updates, and random subsets capture the essential adaptation. DARE is particularly effective when merged models have been fine-tuned on similar data distributions, where parameter redundancy is highest.
+- **SLERP** (Spherical Linear Interpolation) is limited to two-model merges but produces smoother interpolations by traversing a geodesic on the weight hypersphere rather than interpolating linearly. SLERP tends to outperform linear averaging when the two models have diverged significantly from each other.
+
+### Merging vs. Continual Learning: When to Use Which
+
+Model merging is preferable when:
+- You have compute budget to train multiple specialists independently
+- The target domains are well-separated (code + medical + legal) rather than overlapping
+- You need a single model that handles multiple domains at inference time
+- You want to iterate on individual domains without retraining the combined model
+
+Continual learning is preferable when:
+- Training compute is limited and you cannot afford parallel training runs
+- The domains are sequential in nature (the model must learn from a stream of data over time)
+- You need tight control over the performance balance between domains
+- The adaptation involves capability extension (longer context, new modalities) rather than knowledge injection
+
+In practice, the two approaches are often combined. A team might use continual pre-training to adapt a base model to a broad domain (e.g., all of biomedicine), then train multiple SFT specialists from that checkpoint (radiology, genomics, clinical notes), and finally merge the SFT specialists using TIES or DARE. This hybrid pipeline captures the benefits of deep domain adaptation from continual pre-training and the forgetting-free combination of narrow specializations from merging. The fine-tuning fundamentals discussed in [Fine-tuning Fundamentals](/knowledge/agent-19-fine-tuning-fundamentals) apply at each stage of this pipeline, from learning rate selection to evaluation strategy.
 
 ## Emerging Approaches
 
@@ -427,6 +496,8 @@ Recent work on continual instruction tuning explores how to add new instruction-
 - **Progressive networks** eliminate forgetting by adding new parameters per task, but grow linearly and are impractical for many tasks.
 - **Replay buffers** are the simplest and often most effective approach: store examples from previous tasks and mix them into new training. Generative replay avoids storing raw data.
 - **Knowledge distillation** regularizes the updated model to match the previous model's output distribution, preserving functional behavior rather than specific weight values.
-- **Continual pre-training** requires careful data mixing (60-70% domain, 30-40% general), lower learning rates, and continuous regression monitoring.
-- **LoRA adapters** provide a natural continual learning solution by keeping the base model frozen and training separate adapters per domain, at the cost of single-domain inference.
-- The practical recipe is: **establish baselines, mix domain and general data, use conservative learning rates, monitor regression continuously, and stop early if general capabilities degrade**.
+- **Continual pre-training** requires careful data mixing (60-70% domain, 30-40% general), lower learning rates, and continuous regression monitoring. Curriculum ordering should be aligned with the learning rate schedule -- pairing WSD schedules with phased curricula is a reliable default.
+- **Domain adaptation case studies** (CodeLlama, BioMistral, multilingual models) confirm that data volume, general-domain replay, and conservative learning rates are the dominant factors in successful continual pre-training. Omitting general-domain replay consistently increases regression on general benchmarks.
+- **Model merging** (TIES, DARE, SLERP) offers a forgetting-free alternative to sequential training by combining independently trained specialists. It is most effective when domains are well-separated and can be combined with continual pre-training in hybrid pipelines.
+- **LoRA adapters** provide a natural continual learning solution by keeping the base model frozen and training separate adapters per domain, at the cost of single-domain inference (see [LoRA, QLoRA & Adapter Methods](/knowledge/agent-20-lora-adapters)).
+- The practical recipe is: **establish baselines, mix domain and general data, use conservative learning rates with WSD scheduling, monitor regression continuously, and stop early if general capabilities degrade**.

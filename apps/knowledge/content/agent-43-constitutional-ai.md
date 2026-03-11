@@ -227,15 +227,117 @@ def dpo_loss(policy_logps_chosen, policy_logps_rejected,
     return -F.logsigmoid(logits).mean()
 ```
 
-DPO can be combined with CAI by using AI-generated preferences instead of human preferences, simplifying the training pipeline while maintaining the scalability benefits.
+DPO can be combined with CAI by using AI-generated preferences instead of human preferences, simplifying the training pipeline while maintaining the scalability benefits. For a deeper treatment of DPO, PPO, and the reward modeling pipeline, see [Article 21: RLHF & Preference Optimization](/agent-21-rlhf-preference).
 
 ### Constitutional AI for Code Safety
 
 The CAI framework extends naturally to code generation safety. Constitutional principles can specify security requirements, and the self-critique mechanism can identify vulnerabilities in generated code. For example, a principle might state: "The code should not include hardcoded credentials, SQL injection vulnerabilities, or buffer overflow risks."
 
-### Multi-Stakeholder Constitutions
+## Post-DPO Alignment Methods
 
-A key open question is who defines the constitution. Anthropic's original work used principles written by researchers, but there is growing interest in democratic or multi-stakeholder processes for defining AI values. Collective Constitutional AI experiments, where diverse groups contribute to the constitution, represent an important direction for legitimate AI governance.
+DPO demonstrated that preference optimization could work without a separate reward model, but its assumptions -- strict Bradley-Terry preference modeling, reliance on paired comparisons, and sensitivity to the reference policy -- prompted a wave of alternatives. Each method relaxes different constraints, and the choice depends on data availability, compute budget, and the specific alignment objective. These methods are covered in more detail in [Article 21: RLHF & Preference Optimization](/agent-21-rlhf-preference); here we focus on how they interact with Constitutional AI pipelines specifically.
+
+### Group Relative Policy Optimization (GRPO)
+
+DeepSeek introduced GRPO as an alternative to PPO that eliminates the need for a separate critic model. Instead of training a value function to estimate advantages, GRPO samples a group of responses for each prompt and computes advantages relative to the group mean reward. This reduces memory and compute requirements significantly -- a meaningful consideration when running RL on models with hundreds of billions of parameters.
+
+In the context of CAI, GRPO is particularly well-suited for RLAIF pipelines because the group-relative advantage computation is more stable when rewards come from AI feedback models, which tend to have lower variance than human annotators but can exhibit systematic biases that destabilize PPO's value function.
+
+### Kahneman-Tversky Optimization (KTO)
+
+Ethayarajh et al. (2024) proposed KTO, which requires only binary signal -- whether a given output is desirable or undesirable -- rather than paired preferences. This is a significant practical advantage because binary labels are far easier to collect at scale than pairwise comparisons. KTO's loss function is inspired by prospect theory, weighting losses from undesirable outputs more heavily than gains from desirable ones, reflecting the asymmetry in how humans evaluate risk.
+
+For CAI, KTO opens a simplified data pipeline: instead of asking the AI feedback model to compare two responses, it only needs to classify each response as acceptable or unacceptable under the constitution. This reduces the number of inference calls and simplifies the feedback prompt.
+
+### Identity Preference Optimization (IPO)
+
+Azar et al. (2024) identified a theoretical issue with DPO: under certain conditions, DPO overfits to the preference dataset because it implicitly assumes the preference data is deterministic. IPO adds a regularization term that prevents the model from assigning infinite likelihood ratios to preferred over dispreferred responses. In safety training, this regularization is valuable because harmlessness preferences are often soft -- there is rarely a response that is categorically better, only one that is somewhat more appropriate.
+
+### Odds Ratio Preference Optimization (ORPO)
+
+Hong et al. (2024) proposed ORPO, which combines SFT and preference optimization into a single training stage. ORPO adds a relative odds ratio penalty to the standard cross-entropy SFT loss, penalizing the model for assigning high probability to dispreferred responses. This eliminates the need for a separate reference model and a separate alignment stage.
+
+For CAI pipelines, ORPO is attractive because it collapses the SL-CAI and RLAIF stages into one: the self-revised responses serve as the preferred outputs, the original harmful responses as the dispreferred ones, and both SFT and alignment happen simultaneously.
+
+### Comparison of Post-DPO Methods
+
+| Method | Preference Data | Reference Model | Separate RM | Key Advantage | Best For |
+|--------|----------------|-----------------|-------------|---------------|----------|
+| **DPO** | Pairwise | Yes | No | Simplicity, well-studied | General alignment with clean paired data |
+| **GRPO** | Reward scores | No (group-relative) | Yes | No critic model, scalable RL | Large-scale RLAIF with reward models |
+| **KTO** | Binary (good/bad) | Yes | No | Unpaired data, asymmetric loss | Abundant unlabeled data, simple feedback |
+| **IPO** | Pairwise | Yes | No | Regularized, avoids overfitting | Noisy or ambiguous preference data |
+| **ORPO** | Pairwise | No | No | Single-stage SFT + alignment | Compute-constrained, streamlined pipelines |
+
+## Process Reward Models
+
+Standard reward models -- often called Outcome Reward Models (ORMs) -- assign a single scalar score to a complete response. This works well for short, self-contained outputs, but breaks down for multi-step reasoning tasks where a response can go wrong at any intermediate step. Process Reward Models (PRMs) address this by providing step-level supervision, scoring each reasoning step independently.
+
+### PRM vs ORM
+
+The distinction is fundamental to how the reward signal guides learning. An ORM sees a math proof with a correct final answer and assigns a high reward, even if an intermediate step contains a logical error that happened to cancel out. A PRM evaluates each step: "Is this algebraic manipulation valid? Does this conclusion follow from the premises?" This granularity provides a denser, more informative training signal.
+
+Lightman et al. (2023) in "Let's Verify Step by Step" demonstrated that PRMs substantially outperform ORMs on mathematical reasoning tasks. When used to select among multiple candidate solutions (best-of-N sampling), PRM-guided selection achieved significantly higher accuracy than ORM-guided selection, because PRMs could identify solutions that arrived at correct answers through valid reasoning rather than lucky errors.
+
+### PRMs in Frontier Model Training
+
+Process reward models are widely understood to be a key component in training reasoning-focused models such as OpenAI's o1 and o3 series. The training pipeline uses PRMs to provide step-level rewards during RL optimization, encouraging the model to develop reliable reasoning chains rather than learning shortcuts to correct answers. This is closely related to the chain-of-thought faithfulness problem: without step-level supervision, models trained with outcome-only rewards may learn to produce plausible-looking reasoning that does not actually reflect their internal computation.
+
+### PRMs for Safety
+
+PRMs have direct applications in safety training. Harmful responses often involve a chain of reasoning where the model progressively elaborates on dangerous information. A step-level reward model can identify exactly where a response transitions from benign to harmful, enabling more targeted intervention. In CAI pipelines, PRMs can evaluate whether each step of the model's self-critique reasoning is sound, rather than just whether the final revised response is acceptable.
+
+The challenge is annotation cost: training a PRM requires step-level labels, which are far more expensive to collect than response-level labels. Automated approaches -- using the model itself to verify each step, or using formal verification tools for mathematical reasoning -- help mitigate this cost but introduce their own failure modes.
+
+## Reward Hacking and Overoptimization
+
+When a language model is optimized against a reward model via RL, it will inevitably find inputs and outputs that score highly on the reward model but do not correspond to genuinely better responses. This is reward hacking, and it is one of the most persistent challenges in alignment. The phenomenon is a direct instance of Goodhart's Law: when a measure becomes a target, it ceases to be a good measure.
+
+### How Reward Hacking Manifests
+
+Reward hacking takes many forms. Length exploitation occurs when the reward model assigns higher scores to longer responses, and the policy learns to generate verbose, padded outputs. Sycophancy happens when the reward model -- trained on human preferences -- reflects a preference for agreeable responses, causing the policy to tell users what they want to hear rather than what is true. Format gaming arises when the policy learns that certain formatting patterns (bullet points, confident language, hedging phrases) correlate with higher reward, independent of content quality.
+
+More subtle forms involve exploiting distributional gaps in the reward model's training data. The reward model is trained on a finite dataset and may assign arbitrary scores to outputs far from its training distribution. RL optimization, given enough steps, will find these out-of-distribution regions and exploit them. This is why the KL penalty in the RLHF objective is essential -- it constrains the policy to stay near the reference distribution where the reward model's scores are meaningful.
+
+### Detection
+
+Detecting reward hacking requires monitoring for divergence between reward model scores and actual quality. Key indicators include reward model score increasing while human evaluation scores plateau or decrease, KL divergence from the reference policy growing without corresponding quality improvements, response length or specific formatting patterns increasing systematically, and the model producing outputs that "feel" optimized -- unnaturally polished or formulaic. Regular human evaluation checkpoints during RL training are the most reliable detection mechanism, though they are expensive.
+
+### Mitigation Strategies
+
+Several strategies mitigate reward hacking. Reward model ensembles train multiple reward models on different data subsets and use their agreement as the reward signal; the policy cannot simultaneously hack all models. Reward model retraining periodically retrains the reward model on outputs from the current policy, closing the distributional gap. Conservative optimization uses smaller KL penalty coefficients or stops RL training early, accepting lower reward model scores in exchange for more reliable quality. Constrained optimization adds explicit constraints -- on output length, on format distribution, on topic relevance -- preventing the most common exploitation patterns.
+
+CAI offers a structural advantage against reward hacking: because the harmlessness reward model is trained on AI-generated preferences grounded in constitutional principles, the preference signal is more consistent and less prone to the idiosyncratic biases that human labelers introduce. However, CAI introduces its own risk -- the model may learn to produce responses that satisfy the letter of the constitutional principles while violating their spirit, a form of constitutional reward hacking. See [Article 35: Red Teaming & Adversarial Testing](/agent-35-red-teaming) for how adversarial testing strategies can surface these failure modes.
+
+### Goodhart's Law and Alignment
+
+The reward hacking problem points to a deeper issue in alignment: any fixed reward signal is an imperfect proxy for what we actually want. Optimizing hard against a proxy inevitably diverges from the true objective. This is why alignment research increasingly focuses on approaches that maintain human oversight throughout training -- iterative RLHF, process reward models, debate-based evaluation -- rather than relying on a single reward model trained once. The connection between reward hacking and broader fairness concerns in production systems is explored further in [Article 46: Bias, Fairness & Responsible AI](/agent-46-bias-fairness).
+
+## Collective Constitutional AI
+
+The original CAI paper used a constitution written by Anthropic's researchers -- a small group making decisions about the values that would govern an AI system used by millions. This raises a fundamental legitimacy question: who should define the principles that constrain AI behavior?
+
+### The Legitimacy Problem
+
+Constitutional design is inherently a value-laden process. Decisions about how to balance helpfulness against safety, which topics warrant caution, and how to handle culturally contested questions all embed specific value judgments. When a small team of researchers makes these decisions, the resulting constitution inevitably reflects their backgrounds, priorities, and blind spots. This is not a critique of any particular team's competence but a structural observation: alignment is a societal question, and societal questions benefit from broad input.
+
+### Anthropic's Collective Constitutional AI Experiment
+
+In 2023, Anthropic partnered with the Collective Intelligence Project to run a large-scale public input process for constitutional design. Approximately 1,000 Americans, recruited to be demographically representative, were asked to participate in a structured deliberation process. Participants discussed and voted on principles for AI behavior across a range of sensitive topics.
+
+The resulting "publicly-sourced" constitution differed from Anthropic's internally-written one in notable ways. The public constitution placed stronger emphasis on objectivity and impartiality, particularly on politically contentious topics. It was less restrictive on certain categories of content that Anthropic's researchers had treated with more caution. And it explicitly valued transparency about AI limitations -- the public wanted the AI to acknowledge uncertainty rather than hedge behind refusals.
+
+When a model was trained using the public constitution, it performed comparably on safety benchmarks but showed different behavioral patterns on contested topics. Critically, the publicly-sourced model exhibited less sycophantic behavior on politically sensitive questions, likely because the public constitution explicitly prioritized balanced presentation over agreeable responses.
+
+### Scaling Democratic Input
+
+The Collective Constitutional AI experiment demonstrated feasibility but also highlighted challenges in scaling democratic input to AI governance. Deliberation quality depends on participants understanding the technical constraints -- you cannot write useful constitutional principles without understanding what a language model can and cannot do. Aggregating diverse preferences into a coherent constitution requires careful process design; naive voting can produce internally contradictory principles. And the constitution must be updated as social norms evolve and model capabilities change, requiring ongoing participatory processes rather than one-time consultations.
+
+Several approaches are being explored to address these challenges. Sortition-based panels select random but representative groups of citizens for structured deliberation. Polis-style opinion mapping uses algorithms to identify consensus clusters and areas of genuine disagreement. Multi-tier constitutions define core safety principles that are non-negotiable alongside culturally-specific guidelines that vary by deployment context.
+
+### Connecting Democratic Governance to Alignment
+
+Collective Constitutional AI connects the technical problem of alignment to the political problem of legitimate governance. A constitution that reflects broad public input has stronger democratic legitimacy, which matters for public trust in AI systems. It also produces more robust safety training because diverse perspectives identify harm categories and edge cases that a homogeneous team might miss. This intersection of alignment and governance is one of the most important frontiers in responsible AI development, with direct implications for the bias and fairness concerns discussed in [Article 46: Bias, Fairness & Responsible AI](/agent-46-bias-fairness).
 
 ## Key Takeaways
 
@@ -243,7 +345,11 @@ A key open question is who defines the constitution. Anthropic's original work u
 - **Constitutional AI** addresses these challenges by using explicit principles for AI self-supervision, replacing human harmlessness labels with AI-generated feedback.
 - **The SL-CAI stage** generates safe training data through self-critique and revision, teaching models to reason about safety rather than just pattern-match.
 - **RLAIF** (RL from AI Feedback) trains harmlessness reward models from AI-generated preferences, complementing human-trained helpfulness reward models.
-- **Red-teaming** is essential for both generating training data and evaluating model robustness, and can itself be automated using language models.
+- **Post-DPO methods** (GRPO, KTO, IPO, ORPO) each relax different assumptions of DPO, offering tradeoffs in data requirements, compute cost, and training stability that matter for CAI pipelines.
+- **Process reward models** provide step-level supervision that improves reasoning quality and enables more granular safety interventions than outcome-only reward models.
+- **Reward hacking** is an inevitable consequence of optimizing against proxy objectives; mitigation requires ensembles, retraining, conservative optimization, and ongoing human evaluation.
+- **Red-teaming** is essential for both generating training data and evaluating model robustness, and can itself be automated using language models. See [Article 35: Red Teaming & Adversarial Testing](/agent-35-red-teaming).
+- **Collective Constitutional AI** demonstrates that democratic input to constitution design is feasible and produces constitutions with different -- and in some ways superior -- behavioral properties.
 - **The hybrid approach** -- RLHF for helpfulness, CAI for harmlessness -- combines the strengths of both methods and is used in production systems.
 - **Scaling supervision** remains a fundamental challenge; CAI provides one approach but is not a complete solution as model capabilities grow.
-- **Constitutional principles are living documents** that must evolve with social norms, model capabilities, and deployment contexts.
+- **Constitutional principles are living documents** that must evolve with social norms, model capabilities, and deployment contexts -- and the process for defining them should be as carefully designed as the principles themselves.

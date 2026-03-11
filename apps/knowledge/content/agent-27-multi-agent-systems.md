@@ -630,13 +630,122 @@ async def resilient_execute(agent, task, fallback_agent=None, timeout=30):
         return {"error": str(e)}
 ```
 
+## When Single Agents Beat Multi-Agent Systems
+
+The multi-agent paradigm is powerful, but it is not always the right choice. There is a meaningful class of problems where a single well-prompted agent outperforms a multi-agent system -- and recognizing these cases early saves significant engineering effort and operational cost.
+
+### Coordination Overhead Is Real
+
+Every agent boundary introduces coordination overhead: serializing context between agents, designing handoff protocols, handling partial failures, and managing the combinatorial explosion of possible interaction sequences. This overhead is not free. For a two-agent pipeline, the cost is modest. For a five-agent system with conditional routing, the coordination logic can become more complex than the underlying task.
+
+Consider a concrete example: summarizing a document. A single agent with a well-crafted system prompt and a clear output format will produce a summary in one LLM call. A multi-agent version -- with a reader agent, an analyst agent, and a writer agent -- requires three LLM calls, three system prompts, two handoff points, and error handling at each boundary. The multi-agent version costs 3x more, takes 3x longer, and introduces two additional failure points. The summary quality is unlikely to be materially better.
+
+### Decision Criteria
+
+Use a single agent when:
+
+- **The task is well-scoped.** If a good system prompt and a few tools can handle the task end-to-end, adding agents adds complexity without adding capability.
+- **The context fits in one window.** Multi-agent systems partly exist to manage context limits. If the full task context fits comfortably in a single model's context window, splitting it across agents means each agent sees less relevant information than a single agent would.
+- **Latency matters.** Each agent handoff adds at minimum one full LLM round-trip. For interactive applications where users expect sub-second responses, a single fast agent (potentially using a smaller model) often delivers a better experience than a multi-agent pipeline.
+- **The error budget is tight.** If each agent in a five-agent pipeline has 95% reliability, the pipeline's reliability is roughly 0.95^5 = 77%. A single agent with 95% reliability is simply more dependable for straightforward tasks.
+
+Use multi-agent systems when:
+
+- **The task has natural specialization boundaries** where different models, tools, or system prompts genuinely improve quality at each stage.
+- **Verification and debate add value.** For tasks where correctness is critical -- medical reasoning, legal analysis, financial calculations -- the adversarial patterns described earlier in this article provide measurable accuracy improvements that justify the overhead.
+- **Parallelism is exploitable.** If independent subtasks can genuinely run concurrently, multi-agent systems offer wall-clock time savings that a single sequential agent cannot match.
+- **Different subtasks require different models.** A system that uses Claude for nuanced writing and a code-specialized model for implementation can outperform either model used alone (see [Article 39: Cost Optimization](agent-39-cost-optimization.md) for model routing strategies).
+
+### The Prompting-First Rule
+
+A useful heuristic: before building a multi-agent system, try solving the problem with a single agent and better prompting. Add few-shot examples. Improve the system prompt. Give the agent structured output formats. Use chain-of-thought (see [Article 26: Agent Architectures](agent-26-agent-architectures.md) for ReAct and related single-agent patterns). Only reach for multi-agent coordination when the single-agent approach demonstrably fails -- and characterize *how* it fails, because the failure mode determines which multi-agent pattern (if any) will help.
+
+## Observability and Debugging
+
+Multi-agent systems are inherently harder to debug than single-agent applications. When a single agent produces a bad output, you examine one prompt, one set of tool calls, and one response. When a five-agent pipeline produces a bad output, the root cause could be in any agent's reasoning, in the information lost during a handoff, or in the orchestrator's delegation decision. Effective observability is not optional -- it is a prerequisite for operating multi-agent systems reliably. For a comprehensive treatment of LLM observability fundamentals, see [Article 40: Observability](agent-40-observability.md).
+
+### Tracing Multi-Agent Interactions
+
+The core requirement is a hierarchical trace that captures the full execution graph: which agent ran, what it received, what it produced, and how long it took. Each agent invocation should be a span within a parent trace, with tool calls as child spans within the agent span.
+
+```python
+from langfuse.decorators import observe, langfuse_context
+
+@observe(name="multi-agent-pipeline")
+async def run_pipeline(task: str):
+    research = await run_research_agent(task)
+    draft = await run_writer_agent(task, research)
+    review = await run_reviewer_agent(draft)
+    return review
+
+@observe(name="research-agent")
+async def run_research_agent(task: str):
+    langfuse_context.update_current_observation(
+        metadata={"agent_role": "researcher", "model": "gpt-4o"}
+    )
+    result = await research_agent.invoke(task)
+    langfuse_context.update_current_observation(
+        output=result,
+        metadata={"sources_found": len(result.sources)}
+    )
+    return result
+
+@observe(name="writer-agent")
+async def run_writer_agent(task: str, research: str):
+    langfuse_context.update_current_observation(
+        metadata={"agent_role": "writer", "model": "claude-sonnet-4-20250514"}
+    )
+    return await writer_agent.invoke(f"Task: {task}\nResearch: {research}")
+```
+
+This produces a trace tree where the top-level pipeline span contains child spans for each agent, and each agent span contains child spans for its LLM calls and tool invocations. When the final output is wrong, you can walk the trace tree to find where the information degraded.
+
+### Key Debugging Patterns
+
+**Handoff inspection.** The most common failure mode in multi-agent systems is information loss at handoff boundaries. Log the full context passed between agents -- not just the final output of the upstream agent, but the structured handoff payload. When debugging, compare what the upstream agent produced with what the downstream agent received.
+
+**Agent-level cost attribution.** Multi-agent cost debugging requires per-agent token tracking. Langfuse and LangSmith both support tagging spans with cost metadata, enabling you to identify which agent in the pipeline consumes the most tokens and whether that cost is justified by quality improvements.
+
+```python
+@observe(name="agent-execution")
+async def run_agent_with_metrics(agent, task):
+    start = time.time()
+    result = await agent.invoke(task)
+    duration = time.time() - start
+    langfuse_context.update_current_observation(
+        metadata={
+            "agent": agent.name,
+            "duration_ms": int(duration * 1000),
+            "input_tokens": result.usage.input_tokens,
+            "output_tokens": result.usage.output_tokens,
+            "total_cost_usd": result.usage.total_cost,
+        }
+    )
+    return result
+```
+
+**Replay and counterfactual testing.** When a multi-agent pipeline fails, capture the full trace, then replay individual agent invocations with modified inputs to isolate the fault. Did the research agent find bad sources? Replay it with a different query. Did the writer misinterpret good research? Replay the writer with the same research input and a modified prompt. This counterfactual approach is far more efficient than re-running the entire pipeline repeatedly.
+
+**Divergence detection.** In debate and voting patterns, log each agent's position at every round. Track convergence metrics (embedding similarity between positions, vote distributions) over rounds. If agents consistently fail to converge, the problem is likely in role definition or the question is genuinely ambiguous -- and the system should escalate rather than force consensus.
+
+### Platform Support
+
+Both Langfuse and LangSmith support multi-agent tracing, though with different idioms. Langfuse's `@observe` decorator naturally nests -- any observed function called within an observed function becomes a child span. LangSmith's `@traceable` decorator works similarly and integrates directly with LangGraph's built-in tracing. For LangGraph-based multi-agent systems, tracing is effectively automatic: each node execution becomes a span, and conditional edges are visible in the trace.
+
+For custom multi-agent frameworks without LangChain integration, the OpenTelemetry-based approach described in [Article 40: Observability](agent-40-observability.md) works well. Define a span for each agent invocation, propagate trace context through your orchestration layer, and export to your preferred backend. The critical requirement is that the trace captures the causal structure of the multi-agent interaction -- which agent triggered which other agent, and with what context.
+
+For evaluation of multi-agent system outputs, including trajectory analysis and per-agent contribution assessment, see [Article 30: Agent Evaluation](agent-30-agent-evaluation.md).
+
 ## Summary and Key Takeaways
 
 - **Multi-agent systems decompose complex tasks** across specialized agents, improving both quality and enabling parallelism. The key is clear role definition with minimal overlap.
 - **Four fundamental communication patterns** cover most use cases: sequential pipeline, hierarchical delegation, adversarial debate, and roundtable discussion. Choose based on task structure and reliability requirements.
-- **Frameworks like CrewAI, AutoGen, and LangGraph** each take a different modeling approach -- roles/tasks, conversations, and state machines respectively. LangGraph provides the most engineering control; CrewAI offers the simplest mental model; AutoGen excels at conversational dynamics.
+- **Frameworks like CrewAI, AutoGen, and LangGraph** each take a different modeling approach -- roles/tasks, conversations, and state machines respectively. LangGraph provides the most engineering control; CrewAI offers the simplest mental model; AutoGen 0.4+ introduces an async event-driven runtime with modular packages and explicit team constructs.
+- **The handoff pattern** (demonstrated by OpenAI Swarm and adopted in AutoGen 0.4's `Swarm` team type) shows that multi-agent coordination can be as simple as returning a new agent from a function call. Not every multi-agent system needs heavy orchestration infrastructure.
 - **Multi-agent debate** (Du et al., 2023) demonstrably improves factual accuracy and reasoning. Consider it for any task where correctness matters.
+- **Not every task needs multiple agents.** Coordination overhead -- serialized context, handoff protocols, compounding failure rates -- means that for well-scoped tasks, a single agent with good prompting often wins. Try the single-agent approach first and reach for multi-agent systems only when it demonstrably falls short.
 - **Consensus mechanisms** prevent deadlocks and ensure agents converge. Simple majority voting works surprisingly well; convergence-based approaches work better for nuanced decisions.
-- **Cost and latency scale multiplicatively** with agent count. Manage costs through budget caps, dynamic agent spawning, and tiered model selection. Use cheaper models for simpler sub-tasks.
+- **Cost and latency scale multiplicatively** with agent count. Manage costs through budget caps, dynamic agent spawning, and tiered model selection. Use cheaper models for simpler sub-tasks (see [Article 39: Cost Optimization](agent-39-cost-optimization.md)).
+- **Observability is non-negotiable** for production multi-agent systems. Hierarchical tracing with per-agent cost attribution, handoff inspection, and replay-based debugging are essential for diagnosing failures in systems where the root cause may be several agent boundaries away from the symptom (see [Article 40: Observability](agent-40-observability.md)).
 - **Failure isolation is essential.** Design each agent interaction with timeouts, fallbacks, and partial result handling. A single failing agent should not bring down the entire system.
-- **The trend is toward more structured multi-agent architectures** with explicit coordination protocols rather than fully autonomous agent swarms. Production systems need predictability and observability that emergent multi-agent behaviors cannot guarantee.
+- **The trend is toward more structured multi-agent architectures** with explicit coordination protocols rather than fully autonomous agent swarms. Production systems need predictability and observability that emergent multi-agent behaviors cannot guarantee. For foundational single-agent patterns that these systems build upon, see [Article 26: Agent Architectures](agent-26-agent-architectures.md). For evaluating multi-agent system outputs, see [Article 30: Agent Evaluation](agent-30-agent-evaluation.md).

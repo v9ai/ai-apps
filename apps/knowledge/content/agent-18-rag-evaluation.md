@@ -811,11 +811,14 @@ This tiered approach typically reduces evaluation cost by 60-80% while maintaini
 ## Summary and Key Takeaways
 
 - **Evaluate all four layers**: retrieval quality, context relevance, faithfulness, and answer correctness. Metrics that evaluate only one stage will miss critical failures.
-- **RAGAS** provides a practical, LLM-based evaluation framework that doesn't require ground truth for all metrics. Use it as a starting point, not the final word.
+- **RAGAS** provides a practical, LLM-based evaluation framework that doesn't require ground truth for all metrics. Use it as a starting point, not the final word. Alternatives like DeepEval, TruLens, Langfuse, and Phoenix offer complementary strengths -- test-oriented workflows, deep instrumentation, production observability, and embedding-level analysis respectively.
 - **Faithfulness is the most critical metric** for production RAG systems. An unfaithful answer erodes user trust regardless of how correct it happens to be.
 - **Build a curated evaluation dataset** of at least 100 diverse questions with ground truth. This is the most valuable investment you can make in RAG quality.
 - **Failure mode analysis** should be systematic: categorize failures (retrieval failure, synthesis failure, context poisoning), quantify each category, and prioritize fixes by impact.
 - **Debugging requires traces**: Log the full pipeline trace (query, retrieved documents, scores, generated answer) for every query that receives negative feedback.
 - **A/B test every change**: Run offline evaluation first, then online A/B testing with proper statistical analysis. RAG changes can have unexpected second-order effects.
 - **User feedback** is the ground truth signal. Design low-friction feedback mechanisms and close the loop by using feedback to improve the evaluation dataset.
+- **LLM judges are imperfect**: They overestimate faithfulness for paraphrased content, exhibit self-consistency bias, and prefer longer answers. Always calibrate against human judgments on a representative sample before trusting automated scores.
+- **Agentic RAG requires trajectory evaluation**: For multi-step retrieval systems, evaluating only the final answer misses critical information about pipeline efficiency, tool selection quality, and recovery from intermediate failures.
+- **Evaluation has a cost**: A full LLM-based evaluation suite costs roughly $30 per 1,000 items. Use sampling, tiered judge models, caching, and selective metric application to keep evaluation economically sustainable at production scale.
 - The field is moving toward continuous, automated evaluation integrated into the serving pipeline rather than periodic batch evaluation. Monitor faithfulness and relevance in real-time with sampling.
