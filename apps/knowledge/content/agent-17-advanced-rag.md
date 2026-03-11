@@ -12,7 +12,7 @@ Before examining advanced patterns, it is worth understanding precisely where si
 
 **No relationship awareness**: Questions like "Which companies funded by Sequoia went public in 2023?" require understanding the relationship between funding rounds and IPO events across multiple documents. Flat retrieval treats each document independently.
 
-**Fixed retrieval strategy**: The same embedding similarity search is applied whether the query needs a code example, a statistical fact, or a conceptual explanation. Different information types may require different retrieval approaches. For a detailed treatment of how dense and sparse retrieval methods can be combined to address this, see [Article 16: Retrieval Strategies](agent-16-retrieval-strategies.md).
+**Fixed retrieval strategy**: The same embedding similarity search is applied whether the query needs a code example, a statistical fact, or a conceptual explanation. Different information types may require different retrieval approaches. For a detailed treatment of how dense and sparse retrieval methods can be combined to address this, see [Article 16: Retrieval Strategies](/agent-16-retrieval-strategies).
 
 ## Agentic RAG Patterns
 
@@ -514,7 +514,7 @@ class CorrectiveRAG:
         return refined
 ```
 
-The key insight of CRAG is the triage mechanism: rather than treating all retrieved documents equally, it explicitly evaluates and categorizes them, taking different corrective actions based on the assessment. For metrics and frameworks to measure how well these corrective mechanisms perform, see [Article 18: RAG Evaluation](agent-18-rag-evaluation.md).
+The key insight of CRAG is the triage mechanism: rather than treating all retrieved documents equally, it explicitly evaluates and categorizes them, taking different corrective actions based on the assessment. For metrics and frameworks to measure how well these corrective mechanisms perform, see [Article 18: RAG Evaluation](/agent-18-rag-evaluation).
 
 ## Self-RAG: Retrieval with Self-Reflection
 
@@ -555,7 +555,7 @@ Self-RAG is trained in two phases:
 
 ### Why Self-RAG Matters
 
-Self-RAG shifts retrieval control from the application layer into the model itself. Instead of always retrieving (which wastes compute for queries the model already knows) or never retrieving (which causes hallucination), the model adaptively decides. Asai et al. (2023) showed that Self-RAG outperforms both standard RAG and vanilla LLMs across multiple benchmarks, with the added benefit of providing interpretable confidence signals via the reflection tokens. Note that RAG systems with tool-use capabilities introduce prompt injection risks -- an adversary could embed instructions in retrieved documents to manipulate the agent's behavior. See [Article 12: Adversarial Prompting](agent-12-adversarial-prompting.md) for defense strategies against indirect prompt injection in retrieval pipelines.
+Self-RAG shifts retrieval control from the application layer into the model itself. Instead of always retrieving (which wastes compute for queries the model already knows) or never retrieving (which causes hallucination), the model adaptively decides. Asai et al. (2023) showed that Self-RAG outperforms both standard RAG and vanilla LLMs across multiple benchmarks, with the added benefit of providing interpretable confidence signals via the reflection tokens. Note that RAG systems with tool-use capabilities introduce prompt injection risks -- an adversary could embed instructions in retrieved documents to manipulate the agent's behavior. See [Article 12: Adversarial Prompting](/agent-12-adversarial-prompting) for defense strategies against indirect prompt injection in retrieval pipelines.
 
 ## Practical Architecture: Combining Advanced Patterns
 
@@ -624,7 +624,7 @@ Several conditions make RAG indispensable regardless of context window size:
 
 The most effective production systems use both: RAG for precision and long context for breadth. The pattern works as follows:
 
-1. **Retrieval stage**: Use embedding-based or hybrid search (see [Article 16: Retrieval Strategies](agent-16-retrieval-strategies.md)) to surface the most relevant passages
+1. **Retrieval stage**: Use embedding-based or hybrid search (see [Article 16: Retrieval Strategies](/agent-16-retrieval-strategies)) to surface the most relevant passages
 2. **Context augmentation**: Place retrieved passages in the context alongside broader background documents that fit within the window
 3. **Generation with full context**: The LLM generates from both the precisely retrieved passages and the broader contextual documents
 
@@ -652,7 +652,7 @@ RAFT demonstrates significant improvements over both standard RAG and pure fine-
 
 The practical takeaway: if you control the model (i.e., you can fine-tune it) and your retrieval pipeline has a known precision rate below 80%, RAFT-style training can meaningfully improve end-to-end answer quality. The approach is complementary to retriever improvements -- better retrieval reduces the number of distractors, while RAFT makes the model more robust to the distractors that remain.
 
-For practitioners using DSPy (see [Article 11: Prompt Optimization](agent-11-prompt-optimization.md)), a lighter-weight alternative to full RAFT training is prompt optimization over the RAG pipeline: DSPy can automatically tune the prompt and few-shot examples to improve the model's ability to extract relevant information from noisy retrieved context, without requiring gradient-based fine-tuning.
+For practitioners using DSPy (see [Article 11: Prompt Optimization](/agent-11-prompt-optimization)), a lighter-weight alternative to full RAFT training is prompt optimization over the RAG pipeline: DSPy can automatically tune the prompt and few-shot examples to improve the model's ability to extract relevant information from noisy retrieved context, without requiring gradient-based fine-tuning.
 
 ## Cost Analysis of Advanced RAG
 
@@ -692,7 +692,7 @@ Advanced RAG techniques vary dramatically in their cost profiles. Understanding 
 For teams evaluating advanced RAG, a practical budgeting framework:
 
 1. **Prototype with standard RAG** ($10-100 for indexing, $0.001-0.01 per query)
-2. **Measure failure modes** using the evaluation approaches described in [Article 18: RAG Evaluation](agent-18-rag-evaluation.md)
+2. **Measure failure modes** using the evaluation approaches described in [Article 18: RAG Evaluation](/agent-18-rag-evaluation)
 3. **Add complexity selectively**: If failures are primarily retrieval quality, invest in better retrieval strategies before adding agentic patterns. If failures are relationship reasoning, consider GraphRAG for that subset of queries
 4. **Route by cost tier**: Use query classification to send simple queries through cheap pipelines and complex queries through expensive ones
 
@@ -716,7 +716,7 @@ LlamaIndex's strength is its deep integration with retrieval primitives -- it sh
 
 DSPy (Khattab et al., 2023) takes a fundamentally different approach: rather than orchestrating pipeline steps procedurally, it treats the entire RAG pipeline as a program to be optimized. Retrieval, prompting, and generation are expressed as declarative modules, and DSPy's compiler optimizes the prompts and few-shot examples to maximize end-to-end performance on a development set.
 
-For advanced RAG, DSPy's key contribution is that it can jointly optimize the retrieval query formulation and the generation prompt. Instead of manually tuning how queries are rewritten for multi-hop retrieval or how the generation prompt instructs the model to use context, DSPy discovers these configurations automatically. This is especially powerful for RAFT-like improvements without fine-tuning: DSPy can optimize the prompt to make the model more robust to distractor documents in retrieved context. For a deeper treatment of DSPy's optimization approach, see [Article 11: Prompt Optimization](agent-11-prompt-optimization.md).
+For advanced RAG, DSPy's key contribution is that it can jointly optimize the retrieval query formulation and the generation prompt. Instead of manually tuning how queries are rewritten for multi-hop retrieval or how the generation prompt instructs the model to use context, DSPy discovers these configurations automatically. This is especially powerful for RAFT-like improvements without fine-tuning: DSPy can optimize the prompt to make the model more robust to distractor documents in retrieved context. For a deeper treatment of DSPy's optimization approach, see [Article 11: Prompt Optimization](/agent-11-prompt-optimization).
 
 ### Choosing a Framework
 

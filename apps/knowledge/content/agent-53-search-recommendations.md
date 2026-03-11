@@ -709,7 +709,7 @@ The main deployment challenge with ColBERT is storage. A single-vector model sto
 
 ColBERTv2 (Santhanam et al., 2022) addressed this with residual compression: instead of storing full per-token embeddings, it clusters them and stores only the residual difference from the cluster centroid, reducing storage by 6-10x with minimal quality loss. The PLAID engine further optimized this with centroid-based candidate pruning, enabling ColBERT to serve as a first-stage retriever rather than just a re-ranker.
 
-For teams evaluating late interaction models, the RAGatouille library provides a practical entry point, wrapping ColBERTv2 with a scikit-learn-style API that handles indexing, compression, and search. If your domain involves queries where exact term matching matters alongside semantic understanding -- legal search, medical literature, technical documentation -- ColBERT-style models are worth serious evaluation. For a deeper treatment of embedding architectures and training objectives, see [Article 13: Embedding Models](agent-13-embedding-models.md). For the ANN indexing infrastructure that supports multi-vector retrieval, see [Article 14: Vector Databases](agent-14-vector-databases.md).
+For teams evaluating late interaction models, the RAGatouille library provides a practical entry point, wrapping ColBERTv2 with a scikit-learn-style API that handles indexing, compression, and search. If your domain involves queries where exact term matching matters alongside semantic understanding -- legal search, medical literature, technical documentation -- ColBERT-style models are worth serious evaluation. For a deeper treatment of embedding architectures and training objectives, see [Article 13: Embedding Models](/agent-13-embedding-models). For the ANN indexing infrastructure that supports multi-vector retrieval, see [Article 14: Vector Databases](/agent-14-vector-databases).
 
 ## Learned Sparse Retrieval
 
@@ -747,7 +747,7 @@ The key innovation is that SPLADE representations can be stored and searched usi
 
 Learned sparse retrieval excels in scenarios where lexical precision matters. In e-commerce search, a query for "iPhone 15 Pro Max 256GB" needs exact matching on model numbers and specifications -- dense models may retrieve the right product family but confuse variants. In legal and compliance search, specific statutory references, case numbers, and defined terms carry precise meaning that single-vector compression can lose. SPLADE handles these cases naturally because its vocabulary-aligned representation preserves individual term signals while adding semantic expansion.
 
-In hybrid retrieval pipelines, SPLADE can replace BM25 as the sparse component, improving the quality of the sparse retrieval signal without changing the fusion architecture. Teams already running hybrid search with BM25 + dense retrieval can substitute SPLADE for BM25, use the same Reciprocal Rank Fusion strategy, and typically see 3-8% improvement in retrieval recall. For how this fits into multi-stage RAG pipelines, see [Article 17: Advanced RAG](agent-17-advanced-rag.md).
+In hybrid retrieval pipelines, SPLADE can replace BM25 as the sparse component, improving the quality of the sparse retrieval signal without changing the fusion architecture. Teams already running hybrid search with BM25 + dense retrieval can substitute SPLADE for BM25, use the same Reciprocal Rank Fusion strategy, and typically see 3-8% improvement in retrieval recall. For how this fits into multi-stage RAG pipelines, see [Article 17: Advanced RAG](/agent-17-advanced-rag).
 
 ## MTEB and Embedding Model Evaluation
 
@@ -763,7 +763,7 @@ Several pitfalls catch teams that select models purely by leaderboard rank:
 
 **Multilingual considerations**: If your system serves multiple languages, filter for multilingual models and check per-language performance. Models like multilingual-e5-large or BGE-M3 are designed for cross-lingual retrieval, but their per-language performance varies significantly. A monolingual model for your primary language may outperform a multilingual model on that specific language.
 
-**Model size vs. quality tradeoffs**: The top of the leaderboard is dominated by large models (1B+ parameters) that are impractical for latency-sensitive production search. Models in the 100-350M parameter range (e.g., bge-large, e5-large-v2, gte-large) typically offer the best quality-per-FLOP for online serving. For a comprehensive treatment of embedding architectures, training objectives, and fine-tuning strategies, see [Article 13: Embedding Models](agent-13-embedding-models.md).
+**Model size vs. quality tradeoffs**: The top of the leaderboard is dominated by large models (1B+ parameters) that are impractical for latency-sensitive production search. Models in the 100-350M parameter range (e.g., bge-large, e5-large-v2, gte-large) typically offer the best quality-per-FLOP for online serving. For a comprehensive treatment of embedding architectures, training objectives, and fine-tuning strategies, see [Article 13: Embedding Models](/agent-13-embedding-models).
 
 ### Practical Model Selection Workflow
 
@@ -784,7 +784,7 @@ Embedding-based recommendation systems have a structural tendency toward homogen
 
 Over time, the user's exposure narrows. A reader who clicked on a few articles about Python web frameworks will see their feed converge on Flask and Django tutorials, even if they would genuinely enjoy content about systems programming, data engineering, or language design. In e-commerce, a customer who purchased running shoes may be shown nothing but running gear, missing cross-sell opportunities in adjacent categories they would have explored organically.
 
-This is not merely a product quality problem. In contexts like news, job listings, housing, and lending, filter bubbles become fairness issues. A job recommendation system that narrows candidates' exposure to roles similar to their past positions can entrench occupational segregation along demographic lines. For a thorough examination of how bias manifests in AI systems and frameworks for measuring it, see [Article 46: Bias, Fairness & Responsible AI](agent-46-bias-fairness.md).
+This is not merely a product quality problem. In contexts like news, job listings, housing, and lending, filter bubbles become fairness issues. A job recommendation system that narrows candidates' exposure to roles similar to their past positions can entrench occupational segregation along demographic lines. For a thorough examination of how bias manifests in AI systems and frameworks for measuring it, see [Article 46: Bias, Fairness & Responsible AI](/agent-46-bias-fairness).
 
 ### Diversity-Aware Retrieval
 
@@ -908,9 +908,19 @@ Regular offline evaluation ensures model and index quality:
 
 - **Hybrid retrieval** combining BM25 and dense search with Reciprocal Rank Fusion provides the best retrieval quality; neither alone is sufficient for production systems
 - **Re-ranking** with cross-encoders or LLMs dramatically improves precision on the top results; the retrieve-then-rerank pattern is the standard architecture for high-quality search
+- **Late interaction models** like ColBERT offer a practical middle ground between bi-encoder speed and cross-encoder accuracy; ColBERTv2's compression techniques make multi-vector retrieval viable at scale
+- **Learned sparse retrieval** (SPLADE and its variants) bridges the lexical-semantic gap while integrating with existing inverted index infrastructure, making it a drop-in upgrade path from BM25
 - **Query understanding** with LLMs enables expansion, reformulation, and intent detection that traditional NLP pipelines cannot match; HyDE is a particularly effective technique for bridging the query-document gap
 - **Personalization** can be achieved through user embedding models that blend with query embeddings, or through LLM-based re-ranking that considers user profiles
-- **Embedding model selection** should be based on domain-specific evaluation, not just benchmark scores; the MTEB leaderboard is a starting point but not the final word
+- **Embedding model selection** should be based on domain-specific evaluation, not just MTEB leaderboard scores; filter by task, account for domain gap, and measure operational costs alongside quality metrics
+- **Recommendation diversity** is both a product quality and fairness concern; techniques like MMR, exposure fairness constraints, and exploration-exploitation balancing prevent filter bubbles without sacrificing relevance
 - **Vector search at scale** requires ANN indexes (HNSW is the default choice), quantization for memory efficiency, and careful capacity planning
 - **Production monitoring** must track both system metrics (latency, throughput) and quality metrics (click-through rate, reformulation rate, dwell time)
 - The frontier is moving toward end-to-end generative retrieval, where LLMs directly generate document identifiers, but retrieve-and-rerank remains the practical architecture for most production systems today
+
+## Related Articles
+
+- [Article 13: Embedding Models](/agent-13-embedding-models) -- Embedding architectures, training objectives, Matryoshka representations, and fine-tuning strategies that underpin the retrieval models discussed here
+- [Article 14: Vector Databases](/agent-14-vector-databases) -- ANN algorithms (HNSW, IVF, ScaNN), quantization, and production deployment patterns for the vector indexes powering dense and multi-vector retrieval
+- [Article 17: Advanced RAG](/agent-17-advanced-rag) -- Multi-hop retrieval, agentic RAG, and self-correcting pipelines that build on the search foundations covered in this article
+- [Article 46: Bias, Fairness & Responsible AI](/agent-46-bias-fairness) -- Systematic frameworks for identifying and mitigating bias, directly relevant to recommendation fairness and exposure parity

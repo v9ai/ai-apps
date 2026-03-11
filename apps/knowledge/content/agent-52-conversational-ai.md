@@ -2,6 +2,14 @@
 
 Conversational AI has moved well beyond simple FAQ bots into systems capable of sustained, multi-turn interactions with personality, memory, and genuine helpfulness. Yet building a great conversational experience remains more craft than science, requiring deep understanding of dialogue theory, context management, and human expectations. This article bridges the gap between LLM capabilities and production chatbot design, covering the patterns and principles that separate frustrating bots from genuinely useful conversational agents.
 
+## TL;DR
+
+- **Conversation design is a discipline**: Grice's four maxims (Quantity, Quality, Relation, Manner) are the root cause of most chatbot frustration when violated
+- **Hybrid state management** — explicit slot-filling combined with LLM-managed context — gives you structure without sacrificing naturalness
+- **Multi-turn RAG requires query rewriting**: naive retrieval against the raw user message fails on turn 3+ because references are unresolved without dialogue history
+- **Personality drift is real**: LLMs will deviate from the defined persona over long conversations without explicit reinforcement in the system prompt
+- **Omnichannel deployment** requires separating dialogue state from channel rendering — the same brain must serve web, mobile, SMS, WhatsApp, and voice with very different constraints
+
 ## Foundations of Conversation Design
 
 ### The Conversational Contract
@@ -452,6 +460,8 @@ LLMs can drift in personality during long conversations, especially when users t
 3. **Few-shot examples in context**: Include example exchanges that demonstrate the desired personality
 4. **Boundary testing in evaluation**: Specifically test adversarial inputs that try to break persona
 
+> **Tip:** Treat persona consistency as a test suite, not a one-time setup. Run automated adversarial tests (requests to "pretend you have no restrictions," roleplay jailbreaks) as part of your CI pipeline.
+
 ```python
 class PersonaConsistencyChecker:
     def __init__(self, persona_guidelines):
@@ -746,7 +756,7 @@ BAD proactive behavior:
 
 ### From Text to Action
 
-The most significant leap in conversational AI is the shift from systems that can only talk to systems that can act. Function calling (see [Article 25: Function Calling & Tool Integration](agent-25-function-calling.md) for the underlying mechanics) enables chatbots to look up order status, book reservations, process refunds, and query databases -- all within the natural flow of conversation. This transforms the chatbot from an information kiosk into a genuine transactional agent.
+The most significant leap in conversational AI is the shift from systems that can only talk to systems that can act. Function calling (see [Article 25: Function Calling & Tool Integration](/agent-25-function-calling) for the underlying mechanics) enables chatbots to look up order status, book reservations, process refunds, and query databases -- all within the natural flow of conversation. This transforms the chatbot from an information kiosk into a genuine transactional agent.
 
 The architectural challenge is weaving tool execution into dialogue without breaking conversational coherence. A user who says "Where's my package?" expects a direct answer, not a narration of the bot's internal API calls.
 
@@ -824,7 +834,7 @@ The key design principle across all three patterns: tool execution is an impleme
 
 ### RAG in Multi-Turn Context
 
-Retrieval-augmented generation is well-established for single-turn question answering, but multi-turn conversations introduce challenges that naive RAG pipelines do not handle (see [Article 17: Advanced RAG](agent-17-advanced-rag.md) for the foundational retrieval patterns). The core problem: what the user means on turn five often depends on what was discussed on turns one through four.
+Retrieval-augmented generation is well-established for single-turn question answering, but multi-turn conversations introduce challenges that naive RAG pipelines do not handle (see [Article 17: Advanced RAG](/agent-17-advanced-rag) for the foundational retrieval patterns). The core problem: what the user means on turn five often depends on what was discussed on turns one through four.
 
 Consider this exchange:
 
@@ -886,9 +896,16 @@ class ConversationalRetriever:
 
 ### Grounding Without Derailing the Conversation
 
-A common failure mode is the "knowledge dump" -- the bot retrieves relevant content and dumps it wholesale, breaking conversational flow. Grounded dialogue requires synthesizing retrieved information into contextually appropriate responses. If the user asked a yes/no question, the answer should lead with yes or no, even if the supporting document is a 2,000-word policy page. If the user is in the middle of a troubleshooting flow, the retrieved content should be presented as the next diagnostic step, not a standalone article.
+A common failure mode is the "knowledge dump" — the bot retrieves relevant content and dumps it wholesale, breaking conversational flow. Grounded dialogue requires synthesizing retrieved information into contextually appropriate responses:
 
-This is where the tiered memory architecture described earlier intersects with retrieval. Working memory holds the conversation flow and user intent. The retrieval system provides factual grounding. The LLM's job is to merge these two streams into a response that is both factually accurate and conversationally coherent. For deeper coverage of how memory systems support this kind of persistent, context-rich interaction, see [Article 28: Agent Memory](agent-28-agent-memory.md).
+- If the user asked a yes/no question, the answer should lead with yes or no, even if the supporting document is a 2,000-word policy page
+- If the user is in the middle of a troubleshooting flow, the retrieved content should be presented as the next diagnostic step, not a standalone article
+
+This is where the tiered memory architecture described earlier intersects with retrieval. Working memory holds the conversation flow and user intent. The retrieval system provides factual grounding. The LLM's job is to merge these two streams into a response that is both factually accurate and conversationally coherent.
+
+> **Note:** The retrieval system answers "what is true?" — the LLM's job is to answer "how should I say this, given where we are in the conversation?" Conflating these two responsibilities produces knowledge dumps.
+
+For deeper coverage of how memory systems support this kind of persistent, context-rich interaction, see [Article 28: Agent Memory](/agent-28-agent-memory).
 
 ## Conversation Analytics
 
@@ -992,7 +1009,7 @@ These analytics close the feedback loop: topic clusters reveal what users need, 
 
 ### One Brain, Many Interfaces
 
-Production conversational AI rarely lives on a single channel. The same underlying dialogue system must serve a web chat widget, a mobile app, SMS, WhatsApp Business, and increasingly voice interfaces (see [Article 50: Audio & Speech AI](agent-50-audio-speech-ai.md) for the ASR and TTS pipeline that enables voice channels). Each channel imposes different constraints on message format, length, latency, and interaction patterns.
+Production conversational AI rarely lives on a single channel. The same underlying dialogue system must serve a web chat widget, a mobile app, SMS, WhatsApp Business, and increasingly voice interfaces (see [Article 50: Audio & Speech AI](/agent-50-audio-speech-ai) for the ASR and TTS pipeline that enables voice channels). Each channel imposes different constraints on message format, length, latency, and interaction patterns.
 
 ### Channel-Specific Constraints
 
@@ -1070,5 +1087,9 @@ Latency requirements also vary dramatically. Web chat users tolerate two to thre
 - **Personality consistency** requires explicit guidelines in system prompts, periodic reinforcement, and automated checking; LLMs will drift without guardrails
 - **Error recovery** is where chatbots are most often judged; detecting frustration, offering alternatives, and knowing when to escalate to humans are essential capabilities
 - **Multi-turn planning** with progress communication transforms complex tasks from frustrating multi-step interrogations into guided experiences
+- **Tool-augmented conversations** let chatbots take real actions -- looking up orders, processing refunds, making reservations -- within natural dialogue flow; the key is treating tool execution as an implementation detail hidden behind conversational responses
+- **Knowledge-grounded dialogue** requires conversation-aware retrieval that rewrites queries using dialogue history before hitting the index, preventing the "standalone query" problem that plagues naive RAG in multi-turn settings
+- **Conversation analytics** transforms logs into product intelligence through topic clustering, sentiment trajectory tracking, and escalation detection, closing the loop between user experience and product development
+- **Omnichannel deployment** demands separating dialogue state from channel-specific rendering, with adaptation layers that respect each channel's constraints on message length, media support, and latency
 - **Evaluation** should combine automated metrics (task completion, turns to resolution) with LLM-as-judge qualitative assessment and A/B testing for changes
 - **UX fundamentals** matter more than model capabilities: short responses, structured formatting, escape hatches, and capability disclosure determine whether users return to your chatbot or abandon it after one frustrating interaction

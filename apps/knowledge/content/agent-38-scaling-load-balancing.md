@@ -88,7 +88,7 @@ All-to-all communication shuffles tokens between GPUs
 based on expert assignments.
 ```
 
-DeepSeek-V3's paper describes using EP combined with TP for the attention layers, a pattern increasingly common for large MoE models. For a deeper look at the architectural motivations behind MoE routing and how expert counts affect inference cost, see [Article 05: Inference Optimization](./agent-05-inference-optimization.md).
+DeepSeek-V3's paper describes using EP combined with TP for the attention layers, a pattern increasingly common for large MoE models. For a deeper look at the architectural motivations behind MoE routing and how expert counts affect inference cost, see [Article 05: Inference Optimization](/agent-05-inference-optimization).
 
 ### Sequence and Context Parallelism
 
@@ -115,7 +115,7 @@ The critical property of ring attention is that it overlaps communication with c
 
 Meta's Llama 3.1 405B deployment uses context parallelism to serve its 128K context window. The model runs with TP=8 within a node and CP=4 across nodes, enabling each request to spread its 128K-token KV-cache across 4 node-groups. Without CP, a single 128K-token request for a 405B model would require roughly 120GB of KV-cache alone (in FP8), exceeding the capacity available after model weights are loaded.
 
-**Practical considerations**: Context parallelism is most beneficial when sequence lengths are long relative to model size. For short prompts (under 8K tokens), the overhead of ring communication exceeds the benefit. Most serving frameworks activate CP dynamically -- short requests are served with TP only, while long-context requests trigger CP across additional GPU groups. This is closely related to the disaggregated prefill/decode architecture discussed in [Article 37: LLM Serving](./agent-37-llm-serving.md), where long-context prefill jobs can be routed to CP-enabled pools while short decode requests use compact TP-only replicas.
+**Practical considerations**: Context parallelism is most beneficial when sequence lengths are long relative to model size. For short prompts (under 8K tokens), the overhead of ring communication exceeds the benefit. Most serving frameworks activate CP dynamically -- short requests are served with TP only, while long-context requests trigger CP across additional GPU groups. This is closely related to the disaggregated prefill/decode architecture discussed in [Article 37: LLM Serving](/agent-37-llm-serving), where long-context prefill jobs can be routed to CP-enabled pools while short decode requests use compact TP-only replicas.
 
 ## Data Parallelism and Replication
 
@@ -341,7 +341,7 @@ class HeterogeneousLoadBalancer:
         return best_backend
 ```
 
-Model versioning across GPU types adds another layer of complexity. The same logical model may be deployed as FP16 on H100s (where memory is sufficient) and INT4 on A100-40GBs (where it is not). The load balancer needs to understand that these are quality-equivalent but performance-different replicas, and route accordingly. See [Article 39: Cost Optimization](./agent-39-cost-optimization.md) for a broader analysis of how hardware mix decisions affect per-token economics.
+Model versioning across GPU types adds another layer of complexity. The same logical model may be deployed as FP16 on H100s (where memory is sufficient) and INT4 on A100-40GBs (where it is not). The load balancer needs to understand that these are quality-equivalent but performance-different replicas, and route accordingly. See [Article 39: Cost Optimization](/agent-39-cost-optimization) for a broader analysis of how hardware mix decisions affect per-token economics.
 
 ### GPU Disaggregation and Pooling
 
@@ -496,4 +496,4 @@ For batch workloads and non-latency-sensitive traffic, spot/preemptible instance
 
 9. **Autoscaling LLM workloads requires patience** -- model loading takes minutes, so scale-up must be predictive or use warm standby pools. Scale-down should be conservative to avoid thrashing.
 
-10. **Cost optimization is a first-class concern**: choosing the right parallelism configuration, using spot instances for batch work, and right-sizing replicas can reduce serving costs by 2-5x without sacrificing quality. See [Article 39: Cost Optimization](./agent-39-cost-optimization.md) for detailed economic analysis.
+10. **Cost optimization is a first-class concern**: choosing the right parallelism configuration, using spot instances for batch work, and right-sizing replicas can reduce serving costs by 2-5x without sacrificing quality. See [Article 39: Cost Optimization](/agent-39-cost-optimization) for detailed economic analysis.

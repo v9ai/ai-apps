@@ -46,7 +46,7 @@ Dense retrieval encodes queries and documents into learned vector representation
 
 Dense and sparse methods fail on different queries. Empirical analysis on the BEIR benchmark (Thakur et al., 2021) shows that on datasets like TREC-COVID and SciFact, BM25 outperforms many dense retrievers. On Natural Questions and MS MARCO, dense retrievers dominate. The correlation between their error sets is surprisingly low -- meaning they frequently disagree on which documents are relevant.
 
-This complementarity is the fundamental motivation for hybrid search. For a deeper treatment of how embedding model architecture influences dense retrieval quality, see [Article 13: Embedding Models](agent-13-embedding-models.md).
+This complementarity is the fundamental motivation for hybrid search. For a deeper treatment of how embedding model architecture influences dense retrieval quality, see [Article 13: Embedding Models](/agent-13-embedding-models).
 
 ## Learned Sparse Retrieval: SPLADE
 
@@ -334,9 +334,9 @@ results = rag.search("How does late interaction differ from cross-encoding?", k=
 # Each result includes: content, score, rank, document_id
 ```
 
-RAGatouille also supports fine-tuning ColBERT on domain-specific data with minimal code, making it practical to adapt the model for specialized corpora like legal documents, medical literature, or internal knowledge bases. For guidance on generating training pairs for this kind of fine-tuning, see [Article 13: Embedding Models](agent-13-embedding-models.md).
+RAGatouille also supports fine-tuning ColBERT on domain-specific data with minimal code, making it practical to adapt the model for specialized corpora like legal documents, medical literature, or internal knowledge bases. For guidance on generating training pairs for this kind of fine-tuning, see [Article 13: Embedding Models](/agent-13-embedding-models).
 
-**When to choose ColBERT over cross-encoder reranking**: ColBERT is preferable when latency budgets are tight (under 100ms total), when you need to rerank large candidate sets (hundreds rather than dozens), or when you want a single model that can serve as both first-stage retriever and reranker. Cross-encoders remain superior when you have a small candidate set (under 50 documents) and can tolerate 100-200ms of reranking latency, since their joint encoding captures deeper query-document interactions. For storage infrastructure considerations when deploying ColBERT's per-token indexes, see [Article 14: Vector Databases](agent-14-vector-databases.md).
+**When to choose ColBERT over cross-encoder reranking**: ColBERT is preferable when latency budgets are tight (under 100ms total), when you need to rerank large candidate sets (hundreds rather than dozens), or when you want a single model that can serve as both first-stage retriever and reranker. Cross-encoders remain superior when you have a small candidate set (under 50 documents) and can tolerate 100-200ms of reranking latency, since their joint encoding captures deeper query-document interactions. For storage infrastructure considerations when deploying ColBERT's per-token indexes, see [Article 14: Vector Databases](/agent-14-vector-databases).
 
 ## HyDE: Hypothetical Document Embeddings
 
@@ -552,7 +552,7 @@ async def confidence_based_retrieval(query: str, llm, retriever, threshold: floa
     return {"answer": augmented, "retrieved": True}
 ```
 
-The threshold requires tuning per domain. For medical or legal applications where accuracy is critical, a lower threshold (triggering more retrieval) is appropriate. For creative or general-knowledge tasks, a higher threshold reduces unnecessary latency. For more sophisticated self-correcting retrieval patterns, including iterative refinement loops, see [Article 17: Advanced RAG](agent-17-advanced-rag.md).
+The threshold requires tuning per domain. For medical or legal applications where accuracy is critical, a lower threshold (triggering more retrieval) is appropriate. For creative or general-knowledge tasks, a higher threshold reduces unnecessary latency. For more sophisticated self-correcting retrieval patterns, including iterative refinement loops, see [Article 17: Advanced RAG](/agent-17-advanced-rag).
 
 ## Structured Data Retrieval
 
@@ -596,7 +596,7 @@ The schema description is itself a retrieval problem at scale. With hundreds of 
 
 Not all structured data lives in SQL databases. Table QA handles CSV files, spreadsheets, and tabular data embedded within documents. Models like TAPAS (Herzig et al., 2020) and more recently LLM-based approaches can reason over tables directly. The key challenge is representing tabular structure in a way the model can process -- linearizing tables into text while preserving row/column relationships.
 
-For tables extracted from documents during chunking (see [Article 15: Chunking Strategies](agent-15-chunking-strategies.md)), storing both the raw table and a text summary enables hybrid retrieval: the summary matches semantic queries while the structured representation supports precise lookups.
+For tables extracted from documents during chunking (see [Article 15: Chunking Strategies](/agent-15-chunking-strategies)), storing both the raw table and a text summary enables hybrid retrieval: the summary matches semantic queries while the structured representation supports precise lookups.
 
 ### Integrating Structured and Unstructured Retrieval
 
@@ -606,7 +606,7 @@ The most capable RAG systems unify structured and unstructured retrieval behind 
 - "Explain the revenue growth strategy" routes to vector search over earnings call transcripts
 - "How did Q3 revenue compare to the forecast from the analyst report?" requires both: SQL for the actual figure, vector search for the forecast, and synthesis across both
 
-This routing can be implemented as part of the adaptive retrieval classifier described above, adding "structured" as a query category. The key insight is that structured retrieval is not a replacement for RAG but a complement -- most real-world questions require reasoning across both structured facts and unstructured context. For agentic approaches to multi-source retrieval, where the system iteratively decides which sources to query, see [Article 17: Advanced RAG](agent-17-advanced-rag.md).
+This routing can be implemented as part of the adaptive retrieval classifier described above, adding "structured" as a query category. The key insight is that structured retrieval is not a replacement for RAG but a complement -- most real-world questions require reasoning across both structured facts and unstructured context. For agentic approaches to multi-source retrieval, where the system iteratively decides which sources to query, see [Article 17: Advanced RAG](/agent-17-advanced-rag).
 
 ## Retrieval-Aware Prompting
 
@@ -702,7 +702,7 @@ class AdvancedRetrievalPipeline:
 
 ### Related Articles
 
-- [Article 13: Embedding Models](agent-13-embedding-models.md) -- How embedding architecture and training objectives shape dense retrieval quality.
-- [Article 14: Vector Databases](agent-14-vector-databases.md) -- Indexing algorithms and infrastructure for serving dense and ColBERT representations at scale.
-- [Article 15: Chunking Strategies](agent-15-chunking-strategies.md) -- How document splitting decisions determine the upper bound on retrieval quality.
-- [Article 17: Advanced RAG](agent-17-advanced-rag.md) -- Agentic retrieval loops, self-correcting pipelines, and multi-hop reasoning that build on the strategies covered here.
+- [Article 13: Embedding Models](/agent-13-embedding-models) -- How embedding architecture and training objectives shape dense retrieval quality.
+- [Article 14: Vector Databases](/agent-14-vector-databases) -- Indexing algorithms and infrastructure for serving dense and ColBERT representations at scale.
+- [Article 15: Chunking Strategies](/agent-15-chunking-strategies) -- How document splitting decisions determine the upper bound on retrieval quality.
+- [Article 17: Advanced RAG](/agent-17-advanced-rag) -- Agentic retrieval loops, self-correcting pipelines, and multi-hop reasoning that build on the strategies covered here.

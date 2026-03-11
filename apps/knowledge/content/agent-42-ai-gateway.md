@@ -2,6 +2,14 @@
 
 As organizations integrate LLM capabilities across multiple products and teams, the direct-to-provider API call pattern -- where each service independently manages its own API keys, retry logic, and error handling -- becomes untenable. AI gateways emerge as the centralized control plane for LLM traffic, analogous to how API gateways (Kong, Envoy) standardized REST API management a decade ago. This article examines the architecture, capabilities, and implementation patterns of AI gateways, from rate limiting and provider fallback chains through multi-provider routing to the emerging ecosystem of managed gateway solutions.
 
+## TL;DR
+
+- An AI gateway is a reverse proxy that centralizes API keys, rate limiting, fallback logic, cost tracking, and request transformation for all LLM traffic across an organization.
+- Rate limiting must operate on multiple dimensions simultaneously: requests per minute, tokens per minute, and cost per day — at user, team, and provider levels.
+- Provider fallback chains combined with circuit breakers keep services resilient when upstream LLM providers degrade or go down.
+- ML-based model routers (Martian, Not Diamond, Unify) select the optimal model per request, cutting costs by 40–60% at equivalent quality compared to always using a frontier model.
+- The gateway is the best place to enforce compliance: geographic routing, PII filtering, and immutable audit logs can be applied centrally without modifying application code.
+
 ## Why AI Gateways Exist
 
 Consider an organization with five teams, each building LLM-powered features. Without a gateway, each team independently:
@@ -15,7 +23,7 @@ Consider an organization with five teams, each building LLM-powered features. Wi
 
 This leads to duplicated code, inconsistent error handling, no centralized cost visibility, and no ability to enforce organization-wide policies. An AI gateway consolidates all of this into a single layer.
 
-```
+```text
 Without Gateway:                    With Gateway:
 ┌────────┐                          ┌────────┐
 │Service A│──┐                      │Service A│──┐
@@ -253,6 +261,8 @@ fallback_config = FallbackConfig(
 
 ### Circuit Breaker Pattern
 
+> **Tip:** Never fall back on 4xx client errors (bad request, auth failure) — only on 5xx server errors, timeouts, and rate limits. Falling back on client errors wastes budget and obscures bugs.
+
 Blindly retrying a failing provider wastes time and can exacerbate outages. The circuit breaker pattern tracks provider health and stops sending requests to unhealthy providers:
 
 ```python
@@ -332,6 +342,15 @@ class FallbackHandler:
 ```
 
 ## Multi-Provider Routing Strategies
+
+### Routing Strategy Overview
+
+| Strategy | Optimizes For | Trade-off | Best Use Case |
+|----------|--------------|-----------|---------------|
+| Cost-optimized | Lowest price | May sacrifice quality | Batch jobs, low-stakes tasks |
+| Latency-optimized | Fastest TTFT | Cost varies | Real-time user interactions |
+| Hedge routing | Tail latency (p99) | Higher cost (multiple calls) | High-value, latency-critical flows |
+| ML-based routing | Quality/cost ratio | Classifier maintenance overhead | High-volume mixed workloads |
 
 ### Model Mapping
 
@@ -469,6 +488,8 @@ class HedgeRouter:
 ```
 
 Hedge routing reduces tail latency but increases cost (paying for multiple calls). It is best reserved for high-value, latency-critical requests.
+
+> **Note:** Always cancel pending hedged tasks as soon as the first response arrives. Failing to do so turns a latency optimization into a cost multiplier.
 
 ## Request/Response Transformation
 
@@ -632,24 +653,22 @@ response = completion(
 
 # LiteLLM proxy server (self-hosted gateway)
 # config.yaml:
-"""
-model_list:
-  - model_name: best-model
-    litellm_params:
-      model: anthropic/claude-sonnet-4-20250514
-      api_key: sk-ant-...
-    model_info:
-      max_tokens: 8192
-  - model_name: best-model  # Same name = load balanced
-    litellm_params:
-      model: openai/gpt-4o
-      api_key: sk-...
-
-router_settings:
-  routing_strategy: latency-based-routing
-  allowed_fails: 3
-  cooldown_time: 60
-"""
+# model_list:
+#   - model_name: best-model
+#     litellm_params:
+#       model: anthropic/claude-sonnet-4-20250514
+#       api_key: sk-ant-...
+#     model_info:
+#       max_tokens: 8192
+#   - model_name: best-model  # Same name = load balanced
+#     litellm_params:
+#       model: openai/gpt-4o
+#       api_key: sk-...
+#
+# router_settings:
+#   routing_strategy: latency-based-routing
+#   allowed_fails: 3
+#   cooldown_time: 60
 ```
 
 ### Portkey
@@ -712,6 +731,14 @@ const response = await fetch(
 ```
 
 Cloudflare's edge-based approach adds only 1-5ms of latency (compared to 20-50ms for a centralized gateway) and provides built-in analytics, caching, and rate limiting through their dashboard.
+
+### Gateway Options Compared
+
+| Gateway | Deployment | Best For | Latency Overhead |
+|---------|-----------|----------|-----------------|
+| LiteLLM | Self-hosted | Full control, 100+ providers | 20–50ms (centralized) |
+| Portkey | Managed SaaS | Reliability + observability focus | Varies |
+| Cloudflare AI Gateway | Edge (managed) | Low-latency, global distribution | 1–5ms |
 
 ## Authentication and Access Control
 
@@ -840,7 +867,9 @@ Several companies have built production routing systems around this idea:
 
 ### Training the Router
 
-The classifier itself is typically a lightweight model -- a fine-tuned BERT, a small feedforward network over embeddings, or even a logistic regression over engineered features. Training data comes from running evaluation suites across all candidate models and recording which model produced the best output for each input. The router's accuracy improves over time as production feedback (user ratings, downstream task success) augments the training data. This creates a flywheel: more routing decisions generate more performance data, which trains a better router, which makes better decisions. For a deeper treatment of how model selection interacts with cost management, see [Article 39: Cost Optimization](/knowledge/agent-39-cost-optimization).
+The classifier itself is typically a lightweight model -- a fine-tuned BERT, a small feedforward network over embeddings, or even a logistic regression over engineered features. Training data comes from running evaluation suites across all candidate models and recording which model produced the best output for each input. The router's accuracy improves over time as production feedback (user ratings, downstream task success) augments the training data. This creates a flywheel: more routing decisions generate more performance data, which trains a better router, which makes better decisions. For a deeper treatment of how model selection interacts with cost management, see [Article 39: Cost Optimization](/agent-39-cost-optimization).
+
+> **Tip:** Even a simple heuristic router (short prompt → small model, code/math → frontier model) delivers meaningful cost savings before you invest in training a full ML classifier.
 
 ## Prompt Adaptation
 
@@ -1070,7 +1099,7 @@ class GatewayTraceExporter:
             )
 ```
 
-The gateway-to-observability pipeline is particularly powerful because it provides a single integration point. Rather than instrumenting every service that calls an LLM, you instrument the gateway once and get visibility into all LLM usage across the organization. For a comprehensive treatment of LLM observability beyond the gateway layer, see [Article 40: Observability](/knowledge/agent-40-observability).
+The gateway-to-observability pipeline is particularly powerful because it provides a single integration point. Rather than instrumenting every service that calls an LLM, you instrument the gateway once and get visibility into all LLM usage across the organization. For a comprehensive treatment of LLM observability beyond the gateway layer, see [Article 40: Observability](/agent-40-observability).
 
 ## Compliance and Data Residency
 
@@ -1204,7 +1233,9 @@ class PIIFilter:
 
 The gateway can apply different PII policies per team or data classification level. An internal HR chatbot processing employee records might require strict PII masking when calling external providers but allow unmasked calls to self-hosted models within the organization's own infrastructure. Audit logs at the gateway layer record which requests contained PII, which policy was applied, and whether data was masked or blocked -- critical evidence for regulatory compliance audits.
 
-For organizations operating under the EU AI Act or similar regulatory frameworks, the gateway's compliance layer provides the technical controls that governance policies require. The gateway's centralized audit log, combined with its PII filtering and geographic routing capabilities, directly addresses the transparency and accountability obligations that AI regulations impose. For a thorough examination of AI governance requirements and how to build compliant systems, see [Article 47: AI Governance](/knowledge/agent-47-ai-governance).
+> **Note:** Regex alone is not sufficient for reliable PII detection. Supplement pattern matching with an NER model to catch names, addresses, and other unstructured personal data that regexes miss.
+
+For organizations operating under the EU AI Act or similar regulatory frameworks, the gateway's compliance layer provides the technical controls that governance policies require. The gateway's centralized audit log, combined with its PII filtering and geographic routing capabilities, directly addresses the transparency and accountability obligations that AI regulations impose. For a thorough examination of AI governance requirements and how to build compliant systems, see [Article 47: AI Governance](/agent-47-ai-governance).
 
 ## Summary and Key Takeaways
 

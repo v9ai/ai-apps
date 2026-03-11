@@ -880,6 +880,500 @@ class AIObservability:
         return wrapper
 ```
 
+## Human-in-the-Loop Patterns
+
+Fully autonomous AI pipelines are a design goal, not a starting point. Most production systems need human oversight at critical junctures -- either because the stakes are too high for unsupervised decisions, the model's confidence is too low, or regulatory requirements mandate human review. The challenge is designing intervention points that improve reliability without creating bottlenecks.
+
+### Confidence-Based Routing
+
+The simplest human-in-the-loop pattern routes requests based on model confidence. Below a threshold, the system escalates to a human rather than acting on an uncertain prediction:
+
+```python
+class ConfidenceRouter:
+    """Route to human review when model confidence is below threshold"""
+
+    def __init__(self, model, review_queue, thresholds=None):
+        self.model = model
+        self.review_queue = review_queue
+        self.thresholds = thresholds or {
+            "auto_approve": 0.95,
+            "auto_reject": 0.10,
+            # Everything between goes to human review
+        }
+
+    async def process(self, request):
+        result = await self.model.predict(request)
+
+        if result.confidence >= self.thresholds["auto_approve"]:
+            return Action(type="auto", decision=result.label, confidence=result.confidence)
+        elif result.confidence <= self.thresholds["auto_reject"]:
+            return Action(type="auto_reject", decision="rejected", confidence=result.confidence)
+        else:
+            # Queue for human review with model's suggestion
+            ticket = await self.review_queue.enqueue({
+                "request": request,
+                "model_suggestion": result.label,
+                "model_confidence": result.confidence,
+                "model_reasoning": result.explanation,
+                "priority": self.compute_priority(result),
+            })
+            return Action(type="pending_review", ticket_id=ticket.id)
+
+    def compute_priority(self, result):
+        """Higher priority for borderline cases and high-value requests"""
+        confidence_urgency = 1.0 - abs(result.confidence - 0.5) * 2
+        return confidence_urgency * result.request_value
+```
+
+### Approval Workflows
+
+For operations with irreversible consequences -- sending emails to customers, executing financial transactions, publishing content -- approval workflows gate AI output behind human sign-off:
+
+```python
+class ApprovalWorkflow:
+    """Gate AI actions behind human approval for high-stakes operations"""
+
+    RISK_LEVELS = {
+        "low": {"auto_approve": True, "reviewers_required": 0},
+        "medium": {"auto_approve": False, "reviewers_required": 1},
+        "high": {"auto_approve": False, "reviewers_required": 2},
+        "critical": {"auto_approve": False, "reviewers_required": 2, "requires_senior": True},
+    }
+
+    async def submit(self, ai_output, operation_type, context):
+        risk = await self.assess_risk(ai_output, operation_type, context)
+        policy = self.RISK_LEVELS[risk]
+
+        if policy["auto_approve"]:
+            await self.execute(ai_output)
+            return {"status": "auto_approved", "risk": risk}
+
+        approval_request = await self.create_approval_request(
+            output=ai_output,
+            risk_level=risk,
+            reviewers_required=policy["reviewers_required"],
+            requires_senior=policy.get("requires_senior", False),
+            expires_at=datetime.utcnow() + timedelta(hours=4),
+        )
+
+        # Notify reviewers via Slack, email, or dashboard
+        await self.notify_reviewers(approval_request)
+        return {"status": "pending_approval", "request_id": approval_request.id}
+
+    async def assess_risk(self, ai_output, operation_type, context):
+        """Classify risk using rules + model judgment"""
+        # Rule-based checks first
+        if operation_type in ("financial_transaction", "legal_document"):
+            return "critical"
+        if context.get("customer_tier") == "enterprise":
+            return "high"
+
+        # Model-based risk assessment for everything else
+        risk_assessment = await self.risk_model.classify(
+            output=ai_output,
+            operation=operation_type,
+            categories=["low", "medium", "high"],
+        )
+        return risk_assessment.label
+```
+
+### Escalation Triggers
+
+Beyond confidence thresholds, specific content patterns or operational conditions should trigger human escalation. Design these as composable rules:
+
+```python
+class EscalationEngine:
+    def __init__(self):
+        self.triggers = []
+
+    def add_trigger(self, name, condition, priority="medium"):
+        self.triggers.append({"name": name, "condition": condition, "priority": priority})
+
+    async def check(self, request, ai_response):
+        fired = []
+        for trigger in self.triggers:
+            if await trigger["condition"](request, ai_response):
+                fired.append(trigger)
+        return sorted(fired, key=lambda t: {"critical": 0, "high": 1, "medium": 2}[t["priority"]])
+
+# Example triggers
+engine = EscalationEngine()
+engine.add_trigger(
+    "mentions_legal",
+    lambda req, resp: any(term in resp.text.lower() for term in ["lawsuit", "liability", "attorney"]),
+    priority="high",
+)
+engine.add_trigger(
+    "sentiment_negative",
+    lambda req, resp: resp.sentiment_score < -0.7,
+    priority="medium",
+)
+engine.add_trigger(
+    "high_token_output",
+    lambda req, resp: resp.usage.completion_tokens > 2000,
+    priority="medium",
+)
+```
+
+The key principle is that human-in-the-loop is not a failure mode -- it is a design pattern. Systems that route 80% of requests automatically while escalating the remaining 20% typically outperform both fully autonomous and fully manual approaches. For how to observe and trace these routing decisions in production, see [Article 40 -- Observability](/agent-40-observability).
+
+## Testing Non-Deterministic Systems
+
+Traditional software testing asserts that `f(x) == y`. LLM-based systems break this contract: the same prompt can produce different outputs on every call. Testing strategies must shift from exact match verification to property-based and statistical assertions.
+
+### Property-Based Testing
+
+Instead of testing for specific outputs, test that outputs satisfy invariant properties:
+
+```python
+import pytest
+from hypothesis import given, strategies as st
+
+class TestLLMProperties:
+    """Test invariant properties of LLM outputs, not exact values"""
+
+    async def test_json_output_always_valid(self, llm_client):
+        """Property: structured output endpoint always returns valid JSON"""
+        prompts = [
+            "List three countries and their capitals",
+            "Describe the water cycle in structured format",
+            "Generate a product catalog entry for a laptop",
+        ]
+        for prompt in prompts:
+            result = await llm_client.generate(
+                prompt=prompt,
+                response_format={"type": "json_object"},
+            )
+            parsed = json.loads(result.text)  # Must not raise
+            assert isinstance(parsed, dict)
+
+    async def test_classification_within_expected_labels(self):
+        """Property: classifier outputs only valid categories"""
+        VALID_LABELS = {"positive", "negative", "neutral"}
+        test_inputs = load_test_corpus("sentiment_samples.jsonl")
+
+        for sample in test_inputs:
+            result = await classifier.classify(sample.text)
+            assert result.label in VALID_LABELS, (
+                f"Unexpected label '{result.label}' for input: {sample.text[:80]}"
+            )
+            assert 0.0 <= result.confidence <= 1.0
+
+    async def test_summary_shorter_than_input(self):
+        """Property: summaries should always be shorter than source text"""
+        documents = load_test_corpus("documents.jsonl")
+        for doc in documents:
+            summary = await summarizer.summarize(doc.text)
+            assert len(summary) < len(doc.text), "Summary should be shorter than input"
+            assert len(summary) > 50, "Summary should not be trivially short"
+
+    async def test_idempotent_at_zero_temperature(self):
+        """Property: temperature=0 should produce near-identical outputs"""
+        prompt = "What is 2 + 2? Reply with just the number."
+        results = set()
+        for _ in range(5):
+            result = await llm_client.generate(prompt=prompt, temperature=0)
+            results.add(result.text.strip())
+        assert len(results) == 1, f"Expected deterministic output, got: {results}"
+```
+
+### Snapshot Testing with Similarity Thresholds
+
+Exact snapshot matching does not work for LLM outputs. Instead, use semantic similarity to detect regressions -- if a prompt change causes outputs to drift beyond a threshold, the test fails:
+
+```python
+from sentence_transformers import SentenceTransformer
+
+class SemanticSnapshotTest:
+    def __init__(self, snapshot_dir, similarity_threshold=0.85):
+        self.snapshot_dir = snapshot_dir
+        self.threshold = similarity_threshold
+        self.embedder = SentenceTransformer("all-MiniLM-L6-v2")
+
+    async def assert_semantically_similar(self, test_name, current_output):
+        snapshot_path = os.path.join(self.snapshot_dir, f"{test_name}.json")
+
+        if not os.path.exists(snapshot_path):
+            # First run: save snapshot
+            self.save_snapshot(snapshot_path, current_output)
+            return
+
+        saved = self.load_snapshot(snapshot_path)
+        similarity = self.cosine_similarity(
+            self.embedder.encode(saved["output"]),
+            self.embedder.encode(current_output),
+        )
+
+        assert similarity >= self.threshold, (
+            f"Semantic drift detected for '{test_name}': "
+            f"similarity={similarity:.3f}, threshold={self.threshold}\n"
+            f"Saved: {saved['output'][:200]}\n"
+            f"Current: {current_output[:200]}"
+        )
+```
+
+### Statistical Assertion Strategies
+
+For non-deterministic outputs, run multiple trials and assert on distributions rather than individual results:
+
+```python
+class StatisticalAssertions:
+    @staticmethod
+    async def assert_pass_rate(test_fn, n_trials=20, min_pass_rate=0.90):
+        """Run a test multiple times and assert a minimum pass rate"""
+        results = []
+        for _ in range(n_trials):
+            try:
+                await test_fn()
+                results.append(True)
+            except AssertionError:
+                results.append(False)
+
+        pass_rate = sum(results) / len(results)
+        assert pass_rate >= min_pass_rate, (
+            f"Pass rate {pass_rate:.0%} below minimum {min_pass_rate:.0%} "
+            f"over {n_trials} trials"
+        )
+
+    @staticmethod
+    async def assert_quality_distribution(eval_fn, samples, min_median=0.7, min_p10=0.4):
+        """Assert that quality scores meet distribution requirements"""
+        scores = [await eval_fn(sample) for sample in samples]
+        scores.sort()
+
+        median = scores[len(scores) // 2]
+        p10 = scores[len(scores) // 10]
+
+        assert median >= min_median, f"Median quality {median:.2f} below threshold {min_median}"
+        assert p10 >= min_p10, f"P10 quality {p10:.2f} below threshold {min_p10}"
+```
+
+These testing patterns integrate naturally into CI/CD pipelines. For the full picture of regression testing, continuous evaluation, and eval-driven development workflows, see [Article 36 -- CI/CD for AI](/agent-36-ci-cd-ai). For the evaluation metrics and methodology that underpin these test assertions, see [Article 31 -- Eval Fundamentals](/agent-31-eval-fundamentals).
+
+## Prompt Management Systems
+
+Prompts are not strings -- they are configuration artifacts with versioning, deployment, and lifecycle requirements comparable to feature flags or database migrations. Treating prompts as code checked into version control is a good start, but production systems need more: A/B testing of prompt variants, rollback on quality regression, and separation of prompt authoring from application deployment.
+
+### Prompts as First-Class Artifacts
+
+A prompt management system separates prompts from application code, enabling non-engineers (domain experts, content teams) to iterate on prompts without triggering a full deployment cycle:
+
+```python
+class PromptRegistry:
+    """Central registry for versioned, deployable prompts"""
+
+    def __init__(self, store):
+        self.store = store  # Database, Langfuse, or config service
+
+    async def get_prompt(self, name, *, version=None, label="production"):
+        """Fetch a prompt by name, optionally pinned to a version or label"""
+        if version:
+            return await self.store.get_prompt_version(name, version)
+
+        # Labels allow promoting prompts through environments:
+        # "draft" -> "staging" -> "production"
+        return await self.store.get_prompt_by_label(name, label)
+
+    async def create_version(self, name, template, metadata=None):
+        """Create a new prompt version (immutable once created)"""
+        version = await self.store.create_prompt_version(
+            name=name,
+            template=template,
+            metadata={
+                "author": metadata.get("author"),
+                "change_reason": metadata.get("change_reason"),
+                "created_at": datetime.utcnow().isoformat(),
+                **(metadata or {}),
+            },
+        )
+        return version
+
+    async def promote(self, name, version, from_label, to_label):
+        """Promote a prompt version from one environment to another"""
+        # Validate that it was tested in the source environment
+        prompt = await self.store.get_prompt_version(name, version)
+        if from_label not in prompt.labels:
+            raise ValueError(f"Prompt {name}@{version} not labeled '{from_label}'")
+
+        await self.store.add_label(name, version, to_label)
+        # Remove the label from any previous version
+        await self.store.remove_label_from_others(name, version, to_label)
+```
+
+### Langfuse Prompt Management
+
+Langfuse provides built-in prompt management that links prompts to traces, enabling direct correlation between prompt versions and quality metrics. This is covered in depth in [Article 40 -- Observability](/agent-40-observability), but the deployment pattern is worth highlighting here:
+
+```python
+from langfuse import Langfuse
+
+langfuse = Langfuse()
+
+# Fetch the production prompt -- Langfuse handles versioning
+prompt = langfuse.get_prompt("customer-support-router", label="production")
+
+# The prompt object carries its version and metadata
+print(f"Using prompt version: {prompt.version}, updated: {prompt.config.get('updated_at')}")
+
+# Compile the prompt with variables
+compiled = prompt.compile(
+    customer_name=customer.name,
+    issue_category=ticket.category,
+    account_tier=customer.tier,
+)
+
+# When used with tracing, Langfuse links this prompt version to every
+# trace that uses it -- enabling quality analysis per prompt version
+generation = langfuse.generation(
+    name="support-response",
+    prompt=prompt,  # Links trace to prompt version
+    input=compiled,
+)
+```
+
+### A/B Testing Prompts
+
+Prompt A/B testing extends the experiment framework from earlier in this article. The critical addition is linking experiment variants to prompt versions so that quality regressions are traceable to specific prompt changes:
+
+```python
+class PromptExperiment:
+    def __init__(self, prompt_registry, experiment_id):
+        self.registry = prompt_registry
+        self.experiment_id = experiment_id
+
+    async def run(self, user_id, input_data, prompt_name, variants):
+        """
+        variants: {"control": "v12", "treatment": "v13"}
+        Maps variant names to prompt versions.
+        """
+        variant = self.assign_variant(user_id)
+        prompt_version = variants[variant]
+
+        prompt = await self.registry.get_prompt(prompt_name, version=prompt_version)
+        compiled = prompt.compile(**input_data)
+
+        result = await self.llm.generate(messages=[{"role": "user", "content": compiled}])
+
+        # Log for analysis: links experiment -> prompt version -> output quality
+        await self.log_experiment_exposure(
+            experiment_id=self.experiment_id,
+            user_id=user_id,
+            variant=variant,
+            prompt_name=prompt_name,
+            prompt_version=prompt_version,
+            result_id=result.id,
+        )
+        return result
+```
+
+For how prompt A/B tests fit into a broader gateway routing architecture, see [Article 42 -- AI Gateways](/agent-42-ai-gateway).
+
+## Structured Output in Production
+
+Getting an LLM to return valid JSON in a demo is easy. Guaranteeing schema compliance at scale -- across thousands of requests per hour, with varying input complexity and multiple model providers -- is a production engineering problem. The tooling has matured significantly: Instructor, Outlines, and native JSON mode each offer different tradeoff points between flexibility, reliability, and vendor coupling. For the foundational techniques (JSON mode, constrained decoding, tool-schema tricks), see [Article 10 -- Structured Output](/agent-10-structured-output). This section focuses on the production patterns that wrap those techniques.
+
+### Instructor: Pydantic-First Structured Output
+
+Instructor patches LLM client libraries to return validated Pydantic models instead of raw strings. It handles retries on validation failure automatically:
+
+```python
+import instructor
+from pydantic import BaseModel, Field, field_validator
+from openai import AsyncOpenAI
+
+client = instructor.from_openai(AsyncOpenAI())
+
+class ExtractedEntity(BaseModel):
+    name: str = Field(description="Entity name")
+    entity_type: str = Field(description="Type: person, organization, location, or product")
+    confidence: float = Field(ge=0.0, le=1.0, description="Extraction confidence")
+
+    @field_validator("entity_type")
+    @classmethod
+    def validate_entity_type(cls, v):
+        allowed = {"person", "organization", "location", "product"}
+        if v.lower() not in allowed:
+            raise ValueError(f"entity_type must be one of {allowed}, got '{v}'")
+        return v.lower()
+
+class ExtractionResult(BaseModel):
+    entities: list[ExtractedEntity]
+    summary: str = Field(max_length=500)
+
+# Instructor validates the response against the Pydantic model.
+# On validation failure, it automatically retries with the error message
+# injected into the prompt, giving the model a chance to self-correct.
+result = await client.chat.completions.create(
+    model="gpt-4o",
+    response_model=ExtractionResult,
+    max_retries=3,
+    messages=[{"role": "user", "content": f"Extract entities from: {document_text}"}],
+)
+
+# result is a validated ExtractionResult instance -- guaranteed by Pydantic
+assert isinstance(result, ExtractionResult)
+for entity in result.entities:
+    assert 0.0 <= entity.confidence <= 1.0
+```
+
+### Runtime Validation Layer
+
+Even with structured output guarantees from the model, a production system should validate outputs at the application boundary. Defense in depth:
+
+```python
+class OutputValidator:
+    """Validate LLM outputs before they reach downstream consumers"""
+
+    def __init__(self, schema_registry):
+        self.schemas = schema_registry
+
+    async def validate_and_repair(self, output, schema_name, repair_attempts=2):
+        schema = self.schemas.get(schema_name)
+
+        # Attempt 1: Direct validation
+        try:
+            return schema.model_validate_json(output)
+        except ValidationError as first_error:
+            pass
+
+        # Attempt 2: Common repairs (strip markdown fences, fix trailing commas)
+        cleaned = self.clean_common_issues(output)
+        try:
+            return schema.model_validate_json(cleaned)
+        except ValidationError:
+            pass
+
+        # Attempt 3: Ask the LLM to fix its own output
+        for attempt in range(repair_attempts):
+            repair_prompt = (
+                f"The following JSON is invalid according to the schema.\n"
+                f"Schema: {schema.model_json_schema()}\n"
+                f"Invalid JSON: {output}\n"
+                f"Validation error: {first_error}\n"
+                f"Return only the corrected JSON."
+            )
+            output = await self.llm.generate(prompt=repair_prompt, temperature=0)
+            try:
+                return schema.model_validate_json(output)
+            except ValidationError:
+                continue
+
+        raise StructuredOutputError(
+            f"Could not produce valid {schema_name} after {repair_attempts + 2} attempts"
+        )
+
+    def clean_common_issues(self, text):
+        """Fix common LLM JSON formatting issues"""
+        # Strip markdown code fences
+        text = re.sub(r"^```(?:json)?\s*\n?", "", text.strip())
+        text = re.sub(r"\n?```\s*$", "", text)
+        # Remove trailing commas before closing brackets
+        text = re.sub(r",\s*([}\]])", r"\1", text)
+        return text.strip()
+```
+
+The validate-and-repair pattern is essential because no single technique guarantees 100% schema compliance across all models, all inputs, and all edge cases. Instructor handles the common case; the validation layer catches the rest.
+
 ## Summary and Key Takeaways
 
 - **Map-reduce, fan-out/fan-in, chain, and router** are the four fundamental patterns for composing LLM calls; most production AI workflows are combinations of these primitives
@@ -892,3 +1386,14 @@ class AIObservability:
 - **Workflow orchestration** with durable execution (Temporal, Inngest) prevents lost work when AI pipeline steps fail
 - **Observability** must track latency, token usage, cost, error rates, and quality metrics per model per feature; without this visibility, cost optimization and quality improvement are impossible
 - **Architecture Decision Records** are particularly valuable for AI systems because the pace of change (new models, new capabilities) makes it critical to document why decisions were made, not just what was decided
+- **Human-in-the-loop** is a design pattern, not a failure mode; confidence-based routing, approval workflows, and escalation triggers let you automate the 80% of requests that are safe while protecting against the 20% that are not
+- **Testing non-deterministic systems** requires a shift from exact-match assertions to property-based testing, semantic similarity snapshots, and statistical pass-rate checks over multiple trials
+- **Prompt management** treats prompts as versioned, deployable artifacts with their own lifecycle (draft, staging, production); Langfuse and similar tools link prompt versions to quality traces, enabling data-driven prompt iteration
+- **Structured output** in production demands defense in depth: Instructor or Outlines for the happy path, plus a validation-and-repair layer at the application boundary to catch the edge cases that no single technique eliminates
+
+## Related Articles
+
+- [Article 31 -- LLM Evaluation Fundamentals](/agent-31-eval-fundamentals): Metrics, datasets, and methodology for measuring the quality assertions used throughout this article.
+- [Article 36 -- CI/CD for AI](/agent-36-ci-cd-ai): Regression testing, continuous evaluation, and eval-driven development workflows that operationalize the testing patterns described here.
+- [Article 40 -- Observability](/agent-40-observability): Tracing, logging, and LLM monitoring -- including Langfuse integration for prompt management and quality tracking.
+- [Article 42 -- AI Gateways](/agent-42-ai-gateway): Rate limiting, fallback chains, and multi-provider routing that complement the router and fallback patterns in this article.

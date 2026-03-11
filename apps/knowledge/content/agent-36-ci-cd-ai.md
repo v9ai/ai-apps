@@ -736,7 +736,7 @@ This approach integrates naturally with the CI/CD pipeline described earlier. Wh
 
 ### Prompt Management with Langfuse
 
-For teams that need to iterate on prompts without code deployments, Langfuse provides a managed prompt registry with built-in versioning, environment promotion, and traceability. See [Article 40: Observability](./agent-40-observability.md) for a deeper treatment of Langfuse's tracing and prompt management capabilities.
+For teams that need to iterate on prompts without code deployments, Langfuse provides a managed prompt registry with built-in versioning, environment promotion, and traceability. See [Article 40: Observability](/agent-40-observability) for a deeper treatment of Langfuse's tracing and prompt management capabilities.
 
 ```python
 from langfuse import Langfuse
@@ -798,7 +798,7 @@ class PromptPerformanceTracker:
         return comparison
 ```
 
-This approach treats prompt engineering as an empirical discipline. Every prompt change is a hypothesis -- "this rewording will improve accuracy on financial queries" -- and the CI/CD pipeline tests that hypothesis against data before deployment. See [Article 31: LLM Evaluation Fundamentals](./agent-31-eval-fundamentals.md) for the evaluation metrics and methodology that underpin these measurements, and [Article 33: LLM-as-Judge](./agent-33-llm-as-judge.md) for automated scoring techniques that make continuous prompt evaluation practical.
+This approach treats prompt engineering as an empirical discipline. Every prompt change is a hypothesis -- "this rewording will improve accuracy on financial queries" -- and the CI/CD pipeline tests that hypothesis against data before deployment. See [Article 31: LLM Evaluation Fundamentals](/agent-31-eval-fundamentals) for the evaluation metrics and methodology that underpin these measurements, and [Article 33: LLM-as-Judge](/agent-33-llm-as-judge) for automated scoring techniques that make continuous prompt evaluation practical.
 
 ## Feature Flags for AI
 
@@ -911,7 +911,7 @@ This pattern enables a rollout cadence that would be impractical with code deplo
 
 This rollout workflow connects directly to the A/B testing infrastructure described earlier in this article. The feature flag assigns the variant, the monitoring system collects quality scores, and the A/B analysis framework determines statistical significance.
 
-For teams building agentic applications, feature flags become essential for controlling tool availability and agent behavior during rollouts. See [Article 30: Agent Evaluation](./agent-30-agent-evaluation.md) for evaluation strategies that validate agent configurations before and during rollout.
+For teams building agentic applications, feature flags become essential for controlling tool availability and agent behavior during rollouts. See [Article 30: Agent Evaluation](/agent-30-agent-evaluation) for evaluation strategies that validate agent configurations before and during rollout.
 
 ## Cost Monitoring in CI/CD
 
@@ -1056,7 +1056,7 @@ class CostGate:
 
 ### Production Cost Monitoring
 
-Cost tracking does not stop at CI/CD. Production cost monitoring completes the picture by connecting deployment decisions to their financial impact. See [Article 39: Cost Optimization](./agent-39-cost-optimization.md) for comprehensive strategies on token economics, caching, and model routing that reduce production costs.
+Cost tracking does not stop at CI/CD. Production cost monitoring completes the picture by connecting deployment decisions to their financial impact. See [Article 39: Cost Optimization](/agent-39-cost-optimization) for comprehensive strategies on token economics, caching, and model routing that reduce production costs.
 
 ```python
 class ProductionCostMonitor:
@@ -1132,8 +1132,8 @@ The organizations that invest in robust CI/CD for AI will iterate faster and shi
 
 ## Related Articles
 
-- [Article 30: Agent Evaluation](./agent-30-agent-evaluation.md) -- Reliability metrics, tool use accuracy, and trajectory analysis for evaluating agentic systems
-- [Article 31: LLM Evaluation Fundamentals](./agent-31-eval-fundamentals.md) -- Metrics, datasets, and methodology that underpin CI/CD evaluation suites
-- [Article 33: LLM-as-Judge](./agent-33-llm-as-judge.md) -- Automated evaluation and calibration techniques for continuous eval pipelines
-- [Article 39: Cost Optimization](./agent-39-cost-optimization.md) -- Token economics, caching, and model routing strategies for controlling production costs
-- [Article 40: Observability](./agent-40-observability.md) -- Tracing, logging, prompt management, and LLM monitoring in production
+- [Article 30: Agent Evaluation](/agent-30-agent-evaluation) -- Reliability metrics, tool use accuracy, and trajectory analysis for evaluating agentic systems
+- [Article 31: LLM Evaluation Fundamentals](/agent-31-eval-fundamentals) -- Metrics, datasets, and methodology that underpin CI/CD evaluation suites
+- [Article 33: LLM-as-Judge](/agent-33-llm-as-judge) -- Automated evaluation and calibration techniques for continuous eval pipelines
+- [Article 39: Cost Optimization](/agent-39-cost-optimization) -- Token economics, caching, and model routing strategies for controlling production costs
+- [Article 40: Observability](/agent-40-observability) -- Tracing, logging, prompt management, and LLM monitoring in production

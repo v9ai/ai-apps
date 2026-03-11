@@ -1,6 +1,14 @@
 # Agent Evaluation: Reliability, Tool Use Accuracy & Trajectory Analysis
 
-Evaluating AI agents presents challenges fundamentally different from evaluating standalone language models. An agent's output is not a single response but a trajectory -- a sequence of reasoning steps, tool calls, observations, and decisions that unfold over time and interact with external systems. Success depends not only on the final answer but on efficiency, cost, reliability, and the quality of intermediate decisions. This article provides a comprehensive examination of agent evaluation methodologies, key benchmarks (AgentBench, SWE-bench, WebArena), metrics that matter, failure taxonomies, trajectory analysis techniques, and the cost-performance tradeoffs that govern production deployment decisions.
+Evaluating AI agents presents challenges fundamentally different from evaluating standalone language models. An agent's output is not a single response but a trajectory -- a sequence of reasoning steps, tool calls, observations, and decisions that unfold over time and interact with external systems. Success depends not only on the final answer but on efficiency, cost, reliability, and the quality of intermediate decisions. This article provides a comprehensive examination of agent evaluation methodologies, key benchmarks (AgentBench, SWE-bench, WebArena, OSWorld, tau-bench), metrics that matter, failure taxonomies, trajectory analysis techniques, safety evaluation, challenges of long-running agent sessions, and the cost-performance tradeoffs that govern production deployment decisions. (For foundational evaluation concepts that apply to LLMs more broadly, see [Article 31: LLM Evaluation Fundamentals](/agent-31-eval-fundamentals).)
+
+## TL;DR
+
+- Agent evaluation is fundamentally different from LLM evaluation: you must assess the full trajectory of steps, tool calls, and side effects -- not just the final answer.
+- Key metrics go beyond accuracy: success rate (pass@1 vs pass@k), efficiency (steps, tokens, cost), tool use accuracy, and safety all need independent measurement.
+- Trajectory analysis is the core technique: record complete execution traces, detect antipatterns (loops, thrashing, error cascades), and classify failures into planning, execution, or grounding categories.
+- Safety is a first-class concern: side-effect detection, permission boundary testing, and resource consumption monitoring must be evaluated explicitly.
+- Long-running agents introduce unique challenges -- memory decay, context drift, and superlinear cost growth -- that short-task benchmarks do not surface.
 
 ## Why Agent Evaluation is Different
 
@@ -421,6 +429,8 @@ tau-bench (Yao et al., 2024) targets real-world customer service and enterprise 
 
 Correctness metrics tell you whether the agent solved the problem. Safety metrics tell you whether it did anything dangerous along the way. In production environments, an agent that solves a task but leaks credentials, exhausts cloud budgets, or modifies resources outside its scope is worse than one that fails cleanly. Safety evaluation requires dedicated test harnesses that go beyond final-answer checking to inspect the full trajectory for harmful behaviors. (For broader adversarial testing methodologies, see [Article 35: Red Teaming & Adversarial Testing](/agent-35-red-teaming).)
 
+> **Note:** Safety evaluation is not optional for production agents. An agent with a 95% success rate but 5% unsafe-action rate is undeployable in most real-world contexts -- treat safety violations as hard failures, not quality penalties.
+
 ### Side-Effect Detection
 
 Agents that interact with external systems -- filesystems, databases, APIs, cloud infrastructure -- can produce unintended side effects. Evaluation must verify that the agent's actions are confined to the intended scope:
@@ -601,6 +611,8 @@ Using an LLM-as-judge to flag suspicious tool usage introduces its own limitatio
 ## Evaluating Long-Running Agents
 
 Most agent benchmarks evaluate tasks that complete in seconds or minutes. But a growing class of production agents runs for hours or days -- monitoring dashboards, managing deployment pipelines, handling multi-step customer support workflows, or conducting research across many sources. Evaluating these long-running agents introduces challenges that short-task benchmarks do not surface.
+
+> **Tip:** When designing evaluation harnesses for long-running agents, always include checkpoint-based evaluation in addition to final-outcome scoring. A progress curve revealing that an agent plateaued at step 20 of 100 is far more actionable than a binary pass/fail result.
 
 ### Memory Decay
 
@@ -1061,3 +1073,12 @@ class AgentEvaluationFramework:
 - **Reliability engineering** for agents includes retry with variation, consensus execution, budget constraints, and continuous monitoring with alerting on antipatterns. (For integrating evaluations into deployment pipelines, see [Article 36: CI/CD for AI](/agent-36-ci-cd-ai).)
 - **pass@1 versus pass@k** reveals consistency. A large gap indicates the agent can solve the problem but does so unreliably -- this distinction matters enormously for production deployment decisions.
 - **Automated evaluation pipelines** that run regularly, track trends, and alert on regressions are essential for maintaining agent quality in production. Agent behavior can shift due to model updates, tool changes, or environmental factors. Using [LLM-as-Judge](/agent-33-llm-as-judge) for automated trajectory assessment scales evaluation beyond what manual review can cover.
+
+## Key Takeaways
+
+- **Always record full trajectories in production** -- you cannot retroactively diagnose a failure without the complete sequence of thoughts, tool calls, and observations.
+- **Use pass@1 and pass@k together**: a large gap signals that your agent can solve the problem but does so unreliably -- a deployment risk, not just a quality issue.
+- **Build safety evaluation into your CI/CD pipeline**: run side-effect detection, permission boundary tests, and resource consumption checks on every agent version before deploying.
+- **Apply a failure taxonomy proactively**: categorizing failures into planning, execution, and grounding types tells you where to invest improvement effort rather than just how often things go wrong.
+- **Benchmark on multiple suites**: SWE-bench covers software engineering; WebArena covers web navigation; tau-bench tests policy compliance. No single benchmark reveals the full picture.
+- **Model cost selection is an evaluation decision**: always report cost-per-success alongside success rate -- a cheaper hybrid model strategy that scores 63% at $0.44/success can outperform a frontier model scoring 72% at $1.18/success depending on your budget constraints.

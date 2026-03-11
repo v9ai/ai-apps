@@ -332,10 +332,10 @@ Learned sparse representations have distinct advantages in several scenarios:
 
 - **Entity-heavy queries**: Dense embeddings can struggle with rare proper nouns, product codes, or identifiers that had limited representation in training data. SPLADE preserves exact lexical matching while adding semantic expansion.
 - **Interpretability requirements**: Because SPLADE vectors are over vocabulary terms, you can inspect exactly which terms contributed to a match -- a significant advantage for debugging retrieval failures or building user-facing explanations.
-- **Infrastructure compatibility**: SPLADE vectors can be stored in traditional inverted indexes (Lucene, Elasticsearch) alongside BM25, avoiding the need for a separate [vector database](agent-14-vector-databases.md). This makes adoption dramatically simpler for teams with existing search infrastructure.
+- **Infrastructure compatibility**: SPLADE vectors can be stored in traditional inverted indexes (Lucene, Elasticsearch) alongside BM25, avoiding the need for a separate [vector database](/agent-14-vector-databases). This makes adoption dramatically simpler for teams with existing search infrastructure.
 - **Out-of-domain robustness**: On the BEIR benchmark, SPLADE models consistently outperform dense retrievers on out-of-domain datasets, likely because the lexical component provides a reliable fallback when semantic matching fails.
 
-The practical takeaway is that SPLADE is not a replacement for dense embeddings but a complementary signal. BGE-M3 (discussed in the model comparison section) embodies this insight by producing dense, sparse, and multi-vector representations from a single model. Hybrid retrieval strategies that combine dense and sparse scores are covered in depth in [Article 16: Retrieval Strategies](agent-16-retrieval-strategies.md).
+The practical takeaway is that SPLADE is not a replacement for dense embeddings but a complementary signal. BGE-M3 (discussed in the model comparison section) embodies this insight by producing dense, sparse, and multi-vector representations from a single model. Hybrid retrieval strategies that combine dense and sparse scores are covered in depth in [Article 16: Retrieval Strategies](/agent-16-retrieval-strategies).
 
 ## Multimodal Embeddings
 
@@ -409,7 +409,7 @@ Different embedding providers expose this capability through varying interfaces:
 
 The effectiveness of instruction prefixes stems from a fundamental asymmetry in embedding tasks. In retrieval, queries are short and express information needs, while documents are long and express information content. A single embedding function must somehow handle both sides of this asymmetry. Instruction prefixes provide the model with explicit signal about which side of the retrieval pair it is encoding, allowing it to adjust the representation accordingly.
 
-Empirically, instruction-prefixed models show the largest gains on retrieval tasks (3-5% improvement in nDCG@10 on MTEB retrieval benchmarks) and smaller gains on symmetric tasks like STS where both inputs play the same role. This connects directly to the tokenization choices discussed in [Article 3: Tokenization](agent-03-tokenization.md) -- the instruction prefix consumes tokens from the model's context window, which matters more for short inputs where the prefix represents a larger fraction of the total token count.
+Empirically, instruction-prefixed models show the largest gains on retrieval tasks (3-5% improvement in nDCG@10 on MTEB retrieval benchmarks) and smaller gains on symmetric tasks like STS where both inputs play the same role. This connects directly to the tokenization choices discussed in [Article 3: Tokenization](/agent-03-tokenization) -- the instruction prefix consumes tokens from the model's context window, which matters more for short inputs where the prefix represents a larger fraction of the total token count.
 
 ## Dimensionality, Context Length, and Practical Trade-offs
 
@@ -428,18 +428,18 @@ For most RAG applications, 768-1024 dimensions provide the best accuracy-cost tr
 
 ### Context Length Considerations
 
-Embedding models have maximum context lengths ranging from 512 tokens (older models) to 8192+ tokens (modern models). However, longer inputs don't always produce better embeddings -- the mean-pooling operation can dilute signal when averaging over many tokens. This is why chunking strategy is critical -- see [Article 15: Chunking Strategies](agent-15-chunking-strategies.md) for a full treatment of how splitting decisions interact with embedding quality.
+Embedding models have maximum context lengths ranging from 512 tokens (older models) to 8192+ tokens (modern models). However, longer inputs don't always produce better embeddings -- the mean-pooling operation can dilute signal when averaging over many tokens. This is why chunking strategy is critical -- see [Article 15: Chunking Strategies](/agent-15-chunking-strategies) for a full treatment of how splitting decisions interact with embedding quality.
 
 ## Summary and Key Takeaways
 
 - **Contrastive learning** is the dominant training paradigm for embedding models, with in-batch negatives and hard negative mining being the most impactful design choices.
-- **Similarity metrics** (cosine, dot product, euclidean) are closely related for normalized vectors; always match the metric to the model's training objective and the distance metric configured in your [vector database](agent-14-vector-databases.md).
+- **Similarity metrics** (cosine, dot product, euclidean) are closely related for normalized vectors; always match the metric to the model's training objective and the distance metric configured in your [vector database](/agent-14-vector-databases).
 - **Matryoshka embeddings** enable flexible dimensionality trade-offs without retraining, offering significant cost savings.
-- **Learned sparse representations** (SPLADE) complement dense embeddings, combining semantic expansion with lexical precision. They are especially valuable in [hybrid retrieval pipelines](agent-16-retrieval-strategies.md) that fuse dense and sparse scores.
+- **Learned sparse representations** (SPLADE) complement dense embeddings, combining semantic expansion with lexical precision. They are especially valuable in [hybrid retrieval pipelines](/agent-16-retrieval-strategies) that fuse dense and sparse scores.
 - **Multimodal embeddings** (CLIP, SigLIP) extend the embedding paradigm to cross-modal retrieval, enabling unified search across text and images.
-- **Instruction-prefixed embeddings** improve retrieval quality by conditioning representations on the intended task -- a design that interacts with [tokenization](agent-03-tokenization.md) choices since prefixes consume context tokens.
+- **Instruction-prefixed embeddings** improve retrieval quality by conditioning representations on the intended task -- a design that interacts with [tokenization](/agent-03-tokenization) choices since prefixes consume context tokens.
 - **MTEB and domain-specific benchmarks** are essential for model selection, but retrieval-specific performance on your domain matters more than aggregate scores.
 - **Open-source models** (BGE, E5, GTE, Nomic, Jina) have largely closed the gap with proprietary offerings (OpenAI, Cohere, Voyage) and offer cost advantages at scale.
 - **Fine-tuning with synthetic data** is a practical, accessible technique for domain adaptation, but requires care to avoid catastrophic forgetting.
 - The field is converging on **LLM-backbone embeddings** (7B+ parameter models), which achieve the highest quality but at significant inference cost -- a trade-off that quantization and distillation are actively addressing.
-- Embedding quality sets the ceiling for retrieval quality. Invest in evaluation before committing: the right model depends on your domain, your [chunking strategy](agent-15-chunking-strategies.md), and your latency budget.
+- Embedding quality sets the ceiling for retrieval quality. Invest in evaluation before committing: the right model depends on your domain, your [chunking strategy](/agent-15-chunking-strategies), and your latency budget.

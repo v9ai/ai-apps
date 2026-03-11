@@ -308,7 +308,7 @@ The interaction between data ordering and learning rate schedules is an active a
 
 **Cyclical curricula**: Rather than a single general-to-specific transition, recent work explores cyclical data orderings that alternate between general and domain-specific batches within each epoch. This interleaving prevents the model from "settling" into a domain-specific loss basin and forgetting general capabilities. Empirically, cyclical curricula with a constant or slowly decaying learning rate often match or outperform linear transitions while being simpler to implement.
 
-**Difficulty-aware scheduling**: Building on the curriculum learning ideas from pre-training (see [Pre-training: Data Curation, Objectives & Curriculum](/knowledge/agent-06-pretraining-data)), difficulty-aware continual pre-training orders domain-specific data by perplexity under the base model. Documents with moderate perplexity (novel but not incomprehensible) are presented first, followed by higher-perplexity material. This prevents the model from encountering highly out-of-distribution text before it has built intermediate representations, reducing the gradient variance that drives forgetting.
+**Difficulty-aware scheduling**: Building on the curriculum learning ideas from pre-training (see [Pre-training: Data Curation, Objectives & Curriculum](/agent-06-pretraining-data)), difficulty-aware continual pre-training orders domain-specific data by perplexity under the base model. Documents with moderate perplexity (novel but not incomprehensible) are presented first, followed by higher-perplexity material. This prevents the model from encountering highly out-of-distribution text before it has built intermediate representations, reducing the gradient variance that drives forgetting.
 
 **Practical recommendation**: For continual pre-training runs, pair a WSD learning rate schedule with a two-phase curriculum -- (1) mixed general/domain data at the stable learning rate for 70-80% of training, then (2) domain-heavy data during the decay phase. This combines the retention benefits of data mixing with the efficiency of focused domain training during annealing, mirroring the phase-based approach that has become standard in initial pre-training.
 
@@ -401,7 +401,7 @@ legal_model.save_pretrained("legal-adapter")
 # Base model knowledge is perfectly preserved in both cases
 ```
 
-This approach trades off integrated multi-task performance (the model can only do one domain at a time) for guaranteed knowledge retention. For a full treatment of LoRA mechanics, rank selection, and QLoRA, see [LoRA, QLoRA & Adapter Methods](/knowledge/agent-20-lora-adapters).
+This approach trades off integrated multi-task performance (the model can only do one domain at a time) for guaranteed knowledge retention. For a full treatment of LoRA mechanics, rank selection, and QLoRA, see [LoRA, QLoRA & Adapter Methods](/agent-20-lora-adapters).
 
 ## Case Studies in Domain Adaptation
 
@@ -436,11 +436,11 @@ The typical pipeline for multilingual adaptation adds a preliminary step: **voca
 
 Continual pre-training then proceeds on a mix of target-language text (60-80%) and English text (20-40%), with the English component serving as both a retention mechanism and a cross-lingual alignment signal. Learning rates are typically higher than in same-language domain adaptation because the model must learn fundamentally new representations (new token embeddings, new syntactic patterns) rather than refining existing ones.
 
-A common failure mode in multilingual adaptation is "translationese" -- the model learns to generate the target language but with English syntax and phrasing patterns, producing text that is grammatically correct but stylistically unnatural. This is mitigated by ensuring the target-language training data includes diverse registers and native text rather than translated content. This connects to the broader pre-training data quality concerns discussed in [Pre-training: Data Curation, Objectives & Curriculum](/knowledge/agent-06-pretraining-data), where data provenance and quality filtering directly affect model behavior.
+A common failure mode in multilingual adaptation is "translationese" -- the model learns to generate the target language but with English syntax and phrasing patterns, producing text that is grammatically correct but stylistically unnatural. This is mitigated by ensuring the target-language training data includes diverse registers and native text rather than translated content. This connects to the broader pre-training data quality concerns discussed in [Pre-training: Data Curation, Objectives & Curriculum](/agent-06-pretraining-data), where data provenance and quality filtering directly affect model behavior.
 
 ## Model Merging as an Alternative to Sequential Training
 
-The continual learning methods discussed above -- EWC, replay, distillation, data mixing -- all address forgetting within a single sequential training run. Model merging takes a fundamentally different approach: train multiple specialized models independently from the same base, then combine their weights into a single multi-domain model without any additional training. For a detailed treatment of merging algorithms and tooling, see [Distillation & Model Compression](/knowledge/agent-24-distillation-compression).
+The continual learning methods discussed above -- EWC, replay, distillation, data mixing -- all address forgetting within a single sequential training run. Model merging takes a fundamentally different approach: train multiple specialized models independently from the same base, then combine their weights into a single multi-domain model without any additional training. For a detailed treatment of merging algorithms and tooling, see [Distillation & Model Compression](/agent-24-distillation-compression).
 
 ### Why Merging Sidesteps Forgetting
 
@@ -470,7 +470,7 @@ Continual learning is preferable when:
 - You need tight control over the performance balance between domains
 - The adaptation involves capability extension (longer context, new modalities) rather than knowledge injection
 
-In practice, the two approaches are often combined. A team might use continual pre-training to adapt a base model to a broad domain (e.g., all of biomedicine), then train multiple SFT specialists from that checkpoint (radiology, genomics, clinical notes), and finally merge the SFT specialists using TIES or DARE. This hybrid pipeline captures the benefits of deep domain adaptation from continual pre-training and the forgetting-free combination of narrow specializations from merging. The fine-tuning fundamentals discussed in [Fine-tuning Fundamentals](/knowledge/agent-19-fine-tuning-fundamentals) apply at each stage of this pipeline, from learning rate selection to evaluation strategy.
+In practice, the two approaches are often combined. A team might use continual pre-training to adapt a base model to a broad domain (e.g., all of biomedicine), then train multiple SFT specialists from that checkpoint (radiology, genomics, clinical notes), and finally merge the SFT specialists using TIES or DARE. This hybrid pipeline captures the benefits of deep domain adaptation from continual pre-training and the forgetting-free combination of narrow specializations from merging. The fine-tuning fundamentals discussed in [Fine-tuning Fundamentals](/agent-19-fine-tuning-fundamentals) apply at each stage of this pipeline, from learning rate selection to evaluation strategy.
 
 ## Emerging Approaches
 
@@ -499,5 +499,5 @@ Recent work on continual instruction tuning explores how to add new instruction-
 - **Continual pre-training** requires careful data mixing (60-70% domain, 30-40% general), lower learning rates, and continuous regression monitoring. Curriculum ordering should be aligned with the learning rate schedule -- pairing WSD schedules with phased curricula is a reliable default.
 - **Domain adaptation case studies** (CodeLlama, BioMistral, multilingual models) confirm that data volume, general-domain replay, and conservative learning rates are the dominant factors in successful continual pre-training. Omitting general-domain replay consistently increases regression on general benchmarks.
 - **Model merging** (TIES, DARE, SLERP) offers a forgetting-free alternative to sequential training by combining independently trained specialists. It is most effective when domains are well-separated and can be combined with continual pre-training in hybrid pipelines.
-- **LoRA adapters** provide a natural continual learning solution by keeping the base model frozen and training separate adapters per domain, at the cost of single-domain inference (see [LoRA, QLoRA & Adapter Methods](/knowledge/agent-20-lora-adapters)).
+- **LoRA adapters** provide a natural continual learning solution by keeping the base model frozen and training separate adapters per domain, at the cost of single-domain inference (see [LoRA, QLoRA & Adapter Methods](/agent-20-lora-adapters)).
 - The practical recipe is: **establish baselines, mix domain and general data, use conservative learning rates with WSD scheduling, monitor regression continuously, and stop early if general capabilities degrade**.
