@@ -1,6 +1,6 @@
 # Fine-tuning Fundamentals: Full, Freeze & Transfer Learning
 
-Fine-tuning pre-trained language models remains the most reliable method for adapting general-purpose models to domain-specific tasks, yet the decision space around when, how, and whether to fine-tune has grown considerably. This article examines the mechanics of full fine-tuning, feature extraction, and transfer learning strategies, covering learning rate scheduling, catastrophic forgetting mitigation, and the practical economics of fine-tuning versus prompt engineering. Understanding these fundamentals is essential before exploring parameter-efficient methods like LoRA or reinforcement learning from human feedback.
+Fine-tuning pre-trained language models remains the most reliable method for adapting general-purpose models to domain-specific tasks, yet the decision space around when, how, and whether to fine-tune has grown considerably. This article examines the mechanics of full fine-tuning, feature extraction, and transfer learning strategies, covering supervised fine-tuning (SFT) for instruction following, learning rate scheduling, catastrophic forgetting mitigation, mixed-precision and distributed training, and the practical economics of fine-tuning versus prompt engineering. Understanding these fundamentals is essential before exploring parameter-efficient methods like [LoRA](/knowledge/agent-20-lora-adapters) or reinforcement learning from human feedback.
 
 ## The Transfer Learning Paradigm
 
@@ -114,6 +114,199 @@ def gradual_unfreeze(model, epoch, total_layers):
         for param in model.encoder.layer[i].parameters():
             param.requires_grad = True
 ```
+
+## SFT for Instruction Following
+
+Supervised fine-tuning (SFT) for instruction following is the dominant modern fine-tuning use case. Rather than appending a classification head, SFT trains a causal language model to generate helpful responses given conversational prompts. This is the process that transforms a raw pre-trained model into a useful assistant, and it is the first stage of the alignment pipeline that precedes RLHF or DPO.
+
+### Conversation Data Format
+
+SFT datasets consist of multi-turn conversations formatted as sequences of role-tagged messages. The standard format mirrors the OpenAI chat schema:
+
+```json
+{
+  "messages": [
+    {"role": "system", "content": "You are a helpful coding assistant."},
+    {"role": "user", "content": "Write a Python function to compute Fibonacci numbers."},
+    {"role": "assistant", "content": "Here is an efficient implementation using memoization:\n\n```python\nfrom functools import lru_cache\n\n@lru_cache(maxsize=None)\ndef fibonacci(n: int) -> int:\n    if n < 2:\n        return n\n    return fibonacci(n - 1) + fibonacci(n - 2)\n```"}
+  ]
+}
+```
+
+Each conversation is serialized into a single token sequence using a **chat template** -- a model-specific format that inserts special tokens to delimit roles and turns. For Llama 3, this looks like `<|begin_of_text|><|start_header_id|>system<|end_header_id|>...`. The tokenizer handles this automatically:
+
+```python
+from transformers import AutoTokenizer
+
+tokenizer = AutoTokenizer.from_pretrained("meta-llama/Llama-3.1-8B-Instruct")
+
+messages = [
+    {"role": "user", "content": "Explain gradient descent in one sentence."},
+    {"role": "assistant", "content": "Gradient descent iteratively adjusts parameters in the direction that reduces the loss function."}
+]
+
+# apply_chat_template serializes the conversation with proper special tokens
+formatted = tokenizer.apply_chat_template(messages, tokenize=False)
+```
+
+Getting the chat template right is critical. A mismatch between the template used during SFT and the one used at inference causes degraded performance, as the model encounters token patterns it was not trained on.
+
+### Loss Masking on Prompt Tokens
+
+A key detail that distinguishes SFT from naive language model training is **loss masking**: the cross-entropy loss is computed only on assistant response tokens, not on user or system prompt tokens. The model should learn to *generate* good responses, not to *predict* user messages.
+
+In practice, this is implemented by setting labels to `-100` (the PyTorch cross-entropy ignore index) for all non-assistant tokens:
+
+```python
+def mask_prompt_tokens(input_ids, assistant_start_positions, assistant_end_positions):
+    """Create labels with -100 for prompt tokens, actual token IDs for assistant tokens."""
+    labels = input_ids.clone()
+    labels[:] = -100  # Mask everything by default
+
+    for start, end in zip(assistant_start_positions, assistant_end_positions):
+        labels[start:end] = input_ids[start:end]  # Unmask assistant tokens
+
+    return labels
+```
+
+Without loss masking, the model wastes capacity learning to reproduce prompt tokens, which can degrade generation quality and slow convergence. The effect is especially pronounced when system prompts are long relative to responses.
+
+### The TRL SFTTrainer
+
+The Transformer Reinforcement Learning (TRL) library by Hugging Face provides `SFTTrainer`, which handles chat template application, loss masking, and dataset formatting automatically. This has become the standard tool for instruction tuning:
+
+```python
+from trl import SFTTrainer, SFTConfig
+from transformers import AutoModelForCausalLM, AutoTokenizer
+from datasets import load_dataset
+
+model_name = "meta-llama/Llama-3.1-8B"
+model = AutoModelForCausalLM.from_pretrained(model_name, torch_dtype="bfloat16")
+tokenizer = AutoTokenizer.from_pretrained(model_name)
+
+dataset = load_dataset("json", data_files="sft_data.jsonl", split="train")
+
+sft_config = SFTConfig(
+    output_dir="./sft-output",
+    num_train_epochs=3,
+    per_device_train_batch_size=2,
+    gradient_accumulation_steps=8,
+    learning_rate=2e-5,
+    lr_scheduler_type="cosine",
+    warmup_ratio=0.1,
+    bf16=True,
+    logging_steps=10,
+    save_strategy="steps",
+    save_steps=200,
+    max_seq_length=4096,
+)
+
+trainer = SFTTrainer(
+    model=model,
+    args=sft_config,
+    train_dataset=dataset,
+    processing_class=tokenizer,
+)
+
+trainer.train()
+```
+
+`SFTTrainer` expects the dataset to contain a `"messages"` column in the standard chat format. It applies the model's chat template, handles tokenization and packing, and masks prompt tokens from the loss automatically. For details on curating high-quality instruction datasets, see [Dataset Curation: Synthetic Data, Quality Filtering & Annotation](/knowledge/agent-22-dataset-curation).
+
+## Mixed-Precision Training
+
+Training large models in full float32 precision is both memory-prohibitive and unnecessarily slow on modern hardware. Mixed-precision training performs most computations in a lower-precision format while maintaining a master copy of weights in higher precision for numerical stability.
+
+### bf16 vs fp16
+
+Two 16-bit formats are commonly used, and the choice matters:
+
+**fp16 (float16)** uses 5 exponent bits and 10 mantissa bits. It offers 2x memory savings and significant speedups on tensor cores (available since V100). However, its limited dynamic range (max value ~65,504) means that gradient values can overflow or underflow during training. This requires **loss scaling** -- multiplying the loss by a large constant before the backward pass, then dividing gradients by the same constant before the optimizer step. The Hugging Face `Trainer` handles this automatically when `fp16=True`.
+
+**bf16 (bfloat16)** uses 8 exponent bits (same range as float32) and 7 mantissa bits. It matches float32's dynamic range, eliminating overflow/underflow issues and making loss scaling unnecessary. The tradeoff is slightly lower precision than fp16 in the mantissa, but this is rarely a problem for training. bf16 requires Ampere (A100) or newer GPUs.
+
+```python
+# Use bf16 on A100/H100 hardware (preferred)
+training_args = TrainingArguments(
+    bf16=True,       # bfloat16 -- no loss scaling needed
+    # ...
+)
+
+# Use fp16 on V100 or older hardware
+training_args = TrainingArguments(
+    fp16=True,       # float16 with automatic loss scaling
+    # ...
+)
+```
+
+**Practical guidance**: Use bf16 whenever hardware supports it (A100, H100, AMD MI300X). Fall back to fp16 on V100s. Never use both flags simultaneously. If you encounter NaN losses with fp16, try reducing the learning rate or switching to bf16 if possible. For more on quantization during inference, see [Inference Optimization: KV Cache, Quantization & Speculative Decoding](/knowledge/agent-05-inference-optimization).
+
+## Distributed Training Essentials
+
+Full fine-tuning of models above 7B parameters requires distributing computation across multiple GPUs. The two dominant frameworks are PyTorch FSDP and DeepSpeed ZeRO, both of which shard optimizer states, gradients, and optionally parameters across devices to reduce per-GPU memory consumption.
+
+### FSDP vs DeepSpeed ZeRO
+
+**DeepSpeed ZeRO** (Rajbhandari et al., 2020) defines three sharding stages:
+
+- **ZeRO Stage 1**: Shards optimizer states only. Reduces memory by ~4x for Adam (which stores two state tensors per parameter). Minimal communication overhead.
+- **ZeRO Stage 2**: Shards optimizer states and gradients. Further reduces memory with a small communication cost for gradient reduction.
+- **ZeRO Stage 3**: Shards optimizer states, gradients, and parameters. Maximum memory savings but highest communication cost, as parameters must be gathered for each forward/backward pass.
+
+**PyTorch FSDP** (Fully Sharded Data Parallel) is PyTorch's native answer to ZeRO Stage 3. It shards parameters, gradients, and optimizer states, with configurable sharding strategies. FSDP integrates cleanly with the PyTorch ecosystem and is the recommended approach for new projects since it does not require an external library.
+
+### When to Use Each
+
+| Scenario | Recommended Approach |
+|----------|---------------------|
+| 7B model, single GPU (80GB) | No distribution needed; bf16 is sufficient |
+| 7B model, 2-4 GPUs | FSDP or ZeRO Stage 2 |
+| 13B-34B model, 4-8 GPUs | FSDP or ZeRO Stage 3 |
+| 70B+ model, 8+ GPUs | ZeRO Stage 3 with offloading, or FSDP |
+| Already using HF Trainer | Either; both have Trainer integration |
+
+### Practical Configuration
+
+Both frameworks integrate with the Hugging Face `Trainer` via Accelerate configuration files:
+
+```yaml
+# accelerate_config.yaml for FSDP
+compute_environment: LOCAL_MACHINE
+distributed_type: FSDP
+fsdp_config:
+  fsdp_sharding_strategy: FULL_SHARD         # equivalent to ZeRO-3
+  fsdp_auto_wrap_policy: TRANSFORMER_BASED_WRAP
+  fsdp_transformer_layer_cls_to_wrap: LlamaDecoderLayer
+  fsdp_backward_prefetch_policy: BACKWARD_PRE
+  fsdp_state_dict_type: SHARDED_STATE_DICT
+mixed_precision: bf16
+num_machines: 1
+num_processes: 4                              # number of GPUs
+```
+
+Launch training with:
+
+```bash
+accelerate launch --config_file accelerate_config.yaml train.py
+```
+
+For DeepSpeed, a JSON configuration file specifies the ZeRO stage and optimization settings:
+
+```json
+{
+  "bf16": {"enabled": true},
+  "zero_optimization": {
+    "stage": 2,
+    "allgather_partitions": true,
+    "reduce_scatter": true,
+    "overlap_comm": true
+  },
+  "gradient_accumulation_steps": 4,
+  "train_micro_batch_size_per_gpu": 2
+}
+```
+
+In general, start with the simplest configuration that fits your model in memory and scale up sharding only when needed. Each additional ZeRO stage or FSDP sharding level increases communication overhead and can reduce training throughput. For considerations around serving the resulting model, see [LLM Serving: API Design, Batching & Streaming](/knowledge/agent-37-llm-serving).
 
 ## Learning Rate Scheduling
 

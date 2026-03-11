@@ -67,6 +67,7 @@ interface BatchEmailModalProps {
   onOpenChange: (open: boolean) => void;
   recipients: Recipient[];
   jobContext?: JobContext;
+  defaultUseScheduler?: boolean;
 }
 
 type ModalState = "compose" | "sending" | "done";
@@ -76,6 +77,7 @@ export function BatchEmailModal({
   onOpenChange,
   recipients,
   jobContext,
+  defaultUseScheduler,
 }: BatchEmailModalProps) {
   const [subject, setSubject] = useState("");
   const [body, setBody] = useState("");
@@ -86,7 +88,7 @@ export function BatchEmailModal({
   const [genError, setGenError] = useState<string | null>(null);
   const [instructions, setInstructions] = useState("");
   const [companyName, setCompanyName] = useState("");
-  const [useScheduler, setUseScheduler] = useState(false);
+  const [useScheduler, setUseScheduler] = useState(defaultUseScheduler ?? false);
   const [showRecipients, setShowRecipients] = useState(false);
 
   function resetForm() {
@@ -99,7 +101,7 @@ export function BatchEmailModal({
     setGenError(null);
     setInstructions("");
     setCompanyName("");
-    setUseScheduler(false);
+    setUseScheduler(defaultUseScheduler ?? false);
     setShowRecipients(false);
   }
 

@@ -4,7 +4,7 @@ Function calling has emerged as the foundational mechanism through which large l
 
 ## The Evolution of Function Calling
 
-Before dedicated function calling APIs existed, developers resorted to prompt engineering: instructing the model to output JSON in a particular format, then parsing the result with fragile regex or string matching. This approach was error-prone, with models frequently producing malformed output, hallucinating function names, or embedding function calls within conversational text that resisted reliable extraction.
+Before dedicated function calling APIs existed, developers resorted to prompt engineering: instructing the model to output JSON in a particular format, then parsing the result with fragile regex or string matching. This approach was error-prone, with models frequently producing malformed output, hallucinating function names, or embedding function calls within conversational text that resisted reliable extraction (see also [Article 10: Structured Output](agent-10-structured-output.md) for how constrained decoding solves the output formatting problem more broadly).
 
 OpenAI's introduction of function calling in June 2023 marked a turning point. By moving tool definitions into a structured API parameter, the model could be trained to produce tool invocations as structured objects rather than freeform text. This architectural decision -- separating the tool invocation channel from the conversational channel -- solved the parsing problem and opened the door to reliable agent systems.
 
@@ -247,7 +247,7 @@ def get_tools_for_context(user_role, context):
 
 ### Human-in-the-Loop Confirmation
 
-For high-stakes operations, requiring user confirmation before execution:
+For high-stakes operations, requiring user confirmation before execution (see [Article 12: Adversarial Prompting](agent-12-adversarial-prompting.md) for why this is especially critical when user inputs may contain injected tool instructions):
 
 ```python
 async def execute_with_confirmation(tool_call, user_session):
@@ -329,7 +329,7 @@ tool_result_message = {
 # The model can then retry with the correct filename
 ```
 
-This error-retry loop is one of the most powerful patterns in agent systems. Research from Microsoft (Patil et al., "Gorilla: Large Language Model Connected with Massive APIs," 2023) shows that models can effectively recover from errors when given clear error messages and contextual hints.
+This error-retry loop is one of the most powerful patterns in agent systems and forms the backbone of the ReAct loop discussed in [Article 26: Agent Architectures](agent-26-agent-architectures.md). Research from Microsoft (Patil et al., "Gorilla: Large Language Model Connected with Massive APIs," 2023) shows that models can effectively recover from errors when given clear error messages and contextual hints.
 
 ## Tool Result Injection and Context Management
 
@@ -445,6 +445,230 @@ class CostTracker:
             context["result"] = {"error": "Budget exceeded for this session"}
         return context
 ```
+
+## Model Context Protocol (MCP)
+
+While function calling APIs solved the problem of how a model invokes tools, each provider implemented its own schema format, transport mechanism, and tool lifecycle. Anthropic's Model Context Protocol (MCP), introduced in late 2024, addresses this fragmentation by defining an open standard for how AI applications discover, connect to, and interact with external tools and data sources.
+
+### Protocol Architecture
+
+MCP follows a client-server architecture inspired by the Language Server Protocol (LSP) from the IDE world. An MCP server exposes a set of capabilities -- tools, resources (readable data), and prompts (reusable templates) -- through a standardized JSON-RPC 2.0 transport. An MCP client (typically an AI application or agent framework) connects to one or more servers and presents their capabilities to the model as available tools.
+
+The key insight is the separation of concerns: tool *implementation* lives in the MCP server, tool *selection* and *invocation* are handled by the model through the client, and the protocol layer handles discovery, schema negotiation, and transport.
+
+```python
+# Example: MCP server exposing a database query tool
+from mcp.server import Server
+from mcp.types import Tool
+
+server = Server("database-server")
+
+@server.tool()
+async def query_database(sql: str, database: str = "production") -> str:
+    """Execute a read-only SQL query against the specified database.
+
+    Args:
+        sql: The SQL query to execute (SELECT only)
+        database: Target database name
+    """
+    # MCP handles schema generation from type hints and docstring
+    result = await db_pool.execute(sql, database=database)
+    return format_results(result)
+
+# Transport: stdio for local, SSE/HTTP for remote
+server.run(transport="stdio")
+```
+
+### Why MCP Matters
+
+Before MCP, integrating a tool required writing provider-specific adapters. A Slack integration for OpenAI's API looked different from one for Anthropic's API, even though the underlying capability was identical. MCP makes tools portable: a single MCP server for Slack works with any MCP-compatible client, whether that client uses Claude, GPT, or a local model.
+
+MCP servers have been built for databases (Postgres, SQLite), file systems, version control (GitHub, GitLab), communication platforms (Slack, email), and development tools (Docker, Kubernetes). This emerging ecosystem means that agent builders can compose capabilities from pre-built servers rather than implementing each integration from scratch -- a pattern that mirrors how microservices compose into larger systems, as explored in [Article 26: Agent Architectures](agent-26-agent-architectures.md).
+
+### Dynamic Tool Discovery
+
+Unlike static tool definitions passed in the API's `tools` parameter, MCP supports dynamic discovery. A client can query a server for its available tools at runtime, and servers can add or remove tools based on context. This is particularly powerful for enterprise environments where available tools change based on user permissions, deployment environment, or time of day.
+
+## Tool Selection at Scale
+
+Early function calling demos featured three to five tools. Production agent systems routinely expose fifty or more. At this scale, including every tool definition in every request becomes impractical: it consumes context window tokens, increases latency, confuses the model with irrelevant options, and degrades selection accuracy.
+
+### Retrieval-Augmented Tool Selection
+
+The most effective approach borrows from RAG: embed tool descriptions into a vector store and retrieve only the relevant tools for each query.
+
+```python
+from sentence_transformers import SentenceTransformer
+import numpy as np
+
+class ToolSelector:
+    def __init__(self, tools: list[dict]):
+        self.encoder = SentenceTransformer("all-MiniLM-L6-v2")
+        self.tools = tools
+        descriptions = [
+            f"{t['name']}: {t['description']}" for t in tools
+        ]
+        self.embeddings = self.encoder.encode(descriptions)
+
+    def select(self, query: str, top_k: int = 8) -> list[dict]:
+        query_emb = self.encoder.encode([query])
+        scores = np.dot(self.embeddings, query_emb.T).flatten()
+        top_indices = np.argsort(scores)[-top_k:][::-1]
+        return [self.tools[i] for i in top_indices]
+
+# Usage: only pass relevant tools to the model
+selector = ToolSelector(all_tools)
+relevant_tools = selector.select(user_message)
+response = client.chat.completions.create(
+    model="gpt-4o",
+    messages=messages,
+    tools=relevant_tools
+)
+```
+
+This pattern reduces context usage while improving selection accuracy: models perform better when choosing from eight relevant tools than from sixty mostly-irrelevant ones.
+
+### Hierarchical Tool Organization
+
+An alternative to retrieval is a two-stage selection process. First, the model selects a tool *category*, then a second call with only that category's tools selects the specific tool:
+
+```python
+categories = [
+    {"name": "communication", "description": "Email, Slack, SMS, notifications"},
+    {"name": "data_analysis", "description": "SQL queries, data visualization, statistics"},
+    {"name": "file_management", "description": "Read, write, search, organize files"},
+]
+
+# Stage 1: select category
+category = select_category(user_query, categories)
+# Stage 2: select and call specific tool from that category
+category_tools = tool_registry.get_tools(category)
+response = call_model_with_tools(messages, category_tools)
+```
+
+This mirrors how humans navigate complex tool sets -- you open the right application before looking for the specific feature.
+
+### Dynamic Tool Filtering
+
+Context-based filtering reduces the tool set without semantic search. Tools can be tagged with metadata (required permissions, applicable domains, preconditions) and filtered before inclusion:
+
+```python
+def filter_tools(all_tools, context):
+    return [
+        t for t in all_tools
+        if context.user_role in t["metadata"].get("allowed_roles", ["all"])
+        and t["metadata"].get("enabled", True)
+        and context.environment in t["metadata"].get("environments", ["all"])
+    ]
+```
+
+Evaluating tool selection accuracy at scale requires systematic benchmarks, as discussed in [Article 30: Agent Evaluation](agent-30-agent-evaluation.md).
+
+## Computer Use and GUI Tools
+
+Function calling traditionally means invoking structured APIs with typed parameters. Computer Use -- pioneered by Anthropic with Claude's computer use capability in 2024 -- introduces a fundamentally different class of tool interaction: the model controls a graphical user interface through screenshots, mouse clicks, and keyboard input.
+
+### How Computer Use Works
+
+Instead of calling a `search_database(query)` function, the model sees a screenshot of a desktop, identifies the browser's address bar, clicks on it, types a URL, reads the rendered page, and extracts information. The tool interface is minimal:
+
+```python
+# Anthropic's computer use tool definition
+computer_tool = {
+    "type": "computer_20241022",
+    "name": "computer",
+    "display_width_px": 1024,
+    "display_height_px": 768
+}
+
+# The model issues actions like:
+# {"action": "click", "coordinate": [512, 384]}
+# {"action": "type", "text": "quarterly revenue report"}
+# {"action": "screenshot"}  -- returns current screen state
+# {"action": "key", "text": "Return"}
+```
+
+### When GUI Tools Make Sense
+
+Computer Use is not a replacement for API-based function calling -- it is significantly slower and less reliable for tasks where a structured API exists. Its value lies in bridging the gap for applications that *lack* APIs: legacy enterprise software, desktop applications, web interfaces without public APIs, and workflows that span multiple GUI applications.
+
+The interaction loop follows the same observe-act pattern as other agent architectures (see [Article 26: Agent Architectures](agent-26-agent-architectures.md)), but the observation is a screenshot and the action is a physical input event rather than a function call. This makes error detection harder -- the model must visually confirm that its action had the intended effect, introducing a new class of failure modes that pure API tools avoid.
+
+### Safety Considerations
+
+GUI-based tool use amplifies security concerns because the model has broader access than any single API would grant. A model controlling a desktop could navigate to unintended applications, execute system commands through a terminal, or interact with sensitive interfaces. Sandboxing via virtual machines or containers, restricting the accessible screen region, and maintaining human-in-the-loop confirmation for destructive actions are essential safeguards (see [Article 12: Adversarial Prompting](agent-12-adversarial-prompting.md) for related attack vectors).
+
+## Streaming Tool Calls
+
+Standard function calling follows a request-response pattern: the model emits a complete tool call, the runtime executes it, and the result is returned. For long-running tools -- database queries over large datasets, multi-step API workflows, file processing -- the user sees nothing until execution completes. Streaming tool calls address this gap.
+
+### Streaming the Model's Tool Invocation
+
+Most providers support streaming the assistant's response token-by-token, including the tool call arguments. This lets the client display the tool call as it forms:
+
+```python
+stream = client.chat.completions.create(
+    model="gpt-4o",
+    messages=messages,
+    tools=tools,
+    stream=True
+)
+
+tool_call_chunks = {}
+for chunk in stream:
+    delta = chunk.choices[0].delta
+    if delta.tool_calls:
+        for tc in delta.tool_calls:
+            idx = tc.index
+            if idx not in tool_call_chunks:
+                tool_call_chunks[idx] = {"name": "", "arguments": ""}
+            if tc.function.name:
+                tool_call_chunks[idx]["name"] += tc.function.name
+            if tc.function.arguments:
+                tool_call_chunks[idx]["arguments"] += tc.function.arguments
+                # Display partial arguments to user in real-time
+                display_partial_tool_call(tool_call_chunks[idx])
+```
+
+### Streaming Tool Execution Results
+
+For tools that produce incremental output (streaming database rows, reading a large file, multi-page web scraping), the runtime can stream partial results back to the user while accumulating the full result for the model:
+
+```python
+async def execute_streaming_tool(tool_call, user_stream):
+    args = json.loads(tool_call.function.arguments)
+    accumulated = []
+
+    async for partial_result in streaming_query(**args):
+        accumulated.append(partial_result)
+        # Stream partial results to the user's UI immediately
+        await user_stream.send({"partial": partial_result, "tool_call_id": tool_call.id})
+
+    # Return the full result to the model for reasoning
+    return {"complete": True, "data": accumulated}
+```
+
+This dual-channel approach -- streaming to the user for responsiveness while batching for the model -- significantly improves the perceived performance of tool-heavy agents.
+
+## Fine-Tuning for Function Calling
+
+Understanding how models are trained for function calling illuminates why they sometimes fail and how to work around limitations. Base language models have no inherent concept of tool invocation; this capability is added through supervised fine-tuning on curated datasets of tool-use conversations.
+
+### Training Data and Approaches
+
+Several significant efforts have produced open training datasets and fine-tuned models for function calling:
+
+**Gorilla** (Patil et al., 2023) trained a LLaMA-based model on API documentation from TorchHub, TensorHub, and HuggingFace. Its key contribution was demonstrating that fine-tuning on API docs with a retrieval system drastically reduced hallucination of non-existent API parameters. Gorilla's insight that retrieval-augmented training improves tool accuracy directly influenced the retrieval-augmented tool selection patterns discussed earlier in this article.
+
+**ToolLLM** (Qin et al., 2023) scaled to over 16,000 real-world REST APIs from RapidAPI. The researchers used ChatGPT to generate multi-tool usage scenarios, then trained on execution traces that included error recovery. ToolLLM demonstrated that training on realistic tool-use *trajectories* -- complete sequences of tool calls including failures and retries -- produced models far more robust than those trained only on single successful calls.
+
+**Glaive** took a synthetic data approach, generating millions of function calling examples across diverse schemas to fine-tune models that generalize well to unseen tool definitions. This showed that schema diversity in training data matters more than volume.
+
+### What This Means for Practitioners
+
+These training approaches explain common failure modes. Models struggle with tools whose schemas differ significantly from patterns seen in training: unusual parameter names, deeply nested objects, or unconventional description formats. When a model repeatedly misuses a tool, the fix is often to redesign the schema to match patterns the model has been trained on -- shorter descriptions, flatter parameter structures, and conventional naming.
+
+Models also exhibit training-data biases in tool selection. A model trained primarily on single-tool examples may under-utilize parallel calling. One trained on ReAct-style traces may add unnecessary reasoning steps before straightforward tool calls. Recognizing these biases helps when designing evaluation suites for tool-use accuracy, as discussed in [Article 30: Agent Evaluation](agent-30-agent-evaluation.md).
 
 ## Summary and Key Takeaways
 

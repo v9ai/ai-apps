@@ -100,8 +100,10 @@ export function Search({ groups }: Props) {
       {hasQuery ? (
         <div className="search-results">
           {searching && results.length === 0 && (
-            <div className="no-results">
-              <div className="no-results-title">Searching...</div>
+            <div className="search-loading">
+              <div className="search-loading-bar" />
+              <div className="search-loading-bar" />
+              <div className="search-loading-bar" />
             </div>
           )}
           {!searching && results.length === 0 && (

@@ -440,6 +440,8 @@ Performance progression on SWE-bench Verified (a curated subset of 500 problems)
 | Devin | ~55% | Mid 2025 |
 | Amazon Q Developer | ~52% | Mid 2025 |
 
+*Note: these scores are approximate and evolving rapidly. Multiple systems crossed the 50% threshold on SWE-bench Verified by early 2025, and the leaderboard continues to shift as both models and agent scaffolding improve. Scores should be treated as directional rather than definitive, since evaluation methodology, subset selection, and infrastructure differences make exact comparisons difficult. For a deeper discussion of agent benchmarking methodology, see [Article 30: Agent Evaluation](/agent-30-agent-evaluation).*
+
 These results demonstrate that agent scaffolding, tool use, and iterative repair contribute as much to performance as the underlying model's raw coding ability.
 
 ### What SWE-bench Reveals About Agent Design

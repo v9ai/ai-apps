@@ -72,7 +72,9 @@ class ExactPromptCache:
 
 ### Provider-Side Prompt Caching
 
-Anthropic and OpenAI offer server-side prompt caching where repeated prompt prefixes are cached on the provider's infrastructure, reducing both cost and latency. Anthropic's prompt caching charges a reduced rate for cached input tokens (typically 90% discount) and a small write fee for the initial caching.
+All three major providers -- Anthropic, OpenAI, and Google -- now offer server-side prompt caching where repeated prompt prefixes are cached on the provider's infrastructure, reducing both cost and latency. The mechanics differ across providers, but the core idea is the same: if the beginning of your prompt matches a recently seen prefix, the provider reuses its internal KV-cache rather than recomputing attention from scratch.
+
+**Anthropic** offers explicit prompt caching with `cache_control` markers. Cached input tokens receive a 90% discount, while the initial cache write incurs a 25% surcharge. The cache has a 5-minute TTL that resets on each hit.
 
 ```python
 # Anthropic prompt caching -- mark the system prompt for caching
@@ -88,11 +90,28 @@ response = client.messages.create(
     ],
     messages=[{"role": "user", "content": user_query}]
 )
-# First request: pays full input + cache write fee
+# First request: pays full input + cache write fee (1.25x)
 # Subsequent requests (within TTL): pays ~10% for cached prefix
 ```
 
-This is especially powerful for applications with long, stable system prompts or RAG pipelines where the retrieved context is the same across multiple user queries (e.g., when multiple users ask about the same document).
+**OpenAI** implements automatic prompt caching for prompts longer than 1024 tokens. There is no write fee -- cached tokens are simply billed at 50% of the standard input rate. Caching happens automatically with no code changes required; the API response includes a `cached_tokens` field so you can verify it is working.
+
+**Google (Gemini)** provides context caching through an explicit caching API where you create a named cache object with a configurable TTL. Cached input tokens are billed at 75% off the standard rate, but there is a per-hour storage cost for maintaining the cache.
+
+**Cost savings calculation**: Consider an application making 10,000 requests/day with a 3000-token system prompt on Claude Sonnet ($3/MTok input):
+
+```
+Without caching:
+  3,000 tokens * 10,000 requests = 30M input tokens/day
+  30M * $3/MTok = $90/day = $2,700/month
+
+With Anthropic prompt caching (95% hit rate):
+  First/miss requests: 500 * 3,000 = 1.5M tokens at $3.75/MTok = $5.63
+  Cache hits: 9,500 * 3,000 = 28.5M tokens at $0.30/MTok = $8.55
+  Daily cost: ~$14.18/day = ~$425/month (84% savings)
+```
+
+This is especially powerful for applications with long, stable system prompts or RAG pipelines where the retrieved context is the same across multiple user queries (e.g., when multiple users ask about the same document). For AI gateway architectures that centralize LLM traffic (see [AI Gateways: Rate Limiting, Fallbacks & Multi-Provider Routing](/knowledge/agent-42-ai-gateway)), provider-side caching is even more effective because the gateway naturally aggregates requests that share prompt prefixes.
 
 ### Semantic Caching
 

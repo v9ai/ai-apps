@@ -10,18 +10,20 @@ import { useAuth } from "@/lib/auth-hooks";
 import { ADMIN_EMAIL } from "@/lib/constants";
 import { useStreamingEmail } from "@/hooks/useStreamingEmail";
 import { ComposeFromLinkedIn } from "@/components/admin/ComposeFromLinkedIn";
+import { BatchEmailModal } from "@/components/admin/BatchEmailModal";
 import {
   Badge,
   Box,
   Button,
   Callout,
+  Checkbox,
   Code,
   Container,
   Flex,
   Heading,
   Select,
-  Separator,
   Spinner,
+  Tabs,
   Text,
   TextArea,
   TextField,
@@ -30,27 +32,30 @@ import {
   ArrowLeftIcon,
   CheckIcon,
   CopyIcon,
+  EnvelopeClosedIcon,
   ExclamationTriangleIcon,
   InfoCircledIcon,
+  LinkedInLogoIcon,
   MagicWandIcon,
   PaperPlaneIcon,
+  PersonIcon,
 } from "@radix-ui/react-icons";
 
 // ─── Inline Compose ──────────────────────────────────────────────────────────
 
-function InlineCompose({
-  companyId,
-  companyName,
-}: {
-  companyId: number;
-  companyName: string;
-}) {
-  const { data: contactsData, loading: contactsLoading } =
-    useGetContactsQuery({
-      variables: { companyId, limit: 100 },
-    });
+type Contact = NonNullable<
+  NonNullable<ReturnType<typeof useGetContactsQuery>["data"]>["contacts"]
+>["contacts"][number];
 
-  const contacts = contactsData?.contacts?.contacts ?? [];
+function InlineCompose({
+  companyName,
+  contacts,
+  contactsLoading,
+}: {
+  companyName: string;
+  contacts: Contact[];
+  contactsLoading: boolean;
+}) {
   const contactsWithEmail = contacts.filter((c) => c.email);
 
   const [selectedContactId, setSelectedContactId] = useState<string>("");
@@ -167,7 +172,7 @@ function InlineCompose({
 
   if (contactsLoading) {
     return (
-      <Flex justify="center" py="4">
+      <Flex justify="center" py="6">
         <Spinner size="2" />
       </Flex>
     );
@@ -187,7 +192,7 @@ function InlineCompose({
   }
 
   return (
-    <Flex direction="column" gap="4" style={{ maxWidth: 640 }}>
+    <Flex direction="column" gap="4">
       {step === "select" && (
         <>
           <Box>
@@ -198,7 +203,7 @@ function InlineCompose({
               value={selectedContactId}
               onValueChange={setSelectedContactId}
             >
-              <Select.Trigger placeholder="Select a contact..." />
+              <Select.Trigger placeholder="Select a contact..." style={{ width: "100%" }} />
               <Select.Content>
                 {contactsWithEmail.map((c) => (
                   <Select.Item key={c.id} value={String(c.id)}>
@@ -282,9 +287,10 @@ function InlineCompose({
                 <>
                   <Box
                     style={{
-                      background: "var(--green-2)",
+                      background: "var(--green-a2)",
                       borderRadius: "var(--radius-3)",
-                      padding: "var(--space-3)",
+                      padding: "var(--space-4)",
+                      border: "1px solid var(--green-a5)",
                     }}
                   >
                     <Flex justify="between" align="center" mb="2">
@@ -310,16 +316,16 @@ function InlineCompose({
                     </Text>
                   </Box>
 
-                  <Flex align="center" gap="2">
-                    <input
-                      type="checkbox"
-                      id="includeResumeInline"
-                      checked={includeResume}
-                      onChange={(e) => setIncludeResume(e.target.checked)}
-                    />
-                    <Text size="2" as="label" htmlFor="includeResumeInline">
-                      Include resume
-                    </Text>
+                  <Flex asChild gap="2" align="center">
+                    <label>
+                      <Checkbox
+                        checked={includeResume}
+                        onCheckedChange={(checked) =>
+                          setIncludeResume(checked === true)
+                        }
+                      />
+                      <Text size="2">Attach resume</Text>
+                    </label>
                   </Flex>
 
                   <Flex justify="end">
@@ -363,16 +369,16 @@ function InlineCompose({
             />
           </Box>
 
-          <Flex align="center" gap="2">
-            <input
-              type="checkbox"
-              id="includeResumeEditInline"
-              checked={includeResume}
-              onChange={(e) => setIncludeResume(e.target.checked)}
-            />
-            <Text size="2" as="label" htmlFor="includeResumeEditInline">
-              Include resume
-            </Text>
+          <Flex asChild gap="2" align="center">
+            <label>
+              <Checkbox
+                checked={includeResume}
+                onCheckedChange={(checked) =>
+                  setIncludeResume(checked === true)
+                }
+              />
+              <Text size="2">Attach resume</Text>
+            </label>
           </Flex>
 
           {sendResult && (
@@ -461,6 +467,23 @@ export function CreateEmailClient({
 
   const company = companyData?.company ?? null;
 
+  const { data: contactsData, loading: contactsLoading } =
+    useGetContactsQuery({
+      variables: { companyId: company?.id ?? 0, limit: 100 },
+      skip: !company,
+    });
+
+  const contacts = contactsData?.contacts?.contacts ?? [];
+
+  const batchRecipients = contacts
+    .filter((c) => c.email && !c.doNotContact)
+    .map((c) => ({
+      email: c.email as string,
+      name: `${c.firstName ?? ""} ${c.lastName ?? ""}`.trim(),
+    }));
+
+  const [batchEmailOpen, setBatchEmailOpen] = useState(false);
+
   if (!isAdmin) {
     return (
       <Container size="3" p="8">
@@ -497,6 +520,8 @@ export function CreateEmailClient({
     );
   }
 
+  const contactsWithEmail = contacts.filter((c) => c.email);
+
   return (
     <Container size="3" p={{ initial: "4", md: "6" }}>
       <Flex direction="column" gap="5">
@@ -513,29 +538,152 @@ export function CreateEmailClient({
               </Text>
             </Flex>
           </Link>
-          <Heading size="6">Compose Email</Heading>
+          <Flex align="center" gap="3">
+            <Heading size="6">Compose Email</Heading>
+            <Badge color="gray" variant="soft" size="2">
+              {company.name}
+            </Badge>
+          </Flex>
         </Box>
 
-        {/* Compose to Contact */}
-        <Box>
-          <Heading size="4" mb="3">
-            Compose to Contact
-          </Heading>
-          <InlineCompose
-            companyId={company.id}
-            companyName={company.name}
-          />
-        </Box>
+        {/* Tabbed compose modes */}
+        <Tabs.Root defaultValue="contact">
+          <Tabs.List>
+            <Tabs.Trigger value="contact">
+              <Flex align="center" gap="2">
+                <PersonIcon />
+                <Text>Contact</Text>
+                {!contactsLoading && contactsWithEmail.length > 0 && (
+                  <Badge
+                    color="gray"
+                    variant="soft"
+                    size="1"
+                    style={{ minWidth: 20, textAlign: "center" }}
+                  >
+                    {contactsWithEmail.length}
+                  </Badge>
+                )}
+              </Flex>
+            </Tabs.Trigger>
+            <Tabs.Trigger value="linkedin">
+              <Flex align="center" gap="2">
+                <LinkedInLogoIcon />
+                <Text>LinkedIn</Text>
+              </Flex>
+            </Tabs.Trigger>
+            <Tabs.Trigger value="batch">
+              <Flex align="center" gap="2">
+                <EnvelopeClosedIcon />
+                <Text>Batch</Text>
+                {!contactsLoading && batchRecipients.length > 0 && (
+                  <Badge
+                    color="blue"
+                    variant="soft"
+                    size="1"
+                    style={{ minWidth: 20, textAlign: "center" }}
+                  >
+                    {batchRecipients.length}
+                  </Badge>
+                )}
+              </Flex>
+            </Tabs.Trigger>
+          </Tabs.List>
 
-        <Separator size="4" />
+          <Box pt="5">
+            <Tabs.Content value="contact">
+              <Box
+                style={{
+                  background: "var(--gray-a2)",
+                  borderRadius: "var(--radius-3)",
+                  padding: "var(--space-5)",
+                  maxWidth: 640,
+                }}
+              >
+                <Text size="2" color="gray" mb="4" as="p">
+                  Select a contact and generate a personalized email with AI.
+                </Text>
+                <InlineCompose
+                  companyName={company.name}
+                  contacts={contacts}
+                  contactsLoading={contactsLoading}
+                />
+              </Box>
+            </Tabs.Content>
 
-        {/* LinkedIn compose */}
-        <Box>
-          <Heading size="4" mb="3">
-            Compose from LinkedIn
-          </Heading>
-          <ComposeFromLinkedIn defaultCompanyName={company.name} />
-        </Box>
+            <Tabs.Content value="linkedin">
+              <Box
+                style={{
+                  background: "var(--gray-a2)",
+                  borderRadius: "var(--radius-3)",
+                  padding: "var(--space-5)",
+                  maxWidth: 640,
+                }}
+              >
+                <Text size="2" color="gray" mb="4" as="p">
+                  Extract content from a LinkedIn post and compose a personalized
+                  outreach email.
+                </Text>
+                <ComposeFromLinkedIn defaultCompanyName={company.name} />
+              </Box>
+            </Tabs.Content>
+
+            <Tabs.Content value="batch">
+              <Box
+                style={{
+                  background: "var(--gray-a2)",
+                  borderRadius: "var(--radius-3)",
+                  padding: "var(--space-5)",
+                  maxWidth: 640,
+                }}
+              >
+                <Text size="2" color="gray" mb="4" as="p">
+                  Send a personalized email to all eligible contacts at once, with
+                  optional business-day scheduling.
+                </Text>
+                {contactsLoading ? (
+                  <Flex justify="center" py="6">
+                    <Spinner size="2" />
+                  </Flex>
+                ) : batchRecipients.length === 0 ? (
+                  <Callout.Root color="gray" variant="soft">
+                    <Callout.Icon>
+                      <InfoCircledIcon />
+                    </Callout.Icon>
+                    <Callout.Text>
+                      No eligible contacts with email addresses found.
+                    </Callout.Text>
+                  </Callout.Root>
+                ) : (
+                  <Flex direction="column" gap="4">
+                    <Flex align="center" gap="2">
+                      <PersonIcon />
+                      <Badge color="blue" variant="soft" size="2">
+                        {batchRecipients.length} recipient
+                        {batchRecipients.length === 1 ? "" : "s"}
+                      </Badge>
+                      <Text size="1" color="gray">
+                        eligible (have email, not on do-not-contact list)
+                      </Text>
+                    </Flex>
+                    <Button
+                      onClick={() => setBatchEmailOpen(true)}
+                      style={{ alignSelf: "flex-start" }}
+                    >
+                      <PaperPlaneIcon />
+                      Compose Batch Email
+                    </Button>
+                    <BatchEmailModal
+                      open={batchEmailOpen}
+                      onOpenChange={setBatchEmailOpen}
+                      recipients={batchRecipients}
+                      defaultUseScheduler
+                    />
+                  </Flex>
+                )}
+              </Box>
+            </Tabs.Content>
+          </Box>
+        </Tabs.Root>
       </Flex>
     </Container>
   );
