@@ -522,7 +522,7 @@ For self-hosted models, constrained decoding frameworks introduce more visible o
 
 GBNF grammars in llama.cpp operate at the C++ level and avoid Python overhead entirely, making them the fastest constrained decoding option for local inference. The per-token cost of grammar checking is typically under 0.5ms, which is negligible compared to the model forward pass itself. For latency-sensitive local deployments, GBNF grammars add near-zero overhead.
 
-The performance picture changes significantly with schema complexity. A simple flat object with five string fields introduces minimal overhead regardless of the enforcement method. A deeply nested schema with arrays of objects, enums, and conditional fields can increase constrained decoding overhead by 3-5x because the FSM state space grows combinatorially. This is another reason to prefer flat schemas, beyond the reliability benefits discussed in the schema design section above. For more on how constrained decoding interacts with KV cache management, speculative decoding, and other inference optimizations, see [Article 05: Inference Optimization](./agent-05-inference-optimization.md).
+The performance picture changes significantly with schema complexity. A simple flat object with five string fields introduces minimal overhead regardless of the enforcement method. A deeply nested schema with arrays of objects, enums, and conditional fields can increase constrained decoding overhead by 3-5x because the FSM state space grows combinatorially. This is another reason to prefer flat schemas, beyond the reliability benefits discussed in the schema design section above. For more on how constrained decoding interacts with KV cache management, speculative decoding, and other inference optimizations, see [Article 05: Inference Optimization](/agent-05-inference-optimization).
 
 ### Prompt-Only Performance Baseline
 
@@ -568,7 +568,7 @@ Parallel tool calls introduce coordination challenges. The model must generate a
 
 ### Error Recovery in Agent Loops
 
-Tool execution failures are inevitable in production agent systems. A database query might time out, an API might return an error, or the model might generate arguments that are schema-valid but semantically wrong (e.g., searching for a nonexistent ID). Robust agent loops need structured error handling. For a thorough treatment of error recovery, retry strategies, and execution sandboxing, see [Article 25: Function Calling & Tool Integration](./agent-25-function-calling.md).
+Tool execution failures are inevitable in production agent systems. A database query might time out, an API might return an error, or the model might generate arguments that are schema-valid but semantically wrong (e.g., searching for a nonexistent ID). Robust agent loops need structured error handling. For a thorough treatment of error recovery, retry strategies, and execution sandboxing, see [Article 25: Function Calling & Tool Integration](/agent-25-function-calling).
 
 The standard pattern is to return errors as structured tool results rather than raising exceptions:
 
@@ -588,7 +588,7 @@ def execute_tool(name: str, args: dict) -> dict:
                 "message": f"Unexpected error: {str(e)}"}
 ```
 
-When the model receives an error result, it can decide whether to retry with different arguments, try an alternative tool, or report the failure to the user. This self-correcting behavior emerges naturally from the conversation structure -- the model sees the error in context and adjusts its approach. The quality of error recovery depends heavily on how the system prompt instructs the model to handle failures (see [Article 09: System Prompt Design](./agent-09-system-prompts.md) for patterns on structuring these instructions).
+When the model receives an error result, it can decide whether to retry with different arguments, try an alternative tool, or report the failure to the user. This self-correcting behavior emerges naturally from the conversation structure -- the model sees the error in context and adjusts its approach. The quality of error recovery depends heavily on how the system prompt instructs the model to handle failures (see [Article 09: System Prompt Design](/agent-09-system-prompts) for patterns on structuring these instructions).
 
 ## Provider-Specific Structured Output Features
 
@@ -612,7 +612,7 @@ Gemini supports JSON mode via `response_mime_type: "application/json"` and schem
 
 For self-hosted models, the structured output story centers on inference frameworks rather than model providers. vLLM supports Outlines-based constrained decoding natively via the `guided_json`, `guided_regex`, and `guided_grammar` parameters in its API. TGI (Text Generation Inference by Hugging Face) supports grammar-based constraints. llama.cpp provides GBNF grammar support. SGLang offers constrained decoding with a focus on high-throughput batch scenarios.
 
-The open-source advantage is full control over the constraint mechanism -- you can define arbitrary grammars, not just JSON Schema. The disadvantage is that you are responsible for performance tuning, and constrained decoding interacts with other inference optimizations (continuous batching, speculative decoding, KV cache management) in ways that require careful configuration. These interactions are covered in detail in [Article 05: Inference Optimization](./agent-05-inference-optimization.md).
+The open-source advantage is full control over the constraint mechanism -- you can define arbitrary grammars, not just JSON Schema. The disadvantage is that you are responsible for performance tuning, and constrained decoding interacts with other inference optimizations (continuous batching, speculative decoding, KV cache management) in ways that require careful configuration. These interactions are covered in detail in [Article 05: Inference Optimization](/agent-05-inference-optimization).
 
 | Feature | OpenAI | Anthropic | Google Gemini | vLLM / Open-Source |
 |---------|--------|-----------|---------------|---------------------|
@@ -645,7 +645,7 @@ XML is also advantageous for inline annotation tasks where you need to mark up s
 
 This kind of inline markup is awkward to express in JSON, which separates structure from content. XML preserves the original text while adding annotations around it.
 
-The main downside of XML output is the lack of provider-level enforcement. No major API provider offers an "XML mode" equivalent to JSON mode. You must rely on prompt engineering and post-hoc validation to ensure well-formed XML. For Anthropic models, the strong instruction-following and native XML familiarity make prompt-based XML output highly reliable in practice. See [Article 09: System Prompt Design](./agent-09-system-prompts.md) for guidance on structuring XML output instructions.
+The main downside of XML output is the lack of provider-level enforcement. No major API provider offers an "XML mode" equivalent to JSON mode. You must rely on prompt engineering and post-hoc validation to ensure well-formed XML. For Anthropic models, the strong instruction-following and native XML familiarity make prompt-based XML output highly reliable in practice. See [Article 09: System Prompt Design](/agent-09-system-prompts) for guidance on structuring XML output instructions.
 
 ### When YAML Is Preferred
 
@@ -677,7 +677,7 @@ Use **XML** when you need inline text annotation, when working with document mar
 
 Use **YAML** when human readability is a priority, when outputs contain significant multi-line text content, or when the output serves as configuration. Always validate YAML output carefully, as subtle indentation errors are harder to catch than JSON syntax errors.
 
-For RAG pipelines that extract structured information from retrieved documents, the choice of output format interacts with the retrieval and generation strategy. See [Article 17: Advanced RAG](./agent-17-advanced-rag.md) for patterns on structuring extraction outputs in multi-hop retrieval workflows.
+For RAG pipelines that extract structured information from retrieved documents, the choice of output format interacts with the retrieval and generation strategy. See [Article 17: Advanced RAG](/agent-17-advanced-rag) for patterns on structuring extraction outputs in multi-hop retrieval workflows.
 
 ## Choosing the Right Approach
 

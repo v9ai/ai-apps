@@ -66,7 +66,7 @@ The use of headers, labeled sections, and clear boundaries between context, task
 
 ### Principle 3: Examples Are Worth a Thousand Words
 
-Providing examples -- few-shot prompting -- remains one of the most effective techniques for steering model behavior. Brown et al. (2020) demonstrated in the GPT-3 paper that few-shot prompting could match or exceed fine-tuned models on many tasks. The mechanism is straightforward: examples demonstrate the input-output mapping more precisely than instructions alone. For a thorough treatment of few-shot design, example selection, and chain-of-thought reasoning, see [Article 8: Few-Shot & Chain-of-Thought Prompting](/articles/agent-08-few-shot-chain-of-thought).
+Providing examples -- few-shot prompting -- remains one of the most effective techniques for steering model behavior. Brown et al. (2020) demonstrated in the GPT-3 paper that few-shot prompting could match or exceed fine-tuned models on many tasks. The mechanism is straightforward: examples demonstrate the input-output mapping more precisely than instructions alone. For a thorough treatment of few-shot design, example selection, and chain-of-thought reasoning, see [Article 8: Few-Shot & Chain-of-Thought Prompting](/agent-08-few-shot-chain-of-thought).
 
 ```
 # Instruction-only (less reliable)
@@ -228,7 +228,7 @@ Models with larger context windows don't automatically use all provided context 
 
 ### Tokenization Effects
 
-Different tokenizers split text differently, which can affect how models interpret prompts. For example, code-specific models may tokenize programming constructs differently than general-purpose models, affecting how code-related prompts are processed. While this is rarely a primary concern, it can explain unexpected behavior in edge cases. See [Article 3: Tokenization](/articles/agent-03-tokenization) for a deep dive into BPE, SentencePiece, and how vocabulary design shapes what models can and cannot represent.
+Different tokenizers split text differently, which can affect how models interpret prompts. For example, code-specific models may tokenize programming constructs differently than general-purpose models, affecting how code-related prompts are processed. While this is rarely a primary concern, it can explain unexpected behavior in edge cases. See [Article 3: Tokenization](/agent-03-tokenization) for a deep dive into BPE, SentencePiece, and how vocabulary design shapes what models can and cannot represent.
 
 ```python
 # Tokenization can affect prompt interpretation
@@ -261,9 +261,9 @@ Several practices have emerged as reliable across VLMs:
 
 **Use spatial references explicitly.** When asking about specific regions, use directional language ("in the upper-left quadrant," "the third row of the table") rather than assuming the model will attend to the right area. VLMs process images as patch sequences, and spatial grounding in the prompt helps align textual attention with visual attention.
 
-**Annotate images when possible.** Adding bounding boxes, arrows, or numbered labels to images before sending them to the model dramatically improves precision. A prompt that says "Explain the error highlighted in the red box" is far more reliable than "Find the error in this code screenshot." For a deeper treatment of VLM architectures and how visual encoders interact with language decoders, see [Article 49: Vision-Language Models](/articles/agent-49-vision-language-models).
+**Annotate images when possible.** Adding bounding boxes, arrows, or numbered labels to images before sending them to the model dramatically improves precision. A prompt that says "Explain the error highlighted in the red box" is far more reliable than "Find the error in this code screenshot." For a deeper treatment of VLM architectures and how visual encoders interact with language decoders, see [Article 49: Vision-Language Models](/agent-49-vision-language-models).
 
-**Manage image resolution and token cost.** VLMs tokenize images into visual tokens -- often hundreds or thousands per image. Higher-resolution images consume more tokens and increase latency. When fine detail is not required (e.g., classifying a chart type versus reading axis labels), downsizing images before submission saves cost without sacrificing accuracy. Tokenization choices for visual inputs follow analogous tradeoffs to text tokenization (see [Article 3: Tokenization](/articles/agent-03-tokenization) for the foundational concepts).
+**Manage image resolution and token cost.** VLMs tokenize images into visual tokens -- often hundreds or thousands per image. Higher-resolution images consume more tokens and increase latency. When fine detail is not required (e.g., classifying a chart type versus reading axis labels), downsizing images before submission saves cost without sacrificing accuracy. Tokenization choices for visual inputs follow analogous tradeoffs to text tokenization (see [Article 3: Tokenization](/agent-03-tokenization) for the foundational concepts).
 
 ## Model-Specific Formatting Conventions
 
@@ -296,7 +296,7 @@ file, line, severity, category, description
 
 **Markdown for GPT models.** OpenAI's models are optimized for markdown-structured prompts. Headers (`##`), bullet lists, and code fences align well with GPT-4's training distribution. Triple-backtick code blocks are parsed with particular reliability for structured output specifications.
 
-**Chat template differences.** Beyond surface formatting, models differ in how they handle the system/user/assistant message structure. Some models treat system messages as immutable high-priority instructions; others weight them only slightly above user messages. Understanding these differences is critical for production deployments where the system prompt must reliably override user inputs -- a topic explored in depth in [Article 9: System Prompt Design](/articles/agent-09-system-prompts).
+**Chat template differences.** Beyond surface formatting, models differ in how they handle the system/user/assistant message structure. Some models treat system messages as immutable high-priority instructions; others weight them only slightly above user messages. Understanding these differences is critical for production deployments where the system prompt must reliably override user inputs -- a topic explored in depth in [Article 9: System Prompt Design](/agent-09-system-prompts).
 
 The practical implication: prompts are not portable across model families without adaptation. A prompt that achieves 95% compliance on Claude may drop to 80% on GPT-4 (or vice versa) simply because of formatting conventions. Teams working across multiple models should maintain model-specific prompt variants and test each variant against model-specific evaluation suites.
 
@@ -304,7 +304,7 @@ The practical implication: prompts are not portable across model families withou
 
 The introduction of reasoning-focused models -- OpenAI's o1 and o3 series, DeepSeek-R1, and Claude's extended thinking mode -- has created a fork in prompt engineering strategy. These models allocate internal "thinking tokens" before producing a response, fundamentally changing the role of the prompt from reasoning scaffold to task specification.
 
-With standard models (GPT-4o, Claude Sonnet, Gemini Pro), prompting for complex reasoning requires explicit scaffolding: "Think step by step," chain-of-thought examples, or structured decomposition into sub-problems. These techniques work because the model's reasoning happens in the output tokens, and the prompt must initiate and structure that reasoning process. This family of techniques is covered extensively in [Article 8: Few-Shot & Chain-of-Thought Prompting](/articles/agent-08-few-shot-chain-of-thought).
+With standard models (GPT-4o, Claude Sonnet, Gemini Pro), prompting for complex reasoning requires explicit scaffolding: "Think step by step," chain-of-thought examples, or structured decomposition into sub-problems. These techniques work because the model's reasoning happens in the output tokens, and the prompt must initiate and structure that reasoning process. This family of techniques is covered extensively in [Article 8: Few-Shot & Chain-of-Thought Prompting](/agent-08-few-shot-chain-of-thought).
 
 With reasoning models, the calculus inverts. The model already reasons internally before responding. Adding "think step by step" to a prompt for o3 is at best redundant and at worst counterproductive -- the model may produce a shallow, prompt-satisfying reasoning trace on top of its deeper internal reasoning, wasting tokens without improving accuracy.
 
@@ -361,7 +361,7 @@ def build_prompt(clinical_note):
     return f"{SYSTEM_PROMPT}\n\n## Clinical Note\n{clinical_note}"
 ```
 
-This structure maximizes cache hit rates. The guidelines, examples, and schema -- which are the same for every request -- form the cached prefix. Only the clinical note varies. For systematic approaches to reducing prompt cost through automated optimization, see [Article 11: Prompt Optimization](/articles/agent-11-prompt-optimization).
+This structure maximizes cache hit rates. The guidelines, examples, and schema -- which are the same for every request -- form the cached prefix. Only the clinical note varies. For systematic approaches to reducing prompt cost through automated optimization, see [Article 11: Prompt Optimization](/agent-11-prompt-optimization).
 
 **Designing for token efficiency.** Several practical techniques reduce token count without sacrificing prompt quality:
 

@@ -2,6 +2,14 @@
 
 The economics of large language model usage have become a strategic concern as organizations move from prototyping to production. A single GPT-4-class API call costs roughly 1000x more than a traditional database query, and unoptimized LLM pipelines can generate monthly bills that dwarf the rest of an application's infrastructure costs combined. This article provides a systematic framework for understanding, measuring, and optimizing LLM costs across the full spectrum of strategies -- from prompt engineering and caching through intelligent model routing to the build-versus-buy decision.
 
+## TL;DR
+
+- Model routing is the single highest-impact optimization: 70-80% of production requests are "easy" and can be handled by a model 10-50x cheaper than your frontier default.
+- Provider-side prompt caching (Anthropic, OpenAI, Google) delivers 50-90% discounts on cached token prefixes with zero or minimal code changes.
+- Prompt compression tools like LLMLingua can reduce RAG context tokens by 2-5x with under 2% quality loss.
+- Reasoning models can inflate output costs by 3-20x via thinking tokens -- use them only for tasks that genuinely benefit, and always cap the thinking budget.
+- Self-hosting rarely breaks even below ~$10K/month in API spend; a hybrid baseline-load + burst-to-API strategy offers the best economics at medium scale.
+
 ## Token Pricing Landscape
 
 ### Understanding the Pricing Model
@@ -19,6 +27,8 @@ As of early 2026, the pricing landscape spans roughly three orders of magnitude:
 | Self-hosted open | Llama, Mistral, Qwen on own GPUs | ~$0.05-0.30 | ~$0.15-0.80 |
 
 The cost difference between a frontier model and a lightweight model can be 100-500x. This spread is the foundation of every cost optimization strategy: use the cheapest model that delivers acceptable quality for each task.
+
+> **Tip:** The cost difference between frontier and lightweight models spans 100-500x. Every optimization strategy in this article is essentially a way to spend more of your token budget on the cheap end of that range.
 
 ### Hidden Costs
 
@@ -111,7 +121,7 @@ With Anthropic prompt caching (95% hit rate):
   Daily cost: ~$14.18/day = ~$425/month (84% savings)
 ```
 
-This is especially powerful for applications with long, stable system prompts or RAG pipelines where the retrieved context is the same across multiple user queries (e.g., when multiple users ask about the same document). For AI gateway architectures that centralize LLM traffic (see [AI Gateways: Rate Limiting, Fallbacks & Multi-Provider Routing](/knowledge/agent-42-ai-gateway)), provider-side caching is even more effective because the gateway naturally aggregates requests that share prompt prefixes.
+This is especially powerful for applications with long, stable system prompts or RAG pipelines where the retrieved context is the same across multiple user queries (e.g., when multiple users ask about the same document). For AI gateway architectures that centralize LLM traffic (see [AI Gateways: Rate Limiting, Fallbacks & Multi-Provider Routing](/agent-42-ai-gateway)), provider-side caching is even more effective because the gateway naturally aggregates requests that share prompt prefixes.
 
 ### Semantic Caching
 
@@ -372,7 +382,7 @@ Small changes to prompts can significantly impact token costs:
 
 3. **Set appropriate max_tokens**: Always set `max_tokens` to a reasonable value. A request with `max_tokens=4096` that only needs 100 tokens wastes scheduling resources and can lead to higher latency.
 
-4. **Avoid chain-of-thought when unnecessary**: CoT prompting (see [Few-Shot & Chain-of-Thought Prompting](/knowledge/agent-08-few-shot-chain-of-thought)) can increase output tokens by 3-10x. Use it for complex reasoning tasks but skip it for simple extraction or classification.
+4. **Avoid chain-of-thought when unnecessary**: CoT prompting (see [Few-Shot & Chain-of-Thought Prompting](/agent-08-few-shot-chain-of-thought)) can increase output tokens by 3-10x. Use it for complex reasoning tasks but skip it for simple extraction or classification.
 
 ```python
 # Before: verbose prompt (high token count)
@@ -440,6 +450,8 @@ Many organizations use a hybrid strategy:
 
 Production LLM pipelines often send far more context than the model actually needs. RAG systems retrieve entire document chunks when only a few sentences are relevant. Conversation histories accumulate redundant turns. System prompts contain verbose instructions that could be stated concisely. Prompt compression techniques address this by systematically reducing input token counts without sacrificing the information the model needs to generate correct outputs.
 
+> **Note:** Prompt compression and prompt caching compose well together -- compress the variable portion of your prompt to reduce costs, while caching the stable prefix for even greater savings on repeated requests.
+
 ### LLMLingua and Selective Context Compression
 
 LLMLingua (and its successor LLMLingua-2) uses a small language model to identify and remove tokens that contribute minimally to the prompt's meaning. The approach computes per-token perplexity using a compact model like GPT-2 or LLaMA-7B and drops tokens with the lowest information content -- function words, filler phrases, and redundant context that a capable model can infer from surrounding tokens.
@@ -501,6 +513,8 @@ The cost implications are significant. A standard Claude Sonnet call answering a
 ### When Reasoning Models Pay For Themselves
 
 Despite higher per-request costs, reasoning models can be more cost-effective for tasks where standard models require multiple attempts, extensive prompt engineering, or human review:
+
+> **Tip:** Apply the same model routing logic to reasoning mode itself: classify task complexity first using a cheap model, then decide whether extended thinking is warranted. Route only the hardest tier of tasks to reasoning mode.
 
 - **Complex code generation**: If a standard model needs 3 attempts (with human review between each) to produce correct code, while a reasoning model gets it right on the first try, the reasoning model is cheaper in total cost (including engineer time).
 - **Mathematical and logical tasks**: Problems requiring multi-step deduction see dramatic accuracy improvements with reasoning models, often eliminating the need for expensive verification pipelines.
@@ -574,7 +588,7 @@ def optimize_image_for_llm(image_path: str, max_size: int = 768) -> str:
 
 ### The Economic Tradeoff
 
-Few-shot prompting and fine-tuning represent two ends of a cost spectrum. Few-shot prompting (see [Few-Shot & Chain-of-Thought Prompting](/knowledge/agent-08-few-shot-chain-of-thought)) has zero upfront cost but inflates every request by embedding examples in the prompt. Fine-tuning (see [Fine-tuning Fundamentals](/knowledge/agent-19-fine-tuning-fundamentals)) requires upfront investment in data curation and training compute, but the resulting model requires shorter prompts and often uses a cheaper model tier to achieve the same quality.
+Few-shot prompting and fine-tuning represent two ends of a cost spectrum. Few-shot prompting (see [Few-Shot & Chain-of-Thought Prompting](/agent-08-few-shot-chain-of-thought)) has zero upfront cost but inflates every request by embedding examples in the prompt. Fine-tuning (see [Fine-tuning Fundamentals](/agent-19-fine-tuning-fundamentals)) requires upfront investment in data curation and training compute, but the resulting model requires shorter prompts and often uses a cheaper model tier to achieve the same quality.
 
 ### Break-Even Analysis Framework
 
@@ -611,7 +625,7 @@ Fine-tuned approach:
   Break-even: Less than 1 month
 ```
 
-For high-volume applications (500K+ requests/month) with repetitive task patterns, fine-tuning almost always pays for itself within weeks. The savings compound further because fine-tuned models on cheaper architectures often match the quality of larger prompted models, enabling a drop from a mid-tier model to a fine-tuned lightweight model. For a detailed walkthrough of fine-tuning pipelines and when to apply techniques like [RLHF and preference optimization](/knowledge/agent-21-rlhf-preference), the alignment and training articles in this series cover the full process.
+For high-volume applications (500K+ requests/month) with repetitive task patterns, fine-tuning almost always pays for itself within weeks. The savings compound further because fine-tuned models on cheaper architectures often match the quality of larger prompted models, enabling a drop from a mid-tier model to a fine-tuned lightweight model. For a detailed walkthrough of fine-tuning pipelines and when to apply techniques like [RLHF and preference optimization](/agent-21-rlhf-preference), the alignment and training articles in this series cover the full process.
 
 ### When Prompting Wins
 
@@ -624,7 +638,7 @@ Fine-tuning is not always the right answer:
 
 ## Summary and Key Takeaways
 
-1. **Model routing is the highest-impact optimization**: Using a cheap model for easy tasks and reserving expensive models for hard ones can reduce costs by 40-60% with minimal quality impact. Centralize routing logic through an [AI gateway](/knowledge/agent-42-ai-gateway) for consistency.
+1. **Model routing is the highest-impact optimization**: Using a cheap model for easy tasks and reserving expensive models for hard ones can reduce costs by 40-60% with minimal quality impact. Centralize routing logic through an [AI gateway](/agent-42-ai-gateway) for consistency.
 
 2. **Prompt caching (both client-side and provider-side)** eliminates redundant computation. All three major providers now offer server-side prefix caching with 50-90% discounts on cached tokens -- this is free money for applications with stable prompt prefixes.
 
@@ -634,7 +648,7 @@ Fine-tuning is not always the right answer:
 
 5. **Multi-modal inputs are expensive**: A single high-res image costs as much as 4000-6000 words of text. Resize images, use OCR for text extraction, and route simple visual tasks to lightweight vision models.
 
-6. **Fine-tuning vs. prompting is a volume decision**: At 500K+ requests/month, fine-tuning (see [Fine-tuning Fundamentals](/knowledge/agent-19-fine-tuning-fundamentals)) almost always pays for itself by eliminating few-shot examples from prompts and enabling cheaper model tiers. At low volume, the operational overhead is not worth it.
+6. **Fine-tuning vs. prompting is a volume decision**: At 500K+ requests/month, fine-tuning (see [Fine-tuning Fundamentals](/agent-19-fine-tuning-fundamentals)) almost always pays for itself by eliminating few-shot examples from prompts and enabling cheaper model tiers. At low volume, the operational overhead is not worth it.
 
 7. **Batch APIs offer 50% discounts** for non-latency-sensitive workloads. Any pipeline that doesn't need real-time responses should use batch processing.
 
@@ -643,3 +657,12 @@ Fine-tuning is not always the right answer:
 9. **Self-hosting rarely makes sense below ~$10K/month** in API spend for a single model, unless driven by privacy or customization requirements. The operational overhead and utilization challenges of GPU management erode the theoretical cost advantage.
 
 10. **Semantic caching is powerful but risky**: it can dramatically reduce costs for repetitive workloads but requires careful threshold tuning to avoid serving incorrect cached responses.
+
+## Key Takeaways
+
+- **Instrument cost tracking from day one**: log tokens, model, feature, and user ID on every LLM call -- you cannot optimize what you cannot observe.
+- **Implement model routing before any other optimization**: even a simple rule-based router (task type, expected output length) targeting the cheapest capable model delivers the largest cost reduction for the least engineering effort.
+- **Enable provider-side prompt caching immediately** for any application with a long, stable system prompt -- it requires minimal code changes and can reduce prompt costs by 50-90%.
+- **Cap `max_tokens` and thinking budgets explicitly**: unset limits waste scheduling resources and can silently inflate costs on both standard and reasoning models.
+- **Evaluate fine-tuning at 500K+ requests/month**: at that volume, eliminating few-shot examples from prompts typically pays back the fine-tuning investment within a month.
+- **Treat self-hosting as a last resort**: GPU utilization risk, operational overhead, and the rapidly falling cost of hosted inference mean self-hosting only makes sense above ~$10K/month in consistent (non-bursty) API spend.

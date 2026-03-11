@@ -1,6 +1,6 @@
 # Vector Databases: Indexing, ANN Search & Production Patterns
 
-Vector databases have evolved from niche academic tools into critical infrastructure for AI applications, serving as the backbone for retrieval-augmented generation, semantic search, and recommendation systems. This article provides a deep technical examination of approximate nearest neighbor algorithms, production database architectures, and the operational patterns that determine success or failure when deploying vector search at scale. It builds on the embedding representations covered in [Article 13: Embedding Models](agent-13-embedding-models.md) and connects directly to the chunking decisions discussed in [Article 15: Chunking Strategies](agent-15-chunking-strategies.md) -- how you split your documents determines the size, number, and quality of vectors your database must index and search.
+Vector databases have evolved from niche academic tools into critical infrastructure for AI applications, serving as the backbone for retrieval-augmented generation, semantic search, and recommendation systems. This article provides a deep technical examination of approximate nearest neighbor algorithms, production database architectures, and the operational patterns that determine success or failure when deploying vector search at scale. It builds on the embedding representations covered in [Article 13: Embedding Models](/agent-13-embedding-models) and connects directly to the chunking decisions discussed in [Article 15: Chunking Strategies](/agent-15-chunking-strategies) -- how you split your documents determines the size, number, and quality of vectors your database must index and search.
 
 ## The Nearest Neighbor Problem
 
@@ -341,7 +341,7 @@ client.create_payload_index(
 
 ## Hybrid Search Architecture
 
-Combining dense vector search with sparse lexical search (BM25) consistently outperforms either approach alone. [Article 16: Retrieval Strategies](agent-16-retrieval-strategies.md) covers the retrieval-side design in depth -- here we focus on the database-level implementation. The architecture pattern involves:
+Combining dense vector search with sparse lexical search (BM25) consistently outperforms either approach alone. [Article 16: Retrieval Strategies](/agent-16-retrieval-strategies) covers the retrieval-side design in depth -- here we focus on the database-level implementation. The architecture pattern involves:
 
 1. **Parallel retrieval**: Execute vector search and BM25 search simultaneously
 2. **Score normalization**: Normalize scores from each source to a common scale
@@ -399,7 +399,7 @@ For applications requiring immediate consistency (e.g., deduplication), consider
 Vector search costs are dominated by memory for in-memory indexes (HNSW) or IOPS for disk-based indexes. Key optimization strategies:
 
 1. **Quantization**: Reduce vector size with scalar quantization (float32 to int8, 4x savings) or product quantization (16-32x savings)
-2. **Matryoshka truncation**: Use lower-dimensional embeddings for initial retrieval, full dimensions for reranking (see Matryoshka Representation Learning in [Article 13: Embedding Models](agent-13-embedding-models.md))
+2. **Matryoshka truncation**: Use lower-dimensional embeddings for initial retrieval, full dimensions for reranking (see Matryoshka Representation Learning in [Article 13: Embedding Models](/agent-13-embedding-models))
 3. **Tiered storage**: Keep hot data in memory, warm data on SSD, cold data archived
 4. **Index per partition**: Separate indexes by time range or tenant, delete entire indexes instead of individual vectors
 
@@ -429,7 +429,7 @@ Lock-in is a real concern. Maintain the ability to export vectors and metadata i
 
 ## Multi-Vector and ColBERT Storage
 
-Standard embedding models produce a single vector per document -- the entire semantic content compressed into one point in vector space. ColBERT and similar late-interaction models take a fundamentally different approach: they produce one vector per token, preserving fine-grained lexical-semantic information that single-vector representations discard. This enables more precise matching (the model can align individual query terms with specific passage terms) but introduces significant storage and search challenges. For a deeper look at the models themselves, including ColBERTv2 and BGE-M3's multi-vector output, see [Article 13: Embedding Models](agent-13-embedding-models.md).
+Standard embedding models produce a single vector per document -- the entire semantic content compressed into one point in vector space. ColBERT and similar late-interaction models take a fundamentally different approach: they produce one vector per token, preserving fine-grained lexical-semantic information that single-vector representations discard. This enables more precise matching (the model can align individual query terms with specific passage terms) but introduces significant storage and search challenges. For a deeper look at the models themselves, including ColBERTv2 and BGE-M3's multi-vector output, see [Article 13: Embedding Models](/agent-13-embedding-models).
 
 ### Storage Overhead
 
@@ -450,7 +450,7 @@ Practical implementations use a two-stage approach:
 
 Dedicated ColBERT storage engines like **RAGatouille** (wrapping ColBERTv2) and **Vespa's native ColBERT support** handle the multi-vector complexity internally. Among general-purpose vector databases, **Milvus** supports multi-vector fields with per-document token-level storage and retrieval. **Qdrant** can store multi-vectors via its multi-vector feature, enabling late-interaction patterns without external tooling.
 
-For most applications, the practical recommendation is to evaluate whether the recall improvement from multi-vector representations justifies the storage and complexity cost. In domains with precise terminology requirements (legal, medical, technical documentation), the token-level matching often provides meaningful gains over single-vector search. For general-purpose semantic search, a single high-quality embedding with hybrid BM25 retrieval (detailed in [Article 16: Retrieval Strategies](agent-16-retrieval-strategies.md)) typically provides a better complexity-to-quality ratio.
+For most applications, the practical recommendation is to evaluate whether the recall improvement from multi-vector representations justifies the storage and complexity cost. In domains with precise terminology requirements (legal, medical, technical documentation), the token-level matching often provides meaningful gains over single-vector search. For general-purpose semantic search, a single high-quality embedding with hybrid BM25 retrieval (detailed in [Article 16: Retrieval Strategies](/agent-16-retrieval-strategies)) typically provides a better complexity-to-quality ratio.
 
 ## Summary and Key Takeaways
 

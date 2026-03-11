@@ -2,6 +2,14 @@
 
 The centralized cloud model of LLM inference -- where every token is generated on remote GPU clusters -- is increasingly challenged by latency requirements, privacy regulations, connectivity constraints, and cost pressures. Edge deployment places inference computation closer to (or directly on) the end user's device, encompassing everything from llama.cpp on a laptop to WebGPU-accelerated models in a browser tab. This article examines the runtime landscape, optimization techniques, and architectural patterns that make on-device and edge LLM inference practical, along with the trade-offs that determine when edge deployment is the right choice.
 
+## TL;DR
+
+- INT4 quantization is the edge sweet spot: 8x size reduction with only 1-3% quality loss makes 7-8B models practical on consumer hardware.
+- llama.cpp is the universal on-device runtime; MLX is the best choice specifically for Apple Silicon; ONNX Runtime provides the widest cross-platform hardware coverage.
+- Hybrid edge-cloud architectures outperform either approach alone -- use edge for latency-sensitive preprocessing and privacy filtering, cloud for complex generation.
+- Platform providers (Apple Intelligence, Gemini Nano, Samsung Galaxy AI) now treat on-device models as OS-level capabilities, not app-level concerns.
+- The edge deployment decision comes down to four factors: latency requirements, privacy constraints, cost at scale, and offline needs.
+
 ## The Case for Edge Inference
 
 ### Latency
@@ -48,8 +56,6 @@ cmake --build build --config Release
 
 Performance on Apple Silicon (M3 Max 36GB / M4 Pro 24GB):
 
-| Model | Quantization | Size | Tokens/sec |
-|---|---|---|---|
 | Model | Quantization | Size | M3 Max tok/s | M4 Pro tok/s |
 |---|---|---|---|---|
 | Llama 3.1 8B | Q4_K_M | 4.9 GB | ~55 | ~62 |
@@ -329,6 +335,8 @@ llmInference.generateResponseAsync("What is edge computing?")
 
 Quantization reduces model precision from FP32/FP16 to lower bit-widths, directly reducing model size and improving inference speed. The main techniques:
 
+> **Tip:** INT4 (Q4_K_M in GGUF, 4-bit groupwise in ExecuTorch) is the default recommendation for edge deployment. It halves memory versus INT8 with only 1-3% quality degradation on most benchmarks -- the best quality-per-byte tradeoff available.
+
 **Post-Training Quantization (PTQ)**: Applied after training without fine-tuning. GPTQ (Frantar et al., 2022) and AWQ (Lin et al., 2023, "AWQ: Activation-aware Weight Quantization for LLM Compression and Acceleration") are the leading methods.
 
 ```python
@@ -587,6 +595,8 @@ Modern mobile and laptop SoCs include dedicated neural processing units (NPUs) -
 
 **Power efficiency is the real advantage.** NPUs typically deliver 5-10x better performance-per-watt than the GPU for supported operations. For always-on or battery-sensitive tasks (voice detection, background text analysis, on-device search indexing), NPU dispatch is the difference between a feature being practical and draining the battery in two hours.
 
+> **Note:** Always profile actual operator placement on your target NPU before publishing performance numbers. A model that shows 10 TOPS theoretical throughput may achieve only 2-3 TOPS in practice if key transformer operations fall back to CPU.
+
 ## Model Selection for Edge
 
 Choosing the right model for edge deployment requires balancing capability, size, and hardware fit. The landscape of small language models has expanded rapidly, with multiple model families targeting the sub-10B parameter range. Here is a decision framework based on practical deployment constraints.
@@ -612,7 +622,7 @@ For devices with 8GB+ RAM (M-series Macs, gaming laptops, workstations):
 
 - **Llama 3.1 8B**: The general-purpose workhorse. Extensive ecosystem support (GGUF, MLX, ONNX, ExecuTorch). Strong instruction following and tool use.
 - **Qwen 2.5 7B**: Best-in-class for multilingual use cases and coding tasks at this scale. Excellent GGUF quantization quality.
-- **Gemma 2 9B**: Strong reasoning capability. Higher quality than its size suggests due to distillation from larger Gemma models (see [Article 24: Distillation & Model Compression](./agent-24-distillation-compression.md) for distillation techniques).
+- **Gemma 2 9B**: Strong reasoning capability. Higher quality than its size suggests due to distillation from larger Gemma models (see [Article 24: Distillation & Model Compression](/agent-24-distillation-compression) for distillation techniques).
 - **Mistral 7B / Mistral Nemo 12B**: Efficient architectures with sliding window attention. Nemo 12B pushes the upper bound of what runs comfortably on 16GB devices at Q4.
 
 ### Decision Matrix
@@ -625,15 +635,15 @@ For devices with 8GB+ RAM (M-series Macs, gaming laptops, workstations):
 | Laptop, 8GB RAM | Llama 3.1 8B | Q4_K_M | ~4.9 GB | llama.cpp / MLX |
 | Laptop, 16GB+ RAM | Qwen 2.5 14B or Mistral Nemo 12B | Q4_K_M | ~8-9 GB | llama.cpp / MLX |
 
-The quantization technique matters as much as the model choice. INT4 quantization (Q4_K_M in GGUF, 4-bit groupwise in ExecuTorch, INT4 in ONNX Runtime) is the default recommendation for edge -- it halves memory again versus INT8 with only 1-3% quality degradation on most benchmarks. For a detailed treatment of quantization algorithms and their quality/size trade-offs, see [Article 05: Inference Optimization](./agent-05-inference-optimization.md).
+The quantization technique matters as much as the model choice. INT4 quantization (Q4_K_M in GGUF, 4-bit groupwise in ExecuTorch, INT4 in ONNX Runtime) is the default recommendation for edge -- it halves memory again versus INT8 with only 1-3% quality degradation on most benchmarks. For a detailed treatment of quantization algorithms and their quality/size trade-offs, see [Article 05: Inference Optimization](/agent-05-inference-optimization).
 
 ## Cross-References
 
 This article connects to several other topics in this series:
 
-- **[Article 05: Inference Optimization](./agent-05-inference-optimization.md)** covers quantization algorithms (GPTQ, AWQ, SmoothQuant), KV-cache management, and speculative decoding in depth -- all techniques that directly apply to edge inference, just at a different scale.
-- **[Article 24: Distillation & Model Compression](./agent-24-distillation-compression.md)** explores the compression pipeline (distillation, pruning, quantization-aware training) that produces the small models used in edge deployment. Many of the sub-4B models recommended above are themselves distilled from larger teachers.
-- **[Article 50: Audio & Speech AI](./agent-50-audio-speech-ai.md)** covers ASR and TTS pipelines, which are among the most compelling on-device use cases. Whisper Tiny/Base running locally via llama.cpp or Core ML enables fully offline voice transcription, and on-device TTS eliminates round-trip latency for voice agents.
+- **[Article 05: Inference Optimization](/agent-05-inference-optimization)** covers quantization algorithms (GPTQ, AWQ, SmoothQuant), KV-cache management, and speculative decoding in depth -- all techniques that directly apply to edge inference, just at a different scale.
+- **[Article 24: Distillation & Model Compression](/agent-24-distillation-compression)** explores the compression pipeline (distillation, pruning, quantization-aware training) that produces the small models used in edge deployment. Many of the sub-4B models recommended above are themselves distilled from larger teachers.
+- **[Article 50: Audio & Speech AI](/agent-50-audio-speech-ai)** covers ASR and TTS pipelines, which are among the most compelling on-device use cases. Whisper Tiny/Base running locally via llama.cpp or Core ML enables fully offline voice transcription, and on-device TTS eliminates round-trip latency for voice agents.
 
 ## Summary and Key Takeaways
 
@@ -656,3 +666,12 @@ This article connects to several other topics in this series:
 9. **Model selection for edge** is a solved problem at every scale: Qwen 2.5 0.5B for browsers, Llama 3.2 1B/3B or Gemma 3 4B for mobile, Llama 3.1 8B or Qwen 2.5 7B for laptops. INT4 quantization is the default.
 
 10. **The edge deployment decision** hinges on four factors: latency requirements, privacy constraints, cost at scale, and offline needs. If none of these are compelling, cloud inference remains simpler to operate and offers access to larger, more capable models.
+
+## Key Takeaways
+
+- **Start with llama.cpp and GGUF**: they run on virtually every platform, have first-class community support, and GGUF quantized weights are available for almost every popular model on Hugging Face.
+- **Profile before committing to an NPU backend**: theoretical TOPS figures rarely translate directly to real-world LLM throughput due to incomplete operator support; measure actual decode speed on your target device.
+- **Use a hybrid architecture by default**: pure edge limits capability; pure cloud limits latency and offline use. Route simple/latency-sensitive tasks to the edge model and complex generation to the cloud.
+- **INT4 quantization is the starting point, not a compromise**: Q4_K_M quality on Llama 3.1 8B is within 1-3% of FP16 on most benchmarks, and the 4.9 GB size fits comfortably in laptop unified memory.
+- **Filter PII on-device before any cloud call**: the edge preprocessing + cloud generation pattern is the most practical way to comply with data privacy requirements without sacrificing generation quality.
+- **Plan for model lifecycle management**: on-device models need versioning, update delivery, and rollback capability -- especially on mobile where users may run outdated OS versions.

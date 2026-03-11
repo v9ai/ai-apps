@@ -1,6 +1,14 @@
 # Fine-tuning Fundamentals: Full, Freeze & Transfer Learning
 
-Fine-tuning pre-trained language models remains the most reliable method for adapting general-purpose models to domain-specific tasks, yet the decision space around when, how, and whether to fine-tune has grown considerably. This article examines the mechanics of full fine-tuning, feature extraction, and transfer learning strategies, covering supervised fine-tuning (SFT) for instruction following, learning rate scheduling, catastrophic forgetting mitigation, mixed-precision and distributed training, and the practical economics of fine-tuning versus prompt engineering. Understanding these fundamentals is essential before exploring parameter-efficient methods like [LoRA](/knowledge/agent-20-lora-adapters) or reinforcement learning from human feedback.
+Fine-tuning pre-trained language models remains the most reliable method for adapting general-purpose models to domain-specific tasks, yet the decision space around when, how, and whether to fine-tune has grown considerably. This article examines the mechanics of full fine-tuning, feature extraction, and transfer learning strategies, covering supervised fine-tuning (SFT) for instruction following, learning rate scheduling, catastrophic forgetting mitigation, mixed-precision and distributed training, and the practical economics of fine-tuning versus prompt engineering. Understanding these fundamentals is essential before exploring parameter-efficient methods like [LoRA](/agent-20-lora-adapters) or reinforcement learning from human feedback.
+
+## TL;DR
+
+- Fine-tuning adapts a pre-trained model to your task by updating some or all of its weights on labeled data -- full fine-tuning updates everything; feature extraction freezes the backbone.
+- **SFT for instruction following** is the dominant modern workflow: chat-format data, correct chat templates, and loss masking on prompt tokens. TRL's `SFTTrainer` handles this automatically.
+- Use **bf16** on A100/H100 hardware and **FSDP or DeepSpeed ZeRO** when training models above 7B parameters.
+- **Learning rate scheduling matters most**: linear warmup (6-10% of steps) followed by cosine decay, with a low base LR (around 2e-5) to avoid catastrophic forgetting.
+- Fine-tuning wins at scale (1,000+ labeled examples, repeated inference); prompting wins for flexibility and low-data regimes.
 
 ## The Transfer Learning Paradigm
 
@@ -11,7 +19,12 @@ The transfer learning pipeline follows a two-stage process:
 1. **Pre-training**: Learn general representations from large unlabeled corpora using self-supervised objectives (masked language modeling, next-token prediction, or denoising).
 2. **Fine-tuning**: Adapt these representations to a specific task using labeled data, typically with a task-specific head appended to the pre-trained backbone.
 
-This paradigm works because early layers capture low-level syntactic patterns (part-of-speech, phrase structure), middle layers encode semantic relationships, and later layers develop task-relevant abstractions. Fine-tuning adjusts all these layers to align with the target distribution.
+This paradigm works because:
+- Early layers capture low-level syntactic patterns (part-of-speech, phrase structure)
+- Middle layers encode semantic relationships
+- Later layers develop task-relevant abstractions
+
+Fine-tuning adjusts all these layers to align with the target distribution.
 
 ### Feature Extraction vs. Fine-tuning
 
@@ -151,6 +164,8 @@ formatted = tokenizer.apply_chat_template(messages, tokenize=False)
 
 Getting the chat template right is critical. A mismatch between the template used during SFT and the one used at inference causes degraded performance, as the model encounters token patterns it was not trained on.
 
+> **Note:** Chat template mismatches are a common silent failure mode. Always verify that `apply_chat_template` uses the same template at training time and inference time.
+
 ### Loss Masking on Prompt Tokens
 
 A key detail that distinguishes SFT from naive language model training is **loss masking**: the cross-entropy loss is computed only on assistant response tokens, not on user or system prompt tokens. The model should learn to *generate* good responses, not to *predict* user messages.
@@ -211,7 +226,7 @@ trainer = SFTTrainer(
 trainer.train()
 ```
 
-`SFTTrainer` expects the dataset to contain a `"messages"` column in the standard chat format. It applies the model's chat template, handles tokenization and packing, and masks prompt tokens from the loss automatically. For details on curating high-quality instruction datasets, see [Dataset Curation: Synthetic Data, Quality Filtering & Annotation](/knowledge/agent-22-dataset-curation).
+`SFTTrainer` expects the dataset to contain a `"messages"` column in the standard chat format. It applies the model's chat template, handles tokenization and packing, and masks prompt tokens from the loss automatically. For details on curating high-quality instruction datasets, see [Dataset Curation: Synthetic Data, Quality Filtering & Annotation](/agent-22-dataset-curation).
 
 ## Mixed-Precision Training
 
@@ -221,9 +236,14 @@ Training large models in full float32 precision is both memory-prohibitive and u
 
 Two 16-bit formats are commonly used, and the choice matters:
 
-**fp16 (float16)** uses 5 exponent bits and 10 mantissa bits. It offers 2x memory savings and significant speedups on tensor cores (available since V100). However, its limited dynamic range (max value ~65,504) means that gradient values can overflow or underflow during training. This requires **loss scaling** -- multiplying the loss by a large constant before the backward pass, then dividing gradients by the same constant before the optimizer step. The Hugging Face `Trainer` handles this automatically when `fp16=True`.
+| Format | Exponent bits | Mantissa bits | Dynamic range | Loss scaling needed | Min GPU |
+|--------|--------------|---------------|---------------|---------------------|---------|
+| fp16 | 5 | 10 | Limited (~65,504 max) | Yes (auto in HF Trainer) | V100 |
+| bf16 | 8 | 7 | Same as float32 | No | A100+ |
 
-**bf16 (bfloat16)** uses 8 exponent bits (same range as float32) and 7 mantissa bits. It matches float32's dynamic range, eliminating overflow/underflow issues and making loss scaling unnecessary. The tradeoff is slightly lower precision than fp16 in the mantissa, but this is rarely a problem for training. bf16 requires Ampere (A100) or newer GPUs.
+**fp16 (float16)** offers 2x memory savings and significant speedups on tensor cores (available since V100). However, its limited dynamic range means gradient values can overflow or underflow, requiring **loss scaling**. The Hugging Face `Trainer` handles this automatically when `fp16=True`.
+
+**bf16 (bfloat16)** matches float32's dynamic range, eliminating overflow/underflow issues and making loss scaling unnecessary. The tradeoff is slightly lower mantissa precision, but this is rarely a problem for training. bf16 requires Ampere (A100) or newer GPUs.
 
 ```python
 # Use bf16 on A100/H100 hardware (preferred)
@@ -239,7 +259,7 @@ training_args = TrainingArguments(
 )
 ```
 
-**Practical guidance**: Use bf16 whenever hardware supports it (A100, H100, AMD MI300X). Fall back to fp16 on V100s. Never use both flags simultaneously. If you encounter NaN losses with fp16, try reducing the learning rate or switching to bf16 if possible. For more on quantization during inference, see [Inference Optimization: KV Cache, Quantization & Speculative Decoding](/knowledge/agent-05-inference-optimization).
+**Practical guidance**: Use bf16 whenever hardware supports it (A100, H100, AMD MI300X). Fall back to fp16 on V100s. Never use both flags simultaneously. If you encounter NaN losses with fp16, try reducing the learning rate or switching to bf16 if possible. For more on quantization during inference, see [Inference Optimization: KV Cache, Quantization & Speculative Decoding](/agent-05-inference-optimization).
 
 ## Distributed Training Essentials
 
@@ -249,9 +269,11 @@ Full fine-tuning of models above 7B parameters requires distributing computation
 
 **DeepSpeed ZeRO** (Rajbhandari et al., 2020) defines three sharding stages:
 
-- **ZeRO Stage 1**: Shards optimizer states only. Reduces memory by ~4x for Adam (which stores two state tensors per parameter). Minimal communication overhead.
-- **ZeRO Stage 2**: Shards optimizer states and gradients. Further reduces memory with a small communication cost for gradient reduction.
-- **ZeRO Stage 3**: Shards optimizer states, gradients, and parameters. Maximum memory savings but highest communication cost, as parameters must be gathered for each forward/backward pass.
+| Stage | What is sharded | Memory reduction | Communication cost |
+|-------|-----------------|------------------|--------------------|
+| ZeRO-1 | Optimizer states only | ~4x (Adam stores 2 state tensors/param) | Minimal |
+| ZeRO-2 | Optimizer states + gradients | Higher | Small |
+| ZeRO-3 | Optimizer states + gradients + parameters | Maximum | Highest |
 
 **PyTorch FSDP** (Fully Sharded Data Parallel) is PyTorch's native answer to ZeRO Stage 3. It shards parameters, gradients, and optimizer states, with configurable sharding strategies. FSDP integrates cleanly with the PyTorch ecosystem and is the recommended approach for new projects since it does not require an external library.
 
@@ -306,7 +328,11 @@ For DeepSpeed, a JSON configuration file specifies the ZeRO stage and optimizati
 }
 ```
 
-In general, start with the simplest configuration that fits your model in memory and scale up sharding only when needed. Each additional ZeRO stage or FSDP sharding level increases communication overhead and can reduce training throughput. For considerations around serving the resulting model, see [LLM Serving: API Design, Batching & Streaming](/knowledge/agent-37-llm-serving).
+In general, start with the simplest configuration that fits your model in memory and scale up sharding only when needed. Each additional ZeRO stage or FSDP sharding level increases communication overhead and can reduce training throughput.
+
+> **Tip:** Measure training throughput (tokens/sec) after adding each level of sharding. The extra communication cost sometimes makes a lower sharding stage with gradient accumulation faster end-to-end.
+
+For considerations around serving the resulting model, see [LLM Serving: API Design, Batching & Streaming](/agent-37-llm-serving).
 
 ## Learning Rate Scheduling
 
@@ -347,6 +373,8 @@ A newer schedule gaining traction, particularly for continual pre-training, is w
 
 Catastrophic forgetting occurs when fine-tuning on a new task destroys the general knowledge acquired during pre-training. This is not merely a theoretical concern; aggressive fine-tuning on small datasets routinely causes models to lose fluency, factual knowledge, or performance on related tasks.
 
+> **Note:** The most common trigger is a learning rate that's too high, combined with a small domain-specific dataset and no general-data mixing. All three factors compound each other.
+
 ### Techniques for Mitigation
 
 **1. Low learning rates**: The simplest defense. BERT-scale models typically use learning rates of 1e-5 to 5e-5, roughly 10-100x smaller than training from scratch.
@@ -364,7 +392,7 @@ def l2_regularization_to_init(model, pretrained_params, lambda_reg=0.01):
     return lambda_reg * reg_loss
 ```
 
-**4. Elastic Weight Consolidation (EWC)**: Originally proposed by Kirkpatrick et al. (2017) for continual learning, EWC uses the Fisher information matrix to identify which parameters are important for previously learned tasks and penalizes changes to those parameters more heavily. This is explored in depth in [Continual Learning: Catastrophic Forgetting & Knowledge Retention](/knowledge/agent-23-continual-learning).
+**4. Elastic Weight Consolidation (EWC)**: Originally proposed by Kirkpatrick et al. (2017) for continual learning, EWC uses the Fisher information matrix to identify which parameters are important for previously learned tasks and penalizes changes to those parameters more heavily. This is explored in depth in [Continual Learning: Catastrophic Forgetting & Knowledge Retention](/agent-23-continual-learning).
 
 **5. Mixout regularization**: Proposed by Lee et al. (2020), mixout stochastically replaces fine-tuned weights with their pre-trained values during training, similar to dropout but replacing with the pre-trained value instead of zero.
 
@@ -410,7 +438,11 @@ The amount of data needed for fine-tuning depends on the task, model size, and d
 
 ### Data Quality Over Quantity
 
-The LIMA paper demonstrated that 1,000 carefully curated examples can rival models trained on 50,000+ examples of lower quality. Key quality indicators include:
+The LIMA paper demonstrated that 1,000 carefully curated examples can rival models trained on 50,000+ examples of lower quality.
+
+> **Tip:** Before collecting more data, audit the examples you already have. Removing duplicates, correcting label errors, and improving output quality typically yields larger gains than adding raw volume.
+
+Key quality indicators include:
 
 - **Diversity**: Cover the full range of expected inputs
 - **Correctness**: Ensure labels/responses are accurate
@@ -520,7 +552,7 @@ trainer = SFTTrainer(
 trainer.train()
 ```
 
-For classification or other non-generative tasks, the `Trainer` class with `AutoModelForSequenceClassification` remains appropriate, but for instruction following -- the most common modern use case -- `SFTTrainer` with `AutoModelForCausalLM` is the standard approach. For parameter-efficient alternatives that dramatically reduce compute requirements, see [LoRA, QLoRA & Adapter Methods](/knowledge/agent-20-lora-adapters).
+For classification or other non-generative tasks, the `Trainer` class with `AutoModelForSequenceClassification` remains appropriate, but for instruction following -- the most common modern use case -- `SFTTrainer` with `AutoModelForCausalLM` is the standard approach. For parameter-efficient alternatives that dramatically reduce compute requirements, see [LoRA, QLoRA & Adapter Methods](/agent-20-lora-adapters).
 
 ### Key Hyperparameters
 
@@ -539,8 +571,17 @@ For classification or other non-generative tasks, the `Trainer` class with `Auto
 - **Mixed-precision training** is essential. Use bf16 on Ampere+ hardware (A100, H100); fall back to fp16 with loss scaling on older GPUs.
 - **Distributed training** is required for 7B+ models in full fine-tuning. Start with FSDP or ZeRO Stage 2 and increase sharding only when memory demands it.
 - **Learning rate scheduling** is critical. Use linear warmup (6-10% of steps) followed by cosine decay. Discriminative learning rates and gradual unfreezing offer finer control.
-- **Catastrophic forgetting** is a real risk. Mitigate with low learning rates, short training runs, regularization toward pre-trained weights, and data mixing. For a deep treatment, see [Continual Learning: Catastrophic Forgetting & Knowledge Retention](/knowledge/agent-23-continual-learning).
+- **Catastrophic forgetting** is a real risk. Mitigate with low learning rates, short training runs, regularization toward pre-trained weights, and data mixing. For a deep treatment, see [Continual Learning: Catastrophic Forgetting & Knowledge Retention](/agent-23-continual-learning).
 - **Fine-tuning vs. prompting** is a cost-benefit analysis. Fine-tuning wins at scale when you have sufficient data; prompting wins for flexibility and low-data regimes.
-- **Data quality dominates data quantity**. One thousand high-quality examples can outperform fifty thousand noisy ones (LIMA). See [Dataset Curation: Synthetic Data, Quality Filtering & Annotation](/knowledge/agent-22-dataset-curation) for a complete treatment of data preparation.
+- **Data quality dominates data quantity**. One thousand high-quality examples can outperform fifty thousand noisy ones (LIMA). See [Dataset Curation: Synthetic Data, Quality Filtering & Annotation](/agent-22-dataset-curation) for a complete treatment of data preparation.
 - **The full fine-tuning recipe** is well-established: AdamW optimizer, cosine schedule with warmup, 2-5 epochs, learning rate around 2e-5, weight decay of 0.01, bf16 precision, gradient checkpointing enabled. Start here and adjust based on validation metrics.
-- For most practitioners working with models above 7B parameters, **parameter-efficient methods** ([LoRA, QLoRA](/knowledge/agent-20-lora-adapters)) offer a more practical path than full fine-tuning, trading minimal quality for dramatic compute savings.
+- For most practitioners working with models above 7B parameters, **parameter-efficient methods** ([LoRA, QLoRA](/agent-20-lora-adapters)) offer a more practical path than full fine-tuning, trading minimal quality for dramatic compute savings.
+
+## Key Takeaways
+
+- **Use `SFTTrainer` with the correct chat template.** Verify the template matches at training and inference time -- silent mismatches are one of the most common causes of degraded SFT performance.
+- **Always mask prompt tokens from the loss.** Without masking, the model wastes capacity learning to reproduce instructions rather than generating responses.
+- **Default to bf16 + gradient checkpointing.** On A100/H100 hardware this combination maximizes throughput and memory efficiency with no meaningful quality cost.
+- **Pick distributed training based on your model size.** Start without distribution, add ZeRO-2 or FSDP when the model doesn't fit, and move to ZeRO-3 only when needed -- each stage adds communication overhead.
+- **The cost crossover is real.** At 10,000-100,000+ requests, a fine-tuned model with short prompts will be cheaper than a prompted model with long in-context examples. Calculate this break-even before committing to an approach.
+- **Audit data quality before collecting more.** Removing duplicates and correcting label errors in an existing dataset consistently outperforms adding noisy volume.

@@ -1,6 +1,6 @@
 # Inference Optimization: KV Cache, Quantization & Speculative Decoding
 
-Serving large language models at production scale is fundamentally an inference optimization problem. While training a frontier model may cost hundreds of millions of dollars, the cumulative cost of inference — serving billions of requests across the model's lifetime — typically dwarfs training cost by an order of magnitude (see [Article 39: Cost Optimization](./agent-39-cost-optimization.md) for the economic analysis). This article examines the core techniques that make LLM inference practical: KV cache management, prefix caching, quantization methods, speculative decoding, disaggregated serving, continuous batching, and attention optimization. Each technique addresses a different bottleneck in the inference pipeline — rooted in the transformer's attention mechanism and autoregressive decode loop covered in [Article 01: Transformer Architecture](./agent-01-transformer-architecture.md) — and understanding their interactions is essential for building efficient serving systems.
+Serving large language models at production scale is fundamentally an inference optimization problem. While training a frontier model may cost hundreds of millions of dollars, the cumulative cost of inference — serving billions of requests across the model's lifetime — typically dwarfs training cost by an order of magnitude (see [Article 39: Cost Optimization](/agent-39-cost-optimization) for the economic analysis). This article examines the core techniques that make LLM inference practical: KV cache management, prefix caching, quantization methods, speculative decoding, disaggregated serving, continuous batching, and attention optimization. Each technique addresses a different bottleneck in the inference pipeline — rooted in the transformer's attention mechanism and autoregressive decode loop covered in [Article 01: Transformer Architecture](/agent-01-transformer-architecture) — and understanding their interactions is essential for building efficient serving systems.
 
 ## The Inference Pipeline
 
@@ -54,7 +54,7 @@ This means the KV cache alone can exceed the model weights in memory for long se
 
 ### Grouped-Query Attention for KV Cache Reduction
 
-As discussed in [Article 04: Model Architectures](./agent-04-model-architectures.md), GQA reduces the number of KV heads. Llama 2 70B uses 8 KV heads instead of 64, achieving an 8x reduction in KV cache size. This was the primary motivation for adopting GQA — the quality impact is minimal, but the inference memory savings are substantial.
+As discussed in [Article 04: Model Architectures](/agent-04-model-architectures), GQA reduces the number of KV heads. Llama 2 70B uses 8 KV heads instead of 64, achieving an 8x reduction in KV cache size. This was the primary motivation for adopting GQA — the quality impact is minimal, but the inference memory savings are substantial.
 
 ### Multi-Query Attention (MQA)
 
@@ -129,7 +129,7 @@ A large fraction of production LLM traffic shares common prompt prefixes — sys
 # Request C shares the same prefix as A and B, reuses that KV cache.
 ```
 
-The radix tree supports **automatic** prefix sharing with no manual annotation required. Unlike explicit caching APIs (discussed below), the serving system transparently identifies and reuses common prefixes across all concurrent requests. In workloads with high prefix overlap — LLM-as-judge evaluations, chat applications with fixed system prompts, batch processing with shared instructions — RadixAttention achieves up to 5x throughput improvement. See [Article 37: LLM Serving](./agent-37-llm-serving.md) for SGLang's full serving architecture.
+The radix tree supports **automatic** prefix sharing with no manual annotation required. Unlike explicit caching APIs (discussed below), the serving system transparently identifies and reuses common prefixes across all concurrent requests. In workloads with high prefix overlap — LLM-as-judge evaluations, chat applications with fixed system prompts, batch processing with shared instructions — RadixAttention achieves up to 5x throughput improvement. See [Article 37: LLM Serving](/agent-37-llm-serving) for SGLang's full serving architecture.
 
 ### Shared Prefix Caching Across Requests
 
@@ -283,7 +283,7 @@ def speculative_decode(target_model, draft_model, prompt, gamma=5):
 
 ### Key Properties
 
-The acceptance-rejection scheme guarantees that the output distribution is **exactly** the same as the target model's distribution — speculative decoding introduces zero quality degradation. It is purely a latency optimization. Note that speculative decoding interacts with constrained decoding techniques (see [Article 10: Structured Output](./agent-10-structured-output.md)): when output must conform to a grammar or JSON schema, the draft model's proposals can be further filtered by the grammar constraints, improving acceptance rates on structured output tasks.
+The acceptance-rejection scheme guarantees that the output distribution is **exactly** the same as the target model's distribution — speculative decoding introduces zero quality degradation. It is purely a latency optimization. Note that speculative decoding interacts with constrained decoding techniques (see [Article 10: Structured Output](/agent-10-structured-output)): when output must conform to a grammar or JSON schema, the draft model's proposals can be further filtered by the grammar constraints, improving acceptance rates on structured output tasks.
 
 The speedup depends on the acceptance rate, which depends on how well the draft model approximates the target model. In practice:
 
@@ -374,7 +374,7 @@ The benefits are significant. Prefill GPUs can run at near-100% compute utilizat
 
 The separation opens the door to heterogeneous hardware. Prefill benefits from raw FLOPS — fewer, more powerful GPUs are ideal. Decode benefits from memory bandwidth per dollar — more GPUs with high HBM bandwidth, even at lower compute capability, may be cost-optimal. In practice, operators might allocate H100 SXM nodes (high NVLink bandwidth, high FLOPS) for prefill and H100 PCIe or even L40S nodes (lower cost per GB/s of memory bandwidth) for decode.
 
-The main challenge is KV cache transfer latency. For a 70B model at fp16 with a 4K-token prompt, the KV cache is roughly 1 GB. Over a 400 Gbps (50 GB/s) inter-node network, this transfer takes ~20 ms — acceptable for TTFT targets above 100 ms, but potentially problematic for ultra-low-latency applications. See [Article 37: LLM Serving](./agent-37-llm-serving.md) for the broader serving architecture context in which disaggregated serving operates.
+The main challenge is KV cache transfer latency. For a 70B model at fp16 with a 4K-token prompt, the KV cache is roughly 1 GB. Over a 400 Gbps (50 GB/s) inter-node network, this transfer takes ~20 ms — acceptable for TTFT targets above 100 ms, but potentially problematic for ultra-low-latency applications. See [Article 37: LLM Serving](/agent-37-llm-serving) for the broader serving architecture context in which disaggregated serving operates.
 
 ## Flash Attention for Inference
 
@@ -443,7 +443,7 @@ From an inference optimization perspective, prompt caching APIs provide two bene
 1. **TTFT reduction**: The cached prefix skips the compute-bound prefill entirely. For a 4000-token system prompt, this eliminates roughly 80-200 ms of prefill time (depending on model size and hardware), delivering first tokens faster.
 2. **Cost reduction**: Since the provider avoids the prefill computation for cached tokens, they pass a portion of the savings to the user. The economics are significant — a chatbot with a 3000-token system prompt making 1M requests/day saves $20,000-50,000/month on input token costs alone.
 
-The key architectural insight is that prompt caching is a natural extension of the KV cache reuse described in the prefix caching section above. API providers are effectively running RadixAttention or equivalent systems on their serving infrastructure and exposing the savings through pricing. For a detailed cost analysis and implementation patterns, see [Article 39: Cost Optimization](./agent-39-cost-optimization.md).
+The key architectural insight is that prompt caching is a natural extension of the KV cache reuse described in the prefix caching section above. API providers are effectively running RadixAttention or equivalent systems on their serving infrastructure and exposing the savings through pricing. For a detailed cost analysis and implementation patterns, see [Article 39: Cost Optimization](/agent-39-cost-optimization).
 
 ## Serving System Architecture
 
@@ -485,7 +485,7 @@ Response Stream (token-by-token via SSE)
 
 ## Summary and Key Takeaways
 
-- LLM inference has two phases: **prefill** (compute-bound, parallelizable) and **decode** (memory-bandwidth-bound, sequential). Most optimization effort targets the decode bottleneck. See [Article 01: Transformer Architecture](./agent-01-transformer-architecture.md) for the underlying attention mechanism.
+- LLM inference has two phases: **prefill** (compute-bound, parallelizable) and **decode** (memory-bandwidth-bound, sequential). Most optimization effort targets the decode bottleneck. See [Article 01: Transformer Architecture](/agent-01-transformer-architecture) for the underlying attention mechanism.
 - **KV cache** management is the primary memory bottleneck for long-context inference. **PagedAttention** (vLLM) achieves near-optimal memory utilization through OS-inspired virtual memory management.
 - **Prefix caching** (RadixAttention, APC) reuses KV cache blocks across requests sharing common prefixes, achieving up to 5x throughput improvement on system-prompt-heavy workloads and reducing TTFT.
 - **Quantization** reduces memory and bandwidth requirements. **4-bit weight quantization** (GPTQ, AWQ) provides ~4x memory reduction with minimal quality loss, and newer methods (QuIP#, AQLM) push quality even higher at 2-4 bits. **FP8** on H100 hardware delivers 2x throughput over FP16 with near-zero quality loss and no calibration required. **GGUF** format enables efficient CPU inference.
@@ -494,5 +494,5 @@ Response Stream (token-by-token via SSE)
 - **Continuous batching** maximizes GPU utilization by processing requests at iteration granularity rather than batch granularity.
 - **Flash Attention** reduces memory from $O(n^2)$ to $O(n)$ without approximation, enabling longer contexts and faster prefill.
 - **Tensor parallelism** distributes single-layer computation across GPUs, enabling inference on models too large for single GPUs, but requires high-bandwidth interconnects (NVLink) to be latency-efficient.
-- **Prompt caching APIs** from Anthropic, OpenAI, and Google expose KV cache reuse as a user-facing feature, reducing both cost (50-90% discount on cached tokens) and latency. See [Article 39: Cost Optimization](./agent-39-cost-optimization.md) for detailed cost analysis.
-- Production serving systems (vLLM, TGI, TensorRT-LLM, SGLang) combine all these techniques. Understanding their interactions — covered from the serving perspective in [Article 37: LLM Serving](./agent-37-llm-serving.md) — is essential for optimizing the cost-performance tradeoff of deployed LLM systems.
+- **Prompt caching APIs** from Anthropic, OpenAI, and Google expose KV cache reuse as a user-facing feature, reducing both cost (50-90% discount on cached tokens) and latency. See [Article 39: Cost Optimization](/agent-39-cost-optimization) for detailed cost analysis.
+- Production serving systems (vLLM, TGI, TensorRT-LLM, SGLang) combine all these techniques. Understanding their interactions — covered from the serving perspective in [Article 37: LLM Serving](/agent-37-llm-serving) — is essential for optimizing the cost-performance tradeoff of deployed LLM systems.

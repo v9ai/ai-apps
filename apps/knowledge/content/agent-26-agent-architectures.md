@@ -4,7 +4,7 @@ The design of agent architectures determines how language models reason, plan, a
 
 ## Foundations: From Chain-of-Thought to Agents
 
-Before examining specific architectures, it is worth understanding the conceptual progression that led to modern agent designs. Chain-of-Thought prompting (Wei et al., 2022) demonstrated that LLMs could perform multi-step reasoning when prompted to "think step by step" (see [Article 08: Few-Shot & Chain-of-Thought](agent-08-few-shot-chain-of-thought.md) for a thorough treatment). This was a passive capability -- the model reasoned but could not act on its reasoning.
+Before examining specific architectures, it is worth understanding the conceptual progression that led to modern agent designs. Chain-of-Thought prompting (Wei et al., 2022) demonstrated that LLMs could perform multi-step reasoning when prompted to "think step by step" (see [Article 08: Few-Shot & Chain-of-Thought](/agent-08-few-shot-chain-of-thought) for a thorough treatment). This was a passive capability -- the model reasoned but could not act on its reasoning.
 
 The key insight of agent architectures is closing the loop: the model reasons about what to do, takes an action (typically a tool call), observes the result, and then reasons again. This observe-think-act cycle, borrowed from classical AI agent theory (Russell & Norvig), becomes the foundation for all modern LLM agent designs.
 
@@ -185,7 +185,7 @@ class ReflexionAgent:
 
 Reflexion is notable because it achieves learning without gradient updates. The "reinforcement" is entirely verbal -- stored as natural language reflections that modify the agent's behavior through in-context learning. Shinn et al. demonstrated significant improvements on coding tasks (HumanEval: 67.0% to 91.0%), decision-making (ALFWorld), and reasoning tasks through iterative reflection.
 
-This approach is particularly valuable in production systems where fine-tuning is impractical. The reflection memory acts as a lightweight, interpretable form of experience that can be inspected, edited, and shared across agent instances. For a deeper exploration of how agents store and retrieve experiences across sessions, see [Article 28: Agent Memory](agent-28-agent-memory.md).
+This approach is particularly valuable in production systems where fine-tuning is impractical. The reflection memory acts as a lightweight, interpretable form of experience that can be inspected, edited, and shared across agent instances. For a deeper exploration of how agents store and retrieve experiences across sessions, see [Article 28: Agent Memory](/agent-28-agent-memory).
 
 ## Language Agent Tree Search (LATS)
 
@@ -285,7 +285,7 @@ client = Swarm()
 response = client.run(agent=triage_agent, messages=[{"role": "user", "content": "I want to buy..."}])
 ```
 
-Swarm is explicitly not a production framework -- OpenAI describes it as an educational and experimental tool. Its value lies in demonstrating that multi-agent coordination does not require heavy infrastructure. The handoff pattern, where one agent explicitly delegates to another, is a powerful primitive that can be implemented in any framework. For more on multi-agent patterns, see [Article 27: Multi-Agent Systems](agent-27-multi-agent-systems.md).
+Swarm is explicitly not a production framework -- OpenAI describes it as an educational and experimental tool. Its value lies in demonstrating that multi-agent coordination does not require heavy infrastructure. The handoff pattern, where one agent explicitly delegates to another, is a powerful primitive that can be implemented in any framework. For more on multi-agent patterns, see [Article 27: Multi-Agent Systems](/agent-27-multi-agent-systems).
 
 ### Advantages of Graph-Based Control Flow
 
@@ -408,7 +408,7 @@ The decision is not binary. Reasoning-native models excel at tasks requiring dee
 
 Explicit agent loops remain preferable when the task is primarily about information gathering rather than reasoning. A ReAct agent using a fast, inexpensive model to search databases, call APIs, and aggregate results will outperform a reasoning model on both cost and speed. The reasoning model's extended thinking is wasted on tasks like "look up X, then look up Y, then combine them."
 
-The hybrid approach is often strongest in practice: use a reasoning model for the planning phase (where deep thinking about task decomposition adds value) and a faster model for execution steps that are primarily tool invocation. This mirrors the Plan-and-Execute pattern but with the planner benefiting from built-in reasoning capabilities. See [Article 08: Few-Shot & Chain-of-Thought](agent-08-few-shot-chain-of-thought.md) for the foundational prompting techniques that reasoning-native models internalize.
+The hybrid approach is often strongest in practice: use a reasoning model for the planning phase (where deep thinking about task decomposition adds value) and a faster model for execution steps that are primarily tool invocation. This mirrors the Plan-and-Execute pattern but with the planner benefiting from built-in reasoning capabilities. See [Article 08: Few-Shot & Chain-of-Thought](/agent-08-few-shot-chain-of-thought) for the foundational prompting techniques that reasoning-native models internalize.
 
 ## Agentic RAG
 
@@ -473,7 +473,7 @@ class AgenticRAGAgent:
 
 **Adaptive chunking and re-ranking.** The agent can request different chunk sizes, apply re-ranking models to candidate results, or expand its search to adjacent chunks when a retrieved passage seems relevant but incomplete.
 
-Agentic RAG has become one of the most common production agent patterns because it addresses the primary failure mode of naive RAG -- retrieval quality -- while remaining relatively bounded in scope and cost. For deeper coverage of retrieval mechanisms, see [Article 16: Retrieval Strategies](agent-16-retrieval-strategies.md) and [Article 17: Advanced RAG](agent-17-advanced-rag.md).
+Agentic RAG has become one of the most common production agent patterns because it addresses the primary failure mode of naive RAG -- retrieval quality -- while remaining relatively bounded in scope and cost. For deeper coverage of retrieval mechanisms, see [Article 16: Retrieval Strategies](/agent-16-retrieval-strategies) and [Article 17: Advanced RAG](/agent-17-advanced-rag).
 
 ## Agent Termination Strategies
 
@@ -538,7 +538,7 @@ Well-designed agents communicate their limitations rather than silently producin
 - **Escalation**: Route to a human operator or a more capable (and expensive) model when the current agent cannot make progress
 - **Structured failure**: Return a typed error that the calling system can act on, rather than an ambiguous text response
 
-These strategies interact with agent evaluation -- see [Article 30: Agent Evaluation](agent-30-agent-evaluation.md) for metrics that capture termination quality, and [Article 39: Cost Optimization](agent-39-cost-optimization.md) for the economics of budget-based termination.
+These strategies interact with agent evaluation -- see [Article 30: Agent Evaluation](/agent-30-agent-evaluation) for metrics that capture termination quality, and [Article 39: Cost Optimization](/agent-39-cost-optimization) for the economics of budget-based termination.
 
 ## Agent Protocol Patterns
 
@@ -587,7 +587,7 @@ class SelfCorrectingToolLoop:
 
 The key insight is that the model itself serves as the error detector. When a tool returns an unexpected result -- an API error, empty data, a malformed response -- the model recognizes the problem and either retries with modified parameters, tries an alternative tool, or adjusts its plan. This self-correction capability is what separates robust production agents from brittle prototypes.
 
-For the foundational mechanics of how tools are defined and invoked, see [Article 25: Function Calling & Tool Integration](agent-25-function-calling.md). For how these patterns extend to multi-agent coordination, see [Article 27: Multi-Agent Systems](agent-27-multi-agent-systems.md).
+For the foundational mechanics of how tools are defined and invoked, see [Article 25: Function Calling & Tool Integration](/agent-25-function-calling). For how these patterns extend to multi-agent coordination, see [Article 27: Multi-Agent Systems](/agent-27-multi-agent-systems).
 
 ## Comparing Architectures: When to Use What
 
@@ -610,7 +610,7 @@ Choose your architecture based on:
 2. **Reliability requirements**: Production systems benefit from state machine formalism and explicit termination strategies. Research/exploration tolerates lower reliability.
 3. **Cost budget**: LATS and autonomous agents make many LLM calls. ReAct is the most economical. Reasoning-native models trade higher per-call cost for fewer total calls.
 4. **Latency requirements**: ReAct and Plan-and-Execute can be streamed. LATS requires completing the search before producing a result. Reasoning models may have high first-token latency due to internal thinking.
-5. **Need for learning**: If the agent will face similar tasks repeatedly, Reflexion's learning capability adds significant value. For persistent learning across sessions, see [Article 28: Agent Memory](agent-28-agent-memory.md).
+5. **Need for learning**: If the agent will face similar tasks repeatedly, Reflexion's learning capability adds significant value. For persistent learning across sessions, see [Article 28: Agent Memory](/agent-28-agent-memory).
 6. **Retrieval intensity**: Tasks dominated by information gathering benefit from Agentic RAG patterns rather than general-purpose agent loops.
 
 ## Implementation Considerations
@@ -659,8 +659,8 @@ async def stream_agent_execution(agent, task):
 
 This article connects to several related topics covered elsewhere in this series:
 
-- [Article 08: Few-Shot & Chain-of-Thought](agent-08-few-shot-chain-of-thought.md) -- the prompting foundations that agent architectures build upon
-- [Article 25: Function Calling & Tool Integration](agent-25-function-calling.md) -- the mechanics of how agents invoke tools
-- [Article 27: Multi-Agent Systems](agent-27-multi-agent-systems.md) -- extending single-agent architectures to multi-agent coordination
-- [Article 28: Agent Memory](agent-28-agent-memory.md) -- memory systems that enable agents to persist state and learn across sessions
-- [Article 30: Agent Evaluation](agent-30-agent-evaluation.md) -- how to measure agent reliability, efficiency, and quality across architectures
+- [Article 08: Few-Shot & Chain-of-Thought](/agent-08-few-shot-chain-of-thought) -- the prompting foundations that agent architectures build upon
+- [Article 25: Function Calling & Tool Integration](/agent-25-function-calling) -- the mechanics of how agents invoke tools
+- [Article 27: Multi-Agent Systems](/agent-27-multi-agent-systems) -- extending single-agent architectures to multi-agent coordination
+- [Article 28: Agent Memory](/agent-28-agent-memory) -- memory systems that enable agents to persist state and learn across sessions
+- [Article 30: Agent Evaluation](/agent-30-agent-evaluation) -- how to measure agent reliability, efficiency, and quality across architectures

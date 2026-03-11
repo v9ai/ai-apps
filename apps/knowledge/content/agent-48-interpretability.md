@@ -477,6 +477,152 @@ class ConfidenceExplainer:
         return explanation
 ```
 
+## Representation Engineering and Activation Steering
+
+While sparse autoencoders discover features post hoc, representation engineering takes a complementary approach: directly identifying and manipulating the directions in activation space that correspond to high-level concepts, then using those directions to steer model behavior at inference time.
+
+### Reading and Writing Representations
+
+Zou et al. (2023) in "Representation Engineering: A Top-Down Approach to AI Transparency" introduced a framework for extracting concept-level representations from model activations without decomposing individual neurons. The approach works by collecting activations for contrastive pairs of inputs -- one set exhibiting a target concept (e.g., honesty) and another set not exhibiting it -- then computing the difference in mean activations to identify a "concept direction" in the model's representation space:
+
+```python
+def extract_concept_direction(
+    model, tokenizer, positive_examples: list[str],
+    negative_examples: list[str], layer: int
+) -> torch.Tensor:
+    """Extract a concept direction via contrastive activation analysis."""
+    def get_mean_activation(examples):
+        activations = []
+        for text in examples:
+            inputs = tokenizer(text, return_tensors="pt")
+            with torch.no_grad():
+                hidden = model(**inputs, output_hidden_states=True)
+                # Take activation at last token position for target layer
+                act = hidden.hidden_states[layer][0, -1, :]
+                activations.append(act)
+        return torch.stack(activations).mean(dim=0)
+
+    positive_mean = get_mean_activation(positive_examples)
+    negative_mean = get_mean_activation(negative_examples)
+
+    # The concept direction is the difference
+    direction = positive_mean - negative_mean
+    return direction / direction.norm()
+```
+
+Once a concept direction is identified, activation steering adds a scaled version of that direction to the model's hidden states during generation, shifting behavior along the target concept axis. Adding the "honesty" direction increases truthful outputs; subtracting it increases deceptive outputs. Adding a "happiness" direction shifts emotional tone. The technique is surprisingly effective: Turner et al. (2023) demonstrated that activation steering can modulate sycophancy, power-seeking, and refusal behavior with simple vector arithmetic, often more precisely than prompt engineering or fine-tuning.
+
+### Relationship to SAEs and Probing
+
+Representation engineering, probing, and SAE-based feature discovery form a complementary toolkit. Probing asks "is concept X encoded here?" by training a classifier on frozen activations. SAEs ask "what concepts are encoded here?" by decomposing activations into sparse features. Representation engineering asks "can I control concept X?" by identifying and directly modifying the relevant direction. In practice, concept directions found via representation engineering often align with features discovered by SAEs, providing convergent evidence that the model genuinely represents these concepts. For architectural details on the attention and MLP layers where these representations form, see [Article 04: LLM Architectures](/agent-04-model-architectures).
+
+## Automated Circuit Discovery
+
+Manually tracing circuits through transformers is painstaking work -- the induction head circuit took months of researcher effort to identify. Automated circuit discovery aims to scale this process by algorithmically identifying the minimal subgraph responsible for a specific model behavior.
+
+### ACDC and Attribution Patching
+
+Conmy et al. (2023) introduced Automatic Circuit DisCovery (ACDC), which systematically tests whether each edge in the computational graph is necessary for a target behavior. The algorithm works by iteratively patching each edge -- replacing its activation with a baseline value -- and measuring whether the model's behavior on the target task changes. Edges whose removal does not affect task performance are pruned, leaving a minimal circuit.
+
+Attribution patching (Neel Nanda, 2023) provides a faster approximation. Rather than running a full forward pass for each edge ablation, it uses a first-order Taylor approximation: compute the gradient of the target metric with respect to each edge's activation, multiply by the difference between the clean and corrupted activation, and use this product as an estimate of the edge's importance. This reduces the cost from O(n) forward passes to a single forward and backward pass:
+
+```python
+def attribution_patching(
+    model, clean_input, corrupted_input, target_metric_fn, layer, head
+):
+    """Estimate edge importance via first-order approximation."""
+    # Forward pass on clean input with gradient tracking
+    clean_activations = model.forward_with_cache(clean_input)
+    corrupted_activations = model.forward_with_cache(corrupted_input)
+
+    # Compute gradient of target metric w.r.t. edge activation
+    target = target_metric_fn(clean_activations["logits"])
+    target.backward()
+
+    edge_activation = clean_activations[f"layer_{layer}_head_{head}"]
+    edge_gradient = edge_activation.grad
+
+    # Attribution = gradient * (clean - corrupted) activation difference
+    activation_diff = (
+        edge_activation.detach()
+        - corrupted_activations[f"layer_{layer}_head_{head}"].detach()
+    )
+    attribution = (edge_gradient * activation_diff).sum().item()
+
+    return attribution
+```
+
+### Path Patching
+
+Path patching extends attribution patching to trace information flow along specific paths through the network, not just individual edges. By corrupting activations at one node and measuring the effect at a downstream node while holding all other paths fixed, researchers can determine which paths carry the information relevant to a specific behavior. Goldowsky-Dill et al. (2023) used path patching to decompose the indirect object identification circuit into functionally distinct sub-circuits: one path identifies the indirect object, another inhibits the subject, and a third copies the identified object to the output.
+
+These automated methods have dramatically accelerated circuit discovery. What previously required months of manual investigation can now produce candidate circuits in hours, though human verification of the discovered circuits remains essential for confirming mechanistic understanding.
+
+## Interpretability Tooling
+
+The maturation of interpretability as a field has produced a growing ecosystem of open-source tools that make mechanistic analysis accessible to engineers who are not interpretability researchers.
+
+### TransformerLens
+
+TransformerLens (formerly EasyTransformer), developed by Neel Nanda, is a library purpose-built for mechanistic interpretability of GPT-style transformer models. It reimplements common model architectures with full access to every intermediate computation -- every attention pattern, every MLP activation, every residual stream state. Its hook-based architecture makes it straightforward to intervene on activations during forward passes:
+
+```python
+import transformer_lens
+
+# Load a model with full internal access
+model = transformer_lens.HookedTransformer.from_pretrained("gpt2-small")
+
+# Run with full cache of intermediate activations
+logits, cache = model.run_with_cache("The cat sat on the")
+
+# Access any intermediate value
+attention_patterns = cache["pattern", 0]  # Layer 0 attention patterns
+mlp_output = cache["mlp_out", 5]          # Layer 5 MLP output
+residual = cache["resid_post", 11]        # Layer 11 residual stream
+
+# Intervene on activations with hooks
+def ablate_head(value, hook):
+    value[:, :, 7, :] = 0  # Zero out head 7
+    return value
+
+model.run_with_hooks(
+    "The cat sat on the",
+    fwd_hooks=[("blocks.0.attn.hook_z", ablate_head)]
+)
+```
+
+### SAE Lens
+
+SAE Lens, developed by Joseph Bloom and the open-source community, provides standardized tooling for training, evaluating, and analyzing sparse autoencoders on transformer activations. It integrates directly with TransformerLens and supports training SAEs on any layer's residual stream, MLP output, or attention output, with configurable sparsity penalties and architecture variants (including Gated SAEs and TopK SAEs).
+
+### Neuronpedia
+
+Neuronpedia is a collaborative platform for exploring and annotating SAE features at scale. It hosts pre-trained SAEs for multiple models, provides interactive dashboards for exploring feature activations across datasets, and supports community-driven feature labeling. For teams evaluating whether specific model behaviors are driven by identifiable features -- a critical step in safety analysis -- Neuronpedia provides a searchable interface that dramatically reduces the time from question to answer.
+
+### Practical Workflows
+
+A typical interpretability investigation using these tools follows a structured workflow. First, identify a behavior of interest -- a specific output pattern, a failure mode, or a safety-relevant capability. Second, use TransformerLens to cache activations on examples that do and do not exhibit the behavior. Third, apply attribution patching or ACDC to identify which model components (heads, MLPs, specific layers) matter for the behavior. Fourth, train or load SAEs on the relevant layers and examine which features activate differentially. Fifth, validate findings with causal interventions -- ablate the discovered components or steer the identified features and confirm the behavior changes as predicted.
+
+## Safety-Relevant Interpretability
+
+The most consequential application of interpretability is detecting and mitigating safety-relevant properties of language models -- deception, sycophancy, power-seeking, and other behaviors that alignment techniques aim to eliminate.
+
+### Detecting Deception with Internal Probes
+
+If a model produces an output that is helpful and confident but internally "knows" the output is false, this constitutes a form of deception. Probing classifiers and SAE features can detect this discrepancy. Marks et al. (2023) trained linear probes on model activations that distinguish between cases where a model states a true belief versus a false one, achieving high accuracy. Critically, these probes generalize across topics: a probe trained to detect known-false statements about geography also detects known-false statements about science, suggesting that models have a general "I know this is false" representation that is linearly accessible.
+
+Azaria and Mitchell (2023) in "The Internal State of an LLM Knows When It's Lying" demonstrated similar results, showing that a model's hidden states contain sufficient information to determine whether the model's output is truthful, even when the output itself appears confident. For production safety monitoring, this suggests a pipeline where probes run on internal activations in parallel with generation, flagging outputs where the model's internal state diverges from its stated claims.
+
+### Sycophancy and Power-Seeking Detection
+
+Anthropic's work on SAE-discovered features has identified features corresponding to sycophancy (agreeing with the user regardless of correctness) and power-seeking behavior. The sycophancy feature activates when a model detects user opinions in the prompt and adjusts its response to align with them rather than stating its assessment. Activation steering can suppress this feature, producing models that are more willing to respectfully disagree with users.
+
+These findings connect directly to the constitutional AI approach (see [Article 43: Constitutional AI](/agent-43-constitutional-ai)) -- constitutional principles like "choose the response that is more honest, even if it is less agreeable" are effectively training the model to suppress the same features that SAEs identify as sycophancy-related. Interpretability provides a mechanistic explanation for why constitutional training works: it reshapes the geometry of activation space to downweight specific feature directions.
+
+### Toward Scalable Oversight
+
+The ultimate promise of safety-relevant interpretability is scalable oversight -- using automated tools to verify model safety properties faster than models can develop dangerous capabilities. Rather than relying solely on behavioral evaluation (testing what the model does), interpretability enables structural evaluation (verifying what computations the model performs). A model that passes behavioral safety tests might still harbor latent dangerous capabilities that activate only in specific contexts. Interpretability tools can, in principle, detect these capabilities by examining the model's internal structure rather than waiting for them to manifest. This connects to the broader governance challenge discussed in [Article 47: AI Governance](/agent-47-ai-governance) -- regulatory frameworks increasingly require not just behavioral compliance but mechanistic evidence that AI systems operate as intended.
+
 ## The Frontier: Open Problems
 
 Several open problems define the frontier of interpretability research.

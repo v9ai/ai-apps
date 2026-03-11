@@ -398,7 +398,7 @@ Low-resource languages face compounded disadvantage. Models trained on limited t
 
 Bias benchmarks themselves carry cultural assumptions. BBQ's categories of bias (age, disability, gender, race, religion, socioeconomic status) reflect Western anti-discrimination frameworks. Caste-based discrimination, which affects over a billion people, is absent from standard benchmarks. Concepts of disability, gender identity, and family honor vary across cultures in ways that standardized evaluations cannot capture. Teams deploying models internationally must develop culturally specific bias evaluations rather than relying on translated versions of English-language benchmarks.
 
-For practical guidance on how embedding models encode and propagate these cultural biases through vector representations, see [Article 13: Embedding Models](./agent-13-embedding-models.md). The governance implications of cross-cultural deployment are discussed in [Article 47: AI Governance](./agent-47-ai-governance.md).
+For practical guidance on how embedding models encode and propagate these cultural biases through vector representations, see [Article 13: Embedding Models](/agent-13-embedding-models). The governance implications of cross-cultural deployment are discussed in [Article 47: AI Governance](/agent-47-ai-governance).
 
 ## Bias in Retrieval and Embedding Systems
 
@@ -412,7 +412,7 @@ This bias compounds through the retrieval pipeline. When a user queries a RAG sy
 
 ### Search Result Bias and Feedback Loops
 
-Biased retrieval creates feedback loops in systems that learn from user interactions. If a search system consistently ranks content about certain demographic groups higher, users interact more with that content, reinforcing the ranking signal. Recommendation systems built on LLM embeddings (see [Article 53: Search & Recommendations](./agent-53-search-recommendations.md)) are particularly susceptible because their semantic understanding of "relevance" is shaped by the same biased embedding geometry.
+Biased retrieval creates feedback loops in systems that learn from user interactions. If a search system consistently ranks content about certain demographic groups higher, users interact more with that content, reinforcing the ranking signal. Recommendation systems built on LLM embeddings (see [Article 53: Search & Recommendations](/agent-53-search-recommendations)) are particularly susceptible because their semantic understanding of "relevance" is shaped by the same biased embedding geometry.
 
 Practical mitigation requires auditing retrieval results for demographic parity across queries, diversifying retrieval corpora to include underrepresented perspectives, and applying fairness-aware re-ranking that adjusts document scores to counteract embedding bias:
 
@@ -462,11 +462,11 @@ For LLMs, representational harms are especially significant because language mod
 
 ### Applying the Framework
 
-The distinction matters for engineering practice because allocational and representational harms require different measurement and mitigation strategies. Allocational harms are measured by outcome disparities across groups and mitigated by fairness constraints on decision outputs. Representational harms are measured by content analysis, representation audits, and user studies, and mitigated by training data curation, constitutional AI principles (see [Article 43: Constitutional AI](./agent-43-constitutional-ai.md)), and output-level content policies.
+The distinction matters for engineering practice because allocational and representational harms require different measurement and mitigation strategies. Allocational harms are measured by outcome disparities across groups and mitigated by fairness constraints on decision outputs. Representational harms are measured by content analysis, representation audits, and user studies, and mitigated by training data curation, constitutional AI principles (see [Article 43: Constitutional AI](/agent-43-constitutional-ai)), and output-level content policies.
 
 Production systems should evaluate both categories. A customer service chatbot might have no allocational harm (it resolves tickets at equal rates across demographics) while causing significant representational harm (it uses more formal, distant language with users it identifies as non-native speakers). Conversely, a system might produce equitable-sounding language while allocating resources inequitably.
 
-For a comprehensive discussion of how governance frameworks address both categories of harm in regulatory contexts, see [Article 47: AI Governance](./agent-47-ai-governance.md). The role of constitutional principles in mitigating representational harms at training time is covered in [Article 43: Constitutional AI](./agent-43-constitutional-ai.md).
+For a comprehensive discussion of how governance frameworks address both categories of harm in regulatory contexts, see [Article 47: AI Governance](/agent-47-ai-governance). The role of constitutional principles in mitigating representational harms at training time is covered in [Article 43: Constitutional AI](/agent-43-constitutional-ai).
 
 ## The Impossibility Theorem and Practical Tradeoffs
 

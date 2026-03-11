@@ -4,7 +4,7 @@ Function calling has emerged as the foundational mechanism through which large l
 
 ## The Evolution of Function Calling
 
-Before dedicated function calling APIs existed, developers resorted to prompt engineering: instructing the model to output JSON in a particular format, then parsing the result with fragile regex or string matching. This approach was error-prone, with models frequently producing malformed output, hallucinating function names, or embedding function calls within conversational text that resisted reliable extraction (see also [Article 10: Structured Output](agent-10-structured-output.md) for how constrained decoding solves the output formatting problem more broadly).
+Before dedicated function calling APIs existed, developers resorted to prompt engineering: instructing the model to output JSON in a particular format, then parsing the result with fragile regex or string matching. This approach was error-prone, with models frequently producing malformed output, hallucinating function names, or embedding function calls within conversational text that resisted reliable extraction (see also [Article 10: Structured Output](/agent-10-structured-output) for how constrained decoding solves the output formatting problem more broadly).
 
 OpenAI's introduction of function calling in June 2023 marked a turning point. By moving tool definitions into a structured API parameter, the model could be trained to produce tool invocations as structured objects rather than freeform text. This architectural decision -- separating the tool invocation channel from the conversational channel -- solved the parsing problem and opened the door to reliable agent systems.
 
@@ -247,7 +247,7 @@ def get_tools_for_context(user_role, context):
 
 ### Human-in-the-Loop Confirmation
 
-For high-stakes operations, requiring user confirmation before execution (see [Article 12: Adversarial Prompting](agent-12-adversarial-prompting.md) for why this is especially critical when user inputs may contain injected tool instructions):
+For high-stakes operations, requiring user confirmation before execution (see [Article 12: Adversarial Prompting](/agent-12-adversarial-prompting) for why this is especially critical when user inputs may contain injected tool instructions):
 
 ```python
 async def execute_with_confirmation(tool_call, user_session):
@@ -329,7 +329,7 @@ tool_result_message = {
 # The model can then retry with the correct filename
 ```
 
-This error-retry loop is one of the most powerful patterns in agent systems and forms the backbone of the ReAct loop discussed in [Article 26: Agent Architectures](agent-26-agent-architectures.md). Research from Microsoft (Patil et al., "Gorilla: Large Language Model Connected with Massive APIs," 2023) shows that models can effectively recover from errors when given clear error messages and contextual hints.
+This error-retry loop is one of the most powerful patterns in agent systems and forms the backbone of the ReAct loop discussed in [Article 26: Agent Architectures](/agent-26-agent-architectures). Research from Microsoft (Patil et al., "Gorilla: Large Language Model Connected with Massive APIs," 2023) shows that models can effectively recover from errors when given clear error messages and contextual hints.
 
 ## Tool Result Injection and Context Management
 
@@ -483,7 +483,7 @@ server.run(transport="stdio")
 
 Before MCP, integrating a tool required writing provider-specific adapters. A Slack integration for OpenAI's API looked different from one for Anthropic's API, even though the underlying capability was identical. MCP makes tools portable: a single MCP server for Slack works with any MCP-compatible client, whether that client uses Claude, GPT, or a local model.
 
-MCP servers have been built for databases (Postgres, SQLite), file systems, version control (GitHub, GitLab), communication platforms (Slack, email), and development tools (Docker, Kubernetes). This emerging ecosystem means that agent builders can compose capabilities from pre-built servers rather than implementing each integration from scratch -- a pattern that mirrors how microservices compose into larger systems, as explored in [Article 26: Agent Architectures](agent-26-agent-architectures.md).
+MCP servers have been built for databases (Postgres, SQLite), file systems, version control (GitHub, GitLab), communication platforms (Slack, email), and development tools (Docker, Kubernetes). This emerging ecosystem means that agent builders can compose capabilities from pre-built servers rather than implementing each integration from scratch -- a pattern that mirrors how microservices compose into larger systems, as explored in [Article 26: Agent Architectures](/agent-26-agent-architectures).
 
 ### Dynamic Tool Discovery
 
@@ -562,7 +562,7 @@ def filter_tools(all_tools, context):
     ]
 ```
 
-Evaluating tool selection accuracy at scale requires systematic benchmarks, as discussed in [Article 30: Agent Evaluation](agent-30-agent-evaluation.md).
+Evaluating tool selection accuracy at scale requires systematic benchmarks, as discussed in [Article 30: Agent Evaluation](/agent-30-agent-evaluation).
 
 ## Computer Use and GUI Tools
 
@@ -592,11 +592,11 @@ computer_tool = {
 
 Computer Use is not a replacement for API-based function calling -- it is significantly slower and less reliable for tasks where a structured API exists. Its value lies in bridging the gap for applications that *lack* APIs: legacy enterprise software, desktop applications, web interfaces without public APIs, and workflows that span multiple GUI applications.
 
-The interaction loop follows the same observe-act pattern as other agent architectures (see [Article 26: Agent Architectures](agent-26-agent-architectures.md)), but the observation is a screenshot and the action is a physical input event rather than a function call. This makes error detection harder -- the model must visually confirm that its action had the intended effect, introducing a new class of failure modes that pure API tools avoid.
+The interaction loop follows the same observe-act pattern as other agent architectures (see [Article 26: Agent Architectures](/agent-26-agent-architectures)), but the observation is a screenshot and the action is a physical input event rather than a function call. This makes error detection harder -- the model must visually confirm that its action had the intended effect, introducing a new class of failure modes that pure API tools avoid.
 
 ### Safety Considerations
 
-GUI-based tool use amplifies security concerns because the model has broader access than any single API would grant. A model controlling a desktop could navigate to unintended applications, execute system commands through a terminal, or interact with sensitive interfaces. Sandboxing via virtual machines or containers, restricting the accessible screen region, and maintaining human-in-the-loop confirmation for destructive actions are essential safeguards (see [Article 12: Adversarial Prompting](agent-12-adversarial-prompting.md) for related attack vectors).
+GUI-based tool use amplifies security concerns because the model has broader access than any single API would grant. A model controlling a desktop could navigate to unintended applications, execute system commands through a terminal, or interact with sensitive interfaces. Sandboxing via virtual machines or containers, restricting the accessible screen region, and maintaining human-in-the-loop confirmation for destructive actions are essential safeguards (see [Article 12: Adversarial Prompting](/agent-12-adversarial-prompting) for related attack vectors).
 
 ## Streaming Tool Calls
 
@@ -668,7 +668,7 @@ Several significant efforts have produced open training datasets and fine-tuned 
 
 These training approaches explain common failure modes. Models struggle with tools whose schemas differ significantly from patterns seen in training: unusual parameter names, deeply nested objects, or unconventional description formats. When a model repeatedly misuses a tool, the fix is often to redesign the schema to match patterns the model has been trained on -- shorter descriptions, flatter parameter structures, and conventional naming.
 
-Models also exhibit training-data biases in tool selection. A model trained primarily on single-tool examples may under-utilize parallel calling. One trained on ReAct-style traces may add unnecessary reasoning steps before straightforward tool calls. Recognizing these biases helps when designing evaluation suites for tool-use accuracy, as discussed in [Article 30: Agent Evaluation](agent-30-agent-evaluation.md).
+Models also exhibit training-data biases in tool selection. A model trained primarily on single-tool examples may under-utilize parallel calling. One trained on ReAct-style traces may add unnecessary reasoning steps before straightforward tool calls. Recognizing these biases helps when designing evaluation suites for tool-use accuracy, as discussed in [Article 30: Agent Evaluation](/agent-30-agent-evaluation).
 
 ## Summary and Key Takeaways
 
@@ -685,4 +685,4 @@ Models also exhibit training-data biases in tool selection. A model trained prim
 - **Streaming tool calls** improve perceived performance by showing partial invocations and results in real-time, which matters for user-facing agent applications.
 - **Fine-tuning approaches** (Gorilla, ToolLLM, Glaive) reveal why models fail at tool use and suggest practical schema design improvements.
 
-The function calling interface is deceptively simple -- a few API parameters and a JSON Schema. But building reliable, secure, and efficient tool pipelines on top of it requires careful engineering across validation, execution, error handling, and observability. Function calling is the connective tissue of agent systems: it bridges the gap between the model's reasoning (discussed in [Article 26: Agent Architectures](agent-26-agent-architectures.md)) and the structured outputs (discussed in [Article 10: Structured Output](agent-10-structured-output.md)) that make those systems reliable.
+The function calling interface is deceptively simple -- a few API parameters and a JSON Schema. But building reliable, secure, and efficient tool pipelines on top of it requires careful engineering across validation, execution, error handling, and observability. Function calling is the connective tissue of agent systems: it bridges the gap between the model's reasoning (discussed in [Article 26: Agent Architectures](/agent-26-agent-architectures)) and the structured outputs (discussed in [Article 10: Structured Output](/agent-10-structured-output)) that make those systems reliable.

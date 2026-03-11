@@ -6,7 +6,7 @@ Evaluating retrieval-augmented generation systems is fundamentally harder than e
 
 Traditional IR evaluation measures retrieval quality (precision, recall, nDCG) against relevance judgments. Traditional NLG evaluation measures generation quality (BLEU, ROUGE, human ratings) against reference texts. RAG evaluation must assess both simultaneously, plus the interaction between them.
 
-Consider a system that retrieves the correct document but generates an answer that contradicts it (synthesis failure). Or one that retrieves irrelevant documents but generates a plausible-sounding answer from parametric knowledge (retrieval failure masked by hallucination). Or one that retrieves relevant documents but overloads the context with noise, causing the LLM to miss the key information (context poisoning). Each failure mode is invisible to metrics that evaluate only one stage. The retrieval strategies themselves -- hybrid search, reranking, HyDE -- each introduce distinct failure surfaces (see [Article 16: Retrieval Strategies](agent-16-retrieval-strategies.md) for the design space).
+Consider a system that retrieves the correct document but generates an answer that contradicts it (synthesis failure). Or one that retrieves irrelevant documents but generates a plausible-sounding answer from parametric knowledge (retrieval failure masked by hallucination). Or one that retrieves relevant documents but overloads the context with noise, causing the LLM to miss the key information (context poisoning). Each failure mode is invisible to metrics that evaluate only one stage. The retrieval strategies themselves -- hybrid search, reranking, HyDE -- each introduce distinct failure surfaces (see [Article 16: Retrieval Strategies](/agent-16-retrieval-strategies) for the design space).
 
 ### The Evaluation Stack
 
@@ -19,7 +19,7 @@ A comprehensive RAG evaluation framework must assess four layers:
 
 ## The RAGAS Framework
 
-RAGAS (Retrieval Augmented Generation Assessment, Es et al., 2023) provides the most widely adopted automated evaluation framework for RAG systems. It defines metrics for each layer of the evaluation stack and provides LLM-based implementations that don't require ground truth reference answers. These LLM-based metrics are instances of the LLM-as-Judge pattern (see [Article 33: LLM-as-Judge](agent-33-llm-as-judge.md) for a thorough treatment of calibration, biases, and reliability).
+RAGAS (Retrieval Augmented Generation Assessment, Es et al., 2023) provides the most widely adopted automated evaluation framework for RAG systems. It defines metrics for each layer of the evaluation stack and provides LLM-based implementations that don't require ground truth reference answers. These LLM-based metrics are instances of the LLM-as-Judge pattern (see [Article 33: LLM-as-Judge](/agent-33-llm-as-judge) for a thorough treatment of calibration, biases, and reliability).
 
 ### Faithfulness
 
@@ -221,7 +221,7 @@ Common causes:
 
 **Correct document retrieved but wrong chunk**: The document is in the corpus, but the chunk containing the answer scored lower than other chunks from the same document.
 
-Fix: Improve chunking strategy, add parent-child relationships, or use document-level retrieval with chunk-level reranking. Multi-hop and agentic retrieval approaches (see [Article 17: Advanced RAG](agent-17-advanced-rag.md)) can also recover from single-stage retrieval misses by iteratively refining the search.
+Fix: Improve chunking strategy, add parent-child relationships, or use document-level retrieval with chunk-level reranking. Multi-hop and agentic retrieval approaches (see [Article 17: Advanced RAG](/agent-17-advanced-rag)) can also recover from single-stage retrieval misses by iteratively refining the search.
 
 ### Synthesis Failures
 
@@ -260,7 +260,7 @@ Common causes:
 Common causes:
 - **Lost in the Middle** (Liu et al., 2023): Relevant information is in the middle of a long context, where LLM attention is weakest
 - **Context overload**: Too many documents dilute the signal
-- **Poor prompt engineering**: The generation prompt doesn't encourage specificity (see [Article 11: Prompt Optimization](agent-11-prompt-optimization.md) for systematic approaches to prompt improvement)
+- **Poor prompt engineering**: The generation prompt doesn't encourage specificity (see [Article 11: Prompt Optimization](/agent-11-prompt-optimization) for systematic approaches to prompt improvement)
 
 ### Context Poisoning
 
@@ -640,7 +640,7 @@ In practice, these tools are complementary rather than exclusive. A common patte
 
 ## LLM-as-Judge Reliability
 
-Every LLM-based evaluation metric in the frameworks above -- faithfulness scoring, relevance assessment, hallucination detection -- relies on an LLM judge. This introduces a fundamental dependency: your evaluation is only as reliable as the judge model. For a comprehensive treatment of this pattern, see [Article 33: LLM-as-Judge](agent-33-llm-as-judge.md). Here we focus on the specific failure modes that arise when applying LLM judges to RAG evaluation.
+Every LLM-based evaluation metric in the frameworks above -- faithfulness scoring, relevance assessment, hallucination detection -- relies on an LLM judge. This introduces a fundamental dependency: your evaluation is only as reliable as the judge model. For a comprehensive treatment of this pattern, see [Article 33: LLM-as-Judge](/agent-33-llm-as-judge). Here we focus on the specific failure modes that arise when applying LLM judges to RAG evaluation.
 
 ### When LLM-Based Metrics Fail
 
@@ -674,7 +674,7 @@ No LLM-based evaluation should be deployed without calibration against human jud
 
 ## Evaluating Agentic RAG
 
-Standard RAG evaluation assumes a single retrieval step followed by a single generation step. Agentic RAG systems -- where an LLM dynamically decides what to retrieve, when to retrieve, and whether to iterate -- break this assumption. The evaluation challenge is no longer just "did the system produce a good answer?" but "did the system take a good path to the answer?" For background on these architectures, see [Article 17: Advanced RAG](agent-17-advanced-rag.md).
+Standard RAG evaluation assumes a single retrieval step followed by a single generation step. Agentic RAG systems -- where an LLM dynamically decides what to retrieve, when to retrieve, and whether to iterate -- break this assumption. The evaluation challenge is no longer just "did the system produce a good answer?" but "did the system take a good path to the answer?" For background on these architectures, see [Article 17: Advanced RAG](/agent-17-advanced-rag).
 
 ### Multi-Step Retrieval Evaluation
 
@@ -737,7 +737,7 @@ For systems that involve tool selection (choosing between vector search, SQL que
 - **Ordering efficiency**: Did the agent sequence its tool calls in a logical order, or did it waste steps on redundant or out-of-order operations?
 - **Termination quality**: Did the agent stop retrieving when it had sufficient information, or did it continue unnecessarily (wasting tokens and latency)?
 
-These trajectory metrics are more informative than answer-only metrics for improving agentic RAG systems, because they identify which component of the agent loop needs improvement -- the retrieval strategy selection, the stopping criterion, or the synthesis step. The approach shares DNA with agent evaluation methods used outside RAG contexts; see the broader evaluation patterns in [Article 11: Prompt Optimization](agent-11-prompt-optimization.md) for how systematic optimization applies to these multi-step systems.
+These trajectory metrics are more informative than answer-only metrics for improving agentic RAG systems, because they identify which component of the agent loop needs improvement -- the retrieval strategy selection, the stopping criterion, or the synthesis step. The approach shares DNA with agent evaluation methods used outside RAG contexts; see the broader evaluation patterns in [Article 11: Prompt Optimization](/agent-11-prompt-optimization) for how systematic optimization applies to these multi-step systems.
 
 ### Practical Considerations
 

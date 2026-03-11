@@ -191,12 +191,12 @@ vLLM is the most widely deployed open-source LLM serving engine. Its core archit
 
 - **PagedAttention v2** with improved memory efficiency and reduced fragmentation overhead
 - **Automatic prefix caching (APC)**: Enabled via `--enable-prefix-caching`, vLLM hashes KV-cache blocks and reuses them across requests that share common prefixes (system prompts, few-shot examples). Unlike manual prefix registration, APC works transparently across all requests with zero configuration.
-- **Pipeline parallelism**: vLLM v0.5+ introduced pipeline parallelism alongside tensor parallelism, enabling models to be distributed across nodes connected by commodity networking. This is critical for serving 400B+ parameter models where a single node's GPUs are insufficient (see [Article 38: Scaling & Load Balancing](agent-38-scaling-load-balancing.md) for a deeper treatment of parallelism strategies).
+- **Pipeline parallelism**: vLLM v0.5+ introduced pipeline parallelism alongside tensor parallelism, enabling models to be distributed across nodes connected by commodity networking. This is critical for serving 400B+ parameter models where a single node's GPUs are insufficient (see [Article 38: Scaling & Load Balancing](/agent-38-scaling-load-balancing) for a deeper treatment of parallelism strategies).
 - **Multimodal serving**: vLLM v0.5+ supports vision-language models (LLaVA, Qwen-VL, InternVL) with unified batching of text and image inputs. Image preprocessing is pipelined with token generation to avoid blocking.
 - **Chunked prefill**: Borrowed from the Sarathi-Serve approach (discussed below), vLLM v0.6+ breaks long prefill operations into smaller chunks interleaved with decode iterations, preventing prefill from starving decode requests.
 - **Multi-LoRA serving**: Native support for serving multiple LoRA adapters on a single base model with per-request adapter selection (see the Multi-LoRA Serving section below).
 - **Speculative decoding** with draft models, Medusa heads, and n-gram speculation
-- **FP8 and GPTQ/AWQ quantization** for reduced memory and improved throughput (see [Article 5: Inference Optimization](agent-05-inference-optimization.md) for quantization fundamentals)
+- **FP8 and GPTQ/AWQ quantization** for reduced memory and improved throughput (see [Article 5: Inference Optimization](/agent-05-inference-optimization) for quantization fundamentals)
 
 ```bash
 # Launch vLLM server with v0.6+ features
@@ -248,7 +248,7 @@ SGLang (Zheng et al., 2024) takes a different approach, optimizing at the progra
 SGLang has emerged as a genuine competitor to vLLM, particularly for workloads involving structured multi-call programs. Key differentiators:
 
 - **RadixAttention**: Automatic KV-cache sharing across requests with common prefixes, without requiring explicit prefix registration. The radix tree is maintained incrementally and supports LRU eviction when GPU memory is exhausted.
-- **Compressed finite-state machines**: SGLang integrates constrained decoding via compressed FSMs that jump multiple tokens in a single step when the grammar permits only one valid continuation, reducing decode iterations for structured output (see the Guided Decoding section below and [Article 10: Structured Output](agent-10-structured-output.md) for the broader constrained decoding landscape).
+- **Compressed finite-state machines**: SGLang integrates constrained decoding via compressed FSMs that jump multiple tokens in a single step when the grammar permits only one valid continuation, reducing decode iterations for structured output (see the Guided Decoding section below and [Article 10: Structured Output](/agent-10-structured-output) for the broader constrained decoding landscape).
 - **Data parallelism with expert parallelism**: SGLang v0.3+ supports DP attention combined with tensor parallelism, enabling higher throughput on multi-GPU nodes without full pipeline parallelism overhead.
 - **Overlap scheduling**: Prefill and decode operations are overlapped within the same batch to improve GPU utilization, an approach complementary to the chunked-prefill strategy discussed below.
 
@@ -372,7 +372,7 @@ While FlashAttention primarily optimizes the prefill phase (where the full atten
 
 FlashDecoding introduces parallelism along the KV sequence length dimension: different thread blocks process different chunks of the KV-cache in parallel, then combine results with a lightweight reduction. This improves decode throughput by up to 8x for long contexts (e.g., 64K tokens) with small batch sizes.
 
-These kernel-level optimizations form the computational foundation of every serving engine discussed in this article. TGI, vLLM, SGLang, and TensorRT-LLM all use FlashAttention variants as their default attention implementation. For a broader treatment of the attention mechanism and its computational costs, see [Article 5: Inference Optimization](agent-05-inference-optimization.md).
+These kernel-level optimizations form the computational foundation of every serving engine discussed in this article. TGI, vLLM, SGLang, and TensorRT-LLM all use FlashAttention variants as their default attention implementation. For a broader treatment of the attention mechanism and its computational costs, see [Article 5: Inference Optimization](/agent-05-inference-optimization).
 
 ## Multi-LoRA Serving
 
@@ -409,7 +409,7 @@ response = requests.post("http://localhost:8000/v1/chat/completions", json={
 
 In production, adapters are trained and updated continuously. Hot-swapping allows registering new adapters or updating existing ones without restarting the server or draining requests. vLLM's LoRA support allows dynamic adapter registration via API, while SGLang supports loading adapters from Hugging Face Hub at runtime. The adapter weights are small (typically 10-100 MB for rank-16 adapters on a 7B model), making swap latency negligible compared to full model loading.
 
-For a deep dive into LoRA training, rank selection, and merging strategies, see [Article 20: LoRA Adapters](agent-20-lora-adapters.md).
+For a deep dive into LoRA training, rank selection, and merging strategies, see [Article 20: LoRA Adapters](/agent-20-lora-adapters).
 
 ## Chunked Prefill
 
@@ -439,7 +439,7 @@ vLLM v0.6+ adopted chunked prefill as a first-class scheduling option via `--ena
 
 TensorRT-LLM implements a similar concept under the name "inflight batching with context chunking," where long contexts are automatically segmented and interleaved with generation requests.
 
-Chunked prefill is especially important for production deployments that must serve both long-context (RAG, document analysis) and short-context (chat) workloads on the same GPU pool, a scenario that is increasingly common in real-world systems. For how this fits into broader cluster-level scheduling, see [Article 38: Scaling & Load Balancing](agent-38-scaling-load-balancing.md).
+Chunked prefill is especially important for production deployments that must serve both long-context (RAG, document analysis) and short-context (chat) workloads on the same GPU pool, a scenario that is increasingly common in real-world systems. For how this fits into broader cluster-level scheduling, see [Article 38: Scaling & Load Balancing](/agent-38-scaling-load-balancing).
 
 ## Guided Decoding and Constrained Generation
 
@@ -506,7 +506,7 @@ curl http://localhost:8000/v1/chat/completions -d '{
 }'
 ```
 
-The overhead of guided decoding depends on the grammar complexity and the vocabulary size but is typically under 5% of total generation latency with pre-compiled masks. For a comprehensive treatment of structured output techniques and when to prefer constrained decoding over prompt-based approaches, see [Article 10: Structured Output](agent-10-structured-output.md).
+The overhead of guided decoding depends on the grammar complexity and the vocabulary size but is typically under 5% of total generation latency with pre-compiled masks. For a comprehensive treatment of structured output techniques and when to prefer constrained decoding over prompt-based approaches, see [Article 10: Structured Output](/agent-10-structured-output).
 
 ## Production Deployment Patterns
 
@@ -570,11 +570,11 @@ class InferenceMetrics:
 
 5. **FlashAttention (1/2/3) and FlashDecoding** eliminate the memory bottleneck of materialized attention matrices, with Hopper-specific optimizations pushing toward peak hardware utilization. These kernels are the computational foundation of every modern serving engine.
 
-6. **Multi-LoRA serving** (S-LoRA, vLLM LoRA support) enables hundreds of task-specific adapters on a single base model, making per-customer and per-domain fine-tuning economically viable in production (see [Article 20: LoRA Adapters](agent-20-lora-adapters.md)).
+6. **Multi-LoRA serving** (S-LoRA, vLLM LoRA support) enables hundreds of task-specific adapters on a single base model, making per-customer and per-domain fine-tuning economically viable in production (see [Article 20: LoRA Adapters](/agent-20-lora-adapters)).
 
 7. **Chunked prefill** bounds worst-case decode latency in mixed workloads by interleaving prefill chunks with decode iterations, a critical technique for serving both long-context and short-context requests on shared infrastructure.
 
-8. **Guided decoding** via FSMs and context-free grammars provides runtime enforcement of JSON schemas and other structural constraints, eliminating an entire class of output reliability failures (see [Article 10: Structured Output](agent-10-structured-output.md)).
+8. **Guided decoding** via FSMs and context-free grammars provides runtime enforcement of JSON schemas and other structural constraints, eliminating an entire class of output reliability failures (see [Article 10: Structured Output](/agent-10-structured-output)).
 
 9. **The throughput-latency tradeoff is fundamental** and must be navigated through dynamic batch sizing, priority scheduling, and admission control based on SLA requirements.
 

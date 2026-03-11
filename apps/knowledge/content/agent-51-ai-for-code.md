@@ -458,7 +458,7 @@ SWE-bench performance (as of early 2025):
     - Best non-agentic: ~25-30%
 ```
 
-The rapid progression on SWE-bench Verified is notable: agent systems crossed the 50% threshold in early 2025, meaning they can resolve more than half of real-world GitHub issues autonomously. This milestone suggests that AI coding agents are approaching practical utility for a meaningful fraction of routine software maintenance work. For a detailed treatment of how these agent systems are architecturally composed, see [Article 29: Code Generation Agents](/articles/agent-29-code-agents).
+The rapid progression on SWE-bench Verified is notable: agent systems crossed the 50% threshold in early 2025, meaning they can resolve more than half of real-world GitHub issues autonomously. This milestone suggests that AI coding agents are approaching practical utility for a meaningful fraction of routine software maintenance work. For a detailed treatment of how these agent systems are architecturally composed, see [Article 29: Code Generation Agents](/agent-29-code-agents).
 
 SWE-bench tests capabilities that HumanEval misses entirely:
 - Repository navigation and understanding
@@ -593,7 +593,7 @@ The quality of AI-assisted editing depends heavily on what context the model see
 - **Open-file prioritization**: Files currently open in editor tabs receive higher priority than closed files in the workspace. The assumption is that open files are most relevant to the current task - a heuristic that holds well in practice.
 - **Git diff context**: Some systems include recent uncommitted changes as context, allowing the model to understand what the developer is currently working on and maintain consistency with in-progress modifications.
 
-The fundamental tradeoff is coverage versus noise: including more context gives the model more information but risks diluting the signal with irrelevant code. The best systems use retrieval (embedding search, BM25, or graph-based traversal) to select context rather than dumping everything into the prompt. For a deeper look at the retrieval and planning architectures that underpin these systems, see [Article 26: Agent Architectures](/articles/agent-26-agent-architectures).
+The fundamental tradeoff is coverage versus noise: including more context gives the model more information but risks diluting the signal with irrelevant code. The best systems use retrieval (embedding search, BM25, or graph-based traversal) to select context rather than dumping everything into the prompt. For a deeper look at the retrieval and planning architectures that underpin these systems, see [Article 26: Agent Architectures](/agent-26-agent-architectures).
 
 ## Terminal-Based Code Agents
 
@@ -621,7 +621,7 @@ Aider supports multiple LLM backends and has pioneered several practical innovat
 
 OpenHands provides a sandboxed runtime environment where an AI agent can write code, execute commands, browse the web, and interact with a full Linux environment. Its architecture leans toward maximum autonomy: the agent receives a task and works inside a Docker container, making changes and running validation until it considers the task complete.
 
-These terminal-based agents share a common architecture pattern - the observe-think-act loop described in [Article 26: Agent Architectures](/articles/agent-26-agent-architectures) - but differ in their trust model, context management, and degree of autonomy. The trend is toward tighter integration with real development workflows: real git repositories, real test suites, real CI pipelines.
+These terminal-based agents share a common architecture pattern - the observe-think-act loop described in [Article 26: Agent Architectures](/agent-26-agent-architectures) - but differ in their trust model, context management, and degree of autonomy. The trend is toward tighter integration with real development workflows: real git repositories, real test suites, real CI pipelines.
 
 ## AI-Generated Tests
 
@@ -671,7 +671,7 @@ AI-driven coverage improvement follows a systematic pattern:
 3. **Generate targeted tests**: For each uncovered path, generate tests that specifically exercise that path, using the coverage tool to verify the new tests actually cover the intended lines
 4. **Validate and deduplicate**: Run the generated tests to confirm they pass, then remove redundant tests that do not increase coverage
 
-The important caveat is that AI-generated tests can suffer from "tautological testing" - testing that the code does what it does, rather than testing that it does what it should. A test that merely asserts the current behavior of a buggy function will pass but provides no value. The most effective approaches combine AI generation with human review of test assertions, or use specification documents as the ground truth for expected behavior. For patterns on integrating AI-generated tests into continuous integration pipelines, see [Article 36: CI/CD for AI](/articles/agent-36-ci-cd-ai).
+The important caveat is that AI-generated tests can suffer from "tautological testing" - testing that the code does what it does, rather than testing that it does what it should. A test that merely asserts the current behavior of a buggy function will pass but provides no value. The most effective approaches combine AI generation with human review of test assertions, or use specification documents as the ground truth for expected behavior. For patterns on integrating AI-generated tests into continuous integration pipelines, see [Article 36: CI/CD for AI](/agent-36-ci-cd-ai).
 
 ## Code Understanding and Explanation
 
@@ -705,7 +705,7 @@ The combination of code comprehension and documentation generation has a direct 
 - **Contextual explanations**: When reviewing a pull request or reading unfamiliar code, inline explanations help developers understand patterns and conventions specific to the project
 - **Guided task completion**: For well-scoped onboarding tasks, an AI agent can walk the developer through the relevant files, explain the existing patterns, and suggest where to make changes
 
-This capability is closely related to the code agent architectures discussed in [Article 29: Code Generation Agents](/articles/agent-29-code-agents), where agents must build an understanding of a repository before making changes. The same comprehension mechanisms that enable an agent to solve a GitHub issue also enable a developer to understand unfamiliar code.
+This capability is closely related to the code agent architectures discussed in [Article 29: Code Generation Agents](/agent-29-code-agents), where agents must build an understanding of a repository before making changes. The same comprehension mechanisms that enable an agent to solve a GitHub issue also enable a developer to understand unfamiliar code.
 
 ## Summary and Key Takeaways
 

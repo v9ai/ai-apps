@@ -1,6 +1,6 @@
 # LLM Architectures Compared: GPT, Claude, Llama, Gemini, Mistral, and Beyond
 
-The landscape of large language model architectures has diversified significantly since GPT-3 demonstrated that scaling decoder-only transformers yields powerful general-purpose language systems. While the decoder-only transformer remains the dominant paradigm (see [Article 01: Transformer Architecture](./agent-01-transformer-architecture.md) for foundational concepts), each major model family introduces architectural innovations — from Mixture-of-Experts routing in Mixtral to grouped-query attention in Llama 2 to multimodal fusion in Gemini. More recently, reasoning-focused architectures like OpenAI's o1/o3 and DeepSeek R1 have introduced test-time compute scaling as a new dimension of model design, while state-space models like Mamba challenge the transformer's monopoly on sequence modeling. This article provides a detailed comparative analysis of the architectural choices across leading LLM families, examining why specific design decisions were made and their implications for capability, efficiency, and deployment.
+The landscape of large language model architectures has diversified significantly since GPT-3 demonstrated that scaling decoder-only transformers yields powerful general-purpose language systems. While the decoder-only transformer remains the dominant paradigm (see [Article 01: Transformer Architecture](/agent-01-transformer-architecture) for foundational concepts), each major model family introduces architectural innovations — from Mixture-of-Experts routing in Mixtral to grouped-query attention in Llama 2 to multimodal fusion in Gemini. More recently, reasoning-focused architectures like OpenAI's o1/o3 and DeepSeek R1 have introduced test-time compute scaling as a new dimension of model design, while state-space models like Mamba challenge the transformer's monopoly on sequence modeling. This article provides a detailed comparative analysis of the architectural choices across leading LLM families, examining why specific design decisions were made and their implications for capability, efficiency, and deployment.
 
 ## The Decoder-Only Consensus
 
@@ -258,7 +258,7 @@ DeepSeek-V3 (**DeepSeek-AI, 2024b**) scaled the architecture to **671 billion to
 - Retains **MLA** from V2 for KV cache efficiency
 - **256 routed experts** with top-8 routing, plus 1 shared expert always active — the shared expert captures common patterns while routed experts specialize
 - **Auxiliary-loss-free load balancing**: replaces the traditional load-balancing auxiliary loss with a bias-based approach that dynamically adjusts expert selection without degrading the primary training objective
-- **Multi-Token Prediction (MTP)**: the training objective predicts multiple future tokens simultaneously, improving data efficiency and representation quality (see [Article 02: Scaling Laws](./agent-02-scaling-laws.md) for how this relates to compute-optimal training)
+- **Multi-Token Prediction (MTP)**: the training objective predicts multiple future tokens simultaneously, improving data efficiency and representation quality (see [Article 02: Scaling Laws](/agent-02-scaling-laws) for how this relates to compute-optimal training)
 - **FP8 mixed-precision training**: V3 was trained using FP8 for most operations, reducing training cost to approximately $5.5M — a fraction of comparable frontier models
 - **128K context window** with RoPE-based positional encoding using YaRN scaling
 
@@ -358,7 +358,7 @@ Architecture alone does not determine model capability. Training methodology var
 
 ## Reasoning Architectures
 
-A new class of models has emerged where architecture and training are co-designed to enable explicit multi-step reasoning at inference time. Rather than producing answers in a single forward pass, these models allocate additional test-time compute to "think through" problems — a paradigm shift with significant architectural implications (see [Article 02: Scaling Laws](./agent-02-scaling-laws.md) for how test-time compute relates to traditional scaling).
+A new class of models has emerged where architecture and training are co-designed to enable explicit multi-step reasoning at inference time. Rather than producing answers in a single forward pass, these models allocate additional test-time compute to "think through" problems — a paradigm shift with significant architectural implications (see [Article 02: Scaling Laws](/agent-02-scaling-laws) for how test-time compute relates to traditional scaling).
 
 ### OpenAI o1 and o3
 
@@ -399,7 +399,7 @@ The architectural implication is notable: reasoning capability does not require 
 
 ### Implications for Architecture Design
 
-Reasoning models change the compute calculus. A smaller model that spends 10x more inference tokens reasoning can outperform a larger model answering in a single pass. This shifts optimization priorities toward inference efficiency (see [Article 05: Inference Optimization](./agent-05-inference-optimization.md)) — fast token generation and efficient KV caching become even more critical when models routinely generate thousands of reasoning tokens per query.
+Reasoning models change the compute calculus. A smaller model that spends 10x more inference tokens reasoning can outperform a larger model answering in a single pass. This shifts optimization priorities toward inference efficiency (see [Article 05: Inference Optimization](/agent-05-inference-optimization)) — fast token generation and efficient KV caching become even more critical when models routinely generate thousands of reasoning tokens per query.
 
 ## State-Space Model Alternatives
 
@@ -496,7 +496,7 @@ Meta's Llama 3.2 (**Meta AI, 2024**) includes **1B and 3B** parameter models des
 - **Pruning and distillation from Llama 3.1 8B**: rather than training from scratch, the small models are derived from the larger model through structured pruning followed by knowledge distillation
 - **Shared embedding tying**: input and output embeddings are tied to reduce parameter count — a technique that larger models avoid due to its quality ceiling
 - **Reduced GQA groups**: fewer KV heads than the 8B model, aggressively compressing the KV cache for memory-constrained deployment
-- Targets mobile and edge devices with 4-bit quantization support (see [Article 05: Inference Optimization](./agent-05-inference-optimization.md) for quantization techniques)
+- Targets mobile and edge devices with 4-bit quantization support (see [Article 05: Inference Optimization](/agent-05-inference-optimization) for quantization techniques)
 
 ### Qwen2.5 Small Variants
 
@@ -516,9 +516,9 @@ The small model landscape reveals an important insight: below ~7B parameters, **
 
 ## Summary and Key Takeaways
 
-- All frontier LLMs use **decoder-only transformer** architectures (see [Article 01](./agent-01-transformer-architecture.md)), converging on this design for its simplicity and scaling properties.
+- All frontier LLMs use **decoder-only transformer** architectures (see [Article 01](/agent-01-transformer-architecture)), converging on this design for its simplicity and scaling properties.
 - **Mixture-of-Experts** has emerged as the dominant approach for frontier models (GPT-4, Gemini, Mixtral, DeepSeek-V3), offering more total parameters at lower per-token compute cost. DeepSeek-V3's 671B/37B design pushes this to an extreme.
-- **Grouped-Query Attention** (Llama 2+, Mistral, Qwen) and **Multi-head Latent Attention** (DeepSeek) address the KV cache memory bottleneck during inference (see [Article 05](./agent-05-inference-optimization.md) for deployment implications).
+- **Grouped-Query Attention** (Llama 2+, Mistral, Qwen) and **Multi-head Latent Attention** (DeepSeek) address the KV cache memory bottleneck during inference (see [Article 05](/agent-05-inference-optimization) for deployment implications).
 - **Sliding Window Attention** (Mistral) provides linear-cost attention for long sequences when combined with layer stacking.
 - The **Llama architecture** (RMSNorm, SwiGLU, RoPE, GQA) has become the de facto standard for open-source models, adopted by Qwen, Mistral, and others.
 - **Reasoning architectures** (o1/o3, DeepSeek-R1) introduce test-time compute as a new scaling axis — models that "think longer" can outperform larger models that answer immediately, shifting optimization priorities toward inference efficiency.

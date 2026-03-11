@@ -2,6 +2,14 @@
 
 Parameter-efficient fine-tuning (PEFT) methods have fundamentally changed the economics of adapting large language models, reducing trainable parameters by 99%+ while preserving most of the quality of full fine-tuning. This article provides a deep technical treatment of LoRA, QLoRA, and the broader family of adapter methods, covering the mathematical foundations, practical rank selection heuristics, and implementation details using the Hugging Face PEFT library. We also examine emerging methods like DoRA and IA3 that push the Pareto frontier of efficiency versus quality.
 
+## TL;DR
+
+- **LoRA** inserts trainable low-rank matrices alongside frozen base weights, reducing trainable parameters by 100-1000x. Rank 8-16 covers most use cases.
+- **QLoRA** adds 4-bit NF4 quantization of the base model, enabling 70B model fine-tuning on a single 48GB GPU with minimal quality loss.
+- LoRA adapters can be merged into the base model after training, adding zero inference latency; multiple adapters can be swapped at serving time.
+- **vLLM** supports multi-LoRA serving natively: one base model in GPU memory, hundreds of adapters loaded on demand.
+- For 2024-2025, the practical default is QLoRA with rank 16, applied to all linear layers, using `paged_adamw_8bit`.
+
 ## The Motivation for Parameter Efficiency
 
 Full fine-tuning of a 70B parameter model requires updating 140GB of parameters in fp16, demanding multiple high-end GPUs and creating a separate copy of the entire model for each task. For organizations fine-tuning models for dozens of tasks or domains, this becomes prohibitively expensive in both compute and storage.
@@ -377,7 +385,7 @@ S-LoRA (Sheng et al., 2023) extends multi-LoRA serving to thousands of concurren
 
 ### Latency Considerations
 
-Adding LoRA computation to inference introduces a small overhead compared to the merged-weight baseline. In practice, this overhead is 2-5% of total latency for typical ranks (r=8 to r=32) because the LoRA matmuls are small relative to the base model computation. The overhead scales linearly with rank, so serving r=256 adapters is noticeably slower than r=16. For latency-critical paths where even 2% matters, merging the adapter into the base weights and serving as a standalone model remains an option -- the tradeoff is GPU memory (one full model copy per adapter) versus a small latency tax (one shared base model). See [LLM Serving: API Design, Batching & Streaming](/knowledge/agent-37-llm-serving) for more on serving architecture decisions.
+Adding LoRA computation to inference introduces a small overhead compared to the merged-weight baseline. In practice, this overhead is 2-5% of total latency for typical ranks (r=8 to r=32) because the LoRA matmuls are small relative to the base model computation. The overhead scales linearly with rank, so serving r=256 adapters is noticeably slower than r=16. For latency-critical paths where even 2% matters, merging the adapter into the base weights and serving as a standalone model remains an option -- the tradeoff is GPU memory (one full model copy per adapter) versus a small latency tax (one shared base model). See [LLM Serving: API Design, Batching & Streaming](/agent-37-llm-serving) for more on serving architecture decisions.
 
 ## Training Acceleration
 
@@ -414,7 +422,7 @@ Flash Attention (Dao et al., 2022; Dao, 2023) is effectively mandatory for moder
 
 ### Gradient Checkpointing Trade-offs
 
-Gradient checkpointing (activation recomputation) trades compute for memory by discarding intermediate activations during the forward pass and recomputing them during the backward pass. For QLoRA training, this typically reduces peak memory by 30-50%, enough to double the effective batch size or train on a model that would otherwise not fit. The cost is a ~30% increase in training time due to the recomputation. The trade-off is almost always worthwhile for QLoRA because the bottleneck is GPU memory, not training speed. However, for LoRA on fp16 base models where memory is less constrained, disabling gradient checkpointing and using larger batch sizes can be faster end-to-end. See [Fine-tuning Fundamentals](/knowledge/agent-19-fine-tuning-fundamentals) for broader coverage of mixed-precision and distributed training strategies.
+Gradient checkpointing (activation recomputation) trades compute for memory by discarding intermediate activations during the forward pass and recomputing them during the backward pass. For QLoRA training, this typically reduces peak memory by 30-50%, enough to double the effective batch size or train on a model that would otherwise not fit. The cost is a ~30% increase in training time due to the recomputation. The trade-off is almost always worthwhile for QLoRA because the bottleneck is GPU memory, not training speed. However, for LoRA on fp16 base models where memory is less constrained, disabling gradient checkpointing and using larger batch sizes can be faster end-to-end. See [Fine-tuning Fundamentals](/agent-19-fine-tuning-fundamentals) for broader coverage of mixed-precision and distributed training strategies.
 
 ## Emerging PEFT Methods
 
@@ -426,7 +434,7 @@ Standard LoRA uses the same learning rate for both the $A$ and $B$ matrices, but
 
 ### GaLore (Zhao et al., 2024)
 
-Gradient Low-Rank Projection (GaLore) takes a different approach entirely. Instead of adding low-rank adapter matrices, GaLore projects the full gradient matrix onto a low-rank subspace during training, reducing optimizer state memory without modifying the model architecture. This means the trained model is a standard full-parameter model, not a base-plus-adapter pair. GaLore can train a 7B model with the memory footprint of a 1B model, and unlike LoRA, it does not impose a structural constraint on the weight update. The downside is that GaLore requires periodic SVD recomputation to update the projection basis, adding overhead every few hundred steps. GaLore is most compelling for pre-training or continued pre-training scenarios where LoRA's low-rank constraint is too restrictive. For connections between GaLore and continued pre-training, see [Continual Learning: Catastrophic Forgetting & Knowledge Retention](/knowledge/agent-23-continual-learning).
+Gradient Low-Rank Projection (GaLore) takes a different approach entirely. Instead of adding low-rank adapter matrices, GaLore projects the full gradient matrix onto a low-rank subspace during training, reducing optimizer state memory without modifying the model architecture. This means the trained model is a standard full-parameter model, not a base-plus-adapter pair. GaLore can train a 7B model with the memory footprint of a 1B model, and unlike LoRA, it does not impose a structural constraint on the weight update. The downside is that GaLore requires periodic SVD recomputation to update the projection basis, adding overhead every few hundred steps. GaLore is most compelling for pre-training or continued pre-training scenarios where LoRA's low-rank constraint is too restrictive. For connections between GaLore and continued pre-training, see [Continual Learning: Catastrophic Forgetting & Knowledge Retention](/agent-23-continual-learning).
 
 ### rsLoRA (Kalajdzievski, 2024)
 
@@ -459,7 +467,7 @@ The `Q4_K_M` quantization scheme is a common choice, offering roughly 4.5 bits p
 
 ### Quantization Format Selection
 
-The choice of GGUF quantization level involves a quality-size tradeoff that mirrors the decisions discussed in [Distillation & Model Compression](/knowledge/agent-24-distillation-compression):
+The choice of GGUF quantization level involves a quality-size tradeoff that mirrors the decisions discussed in [Distillation & Model Compression](/agent-24-distillation-compression):
 
 | Format | Bits/Weight | 7B Model Size | Quality Impact |
 |--------|------------|---------------|----------------|
@@ -490,7 +498,7 @@ For workloads where multiple adapters are needed at the GGUF level, llama.cpp al
 
 ## Related Articles
 
-- [Fine-tuning Fundamentals: Full, Freeze & Transfer Learning](/knowledge/agent-19-fine-tuning-fundamentals) -- full fine-tuning mechanics, SFT, learning rate scheduling, and when to fine-tune versus prompt engineer.
-- [Continual Learning: Catastrophic Forgetting & Knowledge Retention](/knowledge/agent-23-continual-learning) -- how to update models without destroying existing capabilities, directly relevant when applying LoRA for domain adaptation.
-- [Distillation & Model Compression: Pruning, Quantization & Student Models](/knowledge/agent-24-distillation-compression) -- GPTQ, AWQ, and post-training quantization techniques that complement the GGUF deployment path discussed above.
-- [LLM Serving: API Design, Batching & Streaming](/knowledge/agent-37-llm-serving) -- serving architecture decisions including continuous batching and PagedAttention, which interact directly with multi-LoRA serving strategies.
+- [Fine-tuning Fundamentals: Full, Freeze & Transfer Learning](/agent-19-fine-tuning-fundamentals) -- full fine-tuning mechanics, SFT, learning rate scheduling, and when to fine-tune versus prompt engineer.
+- [Continual Learning: Catastrophic Forgetting & Knowledge Retention](/agent-23-continual-learning) -- how to update models without destroying existing capabilities, directly relevant when applying LoRA for domain adaptation.
+- [Distillation & Model Compression: Pruning, Quantization & Student Models](/agent-24-distillation-compression) -- GPTQ, AWQ, and post-training quantization techniques that complement the GGUF deployment path discussed above.
+- [LLM Serving: API Design, Batching & Streaming](/agent-37-llm-serving) -- serving architecture decisions including continuous batching and PagedAttention, which interact directly with multi-LoRA serving strategies.
