@@ -1,7 +1,6 @@
 import { notFound } from "next/navigation";
 import Link from "next/link";
-import { getAllPapers, getPaperBySlug, getCategoryMeta } from "@/lib/articles";
-import { getPapersForSlug } from "@/lib/papers";
+import { getAllPapers, getPaperBySlug, getCategoryMeta, getCitationsForPaper } from "@/lib/data";
 import { Topbar } from "@/components/topbar";
 import { MarkdownProse } from "@/components/markdown-prose";
 import { TableOfContents } from "@/components/toc";
@@ -9,25 +8,26 @@ import { ReadingProgress } from "@/components/reading-progress";
 import { ScrollToTop } from "@/components/scroll-to-top";
 import { ArticleNav } from "@/components/article-nav";
 
-export function generateStaticParams() {
-  return getAllPapers().map((a) => ({ slug: a.slug }));
+export async function generateStaticParams() {
+  const papers = await getAllPapers();
+  return papers.map((a) => ({ slug: a.slug }));
 }
 
 export async function generateMetadata({ params }: { params: Promise<{ slug: string }> }) {
   const { slug } = await params;
-  const paper = getPaperBySlug(slug);
+  const paper = await getPaperBySlug(slug);
   return { title: paper ? `${paper.title} — AI Learning Research` : "Not Found" };
 }
 
 export default async function PaperPage({ params }: { params: Promise<{ slug: string }> }) {
   const { slug } = await params;
-  const paper = getPaperBySlug(slug);
+  const paper = await getPaperBySlug(slug);
   if (!paper) notFound();
 
-  const allPapers = getAllPapers();
+  const allPapers = await getAllPapers();
   const total = allPapers.length;
   const meta = getCategoryMeta(paper.category);
-  const papers = getPapersForSlug(slug);
+  const papers = await getCitationsForPaper(slug);
 
   // Prev/next
   const idx = allPapers.findIndex((a) => a.slug === slug);

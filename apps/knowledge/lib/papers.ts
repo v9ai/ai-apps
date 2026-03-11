@@ -13,7 +13,7 @@ const CONTENT_DIR = path.join(process.cwd(), "content");
 
 /* ── helpers ────────────────────────────────────────────────────── */
 
-function normalizeTitle(t: string): string {
+export function normalizeTitle(t: string): string {
   return t
     .toLowerCase()
     .replace(/[""''"`]/g, "")
@@ -278,7 +278,7 @@ function dedup(papers: PaperRef[]): PaperRef[] {
 
 /* ── public API ─────────────────────────────────────────────────── */
 
-function extractPapers(content: string): PaperRef[] {
+export function extractPapers(content: string): PaperRef[] {
   return dedup([
     ...extractNumberedRefs(content),
     ...extractTablePapers(content),
