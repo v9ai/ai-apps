@@ -1,20 +1,26 @@
 import { NextRequest, NextResponse } from "next/server";
 import { createHmac } from "crypto";
+import { drizzle } from "drizzle-orm/d1";
+import { eq, sql } from "drizzle-orm";
+import { createD1HttpClient } from "@/db/d1-http";
+import { contactEmails, contacts } from "@/db/schema";
 
 /**
  * Resend Webhook Handler
  *
- * Handles webhook events from Resend to track email delivery status.
+ * Handles webhook events from Resend to track email delivery status and persist
+ * state changes to the D1 database.
  *
  * Supported events:
- * - email.sent - Email was successfully sent
- * - email.delivered - Email was delivered to recipient
- * - email.bounced - Email bounced
- * - email.complained - Recipient marked as spam
- * - email.delivery_delayed - Temporary delivery issue
- * - email.opened - Recipient opened the email
- * - email.clicked - Recipient clicked a link
- * - email.received - Incoming email received
+ * - email.sent            → update status + sent_at
+ * - email.delivered       → update status + delivered_at
+ * - email.bounced         → update status + error_message, stop follow-up,
+ *                           mark contact email as bounced
+ * - email.complained      → update status, stop follow-up
+ * - email.delivery_delayed → update status
+ * - email.opened          → set opened_at
+ * - email.clicked         → log only
+ * - email.received        → forward to personal inbox via Resend
  *
  * Setup:
  * 1. Go to https://resend.com/webhooks
@@ -24,6 +30,13 @@ import { createHmac } from "crypto";
  */
 
 const WEBHOOK_SECRET = process.env.RESEND_WEBHOOK_SECRET;
+const RESEND_API_KEY = process.env.RESEND_API_KEY;
+
+const SENDER_EMAIL = "contact@vadim.blog";
+const NOTIFICATION_EMAIL = "nicolai.vadim@gmail.com";
+
+// Retry delays in milliseconds
+const RETRY_DELAYS = [100, 500, 1000];
 
 interface ResendWebhookEvent {
   type: string;
@@ -49,8 +62,8 @@ interface ResendWebhookEvent {
 }
 
 /**
- * Verify Svix webhook signature
- * Svix uses HMAC-SHA256 to sign webhooks
+ * Verify Svix webhook signature.
+ * Svix uses HMAC-SHA256 to sign webhooks.
  */
 function verifySignature(
   payload: string,
@@ -92,6 +105,284 @@ function verifySignature(
 
   return result === 0;
 }
+
+/**
+ * Retry a DB operation up to 3 times with increasing delays.
+ * Returns undefined (silently) on exhausted retries to prevent Resend loops.
+ */
+async function withRetry<T>(
+  label: string,
+  fn: () => Promise<T>,
+): Promise<T | undefined> {
+  for (let attempt = 0; attempt <= RETRY_DELAYS.length; attempt++) {
+    try {
+      return await fn();
+    } catch (err) {
+      const isLast = attempt === RETRY_DELAYS.length;
+      const msg = err instanceof Error ? err.message : String(err);
+      if (isLast) {
+        console.error(`[RESEND_WEBHOOK] ${label} failed after all retries:`, msg);
+        return undefined;
+      }
+      const delay = RETRY_DELAYS[attempt];
+      console.warn(`[RESEND_WEBHOOK] ${label} attempt ${attempt + 1} failed (retry in ${delay}ms):`, msg);
+      await new Promise((resolve) => setTimeout(resolve, delay));
+    }
+  }
+}
+
+/**
+ * Lazy DB factory — never initialised at module level per CLAUDE.md conventions.
+ */
+function getDb() {
+  return drizzle(createD1HttpClient() as any);
+}
+
+/**
+ * Look up a contactEmail row by resend_id and return it, or null if not found.
+ */
+async function findContactEmail(resendId: string) {
+  const db = getDb();
+  const rows = await db
+    .select()
+    .from(contactEmails)
+    .where(eq(contactEmails.resend_id, resendId))
+    .limit(1);
+  return rows[0] ?? null;
+}
+
+// ---------------------------------------------------------------------------
+// Per-event handlers
+// ---------------------------------------------------------------------------
+
+async function handleSent(emailId: string): Promise<void> {
+  await withRetry(`handleSent(${emailId})`, async () => {
+    const db = getDb();
+    await db
+      .update(contactEmails)
+      .set({
+        status: "sent",
+        sent_at: new Date().toISOString(),
+        updated_at: new Date().toISOString(),
+      })
+      .where(eq(contactEmails.resend_id, emailId));
+    console.log(`[RESEND_WEBHOOK] email.sent persisted: ${emailId}`);
+  });
+}
+
+async function handleDelivered(emailId: string): Promise<void> {
+  await withRetry(`handleDelivered(${emailId})`, async () => {
+    const db = getDb();
+    await db
+      .update(contactEmails)
+      .set({
+        status: "delivered",
+        delivered_at: new Date().toISOString(),
+        updated_at: new Date().toISOString(),
+      })
+      .where(eq(contactEmails.resend_id, emailId));
+    console.log(`[RESEND_WEBHOOK] email.delivered persisted: ${emailId}`);
+  });
+}
+
+async function handleBounced(event: ResendWebhookEvent): Promise<void> {
+  const emailId = event.data.email_id;
+  const bounce = event.data.bounce;
+
+  const errorMessage = bounce
+    ? `${bounce.type}: ${bounce.subType} — ${bounce.message}${bounce.diagnosticCode?.length ? ` (${bounce.diagnosticCode.join(", ")})` : ""}`
+    : event.data.bounce_type ?? "Unknown bounce";
+
+  // 1. Update contactEmails row
+  await withRetry(`handleBounced/updateEmail(${emailId})`, async () => {
+    const db = getDb();
+    await db
+      .update(contactEmails)
+      .set({
+        status: "bounced",
+        error_message: errorMessage,
+        followup_status: "stopped",
+        updated_at: new Date().toISOString(),
+      })
+      .where(eq(contactEmails.resend_id, emailId));
+    console.warn(`[RESEND_WEBHOOK] email.bounced persisted: ${emailId}`);
+  });
+
+  // 2. Find contact and update bounced_emails + email fields
+  // The recipient list may contain multiple addresses; process each.
+  const recipientEmails = event.data.to ?? [];
+
+  for (const recipientEmail of recipientEmails) {
+    const normalised = recipientEmail.trim().toLowerCase();
+
+    await withRetry(`handleBounced/updateContact(${normalised})`, async () => {
+      const db = getDb();
+
+      // Case-insensitive lookup using lower()
+      const matchedContacts = await db
+        .select()
+        .from(contacts)
+        .where(sql`lower(${contacts.email}) = ${normalised}`)
+        .limit(1);
+
+      const contact = matchedContacts[0];
+      if (!contact) {
+        console.warn(`[RESEND_WEBHOOK] No contact found for bounced email: ${normalised}`);
+        return;
+      }
+
+      // Parse existing bounced_emails JSON array (D1 stores as text)
+      let bouncedList: string[] = [];
+      if (contact.bounced_emails) {
+        try {
+          bouncedList = JSON.parse(contact.bounced_emails);
+        } catch {
+          bouncedList = [];
+        }
+      }
+
+      // Add to bounced list (deduplicated)
+      if (!bouncedList.includes(normalised)) {
+        bouncedList.push(normalised);
+      }
+
+      // Parse emails JSON array to also check secondary emails
+      let emailsList: string[] = [];
+      if (contact.emails) {
+        try {
+          emailsList = JSON.parse(contact.emails);
+        } catch {
+          emailsList = [];
+        }
+      }
+      // Remove the bounced address from the secondary emails list
+      emailsList = emailsList.filter((e) => e.toLowerCase() !== normalised);
+
+      // Determine whether the primary email matches the bounce
+      const primaryMatches = contact.email?.toLowerCase() === normalised;
+
+      await db
+        .update(contacts)
+        .set({
+          bounced_emails: JSON.stringify(bouncedList),
+          emails: JSON.stringify(emailsList),
+          // Clear primary email if it was the one that bounced
+          ...(primaryMatches ? { email: null } : {}),
+          // Mark as unverified whenever a bounce is recorded
+          email_verified: false,
+          updated_at: new Date().toISOString(),
+        })
+        .where(eq(contacts.id, contact.id));
+
+      console.warn(
+        `[RESEND_WEBHOOK] Contact ${contact.id} bounce recorded for ${normalised}` +
+          (primaryMatches ? " (primary email cleared)" : ""),
+      );
+    });
+  }
+}
+
+async function handleComplained(emailId: string): Promise<void> {
+  await withRetry(`handleComplained(${emailId})`, async () => {
+    const db = getDb();
+    await db
+      .update(contactEmails)
+      .set({
+        status: "complained",
+        followup_status: "stopped",
+        updated_at: new Date().toISOString(),
+      })
+      .where(eq(contactEmails.resend_id, emailId));
+    console.warn(`[RESEND_WEBHOOK] email.complained persisted: ${emailId}`);
+  });
+}
+
+async function handleDeliveryDelayed(emailId: string): Promise<void> {
+  await withRetry(`handleDeliveryDelayed(${emailId})`, async () => {
+    const db = getDb();
+    await db
+      .update(contactEmails)
+      .set({
+        status: "delayed",
+        updated_at: new Date().toISOString(),
+      })
+      .where(eq(contactEmails.resend_id, emailId));
+    console.warn(`[RESEND_WEBHOOK] email.delivery_delayed persisted: ${emailId}`);
+  });
+}
+
+async function handleOpened(emailId: string): Promise<void> {
+  // Only set opened_at once — do not overwrite an existing value
+  await withRetry(`handleOpened(${emailId})`, async () => {
+    const db = getDb();
+
+    const existing = await findContactEmail(emailId);
+    if (!existing) {
+      console.warn(`[RESEND_WEBHOOK] email.opened — no DB row for: ${emailId}`);
+      return;
+    }
+
+    if (existing.opened_at) {
+      // Already recorded; idempotent skip
+      return;
+    }
+
+    await db
+      .update(contactEmails)
+      .set({
+        opened_at: new Date().toISOString(),
+        updated_at: new Date().toISOString(),
+      })
+      .where(eq(contactEmails.resend_id, emailId));
+    console.log(`[RESEND_WEBHOOK] email.opened persisted: ${emailId}`);
+  });
+}
+
+/**
+ * Forward an inbound received email to the personal notification address.
+ */
+async function handleReceived(event: ResendWebhookEvent): Promise<void> {
+  if (!RESEND_API_KEY) {
+    console.warn("[RESEND_WEBHOOK] RESEND_API_KEY not set — cannot forward received email");
+    return;
+  }
+
+  const { from, subject, html, text } = event.data;
+
+  const forwardPayload = {
+    from: SENDER_EMAIL,
+    to: [NOTIFICATION_EMAIL],
+    subject: `[Fwd] ${subject ?? "(no subject)"}`,
+    reply_to: from,
+    ...(html ? { html: `<p><strong>Forwarded from:</strong> ${from}</p><hr />${html}` } : {}),
+    ...(text ? { text: `Forwarded from: ${from}\n\n${text}` } : {}),
+  };
+
+  try {
+    const response = await fetch("https://api.resend.com/emails", {
+      method: "POST",
+      headers: {
+        Authorization: `Bearer ${RESEND_API_KEY}`,
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify(forwardPayload),
+    });
+
+    if (!response.ok) {
+      const body = await response.text();
+      console.error(`[RESEND_WEBHOOK] Failed to forward received email: ${response.status} ${body}`);
+    } else {
+      console.log(`[RESEND_WEBHOOK] email.received forwarded to ${NOTIFICATION_EMAIL} (from: ${from})`);
+    }
+  } catch (err) {
+    const msg = err instanceof Error ? err.message : String(err);
+    console.error("[RESEND_WEBHOOK] Error forwarding received email:", msg);
+  }
+}
+
+// ---------------------------------------------------------------------------
+// Route handler
+// ---------------------------------------------------------------------------
 
 export async function POST(req: NextRequest) {
   try {
@@ -139,75 +430,63 @@ export async function POST(req: NextRequest) {
       );
     }
 
+    const { email_id: emailId } = event.data;
+
     console.log(`[RESEND_WEBHOOK] Received event: ${event.type}`, {
-      emailId: event.data.email_id,
+      emailId,
       to: event.data.to,
       subject: event.data.subject,
     });
 
     switch (event.type) {
       case "email.sent":
-        console.log(`[RESEND_WEBHOOK] Email sent: ${event.data.email_id}`);
+        await handleSent(emailId);
         break;
 
       case "email.delivered":
-        console.log(`[RESEND_WEBHOOK] Email delivered: ${event.data.email_id}`);
+        await handleDelivered(emailId);
         break;
 
-      case "email.bounced": {
-        const bounce = event.data.bounce;
-        console.warn(`[RESEND_WEBHOOK] Email bounced: ${event.data.email_id}`, {
-          type: bounce?.type,
-          subType: bounce?.subType,
-          message: bounce?.message,
-          to: event.data.to,
-        });
+      case "email.bounced":
+        await handleBounced(event);
         break;
-      }
 
       case "email.complained":
-        console.warn(
-          `[RESEND_WEBHOOK] Spam complaint: ${event.data.email_id}`,
-          { to: event.data.to },
-        );
+        await handleComplained(emailId);
         break;
 
       case "email.delivery_delayed":
-        console.warn(
-          `[RESEND_WEBHOOK] Delivery delayed: ${event.data.email_id}`,
-        );
+        await handleDeliveryDelayed(emailId);
         break;
 
       case "email.opened":
-        console.log(`[RESEND_WEBHOOK] Email opened: ${event.data.email_id}`);
+        await handleOpened(emailId);
         break;
 
       case "email.clicked":
-        console.log(
-          `[RESEND_WEBHOOK] Link clicked: ${event.data.email_id}`,
-          { link: event.data.link },
-        );
+        // No DB update needed — log only
+        console.log(`[RESEND_WEBHOOK] email.clicked: ${emailId}`, {
+          link: event.data.link,
+        });
         break;
 
       case "email.received":
-        console.log(
-          `[RESEND_WEBHOOK] Email received from: ${event.data.from}`,
-          { subject: event.data.subject },
-        );
+        await handleReceived(event);
         break;
 
       default:
         console.log(`[RESEND_WEBHOOK] Unhandled event type: ${event.type}`);
     }
 
+    // Always return 200 to prevent Resend from retrying indefinitely
     return NextResponse.json({
       received: true,
       eventType: event.type,
-      emailId: event.data.email_id,
+      emailId,
     });
   } catch (error) {
     const message = error instanceof Error ? error.message : "Unknown error";
-    console.error("[RESEND_WEBHOOK] Error processing webhook:", message);
+    console.error("[RESEND_WEBHOOK] Unexpected error processing webhook:", message);
 
     // Always return 200 to prevent Resend from retrying indefinitely
     return NextResponse.json({

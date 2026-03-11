@@ -3,6 +3,7 @@ extend type Query {
   contact(id: Int!): Contact
   contactByEmail(email: String!): Contact
   contactEmails(contactId: Int!): [ContactEmail!]!
+  companyContactEmails(companyId: Int!): [CompanyContactEmail!]!
   resendEmail(resendId: String!): ResendEmailDetail
 }
 
@@ -157,7 +158,44 @@ type ContactEmail {
   textContent: String
   status: String!
   sentAt: String
+  scheduledAt: String
+  deliveredAt: String
+  openedAt: String
   recipientName: String
+  errorMessage: String
+  parentEmailId: Int
+  sequenceType: String
+  sequenceNumber: String
+  replyReceived: Boolean!
+  replyReceivedAt: String
+  followupStatus: String
+  companyId: Int
   createdAt: String!
   updatedAt: String!
+}
+
+type CompanyContactEmail {
+  id: Int!
+  contactId: Int!
+  resendId: String!
+  fromEmail: String!
+  toEmails: [String!]!
+  subject: String!
+  textContent: String
+  status: String!
+  sentAt: String
+  scheduledAt: String
+  deliveredAt: String
+  openedAt: String
+  recipientName: String
+  errorMessage: String
+  sequenceType: String
+  sequenceNumber: String
+  replyReceived: Boolean!
+  followupStatus: String
+  createdAt: String!
+  updatedAt: String!
+  contactFirstName: String!
+  contactLastName: String!
+  contactPosition: String
 }

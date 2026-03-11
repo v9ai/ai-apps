@@ -397,19 +397,22 @@ function parsePromptReferences(text: string): PromptReference[] {
 // ---------------------------------------------------------------------------
 
 type LangfuseEvent =
-  | { id: string; type: "trace-create"; body: Record<string, unknown> }
-  | { id: string; type: "observation-create"; body: Record<string, unknown> }
-  | { id: string; type: "observation-update"; body: Record<string, unknown> };
+  | { id: string; type: "trace-create"; timestamp?: string; body: Record<string, unknown> }
+  | { id: string; type: "observation-create"; timestamp?: string; body: Record<string, unknown> }
+  | { id: string; type: "observation-update"; timestamp?: string; body: Record<string, unknown> };
 
 /**
  * Send a batch of trace/observation events to Langfuse.
  * Fire-and-forget: never throws, only warns on failure.
+ * Auto-adds `timestamp` to each event if missing (required by API).
  */
 export async function ingestLangfuseEvents(
   events: LangfuseEvent[],
 ): Promise<void> {
   if (!isLangfuseConfigured()) return;
   const baseUrl = LANGFUSE_BASE_URL.replace(/\/+$/, "");
+  const now = new Date().toISOString();
+  const stamped = events.map((e) => ({ ...e, timestamp: e.timestamp ?? now }));
   try {
     const res = await fetch(`${baseUrl}/api/public/ingestion`, {
       method: "POST",
@@ -417,10 +420,11 @@ export async function ingestLangfuseEvents(
         "Content-Type": "application/json",
         Authorization: `Basic ${btoa(`${LANGFUSE_PUBLIC_KEY}:${LANGFUSE_SECRET_KEY}`)}`,
       },
-      body: JSON.stringify({ batch: events }),
+      body: JSON.stringify({ batch: stamped }),
     });
     if (!res.ok) {
-      console.warn(`[langfuse] ingestion failed: ${res.status} ${res.statusText}`);
+      const text = await res.text().catch(() => "");
+      console.warn(`[langfuse] ingestion failed: ${res.status} ${res.statusText}`, text);
     }
   } catch (err) {
     console.warn("[langfuse] ingestion error:", err);

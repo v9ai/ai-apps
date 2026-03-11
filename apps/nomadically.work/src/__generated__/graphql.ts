@@ -175,12 +175,33 @@ export type AshbySecondaryLocation = {
   location: Scalars['String']['output'];
 };
 
+export type BatchRecipientInput = {
+  companyId?: InputMaybe<Scalars['Int']['input']>;
+  contactId?: InputMaybe<Scalars['Int']['input']>;
+  email: Scalars['String']['input'];
+  name: Scalars['String']['input'];
+};
+
 export type BlockedCompany = {
   __typename: 'BlockedCompany';
   createdAt: Scalars['String']['output'];
   id: Scalars['Int']['output'];
   name: Scalars['String']['output'];
   reason: Maybe<Scalars['String']['output']>;
+};
+
+export type CancelCompanyEmailsResult = {
+  __typename: 'CancelCompanyEmailsResult';
+  cancelledCount: Scalars['Int']['output'];
+  failedCount: Scalars['Int']['output'];
+  message: Scalars['String']['output'];
+  success: Scalars['Boolean']['output'];
+};
+
+export type CancelEmailResult = {
+  __typename: 'CancelEmailResult';
+  error: Maybe<Scalars['String']['output']>;
+  success: Scalars['Boolean']['output'];
 };
 
 export type ChatMessage = {
@@ -271,6 +292,33 @@ export type CompanyCategory =
   | 'STAFFING'
   | 'UNKNOWN';
 
+export type CompanyContactEmail = {
+  __typename: 'CompanyContactEmail';
+  contactFirstName: Scalars['String']['output'];
+  contactId: Scalars['Int']['output'];
+  contactLastName: Scalars['String']['output'];
+  contactPosition: Maybe<Scalars['String']['output']>;
+  createdAt: Scalars['String']['output'];
+  deliveredAt: Maybe<Scalars['String']['output']>;
+  errorMessage: Maybe<Scalars['String']['output']>;
+  followupStatus: Maybe<Scalars['String']['output']>;
+  fromEmail: Scalars['String']['output'];
+  id: Scalars['Int']['output'];
+  openedAt: Maybe<Scalars['String']['output']>;
+  recipientName: Maybe<Scalars['String']['output']>;
+  replyReceived: Scalars['Boolean']['output'];
+  resendId: Scalars['String']['output'];
+  scheduledAt: Maybe<Scalars['String']['output']>;
+  sentAt: Maybe<Scalars['String']['output']>;
+  sequenceNumber: Maybe<Scalars['String']['output']>;
+  sequenceType: Maybe<Scalars['String']['output']>;
+  status: Scalars['String']['output'];
+  subject: Scalars['String']['output'];
+  textContent: Maybe<Scalars['String']['output']>;
+  toEmails: Array<Scalars['String']['output']>;
+  updatedAt: Scalars['String']['output'];
+};
+
 export type CompanyFact = {
   __typename: 'CompanyFact';
   company_id: Scalars['Int']['output'];
@@ -357,13 +405,24 @@ export type Contact = {
 
 export type ContactEmail = {
   __typename: 'ContactEmail';
+  companyId: Maybe<Scalars['Int']['output']>;
   contactId: Scalars['Int']['output'];
   createdAt: Scalars['String']['output'];
+  deliveredAt: Maybe<Scalars['String']['output']>;
+  errorMessage: Maybe<Scalars['String']['output']>;
+  followupStatus: Maybe<Scalars['String']['output']>;
   fromEmail: Scalars['String']['output'];
   id: Scalars['Int']['output'];
+  openedAt: Maybe<Scalars['String']['output']>;
+  parentEmailId: Maybe<Scalars['Int']['output']>;
   recipientName: Maybe<Scalars['String']['output']>;
+  replyReceived: Scalars['Boolean']['output'];
+  replyReceivedAt: Maybe<Scalars['String']['output']>;
   resendId: Scalars['String']['output'];
+  scheduledAt: Maybe<Scalars['String']['output']>;
   sentAt: Maybe<Scalars['String']['output']>;
+  sequenceNumber: Maybe<Scalars['String']['output']>;
+  sequenceType: Maybe<Scalars['String']['output']>;
   status: Scalars['String']['output'];
   subject: Scalars['String']['output'];
   textContent: Maybe<Scalars['String']['output']>;
@@ -574,6 +633,25 @@ export type EmailCampaignsResult = {
   totalCount: Scalars['Int']['output'];
 };
 
+export type EmailStats = {
+  __typename: 'EmailStats';
+  bouncedThisMonth: Scalars['Int']['output'];
+  bouncedThisWeek: Scalars['Int']['output'];
+  bouncedToday: Scalars['Int']['output'];
+  deliveredThisMonth: Scalars['Int']['output'];
+  deliveredThisWeek: Scalars['Int']['output'];
+  deliveredToday: Scalars['Int']['output'];
+  openedThisMonth: Scalars['Int']['output'];
+  openedThisWeek: Scalars['Int']['output'];
+  openedToday: Scalars['Int']['output'];
+  scheduledFuture: Scalars['Int']['output'];
+  scheduledToday: Scalars['Int']['output'];
+  sentThisMonth: Scalars['Int']['output'];
+  sentThisWeek: Scalars['Int']['output'];
+  sentToday: Scalars['Int']['output'];
+  totalSent: Scalars['Int']['output'];
+};
+
 export type EmailTemplate = {
   __typename: 'EmailTemplate';
   category: Maybe<Scalars['String']['output']>;
@@ -671,6 +749,22 @@ export type FindContactEmailResult = {
   verified: Maybe<Scalars['Boolean']['output']>;
 };
 
+export type FollowUpBatchInput = {
+  companyId: Scalars['Int']['input'];
+  customInstructions?: InputMaybe<Scalars['String']['input']>;
+  customSubject?: InputMaybe<Scalars['String']['input']>;
+  daysAfter: Scalars['Int']['input'];
+  sequenceNumber: Scalars['String']['input'];
+};
+
+export type FollowUpBatchResult = {
+  __typename: 'FollowUpBatchResult';
+  contactCount: Scalars['Int']['output'];
+  emailIds: Array<Scalars['String']['output']>;
+  message: Scalars['String']['output'];
+  success: Scalars['Boolean']['output'];
+};
+
 export type GenerateEmailInput = {
   companyName?: InputMaybe<Scalars['String']['input']>;
   purpose: Scalars['String']['input'];
@@ -685,6 +779,22 @@ export type GenerateEmailResult = {
   html: Scalars['String']['output'];
   subject: Scalars['String']['output'];
   text: Scalars['String']['output'];
+};
+
+export type GenerateReplyInput = {
+  additionalDetails?: InputMaybe<Scalars['String']['input']>;
+  includeCalendly?: InputMaybe<Scalars['Boolean']['input']>;
+  originalEmailContent: Scalars['String']['input'];
+  originalSender: Scalars['String']['input'];
+  replyTo?: InputMaybe<Scalars['String']['input']>;
+  replyType?: InputMaybe<Scalars['String']['input']>;
+  tone?: InputMaybe<Scalars['String']['input']>;
+};
+
+export type GenerateReplyResult = {
+  __typename: 'GenerateReplyResult';
+  body: Scalars['String']['output'];
+  subject: Scalars['String']['output'];
 };
 
 export type GreenhouseCompliance = {
@@ -876,6 +986,12 @@ export type LangSmithPromptCommit = {
   promptName: Scalars['String']['output'];
 };
 
+export type MarkRepliedResult = {
+  __typename: 'MarkRepliedResult';
+  message: Maybe<Scalars['String']['output']>;
+  success: Scalars['Boolean']['output'];
+};
+
 export type Mutation = {
   __typename: 'Mutation';
   add_company_facts: Array<CompanyFact>;
@@ -883,6 +999,8 @@ export type Mutation = {
   applyEmailPattern: ApplyEmailPatternResult;
   archiveJob: Job;
   blockCompany: BlockedCompany;
+  cancelCompanyEmails: CancelCompanyEmailsResult;
+  cancelScheduledEmail: CancelEmailResult;
   completeTask: Task;
   createApplication: Application;
   createCompany: Company;
@@ -930,10 +1048,12 @@ export type Mutation = {
   findCompanyEmails: EnhanceAllContactsResult;
   findContactEmail: FindContactEmailResult;
   generateEmail: GenerateEmailResult;
+  generateReply: GenerateReplyResult;
   importContacts: ImportContactsResult;
   ingestResumeParse: Maybe<ResumeIngestResult>;
   ingest_company_snapshot: CompanySnapshot;
   launchEmailCampaign: EmailCampaign;
+  markEmailReplied: MarkRepliedResult;
   markJobApplied: Job;
   /**
    * Trigger classification/enhancement of all unprocessed jobs via the Cloudflare Worker.
@@ -949,7 +1069,11 @@ export type Mutation = {
    * Requires authentication.
    */
   reportJob: Maybe<Job>;
+  scheduleBatchEmails: ScheduleBatchResult;
+  scheduleFollowUpBatch: FollowUpBatchResult;
   sendEmail: SendEmailResult;
+  sendScheduledEmailNow: SendNowResult;
+  syncResendEmails: SyncResendResult;
   unarchiveJob: Job;
   unblockCompany: DeleteBlockedCompanyResult;
   unverifyCompanyContacts: UnverifyContactsResult;
@@ -993,6 +1117,16 @@ export type MutationArchiveJobArgs = {
 export type MutationBlockCompanyArgs = {
   name: Scalars['String']['input'];
   reason?: InputMaybe<Scalars['String']['input']>;
+};
+
+
+export type MutationCancelCompanyEmailsArgs = {
+  companyId: Scalars['Int']['input'];
+};
+
+
+export type MutationCancelScheduledEmailArgs = {
+  resendId: Scalars['String']['input'];
 };
 
 
@@ -1125,6 +1259,11 @@ export type MutationGenerateEmailArgs = {
 };
 
 
+export type MutationGenerateReplyArgs = {
+  input: GenerateReplyInput;
+};
+
+
 export type MutationImportContactsArgs = {
   contacts: Array<ContactInput>;
 };
@@ -1158,6 +1297,11 @@ export type MutationLaunchEmailCampaignArgs = {
 };
 
 
+export type MutationMarkEmailRepliedArgs = {
+  resendId: Scalars['String']['input'];
+};
+
+
 export type MutationMarkJobAppliedArgs = {
   id: Scalars['Int']['input'];
 };
@@ -1185,8 +1329,28 @@ export type MutationReportJobArgs = {
 };
 
 
+export type MutationScheduleBatchEmailsArgs = {
+  input: ScheduleBatchEmailsInput;
+};
+
+
+export type MutationScheduleFollowUpBatchArgs = {
+  input: FollowUpBatchInput;
+};
+
+
 export type MutationSendEmailArgs = {
   input: SendEmailInput;
+};
+
+
+export type MutationSendScheduledEmailNowArgs = {
+  resendId: Scalars['String']['input'];
+};
+
+
+export type MutationSyncResendEmailsArgs = {
+  companyId?: InputMaybe<Scalars['Int']['input']>;
 };
 
 
@@ -1394,6 +1558,7 @@ export type Query = {
   blockedCompanies: Array<BlockedCompany>;
   companies: CompaniesResponse;
   company: Maybe<Company>;
+  companyContactEmails: Array<CompanyContactEmail>;
   company_ats_boards: Array<AtsBoard>;
   company_facts: Array<CompanyFact>;
   company_snapshots: Array<CompanySnapshot>;
@@ -1403,6 +1568,7 @@ export type Query = {
   contacts: ContactsResult;
   emailCampaign: Maybe<EmailCampaign>;
   emailCampaigns: EmailCampaignsResult;
+  emailStats: EmailStats;
   emailTemplate: Maybe<EmailTemplate>;
   emailTemplates: EmailTemplatesResult;
   executeSql: TextToSqlResult;
@@ -1447,6 +1613,11 @@ export type QueryCompaniesArgs = {
 export type QueryCompanyArgs = {
   id?: InputMaybe<Scalars['Int']['input']>;
   key?: InputMaybe<Scalars['String']['input']>;
+};
+
+
+export type QueryCompanyContactEmailsArgs = {
+  companyId: Scalars['Int']['input'];
 };
 
 
@@ -1691,6 +1862,26 @@ export type ResumeUploadResult = {
   tier: Scalars['String']['output'];
 };
 
+export type ScheduleBatchEmailsInput = {
+  body: Scalars['String']['input'];
+  /** Recipients with name and email */
+  recipients: Array<BatchRecipientInput>;
+  subject: Scalars['String']['input'];
+  /** Use business day scheduling (Mon-Fri, 8am UTC, random delays) */
+  useScheduler?: InputMaybe<Scalars['Boolean']['input']>;
+};
+
+export type ScheduleBatchResult = {
+  __typename: 'ScheduleBatchResult';
+  failed: Scalars['Int']['output'];
+  firstSendDate: Maybe<Scalars['String']['output']>;
+  lastSendDate: Maybe<Scalars['String']['output']>;
+  message: Scalars['String']['output'];
+  scheduled: Scalars['Int']['output'];
+  schedulingPlan: Maybe<Scalars['String']['output']>;
+  success: Scalars['Boolean']['output'];
+};
+
 export type SendEmailInput = {
   from?: InputMaybe<Scalars['String']['input']>;
   html: Scalars['String']['input'];
@@ -1705,6 +1896,13 @@ export type SendEmailResult = {
   __typename: 'SendEmailResult';
   error: Maybe<Scalars['String']['output']>;
   id: Maybe<Scalars['String']['output']>;
+  success: Scalars['Boolean']['output'];
+};
+
+export type SendNowResult = {
+  __typename: 'SendNowResult';
+  error: Maybe<Scalars['String']['output']>;
+  resendId: Maybe<Scalars['String']['output']>;
   success: Scalars['Boolean']['output'];
 };
 
@@ -1736,6 +1934,15 @@ export type StackMutationResponse = {
   __typename: 'StackMutationResponse';
   message: Maybe<Scalars['String']['output']>;
   success: Scalars['Boolean']['output'];
+};
+
+export type SyncResendResult = {
+  __typename: 'SyncResendResult';
+  error: Maybe<Scalars['String']['output']>;
+  skippedCount: Scalars['Int']['output'];
+  success: Scalars['Boolean']['output'];
+  totalCount: Scalars['Int']['output'];
+  updatedCount: Scalars['Int']['output'];
 };
 
 export type Task = {
@@ -2299,6 +2506,41 @@ export type GetContactEmailsQueryVariables = Exact<{
 
 export type GetContactEmailsQuery = { __typename: 'Query', contactEmails: Array<{ __typename: 'ContactEmail', id: number, resendId: string, fromEmail: string, toEmails: Array<string>, subject: string, textContent: string | null, status: string, sentAt: string | null, recipientName: string | null, createdAt: string, updatedAt: string }> };
 
+export type GetCompanyContactEmailsQueryVariables = Exact<{
+  companyId: Scalars['Int']['input'];
+}>;
+
+
+export type GetCompanyContactEmailsQuery = { __typename: 'Query', companyContactEmails: Array<{ __typename: 'CompanyContactEmail', id: number, contactId: number, resendId: string, fromEmail: string, toEmails: Array<string>, subject: string, textContent: string | null, status: string, sentAt: string | null, scheduledAt: string | null, recipientName: string | null, createdAt: string, updatedAt: string, contactFirstName: string, contactLastName: string, contactPosition: string | null, sequenceType: string | null, sequenceNumber: string | null, replyReceived: boolean, followupStatus: string | null }> };
+
+export type SyncResendEmailsMutationVariables = Exact<{
+  companyId?: InputMaybe<Scalars['Int']['input']>;
+}>;
+
+
+export type SyncResendEmailsMutation = { __typename: 'Mutation', syncResendEmails: { __typename: 'SyncResendResult', success: boolean, updatedCount: number, skippedCount: number, totalCount: number, error: string | null } };
+
+export type CancelCompanyEmailsMutationVariables = Exact<{
+  companyId: Scalars['Int']['input'];
+}>;
+
+
+export type CancelCompanyEmailsMutation = { __typename: 'Mutation', cancelCompanyEmails: { __typename: 'CancelCompanyEmailsResult', success: boolean, message: string, cancelledCount: number, failedCount: number } };
+
+export type SendScheduledEmailNowMutationVariables = Exact<{
+  resendId: Scalars['String']['input'];
+}>;
+
+
+export type SendScheduledEmailNowMutation = { __typename: 'Mutation', sendScheduledEmailNow: { __typename: 'SendNowResult', success: boolean, resendId: string | null, error: string | null } };
+
+export type CancelScheduledEmailMutationVariables = Exact<{
+  resendId: Scalars['String']['input'];
+}>;
+
+
+export type CancelScheduledEmailMutation = { __typename: 'Mutation', cancelScheduledEmail: { __typename: 'CancelEmailResult', success: boolean, error: string | null } };
+
 export type GetContactsQueryVariables = Exact<{
   companyId?: InputMaybe<Scalars['Int']['input']>;
   search?: InputMaybe<Scalars['String']['input']>;
@@ -2414,6 +2656,18 @@ export type GenerateEmailMutationVariables = Exact<{
 
 
 export type GenerateEmailMutation = { __typename: 'Mutation', generateEmail: { __typename: 'GenerateEmailResult', subject: string, html: string, text: string } };
+
+export type GenerateReplyMutationVariables = Exact<{
+  input: GenerateReplyInput;
+}>;
+
+
+export type GenerateReplyMutation = { __typename: 'Mutation', generateReply: { __typename: 'GenerateReplyResult', subject: string, body: string } };
+
+export type GetEmailStatsQueryVariables = Exact<{ [key: string]: never; }>;
+
+
+export type GetEmailStatsQuery = { __typename: 'Query', emailStats: { __typename: 'EmailStats', sentToday: number, sentThisWeek: number, sentThisMonth: number, scheduledToday: number, scheduledFuture: number, totalSent: number, deliveredToday: number, deliveredThisWeek: number, deliveredThisMonth: number, bouncedToday: number, bouncedThisWeek: number, bouncedThisMonth: number, openedToday: number, openedThisWeek: number, openedThisMonth: number } };
 
 export type GetEmailTemplatesQueryVariables = Exact<{
   category?: InputMaybe<Scalars['String']['input']>;
@@ -2744,6 +2998,11 @@ export const UpdateContactDocument = {"kind":"Document","definitions":[{"kind":"
 export const DeleteContactDocument = {"kind":"Document","definitions":[{"kind":"OperationDefinition","operation":"mutation","name":{"kind":"Name","value":"DeleteContact"},"variableDefinitions":[{"kind":"VariableDefinition","variable":{"kind":"Variable","name":{"kind":"Name","value":"id"}},"type":{"kind":"NonNullType","type":{"kind":"NamedType","name":{"kind":"Name","value":"Int"}}}}],"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"deleteContact"},"arguments":[{"kind":"Argument","name":{"kind":"Name","value":"id"},"value":{"kind":"Variable","name":{"kind":"Name","value":"id"}}}],"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"success"}},{"kind":"Field","name":{"kind":"Name","value":"message"}}]}}]}}]} as unknown as DocumentNode<DeleteContactMutation, DeleteContactMutationVariables>;
 export const GetResendEmailDocument = {"kind":"Document","definitions":[{"kind":"OperationDefinition","operation":"query","name":{"kind":"Name","value":"GetResendEmail"},"variableDefinitions":[{"kind":"VariableDefinition","variable":{"kind":"Variable","name":{"kind":"Name","value":"resendId"}},"type":{"kind":"NonNullType","type":{"kind":"NamedType","name":{"kind":"Name","value":"String"}}}}],"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"resendEmail"},"arguments":[{"kind":"Argument","name":{"kind":"Name","value":"resendId"},"value":{"kind":"Variable","name":{"kind":"Name","value":"resendId"}}}],"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"id"}},{"kind":"Field","name":{"kind":"Name","value":"from"}},{"kind":"Field","name":{"kind":"Name","value":"to"}},{"kind":"Field","name":{"kind":"Name","value":"subject"}},{"kind":"Field","name":{"kind":"Name","value":"text"}},{"kind":"Field","name":{"kind":"Name","value":"html"}},{"kind":"Field","name":{"kind":"Name","value":"lastEvent"}},{"kind":"Field","name":{"kind":"Name","value":"createdAt"}},{"kind":"Field","name":{"kind":"Name","value":"scheduledAt"}},{"kind":"Field","name":{"kind":"Name","value":"cc"}},{"kind":"Field","name":{"kind":"Name","value":"bcc"}}]}}]}}]} as unknown as DocumentNode<GetResendEmailQuery, GetResendEmailQueryVariables>;
 export const GetContactEmailsDocument = {"kind":"Document","definitions":[{"kind":"OperationDefinition","operation":"query","name":{"kind":"Name","value":"GetContactEmails"},"variableDefinitions":[{"kind":"VariableDefinition","variable":{"kind":"Variable","name":{"kind":"Name","value":"contactId"}},"type":{"kind":"NonNullType","type":{"kind":"NamedType","name":{"kind":"Name","value":"Int"}}}}],"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"contactEmails"},"arguments":[{"kind":"Argument","name":{"kind":"Name","value":"contactId"},"value":{"kind":"Variable","name":{"kind":"Name","value":"contactId"}}}],"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"id"}},{"kind":"Field","name":{"kind":"Name","value":"resendId"}},{"kind":"Field","name":{"kind":"Name","value":"fromEmail"}},{"kind":"Field","name":{"kind":"Name","value":"toEmails"}},{"kind":"Field","name":{"kind":"Name","value":"subject"}},{"kind":"Field","name":{"kind":"Name","value":"textContent"}},{"kind":"Field","name":{"kind":"Name","value":"status"}},{"kind":"Field","name":{"kind":"Name","value":"sentAt"}},{"kind":"Field","name":{"kind":"Name","value":"recipientName"}},{"kind":"Field","name":{"kind":"Name","value":"createdAt"}},{"kind":"Field","name":{"kind":"Name","value":"updatedAt"}}]}}]}}]} as unknown as DocumentNode<GetContactEmailsQuery, GetContactEmailsQueryVariables>;
+export const GetCompanyContactEmailsDocument = {"kind":"Document","definitions":[{"kind":"OperationDefinition","operation":"query","name":{"kind":"Name","value":"GetCompanyContactEmails"},"variableDefinitions":[{"kind":"VariableDefinition","variable":{"kind":"Variable","name":{"kind":"Name","value":"companyId"}},"type":{"kind":"NonNullType","type":{"kind":"NamedType","name":{"kind":"Name","value":"Int"}}}}],"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"companyContactEmails"},"arguments":[{"kind":"Argument","name":{"kind":"Name","value":"companyId"},"value":{"kind":"Variable","name":{"kind":"Name","value":"companyId"}}}],"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"id"}},{"kind":"Field","name":{"kind":"Name","value":"contactId"}},{"kind":"Field","name":{"kind":"Name","value":"resendId"}},{"kind":"Field","name":{"kind":"Name","value":"fromEmail"}},{"kind":"Field","name":{"kind":"Name","value":"toEmails"}},{"kind":"Field","name":{"kind":"Name","value":"subject"}},{"kind":"Field","name":{"kind":"Name","value":"textContent"}},{"kind":"Field","name":{"kind":"Name","value":"status"}},{"kind":"Field","name":{"kind":"Name","value":"sentAt"}},{"kind":"Field","name":{"kind":"Name","value":"scheduledAt"}},{"kind":"Field","name":{"kind":"Name","value":"recipientName"}},{"kind":"Field","name":{"kind":"Name","value":"createdAt"}},{"kind":"Field","name":{"kind":"Name","value":"updatedAt"}},{"kind":"Field","name":{"kind":"Name","value":"contactFirstName"}},{"kind":"Field","name":{"kind":"Name","value":"contactLastName"}},{"kind":"Field","name":{"kind":"Name","value":"contactPosition"}},{"kind":"Field","name":{"kind":"Name","value":"sequenceType"}},{"kind":"Field","name":{"kind":"Name","value":"sequenceNumber"}},{"kind":"Field","name":{"kind":"Name","value":"replyReceived"}},{"kind":"Field","name":{"kind":"Name","value":"followupStatus"}}]}}]}}]} as unknown as DocumentNode<GetCompanyContactEmailsQuery, GetCompanyContactEmailsQueryVariables>;
+export const SyncResendEmailsDocument = {"kind":"Document","definitions":[{"kind":"OperationDefinition","operation":"mutation","name":{"kind":"Name","value":"SyncResendEmails"},"variableDefinitions":[{"kind":"VariableDefinition","variable":{"kind":"Variable","name":{"kind":"Name","value":"companyId"}},"type":{"kind":"NamedType","name":{"kind":"Name","value":"Int"}}}],"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"syncResendEmails"},"arguments":[{"kind":"Argument","name":{"kind":"Name","value":"companyId"},"value":{"kind":"Variable","name":{"kind":"Name","value":"companyId"}}}],"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"success"}},{"kind":"Field","name":{"kind":"Name","value":"updatedCount"}},{"kind":"Field","name":{"kind":"Name","value":"skippedCount"}},{"kind":"Field","name":{"kind":"Name","value":"totalCount"}},{"kind":"Field","name":{"kind":"Name","value":"error"}}]}}]}}]} as unknown as DocumentNode<SyncResendEmailsMutation, SyncResendEmailsMutationVariables>;
+export const CancelCompanyEmailsDocument = {"kind":"Document","definitions":[{"kind":"OperationDefinition","operation":"mutation","name":{"kind":"Name","value":"CancelCompanyEmails"},"variableDefinitions":[{"kind":"VariableDefinition","variable":{"kind":"Variable","name":{"kind":"Name","value":"companyId"}},"type":{"kind":"NonNullType","type":{"kind":"NamedType","name":{"kind":"Name","value":"Int"}}}}],"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"cancelCompanyEmails"},"arguments":[{"kind":"Argument","name":{"kind":"Name","value":"companyId"},"value":{"kind":"Variable","name":{"kind":"Name","value":"companyId"}}}],"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"success"}},{"kind":"Field","name":{"kind":"Name","value":"message"}},{"kind":"Field","name":{"kind":"Name","value":"cancelledCount"}},{"kind":"Field","name":{"kind":"Name","value":"failedCount"}}]}}]}}]} as unknown as DocumentNode<CancelCompanyEmailsMutation, CancelCompanyEmailsMutationVariables>;
+export const SendScheduledEmailNowDocument = {"kind":"Document","definitions":[{"kind":"OperationDefinition","operation":"mutation","name":{"kind":"Name","value":"SendScheduledEmailNow"},"variableDefinitions":[{"kind":"VariableDefinition","variable":{"kind":"Variable","name":{"kind":"Name","value":"resendId"}},"type":{"kind":"NonNullType","type":{"kind":"NamedType","name":{"kind":"Name","value":"String"}}}}],"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"sendScheduledEmailNow"},"arguments":[{"kind":"Argument","name":{"kind":"Name","value":"resendId"},"value":{"kind":"Variable","name":{"kind":"Name","value":"resendId"}}}],"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"success"}},{"kind":"Field","name":{"kind":"Name","value":"resendId"}},{"kind":"Field","name":{"kind":"Name","value":"error"}}]}}]}}]} as unknown as DocumentNode<SendScheduledEmailNowMutation, SendScheduledEmailNowMutationVariables>;
+export const CancelScheduledEmailDocument = {"kind":"Document","definitions":[{"kind":"OperationDefinition","operation":"mutation","name":{"kind":"Name","value":"CancelScheduledEmail"},"variableDefinitions":[{"kind":"VariableDefinition","variable":{"kind":"Variable","name":{"kind":"Name","value":"resendId"}},"type":{"kind":"NonNullType","type":{"kind":"NamedType","name":{"kind":"Name","value":"String"}}}}],"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"cancelScheduledEmail"},"arguments":[{"kind":"Argument","name":{"kind":"Name","value":"resendId"},"value":{"kind":"Variable","name":{"kind":"Name","value":"resendId"}}}],"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"success"}},{"kind":"Field","name":{"kind":"Name","value":"error"}}]}}]}}]} as unknown as DocumentNode<CancelScheduledEmailMutation, CancelScheduledEmailMutationVariables>;
 export const GetContactsDocument = {"kind":"Document","definitions":[{"kind":"OperationDefinition","operation":"query","name":{"kind":"Name","value":"GetContacts"},"variableDefinitions":[{"kind":"VariableDefinition","variable":{"kind":"Variable","name":{"kind":"Name","value":"companyId"}},"type":{"kind":"NamedType","name":{"kind":"Name","value":"Int"}}},{"kind":"VariableDefinition","variable":{"kind":"Variable","name":{"kind":"Name","value":"search"}},"type":{"kind":"NamedType","name":{"kind":"Name","value":"String"}}},{"kind":"VariableDefinition","variable":{"kind":"Variable","name":{"kind":"Name","value":"limit"}},"type":{"kind":"NamedType","name":{"kind":"Name","value":"Int"}}},{"kind":"VariableDefinition","variable":{"kind":"Variable","name":{"kind":"Name","value":"offset"}},"type":{"kind":"NamedType","name":{"kind":"Name","value":"Int"}}}],"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"contacts"},"arguments":[{"kind":"Argument","name":{"kind":"Name","value":"companyId"},"value":{"kind":"Variable","name":{"kind":"Name","value":"companyId"}}},{"kind":"Argument","name":{"kind":"Name","value":"search"},"value":{"kind":"Variable","name":{"kind":"Name","value":"search"}}},{"kind":"Argument","name":{"kind":"Name","value":"limit"},"value":{"kind":"Variable","name":{"kind":"Name","value":"limit"}}},{"kind":"Argument","name":{"kind":"Name","value":"offset"},"value":{"kind":"Variable","name":{"kind":"Name","value":"offset"}}}],"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"contacts"},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"id"}},{"kind":"Field","name":{"kind":"Name","value":"firstName"}},{"kind":"Field","name":{"kind":"Name","value":"lastName"}},{"kind":"Field","name":{"kind":"Name","value":"email"}},{"kind":"Field","name":{"kind":"Name","value":"bouncedEmails"}},{"kind":"Field","name":{"kind":"Name","value":"linkedinUrl"}},{"kind":"Field","name":{"kind":"Name","value":"position"}},{"kind":"Field","name":{"kind":"Name","value":"company"}},{"kind":"Field","name":{"kind":"Name","value":"companyId"}},{"kind":"Field","name":{"kind":"Name","value":"githubHandle"}},{"kind":"Field","name":{"kind":"Name","value":"telegramHandle"}},{"kind":"Field","name":{"kind":"Name","value":"emailVerified"}},{"kind":"Field","name":{"kind":"Name","value":"doNotContact"}},{"kind":"Field","name":{"kind":"Name","value":"nbResult"}},{"kind":"Field","name":{"kind":"Name","value":"tags"}},{"kind":"Field","name":{"kind":"Name","value":"createdAt"}}]}},{"kind":"Field","name":{"kind":"Name","value":"totalCount"}}]}}]}}]} as unknown as DocumentNode<GetContactsQuery, GetContactsQueryVariables>;
 export const ImportContactsDocument = {"kind":"Document","definitions":[{"kind":"OperationDefinition","operation":"mutation","name":{"kind":"Name","value":"ImportContacts"},"variableDefinitions":[{"kind":"VariableDefinition","variable":{"kind":"Variable","name":{"kind":"Name","value":"contacts"}},"type":{"kind":"NonNullType","type":{"kind":"ListType","type":{"kind":"NonNullType","type":{"kind":"NamedType","name":{"kind":"Name","value":"ContactInput"}}}}}}],"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"importContacts"},"arguments":[{"kind":"Argument","name":{"kind":"Name","value":"contacts"},"value":{"kind":"Variable","name":{"kind":"Name","value":"contacts"}}}],"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"success"}},{"kind":"Field","name":{"kind":"Name","value":"imported"}},{"kind":"Field","name":{"kind":"Name","value":"failed"}},{"kind":"Field","name":{"kind":"Name","value":"errors"}}]}}]}}]} as unknown as DocumentNode<ImportContactsMutation, ImportContactsMutationVariables>;
 export const FindContactEmailDocument = {"kind":"Document","definitions":[{"kind":"OperationDefinition","operation":"mutation","name":{"kind":"Name","value":"FindContactEmail"},"variableDefinitions":[{"kind":"VariableDefinition","variable":{"kind":"Variable","name":{"kind":"Name","value":"contactId"}},"type":{"kind":"NonNullType","type":{"kind":"NamedType","name":{"kind":"Name","value":"Int"}}}}],"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"findContactEmail"},"arguments":[{"kind":"Argument","name":{"kind":"Name","value":"contactId"},"value":{"kind":"Variable","name":{"kind":"Name","value":"contactId"}}}],"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"success"}},{"kind":"Field","name":{"kind":"Name","value":"emailFound"}},{"kind":"Field","name":{"kind":"Name","value":"email"}},{"kind":"Field","name":{"kind":"Name","value":"verified"}},{"kind":"Field","name":{"kind":"Name","value":"message"}},{"kind":"Field","name":{"kind":"Name","value":"candidatesTried"}}]}}]}}]} as unknown as DocumentNode<FindContactEmailMutation, FindContactEmailMutationVariables>;
@@ -2760,6 +3019,8 @@ export const DeleteCampaignDocument = {"kind":"Document","definitions":[{"kind":
 export const LaunchEmailCampaignDocument = {"kind":"Document","definitions":[{"kind":"OperationDefinition","operation":"mutation","name":{"kind":"Name","value":"LaunchEmailCampaign"},"variableDefinitions":[{"kind":"VariableDefinition","variable":{"kind":"Variable","name":{"kind":"Name","value":"id"}},"type":{"kind":"NonNullType","type":{"kind":"NamedType","name":{"kind":"Name","value":"String"}}}}],"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"launchEmailCampaign"},"arguments":[{"kind":"Argument","name":{"kind":"Name","value":"id"},"value":{"kind":"Variable","name":{"kind":"Name","value":"id"}}}],"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"id"}},{"kind":"Field","name":{"kind":"Name","value":"name"}},{"kind":"Field","name":{"kind":"Name","value":"status"}},{"kind":"Field","name":{"kind":"Name","value":"emailsSent"}},{"kind":"Field","name":{"kind":"Name","value":"emailsScheduled"}},{"kind":"Field","name":{"kind":"Name","value":"emailsFailed"}},{"kind":"Field","name":{"kind":"Name","value":"updatedAt"}}]}}]}}]} as unknown as DocumentNode<LaunchEmailCampaignMutation, LaunchEmailCampaignMutationVariables>;
 export const SendEmailDocument = {"kind":"Document","definitions":[{"kind":"OperationDefinition","operation":"mutation","name":{"kind":"Name","value":"SendEmail"},"variableDefinitions":[{"kind":"VariableDefinition","variable":{"kind":"Variable","name":{"kind":"Name","value":"input"}},"type":{"kind":"NonNullType","type":{"kind":"NamedType","name":{"kind":"Name","value":"SendEmailInput"}}}}],"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"sendEmail"},"arguments":[{"kind":"Argument","name":{"kind":"Name","value":"input"},"value":{"kind":"Variable","name":{"kind":"Name","value":"input"}}}],"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"success"}},{"kind":"Field","name":{"kind":"Name","value":"id"}},{"kind":"Field","name":{"kind":"Name","value":"error"}}]}}]}}]} as unknown as DocumentNode<SendEmailMutation, SendEmailMutationVariables>;
 export const GenerateEmailDocument = {"kind":"Document","definitions":[{"kind":"OperationDefinition","operation":"mutation","name":{"kind":"Name","value":"GenerateEmail"},"variableDefinitions":[{"kind":"VariableDefinition","variable":{"kind":"Variable","name":{"kind":"Name","value":"input"}},"type":{"kind":"NonNullType","type":{"kind":"NamedType","name":{"kind":"Name","value":"GenerateEmailInput"}}}}],"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"generateEmail"},"arguments":[{"kind":"Argument","name":{"kind":"Name","value":"input"},"value":{"kind":"Variable","name":{"kind":"Name","value":"input"}}}],"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"subject"}},{"kind":"Field","name":{"kind":"Name","value":"html"}},{"kind":"Field","name":{"kind":"Name","value":"text"}}]}}]}}]} as unknown as DocumentNode<GenerateEmailMutation, GenerateEmailMutationVariables>;
+export const GenerateReplyDocument = {"kind":"Document","definitions":[{"kind":"OperationDefinition","operation":"mutation","name":{"kind":"Name","value":"GenerateReply"},"variableDefinitions":[{"kind":"VariableDefinition","variable":{"kind":"Variable","name":{"kind":"Name","value":"input"}},"type":{"kind":"NonNullType","type":{"kind":"NamedType","name":{"kind":"Name","value":"GenerateReplyInput"}}}}],"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"generateReply"},"arguments":[{"kind":"Argument","name":{"kind":"Name","value":"input"},"value":{"kind":"Variable","name":{"kind":"Name","value":"input"}}}],"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"subject"}},{"kind":"Field","name":{"kind":"Name","value":"body"}}]}}]}}]} as unknown as DocumentNode<GenerateReplyMutation, GenerateReplyMutationVariables>;
+export const GetEmailStatsDocument = {"kind":"Document","definitions":[{"kind":"OperationDefinition","operation":"query","name":{"kind":"Name","value":"GetEmailStats"},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"emailStats"},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"sentToday"}},{"kind":"Field","name":{"kind":"Name","value":"sentThisWeek"}},{"kind":"Field","name":{"kind":"Name","value":"sentThisMonth"}},{"kind":"Field","name":{"kind":"Name","value":"scheduledToday"}},{"kind":"Field","name":{"kind":"Name","value":"scheduledFuture"}},{"kind":"Field","name":{"kind":"Name","value":"totalSent"}},{"kind":"Field","name":{"kind":"Name","value":"deliveredToday"}},{"kind":"Field","name":{"kind":"Name","value":"deliveredThisWeek"}},{"kind":"Field","name":{"kind":"Name","value":"deliveredThisMonth"}},{"kind":"Field","name":{"kind":"Name","value":"bouncedToday"}},{"kind":"Field","name":{"kind":"Name","value":"bouncedThisWeek"}},{"kind":"Field","name":{"kind":"Name","value":"bouncedThisMonth"}},{"kind":"Field","name":{"kind":"Name","value":"openedToday"}},{"kind":"Field","name":{"kind":"Name","value":"openedThisWeek"}},{"kind":"Field","name":{"kind":"Name","value":"openedThisMonth"}}]}}]}}]} as unknown as DocumentNode<GetEmailStatsQuery, GetEmailStatsQueryVariables>;
 export const GetEmailTemplatesDocument = {"kind":"Document","definitions":[{"kind":"OperationDefinition","operation":"query","name":{"kind":"Name","value":"GetEmailTemplates"},"variableDefinitions":[{"kind":"VariableDefinition","variable":{"kind":"Variable","name":{"kind":"Name","value":"category"}},"type":{"kind":"NamedType","name":{"kind":"Name","value":"String"}}},{"kind":"VariableDefinition","variable":{"kind":"Variable","name":{"kind":"Name","value":"limit"}},"type":{"kind":"NamedType","name":{"kind":"Name","value":"Int"}}},{"kind":"VariableDefinition","variable":{"kind":"Variable","name":{"kind":"Name","value":"offset"}},"type":{"kind":"NamedType","name":{"kind":"Name","value":"Int"}}}],"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"emailTemplates"},"arguments":[{"kind":"Argument","name":{"kind":"Name","value":"category"},"value":{"kind":"Variable","name":{"kind":"Name","value":"category"}}},{"kind":"Argument","name":{"kind":"Name","value":"limit"},"value":{"kind":"Variable","name":{"kind":"Name","value":"limit"}}},{"kind":"Argument","name":{"kind":"Name","value":"offset"},"value":{"kind":"Variable","name":{"kind":"Name","value":"offset"}}}],"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"templates"},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"id"}},{"kind":"Field","name":{"kind":"Name","value":"name"}},{"kind":"Field","name":{"kind":"Name","value":"description"}},{"kind":"Field","name":{"kind":"Name","value":"subject"}},{"kind":"Field","name":{"kind":"Name","value":"category"}},{"kind":"Field","name":{"kind":"Name","value":"tags"}},{"kind":"Field","name":{"kind":"Name","value":"isActive"}},{"kind":"Field","name":{"kind":"Name","value":"createdAt"}},{"kind":"Field","name":{"kind":"Name","value":"updatedAt"}}]}},{"kind":"Field","name":{"kind":"Name","value":"totalCount"}}]}}]}}]} as unknown as DocumentNode<GetEmailTemplatesQuery, GetEmailTemplatesQueryVariables>;
 export const GetEmailTemplateDocument = {"kind":"Document","definitions":[{"kind":"OperationDefinition","operation":"query","name":{"kind":"Name","value":"GetEmailTemplate"},"variableDefinitions":[{"kind":"VariableDefinition","variable":{"kind":"Variable","name":{"kind":"Name","value":"id"}},"type":{"kind":"NonNullType","type":{"kind":"NamedType","name":{"kind":"Name","value":"Int"}}}}],"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"emailTemplate"},"arguments":[{"kind":"Argument","name":{"kind":"Name","value":"id"},"value":{"kind":"Variable","name":{"kind":"Name","value":"id"}}}],"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"id"}},{"kind":"Field","name":{"kind":"Name","value":"name"}},{"kind":"Field","name":{"kind":"Name","value":"description"}},{"kind":"Field","name":{"kind":"Name","value":"subject"}},{"kind":"Field","name":{"kind":"Name","value":"htmlContent"}},{"kind":"Field","name":{"kind":"Name","value":"textContent"}},{"kind":"Field","name":{"kind":"Name","value":"category"}},{"kind":"Field","name":{"kind":"Name","value":"tags"}},{"kind":"Field","name":{"kind":"Name","value":"variables"}},{"kind":"Field","name":{"kind":"Name","value":"isActive"}},{"kind":"Field","name":{"kind":"Name","value":"createdAt"}},{"kind":"Field","name":{"kind":"Name","value":"updatedAt"}}]}}]}}]} as unknown as DocumentNode<GetEmailTemplateQuery, GetEmailTemplateQueryVariables>;
 export const CreateEmailTemplateDocument = {"kind":"Document","definitions":[{"kind":"OperationDefinition","operation":"mutation","name":{"kind":"Name","value":"CreateEmailTemplate"},"variableDefinitions":[{"kind":"VariableDefinition","variable":{"kind":"Variable","name":{"kind":"Name","value":"input"}},"type":{"kind":"NonNullType","type":{"kind":"NamedType","name":{"kind":"Name","value":"CreateEmailTemplateInput"}}}}],"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"createEmailTemplate"},"arguments":[{"kind":"Argument","name":{"kind":"Name","value":"input"},"value":{"kind":"Variable","name":{"kind":"Name","value":"input"}}}],"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"id"}},{"kind":"Field","name":{"kind":"Name","value":"name"}},{"kind":"Field","name":{"kind":"Name","value":"subject"}},{"kind":"Field","name":{"kind":"Name","value":"category"}},{"kind":"Field","name":{"kind":"Name","value":"createdAt"}}]}}]}}]} as unknown as DocumentNode<CreateEmailTemplateMutation, CreateEmailTemplateMutationVariables>;

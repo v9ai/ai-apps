@@ -29,6 +29,8 @@ pub enum PipelineMode {
 struct TopicSelection {
     topic: String,
     angle: String,
+    #[serde(default)]
+    why_viral: Option<String>,
 }
 
 // ── structured results ──────────────────────────────────────────────────────
@@ -523,7 +525,7 @@ impl Pipeline {
         }
 
         if approved {
-            save(&published_dir, &format!("{slug}.md"), &editor_output).await?;
+            save(&published_dir, &format!("{slug}.md"), crate::extract_published_content(&editor_output, &draft)).await?;
         } else {
             save(
                 &drafts_dir,
@@ -540,7 +542,7 @@ impl Pipeline {
                 Some(p) => p.as_ref(),
                 None => &default_pub,
             };
-            pub_impl.publish_post(&editor_output, topic, true, None).await?;
+            pub_impl.publish_post(crate::extract_published_content(&editor_output, &draft), topic, true, None).await?;
         }
 
         assert!(tasks.is_all_done(), "all journalism tasks should be complete");
@@ -682,7 +684,7 @@ impl Pipeline {
         loop {
             let editor_idx = team.spawn(
                 format!("deep-dive-editor-r{revision_rounds}"),
-                prompts::journalism_editor(),
+                prompts::deep_dive_editor(),
                 TeamRole::Reviewer,
                 &pool,
             );
@@ -741,7 +743,7 @@ impl Pipeline {
         }
 
         if approved {
-            save(&published_dir, &format!("{slug}.md"), &editor_output).await?;
+            save(&published_dir, &format!("{slug}.md"), crate::extract_published_content(&editor_output, &draft)).await?;
         } else {
             save(
                 &drafts_dir,
@@ -752,7 +754,7 @@ impl Pipeline {
         }
 
         // ── Phase 4 — LinkedIn (Fast) from final content ───────────────────
-        let final_content = if approved { &editor_output } else { &draft };
+        let final_content = if approved { crate::extract_published_content(&editor_output, &draft) } else { &draft };
         let linkedin_idx = team.spawn(
             "deep-dive-linkedin",
             prompts::linkedin(),
@@ -775,7 +777,7 @@ impl Pipeline {
                 None => &default_pub,
             };
             pub_impl
-                .publish_post(&editor_output, title, true, None)
+                .publish_post(crate::extract_published_content(&editor_output, &draft), title, true, None)
                 .await?;
         }
 
@@ -982,5 +984,23 @@ mod tests {
     #[test]
     fn test_default_mode_is_journalism() {
         assert_eq!(PipelineMode::default(), PipelineMode::Journalism);
+    }
+
+    #[test]
+    fn test_extract_published_content_with_frontmatter() {
+        let editor = "DECISION: APPROVE\n\nMinor edits applied.\n\n---\ntitle: \"Test\"\nstatus: published\n---\n\n# Article\n\nBody text.";
+        let draft = "# Old Draft\n\nOld body.";
+        let result = crate::extract_published_content(editor, draft);
+        assert!(result.starts_with("---\n"));
+        assert!(result.contains("status: published"));
+        assert!(result.contains("# Article"));
+    }
+
+    #[test]
+    fn test_extract_published_content_no_frontmatter() {
+        let editor = "DECISION: APPROVE\n\nLooks good, no changes needed.";
+        let draft = "# My Draft\n\nDraft body.";
+        let result = crate::extract_published_content(editor, draft);
+        assert_eq!(result, draft);
     }
 }

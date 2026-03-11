@@ -12,6 +12,7 @@ import {
   useCreateContactMutation,
   useCreateOpportunityMutation,
   useGetOpportunitiesQuery,
+
 } from "@/__generated__/hooks";
 import type { CompanyCategory } from "@/__generated__/graphql";
 import ReactMarkdown from "react-markdown";
@@ -49,7 +50,6 @@ import {
   ChevronUpIcon,
   Link2Icon,
   Pencil1Icon,
-  PersonIcon,
 } from "@radix-ui/react-icons";
 
 type Props = {
@@ -936,6 +936,7 @@ export function CompanyDetail({ companyKey, companyId }: Props) {
   });
   const companyOpps = oppsData?.opportunities?.opportunities ?? [];
 
+
   const remoteEuConfirmed = companyJobs.some(
     (j) => j.is_remote_eu === true && j.remote_eu_confidence === "high",
   );
@@ -1207,17 +1208,6 @@ export function CompanyDetail({ companyKey, companyId }: Props) {
           </Flex>
 
           <Flex gap="2" align="center">
-            {isAdmin && (
-              <Link
-                href={`/companies/${effectiveKey}/contacts`}
-                style={{ textDecoration: "none" }}
-              >
-                <Button size="2" variant="soft" color="gray">
-                  <PersonIcon />
-                  Contacts
-                </Button>
-              </Link>
-            )}
             {isAdmin && company && (
               <LinkedInLeadDialog
                 companyId={company.id}
@@ -1272,6 +1262,16 @@ export function CompanyDetail({ companyKey, companyId }: Props) {
               <Tabs.Trigger value="opportunities">
                 Opportunities ({companyOpps.length})
               </Tabs.Trigger>
+            )}
+            {isAdmin && (
+              <Link href={`/companies/${effectiveKey}/contacts`} className="rt-reset rt-TabsTrigger" style={{ textDecoration: "none" }}>
+                Contacts
+              </Link>
+            )}
+            {isAdmin && (
+              <Link href={`/companies/${effectiveKey}/emails`} className="rt-reset rt-TabsTrigger" style={{ textDecoration: "none" }}>
+                Emails
+              </Link>
             )}
           </Tabs.List>
 

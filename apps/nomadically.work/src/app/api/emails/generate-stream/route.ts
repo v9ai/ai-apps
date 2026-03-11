@@ -1,6 +1,7 @@
 import { NextRequest } from "next/server";
 import OpenAI from "openai";
 import { emailSchema } from "@/lib/email-schema";
+import { ingestLangfuseEvents, isLangfuseConfigured } from "@/langfuse";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -16,6 +17,7 @@ interface EmailGenerationRequest {
   recipientContext?: string;
   companyName?: string;
   instructions?: string;
+  linkedinPostContent?: string;
 }
 
 function buildPrompt(input: EmailGenerationRequest): string {
@@ -34,7 +36,7 @@ VADIM'S BACKGROUND:
 - Looking for: remote EU opportunities
 
 ${input.instructions ? `SPECIAL INSTRUCTIONS (CRITICAL):\n${input.instructions}\n` : ""}
-
+${input.linkedinPostContent ? `LINKEDIN POST CONTEXT:\nThe recipient recently shared this on LinkedIn:\n---\n${input.linkedinPostContent}\n---\nReference their post naturally in the email — show genuine interest in their perspective. Do NOT quote verbatim or sound like you scraped their content.\n` : ""}
 REQUIREMENTS:
 1. Generate a professional email
 2. Start with "Hey ${firstName},"
@@ -56,24 +58,67 @@ export async function POST(request: NextRequest) {
 
     const encoder = new TextEncoder();
 
+    const traceId = crypto.randomUUID();
+    const generationId = crypto.randomUUID();
+    const hasLinkedIn = !!input.linkedinPostContent;
+
     const stream = new ReadableStream({
       async start(controller) {
         try {
           const prompt = buildPrompt(input);
+          const startTime = new Date().toISOString();
+
+          const messages: OpenAI.Chat.ChatCompletionMessageParam[] = [
+            {
+              role: "system",
+              content:
+                "You are an expert email writer. Always respond with valid JSON matching the requested structure.",
+            },
+            {
+              role: "user",
+              content: prompt,
+            },
+          ];
+
+          if (isLangfuseConfigured()) {
+            void ingestLangfuseEvents([
+              {
+                id: crypto.randomUUID(),
+                type: "trace-create",
+                body: {
+                  id: traceId,
+                  name: "email-generate-stream",
+                  tags: [
+                    "feature:email-compose",
+                    ...(hasLinkedIn ? ["source:linkedin"] : []),
+                  ],
+                  metadata: {
+                    recipientName: input.recipientName,
+                    companyName: input.companyName,
+                    hasLinkedInContent: hasLinkedIn,
+                  },
+                },
+              },
+              {
+                id: crypto.randomUUID(),
+                type: "observation-create",
+                body: {
+                  id: generationId,
+                  traceId,
+                  type: "GENERATION",
+                  name: "deepseek-chat",
+                  model: "deepseek-chat",
+                  input: messages,
+                  startTime,
+                  modelParameters: { temperature: 1.3, response_format: "json_object" },
+                },
+              },
+            ]);
+          }
 
           const completion = await openai.chat.completions.create({
             model: "deepseek-chat",
-            messages: [
-              {
-                role: "system",
-                content:
-                  "You are an expert email writer. Always respond with valid JSON matching the requested structure.",
-              },
-              {
-                role: "user",
-                content: prompt,
-              },
-            ],
+            messages,
             temperature: 1.3,
             stream: true,
             response_format: { type: "json_object" },
@@ -102,6 +147,23 @@ export async function POST(request: NextRequest) {
             const parsed = JSON.parse(fullText);
             const validated = emailSchema.parse(parsed);
 
+            if (isLangfuseConfigured()) {
+              void ingestLangfuseEvents([
+                {
+                  id: crypto.randomUUID(),
+                  type: "observation-update",
+                  body: {
+                    id: generationId,
+                    traceId,
+                    type: "GENERATION",
+                    output: validated,
+                    endTime: new Date().toISOString(),
+                    statusMessage: "success",
+                  },
+                },
+              ]);
+            }
+
             controller.enqueue(
               encoder.encode(
                 `data: ${JSON.stringify({ type: "complete", data: validated })}\n\n`,
@@ -111,14 +173,33 @@ export async function POST(request: NextRequest) {
             const subjectMatch = fullText.match(/"subject":\s*"([^"]+)"/);
             const bodyMatch = fullText.match(/"body":\s*"([^"]+)"/);
 
+            const fallback = {
+              subject: subjectMatch?.[1] || "Follow up",
+              body: bodyMatch?.[1] || fullText,
+            };
+
+            if (isLangfuseConfigured()) {
+              void ingestLangfuseEvents([
+                {
+                  id: crypto.randomUUID(),
+                  type: "observation-update",
+                  body: {
+                    id: generationId,
+                    traceId,
+                    type: "GENERATION",
+                    output: fallback,
+                    endTime: new Date().toISOString(),
+                    statusMessage: "fallback-parse",
+                  },
+                },
+              ]);
+            }
+
             controller.enqueue(
               encoder.encode(
                 `data: ${JSON.stringify({
                   type: "complete",
-                  data: {
-                    subject: subjectMatch?.[1] || "Follow up",
-                    body: bodyMatch?.[1] || fullText,
-                  },
+                  data: fallback,
                 })}\n\n`,
               ),
             );

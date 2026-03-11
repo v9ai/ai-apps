@@ -1,7 +1,7 @@
 import { getAllPapers, getGroupedPapers, getTotalWordCount, CATEGORIES } from "@/lib/data";
 import { Topbar } from "@/components/topbar";
 import { Hero } from "@/components/hero";
-import { CategoryGrid } from "@/components/category-grid";
+import { Search } from "@/components/search";
 import { Footer } from "@/components/footer";
 
 export default async function HomePage() {
@@ -18,7 +18,7 @@ export default async function HomePage() {
 
       {/* Search + Bento Grid */}
       <div id="research">
-        <CategoryGrid groups={groups} />
+        <Search groups={groups} />
       </div>
 
       <Footer />

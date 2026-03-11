@@ -28,6 +28,10 @@ import {
   TrashIcon,
   RocketIcon,
   FileTextIcon,
+  LinkedInLogoIcon,
+  BarChartIcon,
+  UpdateIcon,
+  Pencil1Icon,
 } from "@radix-ui/react-icons";
 import Link from "next/link";
 import { useAuth } from "@/lib/auth-hooks";
@@ -35,6 +39,8 @@ import { ADMIN_EMAIL } from "@/lib/constants";
 import { getSentEmails, getReceivedEmails, getEmailSubscribers } from "./actions";
 import type { EmailSubscriber } from "./actions";
 import { BatchEmailModal } from "@/components/admin/BatchEmailModal";
+import { ComposeFromLinkedIn } from "@/components/admin/ComposeFromLinkedIn";
+import { EditCampaignDialog } from "@/components/admin/EditCampaignDialog";
 import {
   useGetEmailCampaignsQuery,
   useCreateDraftCampaignMutation,
@@ -43,6 +49,8 @@ import {
   useCreateEmailTemplateMutation,
   useDeleteEmailTemplateMutation,
   useUpdateEmailTemplateMutation,
+  useGetEmailStatsQuery,
+  useSyncResendEmailsMutation,
 } from "@/__generated__/hooks";
 
 type SentEmail = {
@@ -80,10 +88,152 @@ function statusColor(
   }
 }
 
+type StatCardProps = {
+  label: string;
+  value: number;
+};
+
+function StatCard({ label, value }: StatCardProps) {
+  return (
+    <Card>
+      <Flex direction="column" gap="1" p="1">
+        <Text size="1" color="gray">
+          {label}
+        </Text>
+        <Text size="5" weight="bold">
+          {value}
+        </Text>
+      </Flex>
+    </Card>
+  );
+}
+
+type StatSectionProps = {
+  title: string;
+  stats: StatCardProps[];
+};
+
+function StatSection({ title, stats }: StatSectionProps) {
+  return (
+    <Box>
+      <Text size="2" weight="bold" mb="2" as="div">
+        {title}
+      </Text>
+      <div
+        style={{
+          display: "grid",
+          gridTemplateColumns: "repeat(auto-fill, minmax(140px, 1fr))",
+          gap: "8px",
+        }}
+      >
+        {stats.map((s) => (
+          <StatCard key={s.label} label={s.label} value={s.value} />
+        ))}
+      </div>
+    </Box>
+  );
+}
+
+function EmailStatsDashboard() {
+  const { data, loading, error, refetch } = useGetEmailStatsQuery({
+    fetchPolicy: "cache-and-network",
+  });
+
+  if (loading && !data) {
+    return (
+      <Text color="gray" size="2">
+        Loading stats…
+      </Text>
+    );
+  }
+
+  if (error) {
+    return (
+      <Card>
+        <Flex gap="2" align="center">
+          <ExclamationTriangleIcon color="red" />
+          <Text color="red" size="2">
+            {error.message}
+          </Text>
+        </Flex>
+      </Card>
+    );
+  }
+
+  const stats = data?.emailStats;
+
+  if (!stats) {
+    return (
+      <Card>
+        <Text color="gray" size="2">
+          No stats available.
+        </Text>
+      </Card>
+    );
+  }
+
+  return (
+    <Flex direction="column" gap="5">
+      <Flex justify="between" align="center">
+        <Heading size="4">Email Statistics</Heading>
+        <Button size="1" variant="ghost" onClick={() => refetch()}>
+          <ReloadIcon /> Refresh
+        </Button>
+      </Flex>
+
+      <StatSection
+        title="Sending"
+        stats={[
+          { label: "Sent today", value: stats.sentToday },
+          { label: "Sent this week", value: stats.sentThisWeek },
+          { label: "Sent this month", value: stats.sentThisMonth },
+          { label: "Total sent", value: stats.totalSent },
+        ]}
+      />
+
+      <StatSection
+        title="Scheduled"
+        stats={[
+          { label: "Scheduled today", value: stats.scheduledToday },
+          { label: "Scheduled future", value: stats.scheduledFuture },
+        ]}
+      />
+
+      <StatSection
+        title="Delivery"
+        stats={[
+          { label: "Delivered today", value: stats.deliveredToday },
+          { label: "Delivered this week", value: stats.deliveredThisWeek },
+          { label: "Delivered this month", value: stats.deliveredThisMonth },
+        ]}
+      />
+
+      <StatSection
+        title="Issues"
+        stats={[
+          { label: "Bounced today", value: stats.bouncedToday },
+          { label: "Bounced this week", value: stats.bouncedThisWeek },
+          { label: "Bounced this month", value: stats.bouncedThisMonth },
+        ]}
+      />
+
+      <StatSection
+        title="Engagement"
+        stats={[
+          { label: "Opened today", value: stats.openedToday },
+          { label: "Opened this week", value: stats.openedThisWeek },
+          { label: "Opened this month", value: stats.openedThisMonth },
+        ]}
+      />
+    </Flex>
+  );
+}
+
 function SentList() {
   const [emails, setEmails] = useState<SentEmail[]>([]);
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
+  const [syncResend, { loading: syncing }] = useSyncResendEmailsMutation();
 
   const load = async () => {
     setLoading(true);
@@ -91,6 +241,11 @@ function SentList() {
     setEmails(result.emails as SentEmail[]);
     setError(result.error);
     setLoading(false);
+  };
+
+  const handleSync = async () => {
+    await syncResend();
+    await load();
   };
 
   useEffect(() => {
@@ -134,9 +289,19 @@ function SentList() {
         <Badge color="gray" size="2" variant="soft">
           {emails.length} emails
         </Badge>
-        <Button size="1" variant="ghost" onClick={load}>
-          <ReloadIcon /> Refresh
-        </Button>
+        <Flex gap="2" align="center">
+          <Button
+            size="1"
+            variant="ghost"
+            onClick={handleSync}
+            disabled={syncing}
+          >
+            <UpdateIcon /> {syncing ? "Syncing…" : "Sync Resend"}
+          </Button>
+          <Button size="1" variant="ghost" onClick={load}>
+            <ReloadIcon /> Refresh
+          </Button>
+        </Flex>
       </Flex>
       {emails.map((email) => (
         <Card key={email.id}>
@@ -276,6 +441,7 @@ function CampaignsList() {
   const [createCampaign, { loading: creating }] = useCreateDraftCampaignMutation();
   const [deleteCampaign] = useDeleteCampaignMutation();
   const [createOpen, setCreateOpen] = useState(false);
+  const [editingCampaignId, setEditingCampaignId] = useState<string | null>(null);
 
   const campaigns = data?.emailCampaigns?.campaigns ?? [];
 
@@ -337,10 +503,21 @@ function CampaignsList() {
                   <Text size="1" color="gray">{new Date(c.createdAt).toLocaleDateString()}</Text>
                 </Flex>
               </Box>
-              <Button size="1" variant="ghost" color="red" onClick={() => handleDelete(c.id)}><TrashIcon /></Button>
+              <Flex gap="1">
+                <Button size="1" variant="ghost" onClick={() => setEditingCampaignId(c.id)}><Pencil1Icon /></Button>
+                <Button size="1" variant="ghost" color="red" onClick={() => handleDelete(c.id)}><TrashIcon /></Button>
+              </Flex>
             </Flex>
           </Card>
         ))
+      )}
+      {editingCampaignId && (
+        <EditCampaignDialog
+          campaignId={editingCampaignId}
+          open={!!editingCampaignId}
+          onOpenChange={(open) => { if (!open) setEditingCampaignId(null); }}
+          onSuccess={() => refetch()}
+        />
       )}
     </Flex>
   );
@@ -512,6 +689,14 @@ function EmailsPageContent() {
             <FileTextIcon />
             &nbsp;Templates
           </Tabs.Trigger>
+          <Tabs.Trigger value="compose">
+            <LinkedInLogoIcon />
+            &nbsp;Compose
+          </Tabs.Trigger>
+          <Tabs.Trigger value="stats">
+            <BarChartIcon />
+            &nbsp;Stats
+          </Tabs.Trigger>
         </Tabs.List>
 
         <Tabs.Content value="sent">
@@ -528,6 +713,14 @@ function EmailsPageContent() {
 
         <Tabs.Content value="templates">
           <EmailTemplatesList />
+        </Tabs.Content>
+
+        <Tabs.Content value="compose">
+          <ComposeFromLinkedIn />
+        </Tabs.Content>
+
+        <Tabs.Content value="stats">
+          <EmailStatsDashboard />
         </Tabs.Content>
       </Tabs.Root>
     </Container>

@@ -22,6 +22,21 @@ pub fn slugify(s: &str) -> String {
         .join("-")
 }
 
+/// When the editor APPROVEs, its output may contain editorial notes followed
+/// by a rewritten article with frontmatter. Extract the article; if none is
+/// found, fall back to the original draft.
+pub fn extract_published_content<'a>(editor_output: &'a str, draft: &'a str) -> &'a str {
+    // If editor included a rewritten article with frontmatter, use it
+    if editor_output.contains("---\n") && editor_output.contains("status: published") {
+        // Find the markdown content after the APPROVE line
+        if let Some(idx) = editor_output.find("---\n") {
+            return &editor_output[idx..];
+        }
+    }
+    // Otherwise use the draft as-is
+    draft
+}
+
 /// Strip leading ` ```<tag>\n ` and trailing ` ``` ` markdown fences from a string.
 /// Handles any fence type: ```json, ```markdown, ```md, ```text, bare ```, etc.
 /// Returns the input unchanged if no fences are found.

@@ -8,8 +8,8 @@ const inter = Inter({ subsets: ["latin"], variable: "--font-inter" });
 const jetbrainsMono = JetBrains_Mono({ subsets: ["latin"], variable: "--font-mono" });
 
 export const metadata: Metadata = {
-  title: "AI Learning Research",
-  description: "55 research papers on AI/ML applications in learning and education",
+  title: "AI Engineering",
+  description: "55 deep dives covering evals, RAG, agents, fine-tuning, prompting & production AI systems",
 };
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {

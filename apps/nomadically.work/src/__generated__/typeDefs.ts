@@ -153,11 +153,30 @@ type AshbySecondaryLocation {
   location: String!
 }
 
+input BatchRecipientInput {
+  companyId: Int
+  contactId: Int
+  email: String!
+  name: String!
+}
+
 type BlockedCompany {
   createdAt: String!
   id: Int!
   name: String!
   reason: String
+}
+
+type CancelCompanyEmailsResult {
+  cancelledCount: Int!
+  failedCount: Int!
+  message: String!
+  success: Boolean!
+}
+
+type CancelEmailResult {
+  error: String
+  success: Boolean!
 }
 
 type ChatMessage {
@@ -232,6 +251,32 @@ enum CompanyCategory {
   PRODUCT
   STAFFING
   UNKNOWN
+}
+
+type CompanyContactEmail {
+  contactFirstName: String!
+  contactId: Int!
+  contactLastName: String!
+  contactPosition: String
+  createdAt: String!
+  deliveredAt: String
+  errorMessage: String
+  followupStatus: String
+  fromEmail: String!
+  id: Int!
+  openedAt: String
+  recipientName: String
+  replyReceived: Boolean!
+  resendId: String!
+  scheduledAt: String
+  sentAt: String
+  sequenceNumber: String
+  sequenceType: String
+  status: String!
+  subject: String!
+  textContent: String
+  toEmails: [String!]!
+  updatedAt: String!
 }
 
 type CompanyFact {
@@ -317,13 +362,24 @@ type Contact {
 }
 
 type ContactEmail {
+  companyId: Int
   contactId: Int!
   createdAt: String!
+  deliveredAt: String
+  errorMessage: String
+  followupStatus: String
   fromEmail: String!
   id: Int!
+  openedAt: String
+  parentEmailId: Int
   recipientName: String
+  replyReceived: Boolean!
+  replyReceivedAt: String
   resendId: String!
+  scheduledAt: String
   sentAt: String
+  sequenceNumber: String
+  sequenceType: String
   status: String!
   subject: String!
   textContent: String
@@ -526,6 +582,24 @@ type EmailCampaignsResult {
   totalCount: Int!
 }
 
+type EmailStats {
+  bouncedThisMonth: Int!
+  bouncedThisWeek: Int!
+  bouncedToday: Int!
+  deliveredThisMonth: Int!
+  deliveredThisWeek: Int!
+  deliveredToday: Int!
+  openedThisMonth: Int!
+  openedThisWeek: Int!
+  openedToday: Int!
+  scheduledFuture: Int!
+  scheduledToday: Int!
+  sentThisMonth: Int!
+  sentThisWeek: Int!
+  sentToday: Int!
+  totalSent: Int!
+}
+
 type EmailTemplate {
   category: String
   createdAt: String!
@@ -617,6 +691,21 @@ type FindContactEmailResult {
   verified: Boolean
 }
 
+input FollowUpBatchInput {
+  companyId: Int!
+  customInstructions: String
+  customSubject: String
+  daysAfter: Int!
+  sequenceNumber: String!
+}
+
+type FollowUpBatchResult {
+  contactCount: Int!
+  emailIds: [String!]!
+  message: String!
+  success: Boolean!
+}
+
 input GenerateEmailInput {
   companyName: String
   purpose: String!
@@ -630,6 +719,21 @@ type GenerateEmailResult {
   html: String!
   subject: String!
   text: String!
+}
+
+input GenerateReplyInput {
+  additionalDetails: String
+  includeCalendly: Boolean
+  originalEmailContent: String!
+  originalSender: String!
+  replyTo: String
+  replyType: String
+  tone: String
+}
+
+type GenerateReplyResult {
+  body: String!
+  subject: String!
 }
 
 type GreenhouseCompliance {
@@ -812,12 +916,19 @@ type LangSmithPromptCommit {
   promptName: String!
 }
 
+type MarkRepliedResult {
+  message: String
+  success: Boolean!
+}
+
 type Mutation {
   add_company_facts(company_id: Int!, facts: [CompanyFactInput!]!): [CompanyFact!]!
   analyzeCompany(id: Int, key: String): AnalyzeCompanyResponse!
   applyEmailPattern(companyId: Int!): ApplyEmailPatternResult!
   archiveJob(id: Int!): Job!
   blockCompany(name: String!, reason: String): BlockedCompany!
+  cancelCompanyEmails(companyId: Int!): CancelCompanyEmailsResult!
+  cancelScheduledEmail(resendId: String!): CancelEmailResult!
   completeTask(id: Int!): Task!
   createApplication(input: ApplicationInput!): Application!
   createCompany(input: CreateCompanyInput!): Company!
@@ -865,10 +976,12 @@ type Mutation {
   findCompanyEmails(companyId: Int!): EnhanceAllContactsResult!
   findContactEmail(contactId: Int!): FindContactEmailResult!
   generateEmail(input: GenerateEmailInput!): GenerateEmailResult!
+  generateReply(input: GenerateReplyInput!): GenerateReplyResult!
   importContacts(contacts: [ContactInput!]!): ImportContactsResult!
   ingestResumeParse(email: String!, filename: String!, job_id: String!): ResumeIngestResult
   ingest_company_snapshot(capture_timestamp: String, company_id: Int!, content_hash: String, crawl_id: String, evidence: EvidenceInput!, extracted: JSON, fetched_at: String!, http_status: Int, jsonld: JSON, mime: String, source_url: String!, text_sample: String): CompanySnapshot!
   launchEmailCampaign(id: String!): EmailCampaign!
+  markEmailReplied(resendId: String!): MarkRepliedResult!
   markJobApplied(id: Int!): Job!
   """
   Trigger classification/enhancement of all unprocessed jobs via the Cloudflare Worker.
@@ -884,7 +997,11 @@ type Mutation {
   Requires authentication.
   """
   reportJob(id: Int!): Job
+  scheduleBatchEmails(input: ScheduleBatchEmailsInput!): ScheduleBatchResult!
+  scheduleFollowUpBatch(input: FollowUpBatchInput!): FollowUpBatchResult!
   sendEmail(input: SendEmailInput!): SendEmailResult!
+  sendScheduledEmailNow(resendId: String!): SendNowResult!
+  syncResendEmails(companyId: Int): SyncResendResult!
   unarchiveJob(id: Int!): Job!
   unblockCompany(id: Int!): DeleteBlockedCompanyResult!
   unverifyCompanyContacts(companyId: Int!): UnverifyContactsResult!
@@ -1012,6 +1129,7 @@ type Query {
   blockedCompanies: [BlockedCompany!]!
   companies(filter: CompanyFilterInput, limit: Int, offset: Int, order_by: CompanyOrderBy): CompaniesResponse!
   company(id: Int, key: String): Company
+  companyContactEmails(companyId: Int!): [CompanyContactEmail!]!
   company_ats_boards(company_id: Int!): [ATSBoard!]!
   company_facts(company_id: Int!, field: String, limit: Int, offset: Int): [CompanyFact!]!
   company_snapshots(company_id: Int!, limit: Int, offset: Int): [CompanySnapshot!]!
@@ -1021,6 +1139,7 @@ type Query {
   contacts(companyId: Int, limit: Int, offset: Int, search: String): ContactsResult!
   emailCampaign(id: String!): EmailCampaign
   emailCampaigns(limit: Int, offset: Int, status: String): EmailCampaignsResult!
+  emailStats: EmailStats!
   emailTemplate(id: Int!): EmailTemplate
   emailTemplates(category: String, limit: Int, offset: Int): EmailTemplatesResult!
   executeSql(sql: String!): TextToSqlResult!
@@ -1111,6 +1230,25 @@ type ResumeUploadResult {
   tier: String!
 }
 
+input ScheduleBatchEmailsInput {
+  body: String!
+  """Recipients with name and email"""
+  recipients: [BatchRecipientInput!]!
+  subject: String!
+  """Use business day scheduling (Mon-Fri, 8am UTC, random delays)"""
+  useScheduler: Boolean
+}
+
+type ScheduleBatchResult {
+  failed: Int!
+  firstSendDate: String
+  lastSendDate: String
+  message: String!
+  scheduled: Int!
+  schedulingPlan: String
+  success: Boolean!
+}
+
 input SendEmailInput {
   from: String
   html: String!
@@ -1124,6 +1262,12 @@ input SendEmailInput {
 type SendEmailResult {
   error: String
   id: String
+  success: Boolean!
+}
+
+type SendNowResult {
+  error: String
+  resendId: String
   success: Boolean!
 }
 
@@ -1153,6 +1297,14 @@ enum SourceType {
 type StackMutationResponse {
   message: String
   success: Boolean!
+}
+
+type SyncResendResult {
+  error: String
+  skippedCount: Int!
+  success: Boolean!
+  totalCount: Int!
+  updatedCount: Int!
 }
 
 type Task {

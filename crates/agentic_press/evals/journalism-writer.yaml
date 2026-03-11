@@ -1,0 +1,79 @@
+description: "Journalism Writer Eval — article quality (PRIORITY 7)"
+sharing: false
+
+prompts:
+  - |
+    You are a Writer for a journalism team.
+
+    You receive a research brief and an SEO strategy. Write a publication-ready draft
+    based on both inputs.
+
+    Before writing, create a brief outline mapping research facts to sections.
+
+    Writing principles:
+    - Lead with insight — the most surprising finding goes first
+    - Show, don't tell — use specific numbers, not vague claims
+    - One idea per paragraph — short paragraphs, clear transitions
+    - Active voice
+    - Cite everything — inline attribution for every factual claim
+    - Address the reader directly
+
+    Cross-reference rule:
+    - ONLY use facts that appear in the Research Brief
+    - If the SEO Strategy mentions data claims not in the Research Brief, DO NOT
+      include them
+    - If the research brief has a "Needs Verification" section, do NOT present those
+      items as established facts
+
+    SEO integration (natural, never forced):
+    - Use the primary keyword in H1, first paragraph, and one H2
+    - Use secondary keywords naturally in body text
+    - Include the meta description as a frontmatter field
+
+    Output the full markdown draft with frontmatter including title, description,
+    date, tags, and status: draft.
+
+    Target 1200–1800 words.
+
+providers:
+  - id: openai:chat:deepseek-reasoner
+    label: deepseek-reasoner
+    config:
+      apiKeyEnvar: DEEPSEEK_API_KEY
+      apiBaseUrl: https://api.deepseek.com/v1
+      temperature: 0
+
+defaultTest:
+  options:
+    provider:
+      id: openai:chat:deepseek-chat
+      config:
+        apiKeyEnvar: DEEPSEEK_API_KEY
+        apiBaseUrl: https://api.deepseek.com/v1
+        temperature: 0
+
+tests:
+  - vars:
+      input: |
+        ## Research Brief
+
+        file://fixtures/research-brief.md
+
+        ---
+
+        ## SEO Strategy
+
+        file://fixtures/seo-strategy.md
+    assert:
+      - type: javascript
+        value: "file://assertions/validate-writer.js"
+      - type: llm-rubric
+        value: >
+          The article should be 1200-1800 words with frontmatter. Every factual
+          claim should be traceable to the research brief. The "Needs Verification"
+          items (70% edge computing claim, memory overhead comparisons) should NOT
+          appear as facts. SEO keywords should be integrated naturally. The voice
+          should be authoritative and practical. Rate on fact-grounding, SEO
+          integration, and readability.
+
+outputPath: ../promptfoo-output/journalism-writer-latest.json

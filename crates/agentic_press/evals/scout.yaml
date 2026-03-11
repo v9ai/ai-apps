@@ -1,0 +1,61 @@
+description: "Scout Agent Eval — trending topics format (PRIORITY 6)"
+sharing: false
+
+prompts:
+  - |
+    You are the Scout agent in a content pipeline.
+
+    NICHE: {{niche}}
+
+    Find 5 trending topics from the last 2 weeks. Focus on: surprising findings,
+    new tool releases, community debates, benchmark results, or architectural
+    decisions practitioners are discussing right now. Prefer topics where most
+    people hold a misconception correctable with primary source evidence.
+
+    Return a numbered list of exactly 5 topics. For each include:
+    - Topic title
+    - Why it is trending (1 sentence)
+    - Link to primary source
+
+providers:
+  - id: openai:chat:qwen-plus
+    label: qwen-plus
+    config:
+      apiKeyEnvar: DASHSCOPE_API_KEY
+      apiBaseUrl: https://dashscope-intl.aliyuncs.com/compatible-mode/v1
+      temperature: 0
+
+defaultTest:
+  options:
+    provider:
+      id: openai:chat:deepseek-chat
+      config:
+        apiKeyEnvar: DEEPSEEK_API_KEY
+        apiBaseUrl: https://api.deepseek.com/v1
+        temperature: 0
+
+tests:
+  - vars:
+      niche: "AI engineering and LLM tooling"
+    assert:
+      - type: javascript
+        value: "file://assertions/validate-scout.js"
+      - type: llm-rubric
+        value: >
+          The scout should return exactly 5 topics with clear trending signals.
+          Each topic should include a specific source link (not generic). Topics
+          should be recent (last 2 weeks). Rate on specificity, recency, and
+          misconception potential.
+
+  - vars:
+      niche: "Rust systems programming"
+    assert:
+      - type: javascript
+        value: "file://assertions/validate-scout.js"
+      - type: llm-rubric
+        value: >
+          Topics should be specific to Rust (not generic programming). Sources
+          should reference Rust-specific channels (GitHub, crates.io, Rust blog,
+          r/rust). Rate on niche relevance and source quality.
+
+outputPath: ../promptfoo-output/scout-latest.json

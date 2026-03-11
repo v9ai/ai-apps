@@ -27,7 +27,6 @@ import {
   Container,
   Dialog,
   Flex,
-  Heading,
   Link as RadixLink,
   Spinner,
   Text,
@@ -51,6 +50,8 @@ import {
   UpdateIcon,
 } from "@radix-ui/react-icons";
 import { BatchEmailModal } from "@/components/admin/BatchEmailModal";
+import { GenerateAndSendBatchEmailModal } from "@/components/admin/GenerateAndSendBatchEmailModal";
+import { useStreamingEmailScheduler } from "@/hooks/useStreamingEmailScheduler";
 
 type Contact = NonNullable<
   GetContactsQuery["contacts"]["contacts"]
@@ -470,6 +471,7 @@ export function CompanyContactsClient({
   const [debouncedSearch, setDebouncedSearch] = useState("");
   const [showImport, setShowImport] = useState(false);
   const [batchEmailOpen, setBatchEmailOpen] = useState(false);
+  const [generateBatchOpen, setGenerateBatchOpen] = useState(false);
   const [linkedinHtml, setLinkedinHtml] = useState("");
   const [importStatus, setImportStatus] = useState<{
     type: "success" | "error";
@@ -479,6 +481,7 @@ export function CompanyContactsClient({
     type: "success" | "error";
     message: string;
   } | null>(null);
+  const { isStreaming, progress, completion, error: schedulerError, scheduleEmails, reset: resetScheduler } = useStreamingEmailScheduler();
 
   const debounceRef = React.useRef<ReturnType<typeof setTimeout> | null>(null);
   const handleSearch = useCallback((val: string) => {
@@ -660,6 +663,15 @@ export function CompanyContactsClient({
       name: `${c.firstName} ${c.lastName}`.trim(),
     }));
 
+  const generateBatchContacts = contactsList
+    .filter((c) => c.email && !c.doNotContact)
+    .map((c) => ({
+      id: c.id,
+      firstName: c.firstName,
+      lastName: c.lastName,
+      email: c.email as string,
+    }));
+
   return (
     <Container size="3" p={{ initial: "4", md: "6" }}>
       <Flex direction="column" gap="5">
@@ -676,7 +688,21 @@ export function CompanyContactsClient({
               </Text>
             </Flex>
           </Link>
-          <Heading size="6">Contacts</Heading>
+
+          {/* Tab navigation */}
+          <div className="rt-TabsRoot" style={{ marginBottom: "var(--space-4)" }}>
+            <div className="rt-TabsList" style={{ display: "flex", gap: 0 }}>
+              <Link href={`/companies/${companyKey}`} className="rt-reset rt-TabsTrigger" style={{ textDecoration: "none" }}>
+                Overview
+              </Link>
+              <Link href={`/companies/${companyKey}/contacts`} className="rt-reset rt-TabsTrigger" data-state="active" style={{ textDecoration: "none" }}>
+                Contacts
+              </Link>
+              <Link href={`/companies/${companyKey}/emails`} className="rt-reset rt-TabsTrigger" style={{ textDecoration: "none" }}>
+                Emails
+              </Link>
+            </div>
+          </div>
         </Box>
 
         {/* Email discovery status */}
@@ -689,6 +715,32 @@ export function CompanyContactsClient({
               <InfoCircledIcon />
             </Callout.Icon>
             <Callout.Text>{emailDiscoveryStatus.message}</Callout.Text>
+          </Callout.Root>
+        )}
+
+        {/* Streaming scheduler progress */}
+        {(isStreaming || completion || schedulerError) && (
+          <Callout.Root
+            color={schedulerError ? "red" : completion ? "green" : "blue"}
+            size="1"
+          >
+            <Callout.Icon>
+              {isStreaming ? <Spinner size="1" /> : schedulerError ? <ExclamationTriangleIcon /> : <InfoCircledIcon />}
+            </Callout.Icon>
+            <Callout.Text>
+              {completion
+                ? completion.message
+                : schedulerError
+                  ? schedulerError
+                  : progress.length > 0
+                    ? progress[progress.length - 1].message
+                    : "Starting scheduler..."}
+            </Callout.Text>
+            {(completion || schedulerError) && (
+              <Button size="1" variant="ghost" onClick={resetScheduler} ml="2">
+                Dismiss
+              </Button>
+            )}
           </Callout.Root>
         )}
 
@@ -742,6 +794,17 @@ export function CompanyContactsClient({
             <Button
               size="2"
               variant="solid"
+              color="violet"
+              onClick={() => setGenerateBatchOpen(true)}
+              disabled={batchEmailRecipients.length === 0}
+            >
+              <MagicWandIcon />
+              Generate & Send
+              {batchEmailRecipients.length > 0 && ` (${batchEmailRecipients.length})`}
+            </Button>
+            <Button
+              size="2"
+              variant="solid"
               color="indigo"
               onClick={() => setBatchEmailOpen(true)}
               disabled={batchEmailRecipients.length === 0}
@@ -749,6 +812,16 @@ export function CompanyContactsClient({
               <PaperPlaneIcon />
               Send Batch Email
               {batchEmailRecipients.length > 0 && ` (${batchEmailRecipients.length})`}
+            </Button>
+            <Button
+              size="2"
+              variant="soft"
+              color="orange"
+              onClick={() => company?.id && scheduleEmails(company.id)}
+              disabled={isStreaming || !company?.id}
+            >
+              {isStreaming ? <Spinner size="1" /> : <UpdateIcon />}
+              {isStreaming ? "Scheduling..." : "Schedule All"}
             </Button>
 
             {/* LinkedIn import */}
@@ -956,6 +1029,14 @@ export function CompanyContactsClient({
         open={batchEmailOpen}
         onOpenChange={setBatchEmailOpen}
         recipients={batchEmailRecipients}
+      />
+      <GenerateAndSendBatchEmailModal
+        open={generateBatchOpen}
+        onOpenChange={setGenerateBatchOpen}
+        companyId={company.id}
+        companyName={company.name ?? undefined}
+        contacts={generateBatchContacts}
+        onSuccess={refetch}
       />
     </Container>
   );

@@ -5,7 +5,9 @@
     "dev": "next dev -p 3006",
     "build": "next build",
     "start": "next start",
-    "seed": "tsx --env-file=.env.local scripts/seed.ts"
+    "seed": "tsx --env-file=.env.local scripts/seed.ts",
+    "eval": "cd evals && DEEPEVAL_TELEMETRY_OPT_OUT=YES uv run deepeval test run test_articles.py",
+    "eval:quick": "cd evals && DEEPEVAL_TELEMETRY_OPT_OUT=YES uv run python run_eval.py --articles 1 2 3"
   },
   "dependencies": {
     "@radix-ui/themes": "^3.3.0",

@@ -1,0 +1,74 @@
+description: "Journalism SEO Eval — strategy format (PRIORITY 8)"
+sharing: false
+
+prompts:
+  - |
+    You are an SEO Strategist for a journalism team.
+
+    TOPIC: {{topic}}
+
+    Analyze search intent, identify target keywords, and recommend content structure
+    optimized for organic discovery. You do NOT write articles — you produce
+    optimization guidance the Writer consumes.
+
+    For the given topic, identify:
+    - Primary keyword — the main search term to target
+    - Secondary keywords — 3-5 related terms
+    - Long-tail keywords — specific queries people search
+    - Questions — what people ask about this topic
+
+    For each keyword, classify intent: Informational, Navigational, Commercial,
+    or Transactional.
+
+    Rules:
+    - NEVER guess search volumes — use ranges (low/medium/high)
+    - NEVER stuff keywords
+    - NEVER invent proprietary data claims, survey results, analysis statistics
+    - Prioritize search intent match over keyword density
+
+    Output format (markdown) with: Target Keywords table, Search Intent, Competitive
+    Landscape table, Recommended Structure, and Content Gaps.
+
+providers:
+  - id: openai:chat:qwen-plus
+    label: qwen-plus
+    config:
+      apiKeyEnvar: DASHSCOPE_API_KEY
+      apiBaseUrl: https://dashscope-intl.aliyuncs.com/compatible-mode/v1
+      temperature: 0
+
+defaultTest:
+  options:
+    provider:
+      id: openai:chat:deepseek-chat
+      config:
+        apiKeyEnvar: DEEPSEEK_API_KEY
+        apiBaseUrl: https://api.deepseek.com/v1
+        temperature: 0
+
+tests:
+  - vars:
+      topic: "WebAssembly server-side computing performance"
+    assert:
+      - type: javascript
+        value: "file://assertions/validate-seo.js"
+      - type: llm-rubric
+        value: >
+          The SEO strategy should include a keyword table with volume estimates
+          (ranges, not exact numbers), a competitive landscape analysis, and
+          actionable structure recommendations. It should NOT fabricate survey data
+          or market statistics. Rate on actionability and adherence to the
+          anti-hallucination rules.
+
+  - vars:
+      topic: "Rust async runtime comparison"
+    assert:
+      - type: javascript
+        value: "file://assertions/validate-seo.js"
+      - type: llm-rubric
+        value: >
+          Keywords should be specific to Rust async (tokio, async-std, smol).
+          Structure recommendations should suggest comparison format. No fabricated
+          benchmark data. Rate on niche specificity.
+
+outputPath: ../promptfoo-output/journalism-seo-latest.json

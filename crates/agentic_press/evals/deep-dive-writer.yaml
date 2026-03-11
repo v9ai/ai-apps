@@ -1,0 +1,104 @@
+description: "Deep-Dive Writer Eval — long-form with citations (PRIORITY 5)"
+sharing: false
+
+prompts:
+  - |
+    You are the Deep-Dive Writer agent.
+
+    TITLE: {{title}}
+
+    AUTHOR VOICE: Vadim Nicolai — senior software engineer. Style: first-person,
+    technically precise, data-driven, contrarian when warranted. Writes like an
+    engineer who has battle-tested every claim, not a marketer summarising trends.
+
+    You receive a detailed source document (notes, transcripts, or research material).
+    Your job is to distill it into an opinionated, insight-dense deep-dive blog post
+    of 2500–3500 words. This is NOT a summary — extract the strongest ideas, add
+    your own technical perspective, and produce a standalone article.
+
+    Structure:
+    - Opening hook: a surprising claim or counterintuitive insight from the material
+    - 7–9 technical sections with descriptive ## headers
+    - Each section: lead with the insight, support with evidence from the source
+    - Practical takeaways section near the end
+    - Closing: the broader implication or call to action
+
+    Research requirements:
+    - Cite every paper from the source with author names and year
+    - Include quantitative findings: accuracy deltas, percentages, cost multipliers
+    - When papers include ablation studies, describe what was removed and the impact
+    - Discuss at least 5 papers in substantive detail, not just name-drops
+    - Include a decision framework grounded in the evidence
+
+    Anti-hallucination rules:
+    - ONLY use facts from the Source Article and Academic Research sections
+    - NEVER fabricate paper titles, author names, statistics, or study results
+    - Flag uncertain claims with [NEEDS VERIFICATION]
+    - Use exact author names and years from the research brief
+
+    Rules:
+    - Write the full post — do not summarise or outline
+    - No filler, no generic AI phrasing, no "in this article we will…"
+    - Every paragraph must earn its place with a distinct insight
+
+providers:
+  - id: openai:chat:deepseek-reasoner
+    label: deepseek-reasoner
+    config:
+      apiKeyEnvar: DEEPSEEK_API_KEY
+      apiBaseUrl: https://api.deepseek.com/v1
+      temperature: 0
+
+defaultTest:
+  options:
+    provider:
+      id: openai:chat:deepseek-chat
+      config:
+        apiKeyEnvar: DEEPSEEK_API_KEY
+        apiBaseUrl: https://api.deepseek.com/v1
+        temperature: 0
+
+tests:
+  - vars:
+      title: "From Research Papers to Production ML Features: Powering a Crypto Scalping Engine"
+      input: |
+        ## Source Article
+
+        file://fixtures/source-article.md
+
+        ## Academic Research
+
+        Key papers referenced:
+        - Cartea et al. (2015): Algorithmic and High-Frequency Trading — foundational text on market microstructure
+        - Avellaneda and Stoikov (2008): High-frequency trading in a limit order book — optimal market-making
+        - Cont et al. (2014): Order flow imbalance — 62% prediction accuracy on 10s horizon
+        - Kolm et al. (2023): Deep reinforcement learning for market making
+        - Berkowitz et al. (2005): VWAP deviation analysis
+        - Easley et al. (2012): Flow toxicity and VPIN
+        - Kyle (1985): Continuous auctions and insider trading — bid-ask spread dynamics
+        - Almgren and Chriss (2001): Optimal execution of portfolio transactions
+        - Barndorff-Nielsen and Shephard (2002): Realized volatility estimation
+        - Sirignano and Cont (2019): Universal features of price formation — cross-asset models
+        - Gueant et al. (2013): Optimal market making with inventory risk
+        - McLean and Pontiff (2016): Edge decay in published strategies — 30-50% reduction
+
+        ## SEO Strategy
+
+        Primary keyword: crypto scalping ML features
+        H1: From Research Papers to Production ML Features
+        Target word count: 2500-3500
+    assert:
+      - type: javascript
+        value: "file://assertions/validate-deep-dive.js"
+      - type: llm-rubric
+        value: >
+          The deep-dive should discuss at least 5 papers substantively (not just
+          name-drops). It must include: (1) order flow imbalance with Cont et al.'s
+          62% accuracy figure; (2) ablation or component analysis showing feature
+          importance; (3) a decision framework for which features to implement first;
+          (4) the edge decay finding from McLean and Pontiff. Quantitative findings
+          should include specific percentages and accuracy figures from the research.
+          Rate on depth of paper discussion, practical applicability, and honest
+          treatment of limitations.
+
+outputPath: ../promptfoo-output/deep-dive-writer-latest.json

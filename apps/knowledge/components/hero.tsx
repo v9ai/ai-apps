@@ -15,20 +15,20 @@ export function Hero({
       <div className="hero-glow" />
       <div className="hero-grid-bg" />
       <div className="hero-content">
-        <p className="hero-kicker">AI/ML Research Compendium</p>
+        <p className="hero-kicker">AI Engineering Learning Path</p>
         <h1 className="hero-title">
           The Definitive Guide to{" "}
-          <span className="hero-title-accent">AI in Learning &amp; Education</span>
+          <span className="hero-title-accent">AI Engineering</span>
         </h1>
         <p className="hero-subtitle">
-          {paperCount} research papers spanning {domainCount} domains
-          — {wordLabel} words of analysis covering every frontier of
-          intelligent learning technology.
+          {paperCount} deep dives spanning {domainCount} domains
+          — {wordLabel} words covering evals, RAG, agents, fine-tuning,
+          prompting &amp; production AI systems.
         </p>
         <div className="hero-stats">
           <div className="hero-stat">
             <span className="hero-stat-number">{paperCount}</span>
-            <span className="hero-stat-label">Research Papers</span>
+            <span className="hero-stat-label">Deep Dives</span>
           </div>
           <div className="hero-stat">
             <span className="hero-stat-number">{domainCount}</span>
@@ -40,7 +40,7 @@ export function Hero({
           </div>
         </div>
         <a href="#research" className="hero-cta">
-          Explore the Research ↓
+          Start Learning ↓
         </a>
       </div>
       <div className="hero-bottom-line" />

@@ -1,0 +1,64 @@
+{
+  "slug": "agent-01-transformer-architecture",
+  "title": "Transformer Architecture: Attention, Positional Encoding & Scale",
+  "voice": "ethan",
+  "duration_secs": 980.48,
+  "file_size_bytes": 9000764,
+  "audio_url": "https://tts.vadim.blog/knowledge/agent-01-transformer-architecture.mp3",
+  "chapters": [
+    {
+      "index": 0,
+      "title": "Introduction",
+      "start_secs": 0.0,
+      "duration_secs": 39.28
+    },
+    {
+      "index": 1,
+      "title": "The Self-Attention Mechanism",
+      "start_secs": 39.28,
+      "duration_secs": 105.52
+    },
+    {
+      "index": 2,
+      "title": "Multi-Head Attention",
+      "start_secs": 144.8,
+      "duration_secs": 95.28
+    },
+    {
+      "index": 3,
+      "title": "Positional Encoding Schemes",
+      "start_secs": 240.08,
+      "duration_secs": 239.92
+    },
+    {
+      "index": 4,
+      "title": "The Transformer Block",
+      "start_secs": 480.0,
+      "duration_secs": 109.68
+    },
+    {
+      "index": 5,
+      "title": "Encoder-Decoder vs. Decoder-Only",
+      "start_secs": 589.6800000000001,
+      "duration_secs": 112.08
+    },
+    {
+      "index": 6,
+      "title": "How Transformers Scale",
+      "start_secs": 701.7600000000001,
+      "duration_secs": 114.16
+    },
+    {
+      "index": 7,
+      "title": "Flash Attention and Hardware-Aware Design",
+      "start_secs": 815.9200000000001,
+      "duration_secs": 72.32
+    },
+    {
+      "index": 8,
+      "title": "Summary and Key Takeaways",
+      "start_secs": 888.24,
+      "duration_secs": 92.24
+    }
+  ]
+}

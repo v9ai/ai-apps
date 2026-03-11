@@ -103,6 +103,41 @@ export async function getTotalWordCountFromDb(): Promise<number> {
   return data.reduce((sum, p) => sum + p.word_count, 0);
 }
 
+export async function getRelatedPapersFromDb(
+  slug: string,
+  limit = 4,
+): Promise<Paper[]> {
+  const supabase = createClient();
+
+  // Get current paper's category_id
+  const { data: current } = await supabase
+    .from("papers")
+    .select("id, category_id")
+    .eq("slug", slug)
+    .single();
+
+  if (!current) return [];
+
+  const { data, error } = await supabase
+    .from("papers")
+    .select("slug, number, title, word_count, reading_time_min, categories(name)")
+    .eq("category_id", current.category_id)
+    .neq("id", current.id)
+    .order("number")
+    .limit(limit);
+
+  if (error) throw error;
+
+  return (data ?? []).map((p) => ({
+    slug: p.slug,
+    number: p.number,
+    title: p.title,
+    category: (p.categories as unknown as { name: string }).name,
+    wordCount: p.word_count,
+    readingTimeMin: p.reading_time_min,
+  }));
+}
+
 export async function getCitationsFromDb(slug: string): Promise<PaperRef[]> {
   const supabase = createClient();
 
