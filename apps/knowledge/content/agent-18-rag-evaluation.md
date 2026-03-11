@@ -6,7 +6,7 @@ Evaluating retrieval-augmented generation systems is fundamentally harder than e
 
 Traditional IR evaluation measures retrieval quality (precision, recall, nDCG) against relevance judgments. Traditional NLG evaluation measures generation quality (BLEU, ROUGE, human ratings) against reference texts. RAG evaluation must assess both simultaneously, plus the interaction between them.
 
-Consider a system that retrieves the correct document but generates an answer that contradicts it (synthesis failure). Or one that retrieves irrelevant documents but generates a plausible-sounding answer from parametric knowledge (retrieval failure masked by hallucination). Or one that retrieves relevant documents but overloads the context with noise, causing the LLM to miss the key information (context poisoning). Each failure mode is invisible to metrics that evaluate only one stage.
+Consider a system that retrieves the correct document but generates an answer that contradicts it (synthesis failure). Or one that retrieves irrelevant documents but generates a plausible-sounding answer from parametric knowledge (retrieval failure masked by hallucination). Or one that retrieves relevant documents but overloads the context with noise, causing the LLM to miss the key information (context poisoning). Each failure mode is invisible to metrics that evaluate only one stage. The retrieval strategies themselves -- hybrid search, reranking, HyDE -- each introduce distinct failure surfaces (see [Article 16: Retrieval Strategies](agent-16-retrieval-strategies.md) for the design space).
 
 ### The Evaluation Stack
 
@@ -19,7 +19,7 @@ A comprehensive RAG evaluation framework must assess four layers:
 
 ## The RAGAS Framework
 
-RAGAS (Retrieval Augmented Generation Assessment, Es et al., 2023) provides the most widely adopted automated evaluation framework for RAG systems. It defines metrics for each layer of the evaluation stack and provides LLM-based implementations that don't require ground truth reference answers.
+RAGAS (Retrieval Augmented Generation Assessment, Es et al., 2023) provides the most widely adopted automated evaluation framework for RAG systems. It defines metrics for each layer of the evaluation stack and provides LLM-based implementations that don't require ground truth reference answers. These LLM-based metrics are instances of the LLM-as-Judge pattern (see [Article 33: LLM-as-Judge](agent-33-llm-as-judge.md) for a thorough treatment of calibration, biases, and reliability).
 
 ### Faithfulness
 
@@ -221,7 +221,7 @@ Common causes:
 
 **Correct document retrieved but wrong chunk**: The document is in the corpus, but the chunk containing the answer scored lower than other chunks from the same document.
 
-Fix: Improve chunking strategy, add parent-child relationships, or use document-level retrieval with chunk-level reranking.
+Fix: Improve chunking strategy, add parent-child relationships, or use document-level retrieval with chunk-level reranking. Multi-hop and agentic retrieval approaches (see [Article 17: Advanced RAG](agent-17-advanced-rag.md)) can also recover from single-stage retrieval misses by iteratively refining the search.
 
 ### Synthesis Failures
 
@@ -260,7 +260,7 @@ Common causes:
 Common causes:
 - **Lost in the Middle** (Liu et al., 2023): Relevant information is in the middle of a long context, where LLM attention is weakest
 - **Context overload**: Too many documents dilute the signal
-- **Poor prompt engineering**: The generation prompt doesn't encourage specificity
+- **Poor prompt engineering**: The generation prompt doesn't encourage specificity (see [Article 11: Prompt Optimization](agent-11-prompt-optimization.md) for systematic approaches to prompt improvement)
 
 ### Context Poisoning
 
@@ -572,6 +572,241 @@ class RAGMonitor:
         if faithfulness < 0.3:
             self.alert(f"Low faithfulness ({faithfulness:.2f}) for query: {trace.query[:100]}")
 ```
+
+## Alternative Evaluation Frameworks
+
+RAGAS is the most cited RAG evaluation framework, but it is far from the only option. Several production-grade alternatives have emerged, each with distinct strengths. The right choice depends on your deployment context, existing infrastructure, and the specific quality dimensions you need to track.
+
+### DeepEval
+
+DeepEval is an open-source evaluation framework that emphasizes unit-test-style assertions for LLM outputs. Where RAGAS focuses on metrics, DeepEval focuses on test cases -- you define pass/fail thresholds and run evaluation suites like conventional test suites.
+
+```python
+from deepeval import assert_test
+from deepeval.test_case import LLMTestCase
+from deepeval.metrics import FaithfulnessMetric, AnswerRelevancyMetric
+
+faithfulness = FaithfulnessMetric(threshold=0.7)
+relevancy = AnswerRelevancyMetric(threshold=0.7)
+
+test_case = LLMTestCase(
+    input="What is the refund policy?",
+    actual_output="Refunds are available within 30 days of purchase.",
+    retrieval_context=["Our refund policy allows returns within 30 days."]
+)
+
+# Fails with AssertionError if either metric is below threshold
+assert_test(test_case, [faithfulness, relevancy])
+```
+
+DeepEval's test-oriented design integrates naturally into CI/CD pipelines. It also provides a broader set of built-in metrics than RAGAS, including hallucination detection, toxicity, and bias scoring. Use DeepEval when you want to treat evaluation as part of your test suite rather than as a separate analytics workflow.
+
+### TruLens
+
+TruLens provides a feedback-function abstraction that decouples what you measure from how you measure it. Each feedback function can be backed by an LLM judge, a BERT-based scorer, or a custom function. TruLens wraps your RAG pipeline and intercepts calls to record full traces alongside feedback scores.
+
+The key differentiator is its instrumentation layer: TruLens can wrap LangChain chains, LlamaIndex query engines, and custom pipelines with minimal code changes, recording every intermediate step. This makes it particularly strong for debugging -- you get a full trace of what was retrieved, what was sent to the LLM, and what was returned, alongside quality scores at each stage.
+
+Use TruLens when you need deep instrumentation of an existing LangChain or LlamaIndex pipeline and want a visual dashboard for trace-level debugging.
+
+### Langfuse
+
+Langfuse is an open-source observability platform that combines tracing, evaluation, and prompt management. Unlike the other frameworks listed here, Langfuse is primarily an observability tool that happens to support evaluation, rather than an evaluation framework that happens to support observability.
+
+Langfuse's evaluation support includes LLM-as-Judge scoring, user feedback collection, and annotation queues for human evaluation. Its main strength is production monitoring: it captures traces from live traffic, allows you to score a sample of queries using LLM judges, and tracks quality metrics over time. The prompt management layer lets you version prompts and link quality regressions to specific prompt changes.
+
+Use Langfuse when your primary need is production observability with evaluation as a component, especially if you want an open-source alternative to commercial LLM observability platforms.
+
+### Phoenix / Arize
+
+Phoenix (by Arize AI) bridges ML observability and LLM evaluation. It provides embedding-based analysis -- you can visualize retrieval results in embedding space to understand why certain queries retrieve the wrong documents. Phoenix also supports LLM-as-Judge evaluation with built-in templates for faithfulness, relevance, and hallucination detection.
+
+Phoenix stands out for its drift detection capabilities. In traditional ML, data drift degrades model performance; in RAG systems, document corpus drift (new documents, updated content, changed terminology) can silently degrade retrieval quality. Phoenix can detect when the distribution of query embeddings diverges from the distribution of document embeddings, flagging retrieval degradation before it manifests as user complaints.
+
+Use Phoenix when you need embedding-level analysis of retrieval quality, drift detection, or integration with broader ML observability workflows.
+
+### Choosing a Framework
+
+| Criterion | RAGAS | DeepEval | TruLens | Langfuse | Phoenix |
+|---|---|---|---|---|---|
+| Primary paradigm | Metrics library | Test suite | Instrumentation | Observability | ML observability |
+| CI/CD integration | Manual | Native | Manual | Via API | Via API |
+| Production monitoring | Limited | Limited | Strong | Strong | Strong |
+| Custom metrics | Moderate | Strong | Strong | Strong | Moderate |
+| Open source | Yes | Yes | Yes | Yes | Yes |
+| Visual debugging | No | Dashboard | Dashboard | Dashboard | Notebook + dashboard |
+
+In practice, these tools are complementary rather than exclusive. A common pattern is to use RAGAS or DeepEval for offline evaluation during development, and Langfuse or Phoenix for production monitoring.
+
+## LLM-as-Judge Reliability
+
+Every LLM-based evaluation metric in the frameworks above -- faithfulness scoring, relevance assessment, hallucination detection -- relies on an LLM judge. This introduces a fundamental dependency: your evaluation is only as reliable as the judge model. For a comprehensive treatment of this pattern, see [Article 33: LLM-as-Judge](agent-33-llm-as-judge.md). Here we focus on the specific failure modes that arise when applying LLM judges to RAG evaluation.
+
+### When LLM-Based Metrics Fail
+
+**Faithfulness overestimation with paraphrasing**. LLM judges tend to mark paraphrased claims as "supported" even when the paraphrase subtly changes the meaning. A RAG answer that says "the policy was enacted in 2019" when the context says "the policy was proposed in 2019" may receive a high faithfulness score because the overall sentence structure is similar. This is especially dangerous for domains where precision matters -- legal, medical, financial.
+
+**Self-consistency bias**. When the judge model is the same model (or model family) that generated the answer, it tends to rate the answer more favorably. This creates a systematic upward bias in faithfulness and relevance scores. Mitigation: use a different model family for judging than for generation, or use multiple judge models and take the minimum score.
+
+**Length and fluency bias**. LLM judges consistently prefer longer, more fluent answers -- even when the shorter answer is more accurate. In RAG evaluation, this means a verbose hallucinated answer may score higher than a terse faithful one. Structured evaluation rubrics that force the judge to evaluate claim-by-claim (as RAGAS does for faithfulness) partially mitigate this, but do not eliminate it.
+
+**Domain knowledge leakage**. When the judge model has parametric knowledge about the topic, it may mark claims as "supported by context" because they are factually true, even if the context does not actually contain that information. This inflates faithfulness scores and masks retrieval failures.
+
+### Validating Against Human Judgments
+
+No LLM-based evaluation should be deployed without calibration against human judgments. The calibration process:
+
+1. **Collect a calibration set**: Take 100-200 representative RAG outputs and have domain experts score them on the same dimensions your LLM judge uses (faithfulness, relevance, correctness). Use the same scale -- if the LLM judge outputs 0-1 continuous scores, have humans use a 1-5 Likert scale and normalize.
+
+2. **Compute agreement metrics**: Calculate Cohen's kappa or Kendall's tau between human and LLM scores. For RAG faithfulness evaluation, published benchmarks report Cohen's kappa of 0.5-0.7 between GPT-4-class judges and expert annotators -- moderate to substantial agreement, but far from perfect.
+
+3. **Identify systematic disagreements**: Partition the cases where human and LLM scores diverge by more than one standard deviation. Look for patterns: does the LLM judge consistently overrate answers on certain topics? Does it fail to catch certain types of hallucination?
+
+4. **Calibrate or adjust**: Based on the disagreement analysis, either adjust the judge prompt (adding domain-specific rubric examples), adjust the score thresholds (if the LLM judge is systematically lenient, lower the "pass" threshold), or flag certain query categories for mandatory human review.
+
+### RAG-Specific Calibration Techniques
+
+**Claim-level calibration**. Rather than calibrating at the answer level, calibrate at the claim level. Extract claims from 50 answers, have humans label each claim as supported/unsupported, and measure the LLM judge's claim-level precision and recall. This gives a more granular view of where the judge fails.
+
+**Adversarial calibration examples**. Create synthetic test cases designed to fool the judge: answers with subtle factual modifications, answers that are correct but unsupported by context, and answers that faithfully reproduce incorrect context. These adversarial cases stress-test the judge and reveal its blind spots.
+
+**Multi-judge ensembles**. Run the same evaluation through 2-3 different judge models (e.g., GPT-4o, Claude, Gemini) and flag cases where judges disagree. Disagreement is a strong signal that human review is needed. The ensemble agreement rate also serves as a confidence score for each evaluation.
+
+## Evaluating Agentic RAG
+
+Standard RAG evaluation assumes a single retrieval step followed by a single generation step. Agentic RAG systems -- where an LLM dynamically decides what to retrieve, when to retrieve, and whether to iterate -- break this assumption. The evaluation challenge is no longer just "did the system produce a good answer?" but "did the system take a good path to the answer?" For background on these architectures, see [Article 17: Advanced RAG](agent-17-advanced-rag.md).
+
+### Multi-Step Retrieval Evaluation
+
+An agentic RAG system might reformulate the query, search multiple indexes, read and discard documents, and perform several rounds of retrieval before generating an answer. Evaluating only the final answer misses critical information about pipeline efficiency and robustness.
+
+**Step-level evaluation** assigns quality scores to each intermediate step:
+
+```python
+@dataclass
+class AgenticRAGStep:
+    step_type: str          # "query_reformulation", "retrieval", "rerank", "filter", "synthesize"
+    input_state: dict       # What the agent knew before this step
+    action: str             # What the agent decided to do
+    result: dict            # What the step produced
+    was_necessary: bool     # Human annotation: was this step needed?
+    was_correct: bool       # Human annotation: did this step move toward the answer?
+
+@dataclass
+class AgenticRAGTrajectory:
+    question: str
+    steps: list[AgenticRAGStep]
+    final_answer: str
+    total_retrieval_calls: int
+    total_tokens_used: int
+    total_latency_ms: float
+
+def evaluate_trajectory(trajectory: AgenticRAGTrajectory, ground_truth: dict) -> dict:
+    """Evaluate both the answer and the path taken to reach it."""
+    # Answer quality (standard metrics)
+    answer_score = evaluate_answer_correctness(trajectory.final_answer, ground_truth["answer"])
+    faithfulness = evaluate_faithfulness(trajectory.final_answer, trajectory.steps)
+
+    # Trajectory quality
+    necessary_steps = sum(1 for s in trajectory.steps if s.was_necessary)
+    trajectory_efficiency = necessary_steps / len(trajectory.steps) if trajectory.steps else 1.0
+
+    # Did the agent recover from mistakes?
+    recoveries = sum(
+        1 for i, s in enumerate(trajectory.steps)
+        if not s.was_correct and i + 1 < len(trajectory.steps) and trajectory.steps[i + 1].was_correct
+    )
+
+    return {
+        "answer_correctness": answer_score,
+        "faithfulness": faithfulness,
+        "trajectory_efficiency": trajectory_efficiency,
+        "total_steps": len(trajectory.steps),
+        "recovery_count": recoveries,
+        "cost_tokens": trajectory.total_tokens_used,
+        "latency_ms": trajectory.total_latency_ms
+    }
+```
+
+### Trajectory Evaluation for Complex Pipelines
+
+For systems that involve tool selection (choosing between vector search, SQL queries, API calls, or web search), trajectory evaluation must also assess tool selection quality:
+
+- **Tool precision**: When the agent chose to use a tool, was it the right tool for that sub-problem?
+- **Tool recall**: Were there steps where the agent should have used a tool but did not?
+- **Ordering efficiency**: Did the agent sequence its tool calls in a logical order, or did it waste steps on redundant or out-of-order operations?
+- **Termination quality**: Did the agent stop retrieving when it had sufficient information, or did it continue unnecessarily (wasting tokens and latency)?
+
+These trajectory metrics are more informative than answer-only metrics for improving agentic RAG systems, because they identify which component of the agent loop needs improvement -- the retrieval strategy selection, the stopping criterion, or the synthesis step. The approach shares DNA with agent evaluation methods used outside RAG contexts; see the broader evaluation patterns in [Article 11: Prompt Optimization](agent-11-prompt-optimization.md) for how systematic optimization applies to these multi-step systems.
+
+### Practical Considerations
+
+Human annotation of trajectories is expensive -- labeling 100 multi-step trajectories may take 10-20 hours of expert time. Two pragmatic shortcuts:
+
+1. **Annotate only disagreement cases**: Run automated answer-level evaluation first. Only annotate trajectories where the answer was wrong or where automated metrics diverge. This focuses human effort on the cases that matter.
+
+2. **Use LLM judges for trajectory assessment**: An LLM can assess whether a retrieval step was necessary or whether a query reformulation improved the search, though with lower reliability than human annotators. Use LLM trajectory judgments as a first-pass filter and human annotation as the gold standard for a calibration subset.
+
+## Evaluation Economics
+
+LLM-based evaluation is not free. Running RAGAS faithfulness evaluation on a single query-answer pair requires one or two LLM calls (claim extraction + claim verification), each consuming tokens. At scale, evaluation costs can rival the cost of the RAG system itself.
+
+### Cost Estimates
+
+A rough cost model for LLM-based RAG evaluation:
+
+| Metric | LLM calls per item | ~Tokens per call | Cost per 1K items (GPT-4o) |
+|---|---|---|---|
+| Faithfulness | 2 | 1,500 | ~$15 |
+| Context relevance | 1 | 1,000 | ~$5 |
+| Answer relevance | 1 | 800 | ~$4 |
+| Answer correctness | 1 | 1,200 | ~$6 |
+| Full suite (4 metrics) | 5 | ~5,500 | ~$30 |
+
+For a production system handling 100K queries per day, evaluating every query with the full suite would cost approximately $3,000 per day -- clearly impractical. This makes evaluation economics a first-order design concern.
+
+### Strategies for Reducing Evaluation Cost
+
+**Sampling**. The most straightforward approach. Evaluate a random sample of production queries rather than every query. Statistical power analysis determines the sample size:
+
+- To detect a 5% change in faithfulness with 95% confidence, you need approximately 1,500 evaluated samples.
+- To detect a 10% change, approximately 400 samples suffice.
+- For monitoring (detecting large regressions), 100-200 daily evaluations are often adequate.
+
+Stratified sampling improves efficiency: sample more heavily from query categories with historically lower scores or higher variance.
+
+**Cheaper judge models**. Not every evaluation requires GPT-4o. For many RAG evaluation tasks, smaller models provide sufficient discrimination:
+
+```python
+class TieredEvaluation:
+    """Use cheap models for screening, expensive models for precision."""
+
+    def __init__(self):
+        self.fast_judge = "gpt-4o-mini"   # ~10x cheaper
+        self.precise_judge = "gpt-4o"
+
+    async def evaluate(self, query: str, answer: str, context: list[str]) -> dict:
+        # First pass: cheap model
+        fast_score = await self.score_faithfulness(query, answer, context, model=self.fast_judge)
+
+        # Second pass: expensive model only for borderline cases
+        if 0.3 < fast_score < 0.8:  # Borderline -- needs precise judgment
+            precise_score = await self.score_faithfulness(
+                query, answer, context, model=self.precise_judge
+            )
+            return {"faithfulness": precise_score, "judge": "precise", "cost_tier": "high"}
+
+        # Clear pass or clear fail -- trust the cheap model
+        return {"faithfulness": fast_score, "judge": "fast", "cost_tier": "low"}
+```
+
+This tiered approach typically reduces evaluation cost by 60-80% while maintaining quality for the cases that matter most -- the borderline ones where a wrong evaluation judgment would lead to incorrect system decisions.
+
+**Caching evaluation results**. Many RAG systems produce identical or near-identical answers for similar queries. Cache evaluation results keyed on (context_hash, answer_hash) to avoid re-evaluating equivalent outputs. For systems with stable document corpora, this cache hit rate can be substantial.
+
+**Offline batch evaluation**. Rather than evaluating in real-time (which adds latency and cost to every query), run evaluation in daily or hourly batches. This allows you to use spot instances or lower-priority API tiers and to aggregate results for trend analysis rather than per-query alerting. Reserve real-time evaluation for critical-path quality gates (e.g., before surfacing answers on high-stakes topics).
+
+**Metric selection**. Not every query needs every metric. Faithfulness is the most operationally critical metric for most RAG systems -- it directly measures hallucination. Context recall requires ground truth and is therefore better suited to periodic offline evaluation. Answer relevance is most useful during development and A/B testing. Choosing which metrics to run on which queries reduces cost without sacrificing coverage of the dimensions that matter most.
 
 ## Summary and Key Takeaways
 

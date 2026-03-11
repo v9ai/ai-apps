@@ -100,7 +100,7 @@ Response headroom:  ~500 tokens (reserved for output)
 
 ### Architecture Overview
 
-Long-term memory systems store information persistently and retrieve relevant items using semantic similarity. The basic architecture:
+Long-term memory systems store information persistently and retrieve relevant items using semantic similarity. The embedding step is covered in depth in [Article 13 -- Embedding Models](/agent-13-embedding-models), the vector storage layer in [Article 14 -- Vector Databases](/agent-14-vector-databases), and the chunking decisions that determine memory granularity in [Article 15 -- Chunking Strategies](/agent-15-chunking-strategies). The basic architecture:
 
 ```
 [Agent generates response] → [Memory extraction] → [Embedding] → [Vector store]
@@ -235,13 +235,13 @@ async def importance_weighted_retrieve(query, memories, llm):
     return candidates[:5]
 ```
 
-## MemGPT: OS-Inspired Memory Management
+## MemGPT and Letta: OS-Inspired Memory Management
 
 ### The Virtual Context Window
 
-MemGPT (Packer et al., 2023, "MemGPT: Towards LLMs as Operating Systems") draws an analogy between LLM context window management and operating system virtual memory. Just as an OS pages memory between RAM and disk, MemGPT pages information between the context window (fast, limited) and external storage (slow, unlimited).
+MemGPT (Packer et al., 2023, "MemGPT: Towards LLMs as Operating Systems") draws an analogy between LLM context window management and operating system virtual memory. Just as an OS pages memory between RAM and disk, MemGPT pages information between the context window (fast, limited) and external storage (slow, unlimited). The MemGPT research project has since evolved into the open-source **Letta** framework (letta.com), which provides a production-ready implementation of these ideas with a stateful agent server, tool-based memory management, and multi-model support. Letta preserves the core MemGPT principles -- self-directed memory editing, tiered storage, and inner monologue -- while adding deployment primitives like REST APIs, agent orchestration, and persistent state management.
 
-The key insight is that the LLM itself should control what is in the context window, using function calls to manage its own memory:
+The key insight is that the LLM itself should control what is in the context window, using function calls to manage its own memory. This approach fits naturally into the tool-use agent architectures discussed in [Article 26 -- Agent Architectures](/agent-26-agent-architectures), where memory operations become just another set of tools in the agent's repertoire:
 
 ```python
 class MemGPTAgent:
@@ -648,13 +648,254 @@ class AgentMemorySystem:
         return context
 ```
 
+## Memory Privacy and Safety
+
+Persistent agent memory introduces obligations that do not exist in stateless systems. When an agent remembers a user's medical condition, financial situation, or personal relationships across sessions, it becomes a data controller -- subject to privacy law and to the user's reasonable expectations about what happens to their information.
+
+### PII Detection and Filtering
+
+The first line of defense is detecting personally identifiable information before it enters long-term storage. A practical pipeline runs extraction candidates through a PII classifier before committing them:
+
+```python
+class PrivacyAwareMemoryExtractor:
+    def __init__(self, llm, pii_detector):
+        self.llm = llm
+        self.pii_detector = pii_detector
+        self.sensitive_categories = {
+            "SSN", "credit_card", "bank_account",
+            "medical_record", "password", "API_key"
+        }
+
+    async def extract_and_filter(self, conversation_turn: str) -> list[str]:
+        """Extract memories, then strip or redact PII."""
+        raw_memories = await self._extract_memories(conversation_turn)
+        filtered = []
+        for memory in raw_memories:
+            detections = self.pii_detector.detect(memory)
+            # Block storage of high-risk PII categories entirely
+            high_risk = [d for d in detections
+                         if d.category in self.sensitive_categories]
+            if high_risk:
+                continue
+            # Redact moderate-risk PII (names, emails, phone numbers)
+            redacted = self.pii_detector.redact(memory)
+            filtered.append(redacted)
+        return filtered
+```
+
+Off-the-shelf PII detectors like Microsoft Presidio, spaCy's entity recognizer, or cloud-based services (Google DLP, AWS Comprehend) can be slotted into this pipeline. The critical design decision is choosing between **redaction** (replacing "John Smith" with "[PERSON]") and **blocking** (refusing to store the memory at all). Redaction preserves structural information but may leak identity through context; blocking is safer but loses potentially useful memories.
+
+### Data Retention and the Right to Be Forgotten
+
+GDPR Article 17, CCPA, and similar regulations grant users the right to request deletion of their personal data. For agent memory systems, this means:
+
+**Retention policies.** Memories should carry a time-to-live (TTL) that triggers automatic deletion. User preference memories might persist for a year; task-specific context might expire after 30 days. The retention policy should be transparent and configurable:
+
+```python
+class RetentionPolicy:
+    DEFAULT_TTL = {
+        "user_preference": timedelta(days=365),
+        "task_context": timedelta(days=30),
+        "conversation_summary": timedelta(days=90),
+        "episodic": timedelta(days=180),
+    }
+
+    def should_retain(self, memory: dict) -> bool:
+        category = memory.get("category", "task_context")
+        ttl = self.DEFAULT_TTL.get(category, timedelta(days=30))
+        created = datetime.fromisoformat(memory["timestamp"])
+        return datetime.now() - created < ttl
+```
+
+**Deletion propagation.** When a user requests deletion, the system must remove not just the raw memory but also any embeddings, summaries that incorporated the memory, and reflection-level insights derived from it. This is particularly challenging for summarization-based compression, where the original source is already merged into a higher-level summary. One practical approach is maintaining a provenance chain -- each summary tracks the memory IDs it was derived from, allowing cascade deletion and re-summarization from remaining sources.
+
+**User controls.** Production systems should expose explicit memory management to users: the ability to view what the agent remembers, delete specific memories, pause memory collection entirely, and export stored data. These are not optional features for systems operating under GDPR -- they are legal requirements.
+
+### Scope Boundaries
+
+Not every piece of information from a conversation should be eligible for long-term storage. Agents should distinguish between **operational context** (needed to complete the current task) and **persistent memory** (worth retaining across sessions). A user asking "my password is hunter2, please log in" is providing operational context, not something to remember. Defining and enforcing these scope boundaries -- through classification models, explicit user consent signals, or conservative defaults -- is a foundational design choice that shapes the entire memory system.
+
+## Graph-Based Memory
+
+Vector stores excel at "find memories similar to this query," but some relationships between memories are structural rather than semantic. A user's team hierarchy, a project's dependency chain, or the causal links between past decisions are better represented as graphs than as points in embedding space.
+
+### When Graphs Outperform Vectors
+
+Vector similarity search answers the question: "What memories are semantically close to this query?" Graph traversal answers a different question: "What is connected to this memory, and how?" The distinction matters in several scenarios:
+
+**Multi-hop reasoning.** "What constraints did we agree on for the API that the billing service depends on?" requires traversing a chain: billing service -> depends on -> payments API -> has constraint -> rate limit. Vector search would need to retrieve the right memory directly; graph traversal follows the relationship chain.
+
+**Temporal and causal chains.** "Why did we switch from PostgreSQL to DynamoDB?" involves a sequence of decisions, each motivated by the previous outcome. Graph edges with typed relationships (caused_by, led_to, replaced) capture this structure naturally.
+
+**Entity-centric recall.** "Everything the agent knows about Project Atlas" is a simple graph query (all nodes connected to the Project Atlas entity) but a fragile vector search (depends on the embedding model placing all Atlas-related memories close together).
+
+### Implementation Approaches
+
+**In-memory property graphs** work well for agents with moderate memory sizes (thousands to tens of thousands of memories). Libraries like NetworkX in Python, or lightweight embedded stores like Kuzu, provide graph operations without infrastructure overhead:
+
+```python
+import networkx as nx
+
+class GraphMemory:
+    def __init__(self):
+        self.graph = nx.DiGraph()
+
+    def add_memory(self, memory_id: str, content: str, metadata: dict):
+        self.graph.add_node(memory_id, content=content, **metadata)
+
+    def add_relationship(self, source_id: str, target_id: str,
+                         relation: str, properties: dict = None):
+        self.graph.add_edge(source_id, target_id,
+                            relation=relation, **(properties or {}))
+
+    def get_related(self, memory_id: str, relation: str = None,
+                    max_depth: int = 2) -> list[dict]:
+        """Traverse the graph from a memory node."""
+        if relation:
+            # Follow only specific relationship types
+            neighbors = [
+                (target, data)
+                for _, target, data in self.graph.edges(memory_id, data=True)
+                if data.get("relation") == relation
+            ]
+        else:
+            neighbors = [
+                (target, data)
+                for _, target, data in self.graph.edges(memory_id, data=True)
+            ]
+
+        results = []
+        for target_id, edge_data in neighbors:
+            node_data = self.graph.nodes[target_id]
+            results.append({
+                "id": target_id,
+                "content": node_data.get("content"),
+                "relation": edge_data.get("relation"),
+            })
+            # Recursive traversal for multi-hop
+            if max_depth > 1:
+                results.extend(
+                    self.get_related(target_id, relation, max_depth - 1)
+                )
+        return results
+```
+
+**Dedicated graph databases** like Neo4j become worthwhile when the memory graph is large, the query patterns are complex, or multiple agents share a knowledge graph. Neo4j's Cypher query language makes multi-hop traversal concise:
+
+```cypher
+// Find all constraints on services that project Atlas depends on
+MATCH (p:Project {name: "Atlas"})-[:DEPENDS_ON]->(s:Service)-[:HAS_CONSTRAINT]->(c:Constraint)
+RETURN s.name, c.description, c.created_at
+ORDER BY c.created_at DESC
+```
+
+### Hybrid: Graph + Vector
+
+The most effective production architectures combine both approaches. Vector search handles open-ended retrieval ("find relevant memories"), while graph traversal handles structured follow-up ("now show me everything connected to this result"). A practical pattern is to use vector search for initial retrieval, then expand results by traversing graph edges from the retrieved nodes:
+
+```python
+class HybridMemoryStore:
+    def __init__(self, vector_store, graph_memory, embedding_model):
+        self.vectors = vector_store
+        self.graph = graph_memory
+        self.embedder = embedding_model
+
+    async def retrieve(self, query: str, top_k: int = 5,
+                       expand_depth: int = 1) -> list[dict]:
+        # Phase 1: Vector retrieval for semantic matches
+        query_embedding = await self.embedder.embed(query)
+        seed_results = await self.vectors.search(query_embedding, top_k=top_k)
+
+        # Phase 2: Graph expansion from seed results
+        expanded = []
+        seen_ids = {r["id"] for r in seed_results}
+        for result in seed_results:
+            related = self.graph.get_related(
+                result["id"], max_depth=expand_depth
+            )
+            for rel in related:
+                if rel["id"] not in seen_ids:
+                    expanded.append(rel)
+                    seen_ids.add(rel["id"])
+
+        return seed_results + expanded
+```
+
+This hybrid model is especially valuable for agents that operate over structured domains -- project management, codebases, organizational knowledge -- where entities have explicit relationships that pure semantic similarity cannot capture. For the underlying vector storage patterns, see [Article 14 -- Vector Databases](/agent-14-vector-databases).
+
+## Memory Evaluation
+
+Building a memory system is straightforward; knowing whether it actually helps is harder. Without deliberate measurement, teams often ship memory features that consume storage and latency budgets without improving agent outcomes.
+
+### Retrieval Quality Metrics
+
+The most direct evaluation targets the retrieval step: does the system return the right memories at the right time?
+
+**Precision and recall at k.** Given a set of queries with known-relevant memories, measure how many of the top-k results are relevant (precision@k) and what fraction of all relevant memories appear in the top k (recall@k). For agent memory, recall is typically more important than precision -- a missed memory can cause a wrong answer, while an extra irrelevant memory in the context merely wastes tokens.
+
+**Mean Reciprocal Rank (MRR).** Where does the first relevant memory appear in the ranked results? MRR penalizes systems that bury the right answer at position 5 instead of position 1. This is particularly important for agents with tight context budgets where only the top 2-3 memories are actually injected.
+
+**Retrieval latency.** Memory retrieval adds latency to every agent turn. Track p50 and p99 retrieval times. For interactive agents, retrieval should complete within 100-200ms; anything slower degrades the user experience noticeably.
+
+### Task Performance Metrics
+
+Retrieval quality is a proxy -- the real question is whether memory improves the agent's ability to complete tasks.
+
+**With-and-without comparison.** Run the same agent on a benchmark with memory enabled and disabled. The performance delta (accuracy, task completion rate, user satisfaction) quantifies the value of the memory system. If memory does not measurably improve outcomes, it is adding complexity without benefit.
+
+**Personalization accuracy.** For user-facing agents, test whether the agent correctly recalls and applies user preferences. Create test scenarios where the user stated a preference in a prior session ("I prefer TypeScript over JavaScript") and measure whether the agent respects it in a later session.
+
+**Redundant failure rate.** Track how often the agent repeats a mistake it has already encountered and stored. If the episodic memory is working, this rate should be near zero for known failure patterns.
+
+### Information Decay Analysis
+
+Memory systems lose information over time through summarization compression, TTL expiration, and embedding drift. Measuring this decay is essential for tuning retention policies.
+
+**Fact survival rate.** Inject known facts into the memory system and test retrieval at intervals (1 day, 1 week, 1 month). The fraction of facts still retrievable at each interval is the survival curve. A steep drop-off indicates overly aggressive compression or short TTLs.
+
+**Summarization fidelity.** When memories are compressed through summarization, measure what percentage of key facts from the original content are preserved in the summary. An automated approach uses an LLM to extract facts from the original and the summary, then computes the overlap:
+
+```python
+async def measure_summarization_fidelity(original: str, summary: str,
+                                          llm) -> float:
+    original_facts = await llm.generate(
+        f"List every distinct fact stated in this text, one per line:\n{original}"
+    )
+    summary_facts = await llm.generate(
+        f"List every distinct fact stated in this text, one per line:\n{summary}"
+    )
+
+    original_set = set(original_facts.strip().split("\n"))
+    preserved = 0
+    for fact in original_set:
+        is_present = await llm.generate(
+            f"Is the following fact present (even if paraphrased) in this list?\n"
+            f"Fact: {fact}\n"
+            f"List:\n{summary_facts}\n"
+            f"Answer YES or NO."
+        )
+        if "YES" in is_present.upper():
+            preserved += 1
+
+    return preserved / len(original_set) if original_set else 1.0
+```
+
+**Memory utilization.** Track what fraction of stored memories are ever retrieved. A large store where 90% of memories are never accessed suggests the extraction pipeline is storing too aggressively or the retrieval mechanism is too narrow. Both waste resources.
+
+### Evaluation Cadence
+
+Memory evaluation should not be a one-time exercise. As the agent's user base grows and usage patterns shift, memory system performance drifts. Establish a recurring evaluation cadence -- monthly retrieval quality benchmarks, quarterly task performance comparisons, and continuous monitoring of retrieval latency and memory store size. The cost of over-engineering memory is real (latency, storage, complexity), and regular evaluation is the only reliable way to know whether your memory system is earning its keep.
+
 ## Summary and Key Takeaways
 
 - **Working memory (context window)** is the most immediate form of agent memory. Manage it actively through sliding window summarization, priority-based allocation, and token budgeting. Do not let it fill with irrelevant content.
 - **Long-term memory via vector stores** provides persistent, semantically-searchable storage. Effective retrieval requires more than cosine similarity -- incorporate recency, importance, and access frequency into scoring.
-- **MemGPT's self-directed memory management** is a paradigm shift: the agent controls its own memory through function calls, deciding what to store, retrieve, and forget. This mirrors how humans manage attention and memory.
+- **MemGPT's self-directed memory management** (now productionized as the Letta framework) is a paradigm shift: the agent controls its own memory through function calls, deciding what to store, retrieve, and forget. This mirrors how humans manage attention and memory.
 - **Episodic memory** enables agents to learn from experience by storing task trajectories with outcomes and reflections. This is particularly valuable for iterative tasks where the same failure patterns recur.
 - **The Generative Agents memory architecture** (Park et al., 2023) provides a robust three-part framework: memory stream for recording, retrieval by recency/importance/relevance, and reflection for higher-level synthesis.
 - **Summarization-based compression** is essential for long-running agents. Progressive and hierarchical summarization maintain information density while respecting token budgets.
 - **Production memory systems combine multiple memory types**, each serving a different purpose. The architecture should match the application's needs: user-facing assistants need user profiles and preferences; task agents need episodic memory; research agents need expansive long-term storage.
+- **Memory privacy is not optional.** PII detection, data retention policies, deletion propagation, and user-facing controls are legal requirements under GDPR and similar regulations. Design these into the memory pipeline from the start, not as afterthoughts.
+- **Graph-based memory complements vector stores** for domains with structured relationships. Use vector search for open-ended semantic retrieval and graph traversal for multi-hop reasoning, entity-centric recall, and causal chains. The most effective architectures combine both.
+- **Measure whether memory actually helps.** Track retrieval precision and recall, task performance with and without memory, information decay over time, and memory utilization rates. A memory system that does not measurably improve agent outcomes is adding complexity without benefit.
 - **Memory is not just storage -- it is retrieval.** The quality of an agent's memory system depends more on how effectively it retrieves relevant information than on how much it stores.

@@ -235,48 +235,96 @@ CrewAI's key design decisions:
 
 ### AutoGen (Microsoft)
 
-AutoGen takes a different approach, modeling multi-agent interactions as conversations between `ConversableAgent` instances:
+AutoGen underwent a significant API redesign in version 0.4, moving from the monolithic `autogen` package to a modular `autogen-agentchat` architecture built on an asynchronous, event-driven runtime. The 0.2 API (shown in many tutorials) used `ConversableAgent` and synchronous `initiate_chat` calls. The 0.4+ API introduces `AssistantAgent`, explicit team constructs, and async-first execution.
 
 ```python
-from autogen import ConversableAgent, GroupChat, GroupChatManager
+from autogen_agentchat.agents import AssistantAgent
+from autogen_agentchat.teams import RoundRobinGroupChat
+from autogen_agentchat.conditions import TextMentionTermination
+from autogen_ext.models.openai import OpenAIChatCompletionClient
 
-coder = ConversableAgent(
+model_client = OpenAIChatCompletionClient(model="gpt-4o")
+
+coder = AssistantAgent(
     name="Coder",
     system_message="You are a Python developer. Write clean, tested code.",
-    llm_config={"model": "gpt-4o"}
+    model_client=model_client,
 )
 
-reviewer = ConversableAgent(
+reviewer = AssistantAgent(
     name="Reviewer",
-    system_message="You review code for bugs, security issues, and best practices.",
-    llm_config={"model": "gpt-4o"}
+    system_message=(
+        "You review code for bugs, security issues, and best practices. "
+        "Say APPROVE when the code is ready."
+    ),
+    model_client=model_client,
 )
 
-executor = ConversableAgent(
-    name="Executor",
-    system_message="You execute Python code and report results.",
-    code_execution_config={"work_dir": "workspace"},
-    human_input_mode="NEVER"
+termination = TextMentionTermination("APPROVE")
+team = RoundRobinGroupChat(
+    participants=[coder, reviewer],
+    termination_condition=termination,
+    max_turns=12,
 )
 
-group_chat = GroupChat(
-    agents=[coder, reviewer, executor],
-    messages=[],
-    max_round=12,
-    speaker_selection_method="auto"  # LLM selects next speaker
-)
-
-manager = GroupChatManager(groupchat=group_chat)
-coder.initiate_chat(manager, message="Write a web scraper for HN front page")
+# Async-first execution
+result = await team.run(task="Write a web scraper for HN front page")
 ```
 
-AutoGen's distinctive features:
+Key changes in the 0.4+ API:
 
-- **Conversation-centric**: Everything is modeled as message passing between agents
-- **Flexible speaker selection**: Can be automatic (LLM-driven), round-robin, or custom
-- **Built-in code execution**: The `code_execution_config` enables agents to run code directly
-- **Human-in-the-loop**: `human_input_mode` controls when human input is requested
-- **Nested chats**: Agents can spawn sub-conversations to handle complex subtasks
+- **Modular packages**: Core runtime (`autogen-core`), chat patterns (`autogen-agentchat`), and extensions (`autogen-ext`) are separate installable packages
+- **Async-native**: All agent execution is async by default; the runtime uses an event-driven message-passing model
+- **Explicit team constructs**: `RoundRobinGroupChat`, `SelectorGroupChat`, and `Swarm` replace the older `GroupChat` + `GroupChatManager` pattern
+- **Termination conditions**: Composable conditions (`TextMentionTermination`, `MaxMessageTermination`, custom) replace the older `max_round` / exit-keyword approach
+- **Model client abstraction**: `OpenAIChatCompletionClient` and other clients replace the flat `llm_config` dict, enabling cleaner multi-model setups
+- **Built-in Swarm team type**: AutoGen 0.4 includes a `Swarm` team type that implements handoff-based multi-agent coordination similar to OpenAI's Swarm pattern (see below)
+
+The migration from 0.2 to 0.4 is non-trivial. If you are starting a new project, use the 0.4 API. If maintaining an existing 0.2 codebase, Microsoft provides a migration guide, but expect to rewrite agent definitions and execution logic.
+
+### OpenAI Swarm and the Handoff Pattern
+
+OpenAI's Swarm (2024) is a lightweight, educational reference implementation that demonstrates a minimalist approach to multi-agent coordination. Its core idea is that agent-to-agent handoffs can be modeled as simple function returns -- no message bus, no orchestrator, no state machine.
+
+```python
+from swarm import Swarm, Agent
+
+def transfer_to_support():
+    """Hand off to the support agent."""
+    return support_agent
+
+def transfer_to_sales():
+    """Hand off to the sales agent."""
+    return sales_agent
+
+triage_agent = Agent(
+    name="Triage",
+    instructions="Determine the user's intent and hand off to the appropriate specialist.",
+    functions=[transfer_to_sales, transfer_to_support],
+)
+
+support_agent = Agent(
+    name="Support",
+    instructions="Help the user with technical issues.",
+    functions=[lookup_order, check_status],
+)
+
+sales_agent = Agent(
+    name="Sales",
+    instructions="Help the user with purchasing decisions.",
+    functions=[check_inventory, create_quote],
+)
+
+client = Swarm()
+response = client.run(
+    agent=triage_agent,
+    messages=[{"role": "user", "content": "My order hasn't arrived"}]
+)
+```
+
+Swarm is explicitly not a production framework -- OpenAI describes it as educational and experimental. But the handoff pattern it demonstrates is architecturally significant. The key insight is that an agent can delegate by returning another agent object from a tool call, transferring conversational context and control in one step. This same pattern appears in AutoGen 0.4's `Swarm` team type and can be implemented in any framework.
+
+The handoff pattern works well for customer service routing, multi-step workflows with clear domain boundaries, and any system where the set of agents is known ahead of time and transitions between them are well-defined. For a deeper treatment of how Swarm fits into the broader agent architecture landscape, see [Article 26: Agent Architectures](agent-26-agent-architectures.md).
 
 ### LangGraph for Multi-Agent Systems
 

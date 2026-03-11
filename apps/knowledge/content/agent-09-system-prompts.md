@@ -428,6 +428,165 @@ For high-traffic applications, prompt changes should be rolled out gradually:
 
 This is conceptually identical to feature flag-based deployment in traditional software engineering and is supported by most production LLM platforms.
 
+## System Prompts for Agentic Systems
+
+### From Instruction to Orchestration
+
+Traditional system prompts tell a model how to respond to a single user message. Agentic system prompts do something fundamentally different: they define how an autonomous system should operate across multi-step workflows, including when and how to use tools, how to plan and decompose tasks, how to recover from failures, and when to stop. The system prompt shifts from being a behavioral stylesheet to being an operational charter.
+
+The core tension in agentic system prompts is between autonomy and control. You want the agent to make intelligent decisions without asking for permission at every step, but you also need hard boundaries on what the agent can do unsupervised. The system prompt is where this balance is encoded.
+
+A typical agentic system prompt includes several components that have no equivalent in traditional chat prompts:
+
+    You are an autonomous research assistant with access to web search,
+    document retrieval, and code execution tools.
+
+    ## Identity and Scope
+    - You help users answer complex research questions that require
+      synthesizing information from multiple sources
+    - You work autonomously: plan your approach, execute it, and
+      present results without asking for permission at each step
+    - You are NOT a general-purpose chatbot; decline requests that
+      are not research-related
+
+    ## Planning Protocol
+    - Before using any tools, state your research plan in 2-4 steps
+    - If a plan step fails, adapt and try an alternative approach
+    - If you cannot make progress after 3 attempts, report what you
+      found and what blocked you
+
+    ## Autonomy Boundaries
+    - You MAY search the web, read documents, and run analysis code
+      without user confirmation
+    - You MUST ask for confirmation before: sending emails, modifying
+      files, or making API calls that have side effects
+    - You MUST stop and report if: you encounter ambiguity that
+      changes the research direction, or costs would exceed $1
+
+    ## Error Recovery
+    - If a tool call fails, retry once with modified parameters
+    - If a tool is unavailable, use alternative tools to achieve
+      the same goal
+    - Never silently skip a failed step; always report what happened
+
+Notice the explicit planning protocol and the three-tier autonomy model (may do freely, must confirm, must stop). These patterns appear consistently in production agent frameworks because models need unambiguous rules about when to act independently versus when to defer. Without them, agents either ask for permission too often (defeating the purpose of autonomy) or take actions the user did not intend (creating trust failures). For a comprehensive treatment of agent loop architectures and planning strategies, see [Article 26 -- Agent Architectures](/agent-26-agent-architectures).
+
+### Agent Identity and Capability Boundaries
+
+Agentic system prompts require sharper capability boundaries than conversational prompts because the stakes of overstepping are higher -- an agent that calls the wrong API or executes unintended code can cause real damage.
+
+Effective agent identity definitions follow a pattern: state what the agent IS, what it CAN DO (linked to specific tools), and what it MUST NOT DO (hard constraints). The capabilities section should map directly to the tools the agent has access to, creating a correspondence between the system prompt narrative and the function definitions the model receives. When this correspondence breaks -- when the system prompt describes capabilities that do not match the available tools, or vice versa -- the agent's behavior becomes unpredictable.
+
+## Tool Integration in System Prompts
+
+### Where to Put Tool Guidance
+
+When building tool-using agents, developers face a recurring question: should tool usage instructions go in the system prompt, in the individual tool descriptions, or both? The answer depends on the type of guidance.
+
+**System prompt** is the right place for:
+- Tool selection strategy ("prefer the database tool over web search for factual queries about our products")
+- Cross-tool coordination ("always verify web search results by checking the primary source document")
+- Sequencing constraints ("always retrieve the user's account before attempting any account modifications")
+- Fallback behavior ("if the API tool returns an error, do not retry more than twice")
+
+**Tool descriptions** are the right place for:
+- Parameter semantics ("the `date` parameter accepts ISO 8601 format only")
+- Individual tool constraints ("this tool can only query tables in the `public` schema")
+- Return value interpretation ("a `null` result means the record does not exist, not that the query failed")
+- Rate limits and costs ("this tool makes a paid API call; use sparingly")
+
+The principle is straightforward: guidance that involves a single tool in isolation belongs in the tool description; guidance that involves choosing between tools, combining tools, or policies that span multiple tools belongs in the system prompt. Duplicating guidance in both places is acceptable for critical constraints and sometimes beneficial for emphasis, but contradictions between the two locations cause erratic behavior.
+
+For a detailed treatment of tool description schemas, parameter typing, and execution patterns, see [Article 25 -- Function Calling & Tool Integration](/agent-25-function-calling).
+
+### Describing Tools Narratively
+
+Beyond the structured tool definitions that API providers require, system prompts often include a narrative description of the agent's toolbox. This serves a different purpose than the formal tool schemas: it establishes the agent's mental model of what tools are for and when they are appropriate.
+
+    ## Your Tools
+    You have access to three tools:
+
+    1. **web_search**: Use this for current events, recent data, or
+       information not in your training data. Prefer specific queries
+       over broad ones.
+    2. **calculator**: Use this for any mathematical computation.
+       Do not attempt mental math for anything beyond basic arithmetic.
+    3. **database_query**: Use this to look up customer records,
+       order history, and product catalog information. Always use
+       parameterized queries; never interpolate user input directly.
+
+    When answering a question, think about which tool (if any) would
+    give you the most reliable answer. Not every question requires
+    a tool -- use your knowledge directly when you are confident.
+
+This narrative framing helps the model make better tool selection decisions because it provides reasoning context that structured schemas cannot express. The instruction "not every question requires a tool" is particularly important -- without it, tool-using agents tend to over-rely on tools even when direct generation would be faster and more accurate.
+
+## System Prompt Caching Economics
+
+### How Caching Changes the Cost Calculus
+
+Both Anthropic and OpenAI now offer prompt caching that dramatically reduces the cost of repeated system prompts. Anthropic's prompt caching, for example, charges the full input token price only on the first request that establishes the cache; subsequent requests using the same cached prefix are charged at 10% of the standard input price (90% discount). OpenAI's automatic caching provides a 50% discount on cached prefixes.
+
+This fundamentally changes the economics of system prompt design. Before caching, there was a real cost tension: longer, more detailed system prompts produced better behavior but increased per-request cost. A 2,000-token system prompt at Anthropic's Claude Sonnet pricing ($3 per million input tokens) costs $0.006 per request. At 10,000 requests per day, that is $60/day just for the system prompt.
+
+With caching, the same 2,000-token system prompt costs the full price once, then $0.0006 per subsequent request -- $6/day instead of $60. The cost difference between a 500-token system prompt and a 5,000-token system prompt drops from meaningful to negligible in any application with consistent traffic.
+
+### Practical Implications
+
+This has several consequences for system prompt engineering:
+
+**Favor comprehensive over minimal.** The old advice to keep system prompts short was partly economic. With caching, the marginal cost of additional instructions is near zero for steady-state traffic. Include the detailed examples, the edge case handling, the explicit format specifications. The cost of verbosity has largely disappeared.
+
+**Structure for cache stability.** Caching works on prefix matching -- the cached portion must be identical across requests. This means the static portions of your system prompt should come first, and any dynamic content (user-specific context, session state) should come after. If you interleave dynamic content early in the prompt, you break the cache prefix and lose the discount.
+
+```python
+# Good: static instructions first, dynamic context last
+system_prompt = f"""{STATIC_INSTRUCTIONS}
+
+## Current Context
+- User: {user_name}
+- Account tier: {tier}
+- Today's date: {date}
+"""
+
+# Bad: dynamic content breaks the cache prefix early
+system_prompt = f"""You are helping {user_name}, a {tier} user.
+{STATIC_INSTRUCTIONS}
+"""
+```
+
+**Budget for one-shot cache priming.** The first request with a new or modified system prompt pays the full input price. For very long system prompts (10,000+ tokens), factor this priming cost into your deployment strategy. In practice, most applications reprime the cache within seconds of deployment, making this a negligible concern.
+
+The caching economics also favor investing engineering time in system prompt quality. When a better system prompt costs essentially the same as a worse one per request, the ROI of prompt engineering effort increases proportionally.
+
+## Measuring System Prompt Effectiveness
+
+### What to Measure
+
+System prompt quality is notoriously hard to measure because the effects are diffuse -- a system prompt influences every response but is directly visible in none of them. However, several concrete metrics provide signal:
+
+**Instruction adherence rate**: What percentage of responses comply with explicit system prompt instructions? Measure this by creating test cases for each instruction and scoring responses on compliance. For a cooking assistant with the instruction "always include estimated prep time," you can automatically check whether responses to recipe requests contain time estimates.
+
+**Format compliance rate**: If the system prompt specifies output formats, measure how often responses match the expected structure. This is particularly easy to automate for structured output requirements -- JSON validity, required field presence, schema conformance. For a thorough treatment of structured output validation, see [Article 10 -- Structured Output](/agent-10-structured-output).
+
+**Guardrail breach rate**: For safety-critical instructions, measure how often the model violates topic boundaries or content policies. This requires adversarial test cases designed to probe the guardrails -- a task closely related to the red-teaming methodology covered in [Article 12 -- Adversarial Prompting](/agent-12-adversarial-prompting).
+
+**Persona consistency**: If the system prompt defines a persona, measure consistency across conversations using LLM-as-judge evaluations. Have a separate model rate whether responses match the defined tone, expertise level, and communication style.
+
+**Task success rate**: The most important and hardest to measure. Does the system prompt help the model actually accomplish what users need? This typically requires human evaluation or carefully designed automated proxies.
+
+### A/B Testing System Prompts
+
+A/B testing system prompts is conceptually identical to A/B testing any other product feature, but the mechanics require care:
+
+**Control for model variability.** LLM outputs are stochastic, which means that observed differences between system prompt variants could be due to sampling noise rather than genuine prompt effects. Use temperature 0 for deterministic comparisons during development, and collect statistically significant sample sizes (hundreds to thousands of responses) for production A/B tests.
+
+**Test one change at a time.** When a system prompt has twenty instructions, changing five of them simultaneously makes it impossible to attribute improvements or regressions. Make targeted changes and evaluate their isolated impact before combining them.
+
+**Use LLM-as-judge for subjective dimensions.** For metrics like tone, helpfulness, and clarity that resist automated measurement, use a separate model to evaluate responses against defined criteria. This approach scales better than human evaluation while capturing nuances that rule-based metrics miss. The core patterns for LLM-as-judge evaluation -- including reference-based and reference-free scoring, pairwise comparison, and calibration -- are foundational prompt engineering techniques covered in [Article 07 -- Prompt Engineering Fundamentals](/agent-07-prompt-engineering-fundamentals).
+
+**Track regression, not just improvement.** A system prompt change that improves performance on one dimension often degrades performance on another. Always evaluate across the full test suite, not just the cases that motivated the change.
+
 ## Anti-Patterns in System Prompt Design
 
 ### The Kitchen Sink Prompt
@@ -455,4 +614,14 @@ Editing system prompts directly in production code without version tracking is a
 - Guardrails implemented in prompts are one layer of a defense-in-depth strategy; combine topic boundaries, content policies, the sandwich defense, and prompt leak prevention for reasonable robustness.
 - Production system prompts should be modular, dynamic when needed, and version-controlled with evaluation-driven development practices.
 - Common anti-patterns include kitchen-sink prompts (too many instructions), threat-based prompts (ineffective motivation), legalistic prompts (wrong register), and unversioned prompts (operational risk).
+- Agentic system prompts serve as operational charters -- defining planning protocols, autonomy boundaries, and error recovery strategies -- rather than simple behavioral stylesheets. Tool selection guidance belongs in the system prompt; tool-specific parameter details belong in tool descriptions (see [Article 25 -- Function Calling & Tool Integration](/agent-25-function-calling)).
+- Prompt caching from Anthropic (90% discount on cached prefixes) and OpenAI (50% discount) has shifted the economics decisively toward longer, more detailed system prompts. Structure prompts with static content first to maximize cache hit rates.
+- System prompt effectiveness should be measured across instruction adherence, format compliance, guardrail breach rate, persona consistency, and task success -- with A/B testing following the same rigor as any production feature rollout.
 - Prompt versioning, evaluation suites, and gradual rollout are not luxuries but necessities for any production LLM application.
+
+## Related Articles
+
+- [Article 07 -- Prompt Engineering Fundamentals](/agent-07-prompt-engineering-fundamentals): Core prompting techniques that underpin system prompt design, including LLM-as-judge evaluation patterns.
+- [Article 10 -- Structured Output](/agent-10-structured-output): JSON mode, schema validation, and constrained decoding techniques for enforcing output formats specified in system prompts.
+- [Article 12 -- Adversarial Prompting](/agent-12-adversarial-prompting): Attack vectors and defense strategies for system prompt guardrails, including prompt injection and jailbreak taxonomies.
+- [Article 25 -- Function Calling & Tool Integration](/agent-25-function-calling): Tool definition schemas, parameter typing, and execution patterns that complement system prompt-level tool guidance.

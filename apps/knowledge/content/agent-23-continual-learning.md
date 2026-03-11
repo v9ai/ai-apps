@@ -300,6 +300,18 @@ Rather than randomly mixing data, curriculum-based approaches order training exa
 
 This gradual transition helps the model build domain knowledge incrementally without sharp distribution shifts.
 
+### Curriculum Ordering and Learning Rate Interactions
+
+The interaction between data ordering and learning rate schedules is an active area of research with practical implications for continual pre-training. Naive curriculum strategies -- moving from general to domain-specific data -- can underperform if the learning rate schedule is not aligned with the transition.
+
+**Cosine decay misalignment**: A standard cosine schedule reaches its lowest learning rates at the end of training. If the most important domain-specific data is concentrated in the final phase, the model may lack sufficient plasticity to absorb it. The warmup-stable-decay (WSD) schedule addresses this by maintaining a constant learning rate during the "stable" phase (where most training occurs) and only decaying in a final annealing phase. This pairs well with curriculum strategies because the learning rate remains high enough throughout the domain transition to incorporate new knowledge.
+
+**Cyclical curricula**: Rather than a single general-to-specific transition, recent work explores cyclical data orderings that alternate between general and domain-specific batches within each epoch. This interleaving prevents the model from "settling" into a domain-specific loss basin and forgetting general capabilities. Empirically, cyclical curricula with a constant or slowly decaying learning rate often match or outperform linear transitions while being simpler to implement.
+
+**Difficulty-aware scheduling**: Building on the curriculum learning ideas from pre-training (see [Pre-training: Data Curation, Objectives & Curriculum](/knowledge/agent-06-pretraining-data)), difficulty-aware continual pre-training orders domain-specific data by perplexity under the base model. Documents with moderate perplexity (novel but not incomprehensible) are presented first, followed by higher-perplexity material. This prevents the model from encountering highly out-of-distribution text before it has built intermediate representations, reducing the gradient variance that drives forgetting.
+
+**Practical recommendation**: For continual pre-training runs, pair a WSD learning rate schedule with a two-phase curriculum -- (1) mixed general/domain data at the stable learning rate for 70-80% of training, then (2) domain-heavy data during the decay phase. This combines the retention benefits of data mixing with the efficiency of focused domain training during annealing, mirroring the phase-based approach that has become standard in initial pre-training.
+
 ## Domain Adaptation Without Regression
 
 ### The Evaluation Framework

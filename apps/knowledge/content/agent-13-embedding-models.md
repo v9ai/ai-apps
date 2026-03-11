@@ -209,6 +209,31 @@ Aggregate MTEB scores can be misleading. A model that excels at STS may underper
 - **gte-Qwen2-7B-instruct**: Built on Qwen2 backbone, competitive with e5-mistral on MTEB. Supports 8192 token context.
 - Represents the trend of using instruction-tuned LLMs as embedding backbones.
 
+### Nomic Embed
+
+- **nomic-embed-text-v1.5**: 768 dimensions, fully open-source (model weights, training code, and training data published under Apache 2.0). Supports Matryoshka truncation down to 64 dimensions with graceful degradation.
+- **nomic-embed-vision-v1.5**: Aligned multimodal companion model sharing the same embedding space, enabling text-image retrieval without separate infrastructure.
+- Strength: Full openness enables auditing, reproduction, and fine-tuning without licensing concerns. Competitive MTEB performance at a fraction of the parameter count of LLM-backbone models.
+
+### Voyage AI
+
+- **voyage-3**: 1024 dimensions, optimized specifically for retrieval and RAG workloads. Supports `input_type` parameter (`query` vs. `document`) for asymmetric retrieval.
+- **voyage-code-3**: Domain-specific variant trained on code corpora, consistently outperforming general-purpose models on code retrieval benchmarks.
+- **voyage-3-large**: 2048 dimensions, pushing the quality frontier for applications where cost is secondary to recall.
+- Strength: Domain-specific model variants (code, law, finance) that avoid the "one model fits all" compromise. Anthropic's recommended embedding provider for Claude-based RAG systems.
+
+### Jina Embeddings
+
+- **jina-embeddings-v3**: 1024 dimensions, 8192 token context, with native support for task-specific LoRA adapters that activate based on the `task` parameter (retrieval.query, retrieval.passage, separation, classification, text-matching). Supports Matryoshka truncation.
+- **jina-clip-v2**: Multimodal text-image embeddings supporting 89 languages, combining CLIP-style cross-modal alignment with strong multilingual text performance.
+- Strength: The LoRA adapter approach to task conditioning is architecturally distinct from instruction prefixes -- it modifies model weights rather than consuming input tokens, avoiding the context-length overhead discussed in the instruction-prefixed embeddings section above.
+
+### MTEB v2 and Domain-Specific Evaluation
+
+The original MTEB benchmark, while transformative, has been supplemented by MTEB v2 (2024), which expands evaluation coverage significantly. Key additions include retrieval tasks in 250+ languages, long-document retrieval benchmarks testing 8192+ token contexts, and instruction-following evaluation that specifically measures the impact of task prefixes. The leaderboard now separates results by model size category, making comparisons more meaningful -- a 150M parameter model and a 7B parameter model serve fundamentally different deployment scenarios.
+
+Beyond MTEB, domain-specific leaderboards have emerged for legal retrieval (LegalBench-RAG), biomedical search (BioMTEB), and code search (CoIR). These specialized benchmarks often reveal surprising rank inversions: a model that leads on general MTEB may fall to mid-pack on biomedical retrieval, where domain-specific fine-tuning or vocabulary coverage matters more than general-purpose quality. When selecting an embedding model for a production system, evaluating on the closest available domain-specific benchmark -- or building a custom evaluation set from your own data -- is more predictive than MTEB aggregate scores.
+
 ## Fine-Tuning Embeddings with Synthetic Data
 
 Off-the-shelf embedding models often underperform on domain-specific data. Fine-tuning with task-specific data is the standard remedy, but labeled data is expensive. Synthetic data generation offers a practical path forward.
@@ -277,6 +302,115 @@ model.fit(
 3. **Evaluate on held-out data**: Track retrieval metrics (nDCG@10, recall@k) on a held-out set to detect overfitting.
 4. **Hard negatives amplify fine-tuning**: Mining hard negatives from BM25 or a previous model checkpoint dramatically improves fine-tuning effectiveness.
 
+## Sparse Learned Representations (SPLADE)
+
+While the previous sections focused on dense embeddings, an important parallel track has produced learned sparse representations that combine the interpretability of lexical methods like BM25 with the semantic understanding of neural models. SPLADE (Sparse Lexical and Expansion Model, Formal et al., 2021) is the most prominent approach in this family.
+
+### How SPLADE Works
+
+SPLADE uses a transformer encoder (typically BERT or DistilBERT) to produce a sparse vector over the entire vocabulary. For each input token, the model predicts activation weights across all vocabulary terms -- crucially, it can activate terms that do not appear in the input text. This "term expansion" is what gives SPLADE its semantic power: a document about "automobile recalls" can activate the term "car" even if that word never appears.
+
+The sparsity is enforced through a FLOPS-regularization loss that penalizes the total number of activated terms, producing vectors with typically 100-300 non-zero entries out of a 30,000+ vocabulary. The result is an inverted index that is conceptually identical to BM25's data structure but with learned term weights and expanded vocabulary coverage.
+
+```python
+# SPLADE produces sparse vectors that look like weighted term lists
+# Input: "How does photosynthesis work?"
+# Output (simplified): {
+#   "photosynthesis": 2.41,
+#   "light": 1.03,
+#   "chlorophyll": 0.87,   # term expansion -- not in query
+#   "energy": 0.72,        # term expansion
+#   "plants": 0.65,        # term expansion
+#   "process": 0.31,
+#   ...
+# }
+```
+
+### When SPLADE Outperforms Dense Embeddings
+
+Learned sparse representations have distinct advantages in several scenarios:
+
+- **Entity-heavy queries**: Dense embeddings can struggle with rare proper nouns, product codes, or identifiers that had limited representation in training data. SPLADE preserves exact lexical matching while adding semantic expansion.
+- **Interpretability requirements**: Because SPLADE vectors are over vocabulary terms, you can inspect exactly which terms contributed to a match -- a significant advantage for debugging retrieval failures or building user-facing explanations.
+- **Infrastructure compatibility**: SPLADE vectors can be stored in traditional inverted indexes (Lucene, Elasticsearch) alongside BM25, avoiding the need for a separate [vector database](agent-14-vector-databases.md). This makes adoption dramatically simpler for teams with existing search infrastructure.
+- **Out-of-domain robustness**: On the BEIR benchmark, SPLADE models consistently outperform dense retrievers on out-of-domain datasets, likely because the lexical component provides a reliable fallback when semantic matching fails.
+
+The practical takeaway is that SPLADE is not a replacement for dense embeddings but a complementary signal. BGE-M3 (discussed in the model comparison section) embodies this insight by producing dense, sparse, and multi-vector representations from a single model. Hybrid retrieval strategies that combine dense and sparse scores are covered in depth in [Article 16: Retrieval Strategies](agent-16-retrieval-strategies.md).
+
+## Multimodal Embeddings
+
+The embedding paradigm extends naturally beyond text. Multimodal embedding models map different modalities -- text, images, audio, video -- into a shared vector space where cross-modal similarity is meaningful. This enables capabilities like text-to-image search, image-to-text retrieval, and zero-shot visual classification.
+
+### CLIP and Contrastive Vision-Language Pre-training
+
+CLIP (Contrastive Language-Image Pre-training, Radford et al., 2021) established the foundational approach. It jointly trains a text encoder and an image encoder using contrastive learning on 400 million image-caption pairs scraped from the web. The training objective is identical in spirit to the InfoNCE loss described earlier: within each batch, the model pulls matching image-caption pairs together and pushes non-matching pairs apart.
+
+The result is a shared embedding space where "a photo of a golden retriever" (text) and an actual image of a golden retriever occupy nearby regions. This shared geometry enables:
+
+- **Cross-modal retrieval**: Search an image corpus with text queries, or find text descriptions matching an input image
+- **Zero-shot classification**: Compare an image embedding against embeddings of class label descriptions (e.g., "a photo of a cat" vs. "a photo of a dog") without any task-specific training
+- **Multimodal RAG**: Build retrieval systems that can surface images, diagrams, or charts alongside text passages in response to user queries
+
+### SigLIP and Architectural Refinements
+
+SigLIP (Zhai et al., 2023) refines the CLIP approach by replacing the softmax-based contrastive loss with a sigmoid loss computed per image-text pair. This eliminates the need for a global softmax normalization across the batch, making training more efficient and enabling larger effective batch sizes. SigLIP models achieve comparable or better performance than CLIP at smaller model sizes, making them more practical for embedding workloads where inference cost matters.
+
+Other notable entries in this space include:
+
+- **OpenCLIP**: Open-source reproduction of CLIP, trained on LAION datasets, providing fully open weights for research and production use
+- **Jina CLIP v2**: Extends the CLIP architecture with support for multilingual text, producing text-image embeddings usable across 89 languages
+- **Nomic Embed Vision**: Companion to Nomic Embed Text, aligning visual and textual embeddings in a unified space with full Matryoshka support
+
+### Practical Considerations for Multimodal Embeddings
+
+Deploying multimodal embeddings introduces unique challenges. Image encoders (typically Vision Transformers) are substantially more expensive to run than text encoders, so pre-computing image embeddings during ingestion is even more critical than with text-only systems. The embedding dimensionality must be shared across modalities, which means the text encoder may be over- or under-parameterized relative to a text-only model. Additionally, the semantic granularity differs across modalities -- a text query like "red car on a mountain road at sunset" expresses rich compositional detail that current vision encoders capture imperfectly.
+
+## Instruction-Prefixed Embeddings
+
+A subtle but impactful development in embedding model design is the use of task-specific instruction prefixes that modify how the model produces representations. Rather than learning a single embedding function, these models condition the encoding on an explicit description of the intended task.
+
+### The Instruction Prefix Mechanism
+
+The E5-instruct family (Wang et al., 2024) pioneered this approach for general-purpose embedding models. At encoding time, each input is prepended with a natural language instruction describing the task:
+
+```python
+from sentence_transformers import SentenceTransformer
+
+model = SentenceTransformer('intfloat/e5-mistral-7b-instruct')
+
+# Retrieval task -- query side
+queries = [
+    "Instruct: Given a web search query, retrieve relevant passages\n"
+    "Query: What causes northern lights?"
+]
+
+# Retrieval task -- document side (no instruction needed for passages)
+documents = [
+    "Aurora borealis occurs when charged particles from the sun "
+    "interact with gases in Earth's atmosphere..."
+]
+
+query_emb = model.encode(queries, normalize_embeddings=True)
+doc_emb = model.encode(documents, normalize_embeddings=True)
+```
+
+The instruction tells the model what kind of similarity to optimize for. The same document encoded for a retrieval task and a clustering task may produce different embeddings, because the relevant notion of "similarity" differs between those contexts. For retrieval, topical relevance matters; for clustering, broader thematic grouping may be more appropriate.
+
+### How Providers Implement Task Conditioning
+
+Different embedding providers expose this capability through varying interfaces:
+
+- **E5-instruct**: Accepts free-form natural language instructions, offering maximum flexibility. The downside is that poorly phrased instructions can degrade performance.
+- **BGE models**: Use a simpler prefix approach -- prepending "Represent this sentence for searching relevant passages:" or similar fixed templates to query-side inputs.
+- **Cohere embed-v3**: Abstracts the mechanism behind an `input_type` parameter with four options: `search_document`, `search_query`, `classification`, and `clustering`. This is less flexible than free-form instructions but harder to misuse.
+- **Voyage AI**: Uses `input_type` with values `query` and `document`, focusing specifically on the asymmetric retrieval case.
+
+### Why Instruction Prefixes Work
+
+The effectiveness of instruction prefixes stems from a fundamental asymmetry in embedding tasks. In retrieval, queries are short and express information needs, while documents are long and express information content. A single embedding function must somehow handle both sides of this asymmetry. Instruction prefixes provide the model with explicit signal about which side of the retrieval pair it is encoding, allowing it to adjust the representation accordingly.
+
+Empirically, instruction-prefixed models show the largest gains on retrieval tasks (3-5% improvement in nDCG@10 on MTEB retrieval benchmarks) and smaller gains on symmetric tasks like STS where both inputs play the same role. This connects directly to the tokenization choices discussed in [Article 3: Tokenization](agent-03-tokenization.md) -- the instruction prefix consumes tokens from the model's context window, which matters more for short inputs where the prefix represents a larger fraction of the total token count.
+
 ## Dimensionality, Context Length, and Practical Trade-offs
 
 ### Dimensionality Selection
@@ -294,14 +428,18 @@ For most RAG applications, 768-1024 dimensions provide the best accuracy-cost tr
 
 ### Context Length Considerations
 
-Embedding models have maximum context lengths ranging from 512 tokens (older models) to 8192+ tokens (modern models). However, longer inputs don't always produce better embeddings -- the mean-pooling operation can dilute signal when averaging over many tokens. This is why chunking strategy (covered in Article 15) is critical.
+Embedding models have maximum context lengths ranging from 512 tokens (older models) to 8192+ tokens (modern models). However, longer inputs don't always produce better embeddings -- the mean-pooling operation can dilute signal when averaging over many tokens. This is why chunking strategy is critical -- see [Article 15: Chunking Strategies](agent-15-chunking-strategies.md) for a full treatment of how splitting decisions interact with embedding quality.
 
 ## Summary and Key Takeaways
 
 - **Contrastive learning** is the dominant training paradigm for embedding models, with in-batch negatives and hard negative mining being the most impactful design choices.
-- **Similarity metrics** (cosine, dot product, euclidean) are closely related for normalized vectors; always match the metric to the model's training objective.
+- **Similarity metrics** (cosine, dot product, euclidean) are closely related for normalized vectors; always match the metric to the model's training objective and the distance metric configured in your [vector database](agent-14-vector-databases.md).
 - **Matryoshka embeddings** enable flexible dimensionality trade-offs without retraining, offering significant cost savings.
-- **MTEB** is the standard benchmark, but retrieval-specific performance matters most for RAG -- don't over-index on aggregate scores.
-- **Open-source models** (BGE, E5, GTE) have largely closed the gap with proprietary offerings (OpenAI, Cohere) and offer cost advantages at scale.
+- **Learned sparse representations** (SPLADE) complement dense embeddings, combining semantic expansion with lexical precision. They are especially valuable in [hybrid retrieval pipelines](agent-16-retrieval-strategies.md) that fuse dense and sparse scores.
+- **Multimodal embeddings** (CLIP, SigLIP) extend the embedding paradigm to cross-modal retrieval, enabling unified search across text and images.
+- **Instruction-prefixed embeddings** improve retrieval quality by conditioning representations on the intended task -- a design that interacts with [tokenization](agent-03-tokenization.md) choices since prefixes consume context tokens.
+- **MTEB and domain-specific benchmarks** are essential for model selection, but retrieval-specific performance on your domain matters more than aggregate scores.
+- **Open-source models** (BGE, E5, GTE, Nomic, Jina) have largely closed the gap with proprietary offerings (OpenAI, Cohere, Voyage) and offer cost advantages at scale.
 - **Fine-tuning with synthetic data** is a practical, accessible technique for domain adaptation, but requires care to avoid catastrophic forgetting.
 - The field is converging on **LLM-backbone embeddings** (7B+ parameter models), which achieve the highest quality but at significant inference cost -- a trade-off that quantization and distillation are actively addressing.
+- Embedding quality sets the ceiling for retrieval quality. Invest in evaluation before committing: the right model depends on your domain, your [chunking strategy](agent-15-chunking-strategies.md), and your latency budget.

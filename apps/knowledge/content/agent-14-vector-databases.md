@@ -1,6 +1,6 @@
 # Vector Databases: Indexing, ANN Search & Production Patterns
 
-Vector databases have evolved from niche academic tools into critical infrastructure for AI applications, serving as the backbone for retrieval-augmented generation, semantic search, and recommendation systems. This article provides a deep technical examination of approximate nearest neighbor algorithms, production database architectures, and the operational patterns that determine success or failure when deploying vector search at scale.
+Vector databases have evolved from niche academic tools into critical infrastructure for AI applications, serving as the backbone for retrieval-augmented generation, semantic search, and recommendation systems. This article provides a deep technical examination of approximate nearest neighbor algorithms, production database architectures, and the operational patterns that determine success or failure when deploying vector search at scale. It builds on the embedding representations covered in [Article 13: Embedding Models](agent-13-embedding-models.md) and connects directly to the chunking decisions discussed in [Article 15: Chunking Strategies](agent-15-chunking-strategies.md) -- how you split your documents determines the size, number, and quality of vectors your database must index and search.
 
 ## The Nearest Neighbor Problem
 
@@ -157,13 +157,27 @@ results = client.search(
 )
 ```
 
+### Milvus
+
+**Architecture**: Open-source (Apache 2.0), built from the ground up for billion-scale vector search. Milvus uses a disaggregated storage-and-compute architecture with separate query nodes, data nodes, and index nodes, orchestrated by a coordinator layer. This design allows independent scaling of ingestion and search workloads. Zilliz Cloud provides a fully managed version with additional enterprise features.
+
+**Indexing**: Milvus supports a wide range of index types -- HNSW, IVF-Flat, IVF-PQ, IVF-SQ8, DiskANN, and notably GPU-accelerated indexes (GPU-IVF-Flat, GPU-IVF-PQ, GPU-CAGRA). The GPU indexes leverage NVIDIA RAPIDS for building and searching, achieving 5-10x throughput improvements on large-scale workloads compared to CPU-only approaches.
+
+**GPU-accelerated search**: For datasets in the hundreds-of-millions to billions range, Milvus's GPU indexes can process thousands of queries per second at high recall. GPU-CAGRA (based on NVIDIA's graph-based algorithm) is particularly effective for high-throughput scenarios where latency budgets are tight and the dataset is large enough to justify GPU infrastructure costs.
+
+**Strengths**: Battle-tested at billion-scale deployments, flexible index selection per use case, strong consistency guarantees via timestamp-based MVCC, rich filtering with scalar indexes, partition-based data management. Multi-vector search support enables late-interaction patterns.
+
+**Limitations**: Operational complexity is higher than simpler alternatives -- the distributed architecture (etcd, MinIO/S3, Pulsar/Kafka) requires infrastructure expertise. The learning curve is steeper than Qdrant or Weaviate.
+
+**Best for**: Teams operating at genuine billion-vector scale, workloads requiring GPU acceleration, organizations comfortable managing distributed systems (or willing to use Zilliz Cloud).
+
 ### Chroma
 
-**Architecture**: Open-source, Python-native. Designed for simplicity and rapid prototyping. Embeds SQLite and HNSW (via hnswlib) in-process.
+**Architecture**: Open-source, Python-native. Designed for simplicity and rapid prototyping. Embeds SQLite and HNSW (via hnswlib) in-process. The project has matured considerably since its early releases, adding a client-server mode for multi-process access, persistent storage by default, authentication support, and observability hooks.
 
-**Strengths**: Dead-simple API, runs in-process (no server needed for development), built-in embedding function support, easy to get started.
+**Strengths**: Dead-simple API, runs in-process (no server needed for development), built-in embedding function support, easy to get started. The client-server architecture now supports production deployments at moderate scale, with a hosted cloud offering in development.
 
-**Limitations**: Not designed for production scale. Single-node only in the open-source version. Limited operational tooling. Performance degrades beyond low millions of vectors.
+**Limitations**: Single-node architecture limits horizontal scalability. Performance is best suited for datasets in the low millions of vectors. For larger workloads, consider purpose-built distributed systems.
 
 ```python
 import chromadb
@@ -185,6 +199,26 @@ results = collection.query(
     where={"source": "paper"}
 )
 ```
+
+### Turbopuffer
+
+**Architecture**: A serverless vector database designed for cost-efficient, large-scale search. Turbopuffer stores vectors on object storage (S3) and uses aggressive caching and custom query execution to serve low-latency queries without keeping entire indexes in memory.
+
+**Strengths**: Dramatically lower cost at large scale compared to in-memory alternatives -- storage pricing follows object-storage economics rather than RAM pricing. Supports hybrid search with BM25 and vector scoring in a single query. Namespace-based multi-tenancy suits SaaS workloads with many isolated tenants. The serverless model means no capacity planning.
+
+**Limitations**: Newer entrant with a smaller ecosystem and community. Latency characteristics differ from in-memory databases -- cold queries may be slower, though caching mitigates this for active datasets. Proprietary, managed-only.
+
+**Best for**: Cost-sensitive workloads with large vector counts, multi-tenant SaaS architectures, teams seeking serverless simplicity with object-storage economics.
+
+### LanceDB
+
+**Architecture**: Open-source, embedded vector database built on the Lance columnar data format. LanceDB runs in-process (similar to SQLite for vectors) with zero-copy access to data on local disk or object storage. Written in Rust with Python, TypeScript, and Rust client libraries.
+
+**Strengths**: No server to manage -- runs embedded in your application process. The Lance format supports versioned datasets with efficient appends and updates, making it well-suited for ML workflows where data evolves over time. Native support for multi-modal data (images, text, tabular). Automatic IVF-PQ index construction. Direct integration with data lake storage (S3, GCS).
+
+**Limitations**: Embedded architecture means no built-in multi-process concurrency (though Lance's MVCC allows concurrent readers). Query performance at very large scale hasn't been validated as extensively as established distributed databases.
+
+**Best for**: Data science workflows, applications needing versioned vector datasets, edge deployments, and teams wanting to avoid managing a separate database server.
 
 ### pgvector
 
@@ -216,6 +250,44 @@ WHERE category = 'technical'
 ORDER BY embedding <=> query_embedding
 LIMIT 10;
 ```
+
+## Vector Search in Existing Databases
+
+A dedicated vector database is not always the right answer. If your application already relies on a general-purpose database, adding vector search as an extension can reduce operational complexity, avoid data synchronization headaches, and keep your stack simpler. The trade-off is performance: purpose-built vector databases are optimized end-to-end for ANN search, while bolt-on solutions inherit the performance characteristics and scaling constraints of their host systems.
+
+### MongoDB Atlas Vector Search
+
+MongoDB Atlas integrates vector search directly into the document model. You define a vector search index on an array field, and queries use an `$vectorSearch` aggregation stage. Because vectors live alongside your documents, there's no ETL pipeline to keep in sync -- when you update a document, the vector index updates with it.
+
+Atlas Vector Search uses a proprietary ANN algorithm and supports pre-filtering on any indexed document field within the same query. The main constraint is that it runs only on Atlas (MongoDB's managed cloud), not on self-hosted MongoDB. Performance is competitive for datasets up to tens of millions of vectors, though it won't match the throughput of Qdrant or Milvus at larger scales.
+
+### Elasticsearch Vector Search
+
+Elasticsearch added dense vector fields and ANN search (HNSW-based) in version 8.x. For teams already running Elasticsearch for full-text search, adding vector search creates a natural hybrid retrieval pipeline -- BM25 and vector scores can be combined in a single query using Elasticsearch's `knn` clause alongside traditional query DSL.
+
+The advantage is architectural simplicity: one system handles both sparse and dense retrieval, with a single relevance pipeline. The limitation is resource overhead -- HNSW indexes in Elasticsearch are memory-intensive, and the JVM-based architecture adds latency compared to native implementations in Rust or C++.
+
+### Supabase pgvector and AlloyDB AI
+
+Supabase wraps pgvector with a managed PostgreSQL service, adding connection pooling, edge functions, and client libraries that simplify vector operations for application developers. Google's AlloyDB AI takes a different approach: it's a PostgreSQL-compatible managed database with a custom vector search engine that claims 10-100x better ANN performance than standard pgvector, using Google's proprietary ScaNN algorithm under the hood.
+
+Both options are compelling for teams committed to the PostgreSQL ecosystem. AlloyDB AI is particularly interesting when performance requirements exceed what standard pgvector can deliver but the team wants to keep SQL as the query interface.
+
+### Decision Framework: Dedicated vs. Integrated
+
+Choose **integrated vector search** (pgvector, Atlas, Elasticsearch) when:
+- Your dataset is under ~10 million vectors
+- You need ACID transactions spanning vector and relational data
+- Operational simplicity outweighs raw search performance
+- Your team already operates the host database in production
+
+Choose a **dedicated vector database** (Qdrant, Milvus, Weaviate, Pinecone) when:
+- Scale exceeds tens of millions of vectors
+- Query latency at high throughput is critical (sub-5ms p99)
+- You need advanced features like multi-vector search, GPU acceleration, or sophisticated filtered HNSW
+- Vector search is a core product differentiator, not a supporting feature
+
+The boundary is not fixed. pgvector with HNSW handles 5 million vectors comfortably on a modern instance. But if you find yourself tuning PostgreSQL shared_buffers and work_mem primarily for vector workloads, the tail is wagging the dog -- it's time for a dedicated system.
 
 ## Indexing Strategies
 
@@ -269,7 +341,7 @@ client.create_payload_index(
 
 ## Hybrid Search Architecture
 
-Combining dense vector search with sparse lexical search (BM25) consistently outperforms either approach alone. The architecture pattern involves:
+Combining dense vector search with sparse lexical search (BM25) consistently outperforms either approach alone. [Article 16: Retrieval Strategies](agent-16-retrieval-strategies.md) covers the retrieval-side design in depth -- here we focus on the database-level implementation. The architecture pattern involves:
 
 1. **Parallel retrieval**: Execute vector search and BM25 search simultaneously
 2. **Score normalization**: Normalize scores from each source to a common scale
@@ -327,7 +399,7 @@ For applications requiring immediate consistency (e.g., deduplication), consider
 Vector search costs are dominated by memory for in-memory indexes (HNSW) or IOPS for disk-based indexes. Key optimization strategies:
 
 1. **Quantization**: Reduce vector size with scalar quantization (float32 to int8, 4x savings) or product quantization (16-32x savings)
-2. **Matryoshka truncation**: Use lower-dimensional embeddings for initial retrieval, full dimensions for reranking
+2. **Matryoshka truncation**: Use lower-dimensional embeddings for initial retrieval, full dimensions for reranking (see Matryoshka Representation Learning in [Article 13: Embedding Models](agent-13-embedding-models.md))
 3. **Tiered storage**: Keep hot data in memory, warm data on SSD, cold data archived
 4. **Index per partition**: Separate indexes by time range or tenant, delete entire indexes instead of individual vectors
 
@@ -355,12 +427,39 @@ Vector indexes are expensive to rebuild. Ensure your backup strategy includes:
 
 Lock-in is a real concern. Maintain the ability to export vectors and metadata in a standard format. The actual vectors are portable; the index must be rebuilt in the target system. Budget for index build time during migration planning.
 
+## Multi-Vector and ColBERT Storage
+
+Standard embedding models produce a single vector per document -- the entire semantic content compressed into one point in vector space. ColBERT and similar late-interaction models take a fundamentally different approach: they produce one vector per token, preserving fine-grained lexical-semantic information that single-vector representations discard. This enables more precise matching (the model can align individual query terms with specific passage terms) but introduces significant storage and search challenges. For a deeper look at the models themselves, including ColBERTv2 and BGE-M3's multi-vector output, see [Article 13: Embedding Models](agent-13-embedding-models.md).
+
+### Storage Overhead
+
+A 200-token passage represented as a single 768-dimensional float32 vector occupies 3KB. The same passage under ColBERT (128-dimensional per-token vectors, as in ColBERTv2) produces 200 vectors at 512 bytes each -- 100KB total, a ~33x increase. At 10 million passages, single-vector storage is ~30GB; multi-vector storage balloons to ~1TB before indexing overhead.
+
+Compression is essential. ColBERTv2 introduced residual compression: vectors are quantized relative to their nearest centroid, reducing per-token storage to 16-32 bytes (using 1-2 bits per dimension). This brings the 10M-passage figure down to ~50-80GB -- still larger than single-vector, but manageable.
+
+### Search Mechanics: MaxSim
+
+ColBERT scoring computes the maximum similarity (MaxSim) between each query token vector and all passage token vectors, then sums across query tokens. Naively, this requires comparing every query token against every token in every candidate passage -- computationally explosive.
+
+Practical implementations use a two-stage approach:
+
+1. **Candidate generation**: Use a standard ANN index over all token vectors to find passages containing at least one highly similar token. This produces a candidate set of hundreds to low thousands of passages.
+2. **Late interaction scoring**: Compute full MaxSim scores only for candidates, using decompressed token vectors. This stage is CPU-intensive but operates on a small subset.
+
+### Database Support
+
+Dedicated ColBERT storage engines like **RAGatouille** (wrapping ColBERTv2) and **Vespa's native ColBERT support** handle the multi-vector complexity internally. Among general-purpose vector databases, **Milvus** supports multi-vector fields with per-document token-level storage and retrieval. **Qdrant** can store multi-vectors via its multi-vector feature, enabling late-interaction patterns without external tooling.
+
+For most applications, the practical recommendation is to evaluate whether the recall improvement from multi-vector representations justifies the storage and complexity cost. In domains with precise terminology requirements (legal, medical, technical documentation), the token-level matching often provides meaningful gains over single-vector search. For general-purpose semantic search, a single high-quality embedding with hybrid BM25 retrieval (detailed in [Article 16: Retrieval Strategies](agent-16-retrieval-strategies.md)) typically provides a better complexity-to-quality ratio.
+
 ## Summary and Key Takeaways
 
 - **HNSW** is the dominant ANN algorithm for good reason: excellent recall-latency trade-off, incremental updates, and wide database support. Use it as the default.
 - **IVF-PQ** becomes relevant at 100M+ scale where HNSW memory requirements become prohibitive.
-- **Database selection** should prioritize: operational model (managed vs. self-hosted), filtering capabilities, existing infrastructure (pgvector if you're already on PostgreSQL), and scale requirements.
+- **Database selection** should prioritize: operational model (managed vs. self-hosted), filtering capabilities, existing infrastructure (pgvector if you're already on PostgreSQL), scale requirements, and whether GPU acceleration (Milvus) is justified.
+- **Existing databases** with vector extensions (pgvector, MongoDB Atlas, Elasticsearch) are often the right starting point -- add a dedicated vector database when scale or latency demands outgrow what integrated solutions provide.
 - **Metadata filtering** strategy (pre/post/integrated) dramatically impacts both recall and latency -- understand how your chosen database handles filtered search.
 - **Hybrid search** (dense + sparse) consistently outperforms pure vector search and should be the default architecture for production RAG systems.
+- **Multi-vector representations** (ColBERT-style) offer superior recall for precision-critical domains but carry significant storage overhead -- evaluate whether the gains justify the complexity for your use case.
 - **Quantization** is the primary lever for cost optimization at scale, offering 4-32x memory reduction with manageable recall loss.
 - **Operational maturity** -- monitoring recall, managing backups, planning for migration -- separates production systems from prototypes.

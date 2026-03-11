@@ -495,12 +495,216 @@ async def apply_output_guardrails(output: str) -> list[GuardrailResult]:
 
 Lightweight models are preferred for guardrail classifiers. DistilBERT-based classifiers typically add only 5-15ms of latency while providing sufficient accuracy for first-pass filtering. More expensive checks (such as NLI-based grounding verification) can be applied selectively based on risk scoring.
 
+## Purpose-Built Safety Classifiers
+
+General toxicity classifiers like Perspective API or toxic-bert were designed for user-generated content moderation -- detecting hate speech, profanity, and harassment in social media posts and comments. While useful as a baseline, they are poorly suited to the nuanced safety requirements of LLM applications. They miss policy violations that are not overtly toxic (such as a model providing step-by-step instructions for lock-picking in a polite, professional tone), and they produce false positives on legitimate discussions of sensitive topics (such as a medical chatbot discussing self-harm risk factors).
+
+Purpose-built safety classifiers address this gap by training specifically on LLM interaction data with fine-grained safety taxonomies. For a deeper treatment of how adversarial inputs exploit gaps in general-purpose classifiers, see [Adversarial Prompting: Jailbreaks, Injections & Defense Strategies](/agent-12-adversarial-prompting).
+
+### Llama Guard 3
+
+Meta's Llama Guard family (Llama Guard, Llama Guard 2, and Llama Guard 3) provides instruction-tuned safety classifiers built on the Llama architecture. Unlike binary toxicity classifiers, Llama Guard categorizes content across a detailed taxonomy aligned with the MLCommons AI Safety standard: violent crimes, non-violent crimes, sex-related crimes, child sexual exploitation, defamation, specialized advice, privacy, intellectual property, indiscriminate weapons, hate, suicide and self-harm, sexual content, and elections. Llama Guard 3 operates as a multi-label classifier that evaluates both user prompts and model responses, returning which specific categories are violated:
+
+```python
+from transformers import AutoTokenizer, AutoModelForCausalLM
+
+model_id = "meta-llama/Llama-Guard-3-8B"
+tokenizer = AutoTokenizer.from_pretrained(model_id)
+model = AutoModelForCausalLM.from_pretrained(model_id, device_map="auto")
+
+def classify_safety(role: str, content: str) -> dict:
+    """Classify content using Llama Guard 3.
+    role: 'user' for input classification, 'assistant' for output classification.
+    """
+    chat = [{"role": role, "content": content}]
+    input_ids = tokenizer.apply_chat_template(chat, return_tensors="pt").to(model.device)
+    output = model.generate(input_ids=input_ids, max_new_tokens=100)
+    result = tokenizer.decode(output[0][len(input_ids[0]):], skip_special_tokens=True)
+
+    is_safe = result.strip().startswith("safe")
+    violated_categories = []
+    if not is_safe:
+        # Llama Guard returns "unsafe\nS1,S3" format
+        parts = result.strip().split("\n")
+        if len(parts) > 1:
+            violated_categories = [c.strip() for c in parts[1].split(",")]
+
+    return {"safe": is_safe, "violated_categories": violated_categories}
+```
+
+### ShieldGemma
+
+Google's ShieldGemma models are purpose-built content safety classifiers derived from the Gemma architecture. They are trained to predict safety labels across four harm categories: sexually explicit content, dangerous content, harassment, and hate speech. ShieldGemma is available in multiple sizes (2B, 9B, 27B), allowing deployment-time trade-offs between latency and accuracy. A key design advantage is that ShieldGemma uses a probability-based scoring approach, enabling operators to set per-category thresholds that balance safety coverage against false positive rates for their specific use case.
+
+### Aegis Guard
+
+The Aegis Guard family of models, developed by NVIDIA, offers safety classification fine-tuned for conversational AI contexts. Aegis Guard models are trained on a permissive safety taxonomy that distinguishes between content that is unsafe in all contexts (such as CSAM or instructions for weapons of mass destruction) and content that may be permissible depending on the application (such as discussion of controlled substances in a harm-reduction context). This taxonomy-aware approach reduces false positives for applications where rigid content blocking would degrade the user experience. The approach aligns well with the principled safety framework described in [Constitutional AI & RLHF for Safety](/agent-43-constitutional-ai), where safety decisions are guided by explicit principles rather than blanket rules.
+
+## Indirect Prompt Injection
+
+Standard prompt injection involves a user directly crafting malicious inputs. Indirect prompt injection is a more insidious threat: the attack payload arrives through data the model processes rather than from the user's direct input. Greshake et al. (2023) systematically demonstrated that LLM-integrated applications are vulnerable to attacks embedded in web pages, emails, documents, and other data sources the model retrieves or processes. This threat is particularly relevant for RAG systems, tool-using agents, and multi-turn conversational applications.
+
+### Attack Vectors
+
+**RAG-Retrieved Documents**: When a model retrieves documents from external sources to ground its responses, adversaries can embed injection payloads in those documents. For example, a website indexed by a search-augmented LLM might contain hidden text instructing the model to ignore its system prompt. The model processes this text as context and may follow the embedded instructions. This is especially dangerous because the user never sees or controls the retrieved content. For techniques to verify whether model outputs are actually grounded in retrieved content, see [Hallucination Detection & Mitigation: Grounding & Verification](/agent-45-hallucination-mitigation).
+
+**Tool Outputs**: In agentic applications where the LLM calls APIs or tools, the responses from those tools can contain injection payloads. If a tool returns user-controlled data (such as a customer support system retrieving customer-submitted tickets), an attacker can embed instructions in the data that the agent then processes as part of its context.
+
+**Multi-Turn Conversations**: Over extended conversations, earlier turns can be manipulated to influence later behavior. An attacker might establish context in early messages that gradually shifts the model's behavior, or exploit conversation history that includes content from other users in shared contexts.
+
+### Detection Strategies
+
+Detecting indirect prompt injection requires treating all non-system content as potentially adversarial, regardless of its source:
+
+```python
+class IndirectInjectionDetector:
+    def __init__(self, classifier_model: str):
+        self.classifier = pipeline(
+            "text-classification",
+            model=classifier_model
+        )
+
+    def scan_retrieved_documents(
+        self, documents: list[str], threshold: float = 0.75
+    ) -> list[dict]:
+        """Scan RAG-retrieved documents for injection payloads."""
+        flagged = []
+        for i, doc in enumerate(documents):
+            # Check each document chunk for injection patterns
+            result = self.classifier(doc[:2048])  # truncate for classifier
+            if result[0]["label"] == "INJECTION" and result[0]["score"] > threshold:
+                flagged.append({
+                    "document_index": i,
+                    "score": result[0]["score"],
+                    "snippet": doc[:200]
+                })
+        return flagged
+
+    def scan_tool_output(self, tool_name: str, output: str) -> bool:
+        """Scan tool outputs before they are added to the model context."""
+        result = self.classifier(output[:2048])
+        is_suspicious = (
+            result[0]["label"] == "INJECTION" and result[0]["score"] > 0.7
+        )
+        if is_suspicious:
+            logging.warning(
+                f"Potential injection in tool output from {tool_name}"
+            )
+        return is_suspicious
+```
+
+Architectural mitigations include privilege separation (using a less-capable model to summarize untrusted content before passing it to the primary model), data-instruction separation (clearly delimiting data from instructions using structured formats), and output provenance tracking (tagging which parts of the context came from untrusted sources). These strategies should be validated through systematic [Red Teaming & Adversarial Testing](/agent-35-red-teaming) before production deployment.
+
+## Multi-Modal Content Safety
+
+As vision-language models (VLMs) become prevalent in production applications, guardrails must extend beyond text. Models that accept image inputs or generate image outputs introduce new categories of safety risk that text-only classifiers cannot address.
+
+### Image Input Safety
+
+Images submitted to VLMs can contain harmful content, embedded text that constitutes prompt injection (text rendered in an image that the model reads and follows), or adversarial perturbations designed to manipulate model behavior. Input safety for images requires dedicated classifiers:
+
+```python
+from transformers import pipeline
+from PIL import Image
+
+class ImageSafetyFilter:
+    def __init__(self):
+        self.nsfw_classifier = pipeline(
+            "image-classification",
+            model="Falconsai/nsfw_image_detection"
+        )
+
+    def check_image(self, image_path: str) -> dict:
+        image = Image.open(image_path)
+        results = self.nsfw_classifier(image)
+        scores = {r["label"]: r["score"] for r in results}
+
+        is_safe = scores.get("nsfw", 0.0) < 0.3
+        return {
+            "safe": is_safe,
+            "scores": scores,
+            "action": "allow" if is_safe else "block"
+        }
+```
+
+### NSFW and Harmful Content Detection
+
+Production image safety typically requires multiple classifiers running in parallel: NSFW detection for sexual content, violence detection for graphic imagery, and hate symbol detection for extremist iconography. These classifiers should be calibrated against a representative dataset of both harmful and benign images to establish thresholds that balance safety against false positive rates. Images of medical procedures, art history content, and news photography frequently trigger false positives in overly aggressive classifiers.
+
+### Deepfake and Synthetic Media Detection
+
+As generative models produce increasingly realistic images, the ability to detect synthetic media becomes a safety concern. Deepfake detection classifiers analyze images for artifacts characteristic of generative models -- inconsistent lighting, unnatural skin textures, spectral anomalies, and compression artifacts that differ between real and generated images. While no current detector is fully reliable, incorporating synthetic media detection as a signal (rather than a hard gate) in the guardrail pipeline adds a useful layer of defense, especially for applications where user-submitted images are presented as authentic.
+
+### Output Image Safety
+
+Models that generate images require output-side guardrails as well. Generated images should be classified for NSFW content, checked for recognizable faces (to prevent unauthorized likeness generation), and scanned for copyrighted content before being served to users. These checks mirror the text-side output filtering pipeline but use vision-specific classifiers.
+
+## Guardrail Evaluation and Benchmarking
+
+Guardrails that are not rigorously evaluated provide a false sense of security. Measuring guardrail effectiveness requires the same systematic approach used for any classification system: labeled datasets, precision/recall analysis, and real-world performance monitoring.
+
+### Measuring Effectiveness
+
+A guardrail is a binary classifier: it either blocks or allows content. The standard metrics apply. **Precision** measures what fraction of blocked content was actually harmful -- low precision means high false positive rates, which degrade user experience. **Recall** measures what fraction of harmful content was caught -- low recall means harmful content gets through, which creates safety risk. The F1 score provides a single metric, but in practice the trade-off between precision and recall must be set explicitly based on the application's risk profile.
+
+```python
+from sklearn.metrics import precision_recall_fscore_support, confusion_matrix
+
+def evaluate_guardrail(
+    guardrail_fn, test_inputs: list[str], labels: list[int]
+) -> dict:
+    """Evaluate guardrail against labeled dataset.
+    labels: 1 = harmful (should be blocked), 0 = benign (should pass).
+    """
+    predictions = [1 if not guardrail_fn(inp) else 0 for inp in test_inputs]
+    precision, recall, f1, _ = precision_recall_fscore_support(
+        labels, predictions, average="binary"
+    )
+    tn, fp, fn, tp = confusion_matrix(labels, predictions).ravel()
+
+    return {
+        "precision": precision,
+        "recall": recall,
+        "f1": f1,
+        "false_positive_rate": fp / (fp + tn),
+        "false_negative_rate": fn / (fn + tp),
+        "total_samples": len(labels),
+    }
+```
+
+### Attack Datasets and Benchmarks
+
+Several benchmarks exist for evaluating guardrail robustness. **ToxicChat** provides real-world toxic user inputs collected from LLM conversations, offering a more realistic distribution than synthetically generated attack prompts. **HarmBench** (Mazeika et al., 2024) standardizes evaluation across multiple attack and defense methods, enabling apples-to-apples comparisons. **JailbreakBench** focuses specifically on jailbreak attacks and provides leaderboards for both attack success rates and defense robustness. For a comprehensive treatment of how to construct and run adversarial evaluations, see [Red Teaming & Adversarial Testing: Automated & Manual Approaches](/agent-35-red-teaming).
+
+### False Positive Rates and User Experience
+
+False positives are the hidden cost of aggressive guardrails. Every legitimate request that is incorrectly blocked is a user experience failure. In production, false positive rates above 1-2% on benign traffic cause measurable user dissatisfaction and loss of trust. Measuring this requires maintaining a representative corpus of benign but edge-case inputs -- questions about sensitive topics asked in good faith, academic discussions of harmful phenomena, creative writing with dark themes, and similar inputs that should pass through guardrails.
+
+The relationship is not linear: moving recall from 95% to 99% on harmful content often requires tripling the false positive rate. Production systems should explicitly define their operating point on this curve and monitor it continuously. A/B testing guardrail configurations against user satisfaction metrics provides the most reliable signal for calibrating this trade-off.
+
+### Continuous Evaluation
+
+Static benchmarks are necessary but insufficient. Adversarial attacks evolve, and guardrails that performed well against yesterday's attack techniques may fail against tomorrow's. Continuous evaluation requires a pipeline that regularly runs the guardrail against updated attack datasets, monitors false positive rates on production traffic, and flags performance degradation for human review. This feedback loop is what separates a deployed guardrail from a robust one.
+
+## Cross-References
+
+This article is part of a broader treatment of LLM safety and robustness:
+
+- **[Adversarial Prompting: Jailbreaks, Injections & Defense Strategies](/agent-12-adversarial-prompting)** covers the attack techniques that guardrails must defend against, including jailbreak taxonomies and defense-in-depth strategies.
+- **[Constitutional AI & RLHF for Safety](/agent-43-constitutional-ai)** explains the training-time safety techniques that complement runtime guardrails, including principle-guided self-critique and reinforcement learning from human feedback.
+- **[Hallucination Detection & Mitigation: Grounding & Verification](/agent-45-hallucination-mitigation)** provides detailed treatment of factual grounding checks, which are a critical output guardrail for RAG applications.
+- **[Red Teaming & Adversarial Testing: Automated & Manual Approaches](/agent-35-red-teaming)** covers systematic methods for probing guardrail effectiveness, including automated red teaming frameworks and safety benchmarks.
+
 ## Key Takeaways
 
 - **Multi-layer defense** is essential: no single guardrail mechanism is sufficient. Combine input validation, model-level safety training, output filtering, and monitoring.
 - **Input guardrails** should detect prompt injection, classify topics, sanitize inputs, and enforce rate limits before the model processes a request.
 - **Output guardrails** should classify content safety, detect PII, verify factual grounding, and validate against output schemas.
-- **NeMo Guardrails** provides a programmable, conversation-flow-based approach using the Colang DSL, well-suited for chatbot and dialog applications.
+- **Purpose-built safety classifiers** like Llama Guard 3, ShieldGemma, and Aegis Guard outperform general toxicity classifiers for LLM applications by using fine-grained safety taxonomies and configurable thresholds.
+- **Indirect prompt injection** through RAG documents, tool outputs, and multi-turn conversations requires scanning all non-system content for injection payloads before it enters the model context.
+- **Multi-modal guardrails** are essential for vision-language models: image inputs and outputs need NSFW detection, violence classification, and synthetic media detection in addition to text-based safety checks.
+- **Guardrail evaluation** demands the same rigor as model evaluation: labeled attack datasets, precision/recall measurement, false positive monitoring, and continuous re-evaluation against evolving threats.
+- **NeMo Guardrails** provides a programmable, conversation-flow-based approach. Colang 2.0 introduces an event-driven programming model with concurrent flows, well-suited for complex agentic applications.
 - **Guardrails AI** focuses on output validation with composable validators, well-suited for structured output use cases.
 - **Performance matters**: guardrails add latency, so use lightweight models, parallelize independent checks, and implement graceful degradation.
 - **Monitoring and logging** are not optional -- they enable continuous improvement and incident response.

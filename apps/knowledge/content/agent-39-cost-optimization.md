@@ -372,7 +372,7 @@ Small changes to prompts can significantly impact token costs:
 
 3. **Set appropriate max_tokens**: Always set `max_tokens` to a reasonable value. A request with `max_tokens=4096` that only needs 100 tokens wastes scheduling resources and can lead to higher latency.
 
-4. **Avoid chain-of-thought when unnecessary**: CoT prompting can increase output tokens by 3-10x. Use it for complex reasoning tasks but skip it for simple extraction or classification.
+4. **Avoid chain-of-thought when unnecessary**: CoT prompting (see [Few-Shot & Chain-of-Thought Prompting](/knowledge/agent-08-few-shot-chain-of-thought)) can increase output tokens by 3-10x. Use it for complex reasoning tasks but skip it for simple extraction or classification.
 
 ```python
 # Before: verbose prompt (high token count)
@@ -434,18 +434,212 @@ Many organizations use a hybrid strategy:
 - **Specialized models self-hosted**: Fine-tuned or domain-specific models that aren't available via APIs
 - **General models via API**: Use API providers for frontier models that are impractical to self-host
 
+## Prompt Compression
+
+### The Token Bloat Problem
+
+Production LLM pipelines often send far more context than the model actually needs. RAG systems retrieve entire document chunks when only a few sentences are relevant. Conversation histories accumulate redundant turns. System prompts contain verbose instructions that could be stated concisely. Prompt compression techniques address this by systematically reducing input token counts without sacrificing the information the model needs to generate correct outputs.
+
+### LLMLingua and Selective Context Compression
+
+LLMLingua (and its successor LLMLingua-2) uses a small language model to identify and remove tokens that contribute minimally to the prompt's meaning. The approach computes per-token perplexity using a compact model like GPT-2 or LLaMA-7B and drops tokens with the lowest information content -- function words, filler phrases, and redundant context that a capable model can infer from surrounding tokens.
+
+```python
+from llmlingua import PromptCompressor
+
+compressor = PromptCompressor(
+    model_name="microsoft/llmlingua-2-bert-base-multilingual-cased-meetingbank",
+    device_map="cpu"
+)
+
+# Compress a long RAG context before sending to the LLM
+compressed = compressor.compress_prompt(
+    context=[retrieved_doc_1, retrieved_doc_2, retrieved_doc_3],
+    instruction="Answer the user's question based on the context.",
+    question=user_query,
+    rate=0.5,  # Target 50% compression
+    condition_in_question="after_condition",
+    reorder_context="sort"
+)
+
+# compressed["compressed_prompt"] contains the shortened prompt
+# compressed["origin_tokens"] vs compressed["compressed_tokens"] shows savings
+response = llm_client.generate(compressed["compressed_prompt"])
+```
+
+In practice, LLMLingua-2 achieves 2-5x compression ratios on RAG contexts with less than 2% degradation on downstream task accuracy. At $3/MTok, compressing a 4000-token context to 1500 tokens saves $0.0075 per request -- meaningful at scale.
+
+### Practical Compression Strategies
+
+Beyond algorithmic compression, several manual techniques reduce token counts effectively:
+
+1. **Selective context retrieval**: Instead of sending full document chunks, extract only the sentences most relevant to the query. A lightweight re-ranker (e.g., a cross-encoder) can score individual sentences and filter out low-relevance ones before they reach the LLM.
+
+2. **Conversation summarization**: For multi-turn conversations, periodically summarize older turns into a compact summary rather than carrying the full history. A 20-turn conversation might be 4000 tokens; a summary of the first 15 turns plus the last 5 verbatim might be 1200 tokens.
+
+3. **Schema pruning for function calling**: If your function schema includes 30 tools but the current context only requires 5, dynamically filter the tool definitions sent in the prompt. Tool schemas can easily consume 2000+ tokens.
+
+4. **Abbreviation and symbol substitution**: In system prompts (which are under your control), use concise notation. "Respond with JSON containing keys: name (string), score (0-100), tags (string array)" is far shorter than a verbose English description of the same schema.
+
+These techniques compose well with each other and with prompt caching -- compressing the variable portion of a prompt while caching the static prefix yields multiplicative savings.
+
+## Reasoning Model Economics
+
+### The Thinking Token Tax
+
+Reasoning models -- OpenAI's o1 and o3 series, Anthropic's extended thinking mode, DeepSeek-R1, and Google's Gemini 2.0 Flash Thinking -- introduce a new cost dimension: thinking tokens. These models generate internal chain-of-thought reasoning before producing their final answer, and this internal reasoning consumes output tokens that you pay for.
+
+The cost implications are significant. A standard Claude Sonnet call answering a straightforward question might use 200 output tokens. The same question routed through extended thinking might use 2000+ thinking tokens plus 200 answer tokens -- a 10x increase in output token costs. For complex math or coding tasks, thinking token counts of 5,000-20,000 are common.
+
+| Model | Input ($/MTok) | Output ($/MTok) | Thinking Tokens | Typical Thinking Overhead |
+|---|---|---|---|---|
+| o1 | $15 | $60 | Billed as output | 3-20x output increase |
+| o3-mini | $1.10 | $4.40 | Billed as output | 2-10x output increase |
+| DeepSeek-R1 | $0.55 | $2.19 | Billed as output | 3-15x output increase |
+| Claude (extended thinking) | $3 | $15 | Billed as output | 2-10x output increase |
+
+### When Reasoning Models Pay For Themselves
+
+Despite higher per-request costs, reasoning models can be more cost-effective for tasks where standard models require multiple attempts, extensive prompt engineering, or human review:
+
+- **Complex code generation**: If a standard model needs 3 attempts (with human review between each) to produce correct code, while a reasoning model gets it right on the first try, the reasoning model is cheaper in total cost (including engineer time).
+- **Mathematical and logical tasks**: Problems requiring multi-step deduction see dramatic accuracy improvements with reasoning models, often eliminating the need for expensive verification pipelines.
+- **Agentic workflows**: When an agent makes sequential tool calls and an early mistake cascades into wasted downstream calls, a reasoning model's higher accuracy on the planning step can reduce total pipeline cost.
+
+For simple tasks -- classification, extraction, formatting -- reasoning models are pure overhead. The model routing pattern described earlier is essential here: route only tasks that benefit from extended reasoning to reasoning models.
+
+### Budget Management for Thinking Tokens
+
+Most reasoning model APIs allow you to cap thinking tokens. Use this aggressively:
+
+```python
+# Anthropic extended thinking with budget cap
+response = client.messages.create(
+    model="claude-sonnet-4-20250514",
+    max_tokens=16000,
+    thinking={
+        "type": "enabled",
+        "budget_tokens": 4000  # Cap thinking at 4000 tokens
+    },
+    messages=[{"role": "user", "content": complex_question}]
+)
+
+# Monitor thinking token usage for cost tracking
+thinking_tokens = sum(
+    block.thinking for block in response.content
+    if block.type == "thinking"
+)
+```
+
+Set thinking budgets based on task complexity. A task classifier (which itself uses a cheap model) can assign budget tiers: 1024 tokens for moderate reasoning, 4096 for complex analysis, 10000+ only for the hardest problems. This mirrors the model routing pattern but applied within a single model's reasoning capacity.
+
+## Multi-Modal Cost Optimization
+
+### The Cost of Vision, Audio, and Video
+
+Multi-modal inputs -- images, audio, and video -- are tokenized differently from text, and their cost profiles vary substantially. Understanding these costs is critical as more applications incorporate multi-modal capabilities.
+
+**Image tokens**: Both OpenAI and Anthropic tokenize images based on resolution. A typical 1024x1024 image consumes roughly 765-1000 tokens. High-resolution images (4K) can consume 4000+ tokens per image. At frontier model pricing ($10-15/MTok input), a single high-res image costs $0.04-0.06 to process -- equivalent to roughly 4000-6000 words of text.
+
+**Audio tokens**: OpenAI's audio models and Gemini's native audio processing tokenize audio at roughly 32-40 tokens per second. A 60-second audio clip becomes ~2000 tokens. For transcription-only tasks, a dedicated Whisper API call ($0.006/minute) is far cheaper than sending audio to a multi-modal model.
+
+**Video tokens**: Google's Gemini models process video at approximately 258 tokens per second. A 1-minute video clip becomes ~15,000 tokens -- equivalent in cost to a substantial text document.
+
+### Strategies for Reducing Multi-Modal Costs
+
+1. **Resize images before sending**: If the task does not require high resolution (e.g., classifying the general content of an image), downscale to 512x512 or lower. This can reduce image token counts by 4-8x.
+
+```python
+from PIL import Image
+import io, base64
+
+def optimize_image_for_llm(image_path: str, max_size: int = 768) -> str:
+    """Resize image to reduce token cost while preserving enough detail."""
+    img = Image.open(image_path)
+    img.thumbnail((max_size, max_size), Image.LANCZOS)
+
+    # Convert to JPEG for smaller payload (vs PNG)
+    buffer = io.BytesIO()
+    img.save(buffer, format="JPEG", quality=80)
+    return base64.b64encode(buffer.getvalue()).decode()
+```
+
+2. **Extract text from images before sending**: If the image contains text (screenshots, documents, receipts), run OCR first and send the extracted text instead. OCR is essentially free compared to vision model inference.
+
+3. **Use frame sampling for video**: Instead of sending every frame, sample key frames at intervals (e.g., 1 frame per second or on scene changes) and send those as individual images.
+
+4. **Route multi-modal tasks to specialized models**: Use a lightweight vision model for simple image tasks (classification, OCR, basic description) and reserve frontier multi-modal models for complex visual reasoning. Gemini Flash with vision is 50-100x cheaper than GPT-4o for image understanding tasks that do not require frontier-level reasoning.
+
+## Fine-Tuning vs. Prompting: Cost Comparison
+
+### The Economic Tradeoff
+
+Few-shot prompting and fine-tuning represent two ends of a cost spectrum. Few-shot prompting (see [Few-Shot & Chain-of-Thought Prompting](/knowledge/agent-08-few-shot-chain-of-thought)) has zero upfront cost but inflates every request by embedding examples in the prompt. Fine-tuning (see [Fine-tuning Fundamentals](/knowledge/agent-19-fine-tuning-fundamentals)) requires upfront investment in data curation and training compute, but the resulting model requires shorter prompts and often uses a cheaper model tier to achieve the same quality.
+
+### Break-Even Analysis Framework
+
+The decision to fine-tune should be driven by a concrete cost comparison:
+
+```
+Fine-tuning total cost = Data preparation + Training compute + Ongoing inference
+Prompting total cost   = Per-request cost * Request volume * Time period
+
+Variables:
+- N = number of few-shot examples in prompt (typically 3-8)
+- T_example = average tokens per example (~150-300)
+- T_system = system prompt tokens
+- R = requests per month
+- C_input = input cost per MTok
+- C_ft = fine-tuning training cost (one-time)
+- C_ft_input = fine-tuned model input cost per MTok
+```
+
+**Worked example**: A sentiment classification task using GPT-4o-mini.
+
+```
+Few-shot approach (5 examples, ~250 tokens each):
+  Extra prompt tokens per request: 5 * 250 = 1,250 tokens
+  At $0.15/MTok input: $0.0001875 per request
+  At 500,000 requests/month: $93.75/month in example tokens alone
+
+Fine-tuned approach:
+  Training cost: ~$5-25 (one-time, for a small dataset)
+  Inference savings: No few-shot examples needed, so 1,250 fewer
+    input tokens per request
+  Monthly savings: $93.75/month
+
+  Break-even: Less than 1 month
+```
+
+For high-volume applications (500K+ requests/month) with repetitive task patterns, fine-tuning almost always pays for itself within weeks. The savings compound further because fine-tuned models on cheaper architectures often match the quality of larger prompted models, enabling a drop from a mid-tier model to a fine-tuned lightweight model. For a detailed walkthrough of fine-tuning pipelines and when to apply techniques like [RLHF and preference optimization](/knowledge/agent-21-rlhf-preference), the alignment and training articles in this series cover the full process.
+
+### When Prompting Wins
+
+Fine-tuning is not always the right answer:
+
+- **Low volume**: Below ~10,000 requests/month, the operational overhead of maintaining a fine-tuned model (versioning, retraining, evaluation) rarely justifies the savings.
+- **Rapidly changing requirements**: If the task definition or output format changes frequently, re-fine-tuning each time is expensive and slow. Prompts can be updated instantly.
+- **Broad task coverage**: Fine-tuned models excel at narrow tasks. If your application needs to handle diverse, unpredictable queries, a prompted general model is more flexible.
+- **Frontier capability requirements**: For tasks that genuinely need frontier model reasoning, fine-tuning a smaller model may not reach acceptable quality regardless of training data.
+
 ## Summary and Key Takeaways
 
-1. **Model routing is the highest-impact optimization**: Using a cheap model for easy tasks and reserving expensive models for hard ones can reduce costs by 40-60% with minimal quality impact.
+1. **Model routing is the highest-impact optimization**: Using a cheap model for easy tasks and reserving expensive models for hard ones can reduce costs by 40-60% with minimal quality impact. Centralize routing logic through an [AI gateway](/knowledge/agent-42-ai-gateway) for consistency.
 
-2. **Prompt caching (both client-side and provider-side)** eliminates redundant computation. Provider-side prefix caching is especially valuable for applications with long, stable system prompts.
+2. **Prompt caching (both client-side and provider-side)** eliminates redundant computation. All three major providers now offer server-side prefix caching with 50-90% discounts on cached tokens -- this is free money for applications with stable prompt prefixes.
 
-3. **Batch APIs offer 50% discounts** for non-latency-sensitive workloads. Any pipeline that doesn't need real-time responses should use batch processing.
+3. **Prompt compression** via tools like LLMLingua or manual techniques (selective retrieval, conversation summarization, schema pruning) can reduce input tokens by 2-5x with minimal quality loss.
 
-4. **Token budgeting and monitoring are non-negotiable** in production. Without per-feature and per-user cost tracking, it's impossible to identify optimization opportunities or detect cost anomalies.
+4. **Reasoning models require careful budget management**: Thinking tokens can inflate output costs by 3-20x. Use thinking token caps and route only genuinely complex tasks to reasoning models.
 
-5. **System prompt optimization** is low-hanging fruit. Since system prompts are repeated on every request, reducing their length has a multiplied cost impact.
+5. **Multi-modal inputs are expensive**: A single high-res image costs as much as 4000-6000 words of text. Resize images, use OCR for text extraction, and route simple visual tasks to lightweight vision models.
 
-6. **Self-hosting rarely makes sense below ~$10K/month** in API spend for a single model, unless driven by privacy or customization requirements. The operational overhead and utilization challenges of GPU management erode the theoretical cost advantage.
+6. **Fine-tuning vs. prompting is a volume decision**: At 500K+ requests/month, fine-tuning (see [Fine-tuning Fundamentals](/knowledge/agent-19-fine-tuning-fundamentals)) almost always pays for itself by eliminating few-shot examples from prompts and enabling cheaper model tiers. At low volume, the operational overhead is not worth it.
 
-7. **Semantic caching is powerful but risky**: it can dramatically reduce costs for repetitive workloads but requires careful threshold tuning to avoid serving incorrect cached responses.
+7. **Batch APIs offer 50% discounts** for non-latency-sensitive workloads. Any pipeline that doesn't need real-time responses should use batch processing.
+
+8. **Token budgeting and monitoring are non-negotiable** in production. Without per-feature and per-user cost tracking, it's impossible to identify optimization opportunities or detect cost anomalies.
+
+9. **Self-hosting rarely makes sense below ~$10K/month** in API spend for a single model, unless driven by privacy or customization requirements. The operational overhead and utilization challenges of GPU management erode the theoretical cost advantage.
+
+10. **Semantic caching is powerful but risky**: it can dramatically reduce costs for repetitive workloads but requires careful threshold tuning to avoid serving incorrect cached responses.

@@ -275,7 +275,7 @@ def weighted_consensus(judge_verdicts: list[str],
 
 ### Diverse Judge Panels
 
-Use judges from different model families to reduce correlated biases. A panel might include GPT-4, Claude, and Gemini as judges. Since their biases are less likely to be correlated, the aggregate judgment is more robust.
+Use judges from different model families to reduce correlated biases. A panel might include GPT-4, Claude 3.5 Sonnet, and Gemini 1.5 Pro as judges. Since their biases are less likely to be correlated, the aggregate judgment is more robust.
 
 Li et al. (2023) showed that multi-judge panels with diverse models achieve higher agreement with human evaluators than any single judge model, even when the panel includes weaker individual judges.
 
@@ -291,13 +291,179 @@ LLM judges are unreliable in several important cases:
 
 **Cross-cultural evaluation**: LLM judges inherit the cultural biases of their training data and may not reliably evaluate content targeting audiences from underrepresented cultures.
 
+## Fine-Tuned Judge Models
+
+General-purpose frontier models like GPT-4 are effective judges, but a growing body of work shows that models specifically fine-tuned for evaluation can match or exceed their performance at a fraction of the inference cost.
+
+### Prometheus 2
+
+Prometheus 2 (Kim et al., 2024) is an open-source family of judge models fine-tuned on large-scale evaluation datasets. The key insight is that evaluation is itself a learnable skill: by training on thousands of (input, response, rubric, score, rationale) tuples, a smaller model can internalize the evaluation patterns that a general-purpose model applies through in-context learning.
+
+Prometheus 2 supports both absolute scoring and pairwise comparison modes. On the benchmarks tested, the 7B and 13B variants approach GPT-4 judge agreement with human annotators while running on a single consumer GPU. The model accepts custom rubrics, making it adaptable across tasks without re-training.
+
+### JudgeLM
+
+JudgeLM (Zhu et al., 2023) takes a complementary approach, fine-tuning LLaMA-based models on over 100,000 judge samples distilled from GPT-4 evaluations. The training data includes diverse evaluation scenarios -- single-answer grading, pairwise comparison, and multi-dimensional scoring -- which gives the model broad evaluation capabilities. JudgeLM also incorporates reference-based judging, where the model receives a gold-standard reference alongside the candidate response, improving accuracy on tasks where ground truth exists.
+
+### When to Use Fine-Tuned vs. General-Purpose Judges
+
+The decision depends on three factors:
+
+**Cost at scale.** If you are running thousands of evaluations per day -- common in continuous integration pipelines (see Article 36) or iterative prompt tuning -- the per-token cost of frontier API models adds up quickly. A fine-tuned 7B judge running on local hardware can reduce marginal cost to near zero after the initial infrastructure investment.
+
+**Evaluation quality requirements.** For high-stakes evaluations where you need the best possible agreement with human judgment, frontier models still hold an edge, particularly on novel or complex tasks outside the fine-tuned model's training distribution. For routine regression testing on well-defined rubrics, fine-tuned judges are often sufficient.
+
+**Privacy and deployment constraints.** Fine-tuned judge models can run entirely on-premises, which matters when evaluating outputs that contain sensitive data. Sending proprietary content to third-party APIs for evaluation may be unacceptable in regulated industries.
+
+A practical pattern is to use a fine-tuned judge as the first stage in a cascaded pipeline, escalating to a frontier model only when the fine-tuned judge's confidence is low. This captures the cost benefit without sacrificing quality on edge cases.
+
+## G-Eval and Chain-of-Thought Judging
+
+Standard judge prompts ask the model to provide a brief explanation and then a score. G-Eval (Liu et al., 2023) formalizes a more structured approach: have the judge reason step-by-step through explicit evaluation criteria before arriving at a score, then derive the final score from the probabilities of the reasoning steps.
+
+### The G-Eval Protocol
+
+G-Eval operates in three stages:
+
+1. **Criteria decomposition.** The evaluation criteria are broken into specific, sequential evaluation steps. For a coherence evaluation, the steps might be: (a) identify the main topic, (b) check whether each paragraph relates to the main topic, (c) assess whether transitions between ideas are logical, (d) determine whether the conclusion follows from the body.
+
+2. **Chain-of-thought evaluation.** The judge model executes each step, producing intermediate reasoning. This forces the model to engage with specific aspects of the response rather than forming a gestalt impression.
+
+3. **Probability-weighted scoring.** Rather than taking the judge's stated score at face value, G-Eval extracts the token-level probabilities for each possible score (1 through 5, say) and computes a weighted average. This produces a continuous score that is more fine-grained than the discrete output.
+
+```python
+def geval_score(judge_model, prompt, score_tokens):
+    """Extract probability-weighted score from judge output."""
+    response = judge_model.generate(prompt, return_logprobs=True)
+
+    # Extract log probabilities for score tokens (e.g., "1", "2", "3", "4", "5")
+    score_probs = {}
+    for token, logprob in response.token_logprobs.items():
+        if token in score_tokens:
+            score_probs[int(token)] = math.exp(logprob)
+
+    # Normalize probabilities
+    total = sum(score_probs.values())
+    if total == 0:
+        return None
+
+    weighted_score = sum(
+        score * (prob / total) for score, prob in score_probs.items()
+    )
+    return weighted_score
+```
+
+### Why Chain-of-Thought Judging Works
+
+The improvement from chain-of-thought judging parallels the well-documented benefit of chain-of-thought prompting in reasoning tasks. By forcing the judge to articulate its reasoning before scoring, the approach reduces several failure modes:
+
+- **Anchoring effects.** Without structured reasoning, judges often anchor on a first impression and adjust insufficiently. Step-by-step evaluation forces engagement with each criterion.
+- **Halo effects.** A response that excels on one dimension (say, eloquence) can inflate scores on other dimensions (say, accuracy). Explicit per-criterion reasoning reduces this cross-contamination.
+- **Score clustering.** LLM judges tend to compress their scores into a narrow range (often 7-9 on a 1-10 scale). Chain-of-thought reasoning combined with probability-weighted scoring produces a wider, more discriminative score distribution.
+
+Liu et al. (2023) demonstrated that G-Eval with GPT-4 achieved higher Spearman correlation with human judgments than any prior automated metric on summarization evaluation, including reference-based metrics like ROUGE and BERTScore. The same principle applies to other evaluation targets, including the evaluation frameworks discussed in Article 31.
+
+## Domain-Specific Judge Adaptation
+
+A judge prompt designed for evaluating general-knowledge chatbot responses will perform poorly when applied to code generation, medical question answering, or legal analysis. Each domain has distinct quality criteria, failure modes, and standards of correctness that a generic rubric cannot capture.
+
+### Calibrating Judges for Code
+
+Code evaluation has a significant advantage: outputs can be verified through execution. However, LLM judges are still valuable for assessing code quality dimensions that execution alone cannot capture -- readability, maintainability, idiomatic usage, and architectural decisions.
+
+An effective code judge rubric separates functional correctness (which should be verified by running tests) from qualitative assessment:
+
+```python
+CODE_JUDGE_RUBRIC = """Evaluate the code response on these dimensions.
+Note: functional correctness has already been verified by test execution.
+Focus your evaluation on code quality aspects.
+
+1. **Readability** (1-5): Clear naming, appropriate comments, logical structure
+2. **Idiomatic Usage** (1-5): Follows language conventions and best practices
+3. **Error Handling** (1-5): Handles edge cases, validates inputs, fails gracefully
+4. **Efficiency** (1-5): Appropriate algorithmic complexity, avoids unnecessary work
+5. **Security** (1-5): No injection vulnerabilities, safe data handling, proper auth checks
+
+For each dimension, explain your reasoning with specific references to the code,
+then provide a score. Do not evaluate whether the code produces correct output --
+that has been separately verified."""
+```
+
+This separation of concerns -- execution-based correctness checking plus LLM-based quality assessment -- produces evaluations that are both reliable and comprehensive. The execution-based component can be integrated into CI/CD pipelines (see Article 36) while the quality assessment runs in parallel.
+
+### Calibrating Judges for Medical and Legal Domains
+
+Medical and legal content evaluation requires domain expertise that general-purpose LLM judges only partially possess. Two patterns improve reliability:
+
+**Expert-seeded rubrics.** Instead of writing rubrics yourself, have domain experts define the evaluation criteria and anchor points. A medical rubric might include dimensions like "clinical accuracy," "appropriate caveats and contraindications," and "consistency with current guidelines." The rubric should include concrete examples of acceptable and unacceptable responses that reflect the domain's standards of care.
+
+**Reference-augmented judging.** Provide the judge with authoritative reference material alongside the response being evaluated. For a medical Q&A evaluation, include relevant clinical guidelines or textbook excerpts. This partially compensates for the judge model's potential knowledge gaps:
+
+```python
+DOMAIN_JUDGE_PROMPT = """You are evaluating a response about {domain}.
+
+[Authoritative Reference Material]
+{reference_context}
+
+[User Question]
+{question}
+
+[Response to Evaluate]
+{response}
+
+Using the reference material as ground truth, evaluate the response on:
+1. **Factual Consistency** (1-5): Does the response align with the reference material?
+2. **Appropriate Caveats** (1-5): Does it include necessary warnings and limitations?
+3. **Completeness** (1-5): Does it cover the key points from the reference?
+
+Flag any claims in the response that contradict the reference material."""
+```
+
+This approach connects to the broader retrieval-augmented pattern: the same retrieval infrastructure used for RAG-based generation can supply reference material for evaluation. The human evaluation methodology in Article 34 provides complementary guidance on when domain expert annotators are irreplaceable.
+
+### Custom Rubric Engineering Patterns
+
+Across domains, several rubric engineering patterns consistently improve judge quality:
+
+**Anchored scales with examples.** Instead of abstract descriptors ("excellent," "good," "poor"), provide concrete examples of responses at each score level. This calibrates the judge's internal scale to your domain's standards.
+
+**Negative criteria.** Specify what a response must *not* do. In medical contexts: "must not recommend specific dosages without professional consultation." In legal contexts: "must not present legal interpretation as settled law when there is active circuit disagreement." Negative criteria are often more actionable than positive ones.
+
+**Hierarchical rubrics.** Some criteria are prerequisites for others. A response that is factually wrong should not receive high marks for clarity or completeness, regardless of how well-written it is. Structure the rubric to enforce this hierarchy, either through explicit gating ("if Factual Accuracy < 3, cap Overall at 3") or through heavily weighted scoring.
+
+## Expanding the Judge Model Landscape
+
+The original MT-Bench work established GPT-4 as the default judge, but the landscape has evolved considerably. Two models have emerged as strong alternatives that diversify the judge panel and reduce single-vendor dependency.
+
+### Claude 3.5 Sonnet as Judge
+
+Anthropic's Claude 3.5 Sonnet brings distinct evaluation characteristics. Its training emphasis on careful reasoning and calibrated uncertainty makes it particularly effective at identifying hedged-but-correct responses that other judges might penalize for lacking confidence. In practice, Claude 3.5 Sonnet shows lower verbosity bias than GPT-4 -- it is less likely to prefer longer responses for their length alone -- and tends to be more conservative in its scores, which can be an advantage when you want a judge that errs toward skepticism.
+
+Claude 3.5 Sonnet is also effective in the role of a reward model surrogate, providing preference judgments that can feed into RLHF-style training loops (see Article 21). Its relatively long context window allows judging multi-turn conversations without truncation artifacts.
+
+### Gemini 1.5 Pro as Judge
+
+Google's Gemini 1.5 Pro offers a different evaluation profile. Its very large context window (up to 1M tokens in some configurations) makes it uniquely suited for evaluating long-form outputs -- full documents, multi-file code reviews, or extended dialogue transcripts -- where other judges would need chunked evaluation. Gemini 1.5 Pro also handles multimodal evaluation natively, which is relevant for tasks that combine text with images, charts, or code outputs.
+
+On standard evaluation benchmarks, Gemini 1.5 Pro's agreement with human judges is competitive with GPT-4, though each model has domain-specific strengths. The practical recommendation is to include both (or all three) in a diverse judge panel and weight them based on calibration performance for your specific task distribution.
+
+### Cost-Quality Tradeoffs Across Judge Models
+
+| Judge Model | Relative Cost | Strengths | Watch For |
+|---|---|---|---|
+| GPT-4 | High | Strong baseline, well-studied biases | Verbosity bias, self-enhancement if evaluating GPT outputs |
+| Claude 3.5 Sonnet | Medium | Lower verbosity bias, careful reasoning | Conservative scoring, may under-reward creative responses |
+| Gemini 1.5 Pro | Medium | Long context, multimodal | Less studied bias profile, newer calibration data needed |
+| Prometheus 2 (7B) | Low (self-hosted) | Custom rubric support, no API cost | Weaker on out-of-distribution tasks |
+| GPT-4o-mini / Claude Haiku | Low | Fast, good for cascaded first-stage | Lower agreement on nuanced judgments |
+
 ## Practical Implementation Guide
 
 ### Step-by-Step Pipeline
 
 1. **Define evaluation criteria** with specific rubrics
 2. **Build a calibration set** with human annotations (50-200 examples)
-3. **Select judge model(s)** -- start with the strongest available
+3. **Select judge model(s)** -- start with the strongest available (GPT-4, Claude 3.5 Sonnet, or Gemini 1.5 Pro)
 4. **Engineer the judge prompt** -- iterate on rubric specificity, debiasing instructions
 5. **Validate against calibration set** -- compute kappa, analyze failure modes
 6. **Deploy with position debiasing** -- swap order and check consistency
@@ -336,12 +502,15 @@ class ProductionJudge:
 
 ## Summary and Key Takeaways
 
-- **LLM-as-Judge is practical** for iterative development but is not a replacement for human evaluation on high-stakes decisions. Use it to narrow the search space, then validate top candidates with human judges.
-- **Pairwise comparison is more reliable** than absolute scoring. When using absolute scoring, provide detailed rubrics with anchored scales.
+- **LLM-as-Judge is practical** for iterative development but is not a replacement for human evaluation (see Article 34) on high-stakes decisions. Use it to narrow the search space, then validate top candidates with human judges.
+- **Pairwise comparison is more reliable** than absolute scoring. When using absolute scoring, provide detailed rubrics with anchored scales. G-Eval's chain-of-thought protocol further improves scoring discriminativeness.
 - **Position bias is real and measurable.** Always debias by evaluating with swapped order. Treat inconsistent judgments as ties.
-- **Calibrate before deploying.** Build a human-annotated calibration set and measure agreement. If kappa is below 0.6, iterate on your judge prompt and rubric.
-- **Multi-judge panels outperform single judges,** especially when using diverse model families. The cost increase is modest compared to the reliability gain.
+- **Calibrate before deploying.** Build a human-annotated calibration set and measure agreement. If kappa is below 0.6, iterate on your judge prompt and rubric. Article 31 covers the broader evaluation methodology that contextualizes these calibration decisions.
+- **Fine-tuned judge models** like Prometheus 2 and JudgeLM offer cost-effective alternatives to frontier API judges, especially for high-volume evaluation in CI/CD pipelines (see Article 36).
+- **Multi-judge panels outperform single judges,** especially when using diverse model families. GPT-4, Claude 3.5 Sonnet, and Gemini 1.5 Pro each bring distinct evaluation characteristics that complement one another.
+- **Domain-specific rubrics are essential.** Generic evaluation criteria fail in specialized domains like code, medicine, and law. Invest in expert-seeded rubrics and reference-augmented judging for domain tasks.
 - **LLM judges fail on factual verification and math.** For these tasks, use execution-based or retrieval-based evaluation methods instead of or alongside LLM judgment.
+- **LLM judges and reward models are converging.** The same preference judgments used in LLM-as-Judge evaluation can feed RLHF training loops (see Article 21), blurring the line between evaluation and training signal.
 - **Log everything.** Judge outputs are data. Analyze disagreement patterns to improve both the judge and the evaluated system.
 
-The LLM-as-Judge paradigm represents a significant advance in evaluation scalability, but only when deployed with an understanding of its limitations and appropriate calibration against human judgment.
+The LLM-as-Judge paradigm represents a significant advance in evaluation scalability, but only when deployed with an understanding of its limitations, appropriate calibration against human judgment, and rubrics engineered for the specific domain and task.

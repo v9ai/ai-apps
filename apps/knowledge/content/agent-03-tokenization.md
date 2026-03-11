@@ -302,11 +302,80 @@ A growing line of research seeks to eliminate the tokenization step entirely:
 
 The challenge is sequence length: byte-level sequences are 3-5x longer than token-level sequences, making the $O(n^2)$ attention cost prohibitive. MegaByte addresses this with a hierarchical architecture that processes patches of bytes locally and attends across patches globally.
 
+More recently, Meta's **Byte Latent Transformer (BLT)** (**Pagnoni et al., 2024**) advanced the byte-level paradigm by introducing *dynamic patching* — rather than using fixed-size byte patches, BLT groups bytes into variable-length patches based on the entropy of the next byte. High-entropy boundaries (where the next byte is hard to predict) trigger patch boundaries, producing patches that roughly correspond to linguistically meaningful units. BLT matches tokenizer-based LLM performance at scales up to 8B parameters while eliminating the tokenization step entirely. This is significant because it demonstrates, for the first time at meaningful scale, that the inductive bias introduced by a learned tokenizer is not strictly necessary — the model can learn its own segmentation implicitly. BLT also exhibits stronger robustness to noisy inputs and improved performance on orthographically unusual text, since there is no vocabulary mismatch to cause degradation.
+
 ### Character-Level Models
 
 **Tay et al. (2022)** explored character-level transformers and found them competitive at sufficient scale, especially for tasks requiring character-level understanding (spelling, morphology, phonetics).
 
 These approaches remain niche but may become more practical as attention efficiency improves (through Flash Attention, linear attention approximations, or state-space models).
+
+## Multimodal Tokenization
+
+As language models expand beyond text to process images, audio, and video, tokenization has become a multimodal problem. The core challenge is the same as in text: convert continuous, high-dimensional input into a discrete sequence of tokens that a transformer can process. But the solutions look very different for each modality.
+
+### Vision Tokenization
+
+Vision transformers (ViTs) tokenize images by dividing them into fixed-size patches — typically 14x14 or 16x16 pixels — and projecting each patch through a linear embedding layer to produce a token vector. A 224x224 image at 14x14 patch size yields 256 visual tokens. This patch embedding is the visual analogue of a text embedding lookup: it maps raw input to the token dimension the transformer expects.
+
+Multimodal LLMs like LLaVA, GPT-4V, and Gemini use a pretrained vision encoder (commonly a ViT trained with contrastive objectives) to produce visual token sequences that are then injected into the language model's token stream. The vision encoder acts as the "tokenizer" for images. **SigLIP** (**Zhai et al., 2023**), a sigmoid-loss variant of CLIP, has become a popular choice for the visual encoder in recent multimodal models because its training objective scales more efficiently to large batch sizes and produces representations well-suited to language model consumption.
+
+The number of visual tokens per image is a critical engineering parameter. High-resolution processing demands more tokens — Gemini 1.5 Pro, for instance, uses dynamic tiling to represent high-resolution images as sequences of hundreds of visual tokens. This directly trades off against context window budget, since every visual token displaces a text token. Techniques like **Perceiver resampler** cross-attention (used in Flamingo) and **abstractor** modules compress the visual token sequence to a fixed, smaller number of tokens, limiting the context window cost regardless of image resolution (see [Article 49: Vision-Language Models](./agent-49-vision-language-models.md) for architectural details on visual encoders and their integration with language models).
+
+### Audio Tokenization
+
+Audio tokenization takes two distinct approaches depending on whether the goal is understanding or generation.
+
+For **speech understanding** (ASR, spoken language understanding), models like Whisper extract log-mel spectrogram features from raw audio — typically 80 or 128 mel-frequency bins computed over 25ms windows with 10ms stride. These spectral features are then processed by a convolutional stem that downsamples the time dimension before feeding into a transformer encoder. Each resulting token represents roughly 40-80ms of audio. This is functionally equivalent to text tokenization: converting a continuous signal into a sequence of discrete representations at a practical granularity (see [Article 50: Audio & Speech AI](./agent-50-audio-speech-ai.md) for a full treatment of Whisper's architecture and speech processing pipelines).
+
+For **audio generation** and speech-to-speech models, neural audio codecs like **EnCodec** (**Defossez et al., 2022**) and **SoundStorm** tokenize audio into discrete codes using residual vector quantization (RVQ). EnCodec compresses 24kHz audio to as few as 1.5 kbps, producing a hierarchy of discrete token streams at different quantization levels. Models like AudioLM and VALL-E consume and generate these discrete audio tokens, enabling audio modeling with the same autoregressive or masked-prediction objectives used for text.
+
+### Unifying Modalities in a Single Sequence
+
+The dominant integration pattern in multimodal models is "early fusion" at the token level: visual tokens, audio tokens, and text tokens are concatenated into a single sequence and processed by a shared transformer backbone. This requires that all modalities produce tokens in the same embedding dimension, but it does not require a shared vocabulary — special separator tokens delineate modality boundaries.
+
+Gemini takes this approach most aggressively, interleaving image, audio, video, and text tokens in a single context. The tokenization choices for each modality directly determine the total sequence length and, consequently, what fits within the context window. A 30-second audio clip at 50 tokens/second consumes 1,500 tokens — the same as roughly 6,000 characters of English text. These budget constraints make efficient multimodal tokenization an active engineering concern, with recent work focused on adaptive token counts per modality based on information density.
+
+## Tokenizer Selection for New Projects
+
+Choosing a tokenizer is one of the earliest and most consequential decisions in any LLM project, yet it rarely receives proportional deliberation. The decision framework depends on whether you are pretraining from scratch, fine-tuning an existing model, or building an application on top of a model API.
+
+### When to Reuse an Existing Tokenizer
+
+For **fine-tuning** or **continued pretraining**, the answer is almost always to reuse the base model's tokenizer unchanged. Modifying the vocabulary invalidates the pretrained embedding weights and output projection — every added or removed token is effectively untrained. Even adding a handful of special tokens requires careful initialization and targeted training.
+
+For **new pretraining runs**, reusing a well-established tokenizer (e.g., Llama's SentencePiece vocabulary, or GPT-4's tiktoken cl100k_base) is a reasonable default. These tokenizers were trained on large, diverse corpora and encode English and common programming languages efficiently. The engineering cost of training and validating a custom tokenizer is non-trivial, and the gains are often marginal for general-purpose models.
+
+### When to Train a Custom Tokenizer
+
+A custom tokenizer is justified when the domain distribution differs significantly from general web text:
+
+- **Specialized languages**: if the primary use case involves languages underrepresented in standard tokenizers, a custom tokenizer trained on a balanced corpus will produce dramatically better token fertility. A model serving primarily Thai, Burmese, or Amharic users should not inherit an English-centric vocabulary.
+- **Domain-specific notation**: medical terminology, chemical formulas (SMILES strings), mathematical notation, or legal citations may be heavily fragmented by general-purpose tokenizers. Training BPE on domain corpora ensures these common patterns become single tokens.
+- **Code-heavy workloads**: if the model is primarily for code generation, the tokenizer should be trained on code to ensure that common language keywords, operators, and indentation patterns tokenize cleanly. StarCoder and CodeLlama both use code-optimized tokenizers for this reason.
+
+### Vocabulary Size as an Architectural Parameter
+
+Vocabulary size interacts with model size in ways that are often underappreciated. The embedding matrix contains $V \times d$ parameters, and the output projection (language model head) contains another $V \times d$ — together, these scale linearly with vocabulary size (see [Article 01: Transformer Architecture](./agent-01-transformer-architecture.md) for how embeddings fit into the overall parameter budget). For a 70B-parameter model, the difference between a 32K and 128K vocabulary at $d = 8192$ is roughly $2 \times 96000 \times 8192 \approx 1.6B$ parameters — a rounding error. For a 1B-parameter model, that same difference is over 10% of total parameters, and many of those embedding vectors will be undertrained.
+
+The practical guidance follows from this math:
+
+| Model Scale | Recommended Vocab Size | Rationale |
+|---|---|---|
+| < 1B parameters | 16K-32K | Minimize embedding tax; every parameter matters |
+| 1B-10B parameters | 32K-64K | Balance sequence length and embedding overhead |
+| 10B+ parameters | 64K-128K+ | Embedding cost is negligible; shorter sequences reduce serving cost |
+
+Larger vocabularies also improve inference throughput by reducing sequence length — fewer tokens means fewer forward passes in autoregressive generation. For serving-cost-sensitive deployments, a larger vocabulary can pay for itself even if some tokens are rarely used (see [Article 04: Model Architectures](./agent-04-model-architectures.md) for how vocabulary choices interact with architecture-level decisions like MoE routing and multi-token prediction).
+
+### Evaluating Tokenizer Quality
+
+Before committing to a tokenizer, evaluate it empirically on representative data from your target domain:
+
+- **Fertility** (tokens per word or tokens per character) across all target languages and domains. Lower is better, but consistency across languages matters more than the absolute number.
+- **Roundtrip fidelity**: verify that encode-then-decode is lossless for all expected inputs, including unicode edge cases, code with unusual indentation, and mixed-language text.
+- **Token boundary quality**: inspect whether token boundaries fall at linguistically or structurally meaningful points. Tokens that split words mid-morpheme or split numbers at inconsistent positions signal problems.
+- **Embedding utilization**: after training, check what fraction of the vocabulary is actually used at reasonable frequency. A vocabulary where 30% of tokens appear fewer than 100 times in the training corpus represents wasted parameters, and those rarely-seen tokens will have poorly trained embeddings (see [Article 13: Embedding Models](./agent-13-embedding-models.md) for how embedding quality impacts downstream retrieval and similarity tasks).
 
 ## Summary and Key Takeaways
 

@@ -437,6 +437,263 @@ Consider a document that begins "Einstein developed the theory of general relati
 
 The limitation is that late chunking requires the full document to fit within the model's context window. For very long documents, a sliding window approach with overlap can partially mitigate this, but the fundamental context window limitation remains.
 
+## Contextual Retrieval: LLM-Augmented Chunk Context
+
+Late chunking addresses context loss at the embedding level, but there is a more direct approach: use an LLM to explicitly inject context into each chunk before embedding. Anthropic introduced this technique as "Contextual Retrieval" in 2024, and it has since become one of the highest-impact improvements available to RAG practitioners.
+
+### The Problem Contextual Retrieval Solves
+
+Consider a financial report where Chapter 3 discusses revenue figures. A chunk from that chapter might read: "Revenue increased 23% year-over-year, driven primarily by expansion in the APAC region." In isolation, this chunk lacks critical context -- which company? Which fiscal year? Which product line? The embedding captures the general concept of "revenue growth in APAC," but a query about "Acme Corp Q3 2024 revenue" may not surface this chunk because the named entities were in a different section entirely.
+
+### How It Works
+
+Before embedding each chunk, an LLM (typically a fast, inexpensive model like Claude Haiku or GPT-4o-mini) reads the full document and generates a short contextual preamble for the chunk. This preamble is prepended to the chunk text, and the combined text is what gets embedded and stored.
+
+```python
+import anthropic
+
+client = anthropic.Anthropic()
+
+def add_contextual_header(
+    document: str,
+    chunk: str,
+    model: str = "claude-haiku"
+) -> str:
+    """Use an LLM to generate contextual information for a chunk."""
+    prompt = f"""<document>
+{document}
+</document>
+
+Here is a chunk from that document:
+<chunk>
+{chunk}
+</chunk>
+
+Provide a short (2-3 sentence) context that situates this chunk within the
+overall document. Include key entities, the document section, and any
+referents that the chunk alone does not resolve. Return ONLY the context."""
+
+    response = client.messages.create(
+        model=model,
+        max_tokens=200,
+        messages=[{"role": "user", "content": prompt}]
+    )
+
+    context = response.content[0].text
+    return f"{context}\n\n{chunk}"
+```
+
+The result for our example chunk might become: "This chunk is from Acme Corp's 2024 Annual Report, Chapter 3 (Revenue Analysis), discussing fiscal year 2024 results for the enterprise SaaS product line. Revenue increased 23% year-over-year, driven primarily by expansion in the APAC region."
+
+### Impact and Cost Trade-offs
+
+Anthropic reported that contextual retrieval reduced retrieval failure rates by 49% when combined with hybrid search (see [Retrieval Strategies](/agent-16-retrieval-strategies) for hybrid search architectures). The improvement is especially pronounced for documents with extensive cross-referencing, coreference, and implicit context -- technical manuals, legal contracts, and research papers.
+
+The cost is real: every chunk requires an LLM call during ingestion. For a corpus of 100,000 chunks, that means 100,000 API calls. Prompt caching helps significantly -- since the full document is repeated across all chunks from that document, the document portion of the prompt is cached after the first call, reducing cost by 80-90% for subsequent chunks from the same document. The approach is best understood as a one-time ingestion cost that pays dividends across every subsequent query.
+
+## Proposition-Based Chunking
+
+While contextual retrieval enriches conventional chunks, proposition-based chunking rethinks what a chunk should contain in the first place. Introduced by Chen et al. (2023) in "Dense X Retrieval: What Retrieval Granularity Should We Use?", this approach decomposes text into atomic, self-contained propositions -- individual facts that can stand alone without requiring surrounding context.
+
+### From Passages to Propositions
+
+A traditional chunk might read: "Founded in 1976 by Steve Jobs, Steve Wozniak, and Ronald Wayne, Apple initially sold hand-built computers. The company went public in 1980, making more millionaires than any IPO in history up to that point."
+
+Proposition-based chunking decomposes this into:
+1. "Apple was founded in 1976."
+2. "Apple was founded by Steve Jobs, Steve Wozniak, and Ronald Wayne."
+3. "Apple initially sold hand-built computers."
+4. "Apple went public in 1980."
+5. "Apple's 1980 IPO created more millionaires than any previous IPO."
+
+Each proposition is a complete, self-contained fact. Pronouns are resolved. Implicit subjects are made explicit.
+
+### Implementation
+
+```python
+def extract_propositions(text: str, llm_client) -> list[str]:
+    """Decompose text into atomic, self-contained propositions."""
+    prompt = f"""Decompose the following text into clear, atomic propositions.
+Each proposition should:
+- Express exactly one fact
+- Be self-contained (no unresolved pronouns or references)
+- Include necessary context (names, dates, locations)
+- Be understandable without reading the original text
+
+Text:
+{text}
+
+Return each proposition on a new line, prefixed with a dash."""
+
+    response = llm_client.generate(prompt)
+    propositions = [
+        line.strip().lstrip("- ")
+        for line in response.split("\n")
+        if line.strip().startswith("-")
+    ]
+    return propositions
+```
+
+### When Propositions Excel
+
+Proposition-based chunking shines for **factoid retrieval** -- queries that target a specific, discrete fact. When a user asks "When did Apple go public?", a proposition containing exactly that fact produces a near-perfect embedding match. The embedding for the query and the embedding for the proposition occupy the same narrow region of the vector space, because they express the same atomic idea.
+
+The trade-off is granularity: propositions are typically 10-30 tokens, far smaller than conventional chunks. This means dramatically more vectors to store and search (see [Vector Databases](/agent-14-vector-databases) for indexing considerations at scale). It also means each retrieved proposition carries less context for generation. A common mitigation is to pair proposition-based retrieval with a parent-child architecture -- retrieve by proposition, but pass the original passage to the LLM.
+
+The computational cost of decomposition is significant, as it requires an LLM call per passage. For large corpora, consider applying proposition decomposition selectively to high-value or fact-dense documents, while using conventional chunking for narrative or expository content.
+
+## Multi-Modal Document Processing
+
+Real-world RAG systems rarely ingest clean plain text. Production pipelines face PDFs with mixed layouts, scanned documents, embedded tables, charts, and images. How text is extracted from these documents determines the ceiling for every downstream chunking strategy.
+
+### The Document Parsing Landscape
+
+Several tools have emerged to handle complex document formats:
+
+**DocTR** (Document Text Recognition) is an open-source OCR library built on deep learning. It combines a text detection model (DBNet or LinkNet) with a text recognition model (CRNN or SAR) to extract text from images and scanned PDFs. DocTR preserves spatial layout information, which is critical for reconstructing reading order in multi-column documents.
+
+**Unstructured** provides a higher-level abstraction, offering a `partition` function that automatically detects element types (titles, narrative text, tables, list items, images) and returns structured elements with metadata. This is particularly valuable because it distinguishes between element types, enabling type-aware chunking downstream.
+
+**LlamaParse** (LlamaIndex) takes a model-driven approach, using multimodal LLMs to parse complex documents. It handles embedded tables, charts, and even handwritten annotations by treating document understanding as a vision-language task rather than a pure OCR problem.
+
+### Integrating Document Parsing with Chunking
+
+```python
+from unstructured.partition.pdf import partition_pdf
+
+def parse_and_chunk_pdf(pdf_path: str, chunk_size: int = 800) -> list[dict]:
+    """Parse a PDF preserving element types, then chunk intelligently."""
+    elements = partition_pdf(
+        pdf_path,
+        strategy="hi_res",            # Use layout detection model
+        infer_table_structure=True,    # Extract table structure
+        extract_images_in_pdf=True     # Pull out embedded images
+    )
+
+    chunks = []
+    current_chunk = ""
+    current_metadata = {"element_types": set()}
+
+    for element in elements:
+        el_type = type(element).__name__
+        text = str(element)
+
+        # Tables get their own chunk -- never split them
+        if el_type == "Table":
+            if current_chunk.strip():
+                chunks.append({
+                    "text": current_chunk.strip(),
+                    "metadata": {
+                        "types": list(current_metadata["element_types"])
+                    }
+                })
+                current_chunk = ""
+                current_metadata = {"element_types": set()}
+
+            chunks.append({
+                "text": text,
+                "metadata": {
+                    "types": ["Table"],
+                    "table_html": element.metadata.text_as_html
+                }
+            })
+            continue
+
+        # Accumulate text elements
+        candidate = current_chunk + "\n\n" + text if current_chunk else text
+        if len(candidate.split()) > chunk_size:
+            if current_chunk.strip():
+                chunks.append({
+                    "text": current_chunk.strip(),
+                    "metadata": {
+                        "types": list(current_metadata["element_types"])
+                    }
+                })
+            current_chunk = text
+            current_metadata = {"element_types": {el_type}}
+        else:
+            current_chunk = candidate
+            current_metadata["element_types"].add(el_type)
+
+    if current_chunk.strip():
+        chunks.append({
+            "text": current_chunk.strip(),
+            "metadata": {"types": list(current_metadata["element_types"])}
+        })
+
+    return chunks
+```
+
+### Handling Images and Charts
+
+For images embedded in documents, the emerging pattern is to generate textual descriptions using a vision-language model, then index those descriptions alongside the surrounding text. A chart showing quarterly revenue trends becomes a text chunk describing the data, the trend, and the key takeaways -- making it searchable through the same embedding pipeline used for text (see [Embedding Models](/agent-13-embedding-models) for how text embeddings capture semantic meaning).
+
+The key principle: convert everything to text before chunking, but preserve the original modality in metadata for potential downstream use by multimodal LLMs.
+
+## Chunk Metadata Enrichment
+
+Even with the best chunking strategy, the raw text of a chunk may not align well with how users phrase queries. Chunk metadata enrichment bridges this gap by generating additional indexed representations for each chunk.
+
+### Hypothetical Question Generation
+
+Inspired by the HyDE (Hypothetical Document Embeddings) technique used at query time (covered in depth in [Retrieval Strategies](/agent-16-retrieval-strategies)), the inverse approach generates hypothetical questions at indexing time. For each chunk, an LLM produces questions that the chunk could answer:
+
+```python
+def generate_chunk_questions(chunk: str, llm_client, n_questions: int = 3) -> list[str]:
+    """Generate hypothetical questions this chunk answers."""
+    prompt = f"""Given the following text passage, generate {n_questions} specific
+questions that this passage directly answers. The questions should be phrased
+as a user would naturally ask them.
+
+Passage:
+{chunk}
+
+Return each question on a new line."""
+
+    response = llm_client.generate(prompt)
+    return [q.strip() for q in response.strip().split("\n") if q.strip()]
+```
+
+These generated questions are embedded alongside (or instead of) the chunk text. When a user's query closely matches one of the hypothetical questions, retrieval accuracy improves substantially -- the query and the hypothetical question occupy the same linguistic register, unlike the query and the original passage text which may use entirely different phrasing.
+
+### Summary and Keyword Extraction
+
+Beyond hypothetical questions, two additional metadata fields consistently improve retrieval:
+
+**Per-chunk summaries** compress the chunk into 1-2 sentences that capture the core claim or information. This is particularly valuable for long chunks (800+ tokens) where the embedding may suffer from topic dilution. The summary embedding provides a concentrated signal that complements the full-text embedding.
+
+**Keyword extraction** identifies domain-specific terms, named entities, and technical vocabulary. These keywords serve double duty: they improve hybrid search by providing explicit lexical matching targets (complementing the semantic matching from dense embeddings), and they enable faceted filtering in the vector database.
+
+```python
+def enrich_chunk(chunk: str, llm_client) -> dict:
+    """Generate comprehensive metadata for a chunk."""
+    prompt = f"""Analyze the following passage and provide:
+1. A 1-2 sentence summary capturing the key information
+2. 5-10 keywords (domain terms, entities, technical concepts)
+3. 3 questions this passage answers
+
+Passage:
+{chunk}
+
+Respond in JSON format with keys: summary, keywords, questions"""
+
+    response = llm_client.generate(prompt)
+    metadata = json.loads(response)
+
+    return {
+        "text": chunk,
+        "summary": metadata["summary"],
+        "keywords": metadata["keywords"],
+        "questions": metadata["questions"],
+    }
+```
+
+### Multi-Vector Indexing
+
+With enriched metadata, a single chunk can be represented by multiple vectors in the index: one for the full text, one for the summary, and one for each hypothetical question. At query time, a match against any of these vectors surfaces the chunk. This multi-vector approach (sometimes called "multi-representation indexing") significantly broadens the retrieval surface without increasing the volume of text sent to the LLM -- only the original chunk text is passed for generation.
+
+The storage overhead is proportional to the number of vectors per chunk. For three hypothetical questions plus a summary, that is a 5x increase in vector count. Most vector databases handle this efficiently through metadata filtering (see [Vector Databases](/agent-14-vector-databases) for storage and filtering architectures), and the retrieval quality improvement typically justifies the cost.
+
 ## Practical Chunking Pipeline
 
 A production chunking pipeline typically combines multiple strategies:
@@ -489,5 +746,9 @@ def production_chunking_pipeline(document: str, doc_type: str) -> list[dict]:
 - **Semantic chunking** produces the highest quality boundaries but at significant computational cost. Use selectively for high-value content.
 - **Parent-child relationships** elegantly resolve the chunk size dilemma: small chunks for precise retrieval, large chunks for context.
 - **Late chunking** represents the frontier of the field, preserving cross-chunk context at the embedding level.
+- **Contextual retrieval** uses an LLM to inject document-level context into each chunk before embedding -- one of the highest-ROI improvements available, especially when combined with [hybrid search](/agent-16-retrieval-strategies).
+- **Proposition-based chunking** maximizes retrieval precision for factoid queries by decomposing text into atomic, self-contained facts.
+- **Multi-modal document processing** is a prerequisite for real-world RAG: if text extraction from PDFs, images, and tables is poor, no chunking strategy can compensate.
+- **Chunk metadata enrichment** (summaries, hypothetical questions, keywords) broadens the retrieval surface without increasing LLM context usage.
 - **There is no universal best strategy**. Evaluate chunking quality through end-to-end retrieval metrics (recall@k, nDCG) on representative queries, not in isolation.
-- The interaction between chunk strategy and embedding model matters: a model trained on short passages may underperform on 2000-token chunks, and vice versa.
+- The interaction between chunk strategy and [embedding model](/agent-13-embedding-models) matters: a model trained on short passages may underperform on 2000-token chunks, and vice versa. Similarly, the choice of [vector database](/agent-14-vector-databases) determines which multi-vector and metadata filtering strategies are practical at scale.

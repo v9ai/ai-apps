@@ -7,6 +7,7 @@ import { TableOfContents } from "@/components/toc";
 import { ReadingProgress } from "@/components/reading-progress";
 import { ScrollToTop } from "@/components/scroll-to-top";
 import { ArticleNav } from "@/components/article-nav";
+import { CategoryProgress } from "@/components/category-progress";
 import { RelatedPapers } from "@/components/related-papers";
 import { PageAnalytics } from "@/components/page-analytics";
 import { AudioPlayer } from "@/components/audio-player";
@@ -34,6 +35,9 @@ export default async function PaperPage({ params }: { params: Promise<{ slug: st
   const related = await getRelatedPapers(slug);
   const audioMeta = await getAudioMeta(slug);
 
+  // Same-category papers for progress indicator
+  const categoryPapers = allPapers.filter((a) => a.category === paper.category);
+
   // Prev/next
   const idx = allPapers.findIndex((a) => a.slug === slug);
   const prev = idx > 0 ? allPapers[idx - 1] : null;
@@ -54,6 +58,11 @@ export default async function PaperPage({ params }: { params: Promise<{ slug: st
             <span className="sep">/</span>
             <span>#{String(paper.number).padStart(2, "0")}</span>
           </div>
+          <CategoryProgress
+            categoryPapers={categoryPapers}
+            currentSlug={slug}
+            categoryName={paper.category}
+          />
           <h1 className="article-banner-title">{paper.title}</h1>
           <div className="article-banner-badges">
             <span className="badge-pill badge-pill--category">
@@ -110,7 +119,7 @@ export default async function PaperPage({ params }: { params: Promise<{ slug: st
           <RelatedPapers papers={related} meta={meta} />
 
           {/* Prev/Next */}
-          <ArticleNav prev={prev} next={next} />
+          <ArticleNav prev={prev} next={next} currentCategory={paper.category} />
         </div>
         <TableOfContents markdown={paper.content} />
       </div>

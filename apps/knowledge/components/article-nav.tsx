@@ -5,9 +5,10 @@ import { getCategoryMeta } from "@/lib/articles";
 interface Props {
   prev: Paper | null;
   next: Paper | null;
+  currentCategory?: string;
 }
 
-export function ArticleNav({ prev, next }: Props) {
+export function ArticleNav({ prev, next, currentCategory }: Props) {
   if (!prev && !next) return null;
 
   return (
@@ -19,6 +20,11 @@ export function ArticleNav({ prev, next }: Props) {
         >
           <span className="article-nav-label">&larr; Previous</span>
           <span className="article-nav-title">{prev.title}</span>
+          {currentCategory && prev.category !== currentCategory && (
+            <span className="article-nav-transition">
+              From: {getCategoryMeta(prev.category).icon} {prev.category}
+            </span>
+          )}
         </Link>
       ) : (
         <div />
@@ -30,6 +36,11 @@ export function ArticleNav({ prev, next }: Props) {
         >
           <span className="article-nav-label">Next &rarr;</span>
           <span className="article-nav-title">{next.title}</span>
+          {currentCategory && next.category !== currentCategory && (
+            <span className="article-nav-transition">
+              Up next: {getCategoryMeta(next.category).icon} {next.category}
+            </span>
+          )}
         </Link>
       ) : (
         <div />

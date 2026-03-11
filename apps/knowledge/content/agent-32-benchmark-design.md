@@ -220,10 +220,119 @@ When comparing models across benchmarks, simple averaging can be misleading. Mor
 
 **Multi-dimensional scaling**: Rather than collapsing performance to a single number, visualize models in a capability space that preserves the structure of their performance profiles.
 
+## Benchmark Gaming and Goodhart's Law
+
+### When the Benchmark Becomes the Target
+
+Goodhart's Law -- "when a measure becomes a target, it ceases to be a good measure" -- applies to AI evaluation with uncomfortable precision. As benchmarks determine which models receive attention, funding, and deployment, the incentive to optimize for benchmark scores rather than genuine capability becomes overwhelming.
+
+The dynamic is straightforward. A benchmark is introduced to measure a real capability. Researchers and labs use it as a progress metric. Over time, training procedures, data mixtures, and even architectural choices are tuned specifically to improve scores on that benchmark. The score goes up, but the underlying capability the benchmark was designed to measure may not improve proportionally. The benchmark has been gamed, not through fraud, but through the ordinary incentive structure of competitive research.
+
+### Case Studies in Benchmark Optimization
+
+**MMLU and the data mixture effect.** The Massive Multitask Language Understanding benchmark (Hendrycks et al., 2021) quickly became the standard measure of broad knowledge. As a result, training data mixtures were adjusted to increase coverage of the topics MMLU tests. Models that looked impressive on MMLU sometimes showed no corresponding improvement on novel questions in the same domains. The benchmark score improved because the models were trained on more relevant data, not because they achieved deeper understanding. This motivated the creation of MMLU-Pro, but the same optimization cycle will likely recur.
+
+**HumanEval and code generation.** OpenAI's HumanEval benchmark for code generation contains 164 hand-crafted programming problems. Its popularity made it a de facto standard, and training pipelines were adjusted accordingly. Some open-source models that achieved high HumanEval scores showed much weaker performance on alternative code benchmarks like SWE-bench or real-world programming tasks. The narrow scope of HumanEval -- self-contained function generation with clear test cases -- became a liability when models were optimized specifically for that pattern. This illustrates why evaluation must always be multi-dimensional, as discussed in [Article 31: LLM Evaluation Fundamentals](/agent-31-eval-fundamentals).
+
+**Chatbot Arena and style optimization.** Even Chatbot Arena's Elo ratings are not immune. As labs began tracking their Arena rankings closely, some tuned their models for the stylistic preferences of Arena users: longer responses, more structured formatting, and confident tone. This is a subtler form of gaming because the optimization target is real human preference, but the preference signal of Arena's self-selected user base may diverge from the needs of production deployments. The style-over-substance bias that Chatbot Arena's creators acknowledged as a limitation has, in some cases, become an optimization target.
+
+### The Arms Race Pattern
+
+The benchmark gaming cycle follows a predictable arc:
+
+1. A new benchmark is introduced to address the shortcomings of its predecessors.
+2. The benchmark is adopted as a community standard. Leaderboards appear.
+3. Training procedures are tuned to maximize performance on the benchmark.
+4. The benchmark's discriminative power degrades as it becomes a training signal rather than an independent measurement.
+5. A new benchmark is introduced to address the shortcomings of its predecessor.
+
+This cycle is not inherently harmful. Each iteration tends to produce benchmarks that are harder, more comprehensive, and more resistant to gaming. The problem arises when stakeholders -- investors, enterprise buyers, media -- treat benchmark numbers as direct measures of capability without understanding the optimization dynamics behind them. The gap between benchmark performance and real-world utility is a recurring theme in deployment failures, and bridging it requires the kind of domain-specific evaluation covered earlier in this article and the dataset curation practices discussed in [Article 22: Dataset Curation](/agent-22-dataset-curation).
+
+## Reasoning-Specific Benchmarks
+
+### Beyond Pattern Matching
+
+Standard benchmarks like MMLU and HellaSwag primarily test knowledge retrieval and linguistic pattern completion. They do not reliably distinguish between a model that reasons through a problem and one that recognizes a familiar pattern and produces the associated answer. As models become more capable, this distinction matters more. A model that "reasons" by pattern matching will fail on novel problems that require genuine multi-step inference.
+
+A new generation of benchmarks has emerged specifically to test reasoning capabilities that resist pattern-based shortcuts.
+
+### FrontierMath
+
+FrontierMath (Glazer et al., 2024) consists of original mathematics problems created by professional mathematicians. The problems are designed to be novel -- they do not appear in any textbook, competition archive, or online resource. Each problem requires multiple steps of genuine mathematical reasoning, and the answers are verifiable (typically numerical or symbolic, eliminating subjective grading).
+
+The key design choice is that FrontierMath problems are not drawn from existing mathematical literature, which means contamination through training data is structurally impossible for the initial release. Early results were striking: frontier models that scored well on GSM8K and MATH benchmarks solved fewer than 2% of FrontierMath problems. This gap between performance on established math benchmarks and performance on genuinely novel problems reveals how much of what we measure as "mathematical reasoning" may actually be sophisticated retrieval from training data.
+
+### ARC-AGI
+
+The Abstraction and Reasoning Corpus (ARC), created by Chollet (2019), takes a different approach. ARC presents visual grid-transformation tasks where the model must infer an abstract rule from a few input-output examples and apply it to a new input. The tasks are designed to test fluid intelligence -- the ability to adapt to novel situations -- rather than crystallized knowledge.
+
+ARC-AGI (the benchmark built around ARC tasks) has proven remarkably resistant to scaling. Larger models do not dramatically outperform smaller ones, suggesting that the tasks test something fundamentally different from what standard language modeling optimizes for. The ARC-AGI-2 competition in 2025 continued to show that even frontier models struggle with tasks that most humans find straightforward, though the gap has narrowed with reasoning-focused architectures. This connects to the broader question of what evaluation signals actually tell us about model internals, a topic explored in [Article 33: LLM-as-Judge](/agent-33-llm-as-judge).
+
+### GPQA (Graduate-Level Google-Proof QA)
+
+GPQA (Rein et al., 2023) targets a specific failure mode: the ability of models to answer questions that require deep domain expertise rather than surface-level knowledge retrieval. Questions are drawn from physics, chemistry, and biology at the graduate level, and they are designed to be "Google-proof" -- answering them requires genuine understanding, not information lookup.
+
+The benchmark's validation process is noteworthy. Domain experts validated each question, and non-expert validators (PhD-level researchers in adjacent fields) were given extensive time and internet access to attempt the questions. The gap between expert and non-expert performance confirms that the questions test deep understanding rather than searchable knowledge. For models, GPQA performance correlates weakly with performance on easier knowledge benchmarks, reinforcing the point that knowledge retrieval and reasoning are distinct capabilities.
+
+### What These Benchmarks Reveal
+
+Taken together, FrontierMath, ARC-AGI, and GPQA paint a consistent picture: current models are substantially better at tasks that resemble their training distribution than at tasks requiring genuinely novel reasoning. This does not mean models lack all reasoning capability, but it means that standard benchmarks significantly overestimate the generality of that capability. For teams building applications that depend on reliable reasoning -- mathematical proof verification, scientific hypothesis generation, complex planning -- these harder benchmarks provide a more honest assessment of what current models can and cannot do.
+
+## Reproducibility Challenges
+
+### The Same Model, Different Numbers
+
+A persistent and underappreciated problem in LLM evaluation is that different evaluation frameworks frequently produce different scores for the same model on the same benchmark. A model might score 78% on MMLU when evaluated with one harness and 83% with another. These differences are not small, and they can reverse the ordering of models on a leaderboard.
+
+Understanding why this happens is essential for anyone who relies on benchmark results to make decisions.
+
+### Sources of Divergence
+
+**Prompt formatting.** The most common source of discrepancy is prompt construction. MMLU questions can be presented in dozens of ways: with or without a system prompt, with different numbers of few-shot examples, with varying formatting of the answer choices, with or without chain-of-thought instructions. Each variation can shift scores by several percentage points. The EleutherAI Language Model Evaluation Harness, the HELM framework, and OpenAI's internal evals all use different prompt templates, and none is objectively "correct."
+
+```python
+# Same MMLU question, two prompt formats, different results
+prompt_v1 = """The following is a multiple choice question about physics.
+
+Question: What is the SI unit of electric current?
+A. Volt
+B. Ampere
+C. Ohm
+D. Watt
+
+Answer:"""
+
+prompt_v2 = """Answer the following physics question by selecting A, B, C, or D.
+
+Q: What is the SI unit of electric current?
+(A) Volt (B) Ampere (C) Ohm (D) Watt
+
+The answer is"""
+```
+
+These two prompts test the same knowledge, but the model's log-probabilities over answer tokens will differ. Multiply this across thousands of questions and the aggregate effect is substantial.
+
+**Sampling parameters.** Temperature, top-p, top-k, and the choice between greedy decoding and sampling all affect results. A model evaluated with greedy decoding will produce different (often higher) scores than the same model evaluated with temperature 0.7. Some frameworks default to greedy; others use sampling with specific parameters. This is particularly impactful for reasoning tasks where chain-of-thought quality varies significantly between samples.
+
+**Answer extraction.** After a model generates a response, the framework must extract the model's "answer" to compare against ground truth. Some frameworks look for the letter label (A, B, C, D) in the last token; others parse the full response for the answer string; still others use log-probabilities over answer tokens rather than generated text. These extraction strategies handle edge cases differently -- a model that says "The answer is B, but I initially considered A" might be scored differently depending on which extraction method is used.
+
+**Tokenization and context handling.** Different frameworks may truncate context differently, handle special tokens differently, or process multi-turn examples differently. For benchmarks with long contexts, these differences compound.
+
+### Practical Consequences
+
+The reproducibility problem has real consequences. When a model's benchmark scores vary by 5+ points depending on evaluation framework, claims like "Model X outperforms Model Y on MMLU" become framework-dependent assertions rather than objective facts. This is especially problematic for enterprise buyers comparing models and for researchers trying to measure incremental progress.
+
+The field has made some progress through standardization efforts. The Open LLM Leaderboard uses a consistent evaluation harness, and papers increasingly report the exact evaluation framework and parameters used. But standardization is far from complete, and new models frequently introduce evaluation complications (different chat templates, different special tokens, different context windows) that existing frameworks must accommodate.
+
+For practitioners, the takeaway is clear: never trust a single benchmark number in isolation. When comparing models, ensure evaluations use identical frameworks, prompts, and sampling parameters. When this is not possible, focus on large performance gaps that are unlikely to be artifacts, and validate with your own domain-specific evaluations. Evaluation methodology is as much a part of the result as the model itself. For multi-modal models, these reproducibility concerns are compounded by additional variables in image preprocessing and visual grounding, as explored in [Article 49: Vision-Language Models](/agent-49-vision-language-models).
+
 ## Summary and Key Takeaways
 
 - **Contamination is endemic** in LLM evaluation due to web-scale training data. Detection methods (n-gram overlap, membership inference, rephrasing) help but cannot guarantee clean evaluation. Private test sets and dynamic benchmarks are the strongest structural mitigations.
 - **Saturation is inevitable** for any static benchmark. Design benchmarks with headroom, plan for harder versions, and monitor for ceiling compression.
+- **Benchmark gaming follows Goodhart's Law**: when evaluation metrics become optimization targets, they lose their diagnostic value. The arms race between benchmark designers and optimizers drives progress but also inflates scores relative to genuine capability.
+- **Reasoning-specific benchmarks** (FrontierMath, ARC-AGI, GPQA) reveal a significant gap between performance on standard knowledge benchmarks and genuinely novel reasoning tasks. These harder evaluations provide a more honest picture of model capabilities.
+- **Reproducibility is fragile**: prompt formatting, sampling parameters, and answer extraction methods can shift benchmark scores by multiple percentage points. Always control for evaluation methodology when comparing models.
 - **Domain-specific evaluation is essential** for production applications. Generic benchmarks provide a starting point but cannot replace evaluations designed around your specific requirements, success criteria, and failure modes.
 - **Dynamic evaluation** (LiveBench, Chatbot Arena) represents the frontier of benchmark design, trading reproducibility for contamination resistance and freshness.
 - **Statistical rigor** in benchmark comparison requires more than simple accuracy averaging. Consider Elo ratings, IRT models, or multi-dimensional analysis to draw valid conclusions.
