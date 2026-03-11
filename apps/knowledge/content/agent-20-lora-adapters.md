@@ -342,6 +342,137 @@ trainer.save_model("./qlora-adapter")
 3. **Not targeting enough layers**: Applying LoRA only to attention projections (the original paper's default) leaves performance on the table. Use `target_modules="all-linear"` for best results.
 4. **Ignoring packing**: For instruction tuning with variable-length examples, packing multiple examples into single sequences significantly improves GPU utilization.
 
+## Production Serving of LoRA Adapters
+
+A single base model can serve hundreds of distinct LoRA adapters simultaneously, making multi-tenant and multi-task deployments economically viable. This is one of LoRA's most consequential properties: instead of deploying N separate fine-tuned models, you deploy one base model plus N small adapter weight sets.
+
+### vLLM Multi-LoRA Serving
+
+vLLM supports multi-LoRA serving natively. The base model weights remain in GPU memory once, and individual LoRA adapters (typically 10-50MB each) are loaded alongside it. During inference, each request specifies which adapter to apply, and vLLM fuses the LoRA computation into the attention and MLP kernels without materializing the full merged weight matrix:
+
+```python
+from vllm import LLM, SamplingParams
+from vllm.lora.request import LoRARequest
+
+llm = LLM(
+    model="meta-llama/Llama-3-8B",
+    enable_lora=True,
+    max_loras=16,          # Number of adapters loaded simultaneously
+    max_lora_rank=64,      # Maximum rank across all adapters
+)
+
+# Each request can target a different adapter
+output = llm.generate(
+    "Summarize this contract clause:",
+    SamplingParams(temperature=0.1, max_tokens=512),
+    lora_request=LoRARequest("legal-adapter", 1, "/adapters/legal-lora"),
+)
+```
+
+The `max_loras` parameter controls how many adapters are resident in GPU memory at once. When a request arrives for an adapter not currently loaded, vLLM evicts the least recently used adapter and loads the new one. For workloads with a long tail of infrequently used adapters, this eviction overhead is the primary latency concern -- individual adapter swaps take 10-50ms depending on rank and the number of target modules, which is negligible per-request but can accumulate under adapter thrashing.
+
+### S-LoRA: Scalable Multi-Adapter Serving
+
+S-LoRA (Sheng et al., 2023) extends multi-LoRA serving to thousands of concurrent adapters. The key innovations are a unified paging mechanism that stores adapter weights in a shared memory pool (analogous to PagedAttention for KV caches), and custom CUDA kernels that batch heterogeneous LoRA computations across requests with different adapters and ranks. S-LoRA demonstrated serving up to 2,000 adapters on a single GPU with minimal throughput degradation compared to serving the base model alone, provided that requests are batched effectively.
+
+### Latency Considerations
+
+Adding LoRA computation to inference introduces a small overhead compared to the merged-weight baseline. In practice, this overhead is 2-5% of total latency for typical ranks (r=8 to r=32) because the LoRA matmuls are small relative to the base model computation. The overhead scales linearly with rank, so serving r=256 adapters is noticeably slower than r=16. For latency-critical paths where even 2% matters, merging the adapter into the base weights and serving as a standalone model remains an option -- the tradeoff is GPU memory (one full model copy per adapter) versus a small latency tax (one shared base model). See [LLM Serving: API Design, Batching & Streaming](/knowledge/agent-37-llm-serving) for more on serving architecture decisions.
+
+## Training Acceleration
+
+### Unsloth
+
+Unsloth has emerged as the go-to library for fast LoRA and QLoRA training, particularly on single-GPU setups. It achieves 2-5x training speedups over standard Hugging Face workflows through several techniques: custom Triton kernels for LoRA-fused forward and backward passes, manual backpropagation that avoids autograd overhead, and intelligent memory management that reduces peak VRAM by 50-70%.
+
+```python
+from unsloth import FastLanguageModel
+
+model, tokenizer = FastLanguageModel.from_pretrained(
+    model_name="meta-llama/Llama-3-8B",
+    max_seq_length=4096,
+    load_in_4bit=True,
+)
+
+model = FastLanguageModel.get_peft_model(
+    model,
+    r=16,
+    lora_alpha=32,
+    target_modules=[
+        "q_proj", "k_proj", "v_proj", "o_proj",
+        "gate_proj", "up_proj", "down_proj"
+    ],
+    lora_dropout=0,  # Unsloth recommends 0 dropout for speed
+)
+```
+
+Unsloth's key advantage is that it requires no changes to the training loop itself -- it is a drop-in replacement for the model loading step, and the resulting model is fully compatible with the Hugging Face `Trainer` and `SFTTrainer` APIs.
+
+### Flash Attention Integration
+
+Flash Attention (Dao et al., 2022; Dao, 2023) is effectively mandatory for modern LoRA training. By fusing the attention computation into a single CUDA kernel and avoiding materialization of the full $N \times N$ attention matrix, Flash Attention reduces the memory complexity of attention from $O(N^2)$ to $O(N)$ and improves wall-clock speed by 2-4x. This is orthogonal to LoRA itself but dramatically affects what sequence lengths and batch sizes are feasible during fine-tuning. Most model loading paths now default to Flash Attention 2 via `attn_implementation="flash_attention_2"`, as shown in the QLoRA pipeline example above.
+
+### Gradient Checkpointing Trade-offs
+
+Gradient checkpointing (activation recomputation) trades compute for memory by discarding intermediate activations during the forward pass and recomputing them during the backward pass. For QLoRA training, this typically reduces peak memory by 30-50%, enough to double the effective batch size or train on a model that would otherwise not fit. The cost is a ~30% increase in training time due to the recomputation. The trade-off is almost always worthwhile for QLoRA because the bottleneck is GPU memory, not training speed. However, for LoRA on fp16 base models where memory is less constrained, disabling gradient checkpointing and using larger batch sizes can be faster end-to-end. See [Fine-tuning Fundamentals](/knowledge/agent-19-fine-tuning-fundamentals) for broader coverage of mixed-precision and distributed training strategies.
+
+## Emerging PEFT Methods
+
+The LoRA family continues to evolve. Several 2024 innovations push the efficiency-quality frontier further.
+
+### LoRA+ (Hayou et al., 2024)
+
+Standard LoRA uses the same learning rate for both the $A$ and $B$ matrices, but LoRA+ argues this is suboptimal. Because $A$ is initialized with random Gaussian values and $B$ is initialized to zero, their gradient dynamics differ substantially during early training. LoRA+ assigns a higher learning rate to the $B$ matrix (typically 2-8x the $A$ learning rate), which improves convergence speed by 1.5-2x and slightly improves final quality. The implementation is straightforward -- it requires only splitting the adapter parameters into two optimizer groups with different learning rates.
+
+### GaLore (Zhao et al., 2024)
+
+Gradient Low-Rank Projection (GaLore) takes a different approach entirely. Instead of adding low-rank adapter matrices, GaLore projects the full gradient matrix onto a low-rank subspace during training, reducing optimizer state memory without modifying the model architecture. This means the trained model is a standard full-parameter model, not a base-plus-adapter pair. GaLore can train a 7B model with the memory footprint of a 1B model, and unlike LoRA, it does not impose a structural constraint on the weight update. The downside is that GaLore requires periodic SVD recomputation to update the projection basis, adding overhead every few hundred steps. GaLore is most compelling for pre-training or continued pre-training scenarios where LoRA's low-rank constraint is too restrictive. For connections between GaLore and continued pre-training, see [Continual Learning: Catastrophic Forgetting & Knowledge Retention](/knowledge/agent-23-continual-learning).
+
+### rsLoRA (Kalajdzievski, 2024)
+
+rsLoRA addresses a subtle scaling issue in standard LoRA. The original $\alpha / r$ scaling factor means that increasing rank actually decreases the per-element magnitude of the update, which is counterintuitive and can require re-tuning the learning rate when experimenting with different ranks. rsLoRA replaces the scaling with $\alpha / \sqrt{r}$, which stabilizes training dynamics across ranks and makes rank selection less sensitive to learning rate. This is a small but meaningful quality-of-life improvement for practitioners running rank sweeps.
+
+## GGUF Deployment Path
+
+For edge deployment, local inference, and cost-sensitive serving, the llama.cpp ecosystem provides an alternative to GPU-based serving stacks. The typical workflow is to merge LoRA adapters into the base model and then quantize the merged result into GGUF format for serving via llama.cpp, ollama, or LM Studio.
+
+### Merge and Quantize Pipeline
+
+```bash
+# 1. Merge LoRA adapter into base model (produces full-size fp16 model)
+python -m peft.merge_and_unload \
+    --base_model meta-llama/Llama-3-8B \
+    --lora_adapter ./qlora-adapter \
+    --output_dir ./merged-model
+
+# 2. Convert to GGUF format
+python llama.cpp/convert_hf_to_gguf.py ./merged-model \
+    --outfile merged-model-f16.gguf --outtype f16
+
+# 3. Quantize to desired precision
+llama.cpp/build/bin/llama-quantize \
+    merged-model-f16.gguf \
+    merged-model-Q4_K_M.gguf Q4_K_M
+```
+
+The `Q4_K_M` quantization scheme is a common choice, offering roughly 4.5 bits per weight with mixed precision for attention layers. A 7B model quantized this way occupies approximately 4.5GB and runs comfortably on consumer hardware with no GPU. For a 70B model, `Q4_K_M` produces a ~40GB file that requires 48GB+ of system RAM but no GPU.
+
+### Quantization Format Selection
+
+The choice of GGUF quantization level involves a quality-size tradeoff that mirrors the decisions discussed in [Distillation & Model Compression](/knowledge/agent-24-distillation-compression):
+
+| Format | Bits/Weight | 7B Model Size | Quality Impact |
+|--------|------------|---------------|----------------|
+| Q2_K | ~2.5 | ~2.5 GB | Noticeable degradation |
+| Q4_K_M | ~4.5 | ~4.5 GB | Minimal for most tasks |
+| Q5_K_M | ~5.5 | ~5.5 GB | Near-fp16 quality |
+| Q6_K | ~6.5 | ~6.5 GB | Negligible quality loss |
+| Q8_0 | 8.0 | ~8.0 GB | Effectively lossless |
+
+An important subtlety: quantizing after merging the LoRA adapter can produce slightly different results than quantizing the base model and then applying the adapter at inference time. The merge-then-quantize approach is generally preferred because it avoids the compounding of quantization error with LoRA approximation error, and the resulting single-file model is simpler to deploy.
+
+For workloads where multiple adapters are needed at the GGUF level, llama.cpp also supports loading LoRA adapters at runtime on top of a quantized base model, applying the fp16 adapter math on the dequantized weights during inference. This avoids creating separate merged models for each adapter but does add latency overhead.
+
 ## Summary and Key Takeaways
 
 - **LoRA** decomposes weight updates into low-rank matrices ($\Delta W = BA$), reducing trainable parameters by 100-1000x while maintaining 95-99% of full fine-tuning quality. Rank 8-16 covers most use cases.
@@ -351,4 +482,15 @@ trainer.save_model("./qlora-adapter")
 - **IA3** rescales activations with learned vectors, achieving extreme parameter efficiency at some quality cost.
 - **DoRA** decomposes weights into magnitude and direction, applying LoRA only to direction, consistently outperforming standard LoRA.
 - **Adapter merging** enables composing multiple task-specific adaptations, with methods like TIES and DARE improving merge quality.
+- **Multi-LoRA serving** via vLLM or S-LoRA enables hundreds of adapters on a single base model, with 2-5% latency overhead at typical ranks.
+- **Training acceleration** through Unsloth, Flash Attention, and gradient checkpointing makes QLoRA training 2-5x faster and more memory-efficient.
+- **Emerging methods** like LoRA+, GaLore, and rsLoRA refine the training dynamics and expand the applicability of parameter-efficient approaches.
+- **GGUF deployment** provides a path from LoRA-trained models to efficient CPU and edge inference via the llama.cpp ecosystem.
 - For practical fine-tuning in 2024-2025, **QLoRA with rank 16, applied to all linear layers, using `paged_adamw_8bit`** is the default recommendation. Adjust rank and alpha based on task complexity and available data.
+
+## Related Articles
+
+- [Fine-tuning Fundamentals: Full, Freeze & Transfer Learning](/knowledge/agent-19-fine-tuning-fundamentals) -- full fine-tuning mechanics, SFT, learning rate scheduling, and when to fine-tune versus prompt engineer.
+- [Continual Learning: Catastrophic Forgetting & Knowledge Retention](/knowledge/agent-23-continual-learning) -- how to update models without destroying existing capabilities, directly relevant when applying LoRA for domain adaptation.
+- [Distillation & Model Compression: Pruning, Quantization & Student Models](/knowledge/agent-24-distillation-compression) -- GPTQ, AWQ, and post-training quantization techniques that complement the GGUF deployment path discussed above.
+- [LLM Serving: API Design, Batching & Streaming](/knowledge/agent-37-llm-serving) -- serving architecture decisions including continuous batching and PagedAttention, which interact directly with multi-LoRA serving strategies.

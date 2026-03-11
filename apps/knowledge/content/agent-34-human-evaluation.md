@@ -157,13 +157,21 @@ This iterative calibration process typically requires 2-4 rounds. Document each 
 
 ### Crowdsourced Evaluation
 
-Platforms like Amazon Mechanical Turk, Prolific, and Surge AI provide access to large pools of annotators. Crowdsourcing enables rapid, large-scale annotation at relatively low cost.
+Several platforms provide access to large pools of annotators, though the landscape has shifted significantly in recent years:
 
-Advantages:
+**Prolific** has largely replaced Amazon Mechanical Turk (MTurk) as the platform of choice for research-grade annotation. Prolific pre-screens participants for demographics and language proficiency, enforces minimum pay rates (helping ensure data quality), and provides built-in tools for longitudinal studies. Its participant pool skews more educated and attentive than MTurk, and rejection rates for attention checks are substantially lower.
+
+**Surge AI** specializes in AI training data, offering managed annotation teams with domain expertise. Surge is particularly useful for tasks that require consistency across annotators, like RLHF preference labeling (see Article 21) or safety annotation for red teaming (see Article 35), because their workforce is trained and calibrated rather than ad hoc.
+
+**Scale AI** serves enterprise-scale annotation needs, combining human annotators with automated quality control pipelines. Scale's RLHF annotation product handles the full pipeline from prompt curation through preference ranking, and their Remotasks platform provides access to large annotator pools for high-volume work.
+
+**Amazon Mechanical Turk** still exists but has experienced declining data quality and workforce engagement. For AI evaluation tasks specifically, Prolific or Surge AI are generally better choices unless you need very high throughput on extremely simple tasks.
+
+Advantages of crowdsourcing:
 - Scale: Hundreds of annotations per hour
 - Diversity: Annotators from varied backgrounds
 - Speed: Results within hours to days
-- Cost: $0.10-$2.00 per annotation for standard tasks
+- Cost: $0.10-$2.00 per annotation for standard tasks (platform dependent)
 
 Challenges and mitigations:
 

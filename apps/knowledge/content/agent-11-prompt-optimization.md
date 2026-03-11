@@ -1,6 +1,8 @@
 # Prompt Optimization: DSPy, Automatic Prompt Engineering & Meta-Prompting
 
-Manually crafting prompts is labor-intensive, brittle across model versions, and difficult to systematically improve. A growing body of research treats prompt design as an optimization problem, applying search algorithms, gradient-free optimization, and compiler-like abstractions to automatically discover prompts that maximize task performance. This article examines the leading frameworks and techniques -- DSPy, APE, OPRO, and meta-prompting -- analyzing how each works, what problems it solves, and how these automated approaches fit into practical prompt development workflows.
+Manually crafting prompts is labor-intensive, brittle across model versions, and difficult to systematically improve. A growing body of research treats prompt design as an optimization problem, applying search algorithms, gradient-free optimization, gradient-based text differentiation, and compiler-like abstractions to automatically discover prompts that maximize task performance. This article examines the leading frameworks and techniques -- DSPy, APE, OPRO, TextGrad, prompt compression, multi-objective optimization, and meta-prompting -- analyzing how each works, what problems it solves, and how these automated approaches fit into practical prompt development workflows.
+
+> **Prerequisite reading.** This article assumes familiarity with prompting fundamentals covered in [Article 07 -- Prompt Engineering Fundamentals](/knowledge/agent-07-prompt-engineering-fundamentals) and the few-shot and chain-of-thought techniques discussed in [Article 08 -- Few-Shot & Chain-of-Thought Prompting](/knowledge/agent-08-few-shot-chain-of-thought). Where prompt optimization intersects with retrieval-augmented generation, see [Article 18 -- RAG Evaluation](/knowledge/agent-18-rag-evaluation) for evaluation methodology that applies equally to optimized retrieval prompts.
 
 ## The Case for Prompt Optimization
 
@@ -20,7 +22,7 @@ These problems motivate the development of automated prompt optimization techniq
 
 ### Core Philosophy
 
-DSPy (Khattab et al., 2023, "DSPy: Compiling Declarative Language Model Calls into Self-Improving Pipelines") represents the most ambitious rethinking of how developers interact with language models. Its central thesis: developers should specify *what* they want (signatures, modules) rather than *how* to prompt (specific prompt text). DSPy then "compiles" these specifications into optimized prompts or fine-tuning configurations.
+DSPy (Khattab et al., 2023, "DSPy: Compiling Declarative Language Model Calls into Self-Improving Pipelines"; substantially updated in DSPy 2.x, 2024) represents the most ambitious rethinking of how developers interact with language models. Its central thesis: developers should specify *what* they want (signatures, modules) rather than *how* to prompt (specific prompt text). DSPy then "compiles" these specifications into optimized prompts or fine-tuning configurations. The 2.x release streamlined the API surface, unified the optimizer interface, and introduced MIPROv2 as the recommended default optimizer for most workloads.
 
 The key abstractions in DSPy are:
 
@@ -48,18 +50,17 @@ class ReviewAnalyzer(dspy.Module):
         return self.classify(review=review)
 ```
 
-**Teleprompters (Optimizers)** automatically optimize the prompts used by modules:
+**Optimizers** (called "teleprompters" in DSPy 1.x, renamed to `dspy.optimize` in 2.x) automatically optimize the prompts used by modules:
 
 ```python
-from dspy.teleprompt import BootstrapFewShot
-
+# DSPy 2.x API
 # Define a simple metric
 def accuracy_metric(example, prediction, trace=None):
     return prediction.sentiment == example.sentiment
 
 # Compile the module with optimization
-teleprompter = BootstrapFewShot(metric=accuracy_metric, max_bootstraps=4)
-optimized_analyzer = teleprompter.compile(
+optimizer = dspy.BootstrapFewShot(metric=accuracy_metric, max_bootstraps=4)
+optimized_analyzer = optimizer.compile(
     ReviewAnalyzer(),
     trainset=train_examples
 )
@@ -71,43 +72,42 @@ DSPy's optimization process operates at multiple levels:
 
 **Few-shot example selection.** The BootstrapFewShot optimizer selects demonstrations from the training set that maximize task performance. Unlike random selection, it evaluates each candidate example's contribution to downstream accuracy and selects the combination that performs best.
 
-**Instruction optimization.** The MIPRO (Multi-prompt Instruction Proposal Optimizer) and related optimizers generate and evaluate candidate instructions for each module, searching for instruction text that maximizes the evaluation metric.
+**Instruction optimization.** MIPROv2 (Multi-prompt Instruction Proposal Optimizer v2, the recommended optimizer in DSPy 2.x) generates and evaluates candidate instructions for each module, searching for instruction text that maximizes the evaluation metric. MIPROv2 improved upon the original MIPRO in several ways: it uses Bayesian surrogate models to direct the search more efficiently, supports a configurable `auto` mode that sets hyperparameters based on dataset size and compute budget, and co-optimizes instructions and few-shot examples in a unified search pass rather than alternating between them.
 
-**Pipeline optimization.** For multi-step pipelines (e.g., retrieve-then-read, chain-of-thought-then-classify), DSPy optimizes each step jointly, accounting for how the output of one step affects the performance of the next.
+**Pipeline optimization.** For multi-step pipelines (e.g., retrieve-then-read, chain-of-thought-then-classify), DSPy optimizes each step jointly, accounting for how the output of one step affects the performance of the next. This is where DSPy's advantage over manual prompt engineering is most pronounced -- the interaction effects between stages in a multi-hop pipeline are nearly impossible to reason about by hand (see [Article 08](/knowledge/agent-08-few-shot-chain-of-thought) for the chain-of-thought techniques that DSPy can automatically apply and optimize).
 
 ```python
-from dspy.teleprompt import MIPROv2
-
-# MIPRO optimizes both instructions and few-shot examples
-teleprompter = MIPROv2(
+# DSPy 2.x API -- MIPROv2 is the recommended default optimizer
+optimizer = dspy.MIPROv2(
     metric=accuracy_metric,
-    num_candidates=10,
+    auto="medium",  # auto-configures based on compute budget
     num_threads=4,
 )
 
-optimized = teleprompter.compile(
+optimized = optimizer.compile(
     ReviewAnalyzer(),
     trainset=train_examples,
     valset=val_examples,
 )
 
 # The optimized module contains automatically discovered
-# instructions and few-shot examples
+# instructions and few-shot examples. Inspect them:
+optimized.inspect_history(n=3)
 ```
 
 ### DSPy's Compilation Metaphor
 
 The term "compilation" in DSPy is deliberate. Just as a compiler translates high-level source code into optimized machine code, DSPy translates high-level task specifications into optimized prompts. The developer works at the specification level, and the compiler handles the prompt engineering.
 
-This has profound implications for prompt portability. When switching from GPT-4 to Claude, a DSPy developer does not rewrite prompts -- they recompile their program against the new model. The optimizer discovers new prompts that work well with the new model's specific characteristics.
+This has profound implications for prompt portability. When switching from GPT-4 to Claude, a DSPy developer does not rewrite prompts -- they recompile their program against the new model. The optimizer discovers new prompts that work well with the new model's specific characteristics. This aligns with the fundamental prompting principle discussed in [Article 07](/knowledge/agent-07-prompt-engineering-fundamentals): different models respond differently to the same instructions, and what works for one model may be suboptimal for another.
 
 ```python
-# Same program, different models
+# Same program, different models -- DSPy 2.x API
 dspy.configure(lm=dspy.LM("openai/gpt-4o"))
-gpt4_optimized = teleprompter.compile(analyzer, trainset=data)
+gpt4_optimized = optimizer.compile(analyzer, trainset=data)
 
 dspy.configure(lm=dspy.LM("anthropic/claude-3-5-sonnet"))
-claude_optimized = teleprompter.compile(analyzer, trainset=data)
+claude_optimized = optimizer.compile(analyzer, trainset=data)
 ```
 
 ### Multi-Stage Pipelines in DSPy

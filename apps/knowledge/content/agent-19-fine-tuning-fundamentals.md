@@ -364,7 +364,7 @@ def l2_regularization_to_init(model, pretrained_params, lambda_reg=0.01):
     return lambda_reg * reg_loss
 ```
 
-**4. Elastic Weight Consolidation (EWC)**: Originally proposed by Kirkpatrick et al. (2017) for continual learning, EWC uses the Fisher information matrix to identify which parameters are important for previously learned tasks and penalizes changes to those parameters more heavily. This is explored in depth in the continual learning article.
+**4. Elastic Weight Consolidation (EWC)**: Originally proposed by Kirkpatrick et al. (2017) for continual learning, EWC uses the Fisher information matrix to identify which parameters are important for previously learned tasks and penalizes changes to those parameters more heavily. This is explored in depth in [Continual Learning: Catastrophic Forgetting & Knowledge Retention](/knowledge/agent-23-continual-learning).
 
 **5. Mixout regularization**: Proposed by Lee et al. (2020), mixout stochastically replaces fine-tuned weights with their pre-trained values during training, similar to dropout but replacing with the pre-trained value instead of zero.
 
@@ -449,10 +449,13 @@ For full fine-tuning, the compute requirement scales linearly with model size an
 |-----------|----------------------|----------|-----------------|
 | 350M params | 10K | A100 40GB | ~15 minutes |
 | 7B params | 10K | A100 80GB | ~2-4 hours |
+| 7B params | 10K | H100 80GB | ~1-2 hours |
 | 13B params | 10K | 2x A100 80GB | ~4-8 hours |
+| 13B params | 10K | 2x H100 80GB | ~2-4 hours |
 | 70B params | 10K | 8x A100 80GB | ~12-24 hours |
+| 70B params | 10K | 8x H100 80GB | ~6-12 hours |
 
-Cloud compute costs for A100 instances range from $1.50-$3.50/GPU-hour, making a 7B fine-tune cost roughly $5-$15 per run. API-based fine-tuning (OpenAI, Anthropic) abstracts these details but charges per training token.
+Cloud compute costs range from $1.50-$3.50/GPU-hour for A100 instances and $3.00-$5.00/GPU-hour for H100 instances. H100s offer roughly 2x throughput over A100s for transformer fine-tuning thanks to improved tensor cores and higher memory bandwidth (3.35 TB/s vs 2.0 TB/s), often making them more cost-effective despite the higher hourly rate. A 7B full fine-tune typically costs $5-$15 per run on A100s and $4-$12 on H100s. API-based fine-tuning (OpenAI, Google) abstracts these details but charges per training token.
 
 ### Hidden Costs
 
@@ -464,69 +467,80 @@ Cloud compute costs for A100 instances range from $1.50-$3.50/GPU-hour, making a
 
 ## The Fine-tuning Recipe
 
-Based on accumulated practical experience and research, here is a reliable recipe for fine-tuning transformer models:
+Based on accumulated practical experience and research, here is a reliable recipe for instruction-tuning a causal language model. This reflects the dominant modern workflow using TRL's `SFTTrainer`:
 
 ```python
-from transformers import (
-    AutoModelForSequenceClassification,
-    AutoTokenizer,
-    TrainingArguments,
-    Trainer
-)
+from trl import SFTTrainer, SFTConfig
+from transformers import AutoModelForCausalLM, AutoTokenizer
+from datasets import load_dataset
 
-model_name = "meta-llama/Llama-3-8B"
+model_name = "meta-llama/Llama-3.1-8B"
 tokenizer = AutoTokenizer.from_pretrained(model_name)
-model = AutoModelForSequenceClassification.from_pretrained(
-    model_name, num_labels=num_classes
+model = AutoModelForCausalLM.from_pretrained(
+    model_name,
+    torch_dtype="bfloat16",
+    attn_implementation="flash_attention_2",  # requires flash-attn package
 )
 
-training_args = TrainingArguments(
-    output_dir="./results",
+# Dataset should have a "messages" column in chat format
+dataset = load_dataset("json", data_files="sft_data.jsonl", split="train")
+eval_dataset = load_dataset("json", data_files="sft_eval.jsonl", split="train")
+
+sft_config = SFTConfig(
+    output_dir="./sft-results",
     num_train_epochs=3,
-    per_device_train_batch_size=8,
-    per_device_eval_batch_size=16,
+    per_device_train_batch_size=2,
+    per_device_eval_batch_size=4,
+    gradient_accumulation_steps=8,  # effective batch size = 2 * 8 = 16
     learning_rate=2e-5,
     weight_decay=0.01,
-    warmup_ratio=0.06,
+    warmup_ratio=0.1,
     lr_scheduler_type="cosine",
-    evaluation_strategy="steps",
-    eval_steps=500,
+    eval_strategy="steps",
+    eval_steps=200,
     save_strategy="steps",
-    save_steps=500,
+    save_steps=200,
     load_best_model_at_end=True,
     metric_for_best_model="eval_loss",
-    fp16=True,
-    gradient_accumulation_steps=4,
-    logging_steps=100,
+    bf16=True,
+    logging_steps=10,
+    max_seq_length=4096,
+    gradient_checkpointing=True,       # trade compute for ~60% memory savings
     dataloader_num_workers=4,
 )
 
-trainer = Trainer(
+trainer = SFTTrainer(
     model=model,
-    args=training_args,
-    train_dataset=train_dataset,
+    args=sft_config,
+    train_dataset=dataset,
     eval_dataset=eval_dataset,
-    tokenizer=tokenizer,
+    processing_class=tokenizer,
 )
 
 trainer.train()
 ```
 
+For classification or other non-generative tasks, the `Trainer` class with `AutoModelForSequenceClassification` remains appropriate, but for instruction following -- the most common modern use case -- `SFTTrainer` with `AutoModelForCausalLM` is the standard approach. For parameter-efficient alternatives that dramatically reduce compute requirements, see [LoRA, QLoRA & Adapter Methods](/knowledge/agent-20-lora-adapters).
+
 ### Key Hyperparameters
 
 - **Learning rate**: 1e-5 to 5e-5 for most tasks. Start with 2e-5.
-- **Batch size**: As large as GPU memory allows. Use gradient accumulation to simulate larger batches.
-- **Epochs**: 2-5 for most tasks. Use early stopping.
+- **Batch size**: As large as GPU memory allows. Use gradient accumulation to simulate larger batches. An effective batch size of 16-64 is typical for SFT.
+- **Epochs**: 2-5 for most tasks. Use early stopping. For high-quality SFT datasets (< 10K examples), 3 epochs is a common default.
 - **Weight decay**: 0.01-0.1. Helps regularization.
 - **Warmup ratio**: 0.06-0.10 of total steps.
-- **Max sequence length**: Match your data. Padding to max model length wastes compute.
+- **Max sequence length**: Match your data distribution. Padding to max model length wastes compute. Use `max_seq_length` in `SFTConfig` to truncate.
+- **Gradient checkpointing**: Almost always worth enabling for 7B+ models. Reduces memory usage by ~60% at the cost of ~20% slower training.
 
 ## Summary and Key Takeaways
 
 - **Transfer learning** is the foundation of modern NLP: pre-train on large unlabeled data, fine-tune on task-specific labeled data. Feature extraction freezes the backbone; full fine-tuning updates everything.
+- **SFT for instruction following** is the dominant modern fine-tuning workflow. Use the chat message format, apply the correct chat template, and mask prompt tokens from the loss. TRL's `SFTTrainer` handles these details automatically.
+- **Mixed-precision training** is essential. Use bf16 on Ampere+ hardware (A100, H100); fall back to fp16 with loss scaling on older GPUs.
+- **Distributed training** is required for 7B+ models in full fine-tuning. Start with FSDP or ZeRO Stage 2 and increase sharding only when memory demands it.
 - **Learning rate scheduling** is critical. Use linear warmup (6-10% of steps) followed by cosine decay. Discriminative learning rates and gradual unfreezing offer finer control.
-- **Catastrophic forgetting** is a real risk. Mitigate with low learning rates, short training runs, regularization toward pre-trained weights, and data mixing.
+- **Catastrophic forgetting** is a real risk. Mitigate with low learning rates, short training runs, regularization toward pre-trained weights, and data mixing. For a deep treatment, see [Continual Learning: Catastrophic Forgetting & Knowledge Retention](/knowledge/agent-23-continual-learning).
 - **Fine-tuning vs. prompting** is a cost-benefit analysis. Fine-tuning wins at scale when you have sufficient data; prompting wins for flexibility and low-data regimes.
-- **Data quality dominates data quantity**. One thousand high-quality examples can outperform fifty thousand noisy ones (LIMA).
-- **The full fine-tuning recipe** is well-established: AdamW optimizer, cosine schedule with warmup, 2-5 epochs, learning rate around 2e-5, weight decay of 0.01. Start here and adjust based on validation metrics.
-- For most practitioners working with models above 7B parameters, **parameter-efficient methods** (LoRA, QLoRA) offer a more practical path than full fine-tuning, trading minimal quality for dramatic compute savings.
+- **Data quality dominates data quantity**. One thousand high-quality examples can outperform fifty thousand noisy ones (LIMA). See [Dataset Curation: Synthetic Data, Quality Filtering & Annotation](/knowledge/agent-22-dataset-curation) for a complete treatment of data preparation.
+- **The full fine-tuning recipe** is well-established: AdamW optimizer, cosine schedule with warmup, 2-5 epochs, learning rate around 2e-5, weight decay of 0.01, bf16 precision, gradient checkpointing enabled. Start here and adjust based on validation metrics.
+- For most practitioners working with models above 7B parameters, **parameter-efficient methods** ([LoRA, QLoRA](/knowledge/agent-20-lora-adapters)) offer a more practical path than full fine-tuning, trading minimal quality for dramatic compute savings.

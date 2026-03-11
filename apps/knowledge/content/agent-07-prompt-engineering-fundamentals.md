@@ -66,7 +66,7 @@ The use of headers, labeled sections, and clear boundaries between context, task
 
 ### Principle 3: Examples Are Worth a Thousand Words
 
-Providing examples -- few-shot prompting -- remains one of the most effective techniques for steering model behavior. Brown et al. (2020) demonstrated in the GPT-3 paper that few-shot prompting could match or exceed fine-tuned models on many tasks. The mechanism is straightforward: examples demonstrate the input-output mapping more precisely than instructions alone.
+Providing examples -- few-shot prompting -- remains one of the most effective techniques for steering model behavior. Brown et al. (2020) demonstrated in the GPT-3 paper that few-shot prompting could match or exceed fine-tuned models on many tasks. The mechanism is straightforward: examples demonstrate the input-output mapping more precisely than instructions alone. For a thorough treatment of few-shot design, example selection, and chain-of-thought reasoning, see [Article 8: Few-Shot & Chain-of-Thought Prompting](/articles/agent-08-few-shot-chain-of-thought).
 
 ```
 # Instruction-only (less reliable)
@@ -228,7 +228,7 @@ Models with larger context windows don't automatically use all provided context 
 
 ### Tokenization Effects
 
-Different tokenizers split text differently, which can affect how models interpret prompts. For example, code-specific models may tokenize programming constructs differently than general-purpose models, affecting how code-related prompts are processed. While this is rarely a primary concern, it can explain unexpected behavior in edge cases.
+Different tokenizers split text differently, which can affect how models interpret prompts. For example, code-specific models may tokenize programming constructs differently than general-purpose models, affecting how code-related prompts are processed. While this is rarely a primary concern, it can explain unexpected behavior in edge cases. See [Article 3: Tokenization](/articles/agent-03-tokenization) for a deep dive into BPE, SentencePiece, and how vocabulary design shapes what models can and cannot represent.
 
 ```python
 # Tokenization can affect prompt interpretation
@@ -236,6 +236,141 @@ Different tokenizers split text differently, which can affect how models interpr
 # These may produce different token sequences, subtly
 # affecting how the model processes the instruction
 ```
+
+## Multimodal Prompting
+
+The expansion of language models into vision-language models (VLMs) introduces a new dimension to prompt engineering: prompting with images alongside text. Models like GPT-4V, Claude's vision capabilities, and Gemini Pro Vision accept interleaved image-text inputs, but the principles for effective multimodal prompting are still being established through practice rather than theory.
+
+The core challenge is that images are dense, ambiguous inputs. A photograph of a whiteboard contains text, diagrams, spatial relationships, and handwriting quality signals simultaneously. Without textual guidance, the model must guess which aspect matters. Effective multimodal prompts constrain the model's visual attention in the same way that task-specific text prompts constrain textual generation.
+
+```
+# Weak multimodal prompt
+What do you see in this image?
+
+# Strong multimodal prompt
+This image shows a UML class diagram for a payment processing system.
+1. List all classes and their attributes.
+2. Identify inheritance and composition relationships.
+3. Flag any design pattern violations (e.g., God classes, circular dependencies).
+Output your findings as a markdown table with columns: Class, Issue, Severity.
+```
+
+Several practices have emerged as reliable across VLMs:
+
+**Describe what the image contains before asking about it.** Providing a brief textual description of the image type ("This is a chest X-ray," "This is a screenshot of a React component") anchors the model's interpretation and reduces hallucinated content. This mirrors the role pattern for text -- you are conditioning the model's visual processing on domain-relevant priors.
+
+**Use spatial references explicitly.** When asking about specific regions, use directional language ("in the upper-left quadrant," "the third row of the table") rather than assuming the model will attend to the right area. VLMs process images as patch sequences, and spatial grounding in the prompt helps align textual attention with visual attention.
+
+**Annotate images when possible.** Adding bounding boxes, arrows, or numbered labels to images before sending them to the model dramatically improves precision. A prompt that says "Explain the error highlighted in the red box" is far more reliable than "Find the error in this code screenshot." For a deeper treatment of VLM architectures and how visual encoders interact with language decoders, see [Article 49: Vision-Language Models](/articles/agent-49-vision-language-models).
+
+**Manage image resolution and token cost.** VLMs tokenize images into visual tokens -- often hundreds or thousands per image. Higher-resolution images consume more tokens and increase latency. When fine detail is not required (e.g., classifying a chart type versus reading axis labels), downsizing images before submission saves cost without sacrificing accuracy. Tokenization choices for visual inputs follow analogous tradeoffs to text tokenization (see [Article 3: Tokenization](/articles/agent-03-tokenization) for the foundational concepts).
+
+## Model-Specific Formatting Conventions
+
+While the core principles of prompt engineering transfer across models, the formatting conventions that maximize compliance differ significantly between model families. These differences arise from training data composition, fine-tuning procedures, and the specific instruction-following objectives each provider optimizes for.
+
+**XML tags for Claude.** Anthropic's Claude models respond particularly well to XML-style delimiters for structuring prompts. Wrapping sections in tags like `<context>`, `<instructions>`, and `<examples>` produces more reliable section-boundary recognition than markdown headers or plain-text labels. This likely reflects deliberate training choices -- Claude's instruction-following data emphasizes XML-tagged structure.
+
+```xml
+<context>
+You are reviewing a pull request for a Python web application.
+The codebase uses FastAPI with SQLAlchemy ORM.
+</context>
+
+<instructions>
+Review the code diff below for:
+1. Security vulnerabilities (SQL injection, XSS, auth bypasses)
+2. Performance issues (N+1 queries, missing indexes)
+3. Code style violations against PEP 8
+</instructions>
+
+<diff>
+{{code_diff}}
+</diff>
+
+<output_format>
+Return findings as a JSON array of objects with keys:
+file, line, severity, category, description
+</output_format>
+```
+
+**Markdown for GPT models.** OpenAI's models are optimized for markdown-structured prompts. Headers (`##`), bullet lists, and code fences align well with GPT-4's training distribution. Triple-backtick code blocks are parsed with particular reliability for structured output specifications.
+
+**Chat template differences.** Beyond surface formatting, models differ in how they handle the system/user/assistant message structure. Some models treat system messages as immutable high-priority instructions; others weight them only slightly above user messages. Understanding these differences is critical for production deployments where the system prompt must reliably override user inputs -- a topic explored in depth in [Article 9: System Prompt Design](/articles/agent-09-system-prompts).
+
+The practical implication: prompts are not portable across model families without adaptation. A prompt that achieves 95% compliance on Claude may drop to 80% on GPT-4 (or vice versa) simply because of formatting conventions. Teams working across multiple models should maintain model-specific prompt variants and test each variant against model-specific evaluation suites.
+
+## Prompting for Extended Reasoning
+
+The introduction of reasoning-focused models -- OpenAI's o1 and o3 series, DeepSeek-R1, and Claude's extended thinking mode -- has created a fork in prompt engineering strategy. These models allocate internal "thinking tokens" before producing a response, fundamentally changing the role of the prompt from reasoning scaffold to task specification.
+
+With standard models (GPT-4o, Claude Sonnet, Gemini Pro), prompting for complex reasoning requires explicit scaffolding: "Think step by step," chain-of-thought examples, or structured decomposition into sub-problems. These techniques work because the model's reasoning happens in the output tokens, and the prompt must initiate and structure that reasoning process. This family of techniques is covered extensively in [Article 8: Few-Shot & Chain-of-Thought Prompting](/articles/agent-08-few-shot-chain-of-thought).
+
+With reasoning models, the calculus inverts. The model already reasons internally before responding. Adding "think step by step" to a prompt for o3 is at best redundant and at worst counterproductive -- the model may produce a shallow, prompt-satisfying reasoning trace on top of its deeper internal reasoning, wasting tokens without improving accuracy.
+
+The emerging best practices for reasoning models:
+
+**Specify the task, not the reasoning process.** Instead of decomposing a problem into steps, describe the desired outcome and let the model determine how to reason toward it. Reasoning models have learned through reinforcement learning when to reason deeply and when a problem is straightforward -- a calibration that manual CoT prompting cannot replicate.
+
+```
+# For standard models (scaffolded reasoning)
+Analyze whether this merge sort implementation is correct.
+Think through each step:
+1. Check the base case
+2. Verify the divide step
+3. Verify the merge step
+4. Consider edge cases (empty array, single element, duplicates)
+
+# For reasoning models (task specification)
+Determine whether this merge sort implementation is correct.
+If there are bugs, identify them with line numbers and explain
+the fix. If it is correct, state why briefly.
+```
+
+**Control reasoning depth through problem framing, not explicit instructions.** Reasoning models allocate more thinking tokens to harder problems. You can influence reasoning depth by how you frame the task -- asking for a proof versus asking for a quick check will naturally elicit different levels of internal reasoning.
+
+**Use reasoning models for verification, not just generation.** One of the most effective patterns is using a reasoning model to verify or critique output from a faster standard model. The reasoning model's internal deliberation is well-suited to catching subtle errors that the generating model missed. This verification pattern is becoming a production staple for high-stakes applications.
+
+## Prompt Economics
+
+Every token in a prompt has a cost, and at production scale those costs compound into a significant engineering concern. Prompt economics -- the practice of designing prompts with cost, latency, and caching efficiency in mind -- has become an essential skill for teams deploying LLM applications beyond prototyping.
+
+**Token cost asymmetry.** Most API pricing charges less for input tokens than output tokens (often 2-4x less), but input tokens still dominate total cost when prompts include large system instructions, few-shot examples, or retrieved context. A system prompt of 2,000 tokens served 10 million times per month costs meaningfully more than a 200-token system prompt -- even before considering the output side.
+
+**Prompt caching changes the calculus.** Anthropic's prompt caching, OpenAI's cached completions, and similar features allow providers to cache the prefix of a prompt across requests. When a long system prompt is reused identically across many requests, only the first request pays the full processing cost; subsequent requests benefit from cached KV states. This creates a direct incentive to design prompts with a long, stable prefix (system instructions, examples, schemas) followed by a short, variable suffix (the user's actual input).
+
+```python
+# Cache-optimized prompt structure
+# ---- Cached prefix (stable across requests) ----
+SYSTEM_PROMPT = """
+You are a medical coding assistant. You help assign ICD-10 codes
+to clinical notes.
+
+## Coding Guidelines
+[... 1500 tokens of detailed guidelines ...]
+
+## Examples
+[... 800 tokens of few-shot examples ...]
+
+## Output Schema
+{... JSON schema specification ...}
+"""
+
+# ---- Variable suffix (changes per request) ----
+def build_prompt(clinical_note):
+    return f"{SYSTEM_PROMPT}\n\n## Clinical Note\n{clinical_note}"
+```
+
+This structure maximizes cache hit rates. The guidelines, examples, and schema -- which are the same for every request -- form the cached prefix. Only the clinical note varies. For systematic approaches to reducing prompt cost through automated optimization, see [Article 11: Prompt Optimization](/articles/agent-11-prompt-optimization).
+
+**Designing for token efficiency.** Several practical techniques reduce token count without sacrificing prompt quality:
+
+- **Abbreviate where the model can infer.** Instead of verbose natural language instructions, use concise structured formats. Models trained on code and documentation understand terse specifications.
+- **Use references instead of repetition.** Rather than restating a complex constraint in three different ways, state it once clearly and reference it elsewhere ("Apply the same format as Example 1 above").
+- **Prune few-shot examples.** More examples are not always better. Two well-chosen examples that cover the key edge cases often outperform five examples that are redundant. Test with fewer examples before assuming more are needed.
+- **Compress retrieved context.** When feeding RAG-retrieved documents into a prompt, summarize or extract relevant passages rather than dumping full documents. The "Lost in the Middle" problem (discussed in Principle 4 above) means that excess context actively hurts performance, not just cost.
+
+**Latency as cost.** Token count affects not just monetary cost but latency. Longer prompts take longer to process, and longer outputs take longer to stream. For interactive applications, prompt economics is also a UX concern -- a 500ms response feels qualitatively different from a 3-second response, and prompt length is one of the levers engineers have to control that difference.
 
 ## The Instruction Hierarchy
 
@@ -298,6 +433,10 @@ tests = [
 - The five core principles -- specificity, structure, examples, ordering, and positive framing -- provide a reliable foundation for prompt design across models and tasks.
 - Common patterns (role, task decomposition, format specification, context window management) encode proven solutions to recurring prompt design challenges.
 - The clarity-verbosity tradeoff resolves in favor of clarity: every sentence should provide necessary information or meaningful constraint.
+- Multimodal prompting extends the same principles to vision-language inputs -- describe the image, constrain visual attention, annotate when possible, and manage visual token cost.
+- Formatting conventions are not cosmetic: XML tags, markdown structure, and chat template choices measurably affect model compliance and should be adapted per model family.
+- Reasoning models require a different prompting strategy: specify the task and desired outcome, not the reasoning process, and avoid redundant chain-of-thought scaffolding.
+- Prompt economics -- token cost, caching, latency -- are first-class design concerns at production scale; cache-friendly prompt architectures with long stable prefixes pay for themselves quickly.
 - Model-specific considerations matter but are secondary to the universal principles; prompts should be tested against the specific model they will be used with.
 - Treating prompts as software artifacts -- with version control, testing, iteration, and documentation -- is essential for production applications.
 - The instruction hierarchy (system > tools > user > examples > implicit) governs how conflicting instructions are resolved, and effective prompt engineering works with this hierarchy rather than against it.

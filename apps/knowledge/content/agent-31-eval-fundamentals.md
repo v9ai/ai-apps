@@ -219,6 +219,152 @@ For reasoning tasks, chain-of-thought (CoT) prompting (Wei et al., 2022) can dra
 
 For chat models, evaluation often tests instruction following rather than raw knowledge. IFEval (Zhou et al., 2023) provides verifiable instruction-following tests where compliance can be checked programmatically (e.g., "write a response with exactly 3 paragraphs").
 
+## Evaluation Toolkits
+
+Running evaluations from scratch is error-prone and time-consuming. Several open-source toolkits have become standard infrastructure for LLM evaluation, each with distinct strengths.
+
+### lm-evaluation-harness (EleutherAI)
+
+The most widely adopted open-source evaluation framework. It provides a unified interface for running hundreds of benchmarks against any model accessible via a HuggingFace-compatible API. The harness handles prompt formatting, few-shot example selection, answer parsing, and metric computation.
+
+```bash
+# Evaluate a model on MMLU, HellaSwag, and ARC using lm-eval
+lm_eval --model hf \
+    --model_args pretrained=meta-llama/Llama-3-8B \
+    --tasks mmlu,hellaswag,arc_challenge \
+    --num_fewshot 5 \
+    --batch_size 8 \
+    --output_path ./results/
+```
+
+The harness supports custom task definitions via YAML configuration, making it straightforward to add internal benchmarks. Its main limitation is that it is optimized for multiple-choice and short-answer tasks; evaluating open-ended generation requires more manual setup. The Open LLM Leaderboard on HuggingFace uses lm-evaluation-harness as its backend, giving it de facto standard status.
+
+### HELM (Stanford CRFM)
+
+HELM (Holistic Evaluation of Language Models) takes a broader approach, evaluating models not just on accuracy but across multiple dimensions: calibration, robustness, fairness, bias, toxicity, and efficiency. HELM defines a taxonomy of scenarios (tasks) and metrics, then runs a model through a systematic matrix of evaluations.
+
+HELM is particularly useful when the goal is a multi-dimensional model comparison rather than a single-task score. Its structured output makes it straightforward to identify where a model excels and where it falls short. The tradeoff is complexity: running a full HELM evaluation is resource-intensive and requires careful configuration.
+
+### BigCode Evaluation Harness
+
+A specialized fork of lm-evaluation-harness focused on code generation tasks. It supports HumanEval, MBPP, MultiPL-E (multilingual code generation), and DS-1000 (data science tasks). The harness handles sandboxed code execution for pass@k evaluation, which is critical for safe automated assessment of generated code.
+
+### DeepEval
+
+DeepEval is a Python-native testing framework that integrates LLM evaluation into standard pytest workflows. It provides built-in metrics including G-Eval, faithfulness, answer relevancy, and hallucination detection. DeepEval is designed for engineering teams building LLM-powered applications rather than researchers benchmarking base models.
+
+```python
+from deepeval import assert_test
+from deepeval.test_case import LLMTestCase
+from deepeval.metrics import AnswerRelevancyMetric
+
+def test_response_relevancy():
+    test_case = LLMTestCase(
+        input="What are the benefits of exercise?",
+        actual_output="Regular exercise improves cardiovascular health, "
+                      "strengthens muscles, and boosts mental well-being.",
+    )
+    metric = AnswerRelevancyMetric(threshold=0.7)
+    assert_test(test_case, [metric])
+```
+
+This approach fits naturally into CI/CD pipelines, enabling automated quality gates on model outputs. For more on integrating evaluation into deployment workflows, see [CI/CD for AI: Regression Testing, Monitoring & Continuous Eval](/agent-36-ci-cd-ai).
+
+## Reference-Free Evaluation
+
+All the metrics discussed so far—BLEU, ROUGE, BERTScore, exact match—require reference text to compare against. This is a fundamental constraint: for open-ended generation, creative tasks, or domains where ground-truth answers are expensive to create, reference-based evaluation is impractical or impossible. Reference-free methods address this gap by evaluating output quality without gold references.
+
+### G-Eval
+
+G-Eval (Liu et al., 2023) uses an LLM as an evaluator, prompting it with a task description and evaluation criteria, then asking it to score the output on a defined scale. The key innovation is using chain-of-thought to generate detailed evaluation steps before assigning a score, which improves consistency and correlation with human judgment.
+
+G-Eval can assess dimensions like fluency, coherence, consistency, and relevance without any reference text. It achieves Spearman correlations above 0.5 with human judgments on summarization tasks, outperforming most reference-based metrics. The method is general: by changing the evaluation prompt, it can be adapted to any quality dimension that a human could assess.
+
+The main risks are the biases inherent in LLM-based evaluation: positional bias (favoring the first or last option), verbosity bias (preferring longer outputs), and self-enhancement bias (an LLM may rate its own outputs more favorably). These are discussed in depth in [LLM-as-Judge: Automated Evaluation, Calibration & Bias](/agent-33-llm-as-judge).
+
+### FActScore
+
+FActScore (Min et al., 2023) decomposes a generated text into atomic factual claims, then independently verifies each claim against a knowledge source. The final score is the fraction of claims that are supported. This provides a fine-grained factual precision measure without requiring a reference summary or answer.
+
+```python
+# Conceptual FActScore pipeline
+def factscore(generated_text, knowledge_source):
+    claims = decompose_into_atomic_facts(generated_text)
+    supported = sum(
+        1 for claim in claims
+        if is_supported(claim, knowledge_source)
+    )
+    return supported / len(claims) if claims else 0.0
+```
+
+FActScore is especially relevant for evaluating long-form generation where traditional metrics fail entirely. A biography or technical explanation might be fluent and well-structured yet contain subtle factual errors that ROUGE would never catch. FActScore targets exactly this failure mode. For evaluation of factual grounding in retrieval-augmented systems, see [RAG Evaluation: Faithfulness, Relevance & Failure Modes](/agent-18-rag-evaluation).
+
+### When to Use Reference-Free vs Reference-Based
+
+The choice depends on the task structure and what you are trying to measure:
+
+- **Use reference-based metrics** when the task has constrained outputs (extractive QA, translation, structured data extraction) and high-quality references are available. Reference-based metrics are faster, cheaper, and more reproducible.
+- **Use reference-free metrics** when outputs are open-ended (creative writing, open-domain chat, summarization of novel documents), when creating references is prohibitively expensive, or when you need to evaluate dimensions like helpfulness or safety that references cannot capture.
+- **Use both together** for the strongest evaluation design. Reference-based metrics catch objective errors; reference-free metrics catch subjective quality issues. Their agreement (or disagreement) is itself informative.
+
+In practice, the trend is toward reference-free evaluation as LLM applications move further from constrained tasks. The critical requirement is validating that your reference-free metric correlates with human judgment on your specific task. A metric that works well for summarization may fail for dialogue, and blind trust in any automated metric is a recipe for silent quality degradation. Calibrating automated judges against human annotations is essential—see [Human Evaluation: Annotation Design, Inter-Rater Reliability & Scale](/agent-34-human-evaluation) for best practices.
+
+## Evaluating Multi-Turn Conversations
+
+Most benchmarks evaluate single-turn interactions: one prompt, one response. But real-world LLM usage is overwhelmingly multi-turn. A model that excels at isolated questions may fail to maintain context, resolve coreferences across turns, or adapt its behavior based on user feedback within a conversation. Multi-turn evaluation requires different frameworks.
+
+### MT-Bench
+
+MT-Bench (Zheng et al., 2023) is a curated set of 80 multi-turn questions spanning writing, roleplay, reasoning, math, coding, extraction, STEM, and humanities. Each item consists of a first-turn question followed by a more challenging or specific follow-up. An LLM judge (typically GPT-4) rates each response on a 1-10 scale.
+
+MT-Bench captures capabilities that single-turn benchmarks miss: can the model build on its previous answer? Does it handle follow-up instructions that modify or constrain the original task? Does it maintain consistency across turns? The two-turn structure is a minimal but meaningful step toward conversational evaluation.
+
+### Arena-Style Evaluation (Chatbot Arena / LMSYS)
+
+Chatbot Arena takes a fundamentally different approach: rather than using fixed test sets, it crowdsources pairwise comparisons from real users. Users submit a prompt, receive responses from two anonymous models, and vote for the better one. Elo ratings (and more recently Bradley-Terry model fits) are computed from the accumulated votes.
+
+This methodology has several strengths. The prompts reflect genuine user needs rather than researcher assumptions. The evaluation is inherently reference-free. The pairwise comparison format is cognitively simpler for annotators than absolute scoring, leading to higher agreement. And the continuous influx of fresh prompts makes contamination essentially impossible.
+
+The resulting leaderboard has become one of the most trusted rankings in the field. However, arena evaluation has its own biases: the user population skews toward English-speaking technical users, responses that "look impressive" may be preferred over responses that are technically correct, and the pairwise format cannot capture fine-grained quality differences on specific dimensions.
+
+### Conversation-Level Metrics
+
+Beyond benchmark-level evaluation, several metrics target specific properties of multi-turn systems:
+
+- **Context retention**: Does the model correctly recall and use information from earlier turns? Tested by introducing facts early in a conversation and querying them later.
+- **Instruction persistence**: If the user sets a constraint in turn 1 ("respond only in French"), does the model maintain it through subsequent turns?
+- **Error recovery**: When the model makes a mistake and the user corrects it, does the model incorporate the correction or repeat the error?
+- **Coherence across turns**: Does the conversation feel like a unified interaction or a series of disconnected exchanges?
+
+These properties are difficult to capture with automated metrics and often require human evaluation or carefully designed LLM-judge rubrics. Building reliable multi-turn evaluation remains an open problem and an active area of research.
+
+## Leaderboard Critique
+
+Public leaderboards—the Open LLM Leaderboard, Chatbot Arena, and various task-specific rankings—have become the primary mechanism by which the community compares models. This has benefits: leaderboards provide standardized, reproducible comparisons and make evaluation accessible. But leaderboard-driven development introduces serious distortions.
+
+### The Open LLM Leaderboard
+
+HuggingFace's Open LLM Leaderboard runs models through a fixed suite of benchmarks using lm-evaluation-harness. The original leaderboard (v1) used MMLU, HellaSwag, ARC, WinoGrande, TruthfulQA, and GSM8K. As models saturated these benchmarks, v2 shifted to harder tasks including MMLU-Pro, GPQA, MuSR, MATH, and IFEval.
+
+The leaderboard's accessibility has been enormously valuable for the open-source community, but it has also created perverse incentives. Models are explicitly optimized for leaderboard benchmarks, sometimes at the expense of general capability. The practice of "benchmark engineering"—selecting training data, hyperparameters, and even model merging strategies to maximize leaderboard scores—has become widespread.
+
+### Contamination Risks
+
+When the evaluation benchmarks are public and the training data is opaque, contamination is nearly impossible to rule out. A model that has memorized MMLU questions during training will score well on the leaderboard without demonstrating genuine understanding. The problem is especially acute for open-weight models where training data composition is not fully disclosed.
+
+Several mitigation strategies exist—canary strings, rephrased test sets, held-out private benchmarks—but none fully solves the problem. LiveBench's approach of monthly question refresh is promising but resource-intensive. The fundamental tension is that public benchmarks enable reproducibility while also enabling gaming. For detailed analysis, see [Benchmark Design: Contamination, Saturation & Domain-Specific Evals](/agent-32-benchmark-design).
+
+### Problems with Leaderboard-Driven Development
+
+The deeper issue is Goodhart's Law applied to LLM development: when a metric becomes a target, it ceases to be a good metric. Specific failure modes include:
+
+- **Narrow optimization**: Models tuned for multiple-choice benchmarks may underperform on open-ended tasks that matter more in production.
+- **Metric monoculture**: The community converges on a small set of benchmarks, leaving other capabilities unmeasured and therefore unoptimized.
+- **False confidence**: A leaderboard ranking creates an illusion of total ordering. Model A outscoring Model B on MMLU says nothing about which is better for a specific production use case.
+- **Neglect of non-benchmark qualities**: Properties like latency, cost, calibration, safety, and instruction-following consistency are poorly captured by standard leaderboards but critical in deployment.
+
+The pragmatic response is to treat leaderboards as a coarse filter, not a definitive ranking. Use them to identify plausible candidate models, then evaluate those candidates rigorously on your specific task with your specific data. Production evaluation should always be task-specific and should include human assessment—see [Human Evaluation: Annotation Design, Inter-Rater Reliability & Scale](/agent-34-human-evaluation).
+
 ## Building a Robust Evaluation Pipeline
 
 A production-grade evaluation pipeline should include:
@@ -260,3 +406,13 @@ class EvalPipeline:
 - **Validate automated metrics against human judgment** for your specific use case. The correlation between automated metrics and human preferences varies dramatically across tasks and domains.
 
 The field of LLM evaluation is evolving rapidly, but the fundamentals of sound experimental methodology remain constant. Rigorous evaluation is the foundation upon which all claims about model capability must rest.
+
+## Further Reading
+
+This article covers evaluation fundamentals. The following companion articles go deeper on specific topics:
+
+- [Benchmark Design: Contamination, Saturation & Domain-Specific Evals](/agent-32-benchmark-design) — How benchmarks are constructed, how they degrade, and how to build domain-specific evaluations.
+- [LLM-as-Judge: Automated Evaluation, Calibration & Bias](/agent-33-llm-as-judge) — Using LLMs to evaluate LLMs, including calibration techniques and bias mitigation.
+- [Human Evaluation: Annotation Design, Inter-Rater Reliability & Scale](/agent-34-human-evaluation) — Designing human annotation studies, measuring agreement, and scaling evaluation.
+- [RAG Evaluation: Faithfulness, Relevance & Failure Modes](/agent-18-rag-evaluation) — Evaluation frameworks specific to retrieval-augmented generation systems.
+- [CI/CD for AI: Regression Testing, Monitoring & Continuous Eval](/agent-36-ci-cd-ai) — Integrating evaluation into deployment pipelines for continuous quality assurance.

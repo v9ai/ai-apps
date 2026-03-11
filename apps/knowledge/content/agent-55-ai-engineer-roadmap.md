@@ -33,19 +33,19 @@ The AI engineer role crystallized around 2023 when the capabilities of foundatio
 
 Day-to-day responsibilities typically include:
 
-1. **Prompt engineering and architecture**: Designing system prompts, few-shot examples, and prompt chains that produce reliable outputs
-2. **RAG system design**: Building retrieval pipelines that ground LLM responses in relevant data
-3. **Integration engineering**: Connecting LLMs to APIs, databases, and business logic through tool use and function calling
-4. **Evaluation and testing**: Building evaluation frameworks to measure AI quality, detect regressions, and validate prompt changes
-5. **Cost and latency optimization**: Choosing models, caching strategies, and architectures that meet performance and budget constraints
-6. **Guardrails and safety**: Implementing content filtering, output validation, and fallback mechanisms
-7. **Feature development**: Shipping user-facing AI features (search, chat, summarization, classification, generation)
+1. **Prompt engineering and architecture**: Designing [system prompts](/agent-09-system-prompts), [few-shot examples](/agent-08-few-shot-chain-of-thought), and prompt chains that produce reliable outputs (see [Prompt Engineering Fundamentals](/agent-07-prompt-engineering-fundamentals))
+2. **RAG system design**: Building [retrieval pipelines](/agent-16-retrieval-strategies) that ground LLM responses in relevant data (see [Advanced RAG](/agent-17-advanced-rag))
+3. **Integration engineering**: Connecting LLMs to APIs, databases, and business logic through [tool use and function calling](/agent-25-function-calling)
+4. **Evaluation and testing**: Building [evaluation frameworks](/agent-31-eval-fundamentals) to measure AI quality, detect regressions, and validate prompt changes (see [CI/CD for AI](/agent-36-ci-cd-ai))
+5. **Cost and latency optimization**: Choosing models, [caching strategies](/agent-39-cost-optimization), and [production architectures](/agent-54-production-patterns) that meet performance and budget constraints
+6. **Guardrails and safety**: Implementing [content filtering](/agent-44-guardrails-filtering), output validation, and [hallucination mitigation](/agent-45-hallucination-mitigation)
+7. **Feature development**: Shipping user-facing AI features ([search](/agent-53-search-recommendations), [chat](/agent-52-conversational-ai), summarization, classification, generation)
 
 ## The Core Skill Tree
 
 ### Tier 1: Foundation (Must-Have)
 
-**Strong software engineering fundamentals**: The AI engineer is first and foremost a software engineer. Without solid engineering skills, AI features will be fragile, untestable, and unmaintainable.
+**Strong software engineering fundamentals**: The AI engineer is first and foremost a software engineer. Without solid engineering skills, AI features will be fragile, untestable, and unmaintainable. Understanding how [production AI patterns](/agent-54-production-patterns) intersect with standard software engineering is critical.
 
 ```
 Required engineering skills:
@@ -59,7 +59,7 @@ Required engineering skills:
 - System design fundamentals
 ```
 
-**LLM API proficiency**: Deep understanding of how to interact with LLMs programmatically:
+**LLM API proficiency**: Deep understanding of how to interact with LLMs programmatically. This requires familiarity with the [transformer architecture](/agent-01-transformer-architecture) that underlies these APIs, [tokenization](/agent-03-tokenization) mechanics that affect cost and context limits, and the [different model architectures](/agent-04-model-architectures) available across providers:
 
 ```python
 # Beyond basic API calls - understanding the full parameter space
@@ -79,25 +79,25 @@ response = await client.chat.completions.create(
 )
 ```
 
-**Prompt engineering depth**: Not just writing prompts, but understanding why certain techniques work:
+**Prompt engineering depth**: Not just writing prompts, but understanding why certain techniques work (see the full treatment in [Prompt Engineering Fundamentals](/agent-07-prompt-engineering-fundamentals)):
 
-- **System prompt design**: Setting behavior, persona, constraints, and output format
-- **Few-shot learning**: Selecting and ordering examples for maximum effectiveness
-- **Chain-of-thought**: Eliciting reasoning before answers for complex tasks
-- **Structured output**: Getting reliable JSON, XML, or other structured formats
-- **Prompt debugging**: Systematically diagnosing why prompts fail on specific inputs
+- **System prompt design**: Setting behavior, persona, constraints, and output format (see [System Prompts](/agent-09-system-prompts))
+- **Few-shot learning**: Selecting and ordering examples for maximum effectiveness (see [Few-Shot & Chain-of-Thought](/agent-08-few-shot-chain-of-thought))
+- **Chain-of-thought**: Eliciting reasoning before answers for complex tasks (see [Few-Shot & Chain-of-Thought](/agent-08-few-shot-chain-of-thought))
+- **Structured output**: Getting reliable JSON, XML, or other structured formats (see [Structured Output](/agent-10-structured-output))
+- **Prompt debugging**: Systematically diagnosing why prompts fail on specific inputs (see [Prompt Optimization](/agent-11-prompt-optimization) and [Adversarial Prompting](/agent-12-adversarial-prompting))
 
 **Embedding and retrieval fundamentals**: Understanding how vector search works and when to use it:
 
-- Text embedding models and their tradeoffs
-- Vector databases (Pinecone, Qdrant, Weaviate, Chroma, pgvector)
-- Chunking strategies for different content types
-- Hybrid search (combining BM25 with dense retrieval)
-- Re-ranking for precision
+- Text [embedding models](/agent-13-embedding-models) and their tradeoffs
+- [Vector databases](/agent-14-vector-databases) (Pinecone, Qdrant, Weaviate, Chroma, pgvector)
+- [Chunking strategies](/agent-15-chunking-strategies) for different content types
+- [Hybrid search](/agent-16-retrieval-strategies) (combining BM25 with dense retrieval)
+- Re-ranking for precision (covered in [Retrieval Strategies](/agent-16-retrieval-strategies))
 
 ### Tier 2: Professional (Differentiation)
 
-**Evaluation and observability**: The skill that separates amateurs from professionals. Without evaluation, you are shipping hope.
+**Evaluation and observability**: The skill that separates amateurs from professionals. Without evaluation, you are shipping hope. Start with [LLM Evaluation Fundamentals](/agent-31-eval-fundamentals), then explore [LLM-as-Judge](/agent-33-llm-as-judge), [Benchmark Design](/agent-32-benchmark-design), and [Human Evaluation](/agent-34-human-evaluation). For production monitoring, see [Observability](/agent-40-observability).
 
 ```python
 # Professional-grade evaluation framework
@@ -127,39 +127,39 @@ class EvalSuite:
         return EvalReport(results)
 ```
 
-**Agent and tool-use design**: Building systems where LLMs can take actions:
+**Agent and tool-use design**: Building systems where LLMs can take actions (see the full agent series starting with [Function Calling](/agent-25-function-calling)):
 
-- Function calling and tool definitions
-- Agent loops (ReAct, plan-and-execute)
-- Error handling in agentic workflows
-- Guardrails for autonomous action
-- Human-in-the-loop patterns
+- [Function calling](/agent-25-function-calling) and tool definitions
+- [Agent loops](/agent-26-agent-architectures) (ReAct, plan-and-execute)
+- Error handling in agentic workflows (see [Agent Evaluation](/agent-30-agent-evaluation))
+- Guardrails for autonomous action (see [Guardrails & Filtering](/agent-44-guardrails-filtering))
+- Human-in-the-loop patterns (see [Multi-Agent Systems](/agent-27-multi-agent-systems) and [Agent Memory](/agent-28-agent-memory))
 
-**Fine-tuning and model customization**: While AI engineers primarily use pre-trained models, knowing when and how to fine-tune is important:
+**Fine-tuning and model customization**: While AI engineers primarily use pre-trained models, knowing when and how to fine-tune is important (see the full series starting with [Fine-tuning Fundamentals](/agent-19-fine-tuning-fundamentals)):
 
 - When fine-tuning is worth it vs. prompt engineering
-- Data preparation for fine-tuning (format, quality, diversity)
-- Parameter-efficient fine-tuning (LoRA, QLoRA)
+- [Data preparation](/agent-22-dataset-curation) for fine-tuning (format, quality, diversity)
+- Parameter-efficient fine-tuning ([LoRA, QLoRA](/agent-20-lora-adapters))
 - Evaluation of fine-tuned models vs. base models
-- Distillation from larger models to smaller ones
+- [Distillation](/agent-24-distillation-compression) from larger models to smaller ones
 
-**Production architecture patterns**: Designing systems that are reliable, scalable, and cost-effective:
+**Production architecture patterns**: Designing systems that are reliable, scalable, and cost-effective (see [Production AI Patterns](/agent-54-production-patterns)):
 
-- Caching strategies (semantic caching, exact-match caching)
-- Rate limiting and queuing
-- Fallback chains and graceful degradation
-- Cost budgeting and monitoring
-- Multi-model routing
+- Caching strategies (semantic caching, exact-match caching) - see [Cost Optimization](/agent-39-cost-optimization)
+- Rate limiting and queuing - see [AI Gateways](/agent-42-ai-gateway)
+- Fallback chains and graceful degradation - see [AI Gateways](/agent-42-ai-gateway)
+- Cost budgeting and monitoring - see [Cost Optimization](/agent-39-cost-optimization)
+- Multi-model routing - see [Scaling & Load Balancing](/agent-38-scaling-load-balancing)
 
 ### Tier 3: Advanced (Specialization)
 
-**Multimodal AI**: Vision-language models, speech-to-text, text-to-speech, and cross-modal applications.
+**Multimodal AI**: [Vision-language models](/agent-49-vision-language-models), [speech-to-text, text-to-speech](/agent-50-audio-speech-ai), and cross-modal applications.
 
-**AI safety and alignment**: Red-teaming, constitutional AI principles, output filtering, and responsible deployment.
+**AI safety and alignment**: [Red-teaming](/agent-35-red-teaming), [constitutional AI](/agent-43-constitutional-ai) principles, [output filtering](/agent-44-guardrails-filtering), [bias and fairness](/agent-46-bias-fairness), and [responsible deployment](/agent-47-ai-governance). Understanding [interpretability](/agent-48-interpretability) further strengthens safety work.
 
-**Infrastructure and MLOps**: GPU management, model serving (vLLM, TGI), deployment optimization, and scaling.
+**Infrastructure and MLOps**: GPU management, [model serving](/agent-37-llm-serving) (vLLM, TGI), [deployment optimization](/agent-41-edge-deployment), [scaling](/agent-38-scaling-load-balancing), and [inference optimization](/agent-05-inference-optimization).
 
-**Domain specialization**: Deep expertise in applying AI to a specific domain (healthcare, legal, finance, education, code).
+**Domain specialization**: Deep expertise in applying AI to a specific domain (healthcare, legal, finance, education, [code](/agent-51-ai-for-code)).
 
 ## Essential Tools and Frameworks
 
@@ -276,10 +276,10 @@ result = MyModel.model_validate_json(response.choices[0].message.content)
 
 **Goal**: Build and deploy a basic AI-powered application.
 
-1. **Complete a practical tutorial**: Build a RAG chatbot from scratch using OpenAI API + a vector database
-2. **Understand transformer basics**: You don't need to implement one, but understand attention, tokens, context windows, and embedding spaces. Andrej Karpathy's "Let's Build GPT" video is the gold standard here.
-3. **Learn prompt engineering systematically**: Work through Anthropic's prompt engineering guide and OpenAI's best practices documentation
-4. **Ship something**: Deploy a working application. A personal knowledge base, a document Q&A system, or a customer support prototype
+1. **Complete a practical tutorial**: Build a RAG chatbot from scratch using OpenAI API + a [vector database](/agent-14-vector-databases)
+2. **Understand transformer basics**: You don't need to implement one, but understand [attention, tokens, context windows](/agent-01-transformer-architecture), and [embedding spaces](/agent-13-embedding-models). Andrej Karpathy's "Let's Build GPT" video is the gold standard here. See also [Tokenization](/agent-03-tokenization) and [Model Architectures](/agent-04-model-architectures).
+3. **Learn prompt engineering systematically**: Work through Anthropic's prompt engineering guide and OpenAI's best practices documentation. See [Prompt Engineering Fundamentals](/agent-07-prompt-engineering-fundamentals) and [System Prompts](/agent-09-system-prompts).
+4. **Ship something**: Deploy a working application. A personal knowledge base, a document Q&A system, or a [customer support prototype](/agent-52-conversational-ai)
 
 **Resources**:
 - "Attention Is All You Need" (Vaswani et al., 2017) - the foundational paper
@@ -291,11 +291,11 @@ result = MyModel.model_validate_json(response.choices[0].message.content)
 
 **Goal**: Build production-quality AI systems with evaluation and monitoring.
 
-1. **Master evaluation**: Build an eval suite for your Phase 1 project. Track quality metrics over time. Use LLM-as-judge for subjective quality assessment.
-2. **Learn agent patterns**: Implement a ReAct agent with tool use. Build something that searches the web, queries databases, or interacts with APIs.
-3. **Study retrieval in depth**: Experiment with different chunking strategies, embedding models, and re-ranking. Measure retrieval quality with NDCG/MRR on a domain-specific dataset.
-4. **Implement production patterns**: Add caching, fallback chains, rate limiting, and cost monitoring to your application.
-5. **Understand fine-tuning**: Fine-tune a small model (e.g., GPT-4o-mini) on a task-specific dataset and compare to prompt engineering.
+1. **Master evaluation**: Build an eval suite for your Phase 1 project. Track quality metrics over time. Use [LLM-as-judge](/agent-33-llm-as-judge) for subjective quality assessment. See [Eval Fundamentals](/agent-31-eval-fundamentals) and [Benchmark Design](/agent-32-benchmark-design).
+2. **Learn agent patterns**: Implement a [ReAct agent](/agent-26-agent-architectures) with [tool use](/agent-25-function-calling). Build something that searches the web, queries databases, or interacts with APIs. See also [Agent Memory](/agent-28-agent-memory) and [Code Agents](/agent-29-code-agents).
+3. **Study retrieval in depth**: Experiment with different [chunking strategies](/agent-15-chunking-strategies), [embedding models](/agent-13-embedding-models), and [re-ranking](/agent-16-retrieval-strategies). Measure retrieval quality with NDCG/MRR on a domain-specific dataset. See [RAG Evaluation](/agent-18-rag-evaluation).
+4. **Implement production patterns**: Add [caching, fallback chains](/agent-39-cost-optimization), [rate limiting](/agent-42-ai-gateway), and [cost monitoring](/agent-40-observability) to your application. See [Production AI Patterns](/agent-54-production-patterns).
+5. **Understand fine-tuning**: [Fine-tune](/agent-19-fine-tuning-fundamentals) a small model (e.g., GPT-4o-mini) on a task-specific [dataset](/agent-22-dataset-curation) and compare to prompt engineering. Explore [LoRA](/agent-20-lora-adapters) for parameter-efficient approaches.
 
 **Resources**:
 - Chip Huyen's "Building LLM Applications for Production" (blog post)
@@ -308,11 +308,11 @@ result = MyModel.model_validate_json(response.choices[0].message.content)
 
 **Goal**: Develop specialization and contribute to the field.
 
-1. **Choose a specialization**: Pick a domain or technical area to go deep on (multimodal, agents, search, voice, safety, etc.)
-2. **Study the research**: Read papers in your specialization area. Follow key researchers and labs.
+1. **Choose a specialization**: Pick a domain or technical area to go deep on ([multimodal](/agent-49-vision-language-models), [agents](/agent-26-agent-architectures), [search](/agent-53-search-recommendations), [voice](/agent-50-audio-speech-ai), [safety](/agent-43-constitutional-ai), etc.)
+2. **Study the research**: Read papers in your specialization area. Follow key researchers and labs. Understand [scaling laws](/agent-02-scaling-laws) and [pre-training dynamics](/agent-06-pretraining-data).
 3. **Build in public**: Share what you learn through blog posts, open-source projects, or conference talks.
 4. **Contribute to open-source**: Contribute to frameworks you use (LangChain, LlamaIndex, vLLM, etc.) or build useful tools.
-5. **Tackle hard problems**: Work on evaluation methodology, agent reliability, cost optimization, or other unsolved challenges.
+5. **Tackle hard problems**: Work on [evaluation methodology](/agent-31-eval-fundamentals), [agent reliability](/agent-30-agent-evaluation), [cost optimization](/agent-39-cost-optimization), [hallucination mitigation](/agent-45-hallucination-mitigation), or other unsolved challenges.
 
 ### Continuous Learning Habits
 
@@ -420,10 +420,10 @@ Director of AI Engineering
 
 Your portfolio should demonstrate breadth and depth:
 
-1. **A RAG application**: Shows you can build retrieval systems, manage embeddings, and handle the full pipeline
-2. **An agent or tool-use system**: Demonstrates ability to build systems where AI takes actions
-3. **An evaluation framework**: Shows you understand quality measurement, which is the #1 differentiator
-4. **A cost-optimized system**: Demonstrates practical engineering (caching, routing, model selection)
+1. **A RAG application**: Shows you can build [retrieval systems](/agent-16-retrieval-strategies), manage [embeddings](/agent-13-embedding-models), and handle the [full pipeline](/agent-17-advanced-rag)
+2. **An agent or tool-use system**: Demonstrates ability to build systems where AI [takes actions](/agent-26-agent-architectures) using [function calling](/agent-25-function-calling)
+3. **An evaluation framework**: Shows you understand [quality measurement](/agent-31-eval-fundamentals), which is the #1 differentiator
+4. **A cost-optimized system**: Demonstrates practical engineering ([caching, routing, model selection](/agent-39-cost-optimization))
 5. **Open-source contributions**: Shows you can work with existing codebases and communities
 
 **Portfolio anti-patterns to avoid**:
@@ -465,9 +465,9 @@ Practical Exercises:
 
 **Model commoditization**: As model quality converges across providers, the differentiator shifts from "which model" to "how you use it." AI engineering becomes more about system design, evaluation, and user experience than model selection.
 
-**Agents becoming practical**: 2024-2025 saw agents move from demos to production for constrained domains. The next phase is expanding the reliability envelope - making agents work for broader, more complex tasks. This requires better evaluation, error recovery, and human oversight patterns.
+**Agents becoming practical**: 2024-2025 saw [agents](/agent-26-agent-architectures) move from demos to production for constrained domains. The next phase is expanding the reliability envelope - making agents work for broader, more complex tasks. This requires better [evaluation](/agent-30-agent-evaluation), error recovery, and [human oversight](/agent-34-human-evaluation) patterns. [Multi-agent systems](/agent-27-multi-agent-systems) and [code agents](/agent-29-code-agents) are leading indicators of this trend.
 
-**Multimodal as default**: Text-only AI applications will be the exception, not the rule. Engineers will need to handle images, audio, video, and structured data alongside text as a baseline expectation.
+**Multimodal as default**: Text-only AI applications will be the exception, not the rule. Engineers will need to handle [images](/agent-49-vision-language-models), [audio](/agent-50-audio-speech-ai), video, and structured data alongside text as a baseline expectation.
 
 **AI engineering as infrastructure**: Just as every company now needs web engineering, every company will need AI engineering. The role will become less specialized and more integrated into general software engineering.
 

@@ -18,6 +18,17 @@ High-risk systems must comply with requirements for risk management systems, dat
 
 **Minimal Risk**: Most AI systems, including spam filters and AI-enabled video games, face no specific requirements beyond existing law.
 
+### Enforcement Timeline and Practical Compliance Steps
+
+The EU AI Act follows a phased enforcement schedule that engineering teams must plan around:
+
+- **February 2025**: Prohibitions on unacceptable-risk AI systems take effect (social scoring, manipulative techniques, untargeted facial recognition database scraping).
+- **August 2025**: Obligations for general-purpose AI (GPAI) models become enforceable, including transparency requirements and systemic risk assessments for the most capable models.
+- **August 2026**: The full set of requirements for high-risk AI systems kicks in -- risk management, data governance, technical documentation, logging, human oversight, accuracy, and robustness.
+- **August 2027**: Extended deadline for high-risk AI systems that are safety components of products already regulated under existing EU sectoral legislation (medical devices, automotive, aviation).
+
+For engineering teams, practical compliance steps include: conducting an internal AI system inventory to classify each system by risk tier; establishing a conformity assessment process for high-risk systems (self-assessment for most, third-party audit for biometric systems); implementing the required logging infrastructure well before the August 2026 deadline; designating an authorized representative if operating from outside the EU; and budgeting for compliance -- penalties reach up to 35 million EUR or 7% of global annual turnover for prohibited practices, and up to 15 million EUR or 3% for other violations.
+
 ### Engineering Implications of the EU AI Act
 
 For engineering teams building LLM applications, the EU AI Act imposes concrete requirements:
@@ -459,6 +470,122 @@ A structured response playbook ensures consistent handling of AI incidents:
 6. **Communicate**: Notify affected users, regulators (if required), and internal stakeholders.
 7. **Review**: Conduct blameless post-incident review and update risk assessments, monitoring, and procedures.
 
+## International AI Safety Institutes
+
+As AI capabilities advance, governments have established dedicated bodies to evaluate frontier models and set safety standards. These institutes are shaping the technical benchmarks that compliance teams will ultimately need to meet.
+
+### UK AI Safety Institute (AISI)
+
+The UK AI Safety Institute, established in November 2023, was the first government body dedicated to evaluating advanced AI models for safety. AISI conducts pre-deployment evaluations of frontier models in collaboration with leading AI labs, developing standardized evaluation methodologies for dangerous capabilities (biosecurity, cybersecurity, persuasion, autonomy). Its evaluation framework, Inspect, is open-source and provides a reusable toolkit for building AI safety benchmarks. AISI has published results from evaluations of models from Anthropic, OpenAI, Google DeepMind, and Meta, establishing a norm of government access to pre-release models.
+
+### US AI Safety Institute (USAISI)
+
+Housed within the National Institute of Standards and Technology (NIST), the US AI Safety Institute was established in early 2024 to develop measurement science for AI safety. It coordinates with AISI UK under a bilateral agreement and focuses on developing evaluation standards for generative AI, creating guidelines for red-teaming methodologies (complementing the adversarial testing approaches discussed in [Red Teaming & Adversarial Testing](/knowledge/agent-35-red-teaming)), and producing technical guidance for watermarking and content provenance. USAISI works with the AI Safety Institute Consortium (AISIC), which includes over 200 organizations contributing to standards development.
+
+### Other National Initiatives
+
+Japan established its AI Safety Institute in February 2024, focusing on evaluation standards harmonized with UK and US approaches. The EU is building the European AI Office within the European Commission, which will oversee enforcement of GPAI model obligations under the AI Act. Singapore's AI Verify Foundation provides an open-source testing toolkit for AI governance. These bodies increasingly coordinate through the International Network of AI Safety Institutes, formed at the 2024 Seoul AI Summit, aiming to develop interoperable evaluation standards that reduce the compliance burden for organizations operating across jurisdictions.
+
+For engineering teams, the practical implication is that pre-deployment safety evaluation is becoming a baseline expectation. Teams should build evaluation pipelines that can accommodate the testing methodologies these institutes produce -- most of which align with the structured red-teaming and benchmark approaches already considered best practice.
+
+## ISO 42001 and Enterprise AI Compliance
+
+ISO/IEC 42001:2023 is the first international management system standard for artificial intelligence. Published in December 2023, it provides a certifiable framework for establishing, implementing, maintaining, and continually improving an AI management system (AIMS) within an organization.
+
+### What ISO 42001 Requires
+
+The standard follows the familiar ISO management system structure (shared with ISO 27001 for information security and ISO 9001 for quality), making it accessible to organizations already operating under those frameworks. Core requirements include:
+
+- **AI Policy**: A documented organizational policy covering responsible AI development and use, endorsed by leadership.
+- **Risk Assessment**: Systematic identification and assessment of risks related to AI systems, including impacts on individuals and groups. This aligns with the NIST AI RMF approach described earlier in this article.
+- **AI Impact Assessment**: Evaluating potential impacts of AI systems on affected stakeholders before deployment.
+- **Data Management**: Controls for data quality, provenance, and preparation throughout the AI lifecycle.
+- **Resource and Competence Management**: Ensuring personnel involved in AI development and operations have appropriate skills and training.
+- **AI System Lifecycle Processes**: Documented processes covering design, development, testing, deployment, monitoring, and retirement.
+- **Third-Party and Supply Chain Management**: Governance of AI components sourced from external providers, including foundation models and API services.
+- **Continuous Improvement**: Mechanisms for monitoring, measurement, analysis, and ongoing enhancement of the AIMS.
+
+### Certification Process
+
+Certification follows the standard ISO audit process: a Stage 1 audit reviews documentation and readiness, followed by a Stage 2 audit that evaluates implementation effectiveness. Certification is valid for three years with annual surveillance audits. Several accredited certification bodies now offer ISO 42001 audits, and early adopters report that the process takes six to twelve months from initiation to certification.
+
+### Why Enterprises Are Pursuing It
+
+ISO 42001 certification is becoming a competitive differentiator and a procurement prerequisite. Enterprises pursue it to demonstrate due diligence in AI governance (relevant for liability defense), satisfy customer and partner requirements in regulated industries, create a structured foundation that maps to multiple regulations (EU AI Act, sector-specific rules), and reduce audit fatigue by consolidating AI governance into a recognized international framework. The standard does not prescribe specific technical controls, making it compatible with the technical compliance approaches described elsewhere in this article.
+
+## Open-Source Model Governance
+
+Open-weight models present a distinct governance challenge: once model weights are publicly released, the provider has no technical mechanism to enforce usage policies. Governance must therefore shift from provider-side controls to deployer-side responsibility.
+
+### The Governance Gap
+
+With proprietary API models (GPT-4, Claude), the provider can enforce acceptable use policies, apply safety filters, and revoke access. With open-weight models (Llama, Mistral, Qwen, Gemma), the deployer assumes full responsibility for safety, compliance, and misuse prevention. This means building your own [guardrails and content filtering](/knowledge/agent-44-guardrails-filtering) pipeline, conducting your own [bias and fairness evaluations](/knowledge/agent-46-bias-fairness), and implementing your own monitoring and audit infrastructure. Under the EU AI Act, deployers of open-source models used in high-risk applications bear the same compliance obligations as deployers of proprietary models -- the openness of the model does not reduce the regulatory burden.
+
+### License Types and Their Implications
+
+Open-weight model licenses vary significantly in what they permit:
+
+**Permissive Licenses**: Apache 2.0 (used by Mistral, some Google models) imposes minimal restrictions. Deployers can modify, distribute, and use the model commercially with few obligations beyond attribution and license notice preservation. This maximizes flexibility but provides no governance guardrails.
+
+**Community and Responsible Use Licenses**: Meta's Llama Community License permits commercial use but includes an acceptable use policy that prohibits certain applications (weapons development, surveillance, generating disinformation). It also imposes a monthly active user threshold (700 million) above which a separate license is required. Google's Gemma license similarly includes prohibited use restrictions.
+
+**Restricted and Research-Only Licenses**: Some models are released under licenses that prohibit commercial use, limit redistribution, or require specific attribution. Research-only releases (common for safety-sensitive models) restrict deployment entirely.
+
+**Model-Specific Terms**: An increasing number of models ship with supplementary use policies or "responsible use guides" that exist alongside the formal license. These may not be legally binding in the same way but signal the developers' intent and may factor into liability assessments.
+
+For engineering teams, the key practice is to maintain a model license registry that tracks the license, acceptable use policy, and any additional terms for every model in use -- including models embedded in dependencies or used through third-party integrations.
+
+## OWASP LLM Top 10
+
+The OWASP Top 10 for Large Language Model Applications provides a standardized security reference for teams building LLM-powered systems. First published in 2023 and updated for 2025, it catalogs the most critical security risks specific to LLM applications, complementing the general OWASP Top 10 for web applications.
+
+### The Ten Risk Categories
+
+**LLM01: Prompt Injection** -- Attackers craft inputs that override system instructions, causing the model to perform unintended actions. This includes both direct injection (malicious user input) and indirect injection (adversarial content in retrieved documents or tool outputs). Mitigation requires input validation, privilege separation, and output filtering -- the layered defense approach covered in [Guardrails & Content Filtering](/knowledge/agent-44-guardrails-filtering).
+
+**LLM02: Sensitive Information Disclosure** -- The model reveals confidential data from training data, system prompts, or connected data sources. This includes PII leakage, system prompt extraction, and memorized training data regurgitation. Controls include data sanitization, output filtering, and least-privilege access to retrieval systems.
+
+**LLM03: Supply Chain Vulnerabilities** -- Risks from third-party model components, including poisoned training data, compromised model weights, and malicious plugins or extensions. This is especially relevant for open-weight models where provenance verification is limited.
+
+**LLM04: Data and Model Poisoning** -- Manipulation of training data or fine-tuning data to introduce backdoors, biases, or targeted misbehavior. This risk is heightened for models fine-tuned on user-generated or scraped data without rigorous quality controls.
+
+**LLM05: Improper Output Handling** -- Downstream systems treat LLM output as trusted, enabling injection attacks (SQL injection, XSS, command injection) through model-generated content. Every LLM output must be treated as untrusted input by consuming systems.
+
+**LLM06: Excessive Agency** -- LLM systems granted too many capabilities, permissions, or autonomy to act on behalf of users. Mitigations include least-privilege tool access, human-in-the-loop confirmation for consequential actions, and rate limiting on tool invocations.
+
+**LLM07: System Prompt Leakage** -- Extraction of system prompts that reveal internal logic, security controls, or sensitive business rules. While not always a direct vulnerability, leaked prompts can inform more targeted attacks.
+
+**LLM08: Vector and Embedding Weaknesses** -- Attacks targeting RAG pipelines through manipulated embeddings, adversarial document injection, or exploitation of similarity search mechanics to surface malicious content.
+
+**LLM09: Misinformation** -- The model generates false, misleading, or fabricated information with high confidence. This covers hallucination in factual domains, fabricated citations, and confident errors in specialized fields.
+
+**LLM10: Unbounded Consumption** -- Resource exhaustion attacks through crafted inputs that cause excessive token generation, recursive tool calls, or denial-of-service through computational overload. Mitigations include token budget limits, timeout controls, and request throttling.
+
+Engineering teams should use the OWASP LLM Top 10 as a checklist during design reviews and [red-teaming exercises](/knowledge/agent-35-red-teaming), ensuring that each risk category is addressed through appropriate technical controls.
+
+## AI Liability and Insurance
+
+As AI systems make or influence consequential decisions, the legal frameworks for assigning liability when things go wrong are rapidly evolving. Engineering choices directly affect an organization's liability exposure.
+
+### Emerging Liability Frameworks
+
+**EU AI Liability Directive**: Proposed alongside the AI Act, this directive establishes rules for civil liability claims related to AI systems. It introduces a presumption of causality -- if a claimant can show that a relevant obligation was not complied with and a causal link to the AI output is reasonably likely, the burden of proof shifts to the AI provider or deployer. This makes compliance with the EU AI Act (documentation, logging, risk management) not just a regulatory requirement but a critical liability defense.
+
+**Product Liability Implications**: The EU's revised Product Liability Directive (2024) explicitly includes software and AI systems within its scope. AI systems are treated as products, meaning strict liability applies -- claimants do not need to prove fault, only defect and damage. This has significant implications for organizations deploying AI in consumer-facing applications.
+
+**US Liability Landscape**: The US lacks a federal AI liability framework, but existing tort law, product liability, and sector-specific regulations (FDA for medical AI, EEOC for employment AI) create a patchwork of liability exposure. Several state-level AI liability bills have been introduced, and courts are beginning to establish precedent through cases involving AI-generated content, autonomous vehicle decisions, and algorithmic discrimination.
+
+### The AI Insurance Market
+
+A nascent but growing AI insurance market is emerging to cover risks that traditional policies exclude or inadequately address:
+
+- **AI-specific liability policies** covering claims arising from model errors, bias, and hallucination.
+- **Algorithmic audit insurance** covering the cost of third-party audits triggered by regulatory action or suspected bias.
+- **Technology errors and omissions (E&O)** policies expanded to explicitly cover AI system failures.
+- **Cyber insurance endorsements** that address AI-specific attack vectors including prompt injection and model poisoning.
+
+Insurers are increasingly requiring evidence of AI governance practices -- risk assessments, audit trails, bias testing, and incident response plans -- as underwriting prerequisites. Organizations with mature governance frameworks (such as those aligned with ISO 42001 or the NIST AI RMF) are positioned for more favorable terms. This creates a direct financial incentive for the engineering practices described throughout this article: comprehensive [observability and audit trails](/knowledge/agent-40-observability), systematic [bias testing](/knowledge/agent-46-bias-fairness), and robust [guardrails](/knowledge/agent-44-guardrails-filtering) all reduce both the likelihood of incidents and the cost of insuring against them.
+
 ## Regulatory Landscape Overview
 
 The global AI regulatory landscape is evolving rapidly. Engineering teams should build systems that are adaptable to changing requirements rather than optimized for any single regulation.
@@ -467,12 +594,26 @@ Key design principles for regulatory adaptability include modular safety archite
 
 The trend is clear: AI regulation is becoming more specific, more enforceable, and more global. Organizations that build governance capabilities now will have a significant advantage as regulations mature.
 
+## Related Articles
+
+This article connects to several related topics covered elsewhere in this series:
+
+- **[Guardrails & Content Filtering](/knowledge/agent-44-guardrails-filtering)** -- The technical implementation of input/output safety layers that form the runtime enforcement mechanism for many governance requirements, including EU AI Act transparency and safety obligations.
+- **[Bias, Fairness & Responsible AI](/knowledge/agent-46-bias-fairness)** -- Detailed treatment of bias measurement and mitigation, which underpins the fairness dimensions of risk assessment and is a key area of regulatory scrutiny under both the EU AI Act and emerging US frameworks.
+- **[Observability: Tracing, Logging & LLM Monitoring](/knowledge/agent-40-observability)** -- The infrastructure foundations for audit trails, compliance logging, and the monitoring capabilities that governance frameworks require for ongoing oversight of deployed systems.
+- **[Red Teaming & Adversarial Testing](/knowledge/agent-35-red-teaming)** -- Pre-deployment testing methodologies that AI safety institutes are standardizing and that the OWASP LLM Top 10 recommends for validating security controls.
+
 ## Key Takeaways
 
-- **The EU AI Act** is the most comprehensive AI regulation, establishing risk-based requirements that directly impact how LLM systems must be built, tested, and documented.
+- **The EU AI Act** is the most comprehensive AI regulation, with a phased enforcement timeline running from February 2025 through August 2027. Engineering teams must plan compliance work against these concrete deadlines.
+- **AI Safety Institutes** in the UK, US, Japan, and the EU are converging on standardized evaluation methodologies for frontier models. Pre-deployment safety evaluation is becoming a baseline expectation.
+- **ISO 42001** provides a certifiable AI management system standard that is becoming a competitive differentiator and procurement prerequisite for enterprises deploying AI.
 - **Model cards and system cards** provide standardized documentation that serves both as communication tools and compliance artifacts. They should be maintained as living documents.
+- **Open-weight model governance** shifts the full burden of safety, compliance, and monitoring to the deployer. License diversity (Apache 2.0, Llama Community License, restricted licenses) requires careful tracking.
 - **Risk assessment** must be systematic and ongoing, covering accuracy, bias, privacy, security, and availability risks with explicit evaluation of inherent risk, controls, and residual risk.
+- **The OWASP LLM Top 10** provides a standardized security checklist for LLM applications, covering prompt injection, data poisoning, excessive agency, and seven other critical risk categories.
 - **Audit trails** require comprehensive, immutable logging of the entire AI decision pipeline -- inputs, model versions, retrieved context, outputs, and safety checks.
+- **AI liability frameworks** are crystallizing rapidly, with the EU treating AI systems as products under strict liability. AI insurance markets are emerging and rewarding mature governance practices.
 - **Data governance** for LLMs is uniquely challenging because model "memory" is implicit. Both training data and inference-time data require systematic governance.
 - **Compliance engineering** translates regulatory requirements into automated tests and configuration, enabling continuous compliance verification.
 - **AI incident response** requires structured severity classification, response playbooks, and blameless post-incident reviews.

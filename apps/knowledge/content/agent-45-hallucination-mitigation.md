@@ -349,6 +349,168 @@ FActScore provides several advantages over holistic evaluation. It is interpreta
 
 FActScore has known limitations. The decomposition step itself can introduce errors -- the LLM might decompose text incorrectly or miss implicit claims. The knowledge source may not contain relevant evidence, leading to false negatives (supported facts marked as unsupported). And the NLI verification step has its own error rate. Despite these limitations, FActScore remains the best-available automated metric for factual precision.
 
+## Search-Augmented Verification
+
+Retrieval-augmented generation grounds responses in a fixed corpus, but many claims require verification against the live web. Search-augmented verification uses search APIs -- Google, Bing, Brave Search -- to fact-check model outputs in real time, either during generation or as a post-generation audit step.
+
+### The Perplexity Pattern
+
+Perplexity AI popularized a generation pattern that interleaves search retrieval with response synthesis. Rather than retrieving once and generating, the system issues multiple targeted search queries as it constructs an answer, refining its evidence base iteratively. The pattern works roughly as follows: decompose the user's question into sub-questions, issue search queries for each, synthesize a response grounded in search results, and annotate each claim with its source URL. This produces responses with inline citations pointing to live web pages, enabling users to verify claims directly. The pattern has since been adopted by Google's AI Overviews, Microsoft Copilot, and several open-source projects.
+
+The engineering challenge lies in latency -- each search query adds network round-trip time. Production implementations typically issue queries in parallel, cache results aggressively, and use streaming to present partial answers while searches complete.
+
+### SAFE: Search-Augmented Factuality Evaluator
+
+Wei et al. (2024) from Google DeepMind introduced SAFE (Search Augmented Factuality Evaluator), a method that uses an LLM as an agent to fact-check long-form responses. SAFE operates in three stages. First, it decomposes a response into individual atomic facts, similar to FActScore. Second, for each atomic fact, the agent iteratively generates Google Search queries, reasoning about the search results to determine whether the fact is supported, unsupported, or irrelevant. Third, it aggregates per-fact verdicts into an overall factuality score.
+
+```python
+class SearchAugmentedVerifier:
+    def __init__(self, llm, search_client):
+        self.llm = llm
+        self.search = search_client
+
+    def verify_claim(self, claim: str, max_searches: int = 3) -> dict:
+        """Iteratively search and reason about a single claim."""
+        search_history = []
+        for step in range(max_searches):
+            # Generate a search query targeting the claim
+            query = self.llm.generate(
+                f"Generate a Google search query to verify: '{claim}'\n"
+                f"Previous searches: {search_history}\n"
+                f"Query:"
+            )
+            results = self.search.query(query.strip())
+            search_history.append({"query": query, "results": results})
+
+            # Ask LLM to reason about whether evidence is sufficient
+            verdict = self.llm.generate(
+                f"Claim: '{claim}'\n"
+                f"Search results: {results}\n"
+                f"Is this claim supported, unsupported, or do you need "
+                f"more evidence? Respond: SUPPORTED / UNSUPPORTED / CONTINUE"
+            )
+
+            if "SUPPORTED" in verdict:
+                return {"claim": claim, "verdict": "supported",
+                        "evidence": search_history}
+            elif "UNSUPPORTED" in verdict:
+                return {"claim": claim, "verdict": "unsupported",
+                        "evidence": search_history}
+
+        return {"claim": claim, "verdict": "inconclusive",
+                "evidence": search_history}
+```
+
+SAFE's key finding was that LLM-as-agent fact-checking achieves human-level accuracy on factuality benchmarks while costing roughly 20x less than human annotation. On a dataset of approximately 16,000 atomic facts, SAFE agreed with human raters 72% of the time, and in cases of disagreement, a panel of human raters preferred SAFE's judgment 76% of the time. This suggests that for many factual claims, search-augmented automated verification is not just cheaper but arguably more reliable than individual human judgment.
+
+## Hallucination in Code and Structured Data
+
+Hallucination is not limited to natural language prose. Code generation models hallucinate in distinctive ways that carry unique risks -- a fabricated API call compiles but fails at runtime, a non-existent package name opens the door to dependency confusion attacks.
+
+### Package Hallucination
+
+When a model suggests importing a package that does not exist in a package registry (npm, PyPI, crates.io), this is package hallucination. Lanyado et al. (2023) demonstrated that attackers can exploit this by registering the hallucinated package names and populating them with malicious code -- a supply chain attack vector unique to AI-assisted development. In their study, models like GPT-4 and CodeLlama hallucinated package names at rates between 5% and 20% depending on the programming language and prompt specificity.
+
+Detection strategies include registry validation (checking whether every imported package actually exists in the relevant registry before presenting suggestions to users), version pinning verification (confirming that the suggested version of a real package actually exists), and namespace analysis (flagging packages with names suspiciously similar to popular packages but with slight misspellings).
+
+### API Hallucination
+
+Models frequently generate calls to API methods that do not exist, use incorrect parameter signatures, or reference deprecated interfaces. A model might generate `response.json(strict=True)` for a library that has no `strict` parameter, or call `torch.compile()` with arguments from a different version's signature. This is especially prevalent when models blend knowledge across library versions or confuse similarly named methods from different frameworks.
+
+Practical mitigation involves providing the model with current API documentation through retrieval (see [Article 17: Advanced RAG](/advanced-rag) for retrieval strategies), using type-checking and static analysis as post-generation validation, and maintaining curated context about the specific library versions in use. Code-focused AI systems increasingly integrate with language servers and type checkers to catch these errors before they reach the user (see [Article 51: AI for Code](/ai-for-code) for deeper treatment of code generation reliability).
+
+### Schema Fabrication
+
+In data-oriented tasks, models may fabricate database columns, JSON fields, or API response structures that do not exist. A model asked to write a SQL query might reference a column that seems plausible given the table name but is not in the actual schema. Similarly, when generating code to parse an API response, the model may invent nested fields based on what a typical API might return rather than what the specific API actually returns.
+
+The most effective mitigation is schema injection -- providing the exact schema (DDL statements, OpenAPI specs, JSON Schema definitions) as context for every structured-data task. When the model has the ground-truth schema in its context window, fabrication rates drop substantially.
+
+## Long-Context Hallucination
+
+As context windows have expanded from 4K to 128K tokens and beyond, a new category of hallucination has emerged: failures that arise specifically because of context length.
+
+### The Lost-in-the-Middle Phenomenon
+
+Liu et al. (2023) in "Lost in the Middle: How Language Models Use Long Contexts" demonstrated that LLM performance on information retrieval tasks degrades significantly when relevant information is placed in the middle of a long context. Models attend most strongly to the beginning and end of their context window, creating a U-shaped performance curve. Information at positions 4-8 (out of 10 retrieved documents) was used least effectively, with accuracy dropping by as much as 20 percentage points compared to information placed first or last.
+
+This has direct implications for hallucination. When a model fails to attend to relevant evidence buried in the middle of a long context, it falls back on parametric knowledge -- which may be outdated or incorrect -- or fabricates a plausible-sounding answer. The hallucination is not caused by absence of evidence but by the model's failure to locate evidence that is present.
+
+### Mitigation Through Retrieval Ordering
+
+Understanding the lost-in-the-middle effect leads to practical mitigations. Place the most relevant retrieved documents at the beginning and end of the context, not in the middle. Reduce the total number of retrieved documents rather than stuffing the context window -- five highly relevant chunks often outperform twenty marginally relevant ones. Use hierarchical summarization to compress long contexts into shorter, more attention-friendly representations. And consider recursive retrieval strategies that re-rank and re-retrieve as the model generates, keeping the working context focused (see [Article 17: Advanced RAG](/advanced-rag) for hierarchical and recursive retrieval patterns).
+
+### Context Length and Faithfulness Degradation
+
+Beyond the positional effect, overall hallucination rates tend to increase with context length even when relevant information is positioned optimally. As context grows, the model must distinguish signal from noise across a larger input space. Levy et al. (2024) found that models' ability to answer simple factual questions degraded as the total context length increased, even when the answer appeared in the same position. This suggests that for high-stakes applications, keeping context windows as concise as possible -- through aggressive retrieval filtering and summarization -- is preferable to maximizing context utilization. Evaluation frameworks for RAG systems should measure faithfulness as a function of context size (see [Article 18: RAG Evaluation](/rag-evaluation) for metrics and evaluation methodology).
+
+## Automated Fact-Checking at Scale
+
+FActScore established the paradigm of atomic-fact verification, but production systems require evaluation models that are faster, cheaper, and tuned for specific deployment contexts. Several specialized models and benchmarks have emerged to fill this gap.
+
+### FActScore-LLM and Self-Evaluation
+
+The original FActScore pipeline relied on retrieval plus NLI to verify facts. Subsequent work showed that LLMs themselves can serve as fact-checkers. FActScore-LLM replaces the retrieval-and-NLI pipeline with a single LLM call that evaluates whether a given atomic fact is likely true, using the model's parametric knowledge. While this sacrifices the grounding benefit of retrieval, it dramatically reduces pipeline complexity and latency. In practice, strong models like GPT-4 achieve FActScore-LLM accuracy within a few points of retrieval-based FActScore on well-known entities, though accuracy degrades for obscure or recent topics where the model's training data is sparse.
+
+A hybrid approach works best in production: use the LLM's self-evaluation as a fast first pass, then route low-confidence facts to retrieval-based verification or search-augmented checking.
+
+### Vectara Hallucination Evaluation Model (HEM)
+
+Vectara released HEM, an open model specifically fine-tuned to detect hallucination in LLM outputs given a source document. HEM is trained as a cross-encoder on (document, summary) pairs labeled for factual consistency. Unlike general-purpose NLI models, HEM is optimized specifically for the LLM hallucination detection use case, achieving strong performance on hallucination benchmarks including SummEval, FRANK, and AggreFact.
+
+HEM's advantage in production is its focus: because it is a single-purpose model, it is smaller and faster than general NLI models while being more accurate on the specific task of detecting whether a generated passage is faithful to a source document. It slots directly into the multi-stage verification pipeline described earlier as a replacement or complement to the NLI checker.
+
+### Hughes Hallucination Evaluation Model
+
+The Hughes Hallucination Evaluation Model (HHEM), developed by Vectara and later contributed to the open-source community, extends hallucination detection to conversational and multi-turn settings. HHEM evaluates whether an LLM response is consistent with a provided context, assigning a hallucination probability score between 0 and 1. It has been widely adopted as a component in evaluation harnesses like RAGAS and DeepEval, where it provides a lightweight, model-based alternative to human judgment for faithfulness evaluation.
+
+### Building a Production Evaluation Harness
+
+A practical fact-checking system at scale combines multiple models, each contributing a different signal:
+
+```python
+class FactCheckingHarness:
+    def __init__(self):
+        self.hem_model = load_model("vectara/hallucination_evaluation_model")
+        self.search_verifier = SearchAugmentedVerifier(llm, search_client)
+        self.nli_model = load_nli_model("cross-encoder/nli-deberta-v3-large")
+
+    def evaluate(
+        self, response: str, context: str, claims: list[str]
+    ) -> dict:
+        # Fast pass: HEM on full response
+        hem_score = self.hem_model.score(context, response)
+
+        if hem_score > 0.9:
+            return {"verdict": "faithful", "score": hem_score, "method": "hem"}
+
+        # Medium pass: NLI on individual claims
+        nli_results = [
+            self.nli_model.check(context, claim) for claim in claims
+        ]
+        flagged = [c for c, r in zip(claims, nli_results) if not r.entailed]
+
+        if not flagged:
+            return {"verdict": "faithful", "score": hem_score,
+                    "method": "hem+nli"}
+
+        # Slow pass: search verification on flagged claims only
+        search_results = [
+            self.search_verifier.verify_claim(claim) for claim in flagged
+        ]
+
+        return {
+            "verdict": "needs_review" if any(
+                r["verdict"] == "unsupported" for r in search_results
+            ) else "faithful",
+            "score": hem_score,
+            "flagged_claims": flagged,
+            "search_verification": search_results,
+            "method": "hem+nli+search"
+        }
+```
+
+This tiered approach keeps costs low for straightforward cases (the HEM fast pass handles the majority of requests) while providing thorough verification for ambiguous or high-risk outputs.
+
 ## Production Verification Pipelines
 
 ### Multi-Stage Verification
@@ -417,6 +579,10 @@ class HumanInTheLoopRouter:
             return "auto_reject"
 ```
 
+## Hallucination in Vision-Language Models
+
+Hallucination is not limited to text-only models. Vision-language models (VLMs) exhibit their own hallucination patterns, including describing objects that are not present in an image, misattributing spatial relationships, and fabricating text that appears in a scene. The CHAIR (Caption Hallucination Assessment with Image Relevance) metric and the POPE (Polling-based Object Probing Evaluation) benchmark provide standardized evaluation for visual hallucination. Mitigation strategies specific to VLMs -- including visual grounding, attention supervision, and contrastive decoding -- are covered in depth in [Article 49: Vision-Language Models](/vision-language-models).
+
 ## Key Takeaways
 
 - **Hallucination is inherent** to probabilistic text generation, not a bug to be patched. Mitigation requires layered approaches.
@@ -426,4 +592,8 @@ class HumanInTheLoopRouter:
 - **RAG with citations** is the most practical grounding technique for production systems, combining retrieval-based evidence with explicit source attribution.
 - **Confidence calibration** and teaching models to say "I don't know" are underrated strategies that address the root cause of helpfulness-driven hallucination.
 - **FActScore** provides a rigorous, automated metric for factual precision by decomposing text into atomic facts and verifying each independently.
-- **Production pipelines** should combine multiple detection signals (NLI, semantic similarity, self-consistency) and include human-in-the-loop review for high-stakes applications.
+- **Search-augmented verification** using live web search (the Perplexity pattern, SAFE) provides real-time fact-checking that goes beyond static knowledge bases.
+- **Code hallucination** -- fabricated packages, non-existent APIs, invented schemas -- requires domain-specific detection strategies including registry validation and schema injection.
+- **Long-context hallucination** worsens with context length; the lost-in-the-middle effect means retrieval ordering and context conciseness are critical design decisions.
+- **Specialized evaluation models** (HEM, HHEM, FActScore-LLM) enable tiered verification pipelines that balance cost, latency, and thoroughness.
+- **Production pipelines** should combine multiple detection signals (NLI, semantic similarity, self-consistency, search verification) and include human-in-the-loop review for high-stakes applications.

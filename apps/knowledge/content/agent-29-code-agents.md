@@ -1,6 +1,6 @@
 # Code Generation Agents: Sandboxing, Iteration & Self-Repair
 
-Code generation agents represent one of the most impactful applications of LLM-based agent systems, capable of writing, executing, testing, and iteratively repairing code to solve complex programming tasks. From the pioneering results of AlphaCode to the practical capabilities of Devin, Codex, and Claude Code, these systems have demonstrated that LLMs augmented with execution environments and feedback loops can match or exceed human performance on substantial software engineering benchmarks. This article examines the architecture of code generation agents, execution sandboxing, iterative repair mechanisms, test-driven generation, benchmark results, and the security considerations that govern production deployment.
+Code generation agents represent one of the most impactful applications of LLM-based agent systems, capable of writing, executing, testing, and iteratively repairing code to solve complex programming tasks. From the pioneering results of AlphaCode to the practical capabilities of Devin, Codex, and Claude Code, these systems have demonstrated that LLMs augmented with execution environments and feedback loops can match or exceed human performance on substantial software engineering benchmarks. This article examines the architecture of code generation agents, execution sandboxing, iterative repair mechanisms, test-driven generation, benchmark results, and the security considerations that govern production deployment. It also covers IDE-integrated agents, repository-level understanding, automated code review, and debugging agents -- categories that extend the core generation pipeline into the broader software engineering workflow. (For foundational agent architecture patterns, see [Article 26: Agent Architectures](/agent-26-agent-architectures); for code-specific model training and capabilities, see [Article 51: AI for Code](/agent-51-ai-for-code).)
 
 ## The Code Generation Pipeline
 
@@ -518,6 +518,217 @@ class ProductionCodeAgent:
         return await self.summarize_changes()
 ```
 
+## IDE-Integrated Code Agents
+
+While standalone CLI agents like Claude Code and Codex operate in a terminal loop, a parallel category of code agents lives inside integrated development environments. Products like Cursor, Windsurf (Codeium), Continue, and GitHub Copilot embed agent capabilities directly into the editor, creating a distinct interaction model with its own architectural tradeoffs. Understanding these patterns is essential for building effective code agent systems, since the IDE context provides signals -- open files, cursor position, visible code, project symbols -- that standalone agents must reconstruct from scratch. (For the foundational tool integration patterns that underpin these systems, see [Article 25: Function Calling & Tool Integration](/agent-25-function-calling).)
+
+### Interaction Modes
+
+IDE-integrated agents typically expose three distinct modes, each suited to different tasks:
+
+**Tab completion** is the lowest-latency mode. The agent receives the current file contents, cursor position, and a small window of surrounding context, then generates a short continuation (one line to a few lines). Copilot pioneered this pattern, sending the current file's prefix and suffix to the model and rendering the completion as ghost text. The key constraint is speed: completions must arrive within 200-500ms to feel seamless, which limits the amount of context gathering and reasoning the agent can perform.
+
+**Chat mode** provides a conversational interface within the IDE, similar to a standalone agent but with automatic access to the editor's state. When a developer opens chat, the agent can see the active file, selected text, open tabs, diagnostics (compiler errors, linter warnings), and terminal output. This mode supports longer reasoning chains and multi-step operations, trading latency for capability.
+
+**Inline edit mode** lets the developer select a region of code and request a transformation in place. The agent receives the selection, the full file for context, and the natural language instruction, then produces a diff that replaces the selection. This mode is particularly effective for refactoring, where the developer can precisely scope what should change.
+
+### Context Gathering Strategies
+
+The defining advantage of IDE agents is their access to rich, structured context that goes beyond raw file contents:
+
+**Open files and tabs** provide a strong signal about what the developer considers relevant. An agent handling a chat request about a function in `auth.py` can automatically include related files the developer has open, such as `auth_test.py` or `models.py`, without explicit retrieval.
+
+**AST and symbol information.** Modern editors maintain parsed abstract syntax trees and symbol tables through language servers (LSP). An IDE agent can query these to find all callers of a function, all implementations of an interface, or the type signature of a variable -- information that a CLI agent would need to reconstruct through grep and heuristic parsing.
+
+**Diagnostics.** Compiler errors, type-check failures, and linter warnings from the editor's language integration provide precise, machine-readable feedback that agents can act on directly, rather than parsing unstructured terminal output.
+
+**Git state.** The IDE tracks which files have uncommitted changes, what branch is active, and the diff against HEAD, giving the agent awareness of in-progress work.
+
+### Architectural Differences from Standalone Agents
+
+Standalone agents like Claude Code run a full agentic loop (see [Article 26: Agent Architectures](/agent-26-agent-architectures)) -- they choose which tools to invoke, manage their own context window, and drive the interaction. IDE agents, by contrast, often operate in a more constrained mode where the editor orchestrates the interaction and the agent fills a specific role (complete this line, apply this edit, answer this question). This means IDE agents typically have shorter planning horizons but faster turnaround, while standalone agents handle longer, more complex tasks that require multi-file changes, test execution, and iterative repair.
+
+## Repository-Level Understanding
+
+One of the hardest problems in code agent design is reasoning about codebases that vastly exceed any model's context window. A typical production repository contains hundreds of thousands to millions of lines of code; even a generous 200K-token context window holds only a fraction. Effective code agents must build and navigate compressed representations of the full repository.
+
+### AST Analysis and Code Graph Construction
+
+Rather than treating source files as flat text, advanced agents parse them into abstract syntax trees and construct a code graph that captures structural relationships:
+
+```python
+class CodeGraph:
+    def __init__(self, repo_path: str):
+        self.repo_path = repo_path
+        self.symbols = {}       # name -> Symbol
+        self.references = {}    # symbol -> [locations]
+        self.call_graph = {}    # function -> [called_functions]
+        self.inheritance = {}   # class -> [parent_classes]
+
+    def build(self):
+        for filepath in self.iter_source_files():
+            tree = self.parse_ast(filepath)
+            for node in self.walk(tree):
+                if self.is_definition(node):
+                    symbol = Symbol(
+                        name=node.name,
+                        kind=node.type,  # function, class, variable
+                        file=filepath,
+                        line=node.line,
+                        signature=self.extract_signature(node)
+                    )
+                    self.symbols[symbol.qualified_name] = symbol
+                elif self.is_reference(node):
+                    self.references.setdefault(
+                        node.name, []
+                    ).append(Location(filepath, node.line))
+```
+
+This graph enables targeted retrieval: when the agent needs to modify a function, it can retrieve that function's callers, callees, and type dependencies without loading the entire codebase.
+
+### Symbol Table Indexing
+
+For repositories too large to parse on every query, agents pre-build a symbol index -- a searchable database of function signatures, class hierarchies, and module exports. Tools like `ctags`, Tree-sitter, and language-server-based indexers provide the raw data; the agent wraps this in an embedding-augmented search layer that can resolve natural-language queries like "the function that validates user permissions" to specific symbols.
+
+### Chunking and Retrieval Strategies
+
+When the full code graph is unavailable, agents fall back to chunking strategies that split the codebase into retrievable units:
+
+- **File-level chunks** are the simplest: each file is a document in a retrieval index. This works for small repositories but produces chunks that are either too large (a 2,000-line file) or too fragmented (an import-only `__init__.py`).
+- **Function-level chunks** split files at function and class boundaries, producing semantically coherent units. Each chunk includes the function body plus its imports and class context.
+- **Sliding-window chunks with overlap** handle files that lack clean boundaries (configuration files, prose-heavy notebooks) by splitting on a fixed token count with overlap to preserve cross-boundary context.
+
+The most effective systems combine these approaches: function-level chunks for code files, file-level chunks for configuration, and embedding-based retrieval to select the most relevant chunks for a given task. For a broader discussion of how code LLMs are trained and how retrieval augments their capabilities, see [Article 51: AI for Code](/agent-51-ai-for-code).
+
+## Code Review Agents
+
+Automated code review is a natural extension of code generation: if an agent can write code, it should also be able to critique it. Code review agents analyze pull requests, flag potential issues, and suggest improvements -- operating as a first-pass reviewer before human engineers examine the changes.
+
+### Architecture of a Review Agent
+
+A typical code review agent processes a pull request in several stages:
+
+```python
+class CodeReviewAgent:
+    async def review_pull_request(self, pr_diff: str,
+                                   pr_description: str,
+                                   repo_context: dict) -> ReviewResult:
+        # Stage 1: Understand the change
+        summary = await self.llm.generate(
+            f"Summarize this PR:\nDescription: {pr_description}\n"
+            f"Diff:\n{pr_diff}"
+        )
+
+        # Stage 2: Check for common issues
+        issues = []
+        issues += await self.check_correctness(pr_diff, repo_context)
+        issues += await self.check_style(pr_diff, repo_context)
+        issues += await self.check_security(pr_diff)
+        issues += await self.check_test_coverage(pr_diff, repo_context)
+
+        # Stage 3: Generate inline comments
+        comments = await self.generate_comments(pr_diff, issues)
+
+        return ReviewResult(summary=summary, issues=issues,
+                           comments=comments)
+```
+
+### Review Dimensions
+
+Effective review agents evaluate changes along multiple axes:
+
+**Correctness.** Does the code do what the PR description claims? Are there edge cases, off-by-one errors, or missing null checks? The agent compares the diff against the stated intent and the existing test suite to flag discrepancies.
+
+**Security.** Review agents scan for common vulnerability patterns: SQL injection, cross-site scripting, hardcoded secrets, insecure deserialization, and overly permissive access controls. This overlaps with static analysis tools (SAST), but LLM-based reviewers can catch semantic vulnerabilities that pattern-matching tools miss -- for example, a logic error that grants admin access when it should not. (For more on adversarial approaches to uncovering these issues, see [Article 35: Red Teaming & Adversarial Testing](/agent-35-red-teaming).)
+
+**Style and conventions.** Rather than just enforcing a linter's rules, an LLM reviewer can learn a project's idiomatic patterns -- naming conventions, error handling style, preferred data structures -- and flag deviations that a rule-based linter would not catch.
+
+**Test coverage.** The agent checks whether new code paths are exercised by tests. If the PR adds a new function but no corresponding test, the reviewer flags this and may even suggest specific test cases.
+
+### Limitations and Calibration
+
+Code review agents face a calibration challenge: too many false positives erode developer trust and cause review fatigue, while too few true positives make the tool seem useless. Production systems address this by:
+
+- Assigning confidence scores to each finding and surfacing only high-confidence issues by default
+- Learning from feedback -- tracking which comments developers accept vs. dismiss and adjusting thresholds
+- Distinguishing between blocking issues (potential bugs, security vulnerabilities) and suggestions (style preferences, minor refactors)
+
+## Debugging Agents
+
+Debugging is a fundamentally different cognitive task from code generation. Where generation is divergent -- the agent produces new code from a specification -- debugging is convergent: the agent must narrow from a broad symptom (a test failure, a crash, unexpected behavior) to a precise root cause and fix. This distinction has architectural implications for how debugging agents are designed.
+
+### Stack Trace Analysis
+
+The most common entry point for a debugging agent is a stack trace or error message. The agent must parse the trace, identify the failing line, load the relevant source code, and reason backward through the call chain to find the root cause:
+
+```python
+class DebuggingAgent:
+    async def diagnose_from_stacktrace(self, stacktrace: str,
+                                        codebase: CodeGraph) -> Diagnosis:
+        # Parse the stack trace into structured frames
+        frames = self.parse_stacktrace(stacktrace)
+
+        # Load source code for each frame
+        frame_context = []
+        for frame in frames:
+            source = codebase.read_function_at(frame.file, frame.line)
+            frame_context.append({
+                "frame": frame,
+                "source": source,
+                "callers": codebase.get_callers(frame.function),
+            })
+
+        # Ask the LLM to diagnose
+        diagnosis = await self.llm.generate(
+            f"Analyze this stack trace and identify the root cause:\n\n"
+            f"Stack trace:\n{stacktrace}\n\n"
+            f"Source context:\n{self.format_frames(frame_context)}\n\n"
+            f"Provide: (1) root cause, (2) which frame introduces the bug, "
+            f"(3) a minimal fix."
+        )
+
+        return self.parse_diagnosis(diagnosis)
+```
+
+### Reproduction and Bisection
+
+Beyond analyzing a single error, advanced debugging agents can drive a reproduction workflow:
+
+**Reproduction.** The agent attempts to construct a minimal test case that triggers the bug. It starts with the failing scenario, strips away unrelated code and data, and iteratively simplifies until it finds the smallest input that reproduces the failure. This is particularly valuable for intermittent bugs where the conditions for reproduction are unclear.
+
+**Bisection.** For regressions -- bugs that were introduced by a specific change -- the agent can automate git bisect. It defines a test that distinguishes "good" from "bad" behavior, then drives a binary search through the commit history to identify the exact commit that introduced the regression:
+
+```python
+class BisectionAgent:
+    async def find_regression(self, test_command: str,
+                               good_commit: str, bad_commit: str) -> str:
+        # Initialize bisect
+        await self.sandbox.execute(
+            f"git bisect start {bad_commit} {good_commit}"
+        )
+
+        while True:
+            # Run the test on the current commit
+            result = await self.sandbox.execute(test_command)
+
+            if "Bisecting:" not in result.get("stdout", ""):
+                # Bisect complete -- extract the offending commit
+                return self.extract_first_bad_commit(result["stdout"])
+
+            # Mark as good or bad based on test result
+            mark = "good" if result["exit_code"] == 0 else "bad"
+            await self.sandbox.execute(f"git bisect {mark}")
+```
+
+### Debugging vs. Generation Agents
+
+The key architectural differences between debugging and generation agents include:
+
+- **Search direction.** Generation agents explore forward from a specification; debugging agents search backward from a symptom.
+- **Hypothesis testing.** Debugging agents benefit from generating and testing multiple hypotheses about the root cause, then systematically eliminating them through targeted experiments (adding logging, modifying inputs, isolating components).
+- **Minimal changes.** While a generation agent might produce large amounts of new code, a debugging agent should make the smallest change that fixes the problem, reducing the risk of introducing new bugs.
+- **Domain knowledge.** Effective debugging often requires understanding runtime behavior, concurrency, memory management, or platform-specific quirks that go beyond the source code itself.
+
 ## Security Considerations
 
 ### Prompt Injection via Code
@@ -597,6 +808,10 @@ Several trends are shaping the next generation of code agents:
 - **Sandboxed execution** is non-negotiable. Use container-based isolation (Docker, E2B) with strict resource limits, no network access by default, and defense-in-depth including static analysis.
 - **Iterative repair loops** are the key differentiator between code agents and code completion. The ability to execute code, observe errors, and systematically fix them enables agents to solve complex tasks that one-shot generation cannot.
 - **Test-driven generation** uses tests as a specification, providing clear success criteria and enabling automated validation. Generate tests first, then implement to pass them.
-- **SWE-bench results** show that agent scaffolding (tool use, context management, repair loops) contributes as much as model capability. Localization -- finding the right code to change -- is often harder than writing the change.
-- **Security requires defense in depth**: static analysis of generated code, sandboxed execution, dependency validation, output filtering, and human approval for sensitive operations.
+- **SWE-bench results** show that agent scaffolding (tool use, context management, repair loops) contributes as much as model capability. Localization -- finding the right code to change -- is often harder than writing the change. Scores are approximate and evolving rapidly.
+- **IDE-integrated agents** (Cursor, Windsurf, Copilot, Continue) provide a different interaction model from standalone CLI agents, with access to rich editor context -- AST, diagnostics, open files, symbol tables -- that enables faster, more targeted assistance.
+- **Repository-level understanding** through code graph construction, symbol indexing, and structured chunking strategies is essential for agents operating on codebases that exceed context windows.
+- **Code review agents** automate first-pass PR review across correctness, security, style, and test coverage dimensions, but must be carefully calibrated to avoid false-positive fatigue.
+- **Debugging agents** require different architectural patterns from generation agents, emphasizing backward search from symptoms, hypothesis testing, reproduction, and minimal fixes.
+- **Security requires defense in depth**: static analysis of generated code, sandboxed execution, dependency validation, output filtering, and human approval for sensitive operations. See [Article 35: Red Teaming & Adversarial Testing](/agent-35-red-teaming) for adversarial approaches to validating these defenses.
 - **Production code agents** (Claude Code, Codex, Devin) combine all these elements into integrated workflows with permission models, session persistence, and progressive trust levels.

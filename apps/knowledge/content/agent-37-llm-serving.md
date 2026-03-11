@@ -187,21 +187,25 @@ This achieves near-zero waste and enables advanced features like **copy-on-write
 
 ### vLLM
 
-vLLM is the most widely deployed open-source LLM serving engine. Key features:
-- PagedAttention for memory efficiency
-- Continuous batching
-- Prefix caching
-- Tensor parallelism for multi-GPU serving
-- OpenAI-compatible API server
-- Support for speculative decoding
+vLLM is the most widely deployed open-source LLM serving engine. Its core architecture is built around PagedAttention, continuous batching, and an OpenAI-compatible API server. Releases from v0.5 through v0.6+ have substantially expanded the feature set:
+
+- **PagedAttention v2** with improved memory efficiency and reduced fragmentation overhead
+- **Automatic prefix caching (APC)**: Enabled via `--enable-prefix-caching`, vLLM hashes KV-cache blocks and reuses them across requests that share common prefixes (system prompts, few-shot examples). Unlike manual prefix registration, APC works transparently across all requests with zero configuration.
+- **Pipeline parallelism**: vLLM v0.5+ introduced pipeline parallelism alongside tensor parallelism, enabling models to be distributed across nodes connected by commodity networking. This is critical for serving 400B+ parameter models where a single node's GPUs are insufficient (see [Article 38: Scaling & Load Balancing](agent-38-scaling-load-balancing.md) for a deeper treatment of parallelism strategies).
+- **Multimodal serving**: vLLM v0.5+ supports vision-language models (LLaVA, Qwen-VL, InternVL) with unified batching of text and image inputs. Image preprocessing is pipelined with token generation to avoid blocking.
+- **Chunked prefill**: Borrowed from the Sarathi-Serve approach (discussed below), vLLM v0.6+ breaks long prefill operations into smaller chunks interleaved with decode iterations, preventing prefill from starving decode requests.
+- **Multi-LoRA serving**: Native support for serving multiple LoRA adapters on a single base model with per-request adapter selection (see the Multi-LoRA Serving section below).
+- **Speculative decoding** with draft models, Medusa heads, and n-gram speculation
+- **FP8 and GPTQ/AWQ quantization** for reduced memory and improved throughput (see [Article 5: Inference Optimization](agent-05-inference-optimization.md) for quantization fundamentals)
 
 ```bash
-# Launch vLLM server
+# Launch vLLM server with v0.6+ features
 python -m vllm.entrypoints.openai.api_server \
     --model meta-llama/Llama-3.1-70B-Instruct \
     --tensor-parallel-size 4 \
     --max-model-len 8192 \
     --enable-prefix-caching \
+    --enable-chunked-prefill \
     --gpu-memory-utilization 0.9
 ```
 
@@ -239,7 +243,16 @@ TensorRT-LLM typically achieves 1.5-3x higher throughput than PyTorch-based solu
 
 ### SGLang
 
-SGLang (Zheng et al., 2024) takes a different approach, optimizing at the programming model level. Its RadixAttention mechanism efficiently shares KV-cache across complex multi-call LLM programs (like tree-of-thought or multi-turn chat).
+SGLang (Zheng et al., 2024) takes a different approach, optimizing at the programming model level. Its **RadixAttention** mechanism uses a radix tree (prefix tree) to automatically detect and reuse KV-cache across requests that share common prefixes. Unlike vLLM's hash-based prefix caching, RadixAttention operates on a trie structure over token sequences, enabling sub-linear lookup for shared prefixes even across complex multi-call LLM programs (tree-of-thought, multi-turn chat, few-shot batches with shared examples).
+
+SGLang has emerged as a genuine competitor to vLLM, particularly for workloads involving structured multi-call programs. Key differentiators:
+
+- **RadixAttention**: Automatic KV-cache sharing across requests with common prefixes, without requiring explicit prefix registration. The radix tree is maintained incrementally and supports LRU eviction when GPU memory is exhausted.
+- **Compressed finite-state machines**: SGLang integrates constrained decoding via compressed FSMs that jump multiple tokens in a single step when the grammar permits only one valid continuation, reducing decode iterations for structured output (see the Guided Decoding section below and [Article 10: Structured Output](agent-10-structured-output.md) for the broader constrained decoding landscape).
+- **Data parallelism with expert parallelism**: SGLang v0.3+ supports DP attention combined with tensor parallelism, enabling higher throughput on multi-GPU nodes without full pipeline parallelism overhead.
+- **Overlap scheduling**: Prefill and decode operations are overlapped within the same batch to improve GPU utilization, an approach complementary to the chunked-prefill strategy discussed below.
+
+In benchmarks on LLM-as-judge workloads (where many requests share the same system prompt and rubric), SGLang's RadixAttention achieves up to 5x throughput improvement over systems without automatic prefix sharing.
 
 ## Request Scheduling and Queuing
 
@@ -337,6 +350,164 @@ def speculative_decode(draft_model, target_model, prompt, K=5):
         tokens.extend(draft_tokens[:accepted])
 ```
 
+## FlashAttention and Memory-Efficient Kernels
+
+Standard self-attention computes the full $N \times N$ attention matrix, requiring $O(N^2)$ memory -- prohibitive for long sequences. **FlashAttention** (Dao et al., 2022) reformulated attention to avoid materializing the full attention matrix, computing attention in tiles that fit in GPU SRAM (on-chip memory) and fusing the softmax normalization into the same kernel pass.
+
+### FlashAttention Evolution
+
+**FlashAttention-1** introduced the tiled, IO-aware algorithm. By computing attention in blocks that fit in SRAM and accumulating the softmax statistics online (using the log-sum-exp trick), it reduces GPU HBM reads/writes from $O(N^2)$ to $O(N^2 d / M)$ where $M$ is SRAM size. In practice, this translates to 2-4x wall-clock speedup and up to 20x memory reduction for long contexts.
+
+**FlashAttention-2** (Dao, 2023) improved on v1 with better work partitioning across GPU warps and thread blocks. Key optimizations include: parallelizing over the sequence length dimension (not just batch and heads), reducing non-matmul FLOPs, and better occupancy on A100 GPUs. FlashAttention-2 achieves up to 230 TFLOPs on A100 (73% of theoretical peak), compared to ~150 TFLOPs for v1.
+
+**FlashAttention-3** (Dao et al., 2024) targets NVIDIA Hopper (H100/H200) GPUs specifically. Hopper introduces the Tensor Memory Accelerator (TMA) for asynchronous block-level data movement and warp-group-level matrix multiply via WGMMA instructions. FA3 exploits these with:
+
+- **Asynchronous pipelining**: Overlaps data loading (via TMA), computation (via WGMMA), and softmax operations in a 3-stage software pipeline, hiding latency at each stage.
+- **FP8 support**: Native FP8 attention with incoherent processing (per-block quantization scaling) to maintain accuracy, achieving up to 1.2 PFLOPs on H100 -- a 2x improvement over FA2 in FP16 on the same hardware.
+- **Block quantization**: Rather than quantizing the entire Q, K, V matrices uniformly, FA3 applies quantization at the tile level with per-tile scaling factors, significantly improving FP8 accuracy.
+
+### FlashDecoding
+
+While FlashAttention primarily optimizes the prefill phase (where the full attention matrix is computed), **FlashDecoding** (Dao et al., 2023) addresses the decode phase. During decode, each new token attends to all previous KV-cache entries -- a workload that is memory-bandwidth-bound with poor GPU utilization because the parallelism is limited to the batch and head dimensions.
+
+FlashDecoding introduces parallelism along the KV sequence length dimension: different thread blocks process different chunks of the KV-cache in parallel, then combine results with a lightweight reduction. This improves decode throughput by up to 8x for long contexts (e.g., 64K tokens) with small batch sizes.
+
+These kernel-level optimizations form the computational foundation of every serving engine discussed in this article. TGI, vLLM, SGLang, and TensorRT-LLM all use FlashAttention variants as their default attention implementation. For a broader treatment of the attention mechanism and its computational costs, see [Article 5: Inference Optimization](agent-05-inference-optimization.md).
+
+## Multi-LoRA Serving
+
+A common production pattern involves fine-tuning dozens or hundreds of LoRA adapters on top of a single base model -- one per customer, language, task, or domain. Naive serving would require loading a separate model copy for each adapter, wasting GPU memory on redundant base model weights. Multi-LoRA serving solves this by keeping one copy of the base model in GPU memory and dynamically swapping lightweight adapter weights per request.
+
+### S-LoRA: Scalable LoRA Serving
+
+S-LoRA (Sheng et al., 2023, "S-LoRA: Serving Thousands of Concurrent LoRA Adapters") introduced a system architecture for serving up to several thousand LoRA adapters concurrently on a single base model. The key innovations:
+
+1. **Unified paging for adapter weights**: S-LoRA extends PagedAttention's paging mechanism to LoRA adapter weights. Adapter matrices A and B are stored in a paged memory pool, allowing adapters to be loaded and evicted at the page granularity.
+2. **Heterogeneous batching**: Within a single batch, different requests can use different LoRA adapters (or no adapter at all). The attention kernel is modified to apply the correct adapter for each request using custom CUDA kernels with gather-scatter operations.
+3. **Adapter caching with LRU eviction**: Frequently used adapters stay in GPU memory; rarely used ones are evicted to CPU memory or disk. When a request arrives for an evicted adapter, it is loaded asynchronously while other requests in the batch proceed.
+
+```python
+# vLLM multi-LoRA serving example
+# Launch with LoRA support enabled
+# python -m vllm.entrypoints.openai.api_server \
+#     --model meta-llama/Llama-3.1-8B-Instruct \
+#     --enable-lora \
+#     --lora-modules customer-a=./adapters/customer_a \
+#                     customer-b=./adapters/customer_b \
+#     --max-loras 64 \
+#     --max-lora-rank 64
+
+# Request with a specific LoRA adapter
+import requests
+response = requests.post("http://localhost:8000/v1/chat/completions", json={
+    "model": "customer-a",  # selects the LoRA adapter
+    "messages": [{"role": "user", "content": "Summarize this contract"}],
+})
+```
+
+### Hot-Swapping Adapters
+
+In production, adapters are trained and updated continuously. Hot-swapping allows registering new adapters or updating existing ones without restarting the server or draining requests. vLLM's LoRA support allows dynamic adapter registration via API, while SGLang supports loading adapters from Hugging Face Hub at runtime. The adapter weights are small (typically 10-100 MB for rank-16 adapters on a 7B model), making swap latency negligible compared to full model loading.
+
+For a deep dive into LoRA training, rank selection, and merging strategies, see [Article 20: LoRA Adapters](agent-20-lora-adapters.md).
+
+## Chunked Prefill
+
+In standard continuous batching, prefill and decode compete for the same GPU compute cycle. A long-context prefill (say, 32K tokens) can monopolize the GPU for hundreds of milliseconds, during which all in-flight decode requests are stalled. This creates severe tail-latency spikes -- a single long-context request arriving at an unfortunate time can degrade inter-token latency for every other active request.
+
+### Sarathi-Serve: Interleaving Prefill and Decode
+
+Sarathi-Serve (Agrawal et al., 2024) formalized the **chunked-prefill** approach. Instead of processing an entire prefill in one pass, the prefill is broken into fixed-size chunks (e.g., 512 or 1024 tokens). Between prefill chunks, the scheduler inserts decode iterations for in-flight requests:
+
+```
+Without chunked prefill (standard continuous batching):
+Decode reqs: [d d d d d |          BLOCKED          | d d d d d]
+Prefill req:            [========= 32K prefill =========]
+                        ^ decode requests stall here
+
+With chunked prefill:
+Decode reqs: [d d d][d d d][d d d][d d d][d d d][d d d][d d d]
+Prefill req:  [p512] [p512] [p512] [p512] [p512] [p512]...
+              ^ prefill and decode interleaved at chunk boundaries
+```
+
+This interleaving bounds the worst-case decode stall to the time of one prefill chunk rather than the time of the full prefill. The cost is slightly increased total prefill latency (due to chunking overhead and re-scheduling), but the tail-latency improvement for concurrent decode requests is dramatic -- P99 inter-token latency improvements of 3-10x in mixed workloads are typical.
+
+### Implementation in Serving Engines
+
+vLLM v0.6+ adopted chunked prefill as a first-class scheduling option via `--enable-chunked-prefill`. The chunk budget is configured alongside the token budget, and the scheduler co-locates prefill chunks with decode iterations in the same batch to maximize GPU utilization. The token budget parameter `--max-num-batched-tokens` controls how many tokens (from both prefill chunks and decode steps) are processed per iteration.
+
+TensorRT-LLM implements a similar concept under the name "inflight batching with context chunking," where long contexts are automatically segmented and interleaved with generation requests.
+
+Chunked prefill is especially important for production deployments that must serve both long-context (RAG, document analysis) and short-context (chat) workloads on the same GPU pool, a scenario that is increasingly common in real-world systems. For how this fits into broader cluster-level scheduling, see [Article 38: Scaling & Load Balancing](agent-38-scaling-load-balancing.md).
+
+## Guided Decoding and Constrained Generation
+
+Many production applications require LLM output to conform to a strict schema -- a JSON object matching a Pydantic model, a SQL query, or a response restricted to an enum of values. While prompt engineering can encourage compliance, it does not guarantee it. **Guided decoding** enforces structural constraints at the token level during generation, making schema violations impossible by construction.
+
+### Finite-State Machine Approach
+
+The dominant approach represents the target grammar (JSON Schema, regular expression, context-free grammar) as a finite-state machine (FSM) or pushdown automaton. At each decode step, the FSM's current state determines which tokens are valid continuations. The serving engine masks logits for invalid tokens before sampling, guaranteeing that every generated token moves the FSM toward an accepting state.
+
+```python
+# Conceptual guided decoding with an FSM
+class GuidedDecoder:
+    def __init__(self, grammar_fsm):
+        self.fsm = grammar_fsm
+
+    def apply_mask(self, logits, current_state):
+        # Determine valid next tokens from FSM
+        valid_tokens = self.fsm.get_valid_tokens(current_state)
+        mask = torch.full_like(logits, float('-inf'))
+        mask[valid_tokens] = 0
+        return logits + mask
+
+    def decode_step(self, model, input_ids, state):
+        logits = model(input_ids).logits[:, -1, :]
+        masked_logits = self.apply_mask(logits, state)
+        next_token = torch.argmax(masked_logits)  # or sample
+        next_state = self.fsm.advance(state, next_token)
+        return next_token, next_state
+```
+
+### Outlines and XGrammar
+
+**Outlines** (Willard & Louf, 2023) pioneered the FSM-based approach for LLM-serving integration. Given a JSON Schema or regex, Outlines pre-compiles the constraint into an FSM where states map to sets of allowed token IDs. The pre-compilation step is critical for performance: building the token mask is done once per schema, and per-step masking is a fast index lookup.
+
+**XGrammar** (Dong et al., 2024) extends this to context-free grammars with a focus on serving-system integration. XGrammar pre-computes token masks at multiple granularities: context-independent masks (tokens that are always valid or invalid regardless of grammar state) are computed at schema-load time, while context-dependent masks are computed per-step using an adaptive expansion algorithm. This reduces per-token overhead to microseconds, making it practical for high-throughput serving.
+
+### Serving Framework Integration
+
+Guided decoding is integrated into major serving frameworks:
+
+- **vLLM**: Supports `guided_json`, `guided_regex`, and `guided_choice` parameters in the OpenAI-compatible API. Uses Outlines or XGrammar as backends (configurable via `--guided-decoding-backend`).
+- **SGLang**: Integrates compressed FSMs that can skip multiple tokens when only one valid continuation exists (e.g., generating the fixed string `"type":` in a JSON object), reducing the number of decode iterations.
+- **TGI**: Supports grammar-based constraints via the `grammar` API parameter.
+
+```bash
+# vLLM request with JSON schema constraint
+curl http://localhost:8000/v1/chat/completions -d '{
+    "model": "meta-llama/Llama-3.1-8B-Instruct",
+    "messages": [{"role": "user", "content": "Extract the name and age"}],
+    "response_format": {
+        "type": "json_schema",
+        "json_schema": {
+            "name": "person",
+            "schema": {
+                "type": "object",
+                "properties": {
+                    "name": {"type": "string"},
+                    "age": {"type": "integer"}
+                },
+                "required": ["name", "age"]
+            }
+        }
+    }
+}'
+```
+
+The overhead of guided decoding depends on the grammar complexity and the vocabulary size but is typically under 5% of total generation latency with pre-compiled masks. For a comprehensive treatment of structured output techniques and when to prefer constrained decoding over prompt-based approaches, see [Article 10: Structured Output](agent-10-structured-output.md).
+
 ## Production Deployment Patterns
 
 ### Health Checks and Graceful Degradation
@@ -397,8 +568,16 @@ class InferenceMetrics:
 
 4. **PagedAttention (vLLM) solves memory fragmentation** by borrowing virtual memory concepts from operating systems, enabling near-optimal GPU memory utilization for KV-caches.
 
-5. **The throughput-latency tradeoff is fundamental** and must be navigated through dynamic batch sizing, priority scheduling, and admission control based on SLA requirements.
+5. **FlashAttention (1/2/3) and FlashDecoding** eliminate the memory bottleneck of materialized attention matrices, with Hopper-specific optimizations pushing toward peak hardware utilization. These kernels are the computational foundation of every modern serving engine.
 
-6. **Speculative decoding** is a free lunch for decode-bound workloads, using a small draft model to generate candidates verified in parallel by the target model.
+6. **Multi-LoRA serving** (S-LoRA, vLLM LoRA support) enables hundreds of task-specific adapters on a single base model, making per-customer and per-domain fine-tuning economically viable in production (see [Article 20: LoRA Adapters](agent-20-lora-adapters.md)).
 
-7. **Production serving requires more than fast inference**: health checks, warm-up procedures, graceful degradation, multi-tenant fairness, and comprehensive observability are all essential components.
+7. **Chunked prefill** bounds worst-case decode latency in mixed workloads by interleaving prefill chunks with decode iterations, a critical technique for serving both long-context and short-context requests on shared infrastructure.
+
+8. **Guided decoding** via FSMs and context-free grammars provides runtime enforcement of JSON schemas and other structural constraints, eliminating an entire class of output reliability failures (see [Article 10: Structured Output](agent-10-structured-output.md)).
+
+9. **The throughput-latency tradeoff is fundamental** and must be navigated through dynamic batch sizing, priority scheduling, and admission control based on SLA requirements.
+
+10. **Speculative decoding** is a free lunch for decode-bound workloads, using a small draft model to generate candidates verified in parallel by the target model.
+
+11. **Production serving requires more than fast inference**: health checks, warm-up procedures, graceful degradation, multi-tenant fairness, and comprehensive observability are all essential components.

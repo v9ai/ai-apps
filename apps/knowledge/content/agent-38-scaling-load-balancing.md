@@ -31,7 +31,7 @@ Y = AllReduce(Y_0 + Y_1 + ... + Y_N)
 
 The MLP block in a transformer uses a column-parallel split for the first linear layer and a row-parallel split for the second, requiring only one all-reduce per MLP block. Similarly, in multi-head attention, heads are distributed across GPUs, with each GPU computing a subset of attention heads.
 
-**Communication cost**: Tensor parallelism requires all-reduce operations at every layer, making it extremely latency-sensitive to inter-GPU bandwidth. It works well within a single node connected by NVLink (900 GB/s on H100 SXM) but poorly across nodes connected by InfiniBand (typically 400 Gb/s = 50 GB/s, an order of magnitude slower).
+**Communication cost**: Tensor parallelism requires all-reduce operations at every layer, making it extremely latency-sensitive to inter-GPU bandwidth. It works well within a single node connected by NVLink (900 GB/s on H100 SXM, up to 1.8 TB/s on B200 with NVLink 5th-gen) but poorly across nodes connected by InfiniBand (typically 400 Gb/s = 50 GB/s, an order of magnitude slower).
 
 ```python
 # vLLM tensor parallelism configuration
@@ -88,7 +88,34 @@ All-to-all communication shuffles tokens between GPUs
 based on expert assignments.
 ```
 
-DeepSeek-V3's paper describes using EP combined with TP for the attention layers, a pattern increasingly common for large MoE models.
+DeepSeek-V3's paper describes using EP combined with TP for the attention layers, a pattern increasingly common for large MoE models. For a deeper look at the architectural motivations behind MoE routing and how expert counts affect inference cost, see [Article 05: Inference Optimization](./agent-05-inference-optimization.md).
+
+### Sequence and Context Parallelism
+
+As context windows grow from 8K to 128K to 1M+ tokens, a new bottleneck emerges: the KV-cache and attention computation for a single sequence may exceed the memory of a single GPU, even when the model weights fit comfortably. Context parallelism (CP) addresses this by partitioning the sequence dimension itself across multiple GPUs, allowing each device to handle a contiguous chunk of the input sequence.
+
+**Ring attention** (Liu et al., 2023, "Ring Attention with Blockwise Transformers for Near-Infinite Context") is the foundational technique. Each GPU holds a shard of the KV-cache corresponding to its portion of the sequence. During attention computation, KV blocks are passed between GPUs in a ring topology -- GPU 0 sends its KV block to GPU 1, GPU 1 to GPU 2, and so on, with the last GPU sending back to GPU 0. Each GPU computes partial attention scores against the visiting KV block while simultaneously forwarding it to the next peer:
+
+```
+Ring Attention (4 GPUs, sequence split into 4 chunks):
+
+          ┌──── KV_0 ────►┐
+GPU 0 [Q_0, KV_0]    GPU 1 [Q_1, KV_1]
+  ▲                          │
+  │ KV_3              KV_1   │
+  │                          ▼
+GPU 3 [Q_3, KV_3]    GPU 2 [Q_2, KV_2]
+          └◄── KV_2 ────┘
+
+Each GPU computes attention for its Q chunk against
+all KV chunks via P rounds of ring communication.
+```
+
+The critical property of ring attention is that it overlaps communication with computation. While a GPU is computing attention against one KV block, the next KV block is already in transit. For large enough chunk sizes, the communication cost is entirely hidden behind compute, making context parallelism nearly free in terms of wall-clock overhead.
+
+Meta's Llama 3.1 405B deployment uses context parallelism to serve its 128K context window. The model runs with TP=8 within a node and CP=4 across nodes, enabling each request to spread its 128K-token KV-cache across 4 node-groups. Without CP, a single 128K-token request for a 405B model would require roughly 120GB of KV-cache alone (in FP8), exceeding the capacity available after model weights are loaded.
+
+**Practical considerations**: Context parallelism is most beneficial when sequence lengths are long relative to model size. For short prompts (under 8K tokens), the overhead of ring communication exceeds the benefit. Most serving frameworks activate CP dynamically -- short requests are served with TP only, while long-context requests trigger CP across additional GPU groups. This is closely related to the disaggregated prefill/decode architecture discussed in [Article 37: LLM Serving](./agent-37-llm-serving.md), where long-context prefill jobs can be routed to CP-enabled pools while short decode requests use compact TP-only replicas.
 
 ## Data Parallelism and Replication
 
@@ -239,7 +266,9 @@ class SessionAffinityRouter:
 
 ### Hardware Topology Awareness
 
-Modern GPU clusters have complex interconnect topologies. Within a node, GPUs may be connected via NVLink or PCIe. Across nodes, InfiniBand or RoCE provides RDMA networking. The serving system must be topology-aware to minimize communication overhead:
+Modern GPU clusters have complex interconnect topologies. Within a node, GPUs may be connected via NVLink or PCIe. Across nodes, InfiniBand or RoCE provides RDMA networking. The serving system must be topology-aware to minimize communication overhead.
+
+With the NVIDIA B200 and GB200 NVL72 systems entering deployment in 2025, the scale-up story has changed significantly. A GB200 NVL72 rack connects 72 B200 GPUs via a single NVLink domain, delivering 130 TB/s of aggregate bisection bandwidth within the rack. This effectively makes the entire rack behave like a single node for tensor parallelism purposes, eliminating the TP-within-node / PP-across-node split for models up to roughly 700B parameters. For serving infrastructure, this means a single GB200 NVL72 rack can host a full Llama 3.1 405B instance with TP=72, yielding lower latency than any multi-node configuration achievable with prior hardware:
 
 ```
 DGX H100 Node Topology:

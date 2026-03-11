@@ -46,19 +46,21 @@ cmake --build build --config Release
     -ngl 99    # Offload all layers to GPU
 ```
 
-Performance on Apple M3 Max (36GB):
+Performance on Apple Silicon (M3 Max 36GB / M4 Pro 24GB):
 
 | Model | Quantization | Size | Tokens/sec |
 |---|---|---|---|
-| Llama 3.1 8B | Q4_K_M | 4.9 GB | ~55 tok/s |
-| Llama 3.1 8B | Q8_0 | 8.5 GB | ~40 tok/s |
-| Llama 3.1 70B | Q4_K_M | 40 GB | ~12 tok/s |
-| Phi-3 Mini 3.8B | Q4_K_M | 2.3 GB | ~85 tok/s |
-| Qwen 2.5 7B | Q4_K_M | 4.4 GB | ~58 tok/s |
+| Model | Quantization | Size | M3 Max tok/s | M4 Pro tok/s |
+|---|---|---|---|---|
+| Llama 3.1 8B | Q4_K_M | 4.9 GB | ~55 | ~62 |
+| Llama 3.1 8B | Q8_0 | 8.5 GB | ~40 | ~46 |
+| Llama 3.1 70B | Q4_K_M | 40 GB | ~12 | ~14 |
+| Phi-3 Mini 3.8B | Q4_K_M | 2.3 GB | ~85 | ~95 |
+| Qwen 2.5 7B | Q4_K_M | 4.4 GB | ~58 | ~66 |
 
 ### MLX (Apple Silicon)
 
-MLX is Apple's machine learning framework specifically designed for Apple Silicon's unified memory architecture, where CPU and GPU share the same memory pool -- eliminating the costly CPU-to-GPU memory transfers that bottleneck inference on discrete GPU systems.
+MLX is Apple's machine learning framework specifically designed for Apple Silicon's unified memory architecture, where CPU and GPU share the same memory pool -- eliminating the costly CPU-to-GPU memory transfers that bottleneck inference on discrete GPU systems. With M4-generation chips, MLX benefits from increased memory bandwidth (up to 273 GB/s on M4 Max) and a larger Neural Engine (38 TOPS on M4 vs. 18 TOPS on M3), translating directly to higher inference throughput.
 
 ```python
 import mlx.core as mx

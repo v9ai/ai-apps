@@ -76,7 +76,7 @@ class MultiHeadAttention(torch.nn.Module):
 
 ### Grouped-Query Attention (GQA)
 
-**Ainslie et al. (2023)** introduced Grouped-Query Attention as a practical middle ground between multi-head attention (MHA) and multi-query attention (MQA). In GQA, the query heads are divided into groups, and each group shares a single key and value head. Llama 2 70B and many subsequent models use GQA because it dramatically reduces KV cache size during inference while retaining most of the quality of full MHA. This has become a standard choice for models intended for efficient deployment.
+**Ainslie et al. (2023)** introduced Grouped-Query Attention as a practical middle ground between multi-head attention (MHA) and multi-query attention (MQA). In GQA, the query heads are divided into groups, and each group shares a single key and value head. Llama 2 70B and many subsequent models use GQA because it dramatically reduces KV cache size during inference while retaining most of the quality of full MHA. This has become a standard choice for models intended for efficient deployment — see [Article 05: Inference Optimization](./agent-05-inference-optimization.md) for a detailed treatment of how GQA interacts with KV cache management, quantization, and paged attention in production serving.
 
 ## Positional Encoding Schemes
 
@@ -206,6 +206,54 @@ T5 (**Raffel et al., 2020**) remains the most prominent encoder-decoder LLM, and
 
 An intermediate approach, the **prefix LM**, uses a decoder-only architecture but applies bidirectional attention to a prefix portion of the input and causal attention to the remainder. **Tay et al. (2022)** in the UL2 paper showed that this can combine some benefits of both paradigms within a unified architecture.
 
+## Sub-Quadratic Attention Alternatives
+
+The $O(n^2)$ cost of standard self-attention has motivated a sustained line of research into sub-quadratic alternatives. As context windows have grown from 2K to 128K+ tokens, the quadratic bottleneck has shifted from a theoretical concern to a practical one — a 128K sequence produces a 16-billion-element attention matrix per head. Several families of approaches have emerged, each trading off different aspects of the full attention mechanism.
+
+### Linear Attention
+
+Linear attention methods remove the softmax from the attention computation and instead approximate or replace it with a kernel function $\phi$, allowing the computation to be rewritten as $\phi(Q)(\phi(K)^T V)$ rather than $\text{softmax}(QK^T)V$. The key algebraic insight is that by computing $\phi(K)^T V$ first (an $O(n d^2)$ operation), the overall cost drops from quadratic to linear in sequence length. **Katharopoulos et al. (2020)** formalized this in their "Transformers are RNNs" paper, showing that linear attention can be expressed as a recurrent computation, enabling constant-time per-step inference.
+
+In practice, linear attention has struggled to match standard softmax attention on language modeling quality. The softmax concentrates attention mass on a small number of relevant tokens — a property that linear kernels approximate poorly. Recent work like **TransNormerLLM (Qin et al., 2024)** and **Based (Arora et al., 2024)** has narrowed the gap by combining linear attention with gating mechanisms and short-range sliding-window attention, but as of 2025, no pure linear attention model has matched a comparable-scale standard transformer on general benchmarks.
+
+### State-Space Models: S4 and Mamba
+
+State-space models (SSMs) take a fundamentally different approach by framing sequence modeling as a continuous-time dynamical system discretized for sequential data. **S4** (**Gu et al., 2022**) showed that carefully parameterized state-space models — using a diagonal-plus-low-rank structure for the state matrix — could match or exceed transformers on long-range sequence benchmarks like the Long Range Arena, with $O(n \log n)$ complexity via convolutional computation.
+
+**Mamba** (**Gu and Dao, 2023**) extended this with selective state spaces, where the state-space parameters ($B$, $C$, $\Delta$) are input-dependent rather than fixed. This selectivity allows Mamba to perform content-based reasoning — something fixed-parameter SSMs struggled with — while retaining linear scaling in sequence length and constant memory per step during inference. Mamba-1 achieved quality competitive with transformers of similar size on language tasks, and its inference throughput is 3-5x higher than standard transformers for long sequences because it avoids materializing any attention matrix.
+
+**Mamba-2** (**Dao and Gu, 2024**) tightened the theoretical connection between SSMs and attention by showing that structured state-space duality (SSD) unifies both under a common framework. Mamba-2's SSD layer is 2-8x faster than Mamba-1 on GPU hardware, achieving close to optimal use of matrix multiply units.
+
+Hybrid architectures have emerged as the pragmatic middle ground. **Jamba** (**AI21, 2024**) interleaves Mamba layers with transformer attention layers in a ratio of roughly 7:1, using Mixture-of-Experts in the feed-forward blocks. This hybrid approach captures the throughput advantages of SSMs for most layers while retaining full attention's superior recall and in-context learning ability in the remaining layers. **Zamba** (**Zyphra, 2024**) and NVIDIA's work on hybrid models follow similar designs, and this pattern is increasingly viewed as the likely successor to pure transformer stacks for efficiency-sensitive deployments (see [Article 04: LLM Architectures Compared](./agent-04-model-architectures.md) for detailed coverage of these architectural families).
+
+### RWKV
+
+**RWKV** (**Peng et al., 2023**) takes yet another path, combining the training parallelism of transformers with the $O(1)$ inference cost of RNNs. RWKV replaces softmax attention with a linear attention variant using a time-decay mechanism (the "WKV" operator), where each token's contribution decays exponentially based on its distance from the current position. Training uses a parallelizable formulation, while inference runs as a true recurrence.
+
+RWKV has reached the 14B parameter scale and produces competitive results on standard benchmarks, though with a quality gap relative to transformers that widens on tasks requiring precise long-range retrieval. The project has an active open-source community and is particularly interesting for deployment on memory-constrained hardware, since it requires no KV cache at all — the entire model state is a fixed-size recurrent state vector regardless of sequence length (see [Article 05: Inference Optimization](./agent-05-inference-optimization.md) for how KV cache costs motivate these alternative architectures).
+
+### Where Things Stand
+
+As of early 2025, the standard softmax transformer remains the dominant architecture for frontier language models. No sub-quadratic alternative has convincingly matched full attention at the largest scales on the most demanding tasks — particularly in-context learning, retrieval-intensive reasoning, and instruction following. However, the gap is closing, and hybrid architectures that mix SSM and attention layers are increasingly practical. The most likely near-term trajectory is not a wholesale replacement of attention but a gradual reduction in the fraction of layers that use it.
+
+## Attention Sink Phenomenon
+
+**Xiao et al. (2023)** identified a striking pattern in autoregressive transformer inference: regardless of the input content, the first token in the sequence accumulates disproportionately high attention scores across nearly all heads and layers. They termed these high-attention initial tokens "attention sinks."
+
+### Why It Happens
+
+The phenomenon arises from a subtle interaction between the softmax normalization and causal masking. Softmax requires that attention weights sum to 1, so every token must distribute its full attention mass somewhere. Early tokens — particularly the very first token — are visible to all subsequent tokens due to the causal mask structure, making them a convenient "dump" for attention mass that the model does not need to allocate meaningfully. The first token effectively becomes a no-op target: the model learns to park excess attention there rather than spreading it across genuinely irrelevant tokens, which could distort the weighted average of values.
+
+This is not a learned semantic property of the first token. The effect persists regardless of what the first token actually is — it could be a BOS token, a space, or an arbitrary character. What matters is its structural position: it is the only token visible to every other token in the causal window.
+
+### Implications for Streaming Inference
+
+The attention sink phenomenon has direct consequences for KV cache management during long-sequence inference. Naive sliding-window approaches that evict the oldest tokens from the cache — a natural strategy for serving streaming or very long inputs — cause quality to collapse when the first token's KV entries are evicted. Without the attention sink, the model has nowhere to deposit its excess attention mass, leading to degenerate softmax distributions and incoherent outputs.
+
+**StreamingLLM** (**Xiao et al., 2023**) proposed a straightforward fix: always retain the KV entries for the first few tokens (typically 1-4 "sink tokens") alongside the sliding window of recent tokens. This simple modification enables stable inference over sequences of effectively unlimited length with a fixed-size KV cache, at the cost of losing access to middle-context information. The approach requires no retraining or fine-tuning — it works with existing pretrained models out of the box.
+
+Several production serving frameworks have adopted this pattern. For systems that need both long-context coverage and cache efficiency, attention sinks interact with other KV cache optimization strategies — including GQA, quantized KV caches, and paged attention — covered in detail in [Article 05: Inference Optimization](./agent-05-inference-optimization.md). Some model developers have also begun explicitly training with a dedicated sink token to further stabilize the effect.
+
 ## How Transformers Scale
 
 The scaling behavior of transformers is one of the most consequential empirical findings in modern AI. Understanding how performance relates to model size, data, and compute is essential for making resource-allocation decisions.
@@ -228,7 +276,7 @@ However, very deep models face training stability challenges — gradient flow t
 
 ### Compute-Optimal Architecture
 
-The transformer's $O(n^2 d)$ attention cost and $O(n d^2)$ FFN cost create a balance point between context length and model width. For fixed compute, increasing context length requires reducing model size or batch size. The interplay between these dimensions is a core consideration in architecture design, which the scaling laws literature (covered in a companion article) addresses quantitatively.
+The transformer's $O(n^2 d)$ attention cost and $O(n d^2)$ FFN cost create a balance point between context length and model width. For fixed compute, increasing context length requires reducing model size or batch size. The interplay between these dimensions is a core consideration in architecture design, which the scaling laws literature addresses quantitatively — see [Article 02: Scaling Laws](./agent-02-scaling-laws.md) for the Kaplan and Chinchilla results that formalize these compute-optimal tradeoffs.
 
 ## Flash Attention and Hardware-Aware Design
 
@@ -238,12 +286,17 @@ Flash Attention is not an approximation — it computes exact attention. Its ins
 
 **Flash Attention 2** (**Dao, 2023**) further improved throughput by optimizing the parallelism and work partitioning across GPU thread blocks, achieving close to the theoretical maximum FLOPs utilization on modern hardware.
 
+**Flash Attention 3** (**Shah et al., 2024**) targets NVIDIA Hopper architecture (H100/H200) specifically, exploiting hardware features unavailable on earlier generations. FA3 uses asynchronous block-wise data movement via the Tensor Memory Accelerator (TMA), overlaps GEMM and softmax computations using the new warp-group programming model, and leverages FP8 low-precision paths with block quantization to maintain accuracy. The result is 1.5-2x faster than FA2 on H100 GPUs, reaching up to 740 TFLOPs/s in FP16 — roughly 75% of the H100's theoretical peak. FA3 also introduces hardware-accelerated support for head dimensions beyond 128 (up to 256) without performance cliffs, which matters for architectures that use larger per-head dimensions to improve quality. These Hopper-specific optimizations underscore the broader trend of Flash Attention: each generation is co-designed with the target GPU microarchitecture, making attention computation increasingly a hardware-software co-design problem rather than a purely algorithmic one.
+
 ## Summary and Key Takeaways
 
 - **Self-attention** enables each token to attend to all others in parallel, with $O(n^2)$ cost in sequence length. The scaled dot-product formulation with queries, keys, and values remains the standard.
-- **Multi-head attention** partitions the representation space into independently attending heads. **Grouped-Query Attention** reduces KV cache costs by sharing key-value heads across query head groups.
+- **Multi-head attention** partitions the representation space into independently attending heads. **Grouped-Query Attention** reduces KV cache costs by sharing key-value heads across query head groups — a tradeoff analyzed in depth in [Article 05: Inference Optimization](./agent-05-inference-optimization.md).
 - **Positional encoding** has evolved from sinusoidal (fixed, non-extrapolating) through learned embeddings to **RoPE** (rotary, extrapolatable with modifications) and **ALiBi** (linear bias, strong extrapolation). RoPE dominates current practice.
+- **Sub-quadratic alternatives** — linear attention, state-space models (Mamba/S4), and RWKV — have not yet replaced standard attention at frontier scale, but hybrid architectures that mix SSM and attention layers are increasingly practical (see [Article 04: LLM Architectures Compared](./agent-04-model-architectures.md) for specific model families adopting these designs).
+- **Attention sinks** — the concentration of attention mass on the first token — must be accounted for in KV cache eviction strategies, especially for streaming and long-context inference.
 - **Decoder-only** architectures have won for general-purpose LLMs due to simplicity, scaling properties, and natural support for in-context learning.
 - Modern transformer blocks use **Pre-Norm** (usually RMSNorm), **SwiGLU** activation, and often **parallel attention-FFN** computation for stability at scale.
-- **Flash Attention** demonstrates that hardware-aware algorithm design can yield large practical speedups without approximation, and has become standard infrastructure for transformer training and inference.
+- **Flash Attention** demonstrates that hardware-aware algorithm design can yield large practical speedups without approximation, with each generation (FA1 through FA3) co-designed with the target GPU microarchitecture. FA3 on H100 reaches 75% of theoretical peak FLOPs.
+- The interplay between architectural choices and compute budgets is formalized by scaling laws — see [Article 02: Scaling Laws](./agent-02-scaling-laws.md) for the quantitative framework.
 - Understanding these architectural primitives is essential for making informed decisions about model selection, fine-tuning strategy, and deployment optimization.

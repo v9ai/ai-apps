@@ -72,7 +72,7 @@ A: Roger starts with 5 balls. He buys 2 cans, each with 3 balls,
    so he gets 2 * 3 = 6 new balls. Total: 5 + 6 = 11. The answer is 11.
 ```
 
-The results were striking: on the GSM8K math benchmark, chain-of-thought prompting improved PaLM 540B's accuracy from 17.9% to 58.1%. Importantly, the effect was scale-dependent -- CoT provided little benefit for smaller models but large gains for models above ~100B parameters.
+The results were striking: on the GSM8K math benchmark, chain-of-thought prompting improved PaLM 540B's accuracy from 17.9% to 58.1%. At the time of publication, the effect appeared strongly scale-dependent -- CoT provided little benefit for smaller models but large gains for models above ~100B parameters. By 2025, this picture has shifted considerably. Fine-tuning smaller models specifically for chain-of-thought reasoning -- a technique sometimes called "distilling" reasoning traces from larger models -- has made CoT effective at the 7B-13B parameter scale. Models like DeepSeek-R1-Distill and Qwen2.5-Math demonstrate that the reasoning capability can be baked in through targeted training rather than requiring sheer scale. Meanwhile, GSM8K itself has become a saturated benchmark: frontier models now exceed 90% accuracy even without explicit CoT prompting, and many open-weight models in the 7B-70B range surpass the 2022 state-of-the-art with standard prompting alone. The community has largely moved to harder benchmarks -- MATH, GPQA, and competition-level problem sets -- as the true tests of reasoning capability.
 
 ### Why Chain-of-Thought Works
 
@@ -289,6 +289,115 @@ print(remaining)  # 81
 
 This approach offloads arithmetic to a code interpreter, eliminating calculation errors that plague natural language reasoning. The model's job becomes translating the problem into code rather than performing the computation itself -- a task that plays to LLMs' strengths.
 
+## Reasoning Tokens and Extended Thinking
+
+The release of OpenAI's o1 in late 2024, followed by o3 and DeepSeek-R1 in early 2025, marked a fundamental shift in how chain-of-thought reasoning is implemented. Rather than relying on prompt-based CoT -- where the user or system prompt instructs the model to reason step-by-step -- these models perform extended internal reasoning as part of their inference process, generating hidden "reasoning tokens" before producing a visible response. The model has been trained, typically through reinforcement learning, to allocate variable amounts of internal computation depending on problem difficulty.
+
+This creates a new taxonomy for practitioners. There are now three distinct approaches to eliciting reasoning:
+
+**Prompt-based CoT.** The original approach: append "Let's think step by step" or provide few-shot examples with reasoning traces. This remains the right choice for standard models (GPT-4o, Claude Sonnet, Gemini Pro) where you want explicit, inspectable reasoning in the output. It is also the only option when you need to control the reasoning format -- for instance, when downstream parsing depends on a specific structure (see [Article 10: Structured Output](/articles/agent-10-structured-output) for techniques on enforcing output format alongside reasoning).
+
+**Training-based reasoning.** Models like o3 and DeepSeek-R1 have internalized the CoT process. They allocate reasoning tokens automatically, often producing more thorough analysis than prompt-based CoT achieves. The key advantage is that the model learns *when* and *how much* to reason through reinforcement learning, rather than reasoning at a fixed depth regardless of problem difficulty. A simple factual lookup gets minimal reasoning; a multi-step proof gets extensive internal deliberation. The tradeoff is reduced transparency -- reasoning tokens in o1/o3 are hidden by default, and even when exposed (as in DeepSeek-R1), the traces can be verbose and difficult to parse.
+
+**Hybrid approaches.** Claude's "extended thinking" feature and similar mechanisms offer a middle ground: the model produces a visible thinking block that the user can inspect, followed by a concise response. This preserves the debuggability advantage of prompt-based CoT while leveraging training-time reasoning optimization. In practice, this is often the best choice for agentic applications where you need both strong reasoning and the ability to audit the model's thought process.
+
+A common mistake is to use prompt-based CoT with a reasoning model. Telling o3 to "think step by step" is redundant at best and counterproductive at worst -- the model may produce a superficial prompt-satisfying chain on top of its internal reasoning, wasting tokens without improving accuracy. The general guidance: if the model has built-in reasoning, trust it. If it does not, provide CoT scaffolding through the prompt. For a broader view of how these prompting decisions fit into systematic prompt development, see [Article 7: Prompt Engineering Fundamentals](/articles/agent-07-prompt-engineering-fundamentals).
+
+## CoT Faithfulness and Interpretability
+
+The appeal of chain-of-thought reasoning extends beyond accuracy: explicit reasoning traces promise interpretability. If a model shows its work, we can verify its logic, catch errors, and build trust. But a growing body of research challenges the assumption that CoT traces faithfully represent the model's internal computation.
+
+**The faithfulness problem.** Turpin et al. (2023) in "Language Models Don't Always Say What They Think" demonstrated that models can produce plausible-looking chain-of-thought reasoning that is systematically unfaithful to the actual factors driving the model's answer. In their experiments, they introduced biasing features into few-shot examples -- such as making the correct answer always "(A)" -- and found that models would choose the biased answer while generating elaborate reasoning chains that never mentioned the bias. The model "knew" the answer was (A) because of the pattern in the examples, but its CoT confabulated a substantive justification.
+
+**Causal unfaithfulness.** Lanham et al. (2023) in "Measuring Faithfulness in Chain-of-Thought Reasoning" took a more systematic approach, testing whether the conclusions stated in CoT traces actually depend on the reasoning steps that precede them. They found that truncating or corrupting intermediate reasoning steps often had little effect on the final answer, suggesting that the model was arriving at the answer through internal mechanisms that the CoT trace merely post-hoc rationalized. On easier problems, the chain-of-thought was particularly likely to be unfaithful -- the model already "knew" the answer and generated reasoning to match.
+
+These findings have concrete implications for practitioners:
+
+**Debugging.** When a CoT trace leads to a wrong answer, the visible error in the chain may not be the actual cause of failure. Fixing the surface-level reasoning error (e.g., by adding a contrastive example showing the correct reasoning) may not help if the model's real failure is in its internal representations. This is a case where [Article 11: Prompt Optimization](/articles/agent-11-prompt-optimization) techniques like DSPy can outperform manual prompt debugging, because they optimize against task outcomes rather than reasoning aesthetics.
+
+**Trust calibration.** CoT should be treated as a useful but imperfect signal. A convincing reasoning chain does not guarantee the answer is correct, and an awkward-looking chain does not mean the answer is wrong. Self-consistency (sampling multiple reasoning paths) remains a more reliable indicator of correctness than the apparent quality of any single chain.
+
+**Model selection.** Faithfulness appears to improve with training specifically targeting faithful reasoning. Models trained with process reward models (PRMs) -- which reward correct intermediate steps, not just correct final answers -- tend to produce more faithful chains than models trained with outcome reward models (ORMs) alone. When interpretability of reasoning is critical (medical, legal, financial applications), prefer models with explicit process supervision.
+
+## ReAct: Reasoning Plus Acting
+
+Yao et al. (2022) introduced ReAct in "ReAct: Synergizing Reasoning and Acting in Language Models," a paradigm that interleaves chain-of-thought reasoning with concrete actions -- typically tool calls or environment interactions. Where standard CoT is purely internal (the model reasons but cannot observe new information), ReAct allows the model to think, act, observe, and then think again in a loop.
+
+A ReAct trace follows a characteristic pattern:
+
+```
+Question: What is the elevation range for the area that the
+eastern sector of the Colorado orogeny extends into?
+
+Thought 1: I need to find where the eastern sector of the Colorado
+orogeny extends, then find the elevation range of that area.
+
+Action 1: Search["eastern sector of the Colorado orogeny"]
+
+Observation 1: The Colorado orogeny was an episode of mountain
+building that included much of eastern Utah and western Colorado.
+The eastern sector extends into the High Plains.
+
+Thought 2: The eastern sector extends into the High Plains.
+I need to find the elevation range of the High Plains.
+
+Action 2: Search["High Plains elevation range"]
+
+Observation 2: The High Plains rise in elevation from around
+1,800 feet to over 7,000 feet.
+
+Thought 3: The elevation range is approximately 1,800 to 7,000 feet.
+
+Answer: The elevation range is approximately 1,800 to 7,000 feet.
+```
+
+The significance of ReAct is that it bridges the gap between chain-of-thought reasoning and agentic tool use. Standard CoT asks the model to reason from what it already knows. ReAct lets the model identify knowledge gaps, take actions to fill them, and incorporate new information into its reasoning. This is the foundation of most modern agent architectures -- the pattern of "think about what to do, do it, observe the result, think again" is essentially ReAct generalized.
+
+In practice, ReAct naturally connects to multi-hop reasoning in retrieval-augmented generation. When a question requires synthesizing information from multiple sources, a ReAct-style agent can retrieve one document, reason about what additional information is needed, retrieve a second document, and synthesize. This iterative retrieve-and-reason loop is explored in depth in [Article 17: Advanced RAG](/articles/agent-17-advanced-rag), where it appears as the core mechanism behind agentic RAG architectures.
+
+The key design decisions when implementing ReAct are:
+
+**Action space definition.** What tools can the model invoke? A narrow action space (just search) keeps the model focused but limits capability. A broad action space (search, calculate, code execution, API calls) increases capability but also increases the chance of the model choosing an inappropriate action or getting stuck in unproductive loops.
+
+**Observation formatting.** How should tool outputs be presented back to the model? Raw tool outputs may be too verbose or poorly formatted. Summarizing or truncating observations keeps the context window manageable but risks losing important details.
+
+**Termination conditions.** When should the model stop its think-act-observe loop? Without explicit termination logic, models can enter infinite loops of redundant searches or reasoning circles. Setting a maximum number of steps and including a "finish" action are practical necessities.
+
+```python
+class ReActAgent:
+    def __init__(self, model, tools, max_steps=8):
+        self.model = model
+        self.tools = {t.name: t for t in tools}
+        self.max_steps = max_steps
+
+    def run(self, question):
+        trajectory = [f"Question: {question}"]
+
+        for step in range(1, self.max_steps + 1):
+            # Generate thought and action
+            response = self.model.generate(
+                self._build_prompt(trajectory),
+                stop=["\nObservation"]
+            )
+            trajectory.append(response)
+
+            # Parse action
+            action, action_input = self._parse_action(response)
+
+            if action == "Finish":
+                return action_input
+
+            # Execute action and get observation
+            observation = self.tools[action].run(action_input)
+            trajectory.append(
+                f"Observation {step}: {observation}"
+            )
+
+        return "Maximum steps reached without answer."
+```
+
+ReAct's influence extends well beyond its original paper. The pattern has become the default architecture for LLM agents -- frameworks like LangChain, LlamaIndex, and the Anthropic tool-use API all implement variations of the ReAct loop. Understanding ReAct as formalized CoT-with-actions clarifies why these agent frameworks work the way they do and helps practitioners debug them when they fail.
+
 ## Practical Considerations for Production
 
 ### When to Use Each Technique
@@ -347,9 +456,12 @@ Every advanced prompting technique increases cost (more tokens generated, more A
 
 - In-context learning allows models to adapt to new tasks through examples alone, likely through a mechanism that combines implicit Bayesian inference with capability retrieval from pretraining.
 - Few-shot example selection significantly impacts performance; embedding-based similarity retrieval outperforms random selection, and example order matters more than most practitioners realize.
-- Chain-of-thought prompting (Wei et al., 2022) remains one of the highest-impact techniques, improving reasoning performance by making intermediate steps explicit. The effect is strongest in larger models.
+- Chain-of-thought prompting (Wei et al., 2022) remains one of the highest-impact techniques, improving reasoning performance by making intermediate steps explicit. While originally observed only in models above ~100B parameters, fine-tuned smaller models (7B-13B) now produce effective CoT, and benchmarks like GSM8K have been largely saturated.
 - Zero-shot CoT ("Let's think step by step") provides much of CoT's benefit without requiring curated examples, making it a strong default for reasoning tasks.
 - Self-consistency (Wang et al., 2022) improves on CoT by sampling multiple reasoning paths and voting, providing both better answers and a useful confidence signal.
 - Tree-of-thought enables exploration and backtracking but at significant computational cost; reserve it for problems where exploration is essential.
 - Least-to-most prompting addresses compositional generalization by decomposing problems into ordered sub-problems, solving each with the context of prior solutions.
+- Reasoning-native models (o1/o3, DeepSeek-R1) internalize CoT through training, making prompt-based CoT redundant for these models. Use prompt-based CoT for standard models; trust built-in reasoning for reasoning-optimized models.
+- CoT faithfulness is not guaranteed -- research shows models can produce plausible reasoning chains that do not reflect their actual decision-making process. Treat CoT as a useful but imperfect interpretability tool.
+- ReAct (Yao et al., 2022) bridges CoT and tool use by interleaving reasoning and actions, forming the foundation of modern agent architectures.
 - In production, combine techniques based on the cost-accuracy tradeoff appropriate for your application, and use confidence signals to route queries appropriately.

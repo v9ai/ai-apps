@@ -46,7 +46,65 @@ Dense retrieval encodes queries and documents into learned vector representation
 
 Dense and sparse methods fail on different queries. Empirical analysis on the BEIR benchmark (Thakur et al., 2021) shows that on datasets like TREC-COVID and SciFact, BM25 outperforms many dense retrievers. On Natural Questions and MS MARCO, dense retrievers dominate. The correlation between their error sets is surprisingly low -- meaning they frequently disagree on which documents are relevant.
 
-This complementarity is the fundamental motivation for hybrid search.
+This complementarity is the fundamental motivation for hybrid search. For a deeper treatment of how embedding model architecture influences dense retrieval quality, see [Article 13: Embedding Models](agent-13-embedding-models.md).
+
+## Learned Sparse Retrieval: SPLADE
+
+BM25's term-matching strengths are real, but its vocabulary is limited to the exact tokens present in the document. Learned sparse retrieval bridges this gap by using transformer models to produce sparse, high-dimensional representations where the dimensions correspond to vocabulary terms -- but crucially, the model can assign non-zero weights to terms that never appear in the original text.
+
+### How SPLADE Works
+
+SPLADE (Formal et al., 2021) -- Sparse Lexical and Expansion -- passes a document through a masked language model (typically BERT or DistilBERT) and uses the MLM head logits to produce a sparse vector over the entire vocabulary. A log-saturation function and FLOPS regularizer control sparsity:
+
+```
+w_j = log(1 + ReLU(MLM_logit_j))
+SPLADE(d) = max_pool over tokens { w_j for j in vocabulary }
+```
+
+The max-pooling over token positions means that if any token in the document activates vocabulary term j, that term receives a non-zero weight. The FLOPS regularizer penalizes the expected number of floating-point operations at query time, directly controlling the sparsity-effectiveness trade-off.
+
+The result is an inverted index that looks structurally identical to a traditional BM25 index -- term IDs mapped to document IDs with weights -- but with two critical differences. First, expansion: a document about "automobile maintenance" will have non-zero weight for "car", "vehicle", and "repair" even if those words never appear. Second, learned term importance: the model learns that "maintenance" is more discriminative than "the" far more effectively than IDF alone.
+
+### SPLADE++ and SPLADEv2
+
+**SPLADEv2** (Formal et al., 2022) introduced distillation from cross-encoder teachers and separate query/document encoders, significantly improving effectiveness. The key insight was that queries and documents have different sparsity requirements: queries benefit from more expansion (to improve recall), while documents benefit from sparser representations (to control index size and query latency).
+
+**SPLADE++** further refined the architecture with two variants. SPLADE++ Self-Distillation uses the model's own hard-negative mining loop to bootstrap better training data. SPLADE++ Ensemble Distillation combines scores from multiple cross-encoder teachers. On the BEIR benchmark, SPLADE++ achieves nDCG@10 scores competitive with or exceeding state-of-the-art dense retrievers while maintaining the interpretability and infrastructure advantages of sparse retrieval.
+
+### When SPLADE Outperforms BM25
+
+SPLADE consistently outperforms BM25 in scenarios involving vocabulary mismatch. On BEIR's zero-shot evaluation, SPLADE++ outperforms BM25 on every dataset and matches or exceeds dense retrievers on most. The gains are largest on datasets with high lexical mismatch -- scientific literature (SciFact), argument retrieval (ArguAna), and web questions (NQ).
+
+Where SPLADE truly shines is in hybrid pipelines. Because SPLADE representations live in an inverted index, they can be served alongside BM25 using the same infrastructure (Lucene, Anserini, OpenSearch). A hybrid of SPLADE + dense retrieval captures three complementary signals: exact term matching (from SPLADE's retention of original terms), learned expansion (from SPLADE's vocabulary expansion), and semantic similarity (from the dense component).
+
+```python
+# SPLADE representations slot directly into existing sparse retrieval infrastructure
+# Example: encoding a query with a SPLADE model
+from transformers import AutoModelForMaskedLM, AutoTokenizer
+import torch
+
+tokenizer = AutoTokenizer.from_pretrained("naver/splade-cocondenser-ensembledistil")
+model = AutoModelForMaskedLM.from_pretrained("naver/splade-cocondenser-ensembledistil")
+
+def encode_splade(text: str) -> dict[int, float]:
+    """Encode text into a SPLADE sparse vector."""
+    tokens = tokenizer(text, return_tensors="pt", truncation=True, max_length=256)
+    with torch.no_grad():
+        logits = model(**tokens).logits
+
+    # Log-saturation and max-pooling over sequence positions
+    weights = torch.max(
+        torch.log1p(torch.relu(logits)) * tokens["attention_mask"].unsqueeze(-1),
+        dim=1
+    ).values.squeeze()
+
+    # Extract non-zero terms
+    non_zero = weights.nonzero().squeeze()
+    sparse_rep = {idx.item(): weights[idx].item() for idx in non_zero}
+    return sparse_rep
+```
+
+This function returns a dictionary mapping vocabulary term IDs to learned importance weights -- structurally identical to a bag-of-words representation, but enriched with expansion terms and learned weighting. These representations can be indexed in any system that supports sparse vectors (Elasticsearch, Vespa, Qdrant, Weaviate).
 
 ## Hybrid Search Architecture
 
@@ -250,6 +308,36 @@ results = searcher.search("retrieval augmented generation", k=10)
 
 **Trade-offs**: ColBERT provides better ranking quality than bi-encoders with lower latency than cross-encoders. The main cost is storage -- retaining per-token embeddings requires ~100x more storage than single-vector representations.
 
+### Practical ColBERT Deployment
+
+**ColBERTv2 and the PLAID Engine**: The original ColBERT required storing full-precision per-token embeddings, making it expensive at scale. ColBERTv2 (Santhanam et al., 2022) introduced residual compression: token embeddings are quantized to 1-2 bits by encoding only the residual difference from the nearest centroid. This reduces storage by 6-10x. The PLAID engine (Santhanam et al., 2022) builds on this with a multi-stage retrieval architecture: candidate generation via centroid interaction, centroid pruning, and then decompression of only the surviving candidates for full MaxSim scoring. PLAID achieves sub-100ms latency on million-document collections while retaining ColBERTv2's ranking quality.
+
+**RAGatouille**: For teams that want ColBERT without managing the full indexing infrastructure, RAGatouille (Clavié, 2024) provides a high-level Python interface that wraps ColBERTv2 with sensible defaults:
+
+```python
+from ragatouille import RAGPretrainedModel
+
+# Load a pre-trained ColBERT model
+rag = RAGPretrainedModel.from_pretrained("colbert-ir/colbertv2.0")
+
+# Index a collection -- handles tokenization, encoding, and PLAID indexing
+rag.index(
+    collection=[doc["text"] for doc in documents],
+    document_ids=[doc["id"] for doc in documents],
+    index_name="my_knowledge_base",
+    max_document_length=300,
+    split_documents=True  # Automatic chunking at sentence boundaries
+)
+
+# Search returns ranked results with per-token interaction scores
+results = rag.search("How does late interaction differ from cross-encoding?", k=10)
+# Each result includes: content, score, rank, document_id
+```
+
+RAGatouille also supports fine-tuning ColBERT on domain-specific data with minimal code, making it practical to adapt the model for specialized corpora like legal documents, medical literature, or internal knowledge bases. For guidance on generating training pairs for this kind of fine-tuning, see [Article 13: Embedding Models](agent-13-embedding-models.md).
+
+**When to choose ColBERT over cross-encoder reranking**: ColBERT is preferable when latency budgets are tight (under 100ms total), when you need to rerank large candidate sets (hundreds rather than dozens), or when you want a single model that can serve as both first-stage retriever and reranker. Cross-encoders remain superior when you have a small candidate set (under 50 documents) and can tolerate 100-200ms of reranking latency, since their joint encoding captures deeper query-document interactions. For storage infrastructure considerations when deploying ColBERT's per-token indexes, see [Article 14: Vector Databases](agent-14-vector-databases.md).
+
 ## HyDE: Hypothetical Document Embeddings
 
 HyDE (Gao et al., 2022) addresses a fundamental asymmetry in retrieval: queries and documents are different kinds of text. A query like "What causes aurora borealis?" is short and interrogative, while the relevant document is a long, declarative explanation. Their embedding space locations may be far apart even when semantically related.
@@ -397,6 +485,129 @@ def step_back_query(query: str) -> str:
     return response.choices[0].message.content.strip()
 ```
 
+## Adaptive Retrieval: Knowing When NOT to Retrieve
+
+Not every query benefits from retrieval. A question like "What is 2 + 2?" or "Write a Python function to reverse a string" gains nothing from searching a knowledge base -- the LLM's parametric knowledge handles these perfectly. Worse, unnecessary retrieval introduces latency, cost, and the risk of injecting distracting or contradictory context. Adaptive retrieval systems learn to route queries between parametric knowledge (the LLM's internal knowledge) and retrieval-augmented generation based on query characteristics.
+
+### Query Complexity Routing
+
+The simplest approach classifies queries into categories and applies different retrieval strategies per category:
+
+```python
+class AdaptiveRetriever:
+    """Route queries between parametric knowledge and retrieval."""
+
+    def __init__(self, retrieval_pipeline, classifier, llm):
+        self.retrieval_pipeline = retrieval_pipeline
+        self.classifier = classifier
+        self.llm = llm
+
+    async def answer(self, query: str) -> dict:
+        # Classify the query to determine retrieval strategy
+        route = self.classifier.classify(query)
+
+        if route == "parametric":
+            # LLM can answer from internal knowledge
+            return {"answer": await self.llm.generate(query), "source": "parametric"}
+        elif route == "retrieval":
+            # Standard RAG pipeline
+            docs = await self.retrieval_pipeline.search(query)
+            return {"answer": await self.llm.generate(query, context=docs), "source": "retrieval"}
+        elif route == "structured":
+            # Route to text-to-SQL or structured query engine
+            return await self.structured_query(query)
+        else:
+            # Hybrid: retrieve but allow the model to ignore context if unhelpful
+            docs = await self.retrieval_pipeline.search(query)
+            return {"answer": await self.llm.generate(query, context=docs, allow_ignore=True), "source": "hybrid"}
+```
+
+The classifier can be a lightweight model (a fine-tuned DistilBERT or even a rule-based system) trained on examples of each category. Key signals include: query length and complexity, presence of domain-specific entities, whether the query asks for factual recall vs. reasoning, and whether the query references time-sensitive information.
+
+### Self-RAG and Retrieval Tokens
+
+Self-RAG (Asai et al., 2023) takes adaptive retrieval further by training the LLM itself to decide when to retrieve. The model is fine-tuned with special reflection tokens: `[Retrieve]` signals that retrieval is needed, `[No Retrieve]` signals that the model can answer from parametric knowledge, `[ISREL]` assesses whether a retrieved passage is relevant, and `[ISSUP]` checks whether the generated response is supported by the passage.
+
+This approach unifies the retrieval decision with generation, eliminating the need for a separate classifier. The model learns that "What year was the Eiffel Tower built?" warrants retrieval while "Explain the concept of recursion" does not. On knowledge-intensive benchmarks, Self-RAG outperforms both always-retrieve and never-retrieve baselines by 5-10% on factual accuracy, while reducing retrieval calls by 30-50%.
+
+### Confidence-Based Routing
+
+A practical middle ground uses the LLM's own confidence as a retrieval signal. Generate an initial answer without retrieval, then assess confidence through verbalized probability or token-level entropy. If confidence is low, trigger retrieval and regenerate:
+
+```python
+async def confidence_based_retrieval(query: str, llm, retriever, threshold: float = 0.7):
+    """Retrieve only when the model is uncertain."""
+    # First pass: answer without retrieval
+    initial = await llm.generate(
+        f"Answer this question. Rate your confidence 0-1.\nQuestion: {query}"
+    )
+    confidence = extract_confidence(initial)
+
+    if confidence >= threshold:
+        return {"answer": initial, "retrieved": False}
+
+    # Low confidence: retrieve and regenerate
+    docs = await retriever.search(query)
+    augmented = await llm.generate(query, context=docs)
+    return {"answer": augmented, "retrieved": True}
+```
+
+The threshold requires tuning per domain. For medical or legal applications where accuracy is critical, a lower threshold (triggering more retrieval) is appropriate. For creative or general-knowledge tasks, a higher threshold reduces unnecessary latency. For more sophisticated self-correcting retrieval patterns, including iterative refinement loops, see [Article 17: Advanced RAG](agent-17-advanced-rag.md).
+
+## Structured Data Retrieval
+
+Many real-world knowledge bases contain structured data -- relational databases, knowledge graphs, spreadsheets, API endpoints -- alongside unstructured text. A complete retrieval strategy must handle both modalities and, critically, know when to route a query to structured retrieval rather than vector search.
+
+### Text-to-SQL
+
+Text-to-SQL converts natural language questions into SQL queries against a relational database. Modern LLMs have made this dramatically more practical, but the challenge lies in grounding the model's output in the actual schema:
+
+```python
+def text_to_sql_retrieval(
+    query: str,
+    schema: str,
+    db_connection,
+    llm
+) -> dict:
+    """Convert a natural language query to SQL and execute it."""
+
+    prompt = f"""Given this database schema:
+{schema}
+
+Convert this question to a SQL query. Return ONLY the SQL, no explanation.
+Use standard SQL syntax. Do not use functions not supported by the database.
+
+Question: {query}
+SQL:"""
+
+    sql = llm.generate(prompt).strip()
+
+    # Safety: validate the generated SQL
+    if not is_safe_query(sql):  # Check for DROP, DELETE, UPDATE, etc.
+        raise ValueError(f"Unsafe SQL generated: {sql}")
+
+    results = db_connection.execute(sql)
+    return {"sql": sql, "results": results}
+```
+
+The schema description is itself a retrieval problem at scale. With hundreds of tables, you cannot fit the full schema into the prompt. Schema retrieval -- selecting the relevant tables and columns based on the query -- becomes a prerequisite. Techniques include embedding table/column descriptions and retrieving the most relevant ones, or using a two-stage approach where a first LLM call identifies relevant tables before a second call generates SQL.
+
+### Table Question Answering
+
+Not all structured data lives in SQL databases. Table QA handles CSV files, spreadsheets, and tabular data embedded within documents. Models like TAPAS (Herzig et al., 2020) and more recently LLM-based approaches can reason over tables directly. The key challenge is representing tabular structure in a way the model can process -- linearizing tables into text while preserving row/column relationships.
+
+For tables extracted from documents during chunking (see [Article 15: Chunking Strategies](agent-15-chunking-strategies.md)), storing both the raw table and a text summary enables hybrid retrieval: the summary matches semantic queries while the structured representation supports precise lookups.
+
+### Integrating Structured and Unstructured Retrieval
+
+The most capable RAG systems unify structured and unstructured retrieval behind a single query interface. The router examines the query and dispatches to the appropriate backend:
+
+- "What were Q3 2024 revenues?" routes to text-to-SQL against a financial database
+- "Explain the revenue growth strategy" routes to vector search over earnings call transcripts
+- "How did Q3 revenue compare to the forecast from the analyst report?" requires both: SQL for the actual figure, vector search for the forecast, and synthesis across both
+
+This routing can be implemented as part of the adaptive retrieval classifier described above, adding "structured" as a query category. The key insight is that structured retrieval is not a replacement for RAG but a complement -- most real-world questions require reasoning across both structured facts and unstructured context. For agentic approaches to multi-source retrieval, where the system iteratively decides which sources to query, see [Article 17: Advanced RAG](agent-17-advanced-rag.md).
+
 ## Retrieval-Aware Prompting
 
 How you present retrieved documents to the LLM significantly impacts answer quality.
@@ -478,10 +689,20 @@ class AdvancedRetrievalPipeline:
 
 - **Hybrid search** (dense + sparse) outperforms either approach alone because they fail on different queries. This should be the default architecture.
 - **BM25 remains essential** for exact term matching, rare entities, and domain-specific terminology. Don't discard it in favor of pure vector search.
+- **Learned sparse retrieval (SPLADE)** bridges the gap between BM25 and dense retrieval by learning term expansion and importance weighting. It slots into existing sparse infrastructure and combines naturally with dense retrieval in hybrid pipelines.
 - **Reciprocal Rank Fusion** is the simplest and most robust fusion method. Start with RRF before exploring learned fusion.
 - **Cross-encoder reranking** provides the largest quality improvement per engineering hour. Even a simple reranker applied to top-30 candidates significantly improves top-5 precision.
-- **ColBERT** offers a compelling middle ground between bi-encoder efficiency and cross-encoder quality, particularly for latency-sensitive applications.
+- **ColBERT** offers a compelling middle ground between bi-encoder efficiency and cross-encoder quality, particularly for latency-sensitive applications. RAGatouille and PLAID make it practical to deploy without deep infrastructure expertise.
 - **HyDE** is most valuable for complex, conceptual queries where query-document vocabulary gap is large. Avoid it for simple factual queries due to latency and cost overhead.
+- **Adaptive retrieval** saves latency and cost by routing queries between parametric knowledge and retrieval based on complexity and confidence. Not every query needs a knowledge base lookup.
+- **Structured data retrieval** (text-to-SQL, table QA) is a necessary complement to vector search for knowledge bases that span relational databases and unstructured documents.
 - **Multi-query retrieval** is a low-cost, high-impact technique. Generating 3-5 query variants and fusing results consistently improves recall.
 - **Query decomposition** is essential for complex, multi-faceted questions that no single retrieval hit can fully answer.
 - The retrieval pipeline is not static: monitor retrieval quality metrics (recall@k, nDCG) and adapt strategies based on observed failure modes.
+
+### Related Articles
+
+- [Article 13: Embedding Models](agent-13-embedding-models.md) -- How embedding architecture and training objectives shape dense retrieval quality.
+- [Article 14: Vector Databases](agent-14-vector-databases.md) -- Indexing algorithms and infrastructure for serving dense and ColBERT representations at scale.
+- [Article 15: Chunking Strategies](agent-15-chunking-strategies.md) -- How document splitting decisions determine the upper bound on retrieval quality.
+- [Article 17: Advanced RAG](agent-17-advanced-rag.md) -- Agentic retrieval loops, self-correcting pipelines, and multi-hop reasoning that build on the strategies covered here.

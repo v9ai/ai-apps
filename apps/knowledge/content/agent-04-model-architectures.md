@@ -356,13 +356,174 @@ Architecture alone does not determine model capability. Training methodology var
 - **Gemini**: multimodal pre-training from the start, with interleaved modality data.
 - **Mixtral**: pre-training with expert load balancing, fine-tuning with expert-aware optimization.
 
+## Reasoning Architectures
+
+A new class of models has emerged where architecture and training are co-designed to enable explicit multi-step reasoning at inference time. Rather than producing answers in a single forward pass, these models allocate additional test-time compute to "think through" problems — a paradigm shift with significant architectural implications (see [Article 02: Scaling Laws](./agent-02-scaling-laws.md) for how test-time compute relates to traditional scaling).
+
+### OpenAI o1 and o3
+
+OpenAI's o1 (**OpenAI, 2024**) introduced the concept of **internal chain-of-thought** at scale. While architectural details are proprietary, the key design principles are understood:
+
+- The model generates an extended internal reasoning trace before producing a final answer. This trace is hidden from the user but consumes real inference tokens.
+- **Verification-based rewards**: the reinforcement learning training uses outcome-based verification — checking whether the final answer is correct — rather than process-based supervision of individual reasoning steps.
+- **Test-time compute scaling**: performance improves with more inference-time tokens spent on reasoning, creating a new scaling axis orthogonal to model size and training data (the traditional scaling dimensions).
+
+o3 (2025) extends this approach with improved reasoning efficiency and reliability, reportedly achieving expert-level performance on competition mathematics and doctoral-level science benchmarks.
+
+### DeepSeek-R1
+
+DeepSeek-R1 (**DeepSeek-AI, 2025**) demonstrated that reasoning capabilities can emerge from pure reinforcement learning without supervised chain-of-thought data:
+
+- **Base architecture**: uses the DeepSeek-V3 model (671B/37B MoE) as its foundation
+- **Group Relative Policy Optimization (GRPO)**: instead of training a separate reward model, GRPO estimates the baseline from group scores — sampling multiple responses for each prompt and using their relative rankings as the reward signal
+
+```python
+# Simplified GRPO reward computation
+def grpo_reward(prompt, policy_model, num_samples=16):
+    """Generate multiple responses and compute relative rewards."""
+    responses = [policy_model.generate(prompt) for _ in range(num_samples)]
+    # Score each response (e.g., correctness check for math)
+    scores = [verify_answer(r) for r in responses]
+
+    # Normalize rewards relative to group
+    mean_score = sum(scores) / len(scores)
+    std_score = (sum((s - mean_score)**2 for s in scores) / len(scores)) ** 0.5
+    advantages = [(s - mean_score) / (std_score + 1e-8) for s in scores]
+    return advantages
+```
+
+- **Emergent reasoning behaviors**: without any supervised examples of chain-of-thought reasoning, the RL-trained model spontaneously develops strategies like self-verification, backtracking, and problem decomposition
+- **Distillation to smaller models**: DeepSeek distilled R1's reasoning capabilities into smaller dense models (1.5B to 70B), showing that the reasoning patterns transfer effectively across architectures. The distilled Qwen2.5-32B variant matches many larger models on reasoning benchmarks.
+
+The architectural implication is notable: reasoning capability does not require a novel architecture. It can be trained into a standard transformer through RL post-training, though the model must be large enough to support the emergent reasoning behaviors.
+
+### Implications for Architecture Design
+
+Reasoning models change the compute calculus. A smaller model that spends 10x more inference tokens reasoning can outperform a larger model answering in a single pass. This shifts optimization priorities toward inference efficiency (see [Article 05: Inference Optimization](./agent-05-inference-optimization.md)) — fast token generation and efficient KV caching become even more critical when models routinely generate thousands of reasoning tokens per query.
+
+## State-Space Model Alternatives
+
+While the transformer dominates, **state-space models (SSMs)** offer a fundamentally different approach to sequence modeling — one that replaces attention's quadratic complexity with linear scaling.
+
+### Mamba
+
+**Gu and Dao (2023)** introduced Mamba, building on the Structured State Space Sequence model (S4) lineage:
+
+- **Selective state spaces**: unlike fixed-parameter SSMs, Mamba makes the state-space parameters input-dependent, allowing the model to selectively propagate or forget information based on the current token
+- **Hardware-aware implementation**: a custom CUDA kernel fuses the selective scan operation, avoiding the materializing of large intermediate states in HBM
+- **Linear time complexity**: processes sequences in $O(n)$ time and $O(1)$ memory per step during generation, compared to the transformer's $O(n^2)$ attention and $O(n)$ KV cache
+
+```python
+# Conceptual selective SSM forward pass
+def selective_ssm(x, A, B, C, delta):
+    """
+    x: input sequence (B, L, D)
+    A, B, C: state-space matrices (input-dependent in Mamba)
+    delta: discretization step (input-dependent)
+    """
+    h = torch.zeros(x.size(0), state_dim)  # hidden state
+    outputs = []
+    for t in range(x.size(1)):
+        # Discretize continuous parameters
+        A_bar = torch.exp(delta[:, t] * A[:, t])
+        B_bar = delta[:, t].unsqueeze(-1) * B[:, t]
+        # State update: linear recurrence
+        h = A_bar * h + B_bar * x[:, t].unsqueeze(-1)
+        y = (C[:, t] * h).sum(dim=-1)
+        outputs.append(y)
+    return torch.stack(outputs, dim=1)
+```
+
+Mamba-3B matches Transformer models of equivalent size on language modeling while being significantly faster at long-sequence inference.
+
+### Jamba: Hybrid Mamba-Transformer
+
+AI21's Jamba (**Lieber et al., 2024**) demonstrated that the most practical approach may be combining architectures:
+
+- **Alternating layers**: interleaves Mamba layers with Transformer attention layers in a ratio of roughly 7:1 (Mamba to attention)
+- **MoE integration**: applies Mixture-of-Experts to some of the MLP layers, creating a triple hybrid: Mamba + Transformer + MoE
+- **52B total parameters, 12B active** — the MoE sparsity keeps inference costs low
+- **256K context window** — the Mamba layers handle the bulk of sequential processing while the sparse attention layers provide the global context integration that pure SSMs struggle with
+
+The hybrid approach addresses SSMs' key weakness: pure Mamba models underperform transformers on tasks requiring precise long-range retrieval (e.g., "find the specific fact mentioned 50K tokens ago"). The periodic attention layers provide this capability while Mamba layers handle the sequential flow efficiently.
+
+### RWKV
+
+**Peng et al. (2023)** developed RWKV (Receptance Weighted Key Value), which reformulates attention as a linear recurrence:
+
+- Can be trained in parallel like a transformer (using the "attention-like" formulation) but runs as an RNN during inference
+- **Constant memory** during generation regardless of context length
+- RWKV-v6 (Eagle) scales to 14B parameters with competitive language modeling performance
+- Particularly suited to deployment on memory-constrained devices where KV cache size is the binding constraint
+
+### When to Choose SSMs Over Transformers
+
+State-space models are preferred in specific scenarios:
+
+- **Very long sequences** (100K+ tokens) where attention's quadratic cost dominates
+- **Streaming applications** where constant-memory inference is required
+- **Edge deployment** where KV cache memory budget is severely limited
+- **Real-time processing** of continuous signals (audio, time-series)
+
+For most general-purpose language tasks at moderate sequence lengths, transformers remain superior due to their stronger in-context learning and retrieval capabilities. The hybrid approach (Jamba) may represent the practical middle ground.
+
+## Small Language Models
+
+A parallel trend to frontier scaling is the development of highly capable small models (1B-7B parameters), optimized for on-device deployment, low-latency serving, and cost-efficient inference.
+
+### Phi Series (Microsoft)
+
+Microsoft's Phi family demonstrates that data quality can partially substitute for model size:
+
+- **Phi-3 Mini (3.8B)** (**Abdin et al., 2024**): achieves performance comparable to Mixtral 8x7B (47B total) on several benchmarks through "textbook-quality" synthetic training data
+- **Phi-4 (14B)**: extends the approach with improved synthetic data generation and reasoning-focused training, competitive with much larger models on math and code benchmarks
+- **Architectural choices**: standard Llama-style architecture (RMSNorm, SwiGLU, RoPE, GQA) — the innovation is in training data curation, not architecture
+- **Long context**: Phi-3 supports 128K context via LongRoPE, a position encoding extension that combines RoPE scaling with progressive extension during fine-tuning
+
+### Gemma 2 (Google)
+
+**Gemma Team (2024)** introduced architectural optimizations specifically targeting the small-model regime:
+
+- **2B and 9B variants** designed for on-device and efficient cloud deployment
+- **Alternating local-global attention**: even-numbered layers use full attention while odd-numbered layers use sliding window attention (4096 tokens), reducing compute while maintaining quality
+- **Logit soft-capping**: clips the pre-softmax logits to prevent attention weight concentration, improving training stability at smaller scales
+- **Knowledge distillation**: the smaller models are trained with a distillation objective from larger Gemma models, transferring capability more efficiently than training from scratch
+
+### Llama 3.2 Small Variants
+
+Meta's Llama 3.2 (**Meta AI, 2024**) includes **1B and 3B** parameter models designed explicitly for edge deployment:
+
+- **Pruning and distillation from Llama 3.1 8B**: rather than training from scratch, the small models are derived from the larger model through structured pruning followed by knowledge distillation
+- **Shared embedding tying**: input and output embeddings are tied to reduce parameter count — a technique that larger models avoid due to its quality ceiling
+- **Reduced GQA groups**: fewer KV heads than the 8B model, aggressively compressing the KV cache for memory-constrained deployment
+- Targets mobile and edge devices with 4-bit quantization support (see [Article 05: Inference Optimization](./agent-05-inference-optimization.md) for quantization techniques)
+
+### Qwen2.5 Small Variants
+
+Qwen2.5's **0.5B, 1.5B, and 3B** models round out the small-model landscape:
+
+- The 0.5B model is one of the smallest instruction-following models that remains genuinely useful for simple tasks
+- All variants share the same architectural template as the 72B model, just with fewer layers and smaller hidden dimensions
+- The large vocabulary (152K tokens) is maintained even at small scales, preserving multilingual capability
+
+### Architectural Lessons from Small Models
+
+The small model landscape reveals an important insight: below ~7B parameters, **training data quality and distillation methodology matter more than architectural innovations**. All competitive small models use essentially the same Llama-derived architecture. The differentiation comes from:
+
+1. **Data curation**: Phi's synthetic "textbook" data, Gemma's web-filtered data
+2. **Distillation**: learning from larger models is consistently more efficient than training from scratch
+3. **Quantization-aware design**: architectures chosen to degrade gracefully under 4-bit and 8-bit quantization
+
 ## Summary and Key Takeaways
 
-- All frontier LLMs use **decoder-only transformer** architectures, converging on this design for its simplicity and scaling properties.
-- **Mixture-of-Experts** has emerged as the dominant approach for frontier models (GPT-4, Gemini, Mixtral, DeepSeek), offering more total parameters at lower per-token compute cost.
-- **Grouped-Query Attention** (Llama 2+, Mistral) and **Multi-head Latent Attention** (DeepSeek) address the KV cache memory bottleneck during inference.
+- All frontier LLMs use **decoder-only transformer** architectures (see [Article 01](./agent-01-transformer-architecture.md)), converging on this design for its simplicity and scaling properties.
+- **Mixture-of-Experts** has emerged as the dominant approach for frontier models (GPT-4, Gemini, Mixtral, DeepSeek-V3), offering more total parameters at lower per-token compute cost. DeepSeek-V3's 671B/37B design pushes this to an extreme.
+- **Grouped-Query Attention** (Llama 2+, Mistral, Qwen) and **Multi-head Latent Attention** (DeepSeek) address the KV cache memory bottleneck during inference (see [Article 05](./agent-05-inference-optimization.md) for deployment implications).
 - **Sliding Window Attention** (Mistral) provides linear-cost attention for long sequences when combined with layer stacking.
-- The **Llama architecture** (RMSNorm, SwiGLU, RoPE, GQA) has become the de facto standard for open-source models.
+- The **Llama architecture** (RMSNorm, SwiGLU, RoPE, GQA) has become the de facto standard for open-source models, adopted by Qwen, Mistral, and others.
+- **Reasoning architectures** (o1/o3, DeepSeek-R1) introduce test-time compute as a new scaling axis — models that "think longer" can outperform larger models that answer immediately, shifting optimization priorities toward inference efficiency.
+- **State-space models** (Mamba, RWKV) and **hybrid architectures** (Jamba) offer linear-scaling alternatives for long sequences and memory-constrained deployment, though transformers retain advantages in in-context learning.
+- **Small language models** (Phi-3/4, Gemma 2, Llama 3.2 1B/3B, Qwen2.5 small) demonstrate that data quality and distillation matter more than architecture below ~7B parameters.
 - **Context length** innovations (RoPE scaling, ring attention) have pushed from 2K to 1M+ tokens, but effective utilization of very long contexts remains an active research challenge.
-- Architectural differences between frontier models are increasingly secondary to differences in **training data, training methodology, and post-training** (RLHF, instruction tuning, tool use training).
-- For practitioners, understanding these architectural choices is essential for selecting the right model for a given deployment scenario: dense vs. MoE tradeoffs, context length requirements, and inference efficiency constraints.
+- Architectural differences between frontier models are increasingly secondary to differences in **training data, training methodology, and post-training** (RLHF, RL for reasoning, instruction tuning, tool use training). The convergence of open-source architectures around the Llama template underscores this point.
+- For practitioners, understanding these architectural choices is essential for selecting the right model for a given deployment scenario: dense vs. MoE tradeoffs, context length requirements, reasoning vs. latency needs, and inference efficiency constraints.

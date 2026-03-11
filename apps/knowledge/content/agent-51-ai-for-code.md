@@ -556,6 +556,157 @@ AI-generated code introduces specific security risks:
 
 Mitigations include post-generation security scanning (Semgrep, CodeQL), license detection, and package existence verification.
 
+## AI IDE Architectures
+
+Inline tab completion was only the first generation of AI-assisted code editing. Modern AI-native IDEs have evolved into multi-modal systems that combine completion, conversational chat, and fully autonomous agent workflows within a single editor surface.
+
+### Interaction Modes
+
+**Tab completion** remains the lowest-latency interaction: the editor sends a FIM prompt on every pause, and the model returns one or more ghost-text suggestions. Cursor, Windsurf, and GitHub Copilot all offer this mode, typically backed by small, fast models (1-7B parameters) optimized for sub-200ms response times.
+
+**Chat mode** opens a conversational panel where the developer describes a task in natural language, and the model generates or edits code in response. The key architectural difference from tab completion is context assembly: chat interactions can afford higher latency (1-5 seconds), so the system can include more context - open files, project structure, terminal output, and previous conversation turns. Cursor's chat mode, for example, automatically indexes the workspace and retrieves relevant files using embedding-based search before generating a response.
+
+**Agent mode** is the most recent evolution, where the IDE hands control to an autonomous agent that can plan multi-step changes, edit multiple files, run terminal commands, and iterate on errors - all within the editor. Cursor's Agent, Windsurf's Cascade, and Zed's AI assistant each implement this pattern differently, but the core architecture is similar:
+
+```
+Developer describes task (natural language)
+        |
+        v
+  Agent plans approach (may ask clarifying questions)
+        |
+        v
+  Loop:
+    - Read/search relevant files
+    - Generate edits across one or more files
+    - Apply edits and show diff preview
+    - Optionally run tests or build commands
+    - Analyze output, fix errors if any
+    - Repeat until task is complete or agent yields control
+```
+
+### Context Window Management
+
+The quality of AI-assisted editing depends heavily on what context the model sees. Modern AI IDEs use several strategies beyond the basic `CopilotContextAssembler` pattern described earlier:
+
+- **AST-aware chunking**: Rather than sending raw file content, the IDE parses the abstract syntax tree and sends function signatures, type definitions, and class hierarchies - the structural skeleton that conveys maximum semantic information per token. Tree-sitter provides language-agnostic parsing for this purpose.
+- **Symbol resolution**: When the cursor is inside a function call, the IDE resolves the called function's definition and includes its signature and docstring. This is similar to how language servers work, and in fact Zed integrates its AI features directly with LSP data.
+- **Open-file prioritization**: Files currently open in editor tabs receive higher priority than closed files in the workspace. The assumption is that open files are most relevant to the current task - a heuristic that holds well in practice.
+- **Git diff context**: Some systems include recent uncommitted changes as context, allowing the model to understand what the developer is currently working on and maintain consistency with in-progress modifications.
+
+The fundamental tradeoff is coverage versus noise: including more context gives the model more information but risks diluting the signal with irrelevant code. The best systems use retrieval (embedding search, BM25, or graph-based traversal) to select context rather than dumping everything into the prompt. For a deeper look at the retrieval and planning architectures that underpin these systems, see [Article 26: Agent Architectures](/articles/agent-26-agent-architectures).
+
+## Terminal-Based Code Agents
+
+While AI IDEs embed intelligence into the editor, a parallel category of tools operates directly in the terminal, treating the entire development workflow - git, tests, builds, deployment - as their environment.
+
+### Claude Code
+
+Claude Code (Anthropic, 2025) runs as a CLI agent that operates within the developer's terminal and file system. It reads and writes files, executes shell commands, interacts with git, and runs tests - all through an agentic loop where the model decides which tool to invoke next. Its architecture is notable for operating without a predefined plan: the model receives the developer's request along with available tools (file read/write, bash execution, search) and iterates until the task is complete or it needs human input.
+
+Key design decisions include:
+- **No sandbox by default**: Claude Code operates directly on the developer's file system, enabling real git commits, real test runs, and real build processes. This contrasts with sandboxed approaches but requires a trust model where the developer reviews changes before accepting.
+- **Full repository awareness**: The agent can search the codebase, read arbitrary files, and understand project structure organically through exploration rather than pre-indexing.
+- **Workflow integration**: Because it runs in the terminal, it composes naturally with existing developer tools - CI pipelines, package managers, deployment scripts.
+
+### Aider
+
+Aider (Gauthier, 2023) takes a different architectural approach: it maintains a "chat" with the LLM where the conversation includes a map of the entire repository structure. The developer adds specific files to the chat context, and Aider generates targeted edits using a structured diff format. Aider's design prioritizes precision over autonomy - it asks the developer to specify which files are relevant rather than searching the codebase itself.
+
+Aider supports multiple LLM backends and has pioneered several practical innovations:
+- **Unified diff format**: A structured output format that enables reliable multi-file editing across different models
+- **Git integration**: Every change is automatically committed with a descriptive message, creating a clean history that can be reviewed or reverted
+- **Linting and testing loops**: After making edits, Aider can run linters and tests, feeding errors back to the model for automatic repair
+
+### OpenHands (formerly OpenDevin)
+
+OpenHands provides a sandboxed runtime environment where an AI agent can write code, execute commands, browse the web, and interact with a full Linux environment. Its architecture leans toward maximum autonomy: the agent receives a task and works inside a Docker container, making changes and running validation until it considers the task complete.
+
+These terminal-based agents share a common architecture pattern - the observe-think-act loop described in [Article 26: Agent Architectures](/articles/agent-26-agent-architectures) - but differ in their trust model, context management, and degree of autonomy. The trend is toward tighter integration with real development workflows: real git repositories, real test suites, real CI pipelines.
+
+## AI-Generated Tests
+
+Test generation is one of the highest-value applications of code AI because tests have a built-in verification mechanism: they either pass or fail. This makes the generate-and-validate loop particularly effective.
+
+### Automated Test Generation
+
+LLMs can generate tests from several starting points:
+
+**From implementation code**: Given a function or class, the model generates unit tests that exercise its behavior. The most effective approach provides the model with the implementation, its type signatures, any existing tests as style examples, and instructions to cover edge cases:
+
+```python
+async def generate_tests_for_function(
+    function_source: str,
+    existing_tests: str | None,
+    llm_client,
+) -> str:
+    """Generate unit tests for a given function implementation"""
+    prompt = f"""Write comprehensive unit tests for this function:
+
+```python
+{function_source}
+```
+
+{"Existing test style to follow:" + existing_tests if existing_tests else ""}
+
+Requirements:
+- Test normal cases, edge cases, and error conditions
+- Use descriptive test names that explain the scenario
+- Include boundary values and empty/null inputs
+- Test both expected outputs and expected exceptions
+- Keep tests independent (no shared mutable state)
+"""
+    return await llm_client.generate(prompt)
+```
+
+**From specifications or docstrings**: When the implementation does not yet exist (test-first development), the model generates tests from the function signature and documentation alone. This supports an AI-assisted TDD workflow: the developer writes a docstring, the model generates tests, and then either the developer or the model writes the implementation to make the tests pass.
+
+**From bug reports**: Given an issue description, the model can generate a regression test that reproduces the bug before any fix is attempted. This is precisely what SWE-bench-solving agents do - and it serves as both a validation mechanism and a guard against future regressions.
+
+### Coverage Improvement Strategies
+
+AI-driven coverage improvement follows a systematic pattern:
+
+1. **Analyze coverage reports**: Parse existing coverage data (from tools like `coverage.py`, `istanbul`, or `llvm-cov`) to identify uncovered lines, branches, and functions
+2. **Prioritize by risk**: Focus test generation on uncovered code paths in critical modules - authentication, payment processing, data validation - rather than pursuing raw coverage numbers
+3. **Generate targeted tests**: For each uncovered path, generate tests that specifically exercise that path, using the coverage tool to verify the new tests actually cover the intended lines
+4. **Validate and deduplicate**: Run the generated tests to confirm they pass, then remove redundant tests that do not increase coverage
+
+The important caveat is that AI-generated tests can suffer from "tautological testing" - testing that the code does what it does, rather than testing that it does what it should. A test that merely asserts the current behavior of a buggy function will pass but provides no value. The most effective approaches combine AI generation with human review of test assertions, or use specification documents as the ground truth for expected behavior. For patterns on integrating AI-generated tests into continuous integration pipelines, see [Article 36: CI/CD for AI](/articles/agent-36-ci-cd-ai).
+
+## Code Understanding and Explanation
+
+Beyond generating and editing code, LLMs excel at reading and explaining existing code - a capability that has significant implications for developer onboarding, documentation, and codebase comprehension.
+
+### Codebase Comprehension
+
+Large codebases are notoriously difficult for new developers to understand. AI-assisted comprehension tools address this by letting developers ask questions about code in natural language:
+
+- **"What does this function do?"**: The model reads the implementation and generates a plain-language explanation, including edge cases and side effects that may not be obvious from the function name alone
+- **"How does authentication work in this project?"**: The agent searches for auth-related files, traces the request flow from middleware to handlers, and synthesizes an explanation of the overall architecture
+- **"Why was this code written this way?"**: When paired with git history, the model can reference the commit messages and pull request descriptions that introduced a pattern, explaining the historical context behind a design decision
+
+The effectiveness of these interactions depends on how much codebase context the model can access. RAG-based systems that index the repository (as described in the Repository-Level Understanding section above) perform significantly better than systems limited to the current file, because real-world questions often span multiple modules.
+
+### Documentation Generation
+
+AI-generated documentation fills a persistent gap in software engineering. Models can produce:
+
+- **Inline docstrings**: Given a function implementation, generate a docstring describing parameters, return values, exceptions, and usage examples. This is most effective when the model has access to call sites, allowing it to document actual usage patterns rather than hypothetical ones.
+- **API documentation**: For libraries and services, the model can generate endpoint descriptions, parameter tables, and example requests by analyzing route definitions and handler implementations.
+- **Architecture documents**: By analyzing the dependency graph and module structure, the model can generate high-level architecture overviews that describe how components interact.
+
+The reliability of AI-generated documentation varies. Docstrings and API docs tend to be accurate because the model can verify them against the implementation. Architecture documents require more judgment and are more prone to hallucination, particularly when the model lacks full codebase context.
+
+### Onboarding Acceleration
+
+The combination of code comprehension and documentation generation has a direct impact on developer onboarding. Organizations report that AI tools can reduce the time for a new developer to make their first meaningful contribution by providing:
+
+- **Interactive codebase exploration**: Instead of reading documentation that may be outdated, new developers can ask questions about the actual current state of the code
+- **Contextual explanations**: When reviewing a pull request or reading unfamiliar code, inline explanations help developers understand patterns and conventions specific to the project
+- **Guided task completion**: For well-scoped onboarding tasks, an AI agent can walk the developer through the relevant files, explain the existing patterns, and suggest where to make changes
+
+This capability is closely related to the code agent architectures discussed in [Article 29: Code Generation Agents](/articles/agent-29-code-agents), where agents must build an understanding of a repository before making changes. The same comprehension mechanisms that enable an agent to solve a GitHub issue also enable a developer to understand unfamiliar code.
+
 ## Summary and Key Takeaways
 
 - **Code LLM training** requires careful data curation (deduplication, quality filtering, license compliance) and code-specific training objectives like Fill-in-the-Middle for completion tasks
@@ -566,3 +717,7 @@ Mitigations include post-generation security scanning (Semgrep, CodeQL), license
 - **SWE-bench** represents the gold standard for evaluating real-world code AI capability, requiring repository navigation, debugging, and targeted editing - skills that HumanEval does not measure
 - **Repository-level understanding** through semantic indexing, dependency graphs, and agentic exploration is the frontier of code AI, enabling systems that understand codebases holistically
 - **Security and compliance** considerations are non-negotiable for production code AI: scan generated code for vulnerabilities, check for license issues, and verify package existence
+- **AI IDE architectures** have evolved beyond tab completion into chat and autonomous agent modes, with context assembly strategies (AST-aware chunking, symbol resolution, git diff context) determining the quality ceiling for each interaction mode
+- **Terminal-based code agents** like Claude Code, Aider, and OpenHands integrate with the full development workflow (git, tests, builds), operating with varying degrees of autonomy and sandboxing
+- **AI-generated tests** offer high value because they have built-in verification (tests pass or fail), but must guard against tautological testing where assertions merely mirror current behavior rather than intended behavior
+- **Code understanding** capabilities - codebase comprehension, documentation generation, onboarding acceleration - represent a force multiplier that complements code generation and may deliver equal or greater practical value in large engineering organizations

@@ -408,10 +408,14 @@ Research suggests DPO has a lower alignment tax than PPO, likely because it stay
 ## Summary and Key Takeaways
 
 - **RLHF** is the foundational alignment paradigm: train a reward model on human preferences, then optimize the policy with PPO. Effective but complex, memory-intensive, and hard to stabilize.
-- **DPO** eliminates the reward model and RL loop by deriving a closed-form loss from the RLHF objective. Simpler, more stable, and more memory-efficient, at the cost of being limited to offline preference data.
+- **DPO** eliminates the reward model and RL loop by deriving a closed-form loss from the RLHF objective. Simpler, more stable, and more memory-efficient, at the cost of being limited to offline preference data. **Online and iterative DPO** variants address the off-policy limitation by generating fresh preference data from the current policy at each round.
+- **SimPO** removes the reference model entirely by using length-normalized log-probabilities as an implicit reward, matching DPO performance with lower memory requirements.
 - **ORPO** further simplifies by removing the reference model, combining SFT and alignment in one stage. Good for resource-constrained settings.
 - **KTO** enables alignment from binary feedback (thumbs up/down) rather than paired preferences, dramatically reducing data collection requirements.
-- **Preference data quality** is the bottleneck for all methods. Invest in clear annotation guidelines, diverse prompts, and quality control.
-- **Synthetic preferences** from stronger models offer a scalable alternative to human annotation but introduce the judge model's biases.
+- **GRPO** enables reward-free RL for reasoning tasks using verification-based rewards and group-relative advantage estimation. It was central to training DeepSeek-R1 and represents a major advance for reasoning alignment.
+- **Process Reward Models** provide step-level supervision for multi-step reasoning, offering denser training signal than outcome-level rewards and enabling more precise credit assignment.
+- **Self-play methods** (SPIN, Self-Rewarding LMs) allow models to iteratively improve using their own generations and judgments, reducing dependence on external annotation.
+- **Preference data quality** is the bottleneck for all methods. Invest in clear annotation guidelines, diverse prompts, and quality control (see Article 22).
+- **Synthetic preferences** from stronger models (see Article 33 on LLM-as-Judge) offer a scalable alternative to human annotation but introduce the judge model's biases.
 - The **alignment tax** is real: alignment training reduces raw capabilities. Manage it by carefully tuning the KL penalty (beta) and monitoring capability benchmarks alongside alignment metrics.
-- For most practitioners, **DPO with high-quality preference data and QLoRA** is the recommended starting point. Move to PPO only if DPO plateaus and you have the engineering resources.
+- For most practitioners, **DPO with high-quality preference data and QLoRA** (see Article 19) is the recommended starting point. Consider online DPO if static data proves insufficient. Move to PPO or GRPO for reasoning-heavy applications where you have verifiable outcomes and the engineering resources.

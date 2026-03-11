@@ -18,7 +18,7 @@ The Kaplan paper made several influential claims:
 
 1. **Performance is a smooth power law** in each variable when the others are not bottlenecked. There are no sharp transitions or diminishing returns at the scales tested.
 2. **Model size matters more than data size**: for a fixed compute budget, it is more efficient to train a larger model on less data than a smaller model on more data. Specifically, they recommended scaling parameters roughly as $N \propto C^{0.73}$ and data as $D \propto C^{0.27}$.
-3. **Architectural details matter less than scale**: within the transformer family, variations in depth, width, and attention heads had modest effects compared to total parameter count.
+3. **Architectural details matter less than scale**: within the transformer family, variations in depth, width, and attention heads had modest effects compared to total parameter count (see [Transformer Architecture](/agent-01-transformer-architecture) for how these dimensions interact).
 4. **Training should be stopped early**: given fixed compute, it is better to train a large model for fewer steps than to train a smaller model to convergence.
 
 This last point was particularly consequential. It led to the common practice (exemplified by GPT-3) of training very large models on relatively modest amounts of data — GPT-3's 175B parameters were trained on roughly 300B tokens, far from convergence.
@@ -52,7 +52,7 @@ The Chinchilla ratios have been broadly (though not universally) adopted. Llama 
 
 Interestingly, many recent models deliberately deviate from Chinchilla-optimal ratios by training on significantly more data than the compute-optimal point would suggest. Llama 2 7B was trained on 2T tokens, and Llama 3 8B on 15T tokens — far beyond Chinchilla-optimal for their sizes.
 
-The rationale is that **inference cost matters more than training cost** for models that will serve billions of queries. A smaller model trained on more data (overtrained relative to Chinchilla) may have higher training cost per quality point, but its lower inference cost makes it more economical at deployment scale. This insight, formalized as **inference-aware scaling** by **Sardana and Frankle (2023)**, has become standard practice.
+The rationale is that **inference cost matters more than training cost** for models that will serve billions of queries. A smaller model trained on more data (overtrained relative to Chinchilla) may have higher training cost per quality point, but its lower inference cost makes it more economical at deployment scale. This insight, formalized as **inference-aware scaling** by **Sardana and Frankle (2023)**, has become standard practice. For a detailed treatment of the inference cost structure that motivates overtraining, see [Inference Optimization: KV Cache, Quantization & Speculative Decoding](/agent-05-inference-optimization).
 
 ```python
 # Chinchilla-optimal estimates
@@ -184,13 +184,22 @@ exact_match = exact_match_probability(per_token_acc, num_tokens=8)
 # This curve looks like a phase transition but is fully predictable
 ```
 
+### Capability Elicitation: Unlocking Hidden Abilities
+
+A parallel line of research has complicated the emergence narrative from a different angle. **Wei et al. (2024)** and **Srivastava et al. (2024)** showed that capabilities which appear absent under naive evaluation can often be **elicited** through improved prompting, scaffolding, or chain-of-thought decomposition. A model that scores near zero on a multi-step reasoning task with direct prompting may score above 80% when given a structured chain-of-thought template or when the task is decomposed into subtasks by an external scaffold.
+
+This suggests that the apparent emergence threshold is at least partially a function of the **evaluation protocol**, not just the model's intrinsic capability. The capability may be latent in the model's representations but inaccessible without the right interface. **Lu et al. (2024)** formalized this as the distinction between a model's **intrinsic capability** (what it can do with optimal elicitation) and its **expressed capability** (what it demonstrates under a given prompt). The gap between these two narrows with better prompting techniques and widens with task complexity — meaning that emergence claims based on simple prompting may systematically underestimate smaller models.
+
+This finding has practical importance: before concluding that a model lacks a capability, teams should invest in prompt engineering and scaffolding. The transformer's internal representations (see [Transformer Architecture](/agent-01-transformer-architecture) for how attention patterns encode structured information) may support capabilities that only surface with the right elicitation strategy.
+
 ### Current Consensus
 
-The field has largely accepted that Schaeffer et al. identified a real methodological issue: many apparent emergent abilities are indeed metric artifacts. However, this does not fully resolve the debate:
+The field has largely accepted that Schaeffer et al. identified a real methodological issue: many apparent emergent abilities are indeed metric artifacts. The capability elicitation research adds a second layer: even beyond metric choice, the prompting and scaffolding strategy significantly affects where the apparent capability threshold falls. However, this does not fully resolve the debate:
 
 - **Some capabilities may still exhibit genuine nonlinear scaling**, particularly those involving qualitative changes in the model's reasoning strategy (e.g., switching from pattern matching to chain-of-thought reasoning).
 - **In-context learning** itself is arguably emergent — small models barely benefit from few-shot examples, while large models show dramatic improvements. **Olsson et al. (2022)** identified specific attention patterns ("induction heads") that form during training and may underlie this capability.
-- The **practical** question remains: even if the underlying metrics are smooth, the user-facing experience of a model that goes from 5% to 95% exact-match accuracy on arithmetic still feels like a qualitative jump.
+- **Capability elicitation** shifts the question from "at what scale does this ability appear?" to "at what scale can this ability be elicited with reasonable effort?" — a more nuanced and practically useful framing.
+- The **practical** question remains: even if the underlying metrics are smooth and elicitation narrows the gap, the user-facing experience of a model that goes from 5% to 95% exact-match accuracy on arithmetic still feels like a qualitative jump.
 
 ## Compute-Optimal Training in Practice
 
@@ -234,7 +243,7 @@ State-of-the-art training systems achieve 40-60% MFU. The gap from 100% comes fr
 
 A practical challenge for Chinchilla-optimal training is that high-quality training data is finite. **Muennighoff et al. (2023)** studied the effect of repeating data and found that repeating tokens is less efficient than unique tokens, with diminishing returns after approximately 4 epochs. This creates a ceiling: if you cannot source enough unique tokens, you may be forced to either use a smaller model than compute-optimal or accept suboptimal data efficiency.
 
-This data wall has driven significant investment in synthetic data generation, multilingual data sourcing, and code/math data as supplements to web text.
+This data wall has driven significant investment in synthetic data generation, multilingual data sourcing, and code/math data as supplements to web text. The full data curation pipeline — including deduplication, quality filtering, and domain mixing strategies — is covered in [Pre-training: Data Curation, Objectives & Curriculum](/agent-06-pretraining-data).
 
 ## Scaling Beyond Language Loss
 
@@ -273,7 +282,10 @@ Perhaps the most important takeaway from scaling laws is quantitative: improveme
 - **Kaplan et al. (2020)** established that language model loss follows power laws in parameters, data, and compute, but overemphasized parameter scaling relative to data.
 - **Chinchilla (Hoffmann et al., 2022)** corrected the balance, showing that parameters and data should scale equally with compute, meaning most prior models were significantly undertrained.
 - **Inference-aware scaling** favors overtraining smaller models relative to Chinchilla-optimal, since deployment cost often dominates training cost.
-- **Emergent abilities** as described by Wei et al. (2022) are at least partially an artifact of discontinuous evaluation metrics (Schaeffer et al., 2023), though the practical significance of capability thresholds remains real.
+- **Test-time compute scaling** introduces a second axis: models that "think longer" at inference time (o1-style reasoning) can trade inference FLOPs for accuracy on reasoning tasks, fundamentally expanding the compute optimization space beyond training alone.
+- **Data quality scaling** (the Phi series and related work) shows that curated, textbook-quality data can substitute for 10-25x more parameters, modifying the Chinchilla ratios when high-quality data is available.
+- **Post-training scaling** follows its own laws: reward model size should match policy model size, preference data quality dominates volume, and alignment effectiveness compounds with base model capability.
+- **Emergent abilities** as described by Wei et al. (2022) are at least partially an artifact of discontinuous evaluation metrics (Schaeffer et al., 2023), and capability elicitation research (2024) further shows that improved prompting and scaffolding can unlock abilities that appear absent under naive evaluation.
 - **Data quality and availability** increasingly constrain scaling, as the field approaches the limits of unique, high-quality web text.
 - Scaling laws provide a quantitative framework for resource allocation, but their logarithmic nature means that algorithmic improvements, data quality, and post-training methods become increasingly important relative to raw compute at the frontier.
 - For practical model sizing, teams should consider their full cost structure (training + inference + data acquisition) rather than optimizing for training efficiency alone.
