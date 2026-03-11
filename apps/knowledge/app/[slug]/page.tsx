@@ -1,12 +1,15 @@
 import { notFound } from "next/navigation";
 import Link from "next/link";
-import { getAllPapers, getPaperBySlug, getCategoryMeta, getCitationsForPaper } from "@/lib/data";
+import { getAllPapers, getPaperBySlug, getCategoryMeta, getCitationsForPaper, getRelatedPapers, getAudioMeta } from "@/lib/data";
 import { Topbar } from "@/components/topbar";
 import { MarkdownProse } from "@/components/markdown-prose";
 import { TableOfContents } from "@/components/toc";
 import { ReadingProgress } from "@/components/reading-progress";
 import { ScrollToTop } from "@/components/scroll-to-top";
 import { ArticleNav } from "@/components/article-nav";
+import { RelatedPapers } from "@/components/related-papers";
+import { PageAnalytics } from "@/components/page-analytics";
+import { AudioPlayer } from "@/components/audio-player";
 
 export async function generateStaticParams() {
   const papers = await getAllPapers();
@@ -16,7 +19,7 @@ export async function generateStaticParams() {
 export async function generateMetadata({ params }: { params: Promise<{ slug: string }> }) {
   const { slug } = await params;
   const paper = await getPaperBySlug(slug);
-  return { title: paper ? `${paper.title} — AI Learning Research` : "Not Found" };
+  return { title: paper ? `${paper.title} — AI Engineering` : "Not Found" };
 }
 
 export default async function PaperPage({ params }: { params: Promise<{ slug: string }> }) {
@@ -28,6 +31,8 @@ export default async function PaperPage({ params }: { params: Promise<{ slug: st
   const total = allPapers.length;
   const meta = getCategoryMeta(paper.category);
   const papers = await getCitationsForPaper(slug);
+  const related = await getRelatedPapers(slug);
+  const audioMeta = await getAudioMeta(slug);
 
   // Prev/next
   const idx = allPapers.findIndex((a) => a.slug === slug);
@@ -35,7 +40,7 @@ export default async function PaperPage({ params }: { params: Promise<{ slug: st
   const next = idx < allPapers.length - 1 ? allPapers[idx + 1] : null;
 
   return (
-    <div className={`cat-${meta.slug}`}>
+    <div className={`cat-${meta.slug}${audioMeta ? " has-audio-player" : ""}`}>
       <ReadingProgress />
       <Topbar paperCount={total} />
 
@@ -43,7 +48,7 @@ export default async function PaperPage({ params }: { params: Promise<{ slug: st
       <div className="article-banner">
         <div className="article-banner-inner">
           <div className="article-banner-breadcrumb">
-            <Link href="/">&larr; all papers</Link>
+            <Link href="/">&larr; all articles</Link>
             <span className="sep">/</span>
             <span>{meta.icon} {paper.category}</span>
             <span className="sep">/</span>
@@ -57,6 +62,11 @@ export default async function PaperPage({ params }: { params: Promise<{ slug: st
             <span className="badge-pill badge-pill--glass">
               ~{paper.readingTimeMin} min read
             </span>
+            {audioMeta && (
+              <span className="badge-pill badge-pill--glass">
+                ~{Math.round(audioMeta.duration_secs / 60)} min listen
+              </span>
+            )}
             {papers.length > 0 && (
               <span className="badge-pill badge-pill--glass">
                 {papers.length} paper{papers.length !== 1 ? "s" : ""}
@@ -96,12 +106,17 @@ export default async function PaperPage({ params }: { params: Promise<{ slug: st
             </div>
           )}
 
+          {/* Related Papers */}
+          <RelatedPapers papers={related} meta={meta} />
+
           {/* Prev/Next */}
           <ArticleNav prev={prev} next={next} />
         </div>
         <TableOfContents markdown={paper.content} />
       </div>
 
+      <PageAnalytics paperSlug={slug} />
+      {audioMeta && <AudioPlayer meta={audioMeta} />}
       <ScrollToTop />
     </div>
   );

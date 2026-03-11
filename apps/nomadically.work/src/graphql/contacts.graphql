@@ -81,6 +81,65 @@ query GetContactEmails($contactId: Int!) {
   }
 }
 
+query GetCompanyContactEmails($companyId: Int!) {
+  companyContactEmails(companyId: $companyId) {
+    id
+    contactId
+    resendId
+    fromEmail
+    toEmails
+    subject
+    textContent
+    status
+    sentAt
+    scheduledAt
+    recipientName
+    createdAt
+    updatedAt
+    contactFirstName
+    contactLastName
+    contactPosition
+    sequenceType
+    sequenceNumber
+    replyReceived
+    followupStatus
+  }
+}
+
+mutation SyncResendEmails($companyId: Int) {
+  syncResendEmails(companyId: $companyId) {
+    success
+    updatedCount
+    skippedCount
+    totalCount
+    error
+  }
+}
+
+mutation CancelCompanyEmails($companyId: Int!) {
+  cancelCompanyEmails(companyId: $companyId) {
+    success
+    message
+    cancelledCount
+    failedCount
+  }
+}
+
+mutation SendScheduledEmailNow($resendId: String!) {
+  sendScheduledEmailNow(resendId: $resendId) {
+    success
+    resendId
+    error
+  }
+}
+
+mutation CancelScheduledEmail($resendId: String!) {
+  cancelScheduledEmail(resendId: $resendId) {
+    success
+    error
+  }
+}
+
 query GetContacts($companyId: Int, $search: String, $limit: Int, $offset: Int) {
   contacts(companyId: $companyId, search: $search, limit: $limit, offset: $offset) {
     contacts {

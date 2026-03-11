@@ -2,13 +2,18 @@ import { NextRequest, NextResponse } from "next/server";
 import { auth, clerkClient } from "@clerk/nextjs/server";
 import { isAdminEmail } from "@/lib/admin";
 import { resend } from "@/lib/resend";
+import {
+  isEmailBounced,
+  personalizeEmailBody,
+  textToStructuredHtml,
+} from "@/lib/email/utils";
+import { buildSchedule, getSchedulePreview } from "@/lib/email/scheduler";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
 export const maxDuration = 60;
 
 const BATCH_LIMIT = 100;
-
 const VERIFIED_FROM = "Vadim Nicolai <contact@vadim.blog>";
 
 interface Recipient {
@@ -21,11 +26,15 @@ interface BatchEmailRequestBody {
   subject: string;
   body: string;
   scheduledAt?: string;
+  /** Use business-day scheduler (distributes across Mon-Fri with random delays) */
+  useScheduler?: boolean;
 }
 
 interface SendResult {
   email: string;
   status: "sent" | "failed";
+  scheduledAt?: string;
+  batchDay?: number;
 }
 
 interface FailedResult {
@@ -38,73 +47,24 @@ interface BatchEmailResponse {
   message: string;
   sent: SendResult[];
   failed: FailedResult[];
+  schedulingPlan?: string;
 }
 
-/**
- * Convert plain text to HTML.
- * Paragraphs are separated by double newlines and wrapped in <p> tags.
- * Single newlines within a paragraph become <br> tags.
- */
-function textToHtml(text: string): string {
-  const paragraphs = text
-    .split(/\n\n+/)
-    .map((para) => {
-      const lines = para
-        .split("\n")
-        .map((line) => line.trim())
-        .filter((line) => line.length > 0)
-        .join("<br>");
-      return lines ? `<p>${lines}</p>` : "";
-    })
-    .filter((p) => p.length > 0);
-
-  return paragraphs.join("\n");
-}
-
-/**
- * Personalize the body for a single recipient.
- * Replaces {{name}} with the recipient's first name.
- * Prepends "Hi [firstName]," if no greeting is present.
- */
-function personalizeBody(body: string, name: string): string {
-  const firstName = name.split(" ")[0] || name;
-  let personalized = body.replace(/\{\{name\}\}/g, firstName);
-
-  const hasGreeting = /^(hi|hey|hello|dear)\b/i.test(personalized.trim());
-  if (!hasGreeting) {
-    personalized = `Hi ${firstName},\n\n${personalized}`;
-  }
-
-  return personalized;
-}
-
-/**
- * Validate that scheduledAt is a future date within Resend's 30-day limit.
- */
 function validateScheduledAt(scheduledAt: string): string | null {
   const scheduledDate = new Date(scheduledAt);
-
-  if (isNaN(scheduledDate.getTime())) {
-    return "scheduledAt is not a valid date string";
-  }
-
+  if (isNaN(scheduledDate.getTime())) return "scheduledAt is not a valid date string";
   const now = new Date();
-  if (scheduledDate <= now) {
-    return "scheduledAt must be a future date";
-  }
-
+  if (scheduledDate <= now) return "scheduledAt must be a future date";
   const daysDiff = Math.ceil(
     (scheduledDate.getTime() - now.getTime()) / (1000 * 60 * 60 * 24),
   );
-  if (daysDiff > 30) {
-    return `scheduledAt exceeds Resend's 30-day scheduling limit (${daysDiff} days from now)`;
-  }
-
+  if (daysDiff > 30) return `scheduledAt exceeds Resend's 30-day limit (${daysDiff} days)`;
   return null;
 }
 
-export async function POST(request: NextRequest): Promise<NextResponse<BatchEmailResponse>> {
-  // Auth check
+export async function POST(
+  request: NextRequest,
+): Promise<NextResponse<BatchEmailResponse>> {
   const { userId } = await auth();
   if (!userId) {
     return NextResponse.json(
@@ -116,7 +76,6 @@ export async function POST(request: NextRequest): Promise<NextResponse<BatchEmai
   const client = await clerkClient();
   const user = await client.users.getUser(userId);
   const userEmail = user.emailAddresses[0]?.emailAddress ?? null;
-
   if (!isAdminEmail(userEmail)) {
     return NextResponse.json(
       { success: false, message: "Forbidden", sent: [], failed: [] },
@@ -124,7 +83,6 @@ export async function POST(request: NextRequest): Promise<NextResponse<BatchEmai
     );
   }
 
-  // Parse + validate body
   let body: BatchEmailRequestBody;
   try {
     body = (await request.json()) as BatchEmailRequestBody;
@@ -135,23 +93,23 @@ export async function POST(request: NextRequest): Promise<NextResponse<BatchEmai
     );
   }
 
-  const { recipients, subject, body: emailBody, scheduledAt } = body;
+  const { recipients, subject, body: emailBody, scheduledAt, useScheduler } = body;
 
   if (!Array.isArray(recipients) || recipients.length === 0) {
     return NextResponse.json(
-      { success: false, message: "recipients array is required and must not be empty", sent: [], failed: [] },
+      { success: false, message: "recipients array is required", sent: [], failed: [] },
       { status: 400 },
     );
   }
 
-  if (!subject || typeof subject !== "string" || subject.trim() === "") {
+  if (!subject?.trim()) {
     return NextResponse.json(
       { success: false, message: "subject is required", sent: [], failed: [] },
       { status: 400 },
     );
   }
 
-  if (!emailBody || typeof emailBody !== "string" || emailBody.trim() === "") {
+  if (!emailBody?.trim()) {
     return NextResponse.json(
       { success: false, message: "body is required", sent: [], failed: [] },
       { status: 400 },
@@ -162,7 +120,7 @@ export async function POST(request: NextRequest): Promise<NextResponse<BatchEmai
     return NextResponse.json(
       {
         success: false,
-        message: `Batch limit is ${BATCH_LIMIT} recipients per request (got ${recipients.length})`,
+        message: `Batch limit is ${BATCH_LIMIT} recipients (got ${recipients.length})`,
         sent: [],
         failed: [],
       },
@@ -170,8 +128,81 @@ export async function POST(request: NextRequest): Promise<NextResponse<BatchEmai
     );
   }
 
-  // Default to 10 minutes from now when no scheduledAt is provided.
-  // Only validate when the caller explicitly passed a value — the default is always valid.
+  for (const r of recipients) {
+    if (!r.email || !r.name) {
+      return NextResponse.json(
+        { success: false, message: "Each recipient must have email and name", sent: [], failed: [] },
+        { status: 400 },
+      );
+    }
+  }
+
+  const sent: SendResult[] = [];
+  const failed: FailedResult[] = [];
+
+  // --- Business day scheduler mode ---
+  if (useScheduler) {
+    const emailsToSchedule = recipients.map((r) => {
+      const personalized = personalizeEmailBody(emailBody, r.name);
+      const html = textToStructuredHtml(personalized);
+      return {
+        contactId: 0,
+        email: r.email,
+        subject: subject.trim(),
+        htmlBody: html,
+        textBody: personalized,
+        firstName: r.name.split(" ")[0] || r.name,
+        lastName: r.name.split(" ").slice(1).join(" ") || "",
+      };
+    });
+
+    const schedule = buildSchedule(emailsToSchedule);
+    const preview = getSchedulePreview(recipients.length);
+
+    for (const entry of schedule) {
+      // Check bounced
+      const bounced = await isEmailBounced(entry.email);
+      if (bounced.isBounced) {
+        failed.push({ email: entry.email, error: "Bounced email" });
+        continue;
+      }
+
+      const result = await resend.instance.send({
+        from: VERIFIED_FROM,
+        to: entry.email,
+        subject: entry.subject,
+        html: entry.htmlBody,
+        scheduledAt: entry.scheduledAt.toISOString(),
+      });
+
+      if (result.error) {
+        failed.push({ email: entry.email, error: String(result.error) });
+      } else {
+        sent.push({
+          email: entry.email,
+          status: "sent",
+          scheduledAt: entry.scheduledAt.toISOString(),
+          batchDay: entry.batchDay,
+        });
+      }
+    }
+
+    const allSucceeded = failed.length === 0;
+    return NextResponse.json(
+      {
+        success: allSucceeded,
+        message: allSucceeded
+          ? `Scheduled ${sent.length} emails across ${preview.daysUsed} business days`
+          : `Scheduled ${sent.length}, failed ${failed.length}`,
+        sent,
+        failed,
+        schedulingPlan: preview.description,
+      },
+      { status: allSucceeded ? 200 : 207 },
+    );
+  }
+
+  // --- Fixed schedule mode (default) ---
   const effectiveScheduledAt: string =
     scheduledAt ?? new Date(Date.now() + 10 * 60 * 1000).toISOString();
 
@@ -185,29 +216,16 @@ export async function POST(request: NextRequest): Promise<NextResponse<BatchEmai
     }
   }
 
-  // Validate each recipient has email + name
   for (const recipient of recipients) {
-    if (!recipient.email || typeof recipient.email !== "string") {
-      return NextResponse.json(
-        { success: false, message: "Each recipient must have a valid email field", sent: [], failed: [] },
-        { status: 400 },
-      );
+    // Check bounced
+    const bounced = await isEmailBounced(recipient.email);
+    if (bounced.isBounced) {
+      failed.push({ email: recipient.email, error: "Bounced email — skipped" });
+      continue;
     }
-    if (!recipient.name || typeof recipient.name !== "string") {
-      return NextResponse.json(
-        { success: false, message: "Each recipient must have a name field", sent: [], failed: [] },
-        { status: 400 },
-      );
-    }
-  }
 
-  const sent: SendResult[] = [];
-  const failed: FailedResult[] = [];
-
-  // Always schedule — sequential send() so scheduledAt is supported for every recipient.
-  for (const recipient of recipients) {
-    const personalized = personalizeBody(emailBody, recipient.name);
-    const html = textToHtml(personalized);
+    const personalized = personalizeEmailBody(emailBody, recipient.name);
+    const html = textToStructuredHtml(personalized);
 
     const result = await resend.instance.send({
       from: VERIFIED_FROM,
@@ -225,17 +243,20 @@ export async function POST(request: NextRequest): Promise<NextResponse<BatchEmai
   }
 
   const allSucceeded = failed.length === 0;
-  const scheduledTime = new Date(effectiveScheduledAt).toLocaleTimeString("en-GB", {
-    hour: "2-digit",
-    minute: "2-digit",
-    timeZone: "UTC",
-  });
-  const message = allSucceeded
-    ? `Scheduled ${sent.length} email${sent.length === 1 ? "" : "s"} for ${scheduledTime} UTC`
-    : `Scheduled ${sent.length}, failed ${failed.length}`;
+  const scheduledTime = new Date(effectiveScheduledAt).toLocaleTimeString(
+    "en-GB",
+    { hour: "2-digit", minute: "2-digit", timeZone: "UTC" },
+  );
 
   return NextResponse.json(
-    { success: allSucceeded, message, sent, failed },
+    {
+      success: allSucceeded,
+      message: allSucceeded
+        ? `Scheduled ${sent.length} email${sent.length === 1 ? "" : "s"} for ${scheduledTime} UTC`
+        : `Scheduled ${sent.length}, failed ${failed.length}`,
+      sent,
+      failed,
+    },
     { status: allSucceeded ? 200 : 207 },
   );
 }

@@ -18,6 +18,7 @@ base64 = "0.22"
 futures = "0.3"
 tokio = { version = "1", features = ["sync", "time", "rt-multi-thread"] }
 dotenvy = "0.15"
+regex = "1"
 rust-s3 = { version = "0.35", optional = true, default-features = false, features = ["tokio-rustls-tls"] }
 
 [dev-dependencies]
@@ -31,3 +32,6 @@ name = "blog_tts"
 
 [[bin]]
 name = "eval_harness"
+
+[[bin]]
+name = "knowledge_tts"

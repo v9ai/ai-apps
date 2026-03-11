@@ -3,6 +3,7 @@ extend type Query {
   emailCampaign(id: String!): EmailCampaign
   emailTemplates(category: String, limit: Int, offset: Int): EmailTemplatesResult!
   emailTemplate(id: Int!): EmailTemplate
+  emailStats: EmailStats!
 }
 
 extend type Mutation {
@@ -15,6 +16,14 @@ extend type Mutation {
   createEmailTemplate(input: CreateEmailTemplateInput!): EmailTemplate!
   updateEmailTemplate(id: Int!, input: UpdateEmailTemplateInput!): EmailTemplate!
   deleteEmailTemplate(id: Int!): DeleteEmailTemplateResult!
+  scheduleBatchEmails(input: ScheduleBatchEmailsInput!): ScheduleBatchResult!
+  scheduleFollowUpBatch(input: FollowUpBatchInput!): FollowUpBatchResult!
+  markEmailReplied(resendId: String!): MarkRepliedResult!
+  syncResendEmails(companyId: Int): SyncResendResult!
+  sendScheduledEmailNow(resendId: String!): SendNowResult!
+  cancelScheduledEmail(resendId: String!): CancelEmailResult!
+  cancelCompanyEmails(companyId: Int!): CancelCompanyEmailsResult!
+  generateReply(input: GenerateReplyInput!): GenerateReplyResult!
 }
 
 type EmailCampaign {
@@ -147,4 +156,115 @@ type GenerateEmailResult {
   subject: String!
   html: String!
   text: String!
+}
+
+input GenerateReplyInput {
+  originalEmailContent: String!
+  originalSender: String!
+  additionalDetails: String
+  tone: String
+  replyType: String
+  includeCalendly: Boolean
+  replyTo: String
+}
+
+type GenerateReplyResult {
+  subject: String!
+  body: String!
+}
+
+# --- Batch Scheduling ---
+
+input ScheduleBatchEmailsInput {
+  """Recipients with name and email"""
+  recipients: [BatchRecipientInput!]!
+  subject: String!
+  body: String!
+  """Use business day scheduling (Mon-Fri, 8am UTC, random delays)"""
+  useScheduler: Boolean
+}
+
+input BatchRecipientInput {
+  email: String!
+  name: String!
+  contactId: Int
+  companyId: Int
+}
+
+type ScheduleBatchResult {
+  success: Boolean!
+  message: String!
+  scheduled: Int!
+  failed: Int!
+  firstSendDate: String
+  lastSendDate: String
+  schedulingPlan: String
+}
+
+# --- Follow-up Sequences ---
+
+input FollowUpBatchInput {
+  companyId: Int!
+  daysAfter: Int!
+  sequenceNumber: String!
+  customSubject: String
+  customInstructions: String
+}
+
+type FollowUpBatchResult {
+  success: Boolean!
+  message: String!
+  contactCount: Int!
+  emailIds: [String!]!
+}
+
+type MarkRepliedResult {
+  success: Boolean!
+  message: String
+}
+
+# --- Sync & Cancel ---
+
+type SyncResendResult {
+  success: Boolean!
+  updatedCount: Int!
+  skippedCount: Int!
+  totalCount: Int!
+  error: String
+}
+
+type SendNowResult {
+  success: Boolean!
+  resendId: String
+  error: String
+}
+
+type CancelEmailResult {
+  success: Boolean!
+  error: String
+}
+
+type EmailStats {
+  sentToday: Int!
+  sentThisWeek: Int!
+  sentThisMonth: Int!
+  scheduledToday: Int!
+  scheduledFuture: Int!
+  totalSent: Int!
+  deliveredToday: Int!
+  deliveredThisWeek: Int!
+  deliveredThisMonth: Int!
+  bouncedToday: Int!
+  bouncedThisWeek: Int!
+  bouncedThisMonth: Int!
+  openedToday: Int!
+  openedThisWeek: Int!
+  openedThisMonth: Int!
+}
+
+type CancelCompanyEmailsResult {
+  success: Boolean!
+  message: String!
+  cancelledCount: Int!
+  failedCount: Int!
 }

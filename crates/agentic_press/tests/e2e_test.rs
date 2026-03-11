@@ -911,7 +911,7 @@ async fn e2e_journalism_approval_triggers_publish() {
         .and(path("/chat/completions"))
         .and(body_string_contains("Editor for a journalism team"))
         .respond_with(ResponseTemplate::new(200).set_body_json(ds_response(
-            "APPROVE\n\nFinal approved content.",
+            "DECISION: APPROVE\n\nMinor edits.\n\n---\ntitle: \"Approved\"\nstatus: published\n---\n\nFinal approved content.",
         )))
         .mount(&ds)
         .await;
@@ -931,7 +931,8 @@ async fn e2e_journalism_approval_triggers_publish() {
     let calls = calls.lock().unwrap();
     assert_eq!(calls.len(), 1, "publisher should be called once");
     assert_eq!(calls[0].1, "Published article");
-    assert!(calls[0].0.contains("APPROVE"));
+    assert!(calls[0].0.contains("status: published"), "published content should contain frontmatter");
+    assert!(calls[0].0.starts_with("---\n"), "published content should start with frontmatter");
 }
 
 /// Three topics run concurrently. Each researcher takes 200 ms.

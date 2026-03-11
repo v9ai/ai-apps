@@ -595,7 +595,20 @@ export const contactEmails = sqliteTable(
     text_content: text("text_content"),
     status: text("status").notNull().default("sent"),
     sent_at: text("sent_at"),
+    scheduled_at: text("scheduled_at"),
+    delivered_at: text("delivered_at"),
+    opened_at: text("opened_at"),
     recipient_name: text("recipient_name"),
+    error_message: text("error_message"),
+    // Follow-up sequence tracking
+    parent_email_id: integer("parent_email_id"),
+    sequence_type: text("sequence_type"), // "initial" | "followup_1" | "followup_2" | "followup_3"
+    sequence_number: text("sequence_number"), // "0", "1", "2", "3"
+    reply_received: integer("reply_received", { mode: "boolean" }).default(false),
+    reply_received_at: text("reply_received_at"),
+    followup_status: text("followup_status"), // "pending" | "completed"
+    // Entity linking (for non-contact emails like company batches)
+    company_id: integer("company_id").references(() => companies.id, { onDelete: "set null" }),
     created_at: text("created_at")
       .notNull()
       .default(sql`(datetime('now'))`),
@@ -606,6 +619,8 @@ export const contactEmails = sqliteTable(
   (table) => ({
     contactIdIdx: index("idx_contact_emails_contact_id").on(table.contact_id),
     resendIdIdx: index("idx_contact_emails_resend_id").on(table.resend_id),
+    statusIdx: index("idx_contact_emails_status").on(table.status),
+    companyIdIdx: index("idx_contact_emails_company_id").on(table.company_id),
   }),
 );
 

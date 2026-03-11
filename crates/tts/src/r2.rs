@@ -83,10 +83,16 @@ impl R2Config {
     }
 }
 
-/// Upload WAV bytes to R2.
+/// Upload arbitrary bytes to R2 with specified extension and content type.
 ///
-/// Key format: `{prefix}/{slug}.wav`
-pub async fn upload(config: &R2Config, slug: &str, wav_bytes: &[u8]) -> Result<R2UploadResult> {
+/// Key format: `{prefix}/{slug}.{extension}`
+pub async fn upload_file(
+    config: &R2Config,
+    slug: &str,
+    extension: &str,
+    content_type: &str,
+    bytes: &[u8],
+) -> Result<R2UploadResult> {
     let endpoint = format!("https://{}.r2.cloudflarestorage.com", config.account_id);
     let region = Region::Custom {
         region: "auto".into(),
@@ -107,13 +113,13 @@ pub async fn upload(config: &R2Config, slug: &str, wav_bytes: &[u8]) -> Result<R
         .with_path_style();
 
     let key = if config.key_prefix.is_empty() {
-        format!("{slug}.wav")
+        format!("{slug}.{extension}")
     } else {
-        format!("{}/{slug}.wav", config.key_prefix)
+        format!("{}/{slug}.{extension}", config.key_prefix)
     };
 
     let response = bucket
-        .put_object_with_content_type(&key, wav_bytes, "audio/wav")
+        .put_object_with_content_type(&key, bytes, content_type)
         .await
         .map_err(|e| Error::R2(format!("upload failed: {e}")))?;
 
@@ -132,6 +138,13 @@ pub async fn upload(config: &R2Config, slug: &str, wav_bytes: &[u8]) -> Result<R
     Ok(R2UploadResult {
         key,
         public_url,
-        size_bytes: wav_bytes.len(),
+        size_bytes: bytes.len(),
     })
+}
+
+/// Upload WAV bytes to R2 (convenience wrapper).
+///
+/// Key format: `{prefix}/{slug}.wav`
+pub async fn upload(config: &R2Config, slug: &str, wav_bytes: &[u8]) -> Result<R2UploadResult> {
+    upload_file(config, slug, "wav", "audio/wav", wav_bytes).await
 }

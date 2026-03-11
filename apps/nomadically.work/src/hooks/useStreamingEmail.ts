@@ -8,6 +8,7 @@ interface GenerateEmailInput {
   recipientContext?: string;
   companyName?: string;
   instructions?: string;
+  linkedinPostContent?: string;
 }
 
 interface UseStreamingEmailResult {

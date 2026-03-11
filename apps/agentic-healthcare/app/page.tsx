@@ -1,6 +1,6 @@
 import { AuthButton } from "@/components/auth-button";
 import { ScrollReveal } from "@/components/scroll-reveal";
-import { AnimatedStat } from "@/components/animated-stat";
+import { ResearchSection } from "@/components/research-section";
 import {
   Box,
   Container,
@@ -12,8 +12,6 @@ import {
 } from "@radix-ui/themes";
 import {
   HeartPulse,
-  FileUp,
-  Calculator,
   TrendingUp,
   Gauge,
   MessageCircleQuestion,
@@ -22,30 +20,10 @@ import {
   FlaskConical,
   Check,
   X,
+  Github,
 } from "lucide-react";
 import Link from "next/link";
 import { Suspense } from "react";
-
-const steps = [
-  {
-    icon: FileUp,
-    title: "Upload",
-    description:
-      "Drop your blood test PDF. Our AI extracts every biomarker — CBC, CMP, lipids, liver, thyroid — in seconds.",
-  },
-  {
-    icon: Calculator,
-    title: "Compute",
-    description:
-      "We calculate 7 clinical ratios (TG/HDL, NLR, De Ritis, eGFR…) with peer-reviewed thresholds and risk ranges.",
-  },
-  {
-    icon: TrendingUp,
-    title: "Track",
-    description:
-      "Each panel becomes a 1024-dimensional health vector. Compare panels over time with cosine similarity and velocity alerts.",
-  },
-];
 
 const features = [
   {
@@ -95,34 +73,6 @@ const features = [
     title: "Full Health Record",
     description:
       "Track conditions, medications, symptoms, and appointments alongside your lab results in one place.",
-  },
-];
-
-const research = [
-  {
-    stat: "87%",
-    label: "sensitivity",
-    description: "Ovarian cancer detection via longitudinal CA-125 trajectory",
-    source: "Blyuss et al.",
-  },
-  {
-    stat: "R²=0.97",
-    label: "correlation",
-    description: "eGFR estimation across 186,000 patients using ratio models",
-    source: "Inker et al.",
-  },
-  {
-    stat: "6×",
-    label: "detection rate",
-    description:
-      "Insulin resistance identification via TG/HDL vs. fasting glucose alone",
-    source: "Giannini et al.",
-  },
-  {
-    stat: "1.64×",
-    label: "mortality prediction",
-    description: "All-cause mortality risk stratification using NLR thresholds",
-    source: "Fest et al.",
   },
 ];
 
@@ -180,7 +130,7 @@ export default function Home() {
                 >
                   <Text asChild size="2" color="gray" weight="medium">
                     <Link
-                      href="#how-it-works"
+                      href="/how-it-works"
                       style={{ textDecoration: "none", color: "inherit" }}
                     >
                       How It Works
@@ -203,6 +153,14 @@ export default function Home() {
                     </Link>
                   </Text>
                 </Flex>
+                <a
+                  href="https://github.com/nicolad/ai-apps"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  style={{ color: "var(--gray-a11)", display: "flex" }}
+                >
+                  <Github size={20} />
+                </a>
                 <Suspense>
                   <AuthButton />
                 </Suspense>
@@ -340,59 +298,6 @@ export default function Home() {
         </Container>
       </Box>
 
-      {/* ── How It Works ── */}
-      <Box id="how-it-works" py="9">
-        <Container size="3">
-          <Flex direction="column" align="center" gap="7" px="4">
-            <ScrollReveal>
-              <Heading
-                size="7"
-                align="center"
-                style={{ letterSpacing: "-0.03em" }}
-              >
-                From PDF to trajectory in 60 seconds
-              </Heading>
-            </ScrollReveal>
-            <Grid
-              columns={{ initial: "1", sm: "3" }}
-              gap="6"
-              width="100%"
-              className="steps-grid"
-            >
-              {steps.map((step, i) => (
-                <ScrollReveal key={step.title} delay={i * 150}>
-                  <Flex
-                    direction="column"
-                    align="center"
-                    gap="3"
-                    p="5"
-                    className="step-card"
-                  >
-                    <Flex
-                      align="center"
-                      justify="center"
-                      style={{
-                        width: 44,
-                        height: 44,
-                        borderRadius: "var(--radius-2)",
-                        background: "var(--indigo-a3)",
-                        color: "var(--indigo-11)",
-                      }}
-                    >
-                      <step.icon size={22} />
-                    </Flex>
-                    <Heading size="4">{step.title}</Heading>
-                    <Text size="2" color="gray" align="center">
-                      {step.description}
-                    </Text>
-                  </Flex>
-                </ScrollReveal>
-              ))}
-            </Grid>
-          </Flex>
-        </Container>
-      </Box>
-
       {/* ── Features Grid ── */}
       <Box id="features" py="9" style={{ background: "var(--gray-a2)" }}>
         <Container size="3">
@@ -444,101 +349,9 @@ export default function Home() {
         </Container>
       </Box>
 
-      {/* ── Built on Science ── */}
-      <Box id="research" py="9">
-        <Container size="3">
-          <Flex direction="column" align="center" gap="7" px="4">
-            <ScrollReveal>
-              <Heading
-                size="7"
-                align="center"
-                style={{ letterSpacing: "-0.03em" }}
-              >
-                Built on science, not hype
-              </Heading>
-            </ScrollReveal>
-            <Grid
-              columns={{ initial: "1", sm: "2" }}
-              gap="5"
-              width="100%"
-            >
-              {research.map((r, i) => (
-                <ScrollReveal key={r.source} delay={i * 120}>
-                  <Flex
-                    direction="column"
-                    gap="2"
-                    p="5"
-                    className="research-card"
-                  >
-                    <Flex align="baseline" gap="2">
-                      <Text
-                        size="7"
-                        weight="bold"
-                        style={{
-                          color: "var(--indigo-11)",
-                          letterSpacing: "-0.03em",
-                        }}
-                      >
-                        {r.stat}
-                      </Text>
-                      <Text size="2" color="gray">
-                        {r.label}
-                      </Text>
-                    </Flex>
-                    <Text size="2" color="gray">
-                      {r.description}
-                    </Text>
-                    <Text size="1" color="gray" style={{ opacity: 0.6 }}>
-                      {r.source}
-                    </Text>
-                  </Flex>
-                </ScrollReveal>
-              ))}
-            </Grid>
-            <ScrollReveal delay={500}>
-              <Text size="2" color="gray" align="center">
-                Backed by 8 peer-reviewed papers
-              </Text>
-            </ScrollReveal>
-          </Flex>
-        </Container>
-      </Box>
-
-      {/* ── Credibility Strip ── */}
-      <Box
-        style={{
-          borderTop: "1px solid var(--gray-a3)",
-          borderBottom: "1px solid var(--gray-a3)",
-        }}
-      >
-        <Container size="3">
-          <Grid columns={{ initial: "2", sm: "4" }} gap="4" py="7" px="4">
-            <Flex direction="column" align="center" gap="1">
-              <AnimatedStat value={8} />
-              <Text size="2" color="gray">
-                Peer-reviewed papers
-              </Text>
-            </Flex>
-            <Flex direction="column" align="center" gap="1">
-              <AnimatedStat value={7} />
-              <Text size="2" color="gray">
-                Clinical ratios tracked
-              </Text>
-            </Flex>
-            <Flex direction="column" align="center" gap="1">
-              <AnimatedStat value={1024} />
-              <Text size="2" color="gray">
-                Dimensional health vectors
-              </Text>
-            </Flex>
-            <Flex direction="column" align="center" gap="1">
-              <AnimatedStat value={1} prefix="<" suffix=" min" />
-              <Text size="2" color="gray">
-                Processing time
-              </Text>
-            </Flex>
-          </Grid>
-        </Container>
+      {/* ── How It Works / Research ── */}
+      <Box id="how-it-works">
+        <ResearchSection />
       </Box>
 
       {/* ── Final CTA ── */}

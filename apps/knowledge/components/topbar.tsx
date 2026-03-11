@@ -5,10 +5,10 @@ export function Topbar({ paperCount }: { paperCount: number }) {
     <div className="yc-topbar">
       <Link href="/">
         <span className="yc-topbar-logo" />
-        AI LEARNING RESEARCH
+        AI ENGINEERING
       </Link>
       <span className="yc-topbar-count">
-        {paperCount} papers
+        {paperCount} articles
       </span>
     </div>
   );

@@ -33,6 +33,7 @@
     "react-dom": "^19.0.0",
     "react-markdown": "^10.1.0",
     "remark-gfm": "^4.0.1",
+    "@repo/ui": "workspace:*",
     "unstructured-client": "^0.31.0"
   },
   "packageManager": "pnpm@10.31.0",

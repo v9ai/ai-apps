@@ -228,40 +228,28 @@ pub async fn run_all(tasks: Vec<(&Agent, String)>) -> Result<Vec<String>> {
     );
 
     let mut set = tokio::task::JoinSet::new();
-    // Track original order.
-    let mut order: Vec<String> = Vec::with_capacity(tasks.len());
 
-    for (agent, input) in &tasks {
-        order.push(agent.name.clone());
+    for (idx, (agent, input)) in tasks.iter().enumerate() {
         let name = agent.name.clone();
         let system_prompt = agent.system_prompt.clone();
         let client = agent.client.clone();
         let input = input.clone();
 
         set.spawn(async move {
-            let agent = Agent::new(name.clone(), system_prompt, client);
+            let agent = Agent::new(name, system_prompt, client);
             let result = agent.run(&input).await?;
-            Ok::<(String, String), anyhow::Error>((name, result))
+            Ok::<(usize, String), anyhow::Error>((idx, result))
         });
     }
 
-    let mut results: Vec<(String, String)> = Vec::with_capacity(tasks.len());
+    let mut results: Vec<(usize, String)> = Vec::with_capacity(tasks.len());
     while let Some(res) = set.join_next().await {
         results.push(res??);
     }
 
-    // Reorder to match input order.
-    let mut ordered = Vec::with_capacity(order.len());
-    for name in &order {
-        let result = results
-            .iter()
-            .find(|(n, _)| n == name)
-            .map(|(_, r)| r.clone())
-            .unwrap_or_default();
-        ordered.push(result);
-    }
-
-    Ok(ordered)
+    // Sort by original index to preserve input order.
+    results.sort_by_key(|(idx, _)| *idx);
+    Ok(results.into_iter().map(|(_, r)| r).collect())
 }
 
 /// Run N agents concurrently, all with the same input. Returns results in order.
@@ -291,7 +279,19 @@ async fn qwen_with_retry(
             ],
         );
         match client.chat(req).await {
-            Ok(resp) => return Ok(resp.text().unwrap_or("").to_string()),
+            Ok(resp) => {
+                let text = resp.text().unwrap_or("").to_string();
+                if text.is_empty() {
+                    if attempt < MAX_RETRIES - 1 {
+                        warn!("[qwen] attempt {} returned empty content, retrying…", attempt + 1);
+                        let delay = std::time::Duration::from_secs(1 << attempt);
+                        tokio::time::sleep(delay).await;
+                        continue;
+                    }
+                    return Err(anyhow::anyhow!("Qwen returned empty content after {MAX_RETRIES} attempts"));
+                }
+                return Ok(text);
+            }
             Err(e) => {
                 let retryable = match &e {
                     qwen::Error::Network(_) => true,

@@ -7,6 +7,15 @@ export type { Paper, PaperWithContent, GroupedPapers, CategoryMeta, PaperRef };
 // Re-export static constants (always from articles.ts — no DB needed)
 export { CATEGORIES, CATEGORY_META, getCategoryMeta } from "./articles";
 
+export interface SearchResult {
+  resultType: "paper" | "section" | "citation";
+  title: string;
+  snippet: string;
+  rank: number;
+  paperSlug: string | null;
+  paperTitle: string | null;
+}
+
 const USE_SUPABASE = process.env.NEXT_PUBLIC_DATA_SOURCE === "supabase";
 
 export async function getAllPapers(): Promise<Paper[]> {
@@ -57,3 +66,23 @@ export async function getCitationsForPaper(
   const { getPapersForSlug } = await import("./papers");
   return getPapersForSlug(slug);
 }
+
+export async function getRelatedPapers(
+  slug: string,
+): Promise<Paper[]> {
+  if (USE_SUPABASE) {
+    const { getRelatedPapersFromDb } = await import("./supabase/queries");
+    return getRelatedPapersFromDb(slug);
+  }
+  // FS fallback: filter by same category
+  const all = await getAllPapers();
+  const current = all.find((p) => p.slug === slug);
+  if (!current) return [];
+  return all
+    .filter((p) => p.category === current.category && p.slug !== slug)
+    .slice(0, 4);
+}
+
+// Audio metadata
+export { getAudioMeta } from "./audio";
+export type { AudioMeta, AudioChapter } from "./audio";

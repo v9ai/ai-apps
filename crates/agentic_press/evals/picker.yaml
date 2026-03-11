@@ -1,0 +1,92 @@
+description: "Picker Agent Eval — JSON format validation (PRIORITY 1)"
+sharing: false
+
+prompts:
+  - |
+    You are the Picker agent in a content pipeline.
+
+    NICHE: {{niche}}
+    AUTHOR: Vadim Nicolai — senior software engineer. Last viral post corrected a
+    widespread misconception about Claude Code's indexing using primary source
+    evidence from Boris Cherny's HN comment.
+
+    You receive a list of 5 candidate topics. Score each on:
+    1. Misconception potential (0–10): is there a common wrong belief to correct?
+    2. Primary source availability (0–10): backed by official docs or direct quotes?
+    3. Audience pain (0–10): do senior engineers actually care?
+    4. Originality (0–10): not already well-covered?
+
+    Select the top {{count}} topic(s) by total score.
+
+    Return ONLY a JSON array — no markdown fences, no extra keys:
+    [
+      {
+        "topic": "...",
+        "angle": "the contrarian or corrective angle to take",
+        "why_viral": "one sentence on why this will resonate"
+      }
+    ]
+
+providers:
+  - id: openai:chat:deepseek-reasoner
+    label: deepseek-reasoner
+    config:
+      apiKeyEnvar: DEEPSEEK_API_KEY
+      apiBaseUrl: https://api.deepseek.com/v1
+      temperature: 0
+  - id: openai:chat:qwen-plus
+    label: qwen-plus
+    config:
+      apiKeyEnvar: DASHSCOPE_API_KEY
+      apiBaseUrl: https://dashscope-intl.aliyuncs.com/compatible-mode/v1
+      temperature: 0
+
+defaultTest:
+  options:
+    provider:
+      id: openai:chat:deepseek-chat
+      config:
+        apiKeyEnvar: DEEPSEEK_API_KEY
+        apiBaseUrl: https://api.deepseek.com/v1
+        temperature: 0
+
+tests:
+  - vars:
+      niche: "AI engineering and LLM tooling"
+      count: "2"
+    assert:
+      - type: javascript
+        value: "file://assertions/validate-picker.js"
+      - type: llm-rubric
+        value: >
+          The picker should select topics with clear contrarian angles backed by
+          primary sources. Each selection should have a specific "why_viral" that
+          explains virality potential, not generic statements. Scoring logic should
+          be transparent. Rate on quality of topic selection and angle specificity.
+
+  - vars:
+      niche: "Rust systems programming"
+      count: "1"
+    assert:
+      - type: javascript
+        value: "file://assertions/validate-picker.js"
+      - type: llm-rubric
+        value: >
+          With count=1, exactly one topic should be selected. The angle should be
+          specific to Rust (not generic programming advice). The why_viral should
+          reference a specific community debate or misconception. Rate on precision
+          and Rust-specificity.
+
+  - vars:
+      niche: "WebAssembly and edge computing"
+      count: "3"
+    assert:
+      - type: javascript
+        value: "file://assertions/validate-picker.js"
+      - type: llm-rubric
+        value: >
+          With count=3, three topics should be selected with distinct angles (not
+          overlapping). Each why_viral should be unique. Rate on diversity of
+          selected topics and quality of differentiation between them.
+
+outputPath: ../promptfoo-output/picker-latest.json

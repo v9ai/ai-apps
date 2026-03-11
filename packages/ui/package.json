@@ -19,6 +19,16 @@
         "default": "./dist/cjs/counter-button.js"
       }
     },
+    "./how-it-works": {
+      "import": {
+        "types": "./dist/es/how-it-works.d.mts",
+        "default": "./dist/es/how-it-works.mjs"
+      },
+      "require": {
+        "types": "./dist/cjs/how-it-works.d.ts",
+        "default": "./dist/cjs/how-it-works.js"
+      }
+    },
     "./link": {
       "import": {
         "types": "./dist/es/link.d.mts",

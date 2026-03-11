@@ -833,7 +833,7 @@ async fn mount_deep_dive_mocks(server: &MockServer, editor_verdict: &str) {
         ("Researcher agent", chat_response("# Research Brief\n\n## Summary\nDeep-dive research findings.")),
         ("SEO Strategist for a journalism team", chat_response("# SEO Strategy\n\n## Target Keywords\neval driven development.")),
         ("Deep-Dive Writer", chat_response("# Eval Driven Development\n\nDraft body with research insights.\n\n## Section 1\n\nContent.")),
-        ("Editor for a journalism team", chat_response(editor_verdict)),
+        ("Editor for a deep-dive technical article team", chat_response(editor_verdict)),
         ("LinkedIn Drafter", chat_response("Eval-driven development changes everything.\n\nKey insight 1\nKey insight 2\n\n#EvalDriven #LLM")),
     ] {
         Mock::given(method("POST"))
@@ -918,7 +918,7 @@ async fn test_deep_dive_revision_loop() {
     // Editor: first call returns REVISE, second returns APPROVE.
     Mock::given(method("POST"))
         .and(path("/chat/completions"))
-        .and(body_string_contains("Editor for a journalism team"))
+        .and(body_string_contains("Editor for a deep-dive technical article team"))
         .respond_with(ResponseTemplate::new(200).set_body_json(
             chat_response("**DECISION: REVISE**\n## Critical Issues (must fix)\n- [ ] Fix the lede"),
         ))
@@ -928,7 +928,7 @@ async fn test_deep_dive_revision_loop() {
 
     Mock::given(method("POST"))
         .and(path("/chat/completions"))
-        .and(body_string_contains("Editor for a journalism team"))
+        .and(body_string_contains("Editor for a deep-dive technical article team"))
         .respond_with(ResponseTemplate::new(200).set_body_json(
             chat_response("**DECISION: APPROVE**\n\n---\nstatus: published\n---\n\n# Final\n\nApproved."),
         ))
@@ -1030,7 +1030,7 @@ async fn test_deep_dive_publisher_receives_content() {
     let server = MockServer::start().await;
     mount_deep_dive_mocks(
         &server,
-        "APPROVE\n\n# Final Deep Dive\n\nApproved editor output.",
+        "DECISION: APPROVE\n\nMinor edits.\n\n---\ntitle: \"Final Deep Dive\"\nstatus: published\n---\n\n# Final Deep Dive\n\nApproved editor output.",
     )
     .await;
 
@@ -1050,6 +1050,7 @@ async fn test_deep_dive_publisher_receives_content() {
 
     let calls = calls.lock().unwrap();
     assert_eq!(calls.len(), 1, "publisher should have been called once");
-    assert!(calls[0].0.contains("APPROVE"), "editor output should be passed to publisher");
+    assert!(calls[0].0.contains("status: published"), "published content should contain frontmatter");
+    assert!(calls[0].0.starts_with("---\n"), "published content should start with frontmatter");
     assert_eq!(calls[0].1, "Eval Driven Development", "title should be passed to publisher");
 }

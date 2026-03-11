@@ -92,3 +92,30 @@ mutation GenerateEmail($input: GenerateEmailInput!) {
     text
   }
 }
+
+mutation GenerateReply($input: GenerateReplyInput!) {
+  generateReply(input: $input) {
+    subject
+    body
+  }
+}
+
+query GetEmailStats {
+  emailStats {
+    sentToday
+    sentThisWeek
+    sentThisMonth
+    scheduledToday
+    scheduledFuture
+    totalSent
+    deliveredToday
+    deliveredThisWeek
+    deliveredThisMonth
+    bouncedToday
+    bouncedThisWeek
+    bouncedThisMonth
+    openedToday
+    openedThisWeek
+    openedThisMonth
+  }
+}

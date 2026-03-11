@@ -1,6 +1,6 @@
 import { contacts, companies, contactEmails } from "@/db/schema";
 import { resend } from "@/lib/resend";
-import { eq, and, like, or, count } from "drizzle-orm";
+import { eq, and, like, or, count, desc } from "drizzle-orm";
 import type { GraphQLContext } from "../context";
 import { isAdminEmail } from "@/lib/admin";
 import {
@@ -173,6 +173,44 @@ export const contactResolvers = {
         .from(contactEmails)
         .where(eq(contactEmails.contact_id, args.contactId))
         .orderBy(contactEmails.created_at);
+    },
+
+    async companyContactEmails(
+      _parent: unknown,
+      args: { companyId: number },
+      context: GraphQLContext,
+    ) {
+      return context.db
+        .select({
+          id: contactEmails.id,
+          contact_id: contactEmails.contact_id,
+          resend_id: contactEmails.resend_id,
+          from_email: contactEmails.from_email,
+          to_emails: contactEmails.to_emails,
+          subject: contactEmails.subject,
+          text_content: contactEmails.text_content,
+          status: contactEmails.status,
+          sent_at: contactEmails.sent_at,
+          scheduled_at: contactEmails.scheduled_at,
+          delivered_at: contactEmails.delivered_at,
+          opened_at: contactEmails.opened_at,
+          recipient_name: contactEmails.recipient_name,
+          error_message: contactEmails.error_message,
+          sequence_type: contactEmails.sequence_type,
+          sequence_number: contactEmails.sequence_number,
+          reply_received: contactEmails.reply_received,
+          followup_status: contactEmails.followup_status,
+          company_id: contactEmails.company_id,
+          created_at: contactEmails.created_at,
+          updated_at: contactEmails.updated_at,
+          contact_first_name: contacts.first_name,
+          contact_last_name: contacts.last_name,
+          contact_position: contacts.position,
+        })
+        .from(contactEmails)
+        .innerJoin(contacts, eq(contactEmails.contact_id, contacts.id))
+        .where(eq(contacts.company_id, args.companyId))
+        .orderBy(desc(contactEmails.created_at));
     },
 
     async resendEmail(_parent: unknown, args: { resendId: string }) {
@@ -801,8 +839,44 @@ export const contactResolvers = {
     toEmails: (parent: any) => parseJsonArray(parent.to_emails),
     textContent: (parent: any) => parent.text_content ?? null,
     sentAt: (parent: any) => parent.sent_at ?? null,
+    scheduledAt: (parent: any) => parent.scheduled_at ?? null,
+    deliveredAt: (parent: any) => parent.delivered_at ?? null,
+    openedAt: (parent: any) => parent.opened_at ?? null,
     recipientName: (parent: any) => parent.recipient_name ?? null,
+    errorMessage: (parent: any) => parent.error_message ?? null,
+    parentEmailId: (parent: any) => parent.parent_email_id ?? null,
+    sequenceType: (parent: any) => parent.sequence_type ?? null,
+    sequenceNumber: (parent: any) => parent.sequence_number ?? null,
+    replyReceived: (parent: any) =>
+      (parent.reply_received as unknown) === 1 || parent.reply_received === true,
+    replyReceivedAt: (parent: any) => parent.reply_received_at ?? null,
+    followupStatus: (parent: any) => parent.followup_status ?? null,
+    companyId: (parent: any) => parent.company_id ?? null,
     createdAt: (parent: any) => parent.created_at,
     updatedAt: (parent: any) => parent.updated_at,
+  },
+
+  CompanyContactEmail: {
+    contactId: (parent: any) => parent.contact_id,
+    resendId: (parent: any) => parent.resend_id,
+    fromEmail: (parent: any) => parent.from_email,
+    toEmails: (parent: any) => parseJsonArray(parent.to_emails),
+    textContent: (parent: any) => parent.text_content ?? null,
+    sentAt: (parent: any) => parent.sent_at ?? null,
+    scheduledAt: (parent: any) => parent.scheduled_at ?? null,
+    deliveredAt: (parent: any) => parent.delivered_at ?? null,
+    openedAt: (parent: any) => parent.opened_at ?? null,
+    recipientName: (parent: any) => parent.recipient_name ?? null,
+    errorMessage: (parent: any) => parent.error_message ?? null,
+    sequenceType: (parent: any) => parent.sequence_type ?? null,
+    sequenceNumber: (parent: any) => parent.sequence_number ?? null,
+    replyReceived: (parent: any) =>
+      (parent.reply_received as unknown) === 1 || parent.reply_received === true,
+    followupStatus: (parent: any) => parent.followup_status ?? null,
+    createdAt: (parent: any) => parent.created_at,
+    updatedAt: (parent: any) => parent.updated_at,
+    contactFirstName: (parent: any) => parent.contact_first_name,
+    contactLastName: (parent: any) => parent.contact_last_name,
+    contactPosition: (parent: any) => parent.contact_position ?? null,
   },
 };

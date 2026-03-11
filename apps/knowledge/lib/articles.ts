@@ -30,71 +30,71 @@ export interface GroupedPapers {
 }
 
 export const CATEGORIES: [number, number, string][] = [
-  [1, 8, "Foundations"],
-  [9, 13, "Cognitive Science & AI"],
-  [14, 19, "Adaptive & Personalized"],
-  [20, 25, "Tutoring & LLMs"],
-  [26, 31, "Analytics & Assessment"],
-  [32, 36, "Self-Regulated Learning"],
-  [37, 41, "Human-AI & Literacy"],
-  [42, 46, "Emerging Frontiers"],
-  [47, 55, "Synthesis & Roadmap"],
+  [1, 6, "Foundations & Architecture"],
+  [7, 12, "Prompting & In-Context Learning"],
+  [13, 18, "RAG & Retrieval"],
+  [19, 24, "Fine-tuning & Training"],
+  [25, 30, "Agents & Tool Use"],
+  [31, 36, "Evals & Testing"],
+  [37, 42, "Infrastructure & Deployment"],
+  [43, 48, "Safety & Alignment"],
+  [49, 55, "Multimodal & Applied"],
 ];
 
 export const CATEGORY_META: Record<string, CategoryMeta> = {
-  "Foundations": {
-    slug: "foundations",
+  "Foundations & Architecture": {
+    slug: "foundations-architecture",
     icon: "🧱",
-    description: "Core principles of cognitive science, adaptive learning, ITS & analytics",
-    gradient: ["#7c3aed", "#a78bfa"], // violet
+    description: "Core transformer & LLM concepts every AI engineer needs",
+    gradient: ["#7c3aed", "#a78bfa"],
   },
-  "Cognitive Science & AI": {
-    slug: "cognitive-science-ai",
-    icon: "🧠",
-    description: "Spaced repetition, knowledge tracing, cognitive load & affect-aware AI",
-    gradient: ["#2563eb", "#60a5fa"], // blue
+  "Prompting & In-Context Learning": {
+    slug: "prompting-icl",
+    icon: "💡",
+    description: "Prompt engineering from fundamentals to advanced techniques",
+    gradient: ["#2563eb", "#60a5fa"],
   },
-  "Adaptive & Personalized": {
-    slug: "adaptive-personalized",
-    icon: "🎯",
-    description: "Bayesian models, RL for education, personalized paths & recommendations",
-    gradient: ["#0891b2", "#22d3ee"], // cyan
+  "RAG & Retrieval": {
+    slug: "rag-retrieval",
+    icon: "🔍",
+    description: "Building production retrieval-augmented generation pipelines",
+    gradient: ["#0891b2", "#22d3ee"],
   },
-  "Tutoring & LLMs": {
-    slug: "tutoring-llms",
-    icon: "💬",
-    description: "LLM dialogue tutors, automated feedback, math/science/language/coding AI",
-    gradient: ["#059669", "#34d399"], // emerald
+  "Fine-tuning & Training": {
+    slug: "fine-tuning",
+    icon: "🔧",
+    description: "Adapting foundation models to your domain with LoRA, RLHF & more",
+    gradient: ["#059669", "#34d399"],
   },
-  "Analytics & Assessment": {
-    slug: "analytics-assessment",
+  "Agents & Tool Use": {
+    slug: "agents-tools",
+    icon: "🤖",
+    description: "Building autonomous AI systems that take actions in the real world",
+    gradient: ["#d97706", "#fbbf24"],
+  },
+  "Evals & Testing": {
+    slug: "evals-testing",
     icon: "📊",
-    description: "Predictive analytics, essay scoring, item generation & process mining",
-    gradient: ["#d97706", "#fbbf24"], // amber
+    description: "Measuring and improving AI system quality with rigorous evaluation",
+    gradient: ["#e11d48", "#fb7185"],
   },
-  "Self-Regulated Learning": {
-    slug: "self-regulated-learning",
-    icon: "🪞",
-    description: "Metacognitive scaffolding, AI note-taking, study planning & motivation",
-    gradient: ["#e11d48", "#fb7185"], // rose
+  "Infrastructure & Deployment": {
+    slug: "infra-deployment",
+    icon: "⚡",
+    description: "Running AI systems in production at scale with optimal performance",
+    gradient: ["#6366f1", "#818cf8"],
   },
-  "Human-AI & Literacy": {
-    slug: "human-ai-literacy",
-    icon: "🤝",
-    description: "AI literacy, prompt engineering education, ethics & teacher partnerships",
-    gradient: ["#6366f1", "#818cf8"], // indigo
+  "Safety & Alignment": {
+    slug: "safety-alignment",
+    icon: "🛡",
+    description: "Building trustworthy, responsible AI with guardrails & alignment",
+    gradient: ["#ea580c", "#fb923c"],
   },
-  "Emerging Frontiers": {
-    slug: "emerging-frontiers",
+  "Multimodal & Applied": {
+    slug: "multimodal-applied",
     icon: "🚀",
-    description: "Multi-agent learning, knowledge graphs, OER, lifelong learning & neuroAI",
-    gradient: ["#ea580c", "#fb923c"], // orange
-  },
-  "Synthesis & Roadmap": {
-    slug: "synthesis-roadmap",
-    icon: "🗺",
-    description: "Cross-domain synthesis, top papers, datasets, gaps & implementation roadmap",
-    gradient: ["#64748b", "#94a3b8"], // slate
+    description: "Cross-modal capabilities, production patterns & the AI engineer's roadmap",
+    gradient: ["#64748b", "#94a3b8"],
   },
 };
 

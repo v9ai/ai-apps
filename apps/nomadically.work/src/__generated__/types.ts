@@ -173,12 +173,33 @@ export type AshbySecondaryLocation = {
   location: Scalars['String']['output'];
 };
 
+export type BatchRecipientInput = {
+  companyId?: InputMaybe<Scalars['Int']['input']>;
+  contactId?: InputMaybe<Scalars['Int']['input']>;
+  email: Scalars['String']['input'];
+  name: Scalars['String']['input'];
+};
+
 export type BlockedCompany = {
   __typename: 'BlockedCompany';
   createdAt: Scalars['String']['output'];
   id: Scalars['Int']['output'];
   name: Scalars['String']['output'];
   reason: Maybe<Scalars['String']['output']>;
+};
+
+export type CancelCompanyEmailsResult = {
+  __typename: 'CancelCompanyEmailsResult';
+  cancelledCount: Scalars['Int']['output'];
+  failedCount: Scalars['Int']['output'];
+  message: Scalars['String']['output'];
+  success: Scalars['Boolean']['output'];
+};
+
+export type CancelEmailResult = {
+  __typename: 'CancelEmailResult';
+  error: Maybe<Scalars['String']['output']>;
+  success: Scalars['Boolean']['output'];
 };
 
 export type ChatMessage = {
@@ -269,6 +290,33 @@ export type CompanyCategory =
   | 'STAFFING'
   | 'UNKNOWN';
 
+export type CompanyContactEmail = {
+  __typename: 'CompanyContactEmail';
+  contactFirstName: Scalars['String']['output'];
+  contactId: Scalars['Int']['output'];
+  contactLastName: Scalars['String']['output'];
+  contactPosition: Maybe<Scalars['String']['output']>;
+  createdAt: Scalars['String']['output'];
+  deliveredAt: Maybe<Scalars['String']['output']>;
+  errorMessage: Maybe<Scalars['String']['output']>;
+  followupStatus: Maybe<Scalars['String']['output']>;
+  fromEmail: Scalars['String']['output'];
+  id: Scalars['Int']['output'];
+  openedAt: Maybe<Scalars['String']['output']>;
+  recipientName: Maybe<Scalars['String']['output']>;
+  replyReceived: Scalars['Boolean']['output'];
+  resendId: Scalars['String']['output'];
+  scheduledAt: Maybe<Scalars['String']['output']>;
+  sentAt: Maybe<Scalars['String']['output']>;
+  sequenceNumber: Maybe<Scalars['String']['output']>;
+  sequenceType: Maybe<Scalars['String']['output']>;
+  status: Scalars['String']['output'];
+  subject: Scalars['String']['output'];
+  textContent: Maybe<Scalars['String']['output']>;
+  toEmails: Array<Scalars['String']['output']>;
+  updatedAt: Scalars['String']['output'];
+};
+
 export type CompanyFact = {
   __typename: 'CompanyFact';
   company_id: Scalars['Int']['output'];
@@ -355,13 +403,24 @@ export type Contact = {
 
 export type ContactEmail = {
   __typename: 'ContactEmail';
+  companyId: Maybe<Scalars['Int']['output']>;
   contactId: Scalars['Int']['output'];
   createdAt: Scalars['String']['output'];
+  deliveredAt: Maybe<Scalars['String']['output']>;
+  errorMessage: Maybe<Scalars['String']['output']>;
+  followupStatus: Maybe<Scalars['String']['output']>;
   fromEmail: Scalars['String']['output'];
   id: Scalars['Int']['output'];
+  openedAt: Maybe<Scalars['String']['output']>;
+  parentEmailId: Maybe<Scalars['Int']['output']>;
   recipientName: Maybe<Scalars['String']['output']>;
+  replyReceived: Scalars['Boolean']['output'];
+  replyReceivedAt: Maybe<Scalars['String']['output']>;
   resendId: Scalars['String']['output'];
+  scheduledAt: Maybe<Scalars['String']['output']>;
   sentAt: Maybe<Scalars['String']['output']>;
+  sequenceNumber: Maybe<Scalars['String']['output']>;
+  sequenceType: Maybe<Scalars['String']['output']>;
   status: Scalars['String']['output'];
   subject: Scalars['String']['output'];
   textContent: Maybe<Scalars['String']['output']>;
@@ -572,6 +631,25 @@ export type EmailCampaignsResult = {
   totalCount: Scalars['Int']['output'];
 };
 
+export type EmailStats = {
+  __typename: 'EmailStats';
+  bouncedThisMonth: Scalars['Int']['output'];
+  bouncedThisWeek: Scalars['Int']['output'];
+  bouncedToday: Scalars['Int']['output'];
+  deliveredThisMonth: Scalars['Int']['output'];
+  deliveredThisWeek: Scalars['Int']['output'];
+  deliveredToday: Scalars['Int']['output'];
+  openedThisMonth: Scalars['Int']['output'];
+  openedThisWeek: Scalars['Int']['output'];
+  openedToday: Scalars['Int']['output'];
+  scheduledFuture: Scalars['Int']['output'];
+  scheduledToday: Scalars['Int']['output'];
+  sentThisMonth: Scalars['Int']['output'];
+  sentThisWeek: Scalars['Int']['output'];
+  sentToday: Scalars['Int']['output'];
+  totalSent: Scalars['Int']['output'];
+};
+
 export type EmailTemplate = {
   __typename: 'EmailTemplate';
   category: Maybe<Scalars['String']['output']>;
@@ -669,6 +747,22 @@ export type FindContactEmailResult = {
   verified: Maybe<Scalars['Boolean']['output']>;
 };
 
+export type FollowUpBatchInput = {
+  companyId: Scalars['Int']['input'];
+  customInstructions?: InputMaybe<Scalars['String']['input']>;
+  customSubject?: InputMaybe<Scalars['String']['input']>;
+  daysAfter: Scalars['Int']['input'];
+  sequenceNumber: Scalars['String']['input'];
+};
+
+export type FollowUpBatchResult = {
+  __typename: 'FollowUpBatchResult';
+  contactCount: Scalars['Int']['output'];
+  emailIds: Array<Scalars['String']['output']>;
+  message: Scalars['String']['output'];
+  success: Scalars['Boolean']['output'];
+};
+
 export type GenerateEmailInput = {
   companyName?: InputMaybe<Scalars['String']['input']>;
   purpose: Scalars['String']['input'];
@@ -683,6 +777,22 @@ export type GenerateEmailResult = {
   html: Scalars['String']['output'];
   subject: Scalars['String']['output'];
   text: Scalars['String']['output'];
+};
+
+export type GenerateReplyInput = {
+  additionalDetails?: InputMaybe<Scalars['String']['input']>;
+  includeCalendly?: InputMaybe<Scalars['Boolean']['input']>;
+  originalEmailContent: Scalars['String']['input'];
+  originalSender: Scalars['String']['input'];
+  replyTo?: InputMaybe<Scalars['String']['input']>;
+  replyType?: InputMaybe<Scalars['String']['input']>;
+  tone?: InputMaybe<Scalars['String']['input']>;
+};
+
+export type GenerateReplyResult = {
+  __typename: 'GenerateReplyResult';
+  body: Scalars['String']['output'];
+  subject: Scalars['String']['output'];
 };
 
 export type GreenhouseCompliance = {
@@ -874,6 +984,12 @@ export type LangSmithPromptCommit = {
   promptName: Scalars['String']['output'];
 };
 
+export type MarkRepliedResult = {
+  __typename: 'MarkRepliedResult';
+  message: Maybe<Scalars['String']['output']>;
+  success: Scalars['Boolean']['output'];
+};
+
 export type Mutation = {
   __typename: 'Mutation';
   add_company_facts: Array<CompanyFact>;
@@ -881,6 +997,8 @@ export type Mutation = {
   applyEmailPattern: ApplyEmailPatternResult;
   archiveJob: Job;
   blockCompany: BlockedCompany;
+  cancelCompanyEmails: CancelCompanyEmailsResult;
+  cancelScheduledEmail: CancelEmailResult;
   completeTask: Task;
   createApplication: Application;
   createCompany: Company;
@@ -928,10 +1046,12 @@ export type Mutation = {
   findCompanyEmails: EnhanceAllContactsResult;
   findContactEmail: FindContactEmailResult;
   generateEmail: GenerateEmailResult;
+  generateReply: GenerateReplyResult;
   importContacts: ImportContactsResult;
   ingestResumeParse: Maybe<ResumeIngestResult>;
   ingest_company_snapshot: CompanySnapshot;
   launchEmailCampaign: EmailCampaign;
+  markEmailReplied: MarkRepliedResult;
   markJobApplied: Job;
   /**
    * Trigger classification/enhancement of all unprocessed jobs via the Cloudflare Worker.
@@ -947,7 +1067,11 @@ export type Mutation = {
    * Requires authentication.
    */
   reportJob: Maybe<Job>;
+  scheduleBatchEmails: ScheduleBatchResult;
+  scheduleFollowUpBatch: FollowUpBatchResult;
   sendEmail: SendEmailResult;
+  sendScheduledEmailNow: SendNowResult;
+  syncResendEmails: SyncResendResult;
   unarchiveJob: Job;
   unblockCompany: DeleteBlockedCompanyResult;
   unverifyCompanyContacts: UnverifyContactsResult;
@@ -991,6 +1115,16 @@ export type MutationArchiveJobArgs = {
 export type MutationBlockCompanyArgs = {
   name: Scalars['String']['input'];
   reason?: InputMaybe<Scalars['String']['input']>;
+};
+
+
+export type MutationCancelCompanyEmailsArgs = {
+  companyId: Scalars['Int']['input'];
+};
+
+
+export type MutationCancelScheduledEmailArgs = {
+  resendId: Scalars['String']['input'];
 };
 
 
@@ -1123,6 +1257,11 @@ export type MutationGenerateEmailArgs = {
 };
 
 
+export type MutationGenerateReplyArgs = {
+  input: GenerateReplyInput;
+};
+
+
 export type MutationImportContactsArgs = {
   contacts: Array<ContactInput>;
 };
@@ -1156,6 +1295,11 @@ export type MutationLaunchEmailCampaignArgs = {
 };
 
 
+export type MutationMarkEmailRepliedArgs = {
+  resendId: Scalars['String']['input'];
+};
+
+
 export type MutationMarkJobAppliedArgs = {
   id: Scalars['Int']['input'];
 };
@@ -1183,8 +1327,28 @@ export type MutationReportJobArgs = {
 };
 
 
+export type MutationScheduleBatchEmailsArgs = {
+  input: ScheduleBatchEmailsInput;
+};
+
+
+export type MutationScheduleFollowUpBatchArgs = {
+  input: FollowUpBatchInput;
+};
+
+
 export type MutationSendEmailArgs = {
   input: SendEmailInput;
+};
+
+
+export type MutationSendScheduledEmailNowArgs = {
+  resendId: Scalars['String']['input'];
+};
+
+
+export type MutationSyncResendEmailsArgs = {
+  companyId?: InputMaybe<Scalars['Int']['input']>;
 };
 
 
@@ -1392,6 +1556,7 @@ export type Query = {
   blockedCompanies: Array<BlockedCompany>;
   companies: CompaniesResponse;
   company: Maybe<Company>;
+  companyContactEmails: Array<CompanyContactEmail>;
   company_ats_boards: Array<AtsBoard>;
   company_facts: Array<CompanyFact>;
   company_snapshots: Array<CompanySnapshot>;
@@ -1401,6 +1566,7 @@ export type Query = {
   contacts: ContactsResult;
   emailCampaign: Maybe<EmailCampaign>;
   emailCampaigns: EmailCampaignsResult;
+  emailStats: EmailStats;
   emailTemplate: Maybe<EmailTemplate>;
   emailTemplates: EmailTemplatesResult;
   executeSql: TextToSqlResult;
@@ -1445,6 +1611,11 @@ export type QueryCompaniesArgs = {
 export type QueryCompanyArgs = {
   id?: InputMaybe<Scalars['Int']['input']>;
   key?: InputMaybe<Scalars['String']['input']>;
+};
+
+
+export type QueryCompanyContactEmailsArgs = {
+  companyId: Scalars['Int']['input'];
 };
 
 
@@ -1689,6 +1860,26 @@ export type ResumeUploadResult = {
   tier: Scalars['String']['output'];
 };
 
+export type ScheduleBatchEmailsInput = {
+  body: Scalars['String']['input'];
+  /** Recipients with name and email */
+  recipients: Array<BatchRecipientInput>;
+  subject: Scalars['String']['input'];
+  /** Use business day scheduling (Mon-Fri, 8am UTC, random delays) */
+  useScheduler?: InputMaybe<Scalars['Boolean']['input']>;
+};
+
+export type ScheduleBatchResult = {
+  __typename: 'ScheduleBatchResult';
+  failed: Scalars['Int']['output'];
+  firstSendDate: Maybe<Scalars['String']['output']>;
+  lastSendDate: Maybe<Scalars['String']['output']>;
+  message: Scalars['String']['output'];
+  scheduled: Scalars['Int']['output'];
+  schedulingPlan: Maybe<Scalars['String']['output']>;
+  success: Scalars['Boolean']['output'];
+};
+
 export type SendEmailInput = {
   from?: InputMaybe<Scalars['String']['input']>;
   html: Scalars['String']['input'];
@@ -1703,6 +1894,13 @@ export type SendEmailResult = {
   __typename: 'SendEmailResult';
   error: Maybe<Scalars['String']['output']>;
   id: Maybe<Scalars['String']['output']>;
+  success: Scalars['Boolean']['output'];
+};
+
+export type SendNowResult = {
+  __typename: 'SendNowResult';
+  error: Maybe<Scalars['String']['output']>;
+  resendId: Maybe<Scalars['String']['output']>;
   success: Scalars['Boolean']['output'];
 };
 
@@ -1734,6 +1932,15 @@ export type StackMutationResponse = {
   __typename: 'StackMutationResponse';
   message: Maybe<Scalars['String']['output']>;
   success: Scalars['Boolean']['output'];
+};
+
+export type SyncResendResult = {
+  __typename: 'SyncResendResult';
+  error: Maybe<Scalars['String']['output']>;
+  skippedCount: Scalars['Int']['output'];
+  success: Scalars['Boolean']['output'];
+  totalCount: Scalars['Int']['output'];
+  updatedCount: Scalars['Int']['output'];
 };
 
 export type Task = {

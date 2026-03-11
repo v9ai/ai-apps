@@ -69,14 +69,22 @@ export default function RootLayout({
                     </Link>
                   </Flex>
 
-                  <a
-                    href="https://github.com/nicolad/ai-apps/tree/main/apps/law-adversarial"
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    style={{ color: "var(--gray-10)", display: "flex", alignItems: "center" }}
-                  >
-                    <Github size={20} />
-                  </a>
+                  <Flex align="center" gap="4">
+                    <Link
+                      href="/how-it-works"
+                      style={{ color: "var(--gray-10)", display: "flex", alignItems: "center" }}
+                    >
+                      <Text size="2" weight="medium">How It Works</Text>
+                    </Link>
+                    <a
+                      href="https://github.com/nicolad/ai-apps/tree/main/apps/law-adversarial"
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      style={{ color: "var(--gray-10)", display: "flex", alignItems: "center" }}
+                    >
+                      <Github size={20} />
+                    </a>
+                  </Flex>
                 </Flex>
               </Container>
             </header>
