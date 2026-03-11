@@ -609,6 +609,14 @@ export const contactEmails = sqliteTable(
     followup_status: text("followup_status"), // "pending" | "completed"
     // Entity linking (for non-contact emails like company batches)
     company_id: integer("company_id").references(() => companies.id, { onDelete: "set null" }),
+    // Extended fields (ported from CRM)
+    cc_emails: text("cc_emails").default("[]"), // JSON array
+    reply_to_emails: text("reply_to_emails").default("[]"), // JSON array
+    html_content: text("html_content"),
+    attachments: text("attachments").default("[]"), // JSON array
+    tags: text("tags").default("[]"), // JSON array
+    headers: text("headers").default("[]"), // JSON array
+    idempotency_key: text("idempotency_key"),
     created_at: text("created_at")
       .notNull()
       .default(sql`(datetime('now'))`),
@@ -739,6 +747,12 @@ export const emailCampaigns = sqliteTable(
     emails_scheduled: integer("emails_scheduled").notNull().default(0),
     emails_failed: integer("emails_failed").notNull().default(0),
     recipient_emails: text("recipient_emails"), // JSON array
+    // Extended fields (ported from CRM)
+    total_emails_planned: integer("total_emails_planned"),
+    add_unsubscribe_headers: integer("add_unsubscribe_headers").notNull().default(0),
+    unsubscribe_url: text("unsubscribe_url"),
+    add_anti_thread_header: integer("add_anti_thread_header").notNull().default(0),
+    created_by: text("created_by"),
     created_at: text("created_at")
       .notNull()
       .default(sql`(datetime('now'))`),
@@ -769,6 +783,7 @@ export const emailTemplates = sqliteTable(
     tags: text("tags"), // JSON array
     variables: text("variables"), // JSON array of variable names
     is_active: integer("is_active", { mode: "boolean" }).notNull().default(true),
+    user_id: text("user_id"), // Template owner
     created_at: text("created_at")
       .notNull()
       .default(sql`(datetime('now'))`),
@@ -802,6 +817,41 @@ export const blockedCompanies = sqliteTable(
 
 export type BlockedCompany = typeof blockedCompanies.$inferSelect;
 export type NewBlockedCompany = typeof blockedCompanies.$inferInsert;
+
+// Received Emails (inbound emails persisted from Resend webhooks)
+export const receivedEmails = sqliteTable(
+  "received_emails",
+  {
+    id: integer("id").primaryKey({ autoIncrement: true }),
+    resend_id: text("resend_id").notNull().unique(),
+    from_email: text("from_email"),
+    to_emails: text("to_emails").notNull().default("[]"), // JSON array
+    cc_emails: text("cc_emails").default("[]"), // JSON array
+    reply_to_emails: text("reply_to_emails").default("[]"), // JSON array
+    subject: text("subject"),
+    message_id: text("message_id"),
+    html_content: text("html_content"),
+    text_content: text("text_content"),
+    attachments: text("attachments").default("[]"), // JSON array
+    received_at: text("received_at").notNull(),
+    archived_at: text("archived_at"),
+    created_at: text("created_at")
+      .notNull()
+      .default(sql`(datetime('now'))`),
+    updated_at: text("updated_at")
+      .notNull()
+      .default(sql`(datetime('now'))`),
+  },
+  (table) => ({
+    fromEmailIdx: index("idx_received_emails_from").on(table.from_email),
+    messageIdIdx: index("idx_received_emails_message_id").on(table.message_id),
+    receivedAtIdx: index("idx_received_emails_received_at").on(table.received_at),
+    resendIdIdx: index("idx_received_emails_resend_id").on(table.resend_id),
+  }),
+);
+
+export type ReceivedEmail = typeof receivedEmails.$inferSelect;
+export type NewReceivedEmail = typeof receivedEmails.$inferInsert;
 
 // ---------------------------------------------------------------------------
 // Drizzle relations() declarations

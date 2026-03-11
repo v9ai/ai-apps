@@ -119,3 +119,83 @@ query GetEmailStats {
     openedThisMonth
   }
 }
+
+query GetReceivedEmails($limit: Int, $offset: Int, $archived: Boolean) {
+  receivedEmails(limit: $limit, offset: $offset, archived: $archived) {
+    emails {
+      id
+      resendId
+      fromEmail
+      toEmails
+      subject
+      receivedAt
+      archivedAt
+      createdAt
+    }
+    totalCount
+  }
+}
+
+query GetReceivedEmail($id: Int!) {
+  receivedEmail(id: $id) {
+    id
+    resendId
+    fromEmail
+    toEmails
+    ccEmails
+    replyToEmails
+    subject
+    messageId
+    htmlContent
+    textContent
+    attachments
+    receivedAt
+    archivedAt
+    createdAt
+    updatedAt
+  }
+}
+
+mutation ArchiveEmail($id: Int!) {
+  archiveEmail(id: $id) {
+    success
+    message
+  }
+}
+
+mutation UnarchiveEmail($id: Int!) {
+  unarchiveEmail(id: $id) {
+    success
+    message
+  }
+}
+
+mutation PreviewEmail($input: PreviewEmailInput!) {
+  previewEmail(input: $input) {
+    htmlContent
+    subject
+    drySendResult
+  }
+}
+
+query GetEmailsNeedingFollowUp($limit: Int, $offset: Int) {
+  emailsNeedingFollowUp(limit: $limit, offset: $offset) {
+    emails {
+      id
+      contactId
+      resendId
+      fromEmail
+      toEmails
+      subject
+      status
+      sentAt
+      sequenceType
+      sequenceNumber
+      followupStatus
+      companyId
+      recipientName
+      createdAt
+    }
+    totalCount
+  }
+}

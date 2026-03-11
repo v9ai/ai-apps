@@ -8,6 +8,9 @@ import {
   textToStructuredHtml,
 } from "@/lib/email/utils";
 import { buildSchedule, getSchedulePreview } from "@/lib/email/scheduler";
+import { drizzle } from "drizzle-orm/d1";
+import { createD1HttpClient } from "@/db/d1-http";
+import { contactEmails } from "@/db/schema";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -19,6 +22,12 @@ const VERIFIED_FROM = "Vadim Nicolai <contact@vadim.blog>";
 interface Recipient {
   email: string;
   name: string;
+  contactId?: number;
+  companyId?: number;
+}
+
+function getDb() {
+  return drizzle(createD1HttpClient() as any);
 }
 
 interface BatchEmailRequestBody {
@@ -146,7 +155,7 @@ export async function POST(
       const personalized = personalizeEmailBody(emailBody, r.name);
       const html = textToStructuredHtml(personalized);
       return {
-        contactId: 0,
+        contactId: r.contactId ?? 0,
         email: r.email,
         subject: subject.trim(),
         htmlBody: html,
@@ -178,6 +187,29 @@ export async function POST(
       if (result.error) {
         failed.push({ email: entry.email, error: String(result.error) });
       } else {
+        // Find the matching recipient to get contactId/companyId
+        const matchingRecipient = recipients.find((r) => r.email === entry.email);
+        if (matchingRecipient?.contactId) {
+          try {
+            const db = getDb();
+            await db.insert(contactEmails).values({
+              contact_id: matchingRecipient.contactId,
+              company_id: matchingRecipient.companyId ?? null,
+              resend_id: result.id || `batch_${Date.now()}_${entry.email}`,
+              from_email: VERIFIED_FROM,
+              to_emails: JSON.stringify([entry.email]),
+              subject: entry.subject,
+              text_content: entry.textBody,
+              status: "scheduled",
+              scheduled_at: entry.scheduledAt.toISOString(),
+              recipient_name: `${entry.firstName} ${entry.lastName}`.trim(),
+              sequence_type: "initial",
+              sequence_number: "0",
+            });
+          } catch (dbErr) {
+            console.error("Failed to persist email to DB:", dbErr);
+          }
+        }
         sent.push({
           email: entry.email,
           status: "sent",
@@ -238,6 +270,27 @@ export async function POST(
     if (result.error) {
       failed.push({ email: recipient.email, error: String(result.error) });
     } else {
+      if (recipient.contactId) {
+        try {
+          const db = getDb();
+          await db.insert(contactEmails).values({
+            contact_id: recipient.contactId,
+            company_id: recipient.companyId ?? null,
+            resend_id: result.id || `batch_${Date.now()}_${recipient.email}`,
+            from_email: VERIFIED_FROM,
+            to_emails: JSON.stringify([recipient.email]),
+            subject: subject.trim(),
+            text_content: personalized,
+            status: "scheduled",
+            scheduled_at: effectiveScheduledAt,
+            recipient_name: recipient.name,
+            sequence_type: "initial",
+            sequence_number: "0",
+          });
+        } catch (dbErr) {
+          console.error("Failed to persist email to DB:", dbErr);
+        }
+      }
       sent.push({ email: recipient.email, status: "sent" });
     }
   }

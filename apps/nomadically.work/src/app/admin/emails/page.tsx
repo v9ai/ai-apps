@@ -51,6 +51,9 @@ import {
   useUpdateEmailTemplateMutation,
   useGetEmailStatsQuery,
   useSyncResendEmailsMutation,
+  useGetReceivedEmailsQuery,
+  useArchiveEmailMutation,
+  useUnarchiveEmailMutation,
 } from "@/__generated__/hooks";
 
 type SentEmail = {
@@ -346,28 +349,29 @@ function SentList() {
 }
 
 function ReceivedList() {
-  const [emails, setEmails] = useState<ReceivedEmail[]>([]);
-  const [error, setError] = useState<string | null>(null);
-  const [loading, setLoading] = useState(true);
+  const [showArchived, setShowArchived] = useState(false);
+  const { data, loading, error, refetch } = useGetReceivedEmailsQuery({
+    variables: { limit: 100, archived: showArchived },
+    fetchPolicy: "cache-and-network",
+  });
+  const [archiveEmail] = useArchiveEmailMutation();
+  const [unarchiveEmail] = useUnarchiveEmailMutation();
 
-  const load = async () => {
-    setLoading(true);
-    const result = await getReceivedEmails(100);
-    setEmails(result.emails as ReceivedEmail[]);
-    setError(result.error);
-    setLoading(false);
+  const emails = data?.receivedEmails?.emails ?? [];
+  const totalCount = data?.receivedEmails?.totalCount ?? 0;
+
+  const handleArchive = async (id: number) => {
+    await archiveEmail({ variables: { id } });
+    refetch();
   };
 
-  useEffect(() => {
-    load();
-  }, []);
+  const handleUnarchive = async (id: number) => {
+    await unarchiveEmail({ variables: { id } });
+    refetch();
+  };
 
-  if (loading) {
-    return (
-      <Text color="gray" size="2">
-        Loading…
-      </Text>
-    );
+  if (loading && !data) {
+    return <Text color="gray" size="2">Loading…</Text>;
   }
 
   if (error) {
@@ -375,20 +379,8 @@ function ReceivedList() {
       <Card>
         <Flex gap="2" align="center">
           <ExclamationTriangleIcon color="red" />
-          <Text color="red" size="2">
-            {error}
-          </Text>
+          <Text color="red" size="2">{error.message}</Text>
         </Flex>
-      </Card>
-    );
-  }
-
-  if (emails.length === 0) {
-    return (
-      <Card>
-        <Text color="gray" size="2">
-          No received emails found.
-        </Text>
       </Card>
     );
   }
@@ -396,33 +388,54 @@ function ReceivedList() {
   return (
     <Flex direction="column" gap="2">
       <Flex justify="between" align="center" mb="2">
-        <Badge color="gray" size="2" variant="soft">
-          {emails.length} emails
-        </Badge>
-        <Button size="1" variant="ghost" onClick={load}>
+        <Flex gap="2" align="center">
+          <Badge color="gray" size="2" variant="soft">{totalCount} emails</Badge>
+          <Button
+            size="1"
+            variant={showArchived ? "solid" : "ghost"}
+            onClick={() => setShowArchived(!showArchived)}
+          >
+            {showArchived ? "Show Inbox" : "Show Archived"}
+          </Button>
+        </Flex>
+        <Button size="1" variant="ghost" onClick={() => refetch()}>
           <ReloadIcon /> Refresh
         </Button>
       </Flex>
-      {emails.map((email) => (
-        <Card key={email.id}>
-          <Flex justify="between" align="start" gap="4">
-            <Box style={{ minWidth: 0, flex: 1 }}>
-              <Flex gap="2" align="center" mb="1">
-                <EnvelopeOpenIcon />
-                <Text size="2" weight="bold" style={{ flex: 1 }}>
-                  {email.subject || "(no subject)"}
-                </Text>
-              </Flex>
-              <Text size="1" color="gray">
-                From: {email.from}
-              </Text>
-              <Text size="1" color="gray" as="div">
-                {new Date(email.created_at).toLocaleString()}
-              </Text>
-            </Box>
-          </Flex>
+      {emails.length === 0 ? (
+        <Card>
+          <Text color="gray" size="2">
+            {showArchived ? "No archived emails." : "No received emails found."}
+          </Text>
         </Card>
-      ))}
+      ) : (
+        emails.map((email) => (
+          <Card key={email.id}>
+            <Flex justify="between" align="start" gap="4">
+              <Box style={{ minWidth: 0, flex: 1 }}>
+                <Flex gap="2" align="center" mb="1">
+                  <EnvelopeOpenIcon />
+                  <Text size="2" weight="bold" style={{ flex: 1 }}>
+                    {email.subject || "(no subject)"}
+                  </Text>
+                </Flex>
+                <Text size="1" color="gray">From: {email.fromEmail}</Text>
+                <Text size="1" color="gray" as="div">
+                  {new Date(email.receivedAt).toLocaleString()}
+                </Text>
+              </Box>
+              <Button
+                size="1"
+                variant="ghost"
+                color={showArchived ? "blue" : "gray"}
+                onClick={() => showArchived ? handleUnarchive(email.id) : handleArchive(email.id)}
+              >
+                {showArchived ? "Unarchive" : "Archive"}
+              </Button>
+            </Flex>
+          </Card>
+        ))
+      )}
     </Flex>
   );
 }

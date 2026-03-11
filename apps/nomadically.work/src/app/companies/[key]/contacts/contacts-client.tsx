@@ -5,19 +5,24 @@ import { useCallback, useState } from "react";
 import {
   useGetCompanyQuery,
   useGetContactsQuery,
+  useGetCompanyContactEmailsQuery,
   useImportContactsMutation,
   useFindContactEmailMutation,
   useFindCompanyEmailsMutation,
   useApplyEmailPatternMutation,
   useCreateContactMutation,
+  useDeleteContactMutation,
   useUnverifyCompanyContactsMutation,
+  useMergeDuplicateContactsMutation,
 } from "@/__generated__/hooks";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import { useAuth } from "@/lib/auth-hooks";
 import { ADMIN_EMAIL } from "@/lib/constants";
 import { useStreamingEmail } from "@/hooks/useStreamingEmail";
 import type { GetContactsQuery } from "@/__generated__/hooks";
 import {
+  AlertDialog,
   Badge,
   Box,
   Button,
@@ -47,10 +52,13 @@ import {
   MagicWandIcon,
   PaperPlaneIcon,
   PlusIcon,
+  TrashIcon,
   UpdateIcon,
+  ClockIcon,
 } from "@radix-ui/react-icons";
 import { BatchEmailModal } from "@/components/admin/BatchEmailModal";
 import { GenerateAndSendBatchEmailModal } from "@/components/admin/GenerateAndSendBatchEmailModal";
+import { FollowUpModal } from "@/components/admin/FollowUpModal";
 import { useStreamingEmailScheduler } from "@/hooks/useStreamingEmailScheduler";
 
 type Contact = NonNullable<
@@ -452,11 +460,58 @@ function CreateContactDialog({
   );
 }
 
+function DeleteContactButton({
+  contact,
+  onDeleted,
+}: {
+  contact: Contact;
+  onDeleted: () => void;
+}) {
+  const [deleteContact, { loading }] = useDeleteContactMutation();
+
+  const handleDelete = useCallback(async () => {
+    const { data } = await deleteContact({ variables: { id: contact.id } });
+    if (data?.deleteContact?.success) {
+      onDeleted();
+    }
+  }, [deleteContact, contact.id, onDeleted]);
+
+  return (
+    <AlertDialog.Root>
+      <AlertDialog.Trigger>
+        <Button size="1" variant="soft" color="red">
+          <TrashIcon />
+          Remove
+        </Button>
+      </AlertDialog.Trigger>
+      <AlertDialog.Content maxWidth="400px">
+        <AlertDialog.Title>Remove contact</AlertDialog.Title>
+        <AlertDialog.Description size="2">
+          Remove {contact.firstName} {contact.lastName}? This cannot be undone.
+        </AlertDialog.Description>
+        <Flex gap="3" mt="4" justify="end">
+          <AlertDialog.Cancel>
+            <Button variant="soft" color="gray">
+              Cancel
+            </Button>
+          </AlertDialog.Cancel>
+          <AlertDialog.Action>
+            <Button color="red" onClick={handleDelete} disabled={loading}>
+              {loading ? "Removing…" : "Remove"}
+            </Button>
+          </AlertDialog.Action>
+        </Flex>
+      </AlertDialog.Content>
+    </AlertDialog.Root>
+  );
+}
+
 export function CompanyContactsClient({
   companyKey,
 }: {
   companyKey: string;
 }) {
+  const router = useRouter();
   const { user } = useAuth();
   const isAdmin = user?.email === ADMIN_EMAIL;
 
@@ -500,10 +555,19 @@ export function CompanyContactsClient({
     fetchPolicy: "cache-and-network",
   });
 
+  const [followUpOpen, setFollowUpOpen] = useState(false);
   const [importContacts, { loading: importing }] = useImportContactsMutation();
   const [findCompanyEmails, { loading: enhancing }] = useFindCompanyEmailsMutation();
   const [applyEmailPattern, { loading: applyingPattern }] = useApplyEmailPatternMutation();
   const [unverifyCompanyContacts, { loading: unverifying }] = useUnverifyCompanyContactsMutation();
+  const [mergeDuplicateContacts, { loading: merging }] = useMergeDuplicateContactsMutation();
+
+  // Fetch company emails for follow-up modal
+  const { data: companyEmailsData, refetch: refetchEmails } = useGetCompanyContactEmailsQuery({
+    variables: { companyId: company?.id ?? 0 },
+    skip: !company?.id,
+    fetchPolicy: "cache-and-network",
+  });
 
   const handleImportContacts = useCallback(async () => {
     if (!linkedinHtml || !company) return;
@@ -823,6 +887,33 @@ export function CompanyContactsClient({
               {isStreaming ? <Spinner size="1" /> : <UpdateIcon />}
               {isStreaming ? "Scheduling..." : "Schedule All"}
             </Button>
+            <Button
+              size="2"
+              variant="soft"
+              color="amber"
+              onClick={() => setFollowUpOpen(true)}
+              disabled={!company?.id}
+            >
+              <ClockIcon />
+              Follow-up
+            </Button>
+            <Button
+              size="2"
+              variant="ghost"
+              color="gray"
+              onClick={async () => {
+                if (!company?.id) return;
+                const { data: result } = await mergeDuplicateContacts({ variables: { companyId: company.id } });
+                if (result?.mergeDuplicateContacts?.success) {
+                  setImportStatus({ type: "success", message: result.mergeDuplicateContacts.message });
+                  await refetch();
+                }
+              }}
+              disabled={merging}
+            >
+              {merging ? <Spinner size="1" /> : null}
+              Merge Duplicates
+            </Button>
 
             {/* LinkedIn import */}
             <Dialog.Root
@@ -911,8 +1002,11 @@ export function CompanyContactsClient({
         ) : (
           <Flex direction="column" gap="2">
             {contactsList.map((contact) => (
-              <Link key={contact.id} href={`/contacts/${contact.id}`} style={{ textDecoration: "none", color: "inherit" }}>
-              <Card style={{ cursor: "pointer" }}>
+              <Card
+                key={contact.id}
+                style={{ cursor: "pointer" }}
+                onClick={() => router.push(`/contacts/${contact.id}`)}
+              >
                 <Box p="3">
                   <Flex align="start" justify="between" gap="3" wrap="wrap">
                     <Box style={{ minWidth: 0 }}>
@@ -945,7 +1039,7 @@ export function CompanyContactsClient({
 
                       <Flex gap="3" mt="2" wrap="wrap" align="center">
                         {contact.email && (
-                          <Flex align="center" gap="1">
+                          <Flex align="center" gap="1" onClick={(e) => e.stopPropagation()}>
                             <EnvelopeClosedIcon color="gray" />
                             <RadixLink
                               href={`mailto:${contact.email}`}
@@ -957,7 +1051,7 @@ export function CompanyContactsClient({
                           </Flex>
                         )}
                         {contact.linkedinUrl && (
-                          <Flex align="center" gap="1">
+                          <Flex align="center" gap="1" onClick={(e) => e.stopPropagation()}>
                             <LinkedInLogoIcon color="gray" />
                             <RadixLink
                               href={contact.linkedinUrl}
@@ -972,7 +1066,7 @@ export function CompanyContactsClient({
                           </Flex>
                         )}
                         {contact.githubHandle && (
-                          <Flex align="center" gap="1">
+                          <Flex align="center" gap="1" onClick={(e) => e.stopPropagation()}>
                             <GitHubLogoIcon color="gray" />
                             <RadixLink
                               href={`https://github.com/${contact.githubHandle}`}
@@ -1003,7 +1097,7 @@ export function CompanyContactsClient({
                       )}
                     </Box>
 
-                    <Flex direction="column" align="end" gap="2" style={{ flexShrink: 0 }}>
+                    <Flex direction="column" align="end" gap="2" style={{ flexShrink: 0 }} onClick={(e) => e.stopPropagation()}>
                       {!contact.doNotContact && (
                         <GenerateEmailDialog
                           contact={contact}
@@ -1016,11 +1110,14 @@ export function CompanyContactsClient({
                           onFound={refetch}
                         />
                       )}
+                      <DeleteContactButton
+                        contact={contact}
+                        onDeleted={refetch}
+                      />
                     </Flex>
                   </Flex>
                 </Box>
               </Card>
-              </Link>
             ))}
           </Flex>
         )}
@@ -1037,6 +1134,25 @@ export function CompanyContactsClient({
         companyName={company.name ?? undefined}
         contacts={generateBatchContacts}
         onSuccess={refetch}
+      />
+      <FollowUpModal
+        open={followUpOpen}
+        onOpenChange={setFollowUpOpen}
+        companyId={company.id}
+        companyName={company.name ?? undefined}
+        companyDescription={company.description ?? undefined}
+        sentEmails={(companyEmailsData?.companyContactEmails ?? []).map((e) => ({
+          id: e.id,
+          resendId: e.resendId,
+          recipientEmail: (e.toEmails?.[0] ?? ""),
+          recipientName: e.recipientName ?? `${e.contactFirstName} ${e.contactLastName}`.trim(),
+          subject: e.subject,
+          sentAt: e.sentAt,
+          sequenceNumber: e.sequenceNumber,
+          sequenceType: e.sequenceType,
+          status: e.status,
+        }))}
+        onSuccess={() => { refetch(); refetchEmails(); }}
       />
     </Container>
   );

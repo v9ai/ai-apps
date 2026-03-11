@@ -1,6 +1,13 @@
 import { NextRequest, NextResponse } from "next/server";
 import OpenAI from "openai";
+import { Langfuse } from "langfuse";
 import { checkIsAdmin } from "@/lib/admin";
+import {
+  buildBatchPrompt,
+  parseJsonContent,
+  type GenerateBatchEmailRequest,
+  type GenerateBatchEmailResponse,
+} from "@/lib/email-prompt-builder";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -11,118 +18,12 @@ const openai = new OpenAI({
   baseURL: "https://api.deepseek.com/v1",
 });
 
-interface GenerateBatchEmailRequest {
-  companyName?: string;
-  instructions?: string;
-  recipientCount?: number;
-}
-
-interface GenerateBatchEmailResponse {
-  subject: string;
-  body: string;
-}
-
-function buildBatchPrompt(input: GenerateBatchEmailRequest): string {
-  const parts: string[] = [];
-
-  // Instructions come FIRST — they are the primary driver of the email
-  if (input.instructions) {
-    parts.push(
-      "PRIMARY GOAL (most important — the entire email must serve this):",
-      input.instructions,
-      "",
-      "INTERPRETATION GUIDE:",
-      "- If the goal mentions 'applied', 'application', 'no response', 'follow up', 'follow-up' → write a FOLLOW-UP email referencing a prior application, NOT a cold outreach.",
-      "- If the goal is cold outreach → write an introduction email.",
-      "- If the goal mentions a specific ask → make that the clear CTA.",
-      "",
-    );
-  }
-
-  if (input.companyName) {
-    parts.push(`TARGET COMPANY: ${input.companyName}`, "");
-  }
-
-  parts.push(
-    "SENDER BACKGROUND (use selectively — only what's relevant to the primary goal):",
-    "- Vadim Nicolai, Senior Frontend/Rust Engineer, 10+ years experience",
-    "- Expertise: React, TypeScript, Rust",
-    "- Seeking: fully remote EU engineering roles",
-    "",
-    "EMAIL TEMPLATE RULES:",
-    '1. Use {{name}} as the placeholder for the recipient\'s first name (start with "Hey {{name}},")',
-    "2. 100-180 words MAX — be sharp and direct, cut all filler",
-    "3. One clear CTA only",
-    '4. End with "Thanks,\\nVadim"',
-    "5. Do NOT fabricate recipient details",
-    "6. The tone and framing must match the PRIMARY GOAL above",
-    "",
-    "Respond ONLY with valid JSON: { \"subject\": \"...\", \"body\": \"...\" }",
-  );
-
-  return parts.join("\n");
-}
-
-function parseJsonContent(
-  content: string,
-): GenerateBatchEmailResponse | null {
-  // Attempt 1: direct parse
-  try {
-    const parsed: unknown = JSON.parse(content);
-    if (
-      parsed !== null &&
-      typeof parsed === "object" &&
-      "subject" in parsed &&
-      "body" in parsed &&
-      typeof (parsed as Record<string, unknown>).subject === "string" &&
-      typeof (parsed as Record<string, unknown>).body === "string"
-    ) {
-      return {
-        subject: (parsed as Record<string, string>).subject,
-        body: (parsed as Record<string, string>).body,
-      };
-    }
-  } catch {
-    // fall through
-  }
-
-  // Attempt 2: strip markdown code fences and retry
-  const stripped = content
-    .replace(/^```(?:json)?\s*/i, "")
-    .replace(/\s*```$/, "")
-    .trim();
-
-  try {
-    const parsed: unknown = JSON.parse(stripped);
-    if (
-      parsed !== null &&
-      typeof parsed === "object" &&
-      "subject" in parsed &&
-      "body" in parsed &&
-      typeof (parsed as Record<string, unknown>).subject === "string" &&
-      typeof (parsed as Record<string, unknown>).body === "string"
-    ) {
-      return {
-        subject: (parsed as Record<string, string>).subject,
-        body: (parsed as Record<string, string>).body,
-      };
-    }
-  } catch {
-    // fall through
-  }
-
-  // Attempt 3: regex extraction
-  const subjectMatch = content.match(/"subject"\s*:\s*"((?:[^"\\]|\\.)*)"/);
-  const bodyMatch = content.match(/"body"\s*:\s*"((?:[^"\\]|\\.)*)"/);
-
-  if (subjectMatch?.[1] && bodyMatch?.[1]) {
-    return {
-      subject: subjectMatch[1].replace(/\\n/g, "\n").replace(/\\"/g, '"'),
-      body: bodyMatch[1].replace(/\\n/g, "\n").replace(/\\"/g, '"'),
-    };
-  }
-
-  return null;
+function getLangfuse() {
+  return new Langfuse({
+    secretKey: process.env.LANGFUSE_SECRET_KEY,
+    publicKey: process.env.LANGFUSE_PUBLIC_KEY,
+    baseUrl: process.env.LANGFUSE_BASE_URL,
+  });
 }
 
 export async function POST(request: NextRequest): Promise<NextResponse> {
@@ -151,6 +52,14 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
           typeof obj.recipientCount === "number"
             ? obj.recipientCount
             : undefined,
+        jobContext:
+          obj.jobContext && typeof obj.jobContext === "object"
+            ? (obj.jobContext as GenerateBatchEmailRequest["jobContext"])
+            : undefined,
+        applicationContext:
+          obj.applicationContext && typeof obj.applicationContext === "object"
+            ? (obj.applicationContext as GenerateBatchEmailRequest["applicationContext"])
+            : undefined,
       };
     } else {
       input = {};
@@ -160,6 +69,30 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
   }
 
   const prompt = buildBatchPrompt(input);
+
+  // Langfuse tracing
+  const langfuse = getLangfuse();
+  const trace = langfuse.trace({
+    name: "email-generate-batch",
+    userId: userId,
+    tags: [
+      input.companyName ? `company:${input.companyName}` : "company:none",
+      input.jobContext?.title ? `role:${input.jobContext.title}` : "role:none",
+      input.applicationContext ? "type:followup" : "type:outreach",
+    ],
+    metadata: {
+      companyName: input.companyName,
+      jobTitle: input.jobContext?.title,
+      hasJobContext: !!input.jobContext,
+      hasApplicationContext: !!input.applicationContext,
+    },
+  });
+
+  const generation = trace.generation({
+    name: "generate-email",
+    model: "deepseek-reasoner",
+    input: { prompt },
+  });
 
   let rawContent: string;
 
@@ -181,25 +114,44 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
 
     const content = completion.choices[0]?.message?.content;
     if (!content) {
+      generation.end();
+      await langfuse.flushAsync();
       return NextResponse.json(
         { error: "Model returned an empty response" },
         { status: 500 },
       );
     }
     rawContent = content;
+
+    generation.update({
+      output: rawContent,
+      usage: {
+        promptTokens: completion.usage?.prompt_tokens || 0,
+        completionTokens: completion.usage?.completion_tokens || 0,
+        totalTokens: completion.usage?.total_tokens || 0,
+      },
+    });
   } catch (error) {
     const message = error instanceof Error ? error.message : "DeepSeek API error";
+    generation.update({ level: "ERROR", statusMessage: message });
+    generation.end();
+    await langfuse.flushAsync();
     return NextResponse.json({ error: message }, { status: 500 });
   }
 
   const parsed = parseJsonContent(rawContent);
 
   if (!parsed) {
+    generation.update({ level: "ERROR", statusMessage: "JSON parse failed" });
+    generation.end();
+    await langfuse.flushAsync();
     return NextResponse.json(
       { error: "Failed to parse model response as JSON" },
       { status: 500 },
     );
   }
 
+  generation.end();
+  await langfuse.flushAsync();
   return NextResponse.json<GenerateBatchEmailResponse>(parsed);
 }

@@ -37,6 +37,11 @@ function mapCampaign(row: typeof emailCampaigns.$inferSelect) {
     emailsScheduled: row.emails_scheduled,
     emailsFailed: row.emails_failed,
     recipientEmails: parseJsonArray(row.recipient_emails),
+    totalEmailsPlanned: row.total_emails_planned ?? null,
+    addUnsubscribeHeaders: (row.add_unsubscribe_headers as unknown) === 1 || row.add_unsubscribe_headers === true,
+    unsubscribeUrl: row.unsubscribe_url ?? null,
+    addAntiThreadHeader: (row.add_anti_thread_header as unknown) === 1 || row.add_anti_thread_header === true,
+    createdBy: row.created_by ?? null,
     createdAt: row.created_at,
     updatedAt: row.updated_at,
   };
@@ -80,6 +85,75 @@ export const emailCampaignResolvers = {
         .where(eq(emailCampaigns.id, args.id))
         .limit(1);
       return rows[0] ? mapCampaign(rows[0]) : null;
+    },
+
+    async emailsNeedingFollowUp(
+      _parent: unknown,
+      args: { limit?: number; offset?: number },
+      context: GraphQLContext,
+    ) {
+      const limit = Math.min(args.limit ?? 50, 200);
+      const offset = args.offset ?? 0;
+
+      const [rows, countRows] = await Promise.all([
+        context.db
+          .select()
+          .from(contactEmails)
+          .where(
+            and(
+              or(
+                eq(contactEmails.status, "sent"),
+                eq(contactEmails.status, "delivered"),
+                eq(contactEmails.status, "opened"),
+              ),
+              eq(contactEmails.reply_received, false),
+              or(
+                eq(contactEmails.followup_status, "pending"),
+                sql`${contactEmails.followup_status} IS NULL`,
+              ),
+            ),
+          )
+          .orderBy(desc(contactEmails.sent_at))
+          .limit(limit + 1)
+          .offset(offset),
+        context.db
+          .select({ value: count() })
+          .from(contactEmails)
+          .where(
+            and(
+              or(
+                eq(contactEmails.status, "sent"),
+                eq(contactEmails.status, "delivered"),
+                eq(contactEmails.status, "opened"),
+              ),
+              eq(contactEmails.reply_received, false),
+              or(
+                eq(contactEmails.followup_status, "pending"),
+                sql`${contactEmails.followup_status} IS NULL`,
+              ),
+            ),
+          ),
+      ]);
+
+      return {
+        emails: rows.slice(0, limit).map((row) => ({
+          id: row.id,
+          contactId: row.contact_id,
+          resendId: row.resend_id,
+          fromEmail: row.from_email,
+          toEmails: parseJsonArray(row.to_emails),
+          subject: row.subject,
+          status: row.status,
+          sentAt: row.sent_at ?? null,
+          sequenceType: row.sequence_type ?? null,
+          sequenceNumber: row.sequence_number ?? null,
+          followupStatus: row.followup_status ?? null,
+          companyId: row.company_id ?? null,
+          recipientName: row.recipient_name ?? null,
+          createdAt: row.created_at,
+        })),
+        totalCount: countRows[0]?.value ?? 0,
+      };
     },
 
     async emailStats(_parent: unknown, _args: unknown, context: GraphQLContext) {
@@ -208,7 +282,7 @@ export const emailCampaignResolvers = {
       if (!context.userId || !isAdminEmail(context.userEmail)) {
         throw new Error("Forbidden");
       }
-      const { name, companyId, fromEmail, replyTo, mode, sequence, delayDays, recipientEmails } = args.input;
+      const { name, companyId, fromEmail, replyTo, mode, sequence, delayDays, recipientEmails, totalEmailsPlanned, addUnsubscribeHeaders, unsubscribeUrl, addAntiThreadHeader, createdBy } = args.input;
       const id = `campaign_${Date.now()}_${Math.random().toString(36).substring(2, 9)}`;
 
       const rows = await context.db
@@ -224,6 +298,11 @@ export const emailCampaignResolvers = {
           delay_days: delayDays ? JSON.stringify(delayDays) : null,
           recipient_emails: recipientEmails ? JSON.stringify(recipientEmails) : "[]",
           total_recipients: recipientEmails?.length ?? 0,
+          total_emails_planned: totalEmailsPlanned ?? null,
+          add_unsubscribe_headers: addUnsubscribeHeaders ? 1 : 0,
+          unsubscribe_url: unsubscribeUrl ?? null,
+          add_anti_thread_header: addAntiThreadHeader ? 1 : 0,
+          created_by: createdBy ?? null,
         })
         .returning();
       return mapCampaign(rows[0]);
@@ -237,7 +316,7 @@ export const emailCampaignResolvers = {
       if (!context.userId || !isAdminEmail(context.userEmail)) {
         throw new Error("Forbidden");
       }
-      const { fromEmail, replyTo, sequence, delayDays, startAt, recipientEmails, ...rest } = args.input;
+      const { fromEmail, replyTo, sequence, delayDays, startAt, recipientEmails, totalEmailsPlanned, addUnsubscribeHeaders, unsubscribeUrl, addAntiThreadHeader, ...rest } = args.input;
       const patch: Record<string, unknown> = { ...rest };
       if (fromEmail !== undefined) patch.from_email = fromEmail;
       if (replyTo !== undefined) patch.reply_to = replyTo;
@@ -248,6 +327,10 @@ export const emailCampaignResolvers = {
         patch.recipient_emails = JSON.stringify(recipientEmails);
         patch.total_recipients = recipientEmails.length;
       }
+      if (totalEmailsPlanned !== undefined) patch.total_emails_planned = totalEmailsPlanned;
+      if (addUnsubscribeHeaders !== undefined) patch.add_unsubscribe_headers = addUnsubscribeHeaders ? 1 : 0;
+      if (unsubscribeUrl !== undefined) patch.unsubscribe_url = unsubscribeUrl;
+      if (addAntiThreadHeader !== undefined) patch.add_anti_thread_header = addAntiThreadHeader ? 1 : 0;
       patch.updated_at = new Date().toISOString();
 
       const rows = await context.db
@@ -500,7 +583,33 @@ Do not include any text before or after the JSON.`;
             scheduledAt: entry.scheduledAt.toISOString(),
           });
 
-          if (result.error) { failed++; } else { scheduled++; }
+          if (result.error) {
+            failed++;
+          } else {
+            scheduled++;
+            // Persist to contactEmails table
+            const matchingRecipient = recipients.find((r) => r.email === entry.email);
+            if (matchingRecipient?.contactId) {
+              try {
+                await context.db.insert(contactEmails).values({
+                  contact_id: matchingRecipient.contactId,
+                  company_id: matchingRecipient.companyId ?? null,
+                  resend_id: result.id || `batch_${Date.now()}_${entry.email}`,
+                  from_email: EmailConfig.SENDER,
+                  to_emails: JSON.stringify([entry.email]),
+                  subject: entry.subject,
+                  text_content: entry.textBody,
+                  status: "scheduled",
+                  scheduled_at: entry.scheduledAt.toISOString(),
+                  recipient_name: `${entry.firstName} ${entry.lastName}`.trim(),
+                  sequence_type: "initial",
+                  sequence_number: "0",
+                });
+              } catch (dbErr) {
+                console.error("Failed to persist email to DB:", dbErr);
+              }
+            }
+          }
         }
 
         return {
@@ -532,7 +641,31 @@ Do not include any text before or after the JSON.`;
           scheduledAt,
         });
 
-        if (result.error) { failed++; } else { scheduled++; }
+        if (result.error) {
+          failed++;
+        } else {
+          scheduled++;
+          if (e.contactId) {
+            try {
+              await context.db.insert(contactEmails).values({
+                contact_id: e.contactId,
+                company_id: e.companyId ?? null,
+                resend_id: result.id || `batch_${Date.now()}_${e.email}`,
+                from_email: EmailConfig.SENDER,
+                to_emails: JSON.stringify([e.email]),
+                subject: e.subject,
+                text_content: e.textBody,
+                status: "scheduled",
+                scheduled_at: scheduledAt,
+                recipient_name: `${e.firstName} ${e.lastName}`.trim(),
+                sequence_type: "initial",
+                sequence_number: "0",
+              });
+            } catch (dbErr) {
+              console.error("Failed to persist email to DB:", dbErr);
+            }
+          }
+        }
       }
 
       return {

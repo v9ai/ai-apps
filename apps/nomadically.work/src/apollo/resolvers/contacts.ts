@@ -1,6 +1,6 @@
 import { contacts, companies, contactEmails } from "@/db/schema";
 import { resend } from "@/lib/resend";
-import { eq, and, like, or, count, desc } from "drizzle-orm";
+import { eq, and, like, or, count, desc, sql } from "drizzle-orm";
 import type { GraphQLContext } from "../context";
 import { isAdminEmail } from "@/lib/admin";
 import {
@@ -823,6 +823,182 @@ export const contactResolvers = {
         .returning({ id: contacts.id });
       return { success: true, count: rows.length };
     },
+
+    async markContactEmailVerified(
+      _parent: unknown,
+      args: { contactId: number; verified: boolean },
+      context: GraphQLContext,
+    ) {
+      if (!context.userId || !isAdminEmail(context.userEmail)) {
+        throw new Error("Forbidden");
+      }
+      const rows = await context.db
+        .update(contacts)
+        .set({ email_verified: args.verified, updated_at: new Date().toISOString() })
+        .where(eq(contacts.id, args.contactId))
+        .returning();
+      if (!rows[0]) throw new Error("Contact not found");
+      return rows[0];
+    },
+
+    async verifyContactEmail(
+      _parent: unknown,
+      args: { contactId: number },
+      context: GraphQLContext,
+    ) {
+      if (!context.userId || !isAdminEmail(context.userEmail)) {
+        throw new Error("Forbidden");
+      }
+
+      const apiKey = process.env.NEVERBOUNCE_API_KEY;
+      if (!apiKey) {
+        return { success: false, verified: null, rawResult: null, flags: null, suggestedCorrection: null, message: "NEVERBOUNCE_API_KEY not configured" };
+      }
+
+      const [contact] = await context.db
+        .select()
+        .from(contacts)
+        .where(eq(contacts.id, args.contactId))
+        .limit(1);
+
+      if (!contact) {
+        return { success: false, verified: null, rawResult: null, flags: null, suggestedCorrection: null, message: "Contact not found" };
+      }
+
+      if (!contact.email) {
+        return { success: false, verified: null, rawResult: null, flags: null, suggestedCorrection: null, message: "Contact has no email" };
+      }
+
+      const nbClient = new NeverBounceClient(apiKey);
+      const outcome = await nbClient.verifyEmail(contact.email);
+
+      await context.db
+        .update(contacts)
+        .set({
+          email_verified: outcome.verified,
+          nb_status: "success",
+          nb_result: outcome.rawResult,
+          nb_flags: JSON.stringify(outcome.flags),
+          nb_suggested_correction: outcome.suggestedCorrection ?? null,
+          nb_execution_time_ms: outcome.executionTimeMs,
+          updated_at: new Date().toISOString(),
+        })
+        .where(eq(contacts.id, args.contactId));
+
+      return {
+        success: true,
+        verified: outcome.verified,
+        rawResult: outcome.rawResult,
+        flags: outcome.flags,
+        suggestedCorrection: outcome.suggestedCorrection ?? null,
+        message: outcome.verified ? "Email verified successfully" : `Email verification result: ${outcome.rawResult}`,
+      };
+    },
+
+    async mergeDuplicateContacts(
+      _parent: unknown,
+      args: { companyId: number },
+      context: GraphQLContext,
+    ) {
+      if (!context.userId || !isAdminEmail(context.userEmail)) {
+        throw new Error("Forbidden");
+      }
+
+      try {
+        const companyContacts = await context.db
+          .select()
+          .from(contacts)
+          .where(eq(contacts.company_id, args.companyId));
+
+        if (companyContacts.length < 2) {
+          return { success: true, message: "No duplicates found", mergedCount: 0, removedCount: 0 };
+        }
+
+        // Group by normalized (firstName + lastName)
+        const groups = new Map<string, typeof companyContacts>();
+        for (const c of companyContacts) {
+          const key = `${(c.first_name ?? "").toLowerCase().trim()}|${(c.last_name ?? "").toLowerCase().trim()}`;
+          const arr = groups.get(key);
+          if (arr) arr.push(c);
+          else groups.set(key, [c]);
+        }
+
+        let mergedCount = 0;
+        let removedCount = 0;
+
+        for (const [, group] of groups) {
+          if (group.length < 2) continue;
+
+          // Pick the most complete contact as primary
+          const sorted = group.sort((a, b) => {
+            let sa = 0, sb = 0;
+            if (a.email) sa += 5;
+            if (a.email_verified) sa += 10;
+            if (a.linkedin_url) sa += 3;
+            if (b.email) sb += 5;
+            if (b.email_verified) sb += 10;
+            if (b.linkedin_url) sb += 3;
+            return sb - sa;
+          });
+
+          const primary = sorted[0];
+          const dupes = sorted.slice(1);
+          const dupeIds = dupes.map((d) => d.id);
+
+          // Merge emails from duplicates
+          const allEmails = new Set<string>();
+          for (const c of group) {
+            if (c.email) allEmails.add(c.email);
+            const extras = parseJsonArray(c.emails);
+            extras.forEach((e) => allEmails.add(e));
+          }
+          // Primary email stays as-is; rest go into emails array
+          allEmails.delete(primary.email ?? "");
+
+          // Reassign contact_emails from dupes to primary
+          await context.db
+            .update(contactEmails)
+            .set({ contact_id: primary.id, updated_at: new Date().toISOString() })
+            .where(sql`${contactEmails.contact_id} IN (${sql.join(dupeIds.map((id) => sql`${id}`), sql`, `)})`);
+
+          // Update primary with merged data
+          await context.db
+            .update(contacts)
+            .set({
+              emails: JSON.stringify([...allEmails]),
+              linkedin_url: primary.linkedin_url ?? dupes.find((d) => d.linkedin_url)?.linkedin_url ?? null,
+              position: primary.position ?? dupes.find((d) => d.position)?.position ?? null,
+              updated_at: new Date().toISOString(),
+            })
+            .where(eq(contacts.id, primary.id));
+
+          // Delete duplicates
+          await context.db
+            .delete(contacts)
+            .where(sql`${contacts.id} IN (${sql.join(dupeIds.map((id) => sql`${id}`), sql`, `)})`);
+
+          mergedCount++;
+          removedCount += dupeIds.length;
+        }
+
+        return {
+          success: true,
+          message: mergedCount > 0
+            ? `Merged ${mergedCount} group(s), removed ${removedCount} duplicate(s)`
+            : "No duplicates found",
+          mergedCount,
+          removedCount,
+        };
+      } catch (error) {
+        console.error("Error merging duplicate contacts:", error);
+        return {
+          success: false,
+          message: error instanceof Error ? error.message : "Failed to merge contacts",
+          mergedCount: 0,
+          removedCount: 0,
+        };
+      }
+    },
   },
 
   // Company.contacts field resolver
@@ -852,6 +1028,13 @@ export const contactResolvers = {
     replyReceivedAt: (parent: any) => parent.reply_received_at ?? null,
     followupStatus: (parent: any) => parent.followup_status ?? null,
     companyId: (parent: any) => parent.company_id ?? null,
+    ccEmails: (parent: any) => parseJsonArray(parent.cc_emails),
+    replyToEmails: (parent: any) => parseJsonArray(parent.reply_to_emails),
+    htmlContent: (parent: any) => parent.html_content ?? null,
+    attachments: (parent: any) => parent.attachments ? JSON.parse(parent.attachments) : [],
+    tags: (parent: any) => parseJsonArray(parent.tags),
+    headers: (parent: any) => parent.headers ? JSON.parse(parent.headers) : [],
+    idempotencyKey: (parent: any) => parent.idempotency_key ?? null,
     createdAt: (parent: any) => parent.created_at,
     updatedAt: (parent: any) => parent.updated_at,
   },

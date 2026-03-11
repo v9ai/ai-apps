@@ -18,6 +18,8 @@ extend type Query {
     offset: Int
   ): [CompanySnapshot!]!
   company_ats_boards(company_id: Int!): [ATSBoard!]!
+  allCompanyTags: [String!]!
+  findCompany(name: String, website: String): FindCompanyResult!
 }
 
 extend type Mutation {
@@ -48,6 +50,11 @@ extend type Mutation {
     extracted: JSON
     evidence: EvidenceInput!
   ): CompanySnapshot!
+  mergeDuplicateCompanies(companyIds: [Int!]!): MergeCompaniesResult!
+  deleteCompanies(companyIds: [Int!]!): DeleteCompaniesResult!
+  importCompanyWithContacts(input: ImportCompanyWithContactsInput!): ImportCompanyResult!
+  importCompanies(companies: [CompanyImportInput!]!): ImportCompaniesResult!
+  blockJobsByCompany(companyName: String!): BlockJobsResult!
 }
 
 enum CompanyCategory {
@@ -345,4 +352,63 @@ type AnalyzeCompanyResponse {
   message: String
   companyId: Int
   companyKey: String
+}
+
+type MergeCompaniesResult {
+  success: Boolean!
+  message: String!
+  keptCompanyId: Int
+  merged: Int!
+}
+
+type DeleteCompaniesResult {
+  success: Boolean!
+  message: String!
+  deleted: Int!
+}
+
+input ImportCompanyWithContactsInput {
+  companyName: String!
+  website: String
+  contacts: [ImportContactInput!]!
+}
+
+input ImportContactInput {
+  name: String!
+  linkedinUrl: String
+  workEmail: String
+}
+
+type ImportCompanyResult {
+  success: Boolean!
+  company: Company
+  contactsImported: Int!
+  contactsSkipped: Int!
+  errors: [String!]!
+}
+
+type BlockJobsResult {
+  success: Boolean!
+  message: String!
+}
+
+type FindCompanyResult {
+  found: Boolean!
+  company: Company
+}
+
+input CompanyImportInput {
+  name: String!
+  website: String
+  email: String
+  linkedin_url: String
+  location: String
+  description: String
+}
+
+type ImportCompaniesResult {
+  success: Boolean!
+  imported: Int!
+  failed: Int!
+  errors: [String!]!
 }

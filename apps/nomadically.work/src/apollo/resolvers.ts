@@ -14,6 +14,7 @@ import { taskResolvers } from "./resolvers/tasks";
 import { emailCampaignResolvers } from "./resolvers/email-campaigns";
 import { emailTemplateResolvers } from "./resolvers/email-templates";
 import { blockedCompanyResolvers } from "./resolvers/blocked-companies";
+import { receivedEmailResolvers } from "./resolvers/received-emails";
 import { merge } from "lodash";
 
 export const resolvers = merge(
@@ -34,4 +35,5 @@ export const resolvers = merge(
   emailCampaignResolvers,
   emailTemplateResolvers,
   blockedCompanyResolvers,
+  receivedEmailResolvers,
 );

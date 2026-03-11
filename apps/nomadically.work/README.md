@@ -1,264 +1,152 @@
 # Nomadically.work
 
-Job board aggregator with GraphQL API, powered by Next.js 16 and Cloudflare D1.
+Remote EU job board aggregator with AI classification, CRM, email campaigns, and a multi-worker pipeline spanning TypeScript, Rust/WASM, and Python.
 
 ## Stack
 
-- **Next.js 16** - App Router with Node.js runtime
-- **Cloudflare D1** - Serverless SQLite database
-- **GraphQL** - Apollo Server with type-safe resolvers
-- **Drizzle ORM** - Type-safe database queries
-- **Trigger.dev** - Background job processing
-- **Clerk** - Authentication
+| Layer | Technology |
+|---|---|
+| Frontend | Next.js 16, React 19, Radix UI |
+| API | Apollo Server 5 (GraphQL), Drizzle ORM |
+| Database | Cloudflare D1 (SQLite) via D1 Gateway Worker |
+| Auth | Clerk |
+| AI/ML | Anthropic Claude, DeepSeek, Vercel AI SDK, OpenRouter |
+| Email | Resend |
+| Workers | Cloudflare Workers — TypeScript, Rust/WASM, Python |
+| Background jobs | Trigger.dev, Cloudflare Cron + Queues |
+| Evaluation | Langfuse |
+| Deployment | Vercel (app), Cloudflare Workers (workers) |
 
 ## Quick Start
 
-### 1. Install dependencies
-
 ```bash
 pnpm install
+cp .env.example .env.local   # fill in credentials (see .env.example for full list)
+pnpm dev                      # http://localhost:3000
 ```
 
-### 2. Set up Cloudflare D1 Gateway (Recommended)
-
-For production-grade performance, deploy the D1 Gateway Worker:
-
-```bash
-# Generate API key
-openssl rand -hex 32
-
-# Deploy gateway
-wrangler deploy --config wrangler.d1-gateway.toml
-
-# Set API key secret
-wrangler secret put API_KEY --config wrangler.d1-gateway.toml
-```
-
-**Full instructions:** [DEPLOY_D1_GATEWAY.md](./DEPLOY_D1_GATEWAY.md)
-
-### 3. Configure environment variables
-
-Copy `.env.example` to `.env.local` and add your credentials:
-
-```bash
-cp .env.example .env.local
-```
-
-**Required for D1 Gateway mode:**
-
-```bash
-D1_GATEWAY_URL=https://d1-gateway.your-subdomain.workers.dev
-D1_GATEWAY_KEY=your-api-key-from-step-2
-```
-
-**Or for Direct API mode (dev only):**
-
-```bash
-CLOUDFLARE_ACCOUNT_ID=your-account-id
-CLOUDFLARE_D1_DATABASE_ID=632b9c57-8262-40bd-86c2-bc08beab713b
-CLOUDFLARE_API_TOKEN=your-api-token
-```
-
-### 4. Run development server
-
-```bash
-pnpm dev
-```
-
-Visit:
-
-- **App:** http://localhost:3000
-- **GraphQL Playground:** http://localhost:3000/api/graphql
+GraphQL Playground: http://localhost:3000/api/graphql
 
 ## Architecture
 
 ### Database Access
 
-**Production (Recommended):**
+**Production:** `Next.js (Vercel) → D1 Gateway Worker → D1 Database (binding)`
+**Dev fallback:** `Next.js → Cloudflare REST API → D1 Database`
+
+The D1 Gateway supports batched queries and caching. See [DEPLOY_D1_GATEWAY.md](./DEPLOY_D1_GATEWAY.md) for setup.
+
+### Data Flow
 
 ```
-Next.js on Vercel → D1 Gateway Worker → D1 Database (binding)
+Discovery      ATS Sources → Cron Worker → Trigger Ingestion
+Board Crawl    Common Crawl CDX → ashby-crawler (Rust/WASM) → D1
+Ingestion      Greenhouse / Lever / Ashby APIs → D1
+Enhancement    Job IDs → ATS API → D1
+Classification Unprocessed jobs → DeepSeek / LangGraph → is_remote_eu → D1
+Skill Extract  Job descriptions → LLM pipeline → Skills → D1
+Resume Match   Resumes → Python Worker / Vectorize → Vector search
+Serving        Browser → Apollo Client → /api/graphql → D1 Gateway → D1
+Evaluation     Langfuse datasets → LLM calls → Accuracy scores
 ```
 
-Benefits:
+### Workers
 
-- ✅ 10-100x faster than REST API
-- ✅ No Cloudflare API rate limits
-- ✅ Batching support (multiple queries in one request)
-- ✅ Built-in caching with `s-maxage`
-
-**Development (Alternative):**
-
-```
-Next.js → Cloudflare REST API → D1 Database
-```
-
-⚠️ REST API has global rate limits and is slower. Use for admin/dev only.
-
-### Why Node.js Runtime?
-
-We use `runtime = "nodejs"` for API routes because:
-
-- Vercel recommends Node.js over Edge for reliability + performance
-- Node.js gets fluid compute optimizations (important for I/O operations)
-- Full access to Node.js APIs and packages
-- Better for calling external APIs like the D1 Gateway
-
-The dominant cost is the network hop to Cloudflare, not the runtime.
+| Worker | Language | Trigger | Purpose |
+|---|---|---|---|
+| `janitor` | TypeScript | Cron (daily midnight UTC) | Triggers ATS ingestion |
+| `d1-gateway` | TypeScript | HTTP | D1 binding proxy with batching |
+| `insert-jobs` | TypeScript | Queue | Job insertion |
+| `process-jobs` | Python | Cron (6h) + Queue | DeepSeek remote EU classification |
+| `ashby-crawler` | Rust/WASM | HTTP | Common Crawl → Ashby board discovery |
+| `resume-rag` | Python | HTTP | Vectorize + Workers AI for resume matching |
 
 ## Key Features
 
+### Job Aggregation
+Ingests from Greenhouse, Lever, and Ashby ATS platforms. Automatic board discovery via Common Crawl (Rust crawler). Enhancement pipeline enriches jobs with full ATS metadata.
+
+### AI Classification
+Detects remote-EU-eligible jobs using DeepSeek with LangGraph orchestration. Evaluated against Langfuse datasets with an 80%+ accuracy bar.
+
+### Skill Extraction
+LLM-powered skill tagging validated against a managed taxonomy. Vector-based skill search and filtering.
+
+### CRM
+Company profiles, contacts management, email campaigns with Resend, batch generation, and follow-up tracking.
+
+### Resume Matching
+RAG-based vector search using Cloudflare Vectorize and Workers AI (Python worker).
+
 ### GraphQL API
+Apollo Server 5 with typed resolvers, DataLoaders, batched D1 queries, and full codegen pipeline.
 
-Purpose-built resolvers with proper batching:
+### Evaluation
+Langfuse dataset-driven accuracy testing for classification and email generation pipelines.
 
-```graphql
-query GetJobs {
-  jobs(limit: 20, status: "active") {
-    jobs {
-      id
-      title
-      company_key
-      location
-      url
-    }
-    totalCount
-  }
-}
-```
-
-### Batched Queries
-
-The D1 Gateway supports batching to reduce round trips:
-
-```ts
-// ❌ Slow: 3 separate requests
-const jobs = await fetch(`${GATEWAY}/jobs`);
-const count = await fetch(`${GATEWAY}/jobs/count`);
-const companies = await fetch(`${GATEWAY}/companies`);
-
-// ✅ Fast: 1 batched request
-const { total, jobs, company_total } = await gateway.jobs.batch({
-  status: "active",
-  company_key: "stripe",
-  limit: 20,
-});
-```
-
-### Caching Strategy
-
-- **Jobs list:** 5 sec fresh, 60 sec stale-while-revalidate
-- **Job detail:** 10 sec fresh, 120 sec stale-while-revalidate
-- **Companies:** 30 sec fresh, 5 min stale-while-revalidate
-- **User settings:** 30 sec private cache
-
-## Database Schema
-
-See `migrations/schema.ts` for the full schema.
-
-Key tables:
-
-- `jobs` - Job postings from various ATS platforms
-- `companies` - Company profiles with scoring
-- `user_settings` - User preferences and filters
-- `job_skill_tags` - Skill extraction results
-
-## Scripts
+## Commands
 
 ```bash
-# Database migrations
-wrangler d1 migrations apply DB --remote
+# Dev & build
+pnpm dev                          # Dev server
+pnpm build                        # Production build
+pnpm lint                         # ESLint
+pnpm codegen                      # GraphQL codegen (run after schema changes)
 
-# Scrape jobs (local)
-pnpm tsx scripts/ingest-jobs.ts
+# Database
+pnpm db:generate                  # Generate Drizzle migrations
+pnpm db:migrate                   # Apply locally
+pnpm db:push                      # Apply to remote D1
 
-# Enhance job with ATS data
-pnpm tsx scripts/enhance-specific-job.ts <job-id>
+# Ingestion & skills
+pnpm jobs:ingest                  # Ingest from ATS platforms
+pnpm jobs:enhance                 # Enhance jobs with ATS data
+pnpm skills:extract               # Extract skills from jobs
+pnpm skills:seed                  # Seed skill taxonomy
 
-# Extract skills from jobs
-pnpm tsx scripts/extract-job-skills.ts
+# Evaluation
+pnpm eval:langfuse                # Run classification eval
 
-# Classify remote EU jobs
-pnpm tsx scripts/classify-remote-eu-jobs.ts
+# Workers
+wrangler deploy --config wrangler.d1-gateway.toml         # D1 Gateway
+wrangler deploy --config workers/ashby-crawler/wrangler.toml  # Ashby crawler
+
+# Deploy app
+pnpm deploy                       # Vercel deploy
+```
+
+## Project Structure
+
+```
+schema/                 GraphQL schema (by domain)
+src/
+  __generated__/        Codegen output (types, hooks, resolvers)
+  agents/               AI agents (SQL, admin, strategy enforcer)
+  anthropic/            Claude client, MCP, sub-agents
+  apollo/resolvers/     GraphQL resolvers
+  app/                  Next.js App Router pages + API routes
+  components/           React components (Radix UI)
+  db/                   Drizzle schema, D1 HTTP client
+  evals/                Langfuse evaluation datasets
+  graphql/              Query/mutation/fragment documents
+  ingestion/            ATS fetchers (Greenhouse, Lever, Ashby)
+  lib/skills/           Skill taxonomy, extraction, filtering
+  tools/database/       Agent database tools
+  trigger/              Trigger.dev tasks
+workers/
+  ashby-crawler/        Rust/WASM — Common Crawl board discovery
+  process-jobs/         Python — DeepSeek classification
+  resume-rag/           Python — Vector search
+migrations/             Drizzle migration SQL files
 ```
 
 ## Deployment
 
-### Deploy to Vercel
+**App** — deployed to Vercel. Set env vars in the Vercel dashboard (see `.env.example`).
 
-```bash
-vercel deploy
-```
+**Workers** — deployed individually via `wrangler deploy` with their respective config files.
 
-Make sure to add environment variables in Vercel dashboard:
-
-- `D1_GATEWAY_URL`
-- `D1_GATEWAY_KEY`
-- `NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY`
-- `CLERK_SECRET_KEY`
-- etc. (see `.env.example`)
-
-### Deploy D1 Gateway Worker
-
-```bash
-wrangler deploy --config wrangler.d1-gateway.toml
-```
-
-See [DEPLOY_D1_GATEWAY.md](./DEPLOY_D1_GATEWAY.md) for details.
-
-## Performance Tips
-
-1. **Use batching** for multiple related queries
-2. **Leverage caching** - GET endpoints have aggressive `s-maxage`
-3. **Select only needed columns** - Gateway uses `.raw()` for compact payloads
-4. **Add indexes** for WHERE + ORDER BY queries
-
-See [DEPLOY_D1_GATEWAY.md](./DEPLOY_D1_GATEWAY.md) for optimization details.
-
-## Monitoring
-
-### View Gateway logs
-
-```bash
-wrangler tail --config wrangler.d1-gateway.toml
-```
-
-### Check Gateway health
-
-```bash
-curl https://d1-gateway.your-subdomain.workers.dev/health \
-  -H "Authorization: Bearer YOUR_API_KEY"
-```
-
-## Troubleshooting
-
-### GraphQL errors
-
-Check the console for detailed error messages:
-
-```
-❌ [GraphQL] Error in context setup: Missing D1 configuration
-```
-
-Make sure environment variables are set in `.env.local`.
-
-### Slow queries
-
-- Add indexes for frequently queried columns
-- Use batching to reduce round trips
-- Check Wrangler logs for query execution time
-
-### "Unauthorized" errors
-
-- Verify `D1_GATEWAY_KEY` matches the Worker's `API_KEY` secret
-- Ensure `Authorization: Bearer ...` header is set
-
-## Contributing
-
-1. Create a feature branch
-2. Make your changes
-3. Test locally with `pnpm dev`
-4. Submit a PR
+**D1 Gateway** — see [DEPLOY_D1_GATEWAY.md](./DEPLOY_D1_GATEWAY.md) for full setup instructions.
 
 ## License
 

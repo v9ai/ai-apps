@@ -241,3 +241,31 @@ mutation CreateContact($input: CreateContactInput!) {
     tags
   }
 }
+
+mutation MergeDuplicateContacts($companyId: Int!) {
+  mergeDuplicateContacts(companyId: $companyId) {
+    success
+    message
+    mergedCount
+    removedCount
+  }
+}
+
+mutation MarkContactEmailVerified($contactId: Int!, $verified: Boolean!) {
+  markContactEmailVerified(contactId: $contactId, verified: $verified) {
+    id
+    email
+    emailVerified
+  }
+}
+
+mutation VerifyContactEmail($contactId: Int!) {
+  verifyContactEmail(contactId: $contactId) {
+    success
+    verified
+    rawResult
+    flags
+    suggestedCorrection
+    message
+  }
+}
