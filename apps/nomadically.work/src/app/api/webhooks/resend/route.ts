@@ -3,7 +3,7 @@ import { createHmac } from "crypto";
 import { drizzle } from "drizzle-orm/d1";
 import { eq, sql } from "drizzle-orm";
 import { createD1HttpClient } from "@/db/d1-http";
-import { contactEmails, contacts } from "@/db/schema";
+import { contactEmails, contacts, receivedEmails } from "@/db/schema";
 
 /**
  * Resend Webhook Handler
@@ -339,15 +339,38 @@ async function handleOpened(emailId: string): Promise<void> {
 }
 
 /**
- * Forward an inbound received email to the personal notification address.
+ * Persist an inbound received email to D1 and forward to personal inbox.
  */
 async function handleReceived(event: ResendWebhookEvent): Promise<void> {
+  const { email_id: emailId, from, to, subject, html, text } = event.data;
+
+  // 1. Persist to D1
+  await withRetry(`handleReceived/persist(${emailId})`, async () => {
+    const db = getDb();
+    await db
+      .insert(receivedEmails)
+      .values({
+        resend_id: emailId,
+        from_email: from ?? null,
+        to_emails: JSON.stringify(to ?? []),
+        cc_emails: JSON.stringify((event.data as any).cc ?? []),
+        reply_to_emails: JSON.stringify((event.data as any).reply_to ?? []),
+        subject: subject ?? null,
+        message_id: (event.data as any).message_id ?? null,
+        html_content: html ?? null,
+        text_content: text ?? null,
+        attachments: JSON.stringify((event.data as any).attachments ?? []),
+        received_at: event.created_at ?? new Date().toISOString(),
+      })
+      .onConflictDoNothing();
+    console.log(`[RESEND_WEBHOOK] email.received persisted: ${emailId}`);
+  });
+
+  // 2. Forward to personal inbox
   if (!RESEND_API_KEY) {
     console.warn("[RESEND_WEBHOOK] RESEND_API_KEY not set — cannot forward received email");
     return;
   }
-
-  const { from, subject, html, text } = event.data;
 
   const forwardPayload = {
     from: SENDER_EMAIL,

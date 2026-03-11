@@ -31,6 +31,16 @@ extend type Mutation {
   enhanceAllContacts: EnhanceAllContactsResult!
   applyEmailPattern(companyId: Int!): ApplyEmailPatternResult!
   unverifyCompanyContacts(companyId: Int!): UnverifyContactsResult!
+  mergeDuplicateContacts(companyId: Int!): MergeDuplicateContactsResult!
+  markContactEmailVerified(contactId: Int!, verified: Boolean!): Contact!
+  verifyContactEmail(contactId: Int!): VerifyEmailResult!
+}
+
+type MergeDuplicateContactsResult {
+  success: Boolean!
+  message: String!
+  mergedCount: Int!
+  removedCount: Int!
 }
 
 type Contact {
@@ -148,6 +158,15 @@ type UnverifyContactsResult {
   count: Int!
 }
 
+type VerifyEmailResult {
+  success: Boolean!
+  verified: Boolean
+  rawResult: String
+  flags: [String!]
+  suggestedCorrection: String
+  message: String!
+}
+
 type ContactEmail {
   id: Int!
   contactId: Int!
@@ -170,6 +189,13 @@ type ContactEmail {
   replyReceivedAt: String
   followupStatus: String
   companyId: Int
+  ccEmails: [String!]!
+  replyToEmails: [String!]!
+  htmlContent: String
+  attachments: JSON
+  tags: [String!]!
+  headers: JSON
+  idempotencyKey: String
   createdAt: String!
   updatedAt: String!
 }

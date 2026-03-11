@@ -105,6 +105,11 @@ type ApplyEmailPatternResult {
   success: Boolean!
 }
 
+type ArchiveEmailResult {
+  message: String!
+  success: Boolean!
+}
+
 type AshbyAddress {
   postalAddress: AshbyPostalAddress
 }
@@ -158,6 +163,11 @@ input BatchRecipientInput {
   contactId: Int
   email: String!
   name: String!
+}
+
+type BlockJobsResult {
+  message: String!
+  success: Boolean!
 }
 
 type BlockedCompany {
@@ -310,6 +320,15 @@ input CompanyFilterInput {
   text: String
 }
 
+input CompanyImportInput {
+  description: String
+  email: String
+  linkedin_url: String
+  location: String
+  name: String!
+  website: String
+}
+
 enum CompanyOrderBy {
   CREATED_AT_DESC
   NAME_ASC
@@ -362,6 +381,8 @@ type Contact {
 }
 
 type ContactEmail {
+  attachments: JSON
+  ccEmails: [String!]!
   companyId: Int
   contactId: Int!
   createdAt: String!
@@ -369,12 +390,16 @@ type ContactEmail {
   errorMessage: String
   followupStatus: String
   fromEmail: String!
+  headers: JSON
+  htmlContent: String
   id: Int!
+  idempotencyKey: String
   openedAt: String
   parentEmailId: Int
   recipientName: String
   replyReceived: Boolean!
   replyReceivedAt: String
+  replyToEmails: [String!]!
   resendId: String!
   scheduledAt: String
   sentAt: String
@@ -382,6 +407,7 @@ type ContactEmail {
   sequenceType: String
   status: String!
   subject: String!
+  tags: [String!]!
   textContent: String
   toEmails: [String!]!
   updatedAt: String!
@@ -407,7 +433,10 @@ type ContactsResult {
 }
 
 input CreateCampaignInput {
+  addAntiThreadHeader: Boolean
+  addUnsubscribeHeaders: Boolean
   companyId: Int
+  createdBy: String
   delayDays: JSON
   fromEmail: String
   mode: String
@@ -415,6 +444,8 @@ input CreateCampaignInput {
   recipientEmails: [String!]
   replyTo: String
   sequence: JSON
+  totalEmailsPlanned: Int
+  unsubscribeUrl: String
 }
 
 input CreateCompanyInput {
@@ -525,6 +556,12 @@ type DeleteCampaignResult {
   success: Boolean!
 }
 
+type DeleteCompaniesResult {
+  deleted: Int!
+  message: String!
+  success: Boolean!
+}
+
 type DeleteCompanyResponse {
   message: String
   success: Boolean!
@@ -558,8 +595,11 @@ type DeleteTaskResult {
 scalar EmailAddress
 
 type EmailCampaign {
+  addAntiThreadHeader: Boolean!
+  addUnsubscribeHeaders: Boolean!
   companyId: Int
   createdAt: String!
+  createdBy: String
   delayDays: JSON
   emailsFailed: Int!
   emailsScheduled: Int!
@@ -573,13 +613,21 @@ type EmailCampaign {
   sequence: JSON
   startAt: String
   status: String!
+  totalEmailsPlanned: Int
   totalRecipients: Int!
+  unsubscribeUrl: String
   updatedAt: String!
 }
 
 type EmailCampaignsResult {
   campaigns: [EmailCampaign!]!
   totalCount: Int!
+}
+
+type EmailPreview {
+  drySendResult: String
+  htmlContent: String!
+  subject: String!
 }
 
 type EmailStats {
@@ -612,6 +660,7 @@ type EmailTemplate {
   tags: [String!]!
   textContent: String
   updatedAt: String!
+  userId: String
   variables: [String!]!
 }
 
@@ -682,6 +731,11 @@ enum ExtractMethod {
   META
 }
 
+type FindCompanyResult {
+  company: Company
+  found: Boolean!
+}
+
 type FindContactEmailResult {
   candidatesTried: Int!
   email: String
@@ -704,6 +758,28 @@ type FollowUpBatchResult {
   emailIds: [String!]!
   message: String!
   success: Boolean!
+}
+
+type FollowUpEmail {
+  companyId: Int
+  contactId: Int!
+  createdAt: String!
+  followupStatus: String
+  fromEmail: String!
+  id: Int!
+  recipientName: String
+  resendId: String!
+  sentAt: String
+  sequenceNumber: String
+  sequenceType: String
+  status: String!
+  subject: String!
+  toEmails: [String!]!
+}
+
+type FollowUpEmailsResult {
+  emails: [FollowUpEmail!]!
+  totalCount: Int!
 }
 
 input GenerateEmailInput {
@@ -789,6 +865,33 @@ type GreenhouseQuestion {
 type GreenhouseQuestionField {
   name: String
   type: String!
+}
+
+type ImportCompaniesResult {
+  errors: [String!]!
+  failed: Int!
+  imported: Int!
+  success: Boolean!
+}
+
+type ImportCompanyResult {
+  company: Company
+  contactsImported: Int!
+  contactsSkipped: Int!
+  errors: [String!]!
+  success: Boolean!
+}
+
+input ImportCompanyWithContactsInput {
+  companyName: String!
+  contacts: [ImportContactInput!]!
+  website: String
+}
+
+input ImportContactInput {
+  linkedinUrl: String
+  name: String!
+  workEmail: String
 }
 
 type ImportContactsResult {
@@ -921,12 +1024,28 @@ type MarkRepliedResult {
   success: Boolean!
 }
 
+type MergeCompaniesResult {
+  keptCompanyId: Int
+  merged: Int!
+  message: String!
+  success: Boolean!
+}
+
+type MergeDuplicateContactsResult {
+  mergedCount: Int!
+  message: String!
+  removedCount: Int!
+  success: Boolean!
+}
+
 type Mutation {
   add_company_facts(company_id: Int!, facts: [CompanyFactInput!]!): [CompanyFact!]!
   analyzeCompany(id: Int, key: String): AnalyzeCompanyResponse!
   applyEmailPattern(companyId: Int!): ApplyEmailPatternResult!
+  archiveEmail(id: Int!): ArchiveEmailResult!
   archiveJob(id: Int!): Job!
   blockCompany(name: String!, reason: String): BlockedCompany!
+  blockJobsByCompany(companyName: String!): BlockJobsResult!
   cancelCompanyEmails(companyId: Int!): CancelCompanyEmailsResult!
   cancelScheduledEmail(resendId: String!): CancelEmailResult!
   completeTask(id: Int!): Task!
@@ -942,6 +1061,7 @@ type Mutation {
   deleteAllJobs: DeleteJobResponse!
   deleteApplication(id: Int!): DeleteApplicationResponse!
   deleteCampaign(id: String!): DeleteCampaignResult!
+  deleteCompanies(companyIds: [Int!]!): DeleteCompaniesResult!
   deleteCompany(id: Int!): DeleteCompanyResponse!
   deleteContact(id: Int!): DeleteContactResult!
   deleteEmailTemplate(id: Int!): DeleteEmailTemplateResult!
@@ -977,12 +1097,18 @@ type Mutation {
   findContactEmail(contactId: Int!): FindContactEmailResult!
   generateEmail(input: GenerateEmailInput!): GenerateEmailResult!
   generateReply(input: GenerateReplyInput!): GenerateReplyResult!
+  importCompanies(companies: [CompanyImportInput!]!): ImportCompaniesResult!
+  importCompanyWithContacts(input: ImportCompanyWithContactsInput!): ImportCompanyResult!
   importContacts(contacts: [ContactInput!]!): ImportContactsResult!
   ingestResumeParse(email: String!, filename: String!, job_id: String!): ResumeIngestResult
   ingest_company_snapshot(capture_timestamp: String, company_id: Int!, content_hash: String, crawl_id: String, evidence: EvidenceInput!, extracted: JSON, fetched_at: String!, http_status: Int, jsonld: JSON, mime: String, source_url: String!, text_sample: String): CompanySnapshot!
   launchEmailCampaign(id: String!): EmailCampaign!
+  markContactEmailVerified(contactId: Int!, verified: Boolean!): Contact!
   markEmailReplied(resendId: String!): MarkRepliedResult!
   markJobApplied(id: Int!): Job!
+  mergeDuplicateCompanies(companyIds: [Int!]!): MergeCompaniesResult!
+  mergeDuplicateContacts(companyId: Int!): MergeDuplicateContactsResult!
+  previewEmail(input: PreviewEmailInput!): EmailPreview!
   """
   Trigger classification/enhancement of all unprocessed jobs via the Cloudflare Worker.
   Calls the classify-jobs CF worker (POST) which runs DeepSeek-based classification
@@ -1002,6 +1128,7 @@ type Mutation {
   sendEmail(input: SendEmailInput!): SendEmailResult!
   sendScheduledEmailNow(resendId: String!): SendNowResult!
   syncResendEmails(companyId: Int): SyncResendResult!
+  unarchiveEmail(id: Int!): ArchiveEmailResult!
   unarchiveJob(id: Int!): Job!
   unblockCompany(id: Int!): DeleteBlockedCompanyResult!
   unverifyCompanyContacts(companyId: Int!): UnverifyContactsResult!
@@ -1017,6 +1144,7 @@ type Mutation {
   updateUserSettings(settings: UserSettingsInput!, userId: String!): UserSettings!
   uploadResume(email: String!, filename: String!, resumePdf: String!): ResumeUploadResult
   upsert_company_ats_boards(boards: [ATSBoardUpsertInput!]!, company_id: Int!): [ATSBoard!]!
+  verifyContactEmail(contactId: Int!): VerifyEmailResult!
 }
 
 type OpportunitiesResult {
@@ -1050,6 +1178,13 @@ type Opportunity {
   title: String!
   updatedAt: String!
   url: String
+}
+
+input PreviewEmailInput {
+  content: String!
+  drySend: Boolean
+  recipientEmail: String!
+  subject: String!
 }
 
 """Response from triggering the classify-jobs Cloudflare Worker"""
@@ -1123,6 +1258,7 @@ input PushLangSmithPromptInput {
 }
 
 type Query {
+  allCompanyTags: [String!]!
   application(id: Int!): Application
   applications: [Application!]!
   askAboutResume(email: String!, question: String!): ResumeAnswer
@@ -1142,7 +1278,9 @@ type Query {
   emailStats: EmailStats!
   emailTemplate(id: Int!): EmailTemplate
   emailTemplates(category: String, limit: Int, offset: Int): EmailTemplatesResult!
+  emailsNeedingFollowUp(limit: Int, offset: Int): FollowUpEmailsResult!
   executeSql(sql: String!): TextToSqlResult!
+  findCompany(name: String, website: String): FindCompanyResult!
   job(id: String!): Job
   jobs(excludedCompanies: [String!], limit: Int, offset: Int, remoteEuConfidence: String, search: String, showAll: Boolean, skills: [String!], sourceType: String, sourceTypes: [String!]): JobsResponse!
   langsmithPrompt(promptIdentifier: String!): LangSmithPrompt
@@ -1153,6 +1291,8 @@ type Query {
   opportunity(id: String!): Opportunity
   prompt(label: String, name: String!, version: Int): Prompt
   prompts: [RegisteredPrompt!]!
+  receivedEmail(id: Int!): ReceivedEmail
+  receivedEmails(archived: Boolean, limit: Int, offset: Int): ReceivedEmailsResult!
   resendEmail(resendId: String!): ResendEmailDetail
   resumeStatus(email: String!): ResumeStatus
   task(id: Int!): Task
@@ -1171,6 +1311,29 @@ input QuestionAnswerInput {
   answerText: String!
   questionId: String!
   questionText: String!
+}
+
+type ReceivedEmail {
+  archivedAt: String
+  attachments: JSON
+  ccEmails: [String!]!
+  createdAt: String!
+  fromEmail: String
+  htmlContent: String
+  id: Int!
+  messageId: String
+  receivedAt: String!
+  replyToEmails: [String!]!
+  resendId: String!
+  subject: String
+  textContent: String
+  toEmails: [String!]!
+  updatedAt: String!
+}
+
+type ReceivedEmailsResult {
+  emails: [ReceivedEmail!]!
+  totalCount: Int!
 }
 
 type RegisteredPrompt {
@@ -1350,6 +1513,8 @@ input UpdateApplicationInput {
 }
 
 input UpdateCampaignInput {
+  addAntiThreadHeader: Boolean
+  addUnsubscribeHeaders: Boolean
   delayDays: JSON
   fromEmail: String
   mode: String
@@ -1359,6 +1524,8 @@ input UpdateCampaignInput {
   sequence: JSON
   startAt: String
   status: String
+  totalEmailsPlanned: Int
+  unsubscribeUrl: String
 }
 
 input UpdateCompanyInput {
@@ -1478,6 +1645,15 @@ input UserSettingsInput {
   new_job_alerts: Boolean
   preferred_locations: [String!]
   preferred_skills: [String!]
+}
+
+type VerifyEmailResult {
+  flags: [String!]
+  message: String!
+  rawResult: String
+  success: Boolean!
+  suggestedCorrection: String
+  verified: Boolean
 }
 
 type WarcPointer {

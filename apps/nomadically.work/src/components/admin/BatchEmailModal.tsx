@@ -55,10 +55,18 @@ interface BatchSendResponse {
   schedulingPlan?: string;
 }
 
+interface JobContext {
+  title?: string;
+  description?: string;
+  requiredSkills?: string[];
+  location?: string;
+}
+
 interface BatchEmailModalProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   recipients: Recipient[];
+  jobContext?: JobContext;
 }
 
 type ModalState = "compose" | "sending" | "done";
@@ -67,6 +75,7 @@ export function BatchEmailModal({
   open,
   onOpenChange,
   recipients,
+  jobContext,
 }: BatchEmailModalProps) {
   const [subject, setSubject] = useState("");
   const [body, setBody] = useState("");
@@ -110,6 +119,7 @@ export function BatchEmailModal({
           companyName: companyName.trim() || undefined,
           instructions: instructions.trim() || undefined,
           recipientCount: recipients.length,
+          jobContext: jobContext || undefined,
         }),
       });
       if (!res.ok) {

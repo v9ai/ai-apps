@@ -3,8 +3,12 @@ import {
   companyFacts,
   companySnapshots,
   atsBoards,
+  contacts,
+  contactEmails,
+  blockedCompanies,
+  opportunities,
 } from "@/db/schema";
-import { eq, and, or, like, asc, desc, gte, inArray } from "drizzle-orm";
+import { eq, and, or, like, asc, desc, gte, inArray, sql } from "drizzle-orm";
 import type { GraphQLContext } from "../context";
 import { isAdminEmail } from "@/lib/admin";
 import { enhanceCompany } from "./enhance-company";
@@ -429,6 +433,65 @@ export const companyResolvers = {
       }
     },
 
+    async allCompanyTags(
+      _parent: any,
+      _args: any,
+      context: GraphQLContext,
+    ) {
+      try {
+        const rows = await context.db
+          .select({ tags: companies.tags })
+          .from(companies)
+          .where(sql`${companies.tags} IS NOT NULL AND ${companies.tags} != '[]'`);
+
+        const tagSet = new Set<string>();
+        for (const row of rows) {
+          const parsed = safeJsonParse<string[]>(row.tags, []);
+          for (const tag of parsed) tagSet.add(tag);
+        }
+        return [...tagSet].sort();
+      } catch (error) {
+        console.error("Error fetching all company tags:", error);
+        return [];
+      }
+    },
+
+    async findCompany(
+      _parent: any,
+      args: { name?: string; website?: string },
+      context: GraphQLContext,
+    ) {
+      try {
+        if (!args.name && !args.website) {
+          return { found: false, company: null };
+        }
+
+        const conditions = [];
+        if (args.name) {
+          conditions.push(like(companies.name, `%${args.name}%`));
+        }
+        if (args.website) {
+          // Match by domain substring
+          const domain = args.website.replace(/^https?:\/\//, "").replace(/^www\./, "").replace(/\/.*$/, "");
+          conditions.push(like(companies.website, `%${domain}%`));
+        }
+
+        const rows = await context.db
+          .select()
+          .from(companies)
+          .where(or(...conditions))
+          .limit(1);
+
+        if (rows[0]) {
+          return { found: true, company: rows[0] };
+        }
+        return { found: false, company: null };
+      } catch (error) {
+        console.error("Error finding company:", error);
+        return { found: false, company: null };
+      }
+    },
+
     async company_ats_boards(
       _parent: any,
       args: { company_id: number },
@@ -849,6 +912,370 @@ export const companyResolvers = {
       } catch (error) {
         console.error("Error ingesting company snapshot:", error);
         throw error;
+      }
+    },
+
+    async mergeDuplicateCompanies(
+      _parent: any,
+      args: { companyIds: number[] },
+      context: GraphQLContext,
+    ) {
+      if (!context.userId || !isAdminEmail(context.userEmail)) {
+        throw new Error("Forbidden");
+      }
+
+      const { companyIds } = args;
+      if (companyIds.length < 2) {
+        return { success: false, message: "Need at least 2 companies to merge", keptCompanyId: null, merged: 0 };
+      }
+
+      try {
+        const allCompanies = await context.db
+          .select()
+          .from(companies)
+          .where(inArray(companies.id, companyIds));
+
+        if (allCompanies.length < 2) {
+          return { success: false, message: "Less than 2 companies found", keptCompanyId: null, merged: 0 };
+        }
+
+        // Score each company by field completeness to pick the best primary
+        function scoreCompany(c: typeof allCompanies[0]): number {
+          let s = 0;
+          if (c.website) s += 10;
+          if (c.linkedin_url) s += 8;
+          if (c.description) s += Math.min(c.description.length / 50, 5);
+          if (c.email) s += 5;
+          const emailsList = c.emails ? safeJsonParse(c.emails, []) : [];
+          s += emailsList.length * 3;
+          const tagsList = c.tags ? safeJsonParse(c.tags, []) : [];
+          s += tagsList.length * 2;
+          if (c.logo_url) s += 3;
+          if (c.industry) s += 2;
+          if (c.size) s += 2;
+          if (c.location) s += 2;
+          return s;
+        }
+
+        const scored = allCompanies
+          .map((c) => ({ company: c, score: scoreCompany(c) }))
+          .sort((a, b) => b.score - a.score);
+
+        const primary = scored[0].company;
+        const duplicates = scored.slice(1).map((s) => s.company);
+        const duplicateIds = duplicates.map((d) => d.id);
+
+        // Merge fields: take first non-null for scalars, merge arrays
+        const mergedEmails = new Set<string>();
+        const mergedTags = new Set<string>();
+        let bestDescription = primary.description ?? "";
+
+        for (const c of allCompanies) {
+          const emails = c.emails ? safeJsonParse<string[]>(c.emails, []) : [];
+          emails.forEach((e) => mergedEmails.add(e));
+          if (c.email) mergedEmails.add(c.email);
+
+          const tags = c.tags ? safeJsonParse<string[]>(c.tags, []) : [];
+          tags.forEach((t) => mergedTags.add(t));
+
+          if (c.description && c.description.length > bestDescription.length) {
+            bestDescription = c.description;
+          }
+        }
+
+        // Update primary with merged data
+        await context.db
+          .update(companies)
+          .set({
+            emails: JSON.stringify([...mergedEmails]),
+            tags: JSON.stringify([...mergedTags]),
+            description: bestDescription || primary.description,
+            website: primary.website ?? duplicates.find((d) => d.website)?.website ?? null,
+            linkedin_url: primary.linkedin_url ?? duplicates.find((d) => d.linkedin_url)?.linkedin_url ?? null,
+            logo_url: primary.logo_url ?? duplicates.find((d) => d.logo_url)?.logo_url ?? null,
+            updated_at: new Date().toISOString(),
+          })
+          .where(eq(companies.id, primary.id));
+
+        // Reassign contacts, opportunities, contact_emails from duplicates to primary
+        await context.db
+          .update(contacts)
+          .set({ company_id: primary.id, updated_at: new Date().toISOString() })
+          .where(inArray(contacts.company_id, duplicateIds));
+
+        await context.db
+          .update(opportunities)
+          .set({ company_id: primary.id, updated_at: new Date().toISOString() })
+          .where(inArray(opportunities.company_id, duplicateIds));
+
+        await context.db
+          .update(contactEmails)
+          .set({ company_id: primary.id, updated_at: new Date().toISOString() })
+          .where(inArray(contactEmails.company_id, duplicateIds));
+
+        // Delete duplicate companies (cascade will handle remaining FKs)
+        await context.db
+          .delete(companies)
+          .where(inArray(companies.id, duplicateIds));
+
+        return {
+          success: true,
+          message: `Merged ${duplicateIds.length} companies into "${primary.name}" (ID: ${primary.id})`,
+          keptCompanyId: primary.id,
+          merged: duplicateIds.length,
+        };
+      } catch (error) {
+        console.error("Error merging companies:", error);
+        return {
+          success: false,
+          message: error instanceof Error ? error.message : "Failed to merge companies",
+          keptCompanyId: null,
+          merged: 0,
+        };
+      }
+    },
+
+    async deleteCompanies(
+      _parent: any,
+      args: { companyIds: number[] },
+      context: GraphQLContext,
+    ) {
+      if (!context.userId || !isAdminEmail(context.userEmail)) {
+        throw new Error("Forbidden");
+      }
+
+      const { companyIds } = args;
+      if (companyIds.length === 0) {
+        return { success: false, message: "No company IDs provided", deleted: 0 };
+      }
+
+      try {
+        // Delete contacts first (cascade may not apply for all FK types)
+        await context.db
+          .delete(contacts)
+          .where(inArray(contacts.company_id, companyIds));
+
+        // Delete companies
+        const result = await context.db
+          .delete(companies)
+          .where(inArray(companies.id, companyIds))
+          .returning({ id: companies.id });
+
+        return {
+          success: true,
+          message: `Deleted ${result.length} company(ies)`,
+          deleted: result.length,
+        };
+      } catch (error) {
+        console.error("Error deleting companies:", error);
+        return {
+          success: false,
+          message: error instanceof Error ? error.message : "Failed to delete companies",
+          deleted: 0,
+        };
+      }
+    },
+
+    async importCompanyWithContacts(
+      _parent: any,
+      args: {
+        input: {
+          companyName: string;
+          website?: string;
+          contacts: Array<{ name: string; linkedinUrl?: string; workEmail?: string }>;
+        };
+      },
+      context: GraphQLContext,
+    ) {
+      if (!context.userId || !isAdminEmail(context.userEmail)) {
+        throw new Error("Forbidden");
+      }
+
+      const { companyName, website, contacts: contactInputs } = args.input;
+      const errors: string[] = [];
+
+      try {
+        // Upsert company: find by name (case-insensitive) or create
+        let companyRow: typeof companies.$inferSelect | undefined;
+
+        const existing = await context.db
+          .select()
+          .from(companies)
+          .where(sql`lower(${companies.name}) = ${companyName.toLowerCase()}`)
+          .limit(1);
+
+        if (existing[0]) {
+          companyRow = existing[0];
+          // Update website if missing
+          if (!companyRow.website && website) {
+            const [updated] = await context.db
+              .update(companies)
+              .set({ website, updated_at: new Date().toISOString() })
+              .where(eq(companies.id, companyRow.id))
+              .returning();
+            companyRow = updated;
+          }
+        } else {
+          // Create new company
+          const key = companyName.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, "");
+          const [created] = await context.db
+            .insert(companies)
+            .values({
+              key,
+              name: companyName,
+              website: website ?? null,
+            })
+            .returning();
+          companyRow = created;
+        }
+
+        let imported = 0;
+        let skipped = 0;
+
+        for (const input of contactInputs) {
+          try {
+            // Parse name
+            const parts = input.name.trim().split(/\s+/);
+            const firstName = parts[0] || input.name;
+            const lastName = parts.slice(1).join(" ") || "";
+
+            // Check for duplicates by linkedinUrl or (firstName + lastName + companyId)
+            if (input.linkedinUrl) {
+              const dupByLinkedin = await context.db
+                .select({ id: contacts.id })
+                .from(contacts)
+                .where(eq(contacts.linkedin_url, input.linkedinUrl))
+                .limit(1);
+              if (dupByLinkedin[0]) { skipped++; continue; }
+            }
+
+            const dupByName = await context.db
+              .select({ id: contacts.id })
+              .from(contacts)
+              .where(
+                and(
+                  sql`lower(${contacts.first_name}) = ${firstName.toLowerCase()}`,
+                  sql`lower(${contacts.last_name}) = ${lastName.toLowerCase()}`,
+                  eq(contacts.company_id, companyRow!.id),
+                ),
+              )
+              .limit(1);
+
+            if (dupByName[0]) { skipped++; continue; }
+
+            await context.db.insert(contacts).values({
+              first_name: firstName,
+              last_name: lastName,
+              email: input.workEmail ?? null,
+              linkedin_url: input.linkedinUrl ?? null,
+              company_id: companyRow!.id,
+              company: companyName,
+            });
+            imported++;
+          } catch (err) {
+            errors.push(`${input.name}: ${err instanceof Error ? err.message : String(err)}`);
+          }
+        }
+
+        return {
+          success: true,
+          company: companyRow,
+          contactsImported: imported,
+          contactsSkipped: skipped,
+          errors,
+        };
+      } catch (error) {
+        console.error("Error importing company with contacts:", error);
+        return {
+          success: false,
+          company: null,
+          contactsImported: 0,
+          contactsSkipped: 0,
+          errors: [error instanceof Error ? error.message : "Import failed"],
+        };
+      }
+    },
+
+    async importCompanies(
+      _parent: any,
+      args: {
+        companies: Array<{
+          name: string;
+          website?: string;
+          email?: string;
+          linkedin_url?: string;
+          location?: string;
+          description?: string;
+        }>;
+      },
+      context: GraphQLContext,
+    ) {
+      if (!context.userId || !isAdminEmail(context.userEmail)) {
+        throw new Error("Forbidden");
+      }
+
+      let imported = 0;
+      const errors: string[] = [];
+
+      for (const input of args.companies) {
+        try {
+          const key = input.name.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, "");
+          await context.db.insert(companies).values({
+            key,
+            name: input.name,
+            website: input.website ?? null,
+            email: input.email ?? null,
+            linkedin_url: input.linkedin_url ?? null,
+            location: input.location ?? null,
+            description: input.description ?? null,
+          });
+          imported++;
+        } catch (err) {
+          errors.push(`${input.name}: ${err instanceof Error ? err.message : String(err)}`);
+        }
+      }
+
+      return {
+        success: errors.length === 0,
+        imported,
+        failed: errors.length,
+        errors,
+      };
+    },
+
+    async blockJobsByCompany(
+      _parent: any,
+      args: { companyName: string },
+      context: GraphQLContext,
+    ) {
+      if (!context.userId || !isAdminEmail(context.userEmail)) {
+        throw new Error("Forbidden");
+      }
+
+      try {
+        // Check if already blocked
+        const existing = await context.db
+          .select()
+          .from(blockedCompanies)
+          .where(sql`lower(${blockedCompanies.name}) = ${args.companyName.toLowerCase()}`)
+          .limit(1);
+
+        if (existing[0]) {
+          return { success: true, message: `"${args.companyName}" is already blocked` };
+        }
+
+        await context.db.insert(blockedCompanies).values({
+          name: args.companyName,
+          reason: "Blocked via blockJobsByCompany mutation",
+        });
+
+        return { success: true, message: `Blocked jobs from "${args.companyName}"` };
+      } catch (error) {
+        console.error("Error blocking company:", error);
+        return {
+          success: false,
+          message: error instanceof Error ? error.message : "Failed to block company",
+        };
       }
     },
   },

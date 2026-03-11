@@ -1,0 +1,19 @@
+#import "./company-fragments.graphql"
+
+query AllCompanyTags {
+  allCompanyTags
+}
+
+query FindCompany($name: String, $website: String) {
+  findCompany(name: $name, website: $website) {
+    found
+    company {
+      id
+      key
+      name
+      website
+      email
+      location
+    }
+  }
+}

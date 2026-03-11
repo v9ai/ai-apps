@@ -72,7 +72,7 @@ The D1 Gateway Worker (`workers/d1-gateway.ts`) supports batched queries — pre
 6. Skill Extract:  Job descriptions --[LLM pipeline]--> Skills → D1
 7. Resume Match:   Resumes --[resume-rag (Python) / Vectorize]--> Vector search
 8. Serving:        Browser --[Apollo Client]--> /api/graphql --[D1 HTTP]--> Gateway --> D1
-9. Evaluation:     Langfuse / Vitest --[LLM calls]--> Accuracy scores
+9. Evaluation:     Langfuse --[LLM calls]--> Accuracy scores
 ```
 
 ### GraphQL codegen
@@ -123,7 +123,7 @@ GraphQL Playground: `http://localhost:3000/api/graphql`. Vercel routes have 60s 
 | AI/ML | Vercel AI SDK, Anthropic Claude (+ Agent SDK), DeepSeek, OpenRouter |
 | Background jobs | Trigger.dev, Cloudflare Workers (cron + queues) |
 | Observability | Langfuse, LangSmith, OpenTelemetry (partially active) |
-| Evaluation | Langfuse, Vitest |
+| Evaluation | Langfuse |
 | Deployment | Vercel (app), Cloudflare Workers (workers) |
 | Package manager | pnpm 10.10 |
 | UI | Radix UI (Themes + Icons) |

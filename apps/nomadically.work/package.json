@@ -24,6 +24,7 @@
     "eval": "tsx --env-file=.env.local scripts/eval-remote-eu-langfuse.ts",
     "eval:langfuse": "tsx --env-file=.env.local scripts/eval-remote-eu-langfuse.ts",
     "eval:heuristic": "tsx --env-file=.env.local scripts/eval-heuristic-comparison.ts",
+    "eval:email": "tsx --env-file=.env.local scripts/eval-email-generation-langfuse.ts",
     "eval:ab": "tsx --env-file=.env.local scripts/eval-prompt-ab.ts",
     "janitor:trigger": "tsx scripts/trigger-janitor.ts",
     "boards:discover": "tsx scripts/discover-ashby-boards.ts",
@@ -113,7 +114,6 @@
     "eslint": "^9.37.0",
     "tsx": "^4.21.0",
     "typescript": "^5.9.3",
-    "vitest": "^4.0.18",
     "wrangler": "^4.61.1"
   },
   "version": "0.0.1"

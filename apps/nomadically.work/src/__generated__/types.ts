@@ -118,6 +118,12 @@ export type ApplyEmailPatternResult = {
   success: Scalars['Boolean']['output'];
 };
 
+export type ArchiveEmailResult = {
+  __typename: 'ArchiveEmailResult';
+  message: Scalars['String']['output'];
+  success: Scalars['Boolean']['output'];
+};
+
 export type AshbyAddress = {
   __typename: 'AshbyAddress';
   postalAddress: Maybe<AshbyPostalAddress>;
@@ -178,6 +184,12 @@ export type BatchRecipientInput = {
   contactId?: InputMaybe<Scalars['Int']['input']>;
   email: Scalars['String']['input'];
   name: Scalars['String']['input'];
+};
+
+export type BlockJobsResult = {
+  __typename: 'BlockJobsResult';
+  message: Scalars['String']['output'];
+  success: Scalars['Boolean']['output'];
 };
 
 export type BlockedCompany = {
@@ -349,6 +361,15 @@ export type CompanyFilterInput = {
   text?: InputMaybe<Scalars['String']['input']>;
 };
 
+export type CompanyImportInput = {
+  description?: InputMaybe<Scalars['String']['input']>;
+  email?: InputMaybe<Scalars['String']['input']>;
+  linkedin_url?: InputMaybe<Scalars['String']['input']>;
+  location?: InputMaybe<Scalars['String']['input']>;
+  name: Scalars['String']['input'];
+  website?: InputMaybe<Scalars['String']['input']>;
+};
+
 export type CompanyOrderBy =
   | 'CREATED_AT_DESC'
   | 'NAME_ASC'
@@ -403,6 +424,8 @@ export type Contact = {
 
 export type ContactEmail = {
   __typename: 'ContactEmail';
+  attachments: Maybe<Scalars['JSON']['output']>;
+  ccEmails: Array<Scalars['String']['output']>;
   companyId: Maybe<Scalars['Int']['output']>;
   contactId: Scalars['Int']['output'];
   createdAt: Scalars['String']['output'];
@@ -410,12 +433,16 @@ export type ContactEmail = {
   errorMessage: Maybe<Scalars['String']['output']>;
   followupStatus: Maybe<Scalars['String']['output']>;
   fromEmail: Scalars['String']['output'];
+  headers: Maybe<Scalars['JSON']['output']>;
+  htmlContent: Maybe<Scalars['String']['output']>;
   id: Scalars['Int']['output'];
+  idempotencyKey: Maybe<Scalars['String']['output']>;
   openedAt: Maybe<Scalars['String']['output']>;
   parentEmailId: Maybe<Scalars['Int']['output']>;
   recipientName: Maybe<Scalars['String']['output']>;
   replyReceived: Scalars['Boolean']['output'];
   replyReceivedAt: Maybe<Scalars['String']['output']>;
+  replyToEmails: Array<Scalars['String']['output']>;
   resendId: Scalars['String']['output'];
   scheduledAt: Maybe<Scalars['String']['output']>;
   sentAt: Maybe<Scalars['String']['output']>;
@@ -423,6 +450,7 @@ export type ContactEmail = {
   sequenceType: Maybe<Scalars['String']['output']>;
   status: Scalars['String']['output'];
   subject: Scalars['String']['output'];
+  tags: Array<Scalars['String']['output']>;
   textContent: Maybe<Scalars['String']['output']>;
   toEmails: Array<Scalars['String']['output']>;
   updatedAt: Scalars['String']['output'];
@@ -449,7 +477,10 @@ export type ContactsResult = {
 };
 
 export type CreateCampaignInput = {
+  addAntiThreadHeader?: InputMaybe<Scalars['Boolean']['input']>;
+  addUnsubscribeHeaders?: InputMaybe<Scalars['Boolean']['input']>;
   companyId?: InputMaybe<Scalars['Int']['input']>;
+  createdBy?: InputMaybe<Scalars['String']['input']>;
   delayDays?: InputMaybe<Scalars['JSON']['input']>;
   fromEmail?: InputMaybe<Scalars['String']['input']>;
   mode?: InputMaybe<Scalars['String']['input']>;
@@ -457,6 +488,8 @@ export type CreateCampaignInput = {
   recipientEmails?: InputMaybe<Array<Scalars['String']['input']>>;
   replyTo?: InputMaybe<Scalars['String']['input']>;
   sequence?: InputMaybe<Scalars['JSON']['input']>;
+  totalEmailsPlanned?: InputMaybe<Scalars['Int']['input']>;
+  unsubscribeUrl?: InputMaybe<Scalars['String']['input']>;
 };
 
 export type CreateCompanyInput = {
@@ -568,6 +601,13 @@ export type DeleteCampaignResult = {
   success: Scalars['Boolean']['output'];
 };
 
+export type DeleteCompaniesResult = {
+  __typename: 'DeleteCompaniesResult';
+  deleted: Scalars['Int']['output'];
+  message: Scalars['String']['output'];
+  success: Scalars['Boolean']['output'];
+};
+
 export type DeleteCompanyResponse = {
   __typename: 'DeleteCompanyResponse';
   message: Maybe<Scalars['String']['output']>;
@@ -606,8 +646,11 @@ export type DeleteTaskResult = {
 
 export type EmailCampaign = {
   __typename: 'EmailCampaign';
+  addAntiThreadHeader: Scalars['Boolean']['output'];
+  addUnsubscribeHeaders: Scalars['Boolean']['output'];
   companyId: Maybe<Scalars['Int']['output']>;
   createdAt: Scalars['String']['output'];
+  createdBy: Maybe<Scalars['String']['output']>;
   delayDays: Maybe<Scalars['JSON']['output']>;
   emailsFailed: Scalars['Int']['output'];
   emailsScheduled: Scalars['Int']['output'];
@@ -621,7 +664,9 @@ export type EmailCampaign = {
   sequence: Maybe<Scalars['JSON']['output']>;
   startAt: Maybe<Scalars['String']['output']>;
   status: Scalars['String']['output'];
+  totalEmailsPlanned: Maybe<Scalars['Int']['output']>;
   totalRecipients: Scalars['Int']['output'];
+  unsubscribeUrl: Maybe<Scalars['String']['output']>;
   updatedAt: Scalars['String']['output'];
 };
 
@@ -629,6 +674,13 @@ export type EmailCampaignsResult = {
   __typename: 'EmailCampaignsResult';
   campaigns: Array<EmailCampaign>;
   totalCount: Scalars['Int']['output'];
+};
+
+export type EmailPreview = {
+  __typename: 'EmailPreview';
+  drySendResult: Maybe<Scalars['String']['output']>;
+  htmlContent: Scalars['String']['output'];
+  subject: Scalars['String']['output'];
 };
 
 export type EmailStats = {
@@ -663,6 +715,7 @@ export type EmailTemplate = {
   tags: Array<Scalars['String']['output']>;
   textContent: Maybe<Scalars['String']['output']>;
   updatedAt: Scalars['String']['output'];
+  userId: Maybe<Scalars['String']['output']>;
   variables: Array<Scalars['String']['output']>;
 };
 
@@ -737,6 +790,12 @@ export type ExtractMethod =
   | 'LLM'
   | 'META';
 
+export type FindCompanyResult = {
+  __typename: 'FindCompanyResult';
+  company: Maybe<Company>;
+  found: Scalars['Boolean']['output'];
+};
+
 export type FindContactEmailResult = {
   __typename: 'FindContactEmailResult';
   candidatesTried: Scalars['Int']['output'];
@@ -761,6 +820,30 @@ export type FollowUpBatchResult = {
   emailIds: Array<Scalars['String']['output']>;
   message: Scalars['String']['output'];
   success: Scalars['Boolean']['output'];
+};
+
+export type FollowUpEmail = {
+  __typename: 'FollowUpEmail';
+  companyId: Maybe<Scalars['Int']['output']>;
+  contactId: Scalars['Int']['output'];
+  createdAt: Scalars['String']['output'];
+  followupStatus: Maybe<Scalars['String']['output']>;
+  fromEmail: Scalars['String']['output'];
+  id: Scalars['Int']['output'];
+  recipientName: Maybe<Scalars['String']['output']>;
+  resendId: Scalars['String']['output'];
+  sentAt: Maybe<Scalars['String']['output']>;
+  sequenceNumber: Maybe<Scalars['String']['output']>;
+  sequenceType: Maybe<Scalars['String']['output']>;
+  status: Scalars['String']['output'];
+  subject: Scalars['String']['output'];
+  toEmails: Array<Scalars['String']['output']>;
+};
+
+export type FollowUpEmailsResult = {
+  __typename: 'FollowUpEmailsResult';
+  emails: Array<FollowUpEmail>;
+  totalCount: Scalars['Int']['output'];
 };
 
 export type GenerateEmailInput = {
@@ -856,6 +939,35 @@ export type GreenhouseQuestionField = {
   __typename: 'GreenhouseQuestionField';
   name: Maybe<Scalars['String']['output']>;
   type: Scalars['String']['output'];
+};
+
+export type ImportCompaniesResult = {
+  __typename: 'ImportCompaniesResult';
+  errors: Array<Scalars['String']['output']>;
+  failed: Scalars['Int']['output'];
+  imported: Scalars['Int']['output'];
+  success: Scalars['Boolean']['output'];
+};
+
+export type ImportCompanyResult = {
+  __typename: 'ImportCompanyResult';
+  company: Maybe<Company>;
+  contactsImported: Scalars['Int']['output'];
+  contactsSkipped: Scalars['Int']['output'];
+  errors: Array<Scalars['String']['output']>;
+  success: Scalars['Boolean']['output'];
+};
+
+export type ImportCompanyWithContactsInput = {
+  companyName: Scalars['String']['input'];
+  contacts: Array<ImportContactInput>;
+  website?: InputMaybe<Scalars['String']['input']>;
+};
+
+export type ImportContactInput = {
+  linkedinUrl?: InputMaybe<Scalars['String']['input']>;
+  name: Scalars['String']['input'];
+  workEmail?: InputMaybe<Scalars['String']['input']>;
 };
 
 export type ImportContactsResult = {
@@ -990,13 +1102,31 @@ export type MarkRepliedResult = {
   success: Scalars['Boolean']['output'];
 };
 
+export type MergeCompaniesResult = {
+  __typename: 'MergeCompaniesResult';
+  keptCompanyId: Maybe<Scalars['Int']['output']>;
+  merged: Scalars['Int']['output'];
+  message: Scalars['String']['output'];
+  success: Scalars['Boolean']['output'];
+};
+
+export type MergeDuplicateContactsResult = {
+  __typename: 'MergeDuplicateContactsResult';
+  mergedCount: Scalars['Int']['output'];
+  message: Scalars['String']['output'];
+  removedCount: Scalars['Int']['output'];
+  success: Scalars['Boolean']['output'];
+};
+
 export type Mutation = {
   __typename: 'Mutation';
   add_company_facts: Array<CompanyFact>;
   analyzeCompany: AnalyzeCompanyResponse;
   applyEmailPattern: ApplyEmailPatternResult;
+  archiveEmail: ArchiveEmailResult;
   archiveJob: Job;
   blockCompany: BlockedCompany;
+  blockJobsByCompany: BlockJobsResult;
   cancelCompanyEmails: CancelCompanyEmailsResult;
   cancelScheduledEmail: CancelEmailResult;
   completeTask: Task;
@@ -1012,6 +1142,7 @@ export type Mutation = {
   deleteAllJobs: DeleteJobResponse;
   deleteApplication: DeleteApplicationResponse;
   deleteCampaign: DeleteCampaignResult;
+  deleteCompanies: DeleteCompaniesResult;
   deleteCompany: DeleteCompanyResponse;
   deleteContact: DeleteContactResult;
   deleteEmailTemplate: DeleteEmailTemplateResult;
@@ -1047,12 +1178,18 @@ export type Mutation = {
   findContactEmail: FindContactEmailResult;
   generateEmail: GenerateEmailResult;
   generateReply: GenerateReplyResult;
+  importCompanies: ImportCompaniesResult;
+  importCompanyWithContacts: ImportCompanyResult;
   importContacts: ImportContactsResult;
   ingestResumeParse: Maybe<ResumeIngestResult>;
   ingest_company_snapshot: CompanySnapshot;
   launchEmailCampaign: EmailCampaign;
+  markContactEmailVerified: Contact;
   markEmailReplied: MarkRepliedResult;
   markJobApplied: Job;
+  mergeDuplicateCompanies: MergeCompaniesResult;
+  mergeDuplicateContacts: MergeDuplicateContactsResult;
+  previewEmail: EmailPreview;
   /**
    * Trigger classification/enhancement of all unprocessed jobs via the Cloudflare Worker.
    * Calls the classify-jobs CF worker (POST) which runs DeepSeek-based classification
@@ -1072,6 +1209,7 @@ export type Mutation = {
   sendEmail: SendEmailResult;
   sendScheduledEmailNow: SendNowResult;
   syncResendEmails: SyncResendResult;
+  unarchiveEmail: ArchiveEmailResult;
   unarchiveJob: Job;
   unblockCompany: DeleteBlockedCompanyResult;
   unverifyCompanyContacts: UnverifyContactsResult;
@@ -1087,6 +1225,7 @@ export type Mutation = {
   updateUserSettings: UserSettings;
   uploadResume: Maybe<ResumeUploadResult>;
   upsert_company_ats_boards: Array<AtsBoard>;
+  verifyContactEmail: VerifyEmailResult;
 };
 
 
@@ -1107,6 +1246,11 @@ export type MutationApplyEmailPatternArgs = {
 };
 
 
+export type MutationArchiveEmailArgs = {
+  id: Scalars['Int']['input'];
+};
+
+
 export type MutationArchiveJobArgs = {
   id: Scalars['Int']['input'];
 };
@@ -1115,6 +1259,11 @@ export type MutationArchiveJobArgs = {
 export type MutationBlockCompanyArgs = {
   name: Scalars['String']['input'];
   reason?: InputMaybe<Scalars['String']['input']>;
+};
+
+
+export type MutationBlockJobsByCompanyArgs = {
+  companyName: Scalars['String']['input'];
 };
 
 
@@ -1186,6 +1335,11 @@ export type MutationDeleteApplicationArgs = {
 
 export type MutationDeleteCampaignArgs = {
   id: Scalars['String']['input'];
+};
+
+
+export type MutationDeleteCompaniesArgs = {
+  companyIds: Array<Scalars['Int']['input']>;
 };
 
 
@@ -1262,6 +1416,16 @@ export type MutationGenerateReplyArgs = {
 };
 
 
+export type MutationImportCompaniesArgs = {
+  companies: Array<CompanyImportInput>;
+};
+
+
+export type MutationImportCompanyWithContactsArgs = {
+  input: ImportCompanyWithContactsInput;
+};
+
+
 export type MutationImportContactsArgs = {
   contacts: Array<ContactInput>;
 };
@@ -1295,6 +1459,12 @@ export type MutationLaunchEmailCampaignArgs = {
 };
 
 
+export type MutationMarkContactEmailVerifiedArgs = {
+  contactId: Scalars['Int']['input'];
+  verified: Scalars['Boolean']['input'];
+};
+
+
 export type MutationMarkEmailRepliedArgs = {
   resendId: Scalars['String']['input'];
 };
@@ -1302,6 +1472,21 @@ export type MutationMarkEmailRepliedArgs = {
 
 export type MutationMarkJobAppliedArgs = {
   id: Scalars['Int']['input'];
+};
+
+
+export type MutationMergeDuplicateCompaniesArgs = {
+  companyIds: Array<Scalars['Int']['input']>;
+};
+
+
+export type MutationMergeDuplicateContactsArgs = {
+  companyId: Scalars['Int']['input'];
+};
+
+
+export type MutationPreviewEmailArgs = {
+  input: PreviewEmailInput;
 };
 
 
@@ -1349,6 +1534,11 @@ export type MutationSendScheduledEmailNowArgs = {
 
 export type MutationSyncResendEmailsArgs = {
   companyId?: InputMaybe<Scalars['Int']['input']>;
+};
+
+
+export type MutationUnarchiveEmailArgs = {
+  id: Scalars['Int']['input'];
 };
 
 
@@ -1440,6 +1630,11 @@ export type MutationUpsert_Company_Ats_BoardsArgs = {
   company_id: Scalars['Int']['input'];
 };
 
+
+export type MutationVerifyContactEmailArgs = {
+  contactId: Scalars['Int']['input'];
+};
+
 export type OpportunitiesResult = {
   __typename: 'OpportunitiesResult';
   opportunities: Array<Opportunity>;
@@ -1473,6 +1668,13 @@ export type Opportunity = {
   title: Scalars['String']['output'];
   updatedAt: Scalars['String']['output'];
   url: Maybe<Scalars['String']['output']>;
+};
+
+export type PreviewEmailInput = {
+  content: Scalars['String']['input'];
+  drySend?: InputMaybe<Scalars['Boolean']['input']>;
+  recipientEmail: Scalars['String']['input'];
+  subject: Scalars['String']['input'];
 };
 
 /** Response from triggering the classify-jobs Cloudflare Worker */
@@ -1550,6 +1752,7 @@ export type PushLangSmithPromptInput = {
 
 export type Query = {
   __typename: 'Query';
+  allCompanyTags: Array<Scalars['String']['output']>;
   application: Maybe<Application>;
   applications: Array<Application>;
   askAboutResume: Maybe<ResumeAnswer>;
@@ -1569,7 +1772,9 @@ export type Query = {
   emailStats: EmailStats;
   emailTemplate: Maybe<EmailTemplate>;
   emailTemplates: EmailTemplatesResult;
+  emailsNeedingFollowUp: FollowUpEmailsResult;
   executeSql: TextToSqlResult;
+  findCompany: FindCompanyResult;
   job: Maybe<Job>;
   jobs: JobsResponse;
   langsmithPrompt: Maybe<LangSmithPrompt>;
@@ -1580,6 +1785,8 @@ export type Query = {
   opportunity: Maybe<Opportunity>;
   prompt: Maybe<Prompt>;
   prompts: Array<RegisteredPrompt>;
+  receivedEmail: Maybe<ReceivedEmail>;
+  receivedEmails: ReceivedEmailsResult;
   resendEmail: Maybe<ResendEmailDetail>;
   resumeStatus: Maybe<ResumeStatus>;
   task: Maybe<Task>;
@@ -1686,8 +1893,20 @@ export type QueryEmailTemplatesArgs = {
 };
 
 
+export type QueryEmailsNeedingFollowUpArgs = {
+  limit?: InputMaybe<Scalars['Int']['input']>;
+  offset?: InputMaybe<Scalars['Int']['input']>;
+};
+
+
 export type QueryExecuteSqlArgs = {
   sql: Scalars['String']['input'];
+};
+
+
+export type QueryFindCompanyArgs = {
+  name?: InputMaybe<Scalars['String']['input']>;
+  website?: InputMaybe<Scalars['String']['input']>;
 };
 
 
@@ -1752,6 +1971,18 @@ export type QueryPromptArgs = {
 };
 
 
+export type QueryReceivedEmailArgs = {
+  id: Scalars['Int']['input'];
+};
+
+
+export type QueryReceivedEmailsArgs = {
+  archived?: InputMaybe<Scalars['Boolean']['input']>;
+  limit?: InputMaybe<Scalars['Int']['input']>;
+  offset?: InputMaybe<Scalars['Int']['input']>;
+};
+
+
 export type QueryResendEmailArgs = {
   resendId: Scalars['String']['input'];
 };
@@ -1795,6 +2026,31 @@ export type QuestionAnswerInput = {
   answerText: Scalars['String']['input'];
   questionId: Scalars['String']['input'];
   questionText: Scalars['String']['input'];
+};
+
+export type ReceivedEmail = {
+  __typename: 'ReceivedEmail';
+  archivedAt: Maybe<Scalars['String']['output']>;
+  attachments: Maybe<Scalars['JSON']['output']>;
+  ccEmails: Array<Scalars['String']['output']>;
+  createdAt: Scalars['String']['output'];
+  fromEmail: Maybe<Scalars['String']['output']>;
+  htmlContent: Maybe<Scalars['String']['output']>;
+  id: Scalars['Int']['output'];
+  messageId: Maybe<Scalars['String']['output']>;
+  receivedAt: Scalars['String']['output'];
+  replyToEmails: Array<Scalars['String']['output']>;
+  resendId: Scalars['String']['output'];
+  subject: Maybe<Scalars['String']['output']>;
+  textContent: Maybe<Scalars['String']['output']>;
+  toEmails: Array<Scalars['String']['output']>;
+  updatedAt: Scalars['String']['output'];
+};
+
+export type ReceivedEmailsResult = {
+  __typename: 'ReceivedEmailsResult';
+  emails: Array<ReceivedEmail>;
+  totalCount: Scalars['Int']['output'];
 };
 
 export type RegisteredPrompt = {
@@ -1988,6 +2244,8 @@ export type UpdateApplicationInput = {
 };
 
 export type UpdateCampaignInput = {
+  addAntiThreadHeader?: InputMaybe<Scalars['Boolean']['input']>;
+  addUnsubscribeHeaders?: InputMaybe<Scalars['Boolean']['input']>;
   delayDays?: InputMaybe<Scalars['JSON']['input']>;
   fromEmail?: InputMaybe<Scalars['String']['input']>;
   mode?: InputMaybe<Scalars['String']['input']>;
@@ -1997,6 +2255,8 @@ export type UpdateCampaignInput = {
   sequence?: InputMaybe<Scalars['JSON']['input']>;
   startAt?: InputMaybe<Scalars['String']['input']>;
   status?: InputMaybe<Scalars['String']['input']>;
+  totalEmailsPlanned?: InputMaybe<Scalars['Int']['input']>;
+  unsubscribeUrl?: InputMaybe<Scalars['String']['input']>;
 };
 
 export type UpdateCompanyInput = {
@@ -2115,6 +2375,16 @@ export type UserSettingsInput = {
   new_job_alerts?: InputMaybe<Scalars['Boolean']['input']>;
   preferred_locations?: InputMaybe<Array<Scalars['String']['input']>>;
   preferred_skills?: InputMaybe<Array<Scalars['String']['input']>>;
+};
+
+export type VerifyEmailResult = {
+  __typename: 'VerifyEmailResult';
+  flags: Maybe<Array<Scalars['String']['output']>>;
+  message: Scalars['String']['output'];
+  rawResult: Maybe<Scalars['String']['output']>;
+  success: Scalars['Boolean']['output'];
+  suggestedCorrection: Maybe<Scalars['String']['output']>;
+  verified: Maybe<Scalars['Boolean']['output']>;
 };
 
 export type WarcPointer = {

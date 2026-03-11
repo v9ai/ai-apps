@@ -51,7 +51,7 @@ This document curates relevant skills and subagents from [awesome-agent-skills](
 - **prompt-engineer** (voltagent-data-ai) — Refine classification and extraction prompts; manage Langfuse prompt versions
 - **nlp-engineer** (voltagent-data-ai) — Skill extraction, entity recognition for remote work indicators (flexible hours, timezone-agnostic, etc.)
 - **machine-learning-engineer** (voltagent-data-ai) — Train classifiers for EU remote job signals; handle regional variations
-- **ai-engineer** (voltagent-data-ai) — End-to-end ML pipeline management, model evaluation with Promptfoo/Vitest
+- **ai-engineer** (voltagent-data-ai) — End-to-end ML pipeline management, model evaluation with Promptfoo/Langfuse
 
 ---
 
@@ -93,7 +93,7 @@ This document curates relevant skills and subagents from [awesome-agent-skills](
 
 ### Claude Code Subagents
 - **qa-expert** (voltagent-qa-sec) — Test remote work classification accuracy across job descriptions
-- **test-automator** (voltagent-qa-sec) — Automated Vitest suites for evals, regression tests for classifiers
+- **test-automator** (voltagent-qa-sec) — Automated eval suites, regression tests for classifiers
 - **performance-engineer** (voltagent-qa-sec) — Profile job listing queries, skill extraction latency, resume RAG search speed
 - **accessibility-tester** (voltagent-qa-sec) — WCAG compliance for job board (essential for EU accessibility regulations)
 
@@ -154,7 +154,7 @@ This document curates relevant skills and subagents from [awesome-agent-skills](
 
 ### Phase 3: ML Evaluation
 - [ ] **nlp-engineer**: Extract remote work signals (keywords, timezone mentions, salary bands)
-- [ ] **ai-engineer**: Build evaluation suite with Promptfoo/Vitest for classifier accuracy
+- [ ] **ai-engineer**: Build evaluation suite with Promptfoo/Langfuse for classifier accuracy
 - [ ] **performance-engineer**: Profile skill extraction, resume RAG latency
 
 ### Phase 4: Deployment & Scale

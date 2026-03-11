@@ -41,6 +41,13 @@ interface PreviewEmail {
   body: string;
 }
 
+interface JobContext {
+  title?: string;
+  description?: string;
+  requiredSkills?: string[];
+  location?: string;
+}
+
 interface GenerateAndSendBatchEmailModalProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
@@ -48,6 +55,7 @@ interface GenerateAndSendBatchEmailModalProps {
   companyName?: string;
   contacts: Contact[];
   onSuccess?: () => void;
+  jobContext?: JobContext;
 }
 
 type Step = "generate" | "preview" | "sending" | "done";
@@ -59,6 +67,7 @@ export function GenerateAndSendBatchEmailModal({
   companyName,
   contacts,
   onSuccess,
+  jobContext,
 }: GenerateAndSendBatchEmailModalProps) {
   const [step, setStep] = useState<Step>("generate");
   const [instructions, setInstructions] = useState("");
@@ -100,6 +109,7 @@ export function GenerateAndSendBatchEmailModal({
           companyName: companyName || undefined,
           instructions: instructions.trim() || undefined,
           recipientCount: contacts.length,
+          jobContext: jobContext || undefined,
         }),
       });
 
@@ -163,7 +173,7 @@ export function GenerateAndSendBatchEmailModal({
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          recipients: emailsToSend.map((e) => ({ email: e.email, name: e.name })),
+          recipients: emailsToSend.map((e) => ({ email: e.email, name: e.name, contactId: e.contactId, companyId })),
           subject: getEmail(generatedEmails[0].contactId).subject,
           body: getEmail(generatedEmails[0].contactId).body,
           useScheduler: true,

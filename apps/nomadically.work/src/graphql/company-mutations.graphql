@@ -93,3 +93,50 @@ mutation IngestCompanySnapshot(
     ...CompanySnapshotFields
   }
 }
+
+mutation MergeDuplicateCompanies($companyIds: [Int!]!) {
+  mergeDuplicateCompanies(companyIds: $companyIds) {
+    success
+    message
+    keptCompanyId
+    merged
+  }
+}
+
+mutation DeleteCompanies($companyIds: [Int!]!) {
+  deleteCompanies(companyIds: $companyIds) {
+    success
+    message
+    deleted
+  }
+}
+
+mutation ImportCompanyWithContacts($input: ImportCompanyWithContactsInput!) {
+  importCompanyWithContacts(input: $input) {
+    success
+    company {
+      id
+      key
+      name
+    }
+    contactsImported
+    contactsSkipped
+    errors
+  }
+}
+
+mutation BlockJobsByCompany($companyName: String!) {
+  blockJobsByCompany(companyName: $companyName) {
+    success
+    message
+  }
+}
+
+mutation ImportCompanies($companies: [CompanyImportInput!]!) {
+  importCompanies(companies: $companies) {
+    success
+    imported
+    failed
+    errors
+  }
+}

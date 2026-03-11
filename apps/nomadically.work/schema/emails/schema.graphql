@@ -4,6 +4,31 @@ extend type Query {
   emailTemplates(category: String, limit: Int, offset: Int): EmailTemplatesResult!
   emailTemplate(id: Int!): EmailTemplate
   emailStats: EmailStats!
+  receivedEmails(limit: Int, offset: Int, archived: Boolean): ReceivedEmailsResult!
+  receivedEmail(id: Int!): ReceivedEmail
+  emailsNeedingFollowUp(limit: Int, offset: Int): FollowUpEmailsResult!
+}
+
+type FollowUpEmail {
+  id: Int!
+  contactId: Int!
+  resendId: String!
+  fromEmail: String!
+  toEmails: [String!]!
+  subject: String!
+  status: String!
+  sentAt: String
+  sequenceType: String
+  sequenceNumber: String
+  followupStatus: String
+  companyId: Int
+  recipientName: String
+  createdAt: String!
+}
+
+type FollowUpEmailsResult {
+  emails: [FollowUpEmail!]!
+  totalCount: Int!
 }
 
 extend type Mutation {
@@ -24,6 +49,9 @@ extend type Mutation {
   cancelScheduledEmail(resendId: String!): CancelEmailResult!
   cancelCompanyEmails(companyId: Int!): CancelCompanyEmailsResult!
   generateReply(input: GenerateReplyInput!): GenerateReplyResult!
+  archiveEmail(id: Int!): ArchiveEmailResult!
+  unarchiveEmail(id: Int!): ArchiveEmailResult!
+  previewEmail(input: PreviewEmailInput!): EmailPreview!
 }
 
 type EmailCampaign {
@@ -42,6 +70,11 @@ type EmailCampaign {
   emailsScheduled: Int!
   emailsFailed: Int!
   recipientEmails: [String!]!
+  totalEmailsPlanned: Int
+  addUnsubscribeHeaders: Boolean!
+  unsubscribeUrl: String
+  addAntiThreadHeader: Boolean!
+  createdBy: String
   createdAt: String!
   updatedAt: String!
 }
@@ -65,6 +98,11 @@ input CreateCampaignInput {
   sequence: JSON
   delayDays: JSON
   recipientEmails: [String!]
+  totalEmailsPlanned: Int
+  addUnsubscribeHeaders: Boolean
+  unsubscribeUrl: String
+  addAntiThreadHeader: Boolean
+  createdBy: String
 }
 
 input UpdateCampaignInput {
@@ -77,6 +115,10 @@ input UpdateCampaignInput {
   delayDays: JSON
   startAt: String
   recipientEmails: [String!]
+  totalEmailsPlanned: Int
+  addUnsubscribeHeaders: Boolean
+  unsubscribeUrl: String
+  addAntiThreadHeader: Boolean
 }
 
 type EmailTemplate {
@@ -90,6 +132,7 @@ type EmailTemplate {
   tags: [String!]!
   variables: [String!]!
   isActive: Boolean!
+  userId: String
   createdAt: String!
   updatedAt: String!
 }
@@ -267,4 +310,49 @@ type CancelCompanyEmailsResult {
   message: String!
   cancelledCount: Int!
   failedCount: Int!
+}
+
+# --- Received Emails ---
+
+type ReceivedEmail {
+  id: Int!
+  resendId: String!
+  fromEmail: String
+  toEmails: [String!]!
+  ccEmails: [String!]!
+  replyToEmails: [String!]!
+  subject: String
+  messageId: String
+  htmlContent: String
+  textContent: String
+  attachments: JSON
+  receivedAt: String!
+  archivedAt: String
+  createdAt: String!
+  updatedAt: String!
+}
+
+type ReceivedEmailsResult {
+  emails: [ReceivedEmail!]!
+  totalCount: Int!
+}
+
+type ArchiveEmailResult {
+  success: Boolean!
+  message: String!
+}
+
+# --- Email Preview ---
+
+input PreviewEmailInput {
+  recipientEmail: String!
+  subject: String!
+  content: String!
+  drySend: Boolean
+}
+
+type EmailPreview {
+  htmlContent: String!
+  subject: String!
+  drySendResult: String
 }
