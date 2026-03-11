@@ -10,7 +10,7 @@ function cardClass(index: number, total: number): string {
   return "cat-card";
 }
 
-function ArticleCard({ article }: { article: Paper }) {
+function ArticleCard({ article, isFirst }: { article: Paper; isFirst?: boolean }) {
   const ref = useRef<HTMLAnchorElement>(null);
 
   const onMove = useCallback((e: React.MouseEvent) => {
@@ -38,6 +38,7 @@ function ArticleCard({ article }: { article: Paper }) {
       <span className="article-card-num">
         {String(article.number).padStart(2, "0")}
       </span>
+      {isFirst && <span className="article-card-start">Start here</span>}
       <span className="article-card-title">{article.title}</span>
       <span className="article-card-time">{article.readingTimeMin}m</span>
       <span className="article-card-arrow">&rarr;</span>
@@ -83,8 +84,8 @@ export function CategoryGrid({ groups }: Props) {
               </span>
             </div>
             <div className="cat-card-desc">{group.meta.description}</div>
-            {group.articles.map((article) => (
-              <ArticleCard key={article.slug} article={article} />
+            {group.articles.map((article, j) => (
+              <ArticleCard key={article.slug} article={article} isFirst={j === 0} />
             ))}
             <div className="cat-card-footer">
               {Math.round(group.articles.reduce((sum, a) => sum + a.readingTimeMin, 0))} min total reading

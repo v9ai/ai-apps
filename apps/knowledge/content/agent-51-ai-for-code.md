@@ -61,7 +61,7 @@ class CodeDataFilter:
 
 **StarCoder / StarCoder2** (Li et al., 2023; Lozhkov et al., 2024): BigCode's open-source models trained on The Stack. StarCoder2-15B uses a 16K context window and was trained on 3.3T+ tokens. Notable for its transparent training process and permissive license. StarCoder2 introduced grouped query attention and sliding window attention.
 
-**DeepSeek-Coder** (Guo et al., 2024): Available in 1.3B, 6.7B, and 33B sizes. Trained on 2T tokens comprising 87% code and 13% natural language. Achieves strong performance across multiple benchmarks. DeepSeek-Coder-V2 further improved with mixture-of-experts architecture.
+**DeepSeek-Coder** (Guo et al., 2024): Available in 1.3B, 6.7B, and 33B sizes. Trained on 2T tokens comprising 87% code and 13% natural language. Achieves strong performance across multiple benchmarks. DeepSeek-Coder-V2 further improved with mixture-of-experts architecture. The later DeepSeek-V3 and DeepSeek-R1 models (late 2024/early 2025) demonstrated that general-purpose reasoning models with strong chain-of-thought capabilities can match or exceed dedicated code models on coding benchmarks, blurring the line between "code LLMs" and "reasoning LLMs" for software engineering tasks.
 
 **Qwen2.5-Coder** (Yang et al., 2024): Alibaba's code model achieving state-of-the-art performance among open-source models on multiple benchmarks. Trained with careful data mixing strategies between code and natural language.
 
@@ -454,9 +454,11 @@ SWE-bench performance (as of early 2025):
     - GPT-4o + SWE-agent: ~33%
     - DeepSeek-V3 + SWE-agent: ~42%
   - SWE-bench Verified (500 human-validated problems):
-    - Best agent systems: ~55-65%
+    - Best agent systems: ~55-65% (with top systems exceeding 50% by early 2025)
     - Best non-agentic: ~25-30%
 ```
+
+The rapid progression on SWE-bench Verified is notable: agent systems crossed the 50% threshold in early 2025, meaning they can resolve more than half of real-world GitHub issues autonomously. This milestone suggests that AI coding agents are approaching practical utility for a meaningful fraction of routine software maintenance work. For a detailed treatment of how these agent systems are architecturally composed, see [Article 29: Code Generation Agents](/articles/agent-29-code-agents).
 
 SWE-bench tests capabilities that HumanEval misses entirely:
 - Repository navigation and understanding

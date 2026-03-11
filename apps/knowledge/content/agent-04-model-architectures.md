@@ -1,6 +1,6 @@
-# LLM Architectures Compared: GPT, Claude, Llama, Gemini, Mistral
+# LLM Architectures Compared: GPT, Claude, Llama, Gemini, Mistral, and Beyond
 
-The landscape of large language model architectures has diversified significantly since GPT-3 demonstrated that scaling decoder-only transformers yields powerful general-purpose language systems. While the decoder-only transformer remains the dominant paradigm, each major model family introduces architectural innovations — from Mixture-of-Experts routing in Mixtral to grouped-query attention in Llama 2 to multimodal fusion in Gemini. This article provides a detailed comparative analysis of the architectural choices across leading LLM families, examining why specific design decisions were made and their implications for capability, efficiency, and deployment.
+The landscape of large language model architectures has diversified significantly since GPT-3 demonstrated that scaling decoder-only transformers yields powerful general-purpose language systems. While the decoder-only transformer remains the dominant paradigm (see [Article 01: Transformer Architecture](./agent-01-transformer-architecture.md) for foundational concepts), each major model family introduces architectural innovations — from Mixture-of-Experts routing in Mixtral to grouped-query attention in Llama 2 to multimodal fusion in Gemini. More recently, reasoning-focused architectures like OpenAI's o1/o3 and DeepSeek R1 have introduced test-time compute scaling as a new dimension of model design, while state-space models like Mamba challenge the transformer's monopoly on sequence modeling. This article provides a detailed comparative analysis of the architectural choices across leading LLM families, examining why specific design decisions were made and their implications for capability, efficiency, and deployment.
 
 ## The Decoder-Only Consensus
 
@@ -47,8 +47,10 @@ Anthropic has published limited architectural details about Claude models. What 
 
 - **Decoder-only transformer** with proprietary architectural modifications
 - **Constitutional AI** training methodology (**Bai et al., 2022**) shapes behavior but operates primarily at the training level rather than the architectural level
-- **200K token context window** in Claude 3 family, suggesting innovations in positional encoding and attention efficiency
+- **200K token context window** in Claude 3 and 3.5 families, suggesting innovations in positional encoding and attention efficiency
 - **Multimodal** (vision) capabilities in Claude 3 and later versions
+- **Claude 3.5 Sonnet** (2024) achieved frontier-class performance — matching or exceeding GPT-4o on major benchmarks — with what appears to be a more compute-efficient architecture, given its strong cost-performance ratio
+- **Extended thinking** capabilities in Claude 3.5 Sonnet, enabling step-by-step reasoning for complex tasks
 
 Anthropic's research publications emphasize interpretability (**Elhage et al., 2022**; **Bills et al., 2023**) and alignment methodology over architectural novelty, suggesting that Claude's advantages come primarily from training methodology and data rather than novel architecture.
 
@@ -235,11 +237,11 @@ where $f_i$ is the fraction of tokens routed to expert $i$, $P_i$ is the average
 
 ## DeepSeek Architecture
 
-**DeepSeek** has introduced notable architectural innovations, particularly in DeepSeek-V2 and V3:
+**DeepSeek** has introduced some of the most significant architectural innovations in the open-source LLM space, progressing from V2 through V3 and the reasoning-focused R1.
 
 ### Multi-head Latent Attention (MLA)
 
-DeepSeek-V2 (**DeepSeek-AI, 2024**) introduced MLA, which compresses the KV cache by projecting keys and values into a low-dimensional latent space before storing them. This achieves KV cache compression comparable to MQA while retaining the expressiveness of MHA:
+DeepSeek-V2 (**DeepSeek-AI, 2024a**) introduced MLA, which compresses the KV cache by projecting keys and values into a low-dimensional latent space before storing them. This achieves KV cache compression comparable to MQA while retaining the expressiveness of MHA:
 
 - Keys and values are jointly compressed into a low-rank representation
 - At attention time, the compressed representation is projected back to full key-value pairs
@@ -249,18 +251,82 @@ DeepSeek-V2 (**DeepSeek-AI, 2024**) introduced MLA, which compresses the KV cach
 
 DeepSeek uses a fine-grained MoE architecture with many small experts rather than fewer large ones. DeepSeek-V2 uses 160 small experts with top-6 routing (rather than Mixtral's 8 experts with top-2), achieving better expert specialization and utilization.
 
+### DeepSeek-V3
+
+DeepSeek-V3 (**DeepSeek-AI, 2024b**) scaled the architecture to **671 billion total parameters** with only **37 billion active per token**, making it one of the most parameter-efficient frontier models:
+
+- Retains **MLA** from V2 for KV cache efficiency
+- **256 routed experts** with top-8 routing, plus 1 shared expert always active — the shared expert captures common patterns while routed experts specialize
+- **Auxiliary-loss-free load balancing**: replaces the traditional load-balancing auxiliary loss with a bias-based approach that dynamically adjusts expert selection without degrading the primary training objective
+- **Multi-Token Prediction (MTP)**: the training objective predicts multiple future tokens simultaneously, improving data efficiency and representation quality (see [Article 02: Scaling Laws](./agent-02-scaling-laws.md) for how this relates to compute-optimal training)
+- **FP8 mixed-precision training**: V3 was trained using FP8 for most operations, reducing training cost to approximately $5.5M — a fraction of comparable frontier models
+- **128K context window** with RoPE-based positional encoding using YaRN scaling
+
+```python
+# Simplified illustration of MLA's KV compression
+class MultiHeadLatentAttention(torch.nn.Module):
+    def __init__(self, d_model, n_heads, d_latent):
+        super().__init__()
+        self.head_dim = d_model // n_heads
+        self.W_q = torch.nn.Linear(d_model, d_model)
+        # Compress KV into low-dimensional latent
+        self.W_kv_down = torch.nn.Linear(d_model, d_latent)
+        # Decompress latent back to K and V
+        self.W_k_up = torch.nn.Linear(d_latent, d_model)
+        self.W_v_up = torch.nn.Linear(d_latent, d_model)
+
+    def forward(self, x):
+        Q = self.W_q(x)
+        # Compress once, store the small latent in KV cache
+        kv_latent = self.W_kv_down(x)  # (B, L, d_latent)
+        K = self.W_k_up(kv_latent)
+        V = self.W_v_up(kv_latent)
+        # ... standard attention with Q, K, V
+```
+
+### DeepSeek-R1
+
+DeepSeek-R1 (**DeepSeek-AI, 2025**) applies reinforcement learning to elicit reasoning behavior from the V3 base model (see the Reasoning Architectures section below for full treatment).
+
+## Qwen Architecture Family
+
+Alibaba's Qwen family has emerged as a major open-source competitor to Meta's Llama, with particularly strong multilingual and code performance.
+
+### Qwen2 (2024)
+
+**Qwen Team (2024a)** introduced a range of models from 0.5B to 72B parameters, building on the Llama-style architecture with several refinements:
+
+- **GQA** across all model sizes, including the smaller variants
+- **SwiGLU activation** and **RMSNorm**, consistent with the open-source consensus
+- **128K context support** in the larger models via YaRN-based RoPE scaling
+- **Dual-size vocabulary**: 151,646 tokens — notably larger than Llama 3's 128K — with strong CJK language coverage
+- **Tied and untied embeddings**: smaller models use tied input-output embeddings for parameter efficiency; larger models untie them for expressiveness
+
+### Qwen2.5 (2024)
+
+**Qwen Team (2024b)** made significant improvements, establishing Qwen2.5 as a direct competitor to Llama 3.1 across all size classes:
+
+- Models at **0.5B, 1.5B, 3B, 7B, 14B, 32B, and 72B** — the broadest size range of any open model family
+- **18T pre-training tokens** for the larger variants, surpassing Llama 3.1's 15T
+- **Qwen2.5-Coder** and **Qwen2.5-Math** specialized variants demonstrate that the base architecture supports effective domain specialization through data mixture and post-training
+- The 72B variant matches or exceeds Llama 3.1 70B on most benchmarks while using a similar dense architecture, suggesting advantages in training data and methodology
+
+The architectural formula is largely convergent with Llama — the differentiation comes from training data quality (particularly for multilingual and code), vocabulary design, and post-training methodology.
+
 ## Architectural Comparison Table
 
-| Feature | GPT-4 | Claude 3 | Llama 3 | Gemini 1.5 | Mixtral | DeepSeek-V3 |
-|---------|-------|----------|---------|------------|---------|-------------|
-| Architecture | Decoder-only | Decoder-only | Decoder-only | Decoder-only | Decoder-only | Decoder-only |
-| MoE | Yes (rumored) | Unknown | No (dense) | Yes | Yes (8x) | Yes (fine-grained) |
-| Pos. Encoding | Unknown | Unknown | RoPE | RoPE variant | RoPE | RoPE (YaRN) |
-| Attention | Unknown | Unknown | GQA | Unknown | GQA + SWA | MLA |
-| Normalization | Unknown | Unknown | RMSNorm | Unknown | RMSNorm | RMSNorm |
-| Activation | Unknown | Unknown | SwiGLU | Unknown | SwiGLU | SwiGLU |
-| Max Context | 128K | 200K | 128K | 1M-2M | 32K | 128K |
-| Vocab Size | ~100K | ~100K | 128K | Unknown | 32K | 100K+ |
+| Feature | GPT-4 | Claude 3.5 | Llama 3.1 | Gemini 1.5 | Mistral Large 2 | Mixtral | DeepSeek-V3 | Qwen2.5 72B |
+|---------|-------|------------|-----------|------------|-----------------|---------|-------------|-------------|
+| Architecture | Decoder-only | Decoder-only | Decoder-only | Decoder-only | Decoder-only | Decoder-only | Decoder-only | Decoder-only |
+| MoE | Yes (rumored) | Unknown | No (dense) | Yes | No (dense) | Yes (8x) | Yes (256 experts) | No (dense) |
+| Pos. Encoding | Unknown | Unknown | RoPE | RoPE variant | RoPE | RoPE | RoPE (YaRN) | RoPE (YaRN) |
+| Attention | Unknown | Unknown | GQA | Unknown | GQA | GQA + SWA | MLA | GQA |
+| Normalization | Unknown | Unknown | RMSNorm | Unknown | RMSNorm | RMSNorm | RMSNorm | RMSNorm |
+| Activation | Unknown | Unknown | SwiGLU | Unknown | SwiGLU | SwiGLU | SwiGLU | SwiGLU |
+| Max Context | 128K | 200K | 128K | 1M-2M | 128K | 32K | 128K | 128K |
+| Vocab Size | ~100K | ~100K | 128K | Unknown | 32K | 32K | ~100K | 152K |
+| Total Params | ~1.8T | Unknown | 405B | Unknown | 123B | ~47B | 671B | 72B |
+| Active Params | ~220B | Unknown | 405B | Unknown | 123B | ~13B | 37B | 72B |
 
 ## Context Length Innovations
 

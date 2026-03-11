@@ -118,6 +118,19 @@ where n is total samples generated and c is the number that pass. HumanEval has 
 - **ARC** (Clark et al., 2018): Science questions from grade school exams, with an easy set and a challenge set.
 - **BBH (BIG-Bench Hard)** (Suzgun et al., 2022): A curated subset of BIG-Bench tasks where language models previously performed below average human raters.
 
+### 2024-2025 Benchmarks and the Saturation Problem
+
+As frontier models saturate older benchmarks, the evaluation community has introduced harder suites designed to maintain discriminative power. Several are now central to model comparison:
+
+- **MMLU-Pro** (Wang et al., 2024): An expanded, harder version of MMLU with 10 answer choices instead of 4 and a heavier emphasis on reasoning-intensive questions. The larger option set reduces the impact of guessing (random baseline drops from 25% to 10%) and the inclusion of more multi-step problems widens the gap between models that have memorized facts and those that can reason over them. MMLU-Pro is increasingly replacing vanilla MMLU as the primary knowledge benchmark.
+- **GPQA (Graduate-Level Google-Proof QA)** (Rein et al., 2023): Expert-crafted questions in biology, physics, and chemistry that are deliberately resistant to web search. Domain experts with PhDs achieve roughly 65% accuracy, while non-expert humans with unrestricted internet access score around 34%. This makes GPQA a meaningful ceiling test: if a model exceeds non-expert-with-search performance, it is demonstrating something beyond pattern matching.
+- **FrontierMath** (Glazer et al., 2024): A collection of original, unpublished mathematics problems created by research mathematicians, spanning computation, proof construction, and mathematical insight. Problems are designed so that even strong math-specialized models score in the low single digits. FrontierMath targets the far frontier of mathematical reasoning and is intended to remain unsaturated for years.
+- **ARC-AGI** (Chollet, 2024): An evolution of the original Abstraction and Reasoning Corpus, this benchmark tests fluid intelligence through novel visual pattern-completion puzzles. Each task requires identifying an abstract transformation rule from a handful of input-output grid pairs, then applying it to a new input. The tasks are trivial for most humans but extremely difficult for current LLMs, making ARC-AGI a litmus test for genuine abstraction rather than knowledge retrieval.
+- **SWE-bench** (Jimenez et al., 2024): Real GitHub issues from popular Python repositories, requiring a model to generate code patches that resolve the issue and pass the repository's test suite. SWE-bench evaluates practical software engineering capability end-to-end: reading code, understanding requirements, and producing working fixes. The verified subset (SWE-bench Verified) uses human-validated issues for cleaner signal.
+- **LiveBench** (White et al., 2024): A benchmark that refreshes its questions monthly from recent sources to combat contamination. Questions are drawn from recent math competitions, news articles, and newly published datasets, making memorization ineffective. This addresses one of the deepest structural problems in static benchmarks.
+
+The pattern across these newer benchmarks is clear: as models improve, evaluations must escalate in difficulty and freshness. Benchmark saturation is not merely an academic nuisance—it means that reported scores stop correlating with real capability differences. When the top ten models all score between 86% and 89% on a benchmark, the evaluation has lost its discriminative power, and further investment in that metric becomes misleading. For a deeper treatment of contamination and saturation dynamics, see [Benchmark Design: Contamination, Saturation & Domain-Specific Evals](/agent-32-benchmark-design).
+
 ## Evaluation Methodology: Getting It Right
 
 ### Held-Out Test Sets and Data Contamination

@@ -199,7 +199,7 @@ def check_grounding(response: str, context: str, threshold: float = 0.7) -> bool
 
 ## NeMo Guardrails
 
-NVIDIA's NeMo Guardrails, released as open source in 2023, provides a programmable framework for adding safety rails to LLM applications. It introduces a domain-specific language called Colang for defining conversational flows and guardrails.
+NVIDIA's NeMo Guardrails, released as open source in 2023, provides a programmable framework for adding safety rails to LLM applications. It introduces a domain-specific language called Colang for defining conversational flows and guardrails. The framework has evolved significantly with the release of Colang 2.0, which replaces the original pattern-matching syntax with a more expressive event-driven programming model based on flows, events, and actions. Colang 2.0 supports multi-modal interaction modeling, concurrent flow execution, and a standard library of reusable guardrail patterns, making it substantially more capable for complex agentic applications.
 
 ### Architecture
 
@@ -221,6 +221,20 @@ define bot refuse to answer
 
 define bot offer alternative help
   "Is there something else I can help you with today?"
+```
+
+In Colang 2.0, the same harmful topic guardrail uses the new event-driven syntax:
+
+```colang
+flow user asked about harmful topics
+  user said something like "how to make a weapon"
+    or something like "how to hack into a system"
+    or something like "how to hurt someone"
+
+flow handle harmful topics
+  user asked about harmful topics
+  bot say "I'm not able to help with that request as it could lead to harm."
+  bot say "Is there something else I can help you with today?"
 ```
 
 ### Key Capabilities

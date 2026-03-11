@@ -70,6 +70,80 @@ N, D = chinchilla_optimal(C)
 print(f"Optimal params: {N/1e9:.1f}B, Optimal tokens: {D/1e12:.2f}T")
 ```
 
+## Test-Time Compute Scaling
+
+The scaling laws discussed above all address **train-time compute** — FLOPs spent before the model is deployed. A paradigm shift emerged with **OpenAI's o1 model (2024)**, which demonstrated that allocating additional compute at **inference time** can yield dramatic accuracy gains on reasoning tasks, effectively creating a second axis of scaling.
+
+### The Inference-Time Reasoning Paradigm
+
+Rather than producing an answer in a single forward pass, o1-style models generate extended chains of internal reasoning tokens before arriving at a final response. The model "thinks longer" on harder problems, spending more inference FLOPs in proportion to problem difficulty. This introduces a new scaling law:
+
+$$\text{Accuracy}(T) \propto \log(T)$$
+
+where $T$ is the number of reasoning tokens generated at inference time. **Snell et al. (2024)** formalized this as "scaling compute-optimal test-time compute," showing that on math and coding benchmarks, doubling inference-time tokens yields consistent accuracy improvements that follow predictable log-linear curves — analogous to the Kaplan/Chinchilla laws for training.
+
+### Rebalancing the Compute Equation
+
+This changes the fundamental resource allocation question. Under the classical framework, the only way to improve a deployed model was to train a better one. Under the test-time compute paradigm, teams face a three-way tradeoff:
+
+1. **Train a larger model** (more parameters, more train-time FLOPs)
+2. **Train longer on more data** (more tokens, same parameters)
+3. **Think longer at inference** (more reasoning tokens per query)
+
+**Lightman et al. (2023)** demonstrated that process reward models — which supervise each step of a chain-of-thought rather than just the final answer — enable more efficient test-time scaling by providing denser feedback signals. Combined with search strategies like beam search or best-of-N sampling over reasoning chains, a smaller base model with extended inference can match or exceed a much larger model's single-pass performance.
+
+The practical implication is significant: for reasoning-heavy workloads (mathematics, code generation, complex analysis), it may be more cost-effective to deploy a 70B model that generates 10,000 reasoning tokens than to train and deploy a 400B model that answers in a single pass. This tradeoff depends on query volume — test-time compute costs scale linearly with requests, while training is a one-time cost (see [Inference Optimization](/agent-05-inference-optimization) for the serving cost analysis).
+
+### Limits of Test-Time Scaling
+
+Test-time compute scaling is not universal. **Brown et al. (2024)** showed that on tasks dominated by factual recall rather than reasoning (e.g., trivia, entity recognition), additional reasoning tokens provide minimal benefit — the knowledge is either in the model's parameters or it is not. Test-time scaling is most effective on tasks that benefit from decomposition: multi-step math, planning, code debugging, and logical reasoning. This suggests that test-time and train-time compute are complementary rather than substitutional: training determines *what the model knows*, while test-time compute determines *how well it can use what it knows*.
+
+## Scaling Laws for Data Quality
+
+The Chinchilla framework treats all training tokens as interchangeable, but a growing body of work demonstrates that **data quality** acts as a multiplier on the effective compute budget, fundamentally altering the scaling ratios.
+
+### The Phi Series: Textbook-Quality Data
+
+Microsoft's Phi model series provided striking evidence that curated, high-quality data can substitute for raw scale. **Gunasekar et al. (2023)** trained **Phi-1**, a 1.3B parameter model, on only 7B tokens of "textbook-quality" data for code — synthetically generated and carefully filtered to emphasize clear, pedagogical examples. Despite its small size, Phi-1 matched or exceeded models 10x larger trained on standard web-scraped code data.
+
+**Li et al. (2023)** extended this with **Phi-2** (2.7B parameters), trained on 1.4T tokens of synthetic textbook and exercise data mixed with filtered web content. Phi-2 matched the performance of Llama-2 70B on several reasoning benchmarks — a 25x parameter gap closed entirely by data quality. **Abdin et al. (2024)** continued with **Phi-3** (3.8B parameters), showing consistent gains from quality-focused data pipelines.
+
+### Modifying the Chinchilla Ratios
+
+These results suggest a modified scaling law that accounts for data quality:
+
+$$L(N, D, Q) \propto N^{-\alpha} \cdot (D \cdot Q)^{-\beta}$$
+
+where $Q$ is a data quality multiplier. When $Q$ is high (curated, textbook-quality data), the effective dataset size $D \cdot Q$ is much larger than the raw token count, shifting the Chinchilla-optimal balance toward smaller models trained on fewer but better tokens. **Sorscher et al. (2022)** formalized this, showing that data pruning can change the scaling exponent itself — moving from a power-law regime to an exponential improvement regime when the lowest-quality data is removed.
+
+In practice, this means that the Chinchilla ratios ($N \propto C^{0.5}$, $D \propto C^{0.5}$) represent a **lower bound** on data efficiency. Teams with access to high-quality curated or synthetic data can achieve the same loss with substantially less compute — or equivalently, achieve lower loss at the same compute budget. For details on quality filtering pipelines and data curation strategies, see [Pre-training: Data Curation, Objectives & Curriculum](/agent-06-pretraining-data).
+
+## Scaling Laws for Post-Training
+
+Pre-training scaling laws govern base model quality, but the relationship between base model capability and the effectiveness of post-training alignment (RLHF, DPO, instruction tuning) follows its own scaling dynamics.
+
+### Reward Model Scaling
+
+**Gao et al. (2023)** studied scaling laws for reward models used in RLHF, finding that reward model accuracy scales log-linearly with both parameter count and the volume of human preference data:
+
+$$\text{RM Accuracy} \propto \alpha \log(N_{RM}) + \beta \log(D_{pref})$$
+
+where $N_{RM}$ is the reward model size and $D_{pref}$ is the number of preference comparisons. Crucially, they found that the reward model should be **comparable in size to the policy model** — using a small reward model to align a large policy leads to reward hacking, where the policy exploits blind spots in the reward model rather than genuinely improving.
+
+### Preference Data Volume
+
+For DPO and RLHF, the volume of preference data exhibits diminishing returns, but the quality threshold is high. **Ivison et al. (2023)** found that 10K high-quality preference pairs can outperform 100K noisy ones, echoing the data quality findings from pre-training. The scaling curve for alignment data is approximately:
+
+$$\Delta_{\text{alignment}} \propto D_{pref}^{0.3} \cdot Q_{pref}^{0.7}$$
+
+where the quality exponent dominates the volume exponent — a sharper quality dependence than in pre-training.
+
+### Base Model Capability and Alignment Effectiveness
+
+A critical finding across multiple studies is that **alignment effectiveness scales with base model capability**. **Ouyang et al. (2022)** showed that InstructGPT's gains over the base GPT-3 were proportionally larger for the 175B model than for the 1.3B model. The same quantity and quality of alignment data produces larger absolute improvements when applied to stronger base models.
+
+This creates a compounding effect: investment in pre-training quality amplifies the return on post-training investment, and vice versa. Teams should not treat pre-training and post-training budgets as independent — the optimal allocation depends on the relative cost curves of both stages. The interaction between pre-training data composition and alignment outcomes is explored further in [Pre-training: Data Curation, Objectives & Curriculum](/agent-06-pretraining-data).
+
 ## Emergent Abilities: Real or Mirage?
 
 One of the most debated phenomena in scaling research is the concept of **emergent abilities** — capabilities that appear to arise suddenly and unpredictably as models scale, absent at smaller scales and present at larger ones.
@@ -124,7 +198,7 @@ Translating scaling laws into practical training decisions requires grappling wi
 
 ### The Compute Frontier
 
-At any given time, the industry's compute frontier — the maximum available FLOPs for a single training run — determines the largest feasible model. As of 2025, frontier training runs consume on the order of $10^{25}$ to $10^{26}$ FLOPs, using tens of thousands of GPUs for months.
+At any given time, the industry's compute frontier — the maximum available FLOPs for a single training run — determines the largest feasible model. As of early 2025, frontier training runs consume on the order of $10^{25}$ to $10^{26}$ FLOPs, using tens of thousands of GPUs for months. Industry estimates for next-generation frontier runs (2025-2026) push toward $10^{26}$ to $10^{27}$ FLOPs, driven by clusters exceeding 100,000 GPUs and the deployment of next-generation accelerators (NVIDIA B200, Google TPU v6). At these scales, even small improvements in MFU or data quality translate to enormous absolute gains — and the interaction with test-time compute scaling (discussed above) means that the effective compute envelope extends well beyond the training budget alone.
 
 For teams not operating at the frontier, the relevant question is: given my compute budget (say, 64 A100 GPUs for 2 weeks), what is the best model I can train? Scaling laws provide direct guidance:
 

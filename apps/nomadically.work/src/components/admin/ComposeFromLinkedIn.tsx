@@ -6,6 +6,7 @@ import {
   Box,
   Button,
   Callout,
+  Checkbox,
   Code,
   Flex,
   Separator,
@@ -413,7 +414,8 @@ export function ComposeFromLinkedIn({
             <>
               <Box
                 style={{
-                  background: "var(--green-2)",
+                  background: "var(--green-a2)",
+                  border: "1px solid var(--green-a5)",
                   borderRadius: "var(--radius-3)",
                   padding: "var(--space-3)",
                 }}
@@ -441,16 +443,16 @@ export function ComposeFromLinkedIn({
                 </Text>
               </Box>
 
-              <Flex align="center" gap="2">
-                <input
-                  type="checkbox"
-                  id="includeResumeLinkedin"
-                  checked={includeResume}
-                  onChange={(e) => setIncludeResume(e.target.checked)}
-                />
-                <Text size="2" as="label" htmlFor="includeResumeLinkedin">
-                  Include resume
-                </Text>
+              <Flex asChild gap="2" align="center">
+                <label>
+                  <Checkbox
+                    checked={includeResume}
+                    onCheckedChange={(checked) =>
+                      setIncludeResume(checked === true)
+                    }
+                  />
+                  <Text size="2">Attach resume</Text>
+                </label>
               </Flex>
 
               <Flex justify="end">
@@ -496,16 +498,16 @@ export function ComposeFromLinkedIn({
             />
           </Box>
 
-          <Flex align="center" gap="2">
-            <input
-              type="checkbox"
-              id="includeResumeEdit"
-              checked={includeResume}
-              onChange={(e) => setIncludeResume(e.target.checked)}
-            />
-            <Text size="2" as="label" htmlFor="includeResumeEdit">
-              Include resume
-            </Text>
+          <Flex asChild gap="2" align="center">
+            <label>
+              <Checkbox
+                checked={includeResume}
+                onCheckedChange={(checked) =>
+                  setIncludeResume(checked === true)
+                }
+              />
+              <Text size="2">Attach resume</Text>
+            </label>
           </Flex>
 
           {sendResult && (
