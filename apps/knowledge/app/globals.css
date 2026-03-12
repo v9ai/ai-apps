@@ -1031,6 +1031,12 @@ body {
   height: 1px;
   background: linear-gradient(90deg, transparent, var(--gray-5), transparent);
 }
+.sources-intro {
+  font-size: 13px;
+  color: var(--gray-9);
+  margin-bottom: 16px;
+  line-height: 1.5;
+}
 .source-card {
   display: block;
   text-decoration: none;

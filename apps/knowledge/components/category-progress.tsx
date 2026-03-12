@@ -14,7 +14,7 @@ export function CategoryProgress({ categoryPapers, currentSlug, categoryName }: 
   return (
     <div className="category-progress">
       <span className="category-progress-label">
-        Article {currentIndex + 1} of {categoryPapers.length} in {categoryName}
+        Lesson {currentIndex + 1} of {categoryPapers.length} in {categoryName}
       </span>
       <div className="category-progress-dots">
         {categoryPapers.map((p) => (
