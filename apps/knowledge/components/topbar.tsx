@@ -8,7 +8,7 @@ export function Topbar({ paperCount }: { paperCount: number }) {
         AI ENGINEERING
       </Link>
       <span className="yc-topbar-count">
-        {paperCount} articles
+        {paperCount} lessons
       </span>
     </div>
   );
