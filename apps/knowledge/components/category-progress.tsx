@@ -1,28 +1,28 @@
 import Link from "next/link";
-import type { Paper } from "@/lib/articles";
+import type { Lesson } from "@/lib/articles";
 
 interface Props {
-  categoryPapers: Paper[];
+  categoryLessons: Lesson[];
   currentSlug: string;
   categoryName: string;
 }
 
-export function CategoryProgress({ categoryPapers, currentSlug, categoryName }: Props) {
-  const currentIndex = categoryPapers.findIndex((p) => p.slug === currentSlug);
+export function CategoryProgress({ categoryLessons, currentSlug, categoryName }: Props) {
+  const currentIndex = categoryLessons.findIndex((l) => l.slug === currentSlug);
   if (currentIndex === -1) return null;
 
   return (
     <div className="category-progress">
       <span className="category-progress-label">
-        Lesson {currentIndex + 1} of {categoryPapers.length} in {categoryName}
+        Lesson {currentIndex + 1} of {categoryLessons.length} in {categoryName}
       </span>
       <div className="category-progress-dots">
-        {categoryPapers.map((p) => (
+        {categoryLessons.map((l) => (
           <Link
-            key={p.slug}
-            href={`/${p.slug}`}
-            className={`category-progress-dot${p.slug === currentSlug ? " category-progress-dot--current" : ""}`}
-            title={p.title}
+            key={l.slug}
+            href={`/${l.slug}`}
+            className={`category-progress-dot${l.slug === currentSlug ? " category-progress-dot--current" : ""}`}
+            title={l.title}
           />
         ))}
       </div>

@@ -37,8 +37,8 @@ export async function searchContent(
       title: r.title,
       snippet: r.snippet,
       rank: r.rank,
-      paperSlug: r.paper_slug,
-      paperTitle: r.paper_title,
+      lessonSlug: r.paper_slug,
+      lessonTitle: r.paper_title,
     }),
   );
 }

@@ -1,6 +1,6 @@
 import Link from "next/link";
 
-export function Topbar({ paperCount }: { paperCount: number }) {
+export function Topbar({ lessonCount }: { lessonCount: number }) {
   return (
     <div className="yc-topbar">
       <Link href="/">
@@ -8,7 +8,7 @@ export function Topbar({ paperCount }: { paperCount: number }) {
         AI ENGINEERING
       </Link>
       <span className="yc-topbar-count">
-        {paperCount} lessons
+        {lessonCount} lessons
       </span>
     </div>
   );

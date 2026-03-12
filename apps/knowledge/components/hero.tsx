@@ -1,9 +1,9 @@
 export function Hero({
-  paperCount,
+  lessonCount,
   domainCount,
   wordCount,
 }: {
-  paperCount: number;
+  lessonCount: number;
   domainCount: number;
   wordCount: number;
 }) {
@@ -21,14 +21,14 @@ export function Hero({
           <span className="hero-title-accent">AI Engineering</span>
         </h1>
         <p className="hero-subtitle">
-          {paperCount} hands-on lessons across {domainCount} skill areas
+          {lessonCount} hands-on lessons across {domainCount} skill areas
           — {wordLabel} words of practical knowledge covering evals, RAG, agents,
           fine-tuning, prompting &amp; production AI systems. Built for junior
           engineers ready to go deep.
         </p>
         <div className="hero-stats">
           <div className="hero-stat">
-            <span className="hero-stat-number">{paperCount}</span>
+            <span className="hero-stat-number">{lessonCount}</span>
             <span className="hero-stat-label">Lessons</span>
           </div>
           <div className="hero-stat">

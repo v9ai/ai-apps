@@ -1,7 +1,7 @@
 import { createClient as createSupabase } from "@supabase/supabase-js";
 import type { Database } from "./database.types";
-import type { Paper, PaperWithContent, GroupedPapers } from "../articles";
-import type { PaperRef } from "../papers";
+import type { Lesson, LessonWithContent, GroupedLessons } from "../articles";
+import type { Reference } from "../papers";
 
 // Use the basic client (no cookies) — works in static generation + server components
 function createClient() {
@@ -11,7 +11,7 @@ function createClient() {
   );
 }
 
-export async function getAllPapersFromDb(): Promise<Paper[]> {
+export async function getAllLessonsFromDb(): Promise<Lesson[]> {
   const supabase = createClient();
   const { data, error } = await supabase
     .from("papers")
@@ -30,9 +30,9 @@ export async function getAllPapersFromDb(): Promise<Paper[]> {
   }));
 }
 
-export async function getPaperBySlugFromDb(
+export async function getLessonBySlugFromDb(
   slug: string,
-): Promise<PaperWithContent | null> {
+): Promise<LessonWithContent | null> {
   const supabase = createClient();
   const { data, error } = await supabase
     .from("papers")
@@ -55,7 +55,7 @@ export async function getPaperBySlugFromDb(
   };
 }
 
-export async function getGroupedPapersFromDb(): Promise<GroupedPapers[]> {
+export async function getGroupedLessonsFromDb(): Promise<GroupedLessons[]> {
   const supabase = createClient();
 
   const { data: categories, error: catErr } = await supabase
@@ -103,13 +103,13 @@ export async function getTotalWordCountFromDb(): Promise<number> {
   return data.reduce((sum, p) => sum + p.word_count, 0);
 }
 
-export async function getRelatedPapersFromDb(
+export async function getRelatedLessonsFromDb(
   slug: string,
   limit = 4,
-): Promise<Paper[]> {
+): Promise<Lesson[]> {
   const supabase = createClient();
 
-  // Get current paper's category_id
+  // Get current lesson's category_id
   const { data: current } = await supabase
     .from("papers")
     .select("id, category_id")
@@ -138,21 +138,21 @@ export async function getRelatedPapersFromDb(
   }));
 }
 
-export async function getCitationsFromDb(slug: string): Promise<PaperRef[]> {
+export async function getReferencesFromDb(slug: string): Promise<Reference[]> {
   const supabase = createClient();
 
-  const { data: paper } = await supabase
+  const { data: lesson } = await supabase
     .from("papers")
     .select("id")
     .eq("slug", slug)
     .single();
 
-  if (!paper) return [];
+  if (!lesson) return [];
 
   const { data: junctions, error } = await supabase
     .from("paper_citations")
     .select("citations(title, authors, year, url, venue)")
-    .eq("paper_id", paper.id);
+    .eq("paper_id", lesson.id);
 
   if (error) throw error;
 

@@ -1,10 +1,10 @@
 import Link from "next/link";
-import type { Paper } from "@/lib/articles";
+import type { Lesson } from "@/lib/articles";
 import { getCategoryMeta } from "@/lib/articles";
 
 interface Props {
-  prev: Paper | null;
-  next: Paper | null;
+  prev: Lesson | null;
+  next: Lesson | null;
   currentCategory?: string;
 }
 

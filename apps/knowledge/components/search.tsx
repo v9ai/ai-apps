@@ -2,7 +2,7 @@
 
 import { useState, useRef, useEffect, useCallback } from "react";
 import Link from "next/link";
-import type { GroupedPapers } from "@/lib/articles";
+import type { GroupedLessons } from "@/lib/articles";
 import type { SearchResult } from "@/lib/data";
 import { searchContent } from "@/lib/actions/search";
 import { CategoryGrid } from "./category-grid";
@@ -16,7 +16,7 @@ function highlightSnippet(snippet: string) {
 
 function typeBadgeLabel(type: SearchResult["resultType"]) {
   switch (type) {
-    case "paper":
+    case "lesson":
       return "Lesson";
     case "section":
       return "Section";
@@ -26,7 +26,7 @@ function typeBadgeLabel(type: SearchResult["resultType"]) {
 }
 
 interface Props {
-  groups: GroupedPapers[];
+  groups: GroupedLessons[];
 }
 
 export function Search({ groups }: Props) {
@@ -121,11 +121,7 @@ export function Search({ groups }: Props) {
           {results.map((r, i) => (
             <Link
               key={`${r.resultType}-${r.title}-${i}`}
-              href={
-                r.resultType === "citation"
-                  ? `/${r.paperSlug}`
-                  : `/${r.paperSlug}`
-              }
+              href={`/${r.lessonSlug}`}
               className="search-result-card"
             >
               <div className="search-result-header">
@@ -137,8 +133,8 @@ export function Search({ groups }: Props) {
               <div className="search-result-snippet">
                 {highlightSnippet(r.snippet)}
               </div>
-              {r.resultType !== "paper" && r.paperTitle && (
-                <div className="search-result-paper">{r.paperTitle}</div>
+              {r.resultType !== "lesson" && r.lessonTitle && (
+                <div className="search-result-paper">{r.lessonTitle}</div>
               )}
             </Link>
           ))}
