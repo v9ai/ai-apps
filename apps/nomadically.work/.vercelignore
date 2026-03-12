@@ -5,7 +5,7 @@ crates/
 workers/
 
 # Rust hooks (local dev only)
-hooks/
+/hooks/
 
 # Python virtualenvs
 .venv/
