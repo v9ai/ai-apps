@@ -166,7 +166,7 @@ APE works in three phases:
 
 **Phase 1 -- Proposal generation.** Given a set of input-output examples, APE asks a language model to propose instruction candidates that could produce the desired outputs from the given inputs.
 
-```
+```text
 I have some input-output pairs. Please generate an instruction
 that could have produced these outputs from these inputs.
 
@@ -235,7 +235,7 @@ Yang et al. (2023) introduced OPRO (Optimization by PROmpting) in "Large Languag
 
 OPRO maintains a "trajectory" of previous optimization attempts and their scores, then asks the model to propose new candidates that improve upon the best seen so far:
 
-```
+```text
 Your task is to generate an instruction for a language model
 to perform sentiment classification.
 
@@ -426,9 +426,9 @@ def textgrad_optimize(prompt, examples, llm, evaluator, steps=5):
 
 ### Where TextGrad Differs from OPRO
 
-OPRO provides the optimizer with a trajectory of (prompt, score) pairs and asks it to propose something better. TextGrad provides *structured feedback about why a prompt failed and how to fix it*. This is a richer optimization signal -- analogous to the difference between zeroth-order optimization (only function values) and first-order optimization (function values plus gradients). In practice, TextGrad converges faster on complex tasks where the relationship between prompt wording and output quality is nuanced.
+OPRO provides the optimizer with a trajectory of (prompt, score) pairs and asks it to propose something better. TextGrad provides *structured feedback about why a prompt failed and how to fix it* -- a richer optimization signal, analogous to the difference between zeroth-order optimization (only function values) and first-order optimization (function values plus gradients).
 
-TextGrad's approach is not limited to prompt optimization. The original paper demonstrates its application to code optimization, molecular design, and reasoning chain improvement. For prompt engineering specifically, TextGrad is most valuable when the evaluation criteria are complex and multi-dimensional -- precisely the situations where a scalar score provides insufficient signal for improvement.
+In practice, TextGrad converges faster on complex tasks where the relationship between prompt wording and output quality is nuanced. The original paper demonstrates its application beyond prompts: code optimization, molecular design, and reasoning chain improvement. For prompt engineering specifically, TextGrad is most valuable when the evaluation criteria are complex and multi-dimensional -- precisely the situations where a scalar score provides insufficient signal for improvement.
 
 ### Limitations
 
@@ -443,7 +443,9 @@ As context windows have grown, so has the tendency to fill them. Long system pro
 
 ### LLMLingua and Selective Context Compression
 
-LLMLingua (Jiang et al., 2023) and its successor LongLLMLingua (Jiang et al., 2024) use a small, fast language model (e.g., GPT-2 or LLaMA-7B) to estimate the "importance" of each token in a prompt by computing perplexity contributions. Tokens that contribute little information -- filler words, redundant phrasing, predictable continuations -- are dropped, while tokens carrying high information density are retained.
+LLMLingua (Jiang et al., 2023) and its successor LongLLMLingua (Jiang et al., 2024) use a small, fast language model (e.g., GPT-2 or LLaMA-7B) to estimate the "importance" of each token in a prompt by computing perplexity contributions.
+
+Tokens that contribute little information -- filler words, redundant phrasing, predictable continuations -- are dropped, while tokens carrying high information density are retained.
 
 The compression process operates at three levels:
 
@@ -478,7 +480,9 @@ def compress_prompt(prompt, small_lm, target_ratio=0.5):
 
 Empirical results from the LLMLingua papers show that prompts can often be compressed to 50% of their original length with less than 2% degradation in task performance. At higher compression ratios (20-30% of original length), performance drops more sharply but remains surprisingly strong on tasks where the critical information is concentrated in a few key tokens.
 
-For retrieval-augmented generation pipelines, prompt compression is particularly valuable. Retrieved passages often contain significant redundancy -- boilerplate, repeated facts, tangentially relevant sentences. Compressing these passages before injection into the prompt reduces cost and latency while focusing the model's attention on the most relevant content. This technique pairs naturally with the RAG evaluation methods discussed in [Article 18](/agent-18-rag-evaluation): a faithfulness metric can verify that compression has not removed information the model needs to generate correct answers.
+For retrieval-augmented generation pipelines, prompt compression is particularly valuable. Retrieved passages often contain significant redundancy -- boilerplate, repeated facts, tangentially relevant sentences. Compressing these passages before injection into the prompt reduces cost and latency while focusing the model's attention on the most relevant content.
+
+> **Note:** This technique pairs naturally with the RAG evaluation methods discussed in [Article 18](/agent-18-rag-evaluation): a faithfulness metric can verify that compression has not removed information the model needs to generate correct answers.
 
 ### Practical Considerations
 
@@ -556,7 +560,13 @@ class MultiObjectivePromptOptimizer:
 
 ### Connecting Optimization Objectives to Production Metrics
 
-In production systems, prompt optimization objectives should map directly to business metrics. Accuracy maps to user satisfaction and task completion rates. Cost maps to infrastructure spend. Latency maps to user experience and throughput. A multi-objective optimizer that surfaces the Pareto frontier enables product teams to make informed trade-offs rather than defaulting to "maximize accuracy at any cost" -- which is the implicit objective of most single-metric optimization approaches.
+In production systems, prompt optimization objectives should map directly to business metrics:
+
+- **Accuracy** maps to user satisfaction and task completion rates.
+- **Cost** maps to infrastructure spend.
+- **Latency** maps to user experience and throughput.
+
+A multi-objective optimizer that surfaces the Pareto frontier enables product teams to make informed trade-offs rather than defaulting to "maximize accuracy at any cost" -- which is the implicit objective of most single-metric optimization approaches.
 
 ## Prompt Tuning vs. Prompt Optimization
 

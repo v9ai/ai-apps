@@ -2,15 +2,31 @@
 
 Understanding what happens inside neural networks -- why they produce specific outputs for specific inputs -- remains one of the most important open problems in AI. Interpretability research aims to reverse-engineer the computations learned by neural networks, moving from treating models as black boxes to understanding their internal mechanisms. This article covers the frontier of interpretability research, from mechanistic interpretability and circuit discovery to practical explainability techniques for production systems.
 
+## TL;DR
+
+- Interpretability seeks to understand internal model mechanisms; explainability seeks human-understandable reasons for outputs. Faithful explanations reflect what the model actually does — plausible ones only sound convincing.
+- Sparse autoencoders (SAEs) are the leading technique for discovering monosemantic features inside superposed neural network representations.
+- Representation engineering identifies concept directions in activation space and can steer model behavior at inference time with simple vector arithmetic.
+- Automated circuit discovery (ACDC, attribution patching) has reduced the time to identify responsible subgraphs from months to hours.
+- For production systems, focus on practical explainability: source highlighting in RAG, counterfactual explanations, and transparent confidence communication.
+
 ## The Interpretability Spectrum
 
 Interpretability and explainability are often used interchangeably, but they represent different goals. Interpretability seeks to understand the internal mechanisms of a model -- what computations it performs and why. Explainability seeks to provide human-understandable reasons for a model's outputs, without necessarily understanding the internal mechanism. A faithful explanation describes what the model actually does; a plausible explanation is one that humans find convincing, whether or not it is faithful.
 
 The distinction matters for safety. An unfaithful explanation -- one that sounds right but does not reflect the model's actual reasoning -- can be worse than no explanation at all, because it creates a false sense of understanding. Mechanistic interpretability aims for faithful explanations by directly analyzing the model's computational structure.
 
+> **Note:** A plausible but unfaithful explanation is worse than no explanation — it creates false confidence in your understanding of the model's behavior.
+
 ### Why Interpretability Matters
 
-For production AI systems, interpretability serves multiple purposes. Debugging enables identifying why a model fails on specific inputs, which is essential for systematic improvement rather than whack-a-mole patching. Safety verification allows confirming that models are not using prohibited features (such as race or gender) for decisions, even when those features are not explicit inputs. Trust calibration lets users and operators understand when to trust model outputs and when to seek verification. Regulatory compliance satisfies requirements like the EU AI Act's right to explanation for high-risk AI systems. And scientific understanding advances our understanding of how neural networks learn and represent knowledge.
+For production AI systems, interpretability serves multiple purposes:
+
+- **Debugging**: Identify why a model fails on specific inputs — essential for systematic improvement rather than whack-a-mole patching.
+- **Safety verification**: Confirm that models are not using prohibited features (such as race or gender) for decisions, even when those features are not explicit inputs.
+- **Trust calibration**: Help users and operators understand when to trust model outputs and when to seek verification.
+- **Regulatory compliance**: Satisfy requirements like the EU AI Act's right to explanation for high-risk AI systems.
+- **Scientific understanding**: Advance knowledge of how neural networks learn and represent information.
 
 ## Mechanistic Interpretability
 
@@ -30,7 +46,7 @@ Induction heads, described by Olsson et al. (2022), are one of the best-understo
 
 The circuit involves two attention heads working together:
 
-```
+```text
 Previous token head (Layer L):
   - Attends from position i to position i-1
   - Copies the previous token's information into position i
@@ -75,6 +91,8 @@ def demonstrate_superposition():
 ```
 
 Understanding superposition is essential because it explains why individual neurons are difficult to interpret and motivates the development of techniques like sparse autoencoders that can disentangle superposed features.
+
+> **Tip:** Don't try to interpret individual neurons directly — they are almost always polysemantic. Use sparse autoencoders to first decompose the representation into monosemantic features.
 
 ## Sparse Autoencoders for Feature Discovery
 
@@ -342,7 +360,18 @@ Integrated gradients satisfy completeness (attributions sum to the difference be
 
 ### Comparing Attribution Methods
 
-Different attribution methods can produce different explanations for the same prediction. Practitioners should use multiple methods and look for agreement, treat attributions as approximations rather than ground truth, validate attributions against domain knowledge, and consider both the method's theoretical properties and computational cost.
+| Method | Theoretical Guarantees | Computational Cost | Best For |
+|--------|----------------------|-------------------|----------|
+| SHAP (Shapley values) | Efficiency, symmetry, dummy, additivity | High (exponential; use approximations) | When theoretical guarantees matter |
+| Integrated Gradients | Completeness, sensitivity | Medium (n_steps forward passes) | Gradient-accessible models |
+| Attention visualization | None (not faithful) | Low | Identifying broad attention patterns |
+
+Different attribution methods can produce different explanations for the same prediction. Practitioners should:
+
+- Use multiple methods and look for agreement.
+- Treat attributions as approximations rather than ground truth.
+- Validate attributions against domain knowledge.
+- Consider both the method's theoretical properties and computational cost.
 
 ## Practical Explainability for Production
 
@@ -514,7 +543,15 @@ Once a concept direction is identified, activation steering adds a scaled versio
 
 ### Relationship to SAEs and Probing
 
-Representation engineering, probing, and SAE-based feature discovery form a complementary toolkit. Probing asks "is concept X encoded here?" by training a classifier on frozen activations. SAEs ask "what concepts are encoded here?" by decomposing activations into sparse features. Representation engineering asks "can I control concept X?" by identifying and directly modifying the relevant direction. In practice, concept directions found via representation engineering often align with features discovered by SAEs, providing convergent evidence that the model genuinely represents these concepts. For architectural details on the attention and MLP layers where these representations form, see [Article 04: LLM Architectures](/agent-04-model-architectures).
+Representation engineering, probing, and SAE-based feature discovery form a complementary toolkit:
+
+| Technique | Question It Answers | Mechanism |
+|-----------|--------------------|-----------|
+| Probing | "Is concept X encoded here?" | Trains a classifier on frozen activations |
+| SAEs | "What concepts are encoded here?" | Decomposes activations into sparse features |
+| Representation engineering | "Can I control concept X?" | Identifies and directly modifies the relevant direction |
+
+In practice, concept directions found via representation engineering often align with features discovered by SAEs, providing convergent evidence that the model genuinely represents these concepts. For architectural details on the attention and MLP layers where these representations form, see [Article 04: LLM Architectures](/agent-04-model-architectures).
 
 ## Automated Circuit Discovery
 
@@ -562,6 +599,14 @@ These automated methods have dramatically accelerated circuit discovery. What pr
 
 The maturation of interpretability as a field has produced a growing ecosystem of open-source tools that make mechanistic analysis accessible to engineers who are not interpretability researchers.
 
+### Tool Overview
+
+| Tool | Primary Use | Key Capability |
+|------|------------|----------------|
+| TransformerLens | Mechanistic analysis | Full internal access via hooks; cache any activation |
+| SAE Lens | Feature discovery | Train and analyze SAEs on any transformer layer |
+| Neuronpedia | Feature exploration | Interactive dashboards; community-driven feature labeling |
+
 ### TransformerLens
 
 TransformerLens (formerly EasyTransformer), developed by Neel Nanda, is a library purpose-built for mechanistic interpretability of GPT-style transformer models. It reimplements common model architectures with full access to every intermediate computation -- every attention pattern, every MLP activation, every residual stream state. Its hook-based architecture makes it straightforward to intervene on activations during forward passes:
@@ -601,7 +646,13 @@ Neuronpedia is a collaborative platform for exploring and annotating SAE feature
 
 ### Practical Workflows
 
-A typical interpretability investigation using these tools follows a structured workflow. First, identify a behavior of interest -- a specific output pattern, a failure mode, or a safety-relevant capability. Second, use TransformerLens to cache activations on examples that do and do not exhibit the behavior. Third, apply attribution patching or ACDC to identify which model components (heads, MLPs, specific layers) matter for the behavior. Fourth, train or load SAEs on the relevant layers and examine which features activate differentially. Fifth, validate findings with causal interventions -- ablate the discovered components or steer the identified features and confirm the behavior changes as predicted.
+A typical interpretability investigation using these tools follows a structured workflow:
+
+1. **Identify a behavior of interest** -- a specific output pattern, a failure mode, or a safety-relevant capability.
+2. **Cache activations** with TransformerLens on examples that do and do not exhibit the behavior.
+3. **Pinpoint responsible components** using attribution patching or ACDC to identify which heads, MLPs, and layers matter.
+4. **Examine features** by training or loading SAEs on the relevant layers and checking which features activate differentially.
+5. **Validate causally** by ablating the discovered components or steering the identified features and confirming the behavior changes as predicted.
 
 ## Safety-Relevant Interpretability
 
@@ -613,6 +664,8 @@ If a model produces an output that is helpful and confident but internally "know
 
 Azaria and Mitchell (2023) in "The Internal State of an LLM Knows When It's Lying" demonstrated similar results, showing that a model's hidden states contain sufficient information to determine whether the model's output is truthful, even when the output itself appears confident. For production safety monitoring, this suggests a pipeline where probes run on internal activations in parallel with generation, flagging outputs where the model's internal state diverges from its stated claims.
 
+> **Tip:** Running lightweight linear probes on internal activations in parallel with generation adds minimal latency but provides an independent signal for output truthfulness — a strong addition to any production safety pipeline.
+
 ### Sycophancy and Power-Seeking Detection
 
 Anthropic's work on SAE-discovered features has identified features corresponding to sycophancy (agreeing with the user regardless of correctness) and power-seeking behavior. The sycophancy feature activates when a model detects user opinions in the prompt and adjusts its response to align with them rather than stating its assessment. Activation steering can suppress this feature, producing models that are more willing to respectfully disagree with users.
@@ -621,7 +674,11 @@ These findings connect directly to the constitutional AI approach (see [Article 
 
 ### Toward Scalable Oversight
 
-The ultimate promise of safety-relevant interpretability is scalable oversight -- using automated tools to verify model safety properties faster than models can develop dangerous capabilities. Rather than relying solely on behavioral evaluation (testing what the model does), interpretability enables structural evaluation (verifying what computations the model performs). A model that passes behavioral safety tests might still harbor latent dangerous capabilities that activate only in specific contexts. Interpretability tools can, in principle, detect these capabilities by examining the model's internal structure rather than waiting for them to manifest. This connects to the broader governance challenge discussed in [Article 47: AI Governance](/agent-47-ai-governance) -- regulatory frameworks increasingly require not just behavioral compliance but mechanistic evidence that AI systems operate as intended.
+The ultimate promise of safety-relevant interpretability is scalable oversight -- using automated tools to verify model safety properties faster than models can develop dangerous capabilities. Rather than relying solely on behavioral evaluation (testing what the model does), interpretability enables structural evaluation (verifying what computations the model performs).
+
+A model that passes behavioral safety tests might still harbor latent dangerous capabilities that activate only in specific contexts. Interpretability tools can, in principle, detect these capabilities by examining the model's internal structure rather than waiting for them to manifest.
+
+> **Note:** Regulatory frameworks increasingly require not just behavioral compliance but mechanistic evidence that AI systems operate as intended -- see [Article 47: AI Governance](/agent-47-ai-governance) for the governance context.
 
 ## The Frontier: Open Problems
 

@@ -14,6 +14,8 @@ Evaluating AI agents presents challenges fundamentally different from evaluating
 
 Traditional LLM evaluation measures response quality on a per-query basis: is the answer correct? Is it fluent? Is it helpful? Agent evaluation must consider additional dimensions that arise from the agent's agentic nature:
 
+> **Note:** A single accuracy number is not sufficient for agents. You need a dashboard of metrics -- success rate, efficiency, tool accuracy, safety, and reliability -- because agents can fail in ways that a correct final answer completely hides.
+
 **Multi-step processes.** An agent might take 15 steps to reach an answer. Two agents can arrive at the same correct answer, but one might take 3 steps while the other takes 30. Evaluation must capture this difference.
 
 **External state changes.** Agents interact with the world -- writing files, sending emails, modifying databases. Evaluation must verify that these side effects are correct, not just the final textual output.
@@ -419,11 +421,32 @@ GAIA (Mialon et al., 2023) evaluates general AI assistants on tasks that are sim
 
 ### OSWorld
 
-OSWorld (Xie et al., 2024) evaluates agents in full desktop operating system environments -- Ubuntu, Windows, and macOS -- where the agent must accomplish real computer tasks by controlling the mouse, keyboard, and screen. Tasks range from "Create a presentation with three slides about climate change" to "Configure the firewall to block incoming connections on port 8080." Unlike benchmarks that provide structured APIs, OSWorld forces agents to interact through raw pixel observations and low-level input actions, testing visual grounding, spatial reasoning, and long-horizon planning in a way that closely mirrors how humans use computers. Current top agents solve fewer than 25% of tasks, underscoring the gap between API-level tool use and genuine computer use.
+OSWorld (Xie et al., 2024) evaluates agents in full desktop operating system environments -- Ubuntu, Windows, and macOS -- where the agent must accomplish real computer tasks by controlling the mouse, keyboard, and screen.
+
+Tasks range from "Create a presentation with three slides about climate change" to "Configure the firewall to block incoming connections on port 8080."
+
+Unlike benchmarks that provide structured APIs, OSWorld forces agents to interact through raw pixel observations and low-level input actions, testing visual grounding, spatial reasoning, and long-horizon planning in a way that closely mirrors how humans use computers. Current top agents solve fewer than 25% of tasks, underscoring the gap between API-level tool use and genuine computer use.
 
 ### tau-bench
 
-tau-bench (Yao et al., 2024) targets real-world customer service and enterprise workflows, providing agents with realistic tool suites (CRM systems, order management, policy databases) and measuring both task success and policy compliance. The benchmark distinguishes itself by testing whether agents follow domain-specific rules -- return policies, escalation procedures, data privacy constraints -- not just whether they reach the right outcome. An agent that processes a refund correctly but violates the company's verification policy fails the evaluation. This makes tau-bench particularly relevant for production deployments where regulatory and procedural compliance is non-negotiable. (For related discussion of guardrails and policy enforcement, see [Article 35: Red Teaming & Adversarial Testing](/agent-35-red-teaming).)
+tau-bench (Yao et al., 2024) targets real-world customer service and enterprise workflows, providing agents with realistic tool suites (CRM systems, order management, policy databases) and measuring both task success and policy compliance.
+
+The benchmark distinguishes itself by testing whether agents follow domain-specific rules -- return policies, escalation procedures, data privacy constraints -- not just whether they reach the right outcome. An agent that processes a refund correctly but violates the company's verification policy fails the evaluation.
+
+> **Note:** tau-bench is particularly relevant for production deployments where regulatory and procedural compliance is non-negotiable -- it is one of the few benchmarks that treats rule-following as a hard requirement rather than a quality signal.
+
+(For related discussion of guardrails and policy enforcement, see [Article 35: Red Teaming & Adversarial Testing](/agent-35-red-teaming).)
+
+### Benchmark Comparison
+
+| Benchmark | Domain | Evaluation Method | Top Agent Score (approx.) |
+|---|---|---|---|
+| AgentBench | 8 diverse environments (OS, DB, web, games) | Task success across all environments | Varies by env (~30-70%) |
+| SWE-bench Verified | Software engineering (GitHub issues) | Test suite pass rate on generated patches | >70% (top agents) |
+| WebArena | Web navigation (realistic sites) | Functional correctness of state changes | ~35-50% |
+| GAIA | General AI assistance (multi-step) | Binary task success, 3 difficulty levels | ~50-75% (Level 1) |
+| OSWorld | Desktop computer use (full OS) | Task success via pixel/input observation | <25% |
+| tau-bench | Enterprise workflows (CRM, policies) | Task success + policy compliance | Varies |
 
 ## Safety Evaluation for Agents
 
@@ -788,6 +811,8 @@ Checkpoint evaluation enables early termination of doomed runs (saving cost), pr
 ## Failure Taxonomy
 
 Understanding how agents fail is as important as measuring their success. A comprehensive failure taxonomy:
+
+> **Tip:** Categorizing failures into planning, execution, and grounding types tells you *where* to invest improvement effort. Planning failures suggest better system prompts or decomposition strategies; execution failures point to tool definition quality; grounding failures indicate hallucination mitigation needs.
 
 ### Planning Failures
 

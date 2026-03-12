@@ -503,11 +503,23 @@ The UK AI Safety Institute, established in November 2023, was the first governme
 
 ### US AI Safety Institute (USAISI)
 
-Housed within the National Institute of Standards and Technology (NIST), the US AI Safety Institute was established in early 2024 to develop measurement science for AI safety. It coordinates with AISI UK under a bilateral agreement and focuses on developing evaluation standards for generative AI, creating guidelines for red-teaming methodologies (complementing the adversarial testing approaches discussed in [Red Teaming & Adversarial Testing](/agent-35-red-teaming)), and producing technical guidance for watermarking and content provenance. USAISI works with the AI Safety Institute Consortium (AISIC), which includes over 200 organizations contributing to standards development.
+Housed within the National Institute of Standards and Technology (NIST), the US AI Safety Institute was established in early 2024 to develop measurement science for AI safety. It coordinates with AISI UK under a bilateral agreement and focuses on:
+
+- Developing evaluation standards for generative AI
+- Creating guidelines for red-teaming methodologies (complementing the approaches in [Red Teaming & Adversarial Testing](/agent-35-red-teaming))
+- Producing technical guidance for watermarking and content provenance
+
+USAISI works with the AI Safety Institute Consortium (AISIC), which includes over 200 organizations contributing to standards development.
 
 ### Other National Initiatives
 
-Japan established its AI Safety Institute in February 2024, focusing on evaluation standards harmonized with UK and US approaches. The EU is building the European AI Office within the European Commission, which will oversee enforcement of GPAI model obligations under the AI Act. Singapore's AI Verify Foundation provides an open-source testing toolkit for AI governance. These bodies increasingly coordinate through the International Network of AI Safety Institutes, formed at the 2024 Seoul AI Summit, aiming to develop interoperable evaluation standards that reduce the compliance burden for organizations operating across jurisdictions.
+Several additional national bodies are active:
+
+- **Japan** established its AI Safety Institute in February 2024, focusing on evaluation standards harmonized with UK and US approaches.
+- **EU** is building the European AI Office within the European Commission, which will oversee enforcement of GPAI model obligations under the AI Act.
+- **Singapore's AI Verify Foundation** provides an open-source testing toolkit for AI governance.
+
+These bodies increasingly coordinate through the International Network of AI Safety Institutes, formed at the 2024 Seoul AI Summit, aiming to develop interoperable evaluation standards that reduce the compliance burden for organizations operating across jurisdictions.
 
 For engineering teams, the practical implication is that pre-deployment safety evaluation is becoming a baseline expectation. Teams should build evaluation pipelines that can accommodate the testing methodologies these institutes produce -- most of which align with the structured red-teaming and benchmark approaches already considered best practice.
 
@@ -551,7 +563,13 @@ Open-weight models present a distinct governance challenge: once model weights a
 
 ### The Governance Gap
 
-With proprietary API models (GPT-4, Claude), the provider can enforce acceptable use policies, apply safety filters, and revoke access. With open-weight models (Llama, Mistral, Qwen, Gemma), the deployer assumes full responsibility for safety, compliance, and misuse prevention. This means building your own [guardrails and content filtering](/agent-44-guardrails-filtering) pipeline, conducting your own [bias and fairness evaluations](/agent-46-bias-fairness), and implementing your own monitoring and audit infrastructure. Under the EU AI Act, deployers of open-source models used in high-risk applications bear the same compliance obligations as deployers of proprietary models -- the openness of the model does not reduce the regulatory burden.
+With proprietary API models (GPT-4, Claude), the provider can enforce acceptable use policies, apply safety filters, and revoke access. With open-weight models (Llama, Mistral, Qwen, Gemma), the deployer assumes full responsibility for safety, compliance, and misuse prevention. This means:
+
+- Building your own [guardrails and content filtering](/agent-44-guardrails-filtering) pipeline
+- Conducting your own [bias and fairness evaluations](/agent-46-bias-fairness)
+- Implementing your own monitoring and audit infrastructure
+
+Under the EU AI Act, deployers of open-source models used in high-risk applications bear the same compliance obligations as deployers of proprietary models -- the openness of the model does not reduce the regulatory burden.
 
 ### License Types and Their Implications
 
@@ -616,7 +634,9 @@ A nascent but growing AI insurance market is emerging to cover risks that tradit
 - **Technology errors and omissions (E&O)** policies expanded to explicitly cover AI system failures.
 - **Cyber insurance endorsements** that address AI-specific attack vectors including prompt injection and model poisoning.
 
-Insurers are increasingly requiring evidence of AI governance practices -- risk assessments, audit trails, bias testing, and incident response plans -- as underwriting prerequisites. Organizations with mature governance frameworks (such as those aligned with ISO 42001 or the NIST AI RMF) are positioned for more favorable terms. This creates a direct financial incentive for the engineering practices described throughout this article: comprehensive [observability and audit trails](/agent-40-observability), systematic [bias testing](/agent-46-bias-fairness), and robust [guardrails](/agent-44-guardrails-filtering) all reduce both the likelihood of incidents and the cost of insuring against them.
+Insurers are increasingly requiring evidence of AI governance practices -- risk assessments, audit trails, bias testing, and incident response plans -- as underwriting prerequisites. Organizations with mature governance frameworks (such as those aligned with ISO 42001 or the NIST AI RMF) are positioned for more favorable terms.
+
+> **Note:** Mature governance practices create a direct financial incentive: comprehensive [observability and audit trails](/agent-40-observability), systematic [bias testing](/agent-46-bias-fairness), and robust [guardrails](/agent-44-guardrails-filtering) all reduce both the likelihood of incidents and the cost of insuring against them.
 
 ## Regulatory Landscape Overview
 

@@ -110,7 +110,7 @@ response = client.messages.create(
 
 **Cost savings calculation**: Consider an application making 10,000 requests/day with a 3000-token system prompt on Claude Sonnet ($3/MTok input):
 
-```
+```text
 Without caching:
   3,000 tokens * 10,000 requests = 30M input tokens/day
   30M * $3/MTok = $90/day = $2,700/month
@@ -415,7 +415,7 @@ Self-hosting makes economic sense when:
 
 Consider serving Llama 3.1 70B for a workload of 100M tokens/day:
 
-```
+```text
 API Route (e.g., Together AI, Fireworks):
 - ~$0.90/MTok output
 - 100M tokens/day * $0.90/MTok = $90/day = $2,700/month
@@ -434,6 +434,8 @@ Break-even analysis:
 ```
 
 The break-even point is highly dependent on utilization. Self-hosted GPUs that sit idle 50% of the time effectively double in cost. API pricing bakes in the provider's utilization optimization.
+
+> **Note:** Self-hosting looks attractive on paper but the numbers rarely hold up below ~$10K/month in consistent API spend. Factor in GPU idle time, engineering overhead, and the operational burden of managing inference infrastructure before committing.
 
 ### Hybrid Approach
 
@@ -594,7 +596,7 @@ Few-shot prompting and fine-tuning represent two ends of a cost spectrum. Few-sh
 
 The decision to fine-tune should be driven by a concrete cost comparison:
 
-```
+```text
 Fine-tuning total cost = Data preparation + Training compute + Ongoing inference
 Prompting total cost   = Per-request cost * Request volume * Time period
 
@@ -610,7 +612,7 @@ Variables:
 
 **Worked example**: A sentiment classification task using GPT-4o-mini.
 
-```
+```text
 Few-shot approach (5 examples, ~250 tokens each):
   Extra prompt tokens per request: 5 * 250 = 1,250 tokens
   At $0.15/MTok input: $0.0001875 per request
@@ -625,7 +627,9 @@ Fine-tuned approach:
   Break-even: Less than 1 month
 ```
 
-For high-volume applications (500K+ requests/month) with repetitive task patterns, fine-tuning almost always pays for itself within weeks. The savings compound further because fine-tuned models on cheaper architectures often match the quality of larger prompted models, enabling a drop from a mid-tier model to a fine-tuned lightweight model. For a detailed walkthrough of fine-tuning pipelines and when to apply techniques like [RLHF and preference optimization](/agent-21-rlhf-preference), the alignment and training articles in this series cover the full process.
+For high-volume applications (500K+ requests/month) with repetitive task patterns, fine-tuning almost always pays for itself within weeks.
+
+The savings compound further because fine-tuned models on cheaper architectures often match the quality of larger prompted models, enabling a drop from a mid-tier model to a fine-tuned lightweight model. For a detailed walkthrough of fine-tuning pipelines and when to apply techniques like [RLHF and preference optimization](/agent-21-rlhf-preference), the alignment and training articles in this series cover the full process.
 
 ### When Prompting Wins
 

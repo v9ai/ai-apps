@@ -603,7 +603,13 @@ Moshi's dual-stream architecture is the most complete open-source implementation
 
 ### Latency Implications
 
-End-to-end speech models fundamentally change the latency equation. Pipeline architectures have a theoretical minimum latency of ASR + LLM + TTS (typically 500-1500ms). Speech-to-speech models can begin generating audio tokens as soon as the input audio tokens are processed, reducing theoretical minimum latency to a single model forward pass (50-200ms for streaming architectures). In practice, GPT-4o's Realtime API achieves ~300ms response latency, roughly matching the responsiveness of human conversation. For a broader treatment of designing conversational interactions around these latency characteristics, see Article 52 on conversational AI.
+End-to-end speech models fundamentally change the latency equation:
+
+- **Pipeline architectures** have a theoretical minimum of ASR + LLM + TTS (typically 500–1500ms)
+- **Speech-to-speech models** can begin generating audio tokens as soon as input audio is processed, reducing theoretical minimum latency to a single model forward pass (50–200ms for streaming architectures)
+- **In practice**, GPT-4o's Realtime API achieves ~300ms response latency — roughly matching the responsiveness of human conversation
+
+For a broader treatment of designing conversational interactions around these latency characteristics, see Article 52 on conversational AI.
 
 ## Speech Emotion and Prosody
 
@@ -626,6 +632,8 @@ Generating emotionally appropriate speech is the synthesis counterpart to emotio
 **Reference-based synthesis**: Extracting a style embedding from a reference audio clip and using it to condition generation — "speak this text in the same emotional tone as this audio sample." This approach powers voice cloning with emotional transfer, though it raises additional ethical considerations around consent (see the voice cloning ethics section above and Article 44 on guardrails and content filtering).
 
 For voice agent applications, emotion recognition and expressive synthesis create a feedback loop: the agent detects user frustration from prosodic cues and responds with a calmer, more empathetic tone, improving user experience in customer service and support contexts.
+
+> **Tip:** Prompt-based emotion control (as in Parler-TTS and ElevenLabs) is generally easier to iterate on than style-token approaches, since domain experts can describe desired tone in plain language rather than engineering embedding vectors.
 
 ## Production Voice Agent Platforms
 
@@ -666,17 +674,3 @@ For teams with strong engineering capacity that need fine-grained control over e
 - Implement **hybrid endpointing** combining silence duration, VAD, and semantic completeness; pure silence-based triggering produces a frustrating experience
 - Build **consent verification and AudioSeal watermarking** into any voice cloning workflow before launch, not after — regulatory and reputational risk is high
 - When choosing between pipeline architecture and end-to-end speech models: pipeline gives you component-level control and cheaper cost; end-to-end (GPT-4o Realtime, Moshi) gives you naturalness and lower latency at higher per-token cost
-
-## Summary and Key Takeaways
-
-- **Whisper** democratized ASR with a simple encoder-decoder architecture trained on massive weakly-supervised data; Whisper v3-turbo offers near-identical accuracy at 3x the speed with a pruned decoder
-- **Modern TTS** treats speech as a language modeling problem over discrete audio tokens (EnCodec/SoundStream), enabling zero-shot voice cloning and multilingual synthesis
-- **Speech-to-speech models** (GPT-4o, Gemini Live, Moshi) collapse the ASR-LLM-TTS pipeline into end-to-end systems that preserve prosody, enable full-duplex conversation, and reduce latency to sub-300ms
-- **Conversational speech models** handle turn-taking, interruption, and backchanneling natively, producing far more natural interactions than pipeline-based voice agents
-- **Speech emotion recognition** using self-supervised representations (wav2vec 2.0, HuBERT, Emotion2Vec) enables agents that detect and respond to user emotional state through prosodic cues
-- **Managed voice agent platforms** (Vapi, Bland.ai, Retell AI) abstract telephony and real-time audio infrastructure, letting teams focus on conversation design rather than plumbing
-- **Voice agent latency** is the critical production metric; streaming at every pipeline stage (ASR, LLM, TTS) and smart endpointing are essential for sub-second response times
-- **Speaker diarization** with pyannote.audio enables multi-party conversation analysis; combining it with ASR creates complete meeting transcription pipelines
-- **WebRTC** provides the browser transport layer; frameworks like LiveKit abstract away the complexity of real-time audio streaming
-- **Voice cloning ethics** require consent verification, audio watermarking (AudioSeal), and compliance with evolving regulations; note that Coqui (the company) shut down in late 2023, though the open-source TTS library remains community-maintained
-- For production systems, choose your ASR/TTS providers based on latency requirements, language support, and cost; the ability to swap components independently is a key advantage of the pipeline approach, while end-to-end models trade modularity for naturalness
