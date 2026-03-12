@@ -29,7 +29,7 @@ Well-designed conversational flows follow established patterns:
 
 **Greeting and Capability Disclosure**: Users need to understand what the system can do. The opening message should set expectations clearly.
 
-```
+```text
 BAD:  "Hello! How can I help you?"
       (Too open-ended; user has no idea what's possible)
 
@@ -86,7 +86,7 @@ class ClarificationStrategy:
 
 **Confirmation Before Action**: For irreversible or consequential actions, always confirm:
 
-```
+```text
 User: Cancel my subscription
 Bot:  I can cancel your Pro subscription ($29/month).
       This will take effect at the end of your current billing
@@ -100,7 +100,7 @@ Bot:  I can cancel your Pro subscription ($29/month).
 
 **Graceful Failure**: When the system cannot help, it should acknowledge the limitation and offer alternatives:
 
-```
+```text
 User: Can you book me a flight to Paris?
 Bot:  I'm not able to book flights directly, but I can help in
       a couple of ways:
@@ -224,7 +224,7 @@ Human conversations have natural rhythms. Bot responses should mirror these patt
 
 **Progressive disclosure**: Don't dump all information at once. Provide the most important answer first, then offer to elaborate.
 
-```
+```text
 User: How do I set up two-factor authentication?
 
 Bot:  Go to Settings > Security > Two-Factor Authentication and
@@ -499,7 +499,7 @@ class PersonaConsistencyChecker:
 Errors in conversational AI fall into several categories, each requiring different recovery strategies:
 
 **Comprehension failure** (didn't understand the user):
-```
+```text
 User: I need to frobulate my account settings
 Bot:  I'm not familiar with "frobulate" - could you describe
       what you're trying to do with your account settings?
@@ -508,7 +508,7 @@ Bot:  I'm not familiar with "frobulate" - could you describe
 ```
 
 **Execution failure** (understood but couldn't complete):
-```
+```text
 User: Show me my order history
 Bot:  I'm having trouble accessing the order system right now.
       Here's what you can do:
@@ -731,7 +731,7 @@ How responses are formatted matters enormously for user experience:
 
 Balance between being helpful and being annoying:
 
-```
+```text
 GOOD proactive behavior:
 - "I notice your free trial ends in 3 days. Would you like to
    review our paid plans?"
@@ -759,6 +759,8 @@ BAD proactive behavior:
 The most significant leap in conversational AI is the shift from systems that can only talk to systems that can act. Function calling (see [Article 25: Function Calling & Tool Integration](/agent-25-function-calling) for the underlying mechanics) enables chatbots to look up order status, book reservations, process refunds, and query databases -- all within the natural flow of conversation. This transforms the chatbot from an information kiosk into a genuine transactional agent.
 
 The architectural challenge is weaving tool execution into dialogue without breaking conversational coherence. A user who says "Where's my package?" expects a direct answer, not a narration of the bot's internal API calls.
+
+> **Note:** Tool execution is an implementation detail — never surface raw API responses or JSON directly to the user. The LLM's job is to synthesize tool results into a natural, conversational reply.
 
 ### Conversation-Aware Tool Orchestration
 
@@ -838,7 +840,7 @@ Retrieval-augmented generation is well-established for single-turn question answ
 
 Consider this exchange:
 
-```
+```text
 Turn 1 - User: "Tell me about your enterprise plan."
 Turn 2 - Bot:  [Retrieves and presents enterprise plan details]
 Turn 3 - User: "How does SSO work with it?"
@@ -1079,17 +1081,13 @@ This means the dialogue engine should produce channel-agnostic structured output
 
 Latency requirements also vary dramatically. Web chat users tolerate two to three seconds. Voice callers perceive anything over 800 milliseconds of silence as a system failure. This means voice channels may need streaming token delivery and partial response strategies, while SMS can afford to run a full retrieval-augmented generation pipeline before responding.
 
-## Summary and Key Takeaways
+> **Tip:** Build latency budgets per channel into your architecture from day one. A single dialogue engine serving both voice and SMS with the same pipeline will either be too slow for voice or over-engineered for SMS.
 
-- **Conversation design** is a discipline, not an afterthought; Grice's maxims provide a framework for evaluating whether bot responses are appropriately informative, truthful, relevant, and clear
-- **Hybrid state management** combining explicit slot-filling with LLM-generated responses gives you the reliability of structured dialogue systems with the naturalness of language models
-- **Context window management** for long conversations requires a tiered approach: full recent history, summarized older turns, and persistent long-term memory for facts and preferences
-- **Personality consistency** requires explicit guidelines in system prompts, periodic reinforcement, and automated checking; LLMs will drift without guardrails
-- **Error recovery** is where chatbots are most often judged; detecting frustration, offering alternatives, and knowing when to escalate to humans are essential capabilities
-- **Multi-turn planning** with progress communication transforms complex tasks from frustrating multi-step interrogations into guided experiences
-- **Tool-augmented conversations** let chatbots take real actions -- looking up orders, processing refunds, making reservations -- within natural dialogue flow; the key is treating tool execution as an implementation detail hidden behind conversational responses
-- **Knowledge-grounded dialogue** requires conversation-aware retrieval that rewrites queries using dialogue history before hitting the index, preventing the "standalone query" problem that plagues naive RAG in multi-turn settings
-- **Conversation analytics** transforms logs into product intelligence through topic clustering, sentiment trajectory tracking, and escalation detection, closing the loop between user experience and product development
-- **Omnichannel deployment** demands separating dialogue state from channel-specific rendering, with adaptation layers that respect each channel's constraints on message length, media support, and latency
-- **Evaluation** should combine automated metrics (task completion, turns to resolution) with LLM-as-judge qualitative assessment and A/B testing for changes
-- **UX fundamentals** matter more than model capabilities: short responses, structured formatting, escape hatches, and capability disclosure determine whether users return to your chatbot or abandon it after one frustrating interaction
+## Key Takeaways
+
+- Define explicit **persona guidelines** (tone, boundaries, communication style) in your system prompt before launch — retrofitting them into a live system causes inconsistency
+- Implement **conversation-aware query rewriting** before any retrieval call in multi-turn flows; raw user messages on turn 3+ are almost never self-contained enough for a clean retrieval hit
+- Use **hybrid state management**: explicit slot-filling for structured tasks (order lookup, booking), LLM-managed context for open-ended conversation — combining both gives reliability without sacrificing naturalness
+- Add **frustration detection** (repeated questions, sentiment decline, escalation keywords) early; knowing when the bot is failing is as important as the happy path
+- When planning omnichannel deployment, **separate dialogue state from channel rendering** on day one — retrofitting this later when you add voice or SMS is painful
+- Run **LLM-as-judge evaluations** on a sample of live conversations weekly; task completion rate and escalation rate are the two metrics that most reliably surface UX regressions

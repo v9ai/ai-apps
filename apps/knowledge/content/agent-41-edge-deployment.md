@@ -28,6 +28,8 @@ Once the model is downloaded to the device, inference is "free" from a marginal 
 
 Edge models work without internet connectivity, enabling use cases in aircraft, remote locations, industrial environments, and mobile applications with spotty connectivity.
 
+> **Note:** If none of these four factors -- latency, privacy, cost at scale, or offline need -- are compelling for your use case, cloud inference remains simpler to operate and gives access to larger, more capable models.
+
 ## On-Device Inference Runtimes
 
 ### llama.cpp
@@ -184,7 +186,7 @@ for await (const chunk of response) {
 
 WebLLM's architecture:
 
-```
+```text
 ┌─────────────────────────────────────────┐
 │              Browser Tab                │
 │  ┌───────────────────────────────────┐  │
@@ -482,7 +484,7 @@ class TieredInference:
 
 Use edge models for preprocessing tasks (embedding, classification, extraction) and cloud models only for generation:
 
-```
+```text
 User Device                          Cloud
 ┌─────────────────┐                 ┌──────────────────┐
 │ Edge Model       │                 │ Cloud LLM         │
@@ -524,7 +526,9 @@ The major platform providers have moved beyond treating on-device AI as an after
 
 ### Apple Intelligence
 
-Apple Intelligence, introduced with iOS 18 and macOS Sequoia, runs a family of Apple-trained foundation models directly on-device. The system routes requests between a ~3B parameter on-device model and Apple's Private Cloud Compute servers based on task complexity -- an approach conceptually similar to the tiered processing pattern described earlier in this article. On-device processing handles text rewriting, summarization, priority classification in Mail, and smart reply generation. Tasks requiring greater capability (such as complex multi-step reasoning) are routed to server-side models running on Apple Silicon servers, with a cryptographic guarantee that user data is not stored or accessible to Apple.
+Apple Intelligence, introduced with iOS 18 and macOS Sequoia, runs a family of Apple-trained foundation models directly on-device. The system routes requests between a ~3B parameter on-device model and Apple's Private Cloud Compute servers based on task complexity -- an approach conceptually similar to the tiered processing pattern described earlier in this article.
+
+On-device processing handles text rewriting, summarization, priority classification in Mail, and smart reply generation. Tasks requiring greater capability are routed to server-side models running on Apple Silicon servers, with a cryptographic guarantee that user data is not stored or accessible to Apple.
 
 The on-device model runs through Core ML on the Apple Neural Engine, with 4-bit palettized weights and grouped query attention to fit within mobile memory constraints. Apple's approach is notable for its tight integration: the model is embedded in the OS, invisible to the user, and invoked through system APIs rather than a standalone app. Third-party developers access Apple Intelligence through system frameworks (like the Writing Tools API) rather than running models directly.
 
@@ -572,7 +576,9 @@ ExecuTorch supports multiple backend delegates: XNNPACK for optimized CPU infere
 
 For LLM-scale models, Meta has demonstrated Llama 3.2 1B and 3B running through ExecuTorch on recent Android and iOS devices, with 4-bit groupwise quantization (via the `torchao` library) bringing the 3B model under 2GB on disk. The ExecuTorch runtime itself is under 1MB, making it feasible to embed in mobile apps without significant size overhead.
 
-ExecuTorch represents the direction PyTorch deployment is heading: a single export path from research to production, with hardware-specific optimization handled by the delegate layer rather than requiring separate model formats for each target platform. For teams already in the PyTorch ecosystem, this eliminates the conversion step to ONNX or Core ML and preserves the ability to debug inference issues in the same framework used for training.
+ExecuTorch represents the direction PyTorch deployment is heading: a single export path from research to production, with hardware-specific optimization handled by the delegate layer rather than requiring separate model formats for each target platform.
+
+> **Tip:** For teams already in the PyTorch ecosystem, ExecuTorch is the lowest-friction path to mobile deployment -- it eliminates the conversion step to ONNX or Core ML and preserves the ability to debug inference issues in the same framework used for training.
 
 ## NPU / Neural Accelerator Landscape
 

@@ -259,7 +259,13 @@ training_args = TrainingArguments(
 )
 ```
 
-**Practical guidance**: Use bf16 whenever hardware supports it (A100, H100, AMD MI300X). Fall back to fp16 on V100s. Never use both flags simultaneously. If you encounter NaN losses with fp16, try reducing the learning rate or switching to bf16 if possible. For more on quantization during inference, see [Inference Optimization: KV Cache, Quantization & Speculative Decoding](/agent-05-inference-optimization).
+**Practical guidance:**
+- Use bf16 whenever hardware supports it (A100, H100, AMD MI300X).
+- Fall back to fp16 on V100s.
+- Never use both flags simultaneously.
+- If you encounter NaN losses with fp16, try reducing the learning rate or switching to bf16 if possible.
+
+For more on quantization during inference, see [Inference Optimization: KV Cache, Quantization & Speculative Decoding](/agent-05-inference-optimization).
 
 ## Distributed Training Essentials
 
@@ -487,7 +493,9 @@ For full fine-tuning, the compute requirement scales linearly with model size an
 | 70B params | 10K | 8x A100 80GB | ~12-24 hours |
 | 70B params | 10K | 8x H100 80GB | ~6-12 hours |
 
-Cloud compute costs range from $1.50-$3.50/GPU-hour for A100 instances and $3.00-$5.00/GPU-hour for H100 instances. H100s offer roughly 2x throughput over A100s for transformer fine-tuning thanks to improved tensor cores and higher memory bandwidth (3.35 TB/s vs 2.0 TB/s), often making them more cost-effective despite the higher hourly rate. A 7B full fine-tune typically costs $5-$15 per run on A100s and $4-$12 on H100s. API-based fine-tuning (OpenAI, Google) abstracts these details but charges per training token.
+Cloud compute costs range from $1.50-$3.50/GPU-hour for A100 instances and $3.00-$5.00/GPU-hour for H100 instances. H100s offer roughly 2x throughput over A100s for transformer fine-tuning thanks to improved tensor cores and higher memory bandwidth (3.35 TB/s vs 2.0 TB/s), often making them more cost-effective despite the higher hourly rate.
+
+A 7B full fine-tune typically costs $5-$15 per run on A100s and $4-$12 on H100s. API-based fine-tuning (OpenAI, Google) abstracts these details but charges per training token.
 
 ### Hidden Costs
 

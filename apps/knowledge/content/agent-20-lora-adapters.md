@@ -36,6 +36,8 @@ The key properties of this decomposition:
 2. **$\Delta W$ is scaled by $\alpha / r$**, where $\alpha$ is a constant. This scaling factor controls the magnitude of the adaptation relative to the original weights.
 3. **No additional inference latency**: After training, the adapter weights can be merged into the base model: $W_{merged} = W_0 + \frac{\alpha}{r} BA$. The merged model has the same architecture and inference cost as the original.
 
+> **Note:** The zero initialization of $B$ is essential -- it ensures the model starts from exactly the pre-trained checkpoint, making LoRA training more stable than inserting randomly initialized weight matrices.
+
 ### Why Low Rank Works
 
 Aghajanyan et al. (2021) provided theoretical motivation in "Intrinsic Dimensionality Explains the Effectiveness of Language Model Fine-Tuning," demonstrating that pre-trained models have a low intrinsic dimensionality for fine-tuning. They showed that fine-tuning in a random low-dimensional subspace of 200-800 dimensions could recover 90%+ of full fine-tuning performance, suggesting that the "useful" updates are indeed low-rank.
@@ -60,6 +62,8 @@ Research and practical experience suggest:
 - Higher ranks help when the task requires substantial behavioral change
 - Diminishing returns typically set in above r=64
 - The optimal rank depends on the gap between pre-training distribution and target distribution
+
+> **Tip:** When in doubt, start with r=16. If quality is insufficient, try r=32 before adding complexity elsewhere. If you're memory-constrained, r=8 with `lora_alpha=16` is a solid fallback.
 
 ### Which Layers to Adapt
 
@@ -102,11 +106,11 @@ QLoRA, introduced by Dettmers et al. (2023) in "QLoRA: Efficient Finetuning of Q
 
 The three key innovations:
 
-**1. 4-bit NormalFloat (NF4) quantization**: A new data type optimized for normally distributed weights. Neural network weights are approximately normally distributed, so NF4 places quantization levels at equal-probability intervals of the normal distribution rather than at equal distances.
-
-**2. Double quantization**: The quantization constants themselves are quantized. First-level quantization uses 64-element blocks, each with a 32-bit scaling constant. Double quantization quantizes these scaling constants to 8-bit, reducing the memory overhead from 0.5 bits per parameter to 0.127 bits per parameter.
-
-**3. Paged optimizers**: Uses NVIDIA unified memory to handle memory spikes during gradient checkpointing by automatically paging optimizer states between GPU and CPU memory.
+| Innovation | What it does | Memory impact |
+|------------|-------------|---------------|
+| 4-bit NormalFloat (NF4) | Quantization levels placed at equal-probability intervals of the normal distribution (matching how weights are distributed) | ~4x base model compression |
+| Double quantization | Quantizes the 32-bit quantization constants themselves to 8-bit | Reduces overhead from 0.5 to 0.127 bits/parameter |
+| Paged optimizers | Uses NVIDIA unified memory to page optimizer states to CPU during gradient checkpointing spikes | Prevents OOM on memory spikes |
 
 ```python
 from transformers import BitsAndBytesConfig, AutoModelForCausalLM
@@ -145,7 +149,7 @@ QLoRA demonstrated that the quality gap between 4-bit quantized LoRA training an
 
 Before LoRA, Houlsby et al. (2019) introduced adapter layers in "Parameter-Efficient Transfer Learning for NLP." Adapters insert small bottleneck modules between existing transformer layers:
 
-```
+```text
 Input -> LayerNorm -> Self-Attention -> Residual ->
   LayerNorm -> FFN -> Residual -> Adapter -> Output
 
@@ -157,10 +161,13 @@ Adapter architecture:
 The adapter has $2 \times d \times r + r + d$ parameters (two projection matrices plus biases). With $r \ll d$, this is a small fraction of the total model parameters.
 
 Key differences from LoRA:
-- Adapters **add inference latency** because they introduce sequential computation
-- Adapters cannot be merged into base weights, requiring the adapter modules during inference
-- Adapters modify the model architecture; LoRA modifies only weight values
-- Adapters have shown competitive performance with LoRA on some tasks
+
+| Dimension | Adapters | LoRA |
+|-----------|----------|------|
+| Inference latency | Added (sequential computation) | None (can merge into base weights) |
+| Requires adapter at inference | Yes | No (after merging) |
+| Modifies | Model architecture | Weight values only |
+| Performance | Competitive on some tasks | Generally preferred |
 
 ## Prefix Tuning and Prompt Tuning
 
@@ -350,6 +357,8 @@ trainer.save_model("./qlora-adapter")
 3. **Not targeting enough layers**: Applying LoRA only to attention projections (the original paper's default) leaves performance on the table. Use `target_modules="all-linear"` for best results.
 4. **Ignoring packing**: For instruction tuning with variable-length examples, packing multiple examples into single sequences significantly improves GPU utilization.
 
+> **Note:** If you skip `prepare_model_for_kbit_training()` with a quantized base model, you may see NaN losses or unstable training -- the error won't always be obvious at startup.
+
 ## Production Serving of LoRA Adapters
 
 A single base model can serve hundreds of distinct LoRA adapters simultaneously, making multi-tenant and multi-task deployments economically viable. This is one of LoRA's most consequential properties: instead of deploying N separate fine-tuned models, you deploy one base model plus N small adapter weight sets.
@@ -377,15 +386,24 @@ output = llm.generate(
 )
 ```
 
-The `max_loras` parameter controls how many adapters are resident in GPU memory at once. When a request arrives for an adapter not currently loaded, vLLM evicts the least recently used adapter and loads the new one. For workloads with a long tail of infrequently used adapters, this eviction overhead is the primary latency concern -- individual adapter swaps take 10-50ms depending on rank and the number of target modules, which is negligible per-request but can accumulate under adapter thrashing.
+The `max_loras` parameter controls how many adapters are resident in GPU memory at once. When a request arrives for an adapter not currently loaded, vLLM evicts the least recently used adapter and loads the new one.
+
+For workloads with a long tail of infrequently used adapters, this eviction overhead is the primary latency concern -- individual adapter swaps take 10-50ms depending on rank and the number of target modules, which is negligible per-request but can accumulate under adapter thrashing.
 
 ### S-LoRA: Scalable Multi-Adapter Serving
 
-S-LoRA (Sheng et al., 2023) extends multi-LoRA serving to thousands of concurrent adapters. The key innovations are a unified paging mechanism that stores adapter weights in a shared memory pool (analogous to PagedAttention for KV caches), and custom CUDA kernels that batch heterogeneous LoRA computations across requests with different adapters and ranks. S-LoRA demonstrated serving up to 2,000 adapters on a single GPU with minimal throughput degradation compared to serving the base model alone, provided that requests are batched effectively.
+S-LoRA (Sheng et al., 2023) extends multi-LoRA serving to thousands of concurrent adapters. The key innovations are:
+
+- A unified paging mechanism that stores adapter weights in a shared memory pool (analogous to PagedAttention for KV caches).
+- Custom CUDA kernels that batch heterogeneous LoRA computations across requests with different adapters and ranks.
+
+S-LoRA demonstrated serving up to 2,000 adapters on a single GPU with minimal throughput degradation compared to serving the base model alone, provided that requests are batched effectively.
 
 ### Latency Considerations
 
-Adding LoRA computation to inference introduces a small overhead compared to the merged-weight baseline. In practice, this overhead is 2-5% of total latency for typical ranks (r=8 to r=32) because the LoRA matmuls are small relative to the base model computation. The overhead scales linearly with rank, so serving r=256 adapters is noticeably slower than r=16. For latency-critical paths where even 2% matters, merging the adapter into the base weights and serving as a standalone model remains an option -- the tradeoff is GPU memory (one full model copy per adapter) versus a small latency tax (one shared base model). See [LLM Serving: API Design, Batching & Streaming](/agent-37-llm-serving) for more on serving architecture decisions.
+Adding LoRA computation to inference introduces a small overhead compared to the merged-weight baseline. In practice, this overhead is 2-5% of total latency for typical ranks (r=8 to r=32) because the LoRA matmuls are small relative to the base model computation. The overhead scales linearly with rank, so serving r=256 adapters is noticeably slower than r=16.
+
+For latency-critical paths where even 2% matters, merging the adapter into the base weights and serving as a standalone model remains an option -- the tradeoff is GPU memory (one full model copy per adapter) versus a small latency tax (one shared base model). See [LLM Serving: API Design, Batching & Streaming](/agent-37-llm-serving) for more on serving architecture decisions.
 
 ## Training Acceleration
 
@@ -434,7 +452,9 @@ Standard LoRA uses the same learning rate for both the $A$ and $B$ matrices, but
 
 ### GaLore (Zhao et al., 2024)
 
-Gradient Low-Rank Projection (GaLore) takes a different approach entirely. Instead of adding low-rank adapter matrices, GaLore projects the full gradient matrix onto a low-rank subspace during training, reducing optimizer state memory without modifying the model architecture. This means the trained model is a standard full-parameter model, not a base-plus-adapter pair. GaLore can train a 7B model with the memory footprint of a 1B model, and unlike LoRA, it does not impose a structural constraint on the weight update. The downside is that GaLore requires periodic SVD recomputation to update the projection basis, adding overhead every few hundred steps. GaLore is most compelling for pre-training or continued pre-training scenarios where LoRA's low-rank constraint is too restrictive. For connections between GaLore and continued pre-training, see [Continual Learning: Catastrophic Forgetting & Knowledge Retention](/agent-23-continual-learning).
+Gradient Low-Rank Projection (GaLore) takes a different approach entirely. Instead of adding low-rank adapter matrices, GaLore projects the full gradient matrix onto a low-rank subspace during training, reducing optimizer state memory without modifying the model architecture. This means the trained model is a standard full-parameter model, not a base-plus-adapter pair.
+
+GaLore can train a 7B model with the memory footprint of a 1B model, and unlike LoRA, it does not impose a structural constraint on the weight update. The downside is that GaLore requires periodic SVD recomputation to update the projection basis, adding overhead every few hundred steps. GaLore is most compelling for pre-training or continued pre-training scenarios where LoRA's low-rank constraint is too restrictive. For connections between GaLore and continued pre-training, see [Continual Learning: Catastrophic Forgetting & Knowledge Retention](/agent-23-continual-learning).
 
 ### rsLoRA (Kalajdzievski, 2024)
 
@@ -477,7 +497,7 @@ The choice of GGUF quantization level involves a quality-size tradeoff that mirr
 | Q6_K | ~6.5 | ~6.5 GB | Negligible quality loss |
 | Q8_0 | 8.0 | ~8.0 GB | Effectively lossless |
 
-An important subtlety: quantizing after merging the LoRA adapter can produce slightly different results than quantizing the base model and then applying the adapter at inference time. The merge-then-quantize approach is generally preferred because it avoids the compounding of quantization error with LoRA approximation error, and the resulting single-file model is simpler to deploy.
+> **Note:** Quantizing after merging the LoRA adapter produces better results than quantizing the base model and applying the adapter at inference time. The merge-then-quantize approach avoids compounding quantization error with LoRA approximation error, and the resulting single-file model is simpler to deploy.
 
 For workloads where multiple adapters are needed at the GGUF level, llama.cpp also supports loading LoRA adapters at runtime on top of a quantized base model, applying the fp16 adapter math on the dequantized weights during inference. This avoids creating separate merged models for each adapter but does add latency overhead.
 
@@ -495,6 +515,15 @@ For workloads where multiple adapters are needed at the GGUF level, llama.cpp al
 - **Emerging methods** like LoRA+, GaLore, and rsLoRA refine the training dynamics and expand the applicability of parameter-efficient approaches.
 - **GGUF deployment** provides a path from LoRA-trained models to efficient CPU and edge inference via the llama.cpp ecosystem.
 - For practical fine-tuning in 2024-2025, **QLoRA with rank 16, applied to all linear layers, using `paged_adamw_8bit`** is the default recommendation. Adjust rank and alpha based on task complexity and available data.
+
+## Key Takeaways
+
+- **Default to QLoRA for 7B+ models on a single GPU.** 4-bit NF4 + LoRA r=16 on all linear layers fits a 70B model on one 48GB GPU and closes 95-99% of the quality gap versus full fine-tuning.
+- **Always call `prepare_model_for_kbit_training()` before applying LoRA to a quantized model.** Skipping it causes subtle instabilities (NaN losses, poor convergence) that are hard to diagnose after the fact.
+- **Set `target_modules="all-linear"` rather than attention-only.** Including MLP layers in the LoRA target set consistently improves results at minimal extra memory cost.
+- **Use higher learning rates than full fine-tuning.** LoRA adapters typically train well at 1e-4 to 3e-4 -- 5-10x higher than the 2e-5 default for full fine-tuning.
+- **Plan your serving architecture before training.** If you need multi-adapter serving, use vLLM with `enable_lora=True` and size `max_lora_rank` to match your trained adapters. Merging adapters before serving eliminates the latency overhead but requires one GPU copy per adapter.
+- **Merge before GGUF quantization.** Merge LoRA weights into the base model first, then quantize to GGUF. This avoids compounding quantization error with LoRA approximation error.
 
 ## Related Articles
 

@@ -867,7 +867,11 @@ Several companies have built production routing systems around this idea:
 
 ### Training the Router
 
-The classifier itself is typically a lightweight model -- a fine-tuned BERT, a small feedforward network over embeddings, or even a logistic regression over engineered features. Training data comes from running evaluation suites across all candidate models and recording which model produced the best output for each input. The router's accuracy improves over time as production feedback (user ratings, downstream task success) augments the training data. This creates a flywheel: more routing decisions generate more performance data, which trains a better router, which makes better decisions. For a deeper treatment of how model selection interacts with cost management, see [Article 39: Cost Optimization](/agent-39-cost-optimization).
+The classifier itself is typically a lightweight model -- a fine-tuned BERT, a small feedforward network over embeddings, or even a logistic regression over engineered features.
+
+Training data comes from running evaluation suites across all candidate models and recording which model produced the best output for each input. The router's accuracy improves over time as production feedback (user ratings, downstream task success) augments the training data. This creates a flywheel: more routing decisions generate more performance data, which trains a better router, which makes better decisions.
+
+For a deeper treatment of how model selection interacts with cost management, see [Article 39: Cost Optimization](/agent-39-cost-optimization).
 
 > **Tip:** Even a simple heuristic router (short prompt → small model, code/math → frontier model) delivers meaningful cost savings before you invest in training a full ML classifier.
 
@@ -980,7 +984,9 @@ class ToolFormatAdapter:
             } for block in content_blocks if block["type"] == "tool_use"]
 ```
 
-Beyond structural differences, models also vary in how reliably they follow tool schemas. Some models require explicit instructions in the system prompt to prefer tool use over text responses, while others default to structured tool calls when tools are available. A mature gateway tracks tool call success rates per provider and adjusts routing accordingly -- if a particular model frequently generates malformed tool arguments for a given function schema, the router should learn to avoid that pairing.
+Beyond structural differences, models also vary in how reliably they follow tool schemas. Some models require explicit instructions in the system prompt to prefer tool use over text responses, while others default to structured tool calls when tools are available.
+
+> **Tip:** A mature gateway tracks tool call success rates per provider and adjusts routing accordingly -- if a particular model frequently generates malformed tool arguments for a given function schema, the router should learn to avoid that pairing.
 
 ## Gateway Observability and Analytics
 
@@ -1237,28 +1243,17 @@ The gateway can apply different PII policies per team or data classification lev
 
 For organizations operating under the EU AI Act or similar regulatory frameworks, the gateway's compliance layer provides the technical controls that governance policies require. The gateway's centralized audit log, combined with its PII filtering and geographic routing capabilities, directly addresses the transparency and accountability obligations that AI regulations impose. For a thorough examination of AI governance requirements and how to build compliant systems, see [Article 47: AI Governance](/agent-47-ai-governance).
 
-## Summary and Key Takeaways
+## Key Takeaways
 
-1. **AI gateways are the control plane for LLM traffic**, providing centralized management of provider keys, rate limiting, fallback logic, cost tracking, and request transformation across an organization.
-
-2. **Multi-dimensional rate limiting** is essential -- limit by requests per minute, tokens per minute, and cost per day, applied at user, team, and organization levels simultaneously.
-
-3. **Circuit breakers prevent cascading failures** when providers experience outages. Automatically stop routing to unhealthy providers and periodically probe for recovery.
-
-4. **Provider fallback chains** should be ordered by preference (quality, cost, or latency) and triggered only on server errors and timeouts, not client errors.
-
-5. **Request/response transformation** enables provider-agnostic applications. The gateway normalizes between OpenAI, Anthropic, and Google formats so applications code against a single API.
-
-6. **The gateway is the optimal caching location** because it sees all traffic across all services, maximizing cache hit rates through exact-match and semantic caching.
-
-7. **ML-based model routing** (Martian, Not Diamond, Unify) goes beyond static heuristics by using trained classifiers to select the optimal model per-request, cutting costs by 40-60% at equivalent quality.
-
-8. **Prompt adaptation is essential for multi-provider routing** -- system prompt handling, tool calling formats, and parameter semantics differ across providers, and naive routing without adaptation degrades output quality.
-
-9. **The gateway is the richest observability data source** in the AI stack. A single instrumentation point captures cost, latency, cache hit rates, and fallback frequency across all teams, providers, and models.
-
-10. **Compliance and data residency** enforcement belongs at the gateway layer. Geographic routing, PII filtering, and audit logging can be applied consistently to all LLM traffic without modifying application code.
-
-11. **LiteLLM, Portkey, and Cloudflare AI Gateway** represent three approaches: open-source self-hosted (LiteLLM), managed SaaS (Portkey), and edge-native (Cloudflare). The right choice depends on operational maturity, latency requirements, and preference for managed vs. self-hosted infrastructure.
-
-12. **Start with a gateway early**: retrofitting gateway patterns into an organization where teams have already built direct provider integrations is significantly harder than starting with a gateway from day one.
+- **AI gateways are the control plane for LLM traffic**, providing centralized management of provider keys, rate limiting, fallback logic, cost tracking, and request transformation across an organization.
+- **Multi-dimensional rate limiting** is essential -- limit by requests per minute, tokens per minute, and cost per day, applied at user, team, and organization levels simultaneously.
+- **Circuit breakers prevent cascading failures** when providers experience outages. Automatically stop routing to unhealthy providers and periodically probe for recovery.
+- **Provider fallback chains** should be ordered by preference (quality, cost, or latency) and triggered only on server errors and timeouts, not client errors.
+- **Request/response transformation** enables provider-agnostic applications. The gateway normalizes between OpenAI, Anthropic, and Google formats so applications code against a single API.
+- **The gateway is the optimal caching location** because it sees all traffic across all services, maximizing cache hit rates through exact-match and semantic caching.
+- **ML-based model routing** (Martian, Not Diamond, Unify) goes beyond static heuristics by using trained classifiers to select the optimal model per-request, cutting costs by 40-60% at equivalent quality.
+- **Prompt adaptation is essential for multi-provider routing** -- system prompt handling, tool calling formats, and parameter semantics differ across providers, and naive routing without adaptation degrades output quality.
+- **The gateway is the richest observability data source** in the AI stack. A single instrumentation point captures cost, latency, cache hit rates, and fallback frequency across all teams, providers, and models.
+- **Compliance and data residency** enforcement belongs at the gateway layer. Geographic routing, PII filtering, and audit logging can be applied consistently to all LLM traffic without modifying application code.
+- **LiteLLM, Portkey, and Cloudflare AI Gateway** represent three approaches: open-source self-hosted (LiteLLM), managed SaaS (Portkey), and edge-native (Cloudflare). The right choice depends on operational maturity, latency requirements, and preference for managed vs. self-hosted infrastructure.
+- **Start with a gateway early**: retrofitting gateway patterns into an organization where teams have already built direct provider integrations is significantly harder than starting with a gateway from day one.
