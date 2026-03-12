@@ -17,11 +17,11 @@ function highlightSnippet(snippet: string) {
 function typeBadgeLabel(type: SearchResult["resultType"]) {
   switch (type) {
     case "paper":
-      return "Paper";
+      return "Lesson";
     case "section":
       return "Section";
     case "citation":
-      return "Citation";
+      return "Reference";
   }
 }
 
@@ -82,7 +82,7 @@ export function Search({ groups }: Props) {
         <input
           ref={inputRef}
           type="text"
-          placeholder="Search papers, sections, citations..."
+          placeholder="Search lessons, topics, concepts..."
           value={query}
           onChange={handleChange}
         />

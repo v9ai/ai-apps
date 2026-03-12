@@ -17,7 +17,7 @@ export default async function HomePage() {
       <Hero paperCount={total} domainCount={catCount} wordCount={wordCount} />
 
       {/* Search + Bento Grid */}
-      <div id="research">
+      <div id="lessons">
         <Search groups={groups} />
       </div>
 

@@ -80,7 +80,7 @@ export function CategoryGrid({ groups }: Props) {
             <div className="cat-card-header">
               <span className="cat-card-name">{group.category}</span>
               <span className="cat-card-count">
-                {group.articles.length} paper{group.articles.length !== 1 ? "s" : ""}
+                {group.articles.length} lesson{group.articles.length !== 1 ? "s" : ""}
               </span>
             </div>
             <div className="cat-card-desc">{group.meta.description}</div>

@@ -52,7 +52,7 @@ export default async function PaperPage({ params }: { params: Promise<{ slug: st
       <div className="article-banner">
         <div className="article-banner-inner">
           <div className="article-banner-breadcrumb">
-            <Link href="/">&larr; all articles</Link>
+            <Link href="/">&larr; all lessons</Link>
             <span className="sep">/</span>
             <span>{meta.icon} {paper.category}</span>
             <span className="sep">/</span>
@@ -78,7 +78,7 @@ export default async function PaperPage({ params }: { params: Promise<{ slug: st
             )}
             {papers.length > 0 && (
               <span className="badge-pill badge-pill--glass">
-                {papers.length} paper{papers.length !== 1 ? "s" : ""}
+                {papers.length} reference{papers.length !== 1 ? "s" : ""}
               </span>
             )}
           </div>
@@ -90,10 +90,11 @@ export default async function PaperPage({ params }: { params: Promise<{ slug: st
         <div>
           <MarkdownProse content={paper.content} />
 
-          {/* Sources */}
+          {/* Go Deeper — optional references for further study */}
           {papers.length > 0 && (
             <div className="sources-section">
-              <div className="sources-heading">Sources &amp; Further Reading</div>
+              <div className="sources-heading">Go Deeper</div>
+              <p className="sources-intro">Want to understand the foundations? These references are a great next step.</p>
               {papers.map((p, i) => (
                 <a
                   key={i}
@@ -115,7 +116,7 @@ export default async function PaperPage({ params }: { params: Promise<{ slug: st
             </div>
           )}
 
-          {/* Related Papers */}
+          {/* Continue Learning */}
           <RelatedPapers papers={related} meta={meta} />
 
           {/* Prev/Next */}
