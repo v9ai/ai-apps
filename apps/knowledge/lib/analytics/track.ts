@@ -3,7 +3,7 @@ import { getSessionId } from "./session";
 
 export async function trackEvent(
   eventName: string,
-  paperSlug: string,
+  lessonSlug: string,
   properties?: Record<string, unknown>,
 ) {
   try {
@@ -13,7 +13,7 @@ export async function trackEvent(
     const { data: paper } = await supabase
       .from("papers")
       .select("id")
-      .eq("slug", paperSlug)
+      .eq("slug", lessonSlug)
       .single();
 
     const props = (properties ?? {}) as import("@/lib/supabase/database.types").Json;

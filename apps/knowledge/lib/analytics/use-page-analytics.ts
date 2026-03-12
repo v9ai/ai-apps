@@ -1,7 +1,7 @@
 import { useEffect, useRef } from "react";
 import { trackEvent } from "./track";
 
-export function usePageAnalytics(paperSlug: string) {
+export function usePageAnalytics(lessonSlug: string) {
   const startRef = useRef(Date.now());
   const milestonesRef = useRef(new Set<number>());
 
@@ -10,7 +10,7 @@ export function usePageAnalytics(paperSlug: string) {
     milestonesRef.current.clear();
 
     // Fire page_view
-    trackEvent("page_view", paperSlug);
+    trackEvent("page_view", lessonSlug);
 
     // Scroll milestones via IntersectionObserver
     const milestones = [25, 50, 75, 100];
@@ -25,7 +25,7 @@ export function usePageAnalytics(paperSlug: string) {
           const pct = Number(entry.target.getAttribute("data-milestone"));
           if (pct && !milestonesRef.current.has(pct)) {
             milestonesRef.current.add(pct);
-            trackEvent("read_progress", paperSlug, { percent: pct });
+            trackEvent("read_progress", lessonSlug, { percent: pct });
           }
         }
       },
@@ -53,7 +53,7 @@ export function usePageAnalytics(paperSlug: string) {
     // Time on page
     function sendTimeOnPage() {
       const duration = Date.now() - startRef.current;
-      trackEvent("time_on_page", paperSlug, { duration_ms: duration });
+      trackEvent("time_on_page", lessonSlug, { duration_ms: duration });
     }
 
     window.addEventListener("beforeunload", sendTimeOnPage);
@@ -64,5 +64,5 @@ export function usePageAnalytics(paperSlug: string) {
       window.removeEventListener("beforeunload", sendTimeOnPage);
       sendTimeOnPage();
     };
-  }, [paperSlug]);
+  }, [lessonSlug]);
 }

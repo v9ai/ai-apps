@@ -3,7 +3,7 @@ import path from "path";
 
 const CONTENT_DIR = path.join(process.cwd(), "content");
 
-export interface Paper {
+export interface Lesson {
   slug: string;
   number: number;
   title: string;
@@ -12,7 +12,7 @@ export interface Paper {
   readingTimeMin: number;
 }
 
-export interface PaperWithContent extends Paper {
+export interface LessonWithContent extends Lesson {
   content: string;
 }
 
@@ -23,10 +23,10 @@ export interface CategoryMeta {
   gradient: [string, string]; // [from, to] CSS colors
 }
 
-export interface GroupedPapers {
+export interface GroupedLessons {
   category: string;
   meta: CategoryMeta;
-  articles: Paper[];
+  articles: Lesson[];
 }
 
 export const CATEGORIES: [number, number, string][] = [
@@ -122,7 +122,7 @@ function extractTitle(content: string): string {
   return "Untitled";
 }
 
-export function getAllPapers(): Paper[] {
+export function getAllLessons(): Lesson[] {
   const files = fs.readdirSync(CONTENT_DIR).filter((f) => f.startsWith("agent-") && f.endsWith(".md"));
 
   return files
@@ -140,7 +140,7 @@ export function getAllPapers(): Paper[] {
     .sort((a, b) => a.number - b.number);
 }
 
-export function getPaperBySlug(slug: string): PaperWithContent | null {
+export function getLessonBySlug(slug: string): LessonWithContent | null {
   const file = path.join(CONTENT_DIR, `${slug}.md`);
   if (!fs.existsSync(file)) return null;
   const raw = fs.readFileSync(file, "utf-8");
@@ -163,18 +163,18 @@ export function getTotalWordCount(): number {
   return total;
 }
 
-export function getGroupedPapers(): GroupedPapers[] {
-  const articles = getAllPapers();
-  const groups = new Map<string, Paper[]>();
+export function getGroupedLessons(): GroupedLessons[] {
+  const lessons = getAllLessons();
+  const groups = new Map<string, Lesson[]>();
 
-  for (const a of articles) {
+  for (const a of lessons) {
     const list = groups.get(a.category) || [];
     list.push(a);
     groups.set(a.category, list);
   }
 
   // Return in category order (based on CATEGORIES array)
-  const ordered: GroupedPapers[] = [];
+  const ordered: GroupedLessons[] = [];
   for (const [, , name] of CATEGORIES) {
     const list = groups.get(name);
     if (list && list.length > 0) {

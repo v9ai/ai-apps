@@ -1,7 +1,7 @@
 import fs from "fs";
 import path from "path";
 
-export interface PaperRef {
+export interface Reference {
   title: string;
   authors?: string;
   year?: number;
@@ -59,8 +59,8 @@ function validYear(y: number): boolean {
 
 /* ── extractor 1: numbered reference lists ──────────────────────── */
 
-function extractNumberedRefs(content: string): PaperRef[] {
-  const papers: PaperRef[] = [];
+function extractNumberedRefs(content: string): Reference[] {
+  const refs: Reference[] = [];
 
   // 1. "Title" (Authors, Year) or (Authors, Venue Year)
   const re1 = /^\d+\.\s+"([^"]{15,})"\s*\(([^)]+)\)/gm;
@@ -89,7 +89,7 @@ function extractNumberedRefs(content: string): PaperRef[] {
       authors = before || undefined;
     }
     if (authors && isFalseAuthor(authors)) continue;
-    papers.push({ title, authors, year, venue, url: scholarUrl(title, authors, year) });
+    refs.push({ title, authors, year, venue, url: scholarUrl(title, authors, year) });
   }
 
   // 2. "Title" by Author (Year)
@@ -99,7 +99,7 @@ function extractNumberedRefs(content: string): PaperRef[] {
     const authors = m[2].trim();
     const year = parseInt(m[3], 10);
     if (!isValidTitle(title) || !validYear(year) || isFalseAuthor(authors)) continue;
-    papers.push({ title, authors, year, url: scholarUrl(title, authors, year) });
+    refs.push({ title, authors, year, url: scholarUrl(title, authors, year) });
   }
 
   // 3. Standalone "Title" (no author)
@@ -107,16 +107,16 @@ function extractNumberedRefs(content: string): PaperRef[] {
   while ((m = re3.exec(content)) !== null) {
     const title = m[1].trim();
     if (!isValidTitle(title)) continue;
-    papers.push({ title, url: scholarUrl(title) });
+    refs.push({ title, url: scholarUrl(title) });
   }
 
-  return papers;
+  return refs;
 }
 
 /* ── extractor 2: markdown tables with Title column ─────────────── */
 
-function extractTablePapers(content: string): PaperRef[] {
-  const papers: PaperRef[] = [];
+function extractTableRefs(content: string): Reference[] {
+  const refs: Reference[] = [];
   const lines = content.split("\n");
 
   for (let i = 0; i < lines.length; i++) {
@@ -156,7 +156,7 @@ function extractTablePapers(content: string): PaperRef[] {
       const venue = venueIdx >= 0 ? rc[venueIdx]?.replace(/\*\*/g, "").trim() || undefined : undefined;
 
       if (year !== undefined && (!validYear(year) || isNaN(year))) continue;
-      papers.push({
+      refs.push({
         title,
         authors,
         year: year && !isNaN(year) ? year : undefined,
@@ -165,13 +165,13 @@ function extractTablePapers(content: string): PaperRef[] {
       });
     }
   }
-  return papers;
+  return refs;
 }
 
 /* ── extractor 3: bold author-year **Author (Year)**: ───────────── */
 
-function extractBoldAuthorYear(content: string): PaperRef[] {
-  const papers: PaperRef[] = [];
+function extractBoldAuthorYear(content: string): Reference[] {
+  const refs: Reference[] = [];
   const re =
     /\*\*([A-Z\u00C0-\u024F][A-Za-z\u00C0-\u024F'.&, ]+?(?:\s+et\s+al\.?)?)\s*\((\d{4})\)\*\*(?::\s*(?:"([^"]+)"|([^\n*]+)))?/g;
   let m: RegExpExecArray | null;
@@ -185,20 +185,20 @@ function extractBoldAuthorYear(content: string): PaperRef[] {
     if (!validYear(year) || isFalseAuthor(authors)) continue;
 
     const title = (quoted && isValidTitle(quoted)) ? quoted : (desc && isValidTitle(desc)) ? desc : undefined;
-    papers.push({
+    refs.push({
       title: title || `${authors} (${year})`,
       authors,
       year,
       url: scholarUrl(title || authors, authors, year),
     });
   }
-  return papers;
+  return refs;
 }
 
 /* ── extractor 4: parenthetical citations (Author, Year) ───────── */
 
-function extractParenthetical(content: string): PaperRef[] {
-  const papers: PaperRef[] = [];
+function extractParenthetical(content: string): Reference[] {
+  const refs: Reference[] = [];
   const re =
     /\(([A-Z\u00C0-\u024F][A-Za-z\u00C0-\u024F']+(?:\s*(?:&|and)\s*[A-Z\u00C0-\u024F][A-Za-z\u00C0-\u024F']+)?(?:\s+et\s+al\.?)?),\s*(\d{4})\)/g;
   let m: RegExpExecArray | null;
@@ -207,20 +207,20 @@ function extractParenthetical(content: string): PaperRef[] {
     const authors = m[1].trim();
     const year = parseInt(m[2], 10);
     if (!validYear(year) || isFalseAuthor(authors) || isYearRange(m[0])) continue;
-    papers.push({
+    refs.push({
       title: `${authors} (${year})`,
       authors,
       year,
       url: scholarUrl(authors, undefined, year),
     });
   }
-  return papers;
+  return refs;
 }
 
 /* ── extractor 5: narrative citations  Author (Year)  ───────────── */
 
-function extractNarrativeCitations(content: string): PaperRef[] {
-  const papers: PaperRef[] = [];
+function extractNarrativeCitations(content: string): Reference[] {
+  const refs: Reference[] = [];
   // Narrative: "Author (Year)" in running text, NOT preceded by **
   const re =
     /(?:^|(?<=[\s,;:(]))([A-Z\u00C0-\u024F][A-Za-z\u00C0-\u024F']+(?:\s*(?:&|and)\s*[A-Z\u00C0-\u024F][A-Za-z\u00C0-\u024F']+)?(?:\s+et\s+al\.?)?)\s+\((\d{4})\)/gm;
@@ -235,67 +235,67 @@ function extractNarrativeCitations(content: string): PaperRef[] {
     const before = content.slice(Math.max(0, m.index - 3), m.index);
     if (before.includes("**")) continue;
 
-    papers.push({
+    refs.push({
       title: `${authors} (${year})`,
       authors,
       year,
       url: scholarUrl(authors, undefined, year),
     });
   }
-  return papers;
+  return refs;
 }
 
 /* ── dedup ──────────────────────────────────────────────────────── */
 
-function dedup(papers: PaperRef[]): PaperRef[] {
-  const byKey = new Map<string, PaperRef>();
+function dedup(refs: Reference[]): Reference[] {
+  const byKey = new Map<string, Reference>();
 
-  for (const p of papers) {
-    const tKey = normalizeTitle(p.title);
-    const ayKey = p.authors && p.year
-      ? `ay:${p.authors.toLowerCase().replace(/\s+/g, " ")}:${p.year}`
+  for (const r of refs) {
+    const tKey = normalizeTitle(r.title);
+    const ayKey = r.authors && r.year
+      ? `ay:${r.authors.toLowerCase().replace(/\s+/g, " ")}:${r.year}`
       : null;
 
     const existing = byKey.get(tKey) || (ayKey ? byKey.get(ayKey) : null);
 
-    const score = (r: PaperRef) =>
-      (r.authors ? 1 : 0) + (r.year ? 1 : 0) + (r.venue ? 1 : 0) + (r.title.length > 30 ? 1 : 0);
+    const score = (ref: Reference) =>
+      (ref.authors ? 1 : 0) + (ref.year ? 1 : 0) + (ref.venue ? 1 : 0) + (ref.title.length > 30 ? 1 : 0);
 
-    if (!existing || score(p) > score(existing)) {
-      byKey.set(tKey, p);
-      if (ayKey) byKey.set(ayKey, p);
+    if (!existing || score(r) > score(existing)) {
+      byKey.set(tKey, r);
+      if (ayKey) byKey.set(ayKey, r);
     }
   }
 
   // collect unique values
-  const unique = new Map<string, PaperRef>();
-  for (const p of byKey.values()) {
-    const uk = `${normalizeTitle(p.title)}::${p.year ?? ""}`;
-    if (!unique.has(uk)) unique.set(uk, p);
+  const unique = new Map<string, Reference>();
+  for (const r of byKey.values()) {
+    const uk = `${normalizeTitle(r.title)}::${r.year ?? ""}`;
+    if (!unique.has(uk)) unique.set(uk, r);
   }
   return Array.from(unique.values());
 }
 
 /* ── public API ─────────────────────────────────────────────────── */
 
-export function extractPapers(content: string): PaperRef[] {
+export function extractReferences(content: string): Reference[] {
   return dedup([
     ...extractNumberedRefs(content),
-    ...extractTablePapers(content),
+    ...extractTableRefs(content),
     ...extractBoldAuthorYear(content),
     ...extractParenthetical(content),
     ...extractNarrativeCitations(content),
   ]);
 }
 
-const cache = new Map<string, PaperRef[]>();
+const cache = new Map<string, Reference[]>();
 
-export function getPapersForSlug(slug: string): PaperRef[] {
+export function getReferencesForSlug(slug: string): Reference[] {
   if (cache.has(slug)) return cache.get(slug)!;
   const file = path.join(CONTENT_DIR, `${slug}.md`);
   if (!fs.existsSync(file)) return [];
   const content = fs.readFileSync(file, "utf-8");
-  const papers = extractPapers(content);
-  cache.set(slug, papers);
-  return papers;
+  const refs = extractReferences(content);
+  cache.set(slug, refs);
+  return refs;
 }

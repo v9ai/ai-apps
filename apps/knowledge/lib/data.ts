@@ -1,49 +1,49 @@
-import type { Paper, PaperWithContent, GroupedPapers, CategoryMeta } from "./articles";
-import type { PaperRef } from "./papers";
+import type { Lesson, LessonWithContent, GroupedLessons, CategoryMeta } from "./articles";
+import type { Reference } from "./papers";
 
 // Re-export types for single-source imports
-export type { Paper, PaperWithContent, GroupedPapers, CategoryMeta, PaperRef };
+export type { Lesson, LessonWithContent, GroupedLessons, CategoryMeta, Reference };
 
 // Re-export static constants (always from articles.ts — no DB needed)
 export { CATEGORIES, CATEGORY_META, getCategoryMeta } from "./articles";
 
 export interface SearchResult {
-  resultType: "paper" | "section" | "citation";
+  resultType: "lesson" | "section" | "citation";
   title: string;
   snippet: string;
   rank: number;
-  paperSlug: string | null;
-  paperTitle: string | null;
+  lessonSlug: string | null;
+  lessonTitle: string | null;
 }
 
 const USE_SUPABASE = process.env.NEXT_PUBLIC_DATA_SOURCE === "supabase";
 
-export async function getAllPapers(): Promise<Paper[]> {
+export async function getAllLessons(): Promise<Lesson[]> {
   if (USE_SUPABASE) {
-    const { getAllPapersFromDb } = await import("./supabase/queries");
-    return getAllPapersFromDb();
+    const { getAllLessonsFromDb } = await import("./supabase/queries");
+    return getAllLessonsFromDb();
   }
-  const { getAllPapers: fs } = await import("./articles");
+  const { getAllLessons: fs } = await import("./articles");
   return fs();
 }
 
-export async function getPaperBySlug(
+export async function getLessonBySlug(
   slug: string,
-): Promise<PaperWithContent | null> {
+): Promise<LessonWithContent | null> {
   if (USE_SUPABASE) {
-    const { getPaperBySlugFromDb } = await import("./supabase/queries");
-    return getPaperBySlugFromDb(slug);
+    const { getLessonBySlugFromDb } = await import("./supabase/queries");
+    return getLessonBySlugFromDb(slug);
   }
-  const { getPaperBySlug: fs } = await import("./articles");
+  const { getLessonBySlug: fs } = await import("./articles");
   return fs(slug);
 }
 
-export async function getGroupedPapers(): Promise<GroupedPapers[]> {
+export async function getGroupedLessons(): Promise<GroupedLessons[]> {
   if (USE_SUPABASE) {
-    const { getGroupedPapersFromDb } = await import("./supabase/queries");
-    return getGroupedPapersFromDb();
+    const { getGroupedLessonsFromDb } = await import("./supabase/queries");
+    return getGroupedLessonsFromDb();
   }
-  const { getGroupedPapers: fs } = await import("./articles");
+  const { getGroupedLessons: fs } = await import("./articles");
   return fs();
 }
 
@@ -56,26 +56,26 @@ export async function getTotalWordCount(): Promise<number> {
   return fs();
 }
 
-export async function getCitationsForPaper(
+export async function getReferencesForLesson(
   slug: string,
-): Promise<PaperRef[]> {
+): Promise<Reference[]> {
   if (USE_SUPABASE) {
-    const { getCitationsFromDb } = await import("./supabase/queries");
-    return getCitationsFromDb(slug);
+    const { getReferencesFromDb } = await import("./supabase/queries");
+    return getReferencesFromDb(slug);
   }
-  const { getPapersForSlug } = await import("./papers");
-  return getPapersForSlug(slug);
+  const { getReferencesForSlug } = await import("./papers");
+  return getReferencesForSlug(slug);
 }
 
-export async function getRelatedPapers(
+export async function getRelatedLessons(
   slug: string,
-): Promise<Paper[]> {
+): Promise<Lesson[]> {
   if (USE_SUPABASE) {
-    const { getRelatedPapersFromDb } = await import("./supabase/queries");
-    return getRelatedPapersFromDb(slug);
+    const { getRelatedLessonsFromDb } = await import("./supabase/queries");
+    return getRelatedLessonsFromDb(slug);
   }
   // FS fallback: filter by same category
-  const all = await getAllPapers();
+  const all = await getAllLessons();
   const current = all.find((p) => p.slug === slug);
   if (!current) return [];
   return all

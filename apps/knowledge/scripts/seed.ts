@@ -2,8 +2,8 @@ import { createClient } from "@supabase/supabase-js";
 import fs from "fs";
 import path from "path";
 import { CATEGORIES, CATEGORY_META } from "../lib/articles";
-import { extractPapers, normalizeTitle } from "../lib/papers";
-import type { PaperRef } from "../lib/papers";
+import { extractReferences, normalizeTitle } from "../lib/papers";
+import type { Reference } from "../lib/papers";
 import type { Database } from "../lib/supabase/database.types";
 
 const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
@@ -225,11 +225,11 @@ async function seed() {
   console.log("Seeding citations...");
   const citationMap = new Map<
     string,
-    { ref: PaperRef; paperSlugs: Set<string> }
+    { ref: Reference; paperSlugs: Set<string> }
   >();
 
   for (const [slug, raw] of fileContents) {
-    const refs = extractPapers(raw);
+    const refs = extractReferences(raw);
     for (const ref of refs) {
       const key = `${normalizeTitle(ref.title)}::${ref.year ?? 0}`;
       const existing = citationMap.get(key);
