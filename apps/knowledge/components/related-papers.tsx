@@ -11,7 +11,7 @@ export function RelatedPapers({ papers, meta }: Props) {
 
   return (
     <div className="related-section">
-      <div className="related-heading">Related Papers</div>
+      <div className="related-heading">Continue Learning</div>
       <div className="related-grid">
         {papers.map((p) => (
           <Link
