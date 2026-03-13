@@ -2515,6 +2515,151 @@ export async function upsertUserSettings(
   return { userId, storyLanguage, storyMinutes };
 }
 
+// ============================================
+// Teacher Feedbacks
+// ============================================
+
+function mapTeacherFeedbackRow(row: Record<string, unknown>) {
+  return {
+    id: row.id as number,
+    familyMemberId: row.family_member_id as number,
+    userId: row.user_id as string,
+    teacherName: row.teacher_name as string,
+    subject: (row.subject as string) || null,
+    feedbackDate: row.feedback_date as string,
+    content: row.content as string,
+    tags: row.tags ? JSON.parse(row.tags as string) : null,
+    source: (row.source as string) || null,
+    extracted: (row.extracted as number) === 1,
+    createdAt: row.created_at as string,
+    updatedAt: row.updated_at as string,
+  };
+}
+
+export async function getTeacherFeedbacksForFamilyMember(
+  familyMemberId: number,
+  userId: string,
+) {
+  const result = await d1.execute({
+    sql: `SELECT * FROM teacher_feedbacks WHERE family_member_id = ? AND user_id = ? ORDER BY feedback_date DESC, created_at DESC`,
+    args: [familyMemberId, userId],
+  });
+  return result.rows.map(mapTeacherFeedbackRow);
+}
+
+export async function getTeacherFeedback(id: number, userId: string) {
+  const result = await d1.execute({
+    sql: `SELECT * FROM teacher_feedbacks WHERE id = ? AND user_id = ?`,
+    args: [id, userId],
+  });
+  if (result.rows.length === 0) return null;
+  return mapTeacherFeedbackRow(result.rows[0]);
+}
+
+export async function createTeacherFeedback(params: {
+  familyMemberId: number;
+  userId: string;
+  teacherName: string;
+  subject?: string | null;
+  feedbackDate: string;
+  content: string;
+  tags?: string[] | null;
+  source?: string | null;
+}): Promise<number> {
+  const result = await d1.execute({
+    sql: `INSERT INTO teacher_feedbacks (family_member_id, user_id, teacher_name, subject, feedback_date, content, tags, source, extracted, created_at, updated_at)
+          VALUES (?, ?, ?, ?, ?, ?, ?, ?, 0, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP)
+          RETURNING id`,
+    args: [
+      params.familyMemberId,
+      params.userId,
+      params.teacherName,
+      params.subject ?? null,
+      params.feedbackDate,
+      params.content,
+      params.tags ? JSON.stringify(params.tags) : null,
+      params.source ?? null,
+    ],
+  });
+  return result.rows[0].id as number;
+}
+
+export async function updateTeacherFeedback(
+  id: number,
+  userId: string,
+  updates: {
+    teacherName?: string;
+    subject?: string | null;
+    feedbackDate?: string;
+    content?: string;
+    tags?: string[] | null;
+    source?: string | null;
+    extracted?: boolean;
+  },
+) {
+  const fields: string[] = [];
+  const args: any[] = [];
+
+  if (updates.teacherName !== undefined) {
+    fields.push("teacher_name = ?");
+    args.push(updates.teacherName);
+  }
+  if (updates.subject !== undefined) {
+    fields.push("subject = ?");
+    args.push(updates.subject);
+  }
+  if (updates.feedbackDate !== undefined) {
+    fields.push("feedback_date = ?");
+    args.push(updates.feedbackDate);
+  }
+  if (updates.content !== undefined) {
+    fields.push("content = ?");
+    args.push(updates.content);
+  }
+  if (updates.tags !== undefined) {
+    fields.push("tags = ?");
+    args.push(updates.tags ? JSON.stringify(updates.tags) : null);
+  }
+  if (updates.source !== undefined) {
+    fields.push("source = ?");
+    args.push(updates.source);
+  }
+  if (updates.extracted !== undefined) {
+    fields.push("extracted = ?");
+    args.push(updates.extracted ? 1 : 0);
+  }
+
+  if (fields.length === 0) return;
+
+  fields.push("updated_at = datetime('now')");
+  args.push(id, userId);
+
+  await d1.execute({
+    sql: `UPDATE teacher_feedbacks SET ${fields.join(", ")} WHERE id = ? AND user_id = ?`,
+    args,
+  });
+}
+
+export async function deleteTeacherFeedback(
+  id: number,
+  userId: string,
+): Promise<void> {
+  await d1.execute({
+    sql: `DELETE FROM teacher_feedbacks WHERE id = ? AND user_id = ?`,
+    args: [id, userId],
+  });
+}
+
+export async function markTeacherFeedbackExtracted(
+  id: number,
+  userId: string,
+): Promise<void> {
+  await d1.execute({
+    sql: `UPDATE teacher_feedbacks SET extracted = 1, updated_at = datetime('now') WHERE id = ? AND user_id = ?`,
+    args: [id, userId],
+  });
+}
+
 export const d1Tools = {
   // Family Members
   listFamilyMembers,
@@ -2605,6 +2750,13 @@ export const d1Tools = {
   createRelationship,
   updateRelationship,
   deleteRelationship,
+  // Teacher Feedbacks
+  getTeacherFeedbacksForFamilyMember,
+  getTeacherFeedback,
+  createTeacherFeedback,
+  updateTeacherFeedback,
+  deleteTeacherFeedback,
+  markTeacherFeedbackExtracted,
   // User Settings
   getUserSettings,
   upsertUserSettings,

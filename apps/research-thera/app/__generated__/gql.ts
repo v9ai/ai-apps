@@ -26,6 +26,7 @@ type Documents = {
     "mutation CreateRelationship($input: CreateRelationshipInput!) {\n  createRelationship(input: $input) {\n    id\n    createdBy\n    subjectType\n    subjectId\n    relatedType\n    relatedId\n    relationshipType\n    context\n    startDate\n    status\n    createdAt\n    updatedAt\n  }\n}": typeof types.CreateRelationshipDocument,
     "mutation CreateStory($input: CreateStoryInput!) {\n  createStory(input: $input) {\n    id\n    goalId\n    createdBy\n    content\n    createdAt\n    updatedAt\n  }\n}": typeof types.CreateStoryDocument,
     "mutation CreateSubGoal($goalId: Int!, $input: CreateSubGoalInput!) {\n  createSubGoal(goalId: $goalId, input: $input) {\n    id\n    slug\n    title\n    description\n    status\n    parentGoalId\n    createdAt\n    updatedAt\n    familyMemberId\n  }\n}": typeof types.CreateSubGoalDocument,
+    "mutation CreateTeacherFeedback($input: CreateTeacherFeedbackInput!) {\n  createTeacherFeedback(input: $input) {\n    id\n    familyMemberId\n    createdBy\n    teacherName\n    subject\n    feedbackDate\n    content\n    tags\n    source\n    extracted\n    createdAt\n    updatedAt\n  }\n}": typeof types.CreateTeacherFeedbackDocument,
     "mutation CreateUniqueOutcome($input: CreateUniqueOutcomeInput!) {\n  createUniqueOutcome(input: $input) {\n    id\n    characteristicId\n    createdBy\n    observedAt\n    description\n    createdAt\n    updatedAt\n  }\n}": typeof types.CreateUniqueOutcomeDocument,
     "mutation DeleteBehaviorObservation($id: Int!) {\n  deleteBehaviorObservation(id: $id) {\n    success\n    message\n  }\n}": typeof types.DeleteBehaviorObservationDocument,
     "mutation DeleteContact($id: Int!) {\n  deleteContact(id: $id) {\n    success\n    message\n  }\n}": typeof types.DeleteContactDocument,
@@ -38,6 +39,7 @@ type Documents = {
     "mutation DeleteRelationship($id: Int!) {\n  deleteRelationship(id: $id) {\n    success\n    message\n  }\n}": typeof types.DeleteRelationshipDocument,
     "mutation DeleteResearch($goalId: Int!) {\n  deleteResearch(goalId: $goalId) {\n    success\n    message\n    deletedCount\n  }\n}": typeof types.DeleteResearchDocument,
     "mutation DeleteStory($id: Int!) {\n  deleteStory(id: $id) {\n    success\n    message\n  }\n}": typeof types.DeleteStoryDocument,
+    "mutation DeleteTeacherFeedback($id: Int!) {\n  deleteTeacherFeedback(id: $id) {\n    success\n    message\n  }\n}": typeof types.DeleteTeacherFeedbackDocument,
     "mutation DeleteUniqueOutcome($id: Int!) {\n  deleteUniqueOutcome(id: $id) {\n    success\n    message\n  }\n}": typeof types.DeleteUniqueOutcomeDocument,
     "mutation GenerateAudio($goalId: Int!, $storyId: Int, $text: String, $language: String, $voice: String) {\n  generateAudio(\n    goalId: $goalId\n    storyId: $storyId\n    text: $text\n    language: $language\n    voice: $voice\n  ) {\n    success\n    message\n    jobId\n    audioUrl\n  }\n}": typeof types.GenerateAudioDocument,
     "mutation GenerateLongFormText($goalId: Int!, $characteristicId: Int, $language: String, $minutes: Int) {\n  generateLongFormText(\n    goalId: $goalId\n    characteristicId: $characteristicId\n    language: $language\n    minutes: $minutes\n  ) {\n    success\n    message\n    jobId\n    storyId\n    text\n    audioUrl\n    manifestUrl\n    segmentUrls\n  }\n}": typeof types.GenerateLongFormTextDocument,
@@ -70,6 +72,7 @@ type Documents = {
     "query GetResearch($goalId: Int!) {\n  research(goalId: $goalId) {\n    id\n    goalId\n    title\n    authors\n    year\n    journal\n    doi\n    url\n    abstract\n    keyFindings\n    therapeuticTechniques\n    evidenceLevel\n    relevanceScore\n    extractedBy\n    extractionConfidence\n    createdAt\n  }\n}": typeof types.GetResearchDocument,
     "query GetStories($goalId: Int!) {\n  stories(goalId: $goalId) {\n    id\n    goalId\n    createdBy\n    content\n    createdAt\n    updatedAt\n  }\n}": typeof types.GetStoriesDocument,
     "query GetStory($id: Int!) {\n  story(id: $id) {\n    id\n    goalId\n    createdBy\n    content\n    audioKey\n    audioUrl\n    audioGeneratedAt\n    createdAt\n    updatedAt\n    goal {\n      id\n      title\n      slug\n    }\n  }\n}": typeof types.GetStoryDocument,
+    "query GetTeacherFeedbacks($familyMemberId: Int!) {\n  teacherFeedbacks(familyMemberId: $familyMemberId) {\n    id\n    familyMemberId\n    createdBy\n    teacherName\n    subject\n    feedbackDate\n    content\n    tags\n    source\n    extracted\n    createdAt\n    updatedAt\n    familyMember {\n      id\n      firstName\n      name\n    }\n  }\n}": typeof types.GetTeacherFeedbacksDocument,
     "mutation ShareFamilyMember($familyMemberId: Int!, $email: String!, $role: FamilyMemberShareRole) {\n  shareFamilyMember(familyMemberId: $familyMemberId, email: $email, role: $role) {\n    familyMemberId\n    email\n    role\n    createdAt\n  }\n}": typeof types.ShareFamilyMemberDocument,
     "mutation UnlinkGoalFamilyMember($id: Int!) {\n  unlinkGoalFamilyMember(id: $id) {\n    id\n    familyMemberId\n    familyMember {\n      id\n      firstName\n      name\n      relationship\n    }\n  }\n}": typeof types.UnlinkGoalFamilyMemberDocument,
     "mutation UnshareFamilyMember($familyMemberId: Int!, $email: String!) {\n  unshareFamilyMember(familyMemberId: $familyMemberId, email: $email)\n}": typeof types.UnshareFamilyMemberDocument,
@@ -82,6 +85,7 @@ type Documents = {
     "mutation UpdateNote($id: Int!, $input: UpdateNoteInput!) {\n  updateNote(id: $id, input: $input) {\n    id\n    entityId\n    entityType\n    createdBy\n    noteType\n    content\n    createdBy\n    tags\n    createdAt\n    updatedAt\n  }\n}": typeof types.UpdateNoteDocument,
     "mutation UpdateRelationship($id: Int!, $input: UpdateRelationshipInput!) {\n  updateRelationship(id: $id, input: $input) {\n    id\n    createdBy\n    subjectType\n    subjectId\n    relatedType\n    relatedId\n    relationshipType\n    context\n    startDate\n    status\n    createdAt\n    updatedAt\n  }\n}": typeof types.UpdateRelationshipDocument,
     "mutation UpdateStory($id: Int!, $input: UpdateStoryInput!) {\n  updateStory(id: $id, input: $input) {\n    id\n    goalId\n    createdBy\n    content\n    createdAt\n    updatedAt\n  }\n}": typeof types.UpdateStoryDocument,
+    "mutation UpdateTeacherFeedback($id: Int!, $input: UpdateTeacherFeedbackInput!) {\n  updateTeacherFeedback(id: $id, input: $input) {\n    id\n    familyMemberId\n    createdBy\n    teacherName\n    subject\n    feedbackDate\n    content\n    tags\n    source\n    extracted\n    createdAt\n    updatedAt\n  }\n}": typeof types.UpdateTeacherFeedbackDocument,
     "mutation UpdateUniqueOutcome($id: Int!, $input: UpdateUniqueOutcomeInput!) {\n  updateUniqueOutcome(id: $id, input: $input) {\n    id\n    characteristicId\n    createdBy\n    observedAt\n    description\n    createdAt\n    updatedAt\n  }\n}": typeof types.UpdateUniqueOutcomeDocument,
     "query GetUserSettings {\n  userSettings {\n    userId\n    storyLanguage\n    storyMinutes\n  }\n}\n\nmutation UpdateUserSettings($storyLanguage: String!, $storyMinutes: Int) {\n  updateUserSettings(storyLanguage: $storyLanguage, storyMinutes: $storyMinutes) {\n    userId\n    storyLanguage\n    storyMinutes\n  }\n}": typeof types.GetUserSettingsDocument,
 };
@@ -98,6 +102,7 @@ const documents: Documents = {
     "mutation CreateRelationship($input: CreateRelationshipInput!) {\n  createRelationship(input: $input) {\n    id\n    createdBy\n    subjectType\n    subjectId\n    relatedType\n    relatedId\n    relationshipType\n    context\n    startDate\n    status\n    createdAt\n    updatedAt\n  }\n}": types.CreateRelationshipDocument,
     "mutation CreateStory($input: CreateStoryInput!) {\n  createStory(input: $input) {\n    id\n    goalId\n    createdBy\n    content\n    createdAt\n    updatedAt\n  }\n}": types.CreateStoryDocument,
     "mutation CreateSubGoal($goalId: Int!, $input: CreateSubGoalInput!) {\n  createSubGoal(goalId: $goalId, input: $input) {\n    id\n    slug\n    title\n    description\n    status\n    parentGoalId\n    createdAt\n    updatedAt\n    familyMemberId\n  }\n}": types.CreateSubGoalDocument,
+    "mutation CreateTeacherFeedback($input: CreateTeacherFeedbackInput!) {\n  createTeacherFeedback(input: $input) {\n    id\n    familyMemberId\n    createdBy\n    teacherName\n    subject\n    feedbackDate\n    content\n    tags\n    source\n    extracted\n    createdAt\n    updatedAt\n  }\n}": types.CreateTeacherFeedbackDocument,
     "mutation CreateUniqueOutcome($input: CreateUniqueOutcomeInput!) {\n  createUniqueOutcome(input: $input) {\n    id\n    characteristicId\n    createdBy\n    observedAt\n    description\n    createdAt\n    updatedAt\n  }\n}": types.CreateUniqueOutcomeDocument,
     "mutation DeleteBehaviorObservation($id: Int!) {\n  deleteBehaviorObservation(id: $id) {\n    success\n    message\n  }\n}": types.DeleteBehaviorObservationDocument,
     "mutation DeleteContact($id: Int!) {\n  deleteContact(id: $id) {\n    success\n    message\n  }\n}": types.DeleteContactDocument,
@@ -110,6 +115,7 @@ const documents: Documents = {
     "mutation DeleteRelationship($id: Int!) {\n  deleteRelationship(id: $id) {\n    success\n    message\n  }\n}": types.DeleteRelationshipDocument,
     "mutation DeleteResearch($goalId: Int!) {\n  deleteResearch(goalId: $goalId) {\n    success\n    message\n    deletedCount\n  }\n}": types.DeleteResearchDocument,
     "mutation DeleteStory($id: Int!) {\n  deleteStory(id: $id) {\n    success\n    message\n  }\n}": types.DeleteStoryDocument,
+    "mutation DeleteTeacherFeedback($id: Int!) {\n  deleteTeacherFeedback(id: $id) {\n    success\n    message\n  }\n}": types.DeleteTeacherFeedbackDocument,
     "mutation DeleteUniqueOutcome($id: Int!) {\n  deleteUniqueOutcome(id: $id) {\n    success\n    message\n  }\n}": types.DeleteUniqueOutcomeDocument,
     "mutation GenerateAudio($goalId: Int!, $storyId: Int, $text: String, $language: String, $voice: String) {\n  generateAudio(\n    goalId: $goalId\n    storyId: $storyId\n    text: $text\n    language: $language\n    voice: $voice\n  ) {\n    success\n    message\n    jobId\n    audioUrl\n  }\n}": types.GenerateAudioDocument,
     "mutation GenerateLongFormText($goalId: Int!, $characteristicId: Int, $language: String, $minutes: Int) {\n  generateLongFormText(\n    goalId: $goalId\n    characteristicId: $characteristicId\n    language: $language\n    minutes: $minutes\n  ) {\n    success\n    message\n    jobId\n    storyId\n    text\n    audioUrl\n    manifestUrl\n    segmentUrls\n  }\n}": types.GenerateLongFormTextDocument,
@@ -142,6 +148,7 @@ const documents: Documents = {
     "query GetResearch($goalId: Int!) {\n  research(goalId: $goalId) {\n    id\n    goalId\n    title\n    authors\n    year\n    journal\n    doi\n    url\n    abstract\n    keyFindings\n    therapeuticTechniques\n    evidenceLevel\n    relevanceScore\n    extractedBy\n    extractionConfidence\n    createdAt\n  }\n}": types.GetResearchDocument,
     "query GetStories($goalId: Int!) {\n  stories(goalId: $goalId) {\n    id\n    goalId\n    createdBy\n    content\n    createdAt\n    updatedAt\n  }\n}": types.GetStoriesDocument,
     "query GetStory($id: Int!) {\n  story(id: $id) {\n    id\n    goalId\n    createdBy\n    content\n    audioKey\n    audioUrl\n    audioGeneratedAt\n    createdAt\n    updatedAt\n    goal {\n      id\n      title\n      slug\n    }\n  }\n}": types.GetStoryDocument,
+    "query GetTeacherFeedbacks($familyMemberId: Int!) {\n  teacherFeedbacks(familyMemberId: $familyMemberId) {\n    id\n    familyMemberId\n    createdBy\n    teacherName\n    subject\n    feedbackDate\n    content\n    tags\n    source\n    extracted\n    createdAt\n    updatedAt\n    familyMember {\n      id\n      firstName\n      name\n    }\n  }\n}": types.GetTeacherFeedbacksDocument,
     "mutation ShareFamilyMember($familyMemberId: Int!, $email: String!, $role: FamilyMemberShareRole) {\n  shareFamilyMember(familyMemberId: $familyMemberId, email: $email, role: $role) {\n    familyMemberId\n    email\n    role\n    createdAt\n  }\n}": types.ShareFamilyMemberDocument,
     "mutation UnlinkGoalFamilyMember($id: Int!) {\n  unlinkGoalFamilyMember(id: $id) {\n    id\n    familyMemberId\n    familyMember {\n      id\n      firstName\n      name\n      relationship\n    }\n  }\n}": types.UnlinkGoalFamilyMemberDocument,
     "mutation UnshareFamilyMember($familyMemberId: Int!, $email: String!) {\n  unshareFamilyMember(familyMemberId: $familyMemberId, email: $email)\n}": types.UnshareFamilyMemberDocument,
@@ -154,6 +161,7 @@ const documents: Documents = {
     "mutation UpdateNote($id: Int!, $input: UpdateNoteInput!) {\n  updateNote(id: $id, input: $input) {\n    id\n    entityId\n    entityType\n    createdBy\n    noteType\n    content\n    createdBy\n    tags\n    createdAt\n    updatedAt\n  }\n}": types.UpdateNoteDocument,
     "mutation UpdateRelationship($id: Int!, $input: UpdateRelationshipInput!) {\n  updateRelationship(id: $id, input: $input) {\n    id\n    createdBy\n    subjectType\n    subjectId\n    relatedType\n    relatedId\n    relationshipType\n    context\n    startDate\n    status\n    createdAt\n    updatedAt\n  }\n}": types.UpdateRelationshipDocument,
     "mutation UpdateStory($id: Int!, $input: UpdateStoryInput!) {\n  updateStory(id: $id, input: $input) {\n    id\n    goalId\n    createdBy\n    content\n    createdAt\n    updatedAt\n  }\n}": types.UpdateStoryDocument,
+    "mutation UpdateTeacherFeedback($id: Int!, $input: UpdateTeacherFeedbackInput!) {\n  updateTeacherFeedback(id: $id, input: $input) {\n    id\n    familyMemberId\n    createdBy\n    teacherName\n    subject\n    feedbackDate\n    content\n    tags\n    source\n    extracted\n    createdAt\n    updatedAt\n  }\n}": types.UpdateTeacherFeedbackDocument,
     "mutation UpdateUniqueOutcome($id: Int!, $input: UpdateUniqueOutcomeInput!) {\n  updateUniqueOutcome(id: $id, input: $input) {\n    id\n    characteristicId\n    createdBy\n    observedAt\n    description\n    createdAt\n    updatedAt\n  }\n}": types.UpdateUniqueOutcomeDocument,
     "query GetUserSettings {\n  userSettings {\n    userId\n    storyLanguage\n    storyMinutes\n  }\n}\n\nmutation UpdateUserSettings($storyLanguage: String!, $storyMinutes: Int) {\n  updateUserSettings(storyLanguage: $storyLanguage, storyMinutes: $storyMinutes) {\n    userId\n    storyLanguage\n    storyMinutes\n  }\n}": types.GetUserSettingsDocument,
 };
@@ -223,6 +231,10 @@ export function gql(source: "mutation CreateSubGoal($goalId: Int!, $input: Creat
 /**
  * The gql function is used to parse GraphQL queries into a document that can be used by GraphQL clients.
  */
+export function gql(source: "mutation CreateTeacherFeedback($input: CreateTeacherFeedbackInput!) {\n  createTeacherFeedback(input: $input) {\n    id\n    familyMemberId\n    createdBy\n    teacherName\n    subject\n    feedbackDate\n    content\n    tags\n    source\n    extracted\n    createdAt\n    updatedAt\n  }\n}"): (typeof documents)["mutation CreateTeacherFeedback($input: CreateTeacherFeedbackInput!) {\n  createTeacherFeedback(input: $input) {\n    id\n    familyMemberId\n    createdBy\n    teacherName\n    subject\n    feedbackDate\n    content\n    tags\n    source\n    extracted\n    createdAt\n    updatedAt\n  }\n}"];
+/**
+ * The gql function is used to parse GraphQL queries into a document that can be used by GraphQL clients.
+ */
 export function gql(source: "mutation CreateUniqueOutcome($input: CreateUniqueOutcomeInput!) {\n  createUniqueOutcome(input: $input) {\n    id\n    characteristicId\n    createdBy\n    observedAt\n    description\n    createdAt\n    updatedAt\n  }\n}"): (typeof documents)["mutation CreateUniqueOutcome($input: CreateUniqueOutcomeInput!) {\n  createUniqueOutcome(input: $input) {\n    id\n    characteristicId\n    createdBy\n    observedAt\n    description\n    createdAt\n    updatedAt\n  }\n}"];
 /**
  * The gql function is used to parse GraphQL queries into a document that can be used by GraphQL clients.
@@ -268,6 +280,10 @@ export function gql(source: "mutation DeleteResearch($goalId: Int!) {\n  deleteR
  * The gql function is used to parse GraphQL queries into a document that can be used by GraphQL clients.
  */
 export function gql(source: "mutation DeleteStory($id: Int!) {\n  deleteStory(id: $id) {\n    success\n    message\n  }\n}"): (typeof documents)["mutation DeleteStory($id: Int!) {\n  deleteStory(id: $id) {\n    success\n    message\n  }\n}"];
+/**
+ * The gql function is used to parse GraphQL queries into a document that can be used by GraphQL clients.
+ */
+export function gql(source: "mutation DeleteTeacherFeedback($id: Int!) {\n  deleteTeacherFeedback(id: $id) {\n    success\n    message\n  }\n}"): (typeof documents)["mutation DeleteTeacherFeedback($id: Int!) {\n  deleteTeacherFeedback(id: $id) {\n    success\n    message\n  }\n}"];
 /**
  * The gql function is used to parse GraphQL queries into a document that can be used by GraphQL clients.
  */
@@ -399,6 +415,10 @@ export function gql(source: "query GetStory($id: Int!) {\n  story(id: $id) {\n  
 /**
  * The gql function is used to parse GraphQL queries into a document that can be used by GraphQL clients.
  */
+export function gql(source: "query GetTeacherFeedbacks($familyMemberId: Int!) {\n  teacherFeedbacks(familyMemberId: $familyMemberId) {\n    id\n    familyMemberId\n    createdBy\n    teacherName\n    subject\n    feedbackDate\n    content\n    tags\n    source\n    extracted\n    createdAt\n    updatedAt\n    familyMember {\n      id\n      firstName\n      name\n    }\n  }\n}"): (typeof documents)["query GetTeacherFeedbacks($familyMemberId: Int!) {\n  teacherFeedbacks(familyMemberId: $familyMemberId) {\n    id\n    familyMemberId\n    createdBy\n    teacherName\n    subject\n    feedbackDate\n    content\n    tags\n    source\n    extracted\n    createdAt\n    updatedAt\n    familyMember {\n      id\n      firstName\n      name\n    }\n  }\n}"];
+/**
+ * The gql function is used to parse GraphQL queries into a document that can be used by GraphQL clients.
+ */
 export function gql(source: "mutation ShareFamilyMember($familyMemberId: Int!, $email: String!, $role: FamilyMemberShareRole) {\n  shareFamilyMember(familyMemberId: $familyMemberId, email: $email, role: $role) {\n    familyMemberId\n    email\n    role\n    createdAt\n  }\n}"): (typeof documents)["mutation ShareFamilyMember($familyMemberId: Int!, $email: String!, $role: FamilyMemberShareRole) {\n  shareFamilyMember(familyMemberId: $familyMemberId, email: $email, role: $role) {\n    familyMemberId\n    email\n    role\n    createdAt\n  }\n}"];
 /**
  * The gql function is used to parse GraphQL queries into a document that can be used by GraphQL clients.
@@ -444,6 +464,10 @@ export function gql(source: "mutation UpdateRelationship($id: Int!, $input: Upda
  * The gql function is used to parse GraphQL queries into a document that can be used by GraphQL clients.
  */
 export function gql(source: "mutation UpdateStory($id: Int!, $input: UpdateStoryInput!) {\n  updateStory(id: $id, input: $input) {\n    id\n    goalId\n    createdBy\n    content\n    createdAt\n    updatedAt\n  }\n}"): (typeof documents)["mutation UpdateStory($id: Int!, $input: UpdateStoryInput!) {\n  updateStory(id: $id, input: $input) {\n    id\n    goalId\n    createdBy\n    content\n    createdAt\n    updatedAt\n  }\n}"];
+/**
+ * The gql function is used to parse GraphQL queries into a document that can be used by GraphQL clients.
+ */
+export function gql(source: "mutation UpdateTeacherFeedback($id: Int!, $input: UpdateTeacherFeedbackInput!) {\n  updateTeacherFeedback(id: $id, input: $input) {\n    id\n    familyMemberId\n    createdBy\n    teacherName\n    subject\n    feedbackDate\n    content\n    tags\n    source\n    extracted\n    createdAt\n    updatedAt\n  }\n}"): (typeof documents)["mutation UpdateTeacherFeedback($id: Int!, $input: UpdateTeacherFeedbackInput!) {\n  updateTeacherFeedback(id: $id, input: $input) {\n    id\n    familyMemberId\n    createdBy\n    teacherName\n    subject\n    feedbackDate\n    content\n    tags\n    source\n    extracted\n    createdAt\n    updatedAt\n  }\n}"];
 /**
  * The gql function is used to parse GraphQL queries into a document that can be used by GraphQL clients.
  */

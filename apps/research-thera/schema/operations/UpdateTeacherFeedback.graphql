@@ -1,0 +1,16 @@
+mutation UpdateTeacherFeedback($id: Int!, $input: UpdateTeacherFeedbackInput!) {
+  updateTeacherFeedback(id: $id, input: $input) {
+    id
+    familyMemberId
+    createdBy
+    teacherName
+    subject
+    feedbackDate
+    content
+    tags
+    source
+    extracted
+    createdAt
+    updatedAt
+  }
+}

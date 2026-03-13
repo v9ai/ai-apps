@@ -32,6 +32,10 @@ type Query {
   familyMemberCharacteristics(familyMemberId: Int!, category: CharacteristicCategory): [FamilyMemberCharacteristic!]!
   familyMemberCharacteristic(id: Int!): FamilyMemberCharacteristic
 
+  # Teacher Feedbacks
+  teacherFeedbacks(familyMemberId: Int!): [TeacherFeedback!]!
+  teacherFeedback(id: Int!): TeacherFeedback
+
   # Contacts
   contacts: [Contact!]!
   contact(id: Int!): Contact
@@ -130,6 +134,12 @@ type Mutation {
   createUniqueOutcome(input: CreateUniqueOutcomeInput!): UniqueOutcome!
   updateUniqueOutcome(id: Int!, input: UpdateUniqueOutcomeInput!): UniqueOutcome!
   deleteUniqueOutcome(id: Int!): DeleteUniqueOutcomeResult!
+
+  # Teacher Feedbacks
+  createTeacherFeedback(input: CreateTeacherFeedbackInput!): TeacherFeedback!
+  updateTeacherFeedback(id: Int!, input: UpdateTeacherFeedbackInput!): TeacherFeedback!
+  deleteTeacherFeedback(id: Int!): DeleteTeacherFeedbackResult!
+  markTeacherFeedbackExtracted(id: Int!): TeacherFeedback!
 
   # Contacts
   createContact(input: CreateContactInput!): Contact!
@@ -695,6 +705,7 @@ type FamilyMember {
   goals: [Goal!]!
   shares: [FamilyMemberShare!]!
   behaviorObservations(goalId: Int): [BehaviorObservation!]!
+  teacherFeedbacks: [TeacherFeedback!]!
 }
 
 input CreateFamilyMemberInput {
@@ -990,6 +1001,59 @@ input UpdateFamilyMemberCharacteristicInput {
 }
 
 type DeleteFamilyMemberCharacteristicResult {
+  success: Boolean!
+  message: String
+}
+
+# ============================================
+# Teacher Feedbacks
+# ============================================
+
+enum FeedbackSource {
+  EMAIL
+  MEETING
+  REPORT
+  PHONE
+  NOTE
+  OTHER
+}
+
+type TeacherFeedback {
+  id: Int!
+  familyMemberId: Int!
+  createdBy: String!
+  teacherName: String!
+  subject: String
+  feedbackDate: String!
+  content: String!
+  tags: [String!]
+  source: FeedbackSource
+  extracted: Boolean!
+  createdAt: String!
+  updatedAt: String!
+  familyMember: FamilyMember
+}
+
+input CreateTeacherFeedbackInput {
+  familyMemberId: Int!
+  teacherName: String!
+  subject: String
+  feedbackDate: String!
+  content: String!
+  tags: [String!]
+  source: FeedbackSource
+}
+
+input UpdateTeacherFeedbackInput {
+  teacherName: String
+  subject: String
+  feedbackDate: String
+  content: String
+  tags: [String!]
+  source: FeedbackSource
+}
+
+type DeleteTeacherFeedbackResult {
   success: Boolean!
   message: String
 }
