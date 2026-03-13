@@ -44,7 +44,6 @@
     "db:studio": "drizzle-kit studio"
   },
   "dependencies": {
-    "@ai-apps/og": "workspace:*",
     "@ai-sdk/anthropic": "^3.0.35",
     "@ai-sdk/deepseek": "^2.0.17",
     "@ai-sdk/openai": "^3.0.26",
@@ -82,6 +81,7 @@
     "llamaindex": "^0.12.1",
     "lodash": "^4.17.23",
     "next": "^16.1.6",
+    "open-graph-scraper": "^6.11.0",
     "openai": "^6.21.0",
     "react": "19.1.1",
     "react-dom": "19.1.1",
