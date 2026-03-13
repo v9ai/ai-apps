@@ -1,6 +1,23 @@
 import { NextRequest, NextResponse } from "next/server";
 import { checkIsAdmin } from "@/lib/admin";
-import { extractOG } from "@ai-apps/og";
+import ogs from "open-graph-scraper";
+
+const DEFAULT_UA =
+  "Mozilla/5.0 (compatible; Googlebot/2.1; +http://www.google.com/bot.html)";
+
+async function extractOG(url: string) {
+  const { result } = await ogs({
+    url,
+    fetchOptions: { headers: { "User-Agent": DEFAULT_UA } },
+  });
+  return {
+    title: result.ogTitle,
+    description: result.ogDescription,
+    image: Array.isArray(result.ogImage) ? result.ogImage[0]?.url : undefined,
+    url: result.ogUrl,
+    siteName: result.ogSiteName,
+  };
+}
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
