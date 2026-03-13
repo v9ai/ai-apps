@@ -1,4 +1,4 @@
-// Inlined from @repo/qwen to avoid workspace:* dependency in standalone deploys
+// Inlined from @ai-apps/qwen to avoid workspace:* dependency in standalone deploys
 
 // ─── Types ──────────────────────────────────────────────────────────────────
 

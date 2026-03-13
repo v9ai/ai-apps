@@ -12,8 +12,9 @@ import {
   useCreateContactMutation,
   useCreateOpportunityMutation,
   useGetOpportunitiesQuery,
-
+  useDeleteCompanyMutation,
 } from "@/__generated__/hooks";
+import { useRouter } from "next/navigation";
 import type { CompanyCategory } from "@/__generated__/graphql";
 import ReactMarkdown from "react-markdown";
 import remarkGfm from "remark-gfm";
@@ -50,6 +51,7 @@ import {
   ChevronUpIcon,
   Link2Icon,
   Pencil1Icon,
+  TrashIcon,
 } from "@radix-ui/react-icons";
 
 type Props = {
@@ -877,6 +879,7 @@ function CompanyEditDialog({ company, onSaved }: EditDialogProps) {
 export function CompanyDetail({ companyKey, companyId }: Props) {
   const { user } = useAuth();
   const isAdmin = user?.email === ADMIN_EMAIL;
+  const router = useRouter();
 
   const [enhanceError, setEnhanceError] = useState<string | null>(null);
   const [enhanceSuccess, setEnhanceSuccess] = useState<string | null>(null);
@@ -899,6 +902,8 @@ export function CompanyDetail({ companyKey, companyId }: Props) {
     },
   });
 
+  const [deleteCompany, { loading: isDeleting }] = useDeleteCompanyMutation();
+
   const [analyzeError, setAnalyzeError] = useState<string | null>(null);
   const [analyzeSuccess, setAnalyzeSuccess] = useState<string | null>(null);
   const [analyzeCompany, { loading: isAnalyzing }] = useAnalyzeCompanyMutation({
@@ -917,13 +922,17 @@ export function CompanyDetail({ companyKey, companyId }: Props) {
   // When a numeric ID is passed, derive the slug from the loaded company record
   const effectiveKey = companyKey ?? company?.key;
 
+  const handleDelete = useCallback(async () => {
+    if (!company?.id) return;
+    await deleteCompany({ variables: { id: company.id } });
+    router.push("/companies");
+  }, [company, deleteCompany, router]);
+
   const { data: jobsData, loading: jobsLoading } = useGetJobsQuery({
-    variables: { search: effectiveKey, limit: 100, showAll: true },
+    variables: { companyKey: effectiveKey, limit: 100, showAll: true },
     skip: !effectiveKey,
   });
-  const companyJobs = (jobsData?.jobs?.jobs ?? []).filter(
-    (j) => j.company_key === effectiveKey,
-  );
+  const companyJobs = jobsData?.jobs?.jobs ?? [];
 
   const { data: appsData } = useGetApplicationsQuery();
   const companyApps = (appsData?.applications ?? []).filter(
@@ -1238,6 +1247,17 @@ export function CompanyDetail({ companyKey, companyId }: Props) {
               >
                 <MagicWandIcon />
                 {isAnalyzing ? "Analyzing…" : company.deep_analysis ? "Re-analyze" : "Deep Analysis"}
+              </Button>
+            )}
+            {isAdmin && (
+              <Button
+                onClick={handleDelete}
+                disabled={isDeleting}
+                color="red"
+                variant="soft"
+              >
+                <TrashIcon />
+                {isDeleting ? "Deleting…" : "Delete"}
               </Button>
             )}
           </Flex>

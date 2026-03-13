@@ -260,7 +260,6 @@ export type Company = {
   id: Scalars['Int']['output'];
   industries: Array<Scalars['String']['output']>;
   industry: Maybe<Scalars['String']['output']>;
-  is_hidden: Scalars['Boolean']['output'];
   job_board_url: Maybe<Scalars['String']['output']>;
   key: Scalars['String']['output'];
   last_seen_capture_timestamp: Maybe<Scalars['String']['output']>;
@@ -357,7 +356,6 @@ export type CompanyFactInput = {
 export type CompanyFilterInput = {
   category_in?: InputMaybe<Array<CompanyCategory>>;
   has_ats_boards?: InputMaybe<Scalars['Boolean']['input']>;
-  is_hidden?: InputMaybe<Scalars['Boolean']['input']>;
   min_ai_tier?: InputMaybe<Scalars['Int']['input']>;
   min_score?: InputMaybe<Scalars['Float']['input']>;
   service_taxonomy_any?: InputMaybe<Array<Scalars['String']['input']>>;
@@ -981,6 +979,20 @@ export type ImportContactsResult = {
   success: Scalars['Boolean']['output'];
 };
 
+export type ImportResendResult = {
+  __typename?: 'ImportResendResult';
+  companyMatchCount: Scalars['Int']['output'];
+  contactMatchCount: Scalars['Int']['output'];
+  durationMs: Scalars['Int']['output'];
+  error: Maybe<Scalars['String']['output']>;
+  errorCount: Scalars['Int']['output'];
+  newCount: Scalars['Int']['output'];
+  skippedCount: Scalars['Int']['output'];
+  success: Scalars['Boolean']['output'];
+  totalFetched: Scalars['Int']['output'];
+  updatedCount: Scalars['Int']['output'];
+};
+
 export type Job = {
   __typename?: 'Job';
   absolute_url: Maybe<Scalars['String']['output']>;
@@ -1184,6 +1196,7 @@ export type Mutation = {
   importCompanies: ImportCompaniesResult;
   importCompanyWithContacts: ImportCompanyResult;
   importContacts: ImportContactsResult;
+  importResendEmails: ImportResendResult;
   ingestResumeParse: Maybe<ResumeIngestResult>;
   ingest_company_snapshot: CompanySnapshot;
   launchEmailCampaign: EmailCampaign;
@@ -1431,6 +1444,11 @@ export type MutationImportCompanyWithContactsArgs = {
 
 export type MutationImportContactsArgs = {
   contacts: Array<ContactInput>;
+};
+
+
+export type MutationImportResendEmailsArgs = {
+  maxEmails?: InputMaybe<Scalars['Int']['input']>;
 };
 
 
@@ -1919,6 +1937,7 @@ export type QueryJobArgs = {
 
 
 export type QueryJobsArgs = {
+  companyKey?: InputMaybe<Scalars['String']['input']>;
   excludedCompanies?: InputMaybe<Array<Scalars['String']['input']>>;
   limit?: InputMaybe<Scalars['Int']['input']>;
   offset?: InputMaybe<Scalars['Int']['input']>;
@@ -2273,7 +2292,6 @@ export type UpdateCompanyInput = {
   github_url?: InputMaybe<Scalars['String']['input']>;
   industries?: InputMaybe<Array<Scalars['String']['input']>>;
   industry?: InputMaybe<Scalars['String']['input']>;
-  is_hidden?: InputMaybe<Scalars['Boolean']['input']>;
   job_board_url?: InputMaybe<Scalars['String']['input']>;
   key?: InputMaybe<Scalars['String']['input']>;
   linkedin_url?: InputMaybe<Scalars['String']['input']>;
@@ -2442,6 +2460,7 @@ export type GetJobsQueryVariables = Exact<{
   sourceType?: InputMaybe<Scalars['String']['input']>;
   sourceTypes?: InputMaybe<Array<Scalars['String']['input']> | Scalars['String']['input']>;
   search?: InputMaybe<Scalars['String']['input']>;
+  companyKey?: InputMaybe<Scalars['String']['input']>;
   limit?: InputMaybe<Scalars['Int']['input']>;
   offset?: InputMaybe<Scalars['Int']['input']>;
   excludedCompanies?: InputMaybe<Array<Scalars['String']['input']> | Scalars['String']['input']>;
@@ -2589,22 +2608,6 @@ export type DeleteCompanyMutationVariables = Exact<{
 
 export type DeleteCompanyMutation = { __typename?: 'Mutation', deleteCompany: { __typename?: 'DeleteCompanyResponse', success: boolean, message: string | null } };
 
-export type EnhanceCompanyMutationVariables = Exact<{
-  id?: InputMaybe<Scalars['Int']['input']>;
-  key?: InputMaybe<Scalars['String']['input']>;
-}>;
-
-
-export type EnhanceCompanyMutation = { __typename?: 'Mutation', enhanceCompany: { __typename?: 'EnhanceCompanyResponse', success: boolean, message: string | null, companyId: number | null, companyKey: string | null } };
-
-export type AnalyzeCompanyMutationVariables = Exact<{
-  id?: InputMaybe<Scalars['Int']['input']>;
-  key?: InputMaybe<Scalars['String']['input']>;
-}>;
-
-
-export type AnalyzeCompanyMutation = { __typename?: 'Mutation', analyzeCompany: { __typename?: 'AnalyzeCompanyResponse', success: boolean, message: string | null, companyId: number | null, companyKey: string | null } };
-
 export type AddCompanyFactsMutationVariables = Exact<{
   company_id: Scalars['Int']['input'];
   facts: Array<CompanyFactInput> | CompanyFactInput;
@@ -2659,6 +2662,22 @@ export type ImportCompanyWithContactsMutationVariables = Exact<{
 
 
 export type ImportCompanyWithContactsMutation = { __typename?: 'Mutation', importCompanyWithContacts: { __typename?: 'ImportCompanyResult', success: boolean, contactsImported: number, contactsSkipped: number, errors: Array<string>, company: { __typename?: 'Company', id: number, key: string, name: string } | null } };
+
+export type EnhanceCompanyMutationVariables = Exact<{
+  id?: InputMaybe<Scalars['Int']['input']>;
+  key?: InputMaybe<Scalars['String']['input']>;
+}>;
+
+
+export type EnhanceCompanyMutation = { __typename?: 'Mutation', enhanceCompany: { __typename?: 'EnhanceCompanyResponse', success: boolean, message: string | null, companyId: number | null, companyKey: string | null } };
+
+export type AnalyzeCompanyMutationVariables = Exact<{
+  id?: InputMaybe<Scalars['Int']['input']>;
+  key?: InputMaybe<Scalars['String']['input']>;
+}>;
+
+
+export type AnalyzeCompanyMutation = { __typename?: 'Mutation', analyzeCompany: { __typename?: 'AnalyzeCompanyResponse', success: boolean, message: string | null, companyId: number | null, companyKey: string | null } };
 
 export type BlockJobsByCompanyMutationVariables = Exact<{
   companyName: Scalars['String']['input'];
@@ -2775,6 +2794,13 @@ export type SyncResendEmailsMutationVariables = Exact<{
 
 
 export type SyncResendEmailsMutation = { __typename?: 'Mutation', syncResendEmails: { __typename?: 'SyncResendResult', success: boolean, updatedCount: number, skippedCount: number, totalCount: number, error: string | null } };
+
+export type ImportResendEmailsMutationVariables = Exact<{
+  maxEmails?: InputMaybe<Scalars['Int']['input']>;
+}>;
+
+
+export type ImportResendEmailsMutation = { __typename?: 'Mutation', importResendEmails: { __typename?: 'ImportResendResult', success: boolean, totalFetched: number, newCount: number, updatedCount: number, skippedCount: number, errorCount: number, contactMatchCount: number, companyMatchCount: number, durationMs: number, error: string | null } };
 
 export type CancelCompanyEmailsMutationVariables = Exact<{
   companyId: Scalars['Int']['input'];
@@ -3761,11 +3787,12 @@ export type GetJobLazyQueryHookResult = ReturnType<typeof useGetJobLazyQuery>;
 export type GetJobSuspenseQueryHookResult = ReturnType<typeof useGetJobSuspenseQuery>;
 export type GetJobQueryResult = Apollo.QueryResult<GetJobQuery, GetJobQueryVariables>;
 export const GetJobsDocument = gql`
-    query GetJobs($sourceType: String, $sourceTypes: [String!], $search: String, $limit: Int, $offset: Int, $excludedCompanies: [String!], $skills: [String!], $showAll: Boolean) {
+    query GetJobs($sourceType: String, $sourceTypes: [String!], $search: String, $companyKey: String, $limit: Int, $offset: Int, $excludedCompanies: [String!], $skills: [String!], $showAll: Boolean) {
   jobs(
     sourceType: $sourceType
     sourceTypes: $sourceTypes
     search: $search
+    companyKey: $companyKey
     limit: $limit
     offset: $offset
     excludedCompanies: $excludedCompanies
@@ -3811,6 +3838,7 @@ export const GetJobsDocument = gql`
  *      sourceType: // value for 'sourceType'
  *      sourceTypes: // value for 'sourceTypes'
  *      search: // value for 'search'
+ *      companyKey: // value for 'companyKey'
  *      limit: // value for 'limit'
  *      offset: // value for 'offset'
  *      excludedCompanies: // value for 'excludedCompanies'
@@ -4552,80 +4580,6 @@ export function useDeleteCompanyMutation(baseOptions?: Apollo.MutationHookOption
 export type DeleteCompanyMutationHookResult = ReturnType<typeof useDeleteCompanyMutation>;
 export type DeleteCompanyMutationResult = Apollo.MutationResult<DeleteCompanyMutation>;
 export type DeleteCompanyMutationOptions = Apollo.BaseMutationOptions<DeleteCompanyMutation, DeleteCompanyMutationVariables>;
-export const EnhanceCompanyDocument = gql`
-    mutation EnhanceCompany($id: Int, $key: String) {
-  enhanceCompany(id: $id, key: $key) {
-    success
-    message
-    companyId
-    companyKey
-  }
-}
-    `;
-export type EnhanceCompanyMutationFn = Apollo.MutationFunction<EnhanceCompanyMutation, EnhanceCompanyMutationVariables>;
-
-/**
- * __useEnhanceCompanyMutation__
- *
- * To run a mutation, you first call `useEnhanceCompanyMutation` within a React component and pass it any options that fit your needs.
- * When your component renders, `useEnhanceCompanyMutation` returns a tuple that includes:
- * - A mutate function that you can call at any time to execute the mutation
- * - An object with fields that represent the current status of the mutation's execution
- *
- * @param baseOptions options that will be passed into the mutation, supported options are listed on: https://www.apollographql.com/docs/react/api/react-hooks/#options-2;
- *
- * @example
- * const [enhanceCompanyMutation, { data, loading, error }] = useEnhanceCompanyMutation({
- *   variables: {
- *      id: // value for 'id'
- *      key: // value for 'key'
- *   },
- * });
- */
-export function useEnhanceCompanyMutation(baseOptions?: Apollo.MutationHookOptions<EnhanceCompanyMutation, EnhanceCompanyMutationVariables>) {
-        const options = {...defaultOptions, ...baseOptions}
-        return Apollo.useMutation<EnhanceCompanyMutation, EnhanceCompanyMutationVariables>(EnhanceCompanyDocument, options);
-      }
-export type EnhanceCompanyMutationHookResult = ReturnType<typeof useEnhanceCompanyMutation>;
-export type EnhanceCompanyMutationResult = Apollo.MutationResult<EnhanceCompanyMutation>;
-export type EnhanceCompanyMutationOptions = Apollo.BaseMutationOptions<EnhanceCompanyMutation, EnhanceCompanyMutationVariables>;
-export const AnalyzeCompanyDocument = gql`
-    mutation AnalyzeCompany($id: Int, $key: String) {
-  analyzeCompany(id: $id, key: $key) {
-    success
-    message
-    companyId
-    companyKey
-  }
-}
-    `;
-export type AnalyzeCompanyMutationFn = Apollo.MutationFunction<AnalyzeCompanyMutation, AnalyzeCompanyMutationVariables>;
-
-/**
- * __useAnalyzeCompanyMutation__
- *
- * To run a mutation, you first call `useAnalyzeCompanyMutation` within a React component and pass it any options that fit your needs.
- * When your component renders, `useAnalyzeCompanyMutation` returns a tuple that includes:
- * - A mutate function that you can call at any time to execute the mutation
- * - An object with fields that represent the current status of the mutation's execution
- *
- * @param baseOptions options that will be passed into the mutation, supported options are listed on: https://www.apollographql.com/docs/react/api/react-hooks/#options-2;
- *
- * @example
- * const [analyzeCompanyMutation, { data, loading, error }] = useAnalyzeCompanyMutation({
- *   variables: {
- *      id: // value for 'id'
- *      key: // value for 'key'
- *   },
- * });
- */
-export function useAnalyzeCompanyMutation(baseOptions?: Apollo.MutationHookOptions<AnalyzeCompanyMutation, AnalyzeCompanyMutationVariables>) {
-        const options = {...defaultOptions, ...baseOptions}
-        return Apollo.useMutation<AnalyzeCompanyMutation, AnalyzeCompanyMutationVariables>(AnalyzeCompanyDocument, options);
-      }
-export type AnalyzeCompanyMutationHookResult = ReturnType<typeof useAnalyzeCompanyMutation>;
-export type AnalyzeCompanyMutationResult = Apollo.MutationResult<AnalyzeCompanyMutation>;
-export type AnalyzeCompanyMutationOptions = Apollo.BaseMutationOptions<AnalyzeCompanyMutation, AnalyzeCompanyMutationVariables>;
 export const AddCompanyFactsDocument = gql`
     mutation AddCompanyFacts($company_id: Int!, $facts: [CompanyFactInput!]!) {
   add_company_facts(company_id: $company_id, facts: $facts) {
@@ -4863,6 +4817,80 @@ export function useImportCompanyWithContactsMutation(baseOptions?: Apollo.Mutati
 export type ImportCompanyWithContactsMutationHookResult = ReturnType<typeof useImportCompanyWithContactsMutation>;
 export type ImportCompanyWithContactsMutationResult = Apollo.MutationResult<ImportCompanyWithContactsMutation>;
 export type ImportCompanyWithContactsMutationOptions = Apollo.BaseMutationOptions<ImportCompanyWithContactsMutation, ImportCompanyWithContactsMutationVariables>;
+export const EnhanceCompanyDocument = gql`
+    mutation EnhanceCompany($id: Int, $key: String) {
+  enhanceCompany(id: $id, key: $key) {
+    success
+    message
+    companyId
+    companyKey
+  }
+}
+    `;
+export type EnhanceCompanyMutationFn = Apollo.MutationFunction<EnhanceCompanyMutation, EnhanceCompanyMutationVariables>;
+
+/**
+ * __useEnhanceCompanyMutation__
+ *
+ * To run a mutation, you first call `useEnhanceCompanyMutation` within a React component and pass it any options that fit your needs.
+ * When your component renders, `useEnhanceCompanyMutation` returns a tuple that includes:
+ * - A mutate function that you can call at any time to execute the mutation
+ * - An object with fields that represent the current status of the mutation's execution
+ *
+ * @param baseOptions options that will be passed into the mutation, supported options are listed on: https://www.apollographql.com/docs/react/api/react-hooks/#options-2;
+ *
+ * @example
+ * const [enhanceCompanyMutation, { data, loading, error }] = useEnhanceCompanyMutation({
+ *   variables: {
+ *      id: // value for 'id'
+ *      key: // value for 'key'
+ *   },
+ * });
+ */
+export function useEnhanceCompanyMutation(baseOptions?: Apollo.MutationHookOptions<EnhanceCompanyMutation, EnhanceCompanyMutationVariables>) {
+        const options = {...defaultOptions, ...baseOptions}
+        return Apollo.useMutation<EnhanceCompanyMutation, EnhanceCompanyMutationVariables>(EnhanceCompanyDocument, options);
+      }
+export type EnhanceCompanyMutationHookResult = ReturnType<typeof useEnhanceCompanyMutation>;
+export type EnhanceCompanyMutationResult = Apollo.MutationResult<EnhanceCompanyMutation>;
+export type EnhanceCompanyMutationOptions = Apollo.BaseMutationOptions<EnhanceCompanyMutation, EnhanceCompanyMutationVariables>;
+export const AnalyzeCompanyDocument = gql`
+    mutation AnalyzeCompany($id: Int, $key: String) {
+  analyzeCompany(id: $id, key: $key) {
+    success
+    message
+    companyId
+    companyKey
+  }
+}
+    `;
+export type AnalyzeCompanyMutationFn = Apollo.MutationFunction<AnalyzeCompanyMutation, AnalyzeCompanyMutationVariables>;
+
+/**
+ * __useAnalyzeCompanyMutation__
+ *
+ * To run a mutation, you first call `useAnalyzeCompanyMutation` within a React component and pass it any options that fit your needs.
+ * When your component renders, `useAnalyzeCompanyMutation` returns a tuple that includes:
+ * - A mutate function that you can call at any time to execute the mutation
+ * - An object with fields that represent the current status of the mutation's execution
+ *
+ * @param baseOptions options that will be passed into the mutation, supported options are listed on: https://www.apollographql.com/docs/react/api/react-hooks/#options-2;
+ *
+ * @example
+ * const [analyzeCompanyMutation, { data, loading, error }] = useAnalyzeCompanyMutation({
+ *   variables: {
+ *      id: // value for 'id'
+ *      key: // value for 'key'
+ *   },
+ * });
+ */
+export function useAnalyzeCompanyMutation(baseOptions?: Apollo.MutationHookOptions<AnalyzeCompanyMutation, AnalyzeCompanyMutationVariables>) {
+        const options = {...defaultOptions, ...baseOptions}
+        return Apollo.useMutation<AnalyzeCompanyMutation, AnalyzeCompanyMutationVariables>(AnalyzeCompanyDocument, options);
+      }
+export type AnalyzeCompanyMutationHookResult = ReturnType<typeof useAnalyzeCompanyMutation>;
+export type AnalyzeCompanyMutationResult = Apollo.MutationResult<AnalyzeCompanyMutation>;
+export type AnalyzeCompanyMutationOptions = Apollo.BaseMutationOptions<AnalyzeCompanyMutation, AnalyzeCompanyMutationVariables>;
 export const BlockJobsByCompanyDocument = gql`
     mutation BlockJobsByCompany($companyName: String!) {
   blockJobsByCompany(companyName: $companyName) {
@@ -5575,6 +5603,48 @@ export function useSyncResendEmailsMutation(baseOptions?: Apollo.MutationHookOpt
 export type SyncResendEmailsMutationHookResult = ReturnType<typeof useSyncResendEmailsMutation>;
 export type SyncResendEmailsMutationResult = Apollo.MutationResult<SyncResendEmailsMutation>;
 export type SyncResendEmailsMutationOptions = Apollo.BaseMutationOptions<SyncResendEmailsMutation, SyncResendEmailsMutationVariables>;
+export const ImportResendEmailsDocument = gql`
+    mutation ImportResendEmails($maxEmails: Int) {
+  importResendEmails(maxEmails: $maxEmails) {
+    success
+    totalFetched
+    newCount
+    updatedCount
+    skippedCount
+    errorCount
+    contactMatchCount
+    companyMatchCount
+    durationMs
+    error
+  }
+}
+    `;
+export type ImportResendEmailsMutationFn = Apollo.MutationFunction<ImportResendEmailsMutation, ImportResendEmailsMutationVariables>;
+
+/**
+ * __useImportResendEmailsMutation__
+ *
+ * To run a mutation, you first call `useImportResendEmailsMutation` within a React component and pass it any options that fit your needs.
+ * When your component renders, `useImportResendEmailsMutation` returns a tuple that includes:
+ * - A mutate function that you can call at any time to execute the mutation
+ * - An object with fields that represent the current status of the mutation's execution
+ *
+ * @param baseOptions options that will be passed into the mutation, supported options are listed on: https://www.apollographql.com/docs/react/api/react-hooks/#options-2;
+ *
+ * @example
+ * const [importResendEmailsMutation, { data, loading, error }] = useImportResendEmailsMutation({
+ *   variables: {
+ *      maxEmails: // value for 'maxEmails'
+ *   },
+ * });
+ */
+export function useImportResendEmailsMutation(baseOptions?: Apollo.MutationHookOptions<ImportResendEmailsMutation, ImportResendEmailsMutationVariables>) {
+        const options = {...defaultOptions, ...baseOptions}
+        return Apollo.useMutation<ImportResendEmailsMutation, ImportResendEmailsMutationVariables>(ImportResendEmailsDocument, options);
+      }
+export type ImportResendEmailsMutationHookResult = ReturnType<typeof useImportResendEmailsMutation>;
+export type ImportResendEmailsMutationResult = Apollo.MutationResult<ImportResendEmailsMutation>;
+export type ImportResendEmailsMutationOptions = Apollo.BaseMutationOptions<ImportResendEmailsMutation, ImportResendEmailsMutationVariables>;
 export const CancelCompanyEmailsDocument = gql`
     mutation CancelCompanyEmails($companyId: Int!) {
   cancelCompanyEmails(companyId: $companyId) {

@@ -1,0 +1,38 @@
+{
+  "name": "@ai-apps/og",
+  "version": "0.1.0",
+  "type": "module",
+  "private": true,
+  "files": [
+    "dist"
+  ],
+  "main": "./dist/es/index.js",
+  "module": "./dist/es/index.js",
+  "types": "./dist/es/index.d.ts",
+  "exports": {
+    ".": {
+      "import": {
+        "types": "./dist/es/index.d.ts",
+        "default": "./dist/es/index.js"
+      },
+      "require": {
+        "types": "./dist/cjs/index.d.cts",
+        "default": "./dist/cjs/index.cjs"
+      }
+    }
+  },
+  "scripts": {
+    "build": "bunchee",
+    "dev": "bunchee --watch"
+  },
+  "dependencies": {
+    "open-graph-scraper": "latest"
+  },
+  "devDependencies": {
+    "@ai-apps/typescript-config": "workspace:*",
+    "@swc/helpers": "^0.5.0",
+    "@types/node": "^22.15.3",
+    "bunchee": "^6.4.0",
+    "typescript": "5.9.3"
+  }
+}

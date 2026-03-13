@@ -20,6 +20,7 @@
     "codegen": "graphql-codegen",
     "schema:generate": "tsx scripts/generate-worker-types.ts",
     "test:evals": "tsx src/evals/remote-eu/__tests__/run-local.ts",
+    "test:email-evals": "tsx src/evals/email-generation/__tests__/run-local.ts",
     "test:openrouter": "tsx src/openrouter/test-integration.ts",
     "eval": "tsx --env-file=.env.local scripts/eval-remote-eu-langfuse.ts",
     "eval:langfuse": "tsx --env-file=.env.local scripts/eval-remote-eu-langfuse.ts",
@@ -43,6 +44,7 @@
     "db:studio": "drizzle-kit studio"
   },
   "dependencies": {
+    "@ai-apps/og": "workspace:*",
     "@ai-sdk/anthropic": "^3.0.35",
     "@ai-sdk/deepseek": "^2.0.17",
     "@ai-sdk/openai": "^3.0.26",

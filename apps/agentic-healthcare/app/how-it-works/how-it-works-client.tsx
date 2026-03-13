@@ -1,7 +1,7 @@
 "use client";
 
 import type { CSSProperties } from "react";
-import { HowItWorks } from "@repo/ui/how-it-works";
+import { HowItWorks } from "@ai-apps/ui/how-it-works";
 import { papers, researchStats, pipelineAgents, story } from "./data";
 
 const rule: CSSProperties = {
@@ -180,7 +180,7 @@ export function HowItWorksClient() {
       <p>
         Shipping fast means sharing code — the healthcare app, the law-adversarial app, and the
         shared UI library all live in one repository and deploy independently. The pnpm monorepo
-        uses Turborepo for task orchestration, and a shared <code style={code}>@repo/ui</code> package
+        uses Turborepo for task orchestration, and a shared <code style={code}>@ai-apps/ui</code> package
         (including this how-it-works component) is built with bunchee and consumed by both apps. Vercel
         deployment uses Next.js App Router (React 19) with automatic ISR for static pages —{" "}
         <code style={code}>/how-it-works</code> is prerendered at build time. Environment configuration requires{" "}

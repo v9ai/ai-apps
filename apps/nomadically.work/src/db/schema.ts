@@ -57,9 +57,6 @@ export const companies = sqliteTable("companies", {
   emails: text("emails"), // JSON array
   github_url: text("github_url"),
 
-  // System-level hidden flag — excludes from all queries, pipelines, and processing
-  is_hidden: integer("is_hidden", { mode: "boolean" }).notNull().default(false),
-
   // Common Crawl / last-seen metadata
   last_seen_crawl_id: text("last_seen_crawl_id"),
   last_seen_capture_timestamp: text("last_seen_capture_timestamp"),

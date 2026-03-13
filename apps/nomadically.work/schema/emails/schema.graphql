@@ -45,6 +45,7 @@ extend type Mutation {
   scheduleFollowUpBatch(input: FollowUpBatchInput!): FollowUpBatchResult!
   markEmailReplied(resendId: String!): MarkRepliedResult!
   syncResendEmails(companyId: Int): SyncResendResult!
+  importResendEmails(maxEmails: Int): ImportResendResult!
   sendScheduledEmailNow(resendId: String!): SendNowResult!
   cancelScheduledEmail(resendId: String!): CancelEmailResult!
   cancelCompanyEmails(companyId: Int!): CancelCompanyEmailsResult!
@@ -267,6 +268,19 @@ type MarkRepliedResult {
 }
 
 # --- Sync & Cancel ---
+
+type ImportResendResult {
+  success: Boolean!
+  totalFetched: Int!
+  newCount: Int!
+  updatedCount: Int!
+  skippedCount: Int!
+  errorCount: Int!
+  contactMatchCount: Int!
+  companyMatchCount: Int!
+  durationMs: Int!
+  error: String
+}
 
 type SyncResendResult {
   success: Boolean!

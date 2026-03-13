@@ -6,6 +6,8 @@ export const research: NonNullable<QueryResolvers['research']> = async (
   args,
   _ctx,
 ) => {
-  const researchList = await d1Tools.listTherapyResearch(args.goalId);
-  return researchList;
+  return d1Tools.listTherapyResearch(
+    args.goalId ?? undefined,
+    args.characteristicId ?? undefined,
+  );
 };

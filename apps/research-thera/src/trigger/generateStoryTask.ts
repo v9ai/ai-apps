@@ -83,12 +83,7 @@ export const generateStoryTask = task({
       throw new Error(`Family member ${goal.familyMemberId} not found`);
     }
 
-    const characteristics = await d1Tools.getCharacteristicsForFamilyMember(
-      goal.familyMemberId,
-      userEmail,
-    );
-
-    const focusCharacteristic = characteristicId
+    const characteristic = characteristicId
       ? (await d1Tools.getCharacteristic(characteristicId, userEmail)) ?? null
       : null;
 
@@ -96,8 +91,7 @@ export const generateStoryTask = task({
       jobId,
       goalTitle: goal.title,
       familyMemberName: familyMember.firstName,
-      characteristicCount: characteristics.length,
-      focusCharacteristicId: focusCharacteristic?.id ?? null,
+      characteristicId: characteristic?.id ?? null,
     });
 
     // --- 30% — Fetch research papers ---
@@ -132,53 +126,38 @@ export const generateStoryTask = task({
     const developmentalTier = getDevelopmentalTier(familyMember.ageYears);
 
     // Fetch unique outcomes for the focus characteristic
-    const uniqueOutcomes = focusCharacteristic
+    const uniqueOutcomes = characteristic
       ? await d1Tools.getUniqueOutcomesForCharacteristic(
-          focusCharacteristic.id,
+          characteristic.id,
           userEmail,
         )
       : [];
 
-    const otherCharacteristics = focusCharacteristic
-      ? characteristics.filter((c) => c.id !== focusCharacteristic.id)
-      : characteristics;
-
-    const characteristicsSection = (() => {
+    let characteristicsSection = "";
+    if (characteristic) {
       const lines: string[] = [];
-      if (focusCharacteristic) {
-        const focusLabel =
-          focusCharacteristic.externalizedName || focusCharacteristic.title;
-        lines.push(
-          `\n## Therapeutic Focus`,
-          `${focusLabel}`,
-          `Category: ${focusCharacteristic.category}`,
-        );
-        if (focusCharacteristic.description) {
-          lines.push(`Description: ${focusCharacteristic.description}`);
-        }
-        if (focusCharacteristic.strengths) {
-          lines.push(`\n## Strengths`, focusCharacteristic.strengths);
-        }
-        if (uniqueOutcomes.length > 0) {
-          lines.push(
-            `\n## Sparkling Moments`,
-            ...uniqueOutcomes.map(
-              (o) => `- ${o.observedAt}: ${o.description}`,
-            ),
-          );
-        }
+      const label = characteristic.externalizedName || characteristic.title;
+      lines.push(
+        `\n## Therapeutic Focus`,
+        `${label}`,
+        `Category: ${characteristic.category}`,
+      );
+      if (characteristic.description) {
+        lines.push(`Description: ${characteristic.description}`);
       }
-      if (otherCharacteristics.length > 0) {
+      if (characteristic.strengths) {
+        lines.push(`\n## Strengths`, characteristic.strengths);
+      }
+      if (uniqueOutcomes.length > 0) {
         lines.push(
-          `\n## Additional Person Characteristics`,
-          ...otherCharacteristics.map(
-            (c) =>
-              `- ${c.category}: ${c.title}${c.description ? ` — ${c.description}` : ""}`,
+          `\n## Sparkling Moments`,
+          ...uniqueOutcomes.map(
+            (o) => `- ${o.observedAt}: ${o.description}`,
           ),
         );
       }
-      return lines.length > 0 ? lines.join("\n") + "\n" : "";
-    })();
+      characteristicsSection = lines.join("\n") + "\n";
+    }
 
     const prompt = `Create a therapeutic audio session for the following goal. Write the full script in ${language}, approximately ${minutes} minutes long when read aloud.
 
@@ -202,7 +181,9 @@ ${researchSummary || "No research papers available yet. Use general evidence-bas
 - Personalize for ${familyMember.firstName}${ageContext} (developmental tier: ${developmentalTier})
 - Target duration: ${minutes} minutes when read aloud at a calm pace
 - Write in ${language}
-- Follow the therapeutic audio content structure (warm introduction, understanding the challenge, guided practices, integration)`;
+- Follow the therapeutic audio content structure (warm introduction, understanding the challenge, guided practices, integration)
+- Include a brief mention that a parent, caregiver, or professional can provide additional support if needed
+- IMPORTANT: Do NOT use any markdown formatting (no **, ##, *, bullet points, or bold/italic syntax). Write plain spoken prose only, as the script will be read aloud by a text-to-speech engine`;
 
     logger.info("generate-story.generating", { jobId, promptLength: prompt.length });
 

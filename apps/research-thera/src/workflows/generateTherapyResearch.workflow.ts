@@ -39,6 +39,7 @@ const inputSchema = z.object({
   jobId: z.string().optional(),
   familyMemberName: z.string().optional(),
   familyMemberAge: z.number().int().optional(),
+  characteristicId: z.number().int().optional(),
 });
 
 const outputSchema = z.object({
@@ -224,6 +225,7 @@ const loadContextStep = createStep({
     userId: z.string(),
     goalId: z.number().int(),
     jobId: z.string().optional(),
+    characteristicId: z.number().int().optional(),
     goal: z.object({
       id: z.number().int(),
       title: z.string(),
@@ -263,6 +265,7 @@ const loadContextStep = createStep({
       userId: inputData.userId,
       goalId: inputData.goalId,
       jobId: inputData.jobId,
+      characteristicId: inputData.characteristicId,
       goal: {
         id: goal.id,
         title: goal.title,
@@ -799,6 +802,7 @@ const prepExtractStep = createStep({
       userId: inputData.userId,
       goalId: inputData.goalId,
       jobId: inputData.jobId,
+      characteristicId: (inputData as any).characteristicId,
       context: {
         goal: inputData.goal,
         notes: inputData.notes,
@@ -834,6 +838,7 @@ const extractAllStep = createStep({
     userId: z.string(),
     goalId: z.number().int(),
     jobId: z.string().optional(),
+    characteristicId: z.number().int().optional(),
     results: z.array(z.any()),
     requiredKeywords: z.array(z.string()).optional(),
   }),
@@ -888,6 +893,7 @@ const extractAllStep = createStep({
       userId: inputData.userId,
       goalId: inputData.goalId,
       jobId: inputData.jobId,
+      characteristicId: (inputData as any).characteristicId,
       results,
       requiredKeywords: inputData.plan?.requiredKeywords ?? [],
     };
@@ -901,6 +907,7 @@ const persistStep = createStep({
     userId: z.string(),
     goalId: z.number().int(),
     jobId: z.string().optional(),
+    characteristicId: z.number().int().optional(),
     results: z.array(z.any()),
     // requiredKeywords from normalizeGoalStep, passed via prepExtractStep → extractAllStep
     requiredKeywords: z.array(z.string()).optional(),
@@ -972,7 +979,7 @@ const persistStep = createStep({
         const rowId = await d1Tools.upsertTherapyResearch(
           inputData.goalId,
           inputData.userId,
-          research,
+          { ...research, characteristicId: inputData.characteristicId ?? null },
         );
         count++;
 

@@ -284,6 +284,11 @@ type DeleteGoalResult {
   success: Boolean!
 }
 
+type DeleteGoalStoryResult {
+  message: String
+  success: Boolean!
+}
+
 type DeleteJournalEntryResult {
   message: String
   success: Boolean!
@@ -386,6 +391,7 @@ type FamilyMemberCharacteristic {
   frequencyPerWeek: Int
   id: Int!
   impairmentDomains: [ImpairmentDomain!]!
+  research: [Research!]!
   riskTier: RiskTier!
   severity: SeverityLevel
   strengths: String
@@ -488,7 +494,7 @@ type Goal {
   createdBy: String!
   description: String
   familyMember: FamilyMember
-  familyMemberId: Int!
+  familyMemberId: Int
   id: Int!
   notes: [Note!]!
   parentGoal: Goal
@@ -598,6 +604,7 @@ type Mutation {
   deleteFamilyMember(id: Int!): DeleteFamilyMemberResult!
   deleteFamilyMemberCharacteristic(id: Int!): DeleteFamilyMemberCharacteristicResult!
   deleteGoal(id: Int!): DeleteGoalResult!
+  deleteGoalStory(id: Int!): DeleteGoalStoryResult!
   deleteJournalEntry(id: Int!): DeleteJournalEntryResult!
   deleteNote(id: Int!): DeleteNoteResult!
   deleteRelationship(id: Int!): DeleteRelationshipResult!
@@ -608,12 +615,13 @@ type Mutation {
   generateAudio(goalId: Int!, language: String, storyId: Int, text: String, voice: String): GenerateAudioResult!
   generateLongFormText(characteristicId: Int, goalId: Int!, language: String, minutes: Int): GenerateLongFormTextResult!
   generateOpenAIAudio(input: GenerateOpenAIAudioInput!): GenerateOpenAIAudioResult!
-  generateResearch(goalId: Int!): GenerateResearchResult!
+  generateResearch(characteristicId: Int, goalId: Int!): GenerateResearchResult!
   generateTherapeuticQuestions(goalId: Int!): GenerateQuestionsResult!
   refreshClaimCard(id: ID!): ClaimCard!
   setNoteVisibility(noteId: Int!, visibility: NoteVisibility!): Note!
   shareFamilyMember(email: String!, familyMemberId: Int!, role: FamilyMemberShareRole): FamilyMemberShare!
   shareNote(email: String!, noteId: Int!, role: NoteShareRole): NoteShare!
+  unlinkGoalFamilyMember(id: Int!): Goal!
   unshareFamilyMember(email: String!, familyMemberId: Int!): Boolean!
   unshareNote(email: String!, noteId: Int!): Boolean!
   updateBehaviorObservation(id: Int!, input: UpdateBehaviorObservationInput!): BehaviorObservation!
@@ -754,7 +762,7 @@ type Query {
   notes(entityId: Int!, entityType: String!): [Note!]!
   relationship(id: Int!): Relationship
   relationships(subjectId: Int!, subjectType: PersonType!): [Relationship!]!
-  research(goalId: Int!): [Research!]!
+  research(characteristicId: Int, goalId: Int): [Research!]!
   stories(goalId: Int!): [Story!]!
   story(id: Int!): Story
   therapeuticQuestions(goalId: Int!): [TherapeuticQuestion!]!
@@ -793,6 +801,7 @@ enum RelationshipStatus {
 type Research {
   abstract: String
   authors: [String!]!
+  characteristicId: Int
   createdAt: String!
   doi: String
   evidenceLevel: String

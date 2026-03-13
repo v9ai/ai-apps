@@ -1,0 +1,20 @@
+query GetResearch($goalId: Int!) {
+  research(goalId: $goalId) {
+    id
+    goalId
+    title
+    authors
+    year
+    journal
+    doi
+    url
+    abstract
+    keyFindings
+    therapeuticTechniques
+    evidenceLevel
+    relevanceScore
+    extractedBy
+    extractionConfidence
+    createdAt
+  }
+}

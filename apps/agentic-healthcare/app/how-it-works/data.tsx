@@ -1,4 +1,4 @@
-import type { Paper, PipelineAgent, Stat } from "@repo/ui/how-it-works";
+import type { Paper, PipelineAgent, Stat } from "@ai-apps/ui/how-it-works";
 
 // ─── Research Papers ───────────────────────────────────────────────
 

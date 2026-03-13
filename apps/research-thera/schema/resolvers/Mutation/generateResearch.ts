@@ -24,6 +24,7 @@ export const generateResearch: NonNullable<MutationResolvers['generateResearch']
     goalId,
     userId: ctx.userId ?? userEmail,
     userEmail,
+    characteristicId: args.characteristicId ?? undefined,
   });
 
   return {

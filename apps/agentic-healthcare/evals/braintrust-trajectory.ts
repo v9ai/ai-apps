@@ -150,8 +150,8 @@ async function trajectoryTask(
 
   const userContent = `Analyze this health trajectory with ${stateCount} states:\n\n${context}${velocityContext}`;
 
-  // Call the LLM via the @repo/qwen client
-  const { QwenClient } = await import("@repo/qwen");
+  // Call the LLM via the @ai-apps/qwen client
+  const { QwenClient } = await import("@ai-apps/qwen");
   const qwen = new QwenClient({
     apiKey: process.env.DASHSCOPE_API_KEY!,
     baseURL: process.env.DASHSCOPE_BASE_URL,

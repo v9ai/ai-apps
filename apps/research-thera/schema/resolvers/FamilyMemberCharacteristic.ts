@@ -35,6 +35,9 @@ export const FamilyMemberCharacteristic: FamilyMemberCharacteristicResolvers = {
       intensity: o.intensity as any,
     })) as any;
   },
+  research: async (parent, _args, _ctx) => {
+    return d1Tools.listTherapyResearch(undefined, parent.id);
+  },
   impairmentDomains: (parent) => {
     if (Array.isArray((parent as any).impairmentDomains)) {
       return (parent as any).impairmentDomains;

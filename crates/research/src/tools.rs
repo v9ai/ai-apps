@@ -109,7 +109,7 @@ impl Tool for SearchPapers {
                     },
                     "limit": {
                         "type": "integer",
-                        "description": format!("Max papers to return (default {}, max 20)", self.config.default_limit)
+                        "description": format!("Max papers to return (default {}, max 100)", self.config.default_limit)
                     }
                 },
                 "required": ["query"]
@@ -119,7 +119,7 @@ impl Tool for SearchPapers {
 
     async fn call_json(&self, args: serde_json::Value) -> Result<String, String> {
         let args: SearchArgs = serde_json::from_value(args).map_err(|e| e.to_string())?;
-        let limit = args.limit.unwrap_or(self.config.default_limit).min(20);
+        let limit = args.limit.unwrap_or(self.config.default_limit).min(100);
 
         // Prefer OpenAlex (no rate-limit issues) when available, fall back to S2.
         if let Some(fb) = &self.fallback {

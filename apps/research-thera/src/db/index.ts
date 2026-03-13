@@ -399,7 +399,7 @@ export async function updateGoal(
   createdBy: string,
   updates: {
     slug?: string;
-    familyMemberId?: number;
+    familyMemberId?: number | null;
     title?: string;
     description?: string | null;
     status?: string;
@@ -456,6 +456,7 @@ export async function upsertTherapyResearch(
   goalId: number,
   userId: string,
   research: {
+    characteristicId?: number | null;
     therapeuticGoalType: string;
     title: string;
     authors: string[];
@@ -561,13 +562,14 @@ export async function upsertTherapyResearch(
     // Insert new
     const result = await d1.execute({
       sql: `INSERT INTO therapy_research (
-              goal_id, therapeutic_goal_type, title, authors, year, journal, doi, url,
+              goal_id, characteristic_id, therapeutic_goal_type, title, authors, year, journal, doi, url,
               abstract, key_findings, therapeutic_techniques, evidence_level,
               relevance_score, extracted_by, extraction_confidence
-            ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+            ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
             RETURNING id`,
       args: [
         goalId,
+        research.characteristicId ?? null,
         research.therapeuticGoalType,
         research.title,
         authorsJson,
@@ -591,15 +593,28 @@ export async function upsertTherapyResearch(
   }
 }
 
-export async function listTherapyResearch(goalId: number) {
-  const result = await d1.execute({
-    sql: `SELECT * FROM therapy_research WHERE goal_id = ? ORDER BY relevance_score DESC, created_at DESC`,
-    args: [goalId],
-  });
+export async function listTherapyResearch(goalId?: number, characteristicId?: number) {
+  let sql = `SELECT * FROM therapy_research WHERE `;
+  const args: any[] = [];
+
+  if (characteristicId != null) {
+    sql += `characteristic_id = ?`;
+    args.push(characteristicId);
+  } else if (goalId != null) {
+    sql += `goal_id = ?`;
+    args.push(goalId);
+  } else {
+    return [];
+  }
+
+  sql += ` ORDER BY relevance_score DESC, created_at DESC`;
+
+  const result = await d1.execute({ sql, args });
 
   return result.rows.map((row) => ({
     id: row.id as number,
     goalId: row.goal_id as number,
+    characteristicId: (row.characteristic_id as number) || null,
     therapeuticGoalType: row.therapeutic_goal_type as string,
     title: row.title as string,
     authors: JSON.parse(row.authors as string) as string[],
@@ -1394,6 +1409,16 @@ export async function updateGoalStoryAudio(
   await d1.execute({
     sql: `UPDATE goal_stories SET audio_key = ?, audio_url = ?, audio_generated_at = ?, updated_at = ? WHERE id = ?`,
     args: [audioKey, audioUrl, now, now, id],
+  });
+}
+
+export async function deleteGoalStory(id: number, userEmail: string) {
+  // Fetch story (throws if not found), then verify its goal belongs to this user
+  const story = await getGoalStory(id);
+  await getGoal(story.goalId, userEmail);
+  await d1.execute({
+    sql: `DELETE FROM goal_stories WHERE id = ?`,
+    args: [id],
   });
 }
 
@@ -2536,6 +2561,7 @@ export const d1Tools = {
   listTherapeuticQuestions,
   createGoalStory,
   getGoalStory,
+  deleteGoalStory,
   updateGoalStoryAudio,
   listGoalStories,
   getTextSegmentsForStory,

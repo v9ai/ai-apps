@@ -34,6 +34,7 @@ interface ExtractionResult {
   profileUrl?: string | null;
   emails: string[];
   imageUrl: string | null;
+  companyName?: string | null;
   extractionQuality: "partial" | "failed";
   reason?: string;
 }
@@ -103,6 +104,9 @@ export function ComposeFromLinkedIn({
       setPostContent(data.postText ?? "");
       setRecipientName(data.authorName ?? "");
       setRecipientEmail(data.emails[0] ?? "");
+      if (data.companyName && !companyName) {
+        setCompanyName(data.companyName);
+      }
       setStep("extracted");
     } catch (err) {
       setExtractError(err instanceof Error ? err.message : "Extraction failed");

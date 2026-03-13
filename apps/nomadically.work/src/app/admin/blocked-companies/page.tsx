@@ -71,7 +71,6 @@ export default function AdminBlockedCompaniesPage() {
   }
 
   async function handleUnblock(id: number) {
-    if (!confirm("Unblock this company?")) return;
     await unblockCompany({ variables: { id } });
     refetch();
   }

@@ -19,7 +19,9 @@ import {
   IconButton,
   Callout,
 } from "@radix-ui/themes";
-import { ArrowLeftIcon, Pencil1Icon, TrashIcon, PlusIcon, Cross2Icon, ExclamationTriangleIcon, MagnifyingGlassIcon } from "@radix-ui/react-icons";
+import { ArrowLeftIcon, Pencil1Icon, TrashIcon, PlusIcon, Cross2Icon, ExclamationTriangleIcon, MagnifyingGlassIcon, ChevronDownIcon } from "@radix-ui/react-icons";
+import * as Accordion from "@radix-ui/react-accordion";
+import "./accordion.css";
 import { useRouter, useParams } from "next/navigation";
 import NextLink from "next/link";
 import dynamic from "next/dynamic";
@@ -49,6 +51,7 @@ import {
 } from "@/app/__generated__/hooks";
 import { useApolloClient } from "@apollo/client";
 import AddGoalButton from "@/app/components/AddGoalButton";
+import NotesList from "@/app/components/NotesList";
 import { CheckCircledIcon } from "@radix-ui/react-icons";
 
 const CATEGORY_COLORS: Record<string, "teal" | "blue" | "orange"> = {
@@ -539,6 +542,9 @@ function CharacteristicDetailContent() {
   });
   const goals = goalsData?.goals ?? [];
 
+  const papers = characteristic?.research ?? [];
+  const researchLoading = loading;
+
   const [generatingGoalId, setGeneratingGoalId] = useState<number | null>(null);
   const [generateLongFormText] = useGenerateLongFormTextMutation();
 
@@ -575,7 +581,7 @@ function CharacteristicDetailContent() {
         setResearchJobId(null);
         setResearchGoalId(null);
         if (status === "SUCCEEDED") {
-          apolloClient.refetchQueries({ include: ["GetGoal"] });
+          apolloClient.refetchQueries({ include: ["GetFamilyMemberCharacteristic"] });
           setResearchMessage({ text: "Research generated successfully.", type: "success" });
         } else {
           setResearchMessage({
@@ -614,7 +620,10 @@ function CharacteristicDetailContent() {
   const handleGenerateResearch = async (goalId: number) => {
     setResearchGoalId(goalId);
     setResearchMessage(null);
-    await generateResearch({ variables: { goalId } });
+    await generateResearch({
+      variables: { goalId, characteristicId: charId },
+      refetchQueries: ["GetFamilyMemberCharacteristic"],
+    });
   };
 
   // Unique outcomes (sparkling moments)
@@ -1266,6 +1275,107 @@ function CharacteristicDetailContent() {
               Generate Research
             </Button>
           )}
+        </Flex>
+      </Card>
+
+      {/* Research Papers */}
+      <Card>
+        <Flex direction="column" gap="3" p="4">
+          <Heading size="4">Research {papers.length > 0 ? `(${papers.length})` : ""}</Heading>
+          <Separator size="4" />
+          {researchLoading ? (
+            <Flex align="center" gap="2">
+              <Spinner size="2" />
+              <Text size="2" color="gray">Loading research…</Text>
+            </Flex>
+          ) : papers.length === 0 ? (
+            <Text size="2" color="gray">
+              No research yet. Click &ldquo;Generate Research&rdquo; above to find relevant academic papers.
+            </Text>
+          ) : (
+            <Accordion.Root type="multiple" style={{ width: "100%" }}>
+              {papers.map((paper, idx) => (
+                <Accordion.Item
+                  key={paper.id}
+                  value={`research-${idx}`}
+                  style={{
+                    borderBottom: "1px solid var(--gray-6)",
+                    paddingBottom: "12px",
+                    marginBottom: "12px",
+                  }}
+                >
+                  <Accordion.Header style={{ all: "unset" }}>
+                    <Accordion.Trigger
+                      className="AccordionTrigger"
+                      style={{
+                        all: "unset",
+                        display: "flex",
+                        alignItems: "center",
+                        justifyContent: "space-between",
+                        width: "100%",
+                        padding: "12px 0",
+                        cursor: "pointer",
+                        gap: "8px",
+                      }}
+                    >
+                      <Flex direction="column" gap="1" style={{ flex: 1 }}>
+                        <Text size="3" weight="medium">{paper.title}</Text>
+                        <Flex gap="2" align="center">
+                          {paper.year && <Badge size="1" variant="soft">{paper.year}</Badge>}
+                          {paper.evidenceLevel && (
+                            <Badge size="1" variant="soft" color="indigo">{paper.evidenceLevel}</Badge>
+                          )}
+                          {paper.authors && paper.authors.length > 0 && (
+                            <Text size="1" color="gray">
+                              {paper.authors.slice(0, 3).join(", ")}
+                              {paper.authors.length > 3 && " et al."}
+                            </Text>
+                          )}
+                        </Flex>
+                      </Flex>
+                      <ChevronDownIcon className="AccordionChevron" style={{ transition: "transform 300ms" }} aria-hidden />
+                    </Accordion.Trigger>
+                  </Accordion.Header>
+                  <Accordion.Content className="AccordionContent">
+                    <div className="AccordionContentText">
+                      <Flex direction="column" gap="2">
+                        {paper.abstract && (
+                          <Text size="2" color="gray">{paper.abstract}</Text>
+                        )}
+                        {paper.keyFindings && paper.keyFindings.length > 0 && (
+                          <Flex direction="column" gap="1">
+                            <Text size="2" weight="medium">Key Findings</Text>
+                            {paper.keyFindings.map((f, i) => (
+                              <Text key={i} size="2" color="gray">• {f}</Text>
+                            ))}
+                          </Flex>
+                        )}
+                        {paper.therapeuticTechniques && paper.therapeuticTechniques.length > 0 && (
+                          <Flex gap="1" wrap="wrap">
+                            {paper.therapeuticTechniques.map((t, i) => (
+                              <Badge key={i} size="1" variant="outline" color="green">{t}</Badge>
+                            ))}
+                          </Flex>
+                        )}
+                        {paper.url && (
+                          <NextLink href={paper.url} target="_blank">
+                            <Text size="2" color="indigo">View Paper →</Text>
+                          </NextLink>
+                        )}
+                      </Flex>
+                    </div>
+                  </Accordion.Content>
+                </Accordion.Item>
+              ))}
+            </Accordion.Root>
+          )}
+        </Flex>
+      </Card>
+
+      {/* Journal / Notes */}
+      <Card>
+        <Flex direction="column" gap="3" p="4">
+          <NotesList entityId={characteristic.id} entityType="characteristic" />
         </Flex>
       </Card>
 

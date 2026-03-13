@@ -1,7 +1,6 @@
 import type { MutationResolvers } from "./../../types.generated";
 import { d1Tools } from "@/src/db";
-import { tasks } from "@trigger.dev/sdk/v3";
-import type { generateStoryTask } from "@/src/trigger/generateStoryTask";
+import { runStoryGraph } from "@/src/graphs/generateStory";
 
 export const generateLongFormText: NonNullable<MutationResolvers['generateLongFormText']> = async (_parent, args, ctx) => {
   const userEmail = ctx.userEmail;
@@ -31,24 +30,18 @@ export const generateLongFormText: NonNullable<MutationResolvers['generateLongFo
     }
   }
 
-  // Create a tracking job (inserted with status='RUNNING')
-  const jobId = crypto.randomUUID();
-  await d1Tools.createGenerationJob(jobId, userEmail, "LONGFORM", goalId);
-
-  // Trigger the durable Trigger.dev task — survives Vercel serverless timeouts
-  await tasks.trigger<typeof generateStoryTask>("generate-story", {
-    jobId,
+  const { storyId, text } = await runStoryGraph({
     goalId,
-    userId: ctx.userId ?? userEmail,
+    characteristicId: args.characteristicId ?? undefined,
     userEmail,
     language: args.language ?? undefined,
     minutes: args.minutes ?? undefined,
-    characteristicId: args.characteristicId ?? undefined,
   });
 
   return {
     success: true,
-    message: "Story generation started",
-    jobId,
+    message: "Story generated successfully",
+    storyId,
+    text,
   };
 };

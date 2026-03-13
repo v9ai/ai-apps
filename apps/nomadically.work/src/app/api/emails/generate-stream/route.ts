@@ -2,6 +2,7 @@ import { NextRequest } from "next/server";
 import OpenAI from "openai";
 import { emailSchema } from "@/lib/email-schema";
 import { ingestLangfuseEvents, isLangfuseConfigured } from "@/langfuse";
+import { buildComposePrompt } from "@/prompts/compose-email";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -20,38 +21,6 @@ interface EmailGenerationRequest {
   linkedinPostContent?: string;
 }
 
-function buildPrompt(input: EmailGenerationRequest): string {
-  const firstName = input.recipientName.split(" ")[0] || input.recipientName;
-
-  return `You are helping Vadim Nicolai (Senior Frontend Engineer) craft a personalized outreach email.
-
-RECIPIENT DETAILS:
-- Name: ${input.recipientName} (use "${firstName}" in greeting)
-${input.companyName ? `- Company: ${input.companyName}` : ""}
-${input.recipientContext ? `- Context: ${input.recipientContext}` : ""}
-
-VADIM'S BACKGROUND:
-- Senior Frontend Engineer with 10+ years experience
-- Expertise: React, TypeScript, Rust
-- Looking for: remote EU opportunities
-
-${input.instructions ? `SPECIAL INSTRUCTIONS (CRITICAL):\n${input.instructions}\n` : ""}
-${input.linkedinPostContent ? `LINKEDIN POST CONTEXT:\nThe recipient recently shared this on LinkedIn:\n---\n${input.linkedinPostContent}\n---\nReference their post naturally in the email — show genuine interest in their perspective. Do NOT quote verbatim or sound like you scraped their content.\n` : ""}
-REQUIREMENTS:
-1. Generate a professional email
-2. Start with "Hey ${firstName},"
-3. Keep it concise (150-300 words)
-4. Include a clear CTA
-5. End with "Thanks,\\nVadim"
-6. Do NOT make up facts about the recipient
-
-Generate the email as a JSON object:
-{
-  "subject": "Your subject line here",
-  "body": "Your email body here"
-}`;
-}
-
 export async function POST(request: NextRequest) {
   try {
     const input: EmailGenerationRequest = await request.json();
@@ -65,7 +34,7 @@ export async function POST(request: NextRequest) {
     const stream = new ReadableStream({
       async start(controller) {
         try {
-          const prompt = buildPrompt(input);
+          const prompt = buildComposePrompt(input);
           const startTime = new Date().toISOString();
 
           const messages: OpenAI.Chat.ChatCompletionMessageParam[] = [
