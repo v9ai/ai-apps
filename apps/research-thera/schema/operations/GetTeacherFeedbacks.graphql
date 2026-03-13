@@ -1,0 +1,21 @@
+query GetTeacherFeedbacks($familyMemberId: Int!) {
+  teacherFeedbacks(familyMemberId: $familyMemberId) {
+    id
+    familyMemberId
+    createdBy
+    teacherName
+    subject
+    feedbackDate
+    content
+    tags
+    source
+    extracted
+    createdAt
+    updatedAt
+    familyMember {
+      id
+      firstName
+      name
+    }
+  }
+}

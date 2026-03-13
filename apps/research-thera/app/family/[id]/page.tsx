@@ -30,6 +30,8 @@ import {
   useDeleteBehaviorObservationMutation,
   useGetFamilyMemberCharacteristicsQuery,
   useDeleteFamilyMemberCharacteristicMutation,
+  useGetTeacherFeedbacksQuery,
+  useDeleteTeacherFeedbackMutation,
   FamilyMemberShareRole,
   CharacteristicCategory,
 } from "@/app/__generated__/hooks";
@@ -39,6 +41,8 @@ import AddBehaviorObservationButton from "@/app/components/AddBehaviorObservatio
 import BehaviorObservationsList from "@/app/components/BehaviorObservationsList";
 import AddCharacteristicButton from "@/app/components/AddCharacteristicButton";
 import CharacteristicsList from "@/app/components/CharacteristicsList";
+import AddTeacherFeedbackButton from "@/app/components/AddTeacherFeedbackButton";
+import TeacherFeedbackList from "@/app/components/TeacherFeedbackList";
 
 const RELATIONSHIP_OPTIONS = [
   "self",
@@ -179,6 +183,21 @@ function FamilyMemberContent() {
 
   const handleDeleteCharacteristic = (charId: number) => {
     deleteCharacteristic({ variables: { id: charId } });
+  };
+
+  const { data: feedbackData } = useGetTeacherFeedbacksQuery({
+    variables: { familyMemberId: id },
+    skip: isNaN(id),
+  });
+  const teacherFeedbacks = feedbackData?.teacherFeedbacks ?? [];
+
+  const [deleteFeedback, { loading: deletingFeedback }] =
+    useDeleteTeacherFeedbackMutation({
+      refetchQueries: ["GetTeacherFeedbacks"],
+    });
+
+  const handleDeleteFeedback = (fbId: number) => {
+    deleteFeedback({ variables: { id: fbId } });
   };
 
   function openEditDialog() {
@@ -498,6 +517,33 @@ function FamilyMemberContent() {
             deleting={deletingChar}
             emptyMessage="No priority concerns added yet"
             getHref={(item) => `/family/${id}/characteristics/${item.id}`}
+          />
+        </Flex>
+      </Card>
+
+      {/* Teacher Feedback */}
+      <Card>
+        <Flex direction="column" gap="3" p="4">
+          <Flex justify="between" align="center">
+            <Flex direction="column" gap="1">
+              <Heading size="4">
+                Teacher Feedback ({teacherFeedbacks.length})
+              </Heading>
+              <Text size="1" color="gray">
+                Feedback from teachers — can be extracted into characteristics
+              </Text>
+            </Flex>
+            <AddTeacherFeedbackButton
+              familyMemberId={id}
+              refetchQueries={["GetTeacherFeedbacks"]}
+              size="2"
+            />
+          </Flex>
+          <Separator size="4" />
+          <TeacherFeedbackList
+            feedbacks={teacherFeedbacks}
+            onDelete={handleDeleteFeedback}
+            deleting={deletingFeedback}
           />
         </Flex>
       </Card>

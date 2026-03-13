@@ -1,0 +1,16 @@
+mutation CreateTeacherFeedback($input: CreateTeacherFeedbackInput!) {
+  createTeacherFeedback(input: $input) {
+    id
+    familyMemberId
+    createdBy
+    teacherName
+    subject
+    feedbackDate
+    content
+    tags
+    source
+    extracted
+    createdAt
+    updatedAt
+  }
+}

@@ -40,4 +40,26 @@ export const FamilyMember: FamilyMemberResolvers = {
       updatedAt: obs.updatedAt,
     })) as any;
   },
+  teacherFeedbacks: async (parent, _args, ctx) => {
+    const userEmail = ctx.userEmail;
+    if (!userEmail) return [];
+    const feedbacks = await d1Tools.getTeacherFeedbacksForFamilyMember(
+      parent.id,
+      userEmail,
+    );
+    return feedbacks.map((fb) => ({
+      id: fb.id,
+      familyMemberId: fb.familyMemberId,
+      createdBy: fb.userId,
+      teacherName: fb.teacherName,
+      subject: fb.subject,
+      feedbackDate: fb.feedbackDate,
+      content: fb.content,
+      tags: fb.tags,
+      source: fb.source as any,
+      extracted: fb.extracted,
+      createdAt: fb.createdAt,
+      updatedAt: fb.updatedAt,
+    })) as any;
+  },
 };
