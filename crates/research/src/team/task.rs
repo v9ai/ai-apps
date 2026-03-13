@@ -40,17 +40,19 @@ impl SharedTaskList {
     pub fn claim(&self, worker_id: &str) -> Option<ResearchTask> {
         let mut tasks = self.inner.lock().unwrap();
 
-        // Collect completed task IDs for dependency checks.
-        let completed: Vec<usize> = tasks
+        // Collect resolved (completed or failed) task IDs for dependency checks.
+        // Failed tasks count as resolved so downstream tasks (e.g. synthesis)
+        // can proceed with partial results instead of deadlocking.
+        let resolved: Vec<usize> = tasks
             .iter()
-            .filter(|t| t.status == TaskStatus::Completed)
+            .filter(|t| t.status == TaskStatus::Completed || t.status == TaskStatus::Failed)
             .map(|t| t.id)
             .collect();
 
-        // Find first pending task whose dependencies are all completed.
+        // Find first pending task whose dependencies are all resolved.
         let idx = tasks.iter().position(|t| {
             t.status == TaskStatus::Pending
-                && t.dependencies.iter().all(|dep| completed.contains(dep))
+                && t.dependencies.iter().all(|dep| resolved.contains(dep))
         })?;
 
         tasks[idx].status = TaskStatus::InProgress;

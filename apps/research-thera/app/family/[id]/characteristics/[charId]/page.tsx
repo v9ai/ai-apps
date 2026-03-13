@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect, useCallback } from "react";
 import {
   Box,
   Flex,
@@ -36,7 +36,7 @@ import {
   useGetContactsQuery,
   useCreateContactMutation,
   useGetGoalsQuery,
-  useGenerateLongFormTextMutation,
+
   useGenerateResearchMutation,
   useGetGenerationJobQuery,
   useCreateUniqueOutcomeMutation,
@@ -46,10 +46,10 @@ import {
   RelationshipStatus,
   RiskTier,
   SeverityLevel,
-  FormulationStatus,
   ImpairmentDomain,
 } from "@/app/__generated__/hooks";
 import { useApolloClient } from "@apollo/client";
+import { useGenerateStory } from "@/app/hooks/useGenerateStory";
 import AddGoalButton from "@/app/components/AddGoalButton";
 import NotesList from "@/app/components/NotesList";
 import { CheckCircledIcon } from "@radix-ui/react-icons";
@@ -516,7 +516,8 @@ function CharacteristicDetailContent() {
   const [editExternalizedName, setEditExternalizedName] = useState("");
   const [editStrengths, setEditStrengths] = useState("");
   const [editRiskTier, setEditRiskTier] = useState<RiskTier>(RiskTier.None);
-  const [editFormulationStatus, setEditFormulationStatus] = useState<FormulationStatus>(FormulationStatus.Draft);
+  const [editTags, setEditTags] = useState<string[]>([]);
+  const [newTagInput, setNewTagInput] = useState("");
   const [editError, setEditError] = useState<string | null>(null);
 
   const [updateCharacteristic, { loading: updating }] =
@@ -545,20 +546,7 @@ function CharacteristicDetailContent() {
   const papers = characteristic?.research ?? [];
   const researchLoading = loading;
 
-  const [generatingGoalId, setGeneratingGoalId] = useState<number | null>(null);
-  const [generateLongFormText] = useGenerateLongFormTextMutation();
-
-  const handleGenerateStory = async (goalId: number) => {
-    setGeneratingGoalId(goalId);
-    try {
-      await generateLongFormText({
-        variables: { goalId, characteristicId: charId },
-      });
-      router.push(`/goals/${goalId}`);
-    } finally {
-      setGeneratingGoalId(null);
-    }
-  };
+  const { handleGenerateStory, handleGenerateFromCharacteristic, generatingGoalId, generatingFromCharacteristic, storyMessage } = useGenerateStory(charId);
 
   // Research generation state
   const [researchGoalId, setResearchGoalId] = useState<number | null>(null);
@@ -626,6 +614,92 @@ function CharacteristicDetailContent() {
     });
   };
 
+  // Deep research (research crate integration)
+  const [deepResearchRunning, setDeepResearchRunning] = useState(false);
+  const [deepResearchMessage, setDeepResearchMessage] = useState<{
+    text: string;
+    type: "success" | "error" | "info";
+  } | null>(null);
+  const [synthesisNote, setSynthesisNote] = useState<{
+    id: number;
+    title: string | null;
+    content: string;
+    createdAt: string;
+  } | null>(null);
+
+  // Check for existing synthesis on mount.
+  const checkSynthesis = useCallback(async () => {
+    try {
+      const res = await fetch(`/api/deep-research?characteristicId=${charId}`);
+      if (res.ok) {
+        const data = await res.json();
+        if (data.synthesisNote) {
+          setSynthesisNote(data.synthesisNote);
+        }
+      }
+    } catch {
+      // ignore
+    }
+  }, [charId]);
+
+  useEffect(() => {
+    if (!isNaN(charId)) checkSynthesis();
+  }, [charId, checkSynthesis]);
+
+  // Poll for synthesis while deep research is running.
+  useEffect(() => {
+    if (!deepResearchRunning) return;
+    const interval = setInterval(async () => {
+      await checkSynthesis();
+    }, 15000);
+    return () => clearInterval(interval);
+  }, [deepResearchRunning, checkSynthesis]);
+
+  // Stop polling when synthesis arrives.
+  useEffect(() => {
+    if (synthesisNote && deepResearchRunning) {
+      setDeepResearchRunning(false);
+      setDeepResearchMessage({
+        text: "Deep research complete! Synthesis is ready.",
+        type: "success",
+      });
+    }
+  }, [synthesisNote, deepResearchRunning]);
+
+  const handleDeepResearch = async () => {
+    setDeepResearchRunning(true);
+    setDeepResearchMessage({
+      text: "Starting deep research (8 parallel agents)...",
+      type: "info",
+    });
+    try {
+      const res = await fetch("/api/deep-research", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ characteristicId: charId }),
+      });
+      const data = await res.json();
+      if (!res.ok || !data.success) {
+        setDeepResearchRunning(false);
+        setDeepResearchMessage({
+          text: data.error || data.message || "Failed to start",
+          type: "error",
+        });
+      } else {
+        setDeepResearchMessage({
+          text: data.message || "Running... results will appear in 5-10 minutes.",
+          type: "info",
+        });
+      }
+    } catch (err: any) {
+      setDeepResearchRunning(false);
+      setDeepResearchMessage({
+        text: err.message || "Network error",
+        type: "error",
+      });
+    }
+  };
+
   // Unique outcomes (sparkling moments)
   const [sparklingOpen, setSparklingOpen] = useState(false);
   const [sparklingDate, setSparklingDate] = useState("");
@@ -669,7 +743,8 @@ function CharacteristicDetailContent() {
     setEditExternalizedName(characteristic.externalizedName ?? "");
     setEditStrengths(characteristic.strengths ?? "");
     setEditRiskTier(characteristic.riskTier);
-    setEditFormulationStatus(characteristic.formulationStatus);
+    setEditTags([...(characteristic.tags ?? [])]);
+    setNewTagInput("");
     setEditError(null);
     setEditOpen(true);
   }
@@ -694,7 +769,7 @@ function CharacteristicDetailContent() {
           externalizedName: editExternalizedName.trim() || undefined,
           strengths: editStrengths.trim() || undefined,
           riskTier: editRiskTier,
-          formulationStatus: editFormulationStatus,
+          tags: editTags.length > 0 ? editTags : [],
         },
       },
     });
@@ -737,14 +812,34 @@ function CharacteristicDetailContent() {
   );
 
   const isSafeguarding = characteristic.riskTier === RiskTier.SafeguardingAlert;
-  const isFormulationReady = characteristic.formulationStatus !== FormulationStatus.Draft;
-  const canGenerate = !isSafeguarding && isFormulationReady;
+  const canGenerate = !isSafeguarding;
 
   const memberName = familyMember?.firstName ?? "this person";
   const uniqueOutcomes = characteristic.uniqueOutcomes ?? [];
 
   return (
     <Flex direction="column" gap="5">
+      {/* Tags */}
+      {characteristic.tags && characteristic.tags.length > 0 && (
+        <Flex gap="2" wrap="wrap" align="center">
+          <Text size="2" color="gray" weight="medium">Tags</Text>
+          {characteristic.tags.map((tag) => (
+            <Badge
+              key={tag}
+              color="violet"
+              variant="soft"
+              size="2"
+              style={{ cursor: "pointer" }}
+              asChild
+            >
+              <NextLink href={`/family/${id}?tag=${encodeURIComponent(tag)}`}>
+                {tag}
+              </NextLink>
+            </Badge>
+          ))}
+        </Flex>
+      )}
+
       {/* Safeguarding gate */}
       {isSafeguarding && (
         <Callout.Root color="red" variant="surface">
@@ -829,6 +924,7 @@ function CharacteristicDetailContent() {
           <Separator size="4" />
 
           {/* Formulation readiness checklist */}
+          <Text size="1" color="gray" weight="medium">Assessment progress</Text>
           <Flex direction="column" gap="1">
             <Flex gap="2" align="center">
               {characteristic.severity ? (
@@ -862,14 +958,6 @@ function CharacteristicDetailContent() {
             </Flex>
           </Flex>
 
-          {characteristic.formulationStatus === FormulationStatus.Draft && (
-            <Callout.Root color="orange" variant="soft" size="1">
-              <Callout.Text>
-                Complete the clinical assessment before generating a story.
-              </Callout.Text>
-            </Callout.Root>
-          )}
-
           {isSafeguarding && (
             <Callout.Root color="red" variant="soft" size="1">
               <Callout.Text>
@@ -878,30 +966,38 @@ function CharacteristicDetailContent() {
             </Callout.Root>
           )}
 
+          {storyMessage && (
+            <Callout.Root color={storyMessage.type === "success" ? "green" : "red"} variant="soft" size="1">
+              <Callout.Icon><ExclamationTriangleIcon /></Callout.Icon>
+              <Callout.Text>{storyMessage.text}</Callout.Text>
+            </Callout.Root>
+          )}
+
           {/* Data transparency callout */}
           <Callout.Root color="gray" variant="soft" size="1">
             <Callout.Text>
               Stories are generated using AI. The characteristic description,
-              goal, and sparkling moments are sent for generation. Data is not
+              research, and sparkling moments are sent for generation. Data is not
               used for AI training.
             </Callout.Text>
           </Callout.Root>
 
-          {goals.length === 0 ? (
+          {/* Primary: generate directly from characteristic */}
+          <Button
+            size="3"
+            disabled={!canGenerate || generatingFromCharacteristic || generatingGoalId !== null}
+            loading={generatingFromCharacteristic}
+            onClick={handleGenerateFromCharacteristic}
+          >
+            Generate Story
+          </Button>
+
+          {/* Secondary: generate for a specific goal */}
+          {goals.length > 0 && (
             <Flex direction="column" gap="2">
-              <Text size="2" color="gray">
-                No goals yet. Create a goal first to generate a story.
+              <Text size="2" color="gray" weight="medium">
+                Or generate for a specific goal:
               </Text>
-              <AddGoalButton
-                presetFamilyMemberId={parseInt(id, 10)}
-                presetTitle={characteristic.title}
-                presetDescription={characteristic.description ?? undefined}
-                refetchQueries={["GetGoals", "GetFamilyMember"]}
-                size="2"
-              />
-            </Flex>
-          ) : (
-            <Flex direction="column" gap="2">
               {goals.map((goal) => (
                 <Flex key={goal.id} align="center" justify="between" gap="2">
                   <Text size="2" style={{ flex: 1, minWidth: 0 }} truncate>
@@ -910,7 +1006,7 @@ function CharacteristicDetailContent() {
                   <Button
                     size="2"
                     variant="soft"
-                    disabled={!canGenerate || generatingGoalId !== null}
+                    disabled={!canGenerate || generatingGoalId !== null || generatingFromCharacteristic}
                     loading={generatingGoalId === goal.id}
                     onClick={() => handleGenerateStory(goal.id)}
                   >
@@ -1057,19 +1153,6 @@ function CharacteristicDetailContent() {
               >
                 {characteristic.riskTier.replace(/_/g, " ").charAt(0) +
                   characteristic.riskTier.replace(/_/g, " ").slice(1).toLowerCase()}
-              </Badge>
-            </Flex>
-            <Flex gap="2">
-              <Text size="2" weight="medium" style={{ minWidth: 100 }}>
-                Status
-              </Text>
-              <Badge variant="soft" size="1" color={
-                characteristic.formulationStatus === FormulationStatus.Formulated ? "green"
-                  : characteristic.formulationStatus === FormulationStatus.Assessed ? "blue"
-                  : "gray"
-              }>
-                {characteristic.formulationStatus.charAt(0) +
-                  characteristic.formulationStatus.slice(1).toLowerCase()}
               </Badge>
             </Flex>
             <Flex gap="2">
@@ -1273,6 +1356,119 @@ function CharacteristicDetailContent() {
             >
               <MagnifyingGlassIcon />
               Generate Research
+            </Button>
+          )}
+        </Flex>
+      </Card>
+
+      {/* Deep Research (Rust research crate) */}
+      <Card>
+        <Flex direction="column" gap="3" p="4">
+          <Flex justify="between" align="center">
+            <Flex direction="column" gap="1">
+              <Heading size="4">Deep Research</Heading>
+              <Text size="1" color="gray">
+                8 parallel AI agents searching Semantic Scholar, OpenAlex &amp; Crossref
+              </Text>
+            </Flex>
+          </Flex>
+          <Separator size="4" />
+
+          {deepResearchMessage && (
+            <Callout.Root
+              color={
+                deepResearchMessage.type === "success"
+                  ? "green"
+                  : deepResearchMessage.type === "error"
+                    ? "red"
+                    : "blue"
+              }
+              variant="soft"
+              size="1"
+            >
+              <Callout.Text>{deepResearchMessage.text}</Callout.Text>
+            </Callout.Root>
+          )}
+
+          {deepResearchRunning && (
+            <Flex direction="column" gap="2">
+              <Flex align="center" gap="2">
+                <Spinner size="2" />
+                <Text size="2" color="gray">
+                  Agents researching — check back in a few minutes
+                </Text>
+              </Flex>
+              <Box
+                style={{
+                  height: 6,
+                  borderRadius: 3,
+                  background: "var(--gray-4)",
+                  overflow: "hidden",
+                }}
+              >
+                <Box
+                  style={{
+                    height: "100%",
+                    width: "60%",
+                    background: "var(--cyan-9)",
+                    borderRadius: 3,
+                    animation:
+                      "researchSweep 2s ease-in-out infinite",
+                  }}
+                />
+              </Box>
+            </Flex>
+          )}
+
+          {synthesisNote ? (
+            <Flex direction="column" gap="3">
+              <Flex justify="between" align="center">
+                <Badge color="green" variant="soft" size="1">
+                  Synthesis ready
+                </Badge>
+                <Text size="1" color="gray">
+                  {new Date(synthesisNote.createdAt).toLocaleDateString(
+                    undefined,
+                    { year: "numeric", month: "short", day: "numeric" },
+                  )}
+                </Text>
+              </Flex>
+              <Box
+                style={{
+                  maxHeight: 400,
+                  overflow: "auto",
+                  padding: "var(--space-3)",
+                  borderRadius: "var(--radius-2)",
+                  background: "var(--gray-a2)",
+                  whiteSpace: "pre-wrap",
+                  fontSize: "var(--font-size-2)",
+                  lineHeight: "var(--line-height-2)",
+                }}
+              >
+                {synthesisNote.content}
+              </Box>
+              <Button
+                size="2"
+                variant="soft"
+                color="cyan"
+                disabled={deepResearchRunning}
+                loading={deepResearchRunning}
+                onClick={handleDeepResearch}
+              >
+                Re-run Deep Research
+              </Button>
+            </Flex>
+          ) : (
+            <Button
+              size="2"
+              variant="soft"
+              color="cyan"
+              disabled={deepResearchRunning}
+              loading={deepResearchRunning}
+              onClick={handleDeepResearch}
+            >
+              <MagnifyingGlassIcon />
+              Run Deep Research
             </Button>
           )}
         </Flex>
@@ -1546,23 +1742,45 @@ function CharacteristicDetailContent() {
                 </Select.Root>
               </label>
 
-              <label>
+              <div>
                 <Text as="div" size="2" mb="1" weight="medium">
-                  Formulation Status
+                  Tags
                 </Text>
-                <Select.Root
-                  value={editFormulationStatus}
-                  onValueChange={(v) => setEditFormulationStatus(v as FormulationStatus)}
+                {editTags.length > 0 && (
+                  <Flex gap="1" wrap="wrap" mb="2">
+                    {editTags.map((tag) => (
+                      <Badge
+                        key={tag}
+                        color="violet"
+                        variant="outline"
+                        size="1"
+                        style={{ cursor: "pointer" }}
+                        onClick={() =>
+                          setEditTags((prev) => prev.filter((t) => t !== tag))
+                        }
+                      >
+                        {tag} <Cross2Icon width="10" height="10" />
+                      </Badge>
+                    ))}
+                  </Flex>
+                )}
+                <TextField.Root
+                  placeholder="Type a tag and press Enter or comma..."
+                  value={newTagInput}
+                  onChange={(e) => setNewTagInput(e.target.value)}
+                  onKeyDown={(e) => {
+                    if (e.key === "Enter" || e.key === ",") {
+                      e.preventDefault();
+                      const tag = newTagInput.trim().replace(/,/g, "");
+                      if (tag && !editTags.includes(tag)) {
+                        setEditTags((prev) => [...prev, tag]);
+                      }
+                      setNewTagInput("");
+                    }
+                  }}
                   disabled={updating}
-                >
-                  <Select.Trigger style={{ width: "100%" }} />
-                  <Select.Content>
-                    <Select.Item value={FormulationStatus.Draft}>Draft</Select.Item>
-                    <Select.Item value={FormulationStatus.Assessed}>Assessed</Select.Item>
-                    <Select.Item value={FormulationStatus.Formulated}>Formulated</Select.Item>
-                  </Select.Content>
-                </Select.Root>
-              </label>
+                />
+              </div>
 
               {editError && (
                 <Text color="red" size="2">
@@ -1666,6 +1884,22 @@ export default function CharacteristicDetailPage() {
               {categoryLabel}
             </Badge>
           )}
+          {characteristic?.tags && characteristic.tags.length > 0 &&
+            characteristic.tags.map((tag) => (
+              <Badge
+                key={tag}
+                color="violet"
+                variant="outline"
+                size="2"
+                style={{ cursor: "pointer" }}
+                asChild
+              >
+                <NextLink href={`/family/${id}?tag=${encodeURIComponent(tag)}`}>
+                  {tag}
+                </NextLink>
+              </Badge>
+            ))
+          }
           {familyMember && (
             <Badge color="gray" variant="soft" size="2">
               {devTier}

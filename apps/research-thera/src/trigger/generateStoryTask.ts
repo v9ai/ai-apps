@@ -205,7 +205,7 @@ ${researchSummary || "No research papers available yet. Use general evidence-bas
     // --- 90% — Save to DB ---
     await d1Tools.updateGenerationJob(jobId, { progress: 90 });
 
-    const story = await d1Tools.createGoalStory(goalId, language, minutes, generatedText);
+    const story = await d1Tools.createGoalStory({ goalId, language, minutes, text: generatedText });
 
     logger.info("generate-story.saved", { jobId, storyId: story.id });
 

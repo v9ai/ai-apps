@@ -8,6 +8,102 @@ pub use deepseek::types::{
     assistant_msg, system_msg, tool_result_msg, user_msg,
 };
 
+// ── Provider / Model Abstraction ──────────────────────────────────────────
+
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
+pub enum QwenModel {
+    #[serde(rename = "qwq-plus")]
+    QwqPlus,
+    #[serde(rename = "qwen-max")]
+    Max,
+    #[serde(rename = "qwen-plus")]
+    Plus,
+    #[serde(rename = "qwen-turbo")]
+    Turbo,
+}
+
+impl QwenModel {
+    pub fn as_str(&self) -> &'static str {
+        match self {
+            Self::QwqPlus => "qwq-plus",
+            Self::Max => "qwen-max",
+            Self::Plus => "qwen-plus",
+            Self::Turbo => "qwen-turbo",
+        }
+    }
+}
+
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
+pub enum Provider {
+    DeepSeek,
+    Qwen,
+}
+
+#[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
+#[serde(untagged)]
+pub enum Model {
+    DeepSeek(DeepSeekModel),
+    Qwen(QwenModel),
+}
+
+impl Model {
+    pub fn as_str(&self) -> &str {
+        match self {
+            Self::DeepSeek(m) => m.as_str(),
+            Self::Qwen(m) => m.as_str(),
+        }
+    }
+
+    pub fn provider(&self) -> Provider {
+        match self {
+            Self::DeepSeek(_) => Provider::DeepSeek,
+            Self::Qwen(_) => Provider::Qwen,
+        }
+    }
+
+    pub fn is_reasoner(&self) -> bool {
+        match self {
+            Self::DeepSeek(DeepSeekModel::Reasoner) => true,
+            Self::Qwen(QwenModel::QwqPlus) => true,
+            _ => false,
+        }
+    }
+
+    /// Return the reasoning model for a given provider.
+    pub fn reasoner_for(provider: Provider) -> Self {
+        match provider {
+            Provider::DeepSeek => Self::DeepSeek(DeepSeekModel::Reasoner),
+            Provider::Qwen => Self::Qwen(QwenModel::QwqPlus),
+        }
+    }
+
+    /// Return the default chat model for a given provider.
+    pub fn chat_for(provider: Provider) -> Self {
+        match provider {
+            Provider::DeepSeek => Self::DeepSeek(DeepSeekModel::Chat),
+            Provider::Qwen => Self::Qwen(QwenModel::Plus),
+        }
+    }
+}
+
+impl Default for Model {
+    fn default() -> Self {
+        Self::DeepSeek(DeepSeekModel::Chat)
+    }
+}
+
+impl From<DeepSeekModel> for Model {
+    fn from(m: DeepSeekModel) -> Self {
+        Self::DeepSeek(m)
+    }
+}
+
+impl From<QwenModel> for Model {
+    fn from(m: QwenModel) -> Self {
+        Self::Qwen(m)
+    }
+}
+
 // ── Hook Types (parity with Anthropic hooks) ──────────────────────────────
 
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq, Hash)]
@@ -67,7 +163,7 @@ pub struct Session {
     pub id: String,
     pub messages: Vec<ChatMessage>,
     pub agent_name: String,
-    pub model: DeepSeekModel,
+    pub model: Model,
     pub created_at: String,
     pub updated_at: String,
     pub turn_count: u32,

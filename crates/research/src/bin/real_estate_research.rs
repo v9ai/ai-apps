@@ -1,5 +1,5 @@
 use anyhow::{Context, Result};
-use research::team::{ResearchTask, TaskStatus, TeamConfig, TeamLead};
+use research::team::{LlmProvider, ResearchTask, TaskStatus, TeamConfig, TeamLead};
 use research::tools::SearchToolConfig;
 
 const DEFAULT_BASE_URL: &str = "https://api.deepseek.com";
@@ -2148,8 +2148,7 @@ async fn main() -> Result<()> {
 
     let lead = TeamLead::new(TeamConfig {
         team_size,
-        api_key,
-        base_url,
+        provider: LlmProvider::DeepSeek { api_key, base_url },
         scholar_key,
         code_root: None,
         synthesis_preamble: Some(
@@ -2199,6 +2198,7 @@ async fn main() -> Result<()> {
         scholar_concurrency: Some(1),
         mailto: std::env::var("RESEARCH_MAILTO").ok(),
         output_dir: Some(OUT_DIR.into()),
+        synthesis_provider: None,
     });
 
     let result = lead.run(tasks).await?;

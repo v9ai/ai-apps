@@ -14,7 +14,7 @@ use crate::agent::build_request;
 use crate::error::{Result, SddError};
 use crate::extract::extract_json;
 use crate::hooks::HookRegistry;
-use crate::types::{DeepSeekModel, EffortLevel, HookEvent, HookInput, HookOutput, system_msg, user_msg};
+use crate::types::{EffortLevel, HookEvent, HookInput, HookOutput, Model, system_msg, user_msg};
 use crate::traits::LlmClient;
 
 // ── Types ──────────────────────────────────────────────────────────────
@@ -25,7 +25,7 @@ pub struct DagNode {
     pub name: String,
     pub system_prompt: String,
     #[serde(default)]
-    pub model: DeepSeekModel,
+    pub model: Model,
     #[serde(default)]
     pub dependencies: Vec<String>,
     #[serde(default)]

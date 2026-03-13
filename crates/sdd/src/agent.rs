@@ -7,7 +7,7 @@ use crate::types::*;
 
 /// Build a ChatRequest with tool schemas for function calling.
 pub fn build_request(
-    model: &DeepSeekModel,
+    model: &Model,
     messages: Vec<ChatMessage>,
     tools: Option<Vec<ToolSchema>>,
     effort: &EffortLevel,
@@ -31,7 +31,7 @@ pub async fn agent_loop<C, F, Fut>(
     client: &C,
     system_prompt: &str,
     user_prompt: &str,
-    model: &DeepSeekModel,
+    model: &Model,
     tools: &[ToolSchema],
     tool_executor: F,
     max_turns: u32,

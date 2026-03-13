@@ -1,7 +1,7 @@
 use anyhow::{bail, Context, Result};
 use research::paper::ResearchPaper;
 use research::scholar::{SemanticScholarClient, PAPER_FIELDS_FULL, SEARCH_FIELDS};
-use research::team::{ResearchTask, TaskStatus, TeamConfig, TeamLead};
+use research::team::{LlmProvider, ResearchTask, TaskStatus, TeamConfig, TeamLead};
 use research::tools::SearchToolConfig;
 use research::{CoreClient, CrossrefClient, OpenAlexClient};
 use serde::{Deserialize, Serialize};
@@ -234,8 +234,7 @@ async fn main() -> Result<()> {
 
     let lead = TeamLead::new(TeamConfig {
         team_size,
-        api_key,
-        base_url,
+        provider: LlmProvider::DeepSeek { api_key, base_url },
         scholar_key,
         code_root: None,
         tool_config: Some(SearchToolConfig {
@@ -283,6 +282,7 @@ Your task: produce a **master clinical research synthesis** with:
 "#,
             condition_name = condition.name,
         )),
+        synthesis_provider: None,
     });
 
     let result = lead.run(tasks).await?;

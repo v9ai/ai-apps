@@ -3,13 +3,16 @@ pub mod code;
 pub mod core_api;
 pub mod crossref;
 pub mod dual;
+pub mod embeddings;
 pub mod openalex;
 pub mod paper;
 pub mod scholar;
 pub mod team;
 pub mod tools;
 
+pub use agent::LlmProvider;
 pub use core_api::CoreClient;
+pub use embeddings::EmbeddingRanker;
 pub use crossref::CrossrefClient;
 pub use dual::{DualModelResearcher, MultiModelResearcher, MultiResponse};
 pub use openalex::OpenAlexClient;

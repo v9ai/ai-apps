@@ -26,10 +26,10 @@ export const familyMemberCharacteristic: NonNullable<QueryResolvers['familyMembe
     durationWeeks: item.durationWeeks,
     ageOfOnset: item.ageOfOnset,
     impairmentDomains: item.impairmentDomains,
-    formulationStatus: item.formulationStatus as any,
     externalizedName: item.externalizedName,
     strengths: item.strengths,
     riskTier: item.riskTier as any,
+    tags: item.tags,
     createdAt: item.createdAt,
     updatedAt: item.updatedAt,
   } as any;

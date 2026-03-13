@@ -105,7 +105,7 @@ async fn test_agent_loop_simple_response() {
         &client,
         "You are helpful.",
         "Say hello",
-        &DeepSeekModel::Chat,
+        &Model::from(DeepSeekModel::Chat),
         &[],
         |_name, _args| async { Ok::<_, String>(json!({})) },
         10,
@@ -151,7 +151,7 @@ async fn test_agent_loop_with_tool_calls() {
         &client,
         "You are helpful.",
         "Find main function",
-        &DeepSeekModel::Chat,
+        &Model::from(DeepSeekModel::Chat),
         &[],
         move |name, _args| {
             let log = log.clone();
@@ -197,7 +197,7 @@ async fn test_agent_loop_max_turns_exceeded() {
         &client,
         "system",
         "user",
-        &DeepSeekModel::Chat,
+        &Model::from(DeepSeekModel::Chat),
         &[],
         |_name, _args| async { Ok::<_, String>(json!({})) },
         3,
@@ -229,7 +229,7 @@ async fn test_agent_loop_tool_error_propagated() {
         &client,
         "system",
         "user",
-        &DeepSeekModel::Chat,
+        &Model::from(DeepSeekModel::Chat),
         &[],
         |_name, _args| async { Err::<serde_json::Value, _>("command failed".to_string()) },
         10,
@@ -257,7 +257,7 @@ async fn test_agent_loop_usage_accumulates() {
     let result = agent_loop(
         &client,
         "s", "u",
-        &DeepSeekModel::Chat, &[],
+        &Model::from(DeepSeekModel::Chat), &[],
         |_, _| async { Ok::<_, String>(json!({})) },
         10, &EffortLevel::Medium,
     ).await.unwrap();
@@ -280,7 +280,7 @@ async fn test_build_request_with_tools() {
     }];
 
     let request = build_request(
-        &DeepSeekModel::Reasoner,
+        &Model::from(DeepSeekModel::Reasoner),
         vec![system_msg("sys"), user_msg("usr")],
         Some(tools),
         &EffortLevel::High,
@@ -297,7 +297,7 @@ async fn test_build_request_with_tools() {
 #[tokio::test]
 async fn test_build_request_without_tools() {
     let request = build_request(
-        &DeepSeekModel::Chat,
+        &Model::from(DeepSeekModel::Chat),
         vec![system_msg("sys")],
         None,
         &EffortLevel::Low,

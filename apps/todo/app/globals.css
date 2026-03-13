@@ -1,0 +1,78 @@
+:root {
+  --app-bg: #111113;
+  --sidebar-width: 260px;
+  --priority-high: #e5484d;
+  --priority-medium: #f5a623;
+  --priority-low: #8b8d98;
+  --streak-gray: #8b8d98;
+  --streak-blue: #3e63dd;
+  --streak-green: #30a46c;
+  --streak-gold: #ffc53d;
+}
+
+* {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+body {
+  background: var(--app-bg);
+  min-height: 100vh;
+}
+
+::-webkit-scrollbar {
+  width: 6px;
+}
+
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+::-webkit-scrollbar-thumb {
+  background: rgba(255, 255, 255, 0.15);
+  border-radius: 3px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: rgba(255, 255, 255, 0.25);
+}
+
+@keyframes taskComplete {
+  0% { transform: scale(1); background: inherit; }
+  30% { transform: scale(1.02); background: rgba(48, 164, 108, 0.15); }
+  100% { transform: scale(1); opacity: 0; height: 0; margin: 0; padding: 0; overflow: hidden; }
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; transform: translateY(4px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+.task-completing {
+  animation: taskComplete 600ms ease-out forwards;
+}
+
+.fade-in {
+  animation: fadeIn 200ms ease-out;
+}
+
+.inline-edit input,
+.inline-edit textarea {
+  background: transparent !important;
+  box-shadow: none !important;
+  border-color: transparent !important;
+  transition: border-color 150ms, background 150ms;
+}
+
+.inline-edit:hover input,
+.inline-edit:hover textarea {
+  background: rgba(255, 255, 255, 0.03) !important;
+  border-color: var(--gray-a4) !important;
+}
+
+.inline-edit input:focus,
+.inline-edit textarea:focus {
+  background: rgba(255, 255, 255, 0.05) !important;
+  border-color: var(--cyan-a6) !important;
+}

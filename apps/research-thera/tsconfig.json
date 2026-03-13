@@ -29,5 +29,5 @@
     ".next/types/**/*.ts",
     ".next/dev/types/**/*.ts"
   ],
-  "exclude": ["node_modules", "better-auth", "src/elevenlabs-examples"]
+  "exclude": ["node_modules", "better-auth", "src/elevenlabs-examples", "vitest.config.ts"]
 }

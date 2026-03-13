@@ -150,7 +150,8 @@ export const stories = sqliteTable("stories", {
 
 export const goalStories = sqliteTable("goal_stories", {
   id: integer("id").primaryKey({ autoIncrement: true }),
-  goalId: integer("goal_id").notNull(),
+  goalId: integer("goal_id"),
+  characteristicId: integer("characteristic_id"),
   language: text("language").notNull(),
   minutes: integer("minutes").notNull(),
   text: text("text").notNull(),
@@ -297,10 +298,10 @@ export const familyMemberCharacteristics = sqliteTable(
     durationWeeks: integer("duration_weeks"),
     ageOfOnset: integer("age_of_onset"),
     impairmentDomains: text("impairment_domains"), // JSON array
-    formulationStatus: text("formulation_status").notNull().default("DRAFT"),
     externalizedName: text("externalized_name"),
     strengths: text("strengths"),
     riskTier: text("risk_tier").notNull().default("NONE"),
+    tags: text("tags"), // JSON array
     createdAt: text("created_at")
       .notNull()
       .default(sql`CURRENT_TIMESTAMP`),

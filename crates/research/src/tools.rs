@@ -1,5 +1,8 @@
+use std::sync::Arc;
+
 use crate::agent::{Tool, ToolDefinition};
 use crate::crossref::CrossrefClient;
+use crate::embeddings::EmbeddingRanker;
 use crate::openalex::OpenAlexClient;
 use crate::paper::ResearchPaper;
 use crate::scholar::{SemanticScholarClient, types::{PAPER_FIELDS_FULL, SEARCH_FIELDS}};
@@ -59,19 +62,81 @@ pub struct SearchPapers {
     client: SemanticScholarClient,
     config: SearchToolConfig,
     fallback: Option<FallbackClients>,
+    embedding_ranker: Option<Arc<EmbeddingRanker>>,
 }
 
 impl SearchPapers {
     pub fn new(client: SemanticScholarClient) -> Self {
-        Self { client, config: SearchToolConfig::default(), fallback: None }
+        Self { client, config: SearchToolConfig::default(), fallback: None, embedding_ranker: None }
     }
 
     pub fn with_config(client: SemanticScholarClient, config: SearchToolConfig) -> Self {
-        Self { client, config, fallback: None }
+        Self { client, config, fallback: None, embedding_ranker: None }
     }
 
     pub fn with_fallback(client: SemanticScholarClient, config: SearchToolConfig, fallback: FallbackClients) -> Self {
-        Self { client, config, fallback: Some(fallback) }
+        Self { client, config, fallback: Some(fallback), embedding_ranker: None }
+    }
+
+    /// Attach an embedding ranker for semantic re-ranking of search results.
+    pub fn with_embedding_ranker(mut self, ranker: Arc<EmbeddingRanker>) -> Self {
+        self.embedding_ranker = Some(ranker);
+        self
+    }
+}
+
+impl SearchPapers {
+    /// Fetch papers from the best available source.
+    async fn fetch_papers(
+        &self,
+        args: &SearchArgs,
+        limit: u32,
+    ) -> Result<(Vec<ResearchPaper>, u64), String> {
+        // Prefer OpenAlex (no rate-limit issues) when available, fall back to S2.
+        if let Some(fb) = &self.fallback {
+            if let Ok(oa_resp) = fb.openalex.search(&args.query, 1, limit).await {
+                if !oa_resp.results.is_empty() {
+                    let papers: Vec<ResearchPaper> =
+                        oa_resp.results.into_iter().map(Into::into).collect();
+                    let total = papers.len() as u64;
+                    return Ok((papers, total));
+                }
+            }
+
+            // OpenAlex empty — try Crossref before S2
+            if let Ok(cr_resp) = fb.crossref.search(&args.query, limit, 0).await {
+                if let Some(items) = cr_resp.message.and_then(|m| m.items) {
+                    if !items.is_empty() {
+                        let papers: Vec<ResearchPaper> =
+                            items.into_iter().map(Into::into).collect();
+                        let total = papers.len() as u64;
+                        return Ok((papers, total));
+                    }
+                }
+            }
+
+            tracing::warn!(
+                "OpenAlex + Crossref returned no results, falling back to Semantic Scholar"
+            );
+        }
+
+        // S2 as last resort (or only provider when no fallback configured)
+        let resp = self
+            .client
+            .search_bulk(
+                &args.query,
+                SEARCH_FIELDS,
+                args.year.as_deref(),
+                args.min_citations,
+                Some("citationCount:desc"),
+                limit,
+            )
+            .await
+            .map_err(|e| e.to_string())?;
+
+        let papers: Vec<ResearchPaper> = resp.data.into_iter().map(Into::into).collect();
+        let total = resp.total.unwrap_or(papers.len() as u64);
+        Ok((papers, total))
     }
 }
 
@@ -121,45 +186,27 @@ impl Tool for SearchPapers {
         let args: SearchArgs = serde_json::from_value(args).map_err(|e| e.to_string())?;
         let limit = args.limit.unwrap_or(self.config.default_limit).min(100);
 
-        // Prefer OpenAlex (no rate-limit issues) when available, fall back to S2.
-        if let Some(fb) = &self.fallback {
-            if let Ok(oa_resp) = fb.openalex.search(&args.query, 1, limit).await {
-                if !oa_resp.results.is_empty() {
-                    let papers: Vec<ResearchPaper> = oa_resp.results.into_iter().map(Into::into).collect();
-                    let total = papers.len() as u64;
-                    return Ok(format_research_papers(&papers, &self.config, &args.query, total));
-                }
-            }
+        let (mut papers, total) = self.fetch_papers(&args, limit).await?;
 
-            // OpenAlex empty — try Crossref before S2
-            if let Ok(cr_resp) = fb.crossref.search(&args.query, limit, 0).await {
-                if let Some(items) = cr_resp.message.and_then(|m| m.items) {
-                    if !items.is_empty() {
-                        let papers: Vec<ResearchPaper> = items.into_iter().map(Into::into).collect();
-                        let total = papers.len() as u64;
-                        return Ok(format_research_papers(&papers, &self.config, &args.query, total));
+        // Optional semantic re-ranking via Qwen embeddings.
+        if let Some(ranker) = &self.embedding_ranker {
+            if !papers.is_empty() {
+                match ranker.rank_papers(&args.query, papers).await {
+                    Ok(ranked) => {
+                        papers = ranked.into_iter().map(|(p, _score)| p).collect();
+                    }
+                    Err(e) => {
+                        tracing::warn!("embedding re-rank failed, keeping original order: {e:#}");
+                        // papers consumed — need to re-fetch; but we moved them.
+                        // Re-fetch as fallback (rare error path).
+                        let (refetched, _) = self.fetch_papers(&args, limit).await?;
+                        papers = refetched;
                     }
                 }
             }
-
-            tracing::warn!("OpenAlex + Crossref returned no results, falling back to Semantic Scholar");
         }
 
-        // S2 as last resort (or only provider when no fallback configured)
-        let resp = self.client
-            .search_bulk(
-                &args.query,
-                SEARCH_FIELDS,
-                args.year.as_deref(),
-                args.min_citations,
-                Some("citationCount:desc"),
-                limit,
-            )
-            .await
-            .map_err(|e| e.to_string())?;
-
-        let papers: Vec<ResearchPaper> = resp.data.into_iter().map(Into::into).collect();
-        Ok(format_research_papers(&papers, &self.config, &args.query, resp.total.unwrap_or(papers.len() as u64)))
+        Ok(format_research_papers(&papers, &self.config, &args.query, total))
     }
 }
 

@@ -20,10 +20,10 @@ export const updateFamilyMemberCharacteristic: NonNullable<MutationResolvers['up
     durationWeeks: args.input.durationWeeks ?? undefined,
     ageOfOnset: args.input.ageOfOnset ?? undefined,
     impairmentDomains: (args.input.impairmentDomains as string[]) ?? undefined,
-    formulationStatus: args.input.formulationStatus ?? undefined,
     externalizedName: args.input.externalizedName ?? undefined,
     strengths: args.input.strengths ?? undefined,
     riskTier: args.input.riskTier ?? undefined,
+    tags: (args.input.tags as string[]) ?? undefined,
   });
 
   const item = await d1Tools.getCharacteristic(args.id, userEmail);

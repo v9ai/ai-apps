@@ -17,8 +17,8 @@ import {
   AlertDialog,
   Separator,
 } from "@radix-ui/themes";
-import { ArrowLeftIcon, Pencil1Icon, TrashIcon } from "@radix-ui/react-icons";
-import { useRouter, useParams } from "next/navigation";
+import { ArrowLeftIcon, Pencil1Icon, TrashIcon, Cross2Icon } from "@radix-ui/react-icons";
+import { useRouter, useParams, useSearchParams } from "next/navigation";
 import NextLink from "next/link";
 import dynamic from "next/dynamic";
 import {
@@ -89,8 +89,10 @@ function getStatusColor(status: string) {
 function FamilyMemberContent() {
   const router = useRouter();
   const params = useParams();
+  const searchParams = useSearchParams();
   const id = parseInt(params.id as string, 10);
   const { user } = useUser();
+  const activeTag = searchParams.get("tag");
 
   const { data, loading, error } = useGetFamilyMemberQuery({
     variables: { id },
@@ -166,15 +168,25 @@ function FamilyMemberContent() {
     skip: isNaN(id),
   });
   const characteristics = charData?.familyMemberCharacteristics ?? [];
+  const tagFilter = (c: (typeof characteristics)[number]) =>
+    !activeTag || (c.tags && c.tags.includes(activeTag));
   const strengths = characteristics.filter(
-    (c) => c.category === CharacteristicCategory.Strength,
+    (c) => c.category === CharacteristicCategory.Strength && tagFilter(c),
   );
   const supportNeeds = characteristics.filter(
-    (c) => c.category === CharacteristicCategory.SupportNeed,
+    (c) => c.category === CharacteristicCategory.SupportNeed && tagFilter(c),
   );
   const priorityConcerns = characteristics.filter(
-    (c) => c.category === CharacteristicCategory.PriorityConcern,
+    (c) => c.category === CharacteristicCategory.PriorityConcern && tagFilter(c),
   );
+
+  const handleTagClick = (tag: string) => {
+    router.push(`/family/${id}?tag=${encodeURIComponent(tag)}`);
+  };
+
+  const clearTagFilter = () => {
+    router.push(`/family/${id}`);
+  };
 
   const [deleteCharacteristic, { loading: deletingChar }] =
     useDeleteFamilyMemberCharacteristicMutation({
@@ -434,6 +446,30 @@ function FamilyMemberContent() {
         </Flex>
       </Card>
 
+      {/* Tag filter banner */}
+      {activeTag && (
+        <Card>
+          <Flex align="center" gap="3" p="3">
+            <Badge color="violet" variant="soft" size="2">
+              {activeTag}
+            </Badge>
+            <Text size="2" color="gray">
+              Filtering characteristics by tag
+            </Text>
+            <Button
+              variant="ghost"
+              color="gray"
+              size="1"
+              onClick={clearTagFilter}
+              style={{ marginLeft: "auto" }}
+            >
+              <Cross2Icon />
+              Clear
+            </Button>
+          </Flex>
+        </Card>
+      )}
+
       {/* Strengths */}
       <Card>
         <Flex direction="column" gap="3" p="4">
@@ -459,6 +495,7 @@ function FamilyMemberContent() {
             deleting={deletingChar}
             emptyMessage="No strengths added yet"
             getHref={(item) => `/family/${id}/characteristics/${item.id}`}
+            onTagClick={handleTagClick}
           />
         </Flex>
       </Card>
@@ -488,6 +525,7 @@ function FamilyMemberContent() {
             deleting={deletingChar}
             emptyMessage="No Support Priority added yet"
             getHref={(item) => `/family/${id}/characteristics/${item.id}`}
+            onTagClick={handleTagClick}
           />
         </Flex>
       </Card>
@@ -517,6 +555,7 @@ function FamilyMemberContent() {
             deleting={deletingChar}
             emptyMessage="No priority concerns added yet"
             getHref={(item) => `/family/${id}/characteristics/${item.id}`}
+            onTagClick={handleTagClick}
           />
         </Flex>
       </Card>

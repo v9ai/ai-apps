@@ -22,10 +22,10 @@ export const createFamilyMemberCharacteristic: NonNullable<MutationResolvers['cr
     durationWeeks: args.input.durationWeeks ?? null,
     ageOfOnset: args.input.ageOfOnset ?? null,
     impairmentDomains: (args.input.impairmentDomains as string[]) ?? null,
-    formulationStatus: args.input.formulationStatus ?? undefined,
     externalizedName: args.input.externalizedName ?? null,
     strengths: args.input.strengths ?? null,
     riskTier: args.input.riskTier ?? undefined,
+    tags: (args.input.tags as string[]) ?? null,
   });
 
   const item = await d1Tools.getCharacteristic(id, userEmail);

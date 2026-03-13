@@ -22,14 +22,17 @@ import {
   Grid,
   ScrollArea,
   TextField,
+  TextArea,
   Tabs,
   Box,
   Separator,
 } from "@radix-ui/themes";
-import { ArrowLeftIcon } from "@radix-ui/react-icons";
+import { ArrowLeftIcon, Pencil1Icon } from "@radix-ui/react-icons";
 import { useRouter, useParams } from "next/navigation";
 import NextLink from "next/link";
 import dynamic from "next/dynamic";
+import ReactMarkdown from "react-markdown";
+import remarkGfm from "remark-gfm";
 import {
   useGetNoteQuery,
   useUpdateNoteMutation,
@@ -67,6 +70,12 @@ function NotePageContent() {
 
   const [showFullDescription, setShowFullDescription] = useState(false);
 
+  // Edit mode state
+  const [editing, setEditing] = useState(false);
+  const [editTitle, setEditTitle] = useState("");
+  const [editContent, setEditContent] = useState("");
+  const [editTags, setEditTags] = useState("");
+
   // List UX state
   const [researchQuery, setResearchQuery] = useState("");
   const [claimsQuery, setClaimsQuery] = useState("");
@@ -78,8 +87,7 @@ function NotePageContent() {
     skip: !slug,
   });
 
-  // Keep your mutations (even if not shown in UI here)
-  const [updateNote] = useUpdateNoteMutation({ refetchQueries: ["GetNote"] });
+  const [updateNote, { loading: saving }] = useUpdateNoteMutation({ refetchQueries: ["GetNote"] });
   const [deleteNote] = useDeleteNoteMutation();
 
   const note = data?.note;
@@ -123,6 +131,37 @@ function NotePageContent() {
     }
   };
 
+  const startEditing = () => {
+    if (!note) return;
+    setEditTitle(note.title || "");
+    setEditContent(note.content || "");
+    setEditTags((note.tags || []).join(", "));
+    setEditing(true);
+  };
+
+  const cancelEditing = () => {
+    setEditing(false);
+  };
+
+  const handleSave = async () => {
+    if (!note) return;
+    try {
+      await updateNote({
+        variables: {
+          id: note.id,
+          input: {
+            title: editTitle || null,
+            content: editContent,
+            tags: editTags.split(",").map((t) => t.trim()).filter(Boolean),
+          },
+        },
+      });
+      setEditing(false);
+    } catch (err) {
+      console.error("Failed to save note:", err);
+    }
+  };
+
   if (loading) {
     return (
       <Flex justify="center" align="center" style={{ minHeight: "200px" }}>
@@ -156,6 +195,85 @@ function NotePageContent() {
     <Grid columns={{ initial: "1", md: "3fr 1.25fr" }} gap="5">
       {/* MAIN COLUMN */}
       <Flex direction="column" gap="4" style={{ minWidth: 0 }}>
+        {/* NOTE CONTENT */}
+        {editing ? (
+          <Card>
+            <Flex direction="column" gap="3" p="4">
+              <Flex justify="between" align="center">
+                <Heading size="4">Edit Note</Heading>
+                <Flex gap="2">
+                  <Button variant="soft" color="gray" onClick={cancelEditing}>
+                    Cancel
+                  </Button>
+                  <Button onClick={handleSave} disabled={saving}>
+                    {saving ? <Spinner size="1" /> : "Save"}
+                  </Button>
+                </Flex>
+              </Flex>
+              <TextField.Root
+                placeholder="Title"
+                value={editTitle}
+                onChange={(e) => setEditTitle(e.target.value)}
+              />
+              <TextArea
+                placeholder="Content (Markdown supported)"
+                value={editContent}
+                onChange={(e) => setEditContent(e.target.value)}
+                style={{ minHeight: "400px", fontFamily: "var(--code-font-family)", fontSize: "var(--font-size-2)" }}
+              />
+              <TextField.Root
+                placeholder="Tags (comma-separated)"
+                value={editTags}
+                onChange={(e) => setEditTags(e.target.value)}
+              />
+            </Flex>
+          </Card>
+        ) : (
+          note.content && (
+            <Card>
+              <Flex justify="end" p="2" pb="0">
+                <Button size="1" variant="ghost" color="gray" onClick={startEditing}>
+                  <Pencil1Icon /> Edit
+                </Button>
+              </Flex>
+              <Box p="4" pt="0" className="prose">
+                <ReactMarkdown
+                  remarkPlugins={[remarkGfm]}
+                  components={{
+                    h1: ({ children }) => <Heading size="6" mb="3">{children}</Heading>,
+                    h2: ({ children }) => <Heading size="5" mb="2" mt="4">{children}</Heading>,
+                    h3: ({ children }) => <Heading size="4" mb="2" mt="3">{children}</Heading>,
+                    h4: ({ children }) => <Heading size="3" mb="1" mt="2">{children}</Heading>,
+                    p: ({ children }) => <Text as="p" size="2" mb="2" style={{ lineHeight: 1.7 }}>{children}</Text>,
+                    li: ({ children }) => <li style={{ lineHeight: 1.6, marginBottom: "4px", fontSize: "var(--font-size-2)" }}>{children}</li>,
+                    strong: ({ children }) => <Text weight="bold">{children}</Text>,
+                    hr: () => <Separator my="4" size="4" />,
+                    table: ({ children }) => (
+                      <Box my="3" style={{ overflowX: "auto" }}>
+                        <table style={{ width: "100%", borderCollapse: "collapse", fontSize: "var(--font-size-2)", lineHeight: 1.5 }}>{children}</table>
+                      </Box>
+                    ),
+                    thead: ({ children }) => (
+                      <thead style={{ background: "var(--gray-a2)" }}>{children}</thead>
+                    ),
+                    tr: ({ children }) => (
+                      <tr style={{ borderBottom: "1px solid var(--gray-a4)" }}>{children}</tr>
+                    ),
+                    th: ({ children }) => (
+                      <th style={{ textAlign: "left", padding: "8px 12px", borderBottom: "2px solid var(--gray-a6)", fontWeight: 600, verticalAlign: "top" }}>{children}</th>
+                    ),
+                    td: ({ children }) => (
+                      <td style={{ padding: "8px 12px", borderBottom: "1px solid var(--gray-a4)", verticalAlign: "top" }}>{children}</td>
+                    ),
+                  }}
+                >
+                  {note.content}
+                </ReactMarkdown>
+              </Box>
+            </Card>
+          )
+        )}
+
         {/* LINKED RESEARCH */}
         {linkedResearch.length > 0 && (
           <Card>
@@ -741,7 +859,7 @@ export default function NotePage() {
           py="4"
           align="center"
           gap="4"
-          style={{ maxWidth: "1200px", margin: "0 auto", width: "100%" }}
+          style={{ maxWidth: "1920px", margin: "0 auto", width: "100%" }}
         >
           <Button variant="soft" size="2" radius="full" color="gray" asChild>
             <NextLink href="/notes">
@@ -762,7 +880,7 @@ export default function NotePage() {
         </Flex>
       </Box>
 
-      <Box style={{ maxWidth: "1200px", margin: "0 auto", width: "100%" }}>
+      <Box style={{ maxWidth: "1920px", margin: "0 auto", width: "100%" }}>
         <DynamicNotePageContent />
       </Box>
     </Flex>

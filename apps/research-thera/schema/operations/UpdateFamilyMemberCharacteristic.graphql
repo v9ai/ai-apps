@@ -11,10 +11,10 @@ mutation UpdateFamilyMemberCharacteristic($id: Int!, $input: UpdateFamilyMemberC
     durationWeeks
     ageOfOnset
     impairmentDomains
-    formulationStatus
     externalizedName
     strengths
     riskTier
+    tags
     createdAt
     updatedAt
   }

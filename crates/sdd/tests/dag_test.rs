@@ -4,7 +4,7 @@ use async_trait::async_trait;
 use sdd::dag::{DagBuilder, DagDefinition, DagExecution, DagNode, DagPipeline, detect_ready_nodes};
 use sdd::types::{
     ChatContent, ChatMessage, ChatRequest, ChatResponse, Choice, DeepSeekModel, EffortLevel,
-    UsageInfo,
+    Model, UsageInfo,
 };
 use sdd::traits::LlmClient;
 use sdd::error::Result;
@@ -73,7 +73,7 @@ fn make_node(name: &str) -> DagNode {
     DagNode {
         name: name.into(),
         system_prompt: format!("You are the {} node.", name),
-        model: DeepSeekModel::Chat,
+        model: Model::from(DeepSeekModel::Chat),
         dependencies: Vec::new(),
         effort: EffortLevel::Low,
         tools: Vec::new(),
@@ -120,7 +120,7 @@ fn cyclic_dag_returns_error() {
             DagNode {
                 name: "a".into(),
                 system_prompt: String::new(),
-                model: DeepSeekModel::Chat,
+                model: Model::from(DeepSeekModel::Chat),
                 dependencies: vec!["b".into()],
                 effort: EffortLevel::Low,
                 tools: Vec::new(),
@@ -130,7 +130,7 @@ fn cyclic_dag_returns_error() {
             DagNode {
                 name: "b".into(),
                 system_prompt: String::new(),
-                model: DeepSeekModel::Chat,
+                model: Model::from(DeepSeekModel::Chat),
                 dependencies: vec!["a".into()],
                 effort: EffortLevel::Low,
                 tools: Vec::new(),

@@ -6,6 +6,7 @@ query GetFamilyMemberCharacteristics($familyMemberId: Int!, $category: Character
     category
     title
     description
+    tags
     createdAt
     updatedAt
   }

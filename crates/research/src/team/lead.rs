@@ -7,7 +7,7 @@ use tokio::sync::Semaphore;
 use tokio::task::JoinSet;
 use tracing::info;
 
-use crate::agent::agent_builder;
+use crate::agent::{provider_agent_builder, LlmProvider};
 use crate::code::CodeAnalysisConfig;
 use crate::crossref::CrossrefClient;
 use crate::openalex::OpenAlexClient;
@@ -22,8 +22,7 @@ use super::teammate::{Teammate, TeammateConfig, truncate_context};
 /// Configuration for the research team.
 pub struct TeamConfig {
     pub team_size: usize,
-    pub api_key: String,
-    pub base_url: String,
+    pub provider: LlmProvider,
     pub scholar_key: Option<String>,
     /// When `Some`, enables code analysis tools on each teammate.
     pub code_root: Option<PathBuf>,
@@ -42,6 +41,8 @@ pub struct TeamConfig {
     /// to disk as it completes, and on startup previously completed results are loaded
     /// to resume from the failure point.
     pub output_dir: Option<String>,
+    /// Optional separate provider for synthesis. Falls back to `provider` if `None`.
+    pub synthesis_provider: Option<LlmProvider>,
 }
 
 /// Result of a full team research run.
@@ -110,8 +111,7 @@ impl TeamLead {
             let teammate = Teammate::new(
                 worker_id,
                 TeammateConfig {
-                    api_key: self.config.api_key.clone(),
-                    base_url: self.config.base_url.clone(),
+                    provider: self.config.provider.clone(),
                     scholar_key: self.config.scholar_key.clone(),
                     code_analysis: code_analysis.clone(),
                     tool_config: self.config.tool_config.clone(),
@@ -281,9 +281,13 @@ impl TeamLead {
             .as_deref()
             .unwrap_or(default_preamble);
 
-        let agent = agent_builder(&self.config.api_key, "deepseek-chat")
+        let synthesis_provider = self
+            .config
+            .synthesis_provider
+            .as_ref()
+            .unwrap_or(&self.config.provider);
+        let agent = provider_agent_builder(synthesis_provider)
             .preamble(preamble)
-            .base_url(&self.config.base_url)
             .worker_id("synthesis")
             .build();
 

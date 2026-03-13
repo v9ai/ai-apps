@@ -1,6 +1,7 @@
 name: therapeutic-research-benchmark
 tasks:
   - harbor/tasks/therapeutic-research.yaml
+  - harbor/tasks/characteristic-research.yaml
 weights:
   citation_accuracy: 0.3
   research_grounding: 0.3

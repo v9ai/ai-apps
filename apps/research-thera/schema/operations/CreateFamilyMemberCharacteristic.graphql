@@ -11,10 +11,10 @@ mutation CreateFamilyMemberCharacteristic($input: CreateFamilyMemberCharacterist
     durationWeeks
     ageOfOnset
     impairmentDomains
-    formulationStatus
     externalizedName
     strengths
     riskTier
+    tags
     createdAt
     updatedAt
   }

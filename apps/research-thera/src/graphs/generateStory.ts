@@ -15,7 +15,7 @@ import { d1Tools } from "@/src/db";
 // Helpers (ported from src/trigger/generateStoryTask.ts)
 // ---------------------------------------------------------------------------
 
-function getDevelopmentalTier(ageYears: number | null | undefined): string {
+export function getDevelopmentalTier(ageYears: number | null | undefined): string {
   if (!ageYears) return "ADULT";
   if (ageYears <= 5) return "EARLY_CHILDHOOD";
   if (ageYears <= 11) return "MIDDLE_CHILDHOOD";
@@ -94,7 +94,7 @@ Draw from:
 
 const StoryState = Annotation.Root({
   // Inputs
-  goalId: Annotation<number>(),
+  goalId: Annotation<number | undefined>(),
   characteristicId: Annotation<number | undefined>(),
   userEmail: Annotation<string>(),
   language: Annotation<string>(),
@@ -121,6 +121,10 @@ const StoryState = Annotation.Root({
     default: () => "",
     reducer: (_prev, next) => next,
   }),
+  notesSummary: Annotation<string>({
+    default: () => "",
+    reducer: (_prev, next) => next,
+  }),
 
   // Output
   storyText: Annotation<string>({
@@ -140,13 +144,18 @@ type StoryStateType = typeof StoryState.State;
 // ---------------------------------------------------------------------------
 
 async function loadContext(state: StoryStateType): Promise<Partial<StoryStateType>> {
-  const goal = await d1Tools.getGoal(state.goalId, state.userEmail);
-  const familyMember = goal.familyMemberId
-    ? await d1Tools.getFamilyMember(goal.familyMemberId)
+  const goal = state.goalId
+    ? await d1Tools.getGoal(state.goalId, state.userEmail)
     : null;
 
   const characteristic = state.characteristicId
     ? (await d1Tools.getCharacteristic(state.characteristicId, state.userEmail)) ?? null
+    : null;
+
+  // Derive familyMember from goal or characteristic
+  const familyMemberId = goal?.familyMemberId ?? characteristic?.familyMemberId ?? null;
+  const familyMember = familyMemberId
+    ? await d1Tools.getFamilyMember(familyMemberId)
     : null;
 
   const uniqueOutcomes = characteristic
@@ -157,7 +166,7 @@ async function loadContext(state: StoryStateType): Promise<Partial<StoryStateTyp
 }
 
 async function fetchResearch(state: StoryStateType): Promise<Partial<StoryStateType>> {
-  const research = await d1Tools.listTherapyResearch(state.goalId);
+  const research = await d1Tools.listTherapyResearch(state.goalId, state.characteristicId);
   const topPapers = research.slice(0, 10);
   const researchSummary = topPapers
     .map((paper, i) => {
@@ -169,14 +178,41 @@ async function fetchResearch(state: StoryStateType): Promise<Partial<StoryStateT
     })
     .join("\n\n");
 
-  return { researchSummary };
+  // Fetch notes for the characteristic if available
+  let notesSummary = "";
+  if (state.characteristicId && state.userEmail) {
+    const notes = await d1Tools.listNotesForEntity(state.characteristicId, "characteristic", state.userEmail);
+
+    // Prioritize deep research notes over regular notes
+    const priority: Record<string, number> = {
+      DEEP_RESEARCH_SYNTHESIS: 0,
+      DEEP_RESEARCH_MERGED: 1,
+      DEEP_RESEARCH_FINDING: 2,
+    };
+    const sorted = [...notes].sort((a, b) => {
+      const pa = priority[a.noteType ?? ""] ?? 3;
+      const pb = priority[b.noteType ?? ""] ?? 3;
+      return pa - pb;
+    });
+
+    const top5 = sorted.slice(0, 5);
+    notesSummary = top5
+      .map((note, i) => {
+        const text = note.content.length > 1500 ? note.content.slice(0, 1500) + "..." : note.content;
+        const label = note.title || `Note ${i + 1}`;
+        return `${i + 1}. ${label}\n   ${text}`;
+      })
+      .join("\n\n");
+  }
+
+  return { researchSummary, notesSummary };
 }
 
 async function generateStory(state: StoryStateType): Promise<Partial<StoryStateType>> {
-  const { goal, familyMember, characteristic, uniqueOutcomes, researchSummary, language, minutes } = state;
+  const { goal, familyMember, characteristic, uniqueOutcomes, researchSummary, notesSummary, language, minutes } = state;
 
-  if (!goal) {
-    throw new Error("Context not loaded — goal is null");
+  if (!goal && !characteristic) {
+    throw new Error("Context not loaded — need at least a goal or characteristic");
   }
 
   const personName = familyMember?.firstName ?? "you";
@@ -211,11 +247,24 @@ async function generateStory(state: StoryStateType): Promise<Partial<StoryStateT
     ? `This is for ${personName}${ageContext}.\nDevelopmental Tier: ${developmentalTier}`
     : "This is for the listener themselves (first-person, self-directed session).";
 
-  const prompt = `Create a therapeutic audio session for the following goal. Write the full script in ${language}, approximately ${minutes} minutes long when read aloud.
-
-## Goal
+  // Build topic section from goal or characteristic
+  let topicSection: string;
+  if (goal) {
+    topicSection = `## Goal
 Title: ${goal.title}
-Description: ${goal.description || "No additional description provided."}
+Description: ${goal.description || "No additional description provided."}`;
+  } else {
+    const char = characteristic!;
+    const label = char.externalizedName || char.title;
+    topicSection = `## Topic
+Title: ${label}
+Category: ${char.category}
+Description: ${char.description || "No additional description provided."}`;
+  }
+
+  const prompt = `Create a therapeutic audio session for the following ${goal ? "goal" : "topic"}. Write the full script in ${language}, approximately ${minutes} minutes long when read aloud.
+
+${topicSection}
 
 ## Person
 ${personLine}
@@ -225,10 +274,16 @@ ${characteristicsSection}
 The following research papers inform the therapeutic techniques to use:
 
 ${researchSummary || "No research papers available yet. Use general evidence-based therapeutic techniques."}
+${notesSummary ? `
+## Clinical Notes & Observations
+The following notes contain clinical observations, research findings, and insights specific to this person:
 
+${notesSummary}
+` : ""}
 ## Instructions
 - Create a complete, flowing therapeutic audio script
 - Incorporate specific techniques and findings from the research above
+- When clinical notes are available, weave their insights and observations into the session
 - Personalize for ${personName}${ageContext}${familyMember ? ` (developmental tier: ${developmentalTier})` : ""}
 - Target duration: ${minutes} minutes when read aloud at a calm pace
 - Write in ${language}
@@ -255,12 +310,13 @@ ${researchSummary || "No research papers available yet. Use general evidence-bas
 }
 
 async function saveStory(state: StoryStateType): Promise<Partial<StoryStateType>> {
-  const story = await d1Tools.createGoalStory(
-    state.goalId,
-    state.language,
-    state.minutes,
-    state.storyText,
-  );
+  const story = await d1Tools.createGoalStory({
+    goalId: state.goalId ?? null,
+    characteristicId: state.characteristicId ?? null,
+    language: state.language,
+    minutes: state.minutes,
+    text: state.storyText,
+  });
   return { storyId: story.id };
 }
 
@@ -285,7 +341,7 @@ const graph = new StateGraph(StoryState)
 // ---------------------------------------------------------------------------
 
 export interface RunStoryGraphInput {
-  goalId: number;
+  goalId?: number;
   characteristicId?: number;
   userEmail: string;
   language?: string;

@@ -21,6 +21,7 @@ pub mod eval;
 pub mod extract;
 pub mod validate;
 pub mod contracts;
+pub mod providers;
 
 // Re-export key types for convenience
 pub use error::{SddError, Result};
@@ -40,3 +41,4 @@ pub use eval::{GroundTruth, Finding, EvalConfig, EvalMetrics, CategoryMetrics, e
 pub use extract::{extract_json, extract_validated};
 pub use validate::{ValidationRule, ValidationResult, RuleResult, validate_spec, builtin_rules};
 pub use contracts::{Contract, CompatibilityMode, CompatibilityResult, check_compatibility, extract_requirements};
+pub use providers::{QwenLlmClient, DeepSeekLlmClient};

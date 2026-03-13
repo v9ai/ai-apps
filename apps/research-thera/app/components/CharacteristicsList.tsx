@@ -19,6 +19,7 @@ export interface Characteristic {
   category: CharacteristicCategory | string;
   title: string;
   description?: string | null;
+  tags?: string[] | null;
   riskTier?: string | null;
   createdAt: string;
 }
@@ -29,6 +30,7 @@ interface CharacteristicsListProps {
   deleting?: boolean;
   emptyMessage?: string;
   getHref?: (item: Characteristic) => string;
+  onTagClick?: (tag: string) => void;
 }
 
 const CATEGORY_COLORS: Record<string, "teal" | "blue" | "orange"> = {
@@ -43,6 +45,7 @@ export default function CharacteristicsList({
   deleting = false,
   emptyMessage = "None added yet",
   getHref,
+  onTagClick,
 }: CharacteristicsListProps) {
   if (items.length === 0) {
     return (
@@ -81,6 +84,30 @@ export default function CharacteristicsList({
               <Text size="1" color="gray">
                 {item.description}
               </Text>
+            )}
+            {item.tags && item.tags.length > 0 && (
+              <Flex gap="1" wrap="wrap">
+                {item.tags.map((tag) => (
+                  <Badge
+                    key={tag}
+                    color="violet"
+                    variant="outline"
+                    size="1"
+                    style={onTagClick ? { cursor: "pointer" } : undefined}
+                    onClick={
+                      onTagClick
+                        ? (e: React.MouseEvent) => {
+                            e.stopPropagation();
+                            e.preventDefault();
+                            onTagClick(tag);
+                          }
+                        : undefined
+                    }
+                  >
+                    {tag}
+                  </Badge>
+                ))}
+              </Flex>
             )}
           </Flex>
         );

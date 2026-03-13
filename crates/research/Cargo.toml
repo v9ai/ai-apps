@@ -78,3 +78,15 @@ path = "src/bin/calm_parent_research.rs"
 [[bin]]
 name = "todo-research"
 path = "src/bin/todo_research.rs"
+
+[[bin]]
+name = "todo-sdd"
+path = "src/bin/todo_sdd.rs"
+
+[[bin]]
+name = "eval-characteristic"
+path = "src/bin/eval_characteristic.rs"
+
+[[bin]]
+name = "characteristic-research"
+path = "src/bin/characteristic_research.rs"

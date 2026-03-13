@@ -378,3 +378,85 @@ fn test_research_enhanced_dod_prompt_section() {
     assert!(section.contains("[contract_compliance]"));
     assert!(section.contains("[ADVISORY]"));
 }
+
+// ── Model / Provider Tests ────────────────────────────────────────────────
+
+#[test]
+fn test_model_as_str() {
+    assert_eq!(Model::DeepSeek(DeepSeekModel::Reasoner).as_str(), "deepseek-reasoner");
+    assert_eq!(Model::DeepSeek(DeepSeekModel::Chat).as_str(), "deepseek-chat");
+    assert_eq!(Model::Qwen(QwenModel::QwqPlus).as_str(), "qwq-plus");
+    assert_eq!(Model::Qwen(QwenModel::Plus).as_str(), "qwen-plus");
+    assert_eq!(Model::Qwen(QwenModel::Max).as_str(), "qwen-max");
+    assert_eq!(Model::Qwen(QwenModel::Turbo).as_str(), "qwen-turbo");
+}
+
+#[test]
+fn test_model_provider() {
+    assert_eq!(Model::DeepSeek(DeepSeekModel::Chat).provider(), Provider::DeepSeek);
+    assert_eq!(Model::Qwen(QwenModel::Plus).provider(), Provider::Qwen);
+}
+
+#[test]
+fn test_model_is_reasoner() {
+    assert!(Model::DeepSeek(DeepSeekModel::Reasoner).is_reasoner());
+    assert!(Model::Qwen(QwenModel::QwqPlus).is_reasoner());
+    assert!(!Model::DeepSeek(DeepSeekModel::Chat).is_reasoner());
+    assert!(!Model::Qwen(QwenModel::Plus).is_reasoner());
+}
+
+#[test]
+fn test_model_reasoner_for() {
+    assert_eq!(Model::reasoner_for(Provider::DeepSeek), Model::DeepSeek(DeepSeekModel::Reasoner));
+    assert_eq!(Model::reasoner_for(Provider::Qwen), Model::Qwen(QwenModel::QwqPlus));
+}
+
+#[test]
+fn test_model_chat_for() {
+    assert_eq!(Model::chat_for(Provider::DeepSeek), Model::DeepSeek(DeepSeekModel::Chat));
+    assert_eq!(Model::chat_for(Provider::Qwen), Model::Qwen(QwenModel::Plus));
+}
+
+#[test]
+fn test_model_default() {
+    assert_eq!(Model::default(), Model::DeepSeek(DeepSeekModel::Chat));
+}
+
+#[test]
+fn test_model_from_deepseek() {
+    let m: Model = DeepSeekModel::Reasoner.into();
+    assert_eq!(m, Model::DeepSeek(DeepSeekModel::Reasoner));
+}
+
+#[test]
+fn test_model_from_qwen() {
+    let m: Model = QwenModel::Plus.into();
+    assert_eq!(m, Model::Qwen(QwenModel::Plus));
+}
+
+#[test]
+fn test_model_serde_deepseek_roundtrip() {
+    let m = Model::DeepSeek(DeepSeekModel::Reasoner);
+    let json = serde_json::to_string(&m).unwrap();
+    assert_eq!(json, r#""deepseek-reasoner""#);
+    let deserialized: Model = serde_json::from_str(&json).unwrap();
+    assert_eq!(deserialized, m);
+}
+
+#[test]
+fn test_model_serde_qwen_roundtrip() {
+    let m = Model::Qwen(QwenModel::Plus);
+    let json = serde_json::to_string(&m).unwrap();
+    assert_eq!(json, r#""qwen-plus""#);
+    let deserialized: Model = serde_json::from_str(&json).unwrap();
+    assert_eq!(deserialized, m);
+}
+
+#[test]
+fn test_qwen_model_serde() {
+    let m = QwenModel::QwqPlus;
+    let json = serde_json::to_string(&m).unwrap();
+    assert_eq!(json, r#""qwq-plus""#);
+    let deserialized: QwenModel = serde_json::from_str(&json).unwrap();
+    assert_eq!(deserialized, m);
+}

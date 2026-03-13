@@ -1,12 +1,13 @@
 mutation UpdateNote($id: Int!, $input: UpdateNoteInput!) {
   updateNote(id: $id, input: $input) {
     id
+    slug
+    title
     entityId
     entityType
     createdBy
     noteType
     content
-    createdBy
     tags
     createdAt
     updatedAt

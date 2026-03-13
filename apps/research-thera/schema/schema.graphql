@@ -70,7 +70,7 @@ type Mutation {
   generateTherapeuticQuestions(goalId: Int!): GenerateQuestionsResult!
   deleteTherapeuticQuestions(goalId: Int!): DeleteQuestionsResult!
   generateLongFormText(
-    goalId: Int!
+    goalId: Int
     characteristicId: Int
     language: String
     minutes: Int
@@ -228,7 +228,8 @@ type Story {
 
 type GoalStory {
   id: Int!
-  goalId: Int!
+  goalId: Int
+  characteristicId: Int
   language: String!
   minutes: Int!
   text: String!
@@ -898,12 +899,6 @@ enum ImpairmentDomain {
   SAFETY
 }
 
-enum FormulationStatus {
-  DRAFT
-  ASSESSED
-  FORMULATED
-}
-
 enum RiskTier {
   NONE
   WATCH
@@ -931,13 +926,14 @@ type FamilyMemberCharacteristic {
   durationWeeks: Int
   ageOfOnset: Int
   impairmentDomains: [ImpairmentDomain!]!
-  formulationStatus: FormulationStatus!
   externalizedName: String
   strengths: String
   riskTier: RiskTier!
+  tags: [String!]
   uniqueOutcomes: [UniqueOutcome!]!
   behaviorObservations: [BehaviorObservation!]!
   research: [Research!]!
+  stories: [GoalStory!]!
   createdAt: String!
   updatedAt: String!
   familyMember: FamilyMember
@@ -979,10 +975,10 @@ input CreateFamilyMemberCharacteristicInput {
   durationWeeks: Int
   ageOfOnset: Int
   impairmentDomains: [ImpairmentDomain!]
-  formulationStatus: FormulationStatus
   externalizedName: String
   strengths: String
   riskTier: RiskTier
+  tags: [String!]
 }
 
 input UpdateFamilyMemberCharacteristicInput {
@@ -994,10 +990,10 @@ input UpdateFamilyMemberCharacteristicInput {
   durationWeeks: Int
   ageOfOnset: Int
   impairmentDomains: [ImpairmentDomain!]
-  formulationStatus: FormulationStatus
   externalizedName: String
   strengths: String
   riskTier: RiskTier
+  tags: [String!]
 }
 
 type DeleteFamilyMemberCharacteristicResult {

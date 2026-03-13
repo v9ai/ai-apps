@@ -83,11 +83,48 @@ pub struct SddPipeline<C: LlmClient> {
     /// Optional spec validation rules. When set, the pipeline validates the
     /// spec artifact after the Spec phase completes, before Tasks begins.
     spec_validation_rules: Option<Vec<crate::validate::ValidationRule>>,
+    /// Model to use for reasoning-heavy phases (Explore, Spec, Design, Verify).
+    reasoner_model: Model,
+    /// Model to use for generation-heavy phases (Propose, Tasks, Apply, Archive).
+    chat_model: Model,
 }
 
 impl<C: LlmClient> SddPipeline<C> {
     pub fn new(client: C) -> Self {
-        Self { client, hooks: None, workflow_docs: None, verify_retries: 0, spec_validation_rules: None }
+        Self {
+            client,
+            hooks: None,
+            workflow_docs: None,
+            verify_retries: 0,
+            spec_validation_rules: None,
+            reasoner_model: Model::DeepSeek(DeepSeekModel::Reasoner),
+            chat_model: Model::DeepSeek(DeepSeekModel::Chat),
+        }
+    }
+
+    /// Create a pipeline with models defaulted for a given provider.
+    pub fn with_provider(client: C, provider: Provider) -> Self {
+        Self {
+            client,
+            hooks: None,
+            workflow_docs: None,
+            verify_retries: 0,
+            spec_validation_rules: None,
+            reasoner_model: Model::reasoner_for(provider),
+            chat_model: Model::chat_for(provider),
+        }
+    }
+
+    /// Override the reasoner model (Explore, Spec, Design, Verify).
+    pub fn with_reasoner_model(mut self, model: Model) -> Self {
+        self.reasoner_model = model;
+        self
+    }
+
+    /// Override the chat model (Propose, Tasks, Apply, Archive).
+    pub fn with_chat_model(mut self, model: Model) -> Self {
+        self.chat_model = model;
+        self
     }
 
     pub fn with_hooks(mut self, hooks: HookRegistry) -> Self {
@@ -145,9 +182,9 @@ impl<C: LlmClient> SddPipeline<C> {
         // Select model based on phase
         let model = match phase {
             SddPhase::Explore | SddPhase::Spec | SddPhase::Design | SddPhase::Verify => {
-                DeepSeekModel::Reasoner
+                &self.reasoner_model
             }
-            _ => DeepSeekModel::Chat,
+            _ => &self.chat_model,
         };
 
         let system_prompt = self.phase_system_prompt(phase);
@@ -175,7 +212,7 @@ impl<C: LlmClient> SddPipeline<C> {
         };
 
         let request = build_request(
-            &model,
+            model,
             vec![system_msg(&system_prompt), user_msg(&user_prompt)],
             None,
             &effort,

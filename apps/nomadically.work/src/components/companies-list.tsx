@@ -98,6 +98,7 @@ export function CompaniesList() {
       setAddName("");
       setAddWebsite("");
       setAddLinkedin("");
+      router.push(`/companies/${key}`);
     } catch (err) {
       setAddError(err instanceof Error ? err.message : "Failed to create company");
     }

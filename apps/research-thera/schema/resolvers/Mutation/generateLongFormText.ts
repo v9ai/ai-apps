@@ -8,23 +8,25 @@ export const generateLongFormText: NonNullable<MutationResolvers['generateLongFo
     throw new Error("Authentication required");
   }
 
-  const goalId = args.goalId;
+  const goalId = args.goalId ?? undefined;
+  const characteristicId = args.characteristicId ?? undefined;
+
+  if (!goalId && !characteristicId) {
+    throw new Error("At least one of goalId or characteristicId is required");
+  }
 
   // Verify the goal exists and belongs to the user
-  await d1Tools.getGoal(goalId, userEmail);
+  if (goalId) {
+    await d1Tools.getGoal(goalId, userEmail);
+  }
 
   // Safety gates: check characteristic if provided
-  if (args.characteristicId) {
-    const char = await d1Tools.getCharacteristic(args.characteristicId, userEmail);
+  if (characteristicId) {
+    const char = await d1Tools.getCharacteristic(characteristicId, userEmail);
     if (char) {
       if (char.riskTier === "SAFEGUARDING_ALERT") {
         throw new Error(
           "SAFEGUARDING_ALERT: Story generation blocked. A supervisor acknowledgment is required before proceeding.",
-        );
-      }
-      if (char.formulationStatus === "DRAFT") {
-        throw new Error(
-          "FORMULATION_INCOMPLETE: Complete the clinical assessment (severity, impairment domains, duration) before generating a story.",
         );
       }
     }
@@ -32,7 +34,7 @@ export const generateLongFormText: NonNullable<MutationResolvers['generateLongFo
 
   const { storyId, text } = await runStoryGraph({
     goalId,
-    characteristicId: args.characteristicId ?? undefined,
+    characteristicId,
     userEmail,
     language: args.language ?? undefined,
     minutes: args.minutes ?? undefined,

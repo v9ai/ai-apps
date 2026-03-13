@@ -9,8 +9,9 @@ import {
   TextField,
   TextArea,
   Select,
+  Badge,
 } from "@radix-ui/themes";
-import { PlusIcon } from "@radix-ui/react-icons";
+import { PlusIcon, Cross2Icon } from "@radix-ui/react-icons";
 import {
   useCreateFamilyMemberCharacteristicMutation,
   CharacteristicCategory,
@@ -28,6 +29,7 @@ const defaultForm = (category: CharacteristicCategory) => ({
   category,
   title: "",
   description: "",
+  tags: [] as string[],
 });
 
 export default function AddCharacteristicButton({
@@ -39,6 +41,7 @@ export default function AddCharacteristicButton({
 }: AddCharacteristicButtonProps) {
   const [open, setOpen] = useState(false);
   const [form, setForm] = useState(() => defaultForm(defaultCategory));
+  const [newTagInput, setNewTagInput] = useState("");
   const [error, setError] = useState<string | null>(null);
 
   const [createCharacteristic, { loading }] =
@@ -57,6 +60,7 @@ export default function AddCharacteristicButton({
 
   const resetForm = () => {
     setForm(defaultForm(defaultCategory));
+    setNewTagInput("");
     setError(null);
   };
 
@@ -77,6 +81,7 @@ export default function AddCharacteristicButton({
             category: form.category,
             title: form.title.trim(),
             description: form.description.trim() || undefined,
+            tags: form.tags.length > 0 ? form.tags : undefined,
           },
         },
       });
@@ -163,6 +168,49 @@ export default function AddCharacteristicButton({
                 disabled={loading}
               />
             </label>
+
+            <div>
+              <Text as="div" size="2" mb="1" weight="medium">
+                Tags
+              </Text>
+              {form.tags.length > 0 && (
+                <Flex gap="1" wrap="wrap" mb="2">
+                  {form.tags.map((tag) => (
+                    <Badge
+                      key={tag}
+                      color="violet"
+                      variant="outline"
+                      size="1"
+                      style={{ cursor: "pointer" }}
+                      onClick={() =>
+                        setForm((f) => ({
+                          ...f,
+                          tags: f.tags.filter((t) => t !== tag),
+                        }))
+                      }
+                    >
+                      {tag} <Cross2Icon width="10" height="10" />
+                    </Badge>
+                  ))}
+                </Flex>
+              )}
+              <TextField.Root
+                placeholder="Type a tag and press Enter or comma..."
+                value={newTagInput}
+                onChange={(e) => setNewTagInput(e.target.value)}
+                onKeyDown={(e) => {
+                  if (e.key === "Enter" || e.key === ",") {
+                    e.preventDefault();
+                    const tag = newTagInput.trim().replace(/,/g, "");
+                    if (tag && !form.tags.includes(tag)) {
+                      setForm((f) => ({ ...f, tags: [...f.tags, tag] }));
+                    }
+                    setNewTagInput("");
+                  }
+                }}
+                disabled={loading}
+              />
+            </div>
 
             {error && (
               <Text color="red" size="2">

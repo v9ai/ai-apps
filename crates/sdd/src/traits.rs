@@ -23,7 +23,7 @@ pub trait ChangeStore: Send + Sync {
 /// CLI implements with filesystem, tests implement with in-memory.
 #[async_trait]
 pub trait SessionRepository: Send + Sync {
-    async fn create(&self, agent_name: &str, model: &DeepSeekModel) -> Result<Session>;
+    async fn create(&self, agent_name: &str, model: &Model) -> Result<Session>;
     async fn load(&self, id: &str) -> Result<Option<Session>>;
     async fn update(&self, session: &Session) -> Result<()>;
     async fn fork(&self, parent_id: &str) -> Result<Option<Session>>;

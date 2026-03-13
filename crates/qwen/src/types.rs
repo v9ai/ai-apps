@@ -110,11 +110,20 @@ pub struct ChatChoice {
     pub finish_reason: Option<String>,
 }
 
+#[derive(Debug, Clone, Deserialize, Serialize)]
+pub struct ChatUsage {
+    pub prompt_tokens: u32,
+    pub completion_tokens: u32,
+    pub total_tokens: u32,
+}
+
 #[derive(Debug, Clone, Deserialize)]
 pub struct ChatResponse {
     pub id: String,
     pub model: String,
     pub choices: Vec<ChatChoice>,
+    #[serde(default)]
+    pub usage: Option<ChatUsage>,
 }
 
 impl ChatResponse {

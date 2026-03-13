@@ -597,7 +597,10 @@ export async function listTherapyResearch(goalId?: number, characteristicId?: nu
   let sql = `SELECT * FROM therapy_research WHERE `;
   const args: any[] = [];
 
-  if (characteristicId != null) {
+  if (characteristicId != null && goalId != null) {
+    sql += `(characteristic_id = ? OR goal_id = ?)`;
+    args.push(characteristicId, goalId);
+  } else if (characteristicId != null) {
     sql += `characteristic_id = ?`;
     args.push(characteristicId);
   } else if (goalId != null) {
@@ -1347,23 +1350,33 @@ export async function listTherapeuticQuestions(goalId: number) {
 // Goal Stories
 // ============================================
 
-export async function createGoalStory(
-  goalId: number,
-  language: string,
-  minutes: number,
-  text: string,
-) {
+export async function createGoalStory(params: {
+  goalId?: number | null;
+  characteristicId?: number | null;
+  language: string;
+  minutes: number;
+  text: string;
+}) {
+  if (params.goalId == null && params.characteristicId == null) {
+    throw new Error("At least one of goalId or characteristicId is required");
+  }
+
   const result = await d1.execute({
-    sql: `INSERT INTO goal_stories (goal_id, language, minutes, text)
-          VALUES (?, ?, ?, ?)
+    sql: `INSERT INTO goal_stories (goal_id, characteristic_id, language, minutes, text)
+          VALUES (?, ?, ?, ?, ?)
           RETURNING *`,
-    args: [goalId, language, minutes, text],
+    args: [params.goalId ?? null, params.characteristicId ?? null, params.language, params.minutes, params.text],
   });
 
   const row = result.rows[0];
+  return mapGoalStoryRow(row);
+}
+
+function mapGoalStoryRow(row: Record<string, unknown>) {
   return {
     id: row.id as number,
-    goalId: row.goal_id as number,
+    goalId: (row.goal_id as number) || null,
+    characteristicId: (row.characteristic_id as number) || null,
     language: row.language as string,
     minutes: row.minutes as number,
     text: row.text as string,
@@ -1385,19 +1398,7 @@ export async function getGoalStory(id: number) {
     throw new Error(`GoalStory ${id} not found`);
   }
 
-  const row = result.rows[0];
-  return {
-    id: row.id as number,
-    goalId: row.goal_id as number,
-    language: row.language as string,
-    minutes: row.minutes as number,
-    text: row.text as string,
-    audioKey: (row.audio_key as string) || null,
-    audioUrl: (row.audio_url as string) || null,
-    audioGeneratedAt: (row.audio_generated_at as string) || null,
-    createdAt: row.created_at as string,
-    updatedAt: row.updated_at as string,
-  };
+  return mapGoalStoryRow(result.rows[0]);
 }
 
 export async function updateGoalStoryAudio(
@@ -1413,9 +1414,11 @@ export async function updateGoalStoryAudio(
 }
 
 export async function deleteGoalStory(id: number, userEmail: string) {
-  // Fetch story (throws if not found), then verify its goal belongs to this user
+  // Fetch story (throws if not found), then verify ownership
   const story = await getGoalStory(id);
-  await getGoal(story.goalId, userEmail);
+  if (story.goalId) {
+    await getGoal(story.goalId, userEmail);
+  }
   await d1.execute({
     sql: `DELETE FROM goal_stories WHERE id = ?`,
     args: [id],
@@ -1428,18 +1431,16 @@ export async function listGoalStories(goalId: number) {
     args: [goalId],
   });
 
-  return result.rows.map((row) => ({
-    id: row.id as number,
-    goalId: row.goal_id as number,
-    language: row.language as string,
-    minutes: row.minutes as number,
-    text: row.text as string,
-    audioKey: (row.audio_key as string) || null,
-    audioUrl: (row.audio_url as string) || null,
-    audioGeneratedAt: (row.audio_generated_at as string) || null,
-    createdAt: row.created_at as string,
-    updatedAt: row.updated_at as string,
-  }));
+  return result.rows.map(mapGoalStoryRow);
+}
+
+export async function listGoalStoriesForCharacteristic(characteristicId: number) {
+  const result = await d1.execute({
+    sql: `SELECT * FROM goal_stories WHERE characteristic_id = ? ORDER BY created_at DESC`,
+    args: [characteristicId],
+  });
+
+  return result.rows.map(mapGoalStoryRow);
 }
 
 export async function getTextSegmentsForStory(storyId: number) {
@@ -1874,10 +1875,10 @@ function mapCharacteristicRow(row: Record<string, unknown>) {
     impairmentDomains: row.impairment_domains
       ? JSON.parse(row.impairment_domains as string)
       : [],
-    formulationStatus: (row.formulation_status as string) || "DRAFT",
     externalizedName: (row.externalized_name as string) || null,
     strengths: (row.strengths as string) || null,
     riskTier: (row.risk_tier as string) || "NONE",
+    tags: row.tags ? JSON.parse(row.tags as string) : [],
     createdAt: row.created_at as string,
     updatedAt: row.updated_at as string,
   };
@@ -1903,17 +1904,17 @@ export async function createCharacteristic(params: {
   durationWeeks?: number | null;
   ageOfOnset?: number | null;
   impairmentDomains?: string[] | null;
-  formulationStatus?: string | null;
   externalizedName?: string | null;
   strengths?: string | null;
   riskTier?: string | null;
+  tags?: string[] | null;
 }): Promise<number> {
   const safeFreq = sanitizeInt(params.frequencyPerWeek);
   const safeDuration = sanitizeInt(params.durationWeeks);
   const safeAge = sanitizeInt(params.ageOfOnset);
 
   const result = await d1.execute({
-    sql: `INSERT INTO family_member_characteristics (family_member_id, user_id, category, title, description, severity, frequency_per_week, duration_weeks, age_of_onset, impairment_domains, formulation_status, externalized_name, strengths, risk_tier, created_at, updated_at)
+    sql: `INSERT INTO family_member_characteristics (family_member_id, user_id, category, title, description, severity, frequency_per_week, duration_weeks, age_of_onset, impairment_domains, externalized_name, strengths, risk_tier, tags, created_at, updated_at)
           VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP)
           RETURNING id`,
     args: [
@@ -1927,10 +1928,10 @@ export async function createCharacteristic(params: {
       safeDuration,
       safeAge,
       params.impairmentDomains ? JSON.stringify(params.impairmentDomains) : null,
-      params.formulationStatus ?? "DRAFT",
       params.externalizedName ?? null,
       params.strengths ?? null,
       params.riskTier ?? "NONE",
+      params.tags ? JSON.stringify(params.tags) : null,
     ],
   });
   return result.rows[0].id as number;
@@ -1954,10 +1955,10 @@ export async function updateCharacteristic(
     durationWeeks?: number | null;
     ageOfOnset?: number | null;
     impairmentDomains?: string[] | null;
-    formulationStatus?: string | null;
     externalizedName?: string | null;
     strengths?: string | null;
     riskTier?: string | null;
+    tags?: string[] | null;
   },
 ) {
   const fields: string[] = [];
@@ -1999,10 +2000,6 @@ export async function updateCharacteristic(
         : null,
     );
   }
-  if (updates.formulationStatus !== undefined) {
-    fields.push("formulation_status = ?");
-    args.push(updates.formulationStatus);
-  }
   if (updates.externalizedName !== undefined) {
     fields.push("externalized_name = ?");
     args.push(updates.externalizedName);
@@ -2014,6 +2011,10 @@ export async function updateCharacteristic(
   if (updates.riskTier !== undefined) {
     fields.push("risk_tier = ?");
     args.push(updates.riskTier);
+  }
+  if (updates.tags !== undefined) {
+    fields.push("tags = ?");
+    args.push(updates.tags ? JSON.stringify(updates.tags) : null);
   }
 
   if (fields.length === 0) return;
@@ -2709,6 +2710,7 @@ export const d1Tools = {
   deleteGoalStory,
   updateGoalStoryAudio,
   listGoalStories,
+  listGoalStoriesForCharacteristic,
   getTextSegmentsForStory,
   getAudioAssetsForStory,
   // Journal Entries

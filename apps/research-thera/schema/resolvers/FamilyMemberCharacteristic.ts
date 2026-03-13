@@ -38,6 +38,9 @@ export const FamilyMemberCharacteristic: FamilyMemberCharacteristicResolvers = {
   research: async (parent, _args, _ctx) => {
     return d1Tools.listTherapyResearch(undefined, parent.id);
   },
+  stories: async (parent) => {
+    return d1Tools.listGoalStoriesForCharacteristic(parent.id) as any;
+  },
   impairmentDomains: (parent) => {
     if (Array.isArray((parent as any).impairmentDomains)) {
       return (parent as any).impairmentDomains;
@@ -45,6 +48,18 @@ export const FamilyMemberCharacteristic: FamilyMemberCharacteristicResolvers = {
     if (typeof (parent as any).impairmentDomains === "string") {
       try {
         return JSON.parse((parent as any).impairmentDomains);
+      } catch {
+        return [];
+      }
+    }
+    return [];
+  },
+  tags: (parent) => {
+    const raw = (parent as any).tags;
+    if (Array.isArray(raw)) return raw;
+    if (typeof raw === "string") {
+      try {
+        return JSON.parse(raw);
       } catch {
         return [];
       }

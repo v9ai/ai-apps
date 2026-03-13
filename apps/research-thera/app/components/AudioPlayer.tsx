@@ -17,7 +17,7 @@ import {
 interface AudioPlayerProps {
   storyId?: number;
   goalStoryId?: number;
-  goalId: number;
+  goalId?: number | null;
   storyContent: string;
   existingAudioUrl?: string | null;
   audioGeneratedAt?: string | null;
@@ -73,8 +73,8 @@ export function AudioPlayer({
 
   // On mount: check for any active RUNNING job for this story (survives page refresh)
   const { data: runningJobsData } = useGetGenerationJobsQuery({
-    variables: { goalId, status: "RUNNING" },
-    skip: Boolean(existingAudioUrl) || Boolean(pollingJobId),
+    variables: { goalId: goalId ?? undefined, status: "RUNNING" },
+    skip: !goalId || Boolean(existingAudioUrl) || Boolean(pollingJobId),
     fetchPolicy: "network-only",
   });
 

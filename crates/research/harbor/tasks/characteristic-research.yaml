@@ -1,0 +1,9 @@
+name: characteristic-research
+description: Multi-agent characteristic-based therapeutic research
+entrypoint: cargo run --bin characteristic-research
+output_dir: research-output/characteristics/
+graders:
+  - harbor/graders/citation_verifier.py
+  - harbor/graders/characteristic_synthesis.py
+  - harbor/graders/research_grounding.py
+  - harbor/graders/characteristic_efficiency.py

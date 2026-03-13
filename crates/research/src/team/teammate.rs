@@ -4,7 +4,7 @@ use anyhow::{Context, Result};
 use tokio::sync::Semaphore;
 use tracing::info;
 
-use crate::agent::agent_builder;
+use crate::agent::{provider_agent_builder, LlmProvider};
 use crate::code::CodeAnalysisConfig;
 use crate::code::tools::{AnalyzeStructure, FindAntiPatterns, SearchPattern};
 use crate::tools::{FallbackClients, GetPaperDetail, GetRecommendations, SearchPapers, SearchToolConfig};
@@ -18,8 +18,7 @@ pub(crate) const MAX_CONTEXT_CHARS: usize = 400_000;
 
 /// Configuration passed to each teammate.
 pub struct TeammateConfig {
-    pub api_key: String,
-    pub base_url: String,
+    pub provider: LlmProvider,
     pub scholar_key: Option<String>,
     /// When `Some`, code analysis tools are attached to the agent.
     pub code_analysis: Option<CodeAnalysisConfig>,
@@ -133,12 +132,11 @@ impl Teammate {
                 None => GetPaperDetail::with_config(scholar.clone(), tool_config.clone()),
             };
 
-            let mut builder = agent_builder(&self.config.api_key, "deepseek-chat")
+            let mut builder = provider_agent_builder(&self.config.provider)
                 .preamble(&task.preamble)
                 .tool(search_tool)
                 .tool(detail_tool)
                 .tool(GetRecommendations::with_config(scholar, tool_config))
-                .base_url(&self.config.base_url)
                 .worker_id(&self.worker_id);
 
             if let Some(code_cfg) = &self.config.code_analysis {
