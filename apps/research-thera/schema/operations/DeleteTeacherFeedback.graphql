@@ -1,0 +1,6 @@
+mutation DeleteTeacherFeedback($id: Int!) {
+  deleteTeacherFeedback(id: $id) {
+    success
+    message
+  }
+}

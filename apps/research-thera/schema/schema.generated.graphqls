@@ -253,6 +253,16 @@ input CreateSubGoalInput {
   title: String!
 }
 
+input CreateTeacherFeedbackInput {
+  content: String!
+  familyMemberId: Int!
+  feedbackDate: String!
+  source: FeedbackSource
+  subject: String
+  tags: [String!]
+  teacherName: String!
+}
+
 input CreateUniqueOutcomeInput {
   characteristicId: Int!
   description: String!
@@ -321,6 +331,11 @@ type DeleteStoryResult {
   success: Boolean!
 }
 
+type DeleteTeacherFeedbackResult {
+  message: String
+  success: Boolean!
+}
+
 type DeleteUniqueOutcomeResult {
   message: String
   success: Boolean!
@@ -372,6 +387,7 @@ type FamilyMember {
   phone: String
   relationship: String
   shares: [FamilyMemberShare!]!
+  teacherFeedbacks: [TeacherFeedback!]!
   updatedAt: String!
   userId: String!
 }
@@ -411,6 +427,15 @@ type FamilyMemberShare {
 enum FamilyMemberShareRole {
   EDITOR
   VIEWER
+}
+
+enum FeedbackSource {
+  EMAIL
+  MEETING
+  NOTE
+  OTHER
+  PHONE
+  REPORT
 }
 
 enum FormulationStatus {
@@ -597,6 +622,7 @@ type Mutation {
   createRelationship(input: CreateRelationshipInput!): Relationship!
   createStory(input: CreateStoryInput!): Story!
   createSubGoal(goalId: Int!, input: CreateSubGoalInput!): Goal!
+  createTeacherFeedback(input: CreateTeacherFeedbackInput!): TeacherFeedback!
   createUniqueOutcome(input: CreateUniqueOutcomeInput!): UniqueOutcome!
   deleteBehaviorObservation(id: Int!): DeleteBehaviorObservationResult!
   deleteClaimCard(id: ID!): Boolean!
@@ -610,6 +636,7 @@ type Mutation {
   deleteRelationship(id: Int!): DeleteRelationshipResult!
   deleteResearch(goalId: Int!): DeleteResearchResult!
   deleteStory(id: Int!): DeleteStoryResult!
+  deleteTeacherFeedback(id: Int!): DeleteTeacherFeedbackResult!
   deleteTherapeuticQuestions(goalId: Int!): DeleteQuestionsResult!
   deleteUniqueOutcome(id: Int!): DeleteUniqueOutcomeResult!
   generateAudio(goalId: Int!, language: String, storyId: Int, text: String, voice: String): GenerateAudioResult!
@@ -617,6 +644,7 @@ type Mutation {
   generateOpenAIAudio(input: GenerateOpenAIAudioInput!): GenerateOpenAIAudioResult!
   generateResearch(characteristicId: Int, goalId: Int!): GenerateResearchResult!
   generateTherapeuticQuestions(goalId: Int!): GenerateQuestionsResult!
+  markTeacherFeedbackExtracted(id: Int!): TeacherFeedback!
   refreshClaimCard(id: ID!): ClaimCard!
   setNoteVisibility(noteId: Int!, visibility: NoteVisibility!): Note!
   shareFamilyMember(email: String!, familyMemberId: Int!, role: FamilyMemberShareRole): FamilyMemberShare!
@@ -633,6 +661,7 @@ type Mutation {
   updateNote(id: Int!, input: UpdateNoteInput!): Note!
   updateRelationship(id: Int!, input: UpdateRelationshipInput!): Relationship!
   updateStory(id: Int!, input: UpdateStoryInput!): Story!
+  updateTeacherFeedback(id: Int!, input: UpdateTeacherFeedbackInput!): TeacherFeedback!
   updateUniqueOutcome(id: Int!, input: UpdateUniqueOutcomeInput!): UniqueOutcome!
   updateUserSettings(storyLanguage: String!, storyMinutes: Int): UserSettings!
 }
@@ -765,6 +794,8 @@ type Query {
   research(characteristicId: Int, goalId: Int): [Research!]!
   stories(goalId: Int!): [Story!]!
   story(id: Int!): Story
+  teacherFeedback(id: Int!): TeacherFeedback
+  teacherFeedbacks(familyMemberId: Int!): [TeacherFeedback!]!
   therapeuticQuestions(goalId: Int!): [TherapeuticQuestion!]!
   userSettings: UserSettings!
 }
@@ -861,6 +892,22 @@ type Story {
 type Subscription {
   audioJobStatus(jobId: String!): GenerationJob!
   researchJobStatus(jobId: String!): GenerationJob!
+}
+
+type TeacherFeedback {
+  content: String!
+  createdAt: String!
+  createdBy: String!
+  extracted: Boolean!
+  familyMember: FamilyMember
+  familyMemberId: Int!
+  feedbackDate: String!
+  id: Int!
+  source: FeedbackSource
+  subject: String
+  tags: [String!]
+  teacherName: String!
+  updatedAt: String!
 }
 
 type TextSegment {
@@ -977,6 +1024,15 @@ input UpdateRelationshipInput {
 
 input UpdateStoryInput {
   content: String
+}
+
+input UpdateTeacherFeedbackInput {
+  content: String
+  feedbackDate: String
+  source: FeedbackSource
+  subject: String
+  tags: [String!]
+  teacherName: String
 }
 
 input UpdateUniqueOutcomeInput {

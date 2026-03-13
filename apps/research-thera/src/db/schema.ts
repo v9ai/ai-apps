@@ -324,6 +324,25 @@ export const uniqueOutcomes = sqliteTable("unique_outcomes", {
     .default(sql`CURRENT_TIMESTAMP`),
 });
 
+export const teacherFeedbacks = sqliteTable("teacher_feedbacks", {
+  id: integer("id").primaryKey({ autoIncrement: true }),
+  familyMemberId: integer("family_member_id").notNull(),
+  userId: text("user_id").notNull(),
+  teacherName: text("teacher_name").notNull(),
+  subject: text("subject"),
+  feedbackDate: text("feedback_date").notNull(),
+  content: text("content").notNull(),
+  tags: text("tags"), // JSON array
+  source: text("source"), // e.g. "email", "meeting", "report", "phone"
+  extracted: integer("extracted").notNull().default(0), // 0 = not extracted, 1 = extracted into characteristics
+  createdAt: text("created_at")
+    .notNull()
+    .default(sql`CURRENT_TIMESTAMP`),
+  updatedAt: text("updated_at")
+    .notNull()
+    .default(sql`CURRENT_TIMESTAMP`),
+});
+
 export const contacts = sqliteTable("contacts", {
   id: integer("id").primaryKey({ autoIncrement: true }),
   userId: text("user_id").notNull(),
