@@ -103,7 +103,6 @@ export default function AdminOpportunitiesPage() {
   }
 
   async function handleDelete(id: string) {
-    if (!confirm("Delete this opportunity?")) return;
     await deleteOpportunity({ variables: { id } });
     refetch();
   }

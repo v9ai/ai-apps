@@ -2,7 +2,7 @@ import { getDeepseekClient, getDeepseekReasoner, getQwenClient } from "./provide
 import { AttackerOutputSchema, DefenderOutputSchema, JudgeOutputSchema, CitationVerifierOutputSchema, JurisdictionExpertOutputSchema, BriefRewriterOutputSchema } from "./schemas";
 import { buildAttackerPrompt, buildDefenderPrompt, buildJudgePrompt, buildCitationVerifierPrompt, buildJurisdictionExpertPrompt, buildBriefRewriterPrompt } from "./prompts";
 import type { AttackerOutput, BriefRewriterOutput, CitationVerifierOutput, DefenderOutput, JudgeOutput, JurisdictionExpertOutput, RoundContext } from "./types";
-import type { DeepSeekClient } from "@repo/deepseek";
+import type { DeepSeekClient } from "@ai-apps/deepseek";
 
 async function generateObject<T>(
   client: DeepSeekClient,

@@ -73,7 +73,6 @@ export function OpportunitiesClient() {
   const totalPages = Math.ceil(totalCount / PAGE_SIZE);
 
   async function handleDelete(id: string) {
-    if (!confirm("Delete this opportunity?")) return;
     await deleteOpportunity({ variables: { id } });
     refetch();
   }

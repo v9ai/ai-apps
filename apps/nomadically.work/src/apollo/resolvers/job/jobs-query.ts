@@ -1,4 +1,4 @@
-import { jobs, jobSkillTags, companies } from "@/db/schema";
+import { jobs, jobSkillTags } from "@/db/schema";
 import {
   eq,
   and,
@@ -35,9 +35,11 @@ export async function jobsQuery(
       AS REAL) > LENGTH(${jobs.company_key}) * 0.6
     )`;
     const conditions = [ne(jobs.status, "reported"), spamKeyFilter];
-    const hasFilters = !!(args.search || args.sourceType || (args.sourceTypes && args.sourceTypes.length > 0) || args.remoteEuConfidence || (args.skills && args.skills.length > 0) || (args.excludedCompanies && args.excludedCompanies.length > 0));
+    const hasFilters = !!(args.search || args.companyKey || args.sourceType || (args.sourceTypes && args.sourceTypes.length > 0) || args.remoteEuConfidence || (args.skills && args.skills.length > 0) || (args.excludedCompanies && args.excludedCompanies.length > 0));
 
-    if (args.search) {
+    if (args.companyKey) {
+      conditions.push(eq(jobs.company_key, args.companyKey));
+    } else if (args.search) {
       const searchPattern = `%${args.search}%`;
       conditions.push(
         or(
@@ -88,15 +90,6 @@ export async function jobsQuery(
             .groupBy(jobSkillTags.job_id),
         ),
       );
-    }
-
-    // Exclude jobs from system-hidden companies (only when hidden companies exist)
-    const hiddenKeys = await context.db
-      .select({ key: companies.key })
-      .from(companies)
-      .where(eq(companies.is_hidden, true));
-    if (hiddenKeys.length > 0) {
-      conditions.push(notInArray(jobs.company_key, hiddenKeys.map((r) => r.key)));
     }
 
     // Exclude companies at SQL level

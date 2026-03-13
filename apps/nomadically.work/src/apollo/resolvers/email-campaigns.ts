@@ -17,6 +17,7 @@ import {
   EmailConfig,
 } from "@/lib/email";
 import { generateReplyContent } from "@/lib/email/reply-generation";
+import { ResendSyncService } from "@/lib/resend/sync-service";
 
 function parseJsonArray(val: string | null | undefined): string[] {
   if (!val) return [];
@@ -980,6 +981,46 @@ Do not include any text before or after the JSON.`;
         cancelledCount,
         failedCount,
       };
+    },
+
+    async importResendEmails(
+      _parent: unknown,
+      args: { maxEmails?: number },
+      context: GraphQLContext,
+    ) {
+      if (!context.userId || !isAdminEmail(context.userEmail)) {
+        throw new Error("Forbidden");
+      }
+
+      try {
+        const service = new ResendSyncService();
+        const result = await service.syncAll({ maxEmails: args.maxEmails ?? 10000 });
+        return {
+          success: true,
+          totalFetched: result.totalFetched,
+          newCount: result.newCount,
+          updatedCount: result.updatedCount,
+          skippedCount: result.skippedCount,
+          errorCount: result.errorCount,
+          contactMatchCount: result.contactMatchCount,
+          companyMatchCount: result.companyMatchCount,
+          durationMs: result.duration,
+          error: null,
+        };
+      } catch (err) {
+        return {
+          success: false,
+          totalFetched: 0,
+          newCount: 0,
+          updatedCount: 0,
+          skippedCount: 0,
+          errorCount: 0,
+          contactMatchCount: 0,
+          companyMatchCount: 0,
+          durationMs: 0,
+          error: err instanceof Error ? err.message : String(err),
+        };
+      }
     },
 
     async generateReply(

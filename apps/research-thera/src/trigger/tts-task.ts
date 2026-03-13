@@ -105,6 +105,32 @@ function mergeAudioChunks(buffers: Buffer[], format: string): Buffer {
 }
 
 // ---------------------------------------------------------------------------
+// Markdown stripper — removes formatting that breaks TTS delivery
+// ---------------------------------------------------------------------------
+
+function stripMarkdown(text: string): string {
+  return text
+    // Remove bold/italic: **text** → text, *text* → text, __text__ → text, _text_ → text
+    .replace(/\*\*(.+?)\*\*/gs, "$1")
+    .replace(/\*(.+?)\*/gs, "$1")
+    .replace(/__(.+?)__/gs, "$1")
+    .replace(/_(.+?)_/gs, "$1")
+    // Remove ATX headings: ## Heading → Heading
+    .replace(/^#{1,6}\s+/gm, "")
+    // Remove leading bullet/numbered list markers
+    .replace(/^\s*[-*+]\s+/gm, "")
+    .replace(/^\s*\d+\.\s+/gm, "")
+    // Collapse triple+ blank lines to double
+    .replace(/\n{3,}/g, "\n\n")
+    .trim();
+}
+
+// Default TTS speaking instructions for therapeutic content
+const DEFAULT_TTS_INSTRUCTIONS =
+  "Speak in a calm, warm, and gentle therapeutic voice. Pace yourself slowly and deliberately. " +
+  "Pause naturally at sentence boundaries and after pause cues. Use a soothing, reassuring tone throughout.";
+
+// ---------------------------------------------------------------------------
 // Text chunking
 // ---------------------------------------------------------------------------
 
@@ -253,11 +279,16 @@ export const ttsTask = task({
       model = "gpt-4o-mini-tts",
       responseFormat = "mp3",
       speed = 0.9,
-      instructions,
       userEmail,
     } = payload;
 
-    const chunks = chunkText(text);
+    // Strip any markdown formatting before chunking — ensures clean spoken output
+    const cleanText = stripMarkdown(text);
+
+    // Use caller-supplied instructions or fall back to default therapeutic voice guidance
+    const instructions = payload.instructions || DEFAULT_TTS_INSTRUCTIONS;
+
+    const chunks = chunkText(cleanText);
     const batchId = jobId ?? `tts-${Date.now()}`;
 
     logger.info("tts.started", {
@@ -309,7 +340,7 @@ export const ttsTask = task({
       metadata: {
         voice,
         model,
-        textLength: String(text.length),
+        textLength: String(cleanText.length),
         chunks: String(chunks.length),
         ...(instructions && { instructions }),
       },

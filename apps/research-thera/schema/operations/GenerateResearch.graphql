@@ -1,5 +1,5 @@
-mutation GenerateResearch($goalId: Int!) {
-  generateResearch(goalId: $goalId) {
+mutation GenerateResearch($goalId: Int!, $characteristicId: Int) {
+  generateResearch(goalId: $goalId, characteristicId: $characteristicId) {
     success
     message
     jobId

@@ -18,6 +18,7 @@ import {
   Button,
   Select,
   IconButton,
+  TextArea,
 } from "@radix-ui/themes";
 import { GlassButton } from "@/app/components/GlassButton";
 import { Breadcrumbs } from "@/app/components/Breadcrumbs";
@@ -39,7 +40,9 @@ import {
   useGenerateResearchMutation,
   useGenerateLongFormTextMutation,
   useDeleteResearchMutation,
+  useDeleteGoalStoryMutation,
   useUpdateGoalMutation,
+  useUnlinkGoalFamilyMemberMutation,
   useGetFamilyMembersQuery,
   useGetGenerationJobQuery,
   useGetUserSettingsQuery,
@@ -89,6 +92,10 @@ function GoalPageContent() {
 
   const goal = data?.goal;
 
+  // Description editing state
+  const [editingDescription, setEditingDescription] = useState(false);
+  const [editedDescription, setEditedDescription] = useState("");
+
   // Family member editing state
   const [editingFamilyMember, setEditingFamilyMember] = useState(false);
   const [selectedFamilyMemberId, setSelectedFamilyMemberId] = useState<string>("");
@@ -101,6 +108,10 @@ function GoalPageContent() {
       setEditingFamilyMember(false);
       setSelectedFamilyMemberId("");
     },
+    refetchQueries: ["GetGoal"],
+  });
+
+  const [unlinkGoalFamilyMember, { loading: unlinkingFamilyMember }] = useUnlinkGoalFamilyMemberMutation({
     refetchQueries: ["GetGoal"],
   });
 
@@ -117,6 +128,27 @@ function GoalPageContent() {
   const handleFamilyMemberEditStart = () => {
     setSelectedFamilyMemberId(goal?.familyMemberId ? String(goal.familyMemberId) : "");
     setEditingFamilyMember(true);
+  };
+
+  const handleDescriptionEditStart = () => {
+    setEditedDescription(goal?.description ?? "");
+    setEditingDescription(true);
+  };
+
+  const handleDescriptionSave = async () => {
+    if (!goal) return;
+    await updateGoal({
+      variables: {
+        id: goal.id,
+        input: { description: editedDescription || null },
+      },
+    });
+    setEditingDescription(false);
+  };
+
+  const handleDescriptionCancel = () => {
+    setEditingDescription(false);
+    setEditedDescription("");
   };
 
   const [deleteGoal, { loading: deleting }] = useDeleteGoalMutation({
@@ -262,12 +294,20 @@ function GoalPageContent() {
   const isStoryJobRunning =
     !!storyJobId && storyJobStatus !== "SUCCEEDED" && storyJobStatus !== "FAILED";
 
+  const [deleteGoalStory] = useDeleteGoalStoryMutation({
+    refetchQueries: ["GetGoal"],
+  });
+
   const [generateStory, { loading: generatingStory }] =
     useGenerateLongFormTextMutation({
       onCompleted: (data) => {
         if (data.generateLongFormText.success) {
           setStoryMessage(null);
-          if (data.generateLongFormText.jobId) {
+          if (data.generateLongFormText.storyId) {
+            // Synchronous (LangGraph local): story already saved, refresh list
+            apolloClient.refetchQueries({ include: ["GetGoal"] });
+          } else if (data.generateLongFormText.jobId) {
+            // Async (Trigger.dev cloud): start polling
             setStoryJobId(data.generateLongFormText.jobId);
           }
         } else {
@@ -466,6 +506,20 @@ function GoalPageContent() {
                   >
                     <Pencil2Icon />
                   </IconButton>
+                  {goal.familyMember && (
+                    <IconButton
+                      size="1"
+                      variant="ghost"
+                      color="red"
+                      disabled={unlinkingFamilyMember}
+                      onClick={async () => {
+                        await unlinkGoalFamilyMember({ variables: { id: goal.id } });
+                      }}
+                      title="Unlink family member"
+                    >
+                      <Cross2Icon />
+                    </IconButton>
+                  )}
                 </Flex>
               )}
             </Flex>
@@ -524,10 +578,60 @@ function GoalPageContent() {
             </Flex>
           </Flex>
 
-          {goal.description && (
-            <Text size="3" style={{ whiteSpace: "pre-wrap" }}>
-              {goal.description}
-            </Text>
+          {editingDescription ? (
+            <Flex direction="column" gap="2">
+              <TextArea
+                size="2"
+                value={editedDescription}
+                onChange={(e) => setEditedDescription(e.target.value)}
+                placeholder="Add a description..."
+                style={{ minHeight: 80 }}
+              />
+              <Flex gap="2">
+                <IconButton
+                  size="1"
+                  variant="soft"
+                  color="green"
+                  onClick={handleDescriptionSave}
+                >
+                  <CheckIcon />
+                </IconButton>
+                <IconButton
+                  size="1"
+                  variant="soft"
+                  color="gray"
+                  onClick={handleDescriptionCancel}
+                >
+                  <Cross2Icon />
+                </IconButton>
+              </Flex>
+            </Flex>
+          ) : (
+            <Flex
+              gap="2"
+              align="start"
+              style={{ cursor: "pointer" }}
+              onClick={handleDescriptionEditStart}
+            >
+              <Text
+                size="3"
+                style={{ whiteSpace: "pre-wrap" }}
+                color={goal.description ? undefined : "gray"}
+              >
+                {goal.description || "Add a description..."}
+              </Text>
+              <IconButton
+                size="1"
+                variant="ghost"
+                color="gray"
+                onClick={(e) => {
+                  e.stopPropagation();
+                  handleDescriptionEditStart();
+                }}
+              >
+                <Pencil2Icon />
+              </IconButton>
+            </Flex>
           )}
 
           <Flex gap="4" wrap="wrap">
@@ -844,15 +948,7 @@ function GoalPageContent() {
           {goal.stories && goal.stories.length > 0 ? (
             <Flex direction="column" gap="3">
               {goal.stories.map((story) => (
-                <Card
-                  key={story.id}
-                  style={{ backgroundColor: "var(--gray-2)" }}
-                  asChild
-                >
-                  <NextLink
-                    href={`/stories/goal-story/${story.id}`}
-                    style={{ textDecoration: "none", cursor: "pointer" }}
-                  >
+                <Card key={story.id} style={{ backgroundColor: "var(--gray-2)" }}>
                   <Flex direction="column" gap="2" p="3">
                     <Flex justify="between" align="center">
                       <Flex align="center" gap="2">
@@ -863,25 +959,59 @@ function GoalPageContent() {
                           {story.minutes} min
                         </Badge>
                       </Flex>
-                      <Text size="1" color="gray">
-                        {new Date(story.createdAt).toLocaleDateString()}
-                      </Text>
+                      <Flex align="center" gap="2">
+                        <Text size="1" color="gray">
+                          {new Date(story.createdAt).toLocaleDateString()}
+                        </Text>
+                        <AlertDialog.Root>
+                          <AlertDialog.Trigger>
+                            <IconButton size="1" variant="ghost" color="red">
+                              <TrashIcon />
+                            </IconButton>
+                          </AlertDialog.Trigger>
+                          <AlertDialog.Content style={{ maxWidth: 400 }}>
+                            <AlertDialog.Title>Delete Story</AlertDialog.Title>
+                            <AlertDialog.Description size="2">
+                              Are you sure you want to delete this generated story? This cannot be undone.
+                            </AlertDialog.Description>
+                            <Flex gap="3" mt="4" justify="end">
+                              <AlertDialog.Cancel>
+                                <Button variant="soft" color="gray">Cancel</Button>
+                              </AlertDialog.Cancel>
+                              <AlertDialog.Action>
+                                <Button
+                                  variant="solid"
+                                  color="red"
+                                  onClick={() => deleteGoalStory({ variables: { id: story.id } })}
+                                >
+                                  Delete
+                                </Button>
+                              </AlertDialog.Action>
+                            </Flex>
+                          </AlertDialog.Content>
+                        </AlertDialog.Root>
+                      </Flex>
                     </Flex>
-                    <Text
-                      size="2"
-                      style={{
-                        whiteSpace: "pre-wrap",
-                        overflow: "hidden",
-                        textOverflow: "ellipsis",
-                        display: "-webkit-box",
-                        WebkitLineClamp: 6,
-                        WebkitBoxOrient: "vertical",
-                      }}
+                    <NextLink
+                      href={`/stories/goal-story/${story.id}`}
+                      style={{ textDecoration: "none" }}
                     >
-                      {story.text}
-                    </Text>
+                      <Text
+                        size="2"
+                        style={{
+                          whiteSpace: "pre-wrap",
+                          overflow: "hidden",
+                          textOverflow: "ellipsis",
+                          display: "-webkit-box",
+                          WebkitLineClamp: 6,
+                          WebkitBoxOrient: "vertical",
+                          cursor: "pointer",
+                        }}
+                      >
+                        {story.text}
+                      </Text>
+                    </NextLink>
                   </Flex>
-                  </NextLink>
                 </Card>
               ))}
             </Flex>

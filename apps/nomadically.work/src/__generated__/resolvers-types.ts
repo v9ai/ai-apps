@@ -260,7 +260,6 @@ export type Company = {
   id: Scalars['Int']['output'];
   industries: Array<Scalars['String']['output']>;
   industry: Maybe<Scalars['String']['output']>;
-  is_hidden: Scalars['Boolean']['output'];
   job_board_url: Maybe<Scalars['String']['output']>;
   key: Scalars['String']['output'];
   last_seen_capture_timestamp: Maybe<Scalars['String']['output']>;
@@ -357,7 +356,6 @@ export type CompanyFactInput = {
 export type CompanyFilterInput = {
   category_in?: InputMaybe<Array<CompanyCategory>>;
   has_ats_boards?: InputMaybe<Scalars['Boolean']['input']>;
-  is_hidden?: InputMaybe<Scalars['Boolean']['input']>;
   min_ai_tier?: InputMaybe<Scalars['Int']['input']>;
   min_score?: InputMaybe<Scalars['Float']['input']>;
   service_taxonomy_any?: InputMaybe<Array<Scalars['String']['input']>>;
@@ -981,6 +979,20 @@ export type ImportContactsResult = {
   success: Scalars['Boolean']['output'];
 };
 
+export type ImportResendResult = {
+  __typename?: 'ImportResendResult';
+  companyMatchCount: Scalars['Int']['output'];
+  contactMatchCount: Scalars['Int']['output'];
+  durationMs: Scalars['Int']['output'];
+  error: Maybe<Scalars['String']['output']>;
+  errorCount: Scalars['Int']['output'];
+  newCount: Scalars['Int']['output'];
+  skippedCount: Scalars['Int']['output'];
+  success: Scalars['Boolean']['output'];
+  totalFetched: Scalars['Int']['output'];
+  updatedCount: Scalars['Int']['output'];
+};
+
 export type Job = {
   __typename?: 'Job';
   absolute_url: Maybe<Scalars['String']['output']>;
@@ -1184,6 +1196,7 @@ export type Mutation = {
   importCompanies: ImportCompaniesResult;
   importCompanyWithContacts: ImportCompanyResult;
   importContacts: ImportContactsResult;
+  importResendEmails: ImportResendResult;
   ingestResumeParse: Maybe<ResumeIngestResult>;
   ingest_company_snapshot: CompanySnapshot;
   launchEmailCampaign: EmailCampaign;
@@ -1431,6 +1444,11 @@ export type MutationImportCompanyWithContactsArgs = {
 
 export type MutationImportContactsArgs = {
   contacts: Array<ContactInput>;
+};
+
+
+export type MutationImportResendEmailsArgs = {
+  maxEmails?: InputMaybe<Scalars['Int']['input']>;
 };
 
 
@@ -1919,6 +1937,7 @@ export type QueryJobArgs = {
 
 
 export type QueryJobsArgs = {
+  companyKey?: InputMaybe<Scalars['String']['input']>;
   excludedCompanies?: InputMaybe<Array<Scalars['String']['input']>>;
   limit?: InputMaybe<Scalars['Int']['input']>;
   offset?: InputMaybe<Scalars['Int']['input']>;
@@ -2273,7 +2292,6 @@ export type UpdateCompanyInput = {
   github_url?: InputMaybe<Scalars['String']['input']>;
   industries?: InputMaybe<Array<Scalars['String']['input']>>;
   industry?: InputMaybe<Scalars['String']['input']>;
-  is_hidden?: InputMaybe<Scalars['Boolean']['input']>;
   job_board_url?: InputMaybe<Scalars['String']['input']>;
   key?: InputMaybe<Scalars['String']['input']>;
   linkedin_url?: InputMaybe<Scalars['String']['input']>;
@@ -2575,6 +2593,7 @@ export type ResolversTypes = {
   ImportCompanyWithContactsInput: ResolverTypeWrapper<Partial<ImportCompanyWithContactsInput>>;
   ImportContactInput: ResolverTypeWrapper<Partial<ImportContactInput>>;
   ImportContactsResult: ResolverTypeWrapper<Partial<ImportContactsResult>>;
+  ImportResendResult: ResolverTypeWrapper<Partial<ImportResendResult>>;
   Int: ResolverTypeWrapper<Partial<Scalars['Int']['output']>>;
   JSON: ResolverTypeWrapper<Partial<Scalars['JSON']['output']>>;
   Job: ResolverTypeWrapper<Partial<Job>>;
@@ -2732,6 +2751,7 @@ export type ResolversParentTypes = {
   ImportCompanyWithContactsInput: Partial<ImportCompanyWithContactsInput>;
   ImportContactInput: Partial<ImportContactInput>;
   ImportContactsResult: Partial<ImportContactsResult>;
+  ImportResendResult: Partial<ImportResendResult>;
   Int: Partial<Scalars['Int']['output']>;
   JSON: Partial<Scalars['JSON']['output']>;
   Job: Partial<Job>;
@@ -2945,7 +2965,6 @@ export type CompanyResolvers<ContextType = GraphQLContext, ParentType extends Re
   id?: Resolver<ResolversTypes['Int'], ParentType, ContextType>;
   industries?: Resolver<Array<ResolversTypes['String']>, ParentType, ContextType>;
   industry?: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType>;
-  is_hidden?: Resolver<ResolversTypes['Boolean'], ParentType, ContextType>;
   job_board_url?: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType>;
   key?: Resolver<ResolversTypes['String'], ParentType, ContextType>;
   last_seen_capture_timestamp?: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType>;
@@ -3389,6 +3408,19 @@ export type ImportContactsResultResolvers<ContextType = GraphQLContext, ParentTy
   success?: Resolver<ResolversTypes['Boolean'], ParentType, ContextType>;
 };
 
+export type ImportResendResultResolvers<ContextType = GraphQLContext, ParentType extends ResolversParentTypes['ImportResendResult'] = ResolversParentTypes['ImportResendResult']> = {
+  companyMatchCount?: Resolver<ResolversTypes['Int'], ParentType, ContextType>;
+  contactMatchCount?: Resolver<ResolversTypes['Int'], ParentType, ContextType>;
+  durationMs?: Resolver<ResolversTypes['Int'], ParentType, ContextType>;
+  error?: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType>;
+  errorCount?: Resolver<ResolversTypes['Int'], ParentType, ContextType>;
+  newCount?: Resolver<ResolversTypes['Int'], ParentType, ContextType>;
+  skippedCount?: Resolver<ResolversTypes['Int'], ParentType, ContextType>;
+  success?: Resolver<ResolversTypes['Boolean'], ParentType, ContextType>;
+  totalFetched?: Resolver<ResolversTypes['Int'], ParentType, ContextType>;
+  updatedCount?: Resolver<ResolversTypes['Int'], ParentType, ContextType>;
+};
+
 export interface JsonScalarConfig extends GraphQLScalarTypeConfig<ResolversTypes['JSON'], any> {
   name: 'JSON';
 }
@@ -3547,6 +3579,7 @@ export type MutationResolvers<ContextType = GraphQLContext, ParentType extends R
   importCompanies?: Resolver<ResolversTypes['ImportCompaniesResult'], ParentType, ContextType, RequireFields<MutationImportCompaniesArgs, 'companies'>>;
   importCompanyWithContacts?: Resolver<ResolversTypes['ImportCompanyResult'], ParentType, ContextType, RequireFields<MutationImportCompanyWithContactsArgs, 'input'>>;
   importContacts?: Resolver<ResolversTypes['ImportContactsResult'], ParentType, ContextType, RequireFields<MutationImportContactsArgs, 'contacts'>>;
+  importResendEmails?: Resolver<ResolversTypes['ImportResendResult'], ParentType, ContextType, Partial<MutationImportResendEmailsArgs>>;
   ingestResumeParse?: Resolver<Maybe<ResolversTypes['ResumeIngestResult']>, ParentType, ContextType, RequireFields<MutationIngestResumeParseArgs, 'email' | 'filename' | 'job_id'>>;
   ingest_company_snapshot?: Resolver<ResolversTypes['CompanySnapshot'], ParentType, ContextType, RequireFields<MutationIngest_Company_SnapshotArgs, 'company_id' | 'evidence' | 'fetched_at' | 'source_url'>>;
   launchEmailCampaign?: Resolver<ResolversTypes['EmailCampaign'], ParentType, ContextType, RequireFields<MutationLaunchEmailCampaignArgs, 'id'>>;
@@ -3978,6 +4011,7 @@ export type Resolvers<ContextType = GraphQLContext> = {
   ImportCompaniesResult?: ImportCompaniesResultResolvers<ContextType>;
   ImportCompanyResult?: ImportCompanyResultResolvers<ContextType>;
   ImportContactsResult?: ImportContactsResultResolvers<ContextType>;
+  ImportResendResult?: ImportResendResultResolvers<ContextType>;
   JSON?: GraphQLScalarType;
   Job?: JobResolvers<ContextType>;
   JobSkill?: JobSkillResolvers<ContextType>;

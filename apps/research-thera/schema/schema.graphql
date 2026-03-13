@@ -1,7 +1,7 @@
 type Query {
   goals(familyMemberId: Int, status: String): [Goal!]!
   goal(id: Int, slug: String): Goal
-  research(goalId: Int!): [Research!]!
+  research(goalId: Int, characteristicId: Int): [Research!]!
   therapeuticQuestions(goalId: Int!): [TherapeuticQuestion!]!
   notes(entityId: Int!, entityType: String!): [Note!]!
   allNotes: [Note!]!
@@ -55,12 +55,13 @@ type Mutation {
   # Goals
   createGoal(input: CreateGoalInput!): Goal!
   updateGoal(id: Int!, input: UpdateGoalInput!): Goal!
+  unlinkGoalFamilyMember(id: Int!): Goal!
   deleteGoal(id: Int!): DeleteGoalResult!
 
   createSubGoal(goalId: Int!, input: CreateSubGoalInput!): Goal!
 
   # Async generation workflows
-  generateResearch(goalId: Int!): GenerateResearchResult!
+  generateResearch(goalId: Int!, characteristicId: Int): GenerateResearchResult!
   deleteResearch(goalId: Int!): DeleteResearchResult!
   generateTherapeuticQuestions(goalId: Int!): GenerateQuestionsResult!
   deleteTherapeuticQuestions(goalId: Int!): DeleteQuestionsResult!
@@ -90,6 +91,7 @@ type Mutation {
   createStory(input: CreateStoryInput!): Story!
   updateStory(id: Int!, input: UpdateStoryInput!): Story!
   deleteStory(id: Int!): DeleteStoryResult!
+  deleteGoalStory(id: Int!): DeleteGoalStoryResult!
 
   # Claim Cards
   buildClaimCards(input: BuildClaimCardsInput!): BuildClaimCardsResult!
@@ -178,7 +180,7 @@ type NoteAccess {
 
 type Goal {
   id: Int!
-  familyMemberId: Int!
+  familyMemberId: Int
   familyMember: FamilyMember
   createdBy: String!
   slug: String
@@ -241,6 +243,7 @@ type TextSegment {
 type Research {
   id: Int!
   goalId: Int!
+  characteristicId: Int
   therapeuticGoalType: String!
   title: String!
   authors: [String!]!
@@ -474,6 +477,11 @@ type DeleteNoteResult {
 }
 
 type DeleteStoryResult {
+  success: Boolean!
+  message: String
+}
+
+type DeleteGoalStoryResult {
   success: Boolean!
   message: String
 }
@@ -918,6 +926,7 @@ type FamilyMemberCharacteristic {
   riskTier: RiskTier!
   uniqueOutcomes: [UniqueOutcome!]!
   behaviorObservations: [BehaviorObservation!]!
+  research: [Research!]!
   createdAt: String!
   updatedAt: String!
   familyMember: FamilyMember

@@ -1,5 +1,5 @@
 {
-  "name": "@repo/deepseek",
+  "name": "@ai-apps/deepseek",
   "version": "0.1.0",
   "type": "module",
   "private": true,
@@ -29,12 +29,12 @@
     "test:integration": "jest --testPathPatterns=integration"
   },
   "jest": {
-    "preset": "@repo/jest-presets/node"
+    "preset": "@ai-apps/jest-presets/node"
   },
   "devDependencies": {
     "@jest/globals": "^30.2.0",
-    "@repo/jest-presets": "workspace:*",
-    "@repo/typescript-config": "workspace:*",
+    "@ai-apps/jest-presets": "workspace:*",
+    "@ai-apps/typescript-config": "workspace:*",
     "@types/node": "^22.15.3",
     "bunchee": "^6.4.0",
     "jest": "^30.2.0",

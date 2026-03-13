@@ -74,3 +74,7 @@ path = "src/bin/scalping_research.rs"
 [[bin]]
 name = "calm-parent-research"
 path = "src/bin/calm_parent_research.rs"
+
+[[bin]]
+name = "todo-research"
+path = "src/bin/todo_research.rs"

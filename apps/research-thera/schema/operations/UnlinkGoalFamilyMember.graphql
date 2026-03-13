@@ -1,0 +1,12 @@
+mutation UnlinkGoalFamilyMember($id: Int!) {
+  unlinkGoalFamilyMember(id: $id) {
+    id
+    familyMemberId
+    familyMember {
+      id
+      firstName
+      name
+      relationship
+    }
+  }
+}

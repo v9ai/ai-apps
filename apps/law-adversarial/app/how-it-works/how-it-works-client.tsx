@@ -22,8 +22,8 @@ import {
   ChevronDown,
   Shield,
 } from "lucide-react";
-import { HowItWorks } from "@repo/ui/how-it-works";
-import type { Paper, PipelineAgent, Stat } from "@repo/ui/how-it-works";
+import { HowItWorks } from "@ai-apps/ui/how-it-works";
+import type { Paper, PipelineAgent, Stat } from "@ai-apps/ui/how-it-works";
 import {
   getDemoSessions,
   getDemoFindings,

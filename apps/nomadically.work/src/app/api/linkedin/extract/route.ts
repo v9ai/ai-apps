@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { checkIsAdmin } from "@/lib/admin";
+import { extractOG } from "@ai-apps/og";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -8,40 +9,6 @@ const LINKEDIN_URL_RE =
   /^https?:\/\/(www\.)?linkedin\.com\/(posts|feed|pulse|in)\/.+/i;
 
 const EMAIL_RE = /[\w.+-]+@[\w-]+\.[\w.-]+/g;
-
-function extractOgTag(html: string, property: string): string | null {
-  const re = new RegExp(
-    `<meta[^>]+property=["']og:${property}["'][^>]+content=["']([^"']+)["']`,
-    "i",
-  );
-  const match = html.match(re);
-  if (match) return match[1];
-  // Try reversed attribute order (content before property)
-  const re2 = new RegExp(
-    `<meta[^>]+content=["']([^"']+)["'][^>]+property=["']og:${property}["']`,
-    "i",
-  );
-  return html.match(re2)?.[1] ?? null;
-}
-
-function extractProfileUrl(html: string): string | null {
-  const match = html.match(
-    /https?:\/\/(www\.)?linkedin\.com\/in\/[\w-]+/i,
-  );
-  return match?.[0] ?? null;
-}
-
-function decodeHtmlEntities(text: string): string {
-  return text
-    .replace(/&amp;/g, "&")
-    .replace(/&lt;/g, "<")
-    .replace(/&gt;/g, ">")
-    .replace(/&quot;/g, '"')
-    .replace(/&#39;/g, "'")
-    .replace(/&#x27;/g, "'")
-    .replace(/&#x2F;/g, "/")
-    .replace(/&nbsp;/g, " ");
-}
 
 export async function POST(request: NextRequest) {
   const { isAdmin } = await checkIsAdmin();
@@ -65,20 +32,14 @@ export async function POST(request: NextRequest) {
   }
 
   try {
-    const response = await fetch(url, {
-      headers: {
-        "User-Agent":
-          "Mozilla/5.0 (compatible; Googlebot/2.1; +http://www.google.com/bot.html)",
-        Accept: "text/html,application/xhtml+xml",
-        "Accept-Language": "en-US,en;q=0.9",
-      },
-      redirect: "follow",
-    });
+    const og = await extractOG(url);
 
-    const finalUrl = response.url;
+    const title = og.title ?? null;
+    const description = og.description ?? null;
+    const imageUrl = og.image ?? null;
 
-    // Detect auth wall redirect
-    if (finalUrl.includes("authwall") || finalUrl.includes("login")) {
+    // Detect auth wall via missing content
+    if (!title && !description) {
       return NextResponse.json({
         authorName: null,
         authorHeadline: null,
@@ -91,16 +52,6 @@ export async function POST(request: NextRequest) {
       });
     }
 
-    const html = await response.text();
-
-    const rawTitle = extractOgTag(html, "title");
-    const rawDescription = extractOgTag(html, "description");
-    const imageUrl = extractOgTag(html, "image");
-    const profileUrl = extractProfileUrl(html);
-
-    const title = rawTitle ? decodeHtmlEntities(rawTitle) : null;
-    const description = rawDescription ? decodeHtmlEntities(rawDescription) : null;
-
     // Parse author name from og:title (typically "AuthorName on LinkedIn: post title")
     let authorName: string | null = null;
     if (title) {
@@ -111,17 +62,39 @@ export async function POST(request: NextRequest) {
     // Extract emails from description
     const emails = description ? [...new Set(description.match(EMAIL_RE) ?? [])] : [];
 
-    const hasContent = !!(title || description);
+    // Fallback: derive name from first email prefix (e.g. ashwin@weareorbis.com → "Ashwin")
+    if (!authorName && emails.length > 0) {
+      const prefix = emails[0].split("@")[0];
+      const parts = prefix.split(/[._+-]+/).filter(Boolean);
+      if (parts.length > 0) {
+        authorName = parts
+          .map((p) => p.charAt(0).toUpperCase() + p.slice(1).toLowerCase())
+          .join(" ");
+      }
+    }
+
+    // Derive company name from email domain (e.g. weareorbis.com → "Weareorbis")
+    let companyName: string | null = null;
+    if (emails.length > 0) {
+      const domain = emails[0].split("@")[1];
+      if (domain) {
+        const name = domain.split(".")[0];
+        if (name && !["gmail", "yahoo", "hotmail", "outlook", "protonmail", "icloud"].includes(name.toLowerCase())) {
+          companyName = name.charAt(0).toUpperCase() + name.slice(1);
+        }
+      }
+    }
 
     return NextResponse.json({
       authorName,
-      authorHeadline: null, // Not reliably available from OG tags
+      authorHeadline: null,
       postText: description,
       postUrl: url,
-      profileUrl,
+      profileUrl: null,
       emails,
       imageUrl,
-      extractionQuality: hasContent ? "partial" : "failed",
+      companyName,
+      extractionQuality: "partial" as const,
     });
   } catch (err) {
     return NextResponse.json(

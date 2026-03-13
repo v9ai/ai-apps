@@ -39,6 +39,25 @@ query GetFamilyMemberCharacteristic($id: Int!) {
       createdAt
       updatedAt
     }
+    research {
+      id
+      goalId
+      characteristicId
+      title
+      authors
+      year
+      journal
+      doi
+      url
+      abstract
+      keyFindings
+      therapeuticTechniques
+      evidenceLevel
+      relevanceScore
+      extractedBy
+      extractionConfidence
+      createdAt
+    }
     createdAt
     updatedAt
   }

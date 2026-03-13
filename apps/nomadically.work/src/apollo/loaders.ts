@@ -1,5 +1,5 @@
 import DataLoader from "dataloader";
-import { and, eq, inArray } from "drizzle-orm";
+import { eq, inArray } from "drizzle-orm";
 import type { DbInstance } from "@/db";
 import {
   jobSkillTags,
@@ -55,7 +55,7 @@ export function createLoaders(db: DbInstance) {
         const rows = await db
           .select()
           .from(companies)
-          .where(and(inArray(companies.id, [...companyIds]), eq(companies.is_hidden, false)));
+          .where(inArray(companies.id, [...companyIds]));
         const byId = new Map(rows.map((r) => [r.id, r]));
         return companyIds.map((id) => byId.get(id) ?? null);
       },

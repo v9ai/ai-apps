@@ -257,7 +257,6 @@ export type Company = {
   id: Scalars['Int']['output'];
   industries: Array<Scalars['String']['output']>;
   industry: Maybe<Scalars['String']['output']>;
-  is_hidden: Scalars['Boolean']['output'];
   job_board_url: Maybe<Scalars['String']['output']>;
   key: Scalars['String']['output'];
   last_seen_capture_timestamp: Maybe<Scalars['String']['output']>;
@@ -354,7 +353,6 @@ export type CompanyFactInput = {
 export type CompanyFilterInput = {
   category_in?: InputMaybe<Array<CompanyCategory>>;
   has_ats_boards?: InputMaybe<Scalars['Boolean']['input']>;
-  is_hidden?: InputMaybe<Scalars['Boolean']['input']>;
   min_ai_tier?: InputMaybe<Scalars['Int']['input']>;
   min_score?: InputMaybe<Scalars['Float']['input']>;
   service_taxonomy_any?: InputMaybe<Array<Scalars['String']['input']>>;
@@ -978,6 +976,20 @@ export type ImportContactsResult = {
   success: Scalars['Boolean']['output'];
 };
 
+export type ImportResendResult = {
+  __typename: 'ImportResendResult';
+  companyMatchCount: Scalars['Int']['output'];
+  contactMatchCount: Scalars['Int']['output'];
+  durationMs: Scalars['Int']['output'];
+  error: Maybe<Scalars['String']['output']>;
+  errorCount: Scalars['Int']['output'];
+  newCount: Scalars['Int']['output'];
+  skippedCount: Scalars['Int']['output'];
+  success: Scalars['Boolean']['output'];
+  totalFetched: Scalars['Int']['output'];
+  updatedCount: Scalars['Int']['output'];
+};
+
 export type Job = {
   __typename: 'Job';
   absolute_url: Maybe<Scalars['String']['output']>;
@@ -1181,6 +1193,7 @@ export type Mutation = {
   importCompanies: ImportCompaniesResult;
   importCompanyWithContacts: ImportCompanyResult;
   importContacts: ImportContactsResult;
+  importResendEmails: ImportResendResult;
   ingestResumeParse: Maybe<ResumeIngestResult>;
   ingest_company_snapshot: CompanySnapshot;
   launchEmailCampaign: EmailCampaign;
@@ -1428,6 +1441,11 @@ export type MutationImportCompanyWithContactsArgs = {
 
 export type MutationImportContactsArgs = {
   contacts: Array<ContactInput>;
+};
+
+
+export type MutationImportResendEmailsArgs = {
+  maxEmails?: InputMaybe<Scalars['Int']['input']>;
 };
 
 
@@ -1916,6 +1934,7 @@ export type QueryJobArgs = {
 
 
 export type QueryJobsArgs = {
+  companyKey?: InputMaybe<Scalars['String']['input']>;
   excludedCompanies?: InputMaybe<Array<Scalars['String']['input']>>;
   limit?: InputMaybe<Scalars['Int']['input']>;
   offset?: InputMaybe<Scalars['Int']['input']>;
@@ -2270,7 +2289,6 @@ export type UpdateCompanyInput = {
   github_url?: InputMaybe<Scalars['String']['input']>;
   industries?: InputMaybe<Array<Scalars['String']['input']>>;
   industry?: InputMaybe<Scalars['String']['input']>;
-  is_hidden?: InputMaybe<Scalars['Boolean']['input']>;
   job_board_url?: InputMaybe<Scalars['String']['input']>;
   key?: InputMaybe<Scalars['String']['input']>;
   linkedin_url?: InputMaybe<Scalars['String']['input']>;

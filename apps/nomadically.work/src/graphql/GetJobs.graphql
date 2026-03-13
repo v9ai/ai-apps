@@ -2,6 +2,7 @@ query GetJobs(
   $sourceType: String
   $sourceTypes: [String!]
   $search: String
+  $companyKey: String
   $limit: Int
   $offset: Int
   $excludedCompanies: [String!]
@@ -12,6 +13,7 @@ query GetJobs(
     sourceType: $sourceType
     sourceTypes: $sourceTypes
     search: $search
+    companyKey: $companyKey
     limit: $limit
     offset: $offset
     excludedCompanies: $excludedCompanies

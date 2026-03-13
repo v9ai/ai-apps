@@ -116,6 +116,21 @@ mutation SyncResendEmails($companyId: Int) {
   }
 }
 
+mutation ImportResendEmails($maxEmails: Int) {
+  importResendEmails(maxEmails: $maxEmails) {
+    success
+    totalFetched
+    newCount
+    updatedCount
+    skippedCount
+    errorCount
+    contactMatchCount
+    companyMatchCount
+    durationMs
+    error
+  }
+}
+
 mutation CancelCompanyEmails($companyId: Int!) {
   cancelCompanyEmails(companyId: $companyId) {
     success

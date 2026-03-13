@@ -4,7 +4,7 @@
  * Uses text-embedding-v4 and qwen-turbo (cheapest models).
  * Skips automatically when DASHSCOPE_API_KEY is not set.
  *
- * Run: pnpm --filter @repo/qwen test:integration
+ * Run: pnpm --filter @ai-apps/qwen test:integration
  */
 import { describe, it, expect, beforeAll } from "@jest/globals";
 import { QwenClient } from "../src/client";

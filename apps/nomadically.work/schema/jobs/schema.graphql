@@ -3,6 +3,7 @@ extend type Query {
     sourceType: String
     sourceTypes: [String!]
     search: String
+    companyKey: String
     limit: Int
     offset: Int
     excludedCompanies: [String!]

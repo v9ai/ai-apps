@@ -36,7 +36,7 @@ export const familyMemberShares = sqliteTable("family_member_shares", {
 
 export const goals = sqliteTable("goals", {
   id: integer("id").primaryKey({ autoIncrement: true }),
-  familyMemberId: integer("family_member_id").notNull(),
+  familyMemberId: integer("family_member_id"),
   userId: text("user_id").notNull(),
   slug: text("slug").unique(),
   title: text("title").notNull(),
@@ -70,6 +70,7 @@ export const therapyResearch = sqliteTable("therapy_research", {
   keyFindings: text("key_findings").notNull(), // JSON array
   therapeuticTechniques: text("therapeutic_techniques").notNull(), // JSON array
   evidenceLevel: text("evidence_level"),
+  characteristicId: integer("characteristic_id"),
   relevanceScore: integer("relevance_score").notNull(),
   extractedBy: text("extracted_by").notNull(),
   extractionConfidence: integer("extraction_confidence").notNull(),

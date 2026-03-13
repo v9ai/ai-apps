@@ -1,4 +1,4 @@
-import { DeepSeekClient } from "@repo/deepseek";
+import { DeepSeekClient } from "@ai-apps/deepseek";
 
 function lazy<T>(fn: () => T): () => T {
   let instance: T;

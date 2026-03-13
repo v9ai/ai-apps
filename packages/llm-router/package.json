@@ -1,0 +1,39 @@
+{
+  "name": "@ai-apps/llm-router",
+  "version": "0.1.0",
+  "type": "module",
+  "private": true,
+  "files": ["dist"],
+  "main": "./dist/index.js",
+  "module": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "default": "./dist/index.js"
+    }
+  },
+  "scripts": {
+    "build": "bunchee",
+    "dev": "bunchee --watch",
+    "test": "jest",
+    "test:integration": "jest --config jest.integration.config.ts"
+  },
+  "jest": {
+    "preset": "@ai-apps/jest-presets/node",
+    "testPathIgnorePatterns": ["<rootDir>/node_modules/", "<rootDir>/dist/", "integration"]
+  },
+  "dependencies": {
+    "@ai-apps/deepseek": "workspace:*",
+    "@ai-apps/qwen": "workspace:*"
+  },
+  "devDependencies": {
+    "@jest/globals": "^30.2.0",
+    "@ai-apps/jest-presets": "workspace:*",
+    "@ai-apps/typescript-config": "workspace:*",
+    "@types/node": "^22.15.3",
+    "bunchee": "^6.4.0",
+    "jest": "^30.2.0",
+    "typescript": "5.9.3"
+  }
+}

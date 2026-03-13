@@ -54,6 +54,7 @@ import {
   useGetReceivedEmailsQuery,
   useArchiveEmailMutation,
   useUnarchiveEmailMutation,
+  useImportResendEmailsMutation,
 } from "@/__generated__/hooks";
 
 type SentEmail = {
@@ -236,7 +237,9 @@ function SentList() {
   const [emails, setEmails] = useState<SentEmail[]>([]);
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
+  const [importSummary, setImportSummary] = useState<string | null>(null);
   const [syncResend, { loading: syncing }] = useSyncResendEmailsMutation();
+  const [importResend, { loading: importing }] = useImportResendEmailsMutation();
 
   const load = async () => {
     setLoading(true);
@@ -248,6 +251,22 @@ function SentList() {
 
   const handleSync = async () => {
     await syncResend();
+    await load();
+  };
+
+  const handleImport = async () => {
+    setImportSummary(null);
+    const result = await importResend();
+    const data = result.data?.importResendEmails;
+    if (data) {
+      if (data.error) {
+        setImportSummary(`Error: ${data.error}`);
+      } else {
+        setImportSummary(
+          `Imported ${data.newCount} new, updated ${data.updatedCount}, skipped ${data.skippedCount} (${data.totalFetched} fetched in ${data.durationMs}ms)`,
+        );
+      }
+    }
     await load();
   };
 
@@ -301,11 +320,24 @@ function SentList() {
           >
             <UpdateIcon /> {syncing ? "Syncing…" : "Sync Resend"}
           </Button>
+          <Button
+            size="1"
+            variant="ghost"
+            onClick={handleImport}
+            disabled={importing}
+          >
+            <ReloadIcon /> {importing ? "Importing…" : "Import from Resend"}
+          </Button>
           <Button size="1" variant="ghost" onClick={load}>
             <ReloadIcon /> Refresh
           </Button>
         </Flex>
       </Flex>
+      {importSummary && (
+        <Text size="1" color="gray">
+          {importSummary}
+        </Text>
+      )}
       {emails.map((email) => (
         <Card key={email.id}>
           <Flex justify="between" align="start" gap="4">
@@ -469,7 +501,6 @@ function CampaignsList() {
   }
 
   async function handleDelete(id: string) {
-    if (!confirm("Delete this campaign?")) return;
     await deleteCampaign({ variables: { id } });
     refetch();
   }
@@ -563,7 +594,6 @@ function EmailTemplatesList() {
   }
 
   async function handleDelete(id: number) {
-    if (!confirm("Delete this template?")) return;
     await deleteTemplate({ variables: { id } });
     refetch();
   }
@@ -630,7 +660,7 @@ function EmailTemplatesList() {
 function EmailsPageContent() {
   const searchParams = useSearchParams();
   const router = useRouter();
-  const tab = searchParams?.get("tab") ?? "sent";
+  const tab = searchParams?.get("tab") ?? "received";
 
   const [batchModalOpen, setBatchModalOpen] = useState(false);
   const [subscribers, setSubscribers] = useState<EmailSubscriber[]>([]);
@@ -686,13 +716,13 @@ function EmailsPageContent() {
 
       <Tabs.Root value={tab} onValueChange={handleTabChange}>
         <Tabs.List mb="4">
-          <Tabs.Trigger value="sent">
-            <EnvelopeClosedIcon />
-            &nbsp;Sent
-          </Tabs.Trigger>
           <Tabs.Trigger value="received">
             <EnvelopeOpenIcon />
             &nbsp;Received
+          </Tabs.Trigger>
+          <Tabs.Trigger value="sent">
+            <EnvelopeClosedIcon />
+            &nbsp;Sent
           </Tabs.Trigger>
           <Tabs.Trigger value="campaigns">
             <RocketIcon />

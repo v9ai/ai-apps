@@ -230,7 +230,6 @@ type Company {
   id: Int!
   industries: [String!]!
   industry: String
-  is_hidden: Boolean!
   job_board_url: String
   key: String!
   last_seen_capture_timestamp: String
@@ -313,7 +312,6 @@ input CompanyFactInput {
 input CompanyFilterInput {
   category_in: [CompanyCategory!]
   has_ats_boards: Boolean
-  is_hidden: Boolean
   min_ai_tier: Int
   min_score: Float
   service_taxonomy_any: [String!]
@@ -901,6 +899,19 @@ type ImportContactsResult {
   success: Boolean!
 }
 
+type ImportResendResult {
+  companyMatchCount: Int!
+  contactMatchCount: Int!
+  durationMs: Int!
+  error: String
+  errorCount: Int!
+  newCount: Int!
+  skippedCount: Int!
+  success: Boolean!
+  totalFetched: Int!
+  updatedCount: Int!
+}
+
 scalar JSON
 
 type Job {
@@ -1100,6 +1111,7 @@ type Mutation {
   importCompanies(companies: [CompanyImportInput!]!): ImportCompaniesResult!
   importCompanyWithContacts(input: ImportCompanyWithContactsInput!): ImportCompanyResult!
   importContacts(contacts: [ContactInput!]!): ImportContactsResult!
+  importResendEmails(maxEmails: Int): ImportResendResult!
   ingestResumeParse(email: String!, filename: String!, job_id: String!): ResumeIngestResult
   ingest_company_snapshot(capture_timestamp: String, company_id: Int!, content_hash: String, crawl_id: String, evidence: EvidenceInput!, extracted: JSON, fetched_at: String!, http_status: Int, jsonld: JSON, mime: String, source_url: String!, text_sample: String): CompanySnapshot!
   launchEmailCampaign(id: String!): EmailCampaign!
@@ -1282,7 +1294,7 @@ type Query {
   executeSql(sql: String!): TextToSqlResult!
   findCompany(name: String, website: String): FindCompanyResult!
   job(id: String!): Job
-  jobs(excludedCompanies: [String!], limit: Int, offset: Int, remoteEuConfidence: String, search: String, showAll: Boolean, skills: [String!], sourceType: String, sourceTypes: [String!]): JobsResponse!
+  jobs(companyKey: String, excludedCompanies: [String!], limit: Int, offset: Int, remoteEuConfidence: String, search: String, showAll: Boolean, skills: [String!], sourceType: String, sourceTypes: [String!]): JobsResponse!
   langsmithPrompt(promptIdentifier: String!): LangSmithPrompt
   langsmithPromptCommit(includeModel: Boolean, promptIdentifier: String!): LangSmithPromptCommit
   langsmithPrompts(isArchived: Boolean, isPublic: Boolean, query: String): [LangSmithPrompt!]!
@@ -1539,7 +1551,6 @@ input UpdateCompanyInput {
   github_url: String
   industries: [String!]
   industry: String
-  is_hidden: Boolean
   job_board_url: String
   key: String
   linkedin_url: String

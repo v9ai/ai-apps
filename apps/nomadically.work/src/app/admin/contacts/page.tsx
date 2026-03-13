@@ -108,7 +108,6 @@ export default function AdminContactsPage() {
   }
 
   async function handleDelete(id: number) {
-    if (!confirm("Delete this contact?")) return;
     await deleteContact({ variables: { id } });
     refetch();
   }

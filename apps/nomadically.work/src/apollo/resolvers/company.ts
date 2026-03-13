@@ -11,8 +11,6 @@ import {
 import { eq, and, or, like, asc, desc, gte, inArray, sql } from "drizzle-orm";
 import type { GraphQLContext } from "../context";
 import { isAdminEmail } from "@/lib/admin";
-import { enhanceCompany } from "./enhance-company";
-import { analyzeCompany } from "./analyze-company";
 
 /**
  * Safely parse JSON strings with proper error handling and logging
@@ -244,7 +242,6 @@ export const companyResolvers = {
           service_taxonomy_any?: string[];
           ai_native_only?: boolean;
           ai_first_only?: boolean;
-          is_hidden?: boolean;
           min_ai_tier?: number;
         };
         order_by?: string;
@@ -255,13 +252,6 @@ export const companyResolvers = {
     ) {
       try {
         const conditions = [];
-
-        // By default, exclude hidden companies unless explicitly requested
-        if (args.filter?.is_hidden === true) {
-          conditions.push(eq(companies.is_hidden, true));
-        } else if (args.filter?.is_hidden === false || !args.filter?.is_hidden) {
-          conditions.push(eq(companies.is_hidden, false));
-        }
 
         if (args.filter) {
           if (args.filter.text) {
@@ -362,9 +352,9 @@ export const companyResolvers = {
         let query = context.db.select().from(companies);
 
         if (args.id) {
-          query = query.where(and(eq(companies.id, args.id), eq(companies.is_hidden, false))) as any;
+          query = query.where(eq(companies.id, args.id)) as any;
         } else if (args.key) {
-          query = query.where(and(eq(companies.key, args.key), eq(companies.is_hidden, false))) as any;
+          query = query.where(eq(companies.key, args.key)) as any;
         }
 
         const [result] = await query.limit(1);
@@ -583,7 +573,6 @@ export const companyResolvers = {
       args: {
         id: number;
         input: {
-          is_hidden?: boolean;
           key?: string;
           name?: string;
           logo_url?: string;
@@ -675,6 +664,8 @@ export const companyResolvers = {
           throw new Error("Forbidden - Admin access required");
         }
 
+        await context.db.delete(contacts).where(eq(contacts.company_id, args.id));
+
         await context.db.delete(companies).where(eq(companies.id, args.id));
 
         return {
@@ -686,9 +677,6 @@ export const companyResolvers = {
         throw error;
       }
     },
-
-    enhanceCompany,
-    analyzeCompany,
 
     async add_company_facts(
       _parent: any,
@@ -1277,6 +1265,24 @@ export const companyResolvers = {
           message: error instanceof Error ? error.message : "Failed to block company",
         };
       }
+    },
+
+    async enhanceCompany(_parent: any, args: { id?: number; key?: string }) {
+      return {
+        success: false,
+        message: "Enhancement is currently unavailable.",
+        companyId: args.id ?? null,
+        companyKey: args.key ?? null,
+      };
+    },
+
+    async analyzeCompany(_parent: any, args: { id?: number; key?: string }) {
+      return {
+        success: false,
+        message: "Deep analysis is currently unavailable.",
+        companyId: args.id ?? null,
+        companyKey: args.key ?? null,
+      };
     },
   },
 };

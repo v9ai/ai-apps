@@ -110,7 +110,6 @@ export default function AdminTasksPage() {
   }
 
   async function handleDelete(id: number) {
-    if (!confirm("Delete this task?")) return;
     await deleteTask({ variables: { id } });
     refetch();
   }

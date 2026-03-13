@@ -1,6 +1,6 @@
 "use client";
 
-import { HowItWorks } from "@repo/ui/how-it-works";
+import { HowItWorks } from "@ai-apps/ui/how-it-works";
 import {
   papers,
   researchStats,
