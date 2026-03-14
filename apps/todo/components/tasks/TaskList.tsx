@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useTransition } from "react";
+import { useState, useRef, useEffect, useTransition } from "react";
 import { Button, Flex } from "@radix-ui/themes";
 import { TaskCard } from "./TaskCard";
 import { loadMoreTasks } from "@/lib/actions/tasks";
@@ -32,19 +32,39 @@ export function TaskList({
 }) {
   const [tasks, setTasks] = useState<Task[]>(initialTasks);
   const [isPending, startTransition] = useTransition();
+  const knownIds = useRef(new Set(initialTasks.map((t) => t.id)));
+  const newIds = useRef(new Set<string>());
   const hasMore = tasks.length < totalCount;
+
+  // Sync when server data changes (after router.refresh)
+  useEffect(() => {
+    const incoming = new Set(initialTasks.map((t) => t.id));
+    for (const id of incoming) {
+      if (!knownIds.current.has(id)) {
+        newIds.current.add(id);
+      }
+    }
+    knownIds.current = incoming;
+    setTasks(initialTasks);
+  }, [initialTasks]);
 
   function handleLoadMore() {
     startTransition(async () => {
       const moreTasks = await loadMoreTasks(status, tasks.length, chunkSize);
-      setTasks((prev) => [...prev, ...(moreTasks as Task[])]);
+      const loaded = moreTasks as Task[];
+      for (const t of loaded) knownIds.current.add(t.id);
+      setTasks((prev) => [...prev, ...loaded]);
     });
   }
 
   return (
     <Flex direction="column" gap="2">
       {tasks.map((task) => (
-        <TaskCard key={task.id} task={task} />
+        <TaskCard
+          key={task.id}
+          task={task}
+          defaultExpanded={newIds.current.has(task.id)}
+        />
       ))}
       {hasMore && (
         <Button

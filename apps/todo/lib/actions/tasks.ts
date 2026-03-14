@@ -34,10 +34,10 @@ export async function createTaskAction(formData: FormData) {
   return task;
 }
 
-export async function createTaskQuickAction(title: string) {
+export async function createTaskQuickAction(title: string, description?: string) {
   const session = await getSessionOrThrow();
 
-  const parsed = createTaskSchema.parse({ title });
+  const parsed = createTaskSchema.parse({ title, description });
   const task = await taskQueries.createTask(session.user.id, parsed);
   revalidatePath("/app");
   return task;

@@ -23,7 +23,7 @@ export const createTaskSchema = z.object({
 export const updateTaskSchema = z.object({
   id: z.string().uuid(),
   title: z.string().min(1).max(500).optional(),
-  description: z.string().max(5000).optional(),
+  description: z.string().max(5000).nullable().optional(),
   status: taskStatusEnum.optional(),
   dueDate: z.coerce.date().nullable().optional(),
   estimatedMinutes: z.number().int().positive().nullable().optional(),

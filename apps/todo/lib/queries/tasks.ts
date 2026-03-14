@@ -28,6 +28,25 @@ export async function getTaskCountByStatus(
   return result[0]?.count ?? 0;
 }
 
+export async function getAllTaskCounts(userId: string) {
+  const result = await db
+    .select({
+      status: tasks.status,
+      count: sql<number>`count(*)`,
+    })
+    .from(tasks)
+    .where(eq(tasks.userId, userId))
+    .groupBy(tasks.status);
+
+  const counts = { inbox: 0, active: 0, completed: 0 };
+  for (const row of result) {
+    if (row.status in counts) {
+      counts[row.status as keyof typeof counts] = row.count;
+    }
+  }
+  return counts;
+}
+
 export async function getTask(userId: string, taskId: string) {
   const result = await db
     .select()

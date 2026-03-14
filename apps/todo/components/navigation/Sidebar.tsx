@@ -7,10 +7,7 @@ import { signOut } from "@/lib/auth-client";
 import { useRouter } from "next/navigation";
 
 const navItems = [
-  { label: "Inbox", href: "/app", icon: "+" },
-  { label: "Active", href: "/app/active", icon: "\u25B6" },
-  { label: "Completed", href: "/app/completed", icon: "\u2713" },
-  { label: "Settings", href: "/app/settings", icon: "\u2699" },
+  { label: "Tasks", href: "/app", icon: "☰" },
   { label: "How It Works", href: "/how-it-works", icon: "?" },
 ];
 

@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useRef, useTransition } from "react";
+import { useState, useRef, useCallback, useEffect, useTransition } from "react";
 import { useRouter } from "next/navigation";
 import {
   Box,
@@ -10,10 +10,10 @@ import {
   Text,
   Badge,
   TextField,
-  TextArea,
   Select,
 } from "@radix-ui/themes";
 import { PriorityBadge } from "./PriorityBadge";
+import { Linkify } from "./Linkify";
 import { updateTaskAction, deleteTaskAction } from "@/lib/actions/tasks";
 import { format } from "date-fns";
 
@@ -31,13 +31,83 @@ type Task = {
   completedAt: Date | null;
 };
 
-export function TaskCard({ task }: { task: Task }) {
+function AutoGrowTextArea({
+  value,
+  onChange,
+  onBlur,
+  onFocus,
+  onKeyDown,
+  placeholder,
+  className,
+  ariaLabel,
+}: {
+  value: string;
+  onChange: (e: React.ChangeEvent<HTMLTextAreaElement>) => void;
+  onBlur: () => void;
+  onFocus?: () => void;
+  onKeyDown?: (e: React.KeyboardEvent<HTMLTextAreaElement>) => void;
+  placeholder?: string;
+  className?: string;
+  ariaLabel?: string;
+}) {
+  const ref = useRef<HTMLTextAreaElement>(null);
+
+  const resize = useCallback(() => {
+    const el = ref.current;
+    if (!el) return;
+    el.style.height = "0";
+    el.style.height = `${el.scrollHeight}px`;
+  }, []);
+
+  useEffect(() => {
+    resize();
+  }, [value, resize]);
+
+  return (
+    <textarea
+      ref={ref}
+      className={className}
+      value={value}
+      onChange={(e) => {
+        onChange(e);
+        resize();
+      }}
+      onBlur={onBlur}
+      onFocus={onFocus}
+      onKeyDown={onKeyDown}
+      placeholder={placeholder}
+      aria-label={ariaLabel}
+      rows={1}
+      style={{
+        width: "100%",
+        resize: "none",
+        overflow: "hidden",
+        marginBottom: 8,
+        padding: "6px 8px",
+        fontSize: "var(--font-size-2)",
+        lineHeight: "var(--line-height-2)",
+        minHeight: "calc(var(--line-height-2) + 12px)",
+        fontFamily: "inherit",
+        borderRadius: "var(--radius-1)",
+        border: "1px solid transparent",
+        background: "transparent",
+        color: "var(--gray-12)",
+        outline: "none",
+        transition: "border-color 150ms, background 150ms",
+      }}
+    />
+  );
+}
+
+export function TaskCard({ task, defaultExpanded = false }: { task: Task; defaultExpanded?: boolean }) {
   const router = useRouter();
-  const [expanded, setExpanded] = useState(false);
+  const [expanded, setExpanded] = useState(defaultExpanded);
   const [completing, setCompleting] = useState(false);
   const [isPending, startTransition] = useTransition();
 
   const titleRef = useRef<HTMLInputElement>(null);
+  const cardRef = useRef<HTMLDivElement>(null);
+  const focusedField = useRef<string | null>(null);
 
   const [editTitle, setEditTitle] = useState(task.title);
   const [editDescription, setEditDescription] = useState(
@@ -50,6 +120,17 @@ export function TaskCard({ task }: { task: Task }) {
   const [editMinutes, setEditMinutes] = useState(
     task.estimatedMinutes?.toString() ?? ""
   );
+
+  // Sync local state when task prop updates (after router.refresh()), but
+  // don't overwrite fields the user is currently editing.
+  useEffect(() => {
+    if (focusedField.current !== "title") setEditTitle(task.title);
+    if (focusedField.current !== "description") setEditDescription(task.description ?? "");
+    if (focusedField.current !== "dueDate")
+      setEditDueDate(task.dueDate ? format(new Date(task.dueDate), "yyyy-MM-dd") : "");
+    if (focusedField.current !== "energy") setEditEnergy(task.energyPreference ?? "");
+    if (focusedField.current !== "minutes") setEditMinutes(task.estimatedMinutes?.toString() ?? "");
+  }, [task.title, task.description, task.dueDate, task.energyPreference, task.estimatedMinutes]);
 
   const isCompleted = task.status === "completed";
 
@@ -83,6 +164,7 @@ export function TaskCard({ task }: { task: Task }) {
   }
 
   function handleTitleBlur() {
+    focusedField.current = null;
     const trimmed = editTitle.trim();
     if (!trimmed) {
       setEditTitle(task.title);
@@ -104,6 +186,7 @@ export function TaskCard({ task }: { task: Task }) {
   }
 
   function handleDescriptionBlur() {
+    focusedField.current = null;
     const trimmed = editDescription.trim();
     const current = task.description ?? "";
     if (trimmed !== current) {
@@ -111,7 +194,16 @@ export function TaskCard({ task }: { task: Task }) {
     }
   }
 
+  function handleDescriptionKeyDown(e: React.KeyboardEvent<HTMLTextAreaElement>) {
+    if (e.key === "Escape") {
+      e.preventDefault();
+      setEditDescription(task.description ?? ""); // revert
+      e.currentTarget.blur(); // handleDescriptionBlur will no-op (value matches)
+    }
+  }
+
   function handleDueDateBlur() {
+    focusedField.current = null;
     const current = task.dueDate
       ? format(new Date(task.dueDate), "yyyy-MM-dd")
       : "";
@@ -133,6 +225,7 @@ export function TaskCard({ task }: { task: Task }) {
   }
 
   function handleMinutesBlur() {
+    focusedField.current = null;
     const current = task.estimatedMinutes?.toString() ?? "";
     if (editMinutes !== current) {
       saveField({
@@ -141,8 +234,44 @@ export function TaskCard({ task }: { task: Task }) {
     }
   }
 
+  // Escape key collapses the card when focus is on the card but not in an input
+  useEffect(() => {
+    if (!expanded) return;
+    function onKeyDown(e: KeyboardEvent) {
+      if (e.key !== "Escape") return;
+      const tag = (e.target as HTMLElement).tagName;
+      if (tag === "INPUT" || tag === "TEXTAREA") return;
+      if (cardRef.current?.contains(e.target as Node)) {
+        setExpanded(false);
+      }
+    }
+    document.addEventListener("keydown", onKeyDown);
+    return () => document.removeEventListener("keydown", onKeyDown);
+  }, [expanded]);
+
+  const metadataBadges = (
+    <>
+      {task.dueDate && (
+        <Badge variant="outline" size="1">
+          {format(new Date(task.dueDate), "MMM d")}
+        </Badge>
+      )}
+      {task.energyPreference && (
+        <Badge variant="soft" color="blue" size="1">
+          {task.energyPreference}
+        </Badge>
+      )}
+      {task.estimatedMinutes && (
+        <Badge variant="soft" color="gray" size="1">
+          {task.estimatedMinutes}m
+        </Badge>
+      )}
+    </>
+  );
+
   return (
     <Card
+      ref={cardRef}
       className={completing ? "task-completing" : "fade-in"}
       style={{
         opacity: isPending && !completing ? 0.6 : 1,
@@ -161,8 +290,18 @@ export function TaskCard({ task }: { task: Task }) {
         )}
 
         <Box
+          role="button"
+          tabIndex={0}
+          aria-expanded={expanded}
+          aria-label={`${expanded ? "Collapse" : "Expand"} task: ${editTitle}`}
           style={{ flex: 1, cursor: "pointer" }}
           onClick={() => setExpanded(!expanded)}
+          onKeyDown={(e) => {
+            if (e.key === "Enter" || e.key === " ") {
+              e.preventDefault();
+              setExpanded(!expanded);
+            }
+          }}
         >
           <Flex align="center" gap="2" wrap="wrap">
             <TextField.Root
@@ -171,6 +310,7 @@ export function TaskCard({ task }: { task: Task }) {
               size="2"
               value={editTitle}
               onChange={(e) => setEditTitle(e.target.value)}
+              onFocus={() => { focusedField.current = "title"; }}
               onBlur={handleTitleBlur}
               onKeyDown={handleTitleKeyDown}
               onClick={(e) => e.stopPropagation()}
@@ -187,27 +327,52 @@ export function TaskCard({ task }: { task: Task }) {
               score={task.priorityScore}
               manual={task.priorityManual}
             />
-            {task.dueDate && (
-              <Badge variant="outline" size="1">
-                {format(new Date(task.dueDate), "MMM d")}
-              </Badge>
-            )}
-            {task.energyPreference && (
-              <Badge variant="soft" color="blue" size="1">
-                {task.energyPreference}
-              </Badge>
-            )}
-            {task.estimatedMinutes && (
-              <Badge variant="soft" color="gray" size="1">
-                {task.estimatedMinutes}m
-              </Badge>
-            )}
+            {metadataBadges}
           </Flex>
+
+          {!expanded && !isCompleted && (
+            <Text
+              size="1"
+              as="p"
+              style={{
+                marginTop: 4,
+                overflow: "hidden",
+                display: "-webkit-box",
+                WebkitLineClamp: 2,
+                WebkitBoxOrient: "vertical",
+                whiteSpace: "pre-wrap",
+                color: task.description ? "var(--gray-11)" : "var(--gray-7)",
+                fontStyle: task.description ? "normal" : "italic",
+              }}
+            >
+              {task.description ? <Linkify text={task.description} /> : "Notes"}
+            </Text>
+          )}
+
+          {!expanded && isCompleted && task.description && (
+            <Text
+              size="1"
+              color="gray"
+              as="p"
+              style={{
+                marginTop: 4,
+                overflow: "hidden",
+                display: "-webkit-box",
+                WebkitLineClamp: 2,
+                WebkitBoxOrient: "vertical",
+                whiteSpace: "pre-wrap",
+              }}
+            >
+              <Linkify text={task.description} />
+            </Text>
+          )}
 
           {expanded && (
             <Box
+              className="task-details-enter"
               style={{ marginTop: 8 }}
               onClick={(e) => e.stopPropagation()}
+              onKeyDown={(e) => e.stopPropagation()}
             >
               {isCompleted ? (
                 <>
@@ -216,23 +381,33 @@ export function TaskCard({ task }: { task: Task }) {
                       size="2"
                       color="gray"
                       as="p"
-                      style={{ marginBottom: 8 }}
+                      style={{ marginBottom: 8, whiteSpace: "pre-wrap" }}
                     >
-                      {task.description}
+                      <Linkify text={task.description} />
                     </Text>
+                  )}
+                  {(task.dueDate || task.energyPreference || task.estimatedMinutes || task.completedAt) && (
+                    <Flex gap="2" wrap="wrap" mb="2" align="center">
+                      {metadataBadges}
+                      {task.completedAt && (
+                        <Badge variant="soft" color="green" size="1">
+                          Done {format(new Date(task.completedAt), "MMM d")}
+                        </Badge>
+                      )}
+                    </Flex>
                   )}
                 </>
               ) : (
                 <>
-                  <TextArea
-                    className="inline-edit"
-                    size="1"
+                  <AutoGrowTextArea
+                    className="auto-grow-textarea"
                     value={editDescription}
                     onChange={(e) => setEditDescription(e.target.value)}
+                    onFocus={() => { focusedField.current = "description"; }}
                     onBlur={handleDescriptionBlur}
-                    placeholder="Add details..."
-                    rows={2}
-                    style={{ marginBottom: 8 }}
+                    onKeyDown={handleDescriptionKeyDown}
+                    placeholder="Notes"
+                    ariaLabel={`Description for ${editTitle}`}
                   />
                   <Flex gap="2" wrap="wrap" mb="2">
                     <TextField.Root
@@ -241,6 +416,7 @@ export function TaskCard({ task }: { task: Task }) {
                       type="date"
                       value={editDueDate}
                       onChange={(e) => setEditDueDate(e.target.value)}
+                      onFocus={() => { focusedField.current = "dueDate"; }}
                       onBlur={handleDueDateBlur}
                       style={{ width: 160 }}
                     />
@@ -263,6 +439,7 @@ export function TaskCard({ task }: { task: Task }) {
                       type="number"
                       value={editMinutes}
                       onChange={(e) => setEditMinutes(e.target.value)}
+                      onFocus={() => { focusedField.current = "minutes"; }}
                       onBlur={handleMinutesBlur}
                       placeholder="Minutes"
                       style={{ width: 90 }}

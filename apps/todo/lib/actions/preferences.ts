@@ -40,5 +40,5 @@ export async function updatePreferencesAction(data: {
       .where(eq(userPreferences.userId, session.user.id));
   }
 
-  revalidatePath("/app/settings");
+  revalidatePath("/app");
 }

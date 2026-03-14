@@ -2,13 +2,14 @@
 
 import { useState, useEffect, useRef } from "react";
 import { useRouter } from "next/navigation";
-import { Button, Dialog, Flex, TextField } from "@radix-ui/themes";
+import { Button, Dialog, Flex, TextArea, TextField } from "@radix-ui/themes";
 import { createTaskQuickAction } from "@/lib/actions/tasks";
 
 export function QuickCapture() {
   const router = useRouter();
   const [open, setOpen] = useState(false);
   const [title, setTitle] = useState("");
+  const [description, setDescription] = useState("");
   const [loading, setLoading] = useState(false);
   const inputRef = useRef<HTMLInputElement>(null);
 
@@ -28,8 +29,9 @@ export function QuickCapture() {
     if (!title.trim()) return;
 
     setLoading(true);
-    await createTaskQuickAction(title.trim());
+    await createTaskQuickAction(title.trim(), description.trim() || undefined);
     setTitle("");
+    setDescription("");
     setLoading(false);
     setOpen(false);
     router.refresh();
@@ -78,6 +80,16 @@ export function QuickCapture() {
                 onChange={(e) => setTitle(e.target.value)}
                 size="3"
               />
+              {title.trim() && (
+                <TextArea
+                  placeholder="Add notes..."
+                  value={description}
+                  onChange={(e) => setDescription(e.target.value)}
+                  size="2"
+                  rows={2}
+                  className="auto-grow-textarea"
+                />
+              )}
               <Flex justify="end" gap="2">
                 <Dialog.Close>
                   <Button variant="soft" color="gray">
