@@ -1,6 +1,49 @@
-import { HowItWorks } from "@ai-apps/ui/how-it-works";
+import type { ReactNode } from "react";
 
-const papers = [
+// ─── Types ─────────────────────────────────────────────────────────
+
+interface Paper {
+  slug: string;
+  number: number;
+  title: string;
+  category: string;
+  wordCount: number;
+  readingTimeMin: number;
+  authors?: string;
+  year?: number;
+  venue?: string;
+  finding?: string;
+  relevance?: string;
+  url?: string;
+}
+
+interface PipelineAgent {
+  name: string;
+  description: string;
+  researchBasis?: string;
+  paperIndices?: number[];
+}
+
+interface Stat {
+  number: string;
+  label: string;
+  source?: string;
+}
+
+// ─── Prose column wrapper ──────────────────────────────────────────
+
+const prose: React.CSSProperties = {
+  maxWidth: 860,
+  margin: "0 auto",
+  padding: "0 1rem",
+  paddingBottom: "3rem",
+  lineHeight: 1.75,
+  fontSize: "1.05rem",
+};
+
+// ─── Data ──────────────────────────────────────────────────────────
+
+const papers: Paper[] = [
   {
     slug: "cbt-anxiety-review",
     number: 1,
@@ -48,7 +91,7 @@ const papers = [
   },
 ];
 
-const agents = [
+const agents: PipelineAgent[] = [
   {
     name: "Context Loader",
     description:
@@ -97,12 +140,11 @@ const agents = [
   },
 ];
 
-const stats = [
+const stats: Stat[] = [
   {
     number: "7+",
     label: "academic databases searched per goal",
     source: "Lipsey & Wilson, 2001",
-    paperIndex: 2,
   },
   {
     number: "~40 s",
@@ -114,15 +156,107 @@ const stats = [
   },
 ];
 
+// ─── Page ──────────────────────────────────────────────────────────
+
 export default function HowItWorksPage() {
+  const title = "How It Works";
+  const subtitle =
+    "A transparent look at the evidence-based pipeline behind every therapeutic insight.";
+  const story =
+    "Research Thera combines multi-source academic search, AI-powered claim verification, and narrative generation to turn your therapeutic goals into personalised, evidence-backed insights. Every recommendation traces back to peer-reviewed literature.";
+  const sorted = [...papers].sort((a, b) => a.number - b.number);
+
   return (
-    <HowItWorks
-      papers={papers}
-      agents={agents}
-      stats={stats}
-      title="How It Works"
-      subtitle="A transparent look at the evidence-based pipeline behind every therapeutic insight."
-      story="Research Thera combines multi-source academic search, AI-powered claim verification, and narrative generation to turn your therapeutic goals into personalised, evidence-backed insights. Every recommendation traces back to peer-reviewed literature."
-    />
+    <div style={prose}>
+      <h2 style={{ fontSize: "1.75rem", fontWeight: 700, margin: "2rem 0 0" }}>
+        {title}
+      </h2>
+      <p
+        style={{
+          color: "var(--gray-a8, rgba(0,0,0,0.5))",
+          margin: "0.5rem 0 0",
+        }}
+      >
+        {subtitle}
+      </p>
+
+      <p style={{ margin: "1.5rem 0 0" }}>{story}</p>
+
+      <p style={{ margin: "1.5rem 0 0" }}>
+        <strong>Key findings: </strong>
+        {stats
+          .map(
+            (s) =>
+              `${s.number} ${s.label}${s.source ? ` (${s.source})` : ""}`
+          )
+          .join("; ")}
+        .
+      </p>
+
+      <h3
+        style={{
+          fontSize: "1.25rem",
+          fontWeight: 600,
+          margin: "2.5rem 0 0.75rem",
+        }}
+      >
+        Research Papers
+      </h3>
+      <ol style={{ margin: 0, paddingLeft: "1.25rem" }}>
+        {sorted.map((paper) => (
+          <li key={paper.slug} style={{ marginBottom: "1rem" }}>
+            <em>{paper.title}</em>
+            {paper.authors && <> — {paper.authors}</>}
+            {paper.year && <> ({paper.year})</>}
+            {paper.venue && <>, {paper.venue}</>}
+            {paper.finding && (
+              <>
+                . <strong>Finding:</strong> {paper.finding}
+              </>
+            )}
+            {paper.relevance && (
+              <>
+                {" "}
+                <strong>Relevance:</strong> {paper.relevance}
+              </>
+            )}
+          </li>
+        ))}
+      </ol>
+
+      <h3
+        style={{
+          fontSize: "1.25rem",
+          fontWeight: 600,
+          margin: "2.5rem 0 0.75rem",
+        }}
+      >
+        Agent Pipeline
+      </h3>
+      <ol style={{ margin: 0, paddingLeft: "1.25rem" }}>
+        {agents.map((agent) => (
+          <li key={agent.name} style={{ marginBottom: "1.25rem" }}>
+            <strong>{agent.name}</strong> — {agent.description}
+            {agent.researchBasis && (
+              <>
+                {" "}
+                <em>Research basis: {agent.researchBasis}.</em>
+              </>
+            )}
+            {agent.paperIndices && agent.paperIndices.length > 0 && (
+              <>
+                {" "}
+                Related papers:{" "}
+                {agent.paperIndices
+                  .map((pi) => papers[pi]?.title)
+                  .filter(Boolean)
+                  .join("; ")}
+                .
+              </>
+            )}
+          </li>
+        ))}
+      </ol>
+    </div>
   );
 }
