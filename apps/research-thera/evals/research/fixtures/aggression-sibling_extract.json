@@ -1,0 +1,51 @@
+{
+  "id": "aggression-sibling",
+  "stage": "extract",
+  "paper": {
+    "title": "Parent Management Training for Childhood Aggression: A Meta-Analysis of School-Age Interventions",
+    "authors": [
+      "Thompson, K.",
+      "Wilson, M."
+    ],
+    "year": 2024,
+    "journal": "Clinical Psychology Review",
+    "doi": "10.1234/cpr.2024.008",
+    "abstract": "This meta-analysis synthesized 42 studies (N=3,847) of parent management training (PMT) for aggression in children aged 4-10. Overall effect size was moderate (g=0.67, 95% CI [0.52, 0.82]). Programs incorporating emotion regulation skills alongside behavioral strategies showed larger effects (g=0.84) than purely behavioral approaches (g=0.51). Functional behavior assessment prior to intervention predicted better outcomes. School-home consistency in contingency management was identified as a key moderator. Child-focused components (anger management, social problem-solving) enhanced effects when added to parent training alone."
+  },
+  "prompt": "Extract therapeutic research information from this paper.\n\nTherapeutic Goal: Stop hitting siblings\nGoal Description: Child hits younger sibling multiple times per day, especially during transitions.\nGoal Type: aggression_children\n\nPaper:\nTitle: Parent Management Training for Childhood Aggression: A Meta-Analysis of School-Age Interventions\nAuthors: Thompson, K., Wilson, M.\nYear: 2024\nJournal: Clinical Psychology Review\nDOI: 10.1234/cpr.2024.008\nAbstract: This meta-analysis synthesized 42 studies (N=3,847) of parent management training (PMT) for aggression in children aged 4-10. Overall effect size was moderate (g=0.67, 95% CI [0.52, 0.82]). Programs incorporating emotion regulation skills alongside behavioral strategies showed larger effects (g=0.84) than purely behavioral approaches (g=0.51). Functional behavior assessment prior to intervention predicted better outcomes. School-home consistency in contingency management was identified as a key moderator. Child-focused components (anger management, social problem-solving) enhanced effects when added to parent training alone.\n\nCRITICAL: This should be THERAPEUTIC/PSYCHOLOGICAL research for clinical/counseling applications.\n\nExtract:\n1. Key findings (3-5) that are DIRECTLY relevant to the therapeutic goal\n2. Specific therapeutic techniques mentioned (e.g., CBT, exposure therapy, mindfulness)\n3. Evidence level (meta-analysis > RCT > cohort > case-study > review)\n4. Relevance score (0-1) based on how well it addresses the THERAPEUTIC goal\n\nRELEVANCE SCORING RUBRIC (be strict):\n- 1.0: Directly studies the exact behavior/condition in the therapeutic goal in the same population\n- 0.8: Studies the same condition in a closely related population\n- 0.6: Studies an adjacent condition using the same modality for the goal's population\n- 0.4: Same modality but different condition or population\n- 0.2: General clinical psychology with no specific relevance to this goal\n- 0.1 or below: NOT about the specific clinical domain of this goal\n\nSTRICT FILTERING:\n- Score 0.1 or lower if paper is about: forensic interviews, legal proceedings, homework completion, academic achievement, adult populations (when goal is for a child), family therapy engagement (unless directly relevant)\n- Score 0.1 or lower if NOT about the specific clinical domain of the therapeutic goal\n- Score 0.8+ ONLY if directly studying the specific intervention for the goal type and population\n- Population mismatch: reduce score by 0.3 if study population age does not match patient age\n- Only extract findings EXPLICITLY stated in the abstract\n- Do not infer or extrapolate beyond what is written\n- Rate your extraction confidence honestly\n\nReturn JSON with these exact fields:\n- therapeuticGoalType: string\n- title: string\n- authors: string[]\n- year: number | null\n- journal: string | null\n- doi: string | null\n- url: string | null\n- abstract: string | null\n- keyFindings: string[]\n- therapeuticTechniques: string[]\n- evidenceLevel: string | null\n- relevanceScore: number (0-1)\n- extractedBy: string\n- extractionConfidence: number (0-1)",
+  "result": {
+    "therapeuticGoalType": "aggression_children",
+    "title": "Parent Management Training for Childhood Aggression: A Meta-Analysis of School-Age Interventions",
+    "authors": [
+      "Thompson, K.",
+      "Wilson, M."
+    ],
+    "year": 2024,
+    "journal": "Clinical Psychology Review",
+    "doi": "10.1234/cpr.2024.008",
+    "url": null,
+    "abstract": "This meta-analysis synthesized 42 studies (N=3,847) of parent management training (PMT) for aggression in children aged 4-10. Overall effect size was moderate (g=0.67, 95% CI [0.52, 0.82]). Programs incorporating emotion regulation skills alongside behavioral strategies showed larger effects (g=0.84) than purely behavioral approaches (g=0.51). Functional behavior assessment prior to intervention predicted better outcomes. School-home consistency in contingency management was identified as a key moderator. Child-focused components (anger management, social problem-solving) enhanced effects when added to parent training alone.",
+    "keyFindings": [
+      "Parent management training (PMT) for aggression in children aged 4-10 shows moderate overall effect size (g=0.67)",
+      "Programs incorporating emotion regulation skills alongside behavioral strategies showed larger effects (g=0.84) than purely behavioral approaches (g=0.51)",
+      "Functional behavior assessment prior to intervention predicted better outcomes",
+      "School-home consistency in contingency management was identified as a key moderator",
+      "Child-focused components (anger management, social problem-solving) enhanced effects when added to parent training alone"
+    ],
+    "therapeuticTechniques": [
+      "parent management training (PMT)",
+      "behavioral strategies",
+      "emotion regulation skills",
+      "functional behavior assessment",
+      "contingency management",
+      "anger management",
+      "social problem-solving"
+    ],
+    "evidenceLevel": "meta-analysis",
+    "relevanceScore": 0.8,
+    "extractedBy": "assistant",
+    "extractionConfidence": 0.95
+  },
+  "model": "deepseek-chat",
+  "generated_at": "2026-03-14T16:20:54.269376+00:00"
+}

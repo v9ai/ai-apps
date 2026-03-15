@@ -2,6 +2,7 @@ query GetContacts {
   contacts {
     id
     createdBy
+    slug
     firstName
     lastName
     role

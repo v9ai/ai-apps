@@ -1,0 +1,50 @@
+{
+  "id": "multi-domain-complex",
+  "user_prompt": "Analyze this feedback and extract all issues:\n\nSubject: Term Report\nSource: REPORT\nDate: 2026-02-28\n\nContent:\nEnd of term summary for Sofia (age 7, Year 2): Academics \u2014 Reading is below grade level; she reads at a Year 1 level and avoids reading tasks. Writing is disorganized with frequent letter reversals (b/d, p/q). Math is a relative strength. Social \u2014 She has one close friend but struggles in larger groups. She becomes overwhelmed at birthday parties and assemblies, covering her ears and asking to leave. Emotional \u2014 She has low self-esteem regarding academic work, frequently saying 'I'm stupid' and 'I can't do it'. She cries easily when corrected. Physical \u2014 She has an awkward pencil grip despite OT exercises last year. She tires easily during PE and avoids running activities. General \u2014 Sofia is a kind and creative child who excels in art and music. She needs significant support across multiple areas.",
+  "issues": [
+    {
+      "title": "Reading below grade level",
+      "description": "Sofia reads at a Year 1 level, which is below the expected level for Year 2, and avoids reading tasks.",
+      "category": "academic",
+      "severity": "medium"
+    },
+    {
+      "title": "Disorganized writing with frequent letter reversals",
+      "description": "Her writing is disorganized and includes frequent reversals of letters b/d and p/q.",
+      "category": "academic",
+      "severity": "medium"
+    },
+    {
+      "title": "Difficulty participating in larger social groups",
+      "description": "She has one close friend but struggles in larger groups, becomes overwhelmed at birthday parties and assemblies, covers her ears, and asks to leave.",
+      "category": "social",
+      "severity": "medium"
+    },
+    {
+      "title": "Low self-esteem regarding academic work",
+      "description": "She frequently says 'I'm stupid' and 'I can't do it' when engaging with academic tasks.",
+      "category": "emotional",
+      "severity": "high"
+    },
+    {
+      "title": "Heightened emotional response to correction",
+      "description": "She cries easily when corrected.",
+      "category": "emotional",
+      "severity": "medium"
+    },
+    {
+      "title": "Awkward pencil grip",
+      "description": "She has an awkward pencil grip despite having received occupational therapy exercises last year.",
+      "category": "health",
+      "severity": "medium"
+    },
+    {
+      "title": "Fatigue and avoidance during physical education",
+      "description": "She tires easily during PE and avoids running activities.",
+      "category": "health",
+      "severity": "medium"
+    }
+  ],
+  "model": "qwen-plus",
+  "generated_at": "2026-03-13T22:24:05.547736+00:00"
+}

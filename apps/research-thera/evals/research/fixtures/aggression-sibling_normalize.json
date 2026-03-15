@@ -1,0 +1,38 @@
+{
+  "id": "aggression-sibling",
+  "stage": "normalize",
+  "prompt": "You are a clinical psychologist specializing in translating parent/family-reported therapeutic goals into precise clinical language for academic research queries.\n\nGoal Title: \"Stop hitting siblings\"\nGoal Description: \"Child hits younger sibling multiple times per day, especially during transitions.\"\nNotes: Hits baby brother when parent attention shifts; Improved slightly with sticker chart but regressed\n\nExtracted Issues from Teacher Feedback:\n- [HIGH] Physical aggression toward peers: Hitting classmates 2-3 times per week during unstructured time, triggered by toy disputes.\n- [MEDIUM] Difficulty with emotional regulation: Shows remorse after incidents but cannot articulate triggers, suggests limited emotion regulation.\n\nRecent Teacher Feedback:\nLizi has been hitting classmates during unstructured time, averaging 2-3 incidents per week. The aggression is typically triggered by disputes over toys or perceived unfairness. She shows remorse after incidents but cannot articulate why she reacted physically. No aggression observed during structured activities with clear rules.\nThe patient is 6 years old. Patient name: Lizi.\n\nTASK:\n1. Detect the language (ISO 639-1 code, e.g. \"en\", \"ro\", \"fr\")\n2. Translate to English if not already English\n3. Identify the SPECIFIC clinical construct (not generic \"behavioral_change\")\n4. Determine if goal is to INCREASE or REDUCE the behavior\n5. Infer developmental stage from age\n6. Generate 5-10 required keywords that MUST appear in relevant research papers\n7. Generate 5-10 excluded topics that are NOT relevant to this goal\n\nCLINICAL DOMAIN EXAMPLES (be this specific, never use \"behavioral_change\"):\n- \"Face sunete la lectii\" (Romanian: makes sounds during lessons) \u2192 if child context:\n  \"selective_mutism\" OR \"adhd_vocalization\" OR \"vocal_stereotypy_asd\"\n- \"Reduce test anxiety\" \u2192 \"test_anxiety_children\"\n- \"Improve eye contact\" \u2192 \"social_communication_asd\"\n- \"Stop hitting siblings\" \u2192 \"aggression_children\"\n- \"Talk more at school\" \u2192 \"selective_mutism\" or \"school_social_anxiety\"\n\nBEHAVIOR DIRECTION:\n- INCREASE: goal is to produce MORE of a behavior\n- REDUCE: goal is to produce LESS of a behavior\n- MAINTAIN: keep current level\n- UNCLEAR: cannot determine\n\nREQUIRED KEYWORDS: clinical terms that MUST appear in papers for them to be relevant.\nExample for selective mutism: [\"selective mutism\", \"classroom vocalization\", \"speech anxiety\", \"school\", \"children\", \"behavioral intervention\"]\n\nEXCLUDED TOPICS: topics that look related but are NOT relevant.\nExample for selective mutism: [\"homework completion\", \"academic achievement\", \"family therapy engagement\", \"adolescent depression\", \"adult psychotherapy\"]\n\nReturn JSON matching the schema exactly.",
+  "result": {
+    "detected_language": "en",
+    "translated_goal": "Child hits younger sibling multiple times per day, especially during transitions. Hits baby brother when parent attention shifts; Improved slightly with sticker chart but regressed",
+    "clinical_construct": "sibling-directed_aggression_children",
+    "behavior_direction": "REDUCE",
+    "developmental_stage": "early_childhood",
+    "required_keywords": [
+      "sibling aggression",
+      "physical aggression children",
+      "sibling-directed violence",
+      "family transitions",
+      "parental attention",
+      "behavioral intervention children",
+      "early childhood",
+      "emotional regulation",
+      "peer aggression",
+      "structured vs unstructured activities"
+    ],
+    "excluded_topics": [
+      "adult aggression",
+      "self-injurious behavior",
+      "academic performance",
+      "language development",
+      "autism spectrum disorder",
+      "adolescent conduct disorder",
+      "parental mental health",
+      "medication management",
+      "school refusal",
+      "peer rejection without aggression"
+    ]
+  },
+  "model": "deepseek-chat",
+  "generated_at": "2026-03-14T16:19:15.581562+00:00"
+}

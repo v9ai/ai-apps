@@ -116,7 +116,7 @@ async function upsertLangfuseTextPrompt(params: {
  * in the generated planner prompt to prevent domain drift.
  */
 export async function ensureLangfusePromptPackForGoal(params: {
-  goalId: number;
+  goalId?: number;
   goalTitle: string;
   goalDescription: string;
   notes: string[];
@@ -165,8 +165,8 @@ export async function ensureLangfusePromptPackForGoal(params: {
     }),
   );
 
-  const plannerName = `research.plan.goal_${goalId}`;
-  const extractorName = `research.extract.goal_${goalId}`;
+  const plannerName = `research.plan.goal_${goalId ?? "feedback"}`;
+  const extractorName = `research.extract.goal_${goalId ?? "feedback"}`;
   const metaLine = `META_GOAL_SIGNATURE=${goalSignature}`;
 
   const existingPlanner = await safeGetTextPrompt(plannerName, label);

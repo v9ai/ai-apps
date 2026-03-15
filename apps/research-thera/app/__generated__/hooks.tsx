@@ -182,6 +182,26 @@ export type Contact = {
   lastName?: Maybe<Scalars['String']['output']>;
   notes?: Maybe<Scalars['String']['output']>;
   role?: Maybe<Scalars['String']['output']>;
+  slug?: Maybe<Scalars['String']['output']>;
+  updatedAt: Scalars['String']['output'];
+};
+
+export type ContactFeedback = {
+  __typename?: 'ContactFeedback';
+  contact?: Maybe<Contact>;
+  contactId: Scalars['Int']['output'];
+  content: Scalars['String']['output'];
+  createdAt: Scalars['String']['output'];
+  createdBy: Scalars['String']['output'];
+  extracted: Scalars['Boolean']['output'];
+  extractedIssues?: Maybe<Array<ExtractedIssue>>;
+  familyMember?: Maybe<FamilyMember>;
+  familyMemberId: Scalars['Int']['output'];
+  feedbackDate: Scalars['String']['output'];
+  id: Scalars['Int']['output'];
+  source?: Maybe<FeedbackSource>;
+  subject?: Maybe<Scalars['String']['output']>;
+  tags?: Maybe<Array<Scalars['String']['output']>>;
   updatedAt: Scalars['String']['output'];
 };
 
@@ -195,6 +215,16 @@ export type CreateBehaviorObservationInput = {
   notes?: InputMaybe<Scalars['String']['input']>;
   observationType: BehaviorObservationType;
   observedAt: Scalars['String']['input'];
+};
+
+export type CreateContactFeedbackInput = {
+  contactId: Scalars['Int']['input'];
+  content: Scalars['String']['input'];
+  familyMemberId: Scalars['Int']['input'];
+  feedbackDate: Scalars['String']['input'];
+  source?: InputMaybe<FeedbackSource>;
+  subject?: InputMaybe<Scalars['String']['input']>;
+  tags?: InputMaybe<Array<Scalars['String']['input']>>;
 };
 
 export type CreateContactInput = {
@@ -284,6 +314,16 @@ export type CreateSubGoalInput = {
   title: Scalars['String']['input'];
 };
 
+export type CreateTeacherFeedbackInput = {
+  content: Scalars['String']['input'];
+  familyMemberId: Scalars['Int']['input'];
+  feedbackDate: Scalars['String']['input'];
+  source?: InputMaybe<FeedbackSource>;
+  subject?: InputMaybe<Scalars['String']['input']>;
+  tags?: InputMaybe<Array<Scalars['String']['input']>>;
+  teacherName: Scalars['String']['input'];
+};
+
 export type CreateUniqueOutcomeInput = {
   characteristicId: Scalars['Int']['input'];
   description: Scalars['String']['input'];
@@ -292,6 +332,12 @@ export type CreateUniqueOutcomeInput = {
 
 export type DeleteBehaviorObservationResult = {
   __typename?: 'DeleteBehaviorObservationResult';
+  message?: Maybe<Scalars['String']['output']>;
+  success: Scalars['Boolean']['output'];
+};
+
+export type DeleteContactFeedbackResult = {
+  __typename?: 'DeleteContactFeedbackResult';
   message?: Maybe<Scalars['String']['output']>;
   success: Scalars['Boolean']['output'];
 };
@@ -364,6 +410,12 @@ export type DeleteStoryResult = {
   success: Scalars['Boolean']['output'];
 };
 
+export type DeleteTeacherFeedbackResult = {
+  __typename?: 'DeleteTeacherFeedbackResult';
+  message?: Maybe<Scalars['String']['output']>;
+  success: Scalars['Boolean']['output'];
+};
+
 export type DeleteUniqueOutcomeResult = {
   __typename?: 'DeleteUniqueOutcomeResult';
   message?: Maybe<Scalars['String']['output']>;
@@ -402,6 +454,15 @@ export enum EvidencePolarity {
   Supports = 'SUPPORTS'
 }
 
+export type ExtractedIssue = {
+  __typename?: 'ExtractedIssue';
+  category: Scalars['String']['output'];
+  description: Scalars['String']['output'];
+  recommendations?: Maybe<Array<Scalars['String']['output']>>;
+  severity: Scalars['String']['output'];
+  title: Scalars['String']['output'];
+};
+
 export type FamilyMember = {
   __typename?: 'FamilyMember';
   ageYears?: Maybe<Scalars['Int']['output']>;
@@ -419,6 +480,8 @@ export type FamilyMember = {
   phone?: Maybe<Scalars['String']['output']>;
   relationship?: Maybe<Scalars['String']['output']>;
   shares: Array<FamilyMemberShare>;
+  slug?: Maybe<Scalars['String']['output']>;
+  teacherFeedbacks: Array<TeacherFeedback>;
   updatedAt: Scalars['String']['output'];
   userId: Scalars['String']['output'];
 };
@@ -466,6 +529,15 @@ export type FamilyMemberShare = {
 export enum FamilyMemberShareRole {
   Editor = 'EDITOR',
   Viewer = 'VIEWER'
+}
+
+export enum FeedbackSource {
+  Email = 'EMAIL',
+  Meeting = 'MEETING',
+  Note = 'NOTE',
+  Other = 'OTHER',
+  Phone = 'PHONE',
+  Report = 'REPORT'
 }
 
 export type GenerateAudioResult = {
@@ -533,7 +605,7 @@ export type GenerationJob = {
   __typename?: 'GenerationJob';
   createdAt: Scalars['String']['output'];
   error?: Maybe<JobError>;
-  goalId: Scalars['Int']['output'];
+  goalId?: Maybe<Scalars['Int']['output']>;
   id: Scalars['String']['output'];
   progress: Scalars['Float']['output'];
   result?: Maybe<JobResult>;
@@ -607,6 +679,7 @@ export type JobResult = {
   assetId?: Maybe<Scalars['String']['output']>;
   audioUrl?: Maybe<Scalars['String']['output']>;
   count?: Maybe<Scalars['Int']['output']>;
+  diagnostics?: Maybe<PipelineDiagnostics>;
   manifestUrl?: Maybe<Scalars['String']['output']>;
   questions?: Maybe<Array<TherapeuticQuestion>>;
   segmentUrls?: Maybe<Array<Scalars['String']['output']>>;
@@ -651,6 +724,7 @@ export type Mutation = {
   checkNoteClaims: CheckNoteClaimsResult;
   createBehaviorObservation: BehaviorObservation;
   createContact: Contact;
+  createContactFeedback: ContactFeedback;
   createFamilyMember: FamilyMember;
   createFamilyMemberCharacteristic: FamilyMemberCharacteristic;
   createGoal: Goal;
@@ -659,10 +733,12 @@ export type Mutation = {
   createRelationship: Relationship;
   createStory: Story;
   createSubGoal: Goal;
+  createTeacherFeedback: TeacherFeedback;
   createUniqueOutcome: UniqueOutcome;
   deleteBehaviorObservation: DeleteBehaviorObservationResult;
   deleteClaimCard: Scalars['Boolean']['output'];
   deleteContact: DeleteContactResult;
+  deleteContactFeedback: DeleteContactFeedbackResult;
   deleteFamilyMember: DeleteFamilyMemberResult;
   deleteFamilyMemberCharacteristic: DeleteFamilyMemberCharacteristicResult;
   deleteGoal: DeleteGoalResult;
@@ -672,13 +748,16 @@ export type Mutation = {
   deleteRelationship: DeleteRelationshipResult;
   deleteResearch: DeleteResearchResult;
   deleteStory: DeleteStoryResult;
+  deleteTeacherFeedback: DeleteTeacherFeedbackResult;
   deleteTherapeuticQuestions: DeleteQuestionsResult;
   deleteUniqueOutcome: DeleteUniqueOutcomeResult;
+  extractContactFeedbackIssues: ContactFeedback;
   generateAudio: GenerateAudioResult;
   generateLongFormText: GenerateLongFormTextResult;
   generateOpenAIAudio: GenerateOpenAiAudioResult;
   generateResearch: GenerateResearchResult;
   generateTherapeuticQuestions: GenerateQuestionsResult;
+  markTeacherFeedbackExtracted: TeacherFeedback;
   refreshClaimCard: ClaimCard;
   setNoteVisibility: Note;
   shareFamilyMember: FamilyMemberShare;
@@ -688,6 +767,7 @@ export type Mutation = {
   unshareNote: Scalars['Boolean']['output'];
   updateBehaviorObservation: BehaviorObservation;
   updateContact: Contact;
+  updateContactFeedback: ContactFeedback;
   updateFamilyMember: FamilyMember;
   updateFamilyMemberCharacteristic: FamilyMemberCharacteristic;
   updateGoal: Goal;
@@ -695,6 +775,7 @@ export type Mutation = {
   updateNote: Note;
   updateRelationship: Relationship;
   updateStory: Story;
+  updateTeacherFeedback: TeacherFeedback;
   updateUniqueOutcome: UniqueOutcome;
   updateUserSettings: UserSettings;
 };
@@ -717,6 +798,11 @@ export type MutationCreateBehaviorObservationArgs = {
 
 export type MutationCreateContactArgs = {
   input: CreateContactInput;
+};
+
+
+export type MutationCreateContactFeedbackArgs = {
+  input: CreateContactFeedbackInput;
 };
 
 
@@ -761,6 +847,11 @@ export type MutationCreateSubGoalArgs = {
 };
 
 
+export type MutationCreateTeacherFeedbackArgs = {
+  input: CreateTeacherFeedbackInput;
+};
+
+
 export type MutationCreateUniqueOutcomeArgs = {
   input: CreateUniqueOutcomeInput;
 };
@@ -777,6 +868,11 @@ export type MutationDeleteClaimCardArgs = {
 
 
 export type MutationDeleteContactArgs = {
+  id: Scalars['Int']['input'];
+};
+
+
+export type MutationDeleteContactFeedbackArgs = {
   id: Scalars['Int']['input'];
 };
 
@@ -826,12 +922,22 @@ export type MutationDeleteStoryArgs = {
 };
 
 
+export type MutationDeleteTeacherFeedbackArgs = {
+  id: Scalars['Int']['input'];
+};
+
+
 export type MutationDeleteTherapeuticQuestionsArgs = {
   goalId: Scalars['Int']['input'];
 };
 
 
 export type MutationDeleteUniqueOutcomeArgs = {
+  id: Scalars['Int']['input'];
+};
+
+
+export type MutationExtractContactFeedbackIssuesArgs = {
   id: Scalars['Int']['input'];
 };
 
@@ -860,12 +966,18 @@ export type MutationGenerateOpenAiAudioArgs = {
 
 export type MutationGenerateResearchArgs = {
   characteristicId?: InputMaybe<Scalars['Int']['input']>;
-  goalId: Scalars['Int']['input'];
+  feedbackId?: InputMaybe<Scalars['Int']['input']>;
+  goalId?: InputMaybe<Scalars['Int']['input']>;
 };
 
 
 export type MutationGenerateTherapeuticQuestionsArgs = {
   goalId: Scalars['Int']['input'];
+};
+
+
+export type MutationMarkTeacherFeedbackExtractedArgs = {
+  id: Scalars['Int']['input'];
 };
 
 
@@ -923,6 +1035,12 @@ export type MutationUpdateContactArgs = {
 };
 
 
+export type MutationUpdateContactFeedbackArgs = {
+  id: Scalars['Int']['input'];
+  input: UpdateContactFeedbackInput;
+};
+
+
 export type MutationUpdateFamilyMemberArgs = {
   id: Scalars['Int']['input'];
   input: UpdateFamilyMemberInput;
@@ -962,6 +1080,12 @@ export type MutationUpdateRelationshipArgs = {
 export type MutationUpdateStoryArgs = {
   id: Scalars['Int']['input'];
   input: UpdateStoryInput;
+};
+
+
+export type MutationUpdateTeacherFeedbackArgs = {
+  id: Scalars['Int']['input'];
+  input: UpdateTeacherFeedbackInput;
 };
 
 
@@ -1078,6 +1202,17 @@ export enum PersonType {
   FamilyMember = 'FAMILY_MEMBER'
 }
 
+export type PipelineDiagnostics = {
+  __typename?: 'PipelineDiagnostics';
+  enrichedCount?: Maybe<Scalars['Int']['output']>;
+  enrichedDropped?: Maybe<Scalars['Int']['output']>;
+  extractedCount?: Maybe<Scalars['Int']['output']>;
+  persistedCount?: Maybe<Scalars['Int']['output']>;
+  qualifiedCount?: Maybe<Scalars['Int']['output']>;
+  searchCount?: Maybe<Scalars['Int']['output']>;
+  searchUsedFallback?: Maybe<Scalars['Boolean']['output']>;
+};
+
 export type Query = {
   __typename?: 'Query';
   allNotes: Array<Note>;
@@ -1088,6 +1223,8 @@ export type Query = {
   claimCard?: Maybe<ClaimCard>;
   claimCardsForNote: Array<ClaimCard>;
   contact?: Maybe<Contact>;
+  contactFeedback?: Maybe<ContactFeedback>;
+  contactFeedbacks: Array<ContactFeedback>;
   contacts: Array<Contact>;
   familyMember?: Maybe<FamilyMember>;
   familyMemberCharacteristic?: Maybe<FamilyMemberCharacteristic>;
@@ -1109,6 +1246,8 @@ export type Query = {
   research: Array<Research>;
   stories: Array<Story>;
   story?: Maybe<Story>;
+  teacherFeedback?: Maybe<TeacherFeedback>;
+  teacherFeedbacks: Array<TeacherFeedback>;
   therapeuticQuestions: Array<TherapeuticQuestion>;
   userSettings: UserSettings;
 };
@@ -1141,12 +1280,25 @@ export type QueryClaimCardsForNoteArgs = {
 
 
 export type QueryContactArgs = {
+  id?: InputMaybe<Scalars['Int']['input']>;
+  slug?: InputMaybe<Scalars['String']['input']>;
+};
+
+
+export type QueryContactFeedbackArgs = {
   id: Scalars['Int']['input'];
 };
 
 
+export type QueryContactFeedbacksArgs = {
+  contactId: Scalars['Int']['input'];
+  familyMemberId: Scalars['Int']['input'];
+};
+
+
 export type QueryFamilyMemberArgs = {
-  id: Scalars['Int']['input'];
+  id?: InputMaybe<Scalars['Int']['input']>;
+  slug?: InputMaybe<Scalars['String']['input']>;
 };
 
 
@@ -1228,6 +1380,7 @@ export type QueryRelationshipsArgs = {
 
 export type QueryResearchArgs = {
   characteristicId?: InputMaybe<Scalars['Int']['input']>;
+  feedbackId?: InputMaybe<Scalars['Int']['input']>;
   goalId?: InputMaybe<Scalars['Int']['input']>;
 };
 
@@ -1239,6 +1392,16 @@ export type QueryStoriesArgs = {
 
 export type QueryStoryArgs = {
   id: Scalars['Int']['input'];
+};
+
+
+export type QueryTeacherFeedbackArgs = {
+  id: Scalars['Int']['input'];
+};
+
+
+export type QueryTeacherFeedbacksArgs = {
+  familyMemberId: Scalars['Int']['input'];
 };
 
 
@@ -1269,6 +1432,7 @@ export type RelationshipPerson = {
   firstName: Scalars['String']['output'];
   id: Scalars['Int']['output'];
   lastName?: Maybe<Scalars['String']['output']>;
+  slug?: Maybe<Scalars['String']['output']>;
   type: PersonType;
 };
 
@@ -1287,8 +1451,9 @@ export type Research = {
   evidenceLevel?: Maybe<Scalars['String']['output']>;
   extractedBy: Scalars['String']['output'];
   extractionConfidence: Scalars['Float']['output'];
+  feedbackId?: Maybe<Scalars['Int']['output']>;
   goal?: Maybe<Goal>;
-  goalId: Scalars['Int']['output'];
+  goalId?: Maybe<Scalars['Int']['output']>;
   id: Scalars['Int']['output'];
   journal?: Maybe<Scalars['String']['output']>;
   keyFindings: Array<Scalars['String']['output']>;
@@ -1355,6 +1520,23 @@ export type SubscriptionResearchJobStatusArgs = {
   jobId: Scalars['String']['input'];
 };
 
+export type TeacherFeedback = {
+  __typename?: 'TeacherFeedback';
+  content: Scalars['String']['output'];
+  createdAt: Scalars['String']['output'];
+  createdBy: Scalars['String']['output'];
+  extracted: Scalars['Boolean']['output'];
+  familyMember?: Maybe<FamilyMember>;
+  familyMemberId: Scalars['Int']['output'];
+  feedbackDate: Scalars['String']['output'];
+  id: Scalars['Int']['output'];
+  source?: Maybe<FeedbackSource>;
+  subject?: Maybe<Scalars['String']['output']>;
+  tags?: Maybe<Array<Scalars['String']['output']>>;
+  teacherName: Scalars['String']['output'];
+  updatedAt: Scalars['String']['output'];
+};
+
 export type TextSegment = {
   __typename?: 'TextSegment';
   createdAt: Scalars['String']['output'];
@@ -1398,12 +1580,21 @@ export type UpdateBehaviorObservationInput = {
   observedAt?: InputMaybe<Scalars['String']['input']>;
 };
 
+export type UpdateContactFeedbackInput = {
+  content?: InputMaybe<Scalars['String']['input']>;
+  feedbackDate?: InputMaybe<Scalars['String']['input']>;
+  source?: InputMaybe<FeedbackSource>;
+  subject?: InputMaybe<Scalars['String']['input']>;
+  tags?: InputMaybe<Array<Scalars['String']['input']>>;
+};
+
 export type UpdateContactInput = {
   ageYears?: InputMaybe<Scalars['Int']['input']>;
   firstName?: InputMaybe<Scalars['String']['input']>;
   lastName?: InputMaybe<Scalars['String']['input']>;
   notes?: InputMaybe<Scalars['String']['input']>;
   role?: InputMaybe<Scalars['String']['input']>;
+  slug?: InputMaybe<Scalars['String']['input']>;
 };
 
 export type UpdateFamilyMemberCharacteristicInput = {
@@ -1474,6 +1665,15 @@ export type UpdateStoryInput = {
   content?: InputMaybe<Scalars['String']['input']>;
 };
 
+export type UpdateTeacherFeedbackInput = {
+  content?: InputMaybe<Scalars['String']['input']>;
+  feedbackDate?: InputMaybe<Scalars['String']['input']>;
+  source?: InputMaybe<FeedbackSource>;
+  subject?: InputMaybe<Scalars['String']['input']>;
+  tags?: InputMaybe<Array<Scalars['String']['input']>>;
+  teacherName?: InputMaybe<Scalars['String']['input']>;
+};
+
 export type UpdateUniqueOutcomeInput = {
   description?: InputMaybe<Scalars['String']['input']>;
   observedAt?: InputMaybe<Scalars['String']['input']>;
@@ -1535,7 +1735,14 @@ export type CreateContactMutationVariables = Exact<{
 }>;
 
 
-export type CreateContactMutation = { __typename?: 'Mutation', createContact: { __typename?: 'Contact', id: number, createdBy: string, firstName: string, lastName?: string | null, role?: string | null, ageYears?: number | null, notes?: string | null, createdAt: string, updatedAt: string } };
+export type CreateContactMutation = { __typename?: 'Mutation', createContact: { __typename?: 'Contact', id: number, createdBy: string, slug?: string | null, firstName: string, lastName?: string | null, role?: string | null, ageYears?: number | null, notes?: string | null, createdAt: string, updatedAt: string } };
+
+export type CreateContactFeedbackMutationVariables = Exact<{
+  input: CreateContactFeedbackInput;
+}>;
+
+
+export type CreateContactFeedbackMutation = { __typename?: 'Mutation', createContactFeedback: { __typename?: 'ContactFeedback', id: number, contactId: number, familyMemberId: number, createdBy: string, subject?: string | null, feedbackDate: string, content: string, tags?: Array<string> | null, source?: FeedbackSource | null, extracted: boolean, createdAt: string, updatedAt: string } };
 
 export type CreateFamilyMemberMutationVariables = Exact<{
   input: CreateFamilyMemberInput;
@@ -1594,6 +1801,13 @@ export type CreateSubGoalMutationVariables = Exact<{
 
 export type CreateSubGoalMutation = { __typename?: 'Mutation', createSubGoal: { __typename?: 'Goal', id: number, slug?: string | null, title: string, description?: string | null, status: string, parentGoalId?: number | null, createdAt: string, updatedAt: string, familyMemberId?: number | null } };
 
+export type CreateTeacherFeedbackMutationVariables = Exact<{
+  input: CreateTeacherFeedbackInput;
+}>;
+
+
+export type CreateTeacherFeedbackMutation = { __typename?: 'Mutation', createTeacherFeedback: { __typename?: 'TeacherFeedback', id: number, familyMemberId: number, createdBy: string, teacherName: string, subject?: string | null, feedbackDate: string, content: string, tags?: Array<string> | null, source?: FeedbackSource | null, extracted: boolean, createdAt: string, updatedAt: string } };
+
 export type CreateUniqueOutcomeMutationVariables = Exact<{
   input: CreateUniqueOutcomeInput;
 }>;
@@ -1614,6 +1828,13 @@ export type DeleteContactMutationVariables = Exact<{
 
 
 export type DeleteContactMutation = { __typename?: 'Mutation', deleteContact: { __typename?: 'DeleteContactResult', success: boolean, message?: string | null } };
+
+export type DeleteContactFeedbackMutationVariables = Exact<{
+  id: Scalars['Int']['input'];
+}>;
+
+
+export type DeleteContactFeedbackMutation = { __typename?: 'Mutation', deleteContactFeedback: { __typename?: 'DeleteContactFeedbackResult', success: boolean, message?: string | null } };
 
 export type DeleteFamilyMemberMutationVariables = Exact<{
   id: Scalars['Int']['input'];
@@ -1678,12 +1899,26 @@ export type DeleteStoryMutationVariables = Exact<{
 
 export type DeleteStoryMutation = { __typename?: 'Mutation', deleteStory: { __typename?: 'DeleteStoryResult', success: boolean, message?: string | null } };
 
+export type DeleteTeacherFeedbackMutationVariables = Exact<{
+  id: Scalars['Int']['input'];
+}>;
+
+
+export type DeleteTeacherFeedbackMutation = { __typename?: 'Mutation', deleteTeacherFeedback: { __typename?: 'DeleteTeacherFeedbackResult', success: boolean, message?: string | null } };
+
 export type DeleteUniqueOutcomeMutationVariables = Exact<{
   id: Scalars['Int']['input'];
 }>;
 
 
 export type DeleteUniqueOutcomeMutation = { __typename?: 'Mutation', deleteUniqueOutcome: { __typename?: 'DeleteUniqueOutcomeResult', success: boolean, message?: string | null } };
+
+export type ExtractContactFeedbackIssuesMutationVariables = Exact<{
+  id: Scalars['Int']['input'];
+}>;
+
+
+export type ExtractContactFeedbackIssuesMutation = { __typename?: 'Mutation', extractContactFeedbackIssues: { __typename?: 'ContactFeedback', id: number, extracted: boolean, extractedIssues?: Array<{ __typename?: 'ExtractedIssue', title: string, description: string, category: string, severity: string, recommendations?: Array<string> | null }> | null } };
 
 export type GenerateAudioMutationVariables = Exact<{
   goalId: Scalars['Int']['input'];
@@ -1721,8 +1956,9 @@ export type GenerateOpenAiAudioMutationVariables = Exact<{
 export type GenerateOpenAiAudioMutation = { __typename?: 'Mutation', generateOpenAIAudio: { __typename?: 'GenerateOpenAIAudioResult', success: boolean, message?: string | null, jobId?: string | null, audioBuffer?: string | null, audioUrl?: string | null, sizeBytes?: number | null, duration?: number | null } };
 
 export type GenerateResearchMutationVariables = Exact<{
-  goalId: Scalars['Int']['input'];
+  goalId?: InputMaybe<Scalars['Int']['input']>;
   characteristicId?: InputMaybe<Scalars['Int']['input']>;
+  feedbackId?: InputMaybe<Scalars['Int']['input']>;
 }>;
 
 
@@ -1761,30 +1997,47 @@ export type GetBehaviorObservationsQueryVariables = Exact<{
 export type GetBehaviorObservationsQuery = { __typename?: 'Query', behaviorObservations: Array<{ __typename?: 'BehaviorObservation', id: number, familyMemberId: number, goalId?: number | null, createdBy: string, observedAt: string, observationType: BehaviorObservationType, frequency?: number | null, intensity?: BehaviorIntensity | null, context?: string | null, notes?: string | null, createdAt: string, updatedAt: string, familyMember?: { __typename?: 'FamilyMember', id: number, firstName: string, name?: string | null } | null, goal?: { __typename?: 'Goal', id: number, title: string } | null }> };
 
 export type GetContactQueryVariables = Exact<{
+  id?: InputMaybe<Scalars['Int']['input']>;
+  slug?: InputMaybe<Scalars['String']['input']>;
+}>;
+
+
+export type GetContactQuery = { __typename?: 'Query', contact?: { __typename?: 'Contact', id: number, createdBy: string, slug?: string | null, firstName: string, lastName?: string | null, role?: string | null, ageYears?: number | null, notes?: string | null, createdAt: string, updatedAt: string } | null };
+
+export type GetContactFeedbackQueryVariables = Exact<{
   id: Scalars['Int']['input'];
 }>;
 
 
-export type GetContactQuery = { __typename?: 'Query', contact?: { __typename?: 'Contact', id: number, createdBy: string, firstName: string, lastName?: string | null, role?: string | null, ageYears?: number | null, notes?: string | null, createdAt: string, updatedAt: string } | null };
+export type GetContactFeedbackQuery = { __typename?: 'Query', contactFeedback?: { __typename?: 'ContactFeedback', id: number, contactId: number, familyMemberId: number, createdBy: string, subject?: string | null, feedbackDate: string, content: string, tags?: Array<string> | null, source?: FeedbackSource | null, extracted: boolean, createdAt: string, updatedAt: string, extractedIssues?: Array<{ __typename?: 'ExtractedIssue', title: string, description: string, category: string, severity: string, recommendations?: Array<string> | null }> | null, contact?: { __typename?: 'Contact', id: number, firstName: string, lastName?: string | null, slug?: string | null } | null, familyMember?: { __typename?: 'FamilyMember', id: number, firstName: string, name?: string | null, slug?: string | null } | null } | null };
+
+export type GetContactFeedbacksQueryVariables = Exact<{
+  contactId: Scalars['Int']['input'];
+  familyMemberId: Scalars['Int']['input'];
+}>;
+
+
+export type GetContactFeedbacksQuery = { __typename?: 'Query', contactFeedbacks: Array<{ __typename?: 'ContactFeedback', id: number, contactId: number, familyMemberId: number, createdBy: string, subject?: string | null, feedbackDate: string, content: string, tags?: Array<string> | null, source?: FeedbackSource | null, extracted: boolean, createdAt: string, updatedAt: string, extractedIssues?: Array<{ __typename?: 'ExtractedIssue', title: string, description: string, category: string, severity: string, recommendations?: Array<string> | null }> | null, contact?: { __typename?: 'Contact', id: number, firstName: string, lastName?: string | null, slug?: string | null } | null, familyMember?: { __typename?: 'FamilyMember', id: number, firstName: string, name?: string | null } | null }> };
 
 export type GetContactsQueryVariables = Exact<{ [key: string]: never; }>;
 
 
-export type GetContactsQuery = { __typename?: 'Query', contacts: Array<{ __typename?: 'Contact', id: number, createdBy: string, firstName: string, lastName?: string | null, role?: string | null, ageYears?: number | null, notes?: string | null, createdAt: string, updatedAt: string }> };
+export type GetContactsQuery = { __typename?: 'Query', contacts: Array<{ __typename?: 'Contact', id: number, createdBy: string, slug?: string | null, firstName: string, lastName?: string | null, role?: string | null, ageYears?: number | null, notes?: string | null, createdAt: string, updatedAt: string }> };
 
 export type GetFamilyMemberQueryVariables = Exact<{
-  id: Scalars['Int']['input'];
+  id?: InputMaybe<Scalars['Int']['input']>;
+  slug?: InputMaybe<Scalars['String']['input']>;
 }>;
 
 
-export type GetFamilyMemberQuery = { __typename?: 'Query', familyMember?: { __typename?: 'FamilyMember', id: number, userId: string, firstName: string, name?: string | null, ageYears?: number | null, relationship?: string | null, email?: string | null, phone?: string | null, location?: string | null, occupation?: string | null, dateOfBirth?: string | null, bio?: string | null, createdAt: string, updatedAt: string, shares: Array<{ __typename?: 'FamilyMemberShare', familyMemberId: number, email: string, role: FamilyMemberShareRole, createdAt: string, createdBy: string }>, goals: Array<{ __typename?: 'Goal', id: number, title: string, status: string, description?: string | null, createdAt: string }>, behaviorObservations: Array<{ __typename?: 'BehaviorObservation', id: number, observedAt: string, observationType: BehaviorObservationType, frequency?: number | null, intensity?: BehaviorIntensity | null, context?: string | null, notes?: string | null, createdAt: string }> } | null };
+export type GetFamilyMemberQuery = { __typename?: 'Query', familyMember?: { __typename?: 'FamilyMember', id: number, userId: string, slug?: string | null, firstName: string, name?: string | null, ageYears?: number | null, relationship?: string | null, email?: string | null, phone?: string | null, location?: string | null, occupation?: string | null, dateOfBirth?: string | null, bio?: string | null, createdAt: string, updatedAt: string, shares: Array<{ __typename?: 'FamilyMemberShare', familyMemberId: number, email: string, role: FamilyMemberShareRole, createdAt: string, createdBy: string }>, goals: Array<{ __typename?: 'Goal', id: number, title: string, status: string, description?: string | null, createdAt: string }>, behaviorObservations: Array<{ __typename?: 'BehaviorObservation', id: number, observedAt: string, observationType: BehaviorObservationType, frequency?: number | null, intensity?: BehaviorIntensity | null, context?: string | null, notes?: string | null, createdAt: string }> } | null };
 
 export type GetFamilyMemberCharacteristicQueryVariables = Exact<{
   id: Scalars['Int']['input'];
 }>;
 
 
-export type GetFamilyMemberCharacteristicQuery = { __typename?: 'Query', familyMemberCharacteristic?: { __typename?: 'FamilyMemberCharacteristic', id: number, familyMemberId: number, createdBy: string, category: CharacteristicCategory, title: string, description?: string | null, severity?: SeverityLevel | null, frequencyPerWeek?: number | null, durationWeeks?: number | null, ageOfOnset?: number | null, impairmentDomains: Array<ImpairmentDomain>, externalizedName?: string | null, strengths?: string | null, riskTier: RiskTier, tags?: Array<string> | null, createdAt: string, updatedAt: string, uniqueOutcomes: Array<{ __typename?: 'UniqueOutcome', id: number, characteristicId: number, createdBy: string, observedAt: string, description: string, createdAt: string, updatedAt: string }>, behaviorObservations: Array<{ __typename?: 'BehaviorObservation', id: number, familyMemberId: number, goalId?: number | null, characteristicId?: number | null, createdBy: string, observedAt: string, observationType: BehaviorObservationType, frequency?: number | null, intensity?: BehaviorIntensity | null, context?: string | null, notes?: string | null, createdAt: string, updatedAt: string }>, research: Array<{ __typename?: 'Research', id: number, goalId: number, characteristicId?: number | null, title: string, authors: Array<string>, year?: number | null, journal?: string | null, doi?: string | null, url?: string | null, abstract?: string | null, keyFindings: Array<string>, therapeuticTechniques: Array<string>, evidenceLevel?: string | null, relevanceScore: number, extractedBy: string, extractionConfidence: number, createdAt: string }> } | null };
+export type GetFamilyMemberCharacteristicQuery = { __typename?: 'Query', familyMemberCharacteristic?: { __typename?: 'FamilyMemberCharacteristic', id: number, familyMemberId: number, createdBy: string, category: CharacteristicCategory, title: string, description?: string | null, severity?: SeverityLevel | null, frequencyPerWeek?: number | null, durationWeeks?: number | null, ageOfOnset?: number | null, impairmentDomains: Array<ImpairmentDomain>, externalizedName?: string | null, strengths?: string | null, riskTier: RiskTier, tags?: Array<string> | null, createdAt: string, updatedAt: string, uniqueOutcomes: Array<{ __typename?: 'UniqueOutcome', id: number, characteristicId: number, createdBy: string, observedAt: string, description: string, createdAt: string, updatedAt: string }>, behaviorObservations: Array<{ __typename?: 'BehaviorObservation', id: number, familyMemberId: number, goalId?: number | null, characteristicId?: number | null, createdBy: string, observedAt: string, observationType: BehaviorObservationType, frequency?: number | null, intensity?: BehaviorIntensity | null, context?: string | null, notes?: string | null, createdAt: string, updatedAt: string }>, research: Array<{ __typename?: 'Research', id: number, goalId?: number | null, characteristicId?: number | null, title: string, authors: Array<string>, year?: number | null, journal?: string | null, doi?: string | null, url?: string | null, abstract?: string | null, keyFindings: Array<string>, therapeuticTechniques: Array<string>, evidenceLevel?: string | null, relevanceScore: number, extractedBy: string, extractionConfidence: number, createdAt: string }> } | null };
 
 export type GetFamilyMemberCharacteristicsQueryVariables = Exact<{
   familyMemberId: Scalars['Int']['input'];
@@ -1797,14 +2050,14 @@ export type GetFamilyMemberCharacteristicsQuery = { __typename?: 'Query', family
 export type GetFamilyMembersQueryVariables = Exact<{ [key: string]: never; }>;
 
 
-export type GetFamilyMembersQuery = { __typename?: 'Query', familyMembers: Array<{ __typename?: 'FamilyMember', id: number, userId: string, firstName: string, name?: string | null, ageYears?: number | null, relationship?: string | null, email?: string | null, phone?: string | null, location?: string | null, occupation?: string | null, dateOfBirth?: string | null, bio?: string | null, createdAt: string, updatedAt: string, shares: Array<{ __typename?: 'FamilyMemberShare', familyMemberId: number, email: string, role: FamilyMemberShareRole, createdAt: string, createdBy: string }> }> };
+export type GetFamilyMembersQuery = { __typename?: 'Query', familyMembers: Array<{ __typename?: 'FamilyMember', id: number, userId: string, slug?: string | null, firstName: string, name?: string | null, ageYears?: number | null, relationship?: string | null, email?: string | null, phone?: string | null, location?: string | null, occupation?: string | null, dateOfBirth?: string | null, bio?: string | null, createdAt: string, updatedAt: string, shares: Array<{ __typename?: 'FamilyMemberShare', familyMemberId: number, email: string, role: FamilyMemberShareRole, createdAt: string, createdBy: string }> }> };
 
 export type GetGenerationJobQueryVariables = Exact<{
   id: Scalars['String']['input'];
 }>;
 
 
-export type GetGenerationJobQuery = { __typename?: 'Query', generationJob?: { __typename?: 'GenerationJob', id: string, status: JobStatus, progress: number, updatedAt: string, result?: { __typename?: 'JobResult', audioUrl?: string | null } | null, error?: { __typename?: 'JobError', message: string } | null } | null };
+export type GetGenerationJobQuery = { __typename?: 'Query', generationJob?: { __typename?: 'GenerationJob', id: string, status: JobStatus, progress: number, updatedAt: string, result?: { __typename?: 'JobResult', audioUrl?: string | null, count?: number | null, diagnostics?: { __typename?: 'PipelineDiagnostics', searchCount?: number | null, enrichedCount?: number | null, extractedCount?: number | null, qualifiedCount?: number | null, persistedCount?: number | null, searchUsedFallback?: boolean | null, enrichedDropped?: number | null } | null } | null, error?: { __typename?: 'JobError', message: string } | null } | null };
 
 export type GetGenerationJobsQueryVariables = Exact<{
   goalId?: InputMaybe<Scalars['Int']['input']>;
@@ -1858,7 +2111,7 @@ export type GetJournalEntryQuery = { __typename?: 'Query', journalEntry?: { __ty
 export type GetMySharedFamilyMembersQueryVariables = Exact<{ [key: string]: never; }>;
 
 
-export type GetMySharedFamilyMembersQuery = { __typename?: 'Query', mySharedFamilyMembers: Array<{ __typename?: 'FamilyMember', id: number, userId: string, firstName: string, name?: string | null, relationship?: string | null, email?: string | null, createdAt: string }> };
+export type GetMySharedFamilyMembersQuery = { __typename?: 'Query', mySharedFamilyMembers: Array<{ __typename?: 'FamilyMember', id: number, userId: string, slug?: string | null, firstName: string, name?: string | null, relationship?: string | null, email?: string | null, createdAt: string }> };
 
 export type GetNoteQueryVariables = Exact<{
   id?: InputMaybe<Scalars['Int']['input']>;
@@ -1889,14 +2142,15 @@ export type GetRelationshipsQueryVariables = Exact<{
 }>;
 
 
-export type GetRelationshipsQuery = { __typename?: 'Query', relationships: Array<{ __typename?: 'Relationship', id: number, createdBy: string, subjectType: PersonType, subjectId: number, relatedType: PersonType, relatedId: number, relationshipType: string, context?: string | null, startDate?: string | null, status: RelationshipStatus, createdAt: string, updatedAt: string, subject?: { __typename?: 'RelationshipPerson', id: number, type: PersonType, firstName: string, lastName?: string | null } | null, related?: { __typename?: 'RelationshipPerson', id: number, type: PersonType, firstName: string, lastName?: string | null } | null }> };
+export type GetRelationshipsQuery = { __typename?: 'Query', relationships: Array<{ __typename?: 'Relationship', id: number, createdBy: string, subjectType: PersonType, subjectId: number, relatedType: PersonType, relatedId: number, relationshipType: string, context?: string | null, startDate?: string | null, status: RelationshipStatus, createdAt: string, updatedAt: string, subject?: { __typename?: 'RelationshipPerson', id: number, type: PersonType, slug?: string | null, firstName: string, lastName?: string | null } | null, related?: { __typename?: 'RelationshipPerson', id: number, type: PersonType, slug?: string | null, firstName: string, lastName?: string | null } | null }> };
 
 export type GetResearchQueryVariables = Exact<{
-  goalId: Scalars['Int']['input'];
+  goalId?: InputMaybe<Scalars['Int']['input']>;
+  feedbackId?: InputMaybe<Scalars['Int']['input']>;
 }>;
 
 
-export type GetResearchQuery = { __typename?: 'Query', research: Array<{ __typename?: 'Research', id: number, goalId: number, title: string, authors: Array<string>, year?: number | null, journal?: string | null, doi?: string | null, url?: string | null, abstract?: string | null, keyFindings: Array<string>, therapeuticTechniques: Array<string>, evidenceLevel?: string | null, relevanceScore: number, extractedBy: string, extractionConfidence: number, createdAt: string }> };
+export type GetResearchQuery = { __typename?: 'Query', research: Array<{ __typename?: 'Research', id: number, goalId?: number | null, feedbackId?: number | null, title: string, authors: Array<string>, year?: number | null, journal?: string | null, doi?: string | null, url?: string | null, abstract?: string | null, keyFindings: Array<string>, therapeuticTechniques: Array<string>, evidenceLevel?: string | null, relevanceScore: number, extractedBy: string, extractionConfidence: number, createdAt: string }> };
 
 export type GetStoriesQueryVariables = Exact<{
   goalId: Scalars['Int']['input'];
@@ -1911,6 +2165,13 @@ export type GetStoryQueryVariables = Exact<{
 
 
 export type GetStoryQuery = { __typename?: 'Query', story?: { __typename?: 'Story', id: number, goalId: number, createdBy: string, content: string, audioKey?: string | null, audioUrl?: string | null, audioGeneratedAt?: string | null, createdAt: string, updatedAt: string, goal?: { __typename?: 'Goal', id: number, title: string, slug?: string | null } | null } | null };
+
+export type GetTeacherFeedbacksQueryVariables = Exact<{
+  familyMemberId: Scalars['Int']['input'];
+}>;
+
+
+export type GetTeacherFeedbacksQuery = { __typename?: 'Query', teacherFeedbacks: Array<{ __typename?: 'TeacherFeedback', id: number, familyMemberId: number, createdBy: string, teacherName: string, subject?: string | null, feedbackDate: string, content: string, tags?: Array<string> | null, source?: FeedbackSource | null, extracted: boolean, createdAt: string, updatedAt: string, familyMember?: { __typename?: 'FamilyMember', id: number, firstName: string, name?: string | null } | null }> };
 
 export type ShareFamilyMemberMutationVariables = Exact<{
   familyMemberId: Scalars['Int']['input'];
@@ -1950,7 +2211,15 @@ export type UpdateContactMutationVariables = Exact<{
 }>;
 
 
-export type UpdateContactMutation = { __typename?: 'Mutation', updateContact: { __typename?: 'Contact', id: number, createdBy: string, firstName: string, lastName?: string | null, role?: string | null, ageYears?: number | null, notes?: string | null, createdAt: string, updatedAt: string } };
+export type UpdateContactMutation = { __typename?: 'Mutation', updateContact: { __typename?: 'Contact', id: number, createdBy: string, slug?: string | null, firstName: string, lastName?: string | null, role?: string | null, ageYears?: number | null, notes?: string | null, createdAt: string, updatedAt: string } };
+
+export type UpdateContactFeedbackMutationVariables = Exact<{
+  id: Scalars['Int']['input'];
+  input: UpdateContactFeedbackInput;
+}>;
+
+
+export type UpdateContactFeedbackMutation = { __typename?: 'Mutation', updateContactFeedback: { __typename?: 'ContactFeedback', id: number, contactId: number, familyMemberId: number, createdBy: string, subject?: string | null, feedbackDate: string, content: string, tags?: Array<string> | null, source?: FeedbackSource | null, extracted: boolean, createdAt: string, updatedAt: string } };
 
 export type UpdateFamilyMemberMutationVariables = Exact<{
   id: Scalars['Int']['input'];
@@ -2007,6 +2276,14 @@ export type UpdateStoryMutationVariables = Exact<{
 
 
 export type UpdateStoryMutation = { __typename?: 'Mutation', updateStory: { __typename?: 'Story', id: number, goalId: number, createdBy: string, content: string, createdAt: string, updatedAt: string } };
+
+export type UpdateTeacherFeedbackMutationVariables = Exact<{
+  id: Scalars['Int']['input'];
+  input: UpdateTeacherFeedbackInput;
+}>;
+
+
+export type UpdateTeacherFeedbackMutation = { __typename?: 'Mutation', updateTeacherFeedback: { __typename?: 'TeacherFeedback', id: number, familyMemberId: number, createdBy: string, teacherName: string, subject?: string | null, feedbackDate: string, content: string, tags?: Array<string> | null, source?: FeedbackSource | null, extracted: boolean, createdAt: string, updatedAt: string } };
 
 export type UpdateUniqueOutcomeMutationVariables = Exact<{
   id: Scalars['Int']['input'];
@@ -2464,6 +2741,7 @@ export const CreateContactDocument = gql`
   createContact(input: $input) {
     id
     createdBy
+    slug
     firstName
     lastName
     role
@@ -2500,6 +2778,50 @@ export function useCreateContactMutation(baseOptions?: Apollo.MutationHookOption
 export type CreateContactMutationHookResult = ReturnType<typeof useCreateContactMutation>;
 export type CreateContactMutationResult = Apollo.MutationResult<CreateContactMutation>;
 export type CreateContactMutationOptions = Apollo.BaseMutationOptions<CreateContactMutation, CreateContactMutationVariables>;
+export const CreateContactFeedbackDocument = gql`
+    mutation CreateContactFeedback($input: CreateContactFeedbackInput!) {
+  createContactFeedback(input: $input) {
+    id
+    contactId
+    familyMemberId
+    createdBy
+    subject
+    feedbackDate
+    content
+    tags
+    source
+    extracted
+    createdAt
+    updatedAt
+  }
+}
+    `;
+export type CreateContactFeedbackMutationFn = Apollo.MutationFunction<CreateContactFeedbackMutation, CreateContactFeedbackMutationVariables>;
+
+/**
+ * __useCreateContactFeedbackMutation__
+ *
+ * To run a mutation, you first call `useCreateContactFeedbackMutation` within a React component and pass it any options that fit your needs.
+ * When your component renders, `useCreateContactFeedbackMutation` returns a tuple that includes:
+ * - A mutate function that you can call at any time to execute the mutation
+ * - An object with fields that represent the current status of the mutation's execution
+ *
+ * @param baseOptions options that will be passed into the mutation, supported options are listed on: https://www.apollographql.com/docs/react/api/react-hooks/#options-2;
+ *
+ * @example
+ * const [createContactFeedbackMutation, { data, loading, error }] = useCreateContactFeedbackMutation({
+ *   variables: {
+ *      input: // value for 'input'
+ *   },
+ * });
+ */
+export function useCreateContactFeedbackMutation(baseOptions?: Apollo.MutationHookOptions<CreateContactFeedbackMutation, CreateContactFeedbackMutationVariables>) {
+        const options = {...defaultOptions, ...baseOptions}
+        return Apollo.useMutation<CreateContactFeedbackMutation, CreateContactFeedbackMutationVariables>(CreateContactFeedbackDocument, options);
+      }
+export type CreateContactFeedbackMutationHookResult = ReturnType<typeof useCreateContactFeedbackMutation>;
+export type CreateContactFeedbackMutationResult = Apollo.MutationResult<CreateContactFeedbackMutation>;
+export type CreateContactFeedbackMutationOptions = Apollo.BaseMutationOptions<CreateContactFeedbackMutation, CreateContactFeedbackMutationVariables>;
 export const CreateFamilyMemberDocument = gql`
     mutation CreateFamilyMember($input: CreateFamilyMemberInput!) {
   createFamilyMember(input: $input) {
@@ -2846,6 +3168,50 @@ export function useCreateSubGoalMutation(baseOptions?: Apollo.MutationHookOption
 export type CreateSubGoalMutationHookResult = ReturnType<typeof useCreateSubGoalMutation>;
 export type CreateSubGoalMutationResult = Apollo.MutationResult<CreateSubGoalMutation>;
 export type CreateSubGoalMutationOptions = Apollo.BaseMutationOptions<CreateSubGoalMutation, CreateSubGoalMutationVariables>;
+export const CreateTeacherFeedbackDocument = gql`
+    mutation CreateTeacherFeedback($input: CreateTeacherFeedbackInput!) {
+  createTeacherFeedback(input: $input) {
+    id
+    familyMemberId
+    createdBy
+    teacherName
+    subject
+    feedbackDate
+    content
+    tags
+    source
+    extracted
+    createdAt
+    updatedAt
+  }
+}
+    `;
+export type CreateTeacherFeedbackMutationFn = Apollo.MutationFunction<CreateTeacherFeedbackMutation, CreateTeacherFeedbackMutationVariables>;
+
+/**
+ * __useCreateTeacherFeedbackMutation__
+ *
+ * To run a mutation, you first call `useCreateTeacherFeedbackMutation` within a React component and pass it any options that fit your needs.
+ * When your component renders, `useCreateTeacherFeedbackMutation` returns a tuple that includes:
+ * - A mutate function that you can call at any time to execute the mutation
+ * - An object with fields that represent the current status of the mutation's execution
+ *
+ * @param baseOptions options that will be passed into the mutation, supported options are listed on: https://www.apollographql.com/docs/react/api/react-hooks/#options-2;
+ *
+ * @example
+ * const [createTeacherFeedbackMutation, { data, loading, error }] = useCreateTeacherFeedbackMutation({
+ *   variables: {
+ *      input: // value for 'input'
+ *   },
+ * });
+ */
+export function useCreateTeacherFeedbackMutation(baseOptions?: Apollo.MutationHookOptions<CreateTeacherFeedbackMutation, CreateTeacherFeedbackMutationVariables>) {
+        const options = {...defaultOptions, ...baseOptions}
+        return Apollo.useMutation<CreateTeacherFeedbackMutation, CreateTeacherFeedbackMutationVariables>(CreateTeacherFeedbackDocument, options);
+      }
+export type CreateTeacherFeedbackMutationHookResult = ReturnType<typeof useCreateTeacherFeedbackMutation>;
+export type CreateTeacherFeedbackMutationResult = Apollo.MutationResult<CreateTeacherFeedbackMutation>;
+export type CreateTeacherFeedbackMutationOptions = Apollo.BaseMutationOptions<CreateTeacherFeedbackMutation, CreateTeacherFeedbackMutationVariables>;
 export const CreateUniqueOutcomeDocument = gql`
     mutation CreateUniqueOutcome($input: CreateUniqueOutcomeInput!) {
   createUniqueOutcome(input: $input) {
@@ -2953,6 +3319,40 @@ export function useDeleteContactMutation(baseOptions?: Apollo.MutationHookOption
 export type DeleteContactMutationHookResult = ReturnType<typeof useDeleteContactMutation>;
 export type DeleteContactMutationResult = Apollo.MutationResult<DeleteContactMutation>;
 export type DeleteContactMutationOptions = Apollo.BaseMutationOptions<DeleteContactMutation, DeleteContactMutationVariables>;
+export const DeleteContactFeedbackDocument = gql`
+    mutation DeleteContactFeedback($id: Int!) {
+  deleteContactFeedback(id: $id) {
+    success
+    message
+  }
+}
+    `;
+export type DeleteContactFeedbackMutationFn = Apollo.MutationFunction<DeleteContactFeedbackMutation, DeleteContactFeedbackMutationVariables>;
+
+/**
+ * __useDeleteContactFeedbackMutation__
+ *
+ * To run a mutation, you first call `useDeleteContactFeedbackMutation` within a React component and pass it any options that fit your needs.
+ * When your component renders, `useDeleteContactFeedbackMutation` returns a tuple that includes:
+ * - A mutate function that you can call at any time to execute the mutation
+ * - An object with fields that represent the current status of the mutation's execution
+ *
+ * @param baseOptions options that will be passed into the mutation, supported options are listed on: https://www.apollographql.com/docs/react/api/react-hooks/#options-2;
+ *
+ * @example
+ * const [deleteContactFeedbackMutation, { data, loading, error }] = useDeleteContactFeedbackMutation({
+ *   variables: {
+ *      id: // value for 'id'
+ *   },
+ * });
+ */
+export function useDeleteContactFeedbackMutation(baseOptions?: Apollo.MutationHookOptions<DeleteContactFeedbackMutation, DeleteContactFeedbackMutationVariables>) {
+        const options = {...defaultOptions, ...baseOptions}
+        return Apollo.useMutation<DeleteContactFeedbackMutation, DeleteContactFeedbackMutationVariables>(DeleteContactFeedbackDocument, options);
+      }
+export type DeleteContactFeedbackMutationHookResult = ReturnType<typeof useDeleteContactFeedbackMutation>;
+export type DeleteContactFeedbackMutationResult = Apollo.MutationResult<DeleteContactFeedbackMutation>;
+export type DeleteContactFeedbackMutationOptions = Apollo.BaseMutationOptions<DeleteContactFeedbackMutation, DeleteContactFeedbackMutationVariables>;
 export const DeleteFamilyMemberDocument = gql`
     mutation DeleteFamilyMember($id: Int!) {
   deleteFamilyMember(id: $id) {
@@ -3260,6 +3660,40 @@ export function useDeleteStoryMutation(baseOptions?: Apollo.MutationHookOptions<
 export type DeleteStoryMutationHookResult = ReturnType<typeof useDeleteStoryMutation>;
 export type DeleteStoryMutationResult = Apollo.MutationResult<DeleteStoryMutation>;
 export type DeleteStoryMutationOptions = Apollo.BaseMutationOptions<DeleteStoryMutation, DeleteStoryMutationVariables>;
+export const DeleteTeacherFeedbackDocument = gql`
+    mutation DeleteTeacherFeedback($id: Int!) {
+  deleteTeacherFeedback(id: $id) {
+    success
+    message
+  }
+}
+    `;
+export type DeleteTeacherFeedbackMutationFn = Apollo.MutationFunction<DeleteTeacherFeedbackMutation, DeleteTeacherFeedbackMutationVariables>;
+
+/**
+ * __useDeleteTeacherFeedbackMutation__
+ *
+ * To run a mutation, you first call `useDeleteTeacherFeedbackMutation` within a React component and pass it any options that fit your needs.
+ * When your component renders, `useDeleteTeacherFeedbackMutation` returns a tuple that includes:
+ * - A mutate function that you can call at any time to execute the mutation
+ * - An object with fields that represent the current status of the mutation's execution
+ *
+ * @param baseOptions options that will be passed into the mutation, supported options are listed on: https://www.apollographql.com/docs/react/api/react-hooks/#options-2;
+ *
+ * @example
+ * const [deleteTeacherFeedbackMutation, { data, loading, error }] = useDeleteTeacherFeedbackMutation({
+ *   variables: {
+ *      id: // value for 'id'
+ *   },
+ * });
+ */
+export function useDeleteTeacherFeedbackMutation(baseOptions?: Apollo.MutationHookOptions<DeleteTeacherFeedbackMutation, DeleteTeacherFeedbackMutationVariables>) {
+        const options = {...defaultOptions, ...baseOptions}
+        return Apollo.useMutation<DeleteTeacherFeedbackMutation, DeleteTeacherFeedbackMutationVariables>(DeleteTeacherFeedbackDocument, options);
+      }
+export type DeleteTeacherFeedbackMutationHookResult = ReturnType<typeof useDeleteTeacherFeedbackMutation>;
+export type DeleteTeacherFeedbackMutationResult = Apollo.MutationResult<DeleteTeacherFeedbackMutation>;
+export type DeleteTeacherFeedbackMutationOptions = Apollo.BaseMutationOptions<DeleteTeacherFeedbackMutation, DeleteTeacherFeedbackMutationVariables>;
 export const DeleteUniqueOutcomeDocument = gql`
     mutation DeleteUniqueOutcome($id: Int!) {
   deleteUniqueOutcome(id: $id) {
@@ -3294,6 +3728,47 @@ export function useDeleteUniqueOutcomeMutation(baseOptions?: Apollo.MutationHook
 export type DeleteUniqueOutcomeMutationHookResult = ReturnType<typeof useDeleteUniqueOutcomeMutation>;
 export type DeleteUniqueOutcomeMutationResult = Apollo.MutationResult<DeleteUniqueOutcomeMutation>;
 export type DeleteUniqueOutcomeMutationOptions = Apollo.BaseMutationOptions<DeleteUniqueOutcomeMutation, DeleteUniqueOutcomeMutationVariables>;
+export const ExtractContactFeedbackIssuesDocument = gql`
+    mutation ExtractContactFeedbackIssues($id: Int!) {
+  extractContactFeedbackIssues(id: $id) {
+    id
+    extracted
+    extractedIssues {
+      title
+      description
+      category
+      severity
+      recommendations
+    }
+  }
+}
+    `;
+export type ExtractContactFeedbackIssuesMutationFn = Apollo.MutationFunction<ExtractContactFeedbackIssuesMutation, ExtractContactFeedbackIssuesMutationVariables>;
+
+/**
+ * __useExtractContactFeedbackIssuesMutation__
+ *
+ * To run a mutation, you first call `useExtractContactFeedbackIssuesMutation` within a React component and pass it any options that fit your needs.
+ * When your component renders, `useExtractContactFeedbackIssuesMutation` returns a tuple that includes:
+ * - A mutate function that you can call at any time to execute the mutation
+ * - An object with fields that represent the current status of the mutation's execution
+ *
+ * @param baseOptions options that will be passed into the mutation, supported options are listed on: https://www.apollographql.com/docs/react/api/react-hooks/#options-2;
+ *
+ * @example
+ * const [extractContactFeedbackIssuesMutation, { data, loading, error }] = useExtractContactFeedbackIssuesMutation({
+ *   variables: {
+ *      id: // value for 'id'
+ *   },
+ * });
+ */
+export function useExtractContactFeedbackIssuesMutation(baseOptions?: Apollo.MutationHookOptions<ExtractContactFeedbackIssuesMutation, ExtractContactFeedbackIssuesMutationVariables>) {
+        const options = {...defaultOptions, ...baseOptions}
+        return Apollo.useMutation<ExtractContactFeedbackIssuesMutation, ExtractContactFeedbackIssuesMutationVariables>(ExtractContactFeedbackIssuesDocument, options);
+      }
+export type ExtractContactFeedbackIssuesMutationHookResult = ReturnType<typeof useExtractContactFeedbackIssuesMutation>;
+export type ExtractContactFeedbackIssuesMutationResult = Apollo.MutationResult<ExtractContactFeedbackIssuesMutation>;
+export type ExtractContactFeedbackIssuesMutationOptions = Apollo.BaseMutationOptions<ExtractContactFeedbackIssuesMutation, ExtractContactFeedbackIssuesMutationVariables>;
 export const GenerateAudioDocument = gql`
     mutation GenerateAudio($goalId: Int!, $storyId: Int, $text: String, $language: String, $voice: String) {
   generateAudio(
@@ -3466,8 +3941,12 @@ export type GenerateOpenAiAudioMutationHookResult = ReturnType<typeof useGenerat
 export type GenerateOpenAiAudioMutationResult = Apollo.MutationResult<GenerateOpenAiAudioMutation>;
 export type GenerateOpenAiAudioMutationOptions = Apollo.BaseMutationOptions<GenerateOpenAiAudioMutation, GenerateOpenAiAudioMutationVariables>;
 export const GenerateResearchDocument = gql`
-    mutation GenerateResearch($goalId: Int!, $characteristicId: Int) {
-  generateResearch(goalId: $goalId, characteristicId: $characteristicId) {
+    mutation GenerateResearch($goalId: Int, $characteristicId: Int, $feedbackId: Int) {
+  generateResearch(
+    goalId: $goalId
+    characteristicId: $characteristicId
+    feedbackId: $feedbackId
+  ) {
     success
     message
     jobId
@@ -3492,6 +3971,7 @@ export type GenerateResearchMutationFn = Apollo.MutationFunction<GenerateResearc
  *   variables: {
  *      goalId: // value for 'goalId'
  *      characteristicId: // value for 'characteristicId'
+ *      feedbackId: // value for 'feedbackId'
  *   },
  * });
  */
@@ -3799,10 +4279,11 @@ export type GetBehaviorObservationsLazyQueryHookResult = ReturnType<typeof useGe
 export type GetBehaviorObservationsSuspenseQueryHookResult = ReturnType<typeof useGetBehaviorObservationsSuspenseQuery>;
 export type GetBehaviorObservationsQueryResult = Apollo.QueryResult<GetBehaviorObservationsQuery, GetBehaviorObservationsQueryVariables>;
 export const GetContactDocument = gql`
-    query GetContact($id: Int!) {
-  contact(id: $id) {
+    query GetContact($id: Int, $slug: String) {
+  contact(id: $id, slug: $slug) {
     id
     createdBy
+    slug
     firstName
     lastName
     role
@@ -3827,10 +4308,11 @@ export const GetContactDocument = gql`
  * const { data, loading, error } = useGetContactQuery({
  *   variables: {
  *      id: // value for 'id'
+ *      slug: // value for 'slug'
  *   },
  * });
  */
-export function useGetContactQuery(baseOptions: Apollo.QueryHookOptions<GetContactQuery, GetContactQueryVariables> & ({ variables: GetContactQueryVariables; skip?: boolean; } | { skip: boolean; }) ) {
+export function useGetContactQuery(baseOptions?: Apollo.QueryHookOptions<GetContactQuery, GetContactQueryVariables>) {
         const options = {...defaultOptions, ...baseOptions}
         return Apollo.useQuery<GetContactQuery, GetContactQueryVariables>(GetContactDocument, options);
       }
@@ -3849,11 +4331,158 @@ export type GetContactQueryHookResult = ReturnType<typeof useGetContactQuery>;
 export type GetContactLazyQueryHookResult = ReturnType<typeof useGetContactLazyQuery>;
 export type GetContactSuspenseQueryHookResult = ReturnType<typeof useGetContactSuspenseQuery>;
 export type GetContactQueryResult = Apollo.QueryResult<GetContactQuery, GetContactQueryVariables>;
+export const GetContactFeedbackDocument = gql`
+    query GetContactFeedback($id: Int!) {
+  contactFeedback(id: $id) {
+    id
+    contactId
+    familyMemberId
+    createdBy
+    subject
+    feedbackDate
+    content
+    tags
+    source
+    extracted
+    extractedIssues {
+      title
+      description
+      category
+      severity
+      recommendations
+    }
+    createdAt
+    updatedAt
+    contact {
+      id
+      firstName
+      lastName
+      slug
+    }
+    familyMember {
+      id
+      firstName
+      name
+      slug
+    }
+  }
+}
+    `;
+
+/**
+ * __useGetContactFeedbackQuery__
+ *
+ * To run a query within a React component, call `useGetContactFeedbackQuery` and pass it any options that fit your needs.
+ * When your component renders, `useGetContactFeedbackQuery` returns an object from Apollo Client that contains loading, error, and data properties
+ * you can use to render your UI.
+ *
+ * @param baseOptions options that will be passed into the query, supported options are listed on: https://www.apollographql.com/docs/react/api/react-hooks/#options;
+ *
+ * @example
+ * const { data, loading, error } = useGetContactFeedbackQuery({
+ *   variables: {
+ *      id: // value for 'id'
+ *   },
+ * });
+ */
+export function useGetContactFeedbackQuery(baseOptions: Apollo.QueryHookOptions<GetContactFeedbackQuery, GetContactFeedbackQueryVariables> & ({ variables: GetContactFeedbackQueryVariables; skip?: boolean; } | { skip: boolean; }) ) {
+        const options = {...defaultOptions, ...baseOptions}
+        return Apollo.useQuery<GetContactFeedbackQuery, GetContactFeedbackQueryVariables>(GetContactFeedbackDocument, options);
+      }
+export function useGetContactFeedbackLazyQuery(baseOptions?: Apollo.LazyQueryHookOptions<GetContactFeedbackQuery, GetContactFeedbackQueryVariables>) {
+          const options = {...defaultOptions, ...baseOptions}
+          return Apollo.useLazyQuery<GetContactFeedbackQuery, GetContactFeedbackQueryVariables>(GetContactFeedbackDocument, options);
+        }
+// @ts-ignore
+export function useGetContactFeedbackSuspenseQuery(baseOptions?: Apollo.SuspenseQueryHookOptions<GetContactFeedbackQuery, GetContactFeedbackQueryVariables>): Apollo.UseSuspenseQueryResult<GetContactFeedbackQuery, GetContactFeedbackQueryVariables>;
+export function useGetContactFeedbackSuspenseQuery(baseOptions?: Apollo.SkipToken | Apollo.SuspenseQueryHookOptions<GetContactFeedbackQuery, GetContactFeedbackQueryVariables>): Apollo.UseSuspenseQueryResult<GetContactFeedbackQuery | undefined, GetContactFeedbackQueryVariables>;
+export function useGetContactFeedbackSuspenseQuery(baseOptions?: Apollo.SkipToken | Apollo.SuspenseQueryHookOptions<GetContactFeedbackQuery, GetContactFeedbackQueryVariables>) {
+          const options = baseOptions === Apollo.skipToken ? baseOptions : {...defaultOptions, ...baseOptions}
+          return Apollo.useSuspenseQuery<GetContactFeedbackQuery, GetContactFeedbackQueryVariables>(GetContactFeedbackDocument, options);
+        }
+export type GetContactFeedbackQueryHookResult = ReturnType<typeof useGetContactFeedbackQuery>;
+export type GetContactFeedbackLazyQueryHookResult = ReturnType<typeof useGetContactFeedbackLazyQuery>;
+export type GetContactFeedbackSuspenseQueryHookResult = ReturnType<typeof useGetContactFeedbackSuspenseQuery>;
+export type GetContactFeedbackQueryResult = Apollo.QueryResult<GetContactFeedbackQuery, GetContactFeedbackQueryVariables>;
+export const GetContactFeedbacksDocument = gql`
+    query GetContactFeedbacks($contactId: Int!, $familyMemberId: Int!) {
+  contactFeedbacks(contactId: $contactId, familyMemberId: $familyMemberId) {
+    id
+    contactId
+    familyMemberId
+    createdBy
+    subject
+    feedbackDate
+    content
+    tags
+    source
+    extracted
+    extractedIssues {
+      title
+      description
+      category
+      severity
+      recommendations
+    }
+    createdAt
+    updatedAt
+    contact {
+      id
+      firstName
+      lastName
+      slug
+    }
+    familyMember {
+      id
+      firstName
+      name
+    }
+  }
+}
+    `;
+
+/**
+ * __useGetContactFeedbacksQuery__
+ *
+ * To run a query within a React component, call `useGetContactFeedbacksQuery` and pass it any options that fit your needs.
+ * When your component renders, `useGetContactFeedbacksQuery` returns an object from Apollo Client that contains loading, error, and data properties
+ * you can use to render your UI.
+ *
+ * @param baseOptions options that will be passed into the query, supported options are listed on: https://www.apollographql.com/docs/react/api/react-hooks/#options;
+ *
+ * @example
+ * const { data, loading, error } = useGetContactFeedbacksQuery({
+ *   variables: {
+ *      contactId: // value for 'contactId'
+ *      familyMemberId: // value for 'familyMemberId'
+ *   },
+ * });
+ */
+export function useGetContactFeedbacksQuery(baseOptions: Apollo.QueryHookOptions<GetContactFeedbacksQuery, GetContactFeedbacksQueryVariables> & ({ variables: GetContactFeedbacksQueryVariables; skip?: boolean; } | { skip: boolean; }) ) {
+        const options = {...defaultOptions, ...baseOptions}
+        return Apollo.useQuery<GetContactFeedbacksQuery, GetContactFeedbacksQueryVariables>(GetContactFeedbacksDocument, options);
+      }
+export function useGetContactFeedbacksLazyQuery(baseOptions?: Apollo.LazyQueryHookOptions<GetContactFeedbacksQuery, GetContactFeedbacksQueryVariables>) {
+          const options = {...defaultOptions, ...baseOptions}
+          return Apollo.useLazyQuery<GetContactFeedbacksQuery, GetContactFeedbacksQueryVariables>(GetContactFeedbacksDocument, options);
+        }
+// @ts-ignore
+export function useGetContactFeedbacksSuspenseQuery(baseOptions?: Apollo.SuspenseQueryHookOptions<GetContactFeedbacksQuery, GetContactFeedbacksQueryVariables>): Apollo.UseSuspenseQueryResult<GetContactFeedbacksQuery, GetContactFeedbacksQueryVariables>;
+export function useGetContactFeedbacksSuspenseQuery(baseOptions?: Apollo.SkipToken | Apollo.SuspenseQueryHookOptions<GetContactFeedbacksQuery, GetContactFeedbacksQueryVariables>): Apollo.UseSuspenseQueryResult<GetContactFeedbacksQuery | undefined, GetContactFeedbacksQueryVariables>;
+export function useGetContactFeedbacksSuspenseQuery(baseOptions?: Apollo.SkipToken | Apollo.SuspenseQueryHookOptions<GetContactFeedbacksQuery, GetContactFeedbacksQueryVariables>) {
+          const options = baseOptions === Apollo.skipToken ? baseOptions : {...defaultOptions, ...baseOptions}
+          return Apollo.useSuspenseQuery<GetContactFeedbacksQuery, GetContactFeedbacksQueryVariables>(GetContactFeedbacksDocument, options);
+        }
+export type GetContactFeedbacksQueryHookResult = ReturnType<typeof useGetContactFeedbacksQuery>;
+export type GetContactFeedbacksLazyQueryHookResult = ReturnType<typeof useGetContactFeedbacksLazyQuery>;
+export type GetContactFeedbacksSuspenseQueryHookResult = ReturnType<typeof useGetContactFeedbacksSuspenseQuery>;
+export type GetContactFeedbacksQueryResult = Apollo.QueryResult<GetContactFeedbacksQuery, GetContactFeedbacksQueryVariables>;
 export const GetContactsDocument = gql`
     query GetContacts {
   contacts {
     id
     createdBy
+    slug
     firstName
     lastName
     role
@@ -3900,10 +4529,11 @@ export type GetContactsLazyQueryHookResult = ReturnType<typeof useGetContactsLaz
 export type GetContactsSuspenseQueryHookResult = ReturnType<typeof useGetContactsSuspenseQuery>;
 export type GetContactsQueryResult = Apollo.QueryResult<GetContactsQuery, GetContactsQueryVariables>;
 export const GetFamilyMemberDocument = gql`
-    query GetFamilyMember($id: Int!) {
-  familyMember(id: $id) {
+    query GetFamilyMember($id: Int, $slug: String) {
+  familyMember(id: $id, slug: $slug) {
     id
     userId
+    slug
     firstName
     name
     ageYears
@@ -3957,10 +4587,11 @@ export const GetFamilyMemberDocument = gql`
  * const { data, loading, error } = useGetFamilyMemberQuery({
  *   variables: {
  *      id: // value for 'id'
+ *      slug: // value for 'slug'
  *   },
  * });
  */
-export function useGetFamilyMemberQuery(baseOptions: Apollo.QueryHookOptions<GetFamilyMemberQuery, GetFamilyMemberQueryVariables> & ({ variables: GetFamilyMemberQueryVariables; skip?: boolean; } | { skip: boolean; }) ) {
+export function useGetFamilyMemberQuery(baseOptions?: Apollo.QueryHookOptions<GetFamilyMemberQuery, GetFamilyMemberQueryVariables>) {
         const options = {...defaultOptions, ...baseOptions}
         return Apollo.useQuery<GetFamilyMemberQuery, GetFamilyMemberQueryVariables>(GetFamilyMemberDocument, options);
       }
@@ -4141,6 +4772,7 @@ export const GetFamilyMembersDocument = gql`
   familyMembers {
     id
     userId
+    slug
     firstName
     name
     ageYears
@@ -4206,6 +4838,16 @@ export const GetGenerationJobDocument = gql`
     progress
     result {
       audioUrl
+      count
+      diagnostics {
+        searchCount
+        enrichedCount
+        extractedCount
+        qualifiedCount
+        persistedCount
+        searchUsedFallback
+        enrichedDropped
+      }
     }
     error {
       message
@@ -4679,6 +5321,7 @@ export const GetMySharedFamilyMembersDocument = gql`
   mySharedFamilyMembers {
     id
     userId
+    slug
     firstName
     name
     relationship
@@ -4984,12 +5627,14 @@ export const GetRelationshipsDocument = gql`
     subject {
       id
       type
+      slug
       firstName
       lastName
     }
     related {
       id
       type
+      slug
       firstName
       lastName
     }
@@ -5034,10 +5679,11 @@ export type GetRelationshipsLazyQueryHookResult = ReturnType<typeof useGetRelati
 export type GetRelationshipsSuspenseQueryHookResult = ReturnType<typeof useGetRelationshipsSuspenseQuery>;
 export type GetRelationshipsQueryResult = Apollo.QueryResult<GetRelationshipsQuery, GetRelationshipsQueryVariables>;
 export const GetResearchDocument = gql`
-    query GetResearch($goalId: Int!) {
-  research(goalId: $goalId) {
+    query GetResearch($goalId: Int, $feedbackId: Int) {
+  research(goalId: $goalId, feedbackId: $feedbackId) {
     id
     goalId
+    feedbackId
     title
     authors
     year
@@ -5069,10 +5715,11 @@ export const GetResearchDocument = gql`
  * const { data, loading, error } = useGetResearchQuery({
  *   variables: {
  *      goalId: // value for 'goalId'
+ *      feedbackId: // value for 'feedbackId'
  *   },
  * });
  */
-export function useGetResearchQuery(baseOptions: Apollo.QueryHookOptions<GetResearchQuery, GetResearchQueryVariables> & ({ variables: GetResearchQueryVariables; skip?: boolean; } | { skip: boolean; }) ) {
+export function useGetResearchQuery(baseOptions?: Apollo.QueryHookOptions<GetResearchQuery, GetResearchQueryVariables>) {
         const options = {...defaultOptions, ...baseOptions}
         return Apollo.useQuery<GetResearchQuery, GetResearchQueryVariables>(GetResearchDocument, options);
       }
@@ -5195,6 +5842,65 @@ export type GetStoryQueryHookResult = ReturnType<typeof useGetStoryQuery>;
 export type GetStoryLazyQueryHookResult = ReturnType<typeof useGetStoryLazyQuery>;
 export type GetStorySuspenseQueryHookResult = ReturnType<typeof useGetStorySuspenseQuery>;
 export type GetStoryQueryResult = Apollo.QueryResult<GetStoryQuery, GetStoryQueryVariables>;
+export const GetTeacherFeedbacksDocument = gql`
+    query GetTeacherFeedbacks($familyMemberId: Int!) {
+  teacherFeedbacks(familyMemberId: $familyMemberId) {
+    id
+    familyMemberId
+    createdBy
+    teacherName
+    subject
+    feedbackDate
+    content
+    tags
+    source
+    extracted
+    createdAt
+    updatedAt
+    familyMember {
+      id
+      firstName
+      name
+    }
+  }
+}
+    `;
+
+/**
+ * __useGetTeacherFeedbacksQuery__
+ *
+ * To run a query within a React component, call `useGetTeacherFeedbacksQuery` and pass it any options that fit your needs.
+ * When your component renders, `useGetTeacherFeedbacksQuery` returns an object from Apollo Client that contains loading, error, and data properties
+ * you can use to render your UI.
+ *
+ * @param baseOptions options that will be passed into the query, supported options are listed on: https://www.apollographql.com/docs/react/api/react-hooks/#options;
+ *
+ * @example
+ * const { data, loading, error } = useGetTeacherFeedbacksQuery({
+ *   variables: {
+ *      familyMemberId: // value for 'familyMemberId'
+ *   },
+ * });
+ */
+export function useGetTeacherFeedbacksQuery(baseOptions: Apollo.QueryHookOptions<GetTeacherFeedbacksQuery, GetTeacherFeedbacksQueryVariables> & ({ variables: GetTeacherFeedbacksQueryVariables; skip?: boolean; } | { skip: boolean; }) ) {
+        const options = {...defaultOptions, ...baseOptions}
+        return Apollo.useQuery<GetTeacherFeedbacksQuery, GetTeacherFeedbacksQueryVariables>(GetTeacherFeedbacksDocument, options);
+      }
+export function useGetTeacherFeedbacksLazyQuery(baseOptions?: Apollo.LazyQueryHookOptions<GetTeacherFeedbacksQuery, GetTeacherFeedbacksQueryVariables>) {
+          const options = {...defaultOptions, ...baseOptions}
+          return Apollo.useLazyQuery<GetTeacherFeedbacksQuery, GetTeacherFeedbacksQueryVariables>(GetTeacherFeedbacksDocument, options);
+        }
+// @ts-ignore
+export function useGetTeacherFeedbacksSuspenseQuery(baseOptions?: Apollo.SuspenseQueryHookOptions<GetTeacherFeedbacksQuery, GetTeacherFeedbacksQueryVariables>): Apollo.UseSuspenseQueryResult<GetTeacherFeedbacksQuery, GetTeacherFeedbacksQueryVariables>;
+export function useGetTeacherFeedbacksSuspenseQuery(baseOptions?: Apollo.SkipToken | Apollo.SuspenseQueryHookOptions<GetTeacherFeedbacksQuery, GetTeacherFeedbacksQueryVariables>): Apollo.UseSuspenseQueryResult<GetTeacherFeedbacksQuery | undefined, GetTeacherFeedbacksQueryVariables>;
+export function useGetTeacherFeedbacksSuspenseQuery(baseOptions?: Apollo.SkipToken | Apollo.SuspenseQueryHookOptions<GetTeacherFeedbacksQuery, GetTeacherFeedbacksQueryVariables>) {
+          const options = baseOptions === Apollo.skipToken ? baseOptions : {...defaultOptions, ...baseOptions}
+          return Apollo.useSuspenseQuery<GetTeacherFeedbacksQuery, GetTeacherFeedbacksQueryVariables>(GetTeacherFeedbacksDocument, options);
+        }
+export type GetTeacherFeedbacksQueryHookResult = ReturnType<typeof useGetTeacherFeedbacksQuery>;
+export type GetTeacherFeedbacksLazyQueryHookResult = ReturnType<typeof useGetTeacherFeedbacksLazyQuery>;
+export type GetTeacherFeedbacksSuspenseQueryHookResult = ReturnType<typeof useGetTeacherFeedbacksSuspenseQuery>;
+export type GetTeacherFeedbacksQueryResult = Apollo.QueryResult<GetTeacherFeedbacksQuery, GetTeacherFeedbacksQueryVariables>;
 export const ShareFamilyMemberDocument = gql`
     mutation ShareFamilyMember($familyMemberId: Int!, $email: String!, $role: FamilyMemberShareRole) {
   shareFamilyMember(familyMemberId: $familyMemberId, email: $email, role: $role) {
@@ -5355,6 +6061,7 @@ export const UpdateContactDocument = gql`
   updateContact(id: $id, input: $input) {
     id
     createdBy
+    slug
     firstName
     lastName
     role
@@ -5392,6 +6099,51 @@ export function useUpdateContactMutation(baseOptions?: Apollo.MutationHookOption
 export type UpdateContactMutationHookResult = ReturnType<typeof useUpdateContactMutation>;
 export type UpdateContactMutationResult = Apollo.MutationResult<UpdateContactMutation>;
 export type UpdateContactMutationOptions = Apollo.BaseMutationOptions<UpdateContactMutation, UpdateContactMutationVariables>;
+export const UpdateContactFeedbackDocument = gql`
+    mutation UpdateContactFeedback($id: Int!, $input: UpdateContactFeedbackInput!) {
+  updateContactFeedback(id: $id, input: $input) {
+    id
+    contactId
+    familyMemberId
+    createdBy
+    subject
+    feedbackDate
+    content
+    tags
+    source
+    extracted
+    createdAt
+    updatedAt
+  }
+}
+    `;
+export type UpdateContactFeedbackMutationFn = Apollo.MutationFunction<UpdateContactFeedbackMutation, UpdateContactFeedbackMutationVariables>;
+
+/**
+ * __useUpdateContactFeedbackMutation__
+ *
+ * To run a mutation, you first call `useUpdateContactFeedbackMutation` within a React component and pass it any options that fit your needs.
+ * When your component renders, `useUpdateContactFeedbackMutation` returns a tuple that includes:
+ * - A mutate function that you can call at any time to execute the mutation
+ * - An object with fields that represent the current status of the mutation's execution
+ *
+ * @param baseOptions options that will be passed into the mutation, supported options are listed on: https://www.apollographql.com/docs/react/api/react-hooks/#options-2;
+ *
+ * @example
+ * const [updateContactFeedbackMutation, { data, loading, error }] = useUpdateContactFeedbackMutation({
+ *   variables: {
+ *      id: // value for 'id'
+ *      input: // value for 'input'
+ *   },
+ * });
+ */
+export function useUpdateContactFeedbackMutation(baseOptions?: Apollo.MutationHookOptions<UpdateContactFeedbackMutation, UpdateContactFeedbackMutationVariables>) {
+        const options = {...defaultOptions, ...baseOptions}
+        return Apollo.useMutation<UpdateContactFeedbackMutation, UpdateContactFeedbackMutationVariables>(UpdateContactFeedbackDocument, options);
+      }
+export type UpdateContactFeedbackMutationHookResult = ReturnType<typeof useUpdateContactFeedbackMutation>;
+export type UpdateContactFeedbackMutationResult = Apollo.MutationResult<UpdateContactFeedbackMutation>;
+export type UpdateContactFeedbackMutationOptions = Apollo.BaseMutationOptions<UpdateContactFeedbackMutation, UpdateContactFeedbackMutationVariables>;
 export const UpdateFamilyMemberDocument = gql`
     mutation UpdateFamilyMember($id: Int!, $input: UpdateFamilyMemberInput!) {
   updateFamilyMember(id: $id, input: $input) {
@@ -5710,6 +6462,51 @@ export function useUpdateStoryMutation(baseOptions?: Apollo.MutationHookOptions<
 export type UpdateStoryMutationHookResult = ReturnType<typeof useUpdateStoryMutation>;
 export type UpdateStoryMutationResult = Apollo.MutationResult<UpdateStoryMutation>;
 export type UpdateStoryMutationOptions = Apollo.BaseMutationOptions<UpdateStoryMutation, UpdateStoryMutationVariables>;
+export const UpdateTeacherFeedbackDocument = gql`
+    mutation UpdateTeacherFeedback($id: Int!, $input: UpdateTeacherFeedbackInput!) {
+  updateTeacherFeedback(id: $id, input: $input) {
+    id
+    familyMemberId
+    createdBy
+    teacherName
+    subject
+    feedbackDate
+    content
+    tags
+    source
+    extracted
+    createdAt
+    updatedAt
+  }
+}
+    `;
+export type UpdateTeacherFeedbackMutationFn = Apollo.MutationFunction<UpdateTeacherFeedbackMutation, UpdateTeacherFeedbackMutationVariables>;
+
+/**
+ * __useUpdateTeacherFeedbackMutation__
+ *
+ * To run a mutation, you first call `useUpdateTeacherFeedbackMutation` within a React component and pass it any options that fit your needs.
+ * When your component renders, `useUpdateTeacherFeedbackMutation` returns a tuple that includes:
+ * - A mutate function that you can call at any time to execute the mutation
+ * - An object with fields that represent the current status of the mutation's execution
+ *
+ * @param baseOptions options that will be passed into the mutation, supported options are listed on: https://www.apollographql.com/docs/react/api/react-hooks/#options-2;
+ *
+ * @example
+ * const [updateTeacherFeedbackMutation, { data, loading, error }] = useUpdateTeacherFeedbackMutation({
+ *   variables: {
+ *      id: // value for 'id'
+ *      input: // value for 'input'
+ *   },
+ * });
+ */
+export function useUpdateTeacherFeedbackMutation(baseOptions?: Apollo.MutationHookOptions<UpdateTeacherFeedbackMutation, UpdateTeacherFeedbackMutationVariables>) {
+        const options = {...defaultOptions, ...baseOptions}
+        return Apollo.useMutation<UpdateTeacherFeedbackMutation, UpdateTeacherFeedbackMutationVariables>(UpdateTeacherFeedbackDocument, options);
+      }
+export type UpdateTeacherFeedbackMutationHookResult = ReturnType<typeof useUpdateTeacherFeedbackMutation>;
+export type UpdateTeacherFeedbackMutationResult = Apollo.MutationResult<UpdateTeacherFeedbackMutation>;
+export type UpdateTeacherFeedbackMutationOptions = Apollo.BaseMutationOptions<UpdateTeacherFeedbackMutation, UpdateTeacherFeedbackMutationVariables>;
 export const UpdateUniqueOutcomeDocument = gql`
     mutation UpdateUniqueOutcome($id: Int!, $input: UpdateUniqueOutcomeInput!) {
   updateUniqueOutcome(id: $id, input: $input) {

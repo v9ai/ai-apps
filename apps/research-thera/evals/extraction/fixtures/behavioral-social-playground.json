@@ -1,0 +1,38 @@
+{
+  "id": "behavioral-social-playground",
+  "user_prompt": "Analyze this feedback and extract all issues:\n\nSubject: Behavior Report\nSource: REPORT\nDate: 2026-02-15\n\nContent:\nThis term we have observed recurring issues with Lizi's behavior during unstructured time. At recess, she has difficulty joining group games and often stands alone near the fence. When other children invite her to play, she sometimes responds by pushing them or walking away without speaking. There have been three incidents this month where she hit a classmate during disputes over toys or turn-taking. She has difficulty reading social cues \u2014 for example, she doesn't notice when other children are upset or when she has said something hurtful. In structured classroom activities, her behavior is much better and she follows instructions well. She seems anxious during transitions between activities.",
+  "issues": [
+    {
+      "title": "Difficulty joining group activities during unstructured time",
+      "description": "During recess, Lizi stands alone near the fence and does not initiate or sustain participation in group games.",
+      "category": "social",
+      "severity": "medium"
+    },
+    {
+      "title": "Challenging responses to peer invitations",
+      "description": "When other children invite her to play, she sometimes pushes them or walks away without speaking.",
+      "category": "behavioral",
+      "severity": "medium"
+    },
+    {
+      "title": "Physical aggression during disputes",
+      "description": "There have been three incidents this month where she hit a classmate during disputes over toys or turn-taking.",
+      "category": "behavioral",
+      "severity": "high"
+    },
+    {
+      "title": "Difficulty recognizing social cues",
+      "description": "She does not notice when other children are upset or when she has said something hurtful.",
+      "category": "social",
+      "severity": "medium"
+    },
+    {
+      "title": "Anxiety during activity transitions",
+      "description": "She seems anxious during transitions between activities.",
+      "category": "emotional",
+      "severity": "medium"
+    }
+  ],
+  "model": "qwen-plus",
+  "generated_at": "2026-03-13T22:23:05.256910+00:00"
+}

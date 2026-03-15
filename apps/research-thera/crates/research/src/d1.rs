@@ -25,6 +25,16 @@ struct D1ResultSet {
     results: Vec<Characteristic>,
 }
 
+#[derive(Deserialize)]
+struct ContactFeedbackD1Response {
+    result: Vec<ContactFeedbackD1ResultSet>,
+}
+
+#[derive(Deserialize)]
+struct ContactFeedbackD1ResultSet {
+    results: Vec<ContactFeedback>,
+}
+
 pub struct D1Client {
     account_id: String,
     database_id: String,
@@ -204,8 +214,23 @@ impl D1Client {
     }
 }
 
-/// Parse `/family/{family_member_id}/characteristics/{characteristic_id}`.
-pub fn parse_path(path: &str) -> Result<(i32, i32)> {
+/// Represents a therapy research target (either a characteristic or feedback).
+#[derive(Debug, Clone)]
+pub enum TherapyTarget {
+    Characteristic {
+        family_member_id: i32,
+        characteristic_id: i32,
+    },
+    Feedback {
+        family_member_id: i32,
+        feedback_id: i32,
+    },
+}
+
+/// Parse various URL paths:
+/// - `/family/{id}/characteristics/{id}` -> TherapyTarget::Characteristic
+/// - `/family/{family}/contacts/{contact}/feedback/{id}` -> TherapyTarget::Feedback
+pub fn parse_path(path: &str) -> Result<TherapyTarget> {
     let parts: Vec<&str> = path.trim_matches('/').split('/').collect();
     match parts.as_slice() {
         ["family", fid, "characteristics", cid] => {
@@ -215,10 +240,77 @@ pub fn parse_path(path: &str) -> Result<(i32, i32)> {
             let char_id: i32 = cid
                 .parse()
                 .with_context(|| format!("invalid characteristic_id: {cid}"))?;
-            Ok((family_id, char_id))
+            Ok(TherapyTarget::Characteristic {
+                family_member_id: family_id,
+                characteristic_id: char_id,
+            })
+        }
+        ["family", _family_name, "contacts", _contact_name, "feedback", fid] => {
+            // Names are resolved elsewhere; we just need the feedback ID
+            let feedback_id: i32 = fid
+                .parse()
+                .with_context(|| format!("invalid feedback_id: {fid}"))?;
+            // family_member_id will be resolved from the feedback itself
+            Ok(TherapyTarget::Feedback {
+                family_member_id: 0, // resolved later from feedback
+                feedback_id,
+            })
         }
         _ => anyhow::bail!(
-            "expected /family/{{id}}/characteristics/{{id}}, got: {path}"
+            "expected /family/{{id}}/characteristics/{{id}} or /family/{{name}}/contacts/{{name}}/feedback/{{id}}, got: {path}"
         ),
+    }
+}
+
+/// Contact feedback row from D1.
+#[derive(Debug, Deserialize)]
+pub struct ContactFeedback {
+    pub id: i32,
+    pub contact_id: i32,
+    pub family_member_id: i32,
+    pub subject: String,
+    pub content: String,
+    pub feedback_date: String,
+    pub tags: Option<String>,
+    pub source: Option<String>,
+    pub extracted_issues: Option<String>,
+}
+
+impl D1Client {
+    pub async fn fetch_contact_feedback(&self, feedback_id: i32) -> Result<ContactFeedback> {
+        let url = format!(
+            "https://api.cloudflare.com/client/v4/accounts/{}/d1/database/{}/query",
+            self.account_id, self.database_id,
+        );
+
+        let body = serde_json::json!({
+            "sql": "SELECT id, contact_id, family_member_id, subject, content, \
+                    feedback_date, tags, source, extracted_issues \
+                    FROM contact_feedbacks WHERE id = ?1",
+            "params": [feedback_id],
+        });
+
+        let resp = self
+            .http
+            .post(&url)
+            .bearer_auth(&self.token)
+            .json(&body)
+            .send()
+            .await
+            .context("D1 HTTP request failed")?;
+
+        if !resp.status().is_success() {
+            let status = resp.status();
+            let text = resp.text().await.unwrap_or_default();
+            anyhow::bail!("D1 API error {status}: {text}");
+        }
+
+        let data: ContactFeedbackD1Response = resp.json().await.context("parsing D1 response")?;
+
+        data.result
+            .into_iter()
+            .next()
+            .and_then(|r| r.results.into_iter().next())
+            .with_context(|| format!("feedback {feedback_id} not found"))
     }
 }

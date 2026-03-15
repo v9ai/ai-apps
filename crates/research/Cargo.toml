@@ -90,3 +90,11 @@ path = "src/bin/eval_characteristic.rs"
 [[bin]]
 name = "characteristic-research"
 path = "src/bin/characteristic_research.rs"
+
+[[bin]]
+name = "bear-market-trading"
+path = "src/bin/bear_market_trading.rs"
+
+[[bin]]
+name = "qwen-investigate"
+path = "src/bin/qwen_investigate.rs"

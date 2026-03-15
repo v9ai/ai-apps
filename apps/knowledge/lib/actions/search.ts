@@ -1,6 +1,7 @@
 "use server";
 
-import { createClient } from "@supabase/supabase-js";
+import { sql } from "drizzle-orm";
+import { db } from "@/src/db";
 import type { SearchResult } from "../data";
 
 export async function searchContent(
@@ -9,36 +10,23 @@ export async function searchContent(
   const trimmed = query.trim();
   if (trimmed.length < 2) return [];
 
-  const supabase = createClient(
-    process.env.NEXT_PUBLIC_SUPABASE_URL!,
-    process.env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY!,
-  );
+  try {
+    const results = await db.execute(
+      sql`SELECT * FROM search_content(${trimmed}, 20)`,
+    );
 
-  const { data, error } = await supabase.rpc("search_content", {
-    query_text: trimmed,
-    result_limit: 20,
-  });
-
-  if (error) {
-    console.error("Search RPC error:", error);
+    return (results.rows ?? []).map(
+      (r: Record<string, unknown>) => ({
+        resultType: r.result_type as SearchResult["resultType"],
+        title: r.title as string,
+        snippet: r.snippet as string,
+        rank: r.rank as number,
+        lessonSlug: (r.paper_slug as string) ?? null,
+        lessonTitle: (r.paper_title as string) ?? null,
+      }),
+    );
+  } catch (error) {
+    console.error("Search error:", error);
     return [];
   }
-
-  return (data ?? []).map(
-    (r: {
-      result_type: string;
-      title: string;
-      snippet: string;
-      rank: number;
-      paper_slug: string | null;
-      paper_title: string | null;
-    }) => ({
-      resultType: r.result_type as SearchResult["resultType"],
-      title: r.title,
-      snippet: r.snippet,
-      rank: r.rank,
-      lessonSlug: r.paper_slug,
-      lessonTitle: r.paper_title,
-    }),
-  );
 }

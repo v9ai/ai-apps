@@ -4,6 +4,7 @@ import { sql } from "drizzle-orm";
 export const familyMembers = sqliteTable("family_members", {
   id: integer("id").primaryKey({ autoIncrement: true }),
   userId: text("user_id").notNull(),
+  slug: text("slug").unique(),
   firstName: text("first_name").notNull(),
   name: text("name"),
   ageYears: integer("age_years"),
@@ -58,7 +59,8 @@ export const goals = sqliteTable("goals", {
 
 export const therapyResearch = sqliteTable("therapy_research", {
   id: integer("id").primaryKey({ autoIncrement: true }),
-  goalId: integer("goal_id").notNull(),
+  goalId: integer("goal_id"),
+  feedbackId: integer("feedback_id"),
   therapeuticGoalType: text("therapeutic_goal_type").notNull(),
   title: text("title").notNull(),
   authors: text("authors").notNull(), // JSON array
@@ -181,7 +183,7 @@ export const generationJobs = sqliteTable("generation_jobs", {
   id: text("id").primaryKey(),
   userId: text("user_id").notNull(),
   type: text("type").notNull(), // AUDIO, RESEARCH, QUESTIONS, LONGFORM
-  goalId: integer("goal_id").notNull(),
+  goalId: integer("goal_id"),
   storyId: integer("story_id"),
   status: text("status").notNull(), // RUNNING, SUCCEEDED, FAILED
   progress: integer("progress").notNull().default(0),
@@ -344,9 +346,30 @@ export const teacherFeedbacks = sqliteTable("teacher_feedbacks", {
     .default(sql`CURRENT_TIMESTAMP`),
 });
 
+export const contactFeedbacks = sqliteTable("contact_feedbacks", {
+  id: integer("id").primaryKey({ autoIncrement: true }),
+  contactId: integer("contact_id").notNull(),
+  familyMemberId: integer("family_member_id").notNull(),
+  userId: text("user_id").notNull(),
+  subject: text("subject"),
+  feedbackDate: text("feedback_date").notNull(),
+  content: text("content").notNull(),
+  tags: text("tags"), // JSON array
+  source: text("source"), // e.g. "email", "meeting", "report", "phone"
+  extracted: integer("extracted").notNull().default(0),
+  extractedIssues: text("extracted_issues"), // JSON array of extracted issues
+  createdAt: text("created_at")
+    .notNull()
+    .default(sql`CURRENT_TIMESTAMP`),
+  updatedAt: text("updated_at")
+    .notNull()
+    .default(sql`CURRENT_TIMESTAMP`),
+});
+
 export const contacts = sqliteTable("contacts", {
   id: integer("id").primaryKey({ autoIncrement: true }),
   userId: text("user_id").notNull(),
+  slug: text("slug").unique(),
   firstName: text("first_name").notNull(),
   lastName: text("last_name"),
   role: text("role"),

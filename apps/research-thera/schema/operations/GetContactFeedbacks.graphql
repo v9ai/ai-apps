@@ -1,0 +1,34 @@
+query GetContactFeedbacks($contactId: Int!, $familyMemberId: Int!) {
+  contactFeedbacks(contactId: $contactId, familyMemberId: $familyMemberId) {
+    id
+    contactId
+    familyMemberId
+    createdBy
+    subject
+    feedbackDate
+    content
+    tags
+    source
+    extracted
+    extractedIssues {
+      title
+      description
+      category
+      severity
+      recommendations
+    }
+    createdAt
+    updatedAt
+    contact {
+      id
+      firstName
+      lastName
+      slug
+    }
+    familyMember {
+      id
+      firstName
+      name
+    }
+  }
+}

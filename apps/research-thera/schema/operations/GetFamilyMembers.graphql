@@ -2,6 +2,7 @@ query GetFamilyMembers {
   familyMembers {
     id
     userId
+    slug
     firstName
     name
     ageYears

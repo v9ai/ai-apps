@@ -1,7 +1,7 @@
 type Query {
   goals(familyMemberId: Int, status: String): [Goal!]!
   goal(id: Int, slug: String): Goal
-  research(goalId: Int, characteristicId: Int): [Research!]!
+  research(goalId: Int, characteristicId: Int, feedbackId: Int): [Research!]!
   therapeuticQuestions(goalId: Int!): [TherapeuticQuestion!]!
   notes(entityId: Int!, entityType: String!): [Note!]!
   allNotes: [Note!]!
@@ -17,7 +17,7 @@ type Query {
 
   # Family Members
   familyMembers: [FamilyMember!]!
-  familyMember(id: Int!): FamilyMember
+  familyMember(id: Int, slug: String): FamilyMember
   mySharedFamilyMembers: [FamilyMember!]!
 
   # Journal Entries
@@ -36,9 +36,13 @@ type Query {
   teacherFeedbacks(familyMemberId: Int!): [TeacherFeedback!]!
   teacherFeedback(id: Int!): TeacherFeedback
 
+  # Contact Feedbacks
+  contactFeedbacks(contactId: Int!, familyMemberId: Int!): [ContactFeedback!]!
+  contactFeedback(id: Int!): ContactFeedback
+
   # Contacts
   contacts: [Contact!]!
-  contact(id: Int!): Contact
+  contact(id: Int, slug: String): Contact
 
   # Relationships
   relationships(subjectType: PersonType!, subjectId: Int!): [Relationship!]!
@@ -65,7 +69,7 @@ type Mutation {
   createSubGoal(goalId: Int!, input: CreateSubGoalInput!): Goal!
 
   # Async generation workflows
-  generateResearch(goalId: Int!, characteristicId: Int): GenerateResearchResult!
+  generateResearch(goalId: Int, characteristicId: Int, feedbackId: Int): GenerateResearchResult!
   deleteResearch(goalId: Int!): DeleteResearchResult!
   generateTherapeuticQuestions(goalId: Int!): GenerateQuestionsResult!
   deleteTherapeuticQuestions(goalId: Int!): DeleteQuestionsResult!
@@ -140,6 +144,12 @@ type Mutation {
   updateTeacherFeedback(id: Int!, input: UpdateTeacherFeedbackInput!): TeacherFeedback!
   deleteTeacherFeedback(id: Int!): DeleteTeacherFeedbackResult!
   markTeacherFeedbackExtracted(id: Int!): TeacherFeedback!
+
+  # Contact Feedbacks
+  createContactFeedback(input: CreateContactFeedbackInput!): ContactFeedback!
+  updateContactFeedback(id: Int!, input: UpdateContactFeedbackInput!): ContactFeedback!
+  deleteContactFeedback(id: Int!): DeleteContactFeedbackResult!
+  extractContactFeedbackIssues(id: Int!): ContactFeedback!
 
   # Contacts
   createContact(input: CreateContactInput!): Contact!
@@ -253,7 +263,8 @@ type TextSegment {
 
 type Research {
   id: Int!
-  goalId: Int!
+  goalId: Int
+  feedbackId: Int
   characteristicId: Int
   therapeuticGoalType: String!
   title: String!
@@ -314,7 +325,7 @@ type GenerationJob {
   id: String!
   userId: String!
   type: JobType!
-  goalId: Int!
+  goalId: Int
   storyId: Int
   status: JobStatus!
   progress: Float!
@@ -345,6 +356,17 @@ type JobResult {
   count: Int
   text: String
   questions: [TherapeuticQuestion!]
+  diagnostics: PipelineDiagnostics
+}
+
+type PipelineDiagnostics {
+  searchCount: Int
+  enrichedCount: Int
+  extractedCount: Int
+  qualifiedCount: Int
+  persistedCount: Int
+  searchUsedFallback: Boolean
+  enrichedDropped: Int
 }
 
 type JobError {
@@ -691,6 +713,7 @@ type AudioFromR2Result {
 type FamilyMember {
   id: Int!
   userId: String!
+  slug: String
   firstName: String!
   name: String
   ageYears: Int
@@ -1055,6 +1078,59 @@ type DeleteTeacherFeedbackResult {
 }
 
 # ============================================
+# Contact Feedbacks
+# ============================================
+
+type ExtractedIssue {
+  title: String!
+  description: String!
+  category: String!
+  severity: String!
+  recommendations: [String!]
+}
+
+type ContactFeedback {
+  id: Int!
+  contactId: Int!
+  familyMemberId: Int!
+  createdBy: String!
+  subject: String
+  feedbackDate: String!
+  content: String!
+  tags: [String!]
+  source: FeedbackSource
+  extracted: Boolean!
+  extractedIssues: [ExtractedIssue!]
+  createdAt: String!
+  updatedAt: String!
+  contact: Contact
+  familyMember: FamilyMember
+}
+
+input CreateContactFeedbackInput {
+  contactId: Int!
+  familyMemberId: Int!
+  subject: String
+  feedbackDate: String!
+  content: String!
+  tags: [String!]
+  source: FeedbackSource
+}
+
+input UpdateContactFeedbackInput {
+  subject: String
+  feedbackDate: String
+  content: String
+  tags: [String!]
+  source: FeedbackSource
+}
+
+type DeleteContactFeedbackResult {
+  success: Boolean!
+  message: String
+}
+
+# ============================================
 # Contacts & Relationships
 # ============================================
 
@@ -1071,6 +1147,7 @@ enum RelationshipStatus {
 type Contact {
   id: Int!
   createdBy: String!
+  slug: String
   firstName: String!
   lastName: String
   role: String
@@ -1100,6 +1177,7 @@ type Relationship {
 type RelationshipPerson {
   id: Int!
   type: PersonType!
+  slug: String
   firstName: String!
   lastName: String
 }
@@ -1115,6 +1193,7 @@ input CreateContactInput {
 input UpdateContactInput {
   firstName: String
   lastName: String
+  slug: String
   role: String
   ageYears: Int
   notes: String

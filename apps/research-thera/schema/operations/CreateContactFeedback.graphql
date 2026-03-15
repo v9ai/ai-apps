@@ -1,0 +1,16 @@
+mutation CreateContactFeedback($input: CreateContactFeedbackInput!) {
+  createContactFeedback(input: $input) {
+    id
+    contactId
+    familyMemberId
+    createdBy
+    subject
+    feedbackDate
+    content
+    tags
+    source
+    extracted
+    createdAt
+    updatedAt
+  }
+}

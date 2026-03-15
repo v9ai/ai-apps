@@ -1,0 +1,21 @@
+name = "research-pipeline"
+main = "src/entry.py"
+compatibility_date = "2026-02-15"
+compatibility_flags = ["python_workers"]
+
+[vars]
+CLOUDFLARE_ACCOUNT_ID = "a036f50e02431c89170b8f977e982a3d"
+CLOUDFLARE_DATABASE_ID = "52b7dab0-7027-4e9e-ae30-f719bdfff993"
+
+[[d1_databases]]
+binding = "D1"
+database_name = "research-thera-db"
+database_id = "52b7dab0-7027-4e9e-ae30-f719bdfff993"
+remote = true
+
+# Secrets (set via `wrangler secret put`):
+# CLOUDFLARE_D1_TOKEN  (still used as fallback for HTTP API)
+# DEEPSEEK_API_KEY
+# SEMANTIC_SCHOLAR_API_KEY
+# OPENALEX_API_KEY
+# WORKER_AUTH_SECRET

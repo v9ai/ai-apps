@@ -4,11 +4,12 @@
  * Runs the Mastra generateTherapyResearchWorkflow in a durable Trigger.dev task,
  * preventing Vercel serverless timeouts from killing long-running research pipelines.
  *
- * Payload: { jobId, goalId, userId, userEmail }
+ * Payload: { jobId, goalId?, userId, userEmail, feedbackId? }
  *   - jobId:     generation_jobs row ID (already created by the GraphQL resolver)
- *   - goalId:    the therapeutic goal to research
+ *   - goalId:    the therapeutic goal to research (optional — omitted for feedback-based research)
  *   - userId:    Clerk user ID (used as userEmail inside the workflow)
  *   - userEmail: normalized email — the workflow expects this as `userId` param
+ *   - feedbackId: when set, research is generated from feedback content instead of a goal
  */
 
 import { task, logger } from "@trigger.dev/sdk/v3";
@@ -21,13 +22,15 @@ import { d1Tools } from "@/src/db";
 
 export interface GenerateResearchPayload {
   jobId: string;
-  goalId: number;
+  goalId?: number;
   /** Clerk userId — passed through for D1 ownership checks */
   userId: string;
   /** Normalized user email — the workflow uses this as its `userId` field */
   userEmail: string;
   /** When set, research is scoped to this characteristic */
   characteristicId?: number;
+  /** When set, research is generated from feedback content */
+  feedbackId?: number;
 }
 
 // ---------------------------------------------------------------------------
@@ -63,9 +66,9 @@ export const generateResearchTask = task({
       .catch(() => {});
   },
   run: async (payload: GenerateResearchPayload) => {
-    const { jobId, goalId, userEmail, characteristicId } = payload;
+    const { jobId, goalId, userEmail, characteristicId, feedbackId } = payload;
 
-    logger.info("generate-research.started", { jobId, goalId, characteristicId });
+    logger.info("generate-research.started", { jobId, goalId, characteristicId, feedbackId });
 
     // The job row was inserted with status='RUNNING' by the GraphQL resolver.
     // No need to update it here — just run the workflow.
@@ -77,23 +80,34 @@ export const generateResearchTask = task({
         goalId,
         jobId,
         characteristicId,
+        feedbackId,
       },
     });
 
     if (result.status === "success") {
+      const count = result.result?.count ?? 0;
       logger.info("generate-research.succeeded", {
         jobId,
         goalId,
-        count: result.result?.count ?? 0,
+        count,
       });
 
-      await d1Tools.updateGenerationJob(jobId, {
-        status: "SUCCEEDED",
-        progress: 100,
-        result: JSON.stringify(result.result),
-      });
+      if (count > 0) {
+        await d1Tools.updateGenerationJob(jobId, {
+          status: "SUCCEEDED",
+          progress: 100,
+          result: JSON.stringify(result.result),
+        });
+      } else {
+        await d1Tools.updateGenerationJob(jobId, {
+          status: "FAILED",
+          progress: 100,
+          error: JSON.stringify({ message: "No papers met minimum quality thresholds" }),
+          result: JSON.stringify({ count: 0 }),
+        });
+      }
 
-      return { success: true, count: result.result?.count ?? 0 };
+      return { success: true, count };
     } else {
       const reason = `Workflow finished with status: ${result.status}`;
       logger.warn("generate-research.workflow_non_success", {

@@ -9,11 +9,11 @@ export const Relationship: RelationshipResolvers = {
     if (parent.subjectType === "FAMILY_MEMBER") {
       const fm = await d1Tools.getFamilyMember(parent.subjectId);
       if (!fm) return null;
-      return { id: fm.id, type: "FAMILY_MEMBER" as any, firstName: fm.firstName, lastName: fm.name };
+      return { id: fm.id, type: "FAMILY_MEMBER" as any, slug: fm.slug, firstName: fm.firstName, lastName: fm.name };
     } else {
       const contact = await d1Tools.getContact(parent.subjectId, userEmail);
       if (!contact) return null;
-      return { id: contact.id, type: "CONTACT" as any, firstName: contact.firstName, lastName: contact.lastName };
+      return { id: contact.id, type: "CONTACT" as any, slug: contact.slug, firstName: contact.firstName, lastName: contact.lastName };
     }
   },
   related: async (parent, _args, ctx) => {
@@ -23,11 +23,11 @@ export const Relationship: RelationshipResolvers = {
     if (parent.relatedType === "FAMILY_MEMBER") {
       const fm = await d1Tools.getFamilyMember(parent.relatedId);
       if (!fm) return null;
-      return { id: fm.id, type: "FAMILY_MEMBER" as any, firstName: fm.firstName, lastName: fm.name };
+      return { id: fm.id, type: "FAMILY_MEMBER" as any, slug: fm.slug, firstName: fm.firstName, lastName: fm.name };
     } else {
       const contact = await d1Tools.getContact(parent.relatedId, userEmail);
       if (!contact) return null;
-      return { id: contact.id, type: "CONTACT" as any, firstName: contact.firstName, lastName: contact.lastName };
+      return { id: contact.id, type: "CONTACT" as any, slug: contact.slug, firstName: contact.firstName, lastName: contact.lastName };
     }
   },
 };

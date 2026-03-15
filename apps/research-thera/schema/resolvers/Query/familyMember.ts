@@ -11,7 +11,16 @@ export const familyMember: NonNullable<QueryResolvers['familyMember']> = async (
     throw new Error("Authentication required");
   }
 
-  const member = await d1Tools.getFamilyMember(args.id);
+  let member;
+
+  if (args.slug) {
+    member = await d1Tools.getFamilyMemberBySlug(args.slug, userEmail);
+  } else if (args.id) {
+    member = await d1Tools.getFamilyMember(args.id);
+  } else {
+    throw new Error("Either id or slug must be provided");
+  }
+
   if (!member) return null;
 
   return {

@@ -1,0 +1,16 @@
+mutation UpdateContactFeedback($id: Int!, $input: UpdateContactFeedbackInput!) {
+  updateContactFeedback(id: $id, input: $input) {
+    id
+    contactId
+    familyMemberId
+    createdBy
+    subject
+    feedbackDate
+    content
+    tags
+    source
+    extracted
+    createdAt
+    updatedAt
+  }
+}

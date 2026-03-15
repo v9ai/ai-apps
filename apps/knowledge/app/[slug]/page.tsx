@@ -33,7 +33,7 @@ export default async function LessonPage({ params }: { params: Promise<{ slug: s
   const meta = getCategoryMeta(lesson.category);
   const references = await getReferencesForLesson(slug);
   const related = await getRelatedLessons(slug);
-  const audioMeta = await getAudioMeta(slug);
+  const audioMeta = await getAudioMeta(lesson.fileSlug);
 
   // Same-category lessons for progress indicator
   const categoryLessons = allLessons.filter((l) => l.category === lesson.category);

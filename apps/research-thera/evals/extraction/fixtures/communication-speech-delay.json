@@ -1,0 +1,32 @@
+{
+  "id": "communication-speech-delay",
+  "user_prompt": "Analyze this feedback and extract all issues:\n\nSubject: Speech and Language\nSource: EMAIL\nDate: 2026-03-10\n\nContent:\nI wanted to flag some observations about Max's language development. At age 4, he uses primarily 2-word phrases ('want juice', 'go outside') while his peers are forming full sentences of 5-6 words. He has difficulty being understood by adults outside the family \u2014 I estimate about 50% of his speech is intelligible to me compared to the expected 90%+ at this age. He frequently substitutes sounds (saying 'tat' for 'cat', 'wun' for 'run'). He follows simple one-step instructions but gets confused with two-step directions like 'put the book away and then sit down'. He compensates well with gestures and pointing and seems cognitively on track in non-verbal activities like puzzles and building.",
+  "issues": [
+    {
+      "title": "Limited expressive language",
+      "description": "At age 4, Max uses primarily 2-word phrases (e.g., 'want juice', 'go outside') while peers are forming full sentences of 5\u20136 words.",
+      "category": "communication",
+      "severity": "high"
+    },
+    {
+      "title": "Reduced speech intelligibility",
+      "description": "Approximately 50% of Max's speech is intelligible to adults outside the family, compared to the expected 90%+ intelligibility for a 4-year-old.",
+      "category": "communication",
+      "severity": "high"
+    },
+    {
+      "title": "Phonological errors",
+      "description": "Max frequently substitutes sounds, such as saying 'tat' for 'cat' and 'wun' for 'run'.",
+      "category": "communication",
+      "severity": "medium"
+    },
+    {
+      "title": "Difficulty following multi-step instructions",
+      "description": "Max follows simple one-step instructions but becomes confused with two-step directions, e.g., 'put the book away and then sit down'.",
+      "category": "communication",
+      "severity": "medium"
+    }
+  ],
+  "model": "qwen-plus",
+  "generated_at": "2026-03-13T22:23:44.720153+00:00"
+}

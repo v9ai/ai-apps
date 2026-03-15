@@ -1,0 +1,143 @@
+{
+  "timestamp": "2026-03-13T22:24:23.704290+00:00",
+  "model": "qwen-plus",
+  "judge": "deepseek-chat",
+  "threshold": 0.7,
+  "summary": {
+    "total": 20,
+    "passed": 19,
+    "failed": 1
+  },
+  "results": [
+    {
+      "case_id": "academic-math-focus",
+      "issue_count": 4,
+      "metrics": {
+        "issue_completeness": {
+          "score": 1.0,
+          "passed": true,
+          "reason": "The output captures all significant concerns from the input: focus/distraction, multiplication table struggles, frustration with independent work, and the verbal vs. written performance discrepancy. Each core issue is meaningfully represented, with no major omissions. The splitting of 'frustration' and 'discrepancy' into separate issues is acceptable as the core concerns are still captured."
+        },
+        "category_accuracy": {
+          "score": 1.0,
+          "passed": true,
+          "reason": "All extracted issues are assigned valid categories that match their primary nature. Focus difficulty is correctly behavioral, multiplication recall is academic, frustration is emotional, and performance discrepancy is academic. No miscategorizations or invalid categories are present."
+        },
+        "severity_calibration": {
+          "score": 0.4,
+          "passed": false,
+          "reason": "All four issues are rated 'medium', but the Input describes 'significant difficulty focusing' and 'visible frustration \u2014 sighing, putting his head down, and sometimes refusing to attempt the problems,' which suggests impacts on daily functioning and emotional regulation that could warrant a 'high' severity for at least the focus and frustration issues. The 'medium' ratings for all items show a pattern of under-rating relative to the described impact, failing to reserve 'high' for significant impacts as required in step 1."
+        },
+        "clinical_language": {
+          "score": 1.0,
+          "passed": true,
+          "reason": "The output uses professional terminology appropriately, maintains objectivity, and avoids subjective language. Titles and descriptions are clear and non-judgmental, suitable for both parents and professionals. It clearly distinguishes observed behaviors from interpretations, and does not introduce unsupported diagnostic labels. All four evaluation steps are fully satisfied."
+        }
+      }
+    },
+    {
+      "case_id": "behavioral-social-playground",
+      "issue_count": 5,
+      "metrics": {
+        "issue_completeness": {
+          "score": 1.0,
+          "passed": true,
+          "reason": "The output captures all significant concerns from the input: difficulty joining group activities, challenging responses to invitations, physical aggression, difficulty reading social cues, and anxiety during transitions. No major concerns are missing. The splitting of 'difficulty joining group games' and 'challenging responses to invitations' is acceptable as it still captures the core issues."
+        },
+        "category_accuracy": {
+          "score": 1.0,
+          "passed": true,
+          "reason": "All extracted issues are assigned valid categories that match their primary nature. The 'social' category correctly captures difficulty joining groups and recognizing social cues; 'behavioral' fits physical aggression and challenging responses; 'emotional' fits anxiety during transitions. No invalid categories are used, and 'health' is not misapplied."
+        },
+        "severity_calibration": {
+          "score": 1.0,
+          "passed": true,
+          "reason": "The severity ratings align well with the described impacts: 'high' is correctly reserved for physical aggression (safety impact), 'medium' for noticeable but manageable difficulties (social/behavioral issues), and 'low' is not used, which is appropriate as no minor concerns were described. No systematic over- or under-rating is present."
+        },
+        "clinical_language": {
+          "score": 1.0,
+          "passed": true,
+          "reason": "The output uses professional terminology appropriately and maintains objectivity. Titles and descriptions are clear and non-judgmental, suitable for parents and professionals. It clearly distinguishes observed behaviors from interpretations, avoiding conflation. No unsupported diagnostic labels are introduced."
+        }
+      }
+    },
+    {
+      "case_id": "emotional-separation-anxiety",
+      "issue_count": 5,
+      "metrics": {
+        "issue_completeness": {
+          "score": 1.0,
+          "passed": true,
+          "reason": "The output captures all significant concerns from the input: intense morning distress, frequent questioning about mother, nightmares, morning stomach aches, and increased clinginess at home. Each is meaningfully represented with appropriate categories and severities. No major concerns are missing, and splitting the input into separate issues is acceptable per step 4."
+        },
+        "category_accuracy": {
+          "score": 1.0,
+          "passed": true,
+          "reason": "All extracted issues are assigned a category. The primary nature of each issue is correctly matched to the defined categories: intense distress, frequent questioning, nightmares, and clinginess are appropriately categorized as 'emotional'. The stomach aches are physical symptoms, correctly categorized as 'health'. No invalid categories are used."
+        },
+        "severity_calibration": {
+          "score": 1.0,
+          "passed": true,
+          "reason": "Severity ratings align well with described impacts: 'high' for intense, prolonged distress affecting daily routine; 'medium' for noticeable but manageable issues like frequent questioning, nightmares, stomach aches, and clinginess; no systematic over- or under-rating observed."
+        },
+        "clinical_language": {
+          "score": 1.0,
+          "passed": true,
+          "reason": "The output uses professional terminology appropriately and maintains objectivity. Titles and descriptions are clear and non-judgmental, suitable for both parents and professionals. It clearly distinguishes observed behaviors from interpretations, avoiding conflation. No unsupported diagnostic labels are introduced."
+        }
+      }
+    },
+    {
+      "case_id": "communication-speech-delay",
+      "issue_count": 4,
+      "metrics": {
+        "issue_completeness": {
+          "score": 1.0,
+          "passed": true,
+          "reason": "The output accurately captures all four core concerns from the input: limited expressive language, reduced speech intelligibility, phonological errors, and difficulty with multi-step instructions. Each issue is meaningfully represented with appropriate detail and severity. No significant concerns are missing."
+        },
+        "category_accuracy": {
+          "score": 1.0,
+          "passed": true,
+          "reason": "All extracted issues are correctly assigned to the 'communication' category, which matches their primary nature (speech, language, intelligibility, following verbal instructions). No miscategorizations or invalid categories are present. The 'health' category is appropriately not used, as issues are not physical/motor-related."
+        },
+        "severity_calibration": {
+          "score": 1.0,
+          "passed": true,
+          "reason": "The output correctly identifies all issues from the input. Severity ratings are well-aligned: 'high' is appropriately reserved for significant impacts on daily functioning (limited expressive language and reduced intelligibility). 'Medium' correctly corresponds to noticeable but manageable difficulties (phonological errors and difficulty with multi-step instructions). There is no systematic over- or under-rating."
+        },
+        "clinical_language": {
+          "score": 1.0,
+          "passed": true,
+          "reason": "The output uses professional terminology appropriately and maintains objectivity. Titles and descriptions are clear and non-judgmental, suitable for both parents and professionals. It clearly distinguishes observed behaviors from interpretations, and avoids introducing unsupported diagnostic labels, aligning well with all evaluation steps."
+        }
+      }
+    },
+    {
+      "case_id": "multi-domain-complex",
+      "issue_count": 7,
+      "metrics": {
+        "issue_completeness": {
+          "score": 1.0,
+          "passed": true,
+          "reason": "The output captures all significant concerns from the input: reading below grade level, writing disorganization/letter reversals, social struggles in large groups, low self-esteem, emotional sensitivity to correction, awkward pencil grip, and fatigue/avoidance in PE. No major concerns are missing. However, the input's 'Math is a relative strength' is not an issue and correctly omitted. The output splits the emotional concerns into two separate issues, which is acceptable per step 4."
+        },
+        "category_accuracy": {
+          "score": 1.0,
+          "passed": true,
+          "reason": "All extracted issues are assigned categories that match their primary nature. Reading and writing issues are correctly academic; social struggles are social; low self-esteem and crying are emotional; pencil grip and fatigue are appropriately health (physical/motor). No invalid categories are used, and health is correctly applied to physical issues."
+        },
+        "severity_calibration": {
+          "score": 0.8,
+          "passed": true,
+          "reason": "Most ratings align with the described impacts, but the 'high' severity for low self-esteem is questionable. While it affects emotional well-being, the description does not clearly indicate it significantly impairs daily functioning or safety, which is the threshold for 'high' per step 1. All other ratings appropriately match the input: 'medium' for noticeable but manageable difficulties (reading, writing, social struggles, emotional response, pencil grip, fatigue) and no systematic over/under-rating pattern."
+        },
+        "clinical_language": {
+          "score": 1.0,
+          "passed": true,
+          "reason": "The Actual Output uses professional terminology appropriately, maintains objectivity, and clearly distinguishes observed behaviors from interpretations. It avoids introducing unsupported diagnostic labels and presents issues in a clear, non-judgmental manner suitable for both parents and professionals. All extracted issues are grounded in the Input, with no conflation or subjective language."
+        }
+      }
+    }
+  ]
+}

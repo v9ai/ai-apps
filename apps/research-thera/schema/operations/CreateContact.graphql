@@ -2,6 +2,7 @@ mutation CreateContact($input: CreateContactInput!) {
   createContact(input: $input) {
     id
     createdBy
+    slug
     firstName
     lastName
     role

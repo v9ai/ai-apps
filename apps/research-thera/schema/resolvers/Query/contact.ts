@@ -11,12 +11,22 @@ export const contact: NonNullable<QueryResolvers['contact']> = async (
     throw new Error("Authentication required");
   }
 
-  const item = await d1Tools.getContact(args.id, userEmail);
+  let item;
+
+  if (args.slug) {
+    item = await d1Tools.getContactBySlug(args.slug, userEmail);
+  } else if (args.id) {
+    item = await d1Tools.getContact(args.id, userEmail);
+  } else {
+    throw new Error("Either id or slug must be provided");
+  }
+
   if (!item) return null;
 
   return {
     id: item.id,
     createdBy: item.userId,
+    slug: item.slug,
     firstName: item.firstName,
     lastName: item.lastName,
     role: item.role,

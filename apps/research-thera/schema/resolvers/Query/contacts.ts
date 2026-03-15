@@ -16,6 +16,7 @@ export const contacts: NonNullable<QueryResolvers['contacts']> = async (
   return items.map((item) => ({
     id: item.id,
     createdBy: item.userId,
+    slug: item.slug,
     firstName: item.firstName,
     lastName: item.lastName,
     role: item.role,

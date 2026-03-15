@@ -1,24 +1,21 @@
-import { createClient } from "@supabase/supabase-js";
+import { neon } from "@neondatabase/serverless";
+import { drizzle } from "drizzle-orm/neon-http";
+import { eq, sql } from "drizzle-orm";
 import fs from "fs";
 import path from "path";
-import { CATEGORIES, CATEGORY_META } from "../lib/articles";
+import { CATEGORIES, CATEGORY_META, LESSON_NUMBER } from "../lib/articles";
 import { extractReferences, normalizeTitle } from "../lib/papers";
 import type { Reference } from "../lib/papers";
-import type { Database } from "../lib/supabase/database.types";
+import * as schema from "../src/db/schema";
 
-const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
-const supabaseKey =
-  process.env.SUPABASE_SERVICE_ROLE_KEY ||
-  process.env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY;
-
-if (!supabaseUrl || !supabaseKey) {
-  console.error(
-    "Missing NEXT_PUBLIC_SUPABASE_URL and SUPABASE_SERVICE_ROLE_KEY (or NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY)",
-  );
+const databaseUrl = process.env.DATABASE_URL;
+if (!databaseUrl) {
+  console.error("Missing DATABASE_URL");
   process.exit(1);
 }
 
-const supabase = createClient<Database>(supabaseUrl, supabaseKey);
+const client = neon(databaseUrl);
+const db = drizzle(client, { schema });
 
 const CONTENT_DIR = path.join(process.cwd(), "content");
 
@@ -96,28 +93,6 @@ function splitSections(markdown: string): Section[] {
   return sections;
 }
 
-function throwOnError<T>(
-  result: { data: T | null; error: unknown },
-  label: string,
-): NonNullable<T> {
-  if (result.error) {
-    console.error(`Error seeding ${label}:`, result.error);
-    throw result.error;
-  }
-  if (!result.data) throw new Error(`No data returned for ${label}`);
-  return result.data as NonNullable<T>;
-}
-
-function checkError(
-  result: { error: unknown },
-  label: string,
-): void {
-  if (result.error) {
-    console.error(`Error seeding ${label}:`, result.error);
-    throw result.error;
-  }
-}
-
 /* ── main ───────────────────────────────────────────────────────── */
 
 async function seed() {
@@ -125,11 +100,11 @@ async function seed() {
 
   // ── 0. Clean existing data (order respects FK constraints) ────
   console.log("Cleaning existing data...");
-  await supabase.from("paper_citations").delete().not("paper_id", "is", null);
-  await supabase.from("paper_sections").delete().not("id", "is", null);
-  await supabase.from("citations").delete().not("id", "is", null);
-  await supabase.from("papers").delete().not("id", "is", null);
-  await supabase.from("categories").delete().not("id", "is", null);
+  await db.delete(schema.paperCitations);
+  await db.delete(schema.paperSections);
+  await db.delete(schema.citations);
+  await db.delete(schema.papers);
+  await db.delete(schema.categories);
 
   // ── 1. Seed categories ───────────────────────────────────────
   console.log("Seeding categories...");
@@ -140,18 +115,18 @@ async function seed() {
       slug: meta.slug,
       icon: meta.icon,
       description: meta.description,
-      gradient_from: meta.gradient[0],
-      gradient_to: meta.gradient[1],
-      paper_range_lo: lo,
-      paper_range_hi: hi,
-      sort_order: i,
+      gradientFrom: meta.gradient[0],
+      gradientTo: meta.gradient[1],
+      paperRangeLo: lo,
+      paperRangeHi: hi,
+      sortOrder: i,
     };
   });
 
-  const cats = throwOnError(
-    await supabase.from("categories").insert(categoryRows).select(),
-    "categories",
-  );
+  const cats = await db
+    .insert(schema.categories)
+    .values(categoryRows)
+    .returning();
   const catIdByName = new Map(cats.map((c) => [c.name, c.id]));
   console.log(`  ${cats.length} categories`);
 
@@ -159,14 +134,13 @@ async function seed() {
   console.log("Seeding papers...");
   const files = fs
     .readdirSync(CONTENT_DIR)
-    .filter((f) => f.startsWith("agent-") && f.endsWith(".md"))
+    .filter((f) => f.endsWith(".md"))
     .sort();
 
   const fileContents = new Map<string, string>();
   const paperRows = files.map((file) => {
     const slug = file.replace(/\.md$/, "");
-    const numMatch = slug.match(/^agent-(\d+)/);
-    const number = numMatch ? parseInt(numMatch[1], 10) : 0;
+    const number = LESSON_NUMBER[slug] ?? 0;
     const raw = fs.readFileSync(path.join(CONTENT_DIR, file), "utf-8");
     fileContents.set(slug, raw);
 
@@ -179,45 +153,44 @@ async function seed() {
       slug,
       number,
       title,
-      category_id: catIdByName.get(categoryName)!,
-      word_count: wordCount,
-      reading_time_min: readingTimeMin,
+      categoryId: catIdByName.get(categoryName)!,
+      wordCount,
+      readingTimeMin,
       content: raw,
     };
   });
 
-  const papers = throwOnError(
-    await supabase.from("papers").insert(paperRows).select("id, slug"),
-    "papers",
-  );
-  const paperIdBySlug = new Map(papers.map((p) => [p.slug, p.id]));
-  console.log(`  ${papers.length} papers`);
+  const insertedPapers = await db
+    .insert(schema.papers)
+    .values(paperRows)
+    .returning({ id: schema.papers.id, slug: schema.papers.slug });
+  const paperIdBySlug = new Map(insertedPapers.map((p) => [p.slug, p.id]));
+  console.log(`  ${insertedPapers.length} papers`);
 
   // ── 3. Seed paper_sections ───────────────────────────────────
   console.log("Seeding paper sections...");
-  const allSections: Database["public"]["Tables"]["paper_sections"]["Insert"][] = [];
+  const allSections: (typeof schema.paperSections.$inferInsert)[] = [];
 
   for (const [slug, raw] of fileContents) {
     const paperId = paperIdBySlug.get(slug)!;
     const sections = splitSections(raw);
     for (let i = 0; i < sections.length; i++) {
       allSections.push({
-        paper_id: paperId,
+        paperId,
         heading: sections[i].heading,
-        heading_level: sections[i].headingLevel,
+        headingLevel: sections[i].headingLevel,
         content: sections[i].content,
-        section_order: i,
-        word_count: sections[i].wordCount,
+        sectionOrder: i,
+        wordCount: sections[i].wordCount,
       });
     }
   }
 
   // Insert in batches of 100
   for (let i = 0; i < allSections.length; i += 100) {
-    checkError(
-      await supabase.from("paper_sections").insert(allSections.slice(i, i + 100)),
-      `paper_sections batch ${i}`,
-    );
+    await db
+      .insert(schema.paperSections)
+      .values(allSections.slice(i, i + 100));
   }
   console.log(`  ${allSections.length} sections`);
 
@@ -244,49 +217,49 @@ async function seed() {
   // Insert citations in batches
   const citationRows = Array.from(citationMap.values()).map(({ ref }) => ({
     title: ref.title,
-    normalized_title: normalizeTitle(ref.title),
+    normalizedTitle: normalizeTitle(ref.title),
     authors: ref.authors ?? null,
     year: ref.year ?? null,
     url: ref.url,
     venue: ref.venue ?? null,
   }));
 
-  const allCitations: { id: string; normalized_title: string; year: number | null }[] = [];
+  const allCitations: { id: string; normalizedTitle: string; year: number | null }[] = [];
   for (let i = 0; i < citationRows.length; i += 100) {
-    const batch = throwOnError(
-      await supabase
-        .from("citations")
-        .insert(citationRows.slice(i, i + 100))
-        .select("id, normalized_title, year"),
-      `citations batch ${i}`,
-    );
+    const batch = await db
+      .insert(schema.citations)
+      .values(citationRows.slice(i, i + 100))
+      .returning({
+        id: schema.citations.id,
+        normalizedTitle: schema.citations.normalizedTitle,
+        year: schema.citations.year,
+      });
     allCitations.push(...batch);
   }
   console.log(`  ${allCitations.length} citations`);
 
   // Build citation ID lookup
   const citationIdMap = new Map(
-    allCitations.map((c) => [`${c.normalized_title}::${c.year ?? 0}`, c.id]),
+    allCitations.map((c) => [`${c.normalizedTitle}::${c.year ?? 0}`, c.id]),
   );
 
   // Build junction rows
   console.log("Seeding paper_citations...");
-  const junctionRows: { paper_id: string; citation_id: string }[] = [];
+  const junctionRows: { paperId: string; citationId: string }[] = [];
   for (const [key, { paperSlugs }] of citationMap) {
     const citationId = citationIdMap.get(key);
     if (!citationId) continue;
     for (const slug of paperSlugs) {
       const paperId = paperIdBySlug.get(slug);
       if (!paperId) continue;
-      junctionRows.push({ paper_id: paperId, citation_id: citationId });
+      junctionRows.push({ paperId, citationId });
     }
   }
 
   for (let i = 0; i < junctionRows.length; i += 100) {
-    checkError(
-      await supabase.from("paper_citations").insert(junctionRows.slice(i, i + 100)),
-      `paper_citations batch ${i}`,
-    );
+    await db
+      .insert(schema.paperCitations)
+      .values(junctionRows.slice(i, i + 100));
   }
   console.log(`  ${junctionRows.length} paper-citation links`);
 
@@ -295,7 +268,7 @@ async function seed() {
   console.log("│ Table                │ Count │");
   console.log("├──────────────────────┼───────┤");
   console.log(`│ categories           │ ${String(cats.length).padStart(5)} │`);
-  console.log(`│ papers               │ ${String(papers.length).padStart(5)} │`);
+  console.log(`│ papers               │ ${String(insertedPapers.length).padStart(5)} │`);
   console.log(`│ paper_sections       │ ${String(allSections.length).padStart(5)} │`);
   console.log(`│ citations            │ ${String(allCitations.length).padStart(5)} │`);
   console.log(`│ paper_citations      │ ${String(junctionRows.length).padStart(5)} │`);

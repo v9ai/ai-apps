@@ -1,0 +1,6 @@
+mutation DeleteContactFeedback($id: Int!) {
+  deleteContactFeedback(id: $id) {
+    success
+    message
+  }
+}

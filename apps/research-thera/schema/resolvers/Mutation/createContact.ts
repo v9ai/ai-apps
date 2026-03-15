@@ -28,6 +28,7 @@ export const createContact: NonNullable<MutationResolvers['createContact']> = as
   return {
     id: item.id,
     createdBy: item.userId,
+    slug: item.slug,
     firstName: item.firstName,
     lastName: item.lastName,
     role: item.role,

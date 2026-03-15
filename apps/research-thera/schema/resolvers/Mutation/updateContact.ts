@@ -14,6 +14,7 @@ export const updateContact: NonNullable<MutationResolvers['updateContact']> = as
   await d1Tools.updateContact(args.id, userEmail, {
     firstName: args.input.firstName ?? undefined,
     lastName: args.input.lastName ?? undefined,
+    slug: args.input.slug ?? undefined,
     role: args.input.role ?? undefined,
     ageYears: args.input.ageYears ?? undefined,
     notes: args.input.notes ?? undefined,
@@ -27,6 +28,7 @@ export const updateContact: NonNullable<MutationResolvers['updateContact']> = as
   return {
     id: item.id,
     createdBy: item.userId,
+    slug: item.slug,
     firstName: item.firstName,
     lastName: item.lastName,
     role: item.role,

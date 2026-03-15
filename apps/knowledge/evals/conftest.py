@@ -95,3 +95,11 @@ def _load_articles() -> list[tuple[str, str]]:
 @pytest.fixture(scope="session")
 def articles() -> list[tuple[str, str]]:
     return _load_articles()
+
+
+@pytest.fixture(scope="session")
+def agent():
+    """Build and return a stateless LangGraph agent for eval runs."""
+    from agent import build_agent
+
+    return build_agent()

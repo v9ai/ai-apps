@@ -5,7 +5,7 @@ use chrono::Utc;
 use research::agent::agent_builder;
 use research::tools::{GetPaperDetail, SearchPapers, SearchToolConfig};
 use research::scholar::SemanticScholarClient;
-use thera_research::d1::{parse_path, D1Client};
+use thera_research::d1::{parse_path, D1Client, TherapyTarget};
 use thera_research::therapy_context::{ResearchOutput, TherapyContext};
 use std::path::PathBuf;
 use tracing::info;
@@ -157,20 +157,41 @@ Evidence levels:
             }
         }
         Commands::Url { path } => {
-            let (family_member_id, characteristic_id) =
-                parse_path(path).with_context(|| format!("parsing path {path:?}"))?;
-            info!(family_member_id, characteristic_id, "Fetching characteristic from D1");
-            let d1 = D1Client::from_env()?;
-            let char = d1.fetch_characteristic(characteristic_id).await?;
-            TherapyContext::from_characteristic_data(
-                char.id,
-                family_member_id,
-                char.category,
-                char.title,
-                char.description,
-                char.severity,
-                char.impairment_domains,
-            )
+            let target = parse_path(path).with_context(|| format!("parsing path {path:?}"))?;
+            
+            match target {
+                TherapyTarget::Characteristic { family_member_id, characteristic_id } => {
+                    info!(family_member_id, characteristic_id, "Fetching characteristic from D1");
+                    let d1 = D1Client::from_env()?;
+                    let char = d1.fetch_characteristic(characteristic_id).await?;
+                    TherapyContext::from_characteristic_data(
+                        char.id,
+                        family_member_id,
+                        char.category,
+                        char.title,
+                        char.description,
+                        char.severity,
+                        char.impairment_domains,
+                    )
+                }
+                TherapyTarget::Feedback { feedback_id, .. } => {
+                    info!(feedback_id, "Fetching contact feedback from D1");
+                    let d1 = D1Client::from_env()?;
+                    let feedback = d1.fetch_contact_feedback(feedback_id).await?;
+                    info!(
+                        family_member_id = feedback.family_member_id,
+                        subject = %feedback.subject,
+                        "Loaded contact feedback"
+                    );
+                    TherapyContext::from_feedback_data(
+                        feedback.id,
+                        feedback.family_member_id,
+                        feedback.subject,
+                        feedback.content,
+                        feedback.tags,
+                    )
+                }
+            }
         }
     };
 
@@ -222,12 +243,23 @@ Evidence levels:
 
     // Persist to D1 when running the Url subcommand
     if let Commands::Url { path } = &cli.command {
-        let (family_member_id, characteristic_id) = parse_path(path)?;
+        let target = parse_path(path)?;
         let json_str = extract_research_json(&insights)
             .context("No JSON block found in agent output — cannot persist to D1")?;
 
         let output: ResearchOutput =
             serde_json::from_str(&json_str).context("Parsing research JSON")?;
+
+        // Resolve family_member_id and characteristic_id based on target type
+        let (family_member_id, characteristic_id) = match &target {
+            TherapyTarget::Characteristic { family_member_id, characteristic_id } => {
+                (*family_member_id, *characteristic_id)
+            }
+            TherapyTarget::Feedback { family_member_id, feedback_id } => {
+                // For feedback, we use feedback_id as the characteristic_id equivalent
+                (*family_member_id, *feedback_id)
+            }
+        };
 
         // Find a goal_id for this family member (required by therapy_research schema)
         let d1 = D1Client::from_env()?;
@@ -282,8 +314,8 @@ Evidence levels:
         }
 
         info!("D1 persist complete: {saved} saved, {skipped} failed");
-        println!("\n✅ Persisted {saved}/{} papers to D1 (characteristic_id={characteristic_id}, goal_id={goal_id})",
-            output.papers.len());
+        println!("\n✅ Persisted {saved}/{} papers to D1 (id={}, goal_id={goal_id})",
+            output.papers.len(), characteristic_id);
     } else if let Some(json) = extract_research_json(&insights) {
         println!("{json}");
     } else {

@@ -1,0 +1,48 @@
+{
+  "id": "anxiety-reduction-teen",
+  "stage": "extract",
+  "paper": {
+    "title": "Cognitive-Behavioral Therapy for Test Anxiety in Adolescents: A Randomized Controlled Trial",
+    "authors": [
+      "Williams, D.",
+      "Lee, E."
+    ],
+    "year": 2024,
+    "journal": "Anxiety Disorders Research",
+    "doi": "10.1234/adr.2024.015",
+    "abstract": "This RCT (N=120) compared CBT with relaxation training for test anxiety in adolescents aged 13-17. The CBT group showed significantly greater reductions in test anxiety (TAI scores: pre=58.3, post=34.7, p<.001) compared to relaxation (pre=57.1, post=45.2). CBT components included cognitive restructuring of catastrophic thoughts, graduated exposure to test-taking situations, and study skills training. Gains maintained at 12-month follow-up. Academic performance improved significantly only in the CBT group."
+  },
+  "prompt": "Extract therapeutic research information from this paper.\n\nTherapeutic Goal: Reduce test anxiety\nGoal Description: Sarah experiences severe anxiety before and during tests, leading to poor performance.\nGoal Type: test_anxiety\n\nPaper:\nTitle: Cognitive-Behavioral Therapy for Test Anxiety in Adolescents: A Randomized Controlled Trial\nAuthors: Williams, D., Lee, E.\nYear: 2024\nJournal: Anxiety Disorders Research\nDOI: 10.1234/adr.2024.015\nAbstract: This RCT (N=120) compared CBT with relaxation training for test anxiety in adolescents aged 13-17. The CBT group showed significantly greater reductions in test anxiety (TAI scores: pre=58.3, post=34.7, p<.001) compared to relaxation (pre=57.1, post=45.2). CBT components included cognitive restructuring of catastrophic thoughts, graduated exposure to test-taking situations, and study skills training. Gains maintained at 12-month follow-up. Academic performance improved significantly only in the CBT group.\n\nCRITICAL: This should be THERAPEUTIC/PSYCHOLOGICAL research for clinical/counseling applications.\n\nExtract:\n1. Key findings (3-5) that are DIRECTLY relevant to the therapeutic goal\n2. Specific therapeutic techniques mentioned (e.g., CBT, exposure therapy, mindfulness)\n3. Evidence level (meta-analysis > RCT > cohort > case-study > review)\n4. Relevance score (0-1) based on how well it addresses the THERAPEUTIC goal\n\nRELEVANCE SCORING RUBRIC (be strict):\n- 1.0: Directly studies the exact behavior/condition in the therapeutic goal in the same population\n- 0.8: Studies the same condition in a closely related population\n- 0.6: Studies an adjacent condition using the same modality for the goal's population\n- 0.4: Same modality but different condition or population\n- 0.2: General clinical psychology with no specific relevance to this goal\n- 0.1 or below: NOT about the specific clinical domain of this goal\n\nSTRICT FILTERING:\n- Score 0.1 or lower if paper is about: forensic interviews, legal proceedings, homework completion, academic achievement, adult populations (when goal is for a child), family therapy engagement (unless directly relevant)\n- Score 0.1 or lower if NOT about the specific clinical domain of the therapeutic goal\n- Score 0.8+ ONLY if directly studying the specific intervention for the goal type and population\n- Population mismatch: reduce score by 0.3 if study population age does not match patient age\n- Only extract findings EXPLICITLY stated in the abstract\n- Do not infer or extrapolate beyond what is written\n- Rate your extraction confidence honestly\n\nReturn JSON with these exact fields:\n- therapeuticGoalType: string\n- title: string\n- authors: string[]\n- year: number | null\n- journal: string | null\n- doi: string | null\n- url: string | null\n- abstract: string | null\n- keyFindings: string[]\n- therapeuticTechniques: string[]\n- evidenceLevel: string | null\n- relevanceScore: number (0-1)\n- extractedBy: string\n- extractionConfidence: number (0-1)",
+  "result": {
+    "therapeuticGoalType": "test_anxiety",
+    "title": "Cognitive-Behavioral Therapy for Test Anxiety in Adolescents: A Randomized Controlled Trial",
+    "authors": [
+      "Williams, D.",
+      "Lee, E."
+    ],
+    "year": 2024,
+    "journal": "Anxiety Disorders Research",
+    "doi": "10.1234/adr.2024.015",
+    "url": null,
+    "abstract": "This RCT (N=120) compared CBT with relaxation training for test anxiety in adolescents aged 13-17. The CBT group showed significantly greater reductions in test anxiety (TAI scores: pre=58.3, post=34.7, p<.001) compared to relaxation (pre=57.1, post=45.2). CBT components included cognitive restructuring of catastrophic thoughts, graduated exposure to test-taking situations, and study skills training. Gains maintained at 12-month follow-up. Academic performance improved significantly only in the CBT group.",
+    "keyFindings": [
+      "CBT group showed significantly greater reductions in test anxiety compared to relaxation training",
+      "CBT components included cognitive restructuring of catastrophic thoughts, graduated exposure to test-taking situations, and study skills training",
+      "Gains from CBT were maintained at 12-month follow-up",
+      "Academic performance improved significantly only in the CBT group"
+    ],
+    "therapeuticTechniques": [
+      "Cognitive-Behavioral Therapy (CBT)",
+      "cognitive restructuring",
+      "graduated exposure",
+      "study skills training",
+      "relaxation training"
+    ],
+    "evidenceLevel": "RCT",
+    "relevanceScore": 0.8,
+    "extractedBy": "assistant",
+    "extractionConfidence": 0.95
+  },
+  "model": "deepseek-chat",
+  "generated_at": "2026-03-14T14:07:08.456314+00:00"
+}

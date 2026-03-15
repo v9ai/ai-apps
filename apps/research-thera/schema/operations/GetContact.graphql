@@ -1,7 +1,8 @@
-query GetContact($id: Int!) {
-  contact(id: $id) {
+query GetContact($id: Int, $slug: String) {
+  contact(id: $id, slug: $slug) {
     id
     createdBy
+    slug
     firstName
     lastName
     role

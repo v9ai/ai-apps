@@ -8,6 +8,8 @@ import    { behaviorObservations as Query_behaviorObservations } from './resolve
 import    { claimCard as Query_claimCard } from './resolvers/Query/claimCard';
 import    { claimCardsForNote as Query_claimCardsForNote } from './resolvers/Query/claimCardsForNote';
 import    { contact as Query_contact } from './resolvers/Query/contact';
+import    { contactFeedback as Query_contactFeedback } from './resolvers/Query/contactFeedback';
+import    { contactFeedbacks as Query_contactFeedbacks } from './resolvers/Query/contactFeedbacks';
 import    { contacts as Query_contacts } from './resolvers/Query/contacts';
 import    { familyMember as Query_familyMember } from './resolvers/Query/familyMember';
 import    { familyMemberCharacteristic as Query_familyMemberCharacteristic } from './resolvers/Query/familyMemberCharacteristic';
@@ -37,6 +39,7 @@ import    { buildClaimCards as Mutation_buildClaimCards } from './resolvers/Muta
 import    { checkNoteClaims as Mutation_checkNoteClaims } from './resolvers/Mutation/checkNoteClaims';
 import    { createBehaviorObservation as Mutation_createBehaviorObservation } from './resolvers/Mutation/createBehaviorObservation';
 import    { createContact as Mutation_createContact } from './resolvers/Mutation/createContact';
+import    { createContactFeedback as Mutation_createContactFeedback } from './resolvers/Mutation/createContactFeedback';
 import    { createFamilyMember as Mutation_createFamilyMember } from './resolvers/Mutation/createFamilyMember';
 import    { createFamilyMemberCharacteristic as Mutation_createFamilyMemberCharacteristic } from './resolvers/Mutation/createFamilyMemberCharacteristic';
 import    { createGoal as Mutation_createGoal } from './resolvers/Mutation/createGoal';
@@ -50,6 +53,7 @@ import    { createUniqueOutcome as Mutation_createUniqueOutcome } from './resolv
 import    { deleteBehaviorObservation as Mutation_deleteBehaviorObservation } from './resolvers/Mutation/deleteBehaviorObservation';
 import    { deleteClaimCard as Mutation_deleteClaimCard } from './resolvers/Mutation/deleteClaimCard';
 import    { deleteContact as Mutation_deleteContact } from './resolvers/Mutation/deleteContact';
+import    { deleteContactFeedback as Mutation_deleteContactFeedback } from './resolvers/Mutation/deleteContactFeedback';
 import    { deleteFamilyMember as Mutation_deleteFamilyMember } from './resolvers/Mutation/deleteFamilyMember';
 import    { deleteFamilyMemberCharacteristic as Mutation_deleteFamilyMemberCharacteristic } from './resolvers/Mutation/deleteFamilyMemberCharacteristic';
 import    { deleteGoal as Mutation_deleteGoal } from './resolvers/Mutation/deleteGoal';
@@ -62,6 +66,7 @@ import    { deleteStory as Mutation_deleteStory } from './resolvers/Mutation/del
 import    { deleteTeacherFeedback as Mutation_deleteTeacherFeedback } from './resolvers/Mutation/deleteTeacherFeedback';
 import    { deleteTherapeuticQuestions as Mutation_deleteTherapeuticQuestions } from './resolvers/Mutation/deleteTherapeuticQuestions';
 import    { deleteUniqueOutcome as Mutation_deleteUniqueOutcome } from './resolvers/Mutation/deleteUniqueOutcome';
+import    { extractContactFeedbackIssues as Mutation_extractContactFeedbackIssues } from './resolvers/Mutation/extractContactFeedbackIssues';
 import    { generateAudio as Mutation_generateAudio } from './resolvers/Mutation/generateAudio';
 import    { generateLongFormText as Mutation_generateLongFormText } from './resolvers/Mutation/generateLongFormText';
 import    { generateOpenAIAudio as Mutation_generateOpenAIAudio } from './resolvers/Mutation/generateOpenAIAudio';
@@ -77,6 +82,7 @@ import    { unshareFamilyMember as Mutation_unshareFamilyMember } from './resolv
 import    { unshareNote as Mutation_unshareNote } from './resolvers/Mutation/unshareNote';
 import    { updateBehaviorObservation as Mutation_updateBehaviorObservation } from './resolvers/Mutation/updateBehaviorObservation';
 import    { updateContact as Mutation_updateContact } from './resolvers/Mutation/updateContact';
+import    { updateContactFeedback as Mutation_updateContactFeedback } from './resolvers/Mutation/updateContactFeedback';
 import    { updateFamilyMember as Mutation_updateFamilyMember } from './resolvers/Mutation/updateFamilyMember';
 import    { updateFamilyMemberCharacteristic as Mutation_updateFamilyMemberCharacteristic } from './resolvers/Mutation/updateFamilyMemberCharacteristic';
 import    { updateGoal as Mutation_updateGoal } from './resolvers/Mutation/updateGoal';
@@ -101,7 +107,9 @@ import    { ClaimCard } from './resolvers/ClaimCard';
 import    { ClaimProvenance } from './resolvers/ClaimProvenance';
 import    { ClaimScope } from './resolvers/ClaimScope';
 import    { Contact } from './resolvers/Contact';
+import    { ContactFeedback } from './resolvers/ContactFeedback';
 import    { DeleteBehaviorObservationResult } from './resolvers/DeleteBehaviorObservationResult';
+import    { DeleteContactFeedbackResult } from './resolvers/DeleteContactFeedbackResult';
 import    { DeleteContactResult } from './resolvers/DeleteContactResult';
 import    { DeleteFamilyMemberCharacteristicResult } from './resolvers/DeleteFamilyMemberCharacteristicResult';
 import    { DeleteFamilyMemberResult } from './resolvers/DeleteFamilyMemberResult';
@@ -117,6 +125,7 @@ import    { DeleteTeacherFeedbackResult } from './resolvers/DeleteTeacherFeedbac
 import    { DeleteUniqueOutcomeResult } from './resolvers/DeleteUniqueOutcomeResult';
 import    { EvidenceItem } from './resolvers/EvidenceItem';
 import    { EvidenceLocator } from './resolvers/EvidenceLocator';
+import    { ExtractedIssue } from './resolvers/ExtractedIssue';
 import    { FamilyMember } from './resolvers/FamilyMember';
 import    { FamilyMemberCharacteristic } from './resolvers/FamilyMemberCharacteristic';
 import    { FamilyMemberShare } from './resolvers/FamilyMemberShare';
@@ -135,6 +144,7 @@ import    { Note } from './resolvers/Note';
 import    { NoteAccess } from './resolvers/NoteAccess';
 import    { NoteShare } from './resolvers/NoteShare';
 import    { PaperCandidate } from './resolvers/PaperCandidate';
+import    { PipelineDiagnostics } from './resolvers/PipelineDiagnostics';
 import    { Relationship } from './resolvers/Relationship';
 import    { RelationshipPerson } from './resolvers/RelationshipPerson';
 import    { Research } from './resolvers/Research';
@@ -145,8 +155,8 @@ import    { TherapeuticQuestion } from './resolvers/TherapeuticQuestion';
 import    { UniqueOutcome } from './resolvers/UniqueOutcome';
 import    { UserSettings } from './resolvers/UserSettings';
     export const resolvers: Resolvers = {
-      Query: { allNotes: Query_allNotes,allStories: Query_allStories,audioFromR2: Query_audioFromR2,behaviorObservation: Query_behaviorObservation,behaviorObservations: Query_behaviorObservations,claimCard: Query_claimCard,claimCardsForNote: Query_claimCardsForNote,contact: Query_contact,contacts: Query_contacts,familyMember: Query_familyMember,familyMemberCharacteristic: Query_familyMemberCharacteristic,familyMemberCharacteristics: Query_familyMemberCharacteristics,familyMembers: Query_familyMembers,generationJob: Query_generationJob,generationJobs: Query_generationJobs,goal: Query_goal,goalStory: Query_goalStory,goals: Query_goals,journalEntries: Query_journalEntries,journalEntry: Query_journalEntry,mySharedFamilyMembers: Query_mySharedFamilyMembers,mySharedNotes: Query_mySharedNotes,note: Query_note,notes: Query_notes,relationship: Query_relationship,relationships: Query_relationships,research: Query_research,stories: Query_stories,story: Query_story,teacherFeedback: Query_teacherFeedback,teacherFeedbacks: Query_teacherFeedbacks,therapeuticQuestions: Query_therapeuticQuestions,userSettings: Query_userSettings },
-      Mutation: { buildClaimCards: Mutation_buildClaimCards,checkNoteClaims: Mutation_checkNoteClaims,createBehaviorObservation: Mutation_createBehaviorObservation,createContact: Mutation_createContact,createFamilyMember: Mutation_createFamilyMember,createFamilyMemberCharacteristic: Mutation_createFamilyMemberCharacteristic,createGoal: Mutation_createGoal,createJournalEntry: Mutation_createJournalEntry,createNote: Mutation_createNote,createRelationship: Mutation_createRelationship,createStory: Mutation_createStory,createSubGoal: Mutation_createSubGoal,createTeacherFeedback: Mutation_createTeacherFeedback,createUniqueOutcome: Mutation_createUniqueOutcome,deleteBehaviorObservation: Mutation_deleteBehaviorObservation,deleteClaimCard: Mutation_deleteClaimCard,deleteContact: Mutation_deleteContact,deleteFamilyMember: Mutation_deleteFamilyMember,deleteFamilyMemberCharacteristic: Mutation_deleteFamilyMemberCharacteristic,deleteGoal: Mutation_deleteGoal,deleteGoalStory: Mutation_deleteGoalStory,deleteJournalEntry: Mutation_deleteJournalEntry,deleteNote: Mutation_deleteNote,deleteRelationship: Mutation_deleteRelationship,deleteResearch: Mutation_deleteResearch,deleteStory: Mutation_deleteStory,deleteTeacherFeedback: Mutation_deleteTeacherFeedback,deleteTherapeuticQuestions: Mutation_deleteTherapeuticQuestions,deleteUniqueOutcome: Mutation_deleteUniqueOutcome,generateAudio: Mutation_generateAudio,generateLongFormText: Mutation_generateLongFormText,generateOpenAIAudio: Mutation_generateOpenAIAudio,generateResearch: Mutation_generateResearch,generateTherapeuticQuestions: Mutation_generateTherapeuticQuestions,markTeacherFeedbackExtracted: Mutation_markTeacherFeedbackExtracted,refreshClaimCard: Mutation_refreshClaimCard,setNoteVisibility: Mutation_setNoteVisibility,shareFamilyMember: Mutation_shareFamilyMember,shareNote: Mutation_shareNote,unlinkGoalFamilyMember: Mutation_unlinkGoalFamilyMember,unshareFamilyMember: Mutation_unshareFamilyMember,unshareNote: Mutation_unshareNote,updateBehaviorObservation: Mutation_updateBehaviorObservation,updateContact: Mutation_updateContact,updateFamilyMember: Mutation_updateFamilyMember,updateFamilyMemberCharacteristic: Mutation_updateFamilyMemberCharacteristic,updateGoal: Mutation_updateGoal,updateJournalEntry: Mutation_updateJournalEntry,updateNote: Mutation_updateNote,updateRelationship: Mutation_updateRelationship,updateStory: Mutation_updateStory,updateTeacherFeedback: Mutation_updateTeacherFeedback,updateUniqueOutcome: Mutation_updateUniqueOutcome,updateUserSettings: Mutation_updateUserSettings },
+      Query: { allNotes: Query_allNotes,allStories: Query_allStories,audioFromR2: Query_audioFromR2,behaviorObservation: Query_behaviorObservation,behaviorObservations: Query_behaviorObservations,claimCard: Query_claimCard,claimCardsForNote: Query_claimCardsForNote,contact: Query_contact,contactFeedback: Query_contactFeedback,contactFeedbacks: Query_contactFeedbacks,contacts: Query_contacts,familyMember: Query_familyMember,familyMemberCharacteristic: Query_familyMemberCharacteristic,familyMemberCharacteristics: Query_familyMemberCharacteristics,familyMembers: Query_familyMembers,generationJob: Query_generationJob,generationJobs: Query_generationJobs,goal: Query_goal,goalStory: Query_goalStory,goals: Query_goals,journalEntries: Query_journalEntries,journalEntry: Query_journalEntry,mySharedFamilyMembers: Query_mySharedFamilyMembers,mySharedNotes: Query_mySharedNotes,note: Query_note,notes: Query_notes,relationship: Query_relationship,relationships: Query_relationships,research: Query_research,stories: Query_stories,story: Query_story,teacherFeedback: Query_teacherFeedback,teacherFeedbacks: Query_teacherFeedbacks,therapeuticQuestions: Query_therapeuticQuestions,userSettings: Query_userSettings },
+      Mutation: { buildClaimCards: Mutation_buildClaimCards,checkNoteClaims: Mutation_checkNoteClaims,createBehaviorObservation: Mutation_createBehaviorObservation,createContact: Mutation_createContact,createContactFeedback: Mutation_createContactFeedback,createFamilyMember: Mutation_createFamilyMember,createFamilyMemberCharacteristic: Mutation_createFamilyMemberCharacteristic,createGoal: Mutation_createGoal,createJournalEntry: Mutation_createJournalEntry,createNote: Mutation_createNote,createRelationship: Mutation_createRelationship,createStory: Mutation_createStory,createSubGoal: Mutation_createSubGoal,createTeacherFeedback: Mutation_createTeacherFeedback,createUniqueOutcome: Mutation_createUniqueOutcome,deleteBehaviorObservation: Mutation_deleteBehaviorObservation,deleteClaimCard: Mutation_deleteClaimCard,deleteContact: Mutation_deleteContact,deleteContactFeedback: Mutation_deleteContactFeedback,deleteFamilyMember: Mutation_deleteFamilyMember,deleteFamilyMemberCharacteristic: Mutation_deleteFamilyMemberCharacteristic,deleteGoal: Mutation_deleteGoal,deleteGoalStory: Mutation_deleteGoalStory,deleteJournalEntry: Mutation_deleteJournalEntry,deleteNote: Mutation_deleteNote,deleteRelationship: Mutation_deleteRelationship,deleteResearch: Mutation_deleteResearch,deleteStory: Mutation_deleteStory,deleteTeacherFeedback: Mutation_deleteTeacherFeedback,deleteTherapeuticQuestions: Mutation_deleteTherapeuticQuestions,deleteUniqueOutcome: Mutation_deleteUniqueOutcome,extractContactFeedbackIssues: Mutation_extractContactFeedbackIssues,generateAudio: Mutation_generateAudio,generateLongFormText: Mutation_generateLongFormText,generateOpenAIAudio: Mutation_generateOpenAIAudio,generateResearch: Mutation_generateResearch,generateTherapeuticQuestions: Mutation_generateTherapeuticQuestions,markTeacherFeedbackExtracted: Mutation_markTeacherFeedbackExtracted,refreshClaimCard: Mutation_refreshClaimCard,setNoteVisibility: Mutation_setNoteVisibility,shareFamilyMember: Mutation_shareFamilyMember,shareNote: Mutation_shareNote,unlinkGoalFamilyMember: Mutation_unlinkGoalFamilyMember,unshareFamilyMember: Mutation_unshareFamilyMember,unshareNote: Mutation_unshareNote,updateBehaviorObservation: Mutation_updateBehaviorObservation,updateContact: Mutation_updateContact,updateContactFeedback: Mutation_updateContactFeedback,updateFamilyMember: Mutation_updateFamilyMember,updateFamilyMemberCharacteristic: Mutation_updateFamilyMemberCharacteristic,updateGoal: Mutation_updateGoal,updateJournalEntry: Mutation_updateJournalEntry,updateNote: Mutation_updateNote,updateRelationship: Mutation_updateRelationship,updateStory: Mutation_updateStory,updateTeacherFeedback: Mutation_updateTeacherFeedback,updateUniqueOutcome: Mutation_updateUniqueOutcome,updateUserSettings: Mutation_updateUserSettings },
       Subscription: { audioJobStatus: Subscription_audioJobStatus,researchJobStatus: Subscription_researchJobStatus },
       AudioAsset: AudioAsset,
 AudioFromR2Result: AudioFromR2Result,
@@ -160,7 +170,9 @@ ClaimCard: ClaimCard,
 ClaimProvenance: ClaimProvenance,
 ClaimScope: ClaimScope,
 Contact: Contact,
+ContactFeedback: ContactFeedback,
 DeleteBehaviorObservationResult: DeleteBehaviorObservationResult,
+DeleteContactFeedbackResult: DeleteContactFeedbackResult,
 DeleteContactResult: DeleteContactResult,
 DeleteFamilyMemberCharacteristicResult: DeleteFamilyMemberCharacteristicResult,
 DeleteFamilyMemberResult: DeleteFamilyMemberResult,
@@ -176,6 +188,7 @@ DeleteTeacherFeedbackResult: DeleteTeacherFeedbackResult,
 DeleteUniqueOutcomeResult: DeleteUniqueOutcomeResult,
 EvidenceItem: EvidenceItem,
 EvidenceLocator: EvidenceLocator,
+ExtractedIssue: ExtractedIssue,
 FamilyMember: FamilyMember,
 FamilyMemberCharacteristic: FamilyMemberCharacteristic,
 FamilyMemberShare: FamilyMemberShare,
@@ -194,6 +207,7 @@ Note: Note,
 NoteAccess: NoteAccess,
 NoteShare: NoteShare,
 PaperCandidate: PaperCandidate,
+PipelineDiagnostics: PipelineDiagnostics,
 Relationship: Relationship,
 RelationshipPerson: RelationshipPerson,
 Research: Research,

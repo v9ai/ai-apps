@@ -1,0 +1,38 @@
+{
+  "id": "emotional-separation-anxiety",
+  "user_prompt": "Analyze this feedback and extract all issues:\n\nDate: 2026-01-20\n\nContent:\nEmma has been having a very hard time at morning drop-off for the past three weeks. She cries intensely when her mother leaves, clinging to her legs and screaming. The episodes last 20-30 minutes and she is inconsolable during this time. After she calms down, she participates normally in class activities and seems happy. However, she frequently asks teachers 'when is mommy coming?' throughout the day, sometimes 10+ times. She has started having nightmares about school and complains of stomach aches on school mornings. At home, her mother reports she has become very clingy and refuses to sleep alone, which is a regression from previous independence.",
+  "issues": [
+    {
+      "title": "Intense distress during morning drop-off",
+      "description": "Emma cries intensely, clings to her mother's legs, and screams when her mother leaves at morning drop-off; episodes last 20\u201330 minutes and she is inconsolable during this time.",
+      "category": "emotional",
+      "severity": "high"
+    },
+    {
+      "title": "Frequent questioning about mother's return",
+      "description": "Emma asks teachers 'when is mommy coming?' repeatedly throughout the day, sometimes more than 10 times.",
+      "category": "emotional",
+      "severity": "medium"
+    },
+    {
+      "title": "Nightmares related to school",
+      "description": "Emma has started having nightmares about school.",
+      "category": "emotional",
+      "severity": "medium"
+    },
+    {
+      "title": "Morning stomach aches on school days",
+      "description": "Emma complains of stomach aches on school mornings.",
+      "category": "health",
+      "severity": "medium"
+    },
+    {
+      "title": "Increased clinginess at home",
+      "description": "Emma has become very clingy at home, refusing to sleep alone \u2014 a regression from previous independence.",
+      "category": "emotional",
+      "severity": "medium"
+    }
+  ],
+  "model": "qwen-plus",
+  "generated_at": "2026-03-13T22:23:25.571889+00:00"
+}

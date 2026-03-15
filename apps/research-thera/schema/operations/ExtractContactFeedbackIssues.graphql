@@ -1,0 +1,13 @@
+mutation ExtractContactFeedbackIssues($id: Int!) {
+  extractContactFeedbackIssues(id: $id) {
+    id
+    extracted
+    extractedIssues {
+      title
+      description
+      category
+      severity
+      recommendations
+    }
+  }
+}

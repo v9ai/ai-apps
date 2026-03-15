@@ -1,0 +1,35 @@
+query GetContactFeedback($id: Int!) {
+  contactFeedback(id: $id) {
+    id
+    contactId
+    familyMemberId
+    createdBy
+    subject
+    feedbackDate
+    content
+    tags
+    source
+    extracted
+    extractedIssues {
+      title
+      description
+      category
+      severity
+      recommendations
+    }
+    createdAt
+    updatedAt
+    contact {
+      id
+      firstName
+      lastName
+      slug
+    }
+    familyMember {
+      id
+      firstName
+      name
+      slug
+    }
+  }
+}

@@ -30,6 +30,7 @@ export async function listFamilyMembers(userId: string) {
   return result.rows.map((row) => ({
     id: row.id as number,
     userId: row.user_id as string,
+    slug: (row.slug as string) || null,
     firstName: row.first_name as string,
     name: (row.name as string) || null,
     ageYears: (row.age_years as number) || null,
@@ -55,6 +56,7 @@ export async function getFamilyMember(id: number) {
   return {
     id: row.id as number,
     userId: row.user_id as string,
+    slug: (row.slug as string) || null,
     firstName: row.first_name as string,
     name: (row.name as string) || null,
     ageYears: (row.age_years as number) || null,
@@ -70,6 +72,59 @@ export async function getFamilyMember(id: number) {
   };
 }
 
+export async function getFamilyMemberBySlug(slug: string, userId: string) {
+  const result = await d1.execute({
+    sql: `SELECT * FROM family_members WHERE slug = ? AND user_id = ?`,
+    args: [slug, userId],
+  });
+  if (result.rows.length === 0) return null;
+  const row = result.rows[0];
+  return {
+    id: row.id as number,
+    userId: row.user_id as string,
+    slug: (row.slug as string) || null,
+    firstName: row.first_name as string,
+    name: (row.name as string) || null,
+    ageYears: (row.age_years as number) || null,
+    relationship: (row.relationship as string) || null,
+    dateOfBirth: (row.date_of_birth as string) || null,
+    bio: (row.bio as string) || null,
+    email: (row.email as string) || null,
+    phone: (row.phone as string) || null,
+    location: (row.location as string) || null,
+    occupation: (row.occupation as string) || null,
+    createdAt: row.created_at as string,
+    updatedAt: row.updated_at as string,
+  };
+}
+
+function slugify(text: string): string {
+  return text
+    .toLowerCase()
+    .trim()
+    .replace(/[^\w\s-]/g, "")
+    .replace(/[\s_]+/g, "-")
+    .replace(/-+/g, "-")
+    .replace(/^-+|-+$/g, "");
+}
+
+async function generateFamilyMemberSlug(firstName: string, userId: string): Promise<string> {
+  const base = slugify(firstName);
+  if (!base) return `member-${Date.now()}`;
+
+  // Check if base slug is available
+  const existing = await getFamilyMemberBySlug(base, userId);
+  if (!existing) return base;
+
+  // Append numeric suffix on collision
+  for (let i = 2; i < 100; i++) {
+    const candidate = `${base}-${i}`;
+    const check = await getFamilyMemberBySlug(candidate, userId);
+    if (!check) return candidate;
+  }
+  return `${base}-${Date.now()}`;
+}
+
 export async function createFamilyMember(params: {
   userId: string;
   firstName: string;
@@ -83,12 +138,14 @@ export async function createFamilyMember(params: {
   location?: string | null;
   occupation?: string | null;
 }): Promise<number> {
+  const slug = await generateFamilyMemberSlug(params.firstName, params.userId);
   const result = await d1.execute({
-    sql: `INSERT INTO family_members (user_id, first_name, name, age_years, relationship, date_of_birth, bio, email, phone, location, occupation, created_at, updated_at)
-          VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP)
+    sql: `INSERT INTO family_members (user_id, slug, first_name, name, age_years, relationship, date_of_birth, bio, email, phone, location, occupation, created_at, updated_at)
+          VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP)
           RETURNING id`,
     args: [
       params.userId,
+      slug,
       params.firstName,
       params.name ?? null,
       params.ageYears ?? null,
@@ -453,10 +510,11 @@ export async function updateGoal(
 // ============================================
 
 export async function upsertTherapyResearch(
-  goalId: number,
+  goalId: number | null | undefined,
   userId: string,
   research: {
     characteristicId?: number | null;
+    feedbackId?: number | null;
     therapeuticGoalType: string;
     title: string;
     authors: string[];
@@ -474,23 +532,29 @@ export async function upsertTherapyResearch(
   },
 ) {
   // Check if exists by DOI or title
+  // When goalId is null, deduplicate by title/DOI globally (or by feedbackId if available)
   let existingId: number | null = null;
 
+  const dedupCol = goalId != null ? "goal_id" : (research.feedbackId != null ? "feedback_id" : null);
+  const dedupVal = goalId != null ? goalId : (research.feedbackId != null ? research.feedbackId : null);
+
   if (research.doi) {
-    const checkDoi = await d1.execute({
-      sql: `SELECT id FROM therapy_research WHERE goal_id = ? AND doi = ?`,
-      args: [goalId, research.doi],
-    });
+    const sql = dedupCol
+      ? `SELECT id FROM therapy_research WHERE ${dedupCol} = ? AND doi = ?`
+      : `SELECT id FROM therapy_research WHERE goal_id IS NULL AND doi = ?`;
+    const args = dedupCol ? [dedupVal, research.doi] : [research.doi];
+    const checkDoi = await d1.execute({ sql, args });
     if (checkDoi.rows.length > 0) {
       existingId = checkDoi.rows[0].id as number;
     }
   }
 
   if (!existingId) {
-    const checkTitle = await d1.execute({
-      sql: `SELECT id FROM therapy_research WHERE goal_id = ? AND title = ?`,
-      args: [goalId, research.title],
-    });
+    const sql = dedupCol
+      ? `SELECT id FROM therapy_research WHERE ${dedupCol} = ? AND title = ?`
+      : `SELECT id FROM therapy_research WHERE goal_id IS NULL AND title = ?`;
+    const args = dedupCol ? [dedupVal, research.title] : [research.title];
+    const checkTitle = await d1.execute({ sql, args });
     if (checkTitle.rows.length > 0) {
       existingId = checkTitle.rows[0].id as number;
     }
@@ -524,8 +588,10 @@ export async function upsertTherapyResearch(
   if (existingId) {
     // Update existing
     await d1.execute({
-      sql: `UPDATE therapy_research 
-            SET therapeutic_goal_type = ?,
+      sql: `UPDATE therapy_research
+            SET feedback_id = ?,
+                characteristic_id = ?,
+                therapeutic_goal_type = ?,
                 authors = ?,
                 year = ?,
                 journal = ?,
@@ -541,6 +607,8 @@ export async function upsertTherapyResearch(
                 updated_at = datetime('now')
             WHERE id = ?`,
       args: [
+        research.feedbackId ?? null,
+        research.characteristicId ?? null,
         research.therapeuticGoalType,
         authorsJson,
         research.year || null,
@@ -562,13 +630,14 @@ export async function upsertTherapyResearch(
     // Insert new
     const result = await d1.execute({
       sql: `INSERT INTO therapy_research (
-              goal_id, characteristic_id, therapeutic_goal_type, title, authors, year, journal, doi, url,
+              goal_id, feedback_id, characteristic_id, therapeutic_goal_type, title, authors, year, journal, doi, url,
               abstract, key_findings, therapeutic_techniques, evidence_level,
               relevance_score, extracted_by, extraction_confidence
-            ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+            ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
             RETURNING id`,
       args: [
-        goalId,
+        goalId ?? null,
+        research.feedbackId ?? null,
         research.characteristicId ?? null,
         research.therapeuticGoalType,
         research.title,
@@ -593,11 +662,14 @@ export async function upsertTherapyResearch(
   }
 }
 
-export async function listTherapyResearch(goalId?: number, characteristicId?: number) {
+export async function listTherapyResearch(goalId?: number, characteristicId?: number, feedbackId?: number) {
   let sql = `SELECT * FROM therapy_research WHERE `;
   const args: any[] = [];
 
-  if (characteristicId != null && goalId != null) {
+  if (feedbackId != null) {
+    sql += `feedback_id = ?`;
+    args.push(feedbackId);
+  } else if (characteristicId != null && goalId != null) {
     sql += `(characteristic_id = ? OR goal_id = ?)`;
     args.push(characteristicId, goalId);
   } else if (characteristicId != null) {
@@ -616,7 +688,8 @@ export async function listTherapyResearch(goalId?: number, characteristicId?: nu
 
   return result.rows.map((row) => ({
     id: row.id as number,
-    goalId: row.goal_id as number,
+    goalId: (row.goal_id as number) || null,
+    feedbackId: (row.feedback_id as number) || null,
     characteristicId: (row.characteristic_id as number) || null,
     therapeuticGoalType: row.therapeutic_goal_type as string,
     title: row.title as string,
@@ -1210,17 +1283,32 @@ export async function deleteStory(storyId: number, createdBy: string) {
 // Generation Jobs
 // ============================================
 
+/**
+ * Mark RUNNING jobs older than `minutes` as FAILED so they don't block new runs.
+ */
+export async function cleanupStaleJobs(minutes = 15): Promise<void> {
+  await d1.execute({
+    sql: `UPDATE generation_jobs
+           SET status = 'FAILED',
+               error = '{"message":"Job timed out — no progress updates received"}',
+               updated_at = datetime('now')
+         WHERE status = 'RUNNING'
+           AND updated_at < datetime('now', '-' || ? || ' minutes')`,
+    args: [minutes],
+  });
+}
+
 export async function createGenerationJob(
   id: string,
   userId: string,
   type: "AUDIO" | "RESEARCH" | "QUESTIONS" | "LONGFORM",
-  goalId: number,
+  goalId?: number | null,
   storyId?: number,
 ) {
   await d1.execute({
     sql: `INSERT INTO generation_jobs (id, user_id, type, goal_id, story_id, status, progress)
           VALUES (?, ?, ?, ?, ?, 'RUNNING', 0)`,
-    args: [id, userId, type, goalId, storyId || null],
+    args: [id, userId, type, goalId ?? null, storyId || null],
   });
 }
 
@@ -2215,6 +2303,7 @@ export async function getContactsForUser(userId: string) {
   return result.rows.map((row) => ({
     id: row.id as number,
     userId: row.user_id as string,
+    slug: (row.slug as string) || null,
     firstName: row.first_name as string,
     lastName: (row.last_name as string) || null,
     role: (row.role as string) || null,
@@ -2235,6 +2324,7 @@ export async function getContact(id: number, userId: string) {
   return {
     id: row.id as number,
     userId: row.user_id as string,
+    slug: (row.slug as string) || null,
     firstName: row.first_name as string,
     lastName: (row.last_name as string) || null,
     role: (row.role as string) || null,
@@ -2243,6 +2333,42 @@ export async function getContact(id: number, userId: string) {
     createdAt: row.created_at as string,
     updatedAt: row.updated_at as string,
   };
+}
+
+export async function getContactBySlug(slug: string, userId: string) {
+  const result = await d1.execute({
+    sql: `SELECT * FROM contacts WHERE slug = ? AND user_id = ?`,
+    args: [slug, userId],
+  });
+  if (result.rows.length === 0) return null;
+  const row = result.rows[0];
+  return {
+    id: row.id as number,
+    userId: row.user_id as string,
+    slug: (row.slug as string) || null,
+    firstName: row.first_name as string,
+    lastName: (row.last_name as string) || null,
+    role: (row.role as string) || null,
+    ageYears: (row.age_years as number) || null,
+    notes: (row.notes as string) || null,
+    createdAt: row.created_at as string,
+    updatedAt: row.updated_at as string,
+  };
+}
+
+async function generateContactSlug(firstName: string, userId: string): Promise<string> {
+  const base = slugify(firstName);
+  if (!base) return `contact-${Date.now()}`;
+
+  const existing = await getContactBySlug(base, userId);
+  if (!existing) return base;
+
+  for (let i = 2; i < 100; i++) {
+    const candidate = `${base}-${i}`;
+    const check = await getContactBySlug(candidate, userId);
+    if (!check) return candidate;
+  }
+  return `${base}-${Date.now()}`;
 }
 
 export async function createContact(params: {
@@ -2261,12 +2387,14 @@ export async function createContact(params: {
       ? params.ageYears
       : null;
 
+  const slug = await generateContactSlug(params.firstName, params.userId);
   const result = await d1.execute({
-    sql: `INSERT INTO contacts (user_id, first_name, last_name, role, age_years, notes, created_at, updated_at)
-          VALUES (?, ?, ?, ?, ?, ?, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP)
+    sql: `INSERT INTO contacts (user_id, slug, first_name, last_name, role, age_years, notes, created_at, updated_at)
+          VALUES (?, ?, ?, ?, ?, ?, ?, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP)
           RETURNING id`,
     args: [
       params.userId,
+      slug,
       params.firstName,
       params.lastName ?? null,
       params.role ?? null,
@@ -2283,6 +2411,7 @@ export async function updateContact(
   updates: {
     firstName?: string;
     lastName?: string | null;
+    slug?: string | null;
     role?: string | null;
     ageYears?: number | null;
     notes?: string | null;
@@ -2294,6 +2423,10 @@ export async function updateContact(
   if (updates.firstName !== undefined) {
     fields.push("first_name = ?");
     args.push(updates.firstName);
+  }
+  if (updates.slug !== undefined && updates.slug !== null) {
+    fields.push("slug = ?");
+    args.push(updates.slug);
   }
   if (updates.lastName !== undefined) {
     fields.push("last_name = ?");
@@ -2661,10 +2794,154 @@ export async function markTeacherFeedbackExtracted(
   });
 }
 
+// ─── Contact Feedbacks ───────────────────────────────────────
+
+function mapContactFeedbackRow(row: Record<string, unknown>) {
+  return {
+    id: row.id as number,
+    contactId: row.contact_id as number,
+    familyMemberId: row.family_member_id as number,
+    userId: row.user_id as string,
+    subject: (row.subject as string) || null,
+    feedbackDate: row.feedback_date as string,
+    content: row.content as string,
+    tags: row.tags ? JSON.parse(row.tags as string) : null,
+    source: (row.source as string) || null,
+    extracted: (row.extracted as number) === 1,
+    extractedIssues: row.extracted_issues
+      ? JSON.parse(row.extracted_issues as string)
+      : null,
+    createdAt: row.created_at as string,
+    updatedAt: row.updated_at as string,
+  };
+}
+
+export async function getContactFeedbacks(
+  contactId: number,
+  familyMemberId: number,
+  userId: string,
+) {
+  const result = await d1.execute({
+    sql: `SELECT * FROM contact_feedbacks WHERE contact_id = ? AND family_member_id = ? AND user_id = ? ORDER BY feedback_date DESC, created_at DESC`,
+    args: [contactId, familyMemberId, userId],
+  });
+  return result.rows.map(mapContactFeedbackRow);
+}
+
+export async function getContactFeedback(id: number, userId: string) {
+  const result = await d1.execute({
+    sql: `SELECT * FROM contact_feedbacks WHERE id = ? AND user_id = ?`,
+    args: [id, userId],
+  });
+  if (result.rows.length === 0) return null;
+  return mapContactFeedbackRow(result.rows[0]);
+}
+
+export async function createContactFeedback(params: {
+  contactId: number;
+  familyMemberId: number;
+  userId: string;
+  subject?: string | null;
+  feedbackDate: string;
+  content: string;
+  tags?: string[] | null;
+  source?: string | null;
+}): Promise<number> {
+  const result = await d1.execute({
+    sql: `INSERT INTO contact_feedbacks (contact_id, family_member_id, user_id, subject, feedback_date, content, tags, source, extracted, created_at, updated_at)
+          VALUES (?, ?, ?, ?, ?, ?, ?, ?, 0, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP)
+          RETURNING id`,
+    args: [
+      params.contactId,
+      params.familyMemberId,
+      params.userId,
+      params.subject ?? null,
+      params.feedbackDate,
+      params.content,
+      params.tags ? JSON.stringify(params.tags) : null,
+      params.source ?? null,
+    ],
+  });
+  return result.rows[0].id as number;
+}
+
+export async function updateContactFeedback(
+  id: number,
+  userId: string,
+  updates: {
+    subject?: string | null;
+    feedbackDate?: string;
+    content?: string;
+    tags?: string[] | null;
+    source?: string | null;
+    extracted?: boolean;
+  },
+) {
+  const fields: string[] = [];
+  const args: any[] = [];
+
+  if (updates.subject !== undefined) {
+    fields.push("subject = ?");
+    args.push(updates.subject);
+  }
+  if (updates.feedbackDate !== undefined) {
+    fields.push("feedback_date = ?");
+    args.push(updates.feedbackDate);
+  }
+  if (updates.content !== undefined) {
+    fields.push("content = ?");
+    args.push(updates.content);
+  }
+  if (updates.tags !== undefined) {
+    fields.push("tags = ?");
+    args.push(updates.tags ? JSON.stringify(updates.tags) : null);
+  }
+  if (updates.source !== undefined) {
+    fields.push("source = ?");
+    args.push(updates.source);
+  }
+  if (updates.extracted !== undefined) {
+    fields.push("extracted = ?");
+    args.push(updates.extracted ? 1 : 0);
+  }
+
+  if (fields.length === 0) return;
+
+  fields.push("updated_at = datetime('now')");
+  args.push(id, userId);
+
+  await d1.execute({
+    sql: `UPDATE contact_feedbacks SET ${fields.join(", ")} WHERE id = ? AND user_id = ?`,
+    args,
+  });
+}
+
+export async function deleteContactFeedback(
+  id: number,
+  userId: string,
+): Promise<void> {
+  await d1.execute({
+    sql: `DELETE FROM contact_feedbacks WHERE id = ? AND user_id = ?`,
+    args: [id, userId],
+  });
+}
+
+export async function saveExtractedIssues(
+  id: number,
+  userId: string,
+  issues: unknown[],
+): Promise<void> {
+  await d1.execute({
+    sql: `UPDATE contact_feedbacks SET extracted_issues = ?, extracted = 1, updated_at = datetime('now') WHERE id = ? AND user_id = ?`,
+    args: [JSON.stringify(issues), id, userId],
+  });
+}
+
 export const d1Tools = {
   // Family Members
   listFamilyMembers,
   getFamilyMember,
+  getFamilyMemberBySlug,
   createFamilyMember,
   updateFamilyMember,
   deleteFamilyMember,
@@ -2701,6 +2978,7 @@ export const d1Tools = {
   createStory,
   updateStory,
   deleteStory,
+  cleanupStaleJobs,
   createGenerationJob,
   updateGenerationJob,
   getGenerationJob,
@@ -2743,6 +3021,7 @@ export const d1Tools = {
   // Contacts
   getContactsForUser,
   getContact,
+  getContactBySlug,
   createContact,
   updateContact,
   deleteContact,
@@ -2759,6 +3038,13 @@ export const d1Tools = {
   updateTeacherFeedback,
   deleteTeacherFeedback,
   markTeacherFeedbackExtracted,
+  // Contact Feedbacks
+  getContactFeedbacks,
+  getContactFeedback,
+  createContactFeedback,
+  updateContactFeedback,
+  deleteContactFeedback,
+  saveExtractedIssues,
   // User Settings
   getUserSettings,
   upsertUserSettings,

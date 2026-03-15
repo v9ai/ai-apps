@@ -353,7 +353,7 @@ function FamilyListContent() {
           {members.map((member) => (
             <Link
               key={member.id}
-              href={`/family/${member.id}`}
+              href={`/family/${member.slug ?? member.id}`}
               style={{ textDecoration: "none", color: "inherit" }}
             >
             <Card
@@ -460,7 +460,7 @@ function FamilyListContent() {
             {sharedMembers.map((member) => (
               <Link
                 key={member.id}
-                href={`/family/${member.id}`}
+                href={`/family/${member.slug ?? member.id}`}
                 style={{ textDecoration: "none", color: "inherit" }}
               >
               <Card

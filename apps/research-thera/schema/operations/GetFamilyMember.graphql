@@ -1,7 +1,8 @@
-query GetFamilyMember($id: Int!) {
-  familyMember(id: $id) {
+query GetFamilyMember($id: Int, $slug: String) {
+  familyMember(id: $id, slug: $slug) {
     id
     userId
+    slug
     firstName
     name
     ageYears

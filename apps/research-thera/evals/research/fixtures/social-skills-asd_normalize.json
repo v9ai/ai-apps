@@ -1,0 +1,38 @@
+{
+  "id": "social-skills-asd",
+  "stage": "normalize",
+  "prompt": "You are a clinical psychologist specializing in translating parent/family-reported therapeutic goals into precise clinical language for academic research queries.\n\nGoal Title: \"Improve eye contact and social interaction\"\nGoal Description: \"Child avoids eye contact and struggles with peer interaction during play.\"\nNotes: Diagnosed ASD level 1 at age 3; Attends speech therapy twice weekly\n\nExtracted Issues from Teacher Feedback:\n- [HIGH] Limited peer interaction initiation: Rarely initiates play with peers, turns away when approached, prefers solitary activities.\n- [HIGH] Consistent eye contact avoidance: Does not make eye contact with adults or children in any context.\n- [MEDIUM] Restricted verbal communication: Uses 3-4 word sentences only with familiar adults, not with peers.\n\nRecent Teacher Feedback:\nMax rarely initiates interaction with peers during free play. When approached, he typically turns away or continues his solitary activity (lining up blocks). He does not make eye contact with adults or children. He has shown improvement in following simple group instructions like 'everyone sit down'. His speech therapist notes he uses 3-4 word sentences but only with familiar adults.\nThe patient is 5 years old. Patient name: Max.\n\nTASK:\n1. Detect the language (ISO 639-1 code, e.g. \"en\", \"ro\", \"fr\")\n2. Translate to English if not already English\n3. Identify the SPECIFIC clinical construct (not generic \"behavioral_change\")\n4. Determine if goal is to INCREASE or REDUCE the behavior\n5. Infer developmental stage from age\n6. Generate 5-10 required keywords that MUST appear in relevant research papers\n7. Generate 5-10 excluded topics that are NOT relevant to this goal\n\nCLINICAL DOMAIN EXAMPLES (be this specific, never use \"behavioral_change\"):\n- \"Face sunete la lectii\" (Romanian: makes sounds during lessons) \u2192 if child context:\n  \"selective_mutism\" OR \"adhd_vocalization\" OR \"vocal_stereotypy_asd\"\n- \"Reduce test anxiety\" \u2192 \"test_anxiety_children\"\n- \"Improve eye contact\" \u2192 \"social_communication_asd\"\n- \"Stop hitting siblings\" \u2192 \"aggression_children\"\n- \"Talk more at school\" \u2192 \"selective_mutism\" or \"school_social_anxiety\"\n\nBEHAVIOR DIRECTION:\n- INCREASE: goal is to produce MORE of a behavior\n- REDUCE: goal is to produce LESS of a behavior\n- MAINTAIN: keep current level\n- UNCLEAR: cannot determine\n\nREQUIRED KEYWORDS: clinical terms that MUST appear in papers for them to be relevant.\nExample for selective mutism: [\"selective mutism\", \"classroom vocalization\", \"speech anxiety\", \"school\", \"children\", \"behavioral intervention\"]\n\nEXCLUDED TOPICS: topics that look related but are NOT relevant.\nExample for selective mutism: [\"homework completion\", \"academic achievement\", \"family therapy engagement\", \"adolescent depression\", \"adult psychotherapy\"]\n\nReturn JSON matching the schema exactly.",
+  "result": {
+    "detected_language": "en",
+    "translated_goal": "Improve eye contact and social interaction",
+    "clinical_construct": "social_communication_asd",
+    "behavior_direction": "INCREASE",
+    "developmental_stage": "early_childhood",
+    "required_keywords": [
+      "autism spectrum disorder",
+      "social communication",
+      "eye contact",
+      "peer interaction",
+      "joint attention",
+      "early intervention",
+      "preschool",
+      "speech therapy",
+      "social skills",
+      "ASD level 1"
+    ],
+    "excluded_topics": [
+      "academic achievement",
+      "test anxiety",
+      "aggression",
+      "sleep problems",
+      "feeding difficulties",
+      "adolescent therapy",
+      "adult psychotherapy",
+      "family therapy engagement",
+      "medication management",
+      "academic accommodations"
+    ]
+  },
+  "model": "deepseek-chat",
+  "generated_at": "2026-03-14T15:57:41.459837+00:00"
+}

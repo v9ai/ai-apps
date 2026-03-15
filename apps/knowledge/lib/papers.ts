@@ -1,5 +1,6 @@
 import fs from "fs";
-import path from "path";
+
+import { resolveContentFile } from "./articles";
 
 export interface Reference {
   title: string;
@@ -8,8 +9,6 @@ export interface Reference {
   url: string;
   venue?: string;
 }
-
-const CONTENT_DIR = path.join(process.cwd(), "content");
 
 /* ── helpers ────────────────────────────────────────────────────── */
 
@@ -292,8 +291,8 @@ const cache = new Map<string, Reference[]>();
 
 export function getReferencesForSlug(slug: string): Reference[] {
   if (cache.has(slug)) return cache.get(slug)!;
-  const file = path.join(CONTENT_DIR, `${slug}.md`);
-  if (!fs.existsSync(file)) return [];
+  const file = resolveContentFile(slug);
+  if (!file || !fs.existsSync(file)) return [];
   const content = fs.readFileSync(file, "utf-8");
   const refs = extractReferences(content);
   cache.set(slug, refs);

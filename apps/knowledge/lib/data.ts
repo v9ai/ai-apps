@@ -16,11 +16,11 @@ export interface SearchResult {
   lessonTitle: string | null;
 }
 
-const USE_SUPABASE = process.env.NEXT_PUBLIC_DATA_SOURCE === "supabase";
+const USE_DB = process.env.NEXT_PUBLIC_DATA_SOURCE === "neon";
 
 export async function getAllLessons(): Promise<Lesson[]> {
-  if (USE_SUPABASE) {
-    const { getAllLessonsFromDb } = await import("./supabase/queries");
+  if (USE_DB) {
+    const { getAllLessonsFromDb } = await import("./db/queries");
     return getAllLessonsFromDb();
   }
   const { getAllLessons: fs } = await import("./articles");
@@ -30,8 +30,8 @@ export async function getAllLessons(): Promise<Lesson[]> {
 export async function getLessonBySlug(
   slug: string,
 ): Promise<LessonWithContent | null> {
-  if (USE_SUPABASE) {
-    const { getLessonBySlugFromDb } = await import("./supabase/queries");
+  if (USE_DB) {
+    const { getLessonBySlugFromDb } = await import("./db/queries");
     return getLessonBySlugFromDb(slug);
   }
   const { getLessonBySlug: fs } = await import("./articles");
@@ -39,8 +39,8 @@ export async function getLessonBySlug(
 }
 
 export async function getGroupedLessons(): Promise<GroupedLessons[]> {
-  if (USE_SUPABASE) {
-    const { getGroupedLessonsFromDb } = await import("./supabase/queries");
+  if (USE_DB) {
+    const { getGroupedLessonsFromDb } = await import("./db/queries");
     return getGroupedLessonsFromDb();
   }
   const { getGroupedLessons: fs } = await import("./articles");
@@ -48,8 +48,8 @@ export async function getGroupedLessons(): Promise<GroupedLessons[]> {
 }
 
 export async function getTotalWordCount(): Promise<number> {
-  if (USE_SUPABASE) {
-    const { getTotalWordCountFromDb } = await import("./supabase/queries");
+  if (USE_DB) {
+    const { getTotalWordCountFromDb } = await import("./db/queries");
     return getTotalWordCountFromDb();
   }
   const { getTotalWordCount: fs } = await import("./articles");
@@ -59,8 +59,8 @@ export async function getTotalWordCount(): Promise<number> {
 export async function getReferencesForLesson(
   slug: string,
 ): Promise<Reference[]> {
-  if (USE_SUPABASE) {
-    const { getReferencesFromDb } = await import("./supabase/queries");
+  if (USE_DB) {
+    const { getReferencesFromDb } = await import("./db/queries");
     return getReferencesFromDb(slug);
   }
   const { getReferencesForSlug } = await import("./papers");
@@ -70,8 +70,8 @@ export async function getReferencesForLesson(
 export async function getRelatedLessons(
   slug: string,
 ): Promise<Lesson[]> {
-  if (USE_SUPABASE) {
-    const { getRelatedLessonsFromDb } = await import("./supabase/queries");
+  if (USE_DB) {
+    const { getRelatedLessonsFromDb } = await import("./db/queries");
     return getRelatedLessonsFromDb(slug);
   }
   // FS fallback: filter by same category

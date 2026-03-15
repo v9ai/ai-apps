@@ -151,6 +151,25 @@ type Contact {
   lastName: String
   notes: String
   role: String
+  slug: String
+  updatedAt: String!
+}
+
+type ContactFeedback {
+  contact: Contact
+  contactId: Int!
+  content: String!
+  createdAt: String!
+  createdBy: String!
+  extracted: Boolean!
+  extractedIssues: [ExtractedIssue!]
+  familyMember: FamilyMember
+  familyMemberId: Int!
+  feedbackDate: String!
+  id: Int!
+  source: FeedbackSource
+  subject: String
+  tags: [String!]
   updatedAt: String!
 }
 
@@ -164,6 +183,16 @@ input CreateBehaviorObservationInput {
   notes: String
   observationType: BehaviorObservationType!
   observedAt: String!
+}
+
+input CreateContactFeedbackInput {
+  contactId: Int!
+  content: String!
+  familyMemberId: Int!
+  feedbackDate: String!
+  source: FeedbackSource
+  subject: String
+  tags: [String!]
 }
 
 input CreateContactInput {
@@ -253,6 +282,16 @@ input CreateSubGoalInput {
   title: String!
 }
 
+input CreateTeacherFeedbackInput {
+  content: String!
+  familyMemberId: Int!
+  feedbackDate: String!
+  source: FeedbackSource
+  subject: String
+  tags: [String!]
+  teacherName: String!
+}
+
 input CreateUniqueOutcomeInput {
   characteristicId: Int!
   description: String!
@@ -260,6 +299,11 @@ input CreateUniqueOutcomeInput {
 }
 
 type DeleteBehaviorObservationResult {
+  message: String
+  success: Boolean!
+}
+
+type DeleteContactFeedbackResult {
   message: String
   success: Boolean!
 }
@@ -321,6 +365,11 @@ type DeleteStoryResult {
   success: Boolean!
 }
 
+type DeleteTeacherFeedbackResult {
+  message: String
+  success: Boolean!
+}
+
 type DeleteUniqueOutcomeResult {
   message: String
   success: Boolean!
@@ -356,6 +405,14 @@ enum EvidencePolarity {
   SUPPORTS
 }
 
+type ExtractedIssue {
+  category: String!
+  description: String!
+  recommendations: [String!]
+  severity: String!
+  title: String!
+}
+
 type FamilyMember {
   ageYears: Int
   behaviorObservations(goalId: Int): [BehaviorObservation!]!
@@ -372,6 +429,8 @@ type FamilyMember {
   phone: String
   relationship: String
   shares: [FamilyMemberShare!]!
+  slug: String
+  teacherFeedbacks: [TeacherFeedback!]!
   updatedAt: String!
   userId: String!
 }
@@ -412,6 +471,15 @@ type FamilyMemberShare {
 enum FamilyMemberShareRole {
   EDITOR
   VIEWER
+}
+
+enum FeedbackSource {
+  EMAIL
+  MEETING
+  NOTE
+  OTHER
+  PHONE
+  REPORT
 }
 
 type GenerateAudioResult {
@@ -473,7 +541,7 @@ type GenerateResearchResult {
 type GenerationJob {
   createdAt: String!
   error: JobError
-  goalId: Int!
+  goalId: Int
   id: String!
   progress: Float!
   result: JobResult
@@ -543,6 +611,7 @@ type JobResult {
   assetId: String
   audioUrl: String
   count: Int
+  diagnostics: PipelineDiagnostics
   manifestUrl: String
   questions: [TherapeuticQuestion!]
   segmentUrls: [String!]
@@ -585,6 +654,7 @@ type Mutation {
   checkNoteClaims(input: CheckNoteClaimsInput!): CheckNoteClaimsResult!
   createBehaviorObservation(input: CreateBehaviorObservationInput!): BehaviorObservation!
   createContact(input: CreateContactInput!): Contact!
+  createContactFeedback(input: CreateContactFeedbackInput!): ContactFeedback!
   createFamilyMember(input: CreateFamilyMemberInput!): FamilyMember!
   createFamilyMemberCharacteristic(input: CreateFamilyMemberCharacteristicInput!): FamilyMemberCharacteristic!
   createGoal(input: CreateGoalInput!): Goal!
@@ -593,10 +663,12 @@ type Mutation {
   createRelationship(input: CreateRelationshipInput!): Relationship!
   createStory(input: CreateStoryInput!): Story!
   createSubGoal(goalId: Int!, input: CreateSubGoalInput!): Goal!
+  createTeacherFeedback(input: CreateTeacherFeedbackInput!): TeacherFeedback!
   createUniqueOutcome(input: CreateUniqueOutcomeInput!): UniqueOutcome!
   deleteBehaviorObservation(id: Int!): DeleteBehaviorObservationResult!
   deleteClaimCard(id: ID!): Boolean!
   deleteContact(id: Int!): DeleteContactResult!
+  deleteContactFeedback(id: Int!): DeleteContactFeedbackResult!
   deleteFamilyMember(id: Int!): DeleteFamilyMemberResult!
   deleteFamilyMemberCharacteristic(id: Int!): DeleteFamilyMemberCharacteristicResult!
   deleteGoal(id: Int!): DeleteGoalResult!
@@ -606,13 +678,16 @@ type Mutation {
   deleteRelationship(id: Int!): DeleteRelationshipResult!
   deleteResearch(goalId: Int!): DeleteResearchResult!
   deleteStory(id: Int!): DeleteStoryResult!
+  deleteTeacherFeedback(id: Int!): DeleteTeacherFeedbackResult!
   deleteTherapeuticQuestions(goalId: Int!): DeleteQuestionsResult!
   deleteUniqueOutcome(id: Int!): DeleteUniqueOutcomeResult!
+  extractContactFeedbackIssues(id: Int!): ContactFeedback!
   generateAudio(goalId: Int!, language: String, storyId: Int, text: String, voice: String): GenerateAudioResult!
   generateLongFormText(characteristicId: Int, goalId: Int, language: String, minutes: Int): GenerateLongFormTextResult!
   generateOpenAIAudio(input: GenerateOpenAIAudioInput!): GenerateOpenAIAudioResult!
-  generateResearch(characteristicId: Int, goalId: Int!): GenerateResearchResult!
+  generateResearch(characteristicId: Int, feedbackId: Int, goalId: Int): GenerateResearchResult!
   generateTherapeuticQuestions(goalId: Int!): GenerateQuestionsResult!
+  markTeacherFeedbackExtracted(id: Int!): TeacherFeedback!
   refreshClaimCard(id: ID!): ClaimCard!
   setNoteVisibility(noteId: Int!, visibility: NoteVisibility!): Note!
   shareFamilyMember(email: String!, familyMemberId: Int!, role: FamilyMemberShareRole): FamilyMemberShare!
@@ -622,6 +697,7 @@ type Mutation {
   unshareNote(email: String!, noteId: Int!): Boolean!
   updateBehaviorObservation(id: Int!, input: UpdateBehaviorObservationInput!): BehaviorObservation!
   updateContact(id: Int!, input: UpdateContactInput!): Contact!
+  updateContactFeedback(id: Int!, input: UpdateContactFeedbackInput!): ContactFeedback!
   updateFamilyMember(id: Int!, input: UpdateFamilyMemberInput!): FamilyMember!
   updateFamilyMemberCharacteristic(id: Int!, input: UpdateFamilyMemberCharacteristicInput!): FamilyMemberCharacteristic!
   updateGoal(id: Int!, input: UpdateGoalInput!): Goal!
@@ -629,6 +705,7 @@ type Mutation {
   updateNote(id: Int!, input: UpdateNoteInput!): Note!
   updateRelationship(id: Int!, input: UpdateRelationshipInput!): Relationship!
   updateStory(id: Int!, input: UpdateStoryInput!): Story!
+  updateTeacherFeedback(id: Int!, input: UpdateTeacherFeedbackInput!): TeacherFeedback!
   updateUniqueOutcome(id: Int!, input: UpdateUniqueOutcomeInput!): UniqueOutcome!
   updateUserSettings(storyLanguage: String!, storyMinutes: Int): UserSettings!
 }
@@ -731,6 +808,16 @@ enum PersonType {
   FAMILY_MEMBER
 }
 
+type PipelineDiagnostics {
+  enrichedCount: Int
+  enrichedDropped: Int
+  extractedCount: Int
+  persistedCount: Int
+  qualifiedCount: Int
+  searchCount: Int
+  searchUsedFallback: Boolean
+}
+
 type Query {
   allNotes: [Note!]!
   allStories: [Story!]!
@@ -739,9 +826,11 @@ type Query {
   behaviorObservations(familyMemberId: Int!, goalId: Int): [BehaviorObservation!]!
   claimCard(id: ID!): ClaimCard
   claimCardsForNote(noteId: Int!): [ClaimCard!]!
-  contact(id: Int!): Contact
+  contact(id: Int, slug: String): Contact
+  contactFeedback(id: Int!): ContactFeedback
+  contactFeedbacks(contactId: Int!, familyMemberId: Int!): [ContactFeedback!]!
   contacts: [Contact!]!
-  familyMember(id: Int!): FamilyMember
+  familyMember(id: Int, slug: String): FamilyMember
   familyMemberCharacteristic(id: Int!): FamilyMemberCharacteristic
   familyMemberCharacteristics(category: CharacteristicCategory, familyMemberId: Int!): [FamilyMemberCharacteristic!]!
   familyMembers: [FamilyMember!]!
@@ -758,9 +847,11 @@ type Query {
   notes(entityId: Int!, entityType: String!): [Note!]!
   relationship(id: Int!): Relationship
   relationships(subjectId: Int!, subjectType: PersonType!): [Relationship!]!
-  research(characteristicId: Int, goalId: Int): [Research!]!
+  research(characteristicId: Int, feedbackId: Int, goalId: Int): [Research!]!
   stories(goalId: Int!): [Story!]!
   story(id: Int!): Story
+  teacherFeedback(id: Int!): TeacherFeedback
+  teacherFeedbacks(familyMemberId: Int!): [TeacherFeedback!]!
   therapeuticQuestions(goalId: Int!): [TherapeuticQuestion!]!
   userSettings: UserSettings!
 }
@@ -786,6 +877,7 @@ type RelationshipPerson {
   firstName: String!
   id: Int!
   lastName: String
+  slug: String
   type: PersonType!
 }
 
@@ -803,8 +895,9 @@ type Research {
   evidenceLevel: String
   extractedBy: String!
   extractionConfidence: Float!
+  feedbackId: Int
   goal: Goal
-  goalId: Int!
+  goalId: Int
   id: Int!
   journal: String
   keyFindings: [String!]!
@@ -859,6 +952,22 @@ type Subscription {
   researchJobStatus(jobId: String!): GenerationJob!
 }
 
+type TeacherFeedback {
+  content: String!
+  createdAt: String!
+  createdBy: String!
+  extracted: Boolean!
+  familyMember: FamilyMember
+  familyMemberId: Int!
+  feedbackDate: String!
+  id: Int!
+  source: FeedbackSource
+  subject: String
+  tags: [String!]
+  teacherName: String!
+  updatedAt: String!
+}
+
 type TextSegment {
   createdAt: String!
   goalId: Int!
@@ -899,12 +1008,21 @@ input UpdateBehaviorObservationInput {
   observedAt: String
 }
 
+input UpdateContactFeedbackInput {
+  content: String
+  feedbackDate: String
+  source: FeedbackSource
+  subject: String
+  tags: [String!]
+}
+
 input UpdateContactInput {
   ageYears: Int
   firstName: String
   lastName: String
   notes: String
   role: String
+  slug: String
 }
 
 input UpdateFamilyMemberCharacteristicInput {
@@ -973,6 +1091,15 @@ input UpdateRelationshipInput {
 
 input UpdateStoryInput {
   content: String
+}
+
+input UpdateTeacherFeedbackInput {
+  content: String
+  feedbackDate: String
+  source: FeedbackSource
+  subject: String
+  tags: [String!]
+  teacherName: String
 }
 
 input UpdateUniqueOutcomeInput {

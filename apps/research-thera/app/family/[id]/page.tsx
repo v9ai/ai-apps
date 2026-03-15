@@ -32,8 +32,12 @@ import {
   useDeleteFamilyMemberCharacteristicMutation,
   useGetTeacherFeedbacksQuery,
   useDeleteTeacherFeedbackMutation,
+  useGetRelationshipsQuery,
+  useDeleteRelationshipMutation,
+  useDeleteContactMutation,
   FamilyMemberShareRole,
   CharacteristicCategory,
+  PersonType,
 } from "@/app/__generated__/hooks";
 import { useUser } from "@clerk/nextjs";
 import AddGoalButton from "@/app/components/AddGoalButton";
@@ -43,6 +47,7 @@ import AddCharacteristicButton from "@/app/components/AddCharacteristicButton";
 import CharacteristicsList from "@/app/components/CharacteristicsList";
 import AddTeacherFeedbackButton from "@/app/components/AddTeacherFeedbackButton";
 import TeacherFeedbackList from "@/app/components/TeacherFeedbackList";
+import AddContactButton from "@/app/components/AddContactButton";
 
 const RELATIONSHIP_OPTIONS = [
   "self",
@@ -90,16 +95,20 @@ function FamilyMemberContent() {
   const router = useRouter();
   const params = useParams();
   const searchParams = useSearchParams();
-  const id = parseInt(params.id as string, 10);
+  const raw = params.id as string;
+  const isNumeric = /^\d+$/.test(raw);
+  const id = isNumeric ? parseInt(raw, 10) : NaN;
+  const slug = isNumeric ? undefined : raw;
   const { user } = useUser();
   const activeTag = searchParams.get("tag");
 
   const { data, loading, error } = useGetFamilyMemberQuery({
-    variables: { id },
-    skip: isNaN(id),
+    variables: isNumeric ? { id } : { slug },
+    skip: isNumeric ? isNaN(id) : !slug,
   });
 
   const member = data?.familyMember;
+  const memberId = member?.id ?? NaN;
 
   // Edit form state
   const [editOpen, setEditOpen] = useState(false);
@@ -149,8 +158,8 @@ function FamilyMemberContent() {
     });
 
   const { data: obsData } = useGetBehaviorObservationsQuery({
-    variables: { familyMemberId: id },
-    skip: isNaN(id),
+    variables: { familyMemberId: memberId },
+    skip: isNaN(memberId),
   });
   const observations = obsData?.behaviorObservations ?? [];
 
@@ -164,8 +173,8 @@ function FamilyMemberContent() {
   };
 
   const { data: charData } = useGetFamilyMemberCharacteristicsQuery({
-    variables: { familyMemberId: id },
-    skip: isNaN(id),
+    variables: { familyMemberId: memberId },
+    skip: isNaN(memberId),
   });
   const characteristics = charData?.familyMemberCharacteristics ?? [];
   const tagFilter = (c: (typeof characteristics)[number]) =>
@@ -180,12 +189,14 @@ function FamilyMemberContent() {
     (c) => c.category === CharacteristicCategory.PriorityConcern && tagFilter(c),
   );
 
+  const memberSlugOrId = member?.slug ?? raw;
+
   const handleTagClick = (tag: string) => {
-    router.push(`/family/${id}?tag=${encodeURIComponent(tag)}`);
+    router.push(`/family/${memberSlugOrId}?tag=${encodeURIComponent(tag)}`);
   };
 
   const clearTagFilter = () => {
-    router.push(`/family/${id}`);
+    router.push(`/family/${memberSlugOrId}`);
   };
 
   const [deleteCharacteristic, { loading: deletingChar }] =
@@ -198,8 +209,8 @@ function FamilyMemberContent() {
   };
 
   const { data: feedbackData } = useGetTeacherFeedbacksQuery({
-    variables: { familyMemberId: id },
-    skip: isNaN(id),
+    variables: { familyMemberId: memberId },
+    skip: isNaN(memberId),
   });
   const teacherFeedbacks = feedbackData?.teacherFeedbacks ?? [];
 
@@ -210,6 +221,26 @@ function FamilyMemberContent() {
 
   const handleDeleteFeedback = (fbId: number) => {
     deleteFeedback({ variables: { id: fbId } });
+  };
+
+  const { data: relationshipsData } = useGetRelationshipsQuery({
+    variables: { subjectType: PersonType.FamilyMember, subjectId: memberId },
+    skip: isNaN(memberId),
+  });
+  const relationships = relationshipsData?.relationships ?? [];
+
+  const [deleteRelationship, { loading: deletingRelationship }] =
+    useDeleteRelationshipMutation({
+      refetchQueries: ["GetRelationships"],
+    });
+
+  const [deleteContact] = useDeleteContactMutation({
+    refetchQueries: ["GetContacts"],
+  });
+
+  const handleDeleteContact = async (relationshipId: number, contactId: number) => {
+    await deleteRelationship({ variables: { id: relationshipId } });
+    await deleteContact({ variables: { id: contactId } });
   };
 
   function openEditDialog() {
@@ -236,7 +267,7 @@ function FamilyMemberContent() {
     }
     await updateFamilyMember({
       variables: {
-        id,
+        id: memberId,
         input: {
           firstName: editFirstName.trim(),
           name: editName.trim() || undefined,
@@ -262,7 +293,7 @@ function FamilyMemberContent() {
     }
     await shareFamilyMember({
       variables: {
-        familyMemberId: id,
+        familyMemberId: memberId,
         email: shareEmail.trim().toLowerCase(),
         role: shareRole,
       },
@@ -388,13 +419,101 @@ function FamilyMemberContent() {
         </Flex>
       </Card>
 
+      {/* Contacts */}
+      <Card>
+        <Flex direction="column" gap="3" p="4">
+          <Flex justify="between" align="center">
+            <Heading size="4">Contacts ({relationships.length})</Heading>
+            {isOwner && (
+              <AddContactButton
+                familyMemberId={memberId}
+                refetchQueries={["GetRelationships"]}
+                size="2"
+              />
+            )}
+          </Flex>
+          <Separator size="4" />
+          {relationships.length === 0 ? (
+            <Text size="2" color="gray">
+              No contacts added yet
+            </Text>
+          ) : (
+            <Flex direction="column" gap="2">
+              {relationships.map((rel) => {
+                const contact = rel.related;
+                if (!contact) return null;
+                const contactHref = `/family/${memberSlugOrId}/contacts/${contact.slug || contact.id}`;
+                return (
+                  <Flex
+                    key={rel.id}
+                    justify="between"
+                    align="center"
+                    p="2"
+                    style={{
+                      borderRadius: "var(--radius-2)",
+                      background: "var(--gray-a2)",
+                      cursor: "pointer",
+                    }}
+                    onClick={() => router.push(contactHref)}
+                  >
+                    <Flex gap="2" align="center">
+                      <Text size="2" weight="medium" color="indigo">
+                        {contact.firstName}
+                        {contact.lastName ? ` ${contact.lastName}` : ""}
+                      </Text>
+                      <Badge color="violet" variant="soft" size="1">
+                        {rel.relationshipType.replace(/_/g, " ")}
+                      </Badge>
+                    </Flex>
+                    {isOwner && (
+                      <AlertDialog.Root>
+                        <AlertDialog.Trigger>
+                          <Button variant="ghost" color="red" size="1">
+                            <TrashIcon />
+                          </Button>
+                        </AlertDialog.Trigger>
+                        <AlertDialog.Content>
+                          <AlertDialog.Title>Remove Contact</AlertDialog.Title>
+                          <AlertDialog.Description>
+                            Remove {contact.firstName} as a contact? This will
+                            delete the contact and the relationship.
+                          </AlertDialog.Description>
+                          <Flex gap="3" justify="end" mt="4">
+                            <AlertDialog.Cancel>
+                              <Button variant="soft" color="gray">
+                                Cancel
+                              </Button>
+                            </AlertDialog.Cancel>
+                            <AlertDialog.Action>
+                              <Button
+                                color="red"
+                                disabled={deletingRelationship}
+                                onClick={() =>
+                                  handleDeleteContact(rel.id, contact.id)
+                                }
+                              >
+                                Remove
+                              </Button>
+                            </AlertDialog.Action>
+                          </Flex>
+                        </AlertDialog.Content>
+                      </AlertDialog.Root>
+                    )}
+                  </Flex>
+                );
+              })}
+            </Flex>
+          )}
+        </Flex>
+      </Card>
+
       {/* Goals */}
       <Card>
         <Flex direction="column" gap="3" p="4">
           <Flex justify="between" align="center">
             <Heading size="4">Goals ({member.goals.length})</Heading>
             <AddGoalButton
-              presetFamilyMemberId={id}
+              presetFamilyMemberId={memberId}
               refetchQueries={["GetFamilyMember"]}
               size="2"
             />
@@ -481,7 +600,7 @@ function FamilyMemberContent() {
               </Text>
             </Flex>
             <AddCharacteristicButton
-              familyMemberId={id}
+              familyMemberId={memberId}
               defaultCategory={CharacteristicCategory.Strength}
               label="Add Strength"
               refetchQueries={["GetFamilyMemberCharacteristics"]}
@@ -494,7 +613,7 @@ function FamilyMemberContent() {
             onDelete={handleDeleteCharacteristic}
             deleting={deletingChar}
             emptyMessage="No strengths added yet"
-            getHref={(item) => `/family/${id}/characteristics/${item.id}`}
+            getHref={(item) => `/family/${memberSlugOrId}/characteristics/${item.id}`}
             onTagClick={handleTagClick}
           />
         </Flex>
@@ -511,7 +630,7 @@ function FamilyMemberContent() {
               </Text>
             </Flex>
             <AddCharacteristicButton
-              familyMemberId={id}
+              familyMemberId={memberId}
               defaultCategory={CharacteristicCategory.SupportNeed}
               label="Add Support Priority"
               refetchQueries={["GetFamilyMemberCharacteristics"]}
@@ -524,7 +643,7 @@ function FamilyMemberContent() {
             onDelete={handleDeleteCharacteristic}
             deleting={deletingChar}
             emptyMessage="No Support Priority added yet"
-            getHref={(item) => `/family/${id}/characteristics/${item.id}`}
+            getHref={(item) => `/family/${memberSlugOrId}/characteristics/${item.id}`}
             onTagClick={handleTagClick}
           />
         </Flex>
@@ -541,7 +660,7 @@ function FamilyMemberContent() {
               </Text>
             </Flex>
             <AddCharacteristicButton
-              familyMemberId={id}
+              familyMemberId={memberId}
               defaultCategory={CharacteristicCategory.PriorityConcern}
               label="Add Priority Concern"
               refetchQueries={["GetFamilyMemberCharacteristics"]}
@@ -554,7 +673,7 @@ function FamilyMemberContent() {
             onDelete={handleDeleteCharacteristic}
             deleting={deletingChar}
             emptyMessage="No priority concerns added yet"
-            getHref={(item) => `/family/${id}/characteristics/${item.id}`}
+            getHref={(item) => `/family/${memberSlugOrId}/characteristics/${item.id}`}
             onTagClick={handleTagClick}
           />
         </Flex>
@@ -573,7 +692,7 @@ function FamilyMemberContent() {
               </Text>
             </Flex>
             <AddTeacherFeedbackButton
-              familyMemberId={id}
+              familyMemberId={memberId}
               refetchQueries={["GetTeacherFeedbacks"]}
               size="2"
             />
@@ -595,7 +714,7 @@ function FamilyMemberContent() {
               Behavior Observations ({observations.length})
             </Heading>
             <AddBehaviorObservationButton
-              familyMemberId={id}
+              familyMemberId={memberId}
               refetchQueries={["GetBehaviorObservations"]}
               size="2"
             />
@@ -669,7 +788,7 @@ function FamilyMemberContent() {
                               onClick={() =>
                                 unshareFamilyMember({
                                   variables: {
-                                    familyMemberId: id,
+                                    familyMemberId: memberId,
                                     email: share.email,
                                   },
                                 })
@@ -901,11 +1020,14 @@ const DynamicFamilyMemberContent = dynamic(
 export default function FamilyMemberPage() {
   const router = useRouter();
   const params = useParams();
-  const id = parseInt(params.id as string, 10);
+  const raw = params.id as string;
+  const isNumeric = /^\d+$/.test(raw);
+  const id = isNumeric ? parseInt(raw, 10) : NaN;
+  const slug = isNumeric ? undefined : raw;
 
   const { data } = useGetFamilyMemberQuery({
-    variables: { id },
-    skip: isNaN(id),
+    variables: isNumeric ? { id } : { slug },
+    skip: isNumeric ? isNaN(id) : !slug,
   });
 
   const member = data?.familyMember;

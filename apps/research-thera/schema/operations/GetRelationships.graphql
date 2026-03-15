@@ -15,12 +15,14 @@ query GetRelationships($subjectType: PersonType!, $subjectId: Int!) {
     subject {
       id
       type
+      slug
       firstName
       lastName
     }
     related {
       id
       type
+      slug
       firstName
       lastName
     }

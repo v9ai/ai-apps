@@ -5,6 +5,16 @@ query GetGenerationJob($id: String!) {
     progress
     result {
       audioUrl
+      count
+      diagnostics {
+        searchCount
+        enrichedCount
+        extractedCount
+        qualifiedCount
+        persistedCount
+        searchUsedFallback
+        enrichedDropped
+      }
     }
     error {
       message

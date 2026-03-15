@@ -80,6 +80,33 @@ impl TherapyContext {
         }
     }
 
+    /// Build a `TherapyContext` from contact feedback data.
+    pub fn from_feedback_data(
+        feedback_id: i32,
+        family_member_id: i32,
+        subject: String,
+        content: String,
+        tags_json: Option<String>,
+    ) -> Self {
+        let impairment_domains: Vec<String> = tags_json
+            .as_deref()
+            .and_then(|s| serde_json::from_str(s).ok())
+            .unwrap_or_default();
+        let focus_keywords = infer_focus_keywords("Feedback", &subject);
+        TherapyContext {
+            goal_id: feedback_id as u32,
+            family_member_id: family_member_id as u32,
+            therapeutic_goal_type: "Feedback-based Intervention".to_string(),
+            title: subject,
+            description: Some(content),
+            category: Some("Feedback".to_string()),
+            severity: None,
+            impairment_domains,
+            target_population: "children adolescents families".to_string(),
+            focus_keywords,
+        }
+    }
+
     pub fn from_goal_file(path: &Path) -> Result<Self> {
         let content = std::fs::read_to_string(path).with_context(|| format!("reading {path:?}"))?;
         let goal: GoalFile =

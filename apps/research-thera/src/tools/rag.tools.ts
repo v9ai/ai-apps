@@ -27,7 +27,7 @@ import {
  * TODO: Implement with D1-compatible vector search
  */
 export async function upsertResearchChunks(params: {
-  goalId: number;
+  goalId?: number;
   entityType: "TherapyResearch" | "Goal" | "Note" | "TherapeuticQuestion";
   entityId: number;
   title: string;

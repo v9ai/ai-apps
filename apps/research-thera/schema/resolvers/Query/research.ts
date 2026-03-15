@@ -9,5 +9,6 @@ export const research: NonNullable<QueryResolvers['research']> = async (
   return d1Tools.listTherapyResearch(
     args.goalId ?? undefined,
     args.characteristicId ?? undefined,
+    args.feedbackId ?? undefined,
   );
 };

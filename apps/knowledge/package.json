@@ -6,13 +6,19 @@
     "build": "next build",
     "start": "next start",
     "seed": "tsx --env-file=.env.local scripts/seed.ts",
+    "db:push": "drizzle-kit push",
+    "db:studio": "drizzle-kit studio",
+    "db:generate": "drizzle-kit generate",
     "eval": "cd evals && DEEPEVAL_TELEMETRY_OPT_OUT=YES uv run deepeval test run test_articles.py",
-    "eval:quick": "cd evals && DEEPEVAL_TELEMETRY_OPT_OUT=YES uv run python run_eval.py --articles 1 2 3"
+    "eval:quick": "cd evals && DEEPEVAL_TELEMETRY_OPT_OUT=YES uv run python run_eval.py --articles 1 2 3",
+    "eval:agent": "cd evals && DEEPEVAL_TELEMETRY_OPT_OUT=YES uv run deepeval test run test_agent.py",
+    "eval:judge": "cd evals && DEEPEVAL_TELEMETRY_OPT_OUT=YES uv run deepeval test run test_llm_judge.py",
+    "eval:all": "cd evals && DEEPEVAL_TELEMETRY_OPT_OUT=YES uv run deepeval test run test_articles.py test_agent.py test_llm_judge.py"
   },
   "dependencies": {
+    "@neondatabase/serverless": "^0.10.4",
     "@radix-ui/themes": "^3.3.0",
-    "@supabase/ssr": "^0.9.0",
-    "@supabase/supabase-js": "^2.99.0",
+    "drizzle-orm": "^0.45.1",
     "next": "latest",
     "react": "^19.0.0",
     "react-dom": "^19.0.0",
@@ -25,6 +31,7 @@
     "@types/node": "^22",
     "@types/react": "^19",
     "@types/react-dom": "^19",
+    "drizzle-kit": "^0.31.9",
     "tsx": "^4.21.0",
     "typescript": "^5"
   }

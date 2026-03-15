@@ -2,6 +2,7 @@ query GetMySharedFamilyMembers {
   mySharedFamilyMembers {
     id
     userId
+    slug
     firstName
     name
     relationship

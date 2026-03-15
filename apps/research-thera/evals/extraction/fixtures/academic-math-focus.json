@@ -1,0 +1,32 @@
+{
+  "id": "academic-math-focus",
+  "user_prompt": "Analyze this feedback and extract all issues:\n\nSubject: Mathematics\nSource: MEETING\nDate: 2026-03-01\n\nContent:\nDuring our parent-teacher conference, we discussed Bogdan's performance in mathematics. He has significant difficulty focusing during math lessons and is frequently distracted by peers sitting nearby. He struggles particularly with multiplication tables and often cannot recall basic facts quickly enough for timed exercises. When asked to work independently on word problems, he shows visible frustration \u2014 sighing, putting his head down, and sometimes refusing to attempt the problems. However, he participates enthusiastically during group activities and often helps other students understand concepts verbally, suggesting the underlying comprehension may be stronger than his written performance indicates.",
+  "issues": [
+    {
+      "title": "Difficulty maintaining focus during math lessons",
+      "description": "Bogdan is frequently distracted by peers sitting nearby during math lessons.",
+      "category": "behavioral",
+      "severity": "medium"
+    },
+    {
+      "title": "Difficulty recalling multiplication facts",
+      "description": "Bogdan struggles with multiplication tables and often cannot recall basic facts quickly enough for timed exercises.",
+      "category": "academic",
+      "severity": "medium"
+    },
+    {
+      "title": "Frustration during independent word problem work",
+      "description": "When asked to work independently on word problems, Bogdan sighs, puts his head down, and sometimes refuses to attempt the problems.",
+      "category": "emotional",
+      "severity": "medium"
+    },
+    {
+      "title": "Discrepancy between verbal participation and written performance",
+      "description": "Bogdan participates enthusiastically during group activities and helps other students understand concepts verbally, but his written performance in mathematics is weaker.",
+      "category": "academic",
+      "severity": "medium"
+    }
+  ],
+  "model": "qwen-plus",
+  "generated_at": "2026-03-13T22:22:24.241666+00:00"
+}

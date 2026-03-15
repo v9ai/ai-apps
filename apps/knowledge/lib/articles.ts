@@ -5,6 +5,7 @@ const CONTENT_DIR = path.join(process.cwd(), "content");
 
 export interface Lesson {
   slug: string;
+  fileSlug: string;
   number: number;
   title: string;
   category: string;
@@ -28,6 +29,69 @@ export interface GroupedLessons {
   meta: CategoryMeta;
   articles: Lesson[];
 }
+
+// Ordered list of slugs — position (1-indexed) defines the lesson number
+const LESSON_SLUGS = [
+  "transformer-architecture",
+  "scaling-laws",
+  "tokenization",
+  "model-architectures",
+  "inference-optimization",
+  "pretraining-data",
+  "prompt-engineering-fundamentals",
+  "few-shot-chain-of-thought",
+  "system-prompts",
+  "structured-output",
+  "prompt-optimization",
+  "adversarial-prompting",
+  "embedding-models",
+  "vector-databases",
+  "chunking-strategies",
+  "retrieval-strategies",
+  "advanced-rag",
+  "rag-evaluation",
+  "fine-tuning-fundamentals",
+  "lora-adapters",
+  "rlhf-preference",
+  "dataset-curation",
+  "continual-learning",
+  "distillation-compression",
+  "function-calling",
+  "agent-architectures",
+  "multi-agent-systems",
+  "agent-memory",
+  "code-agents",
+  "agent-evaluation",
+  "eval-fundamentals",
+  "benchmark-design",
+  "llm-as-judge",
+  "human-evaluation",
+  "red-teaming",
+  "ci-cd-ai",
+  "llm-serving",
+  "scaling-load-balancing",
+  "cost-optimization",
+  "observability",
+  "edge-deployment",
+  "ai-gateway",
+  "constitutional-ai",
+  "guardrails-filtering",
+  "hallucination-mitigation",
+  "bias-fairness",
+  "ai-governance",
+  "interpretability",
+  "vision-language-models",
+  "audio-speech-ai",
+  "ai-for-code",
+  "conversational-ai",
+  "search-recommendations",
+  "production-patterns",
+  "ai-engineer-roadmap",
+];
+
+export const LESSON_NUMBER: Record<string, number> = Object.fromEntries(
+  LESSON_SLUGS.map((slug, i) => [slug, i + 1]),
+);
 
 export const CATEGORIES: [number, number, string][] = [
   [1, 6, "Foundations & Architecture"],
@@ -114,6 +178,11 @@ function getCategory(num: number): string {
   return "Other";
 }
 
+export function resolveContentFile(slug: string): string | null {
+  const filePath = path.join(CONTENT_DIR, `${slug}.md`);
+  return fs.existsSync(filePath) ? filePath : null;
+}
+
 function extractTitle(content: string): string {
   for (const line of content.split("\n")) {
     const match = line.match(/^#\s+(.+)/);
@@ -123,38 +192,36 @@ function extractTitle(content: string): string {
 }
 
 export function getAllLessons(): Lesson[] {
-  const files = fs.readdirSync(CONTENT_DIR).filter((f) => f.startsWith("agent-") && f.endsWith(".md"));
+  const files = fs.readdirSync(CONTENT_DIR).filter((f) => f.endsWith(".md"));
 
   return files
     .map((file) => {
       const slug = file.replace(/\.md$/, "");
-      const numMatch = slug.match(/^agent-(\d+)/);
-      const number = numMatch ? parseInt(numMatch[1], 10) : 0;
+      const number = LESSON_NUMBER[slug] ?? 0;
       const raw = fs.readFileSync(path.join(CONTENT_DIR, file), "utf-8");
       const title = extractTitle(raw);
       const category = getCategory(number);
       const wordCount = raw.split(/\s+/).filter(Boolean).length;
       const readingTimeMin = Math.max(1, Math.round(wordCount / 200));
-      return { slug, number, title, category, wordCount, readingTimeMin };
+      return { slug, fileSlug: slug, number, title, category, wordCount, readingTimeMin };
     })
     .sort((a, b) => a.number - b.number);
 }
 
 export function getLessonBySlug(slug: string): LessonWithContent | null {
-  const file = path.join(CONTENT_DIR, `${slug}.md`);
-  if (!fs.existsSync(file)) return null;
+  const file = resolveContentFile(slug);
+  if (!file) return null;
   const raw = fs.readFileSync(file, "utf-8");
-  const numMatch = slug.match(/^agent-(\d+)/);
-  const number = numMatch ? parseInt(numMatch[1], 10) : 0;
+  const number = LESSON_NUMBER[slug] ?? 0;
   const title = extractTitle(raw);
   const category = getCategory(number);
   const wordCount = raw.split(/\s+/).filter(Boolean).length;
   const readingTimeMin = Math.max(1, Math.round(wordCount / 200));
-  return { slug, number, title, category, wordCount, readingTimeMin, content: raw };
+  return { slug, fileSlug: slug, number, title, category, wordCount, readingTimeMin, content: raw };
 }
 
 export function getTotalWordCount(): number {
-  const files = fs.readdirSync(CONTENT_DIR).filter((f) => f.startsWith("agent-") && f.endsWith(".md"));
+  const files = fs.readdirSync(CONTENT_DIR).filter((f) => f.endsWith(".md"));
   let total = 0;
   for (const file of files) {
     const raw = fs.readFileSync(path.join(CONTENT_DIR, file), "utf-8");
