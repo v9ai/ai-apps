@@ -1,5 +1,6 @@
 import type { MutationResolvers } from "../../types.generated";
-import { d1Tools, d1 } from "@/src/db";
+import { d1Tools } from "@/src/db";
+import { sql } from "@/src/db/neon";
 import { buildClaimCardsFromItem } from "@/src/tools/generic-claim-cards.tools";
 import { createDeepSeekAdapters } from "@/src/adapters/deepseek.adapter";
 import { createResearchSourceResolver } from "@/src/adapters/research-resolver.adapter";
@@ -18,12 +19,9 @@ export const checkNoteClaims: NonNullable<MutationResolvers['checkNoteClaims']> 
 
   try {
     // 1. Fetch the note
-    const noteResult = await d1.execute({
-      sql: `SELECT * FROM notes WHERE id = ?`,
-      args: [noteId],
-    });
+    const noteRows = await sql`SELECT * FROM notes WHERE id = ${noteId}`;
 
-    if (noteResult.rows.length === 0) {
+    if (noteRows.length === 0) {
       return {
         success: false,
         message: `Note ${noteId} not found`,
@@ -32,7 +30,7 @@ export const checkNoteClaims: NonNullable<MutationResolvers['checkNoteClaims']> 
       };
     }
 
-    const noteRow = noteResult.rows[0];
+    const noteRow = noteRows[0];
     const note = {
       id: noteRow.id as number,
       title: `Note ${noteRow.id}`,

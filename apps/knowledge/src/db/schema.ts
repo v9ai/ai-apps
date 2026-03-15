@@ -85,12 +85,12 @@ export const categories = pgTable("categories", {
   gradientFrom: text("gradient_from").notNull(),
   gradientTo: text("gradient_to").notNull(),
   sortOrder: integer("sort_order").notNull(),
-  paperRangeLo: integer("paper_range_lo").notNull(),
-  paperRangeHi: integer("paper_range_hi").notNull(),
+  lessonRangeLo: integer("lesson_range_lo").notNull(),
+  lessonRangeHi: integer("lesson_range_hi").notNull(),
 });
 
-export const papers = pgTable(
-  "papers",
+export const lessons = pgTable(
+  "lessons",
   {
     id: uuid("id").primaryKey().defaultRandom(),
     slug: text("slug").unique().notNull(),
@@ -111,17 +111,17 @@ export const papers = pgTable(
       .defaultNow(),
   },
   (table) => [
-    index("papers_category_idx").on(table.categoryId),
-    index("papers_number_idx").on(table.number),
+    index("lessons_category_idx").on(table.categoryId),
+    index("lessons_number_idx").on(table.number),
   ],
 );
 
-export const paperSections = pgTable(
-  "paper_sections",
+export const lessonSections = pgTable(
+  "lesson_sections",
   {
     id: uuid("id").primaryKey().defaultRandom(),
-    paperId: uuid("paper_id")
-      .references(() => papers.id, { onDelete: "cascade" })
+    lessonId: uuid("lesson_id")
+      .references(() => lessons.id, { onDelete: "cascade" })
       .notNull(),
     heading: text("heading").notNull(),
     headingLevel: integer("heading_level").notNull().default(2),
@@ -129,7 +129,7 @@ export const paperSections = pgTable(
     sectionOrder: integer("section_order").notNull(),
     wordCount: integer("word_count").notNull().default(0),
   },
-  (table) => [index("paper_sections_paper_idx").on(table.paperId)],
+  (table) => [index("lesson_sections_lesson_idx").on(table.lessonId)],
 );
 
 export const citations = pgTable(
@@ -151,17 +151,17 @@ export const citations = pgTable(
   ],
 );
 
-export const paperCitations = pgTable(
-  "paper_citations",
+export const lessonCitations = pgTable(
+  "lesson_citations",
   {
-    paperId: uuid("paper_id")
-      .references(() => papers.id, { onDelete: "cascade" })
+    lessonId: uuid("lesson_id")
+      .references(() => lessons.id, { onDelete: "cascade" })
       .notNull(),
     citationId: uuid("citation_id")
       .references(() => citations.id, { onDelete: "cascade" })
       .notNull(),
   },
-  (table) => [primaryKey({ columns: [table.paperId, table.citationId] })],
+  (table) => [primaryKey({ columns: [table.lessonId, table.citationId] })],
 );
 
 // ── Knowledge Graph ────────────────────────────────────────────────
@@ -210,18 +210,18 @@ export const conceptEdges = pgTable(
   ],
 );
 
-export const paperConcepts = pgTable(
-  "paper_concepts",
+export const lessonConcepts = pgTable(
+  "lesson_concepts",
   {
-    paperId: uuid("paper_id")
-      .references(() => papers.id, { onDelete: "cascade" })
+    lessonId: uuid("lesson_id")
+      .references(() => lessons.id, { onDelete: "cascade" })
       .notNull(),
     conceptId: uuid("concept_id")
       .references(() => concepts.id, { onDelete: "cascade" })
       .notNull(),
     relevance: real("relevance").notNull().default(1.0),
   },
-  (table) => [primaryKey({ columns: [table.paperId, table.conceptId] })],
+  (table) => [primaryKey({ columns: [table.lessonId, table.conceptId] })],
 );
 
 // ── Knowledge Tracing ──────────────────────────────────────────────
@@ -284,10 +284,10 @@ export const interactionEvents = pgTable(
     conceptId: uuid("concept_id").references(() => concepts.id, {
       onDelete: "set null",
     }),
-    paperId: uuid("paper_id").references(() => papers.id, {
+    lessonId: uuid("lesson_id").references(() => lessons.id, {
       onDelete: "set null",
     }),
-    sectionId: uuid("section_id").references(() => paperSections.id, {
+    sectionId: uuid("section_id").references(() => lessonSections.id, {
       onDelete: "set null",
     }),
     interactionType: interactionTypeEnum("interaction_type").notNull(),
@@ -305,17 +305,17 @@ export const interactionEvents = pgTable(
       table.conceptId,
       table.createdAt,
     ),
-    index("interaction_events_paper_idx").on(table.paperId),
+    index("interaction_events_lesson_idx").on(table.lessonId),
     index("interaction_events_type_idx").on(table.interactionType),
   ],
 );
 
 // ── Embeddings ─────────────────────────────────────────────────────
 
-export const paperEmbeddings = pgTable("paper_embeddings", {
+export const lessonEmbeddings = pgTable("lesson_embeddings", {
   id: uuid("id").primaryKey().defaultRandom(),
-  paperId: uuid("paper_id")
-    .references(() => papers.id, { onDelete: "cascade" })
+  lessonId: uuid("lesson_id")
+    .references(() => lessons.id, { onDelete: "cascade" })
     .notNull()
     .unique(),
   content: text("content").notNull(),
@@ -330,11 +330,11 @@ export const sectionEmbeddings = pgTable(
   {
     id: uuid("id").primaryKey().defaultRandom(),
     sectionId: uuid("section_id")
-      .references(() => paperSections.id, { onDelete: "cascade" })
+      .references(() => lessonSections.id, { onDelete: "cascade" })
       .notNull()
       .unique(),
-    paperId: uuid("paper_id")
-      .references(() => papers.id, { onDelete: "cascade" })
+    lessonId: uuid("lesson_id")
+      .references(() => lessons.id, { onDelete: "cascade" })
       .notNull(),
     content: text("content").notNull(),
     embedding: vector("embedding").notNull(),
@@ -342,7 +342,7 @@ export const sectionEmbeddings = pgTable(
       .notNull()
       .defaultNow(),
   },
-  (table) => [index("section_embeddings_paper_idx").on(table.paperId)],
+  (table) => [index("section_embeddings_lesson_idx").on(table.lessonId)],
 );
 
 export const conceptEmbeddings = pgTable("concept_embeddings", {
@@ -358,15 +358,15 @@ export const conceptEmbeddings = pgTable("concept_embeddings", {
     .defaultNow(),
 });
 
-export const userPaperInteractions = pgTable(
-  "user_paper_interactions",
+export const userLessonInteractions = pgTable(
+  "user_lesson_interactions",
   {
     id: uuid("id").primaryKey().defaultRandom(),
     userId: uuid("user_id")
       .references(() => userProfiles.id, { onDelete: "cascade" })
       .notNull(),
-    paperId: uuid("paper_id")
-      .references(() => papers.id, { onDelete: "cascade" })
+    lessonId: uuid("lesson_id")
+      .references(() => lessons.id, { onDelete: "cascade" })
       .notNull(),
     readProgress: real("read_progress").notNull().default(0),
     rating: integer("rating"),
@@ -380,12 +380,12 @@ export const userPaperInteractions = pgTable(
       .defaultNow(),
   },
   (table) => [
-    uniqueIndex("user_paper_interactions_user_paper_idx").on(
+    uniqueIndex("user_lesson_interactions_user_lesson_idx").on(
       table.userId,
-      table.paperId,
+      table.lessonId,
     ),
-    index("user_paper_interactions_user_idx").on(table.userId),
-    index("user_paper_interactions_paper_idx").on(table.paperId),
+    index("user_lesson_interactions_user_idx").on(table.userId),
+    index("user_lesson_interactions_lesson_idx").on(table.lessonId),
   ],
 );
 
@@ -417,7 +417,7 @@ export const analyticsEvents = pgTable(
     sessionId: text("session_id"),
     eventName: text("event_name").notNull(),
     eventCategory: text("event_category").notNull(),
-    paperId: uuid("paper_id").references(() => papers.id, {
+    lessonId: uuid("lesson_id").references(() => lessons.id, {
       onDelete: "set null",
     }),
     properties: jsonb("properties").notNull().default({}),
@@ -432,7 +432,7 @@ export const analyticsEvents = pgTable(
       table.eventName,
       table.createdAt,
     ),
-    index("analytics_events_paper_time_idx").on(table.paperId, table.createdAt),
+    index("analytics_events_lesson_time_idx").on(table.lessonId, table.createdAt),
     index("analytics_events_session_idx").on(table.sessionId, table.createdAt),
   ],
 );
@@ -440,39 +440,39 @@ export const analyticsEvents = pgTable(
 // ── Relations ──────────────────────────────────────────────────────
 
 export const categoriesRelations = relations(categories, ({ many }) => ({
-  papers: many(papers),
+  lessons: many(lessons),
 }));
 
-export const papersRelations = relations(papers, ({ one, many }) => ({
+export const lessonsRelations = relations(lessons, ({ one, many }) => ({
   category: one(categories, {
-    fields: [papers.categoryId],
+    fields: [lessons.categoryId],
     references: [categories.id],
   }),
-  sections: many(paperSections),
-  paperCitations: many(paperCitations),
-  paperConcepts: many(paperConcepts),
+  sections: many(lessonSections),
+  lessonCitations: many(lessonCitations),
+  lessonConcepts: many(lessonConcepts),
 }));
 
-export const paperSectionsRelations = relations(paperSections, ({ one }) => ({
-  paper: one(papers, {
-    fields: [paperSections.paperId],
-    references: [papers.id],
+export const lessonSectionsRelations = relations(lessonSections, ({ one }) => ({
+  lesson: one(lessons, {
+    fields: [lessonSections.lessonId],
+    references: [lessons.id],
   }),
 }));
 
 export const citationsRelations = relations(citations, ({ many }) => ({
-  paperCitations: many(paperCitations),
+  lessonCitations: many(lessonCitations),
 }));
 
-export const paperCitationsRelations = relations(
-  paperCitations,
+export const lessonCitationsRelations = relations(
+  lessonCitations,
   ({ one }) => ({
-    paper: one(papers, {
-      fields: [paperCitations.paperId],
-      references: [papers.id],
+    lesson: one(lessons, {
+      fields: [lessonCitations.lessonId],
+      references: [lessons.id],
     }),
     citation: one(citations, {
-      fields: [paperCitations.citationId],
+      fields: [lessonCitations.citationId],
       references: [citations.id],
     }),
   }),
@@ -481,7 +481,7 @@ export const paperCitationsRelations = relations(
 export const conceptsRelations = relations(concepts, ({ many }) => ({
   outgoingEdges: many(conceptEdges, { relationName: "source" }),
   incomingEdges: many(conceptEdges, { relationName: "target" }),
-  paperConcepts: many(paperConcepts),
+  lessonConcepts: many(lessonConcepts),
 }));
 
 export const conceptEdgesRelations = relations(conceptEdges, ({ one }) => ({
@@ -497,13 +497,13 @@ export const conceptEdgesRelations = relations(conceptEdges, ({ one }) => ({
   }),
 }));
 
-export const paperConceptsRelations = relations(paperConcepts, ({ one }) => ({
-  paper: one(papers, {
-    fields: [paperConcepts.paperId],
-    references: [papers.id],
+export const lessonConceptsRelations = relations(lessonConcepts, ({ one }) => ({
+  lesson: one(lessons, {
+    fields: [lessonConcepts.lessonId],
+    references: [lessons.id],
   }),
   concept: one(concepts, {
-    fields: [paperConcepts.conceptId],
+    fields: [lessonConcepts.conceptId],
     references: [concepts.id],
   }),
 }));

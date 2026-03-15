@@ -1,20 +1,19 @@
 import "dotenv/config";
-import { d1 } from "../src/db/d1";
+import { sql as neonSql } from "../src/db/neon";
 
 async function checkStoryAudio() {
   try {
     console.log("Checking stories table for audio columns...\n");
 
-    const result = await d1.execute(`
-      SELECT id, audio_key, audio_url, audio_generated_at, created_at 
-      FROM stories 
-      ORDER BY created_at DESC 
-      LIMIT 5
-    `);
+    const rows = await neonSql`
+      SELECT id, audio_key, audio_url, audio_generated_at, created_at
+      FROM stories
+      ORDER BY created_at DESC
+      LIMIT 5`;
 
-    console.log(`Found ${result.rows.length} stories:\n`);
+    console.log(`Found ${rows.length} stories:\n`);
 
-    result.rows.forEach((row, index) => {
+    rows.forEach((row: any, index: number) => {
       console.log(`Story ${index + 1}:`);
       console.log(`  ID: ${row.id}`);
       console.log(`  Audio Key: ${row.audio_key || "NULL"}`);
@@ -24,9 +23,9 @@ async function checkStoryAudio() {
       console.log("");
     });
 
-    const withAudio = result.rows.filter((row) => row.audio_url);
+    const withAudio = rows.filter((row: any) => row.audio_url);
     console.log(
-      `\nStories with audio: ${withAudio.length}/${result.rows.length}`,
+      `\nStories with audio: ${withAudio.length}/${rows.length}`,
     );
   } catch (error) {
     console.error("Error checking stories:", error);

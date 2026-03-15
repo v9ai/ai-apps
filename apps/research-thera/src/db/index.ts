@@ -1,18 +1,26 @@
-import { drizzle } from "drizzle-orm/d1";
-import * as schema from "./schema";
-import { d1 } from "./d1";
-import {
-  CLOUDFLARE_ACCOUNT_ID,
-  CLOUDFLARE_DATABASE_ID,
-  CLOUDFLARE_D1_TOKEN,
-} from "@/src/config/d1";
+import { sql as neonSql } from "./neon";
 
-// Note: For D1, drizzle ORM integration requires a D1Database binding
-// This is typically available in Cloudflare Workers runtime
-// For now, we'll use the raw D1 client for queries
+/**
+ * Convert a SQL string with `?` placeholders to PostgreSQL `$N` style,
+ * returning the converted query and the params array unchanged.
+ */
+function p(template: string, params: any[]): [string, any[]] {
+  let i = 0;
+  const query = template.replace(/\?/g, () => `$${++i}`);
+  return [query, params];
+}
 
-// Placeholder for when running in Cloudflare Workers context
-export const db = null as any;
+/**
+ * D1-compatible shim over Neon — allows legacy `d1.execute({ sql, args })` calls
+ * to work against Postgres without rewriting every resolver.
+ */
+export const d1 = {
+  async execute(opts: { sql: string; args?: any[] }): Promise<{ rows: any[] }> {
+    const [query, params] = p(opts.sql, opts.args || []);
+    const rows = await neonSql(query, params);
+    return { rows: rows as any[] };
+  },
+};
 
 /**
  * Database operations for goals, research, questions, notes, and jobs
@@ -23,11 +31,8 @@ export const db = null as any;
 // ============================================
 
 export async function listFamilyMembers(userId: string) {
-  const result = await d1.execute({
-    sql: `SELECT * FROM family_members WHERE user_id = ? ORDER BY created_at DESC`,
-    args: [userId],
-  });
-  return result.rows.map((row) => ({
+  const rows = await neonSql`SELECT * FROM family_members WHERE user_id = ${userId} ORDER BY created_at DESC`;
+  return rows.map((row) => ({
     id: row.id as number,
     userId: row.user_id as string,
     slug: (row.slug as string) || null,
@@ -47,12 +52,9 @@ export async function listFamilyMembers(userId: string) {
 }
 
 export async function getFamilyMember(id: number) {
-  const result = await d1.execute({
-    sql: `SELECT * FROM family_members WHERE id = ?`,
-    args: [id],
-  });
-  if (result.rows.length === 0) return null;
-  const row = result.rows[0];
+  const rows = await neonSql`SELECT * FROM family_members WHERE id = ${id}`;
+  if (rows.length === 0) return null;
+  const row = rows[0];
   return {
     id: row.id as number,
     userId: row.user_id as string,
@@ -73,12 +75,9 @@ export async function getFamilyMember(id: number) {
 }
 
 export async function getFamilyMemberBySlug(slug: string, userId: string) {
-  const result = await d1.execute({
-    sql: `SELECT * FROM family_members WHERE slug = ? AND user_id = ?`,
-    args: [slug, userId],
-  });
-  if (result.rows.length === 0) return null;
-  const row = result.rows[0];
+  const rows = await neonSql`SELECT * FROM family_members WHERE slug = ${slug} AND user_id = ${userId}`;
+  if (rows.length === 0) return null;
+  const row = rows[0];
   return {
     id: row.id as number,
     userId: row.user_id as string,
@@ -112,11 +111,9 @@ async function generateFamilyMemberSlug(firstName: string, userId: string): Prom
   const base = slugify(firstName);
   if (!base) return `member-${Date.now()}`;
 
-  // Check if base slug is available
   const existing = await getFamilyMemberBySlug(base, userId);
   if (!existing) return base;
 
-  // Append numeric suffix on collision
   for (let i = 2; i < 100; i++) {
     const candidate = `${base}-${i}`;
     const check = await getFamilyMemberBySlug(candidate, userId);
@@ -139,26 +136,11 @@ export async function createFamilyMember(params: {
   occupation?: string | null;
 }): Promise<number> {
   const slug = await generateFamilyMemberSlug(params.firstName, params.userId);
-  const result = await d1.execute({
-    sql: `INSERT INTO family_members (user_id, slug, first_name, name, age_years, relationship, date_of_birth, bio, email, phone, location, occupation, created_at, updated_at)
-          VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP)
-          RETURNING id`,
-    args: [
-      params.userId,
-      slug,
-      params.firstName,
-      params.name ?? null,
-      params.ageYears ?? null,
-      params.relationship ?? null,
-      params.dateOfBirth ?? null,
-      params.bio ?? null,
-      params.email ?? null,
-      params.phone ?? null,
-      params.location ?? null,
-      params.occupation ?? null,
-    ],
-  });
-  return result.rows[0].id as number;
+  const rows = await neonSql`
+    INSERT INTO family_members (user_id, slug, first_name, name, age_years, relationship, date_of_birth, bio, email, phone, location, occupation, created_at, updated_at)
+    VALUES (${params.userId}, ${slug}, ${params.firstName}, ${params.name ?? null}, ${params.ageYears ?? null}, ${params.relationship ?? null}, ${params.dateOfBirth ?? null}, ${params.bio ?? null}, ${params.email ?? null}, ${params.phone ?? null}, ${params.location ?? null}, ${params.occupation ?? null}, NOW(), NOW())
+    RETURNING id`;
+  return rows[0].id as number;
 }
 
 export async function updateFamilyMember(
@@ -179,69 +161,38 @@ export async function updateFamilyMember(
   const sets: string[] = [];
   const args: any[] = [];
 
-  if (params.firstName !== undefined) {
-    sets.push("first_name = ?");
-    args.push(params.firstName);
-  }
-  if (params.name !== undefined) {
-    sets.push("name = ?");
-    args.push(params.name);
-  }
-  if (params.ageYears !== undefined) {
-    sets.push("age_years = ?");
-    args.push(params.ageYears);
-  }
-  if (params.relationship !== undefined) {
-    sets.push("relationship = ?");
-    args.push(params.relationship);
-  }
-  if (params.dateOfBirth !== undefined) {
-    sets.push("date_of_birth = ?");
-    args.push(params.dateOfBirth);
-  }
-  if (params.bio !== undefined) {
-    sets.push("bio = ?");
-    args.push(params.bio);
-  }
-  if (params.email !== undefined) {
-    sets.push("email = ?");
-    args.push(params.email);
-  }
-  if (params.phone !== undefined) {
-    sets.push("phone = ?");
-    args.push(params.phone);
-  }
-  if (params.location !== undefined) {
-    sets.push("location = ?");
-    args.push(params.location);
-  }
-  if (params.occupation !== undefined) {
-    sets.push("occupation = ?");
-    args.push(params.occupation);
-  }
+  if (params.firstName !== undefined) { sets.push("first_name = ?"); args.push(params.firstName); }
+  if (params.name !== undefined) { sets.push("name = ?"); args.push(params.name); }
+  if (params.ageYears !== undefined) { sets.push("age_years = ?"); args.push(params.ageYears); }
+  if (params.relationship !== undefined) { sets.push("relationship = ?"); args.push(params.relationship); }
+  if (params.dateOfBirth !== undefined) { sets.push("date_of_birth = ?"); args.push(params.dateOfBirth); }
+  if (params.bio !== undefined) { sets.push("bio = ?"); args.push(params.bio); }
+  if (params.email !== undefined) { sets.push("email = ?"); args.push(params.email); }
+  if (params.phone !== undefined) { sets.push("phone = ?"); args.push(params.phone); }
+  if (params.location !== undefined) { sets.push("location = ?"); args.push(params.location); }
+  if (params.occupation !== undefined) { sets.push("occupation = ?"); args.push(params.occupation); }
 
   if (sets.length === 0) return;
 
-  sets.push("updated_at = CURRENT_TIMESTAMP");
+  sets.push("updated_at = NOW()");
   args.push(id);
 
-  await d1.execute({
-    sql: `UPDATE family_members SET ${sets.join(", ")} WHERE id = ?`,
-    args,
-  });
+  const [query, queryParams] = p(`UPDATE family_members SET ${sets.join(", ")} WHERE id = ?`, args);
+  await neonSql(query, queryParams);
 }
 
 export async function deleteFamilyMember(id: number): Promise<boolean> {
-  await d1.execute({
-    sql: `DELETE FROM family_members WHERE id = ?`,
-    args: [id],
-  });
+  await neonSql`DELETE FROM family_members WHERE id = ${id}`;
   return true;
 }
 
 // ============================================
 // Family Member Shares
 // ============================================
+
+function normalizeEmail(email: string): string {
+  return email.trim().toLowerCase();
+}
 
 export async function shareFamilyMember(
   familyMemberId: number,
@@ -250,18 +201,13 @@ export async function shareFamilyMember(
   createdBy: string,
 ) {
   const normalizedEmail = normalizeEmail(email);
-  await d1.execute({
-    sql: `INSERT INTO family_member_shares (family_member_id, email, role, created_by)
-          VALUES (?, ?, ?, ?)
-          ON CONFLICT(family_member_id, email)
-          DO UPDATE SET role = excluded.role`,
-    args: [familyMemberId, normalizedEmail, role, createdBy],
-  });
-  const result = await d1.execute({
-    sql: `SELECT * FROM family_member_shares WHERE family_member_id = ? AND email = ?`,
-    args: [familyMemberId, normalizedEmail],
-  });
-  const row = result.rows[0];
+  await neonSql`
+    INSERT INTO family_member_shares (family_member_id, email, role, created_by)
+    VALUES (${familyMemberId}, ${normalizedEmail}, ${role}, ${createdBy})
+    ON CONFLICT (family_member_id, email)
+    DO UPDATE SET role = excluded.role`;
+  const rows = await neonSql`SELECT * FROM family_member_shares WHERE family_member_id = ${familyMemberId} AND email = ${normalizedEmail}`;
+  const row = rows[0];
   return {
     familyMemberId: row.family_member_id as number,
     email: row.email as string,
@@ -276,19 +222,13 @@ export async function unshareFamilyMember(
   email: string,
 ): Promise<boolean> {
   const normalizedEmail = normalizeEmail(email);
-  await d1.execute({
-    sql: `DELETE FROM family_member_shares WHERE family_member_id = ? AND email = ?`,
-    args: [familyMemberId, normalizedEmail],
-  });
+  await neonSql`DELETE FROM family_member_shares WHERE family_member_id = ${familyMemberId} AND email = ${normalizedEmail}`;
   return true;
 }
 
 export async function getFamilyMemberShares(familyMemberId: number) {
-  const result = await d1.execute({
-    sql: `SELECT * FROM family_member_shares WHERE family_member_id = ? ORDER BY created_at DESC`,
-    args: [familyMemberId],
-  });
-  return result.rows.map((row) => ({
+  const rows = await neonSql`SELECT * FROM family_member_shares WHERE family_member_id = ${familyMemberId} ORDER BY created_at DESC`;
+  return rows.map((row) => ({
     familyMemberId: row.family_member_id as number,
     email: row.email as string,
     role: row.role as "VIEWER" | "EDITOR",
@@ -299,14 +239,12 @@ export async function getFamilyMemberShares(familyMemberId: number) {
 
 export async function getSharedFamilyMembers(viewerEmail: string) {
   const normalizedEmail = normalizeEmail(viewerEmail);
-  const result = await d1.execute({
-    sql: `SELECT fm.* FROM family_members fm
-          JOIN family_member_shares s ON s.family_member_id = fm.id
-          WHERE s.email = ?
-          ORDER BY fm.updated_at DESC`,
-    args: [normalizedEmail],
-  });
-  return result.rows.map((row) => ({
+  const rows = await neonSql`
+    SELECT fm.* FROM family_members fm
+    JOIN family_member_shares s ON s.family_member_id = fm.id
+    WHERE s.email = ${normalizedEmail}
+    ORDER BY fm.updated_at DESC`;
+  return rows.map((row) => ({
     id: row.id as number,
     userId: row.user_id as string,
     firstName: row.first_name as string,
@@ -329,16 +267,13 @@ export async function getSharedFamilyMembers(viewerEmail: string) {
 // ============================================
 
 export async function getGoal(goalId: number, createdBy: string) {
-  const result = await d1.execute({
-    sql: `SELECT * FROM goals WHERE id = ? AND user_id = ?`,
-    args: [goalId, createdBy],
-  });
+  const rows = await neonSql`SELECT * FROM goals WHERE id = ${goalId} AND user_id = ${createdBy}`;
 
-  if (result.rows.length === 0) {
+  if (rows.length === 0) {
     throw new Error(`Goal ${goalId} not found`);
   }
 
-  const row = result.rows[0];
+  const row = rows[0];
   return {
     id: row.id as number,
     familyMemberId: row.family_member_id as number,
@@ -359,16 +294,13 @@ export async function getGoal(goalId: number, createdBy: string) {
 }
 
 export async function getGoalBySlug(slug: string, createdBy: string) {
-  const result = await d1.execute({
-    sql: `SELECT * FROM goals WHERE slug = ? AND user_id = ?`,
-    args: [slug, createdBy],
-  });
+  const rows = await neonSql`SELECT * FROM goals WHERE slug = ${slug} AND user_id = ${createdBy}`;
 
-  if (result.rows.length === 0) {
+  if (rows.length === 0) {
     throw new Error(`Goal with slug "${slug}" not found`);
   }
 
-  const row = result.rows[0];
+  const row = rows[0];
   return {
     id: row.id as number,
     familyMemberId: row.family_member_id as number,
@@ -393,23 +325,24 @@ export async function listGoals(
   familyMemberId?: number,
   status?: string,
 ) {
-  let sql = `SELECT * FROM goals WHERE user_id = ?`;
+  let sqlStr = `SELECT * FROM goals WHERE user_id = ?`;
   const args: any[] = [createdBy];
 
   if (familyMemberId) {
-    sql += ` AND family_member_id = ?`;
+    sqlStr += ` AND family_member_id = ?`;
     args.push(familyMemberId);
   }
 
   if (status) {
-    sql += ` AND status = ?`;
+    sqlStr += ` AND status = ?`;
     args.push(status);
   }
 
-  sql += ` ORDER BY created_at DESC`;
+  sqlStr += ` ORDER BY created_at DESC`;
 
-  const result = await d1.execute({ sql, args });
-  return result.rows.map((row) => ({
+  const [query, params] = p(sqlStr, args);
+  const rows = await neonSql(query, params);
+  return rows.map((row) => ({
     id: row.id as number,
     familyMemberId: row.family_member_id as number,
     createdBy: row.user_id as string,
@@ -432,23 +365,11 @@ export async function createGoal(params: {
   parentGoalId?: number | null;
 }) {
   const status = "active";
-
-  const result = await d1.execute({
-    sql: `INSERT INTO goals (family_member_id, user_id, slug, title, description, status, parent_goal_id)
-          VALUES (?, ?, ?, ?, ?, ?, ?)
-          RETURNING id`,
-    args: [
-      params.familyMemberId,
-      params.createdBy,
-      params.slug || null,
-      params.title,
-      params.description || null,
-      status,
-      params.parentGoalId || null,
-    ],
-  });
-
-  return result.rows[0].id as number;
+  const rows = await neonSql`
+    INSERT INTO goals (family_member_id, user_id, slug, title, description, status, parent_goal_id)
+    VALUES (${params.familyMemberId}, ${params.createdBy}, ${params.slug || null}, ${params.title}, ${params.description || null}, ${status}, ${params.parentGoalId || null})
+    RETURNING id`;
+  return rows[0].id as number;
 }
 
 export async function updateGoal(
@@ -466,43 +387,18 @@ export async function updateGoal(
   const fields: string[] = [];
   const args: any[] = [];
 
-  if (updates.slug !== undefined) {
-    fields.push("slug = ?");
-    args.push(updates.slug);
-  }
+  if (updates.slug !== undefined) { fields.push("slug = ?"); args.push(updates.slug); }
+  if (updates.familyMemberId !== undefined) { fields.push("family_member_id = ?"); args.push(updates.familyMemberId); }
+  if (updates.title !== undefined) { fields.push("title = ?"); args.push(updates.title); }
+  if (updates.description !== undefined) { fields.push("description = ?"); args.push(updates.description); }
+  if (updates.status !== undefined) { fields.push("status = ?"); args.push(updates.status); }
+  if (updates.storyLanguage !== undefined) { fields.push("story_language = ?"); args.push(updates.storyLanguage); }
 
-  if (updates.familyMemberId !== undefined) {
-    fields.push("family_member_id = ?");
-    args.push(updates.familyMemberId);
-  }
-
-  if (updates.title !== undefined) {
-    fields.push("title = ?");
-    args.push(updates.title);
-  }
-
-  if (updates.description !== undefined) {
-    fields.push("description = ?");
-    args.push(updates.description);
-  }
-
-  if (updates.status !== undefined) {
-    fields.push("status = ?");
-    args.push(updates.status);
-  }
-
-  if (updates.storyLanguage !== undefined) {
-    fields.push("story_language = ?");
-    args.push(updates.storyLanguage);
-  }
-
-  fields.push("updated_at = datetime('now')");
+  fields.push("updated_at = NOW()");
   args.push(goalId, createdBy);
 
-  await d1.execute({
-    sql: `UPDATE goals SET ${fields.join(", ")} WHERE id = ? AND user_id = ?`,
-    args,
-  });
+  const [query, params] = p(`UPDATE goals SET ${fields.join(", ")} WHERE id = ? AND user_id = ?`, args);
+  await neonSql(query, params);
 }
 
 // ============================================
@@ -513,7 +409,7 @@ export async function upsertTherapyResearch(
   goalId: number | null | undefined,
   userId: string,
   research: {
-    characteristicId?: number | null;
+    issueId?: number | null;
     feedbackId?: number | null;
     therapeuticGoalType: string;
     title: string;
@@ -531,33 +427,31 @@ export async function upsertTherapyResearch(
     extractionConfidence: number;
   },
 ) {
-  // Check if exists by DOI or title
-  // When goalId is null, deduplicate by title/DOI globally (or by feedbackId if available)
-  let existingId: number | null = null;
-
   const dedupCol = goalId != null ? "goal_id" : (research.feedbackId != null ? "feedback_id" : null);
   const dedupVal = goalId != null ? goalId : (research.feedbackId != null ? research.feedbackId : null);
 
+  let existingId: number | null = null;
+
   if (research.doi) {
-    const sql = dedupCol
-      ? `SELECT id FROM therapy_research WHERE ${dedupCol} = ? AND doi = ?`
-      : `SELECT id FROM therapy_research WHERE goal_id IS NULL AND doi = ?`;
-    const args = dedupCol ? [dedupVal, research.doi] : [research.doi];
-    const checkDoi = await d1.execute({ sql, args });
-    if (checkDoi.rows.length > 0) {
-      existingId = checkDoi.rows[0].id as number;
+    let doiRows;
+    if (dedupCol) {
+      const [q, params] = p(`SELECT id FROM therapy_research WHERE ${dedupCol} = ? AND doi = ?`, [dedupVal, research.doi]);
+      doiRows = await neonSql(q, params);
+    } else {
+      doiRows = await neonSql`SELECT id FROM therapy_research WHERE goal_id IS NULL AND doi = ${research.doi}`;
     }
+    if (doiRows.length > 0) existingId = doiRows[0].id as number;
   }
 
   if (!existingId) {
-    const sql = dedupCol
-      ? `SELECT id FROM therapy_research WHERE ${dedupCol} = ? AND title = ?`
-      : `SELECT id FROM therapy_research WHERE goal_id IS NULL AND title = ?`;
-    const args = dedupCol ? [dedupVal, research.title] : [research.title];
-    const checkTitle = await d1.execute({ sql, args });
-    if (checkTitle.rows.length > 0) {
-      existingId = checkTitle.rows[0].id as number;
+    let titleRows;
+    if (dedupCol) {
+      const [q, params] = p(`SELECT id FROM therapy_research WHERE ${dedupCol} = ? AND title = ?`, [dedupVal, research.title]);
+      titleRows = await neonSql(q, params);
+    } else {
+      titleRows = await neonSql`SELECT id FROM therapy_research WHERE goal_id IS NULL AND title = ${research.title}`;
     }
+    if (titleRows.length > 0) existingId = titleRows[0].id as number;
   }
 
   const authorsJson = JSON.stringify(
@@ -572,7 +466,6 @@ export async function upsertTherapyResearch(
     ),
   );
 
-  // Validate and sanitize numeric values - SQLite doesn't support NaN or Infinity
   const sanitizeNumber = (
     value: number | undefined | null,
     defaultValue: number = 0,
@@ -586,111 +479,77 @@ export async function upsertTherapyResearch(
   const extractionConfidence = sanitizeNumber(research.extractionConfidence, 0);
 
   if (existingId) {
-    // Update existing
-    await d1.execute({
-      sql: `UPDATE therapy_research
-            SET feedback_id = ?,
-                characteristic_id = ?,
-                therapeutic_goal_type = ?,
-                authors = ?,
-                year = ?,
-                journal = ?,
-                doi = ?,
-                url = ?,
-                abstract = ?,
-                key_findings = ?,
-                therapeutic_techniques = ?,
-                evidence_level = ?,
-                relevance_score = ?,
-                extracted_by = ?,
-                extraction_confidence = ?,
-                updated_at = datetime('now')
-            WHERE id = ?`,
-      args: [
-        research.feedbackId ?? null,
-        research.characteristicId ?? null,
-        research.therapeuticGoalType,
-        authorsJson,
-        research.year || null,
-        research.journal || null,
-        research.doi || null,
-        research.url || null,
-        research.abstract || null,
-        keyFindingsJson,
-        techniquesJson,
-        research.evidenceLevel || null,
-        relevanceScore,
-        research.extractedBy,
-        extractionConfidence,
-        existingId,
-      ],
-    });
+    await neonSql`
+      UPDATE therapy_research
+      SET feedback_id = ${research.feedbackId ?? null},
+          issue_id = ${research.issueId ?? null},
+          therapeutic_goal_type = ${research.therapeuticGoalType},
+          authors = ${authorsJson},
+          year = ${research.year || null},
+          journal = ${research.journal || null},
+          doi = ${research.doi || null},
+          url = ${research.url || null},
+          abstract = ${research.abstract || null},
+          key_findings = ${keyFindingsJson},
+          therapeutic_techniques = ${techniquesJson},
+          evidence_level = ${research.evidenceLevel || null},
+          relevance_score = ${relevanceScore},
+          extracted_by = ${research.extractedBy},
+          extraction_confidence = ${extractionConfidence},
+          updated_at = NOW()
+      WHERE id = ${existingId}`;
     return existingId;
   } else {
-    // Insert new
-    const result = await d1.execute({
-      sql: `INSERT INTO therapy_research (
-              goal_id, feedback_id, characteristic_id, therapeutic_goal_type, title, authors, year, journal, doi, url,
-              abstract, key_findings, therapeutic_techniques, evidence_level,
-              relevance_score, extracted_by, extraction_confidence
-            ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
-            RETURNING id`,
-      args: [
-        goalId ?? null,
-        research.feedbackId ?? null,
-        research.characteristicId ?? null,
-        research.therapeuticGoalType,
-        research.title,
-        authorsJson,
-        research.year || null,
-        research.journal || null,
-        research.doi || null,
-        research.url || null,
-        research.abstract || null,
-        keyFindingsJson,
-        techniquesJson,
-        research.evidenceLevel || null,
-        relevanceScore,
-        research.extractedBy,
-        extractionConfidence,
-      ],
-    });
-    if (!result.rows || result.rows.length === 0) {
+    const rows = await neonSql`
+      INSERT INTO therapy_research (
+        goal_id, feedback_id, issue_id, therapeutic_goal_type, title, authors, year, journal, doi, url,
+        abstract, key_findings, therapeutic_techniques, evidence_level,
+        relevance_score, extracted_by, extraction_confidence
+      ) VALUES (
+        ${goalId ?? null}, ${research.feedbackId ?? null}, ${research.issueId ?? null},
+        ${research.therapeuticGoalType}, ${research.title}, ${authorsJson},
+        ${research.year || null}, ${research.journal || null}, ${research.doi || null},
+        ${research.url || null}, ${research.abstract || null}, ${keyFindingsJson},
+        ${techniquesJson}, ${research.evidenceLevel || null},
+        ${relevanceScore}, ${research.extractedBy}, ${extractionConfidence}
+      ) RETURNING id`;
+    if (!rows || rows.length === 0) {
       throw new Error("Failed to insert therapy research: no ID returned");
     }
-    return Number(result.rows[0].id);
+    return Number(rows[0].id);
   }
 }
 
-export async function listTherapyResearch(goalId?: number, characteristicId?: number, feedbackId?: number) {
-  let sql = `SELECT * FROM therapy_research WHERE `;
+export async function listTherapyResearch(goalId?: number, issueId?: number, feedbackId?: number) {
+  let sqlStr = `SELECT * FROM therapy_research WHERE `;
   const args: any[] = [];
 
   if (feedbackId != null) {
-    sql += `feedback_id = ?`;
+    sqlStr += `feedback_id = ?`;
     args.push(feedbackId);
-  } else if (characteristicId != null && goalId != null) {
-    sql += `(characteristic_id = ? OR goal_id = ?)`;
-    args.push(characteristicId, goalId);
-  } else if (characteristicId != null) {
-    sql += `characteristic_id = ?`;
-    args.push(characteristicId);
+  } else if (issueId != null && goalId != null) {
+    sqlStr += `(issue_id = ? OR goal_id = ?)`;
+    args.push(issueId, goalId);
+  } else if (issueId != null) {
+    sqlStr += `issue_id = ?`;
+    args.push(issueId);
   } else if (goalId != null) {
-    sql += `goal_id = ?`;
+    sqlStr += `goal_id = ?`;
     args.push(goalId);
   } else {
     return [];
   }
 
-  sql += ` ORDER BY relevance_score DESC, created_at DESC`;
+  sqlStr += ` ORDER BY relevance_score DESC, created_at DESC`;
 
-  const result = await d1.execute({ sql, args });
+  const [query, params] = p(sqlStr, args);
+  const rows = await neonSql(query, params);
 
-  return result.rows.map((row) => ({
+  return rows.map((row) => ({
     id: row.id as number,
     goalId: (row.goal_id as number) || null,
     feedbackId: (row.feedback_id as number) || null,
-    characteristicId: (row.characteristic_id as number) || null,
+    issueId: (row.issue_id as number) || null,
     therapeuticGoalType: row.therapeutic_goal_type as string,
     title: row.title as string,
     authors: JSON.parse(row.authors as string) as string[],
@@ -713,38 +572,23 @@ export async function listTherapyResearch(goalId?: number, characteristicId?: nu
 }
 
 export async function deleteTherapyResearch(goalId: number): Promise<number> {
-  // Count research rows before deleting
-  const countResult = await d1.execute({
-    sql: `SELECT COUNT(*) as cnt FROM therapy_research WHERE goal_id = ?`,
-    args: [goalId],
-  });
-  const count = (countResult.rows[0]?.cnt as number) ?? 0;
+  const countRows = await neonSql`SELECT COUNT(*) as cnt FROM therapy_research WHERE goal_id = ${goalId}`;
+  const count = Number(countRows[0]?.cnt ?? 0);
 
-  // Delete linked notes_research rows first
-  await d1.execute({
-    sql: `DELETE FROM notes_research WHERE research_id IN (SELECT id FROM therapy_research WHERE goal_id = ?)`,
-    args: [goalId],
-  });
-
-  // Delete the research rows
-  await d1.execute({
-    sql: `DELETE FROM therapy_research WHERE goal_id = ?`,
-    args: [goalId],
-  });
+  await neonSql`DELETE FROM notes_research WHERE research_id IN (SELECT id FROM therapy_research WHERE goal_id = ${goalId})`;
+  await neonSql`DELETE FROM therapy_research WHERE goal_id = ${goalId}`;
 
   return count;
 }
 
 export async function getResearchForNote(noteId: number) {
-  const result = await d1.execute({
-    sql: `SELECT tr.* FROM therapy_research tr
-          INNER JOIN notes_research nr ON tr.id = nr.research_id
-          WHERE nr.note_id = ?
-          ORDER BY tr.relevance_score DESC, tr.created_at DESC`,
-    args: [noteId],
-  });
+  const rows = await neonSql`
+    SELECT tr.* FROM therapy_research tr
+    INNER JOIN notes_research nr ON tr.id = nr.research_id
+    WHERE nr.note_id = ${noteId}
+    ORDER BY tr.relevance_score DESC, tr.created_at DESC`;
 
-  return result.rows.map((row) => ({
+  return rows.map((row) => ({
     id: row.id as number,
     goalId: row.goal_id as number,
     therapeuticGoalType: row.therapeutic_goal_type as string,
@@ -773,16 +617,11 @@ export async function getResearchForNote(noteId: number) {
 // ============================================
 
 export async function getNoteById(noteId: number, userId: string) {
-  const result = await d1.execute({
-    sql: `SELECT * FROM notes WHERE id = ?`,
-    args: [noteId],
-  });
+  const rows = await neonSql`SELECT * FROM notes WHERE id = ${noteId}`;
 
-  if (result.rows.length === 0) {
-    return null;
-  }
+  if (rows.length === 0) return null;
 
-  const row = result.rows[0];
+  const row = rows[0];
   return {
     id: row.id as number,
     entityId: row.entity_id as number,
@@ -800,16 +639,11 @@ export async function getNoteById(noteId: number, userId: string) {
 }
 
 export async function getNoteBySlug(slug: string, userId: string) {
-  const result = await d1.execute({
-    sql: `SELECT * FROM notes WHERE slug = ?`,
-    args: [slug],
-  });
+  const rows = await neonSql`SELECT * FROM notes WHERE slug = ${slug}`;
 
-  if (result.rows.length === 0) {
-    return null;
-  }
+  if (rows.length === 0) return null;
 
-  const row = result.rows[0];
+  const row = rows[0];
   return {
     id: row.id as number,
     entityId: row.entity_id as number,
@@ -827,12 +661,9 @@ export async function getNoteBySlug(slug: string, userId: string) {
 }
 
 export async function getAllNotesForUser(userId: string) {
-  const result = await d1.execute({
-    sql: `SELECT * FROM notes WHERE user_id = ? ORDER BY created_at DESC`,
-    args: [userId],
-  });
+  const rows = await neonSql`SELECT * FROM notes WHERE user_id = ${userId} ORDER BY created_at DESC`;
 
-  return result.rows.map((row) => ({
+  return rows.map((row) => ({
     id: row.id as number,
     entityId: row.entity_id as number,
     entityType: row.entity_type as string,
@@ -853,12 +684,9 @@ export async function listNotesForEntity(
   entityType: string,
   userId: string,
 ) {
-  const result = await d1.execute({
-    sql: `SELECT * FROM notes WHERE entity_id = ? AND entity_type = ? AND user_id = ? ORDER BY created_at DESC`,
-    args: [entityId, entityType, userId],
-  });
+  const rows = await neonSql`SELECT * FROM notes WHERE entity_id = ${entityId} AND entity_type = ${entityType} AND user_id = ${userId} ORDER BY created_at DESC`;
 
-  return result.rows.map((row) => ({
+  return rows.map((row) => ({
     id: row.id as number,
     entityId: row.entity_id as number,
     entityType: row.entity_type as string,
@@ -885,8 +713,6 @@ export async function createNote(params: {
   tags: string[];
 }) {
   const tagsJson = JSON.stringify(params.tags);
-
-  // Auto-generate slug from content if not provided
   const slug =
     params.slug ||
     params.content
@@ -895,23 +721,12 @@ export async function createNote(params: {
       .replace(/^-+|-+$/g, "")
       .substring(0, 50);
 
-  const result = await d1.execute({
-    sql: `INSERT INTO notes (entity_id, entity_type, user_id, note_type, slug, content, created_by, tags)
-          VALUES (?, ?, ?, ?, ?, ?, ?, ?)
-          RETURNING id`,
-    args: [
-      params.entityId,
-      params.entityType,
-      params.userId,
-      params.noteType,
-      slug,
-      params.content,
-      params.createdBy,
-      tagsJson,
-    ],
-  });
+  const rows = await neonSql`
+    INSERT INTO notes (entity_id, entity_type, user_id, note_type, slug, content, created_by, tags)
+    VALUES (${params.entityId}, ${params.entityType}, ${params.userId}, ${params.noteType}, ${slug}, ${params.content}, ${params.createdBy}, ${tagsJson})
+    RETURNING id`;
 
-  return result.rows[0].id as number;
+  return rows[0].id as number;
 }
 
 export async function updateNote(
@@ -924,66 +739,35 @@ export async function updateNote(
     content?: string;
     createdBy?: string | null;
     tags?: string[];
+    title?: string | null;
   },
 ) {
   const fields: string[] = [];
   const args: any[] = [];
 
-  if (updates.entityId !== undefined) {
-    fields.push("entity_id = ?");
-    args.push(updates.entityId);
-  }
+  if (updates.entityId !== undefined) { fields.push("entity_id = ?"); args.push(updates.entityId); }
+  if (updates.entityType !== undefined) { fields.push("entity_type = ?"); args.push(updates.entityType); }
+  if (updates.noteType !== undefined) { fields.push("note_type = ?"); args.push(updates.noteType); }
+  if (updates.content !== undefined) { fields.push("content = ?"); args.push(updates.content); }
+  if (updates.createdBy !== undefined) { fields.push("created_by = ?"); args.push(updates.createdBy); }
+  if (updates.tags !== undefined) { fields.push("tags = ?"); args.push(JSON.stringify(updates.tags)); }
+  if (updates.title !== undefined) { fields.push("title = ?"); args.push(updates.title); }
 
-  if (updates.entityType !== undefined) {
-    fields.push("entity_type = ?");
-    args.push(updates.entityType);
-  }
-
-  if (updates.noteType !== undefined) {
-    fields.push("note_type = ?");
-    args.push(updates.noteType);
-  }
-
-  if (updates.content !== undefined) {
-    fields.push("content = ?");
-    args.push(updates.content);
-  }
-
-  if (updates.createdBy !== undefined) {
-    fields.push("created_by = ?");
-    args.push(updates.createdBy);
-  }
-
-  if (updates.tags !== undefined) {
-    fields.push("tags = ?");
-    args.push(JSON.stringify(updates.tags));
-  }
-
-  fields.push("updated_at = datetime('now')");
+  fields.push("updated_at = NOW()");
   args.push(noteId, userId);
 
-  await d1.execute({
-    sql: `UPDATE notes SET ${fields.join(", ")} WHERE id = ? AND user_id = ?`,
-    args,
-  });
+  const [query, params] = p(`UPDATE notes SET ${fields.join(", ")} WHERE id = ? AND user_id = ?`, args);
+  await neonSql(query, params);
 }
 
 export async function linkResearchToNote(
   noteId: number,
   researchIds: number[],
 ) {
-  // First, remove existing links
-  await d1.execute({
-    sql: `DELETE FROM notes_research WHERE note_id = ?`,
-    args: [noteId],
-  });
+  await neonSql`DELETE FROM notes_research WHERE note_id = ${noteId}`;
 
-  // Then add new links
   for (const researchId of researchIds) {
-    await d1.execute({
-      sql: `INSERT INTO notes_research (note_id, research_id) VALUES (?, ?)`,
-      args: [noteId, researchId],
-    });
+    await neonSql`INSERT INTO notes_research (note_id, research_id) VALUES (${noteId}, ${researchId})`;
   }
 }
 
@@ -991,41 +775,35 @@ export async function linkResearchToNote(
 // Note Access Control & Sharing
 // ============================================
 
-function normalizeEmail(email: string): string {
-  return email.trim().toLowerCase();
-}
-
 export async function canViewerReadNote(
   noteId: number,
   viewerEmail: string | null,
 ): Promise<{ canRead: boolean; canEdit: boolean; reason: string }> {
-  const result = await d1.execute({
-    sql: `
-      SELECT
-        n.visibility,
-        n.user_id as owner_email,
-        CASE
-          WHEN n.visibility = 'PUBLIC' THEN 1
-          WHEN n.user_id = ? THEN 1
-          WHEN EXISTS (
-            SELECT 1 FROM note_shares s
-            WHERE s.note_id = n.id AND s.email = ?
-          ) THEN 1
-          ELSE 0
-        END AS can_read
-      FROM notes n
-      WHERE n.id = ?
-      LIMIT 1;
-    `,
-    args: [viewerEmail || "", normalizeEmail(viewerEmail || ""), noteId],
-  });
+  const ve = viewerEmail || "";
+  const vn = normalizeEmail(ve);
+  const rows = await neonSql`
+    SELECT
+      n.visibility,
+      n.user_id as owner_email,
+      CASE
+        WHEN n.visibility = 'PUBLIC' THEN 1
+        WHEN n.user_id = ${ve} THEN 1
+        WHEN EXISTS (
+          SELECT 1 FROM note_shares s
+          WHERE s.note_id = n.id AND s.email = ${vn}
+        ) THEN 1
+        ELSE 0
+      END AS can_read
+    FROM notes n
+    WHERE n.id = ${noteId}
+    LIMIT 1`;
 
-  if (result.rows.length === 0) {
+  if (rows.length === 0) {
     return { canRead: false, canEdit: false, reason: "NOT_FOUND" };
   }
 
-  const row = result.rows[0];
-  const canRead = (row.can_read as number) === 1;
+  const row = rows[0];
+  const canRead = Number(row.can_read) === 1;
   const ownerEmail = row.owner_email as string;
   const visibility = row.visibility as string;
 
@@ -1033,24 +811,18 @@ export async function canViewerReadNote(
     return { canRead: false, canEdit: false, reason: "FORBIDDEN" };
   }
 
-  // Check if viewer is owner
   if (viewerEmail === ownerEmail) {
     return { canRead: true, canEdit: true, reason: "OWNER" };
   }
 
-  // Check if public
   if (visibility === "PUBLIC") {
     return { canRead: true, canEdit: false, reason: "PUBLIC" };
   }
 
-  // Check share role
-  const shareResult = await d1.execute({
-    sql: `SELECT role FROM note_shares WHERE note_id = ? AND email = ?`,
-    args: [noteId, normalizeEmail(viewerEmail || "")],
-  });
+  const shareRows = await neonSql`SELECT role FROM note_shares WHERE note_id = ${noteId} AND email = ${normalizeEmail(viewerEmail || "")}`;
 
-  if (shareResult.rows.length > 0) {
-    const role = shareResult.rows[0].role as string;
+  if (shareRows.length > 0) {
+    const role = shareRows[0].role as string;
     return {
       canRead: true,
       canEdit: role === "EDITOR",
@@ -1066,11 +838,7 @@ export async function setNoteVisibility(
   visibility: "PRIVATE" | "PUBLIC",
   userId: string,
 ) {
-  await d1.execute({
-    sql: `UPDATE notes SET visibility = ?, updated_at = datetime('now') WHERE id = ? AND user_id = ?`,
-    args: [visibility, noteId, userId],
-  });
-
+  await neonSql`UPDATE notes SET visibility = ${visibility}, updated_at = NOW() WHERE id = ${noteId} AND user_id = ${userId}`;
   return getNoteById(noteId, userId);
 }
 
@@ -1082,22 +850,15 @@ export async function shareNote(
 ) {
   const normalizedEmail = normalizeEmail(email);
 
-  await d1.execute({
-    sql: `
-      INSERT INTO note_shares (note_id, email, role, created_by)
-      VALUES (?, ?, ?, ?)
-      ON CONFLICT(note_id, email)
-      DO UPDATE SET role = excluded.role
-    `,
-    args: [noteId, normalizedEmail, role, createdBy],
-  });
+  await neonSql`
+    INSERT INTO note_shares (note_id, email, role, created_by)
+    VALUES (${noteId}, ${normalizedEmail}, ${role}, ${createdBy})
+    ON CONFLICT (note_id, email)
+    DO UPDATE SET role = excluded.role`;
 
-  const result = await d1.execute({
-    sql: `SELECT * FROM note_shares WHERE note_id = ? AND email = ?`,
-    args: [noteId, normalizedEmail],
-  });
+  const rows = await neonSql`SELECT * FROM note_shares WHERE note_id = ${noteId} AND email = ${normalizedEmail}`;
 
-  const row = result.rows[0];
+  const row = rows[0];
   return {
     noteId: row.note_id as number,
     email: row.email as string,
@@ -1113,22 +874,14 @@ export async function unshareNote(
   userId: string,
 ) {
   const normalizedEmail = normalizeEmail(email);
-
-  const result = await d1.execute({
-    sql: `DELETE FROM note_shares WHERE note_id = ? AND email = ? RETURNING id`,
-    args: [noteId, normalizedEmail],
-  });
-
-  return result.rows.length > 0;
+  const rows = await neonSql`DELETE FROM note_shares WHERE note_id = ${noteId} AND email = ${normalizedEmail} RETURNING note_id`;
+  return rows.length > 0;
 }
 
 export async function getNoteShares(noteId: number) {
-  const result = await d1.execute({
-    sql: `SELECT * FROM note_shares WHERE note_id = ? ORDER BY created_at DESC`,
-    args: [noteId],
-  });
+  const rows = await neonSql`SELECT * FROM note_shares WHERE note_id = ${noteId} ORDER BY created_at DESC`;
 
-  return result.rows.map((row) => ({
+  return rows.map((row) => ({
     noteId: row.note_id as number,
     email: row.email as string,
     role: row.role as string,
@@ -1140,18 +893,14 @@ export async function getNoteShares(noteId: number) {
 export async function getSharedNotes(viewerEmail: string) {
   const normalizedEmail = normalizeEmail(viewerEmail);
 
-  const result = await d1.execute({
-    sql: `
-      SELECT n.*
-      FROM notes n
-      JOIN note_shares s ON s.note_id = n.id
-      WHERE s.email = ?
-      ORDER BY n.updated_at DESC
-    `,
-    args: [normalizedEmail],
-  });
+  const rows = await neonSql`
+    SELECT n.*
+    FROM notes n
+    JOIN note_shares s ON s.note_id = n.id
+    WHERE s.email = ${normalizedEmail}
+    ORDER BY n.updated_at DESC`;
 
-  return result.rows.map((row) => ({
+  return rows.map((row) => ({
     id: row.id as number,
     entityId: row.entity_id as number,
     entityType: row.entity_type as string,
@@ -1172,12 +921,9 @@ export async function getSharedNotes(viewerEmail: string) {
 // ============================================
 
 export async function getAllStoriesForUser(createdBy: string) {
-  const result = await d1.execute({
-    sql: `SELECT * FROM stories WHERE user_id = ? ORDER BY created_at DESC`,
-    args: [createdBy],
-  });
+  const rows = await neonSql`SELECT * FROM stories WHERE user_id = ${createdBy} ORDER BY created_at DESC`;
 
-  return result.rows.map((row) => ({
+  return rows.map((row) => ({
     id: row.id as number,
     goalId: row.goal_id as number,
     createdBy: row.user_id as string,
@@ -1191,12 +937,9 @@ export async function getAllStoriesForUser(createdBy: string) {
 }
 
 export async function listStories(goalId: number, createdBy: string) {
-  const result = await d1.execute({
-    sql: `SELECT * FROM stories WHERE goal_id = ? AND user_id = ? ORDER BY created_at DESC`,
-    args: [goalId, createdBy],
-  });
+  const rows = await neonSql`SELECT * FROM stories WHERE goal_id = ${goalId} AND user_id = ${createdBy} ORDER BY created_at DESC`;
 
-  return result.rows.map((row) => ({
+  return rows.map((row) => ({
     id: row.id as number,
     goalId: row.goal_id as number,
     createdBy: row.user_id as string,
@@ -1210,16 +953,11 @@ export async function listStories(goalId: number, createdBy: string) {
 }
 
 export async function getStory(storyId: number, createdBy: string) {
-  const result = await d1.execute({
-    sql: `SELECT * FROM stories WHERE id = ? AND user_id = ?`,
-    args: [storyId, createdBy],
-  });
+  const rows = await neonSql`SELECT * FROM stories WHERE id = ${storyId} AND user_id = ${createdBy}`;
 
-  if (result.rows.length === 0) {
-    return null;
-  }
+  if (rows.length === 0) return null;
 
-  const row = result.rows[0];
+  const row = rows[0];
   return {
     id: row.id as number,
     goalId: row.goal_id as number,
@@ -1238,14 +976,11 @@ export async function createStory(params: {
   createdBy: string;
   content: string;
 }) {
-  const result = await d1.execute({
-    sql: `INSERT INTO stories (goal_id, user_id, content)
-          VALUES (?, ?, ?)
-          RETURNING id`,
-    args: [params.goalId, params.createdBy, params.content],
-  });
-
-  return result.rows[0].id as number;
+  const rows = await neonSql`
+    INSERT INTO stories (goal_id, user_id, content)
+    VALUES (${params.goalId}, ${params.createdBy}, ${params.content})
+    RETURNING id`;
+  return rows[0].id as number;
 }
 
 export async function updateStory(
@@ -1258,44 +993,31 @@ export async function updateStory(
   const fields: string[] = [];
   const args: any[] = [];
 
-  if (updates.content !== undefined) {
-    fields.push("content = ?");
-    args.push(updates.content);
-  }
+  if (updates.content !== undefined) { fields.push("content = ?"); args.push(updates.content); }
 
-  fields.push("updated_at = datetime('now')");
+  fields.push("updated_at = NOW()");
   args.push(storyId, createdBy);
 
-  await d1.execute({
-    sql: `UPDATE stories SET ${fields.join(", ")} WHERE id = ? AND user_id = ?`,
-    args,
-  });
+  const [query, params] = p(`UPDATE stories SET ${fields.join(", ")} WHERE id = ? AND user_id = ?`, args);
+  await neonSql(query, params);
 }
 
 export async function deleteStory(storyId: number, createdBy: string) {
-  await d1.execute({
-    sql: `DELETE FROM stories WHERE id = ? AND user_id = ?`,
-    args: [storyId, createdBy],
-  });
+  await neonSql`DELETE FROM stories WHERE id = ${storyId} AND user_id = ${createdBy}`;
 }
 
 // ============================================
 // Generation Jobs
 // ============================================
 
-/**
- * Mark RUNNING jobs older than `minutes` as FAILED so they don't block new runs.
- */
 export async function cleanupStaleJobs(minutes = 15): Promise<void> {
-  await d1.execute({
-    sql: `UPDATE generation_jobs
-           SET status = 'FAILED',
-               error = '{"message":"Job timed out — no progress updates received"}',
-               updated_at = datetime('now')
-         WHERE status = 'RUNNING'
-           AND updated_at < datetime('now', '-' || ? || ' minutes')`,
-    args: [minutes],
-  });
+  await neonSql`
+    UPDATE generation_jobs
+    SET status = 'FAILED',
+        error = '{"message":"Job timed out — no progress updates received"}',
+        updated_at = NOW()
+    WHERE status = 'RUNNING'
+      AND updated_at < NOW() - (${minutes} * INTERVAL '1 minute')`;
 }
 
 export async function createGenerationJob(
@@ -1305,11 +1027,9 @@ export async function createGenerationJob(
   goalId?: number | null,
   storyId?: number,
 ) {
-  await d1.execute({
-    sql: `INSERT INTO generation_jobs (id, user_id, type, goal_id, story_id, status, progress)
-          VALUES (?, ?, ?, ?, ?, 'RUNNING', 0)`,
-    args: [id, userId, type, goalId ?? null, storyId || null],
-  });
+  await neonSql`
+    INSERT INTO generation_jobs (id, user_id, type, goal_id, story_id, status, progress)
+    VALUES (${id}, ${userId}, ${type}, ${goalId ?? null}, ${storyId || null}, 'RUNNING', 0)`;
 }
 
 export async function updateGenerationJob(
@@ -1324,47 +1044,27 @@ export async function updateGenerationJob(
   const fields: string[] = [];
   const args: any[] = [];
 
-  if (updates.status) {
-    fields.push("status = ?");
-    args.push(updates.status);
-  }
-
-  if (updates.progress !== undefined) {
-    fields.push("progress = ?");
-    args.push(updates.progress);
-  }
-
+  if (updates.status) { fields.push("status = ?"); args.push(updates.status); }
+  if (updates.progress !== undefined) { fields.push("progress = ?"); args.push(updates.progress); }
   if (updates.result) {
     fields.push("result = ?");
-    // updates.result is already a JSON string (callers pass JSON.stringify output)
     args.push(typeof updates.result === "string" ? updates.result : JSON.stringify(updates.result));
   }
-
   if (updates.error) {
     fields.push("error = ?");
-    // updates.error is already a JSON string (callers pass JSON.stringify output)
     args.push(typeof updates.error === "string" ? updates.error : JSON.stringify(updates.error));
   }
 
-  fields.push("updated_at = datetime('now')");
+  fields.push("updated_at = NOW()");
   args.push(id);
 
-  await d1.execute({
-    sql: `UPDATE generation_jobs SET ${fields.join(", ")} WHERE id = ?`,
-    args,
-  });
+  const [query, params] = p(`UPDATE generation_jobs SET ${fields.join(", ")} WHERE id = ?`, args);
+  await neonSql(query, params);
 }
 
-/**
- * Safely parses a job error stored in D1.
- * Handles legacy double-encoded values (where JSON.stringify was applied to an
- * already-serialized string) as well as correctly single-encoded values.
- * Always returns an object with at least { message: string }.
- */
 function parseJobError(raw: string): { message: string; code?: string; details?: string } {
   try {
     const first = JSON.parse(raw);
-    // If the first parse returns a string, it was double-encoded — parse again
     if (typeof first === "string") {
       try {
         const second = JSON.parse(first);
@@ -1372,7 +1072,6 @@ function parseJobError(raw: string): { message: string; code?: string; details?:
           return second as { message: string; code?: string; details?: string };
         }
       } catch {
-        // Inner string is not JSON — treat it as the message
         return { message: first };
       }
     }
@@ -1386,16 +1085,11 @@ function parseJobError(raw: string): { message: string; code?: string; details?:
 }
 
 export async function getGenerationJob(id: string) {
-  const result = await d1.execute({
-    sql: `SELECT * FROM generation_jobs WHERE id = ?`,
-    args: [id],
-  });
+  const rows = await neonSql`SELECT * FROM generation_jobs WHERE id = ${id}`;
 
-  if (result.rows.length === 0) {
-    return null;
-  }
+  if (rows.length === 0) return null;
 
-  const row = result.rows[0];
+  const row = rows[0];
   return {
     id: row.id as string,
     userId: row.user_id as string,
@@ -1416,12 +1110,9 @@ export async function getGenerationJob(id: string) {
 // ============================================
 
 export async function listTherapeuticQuestions(goalId: number) {
-  const result = await d1.execute({
-    sql: `SELECT * FROM therapeutic_questions WHERE goal_id = ? ORDER BY created_at DESC`,
-    args: [goalId],
-  });
+  const rows = await neonSql`SELECT * FROM therapeutic_questions WHERE goal_id = ${goalId} ORDER BY created_at DESC`;
 
-  return result.rows.map((row) => ({
+  return rows.map((row) => ({
     id: row.id as number,
     goalId: row.goal_id as number,
     question: row.question as string,
@@ -1440,31 +1131,30 @@ export async function listTherapeuticQuestions(goalId: number) {
 
 export async function createGoalStory(params: {
   goalId?: number | null;
-  characteristicId?: number | null;
+  issueId?: number | null;
+  feedbackId?: number | null;
   language: string;
   minutes: number;
   text: string;
 }) {
-  if (params.goalId == null && params.characteristicId == null) {
-    throw new Error("At least one of goalId or characteristicId is required");
+  if (params.goalId == null && params.issueId == null && params.feedbackId == null) {
+    throw new Error("At least one of goalId, issueId, or feedbackId is required");
   }
 
-  const result = await d1.execute({
-    sql: `INSERT INTO goal_stories (goal_id, characteristic_id, language, minutes, text)
-          VALUES (?, ?, ?, ?, ?)
-          RETURNING *`,
-    args: [params.goalId ?? null, params.characteristicId ?? null, params.language, params.minutes, params.text],
-  });
+  const rows = await neonSql`
+    INSERT INTO goal_stories (goal_id, issue_id, feedback_id, language, minutes, text)
+    VALUES (${params.goalId ?? null}, ${params.issueId ?? null}, ${params.feedbackId ?? null}, ${params.language}, ${params.minutes}, ${params.text})
+    RETURNING *`;
 
-  const row = result.rows[0];
-  return mapGoalStoryRow(row);
+  return mapGoalStoryRow(rows[0]);
 }
 
 function mapGoalStoryRow(row: Record<string, unknown>) {
   return {
     id: row.id as number,
     goalId: (row.goal_id as number) || null,
-    characteristicId: (row.characteristic_id as number) || null,
+    issueId: (row.issue_id as number) || null,
+    feedbackId: (row.feedback_id as number) || null,
     language: row.language as string,
     minutes: row.minutes as number,
     text: row.text as string,
@@ -1477,16 +1167,13 @@ function mapGoalStoryRow(row: Record<string, unknown>) {
 }
 
 export async function getGoalStory(id: number) {
-  const result = await d1.execute({
-    sql: `SELECT * FROM goal_stories WHERE id = ?`,
-    args: [id],
-  });
+  const rows = await neonSql`SELECT * FROM goal_stories WHERE id = ${id}`;
 
-  if (result.rows.length === 0) {
+  if (rows.length === 0) {
     throw new Error(`GoalStory ${id} not found`);
   }
 
-  return mapGoalStoryRow(result.rows[0]);
+  return mapGoalStoryRow(rows[0]);
 }
 
 export async function updateGoalStoryAudio(
@@ -1495,49 +1182,36 @@ export async function updateGoalStoryAudio(
   audioUrl: string,
 ) {
   const now = new Date().toISOString();
-  await d1.execute({
-    sql: `UPDATE goal_stories SET audio_key = ?, audio_url = ?, audio_generated_at = ?, updated_at = ? WHERE id = ?`,
-    args: [audioKey, audioUrl, now, now, id],
-  });
+  await neonSql`UPDATE goal_stories SET audio_key = ${audioKey}, audio_url = ${audioUrl}, audio_generated_at = ${now}, updated_at = ${now} WHERE id = ${id}`;
 }
 
 export async function deleteGoalStory(id: number, userEmail: string) {
-  // Fetch story (throws if not found), then verify ownership
   const story = await getGoalStory(id);
   if (story.goalId) {
     await getGoal(story.goalId, userEmail);
   }
-  await d1.execute({
-    sql: `DELETE FROM goal_stories WHERE id = ?`,
-    args: [id],
-  });
+  await neonSql`DELETE FROM goal_stories WHERE id = ${id}`;
 }
 
 export async function listGoalStories(goalId: number) {
-  const result = await d1.execute({
-    sql: `SELECT * FROM goal_stories WHERE goal_id = ? ORDER BY created_at DESC`,
-    args: [goalId],
-  });
-
-  return result.rows.map(mapGoalStoryRow);
+  const rows = await neonSql`SELECT * FROM goal_stories WHERE goal_id = ${goalId} ORDER BY created_at DESC`;
+  return rows.map(mapGoalStoryRow);
 }
 
-export async function listGoalStoriesForCharacteristic(characteristicId: number) {
-  const result = await d1.execute({
-    sql: `SELECT * FROM goal_stories WHERE characteristic_id = ? ORDER BY created_at DESC`,
-    args: [characteristicId],
-  });
+export async function listGoalStoriesForIssue(issueId: number) {
+  const rows = await neonSql`SELECT * FROM goal_stories WHERE issue_id = ${issueId} ORDER BY created_at DESC`;
+  return rows.map(mapGoalStoryRow);
+}
 
-  return result.rows.map(mapGoalStoryRow);
+export async function listGoalStoriesForFeedback(feedbackId: number) {
+  const rows = await neonSql`SELECT * FROM goal_stories WHERE feedback_id = ${feedbackId} ORDER BY created_at DESC`;
+  return rows.map(mapGoalStoryRow);
 }
 
 export async function getTextSegmentsForStory(storyId: number) {
-  const result = await d1.execute({
-    sql: `SELECT * FROM text_segments WHERE story_id = ? ORDER BY idx ASC`,
-    args: [storyId],
-  });
+  const rows = await neonSql`SELECT * FROM text_segments WHERE story_id = ${storyId} ORDER BY idx ASC`;
 
-  return result.rows.map((row) => ({
+  return rows.map((row) => ({
     id: row.id as number,
     goalId: row.goal_id as number,
     storyId: (row.story_id as number) || null,
@@ -1548,12 +1222,9 @@ export async function getTextSegmentsForStory(storyId: number) {
 }
 
 export async function getAudioAssetsForStory(storyId: number) {
-  const result = await d1.execute({
-    sql: `SELECT * FROM audio_assets WHERE story_id = ? ORDER BY created_at DESC`,
-    args: [storyId],
-  });
+  const rows = await neonSql`SELECT * FROM audio_assets WHERE story_id = ${storyId} ORDER BY created_at DESC`;
 
-  return result.rows.map((row) => ({
+  return rows.map((row) => ({
     id: row.id as string,
     createdBy: row.user_id as string,
     goalId: row.goal_id as number,
@@ -1580,34 +1251,20 @@ export async function listJournalEntries(
     toDate?: string;
   },
 ) {
-  let sql = `SELECT * FROM journal_entries WHERE user_id = ?`;
+  let sqlStr = `SELECT * FROM journal_entries WHERE user_id = ?`;
   const args: any[] = [userId];
 
-  if (opts?.familyMemberId) {
-    sql += ` AND family_member_id = ?`;
-    args.push(opts.familyMemberId);
-  }
-  if (opts?.goalId) {
-    sql += ` AND goal_id = ?`;
-    args.push(opts.goalId);
-  }
-  if (opts?.mood) {
-    sql += ` AND mood = ?`;
-    args.push(opts.mood);
-  }
-  if (opts?.fromDate) {
-    sql += ` AND entry_date >= ?`;
-    args.push(opts.fromDate);
-  }
-  if (opts?.toDate) {
-    sql += ` AND entry_date <= ?`;
-    args.push(opts.toDate);
-  }
+  if (opts?.familyMemberId) { sqlStr += ` AND family_member_id = ?`; args.push(opts.familyMemberId); }
+  if (opts?.goalId) { sqlStr += ` AND goal_id = ?`; args.push(opts.goalId); }
+  if (opts?.mood) { sqlStr += ` AND mood = ?`; args.push(opts.mood); }
+  if (opts?.fromDate) { sqlStr += ` AND entry_date >= ?`; args.push(opts.fromDate); }
+  if (opts?.toDate) { sqlStr += ` AND entry_date <= ?`; args.push(opts.toDate); }
 
-  sql += ` ORDER BY entry_date DESC, created_at DESC`;
+  sqlStr += ` ORDER BY entry_date DESC, created_at DESC`;
 
-  const result = await d1.execute({ sql, args });
-  return result.rows.map((row) => ({
+  const [query, params] = p(sqlStr, args);
+  const rows = await neonSql(query, params);
+  return rows.map((row) => ({
     id: row.id as number,
     userId: row.user_id as string,
     familyMemberId: (row.family_member_id as number) || null,
@@ -1625,12 +1282,9 @@ export async function listJournalEntries(
 }
 
 export async function getJournalEntry(id: number, userId: string) {
-  const result = await d1.execute({
-    sql: `SELECT * FROM journal_entries WHERE id = ? AND user_id = ?`,
-    args: [id, userId],
-  });
-  if (result.rows.length === 0) return null;
-  const row = result.rows[0];
+  const rows = await neonSql`SELECT * FROM journal_entries WHERE id = ${id} AND user_id = ${userId}`;
+  if (rows.length === 0) return null;
+  const row = rows[0];
   return {
     id: row.id as number,
     userId: row.user_id as string,
@@ -1662,24 +1316,11 @@ export async function createJournalEntry(params: {
 }): Promise<number> {
   const tagsJson = JSON.stringify(params.tags || []);
   const isPrivate = params.isPrivate !== false ? 1 : 0;
-  const result = await d1.execute({
-    sql: `INSERT INTO journal_entries (user_id, family_member_id, title, content, mood, mood_score, tags, goal_id, is_private, entry_date, created_at, updated_at)
-          VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP)
-          RETURNING id`,
-    args: [
-      params.userId,
-      params.familyMemberId ?? null,
-      params.title ?? null,
-      params.content,
-      params.mood ?? null,
-      params.moodScore ?? null,
-      tagsJson,
-      params.goalId ?? null,
-      isPrivate,
-      params.entryDate,
-    ],
-  });
-  return result.rows[0].id as number;
+  const rows = await neonSql`
+    INSERT INTO journal_entries (user_id, family_member_id, title, content, mood, mood_score, tags, goal_id, is_private, entry_date, created_at, updated_at)
+    VALUES (${params.userId}, ${params.familyMemberId ?? null}, ${params.title ?? null}, ${params.content}, ${params.mood ?? null}, ${params.moodScore ?? null}, ${tagsJson}, ${params.goalId ?? null}, ${isPrivate}, ${params.entryDate}, NOW(), NOW())
+    RETURNING id`;
+  return rows[0].id as number;
 }
 
 export async function updateJournalEntry(
@@ -1700,62 +1341,30 @@ export async function updateJournalEntry(
   const fields: string[] = [];
   const args: any[] = [];
 
-  if (updates.title !== undefined) {
-    fields.push("title = ?");
-    args.push(updates.title);
-  }
-  if (updates.content !== undefined) {
-    fields.push("content = ?");
-    args.push(updates.content);
-  }
-  if (updates.mood !== undefined) {
-    fields.push("mood = ?");
-    args.push(updates.mood);
-  }
-  if (updates.moodScore !== undefined) {
-    fields.push("mood_score = ?");
-    args.push(updates.moodScore);
-  }
-  if (updates.tags !== undefined) {
-    fields.push("tags = ?");
-    args.push(JSON.stringify(updates.tags));
-  }
-  if (updates.goalId !== undefined) {
-    fields.push("goal_id = ?");
-    args.push(updates.goalId);
-  }
-  if (updates.familyMemberId !== undefined) {
-    fields.push("family_member_id = ?");
-    args.push(updates.familyMemberId);
-  }
-  if (updates.isPrivate !== undefined) {
-    fields.push("is_private = ?");
-    args.push(updates.isPrivate ? 1 : 0);
-  }
-  if (updates.entryDate !== undefined) {
-    fields.push("entry_date = ?");
-    args.push(updates.entryDate);
-  }
+  if (updates.title !== undefined) { fields.push("title = ?"); args.push(updates.title); }
+  if (updates.content !== undefined) { fields.push("content = ?"); args.push(updates.content); }
+  if (updates.mood !== undefined) { fields.push("mood = ?"); args.push(updates.mood); }
+  if (updates.moodScore !== undefined) { fields.push("mood_score = ?"); args.push(updates.moodScore); }
+  if (updates.tags !== undefined) { fields.push("tags = ?"); args.push(JSON.stringify(updates.tags)); }
+  if (updates.goalId !== undefined) { fields.push("goal_id = ?"); args.push(updates.goalId); }
+  if (updates.familyMemberId !== undefined) { fields.push("family_member_id = ?"); args.push(updates.familyMemberId); }
+  if (updates.isPrivate !== undefined) { fields.push("is_private = ?"); args.push(updates.isPrivate ? 1 : 0); }
+  if (updates.entryDate !== undefined) { fields.push("entry_date = ?"); args.push(updates.entryDate); }
 
   if (fields.length === 0) return;
 
-  fields.push("updated_at = datetime('now')");
+  fields.push("updated_at = NOW()");
   args.push(id, userId);
 
-  await d1.execute({
-    sql: `UPDATE journal_entries SET ${fields.join(", ")} WHERE id = ? AND user_id = ?`,
-    args,
-  });
+  const [query, params] = p(`UPDATE journal_entries SET ${fields.join(", ")} WHERE id = ? AND user_id = ?`, args);
+  await neonSql(query, params);
 }
 
 export async function deleteJournalEntry(
   id: number,
   userId: string,
 ): Promise<boolean> {
-  await d1.execute({
-    sql: `DELETE FROM journal_entries WHERE id = ? AND user_id = ?`,
-    args: [id, userId],
-  });
+  await neonSql`DELETE FROM journal_entries WHERE id = ${id} AND user_id = ${userId}`;
   return true;
 }
 
@@ -1768,18 +1377,16 @@ export async function getBehaviorObservationsForFamilyMember(
   userId: string,
   goalId?: number,
 ) {
-  let sql = `SELECT * FROM behavior_observations WHERE family_member_id = ? AND user_id = ?`;
+  let sqlStr = `SELECT * FROM behavior_observations WHERE family_member_id = ? AND user_id = ?`;
   const args: any[] = [familyMemberId, userId];
 
-  if (goalId !== undefined) {
-    sql += ` AND goal_id = ?`;
-    args.push(goalId);
-  }
+  if (goalId !== undefined) { sqlStr += ` AND goal_id = ?`; args.push(goalId); }
 
-  sql += ` ORDER BY observed_at DESC, created_at DESC`;
+  sqlStr += ` ORDER BY observed_at DESC, created_at DESC`;
 
-  const result = await d1.execute({ sql, args });
-  return result.rows.map((row) => ({
+  const [query, params] = p(sqlStr, args);
+  const rows = await neonSql(query, params);
+  return rows.map((row) => ({
     id: row.id as number,
     familyMemberId: row.family_member_id as number,
     goalId: (row.goal_id as number) || null,
@@ -1796,12 +1403,9 @@ export async function getBehaviorObservationsForFamilyMember(
 }
 
 export async function getBehaviorObservation(id: number, userId: string) {
-  const result = await d1.execute({
-    sql: `SELECT * FROM behavior_observations WHERE id = ? AND user_id = ?`,
-    args: [id, userId],
-  });
-  if (result.rows.length === 0) return null;
-  const row = result.rows[0];
+  const rows = await neonSql`SELECT * FROM behavior_observations WHERE id = ${id} AND user_id = ${userId}`;
+  if (rows.length === 0) return null;
+  const row = rows[0];
   return {
     id: row.id as number,
     familyMemberId: row.family_member_id as number,
@@ -1821,7 +1425,7 @@ export async function getBehaviorObservation(id: number, userId: string) {
 export async function createBehaviorObservation(params: {
   familyMemberId: number;
   goalId?: number | null;
-  characteristicId?: number | null;
+  issueId?: number | null;
   userId: string;
   observedAt: string;
   observationType: string;
@@ -1838,24 +1442,11 @@ export async function createBehaviorObservation(params: {
       ? params.frequency
       : null;
 
-  const result = await d1.execute({
-    sql: `INSERT INTO behavior_observations (family_member_id, goal_id, characteristic_id, user_id, observed_at, observation_type, frequency, intensity, context, notes, created_at, updated_at)
-          VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP)
-          RETURNING id`,
-    args: [
-      params.familyMemberId,
-      params.goalId ?? null,
-      params.characteristicId ?? null,
-      params.userId,
-      params.observedAt,
-      params.observationType,
-      safeFrequency,
-      params.intensity ?? null,
-      params.context ?? null,
-      params.notes ?? null,
-    ],
-  });
-  return result.rows[0].id as number;
+  const rows = await neonSql`
+    INSERT INTO behavior_observations (family_member_id, goal_id, issue_id, user_id, observed_at, observation_type, frequency, intensity, context, notes, created_at, updated_at)
+    VALUES (${params.familyMemberId}, ${params.goalId ?? null}, ${params.issueId ?? null}, ${params.userId}, ${params.observedAt}, ${params.observationType}, ${safeFrequency}, ${params.intensity ?? null}, ${params.context ?? null}, ${params.notes ?? null}, NOW(), NOW())
+    RETURNING id`;
+  return rows[0].id as number;
 }
 
 export async function updateBehaviorObservation(
@@ -1873,14 +1464,8 @@ export async function updateBehaviorObservation(
   const fields: string[] = [];
   const args: any[] = [];
 
-  if (updates.observedAt !== undefined) {
-    fields.push("observed_at = ?");
-    args.push(updates.observedAt);
-  }
-  if (updates.observationType !== undefined) {
-    fields.push("observation_type = ?");
-    args.push(updates.observationType);
-  }
+  if (updates.observedAt !== undefined) { fields.push("observed_at = ?"); args.push(updates.observedAt); }
+  if (updates.observationType !== undefined) { fields.push("observation_type = ?"); args.push(updates.observationType); }
   if (updates.frequency !== undefined) {
     const safeFrequency =
       updates.frequency !== null &&
@@ -1891,138 +1476,24 @@ export async function updateBehaviorObservation(
     fields.push("frequency = ?");
     args.push(safeFrequency);
   }
-  if (updates.intensity !== undefined) {
-    fields.push("intensity = ?");
-    args.push(updates.intensity);
-  }
-  if (updates.context !== undefined) {
-    fields.push("context = ?");
-    args.push(updates.context);
-  }
-  if (updates.notes !== undefined) {
-    fields.push("notes = ?");
-    args.push(updates.notes);
-  }
+  if (updates.intensity !== undefined) { fields.push("intensity = ?"); args.push(updates.intensity); }
+  if (updates.context !== undefined) { fields.push("context = ?"); args.push(updates.context); }
+  if (updates.notes !== undefined) { fields.push("notes = ?"); args.push(updates.notes); }
 
   if (fields.length === 0) return;
 
-  fields.push("updated_at = datetime('now')");
+  fields.push("updated_at = NOW()");
   args.push(id, userId);
 
-  await d1.execute({
-    sql: `UPDATE behavior_observations SET ${fields.join(", ")} WHERE id = ? AND user_id = ?`,
-    args,
-  });
+  const [query, params] = p(`UPDATE behavior_observations SET ${fields.join(", ")} WHERE id = ? AND user_id = ?`, args);
+  await neonSql(query, params);
 }
 
 export async function deleteBehaviorObservation(
   id: number,
   userId: string,
 ): Promise<void> {
-  await d1.execute({
-    sql: `DELETE FROM behavior_observations WHERE id = ? AND user_id = ?`,
-    args: [id, userId],
-  });
-}
-
-// ============================================
-// Family Member Characteristics
-// ============================================
-
-export async function getCharacteristicsForFamilyMember(
-  familyMemberId: number,
-  userId: string,
-  category?: string,
-) {
-  let sql = `SELECT * FROM family_member_characteristics WHERE family_member_id = ? AND user_id = ?`;
-  const args: any[] = [familyMemberId, userId];
-
-  if (category !== undefined) {
-    sql += ` AND category = ?`;
-    args.push(category);
-  }
-
-  sql += ` ORDER BY created_at ASC`;
-
-  const result = await d1.execute({ sql, args });
-  return result.rows.map(mapCharacteristicRow);
-}
-
-function mapCharacteristicRow(row: Record<string, unknown>) {
-  return {
-    id: row.id as number,
-    familyMemberId: row.family_member_id as number,
-    userId: row.user_id as string,
-    category: row.category as string,
-    title: row.title as string,
-    description: (row.description as string) || null,
-    severity: (row.severity as string) || null,
-    frequencyPerWeek: (row.frequency_per_week as number) ?? null,
-    durationWeeks: (row.duration_weeks as number) ?? null,
-    ageOfOnset: (row.age_of_onset as number) ?? null,
-    impairmentDomains: row.impairment_domains
-      ? JSON.parse(row.impairment_domains as string)
-      : [],
-    externalizedName: (row.externalized_name as string) || null,
-    strengths: (row.strengths as string) || null,
-    riskTier: (row.risk_tier as string) || "NONE",
-    tags: row.tags ? JSON.parse(row.tags as string) : [],
-    createdAt: row.created_at as string,
-    updatedAt: row.updated_at as string,
-  };
-}
-
-export async function getCharacteristic(id: number, userId: string) {
-  const result = await d1.execute({
-    sql: `SELECT * FROM family_member_characteristics WHERE id = ? AND user_id = ?`,
-    args: [id, userId],
-  });
-  if (result.rows.length === 0) return null;
-  return mapCharacteristicRow(result.rows[0]);
-}
-
-export async function createCharacteristic(params: {
-  familyMemberId: number;
-  userId: string;
-  category: string;
-  title: string;
-  description?: string | null;
-  severity?: string | null;
-  frequencyPerWeek?: number | null;
-  durationWeeks?: number | null;
-  ageOfOnset?: number | null;
-  impairmentDomains?: string[] | null;
-  externalizedName?: string | null;
-  strengths?: string | null;
-  riskTier?: string | null;
-  tags?: string[] | null;
-}): Promise<number> {
-  const safeFreq = sanitizeInt(params.frequencyPerWeek);
-  const safeDuration = sanitizeInt(params.durationWeeks);
-  const safeAge = sanitizeInt(params.ageOfOnset);
-
-  const result = await d1.execute({
-    sql: `INSERT INTO family_member_characteristics (family_member_id, user_id, category, title, description, severity, frequency_per_week, duration_weeks, age_of_onset, impairment_domains, externalized_name, strengths, risk_tier, tags, created_at, updated_at)
-          VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP)
-          RETURNING id`,
-    args: [
-      params.familyMemberId,
-      params.userId,
-      params.category,
-      params.title,
-      params.description ?? null,
-      params.severity ?? null,
-      safeFreq,
-      safeDuration,
-      safeAge,
-      params.impairmentDomains ? JSON.stringify(params.impairmentDomains) : null,
-      params.externalizedName ?? null,
-      params.strengths ?? null,
-      params.riskTier ?? "NONE",
-      params.tags ? JSON.stringify(params.tags) : null,
-    ],
-  });
-  return result.rows[0].id as number;
+  await neonSql`DELETE FROM behavior_observations WHERE id = ${id} AND user_id = ${userId}`;
 }
 
 function sanitizeInt(val: number | null | undefined): number | null {
@@ -2031,118 +1502,20 @@ function sanitizeInt(val: number | null | undefined): number | null {
   return val;
 }
 
-export async function updateCharacteristic(
-  id: number,
-  userId: string,
-  updates: {
-    category?: string;
-    title?: string;
-    description?: string | null;
-    severity?: string | null;
-    frequencyPerWeek?: number | null;
-    durationWeeks?: number | null;
-    ageOfOnset?: number | null;
-    impairmentDomains?: string[] | null;
-    externalizedName?: string | null;
-    strengths?: string | null;
-    riskTier?: string | null;
-    tags?: string[] | null;
-  },
-) {
-  const fields: string[] = [];
-  const args: any[] = [];
-
-  if (updates.category !== undefined) {
-    fields.push("category = ?");
-    args.push(updates.category);
-  }
-  if (updates.title !== undefined) {
-    fields.push("title = ?");
-    args.push(updates.title);
-  }
-  if (updates.description !== undefined) {
-    fields.push("description = ?");
-    args.push(updates.description);
-  }
-  if (updates.severity !== undefined) {
-    fields.push("severity = ?");
-    args.push(updates.severity);
-  }
-  if (updates.frequencyPerWeek !== undefined) {
-    fields.push("frequency_per_week = ?");
-    args.push(sanitizeInt(updates.frequencyPerWeek));
-  }
-  if (updates.durationWeeks !== undefined) {
-    fields.push("duration_weeks = ?");
-    args.push(sanitizeInt(updates.durationWeeks));
-  }
-  if (updates.ageOfOnset !== undefined) {
-    fields.push("age_of_onset = ?");
-    args.push(sanitizeInt(updates.ageOfOnset));
-  }
-  if (updates.impairmentDomains !== undefined) {
-    fields.push("impairment_domains = ?");
-    args.push(
-      updates.impairmentDomains
-        ? JSON.stringify(updates.impairmentDomains)
-        : null,
-    );
-  }
-  if (updates.externalizedName !== undefined) {
-    fields.push("externalized_name = ?");
-    args.push(updates.externalizedName);
-  }
-  if (updates.strengths !== undefined) {
-    fields.push("strengths = ?");
-    args.push(updates.strengths);
-  }
-  if (updates.riskTier !== undefined) {
-    fields.push("risk_tier = ?");
-    args.push(updates.riskTier);
-  }
-  if (updates.tags !== undefined) {
-    fields.push("tags = ?");
-    args.push(updates.tags ? JSON.stringify(updates.tags) : null);
-  }
-
-  if (fields.length === 0) return;
-
-  fields.push("updated_at = datetime('now')");
-  args.push(id, userId);
-
-  await d1.execute({
-    sql: `UPDATE family_member_characteristics SET ${fields.join(", ")} WHERE id = ? AND user_id = ?`,
-    args,
-  });
-}
-
-export async function deleteCharacteristic(
-  id: number,
-  userId: string,
-): Promise<void> {
-  await d1.execute({
-    sql: `DELETE FROM family_member_characteristics WHERE id = ? AND user_id = ?`,
-    args: [id, userId],
-  });
-}
-
 // ============================================
-// Characteristic Behavior Observations
+// Issue Behavior Observations
 // ============================================
 
-export async function getCharacteristicBehaviorObservations(
-  characteristicId: number,
+export async function getIssueBehaviorObservations(
+  issueId: number,
   userId: string,
 ) {
-  const result = await d1.execute({
-    sql: `SELECT * FROM behavior_observations WHERE characteristic_id = ? AND user_id = ? ORDER BY observed_at DESC`,
-    args: [characteristicId, userId],
-  });
-  return result.rows.map((row) => ({
+  const rows = await neonSql`SELECT * FROM behavior_observations WHERE issue_id = ${issueId} AND user_id = ${userId} ORDER BY observed_at DESC`;
+  return rows.map((row) => ({
     id: row.id as number,
     familyMemberId: row.family_member_id as number,
     goalId: (row.goal_id as number) || null,
-    characteristicId: (row.characteristic_id as number) || null,
+    issueId: (row.issue_id as number) || null,
     userId: row.user_id as string,
     observedAt: row.observed_at as string,
     observationType: row.observation_type as string,
@@ -2159,17 +1532,14 @@ export async function getCharacteristicBehaviorObservations(
 // Unique Outcomes
 // ============================================
 
-export async function getUniqueOutcomesForCharacteristic(
-  characteristicId: number,
+export async function getUniqueOutcomesForIssue(
+  issueId: number,
   userId: string,
 ) {
-  const result = await d1.execute({
-    sql: `SELECT * FROM unique_outcomes WHERE characteristic_id = ? AND user_id = ? ORDER BY observed_at DESC`,
-    args: [characteristicId, userId],
-  });
-  return result.rows.map((row) => ({
+  const rows = await neonSql`SELECT * FROM unique_outcomes WHERE issue_id = ${issueId} AND user_id = ${userId} ORDER BY observed_at DESC`;
+  return rows.map((row) => ({
     id: row.id as number,
-    characteristicId: row.characteristic_id as number,
+    issueId: row.issue_id as number,
     userId: row.user_id as string,
     observedAt: row.observed_at as string,
     description: row.description as string,
@@ -2179,15 +1549,12 @@ export async function getUniqueOutcomesForCharacteristic(
 }
 
 export async function getUniqueOutcome(id: number, userId: string) {
-  const result = await d1.execute({
-    sql: `SELECT * FROM unique_outcomes WHERE id = ? AND user_id = ?`,
-    args: [id, userId],
-  });
-  if (result.rows.length === 0) return null;
-  const row = result.rows[0];
+  const rows = await neonSql`SELECT * FROM unique_outcomes WHERE id = ${id} AND user_id = ${userId}`;
+  if (rows.length === 0) return null;
+  const row = rows[0];
   return {
     id: row.id as number,
-    characteristicId: row.characteristic_id as number,
+    issueId: row.issue_id as number,
     userId: row.user_id as string,
     observedAt: row.observed_at as string,
     description: row.description as string,
@@ -2197,23 +1564,16 @@ export async function getUniqueOutcome(id: number, userId: string) {
 }
 
 export async function createUniqueOutcome(params: {
-  characteristicId: number;
+  issueId: number;
   userId: string;
   observedAt: string;
   description: string;
 }): Promise<number> {
-  const result = await d1.execute({
-    sql: `INSERT INTO unique_outcomes (characteristic_id, user_id, observed_at, description, created_at, updated_at)
-          VALUES (?, ?, ?, ?, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP)
-          RETURNING id`,
-    args: [
-      params.characteristicId,
-      params.userId,
-      params.observedAt,
-      params.description,
-    ],
-  });
-  return result.rows[0].id as number;
+  const rows = await neonSql`
+    INSERT INTO unique_outcomes (issue_id, user_id, observed_at, description, created_at, updated_at)
+    VALUES (${params.issueId}, ${params.userId}, ${params.observedAt}, ${params.description}, NOW(), NOW())
+    RETURNING id`;
+  return rows[0].id as number;
 }
 
 export async function updateUniqueOutcome(
@@ -2227,34 +1587,23 @@ export async function updateUniqueOutcome(
   const fields: string[] = [];
   const args: any[] = [];
 
-  if (updates.observedAt !== undefined) {
-    fields.push("observed_at = ?");
-    args.push(updates.observedAt);
-  }
-  if (updates.description !== undefined) {
-    fields.push("description = ?");
-    args.push(updates.description);
-  }
+  if (updates.observedAt !== undefined) { fields.push("observed_at = ?"); args.push(updates.observedAt); }
+  if (updates.description !== undefined) { fields.push("description = ?"); args.push(updates.description); }
 
   if (fields.length === 0) return;
 
-  fields.push("updated_at = datetime('now')");
+  fields.push("updated_at = NOW()");
   args.push(id, userId);
 
-  await d1.execute({
-    sql: `UPDATE unique_outcomes SET ${fields.join(", ")} WHERE id = ? AND user_id = ?`,
-    args,
-  });
+  const [query, params] = p(`UPDATE unique_outcomes SET ${fields.join(", ")} WHERE id = ? AND user_id = ?`, args);
+  await neonSql(query, params);
 }
 
 export async function deleteUniqueOutcome(
   id: number,
   userId: string,
 ): Promise<void> {
-  await d1.execute({
-    sql: `DELETE FROM unique_outcomes WHERE id = ? AND user_id = ?`,
-    args: [id, userId],
-  });
+  await neonSql`DELETE FROM unique_outcomes WHERE id = ${id} AND user_id = ${userId}`;
 }
 
 // ============================================
@@ -2266,16 +1615,14 @@ export async function getRelationshipsBidirectional(
   subjectId: number,
   userId: string,
 ) {
-  const result = await d1.execute({
-    sql: `SELECT * FROM relationships
-          WHERE user_id = ? AND (
-            (subject_type = ? AND subject_id = ?) OR
-            (related_type = ? AND related_id = ?)
-          )
-          ORDER BY created_at DESC`,
-    args: [userId, subjectType, subjectId, subjectType, subjectId],
-  });
-  return result.rows.map((row) => ({
+  const rows = await neonSql`
+    SELECT * FROM relationships
+    WHERE user_id = ${userId} AND (
+      (subject_type = ${subjectType} AND subject_id = ${subjectId}) OR
+      (related_type = ${subjectType} AND related_id = ${subjectId})
+    )
+    ORDER BY created_at DESC`;
+  return rows.map((row) => ({
     id: row.id as number,
     userId: row.user_id as string,
     subjectType: row.subject_type as string,
@@ -2296,11 +1643,8 @@ export async function getRelationshipsBidirectional(
 // ============================================
 
 export async function getContactsForUser(userId: string) {
-  const result = await d1.execute({
-    sql: `SELECT * FROM contacts WHERE user_id = ? ORDER BY created_at DESC`,
-    args: [userId],
-  });
-  return result.rows.map((row) => ({
+  const rows = await neonSql`SELECT * FROM contacts WHERE user_id = ${userId} ORDER BY created_at DESC`;
+  return rows.map((row) => ({
     id: row.id as number,
     userId: row.user_id as string,
     slug: (row.slug as string) || null,
@@ -2315,12 +1659,9 @@ export async function getContactsForUser(userId: string) {
 }
 
 export async function getContact(id: number, userId: string) {
-  const result = await d1.execute({
-    sql: `SELECT * FROM contacts WHERE id = ? AND user_id = ?`,
-    args: [id, userId],
-  });
-  if (result.rows.length === 0) return null;
-  const row = result.rows[0];
+  const rows = await neonSql`SELECT * FROM contacts WHERE id = ${id} AND user_id = ${userId}`;
+  if (rows.length === 0) return null;
+  const row = rows[0];
   return {
     id: row.id as number,
     userId: row.user_id as string,
@@ -2336,12 +1677,9 @@ export async function getContact(id: number, userId: string) {
 }
 
 export async function getContactBySlug(slug: string, userId: string) {
-  const result = await d1.execute({
-    sql: `SELECT * FROM contacts WHERE slug = ? AND user_id = ?`,
-    args: [slug, userId],
-  });
-  if (result.rows.length === 0) return null;
-  const row = result.rows[0];
+  const rows = await neonSql`SELECT * FROM contacts WHERE slug = ${slug} AND user_id = ${userId}`;
+  if (rows.length === 0) return null;
+  const row = rows[0];
   return {
     id: row.id as number,
     userId: row.user_id as string,
@@ -2388,21 +1726,11 @@ export async function createContact(params: {
       : null;
 
   const slug = await generateContactSlug(params.firstName, params.userId);
-  const result = await d1.execute({
-    sql: `INSERT INTO contacts (user_id, slug, first_name, last_name, role, age_years, notes, created_at, updated_at)
-          VALUES (?, ?, ?, ?, ?, ?, ?, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP)
-          RETURNING id`,
-    args: [
-      params.userId,
-      slug,
-      params.firstName,
-      params.lastName ?? null,
-      params.role ?? null,
-      safeAge,
-      params.notes ?? null,
-    ],
-  });
-  return result.rows[0].id as number;
+  const rows = await neonSql`
+    INSERT INTO contacts (user_id, slug, first_name, last_name, role, age_years, notes, created_at, updated_at)
+    VALUES (${params.userId}, ${slug}, ${params.firstName}, ${params.lastName ?? null}, ${params.role ?? null}, ${safeAge}, ${params.notes ?? null}, NOW(), NOW())
+    RETURNING id`;
+  return rows[0].id as number;
 }
 
 export async function updateContact(
@@ -2420,22 +1748,10 @@ export async function updateContact(
   const fields: string[] = [];
   const args: any[] = [];
 
-  if (updates.firstName !== undefined) {
-    fields.push("first_name = ?");
-    args.push(updates.firstName);
-  }
-  if (updates.slug !== undefined && updates.slug !== null) {
-    fields.push("slug = ?");
-    args.push(updates.slug);
-  }
-  if (updates.lastName !== undefined) {
-    fields.push("last_name = ?");
-    args.push(updates.lastName);
-  }
-  if (updates.role !== undefined) {
-    fields.push("role = ?");
-    args.push(updates.role);
-  }
+  if (updates.firstName !== undefined) { fields.push("first_name = ?"); args.push(updates.firstName); }
+  if (updates.slug !== undefined && updates.slug !== null) { fields.push("slug = ?"); args.push(updates.slug); }
+  if (updates.lastName !== undefined) { fields.push("last_name = ?"); args.push(updates.lastName); }
+  if (updates.role !== undefined) { fields.push("role = ?"); args.push(updates.role); }
   if (updates.ageYears !== undefined) {
     const safeAge =
       updates.ageYears !== null &&
@@ -2446,30 +1762,22 @@ export async function updateContact(
     fields.push("age_years = ?");
     args.push(safeAge);
   }
-  if (updates.notes !== undefined) {
-    fields.push("notes = ?");
-    args.push(updates.notes);
-  }
+  if (updates.notes !== undefined) { fields.push("notes = ?"); args.push(updates.notes); }
 
   if (fields.length === 0) return;
 
-  fields.push("updated_at = datetime('now')");
+  fields.push("updated_at = NOW()");
   args.push(id, userId);
 
-  await d1.execute({
-    sql: `UPDATE contacts SET ${fields.join(", ")} WHERE id = ? AND user_id = ?`,
-    args,
-  });
+  const [query, params] = p(`UPDATE contacts SET ${fields.join(", ")} WHERE id = ? AND user_id = ?`, args);
+  await neonSql(query, params);
 }
 
 export async function deleteContact(
   id: number,
   userId: string,
 ): Promise<void> {
-  await d1.execute({
-    sql: `DELETE FROM contacts WHERE id = ? AND user_id = ?`,
-    args: [id, userId],
-  });
+  await neonSql`DELETE FROM contacts WHERE id = ${id} AND user_id = ${userId}`;
 }
 
 // ============================================
@@ -2481,16 +1789,14 @@ export async function getRelationshipsForPerson(
   subjectType: string,
   subjectId: number,
 ) {
-  const result = await d1.execute({
-    sql: `SELECT * FROM relationships
-          WHERE user_id = ? AND (
-            (subject_type = ? AND subject_id = ?) OR
-            (related_type = ? AND related_id = ?)
-          )
-          ORDER BY created_at DESC`,
-    args: [userId, subjectType, subjectId, subjectType, subjectId],
-  });
-  return result.rows.map((row) => ({
+  const rows = await neonSql`
+    SELECT * FROM relationships
+    WHERE user_id = ${userId} AND (
+      (subject_type = ${subjectType} AND subject_id = ${subjectId}) OR
+      (related_type = ${subjectType} AND related_id = ${subjectId})
+    )
+    ORDER BY created_at DESC`;
+  return rows.map((row) => ({
     id: row.id as number,
     userId: row.user_id as string,
     subjectType: row.subject_type as string,
@@ -2507,12 +1813,9 @@ export async function getRelationshipsForPerson(
 }
 
 export async function getRelationship(id: number, userId: string) {
-  const result = await d1.execute({
-    sql: `SELECT * FROM relationships WHERE id = ? AND user_id = ?`,
-    args: [id, userId],
-  });
-  if (result.rows.length === 0) return null;
-  const row = result.rows[0];
+  const rows = await neonSql`SELECT * FROM relationships WHERE id = ${id} AND user_id = ${userId}`;
+  if (rows.length === 0) return null;
+  const row = rows[0];
   return {
     id: row.id as number,
     userId: row.user_id as string,
@@ -2540,23 +1843,11 @@ export async function createRelationship(params: {
   startDate?: string | null;
   status?: string | null;
 }): Promise<number> {
-  const result = await d1.execute({
-    sql: `INSERT INTO relationships (user_id, subject_type, subject_id, related_type, related_id, relationship_type, context, start_date, status, created_at, updated_at)
-          VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP)
-          RETURNING id`,
-    args: [
-      params.userId,
-      params.subjectType,
-      params.subjectId,
-      params.relatedType,
-      params.relatedId,
-      params.relationshipType,
-      params.context ?? null,
-      params.startDate ?? null,
-      params.status ?? "active",
-    ],
-  });
-  return result.rows[0].id as number;
+  const rows = await neonSql`
+    INSERT INTO relationships (user_id, subject_type, subject_id, related_type, related_id, relationship_type, context, start_date, status, created_at, updated_at)
+    VALUES (${params.userId}, ${params.subjectType}, ${params.subjectId}, ${params.relatedType}, ${params.relatedId}, ${params.relationshipType}, ${params.context ?? null}, ${params.startDate ?? null}, ${params.status ?? "active"}, NOW(), NOW())
+    RETURNING id`;
+  return rows[0].id as number;
 }
 
 export async function updateRelationship(
@@ -2572,42 +1863,25 @@ export async function updateRelationship(
   const fields: string[] = [];
   const args: any[] = [];
 
-  if (updates.relationshipType !== undefined) {
-    fields.push("relationship_type = ?");
-    args.push(updates.relationshipType);
-  }
-  if (updates.context !== undefined) {
-    fields.push("context = ?");
-    args.push(updates.context);
-  }
-  if (updates.startDate !== undefined) {
-    fields.push("start_date = ?");
-    args.push(updates.startDate);
-  }
-  if (updates.status !== undefined) {
-    fields.push("status = ?");
-    args.push(updates.status);
-  }
+  if (updates.relationshipType !== undefined) { fields.push("relationship_type = ?"); args.push(updates.relationshipType); }
+  if (updates.context !== undefined) { fields.push("context = ?"); args.push(updates.context); }
+  if (updates.startDate !== undefined) { fields.push("start_date = ?"); args.push(updates.startDate); }
+  if (updates.status !== undefined) { fields.push("status = ?"); args.push(updates.status); }
 
   if (fields.length === 0) return;
 
-  fields.push("updated_at = datetime('now')");
+  fields.push("updated_at = NOW()");
   args.push(id, userId);
 
-  await d1.execute({
-    sql: `UPDATE relationships SET ${fields.join(", ")} WHERE id = ? AND user_id = ?`,
-    args,
-  });
+  const [query, params] = p(`UPDATE relationships SET ${fields.join(", ")} WHERE id = ? AND user_id = ?`, args);
+  await neonSql(query, params);
 }
 
 export async function deleteRelationship(
   id: number,
   userId: string,
 ): Promise<void> {
-  await d1.execute({
-    sql: `DELETE FROM relationships WHERE id = ? AND user_id = ?`,
-    args: [id, userId],
-  });
+  await neonSql`DELETE FROM relationships WHERE id = ${id} AND user_id = ${userId}`;
 }
 
 // ============================================
@@ -2617,14 +1891,11 @@ export async function deleteRelationship(
 export async function getUserSettings(
   userId: string,
 ): Promise<{ userId: string; storyLanguage: string; storyMinutes: number }> {
-  const result = await d1.execute({
-    sql: `SELECT * FROM user_settings WHERE user_id = ?`,
-    args: [userId],
-  });
-  if (result.rows.length === 0) {
+  const rows = await neonSql`SELECT * FROM user_settings WHERE user_id = ${userId}`;
+  if (rows.length === 0) {
     return { userId, storyLanguage: "English", storyMinutes: 10 };
   }
-  const row = result.rows[0];
+  const row = rows[0];
   return {
     userId: row.user_id as string,
     storyLanguage: (row.story_language as string) ?? "English",
@@ -2637,15 +1908,13 @@ export async function upsertUserSettings(
   storyLanguage: string,
   storyMinutes: number,
 ): Promise<{ userId: string; storyLanguage: string; storyMinutes: number }> {
-  await d1.execute({
-    sql: `INSERT INTO user_settings (user_id, story_language, story_minutes, created_at, updated_at)
-          VALUES (?, ?, ?, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP)
-          ON CONFLICT(user_id) DO UPDATE SET
-            story_language = excluded.story_language,
-            story_minutes = excluded.story_minutes,
-            updated_at = CURRENT_TIMESTAMP`,
-    args: [userId, storyLanguage, storyMinutes],
-  });
+  await neonSql`
+    INSERT INTO user_settings (user_id, story_language, story_minutes, created_at, updated_at)
+    VALUES (${userId}, ${storyLanguage}, ${storyMinutes}, NOW(), NOW())
+    ON CONFLICT (user_id) DO UPDATE SET
+      story_language = excluded.story_language,
+      story_minutes = excluded.story_minutes,
+      updated_at = NOW()`;
   return { userId, storyLanguage, storyMinutes };
 }
 
@@ -2674,20 +1943,14 @@ export async function getTeacherFeedbacksForFamilyMember(
   familyMemberId: number,
   userId: string,
 ) {
-  const result = await d1.execute({
-    sql: `SELECT * FROM teacher_feedbacks WHERE family_member_id = ? AND user_id = ? ORDER BY feedback_date DESC, created_at DESC`,
-    args: [familyMemberId, userId],
-  });
-  return result.rows.map(mapTeacherFeedbackRow);
+  const rows = await neonSql`SELECT * FROM teacher_feedbacks WHERE family_member_id = ${familyMemberId} AND user_id = ${userId} ORDER BY feedback_date DESC, created_at DESC`;
+  return rows.map(mapTeacherFeedbackRow);
 }
 
 export async function getTeacherFeedback(id: number, userId: string) {
-  const result = await d1.execute({
-    sql: `SELECT * FROM teacher_feedbacks WHERE id = ? AND user_id = ?`,
-    args: [id, userId],
-  });
-  if (result.rows.length === 0) return null;
-  return mapTeacherFeedbackRow(result.rows[0]);
+  const rows = await neonSql`SELECT * FROM teacher_feedbacks WHERE id = ${id} AND user_id = ${userId}`;
+  if (rows.length === 0) return null;
+  return mapTeacherFeedbackRow(rows[0]);
 }
 
 export async function createTeacherFeedback(params: {
@@ -2700,22 +1963,11 @@ export async function createTeacherFeedback(params: {
   tags?: string[] | null;
   source?: string | null;
 }): Promise<number> {
-  const result = await d1.execute({
-    sql: `INSERT INTO teacher_feedbacks (family_member_id, user_id, teacher_name, subject, feedback_date, content, tags, source, extracted, created_at, updated_at)
-          VALUES (?, ?, ?, ?, ?, ?, ?, ?, 0, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP)
-          RETURNING id`,
-    args: [
-      params.familyMemberId,
-      params.userId,
-      params.teacherName,
-      params.subject ?? null,
-      params.feedbackDate,
-      params.content,
-      params.tags ? JSON.stringify(params.tags) : null,
-      params.source ?? null,
-    ],
-  });
-  return result.rows[0].id as number;
+  const rows = await neonSql`
+    INSERT INTO teacher_feedbacks (family_member_id, user_id, teacher_name, subject, feedback_date, content, tags, source, extracted, created_at, updated_at)
+    VALUES (${params.familyMemberId}, ${params.userId}, ${params.teacherName}, ${params.subject ?? null}, ${params.feedbackDate}, ${params.content}, ${params.tags ? JSON.stringify(params.tags) : null}, ${params.source ?? null}, 0, NOW(), NOW())
+    RETURNING id`;
+  return rows[0].id as number;
 }
 
 export async function updateTeacherFeedback(
@@ -2734,64 +1986,35 @@ export async function updateTeacherFeedback(
   const fields: string[] = [];
   const args: any[] = [];
 
-  if (updates.teacherName !== undefined) {
-    fields.push("teacher_name = ?");
-    args.push(updates.teacherName);
-  }
-  if (updates.subject !== undefined) {
-    fields.push("subject = ?");
-    args.push(updates.subject);
-  }
-  if (updates.feedbackDate !== undefined) {
-    fields.push("feedback_date = ?");
-    args.push(updates.feedbackDate);
-  }
-  if (updates.content !== undefined) {
-    fields.push("content = ?");
-    args.push(updates.content);
-  }
-  if (updates.tags !== undefined) {
-    fields.push("tags = ?");
-    args.push(updates.tags ? JSON.stringify(updates.tags) : null);
-  }
-  if (updates.source !== undefined) {
-    fields.push("source = ?");
-    args.push(updates.source);
-  }
-  if (updates.extracted !== undefined) {
-    fields.push("extracted = ?");
-    args.push(updates.extracted ? 1 : 0);
-  }
+  if (updates.teacherName !== undefined) { fields.push("teacher_name = ?"); args.push(updates.teacherName); }
+  if (updates.subject !== undefined) { fields.push("subject = ?"); args.push(updates.subject); }
+  if (updates.feedbackDate !== undefined) { fields.push("feedback_date = ?"); args.push(updates.feedbackDate); }
+  if (updates.content !== undefined) { fields.push("content = ?"); args.push(updates.content); }
+  if (updates.tags !== undefined) { fields.push("tags = ?"); args.push(updates.tags ? JSON.stringify(updates.tags) : null); }
+  if (updates.source !== undefined) { fields.push("source = ?"); args.push(updates.source); }
+  if (updates.extracted !== undefined) { fields.push("extracted = ?"); args.push(updates.extracted ? 1 : 0); }
 
   if (fields.length === 0) return;
 
-  fields.push("updated_at = datetime('now')");
+  fields.push("updated_at = NOW()");
   args.push(id, userId);
 
-  await d1.execute({
-    sql: `UPDATE teacher_feedbacks SET ${fields.join(", ")} WHERE id = ? AND user_id = ?`,
-    args,
-  });
+  const [query, params] = p(`UPDATE teacher_feedbacks SET ${fields.join(", ")} WHERE id = ? AND user_id = ?`, args);
+  await neonSql(query, params);
 }
 
 export async function deleteTeacherFeedback(
   id: number,
   userId: string,
 ): Promise<void> {
-  await d1.execute({
-    sql: `DELETE FROM teacher_feedbacks WHERE id = ? AND user_id = ?`,
-    args: [id, userId],
-  });
+  await neonSql`DELETE FROM teacher_feedbacks WHERE id = ${id} AND user_id = ${userId}`;
 }
 
 export async function markTeacherFeedbackExtracted(
   id: number,
   userId: string,
 ): Promise<void> {
-  await d1.execute({
-    sql: `UPDATE teacher_feedbacks SET extracted = 1, updated_at = datetime('now') WHERE id = ? AND user_id = ?`,
-    args: [id, userId],
-  });
+  await neonSql`UPDATE teacher_feedbacks SET extracted = 1, updated_at = NOW() WHERE id = ${id} AND user_id = ${userId}`;
 }
 
 // ─── Contact Feedbacks ───────────────────────────────────────
@@ -2821,20 +2044,14 @@ export async function getContactFeedbacks(
   familyMemberId: number,
   userId: string,
 ) {
-  const result = await d1.execute({
-    sql: `SELECT * FROM contact_feedbacks WHERE contact_id = ? AND family_member_id = ? AND user_id = ? ORDER BY feedback_date DESC, created_at DESC`,
-    args: [contactId, familyMemberId, userId],
-  });
-  return result.rows.map(mapContactFeedbackRow);
+  const rows = await neonSql`SELECT * FROM contact_feedbacks WHERE contact_id = ${contactId} AND family_member_id = ${familyMemberId} AND user_id = ${userId} ORDER BY feedback_date DESC, created_at DESC`;
+  return rows.map(mapContactFeedbackRow);
 }
 
 export async function getContactFeedback(id: number, userId: string) {
-  const result = await d1.execute({
-    sql: `SELECT * FROM contact_feedbacks WHERE id = ? AND user_id = ?`,
-    args: [id, userId],
-  });
-  if (result.rows.length === 0) return null;
-  return mapContactFeedbackRow(result.rows[0]);
+  const rows = await neonSql`SELECT * FROM contact_feedbacks WHERE id = ${id} AND user_id = ${userId}`;
+  if (rows.length === 0) return null;
+  return mapContactFeedbackRow(rows[0]);
 }
 
 export async function createContactFeedback(params: {
@@ -2847,22 +2064,11 @@ export async function createContactFeedback(params: {
   tags?: string[] | null;
   source?: string | null;
 }): Promise<number> {
-  const result = await d1.execute({
-    sql: `INSERT INTO contact_feedbacks (contact_id, family_member_id, user_id, subject, feedback_date, content, tags, source, extracted, created_at, updated_at)
-          VALUES (?, ?, ?, ?, ?, ?, ?, ?, 0, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP)
-          RETURNING id`,
-    args: [
-      params.contactId,
-      params.familyMemberId,
-      params.userId,
-      params.subject ?? null,
-      params.feedbackDate,
-      params.content,
-      params.tags ? JSON.stringify(params.tags) : null,
-      params.source ?? null,
-    ],
-  });
-  return result.rows[0].id as number;
+  const rows = await neonSql`
+    INSERT INTO contact_feedbacks (contact_id, family_member_id, user_id, subject, feedback_date, content, tags, source, extracted, created_at, updated_at)
+    VALUES (${params.contactId}, ${params.familyMemberId}, ${params.userId}, ${params.subject ?? null}, ${params.feedbackDate}, ${params.content}, ${params.tags ? JSON.stringify(params.tags) : null}, ${params.source ?? null}, 0, NOW(), NOW())
+    RETURNING id`;
+  return rows[0].id as number;
 }
 
 export async function updateContactFeedback(
@@ -2880,50 +2086,27 @@ export async function updateContactFeedback(
   const fields: string[] = [];
   const args: any[] = [];
 
-  if (updates.subject !== undefined) {
-    fields.push("subject = ?");
-    args.push(updates.subject);
-  }
-  if (updates.feedbackDate !== undefined) {
-    fields.push("feedback_date = ?");
-    args.push(updates.feedbackDate);
-  }
-  if (updates.content !== undefined) {
-    fields.push("content = ?");
-    args.push(updates.content);
-  }
-  if (updates.tags !== undefined) {
-    fields.push("tags = ?");
-    args.push(updates.tags ? JSON.stringify(updates.tags) : null);
-  }
-  if (updates.source !== undefined) {
-    fields.push("source = ?");
-    args.push(updates.source);
-  }
-  if (updates.extracted !== undefined) {
-    fields.push("extracted = ?");
-    args.push(updates.extracted ? 1 : 0);
-  }
+  if (updates.subject !== undefined) { fields.push("subject = ?"); args.push(updates.subject); }
+  if (updates.feedbackDate !== undefined) { fields.push("feedback_date = ?"); args.push(updates.feedbackDate); }
+  if (updates.content !== undefined) { fields.push("content = ?"); args.push(updates.content); }
+  if (updates.tags !== undefined) { fields.push("tags = ?"); args.push(updates.tags ? JSON.stringify(updates.tags) : null); }
+  if (updates.source !== undefined) { fields.push("source = ?"); args.push(updates.source); }
+  if (updates.extracted !== undefined) { fields.push("extracted = ?"); args.push(updates.extracted ? 1 : 0); }
 
   if (fields.length === 0) return;
 
-  fields.push("updated_at = datetime('now')");
+  fields.push("updated_at = NOW()");
   args.push(id, userId);
 
-  await d1.execute({
-    sql: `UPDATE contact_feedbacks SET ${fields.join(", ")} WHERE id = ? AND user_id = ?`,
-    args,
-  });
+  const [query, params] = p(`UPDATE contact_feedbacks SET ${fields.join(", ")} WHERE id = ? AND user_id = ?`, args);
+  await neonSql(query, params);
 }
 
 export async function deleteContactFeedback(
   id: number,
   userId: string,
 ): Promise<void> {
-  await d1.execute({
-    sql: `DELETE FROM contact_feedbacks WHERE id = ? AND user_id = ?`,
-    args: [id, userId],
-  });
+  await neonSql`DELETE FROM contact_feedbacks WHERE id = ${id} AND user_id = ${userId}`;
 }
 
 export async function saveExtractedIssues(
@@ -2931,10 +2114,170 @@ export async function saveExtractedIssues(
   userId: string,
   issues: unknown[],
 ): Promise<void> {
-  await d1.execute({
-    sql: `UPDATE contact_feedbacks SET extracted_issues = ?, extracted = 1, updated_at = datetime('now') WHERE id = ? AND user_id = ?`,
-    args: [JSON.stringify(issues), id, userId],
-  });
+  await neonSql`UPDATE contact_feedbacks SET extracted_issues = ${JSON.stringify(issues)}, extracted = 1, updated_at = NOW() WHERE id = ${id} AND user_id = ${userId}`;
+}
+
+// ============================================
+// Issues
+// ============================================
+
+interface IssueRow {
+  id: number;
+  feedback_id: number;
+  family_member_id: number;
+  user_id: string;
+  title: string;
+  description: string;
+  category: string;
+  severity: string;
+  recommendations: string | null;
+  created_at: string;
+  updated_at: string;
+}
+
+interface Issue {
+  id: number;
+  feedbackId: number;
+  familyMemberId: number;
+  userId: string;
+  title: string;
+  description: string;
+  category: string;
+  severity: string;
+  recommendations: string[] | null;
+  createdAt: string;
+  updatedAt: string;
+}
+
+function mapIssueRow(row: IssueRow): Issue {
+  return {
+    id: row.id as number,
+    feedbackId: row.feedback_id as number,
+    familyMemberId: row.family_member_id as number,
+    userId: row.user_id as string,
+    title: row.title as string,
+    description: row.description as string,
+    category: row.category as string,
+    severity: row.severity as string,
+    recommendations: row.recommendations
+      ? JSON.parse(row.recommendations as string)
+      : null,
+    createdAt: row.created_at as string,
+    updatedAt: row.updated_at as string,
+  };
+}
+
+export async function getIssuesForFamilyMember(
+  familyMemberId: number,
+  feedbackId?: number,
+  userId?: string,
+) {
+  let sqlStr = `SELECT * FROM issues WHERE family_member_id = ?`;
+  const args: any[] = [familyMemberId];
+
+  if (feedbackId !== undefined) { sqlStr += ` AND feedback_id = ?`; args.push(feedbackId); }
+  if (userId !== undefined) { sqlStr += ` AND user_id = ?`; args.push(userId); }
+
+  sqlStr += ` ORDER BY created_at DESC`;
+
+  const [query, params] = p(sqlStr, args);
+  const rows = await neonSql(query, params);
+  return rows.map((r) => mapIssueRow(r as IssueRow));
+}
+
+export async function getIssue(id: number, userId: string) {
+  const rows = await neonSql`SELECT * FROM issues WHERE id = ${id} AND user_id = ${userId}`;
+  if (rows.length === 0) return null;
+  return mapIssueRow(rows[0] as IssueRow);
+}
+
+export async function createIssue(params: {
+  feedbackId?: number | null;
+  familyMemberId: number;
+  userId: string;
+  title: string;
+  description: string;
+  category: string;
+  severity: string;
+  recommendations?: string[] | null;
+}): Promise<number> {
+  const rows = await neonSql`
+    INSERT INTO issues (feedback_id, family_member_id, user_id, title, description, category, severity, recommendations, created_at, updated_at)
+    VALUES (${params.feedbackId ?? null}, ${params.familyMemberId}, ${params.userId}, ${params.title}, ${params.description}, ${params.category}, ${params.severity}, ${params.recommendations ? JSON.stringify(params.recommendations) : null}, NOW(), NOW())
+    RETURNING id`;
+  return rows[0].id as number;
+}
+
+export async function updateIssue(
+  id: number,
+  userId: string,
+  updates: {
+    title?: string;
+    description?: string;
+    category?: string;
+    severity?: string;
+    recommendations?: string[] | null;
+  },
+) {
+  const fields: string[] = [];
+  const args: any[] = [];
+
+  if (updates.title !== undefined) { fields.push("title = ?"); args.push(updates.title); }
+  if (updates.description !== undefined) { fields.push("description = ?"); args.push(updates.description); }
+  if (updates.category !== undefined) { fields.push("category = ?"); args.push(updates.category); }
+  if (updates.severity !== undefined) { fields.push("severity = ?"); args.push(updates.severity); }
+  if (updates.recommendations !== undefined) {
+    fields.push("recommendations = ?");
+    args.push(updates.recommendations ? JSON.stringify(updates.recommendations) : null);
+  }
+
+  if (fields.length === 0) return;
+
+  fields.push("updated_at = NOW()");
+  args.push(id, userId);
+
+  const [query, params] = p(`UPDATE issues SET ${fields.join(", ")} WHERE id = ? AND user_id = ?`, args);
+  await neonSql(query, params);
+}
+
+export async function deleteIssue(id: number, userId: string): Promise<void> {
+  await neonSql`DELETE FROM issues WHERE id = ${id} AND user_id = ${userId}`;
+}
+
+export async function saveIssuesToTable(
+  feedbackId: number,
+  familyMemberId: number,
+  userId: string,
+  issues: unknown[],
+): Promise<number[]> {
+  const issueIds: number[] = [];
+
+  await neonSql`DELETE FROM issues WHERE feedback_id = ${feedbackId} AND user_id = ${userId}`;
+
+  for (const issue of issues) {
+    const issueData = issue as {
+      title: string;
+      description: string;
+      category: string;
+      severity: string;
+      recommendations?: string[];
+    };
+
+    const newId = await createIssue({
+      feedbackId,
+      familyMemberId,
+      userId,
+      title: issueData.title,
+      description: issueData.description,
+      category: issueData.category,
+      severity: issueData.severity,
+      recommendations: issueData.recommendations || null,
+    });
+
+    issueIds.push(newId);
+  }
+
+  return issueIds;
 }
 
 export const d1Tools = {
@@ -2988,7 +2331,8 @@ export const d1Tools = {
   deleteGoalStory,
   updateGoalStoryAudio,
   listGoalStories,
-  listGoalStoriesForCharacteristic,
+  listGoalStoriesForIssue,
+  listGoalStoriesForFeedback,
   getTextSegmentsForStory,
   getAudioAssetsForStory,
   // Journal Entries
@@ -3003,15 +2347,9 @@ export const d1Tools = {
   createBehaviorObservation,
   updateBehaviorObservation,
   deleteBehaviorObservation,
-  // Family Member Characteristics
-  getCharacteristicsForFamilyMember,
-  getCharacteristic,
-  createCharacteristic,
-  updateCharacteristic,
-  deleteCharacteristic,
-  getCharacteristicBehaviorObservations,
+  getIssueBehaviorObservations,
   // Unique Outcomes
-  getUniqueOutcomesForCharacteristic,
+  getUniqueOutcomesForIssue,
   getUniqueOutcome,
   createUniqueOutcome,
   updateUniqueOutcome,
@@ -3045,10 +2383,14 @@ export const d1Tools = {
   updateContactFeedback,
   deleteContactFeedback,
   saveExtractedIssues,
+  // Issues
+  getIssuesForFamilyMember,
+  getIssue,
+  createIssue,
+  updateIssue,
+  deleteIssue,
+  saveIssuesToTable,
   // User Settings
   getUserSettings,
   upsertUserSettings,
 };
-
-// Export d1 client for direct database access
-export { d1 };

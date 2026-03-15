@@ -1,6 +1,7 @@
 import type { MutationResolvers } from "./../../types.generated";
 import { d1Tools } from "@/src/db";
-import { runStoryGraph } from "@/src/graphs/generateStory";
+
+const STORY_SERVICE_URL = process.env.STORY_SERVICE_URL ?? "http://localhost:8001";
 
 export const generateLongFormText: NonNullable<MutationResolvers['generateLongFormText']> = async (_parent, args, ctx) => {
   const userEmail = ctx.userEmail;
@@ -9,10 +10,11 @@ export const generateLongFormText: NonNullable<MutationResolvers['generateLongFo
   }
 
   const goalId = args.goalId ?? undefined;
-  const characteristicId = args.characteristicId ?? undefined;
+  const issueId = args.issueId ?? undefined;
+  const feedbackId = args.feedbackId ?? undefined;
 
-  if (!goalId && !characteristicId) {
-    throw new Error("At least one of goalId or characteristicId is required");
+  if (!goalId && !issueId && !feedbackId) {
+    throw new Error("At least one of goalId, issueId, or feedbackId is required");
   }
 
   // Verify the goal exists and belongs to the user
@@ -20,25 +22,28 @@ export const generateLongFormText: NonNullable<MutationResolvers['generateLongFo
     await d1Tools.getGoal(goalId, userEmail);
   }
 
-  // Safety gates: check characteristic if provided
-  if (characteristicId) {
-    const char = await d1Tools.getCharacteristic(characteristicId, userEmail);
-    if (char) {
-      if (char.riskTier === "SAFEGUARDING_ALERT") {
-        throw new Error(
-          "SAFEGUARDING_ALERT: Story generation blocked. A supervisor acknowledgment is required before proceeding.",
-        );
-      }
+  // Verify feedback exists and belongs to user
+  if (feedbackId) {
+    const fb = await d1Tools.getContactFeedback(feedbackId, userEmail);
+    if (!fb) {
+      throw new Error("Feedback not found");
     }
   }
 
-  const { storyId, text } = await runStoryGraph({
-    goalId,
-    characteristicId,
-    userEmail,
-    language: args.language ?? undefined,
-    minutes: args.minutes ?? undefined,
+  const resp = await fetch(`${STORY_SERVICE_URL}/generate-story`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({
+      goal_id: goalId ?? null,
+      issue_id: issueId ?? null,
+      feedback_id: feedbackId ?? null,
+      user_email: userEmail,
+      language: args.language ?? "English",
+      minutes: args.minutes ?? 10,
+    }),
   });
+  if (!resp.ok) throw new Error(`Story service error: ${resp.status}`);
+  const { story_id: storyId, text } = await resp.json();
 
   return {
     success: true,

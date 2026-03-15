@@ -1,25 +1,18 @@
 import "dotenv/config";
-import { d1 } from "../src/db/d1";
+import { sql as neonSql } from "../src/db/neon";
 
 async function updateNoteVisibility() {
   try {
     console.log("Updating note visibility to PUBLIC...\n");
 
-    await d1.execute({
-      sql: `UPDATE notes SET visibility = 'PUBLIC' WHERE slug = ?`,
-      args: ["state-of-remote-work"],
-    });
+    await neonSql`UPDATE notes SET visibility = 'PUBLIC' WHERE slug = ${"state-of-remote-work"}`;
 
     console.log(`✅ Updated note visibility`);
 
-    // Verify the update
-    const check = await d1.execute({
-      sql: `SELECT id, title, slug, visibility FROM notes WHERE slug = ?`,
-      args: ["state-of-remote-work"],
-    });
+    const rows = await neonSql`SELECT id, title, slug, visibility FROM notes WHERE slug = ${"state-of-remote-work"}`;
 
-    if (check.rows.length > 0) {
-      const note = check.rows[0];
+    if (rows.length > 0) {
+      const note = rows[0];
       console.log("\n✅ Verified:");
       console.log(`  ID: ${note.id}`);
       console.log(`  Title: ${note.title}`);

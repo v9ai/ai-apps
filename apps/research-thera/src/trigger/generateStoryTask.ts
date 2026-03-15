@@ -33,8 +33,8 @@ export interface GenerateStoryPayload {
   userEmail: string;
   language?: string;
   minutes?: number;
-  /** When set, this characteristic is the primary focus of the story */
-  characteristicId?: number;
+  /** When set, this issue is the primary focus of the story */
+  issueId?: number;
 }
 
 // ---------------------------------------------------------------------------
@@ -69,7 +69,7 @@ export const generateStoryTask = task({
       .catch(() => {});
   },
   run: async (payload: GenerateStoryPayload) => {
-    const { jobId, goalId, userEmail, language = "English", minutes = 10, characteristicId } = payload;
+    const { jobId, goalId, userEmail, language = "English", minutes = 10, issueId } = payload;
 
     logger.info("generate-story.started", { jobId, goalId, language, minutes });
 
@@ -83,15 +83,15 @@ export const generateStoryTask = task({
       throw new Error(`Family member ${goal.familyMemberId} not found`);
     }
 
-    const characteristic = characteristicId
-      ? (await d1Tools.getCharacteristic(characteristicId, userEmail)) ?? null
+    const issue = issueId
+      ? (await d1Tools.getIssue(issueId, userEmail)) ?? null
       : null;
 
     logger.info("generate-story.loaded_context", {
       jobId,
       goalTitle: goal.title,
       familyMemberName: familyMember.firstName,
-      characteristicId: characteristic?.id ?? null,
+      issueId: issue?.id ?? null,
     });
 
     // --- 30% — Fetch research papers ---
@@ -125,28 +125,27 @@ export const generateStoryTask = task({
 
     const developmentalTier = getDevelopmentalTier(familyMember.ageYears);
 
-    // Fetch unique outcomes for the focus characteristic
-    const uniqueOutcomes = characteristic
-      ? await d1Tools.getUniqueOutcomesForCharacteristic(
-          characteristic.id,
-          userEmail,
-        )
+    // Fetch unique outcomes for the focus issue
+    const uniqueOutcomes = issue
+      ? await d1Tools.getUniqueOutcomesForIssue(issue.id, userEmail)
       : [];
 
-    let characteristicsSection = "";
-    if (characteristic) {
+    let issueSection = "";
+    if (issue) {
       const lines: string[] = [];
-      const label = characteristic.externalizedName || characteristic.title;
       lines.push(
         `\n## Therapeutic Focus`,
-        `${label}`,
-        `Category: ${characteristic.category}`,
+        `${issue.title}`,
+        `Category: ${issue.category}`,
       );
-      if (characteristic.description) {
-        lines.push(`Description: ${characteristic.description}`);
+      if (issue.description) {
+        lines.push(`Description: ${issue.description}`);
       }
-      if (characteristic.strengths) {
-        lines.push(`\n## Strengths`, characteristic.strengths);
+      if (issue.recommendations && issue.recommendations.length > 0) {
+        lines.push(`\n## Recommendations`);
+        for (const rec of issue.recommendations) {
+          lines.push(`- ${rec}`);
+        }
       }
       if (uniqueOutcomes.length > 0) {
         lines.push(
@@ -156,7 +155,7 @@ export const generateStoryTask = task({
           ),
         );
       }
-      characteristicsSection = lines.join("\n") + "\n";
+      issueSection = lines.join("\n") + "\n";
     }
 
     const prompt = `Create a therapeutic audio session for the following goal. Write the full script in ${language}, approximately ${minutes} minutes long when read aloud.
@@ -168,7 +167,7 @@ Description: ${goal.description || "No additional description provided."}
 ## Person
 This is for ${familyMember.firstName}${ageContext}.
 Developmental Tier: ${developmentalTier}
-${characteristicsSection}
+${issueSection}
 
 ## Research Evidence
 The following research papers inform the therapeutic techniques to use:

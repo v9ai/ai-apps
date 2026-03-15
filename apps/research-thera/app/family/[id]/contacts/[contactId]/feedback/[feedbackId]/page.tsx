@@ -19,7 +19,7 @@ import {
   Link,
 } from "@radix-ui/themes";
 import * as Accordion from "@radix-ui/react-accordion";
-import { ArrowLeftIcon, ChevronDownIcon, MagicWandIcon, MagnifyingGlassIcon, Pencil1Icon, TrashIcon } from "@radix-ui/react-icons";
+import { ArrowLeftIcon, ChevronDownIcon, MagicWandIcon, MagnifyingGlassIcon, Pencil1Icon, TrashIcon, ExternalLinkIcon, PlusIcon } from "@radix-ui/react-icons";
 import { useRouter, useParams } from "next/navigation";
 import NextLink from "next/link";
 import dynamic from "next/dynamic";
@@ -31,8 +31,11 @@ import {
   useDeleteContactFeedbackMutation,
   useExtractContactFeedbackIssuesMutation,
   useGenerateResearchMutation,
+  useGenerateLongFormTextMutation,
   useGetGenerationJobQuery,
   useGetResearchQuery,
+  useGetIssuesQuery,
+  useCreateIssueMutation,
   FeedbackSource,
 } from "@/app/__generated__/hooks";
 
@@ -46,6 +49,13 @@ const RESEARCH_STEP_LABELS: Record<number, string> = {
   85: "Extracting relevant findings\u2026",
   95: "Saving papers to database\u2026",
   100: "Research complete!",
+};
+
+const STORY_STEP_LABELS: Record<number, string> = {
+  10: "Loading feedback context\u2026",
+  30: "Fetching research\u2026",
+  60: "Generating story\u2026",
+  90: "Saving story\u2026",
 };
 
 const SOURCE_LABELS: Record<FeedbackSource, string> = {
@@ -92,6 +102,14 @@ function ContactFeedbackDetailContent() {
 
   const fb = data?.contactFeedback;
 
+  // Fetch issues from the new issues table
+  const { data: issuesData } = useGetIssuesQuery({
+    variables: { familyMemberId: fb?.familyMemberId ?? -1, feedbackId },
+    skip: isNaN(feedbackId) || !fb?.familyMemberId,
+  });
+
+  const issues = issuesData?.issues || [];
+
   // Edit form state
   const [editOpen, setEditOpen] = useState(false);
   const [editSubject, setEditSubject] = useState("");
@@ -122,12 +140,61 @@ function ContactFeedbackDetailContent() {
 
   const [extractIssues, { loading: extracting }] =
     useExtractContactFeedbackIssuesMutation({
-      refetchQueries: ["GetContactFeedback"],
+      refetchQueries: ["GetContactFeedback", "GetIssues"],
     });
 
   const handleExtract = () => {
     if (!fb) return;
     extractIssues({ variables: { id: fb.id } });
+  };
+
+  // Manual issue creation
+  const [addIssueOpen, setAddIssueOpen] = useState(false);
+  const [newIssueTitle, setNewIssueTitle] = useState("");
+  const [newIssueDescription, setNewIssueDescription] = useState("");
+  const [newIssueCategory, setNewIssueCategory] = useState("behavioral");
+  const [newIssueSeverity, setNewIssueSeverity] = useState("medium");
+  const [newIssueRecs, setNewIssueRecs] = useState("");
+  const [addIssueError, setAddIssueError] = useState<string | null>(null);
+
+  const [createIssue, { loading: creatingIssue }] = useCreateIssueMutation({
+    onCompleted: () => {
+      setAddIssueOpen(false);
+      setNewIssueTitle("");
+      setNewIssueDescription("");
+      setNewIssueCategory("behavioral");
+      setNewIssueSeverity("medium");
+      setNewIssueRecs("");
+      setAddIssueError(null);
+    },
+    onError: (err) => setAddIssueError(err.message),
+    refetchQueries: ["GetIssues"],
+  });
+
+  const handleAddIssue = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!fb) return;
+    if (!newIssueTitle.trim()) {
+      setAddIssueError("Title is required");
+      return;
+    }
+    const recs = newIssueRecs
+      .split("\n")
+      .map((r) => r.trim())
+      .filter(Boolean);
+    await createIssue({
+      variables: {
+        input: {
+          feedbackId: fb.id,
+          familyMemberId: fb.familyMemberId,
+          title: newIssueTitle.trim(),
+          description: newIssueDescription.trim() || "",
+          category: newIssueCategory,
+          severity: newIssueSeverity,
+          recommendations: recs.length > 0 ? recs : undefined,
+        },
+      },
+    });
   };
 
   // Research generation & display
@@ -215,6 +282,69 @@ function ContactFeedbackDetailContent() {
     });
   };
 
+  // LangGraph research (calls local langgraph dev server via /api/langgraph-research)
+  const [lgLoading, setLgLoading] = useState(false);
+  const [lgResult, setLgResult] = useState<string | null>(null);
+
+  const handleLangGraphResearch = async () => {
+    setLgLoading(true);
+    setLgResult(null);
+    setResearchMessage(null);
+    try {
+      const res = await fetch("/api/langgraph-research", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ feedbackId }),
+      });
+      const json = await res.json();
+      if (!res.ok) {
+        setResearchMessage({ text: json.error || "LangGraph request failed", type: "error" });
+      } else {
+        setLgResult(json.output);
+      }
+    } catch (err) {
+      setResearchMessage({
+        text: err instanceof Error ? err.message : "LangGraph request failed",
+        type: "error",
+      });
+    } finally {
+      setLgLoading(false);
+    }
+  };
+
+  // Story generation (LangGraph)
+  const [generatingStory, setGeneratingStory] = useState(false);
+  const [storyMessage, setStoryMessage] = useState<{
+    text: string;
+    type: "success" | "error";
+  } | null>(null);
+
+  const handleGenerateStory = async () => {
+    setGeneratingStory(true);
+    setStoryMessage(null);
+    try {
+      const res = await fetch("/api/langgraph-story", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ feedbackId }),
+      });
+      const json = await res.json();
+      if (!res.ok) {
+        setStoryMessage({ text: json.error || "Story generation failed", type: "error" });
+      } else {
+        apolloClient.refetchQueries({ include: ["GetContactFeedback"] });
+        setStoryMessage({ text: "Story generated successfully!", type: "success" });
+      }
+    } catch (err) {
+      setStoryMessage({
+        text: err instanceof Error ? err.message : "Story generation failed",
+        type: "error",
+      });
+    } finally {
+      setGeneratingStory(false);
+    }
+  };
+
   function openEditDialog() {
     if (!fb) return;
     setEditSubject(fb.subject ?? "");
@@ -291,6 +421,15 @@ function ContactFeedbackDetailContent() {
               >
                 {extracting ? <Spinner size="1" /> : <MagicWandIcon />}
                 {extracting ? "Extracting..." : "Extract Issues"}
+              </Button>
+              <Button
+                variant="soft"
+                color="indigo"
+                size="2"
+                onClick={() => { setAddIssueError(null); setAddIssueOpen(true); }}
+              >
+                <PlusIcon />
+                Add Issue
               </Button>
               <Button variant="soft" size="2" onClick={openEditDialog}>
                 <Pencil1Icon />
@@ -422,41 +561,71 @@ function ContactFeedbackDetailContent() {
       </Card>
 
       {/* Extracted Issues */}
-      {fb.extractedIssues && fb.extractedIssues.length > 0 && (
+      {issues.length > 0 && (
         <Card>
           <Flex direction="column" gap="3" p="4">
-            <Heading size="3">Extracted Issues ({fb.extractedIssues.length})</Heading>
+            <Heading size="3">Extracted Issues ({issues.length})</Heading>
             <Separator size="4" />
             <Flex direction="column" gap="3">
-              {fb.extractedIssues.map((issue, idx) => (
-                <Card key={idx} variant="surface">
+              {issues.map((issue) => (
+                <Card key={issue.id} variant="surface">
                   <Flex direction="column" gap="2" p="3">
                     <Flex justify="between" align="center">
-                      <Text size="2" weight="bold">{issue.title}</Text>
-                      <Flex gap="1">
-                        <Badge
-                          color={
-                            issue.severity === "high"
-                              ? "red"
-                              : issue.severity === "medium"
-                                ? "orange"
-                                : "green"
-                          }
-                          variant="soft"
-                          size="1"
-                        >
-                          {issue.severity}
-                        </Badge>
-                        <Badge color="iris" variant="outline" size="1">
-                          {issue.category}
-                        </Badge>
+                      <Flex gap="2" align="center" style={{ flex: 1 }}>
+                        <NextLink href={`/family/${familySlug}/issues/${issue.id}`} style={{ textDecoration: "none", color: "inherit", flex: 1 }}>
+                          <Flex gap="2" align="center">
+                            <Text size="2" weight="bold" color="iris">
+                              {issue.title}
+                            </Text>
+                            <ExternalLinkIcon style={{ width: 12, height: 12, opacity: 0.6 }} />
+                          </Flex>
+                        </NextLink>
+                        <Flex gap="1">
+                          <Badge
+                            color={
+                              issue.severity === "high"
+                                ? "red"
+                                : issue.severity === "medium"
+                                  ? "orange"
+                                  : "green"
+                            }
+                            variant="soft"
+                            size="1"
+                          >
+                            {issue.severity}
+                          </Badge>
+                          <Badge color="iris" variant="outline" size="1">
+                            {issue.category}
+                          </Badge>
+                        </Flex>
                       </Flex>
                     </Flex>
                     <Text size="2" color="gray">{issue.description}</Text>
+                    {issue.recommendations && issue.recommendations.length > 0 && (
+                      <Flex direction="column" gap="1" mt="1">
+                        <Text size="1" weight="medium">Recommendations:</Text>
+                        <ul style={{ margin: 0, paddingLeft: "16px" }}>
+                          {issue.recommendations.map((rec, idx) => (
+                            <li key={idx}>
+                              <Text size="1" color="gray">{rec}</Text>
+                            </li>
+                          ))}
+                        </ul>
+                      </Flex>
+                    )}
                   </Flex>
                 </Card>
               ))}
             </Flex>
+          </Flex>
+        </Card>
+      )}
+
+      {!loading && fb && issues.length === 0 && (
+        <Card>
+          <Flex direction="column" gap="2" p="4" align="center">
+            <Text size="2" color="gray">No issues extracted yet.</Text>
+            <Text size="1" color="gray">Click &quot;Extract Issues&quot; above to analyze this feedback.</Text>
           </Flex>
         </Card>
       )}
@@ -478,35 +647,30 @@ function ContactFeedbackDetailContent() {
               {researchMessage.text}
             </Text>
           )}
-          {isJobRunning ? (
-            <Flex direction="column" gap="2">
-              <Flex justify="between" align="center">
-                <Text size="2" color="gray">
-                  {RESEARCH_STEP_LABELS[jobProgress] ?? "Searching for papers\u2026"}
-                </Text>
-                {jobProgress > 0 && (
-                  <Text size="2" color="gray">{jobProgress}%</Text>
-                )}
-              </Flex>
-              <Box style={{ height: 6, borderRadius: 3, background: "var(--gray-4)", overflow: "hidden" }}>
-                {jobProgress > 0 ? (
-                  <Box style={{ height: "100%", width: `${jobProgress}%`, background: "var(--indigo-9)", transition: "width 0.4s ease", borderRadius: 3 }} />
-                ) : (
-                  <Box style={{ height: "100%", width: "40%", background: "var(--indigo-9)", borderRadius: 3, animation: "researchSweep 1.4s ease-in-out infinite" }} />
-                )}
-              </Box>
-            </Flex>
-          ) : (
-            <Button
-              size="2"
-              variant="soft"
-              disabled={generatingResearch}
-              loading={generatingResearch}
-              onClick={() => handleGenerateResearch()}
+          <Button
+            size="2"
+            variant="soft"
+            disabled={lgLoading}
+            loading={lgLoading}
+            onClick={() => handleLangGraphResearch()}
+          >
+            <MagnifyingGlassIcon />
+            Generate Research
+          </Button>
+          {lgResult && (
+            <Box
+              p="3"
+              style={{
+                background: "var(--gray-2)",
+                borderRadius: "var(--radius-2)",
+                maxHeight: 400,
+                overflow: "auto",
+                whiteSpace: "pre-wrap",
+                fontSize: "var(--font-size-2)",
+              }}
             >
-              <MagnifyingGlassIcon />
-              Generate Research
-            </Button>
+              {lgResult}
+            </Box>
           )}
         </Flex>
       </Card>
@@ -611,6 +775,175 @@ function ContactFeedbackDetailContent() {
           </Flex>
         </Card>
       )}
+
+      {/* Generated Stories */}
+      <Card>
+        <Flex direction="column" gap="3" p="4">
+          <Flex justify="between" align="center">
+            <Flex direction="column" gap="1">
+              <Heading size="3">
+                Generated Stories{" "}
+                {fb.stories && fb.stories.length > 0 ? `(${fb.stories.length})` : ""}
+              </Heading>
+              <Text size="1" color="gray">
+                Create a therapeutic audio script based on this feedback
+              </Text>
+            </Flex>
+            <Button
+              size="2"
+              variant="soft"
+              color="violet"
+              disabled={generatingStory}
+              loading={generatingStory}
+              onClick={handleGenerateStory}
+            >
+              <MagicWandIcon />
+              Generate Story
+            </Button>
+          </Flex>
+          <Separator size="4" />
+
+          {storyMessage && (
+            <Text size="2" color={storyMessage.type === "success" ? "green" : "red"}>
+              {storyMessage.text}
+            </Text>
+          )}
+
+          {fb.stories && fb.stories.length > 0 ? (
+            <Flex direction="column" gap="3">
+              {fb.stories.map((story) => (
+                <Card key={story.id} style={{ backgroundColor: "var(--gray-2)" }}>
+                  <Flex direction="column" gap="2" p="3">
+                    <Flex justify="between" align="center">
+                      <Flex align="center" gap="2">
+                        <Badge color="violet" size="1">
+                          {story.language}
+                        </Badge>
+                        <Badge variant="soft" size="1">
+                          {story.minutes} min
+                        </Badge>
+                      </Flex>
+                      <Text size="1" color="gray">
+                        {new Date(story.createdAt).toLocaleDateString()}
+                      </Text>
+                    </Flex>
+                    <NextLink
+                      href={`/stories/goal-story/${story.id}`}
+                      style={{ textDecoration: "none" }}
+                    >
+                      <Text
+                        size="2"
+                        style={{
+                          whiteSpace: "pre-wrap",
+                          overflow: "hidden",
+                          textOverflow: "ellipsis",
+                          display: "-webkit-box",
+                          WebkitLineClamp: 6,
+                          WebkitBoxOrient: "vertical",
+                          cursor: "pointer",
+                        }}
+                      >
+                        {story.text}
+                      </Text>
+                    </NextLink>
+                  </Flex>
+                </Card>
+              ))}
+            </Flex>
+          ) : (
+            !isJobRunning && (
+              <Text size="2" color="gray">
+                No generated stories yet. Click &ldquo;Generate Story&rdquo; to create a
+                research-backed therapeutic story based on this feedback.
+              </Text>
+            )
+          )}
+        </Flex>
+      </Card>
+
+      {/* Add Issue Dialog */}
+      <Dialog.Root open={addIssueOpen} onOpenChange={setAddIssueOpen}>
+        <Dialog.Content style={{ maxWidth: 540 }}>
+          <Dialog.Title>Add Issue Manually</Dialog.Title>
+          <form onSubmit={handleAddIssue}>
+            <Flex direction="column" gap="4">
+              <label>
+                <Text as="div" size="2" mb="1" weight="medium">Title *</Text>
+                <TextField.Root
+                  placeholder="Brief title for the issue"
+                  value={newIssueTitle}
+                  onChange={(e) => setNewIssueTitle(e.target.value)}
+                  disabled={creatingIssue}
+                />
+              </label>
+
+              <label>
+                <Text as="div" size="2" mb="1" weight="medium">Description</Text>
+                <TextArea
+                  placeholder="Describe the issue in detail"
+                  value={newIssueDescription}
+                  onChange={(e) => setNewIssueDescription(e.target.value)}
+                  rows={3}
+                  disabled={creatingIssue}
+                />
+              </label>
+
+              <Flex gap="3">
+                <Flex direction="column" gap="1" style={{ flex: 1 }}>
+                  <Text as="div" size="2" weight="medium">Category</Text>
+                  <Select.Root value={newIssueCategory} onValueChange={setNewIssueCategory} disabled={creatingIssue}>
+                    <Select.Trigger style={{ width: "100%" }} />
+                    <Select.Content>
+                      <Select.Item value="behavioral">Behavioral</Select.Item>
+                      <Select.Item value="academic">Academic</Select.Item>
+                      <Select.Item value="social">Social</Select.Item>
+                      <Select.Item value="emotional">Emotional</Select.Item>
+                      <Select.Item value="communication">Communication</Select.Item>
+                      <Select.Item value="other">Other</Select.Item>
+                    </Select.Content>
+                  </Select.Root>
+                </Flex>
+
+                <Flex direction="column" gap="1" style={{ flex: 1 }}>
+                  <Text as="div" size="2" weight="medium">Severity</Text>
+                  <Select.Root value={newIssueSeverity} onValueChange={setNewIssueSeverity} disabled={creatingIssue}>
+                    <Select.Trigger style={{ width: "100%" }} />
+                    <Select.Content>
+                      <Select.Item value="low">Low</Select.Item>
+                      <Select.Item value="medium">Medium</Select.Item>
+                      <Select.Item value="high">High</Select.Item>
+                    </Select.Content>
+                  </Select.Root>
+                </Flex>
+              </Flex>
+
+              <label>
+                <Text as="div" size="2" mb="1" weight="medium">Recommendations</Text>
+                <TextArea
+                  placeholder="One recommendation per line (optional)"
+                  value={newIssueRecs}
+                  onChange={(e) => setNewIssueRecs(e.target.value)}
+                  rows={3}
+                  disabled={creatingIssue}
+                />
+              </label>
+
+              {addIssueError && (
+                <Text color="red" size="2">{addIssueError}</Text>
+              )}
+
+              <Flex gap="3" justify="end" mt="4">
+                <Dialog.Close>
+                  <Button variant="soft" color="gray" disabled={creatingIssue}>Cancel</Button>
+                </Dialog.Close>
+                <Button type="submit" disabled={creatingIssue} loading={creatingIssue}>
+                  Add Issue
+                </Button>
+              </Flex>
+            </Flex>
+          </form>
+        </Dialog.Content>
+      </Dialog.Root>
 
       {/* Edit Dialog */}
       <Dialog.Root open={editOpen} onOpenChange={setEditOpen}>

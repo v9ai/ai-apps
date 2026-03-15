@@ -295,3 +295,17 @@ export const stories = sqliteTable("stories", {
   audioUrl: text("audio_url"),
   audioGeneratedAt: text("audio_generated_at"),
 });
+
+export const issues = sqliteTable("issues", {
+  id: integer().primaryKey({ autoIncrement: true }),
+  feedbackId: integer("feedback_id"),
+  familyMemberId: integer("family_member_id").notNull(),
+  userId: text("user_id").notNull(),
+  title: text().notNull(),
+  description: text().notNull(),
+  category: text().notNull(),
+  severity: text().notNull(),
+  recommendations: text(),
+  createdAt: text("created_at").default("sql`(datetime('now'))`").notNull(),
+  updatedAt: text("updated_at").default("sql`(datetime('now'))`").notNull(),
+});

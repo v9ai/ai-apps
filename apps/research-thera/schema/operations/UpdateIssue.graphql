@@ -1,0 +1,15 @@
+mutation UpdateIssue($id: Int!, $input: UpdateIssueInput!) {
+  updateIssue(id: $id, input: $input) {
+    id
+    feedbackId
+    familyMemberId
+    createdBy
+    title
+    description
+    category
+    severity
+    recommendations
+    createdAt
+    updatedAt
+  }
+}

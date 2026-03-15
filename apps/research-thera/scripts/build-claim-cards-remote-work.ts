@@ -9,17 +9,9 @@
  *   pnpm tsx scripts/build-claim-cards-remote-work.ts
  */
 
-import { d1 } from "../src/db/d1";
-import * as dotenv from "dotenv";
+import "dotenv/config";
 import { buildClaimCards } from "../schema/resolvers/Mutation/buildClaimCards";
-import {
-  CLOUDFLARE_ACCOUNT_ID,
-  CLOUDFLARE_DATABASE_ID,
-  CLOUDFLARE_D1_TOKEN,
-} from "../src/config/d1";
-
-// Load environment variables
-dotenv.config();
+import { sql as neonSql } from "../src/db/neon";
 
 // Suppress AI SDK warnings
 if (typeof globalThis !== "undefined") {
@@ -33,19 +25,13 @@ type StorageDetection = {
 } | null;
 
 async function listTables(): Promise<string[]> {
-  const res = await d1.execute({
-    sql: `SELECT name FROM sqlite_master WHERE type='table' ORDER BY name`,
-    args: [],
-  });
-  return res.rows.map((r: any) => String(r.name));
+  const rows = await neonSql`SELECT table_name as name FROM information_schema.tables WHERE table_schema = 'public' ORDER BY table_name`;
+  return rows.map((r: any) => String(r.name));
 }
 
 async function tableColumns(table: string): Promise<string[]> {
-  const res = await d1.execute({
-    sql: `PRAGMA table_info(${table})`,
-    args: [],
-  });
-  return res.rows.map((r: any) => String(r.name));
+  const rows = await neonSql`SELECT column_name as name FROM information_schema.columns WHERE table_name = ${table} AND table_schema = 'public'`;
+  return rows.map((r: any) => String(r.name));
 }
 
 /**
@@ -82,9 +68,9 @@ async function claimExists(
   noteId: number,
   claim: string,
 ): Promise<boolean> {
-  const sql = `SELECT 1 AS ok FROM ${storage.table} WHERE ${storage.noteIdColumn} = ? AND ${storage.claimColumn} = ? LIMIT 1`;
-  const res = await d1.execute({ sql, args: [noteId, claim] });
-  return res.rows.length > 0;
+  const query = `SELECT 1 AS ok FROM ${storage.table} WHERE ${storage.noteIdColumn} = $1 AND ${storage.claimColumn} = $2 LIMIT 1`;
+  const rows = await neonSql(query, [noteId, claim]);
+  return rows.length > 0;
 }
 
 async function verifyLinkTable(
@@ -95,11 +81,8 @@ async function verifyLinkTable(
 
   // Check for notes_claims linking table
   if (tables.includes("notes_claims")) {
-    const res = await d1.execute({
-      sql: "SELECT COUNT(*) as count FROM notes_claims WHERE note_id = ?",
-      args: [noteId],
-    });
-    const linkCount = Number(res.rows[0]?.count ?? 0);
+    const rows = await neonSql`SELECT COUNT(*) as count FROM notes_claims WHERE note_id = ${noteId}`;
+    const linkCount = Number(rows[0]?.count ?? 0);
 
     if (linkCount !== expectedCount) {
       console.warn(
@@ -118,18 +101,15 @@ async function main() {
 
   try {
     // 1. Get the note
-    const noteResult = await d1.execute({
-      sql: "SELECT id, slug, content FROM notes WHERE slug = ?",
-      args: ["state-of-remote-work"],
-    });
+    const noteResult = await neonSql`SELECT id, slug, content FROM notes WHERE slug = ${"state-of-remote-work"}`;
 
-    if (noteResult.rows.length === 0) {
+    if (noteResult.length === 0) {
       console.error("❌ Note 'state-of-remote-work' not found");
       console.log("\n💡 Tip: Make sure the note exists in the database");
       return;
     }
 
-    const note = noteResult.rows[0];
+    const note = noteResult[0];
     const noteId = note.id as number;
     const content = note.content as string;
 

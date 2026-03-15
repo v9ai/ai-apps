@@ -12,7 +12,7 @@ export const createUniqueOutcome: NonNullable<MutationResolvers['createUniqueOut
   }
 
   const id = await d1Tools.createUniqueOutcome({
-    characteristicId: args.input.characteristicId,
+    issueId: args.input.issueId,
     userId: userEmail,
     observedAt: args.input.observedAt,
     description: args.input.description,

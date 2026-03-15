@@ -1,8 +1,8 @@
-import { sqliteTable, integer, text } from "drizzle-orm/sqlite-core";
+import { pgTable, serial, integer, text, boolean, timestamp } from "drizzle-orm/pg-core";
 import { sql } from "drizzle-orm";
 
-export const familyMembers = sqliteTable("family_members", {
-  id: integer("id").primaryKey({ autoIncrement: true }),
+export const familyMembers = pgTable("family_members", {
+  id: serial("id").primaryKey(),
   userId: text("user_id").notNull(),
   slug: text("slug").unique(),
   firstName: text("first_name").notNull(),
@@ -17,13 +17,13 @@ export const familyMembers = sqliteTable("family_members", {
   occupation: text("occupation"),
   createdAt: text("created_at")
     .notNull()
-    .default(sql`CURRENT_TIMESTAMP`),
+    .default(sql`NOW()`),
   updatedAt: text("updated_at")
     .notNull()
-    .default(sql`CURRENT_TIMESTAMP`),
+    .default(sql`NOW()`),
 });
 
-export const familyMemberShares = sqliteTable("family_member_shares", {
+export const familyMemberShares = pgTable("family_member_shares", {
   familyMemberId: integer("family_member_id")
     .notNull()
     .references(() => familyMembers.id, { onDelete: "cascade" }),
@@ -31,12 +31,12 @@ export const familyMemberShares = sqliteTable("family_member_shares", {
   role: text("role").notNull().default("VIEWER"), // VIEWER or EDITOR
   createdAt: text("created_at")
     .notNull()
-    .default(sql`CURRENT_TIMESTAMP`),
+    .default(sql`NOW()`),
   createdBy: text("created_by").notNull(),
 });
 
-export const goals = sqliteTable("goals", {
-  id: integer("id").primaryKey({ autoIncrement: true }),
+export const goals = pgTable("goals", {
+  id: serial("id").primaryKey(),
   familyMemberId: integer("family_member_id"),
   userId: text("user_id").notNull(),
   slug: text("slug").unique(),
@@ -51,14 +51,14 @@ export const goals = sqliteTable("goals", {
   storyLanguage: text("story_language"),
   createdAt: text("created_at")
     .notNull()
-    .default(sql`CURRENT_TIMESTAMP`),
+    .default(sql`NOW()`),
   updatedAt: text("updated_at")
     .notNull()
-    .default(sql`CURRENT_TIMESTAMP`),
+    .default(sql`NOW()`),
 });
 
-export const therapyResearch = sqliteTable("therapy_research", {
-  id: integer("id").primaryKey({ autoIncrement: true }),
+export const therapyResearch = pgTable("therapy_research", {
+  id: serial("id").primaryKey(),
   goalId: integer("goal_id"),
   feedbackId: integer("feedback_id"),
   therapeuticGoalType: text("therapeutic_goal_type").notNull(),
@@ -72,20 +72,20 @@ export const therapyResearch = sqliteTable("therapy_research", {
   keyFindings: text("key_findings").notNull(), // JSON array
   therapeuticTechniques: text("therapeutic_techniques").notNull(), // JSON array
   evidenceLevel: text("evidence_level"),
-  characteristicId: integer("characteristic_id"),
+  issueId: integer("issue_id"),
   relevanceScore: integer("relevance_score").notNull(),
   extractedBy: text("extracted_by").notNull(),
   extractionConfidence: integer("extraction_confidence").notNull(),
   createdAt: text("created_at")
     .notNull()
-    .default(sql`CURRENT_TIMESTAMP`),
+    .default(sql`NOW()`),
   updatedAt: text("updated_at")
     .notNull()
-    .default(sql`CURRENT_TIMESTAMP`),
+    .default(sql`NOW()`),
 });
 
-export const therapeuticQuestions = sqliteTable("therapeutic_questions", {
-  id: integer("id").primaryKey({ autoIncrement: true }),
+export const therapeuticQuestions = pgTable("therapeutic_questions", {
+  id: serial("id").primaryKey(),
   goalId: integer("goal_id").notNull(),
   question: text("question").notNull(),
   researchId: integer("research_id"),
@@ -94,14 +94,14 @@ export const therapeuticQuestions = sqliteTable("therapeutic_questions", {
   generatedAt: text("generated_at").notNull(),
   createdAt: text("created_at")
     .notNull()
-    .default(sql`CURRENT_TIMESTAMP`),
+    .default(sql`NOW()`),
   updatedAt: text("updated_at")
     .notNull()
-    .default(sql`CURRENT_TIMESTAMP`),
+    .default(sql`NOW()`),
 });
 
-export const notes = sqliteTable("notes", {
-  id: integer("id").primaryKey({ autoIncrement: true }),
+export const notes = pgTable("notes", {
+  id: serial("id").primaryKey(),
   entityId: integer("entity_id").notNull(),
   entityType: text("entity_type").notNull(),
   userId: text("user_id").notNull(),
@@ -114,13 +114,13 @@ export const notes = sqliteTable("notes", {
   visibility: text("visibility").notNull().default("PRIVATE"), // PRIVATE or PUBLIC
   createdAt: text("created_at")
     .notNull()
-    .default(sql`CURRENT_TIMESTAMP`),
+    .default(sql`NOW()`),
   updatedAt: text("updated_at")
     .notNull()
-    .default(sql`CURRENT_TIMESTAMP`),
+    .default(sql`NOW()`),
 });
 
-export const noteShares = sqliteTable("note_shares", {
+export const noteShares = pgTable("note_shares", {
   noteId: integer("note_id")
     .notNull()
     .references(() => notes.id, { onDelete: "cascade" }),
@@ -128,12 +128,12 @@ export const noteShares = sqliteTable("note_shares", {
   role: text("role").notNull().default("READER"), // READER or EDITOR
   createdAt: text("created_at")
     .notNull()
-    .default(sql`CURRENT_TIMESTAMP`),
+    .default(sql`NOW()`),
   createdBy: text("created_by").notNull(), // who created the share
 });
 
-export const stories = sqliteTable("stories", {
-  id: integer("id").primaryKey({ autoIncrement: true }),
+export const stories = pgTable("stories", {
+  id: serial("id").primaryKey(),
   goalId: integer("goal_id")
     .notNull()
     .references(() => goals.id, { onDelete: "cascade" }),
@@ -144,16 +144,17 @@ export const stories = sqliteTable("stories", {
   audioGeneratedAt: text("audio_generated_at"),
   createdAt: text("created_at")
     .notNull()
-    .default(sql`CURRENT_TIMESTAMP`),
+    .default(sql`NOW()`),
   updatedAt: text("updated_at")
     .notNull()
-    .default(sql`CURRENT_TIMESTAMP`),
+    .default(sql`NOW()`),
 });
 
-export const goalStories = sqliteTable("goal_stories", {
-  id: integer("id").primaryKey({ autoIncrement: true }),
+export const goalStories = pgTable("goal_stories", {
+  id: serial("id").primaryKey(),
   goalId: integer("goal_id"),
-  characteristicId: integer("characteristic_id"),
+  issueId: integer("issue_id"),
+  feedbackId: integer("feedback_id"),
   language: text("language").notNull(),
   minutes: integer("minutes").notNull(),
   text: text("text").notNull(),
@@ -162,24 +163,24 @@ export const goalStories = sqliteTable("goal_stories", {
   audioGeneratedAt: text("audio_generated_at"),
   createdAt: text("created_at")
     .notNull()
-    .default(sql`CURRENT_TIMESTAMP`),
+    .default(sql`NOW()`),
   updatedAt: text("updated_at")
     .notNull()
-    .default(sql`CURRENT_TIMESTAMP`),
+    .default(sql`NOW()`),
 });
 
-export const textSegments = sqliteTable("text_segments", {
-  id: integer("id").primaryKey({ autoIncrement: true }),
+export const textSegments = pgTable("text_segments", {
+  id: serial("id").primaryKey(),
   goalId: integer("goal_id").notNull(),
   storyId: integer("story_id"),
   idx: integer("idx").notNull(),
   text: text("text").notNull(),
   createdAt: text("created_at")
     .notNull()
-    .default(sql`CURRENT_TIMESTAMP`),
+    .default(sql`NOW()`),
 });
 
-export const generationJobs = sqliteTable("generation_jobs", {
+export const generationJobs = pgTable("generation_jobs", {
   id: text("id").primaryKey(),
   userId: text("user_id").notNull(),
   type: text("type").notNull(), // AUDIO, RESEARCH, QUESTIONS, LONGFORM
@@ -191,13 +192,13 @@ export const generationJobs = sqliteTable("generation_jobs", {
   error: text("error"), // JSON object
   createdAt: text("created_at")
     .notNull()
-    .default(sql`CURRENT_TIMESTAMP`),
+    .default(sql`NOW()`),
   updatedAt: text("updated_at")
     .notNull()
-    .default(sql`CURRENT_TIMESTAMP`),
+    .default(sql`NOW()`),
 });
 
-export const audioAssets = sqliteTable("audio_assets", {
+export const audioAssets = pgTable("audio_assets", {
   id: text("id").primaryKey(),
   userId: text("user_id").notNull(),
   goalId: integer("goal_id").notNull(),
@@ -208,46 +209,46 @@ export const audioAssets = sqliteTable("audio_assets", {
   manifest: text("manifest").notNull(), // JSON object
   createdAt: text("created_at")
     .notNull()
-    .default(sql`CURRENT_TIMESTAMP`),
+    .default(sql`NOW()`),
 });
 
-export const notesResearch = sqliteTable("notes_research", {
+export const notesResearch = pgTable("notes_research", {
   noteId: integer("note_id").notNull(),
   researchId: integer("research_id").notNull(),
   createdAt: text("created_at")
     .notNull()
-    .default(sql`CURRENT_TIMESTAMP`),
+    .default(sql`NOW()`),
 });
 
-export const claimCards = sqliteTable("claim_cards", {
+export const claimCards = pgTable("claim_cards", {
   id: text("id").primaryKey(),
   noteId: integer("note_id"),
   claim: text("claim").notNull(),
   scope: text("scope"), // JSON: { population?, intervention?, comparator?, outcome?, timeframe?, setting? }
   verdict: text("verdict").notNull(), // unverified, supported, contradicted, mixed, insufficient
-  confidence: integer("confidence").notNull(), // 0-100 (stored as integer for SQLite)
+  confidence: integer("confidence").notNull(), // 0-100
   evidence: text("evidence").notNull(), // JSON array of EvidenceItem[]
   queries: text("queries").notNull(), // JSON array of search queries used
   provenance: text("provenance").notNull(), // JSON: { generatedBy, model?, sourceTools[] }
   notes: text("notes"),
   createdAt: text("created_at")
     .notNull()
-    .default(sql`CURRENT_TIMESTAMP`),
+    .default(sql`NOW()`),
   updatedAt: text("updated_at")
     .notNull()
-    .default(sql`CURRENT_TIMESTAMP`),
+    .default(sql`NOW()`),
 });
 
-export const notesClaims = sqliteTable("notes_claims", {
+export const notesClaims = pgTable("notes_claims", {
   noteId: integer("note_id").notNull(),
   claimId: text("claim_id").notNull(),
   createdAt: text("created_at")
     .notNull()
-    .default(sql`CURRENT_TIMESTAMP`),
+    .default(sql`NOW()`),
 });
 
-export const journalEntries = sqliteTable("journal_entries", {
-  id: integer("id").primaryKey({ autoIncrement: true }),
+export const journalEntries = pgTable("journal_entries", {
+  id: serial("id").primaryKey(),
   userId: text("user_id").notNull(),
   familyMemberId: integer("family_member_id"),
   title: text("title"),
@@ -260,17 +261,17 @@ export const journalEntries = sqliteTable("journal_entries", {
   entryDate: text("entry_date").notNull(),
   createdAt: text("created_at")
     .notNull()
-    .default(sql`CURRENT_TIMESTAMP`),
+    .default(sql`NOW()`),
   updatedAt: text("updated_at")
     .notNull()
-    .default(sql`CURRENT_TIMESTAMP`),
+    .default(sql`NOW()`),
 });
 
-export const behaviorObservations = sqliteTable("behavior_observations", {
-  id: integer("id").primaryKey({ autoIncrement: true }),
+export const behaviorObservations = pgTable("behavior_observations", {
+  id: serial("id").primaryKey(),
   familyMemberId: integer("family_member_id").notNull(),
   goalId: integer("goal_id"),
-  characteristicId: integer("characteristic_id"),
+  issueId: integer("issue_id"),
   userId: text("user_id").notNull(),
   observedAt: text("observed_at").notNull(),
   observationType: text("observation_type").notNull(),
@@ -280,55 +281,28 @@ export const behaviorObservations = sqliteTable("behavior_observations", {
   notes: text("notes"),
   createdAt: text("created_at")
     .notNull()
-    .default(sql`CURRENT_TIMESTAMP`),
+    .default(sql`NOW()`),
   updatedAt: text("updated_at")
     .notNull()
-    .default(sql`CURRENT_TIMESTAMP`),
+    .default(sql`NOW()`),
 });
 
-export const familyMemberCharacteristics = sqliteTable(
-  "family_member_characteristics",
-  {
-    id: integer("id").primaryKey({ autoIncrement: true }),
-    familyMemberId: integer("family_member_id").notNull(),
-    userId: text("user_id").notNull(),
-    category: text("category").notNull(), // STRENGTH | SUPPORT_NEED | PRIORITY_CONCERN
-    title: text("title").notNull(),
-    description: text("description"),
-    severity: text("severity"),
-    frequencyPerWeek: integer("frequency_per_week"),
-    durationWeeks: integer("duration_weeks"),
-    ageOfOnset: integer("age_of_onset"),
-    impairmentDomains: text("impairment_domains"), // JSON array
-    externalizedName: text("externalized_name"),
-    strengths: text("strengths"),
-    riskTier: text("risk_tier").notNull().default("NONE"),
-    tags: text("tags"), // JSON array
-    createdAt: text("created_at")
-      .notNull()
-      .default(sql`CURRENT_TIMESTAMP`),
-    updatedAt: text("updated_at")
-      .notNull()
-      .default(sql`CURRENT_TIMESTAMP`),
-  },
-);
-
-export const uniqueOutcomes = sqliteTable("unique_outcomes", {
-  id: integer("id").primaryKey({ autoIncrement: true }),
-  characteristicId: integer("characteristic_id").notNull(),
+export const uniqueOutcomes = pgTable("unique_outcomes", {
+  id: serial("id").primaryKey(),
+  issueId: integer("issue_id").notNull(),
   userId: text("user_id").notNull(),
   observedAt: text("observed_at").notNull(),
   description: text("description").notNull(),
   createdAt: text("created_at")
     .notNull()
-    .default(sql`CURRENT_TIMESTAMP`),
+    .default(sql`NOW()`),
   updatedAt: text("updated_at")
     .notNull()
-    .default(sql`CURRENT_TIMESTAMP`),
+    .default(sql`NOW()`),
 });
 
-export const teacherFeedbacks = sqliteTable("teacher_feedbacks", {
-  id: integer("id").primaryKey({ autoIncrement: true }),
+export const teacherFeedbacks = pgTable("teacher_feedbacks", {
+  id: serial("id").primaryKey(),
   familyMemberId: integer("family_member_id").notNull(),
   userId: text("user_id").notNull(),
   teacherName: text("teacher_name").notNull(),
@@ -337,17 +311,17 @@ export const teacherFeedbacks = sqliteTable("teacher_feedbacks", {
   content: text("content").notNull(),
   tags: text("tags"), // JSON array
   source: text("source"), // e.g. "email", "meeting", "report", "phone"
-  extracted: integer("extracted").notNull().default(0), // 0 = not extracted, 1 = extracted into characteristics
+  extracted: integer("extracted").notNull().default(0), // 0 = not extracted, 1 = extracted into issues
   createdAt: text("created_at")
     .notNull()
-    .default(sql`CURRENT_TIMESTAMP`),
+    .default(sql`NOW()`),
   updatedAt: text("updated_at")
     .notNull()
-    .default(sql`CURRENT_TIMESTAMP`),
+    .default(sql`NOW()`),
 });
 
-export const contactFeedbacks = sqliteTable("contact_feedbacks", {
-  id: integer("id").primaryKey({ autoIncrement: true }),
+export const contactFeedbacks = pgTable("contact_feedbacks", {
+  id: serial("id").primaryKey(),
   contactId: integer("contact_id").notNull(),
   familyMemberId: integer("family_member_id").notNull(),
   userId: text("user_id").notNull(),
@@ -357,17 +331,35 @@ export const contactFeedbacks = sqliteTable("contact_feedbacks", {
   tags: text("tags"), // JSON array
   source: text("source"), // e.g. "email", "meeting", "report", "phone"
   extracted: integer("extracted").notNull().default(0),
-  extractedIssues: text("extracted_issues"), // JSON array of extracted issues
+  extractedIssues: text("extracted_issues"), // JSON array of extracted issues (legacy, kept for backwards compatibility)
   createdAt: text("created_at")
     .notNull()
-    .default(sql`CURRENT_TIMESTAMP`),
+    .default(sql`NOW()`),
   updatedAt: text("updated_at")
     .notNull()
-    .default(sql`CURRENT_TIMESTAMP`),
+    .default(sql`NOW()`),
 });
 
-export const contacts = sqliteTable("contacts", {
-  id: integer("id").primaryKey({ autoIncrement: true }),
+export const issues = pgTable("issues", {
+  id: serial("id").primaryKey(),
+  feedbackId: integer("feedback_id"),
+  familyMemberId: integer("family_member_id").notNull(),
+  userId: text("user_id").notNull(),
+  title: text("title").notNull(),
+  description: text("description").notNull(),
+  category: text("category").notNull(), // academic, behavioral, social, emotional, developmental, health, communication, other
+  severity: text("severity").notNull(), // low, medium, high
+  recommendations: text("recommendations"), // JSON array of strings
+  createdAt: text("created_at")
+    .notNull()
+    .default(sql`NOW()`),
+  updatedAt: text("updated_at")
+    .notNull()
+    .default(sql`NOW()`),
+});
+
+export const contacts = pgTable("contacts", {
+  id: serial("id").primaryKey(),
   userId: text("user_id").notNull(),
   slug: text("slug").unique(),
   firstName: text("first_name").notNull(),
@@ -377,14 +369,14 @@ export const contacts = sqliteTable("contacts", {
   notes: text("notes"),
   createdAt: text("created_at")
     .notNull()
-    .default(sql`CURRENT_TIMESTAMP`),
+    .default(sql`NOW()`),
   updatedAt: text("updated_at")
     .notNull()
-    .default(sql`CURRENT_TIMESTAMP`),
+    .default(sql`NOW()`),
 });
 
-export const relationships = sqliteTable("relationships", {
-  id: integer("id").primaryKey({ autoIncrement: true }),
+export const relationships = pgTable("relationships", {
+  id: serial("id").primaryKey(),
   userId: text("user_id").notNull(),
   subjectType: text("subject_type").notNull(),
   subjectId: integer("subject_id").notNull(),
@@ -396,41 +388,41 @@ export const relationships = sqliteTable("relationships", {
   status: text("status").default("active"),
   createdAt: text("created_at")
     .notNull()
-    .default(sql`CURRENT_TIMESTAMP`),
+    .default(sql`NOW()`),
   updatedAt: text("updated_at")
     .notNull()
-    .default(sql`CURRENT_TIMESTAMP`),
+    .default(sql`NOW()`),
 });
 
-export const userSettings = sqliteTable("user_settings", {
+export const userSettings = pgTable("user_settings", {
   userId: text("user_id").primaryKey(),
   storyLanguage: text("story_language").notNull().default("English"),
   storyMinutes: integer("story_minutes").notNull().default(10),
   createdAt: text("created_at")
     .notNull()
-    .default(sql`CURRENT_TIMESTAMP`),
+    .default(sql`NOW()`),
   updatedAt: text("updated_at")
     .notNull()
-    .default(sql`CURRENT_TIMESTAMP`),
+    .default(sql`NOW()`),
 });
 
 // Better Auth Tables
-export const user = sqliteTable("user", {
+export const user = pgTable("user", {
   id: text("id").primaryKey(),
   name: text("name").notNull(),
   email: text("email").notNull().unique(),
-  emailVerified: integer("emailVerified", { mode: "boolean" }).notNull(),
+  emailVerified: boolean("emailVerified").notNull(),
   image: text("image"),
-  createdAt: integer("createdAt", { mode: "timestamp" }).notNull(),
-  updatedAt: integer("updatedAt", { mode: "timestamp" }).notNull(),
+  createdAt: timestamp("createdAt").notNull(),
+  updatedAt: timestamp("updatedAt").notNull(),
 });
 
-export const session = sqliteTable("session", {
+export const session = pgTable("session", {
   id: text("id").primaryKey(),
-  expiresAt: integer("expiresAt", { mode: "timestamp" }).notNull(),
+  expiresAt: timestamp("expiresAt").notNull(),
   token: text("token").notNull().unique(),
-  createdAt: integer("createdAt", { mode: "timestamp" }).notNull(),
-  updatedAt: integer("updatedAt", { mode: "timestamp" }).notNull(),
+  createdAt: timestamp("createdAt").notNull(),
+  updatedAt: timestamp("updatedAt").notNull(),
   ipAddress: text("ipAddress"),
   userAgent: text("userAgent"),
   userId: text("userId")
@@ -438,7 +430,7 @@ export const session = sqliteTable("session", {
     .references(() => user.id, { onDelete: "cascade" }),
 });
 
-export const account = sqliteTable("account", {
+export const account = pgTable("account", {
   id: text("id").primaryKey(),
   accountId: text("accountId").notNull(),
   providerId: text("providerId").notNull(),
@@ -448,21 +440,19 @@ export const account = sqliteTable("account", {
   accessToken: text("accessToken"),
   refreshToken: text("refreshToken"),
   idToken: text("idToken"),
-  accessTokenExpiresAt: integer("accessTokenExpiresAt", { mode: "timestamp" }),
-  refreshTokenExpiresAt: integer("refreshTokenExpiresAt", {
-    mode: "timestamp",
-  }),
+  accessTokenExpiresAt: timestamp("accessTokenExpiresAt"),
+  refreshTokenExpiresAt: timestamp("refreshTokenExpiresAt"),
   scope: text("scope"),
   password: text("password"),
-  createdAt: integer("createdAt", { mode: "timestamp" }).notNull(),
-  updatedAt: integer("updatedAt", { mode: "timestamp" }).notNull(),
+  createdAt: timestamp("createdAt").notNull(),
+  updatedAt: timestamp("updatedAt").notNull(),
 });
 
-export const verification = sqliteTable("verification", {
+export const verification = pgTable("verification", {
   id: text("id").primaryKey(),
   identifier: text("identifier").notNull(),
   value: text("value").notNull(),
-  expiresAt: integer("expiresAt", { mode: "timestamp" }).notNull(),
-  createdAt: integer("createdAt", { mode: "timestamp" }),
-  updatedAt: integer("updatedAt", { mode: "timestamp" }),
+  expiresAt: timestamp("expiresAt").notNull(),
+  createdAt: timestamp("createdAt"),
+  updatedAt: timestamp("updatedAt"),
 });

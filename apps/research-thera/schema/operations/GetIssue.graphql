@@ -1,0 +1,44 @@
+query GetIssue($id: Int!) {
+  issue(id: $id) {
+    id
+    feedbackId
+    familyMemberId
+    createdBy
+    title
+    description
+    category
+    severity
+    recommendations
+    createdAt
+    updatedAt
+    feedback {
+      id
+      contactId
+      familyMemberId
+      subject
+      feedbackDate
+      content
+      tags
+      source
+      extracted
+      contact {
+        id
+        firstName
+        lastName
+        slug
+      }
+      familyMember {
+        id
+        firstName
+        name
+        slug
+      }
+    }
+    familyMember {
+      id
+      firstName
+      name
+      slug
+    }
+  }
+}

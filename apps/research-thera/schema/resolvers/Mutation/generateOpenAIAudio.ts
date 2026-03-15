@@ -1,5 +1,5 @@
 import type { MutationResolvers } from "./../../types.generated";
-import { d1 } from "@/src/db/d1";
+import { sql as neonSql } from "@/src/db/neon";
 import { tasks } from "@trigger.dev/sdk/v3";
 import type { TTSPayload } from "@/src/trigger/tts-task";
 
@@ -32,15 +32,13 @@ export const generateOpenAIAudio: NonNullable<MutationResolvers['generateOpenAIA
   // Jobs older than 10 min are considered stale (Trigger.dev MAX_DURATION_EXCEEDED
   // does not always fire onFailure) — mark them FAILED and allow a new run.
   if (entityStoryId) {
-    const existing = await d1.execute({
-      sql: `SELECT id, created_at FROM generation_jobs
-            WHERE story_id = ? AND user_id = ? AND type = 'AUDIO' AND status = 'RUNNING'
-            ORDER BY created_at DESC LIMIT 1`,
-      args: [entityStoryId, userEmail],
-    });
-    if (existing.rows.length > 0) {
-      const existingJobId = existing.rows[0].id as string;
-      const createdAt = new Date(existing.rows[0].created_at as string).getTime();
+    const existing = await neonSql`
+      SELECT id, created_at FROM generation_jobs
+      WHERE story_id = ${entityStoryId} AND user_id = ${userEmail} AND type = 'AUDIO' AND status = 'RUNNING'
+      ORDER BY created_at DESC LIMIT 1`;
+    if (existing.length > 0) {
+      const existingJobId = existing[0].id as string;
+      const createdAt = new Date(existing[0].created_at as string).getTime();
       const ageMs = Date.now() - createdAt;
 
       if (ageMs < 10 * 60 * 1000) {
@@ -59,39 +57,22 @@ export const generateOpenAIAudio: NonNullable<MutationResolvers['generateOpenAIA
 
       // Stale job — clean it up before proceeding
       console.warn(`[TTS] job ${existingJobId} stale after ${Math.round(ageMs / 1000)}s, marking FAILED`);
-      await d1.execute({
-        sql: `UPDATE generation_jobs SET status = 'FAILED', error = ?, updated_at = datetime('now') WHERE id = ?`,
-        args: [JSON.stringify({ message: "Job timed out (stale RUNNING state)" }), existingJobId],
-      }).catch(() => {});
+      await neonSql`UPDATE generation_jobs SET status = 'FAILED', error = ${JSON.stringify({ message: "Job timed out (stale RUNNING state)" })}, updated_at = NOW() WHERE id = ${existingJobId}`.catch(() => {});
     }
   }
 
-  // Create a RUNNING job in D1 for tracking + deduplication
+  // Create a RUNNING job for tracking + deduplication
   const jobId = crypto.randomUUID();
 
   if (isGoalStory && goalStoryId) {
     // Fetch goal_id from goal_stories table
-    const goalStoryRow = await d1.execute({
-      sql: `SELECT goal_id FROM goal_stories WHERE id = ?`,
-      args: [goalStoryId],
-    });
-    const goalId = (goalStoryRow.rows[0]?.goal_id as number | undefined) ?? null;
-    await d1.execute({
-      sql: `INSERT INTO generation_jobs (id, user_id, type, goal_id, story_id, status, progress)
-            VALUES (?, ?, 'AUDIO', ?, ?, 'RUNNING', 0)`,
-      args: [jobId, userEmail, goalId, goalStoryId],
-    });
+    const goalStoryRows = await neonSql`SELECT goal_id FROM goal_stories WHERE id = ${goalStoryId}`;
+    const goalId = (goalStoryRows[0]?.goal_id as number | undefined) ?? null;
+    await neonSql`INSERT INTO generation_jobs (id, user_id, type, goal_id, story_id, status, progress) VALUES (${jobId}, ${userEmail}, 'AUDIO', ${goalId}, ${goalStoryId}, 'RUNNING', 0)`;
   } else if (storyId) {
-    const storyRow = await d1.execute({
-      sql: `SELECT goal_id FROM stories WHERE id = ? AND user_id = ?`,
-      args: [storyId, userEmail],
-    });
-    const goalId = (storyRow.rows[0]?.goal_id as number | undefined) ?? null;
-    await d1.execute({
-      sql: `INSERT INTO generation_jobs (id, user_id, type, goal_id, story_id, status, progress)
-            VALUES (?, ?, 'AUDIO', ?, ?, 'RUNNING', 0)`,
-      args: [jobId, userEmail, goalId, storyId],
-    });
+    const storyRows = await neonSql`SELECT goal_id FROM stories WHERE id = ${storyId} AND user_id = ${userEmail}`;
+    const goalId = (storyRows[0]?.goal_id as number | undefined) ?? null;
+    await neonSql`INSERT INTO generation_jobs (id, user_id, type, goal_id, story_id, status, progress) VALUES (${jobId}, ${userEmail}, 'AUDIO', ${goalId}, ${storyId}, 'RUNNING', 0)`;
   }
 
   const openAIVoice = voice?.toLowerCase() ?? "onyx";
@@ -125,10 +106,7 @@ export const generateOpenAIAudio: NonNullable<MutationResolvers['generateOpenAIA
     console.error("[TTS] trigger dispatch failed:", errorMessage);
     if (jobId) {
       const now = new Date().toISOString();
-      await d1.execute({
-        sql: `UPDATE generation_jobs SET status = 'FAILED', error = ?, updated_at = ? WHERE id = ?`,
-        args: [JSON.stringify({ message: errorMessage }), now, jobId],
-      }).catch(() => {});
+      await neonSql`UPDATE generation_jobs SET status = 'FAILED', error = ${JSON.stringify({ message: errorMessage })}, updated_at = ${now} WHERE id = ${jobId}`.catch(() => {});
     }
     return {
       success: false,

@@ -19,17 +19,12 @@ if (typeof globalThis !== "undefined") {
 }
 
 import { claimCardsTools } from "../src/tools/claim-cards.tools";
-import { d1 } from "../src/db/d1";
+import { sql as neonSql } from "../src/db/neon";
 import { sourceTools } from "../src/tools/sources.tools";
 import { createDeepSeek } from "@ai-sdk/deepseek";
 import { generateObject } from "ai";
 import { z } from "zod";
 import type { PaperDetails } from "../src/tools/sources.tools";
-import {
-  CLOUDFLARE_ACCOUNT_ID,
-  CLOUDFLARE_DATABASE_ID,
-  CLOUDFLARE_D1_TOKEN,
-} from "../src/config/d1";
 
 const deepseek = createDeepSeek({
   apiKey: process.env.DEEPSEEK_API_KEY,
@@ -227,8 +222,7 @@ async function main() {
   try {
     // Load linked research for this note
     console.log(`📚 Loading linked research for note...`);
-    const res = await d1.execute({
-      sql: `
+    const res = await neonSql`
         SELECT
           r.id as id,
           r.title as title,
@@ -240,13 +234,11 @@ async function main() {
           r.journal as journal
         FROM therapy_research r
         INNER JOIN notes_research nr ON nr.research_id = r.id
-        WHERE nr.note_id = ?
+        WHERE nr.note_id = ${noteId}
         ORDER BY r.year DESC
-      `,
-      args: [noteId],
-    });
+      `;
 
-    const pool = res.rows.map((r: any) => ({
+    const pool = res.map((r: any) => ({
       title: String(r.title),
       year: r.year != null ? Number(r.year) : undefined,
       doi: r.doi ? String(r.doi) : undefined,

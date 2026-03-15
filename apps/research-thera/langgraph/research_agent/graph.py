@@ -7,12 +7,18 @@ Uses create_react_agent with DeepSeek Reasoner and two tools:
 from __future__ import annotations
 
 import json
+import os
 import re
+from pathlib import Path
 from typing import Optional
 
+from dotenv import load_dotenv
 from langchain_core.tools import tool
 from langchain_openai import ChatOpenAI
 from langgraph.prebuilt import create_react_agent
+
+# Load .env from langgraph directory before anything reads env vars
+load_dotenv(Path(__file__).resolve().parent.parent / ".env")
 
 from .d1 import (
     D1Client,
@@ -20,6 +26,7 @@ from .d1 import (
     FeedbackTarget,
     parse_path,
 )
+from .neon import upsert_research_paper
 from .research_sources import (
     get_paper_detail_semantic_scholar,
     search_papers_with_fallback,
@@ -40,8 +47,8 @@ Research standards:
 - Extract concrete therapeutic techniques from each paper
 - Identify outcome measures and their effect sizes when available
 - Report confidence honestly — say 'insufficient evidence' if the literature is sparse
-- The final JSON block MUST contain exactly 10 papers (or fewer if not enough quality results)
-- The final JSON block MUST be valid JSON that can be machine-parsed
+- IMPORTANT: At the end, call save_research_papers with the curated papers JSON to persist them to the database
+- The feedback_id will be provided in the user message — include it in the save_research_papers call
 
 Evidence levels:
 - meta-analysis: pooled analysis of multiple studies
@@ -113,16 +120,70 @@ def _make_tools(semantic_scholar_api_key: Optional[str] = None) -> list:
             )
         return f"No details found for: {doi_or_title}"
 
-    return [search_papers, get_paper_detail]
+    @tool
+    async def save_research_papers(papers_json: str) -> str:
+        """Save the final curated research papers to the database. Call this ONCE at the end
+        with a JSON string containing: {"feedback_id": <int>, "therapeutic_goal_type": "<string>",
+        "papers": [{"title": "...", "authors": ["..."], "year": 2024, "doi": "10.xxx",
+        "url": "...", "abstract": "...", "key_findings": ["..."], "therapeutic_techniques": ["..."],
+        "evidence_level": "rct", "relevance_score": 0.85}]}. This persists the papers so the
+        therapist can review them later."""
+        try:
+            data = json.loads(papers_json)
+        except json.JSONDecodeError as e:
+            return f"Invalid JSON: {e}"
+
+        feedback_id = data.get("feedback_id")
+        if not feedback_id:
+            return "Error: feedback_id is required"
+
+        therapeutic_goal_type = data.get("therapeutic_goal_type", "")
+        papers = data.get("papers", [])
+        if not papers:
+            return "No papers to save"
+
+        saved = 0
+        failed = 0
+        for paper in papers[:10]:
+            try:
+                await upsert_research_paper(
+                    feedback_id=feedback_id,
+                    therapeutic_goal_type=therapeutic_goal_type,
+                    title=paper.get("title", ""),
+                    authors=paper.get("authors", []),
+                    year=paper.get("year"),
+                    doi=paper.get("doi"),
+                    url=paper.get("url"),
+                    abstract=paper.get("abstract"),
+                    key_findings=paper.get("key_findings", []),
+                    therapeutic_techniques=paper.get("therapeutic_techniques", []),
+                    evidence_level=paper.get("evidence_level"),
+                    relevance_score=float(paper.get("relevance_score", 0)),
+                )
+                saved += 1
+            except Exception as e:
+                failed += 1
+                print(f"[save_research_papers] Error saving paper: {e}")
+
+        return f"Saved {saved} papers to database ({failed} failed)"
+
+    return [search_papers, get_paper_detail, save_research_papers]
 
 
 def create_research_agent(
-    api_key: str,
+    api_key: Optional[str] = None,
     semantic_scholar_api_key: Optional[str] = None,
 ):
-    """Create a LangGraph ReAct agent using DeepSeek Reasoner."""
+    """Create a LangGraph ReAct agent using DeepSeek Reasoner.
+
+    When called with no args (by LangGraph server), reads from env vars.
+    """
+    api_key = api_key or os.environ.get("DEEPSEEK_API_KEY", "")
+    semantic_scholar_api_key = semantic_scholar_api_key or os.environ.get(
+        "SEMANTIC_SCHOLAR_API_KEY"
+    )
     llm = ChatOpenAI(
-        model="deepseek-reasoner",
+        model="deepseek-chat",
         api_key=api_key,
         base_url="https://api.deepseek.com/v1",
         temperature=0,
@@ -259,3 +320,7 @@ async def persist_research_to_d1(
         return saved, failed
     finally:
         await d1.aclose()
+
+
+# Module-level graph instance for LangGraph server (reads keys from env)
+graph = create_research_agent()

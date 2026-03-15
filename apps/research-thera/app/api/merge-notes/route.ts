@@ -131,11 +131,7 @@ export async function POST(request: NextRequest) {
   });
 
   // Update the title (createNote doesn't accept title directly).
-  const { d1 } = await import("@/src/db/d1");
-  await d1.execute({
-    sql: "UPDATE notes SET title = ? WHERE id = ?",
-    args: [mergedTitle, noteId],
-  });
+  await d1Tools.updateNote(noteId, userEmail, { title: mergedTitle });
 
   return NextResponse.json({
     success: true,

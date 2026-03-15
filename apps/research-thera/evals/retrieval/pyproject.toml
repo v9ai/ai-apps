@@ -1,0 +1,17 @@
+[project]
+name = "retrieval-evals"
+version = "0.1.0"
+description = "DeepEval retrieval quality evaluations for PGVector → story generation pipeline"
+requires-python = ">=3.12"
+dependencies = [
+    "deepeval>=2.5.0",
+    "openai>=1.0.0",
+    "pgvector>=0.3",
+    "psycopg2-binary>=2.9",
+    "python-dotenv>=1.0.0",
+]
+
+[tool.pytest.ini_options]
+env = [
+    "DEEPEVAL_TELEMETRY_OPT_OUT=YES",
+]

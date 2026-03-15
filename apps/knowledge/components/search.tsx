@@ -20,9 +20,7 @@ function typeBadgeLabel(type: SearchResult["resultType"]) {
       return "Lesson";
     case "section":
       return "Section";
-    case "citation":
-      return "Reference";
-  }
+}
 }
 
 interface Props {
@@ -134,7 +132,7 @@ export function Search({ groups }: Props) {
                 {highlightSnippet(r.snippet)}
               </div>
               {r.resultType !== "lesson" && r.lessonTitle && (
-                <div className="search-result-paper">{r.lessonTitle}</div>
+                <div className="search-result-lesson">{r.lessonTitle}</div>
               )}
             </Link>
           ))}

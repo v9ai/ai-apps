@@ -3,12 +3,11 @@
   "private": true,
   "scripts": {
     "build": "turbo run build",
-
     "dev": "turbo run dev",
     "dev:h": "turbo run dev --filter=agentic-healthcare",
     "dev:l": "turbo run dev --filter=law-adversarial",
     "dev:n": "turbo run dev --filter=nomadically.work",
-    "dev:r": "turbo run dev --filter=research-thera",
+    "dev:r": "turbo run dev --filter=research-thera & cd apps/research-thera/langgraph && uv run langgraph dev",
     "dev:b": "turbo run dev --filter=vadim.blog",
     "dev:re": "turbo run dev --filter=real-estate",
     "dev:k": "turbo run dev --filter=knowledge",
@@ -17,7 +16,6 @@
     "check-types": "turbo run check-types",
     "lint": "turbo run lint",
     "test": "turbo run test",
-
     "deploy:blog": "vercel deploy --prod --archive=tgz --cwd apps/vadim.blog",
     "deploy:l": "vercel deploy --prod --archive=tgz --cwd apps/law-adversarial",
     "deploy:n": "vercel deploy --prod --archive=tgz --cwd apps/nomadically.work",
@@ -30,14 +28,15 @@
   "devDependencies": {
     "napi-postinstall": "^0.2.4",
     "prettier": "^3.6.0",
-    "turbo": "^2.8.12"
+    "turbo": "^2.8.12",
+    "vercel": "^50.32.5"
   },
   "packageManager": "pnpm@10.31.0",
   "pnpm": {
     "onlyBuiltDependencies": [
       "@apollo/protobufjs",
       "@clerk/shared",
-"@swc/core",
+      "@swc/core",
       "better-sqlite3",
       "core-js",
       "core-js-pure",

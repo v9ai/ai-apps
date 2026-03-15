@@ -489,8 +489,7 @@ export async function refreshClaimCard(
 /**
  * Database persistence for claim cards
  */
-import { d1 } from "@/src/db/d1";
-import path from "path";
+import { sql as neonSql } from "@/src/db/neon";
 
 export async function saveClaimCard(
   card: ClaimCard,
@@ -498,44 +497,32 @@ export async function saveClaimCard(
 ): Promise<void> {
   const confidenceInt = Math.round(card.confidence * 100);
 
-  await d1.execute({
-    sql: `INSERT OR REPLACE INTO claim_cards
-      (id, note_id, claim, scope, verdict, confidence, evidence, queries, provenance, notes, created_at, updated_at)
-      VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
-    args: [
-      card.id,
-      noteId || null,
-      card.claim,
-      card.scope ? JSON.stringify(card.scope) : null,
-      card.verdict,
-      confidenceInt,
-      JSON.stringify(card.evidence),
-      JSON.stringify(card.queries),
-      JSON.stringify(card.provenance),
-      card.notes || null,
-      card.createdAt,
-      card.updatedAt,
-    ],
-  });
+  await neonSql`
+    INSERT INTO claim_cards (id, note_id, claim, scope, verdict, confidence, evidence, queries, provenance, notes, created_at, updated_at)
+    VALUES (${card.id}, ${noteId || null}, ${card.claim}, ${card.scope ? JSON.stringify(card.scope) : null}, ${card.verdict}, ${confidenceInt}, ${JSON.stringify(card.evidence)}, ${JSON.stringify(card.queries)}, ${JSON.stringify(card.provenance)}, ${card.notes || null}, ${card.createdAt}, ${card.updatedAt})
+    ON CONFLICT (id) DO UPDATE SET
+      claim = excluded.claim,
+      scope = excluded.scope,
+      verdict = excluded.verdict,
+      confidence = excluded.confidence,
+      evidence = excluded.evidence,
+      queries = excluded.queries,
+      provenance = excluded.provenance,
+      notes = excluded.notes,
+      updated_at = excluded.updated_at`;
 
   // Link to note if provided
   if (noteId) {
-    await d1.execute({
-      sql: `INSERT OR IGNORE INTO notes_claims (note_id, claim_id) VALUES (?, ?)`,
-      args: [noteId, card.id],
-    });
+    await neonSql`INSERT INTO notes_claims (note_id, claim_id) VALUES (${noteId}, ${card.id}) ON CONFLICT DO NOTHING`;
   }
 }
 
 export async function getClaimCard(claimId: string): Promise<ClaimCard | null> {
-  const result = await d1.execute({
-    sql: `SELECT * FROM claim_cards WHERE id = ?`,
-    args: [claimId],
-  });
+  const rows = await neonSql`SELECT * FROM claim_cards WHERE id = ${claimId}`;
 
-  if (result.rows.length === 0) return null;
+  if (rows.length === 0) return null;
 
-  const row = result.rows[0];
+  const row = rows[0];
   return {
     id: row.id as string,
     claim: row.claim as string,
@@ -554,15 +541,13 @@ export async function getClaimCard(claimId: string): Promise<ClaimCard | null> {
 export async function getClaimCardsForNote(
   noteId: number,
 ): Promise<ClaimCard[]> {
-  const result = await d1.execute({
-    sql: `SELECT cc.* FROM claim_cards cc
-      INNER JOIN notes_claims nc ON cc.id = nc.claim_id
-      WHERE nc.note_id = ?
-      ORDER BY cc.created_at DESC`,
-    args: [noteId],
-  });
+  const rows = await neonSql`
+    SELECT cc.* FROM claim_cards cc
+    INNER JOIN notes_claims nc ON cc.id = nc.claim_id
+    WHERE nc.note_id = ${noteId}
+    ORDER BY cc.created_at DESC`;
 
-  return result.rows.map((row) => ({
+  return rows.map((row) => ({
     id: row.id as string,
     claim: row.claim as string,
     scope: row.scope ? JSON.parse(row.scope as string) : undefined,
@@ -578,15 +563,8 @@ export async function getClaimCardsForNote(
 }
 
 export async function deleteClaimCard(claimId: string): Promise<void> {
-  await d1.execute({
-    sql: `DELETE FROM notes_claims WHERE claim_id = ?`,
-    args: [claimId],
-  });
-
-  await d1.execute({
-    sql: `DELETE FROM claim_cards WHERE id = ?`,
-    args: [claimId],
-  });
+  await neonSql`DELETE FROM notes_claims WHERE claim_id = ${claimId}`;
+  await neonSql`DELETE FROM claim_cards WHERE id = ${claimId}`;
 }
 
 export const claimCardsTools = {

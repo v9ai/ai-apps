@@ -1,0 +1,15 @@
+query GetIssues($familyMemberId: Int!, $feedbackId: Int) {
+  issues(familyMemberId: $familyMemberId, feedbackId: $feedbackId) {
+    id
+    feedbackId
+    familyMemberId
+    createdBy
+    title
+    description
+    category
+    severity
+    recommendations
+    createdAt
+    updatedAt
+  }
+}

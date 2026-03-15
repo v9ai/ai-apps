@@ -1,7 +1,8 @@
-mutation GenerateLongFormText($goalId: Int, $characteristicId: Int, $language: String, $minutes: Int) {
+mutation GenerateLongFormText($goalId: Int, $issueId: Int, $feedbackId: Int, $language: String, $minutes: Int) {
   generateLongFormText(
     goalId: $goalId
-    characteristicId: $characteristicId
+    issueId: $issueId
+    feedbackId: $feedbackId
     language: $language
     minutes: $minutes
   ) {

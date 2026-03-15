@@ -3,6 +3,7 @@ import OpenAI from "openai";
 import { MDocument } from "@mastra/rag";
 import { uploadToR2, generateAudioKey } from "@/lib/r2-uploader";
 import { parseBuffer } from "music-metadata";
+import { sql as neonSql } from "@/src/db/neon";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -112,21 +113,8 @@ export async function POST(request: NextRequest) {
 
         // Save audio to story if both storyId and userEmail are provided
         if (storyId && userEmail) {
-          const { d1 } = await import("@/src/db/d1");
           const now = new Date().toISOString();
-          await d1.execute({
-            sql: `UPDATE stories 
-                  SET audio_key = ?, audio_url = ?, audio_generated_at = ?, updated_at = ?
-                  WHERE id = ? AND user_id = ?`,
-            args: [
-              result.key,
-              result.publicUrl || "",
-              now,
-              now,
-              storyId,
-              userEmail,
-            ],
-          });
+          await neonSql`UPDATE stories SET audio_key = ${result.key}, audio_url = ${result.publicUrl || ""}, audio_generated_at = ${now}, updated_at = ${now} WHERE id = ${storyId} AND user_id = ${userEmail}`;
         }
 
         return NextResponse.json({
@@ -226,21 +214,8 @@ export async function POST(request: NextRequest) {
 
       // Save audio to story if both storyId and userEmail are provided
       if (storyId && userEmail) {
-        const { d1 } = await import("@/src/db/d1");
         const now = new Date().toISOString();
-        await d1.execute({
-          sql: `UPDATE stories 
-                SET audio_key = ?, audio_url = ?, audio_generated_at = ?, updated_at = ?
-                WHERE id = ? AND user_id = ?`,
-          args: [
-            result.key,
-            result.publicUrl || "",
-            now,
-            now,
-            storyId,
-            userEmail,
-          ],
-        });
+        await neonSql`UPDATE stories SET audio_key = ${result.key}, audio_url = ${result.publicUrl || ""}, audio_generated_at = ${now}, updated_at = ${now} WHERE id = ${storyId} AND user_id = ${userEmail}`;
       }
 
       return NextResponse.json({

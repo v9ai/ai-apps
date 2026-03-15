@@ -4,11 +4,11 @@ import { useState, useCallback } from "react";
 import { useRouter } from "next/navigation";
 import { useGenerateLongFormTextMutation } from "@/app/__generated__/hooks";
 
-export function useGenerateStory(characteristicId: number) {
+export function useGenerateStory(issueId: number) {
   const router = useRouter();
   const [generateLongFormText] = useGenerateLongFormTextMutation();
   const [generatingGoalId, setGeneratingGoalId] = useState<number | null>(null);
-  const [generatingFromCharacteristic, setGeneratingFromCharacteristic] = useState(false);
+  const [generatingFromIssue, setGeneratingFromIssue] = useState(false);
   const [storyMessage, setStoryMessage] = useState<{
     text: string;
     type: "success" | "error";
@@ -20,7 +20,7 @@ export function useGenerateStory(characteristicId: number) {
       setStoryMessage(null);
       try {
         const { data } = await generateLongFormText({
-          variables: { goalId, characteristicId },
+          variables: { goalId, issueId },
         });
         if (data?.generateLongFormText.success) {
           router.push(`/goals/${goalId}`);
@@ -40,16 +40,16 @@ export function useGenerateStory(characteristicId: number) {
         setGeneratingGoalId(null);
       }
     },
-    [characteristicId, generateLongFormText, router],
+    [issueId, generateLongFormText, router],
   );
 
-  const handleGenerateFromCharacteristic = useCallback(
+  const handleGenerateFromIssue = useCallback(
     async () => {
-      setGeneratingFromCharacteristic(true);
+      setGeneratingFromIssue(true);
       setStoryMessage(null);
       try {
         const { data } = await generateLongFormText({
-          variables: { characteristicId },
+          variables: { issueId },
         });
         if (data?.generateLongFormText.success) {
           setStoryMessage({
@@ -69,17 +69,17 @@ export function useGenerateStory(characteristicId: number) {
           type: "error",
         });
       } finally {
-        setGeneratingFromCharacteristic(false);
+        setGeneratingFromIssue(false);
       }
     },
-    [characteristicId, generateLongFormText],
+    [issueId, generateLongFormText],
   );
 
   return {
     handleGenerateStory,
-    handleGenerateFromCharacteristic,
+    handleGenerateFromIssue,
     generatingGoalId,
-    generatingFromCharacteristic,
+    generatingFromIssue,
     storyMessage,
   };
 }

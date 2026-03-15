@@ -17,6 +17,18 @@ query GetContactFeedback($id: Int!) {
       severity
       recommendations
     }
+    stories {
+      id
+      goalId
+      language
+      minutes
+      text
+      audioKey
+      audioUrl
+      audioGeneratedAt
+      createdAt
+      updatedAt
+    }
     createdAt
     updatedAt
     contact {

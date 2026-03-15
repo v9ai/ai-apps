@@ -4,11 +4,6 @@ import { Mastra } from "@mastra/core/mastra";
 
 import { storyTellerAgent, therapeuticAgent } from "./agents";
 import { generateTherapyResearchWorkflow } from "@/src/workflows";
-import {
-  CLOUDFLARE_ACCOUNT_ID,
-  CLOUDFLARE_DATABASE_ID,
-  CLOUDFLARE_D1_TOKEN,
-} from "@/src/config/d1";
 
 // Suppress AI SDK warnings (DeepSeek JSON schema compatibility mode)
 if (typeof globalThis !== "undefined") {

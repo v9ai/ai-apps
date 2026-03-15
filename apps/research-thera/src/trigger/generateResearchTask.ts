@@ -27,8 +27,8 @@ export interface GenerateResearchPayload {
   userId: string;
   /** Normalized user email — the workflow uses this as its `userId` field */
   userEmail: string;
-  /** When set, research is scoped to this characteristic */
-  characteristicId?: number;
+  /** When set, research is scoped to this issue */
+  issueId?: number;
   /** When set, research is generated from feedback content */
   feedbackId?: number;
 }
@@ -66,9 +66,9 @@ export const generateResearchTask = task({
       .catch(() => {});
   },
   run: async (payload: GenerateResearchPayload) => {
-    const { jobId, goalId, userEmail, characteristicId, feedbackId } = payload;
+    const { jobId, goalId, userEmail, issueId, feedbackId } = payload;
 
-    logger.info("generate-research.started", { jobId, goalId, characteristicId, feedbackId });
+    logger.info("generate-research.started", { jobId, goalId, issueId, feedbackId });
 
     // The job row was inserted with status='RUNNING' by the GraphQL resolver.
     // No need to update it here — just run the workflow.
@@ -79,7 +79,7 @@ export const generateResearchTask = task({
         userId: userEmail,
         goalId,
         jobId,
-        characteristicId,
+        issueId,
         feedbackId,
       },
     });

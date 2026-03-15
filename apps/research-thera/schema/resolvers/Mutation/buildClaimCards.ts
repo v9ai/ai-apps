@@ -5,7 +5,7 @@ import { createDeepSeek } from "@ai-sdk/deepseek";
 import { generateObject } from "ai";
 import { z } from "zod";
 import { toGqlClaimCards } from "../utils/normalize-claim-card";
-import { d1 } from "../../../src/db/d1";
+import { d1 } from "../../../src/db";
 import type { PaperDetails } from "../../../src/tools/sources.tools";
 
 // Suppress AI SDK warnings

@@ -1,30 +1,18 @@
-// import { LibSQLVector } from "@mastra/libsql"; // Disabled: Not compatible with D1
-import {
-  CLOUDFLARE_ACCOUNT_ID,
-  CLOUDFLARE_DATABASE_ID,
-  CLOUDFLARE_D1_TOKEN,
-} from "@/src/config/d1";
+import { sql } from "@/src/db/neon";
+import OpenAI from "openai";
+
+const openai = new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
+
+async function embed(text: string): Promise<number[]> {
+  const res = await openai.embeddings.create({
+    model: "text-embedding-3-small",
+    input: text,
+  });
+  return res.data[0].embedding;
+}
 
 /**
- * RAG Tools for Mastra Workflows
- * Manages vector embeddings and retrieval using LibSQLVector
- *
- * Note: LibSQLVector is designed for libsql databases. With D1 migration,
- * vector store functionality is temporarily disabled pending D1-compatible
- * vector search implementation.
- */
-
-// TODO: Re-enable vector store with D1-compatible solution
-// Initialize vector store
-// export const vectorStore = new LibSQLVector({
-//   id: "goal-context-v1",
-//   url: "...",
-//   authToken: "...",
-// });
-
-/**
- * Upsert research chunks into vector store
- * TODO: Implement with D1-compatible vector search
+ * Upsert research chunks into Neon PGVector store
  */
 export async function upsertResearchChunks(params: {
   goalId?: number;
@@ -35,54 +23,142 @@ export async function upsertResearchChunks(params: {
   keyFindings?: string[];
   techniques?: string[];
 }) {
-  // TODO: Implement vector upsert
+  const content = [
+    params.title,
+    params.abstract ?? "",
+    ...(params.keyFindings ?? []),
+    ...(params.techniques ?? []),
+  ]
+    .filter(Boolean)
+    .join("\n");
+
   console.log(
-    `[RAG] Would upsert research chunks for ${params.entityType} ${params.entityId}`,
+    `[RAG] Upserting ${params.entityType} ${params.entityId}: ${params.title}`,
   );
-  return 0;
+
+  const embedding = await embed(content);
+  const metadata = {
+    keyFindings: params.keyFindings ?? [],
+    techniques: params.techniques ?? [],
+  };
+
+  await sql(
+    `INSERT INTO research_embeddings (goal_id, entity_type, entity_id, title, content, embedding, metadata)
+     VALUES ($1, $2, $3, $4, $5, $6, $7)
+     ON CONFLICT (entity_type, entity_id) DO UPDATE
+       SET title = EXCLUDED.title,
+           content = EXCLUDED.content,
+           embedding = EXCLUDED.embedding,
+           metadata = EXCLUDED.metadata,
+           goal_id = EXCLUDED.goal_id`,
+    [
+      params.goalId ?? null,
+      params.entityType,
+      params.entityId,
+      params.title,
+      content,
+      JSON.stringify(embedding),
+      JSON.stringify(metadata),
+    ],
+  );
+
+  return embedding.length;
 }
 
 /**
- * Retrieve relevant context for a goal
- * TODO: Implement once Mastra LibSQLVector API is stable
+ * Retrieve relevant context for a goal using cosine similarity
  */
 export async function retrieveGoalContext(
   goalId: number,
   query: string,
   topK: number = 10,
 ) {
-  // TODO: Implement vector query
-  console.log(`[RAG] Would query goal ${goalId} context with: ${query}`);
-  return [];
+  console.log(`[RAG] Querying goal ${goalId} context with: ${query}`);
+
+  const queryEmbedding = await embed(query);
+
+  const rows = await sql(
+    `SELECT entity_type, entity_id, title, content, metadata,
+            1 - (embedding <-> $1) AS similarity
+     FROM research_embeddings
+     WHERE goal_id = $2
+     ORDER BY embedding <-> $1
+     LIMIT $3`,
+    [JSON.stringify(queryEmbedding), goalId, topK],
+  );
+
+  return rows;
 }
 
 /**
  * Upsert goal description chunks
- * TODO: Implement once Mastra LibSQLVector API is stable
  */
 export async function upsertGoalChunks(params: {
   goalId: number;
   title: string;
   description?: string;
 }) {
-  console.log(`[RAG] Would upsert goal ${params.goalId} chunks`);
+  const content = [params.title, params.description ?? ""]
+    .filter(Boolean)
+    .join("\n");
+
+  console.log(`[RAG] Upserting goal ${params.goalId} chunks`);
+
+  const embedding = await embed(content);
+
+  await sql(
+    `INSERT INTO research_embeddings (goal_id, entity_type, entity_id, title, content, embedding, metadata)
+     VALUES ($1, $2, $3, $4, $5, $6, $7)
+     ON CONFLICT (entity_type, entity_id) DO UPDATE
+       SET title = EXCLUDED.title,
+           content = EXCLUDED.content,
+           embedding = EXCLUDED.embedding,
+           goal_id = EXCLUDED.goal_id`,
+    [
+      params.goalId,
+      "Goal",
+      params.goalId,
+      params.title,
+      content,
+      JSON.stringify(embedding),
+      JSON.stringify({}),
+    ],
+  );
 }
 
 /**
  * Upsert note chunks
- * TODO: Implement once Mastra LibSQLVector API is stable
  */
 export async function upsertNoteChunks(params: {
   goalId: number;
   noteId: number;
   content: string;
 }) {
-  console.log(`[RAG] Would upsert note ${params.noteId} chunks`);
+  console.log(`[RAG] Upserting note ${params.noteId} chunks`);
+
+  const embedding = await embed(params.content);
+
+  await sql(
+    `INSERT INTO research_embeddings (goal_id, entity_type, entity_id, title, content, embedding, metadata)
+     VALUES ($1, $2, $3, $4, $5, $6, $7)
+     ON CONFLICT (entity_type, entity_id) DO UPDATE
+       SET content = EXCLUDED.content,
+           embedding = EXCLUDED.embedding,
+           goal_id = EXCLUDED.goal_id`,
+    [
+      params.goalId,
+      "Note",
+      params.noteId,
+      `Note ${params.noteId}`,
+      params.content,
+      JSON.stringify(embedding),
+      JSON.stringify({}),
+    ],
+  );
 }
 
 /**
  * Upsert question chunks
- * TODO: Implement once Mastra LibSQLVector API is stable
  */
 export async function upsertQuestionChunks(params: {
   goalId: number;
@@ -90,7 +166,29 @@ export async function upsertQuestionChunks(params: {
   question: string;
   rationale: string;
 }) {
-  console.log(`[RAG] Would upsert question ${params.questionId} chunks`);
+  const content = `${params.question}\n${params.rationale}`;
+  console.log(`[RAG] Upserting question ${params.questionId} chunks`);
+
+  const embedding = await embed(content);
+
+  await sql(
+    `INSERT INTO research_embeddings (goal_id, entity_type, entity_id, title, content, embedding, metadata)
+     VALUES ($1, $2, $3, $4, $5, $6, $7)
+     ON CONFLICT (entity_type, entity_id) DO UPDATE
+       SET title = EXCLUDED.title,
+           content = EXCLUDED.content,
+           embedding = EXCLUDED.embedding,
+           goal_id = EXCLUDED.goal_id`,
+    [
+      params.goalId,
+      "TherapeuticQuestion",
+      params.questionId,
+      params.question,
+      content,
+      JSON.stringify(embedding),
+      JSON.stringify({}),
+    ],
+  );
 }
 
 export const ragTools = {

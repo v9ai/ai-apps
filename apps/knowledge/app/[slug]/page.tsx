@@ -1,6 +1,6 @@
 import { notFound } from "next/navigation";
 import Link from "next/link";
-import { getAllLessons, getLessonBySlug, getCategoryMeta, getReferencesForLesson, getRelatedLessons, getAudioMeta } from "@/lib/data";
+import { getAllLessons, getLessonBySlug, getCategoryMeta, getRelatedLessons, getAudioMeta } from "@/lib/data";
 import { Topbar } from "@/components/topbar";
 import { MarkdownProse } from "@/components/markdown-prose";
 import { TableOfContents } from "@/components/toc";
@@ -31,7 +31,6 @@ export default async function LessonPage({ params }: { params: Promise<{ slug: s
   const allLessons = await getAllLessons();
   const total = allLessons.length;
   const meta = getCategoryMeta(lesson.category);
-  const references = await getReferencesForLesson(slug);
   const related = await getRelatedLessons(slug);
   const audioMeta = await getAudioMeta(lesson.fileSlug);
 
@@ -76,11 +75,6 @@ export default async function LessonPage({ params }: { params: Promise<{ slug: s
                 ~{Math.round(audioMeta.duration_secs / 60)} min listen
               </span>
             )}
-            {references.length > 0 && (
-              <span className="badge-pill badge-pill--glass">
-                {references.length} reference{references.length !== 1 ? "s" : ""}
-              </span>
-            )}
           </div>
         </div>
       </div>
@@ -89,32 +83,6 @@ export default async function LessonPage({ params }: { params: Promise<{ slug: s
       <div className="article-grid">
         <div>
           <MarkdownProse content={lesson.content} />
-
-          {/* Go Deeper — optional references for further study */}
-          {references.length > 0 && (
-            <div className="sources-section">
-              <div className="sources-heading">Go Deeper</div>
-              <p className="sources-intro">Want to understand the foundations? These references are a great next step.</p>
-              {references.map((ref, i) => (
-                <a
-                  key={i}
-                  href={ref.url}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="source-card"
-                >
-                  <div className="source-card-title">{ref.title}</div>
-                  <div className="source-card-meta">
-                    {ref.authors && <span>{ref.authors}</span>}
-                    {ref.year && <span>&middot; {ref.year}</span>}
-                    {ref.venue && (
-                      <span className="source-card-venue">{ref.venue}</span>
-                    )}
-                  </div>
-                </a>
-              ))}
-            </div>
-          )}
 
           {/* Continue Learning */}
           <RelatedLessons lessons={related} meta={meta} />

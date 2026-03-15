@@ -1,0 +1,21 @@
+[project]
+name = "agent-evals"
+version = "0.1.0"
+description = "DeepEval quality evaluations for the Rust DeepSeek Reasoner research agent"
+requires-python = ">=3.12"
+dependencies = [
+    "deepeval>=2.5.0",
+    "httpx>=0.27.0",
+    "langchain>=0.3",
+    "langchain-openai>=0.2",
+    "langgraph>=0.2",
+    "openai>=1.0.0",
+    "pgvector>=0.3",
+    "psycopg2-binary>=2.9",
+    "python-dotenv>=1.0.0",
+]
+
+[tool.pytest.ini_options]
+env = [
+    "DEEPEVAL_TELEMETRY_OPT_OUT=YES",
+]

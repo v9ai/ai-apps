@@ -39,7 +39,7 @@ const inputSchema = z.object({
   jobId: z.string().optional(),
   familyMemberName: z.string().optional(),
   familyMemberAge: z.number().int().optional(),
-  characteristicId: z.number().int().optional(),
+  issueId: z.number().int().optional(),
   feedbackId: z.number().int().optional(),
 });
 
@@ -101,7 +101,7 @@ const normalizeGoalStep = createStep({
     userId: z.string(),
     goalId: z.number().int().optional(),
     jobId: z.string().optional(),
-    characteristicId: z.number().int().optional(),
+    issueId: z.number().int().optional(),
     feedbackId: z.number().int().optional(),
     goal: z.object({
       id: z.number().int(),
@@ -116,7 +116,7 @@ const normalizeGoalStep = createStep({
     userId: z.string(),
     goalId: z.number().int().optional(),
     jobId: z.string().optional(),
-    characteristicId: z.number().int().optional(),
+    issueId: z.number().int().optional(),
     feedbackId: z.number().int().optional(),
     goal: z.object({
       id: z.number().int(),
@@ -230,7 +230,7 @@ const loadContextStep = createStep({
     userId: z.string(),
     goalId: z.number().int().optional(),
     jobId: z.string().optional(),
-    characteristicId: z.number().int().optional(),
+    issueId: z.number().int().optional(),
     feedbackId: z.number().int().optional(),
     goal: z.object({
       id: z.number().int(),
@@ -274,7 +274,7 @@ const loadContextStep = createStep({
         userId: inputData.userId,
         goalId: inputData.goalId,
         jobId: inputData.jobId,
-        characteristicId: inputData.characteristicId,
+        issueId: inputData.issueId,
         feedbackId: inputData.feedbackId,
         goal: {
           id: goal.id,
@@ -315,7 +315,7 @@ const loadContextStep = createStep({
         userId: inputData.userId,
         goalId: undefined,
         jobId: inputData.jobId,
-        characteristicId: inputData.characteristicId,
+        issueId: inputData.issueId,
         feedbackId: inputData.feedbackId,
         goal: {
           id: inputData.feedbackId, // use feedbackId as synthetic goal id
@@ -357,7 +357,7 @@ const ensurePromptsStep = createStep({
     userId: z.string(),
     goalId: z.number().int().optional(),
     jobId: z.string().optional(),
-    characteristicId: z.number().int().optional(),
+    issueId: z.number().int().optional(),
     feedbackId: z.number().int().optional(),
     goal: z.object({
       id: z.number().int(),
@@ -373,7 +373,7 @@ const ensurePromptsStep = createStep({
     userId: z.string(),
     goalId: z.number().int().optional(),
     jobId: z.string().optional(),
-    characteristicId: z.number().int().optional(),
+    issueId: z.number().int().optional(),
     feedbackId: z.number().int().optional(),
     goal: z.object({
       id: z.number().int(),
@@ -427,7 +427,7 @@ const planQueryStep = createStep({
     userId: z.string(),
     goalId: z.number().int().optional(),
     jobId: z.string().optional(),
-    characteristicId: z.number().int().optional(),
+    issueId: z.number().int().optional(),
     feedbackId: z.number().int().optional(),
     goal: z.object({ title: z.string(), description: z.string().nullable() }),
     notes: z.array(z.object({ content: z.string() })),
@@ -440,7 +440,7 @@ const planQueryStep = createStep({
     userId: z.string(),
     goalId: z.number().int().optional(),
     jobId: z.string().optional(),
-    characteristicId: z.number().int().optional(),
+    issueId: z.number().int().optional(),
     feedbackId: z.number().int().optional(),
     goal: z.object({ title: z.string(), description: z.string().nullable() }),
     notes: z.array(z.object({ content: z.string() })),
@@ -504,7 +504,7 @@ const searchStep = createStep({
     userId: z.string(),
     goalId: z.number().int().optional(),
     jobId: z.string().optional(),
-    characteristicId: z.number().int().optional(),
+    issueId: z.number().int().optional(),
     feedbackId: z.number().int().optional(),
     goal: z.any(),
     notes: z.any(),
@@ -521,7 +521,7 @@ const searchStep = createStep({
     userId: z.string(),
     goalId: z.number().int().optional(),
     jobId: z.string().optional(),
-    characteristicId: z.number().int().optional(),
+    issueId: z.number().int().optional(),
     feedbackId: z.number().int().optional(),
     goal: z.any(),
     notes: z.any(),
@@ -713,7 +713,7 @@ const enrichAbstractsStep = createStep({
     userId: z.string(),
     goalId: z.number().int().optional(),
     jobId: z.string().optional(),
-    characteristicId: z.number().int().optional(),
+    issueId: z.number().int().optional(),
     feedbackId: z.number().int().optional(),
     goal: z.any(),
     notes: z.any(),
@@ -727,7 +727,7 @@ const enrichAbstractsStep = createStep({
     userId: z.string(),
     goalId: z.number().int().optional(),
     jobId: z.string().optional(),
-    characteristicId: z.number().int().optional(),
+    issueId: z.number().int().optional(),
     feedbackId: z.number().int().optional(),
     goal: z.any(),
     notes: z.any(),
@@ -872,7 +872,7 @@ const prepExtractStep = createStep({
       userId: inputData.userId,
       goalId: inputData.goalId,
       jobId: inputData.jobId,
-      characteristicId: (inputData as any).characteristicId,
+      issueId: (inputData as any).issueId,
       feedbackId: (inputData as any).feedbackId,
       context: {
         goal: inputData.goal,
@@ -909,7 +909,7 @@ const extractAllStep = createStep({
     userId: z.string(),
     goalId: z.number().int().optional(),
     jobId: z.string().optional(),
-    characteristicId: z.number().int().optional(),
+    issueId: z.number().int().optional(),
     feedbackId: z.number().int().optional(),
     results: z.array(z.any()),
     requiredKeywords: z.array(z.string()).optional(),
@@ -965,7 +965,7 @@ const extractAllStep = createStep({
       userId: inputData.userId,
       goalId: inputData.goalId,
       jobId: inputData.jobId,
-      characteristicId: (inputData as any).characteristicId,
+      issueId: (inputData as any).issueId,
       feedbackId: (inputData as any).feedbackId,
       results,
       requiredKeywords: inputData.plan?.requiredKeywords ?? [],
@@ -980,7 +980,7 @@ const persistStep = createStep({
     userId: z.string(),
     goalId: z.number().int().optional(),
     jobId: z.string().optional(),
-    characteristicId: z.number().int().optional(),
+    issueId: z.number().int().optional(),
     feedbackId: z.number().int().optional(),
     results: z.array(z.any()),
     // requiredKeywords from normalizeGoalStep, passed via prepExtractStep → extractAllStep
@@ -1053,7 +1053,7 @@ const persistStep = createStep({
         const rowId = await d1Tools.upsertTherapyResearch(
           inputData.goalId,
           inputData.userId,
-          { ...research, characteristicId: inputData.characteristicId ?? null, feedbackId: inputData.feedbackId ?? null },
+          { ...research, issueId: inputData.issueId ?? null, feedbackId: inputData.feedbackId ?? null },
         );
         count++;
 

@@ -4,8 +4,6 @@ import { eq, sql } from "drizzle-orm";
 import fs from "fs";
 import path from "path";
 import { CATEGORIES, CATEGORY_META, LESSON_NUMBER } from "../lib/articles";
-import { extractReferences, normalizeTitle } from "../lib/papers";
-import type { Reference } from "../lib/papers";
 import * as schema from "../src/db/schema";
 
 const databaseUrl = process.env.DATABASE_URL;
@@ -100,10 +98,10 @@ async function seed() {
 
   // ── 0. Clean existing data (order respects FK constraints) ────
   console.log("Cleaning existing data...");
-  await db.delete(schema.paperCitations);
-  await db.delete(schema.paperSections);
+  await db.delete(schema.lessonCitations);
+  await db.delete(schema.lessonSections);
   await db.delete(schema.citations);
-  await db.delete(schema.papers);
+  await db.delete(schema.lessons);
   await db.delete(schema.categories);
 
   // ── 1. Seed categories ───────────────────────────────────────
@@ -117,8 +115,8 @@ async function seed() {
       description: meta.description,
       gradientFrom: meta.gradient[0],
       gradientTo: meta.gradient[1],
-      paperRangeLo: lo,
-      paperRangeHi: hi,
+      lessonRangeLo: lo,
+      lessonRangeHi: hi,
       sortOrder: i,
     };
   });
@@ -130,15 +128,15 @@ async function seed() {
   const catIdByName = new Map(cats.map((c) => [c.name, c.id]));
   console.log(`  ${cats.length} categories`);
 
-  // ── 2. Read markdown files + seed papers ─────────────────────
-  console.log("Seeding papers...");
+  // ── 2. Read markdown files + seed lessons ─────────────────────
+  console.log("Seeding lessons...");
   const files = fs
     .readdirSync(CONTENT_DIR)
     .filter((f) => f.endsWith(".md"))
     .sort();
 
   const fileContents = new Map<string, string>();
-  const paperRows = files.map((file) => {
+  const lessonRows = files.map((file) => {
     const slug = file.replace(/\.md$/, "");
     const number = LESSON_NUMBER[slug] ?? 0;
     const raw = fs.readFileSync(path.join(CONTENT_DIR, file), "utf-8");
@@ -160,23 +158,23 @@ async function seed() {
     };
   });
 
-  const insertedPapers = await db
-    .insert(schema.papers)
-    .values(paperRows)
-    .returning({ id: schema.papers.id, slug: schema.papers.slug });
-  const paperIdBySlug = new Map(insertedPapers.map((p) => [p.slug, p.id]));
-  console.log(`  ${insertedPapers.length} papers`);
+  const insertedLessons = await db
+    .insert(schema.lessons)
+    .values(lessonRows)
+    .returning({ id: schema.lessons.id, slug: schema.lessons.slug });
+  const lessonIdBySlug = new Map(insertedLessons.map((p) => [p.slug, p.id]));
+  console.log(`  ${insertedLessons.length} lessons`);
 
-  // ── 3. Seed paper_sections ───────────────────────────────────
-  console.log("Seeding paper sections...");
-  const allSections: (typeof schema.paperSections.$inferInsert)[] = [];
+  // ── 3. Seed lesson_sections ───────────────────────────────────
+  console.log("Seeding lesson sections...");
+  const allSections: (typeof schema.lessonSections.$inferInsert)[] = [];
 
   for (const [slug, raw] of fileContents) {
-    const paperId = paperIdBySlug.get(slug)!;
+    const lessonId = lessonIdBySlug.get(slug)!;
     const sections = splitSections(raw);
     for (let i = 0; i < sections.length; i++) {
       allSections.push({
-        paperId,
+        lessonId,
         heading: sections[i].heading,
         headingLevel: sections[i].headingLevel,
         content: sections[i].content,
@@ -189,89 +187,18 @@ async function seed() {
   // Insert in batches of 100
   for (let i = 0; i < allSections.length; i += 100) {
     await db
-      .insert(schema.paperSections)
+      .insert(schema.lessonSections)
       .values(allSections.slice(i, i + 100));
   }
   console.log(`  ${allSections.length} sections`);
-
-  // ── 4. Seed citations + paper_citations ──────────────────────
-  console.log("Seeding citations...");
-  const citationMap = new Map<
-    string,
-    { ref: Reference; paperSlugs: Set<string> }
-  >();
-
-  for (const [slug, raw] of fileContents) {
-    const refs = extractReferences(raw);
-    for (const ref of refs) {
-      const key = `${normalizeTitle(ref.title)}::${ref.year ?? 0}`;
-      const existing = citationMap.get(key);
-      if (existing) {
-        existing.paperSlugs.add(slug);
-      } else {
-        citationMap.set(key, { ref, paperSlugs: new Set([slug]) });
-      }
-    }
-  }
-
-  // Insert citations in batches
-  const citationRows = Array.from(citationMap.values()).map(({ ref }) => ({
-    title: ref.title,
-    normalizedTitle: normalizeTitle(ref.title),
-    authors: ref.authors ?? null,
-    year: ref.year ?? null,
-    url: ref.url,
-    venue: ref.venue ?? null,
-  }));
-
-  const allCitations: { id: string; normalizedTitle: string; year: number | null }[] = [];
-  for (let i = 0; i < citationRows.length; i += 100) {
-    const batch = await db
-      .insert(schema.citations)
-      .values(citationRows.slice(i, i + 100))
-      .returning({
-        id: schema.citations.id,
-        normalizedTitle: schema.citations.normalizedTitle,
-        year: schema.citations.year,
-      });
-    allCitations.push(...batch);
-  }
-  console.log(`  ${allCitations.length} citations`);
-
-  // Build citation ID lookup
-  const citationIdMap = new Map(
-    allCitations.map((c) => [`${c.normalizedTitle}::${c.year ?? 0}`, c.id]),
-  );
-
-  // Build junction rows
-  console.log("Seeding paper_citations...");
-  const junctionRows: { paperId: string; citationId: string }[] = [];
-  for (const [key, { paperSlugs }] of citationMap) {
-    const citationId = citationIdMap.get(key);
-    if (!citationId) continue;
-    for (const slug of paperSlugs) {
-      const paperId = paperIdBySlug.get(slug);
-      if (!paperId) continue;
-      junctionRows.push({ paperId, citationId });
-    }
-  }
-
-  for (let i = 0; i < junctionRows.length; i += 100) {
-    await db
-      .insert(schema.paperCitations)
-      .values(junctionRows.slice(i, i + 100));
-  }
-  console.log(`  ${junctionRows.length} paper-citation links`);
 
   // ── Summary ──────────────────────────────────────────────────
   console.log("\n┌──────────────────────┬───────┐");
   console.log("│ Table                │ Count │");
   console.log("├──────────────────────┼───────┤");
   console.log(`│ categories           │ ${String(cats.length).padStart(5)} │`);
-  console.log(`│ papers               │ ${String(insertedPapers.length).padStart(5)} │`);
-  console.log(`│ paper_sections       │ ${String(allSections.length).padStart(5)} │`);
-  console.log(`│ citations            │ ${String(allCitations.length).padStart(5)} │`);
-  console.log(`│ paper_citations      │ ${String(junctionRows.length).padStart(5)} │`);
+  console.log(`│ lessons              │ ${String(insertedLessons.length).padStart(5)} │`);
+  console.log(`│ lesson_sections      │ ${String(allSections.length).padStart(5)} │`);
   console.log("└──────────────────────┴───────┘");
   console.log("\nDone!");
 }

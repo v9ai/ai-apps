@@ -99,8 +99,9 @@ Example:
     throw new Error("Failed to parse extracted issues from Qwen response");
   }
 
-  // Save to DB
+  // Save to DB - both legacy JSON field and new issues table
   await d1Tools.saveExtractedIssues(args.id, userEmail, issues);
+  await d1Tools.saveIssuesToTable(args.id, fb.familyMemberId, userEmail, issues);
 
   // Re-fetch the updated record
   const updated = await d1Tools.getContactFeedback(args.id, userEmail);

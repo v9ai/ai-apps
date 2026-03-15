@@ -1,7 +1,7 @@
 mutation CreateUniqueOutcome($input: CreateUniqueOutcomeInput!) {
   createUniqueOutcome(input: $input) {
     id
-    characteristicId
+    issueId
     createdBy
     observedAt
     description

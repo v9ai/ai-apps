@@ -1,15 +1,7 @@
-import { d1 } from "../src/db/d1";
-import * as dotenv from "dotenv";
+import "dotenv/config";
 import * as fs from "fs";
 import * as path from "path";
-import {
-  CLOUDFLARE_ACCOUNT_ID,
-  CLOUDFLARE_DATABASE_ID,
-  CLOUDFLARE_D1_TOKEN,
-} from "../src/config/d1";
-
-// Load environment variables
-dotenv.config();
+import { sql as neonSql } from "../src/db/neon";
 
 // Read CSV data from file
 const csvPath = path.join(__dirname, "research-papers.csv");
@@ -19,17 +11,14 @@ async function insertAllResearchPapers() {
   console.log("🚀 Starting research papers insertion...\n");
 
   // Get the note ID for 'state-of-remote-work'
-  const noteResult = await d1.execute({
-    sql: "SELECT id FROM notes WHERE slug = ?",
-    args: ["state-of-remote-work"],
-  });
+  const noteResult = await neonSql`SELECT id FROM notes WHERE slug = ${"state-of-remote-work"}`;
 
-  if (noteResult.rows.length === 0) {
+  if (noteResult.length === 0) {
     console.error("❌ Note 'state-of-remote-work' not found");
     return;
   }
 
-  const noteId = noteResult.rows[0].id as number;
+  const noteId = noteResult[0].id as number;
   console.log(`📝 Found note with ID: ${noteId}\n`);
 
   // Parse CSV
@@ -70,62 +59,45 @@ async function insertAllResearchPapers() {
   for (const paper of papers) {
     try {
       // Check if paper already exists by URL to prevent duplicates
-      const existingPaper = await d1.execute({
-        sql: `SELECT id FROM therapy_research WHERE url = ?`,
-        args: [paper!.url],
-      });
+      const existingPaper = await neonSql`SELECT id FROM therapy_research WHERE url = ${paper!.url}`;
 
       let researchId: number;
 
-      if (existingPaper.rows.length > 0) {
+      if (existingPaper.length > 0) {
         // Paper already exists, use existing ID
-        researchId = existingPaper.rows[0].id as number;
+        researchId = existingPaper[0].id as number;
         console.log(
           `⏭️  Skipping duplicate: ${paper!.title.substring(0, 50)}...`,
         );
       } else {
         // Insert new paper into therapy_research table
-        const result = await d1.execute({
-          sql: `INSERT INTO therapy_research (
-            goal_id, therapeutic_goal_type, title, authors, year, journal, 
-            url, key_findings, therapeutic_techniques, relevance_score, 
+        const result = await neonSql`INSERT INTO therapy_research (
+            goal_id, therapeutic_goal_type, title, authors, year, journal,
+            url, key_findings, therapeutic_techniques, relevance_score,
             extracted_by, extraction_confidence
-          ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
-          RETURNING id`,
-          args: [
-            0, // goal_id = 0 for general research
-            "post-covid-labor-market",
-            paper!.title,
-            JSON.stringify(["Various"]),
-            paper!.year,
-            paper!.venue,
-            paper!.url,
-            JSON.stringify([
-              `Rank ${paper!.rank} in post-COVID job market research`,
-            ]),
-            JSON.stringify([
-              "remote work",
-              "labor market",
-              "post-COVID",
-              "employment",
-            ]),
-            101 - paper!.rank, // Higher rank = higher score
-            "csv-import",
-            90,
-          ],
-        });
+          ) VALUES (
+            ${0},
+            ${"post-covid-labor-market"},
+            ${paper!.title},
+            ${JSON.stringify(["Various"])},
+            ${paper!.year},
+            ${paper!.venue},
+            ${paper!.url},
+            ${JSON.stringify([`Rank ${paper!.rank} in post-COVID job market research`])},
+            ${JSON.stringify(["remote work", "labor market", "post-COVID", "employment"])},
+            ${101 - paper!.rank},
+            ${"csv-import"},
+            ${90}
+          ) RETURNING id`;
 
-        researchId = result.rows[0].id as number;
+        researchId = result[0].id as number;
         insertedCount++;
       }
 
       researchIds.push(researchId);
 
-      // Link to note (INSERT OR IGNORE prevents duplicate links)
-      await d1.execute({
-        sql: `INSERT OR IGNORE INTO notes_research (note_id, research_id) VALUES (?, ?)`,
-        args: [noteId, researchId],
-      });
+      // Link to note (ON CONFLICT DO NOTHING prevents duplicate links)
+      await neonSql`INSERT INTO notes_research (note_id, research_id) VALUES (${noteId}, ${researchId}) ON CONFLICT DO NOTHING`;
 
       if (insertedCount % 10 === 0 || insertedCount === papers.length) {
         console.log(

@@ -1,7 +1,7 @@
 mutation UpdateUniqueOutcome($id: Int!, $input: UpdateUniqueOutcomeInput!) {
   updateUniqueOutcome(id: $id, input: $input) {
     id
-    characteristicId
+    issueId
     createdBy
     observedAt
     description

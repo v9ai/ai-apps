@@ -1,0 +1,6 @@
+mutation DeleteIssue($id: Int!) {
+  deleteIssue(id: $id) {
+    success
+    message
+  }
+}

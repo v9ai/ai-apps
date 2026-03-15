@@ -3,7 +3,6 @@ import { auth, currentUser } from "@clerk/nextjs/server";
 import { spawn } from "child_process";
 import path from "path";
 import * as d1Tools from "@/src/db/index";
-import { d1 } from "@/src/db/d1";
 
 export const runtime = "nodejs";
 
@@ -19,38 +18,32 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ error: "User email not found" }, { status: 401 });
   }
 
-  const { characteristicId } = await request.json();
-  if (!characteristicId) {
+  const { issueId } = await request.json();
+  if (!issueId) {
     return NextResponse.json(
-      { error: "characteristicId required" },
+      { error: "issueId required" },
       { status: 400 },
     );
   }
 
-  const characteristic = await d1Tools.getCharacteristic(
-    characteristicId,
-    userEmail,
-  );
-  if (!characteristic) {
+  const issue = await d1Tools.getIssue(issueId, userEmail);
+  if (!issue) {
     return NextResponse.json(
-      { error: "Characteristic not found" },
+      { error: "Issue not found" },
       { status: 404 },
     );
   }
 
-  const fm = await d1Tools.getFamilyMember(characteristic.familyMemberId);
+  const fm = await d1Tools.getFamilyMember(issue.familyMemberId);
 
   const inputJson = JSON.stringify({
-    id: characteristic.id,
-    title: characteristic.title,
-    description: characteristic.description,
-    category: characteristic.category,
-    severity: characteristic.severity,
+    id: issue.id,
+    title: issue.title,
+    description: issue.description,
+    category: issue.category,
+    severity: issue.severity,
     ageYears: fm?.ageYears,
-    tags: characteristic.tags,
-    impairmentDomains: characteristic.impairmentDomains,
-    externalizedName: characteristic.externalizedName,
-    strengths: characteristic.strengths,
+    recommendations: issue.recommendations,
     familyMemberName: fm?.firstName,
   });
 
@@ -58,7 +51,7 @@ export async function POST(request: NextRequest) {
     process.env.RESEARCH_BINARY_PATH ||
     path.resolve(
       process.cwd(),
-      "../../crates/research/target/release/characteristic-research",
+      "../../crates/research/target/release/issue-research",
     );
 
   // Spawn binary in background.
@@ -84,10 +77,10 @@ export async function POST(request: NextRequest) {
       if (code === 0 && stdout.trim()) {
         const output = JSON.parse(stdout.trim());
 
-        // Create synthesis note linked to the characteristic.
+        // Create synthesis note linked to the issue.
         const noteId = await d1Tools.createNote({
-          entityId: characteristicId,
-          entityType: "characteristic",
+          entityId: issueId,
+          entityType: "issue",
           userId: userEmail,
           content: output.synthesis,
           noteType: "DEEP_RESEARCH_SYNTHESIS",
@@ -96,33 +89,26 @@ export async function POST(request: NextRequest) {
         });
 
         // Set the note title.
-        await d1.execute({
-          sql: "UPDATE notes SET title = ? WHERE id = ?",
-          args: [`Research Synthesis: ${characteristic.title}`, noteId],
-        });
+        await d1Tools.updateNote(noteId, userEmail, { title: `Research Synthesis: ${issue.title}` });
 
         // Store per-agent findings as separate notes.
         for (const finding of output.findings) {
           const fNoteId = await d1Tools.createNote({
-            entityId: characteristicId,
-            entityType: "characteristic",
+            entityId: issueId,
+            entityType: "issue",
             userId: userEmail,
             content: finding.content,
             noteType: "DEEP_RESEARCH_FINDING",
             createdBy: userEmail,
             tags: ["deep-research", finding.subject],
           });
-          await d1.execute({
-            sql: "UPDATE notes SET title = ? WHERE id = ?",
-            args: [
-              `Research: ${finding.subject.replace(/-/g, " ")}`,
-              fNoteId,
-            ],
+          await d1Tools.updateNote(fNoteId, userEmail, {
+            title: `Research: ${finding.subject.replace(/-/g, " ")}`,
           });
         }
 
         console.log(
-          `[deep-research] Done: ${output.findings.length} findings + synthesis for characteristic ${characteristicId}`,
+          `[deep-research] Done: ${output.findings.length} findings + synthesis for issue ${issueId}`,
         );
       } else {
         console.error(
@@ -140,7 +126,7 @@ export async function POST(request: NextRequest) {
 
   return NextResponse.json({
     success: true,
-    message: `Deep research started for "${characteristic.title}". Results will appear as notes in 5-10 minutes.`,
+    message: `Deep research started for "${issue.title}". Results will appear as notes in 5-10 minutes.`,
   });
 }
 
@@ -156,18 +142,18 @@ export async function GET(request: NextRequest) {
     return NextResponse.json({ error: "User email not found" }, { status: 401 });
   }
 
-  const characteristicId = request.nextUrl.searchParams.get("characteristicId");
-  if (!characteristicId) {
+  const issueId = request.nextUrl.searchParams.get("issueId");
+  if (!issueId) {
     return NextResponse.json(
-      { error: "characteristicId required" },
+      { error: "issueId required" },
       { status: 400 },
     );
   }
 
   // Check for existing synthesis notes.
   const notes = await d1Tools.listNotesForEntity(
-    parseInt(characteristicId, 10),
-    "characteristic",
+    parseInt(issueId, 10),
+    "issue",
     userEmail,
   );
 

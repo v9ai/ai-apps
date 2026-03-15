@@ -18,7 +18,7 @@ import {
   deleteFromR2,
   generateAudioKey,
 } from "@/lib/r2-uploader";
-import { d1 } from "@/src/db/d1";
+import { sql as neonSql } from "@/src/db/neon";
 
 const MAX_CHARS = 4000;
 
@@ -184,20 +184,11 @@ async function updateJob(
 ) {
   const now = new Date().toISOString();
   if (extra?.error) {
-    await d1.execute({
-      sql: `UPDATE generation_jobs SET status = ?, error = ?, updated_at = ? WHERE id = ?`,
-      args: [status, JSON.stringify({ message: extra.error }), now, jobId],
-    });
+    await neonSql`UPDATE generation_jobs SET status = ${status}, error = ${JSON.stringify({ message: extra.error })}, updated_at = ${now} WHERE id = ${jobId}`;
   } else if (extra?.result) {
-    await d1.execute({
-      sql: `UPDATE generation_jobs SET status = ?, result = ?, updated_at = ? WHERE id = ?`,
-      args: [status, JSON.stringify(extra.result), now, jobId],
-    });
+    await neonSql`UPDATE generation_jobs SET status = ${status}, result = ${JSON.stringify(extra.result)}, updated_at = ${now} WHERE id = ${jobId}`;
   } else {
-    await d1.execute({
-      sql: `UPDATE generation_jobs SET status = ?, updated_at = ? WHERE id = ?`,
-      args: [status, now, jobId],
-    });
+    await neonSql`UPDATE generation_jobs SET status = ${status}, updated_at = ${now} WHERE id = ${jobId}`;
   }
 }
 
@@ -353,20 +344,14 @@ export const ttsTask = task({
     await Promise.all(chunkPayloads.map((p) => deleteFromR2(p.tempKey).catch(() => {})));
     logger.info("tts.chunks_cleaned", { storyId, count: chunkPayloads.length });
 
-    // Update D1 stories row
+    // Update Neon stories row
     if (goalStoryId) {
       const now = new Date().toISOString();
-      await d1.execute({
-        sql: `UPDATE goal_stories SET audio_key = ?, audio_url = ?, audio_generated_at = ?, updated_at = ? WHERE id = ?`,
-        args: [key, audioUrl, now, now, goalStoryId],
-      });
+      await neonSql`UPDATE goal_stories SET audio_key = ${key}, audio_url = ${audioUrl}, audio_generated_at = ${now}, updated_at = ${now} WHERE id = ${goalStoryId}`;
       logger.info("tts.goal_story_updated", { goalStoryId, audioUrl });
     } else if (storyId && userEmail) {
       const now = new Date().toISOString();
-      await d1.execute({
-        sql: `UPDATE stories SET audio_key = ?, audio_url = ?, audio_generated_at = ?, updated_at = ? WHERE id = ? AND user_id = ?`,
-        args: [key, audioUrl, now, now, storyId, userEmail],
-      });
+      await neonSql`UPDATE stories SET audio_key = ${key}, audio_url = ${audioUrl}, audio_generated_at = ${now}, updated_at = ${now} WHERE id = ${storyId} AND user_id = ${userEmail}`;
       logger.info("tts.story_updated", { storyId, audioUrl });
     }
 

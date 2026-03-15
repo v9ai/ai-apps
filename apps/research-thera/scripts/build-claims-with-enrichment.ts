@@ -22,8 +22,7 @@
  *   S2_API_KEY           - Optional Semantic Scholar key
  */
 
-import { d1 } from "../src/db/d1";
-import * as dotenv from "dotenv";
+import "dotenv/config";
 import { createDeepSeek } from "@ai-sdk/deepseek";
 import { generateObject } from "ai";
 import { z } from "zod";
@@ -32,13 +31,7 @@ import type { PaperDetails } from "../src/tools/sources.tools";
 import { createHash } from "node:crypto";
 import { readFile, writeFile, mkdir } from "node:fs/promises";
 import { existsSync } from "node:fs";
-import {
-  CLOUDFLARE_ACCOUNT_ID,
-  CLOUDFLARE_DATABASE_ID,
-  CLOUDFLARE_D1_TOKEN,
-} from "../src/config/d1";
-
-dotenv.config();
+import { sql as neonSql } from "../src/db/neon";
 
 // Suppress AI SDK warnings
 process.env.AI_SDK_LOG_WARNINGS = "false";
@@ -764,8 +757,7 @@ async function main() {
   try {
     // Step 1: Load linked research from DB
     console.log(`📚 Loading linked research from database...`);
-    const res = await d1.execute({
-      sql: `
+    const res = await neonSql`
         SELECT
           r.id as id,
           r.title as title,
@@ -777,13 +769,11 @@ async function main() {
           r.journal as journal
         FROM therapy_research r
         INNER JOIN notes_research nr ON nr.research_id = r.id
-        WHERE nr.note_id = ?
+        WHERE nr.note_id = ${CFG.NOTE_ID}
         ORDER BY r.year DESC
-      `,
-      args: [CFG.NOTE_ID],
-    });
+      `;
 
-    const dbPapers = res.rows.map((r: any) => ({
+    const dbPapers = res.map((r: any) => ({
       title: String(r.title),
       year: r.year != null ? Number(r.year) : undefined,
       doi: r.doi ? String(r.doi) : undefined,

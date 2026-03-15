@@ -1,0 +1,13 @@
+mutation ConvertIssueToGoal($id: Int!, $input: CreateGoalInput!) {
+  convertIssueToGoal(id: $id, input: $input) {
+    id
+    familyMemberId
+    createdBy
+    slug
+    title
+    description
+    status
+    createdAt
+    updatedAt
+  }
+}

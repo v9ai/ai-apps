@@ -1,14 +1,12 @@
 import type { Lesson, LessonWithContent, GroupedLessons, CategoryMeta } from "./articles";
-import type { Reference } from "./papers";
-
 // Re-export types for single-source imports
-export type { Lesson, LessonWithContent, GroupedLessons, CategoryMeta, Reference };
+export type { Lesson, LessonWithContent, GroupedLessons, CategoryMeta };
 
 // Re-export static constants (always from articles.ts — no DB needed)
 export { CATEGORIES, CATEGORY_META, getCategoryMeta } from "./articles";
 
 export interface SearchResult {
-  resultType: "lesson" | "section" | "citation";
+  resultType: "lesson" | "section";
   title: string;
   snippet: string;
   rank: number;
@@ -54,17 +52,6 @@ export async function getTotalWordCount(): Promise<number> {
   }
   const { getTotalWordCount: fs } = await import("./articles");
   return fs();
-}
-
-export async function getReferencesForLesson(
-  slug: string,
-): Promise<Reference[]> {
-  if (USE_DB) {
-    const { getReferencesFromDb } = await import("./db/queries");
-    return getReferencesFromDb(slug);
-  }
-  const { getReferencesForSlug } = await import("./papers");
-  return getReferencesForSlug(slug);
 }
 
 export async function getRelatedLessons(

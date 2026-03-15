@@ -6,11 +6,6 @@ import { Memory } from "@mastra/memory";
 import { buildTracingOptions } from "@mastra/observability";
 import { withLangfusePrompt } from "@mastra/langfuse";
 import { Langfuse } from "langfuse";
-import {
-  CLOUDFLARE_ACCOUNT_ID,
-  CLOUDFLARE_DATABASE_ID,
-  CLOUDFLARE_D1_TOKEN,
-} from "@/src/config/d1";
 
 const deepseek = createDeepSeek({
   apiKey: process.env.DEEPSEEK_API_KEY,

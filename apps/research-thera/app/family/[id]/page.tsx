@@ -17,8 +17,8 @@ import {
   AlertDialog,
   Separator,
 } from "@radix-ui/themes";
-import { ArrowLeftIcon, Pencil1Icon, TrashIcon, Cross2Icon } from "@radix-ui/react-icons";
-import { useRouter, useParams, useSearchParams } from "next/navigation";
+import { ArrowLeftIcon, Pencil1Icon, TrashIcon } from "@radix-ui/react-icons";
+import { useRouter, useParams } from "next/navigation";
 import NextLink from "next/link";
 import dynamic from "next/dynamic";
 import {
@@ -28,23 +28,20 @@ import {
   useUnshareFamilyMemberMutation,
   useGetBehaviorObservationsQuery,
   useDeleteBehaviorObservationMutation,
-  useGetFamilyMemberCharacteristicsQuery,
-  useDeleteFamilyMemberCharacteristicMutation,
+  useGetIssuesQuery,
+  useDeleteIssueMutation,
   useGetTeacherFeedbacksQuery,
   useDeleteTeacherFeedbackMutation,
   useGetRelationshipsQuery,
   useDeleteRelationshipMutation,
   useDeleteContactMutation,
   FamilyMemberShareRole,
-  CharacteristicCategory,
   PersonType,
 } from "@/app/__generated__/hooks";
 import { useUser } from "@clerk/nextjs";
 import AddGoalButton from "@/app/components/AddGoalButton";
 import AddBehaviorObservationButton from "@/app/components/AddBehaviorObservationButton";
 import BehaviorObservationsList from "@/app/components/BehaviorObservationsList";
-import AddCharacteristicButton from "@/app/components/AddCharacteristicButton";
-import CharacteristicsList from "@/app/components/CharacteristicsList";
 import AddTeacherFeedbackButton from "@/app/components/AddTeacherFeedbackButton";
 import TeacherFeedbackList from "@/app/components/TeacherFeedbackList";
 import AddContactButton from "@/app/components/AddContactButton";
@@ -91,16 +88,48 @@ function getStatusColor(status: string) {
   }
 }
 
+function getSeverityColor(severity: string) {
+  switch (severity.toLowerCase()) {
+    case "high":
+      return "red" as const;
+    case "medium":
+      return "orange" as const;
+    case "low":
+      return "green" as const;
+    default:
+      return "gray" as const;
+  }
+}
+
+function getCategoryColor(category: string) {
+  switch (category.toLowerCase()) {
+    case "academic":
+      return "blue" as const;
+    case "behavioral":
+      return "orange" as const;
+    case "social":
+      return "purple" as const;
+    case "emotional":
+      return "pink" as const;
+    case "developmental":
+      return "cyan" as const;
+    case "health":
+      return "red" as const;
+    case "communication":
+      return "yellow" as const;
+    default:
+      return "gray" as const;
+  }
+}
+
 function FamilyMemberContent() {
   const router = useRouter();
   const params = useParams();
-  const searchParams = useSearchParams();
   const raw = params.id as string;
   const isNumeric = /^\d+$/.test(raw);
   const id = isNumeric ? parseInt(raw, 10) : NaN;
   const slug = isNumeric ? undefined : raw;
   const { user } = useUser();
-  const activeTag = searchParams.get("tag");
 
   const { data, loading, error } = useGetFamilyMemberQuery({
     variables: isNumeric ? { id } : { slug },
@@ -172,41 +201,21 @@ function FamilyMemberContent() {
     deleteObservation({ variables: { id: obsId } });
   };
 
-  const { data: charData } = useGetFamilyMemberCharacteristicsQuery({
+  const { data: issuesData } = useGetIssuesQuery({
     variables: { familyMemberId: memberId },
     skip: isNaN(memberId),
   });
-  const characteristics = charData?.familyMemberCharacteristics ?? [];
-  const tagFilter = (c: (typeof characteristics)[number]) =>
-    !activeTag || (c.tags && c.tags.includes(activeTag));
-  const strengths = characteristics.filter(
-    (c) => c.category === CharacteristicCategory.Strength && tagFilter(c),
-  );
-  const supportNeeds = characteristics.filter(
-    (c) => c.category === CharacteristicCategory.SupportNeed && tagFilter(c),
-  );
-  const priorityConcerns = characteristics.filter(
-    (c) => c.category === CharacteristicCategory.PriorityConcern && tagFilter(c),
-  );
+  const issues = issuesData?.issues ?? [];
+
+  const [deleteIssue, { loading: deletingIssue }] = useDeleteIssueMutation({
+    refetchQueries: ["GetIssues"],
+  });
+
+  const handleDeleteIssue = (issueId: number) => {
+    deleteIssue({ variables: { id: issueId } });
+  };
 
   const memberSlugOrId = member?.slug ?? raw;
-
-  const handleTagClick = (tag: string) => {
-    router.push(`/family/${memberSlugOrId}?tag=${encodeURIComponent(tag)}`);
-  };
-
-  const clearTagFilter = () => {
-    router.push(`/family/${memberSlugOrId}`);
-  };
-
-  const [deleteCharacteristic, { loading: deletingChar }] =
-    useDeleteFamilyMemberCharacteristicMutation({
-      refetchQueries: ["GetFamilyMemberCharacteristics"],
-    });
-
-  const handleDeleteCharacteristic = (charId: number) => {
-    deleteCharacteristic({ variables: { id: charId } });
-  };
 
   const { data: feedbackData } = useGetTeacherFeedbacksQuery({
     variables: { familyMemberId: memberId },
@@ -565,117 +574,112 @@ function FamilyMemberContent() {
         </Flex>
       </Card>
 
-      {/* Tag filter banner */}
-      {activeTag && (
-        <Card>
-          <Flex align="center" gap="3" p="3">
-            <Badge color="violet" variant="soft" size="2">
-              {activeTag}
-            </Badge>
-            <Text size="2" color="gray">
-              Filtering characteristics by tag
-            </Text>
+      {/* Issues */}
+      <Card>
+        <Flex direction="column" gap="3" p="4">
+          <Flex justify="between" align="center">
+            <Heading size="4">Issues ({issues.length})</Heading>
             <Button
-              variant="ghost"
-              color="gray"
-              size="1"
-              onClick={clearTagFilter}
-              style={{ marginLeft: "auto" }}
+              variant="soft"
+              size="2"
+              onClick={() => router.push(`/family/${memberSlugOrId}/issues`)}
             >
-              <Cross2Icon />
-              Clear
+              View All
             </Button>
           </Flex>
-        </Card>
-      )}
-
-      {/* Strengths */}
-      <Card>
-        <Flex direction="column" gap="3" p="4">
-          <Flex justify="between" align="center">
-            <Flex direction="column" gap="1">
-              <Heading size="4">Strengths ({strengths.length})</Heading>
-              <Text size="1" color="gray">
-                Part of how they function — neutral
-              </Text>
-            </Flex>
-            <AddCharacteristicButton
-              familyMemberId={memberId}
-              defaultCategory={CharacteristicCategory.Strength}
-              label="Add Strength"
-              refetchQueries={["GetFamilyMemberCharacteristics"]}
-              size="2"
-            />
-          </Flex>
           <Separator size="4" />
-          <CharacteristicsList
-            items={strengths}
-            onDelete={handleDeleteCharacteristic}
-            deleting={deletingChar}
-            emptyMessage="No strengths added yet"
-            getHref={(item) => `/family/${memberSlugOrId}/characteristics/${item.id}`}
-            onTagClick={handleTagClick}
-          />
-        </Flex>
-      </Card>
-
-      {/* Support Priority */}
-      <Card>
-        <Flex direction="column" gap="3" p="4">
-          <Flex justify="between" align="center">
-            <Flex direction="column" gap="1">
-              <Heading size="4">Support Priority ({supportNeeds.length})</Heading>
-              <Text size="1" color="gray">
-                Interferes with something
-              </Text>
+          {issues.length === 0 ? (
+            <Text size="2" color="gray">
+              No issues yet. Extract issues from contact feedback or add them manually.
+            </Text>
+          ) : (
+            <Flex direction="column" gap="2">
+              {issues.slice(0, 5).map((issue) => (
+                <Card
+                  key={issue.id}
+                  style={{ cursor: "pointer" }}
+                  onClick={() => router.push(`/family/${memberSlugOrId}/issues/${issue.id}`)}
+                >
+                  <Flex justify="between" align="center" p="3">
+                    <Flex direction="column" gap="1" style={{ flex: 1 }}>
+                      <Flex gap="2" align="center">
+                        <Text size="2" weight="medium">
+                          {issue.title}
+                        </Text>
+                        <Badge
+                          color={getSeverityColor(issue.severity)}
+                          variant="soft"
+                          size="1"
+                        >
+                          {issue.severity}
+                        </Badge>
+                        <Badge
+                          color={getCategoryColor(issue.category)}
+                          variant="outline"
+                          size="1"
+                        >
+                          {issue.category}
+                        </Badge>
+                      </Flex>
+                      {issue.description && (
+                        <Text
+                          size="1"
+                          color="gray"
+                          style={{
+                            overflow: "hidden",
+                            textOverflow: "ellipsis",
+                            whiteSpace: "nowrap",
+                          }}
+                        >
+                          {issue.description}
+                        </Text>
+                      )}
+                    </Flex>
+                    <AlertDialog.Root>
+                      <AlertDialog.Trigger>
+                        <Button
+                          variant="ghost"
+                          color="red"
+                          size="1"
+                          disabled={deletingIssue}
+                          onClick={(e) => e.stopPropagation()}
+                        >
+                          <TrashIcon />
+                        </Button>
+                      </AlertDialog.Trigger>
+                      <AlertDialog.Content>
+                        <AlertDialog.Title>Delete Issue</AlertDialog.Title>
+                        <AlertDialog.Description>
+                          Remove &quot;{issue.title}&quot;? This action cannot be undone.
+                        </AlertDialog.Description>
+                        <Flex gap="3" justify="end" mt="4">
+                          <AlertDialog.Cancel>
+                            <Button variant="soft" color="gray">
+                              Cancel
+                            </Button>
+                          </AlertDialog.Cancel>
+                          <AlertDialog.Action>
+                            <Button
+                              color="red"
+                              disabled={deletingIssue}
+                              onClick={() => handleDeleteIssue(issue.id)}
+                            >
+                              Delete
+                            </Button>
+                          </AlertDialog.Action>
+                        </Flex>
+                      </AlertDialog.Content>
+                    </AlertDialog.Root>
+                  </Flex>
+                </Card>
+              ))}
+              {issues.length > 5 && (
+                <Text size="2" color="gray" align="center">
+                  +{issues.length - 5} more issues
+                </Text>
+              )}
             </Flex>
-            <AddCharacteristicButton
-              familyMemberId={memberId}
-              defaultCategory={CharacteristicCategory.SupportNeed}
-              label="Add Support Priority"
-              refetchQueries={["GetFamilyMemberCharacteristics"]}
-              size="2"
-            />
-          </Flex>
-          <Separator size="4" />
-          <CharacteristicsList
-            items={supportNeeds}
-            onDelete={handleDeleteCharacteristic}
-            deleting={deletingChar}
-            emptyMessage="No Support Priority added yet"
-            getHref={(item) => `/family/${memberSlugOrId}/characteristics/${item.id}`}
-            onTagClick={handleTagClick}
-          />
-        </Flex>
-      </Card>
-
-      {/* Priority Concerns */}
-      <Card>
-        <Flex direction="column" gap="3" p="4">
-          <Flex justify="between" align="center">
-            <Flex direction="column" gap="1">
-              <Heading size="4">Priority Concerns ({priorityConcerns.length})</Heading>
-              <Text size="1" color="gray">
-                Requires active intervention
-              </Text>
-            </Flex>
-            <AddCharacteristicButton
-              familyMemberId={memberId}
-              defaultCategory={CharacteristicCategory.PriorityConcern}
-              label="Add Priority Concern"
-              refetchQueries={["GetFamilyMemberCharacteristics"]}
-              size="2"
-            />
-          </Flex>
-          <Separator size="4" />
-          <CharacteristicsList
-            items={priorityConcerns}
-            onDelete={handleDeleteCharacteristic}
-            deleting={deletingChar}
-            emptyMessage="No priority concerns added yet"
-            getHref={(item) => `/family/${memberSlugOrId}/characteristics/${item.id}`}
-            onTagClick={handleTagClick}
-          />
+          )}
         </Flex>
       </Card>
 
@@ -688,7 +692,7 @@ function FamilyMemberContent() {
                 Teacher Feedback ({teacherFeedbacks.length})
               </Heading>
               <Text size="1" color="gray">
-                Feedback from teachers — can be extracted into characteristics
+                Feedback from teachers — can be extracted into issues
               </Text>
             </Flex>
             <AddTeacherFeedbackButton

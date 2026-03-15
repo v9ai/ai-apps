@@ -1,11 +1,11 @@
 /**
- * D1 Storage Adapter for Generic Claim Cards
+ * Neon Storage Adapter for Generic Claim Cards
  *
- * Implements StorageAdapter for persisting claim cards to Cloudflare D1.
+ * Implements StorageAdapter for persisting claim cards to Neon PostgreSQL.
  * Uses existing schema: claim_cards and notes_claims tables.
  */
 
-import { d1 } from "@/src/db/d1";
+import { sql as neonSql } from "@/src/db/neon";
 import type {
   StorageAdapter,
   ClaimCard,
@@ -16,7 +16,7 @@ import { toGqlClaimCards } from "@/schema/resolvers/utils/normalize-claim-card";
 
 export function createD1StorageAdapter(): StorageAdapter {
   return {
-    name: "d1",
+    name: "neon",
 
     async saveCard(card: ClaimCard, itemId?: string | number): Promise<void> {
       const noteId =
@@ -35,44 +35,27 @@ export function createD1StorageAdapter(): StorageAdapter {
       const queries = JSON.stringify(card.queries);
       const provenance = JSON.stringify(card.provenance);
 
-      // Upsert claim card using raw SQL
-      await d1.execute({
-        sql: `INSERT INTO claim_cards (id, note_id, claim, scope, verdict, confidence, evidence, queries, provenance, notes, created_at, updated_at)
-              VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
-              ON CONFLICT(id) DO UPDATE SET
-                claim = excluded.claim,
-                scope = excluded.scope,
-                verdict = excluded.verdict,
-                confidence = excluded.confidence,
-                evidence = excluded.evidence,
-                queries = excluded.queries,
-                provenance = excluded.provenance,
-                notes = excluded.notes,
-                updated_at = excluded.updated_at`,
-        args: [
-          card.id,
-          noteId,
-          card.claim,
-          scope,
-          card.verdict,
-          confidenceInt,
-          evidence,
-          queries,
-          provenance,
-          card.notes ?? null,
-          card.createdAt,
-          card.updatedAt,
-        ],
-      });
+      // Upsert claim card
+      await neonSql`
+        INSERT INTO claim_cards (id, note_id, claim, scope, verdict, confidence, evidence, queries, provenance, notes, created_at, updated_at)
+        VALUES (${card.id}, ${noteId}, ${card.claim}, ${scope}, ${card.verdict}, ${confidenceInt}, ${evidence}, ${queries}, ${provenance}, ${card.notes ?? null}, ${card.createdAt}, ${card.updatedAt})
+        ON CONFLICT (id) DO UPDATE SET
+          claim = excluded.claim,
+          scope = excluded.scope,
+          verdict = excluded.verdict,
+          confidence = excluded.confidence,
+          evidence = excluded.evidence,
+          queries = excluded.queries,
+          provenance = excluded.provenance,
+          notes = excluded.notes,
+          updated_at = excluded.updated_at`;
 
       // Link to note if itemId provided
       if (noteId) {
-        await d1.execute({
-          sql: `INSERT INTO notes_claims (note_id, claim_id, created_at)
-                VALUES (?, ?, ?)
-                ON CONFLICT DO NOTHING`,
-          args: [noteId, card.id, new Date().toISOString()],
-        });
+        await neonSql`
+          INSERT INTO notes_claims (note_id, claim_id, created_at)
+          VALUES (${noteId}, ${card.id}, ${new Date().toISOString()})
+          ON CONFLICT DO NOTHING`;
       }
     },
 
@@ -86,44 +69,30 @@ export function createD1StorageAdapter(): StorageAdapter {
     },
 
     async getCard(cardId: string): Promise<ClaimCard | null> {
-      const result = await d1.execute({
-        sql: `SELECT * FROM claim_cards WHERE id = ? LIMIT 1`,
-        args: [cardId],
-      });
+      const rows = await neonSql`SELECT * FROM claim_cards WHERE id = ${cardId} LIMIT 1`;
 
-      if (result.rows.length === 0) return null;
+      if (rows.length === 0) return null;
 
-      const row = result.rows[0];
-      return deserializeClaimCard(row);
+      return deserializeClaimCard(rows[0]);
     },
 
     async getCardsForItem(itemId: string | number): Promise<ClaimCard[]> {
       const noteId = typeof itemId === "number" ? itemId : parseInt(itemId, 10);
 
-      const result = await d1.execute({
-        sql: `SELECT cc.* FROM claim_cards cc
-              INNER JOIN notes_claims nc ON nc.claim_id = cc.id
-              WHERE nc.note_id = ?`,
-        args: [noteId],
-      });
+      const rows = await neonSql`
+        SELECT cc.* FROM claim_cards cc
+        INNER JOIN notes_claims nc ON nc.claim_id = cc.id
+        WHERE nc.note_id = ${noteId}`;
 
-      const rawCards = result.rows.map((row) => deserializeClaimCard(row));
+      const rawCards = rows.map((row) => deserializeClaimCard(row));
 
       // Normalize to ensure consistent GraphQL output
       return toGqlClaimCards(rawCards) as any;
     },
 
     async deleteCard(cardId: string): Promise<void> {
-      // Delete links first
-      await d1.execute({
-        sql: `DELETE FROM notes_claims WHERE claim_id = ?`,
-        args: [cardId],
-      });
-      // Delete card
-      await d1.execute({
-        sql: `DELETE FROM claim_cards WHERE id = ?`,
-        args: [cardId],
-      });
+      await neonSql`DELETE FROM notes_claims WHERE claim_id = ${cardId}`;
+      await neonSql`DELETE FROM claim_cards WHERE id = ${cardId}`;
     },
   };
 }
