@@ -254,10 +254,25 @@ export const ttsTask = task({
     randomize: true,
   },
   onFailure: async ({ payload, error }: { payload: TTSPayload; error: unknown }) => {
+    const message = error instanceof Error ? error.message : "TTS generation failed";
+    logger.error("tts.job_failed", {
+      jobId: payload.jobId,
+      storyId: payload.storyId,
+      goalStoryId: payload.goalStoryId,
+      error: message,
+    });
     if (payload.jobId) {
-      const message = error instanceof Error ? error.message : "TTS generation failed";
-      await updateJob(payload.jobId, "FAILED", { error: message }).catch(() => {});
-      logger.error("tts.job_failed", { jobId: payload.jobId, storyId: payload.storyId, error: message });
+      try {
+        await updateJob(payload.jobId, "FAILED", { error: message });
+        logger.info("tts.job_marked_failed", { jobId: payload.jobId });
+      } catch (dbErr) {
+        // updateJob itself failed — log so the stale RUNNING job can be diagnosed
+        logger.error("tts.job_update_failed", {
+          jobId: payload.jobId,
+          updateError: dbErr instanceof Error ? dbErr.message : String(dbErr),
+          originalError: message,
+        });
+      }
     }
   },
   run: async (payload: TTSPayload) => {
@@ -284,12 +299,21 @@ export const ttsTask = task({
 
     logger.info("tts.started", {
       storyId,
+      goalStoryId,
       jobId,
       chunks: chunks.length,
       textLen: text.length,
+      cleanTextLen: cleanText.length,
       voice,
       model,
     });
+
+    // Mark progress=5 immediately so stale-job detection knows the task actually started
+    if (jobId) {
+      await updateJob(jobId, "RUNNING", { result: { progress: 5, stage: "started" } }).catch((e) =>
+        logger.warn("tts.progress_update_failed", { jobId, stage: "started", error: String(e) }),
+      );
+    }
 
     // Build chunk payloads — assign temp R2 keys upfront so we can clean up on failure
     const chunkPayloads: ChunkPayload[] = chunks.map((chunk, index) => ({
@@ -305,13 +329,30 @@ export const ttsTask = task({
     }));
 
     // Fan-out: all chunks run in parallel, capped by ttsChunkQueue concurrencyLimit
+    if (jobId) {
+      await updateJob(jobId, "RUNNING", { result: { progress: 10, stage: "generating_chunks" } }).catch((e) => {
+        logger.warn("tts.progress_update_failed", { jobId, stage: "generating_chunks", error: String(e) });
+      });
+    }
+
     const results = await ttsChunkTask.batchTriggerAndWait(
       chunkPayloads.map((p) => ({ payload: p })),
     );
 
     const failedChunks = results.runs.filter((r) => !r.ok);
     if (failedChunks.length > 0) {
+      const failedDetails = failedChunks.map((r) => ({
+        ok: r.ok,
+        error: !r.ok ? String(r.error) : undefined,
+      }));
+      logger.error("tts.chunks_failed", { storyId, goalStoryId, failed: failedChunks.length, total: chunks.length, details: failedDetails });
       throw new Error(`${failedChunks.length}/${chunks.length} chunk(s) failed`);
+    }
+
+    if (jobId) {
+      await updateJob(jobId, "RUNNING", { result: { progress: 60, stage: "merging" } }).catch((e) => {
+        logger.warn("tts.progress_update_failed", { jobId, stage: "merging", error: String(e) });
+      });
     }
 
     // Download chunks in order and merge
@@ -319,7 +360,13 @@ export const ttsTask = task({
       chunkPayloads.map((p) => downloadFromR2(p.tempKey)),
     );
     const combined = mergeAudioChunks(audioBuffers, responseFormat);
-    logger.info("tts.chunks_merged", { storyId, chunks: chunks.length, sizeBytes: combined.length });
+    logger.info("tts.chunks_merged", { storyId, goalStoryId, chunks: chunks.length, sizeBytes: combined.length });
+
+    if (jobId) {
+      await updateJob(jobId, "RUNNING", { result: { progress: 80, stage: "uploading" } }).catch((e) => {
+        logger.warn("tts.progress_update_failed", { jobId, stage: "uploading", error: String(e) });
+      });
+    }
 
     // Upload final audio
     const baseKey = generateAudioKey("graphql-tts");
@@ -338,26 +385,60 @@ export const ttsTask = task({
     });
 
     const audioUrl = result.publicUrl ?? "";
-    logger.info("tts.r2_uploaded", { storyId, key, sizeBytes: combined.length });
+    if (!audioUrl) {
+      logger.warn("tts.r2_no_public_url", { storyId, goalStoryId, key });
+    }
+    logger.info("tts.r2_uploaded", { storyId, goalStoryId, key, sizeBytes: combined.length, audioUrl });
 
     // Clean up temp chunk files
-    await Promise.all(chunkPayloads.map((p) => deleteFromR2(p.tempKey).catch(() => {})));
-    logger.info("tts.chunks_cleaned", { storyId, count: chunkPayloads.length });
+    await Promise.all(chunkPayloads.map((p) => deleteFromR2(p.tempKey).catch((e) => {
+      logger.warn("tts.chunk_delete_failed", { tempKey: p.tempKey, error: String(e) });
+    })));
+    logger.info("tts.chunks_cleaned", { storyId, goalStoryId, count: chunkPayloads.length });
 
     // Update Neon stories row
     if (goalStoryId) {
       const now = new Date().toISOString();
-      await neonSql`UPDATE goal_stories SET audio_key = ${key}, audio_url = ${audioUrl}, audio_generated_at = ${now}, updated_at = ${now} WHERE id = ${goalStoryId}`;
-      logger.info("tts.goal_story_updated", { goalStoryId, audioUrl });
+      try {
+        await neonSql`UPDATE goal_stories SET audio_key = ${key}, audio_url = ${audioUrl}, audio_generated_at = ${now}, updated_at = ${now} WHERE id = ${goalStoryId}`;
+        logger.info("tts.goal_story_updated", { goalStoryId, audioUrl, key });
+      } catch (dbErr) {
+        logger.error("tts.goal_story_update_failed", {
+          goalStoryId,
+          error: dbErr instanceof Error ? dbErr.message : String(dbErr),
+        });
+        throw dbErr; // re-throw so onFailure marks the job FAILED
+      }
     } else if (storyId && userEmail) {
       const now = new Date().toISOString();
-      await neonSql`UPDATE stories SET audio_key = ${key}, audio_url = ${audioUrl}, audio_generated_at = ${now}, updated_at = ${now} WHERE id = ${storyId} AND user_id = ${userEmail}`;
-      logger.info("tts.story_updated", { storyId, audioUrl });
+      try {
+        await neonSql`UPDATE stories SET audio_key = ${key}, audio_url = ${audioUrl}, audio_generated_at = ${now}, updated_at = ${now} WHERE id = ${storyId} AND user_id = ${userEmail}`;
+        logger.info("tts.story_updated", { storyId, audioUrl, key });
+      } catch (dbErr) {
+        logger.error("tts.story_update_failed", {
+          storyId,
+          error: dbErr instanceof Error ? dbErr.message : String(dbErr),
+        });
+        throw dbErr;
+      }
+    } else {
+      logger.warn("tts.no_story_target", { storyId, goalStoryId, userEmail: userEmail ? "[set]" : "[missing]", jobId });
     }
 
     // Mark job SUCCEEDED
     if (jobId) {
-      await updateJob(jobId, "SUCCEEDED", { result: { audioUrl } });
+      try {
+        await updateJob(jobId, "SUCCEEDED", { result: { audioUrl } });
+        logger.info("tts.job_succeeded", { jobId, storyId, goalStoryId, audioUrl });
+      } catch (dbErr) {
+        // Audio was generated and uploaded successfully — only the job status update failed.
+        // Log clearly so it can be manually corrected.
+        logger.error("tts.job_success_update_failed", {
+          jobId,
+          audioUrl,
+          error: dbErr instanceof Error ? dbErr.message : String(dbErr),
+        });
+      }
     }
 
     return { audioUrl, key, sizeBytes: combined.length };

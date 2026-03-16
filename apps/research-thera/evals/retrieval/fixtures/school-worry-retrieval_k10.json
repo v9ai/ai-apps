@@ -1,0 +1,247 @@
+{
+  "id": "school-worry-retrieval",
+  "query": "Brief CBT interventions for generalized worry in middle childhood",
+  "top_k": 10,
+  "chunks": [
+    {
+      "entity_type": "TherapyResearch",
+      "entity_id": 130,
+      "title": "Parental Stress of Preschool Children With Generalized Anxiety or Oppositional Defiant Disorder",
+      "content": "Parental Stress of Preschool Children With Generalized Anxiety or Oppositional Defiant Disorder\n<b>Background:</b> Generalized anxiety and oppositional defiant disorders are among the most common psychopathological disorders in pre-school children. We investigated the symptom rate and perception of the child's disorders in parents of preschool children with generalized anxiety disorder (GAD) or oppositional defiant disorder (ODD). <b>Methods:</b> The parents of preschool children (mean age 54.35 months, SD \u00b1 11.60) with ODD, GAD, or typical development (TD) filled the Symptom Check List-90-Revised (SCL-90-R) and the Child Behavior Checklist- 1\u00bd-5 (CBCL 1\u00bd 5). Parents and children's diagnoses were determined by clinical assessment. <b>Results:</b> The parents of children with ODD reported a symptoms rate higher than parents of children with GAD or TD on most of the SCL-90-R (Global Severity Index of mental distress, <i>p</i> = 0.010; Somatization, <i>p</i> = 0.002; Paranoid Ideation, <i>p</i> < 0.000; and Phobic Anxiety scales, <i>p</i> = 0.030). <b>Conclusions:</b> On the CBCL scales, the parents of the ODD group overestimated the children's problems, while parents of children with GAD reported mainly children's emotional difficulties. Parents of children with ODD seem to be psychologically more vulnerable than parents of children with GAD. Parenting programs might be tailored considering the child's diagnosis and family functioning.\nParents of children with ODD reported higher symptom rates on most SCL-90-R scales compared to parents of children with GAD or typical development\nOn the CBCL scales, parents of ODD children overestimated their children's problems, while parents of GAD children focused more on emotional difficulties\nParents of children with ODD appear psychologically more vulnerable than parents of children with GAD\nParenting programs might be tailored based on the child's diagnosis and family functioning\nParental stress and psychological vulnerability should be assessed when working with families of preschool children with ODD\nParenting interventions for ODD should address both child behavior and parental psychological wellbeing\nTailoring parenting programs based on specific child diagnoses (ODD vs GAD) may improve effectiveness",
+      "metadata": {
+        "techniques": [
+          "Parental stress and psychological vulnerability should be assessed when working with families of preschool children with ODD",
+          "Parenting interventions for ODD should address both child behavior and parental psychological wellbeing",
+          "Tailoring parenting programs based on specific child diagnoses (ODD vs GAD) may improve effectiveness"
+        ],
+        "keyFindings": [
+          "Parents of children with ODD reported higher symptom rates on most SCL-90-R scales compared to parents of children with GAD or typical development",
+          "On the CBCL scales, parents of ODD children overestimated their children's problems, while parents of GAD children focused more on emotional difficulties",
+          "Parents of children with ODD appear psychologically more vulnerable than parents of children with GAD",
+          "Parenting programs might be tailored based on the child's diagnosis and family functioning"
+        ]
+      },
+      "similarity": 0.015654851972514927
+    },
+    {
+      "entity_type": "TherapyResearch",
+      "entity_id": 145,
+      "title": "Technology-Based Acceptance and Commitment Therapy for Parents of Children with Chronic Conditions: A Pilot Study",
+      "content": "Technology-Based Acceptance and Commitment Therapy for Parents of Children with Chronic Conditions: A Pilot Study\nPilot randomized controlled trial of a technology-based ACT program for parents of children with chronic conditions. Demonstrated significant improvements in psychological flexibility, parenting stress, and quality of life with medium effect sizes maintained at 3-month follow-up.\nSignificant reduction in parenting stress (d = 0.58)\nIncreased psychological flexibility in parenting contexts\nReduced experiential avoidance and cognitive fusion\nHigh treatment satisfaction and program acceptability\nAcceptance and Commitment Therapy\nCognitive defusion\nPsychological flexibility\nValues-based parenting\nMindfulness",
+      "metadata": {
+        "techniques": [
+          "Acceptance and Commitment Therapy",
+          "Cognitive defusion",
+          "Psychological flexibility",
+          "Values-based parenting",
+          "Mindfulness"
+        ],
+        "keyFindings": [
+          "Significant reduction in parenting stress (d = 0.58)",
+          "Increased psychological flexibility in parenting contexts",
+          "Reduced experiential avoidance and cognitive fusion",
+          "High treatment satisfaction and program acceptability"
+        ]
+      },
+      "similarity": -0.03458120820319732
+    },
+    {
+      "entity_type": "TherapyResearch",
+      "entity_id": 134,
+      "title": "Self-Regulation Intervention Impact on Turkish Children with Emotional and Behavioral Disorder Risks",
+      "content": "Self-Regulation Intervention Impact on Turkish Children with Emotional and Behavioral Disorder Risks\n<jats:p>This study examined the effect of a self-regulation intervention package prepared for preschool children at risk for emotional and behavioral disorders (EBDs) in T\u00fcrkiye on children\u2019s self-regulation skills, social skills, problem behaviors, relationships with teachers, and peer acceptance. Ten children, five at risk of EBD and five with typical development (TD), participated in the study. This study used a single-group pretest-posttest design. The intervention lasted for eight weeks, two days a week. Follow-up data were collected three weeks after the intervention. It was found that the intervention package was effective in self-regulation, problem behavior, social skills, and peer acceptance variables of children at risk of EBD (z = \u22122.02, p &lt; 0.05, r = 0.64) but not in student-teacher relationships (p &gt; 0.05). In the follow-up, no significant changes were observed in any of the variables, except for problem behaviors. However, the levels were maintained (p &gt; 0.05). Only the problem behavior variable showed a significant decrease compared to the post-test (z = \u22122.03, p &lt; 0.05, r = 0.64). In addition, in the post- and follow-up tests, children at risk of EBD reached performance levels similar to those of TD children in terms of all variables (p &gt; 0.05), which is essential evidence showing the effectiveness and social validity of the intervention.</jats:p>\nThe self-regulation intervention was effective in improving self-regulation, reducing problem behaviors, enhancing social skills, and increasing peer acceptance in children at risk of EBD\nNo significant improvement was observed in student-teacher relationships during the intervention period\nProblem behaviors showed continued significant decrease during follow-up testing three weeks after intervention completion\nChildren at risk of EBD reached performance levels similar to typically developing children across all measured variables post-intervention\nSelf-regulation interventions can effectively reduce problem behaviors in preschool children at risk for emotional and behavioral disorders\nEight-week intervention programs with twice-weekly sessions show promise for improving social skills and emotional regulation in this population\nBehavioral interventions targeting self-regulation may help close the gap between at-risk children and typically developing peers in social-emotional functioning",
+      "metadata": {
+        "techniques": [
+          "Self-regulation interventions can effectively reduce problem behaviors in preschool children at risk for emotional and behavioral disorders",
+          "Eight-week intervention programs with twice-weekly sessions show promise for improving social skills and emotional regulation in this population",
+          "Behavioral interventions targeting self-regulation may help close the gap between at-risk children and typically developing peers in social-emotional functioning"
+        ],
+        "keyFindings": [
+          "The self-regulation intervention was effective in improving self-regulation, reducing problem behaviors, enhancing social skills, and increasing peer acceptance in children at risk of EBD",
+          "No significant improvement was observed in student-teacher relationships during the intervention period",
+          "Problem behaviors showed continued significant decrease during follow-up testing three weeks after intervention completion",
+          "Children at risk of EBD reached performance levels similar to typically developing children across all measured variables post-intervention"
+        ]
+      },
+      "similarity": -0.03645824387644225
+    },
+    {
+      "entity_type": "TherapyResearch",
+      "entity_id": 126,
+      "title": "Effect of class wide function-based intervention teams (CW-FIT) and the good behavior game (GBG) intervention with children in a classroom",
+      "content": "Effect of class wide function-based intervention teams (CW-FIT) and the good behavior game (GBG) intervention with children in a classroom\n<jats:p xml:lang=\"en\">One common issue with children with developmental disabilities is compliance. In Applied Behavior Analysis (ABA) individualized curriculum is developed for each student. However, Maggin et al. (2012) showed that group contingencies are effective in addressing challenging behavior in general education classroom. Research has been done with using two types of interdependent contingency, Class Wide Function Based Intervention Teams (CWFIT) and Good Behavior Game (GBG). They have each shown their strength in reducing disruptive behavior, but they have not been compared to see which intervention works better when applied alternatively. The purpose of the study is to evaluate the effect of CW-FIT and GBG interventions on disruptive behavior of children in elementary school. The results showed that both the interventions were effective in reducing disruptive behavior. These findings suggested that both interventions work. We did not have a clear finding on praise versus reprimand during baseline, intervention and generalization phase.</jats:p>\nBoth CW-FIT and GBG interventions were effective in reducing disruptive behavior in children\nGroup contingencies are effective for addressing challenging behavior in general education classrooms\nThe study compared CW-FIT and GBG but did not determine which intervention works better when applied alternatively\nNo clear findings on praise versus reprimand during baseline, intervention and generalization phases\nGroup contingency interventions like CW-FIT and GBG can effectively reduce disruptive classroom behaviors\nBoth CW-FIT and GBG show promise for addressing vocalization disruptions in classroom settings\nInterdependent contingencies may be particularly effective for managing disruptive behaviors in children with developmental disabilities",
+      "metadata": {
+        "techniques": [
+          "Group contingency interventions like CW-FIT and GBG can effectively reduce disruptive classroom behaviors",
+          "Both CW-FIT and GBG show promise for addressing vocalization disruptions in classroom settings",
+          "Interdependent contingencies may be particularly effective for managing disruptive behaviors in children with developmental disabilities"
+        ],
+        "keyFindings": [
+          "Both CW-FIT and GBG interventions were effective in reducing disruptive behavior in children",
+          "Group contingencies are effective for addressing challenging behavior in general education classrooms",
+          "The study compared CW-FIT and GBG but did not determine which intervention works better when applied alternatively",
+          "No clear findings on praise versus reprimand during baseline, intervention and generalization phases"
+        ]
+      },
+      "similarity": -0.0365574979388279
+    },
+    {
+      "entity_type": "TherapyResearch",
+      "entity_id": 127,
+      "title": "The effect of child-centered play therapy (CCPT) on the symptoms of oppositional defiant disorder in preschool children",
+      "content": "The effect of child-centered play therapy (CCPT) on the symptoms of oppositional defiant disorder in preschool children\nThis study aimed to evaluate the effect of child-centered play therapy (CCPT) on the symptoms of ODD in preschool children. In this quasi-experimental study, using a randomized pretest, posttest, follow-up (RPPF) design with a control group, 24 children in the age range of 5-7 years were selected based on the cut off point of CSI-4 and were randomly assigned into two equal groups of experimental and control (n = 12 each). The experimental group underwent CCPT intervention for 12 weeks, while the control group did not receive any intervention. Data were analyzed using the repeated measures ANOVA. The results showed a significant difference between the intervention and control groups in the symptoms of ODD (P < 0.05), so that CCPT intervention could reduce the symptoms of ODD in preschool children. Comparison of the scores of the evaluation stages showed that the symptoms were continuously decreasing in the experimental group in the 6-month follow-up. Based on these findings, it can be concluded that CCPT is an effective method to reduce the symptoms of ODD in preschool children. Therefore, it is recommended that this method be used for preschool children with ODD in educational institutions and psychological clinics.\nCCPT intervention significantly reduced symptoms of ODD in preschool children compared to control group\nSymptoms showed continuous decrease in experimental group during 6-month follow-up period\nCCPT is an effective method to reduce ODD symptoms in preschool children\nCCPT can be implemented as a 12-week intervention for preschool children with ODD symptoms\nTherapy effects persist with continuous symptom reduction observed at 6-month follow-up\nCCPT is recommended for use in educational institutions and psychological clinics for this population",
+      "metadata": {
+        "techniques": [
+          "CCPT can be implemented as a 12-week intervention for preschool children with ODD symptoms",
+          "Therapy effects persist with continuous symptom reduction observed at 6-month follow-up",
+          "CCPT is recommended for use in educational institutions and psychological clinics for this population"
+        ],
+        "keyFindings": [
+          "CCPT intervention significantly reduced symptoms of ODD in preschool children compared to control group",
+          "Symptoms showed continuous decrease in experimental group during 6-month follow-up period",
+          "CCPT is an effective method to reduce ODD symptoms in preschool children"
+        ]
+      },
+      "similarity": -0.04543022553423981
+    },
+    {
+      "entity_type": "TherapyResearch",
+      "entity_id": 159,
+      "title": "The effect of an aggressive behavior prevention program on kindergarten students",
+      "content": "The effect of an aggressive behavior prevention program on kindergarten students\nThe Aggressive Behavior Prevention Program significantly decreased aggression levels in kindergarten students based on Social Cognitive Theory\nSocial Cognitive Theory-based intervention\nanger management\nalternative behavior training\nfamily involvement\novert and relational aggression reduction",
+      "metadata": {
+        "techniques": [
+          "Social Cognitive Theory-based intervention",
+          "anger management",
+          "alternative behavior training",
+          "family involvement",
+          "overt and relational aggression reduction"
+        ],
+        "keyFindings": [
+          "The Aggressive Behavior Prevention Program significantly decreased aggression levels in kindergarten students based on Social Cognitive Theory"
+        ]
+      },
+      "similarity": -0.05805431853177789
+    },
+    {
+      "entity_type": "TherapyResearch",
+      "entity_id": 143,
+      "title": "Mindful Parenting Training in Child Psychiatric Settings: Heightened Parental Mindfulness Reduces Parents' and Children's Psychopathology",
+      "content": "Mindful Parenting Training in Child Psychiatric Settings: Heightened Parental Mindfulness Reduces Parents' and Children's Psychopathology\nPilot study and secondary analysis of Mindful Parenting training in child psychiatric settings. Parents showed large increases in mindfulness (d = 0.74) and significant reductions in psychopathology, with corresponding improvements in child symptoms across diverse clinical presentations.\nLarge increase in parental mindfulness (d = 0.74)\nSignificant reduction in parenting stress\nImprovements in child psychopathology across diagnostic categories\nEnhanced parent-child relationship quality\nMindful parenting\nMindfulness meditation\nMindful communication\nCompassion practices",
+      "metadata": {
+        "techniques": [
+          "Mindful parenting",
+          "Mindfulness meditation",
+          "Mindful communication",
+          "Compassion practices"
+        ],
+        "keyFindings": [
+          "Large increase in parental mindfulness (d = 0.74)",
+          "Significant reduction in parenting stress",
+          "Improvements in child psychopathology across diagnostic categories",
+          "Enhanced parent-child relationship quality"
+        ]
+      },
+      "similarity": -0.05908630848606089
+    },
+    {
+      "entity_type": "TherapyResearch",
+      "entity_id": 152,
+      "title": "A Meta-Analytic Review of Preschool Social and Emotional Learning Interventions",
+      "content": "A Meta-Analytic Review of Preschool Social and Emotional Learning Interventions\nUniversal SEL interventions show small-medium effects on social-emotional skill development (g = 0.34) and problem behavior reduction (g = 0.32)\nTargeted interventions show medium effects (g = 0.48)\nuniversal SEL curricula\ntargeted interventions for at-risk children\nsocial-emotional skill building\nproblem behavior reduction strategies",
+      "metadata": {
+        "techniques": [
+          "universal SEL curricula",
+          "targeted interventions for at-risk children",
+          "social-emotional skill building",
+          "problem behavior reduction strategies"
+        ],
+        "keyFindings": [
+          "Universal SEL interventions show small-medium effects on social-emotional skill development (g = 0.34) and problem behavior reduction (g = 0.32)",
+          "Targeted interventions show medium effects (g = 0.48)"
+        ]
+      },
+      "similarity": -0.06310782156851391
+    },
+    {
+      "entity_type": "TherapyResearch",
+      "entity_id": 175,
+      "title": "The Efficacy of Visual Activity Schedule Intervention in Reducing Problem Behaviors in Children With Attention-Deficit/Hyperactivity Disorder Between the Age of 5 and 12 Years: A Systematic Review",
+      "content": "The Efficacy of Visual Activity Schedule Intervention in Reducing Problem Behaviors in Children With Attention-Deficit/Hyperactivity Disorder Between the Age of 5 and 12 Years: A Systematic Review\nA larger number of studies and the ADHD clinical population would help to increase the generalizability of future reviews of treatments in this context.\nVisual activity schedules reduce problem behaviors in children with ADHD\nPredictable routines decrease anxiety and improve self-regulation\nVisual supports help children understand expectations and transitions\nVisual activity schedules\nPredictable classroom routines\nVisual timers and cues\nTransition warnings and supports\nClear visual expectations",
+      "metadata": {
+        "techniques": [
+          "Visual activity schedules",
+          "Predictable classroom routines",
+          "Visual timers and cues",
+          "Transition warnings and supports",
+          "Clear visual expectations"
+        ],
+        "keyFindings": [
+          "Visual activity schedules reduce problem behaviors in children with ADHD",
+          "Predictable routines decrease anxiety and improve self-regulation",
+          "Visual supports help children understand expectations and transitions"
+        ]
+      },
+      "similarity": -0.06384579192459405
+    },
+    {
+      "entity_type": "TherapyResearch",
+      "entity_id": 140,
+      "title": "The Effect of Mindfulness Interventions for Parents on Parenting Stress and Youth Psychological Outcomes: A Systematic Review and Meta-Analysis",
+      "content": "The Effect of Mindfulness Interventions for Parents on Parenting Stress and Youth Psychological Outcomes: A Systematic Review and Meta-Analysis\nSystematic review and meta-analysis of 25 studies on mindfulness interventions for parents. Found large effect sizes for parenting stress reduction (g = 0.68) and moderate effects for youth psychological outcomes (g = 0.37), with effects maintained at 3-6 month follow-ups.\nLarge effect size for parenting stress reduction (g = 0.68, 95% CI [0.46, 0.90])\nModerate effect for youth psychological outcomes (g = 0.37)\nEffects maintained at 3-6 month follow-ups\n6-8-week MBSR-adapted programs show optimal outcomes\nMindfulness meditation\nBody scan\nBreath awareness\nLoving-kindness meditation\nMindful parenting exercises",
+      "metadata": {
+        "techniques": [
+          "Mindfulness meditation",
+          "Body scan",
+          "Breath awareness",
+          "Loving-kindness meditation",
+          "Mindful parenting exercises"
+        ],
+        "keyFindings": [
+          "Large effect size for parenting stress reduction (g = 0.68, 95% CI [0.46, 0.90])",
+          "Moderate effect for youth psychological outcomes (g = 0.37)",
+          "Effects maintained at 3-6 month follow-ups",
+          "6-8-week MBSR-adapted programs show optimal outcomes"
+        ]
+      },
+      "similarity": -0.0655181875981361
+    }
+  ],
+  "retrieval_context": [
+    "Parental Stress of Preschool Children With Generalized Anxiety or Oppositional Defiant Disorder\n<b>Background:</b> Generalized anxiety and oppositional defiant disorders are among the most common psychopathological disorders in pre-school children. We investigated the symptom rate and perception of the child's disorders in parents of preschool children with generalized anxiety disorder (GAD) or oppositional defiant disorder (ODD). <b>Methods:</b> The parents of preschool children (mean age 54.35 months, SD \u00b1 11.60) with ODD, GAD, or typical development (TD) filled the Symptom Check List-90-Revised (SCL-90-R) and the Child Behavior Checklist- 1\u00bd-5 (CBCL 1\u00bd 5). Parents and children's diagnoses were determined by clinical assessment. <b>Results:</b> The parents of children with ODD reported a symptoms rate higher than parents of children with GAD or TD on most of the SCL-90-R (Global Severity Index of mental distress, <i>p</i> = 0.010; Somatization, <i>p</i> = 0.002; Paranoid Ideation, <i>p</i> < 0.000; and Phobic Anxiety scales, <i>p</i> = 0.030). <b>Conclusions:</b> On the CBCL scales, the parents of the ODD group overestimated the children's problems, while parents of children with GAD reported mainly children's emotional difficulties. Parents of children with ODD seem to be psychologically more vulnerable than parents of children with GAD. Parenting programs might be tailored considering the child's diagnosis and family functioning.\nParents of children with ODD reported higher symptom rates on most SCL-90-R scales compared to parents of children with GAD or typical development\nOn the CBCL scales, parents of ODD children overestimated their children's problems, while parents of GAD children focused more on emotional difficulties\nParents of children with ODD appear psychologically more vulnerable than parents of children with GAD\nParenting programs might be tailored based on the child's diagnosis and family functioning\nParental stress and psychological vulnerability should be assessed when working with families of preschool children with ODD\nParenting interventions for ODD should address both child behavior and parental psychological wellbeing\nTailoring parenting programs based on specific child diagnoses (ODD vs GAD) may improve effectiveness",
+    "Technology-Based Acceptance and Commitment Therapy for Parents of Children with Chronic Conditions: A Pilot Study\nPilot randomized controlled trial of a technology-based ACT program for parents of children with chronic conditions. Demonstrated significant improvements in psychological flexibility, parenting stress, and quality of life with medium effect sizes maintained at 3-month follow-up.\nSignificant reduction in parenting stress (d = 0.58)\nIncreased psychological flexibility in parenting contexts\nReduced experiential avoidance and cognitive fusion\nHigh treatment satisfaction and program acceptability\nAcceptance and Commitment Therapy\nCognitive defusion\nPsychological flexibility\nValues-based parenting\nMindfulness",
+    "Self-Regulation Intervention Impact on Turkish Children with Emotional and Behavioral Disorder Risks\n<jats:p>This study examined the effect of a self-regulation intervention package prepared for preschool children at risk for emotional and behavioral disorders (EBDs) in T\u00fcrkiye on children\u2019s self-regulation skills, social skills, problem behaviors, relationships with teachers, and peer acceptance. Ten children, five at risk of EBD and five with typical development (TD), participated in the study. This study used a single-group pretest-posttest design. The intervention lasted for eight weeks, two days a week. Follow-up data were collected three weeks after the intervention. It was found that the intervention package was effective in self-regulation, problem behavior, social skills, and peer acceptance variables of children at risk of EBD (z = \u22122.02, p &lt; 0.05, r = 0.64) but not in student-teacher relationships (p &gt; 0.05). In the follow-up, no significant changes were observed in any of the variables, except for problem behaviors. However, the levels were maintained (p &gt; 0.05). Only the problem behavior variable showed a significant decrease compared to the post-test (z = \u22122.03, p &lt; 0.05, r = 0.64). In addition, in the post- and follow-up tests, children at risk of EBD reached performance levels similar to those of TD children in terms of all variables (p &gt; 0.05), which is essential evidence showing the effectiveness and social validity of the intervention.</jats:p>\nThe self-regulation intervention was effective in improving self-regulation, reducing problem behaviors, enhancing social skills, and increasing peer acceptance in children at risk of EBD\nNo significant improvement was observed in student-teacher relationships during the intervention period\nProblem behaviors showed continued significant decrease during follow-up testing three weeks after intervention completion\nChildren at risk of EBD reached performance levels similar to typically developing children across all measured variables post-intervention\nSelf-regulation interventions can effectively reduce problem behaviors in preschool children at risk for emotional and behavioral disorders\nEight-week intervention programs with twice-weekly sessions show promise for improving social skills and emotional regulation in this population\nBehavioral interventions targeting self-regulation may help close the gap between at-risk children and typically developing peers in social-emotional functioning",
+    "Effect of class wide function-based intervention teams (CW-FIT) and the good behavior game (GBG) intervention with children in a classroom\n<jats:p xml:lang=\"en\">One common issue with children with developmental disabilities is compliance. In Applied Behavior Analysis (ABA) individualized curriculum is developed for each student. However, Maggin et al. (2012) showed that group contingencies are effective in addressing challenging behavior in general education classroom. Research has been done with using two types of interdependent contingency, Class Wide Function Based Intervention Teams (CWFIT) and Good Behavior Game (GBG). They have each shown their strength in reducing disruptive behavior, but they have not been compared to see which intervention works better when applied alternatively. The purpose of the study is to evaluate the effect of CW-FIT and GBG interventions on disruptive behavior of children in elementary school. The results showed that both the interventions were effective in reducing disruptive behavior. These findings suggested that both interventions work. We did not have a clear finding on praise versus reprimand during baseline, intervention and generalization phase.</jats:p>\nBoth CW-FIT and GBG interventions were effective in reducing disruptive behavior in children\nGroup contingencies are effective for addressing challenging behavior in general education classrooms\nThe study compared CW-FIT and GBG but did not determine which intervention works better when applied alternatively\nNo clear findings on praise versus reprimand during baseline, intervention and generalization phases\nGroup contingency interventions like CW-FIT and GBG can effectively reduce disruptive classroom behaviors\nBoth CW-FIT and GBG show promise for addressing vocalization disruptions in classroom settings\nInterdependent contingencies may be particularly effective for managing disruptive behaviors in children with developmental disabilities",
+    "The effect of child-centered play therapy (CCPT) on the symptoms of oppositional defiant disorder in preschool children\nThis study aimed to evaluate the effect of child-centered play therapy (CCPT) on the symptoms of ODD in preschool children. In this quasi-experimental study, using a randomized pretest, posttest, follow-up (RPPF) design with a control group, 24 children in the age range of 5-7 years were selected based on the cut off point of CSI-4 and were randomly assigned into two equal groups of experimental and control (n = 12 each). The experimental group underwent CCPT intervention for 12 weeks, while the control group did not receive any intervention. Data were analyzed using the repeated measures ANOVA. The results showed a significant difference between the intervention and control groups in the symptoms of ODD (P < 0.05), so that CCPT intervention could reduce the symptoms of ODD in preschool children. Comparison of the scores of the evaluation stages showed that the symptoms were continuously decreasing in the experimental group in the 6-month follow-up. Based on these findings, it can be concluded that CCPT is an effective method to reduce the symptoms of ODD in preschool children. Therefore, it is recommended that this method be used for preschool children with ODD in educational institutions and psychological clinics.\nCCPT intervention significantly reduced symptoms of ODD in preschool children compared to control group\nSymptoms showed continuous decrease in experimental group during 6-month follow-up period\nCCPT is an effective method to reduce ODD symptoms in preschool children\nCCPT can be implemented as a 12-week intervention for preschool children with ODD symptoms\nTherapy effects persist with continuous symptom reduction observed at 6-month follow-up\nCCPT is recommended for use in educational institutions and psychological clinics for this population",
+    "The effect of an aggressive behavior prevention program on kindergarten students\nThe Aggressive Behavior Prevention Program significantly decreased aggression levels in kindergarten students based on Social Cognitive Theory\nSocial Cognitive Theory-based intervention\nanger management\nalternative behavior training\nfamily involvement\novert and relational aggression reduction",
+    "Mindful Parenting Training in Child Psychiatric Settings: Heightened Parental Mindfulness Reduces Parents' and Children's Psychopathology\nPilot study and secondary analysis of Mindful Parenting training in child psychiatric settings. Parents showed large increases in mindfulness (d = 0.74) and significant reductions in psychopathology, with corresponding improvements in child symptoms across diverse clinical presentations.\nLarge increase in parental mindfulness (d = 0.74)\nSignificant reduction in parenting stress\nImprovements in child psychopathology across diagnostic categories\nEnhanced parent-child relationship quality\nMindful parenting\nMindfulness meditation\nMindful communication\nCompassion practices",
+    "A Meta-Analytic Review of Preschool Social and Emotional Learning Interventions\nUniversal SEL interventions show small-medium effects on social-emotional skill development (g = 0.34) and problem behavior reduction (g = 0.32)\nTargeted interventions show medium effects (g = 0.48)\nuniversal SEL curricula\ntargeted interventions for at-risk children\nsocial-emotional skill building\nproblem behavior reduction strategies",
+    "The Efficacy of Visual Activity Schedule Intervention in Reducing Problem Behaviors in Children With Attention-Deficit/Hyperactivity Disorder Between the Age of 5 and 12 Years: A Systematic Review\nA larger number of studies and the ADHD clinical population would help to increase the generalizability of future reviews of treatments in this context.\nVisual activity schedules reduce problem behaviors in children with ADHD\nPredictable routines decrease anxiety and improve self-regulation\nVisual supports help children understand expectations and transitions\nVisual activity schedules\nPredictable classroom routines\nVisual timers and cues\nTransition warnings and supports\nClear visual expectations",
+    "The Effect of Mindfulness Interventions for Parents on Parenting Stress and Youth Psychological Outcomes: A Systematic Review and Meta-Analysis\nSystematic review and meta-analysis of 25 studies on mindfulness interventions for parents. Found large effect sizes for parenting stress reduction (g = 0.68) and moderate effects for youth psychological outcomes (g = 0.37), with effects maintained at 3-6 month follow-ups.\nLarge effect size for parenting stress reduction (g = 0.68, 95% CI [0.46, 0.90])\nModerate effect for youth psychological outcomes (g = 0.37)\nEffects maintained at 3-6 month follow-ups\n6-8-week MBSR-adapted programs show optimal outcomes\nMindfulness meditation\nBody scan\nBreath awareness\nLoving-kindness meditation\nMindful parenting exercises"
+  ],
+  "similarities": [
+    0.015654851972514927,
+    -0.03458120820319732,
+    -0.03645824387644225,
+    -0.0365574979388279,
+    -0.04543022553423981,
+    -0.05805431853177789,
+    -0.05908630848606089,
+    -0.06310782156851391,
+    -0.06384579192459405,
+    -0.0655181875981361
+  ],
+  "titles": [
+    "Parental Stress of Preschool Children With Generalized Anxiety or Oppositional Defiant Disorder",
+    "Technology-Based Acceptance and Commitment Therapy for Parents of Children with Chronic Conditions: A Pilot Study",
+    "Self-Regulation Intervention Impact on Turkish Children with Emotional and Behavioral Disorder Risks",
+    "Effect of class wide function-based intervention teams (CW-FIT) and the good behavior game (GBG) intervention with children in a classroom",
+    "The effect of child-centered play therapy (CCPT) on the symptoms of oppositional defiant disorder in preschool children",
+    "The effect of an aggressive behavior prevention program on kindergarten students",
+    "Mindful Parenting Training in Child Psychiatric Settings: Heightened Parental Mindfulness Reduces Parents' and Children's Psychopathology",
+    "A Meta-Analytic Review of Preschool Social and Emotional Learning Interventions",
+    "The Efficacy of Visual Activity Schedule Intervention in Reducing Problem Behaviors in Children With Attention-Deficit/Hyperactivity Disorder Between the Age of 5 and 12 Years: A Systematic Review",
+    "The Effect of Mindfulness Interventions for Parents on Parenting Stress and Youth Psychological Outcomes: A Systematic Review and Meta-Analysis"
+  ],
+  "response": "Based on the provided research context, there is no direct evidence on brief CBT interventions for generalized worry in middle childhood. The context focuses on preschool-aged children (ages 1.5\u20135 and 5\u20137) and includes interventions such as play therapy, self-regulation programs, mindfulness for parents, and classroom management strategies, but not specifically brief CBT for school-aged children with generalized worry.\n\nHowever, related insights from the context that may inform an approach include:\n\n1. **For anxiety-related difficulties in children**, the research highlights that parents of children with Generalized Anxiety Disorder (GAD) tend to report their children's emotional difficulties accurately, suggesting that interventions might benefit from involving parents to address emotional awareness and support.\n\n2. **Parent involvement is key**. Several studies show that reducing parental stress and improving parenting skills (e.g., through mindfulness, Acceptance and Commitment Therapy, or tailored parenting programs) leads to improvements in child psychopathology, including anxiety-related symptoms.\n\n3. **Consider targeted interventions**. While not brief CBT, targeted social-emotional learning (SEL) interventions show medium effects (g = 0.48) for at-risk children, which could be adapted for worry in middle childhood.\n\n4. **Structure and predictability help**. Visual schedules and predictable routines\u2014effective for children with ADHD\u2014may also reduce anxiety by providing clarity and reducing uncertainty, a common component of generalized worry.\n\nIn summary, while brief CBT for generalized worry in middle childhood isn\u2019t covered, the context supports using structured, skill-based interventions involving both child and parent components, with an emphasis on emotional regulation, parental support, and predictable environments."
+}

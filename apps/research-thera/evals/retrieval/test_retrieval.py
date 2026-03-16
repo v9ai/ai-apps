@@ -1,7 +1,7 @@
 """DeepEval retrieval quality tests for PGVector → story generation pipeline.
 
 Tests whether the PGVector cosine similarity search returns therapeutically
-relevant, precise, and complete research context for each Noah scenario.
+relevant, precise, and complete research context for each Sam scenario.
 
 Two test categories:
   1. Deterministic — fast similarity/structure checks, no LLM calls

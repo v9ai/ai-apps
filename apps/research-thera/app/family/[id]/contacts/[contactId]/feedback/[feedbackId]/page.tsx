@@ -36,6 +36,7 @@ import {
   useGetResearchQuery,
   useGetIssuesQuery,
   useCreateIssueMutation,
+  useDeleteGoalStoryMutation,
   FeedbackSource,
 } from "@/app/__generated__/hooks";
 
@@ -344,6 +345,16 @@ function ContactFeedbackDetailContent() {
       setGeneratingStory(false);
     }
   };
+
+  // Story deletion
+  const [storyToDelete, setStoryToDelete] = useState<number | null>(null);
+  const [deleteGoalStory, { loading: deletingStory }] = useDeleteGoalStoryMutation({
+    onCompleted: () => {
+      setStoryToDelete(null);
+      apolloClient.refetchQueries({ include: ["GetContactFeedback"] });
+    },
+    onError: () => setStoryToDelete(null),
+  });
 
   function openEditDialog() {
     if (!fb) return;
@@ -809,6 +820,29 @@ function ContactFeedbackDetailContent() {
             </Text>
           )}
 
+          <AlertDialog.Root open={storyToDelete !== null} onOpenChange={(open) => { if (!open) setStoryToDelete(null); }}>
+            <AlertDialog.Content maxWidth="400px">
+              <AlertDialog.Title>Delete this story?</AlertDialog.Title>
+              <AlertDialog.Description size="2">
+                This story will be permanently deleted and cannot be recovered.
+              </AlertDialog.Description>
+              <Flex gap="3" mt="4" justify="end">
+                <AlertDialog.Cancel>
+                  <Button variant="soft" color="gray">Cancel</Button>
+                </AlertDialog.Cancel>
+                <AlertDialog.Action>
+                  <Button
+                    color="red"
+                    loading={deletingStory}
+                    onClick={() => storyToDelete !== null && deleteGoalStory({ variables: { id: storyToDelete } })}
+                  >
+                    Delete
+                  </Button>
+                </AlertDialog.Action>
+              </Flex>
+            </AlertDialog.Content>
+          </AlertDialog.Root>
+
           {fb.stories && fb.stories.length > 0 ? (
             <Flex direction="column" gap="3">
               {fb.stories.map((story) => (
@@ -823,9 +857,19 @@ function ContactFeedbackDetailContent() {
                           {story.minutes} min
                         </Badge>
                       </Flex>
-                      <Text size="1" color="gray">
-                        {new Date(story.createdAt).toLocaleDateString()}
-                      </Text>
+                      <Flex align="center" gap="2">
+                        <Text size="1" color="gray">
+                          {new Date(story.createdAt).toLocaleDateString()}
+                        </Text>
+                        <Button
+                          size="1"
+                          variant="ghost"
+                          color="red"
+                          onClick={() => setStoryToDelete(story.id)}
+                        >
+                          <TrashIcon />
+                        </Button>
+                      </Flex>
                     </Flex>
                     <NextLink
                       href={`/stories/goal-story/${story.id}`}

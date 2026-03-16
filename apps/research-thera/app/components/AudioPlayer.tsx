@@ -53,6 +53,9 @@ export function AudioPlayer({
   const [ttsError, setTtsError] = useState<string | null>(null);
   const [pollingJobId, setPollingJobId] = useState<string | null>(null);
   const [generationMessage, setGenerationMessage] = useState<string | null>(null);
+  const [generationProgress, setGenerationProgress] = useState<number | null>(null);
+  // Track consecutive null responses from the job query to detect a missing/lost job
+  const nullJobCountRef = useRef(0);
 
   const [generateAudio, { loading: generatingAudio }] =
     useGenerateOpenAiAudioMutation();
@@ -81,7 +84,8 @@ export function AudioPlayer({
   useEffect(() => {
     if (pollingJobId || existingAudioUrl) return;
     const runningJob = runningJobsData?.generationJobs?.find(
-      (j) => j.type === JobType.Audio && j.storyId === effectiveStoryId,
+      // Compare as strings to avoid number/string type mismatch from the DB
+      (j) => j.type === JobType.Audio && String(j.storyId) === String(effectiveStoryId),
     );
     if (runningJob) {
       // If the job hasn't been updated in >10 min it's permanently stuck — show error instead of polling.
@@ -91,6 +95,7 @@ export function AudioPlayer({
         setTtsError("Previous audio generation appears to have failed. Please try again.");
         return;
       }
+      nullJobCountRef.current = 0;
       setPollingJobId(runningJob.id);
       setGenerationMessage("Audio generation in progress…");
       // Guard against infinite polling if the job never reaches a terminal state.
@@ -98,6 +103,7 @@ export function AudioPlayer({
         stopPolling();
         setPollingJobId(null);
         setGenerationMessage(null);
+        setGenerationProgress(null);
         setTtsError("Audio generation timed out. Please try again.");
       }, 10 * 60 * 1000);
     }
@@ -107,26 +113,58 @@ export function AudioPlayer({
   // React to job status changes
   useEffect(() => {
     const job = jobData?.generationJob;
+
+    // If we are actively polling but the job is not found in the DB, count consecutive
+    // nulls and bail out after 3 to avoid an infinite spinner.
+    if (!job && pollingJobId) {
+      nullJobCountRef.current += 1;
+      if (nullJobCountRef.current >= 3) {
+        console.error("[AudioPlayer] job not found after 3 polls, giving up", { pollingJobId });
+        stopPolling();
+        setPollingJobId(null);
+        setGenerationMessage(null);
+        setGenerationProgress(null);
+        if (timeoutRef.current) clearTimeout(timeoutRef.current);
+        setTtsError("Audio generation job not found. Please try again.");
+      }
+      return;
+    }
+    if (job) nullJobCountRef.current = 0;
+
     if (!job) return;
+
+    // Show progress from result metadata if available
+    const progress = job.result?.progress;
+    if (typeof progress === "number") {
+      setGenerationProgress(progress);
+    }
 
     if (job.status === JobStatus.Succeeded) {
       stopPolling();
       setPollingJobId(null);
       setGenerationMessage(null);
+      setGenerationProgress(null);
       if (timeoutRef.current) clearTimeout(timeoutRef.current);
       const audioUrl = job.result?.audioUrl;
       if (audioUrl) {
-        setAudioSrc(audioUrl);
+        setAudioSrc(audioUrl as string);
         if (onAudioGenerated) onAudioGenerated();
+      } else {
+        console.error("[AudioPlayer] job succeeded but no audioUrl in result", job.result);
+        setTtsError("Audio generation completed but no audio URL was returned. Please try again.");
       }
     } else if (job.status === JobStatus.Failed) {
       stopPolling();
       setPollingJobId(null);
       setGenerationMessage(null);
+      setGenerationProgress(null);
       if (timeoutRef.current) clearTimeout(timeoutRef.current);
-      setTtsError(job.error?.message ?? "Audio generation failed");
+      const errorMsg = job.error?.message ?? "Audio generation failed";
+      console.error("[AudioPlayer] generation job failed", { jobId: pollingJobId, error: errorMsg });
+      setTtsError(errorMsg);
     }
-  }, [jobData, stopPolling, onAudioGenerated]);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [jobData, pollingJobId]);
 
   // Cleanup
   useEffect(() => {
@@ -192,11 +230,13 @@ export function AudioPlayer({
         setGenerationMessage(response.message);
       }
       if (jobId) {
+        nullJobCountRef.current = 0;
         setPollingJobId(jobId);
         timeoutRef.current = setTimeout(() => {
           stopPolling();
           setPollingJobId(null);
           setGenerationMessage(null);
+          setGenerationProgress(null);
           setTtsError("Audio generation timed out. Please try again.");
         }, 10 * 60 * 1000);
       }
@@ -354,6 +394,16 @@ export function AudioPlayer({
               {generationMessage && (
                 <Text size="1" color="gray">
                   {generationMessage}
+                </Text>
+              )}
+              {generationProgress != null && (
+                <Text size="1" color="gray">
+                  {generationProgress}% complete
+                </Text>
+              )}
+              {pollingJobId && (
+                <Text size="1" color="gray" style={{ fontFamily: "monospace", opacity: 0.6 }}>
+                  job: {pollingJobId}
                 </Text>
               )}
             </Flex>

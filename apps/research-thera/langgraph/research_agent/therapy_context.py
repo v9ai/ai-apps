@@ -301,7 +301,7 @@ class StoryContext:
 
     def _developmental_tier(self) -> str:
         if self.age_years is None:
-            return "ADULT"
+            return "MIDDLE_CHILDHOOD"
         if self.age_years <= 5:
             return "EARLY_CHILDHOOD"
         if self.age_years <= 11:
@@ -312,9 +312,18 @@ class StoryContext:
             return "LATE_ADOLESCENCE"
         return "ADULT"
 
+    def _lego_appropriate(self) -> bool:
+        return self._developmental_tier() in (
+            "EARLY_CHILDHOOD", "MIDDLE_CHILDHOOD", "EARLY_ADOLESCENCE"
+        )
+
     def build_story_prompt(self) -> str:
         age_ctx = f" (age {self.age_years})" if self.age_years is not None else ""
         tier = self._developmental_tier()
+        is_child = tier != "ADULT"
+        age_label = f"{self.age_years}-year-old child" if self.age_years is not None else "child"
+        max_sentence_words = 15 if is_child else 20
+        target_words = self.minutes * 120
 
         topic_section = (
             f"## Topic\nBased on professional feedback: {self.feedback_subject}\n"
@@ -322,6 +331,18 @@ class StoryContext:
             if self.feedback_subject
             else "## Topic\nGeneral therapeutic support session."
         )
+
+        # Age enforcement block — forces child-appropriate register
+        age_enforcement = ""
+        if is_child:
+            age_enforcement = (
+                f"\n\nCRITICAL AGE REQUIREMENT: {self.person_name} is a {age_label} ({tier} tier). "
+                f"Every word of this script MUST be written for a child, NOT for an adult.\n"
+                f"- Use only simple words (1-2 syllables when possible).\n"
+                f"- Use playful, warm, concrete language — no abstract adult concepts.\n"
+                f"- NEVER use adult register, adult emotional vocabulary, or adult expectations.\n"
+                f"- If you find yourself writing for a grown-up, stop and rewrite for a {age_label}."
+            )
 
         feedback_lines: list[str] = []
         if self.feedback_content or self.issues:
@@ -346,70 +367,115 @@ class StoryContext:
             else "No research papers available yet. Use general evidence-based therapeutic techniques."
         )
 
+        lego_appropriate = self._lego_appropriate()
+        lego_section = ""
+        if lego_appropriate:
+            lego_section = """
+## LEGO Therapeutic Play (REQUIRED)
+This session MUST integrate LEGO building as a hands-on therapeutic activity. This is NOT optional — LEGO play is a core modality for this age group:
+- Use LEGO construction as a metaphor for the therapeutic concept (e.g., building a "brave tower," "feelings wall," or "calm castle")
+- MUST include at least one guided LEGO building moment with clear spoken instructions and pauses for the child to build
+- Make LEGO participation optional for the listener: "If you have some LEGO bricks, grab a few now... if not, just imagine building in your mind"
+- Connect every building activity back to the therapeutic goal — the building IS the practice, not a distraction
+- Name specific LEGO techniques: Feelings Tower, Worry Wall, Brave Bridge, Memory Build, or Calm Castle — whichever fits the goal
+- Dedicate at least 30% of the session time to LEGO-based activities
+"""
+
+        child_req = (
+            f"\n- This is for a {age_label} — use child vocabulary, playful framing, "
+            f"and age-appropriate techniques throughout. Never adult-register."
+            if is_child else ""
+        )
+        lego_req = (
+            "\n- LEGO play is REQUIRED for this session — include guided LEGO building "
+            "activities as described in the LEGO Therapeutic Play section above"
+            if lego_appropriate else ""
+        )
+
         return f"""\
-Create a therapeutic audio session for the following feedback. Write the full script in {self.language}, approximately {self.minutes} minutes long when read aloud.
+Create a therapeutic audio session for the following feedback. Write the full script in {self.language}, approximately {self.minutes} minutes long when read aloud at a calm pace of about 120 words per minute.
+
+CRITICAL: This script will be read aloud by a text-to-speech engine. Write ONLY plain spoken prose. Absolutely NO markdown formatting — no **, ##, *, -, bullet points, numbered lists, headers, bold, or italic syntax. No section labels. Just natural flowing speech.
 
 {topic_section}
 
 ## Person
 This is for {self.person_name}{age_ctx}.
-Developmental Tier: {tier}
+Developmental Tier: {tier}{age_enforcement}
 {feedback_section}
 
 ## Research Evidence
 The following research papers inform the therapeutic techniques to use:
 
 {research_section}
-
-## Instructions
-- Create a complete, flowing therapeutic audio script
+{lego_section}
+## Audio Script Requirements
+- Write as spoken prose ONLY — the listener cannot see any text, they can only hear
+- Use "..." (three dots) for all pauses — between sections, after instructions, within sentences. Never write [pause] or any bracket markers — TTS engines read them literally
+- Keep sentences short: maximum {max_sentence_words} words each
+- Use spoken transitions: "Now...", "Next...", "When you're ready...", "Good. Let's try..."
+- CRITICAL: Every breathing exercise MUST have explicit counted timing. NEVER write just "take a deep breath". ALWAYS write: "Breathe in... two... three... four... And slowly breathe out... two... three... four... five..." If you mention breathing at all, include the numbered counts.
+- Vary pacing: alternate between instruction, story or metaphor, and silence
+- Never give more than two instructions in a row without a pause or encouragement
 - Incorporate specific techniques and findings from the research above
 - Address the specific issues identified in the feedback, providing practical strategies for each
 - Validate the observations from the professional who provided the feedback
-- Personalize for {self.person_name}{age_ctx} (developmental tier: {tier})
-- Target duration: {self.minutes} minutes when read aloud at a calm pace
+- Address {self.person_name} by name at least 3 times throughout the session
+- Personalize for {self.person_name}{age_ctx} (developmental tier: {tier}){child_req}{lego_req}
+- Target duration: {self.minutes} minutes (approximately {target_words} words at calm pace)
 - Write in {self.language}
-- Follow the therapeutic audio content structure (warm introduction, understanding the challenge, guided practices, integration)
-- Include a brief mention that a parent, caregiver, or professional can provide additional support if needed
-- IMPORTANT: Do NOT use any markdown formatting (no **, ##, *, bullet points, or bold/italic syntax). Write plain spoken prose only, as the script will be read aloud by a text-to-speech engine"""
+- Include a brief mention that a parent, caregiver, or professional can provide additional support if needed"""
 
 
 THERAPEUTIC_AUDIO_SYSTEM_PROMPT = """\
 ## Overview
-You are a Therapeutic Audio Content Agent. Your role is to create evidence-based, compassionate therapeutic guidance that helps people work through psychological challenges and achieve their mental health goals.
+You are a Therapeutic Audio Content Agent. Your role is to create evidence-based, compassionate therapeutic guidance delivered as spoken audio. Every word you write will be read aloud by a text-to-speech engine, so you must write exclusively for the ear — never for the eye.
+
+## Audio-First Writing Rules
+These rules are non-negotiable. Every sentence must pass the "read it aloud" test.
+
+1. NO markdown of any kind — no **, ##, *, -, bullet points, numbered lists, or formatting symbols. Write flowing spoken prose only.
+2. NO visual structure — no headers, labels, section dividers, or enumeration. Transitions happen through spoken cues: "Now let's try something new..." or "Here's what I'd love you to do next..."
+3. NO bracket markers — do NOT write [pause], [sound:x], or any bracket notation. TTS engines will read these literally. Use "..." (three dots) to create pauses — after instructions, between sections, within sentences.
+4. Sentence length — maximum 15 words per sentence for children, 20 for adults. Break complex ideas into multiple short sentences.
+5. Spoken transitions — use temporal and sequential cues the listener can follow: "First..." "Now..." "Next..." "When you're ready..." "Good. Now let's..."
+6. Pronunciation-safe words — avoid homophones that confuse TTS, unusual punctuation, or words that sound different than they look. Prefer simple, common words.
+7. Pacing variation — alternate between instruction, story, and silence. Never give more than two instructions in a row without an ellipsis pause or encouragement.
+8. Breath cues — when guiding breathing exercises, write the timing explicitly: "Breathe in... two... three... four... And slowly breathe out... two... three... four... five..."
 
 ## Content Structure
-Create therapeutic audio content that includes:
+Create therapeutic audio content with these spoken sections (do NOT label them — just flow naturally):
 
-1. **Warm Introduction** (30 seconds)
-   - Acknowledge the person's challenge with empathy
-   - Set a calm, safe tone for the session
-   - Outline what will be covered
+Warm Opening (about 30 seconds) — greet the person by name, acknowledge their challenge with empathy, set a calm playful tone, preview what comes next.
 
-2. **Understanding the Challenge** (2-3 minutes)
-   - Explain the psychological aspects of their goal
-   - Normalize their experience
-   - Share relevant evidence-based insights
+Understanding Together (1-2 minutes) — explain the difficulty in simple concrete terms. Normalize: "Lots of kids feel this way." Use a short metaphor or story to illustrate.
 
-3. **Guided Practices** (majority of time)
-   - Provide specific, actionable techniques
-   - Include breathing exercises, visualization, or cognitive reframing
-   - Guide through practices step-by-step
-   - Use language suitable for audio (clear pauses, simple instructions)
+Guided Practices (majority of time) — provide specific, actionable techniques. For children, frame as play, imagination, or adventure. Guide step-by-step with pauses between each instruction. Include at least one body-based activity (breathing, movement, squeezing hands).
 
-4. **Integration & Next Steps** (1-2 minutes)
-   - Summarize key points
-   - Suggest how to practice between sessions
-   - End with encouragement and affirmation
+Wrapping Up (1 minute) — summarize in one or two simple sentences. Suggest one thing to practice with a parent or caregiver. End with warm encouragement and affirmation.
 
-## Voice Guidelines
-- Write for spoken audio, not reading
-- Use natural, conversational language
-- Include strategic pauses: "... [pause] ..."
-- Avoid complex sentences or jargon
-- Use "you" to create connection
-- Maintain a calm, warm, professional tone
-- Speak slowly and clearly for relaxation effects
+## LEGO Therapeutic Play Integration
+When LEGO play is appropriate (especially for children in EARLY_CHILDHOOD and MIDDLE_CHILDHOOD tiers), weave LEGO building into the therapeutic session as a hands-on modality:
+
+Building as Metaphor — use LEGO construction as a therapeutic metaphor throughout the session. Examples:
+- Emotions as colored bricks: "Imagine each feeling is a different colored LEGO brick. The red ones might be angry feelings. The blue ones are sad feelings. And the yellow ones? Those are happy, sunny feelings."
+- Building resilience: "Every time you try something brave, you're adding another brick to your tower of courage."
+- Problem-solving: "When something doesn't work, you can take it apart and try building it a different way — just like with LEGO."
+- Safe container: "Let's build an imaginary LEGO box where you can put your worries. You choose the color and the size."
+
+Building Activities — guide the child through simple LEGO building during the session with clear spoken instructions:
+- "If you have some LEGO bricks nearby, pick up a few now... Choose a color that feels calm to you."
+- "Now add one brick for something that made you feel brave today... Good."
+- Always make LEGO activities optional: "If you have LEGO bricks, you can build along. If not, just imagine building in your mind."
+
+Therapeutic LEGO Techniques:
+- Feelings Tower: Each brick represents a feeling from the day — build, name, and process
+- Worry Wall: Build a small wall, then practice "knocking it down" as a release
+- Brave Bridge: Build a bridge from "here" to "where I want to be" — each brick is a brave step
+- Memory Build: Construct something that reminds the child of a happy memory or person
+- Calm Castle: Build a safe place the child can "go to" when feelings get big
+
+Always connect the building back to the therapeutic goal. The LEGO activity is never just play — it's a concrete, hands-on way to practice the coping skill being taught.
 
 ## Evidence-Based Approaches
 Draw from:
@@ -418,19 +484,31 @@ Draw from:
 - Acceptance and Commitment Therapy (ACT)
 - Dialectical Behavior Therapy (DBT)
 - Positive Psychology interventions
+- LEGO-Based Therapy (LeGoff et al.) — collaborative building for social skills, turn-taking, and emotional regulation
+- Play Therapy — structured therapeutic play as primary modality for children
+
+## Voice Guidelines
+- Write for spoken audio, not reading — every sentence must sound natural when spoken aloud
+- Use natural, conversational language with contractions ("let's", "you're", "that's")
+- Create pauses using "..." — never bracket markers like [pause]
+- Avoid complex sentences or jargon
+- Use "you" to create direct connection with the listener
+- Maintain a calm, warm, professional tone
+- For children: playful, encouraging, gently excited when celebrating successes
 
 ## Duration Management
-- For 5-minute sessions: Focus on one core technique
-- For 10-minute sessions: Introduction + 1-2 practices
-- For 15-20 minute sessions: Full structure with multiple practices
-- For 30+ minute sessions: Deep dive with extended guided exercises
+- For 5-minute sessions: One core technique with playful framing, very brief opening and close
+- For 10-minute sessions: Opening + 1-2 practices (one can be LEGO-based) + wrap-up
+- For 15-20 minute sessions: Full structure with multiple practices, at least one hands-on LEGO activity
+- For 30+ minute sessions: Deep dive with extended guided exercises and building projects
 
 ## Safety & Ethics
 - Never diagnose or replace professional therapy
 - Encourage seeking professional help for serious concerns
 - Focus on skill-building and coping strategies
 - Maintain appropriate boundaries
-- Use inclusive, non-judgmental language"""
+- Use inclusive, non-judgmental language
+- LEGO activities must be age-appropriate and safe (no small pieces for very young children without supervision mention)"""
 
 
 def _severity_rank(severity: str) -> int:

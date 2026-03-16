@@ -69,7 +69,7 @@ export const generateStoryTask = task({
       .catch(() => {});
   },
   run: async (payload: GenerateStoryPayload) => {
-    const { jobId, goalId, userEmail, language = "English", minutes = 10, issueId } = payload;
+    const { jobId, goalId, userEmail, language = "English", minutes = 30, issueId } = payload;
 
     logger.info("generate-story.started", { jobId, goalId, language, minutes });
 
@@ -125,6 +125,15 @@ export const generateStoryTask = task({
 
     const developmentalTier = getDevelopmentalTier(familyMember.ageYears);
 
+    if (!familyMember.ageYears) {
+      logger.warn("generate-story.missing_age", {
+        jobId,
+        familyMemberId: familyMember.id,
+        firstName: familyMember.firstName,
+        note: "ageYears is null — tier defaults to ADULT which may produce adult-register content",
+      });
+    }
+
     // Fetch unique outcomes for the focus issue
     const uniqueOutcomes = issue
       ? await d1Tools.getUniqueOutcomesForIssue(issue.id, userEmail)
@@ -158,7 +167,42 @@ export const generateStoryTask = task({
       issueSection = lines.join("\n") + "\n";
     }
 
-    const prompt = `Create a therapeutic audio session for the following goal. Write the full script in ${language}, approximately ${minutes} minutes long when read aloud.
+    // Determine if LEGO play is appropriate for this developmental tier
+    const legoAppropriate = ["EARLY_CHILDHOOD", "MIDDLE_CHILDHOOD", "EARLY_ADOLESCENCE"].includes(developmentalTier);
+
+    const legoInstructions = legoAppropriate
+      ? `
+## LEGO Therapeutic Play (REQUIRED)
+This session MUST integrate LEGO building as a hands-on therapeutic activity. This is NOT optional — LEGO play is a core modality for this age group:
+- Use LEGO construction as a metaphor for the therapeutic concept (e.g., building a "brave tower," "feelings wall," or "calm castle")
+- MUST include at least one guided LEGO building moment with clear spoken instructions and pauses for the child to build
+- Make LEGO participation optional for the listener: "If you have some LEGO bricks, grab a few now... if not, just imagine building in your mind"
+- Connect every building activity back to the therapeutic goal — the building IS the practice, not a distraction
+- Name specific LEGO techniques: Feelings Tower, Worry Wall, Brave Bridge, Memory Build, or Calm Castle — whichever fits the goal
+- Dedicate at least 30% of the session time to LEGO-based activities`
+      : "";
+
+    const isChild = developmentalTier !== "ADULT";
+    const ageLabel = familyMember.ageYears
+      ? `${familyMember.ageYears}-year-old child`
+      : "child";
+
+    // Hard age-enforcement block injected immediately after the person line for children.
+    // Without this, the LLM can drift to adult register even when age is stated.
+    const ageEnforcementBlock = isChild
+      ? `
+
+CRITICAL AGE REQUIREMENT: ${familyMember.firstName} is a ${ageLabel} (${developmentalTier} tier). Every word of this script MUST be written for a child, NOT for an adult.
+- Use only simple words (1-2 syllables when possible).
+- Use playful, warm, concrete language — no abstract adult concepts.
+- NEVER say ${familyMember.firstName} is "normal like an adult", "behaves like an adult", or describe adult-level coping.
+- NEVER use adult register, adult emotional vocabulary, or adult expectations.
+- If you find yourself writing for a grown-up, stop and rewrite for a ${ageLabel}.`
+      : "";
+
+    const prompt = `Create a therapeutic audio session for the following goal. Write the full script in ${language}, approximately ${minutes} minutes long when read aloud at a calm pace of about 120 words per minute.
+
+CRITICAL: This script will be read aloud by a text-to-speech engine. Write ONLY plain spoken prose. Absolutely NO markdown formatting — no **, ##, *, -, bullet points, numbered lists, headers, bold, or italic syntax. No section labels. Just natural flowing speech.
 
 ## Goal
 Title: ${goal.title}
@@ -166,23 +210,26 @@ Description: ${goal.description || "No additional description provided."}
 
 ## Person
 This is for ${familyMember.firstName}${ageContext}.
-Developmental Tier: ${developmentalTier}
+Developmental Tier: ${developmentalTier}${ageEnforcementBlock}
 ${issueSection}
-
 ## Research Evidence
 The following research papers inform the therapeutic techniques to use:
 
 ${researchSummary || "No research papers available yet. Use general evidence-based therapeutic techniques."}
-
-## Instructions
-- Create a complete, flowing therapeutic audio script
-- Incorporate specific techniques and findings from the research above
-- Personalize for ${familyMember.firstName}${ageContext} (developmental tier: ${developmentalTier})
-- Target duration: ${minutes} minutes when read aloud at a calm pace
+${legoInstructions}
+## Audio Script Requirements
+- Write as spoken prose ONLY — the listener cannot see any text, they can only hear
+- Use "..." (three dots) for all pauses — between sections, after instructions, within sentences. NEVER write [pause] or any bracket markers — TTS engines read them literally
+- Keep sentences short: maximum ${isChild ? "15" : "20"} words each
+- Use spoken transitions: "Now..." "Next..." "When you're ready..." "Good. Let's try..."
+- CRITICAL: Every breathing exercise MUST have explicit counted timing. NEVER write just "take a deep breath". ALWAYS write: "Breathe in... two... three... four... And slowly breathe out... two... three... four... five..." If you mention breathing at all, include the numbered counts.
+- Vary pacing: alternate between instruction, story or metaphor, and silence
+- Never give more than two instructions in a row without an ellipsis pause or encouragement
+- Address ${familyMember.firstName} by name at least 3 times throughout the session
+- Include a brief mention that a parent, caregiver, or professional can provide additional support
 - Write in ${language}
-- Follow the therapeutic audio content structure (warm introduction, understanding the challenge, guided practices, integration)
-- Include a brief mention that a parent, caregiver, or professional can provide additional support if needed
-- IMPORTANT: Do NOT use any markdown formatting (no **, ##, *, bullet points, or bold/italic syntax). Write plain spoken prose only, as the script will be read aloud by a text-to-speech engine`;
+- Personalize for ${familyMember.firstName}${ageContext} (developmental tier: ${developmentalTier})${isChild ? `\n- This is for a ${ageLabel} — use child vocabulary, playful framing, and age-appropriate techniques throughout. Never adult-register.` : ""}${legoAppropriate ? `\n- LEGO play is REQUIRED for this session — include guided LEGO building activities as described in the LEGO Therapeutic Play section above` : ""}
+- Target duration: ${minutes} minutes (approximately ${minutes * 120} words at calm pace)`;
 
     logger.info("generate-story.generating", { jobId, promptLength: prompt.length });
 
@@ -190,11 +237,18 @@ ${researchSummary || "No research papers available yet. Use general evidence-bas
       { role: "user", content: prompt },
     ]);
 
-    const generatedText = response.text;
+    let generatedText = response.text;
 
     if (!generatedText) {
       throw new Error("Agent returned empty text");
     }
+
+    // Post-process: convert [pause] → "..." and strip any other bracket markers
+    // (LLM sometimes ignores the prompt instruction to avoid bracket notation)
+    generatedText = generatedText
+      .replace(/\[pause\]/gi, "...")
+      .replace(/\[sound:[^\]]*\]/gi, "")
+      .replace(/\[[^\]]+\]/g, "");
 
     logger.info("generate-story.generated", {
       jobId,

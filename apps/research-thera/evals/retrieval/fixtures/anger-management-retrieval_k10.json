@@ -1,0 +1,249 @@
+{
+  "id": "anger-management-retrieval",
+  "query": "Body-based interventions for childhood anger and aggressive outbursts",
+  "top_k": 10,
+  "chunks": [
+    {
+      "entity_type": "TherapyResearch",
+      "entity_id": 159,
+      "title": "The effect of an aggressive behavior prevention program on kindergarten students",
+      "content": "The effect of an aggressive behavior prevention program on kindergarten students\nThe Aggressive Behavior Prevention Program significantly decreased aggression levels in kindergarten students based on Social Cognitive Theory\nSocial Cognitive Theory-based intervention\nanger management\nalternative behavior training\nfamily involvement\novert and relational aggression reduction",
+      "metadata": {
+        "techniques": [
+          "Social Cognitive Theory-based intervention",
+          "anger management",
+          "alternative behavior training",
+          "family involvement",
+          "overt and relational aggression reduction"
+        ],
+        "keyFindings": [
+          "The Aggressive Behavior Prevention Program significantly decreased aggression levels in kindergarten students based on Social Cognitive Theory"
+        ]
+      },
+      "similarity": 0.08713427256436057
+    },
+    {
+      "entity_type": "TherapyResearch",
+      "entity_id": 169,
+      "title": "Evidence-Based Approaches to Social Skills Training with Children and Adolescents",
+      "content": "Evidence-Based Approaches to Social Skills Training with Children and Adolescents\nComprehensive review highlighting evidence\u2011based approaches to social skills training, emphasizing modeling, coaching, reinforcement, and generalization strategies.\nmodeling\ncoaching\nreinforcement\nproblem\u2011solving\nemotional regulation training",
+      "metadata": {
+        "techniques": [
+          "modeling",
+          "coaching",
+          "reinforcement",
+          "problem\u2011solving",
+          "emotional regulation training"
+        ],
+        "keyFindings": [
+          "Comprehensive review highlighting evidence\u2011based approaches to social skills training, emphasizing modeling, coaching, reinforcement, and generalization strategies."
+        ]
+      },
+      "similarity": 0.011818238693686256
+    },
+    {
+      "entity_type": "TherapyResearch",
+      "entity_id": 172,
+      "title": "Improving the efficacy and effectiveness of evidence-based psychosocial interventions for attention-deficit/hyperactivity disorder (ADHD) in children and adolescents",
+      "content": "Improving the efficacy and effectiveness of evidence-based psychosocial interventions for attention-deficit/hyperactivity disorder (ADHD) in children and adolescents\nAttention-deficit/hyperactivity disorder (ADHD) is a prevalent, chronic, and impairing mental health disorder of childhood. Decades of empirical research has established a strong evidence-based intervention armamentarium for ADHD; however, limitations exist in regards to efficacy and effectiveness of these interventions.\nBehavioral parent training and classroom behavior management are evidence-based interventions for ADHD\nCombined interventions addressing both home and school environments show superior outcomes\nSelf-regulation training improves impulse control and social functioning\nBehavioral parent training\nClassroom behavior management strategies\nSelf-regulation training\nSocial skills training\nCognitive-behavioral techniques for impulse control",
+      "metadata": {
+        "techniques": [
+          "Behavioral parent training",
+          "Classroom behavior management strategies",
+          "Self-regulation training",
+          "Social skills training",
+          "Cognitive-behavioral techniques for impulse control"
+        ],
+        "keyFindings": [
+          "Behavioral parent training and classroom behavior management are evidence-based interventions for ADHD",
+          "Combined interventions addressing both home and school environments show superior outcomes",
+          "Self-regulation training improves impulse control and social functioning"
+        ]
+      },
+      "similarity": 0.010472115179495645
+    },
+    {
+      "entity_type": "TherapyResearch",
+      "entity_id": 129,
+      "title": "Behavioral Parent Training",
+      "content": "Behavioral Parent Training\nBehavioral parent training is a psychotherapeutic intervention that aims to alter maladaptive parent-child interactions by training parents to use behavioral techniques to decrease children's disruptive behaviors and to increase social appropriate behaviors. This chapter presents the theoretical background of behavioral parent training and then discusses behavioral techniques related to the principles of operant learning theory. Over the years, many behavioral parent training programs have been developed. In behavioral parent training, the behavioral techniques that increase the likelihood of behavior are much more important than the behavioral techniques that decrease the likelihood of behavior, that is, those based on punishment and extinction. There are several types of reinforcers: food, social reinforcers, privileges and activities, and tokens. The goal of behavioral parent training is to change the child's referral problems by improving the parents' skills that affect parent-child interactions. Parent-Child Interaction Therapy (PCIT) is a program developed for the treatment of young children with disruptive behavior disorders (DBDs).\nBehavioral parent training aims to alter maladaptive parent-child interactions by training parents to use behavioral techniques\nThe intervention focuses on increasing appropriate behaviors through reinforcement rather than decreasing behaviors through punishment\nMultiple types of reinforcers can be used including social reinforcers, privileges, activities, and tokens\nThe goal is to change children's referral problems by improving parents' skills in managing parent-child interactions\nParent-Child Interaction Therapy (PCIT) is specifically developed for young children with disruptive behavior disorders\nFocus on reinforcement strategies (social reinforcers, privileges, activities) rather than punishment to increase compliant behaviors\nTrain parents in specific behavioral techniques to improve parent-child interactions and reduce oppositional behaviors\nUse structured programs like PCIT that are specifically designed for young children with disruptive behavior issues",
+      "metadata": {
+        "techniques": [
+          "Focus on reinforcement strategies (social reinforcers, privileges, activities) rather than punishment to increase compliant behaviors",
+          "Train parents in specific behavioral techniques to improve parent-child interactions and reduce oppositional behaviors",
+          "Use structured programs like PCIT that are specifically designed for young children with disruptive behavior issues"
+        ],
+        "keyFindings": [
+          "Behavioral parent training aims to alter maladaptive parent-child interactions by training parents to use behavioral techniques",
+          "The intervention focuses on increasing appropriate behaviors through reinforcement rather than decreasing behaviors through punishment",
+          "Multiple types of reinforcers can be used including social reinforcers, privileges, activities, and tokens",
+          "The goal is to change children's referral problems by improving parents' skills in managing parent-child interactions",
+          "Parent-Child Interaction Therapy (PCIT) is specifically developed for young children with disruptive behavior disorders"
+        ]
+      },
+      "similarity": 0.010359481322232189
+    },
+    {
+      "entity_type": "TherapyResearch",
+      "entity_id": 177,
+      "title": "Peer rejection: developmental processes and intervention strategies",
+      "content": "Peer rejection: developmental processes and intervention strategies\nThe volume begins by reviewing the causes and correlates of peer rejection, examining both the characteristics of individual victims and the group dynamics that contribute to rejection.\nSocial skills training improves peer relationships\nCoaching in perspective-taking reduces aggressive behaviors\nStructured peer activities promote positive interactions\nSocial skills training programs\nPerspective-taking exercises\nPeer-mediated interventions\nConflict resolution training\nFriendship-building activities",
+      "metadata": {
+        "techniques": [
+          "Social skills training programs",
+          "Perspective-taking exercises",
+          "Peer-mediated interventions",
+          "Conflict resolution training",
+          "Friendship-building activities"
+        ],
+        "keyFindings": [
+          "Social skills training improves peer relationships",
+          "Coaching in perspective-taking reduces aggressive behaviors",
+          "Structured peer activities promote positive interactions"
+        ]
+      },
+      "similarity": 0.004473080817491648
+    },
+    {
+      "entity_type": "TherapyResearch",
+      "entity_id": 170,
+      "title": "Evaluation of a group-based social skills training for children with problem behavior",
+      "content": "Evaluation of a group-based social skills training for children with problem behavior\nGroup\u2011based social skills training reduced problem behavior and improved social competence, especially with parent involvement.\ngroup\u2011based social skills training\nbehavioral rehearsal\nfeedback\nparent involvement",
+      "metadata": {
+        "techniques": [
+          "group\u2011based social skills training",
+          "behavioral rehearsal",
+          "feedback",
+          "parent involvement"
+        ],
+        "keyFindings": [
+          "Group\u2011based social skills training reduced problem behavior and improved social competence, especially with parent involvement."
+        ]
+      },
+      "similarity": -0.007011746024578214
+    },
+    {
+      "entity_type": "TherapyResearch",
+      "entity_id": 144,
+      "title": "Meta-meta-analysis on the effectiveness of parent-based interventions for the treatment of child externalizing behavior problems",
+      "content": "Meta-meta-analysis on the effectiveness of parent-based interventions for the treatment of child externalizing behavior problems\nMeta-meta-analysis of 19 meta-analyses synthesizing over 1,000 primary studies on parent-based interventions for child externalizing behaviors. Found consistent moderate effects across all major evidence-based programs including Triple P, Incredible Years, PCIT, and PMT.\nConsistent moderate effects across parent-based programs (d = 0.36-0.52)\nStrongest effects for in-person compared to online delivery\nBehavioral parent training reduces harsh parenting practices significantly\nLong-term effects maintained at 12-month follow-up\nBehavioral parent training\nPositive reinforcement\nConsistent discipline\nParent-child interaction therapy\nProblem-solving",
+      "metadata": {
+        "techniques": [
+          "Behavioral parent training",
+          "Positive reinforcement",
+          "Consistent discipline",
+          "Parent-child interaction therapy",
+          "Problem-solving"
+        ],
+        "keyFindings": [
+          "Consistent moderate effects across parent-based programs (d = 0.36-0.52)",
+          "Strongest effects for in-person compared to online delivery",
+          "Behavioral parent training reduces harsh parenting practices significantly",
+          "Long-term effects maintained at 12-month follow-up"
+        ]
+      },
+      "similarity": -0.008087298166578716
+    },
+    {
+      "entity_type": "TherapyResearch",
+      "entity_id": 154,
+      "title": "School bullying and group violence: How to occupy a place in the group by exclusion",
+      "content": "School bullying and group violence: How to occupy a place in the group by exclusion\nBullying involves group dynamics where exclusion serves to establish social position\nInterventions should target all actors (harasser, harassed, spectators) through perspective-taking and collective responsibility\nrole-playing\nsimulation games\nperspective-taking exercises\ncognitive-to-emotional empathy transition training\ngroup discussions\ncollective responsibility building",
+      "metadata": {
+        "techniques": [
+          "role-playing",
+          "simulation games",
+          "perspective-taking exercises",
+          "cognitive-to-emotional empathy transition training",
+          "group discussions",
+          "collective responsibility building"
+        ],
+        "keyFindings": [
+          "Bullying involves group dynamics where exclusion serves to establish social position",
+          "Interventions should target all actors (harasser, harassed, spectators) through perspective-taking and collective responsibility"
+        ]
+      },
+      "similarity": -0.009888042061182656
+    },
+    {
+      "entity_type": "TherapyResearch",
+      "entity_id": 180,
+      "title": "Mental health interventions in schools in high-income countries",
+      "content": "Mental health interventions in schools in high-income countries\nThis paper reviews mental health interventions delivered in school settings in high-income countries.\nSchool-based interventions are effective for behavioral issues\nMulti-component approaches show strongest effects\nTeacher training enhances intervention effectiveness\nMulti-tiered systems of support\nTeacher training in behavior management\nSchool-wide positive behavior interventions\nTargeted social-emotional learning\nCollaborative problem-solving",
+      "metadata": {
+        "techniques": [
+          "Multi-tiered systems of support",
+          "Teacher training in behavior management",
+          "School-wide positive behavior interventions",
+          "Targeted social-emotional learning",
+          "Collaborative problem-solving"
+        ],
+        "keyFindings": [
+          "School-based interventions are effective for behavioral issues",
+          "Multi-component approaches show strongest effects",
+          "Teacher training enhances intervention effectiveness"
+        ]
+      },
+      "similarity": -0.011645399107845344
+    },
+    {
+      "entity_type": "TherapyResearch",
+      "entity_id": 149,
+      "title": "Effectiveness of the Incredible Years Parent Training to Modify Disruptive and Prosocial Child Behavior: A Meta-Analytic Review",
+      "content": "Effectiveness of the Incredible Years Parent Training to Modify Disruptive and Prosocial Child Behavior: A Meta-Analytic Review\nMeta-analytic review of 50 studies on the Incredible Years parent training program, finding medium-sized effects on child disruptive behavior and parenting practices with effects maintained at follow-up. Supports Incredible Years as a well-established evidence-based program for reducing parent-child conflict.\nMedium effects on child disruptive behavior reduction (d = 0.56)\nSignificant improvements in positive parenting practices\nEffects maintained at follow-up assessments\nStrongest effects for children with conduct disorder or ODD\nPositive parenting\nPraise and reward systems\nConsistent limit setting\nProactive strategies\nEmotion coaching",
+      "metadata": {
+        "techniques": [
+          "Positive parenting",
+          "Praise and reward systems",
+          "Consistent limit setting",
+          "Proactive strategies",
+          "Emotion coaching"
+        ],
+        "keyFindings": [
+          "Medium effects on child disruptive behavior reduction (d = 0.56)",
+          "Significant improvements in positive parenting practices",
+          "Effects maintained at follow-up assessments",
+          "Strongest effects for children with conduct disorder or ODD"
+        ]
+      },
+      "similarity": -0.011721813536022863
+    }
+  ],
+  "retrieval_context": [
+    "The effect of an aggressive behavior prevention program on kindergarten students\nThe Aggressive Behavior Prevention Program significantly decreased aggression levels in kindergarten students based on Social Cognitive Theory\nSocial Cognitive Theory-based intervention\nanger management\nalternative behavior training\nfamily involvement\novert and relational aggression reduction",
+    "Evidence-Based Approaches to Social Skills Training with Children and Adolescents\nComprehensive review highlighting evidence\u2011based approaches to social skills training, emphasizing modeling, coaching, reinforcement, and generalization strategies.\nmodeling\ncoaching\nreinforcement\nproblem\u2011solving\nemotional regulation training",
+    "Improving the efficacy and effectiveness of evidence-based psychosocial interventions for attention-deficit/hyperactivity disorder (ADHD) in children and adolescents\nAttention-deficit/hyperactivity disorder (ADHD) is a prevalent, chronic, and impairing mental health disorder of childhood. Decades of empirical research has established a strong evidence-based intervention armamentarium for ADHD; however, limitations exist in regards to efficacy and effectiveness of these interventions.\nBehavioral parent training and classroom behavior management are evidence-based interventions for ADHD\nCombined interventions addressing both home and school environments show superior outcomes\nSelf-regulation training improves impulse control and social functioning\nBehavioral parent training\nClassroom behavior management strategies\nSelf-regulation training\nSocial skills training\nCognitive-behavioral techniques for impulse control",
+    "Behavioral Parent Training\nBehavioral parent training is a psychotherapeutic intervention that aims to alter maladaptive parent-child interactions by training parents to use behavioral techniques to decrease children's disruptive behaviors and to increase social appropriate behaviors. This chapter presents the theoretical background of behavioral parent training and then discusses behavioral techniques related to the principles of operant learning theory. Over the years, many behavioral parent training programs have been developed. In behavioral parent training, the behavioral techniques that increase the likelihood of behavior are much more important than the behavioral techniques that decrease the likelihood of behavior, that is, those based on punishment and extinction. There are several types of reinforcers: food, social reinforcers, privileges and activities, and tokens. The goal of behavioral parent training is to change the child's referral problems by improving the parents' skills that affect parent-child interactions. Parent-Child Interaction Therapy (PCIT) is a program developed for the treatment of young children with disruptive behavior disorders (DBDs).\nBehavioral parent training aims to alter maladaptive parent-child interactions by training parents to use behavioral techniques\nThe intervention focuses on increasing appropriate behaviors through reinforcement rather than decreasing behaviors through punishment\nMultiple types of reinforcers can be used including social reinforcers, privileges, activities, and tokens\nThe goal is to change children's referral problems by improving parents' skills in managing parent-child interactions\nParent-Child Interaction Therapy (PCIT) is specifically developed for young children with disruptive behavior disorders\nFocus on reinforcement strategies (social reinforcers, privileges, activities) rather than punishment to increase compliant behaviors\nTrain parents in specific behavioral techniques to improve parent-child interactions and reduce oppositional behaviors\nUse structured programs like PCIT that are specifically designed for young children with disruptive behavior issues",
+    "Peer rejection: developmental processes and intervention strategies\nThe volume begins by reviewing the causes and correlates of peer rejection, examining both the characteristics of individual victims and the group dynamics that contribute to rejection.\nSocial skills training improves peer relationships\nCoaching in perspective-taking reduces aggressive behaviors\nStructured peer activities promote positive interactions\nSocial skills training programs\nPerspective-taking exercises\nPeer-mediated interventions\nConflict resolution training\nFriendship-building activities",
+    "Evaluation of a group-based social skills training for children with problem behavior\nGroup\u2011based social skills training reduced problem behavior and improved social competence, especially with parent involvement.\ngroup\u2011based social skills training\nbehavioral rehearsal\nfeedback\nparent involvement",
+    "Meta-meta-analysis on the effectiveness of parent-based interventions for the treatment of child externalizing behavior problems\nMeta-meta-analysis of 19 meta-analyses synthesizing over 1,000 primary studies on parent-based interventions for child externalizing behaviors. Found consistent moderate effects across all major evidence-based programs including Triple P, Incredible Years, PCIT, and PMT.\nConsistent moderate effects across parent-based programs (d = 0.36-0.52)\nStrongest effects for in-person compared to online delivery\nBehavioral parent training reduces harsh parenting practices significantly\nLong-term effects maintained at 12-month follow-up\nBehavioral parent training\nPositive reinforcement\nConsistent discipline\nParent-child interaction therapy\nProblem-solving",
+    "School bullying and group violence: How to occupy a place in the group by exclusion\nBullying involves group dynamics where exclusion serves to establish social position\nInterventions should target all actors (harasser, harassed, spectators) through perspective-taking and collective responsibility\nrole-playing\nsimulation games\nperspective-taking exercises\ncognitive-to-emotional empathy transition training\ngroup discussions\ncollective responsibility building",
+    "Mental health interventions in schools in high-income countries\nThis paper reviews mental health interventions delivered in school settings in high-income countries.\nSchool-based interventions are effective for behavioral issues\nMulti-component approaches show strongest effects\nTeacher training enhances intervention effectiveness\nMulti-tiered systems of support\nTeacher training in behavior management\nSchool-wide positive behavior interventions\nTargeted social-emotional learning\nCollaborative problem-solving",
+    "Effectiveness of the Incredible Years Parent Training to Modify Disruptive and Prosocial Child Behavior: A Meta-Analytic Review\nMeta-analytic review of 50 studies on the Incredible Years parent training program, finding medium-sized effects on child disruptive behavior and parenting practices with effects maintained at follow-up. Supports Incredible Years as a well-established evidence-based program for reducing parent-child conflict.\nMedium effects on child disruptive behavior reduction (d = 0.56)\nSignificant improvements in positive parenting practices\nEffects maintained at follow-up assessments\nStrongest effects for children with conduct disorder or ODD\nPositive parenting\nPraise and reward systems\nConsistent limit setting\nProactive strategies\nEmotion coaching"
+  ],
+  "similarities": [
+    0.08713427256436057,
+    0.011818238693686256,
+    0.010472115179495645,
+    0.010359481322232189,
+    0.004473080817491648,
+    -0.007011746024578214,
+    -0.008087298166578716,
+    -0.009888042061182656,
+    -0.011645399107845344,
+    -0.011721813536022863
+  ],
+  "titles": [
+    "The effect of an aggressive behavior prevention program on kindergarten students",
+    "Evidence-Based Approaches to Social Skills Training with Children and Adolescents",
+    "Improving the efficacy and effectiveness of evidence-based psychosocial interventions for attention-deficit/hyperactivity disorder (ADHD) in children and adolescents",
+    "Behavioral Parent Training",
+    "Peer rejection: developmental processes and intervention strategies",
+    "Evaluation of a group-based social skills training for children with problem behavior",
+    "Meta-meta-analysis on the effectiveness of parent-based interventions for the treatment of child externalizing behavior problems",
+    "School bullying and group violence: How to occupy a place in the group by exclusion",
+    "Mental health interventions in schools in high-income countries",
+    "Effectiveness of the Incredible Years Parent Training to Modify Disruptive and Prosocial Child Behavior: A Meta-Analytic Review"
+  ],
+  "response": "Based on the provided research context, there is no direct mention of body-based interventions (such as mindfulness, breathing exercises, yoga, or sensory regulation techniques) for childhood anger and aggressive outbursts. The context focuses exclusively on cognitive, behavioral, and social-interactional approaches.\n\nThe evidence-based interventions highlighted in the context for reducing aggression and anger include:\n\n1.  **Behavioral Parent Training (e.g., Incredible Years, PCIT):** These programs train parents to use positive reinforcement, consistent discipline, and proactive strategies to alter parent-child interactions and reduce disruptive behaviors.\n2.  **Social Skills Training:** This involves group-based training using modeling, coaching, behavioral rehearsal, and feedback to teach alternative behaviors, problem-solving, and emotional regulation.\n3.  **School-Based Interventions:** These include classroom behavior management, teacher training, and multi-tiered systems of support that address behavior across school environments.\n4.  **Specific Program Components:** Key effective components across interventions are:\n    *   **Anger management and emotional regulation training** (from the Aggressive Behavior Prevention Program and social skills approaches).\n    *   **Perspective-taking and empathy training** (to reduce aggression and address bullying dynamics).\n    *   **Family involvement**, which is consistently shown to enhance outcomes.\n\n**Conclusion:** While the context does not support body-based interventions, it strongly supports **psychosocial interventions** that combine **behavioral parent training, social skills instruction (including emotional regulation), and school-based support** as evidence-based methods for addressing childhood anger and aggressive outbursts."
+}

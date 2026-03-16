@@ -359,6 +359,8 @@ type JobResult {
   text: String
   questions: [TherapeuticQuestion!]
   diagnostics: PipelineDiagnostics
+  progress: Int
+  stage: String
 }
 
 type PipelineDiagnostics {

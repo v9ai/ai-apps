@@ -5,7 +5,7 @@ returns therapeutically relevant, precise, and complete context for
 story generation — the missing evaluation link between "papers exist
 in the DB" and "the right papers reach the LLM prompt."
 
-All test cases reuse the same Noah (7-year-old, MIDDLE_CHILDHOOD)
+All test cases reuse the same Sam (7-year-old, MIDDLE_CHILDHOOD)
 scenarios from the story evals for consistency.
 """
 
@@ -168,24 +168,6 @@ RETRIEVAL_TEST_CASES = [
         ],
         "clinical_domain": "social anxiety",
         "population": "children 6-9",
-    },
-    {
-        "id": "grief-retrieval",
-        "query": "Child-centered grief therapy and continuing bonds for bereaved children",
-        "goal_context": "Process grief after loss of grandparent and keep memory alive",
-        "expected_output": (
-            "Memory box activities and continuing-bonds narration reduce grief "
-            "symptoms. Expressive arts (drawing, storytelling) improve emotional "
-            "processing in children aged 5-10."
-        ),
-        "expected_techniques": [
-            "memory box",
-            "continuing bonds",
-            "expressive arts",
-            "safe-place visualization",
-        ],
-        "clinical_domain": "childhood bereavement",
-        "population": "children 5-10",
     },
 ]
 

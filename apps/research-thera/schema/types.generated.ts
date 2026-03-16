@@ -649,8 +649,10 @@ export type JobResult = {
   count?: Maybe<Scalars['Int']['output']>;
   diagnostics?: Maybe<PipelineDiagnostics>;
   manifestUrl?: Maybe<Scalars['String']['output']>;
+  progress?: Maybe<Scalars['Int']['output']>;
   questions?: Maybe<Array<TherapeuticQuestion>>;
   segmentUrls?: Maybe<Array<Scalars['String']['output']>>;
+  stage?: Maybe<Scalars['String']['output']>;
   text?: Maybe<Scalars['String']['output']>;
 };
 
@@ -2319,8 +2321,10 @@ export type JobResultResolvers<ContextType = GraphQLContext, ParentType extends 
   count?: Resolver<Maybe<ResolversTypes['Int']>, ParentType, ContextType>;
   diagnostics?: Resolver<Maybe<ResolversTypes['PipelineDiagnostics']>, ParentType, ContextType>;
   manifestUrl?: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType>;
+  progress?: Resolver<Maybe<ResolversTypes['Int']>, ParentType, ContextType>;
   questions?: Resolver<Maybe<Array<ResolversTypes['TherapeuticQuestion']>>, ParentType, ContextType>;
   segmentUrls?: Resolver<Maybe<Array<ResolversTypes['String']>>, ParentType, ContextType>;
+  stage?: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType>;
   text?: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType>;
 };
 

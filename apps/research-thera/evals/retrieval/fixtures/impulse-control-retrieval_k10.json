@@ -1,0 +1,249 @@
+{
+  "id": "impulse-control-retrieval",
+  "query": "Emotion regulation and impulse control interventions for young children",
+  "top_k": 10,
+  "chunks": [
+    {
+      "entity_type": "TherapyResearch",
+      "entity_id": 176,
+      "title": "School Readiness and Self-Regulation: A Developmental Psychobiological Approach",
+      "content": "School Readiness and Self-Regulation: A Developmental Psychobiological Approach\nResearch on the development of self-regulation in young children provides a unifying framework for the study of school readiness.\nSelf-regulation skills are foundational for academic and social success\nExecutive function training improves impulse control and attention\nEmotion regulation strategies reduce disruptive behaviors\nExecutive function training games\nEmotion regulation strategies\nMindfulness-based interventions\nSelf-monitoring techniques\nCognitive flexibility exercises",
+      "metadata": {
+        "techniques": [
+          "Executive function training games",
+          "Emotion regulation strategies",
+          "Mindfulness-based interventions",
+          "Self-monitoring techniques",
+          "Cognitive flexibility exercises"
+        ],
+        "keyFindings": [
+          "Self-regulation skills are foundational for academic and social success",
+          "Executive function training improves impulse control and attention",
+          "Emotion regulation strategies reduce disruptive behaviors"
+        ]
+      },
+      "similarity": 0.13923209972973483
+    },
+    {
+      "entity_type": "TherapyResearch",
+      "entity_id": 134,
+      "title": "Self-Regulation Intervention Impact on Turkish Children with Emotional and Behavioral Disorder Risks",
+      "content": "Self-Regulation Intervention Impact on Turkish Children with Emotional and Behavioral Disorder Risks\n<jats:p>This study examined the effect of a self-regulation intervention package prepared for preschool children at risk for emotional and behavioral disorders (EBDs) in T\u00fcrkiye on children\u2019s self-regulation skills, social skills, problem behaviors, relationships with teachers, and peer acceptance. Ten children, five at risk of EBD and five with typical development (TD), participated in the study. This study used a single-group pretest-posttest design. The intervention lasted for eight weeks, two days a week. Follow-up data were collected three weeks after the intervention. It was found that the intervention package was effective in self-regulation, problem behavior, social skills, and peer acceptance variables of children at risk of EBD (z = \u22122.02, p &lt; 0.05, r = 0.64) but not in student-teacher relationships (p &gt; 0.05). In the follow-up, no significant changes were observed in any of the variables, except for problem behaviors. However, the levels were maintained (p &gt; 0.05). Only the problem behavior variable showed a significant decrease compared to the post-test (z = \u22122.03, p &lt; 0.05, r = 0.64). In addition, in the post- and follow-up tests, children at risk of EBD reached performance levels similar to those of TD children in terms of all variables (p &gt; 0.05), which is essential evidence showing the effectiveness and social validity of the intervention.</jats:p>\nThe self-regulation intervention was effective in improving self-regulation, reducing problem behaviors, enhancing social skills, and increasing peer acceptance in children at risk of EBD\nNo significant improvement was observed in student-teacher relationships during the intervention period\nProblem behaviors showed continued significant decrease during follow-up testing three weeks after intervention completion\nChildren at risk of EBD reached performance levels similar to typically developing children across all measured variables post-intervention\nSelf-regulation interventions can effectively reduce problem behaviors in preschool children at risk for emotional and behavioral disorders\nEight-week intervention programs with twice-weekly sessions show promise for improving social skills and emotional regulation in this population\nBehavioral interventions targeting self-regulation may help close the gap between at-risk children and typically developing peers in social-emotional functioning",
+      "metadata": {
+        "techniques": [
+          "Self-regulation interventions can effectively reduce problem behaviors in preschool children at risk for emotional and behavioral disorders",
+          "Eight-week intervention programs with twice-weekly sessions show promise for improving social skills and emotional regulation in this population",
+          "Behavioral interventions targeting self-regulation may help close the gap between at-risk children and typically developing peers in social-emotional functioning"
+        ],
+        "keyFindings": [
+          "The self-regulation intervention was effective in improving self-regulation, reducing problem behaviors, enhancing social skills, and increasing peer acceptance in children at risk of EBD",
+          "No significant improvement was observed in student-teacher relationships during the intervention period",
+          "Problem behaviors showed continued significant decrease during follow-up testing three weeks after intervention completion",
+          "Children at risk of EBD reached performance levels similar to typically developing children across all measured variables post-intervention"
+        ]
+      },
+      "similarity": 0.11921766664559108
+    },
+    {
+      "entity_type": "TherapyResearch",
+      "entity_id": 135,
+      "title": "The Development of Behavioral and Emotional Self-Regulation During the Preschool Period.",
+      "content": "The Development of Behavioral and Emotional Self-Regulation During the Preschool Period.\nThe study investigates age-related changes in behavioral and emotional self-regulation during the preschool period and the relationship between them. Behavioral self-regulation was measured by compliance without external monitors. Emotional self-regulation was measured by the expressed control of emotions and coping strategies. Eighty-eight preschoolers (45 5-year-olds; 43 3-year-olds) participated in a compliance-delay task. They were left alone for 10 min (self-regulated compliance) to sort cutlery in the presence of toys. The demand for emotional self-regulation was manipulated by hiding (low demand) or exposing (high demand) the toys. Children experienced both sessions. All procedures were video-taped. The expressed emotional comfort during the task was rated. Further, mothers and teachers completed ratings of children's compliance and coping strategies. The predicted age-related increase in self-regulated compliance was found. The age-related increase in emotional comfort and posttask interviews supported the expected increase in emotional self-regulation. Mothers' and teachers' ratings indicated that preschool children gradually acquire more independent, problem-focused coping strategies. Boys are more likely to cope with frustration in an aggressive manner whereas girls are more likely to ask for emotional support and seek help. This study is the first to provide evidence for the relationship between behavioral and emotional self-regulation during the preschool period. Self-regulated compliance is associated with independent, problem-focused coping strategies. Emotion-focused strategies, such as aggression and venting, are negatively correlated with self-regulated compliance. Emotional self-regulation contributes to the internalization of standards of behavior and the contribution increases with age. Behavioral self-regulation shows greater consistency across contexts than emotional self-regulation, perhaps because behavioral self-regulation develops faster. The finding that 5-year-olds worked less in the high demand condition than the low, whereas 3-year-olds did not, was interpreted as a reflection of differential ratio of child resources to task demands. The findings support the important contributions of emotional self-regulation to behavioral self-regulation. A new integrative model is proposed to explain the dynamics of the relationship between behavioral and emotional self-regulation. Specifically, the point is made that behavioral outcome depends on the resources available to the child and the demands for behavioral and emotional self-regulation of a particular situation.\nAge-related increase in self-regulated compliance (behavioral self-regulation) during preschool period\nSelf-regulated compliance is associated with independent, problem-focused coping strategies\nEmotion-focused strategies like aggression are negatively correlated with self-regulated compliance\nEmotional self-regulation contributes to internalization of behavioral standards, increasing with age\nBehavioral self-regulation shows greater consistency across contexts than emotional self-regulation\nFocus on developing emotional regulation skills to support behavioral compliance in preschool children\nTeach problem-focused coping strategies rather than emotion-focused strategies like aggression\nConsider task demands and child resources when designing interventions for self-regulation",
+      "metadata": {
+        "techniques": [
+          "Focus on developing emotional regulation skills to support behavioral compliance in preschool children",
+          "Teach problem-focused coping strategies rather than emotion-focused strategies like aggression",
+          "Consider task demands and child resources when designing interventions for self-regulation"
+        ],
+        "keyFindings": [
+          "Age-related increase in self-regulated compliance (behavioral self-regulation) during preschool period",
+          "Self-regulated compliance is associated with independent, problem-focused coping strategies",
+          "Emotion-focused strategies like aggression are negatively correlated with self-regulated compliance",
+          "Emotional self-regulation contributes to internalization of behavioral standards, increasing with age",
+          "Behavioral self-regulation shows greater consistency across contexts than emotional self-regulation"
+        ]
+      },
+      "similarity": 0.1094837589748966
+    },
+    {
+      "entity_type": "TherapyResearch",
+      "entity_id": 131,
+      "title": "Inhibition and working memory in young preschool children with symptoms of ADHD and/or oppositional-defiant disorder",
+      "content": "Inhibition and working memory in young preschool children with symptoms of ADHD and/or oppositional-defiant disorder\nYoung preschoolers show the same pattern of relations between EF and behavioral symptoms of ADHD and/or ODD as previously described in older children diagnosed with ADHD and/or ODD. Effect sizes were generally small, indicating that measures of EF have limited clinical utility at this stage in development.\nYoung preschoolers show the same pattern of relations between executive function and behavioral symptoms of ADHD and/or ODD as previously described in older children diagnosed with ADHD and/or ODD.\nEffect sizes were generally small, indicating that measures of executive function have limited clinical utility at this stage in development.\nThe study examines inhibition and working memory in preschool children with oppositional-defiant symptoms.\nFindings suggest that executive function measures may not be strong predictors of clinical outcomes in very young children with behavioral issues.\nThe research provides insight into the neuropsychological correlates of oppositional behavior in preschool-aged children.\nExecutive function assessments may have limited predictive value for clinical interventions in preschool children with oppositional behavior.\nBehavioral interventions for preschool oppositional behavior should focus on direct behavioral strategies rather than relying heavily on executive function measures.\nEarly identification of oppositional behavior patterns in preschool children can inform targeted behavioral interventions.\nParent-child interaction interventions may be more effective than neuropsychological approaches for addressing oppositional behavior in very young children.",
+      "metadata": {
+        "techniques": [
+          "Executive function assessments may have limited predictive value for clinical interventions in preschool children with oppositional behavior.",
+          "Behavioral interventions for preschool oppositional behavior should focus on direct behavioral strategies rather than relying heavily on executive function measures.",
+          "Early identification of oppositional behavior patterns in preschool children can inform targeted behavioral interventions.",
+          "Parent-child interaction interventions may be more effective than neuropsychological approaches for addressing oppositional behavior in very young children."
+        ],
+        "keyFindings": [
+          "Young preschoolers show the same pattern of relations between executive function and behavioral symptoms of ADHD and/or ODD as previously described in older children diagnosed with ADHD and/or ODD.",
+          "Effect sizes were generally small, indicating that measures of executive function have limited clinical utility at this stage in development.",
+          "The study examines inhibition and working memory in preschool children with oppositional-defiant symptoms.",
+          "Findings suggest that executive function measures may not be strong predictors of clinical outcomes in very young children with behavioral issues.",
+          "The research provides insight into the neuropsychological correlates of oppositional behavior in preschool-aged children."
+        ]
+      },
+      "similarity": 0.08987904891328058
+    },
+    {
+      "entity_type": "TherapyResearch",
+      "entity_id": 172,
+      "title": "Improving the efficacy and effectiveness of evidence-based psychosocial interventions for attention-deficit/hyperactivity disorder (ADHD) in children and adolescents",
+      "content": "Improving the efficacy and effectiveness of evidence-based psychosocial interventions for attention-deficit/hyperactivity disorder (ADHD) in children and adolescents\nAttention-deficit/hyperactivity disorder (ADHD) is a prevalent, chronic, and impairing mental health disorder of childhood. Decades of empirical research has established a strong evidence-based intervention armamentarium for ADHD; however, limitations exist in regards to efficacy and effectiveness of these interventions.\nBehavioral parent training and classroom behavior management are evidence-based interventions for ADHD\nCombined interventions addressing both home and school environments show superior outcomes\nSelf-regulation training improves impulse control and social functioning\nBehavioral parent training\nClassroom behavior management strategies\nSelf-regulation training\nSocial skills training\nCognitive-behavioral techniques for impulse control",
+      "metadata": {
+        "techniques": [
+          "Behavioral parent training",
+          "Classroom behavior management strategies",
+          "Self-regulation training",
+          "Social skills training",
+          "Cognitive-behavioral techniques for impulse control"
+        ],
+        "keyFindings": [
+          "Behavioral parent training and classroom behavior management are evidence-based interventions for ADHD",
+          "Combined interventions addressing both home and school environments show superior outcomes",
+          "Self-regulation training improves impulse control and social functioning"
+        ]
+      },
+      "similarity": 0.06953629271675021
+    },
+    {
+      "entity_type": "TherapyResearch",
+      "entity_id": 153,
+      "title": "Short-Term Intervention Effects of the PATHS Curriculum in Young Low-Income Children: Capitalizing on Plasticity",
+      "content": "Short-Term Intervention Effects of the PATHS Curriculum in Young Low-Income Children: Capitalizing on Plasticity\nChildren receiving PATHS showed significantly greater improvements in social competence and behavioral problems than controls\nImprovements in motor inhibition were observed\nemotion recognition training\nself-control strategies\nsocial problem-solving\nfriendship skills development\nexecutive function training",
+      "metadata": {
+        "techniques": [
+          "emotion recognition training",
+          "self-control strategies",
+          "social problem-solving",
+          "friendship skills development",
+          "executive function training"
+        ],
+        "keyFindings": [
+          "Children receiving PATHS showed significantly greater improvements in social competence and behavioral problems than controls",
+          "Improvements in motor inhibition were observed"
+        ]
+      },
+      "similarity": 0.04712949304440228
+    },
+    {
+      "entity_type": "TherapyResearch",
+      "entity_id": 136,
+      "title": "Early Intervention for Preschool-Age Children with ADHD",
+      "content": "Early Intervention for Preschool-Age Children with ADHD\n<jats:p> Preschool-age children with attention-deficit/hyperactivity disorder (ADHD) are at-risk for expulsion from preschool settings due to disruptive, noncompliant behavior. Removal from preschool limits the child's exposure to preacademic instruction, socialization opportunities, and the structure of classrooms. In this review, the authors evaluate the efficacy of pharmacological, parent training, and behavioral interventions designed to manage the disruptive behavior of preschool children with ADHD. Twenty-six experimental articles were reviewed. Pharmacological intervention, which has received the most attention, was found to be generally effective, although not without problems due to side effects. Parent-training methods were found to be effective in the home setting, but minimal information has been collected on the generalization of these findings to the school setting. Very little research has been devoted to the use of behavior management in the school setting, but results from those studies that have been done appear promising. Issues regarding future research and the use of these interventions to prepare the preschool-age child with ADHD for kindergarten are discussed. </jats:p>\nPharmacological intervention is generally effective for managing disruptive behavior in preschool children with ADHD, though side effects are a concern\nParent-training methods are effective in home settings for reducing disruptive behavior, but generalization to school settings needs more research\nBehavior management in school settings shows promising results for addressing disruptive behavior, though research is limited\nPreschool children with ADHD are at risk for expulsion due to disruptive, noncompliant behavior, limiting their educational and social opportunities\nParent training interventions can be implemented in home settings to reduce noncompliant behavior in preschool children with ADHD\nBehavioral management strategies show promise for school settings to address disruptive behavior and prevent expulsion\nA multi-modal approach combining parent training and school-based behavioral interventions may be most effective for oppositional behavior",
+      "metadata": {
+        "techniques": [
+          "Parent training interventions can be implemented in home settings to reduce noncompliant behavior in preschool children with ADHD",
+          "Behavioral management strategies show promise for school settings to address disruptive behavior and prevent expulsion",
+          "A multi-modal approach combining parent training and school-based behavioral interventions may be most effective for oppositional behavior"
+        ],
+        "keyFindings": [
+          "Pharmacological intervention is generally effective for managing disruptive behavior in preschool children with ADHD, though side effects are a concern",
+          "Parent-training methods are effective in home settings for reducing disruptive behavior, but generalization to school settings needs more research",
+          "Behavior management in school settings shows promising results for addressing disruptive behavior, though research is limited",
+          "Preschool children with ADHD are at risk for expulsion due to disruptive, noncompliant behavior, limiting their educational and social opportunities"
+        ]
+      },
+      "similarity": 0.02774561715715429
+    },
+    {
+      "entity_type": "TherapyResearch",
+      "entity_id": 169,
+      "title": "Evidence-Based Approaches to Social Skills Training with Children and Adolescents",
+      "content": "Evidence-Based Approaches to Social Skills Training with Children and Adolescents\nComprehensive review highlighting evidence\u2011based approaches to social skills training, emphasizing modeling, coaching, reinforcement, and generalization strategies.\nmodeling\ncoaching\nreinforcement\nproblem\u2011solving\nemotional regulation training",
+      "metadata": {
+        "techniques": [
+          "modeling",
+          "coaching",
+          "reinforcement",
+          "problem\u2011solving",
+          "emotional regulation training"
+        ],
+        "keyFindings": [
+          "Comprehensive review highlighting evidence\u2011based approaches to social skills training, emphasizing modeling, coaching, reinforcement, and generalization strategies."
+        ]
+      },
+      "similarity": 0.02181497703175128
+    },
+    {
+      "entity_type": "TherapyResearch",
+      "entity_id": 138,
+      "title": "The effectiveness of play therapy on emotional and behavioral disorders of preschool children in Marand city",
+      "content": "The effectiveness of play therapy on emotional and behavioral disorders of preschool children in Marand city\n<jats:p>Background and Aim: The purpose of this study was to investigate the effectiveness of play therapy on emotional and behavioral disorders of preschool children in Marand city. Methods: The current research method was a semi-experimental type of pre-test and post-test with a control group. The statistical population of this research includes 653 preschool children of Marand city, of which 44 were selected as the sample size using a targeted method. People were randomly divided into two experimental and control groups. Then, for the children of the experimental group, play therapy training sessions based on the cognitive-behavioral approach were implemented as a group. No training sessions were held for the control group. After these sessions, the social-emotional disorders test was taken from the two experimental and control groups. The number of training sessions was eight. These meetings were held every week on two days for two groups for 45 minutes. The data collection tool was Garnevsky et al.'s 2006 children's cognitive-emotional regulation questionnaire, whose validity was confirmed by experts' opinions and reliability by Cronbach's alpha. Multivariate analysis of covariance test was used to analyze the data. Results: The findings showed that play therapy based on the cognitive-behavioral approach has an effect on children's social-emotional disorders. Play therapy based on the cognitive-behavioral approach has an effect on the organization of homework, children's peer relationships, children's self-regulation, restlessness and anger, discomfort and loneliness, and children's feelings of loneliness. Conclusion: The results of the research show that playing in Mani has a positive effect on reducing children's social-emotional disorders, so it is suggested that school and welfare managers use the presence of clinical psychologists in this area, and psychologists also use play therapy methods to reduce children's social-emotional disorders</jats:p>\nPlay therapy based on cognitive-behavioral approach significantly reduces social-emotional disorders in preschool children\nThe intervention positively affects children's self-regulation, restlessness, and anger\nPlay therapy improves organization of homework and peer relationships\nThe approach reduces discomfort, loneliness, and feelings of loneliness in children\nPlay therapy using cognitive-behavioral techniques can be effective for reducing oppositional behaviors like anger and restlessness in preschool children\nStructured group play therapy sessions (8 sessions of 45 minutes) show measurable improvements in emotional regulation\nSchools and welfare programs should consider incorporating clinical psychologists trained in play therapy for preschool behavioral interventions",
+      "metadata": {
+        "techniques": [
+          "Play therapy using cognitive-behavioral techniques can be effective for reducing oppositional behaviors like anger and restlessness in preschool children",
+          "Structured group play therapy sessions (8 sessions of 45 minutes) show measurable improvements in emotional regulation",
+          "Schools and welfare programs should consider incorporating clinical psychologists trained in play therapy for preschool behavioral interventions"
+        ],
+        "keyFindings": [
+          "Play therapy based on cognitive-behavioral approach significantly reduces social-emotional disorders in preschool children",
+          "The intervention positively affects children's self-regulation, restlessness, and anger",
+          "Play therapy improves organization of homework and peer relationships",
+          "The approach reduces discomfort, loneliness, and feelings of loneliness in children"
+        ]
+      },
+      "similarity": 0.014950998140626504
+    },
+    {
+      "entity_type": "TherapyResearch",
+      "entity_id": 175,
+      "title": "The Efficacy of Visual Activity Schedule Intervention in Reducing Problem Behaviors in Children With Attention-Deficit/Hyperactivity Disorder Between the Age of 5 and 12 Years: A Systematic Review",
+      "content": "The Efficacy of Visual Activity Schedule Intervention in Reducing Problem Behaviors in Children With Attention-Deficit/Hyperactivity Disorder Between the Age of 5 and 12 Years: A Systematic Review\nA larger number of studies and the ADHD clinical population would help to increase the generalizability of future reviews of treatments in this context.\nVisual activity schedules reduce problem behaviors in children with ADHD\nPredictable routines decrease anxiety and improve self-regulation\nVisual supports help children understand expectations and transitions\nVisual activity schedules\nPredictable classroom routines\nVisual timers and cues\nTransition warnings and supports\nClear visual expectations",
+      "metadata": {
+        "techniques": [
+          "Visual activity schedules",
+          "Predictable classroom routines",
+          "Visual timers and cues",
+          "Transition warnings and supports",
+          "Clear visual expectations"
+        ],
+        "keyFindings": [
+          "Visual activity schedules reduce problem behaviors in children with ADHD",
+          "Predictable routines decrease anxiety and improve self-regulation",
+          "Visual supports help children understand expectations and transitions"
+        ]
+      },
+      "similarity": 0.014587222773006281
+    }
+  ],
+  "retrieval_context": [
+    "School Readiness and Self-Regulation: A Developmental Psychobiological Approach\nResearch on the development of self-regulation in young children provides a unifying framework for the study of school readiness.\nSelf-regulation skills are foundational for academic and social success\nExecutive function training improves impulse control and attention\nEmotion regulation strategies reduce disruptive behaviors\nExecutive function training games\nEmotion regulation strategies\nMindfulness-based interventions\nSelf-monitoring techniques\nCognitive flexibility exercises",
+    "Self-Regulation Intervention Impact on Turkish Children with Emotional and Behavioral Disorder Risks\n<jats:p>This study examined the effect of a self-regulation intervention package prepared for preschool children at risk for emotional and behavioral disorders (EBDs) in T\u00fcrkiye on children\u2019s self-regulation skills, social skills, problem behaviors, relationships with teachers, and peer acceptance. Ten children, five at risk of EBD and five with typical development (TD), participated in the study. This study used a single-group pretest-posttest design. The intervention lasted for eight weeks, two days a week. Follow-up data were collected three weeks after the intervention. It was found that the intervention package was effective in self-regulation, problem behavior, social skills, and peer acceptance variables of children at risk of EBD (z = \u22122.02, p &lt; 0.05, r = 0.64) but not in student-teacher relationships (p &gt; 0.05). In the follow-up, no significant changes were observed in any of the variables, except for problem behaviors. However, the levels were maintained (p &gt; 0.05). Only the problem behavior variable showed a significant decrease compared to the post-test (z = \u22122.03, p &lt; 0.05, r = 0.64). In addition, in the post- and follow-up tests, children at risk of EBD reached performance levels similar to those of TD children in terms of all variables (p &gt; 0.05), which is essential evidence showing the effectiveness and social validity of the intervention.</jats:p>\nThe self-regulation intervention was effective in improving self-regulation, reducing problem behaviors, enhancing social skills, and increasing peer acceptance in children at risk of EBD\nNo significant improvement was observed in student-teacher relationships during the intervention period\nProblem behaviors showed continued significant decrease during follow-up testing three weeks after intervention completion\nChildren at risk of EBD reached performance levels similar to typically developing children across all measured variables post-intervention\nSelf-regulation interventions can effectively reduce problem behaviors in preschool children at risk for emotional and behavioral disorders\nEight-week intervention programs with twice-weekly sessions show promise for improving social skills and emotional regulation in this population\nBehavioral interventions targeting self-regulation may help close the gap between at-risk children and typically developing peers in social-emotional functioning",
+    "The Development of Behavioral and Emotional Self-Regulation During the Preschool Period.\nThe study investigates age-related changes in behavioral and emotional self-regulation during the preschool period and the relationship between them. Behavioral self-regulation was measured by compliance without external monitors. Emotional self-regulation was measured by the expressed control of emotions and coping strategies. Eighty-eight preschoolers (45 5-year-olds; 43 3-year-olds) participated in a compliance-delay task. They were left alone for 10 min (self-regulated compliance) to sort cutlery in the presence of toys. The demand for emotional self-regulation was manipulated by hiding (low demand) or exposing (high demand) the toys. Children experienced both sessions. All procedures were video-taped. The expressed emotional comfort during the task was rated. Further, mothers and teachers completed ratings of children's compliance and coping strategies. The predicted age-related increase in self-regulated compliance was found. The age-related increase in emotional comfort and posttask interviews supported the expected increase in emotional self-regulation. Mothers' and teachers' ratings indicated that preschool children gradually acquire more independent, problem-focused coping strategies. Boys are more likely to cope with frustration in an aggressive manner whereas girls are more likely to ask for emotional support and seek help. This study is the first to provide evidence for the relationship between behavioral and emotional self-regulation during the preschool period. Self-regulated compliance is associated with independent, problem-focused coping strategies. Emotion-focused strategies, such as aggression and venting, are negatively correlated with self-regulated compliance. Emotional self-regulation contributes to the internalization of standards of behavior and the contribution increases with age. Behavioral self-regulation shows greater consistency across contexts than emotional self-regulation, perhaps because behavioral self-regulation develops faster. The finding that 5-year-olds worked less in the high demand condition than the low, whereas 3-year-olds did not, was interpreted as a reflection of differential ratio of child resources to task demands. The findings support the important contributions of emotional self-regulation to behavioral self-regulation. A new integrative model is proposed to explain the dynamics of the relationship between behavioral and emotional self-regulation. Specifically, the point is made that behavioral outcome depends on the resources available to the child and the demands for behavioral and emotional self-regulation of a particular situation.\nAge-related increase in self-regulated compliance (behavioral self-regulation) during preschool period\nSelf-regulated compliance is associated with independent, problem-focused coping strategies\nEmotion-focused strategies like aggression are negatively correlated with self-regulated compliance\nEmotional self-regulation contributes to internalization of behavioral standards, increasing with age\nBehavioral self-regulation shows greater consistency across contexts than emotional self-regulation\nFocus on developing emotional regulation skills to support behavioral compliance in preschool children\nTeach problem-focused coping strategies rather than emotion-focused strategies like aggression\nConsider task demands and child resources when designing interventions for self-regulation",
+    "Inhibition and working memory in young preschool children with symptoms of ADHD and/or oppositional-defiant disorder\nYoung preschoolers show the same pattern of relations between EF and behavioral symptoms of ADHD and/or ODD as previously described in older children diagnosed with ADHD and/or ODD. Effect sizes were generally small, indicating that measures of EF have limited clinical utility at this stage in development.\nYoung preschoolers show the same pattern of relations between executive function and behavioral symptoms of ADHD and/or ODD as previously described in older children diagnosed with ADHD and/or ODD.\nEffect sizes were generally small, indicating that measures of executive function have limited clinical utility at this stage in development.\nThe study examines inhibition and working memory in preschool children with oppositional-defiant symptoms.\nFindings suggest that executive function measures may not be strong predictors of clinical outcomes in very young children with behavioral issues.\nThe research provides insight into the neuropsychological correlates of oppositional behavior in preschool-aged children.\nExecutive function assessments may have limited predictive value for clinical interventions in preschool children with oppositional behavior.\nBehavioral interventions for preschool oppositional behavior should focus on direct behavioral strategies rather than relying heavily on executive function measures.\nEarly identification of oppositional behavior patterns in preschool children can inform targeted behavioral interventions.\nParent-child interaction interventions may be more effective than neuropsychological approaches for addressing oppositional behavior in very young children.",
+    "Improving the efficacy and effectiveness of evidence-based psychosocial interventions for attention-deficit/hyperactivity disorder (ADHD) in children and adolescents\nAttention-deficit/hyperactivity disorder (ADHD) is a prevalent, chronic, and impairing mental health disorder of childhood. Decades of empirical research has established a strong evidence-based intervention armamentarium for ADHD; however, limitations exist in regards to efficacy and effectiveness of these interventions.\nBehavioral parent training and classroom behavior management are evidence-based interventions for ADHD\nCombined interventions addressing both home and school environments show superior outcomes\nSelf-regulation training improves impulse control and social functioning\nBehavioral parent training\nClassroom behavior management strategies\nSelf-regulation training\nSocial skills training\nCognitive-behavioral techniques for impulse control",
+    "Short-Term Intervention Effects of the PATHS Curriculum in Young Low-Income Children: Capitalizing on Plasticity\nChildren receiving PATHS showed significantly greater improvements in social competence and behavioral problems than controls\nImprovements in motor inhibition were observed\nemotion recognition training\nself-control strategies\nsocial problem-solving\nfriendship skills development\nexecutive function training",
+    "Early Intervention for Preschool-Age Children with ADHD\n<jats:p> Preschool-age children with attention-deficit/hyperactivity disorder (ADHD) are at-risk for expulsion from preschool settings due to disruptive, noncompliant behavior. Removal from preschool limits the child's exposure to preacademic instruction, socialization opportunities, and the structure of classrooms. In this review, the authors evaluate the efficacy of pharmacological, parent training, and behavioral interventions designed to manage the disruptive behavior of preschool children with ADHD. Twenty-six experimental articles were reviewed. Pharmacological intervention, which has received the most attention, was found to be generally effective, although not without problems due to side effects. Parent-training methods were found to be effective in the home setting, but minimal information has been collected on the generalization of these findings to the school setting. Very little research has been devoted to the use of behavior management in the school setting, but results from those studies that have been done appear promising. Issues regarding future research and the use of these interventions to prepare the preschool-age child with ADHD for kindergarten are discussed. </jats:p>\nPharmacological intervention is generally effective for managing disruptive behavior in preschool children with ADHD, though side effects are a concern\nParent-training methods are effective in home settings for reducing disruptive behavior, but generalization to school settings needs more research\nBehavior management in school settings shows promising results for addressing disruptive behavior, though research is limited\nPreschool children with ADHD are at risk for expulsion due to disruptive, noncompliant behavior, limiting their educational and social opportunities\nParent training interventions can be implemented in home settings to reduce noncompliant behavior in preschool children with ADHD\nBehavioral management strategies show promise for school settings to address disruptive behavior and prevent expulsion\nA multi-modal approach combining parent training and school-based behavioral interventions may be most effective for oppositional behavior",
+    "Evidence-Based Approaches to Social Skills Training with Children and Adolescents\nComprehensive review highlighting evidence\u2011based approaches to social skills training, emphasizing modeling, coaching, reinforcement, and generalization strategies.\nmodeling\ncoaching\nreinforcement\nproblem\u2011solving\nemotional regulation training",
+    "The effectiveness of play therapy on emotional and behavioral disorders of preschool children in Marand city\n<jats:p>Background and Aim: The purpose of this study was to investigate the effectiveness of play therapy on emotional and behavioral disorders of preschool children in Marand city. Methods: The current research method was a semi-experimental type of pre-test and post-test with a control group. The statistical population of this research includes 653 preschool children of Marand city, of which 44 were selected as the sample size using a targeted method. People were randomly divided into two experimental and control groups. Then, for the children of the experimental group, play therapy training sessions based on the cognitive-behavioral approach were implemented as a group. No training sessions were held for the control group. After these sessions, the social-emotional disorders test was taken from the two experimental and control groups. The number of training sessions was eight. These meetings were held every week on two days for two groups for 45 minutes. The data collection tool was Garnevsky et al.'s 2006 children's cognitive-emotional regulation questionnaire, whose validity was confirmed by experts' opinions and reliability by Cronbach's alpha. Multivariate analysis of covariance test was used to analyze the data. Results: The findings showed that play therapy based on the cognitive-behavioral approach has an effect on children's social-emotional disorders. Play therapy based on the cognitive-behavioral approach has an effect on the organization of homework, children's peer relationships, children's self-regulation, restlessness and anger, discomfort and loneliness, and children's feelings of loneliness. Conclusion: The results of the research show that playing in Mani has a positive effect on reducing children's social-emotional disorders, so it is suggested that school and welfare managers use the presence of clinical psychologists in this area, and psychologists also use play therapy methods to reduce children's social-emotional disorders</jats:p>\nPlay therapy based on cognitive-behavioral approach significantly reduces social-emotional disorders in preschool children\nThe intervention positively affects children's self-regulation, restlessness, and anger\nPlay therapy improves organization of homework and peer relationships\nThe approach reduces discomfort, loneliness, and feelings of loneliness in children\nPlay therapy using cognitive-behavioral techniques can be effective for reducing oppositional behaviors like anger and restlessness in preschool children\nStructured group play therapy sessions (8 sessions of 45 minutes) show measurable improvements in emotional regulation\nSchools and welfare programs should consider incorporating clinical psychologists trained in play therapy for preschool behavioral interventions",
+    "The Efficacy of Visual Activity Schedule Intervention in Reducing Problem Behaviors in Children With Attention-Deficit/Hyperactivity Disorder Between the Age of 5 and 12 Years: A Systematic Review\nA larger number of studies and the ADHD clinical population would help to increase the generalizability of future reviews of treatments in this context.\nVisual activity schedules reduce problem behaviors in children with ADHD\nPredictable routines decrease anxiety and improve self-regulation\nVisual supports help children understand expectations and transitions\nVisual activity schedules\nPredictable classroom routines\nVisual timers and cues\nTransition warnings and supports\nClear visual expectations"
+  ],
+  "similarities": [
+    0.13923209972973483,
+    0.11921766664559108,
+    0.1094837589748966,
+    0.08987904891328058,
+    0.06953629271675021,
+    0.04712949304440228,
+    0.02774561715715429,
+    0.02181497703175128,
+    0.014950998140626504,
+    0.014587222773006281
+  ],
+  "titles": [
+    "School Readiness and Self-Regulation: A Developmental Psychobiological Approach",
+    "Self-Regulation Intervention Impact on Turkish Children with Emotional and Behavioral Disorder Risks",
+    "The Development of Behavioral and Emotional Self-Regulation During the Preschool Period.",
+    "Inhibition and working memory in young preschool children with symptoms of ADHD and/or oppositional-defiant disorder",
+    "Improving the efficacy and effectiveness of evidence-based psychosocial interventions for attention-deficit/hyperactivity disorder (ADHD) in children and adolescents",
+    "Short-Term Intervention Effects of the PATHS Curriculum in Young Low-Income Children: Capitalizing on Plasticity",
+    "Early Intervention for Preschool-Age Children with ADHD",
+    "Evidence-Based Approaches to Social Skills Training with Children and Adolescents",
+    "The effectiveness of play therapy on emotional and behavioral disorders of preschool children in Marand city",
+    "The Efficacy of Visual Activity Schedule Intervention in Reducing Problem Behaviors in Children With Attention-Deficit/Hyperactivity Disorder Between the Age of 5 and 12 Years: A Systematic Review"
+  ],
+  "response": "Based on the provided research context, evidence-based emotion regulation and impulse control interventions for young children include:\n\n**1. Self-Regulation Intervention Packages:** Structured programs (e.g., 8 weeks, twice weekly) that combine multiple strategies to improve self-regulation, reduce problem behaviors, and enhance social skills. These have been shown effective even for children at risk of emotional/behavioral disorders, helping them reach functioning levels similar to typically developing peers.\n\n**2. Executive Function (EF) Training:** This includes specific activities such as:\n- **Executive function training games** to improve impulse control and attention.\n- **Cognitive flexibility exercises.**\n- **Self-monitoring techniques.**\n\n**3. Mindfulness-Based Interventions:** Practices designed to enhance present-moment awareness and emotional control.\n\n**4. Behavioral and Cognitive-Behavioral Approaches:**\n- **Play therapy** using a cognitive-behavioral approach, which reduces emotional disorders, anger, and restlessness while improving self-regulation and peer relationships.\n- **Parent training** and **classroom behavior management** to provide consistent reinforcement and structure.\n- **Social skills training** incorporating modeling, coaching, and problem-solving.\n\n**5. Curriculum-Based Programs:** Such as the **PATHS Curriculum**, which teaches emotion recognition, self-control strategies, social problem-solving, and friendship skills, leading to improvements in social competence and behavioral problems.\n\n**6. Visual Supports:**  \n- **Visual activity schedules** and predictable routines to reduce anxiety, clarify expectations, and improve self-regulation during transitions.\n\n**Key Considerations from the Research:**\n- Interventions should be developmentally appropriate, considering that **behavioral self-regulation may develop faster and be more consistent across contexts than emotional self-regulation** in preschoolers.\n- Teaching **problem-focused coping strategies** (e.g., independent problem-solving) is more effective than emotion-focused strategies (e.g., aggression) for fostering behavioral compliance.\n- For children with or at risk for ADHD/ODD, **combined interventions addressing both home and school environments** show superior outcomes, though executive function measures alone have limited clinical utility for very young children.\n- Effective interventions often require repeated, structured sessions and should aim to **generalize skills across settings** (home, school)."
+}

@@ -10,3 +10,4 @@ Requires-Dist: langgraph>=0.2
 Requires-Dist: openai>=1.0.0
 Requires-Dist: psycopg[binary]>=3.2
 Requires-Dist: python-dotenv>=1.0.0
+Requires-Dist: sentence-transformers>=3.0

@@ -1,0 +1,239 @@
+{
+  "id": "social-skills-retrieval",
+  "query": "Social skills and peer interaction interventions for shy children",
+  "top_k": 10,
+  "chunks": [
+    {
+      "entity_type": "TherapyResearch",
+      "entity_id": 177,
+      "title": "Peer rejection: developmental processes and intervention strategies",
+      "content": "Peer rejection: developmental processes and intervention strategies\nThe volume begins by reviewing the causes and correlates of peer rejection, examining both the characteristics of individual victims and the group dynamics that contribute to rejection.\nSocial skills training improves peer relationships\nCoaching in perspective-taking reduces aggressive behaviors\nStructured peer activities promote positive interactions\nSocial skills training programs\nPerspective-taking exercises\nPeer-mediated interventions\nConflict resolution training\nFriendship-building activities",
+      "metadata": {
+        "techniques": [
+          "Social skills training programs",
+          "Perspective-taking exercises",
+          "Peer-mediated interventions",
+          "Conflict resolution training",
+          "Friendship-building activities"
+        ],
+        "keyFindings": [
+          "Social skills training improves peer relationships",
+          "Coaching in perspective-taking reduces aggressive behaviors",
+          "Structured peer activities promote positive interactions"
+        ]
+      },
+      "similarity": 0.15774856413739724
+    },
+    {
+      "entity_type": "TherapyResearch",
+      "entity_id": 155,
+      "title": "Impact of a school-based social skills training program on parent\u2013child relationships and parent attitudes toward school",
+      "content": "Impact of a school-based social skills training program on parent\u2013child relationships and parent attitudes toward school\nSocial skills training improved parent-child closeness and (for older children) parent attitudes toward school\nEffects mediated by increased teacher support and peer liking\nsocial skills instruction\npeer interaction practice\nteacher support enhancement\npeer liking strategies\nparent-child relationship building",
+      "metadata": {
+        "techniques": [
+          "social skills instruction",
+          "peer interaction practice",
+          "teacher support enhancement",
+          "peer liking strategies",
+          "parent-child relationship building"
+        ],
+        "keyFindings": [
+          "Social skills training improved parent-child closeness and (for older children) parent attitudes toward school",
+          "Effects mediated by increased teacher support and peer liking"
+        ]
+      },
+      "similarity": 0.1299291894943928
+    },
+    {
+      "entity_type": "TherapyResearch",
+      "entity_id": 161,
+      "title": "Social skills training for attention deficit hyperactivity disorder (ADHD) in children aged 5 to 18 years",
+      "content": "Social skills training for attention deficit hyperactivity disorder (ADHD) in children aged 5 to 18 years\nLittle evidence to support or refute social skills training for ADHD; teacher\u2011rated social skills effects minimal (SMD 0.11) and not clinically significant.\nInterventions included cognitive\u2011behavioral, multimodal, parent\u2011training, and teacher\u2011consultation components.\nsocial skills training\ncognitive\u2011behavioral therapy\nmultimodal behavioral/psychosocial therapy\nparent training\nteacher consultations",
+      "metadata": {
+        "techniques": [
+          "social skills training",
+          "cognitive\u2011behavioral therapy",
+          "multimodal behavioral/psychosocial therapy",
+          "parent training",
+          "teacher consultations"
+        ],
+        "keyFindings": [
+          "Little evidence to support or refute social skills training for ADHD; teacher\u2011rated social skills effects minimal (SMD 0.11) and not clinically significant.",
+          "Interventions included cognitive\u2011behavioral, multimodal, parent\u2011training, and teacher\u2011consultation components."
+        ]
+      },
+      "similarity": 0.11929617011542515
+    },
+    {
+      "entity_type": "TherapyResearch",
+      "entity_id": 167,
+      "title": "[Effectiveness of social skills training among children with behavior problems: A randomized controlled trial]",
+      "content": "[Effectiveness of social skills training among children with behavior problems: A randomized controlled trial]\nSocial skills training was acceptable and improved psychosocial competence in children with behavior problems.\nsocial skills training\ngroup sessions\nrole\u2011playing\nmodeling\nreinforcement",
+      "metadata": {
+        "techniques": [
+          "social skills training",
+          "group sessions",
+          "role\u2011playing",
+          "modeling",
+          "reinforcement"
+        ],
+        "keyFindings": [
+          "Social skills training was acceptable and improved psychosocial competence in children with behavior problems."
+        ]
+      },
+      "similarity": 0.1027212234417968
+    },
+    {
+      "entity_type": "TherapyResearch",
+      "entity_id": 170,
+      "title": "Evaluation of a group-based social skills training for children with problem behavior",
+      "content": "Evaluation of a group-based social skills training for children with problem behavior\nGroup\u2011based social skills training reduced problem behavior and improved social competence, especially with parent involvement.\ngroup\u2011based social skills training\nbehavioral rehearsal\nfeedback\nparent involvement",
+      "metadata": {
+        "techniques": [
+          "group\u2011based social skills training",
+          "behavioral rehearsal",
+          "feedback",
+          "parent involvement"
+        ],
+        "keyFindings": [
+          "Group\u2011based social skills training reduced problem behavior and improved social competence, especially with parent involvement."
+        ]
+      },
+      "similarity": 0.07868308456564943
+    },
+    {
+      "entity_type": "TherapyResearch",
+      "entity_id": 169,
+      "title": "Evidence-Based Approaches to Social Skills Training with Children and Adolescents",
+      "content": "Evidence-Based Approaches to Social Skills Training with Children and Adolescents\nComprehensive review highlighting evidence\u2011based approaches to social skills training, emphasizing modeling, coaching, reinforcement, and generalization strategies.\nmodeling\ncoaching\nreinforcement\nproblem\u2011solving\nemotional regulation training",
+      "metadata": {
+        "techniques": [
+          "modeling",
+          "coaching",
+          "reinforcement",
+          "problem\u2011solving",
+          "emotional regulation training"
+        ],
+        "keyFindings": [
+          "Comprehensive review highlighting evidence\u2011based approaches to social skills training, emphasizing modeling, coaching, reinforcement, and generalization strategies."
+        ]
+      },
+      "similarity": 0.07349925898351517
+    },
+    {
+      "entity_type": "TherapyResearch",
+      "entity_id": 152,
+      "title": "A Meta-Analytic Review of Preschool Social and Emotional Learning Interventions",
+      "content": "A Meta-Analytic Review of Preschool Social and Emotional Learning Interventions\nUniversal SEL interventions show small-medium effects on social-emotional skill development (g = 0.34) and problem behavior reduction (g = 0.32)\nTargeted interventions show medium effects (g = 0.48)\nuniversal SEL curricula\ntargeted interventions for at-risk children\nsocial-emotional skill building\nproblem behavior reduction strategies",
+      "metadata": {
+        "techniques": [
+          "universal SEL curricula",
+          "targeted interventions for at-risk children",
+          "social-emotional skill building",
+          "problem behavior reduction strategies"
+        ],
+        "keyFindings": [
+          "Universal SEL interventions show small-medium effects on social-emotional skill development (g = 0.34) and problem behavior reduction (g = 0.32)",
+          "Targeted interventions show medium effects (g = 0.48)"
+        ]
+      },
+      "similarity": 0.05105619919728166
+    },
+    {
+      "entity_type": "TherapyResearch",
+      "entity_id": 153,
+      "title": "Short-Term Intervention Effects of the PATHS Curriculum in Young Low-Income Children: Capitalizing on Plasticity",
+      "content": "Short-Term Intervention Effects of the PATHS Curriculum in Young Low-Income Children: Capitalizing on Plasticity\nChildren receiving PATHS showed significantly greater improvements in social competence and behavioral problems than controls\nImprovements in motor inhibition were observed\nemotion recognition training\nself-control strategies\nsocial problem-solving\nfriendship skills development\nexecutive function training",
+      "metadata": {
+        "techniques": [
+          "emotion recognition training",
+          "self-control strategies",
+          "social problem-solving",
+          "friendship skills development",
+          "executive function training"
+        ],
+        "keyFindings": [
+          "Children receiving PATHS showed significantly greater improvements in social competence and behavioral problems than controls",
+          "Improvements in motor inhibition were observed"
+        ]
+      },
+      "similarity": 0.04675887768325071
+    },
+    {
+      "entity_type": "TherapyResearch",
+      "entity_id": 165,
+      "title": "Preventing Conduct Problems, Promoting Social Competence: A Parent and Teacher Training Partnership in Head Start",
+      "content": "Preventing Conduct Problems, Promoting Social Competence: A Parent and Teacher Training Partnership in Head Start\nIncredible Years program (parent + teacher training) significantly reduced child conduct problems at school and home, improved positive parenting, and enhanced teacher classroom management skills; effects maintained at one\u2011year follow\u2011up.\nIncredible Years program\nparent training\nteacher training\nchild social skills training\nvideo modeling\nrole\u2011playing",
+      "metadata": {
+        "techniques": [
+          "Incredible Years program",
+          "parent training",
+          "teacher training",
+          "child social skills training",
+          "video modeling",
+          "role\u2011playing"
+        ],
+        "keyFindings": [
+          "Incredible Years program (parent + teacher training) significantly reduced child conduct problems at school and home, improved positive parenting, and enhanced teacher classroom management skills; effects maintained at one\u2011year follow\u2011up."
+        ]
+      },
+      "similarity": 0.03769588729847695
+    },
+    {
+      "entity_type": "TherapyResearch",
+      "entity_id": 168,
+      "title": "A Meta\u2011Analysis of After\u2011School Programs That Seek to Promote Personal and Social Skills in Children and Adolescents",
+      "content": "A Meta\u2011Analysis of After\u2011School Programs That Seek to Promote Personal and Social Skills in Children and Adolescents\nAfter\u2011school programs using SAFE practices (sequenced, active, focused, explicit) significantly improved social behaviors, self\u2011perceptions, school bonding, academic achievement, and reduced problem behaviors.\nSAFE programming\nskill\u2011building activities\ncooperative games\nrole\u2011plays\ngroup discussions",
+      "metadata": {
+        "techniques": [
+          "SAFE programming",
+          "skill\u2011building activities",
+          "cooperative games",
+          "role\u2011plays",
+          "group discussions"
+        ],
+        "keyFindings": [
+          "After\u2011school programs using SAFE practices (sequenced, active, focused, explicit) significantly improved social behaviors, self\u2011perceptions, school bonding, academic achievement, and reduced problem behaviors."
+        ]
+      },
+      "similarity": 0.02343481445681761
+    }
+  ],
+  "retrieval_context": [
+    "Peer rejection: developmental processes and intervention strategies\nThe volume begins by reviewing the causes and correlates of peer rejection, examining both the characteristics of individual victims and the group dynamics that contribute to rejection.\nSocial skills training improves peer relationships\nCoaching in perspective-taking reduces aggressive behaviors\nStructured peer activities promote positive interactions\nSocial skills training programs\nPerspective-taking exercises\nPeer-mediated interventions\nConflict resolution training\nFriendship-building activities",
+    "Impact of a school-based social skills training program on parent\u2013child relationships and parent attitudes toward school\nSocial skills training improved parent-child closeness and (for older children) parent attitudes toward school\nEffects mediated by increased teacher support and peer liking\nsocial skills instruction\npeer interaction practice\nteacher support enhancement\npeer liking strategies\nparent-child relationship building",
+    "Social skills training for attention deficit hyperactivity disorder (ADHD) in children aged 5 to 18 years\nLittle evidence to support or refute social skills training for ADHD; teacher\u2011rated social skills effects minimal (SMD 0.11) and not clinically significant.\nInterventions included cognitive\u2011behavioral, multimodal, parent\u2011training, and teacher\u2011consultation components.\nsocial skills training\ncognitive\u2011behavioral therapy\nmultimodal behavioral/psychosocial therapy\nparent training\nteacher consultations",
+    "[Effectiveness of social skills training among children with behavior problems: A randomized controlled trial]\nSocial skills training was acceptable and improved psychosocial competence in children with behavior problems.\nsocial skills training\ngroup sessions\nrole\u2011playing\nmodeling\nreinforcement",
+    "Evaluation of a group-based social skills training for children with problem behavior\nGroup\u2011based social skills training reduced problem behavior and improved social competence, especially with parent involvement.\ngroup\u2011based social skills training\nbehavioral rehearsal\nfeedback\nparent involvement",
+    "Evidence-Based Approaches to Social Skills Training with Children and Adolescents\nComprehensive review highlighting evidence\u2011based approaches to social skills training, emphasizing modeling, coaching, reinforcement, and generalization strategies.\nmodeling\ncoaching\nreinforcement\nproblem\u2011solving\nemotional regulation training",
+    "A Meta-Analytic Review of Preschool Social and Emotional Learning Interventions\nUniversal SEL interventions show small-medium effects on social-emotional skill development (g = 0.34) and problem behavior reduction (g = 0.32)\nTargeted interventions show medium effects (g = 0.48)\nuniversal SEL curricula\ntargeted interventions for at-risk children\nsocial-emotional skill building\nproblem behavior reduction strategies",
+    "Short-Term Intervention Effects of the PATHS Curriculum in Young Low-Income Children: Capitalizing on Plasticity\nChildren receiving PATHS showed significantly greater improvements in social competence and behavioral problems than controls\nImprovements in motor inhibition were observed\nemotion recognition training\nself-control strategies\nsocial problem-solving\nfriendship skills development\nexecutive function training",
+    "Preventing Conduct Problems, Promoting Social Competence: A Parent and Teacher Training Partnership in Head Start\nIncredible Years program (parent + teacher training) significantly reduced child conduct problems at school and home, improved positive parenting, and enhanced teacher classroom management skills; effects maintained at one\u2011year follow\u2011up.\nIncredible Years program\nparent training\nteacher training\nchild social skills training\nvideo modeling\nrole\u2011playing",
+    "A Meta\u2011Analysis of After\u2011School Programs That Seek to Promote Personal and Social Skills in Children and Adolescents\nAfter\u2011school programs using SAFE practices (sequenced, active, focused, explicit) significantly improved social behaviors, self\u2011perceptions, school bonding, academic achievement, and reduced problem behaviors.\nSAFE programming\nskill\u2011building activities\ncooperative games\nrole\u2011plays\ngroup discussions"
+  ],
+  "similarities": [
+    0.15774856413739724,
+    0.1299291894943928,
+    0.11929617011542515,
+    0.1027212234417968,
+    0.07868308456564943,
+    0.07349925898351517,
+    0.05105619919728166,
+    0.04675887768325071,
+    0.03769588729847695,
+    0.02343481445681761
+  ],
+  "titles": [
+    "Peer rejection: developmental processes and intervention strategies",
+    "Impact of a school-based social skills training program on parent\u2013child relationships and parent attitudes toward school",
+    "Social skills training for attention deficit hyperactivity disorder (ADHD) in children aged 5 to 18 years",
+    "[Effectiveness of social skills training among children with behavior problems: A randomized controlled trial]",
+    "Evaluation of a group-based social skills training for children with problem behavior",
+    "Evidence-Based Approaches to Social Skills Training with Children and Adolescents",
+    "A Meta-Analytic Review of Preschool Social and Emotional Learning Interventions",
+    "Short-Term Intervention Effects of the PATHS Curriculum in Young Low-Income Children: Capitalizing on Plasticity",
+    "Preventing Conduct Problems, Promoting Social Competence: A Parent and Teacher Training Partnership in Head Start",
+    "A Meta\u2011Analysis of After\u2011School Programs That Seek to Promote Personal and Social Skills in Children and Adolescents"
+  ],
+  "response": "Based on the provided research context, social skills and peer interaction interventions for shy children should focus on evidence-based strategies that build social competence, reduce avoidance, and foster positive peer relationships. Key approaches include:\n\n1. **Structured Social Skills Training (SST):** Programs that use modeling, coaching, role-playing, and reinforcement (as highlighted in multiple sources) can help shy children learn and practice specific interaction skills in a safe setting.\n\n2. **Peer-Mediated Interventions and Structured Activities:** Creating opportunities for positive, low-pressure peer interactions through guided activities or cooperative games (noted in the context on peer rejection and after-school programs) can help shy children build confidence and connections.\n\n3. **Emotional Regulation and Perspective-Taking Training:** Incorporating elements like emotion recognition, self-control strategies, and perspective-taking exercises (from the PATHS curriculum and peer rejection research) can help shy children better manage social anxiety and understand social cues.\n\n4. **Parent and Teacher Involvement:** Involving parents and teachers\u2014through training or consultation\u2014can support generalization of skills across settings and provide consistent encouragement, which is especially important for children with social hesitancy.\n\n5. **Group-Based Formats:** Small-group sessions that include behavioral rehearsal and feedback (as evaluated for children with problem behavior) can offer a supportive environment for shy children to practice social skills without the intensity of one-on-one interactions.\n\n6. **SAFE Program Principles:** After-school or school-based programs that are Sequenced, Active, Focused, and Explicit (SAFE) have shown success in improving social behaviors and self-perceptions, which could benefit shy children by providing predictable and scaffolded social engagement.\n\n**Note:** While the context does not specifically address \"shyness,\" these strategies are derived from interventions aimed at improving social competence, reducing problem behaviors, and enhancing peer relationships\u2014outcomes relevant to supporting shy children in social settings."
+}

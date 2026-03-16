@@ -5,6 +5,8 @@ query GetGenerationJob($id: String!) {
     progress
     result {
       audioUrl
+      progress
+      stage
       count
       diagnostics {
         searchCount
