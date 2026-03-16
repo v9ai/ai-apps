@@ -1,0 +1,209 @@
+"""All UPDATE/INSERT/DELETE mutations used by the pipeline graphs.
+
+PostgreSQL syntax (parameterised with %s, native BOOLEAN, now()).
+"""
+
+from __future__ import annotations
+
+from datetime import datetime, timezone
+
+import psycopg
+from psycopg.rows import dict_row
+
+
+# ---------------------------------------------------------------------------
+# Process Jobs — Phase 1 (enhance)
+# ---------------------------------------------------------------------------
+
+def promote_non_ats_jobs(conn: psycopg.Connection) -> int:
+    """Promote non-ATS jobs directly to 'enhanced' (no external fetch needed)."""
+    with conn.cursor() as cur:
+        cur.execute(
+            """UPDATE jobs SET status = 'enhanced', updated_at = now()
+               WHERE (status IS NULL OR status = 'new')
+                 AND source_kind NOT IN ('greenhouse', 'lever', 'ashby')"""
+        )
+        conn.commit()
+        return cur.rowcount
+
+
+def update_job_enhanced(
+    conn: psycopg.Connection, job_id: int, cols: list[str], vals: list
+) -> None:
+    """Update a job with ATS data and set status to 'enhanced'."""
+    set_parts = [f"{c} = %s" for c in cols]
+    set_parts += ["status = %s", "updated_at = now()"]
+    vals = list(vals) + ["enhanced", job_id]
+    sql = f"UPDATE jobs SET {', '.join(set_parts)} WHERE id = %s"
+    with conn.cursor() as cur:
+        cur.execute(sql, vals)
+    conn.commit()
+
+
+def advance_job_to_enhanced(conn: psycopg.Connection, job_id: int) -> None:
+    """Advance a job to 'enhanced' without ATS data."""
+    with conn.cursor() as cur:
+        cur.execute(
+            "UPDATE jobs SET status = 'enhanced', updated_at = now() WHERE id = %s",
+            [job_id],
+        )
+    conn.commit()
+
+
+# ---------------------------------------------------------------------------
+# Process Jobs — Phase 2 (role tagging)
+# ---------------------------------------------------------------------------
+
+def persist_role_tags(
+    conn: psycopg.Connection,
+    job_id: int,
+    is_frontend_react: bool,
+    is_ai_engineer: bool,
+    confidence: str,
+    reason: str,
+    source: str,
+    next_status: str,
+) -> None:
+    """Write role tag columns and new status."""
+    with conn.cursor() as cur:
+        cur.execute(
+            """UPDATE jobs
+               SET role_frontend_react = %s,
+                   role_ai_engineer    = %s,
+                   role_confidence     = %s,
+                   role_reason         = %s,
+                   role_source         = %s,
+                   status              = %s,
+                   updated_at          = now()
+               WHERE id = %s""",
+            [
+                is_frontend_react,
+                is_ai_engineer,
+                confidence,
+                reason,
+                source,
+                next_status,
+                job_id,
+            ],
+        )
+    conn.commit()
+
+
+# ---------------------------------------------------------------------------
+# Process Jobs — Phase 3 (EU classification)
+# ---------------------------------------------------------------------------
+
+def persist_eu_classification(
+    conn: psycopg.Connection,
+    job_id: int,
+    is_remote_eu: bool,
+    confidence: str,
+    reason: str,
+    source: str,
+) -> None:
+    """Write EU classification result and advance status."""
+    next_status = "eu-remote" if is_remote_eu else "non-eu"
+    with conn.cursor() as cur:
+        cur.execute(
+            """UPDATE jobs
+               SET is_remote_eu          = %s,
+                   remote_eu_confidence  = %s,
+                   remote_eu_reason      = %s,
+                   score_reason          = %s,
+                   status                = %s,
+                   updated_at            = now()
+               WHERE id = %s""",
+            [is_remote_eu, confidence, reason, source, next_status, job_id],
+        )
+    conn.commit()
+
+
+# ---------------------------------------------------------------------------
+# Process Jobs — Phase 4 (skill extraction)
+# ---------------------------------------------------------------------------
+
+def upsert_job_skills(
+    conn: psycopg.Connection,
+    job_id: int,
+    skills: list[dict],
+) -> int:
+    """Delete existing skills and insert fresh batch. Returns count."""
+    now = datetime.now(timezone.utc).isoformat()
+    with conn.cursor() as cur:
+        cur.execute("DELETE FROM job_skill_tags WHERE job_id = %s", [job_id])
+        for s in skills:
+            cur.execute(
+                """INSERT INTO job_skill_tags
+                   (job_id, tag, level, confidence, evidence, extracted_at, version)
+                   VALUES (%s, %s, %s, %s, %s, %s, 'skills-v1')
+                   ON CONFLICT (job_id, tag) DO UPDATE SET
+                       level = EXCLUDED.level,
+                       confidence = EXCLUDED.confidence,
+                       evidence = EXCLUDED.evidence,
+                       extracted_at = EXCLUDED.extracted_at,
+                       version = EXCLUDED.version""",
+                [
+                    job_id,
+                    s["tag"],
+                    s["level"],
+                    round(s["confidence"], 3),
+                    s["evidence"],
+                    now,
+                ],
+            )
+    conn.commit()
+    return len(skills)
+
+
+# ---------------------------------------------------------------------------
+# Cleanup Jobs
+# ---------------------------------------------------------------------------
+
+# Columns NULLed on stale — everything except identity/conflict keys.
+_STALE_COLUMNS = [
+    "location", "description", "score", "score_reason",
+    "is_remote_eu", "remote_eu_confidence", "remote_eu_reason",
+    "company_id", "ats_data", "absolute_url", "internal_job_id",
+    "requisition_id", "company_name", "first_published", "language",
+    "metadata", "departments", "offices", "questions",
+    "location_questions", "compliance", "demographic_questions",
+    "data_compliance", "categories", "workplace_type", "country",
+    "opening", "opening_plain", "description_body",
+    "description_body_plain", "additional", "additional_plain",
+    "lists", "ats_created_at", "ashby_department", "ashby_team",
+    "ashby_employment_type", "ashby_is_remote", "ashby_is_listed",
+    "ashby_published_at", "ashby_job_url", "ashby_apply_url",
+    "ashby_secondary_locations", "ashby_compensation", "ashby_address",
+]
+
+
+def mark_jobs_stale(conn: psycopg.Connection, job_ids: list[int]) -> int:
+    """Mark a batch of jobs as stale: null data columns, delete skill tags."""
+    if not job_ids:
+        return 0
+
+    now = datetime.now(timezone.utc).isoformat()
+    placeholders = ",".join(["%s"] * len(job_ids))
+
+    null_sets = ", ".join(f"{c} = NULL" for c in _STALE_COLUMNS)
+
+    with conn.cursor() as cur:
+        # Delete skill tags
+        cur.execute(
+            f"DELETE FROM job_skill_tags WHERE job_id IN ({placeholders})",
+            job_ids,
+        )
+        # Null out data columns, set sentinel values
+        cur.execute(
+            f"""UPDATE jobs SET
+                    status = 'stale',
+                    title = '[stale]',
+                    url = '',
+                    posted_at = '1970-01-01T00:00:00Z',
+                    {null_sets},
+                    updated_at = %s
+                WHERE id IN ({placeholders})""",
+            [now, *job_ids],
+        )
+    conn.commit()
+    return len(job_ids)

@@ -1,0 +1,168 @@
+"""Tier 0: Deterministic keyword heuristic for EU remote classification.
+
+Returns high-confidence results for unambiguous cases.
+Returns None for anything ambiguous, signalling escalation to the LLM tier.
+
+Ported verbatim from workers/eu-classifier/src/heuristic.py with import fixes.
+"""
+
+import re
+
+from .constants import normalize_text_for_signals, NON_EU_LOCATION_PATTERN, NON_EU_JD_PATTERN
+from ..models.classification import JobClassification
+
+
+# Remote aggregator source kinds that post worldwide jobs — need EU-specific
+# location signals before heuristic can auto-accept.
+AGGREGATOR_SOURCE_KINDS = frozenset({"remoteok", "remotive", "himalayas", "jobicy"})
+
+# Compiled once — matches explicit EU eligibility signals in job descriptions.
+# Used in both the no-country and has-country paths.
+_eu_desc_pattern = re.compile(
+    r"\b(eu\s+(?:based|eligible|residents?|citizens?|work\s*(?:authorization|permit))"
+    r"|european\s+(?:union|economic\s+area)"
+    r"|remote.*\beu\b"
+    r"|emea"
+    r"|eu\s+timezone"
+    r"|european\s+business\s+hours)"
+    r"\b",
+    re.IGNORECASE,
+)
+
+
+def keyword_eu_classify(job: dict, signals: dict) -> JobClassification | None:
+    """Tier 0: deterministic EU classification heuristic.
+
+    Returns high-confidence results only for unambiguous cases.
+    Returns None for anything ambiguous -> falls through to LLM.
+
+    For remote aggregator sources (remoteok, remotive, himalayas, jobicy),
+    the heuristic requires explicit EU location signals before auto-accepting
+    worldwide remote. This prevents non-EU worldwide jobs from flooding the
+    eu-remote bucket.
+    """
+    location = (job.get("location") or "").lower()
+    source_kind = (job.get("source_kind") or "").lower()
+    is_aggregator = source_kind in AGGREGATOR_SOURCE_KINDS
+
+    # Negative signals -> reject
+    if signals["negative_signals"]:
+        return JobClassification(
+            isRemoteEU=False,
+            confidence="high",
+            reason=f"Heuristic: negative signals found: {', '.join(signals['negative_signals'][:3])}",
+        )
+
+    # ATS says not remote and location is not remote -> reject
+    if not signals["ats_remote"] and "remote" not in location:
+        desc_lower = (job.get("description") or "").lower()
+        if ("on-site" in desc_lower or "onsite" in desc_lower or "hybrid" in location
+                or "in office" in desc_lower):
+            return JobClassification(
+                isRemoteEU=False,
+                confidence="high",
+                reason="Heuristic: not a remote position",
+            )
+
+    # EU country code + remote flag -> accept
+    if signals["eu_country_code"] and signals["ats_remote"]:
+        return JobClassification(
+            isRemoteEU=True,
+            confidence="high",
+            reason=f"Heuristic: EU country code ({signals['country_code']}) + ATS remote flag",
+        )
+
+    # Explicit "Remote - EU" / "Remote | EU" in location
+    if re.search(r"\bremote\b.*\beu\b(?!\s*timezone)", location, re.IGNORECASE):
+        return JobClassification(
+            isRemoteEU=True,
+            confidence="high",
+            reason="Heuristic: explicit 'Remote EU' in location",
+        )
+
+    # EU country names in location (e.g. "Europe", "Americas, Europe, Israel")
+    if signals["eu_countries_in_location"] and signals["ats_remote"]:
+        countries = ", ".join(signals["eu_countries_in_location"][:3])
+        return JobClassification(
+            isRemoteEU=True,
+            confidence="high",
+            reason=f"Heuristic: EU/EEA country in location ({countries}) + ATS remote flag",
+        )
+
+    # "Europe" or "EMEA" in location string for aggregator sources
+    if is_aggregator and re.search(r"\b(europe|emea|european)\b", location, re.IGNORECASE):
+        return JobClassification(
+            isRemoteEU=True,
+            confidence="medium",
+            reason=f"Heuristic: Europe/EMEA in aggregator location ({location[:60]})",
+        )
+
+    # US-implicit signals + no EU signals -> escalate to LLM
+    if (signals.get("us_implicit_signals")
+            and not signals["eu_country_code"]
+            and not signals["eu_timezone"]
+            and not signals["eu_countries_in_location"]):
+        return None
+
+    # Pre-screen: check location string and JD intro for non-EU regional signals.
+    location_raw = job.get("location") or ""
+    desc_raw = (job.get("description") or "")
+    _has_non_eu_location = bool(NON_EU_LOCATION_PATTERN.search(location_raw))
+    _has_hybrid_location = "hybrid" in location
+    _has_non_eu_jd = bool(NON_EU_JD_PATTERN.search(desc_raw[:500]))
+
+    # Compute normalized description once
+    desc_lower = normalize_text_for_signals((job.get("description") or "").lower())
+
+    # Worldwide remote: ATS remote flag + no country code + no negative signals.
+    if signals["ats_remote"] and not signals["country_code"]:
+        # Fast-path: eu_timezone signal already extracted -> accept
+        if signals["eu_timezone"]:
+            return JobClassification(
+                isRemoteEU=True,
+                confidence="medium",
+                reason="Heuristic: EU timezone signal + remote (no country code)",
+            )
+        # Check description for explicit EU eligibility signals
+        if _eu_desc_pattern.search(desc_lower):
+            return JobClassification(
+                isRemoteEU=True,
+                confidence="medium",
+                reason=f"Heuristic: EU signal in description ({_eu_desc_pattern.search(desc_lower).group(0)})",
+            )
+        # No EU signals — too ambiguous, escalate to LLM.
+        return None
+
+    # Non-EU country but ATS remote + description signals worldwide/global scope
+    if signals["ats_remote"] and signals["country_code"] and not signals["eu_country_code"]:
+        # Tier A: Explicit "work from anywhere" phrases -> escalate
+        _explicit_worldwide_pattern = re.compile(
+            r"\b(anywhere in the world|work from anywhere"
+            r"|location.agnostic|digital nomad)\b",
+            re.IGNORECASE,
+        )
+        explicit_match = _explicit_worldwide_pattern.search(desc_lower)
+        if explicit_match:
+            return None
+
+        # Tier B: Vague phrases -> escalate to LLM
+        _vague_worldwide_pattern = re.compile(
+            r"\b(global(?:ly)?|worldwide|distributed team|fully distributed"
+            r"|remote.first|remote.friendly)\b",
+            re.IGNORECASE,
+        )
+        vague_match = _vague_worldwide_pattern.search(desc_lower)
+        if vague_match:
+            return None
+
+    # Check description for explicit EU eligibility (has-country-code path)
+    if signals["ats_remote"]:
+        eu_desc_match = _eu_desc_pattern.search(desc_lower)
+        if eu_desc_match:
+            return JobClassification(
+                isRemoteEU=True,
+                confidence="medium",
+                reason=f"Heuristic: EU signal in description ({eu_desc_match.group(0)})",
+            )
+
+    return None  # Ambiguous -- escalate to LLM
