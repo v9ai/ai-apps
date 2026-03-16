@@ -18,7 +18,7 @@ import {
   useCreateGoalMutation,
   useGetFamilyMembersQuery,
 } from "@/app/__generated__/hooks";
-import { useUser } from "@clerk/nextjs";
+import { authClient } from "@/app/lib/auth/client";
 
 export default function AddGoalButton({
   presetFamilyMemberId,
@@ -34,7 +34,8 @@ export default function AddGoalButton({
   size?: "1" | "2" | "3";
 } = {}) {
   const router = useRouter();
-  const { user } = useUser();
+  const { data: session } = authClient.useSession();
+  const user = session?.user;
   const [open, setOpen] = useState(false);
   const [title, setTitle] = useState("");
   const [description, setDescription] = useState("");

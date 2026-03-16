@@ -48,7 +48,7 @@ import {
   useGetUserSettingsQuery,
 } from "@/app/__generated__/hooks";
 import { UserSettingsLanguageSelector } from "@/app/components/UserSettingsLanguageSelector";
-import { useUser } from "@clerk/nextjs";
+import { authClient } from "@/app/lib/auth/client";
 import AddSubGoalButton from "@/app/components/AddSubGoalButton";
 import "./accordion.css";
 
@@ -74,7 +74,8 @@ function GoalPageContent() {
   const router = useRouter();
   const params = useParams();
   const paramValue = params.id as string;
-  const { user } = useUser();
+  const { data: session } = authClient.useSession();
+  const user = session?.user;
   const apolloClient = useApolloClient();
 
   // Determine if paramValue is a number (ID) or string (slug)

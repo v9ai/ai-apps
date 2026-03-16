@@ -38,7 +38,7 @@ import {
   useUpdateNoteMutation,
   useDeleteNoteMutation,
 } from "@/app/__generated__/hooks";
-import { useUser } from "@clerk/nextjs";
+import { authClient } from "@/app/lib/auth/client";
 import "./accordion.css";
 
 // Utility to format relative time
@@ -66,7 +66,8 @@ function NotePageContent() {
   const router = useRouter();
   const params = useParams();
   const slug = params.slug as string;
-  const { user } = useUser();
+  const { data: session } = authClient.useSession();
+  const user = session?.user;
 
   const [showFullDescription, setShowFullDescription] = useState(false);
 
@@ -829,7 +830,8 @@ export default function NotePage() {
   const router = useRouter();
   const params = useParams();
   const slug = params.slug as string;
-  const { user } = useUser();
+  const { data: session } = authClient.useSession();
+  const user = session?.user;
 
   const { data } = useGetNoteQuery({
     variables: { slug },

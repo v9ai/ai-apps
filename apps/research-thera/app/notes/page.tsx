@@ -10,12 +10,13 @@ import {
 } from "@radix-ui/themes";
 import { useRouter } from "next/navigation";
 import { useGetAllNotesQuery } from "../__generated__/hooks";
-import { useUser } from "@clerk/nextjs";
+import { authClient } from "@/app/lib/auth/client";
 import { AuthGate } from "../components/AuthGate";
 
 export default function NotesPage() {
   const router = useRouter();
-  const { user } = useUser();
+  const { data: session } = authClient.useSession();
+  const user = session?.user;
 
   const { data, loading, error } = useGetAllNotesQuery({ skip: !user });
 

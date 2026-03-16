@@ -56,7 +56,7 @@ Client (React + Apollo) → GraphQL API (`/api/graphql`) → Resolvers → D1 da
 
 ### Authentication
 
-Clerk (`@clerk/nextjs`) with modal sign-in/sign-up (no dedicated auth pages). GraphQL context provides `userId` and `userEmail` from Clerk's `auth()` and `currentUser()`.
+Neon Auth (`@neondatabase/auth`) built on Better Auth. Modal sign-in/sign-up via `AuthDialog` component. Auth server instance: `app/lib/auth/server.ts`, client instance: `app/lib/auth/client.ts`. GraphQL context provides `userId` and `userEmail` from `auth.getSession()`. Auth API handler at `app/api/auth/[...path]/route.ts`.
 
 ### Frontend
 

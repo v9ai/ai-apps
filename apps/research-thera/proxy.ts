@@ -1,22 +1,8 @@
-import { clerkMiddleware, createRouteMatcher } from "@clerk/nextjs/server";
-import { NextResponse } from "next/server";
-import type { NextRequest, NextFetchEvent } from "next/server";
+import { auth } from "@/app/lib/auth/server";
 
-const isProtectedRoute = createRouteMatcher(["/goals(.*)", "/notes(.*)"]);
-
-const clerkHandler = clerkMiddleware(async (auth, req) => {
-  if (isProtectedRoute(req)) {
-    const { userId } = await auth();
-    if (!userId) {
-      const homeUrl = new URL("/", req.url);
-      return NextResponse.redirect(homeUrl);
-    }
-  }
+export default auth.middleware({
+  loginUrl: "/",
 });
-
-export function proxy(request: NextRequest, event: NextFetchEvent) {
-  return clerkHandler(request as any, event as any);
-}
 
 export const config = {
   matcher: [

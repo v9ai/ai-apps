@@ -32,7 +32,7 @@ import {
   useDeleteContactFeedbackMutation,
   PersonType,
 } from "@/app/__generated__/hooks";
-import { useUser } from "@clerk/nextjs";
+import { authClient } from "@/app/lib/auth/client";
 import ContactFeedbackList from "@/app/components/ContactFeedbackList";
 import AddContactFeedbackButton from "@/app/components/AddContactFeedbackButton";
 
@@ -55,7 +55,8 @@ function ContactDetailContent() {
   const isNumeric = /^\d+$/.test(contactRaw);
   const contactId = isNumeric ? parseInt(contactRaw, 10) : NaN;
   const contactSlug = isNumeric ? undefined : contactRaw;
-  const { user } = useUser();
+  const { data: session } = authClient.useSession();
+  const user = session?.user;
 
   const { data, loading, error } = useGetContactQuery({
     variables: isNumeric ? { id: contactId } : { slug: contactSlug },
@@ -209,7 +210,7 @@ function ContactDetailContent() {
   }
 
   const isOwner =
-    contact.createdBy === user?.primaryEmailAddress?.emailAddress ||
+    contact.createdBy === user?.email ||
     contact.createdBy === user?.id;
 
   const contactName =

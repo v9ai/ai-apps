@@ -10,8 +10,10 @@ import {
   Separator,
   Grid,
 } from "@radix-ui/themes";
+import { useState } from "react";
 import { useRouter } from "next/navigation";
-import { useUser, useClerk } from "@clerk/nextjs";
+import { authClient } from "@/app/lib/auth/client";
+import { AuthDialog } from "./components/AuthDialog";
 import {
   RocketIcon,
   FileTextIcon,
@@ -23,9 +25,16 @@ import {
 
 export default function Home() {
   const router = useRouter();
-  const { user, isLoaded } = useUser();
-  const { openSignIn, openSignUp } = useClerk();
-  const isPending = !isLoaded;
+  const { data: session, isPending } = authClient.useSession();
+  const user = session?.user;
+
+  const [authOpen, setAuthOpen] = useState(false);
+  const [authMode, setAuthMode] = useState<"signin" | "signup">("signup");
+
+  const openAuth = (mode: "signin" | "signup") => {
+    setAuthMode(mode);
+    setAuthOpen(true);
+  };
 
   return (
     <Flex direction="column" gap="6">
@@ -52,7 +61,7 @@ export default function Home() {
           {user && (
             <Text size="3" color="indigo" weight="medium">
               Welcome back,{" "}
-              {user.firstName || user.emailAddresses[0]?.emailAddress}!
+              {user.name || user.email}!
             </Text>
           )}
 
@@ -68,10 +77,10 @@ export default function Home() {
               </>
             ) : !user ? (
               <>
-                <Button size="3" onClick={() => openSignUp()} color="indigo">
+                <Button size="3" onClick={() => openAuth("signup")} color="indigo">
                   Get Started
                 </Button>
-                <Button size="3" variant="soft" onClick={() => openSignIn()}>
+                <Button size="3" variant="soft" onClick={() => openAuth("signin")}>
                   Sign In
                 </Button>
               </>
@@ -101,7 +110,7 @@ export default function Home() {
         <Grid columns={{ initial: "1", md: "2", lg: "3" }} gap="4">
           <Card
             style={{ cursor: "pointer" }}
-            onClick={() => (user ? router.push("/goals") : openSignUp())}
+            onClick={() => (user ? router.push("/goals") : openAuth("signup"))}
           >
             <Flex direction="column" gap="3" p="2">
               <Flex align="center" gap="2">
@@ -120,7 +129,7 @@ export default function Home() {
 
           <Card
             style={{ cursor: "pointer" }}
-            onClick={() => (user ? router.push("/notes") : openSignUp())}
+            onClick={() => (user ? router.push("/notes") : openAuth("signup"))}
           >
             <Flex direction="column" gap="3" p="2">
               <Flex align="center" gap="2">
@@ -311,7 +320,7 @@ export default function Home() {
                   : "Sign up to create therapeutic goals backed by research and track your progress."}
               </Text>
               <Button
-                onClick={() => (user ? router.push("/goals") : openSignUp())}
+                onClick={() => (user ? router.push("/goals") : openAuth("signup"))}
                 style={{ marginTop: "1rem" }}
               >
                 {user ? "Create Goal" : "Sign Up"}
@@ -329,7 +338,7 @@ export default function Home() {
                   : "Discover research-backed insights, claim verification, and AI-powered audio content."}
               </Text>
               <Button
-                onClick={() => (user ? router.push("/notes") : openSignIn())}
+                onClick={() => (user ? router.push("/notes") : openAuth("signin"))}
                 style={{ marginTop: "1rem" }}
                 variant={user ? "solid" : "soft"}
               >
@@ -339,6 +348,12 @@ export default function Home() {
           </Card>
         </Grid>
       </Flex>
+
+      <AuthDialog
+        open={authOpen}
+        onOpenChange={setAuthOpen}
+        defaultMode={authMode}
+      />
     </Flex>
   );
 }

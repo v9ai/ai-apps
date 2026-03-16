@@ -38,7 +38,7 @@ import {
   FamilyMemberShareRole,
   PersonType,
 } from "@/app/__generated__/hooks";
-import { useUser } from "@clerk/nextjs";
+import { authClient } from "@/app/lib/auth/client";
 import AddGoalButton from "@/app/components/AddGoalButton";
 import AddBehaviorObservationButton from "@/app/components/AddBehaviorObservationButton";
 import BehaviorObservationsList from "@/app/components/BehaviorObservationsList";
@@ -129,7 +129,8 @@ function FamilyMemberContent() {
   const isNumeric = /^\d+$/.test(raw);
   const id = isNumeric ? parseInt(raw, 10) : NaN;
   const slug = isNumeric ? undefined : raw;
-  const { user } = useUser();
+  const { data: session } = authClient.useSession();
+  const user = session?.user;
 
   const { data, loading, error } = useGetFamilyMemberQuery({
     variables: isNumeric ? { id } : { slug },
@@ -328,7 +329,7 @@ function FamilyMemberContent() {
   }
 
   const isOwner =
-    member.userId === user?.primaryEmailAddress?.emailAddress ||
+    member.userId === user?.email ||
     member.userId === user?.id;
 
   const memberName = member.firstName + (member.name ? ` ${member.name}` : "");

@@ -1,9 +1,10 @@
 "use client";
 
 import { useEffect } from "react";
-import { useUser, SignInButton, SignUpButton } from "@clerk/nextjs";
 import { Card, Flex, Heading, Text, Button, Spinner } from "@radix-ui/themes";
 import { LockClosedIcon } from "@radix-ui/react-icons";
+import { authClient } from "@/app/lib/auth/client";
+import { AuthDialog } from "./AuthDialog";
 
 interface AuthGateProps {
   children: React.ReactNode;
@@ -12,7 +13,8 @@ interface AuthGateProps {
 }
 
 export function AuthGate({ children, pageName, description }: AuthGateProps) {
-  const { user, isLoaded } = useUser();
+  const { data: session, isPending } = authClient.useSession();
+  const user = session?.user;
 
   useEffect(() => {
     document.title = `${pageName} | ResearchThera`;
@@ -21,7 +23,7 @@ export function AuthGate({ children, pageName, description }: AuthGateProps) {
     };
   }, [pageName]);
 
-  if (!isLoaded) {
+  if (isPending) {
     return (
       <Flex justify="center" align="center" style={{ minHeight: "240px" }}>
         <Spinner size="3" />
@@ -67,16 +69,22 @@ export function AuthGate({ children, pageName, description }: AuthGateProps) {
             </Flex>
 
             <Flex gap="3">
-              <SignInButton mode="modal">
-                <Button size="3" color="indigo">
-                  Sign in
-                </Button>
-              </SignInButton>
-              <SignUpButton mode="modal">
-                <Button size="3" variant="soft" color="gray">
-                  Create account
-                </Button>
-              </SignUpButton>
+              <AuthDialog
+                trigger={
+                  <Button size="3" color="indigo">
+                    Sign in
+                  </Button>
+                }
+                defaultMode="signin"
+              />
+              <AuthDialog
+                trigger={
+                  <Button size="3" variant="soft" color="gray">
+                    Create account
+                  </Button>
+                }
+                defaultMode="signup"
+              />
             </Flex>
           </Flex>
         </Card>

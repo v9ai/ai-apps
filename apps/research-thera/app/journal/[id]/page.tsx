@@ -24,7 +24,7 @@ import {
   useGetJournalEntryQuery,
   useDeleteJournalEntryMutation,
 } from "@/app/__generated__/hooks";
-import { useUser } from "@clerk/nextjs";
+import { authClient } from "@/app/lib/auth/client";
 import { Breadcrumbs } from "@/app/components/Breadcrumbs";
 import AddJournalEntryButton from "@/app/components/AddJournalEntryButton";
 
@@ -45,7 +45,8 @@ function JournalEntryContent() {
   const router = useRouter();
   const params = useParams();
   const id = parseInt(params.id as string);
-  const { user } = useUser();
+  const { data: session } = authClient.useSession();
+  const user = session?.user;
 
   const { data, loading, error } = useGetJournalEntryQuery({
     variables: { id },

@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-import { auth, currentUser } from "@clerk/nextjs/server";
+import { auth } from "@/app/lib/auth/server";
 import { spawn } from "child_process";
 import path from "path";
 import * as d1Tools from "@/src/db/index";
@@ -7,13 +7,12 @@ import * as d1Tools from "@/src/db/index";
 export const runtime = "nodejs";
 
 export async function POST(request: NextRequest) {
-  const { userId } = await auth();
-  if (!userId) {
+  const { data: session } = await auth.getSession();
+  if (!session?.user?.id) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
 
-  const user = await currentUser();
-  const userEmail = user?.emailAddresses[0]?.emailAddress;
+  const userEmail = session.user.email;
   if (!userEmail) {
     return NextResponse.json({ error: "User email not found" }, { status: 401 });
   }
@@ -131,13 +130,12 @@ export async function POST(request: NextRequest) {
 }
 
 export async function GET(request: NextRequest) {
-  const { userId } = await auth();
-  if (!userId) {
+  const { data: session } = await auth.getSession();
+  if (!session?.user?.id) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
 
-  const user = await currentUser();
-  const userEmail = user?.emailAddresses[0]?.emailAddress;
+  const userEmail = session.user.email;
   if (!userEmail) {
     return NextResponse.json({ error: "User email not found" }, { status: 401 });
   }

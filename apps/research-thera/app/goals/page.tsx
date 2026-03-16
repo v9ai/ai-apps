@@ -15,13 +15,14 @@ import { PlusIcon } from "@radix-ui/react-icons";
 import { useRouter } from "next/navigation";
 import dynamic from "next/dynamic";
 import { useGetGoalsQuery } from "@/app/__generated__/hooks";
-import { useUser } from "@clerk/nextjs";
+import { authClient } from "@/app/lib/auth/client";
 import AddGoalButton from "@/app/components/AddGoalButton";
 import { AuthGate } from "@/app/components/AuthGate";
 
 function GoalsListContent() {
   const router = useRouter();
-  const { user } = useUser();
+  const { data: session } = authClient.useSession();
+  const user = session?.user;
   const [statusFilter, setStatusFilter] = useState<string | undefined>(
     undefined,
   );

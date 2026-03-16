@@ -25,7 +25,7 @@ import {
   useCreateFamilyMemberMutation,
   useDeleteFamilyMemberMutation,
 } from "@/app/__generated__/hooks";
-import { useUser } from "@clerk/nextjs";
+import { authClient } from "@/app/lib/auth/client";
 import { AuthGate } from "@/app/components/AuthGate";
 
 const RELATIONSHIP_OPTIONS = [
@@ -56,7 +56,8 @@ function getRelationshipColor(relationship: string | null | undefined) {
 }
 
 function FamilyListContent() {
-  const { user } = useUser();
+  const { data: session } = authClient.useSession();
+  const user = session?.user;
   const [addOpen, setAddOpen] = useState(false);
   const [deleteId, setDeleteId] = useState<number | null>(null);
 

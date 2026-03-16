@@ -18,7 +18,7 @@ import {
   useGetJournalEntriesQuery,
   useGetFamilyMembersQuery,
 } from "@/app/__generated__/hooks";
-import { useUser } from "@clerk/nextjs";
+import { authClient } from "@/app/lib/auth/client";
 import AddJournalEntryButton from "@/app/components/AddJournalEntryButton";
 import { AuthGate } from "@/app/components/AuthGate";
 
@@ -37,7 +37,8 @@ const moodColor = (mood: string) =>
 
 function JournalListContent() {
   const router = useRouter();
-  const { user } = useUser();
+  const { data: session } = authClient.useSession();
+  const user = session?.user;
   const [moodFilter, setMoodFilter] = useState<string | undefined>(undefined);
   const [familyMemberFilter, setFamilyMemberFilter] = useState<
     string | undefined

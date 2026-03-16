@@ -19,7 +19,7 @@ import {
   useGetFamilyMembersQuery,
   useGetGoalsQuery,
 } from "@/app/__generated__/hooks";
-import { useUser } from "@clerk/nextjs";
+import { authClient } from "@/app/lib/auth/client";
 
 interface EditEntry {
   id: number;
@@ -54,7 +54,8 @@ export default function AddJournalEntryButton({
   editEntry,
 }: AddJournalEntryButtonProps) {
   const router = useRouter();
-  const { isSignedIn } = useUser();
+  const { data: session } = authClient.useSession();
+  const isSignedIn = !!session?.user;
   const isEdit = !!editEntry;
 
   const [open, setOpen] = useState(false);

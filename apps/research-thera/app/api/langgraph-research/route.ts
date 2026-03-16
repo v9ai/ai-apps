@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-import { auth, currentUser } from "@clerk/nextjs/server";
+import { auth } from "@/app/lib/auth/server";
 import { Client } from "@langchain/langgraph-sdk";
 import * as d1Tools from "@/src/db/index";
 
@@ -9,13 +9,12 @@ export const maxDuration = 300;
 const LANGGRAPH_URL = process.env.LANGGRAPH_URL || "http://127.0.0.1:2024";
 
 export async function POST(request: NextRequest) {
-  const { userId } = await auth();
-  if (!userId) {
+  const { data: session } = await auth.getSession();
+  if (!session?.user?.id) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
 
-  const user = await currentUser();
-  const userEmail = user?.emailAddresses[0]?.emailAddress;
+  const userEmail = session.user.email;
   if (!userEmail) {
     return NextResponse.json(
       { error: "User email not found" },

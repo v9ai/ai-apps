@@ -13,12 +13,13 @@ import { SpeakerLoudIcon, FileTextIcon } from "@radix-ui/react-icons";
 import { useRouter } from "next/navigation";
 import dynamic from "next/dynamic";
 import { useGetAllStoriesQuery } from "@/app/__generated__/hooks";
-import { useUser } from "@clerk/nextjs";
+import { authClient } from "@/app/lib/auth/client";
 import { AuthGate } from "@/app/components/AuthGate";
 
 function StoriesListContent() {
   const router = useRouter();
-  const { user } = useUser();
+  const { data: session } = authClient.useSession();
+  const user = session?.user;
 
   const { data, loading, error, refetch } = useGetAllStoriesQuery({
     skip: !user,
