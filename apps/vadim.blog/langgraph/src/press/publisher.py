@@ -14,7 +14,7 @@ def blog_root() -> Path:
     """Resolve the blog posts directory."""
     if env_dir := os.environ.get("VADIM_BLOG_DIR"):
         return Path(env_dir)
-    return Path(__file__).resolve().parents[4] / "blog"
+    return Path(__file__).resolve().parents[3] / "blog"
 
 
 def publish(
