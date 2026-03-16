@@ -13,6 +13,8 @@ tags:
   - europe
 ---
 
+<AudioPlayer src="https://tts.vadim.blog/vadim-blog/llm-as-judge.wav" />
+
 Claude 3.5 Sonnet rates its own outputs approximately 25% higher than a human panel would. GPT-4 gives itself a 10% boost. Swap the order of two candidate responses in a pairwise comparison, and the verdict flips in 10--30% of cases -- not because the quality changed, but because the judge has a position preference it cannot override.
 
 These are not edge cases. They are the default behavior of every LLM-as-judge pipeline that ships without explicit mitigation. And most ship without it.
