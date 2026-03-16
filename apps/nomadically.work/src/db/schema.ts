@@ -1,8 +1,8 @@
-import { sqliteTable, text, integer, real, index, uniqueIndex, primaryKey } from "drizzle-orm/sqlite-core";
+import { pgTable, text, integer, real, index, uniqueIndex, primaryKey, serial, boolean } from "drizzle-orm/pg-core";
 import { sql, relations } from "drizzle-orm";
 
-export const companies = sqliteTable("companies", {
-  id: integer("id").primaryKey({ autoIncrement: true }),
+export const companies = pgTable("companies", {
+  id: serial("id").primaryKey(),
   key: text("key").notNull().unique(), // Unique identifier (slug/domain)
   name: text("name").notNull(),
   logo_url: text("logo_url"),
@@ -64,17 +64,17 @@ export const companies = sqliteTable("companies", {
 
   created_at: text("created_at")
     .notNull()
-    .default(sql`(datetime('now'))`),
+    .default(sql`now()::text`),
   updated_at: text("updated_at")
     .notNull()
-    .default(sql`(datetime('now'))`),
+    .default(sql`now()::text`),
 });
 
 export type Company = typeof companies.$inferSelect;
 export type NewCompany = typeof companies.$inferInsert;
 
-export const jobs = sqliteTable("jobs", {
-  id: integer("id").primaryKey(),
+export const jobs = pgTable("jobs", {
+  id: serial("id").primaryKey(),
   external_id: text("external_id").notNull(),
   source_id: text("source_id"),
   source_kind: text("source_kind").notNull(),
@@ -90,14 +90,14 @@ export const jobs = sqliteTable("jobs", {
   score: real("score"),
   score_reason: text("score_reason"),
   status: text("status"),
-  is_remote_eu: integer("is_remote_eu", { mode: "boolean" }),
+  is_remote_eu: boolean("is_remote_eu"),
   remote_eu_confidence: text("remote_eu_confidence", {
     enum: ["high", "medium", "low"],
   }),
   remote_eu_reason: text("remote_eu_reason"),
 
   // Role classification
-  role_ai_engineer: integer("role_ai_engineer", { mode: "boolean" }),
+  role_ai_engineer: boolean("role_ai_engineer"),
   role_confidence: text("role_confidence", { enum: ["high", "medium", "low"] }),
   role_reason: text("role_reason"),
   role_source: text("role_source"),
@@ -125,8 +125,8 @@ export const jobs = sqliteTable("jobs", {
   ashby_department: text("ashby_department"),
   ashby_team: text("ashby_team"),
   ashby_employment_type: text("ashby_employment_type"),
-  ashby_is_remote: integer("ashby_is_remote", { mode: "boolean" }),
-  ashby_is_listed: integer("ashby_is_listed", { mode: "boolean" }),
+  ashby_is_remote: boolean("ashby_is_remote"),
+  ashby_is_listed: boolean("ashby_is_listed"),
   ashby_published_at: text("ashby_published_at"),
   ashby_job_url: text("ashby_job_url"),
   ashby_apply_url: text("ashby_apply_url"),
@@ -141,16 +141,16 @@ export const jobs = sqliteTable("jobs", {
   ats_created_at: text("ats_created_at"),
 
   // Job application tracking
-  applied: integer("applied", { mode: "boolean" }).notNull().default(false),
+  applied: boolean("applied").notNull().default(false),
   applied_at: text("applied_at"),
   recruiter_id: integer("recruiter_id").references(() => contacts.id, { onDelete: "set null" }),
-  archived: integer("archived", { mode: "boolean" }).notNull().default(false),
+  archived: boolean("archived").notNull().default(false),
 
   // Knowledge Squad enrichment columns
   salary_min: integer("salary_min"),
   salary_max: integer("salary_max"),
   salary_currency: text("salary_currency"),
-  visa_sponsorship: integer("visa_sponsorship", { mode: "boolean" }),
+  visa_sponsorship: boolean("visa_sponsorship"),
   enrichment_status: text("enrichment_status", {
     enum: ["pending", "enriched", "skipped", "failed"],
   }),
@@ -166,10 +166,10 @@ export const jobs = sqliteTable("jobs", {
 
   created_at: text("created_at")
     .notNull()
-    .default(sql`(datetime('now'))`),
+    .default(sql`now()::text`),
   updated_at: text("updated_at")
     .notNull()
-    .default(sql`(datetime('now'))`),
+    .default(sql`now()::text`),
 }, (table) => ({
   sourceCompanyExternalIdx: uniqueIndex("idx_jobs_source_company_external").on(table.source_kind, table.company_key, table.external_id),
   externalIdIdx: index("idx_jobs_external_id").on(table.external_id),
@@ -183,59 +183,59 @@ export const jobs = sqliteTable("jobs", {
 export type Job = typeof jobs.$inferSelect;
 export type NewJob = typeof jobs.$inferInsert;
 
-export const ashbyBoards = sqliteTable("ashby_boards", {
-  id: integer("id").primaryKey({ autoIncrement: true }),
+export const ashbyBoards = pgTable("ashby_boards", {
+  id: serial("id").primaryKey(),
   board_name: text("board_name").notNull().unique(),
   discovered_at: text("discovered_at")
     .notNull()
-    .default(sql`(datetime('now'))`),
+    .default(sql`now()::text`),
   last_synced_at: text("last_synced_at"),
   job_count: integer("job_count").default(0),
-  is_active: integer("is_active", { mode: "boolean" })
+  is_active: boolean("is_active")
     .notNull()
-    .default(sql`1`),
+    .default(true),
   created_at: text("created_at")
     .notNull()
-    .default(sql`(datetime('now'))`),
+    .default(sql`now()::text`),
   updated_at: text("updated_at")
     .notNull()
-    .default(sql`(datetime('now'))`),
+    .default(sql`now()::text`),
 });
 
 export type AshbyBoard = typeof ashbyBoards.$inferSelect;
 export type NewAshbyBoard = typeof ashbyBoards.$inferInsert;
 
-export const userSettings = sqliteTable("user_settings", {
-  id: integer("id").primaryKey({ autoIncrement: true }),
+export const userSettings = pgTable("user_settings", {
+  id: serial("id").primaryKey(),
   user_id: text("user_id").notNull().unique(), // Better Auth user ID
-  email_notifications: integer("email_notifications", { mode: "boolean" })
+  email_notifications: boolean("email_notifications")
     .notNull()
-    .default(sql`1`),
-  daily_digest: integer("daily_digest", { mode: "boolean" })
+    .default(true),
+  daily_digest: boolean("daily_digest")
     .notNull()
-    .default(sql`0`),
-  new_job_alerts: integer("new_job_alerts", { mode: "boolean" })
+    .default(false),
+  new_job_alerts: boolean("new_job_alerts")
     .notNull()
-    .default(sql`1`),
+    .default(true),
   preferred_locations: text("preferred_locations"), // JSON array
   preferred_skills: text("preferred_skills"), // JSON array
   excluded_companies: text("excluded_companies"), // JSON array
-  dark_mode: integer("dark_mode", { mode: "boolean" })
+  dark_mode: boolean("dark_mode")
     .notNull()
-    .default(sql`1`),
+    .default(true),
   jobs_per_page: integer("jobs_per_page").notNull().default(20),
   created_at: text("created_at")
     .notNull()
-    .default(sql`(datetime('now'))`),
+    .default(sql`now()::text`),
   updated_at: text("updated_at")
     .notNull()
-    .default(sql`(datetime('now'))`),
+    .default(sql`now()::text`),
 });
 
 export type UserSettings = typeof userSettings.$inferSelect;
 export type NewUserSettings = typeof userSettings.$inferInsert;
 
-export const jobSkillTags = sqliteTable(
+export const jobSkillTags = pgTable(
   "job_skill_tags",
   {
     job_id: integer("job_id")
@@ -260,7 +260,7 @@ export const jobSkillTags = sqliteTable(
 export type JobSkillTag = typeof jobSkillTags.$inferSelect;
 export type NewJobSkillTag = typeof jobSkillTags.$inferInsert;
 
-export const skillAliases = sqliteTable("skill_aliases", {
+export const skillAliases = pgTable("skill_aliases", {
   alias: text("alias").primaryKey(),
   tag: text("tag").notNull(),
 });
@@ -269,10 +269,10 @@ export type SkillAlias = typeof skillAliases.$inferSelect;
 export type NewSkillAlias = typeof skillAliases.$inferInsert;
 
 // Company Facts (MDM/Evidence-based)
-export const companyFacts = sqliteTable(
+export const companyFacts = pgTable(
   "company_facts",
   {
-    id: integer("id").primaryKey({ autoIncrement: true }),
+    id: serial("id").primaryKey(),
     company_id: integer("company_id")
       .notNull()
       .references(() => companies.id, { onDelete: "cascade" }),
@@ -306,7 +306,7 @@ export const companyFacts = sqliteTable(
 
     created_at: text("created_at")
       .notNull()
-      .default(sql`(datetime('now'))`),
+      .default(sql`now()::text`),
   },
   (table) => [
     index("idx_company_facts_company_field").on(table.company_id, table.field),
@@ -317,10 +317,10 @@ export type CompanyFact = typeof companyFacts.$inferSelect;
 export type NewCompanyFact = typeof companyFacts.$inferInsert;
 
 // Company Snapshots (Crawl storage for debugging/reprocessing)
-export const companySnapshots = sqliteTable(
+export const companySnapshots = pgTable(
   "company_snapshots",
   {
-    id: integer("id").primaryKey({ autoIncrement: true }),
+    id: serial("id").primaryKey(),
     company_id: integer("company_id")
       .notNull()
       .references(() => companies.id, { onDelete: "cascade" }),
@@ -355,7 +355,7 @@ export const companySnapshots = sqliteTable(
 
     created_at: text("created_at")
       .notNull()
-      .default(sql`(datetime('now'))`),
+      .default(sql`now()::text`),
   },
   (table) => [
     index("idx_company_snapshots_company_hash").on(table.company_id, table.content_hash),
@@ -366,10 +366,10 @@ export type CompanySnapshot = typeof companySnapshots.$inferSelect;
 export type NewCompanySnapshot = typeof companySnapshots.$inferInsert;
 
 // ATS Boards
-export const atsBoards = sqliteTable(
+export const atsBoards = pgTable(
   "ats_boards",
   {
-    id: integer("id").primaryKey({ autoIncrement: true }),
+    id: serial("id").primaryKey(),
     company_id: integer("company_id")
       .notNull()
       .references(() => companies.id, { onDelete: "cascade" }),
@@ -397,7 +397,7 @@ export const atsBoards = sqliteTable(
     }).notNull(),
 
     confidence: real("confidence").notNull(), // 0..1
-    is_active: integer("is_active", { mode: "boolean" })
+    is_active: boolean("is_active")
       .notNull()
       .default(true),
 
@@ -425,10 +425,10 @@ export const atsBoards = sqliteTable(
 
     created_at: text("created_at")
       .notNull()
-      .default(sql`(datetime('now'))`),
+      .default(sql`now()::text`),
     updated_at: text("updated_at")
       .notNull()
-      .default(sql`(datetime('now'))`),
+      .default(sql`now()::text`),
   },
   (table) => [
     index("idx_ats_boards_company_url").on(table.company_id, table.url),
@@ -440,10 +440,10 @@ export type ATSBoard = typeof atsBoards.$inferSelect;
 export type NewATSBoard = typeof atsBoards.$inferInsert;
 
 // User Preferences (Evidence-based personalization)
-export const userPreferences = sqliteTable(
+export const userPreferences = pgTable(
   "user_preferences",
   {
-    id: integer("id").primaryKey({ autoIncrement: true }),
+    id: serial("id").primaryKey(),
     user_id: text("user_id")
       .notNull()
       .references(() => userSettings.user_id, { onDelete: "cascade" }),
@@ -469,10 +469,10 @@ export const userPreferences = sqliteTable(
     // Tracking
     created_at: text("created_at")
       .notNull()
-      .default(sql`(datetime('now'))`),
+      .default(sql`now()::text`),
     updated_at: text("updated_at")
       .notNull()
-      .default(sql`(datetime('now'))`),
+      .default(sql`now()::text`),
   },
   (table) => [
     index("idx_user_preferences_user_field").on(table.user_id, table.field),
@@ -483,8 +483,8 @@ export type UserPreference = typeof userPreferences.$inferSelect;
 export type NewUserPreference = typeof userPreferences.$inferInsert;
 
 // Applications
-export const applications = sqliteTable("applications", {
-  id: integer("id").primaryKey({ autoIncrement: true }),
+export const applications = pgTable("applications", {
+  id: serial("id").primaryKey(),
   user_email: text("user_email").notNull(), // User's email address
   job_id: text("job_id"), // Job URL
   resume_url: text("resume_url"), // Store uploaded resume URL
@@ -500,20 +500,20 @@ export const applications = sqliteTable("applications", {
   job_description: text("job_description"), // User-supplied job description override
   created_at: text("created_at")
     .notNull()
-    .default(sql`(datetime('now'))`),
+    .default(sql`now()::text`),
   updated_at: text("updated_at")
     .notNull()
-    .default(sql`(datetime('now'))`),
+    .default(sql`now()::text`),
 });
 
 export type Application = typeof applications.$inferSelect;
 export type NewApplication = typeof applications.$inferInsert;
 
 // Job report audit log (written by job-reporter-llm worker)
-export const jobReportEvents = sqliteTable(
+export const jobReportEvents = pgTable(
   "job_report_events",
   {
-    id: integer("id").primaryKey({ autoIncrement: true }),
+    id: serial("id").primaryKey(),
     job_id: integer("job_id")
       .notNull()
       .references(() => jobs.id),
@@ -522,7 +522,7 @@ export const jobReportEvents = sqliteTable(
     payload: text("payload"), // JSON
     created_at: text("created_at")
       .notNull()
-      .default(sql`(datetime('now'))`),
+      .default(sql`now()::text`),
   },
   (table) => ({
     jobIdx: index("idx_report_events_job").on(table.job_id),
@@ -533,10 +533,10 @@ export type JobReportEvent = typeof jobReportEvents.$inferSelect;
 export type NewJobReportEvent = typeof jobReportEvents.$inferInsert;
 
 // Contacts (from CRM — recruiters and company contacts)
-export const contacts = sqliteTable(
+export const contacts = pgTable(
   "contacts",
   {
-    id: integer("id").primaryKey({ autoIncrement: true }),
+    id: serial("id").primaryKey(),
     first_name: text("first_name").notNull(),
     last_name: text("last_name").notNull(),
     linkedin_url: text("linkedin_url"),
@@ -554,18 +554,18 @@ export const contacts = sqliteTable(
     nb_suggested_correction: text("nb_suggested_correction"),
     nb_retry_token: text("nb_retry_token"),
     nb_execution_time_ms: integer("nb_execution_time_ms"),
-    email_verified: integer("email_verified", { mode: "boolean" }).default(false),
+    email_verified: boolean("email_verified").default(false),
     bounced_emails: text("bounced_emails"), // JSON array of known-bad email addresses
     github_handle: text("github_handle"),
     telegram_handle: text("telegram_handle"),
-    do_not_contact: integer("do_not_contact", { mode: "boolean" }).default(false),
+    do_not_contact: boolean("do_not_contact").default(false),
     tags: text("tags"), // JSON array
     created_at: text("created_at")
       .notNull()
-      .default(sql`(datetime('now'))`),
+      .default(sql`now()::text`),
     updated_at: text("updated_at")
       .notNull()
-      .default(sql`(datetime('now'))`),
+      .default(sql`now()::text`),
   },
   (table) => ({
     emailIdx: index("idx_contacts_email").on(table.email),
@@ -578,10 +578,10 @@ export type Contact = typeof contacts.$inferSelect;
 export type NewContact = typeof contacts.$inferInsert;
 
 // Contact Emails (outbound emails sent to a contact)
-export const contactEmails = sqliteTable(
+export const contactEmails = pgTable(
   "contact_emails",
   {
-    id: integer("id").primaryKey({ autoIncrement: true }),
+    id: serial("id").primaryKey(),
     contact_id: integer("contact_id")
       .notNull()
       .references(() => contacts.id, { onDelete: "cascade" }),
@@ -601,7 +601,7 @@ export const contactEmails = sqliteTable(
     parent_email_id: integer("parent_email_id"),
     sequence_type: text("sequence_type"), // "initial" | "followup_1" | "followup_2" | "followup_3"
     sequence_number: text("sequence_number"), // "0", "1", "2", "3"
-    reply_received: integer("reply_received", { mode: "boolean" }).default(false),
+    reply_received: boolean("reply_received").default(false),
     reply_received_at: text("reply_received_at"),
     followup_status: text("followup_status"), // "pending" | "completed"
     // Entity linking (for non-contact emails like company batches)
@@ -616,10 +616,10 @@ export const contactEmails = sqliteTable(
     idempotency_key: text("idempotency_key"),
     created_at: text("created_at")
       .notNull()
-      .default(sql`(datetime('now'))`),
+      .default(sql`now()::text`),
     updated_at: text("updated_at")
       .notNull()
-      .default(sql`(datetime('now'))`),
+      .default(sql`now()::text`),
   },
   (table) => ({
     contactIdIdx: index("idx_contact_emails_contact_id").on(table.contact_id),
@@ -633,7 +633,7 @@ export type ContactEmail = typeof contactEmails.$inferSelect;
 export type NewContactEmail = typeof contactEmails.$inferInsert;
 
 // Opportunities — personal job pipeline tracker (sourced from CRM)
-export const opportunities = sqliteTable(
+export const opportunities = pgTable(
   "opportunities",
   {
     id: text("id").primaryKey(), // opp_<timestamp>_<random>
@@ -651,15 +651,15 @@ export const opportunities = sqliteTable(
     score: integer("score"),
     raw_context: text("raw_context"),
     metadata: text("metadata"), // JSON
-    applied: integer("applied", { mode: "boolean" }).notNull().default(false),
+    applied: boolean("applied").notNull().default(false),
     applied_at: text("applied_at"),
     application_status: text("application_status"),
     application_notes: text("application_notes"),
     tags: text("tags"), // JSON array
     company_id: integer("company_id").references(() => companies.id),
     contact_id: integer("contact_id").references(() => contacts.id),
-    created_at: text("created_at").notNull().default(sql`(datetime('now'))`),
-    updated_at: text("updated_at").notNull().default(sql`(datetime('now'))`),
+    created_at: text("created_at").notNull().default(sql`now()::text`),
+    updated_at: text("updated_at").notNull().default(sql`now()::text`),
   },
   (t) => ({
     idxOppStatus: index("idx_opportunities_status").on(t.status),
@@ -671,28 +671,28 @@ export const opportunities = sqliteTable(
 export type Opportunity = typeof opportunities.$inferSelect;
 export type NewOpportunity = typeof opportunities.$inferInsert;
 
-// Resumes (skill profile uploads, stored as raw text for D1 fallback)
-export const resumes = sqliteTable("resumes", {
+// Resumes (skill profile uploads)
+export const resumes = pgTable("resumes", {
   id: text("id").primaryKey(), // UUID
   user_id: text("user_id").notNull(),
   filename: text("filename"),
   raw_text: text("raw_text"),
   created_at: text("created_at")
     .notNull()
-    .default(sql`(datetime('now'))`),
+    .default(sql`now()::text`),
   updated_at: text("updated_at")
     .notNull()
-    .default(sql`(datetime('now'))`),
+    .default(sql`now()::text`),
 });
 
 export type Resume = typeof resumes.$inferSelect;
 export type NewResume = typeof resumes.$inferInsert;
 
 // Tasks (CRM — personal task management linked to entities)
-export const tasks = sqliteTable(
+export const tasks = pgTable(
   "tasks",
   {
-    id: integer("id").primaryKey({ autoIncrement: true }),
+    id: serial("id").primaryKey(),
     title: text("title").notNull(),
     description: text("description"),
     status: text("status", {
@@ -708,10 +708,10 @@ export const tasks = sqliteTable(
     tags: text("tags"), // JSON array
     created_at: text("created_at")
       .notNull()
-      .default(sql`(datetime('now'))`),
+      .default(sql`now()::text`),
     updated_at: text("updated_at")
       .notNull()
-      .default(sql`(datetime('now'))`),
+      .default(sql`now()::text`),
   },
   (table) => ({
     statusIdx: index("idx_tasks_status").on(table.status),
@@ -724,7 +724,7 @@ export type Task = typeof tasks.$inferSelect;
 export type NewTask = typeof tasks.$inferInsert;
 
 // Email Campaigns (CRM — automated email sequences)
-export const emailCampaigns = sqliteTable(
+export const emailCampaigns = pgTable(
   "email_campaigns",
   {
     id: text("id").primaryKey(), // campaign_<timestamp>_<random>
@@ -752,10 +752,10 @@ export const emailCampaigns = sqliteTable(
     created_by: text("created_by"),
     created_at: text("created_at")
       .notNull()
-      .default(sql`(datetime('now'))`),
+      .default(sql`now()::text`),
     updated_at: text("updated_at")
       .notNull()
-      .default(sql`(datetime('now'))`),
+      .default(sql`now()::text`),
   },
   (table) => ({
     companyIdIdx: index("idx_email_campaigns_company_id").on(table.company_id),
@@ -767,10 +767,10 @@ export type EmailCampaign = typeof emailCampaigns.$inferSelect;
 export type NewEmailCampaign = typeof emailCampaigns.$inferInsert;
 
 // Email Templates (CRM — reusable email templates)
-export const emailTemplates = sqliteTable(
+export const emailTemplates = pgTable(
   "email_templates",
   {
-    id: integer("id").primaryKey({ autoIncrement: true }),
+    id: serial("id").primaryKey(),
     name: text("name").notNull(),
     description: text("description"),
     subject: text("subject"),
@@ -779,14 +779,14 @@ export const emailTemplates = sqliteTable(
     category: text("category"),
     tags: text("tags"), // JSON array
     variables: text("variables"), // JSON array of variable names
-    is_active: integer("is_active", { mode: "boolean" }).notNull().default(true),
+    is_active: boolean("is_active").notNull().default(true),
     user_id: text("user_id"), // Template owner
     created_at: text("created_at")
       .notNull()
-      .default(sql`(datetime('now'))`),
+      .default(sql`now()::text`),
     updated_at: text("updated_at")
       .notNull()
-      .default(sql`(datetime('now'))`),
+      .default(sql`now()::text`),
   },
   (table) => ({
     categoryIdx: index("idx_email_templates_category").on(table.category),
@@ -797,15 +797,15 @@ export type EmailTemplate = typeof emailTemplates.$inferSelect;
 export type NewEmailTemplate = typeof emailTemplates.$inferInsert;
 
 // Blocked Companies (CRM — companies to exclude from outreach)
-export const blockedCompanies = sqliteTable(
+export const blockedCompanies = pgTable(
   "blocked_companies",
   {
-    id: integer("id").primaryKey({ autoIncrement: true }),
+    id: serial("id").primaryKey(),
     name: text("name").notNull().unique(),
     reason: text("reason"),
     created_at: text("created_at")
       .notNull()
-      .default(sql`(datetime('now'))`),
+      .default(sql`now()::text`),
   },
   (table) => ({
     nameIdx: index("idx_blocked_companies_name").on(table.name),
@@ -816,10 +816,10 @@ export type BlockedCompany = typeof blockedCompanies.$inferSelect;
 export type NewBlockedCompany = typeof blockedCompanies.$inferInsert;
 
 // Received Emails (inbound emails persisted from Resend webhooks)
-export const receivedEmails = sqliteTable(
+export const receivedEmails = pgTable(
   "received_emails",
   {
-    id: integer("id").primaryKey({ autoIncrement: true }),
+    id: serial("id").primaryKey(),
     resend_id: text("resend_id").notNull().unique(),
     from_email: text("from_email"),
     to_emails: text("to_emails").notNull().default("[]"), // JSON array
@@ -834,10 +834,10 @@ export const receivedEmails = sqliteTable(
     archived_at: text("archived_at"),
     created_at: text("created_at")
       .notNull()
-      .default(sql`(datetime('now'))`),
+      .default(sql`now()::text`),
     updated_at: text("updated_at")
       .notNull()
-      .default(sql`(datetime('now'))`),
+      .default(sql`now()::text`),
   },
   (table) => ({
     fromEmailIdx: index("idx_received_emails_from").on(table.from_email),

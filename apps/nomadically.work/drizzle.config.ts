@@ -1,19 +1,20 @@
 import { defineConfig } from "drizzle-kit";
 
 /**
- * Drizzle Kit configuration for Cloudflare D1 (Remote Production)
- * 
- * Database: nomadically-work-db (632b9c57-8262-40bd-86c2-bc08beab713b)
- * 
+ * Drizzle Kit configuration for Neon PostgreSQL
+ *
+ * Database: nomadically-work (twilight-pond-00008257)
+ *
  * Workflow:
  * 1. Update schema in ./src/db/schema.ts
  * 2. Generate migration: pnpm db:generate
- * 3. Apply to remote D1: pnpm db:push
- * 
- * Migrations are applied via wrangler CLI to the remote D1 database.
+ * 3. Apply to Neon: pnpm db:migrate
  */
 export default defineConfig({
   schema: "./src/db/schema.ts",
   out: "./migrations",
-  dialect: "sqlite",
+  dialect: "postgresql",
+  dbCredentials: {
+    url: process.env.DATABASE_URL!,
+  },
 });

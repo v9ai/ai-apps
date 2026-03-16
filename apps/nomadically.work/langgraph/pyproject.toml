@@ -1,0 +1,10 @@
+[project]
+name = "nomadically-langgraph"
+version = "0.1.0"
+description = "Add your description here"
+requires-python = ">=3.12"
+dependencies = [
+    "deepeval>=3.8.9",
+    "langchain-openai>=1.1.11",
+    "langgraph>=1.1.2",
+]
