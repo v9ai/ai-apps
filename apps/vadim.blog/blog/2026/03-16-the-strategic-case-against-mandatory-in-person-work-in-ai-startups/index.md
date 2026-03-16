@@ -19,7 +19,7 @@ But intuition is not a strategy, and anecdotes are not data. When we examine the
 
 ## Debunking the Myth of the Serendipitous Office
 
-A common pro-office argument anchors on a powerful anecdote: the hallway conversation that sparked the Transformer architecture. This story is foundational to modern AI. It is tempting to extrapolate a universal rule from it. Some claim true innovation “only happens when talented people share the same space.”
+A common pro-office argument anchors on a powerful anecdote: the hallway conversation that sparked the Transformer architecture. This story is foundational to modern AI. Dust, an AI company building on top of enterprise data, articulates this position in [Build in Person](https://dust.tt/blog/build-in-person), arguing that “physical proximity matters when pushing boundaries.” It is tempting to extrapolate a universal rule from it. Some claim true innovation “only happens when talented people share the same space.”
 
 This is a classic case of survivorship bias. We remember the one legendary hallway meeting, not the thousands of other hallway conversations that led nowhere. It frames innovation as a binary outcome of physical proximity, which broader research contradicts. A pivotal study in [*Nature Human Behaviour*](https://www.nature.com/articles/d41586-022-01044-z) analyzed decades of scientific research. It found a clear trend: while remote collaboration over long distances has increased dramatically, it has **not reduced the rate of breakthrough innovation**.
 
@@ -27,7 +27,7 @@ Geographically distributed teams are just as capable of producing high-impact, n
 
 ## The False Choice Between Speed and Async
 
-The second major claim is that in-person work accelerates innovation. "A conversation by the coffee machine," one argument states, "can spark a solution that would have taken days of back-and-forth in a remote setting."
+The second major claim is that in-person work accelerates innovation. Dust's [Build in Person](https://dust.tt/blog/build-in-person) puts it directly: "A conversation by the coffee machine can spark a solution that would have taken days of back-and-forth in a remote setting."
 
 This conflates *ease of interruption* with *overall velocity*. It presumes the remote alternative is a slow, painful sequence of delayed messages. This is a failure of process, not geography. A [GitLab survey](https://handbook.gitlab.com/handbook/company/all-remote/) of over 4,000 developers found that **52% felt more productive working remotely**. A significant portion cited fewer distractions as the key reason.
 
