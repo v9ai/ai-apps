@@ -19,7 +19,7 @@ These are not edge cases. They are the default behavior of every LLM-as-judge pi
 
 LLM-as-judge -- the practice of using a capable large language model to score or compare outputs from another LLM -- has become the dominant evaluation method for production AI systems. [53.3% of teams with deployed AI agents](https://www.langchain.com/state-of-agent-engineering) now use it, according to LangChain's 2025 State of AI Agents survey. The economics are compelling: 80% agreement with human preferences at [500x--5,000x lower cost](https://arxiv.org/abs/2306.05685). But agreement rates and cost savings obscure a deeper problem. Most teams adopt the method, measure the savings, and never measure the biases. The result is evaluation infrastructure that looks automated but is quietly wrong in systematic, reproducible ways.
 
-This article covers the mechanism, the research, the biases, and what evaluation skills are actually worth in the remote EU job market -- backed by data from 1,780 job listings in the [nomadically.work](https://nomadically.work) database.
+This article covers the mechanism, the research, the biases, and what evaluation skills are actually worth in the remote EU job market -- backed by data from 1,780 job listings scraped from Greenhouse, Ashby, and Lever.
 
 > **What is LLM as a judge?** LLM-as-a-Judge is an evaluation methodology where a capable large language model scores or compares outputs from another LLM application against defined criteria -- such as helpfulness, factual accuracy, and relevance -- using structured prompts that request [chain-of-thought reasoning](https://arxiv.org/abs/2201.11903) before a final score. The method achieves approximately 80% agreement with human evaluators, matching human-to-human consistency, at 500x--5,000x lower cost than manual review.
 
@@ -85,8 +85,7 @@ This is not a theoretical concern. It is a practical bottleneck. Every productio
 
 **Practical resolution:** Maintain a small, high-quality human-labeled calibration set. Run the LLM judge against it monthly. Track judge-human agreement over time. When agreement drops below your threshold (75% is a common production target), recalibrate: update the judge prompt, swap the judge model, or expand the calibration set to cover the failure cases. This is not optional overhead -- it is the cost of using automated evaluation responsibly.
 
-One nuance from the research: a [medRxiv 2025 study](https://www.medrxiv.org/content/10.1101/2025.10.27.25338910v1.full) comparing human and LLM judges in a global health context found that humans demonstrated *more* bias (odds ratio 2.65) than GPT-5 judges (odds ratio 1.23). The comparison is not one-directional. LLM judges are biased, but human judges are not a gold standard either. The goal is not to eliminate bias but to measure and bound it. For more on how LLMs handle self-assessment, see [The Research on LLM Self-Correction](/blog/the-research-on-llm-self-correction).
-
+One nuance from the research: a [medRxiv 2025 study](https://www.medrxiv.org/content/10.1101/2025.10.27.25338910v1.full) comparing human and LLM judges in a global health context found that humans demonstrated *more* bias (odds ratio 2.65) than GPT-5 judges (odds ratio 1.23). The comparison is not one-directional. LLM judges are biased, but human judges are not a gold standard either. The goal is not to eliminate bias but to measure and bound it.
 ### Tasks Where LLM Judges Underperform
 
 Not every evaluation task is a good fit. LLM judges reliably struggle with:
@@ -122,8 +121,6 @@ The most common mistake is vague criteria. "Rate the quality of this response" p
 - Include two to three calibration examples showing what a score of 1, 3, and 5 look like. [Few-shot calibration](https://arxiv.org/abs/2005.14165) anchors the judge's scoring distribution.
 - Resist the rubric trap: more than five evaluation dimensions dilute signal. Each added dimension reduces the judge's attention to every other dimension.
 
-For a deeper look at how eval-driven workflows reshape development, see [Eval Driven Development](/blog/eval-driven-development).
-
 ### CI/CD Integration Patterns
 
 Evaluation plugs into CI/CD at three points:
@@ -132,15 +129,14 @@ Evaluation plugs into CI/CD at three points:
 2. **Nightly regression suites.** Run the full evaluation corpus overnight. Track scores over time. Alert when any dimension degrades by more than one standard deviation.
 3. **Production monitoring.** Sample live traffic, evaluate in the background, and surface degradation in dashboards. This catches drift that test suites miss -- changes in user behavior, data distribution shifts, or model provider updates.
 
-The eval dataset problem is real: maintaining representative test cases as the product evolves requires ongoing investment. Teams that freeze their test suite at launch discover months later that it no longer reflects actual usage patterns. Production observability tools like [Langfuse](/blog/langfuse-features-prompts-tracing-scores-usage) and [Arize Phoenix](https://arize.com) help close this feedback loop by connecting traces to evaluation scores.
+The eval dataset problem is real: maintaining representative test cases as the product evolves requires ongoing investment. Teams that freeze their test suite at launch discover months later that it no longer reflects actual usage patterns. Production observability tools like [Langfuse](https://langfuse.com) and [Arize Phoenix](https://arize.com) help close this feedback loop by connecting traces to evaluation scores.
 
 ### The Tool Landscape
 
 Five frameworks dominate production LLM evaluation in 2026. Each occupies a different niche:
 
 - **[DeepEval](https://github.com/confident-ai/deepeval)** -- code-centric, [pytest](https://docs.pytest.org/)-native workflows, G-Eval built in. Strong for teams that want evaluation-as-code in their existing test infrastructure.
-- **[Langfuse](https://langfuse.com)** -- open-source, developer-first, strong tracing and observability. Best for teams that need evaluation tied to production trace data. See [AI Observability for LLM Evals with Langfuse](/blog/ai-observability-llm-evals-langfuse) for a hands-on walkthrough.
-- **[Arize Phoenix](https://arize.com)** -- production observability with drift detection. Suited for teams operating at scale who need automated alerting on quality degradation.
+- **[Langfuse](https://langfuse.com)** -- open-source, developer-first, strong tracing and observability. Best for teams that need evaluation tied to production trace data.- **[Arize Phoenix](https://arize.com)** -- production observability with drift detection. Suited for teams operating at scale who need automated alerting on quality degradation.
 - **[Braintrust](https://braintrust.dev)** -- logging, scoring, and dataset management in one platform. Good for teams building their first evaluation workflow.
 - **[Maxim](https://getmaxim.ai)** -- enterprise-grade, multi-level tracing, simulation capabilities. Designed for larger organizations with complex evaluation requirements.
 
@@ -152,17 +148,17 @@ Cost-wise, [Prometheus 2](https://arxiv.org/abs/2405.01535) -- a 7B open-source 
 
 ## What the Job Market Says About Evaluation Skills
 
-No competing article on LLM-as-judge connects the technique to hiring demand. Our [nomadically.work](https://nomadically.work) database -- 1,780 jobs across [Greenhouse](https://www.greenhouse.com/), [Ashby](https://www.ashbyhq.com/), and [Lever](https://www.lever.co/) -- tells a clear story.
+No competing article on LLM-as-judge connects the technique to hiring demand. Our dataset of 1,780 jobs scraped from [Greenhouse](https://www.greenhouse.com/), [Ashby](https://www.ashbyhq.com/), and [Lever](https://www.lever.co/) tells a clear story.
 
 ### The Embedding Paradox: Evaluation Is Everywhere and Nowhere
 
-Only three out of 1,780 jobs carry "evaluation" in their title: AI Evaluation Engineer ([Distyl](https://www.distyl.ai/)), Model Evaluation QA Lead ([Deepgram](https://deepgram.com/)), and Senior Software Engineer, Evals and AI Infra ([Commure](https://www.commure.com/)). Yet 643 job descriptions -- 36.1% of the entire corpus -- mention evaluation-related terms. The explicit phrase "LLM-as-judge" appears in exactly one listing.
+Only three out of 1,780 jobs carry "evaluation" in their title: AI Evaluation Engineer ([Distyl](https://www.distyl.ai/)), Model Evaluation QA Lead ([Deepgram](https://deepgram.com/)), and Senior Software Engineer, Evals and AI Infra ([Commure](https://www.commure.com/)). Yet 643 job descriptions -- 36.1% of the corpus -- mention evaluation-related terms. The explicit phrase "LLM-as-judge" appears in exactly one listing.
 
 This 213x ratio between description mentions and dedicated titles is the key finding. Evaluation expertise is a horizontal requirement spread across AI engineering, ML scientist, and software engineering roles. It is not a vertical specialization you apply for -- it is a skill that differentiates you within virtually any AI role you already hold.
 
 ### Model Evaluation Outranks MLOps and Prompt Engineering
 
-Among AI/ML-specific skill tags in the nomadically.work database, `model-evaluation` ranks sixth -- ahead of MLOps (eighth), prompt engineering (ninth), fine-tuning (10th), and RAG (11th).
+Among AI/ML-specific skill tags in the dataset, `model-evaluation` ranks sixth -- ahead of MLOps (eighth), prompt engineering (ninth), fine-tuning (10th), and RAG (11th).
 
 | Rank | Skill | Jobs (N=311) | Share |
 |------|-------|-------------|-------|
@@ -193,9 +189,7 @@ If you want to position yourself for evaluation work, the data says: Python flue
 
 Of 21 remote-EU classified jobs in the database, 10 (47.6%) mention evaluation terms in their descriptions -- compared to 36.1% across the full corpus. Remote EU roles over-index for evaluation language.
 
-The standout companies for EU-based candidates: [n8n](https://n8n.io/) (Sr AI Engineer and Staff LLM Interaction Engineer, both Europe-remote, both with evaluation in their scope) and [Adaptive ML](https://www.adaptiveml.com/) (ML Developer Experience Engineer, Paris-based with EU-remote option, explicitly tagged with `model-evaluation`).
-
-[Ashby](https://www.ashbyhq.com/)-based companies -- typically AI-native startups -- account for 63.2% of evaluation-tagged jobs despite representing 42.9% of overall listings, a 1.5x over-index. If you are filtering for evaluation-heavy roles, Ashby-powered job boards are disproportionately productive.
+The standout companies for EU-based candidates: [n8n](https://n8n.io/) (Sr AI Engineer and Staff LLM Interaction Engineer, both Europe-remote, both with evaluation in their scope) and [Adaptive ML](https://www.adaptiveml.com/) (ML Developer Experience Engineer, Paris-based with EU-remote option, explicitly tagged with `model-evaluation`). [Ashby](https://www.ashbyhq.com/)-based companies -- typically AI-native startups -- account for 63.2% of evaluation-tagged jobs despite representing 42.9% of overall listings, a 1.5x over-index.
 
 Average remote MLOps engineer salary in Europe sits at [EUR 71,613/year](https://www.remoterocketship.com/country/europe/jobs/mlops-engineer/). The global average for equivalent roles is $159,625/year. Specialized evaluation roles at well-funded AI companies likely command premiums above these averages, though the sample is too small to quantify precisely.
 
@@ -221,8 +215,6 @@ Average remote MLOps engineer salary in Europe sits at [EUR 71,613/year](https:/
 
 7. **Monitor judge drift monthly.** Re-run the judge against your calibration set every month. Model provider updates, prompt changes, and distribution shifts can degrade judge accuracy silently. When agreement drops, recalibrate.
 
-For a grounding-first approach to RAG evaluation, see [Schema-First RAG with Eval-Gated Grounding](/blog/eval-gated-grounded-research-pipeline).
-
 ### The EU AI Act Compliance Angle
 
 The [EU AI Act's high-risk system conformity assessment deadline](https://www.modulos.ai/blog/eu-ai-act-high-risk-compliance-deadline-2026/) hits August 2, 2026. High-risk AI systems (defined in [Annex III](https://eur-lex.europa.eu/legal-content/EN/TXT/?uri=CELEX:32024R1689) -- covering healthcare, finance, employment, and critical infrastructure) require documented evaluation as part of conformity assessment. The assessment process takes an estimated eight to 16 weeks, meaning teams should already have evaluation infrastructure operational.
@@ -239,10 +231,10 @@ But it works only when you engineer around its failure modes. Position bias, ver
 
 The shift in 2026 is clear: evaluation is no longer a final QA step bolted onto the end of a deployment pipeline. It is woven into development (pre-merge gates), deployment (nightly regression), and compliance ([EU AI Act](https://eur-lex.europa.eu/legal-content/EN/TXT/?uri=CELEX:32024R1689) documentation). Prompt engineering without evaluation is now considered junior-level -- the ability to write prompts matters less than the ability to *measure* whether those prompts produce good outputs at scale.
 
-The job market reflects this. Model evaluation outranks both MLOps and prompt engineering in skill demand across our dataset of 1,780 AI/ML jobs. 94.7% of companies that ask for evaluation skills treat them as required or strongly preferred. The practice is spreading faster than the vocabulary -- only one job in the entire corpus uses the term "LLM-as-judge," but 643 describe the work.
+The job market reflects this. Model evaluation outranks both MLOps and prompt engineering in skill demand across a dataset of 1,780 AI/ML jobs. 94.7% of companies that ask for evaluation skills treat them as required or strongly preferred. The practice is spreading faster than the vocabulary -- only one job in the corpus uses the term "LLM-as-judge," but 643 describe the work.
 
 The engineers who build the next generation of production AI systems will not be the ones who ship the fastest. They will be the ones who know when their systems are wrong.
 
 ---
 
-*Data sourced from [nomadically.work](https://nomadically.work) job database (1,780 jobs, Jan 2025 -- Mar 2026). Skill tag analysis covers 311 jobs with extracted skill tags. Remote EU classification covers 21 jobs flagged as `is_remote_eu`. Description-level evaluation term matches (643) include an upper-bound estimate as "evaluat\*" captures some non-AI uses such as employee performance evaluation. The `model-evaluation` skill tag (38 jobs) represents the highest-precision signal.*
+*Data sourced from 1,780 job listings (Jan 2025 -- Mar 2026) scraped from Greenhouse, Ashby, and Lever. Skill tag analysis covers 311 jobs with extracted skill tags. Remote EU classification covers 21 jobs flagged as remote-EU eligible. Description-level evaluation term matches (643) include an upper-bound estimate as "evaluat\*" captures some non-AI uses such as employee performance evaluation. The `model-evaluation` skill tag (38 jobs) represents the highest-precision signal.*
