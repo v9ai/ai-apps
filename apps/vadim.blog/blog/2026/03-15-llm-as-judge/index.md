@@ -19,7 +19,7 @@ These are not edge cases. They are the default behavior of every LLM-as-judge pi
 
 LLM-as-judge -- the practice of using a capable large language model to score or compare outputs from another LLM -- has become the dominant evaluation method for production AI systems. [53.3% of teams with deployed AI agents](https://www.langchain.com/state-of-agent-engineering) now use it, according to LangChain's 2025 State of AI Agents survey. The economics are compelling: 80% agreement with human preferences at [500x--5,000x lower cost](https://arxiv.org/abs/2306.05685). But agreement rates and cost savings obscure a deeper problem. Most teams adopt the method, measure the savings, and never measure the biases. The result is evaluation infrastructure that looks automated but is quietly wrong in systematic, reproducible ways.
 
-This article covers the mechanism, the research, the biases, and what evaluation skills are actually worth in the remote EU job market -- backed by data from 1,780 job listings scraped from Greenhouse, Ashby, and Lever.
+This article covers the mechanism, the research, and the biases that break LLM judges in production.
 
 > **What is LLM as a judge?** LLM-as-a-Judge is an evaluation methodology where a capable large language model scores or compares outputs from another LLM application against defined criteria -- such as helpfulness, factual accuracy, and relevance -- using structured prompts that request [chain-of-thought reasoning](https://arxiv.org/abs/2201.11903) before a final score. The method achieves approximately 80% agreement with human evaluators, matching human-to-human consistency, at 500x--5,000x lower cost than manual review.
 
@@ -235,6 +235,3 @@ The job market reflects this. Model evaluation outranks both MLOps and prompt en
 
 The engineers who build the next generation of production AI systems will not be the ones who ship the fastest. They will be the ones who know when their systems are wrong.
 
----
-
-*Data sourced from 1,780 job listings (Jan 2025 -- Mar 2026) scraped from Greenhouse, Ashby, and Lever. Skill tag analysis covers 311 jobs with extracted skill tags. Remote EU classification covers 21 jobs flagged as remote-EU eligible. Description-level evaluation term matches (643) include an upper-bound estimate as "evaluat\*" captures some non-AI uses such as employee performance evaluation. The `model-evaluation` skill tag (38 jobs) represents the highest-precision signal.*
