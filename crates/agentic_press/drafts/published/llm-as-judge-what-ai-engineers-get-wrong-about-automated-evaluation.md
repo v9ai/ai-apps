@@ -1,17 +1,9 @@
 ---
-slug: llm-as-judge
-title: "LLM as Judge: What AI Engineers Get Wrong About Automated Evaluation"
-description: "LLM-as-judge achieves 80% human agreement at 500x lower cost. But position bias, self-preference, and the meta-evaluation problem mean most pipelines ship broken."
-date: 2026-03-15
-authors: [nicolad]
-tags:
-  - llm-evaluation
-  - llm-as-judge
-  - ai-engineering
-  - mlops
-  - remote-work
-  - europe
----
+```markdown
+status: published
+```
+
+# LLM as Judge: What AI Engineers Get Wrong About Automated Evaluation
 
 The most dangerous assumption in AI engineering today is that a more capable model can objectively evaluate a lesser one. We are building production evaluation pipelines on a foundation of circular logic. We treat language models—systems prone to "generate incorrect information, known as hallucinations" (Bang et al., 2023)—as arbiters of truth.
 
@@ -109,3 +101,4 @@ They read the research and internalize the lessons on limitations and ethics. Th
 The next time you see a dashboard with a glowing LLM-generated quality score, ask the engineering team: What are the error bars on that? How did you audit for bias? Where is the human calibration log? If they can't answer, the score is just a number—and potentially a dangerously misleading one.
 
 *This analysis is grounded in the academic consensus from Bang et al. (2023), Borji (2023), Budhwar et al. (2023), DeepSeek-AI et al. (2025), Hadi et al. (2023), Harrer (2023), Longo et al. (2024), Prather et al. (2023), Schwartz et al. (2022), and the foundational statistical cautions of Johnson (2018).*
+```
