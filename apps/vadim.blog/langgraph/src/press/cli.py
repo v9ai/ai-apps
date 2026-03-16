@@ -73,7 +73,6 @@ async def _deep_dive(
     )
 
 
-
 @main.command()
 @click.option("--topic", required=True, help="Article topic")
 @click.option("--output-dir", default="./articles", help="Output directory")

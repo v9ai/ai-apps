@@ -8,10 +8,11 @@ import {
   Text,
   AlertDialog,
 } from "@radix-ui/themes";
-import { TrashIcon } from "@radix-ui/react-icons";
+import { TrashIcon, ArrowRightIcon } from "@radix-ui/react-icons";
 import {
   BehaviorObservationType,
   BehaviorIntensity,
+  useCreateIssueMutation,
 } from "@/app/__generated__/hooks";
 
 export type { BehaviorObservationType, BehaviorIntensity };
@@ -31,6 +32,7 @@ interface BehaviorObservationsListProps {
   observations: BehaviorObservation[];
   onDelete: (id: number) => void;
   deleting?: boolean;
+  familyMemberId?: number;
 }
 
 const OBSERVATION_TYPE_LABELS: Record<BehaviorObservationType, string> = {
@@ -69,11 +71,28 @@ function formatObservedAt(dateStr: string): string {
   }
 }
 
+function intensityToSeverity(intensity?: BehaviorIntensity | null): string {
+  if (intensity === BehaviorIntensity.High) return "high";
+  if (intensity === BehaviorIntensity.Medium) return "medium";
+  if (intensity === BehaviorIntensity.Low) return "low";
+  return "medium";
+}
+
+function observationToIssueTitle(obs: BehaviorObservation): string {
+  const label = OBSERVATION_TYPE_LABELS[obs.observationType];
+  const detail = obs.notes?.slice(0, 80) || obs.context?.slice(0, 80);
+  return detail ? `${label}: ${detail}` : label;
+}
+
 export default function BehaviorObservationsList({
   observations,
   onDelete,
   deleting = false,
+  familyMemberId,
 }: BehaviorObservationsListProps) {
+  const [createIssue, { loading: converting }] = useCreateIssueMutation({
+    refetchQueries: ["GetIssues"],
+  });
   if (observations.length === 0) {
     return (
       <Text size="2" color="gray">
@@ -132,15 +151,40 @@ export default function BehaviorObservationsList({
               )}
             </Flex>
 
-            {/* Right: delete button */}
-            <AlertDialog.Root>
+            {/* Right: actions */}
+            <Flex gap="1" align="center" style={{ flexShrink: 0 }}>
+              {familyMemberId != null && (
+                <Button
+                  variant="ghost"
+                  color="indigo"
+                  size="1"
+                  disabled={converting}
+                  title="Convert to Issue"
+                  onClick={() =>
+                    createIssue({
+                      variables: {
+                        input: {
+                          familyMemberId,
+                          title: observationToIssueTitle(obs),
+                          description: obs.notes || obs.context || "",
+                          category: "behavioral",
+                          severity: intensityToSeverity(obs.intensity),
+                        },
+                      },
+                    })
+                  }
+                >
+                  <ArrowRightIcon />
+                  Issue
+                </Button>
+              )}
+              <AlertDialog.Root>
               <AlertDialog.Trigger>
                 <Button
                   variant="ghost"
                   color="red"
                   size="1"
                   disabled={deleting}
-                  style={{ flexShrink: 0 }}
                 >
                   <TrashIcon />
                 </Button>
@@ -168,7 +212,8 @@ export default function BehaviorObservationsList({
                   </AlertDialog.Action>
                 </Flex>
               </AlertDialog.Content>
-            </AlertDialog.Root>
+              </AlertDialog.Root>
+            </Flex>
           </Flex>
         </Card>
       ))}

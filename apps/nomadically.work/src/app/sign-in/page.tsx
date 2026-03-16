@@ -1,11 +1,20 @@
-import { SignIn } from "@clerk/nextjs";
+"use client";
+
 import { Container, Flex } from "@radix-ui/themes";
+import { AuthDialog } from "@/components/AuthDialog";
+import { useEffect, useState } from "react";
 
 export default function SignInPage() {
+  const [open, setOpen] = useState(false);
+
+  useEffect(() => {
+    setOpen(true);
+  }, []);
+
   return (
     <Container size="1" px="4" py="8">
       <Flex direction="column" gap="6" align="center">
-        <SignIn />
+        <AuthDialog open={open} onOpenChange={setOpen} defaultMode="signin" />
       </Flex>
     </Container>
   );

@@ -1,12 +1,7 @@
 "use client";
 
-import { useUser, useAuth as useClerkAuth } from "@clerk/nextjs";
-
-/**
- * Clerk authentication hooks
- *
- * These hooks provide a consistent interface for authentication across the app
- */
+import { authClient } from "@/lib/auth/client";
+import { ADMIN_EMAIL } from "@/lib/constants";
 
 export interface User {
   id: string;
@@ -31,16 +26,15 @@ export interface AuthContext {
  * Hook to get current authentication state
  */
 export function useAuth(): AuthContext {
-  const { isLoaded, isSignedIn, user } = useUser();
+  const { data: session, isPending } = authClient.useSession();
 
-  // Dev bypass: if ADMIN_EMAIL is set in dev, use it immediately (don't wait for Clerk)
+  // Dev bypass: if ADMIN_EMAIL is set in dev, use it immediately
   const devEmail =
     process.env.NODE_ENV === "development"
       ? process.env.NEXT_PUBLIC_ADMIN_EMAIL
       : undefined;
 
-  if (!isLoaded) {
-    // In dev with ADMIN_EMAIL, skip the loading state entirely
+  if (isPending) {
     if (devEmail) {
       const devUser = { id: "dev-local", email: devEmail, name: "Dev", emailVerified: true };
       return {
@@ -60,13 +54,13 @@ export function useAuth(): AuthContext {
     };
   }
 
+  const user = session?.user;
   const mappedUser = user
     ? {
         id: user.id,
-        email: user.primaryEmailAddress?.emailAddress?.toLowerCase(),
-        name: user.fullName || user.username,
-        emailVerified:
-          user.primaryEmailAddress?.verification.status === "verified",
+        email: user.email,
+        name: user.name,
+        emailVerified: user.emailVerified,
       }
     : devEmail
       ? { id: "dev-local", email: devEmail, name: "Dev", emailVerified: true }
@@ -75,7 +69,7 @@ export function useAuth(): AuthContext {
   return {
     user: mappedUser,
     session: mappedUser ? { user: mappedUser } : null,
-    isAuthenticated: !!isSignedIn || !!mappedUser,
+    isAuthenticated: !!session || !!devEmail,
     loading: false,
     error: null,
   };
@@ -85,24 +79,20 @@ export function useAuth(): AuthContext {
  * Hook to check if user is authenticated
  */
 export function useIsAuthenticated() {
-  const { isLoaded, isSignedIn } = useUser();
+  const { data: session, isPending } = authClient.useSession();
   return {
-    isAuthenticated: isSignedIn,
-    loading: !isLoaded,
+    isAuthenticated: !!session,
+    loading: isPending,
   };
 }
 
 /**
  * Hook to check if user is admin
- * Note: You'll need to add custom claims or metadata in Clerk dashboard
- * to set admin roles
  */
 export function useIsAdmin() {
-  const { isLoaded, user } = useUser();
-  const { orgRole } = useClerkAuth();
-  
+  const { data: session, isPending } = authClient.useSession();
   return {
-    isAdmin: (user?.publicMetadata as any)?.role === "admin" || orgRole === "admin",
-    loading: !isLoaded,
+    isAdmin: !!session && session.user.email === ADMIN_EMAIL,
+    loading: isPending,
   };
 }

@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-import { currentUser } from "@clerk/nextjs/server";
+import { auth } from "@/lib/auth/server";
 import { ADMIN_EMAIL } from "@/lib/constants";
 
 async function workerFetch(path: string, options?: RequestInit) {
@@ -17,8 +17,8 @@ async function workerFetch(path: string, options?: RequestInit) {
 }
 
 export async function GET(request: NextRequest) {
-  const user = await currentUser();
-  if (user?.primaryEmailAddress?.emailAddress !== ADMIN_EMAIL) {
+  const session = await auth.api.getSession({ headers: request.headers });
+  if (session?.user.email !== ADMIN_EMAIL) {
     return NextResponse.json({ error: "Forbidden" }, { status: 403 });
   }
 

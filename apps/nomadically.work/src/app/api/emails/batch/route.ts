@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-import { auth, clerkClient } from "@clerk/nextjs/server";
+import { auth } from "@/lib/auth/server";
 import { isAdminEmail } from "@/lib/admin";
 import { resend } from "@/lib/resend";
 import {
@@ -74,17 +74,15 @@ function validateScheduledAt(scheduledAt: string): string | null {
 export async function POST(
   request: NextRequest,
 ): Promise<NextResponse<BatchEmailResponse>> {
-  const { userId } = await auth();
-  if (!userId) {
+  const session = await auth.api.getSession({ headers: request.headers });
+  if (!session) {
     return NextResponse.json(
       { success: false, message: "Unauthorized", sent: [], failed: [] },
       { status: 401 },
     );
   }
 
-  const client = await clerkClient();
-  const user = await client.users.getUser(userId);
-  const userEmail = user.emailAddresses[0]?.emailAddress ?? null;
+  const userEmail = session.user.email;
   if (!isAdminEmail(userEmail)) {
     return NextResponse.json(
       { success: false, message: "Forbidden", sent: [], failed: [] },

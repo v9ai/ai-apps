@@ -4,7 +4,7 @@ import json
 import os
 import re
 
-from duckduckgo_search import DDGS
+from ddgs import DDGS
 from langchain_openai import ChatOpenAI
 
 from .models import CandidateCompany
@@ -49,7 +49,7 @@ def _extract_domain(url: str) -> str:
 
 def search_web(query: str, max_results: int = 10) -> list[CandidateCompany]:
     """Execute a single DuckDuckGo search and return candidate companies."""
-    results = DDGS().text(query, max_results=max_results)
+    results = DDGS().text(query, max_results=max_results, region="wt-wt")
 
     candidates: list[CandidateCompany] = []
     seen_domains: set[str] = set()
@@ -62,12 +62,25 @@ def search_web(query: str, max_results: int = 10) -> list[CandidateCompany]:
         if not domain or domain in seen_domains:
             continue
 
-        # Skip aggregator/news sites — we want company websites
+        # Skip aggregator/news/job-board sites — we want company websites
         skip_domains = {
+            # Social / code
             "linkedin.com", "twitter.com", "x.com", "github.com",
-            "medium.com", "techcrunch.com", "crunchbase.com",
+            "medium.com", "substack.com", "reddit.com", "wikipedia.org",
+            # News / lists
+            "techcrunch.com", "crunchbase.com", "aimagazine.com",
+            "euronews.com", "walturn.com", "noota.io", "aijourn.com",
+            # Job boards / aggregators
             "glassdoor.com", "indeed.com", "ycombinator.com",
-            "news.ycombinator.com", "reddit.com", "wikipedia.org",
+            "news.ycombinator.com", "wellfound.com", "builtin.com",
+            "remoterocketship.com", "workingnomads.com", "remoteok.com",
+            "jobgether.com", "totaljobs.com", "euremotejobs.com",
+            "remote.io", "remotech.ai", "startup.jobs", "meetfrank.com",
+            "eu-startups.com", "talents2germany.de", "searchqualify.com",
+            "techmunity.io", "bing.com", "google.com",
+            # ATS platforms (we want company domains, not board URLs)
+            "boards.greenhouse.io", "jobs.lever.co", "jobs.eu.lever.co",
+            "jobs.ashbyhq.com", "boards-api.greenhouse.io",
         }
         if any(domain.endswith(s) for s in skip_domains):
             continue

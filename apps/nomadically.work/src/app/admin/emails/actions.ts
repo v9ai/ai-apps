@@ -1,6 +1,6 @@
 "use server";
 
-import { clerkClient } from "@clerk/nextjs/server";
+import { neon } from "@neondatabase/serverless";
 import { drizzle } from "drizzle-orm/d1";
 import { eq } from "drizzle-orm";
 import { resend } from "@/lib/resend";
@@ -62,7 +62,7 @@ export interface EmailSubscriber {
 
 /**
  * Return all users who have email_notifications enabled.
- * Looks up Clerk user emails by user_id from the userSettings table.
+ * Looks up user emails from Neon Auth database by user_id from the userSettings table.
  */
 export async function getEmailSubscribers(): Promise<EmailSubscriber[]> {
   const { isAdmin } = await checkIsAdmin();
@@ -78,24 +78,17 @@ export async function getEmailSubscribers(): Promise<EmailSubscriber[]> {
 
   if (rows.length === 0) return [];
 
-  const clerk = await clerkClient();
+  // Look up user emails from Neon Auth database
+  const sql = neon(process.env.NEON_DATABASE_URL!);
+  const userIds = rows.map((r) => r.user_id);
+  const users = await sql`
+    SELECT id, email, name FROM "user" WHERE id = ANY(${userIds})
+  `;
 
-  const subscribers = await Promise.allSettled(
-    rows.map(async (row): Promise<EmailSubscriber> => {
-      const user = await clerk.users.getUser(row.user_id);
-      const email = user.emailAddresses[0]?.emailAddress ?? "";
-      const firstName = user.firstName ?? "";
-      const lastName = user.lastName ?? "";
-      const name =
-        [firstName, lastName].filter(Boolean).join(" ") || email.split("@")[0] || row.user_id;
-      return { email, name };
-    }),
-  );
-
-  return subscribers
-    .filter(
-      (r): r is PromiseFulfilledResult<EmailSubscriber> =>
-        r.status === "fulfilled" && r.value.email !== "",
-    )
-    .map((r) => r.value);
+  return (users as { id: string; email: string; name: string | null }[])
+    .filter((u) => u.email)
+    .map((u) => ({
+      email: u.email,
+      name: u.name || u.email.split("@")[0],
+    }));
 }

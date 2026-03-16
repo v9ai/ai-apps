@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { useAuth } from "@clerk/nextjs";
+import { authClient } from "@/lib/auth/client";
 import {
   Flex,
   Badge,
@@ -21,7 +21,8 @@ import {
 } from "@/__generated__/hooks";
 
 export function UserPreferences() {
-  const { userId } = useAuth();
+  const { data: session } = authClient.useSession();
+  const userId = session?.user.id ?? null;
   const [isOpen, setIsOpen] = useState(false);
   const [locations, setLocations] = useState<string[]>([]);
   const [skills, setSkills] = useState<string[]>([]);

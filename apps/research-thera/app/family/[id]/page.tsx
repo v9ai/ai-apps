@@ -729,6 +729,7 @@ function FamilyMemberContent() {
             observations={observations}
             onDelete={handleDeleteObservation}
             deleting={deletingObs}
+            familyMemberId={memberId}
           />
         </Flex>
       </Card>

@@ -10,19 +10,16 @@ import {
   Cross2Icon,
 } from "@radix-ui/react-icons";
 import { Flex } from "@radix-ui/themes";
-import { useUser } from "@clerk/nextjs";
+import { authClient } from "@/lib/auth/client";
 import { NavLink } from "@/components/ui";
 import { ADMIN_EMAIL } from "@/lib/constants";
 
 export function AdminNav() {
-  const { isLoaded, isSignedIn, user } = useUser();
+  const { data: session, isPending } = authClient.useSession();
 
-  if (!isLoaded || !isSignedIn) return null;
+  if (isPending || !session) return null;
 
-  const userEmail =
-    user.primaryEmailAddress?.emailAddress ??
-    user.emailAddresses[0]?.emailAddress;
-  const isAdmin = userEmail?.toLowerCase() === ADMIN_EMAIL.toLowerCase();
+  const isAdmin = session.user.email?.toLowerCase() === ADMIN_EMAIL.toLowerCase();
 
   if (!isAdmin) return null;
 

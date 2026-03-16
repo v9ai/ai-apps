@@ -1,10 +1,10 @@
 import { NextRequest, NextResponse } from "next/server";
-import { currentUser } from "@clerk/nextjs/server";
+import { auth } from "@/lib/auth/server";
 import { ADMIN_EMAIL } from "@/lib/constants";
 
 export async function POST(request: NextRequest) {
-  const user = await currentUser();
-  if (user?.primaryEmailAddress?.emailAddress !== ADMIN_EMAIL) {
+  const session = await auth.api.getSession({ headers: request.headers });
+  if (session?.user.email !== ADMIN_EMAIL) {
     return NextResponse.json({ error: "Forbidden" }, { status: 403 });
   }
 
@@ -38,7 +38,7 @@ export async function POST(request: NextRequest) {
       },
       body: JSON.stringify({
         jobId,
-        actor: user.primaryEmailAddress?.emailAddress ?? "admin",
+        actor: session.user.email ?? "admin",
         ...(confirmedReason ? { confirmedReason } : {}),
       }),
     });

@@ -302,7 +302,6 @@ Output the full markdown draft with frontmatter:
 ---
 title: "[Title Tag from SEO strategy]"
 description: "[Meta description]"
-date: "[ISO date]"
 tags: [...]
 status: draft
 ---
@@ -316,7 +315,8 @@ Rules:
 2. Only use facts from the research brief — cross-reference before including
 3. Keep paragraphs under 4 sentences
 4. Target 1200–1800 words
-5. Include frontmatter with title, description, date, tags, and status"""
+5. Include frontmatter with title, description, tags, and status
+6. Do NOT include a date field — the publisher sets the date automatically"""
 
 
 def journalism_editor() -> str:
@@ -496,14 +496,15 @@ Output the full markdown draft with frontmatter:
 ---
 title: "[Title Tag from SEO strategy]"
 description: "[Meta description]"
-date: "[ISO date]"
 tags: [...]
 status: draft
 ---
 
 # [H1 Headline]
 
-[Article body]"""
+[Article body]
+
+Do NOT include a date field in the frontmatter — the publisher sets the date automatically."""
 
 
 def deep_dive_writer(title: str) -> str:

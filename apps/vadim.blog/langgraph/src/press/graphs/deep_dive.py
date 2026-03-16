@@ -7,12 +7,17 @@ from pathlib import Path
 
 from langgraph.graph import END, START, StateGraph
 
-from press import extract_published_content, slugify
+from press import slugify
 from press.agents import Agent, run_parallel
+from press.graphs.nodes import (
+    make_linkedin_node,
+    publish_node,
+    save_final_node,
+    should_revise_with_linkedin,
+)
 from press.graphs.state import DeepDiveState
 from press.models import ModelPool, TeamRole
 from press import prompts
-from press.publisher import publish as publish_post
 from press.research import ResearchConfig, research_phase
 
 logger = logging.getLogger(__name__)
@@ -149,59 +154,7 @@ def build_deep_dive_graph(pool: ModelPool):
 
         return {"draft": draft, "revision_rounds": rounds}
 
-    async def linkedin_node(state: DeepDiveState) -> dict:
-        content = (
-            extract_published_content(state["editor_output"], state["draft"])
-            if state.get("approved")
-            else state["draft"]
-        )
-        agent = Agent(
-            "deep-dive-linkedin",
-            prompts.linkedin(),
-            pool.for_role(TeamRole.FAST),
-        )
-        linkedin = await agent.run(content)
-
-        output_dir = state.get("output_dir", "./articles")
-        slug = slugify(state["title"])
-        drafts_dir = Path(output_dir) / "drafts"
-        drafts_dir.mkdir(parents=True, exist_ok=True)
-        (drafts_dir / f"{slug}-linkedin.md").write_text(linkedin)
-
-        return {"linkedin": linkedin}
-
-    async def publish_node(state: DeepDiveState) -> dict:
-        output_dir = state.get("output_dir", "./articles")
-        slug = slugify(state["title"])
-        published_dir = Path(output_dir) / "published"
-        published_dir.mkdir(parents=True, exist_ok=True)
-        content = extract_published_content(state["editor_output"], state["draft"])
-        (published_dir / f"{slug}.md").write_text(content)
-
-        if state.get("publish"):
-            publish_post(
-                content,
-                state["title"],
-                git_push=state.get("git_push", False),
-                deploy=True,
-            )
-
-        return {}
-
-    async def save_final(state: DeepDiveState) -> dict:
-        output_dir = state.get("output_dir", "./articles")
-        slug = slugify(state["title"])
-        drafts_dir = Path(output_dir) / "drafts"
-        drafts_dir.mkdir(parents=True, exist_ok=True)
-        (drafts_dir / f"{slug}-revisions.md").write_text(state["editor_output"])
-        return {}
-
-    def should_revise(state: DeepDiveState) -> str:
-        if state.get("approved"):
-            return "linkedin_approved"
-        if state.get("revision_rounds", 0) >= 1:
-            return "linkedin_final"
-        return "revise"
+    linkedin = make_linkedin_node(pool, "deep-dive-linkedin")
 
     # Build graph
     graph.add_node("read_source", read_source)
@@ -209,10 +162,10 @@ def build_deep_dive_graph(pool: ModelPool):
     graph.add_node("write", write)
     graph.add_node("edit", edit)
     graph.add_node("revise", revise)
-    graph.add_node("linkedin_approved", linkedin_node)
-    graph.add_node("linkedin_final", linkedin_node)
+    graph.add_node("linkedin_approved", linkedin)
+    graph.add_node("linkedin_final", linkedin)
     graph.add_node("publish", publish_node)
-    graph.add_node("save_final", save_final)
+    graph.add_node("save_final", save_final_node)
 
     graph.add_edge(START, "read_source")
     graph.add_edge("read_source", "research_and_seo")
@@ -220,7 +173,7 @@ def build_deep_dive_graph(pool: ModelPool):
     graph.add_edge("write", "edit")
     graph.add_conditional_edges(
         "edit",
-        should_revise,
+        should_revise_with_linkedin,
         {
             "linkedin_approved": "linkedin_approved",
             "linkedin_final": "linkedin_final",

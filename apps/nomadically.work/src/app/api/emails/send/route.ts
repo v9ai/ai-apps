@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { readFile } from "fs/promises";
 import { join } from "path";
-import { auth, clerkClient } from "@clerk/nextjs/server";
+import { auth } from "@/lib/auth/server";
 import { isAdminEmail } from "@/lib/admin";
 import { resend } from "@/lib/resend";
 import { drizzle } from "drizzle-orm/d1";
@@ -40,15 +40,12 @@ function textToHtml(text: string): string {
 }
 
 export async function POST(request: NextRequest) {
-  const { userId } = await auth();
-  if (!userId) {
+  const session = await auth.api.getSession({ headers: request.headers });
+  if (!session) {
     return NextResponse.json({ success: false, error: "Unauthorized" }, { status: 401 });
   }
 
-  const client = await clerkClient();
-  const user = await client.users.getUser(userId);
-  const userEmail = user.emailAddresses[0]?.emailAddress ?? null;
-
+  const userEmail = session.user.email;
   if (!isAdminEmail(userEmail)) {
     return NextResponse.json({ success: false, error: "Forbidden" }, { status: 403 });
   }

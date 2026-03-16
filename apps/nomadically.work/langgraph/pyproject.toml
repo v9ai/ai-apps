@@ -6,7 +6,7 @@ requires-python = ">=3.12"
 dependencies = [
     "click>=8.0",
     "deepeval>=3.8.9",
-    "duckduckgo-search>=7.0",
+    "ddgs>=9.0",
     "httpx>=0.27.0",
     "langchain-openai>=1.1.11",
     "langchain-core>=0.3",

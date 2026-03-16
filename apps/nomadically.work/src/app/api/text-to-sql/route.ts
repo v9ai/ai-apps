@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-import { auth } from "@clerk/nextjs/server";
+import { auth } from "@/lib/auth/server";
 import { sqlAgent } from "@/agents/sql";
 import { isAdminEmail } from "@/lib/admin";
 
@@ -12,8 +12,8 @@ import { isAdminEmail } from "@/lib/admin";
  */
 export async function POST(request: NextRequest) {
   try {
-    const { userId } = await auth();
-    if (!userId) {
+    const session = await auth.api.getSession({ headers: request.headers });
+    if (!session) {
       return NextResponse.json({ error: "Authentication required" }, { status: 401 });
     }
 

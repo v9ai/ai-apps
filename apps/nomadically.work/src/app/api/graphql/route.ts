@@ -4,7 +4,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { Kind, GraphQLError, type DocumentNode, type ValidationContext } from "graphql";
 import { schema } from "@/apollo/schema";
 import { GraphQLContext } from "@/apollo/context";
-import { auth, clerkClient } from "@clerk/nextjs/server";
+import { auth } from "@/lib/auth/server";
 import { getDb } from "@/db";
 import { createD1HttpClient } from "@/db/d1-http";
 import { createLoaders } from "@/apollo/loaders";
@@ -99,25 +99,19 @@ const handler = startServerAndCreateNextHandler<NextRequest, GraphQLContext>(
         const db = getDb(d1Client as any); // Cast to D1Database type
         const loaders = createLoaders(db);
 
-        // Dev bypass: use ADMIN_EMAIL when Clerk has no session
-        const { userId } = await auth();
-
-        if (!userId && process.env.NODE_ENV === "development" && process.env.ADMIN_EMAIL) {
+        // Dev bypass: use ADMIN_EMAIL in development
+        if (process.env.NODE_ENV === "development" && process.env.ADMIN_EMAIL) {
           return { userId: "dev-local", userEmail: process.env.ADMIN_EMAIL, db, loaders };
         }
 
-        if (!userId) {
-          return { userId: null, userEmail: null, db, loaders };
-        }
-
-        // Fetch user email from Clerk for admin checks and prompt access
+        let userId: string | null = null;
         let userEmail: string | null = null;
         try {
-          const client = await clerkClient();
-          const user = await client.users.getUser(userId);
-          userEmail = user.emailAddresses[0]?.emailAddress || null;
-        } catch (e) {
-          console.warn("⚠️ Could not fetch user email from Clerk:", e);
+          const session = await auth.api.getSession({ headers: req.headers });
+          userId = session?.user.id ?? null;
+          userEmail = session?.user.email ?? null;
+        } catch {
+          // Auth unavailable — treat as unauthenticated
         }
 
         return { userId, userEmail, db, loaders };
@@ -134,19 +128,21 @@ const handler = startServerAndCreateNextHandler<NextRequest, GraphQLContext>(
 );
 
 async function getRateLimitIdentifier(request: NextRequest): Promise<string> {
-  // Try to get user ID from auth
+  if (process.env.NODE_ENV === "development") {
+    return `dev:local`;
+  }
   try {
-    const { userId } = await auth();
-    if (userId) {
-      return `user:${userId}`;
+    const session = await auth.api.getSession({ headers: request.headers });
+    if (session?.user.id) {
+      return `user:${session.user.id}`;
     }
   } catch {
-    // Auth not available
+    // Auth unavailable
   }
 
   // Fallback to IP address
-  const ip = request.headers.get("x-forwarded-for") || 
-             request.headers.get("x-real-ip") || 
+  const ip = request.headers.get("x-forwarded-for") ||
+             request.headers.get("x-real-ip") ||
              "anonymous";
   return `ip:${ip}`;
 }
@@ -157,11 +153,11 @@ export async function GET(request: NextRequest) {
 
   if (!rateLimit.allowed) {
     return NextResponse.json(
-      { 
-        error: "Rate limit exceeded", 
-        message: `Too many requests. Please try again after ${new Date(rateLimit.resetTime).toISOString()}` 
+      {
+        error: "Rate limit exceeded",
+        message: `Too many requests. Please try again after ${new Date(rateLimit.resetTime).toISOString()}`
       },
-      { 
+      {
         status: 429,
         headers: {
           "X-RateLimit-Limit": String(RATE_LIMIT.MAX_REQUESTS),
@@ -181,11 +177,11 @@ export async function POST(request: NextRequest) {
 
   if (!rateLimit.allowed) {
     return NextResponse.json(
-      { 
-        error: "Rate limit exceeded", 
-        message: `Too many requests. Please try again after ${new Date(rateLimit.resetTime).toISOString()}` 
+      {
+        error: "Rate limit exceeded",
+        message: `Too many requests. Please try again after ${new Date(rateLimit.resetTime).toISOString()}`
       },
-      { 
+      {
         status: 429,
         headers: {
           "X-RateLimit-Limit": String(RATE_LIMIT.MAX_REQUESTS),

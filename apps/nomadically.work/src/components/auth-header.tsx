@@ -2,15 +2,15 @@
 
 import { GearIcon } from "@radix-ui/react-icons";
 import Link from "next/link";
-import { useUser, useClerk } from "@clerk/nextjs";
 import { Flex, Text } from "@radix-ui/themes";
 import { Button } from "@/components/ui";
+import { authClient } from "@/lib/auth/client";
+import { AuthDialog } from "@/components/AuthDialog";
 
 export function AuthHeader() {
-  const { isLoaded, isSignedIn, user } = useUser();
-  const { signOut } = useClerk();
+  const { data: session, isPending } = authClient.useSession();
 
-  if (!isLoaded) {
+  if (isPending) {
     return (
       <Text size="1" color="gray" style={{ paddingLeft: 4, paddingRight: 4 }}>
         …
@@ -18,23 +18,30 @@ export function AuthHeader() {
     );
   }
 
-  if (!isSignedIn) {
+  if (!session) {
     return (
       <Flex direction="column" gap="2">
-        <Link href="/sign-in">
-          <Button variant="ghost" size="sm" style={{ width: "100%" }}>sign in</Button>
-        </Link>
-        <Link href="/sign-up">
-          <Button variant="primary" size="sm" style={{ width: "100%" }}>sign up</Button>
-        </Link>
+        <AuthDialog
+          trigger={
+            <Button variant="ghost" size="sm" style={{ width: "100%" }}>
+              sign in
+            </Button>
+          }
+          defaultMode="signin"
+        />
+        <AuthDialog
+          trigger={
+            <Button variant="primary" size="sm" style={{ width: "100%" }}>
+              sign up
+            </Button>
+          }
+          defaultMode="signup"
+        />
       </Flex>
     );
   }
 
-  const displayName =
-    user.fullName ||
-    user.primaryEmailAddress?.emailAddress ||
-    user.username;
+  const displayName = session.user.name || session.user.email;
 
   return (
     <Flex direction="column" gap="2">
@@ -53,7 +60,7 @@ export function AuthHeader() {
         <Button
           variant="ghost"
           size="sm"
-          onClick={() => signOut({ redirectUrl: "/" })}
+          onClick={() => authClient.signOut()}
         >
           sign out
         </Button>

@@ -3,6 +3,7 @@
 from langgraph.types import Send
 
 from .data import (
+    _domain_to_key,
     _normalize_domain,
     fetch_existing_company_keys,
     persist_ats_boards,
