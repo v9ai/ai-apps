@@ -5,8 +5,7 @@ import { Kind, GraphQLError, type DocumentNode, type ValidationContext } from "g
 import { schema } from "@/apollo/schema";
 import { GraphQLContext } from "@/apollo/context";
 import { auth } from "@/lib/auth/server";
-import { getDb } from "@/db";
-import { createD1HttpClient } from "@/db/d1-http";
+import { db } from "@/db";
 import { createLoaders } from "@/apollo/loaders";
 
 const MAX_DEPTH = 10;
@@ -95,8 +94,6 @@ const handler = startServerAndCreateNextHandler<NextRequest, GraphQLContext>(
   {
     context: async (req) => {
       try {
-        const d1Client = createD1HttpClient();
-        const db = getDb(d1Client as any); // Cast to D1Database type
         const loaders = createLoaders(db);
 
         // Dev bypass: use ADMIN_EMAIL in development
@@ -107,7 +104,7 @@ const handler = startServerAndCreateNextHandler<NextRequest, GraphQLContext>(
         let userId: string | null = null;
         let userEmail: string | null = null;
         try {
-          const session = await auth.api.getSession({ headers: req.headers });
+          const { data: session } = await auth.getSession({ fetchOptions: { headers: req.headers } });
           userId = session?.user.id ?? null;
           userEmail = session?.user.email ?? null;
         } catch {
@@ -118,8 +115,7 @@ const handler = startServerAndCreateNextHandler<NextRequest, GraphQLContext>(
       } catch (error) {
         console.error("❌ [GraphQL] Error in context setup:", error);
         console.error("❌ [GraphQL] Make sure environment variables are set in .env.local");
-        console.error("❌ [GraphQL] Required: CLOUDFLARE_ACCOUNT_ID, CLOUDFLARE_D1_DATABASE_ID, CLOUDFLARE_API_TOKEN");
-        console.error("❌ [GraphQL] See docs/D1_SETUP.md for setup instructions");
+        console.error("❌ [GraphQL] Required: NEON_DATABASE_URL");
         // Re-throw to show proper error to client
         throw error;
       }
@@ -132,7 +128,7 @@ async function getRateLimitIdentifier(request: NextRequest): Promise<string> {
     return `dev:local`;
   }
   try {
-    const session = await auth.api.getSession({ headers: request.headers });
+    const { data: session } = await auth.getSession({ fetchOptions: { headers: request.headers } });
     if (session?.user.id) {
       return `user:${session.user.id}`;
     }

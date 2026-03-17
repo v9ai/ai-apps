@@ -1,13 +1,8 @@
 import { task, logger } from "@trigger.dev/sdk/v3";
-import { drizzle } from "drizzle-orm/d1";
 import { sql } from "drizzle-orm";
 import { jobs } from "../db/schema";
-import { createD1HttpClient } from "../db/d1-http";
+import { db } from "../db";
 import { enhanceJobTask, type EnhanceJobPayload } from "./enhance-job";
-
-function getDb() {
-  return drizzle(createD1HttpClient() as any);
-}
 
 /**
  * On-demand enhancement task — same logic as the scheduled `enhance-jobs-scheduled`
@@ -22,7 +17,6 @@ export const enhanceJobsOnDemand = task({
   run: async (payload: { limit?: number }) => {
     logger.info("Starting on-demand job enhancement scan...");
 
-    const db = getDb();
 
     const candidates = await db
       .select({
@@ -35,7 +29,7 @@ export const enhanceJobsOnDemand = task({
       .from(jobs)
       .where(
         sql`${jobs.source_kind} IN ('greenhouse', 'ashby')
-            AND ${jobs.status} IS NOT 'closed'
+            AND (${jobs.status} IS NULL OR ${jobs.status} != 'closed')
             AND ${jobs.absolute_url} IS NULL
             AND ${jobs.ashby_department} IS NULL
             AND ${jobs.departments} IS NULL`,

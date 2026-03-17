@@ -18,13 +18,11 @@ import Link from "next/link";
 
 const WORKERS = [
   { name: "nomadically-janitor", config: "wrangler.toml", runtime: "TypeScript", notes: "Daily midnight UTC, triggers ATS ingestion" },
-  { name: "d1-gateway", config: "wrangler.d1-gateway.toml", runtime: "TypeScript", notes: "On-demand HTTP, D1 binding" },
   { name: "nomadically-work-insert-jobs", config: "wrangler.insert-jobs.toml", runtime: "TypeScript", notes: "Queue-based job ingestion" },
-  { name: "nomadically-work-classify-jobs", config: "wrangler.classify-jobs.toml", runtime: "TypeScript", notes: "Job classification queue" },
   { name: "nomadically-work-process-companies-cron", config: "wrangler.process-companies-cron.toml", runtime: "TypeScript", notes: "Company processing cron" },
   { name: "dlq-consumer", config: "wrangler.dlq-consumer.toml", runtime: "TypeScript", notes: "Dead-letter queue consumer" },
   { name: "observability-tail", config: "wrangler.observability-tail.toml", runtime: "TypeScript", notes: "Observability logging tail" },
-{ name: "ats-crawler", config: "workers/ashby-crawler/wrangler.toml", runtime: "Rust/WASM", notes: "Common Crawl → D1, cron 02:00 UTC" },
+  { name: "ats-crawler", config: "workers/ashby-crawler/wrangler.toml", runtime: "Rust/WASM", notes: "Common Crawl → Ashby boards, cron 02:00 UTC" },
   { name: "nomadically-work-process-jobs", config: "workers/process-jobs/wrangler.jsonc", runtime: "Python/LangGraph", notes: "Every 6h + queue, DeepSeek classification" },
   { name: "nomadically-work-eu-classifier", config: "workers/eu-classifier/wrangler.jsonc", runtime: "Python", notes: "EU job classification" },
   { name: "nomadically-work-resume-rag", config: "workers/resume-rag/wrangler.jsonc", runtime: "Python", notes: "Vectorize + Workers AI" },
@@ -93,11 +91,11 @@ export default function WorkersPage() {
 
       <Text size="2" color="gray" mb="6" as="p">
         The pipeline runs across three runtimes:{" "}
-        <Text weight="medium" color="gray">TypeScript</Text> workers handle ATS ingestion, D1 gateway, queues, and cron scheduling;{" "}
+        <Text weight="medium" color="gray">TypeScript</Text> workers handle ATS ingestion, queues, and cron scheduling;{" "}
         <Text weight="medium" color="gray">Python/LangGraph</Text> workers run DeepSeek-powered job classification, EU filtering, resume RAG (Vectorize + Workers AI), and job-to-resume matching;{" "}
         <Text weight="medium" color="gray">Rust/WASM</Text> powers the Ashby board crawler via Common Crawl.
         Background tasks (enhancement, skill extraction) run on <Text weight="medium" color="gray">Trigger.dev</Text>.
-        All workers write to <Text weight="medium" color="gray">Cloudflare D1</Text> through the D1 gateway binding.
+        The Next.js app layer reads from <Text weight="medium" color="gray">Neon PostgreSQL</Text>; CF Workers (janitor, insert-jobs) are pending migration to Neon.
       </Text>
 
       {/* Feature Adoption */}
@@ -181,16 +179,12 @@ export default function WorkersPage() {
       <Flex direction="column" gap="2">
         {[
           {
-            text: "cron.ts and insert-jobs.ts still reference Turso (libsql) instead of D1",
+            text: "janitor and insert-jobs workers still use D1 binding — pending migration to Neon",
             severity: "orange" as const,
           },
           {
             text: "enhanceJobFromATS mutation has no auth check",
             severity: "red" as const,
-          },
-          {
-            text: "CORS on D1 Gateway is * (open)",
-            severity: "orange" as const,
           },
         ].map(({ text, severity }) => (
           <Card key={text}>

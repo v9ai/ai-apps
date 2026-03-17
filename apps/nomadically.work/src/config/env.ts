@@ -31,13 +31,6 @@ export interface EnvConfig {
     deepseekApiKey?: string;
   };
 
-  // Cloudflare D1 Configuration
-  d1?: {
-    accountId: string;
-    databaseId: string;
-    apiToken: string;
-  };
-
   // Other APIs
   apis?: {
     resendApiKey?: string;
@@ -82,17 +75,6 @@ export function loadEnvConfig(): EnvConfig {
       deepseekApiKey: getOptionalEnv("DEEPSEEK_API_KEY"),
     },
 
-    d1:
-      process.env.CLOUDFLARE_ACCOUNT_ID &&
-      process.env.CLOUDFLARE_D1_DATABASE_ID &&
-      process.env.CLOUDFLARE_API_TOKEN
-        ? {
-            accountId: getRequiredEnv("CLOUDFLARE_ACCOUNT_ID"),
-            databaseId: getRequiredEnv("CLOUDFLARE_D1_DATABASE_ID"),
-            apiToken: getRequiredEnv("CLOUDFLARE_API_TOKEN"),
-          }
-        : undefined,
-
     apis: {
       resendApiKey: getOptionalEnv("RESEND_API_KEY"),
       braveApiKey: getOptionalEnv("BRAVE_API_KEY"),
@@ -131,9 +113,6 @@ export const OPENAI_API_KEY = env.llm.openaiApiKey?.trim();
 export const DEEPSEEK_API_KEY = env.llm.deepseekApiKey?.trim();
 
 // Cloudflare configuration
-export const CLOUDFLARE_ACCOUNT_ID = env.d1?.accountId?.trim();
-export const CLOUDFLARE_API_TOKEN = env.d1?.apiToken?.trim();
-export const CLOUDFLARE_D1_DATABASE_ID = env.d1?.databaseId?.trim();
 export const CLOUDFLARE_WORKERS_AI_KEY = getOptionalEnv(
   "CLOUDFLARE_WORKERS_AI_KEY",
 );

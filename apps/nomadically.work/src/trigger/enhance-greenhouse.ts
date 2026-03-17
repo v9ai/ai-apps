@@ -1,14 +1,8 @@
 import { schedules, logger } from "@trigger.dev/sdk/v3";
-import { drizzle } from "drizzle-orm/d1";
 import { sql } from "drizzle-orm";
 import { jobs } from "../db/schema";
-import { createD1HttpClient } from "../db/d1-http";
+import { db } from "../db";
 import { enhanceJobTask, type EnhanceJobPayload } from "./enhance-job";
-
-function getDb() {
-  const d1Client = createD1HttpClient();
-  return drizzle(d1Client as any);
-}
 
 /**
  * Scheduled task: find un-enhanced jobs and fan out to individual enhance-job tasks.
@@ -24,7 +18,6 @@ export const enhanceJobsScheduled = schedules.task({
   run: async () => {
     logger.info("Starting scheduled job enhancement scan...");
 
-    const db = getDb();
 
     // Find jobs that haven't been enhanced yet across all ATS sources.
     // A job is "un-enhanced" if it has no ATS-specific data populated.
@@ -41,7 +34,7 @@ export const enhanceJobsScheduled = schedules.task({
       .from(jobs)
       .where(
         sql`${jobs.source_kind} IN ('greenhouse', 'ashby')
-            AND ${jobs.status} IS NOT 'closed'
+            AND (${jobs.status} IS NULL OR ${jobs.status} != 'closed')
             AND ${jobs.absolute_url} IS NULL
             AND ${jobs.ashby_department} IS NULL
             AND ${jobs.departments} IS NULL`,

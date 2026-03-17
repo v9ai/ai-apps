@@ -2,7 +2,7 @@
 
 This file provides guidance to Claude Code (claude.ai/code) when working with code in this repository.
 
-Remote EU job board aggregator. Next.js 16 frontend + GraphQL API backed by Cloudflare D1 (SQLite), with an AI/ML pipeline for job classification, skill extraction, and resume matching.
+Remote EU job board aggregator. Next.js 16 frontend + GraphQL API backed by Neon PostgreSQL, with an AI/ML pipeline for job classification, skill extraction, and resume matching. CF Workers (janitor, insert-jobs) still write to D1 and are pending migration to Neon.
 
 ---
 
@@ -17,10 +17,9 @@ pnpm lint                         # ESLint (next lint)
 # GraphQL codegen — run after modifying any schema/**/*.graphql file
 pnpm codegen
 
-# Database
+# Database (Neon PostgreSQL)
 pnpm db:generate                  # Generate Drizzle migration files
-pnpm db:migrate                   # Apply locally with Drizzle Kit
-pnpm db:push                      # Apply migrations to remote D1
+pnpm db:migrate                   # Apply migrations via Drizzle Kit
 pnpm db:studio                    # Drizzle Studio
 
 # Evaluation
@@ -41,8 +40,6 @@ pnpm boards:discover              # Discover Ashby boards
 pnpm janitor:trigger              # Manually trigger janitor worker
 
 # Workers
-wrangler deploy --config wrangler.d1-gateway.toml   # Deploy D1 gateway
-wrangler tail --config wrangler.d1-gateway.toml     # Stream gateway logs
 cd workers/ashby-crawler && wrangler dev             # Ashby crawler local dev
 
 # Deployment
@@ -56,10 +53,10 @@ wrangler deploy --config workers/ashby-crawler/wrangler.toml  # Ashby crawler
 
 ### Database access
 
-**Production:** `Next.js (Vercel) → D1 Gateway Worker (CF) → D1 Database (binding)`
-**Dev fallback:** `Next.js → Cloudflare REST API → D1 Database`
+**Next.js app (Vercel):** `Next.js → Neon PostgreSQL` via `@neondatabase/serverless` + Drizzle ORM.
+Import `db` from `@/db` for all queries. Schema in `src/db/schema.ts`, migrations in `migrations/`.
 
-The D1 Gateway Worker (`workers/d1-gateway.ts`) supports batched queries — prefer batching for multi-query operations. Authenticated via `API_KEY` secret. Database schema is in `src/db/schema.ts` (Drizzle ORM), migrations in `migrations/`.
+**CF Workers (janitor, insert-jobs, process-companies):** still use D1 binding (`env.DB`) directly — pending migration to Neon.
 
 ### Data flow
 
@@ -67,11 +64,11 @@ The D1 Gateway Worker (`workers/d1-gateway.ts`) supports batched queries — pre
 1. Discovery:      ATS Sources (D1) --[Cron Worker]--> Trigger Ingestion
 2. Board Crawl:    Common Crawl CDX --[ashby-crawler (Rust)]--> Ashby boards → D1
 3. Ingestion:      ATS APIs (Greenhouse/Lever/Ashby) --[Insert Worker]--> D1
-4. Enhancement:    Job IDs --[Trigger.dev / GraphQL Mutation]--> ATS API --> D1
+4. Enhancement:    Job IDs --[Trigger.dev / GraphQL Mutation]--> ATS API --> Neon
 5. Classification: Unprocessed jobs --[process-jobs (Python) / DeepSeek]--> is_remote_eu --> D1
-6. Skill Extract:  Job descriptions --[LLM pipeline]--> Skills → D1
+6. Skill Extract:  Job descriptions --[LLM pipeline]--> Skills → Neon
 7. Resume Match:   Resumes --[resume-rag (Python) / Vectorize]--> Vector search
-8. Serving:        Browser --[Apollo Client]--> /api/graphql --[D1 HTTP]--> Gateway --> D1
+8. Serving:        Browser --[Apollo Client]--> /api/graphql --[Drizzle ORM]--> Neon
 9. Evaluation:     Langfuse --[LLM calls]--> Accuracy scores
 ```
 
@@ -89,9 +86,8 @@ Custom scalars: `DateTime`/`URL`/`EmailAddress` → `string`, `Upload` → `File
 
 | Worker | Config | Runtime | Key details |
 |---|---|---|---|
-| `janitor` | `wrangler.toml` | TypeScript | Daily midnight UTC, triggers ATS ingestion |
-| `d1-gateway` | `wrangler.d1-gateway.toml` | TypeScript | On-demand HTTP, D1 binding |
-| `insert-jobs` | `wrangler.insert-jobs.toml` | TypeScript | Queue-based, still uses Turso (legacy) |
+| `janitor` | `wrangler.toml` | TypeScript | Daily midnight UTC, triggers ATS ingestion (D1) |
+| `insert-jobs` | `wrangler.insert-jobs.toml` | TypeScript | Queue-based (D1 — pending Neon migration) |
 | `process-jobs` | `workers/process-jobs/wrangler.jsonc` | Python/LangGraph | Every 6h + queue, DeepSeek classification |
 | `ashby-crawler` | `workers/ashby-crawler/wrangler.toml` | **Rust/WASM** | Common Crawl → D1, rig_compat module |
 | `resume-rag` | `workers/resume-rag/wrangler.jsonc` | **Python** | Vectorize + Workers AI |
@@ -116,7 +112,7 @@ GraphQL Playground: `http://localhost:3000/api/graphql`. Vercel routes have 60s 
 |---|---|
 | Frontend | Next.js 16, React 19, App Router |
 | Language | TypeScript 5.9 |
-| Database | Cloudflare D1 (SQLite) via D1 Gateway Worker |
+| Database | Neon PostgreSQL (Next.js app) + Cloudflare D1 (workers, pending migration) |
 | ORM | Drizzle ORM |
 | API | Apollo Server 5 (GraphQL) |
 | Auth | Clerk |
@@ -174,7 +170,7 @@ The strategy enforcer (`src/agents/strategy-enforcer.ts`) is available as a plai
 
 ## Environment variables
 
-Copy `.env.example` to `.env.local`. Key groups: D1 Gateway (or Cloudflare REST API for dev), Clerk auth, AI provider keys (Anthropic, DeepSeek, OpenAI, Gemini), Langfuse/LangSmith observability, admin email, app URL. See `.env.example` for full list.
+Copy `.env.example` to `.env.local`. Key groups: `NEON_DATABASE_URL`, Clerk auth, AI provider keys (Anthropic, DeepSeek, OpenAI, Gemini), Langfuse/LangSmith observability, admin email, app URL. See `.env.example` for full list.
 
 ---
 
@@ -185,7 +181,7 @@ Copy `.env.example` to `.env.local`. Key groups: D1 Gateway (or Cloudflare REST 
 - **N+1 queries** for skills, company, and ATS board sub-fields — no DataLoader.
 
 ### Security
-- CORS on D1 Gateway is `*`.
+- No CORS policy on the GraphQL API route.
 - No GraphQL query complexity/depth limiting.
 
 ### Type safety
@@ -194,11 +190,11 @@ Copy `.env.example` to `.env.local`. Key groups: D1 Gateway (or Cloudflare REST 
 
 ### Dead code
 - `scripts/ingest-jobs.ts` still documents Turso env vars in its help text (stale).
-- `@libsql/client` and `pg` are likely unused after D1 migration — can be removed from dependencies.
+- `@libsql/client` and `drizzle-orm/d1` are likely unused and can be removed from `package.json`.
 
 ### Dependencies
 - `@ai-sdk/anthropic` pinned to `"latest"` — should use specific version.
-- `@libsql/client` and `pg` are likely unused after D1 migration.
+- `@libsql/client` and `drizzle-orm/d1` are likely unused — remove from `package.json`.
 
 ---
 
@@ -352,15 +348,12 @@ Safety: Max 3 code changes + 2 skill evolutions per cycle. Phase detection (IMPR
 
 ---
 
-### Drizzle ORM + D1
+### Drizzle ORM + Neon
 
-**Setup** — always cast `D1HttpClient` as `any` (it implements a subset of the CF binding interface):
+**Setup** — import `db` directly from `@/db` (Neon PostgreSQL via drizzle-orm/neon-http):
 
 ```ts
-import { drizzle } from "drizzle-orm/d1";
-import { createD1HttpClient } from "@/db/d1-http";
-
-const db = drizzle(createD1HttpClient() as any);
+import { db } from "@/db";
 ```
 
 **Querying** — use Drizzle expressions, never raw SQL template literals:
@@ -397,13 +390,13 @@ import type { Job, NewJob, Company } from "@/db/schema";
 ```bash
 pnpm db:generate   # creates migration file in migrations/
 pnpm db:migrate    # applies locally
-pnpm db:push       # applies to remote D1
 ```
 
 **Anti-patterns:**
 - Never write raw SQL strings in resolvers — use Drizzle ORM methods.
 - Never use `db.execute(sql\`...\`)` for application queries — use typed builder.
-- Never import from `drizzle-orm/pg-core` or `drizzle-orm/mysql-core` — use `drizzle-orm/sqlite-core`.
+- Never import from `drizzle-orm/sqlite-core` or `drizzle-orm/d1` — use `drizzle-orm/pg-core`.
+- Never use `createD1HttpClient()` — it is deleted; import `db` from `@/db` directly.
 
 > Docs: fetch_docs on `https://orm.drizzle.team/docs/overview`
 
@@ -434,23 +427,7 @@ const Job: JobResolvers<GraphQLContext, Job> = {
 };
 ```
 
-**JSON column pattern** — D1 stores JSON as text; always parse in field resolvers:
-
-```ts
-departments(parent) {
-  if (!parent.departments) return [];
-  try { return JSON.parse(parent.departments); }
-  catch { return []; }
-},
-```
-
-**Boolean columns** — D1 returns `0`/`1` for SQLite integers. Fields defined with `{ mode: "boolean" }` in schema are auto-coerced by Drizzle. Fields without it need manual coercion in resolvers:
-
-```ts
-is_remote_eu(parent) {
-  return (parent.is_remote_eu as unknown) === 1 || parent.is_remote_eu === true;
-},
-```
+**JSON column pattern** — Neon stores JSON as `jsonb`; Drizzle auto-parses it. Manual `JSON.parse()` is not needed for `jsonb` columns.
 
 **Admin guard** — any mutation that modifies production data must check:
 
@@ -495,13 +472,7 @@ Tasks live in `src/trigger/` and must be registered. Pattern:
 
 ```ts
 import { task, logger } from "@trigger.dev/sdk/v3";
-import { drizzle } from "drizzle-orm/d1";
-import { createD1HttpClient } from "../db/d1-http";
-
-// Lazy DB init — don't create at module level
-function getDb() {
-  return drizzle(createD1HttpClient() as any);
-}
+import { db } from "../db";
 
 export const myTask = task({
   id: "my-task",           // unique kebab-case, matches trigger.config.ts registration
@@ -543,24 +514,19 @@ export const myTask = task({
 
 ---
 
-### D1 Gateway / batch queries
+### Database queries
 
-Prefer batching when making multiple independent queries in one request:
+Use the `db` instance from `@/db` for all queries — it is the Neon Drizzle instance:
 
 ```ts
-// Single exec (via Drizzle — preferred for typed queries)
-const result = await context.db.select().from(jobs).where(eq(jobs.id, id));
+import { db } from "@/db";
 
-// Raw batch (for admin scripts / multi-statement operations)
-const client = createD1HttpClient();
-const [jobsResult, companiesResult] = await client.batch([
-  "SELECT count(*) FROM jobs",
-  "SELECT count(*) FROM companies",
+// Single query
+const result = await db.select().from(jobs).where(eq(jobs.id, id));
+
+// Multiple independent queries — run in parallel
+const [jobsCount, companiesCount] = await Promise.all([
+  db.select({ count: count() }).from(jobs),
+  db.select({ count: count() }).from(companies),
 ]);
 ```
-
-The `D1HttpClient` singleton is cached (`_cachedClient`) — do not re-instantiate per request.
-
-**Anti-patterns:**
-- Never make N sequential `fetch()` calls to the D1 gateway when a batch would work.
-- Never bypass `createD1HttpClient()` by constructing `D1HttpClient` directly — the factory handles env var selection and caching.
