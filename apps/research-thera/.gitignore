@@ -53,5 +53,14 @@ better-auth/
 src/elevenlabs-examples/
 .trigger/
 
+# Python
+.venv/
+__pycache__/
+*.pyc
+
+# SQLite databases
+*.db
+*.db.backup
+
 # Rust
 **/target/

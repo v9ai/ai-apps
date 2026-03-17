@@ -1,0 +1,11 @@
+.venv
+__pycache__
+.next
+better-auth
+evals
+langgraph
+*.db
+*.db.backup
+_memory
+research-output
+tsconfig.tsbuildinfo
