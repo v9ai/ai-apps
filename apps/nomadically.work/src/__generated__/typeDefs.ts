@@ -64,6 +64,7 @@ type AnalyzeCompanyResponse {
 
 type Application {
   aiInterviewQuestions: String
+  aiTechStack: String
   companyKey: String
   companyName: String
   createdAt: String!

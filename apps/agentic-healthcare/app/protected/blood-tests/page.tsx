@@ -1,12 +1,12 @@
-import { createClient } from "@/lib/supabase/server";
-import { redirect } from "next/navigation";
+import { withAuth } from "@/lib/auth-helpers";
+import { db } from "@/lib/db";
+import { bloodTests } from "@/lib/db/schema";
+import { eq, desc } from "drizzle-orm";
 import Link from "next/link";
 import { Badge, Box, Card, Flex, Heading, Separator, Skeleton, Text } from "@radix-ui/themes";
 import { Suspense } from "react";
 import { Droplet } from "lucide-react";
 import { UploadForm } from "./upload-form";
-import { gqlQuery } from "@/lib/graphql/execute";
-import { GetBloodTestsDocument } from "@/lib/graphql/__generated__/graphql";
 
 const statusColor: Record<string, "green" | "red" | "yellow" | "gray"> = {
   done: "green",
@@ -16,12 +16,13 @@ const statusColor: Record<string, "green" | "red" | "yellow" | "gray"> = {
 };
 
 async function TestsList() {
-  const supabase = await createClient();
-  const { data: { session } } = await supabase.auth.getSession();
-  if (!session) redirect("/auth/login");
+  const { userId } = await withAuth();
 
-  const data = await gqlQuery(GetBloodTestsDocument, {}, session.access_token);
-  const tests = data.blood_testsCollection?.edges.map((e) => e.node) ?? [];
+  const tests = await db
+    .select()
+    .from(bloodTests)
+    .where(eq(bloodTests.userId, userId))
+    .orderBy(desc(bloodTests.uploadedAt));
 
   if (tests.length === 0) {
     return (
@@ -43,11 +44,11 @@ async function TestsList() {
             <Link href={`/protected/blood-tests/${test.id}`} style={{ textDecoration: "none" }}>
               <Flex justify="between" align="center">
                 <Flex direction="column" gap="1">
-                  <Text size="2" weight="medium">{test.file_name}</Text>
+                  <Text size="2" weight="medium">{test.fileName}</Text>
                   <Text size="1" color="gray">
-                    {test.test_date
-                      ? new Date(test.test_date).toLocaleDateString()
-                      : new Date(test.uploaded_at).toLocaleDateString()}
+                    {test.testDate
+                      ? new Date(test.testDate).toLocaleDateString()
+                      : new Date(test.uploadedAt).toLocaleDateString()}
                   </Text>
                 </Flex>
                 <Badge color={statusColor[test.status] ?? "gray"} variant="soft">

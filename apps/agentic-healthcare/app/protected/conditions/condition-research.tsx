@@ -1,6 +1,8 @@
 import { Badge, Callout, Card, Flex, Heading, Text } from "@radix-ui/themes";
-import { createClient } from "@/lib/supabase/server";
-import { redirect } from "next/navigation";
+import { withAuth } from "@/lib/auth-helpers";
+import { db } from "@/lib/db";
+import { conditionResearches } from "@/lib/db/schema";
+import { eq } from "drizzle-orm";
 import { BookOpen, ExternalLink } from "lucide-react";
 import { MarkdownProse } from "@/components/markdown-prose";
 import { ResearchButton } from "./research-button";
@@ -18,26 +20,23 @@ type Paper = {
 };
 
 async function getConditionResearch(conditionId: string) {
-  const supabase = await createClient();
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
-  if (!user) redirect("/auth/login");
+  await withAuth();
 
-  const { data } = await supabase
-    .from("condition_researches")
-    .select("synthesis, papers, paper_count, search_query, created_at, updated_at")
-    .eq("condition_id", conditionId)
-    .single();
+  const [data] = await db
+    .select()
+    .from(conditionResearches)
+    .where(eq(conditionResearches.conditionId, conditionId));
 
-  return data as {
-    synthesis: string | null;
-    papers: Paper[];
-    paper_count: number;
-    search_query: string | null;
-    created_at: string;
-    updated_at: string | null;
-  } | null;
+  if (!data) return null;
+
+  return {
+    synthesis: data.synthesis,
+    papers: data.papers as Paper[],
+    paper_count: Number(data.paperCount) || 0,
+    search_query: data.searchQuery,
+    created_at: data.createdAt.toISOString(),
+    updated_at: data.updatedAt.toISOString(),
+  };
 }
 
 function formatAuthors(authors: string[]) {

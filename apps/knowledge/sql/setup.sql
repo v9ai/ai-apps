@@ -1,16 +1,18 @@
 -- ═══════════════════════════════════════
--- Extensions (run BEFORE drizzle-kit push)
+-- Knowledge App — Neon PostgreSQL Setup
+-- Run BEFORE drizzle-kit push: extensions
+-- Run AFTER  drizzle-kit push: everything else
 -- ═══════════════════════════════════════
 
+-- Extensions
 CREATE EXTENSION IF NOT EXISTS vector;
 CREATE EXTENSION IF NOT EXISTS pg_trgm;
 
 -- ═══════════════════════════════════════
 -- Full-Text Search: tsvector columns + GIN
--- (run AFTER drizzle-kit push creates tables)
 -- ═══════════════════════════════════════
 
-ALTER TABLE papers
+ALTER TABLE lessons
   ADD COLUMN IF NOT EXISTS fts tsvector
   GENERATED ALWAYS AS (
     setweight(to_tsvector('english', coalesce(title, '')), 'A') ||
@@ -18,16 +20,16 @@ ALTER TABLE papers
     setweight(to_tsvector('english', coalesce(content, '')), 'C')
   ) STORED;
 
-CREATE INDEX IF NOT EXISTS papers_fts_idx ON papers USING gin (fts);
+CREATE INDEX IF NOT EXISTS lessons_fts_idx ON lessons USING gin (fts);
 
-ALTER TABLE paper_sections
+ALTER TABLE lesson_sections
   ADD COLUMN IF NOT EXISTS fts tsvector
   GENERATED ALWAYS AS (
     setweight(to_tsvector('english', coalesce(heading, '')), 'A') ||
     setweight(to_tsvector('english', coalesce(content, '')), 'B')
   ) STORED;
 
-CREATE INDEX IF NOT EXISTS paper_sections_fts_idx ON paper_sections USING gin (fts);
+CREATE INDEX IF NOT EXISTS lesson_sections_fts_idx ON lesson_sections USING gin (fts);
 
 ALTER TABLE citations
   ADD COLUMN IF NOT EXISTS fts tsvector
@@ -52,7 +54,7 @@ CREATE INDEX IF NOT EXISTS concepts_fts_idx ON concepts USING gin (fts);
 CREATE INDEX IF NOT EXISTS concepts_name_trgm_idx ON concepts USING gin (name gin_trgm_ops);
 
 -- HNSW vector indexes for similarity search
-CREATE INDEX IF NOT EXISTS paper_embeddings_hnsw_idx ON paper_embeddings
+CREATE INDEX IF NOT EXISTS lesson_embeddings_hnsw_idx ON lesson_embeddings
   USING hnsw (embedding vector_cosine_ops);
 CREATE INDEX IF NOT EXISTS section_embeddings_hnsw_idx ON section_embeddings
   USING hnsw (embedding vector_cosine_ops);
@@ -63,11 +65,11 @@ CREATE INDEX IF NOT EXISTS concept_embeddings_hnsw_idx ON concept_embeddings
 -- Materialized Views
 -- ═══════════════════════════════════════
 
-CREATE MATERIALIZED VIEW IF NOT EXISTS mv_paper_engagement AS
+CREATE MATERIALIZED VIEW IF NOT EXISTS mv_lesson_engagement AS
 SELECT
-  p.id AS paper_id,
-  p.slug,
-  p.title,
+  l.id AS lesson_id,
+  l.slug,
+  l.title,
   count(DISTINCT ae.user_id) AS unique_readers,
   count(ae.id) AS total_views,
   avg(ae.duration_ms)::int AS avg_duration_ms,
@@ -75,11 +77,11 @@ SELECT
   count(DISTINCT ae.user_id) FILTER (WHERE ae.event_name = 'read_complete')::float /
     greatest(count(DISTINCT ae.user_id), 1) AS completion_rate,
   max(ae.created_at) AS last_activity
-FROM papers p
-LEFT JOIN analytics_events ae ON ae.paper_id = p.id
-GROUP BY p.id, p.slug, p.title;
+FROM lessons l
+LEFT JOIN analytics_events ae ON ae.lesson_id = l.id
+GROUP BY l.id, l.slug, l.title;
 
-CREATE UNIQUE INDEX IF NOT EXISTS mv_paper_engagement_paper_idx ON mv_paper_engagement(paper_id);
+CREATE UNIQUE INDEX IF NOT EXISTS mv_lesson_engagement_lesson_idx ON mv_lesson_engagement(lesson_id);
 
 CREATE MATERIALIZED VIEW IF NOT EXISTS mv_daily_activity AS
 SELECT
@@ -87,7 +89,7 @@ SELECT
   ae.event_name,
   count(*) AS event_count,
   count(DISTINCT ae.user_id) AS unique_users,
-  count(DISTINCT ae.paper_id) AS papers_touched
+  count(DISTINCT ae.lesson_id) AS lessons_touched
 FROM analytics_events ae
 WHERE ae.created_at > now() - interval '90 days'
 GROUP BY date_trunc('day', ae.created_at)::date, ae.event_name;
@@ -103,8 +105,8 @@ SELECT
   count(ae.id) AS total_events,
   avg(ae.duration_ms)::int AS avg_duration_ms
 FROM categories cat
-JOIN papers p ON p.category_id = cat.id
-LEFT JOIN analytics_events ae ON ae.paper_id = p.id
+JOIN lessons l ON l.category_id = cat.id
+LEFT JOIN analytics_events ae ON ae.lesson_id = l.id
 GROUP BY cat.id, cat.name;
 
 CREATE UNIQUE INDEX IF NOT EXISTS mv_category_engagement_cat_idx ON mv_category_engagement(category_id);
@@ -310,17 +312,17 @@ AS $$
 $$;
 
 -- ═══════════════════════════════════════
--- RPCs: Recommender
+-- RPCs: Recommender (vector similarity)
 -- ═══════════════════════════════════════
 
-CREATE OR REPLACE FUNCTION find_similar_papers(
+CREATE OR REPLACE FUNCTION find_similar_lessons(
   query_embedding vector(1024),
   match_threshold float DEFAULT 0.3,
   match_count int DEFAULT 10,
-  exclude_paper_id uuid DEFAULT NULL
+  exclude_lesson_id uuid DEFAULT NULL
 )
 RETURNS TABLE (
-  paper_id uuid,
+  lesson_id uuid,
   slug text,
   title text,
   category_name text,
@@ -330,17 +332,17 @@ LANGUAGE sql STABLE
 SET search_path = public, pg_catalog
 AS $$
   SELECT
-    pe.paper_id,
-    p.slug,
-    p.title,
+    le.lesson_id,
+    l.slug,
+    l.title,
     cat.name AS category_name,
-    1 - (pe.embedding <=> query_embedding) AS similarity
-  FROM paper_embeddings pe
-  JOIN papers p ON p.id = pe.paper_id
-  JOIN categories cat ON cat.id = p.category_id
-  WHERE 1 - (pe.embedding <=> query_embedding) > match_threshold
-    AND (exclude_paper_id IS NULL OR pe.paper_id <> exclude_paper_id)
-  ORDER BY pe.embedding <=> query_embedding
+    1 - (le.embedding <=> query_embedding) AS similarity
+  FROM lesson_embeddings le
+  JOIN lessons l ON l.id = le.lesson_id
+  JOIN categories cat ON cat.id = l.category_id
+  WHERE 1 - (le.embedding <=> query_embedding) > match_threshold
+    AND (exclude_lesson_id IS NULL OR le.lesson_id <> exclude_lesson_id)
+  ORDER BY le.embedding <=> query_embedding
   LIMIT match_count;
 $$;
 
@@ -351,9 +353,9 @@ CREATE OR REPLACE FUNCTION find_similar_sections(
 )
 RETURNS TABLE (
   section_id uuid,
-  paper_id uuid,
-  paper_slug text,
-  paper_title text,
+  lesson_id uuid,
+  lesson_slug text,
+  lesson_title text,
   heading text,
   similarity float
 )
@@ -362,25 +364,25 @@ SET search_path = public, pg_catalog
 AS $$
   SELECT
     se.section_id,
-    se.paper_id,
-    p.slug AS paper_slug,
-    p.title AS paper_title,
-    ps.heading,
+    se.lesson_id,
+    l.slug AS lesson_slug,
+    l.title AS lesson_title,
+    ls.heading,
     1 - (se.embedding <=> query_embedding) AS similarity
   FROM section_embeddings se
-  JOIN paper_sections ps ON ps.id = se.section_id
-  JOIN papers p ON p.id = se.paper_id
+  JOIN lesson_sections ls ON ls.id = se.section_id
+  JOIN lessons l ON l.id = se.lesson_id
   WHERE 1 - (se.embedding <=> query_embedding) > match_threshold
   ORDER BY se.embedding <=> query_embedding
   LIMIT match_count;
 $$;
 
-CREATE OR REPLACE FUNCTION recommend_papers_collaborative(
+CREATE OR REPLACE FUNCTION recommend_lessons_collaborative(
   target_user_id uuid,
   rec_count int DEFAULT 10
 )
 RETURNS TABLE (
-  paper_id uuid,
+  lesson_id uuid,
   slug text,
   title text,
   score float
@@ -388,42 +390,42 @@ RETURNS TABLE (
 LANGUAGE sql STABLE
 SET search_path = public, pg_catalog
 AS $$
-  WITH my_papers AS (
-    SELECT paper_id, read_progress, coalesce(rating, 3) AS rating
-    FROM user_paper_interactions
+  WITH my_lessons AS (
+    SELECT lesson_id, read_progress, coalesce(rating, 3) AS rating
+    FROM user_lesson_interactions
     WHERE user_id = target_user_id
       AND (read_progress > 0.3 OR rating >= 3 OR bookmarked)
   ),
   similar_users AS (
     SELECT
-      upi.user_id,
+      uli.user_id,
       count(*)::float / greatest(
-        (SELECT count(*) FROM my_papers) +
-        (SELECT count(*) FROM user_paper_interactions upi2
-         WHERE upi2.user_id = upi.user_id AND (upi2.read_progress > 0.3 OR upi2.rating >= 3 OR upi2.bookmarked))
+        (SELECT count(*) FROM my_lessons) +
+        (SELECT count(*) FROM user_lesson_interactions uli2
+         WHERE uli2.user_id = uli.user_id AND (uli2.read_progress > 0.3 OR uli2.rating >= 3 OR uli2.bookmarked))
         - count(*),
         1
       ) AS similarity
-    FROM user_paper_interactions upi
-    JOIN my_papers mp ON mp.paper_id = upi.paper_id
-    WHERE upi.user_id <> target_user_id
-      AND (upi.read_progress > 0.3 OR upi.rating >= 3 OR upi.bookmarked)
-    GROUP BY upi.user_id
+    FROM user_lesson_interactions uli
+    JOIN my_lessons ml ON ml.lesson_id = uli.lesson_id
+    WHERE uli.user_id <> target_user_id
+      AND (uli.read_progress > 0.3 OR uli.rating >= 3 OR uli.bookmarked)
+    GROUP BY uli.user_id
     HAVING count(*) >= 2
     ORDER BY similarity DESC
     LIMIT 20
   )
   SELECT
-    p.id AS paper_id,
-    p.slug,
-    p.title,
-    sum(su.similarity * coalesce(upi.rating, 3))::float AS score
+    l.id AS lesson_id,
+    l.slug,
+    l.title,
+    sum(su.similarity * coalesce(uli.rating, 3))::float AS score
   FROM similar_users su
-  JOIN user_paper_interactions upi ON upi.user_id = su.user_id
-  JOIN papers p ON p.id = upi.paper_id
-  WHERE upi.paper_id NOT IN (SELECT paper_id FROM my_papers)
-    AND (upi.read_progress > 0.3 OR upi.rating >= 3 OR upi.bookmarked)
-  GROUP BY p.id, p.slug, p.title
+  JOIN user_lesson_interactions uli ON uli.user_id = su.user_id
+  JOIN lessons l ON l.id = uli.lesson_id
+  WHERE uli.lesson_id NOT IN (SELECT lesson_id FROM my_lessons)
+    AND (uli.read_progress > 0.3 OR uli.rating >= 3 OR uli.bookmarked)
+  GROUP BY l.id, l.slug, l.title
   ORDER BY score DESC
   LIMIT rec_count;
 $$;
@@ -442,24 +444,24 @@ RETURNS TABLE (
   title text,
   snippet text,
   rank float,
-  paper_slug text,
-  paper_title text
+  paper_slug text,   -- kept for API compat (maps to lesson slug)
+  paper_title text   -- kept for API compat (maps to lesson title)
 )
 LANGUAGE sql STABLE
 SET search_path = public, pg_catalog
 AS $$
   (
     SELECT
-      'paper'::text AS result_type,
-      p.id AS result_id,
-      p.title,
-      ts_headline('english', p.content, websearch_to_tsquery('english', query_text),
+      'lesson'::text AS result_type,
+      l.id AS result_id,
+      l.title,
+      ts_headline('english', l.content, websearch_to_tsquery('english', query_text),
         'MaxWords=40, MinWords=20, StartSel=**, StopSel=**') AS snippet,
-      ts_rank(p.fts, websearch_to_tsquery('english', query_text))::float AS rank,
-      p.slug AS paper_slug,
-      p.title AS paper_title
-    FROM papers p
-    WHERE p.fts @@ websearch_to_tsquery('english', query_text)
+      ts_rank(l.fts, websearch_to_tsquery('english', query_text))::float AS rank,
+      l.slug AS paper_slug,
+      l.title AS paper_title
+    FROM lessons l
+    WHERE l.fts @@ websearch_to_tsquery('english', query_text)
     ORDER BY rank DESC
     LIMIT result_limit
   )
@@ -467,17 +469,17 @@ AS $$
   (
     SELECT
       'section'::text,
-      ps.id,
-      ps.heading,
-      ts_headline('english', ps.content, websearch_to_tsquery('english', query_text),
+      ls.id,
+      ls.heading,
+      ts_headline('english', ls.content, websearch_to_tsquery('english', query_text),
         'MaxWords=40, MinWords=20, StartSel=**, StopSel=**'),
-      ts_rank(ps.fts, websearch_to_tsquery('english', query_text))::float,
-      p.slug,
-      p.title
-    FROM paper_sections ps
-    JOIN papers p ON p.id = ps.paper_id
-    WHERE ps.fts @@ websearch_to_tsquery('english', query_text)
-    ORDER BY ts_rank(ps.fts, websearch_to_tsquery('english', query_text)) DESC
+      ts_rank(ls.fts, websearch_to_tsquery('english', query_text))::float,
+      l.slug,
+      l.title
+    FROM lesson_sections ls
+    JOIN lessons l ON l.id = ls.lesson_id
+    WHERE ls.fts @@ websearch_to_tsquery('english', query_text)
+    ORDER BY ts_rank(ls.fts, websearch_to_tsquery('english', query_text)) DESC
     LIMIT result_limit
   )
   UNION ALL
@@ -515,7 +517,7 @@ AS $$
   LIMIT result_limit;
 $$;
 
-CREATE OR REPLACE FUNCTION hybrid_search_papers(
+CREATE OR REPLACE FUNCTION hybrid_search_lessons(
   query_text text,
   query_embedding vector(1024),
   match_count int DEFAULT 10,
@@ -524,7 +526,7 @@ CREATE OR REPLACE FUNCTION hybrid_search_papers(
   match_threshold float DEFAULT 0.2
 )
 RETURNS TABLE (
-  paper_id uuid,
+  lesson_id uuid,
   slug text,
   title text,
   category_name text,
@@ -536,22 +538,22 @@ LANGUAGE sql STABLE
 SET search_path = public, pg_catalog
 AS $$
   SELECT
-    p.id AS paper_id,
-    p.slug,
-    p.title,
+    l.id AS lesson_id,
+    l.slug,
+    l.title,
     cat.name AS category_name,
-    ts_rank(p.fts, websearch_to_tsquery('english', query_text))::float AS fts_rank,
-    (1 - (pe.embedding <=> query_embedding))::float AS vector_similarity,
+    ts_rank(l.fts, websearch_to_tsquery('english', query_text))::float AS fts_rank,
+    (1 - (le.embedding <=> query_embedding))::float AS vector_similarity,
     (
-      fts_weight * ts_rank(p.fts, websearch_to_tsquery('english', query_text))
-      + vector_weight * (1 - (pe.embedding <=> query_embedding))
+      fts_weight * ts_rank(l.fts, websearch_to_tsquery('english', query_text))
+      + vector_weight * (1 - (le.embedding <=> query_embedding))
     )::float AS combined_score
-  FROM papers p
-  JOIN paper_embeddings pe ON pe.paper_id = p.id
-  JOIN categories cat ON cat.id = p.category_id
+  FROM lessons l
+  JOIN lesson_embeddings le ON le.lesson_id = l.id
+  JOIN categories cat ON cat.id = l.category_id
   WHERE
-    p.fts @@ websearch_to_tsquery('english', query_text)
-    OR 1 - (pe.embedding <=> query_embedding) > match_threshold
+    l.fts @@ websearch_to_tsquery('english', query_text)
+    OR 1 - (le.embedding <=> query_embedding) > match_threshold
   ORDER BY combined_score DESC
   LIMIT match_count;
 $$;
@@ -567,7 +569,7 @@ SECURITY DEFINER
 SET search_path = public, pg_catalog
 AS $$
 BEGIN
-  REFRESH MATERIALIZED VIEW CONCURRENTLY mv_paper_engagement;
+  REFRESH MATERIALIZED VIEW CONCURRENTLY mv_lesson_engagement;
   REFRESH MATERIALIZED VIEW CONCURRENTLY mv_daily_activity;
   REFRESH MATERIALIZED VIEW CONCURRENTLY mv_category_engagement;
 END;
@@ -575,8 +577,8 @@ $$;
 
 CREATE OR REPLACE FUNCTION get_user_engagement_summary(target_user_id uuid)
 RETURNS TABLE (
-  papers_started bigint,
-  papers_completed bigint,
+  lessons_started bigint,
+  lessons_completed bigint,
   total_time_spent_min bigint,
   current_streak_days bigint,
   categories_explored bigint,
@@ -587,8 +589,8 @@ SET search_path = public, pg_catalog
 AS $$
   WITH user_activity AS (
     SELECT
-      count(DISTINCT paper_id) FILTER (WHERE event_name = 'read_start') AS papers_started,
-      count(DISTINCT paper_id) FILTER (WHERE event_name = 'read_complete') AS papers_completed,
+      count(DISTINCT lesson_id) FILTER (WHERE event_name = 'read_start') AS lessons_started,
+      count(DISTINCT lesson_id) FILTER (WHERE event_name = 'read_complete') AS lessons_completed,
       coalesce(sum(duration_ms) / 60000, 0) AS total_time_spent_min
     FROM analytics_events
     WHERE user_id = target_user_id
@@ -621,22 +623,22 @@ AS $$
   fav_cat AS (
     SELECT cat.name AS favorite_category
     FROM analytics_events ae
-    JOIN papers p ON p.id = ae.paper_id
-    JOIN categories cat ON cat.id = p.category_id
+    JOIN lessons l ON l.id = ae.lesson_id
+    JOIN categories cat ON cat.id = l.category_id
     WHERE ae.user_id = target_user_id
     GROUP BY cat.name
     ORDER BY count(*) DESC
     LIMIT 1
   )
   SELECT
-    ua.papers_started,
-    ua.papers_completed,
+    ua.lessons_started,
+    ua.lessons_completed,
     ua.total_time_spent_min,
     cs.current_streak_days,
     (SELECT count(DISTINCT cat.id)
      FROM analytics_events ae2
-     JOIN papers p2 ON p2.id = ae2.paper_id
-     JOIN categories cat ON cat.id = p2.category_id
+     JOIN lessons l2 ON l2.id = ae2.lesson_id
+     JOIN categories cat ON cat.id = l2.category_id
      WHERE ae2.user_id = target_user_id),
     coalesce(fc.favorite_category, 'None')
   FROM user_activity ua
@@ -650,9 +652,9 @@ CREATE OR REPLACE FUNCTION get_reading_velocity(
 )
 RETURNS TABLE (
   week_start date,
-  papers_read bigint,
+  lessons_read bigint,
   total_time_min bigint,
-  running_avg_papers float
+  running_avg_lessons float
 )
 LANGUAGE sql STABLE
 SET search_path = public, pg_catalog
@@ -660,7 +662,7 @@ AS $$
   WITH weekly AS (
     SELECT
       date_trunc('week', created_at)::date AS week_start,
-      count(DISTINCT paper_id) AS papers_read,
+      count(DISTINCT lesson_id) AS lessons_read,
       coalesce(sum(duration_ms) / 60000, 0) AS total_time_min
     FROM analytics_events
     WHERE user_id = target_user_id
@@ -670,12 +672,12 @@ AS $$
   )
   SELECT
     w.week_start,
-    w.papers_read,
+    w.lessons_read,
     w.total_time_min,
-    avg(w.papers_read) OVER (
+    avg(w.lessons_read) OVER (
       ORDER BY w.week_start
       ROWS BETWEEN 3 PRECEDING AND CURRENT ROW
-    )::float AS running_avg_papers
+    )::float AS running_avg_lessons
   FROM weekly w
   ORDER BY w.week_start;
 $$;

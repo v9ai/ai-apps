@@ -77,6 +77,7 @@ export type AnalyzeCompanyResponse = {
 export type Application = {
   __typename: 'Application';
   aiInterviewQuestions: Maybe<Scalars['String']['output']>;
+  aiTechStack: Maybe<Scalars['String']['output']>;
   companyKey: Maybe<Scalars['String']['output']>;
   companyName: Maybe<Scalars['String']['output']>;
   createdAt: Scalars['String']['output'];

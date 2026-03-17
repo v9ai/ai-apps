@@ -1,33 +1,30 @@
 "use server";
 
-import { createClient } from "@/lib/supabase/server";
-import { redirect } from "next/navigation";
+import { withAuth } from "@/lib/auth-helpers";
+import { db } from "@/lib/db";
+import { conditions, conditionEmbeddings } from "@/lib/db/schema";
+import { eq } from "drizzle-orm";
 import { revalidatePath } from "next/cache";
-import { embedCondition } from "@/lib/embeddings";
-import { generateEmbedding } from "@/lib/embeddings";
+import { embedCondition, generateEmbedding } from "@/lib/embeddings";
+import { sql } from "drizzle-orm";
 
 export async function updateConditionName(id: string, formData: FormData) {
-  const supabase = await createClient();
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
-  if (!user) redirect("/auth/login");
+  const { userId } = await withAuth();
 
   const name = (formData.get("name") as string)?.trim();
   if (!name) return;
 
-  const { data: condition } = await supabase
-    .from("conditions")
-    .select("notes")
-    .eq("id", id)
-    .single();
+  const [condition] = await db
+    .select({ notes: conditions.notes })
+    .from(conditions)
+    .where(eq(conditions.id, id));
 
   if (!condition) return;
 
-  await supabase.from("conditions").update({ name }).eq("id", id);
+  await db.update(conditions).set({ name }).where(eq(conditions.id, id));
 
   try {
-    await embedCondition(supabase, id, user.id, name, condition.notes);
+    await embedCondition(id, userId, name, condition.notes);
   } catch {
     // Re-embed failure is non-blocking
   }
@@ -37,29 +34,24 @@ export async function updateConditionName(id: string, formData: FormData) {
 }
 
 export async function updateConditionNotes(id: string, formData: FormData) {
-  const supabase = await createClient();
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
-  if (!user) redirect("/auth/login");
+  const { userId } = await withAuth();
 
   const notes = (formData.get("notes") as string)?.trim() || null;
 
-  const { data: condition } = await supabase
-    .from("conditions")
-    .select("name")
-    .eq("id", id)
-    .single();
+  const [condition] = await db
+    .select({ name: conditions.name })
+    .from(conditions)
+    .where(eq(conditions.id, id));
 
   if (!condition) return;
 
-  await supabase
-    .from("conditions")
-    .update({ notes })
-    .eq("id", id);
+  await db
+    .update(conditions)
+    .set({ notes })
+    .where(eq(conditions.id, id));
 
   try {
-    await embedCondition(supabase, id, user.id, condition.name, notes);
+    await embedCondition(id, userId, condition.name, notes);
   } catch {
     // Re-embed failure is non-blocking
   }
@@ -68,29 +60,29 @@ export async function updateConditionNotes(id: string, formData: FormData) {
 }
 
 export async function getRelatedMarkers(conditionId: string) {
-  const supabase = await createClient();
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
-  if (!user) return [];
+  const { userId } = await withAuth();
 
-  const { data: conditionEmb } = await supabase
-    .from("condition_embeddings")
-    .select("content")
-    .eq("condition_id", conditionId)
-    .single();
+  const [conditionEmb] = await db
+    .select({ content: conditionEmbeddings.content })
+    .from(conditionEmbeddings)
+    .where(eq(conditionEmbeddings.conditionId, conditionId));
 
   if (!conditionEmb) return [];
 
   const embedding = await generateEmbedding(conditionEmb.content);
+  const embStr = `[${embedding.join(",")}]`;
 
-  const { data } = await supabase.rpc("match_markers", {
-    query_embedding: JSON.stringify(embedding),
-    match_threshold: 0.3,
-    match_count: 10,
-  });
+  const data = await db.execute(sql`
+    SELECT id, marker_id, test_id, marker_name, content,
+           1 - (embedding <=> ${embStr}::vector) as similarity
+    FROM blood_marker_embeddings
+    WHERE user_id = ${userId}
+      AND 1 - (embedding <=> ${embStr}::vector) > 0.3
+    ORDER BY embedding <=> ${embStr}::vector
+    LIMIT 10
+  `);
 
-  return (data ?? []) as Array<{
+  return data.rows as Array<{
     id: string;
     marker_id: string;
     test_id: string;

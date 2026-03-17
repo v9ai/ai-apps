@@ -12,6 +12,7 @@ import {
   Calendar,
   TrendingUp,
   Search,
+  MessageSquare,
 } from "lucide-react";
 import type { LucideIcon } from "lucide-react";
 
@@ -24,6 +25,7 @@ const navLinks: { href: string; label: string; icon: LucideIcon; separator?: boo
   { href: "/protected/appointments", label: "Appointments", icon: Calendar },
   { href: "/protected/trajectory", label: "Trajectory", icon: TrendingUp },
   { href: "/protected/search", label: "Search", icon: Search, separator: true },
+  { href: "/protected/chat", label: "Chat", icon: MessageSquare },
 ];
 
 export function Nav() {

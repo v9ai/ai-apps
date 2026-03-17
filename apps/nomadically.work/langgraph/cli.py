@@ -307,6 +307,111 @@ def interview_prep(app_id: int, save: bool):
     print(report)
 
 
+@main.command("tech-knowledge")
+@click.option("--app-id", "-a", type=int, default=None, help="Application ID to extract tech from")
+@click.option("--job-id", "-j", type=int, default=None, help="Job ID to extract tech from")
+@click.option("--exclude", "-x", default="", help="Comma-separated tags to exclude (e.g. webpack,jest)")
+@click.option("--dry-run", is_flag=True, default=False, help="Extract and show technologies without persisting")
+def tech_knowledge(app_id: int | None, job_id: int | None, exclude: str, dry_run: bool):
+    """Extract technologies from a job and generate knowledge study material."""
+    from src.db.connection import get_connection
+    from src.graphs.tech_knowledge import build_tech_knowledge_graph
+
+    if not app_id and not job_id:
+        print("Provide --app-id or --job-id.")
+        return
+
+    conn = get_connection()
+
+    if app_id:
+        with conn.cursor() as cur:
+            cur.execute(
+                "SELECT id, job_title, company_name, job_description, tech_dismissed_tags FROM applications WHERE id = %s",
+                [app_id],
+            )
+            row = cur.fetchone()
+        if not row:
+            print(f"Application {app_id} not found.")
+            conn.close()
+            return
+        if not row.get("job_description"):
+            print("Application has no job description.")
+            conn.close()
+            return
+        title = row["job_title"] or ""
+        company = row["company_name"] or ""
+        description = row["job_description"] or ""
+        source_id = app_id
+    else:
+        with conn.cursor() as cur:
+            cur.execute(
+                "SELECT id, title, company_name, description FROM jobs WHERE id = %s",
+                [job_id],
+            )
+            row = cur.fetchone()
+        if not row:
+            print(f"Job {job_id} not found.")
+            conn.close()
+            return
+        title = row["title"] or ""
+        company = row["company_name"] or ""
+        description = row["description"] or ""
+        source_id = job_id
+
+    conn.close()
+
+    # Merge CLI --exclude with DB-dismissed tags
+    import json as _json
+    exclude_tags = [t.strip() for t in exclude.split(",") if t.strip()]
+    if app_id and row.get("tech_dismissed_tags"):
+        try:
+            db_dismissed = _json.loads(row["tech_dismissed_tags"])
+            if isinstance(db_dismissed, list):
+                exclude_tags = list(set(exclude_tags) | set(db_dismissed))
+        except (ValueError, TypeError):
+            pass
+
+    source_label = f"application #{app_id}" if app_id else f"job #{job_id}"
+    print(f"\nTech Knowledge Pipeline — {title} @ {company}")
+    print(f"Source: {source_label}")
+    if exclude_tags:
+        print(f"Dismissed: {', '.join(exclude_tags)}")
+    print(f"Dry run: {dry_run}\n")
+
+    graph = build_tech_knowledge_graph()
+    result = graph.invoke({
+        "application_id": source_id,
+        "job_title": title,
+        "company_name": company,
+        "job_description": description,
+        "source_text": "",
+        "technologies": [],
+        "organized": [],
+        "existing_slugs": [],
+        "generated": [],
+        "dry_run": dry_run,
+        "exclude_tags": exclude_tags,
+        "stats": {},
+    })
+
+    stats = result.get("stats", {})
+    print(f"\n--- Tech Knowledge Summary ---")
+    print(f"  Technologies extracted: {stats.get('technologies_extracted', 0)}")
+    print(f"  Already in knowledge DB: {stats.get('already_existed', 0)}")
+    print(f"  Content generated: {stats.get('content_generated', 0)}")
+    if not dry_run:
+        print(f"  Lessons persisted: {stats.get('lessons_persisted', 0)}")
+        print(f"  Concepts created: {stats.get('concepts_created', 0)}")
+        print(f"  Edges created: {stats.get('edges_created', 0)}")
+
+
+@main.command("eval-tech-knowledge")
+def eval_tech_knowledge():
+    """Run deepeval evals for the tech knowledge graph."""
+    from src.graphs.tech_knowledge.evals import main as run_evals
+    run_evals()
+
+
 @main.command("eval-interview-prep")
 def eval_interview_prep():
     """Run deepeval evals for the interview prep graph."""

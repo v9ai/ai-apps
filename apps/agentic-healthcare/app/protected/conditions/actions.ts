@@ -1,31 +1,27 @@
 "use server";
 
-import { createClient } from "@/lib/supabase/server";
+import { withAuth } from "@/lib/auth-helpers";
+import { db } from "@/lib/db";
+import { conditions } from "@/lib/db/schema";
+import { eq } from "drizzle-orm";
 import { revalidatePath } from "next/cache";
-import { redirect } from "next/navigation";
-import { gqlMutate } from "@/lib/graphql/execute";
-import { InsertConditionDocument, DeleteConditionDocument } from "@/lib/graphql/__generated__/graphql";
 import { embedCondition } from "@/lib/embeddings";
 
 export async function addCondition(formData: FormData) {
-  const supabase = await createClient();
-  const { data: { session } } = await supabase.auth.getSession();
-  if (!session) redirect("/auth/login");
+  const { userId } = await withAuth();
 
   const name = (formData.get("name") as string)?.trim();
   const notes = (formData.get("notes") as string)?.trim() || null;
   if (!name) return;
 
-  const data = await gqlMutate(
-    InsertConditionDocument,
-    { user_id: session.user.id, name, notes },
-    session.access_token,
-  );
+  const [condition] = await db
+    .insert(conditions)
+    .values({ userId, name, notes })
+    .returning();
 
-  const condition = data.insertIntoconditionsCollection?.records[0];
   if (condition) {
     try {
-      await embedCondition(supabase, condition.id, session.user.id, name, notes);
+      await embedCondition(condition.id, userId, name, notes);
     } catch {
       // Embedding failure is non-blocking
     }
@@ -35,10 +31,7 @@ export async function addCondition(formData: FormData) {
 }
 
 export async function deleteCondition(id: string) {
-  const supabase = await createClient();
-  const { data: { session } } = await supabase.auth.getSession();
-  if (!session) redirect("/auth/login");
-
-  await gqlMutate(DeleteConditionDocument, { id }, session.access_token);
+  await withAuth();
+  await db.delete(conditions).where(eq(conditions.id, id));
   revalidatePath("/protected/conditions");
 }

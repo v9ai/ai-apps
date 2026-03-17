@@ -80,6 +80,7 @@ export type AnalyzeCompanyResponse = {
 export type Application = {
   __typename?: 'Application';
   aiInterviewQuestions: Maybe<Scalars['String']['output']>;
+  aiTechStack: Maybe<Scalars['String']['output']>;
   companyKey: Maybe<Scalars['String']['output']>;
   companyName: Maybe<Scalars['String']['output']>;
   createdAt: Scalars['String']['output'];
@@ -2510,26 +2511,26 @@ export type UpdateUserSettingsMutationVariables = Exact<{
 
 export type UpdateUserSettingsMutation = { __typename?: 'Mutation', updateUserSettings: { __typename?: 'UserSettings', id: number, user_id: string, email_notifications: boolean, daily_digest: boolean, new_job_alerts: boolean, preferred_locations: Array<string> | null, preferred_skills: Array<string> | null, excluded_companies: Array<string> | null, dark_mode: boolean, jobs_per_page: number, created_at: string, updated_at: string } };
 
-export type ApplicationFieldsFragment = { __typename?: 'Application', id: number, email: string, jobId: string | null, resume: File | null, status: ApplicationStatus, notes: string | null, jobTitle: string | null, companyName: string | null, companyKey: string | null, jobDescription: string | null, aiInterviewQuestions: string | null, createdAt: string, questions: Array<{ __typename?: 'QuestionAnswer', questionId: string, questionText: string, answerText: string }> };
+export type ApplicationFieldsFragment = { __typename?: 'Application', id: number, email: string, jobId: string | null, resume: File | null, status: ApplicationStatus, notes: string | null, jobTitle: string | null, companyName: string | null, companyKey: string | null, jobDescription: string | null, aiInterviewQuestions: string | null, aiTechStack: string | null, createdAt: string, questions: Array<{ __typename?: 'QuestionAnswer', questionId: string, questionText: string, answerText: string }> };
 
 export type GetApplicationsQueryVariables = Exact<{ [key: string]: never; }>;
 
 
-export type GetApplicationsQuery = { __typename?: 'Query', applications: Array<{ __typename?: 'Application', id: number, email: string, jobId: string | null, resume: File | null, status: ApplicationStatus, notes: string | null, jobTitle: string | null, companyName: string | null, companyKey: string | null, jobDescription: string | null, aiInterviewQuestions: string | null, createdAt: string, questions: Array<{ __typename?: 'QuestionAnswer', questionId: string, questionText: string, answerText: string }> }> };
+export type GetApplicationsQuery = { __typename?: 'Query', applications: Array<{ __typename?: 'Application', id: number, email: string, jobId: string | null, resume: File | null, status: ApplicationStatus, notes: string | null, jobTitle: string | null, companyName: string | null, companyKey: string | null, jobDescription: string | null, aiInterviewQuestions: string | null, aiTechStack: string | null, createdAt: string, questions: Array<{ __typename?: 'QuestionAnswer', questionId: string, questionText: string, answerText: string }> }> };
 
 export type GetApplicationQueryVariables = Exact<{
   id: Scalars['Int']['input'];
 }>;
 
 
-export type GetApplicationQuery = { __typename?: 'Query', application: { __typename?: 'Application', id: number, email: string, jobId: string | null, resume: File | null, status: ApplicationStatus, notes: string | null, jobTitle: string | null, companyName: string | null, companyKey: string | null, jobDescription: string | null, aiInterviewQuestions: string | null, createdAt: string, questions: Array<{ __typename?: 'QuestionAnswer', questionId: string, questionText: string, answerText: string }> } | null };
+export type GetApplicationQuery = { __typename?: 'Query', application: { __typename?: 'Application', id: number, email: string, jobId: string | null, resume: File | null, status: ApplicationStatus, notes: string | null, jobTitle: string | null, companyName: string | null, companyKey: string | null, jobDescription: string | null, aiInterviewQuestions: string | null, aiTechStack: string | null, createdAt: string, questions: Array<{ __typename?: 'QuestionAnswer', questionId: string, questionText: string, answerText: string }> } | null };
 
 export type CreateApplicationMutationVariables = Exact<{
   input: ApplicationInput;
 }>;
 
 
-export type CreateApplicationMutation = { __typename?: 'Mutation', createApplication: { __typename?: 'Application', id: number, email: string, jobId: string | null, resume: File | null, status: ApplicationStatus, notes: string | null, jobTitle: string | null, companyName: string | null, companyKey: string | null, jobDescription: string | null, aiInterviewQuestions: string | null, createdAt: string, questions: Array<{ __typename?: 'QuestionAnswer', questionId: string, questionText: string, answerText: string }> } };
+export type CreateApplicationMutation = { __typename?: 'Mutation', createApplication: { __typename?: 'Application', id: number, email: string, jobId: string | null, resume: File | null, status: ApplicationStatus, notes: string | null, jobTitle: string | null, companyName: string | null, companyKey: string | null, jobDescription: string | null, aiInterviewQuestions: string | null, aiTechStack: string | null, createdAt: string, questions: Array<{ __typename?: 'QuestionAnswer', questionId: string, questionText: string, answerText: string }> } };
 
 export type UpdateApplicationMutationVariables = Exact<{
   id: Scalars['Int']['input'];
@@ -3315,6 +3316,7 @@ export const ApplicationFieldsFragmentDoc = gql`
   companyKey
   jobDescription
   aiInterviewQuestions
+  aiTechStack
   createdAt
 }
     `;

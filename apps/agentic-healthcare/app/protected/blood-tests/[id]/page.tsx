@@ -1,12 +1,13 @@
-import { createClient } from "@/lib/supabase/server";
-import { redirect, notFound } from "next/navigation";
+import { withAuth } from "@/lib/auth-helpers";
+import { db } from "@/lib/db";
+import { bloodTests, bloodMarkers } from "@/lib/db/schema";
+import { eq, asc } from "drizzle-orm";
+import { notFound } from "next/navigation";
 import { Badge, Box, Callout, Flex, Heading, Separator, Skeleton, Table, Text } from "@radix-ui/themes";
 import Link from "next/link";
 import { Suspense } from "react";
 import { deleteBloodTest } from "../actions";
 import { DeleteConfirmButton } from "@/components/delete-confirm-button";
-import { gqlQuery } from "@/lib/graphql/execute";
-import { GetBloodTestDocument } from "@/lib/graphql/__generated__/graphql";
 
 const statusColor: Record<string, "green" | "red" | "yellow" | "gray"> = {
   done: "green",
@@ -22,26 +23,30 @@ const flagColor: Record<string, "blue" | "red" | "green"> = {
 };
 
 async function TestDetail({ id }: { id: string }) {
-  const supabase = await createClient();
-  const { data: { session } } = await supabase.auth.getSession();
-  if (!session) redirect("/auth/login");
+  const { userId } = await withAuth();
 
-  const data = await gqlQuery(GetBloodTestDocument, { id }, session.access_token);
-  const test = data.blood_testsCollection?.edges[0]?.node;
+  const [test] = await db
+    .select()
+    .from(bloodTests)
+    .where(eq(bloodTests.id, id));
 
-  if (!test || test.user_id !== session.user.id) notFound();
+  if (!test || test.userId !== userId) notFound();
 
-  const markers = data.blood_markersCollection?.edges.map((e) => e.node) ?? [];
+  const markers = await db
+    .select()
+    .from(bloodMarkers)
+    .where(eq(bloodMarkers.testId, id))
+    .orderBy(asc(bloodMarkers.name));
 
   return (
     <>
       <Flex justify="between" align="start">
         <Flex direction="column" gap="1">
-          <Heading size="6">{test.file_name}</Heading>
+          <Heading size="6">{test.fileName}</Heading>
           <Text size="2" color="gray">
-            {test.test_date
-              ? new Date(test.test_date).toLocaleDateString()
-              : new Date(test.uploaded_at).toLocaleString()}
+            {test.testDate
+              ? new Date(test.testDate).toLocaleDateString()
+              : new Date(test.uploadedAt).toLocaleString()}
           </Text>
         </Flex>
         <Flex align="center" gap="3">
@@ -63,7 +68,7 @@ async function TestDetail({ id }: { id: string }) {
 
       {test.status === "error" && (
         <Callout.Root color="red">
-          <Callout.Text>{test.error_message}</Callout.Text>
+          <Callout.Text>{test.errorMessage}</Callout.Text>
         </Callout.Root>
       )}
 
@@ -90,7 +95,7 @@ async function TestDetail({ id }: { id: string }) {
                 <Table.Cell><Text weight="medium">{m.name}</Text></Table.Cell>
                 <Table.Cell>{m.value}</Table.Cell>
                 <Table.Cell><Text color="gray">{m.unit}</Text></Table.Cell>
-                <Table.Cell><Text color="gray">{m.reference_range}</Text></Table.Cell>
+                <Table.Cell><Text color="gray">{m.referenceRange}</Text></Table.Cell>
                 <Table.Cell>
                   <Badge color={flagColor[m.flag ?? "normal"] ?? "green"} variant="soft">
                     {m.flag ?? "normal"}

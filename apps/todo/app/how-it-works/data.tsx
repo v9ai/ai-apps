@@ -1,211 +1,229 @@
-import type { Paper, PipelineAgent, Stat } from "@/components/how-it-works";
+interface Paper {
+  slug: string;
+  number: number;
+  title: string;
+  category: string;
+  wordCount: number;
+  readingTimeMin: number;
+  authors?: string;
+  year?: number;
+  venue?: string;
+  finding?: string;
+  relevance?: string;
+  url?: string;
+  categoryColor?: string;
+}
 
-// ─── Research Papers ───────────────────────────────────────────────
+interface PipelineAgent {
+  name: string;
+  icon?: React.ReactNode;
+  color?: string;
+  description: string;
+  researchBasis?: string;
+  paperIndices?: number[];
+}
+
+interface Stat {
+  number: string;
+  label: string;
+  source?: string;
+  paperIndex?: number;
+}
+
+// ─── Technical Foundations ──────────────────────────────────────────
 
 export const papers: Paper[] = [
   {
-    slug: "miller-1956",
+    slug: "nextjs-app-router",
     number: 1,
-    title: "The Magical Number Seven, Plus or Minus Two: Some Limits on Our Capacity for Processing Information",
-    category: "Cognitive Load",
+    title: "Next.js App Router",
+    category: "Frontend",
     wordCount: 0,
-    readingTimeMin: 3,
-    authors: "Miller, G. A.",
-    year: 1956,
-    venue: "Psychological Review",
-    finding:
-      "Working memory can hold 7±2 chunks of information simultaneously — exceeding this limit causes cognitive overload and errors.",
-    relevance:
-      "Backs the 7±2 task chunking limit: the app never shows more than ~7 active tasks at once, keeping the user within cognitive capacity.",
-    categoryColor: "green",
+    readingTimeMin: 2,
+    authors: "Vercel",
+    year: 2024,
+    finding: "Server-side rendering and static generation with React components, enabling efficient data fetching and SEO",
+    relevance: "Used in app/app/page.tsx for server-first data fetching of tasks and userPreferences via Drizzle ORM, and in auth routes for client interactivity",
+    url: "https://nextjs.org/docs/app",
+    categoryColor: "var(--blue-9)",
   },
   {
-    slug: "kahneman-tversky-1979",
+    slug: "drizzle-orm",
     number: 2,
-    title: "Intuitive Prediction: Biases and Corrective Procedures",
-    category: "Planning Fallacy",
+    title: "Drizzle ORM",
+    category: "Database",
     wordCount: 0,
-    readingTimeMin: 3,
-    authors: "Kahneman, D. & Tversky, A.",
-    year: 1979,
-    venue: "TIMS Studies in Management Science",
-    finding:
-      "People systematically underestimate task completion times by 25–50%, even when aware of past overruns.",
-    relevance:
-      "The AI schedule optimizer automatically adds a 25% time buffer to every task estimate, counteracting the planning fallacy at the system level.",
-    categoryColor: "amber",
+    readingTimeMin: 2,
+    authors: "Drizzle Team",
+    year: 2024,
+    finding: "Type-safe SQL query builder with schema migrations, providing compile-time validation and database abstraction",
+    relevance: "Defines tables like tasks and userPreferences in src/db/schema.ts, used in getTasksByStatus and getAllTaskCounts queries for task management",
+    url: "https://orm.drizzle.team",
+    categoryColor: "var(--green-9)",
   },
   {
-    slug: "roenneberg-2003",
+    slug: "better-auth",
     number: 3,
-    title: "Life Between Clocks: Daily Temporal Patterns of Human Chronotypes",
-    category: "Chronotype Science",
+    title: "Better Auth",
+    category: "Authentication",
     wordCount: 0,
-    readingTimeMin: 3,
-    authors: "Roenneberg, T. et al.",
-    year: 2003,
-    venue: "Journal of Biological Rhythms",
-    finding:
-      "Individual chronotype determines peak cognitive performance windows — morning types peak 2–4 hours after waking, evening types peak 8–10 hours after waking.",
-    relevance:
-      "Backs chronotype-aware scheduling: the energy matcher assigns high-priority tasks to the user's biological peak performance windows.",
-    categoryColor: "cyan",
+    readingTimeMin: 2,
+    authors: "Better Auth",
+    year: 2024,
+    finding: "Full-stack authentication solution with session management, email/password support, and adapters for various databases",
+    relevance: "Handles signup and login via signUp.email() and signIn.email() in lib/auth-client.ts, storing users in the user table and validating sessions in protected routes",
+    url: "https://better-auth.com",
+    categoryColor: "var(--purple-9)",
   },
   {
-    slug: "krug-tidwell-2005",
+    slug: "postgresql-neon",
     number: 4,
-    title: "Designing Interfaces: Patterns for Effective Interaction Design",
-    category: "Progressive Disclosure",
+    title: "PostgreSQL with Neon",
+    category: "Database",
     wordCount: 0,
     readingTimeMin: 2,
-    authors: "Krug, S. / Tidwell, J.",
-    year: 2005,
-    venue: "O'Reilly Media",
-    finding:
-      "Progressive disclosure — showing only essential information first, with details available on demand — reduces cognitive load by 30–40% in complex interfaces.",
-    relevance:
-      "The app uses a 3-level disclosure scaffold: task title → expanded details → full context, preventing information overload.",
-    categoryColor: "violet",
+    authors: "Neon",
+    year: 2024,
+    finding: "Serverless PostgreSQL with HTTP driver support, enabling scalable and serverless database operations",
+    relevance: "Hosts the database for tasks, userPreferences, and auth tables, accessed via @neondatabase/serverless in the Proxy pattern in src/db/index.ts",
+    url: "https://neon.tech",
+    categoryColor: "var(--green-9)",
   },
   {
-    slug: "zichermann-2011",
+    slug: "zod-validation",
     number: 5,
-    title: "Gamification by Design: Implementing Game Mechanics in Web and Mobile Apps",
-    category: "Gamification",
+    title: "Zod",
+    category: "API",
     wordCount: 0,
     readingTimeMin: 2,
-    authors: "Zichermann, G. & Cunningham, C.",
-    year: 2011,
-    venue: "O'Reilly Media",
-    finding:
-      "Streak mechanics with freeze/recovery options increase engagement by 34% compared to simple completion tracking.",
-    relevance:
-      "Backs the streak system with freeze and recovery mechanics — maintaining motivation through loss aversion without punishing occasional breaks.",
-    categoryColor: "orange",
+    authors: "Colin McDonnell",
+    year: 2024,
+    finding: "TypeScript-first schema validation library for runtime type checking and data validation",
+    relevance: "Used for createTaskSchema and updateTaskSchema to validate task inputs in server actions, ensuring data integrity before database operations",
+    url: "https://zod.dev",
+    categoryColor: "var(--orange-9)",
   },
   {
-    slug: "deterding-2011",
+    slug: "radix-ui-themes",
     number: 6,
-    title: "From Game Design Elements to Gamefulness: Defining Gamification",
-    category: "Endowed Progress",
+    title: "Radix UI Themes",
+    category: "Frontend",
     wordCount: 0,
     readingTimeMin: 2,
-    authors: "Deterding, S. et al.",
-    year: 2011,
-    venue: "Proceedings of MindTrek",
-    finding:
-      "The endowed progress effect: people given artificial advancement toward a goal (e.g., a progress bar starting at 30%) show 2× higher completion rates.",
-    relevance:
-      "Progress bars in the app start at 30% to leverage the endowed progress effect, making task lists feel achievable rather than daunting.",
-    categoryColor: "pink",
+    authors: "Radix UI",
+    year: 2024,
+    finding: "Accessible component library with built-in theming and dark mode support for consistent UI design",
+    relevance: "Provides the styling and components for the app layout, including StatusTabs and TaskList in the main dashboard",
+    url: "https://www.radix-ui.com/themes",
+    categoryColor: "var(--blue-9)",
   },
   {
-    slug: "baumeister-tierney-2011",
+    slug: "turbopack-monorepo",
     number: 7,
-    title: "Willpower: Rediscovering the Greatest Human Strength",
-    category: "Energy Management",
-    wordCount: 0,
-    readingTimeMin: 3,
-    authors: "Baumeister, R. F. & Tierney, J.",
-    year: 2011,
-    venue: "Penguin Press",
-    finding:
-      "Decision fatigue depletes willpower throughout the day — matching task difficulty to energy levels reduces abandonment by 40%.",
-    relevance:
-      "Backs energy-level task matching: high-effort tasks are scheduled during peak energy, routine tasks during low-energy periods.",
-    categoryColor: "blue",
-  },
-  {
-    slug: "sauro-lewis-2012",
-    number: 8,
-    title: "Quantifying the User Experience: Practical Statistics for User Research",
-    category: "UX Research",
+    title: "Turbopack",
+    category: "Build Tool",
     wordCount: 0,
     readingTimeMin: 2,
-    authors: "Sauro, J. & Lewis, J. R.",
-    year: 2012,
-    venue: "Morgan Kaufmann",
-    finding:
-      "Reducing task-capture friction to a single action (one tap or keystroke) increases capture rate by 3× compared to multi-step entry forms.",
-    relevance:
-      "Backs the one-tap Cmd+K capture: users can add tasks with a single keyboard shortcut, eliminating friction between intent and action.",
-    categoryColor: "teal",
+    authors: "Vercel",
+    year: 2024,
+    finding: "High-performance bundler for Next.js with monorepo support, enabling fast hot reloads and optimized builds",
+    relevance: "Configured with turbopack.root pointing to ../.., indicating this app is part of a larger monorepo for shared dependencies and development",
+    url: "https://turbo.build/pack",
+    categoryColor: "var(--gray-9)",
   },
 ];
 
-// ─── Research Stats ────────────────────────────────────────────────
+// ─── Key Metrics ───────────────────────────────────────────────────
 
 export const researchStats: Stat[] = [
   {
-    number: "7±2",
-    label: "Working memory item limit",
-    source: "Miller, Psychological Review 1956",
-    paperIndex: 0,
+    number: "3",
+    label: "Core task statuses (inbox, active, completed) managed via StatusTabs",
+    source: "app/app/page.tsx emptyMessages object",
   },
   {
-    number: "25–50%",
-    label: "Time underestimation bias",
-    source: "Kahneman & Tversky, 1979",
-    paperIndex: 1,
+    number: "4",
+    label: "AI priority factors (deadlineUrgency, userValue, dependencyImpact, projectWeight) with configurable weights",
+    source: "userPreferences.priorityWeights JSONB schema",
   },
   {
-    number: "40%",
-    label: "Overload reduction via energy matching",
-    source: "Baumeister & Tierney, 2011",
-    paperIndex: 6,
+    number: "7",
+    label: "Default tasks per page (chunkSize) for pagination in TaskList",
+    source: "userPreferences.chunkSize default value",
   },
   {
-    number: "34%",
-    label: "Completion increase via gamification",
-    source: "Zichermann & Cunningham, 2011",
-    paperIndex: 4,
+    number: "O(1)",
+    label: "Session validation complexity via Better Auth cookie checks",
+    source: "Better Auth documentation on session management",
+  },
+  {
+    number: "25%",
+    label: "Default buffer percentage for task scheduling in userPreferences",
+    source: "userPreferences.bufferPercentage default value",
   },
 ];
 
-// ─── Pipeline Agents ───────────────────────────────────────────────
+// ─── Pipeline Stages ───────────────────────────────────────────────
 
 export const pipelineAgents: PipelineAgent[] = [
   {
-    name: "Natural Language Parser",
-    description:
-      "Qwen Plus parses free-text input into structured task data — extracting title, due date, priority signals, project tags, and dependencies from natural language. Handles phrases like 'finish report by Friday for the Q3 project, depends on data review' in a single pass.",
-    researchBasis: "Sauro & Lewis (2012) — one-tap capture reduces friction by 3×",
-    paperIndices: [7],
+    name: "User Authentication",
+    description: "Users submit credentials via app/(auth)/signup/page.tsx or app/(auth)/login/page.tsx, which call signUp.email() or signIn.email() from lib/auth-client.ts. Better Auth validates inputs, hashes passwords, and stores data in the user and account tables, creating a session cookie for subsequent requests.",
+    researchBasis: "Better Auth library with Drizzle adapter for secure session management",
   },
   {
-    name: "Priority Scorer",
-    description:
-      "Computes dynamic priority using the formula P = f(urgency, value, dependencies, project weight). Urgency decays as deadlines approach, value reflects user-assigned importance, and dependency chains propagate priority upstream — ensuring blockers surface before the tasks they block.",
-    researchBasis: "Miller (1956) — keeping active tasks within 7±2 cognitive limit",
-    paperIndices: [0],
+    name: "Task Data Fetching",
+    description: "The server component app/app/page.tsx calls getTasksByStatus(userId, status, limit, offset) and getAllTaskCounts(userId) to retrieve tasks and counts from the tasks table. It uses Drizzle ORM queries filtered by userId and status, with pagination based on userPreferences.chunkSize.",
+    researchBasis: "Next.js App Router for server-side data fetching with direct database access",
   },
   {
-    name: "Energy Matcher",
-    description:
-      "Maps tasks to chronotype-aware time slots based on the user's energy profile. High-cognitive-load tasks (deep work, creative thinking) are assigned to biological peak windows; routine tasks (email, admin) fill low-energy troughs. The matching algorithm respects both energy curves and hard deadline constraints.",
-    researchBasis: "Roenneberg et al. (2003) — chronotype peak performance windows; Baumeister & Tierney (2011) — decision fatigue",
-    paperIndices: [2, 6],
+    name: "AI Priority Scoring",
+    description: "When tasks are created or updated, a server action calculates priorityScore using weights from userPreferences.priorityWeights (e.g., deadlineUrgency: 0.4, userValue: 0.3). This rule-based AI engine computes a weighted sum and updates the tasks.priorityScore field for intelligent sorting.",
+    researchBasis: "Custom scoring algorithm with configurable JSONB weights for personalization",
   },
   {
-    name: "Schedule Optimizer",
-    description:
-      "Generates daily schedules with automatic planning-fallacy buffers. Every time estimate receives a 25% buffer based on Kahneman's research. The optimizer balances task priority, energy matching, and deadline proximity while preserving break periods to prevent burnout.",
-    researchBasis: "Kahneman & Tversky (1979) — 25–50% underestimation bias",
-    paperIndices: [1],
+    name: "Task Management UI",
+    description: "The StatusTabs component handles navigation between inbox, active, and completed views using query parameters (?status=active). TaskList renders tasks with pagination, and users can edit tasks via forms validated by updateTaskSchema, triggering server actions to update the tasks table.",
+    researchBasis: "React components with Radix UI for interactive, accessible interfaces",
+  },
+  {
+    name: "User Preferences Sync",
+    description: "The SettingsModal component allows users to update chronotype, chunkSize, and priorityWeights in userPreferences. Changes are validated and persisted via a server action that updates the userPreferences table, affecting task display and AI calculations in real-time.",
+    researchBasis: "Drizzle ORM for type-safe updates to JSONB and relational data",
+  },
+  {
+    name: "Session Validation",
+    description: "Protected routes like app/app/page.tsx call auth.api.getSession({ headers }) to validate the session token from cookies. Better Auth checks the session table and returns the session object or null, ensuring only authenticated users access the main app.",
+    researchBasis: "Better Auth server API for secure session verification",
   },
 ];
 
-// ─── Story ─────────────────────────────────────────────────────────
+// ─── Narrative ─────────────────────────────────────────────────────
 
 export const story =
-  "You type a task in plain English — 'finish the Q3 report by Friday, high priority, depends on data review' — " +
-  "and hit Cmd+K. Qwen Plus's natural language parser extracts the title, deadline, priority, project, and dependencies " +
-  "in a single pass, eliminating multi-field forms entirely. " +
-  "Behind the scenes, a priority scorer computes a dynamic rank using urgency decay, value weight, and dependency chains, " +
-  "surfacing blockers before the tasks they block. " +
-  "The energy matcher then maps each task to your chronotype's peak performance window — deep work during your biological " +
-  "prime time, routine tasks during energy troughs — using Roenneberg's chronotype research. " +
-  "Finally, the schedule optimizer assembles your day with automatic 25% time buffers (Kahneman's planning fallacy correction), " +
-  "streak mechanics with freeze/recovery for sustained motivation (Zichermann), and progress bars that start at 30% " +
-  "to leverage the endowed progress effect (Deterding). " +
-  "The result: a todo system that works with your biology, not against it.";
+  "Users sign up via the signup page, where Better Auth creates a session and stores credentials in PostgreSQL. Once logged in, the app dashboard (app/app/page.tsx) fetches tasks using getTasksByStatus and user preferences via direct Drizzle queries. Tasks are prioritized with an AI scoring engine that calculates priorityScore based on deadlineUrgency and userValue weights from userPreferences. Users can manage tasks through StatusTabs and TaskList components, with updates validated by Zod schemas and persisted to the tasks table.";
+
+// ─── Deep-Dive Sections ────────────────────────────────────────────
+
+export const extraSections: { heading: string; content: string }[] = [
+  {
+    heading: "System Architecture",
+    content: "The app uses a Next.js App Router with server components like app/app/page.tsx for data fetching and client components for interactive auth pages. It follows a monorepo structure with Turbopack configuration pointing two levels up. Database access is via Drizzle ORM with a Proxy pattern in src/db/index.ts for lazy initialization, connecting to PostgreSQL on Neon. Key components include StatusTabs for navigation and TaskList for rendering, with server actions handling task mutations.",
+  },
+  {
+    heading: "Database Design",
+    content: "PostgreSQL stores data in tables: tasks (with fields like priorityScore, energyPreference, parentTaskId), userPreferences (with chronotype, chunkSize, priorityWeights JSONB), and Better Auth tables (user, session, account). Indexes ensure uniqueness on user.email and session.token. Foreign keys with onDelete: cascade maintain referential integrity. Drizzle Kit manages migrations from src/db/schema.ts.",
+  },
+  {
+    heading: "Security & Auth",
+    content: "Authentication is handled by Better Auth with email/password, storing hashed passwords in the account table. Sessions are cookie-based and validated server-side via auth.api.getSession(). Protected routes check sessions before rendering. Input validation uses Zod schemas for tasks, and queries filter by userId to prevent data leakage. Environment variables secure DATABASE_URL and auth URLs.",
+  },
+  {
+    heading: "Deployment & Infrastructure",
+    content: "The app is deployed on Vercel with Next.js, using Neon for serverless PostgreSQL. Turbopack enables fast builds in the monorepo environment. Environment variables configure database and auth settings. The Proxy database pattern optimizes connection usage, and Drizzle ORM ensures type-safe queries across deployments.",
+  },
+  {
+    heading: "AI Integration",
+    content: "AI features include a rule-based priority scoring engine that calculates tasks.priorityScore using weights from userPreferences.priorityWeights. Factors like deadlineUrgency and userValue are combined in a weighted sum. Energy-based matching uses tasks.energyPreference to align with user rhythms, and chronotype from userPreferences influences scheduling. This is implemented in server actions without LLMs, focusing on configurable, deterministic algorithms.",
+  },
+];

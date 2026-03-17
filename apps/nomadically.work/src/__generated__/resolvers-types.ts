@@ -80,6 +80,7 @@ export type AnalyzeCompanyResponse = {
 export type Application = {
   __typename?: 'Application';
   aiInterviewQuestions: Maybe<Scalars['String']['output']>;
+  aiTechStack: Maybe<Scalars['String']['output']>;
   companyKey: Maybe<Scalars['String']['output']>;
   companyName: Maybe<Scalars['String']['output']>;
   createdAt: Scalars['String']['output'];
@@ -2841,6 +2842,7 @@ export type AnalyzeCompanyResponseResolvers<ContextType = GraphQLContext, Parent
 
 export type ApplicationResolvers<ContextType = GraphQLContext, ParentType extends ResolversParentTypes['Application'] = ResolversParentTypes['Application']> = {
   aiInterviewQuestions?: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType>;
+  aiTechStack?: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType>;
   companyKey?: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType>;
   companyName?: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType>;
   createdAt?: Resolver<ResolversTypes['String'], ParentType, ContextType>;

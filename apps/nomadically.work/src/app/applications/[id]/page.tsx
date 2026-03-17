@@ -16,7 +16,12 @@ const ProjectDocsTab = dynamic(
   { loading: () => <Skeleton height="400px" /> },
 );
 
-const TAB_VALUES = ["description", "docs", "prep"] as const;
+const TechStackTab = dynamic(
+  () => import("@/components/app-detail/TechStackTab").then((m) => ({ default: m.TechStackTab })),
+  { loading: () => <Skeleton height="200px" /> },
+);
+
+const TAB_VALUES = ["description", "tech", "docs", "prep"] as const;
 type TabValue = (typeof TAB_VALUES)[number];
 
 function ApplicationDetailInner() {
@@ -105,7 +110,7 @@ function ApplicationDetailInner() {
 
   return (
     <Container size="3" p={{ initial: "4", md: "8" }}>
-      <ApplicationHeader app={app} isAdmin={isAdmin} />
+      <ApplicationHeader app={app} isAdmin={isAdmin} refetch={refetch} />
 
       <Tabs.Root value={activeTab} onValueChange={setActiveTab}>
         <Tabs.List style={{ borderBottom: "1px solid var(--gray-6)" }}>
@@ -115,20 +120,26 @@ function ApplicationDetailInner() {
               <span className="tab-shortcut-hint">1</span>
             </Flex>
           </Tabs.Trigger>
+          <Tabs.Trigger value="tech">
+            <Flex direction="column" align="center" gap="0">
+              <Text>Tech Stack</Text>
+              <span className="tab-shortcut-hint">2</span>
+            </Flex>
+          </Tabs.Trigger>
           {app.id === 13 && (
             <Tabs.Trigger value="docs">
               <Flex direction="column" align="center" gap="0">
                 <Flex align="center" gap="1">
                   <Text>Docs</Text>
                 </Flex>
-                <span className="tab-shortcut-hint">2</span>
+                <span className="tab-shortcut-hint">3</span>
               </Flex>
             </Tabs.Trigger>
           )}
           <Tabs.Trigger value="prep">
             <Flex direction="column" align="center" gap="0">
               <Text>Prep</Text>
-              <span className="tab-shortcut-hint">3</span>
+              <span className="tab-shortcut-hint">4</span>
             </Flex>
           </Tabs.Trigger>
         </Tabs.List>
@@ -140,6 +151,9 @@ function ApplicationDetailInner() {
               isAdmin={isAdmin}
               refetch={refetch}
             />
+          </Tabs.Content>
+          <Tabs.Content value="tech">
+            <TechStackTab app={app} isAdmin={isAdmin} />
           </Tabs.Content>
           {app.id === 13 && (
             <Tabs.Content value="docs">

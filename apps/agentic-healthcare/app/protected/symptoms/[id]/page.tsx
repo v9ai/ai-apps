@@ -1,9 +1,13 @@
-import { createClient } from "@/lib/supabase/server";
-import { redirect, notFound } from "next/navigation";
+import { withAuth } from "@/lib/auth-helpers";
+import { db } from "@/lib/db";
+import { symptoms } from "@/lib/db/schema";
+import { eq } from "drizzle-orm";
+import { notFound } from "next/navigation";
 import { Badge, Box, Flex, Heading, Separator, Skeleton, Text } from "@radix-ui/themes";
 import Link from "next/link";
 import { Suspense } from "react";
 import { deleteSymptom } from "../actions";
+import { redirect } from "next/navigation";
 import { DeleteConfirmButton } from "@/components/delete-confirm-button";
 
 const severityColor = {
@@ -13,19 +17,14 @@ const severityColor = {
 };
 
 async function SymptomDetail({ id }: { id: string }) {
-  const supabase = await createClient();
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
-  if (!user) redirect("/auth/login");
+  const { userId } = await withAuth();
 
-  const { data: symptom } = await supabase
-    .from("symptoms")
-    .select("*")
-    .eq("id", id)
-    .single();
+  const [symptom] = await db
+    .select()
+    .from(symptoms)
+    .where(eq(symptoms.id, id));
 
-  if (!symptom || symptom.user_id !== user.id) notFound();
+  if (!symptom || symptom.userId !== userId) notFound();
 
   return (
     <>
@@ -39,7 +38,7 @@ async function SymptomDetail({ id }: { id: string }) {
               </Badge>
             )}
             <Text size="2" color="gray">
-              {new Date(symptom.logged_at).toLocaleString()}
+              {new Date(symptom.loggedAt).toLocaleString()}
             </Text>
           </Flex>
         </Flex>
@@ -58,7 +57,7 @@ async function SymptomDetail({ id }: { id: string }) {
 
       <Flex direction="column" gap="1">
         <Text size="2" weight="medium" color="gray">Logged</Text>
-        <Text size="3">{new Date(symptom.logged_at).toLocaleString()}</Text>
+        <Text size="3">{new Date(symptom.loggedAt).toLocaleString()}</Text>
       </Flex>
     </>
   );

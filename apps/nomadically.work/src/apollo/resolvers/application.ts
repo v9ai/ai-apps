@@ -21,6 +21,7 @@ function mapApplication(
     companyKey: companyKey ?? null,
     jobDescription: app.job_description ?? jobDescription ?? null,
     aiInterviewQuestions: (app as any).ai_interview_questions ?? null,
+    aiTechStack: (app as any).ai_tech_stack ?? null,
     createdAt: app.created_at,
   };
 }

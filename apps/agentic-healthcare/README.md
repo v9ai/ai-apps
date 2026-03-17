@@ -20,7 +20,7 @@ flowchart LR
     Upload["PDF Upload"] --> Extractor["PDF Extractor<br/><i>Unstructured.io HiRes + OCR</i>"]
     Extractor --> Ratios["Ratio Calculator<br/><i>7 clinical ratios</i>"]
     Ratios --> Encoder["Vector Encoder<br/><i>Qwen text-embedding-v4</i>"]
-    Encoder --> DB[("Supabase<br/>pgvector HNSW<br/>1024-dim")]
+    Encoder --> DB[("Neon PostgreSQL<br/>pgvector HNSW<br/>1024-dim")]
     DB --> Similarity["Similarity Analyzer<br/><i>cosine distance</i>"]
     DB --> Velocity["Velocity Monitor<br/><i>per-day Δ</i>"]
     Similarity --> Analyst["Trajectory Analyst<br/><i>Qwen Plus · temp 0.3</i>"]
@@ -69,29 +69,32 @@ flowchart LR
 Three-layer eval pipeline with custom clinical scorers:
 
 - **Promptfoo** — Health Q&A + trajectory prompt evaluation
-- **Braintrust** — End-to-end trajectory evaluation across 15 test cases
+- **DeepEval + RAGAS** — RAG evaluation with factuality, relevance, faithfulness, and contextual precision metrics across 15 test cases
 - **Custom Scorers** — `RiskClassification` (metric tiers vs METRIC_REFERENCES), `TrajectoryDirection` (improving/stable/deteriorating vs velocity), `ClinicalFactuality` (21 citation pattern regex)
 
 ```bash
-pnpm eval            # Run all evals
-pnpm eval:qa         # Health Q&A evals only
-pnpm eval:trajectory # Trajectory evals only
-pnpm eval:braintrust # Braintrust end-to-end
+pnpm eval              # Run all evals
+pnpm eval:qa           # Health Q&A evals only
+pnpm eval:trajectory   # Trajectory evals only
+pnpm eval:deepeval     # DeepEval + RAGAS (Python)
+pnpm eval:view         # View results
 ```
 
 ## Tech Stack
 
 | Layer | Technology |
 |-------|-----------|
-| Framework | Next.js (App Router), React 19, TypeScript |
+| Framework | Next.js 15 (App Router), React 19, TypeScript |
 | UI | Radix UI + Radix Themes |
-| Database | Supabase (Postgres + pgvector + RLS) |
-| Auth | Supabase Auth (cookie-based SSR) |
+| Database | Neon PostgreSQL (serverless) + pgvector + Drizzle ORM |
+| Auth | Better Auth (email/password, cookie-based SSR) |
 | LLM | Qwen Plus (DashScope API) |
 | Embeddings | Qwen text-embedding-v4 (1024-dim) |
 | PDF Parsing | Unstructured.io (HiRes + OCR) |
-| Research | Semantic Scholar API |
-| Testing | Vitest + Promptfoo + Braintrust |
+| File Storage | Cloudflare R2 (S3-compatible, zero egress) |
+| RAG Chat | LlamaIndex + DeepSeek (FastAPI server) |
+| Research | Semantic Scholar API (+ OpenAlex, CrossRef, CORE fallbacks) |
+| Evals | Promptfoo + DeepEval + RAGAS (Python) |
 | Monorepo | pnpm + Turborepo |
 
 ## Getting Started
@@ -100,15 +103,29 @@ pnpm eval:braintrust # Braintrust end-to-end
 
 - Node.js 18+
 - pnpm 10+
-- A [Supabase](https://supabase.com) project with pgvector enabled
+- A [Neon](https://neon.tech) PostgreSQL project with pgvector enabled
 
 ### Environment Variables
 
 ```env
-NEXT_PUBLIC_SUPABASE_URL=
-NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY=
-DASHSCOPE_API_KEY=
-UNSTRUCTURED_API_KEY=
+# Neon PostgreSQL
+DATABASE_URL=postgresql://...
+
+# Better Auth
+BETTER_AUTH_SECRET=your-secret-at-least-32-chars
+BETTER_AUTH_URL=http://localhost:3003
+
+# Cloudflare R2
+R2_ACCOUNT_ID=your-account-id
+R2_ACCESS_KEY_ID=your-access-key
+R2_SECRET_ACCESS_KEY=your-secret-key
+R2_BUCKET_NAME=healthcare-blood-tests
+
+# Qwen / DashScope
+DASHSCOPE_API_KEY=your-key
+
+# Unstructured.io
+UNSTRUCTURED_API_KEY=your-key
 ```
 
 ### Development
@@ -122,7 +139,20 @@ pnpm eval         # Run evaluation suite
 
 ### Database Migrations
 
-The `supabase/migrations/` directory contains 16 migrations covering blood tests, pgvector embeddings, conditions, medications, symptoms, appointments, health trajectory, hybrid search, and trend detection.
+```bash
+pnpm drizzle-kit generate   # Generate migration files
+pnpm drizzle-kit migrate    # Apply migrations to Neon
+```
+
+### RAG Chat Server
+
+The AI Q&A feature requires the LlamaIndex chat server running locally:
+
+```bash
+cd langgraph
+cp .env.example .env   # fill DEEPSEEK_API_KEY
+uv run uvicorn chat_server:app --port 8001 --reload
+```
 
 ## Disclaimer
 

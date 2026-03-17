@@ -1,26 +1,29 @@
 "use server";
 
-import { createClient } from "@/lib/supabase/server";
+import { withAuth } from "@/lib/auth-helpers";
+import { db } from "@/lib/db";
 import { generateEmbedding, qwen } from "@/lib/embeddings";
-import { redirect } from "next/navigation";
+import { sql } from "drizzle-orm";
 
 export async function searchBloodTests(query: string) {
-  const supabase = await createClient();
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
-  if (!user) redirect("/auth/login");
+  const { userId } = await withAuth();
 
   const embedding = await generateEmbedding(query);
+  const embStr = `[${embedding.join(",")}]`;
 
-  const { data, error } = await supabase.rpc("match_blood_tests", {
-    query_embedding: JSON.stringify(embedding),
-    match_threshold: 0.3,
-    match_count: 5,
-  });
+  const data = await db.execute(sql`
+    SELECT e.id, e.test_id, e.content,
+           1 - (e.embedding <=> ${embStr}::vector) as similarity,
+           t.file_name, t.test_date
+    FROM blood_test_embeddings e
+    JOIN blood_tests t ON t.id = e.test_id
+    WHERE e.user_id = ${userId}
+      AND 1 - (e.embedding <=> ${embStr}::vector) > 0.3
+    ORDER BY e.embedding <=> ${embStr}::vector
+    LIMIT 5
+  `);
 
-  if (error) throw new Error(error.message);
-  return data as Array<{
+  return data.rows as Array<{
     id: string;
     test_id: string;
     content: string;
@@ -31,22 +34,22 @@ export async function searchBloodTests(query: string) {
 }
 
 export async function searchMarkers(query: string) {
-  const supabase = await createClient();
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
-  if (!user) redirect("/auth/login");
+  const { userId } = await withAuth();
 
   const embedding = await generateEmbedding(query);
+  const embStr = `[${embedding.join(",")}]`;
 
-  const { data, error } = await supabase.rpc("match_markers", {
-    query_embedding: JSON.stringify(embedding),
-    match_threshold: 0.3,
-    match_count: 10,
-  });
+  const data = await db.execute(sql`
+    SELECT id, marker_id, test_id, marker_name, content,
+           1 - (embedding <=> ${embStr}::vector) as similarity
+    FROM blood_marker_embeddings
+    WHERE user_id = ${userId}
+      AND 1 - (embedding <=> ${embStr}::vector) > 0.3
+    ORDER BY embedding <=> ${embStr}::vector
+    LIMIT 10
+  `);
 
-  if (error) throw new Error(error.message);
-  return data as Array<{
+  return data.rows as Array<{
     id: string;
     marker_id: string;
     test_id: string;
@@ -56,17 +59,18 @@ export async function searchMarkers(query: string) {
   }>;
 }
 
-async function searchConditions(embedding: number[]) {
-  const supabase = await createClient();
+async function searchConditions(embStr: string, userId: string) {
+  const data = await db.execute(sql`
+    SELECT id, condition_id, content,
+           1 - (embedding <=> ${embStr}::vector) as similarity
+    FROM condition_embeddings
+    WHERE user_id = ${userId}
+      AND 1 - (embedding <=> ${embStr}::vector) > 0.3
+    ORDER BY embedding <=> ${embStr}::vector
+    LIMIT 5
+  `);
 
-  const { data, error } = await supabase.rpc("match_conditions", {
-    query_embedding: JSON.stringify(embedding),
-    match_threshold: 0.3,
-    match_count: 5,
-  });
-
-  if (error) return [];
-  return (data ?? []) as Array<{
+  return data.rows as Array<{
     id: string;
     condition_id: string;
     content: string;
@@ -75,100 +79,76 @@ async function searchConditions(embedding: number[]) {
 }
 
 export async function askHealthQuestion(question: string) {
-  const supabase = await createClient();
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
-  if (!user) redirect("/auth/login");
+  const { userId } = await withAuth();
 
   const embedding = await generateEmbedding(question);
+  const embStr = `[${embedding.join(",")}]`;
 
-  // Search blood tests, markers, conditions, medications, symptoms, and appointments in parallel
   const [testResults, markerResults, conditionResults, medicationResults, symptomResults, appointmentResults] = await Promise.all([
-    supabase
-      .rpc("match_blood_tests", {
-        query_embedding: JSON.stringify(embedding),
-        match_threshold: 0.3,
-        match_count: 5,
-      })
-      .then((r) => (r.data ?? []) as Array<{
-        id: string;
-        test_id: string;
-        content: string;
-        similarity: number;
-        file_name: string;
-        test_date: string | null;
-      }>),
-    supabase
-      .rpc("hybrid_search_markers", {
-        query_text: question,
-        query_embedding: JSON.stringify(embedding),
-        match_count: 5,
-        fts_weight: 0.3,
-        vector_weight: 0.7,
-        match_threshold: 0.3,
-      })
-      .then((r) => (r.data ?? []) as Array<{
-        marker_id: string;
-        test_id: string;
-        marker_name: string;
-        content: string;
-        fts_rank: number;
-        vector_similarity: number;
-        combined_score: number;
-      }>),
-    searchConditions(embedding),
-    (async () => {
-      try {
-        const r = await supabase.rpc("match_medications", {
-          query_embedding: JSON.stringify(embedding),
-          match_threshold: 0.3,
-          match_count: 5,
-        });
-        return (r.data ?? []) as Array<{
-          id: string;
-          medication_id: string;
-          content: string;
-          similarity: number;
-        }>;
-      } catch {
-        return [] as Array<{ id: string; medication_id: string; content: string; similarity: number }>;
-      }
-    })(),
-    (async () => {
-      try {
-        const r = await supabase.rpc("match_symptoms", {
-          query_embedding: JSON.stringify(embedding),
-          match_threshold: 0.3,
-          match_count: 5,
-        });
-        return (r.data ?? []) as Array<{
-          id: string;
-          symptom_id: string;
-          content: string;
-          similarity: number;
-        }>;
-      } catch {
-        return [] as Array<{ id: string; symptom_id: string; content: string; similarity: number }>;
-      }
-    })(),
-    (async () => {
-      try {
-        const r = await supabase.rpc("match_appointments", {
-          query_embedding: JSON.stringify(embedding),
-          match_threshold: 0.3,
-          match_count: 5,
-        });
-        return (r.data ?? []) as Array<{
-          id: string;
-          appointment_id: string;
-          content: string;
-          similarity: number;
-        }>;
-      } catch {
-        return [] as Array<{ id: string; appointment_id: string; content: string; similarity: number }>;
-      }
-    })(),
+    db.execute(sql`
+      SELECT e.id, e.test_id, e.content,
+             1 - (e.embedding <=> ${embStr}::vector) as similarity,
+             t.file_name, t.test_date
+      FROM blood_test_embeddings e
+      JOIN blood_tests t ON t.id = e.test_id
+      WHERE e.user_id = ${userId}
+        AND 1 - (e.embedding <=> ${embStr}::vector) > 0.3
+      ORDER BY e.embedding <=> ${embStr}::vector
+      LIMIT 5
+    `).then((r) => r.rows as Array<{
+      id: string; test_id: string; content: string; similarity: number;
+      file_name: string; test_date: string | null;
+    }>),
+    // Hybrid search: combine FTS + vector
+    db.execute(sql`
+      SELECT marker_id, test_id, marker_name, content,
+             ts_rank(to_tsvector('english', content), plainto_tsquery('english', ${question})) as fts_rank,
+             1 - (embedding <=> ${embStr}::vector) as vector_similarity,
+             (0.3 * ts_rank(to_tsvector('english', content), plainto_tsquery('english', ${question}))
+              + 0.7 * (1 - (embedding <=> ${embStr}::vector))) as combined_score
+      FROM blood_marker_embeddings
+      WHERE user_id = ${userId}
+        AND 1 - (embedding <=> ${embStr}::vector) > 0.3
+      ORDER BY combined_score DESC
+      LIMIT 5
+    `).then((r) => r.rows as Array<{
+      marker_id: string; test_id: string; marker_name: string; content: string;
+      fts_rank: number; vector_similarity: number; combined_score: number;
+    }>),
+    searchConditions(embStr, userId),
+    db.execute(sql`
+      SELECT id, medication_id, content,
+             1 - (embedding <=> ${embStr}::vector) as similarity
+      FROM medication_embeddings
+      WHERE user_id = ${userId}
+        AND 1 - (embedding <=> ${embStr}::vector) > 0.3
+      ORDER BY embedding <=> ${embStr}::vector
+      LIMIT 5
+    `).then((r) => r.rows as Array<{
+      id: string; medication_id: string; content: string; similarity: number;
+    }>).catch(() => [] as Array<{ id: string; medication_id: string; content: string; similarity: number }>),
+    db.execute(sql`
+      SELECT id, symptom_id, content,
+             1 - (embedding <=> ${embStr}::vector) as similarity
+      FROM symptom_embeddings
+      WHERE user_id = ${userId}
+        AND 1 - (embedding <=> ${embStr}::vector) > 0.3
+      ORDER BY embedding <=> ${embStr}::vector
+      LIMIT 5
+    `).then((r) => r.rows as Array<{
+      id: string; symptom_id: string; content: string; similarity: number;
+    }>).catch(() => [] as Array<{ id: string; symptom_id: string; content: string; similarity: number }>),
+    db.execute(sql`
+      SELECT id, appointment_id, content,
+             1 - (embedding <=> ${embStr}::vector) as similarity
+      FROM appointment_embeddings
+      WHERE user_id = ${userId}
+        AND 1 - (embedding <=> ${embStr}::vector) > 0.3
+      ORDER BY embedding <=> ${embStr}::vector
+      LIMIT 5
+    `).then((r) => r.rows as Array<{
+      id: string; appointment_id: string; content: string; similarity: number;
+    }>).catch(() => [] as Array<{ id: string; appointment_id: string; content: string; similarity: number }>),
   ]);
 
   const hasResults = testResults.length > 0 || markerResults.length > 0 ||
@@ -194,7 +174,7 @@ export async function askHealthQuestion(question: string) {
     context += testResults
       .map(
         (r, i) =>
-          `--- Test ${i + 1} (similarity: ${r.similarity.toFixed(2)}) ---\n${r.content}`
+          `--- Test ${i + 1} (similarity: ${Number(r.similarity).toFixed(2)}) ---\n${r.content}`
       )
       .join("\n\n");
   }
@@ -204,7 +184,7 @@ export async function askHealthQuestion(question: string) {
     context += markerResults
       .map(
         (r, i) =>
-          `--- ${r.marker_name} (score: ${r.combined_score.toFixed(2)}) ---\n${r.content}`
+          `--- ${r.marker_name} (score: ${Number(r.combined_score).toFixed(2)}) ---\n${r.content}`
       )
       .join("\n\n");
   }
@@ -214,7 +194,7 @@ export async function askHealthQuestion(question: string) {
     context += conditionResults
       .map(
         (c, i) =>
-          `--- Condition ${i + 1} (similarity: ${c.similarity.toFixed(2)}) ---\n${c.content}`
+          `--- Condition ${i + 1} (similarity: ${Number(c.similarity).toFixed(2)}) ---\n${c.content}`
       )
       .join("\n\n");
   }
@@ -224,7 +204,7 @@ export async function askHealthQuestion(question: string) {
     context += medicationResults
       .map(
         (m, i) =>
-          `--- Medication ${i + 1} (similarity: ${m.similarity.toFixed(2)}) ---\n${m.content}`
+          `--- Medication ${i + 1} (similarity: ${Number(m.similarity).toFixed(2)}) ---\n${m.content}`
       )
       .join("\n\n");
   }
@@ -234,7 +214,7 @@ export async function askHealthQuestion(question: string) {
     context += symptomResults
       .map(
         (s, i) =>
-          `--- Symptom ${i + 1} (similarity: ${s.similarity.toFixed(2)}) ---\n${s.content}`
+          `--- Symptom ${i + 1} (similarity: ${Number(s.similarity).toFixed(2)}) ---\n${s.content}`
       )
       .join("\n\n");
   }
@@ -244,7 +224,7 @@ export async function askHealthQuestion(question: string) {
     context += appointmentResults
       .map(
         (a, i) =>
-          `--- Appointment ${i + 1} (similarity: ${a.similarity.toFixed(2)}) ---\n${a.content}`
+          `--- Appointment ${i + 1} (similarity: ${Number(a.similarity).toFixed(2)}) ---\n${a.content}`
       )
       .join("\n\n");
   }
@@ -269,51 +249,59 @@ export async function askHealthQuestion(question: string) {
     answer: completion.choices[0]?.message.content ?? "",
     sources: testResults.map((r) => ({
       testId: r.test_id,
-      similarity: r.similarity,
+      similarity: Number(r.similarity),
       fileName: r.file_name,
       testDate: r.test_date,
     })),
     conditions: conditionResults.map((c) => ({
       conditionId: c.condition_id,
       content: c.content,
-      similarity: c.similarity,
+      similarity: Number(c.similarity),
     })),
     medications: medicationResults.map((m) => ({
       medicationId: m.medication_id,
       content: m.content,
-      similarity: m.similarity,
+      similarity: Number(m.similarity),
     })),
     symptoms: symptomResults.map((s) => ({
       symptomId: s.symptom_id,
       content: s.content,
-      similarity: s.similarity,
+      similarity: Number(s.similarity),
     })),
     appointments: appointmentResults.map((a) => ({
       appointmentId: a.appointment_id,
       content: a.content,
-      similarity: a.similarity,
+      similarity: Number(a.similarity),
     })),
   };
 }
 
 export async function getMarkerTrend(query: string, markerName?: string) {
-  const supabase = await createClient();
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
-  if (!user) redirect("/auth/login");
+  const { userId } = await withAuth();
 
   const embedding = await generateEmbedding(query);
+  const embStr = `[${embedding.join(",")}]`;
 
-  const { data, error } = await supabase.rpc("find_similar_markers_over_time", {
-    query_embedding: JSON.stringify(embedding),
-    match_threshold: 0.3,
-    match_count: 50,
-    exact_marker_name: markerName ?? null,
-  });
+  const nameFilter = markerName
+    ? sql`AND e.marker_name = ${markerName}`
+    : sql``;
 
-  if (error) throw new Error(error.message);
-  return (data ?? []) as Array<{
+  const data = await db.execute(sql`
+    SELECT e.marker_id, e.test_id, e.marker_name, e.content,
+           1 - (e.embedding <=> ${embStr}::vector) as similarity,
+           m.value, m.unit, m.flag,
+           t.test_date, t.file_name
+    FROM blood_marker_embeddings e
+    JOIN blood_markers m ON m.id = e.marker_id
+    JOIN blood_tests t ON t.id = e.test_id
+    WHERE e.user_id = ${userId}
+      AND 1 - (e.embedding <=> ${embStr}::vector) > 0.3
+      ${nameFilter}
+    ORDER BY e.embedding <=> ${embStr}::vector
+    LIMIT 50
+  `);
+
+  return data.rows as Array<{
     marker_id: string;
     test_id: string;
     marker_name: string;

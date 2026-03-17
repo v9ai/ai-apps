@@ -1,25 +1,24 @@
-import { createClient } from "@/lib/supabase/server";
-import { redirect, notFound } from "next/navigation";
+import { withAuth } from "@/lib/auth-helpers";
+import { db } from "@/lib/db";
+import { appointments } from "@/lib/db/schema";
+import { eq } from "drizzle-orm";
+import { notFound } from "next/navigation";
 import { Box, Flex, Heading, Separator, Skeleton, Text } from "@radix-ui/themes";
 import Link from "next/link";
 import { Suspense } from "react";
 import { deleteAppointment } from "../actions";
+import { redirect } from "next/navigation";
 import { DeleteConfirmButton } from "@/components/delete-confirm-button";
 
 async function AppointmentDetail({ id }: { id: string }) {
-  const supabase = await createClient();
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
-  if (!user) redirect("/auth/login");
+  const { userId } = await withAuth();
 
-  const { data: appointment } = await supabase
-    .from("appointments")
-    .select("*")
-    .eq("id", id)
-    .single();
+  const [appointment] = await db
+    .select()
+    .from(appointments)
+    .where(eq(appointments.id, id));
 
-  if (!appointment || appointment.user_id !== user.id) notFound();
+  if (!appointment || appointment.userId !== userId) notFound();
 
   return (
     <>
@@ -28,9 +27,9 @@ async function AppointmentDetail({ id }: { id: string }) {
           <Heading size="6">{appointment.title}</Heading>
           <Text size="2" color="gray">
             {appointment.provider && `${appointment.provider} · `}
-            {appointment.appointment_date
-              ? new Date(appointment.appointment_date).toLocaleDateString()
-              : `Added ${new Date(appointment.created_at).toLocaleDateString()}`}
+            {appointment.appointmentDate
+              ? new Date(appointment.appointmentDate).toLocaleDateString()
+              : `Added ${new Date(appointment.createdAt).toLocaleDateString()}`}
           </Text>
         </Flex>
         <DeleteConfirmButton

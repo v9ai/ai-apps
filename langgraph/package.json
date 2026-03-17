@@ -1,0 +1,20 @@
+{
+  "name": "@ai-apps/langgraph",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "how-it-works": "tsx src/index.ts",
+    "how-it-works:dry": "tsx src/index.ts --dry-run"
+  },
+  "dependencies": {
+    "@langchain/core": "^0.3.0",
+    "@langchain/langgraph": "^0.2.0",
+    "dotenv": "^16.0.0"
+  },
+  "devDependencies": {
+    "@types/node": "^22.0.0",
+    "tsx": "^4.19.0",
+    "typescript": "5.9.3"
+  }
+}

@@ -1,59 +1,45 @@
 "use server";
 
-import { createClient } from "@/lib/supabase/server";
+import { withAuth } from "@/lib/auth-helpers";
+import { db } from "@/lib/db";
+import { bloodTests, bloodMarkers } from "@/lib/db/schema";
+import { eq } from "drizzle-orm";
 import { redirect } from "next/navigation";
 import { UnstructuredClient } from "unstructured-client";
 import { Strategy } from "unstructured-client/sdk/models/shared";
 import { parseMarkers } from "./parsers";
 import { embedBloodTest, embedBloodMarkers, embedHealthState } from "@/lib/embeddings";
-import { gqlMutate, gqlQuery } from "@/lib/graphql/execute";
-import {
-  DeleteBloodTestDocument,
-  GetBloodTestDocument,
-  InsertBloodTestDocument,
-  InsertBloodMarkersDocument,
-  UpdateBloodTestStatusDocument,
-} from "@/lib/graphql/__generated__/graphql";
+import { uploadFile, deleteFile } from "@/lib/storage";
 
 const unstructured = new UnstructuredClient({
   security: { apiKeyAuth: process.env.UNSTRUCTURED_API_KEY! },
 });
 
 export async function uploadBloodTest(formData: FormData) {
-  const supabase = await createClient();
-  const {
-    data: { session },
-  } = await supabase.auth.getSession();
-  if (!session) redirect("/auth/login");
+  const { userId } = await withAuth();
 
   const file = formData.get("file") as File;
   if (!file) throw new Error("No file provided");
 
   const testDate = (formData.get("test_date") as string) || null;
 
-  const filePath = `${session.user.id}/${Date.now()}_${file.name}`;
+  const filePath = `${userId}/${Date.now()}_${file.name}`;
 
-  const { error: uploadError } = await supabase.storage
-    .from("blood-tests")
-    .upload(filePath, file);
-  if (uploadError) throw new Error(uploadError.message);
+  const buffer = Buffer.from(await file.arrayBuffer());
+  await uploadFile(filePath, buffer, file.type);
 
-  const insertData = await gqlMutate(
-    InsertBloodTestDocument,
-    {
-      user_id: session.user.id,
-      file_name: file.name,
-      file_path: filePath,
+  const [test] = await db
+    .insert(bloodTests)
+    .values({
+      userId,
+      fileName: file.name,
+      filePath,
       status: "processing",
-      test_date: testDate,
-    },
-    session.access_token,
-  );
-  const test = insertData.insertIntoblood_testsCollection?.records[0];
-  if (!test) throw new Error("Failed to insert blood test record");
+      testDate,
+    })
+    .returning();
 
   try {
-    const buffer = Buffer.from(await file.arrayBuffer());
     const res = await unstructured.general.partition({
       partitionParameters: {
         files: { content: buffer, fileName: file.name },
@@ -66,66 +52,73 @@ export async function uploadBloodTest(formData: FormData) {
 
     let insertedMarkerIds: string[] = [];
     if (markers.length > 0) {
-      const markerData = await gqlMutate(
-        InsertBloodMarkersDocument,
-        { objects: markers.map((m) => ({ ...m, test_id: test.id })) },
-        session.access_token,
-      );
-      insertedMarkerIds =
-        markerData.insertIntoblood_markersCollection?.records.map((r) => r.id) ?? [];
+      const inserted = await db
+        .insert(bloodMarkers)
+        .values(
+          markers.map((m) => ({
+            testId: test.id,
+            name: m.name,
+            value: m.value,
+            unit: m.unit,
+            referenceRange: m.reference_range,
+            flag: m.flag,
+          }))
+        )
+        .returning({ id: bloodMarkers.id });
+      insertedMarkerIds = inserted.map((r) => r.id);
     }
 
-    await gqlMutate(
-      UpdateBloodTestStatusDocument,
-      { id: test.id, status: "done", error_message: null },
-      session.access_token,
-    );
+    await db
+      .update(bloodTests)
+      .set({ status: "done", errorMessage: null })
+      .where(eq(bloodTests.id, test.id));
 
-    // Auto-embed (non-blocking — upload succeeds even if embedding fails)
+    // Auto-embed (non-blocking)
     if (markers.length > 0) {
       try {
         const meta = { fileName: file.name, uploadedAt: new Date().toISOString() };
-        await embedBloodTest(supabase, test.id, session.user.id, markers, meta);
+        await embedBloodTest(test.id, userId, markers, meta);
 
         const markersWithIds = markers.map((m, i) => ({
           ...m,
           id: insertedMarkerIds[i],
         }));
-        await embedBloodMarkers(supabase, test.id, session.user.id, markersWithIds, {
+        await embedBloodMarkers(test.id, userId, markersWithIds, {
           fileName: file.name,
           testDate: testDate ?? new Date().toISOString(),
         });
 
-        await embedHealthState(supabase, test.id, session.user.id, markers, meta);
+        await embedHealthState(test.id, userId, markers, meta);
       } catch {
         // Embedding failure is non-blocking
       }
     }
   } catch (err: any) {
-    await gqlMutate(
-      UpdateBloodTestStatusDocument,
-      { id: test.id, status: "error", error_message: err.message },
-      session.access_token,
-    );
+    await db
+      .update(bloodTests)
+      .set({ status: "error", errorMessage: err.message })
+      .where(eq(bloodTests.id, test.id));
   }
 
   redirect(`/protected/blood-tests/${test.id}`);
 }
 
 export async function deleteBloodTest(id: string) {
-  const supabase = await createClient();
-  const {
-    data: { session },
-  } = await supabase.auth.getSession();
-  if (!session) redirect("/auth/login");
+  await withAuth();
 
-  const data = await gqlQuery(GetBloodTestDocument, { id }, session.access_token);
-  const filePath = data.blood_testsCollection?.edges[0]?.node?.file_path;
+  const [test] = await db
+    .select({ filePath: bloodTests.filePath })
+    .from(bloodTests)
+    .where(eq(bloodTests.id, id));
 
-  await gqlMutate(DeleteBloodTestDocument, { id }, session.access_token);
+  await db.delete(bloodTests).where(eq(bloodTests.id, id));
 
-  if (filePath) {
-    await supabase.storage.from("blood-tests").remove([filePath]);
+  if (test?.filePath) {
+    try {
+      await deleteFile(test.filePath);
+    } catch {
+      // Storage cleanup failure is non-blocking
+    }
   }
 
   redirect("/protected/blood-tests");

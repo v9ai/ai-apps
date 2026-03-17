@@ -1,11 +1,13 @@
-import { createClient } from "@/lib/supabase/server";
-import { redirect, notFound } from "next/navigation";
+import { withAuth } from "@/lib/auth-helpers";
+import { db } from "@/lib/db";
+import { conditions } from "@/lib/db/schema";
+import { eq } from "drizzle-orm";
+import { notFound } from "next/navigation";
 import { Box, Button, Card, Flex, Skeleton, Text } from "@radix-ui/themes";
 import Link from "next/link";
 import { Suspense } from "react";
-import { gqlQuery } from "@/lib/graphql/execute";
-import { GetConditionDocument } from "@/lib/graphql/__generated__/graphql";
 import { deleteCondition } from "../actions";
+import { redirect } from "next/navigation";
 import { EditNotesForm } from "../edit-notes-form";
 import { EditConditionHeader } from "../edit-condition-header";
 import { RelatedMarkers } from "../related-markers";
@@ -13,21 +15,21 @@ import { ConditionResearch } from "../condition-research";
 import { ChevronLeftIcon } from "@radix-ui/react-icons";
 
 async function ConditionDetail({ id }: { id: string }) {
-  const supabase = await createClient();
-  const { data: { session } } = await supabase.auth.getSession();
-  if (!session) redirect("/auth/login");
+  const { userId } = await withAuth();
 
-  const data = await gqlQuery(GetConditionDocument, { id }, session.access_token);
-  const condition = data.conditionsCollection?.edges[0]?.node;
+  const [condition] = await db
+    .select()
+    .from(conditions)
+    .where(eq(conditions.id, id));
 
-  if (!condition || condition.user_id !== session.user.id) notFound();
+  if (!condition || condition.userId !== userId) notFound();
 
   return (
     <>
       <EditConditionHeader
         conditionId={condition.id}
         initialName={condition.name}
-        createdAt={condition.created_at}
+        createdAt={condition.createdAt.toISOString()}
         deleteAction={async () => {
           "use server";
           await deleteCondition(id);

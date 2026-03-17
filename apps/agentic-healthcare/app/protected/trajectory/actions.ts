@@ -1,8 +1,9 @@
 "use server";
 
-import { createClient } from "@/lib/supabase/server";
+import { withAuth } from "@/lib/auth-helpers";
+import { db } from "@/lib/db";
 import { qwen, METRIC_REFERENCES } from "@/lib/embeddings";
-import { redirect } from "next/navigation";
+import { sql } from "drizzle-orm";
 import {
   classifyStateMetrics,
   computeTrajectoryVelocities,
@@ -14,18 +15,36 @@ import type {
 } from "./utils";
 
 export async function getHealthTrajectory(): Promise<TrajectoryState[]> {
-  const supabase = await createClient();
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
-  if (!user) redirect("/auth/login");
+  const { userId } = await withAuth();
 
-  const { data, error } = await supabase.rpc(
-    "get_health_trajectory_with_similarity"
-  );
+  const data = await db.execute(sql`
+    WITH latest AS (
+      SELECT embedding
+      FROM health_state_embeddings
+      WHERE user_id = ${userId}
+      ORDER BY created_at DESC
+      LIMIT 1
+    )
+    SELECT
+      e.id,
+      e.test_id,
+      e.content,
+      e.derived_metrics,
+      e.created_at,
+      t.file_name,
+      t.test_date,
+      CASE
+        WHEN (SELECT embedding FROM latest) IS NOT NULL
+        THEN 1 - (e.embedding <=> (SELECT embedding FROM latest))
+        ELSE NULL
+      END as similarity_to_latest
+    FROM health_state_embeddings e
+    JOIN blood_tests t ON t.id = e.test_id
+    WHERE e.user_id = ${userId}
+    ORDER BY COALESCE(t.test_date::timestamptz, e.created_at) ASC
+  `);
 
-  if (error) throw new Error(error.message);
-  return (data ?? []) as TrajectoryState[];
+  return data.rows as TrajectoryState[];
 }
 
 export async function getTrajectoryInsights() {
@@ -55,7 +74,7 @@ export async function getTrajectoryInsights() {
         .join(", ");
       const simStr =
         state.similarity_to_latest != null
-          ? ` | similarity to latest: ${(state.similarity_to_latest * 100).toFixed(1)}%`
+          ? ` | similarity to latest: ${(Number(state.similarity_to_latest) * 100).toFixed(1)}%`
           : "";
       return `--- State ${i + 1} (${date})${simStr} ---\nFile: ${state.file_name}\nDerived metrics: ${metricStr || "none"}\n${state.content}`;
     })

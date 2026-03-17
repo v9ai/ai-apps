@@ -1,24 +1,27 @@
 "use client";
 
-import { createClient } from "@/lib/supabase/client";
+import { authClient } from "@/lib/auth-client";
 import { Button, Card, Flex, Heading, Text, TextField } from "@radix-ui/themes";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
 
 export function UpdatePasswordForm() {
-  const [password, setPassword] = useState("");
+  const [currentPassword, setCurrentPassword] = useState("");
+  const [newPassword, setNewPassword] = useState("");
   const [error, setError] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(false);
   const router = useRouter();
 
   const handleUpdatePassword = async (e: React.FormEvent) => {
     e.preventDefault();
-    const supabase = createClient();
     setIsLoading(true);
     setError(null);
     try {
-      const { error } = await supabase.auth.updateUser({ password });
-      if (error) throw error;
+      const { error } = await authClient.changePassword({
+        currentPassword,
+        newPassword,
+      });
+      if (error) throw new Error(error.message);
       router.push("/protected");
     } catch (err: unknown) {
       setError(err instanceof Error ? err.message : "An error occurred");
@@ -31,21 +34,31 @@ export function UpdatePasswordForm() {
     <Card size="3" style={{ width: "100%", maxWidth: 400 }}>
       <Flex direction="column" gap="5">
         <Flex direction="column" gap="1">
-          <Heading size="6">New password</Heading>
-          <Text size="2" color="gray">Enter your new password below</Text>
+          <Heading size="6">Change password</Heading>
+          <Text size="2" color="gray">Enter your current and new password</Text>
         </Flex>
 
         <form onSubmit={handleUpdatePassword}>
           <Flex direction="column" gap="4">
             <Flex direction="column" gap="1">
-              <Text as="label" size="2" weight="medium" htmlFor="password">Password</Text>
+              <Text as="label" size="2" weight="medium" htmlFor="current-password">Current password</Text>
               <TextField.Root
-                id="password"
+                id="current-password"
                 type="password"
-                placeholder="New password"
                 required
-                value={password}
-                onChange={(e) => setPassword(e.target.value)}
+                value={currentPassword}
+                onChange={(e) => setCurrentPassword(e.target.value)}
+              />
+            </Flex>
+
+            <Flex direction="column" gap="1">
+              <Text as="label" size="2" weight="medium" htmlFor="new-password">New password</Text>
+              <TextField.Root
+                id="new-password"
+                type="password"
+                required
+                value={newPassword}
+                onChange={(e) => setNewPassword(e.target.value)}
               />
             </Flex>
 

@@ -1,24 +1,25 @@
-import { createClient } from "@/lib/supabase/server";
-import { redirect } from "next/navigation";
+import { withAuth } from "@/lib/auth-helpers";
+import { db } from "@/lib/db";
+import { conditions } from "@/lib/db/schema";
+import { eq, desc } from "drizzle-orm";
 import { Box, Card, Flex, Heading, Separator, Skeleton, Text } from "@radix-ui/themes";
 import { Suspense } from "react";
 import { AddConditionForm } from "./add-form";
 import { deleteCondition } from "./actions";
 import { DeleteConfirmButton } from "@/components/delete-confirm-button";
 import { Heart } from "lucide-react";
-import { gqlQuery } from "@/lib/graphql/execute";
-import { GetConditionsDocument } from "@/lib/graphql/__generated__/graphql";
 import Link from "next/link";
 
 async function ConditionsList() {
-  const supabase = await createClient();
-  const { data: { session } } = await supabase.auth.getSession();
-  if (!session) redirect("/auth/login");
+  const { userId } = await withAuth();
 
-  const data = await gqlQuery(GetConditionsDocument, {}, session.access_token);
-  const conditions = data.conditionsCollection?.edges.map((e) => e.node) ?? [];
+  const rows = await db
+    .select()
+    .from(conditions)
+    .where(eq(conditions.userId, userId))
+    .orderBy(desc(conditions.createdAt));
 
-  if (conditions.length === 0) {
+  if (rows.length === 0) {
     return (
       <Flex direction="column" align="center" gap="3" py="6">
         <Heart size={48} color="var(--gray-8)" />
@@ -33,14 +34,14 @@ async function ConditionsList() {
       <Separator size="4" />
       <Flex direction="column" gap="2">
         <Heading size="4">Your conditions</Heading>
-        {conditions.map((c) => (
+        {rows.map((c) => (
           <Card key={c.id} asChild className="card-hover">
             <Link href={`/protected/conditions/${c.id}`} style={{ textDecoration: "none" }}>
               <Flex justify="between" align="start">
                 <Flex direction="column" gap="1">
                   <Text size="2" weight="medium">{c.name}</Text>
                   {c.notes && <Text size="1" color="gray">{c.notes}</Text>}
-                  <Text size="1" color="gray">{new Date(c.created_at).toLocaleDateString()}</Text>
+                  <Text size="1" color="gray">{new Date(c.createdAt).toLocaleDateString()}</Text>
                 </Flex>
                 <DeleteConfirmButton
                   action={deleteCondition.bind(null, c.id)}

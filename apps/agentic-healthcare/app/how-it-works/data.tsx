@@ -1,245 +1,247 @@
-import type { Paper, PipelineAgent, Stat } from "@ai-apps/ui/how-it-works";
+interface Paper {
+  slug: string;
+  number: number;
+  title: string;
+  category: string;
+  wordCount: number;
+  readingTimeMin: number;
+  authors?: string;
+  year?: number;
+  venue?: string;
+  finding?: string;
+  relevance?: string;
+  url?: string;
+  categoryColor?: string;
+}
 
-// ─── Research Papers ───────────────────────────────────────────────
+interface PipelineAgent {
+  name: string;
+  icon?: React.ReactNode;
+  color?: string;
+  description: string;
+  researchBasis?: string;
+  paperIndices?: number[];
+}
+
+interface Stat {
+  number: string;
+  label: string;
+  source?: string;
+  paperIndex?: number;
+}
+
+// ─── Technical Foundations ──────────────────────────────────────────
 
 export const papers: Paper[] = [
   {
-    slug: "blyuss-2019",
+    slug: "nextjs-15-app-router",
     number: 1,
-    title:
-      "Serial Patterns of Ovarian Cancer Biomarkers in a Prediagnosis Longitudinal Dataset",
-    category: "Longitudinal Tracking",
+    title: "Next.js 15 App Router",
+    category: "Frontend",
     wordCount: 0,
-    readingTimeMin: 3,
-    authors: "Blyuss et al.",
-    year: 2019,
-    venue: "Clinical Cancer Research",
-    finding:
-      "Longitudinal CA-125 trajectory algorithms achieved 87.1% sensitivity for ovarian cancer detection at 98% specificity — dramatically outperforming single-threshold screening.",
-    relevance:
-      "Validates our core premise: tracking biomarker trajectories over time catches patterns that isolated snapshots miss entirely.",
-    url: "https://doi.org/10.1158/1078-0432.CCR-18-0208",
-    categoryColor: "var(--green-9)",
-  },
-  {
-    slug: "inker-2021",
-    number: 2,
-    title:
-      "New Creatinine- and Cystatin C-Based Equations to Estimate GFR",
-    category: "Renal Function",
-    wordCount: 0,
-    readingTimeMin: 3,
-    authors: "Inker et al.",
-    year: 2021,
-    venue: "New England Journal of Medicine",
-    finding:
-      "eGFR equations validated across 186,000 patients achieved R²=0.97 correlation with measured GFR. The ratio-based approach proved more reliable than individual marker thresholds.",
-    relevance:
-      "Our eGFR and BUN/Creatinine ratio calculations use these validated equations, providing clinical-grade renal function tracking.",
-    url: "https://doi.org/10.1681/ASN.2019010007",
+    readingTimeMin: 2,
+    authors: "Vercel",
+    year: 2024,
+    finding: "Server-side rendering by default with React Server Components, enabling efficient data fetching and reduced client-side JavaScript.",
+    relevance: "Used for all pages in app/protected/ (e.g., blood-tests, appointments) with async data fetching, Suspense boundaries for loading states, and server actions like uploadBloodTest.",
+    url: "https://nextjs.org/docs/app",
     categoryColor: "var(--blue-9)",
   },
   {
-    slug: "giannini-2011",
+    slug: "neon-postgresql",
+    number: 2,
+    title: "Neon PostgreSQL + Drizzle ORM",
+    category: "Database",
+    wordCount: 0,
+    readingTimeMin: 2,
+    authors: "Neon / Drizzle Team",
+    year: 2024,
+    finding: "Serverless PostgreSQL with branching, autoscaling, and pgvector support, paired with a type-safe ORM for schema management.",
+    relevance: "Stores core tables like blood_tests, blood_markers, and appointments via Drizzle schema, with pgvector HNSW indexes for embedding similarity search and Cloudflare R2 for file storage.",
+    url: "https://neon.tech/docs",
+    categoryColor: "var(--green-9)",
+  },
+  {
+    slug: "qwen-embeddings",
     number: 3,
-    title:
-      "The Triglyceride-to-HDL Cholesterol Ratio: Association With Insulin Resistance in Obese Youths",
-    category: "Metabolic Risk",
+    title: "Qwen Embeddings",
+    category: "AI/LLM",
     wordCount: 0,
     readingTimeMin: 2,
-    authors: "Giannini et al.",
-    year: 2011,
-    venue: "Diabetes Care",
-    finding:
-      "TG/HDL ratio identified insulin resistance with 6.02× odds ratio compared to fasting glucose alone. A TG/HDL >2.0 in youth strongly predicted metabolic syndrome.",
-    relevance:
-      "The TG/HDL ratio is our primary metabolic risk indicator. This paper established the thresholds we use for optimal (<2.0) and borderline (2.0-3.5) classification.",
-    url: "https://doi.org/10.2337/dc10-2234",
-    categoryColor: "var(--orange-9)",
-  },
-  {
-    slug: "luo-2021",
-    number: 4,
-    title:
-      "Triglyceride to HDL-C Ratio and Cardiovascular Disease Risk",
-    category: "Cardiovascular",
-    wordCount: 0,
-    readingTimeMin: 2,
-    authors: "Luo et al.",
-    year: 2021,
-    venue: "Frontiers in Cardiovascular Medicine",
-    finding:
-      "Elevated TG/HDL ratio was associated with 2.14× increased cardiovascular risk. The ratio outperformed individual lipid markers for predicting cardiac events.",
-    relevance:
-      "Confirms that ratio-based tracking catches cardiovascular risk that individual cholesterol numbers miss — exactly what our health vectors capture.",
-    url: "https://doi.org/10.3389/fcvm.2021.774781",
-    categoryColor: "var(--red-9)",
-  },
-  {
-    slug: "fest-2018",
-    number: 5,
-    title:
-      "Reference Values for Neutrophil-to-Lymphocyte Ratio and All-Cause Mortality",
-    category: "Inflammation",
-    wordCount: 0,
-    readingTimeMin: 2,
-    authors: "Fest et al.",
-    year: 2018,
-    venue: "European Journal of Epidemiology",
-    finding:
-      "NLR >3.0 predicted 1.64× all-cause mortality risk in the general population. Established population-based reference ranges (optimal: 1.0-3.0) used worldwide.",
-    relevance:
-      "Our NLR calculation uses these exact thresholds. Tracking NLR trajectory over time reveals emerging inflammatory states before symptoms appear.",
-    url: "https://doi.org/10.1007/s10654-018-0472-y",
-    categoryColor: "var(--purple-9)",
-  },
-  {
-    slug: "botros-2013",
-    number: 6,
-    title: "The De Ritis Ratio: The Test of Time",
-    category: "Liver Function",
-    wordCount: 0,
-    readingTimeMin: 2,
-    authors: "Botros & Sikaris",
-    year: 2013,
-    venue: "Clinical Biochemist Reviews",
-    finding:
-      "The AST/ALT (De Ritis) ratio remains the most reliable non-invasive discriminator of liver pathology: <1.0 suggests viral hepatitis, >2.0 suggests alcoholic liver disease, and trending changes predict fibrosis progression.",
-    relevance:
-      "Our De Ritis ratio tracking uses these validated cutoffs (optimal: 0.8-1.2). Trajectory changes in this ratio flag liver disease progression early.",
-    url: "https://www.ncbi.nlm.nih.gov/pmc/articles/PMC3866949/",
+    authors: "Alibaba Cloud",
+    year: 2024,
+    finding: "text-embedding-v4 model generates 1024-dimensional vectors for semantic search and retrieval-augmented generation (RAG).",
+    relevance: "Powers embedding generation via QwenClient for test summaries (formatTestForEmbedding) and individual markers (formatMarkerForEmbedding), stored in blood_test_embeddings and blood_marker_embeddings tables.",
+    url: "https://help.aliyun.com/zh/dashscope/developer-reference/text-embedding-api-details",
     categoryColor: "var(--amber-9)",
   },
   {
-    slug: "gonzalez-chavez-2024",
-    number: 7,
-    title:
-      "Triglyceride/HDL-Cholesterol Ratio as a Cardiometabolic Risk Marker",
-    category: "Metabolic Risk",
+    slug: "better-auth",
+    number: 4,
+    title: "Better Auth",
+    category: "Authentication",
     wordCount: 0,
     readingTimeMin: 2,
-    authors: "Gonzalez-Chavez et al.",
+    authors: "Better Auth",
     year: 2024,
-    venue: "Biomedicines",
-    finding:
-      "Validated TG/HDL cutoff values across diverse populations. Confirmed that the ratio performs consistently as a surrogate for small dense LDL and insulin resistance.",
-    relevance:
-      "Cross-validates our TG/HDL thresholds across populations, ensuring our risk classifications are robust regardless of patient demographics.",
-    url: "https://doi.org/10.3390/biomedicines12071493",
+    finding: "Framework-agnostic authentication library with Drizzle adapter, email/password support, and Next.js cookie management.",
+    relevance: "Handles all authentication via lib/auth.ts with Drizzle adapter, providing server-side session checks via withAuth() and client-side auth via authClient hooks.",
+    url: "https://www.better-auth.com",
     categoryColor: "var(--orange-9)",
   },
   {
-    slug: "millan-2009",
-    number: 8,
-    title:
-      "Lipoprotein Ratios: Physiological Significance and Clinical Usefulness",
-    category: "Cardiovascular",
+    slug: "radix-ui-themes",
+    number: 5,
+    title: "Radix UI Themes",
+    category: "Frontend",
     wordCount: 0,
-    readingTimeMin: 3,
-    authors: "Millan et al.",
-    year: 2009,
-    venue: "Vascular Health and Risk Management",
-    finding:
-      "Lipid ratios (TC/HDL, TG/HDL, LDL/HDL) consistently outperform individual lipid markers for cardiovascular risk prediction. The TC/HDL ratio <4.5 defines optimal atherogenic risk.",
-    relevance:
-      "The foundational paper for our ratio-based approach. Proves that computed ratios are more clinically informative than raw biomarker values alone.",
-    url: "https://doi.org/10.2147/vhrm.s6269",
-    categoryColor: "var(--red-9)",
+    readingTimeMin: 2,
+    authors: "Radix UI",
+    year: 2024,
+    finding: "Accessible component library with built-in dark theme support and primitive building blocks.",
+    relevance: "Provides UI components like Dialog, Dropdown, and Skeleton across pages (e.g., app/protected/blood-tests/page.tsx) and enables theme management via next-themes.",
+    url: "https://www.radix-ui.com/themes",
+    categoryColor: "var(--blue-9)",
+  },
+  {
+    slug: "unstructured-api",
+    number: 6,
+    title: "Unstructured API",
+    category: "AI/LLM",
+    wordCount: 0,
+    readingTimeMin: 2,
+    authors: "Unstructured",
+    year: 2024,
+    finding: "Document parsing service that extracts structured data from PDFs and other file formats.",
+    relevance: "Parses uploaded blood test PDFs in the uploadBloodTest server action, converting them into marker data for insertion into the blood_markers table.",
+    url: "https://unstructured.io/api",
+    categoryColor: "var(--amber-9)",
+  },
+  {
+    slug: "semantic-scholar-api",
+    number: 7,
+    title: "Semantic Scholar API",
+    category: "Search",
+    wordCount: 0,
+    readingTimeMin: 2,
+    authors: "Allen Institute for AI",
+    year: 2024,
+    finding: "Academic search engine providing access to millions of research papers with metadata and summaries.",
+    relevance: "Used in lib/semantic-scholar.ts for research paper discovery, querying based on abnormal markers with fallbacks to OpenAlex, CrossRef, and CORE APIs.",
+    url: "https://api.semanticscholar.org",
+    categoryColor: "var(--indigo-9)",
+  },
+  {
+    slug: "cloudflare-r2",
+    number: 8,
+    title: "Cloudflare R2",
+    category: "Storage",
+    wordCount: 0,
+    readingTimeMin: 2,
+    authors: "Cloudflare",
+    year: 2024,
+    finding: "S3-compatible object storage with zero egress fees, used for storing blood test PDF uploads.",
+    relevance: "Replaces Supabase Storage for file uploads via lib/storage.ts using @aws-sdk/client-s3, with files stored in the healthcare-blood-tests bucket.",
+    url: "https://developers.cloudflare.com/r2",
+    categoryColor: "var(--purple-9)",
   },
 ];
 
-// ─── Research Stats ────────────────────────────────────────────────
+// ─── Key Metrics ───────────────────────────────────────────────────
 
 export const researchStats: Stat[] = [
   {
-    number: "87%",
-    label: "Sensitivity via longitudinal tracking",
-    source: "Blyuss et al., Clin Cancer Res 2019",
-    paperIndex: 0,
+    number: "1024-dim",
+    label: "Embedding vector dimensionality for semantic search",
+    source: "Qwen text-embedding-v4 model configuration",
   },
   {
-    number: "R²=0.97",
-    label: "eGFR estimation across 186K patients",
-    source: "Inker et al., NEJM 2021",
-    paperIndex: 1,
+    number: "7",
+    label: "Predefined clinical ratios with published thresholds (e.g., TG/HDL, NLR)",
+    source: "Domain-specific implementation in trajectory tracking",
   },
   {
-    number: "6×",
-    label: "Insulin resistance detection via TG/HDL",
-    source: "Giannini et al., Diabetes Care 2011",
-    paperIndex: 2,
+    number: "4",
+    label: "API fallback layers for research paper retrieval (Semantic Scholar → OpenAlex → CrossRef → CORE)",
+    source: "Multi-source design in lib/semantic-scholar.ts",
   },
   {
-    number: "1.64×",
-    label: "Mortality prediction via NLR",
-    source: "Fest et al., Eur J Epidemiol 2018",
-    paperIndex: 4,
+    number: "3",
+    label: "Embedding granularity levels: test, marker, and condition",
+    source: "Multi-level embedding strategy in lib/embeddings.ts",
+  },
+  {
+    number: "O(log n)",
+    label: "Query performance for vector similarity searches with pgvector indexes",
+    source: "PostgreSQL vector indexing for cosine similarity",
   },
 ];
 
-// ─── Pipeline Agents ───────────────────────────────────────────────
+// ─── Pipeline Stages ───────────────────────────────────────────────
 
 export const pipelineAgents: PipelineAgent[] = [
   {
-    name: "PDF Extractor",
-    description:
-      "Parses uploaded blood test PDFs via Unstructured.io's HiRes strategy with OCR. A three-tier parser chain — HTML table regex, European FormKeysValues pairs, free-text pattern matching — handles any lab report format. Alias-based marker resolution (case-insensitive MARKER_ALIAS_MAP) normalizes names like 'Trigliceride' to 'Triglycerides', with deduplication and HTML stripping for embedded markup. Parsed markers flow directly into the Ratio Calculator.",
-    researchBasis: "Unstructured document parsing + OCR",
+    name: "PDF Upload and Parsing",
+    description: "Users upload blood test PDFs via the UploadForm component at /app/protected/blood-tests/upload-form, triggering the uploadBloodTest server action. This stores the file in Cloudflare R2, then calls the Unstructured API to parse the PDF into structured marker data. The parsed data is inserted into the blood_markers table via Drizzle ORM.",
+    researchBasis: "Unstructured Client for document parsing, Cloudflare R2 for file storage",
   },
   {
-    name: "Ratio Calculator",
-    description:
-      "Computes 7 clinical ratios via computeDerivedMetrics() — TG/HDL, NLR, De Ritis, BUN/Creatinine, TC/HDL, HDL/LDL, and TyG Index — each with peer-reviewed thresholds stored in METRIC_REFERENCES (label, unit, ranges, clinical description, citation). classifyMetricRisk() maps each value to optimal, borderline, elevated, or low with range-aware direction: NLR and De Ritis measure distance to optimal midpoint, HDL/LDL is higher-is-better, TC/HDL and TG/HDL are lower-is-better. These risk classifications persist in the health_state_embeddings JSONB column and are embedded into the health vector by the Vector Encoder.",
-    researchBasis: "McLaughlin et al., Fest et al., Botros & Sikaris",
-    paperIndices: [2, 4, 5],
+    name: "Embedding Generation and Storage",
+    description: "After parsing, the system generates embeddings using QwenClient: test-level embeddings via formatTestForEmbedding() and marker-level embeddings via formatMarkerForEmbedding(). These 1024-dimensional vectors are stored in the blood_test_embeddings and blood_marker_embeddings tables, enabling semantic search capabilities.",
+    researchBasis: "Qwen text-embedding-v4 model for vector generation, PostgreSQL for vector storage",
   },
   {
-    name: "Vector Encoder",
-    description:
-      "Generates three embedding types via Qwen text-embedding-v4 (1024 dimensions, DashScope API): test-level embeddings for full panel comparison, marker-level embeddings for individual biomarker search, and health-state embeddings that include derived metrics alongside raw values. The health-state vector captures the full clinical picture — ratios, risk tiers, and raw markers — in a single 1024-dim point that feeds into the Similarity Analyzer and powers the Q&A retrieval system.",
-    researchBasis: "Blyuss et al. (2019) — longitudinal encoding",
-    paperIndices: [0],
+    name: "AI Health Q&A Retrieval",
+    description: "When a user asks a question, Drizzle raw SQL queries retrieve relevant embeddings from Neon using pgvector cosine similarity. A hybrid search combining FTS + vector similarity is performed on blood_marker_embeddings to find top-k relevant markers. This context is combined with the question and fed to QwenClient.chat() using the qwen-plus model.",
+    researchBasis: "Retrieval-Augmented Generation (RAG) pattern with vector similarity search",
   },
   {
-    name: "Similarity Analyzer",
-    description:
-      "Uses pgvector's <=> cosine distance operator over an HNSW index for sub-linear approximate nearest neighbor search. The get_health_trajectory_with_similarity() Postgres RPC computes similarity-to-latest in SQL, returning a timeline where 0.99 means near-identical health state and 0.85 flags a significant shift. This timeline, alongside per-day velocities from the Velocity Monitor, feeds into the Trajectory Analyst.",
-    researchBasis: "Inker et al. (2021) — validated correlations",
-    paperIndices: [1],
+    name: "Research Paper Discovery",
+    description: "Abnormal markers flagged in blood tests trigger queries to the Semantic Scholar API via lib/semantic-scholar.ts. The query is built from marker names, values, and flags, using bulk search with filters for year and citation count. Results are ranked by relevance and displayed in the ResearchSection component with TLDR summaries and PDF links.",
+    researchBasis: "Semantic Scholar API for academic paper retrieval, multi-source fallback design",
   },
   {
-    name: "Velocity Monitor",
-    description:
-      "Calculates per-day rate-of-change for every biomarker and ratio. Direction interpretation is range-aware: NLR rising is bad (higher-is-worse), HDL/LDL rising is good (higher-is-better), and De Ritis moving away from the 0.8–1.2 optimal midpoint in either direction triggers a flag. The eval framework validates directional accuracy with a 0.001/day stability threshold.",
-    researchBasis: "Giannini et al. (2011), Fest et al. (2018)",
-    paperIndices: [2, 4],
+    name: "Trajectory Tracking and Alerts",
+    description: "The system calculates health trajectories by comparing 1024-dimensional embeddings across time using cosine similarity in the database. Velocity alerts are generated by computing per-day rate-of-change for each biomarker, and clinical ratios (e.g., TG/HDL, NLR) are evaluated against published thresholds to detect early trends.",
+    researchBasis: "Vector mathematics for pattern detection, clinical ratio integration",
   },
   {
-    name: "Trajectory Analyst",
-    description:
-      "Qwen Plus (temperature 0.3, max 1500 tokens) with a system prompt that embeds all 7 metric thresholds and paper citations. Classifies trajectory direction as improving, stable, or deteriorating by cross-referencing computed velocities with clinical thresholds. Every insight includes the specific ratio value, its risk tier, and the supporting citation — grounded in the same METRIC_REFERENCES the Ratio Calculator uses.",
-    researchBasis: "All 8 peer-reviewed papers",
-    paperIndices: [0, 1, 2, 3, 4, 5, 6, 7],
+    name: "Appointment Management",
+    description: "Users manage health appointments via the appointments module at /app/protected/appointments/page.tsx, using the AddAppointmentForm for creation and deleteAppointment server action for deletion. Data is stored in the appointments table via Drizzle ORM with fields like title, provider, and appointmentDate.",
+    researchBasis: "Drizzle ORM for type-safe queries, Next.js server actions for mutations",
   },
 ];
 
-// ─── Story ─────────────────────────────────────────────────────────
+// ─── Narrative ─────────────────────────────────────────────────────
 
 export const story =
-  "You upload a blood test PDF. Within seconds, Unstructured.io's HiRes strategy with OCR " +
-  "runs it through a three-tier cascade — HTML table extraction, European FormKeysValues pair parsing, " +
-  "then free-text pattern matching — normalizing every marker through alias resolution so that " +
-  "'Trigliceride' and 'Triglycerides' resolve to the same biomarker. " +
-  "From those raw values, 7 clinical ratios emerge: TG/HDL, NLR, De Ritis, BUN/Creatinine, TC/HDL, " +
-  "HDL/LDL, and TyG Index — each classified against peer-reviewed thresholds into optimal, borderline, " +
-  "elevated, or low risk tiers. But the real insight comes from what happens next. " +
-  "Your entire panel is encoded into a 1024-dimensional health vector via Qwen text-embedding-v4, " +
-  "capturing ratios, risk tiers, and raw markers in a single geometric point. " +
-  "pgvector's HNSW index computes cosine similarity against every previous upload, while per-day " +
-  "velocity tracking measures how fast each ratio is drifting — catching a quietly rising NLR or a " +
-  "deteriorating De Ritis ratio before either crosses a clinical threshold. " +
-  "Finally, a trajectory analyst powered by Qwen Plus at temperature 0.3 synthesizes everything: " +
-  "it cross-references your computed velocities against the same peer-reviewed thresholds, classifies " +
-  "your trajectory as improving, stable, or deteriorating, and grounds every insight in a specific " +
-  "ratio value, risk tier, and supporting citation. " +
-  "The result: your blood work stops being a snapshot and becomes a trajectory.";
+  "Users upload blood test PDFs via a protected upload form, triggering a server action that stores files in Cloudflare R2 and parses them with Unstructured API. The parsed markers are inserted into the blood_markers table via Drizzle ORM, and Qwen generates 1024-dimensional embeddings for each marker and test summary, stored in Neon pgvector tables. For AI Q&A, Drizzle raw SQL queries retrieve relevant embeddings, perform cosine similarity searches, and feed context to QwenClient.chat for responses. Research paper discovery queries Semantic Scholar API based on abnormal markers, displaying results with summaries and links.";
+
+// ─── Deep-Dive Sections ────────────────────────────────────────────
+
+export const extraSections: { heading: string; content: string }[] = [
+  {
+    heading: "System Architecture",
+    content: "The app uses a Next.js 15 App Router with server components by default for pages like /app/protected/blood-tests/, leveraging Suspense boundaries for loading states. Data flows through a monorepo structure with Turbopack bundling, integrating Neon PostgreSQL via Drizzle ORM for type-safe queries and Better Auth for authentication. AI components are built with a custom QwenClient for embeddings and chat, and external APIs like Semantic Scholar are used for research retrieval.",
+  },
+  {
+    heading: "Database Design",
+    content: "Core tables include blood_tests (id, user_id, status), blood_markers (test_id, name, value, flag), and appointments (user_id, title, appointment_date), defined in Drizzle schema at lib/db/schema.ts. Vector tables like blood_test_embeddings and blood_marker_embeddings store 1024-dimensional pgvector embeddings for semantic search with HNSW indexes. All queries are scoped to the authenticated user via withAuth(), and indexes are applied for performance on user_id and test_date columns.",
+  },
+  {
+    heading: "Security & Auth",
+    content: "Authentication is handled by Better Auth with email/password, using a Drizzle adapter in lib/auth.ts. Middleware checks session cookies for route protection, and each page/action calls withAuth() server-side, redirecting unauthenticated users to /auth/login. All queries are scoped to the authenticated userId, and server actions like uploadBloodTest include validation. Environment variables secure API keys for DashScope and other services.",
+  },
+  {
+    heading: "Deployment & Infrastructure",
+    content: "The app is deployed on Vercel with Neon PostgreSQL for the database, Better Auth for authentication, and Cloudflare R2 for file storage. The monorepo structure allows standalone deployments. Drizzle Kit manages schema migrations via `drizzle-kit push`, and HNSW vector indexes are created via raw SQL for optimal embedding search performance.",
+  },
+  {
+    heading: "AI Integration",
+    content: "AI capabilities are centered on Qwen models: text-embedding-v4 for generating 1024-dim vectors and qwen-plus for chat. Embeddings are created at test, marker, and condition levels via functions like formatTestForEmbedding(). RAG patterns enable health Q&A with cosine similarity searches on vector tables. Evaluation frameworks like promptfoo and Braintrust are used for LLM evaluation and experiment tracking.",
+  },
+  {
+    heading: "UI/UX Design",
+    content: "The interface uses Radix UI Themes for components like Dialog and Skeleton, with Geist font and lucide-react icons. Pages feature status badges (done, error) and flag indicators (low, normal, high) in tabular displays. Progressive enhancement is achieved through Suspense and skeleton loaders, and theme management is handled by next-themes for dark/light mode support.",
+  },
+];

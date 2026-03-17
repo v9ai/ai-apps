@@ -1,5 +1,7 @@
-import { createClient } from "@/lib/supabase/server";
-import { redirect } from "next/navigation";
+import { withAuth } from "@/lib/auth-helpers";
+import { db } from "@/lib/db";
+import { medications } from "@/lib/db/schema";
+import { eq, desc } from "drizzle-orm";
 import { Box, Card, Flex, Heading, Separator, Skeleton, Text } from "@radix-ui/themes";
 import { Suspense } from "react";
 import { AddMedicationForm } from "./add-form";
@@ -9,18 +11,15 @@ import { Pill } from "lucide-react";
 import Link from "next/link";
 
 async function MedicationsList() {
-  const supabase = await createClient();
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
-  if (!user) redirect("/auth/login");
+  const { userId } = await withAuth();
 
-  const { data: medications } = await supabase
-    .from("medications")
-    .select("*")
-    .order("created_at", { ascending: false });
+  const rows = await db
+    .select()
+    .from(medications)
+    .where(eq(medications.userId, userId))
+    .orderBy(desc(medications.createdAt));
 
-  if (!medications?.length) {
+  if (!rows.length) {
     return (
       <Flex direction="column" align="center" gap="3" py="6">
         <Pill size={48} color="var(--gray-8)" />
@@ -35,7 +34,7 @@ async function MedicationsList() {
       <Separator size="4" />
       <Flex direction="column" gap="2">
         <Heading size="4">Your medications</Heading>
-        {medications.map((m) => (
+        {rows.map((m) => (
           <Card key={m.id} asChild className="card-hover">
             <Link href={`/protected/medications/${m.id}`} style={{ textDecoration: "none" }}>
               <Flex justify="between" align="start">

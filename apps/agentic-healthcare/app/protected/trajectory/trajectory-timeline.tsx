@@ -1,5 +1,6 @@
-import { createClient } from "@/lib/supabase/server";
-import { redirect } from "next/navigation";
+import { withAuth } from "@/lib/auth-helpers";
+import { db } from "@/lib/db";
+import { sql } from "drizzle-orm";
 import { Badge, Card, Flex, Text, Tooltip } from "@radix-ui/themes";
 import { METRIC_REFERENCES, classifyMetricRisk } from "@/lib/embeddings";
 import type { TrajectoryState, MetricRisk } from "./utils";
@@ -31,17 +32,30 @@ const METRIC_LABELS: Record<string, string> = {
 };
 
 export async function TrajectoryTimeline() {
-  const supabase = await createClient();
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
-  if (!user) redirect("/auth/login");
+  const { userId } = await withAuth();
 
-  const { data } = await supabase.rpc(
-    "get_health_trajectory_with_similarity"
-  );
+  const data = await db.execute(sql`
+    WITH latest AS (
+      SELECT embedding
+      FROM health_state_embeddings
+      WHERE user_id = ${userId}
+      ORDER BY created_at DESC
+      LIMIT 1
+    )
+    SELECT
+      e.id, e.test_id, e.content, e.derived_metrics, e.created_at,
+      t.file_name, t.test_date,
+      CASE WHEN (SELECT embedding FROM latest) IS NOT NULL
+        THEN 1 - (e.embedding <=> (SELECT embedding FROM latest))
+        ELSE NULL
+      END as similarity_to_latest
+    FROM health_state_embeddings e
+    JOIN blood_tests t ON t.id = e.test_id
+    WHERE e.user_id = ${userId}
+    ORDER BY COALESCE(t.test_date::timestamptz, e.created_at) ASC
+  `);
 
-  const trajectory = (data ?? []) as TrajectoryState[];
+  const trajectory = data.rows as TrajectoryState[];
 
   if (trajectory.length === 0) {
     return (
@@ -82,11 +96,11 @@ export async function TrajectoryTimeline() {
                 </Flex>
                 {state.similarity_to_latest != null && !isLatest && (
                   <Badge
-                    color={similarityColor(state.similarity_to_latest)}
+                    color={similarityColor(Number(state.similarity_to_latest))}
                     variant="soft"
                     size="1"
                   >
-                    {(state.similarity_to_latest * 100).toFixed(1)}% similar
+                    {(Number(state.similarity_to_latest) * 100).toFixed(1)}% similar
                   </Badge>
                 )}
               </Flex>

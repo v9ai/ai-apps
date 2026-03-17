@@ -1,27 +1,36 @@
-import { createClient } from "@/lib/supabase/server";
-import { redirect } from "next/navigation";
+import { withAuth } from "@/lib/auth-helpers";
+import { db } from "@/lib/db";
+import {
+  bloodTests,
+  conditions,
+  medications,
+  symptoms,
+  appointments,
+  healthStateEmbeddings,
+} from "@/lib/db/schema";
+import { eq, count } from "drizzle-orm";
 import { Card, Grid, Text } from "@radix-ui/themes";
 import Link from "next/link";
 
 const sections = [
-  { table: "blood_tests", label: "Blood Tests", href: "/protected/blood-tests" },
-  { table: "conditions", label: "Conditions", href: "/protected/conditions" },
-  { table: "medications", label: "Medications", href: "/protected/medications" },
-  { table: "symptoms", label: "Symptoms", href: "/protected/symptoms" },
-  { table: "appointments", label: "Appointments", href: "/protected/appointments" },
-  { table: "health_state_embeddings", label: "Health States", href: "/protected/trajectory" },
+  { table: bloodTests, label: "Blood Tests", href: "/protected/blood-tests" },
+  { table: conditions, label: "Conditions", href: "/protected/conditions" },
+  { table: medications, label: "Medications", href: "/protected/medications" },
+  { table: symptoms, label: "Symptoms", href: "/protected/symptoms" },
+  { table: appointments, label: "Appointments", href: "/protected/appointments" },
+  { table: healthStateEmbeddings, label: "Health States", href: "/protected/trajectory" },
 ] as const;
 
 export async function QuickStats() {
-  const supabase = await createClient();
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
-  if (!user) redirect("/auth/login");
+  const { userId } = await withAuth();
 
   const counts = await Promise.all(
     sections.map((s) =>
-      supabase.from(s.table).select("id", { count: "exact", head: true })
+      db
+        .select({ count: count() })
+        .from(s.table)
+        .where(eq(s.table.userId, userId))
+        .then((r) => r[0]?.count ?? 0)
     )
   );
 
@@ -29,7 +38,7 @@ export async function QuickStats() {
     <Grid columns={{ initial: "2", md: "3" }} gap="4">
       {sections.map((section, i) => (
         <Link
-          key={section.table}
+          key={section.href}
           href={section.href}
           style={{ textDecoration: "none" }}
         >
@@ -40,7 +49,7 @@ export async function QuickStats() {
               weight="bold"
               align="center"
             >
-              {counts[i].count ?? 0}
+              {counts[i]}
             </Text>
             <Text as="div" size="2" color="gray" align="center">
               {section.label}

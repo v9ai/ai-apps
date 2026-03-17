@@ -1,25 +1,24 @@
-import { createClient } from "@/lib/supabase/server";
-import { redirect, notFound } from "next/navigation";
+import { withAuth } from "@/lib/auth-helpers";
+import { db } from "@/lib/db";
+import { medications } from "@/lib/db/schema";
+import { eq } from "drizzle-orm";
+import { notFound } from "next/navigation";
 import { Box, Flex, Heading, Separator, Skeleton, Text } from "@radix-ui/themes";
 import Link from "next/link";
 import { Suspense } from "react";
 import { deleteMedication } from "../actions";
+import { redirect } from "next/navigation";
 import { DeleteConfirmButton } from "@/components/delete-confirm-button";
 
 async function MedicationDetail({ id }: { id: string }) {
-  const supabase = await createClient();
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
-  if (!user) redirect("/auth/login");
+  const { userId } = await withAuth();
 
-  const { data: medication } = await supabase
-    .from("medications")
-    .select("*")
-    .eq("id", id)
-    .single();
+  const [medication] = await db
+    .select()
+    .from(medications)
+    .where(eq(medications.id, id));
 
-  if (!medication || medication.user_id !== user.id) notFound();
+  if (!medication || medication.userId !== userId) notFound();
 
   return (
     <>
@@ -27,7 +26,7 @@ async function MedicationDetail({ id }: { id: string }) {
         <Flex direction="column" gap="1">
           <Heading size="6">{medication.name}</Heading>
           <Text size="2" color="gray">
-            Added {new Date(medication.created_at).toLocaleDateString()}
+            Added {new Date(medication.createdAt).toLocaleDateString()}
           </Text>
         </Flex>
         <DeleteConfirmButton
@@ -56,13 +55,13 @@ async function MedicationDetail({ id }: { id: string }) {
             <Text size="3">{medication.frequency}</Text>
           </Flex>
         )}
-        {(medication.start_date || medication.end_date) && (
+        {(medication.startDate || medication.endDate) && (
           <Flex direction="column" gap="1">
             <Text size="2" weight="medium" color="gray">Duration</Text>
             <Text size="3">
-              {medication.start_date ? new Date(medication.start_date).toLocaleDateString() : "?"}
+              {medication.startDate ? new Date(medication.startDate).toLocaleDateString() : "?"}
               {" — "}
-              {medication.end_date ? new Date(medication.end_date).toLocaleDateString() : "ongoing"}
+              {medication.endDate ? new Date(medication.endDate).toLocaleDateString() : "ongoing"}
             </Text>
           </Flex>
         )}

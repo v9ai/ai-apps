@@ -1,41 +1,33 @@
 "use client";
 
-import { createClient } from "@/lib/supabase/client";
-import { Button, Card, Callout, Flex, Heading, Text, TextField } from "@radix-ui/themes";
+import { Button, Card, Flex, Heading, Text, TextField } from "@radix-ui/themes";
 import Link from "next/link";
 import { useState } from "react";
 
 export function ForgotPasswordForm() {
   const [email, setEmail] = useState("");
-  const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
 
   const handleForgotPassword = async (e: React.FormEvent) => {
     e.preventDefault();
-    const supabase = createClient();
     setIsLoading(true);
-    setError(null);
-    try {
-      const { error } = await supabase.auth.resetPasswordForEmail(email, {
-        redirectTo: `${window.location.origin}/auth/update-password`,
-      });
-      if (error) throw error;
-      setSuccess(true);
-    } catch (err: unknown) {
-      setError(err instanceof Error ? err.message : "An error occurred");
-    } finally {
-      setIsLoading(false);
-    }
+    // Better Auth doesn't have built-in password reset without the forgetPassword plugin.
+    // For now, show a success message directing the user to re-register.
+    setSuccess(true);
+    setIsLoading(false);
   };
 
   if (success) {
     return (
       <Card size="3" style={{ width: "100%", maxWidth: 400 }}>
         <Flex direction="column" gap="3">
-          <Heading size="6">Check your email</Heading>
+          <Heading size="6">Password reset</Heading>
           <Text size="2" color="gray">
-            If you registered with this email, you will receive a password reset link shortly.
+            Password reset is not yet available. Please create a new account or contact support.
+          </Text>
+          <Text size="2" asChild>
+            <Link href="/auth/login" style={{ color: "var(--accent-9)" }}>Back to sign in</Link>
           </Text>
         </Flex>
       </Card>
@@ -63,8 +55,6 @@ export function ForgotPasswordForm() {
                 onChange={(e) => setEmail(e.target.value)}
               />
             </Flex>
-
-            {error && <Text size="2" color="red">{error}</Text>}
 
             <Button type="submit" disabled={isLoading} style={{ width: "100%" }}>
               {isLoading ? "Sending..." : "Send reset link"}

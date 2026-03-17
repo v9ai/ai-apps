@@ -1,6 +1,9 @@
 "use server";
 
-import { createClient } from "@/lib/supabase/server";
+import { withAuth } from "@/lib/auth-helpers";
+import { db } from "@/lib/db";
+import { conditions, conditionResearches } from "@/lib/db/schema";
+import { eq, sql } from "drizzle-orm";
 import { qwen } from "@/lib/embeddings";
 import {
   searchAllApis,
@@ -9,26 +12,19 @@ import {
   type ResearchPaperRecord,
 } from "@/lib/semantic-scholar";
 import { revalidatePath } from "next/cache";
-import { redirect } from "next/navigation";
 
 export async function runConditionResearch(conditionId: string) {
-  const supabase = await createClient();
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
-  if (!user) redirect("/auth/login");
+  const { userId } = await withAuth();
 
-  // 1. Fetch condition
-  const { data: condition, error: condErr } = await supabase
-    .from("conditions")
-    .select("id, user_id, name, notes")
-    .eq("id", conditionId)
-    .single();
+  const [condition] = await db
+    .select()
+    .from(conditions)
+    .where(eq(conditions.id, conditionId));
 
-  if (condErr || !condition) throw new Error("Condition not found");
-  if (condition.user_id !== user.id) throw new Error("Unauthorized");
+  if (!condition) throw new Error("Condition not found");
+  if (condition.userId !== userId) throw new Error("Unauthorized");
 
-  // 2. Generate enhanced search query via Qwen
+  // Generate enhanced search query via Qwen
   let searchQuery: string;
   try {
     const queryResp = await qwen.chat({
@@ -53,7 +49,7 @@ export async function runConditionResearch(conditionId: string) {
     searchQuery = condition.name;
   }
 
-  // 3. Search all research APIs in parallel (Semantic Scholar, OpenAlex, Crossref, CORE)
+  // Search all research APIs in parallel
   const scholarKey = process.env.SEMANTIC_SCHOLAR_API_KEY;
   const coreKey = process.env.CORE_API_KEY;
   const mailto = process.env.OPENALEX_MAILTO;
@@ -69,7 +65,7 @@ export async function runConditionResearch(conditionId: string) {
     throw new Error(`No papers found across any API for: ${searchQuery}`);
   }
 
-  // 4. Get TLDRs for top 3 Semantic Scholar papers
+  // Get TLDRs for top 3 Semantic Scholar papers
   const scholarIds = paperRecords
     .filter((p) => p.source === "SemanticScholar" && p.paper_id)
     .slice(0, 3)
@@ -87,13 +83,12 @@ export async function runConditionResearch(conditionId: string) {
     }
   }
 
-  // Enrich records with TLDRs
   const enriched: ResearchPaperRecord[] = paperRecords.map((p) => ({
     ...p,
     tldr: tldrs.get(p.paper_id) ?? p.tldr,
   }));
 
-  // 5. Build paper context for synthesis
+  // Build paper context for synthesis
   const paperText = enriched
     .map((pr, i) => {
       const lines = [
@@ -110,7 +105,7 @@ export async function runConditionResearch(conditionId: string) {
     ? `\n\nPatient notes: ${condition.notes}`
     : "";
 
-  // 6. Generate unified synthesis via Qwen
+  // Generate synthesis via Qwen
   const synthResp = await qwen.chat({
     model: "qwen-plus",
     messages: [
@@ -138,22 +133,27 @@ export async function runConditionResearch(conditionId: string) {
   const synthesis =
     synthResp.choices[0]?.message.content ?? "Synthesis generation failed.";
 
-  // 7. Upsert to condition_researches
-  const { error: upsertErr } = await supabase
-    .from("condition_researches")
-    .upsert(
-      {
-        condition_id: condition.id,
-        user_id: user.id,
+  // Upsert to condition_researches
+  await db
+    .insert(conditionResearches)
+    .values({
+      conditionId: condition.id,
+      userId,
+      papers: enriched,
+      synthesis,
+      paperCount: String(enriched.length),
+      searchQuery,
+    })
+    .onConflictDoUpdate({
+      target: conditionResearches.conditionId,
+      set: {
         papers: enriched,
         synthesis,
-        paper_count: enriched.length,
-        search_query: searchQuery,
+        paperCount: String(enriched.length),
+        searchQuery,
+        updatedAt: sql`now()`,
       },
-      { onConflict: "condition_id" }
-    );
-
-  if (upsertErr) throw new Error(`Failed to save research: ${upsertErr.message}`);
+    });
 
   revalidatePath(`/protected/conditions/${conditionId}`);
 }

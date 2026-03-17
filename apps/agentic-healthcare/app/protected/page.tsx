@@ -1,5 +1,4 @@
-import { createClient } from "@/lib/supabase/server";
-import { redirect } from "next/navigation";
+import { withAuth } from "@/lib/auth-helpers";
 import { Box, Flex, Heading, Separator, Skeleton, Text } from "@radix-ui/themes";
 import { Suspense } from "react";
 import { TrajectoryPreview } from "./trajectory/trajectory-preview";
@@ -8,11 +7,7 @@ import { WhyTrajectory } from "./why-trajectory";
 import { QuickStats } from "./dashboard/quick-stats";
 
 export default async function ProtectedPage() {
-  const supabase = await createClient();
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
-  if (!user) redirect("/auth/login");
+  await withAuth();
 
   return (
     <Box py="8" style={{ maxWidth: 900, margin: "0 auto" }}>

@@ -1,5 +1,7 @@
-import { createClient } from "@/lib/supabase/server";
-import { redirect } from "next/navigation";
+import { withAuth } from "@/lib/auth-helpers";
+import { db } from "@/lib/db";
+import { appointments } from "@/lib/db/schema";
+import { eq, desc } from "drizzle-orm";
 import { Box, Card, Flex, Heading, Separator, Skeleton, Text } from "@radix-ui/themes";
 import { Suspense } from "react";
 import { AddAppointmentForm } from "./add-form";
@@ -9,18 +11,15 @@ import { Calendar } from "lucide-react";
 import Link from "next/link";
 
 async function AppointmentsList() {
-  const supabase = await createClient();
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
-  if (!user) redirect("/auth/login");
+  const { userId } = await withAuth();
 
-  const { data: appointments } = await supabase
-    .from("appointments")
-    .select("*")
-    .order("appointment_date", { ascending: false, nullsFirst: false });
+  const rows = await db
+    .select()
+    .from(appointments)
+    .where(eq(appointments.userId, userId))
+    .orderBy(desc(appointments.appointmentDate));
 
-  if (!appointments?.length) {
+  if (!rows.length) {
     return (
       <Flex direction="column" align="center" gap="3" py="6">
         <Calendar size={48} color="var(--gray-8)" />
@@ -35,16 +34,16 @@ async function AppointmentsList() {
       <Separator size="4" />
       <Flex direction="column" gap="2">
         <Heading size="4">Your appointments</Heading>
-        {appointments.map((a) => (
+        {rows.map((a) => (
           <Card key={a.id} asChild className="card-hover">
             <Link href={`/protected/appointments/${a.id}`} style={{ textDecoration: "none" }}>
               <Flex justify="between" align="start">
                 <Flex direction="column" gap="1">
                   <Text size="2" weight="medium">{a.title}</Text>
                   {a.provider && <Text size="1" color="gray">{a.provider}</Text>}
-                  {a.appointment_date && (
+                  {a.appointmentDate && (
                     <Text size="1" color="gray">
-                      {new Date(a.appointment_date).toLocaleDateString()}
+                      {new Date(a.appointmentDate).toLocaleDateString()}
                     </Text>
                   )}
                   {a.notes && (

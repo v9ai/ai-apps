@@ -1,16 +1,14 @@
 "use server";
 
-import { createClient } from "@/lib/supabase/server";
+import { withAuth } from "@/lib/auth-helpers";
+import { db } from "@/lib/db";
+import { medications } from "@/lib/db/schema";
+import { eq } from "drizzle-orm";
 import { revalidatePath } from "next/cache";
-import { redirect } from "next/navigation";
 import { embedMedication } from "@/lib/embeddings";
 
 export async function addMedication(formData: FormData) {
-  const supabase = await createClient();
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
-  if (!user) redirect("/auth/login");
+  const { userId } = await withAuth();
 
   const name = (formData.get("name") as string)?.trim();
   if (!name) return;
@@ -18,27 +16,24 @@ export async function addMedication(formData: FormData) {
   const dosage = (formData.get("dosage") as string)?.trim() || null;
   const frequency = (formData.get("frequency") as string)?.trim() || null;
   const notes = (formData.get("notes") as string)?.trim() || null;
-  const start_date = (formData.get("start_date") as string) || null;
-  const end_date = (formData.get("end_date") as string) || null;
+  const startDate = (formData.get("start_date") as string) || null;
+  const endDate = (formData.get("end_date") as string) || null;
 
-  const { data: medication, error } = await supabase
-    .from("medications")
-    .insert({
-      user_id: user.id,
+  const [medication] = await db
+    .insert(medications)
+    .values({
+      userId,
       name,
       dosage,
       frequency,
       notes,
-      start_date,
-      end_date,
+      startDate,
+      endDate,
     })
-    .select("id")
-    .single();
-
-  if (error) throw new Error(error.message);
+    .returning();
 
   try {
-    await embedMedication(supabase, medication.id, user.id, name, {
+    await embedMedication(medication.id, userId, name, {
       dosage,
       frequency,
       notes,
@@ -51,12 +46,7 @@ export async function addMedication(formData: FormData) {
 }
 
 export async function deleteMedication(id: string) {
-  const supabase = await createClient();
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
-  if (!user) redirect("/auth/login");
-
-  await supabase.from("medications").delete().eq("id", id);
+  await withAuth();
+  await db.delete(medications).where(eq(medications.id, id));
   revalidatePath("/protected/medications");
 }

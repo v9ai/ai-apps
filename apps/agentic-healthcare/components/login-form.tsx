@@ -1,6 +1,6 @@
 "use client";
 
-import { createClient } from "@/lib/supabase/client";
+import { authClient } from "@/lib/auth-client";
 import { Button, Card, Flex, Heading, Text, TextField } from "@radix-ui/themes";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
@@ -15,12 +15,11 @@ export function LoginForm() {
 
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
-    const supabase = createClient();
     setIsLoading(true);
     setError(null);
     try {
-      const { error } = await supabase.auth.signInWithPassword({ email, password });
-      if (error) throw error;
+      const { error } = await authClient.signIn.email({ email, password });
+      if (error) throw new Error(error.message);
       router.push("/protected");
     } catch (err: unknown) {
       setError(err instanceof Error ? err.message : "An error occurred");

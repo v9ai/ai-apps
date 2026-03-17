@@ -1,5 +1,7 @@
-import { createClient } from "@/lib/supabase/server";
-import { redirect } from "next/navigation";
+import { withAuth } from "@/lib/auth-helpers";
+import { db } from "@/lib/db";
+import { symptoms } from "@/lib/db/schema";
+import { eq, desc } from "drizzle-orm";
 import { Badge, Box, Card, Flex, Heading, Separator, Skeleton, Text } from "@radix-ui/themes";
 import { Suspense } from "react";
 import { AddSymptomForm } from "./add-form";
@@ -15,18 +17,15 @@ const severityColor = {
 };
 
 async function SymptomsList() {
-  const supabase = await createClient();
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
-  if (!user) redirect("/auth/login");
+  const { userId } = await withAuth();
 
-  const { data: symptoms } = await supabase
-    .from("symptoms")
-    .select("*")
-    .order("logged_at", { ascending: false });
+  const rows = await db
+    .select()
+    .from(symptoms)
+    .where(eq(symptoms.userId, userId))
+    .orderBy(desc(symptoms.loggedAt));
 
-  if (!symptoms?.length) {
+  if (!rows.length) {
     return (
       <Flex direction="column" align="center" gap="3" py="6">
         <Activity size={48} color="var(--gray-8)" />
@@ -41,7 +40,7 @@ async function SymptomsList() {
       <Separator size="4" />
       <Flex direction="column" gap="2">
         <Heading size="4">Symptom journal</Heading>
-        {symptoms.map((s) => (
+        {rows.map((s) => (
           <Card key={s.id} asChild className="card-hover">
             <Link href={`/protected/symptoms/${s.id}`} style={{ textDecoration: "none" }}>
               <Flex justify="between" align="start">
@@ -55,7 +54,7 @@ async function SymptomsList() {
                     )}
                   </Flex>
                   <Text size="1" color="gray">
-                    {new Date(s.logged_at).toLocaleString()}
+                    {new Date(s.loggedAt).toLocaleString()}
                   </Text>
                 </Flex>
                 <DeleteConfirmButton

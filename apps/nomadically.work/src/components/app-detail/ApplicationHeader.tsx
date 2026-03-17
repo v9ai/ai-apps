@@ -36,9 +36,10 @@ import { formatDate, companyInitials, COLUMNS } from "./constants";
 interface ApplicationHeaderProps {
   app: AppData;
   isAdmin: boolean;
+  refetch?: () => void;
 }
 
-export function ApplicationHeader({ app, isAdmin }: ApplicationHeaderProps) {
+export function ApplicationHeader({ app, isAdmin, refetch: refetchApp }: ApplicationHeaderProps) {
   const router = useRouter();
   const [deleteApplication] = useDeleteApplicationMutation();
   const [updateApplication] = useUpdateApplicationMutation();
@@ -135,6 +136,7 @@ export function ApplicationHeader({ app, isAdmin }: ApplicationHeaderProps) {
       const data = await res.json() as { error?: string; enriched?: { jobTitle?: string } };
       if (!res.ok) throw new Error(data.error ?? "Enhance failed");
       setEnhanceMessage(`Done — fetched description for ${data.enriched?.jobTitle ?? "job"}`);
+      refetchApp?.();
       router.refresh();
     } catch (e) {
       setEnhanceMessage(e instanceof Error ? e.message : "Enhance failed");

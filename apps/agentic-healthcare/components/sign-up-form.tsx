@@ -1,12 +1,13 @@
 "use client";
 
-import { createClient } from "@/lib/supabase/client";
+import { authClient } from "@/lib/auth-client";
 import { Button, Card, Flex, Heading, Text, TextField } from "@radix-ui/themes";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
 
 export function SignUpForm() {
+  const [name, setName] = useState("");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [repeatPassword, setRepeatPassword] = useState("");
@@ -20,17 +21,16 @@ export function SignUpForm() {
       setError("Passwords do not match");
       return;
     }
-    const supabase = createClient();
     setIsLoading(true);
     setError(null);
     try {
-      const { error } = await supabase.auth.signUp({
+      const { error } = await authClient.signUp.email({
+        name: name || email.split("@")[0],
         email,
         password,
-        options: { emailRedirectTo: `${window.location.origin}/protected` },
       });
-      if (error) throw error;
-      router.push("/auth/sign-up-success");
+      if (error) throw new Error(error.message);
+      router.push("/protected");
     } catch (err: unknown) {
       setError(err instanceof Error ? err.message : "An error occurred");
     } finally {
@@ -48,6 +48,17 @@ export function SignUpForm() {
 
         <form onSubmit={handleSignUp}>
           <Flex direction="column" gap="4">
+            <Flex direction="column" gap="1">
+              <Text as="label" size="2" weight="medium" htmlFor="name">Name</Text>
+              <TextField.Root
+                id="name"
+                type="text"
+                placeholder="Your name"
+                value={name}
+                onChange={(e) => setName(e.target.value)}
+              />
+            </Flex>
+
             <Flex direction="column" gap="1">
               <Text as="label" size="2" weight="medium" htmlFor="email">Email</Text>
               <TextField.Root

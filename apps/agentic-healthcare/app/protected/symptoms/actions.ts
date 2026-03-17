@@ -1,40 +1,35 @@
 "use server";
 
-import { createClient } from "@/lib/supabase/server";
+import { withAuth } from "@/lib/auth-helpers";
+import { db } from "@/lib/db";
+import { symptoms } from "@/lib/db/schema";
+import { eq } from "drizzle-orm";
 import { revalidatePath } from "next/cache";
-import { redirect } from "next/navigation";
 import { embedSymptom } from "@/lib/embeddings";
 
 export async function addSymptom(formData: FormData) {
-  const supabase = await createClient();
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
-  if (!user) redirect("/auth/login");
+  const { userId } = await withAuth();
 
   const description = (formData.get("description") as string)?.trim();
   if (!description) return;
 
   const severity = (formData.get("severity") as string) || null;
-  const logged_at = (formData.get("logged_at") as string) || new Date().toISOString();
+  const loggedAtStr = (formData.get("logged_at") as string) || new Date().toISOString();
 
-  const { data: symptom, error } = await supabase
-    .from("symptoms")
-    .insert({
-      user_id: user.id,
+  const [symptom] = await db
+    .insert(symptoms)
+    .values({
+      userId,
       description,
       severity,
-      logged_at,
+      loggedAt: new Date(loggedAtStr),
     })
-    .select("id, logged_at")
-    .single();
-
-  if (error) throw new Error(error.message);
+    .returning();
 
   try {
-    await embedSymptom(supabase, symptom.id, user.id, description, {
+    await embedSymptom(symptom.id, userId, description, {
       severity,
-      loggedAt: new Date(symptom.logged_at).toLocaleDateString(),
+      loggedAt: new Date(symptom.loggedAt).toLocaleDateString(),
     });
   } catch {
     // Embedding failure is non-blocking
@@ -44,12 +39,7 @@ export async function addSymptom(formData: FormData) {
 }
 
 export async function deleteSymptom(id: string) {
-  const supabase = await createClient();
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
-  if (!user) redirect("/auth/login");
-
-  await supabase.from("symptoms").delete().eq("id", id);
+  await withAuth();
+  await db.delete(symptoms).where(eq(symptoms.id, id));
   revalidatePath("/protected/symptoms");
 }

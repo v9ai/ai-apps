@@ -4,7 +4,7 @@
   "scripts": {
     "build": "turbo run build",
     "dev": "turbo run dev",
-    "dev:h": "turbo run dev --filter=agentic-healthcare",
+    "dev:h": "turbo run dev --filter=agentic-healthcare & cd apps/agentic-healthcare/langgraph && uv run uvicorn chat_server:app --port 8001 --reload",
     "dev:l": "turbo run dev --filter=law-adversarial",
     "dev:n": "turbo run dev --filter=nomadically.work",
     "dev:r": "turbo run dev --filter=research-thera & cd apps/research-thera/langgraph && uv run langgraph dev",

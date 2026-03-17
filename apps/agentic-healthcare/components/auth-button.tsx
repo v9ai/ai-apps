@@ -1,4 +1,5 @@
-import { createClient } from "@/lib/supabase/server";
+import { auth } from "@/lib/auth";
+import { headers } from "next/headers";
 import { Avatar, Box, Button, Flex, Text } from "@radix-ui/themes";
 import Link from "next/link";
 import { LogoutButton } from "./logout-button";
@@ -9,13 +10,11 @@ function truncateEmail(email: string, max = 20): string {
 }
 
 export async function AuthButton() {
-  const supabase = await createClient();
-  const { data } = await supabase.auth.getClaims();
-  const user = data?.claims;
+  const session = await auth.api.getSession({ headers: await headers() });
 
-  if (user) {
-    const email = (user.email as string) ?? "";
-    const initial = email.charAt(0).toUpperCase();
+  if (session) {
+    const email = session.user.email ?? "";
+    const initial = (session.user.name ?? email).charAt(0).toUpperCase();
 
     return (
       <Flex align="center" gap="3">

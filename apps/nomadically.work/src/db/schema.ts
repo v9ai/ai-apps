@@ -499,6 +499,8 @@ export const applications = pgTable("applications", {
   company_name: text("company_name"), // Denormalized company name for display
   job_description: text("job_description"), // User-supplied job description override
   ai_interview_questions: text("ai_interview_questions"), // AI-generated interview prep (markdown)
+  tech_dismissed_tags: text("tech_dismissed_tags"), // JSON array of dismissed tech tags, e.g. ["webpack","jest"]
+  ai_tech_stack: text("ai_tech_stack"), // JSON array of LLM-extracted techs, e.g. [{"tag":"react","label":"React","category":"Frontend Frameworks","relevance":"primary"}]
   created_at: text("created_at")
     .notNull()
     .default(sql`now()::text`),
