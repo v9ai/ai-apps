@@ -1,31 +1,21 @@
 "use client";
 
-import { useState, useEffect, useCallback, Suspense } from "react";
+import { Suspense, useCallback } from "react";
 import { Container, Heading, Button, Flex, Text, Box, Card, Skeleton, Tabs } from "@radix-ui/themes";
-import { useParams, useRouter, useSearchParams } from "next/navigation";
+import { useParams, useRouter } from "next/navigation";
 import { useGetApplicationQuery } from "@/__generated__/hooks";
 import Link from "next/link";
 import { useAuth } from "@/lib/auth-hooks";
 import { ADMIN_EMAIL } from "@/lib/constants";
 import { ApplicationHeader } from "@/components/app-detail/ApplicationHeader";
-import { JobDescriptionTab } from "@/components/app-detail/JobDescriptionTab";
-import dynamic from "next/dynamic";
+import { InterviewPrepTab } from "@/components/app-detail/InterviewPrepTab";
 
-const ProjectDocsTab = dynamic(
-  () => import("@/components/app-detail/ProjectDocsTab").then((m) => ({ default: m.ProjectDocsTab })),
-  { loading: () => <Skeleton height="400px" /> },
-);
-
-const TAB_VALUES = ["description", "docs", "prep"] as const;
-type TabValue = (typeof TAB_VALUES)[number];
-
-function ApplicationDetailInner() {
+function PrepPageInner() {
   const params = useParams();
   const router = useRouter();
-  const searchParams = useSearchParams();
   const id = Number(params.id);
 
-  const { data, loading, error, refetch } = useGetApplicationQuery({
+  const { data, loading, error } = useGetApplicationQuery({
     variables: { id },
     skip: isNaN(id),
   });
@@ -34,35 +24,14 @@ function ApplicationDetailInner() {
   const isAdmin = user?.email === ADMIN_EMAIL;
   const app = data?.application;
 
-  // Tab state persisted to URL
-  const rawTab = searchParams.get("tab") ?? "description";
-  const activeTab: TabValue = TAB_VALUES.includes(rawTab as TabValue) ? (rawTab as TabValue) : "description";
-  const setActiveTab = useCallback(
+  const handleTabChange = useCallback(
     (tab: string) => {
-      if (tab === "prep") {
-        router.push(`/applications/${id}/prep`);
-        return;
+      if (tab !== "prep") {
+        router.push(`/applications/${id}?tab=${tab}`);
       }
-      const url = new URL(window.location.href);
-      url.searchParams.set("tab", tab);
-      router.replace(url.pathname + url.search, { scroll: false });
     },
     [router, id],
   );
-
-  // Keyboard shortcuts 1-2 to switch tabs
-  useEffect(() => {
-    const handler = (e: KeyboardEvent) => {
-      const tag = (e.target as HTMLElement)?.tagName;
-      if (tag === "INPUT" || tag === "TEXTAREA" || tag === "SELECT") return;
-      const idx = Number(e.key) - 1;
-      if (idx >= 0 && idx < TAB_VALUES.length) {
-        setActiveTab(TAB_VALUES[idx]);
-      }
-    };
-    window.addEventListener("keydown", handler);
-    return () => window.removeEventListener("keydown", handler);
-  }, [setActiveTab]);
 
   if (loading) {
     return (
@@ -80,7 +49,6 @@ function ApplicationDetailInner() {
           <Flex direction="column" align="center" gap="4" p="6">
             <Heading size="5">Error Loading Application</Heading>
             <Text color="gray">{error.message}</Text>
-            <Button onClick={() => refetch()}>Retry</Button>
           </Flex>
         </Card>
       </Container>
@@ -107,7 +75,7 @@ function ApplicationDetailInner() {
     <Container size="3" p={{ initial: "4", md: "8" }}>
       <ApplicationHeader app={app} isAdmin={isAdmin} />
 
-      <Tabs.Root value={activeTab} onValueChange={setActiveTab}>
+      <Tabs.Root value="prep" onValueChange={handleTabChange}>
         <Tabs.List style={{ borderBottom: "1px solid var(--gray-6)" }}>
           <Tabs.Trigger value="description">
             <Flex direction="column" align="center" gap="0">
@@ -118,9 +86,7 @@ function ApplicationDetailInner() {
           {app.id === 13 && (
             <Tabs.Trigger value="docs">
               <Flex direction="column" align="center" gap="0">
-                <Flex align="center" gap="1">
-                  <Text>Docs</Text>
-                </Flex>
+                <Text>Docs</Text>
                 <span className="tab-shortcut-hint">2</span>
               </Flex>
             </Tabs.Trigger>
@@ -134,25 +100,16 @@ function ApplicationDetailInner() {
         </Tabs.List>
 
         <Box pt="4">
-          <Tabs.Content value="description">
-            <JobDescriptionTab
-              app={app}
-              isAdmin={isAdmin}
-              refetch={refetch}
-            />
+          <Tabs.Content value="prep">
+            <InterviewPrepTab app={app} isAdmin={isAdmin} />
           </Tabs.Content>
-          {app.id === 13 && (
-            <Tabs.Content value="docs">
-              <ProjectDocsTab app={app} isAdmin={isAdmin} />
-            </Tabs.Content>
-          )}
         </Box>
       </Tabs.Root>
     </Container>
   );
 }
 
-export default function ApplicationDetailPage() {
+export default function PrepPage() {
   return (
     <Suspense fallback={
       <Container size="3" p="8">
@@ -160,7 +117,7 @@ export default function ApplicationDetailPage() {
         <Skeleton height="400px" />
       </Container>
     }>
-      <ApplicationDetailInner />
+      <PrepPageInner />
     </Suspense>
   );
 }

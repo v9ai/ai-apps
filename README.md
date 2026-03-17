@@ -1,40 +1,143 @@
-# Turborepo kitchen sink starter
+# ai-apps
 
-This Turborepo starter is maintained by the Turborepo core team.
+A pnpm + Turborepo monorepo containing AI-powered web apps, shared Rust crates, and TypeScript packages.
 
-This example also shows how to use [Workspace Configurations](https://turborepo.dev/docs/core-concepts/monorepos/configuring-workspaces).
+## Monorepo Structure
 
-## Using this example
+```mermaid
+graph TD
+    subgraph apps["Apps"]
+        NOM["nomadically.work\nRemote EU job board"]
+        HC["agentic-healthcare\nBlood test intelligence"]
+        LAW["law-adversarial\nLegal brief stress-tester"]
+        RT["research-thera\nTherapeutic research"]
+        MISC["knowledge · real-estate · todo · blog"]
+    end
 
-Run the following command:
+    subgraph ts["TypeScript Packages"]
+        DS_TS["@ai-apps/deepseek"]
+        QW_TS["@ai-apps/qwen"]
+        ROUTER["llm-router"]
+        SHARED["ui · og · logger · configs"]
+    end
 
-```sh
-npx create-turbo@latest -e kitchen-sink
+    subgraph rust["Rust Crates"]
+        SDD["sdd\n8-phase LLM pipeline"]
+        GEN["genesis\nself-improving codegen"]
+        RES["research\nSemantic Scholar + agents"]
+        DS_RS["deepseek\nreqwest · wasm · agent · cache"]
+        QW_RS["qwen · tts"]
+        EVALS["evals"]
+    end
+
+    subgraph infra["Infrastructure"]
+        VERCEL["Vercel"]
+        CF["Cloudflare Workers\nTS · Rust/WASM · Python"]
+        NEON["Neon PostgreSQL"]
+        SUP["Supabase"]
+    end
+
+    subgraph ai["AI Providers"]
+        CLAUDE["Anthropic Claude"]
+        DS_API["DeepSeek"]
+        QW_API["DashScope / Qwen"]
+        OR["OpenRouter"]
+    end
+
+    NOM --> DS_TS & QW_TS & ROUTER & SHARED
+    HC --> QW_TS & SHARED
+    LAW --> DS_TS & QW_TS
+    RT --> SHARED
+
+    GEN --> SDD
+    SDD --> DS_RS
+    RES --> DS_RS & QW_RS
+
+    DS_TS & DS_RS --> DS_API
+    QW_TS & QW_RS --> QW_API
+
+    NOM --> VERCEL & CF & NEON & CLAUDE & DS_API & OR
+    HC --> SUP & QW_API
+    LAW --> SUP & DS_API & QW_API
+    RT --> NEON
 ```
 
-## What's inside?
+## SDD Pipeline
 
-This Turborepo includes the following packages and apps:
+The [`crates/sdd`](crates/sdd) crate powers spec-driven development across the whole repo — every change flows through an 8-phase LLM orchestrator:
 
-### Apps and Packages
+```mermaid
+flowchart LR
+    E([explore]) --> P([propose])
+    P --> S([spec])
+    P --> D([design])
+    S & D --> T([tasks])
+    T --> A([apply])
+    A --> V{verify}
+    V -->|pass| AR([archive])
+    V -->|fail + context| A
 
-- `api`: an [Express](https://expressjs.com/) server
-- `storefront`: a [Next.js](https://nextjs.org/) app
-- `admin`: a [Vite](https://vitejs.dev/) single page app
-- `blog`: a [Remix](https://remix.run/) blog
-- `@repo/eslint-config`: ESLint configurations used throughout the monorepo
-- `@repo/jest-presets`: Jest configurations
-- `@repo/logger`: isomorphic logger (a small wrapper around console.log)
-- `@repo/ui`: a dummy React UI library (which contains `<CounterButton>` and `<Link>` components)
-- `@repo/typescript-config`: tsconfig.json's used throughout the monorepo
+    style S fill:#4a9eff,color:#fff
+    style D fill:#4a9eff,color:#fff
+```
 
-Each package and app is 100% [TypeScript](https://www.typescriptlang.org/).
+`spec` and `design` run in parallel. On verify failure, the failure summary is injected as context and `apply` retries automatically.
 
-### Utilities
+## Apps
 
-This Turborepo has some additional tools already setup for you:
+| App | Description | Stack |
+|-----|-------------|-------|
+| [`nomadically.work`](apps/nomadically.work) | Remote EU job board aggregator with AI classification, CRM, and a multi-worker pipeline | Next.js 16, Neon PostgreSQL, Apollo/GraphQL, CF Workers (TS + Rust/WASM + Python) |
+| [`agentic-healthcare`](apps/agentic-healthcare) | Longitudinal blood test intelligence — clinical ratio tracking, health trajectories, AI Q&A | Next.js, Supabase pgvector, Qwen |
+| [`law-adversarial`](apps/law-adversarial) | Legal brief stress-tester with adversarial multi-agent debate (Attacker → Defender → Judge) | Next.js, Supabase, DeepSeek R1 + Qwen Plus |
+| [`research-thera`](apps/research-thera) | Therapeutic research platform | Next.js, Apollo/GraphQL, better-auth |
+| [`vadim.blog`](apps/vadim.blog) | Personal blog | Docusaurus |
+| `knowledge` | Knowledge management app | Next.js, Drizzle |
+| `real-estate` | Real estate app | Next.js |
+| `todo` | Todo app | Next.js, Drizzle |
 
-- [TypeScript](https://www.typescriptlang.org/) for static type checking
-- [ESLint](https://eslint.org/) for code linting
-- [Jest](https://jestjs.io) test runner for all things JavaScript
-- [Prettier](https://prettier.io) for code formatting
+## Rust Crates
+
+| Crate | Description |
+|-------|-------------|
+| [`crates/deepseek`](crates/deepseek) | Shared DeepSeek API client — reqwest, WASM, agent loop, TTL cache |
+| [`crates/qwen`](crates/qwen) | Shared Qwen/DashScope client |
+| [`crates/sdd`](crates/sdd) | Spec-Driven Development pipeline — 8-phase LLM orchestrator (explore → archive) |
+| [`crates/genesis`](crates/genesis) | Self-improving code generation — wraps SDD in a learning layer |
+| [`crates/research`](crates/research) | Semantic Scholar client + DeepSeek/Qwen dual-model agent framework |
+| [`crates/tts`](crates/tts) | Async Qwen TTS client (DashScope API, optional R2 storage) |
+| [`crates/evals`](crates/evals) | Eval framework (rig-core) |
+
+## TypeScript Packages
+
+| Package | Description |
+|---------|-------------|
+| [`packages/deepseek`](packages/deepseek) | `@ai-apps/deepseek` — TypeScript DeepSeek client |
+| [`packages/qwen`](packages/qwen) | `@ai-apps/qwen` — TypeScript Qwen/DashScope client |
+| [`packages/llm-router`](packages/llm-router) | LLM routing across providers |
+| `packages/ui` | Shared React components |
+| `packages/og` | Open Graph image generation |
+| `packages/logger` | Isomorphic logger |
+| `packages/config-eslint` | Shared ESLint config |
+| `packages/config-typescript` | Shared tsconfig |
+| `packages/jest-presets` | Shared Jest config |
+
+## Getting Started
+
+```bash
+pnpm install
+
+# Run Nomadically dev server
+pnpm dev:n          # http://localhost:3000
+
+# Run any app directly
+cd apps/nomadically.work && pnpm dev
+```
+
+## Tech Stack
+
+- **Package manager** — pnpm 10 + Turborepo
+- **Languages** — TypeScript 5.9, Rust (2021 edition)
+- **AI providers** — Anthropic Claude, DeepSeek, Qwen (DashScope), OpenRouter
+- **Databases** — Neon PostgreSQL, Cloudflare D1, Supabase
+- **Deployment** — Vercel (Next.js apps), Cloudflare Workers (workers/WASM)
