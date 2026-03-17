@@ -5,5 +5,5 @@ import { redirect } from "next/navigation";
 export async function withAuth() {
   const session = await auth.api.getSession({ headers: await headers() });
   if (!session) redirect("/auth/login");
-  return { userId: session.user.id };
+  return { userId: session.user.id, user: session.user };
 }
