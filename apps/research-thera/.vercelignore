@@ -1,9 +1,13 @@
+.trigger
 .venv
 __pycache__
 .next
 better-auth
 evals
 langgraph
+.wrangler
+.agents
+.pytest_cache
 *.db
 *.db.backup
 _memory
