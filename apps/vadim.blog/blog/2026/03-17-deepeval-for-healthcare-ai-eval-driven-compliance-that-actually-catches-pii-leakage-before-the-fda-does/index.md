@@ -1,16 +1,16 @@
 ---
 slug: deepeval-for-healthcare-ai-eval-driven-compliance-that-actually-catches-pii-leakage-before-the-fda-does
 title: "DeepEval for Healthcare AI: Eval-Driven Compliance That Actually Catches PII Leakage Before the FDA Does"
-description: "The most dangerous failure mode for a healthcare AI isn't inaccuracy—it's a compliance breach you didn't test for. A model can generate a perfect clinical summary and still violate HIPAA by hallucinat"
+description: "Most healthcare AI teams bolt compliance checks onto shipping code. DeepEval lets you encode HIPAA, FDA, and PII constraints as executable metrics that fail your pipeline before PHI ever leaks."
 date: 2026-03-17
 authors: [nicolad]
 tags:
   - deepeval
-  - healthcare
-  - eval
-  - driven
-  - compliance
-  - that
+  - healthcare-ai
+  - hipaa-compliance
+  - fda-regulation
+  - pii-leakage
+  - llm-evaluation
 ---
 
 The most dangerous failure mode for a healthcare AI isn't inaccuracy—it's a compliance breach you didn't test for. A model can generate a perfect clinical summary and still violate HIPAA by hallucinating a patient's name that never existed. Under the Breach Notification Rule, that fabricated yet plausible Protected Health Information (PHI) constitutes a reportable incident. Most teams discover these gaps during an audit or, worse, after a breach. The alternative is to treat compliance not as a post-hoc checklist, but as an integrated, automated evaluation layer that fails your CI pipeline before bad code ships. This is eval-driven compliance, and it's the only way to build healthcare AI that doesn't gamble with regulatory extinction.
@@ -63,7 +63,7 @@ pii_leakage_metric = GEval(
 
 This metric runs against every model output. PII leakage is an absolute constraint. Integrating this into your test suite turns a nebulous regulatory worry into a pass/fail gate, embodying the "structured framework" principle of PRISMA (Liberati et al., 2009) in an automated test.
 
-For clinical factuality, explainability isn't just nice-to-have; it's a validation requirement. The FDA's Total Product Life Cycle approach demands outputs be reproducible and traceable. Consider the claim: "Your TC/HDL ratio of 5.2 is elevated (optimal is <4.5 per Millán et al., 2009)." An audit-ready eval must deterministically validate the ratio calculation, the threshold match to the cited source, and the logical classification.
+For clinical factuality, explainability isn't just nice-to-have; it's a validation requirement. The FDA's Total Product Life Cycle approach demands outputs be reproducible and traceable. Consider the claim: "Your TC/HDL ratio of 5.2 is elevated (optimal is &lt;4.5 per Millán et al., 2009)." An audit-ready eval must deterministically validate the ratio calculation, the threshold match to the cited source, and the logical classification.
 
 DeepEval's `BaseMetric` class enables this. You build a custom metric that uses regex patterns and validation functions to check every clinical assertion against a ground-truth knowledge base.
 
