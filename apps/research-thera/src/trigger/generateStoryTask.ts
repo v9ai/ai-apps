@@ -222,7 +222,7 @@ ${legoInstructions}
 
     const response = await therapeuticAgent.generate(
       [{ role: "user", content: prompt }],
-      { modelSettings: { maxTokens: 8192 } },
+      { maxSteps: 1 },
     );
 
     let generatedText = response.text;

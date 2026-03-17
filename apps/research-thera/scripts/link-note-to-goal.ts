@@ -68,7 +68,7 @@ async function main() {
     if (result.rows.length === 0) {
       console.log("No notes found.");
     } else {
-      result.rows.forEach((row) => {
+      result.rows.forEach((row: any) => {
         const tags = row.tags ? JSON.parse(row.tags as string) : [];
         const preview = (row.content as string).substring(0, 100);
         console.log(`ID: ${row.id}`);

@@ -35,7 +35,6 @@ import {
 } from "@/app/__generated__/hooks";
 import { authClient } from "@/app/lib/auth/client";
 import AddGoalButton from "@/app/components/AddGoalButton";
-import AddBehaviorObservationButton from "@/app/components/AddBehaviorObservationButton";
 import BehaviorObservationsList from "@/app/components/BehaviorObservationsList";
 import AddTeacherFeedbackButton from "@/app/components/AddTeacherFeedbackButton";
 import TeacherFeedbackList from "@/app/components/TeacherFeedbackList";
@@ -665,14 +664,7 @@ function FamilyMemberContent() {
             </Flex>
           )}
           <Separator size="4" />
-          <Flex justify="between" align="center">
-            <Heading size="3">Behavior Observations ({observations.length})</Heading>
-            <AddBehaviorObservationButton
-              familyMemberId={memberId}
-              refetchQueries={["GetFamilyMember"]}
-              size="2"
-            />
-          </Flex>
+          <Heading size="3">Behavior Observations ({observations.length})</Heading>
           <BehaviorObservationsList
             observations={observations}
             onDelete={handleDeleteObservation}
