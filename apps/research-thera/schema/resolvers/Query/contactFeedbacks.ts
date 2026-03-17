@@ -1,5 +1,5 @@
 import type { QueryResolvers } from "./../../types.generated";
-import { d1Tools } from "@/src/db";
+import { getContactFeedbacks } from "@/src/db";
 
 export const contactFeedbacks: NonNullable<QueryResolvers['contactFeedbacks']> = async (
   _parent,
@@ -11,7 +11,7 @@ export const contactFeedbacks: NonNullable<QueryResolvers['contactFeedbacks']> =
     throw new Error("Authentication required");
   }
 
-  const feedbacks = await d1Tools.getContactFeedbacks(
+  const feedbacks = await getContactFeedbacks(
     args.contactId,
     args.familyMemberId,
     userEmail,

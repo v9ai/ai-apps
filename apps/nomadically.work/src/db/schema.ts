@@ -498,6 +498,7 @@ export const applications = pgTable("applications", {
   job_title: text("job_title"), // Denormalized job title for display
   company_name: text("company_name"), // Denormalized company name for display
   job_description: text("job_description"), // User-supplied job description override
+  ai_interview_questions: text("ai_interview_questions"), // AI-generated interview prep (markdown)
   created_at: text("created_at")
     .notNull()
     .default(sql`now()::text`),

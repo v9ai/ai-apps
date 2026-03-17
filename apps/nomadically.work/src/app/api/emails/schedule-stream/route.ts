@@ -1,7 +1,6 @@
 import { NextRequest } from "next/server";
-import { drizzle } from "drizzle-orm/d1";
 import { eq, and, isNotNull } from "drizzle-orm";
-import { createD1HttpClient } from "@/db/d1-http";
+import { db } from "@/db";
 import { contacts, companies } from "@/db/schema";
 import { sendAndSaveEmail } from "@/lib/email/utils";
 import { personalizeEmailBody, textToHtml } from "@/lib/email/utils";
@@ -16,9 +15,6 @@ import {
 
 export const maxDuration = 120;
 
-function getDb() {
-  return drizzle(createD1HttpClient() as any);
-}
 
 /**
  * Get next business day at ~8am UTC with random 0-120 min offset.
@@ -70,7 +66,6 @@ export async function POST(request: NextRequest) {
   // Process in the background while streaming
   (async () => {
     try {
-      const db = getDb();
 
       // Get company
       const [company] = await db

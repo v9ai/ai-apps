@@ -1,15 +1,12 @@
 import type { QueryResolvers } from "./../../types.generated";
-import { d1Tools } from "@/src/db";
+import { getStory } from "@/src/db";
 
 export const story: NonNullable<QueryResolvers['story']> = async (
   _parent,
   args,
-  ctx,
+  _ctx,
 ) => {
-  const userEmail = ctx.userEmail;
-  if (!userEmail) {
-    throw new Error("Authentication required");
-  }
-
-  return d1Tools.getStory(args.id, userEmail);
+  const story = await getStory(args.id);
+  if (!story) return null;
+  return { ...story, segments: [], audioAssets: [] } as any;
 };

@@ -1,5 +1,5 @@
 import type { QueryResolvers } from "./../../types.generated";
-import { d1Tools } from "@/src/db";
+import { listFamilyMembers } from "@/src/db";
 
 export const familyMembers: NonNullable<QueryResolvers['familyMembers']> = async (_parent, _arg, ctx) => {
   const userEmail = ctx.userEmail;
@@ -7,7 +7,7 @@ export const familyMembers: NonNullable<QueryResolvers['familyMembers']> = async
     throw new Error("Authentication required");
   }
 
-  const members = await d1Tools.listFamilyMembers(userEmail);
+  const members = await listFamilyMembers(userEmail);
   return members.map((m) => ({
     ...m,
     goals: [],

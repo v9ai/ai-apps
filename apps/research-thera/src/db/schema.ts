@@ -134,30 +134,13 @@ export const noteShares = pgTable("note_shares", {
 
 export const stories = pgTable("stories", {
   id: serial("id").primaryKey(),
-  goalId: integer("goal_id")
-    .notNull()
-    .references(() => goals.id, { onDelete: "cascade" }),
-  userId: text("user_id").notNull(),
-  content: text("content").notNull(),
-  audioKey: text("audio_key"),
-  audioUrl: text("audio_url"),
-  audioGeneratedAt: text("audio_generated_at"),
-  createdAt: text("created_at")
-    .notNull()
-    .default(sql`NOW()`),
-  updatedAt: text("updated_at")
-    .notNull()
-    .default(sql`NOW()`),
-});
-
-export const goalStories = pgTable("goal_stories", {
-  id: serial("id").primaryKey(),
   goalId: integer("goal_id"),
   issueId: integer("issue_id"),
   feedbackId: integer("feedback_id"),
-  language: text("language").notNull(),
-  minutes: integer("minutes").notNull(),
-  text: text("text").notNull(),
+  userId: text("user_id"),
+  content: text("content").notNull(),
+  language: text("language"),
+  minutes: integer("minutes"),
   audioKey: text("audio_key"),
   audioUrl: text("audio_url"),
   audioGeneratedAt: text("audio_generated_at"),
@@ -287,20 +270,6 @@ export const behaviorObservations = pgTable("behavior_observations", {
     .default(sql`NOW()`),
 });
 
-export const uniqueOutcomes = pgTable("unique_outcomes", {
-  id: serial("id").primaryKey(),
-  issueId: integer("issue_id").notNull(),
-  userId: text("user_id").notNull(),
-  observedAt: text("observed_at").notNull(),
-  description: text("description").notNull(),
-  createdAt: text("created_at")
-    .notNull()
-    .default(sql`NOW()`),
-  updatedAt: text("updated_at")
-    .notNull()
-    .default(sql`NOW()`),
-});
-
 export const teacherFeedbacks = pgTable("teacher_feedbacks", {
   id: serial("id").primaryKey(),
   familyMemberId: integer("family_member_id").notNull(),
@@ -344,6 +313,7 @@ export const issues = pgTable("issues", {
   id: serial("id").primaryKey(),
   feedbackId: integer("feedback_id"),
   familyMemberId: integer("family_member_id").notNull(),
+  relatedFamilyMemberId: integer("related_family_member_id"),
   userId: text("user_id").notNull(),
   title: text("title").notNull(),
   description: text("description").notNull(),

@@ -1,5 +1,5 @@
 import type { QueryResolvers } from "./../../types.generated";
-import { d1Tools } from "@/src/db";
+import { getContactBySlug, getContact } from "@/src/db";
 
 export const contact: NonNullable<QueryResolvers['contact']> = async (
   _parent,
@@ -14,9 +14,9 @@ export const contact: NonNullable<QueryResolvers['contact']> = async (
   let item;
 
   if (args.slug) {
-    item = await d1Tools.getContactBySlug(args.slug, userEmail);
+    item = await getContactBySlug(args.slug, userEmail);
   } else if (args.id) {
-    item = await d1Tools.getContact(args.id, userEmail);
+    item = await getContact(args.id, userEmail);
   } else {
     throw new Error("Either id or slug must be provided");
   }

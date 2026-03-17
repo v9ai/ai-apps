@@ -1,9 +1,9 @@
 import type { BehaviorObservationResolvers } from './../types.generated';
-import { d1Tools } from "@/src/db";
+import { getFamilyMember, getGoal } from "@/src/db";
 
 export const BehaviorObservation: BehaviorObservationResolvers = {
   familyMember: async (parent) => {
-    const fm = await d1Tools.getFamilyMember(parent.familyMemberId);
+    const fm = await getFamilyMember(parent.familyMemberId);
     if (!fm) return null;
     return fm as any;
   },
@@ -12,7 +12,7 @@ export const BehaviorObservation: BehaviorObservationResolvers = {
     const userEmail = ctx.userEmail;
     if (!userEmail) return null;
     try {
-      const goal = await d1Tools.getGoal(parent.goalId, userEmail);
+      const goal = await getGoal(parent.goalId, userEmail);
       return goal as any;
     } catch {
       return null;

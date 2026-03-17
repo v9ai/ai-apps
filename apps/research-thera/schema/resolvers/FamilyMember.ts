@@ -1,26 +1,25 @@
 import type { FamilyMemberResolvers } from "./../types.generated";
-import { d1Tools } from "@/src/db";
+import { listGoals, getFamilyMemberShares, getBehaviorObservationsForFamilyMember, getTeacherFeedbacksForFamilyMember, getIssuesForFamilyMember, getRelationshipsForPerson } from "@/src/db";
 
 export const FamilyMember: FamilyMemberResolvers = {
   goals: async (parent, _args, _ctx) => {
-    const goals = await d1Tools.listGoals(parent.userId, parent.id);
+    const goals = await listGoals(parent.userId, parent.id);
     return goals.map((goal) => ({
       ...goal,
       questions: [],
       stories: [],
-      userStories: [],
       notes: [],
       research: [],
     })) as any;
   },
   shares: async (parent, _args, _ctx) => {
-    const shares = await d1Tools.getFamilyMemberShares(parent.id);
+    const shares = await getFamilyMemberShares(parent.id);
     return shares.map((s) => ({ ...s, role: s.role as any }));
   },
   behaviorObservations: async (parent, args, ctx) => {
     const userEmail = ctx.userEmail;
     if (!userEmail) return [];
-    const observations = await d1Tools.getBehaviorObservationsForFamilyMember(
+    const observations = await getBehaviorObservationsForFamilyMember(
       parent.id,
       userEmail,
       args.goalId ?? undefined,
@@ -43,7 +42,7 @@ export const FamilyMember: FamilyMemberResolvers = {
   teacherFeedbacks: async (parent, _args, ctx) => {
     const userEmail = ctx.userEmail;
     if (!userEmail) return [];
-    const feedbacks = await d1Tools.getTeacherFeedbacksForFamilyMember(
+    const feedbacks = await getTeacherFeedbacksForFamilyMember(
       parent.id,
       userEmail,
     );
@@ -60,6 +59,44 @@ export const FamilyMember: FamilyMemberResolvers = {
       extracted: fb.extracted,
       createdAt: fb.createdAt,
       updatedAt: fb.updatedAt,
+    })) as any;
+  },
+  issues: async (parent, _args, ctx) => {
+    const userEmail = ctx.userEmail;
+    if (!userEmail) return [];
+    const issues = await getIssuesForFamilyMember(parent.id, undefined, userEmail);
+    return issues.map((issue) => ({
+      id: issue.id,
+      feedbackId: issue.feedbackId,
+      familyMemberId: issue.familyMemberId,
+      createdBy: issue.userId,
+      title: issue.title,
+      description: issue.description,
+      category: issue.category,
+      severity: issue.severity,
+      recommendations: issue.recommendations,
+      createdAt: issue.createdAt,
+      updatedAt: issue.updatedAt,
+    })) as any;
+  },
+  relationships: async (parent, _args, ctx) => {
+    const userEmail = ctx.userEmail;
+    if (!userEmail) return [];
+    const items = await getRelationshipsForPerson(userEmail, "FAMILY_MEMBER", parent.id);
+    return items.map((item) => ({
+      id: item.id,
+      createdBy: item.userId,
+      subjectType: item.subjectType as any,
+      subjectId: item.subjectId,
+      relatedType: item.relatedType as any,
+      relatedId: item.relatedId,
+      relationshipType: item.relationshipType,
+      context: item.context,
+      startDate: item.startDate,
+      status: item.status as any,
+      createdAt: item.createdAt,
+      updatedAt: item.updatedAt,
+      related: item.related ? { ...item.related, type: item.related.type as any } : null,
     })) as any;
   },
 };

@@ -1,5 +1,5 @@
 import type { MutationResolvers } from "./../../types.generated";
-import { d1Tools } from "@/src/db";
+import { deleteRelationship as _deleteRelationship } from "@/src/db";
 
 export const deleteRelationship: NonNullable<MutationResolvers['deleteRelationship']> = async (
   _parent,
@@ -11,7 +11,7 @@ export const deleteRelationship: NonNullable<MutationResolvers['deleteRelationsh
     throw new Error("Authentication required");
   }
 
-  await d1Tools.deleteRelationship(args.id, userEmail);
+  await _deleteRelationship(args.id, userEmail);
 
   return {
     success: true,

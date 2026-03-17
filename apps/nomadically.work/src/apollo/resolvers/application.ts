@@ -20,6 +20,7 @@ function mapApplication(
     companyName: app.company_name ?? null,
     companyKey: companyKey ?? null,
     jobDescription: app.job_description ?? jobDescription ?? null,
+    aiInterviewQuestions: (app as any).ai_interview_questions ?? null,
     createdAt: app.created_at,
   };
 }
@@ -123,6 +124,8 @@ export const applicationResolvers = {
           notes?: string;
           jobDescription?: string;
           companyName?: string;
+          jobId?: string;
+          jobTitle?: string;
         };
       },
       context: GraphQLContext,
@@ -149,6 +152,12 @@ export const applicationResolvers = {
         }
         if (args.input.companyName !== undefined) {
           updateValues.company_name = args.input.companyName;
+        }
+        if (args.input.jobId !== undefined) {
+          updateValues.job_id = args.input.jobId;
+        }
+        if (args.input.jobTitle !== undefined) {
+          updateValues.job_title = args.input.jobTitle;
         }
 
         const [updated] = await context.db

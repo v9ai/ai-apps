@@ -1,5 +1,5 @@
 import type { MutationResolvers } from "../../types.generated";
-import { d1Tools } from "@/src/db";
+import { getResearchForNote } from "@/src/db";
 import { sql } from "@/src/db/neon";
 import { buildClaimCardsFromItem } from "@/src/tools/generic-claim-cards.tools";
 import { createDeepSeekAdapters } from "@/src/adapters/deepseek.adapter";
@@ -40,7 +40,7 @@ export const checkNoteClaims: NonNullable<MutationResolvers['checkNoteClaims']> 
     };
 
     // 2. Fetch linked research papers
-    const linkedResearch = await d1Tools.getResearchForNote(noteId);
+    const linkedResearch = await getResearchForNote(noteId);
 
     if (linkedResearch.length === 0) {
       return {

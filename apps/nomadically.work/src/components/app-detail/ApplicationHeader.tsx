@@ -57,13 +57,21 @@ export function ApplicationHeader({ app, isAdmin }: ApplicationHeaderProps) {
   const [companySaving, setCompanySaving] = useState(false);
   const [companySaveError, setCompanySaveError] = useState<string | null>(null);
 
+  const [editingApp, setEditingApp] = useState(false);
+  const [jobUrlValue, setJobUrlValue] = useState("");
+  const [jobTitleValue, setJobTitleValue] = useState("");
+  const [appSaving, setAppSaving] = useState(false);
+  const [appSaveError, setAppSaveError] = useState<string | null>(null);
+  const [enhancing, setEnhancing] = useState(false);
+  const [enhanceMessage, setEnhanceMessage] = useState<string | null>(null);
+
   const displayName = app.companyName ?? app.jobId;
   const displayTitle = app.jobTitle ?? "Job application";
-  const initials = companyInitials(displayName);
+  const initials = companyInitials(displayName ?? "?");
   const statusCol = COLUMNS.find((c) => c.status === app.status);
   const statusColorToken = statusCol?.color ?? "gray";
   const statusCssColor = `var(--${statusColorToken}-9)`;
-  const jobUrl = app.jobId.startsWith("http") ? app.jobId : null;
+  const jobUrl = app.jobId?.startsWith("http") ? app.jobId : null;
 
   const handleStatusChange = async (status: ApplicationStatus) => {
     await updateApplication({
@@ -93,6 +101,50 @@ export function ApplicationHeader({ app, isAdmin }: ApplicationHeaderProps) {
     }
   };
 
+  const handleSaveApp = async () => {
+    setAppSaving(true);
+    setAppSaveError(null);
+    try {
+      await updateApplication({
+        variables: {
+          id: app.id,
+          input: {
+            jobId: jobUrlValue || undefined,
+            jobTitle: jobTitleValue || undefined,
+          },
+        },
+        refetchQueries: ["GetApplication"],
+      });
+      setEditingApp(false);
+    } catch (e) {
+      setAppSaveError(e instanceof Error ? e.message : "Save failed");
+    } finally {
+      setAppSaving(false);
+    }
+  };
+
+  const handleEnhanceFromAshby = async () => {
+    setEnhancing(true);
+    setEnhanceMessage(null);
+    try {
+      const res = await fetch("/api/applications/enhance", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ applicationId: app.id }),
+      });
+      const data = await res.json() as { error?: string; enriched?: { jobTitle?: string } };
+      if (!res.ok) throw new Error(data.error ?? "Enhance failed");
+      setEnhanceMessage(`Done — fetched description for ${data.enriched?.jobTitle ?? "job"}`);
+      router.refresh();
+    } catch (e) {
+      setEnhanceMessage(e instanceof Error ? e.message : "Enhance failed");
+    } finally {
+      setEnhancing(false);
+    }
+  };
+
+  const isAshbyUrl = jobUrl?.includes("ashbyhq.com");
+
   return (
     <>
       {/* Breadcrumb + overflow menu */}
@@ -115,6 +167,16 @@ export function ApplicationHeader({ app, isAdmin }: ApplicationHeaderProps) {
             </IconButton>
           </DropdownMenu.Trigger>
           <DropdownMenu.Content size="1">
+            <DropdownMenu.Item onClick={() => {
+              setJobUrlValue(app.jobId ?? "");
+              setJobTitleValue(app.jobTitle ?? "");
+              setAppSaveError(null);
+              setEnhanceMessage(null);
+              setEditingApp(true);
+            }}>
+              <Pencil1Icon /> Edit application
+            </DropdownMenu.Item>
+            <DropdownMenu.Separator />
             <DropdownMenu.Item color="red" onClick={() => setDeleteDialogOpen(true)}>
               <TrashIcon /> Delete application
             </DropdownMenu.Item>
@@ -247,32 +309,56 @@ export function ApplicationHeader({ app, isAdmin }: ApplicationHeaderProps) {
           </Flex>
 
           {/* Inline job URL + resume */}
-          {(jobUrl || app.resume) && (
-            <Flex align="center" gap="3" mt="1" wrap="wrap">
-              {jobUrl && (
-                <a
-                  href={jobUrl}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  style={{ display: "inline-flex", alignItems: "center", gap: 4, color: "var(--accent-11)", textDecoration: "none" }}
-                >
-                  <Text size="1">Job posting</Text>
-                  <ExternalLinkIcon width={12} height={12} />
-                </a>
-              )}
-              {app.resume && (
-                <a
-                  href={app.resume as unknown as string}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  style={{ display: "inline-flex", alignItems: "center", gap: 4, color: "var(--accent-11)", textDecoration: "none" }}
-                >
-                  <Text size="1">Resume</Text>
-                  <ExternalLinkIcon width={12} height={12} />
-                </a>
-              )}
-            </Flex>
-          )}
+          <Flex align="center" gap="3" mt="1" wrap="wrap">
+            {jobUrl ? (
+              <a
+                href={jobUrl}
+                target="_blank"
+                rel="noopener noreferrer"
+                style={{ display: "inline-flex", alignItems: "center", gap: 4, color: "var(--accent-11)", textDecoration: "none" }}
+              >
+                <Text size="1">Job posting</Text>
+                <ExternalLinkIcon width={12} height={12} />
+              </a>
+            ) : (
+              <Button
+                size="1"
+                variant="ghost"
+                color="gray"
+                onClick={() => {
+                  setJobUrlValue(app.jobId ?? "");
+                  setJobTitleValue(app.jobTitle ?? "");
+                  setAppSaveError(null);
+                  setEnhanceMessage(null);
+                  setEditingApp(true);
+                }}
+              >
+                + Add job URL
+              </Button>
+            )}
+            {isAshbyUrl && (
+              <Button
+                size="1"
+                variant="ghost"
+                color="indigo"
+                disabled={enhancing}
+                onClick={handleEnhanceFromAshby}
+              >
+                {enhancing ? "Enhancing\u2026" : "Enhance from Ashby"}
+              </Button>
+            )}
+            {app.resume && (
+              <a
+                href={app.resume as unknown as string}
+                target="_blank"
+                rel="noopener noreferrer"
+                style={{ display: "inline-flex", alignItems: "center", gap: 4, color: "var(--accent-11)", textDecoration: "none" }}
+              >
+                <Text size="1">Resume</Text>
+                <ExternalLinkIcon width={12} height={12} />
+              </a>
+            )}
+          </Flex>
         </Box>
       </Flex>
 
@@ -327,6 +413,89 @@ export function ApplicationHeader({ app, isAdmin }: ApplicationHeaderProps) {
             </Dialog.Close>
             <Button size="2" disabled={companySaving} onClick={handleSaveCompany}>
               {companySaving ? "Saving\u2026" : "Save"}
+            </Button>
+          </Flex>
+        </Dialog.Content>
+      </Dialog.Root>
+
+      {/* Edit application dialog */}
+      <Dialog.Root open={editingApp} onOpenChange={(o) => { if (!o) setEditingApp(false); }}>
+        <Dialog.Content maxWidth="480px">
+          <Dialog.Title>Edit Application</Dialog.Title>
+          <Flex direction="column" gap="3" mt="2">
+            <Box>
+              <Text size="2" weight="medium" mb="1" as="div">Job Title</Text>
+              <input
+                value={jobTitleValue}
+                onChange={(e) => setJobTitleValue(e.target.value)}
+                placeholder="e.g. Senior Frontend Engineer"
+                style={{
+                  width: "100%",
+                  padding: "6px 10px",
+                  borderRadius: "var(--radius-2)",
+                  border: "1px solid var(--gray-6)",
+                  background: "var(--gray-2)",
+                  color: "var(--gray-12)",
+                  fontSize: "var(--font-size-2)",
+                  boxSizing: "border-box",
+                }}
+              />
+            </Box>
+            <Box>
+              <Text size="2" weight="medium" mb="1" as="div">Job URL</Text>
+              <input
+                value={jobUrlValue}
+                onChange={(e) => setJobUrlValue(e.target.value)}
+                placeholder="https://jobs.ashbyhq.com/..."
+                style={{
+                  width: "100%",
+                  padding: "6px 10px",
+                  borderRadius: "var(--radius-2)",
+                  border: "1px solid var(--gray-6)",
+                  background: "var(--gray-2)",
+                  color: "var(--gray-12)",
+                  fontSize: "var(--font-size-2)",
+                  boxSizing: "border-box",
+                }}
+              />
+            </Box>
+            {jobUrlValue.includes("ashbyhq.com") && (
+              <Flex align="center" gap="2">
+                <Button
+                  size="1"
+                  variant="soft"
+                  color="indigo"
+                  disabled={enhancing}
+                  onClick={async () => {
+                    // Save job URL first, then enhance
+                    setAppSaving(true);
+                    try {
+                      await updateApplication({
+                        variables: { id: app.id, input: { jobId: jobUrlValue, jobTitle: jobTitleValue || undefined } },
+                        refetchQueries: ["GetApplication"],
+                      });
+                    } finally {
+                      setAppSaving(false);
+                    }
+                    await handleEnhanceFromAshby();
+                    setEditingApp(false);
+                  }}
+                >
+                  {enhancing ? "Enhancing\u2026" : "Enhance from Ashby"}
+                </Button>
+                {enhanceMessage && (
+                  <Text size="1" color={enhanceMessage.startsWith("Done") ? "green" : "red"}>{enhanceMessage}</Text>
+                )}
+              </Flex>
+            )}
+            {appSaveError && <Text size="1" color="red">{appSaveError}</Text>}
+          </Flex>
+          <Flex gap="2" justify="end" mt="4">
+            <Dialog.Close>
+              <Button variant="soft" color="gray" size="2">Cancel</Button>
+            </Dialog.Close>
+            <Button size="2" disabled={appSaving} onClick={handleSaveApp}>
+              {appSaving ? "Saving\u2026" : "Save"}
             </Button>
           </Flex>
         </Dialog.Content>

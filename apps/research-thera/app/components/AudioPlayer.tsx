@@ -16,7 +16,6 @@ import {
 
 interface AudioPlayerProps {
   storyId?: number;
-  goalStoryId?: number;
   goalId?: number | null;
   storyContent: string;
   existingAudioUrl?: string | null;
@@ -34,14 +33,13 @@ function formatDuration(seconds?: number | null): string {
 
 export function AudioPlayer({
   storyId,
-  goalStoryId,
   goalId,
   storyContent,
   existingAudioUrl,
   audioGeneratedAt,
   onAudioGenerated,
 }: AudioPlayerProps) {
-  const effectiveStoryId = storyId ?? goalStoryId ?? 0;
+  const effectiveStoryId = storyId ?? 0;
   const audioRef = useRef<HTMLAudioElement | null>(null);
   const objectUrlRef = useRef<string | null>(null);
   const timeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
@@ -213,9 +211,7 @@ export function AudioPlayer({
         variables: {
           input: {
             text: storyContent,
-            ...(goalStoryId && !storyId
-              ? { goalStoryId }
-              : { storyId }),
+            storyId,
             voice: OpenAittsVoice.Onyx,
             model: OpenAittsModel.Gpt_4OMiniTts,
             responseFormat: OpenAiAudioFormat.Mp3,

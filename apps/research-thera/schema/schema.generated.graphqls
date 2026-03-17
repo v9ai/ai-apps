@@ -163,22 +163,10 @@ type ContactFeedback {
   id: Int!
   issues: [Issue!]!
   source: FeedbackSource
-  stories: [GoalStory!]!
+  stories: [Story!]!
   subject: String
   tags: [String!]
   updatedAt: String!
-}
-
-input CreateBehaviorObservationInput {
-  context: String
-  familyMemberId: Int!
-  frequency: Int
-  goalId: Int
-  intensity: BehaviorIntensity
-  issueId: Int
-  notes: String
-  observationType: BehaviorObservationType!
-  observedAt: String!
 }
 
 input CreateContactFeedbackInput {
@@ -282,12 +270,6 @@ input CreateTeacherFeedbackInput {
   teacherName: String!
 }
 
-input CreateUniqueOutcomeInput {
-  description: String!
-  issueId: Int!
-  observedAt: String!
-}
-
 type DeleteBehaviorObservationResult {
   message: String
   success: Boolean!
@@ -309,11 +291,6 @@ type DeleteFamilyMemberResult {
 }
 
 type DeleteGoalResult {
-  message: String
-  success: Boolean!
-}
-
-type DeleteGoalStoryResult {
   message: String
   success: Boolean!
 }
@@ -356,11 +333,6 @@ type DeleteStoryResult {
 }
 
 type DeleteTeacherFeedbackResult {
-  message: String
-  success: Boolean!
-}
-
-type DeleteUniqueOutcomeResult {
   message: String
   success: Boolean!
 }
@@ -413,11 +385,13 @@ type FamilyMember {
   firstName: String!
   goals: [Goal!]!
   id: Int!
+  issues: [Issue!]!
   location: String
   name: String
   occupation: String
   phone: String
   relationship: String
+  relationships: [Relationship!]!
   shares: [FamilyMemberShare!]!
   slug: String
   teacherFeedbacks: [TeacherFeedback!]!
@@ -456,6 +430,7 @@ type GenerateAudioResult {
 
 type GenerateLongFormTextResult {
   audioUrl: String
+  evals: String
   jobId: String
   manifestUrl: String
   message: String
@@ -466,7 +441,6 @@ type GenerateLongFormTextResult {
 }
 
 input GenerateOpenAIAudioInput {
-  goalStoryId: Int
   instructions: String
   model: OpenAITTSModel
   responseFormat: OpenAIAudioFormat
@@ -531,30 +505,13 @@ type Goal {
   research: [Research!]!
   slug: String
   status: String!
-  stories: [GoalStory!]!
+  stories: [Story!]!
   storyLanguage: String
   subGoals: [Goal!]!
   therapeuticText: String
   therapeuticTextGeneratedAt: String
   therapeuticTextLanguage: String
   title: String!
-  updatedAt: String!
-  userStories: [Story!]!
-}
-
-type GoalStory {
-  audioAssets: [AudioAsset!]!
-  audioGeneratedAt: String
-  audioKey: String
-  audioUrl: String
-  createdAt: String!
-  goalId: Int
-  id: Int!
-  issueId: Int
-  language: String!
-  minutes: Int!
-  segments: [TextSegment!]!
-  text: String!
   updatedAt: String!
 }
 
@@ -569,6 +526,8 @@ type Issue {
   feedbackId: Int
   id: Int!
   recommendations: [String!]
+  relatedFamilyMember: FamilyMember
+  relatedFamilyMemberId: Int
   severity: String!
   title: String!
   updatedAt: String!
@@ -628,7 +587,6 @@ type Mutation {
   buildClaimCards(input: BuildClaimCardsInput!): BuildClaimCardsResult!
   checkNoteClaims(input: CheckNoteClaimsInput!): CheckNoteClaimsResult!
   convertIssueToGoal(id: Int!, input: CreateGoalInput!): Goal!
-  createBehaviorObservation(input: CreateBehaviorObservationInput!): BehaviorObservation!
   createContact(input: CreateContactInput!): Contact!
   createContactFeedback(input: CreateContactFeedbackInput!): ContactFeedback!
   createFamilyMember(input: CreateFamilyMemberInput!): FamilyMember!
@@ -640,14 +598,12 @@ type Mutation {
   createStory(input: CreateStoryInput!): Story!
   createSubGoal(goalId: Int!, input: CreateSubGoalInput!): Goal!
   createTeacherFeedback(input: CreateTeacherFeedbackInput!): TeacherFeedback!
-  createUniqueOutcome(input: CreateUniqueOutcomeInput!): UniqueOutcome!
   deleteBehaviorObservation(id: Int!): DeleteBehaviorObservationResult!
   deleteClaimCard(id: ID!): Boolean!
   deleteContact(id: Int!): DeleteContactResult!
   deleteContactFeedback(id: Int!): DeleteContactFeedbackResult!
   deleteFamilyMember(id: Int!): DeleteFamilyMemberResult!
   deleteGoal(id: Int!): DeleteGoalResult!
-  deleteGoalStory(id: Int!): DeleteGoalStoryResult!
   deleteIssue(id: Int!): DeleteIssueResult!
   deleteJournalEntry(id: Int!): DeleteJournalEntryResult!
   deleteNote(id: Int!): DeleteNoteResult!
@@ -656,7 +612,6 @@ type Mutation {
   deleteStory(id: Int!): DeleteStoryResult!
   deleteTeacherFeedback(id: Int!): DeleteTeacherFeedbackResult!
   deleteTherapeuticQuestions(goalId: Int!): DeleteQuestionsResult!
-  deleteUniqueOutcome(id: Int!): DeleteUniqueOutcomeResult!
   extractContactFeedbackIssues(id: Int!): ContactFeedback!
   generateAudio(goalId: Int!, language: String, storyId: Int, text: String, voice: String): GenerateAudioResult!
   generateLongFormText(feedbackId: Int, goalId: Int, issueId: Int, language: String, minutes: Int): GenerateLongFormTextResult!
@@ -682,7 +637,6 @@ type Mutation {
   updateRelationship(id: Int!, input: UpdateRelationshipInput!): Relationship!
   updateStory(id: Int!, input: UpdateStoryInput!): Story!
   updateTeacherFeedback(id: Int!, input: UpdateTeacherFeedbackInput!): TeacherFeedback!
-  updateUniqueOutcome(id: Int!, input: UpdateUniqueOutcomeInput!): UniqueOutcome!
   updateUserSettings(storyLanguage: String!, storyMinutes: Int): UserSettings!
 }
 
@@ -811,7 +765,6 @@ type Query {
   generationJob(id: String!): GenerationJob
   generationJobs(goalId: Int, status: String): [GenerationJob!]!
   goal(id: Int, slug: String): Goal
-  goalStory(id: Int!): GoalStory
   goals(familyMemberId: Int, status: String): [Goal!]!
   issue(id: Int!): Issue
   issues(familyMemberId: Int!, feedbackId: Int): [Issue!]!
@@ -897,15 +850,21 @@ enum ResearchSource {
 }
 
 type Story {
+  audioAssets: [AudioAsset!]!
   audioGeneratedAt: String
   audioKey: String
   audioUrl: String
   content: String!
   createdAt: String!
-  createdBy: String!
+  createdBy: String
+  feedbackId: Int
   goal: Goal
-  goalId: Int!
+  goalId: Int
   id: Int!
+  issueId: Int
+  language: String
+  minutes: Int
+  segments: [TextSegment!]!
   updatedAt: String!
 }
 
@@ -948,16 +907,6 @@ type TherapeuticQuestion {
   rationale: String!
   researchId: Int
   researchTitle: String
-  updatedAt: String!
-}
-
-type UniqueOutcome {
-  createdAt: String!
-  createdBy: String!
-  description: String!
-  id: Int!
-  issueId: Int!
-  observedAt: String!
   updatedAt: String!
 }
 
@@ -1011,7 +960,9 @@ input UpdateGoalInput {
 input UpdateIssueInput {
   category: String
   description: String
+  familyMemberId: Int
   recommendations: [String!]
+  relatedFamilyMemberId: Int
   severity: String
   title: String
 }
@@ -1055,11 +1006,6 @@ input UpdateTeacherFeedbackInput {
   subject: String
   tags: [String!]
   teacherName: String
-}
-
-input UpdateUniqueOutcomeInput {
-  description: String
-  observedAt: String
 }
 
 type UserSettings {

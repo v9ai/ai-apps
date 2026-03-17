@@ -1,5 +1,5 @@
 import type { MutationResolvers } from "./../../types.generated";
-import { d1Tools } from "@/src/db";
+import { updateContact as _updateContact, getContact } from "@/src/db";
 
 export const updateContact: NonNullable<MutationResolvers['updateContact']> = async (
   _parent,
@@ -11,7 +11,7 @@ export const updateContact: NonNullable<MutationResolvers['updateContact']> = as
     throw new Error("Authentication required");
   }
 
-  await d1Tools.updateContact(args.id, userEmail, {
+  await _updateContact(args.id, userEmail, {
     firstName: args.input.firstName ?? undefined,
     lastName: args.input.lastName ?? undefined,
     slug: args.input.slug ?? undefined,
@@ -20,7 +20,7 @@ export const updateContact: NonNullable<MutationResolvers['updateContact']> = as
     notes: args.input.notes ?? undefined,
   });
 
-  const item = await d1Tools.getContact(args.id, userEmail);
+  const item = await getContact(args.id, userEmail);
   if (!item) {
     throw new Error("Contact not found after update");
   }

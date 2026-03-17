@@ -1,7 +1,7 @@
 #!/usr/bin/env tsx
 
 /**
- * Export real job data from D1 for use as LLM eval test cases.
+ * Export real job data from Neon for use as LLM eval test cases.
  *
  * Queries jobs that have already been classified by the pipeline and exports
  * balanced samples as TypeScript test data files. The DB labels (is_remote_eu,
@@ -16,9 +16,7 @@
  *   pnpm tsx scripts/export-eval-data.ts --limit 20 --out src/evals/remote-eu/db-test-data.ts
  *
  * Requires (in .env.local):
- *   D1_GATEWAY_URL + D1_GATEWAY_KEY   (preferred)
- *   or
- *   CLOUDFLARE_ACCOUNT_ID + CLOUDFLARE_D1_DATABASE_ID + CLOUDFLARE_API_TOKEN
+ *   NEON_DATABASE_URL   or   DATABASE_URL
  */
 
 import { config } from "dotenv";
@@ -27,7 +25,9 @@ import { dirname } from "path";
 
 config({ path: ".env.local" });
 
-import { createD1HttpClient } from "../src/db/d1-http";
+import { neon } from "@neondatabase/serverless";
+
+const pg = neon(process.env.NEON_DATABASE_URL ?? process.env.DATABASE_URL!);
 
 // ---------------------------------------------------------------------------
 // CLI args
@@ -47,16 +47,12 @@ const roleOut = "src/evals/role-tagging/db-test-data.ts";
 // D1 query helpers
 // ---------------------------------------------------------------------------
 
-async function query<T = Record<string, unknown>>(
-  client: ReturnType<typeof createD1HttpClient>,
-  sql: string,
-  params?: unknown[],
-): Promise<T[]> {
-  const stmt = params
-    ? client.prepare(sql).bind(...params)
-    : client.prepare(sql);
-  const result = await stmt.all();
-  return result.results as T[];
+async function query<T = Record<string, unknown>>(rawSql: string, params?: unknown[]): Promise<T[]> {
+  // Build a tagged-template call from raw SQL + params so neon can safely escape values.
+  const parts = rawSql.split("?");
+  const strings = Object.assign(parts, { raw: parts }) as TemplateStringsArray;
+  const rows = await pg(strings, ...(params ?? []));
+  return rows as unknown as T[];
 }
 
 // ---------------------------------------------------------------------------
@@ -69,7 +65,7 @@ interface RawJob {
   location: string | null;
   description: string | null;
   status: string | null;
-  is_remote_eu: number | null; // SQLite INTEGER boolean
+  is_remote_eu: boolean | null;
   remote_eu_confidence: string | null;
   remote_eu_reason: string | null;
   source_kind: string | null;
@@ -81,8 +77,8 @@ interface RawRoleJob {
   title: string;
   location: string | null;
   description: string | null;
-  role_ai_engineer: number | null;
-  role_frontend_react: number | null;
+  role_ai_engineer: boolean | null;
+  role_frontend_react: boolean | null;
   role_confidence: string | null;
   role_reason: string | null;
   role_source: string | null;
@@ -121,11 +117,8 @@ function toConfidence(raw: string | null): "high" | "medium" | "low" {
 // EU remote classification export
 // ---------------------------------------------------------------------------
 
-async function exportEURemoteCases(
-  client: ReturnType<typeof createD1HttpClient>,
-  n: number,
-): Promise<void> {
-  console.log("\n📡 Querying EU remote classification data from D1…");
+async function exportEURemoteCases(n: number): Promise<void> {
+  console.log("\n📡 Querying EU remote classification data from Neon…");
 
   // Sample from each bucket: true-high, true-medium, false-high, false-medium,
   // unclassified (no label yet — useful for "live" eval without ground truth)
@@ -136,7 +129,7 @@ async function exportEURemoteCases(
                    is_remote_eu, remote_eu_confidence, remote_eu_reason,
                    source_kind, company_key
             FROM jobs
-            WHERE is_remote_eu = 1
+            WHERE is_remote_eu = true
               AND remote_eu_confidence = 'high'
               AND title IS NOT NULL
               AND location IS NOT NULL
@@ -150,7 +143,7 @@ async function exportEURemoteCases(
                    is_remote_eu, remote_eu_confidence, remote_eu_reason,
                    source_kind, company_key
             FROM jobs
-            WHERE is_remote_eu = 1
+            WHERE is_remote_eu = true
               AND remote_eu_confidence IN ('medium', 'low')
               AND title IS NOT NULL
               AND location IS NOT NULL
@@ -164,7 +157,7 @@ async function exportEURemoteCases(
                    is_remote_eu, remote_eu_confidence, remote_eu_reason,
                    source_kind, company_key
             FROM jobs
-            WHERE is_remote_eu = 0
+            WHERE is_remote_eu = false
               AND remote_eu_confidence = 'high'
               AND title IS NOT NULL
               AND location IS NOT NULL
@@ -178,7 +171,7 @@ async function exportEURemoteCases(
                    is_remote_eu, remote_eu_confidence, remote_eu_reason,
                    source_kind, company_key
             FROM jobs
-            WHERE is_remote_eu = 0
+            WHERE is_remote_eu = false
               AND remote_eu_confidence IN ('medium', 'low')
               AND title IS NOT NULL
               AND location IS NOT NULL
@@ -193,7 +186,7 @@ async function exportEURemoteCases(
   const allRows: Array<{ row: RawJob; bucket: string }> = [];
 
   for (const bucket of buckets) {
-    const rows = await query<RawJob>(client, bucket.sql, bucket.params);
+    const rows = await query<RawJob>(bucket.sql, bucket.params);
     console.log(`  ${bucket.label}: ${rows.length} rows`);
     for (const row of rows) {
       if (!seen.has(row.id)) {
@@ -210,7 +203,7 @@ async function exportEURemoteCases(
     const id = `db-${row.id}-${slugId(row.title ?? `job-${i}`)}`;
     const desc = trimDesc(row.description);
     const confidence = toConfidence(row.remote_eu_confidence);
-    const isRemoteEU = row.is_remote_eu === 1;
+    const isRemoteEU = row.is_remote_eu === true;
     const reason =
       row.remote_eu_reason?.replace(/"/g, '\\"').slice(0, 200) ??
       (isRemoteEU
@@ -266,11 +259,8 @@ ${cases.join(",\n")}
 // Role tagging export
 // ---------------------------------------------------------------------------
 
-async function exportRoleTaggingCases(
-  client: ReturnType<typeof createD1HttpClient>,
-  n: number,
-): Promise<void> {
-  console.log("\n📡 Querying role tagging data from D1…");
+async function exportRoleTaggingCases(n: number): Promise<void> {
+  console.log("\n📡 Querying role tagging data from Neon…");
   console.log(
     "  Note: role columns require the Phase 2 migration to be applied.",
   );
@@ -283,7 +273,7 @@ async function exportRoleTaggingCases(
                    role_confidence, role_reason, role_source,
                    source_kind, company_key
             FROM jobs
-            WHERE role_ai_engineer = 1
+            WHERE role_ai_engineer = true
               AND role_confidence = 'high'
               AND title IS NOT NULL
             ORDER BY RANDOM()
@@ -297,8 +287,8 @@ async function exportRoleTaggingCases(
                    role_confidence, role_reason, role_source,
                    source_kind, company_key
             FROM jobs
-            WHERE role_frontend_react = 1
-              AND role_ai_engineer = 0
+            WHERE role_frontend_react = true
+              AND role_ai_engineer = false
               AND role_confidence = 'high'
               AND title IS NOT NULL
             ORDER BY RANDOM()
@@ -312,8 +302,8 @@ async function exportRoleTaggingCases(
                    role_confidence, role_reason, role_source,
                    source_kind, company_key
             FROM jobs
-            WHERE role_ai_engineer = 1
-              AND role_frontend_react = 1
+            WHERE role_ai_engineer = true
+              AND role_frontend_react = true
               AND title IS NOT NULL
             ORDER BY RANDOM()
             LIMIT ?`,
@@ -326,8 +316,8 @@ async function exportRoleTaggingCases(
                    role_confidence, role_reason, role_source,
                    source_kind, company_key
             FROM jobs
-            WHERE role_ai_engineer = 0
-              AND role_frontend_react = 0
+            WHERE role_ai_engineer = false
+              AND role_frontend_react = false
               AND role_confidence = 'high'
               AND title IS NOT NULL
             ORDER BY RANDOM()
@@ -354,7 +344,7 @@ async function exportRoleTaggingCases(
 
   for (const bucket of buckets) {
     try {
-      const rows = await query<RawRoleJob>(client, bucket.sql, bucket.params);
+      const rows = await query<RawRoleJob>(bucket.sql, bucket.params);
       console.log(`  ${bucket.label}: ${rows.length} rows`);
       for (const row of rows) {
         if (!seen.has(row.id)) {
@@ -385,8 +375,8 @@ async function exportRoleTaggingCases(
   const cases = allRows.map(({ row, bucket }, i) => {
     const id = `db-role-${row.id}-${slugId(row.title ?? `job-${i}`)}`;
     const desc = trimDesc(row.description);
-    const isAI = row.role_ai_engineer === 1;
-    const isFrontend = row.role_frontend_react === 1;
+    const isAI = row.role_ai_engineer === true;
+    const isFrontend = row.role_frontend_react === true;
     const confidence = toConfidence(row.role_confidence);
     const reason =
       row.role_reason?.replace(/"/g, '\\"').slice(0, 200) ??
@@ -455,13 +445,10 @@ ${cases.join(",\n")}
 // Stats summary
 // ---------------------------------------------------------------------------
 
-async function printStats(
-  client: ReturnType<typeof createD1HttpClient>,
-): Promise<void> {
+async function printStats(): Promise<void> {
   console.log("\n📊 Database classification stats:");
 
-  const euStats = await query<{ is_remote_eu: number | null; confidence: string | null; count: number }>(
-    client,
+  const euStats = await query<{ is_remote_eu: boolean | null; confidence: string | null; count: number }>(
     `SELECT is_remote_eu, remote_eu_confidence AS confidence, COUNT(*) AS count
      FROM jobs
      WHERE is_remote_eu IS NOT NULL
@@ -470,12 +457,11 @@ async function printStats(
   );
 
   for (const row of euStats) {
-    const label = row.is_remote_eu === 1 ? "EU remote=true " : "EU remote=false";
+    const label = row.is_remote_eu === true ? "EU remote=true " : "EU remote=false";
     console.log(`  ${label}  conf=${row.confidence ?? "null"}  n=${row.count}`);
   }
 
-  const roleStats = await query<{ ai: number | null; frontend: number | null; count: number }>(
-    client,
+  const roleStats = await query<{ ai: boolean | null; frontend: boolean | null; count: number }>(
     `SELECT role_ai_engineer AS ai, role_frontend_react AS frontend, COUNT(*) AS count
      FROM jobs
      WHERE role_ai_engineer IS NOT NULL OR role_frontend_react IS NOT NULL
@@ -492,10 +478,7 @@ async function printStats(
     console.log("\n  Role tagging: no data (Phase 2 migration may not be applied)");
   }
 
-  const total = await query<{ count: number }>(
-    client,
-    "SELECT COUNT(*) AS count FROM jobs",
-  );
+  const total = await query<{ count: number }>("SELECT COUNT(*) AS count FROM jobs");
   console.log(`\n  Total jobs in DB: ${total[0]?.count ?? "?"}`);
 }
 
@@ -504,20 +487,12 @@ async function printStats(
 // ---------------------------------------------------------------------------
 
 async function main() {
-  console.log("🗃️  Export real D1 job data as LLM eval test cases");
-  console.log("===================================================");
+  console.log("🗃️  Export real job data (Neon) as LLM eval test cases");
+  console.log("======================================================");
 
-  let client: ReturnType<typeof createD1HttpClient>;
-  try {
-    client = createD1HttpClient();
-  } catch (err) {
-    console.error(`\n❌ ${(err as Error).message}`);
-    process.exit(1);
-  }
-
-  await printStats(client);
-  await exportEURemoteCases(client, samplesPerBucket);
-  await exportRoleTaggingCases(client, samplesPerBucket);
+  await printStats();
+  await exportEURemoteCases(samplesPerBucket);
+  await exportRoleTaggingCases(samplesPerBucket);
 
   console.log("\n🏁 Done.");
   console.log(

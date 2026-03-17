@@ -40,7 +40,7 @@ import {
   useGenerateResearchMutation,
   useGenerateLongFormTextMutation,
   useDeleteResearchMutation,
-  useDeleteGoalStoryMutation,
+  useDeleteStoryMutation,
   useUpdateGoalMutation,
   useUnlinkGoalFamilyMemberMutation,
   useGetFamilyMembersQuery,
@@ -295,7 +295,7 @@ function GoalPageContent() {
   const isStoryJobRunning =
     !!storyJobId && storyJobStatus !== "SUCCEEDED" && storyJobStatus !== "FAILED";
 
-  const [deleteGoalStory] = useDeleteGoalStoryMutation({
+  const [deleteStory] = useDeleteStoryMutation({
     refetchQueries: ["GetGoal"],
   });
 
@@ -809,76 +809,20 @@ function GoalPageContent() {
         </Card>
       )}
 
-      {/* User Stories */}
+      {/* Stories */}
       <Card>
         <Flex direction="column" gap="3" p="4">
           <Flex justify="between" align="center">
             <Heading size="4">
-              Stories {goal.userStories ? `(${goal.userStories.length})` : ""}
-            </Heading>
-            <Button asChild>
-              <NextLink href={goal ? `/stories/new?goalId=${goal.id}` : "/stories/new"}>
-                Add Story
-              </NextLink>
-            </Button>
-          </Flex>
-
-          {goal.userStories && goal.userStories.length > 0 ? (
-            <Flex direction="column" gap="2">
-              {goal.userStories.map((story) => (
-                <Card
-                  key={story.id}
-                  style={{ backgroundColor: "var(--gray-2)" }}
-                  asChild
-                >
-                  <NextLink
-                    href={`/stories/${story.id}`}
-                    style={{ textDecoration: "none" }}
-                  >
-                  <Flex direction="column" gap="2" p="3">
-                    <Flex align="center" gap="2">
-                      <Text size="1" color="gray">
-                        {new Date(story.createdAt).toLocaleDateString()}
-                      </Text>
-                      <Text size="1" color="gray">
-                        by {story.createdBy}
-                      </Text>
-                    </Flex>
-                    <Text
-                      size="2"
-                      style={{
-                        whiteSpace: "pre-wrap",
-                        overflow: "hidden",
-                        textOverflow: "ellipsis",
-                        display: "-webkit-box",
-                        WebkitLineClamp: 3,
-                        WebkitBoxOrient: "vertical",
-                      }}
-                    >
-                      {story.content}
-                    </Text>
-                  </Flex>
-                  </NextLink>
-                </Card>
-              ))}
-            </Flex>
-          ) : (
-            <Text size="2" color="gray">
-              No stories yet. Add your first story to capture your experience.
-            </Text>
-          )}
-        </Flex>
-      </Card>
-
-      {/* Generated Stories */}
-      <Card>
-        <Flex direction="column" gap="3" p="4">
-          <Flex justify="between" align="center">
-            <Heading size="4">
-              Generated Stories{" "}
+              Stories{" "}
               {goal.stories ? `(${goal.stories.length})` : ""}
             </Heading>
             <Flex align="center" gap="3">
+              <Button asChild variant="soft">
+                <NextLink href={goal ? `/stories/new?goalId=${goal.id}` : "/stories/new"}>
+                  Add Story
+                </NextLink>
+              </Button>
               <UserSettingsLanguageSelector />
               <GlassButton
                 variant="primary"
@@ -953,12 +897,19 @@ function GoalPageContent() {
                   <Flex direction="column" gap="2" p="3">
                     <Flex justify="between" align="center">
                       <Flex align="center" gap="2">
-                        <Badge color="violet" size="1">
-                          {story.language}
-                        </Badge>
-                        <Badge variant="soft" size="1">
-                          {story.minutes} min
-                        </Badge>
+                        {story.language && (
+                          <Badge color="violet" size="1">
+                            {story.language}
+                          </Badge>
+                        )}
+                        {story.minutes && (
+                          <Badge variant="soft" size="1">
+                            {story.minutes} min
+                          </Badge>
+                        )}
+                        {story.createdBy && (
+                          <Text size="1" color="gray">by {story.createdBy}</Text>
+                        )}
                       </Flex>
                       <Flex align="center" gap="2">
                         <Text size="1" color="gray">
@@ -973,7 +924,7 @@ function GoalPageContent() {
                           <AlertDialog.Content style={{ maxWidth: 400 }}>
                             <AlertDialog.Title>Delete Story</AlertDialog.Title>
                             <AlertDialog.Description size="2">
-                              Are you sure you want to delete this generated story? This cannot be undone.
+                              Are you sure you want to delete this story? This cannot be undone.
                             </AlertDialog.Description>
                             <Flex gap="3" mt="4" justify="end">
                               <AlertDialog.Cancel>
@@ -983,7 +934,7 @@ function GoalPageContent() {
                                 <Button
                                   variant="solid"
                                   color="red"
-                                  onClick={() => deleteGoalStory({ variables: { id: story.id } })}
+                                  onClick={() => deleteStory({ variables: { id: story.id } })}
                                 >
                                   Delete
                                 </Button>
@@ -994,7 +945,7 @@ function GoalPageContent() {
                       </Flex>
                     </Flex>
                     <NextLink
-                      href={`/stories/goal-story/${story.id}`}
+                      href={`/stories/${story.id}`}
                       style={{ textDecoration: "none" }}
                     >
                       <Text
@@ -1009,7 +960,7 @@ function GoalPageContent() {
                           cursor: "pointer",
                         }}
                       >
-                        {story.text}
+                        {story.content}
                       </Text>
                     </NextLink>
                   </Flex>

@@ -1,5 +1,5 @@
-query GetResearch($goalId: Int, $feedbackId: Int) {
-  research(goalId: $goalId, feedbackId: $feedbackId) {
+query GetResearch($goalId: Int, $issueId: Int, $feedbackId: Int) {
+  research(goalId: $goalId, issueId: $issueId, feedbackId: $feedbackId) {
     id
     goalId
     feedbackId

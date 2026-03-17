@@ -12,8 +12,7 @@
  */
 
 import { config } from "dotenv";
-import { drizzle } from "drizzle-orm/d1";
-import { createD1HttpClient } from "../src/db/d1-http";
+import { db } from "../src/db";
 import { jobs } from "../src/db/schema";
 import { isNotNull, desc, sql } from "drizzle-orm";
 
@@ -44,7 +43,6 @@ async function getJobsNeedingSkillExtraction(
   _config: Config,
   limit: number = 100,
 ): Promise<any[]> {
-  const db = drizzle(createD1HttpClient() as any);
   const result = await db
     .select({
       id: jobs.id,

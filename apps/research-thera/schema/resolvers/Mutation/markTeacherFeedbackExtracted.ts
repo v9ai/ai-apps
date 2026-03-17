@@ -1,5 +1,5 @@
 import type { MutationResolvers } from "./../../types.generated";
-import { d1Tools } from "@/src/db";
+import { markTeacherFeedbackExtracted as _markTeacherFeedbackExtracted, getTeacherFeedback } from "@/src/db";
 
 export const markTeacherFeedbackExtracted: NonNullable<MutationResolvers['markTeacherFeedbackExtracted']> = async (
   _parent,
@@ -11,9 +11,9 @@ export const markTeacherFeedbackExtracted: NonNullable<MutationResolvers['markTe
     throw new Error("Authentication required");
   }
 
-  await d1Tools.markTeacherFeedbackExtracted(args.id, userEmail);
+  await _markTeacherFeedbackExtracted(args.id, userEmail);
 
-  const fb = await d1Tools.getTeacherFeedback(args.id, userEmail);
+  const fb = await getTeacherFeedback(args.id, userEmail);
 
   if (!fb) {
     throw new Error("Teacher feedback not found after marking as extracted");

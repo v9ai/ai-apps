@@ -37,7 +37,6 @@ export const goal: NonNullable<QueryResolvers['goal']> = async (
     updatedAt: goal.updatedAt,
     questions: [],
     stories: [],
-    userStories: [],
     notes: [],
     research: [],
     subGoals: [],

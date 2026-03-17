@@ -38,7 +38,6 @@ export const ttsChunkQueue = queue({
 export interface TTSPayload {
   text: string;
   storyId?: string | null;
-  goalStoryId?: string | null;
   jobId?: string | null;
   voice?: string;
   model?: string;
@@ -258,7 +257,7 @@ export const ttsTask = task({
     logger.error("tts.job_failed", {
       jobId: payload.jobId,
       storyId: payload.storyId,
-      goalStoryId: payload.goalStoryId,
+
       error: message,
     });
     if (payload.jobId) {
@@ -279,7 +278,6 @@ export const ttsTask = task({
     const {
       text,
       storyId,
-      goalStoryId,
       jobId,
       voice = "onyx",
       model = "gpt-4o-mini-tts",
@@ -299,7 +297,6 @@ export const ttsTask = task({
 
     logger.info("tts.started", {
       storyId,
-      goalStoryId,
       jobId,
       chunks: chunks.length,
       textLen: text.length,
@@ -345,7 +342,7 @@ export const ttsTask = task({
         ok: r.ok,
         error: !r.ok ? String(r.error) : undefined,
       }));
-      logger.error("tts.chunks_failed", { storyId, goalStoryId, failed: failedChunks.length, total: chunks.length, details: failedDetails });
+      logger.error("tts.chunks_failed", { storyId, failed: failedChunks.length, total: chunks.length, details: failedDetails });
       throw new Error(`${failedChunks.length}/${chunks.length} chunk(s) failed`);
     }
 
@@ -360,7 +357,7 @@ export const ttsTask = task({
       chunkPayloads.map((p) => downloadFromR2(p.tempKey)),
     );
     const combined = mergeAudioChunks(audioBuffers, responseFormat);
-    logger.info("tts.chunks_merged", { storyId, goalStoryId, chunks: chunks.length, sizeBytes: combined.length });
+    logger.info("tts.chunks_merged", { storyId, chunks: chunks.length, sizeBytes: combined.length });
 
     if (jobId) {
       await updateJob(jobId, "RUNNING", { result: { progress: 80, stage: "uploading" } }).catch((e) => {
@@ -386,33 +383,21 @@ export const ttsTask = task({
 
     const audioUrl = result.publicUrl ?? "";
     if (!audioUrl) {
-      logger.warn("tts.r2_no_public_url", { storyId, goalStoryId, key });
+      logger.warn("tts.r2_no_public_url", { storyId, key });
     }
-    logger.info("tts.r2_uploaded", { storyId, goalStoryId, key, sizeBytes: combined.length, audioUrl });
+    logger.info("tts.r2_uploaded", { storyId, key, sizeBytes: combined.length, audioUrl });
 
     // Clean up temp chunk files
     await Promise.all(chunkPayloads.map((p) => deleteFromR2(p.tempKey).catch((e) => {
       logger.warn("tts.chunk_delete_failed", { tempKey: p.tempKey, error: String(e) });
     })));
-    logger.info("tts.chunks_cleaned", { storyId, goalStoryId, count: chunkPayloads.length });
+    logger.info("tts.chunks_cleaned", { storyId, count: chunkPayloads.length });
 
     // Update Neon stories row
-    if (goalStoryId) {
+    if (storyId) {
       const now = new Date().toISOString();
       try {
-        await neonSql`UPDATE goal_stories SET audio_key = ${key}, audio_url = ${audioUrl}, audio_generated_at = ${now}, updated_at = ${now} WHERE id = ${goalStoryId}`;
-        logger.info("tts.goal_story_updated", { goalStoryId, audioUrl, key });
-      } catch (dbErr) {
-        logger.error("tts.goal_story_update_failed", {
-          goalStoryId,
-          error: dbErr instanceof Error ? dbErr.message : String(dbErr),
-        });
-        throw dbErr; // re-throw so onFailure marks the job FAILED
-      }
-    } else if (storyId && userEmail) {
-      const now = new Date().toISOString();
-      try {
-        await neonSql`UPDATE stories SET audio_key = ${key}, audio_url = ${audioUrl}, audio_generated_at = ${now}, updated_at = ${now} WHERE id = ${storyId} AND user_id = ${userEmail}`;
+        await neonSql`UPDATE stories SET audio_key = ${key}, audio_url = ${audioUrl}, audio_generated_at = ${now}, updated_at = ${now} WHERE id = ${storyId}`;
         logger.info("tts.story_updated", { storyId, audioUrl, key });
       } catch (dbErr) {
         logger.error("tts.story_update_failed", {
@@ -422,14 +407,14 @@ export const ttsTask = task({
         throw dbErr;
       }
     } else {
-      logger.warn("tts.no_story_target", { storyId, goalStoryId, userEmail: userEmail ? "[set]" : "[missing]", jobId });
+      logger.warn("tts.no_story_target", { storyId, userEmail: userEmail ? "[set]" : "[missing]", jobId });
     }
 
     // Mark job SUCCEEDED
     if (jobId) {
       try {
         await updateJob(jobId, "SUCCEEDED", { result: { audioUrl } });
-        logger.info("tts.job_succeeded", { jobId, storyId, goalStoryId, audioUrl });
+        logger.info("tts.job_succeeded", { jobId, storyId, audioUrl });
       } catch (dbErr) {
         // Audio was generated and uploaded successfully — only the job status update failed.
         // Log clearly so it can be manually corrected.

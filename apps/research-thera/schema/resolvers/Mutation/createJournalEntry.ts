@@ -1,5 +1,5 @@
 import type { MutationResolvers } from "./../../types.generated";
-import { d1Tools } from "@/src/db";
+import { createJournalEntry as _createJournalEntry, getJournalEntry } from "@/src/db";
 
 export const createJournalEntry: NonNullable<MutationResolvers['createJournalEntry']> = async (
   _parent,
@@ -11,7 +11,7 @@ export const createJournalEntry: NonNullable<MutationResolvers['createJournalEnt
     throw new Error("Authentication required");
   }
 
-  const entryId = await d1Tools.createJournalEntry({
+  const entryId = await _createJournalEntry({
     userId: userEmail,
     familyMemberId: args.input.familyMemberId ?? null,
     title: args.input.title ?? null,
@@ -24,7 +24,7 @@ export const createJournalEntry: NonNullable<MutationResolvers['createJournalEnt
     entryDate: args.input.entryDate,
   });
 
-  const entry = await d1Tools.getJournalEntry(entryId, userEmail);
+  const entry = await getJournalEntry(entryId, userEmail);
 
   if (!entry) {
     throw new Error("Failed to retrieve created journal entry");

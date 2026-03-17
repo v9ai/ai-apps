@@ -1,6 +1,0 @@
-mutation DeleteGoalStory($id: Int!) {
-  deleteGoalStory(id: $id) {
-    success
-    message
-  }
-}

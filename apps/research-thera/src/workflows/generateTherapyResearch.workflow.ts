@@ -7,7 +7,6 @@ import { ragTools } from "@/src/tools/rag.tools";
 import { sourceTools } from "@/src/tools/sources.tools";
 import { extractorTools } from "@/src/tools/extractor.tools";
 import { openAlexTools } from "@/src/tools/openalex.tools";
-import { langfusePromptPackTools } from "@/src/tools/langfusePromptPack.tools";
 
 /**
  * Deep Research Workflow
@@ -350,7 +349,7 @@ const clinicalContextFields = {
   excludedTopics: z.array(z.string()),
 };
 
-// Step 2: Ensure Langfuse prompts exist (DeepSeek generates goal-specific templates)
+// Step 2: Pass-through step (formerly ensurePromptsStep — Langfuse removed)
 const ensurePromptsStep = createStep({
   id: "ensure-langfuse-prompts",
   inputSchema: z.object({
@@ -383,44 +382,20 @@ const ensurePromptsStep = createStep({
     notes: z.array(z.object({ content: z.string() })),
     familyMemberName: z.string().nullable(),
     familyMemberAge: z.number().int().nullable(),
-    plannerPromptName: z.string(),
-    extractorPromptName: z.string(),
-    goalSignature: z.string(),
-    createdNewVersion: z.boolean(),
     ...clinicalContextFields,
   }),
   execute: async ({ inputData }) => {
     if (inputData.jobId) {
       await d1Tools.updateGenerationJob(inputData.jobId, { progress: 10 }).catch(() => {});
     }
-    const ensured = await langfusePromptPackTools.ensure({
-      goalId: inputData.goalId,
-      // Use the translated/normalized title so DeepSeek generates correct domain queries
-      goalTitle: inputData.translatedGoalTitle,
-      goalDescription: inputData.goal.description ?? "",
-      notes: inputData.notes.map((n) => n.content),
-      familyMemberName: inputData.familyMemberName,
-      familyMemberAge: inputData.familyMemberAge,
-      label: process.env.LANGFUSE_PROMPT_LABEL || "production",
-      // Clinical context from normalizeGoalStep — used as hard constraints in planner prompt
-      clinicalDomain: inputData.clinicalDomain,
-      clinicalRestatement: inputData.clinicalRestatement,
-      behaviorDirection: inputData.behaviorDirection,
-      developmentalTier: inputData.developmentalTier,
-      requiredKeywords: inputData.requiredKeywords,
-      excludedTopics: inputData.excludedTopics,
-    });
-
     return {
       ...inputData,
       notes: inputData.notes.map((n) => ({ content: n.content })),
-      ...ensured,
-      jobId: inputData.jobId,
     };
   },
 });
 
-// Step 3: Plan query (uses Langfuse-backed planner prompt)
+// Step 3: Plan query
 const planQueryStep = createStep({
   id: "plan-query",
   inputSchema: z.object({
@@ -433,8 +408,6 @@ const planQueryStep = createStep({
     notes: z.array(z.object({ content: z.string() })),
     familyMemberName: z.string().nullable(),
     familyMemberAge: z.number().int().nullable(),
-    plannerPromptName: z.string(),
-    extractorPromptName: z.string(),
   }),
   outputSchema: z.object({
     userId: z.string(),
@@ -446,8 +419,6 @@ const planQueryStep = createStep({
     notes: z.array(z.object({ content: z.string() })),
     familyMemberName: z.string().nullable(),
     familyMemberAge: z.number().int().nullable(),
-    plannerPromptName: z.string(),
-    extractorPromptName: z.string(),
     goalType: z.string(),
     keywords: z.array(z.string()),
     semanticScholarQueries: z.array(z.string()),
@@ -460,14 +431,13 @@ const planQueryStep = createStep({
     if (inputData.jobId) {
       await d1Tools.updateGenerationJob(inputData.jobId, { progress: 20 }).catch(() => {});
     }
-    // Use the translated title so the Langfuse planner prompt runs in clinical English
+    // Use the translated title so the planner prompt runs in clinical English
     const planTitle = (inputData as any).translatedGoalTitle ?? inputData.goal.title;
 
     const rawPlan = await extractorTools.plan({
       title: planTitle,
       description: inputData.goal.description ?? "",
       notes: inputData.notes.map((n) => n.content),
-      plannerPromptName: inputData.plannerPromptName,
     });
 
     const plan = extractorTools.sanitize(rawPlan);
@@ -508,8 +478,6 @@ const searchStep = createStep({
     feedbackId: z.number().int().optional(),
     goal: z.any(),
     notes: z.any(),
-    plannerPromptName: z.string(),
-    extractorPromptName: z.string(),
     goalType: z.string(),
     keywords: z.array(z.string()),
     semanticScholarQueries: z.array(z.string()).optional(),
@@ -525,8 +493,6 @@ const searchStep = createStep({
     feedbackId: z.number().int().optional(),
     goal: z.any(),
     notes: z.any(),
-    plannerPromptName: z.string(),
-    extractorPromptName: z.string(),
     goalType: z.string(),
     keywords: z.array(z.string()),
     candidates: z.array(
@@ -717,8 +683,6 @@ const enrichAbstractsStep = createStep({
     feedbackId: z.number().int().optional(),
     goal: z.any(),
     notes: z.any(),
-    plannerPromptName: z.string(),
-    extractorPromptName: z.string(),
     goalType: z.string(),
     keywords: z.array(z.string()),
     candidates: z.array(z.any()),
@@ -731,8 +695,6 @@ const enrichAbstractsStep = createStep({
     feedbackId: z.number().int().optional(),
     goal: z.any(),
     notes: z.any(),
-    plannerPromptName: z.string(),
-    extractorPromptName: z.string(),
     goalType: z.string(),
     keywords: z.array(z.string()),
     candidates: z.array(z.any()),
@@ -810,7 +772,6 @@ async function extractOnePaper(params: {
   goalType: string;
   goalTitle: string;
   goalDescription: string | null;
-  extractorPromptName: string;
 }): Promise<{ ok: boolean; score: number; research?: any; reason: string }> {
   try {
     const paper = await sourceTools.fetchPaperDetails(params.candidate);
@@ -820,7 +781,6 @@ async function extractOnePaper(params: {
       goalDescription: params.goalDescription ?? "",
       goalType: params.goalType,
       paper,
-      extractorPromptName: params.extractorPromptName,
     });
 
     const ok =
@@ -882,7 +842,6 @@ const prepExtractStep = createStep({
       },
       plan: {
         goalType: inputData.goalType,
-        extractorPromptName: inputData.extractorPromptName,
         keywords: inputData.keywords,
         // Pass requiredKeywords for keyword-overlap scoring in persistStep
         requiredKeywords: inputData.requiredKeywords ?? [],
@@ -948,7 +907,6 @@ const extractAllStep = createStep({
             // Use translated title so extractor scores against the correct clinical domain
             goalTitle: inputData.context.translatedGoalTitle ?? goal.title,
             goalDescription: goal.description,
-            extractorPromptName: plan.extractorPromptName,
           }),
         ),
       );

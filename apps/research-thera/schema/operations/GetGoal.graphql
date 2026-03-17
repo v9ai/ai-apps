@@ -54,17 +54,15 @@ query GetGoal($id: Int, $slug: String) {
     stories {
       id
       goalId
-      language
-      minutes
-      text
-      createdAt
-      updatedAt
-    }
-    userStories {
-      id
-      goalId
+      issueId
+      feedbackId
       createdBy
       content
+      language
+      minutes
+      audioKey
+      audioUrl
+      audioGeneratedAt
       createdAt
       updatedAt
     }

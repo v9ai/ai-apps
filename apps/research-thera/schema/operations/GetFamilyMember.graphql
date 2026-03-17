@@ -31,6 +31,9 @@ query GetFamilyMember($id: Int, $slug: String) {
     }
     behaviorObservations {
       id
+      familyMemberId
+      goalId
+      createdBy
       observedAt
       observationType
       frequency
@@ -38,6 +41,55 @@ query GetFamilyMember($id: Int, $slug: String) {
       context
       notes
       createdAt
+      updatedAt
+    }
+    teacherFeedbacks {
+      id
+      familyMemberId
+      createdBy
+      teacherName
+      subject
+      feedbackDate
+      content
+      tags
+      source
+      extracted
+      createdAt
+      updatedAt
+    }
+    issues {
+      id
+      feedbackId
+      familyMemberId
+      createdBy
+      title
+      description
+      category
+      severity
+      recommendations
+      createdAt
+      updatedAt
+    }
+    relationships {
+      id
+      createdBy
+      subjectType
+      subjectId
+      relatedType
+      relatedId
+      relationshipType
+      context
+      startDate
+      status
+      createdAt
+      updatedAt
+      related {
+        id
+        type
+        slug
+        firstName
+        lastName
+      }
     }
   }
 }

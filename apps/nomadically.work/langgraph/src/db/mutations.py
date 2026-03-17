@@ -68,8 +68,7 @@ def persist_role_tags(
     with conn.cursor() as cur:
         cur.execute(
             """UPDATE jobs
-               SET role_frontend_react = %s,
-                   role_ai_engineer    = %s,
+               SET role_ai_engineer    = %s,
                    role_confidence     = %s,
                    role_reason         = %s,
                    role_source         = %s,
@@ -77,8 +76,7 @@ def persist_role_tags(
                    updated_at          = now()
                WHERE id = %s""",
             [
-                is_frontend_react,
-                is_ai_engineer,
+                is_ai_engineer or is_frontend_react,
                 confidence,
                 reason,
                 source,

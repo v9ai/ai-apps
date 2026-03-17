@@ -1,5 +1,5 @@
 import type { QueryResolvers } from "./../../types.generated";
-import { d1Tools } from "@/src/db";
+import { getRelationship } from "@/src/db";
 
 export const relationship: NonNullable<QueryResolvers['relationship']> = async (
   _parent,
@@ -11,7 +11,7 @@ export const relationship: NonNullable<QueryResolvers['relationship']> = async (
     throw new Error("Authentication required");
   }
 
-  const item = await d1Tools.getRelationship(args.id, userEmail);
+  const item = await getRelationship(args.id, userEmail);
   if (!item) return null;
 
   return {

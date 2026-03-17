@@ -26,17 +26,12 @@ import {
   useUpdateFamilyMemberMutation,
   useShareFamilyMemberMutation,
   useUnshareFamilyMemberMutation,
-  useGetBehaviorObservationsQuery,
   useDeleteBehaviorObservationMutation,
-  useGetIssuesQuery,
   useDeleteIssueMutation,
-  useGetTeacherFeedbacksQuery,
   useDeleteTeacherFeedbackMutation,
-  useGetRelationshipsQuery,
   useDeleteRelationshipMutation,
   useDeleteContactMutation,
   FamilyMemberShareRole,
-  PersonType,
 } from "@/app/__generated__/hooks";
 import { authClient } from "@/app/lib/auth/client";
 import AddGoalButton from "@/app/components/AddGoalButton";
@@ -45,6 +40,7 @@ import BehaviorObservationsList from "@/app/components/BehaviorObservationsList"
 import AddTeacherFeedbackButton from "@/app/components/AddTeacherFeedbackButton";
 import TeacherFeedbackList from "@/app/components/TeacherFeedbackList";
 import AddContactButton from "@/app/components/AddContactButton";
+import AddIssueButton from "@/app/components/AddIssueButton";
 
 const RELATIONSHIP_OPTIONS = [
   "self",
@@ -187,29 +183,21 @@ function FamilyMemberContent() {
       refetchQueries: ["GetFamilyMember"],
     });
 
-  const { data: obsData } = useGetBehaviorObservationsQuery({
-    variables: { familyMemberId: memberId },
-    skip: isNaN(memberId),
-  });
-  const observations = obsData?.behaviorObservations ?? [];
+  const observations = member?.behaviorObservations ?? [];
 
   const [deleteObservation, { loading: deletingObs }] =
     useDeleteBehaviorObservationMutation({
-      refetchQueries: ["GetBehaviorObservations"],
+      refetchQueries: ["GetFamilyMember"],
     });
 
   const handleDeleteObservation = (obsId: number) => {
     deleteObservation({ variables: { id: obsId } });
   };
 
-  const { data: issuesData } = useGetIssuesQuery({
-    variables: { familyMemberId: memberId },
-    skip: isNaN(memberId),
-  });
-  const issues = issuesData?.issues ?? [];
+  const issues = member?.issues ?? [];
 
   const [deleteIssue, { loading: deletingIssue }] = useDeleteIssueMutation({
-    refetchQueries: ["GetIssues"],
+    refetchQueries: ["GetFamilyMember"],
   });
 
   const handleDeleteIssue = (issueId: number) => {
@@ -218,30 +206,22 @@ function FamilyMemberContent() {
 
   const memberSlugOrId = member?.slug ?? raw;
 
-  const { data: feedbackData } = useGetTeacherFeedbacksQuery({
-    variables: { familyMemberId: memberId },
-    skip: isNaN(memberId),
-  });
-  const teacherFeedbacks = feedbackData?.teacherFeedbacks ?? [];
+  const teacherFeedbacks = member?.teacherFeedbacks ?? [];
 
   const [deleteFeedback, { loading: deletingFeedback }] =
     useDeleteTeacherFeedbackMutation({
-      refetchQueries: ["GetTeacherFeedbacks"],
+      refetchQueries: ["GetFamilyMember"],
     });
 
   const handleDeleteFeedback = (fbId: number) => {
     deleteFeedback({ variables: { id: fbId } });
   };
 
-  const { data: relationshipsData } = useGetRelationshipsQuery({
-    variables: { subjectType: PersonType.FamilyMember, subjectId: memberId },
-    skip: isNaN(memberId),
-  });
-  const relationships = relationshipsData?.relationships ?? [];
+  const relationships = member?.relationships ?? [];
 
   const [deleteRelationship, { loading: deletingRelationship }] =
     useDeleteRelationshipMutation({
-      refetchQueries: ["GetRelationships"],
+      refetchQueries: ["GetFamilyMember"],
     });
 
   const [deleteContact] = useDeleteContactMutation({
@@ -580,13 +560,16 @@ function FamilyMemberContent() {
         <Flex direction="column" gap="3" p="4">
           <Flex justify="between" align="center">
             <Heading size="4">Issues ({issues.length})</Heading>
-            <Button
-              variant="soft"
-              size="2"
-              onClick={() => router.push(`/family/${memberSlugOrId}/issues`)}
-            >
-              View All
-            </Button>
+            <Flex gap="2">
+              <AddIssueButton familyMemberId={memberId} size="2" />
+              <Button
+                variant="soft"
+                size="2"
+                onClick={() => router.push(`/family/${memberSlugOrId}/issues`)}
+              >
+                View All
+              </Button>
+            </Flex>
           </Flex>
           <Separator size="4" />
           {issues.length === 0 ? (
@@ -681,6 +664,21 @@ function FamilyMemberContent() {
               )}
             </Flex>
           )}
+          <Separator size="4" />
+          <Flex justify="between" align="center">
+            <Heading size="3">Behavior Observations ({observations.length})</Heading>
+            <AddBehaviorObservationButton
+              familyMemberId={memberId}
+              refetchQueries={["GetFamilyMember"]}
+              size="2"
+            />
+          </Flex>
+          <BehaviorObservationsList
+            observations={observations}
+            onDelete={handleDeleteObservation}
+            deleting={deletingObs}
+            familyMemberId={memberId}
+          />
         </Flex>
       </Card>
 
@@ -698,7 +696,7 @@ function FamilyMemberContent() {
             </Flex>
             <AddTeacherFeedbackButton
               familyMemberId={memberId}
-              refetchQueries={["GetTeacherFeedbacks"]}
+              refetchQueries={["GetFamilyMember"]}
               size="2"
             />
           </Flex>
@@ -707,29 +705,6 @@ function FamilyMemberContent() {
             feedbacks={teacherFeedbacks}
             onDelete={handleDeleteFeedback}
             deleting={deletingFeedback}
-          />
-        </Flex>
-      </Card>
-
-      {/* Behavior Observations */}
-      <Card>
-        <Flex direction="column" gap="3" p="4">
-          <Flex justify="between" align="center">
-            <Heading size="4">
-              Behavior Observations ({observations.length})
-            </Heading>
-            <AddBehaviorObservationButton
-              familyMemberId={memberId}
-              refetchQueries={["GetBehaviorObservations"]}
-              size="2"
-            />
-          </Flex>
-          <Separator size="4" />
-          <BehaviorObservationsList
-            observations={observations}
-            onDelete={handleDeleteObservation}
-            deleting={deletingObs}
-            familyMemberId={memberId}
           />
         </Flex>
       </Card>

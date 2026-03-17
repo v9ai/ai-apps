@@ -2,16 +2,12 @@
  * Email utilities — personalization, bounce checking, send+save.
  */
 
-import { drizzle } from "drizzle-orm/d1";
 import { eq, and, or } from "drizzle-orm";
-import { createD1HttpClient } from "@/db/d1-http";
+import { db } from "@/db";
 import { contacts, contactEmails } from "@/db/schema";
 import { resend } from "@/lib/resend";
 import { EmailConfig } from "./config";
 
-function getDb() {
-  return drizzle(createD1HttpClient() as any);
-}
 
 /**
  * Check if an email address has bounced (exists in any contact's bouncedEmails).
@@ -20,7 +16,6 @@ export async function isEmailBounced(
   email: string,
 ): Promise<{ isBounced: boolean; contactId?: number }> {
   try {
-    const db = getDb();
     const allContacts = await db.select().from(contacts);
 
     for (const contact of allContacts) {
@@ -155,8 +150,7 @@ export async function sendAndSaveEmail(
     // Save to DB if we have a contactId
     if (params.contactId) {
       try {
-        const db = getDb();
-        const [savedEmail] = await db
+            const [savedEmail] = await db
           .insert(contactEmails)
           .values({
             contact_id: params.contactId,

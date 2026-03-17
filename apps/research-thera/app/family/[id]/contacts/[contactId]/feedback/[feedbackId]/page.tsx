@@ -36,7 +36,7 @@ import {
   useGetResearchQuery,
   useGetIssuesQuery,
   useCreateIssueMutation,
-  useDeleteGoalStoryMutation,
+  useDeleteStoryMutation,
   FeedbackSource,
 } from "@/app/__generated__/hooks";
 
@@ -348,7 +348,7 @@ function ContactFeedbackDetailContent() {
 
   // Story deletion
   const [storyToDelete, setStoryToDelete] = useState<number | null>(null);
-  const [deleteGoalStory, { loading: deletingStory }] = useDeleteGoalStoryMutation({
+  const [deleteStory, { loading: deletingStory }] = useDeleteStoryMutation({
     onCompleted: () => {
       setStoryToDelete(null);
       apolloClient.refetchQueries({ include: ["GetContactFeedback"] });
@@ -834,7 +834,7 @@ function ContactFeedbackDetailContent() {
                   <Button
                     color="red"
                     loading={deletingStory}
-                    onClick={() => storyToDelete !== null && deleteGoalStory({ variables: { id: storyToDelete } })}
+                    onClick={() => storyToDelete !== null && deleteStory({ variables: { id: storyToDelete } })}
                   >
                     Delete
                   </Button>
@@ -872,7 +872,7 @@ function ContactFeedbackDetailContent() {
                       </Flex>
                     </Flex>
                     <NextLink
-                      href={`/stories/goal-story/${story.id}`}
+                      href={`/stories/${story.id}`}
                       style={{ textDecoration: "none" }}
                     >
                       <Text
@@ -887,7 +887,7 @@ function ContactFeedbackDetailContent() {
                           cursor: "pointer",
                         }}
                       >
-                        {story.text}
+                        {story.content}
                       </Text>
                     </NextLink>
                   </Flex>

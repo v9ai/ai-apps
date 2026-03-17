@@ -9,6 +9,8 @@ import {
   useUpdateCompanyMutation,
   useGetJobsQuery,
   useGetApplicationsQuery,
+  useCreateApplicationMutation,
+  useUpdateApplicationMutation,
   useCreateContactMutation,
   useCreateOpportunityMutation,
   useGetOpportunitiesQuery,
@@ -51,6 +53,7 @@ import {
   ChevronUpIcon,
   Link2Icon,
   Pencil1Icon,
+  PlusIcon,
   TrashIcon,
 } from "@radix-ui/react-icons";
 
@@ -363,6 +366,140 @@ const CATEGORY_OPTIONS: CompanyCategory[] = [
   "OTHER",
   "UNKNOWN",
 ];
+
+function AddApplicationDialog({
+  companyName,
+  onCreated,
+}: {
+  companyName: string;
+  onCreated?: () => void;
+}) {
+  const [open, setOpen] = useState(false);
+  const [jobTitle, setJobTitle] = useState("");
+  const [status, setStatus] = useState("pending");
+  const [notes, setNotes] = useState("");
+  const [error, setError] = useState<string | null>(null);
+
+  const [createApplication, { loading: creating }] = useCreateApplicationMutation();
+  const [updateApplication, { loading: updating }] = useUpdateApplicationMutation();
+  const loading = creating || updating;
+
+  const handleSave = async () => {
+    setError(null);
+    if (!jobTitle.trim()) {
+      setError("Job title is required.");
+      return;
+    }
+    try {
+      const result = await createApplication({
+        variables: {
+          input: {
+            jobTitle: jobTitle.trim(),
+            companyName,
+            questions: [],
+          },
+        },
+      });
+      const id = result.data?.createApplication?.id;
+      if (id && (status !== "pending" || notes.trim())) {
+        await updateApplication({
+          variables: {
+            id,
+            input: {
+              ...(status !== "pending" && { status: status as "pending" | "submitted" | "reviewed" | "rejected" | "accepted" }),
+              ...(notes.trim() && { notes: notes.trim() }),
+            },
+          },
+        });
+      }
+      onCreated?.();
+      setOpen(false);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Something went wrong.");
+    }
+  };
+
+  const handleOpenChange = (nextOpen: boolean) => {
+    setOpen(nextOpen);
+    if (nextOpen) {
+      setJobTitle("");
+      setStatus("pending");
+      setNotes("");
+      setError(null);
+    }
+  };
+
+  return (
+    <Dialog.Root open={open} onOpenChange={handleOpenChange}>
+      <Dialog.Trigger>
+        <Button size="2" variant="soft" color="green">
+          <PlusIcon />
+          Add Application
+        </Button>
+      </Dialog.Trigger>
+
+      <Dialog.Content maxWidth="440px">
+        <Dialog.Title>Add Application</Dialog.Title>
+        <Dialog.Description size="2" color="gray" mb="4">
+          Track a job application at {companyName}.
+        </Dialog.Description>
+
+        <Flex direction="column" gap="3">
+          {error && (
+            <Callout.Root color="red" size="1">
+              <Callout.Icon>
+                <InfoCircledIcon />
+              </Callout.Icon>
+              <Callout.Text>{error}</Callout.Text>
+            </Callout.Root>
+          )}
+
+          <Flex direction="column" gap="1">
+            <Text size="2" weight="medium">Job title *</Text>
+            <TextField.Root
+              value={jobTitle}
+              onChange={(e) => setJobTitle(e.target.value)}
+              placeholder="e.g. Senior AI Engineer"
+            />
+          </Flex>
+
+          <Flex direction="column" gap="1">
+            <Text size="2" weight="medium">Status</Text>
+            <Select.Root value={status} onValueChange={setStatus}>
+              <Select.Trigger />
+              <Select.Content>
+                <Select.Item value="pending">Saved</Select.Item>
+                <Select.Item value="submitted">Applied</Select.Item>
+                <Select.Item value="reviewed">Interviewing</Select.Item>
+                <Select.Item value="accepted">Offer</Select.Item>
+                <Select.Item value="rejected">Rejected</Select.Item>
+              </Select.Content>
+            </Select.Root>
+          </Flex>
+
+          <Flex direction="column" gap="1">
+            <Text size="2" weight="medium">Notes</Text>
+            <TextArea
+              value={notes}
+              onChange={(e) => setNotes(e.target.value)}
+              placeholder="Any context or notes..."
+              rows={3}
+            />
+          </Flex>
+
+          <Flex justify="end" gap="2">
+            <Dialog.Close>
+              <Button variant="soft" color="gray">Cancel</Button>
+            </Dialog.Close>
+            <Button onClick={handleSave} disabled={loading}>
+              {loading ? "Saving…" : "Add application"}
+            </Button>
+          </Flex>
+        </Flex>
+      </Dialog.Content>
+    </Dialog.Root>
+  );
+}
 
 function LinkedInLeadDialog({
   companyId,
@@ -934,7 +1071,7 @@ export function CompanyDetail({ companyKey, companyId }: Props) {
   });
   const companyJobs = jobsData?.jobs?.jobs ?? [];
 
-  const { data: appsData } = useGetApplicationsQuery();
+  const { data: appsData, refetch: refetchApps } = useGetApplicationsQuery();
   const companyApps = (appsData?.applications ?? []).filter(
     (a) => a.companyKey === effectiveKey || a.companyName?.toLowerCase().replace(/\s+/g, "-") === effectiveKey,
   );
@@ -1218,6 +1355,12 @@ export function CompanyDetail({ companyKey, companyId }: Props) {
 
           <Flex gap="2" align="center">
             {isAdmin && company && (
+              <AddApplicationDialog
+                companyName={company.name}
+                onCreated={refetchApps}
+              />
+            )}
+            {isAdmin && company && (
               <LinkedInLeadDialog
                 companyId={company.id}
                 companyName={company.name}
@@ -1284,12 +1427,12 @@ export function CompanyDetail({ companyKey, companyId }: Props) {
               </Tabs.Trigger>
             )}
             {isAdmin && (
-              <Link href={`/companies/${effectiveKey}/contacts`} className="rt-reset rt-TabsTrigger" style={{ textDecoration: "none" }}>
+              <Link href={`/companies/${effectiveKey}/contacts`} className="rt-reset rt-TabsTrigger" style={{ textDecoration: "none", display: "inline-flex", alignItems: "center", paddingLeft: "var(--tabs-trigger-padding-x)", paddingRight: "var(--tabs-trigger-padding-x)" }}>
                 Contacts
               </Link>
             )}
             {isAdmin && (
-              <Link href={`/companies/${effectiveKey}/emails`} className="rt-reset rt-TabsTrigger" style={{ textDecoration: "none" }}>
+              <Link href={`/companies/${effectiveKey}/emails`} className="rt-reset rt-TabsTrigger" style={{ textDecoration: "none", display: "inline-flex", alignItems: "center", paddingLeft: "var(--tabs-trigger-padding-x)", paddingRight: "var(--tabs-trigger-padding-x)" }}>
                 Emails
               </Link>
             )}

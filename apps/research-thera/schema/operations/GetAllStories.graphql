@@ -2,8 +2,12 @@ query GetAllStories {
   allStories {
     id
     goalId
+    issueId
+    feedbackId
     createdBy
     content
+    language
+    minutes
     audioKey
     audioUrl
     audioGeneratedAt

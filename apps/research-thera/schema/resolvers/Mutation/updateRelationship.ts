@@ -1,5 +1,5 @@
 import type { MutationResolvers } from "./../../types.generated";
-import { d1Tools } from "@/src/db";
+import { updateRelationship as _updateRelationship, getRelationship } from "@/src/db";
 
 export const updateRelationship: NonNullable<MutationResolvers['updateRelationship']> = async (
   _parent,
@@ -11,14 +11,14 @@ export const updateRelationship: NonNullable<MutationResolvers['updateRelationsh
     throw new Error("Authentication required");
   }
 
-  await d1Tools.updateRelationship(args.id, userEmail, {
+  await _updateRelationship(args.id, userEmail, {
     relationshipType: args.input.relationshipType ?? undefined,
     context: args.input.context ?? undefined,
     startDate: args.input.startDate ?? undefined,
     status: args.input.status ?? undefined,
   });
 
-  const item = await d1Tools.getRelationship(args.id, userEmail);
+  const item = await getRelationship(args.id, userEmail);
   if (!item) {
     throw new Error("Relationship not found after update");
   }

@@ -1,5 +1,5 @@
 import type { MutationResolvers } from "./../../types.generated";
-import { d1Tools } from "@/src/db";
+import { updateContactFeedback as _updateContactFeedback, getContactFeedback } from "@/src/db";
 
 export const updateContactFeedback: NonNullable<MutationResolvers['updateContactFeedback']> = async (
   _parent,
@@ -11,7 +11,7 @@ export const updateContactFeedback: NonNullable<MutationResolvers['updateContact
     throw new Error("Authentication required");
   }
 
-  await d1Tools.updateContactFeedback(args.id, userEmail, {
+  await _updateContactFeedback(args.id, userEmail, {
     subject: args.input.subject ?? undefined,
     feedbackDate: args.input.feedbackDate ?? undefined,
     content: args.input.content ?? undefined,
@@ -19,7 +19,7 @@ export const updateContactFeedback: NonNullable<MutationResolvers['updateContact
     source: args.input.source ?? undefined,
   });
 
-  const fb = await d1Tools.getContactFeedback(args.id, userEmail);
+  const fb = await getContactFeedback(args.id, userEmail);
 
   if (!fb) {
     throw new Error("Contact feedback not found after update");

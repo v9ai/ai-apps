@@ -4,8 +4,7 @@ import { join } from "path";
 import { auth } from "@/lib/auth/server";
 import { isAdminEmail } from "@/lib/admin";
 import { resend } from "@/lib/resend";
-import { drizzle } from "drizzle-orm/d1";
-import { createD1HttpClient } from "@/db/d1-http";
+import { db } from "@/db";
 import { contactEmails } from "@/db/schema";
 
 export const runtime = "nodejs";
@@ -40,7 +39,7 @@ function textToHtml(text: string): string {
 }
 
 export async function POST(request: NextRequest) {
-  const session = await auth.api.getSession({ headers: request.headers });
+  const { data: session } = await auth.getSession({ fetchOptions: { headers: request.headers } });
   if (!session) {
     return NextResponse.json({ success: false, error: "Unauthorized" }, { status: 401 });
   }
@@ -93,7 +92,6 @@ export async function POST(request: NextRequest) {
   // Persist to DB if contactId provided
   if (contactId) {
     try {
-      const db = drizzle(createD1HttpClient() as any);
       await db.insert(contactEmails).values({
         contact_id: contactId,
         resend_id: result.id,

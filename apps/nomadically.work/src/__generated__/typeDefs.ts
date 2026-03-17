@@ -63,13 +63,14 @@ type AnalyzeCompanyResponse {
 }
 
 type Application {
+  aiInterviewQuestions: String
   companyKey: String
   companyName: String
   createdAt: String!
   email: EmailAddress!
   id: Int!
   jobDescription: String
-  jobId: String!
+  jobId: String
   jobTitle: String
   notes: String
   questions: [QuestionAnswer!]!
@@ -1520,6 +1521,8 @@ type UnverifyContactsResult {
 input UpdateApplicationInput {
   companyName: String
   jobDescription: String
+  jobId: String
+  jobTitle: String
   notes: String
   status: ApplicationStatus
 }

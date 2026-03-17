@@ -33,9 +33,9 @@ from conftest import (
     lego_therapeutic_integration_metric,
     not_adult_register_metric,
     safety_compliance_metric,
+    single_recipient_metric,
     therapeutic_structure_metric,
     tts_suitability_metric,
-    unique_outcomes_integration_metric,
 )
 from generator import build_story_prompt
 
@@ -172,17 +172,19 @@ class TestDeterministic:
         )
 
     def test_sam_name_in_script(self, story_output):
-        _, script = story_output
-        assert _NAME in script.lower(), (
-            "Script does not mention Sam by name. "
+        case, script = story_output
+        name = case.get("person_name", "sam").lower()
+        assert name in script.lower(), (
+            f"Script does not mention {case.get('person_name', 'the child')} by name. "
             "Child-directed scripts must address the child directly and personally."
         )
 
     def test_sam_name_used_multiple_times(self, story_output):
-        _, script = story_output
-        count = script.lower().count(_NAME)
+        case, script = story_output
+        name = case.get("person_name", "sam").lower()
+        count = script.lower().count(name)
         assert count >= 2, (
-            f"Sam's name appears only {count} time(s). "
+            f"{case.get('person_name', 'The child')}'s name appears only {count} time(s). "
             "Child scripts should use the child's name at least twice for engagement."
         )
 
@@ -254,23 +256,6 @@ class TestDeterministic:
             f"Addressed {addressed}/{len(issue_titles)} issues: {issue_titles}"
         )
 
-    def test_unique_outcomes_referenced(self, story_output):
-        case, script = story_output
-        outcomes = case.get("unique_outcomes", [])
-        if not outcomes:
-            pytest.skip("No unique outcomes in this test case")
-
-        script_lower = script.lower()
-        for outcome in outcomes:
-            desc_words = [w for w in outcome["description"].lower().split() if len(w) > 4]
-            if any(w in script_lower for w in desc_words):
-                return
-
-        pytest.fail(
-            f"Sam's sparkling moments not referenced in script. "
-            f"Outcomes: {[o['description'] for o in outcomes]}"
-        )
-
     def test_notes_key_concepts_in_script(self, story_output):
         case, script = story_output
         notes = case.get("notes")
@@ -305,6 +290,84 @@ class TestDeterministic:
                 f"Script may contain a diagnosis statement about Sam. "
                 f"Match: {match.group()!r}"
             )
+
+    # Patterns that indicate a direct address to "Mom", "Dad", etc.
+    def test_script_not_truncated(self, story_output):
+        """Script must end with a complete sentence, not be cut off mid-word or mid-sentence."""
+        _, script = story_output
+        stripped = script.strip()
+        assert re.search(r'[.!?…]$|\.{3}$', stripped), (
+            f"Script appears truncated — last 80 chars: {stripped[-80:]!r}. "
+            "Expected the script to end with a complete sentence (., !, ?) or ellipsis."
+        )
+        assert not re.search(r'\w$', stripped), (
+            f"Script ends mid-word: {stripped[-40:]!r}. "
+            "Increase maxTokens or reduce session length to prevent truncation."
+        )
+
+    def test_script_has_closing(self, story_output):
+        """Script must contain a closing/affirmation — catches truncation before the wrap-up."""
+        _, script = story_output
+        script_lower = script.lower()
+        closing_keywords = [
+            "well done", "great job", "proud of you", "you did", "bravo",
+            "remember", "practice", "until next time", "bye", "goodbye",
+            "see you", "you are", "you're", "fantastic", "wonderful", "amazing",
+        ]
+        found = any(kw in script_lower for kw in closing_keywords)
+        assert found, (
+            "Script appears to be missing a closing/affirmation section — "
+            "the content may have been cut off before the wrap-up. "
+            f"Expected one of: {closing_keywords[:6]}..."
+        )
+
+    # Used by both single-recipient tests below.
+    _PARENT_ROLE_PATTERNS = [
+        r"(?:^|\.\s+|\?\s+|!\s+|,\s+)(?:mom|mum|mama|dad|papa|father|mother)\s*[,.]",
+        r"\bhi\s+(?:mom|mum|mama|dad|papa|father|mother)\b",
+        r"\bhello\s+(?:mom|mum|mama|dad|papa|father|mother)\b",
+        r"\bnow\s*,?\s*(?:mom|mum|mama|dad|papa|father|mother)\b",
+        r"\b(?:mom|mum|mama|dad|papa|father|mother)\s*,\s+(?:please|you|let|can|do|tell|say|take|try|now|next)",
+    ]
+
+    def test_no_parent_role_direct_address(self, story_output):
+        """Script must never directly address 'Mom', 'Dad', or equivalent parent roles."""
+        _, script = story_output
+        script_lower = script.lower()
+        for pattern in self._PARENT_ROLE_PATTERNS:
+            match = re.search(pattern, script_lower)
+            assert not match, (
+                f"Script directly addresses a parent role: {match.group()!r}. "
+                "The session must be addressed exclusively to the child — "
+                "parents/caregivers may only be mentioned in third person."
+            )
+
+    def test_no_direct_address_of_related_person(self, story_output):
+        """When a related_person_name is set, the script must never directly address them."""
+        case, script = story_output
+        related_name = case.get("related_person_name")
+        if not related_name:
+            pytest.skip("No related person in this test case")
+        name_lower = related_name.lower()
+        script_lower = script.lower()
+        direct_patterns = [
+            rf"(?:^|\.\s+|\?\s+|!\s+|,\s+){re.escape(name_lower)}\s*[,.]",
+            rf"\bhi\s+{re.escape(name_lower)}\b",
+            rf"\bhello\s+{re.escape(name_lower)}\b",
+            rf"\bnow\s*,?\s*{re.escape(name_lower)}\b",
+            rf"\b{re.escape(name_lower)}\s*,\s+(?:please|you|let|can|do|tell|say|take|try|now|next)",
+        ]
+        found = [
+            m.group()
+            for p in direct_patterns
+            for m in [re.search(p, script_lower)]
+            if m
+        ]
+        assert not found, (
+            f"Script directly addresses '{related_name}' — the session must be "
+            f"a 1:1 addressed exclusively to {case['person_name']!r}. "
+            f"Offending match(es): {found}"
+        )
 
     def test_case_targets_7_year_old(self, story_output):
         case, _ = story_output
@@ -410,10 +473,11 @@ class TestDeterministic:
         )
 
     def test_name_used_at_least_three_times(self, story_output):
-        _, script = story_output
-        count = script.lower().count(_NAME)
+        case, script = story_output
+        name = case.get("person_name", "sam").lower()
+        count = script.lower().count(name)
         assert count >= 3, (
-            f"Sam's name appears only {count} time(s). "
+            f"{case.get('person_name', 'The child')}'s name appears only {count} time(s). "
             "Audio scripts should address the child by name at least 3 times for engagement."
         )
 
@@ -533,12 +597,6 @@ class TestLLMJudged:
             pytest.skip("No feedback context in this test case")
         assert_test(_make_test_case(case, script), [feedback_personalization_metric])
 
-    def test_unique_outcomes_integration(self, story_output):
-        case, script = story_output
-        if not case.get("unique_outcomes"):
-            pytest.skip("No unique outcomes in this test case")
-        assert_test(_make_test_case(case, script), [unique_outcomes_integration_metric])
-
     def test_duration_coherence(self, story_output):
         case, script = story_output
         assert_test(_make_test_case(case, script), [duration_coherence_metric])
@@ -577,3 +635,13 @@ class TestLLMJudged:
         """
         case, script = story_output
         assert_test(_make_test_case(case, script), [not_adult_register_metric])
+
+    def test_single_recipient(self, story_output):
+        """LLM judge: script must be addressed exclusively to the primary child.
+
+        Catches dual-recipient sessions (e.g. 'Hi Sam. Hi Mom.') and any mid-session
+        address switches to a parent or caregiver.  The deterministic tests above catch
+        explicit role/name matches; this catches subtler audience drift.
+        """
+        case, script = story_output
+        assert_test(_make_test_case(case, script), [single_recipient_metric])

@@ -1,19 +1,19 @@
 import type { ContactFeedbackResolvers } from './../types.generated';
-import { d1Tools } from "@/src/db";
+import { getContact, getFamilyMember, getIssuesForFamilyMember, listStoriesForFeedback } from "@/src/db";
 
 export const ContactFeedback: ContactFeedbackResolvers = {
   contact: async (parent) => {
-    const contact = await d1Tools.getContact(parent.contactId, parent.createdBy);
+    const contact = await getContact(parent.contactId, parent.createdBy);
     if (!contact) return null;
     return contact as any;
   },
   familyMember: async (parent) => {
-    const fm = await d1Tools.getFamilyMember(parent.familyMemberId);
+    const fm = await getFamilyMember(parent.familyMemberId);
     if (!fm) return null;
     return fm as any;
   },
   issues: async (parent) => {
-    const issues = await d1Tools.getIssuesForFamilyMember(parent.familyMemberId, parent.id, parent.createdBy);
+    const issues = await getIssuesForFamilyMember(parent.familyMemberId, parent.id, parent.createdBy);
     return issues.map((issue) => ({
       id: issue.id,
       feedbackId: issue.feedbackId,
@@ -29,7 +29,7 @@ export const ContactFeedback: ContactFeedbackResolvers = {
     })) as any;
   },
   stories: async (parent) => {
-    const stories = await d1Tools.listGoalStoriesForFeedback(parent.id);
+    const stories = await listStoriesForFeedback(parent.id);
     return stories as any;
   },
 };

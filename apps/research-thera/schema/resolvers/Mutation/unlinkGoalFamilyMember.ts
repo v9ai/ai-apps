@@ -30,7 +30,6 @@ export const unlinkGoalFamilyMember: NonNullable<MutationResolvers['unlinkGoalFa
     updatedAt: goal.updatedAt,
     questions: [],
     stories: [],
-    userStories: [],
     notes: [],
     research: [],
   } as any;

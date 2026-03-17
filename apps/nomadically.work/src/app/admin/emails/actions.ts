@@ -1,11 +1,9 @@
 "use server";
 
-import { neon } from "@neondatabase/serverless";
-import { drizzle } from "drizzle-orm/d1";
 import { eq } from "drizzle-orm";
 import { resend } from "@/lib/resend";
 import { checkIsAdmin } from "@/lib/admin";
-import { createD1HttpClient } from "@/db/d1-http";
+import { db } from "@/db";
 import { userSettings } from "@/db/schema";
 
 export async function getSentEmails(limit = 100) {
@@ -68,8 +66,6 @@ export async function getEmailSubscribers(): Promise<EmailSubscriber[]> {
   const { isAdmin } = await checkIsAdmin();
   if (!isAdmin) return [];
 
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const db = drizzle(createD1HttpClient() as any);
 
   const rows = await db
     .select({ user_id: userSettings.user_id })

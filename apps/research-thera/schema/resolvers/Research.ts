@@ -1,19 +1,16 @@
 import type { ResearchResolvers } from "./../types.generated";
-import { d1 } from "@/src/db";
+import { sql as neonSql } from "@/src/db/neon";
 
 export const Research: ResearchResolvers = {
   goal: async (parent, _args, _ctx) => {
     // Fetch the goal associated with this research
-    const result = await d1.execute({
-      sql: `SELECT * FROM goals WHERE id = ?`,
-      args: [parent.goalId],
-    });
+    const rows = await neonSql`SELECT * FROM goals WHERE id = ${parent.goalId}`;
 
-    if (result.rows.length === 0) {
+    if (rows.length === 0) {
       return null;
     }
 
-    const row = result.rows[0];
+    const row = rows[0];
     return {
       id: row.id as number,
       familyMemberId: row.family_member_id as number,
@@ -32,7 +29,6 @@ export const Research: ResearchResolvers = {
       research: [],
       questions: [],
       stories: [],
-      userStories: [],
     } as any;
   },
 };

@@ -3,7 +3,7 @@ import { defineConfig } from "drizzle-kit";
 /**
  * Drizzle Kit configuration for Neon PostgreSQL
  *
- * Database: nomadically-work (twilight-pond-00008257)
+ * Database: nomadically-db (twilight-pond-00008257)
  *
  * Workflow:
  * 1. Update schema in ./src/db/schema.ts
@@ -15,6 +15,6 @@ export default defineConfig({
   out: "./migrations",
   dialect: "postgresql",
   dbCredentials: {
-    url: process.env.DATABASE_URL!,
+    url: (process.env.NEON_DATABASE_URL ?? process.env.DATABASE_URL)!,
   },
 });

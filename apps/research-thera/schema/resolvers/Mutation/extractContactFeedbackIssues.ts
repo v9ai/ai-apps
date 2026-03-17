@@ -1,5 +1,5 @@
 import type { MutationResolvers } from "./../../types.generated";
-import { d1Tools } from "@/src/db";
+import { getContactFeedback, saveExtractedIssues, saveIssuesToTable } from "@/src/db";
 
 const DASHSCOPE_BASE =
   "https://dashscope-intl.aliyuncs.com/compatible-mode/v1";
@@ -16,7 +16,7 @@ export const extractContactFeedbackIssues: NonNullable<MutationResolvers['extrac
     throw new Error("DASHSCOPE_API_KEY not configured");
   }
 
-  const fb = await d1Tools.getContactFeedback(args.id, userEmail);
+  const fb = await getContactFeedback(args.id, userEmail);
   if (!fb) {
     throw new Error("Contact feedback not found");
   }
@@ -100,11 +100,11 @@ Example:
   }
 
   // Save to DB - both legacy JSON field and new issues table
-  await d1Tools.saveExtractedIssues(args.id, userEmail, issues);
-  await d1Tools.saveIssuesToTable(args.id, fb.familyMemberId, userEmail, issues);
+  await saveExtractedIssues(args.id, userEmail, issues);
+  await saveIssuesToTable(args.id, fb.familyMemberId, userEmail, issues);
 
   // Re-fetch the updated record
-  const updated = await d1Tools.getContactFeedback(args.id, userEmail);
+  const updated = await getContactFeedback(args.id, userEmail);
   if (!updated) {
     throw new Error("Feedback not found after extraction");
   }

@@ -134,11 +134,6 @@ export const generateStoryTask = task({
       });
     }
 
-    // Fetch unique outcomes for the focus issue
-    const uniqueOutcomes = issue
-      ? await d1Tools.getUniqueOutcomesForIssue(issue.id, userEmail)
-      : [];
-
     let issueSection = "";
     if (issue) {
       const lines: string[] = [];
@@ -155,14 +150,6 @@ export const generateStoryTask = task({
         for (const rec of issue.recommendations) {
           lines.push(`- ${rec}`);
         }
-      }
-      if (uniqueOutcomes.length > 0) {
-        lines.push(
-          `\n## Sparkling Moments`,
-          ...uniqueOutcomes.map(
-            (o) => `- ${o.observedAt}: ${o.description}`,
-          ),
-        );
       }
       issueSection = lines.join("\n") + "\n";
     }
@@ -226,16 +213,17 @@ ${legoInstructions}
 - Vary pacing: alternate between instruction, story or metaphor, and silence
 - Never give more than two instructions in a row without an ellipsis pause or encouragement
 - Address ${familyMember.firstName} by name at least 3 times throughout the session
-- Include a brief mention that a parent, caregiver, or professional can provide additional support
+- Address ONLY ${familyMember.firstName} directly throughout the entire session. NEVER directly address or speak to any parent, caregiver, or other person. You may suggest ${familyMember.firstName} ask a parent or caregiver for help, but always in third person (e.g., "you can ask your mom to help you practice this" — never "Mom, do this with him")
 - Write in ${language}
 - Personalize for ${familyMember.firstName}${ageContext} (developmental tier: ${developmentalTier})${isChild ? `\n- This is for a ${ageLabel} — use child vocabulary, playful framing, and age-appropriate techniques throughout. Never adult-register.` : ""}${legoAppropriate ? `\n- LEGO play is REQUIRED for this session — include guided LEGO building activities as described in the LEGO Therapeutic Play section above` : ""}
 - Target duration: ${minutes} minutes (approximately ${minutes * 120} words at calm pace)`;
 
     logger.info("generate-story.generating", { jobId, promptLength: prompt.length });
 
-    const response = await therapeuticAgent.generate([
-      { role: "user", content: prompt },
-    ]);
+    const response = await therapeuticAgent.generate(
+      [{ role: "user", content: prompt }],
+      { modelSettings: { maxTokens: 8192 } },
+    );
 
     let generatedText = response.text;
 
@@ -258,7 +246,7 @@ ${legoInstructions}
     // --- 90% — Save to DB ---
     await d1Tools.updateGenerationJob(jobId, { progress: 90 });
 
-    const story = await d1Tools.createGoalStory({ goalId, language, minutes, text: generatedText });
+    const story = await d1Tools.createStory({ goalId, language, minutes, content: generatedText });
 
     logger.info("generate-story.saved", { jobId, storyId: story.id });
 

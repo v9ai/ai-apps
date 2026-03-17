@@ -1,7 +1,6 @@
 import { Resend } from "resend";
-import { drizzle } from "drizzle-orm/d1";
 import { eq, sql, or } from "drizzle-orm";
-import { createD1HttpClient } from "@/db/d1-http";
+import { db } from "@/db";
 import { contacts, contactEmails, companies } from "@/db/schema";
 
 export type ResendStatus =
@@ -50,9 +49,6 @@ const statusMap: Record<string, string> = {
   cancelled: "cancelled",
 };
 
-function getDb() {
-  return drizzle(createD1HttpClient() as any);
-}
 
 export class ResendSyncService {
   private resend: Resend;
@@ -113,7 +109,6 @@ export class ResendSyncService {
   }> {
     let contactId: number | null = null;
     let companyId: number | null = null;
-    const db = getDb();
 
     if (this.contactCache.has(recipientEmail)) {
       const cached = this.contactCache.get(recipientEmail)!;
@@ -172,8 +167,7 @@ export class ResendSyncService {
     error?: string;
   }> {
     try {
-      const db = getDb();
-      const status = this.mapStatus(email.last_event);
+        const status = this.mapStatus(email.last_event);
 
       const existing = await db
         .select()

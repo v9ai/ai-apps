@@ -11,5 +11,5 @@ export const stories: NonNullable<QueryResolvers['stories']> = async (
     throw new Error("Authentication required");
   }
 
-  return d1Tools.listStories(args.goalId, userEmail);
+  return d1Tools.listStories(args.goalId) as any;
 };

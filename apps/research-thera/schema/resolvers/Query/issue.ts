@@ -21,6 +21,7 @@ export const issue: NonNullable<QueryResolvers['issue']> = async (
     id: issue.id,
     feedbackId: issue.feedbackId,
     familyMemberId: issue.familyMemberId,
+    relatedFamilyMemberId: issue.relatedFamilyMemberId,
     createdBy: issue.userId,
     title: issue.title,
     description: issue.description,

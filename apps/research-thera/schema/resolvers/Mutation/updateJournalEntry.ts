@@ -1,5 +1,5 @@
 import type { MutationResolvers } from "./../../types.generated";
-import { d1Tools } from "@/src/db";
+import { updateJournalEntry as _updateJournalEntry, getJournalEntry } from "@/src/db";
 
 export const updateJournalEntry: NonNullable<MutationResolvers['updateJournalEntry']> = async (
   _parent,
@@ -11,7 +11,7 @@ export const updateJournalEntry: NonNullable<MutationResolvers['updateJournalEnt
     throw new Error("Authentication required");
   }
 
-  await d1Tools.updateJournalEntry(args.id, userEmail, {
+  await _updateJournalEntry(args.id, userEmail, {
     familyMemberId: args.input.familyMemberId ?? undefined,
     title: args.input.title ?? undefined,
     content: args.input.content ?? undefined,
@@ -23,7 +23,7 @@ export const updateJournalEntry: NonNullable<MutationResolvers['updateJournalEnt
     entryDate: args.input.entryDate ?? undefined,
   });
 
-  const entry = await d1Tools.getJournalEntry(args.id, userEmail);
+  const entry = await getJournalEntry(args.id, userEmail);
 
   if (!entry) {
     throw new Error("Journal entry not found after update");

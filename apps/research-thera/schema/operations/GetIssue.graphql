@@ -40,5 +40,12 @@ query GetIssue($id: Int!) {
       name
       slug
     }
+    relatedFamilyMemberId
+    relatedFamilyMember {
+      id
+      firstName
+      name
+      slug
+    }
   }
 }

@@ -12,7 +12,7 @@ export async function checkIsAdmin(): Promise<{
   userEmail: string | null;
 }> {
   try {
-    const session = await auth.api.getSession({ headers: await headers() });
+    const { data: session } = await auth.getSession({ fetchOptions: { headers: await headers() } });
 
     if (!session) {
       return { isAdmin: false, userId: null, userEmail: null };

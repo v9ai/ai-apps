@@ -16,6 +16,7 @@ fragment ApplicationFields on Application {
   companyName
   companyKey
   jobDescription
+  aiInterviewQuestions
   createdAt
 }
 

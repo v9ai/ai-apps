@@ -8,8 +8,7 @@ import {
   textToStructuredHtml,
 } from "@/lib/email/utils";
 import { buildSchedule, getSchedulePreview } from "@/lib/email/scheduler";
-import { drizzle } from "drizzle-orm/d1";
-import { createD1HttpClient } from "@/db/d1-http";
+import { db } from "@/db";
 import { contactEmails } from "@/db/schema";
 
 export const runtime = "nodejs";
@@ -26,9 +25,6 @@ interface Recipient {
   companyId?: number;
 }
 
-function getDb() {
-  return drizzle(createD1HttpClient() as any);
-}
 
 interface BatchEmailRequestBody {
   recipients: Recipient[];
@@ -74,7 +70,7 @@ function validateScheduledAt(scheduledAt: string): string | null {
 export async function POST(
   request: NextRequest,
 ): Promise<NextResponse<BatchEmailResponse>> {
-  const session = await auth.api.getSession({ headers: request.headers });
+  const { data: session } = await auth.getSession({ fetchOptions: { headers: request.headers } });
   if (!session) {
     return NextResponse.json(
       { success: false, message: "Unauthorized", sent: [], failed: [] },
@@ -189,8 +185,7 @@ export async function POST(
         const matchingRecipient = recipients.find((r) => r.email === entry.email);
         if (matchingRecipient?.contactId) {
           try {
-            const db = getDb();
-            await db.insert(contactEmails).values({
+              await db.insert(contactEmails).values({
               contact_id: matchingRecipient.contactId,
               company_id: matchingRecipient.companyId ?? null,
               resend_id: result.id || `batch_${Date.now()}_${entry.email}`,
@@ -270,7 +265,6 @@ export async function POST(
     } else {
       if (recipient.contactId) {
         try {
-          const db = getDb();
           await db.insert(contactEmails).values({
             contact_id: recipient.contactId,
             company_id: recipient.companyId ?? null,

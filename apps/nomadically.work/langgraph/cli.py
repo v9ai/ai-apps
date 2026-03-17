@@ -237,5 +237,82 @@ def cleanup(dry_run: bool, cutoff_days: int):
         print(f"Marked {stats.get('marked_stale', 0)} jobs stale.")
 
 
+@main.command("interview-prep")
+@click.option("--app-id", "-a", required=True, type=int, help="Application ID from the database")
+@click.option("--save/--no-save", default=True, show_default=True, help="Save report to applications.ai_interview_questions")
+def interview_prep(app_id: int, save: bool):
+    """Generate interview prep questions for a job application."""
+    import psycopg
+    from src.db.connection import get_connection
+    from src.graphs.interview_prep import build_interview_prep_graph
+
+    conn = get_connection()
+    with conn.cursor() as cur:
+        cur.execute(
+            "SELECT id, job_title, company_name, job_description, status FROM applications WHERE id = %s",
+            [app_id],
+        )
+        app = cur.fetchone()
+
+    if not app:
+        print(f"Application {app_id} not found.")
+        conn.close()
+        return
+
+    if not app.get("job_description"):
+        print("Application has no job description — cannot generate prep questions.")
+        conn.close()
+        return
+
+    # Resolve company_key from jobs table
+    company_name = app["company_name"] or ""
+    with conn.cursor() as cur:
+        cur.execute(
+            "SELECT company_key FROM jobs WHERE lower(company_name) = lower(%s) LIMIT 1",
+            [company_name],
+        )
+        key_row = cur.fetchone()
+    company_key = (key_row["company_key"] if key_row else company_name.lower()) or ""
+
+    print(f"\nApplication #{app_id}: {app['job_title']} @ {company_name}")
+    print(f"Status: {app['status']} | company_key: {company_key}\n")
+    print("Running interview prep pipeline...\n")
+
+    graph = build_interview_prep_graph()
+    result = graph.invoke({
+        "application_id": app_id,
+        "job_title": app["job_title"] or "",
+        "company_name": company_name,
+        "company_key": company_key,
+        "job_description": app["job_description"] or "",
+        "parsed": None,
+        "company_context": "",
+        "question_sets": [],
+        "report": "",
+    })
+
+    report = result.get("report", "")
+
+    if save and report:
+        with conn.cursor() as cur:
+            cur.execute(
+                "UPDATE applications SET ai_interview_questions = %s, updated_at = now() WHERE id = %s",
+                [report, app_id],
+            )
+        conn.commit()
+        print(f"\nSaved to applications.ai_interview_questions (app #{app_id})")
+
+    conn.close()
+    print("\n" + "=" * 70)
+    print(report)
+
+
+@main.command("eval-interview-prep")
+def eval_interview_prep():
+    """Run deepeval evals for the interview prep graph."""
+    from src.graphs.interview_prep.evals import main as run_evals
+    run_evals()
+
+
 if __name__ == "__main__":
     main()

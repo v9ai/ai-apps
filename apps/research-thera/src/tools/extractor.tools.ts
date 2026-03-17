@@ -1,47 +1,15 @@
 import { createDeepSeek } from "@ai-sdk/deepseek";
 import { generateObject } from "ai";
 import { z } from "zod";
-import { Langfuse } from "langfuse";
 import type { PaperDetails } from "./sources.tools";
 
 const deepseek = createDeepSeek({
   apiKey: process.env.DEEPSEEK_API_KEY,
 });
 
-const langfuse = new Langfuse({
-  secretKey: process.env.LANGFUSE_SECRET_KEY,
-  publicKey: process.env.LANGFUSE_PUBLIC_KEY,
-  baseUrl: process.env.LANGFUSE_BASE_URL,
-});
-
 /**
  * Research Extraction Tools
- * Now uses Langfuse-backed prompts (fetched at runtime, no hardcoded templates)
  */
-
-function toVars(input: Record<string, unknown>): Record<string, string> {
-  const out: Record<string, string> = {};
-  for (const [k, v] of Object.entries(input))
-    out[k] = v == null ? "" : String(v);
-  return out;
-}
-
-async function getCompiledTextPrompt(params: {
-  name: string;
-  vars: Record<string, unknown>;
-}) {
-  const p = await langfuse.getPrompt(params.name, undefined, {
-    type: "text",
-  });
-  const compiled: string = p.compile(toVars(params.vars));
-
-  if (compiled.includes("{{")) {
-    throw new Error(
-      `Unresolved {{variables}} in compiled Langfuse prompt "${params.name}".`,
-    );
-  }
-  return compiled;
-}
 
 /**
  * Planner output schema (therapeutic/psychological research)
@@ -191,62 +159,90 @@ function convertLegacyToResearchSchema(
 }
 
 /**
- * Plan research query using Langfuse-backed planner prompt
+ * Plan research query using inline prompt
  */
 export async function planResearchQuery(params: {
   title: string;
   description: string;
   notes: string[];
-  plannerPromptName: string; // from workflow ensure step
 }): Promise<ResearchPlan> {
-  const { title, description, notes, plannerPromptName } = params;
-
-  const compiledPrompt = await getCompiledTextPrompt({
-    name: plannerPromptName,
-    vars: {
-      goalTitle: title,
-      goalDescription: description,
-      notes: notes.join("\n- "),
-    },
-  });
+  const { title, description, notes } = params;
 
   const { object } = await generateObject({
     model: deepseek("deepseek-chat"),
     schema: PlanSchema,
-    prompt: compiledPrompt,
+    prompt: `Plan a research query strategy for this therapeutic/psychological goal.
+
+Goal: ${title}
+Description: ${description}
+Notes: ${notes.join("\n- ")}
+
+Generate MULTIPLE diverse queries to maximize recall from different psychological/therapy databases.
+
+QUERY STRATEGY:
+1. Semantic Scholar queries (min 2): Mix broad + specific, use synonyms and related constructs
+2. Crossref queries (min 2): Use natural language phrases common in therapy/psychology literature
+3. PubMed queries (min 1): Use MeSH terms and clinical psychology terminology
+
+Focus on finding psychological research relevant to the specific therapeutic goal.
+Include queries about: therapeutic interventions, mechanisms, evidence-based treatments, coping strategies.`,
   });
 
   return object;
 }
 
 /**
- * Extract research using Langfuse-backed extractor prompt
+ * Extract research using inline prompt
  */
 export async function extractResearch(params: {
   goalTitle: string;
   goalDescription: string;
   goalType: string;
   paper: PaperDetails;
-  extractorPromptName: string; // from workflow ensure step
 }): Promise<ExtractedResearchV2> {
-  const { goalTitle, goalDescription, goalType, paper, extractorPromptName } =
-    params;
+  const { goalTitle, goalDescription, goalType, paper } = params;
 
-  const compiledPrompt = await getCompiledTextPrompt({
-    name: extractorPromptName,
-    vars: {
-      goalTitle,
-      goalDescription,
-      goalType,
-      paperTitle: paper.title ?? "",
-      paperAuthors: (paper.authors ?? []).join(", "),
-      paperYear: paper.year ?? "",
-      paperVenue: paper.journal ?? "",
-      paperDoi: paper.doi ?? "",
-      paperUrl: paper.url ?? "",
-      paperAbstract: paper.abstract ?? "",
-    },
-  });
+  const compiledPrompt = `Extract therapeutic research information from this paper.
+
+Therapeutic Goal: ${goalTitle}
+Goal Description: ${goalDescription}
+Goal Type: ${goalType}
+
+Paper:
+Title: ${paper.title ?? ""}
+Authors: ${(paper.authors ?? []).join(", ") || "Unknown"}
+Year: ${paper.year ?? "Unknown"}
+Journal: ${paper.journal ?? "Unknown"}
+DOI: ${paper.doi ?? "None"}
+URL: ${paper.url ?? ""}
+Abstract: ${paper.abstract ?? ""}
+
+Extract the following fields for the therapeutic research:
+- domain: the therapy domain (cbt, act, dbt, behavioral, psychodynamic, somatic, humanistic, speech_language, play_therapy, aba, parent_mediated, neurodevelopmental, or other)
+- paperMeta: title, authors, year, venue, doi, url
+- studyType: meta-analysis, RCT, field study, lab study, quasi-experimental, review, or other
+- populationContext: who was studied (null if not specified)
+- interventionOrSkill: specific therapy technique or intervention studied (null if not specified)
+- keyFindings: 3-5 findings directly from the abstract
+- evidenceSnippets: array of {findingIndex, snippet}
+- practicalTakeaways: 2-4 actionable insights for therapists/clients
+- relevanceScore: 0-1 (how relevant to the therapeutic goal)
+- confidence: 0-1 (confidence in extraction quality)
+- rejectReason: reason for rejection or null
+
+RELEVANCE SCORING RUBRIC (be strict):
+- 1.0: Directly studies the exact behavior/condition in the therapeutic goal in the same population
+- 0.8: Studies the same condition in a closely related population
+- 0.6: Studies an adjacent condition using the same modality for the goal's population
+- 0.4: Same modality but different condition or population
+- 0.2: General clinical psychology with no specific relevance to this goal
+- 0.1 or below: NOT about the specific clinical domain of this goal
+
+STRICT FILTERING:
+- Score 0.1 or lower if paper is about: forensic interviews, legal proceedings, homework completion, academic achievement, adult populations (when goal is for a child)
+- Population mismatch: reduce score by 0.3 if study population age does not match patient age
+- If abstract is missing or fewer than 300 characters, return relevanceScore=0, confidence=0, rejectReason='insufficient_abstract'
+- Only extract findings EXPLICITLY stated in the abstract`;
 
   // Append explicit schema instructions to ensure valid JSON output
   const schemaInstructions = `

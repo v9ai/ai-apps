@@ -1,5 +1,5 @@
 import type { MutationResolvers } from "./../../types.generated";
-import { d1Tools } from "@/src/db";
+import { updateStory as _updateStory, getStory } from "@/src/db";
 
 export const updateStory: NonNullable<MutationResolvers['updateStory']> = async (_parent, args, ctx) => {
   const userEmail = ctx.userEmail;
@@ -7,14 +7,14 @@ export const updateStory: NonNullable<MutationResolvers['updateStory']> = async 
     throw new Error("Authentication required");
   }
 
-  await d1Tools.updateStory(args.id, userEmail, {
+  await _updateStory(args.id, userEmail, {
     content: args.input.content ?? undefined,
   });
 
-  const story = await d1Tools.getStory(args.id, userEmail);
+  const story = await getStory(args.id);
   if (!story) {
     throw new Error("Story not found");
   }
 
-  return story;
+  return { ...story, segments: [], audioAssets: [] } as any;
 };

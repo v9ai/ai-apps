@@ -1,5 +1,5 @@
 import type { MutationResolvers } from "./../../types.generated";
-import { d1 } from "@/src/db";
+import { sql as neonSql } from "@/src/db/neon";
 
 export const deleteFamilyMember: NonNullable<MutationResolvers['deleteFamilyMember']> = async (_parent, args, ctx) => {
   const userEmail = ctx.userEmail;
@@ -8,10 +8,7 @@ export const deleteFamilyMember: NonNullable<MutationResolvers['deleteFamilyMemb
   }
 
   try {
-    await d1.execute({
-      sql: `DELETE FROM family_members WHERE id = ? AND user_id = ?`,
-      args: [args.id, userEmail],
-    });
+    await neonSql`DELETE FROM family_members WHERE id = ${args.id} AND user_id = ${userEmail}`;
 
     return {
       success: true,

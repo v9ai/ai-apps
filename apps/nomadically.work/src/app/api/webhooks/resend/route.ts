@@ -1,8 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { createHmac } from "crypto";
-import { drizzle } from "drizzle-orm/d1";
 import { eq, sql } from "drizzle-orm";
-import { createD1HttpClient } from "@/db/d1-http";
+import { db } from "@/db";
 import { contactEmails, contacts, receivedEmails } from "@/db/schema";
 
 /**
@@ -132,17 +131,9 @@ async function withRetry<T>(
 }
 
 /**
- * Lazy DB factory — never initialised at module level per CLAUDE.md conventions.
- */
-function getDb() {
-  return drizzle(createD1HttpClient() as any);
-}
-
-/**
  * Look up a contactEmail row by resend_id and return it, or null if not found.
  */
 async function findContactEmail(resendId: string) {
-  const db = getDb();
   const rows = await db
     .select()
     .from(contactEmails)
@@ -157,7 +148,6 @@ async function findContactEmail(resendId: string) {
 
 async function handleSent(emailId: string): Promise<void> {
   await withRetry(`handleSent(${emailId})`, async () => {
-    const db = getDb();
     await db
       .update(contactEmails)
       .set({
@@ -172,7 +162,6 @@ async function handleSent(emailId: string): Promise<void> {
 
 async function handleDelivered(emailId: string): Promise<void> {
   await withRetry(`handleDelivered(${emailId})`, async () => {
-    const db = getDb();
     await db
       .update(contactEmails)
       .set({
@@ -195,7 +184,6 @@ async function handleBounced(event: ResendWebhookEvent): Promise<void> {
 
   // 1. Update contactEmails row
   await withRetry(`handleBounced/updateEmail(${emailId})`, async () => {
-    const db = getDb();
     await db
       .update(contactEmails)
       .set({
@@ -216,8 +204,7 @@ async function handleBounced(event: ResendWebhookEvent): Promise<void> {
     const normalised = recipientEmail.trim().toLowerCase();
 
     await withRetry(`handleBounced/updateContact(${normalised})`, async () => {
-      const db = getDb();
-
+  
       // Case-insensitive lookup using lower()
       const matchedContacts = await db
         .select()
@@ -284,7 +271,6 @@ async function handleBounced(event: ResendWebhookEvent): Promise<void> {
 
 async function handleComplained(emailId: string): Promise<void> {
   await withRetry(`handleComplained(${emailId})`, async () => {
-    const db = getDb();
     await db
       .update(contactEmails)
       .set({
@@ -299,7 +285,6 @@ async function handleComplained(emailId: string): Promise<void> {
 
 async function handleDeliveryDelayed(emailId: string): Promise<void> {
   await withRetry(`handleDeliveryDelayed(${emailId})`, async () => {
-    const db = getDb();
     await db
       .update(contactEmails)
       .set({
@@ -314,7 +299,6 @@ async function handleDeliveryDelayed(emailId: string): Promise<void> {
 async function handleOpened(emailId: string): Promise<void> {
   // Only set opened_at once — do not overwrite an existing value
   await withRetry(`handleOpened(${emailId})`, async () => {
-    const db = getDb();
 
     const existing = await findContactEmail(emailId);
     if (!existing) {
@@ -346,7 +330,6 @@ async function handleReceived(event: ResendWebhookEvent): Promise<void> {
 
   // 1. Persist to D1
   await withRetry(`handleReceived/persist(${emailId})`, async () => {
-    const db = getDb();
     await db
       .insert(receivedEmails)
       .values({

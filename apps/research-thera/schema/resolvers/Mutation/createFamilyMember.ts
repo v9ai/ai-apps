@@ -1,5 +1,5 @@
 import type { MutationResolvers } from "./../../types.generated";
-import { d1Tools } from "@/src/db";
+import { createFamilyMember as _createFamilyMember, getFamilyMember } from "@/src/db";
 
 export const createFamilyMember: NonNullable<MutationResolvers['createFamilyMember']> = async (_parent, args, ctx) => {
   const userEmail = ctx.userEmail;
@@ -7,7 +7,7 @@ export const createFamilyMember: NonNullable<MutationResolvers['createFamilyMemb
     throw new Error("Authentication required");
   }
 
-  const id = await d1Tools.createFamilyMember({
+  const id = await _createFamilyMember({
     userId: userEmail,
     firstName: args.input.firstName,
     name: args.input.name ?? null,
@@ -21,7 +21,7 @@ export const createFamilyMember: NonNullable<MutationResolvers['createFamilyMemb
     occupation: args.input.occupation ?? null,
   });
 
-  const member = await d1Tools.getFamilyMember(id);
+  const member = await getFamilyMember(id);
   if (!member) throw new Error("Failed to create family member");
 
   return {

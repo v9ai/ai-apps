@@ -1,5 +1,5 @@
 import type { MutationResolvers } from "./../../types.generated";
-import { d1Tools } from "@/src/db";
+import { deleteJournalEntry as _deleteJournalEntry } from "@/src/db";
 
 export const deleteJournalEntry: NonNullable<MutationResolvers['deleteJournalEntry']> = async (
   _parent,
@@ -11,7 +11,7 @@ export const deleteJournalEntry: NonNullable<MutationResolvers['deleteJournalEnt
     throw new Error("Authentication required");
   }
 
-  await d1Tools.deleteJournalEntry(args.id, userEmail);
+  await _deleteJournalEntry(args.id, userEmail);
 
   return {
     success: true,

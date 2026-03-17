@@ -3,6 +3,7 @@ mutation UpdateIssue($id: Int!, $input: UpdateIssueInput!) {
     id
     feedbackId
     familyMemberId
+    relatedFamilyMemberId
     createdBy
     title
     description

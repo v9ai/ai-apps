@@ -1,5 +1,5 @@
 import type { MutationResolvers } from "./../../types.generated";
-import { d1Tools } from "@/src/db";
+import { updateBehaviorObservation as _updateBehaviorObservation, getBehaviorObservation } from "@/src/db";
 
 export const updateBehaviorObservation: NonNullable<MutationResolvers['updateBehaviorObservation']> = async (
   _parent,
@@ -11,7 +11,7 @@ export const updateBehaviorObservation: NonNullable<MutationResolvers['updateBeh
     throw new Error("Authentication required");
   }
 
-  await d1Tools.updateBehaviorObservation(args.id, userEmail, {
+  await _updateBehaviorObservation(args.id, userEmail, {
     observedAt: args.input.observedAt ?? undefined,
     observationType: args.input.observationType ?? undefined,
     frequency: args.input.frequency ?? undefined,
@@ -20,7 +20,7 @@ export const updateBehaviorObservation: NonNullable<MutationResolvers['updateBeh
     notes: args.input.notes ?? undefined,
   });
 
-  const obs = await d1Tools.getBehaviorObservation(args.id, userEmail);
+  const obs = await getBehaviorObservation(args.id, userEmail);
 
   if (!obs) {
     throw new Error("Behavior observation not found after update");

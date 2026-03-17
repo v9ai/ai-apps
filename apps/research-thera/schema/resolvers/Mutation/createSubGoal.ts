@@ -38,7 +38,6 @@ export const createSubGoal: NonNullable<MutationResolvers['createSubGoal']> = as
     updatedAt: subGoal.updatedAt,
     questions: [],
     stories: [],
-    userStories: [],
     notes: [],
     research: [],
     subGoals: [],

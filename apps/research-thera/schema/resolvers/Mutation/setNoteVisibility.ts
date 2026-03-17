@@ -1,5 +1,5 @@
 import type { MutationResolvers } from "./../../types.generated";
-import { d1Tools } from "@/src/db";
+import { getNoteById, setNoteVisibility as _setNoteVisibility } from "@/src/db";
 
 export const setNoteVisibility: NonNullable<MutationResolvers['setNoteVisibility']> = async (_parent, args, ctx) => {
   const userEmail = ctx.userEmail;
@@ -8,7 +8,7 @@ export const setNoteVisibility: NonNullable<MutationResolvers['setNoteVisibility
   }
 
   // Check if user is the owner
-  const note = await d1Tools.getNoteById(args.noteId, userEmail);
+  const note = await getNoteById(args.noteId, userEmail);
   if (!note) {
     throw new Error("Note not found");
   }
@@ -17,7 +17,7 @@ export const setNoteVisibility: NonNullable<MutationResolvers['setNoteVisibility
     throw new Error("Only the note owner can change visibility");
   }
 
-  const updatedNote = await d1Tools.setNoteVisibility(
+  const updatedNote = await _setNoteVisibility(
     args.noteId,
     args.visibility,
     userEmail,

@@ -11,18 +11,6 @@ function p(template: string, params: any[]): [string, any[]] {
 }
 
 /**
- * D1-compatible shim over Neon — allows legacy `d1.execute({ sql, args })` calls
- * to work against Postgres without rewriting every resolver.
- */
-export const d1 = {
-  async execute(opts: { sql: string; args?: any[] }): Promise<{ rows: any[] }> {
-    const [query, params] = p(opts.sql, opts.args || []);
-    const rows = await neonSql(query, params);
-    return { rows: rows as any[] };
-  },
-};
-
-/**
  * Database operations for goals, research, questions, notes, and jobs
  */
 
@@ -920,67 +908,64 @@ export async function getSharedNotes(viewerEmail: string) {
 // Stories
 // ============================================
 
-export async function getAllStoriesForUser(createdBy: string) {
-  const rows = await neonSql`SELECT * FROM stories WHERE user_id = ${createdBy} ORDER BY created_at DESC`;
-
-  return rows.map((row) => ({
-    id: row.id as number,
-    goalId: row.goal_id as number,
-    createdBy: row.user_id as string,
-    content: row.content as string,
-    audioKey: row.audio_key as string | null,
-    audioUrl: row.audio_url as string | null,
-    audioGeneratedAt: row.audio_generated_at as string | null,
-    createdAt: row.created_at as string,
-    updatedAt: row.updated_at as string,
-  }));
-}
-
-export async function listStories(goalId: number, createdBy: string) {
-  const rows = await neonSql`SELECT * FROM stories WHERE goal_id = ${goalId} AND user_id = ${createdBy} ORDER BY created_at DESC`;
-
-  return rows.map((row) => ({
-    id: row.id as number,
-    goalId: row.goal_id as number,
-    createdBy: row.user_id as string,
-    content: row.content as string,
-    audioKey: row.audio_key as string | null,
-    audioUrl: row.audio_url as string | null,
-    audioGeneratedAt: row.audio_generated_at as string | null,
-    createdAt: row.created_at as string,
-    updatedAt: row.updated_at as string,
-  }));
-}
-
-export async function getStory(storyId: number, createdBy: string) {
-  const rows = await neonSql`SELECT * FROM stories WHERE id = ${storyId} AND user_id = ${createdBy}`;
-
-  if (rows.length === 0) return null;
-
-  const row = rows[0];
+function mapStoryRow(row: Record<string, unknown>) {
   return {
     id: row.id as number,
-    goalId: row.goal_id as number,
-    createdBy: row.user_id as string,
+    goalId: (row.goal_id as number) ?? null,
+    issueId: (row.issue_id as number) ?? null,
+    feedbackId: (row.feedback_id as number) ?? null,
+    createdBy: (row.user_id as string) ?? null,
     content: row.content as string,
-    audioKey: row.audio_key as string | null,
-    audioUrl: row.audio_url as string | null,
-    audioGeneratedAt: row.audio_generated_at as string | null,
+    language: (row.language as string) ?? null,
+    minutes: (row.minutes as number) ?? null,
+    audioKey: (row.audio_key as string) ?? null,
+    audioUrl: (row.audio_url as string) ?? null,
+    audioGeneratedAt: (row.audio_generated_at as string) ?? null,
     createdAt: row.created_at as string,
     updatedAt: row.updated_at as string,
   };
 }
 
+export async function getAllStoriesForUser(createdBy: string) {
+  const rows = await neonSql`SELECT * FROM stories WHERE user_id = ${createdBy} ORDER BY created_at DESC`;
+  return rows.map(mapStoryRow);
+}
+
+export async function listStories(goalId: number) {
+  const rows = await neonSql`SELECT * FROM stories WHERE goal_id = ${goalId} ORDER BY created_at DESC`;
+  return rows.map(mapStoryRow);
+}
+
+export async function listStoriesForIssue(issueId: number) {
+  const rows = await neonSql`SELECT * FROM stories WHERE issue_id = ${issueId} ORDER BY created_at DESC`;
+  return rows.map(mapStoryRow);
+}
+
+export async function listStoriesForFeedback(feedbackId: number) {
+  const rows = await neonSql`SELECT * FROM stories WHERE feedback_id = ${feedbackId} ORDER BY created_at DESC`;
+  return rows.map(mapStoryRow);
+}
+
+export async function getStory(storyId: number) {
+  const rows = await neonSql`SELECT * FROM stories WHERE id = ${storyId}`;
+  if (rows.length === 0) return null;
+  return mapStoryRow(rows[0]);
+}
+
 export async function createStory(params: {
-  goalId: number;
-  createdBy: string;
+  goalId?: number | null;
+  issueId?: number | null;
+  feedbackId?: number | null;
+  createdBy?: string | null;
   content: string;
+  language?: string | null;
+  minutes?: number | null;
 }) {
   const rows = await neonSql`
-    INSERT INTO stories (goal_id, user_id, content)
-    VALUES (${params.goalId}, ${params.createdBy}, ${params.content})
-    RETURNING id`;
-  return rows[0].id as number;
+    INSERT INTO stories (goal_id, issue_id, feedback_id, user_id, content, language, minutes)
+    VALUES (${params.goalId ?? null}, ${params.issueId ?? null}, ${params.feedbackId ?? null}, ${params.createdBy ?? null}, ${params.content}, ${params.language ?? null}, ${params.minutes ?? null})
+    RETURNING *`;
+  return mapStoryRow(rows[0]);
 }
 
 export async function updateStory(
@@ -1002,6 +987,11 @@ export async function updateStory(
   await neonSql(query, params);
 }
 
+export async function updateStoryAudio(id: number, audioKey: string, audioUrl: string) {
+  const now = new Date().toISOString();
+  await neonSql`UPDATE stories SET audio_key = ${audioKey}, audio_url = ${audioUrl}, audio_generated_at = ${now}, updated_at = ${now} WHERE id = ${id}`;
+}
+
 export async function deleteStory(storyId: number, createdBy: string) {
   await neonSql`DELETE FROM stories WHERE id = ${storyId} AND user_id = ${createdBy}`;
 }
@@ -1017,7 +1007,7 @@ export async function cleanupStaleJobs(minutes = 15): Promise<void> {
         error = '{"message":"Job timed out — no progress updates received"}',
         updated_at = NOW()
     WHERE status = 'RUNNING'
-      AND updated_at < NOW() - (${minutes} * INTERVAL '1 minute')`;
+      AND updated_at::timestamptz < NOW() - (${minutes} * INTERVAL '1 minute')`;
 }
 
 export async function createGenerationJob(
@@ -1084,6 +1074,36 @@ function parseJobError(raw: string): { message: string; code?: string; details?:
   }
 }
 
+export async function listGenerationJobs(filters: { userId?: string; goalId?: number; status?: string } = {}) {
+  const conditions: string[] = [];
+  const args: any[] = [];
+
+  if (filters.userId) { conditions.push("user_id = ?"); args.push(filters.userId); }
+  if (filters.goalId) { conditions.push("goal_id = ?"); args.push(filters.goalId); }
+  if (filters.status) { conditions.push("status = ?"); args.push(filters.status); }
+
+  let query = "SELECT * FROM generation_jobs";
+  if (conditions.length > 0) query += ` WHERE ${conditions.join(" AND ")}`;
+  query += " ORDER BY created_at DESC";
+
+  const [q, params] = p(query, args);
+  const rows = await neonSql(q, params);
+
+  return rows.map((row) => ({
+    id: row.id as string,
+    userId: row.user_id as string,
+    type: row.type as any,
+    goalId: row.goal_id as number,
+    storyId: (row.story_id as number) || null,
+    status: row.status as any,
+    progress: row.progress as number,
+    result: row.result ? JSON.parse(row.result as string) : null,
+    error: row.error ? parseJobError(row.error as string) : null,
+    createdAt: row.created_at as string,
+    updatedAt: row.updated_at as string,
+  }));
+}
+
 export async function getGenerationJob(id: string) {
   const rows = await neonSql`SELECT * FROM generation_jobs WHERE id = ${id}`;
 
@@ -1125,88 +1145,6 @@ export async function listTherapeuticQuestions(goalId: number) {
   }));
 }
 
-// ============================================
-// Goal Stories
-// ============================================
-
-export async function createGoalStory(params: {
-  goalId?: number | null;
-  issueId?: number | null;
-  feedbackId?: number | null;
-  language: string;
-  minutes: number;
-  text: string;
-}) {
-  if (params.goalId == null && params.issueId == null && params.feedbackId == null) {
-    throw new Error("At least one of goalId, issueId, or feedbackId is required");
-  }
-
-  const rows = await neonSql`
-    INSERT INTO goal_stories (goal_id, issue_id, feedback_id, language, minutes, text)
-    VALUES (${params.goalId ?? null}, ${params.issueId ?? null}, ${params.feedbackId ?? null}, ${params.language}, ${params.minutes}, ${params.text})
-    RETURNING *`;
-
-  return mapGoalStoryRow(rows[0]);
-}
-
-function mapGoalStoryRow(row: Record<string, unknown>) {
-  return {
-    id: row.id as number,
-    goalId: (row.goal_id as number) || null,
-    issueId: (row.issue_id as number) || null,
-    feedbackId: (row.feedback_id as number) || null,
-    language: row.language as string,
-    minutes: row.minutes as number,
-    text: row.text as string,
-    audioKey: (row.audio_key as string) || null,
-    audioUrl: (row.audio_url as string) || null,
-    audioGeneratedAt: (row.audio_generated_at as string) || null,
-    createdAt: row.created_at as string,
-    updatedAt: row.updated_at as string,
-  };
-}
-
-export async function getGoalStory(id: number) {
-  const rows = await neonSql`SELECT * FROM goal_stories WHERE id = ${id}`;
-
-  if (rows.length === 0) {
-    throw new Error(`GoalStory ${id} not found`);
-  }
-
-  return mapGoalStoryRow(rows[0]);
-}
-
-export async function updateGoalStoryAudio(
-  id: number,
-  audioKey: string,
-  audioUrl: string,
-) {
-  const now = new Date().toISOString();
-  await neonSql`UPDATE goal_stories SET audio_key = ${audioKey}, audio_url = ${audioUrl}, audio_generated_at = ${now}, updated_at = ${now} WHERE id = ${id}`;
-}
-
-export async function deleteGoalStory(id: number, userEmail: string) {
-  const story = await getGoalStory(id);
-  if (story.goalId) {
-    await getGoal(story.goalId, userEmail);
-  }
-  await neonSql`DELETE FROM goal_stories WHERE id = ${id}`;
-}
-
-export async function listGoalStories(goalId: number) {
-  const rows = await neonSql`SELECT * FROM goal_stories WHERE goal_id = ${goalId} ORDER BY created_at DESC`;
-  return rows.map(mapGoalStoryRow);
-}
-
-export async function listGoalStoriesForIssue(issueId: number) {
-  const rows = await neonSql`SELECT * FROM goal_stories WHERE issue_id = ${issueId} ORDER BY created_at DESC`;
-  return rows.map(mapGoalStoryRow);
-}
-
-export async function listGoalStoriesForFeedback(feedbackId: number) {
-  const rows = await neonSql`SELECT * FROM goal_stories WHERE feedback_id = ${feedbackId} ORDER BY created_at DESC`;
-  return rows.map(mapGoalStoryRow);
-}
 
 export async function getTextSegmentsForStory(storyId: number) {
   const rows = await neonSql`SELECT * FROM text_segments WHERE story_id = ${storyId} ORDER BY idx ASC`;
@@ -1372,6 +1310,32 @@ export async function deleteJournalEntry(
 // Behavior Observations
 // ============================================
 
+export async function createBehaviorObservation(params: {
+  familyMemberId: number;
+  goalId?: number | null;
+  issueId?: number | null;
+  userId: string;
+  observedAt: string;
+  observationType: string;
+  frequency?: number | null;
+  intensity?: string | null;
+  context?: string | null;
+  notes?: string | null;
+}): Promise<number> {
+  const safeFrequency =
+    params.frequency !== null &&
+    params.frequency !== undefined &&
+    !isNaN(params.frequency) &&
+    isFinite(params.frequency)
+      ? params.frequency
+      : null;
+  const rows = await neonSql`
+    INSERT INTO behavior_observations (family_member_id, goal_id, issue_id, user_id, observed_at, observation_type, frequency, intensity, context, notes, created_at, updated_at)
+    VALUES (${params.familyMemberId}, ${params.goalId ?? null}, ${params.issueId ?? null}, ${params.userId}, ${params.observedAt}, ${params.observationType}, ${safeFrequency}, ${params.intensity ?? null}, ${params.context ?? null}, ${params.notes ?? null}, NOW(), NOW())
+    RETURNING id`;
+  return rows[0].id as number;
+}
+
 export async function getBehaviorObservationsForFamilyMember(
   familyMemberId: number,
   userId: string,
@@ -1420,33 +1384,6 @@ export async function getBehaviorObservation(id: number, userId: string) {
     createdAt: row.created_at as string,
     updatedAt: row.updated_at as string,
   };
-}
-
-export async function createBehaviorObservation(params: {
-  familyMemberId: number;
-  goalId?: number | null;
-  issueId?: number | null;
-  userId: string;
-  observedAt: string;
-  observationType: string;
-  frequency?: number | null;
-  intensity?: string | null;
-  context?: string | null;
-  notes?: string | null;
-}): Promise<number> {
-  const safeFrequency =
-    params.frequency !== undefined &&
-    params.frequency !== null &&
-    !isNaN(params.frequency) &&
-    isFinite(params.frequency)
-      ? params.frequency
-      : null;
-
-  const rows = await neonSql`
-    INSERT INTO behavior_observations (family_member_id, goal_id, issue_id, user_id, observed_at, observation_type, frequency, intensity, context, notes, created_at, updated_at)
-    VALUES (${params.familyMemberId}, ${params.goalId ?? null}, ${params.issueId ?? null}, ${params.userId}, ${params.observedAt}, ${params.observationType}, ${safeFrequency}, ${params.intensity ?? null}, ${params.context ?? null}, ${params.notes ?? null}, NOW(), NOW())
-    RETURNING id`;
-  return rows[0].id as number;
 }
 
 export async function updateBehaviorObservation(
@@ -1526,84 +1463,6 @@ export async function getIssueBehaviorObservations(
     createdAt: row.created_at as string,
     updatedAt: row.updated_at as string,
   }));
-}
-
-// ============================================
-// Unique Outcomes
-// ============================================
-
-export async function getUniqueOutcomesForIssue(
-  issueId: number,
-  userId: string,
-) {
-  const rows = await neonSql`SELECT * FROM unique_outcomes WHERE issue_id = ${issueId} AND user_id = ${userId} ORDER BY observed_at DESC`;
-  return rows.map((row) => ({
-    id: row.id as number,
-    issueId: row.issue_id as number,
-    userId: row.user_id as string,
-    observedAt: row.observed_at as string,
-    description: row.description as string,
-    createdAt: row.created_at as string,
-    updatedAt: row.updated_at as string,
-  }));
-}
-
-export async function getUniqueOutcome(id: number, userId: string) {
-  const rows = await neonSql`SELECT * FROM unique_outcomes WHERE id = ${id} AND user_id = ${userId}`;
-  if (rows.length === 0) return null;
-  const row = rows[0];
-  return {
-    id: row.id as number,
-    issueId: row.issue_id as number,
-    userId: row.user_id as string,
-    observedAt: row.observed_at as string,
-    description: row.description as string,
-    createdAt: row.created_at as string,
-    updatedAt: row.updated_at as string,
-  };
-}
-
-export async function createUniqueOutcome(params: {
-  issueId: number;
-  userId: string;
-  observedAt: string;
-  description: string;
-}): Promise<number> {
-  const rows = await neonSql`
-    INSERT INTO unique_outcomes (issue_id, user_id, observed_at, description, created_at, updated_at)
-    VALUES (${params.issueId}, ${params.userId}, ${params.observedAt}, ${params.description}, NOW(), NOW())
-    RETURNING id`;
-  return rows[0].id as number;
-}
-
-export async function updateUniqueOutcome(
-  id: number,
-  userId: string,
-  updates: {
-    observedAt?: string;
-    description?: string;
-  },
-) {
-  const fields: string[] = [];
-  const args: any[] = [];
-
-  if (updates.observedAt !== undefined) { fields.push("observed_at = ?"); args.push(updates.observedAt); }
-  if (updates.description !== undefined) { fields.push("description = ?"); args.push(updates.description); }
-
-  if (fields.length === 0) return;
-
-  fields.push("updated_at = NOW()");
-  args.push(id, userId);
-
-  const [query, params] = p(`UPDATE unique_outcomes SET ${fields.join(", ")} WHERE id = ? AND user_id = ?`, args);
-  await neonSql(query, params);
-}
-
-export async function deleteUniqueOutcome(
-  id: number,
-  userId: string,
-): Promise<void> {
-  await neonSql`DELETE FROM unique_outcomes WHERE id = ${id} AND user_id = ${userId}`;
 }
 
 // ============================================
@@ -1790,26 +1649,43 @@ export async function getRelationshipsForPerson(
   subjectId: number,
 ) {
   const rows = await neonSql`
-    SELECT * FROM relationships
-    WHERE user_id = ${userId} AND (
-      (subject_type = ${subjectType} AND subject_id = ${subjectId}) OR
-      (related_type = ${subjectType} AND related_id = ${subjectId})
+    SELECT
+      r.*,
+      c.id AS c_id, c.slug AS c_slug, c.first_name AS c_first_name, c.last_name AS c_last_name,
+      fm.id AS fm_id, fm.slug AS fm_slug, fm.first_name AS fm_first_name, fm.name AS fm_name
+    FROM relationships r
+    LEFT JOIN contacts c
+      ON c.id = r.related_id AND r.related_type = 'CONTACT' AND c.user_id = ${userId}
+    LEFT JOIN family_members fm
+      ON fm.id = r.related_id AND r.related_type = 'FAMILY_MEMBER'
+    WHERE r.user_id = ${userId} AND (
+      (r.subject_type = ${subjectType} AND r.subject_id = ${subjectId}) OR
+      (r.related_type = ${subjectType} AND r.related_id = ${subjectId})
     )
-    ORDER BY created_at DESC`;
-  return rows.map((row) => ({
-    id: row.id as number,
-    userId: row.user_id as string,
-    subjectType: row.subject_type as string,
-    subjectId: row.subject_id as number,
-    relatedType: row.related_type as string,
-    relatedId: row.related_id as number,
-    relationshipType: row.relationship_type as string,
-    context: (row.context as string) || null,
-    startDate: (row.start_date as string) || null,
-    status: (row.status as string) || "active",
-    createdAt: row.created_at as string,
-    updatedAt: row.updated_at as string,
-  }));
+    ORDER BY r.created_at DESC`;
+  return rows.map((row) => {
+    let related: { id: number; type: string; slug: string | null; firstName: string; lastName: string | null } | null = null;
+    if (row.related_type === 'CONTACT' && row.c_id) {
+      related = { id: row.c_id as number, type: 'CONTACT', slug: (row.c_slug as string) || null, firstName: row.c_first_name as string, lastName: (row.c_last_name as string) || null };
+    } else if (row.related_type === 'FAMILY_MEMBER' && row.fm_id) {
+      related = { id: row.fm_id as number, type: 'FAMILY_MEMBER', slug: (row.fm_slug as string) || null, firstName: row.fm_first_name as string, lastName: (row.fm_name as string) || null };
+    }
+    return {
+      id: row.id as number,
+      userId: row.user_id as string,
+      subjectType: row.subject_type as string,
+      subjectId: row.subject_id as number,
+      relatedType: row.related_type as string,
+      relatedId: row.related_id as number,
+      relationshipType: row.relationship_type as string,
+      context: (row.context as string) || null,
+      startDate: (row.start_date as string) || null,
+      status: (row.status as string) || "active",
+      createdAt: row.created_at as string,
+      updatedAt: row.updated_at as string,
+      related,
+    };
+  });
 }
 
 export async function getRelationship(id: number, userId: string) {
@@ -2125,6 +2001,7 @@ interface IssueRow {
   id: number;
   feedback_id: number;
   family_member_id: number;
+  related_family_member_id: number | null;
   user_id: string;
   title: string;
   description: string;
@@ -2139,6 +2016,7 @@ interface Issue {
   id: number;
   feedbackId: number;
   familyMemberId: number;
+  relatedFamilyMemberId: number | null;
   userId: string;
   title: string;
   description: string;
@@ -2154,6 +2032,7 @@ function mapIssueRow(row: IssueRow): Issue {
     id: row.id as number,
     feedbackId: row.feedback_id as number,
     familyMemberId: row.family_member_id as number,
+    relatedFamilyMemberId: (row.related_family_member_id as number) ?? null,
     userId: row.user_id as string,
     title: row.title as string,
     description: row.description as string,
@@ -2212,6 +2091,8 @@ export async function updateIssue(
   id: number,
   userId: string,
   updates: {
+    familyMemberId?: number;
+    relatedFamilyMemberId?: number | null;
     title?: string;
     description?: string;
     category?: string;
@@ -2222,6 +2103,8 @@ export async function updateIssue(
   const fields: string[] = [];
   const args: any[] = [];
 
+  if (updates.familyMemberId !== undefined) { fields.push("family_member_id = ?"); args.push(updates.familyMemberId); }
+  if (updates.relatedFamilyMemberId !== undefined) { fields.push("related_family_member_id = ?"); args.push(updates.relatedFamilyMemberId ?? null); }
   if (updates.title !== undefined) { fields.push("title = ?"); args.push(updates.title); }
   if (updates.description !== undefined) { fields.push("description = ?"); args.push(updates.description); }
   if (updates.category !== undefined) { fields.push("category = ?"); args.push(updates.category); }
@@ -2280,6 +2163,51 @@ export async function saveIssuesToTable(
   return issueIds;
 }
 
+export async function getGoalById(goalId: number) {
+  const rows = await neonSql`SELECT * FROM goals WHERE id = ${goalId}`;
+  if (rows.length === 0) return null;
+  const row = rows[0];
+  return {
+    id: row.id as number,
+    familyMemberId: row.family_member_id as number,
+    createdBy: row.user_id as string,
+    slug: (row.slug as string) || null,
+    title: row.title as string,
+    description: (row.description as string) || null,
+    status: row.status as string,
+    parentGoalId: (row.parent_goal_id as number) || null,
+    therapeuticText: (row.therapeutic_text as string) || null,
+    therapeuticTextLanguage: (row.therapeutic_text_language as string) || null,
+    therapeuticTextGeneratedAt: (row.therapeutic_text_generated_at as string) || null,
+    storyLanguage: (row.story_language as string) || null,
+    createdAt: row.created_at as string,
+    updatedAt: row.updated_at as string,
+  };
+}
+
+export async function deleteNote(noteId: number, userEmail: string): Promise<void> {
+  await neonSql`DELETE FROM notes_claims WHERE note_id = ${noteId}`;
+  await neonSql`DELETE FROM notes_research WHERE note_id = ${noteId}`;
+  await neonSql`DELETE FROM notes WHERE id = ${noteId} AND user_id = ${userEmail}`;
+}
+
+export async function deleteGoal(goalId: number, userEmail: string): Promise<void> {
+  await neonSql`DELETE FROM notes_claims WHERE note_id IN (SELECT id FROM notes WHERE entity_id = ${goalId} AND entity_type = 'Goal')`;
+  await neonSql`DELETE FROM notes_research WHERE note_id IN (SELECT id FROM notes WHERE entity_id = ${goalId} AND entity_type = 'Goal')`;
+  await neonSql`DELETE FROM notes WHERE entity_id = ${goalId} AND entity_type = 'Goal' AND user_id = ${userEmail}`;
+  await neonSql`DELETE FROM therapeutic_questions WHERE goal_id = ${goalId}`;
+  await neonSql`DELETE FROM therapy_research WHERE goal_id = ${goalId}`;
+  await neonSql`DELETE FROM text_segments WHERE goal_id = ${goalId}`;
+  await neonSql`DELETE FROM audio_assets WHERE goal_id = ${goalId}`;
+  await neonSql`DELETE FROM stories WHERE goal_id = ${goalId}`;
+  await neonSql`DELETE FROM generation_jobs WHERE goal_id = ${goalId}`;
+  await neonSql`DELETE FROM goals WHERE id = ${goalId} AND user_id = ${userEmail}`;
+}
+
+// ============================================
+// Namespace export (backward compat with resolvers)
+// ============================================
+
 export const d1Tools = {
   // Family Members
   listFamilyMembers,
@@ -2288,74 +2216,64 @@ export const d1Tools = {
   createFamilyMember,
   updateFamilyMember,
   deleteFamilyMember,
-  // Family Member Shares
   shareFamilyMember,
   unshareFamilyMember,
-  getFamilyMemberShares,
   getSharedFamilyMembers,
   // Goals
   getGoal,
+  getGoalById,
   getGoalBySlug,
   listGoals,
   createGoal,
   updateGoal,
+  deleteGoal,
+  // Research
   upsertTherapyResearch,
   listTherapyResearch,
   getResearchForNote,
+  // Notes
   getNoteById,
   getNoteBySlug,
   getAllNotesForUser,
   listNotesForEntity,
   createNote,
   updateNote,
+  deleteNote,
   linkResearchToNote,
   canViewerReadNote,
   setNoteVisibility,
   shareNote,
   unshareNote,
-  getNoteShares,
   getSharedNotes,
+  // Stories
   getAllStoriesForUser,
   listStories,
+  listStoriesForIssue,
+  listStoriesForFeedback,
   getStory,
   createStory,
   updateStory,
+  updateStoryAudio,
   deleteStory,
+  // Generation Jobs
   cleanupStaleJobs,
   createGenerationJob,
   updateGenerationJob,
   getGenerationJob,
-  listTherapeuticQuestions,
-  createGoalStory,
-  getGoalStory,
-  deleteGoalStory,
-  updateGoalStoryAudio,
-  listGoalStories,
-  listGoalStoriesForIssue,
-  listGoalStoriesForFeedback,
-  getTextSegmentsForStory,
-  getAudioAssetsForStory,
-  // Journal Entries
+  listGenerationJobs,
+  // Journal
   listJournalEntries,
   getJournalEntry,
   createJournalEntry,
   updateJournalEntry,
   deleteJournalEntry,
   // Behavior Observations
+  createBehaviorObservation,
   getBehaviorObservationsForFamilyMember,
   getBehaviorObservation,
-  createBehaviorObservation,
   updateBehaviorObservation,
   deleteBehaviorObservation,
   getIssueBehaviorObservations,
-  // Unique Outcomes
-  getUniqueOutcomesForIssue,
-  getUniqueOutcome,
-  createUniqueOutcome,
-  updateUniqueOutcome,
-  deleteUniqueOutcome,
-  // Bidirectional Relationships
-  getRelationshipsBidirectional,
   // Contacts
   getContactsForUser,
   getContact,
@@ -2369,6 +2287,9 @@ export const d1Tools = {
   createRelationship,
   updateRelationship,
   deleteRelationship,
+  // Settings
+  getUserSettings,
+  upsertUserSettings,
   // Teacher Feedbacks
   getTeacherFeedbacksForFamilyMember,
   getTeacherFeedback,
@@ -2390,7 +2311,7 @@ export const d1Tools = {
   updateIssue,
   deleteIssue,
   saveIssuesToTable,
-  // User Settings
-  getUserSettings,
-  upsertUserSettings,
 };
+
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+export const d1 = null as any; // legacy compat — scripts not yet migrated to Neon

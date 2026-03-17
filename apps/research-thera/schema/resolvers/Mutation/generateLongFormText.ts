@@ -1,7 +1,8 @@
 import type { MutationResolvers } from "./../../types.generated";
-import { d1Tools } from "@/src/db";
+import { getGoal, getIssue, getContactFeedback } from "@/src/db";
+import { Client } from "@langchain/langgraph-sdk";
 
-const STORY_SERVICE_URL = process.env.STORY_SERVICE_URL ?? "http://localhost:8001";
+const LANGGRAPH_URL = process.env.LANGGRAPH_URL || "http://127.0.0.1:2024";
 
 export const generateLongFormText: NonNullable<MutationResolvers['generateLongFormText']> = async (_parent, args, ctx) => {
   const userEmail = ctx.userEmail;
@@ -17,38 +18,42 @@ export const generateLongFormText: NonNullable<MutationResolvers['generateLongFo
     throw new Error("At least one of goalId, issueId, or feedbackId is required");
   }
 
-  // Verify the goal exists and belongs to the user
   if (goalId) {
-    await d1Tools.getGoal(goalId, userEmail);
+    await getGoal(goalId, userEmail);
   }
-
-  // Verify feedback exists and belongs to user
+  if (issueId) {
+    const issue = await getIssue(issueId, userEmail);
+    if (!issue) throw new Error("Issue not found");
+  }
   if (feedbackId) {
-    const fb = await d1Tools.getContactFeedback(feedbackId, userEmail);
-    if (!fb) {
-      throw new Error("Feedback not found");
-    }
+    const fb = await getContactFeedback(feedbackId, userEmail);
+    if (!fb) throw new Error("Feedback not found");
   }
 
-  const resp = await fetch(`${STORY_SERVICE_URL}/generate-story`, {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({
+  const client = new Client({ apiUrl: LANGGRAPH_URL });
+
+  const result = await client.runs.wait(null, "story", {
+    input: {
       goal_id: goalId ?? null,
       issue_id: issueId ?? null,
       feedback_id: feedbackId ?? null,
-      user_email: userEmail,
       language: args.language ?? "English",
       minutes: args.minutes ?? 10,
-    }),
-  });
-  if (!resp.ok) throw new Error(`Story service error: ${resp.status}`);
-  const { story_id: storyId, text } = await resp.json();
+    },
+  }) as Record<string, unknown>;
+
+  const error = result?.error as string | undefined;
+  if (error) throw new Error(`Story generation failed: ${error}`);
+
+  const text = result?.story_text as string | undefined;
+  const storyId = result?.story_id as number | undefined;
+  const evals = result?.evals as string | undefined;
 
   return {
     success: true,
     message: "Story generated successfully",
-    storyId,
-    text,
+    storyId: storyId ?? null,
+    text: text ?? null,
+    evals: evals ?? null,
   };
 };

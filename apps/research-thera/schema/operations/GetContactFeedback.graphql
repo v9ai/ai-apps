@@ -22,7 +22,7 @@ query GetContactFeedback($id: Int!) {
       goalId
       language
       minutes
-      text
+      content
       audioKey
       audioUrl
       audioGeneratedAt

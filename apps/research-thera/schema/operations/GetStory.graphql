@@ -2,8 +2,12 @@ query GetStory($id: Int!) {
   story(id: $id) {
     id
     goalId
+    issueId
+    feedbackId
     createdBy
     content
+    language
+    minutes
     audioKey
     audioUrl
     audioGeneratedAt

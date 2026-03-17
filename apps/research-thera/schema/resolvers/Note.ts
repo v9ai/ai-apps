@@ -1,10 +1,10 @@
 import type { NoteResolvers } from "./../types.generated";
-import { d1Tools } from "@/src/db";
+import { getResearchForNote, getGoal, getNoteShares, canViewerReadNote } from "@/src/db";
 import { createD1StorageAdapter } from "@/src/adapters/d1-storage.adapter";
 
 export const Note: NoteResolvers = {
   linkedResearch: async (parent, _args, _ctx) => {
-    const research = await d1Tools.getResearchForNote(parent.id);
+    const research = await getResearchForNote(parent.id);
     return research;
   },
 
@@ -21,14 +21,13 @@ export const Note: NoteResolvers = {
     }
 
     try {
-      const goal = await d1Tools.getGoal(parent.entityId, parent.createdBy);
+      const goal = await getGoal(parent.entityId, parent.createdBy);
       return {
         ...goal,
         notes: [],
         research: [],
         questions: [],
         stories: [],
-        userStories: [],
       } as any;
     } catch (error) {
       // Goal not found or user doesn't have access
@@ -44,7 +43,7 @@ export const Note: NoteResolvers = {
       return [];
     }
 
-    const shares = await d1Tools.getNoteShares(parent.id);
+    const shares = await getNoteShares(parent.id);
     return shares.map((share) => ({
       noteId: share.noteId,
       email: share.email,
@@ -57,7 +56,7 @@ export const Note: NoteResolvers = {
   viewerAccess: async (parent, _args, ctx) => {
     const userEmail = ctx.userEmail;
 
-    const access = await d1Tools.canViewerReadNote(
+    const access = await canViewerReadNote(
       parent.id,
       userEmail || null,
     );

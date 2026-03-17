@@ -1,5 +1,5 @@
 import type { MutationResolvers } from "./../../types.generated";
-import { d1Tools } from "@/src/db";
+import { updateTeacherFeedback as _updateTeacherFeedback, getTeacherFeedback } from "@/src/db";
 
 export const updateTeacherFeedback: NonNullable<MutationResolvers['updateTeacherFeedback']> = async (
   _parent,
@@ -11,7 +11,7 @@ export const updateTeacherFeedback: NonNullable<MutationResolvers['updateTeacher
     throw new Error("Authentication required");
   }
 
-  await d1Tools.updateTeacherFeedback(args.id, userEmail, {
+  await _updateTeacherFeedback(args.id, userEmail, {
     teacherName: args.input.teacherName ?? undefined,
     subject: args.input.subject ?? undefined,
     feedbackDate: args.input.feedbackDate ?? undefined,
@@ -20,7 +20,7 @@ export const updateTeacherFeedback: NonNullable<MutationResolvers['updateTeacher
     source: args.input.source ?? undefined,
   });
 
-  const fb = await d1Tools.getTeacherFeedback(args.id, userEmail);
+  const fb = await getTeacherFeedback(args.id, userEmail);
 
   if (!fb) {
     throw new Error("Teacher feedback not found after update");

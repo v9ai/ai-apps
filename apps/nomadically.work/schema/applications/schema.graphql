@@ -30,7 +30,7 @@ type Application {
   id: Int!
   # Email of the currently authenticated user
   email: EmailAddress!
-  jobId: String!
+  jobId: String
   resume: Upload
   questions: [QuestionAnswer!]!
   status: ApplicationStatus!
@@ -39,6 +39,7 @@ type Application {
   companyName: String
   companyKey: String
   jobDescription: String
+  aiInterviewQuestions: String
   createdAt: String!
 }
 
@@ -67,4 +68,6 @@ input UpdateApplicationInput {
   notes: String
   jobDescription: String
   companyName: String
+  jobId: String
+  jobTitle: String
 }

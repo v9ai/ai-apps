@@ -1,5 +1,5 @@
 import type { RelationshipResolvers } from './../types.generated';
-import { d1Tools } from "@/src/db";
+import { getFamilyMember, getContact } from "@/src/db";
 
 export const Relationship: RelationshipResolvers = {
   subject: async (parent, _args, ctx) => {
@@ -7,11 +7,11 @@ export const Relationship: RelationshipResolvers = {
     if (!userEmail) return null;
 
     if (parent.subjectType === "FAMILY_MEMBER") {
-      const fm = await d1Tools.getFamilyMember(parent.subjectId);
+      const fm = await getFamilyMember(parent.subjectId);
       if (!fm) return null;
       return { id: fm.id, type: "FAMILY_MEMBER" as any, slug: fm.slug, firstName: fm.firstName, lastName: fm.name };
     } else {
-      const contact = await d1Tools.getContact(parent.subjectId, userEmail);
+      const contact = await getContact(parent.subjectId, userEmail);
       if (!contact) return null;
       return { id: contact.id, type: "CONTACT" as any, slug: contact.slug, firstName: contact.firstName, lastName: contact.lastName };
     }
@@ -21,11 +21,11 @@ export const Relationship: RelationshipResolvers = {
     if (!userEmail) return null;
 
     if (parent.relatedType === "FAMILY_MEMBER") {
-      const fm = await d1Tools.getFamilyMember(parent.relatedId);
+      const fm = await getFamilyMember(parent.relatedId);
       if (!fm) return null;
       return { id: fm.id, type: "FAMILY_MEMBER" as any, slug: fm.slug, firstName: fm.firstName, lastName: fm.name };
     } else {
-      const contact = await d1Tools.getContact(parent.relatedId, userEmail);
+      const contact = await getContact(parent.relatedId, userEmail);
       if (!contact) return null;
       return { id: contact.id, type: "CONTACT" as any, slug: contact.slug, firstName: contact.firstName, lastName: contact.lastName };
     }

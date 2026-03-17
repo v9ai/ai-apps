@@ -76,13 +76,14 @@ export type AnalyzeCompanyResponse = {
 
 export type Application = {
   __typename: 'Application';
+  aiInterviewQuestions: Maybe<Scalars['String']['output']>;
   companyKey: Maybe<Scalars['String']['output']>;
   companyName: Maybe<Scalars['String']['output']>;
   createdAt: Scalars['String']['output'];
   email: Scalars['EmailAddress']['output'];
   id: Scalars['Int']['output'];
   jobDescription: Maybe<Scalars['String']['output']>;
-  jobId: Scalars['String']['output'];
+  jobId: Maybe<Scalars['String']['output']>;
   jobTitle: Maybe<Scalars['String']['output']>;
   notes: Maybe<Scalars['String']['output']>;
   questions: Array<QuestionAnswer>;
@@ -2258,6 +2259,8 @@ export type UnverifyContactsResult = {
 export type UpdateApplicationInput = {
   companyName?: InputMaybe<Scalars['String']['input']>;
   jobDescription?: InputMaybe<Scalars['String']['input']>;
+  jobId?: InputMaybe<Scalars['String']['input']>;
+  jobTitle?: InputMaybe<Scalars['String']['input']>;
   notes?: InputMaybe<Scalars['String']['input']>;
   status?: InputMaybe<ApplicationStatus>;
 };

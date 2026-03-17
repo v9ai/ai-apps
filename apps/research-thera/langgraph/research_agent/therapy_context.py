@@ -298,6 +298,8 @@ class StoryContext:
     research_summary: str
     language: str
     minutes: int
+    related_person_name: Optional[str] = None
+    related_person_relationship: Optional[str] = None
 
     def _developmental_tier(self) -> str:
         if self.age_years is None:
@@ -392,6 +394,19 @@ This session MUST integrate LEGO building as a hands-on therapeutic activity. Th
             if lego_appropriate else ""
         )
 
+        related_section = ""
+        if self.related_person_name:
+            rel_desc = self.related_person_relationship or "family member"
+            related_section = (
+                f"\nRelational context: {self.related_person_name} ({rel_desc}) is part of "
+                f"{self.person_name}'s life and relevant to this issue. "
+                f"Use this as background context only. "
+                f"CRITICAL: This session is addressed ONLY to {self.person_name}. "
+                f"NEVER directly address or speak to {self.related_person_name} in the script. "
+                f"You may help {self.person_name} understand and navigate this relationship, "
+                f"but always speak directly to {self.person_name} alone."
+            )
+
         return f"""\
 Create a therapeutic audio session for the following feedback. Write the full script in {self.language}, approximately {self.minutes} minutes long when read aloud at a calm pace of about 120 words per minute.
 
@@ -401,7 +416,7 @@ CRITICAL: This script will be read aloud by a text-to-speech engine. Write ONLY 
 
 ## Person
 This is for {self.person_name}{age_ctx}.
-Developmental Tier: {tier}{age_enforcement}
+Developmental Tier: {tier}{age_enforcement}{related_section}
 {feedback_section}
 
 ## Research Evidence
@@ -424,7 +439,7 @@ The following research papers inform the therapeutic techniques to use:
 - Personalize for {self.person_name}{age_ctx} (developmental tier: {tier}){child_req}{lego_req}
 - Target duration: {self.minutes} minutes (approximately {target_words} words at calm pace)
 - Write in {self.language}
-- Include a brief mention that a parent, caregiver, or professional can provide additional support if needed"""
+- Address ONLY {self.person_name} directly throughout the entire session. NEVER directly address or speak to any parent, caregiver, or other person — not even if a related person is mentioned in the context. You may suggest {self.person_name} ask a parent or caregiver for help, but always in third person (e.g., "you can ask your mom to help you practice this" — never "Mom, help him with this")"""
 
 
 THERAPEUTIC_AUDIO_SYSTEM_PROMPT = """\
@@ -452,7 +467,7 @@ Understanding Together (1-2 minutes) — explain the difficulty in simple concre
 
 Guided Practices (majority of time) — provide specific, actionable techniques. For children, frame as play, imagination, or adventure. Guide step-by-step with pauses between each instruction. Include at least one body-based activity (breathing, movement, squeezing hands).
 
-Wrapping Up (1 minute) — summarize in one or two simple sentences. Suggest one thing to practice with a parent or caregiver. End with warm encouragement and affirmation.
+Wrapping Up (1 minute) — summarize in one or two simple sentences. Suggest one thing the listener can practice (they can ask a parent or caregiver to help them). End with warm encouragement and affirmation. Always speak only to the listener — never directly address a parent or caregiver.
 
 ## LEGO Therapeutic Play Integration
 When LEGO play is appropriate (especially for children in EARLY_CHILDHOOD and MIDDLE_CHILDHOOD tiers), weave LEGO building into the therapeutic session as a hands-on modality:

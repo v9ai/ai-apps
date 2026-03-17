@@ -1,5 +1,5 @@
 import type { QueryResolvers } from "./../../types.generated";
-import { d1Tools } from "@/src/db";
+import { getIssuesForFamilyMember, getContactFeedback } from "@/src/db";
 
 export const issues: NonNullable<QueryResolvers['issues']> = async (
   _parent,
@@ -12,7 +12,7 @@ export const issues: NonNullable<QueryResolvers['issues']> = async (
   }
 
   // First, try to get issues from the issues table
-  const issues = await d1Tools.getIssuesForFamilyMember(
+  const issues = await getIssuesForFamilyMember(
     args.familyMemberId,
     args.feedbackId ?? undefined,
     userEmail,
@@ -38,7 +38,7 @@ export const issues: NonNullable<QueryResolvers['issues']> = async (
   // Fallback: If no issues in table and feedbackId is provided, try to get from legacy extracted_issues field
   if (args.feedbackId) {
     try {
-      const feedback = await d1Tools.getContactFeedback(args.feedbackId, userEmail);
+      const feedback = await getContactFeedback(args.feedbackId, userEmail);
       if (feedback?.extractedIssues && Array.isArray(feedback.extractedIssues)) {
         // Map legacy JSON field to Issue format
         return feedback.extractedIssues.map((legacyIssue: any, index: number) => ({

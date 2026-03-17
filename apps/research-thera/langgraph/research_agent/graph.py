@@ -48,7 +48,7 @@ Research standards:
 - Identify outcome measures and their effect sizes when available
 - Report confidence honestly — say 'insufficient evidence' if the literature is sparse
 - IMPORTANT: At the end, call save_research_papers with the curated papers JSON to persist them to the database
-- The feedback_id will be provided in the user message — include it in the save_research_papers call
+- The feedback_id or issue_id will be provided in the user message — include whichever is given in the save_research_papers call
 
 Evidence levels:
 - meta-analysis: pooled analysis of multiple studies
@@ -123,19 +123,22 @@ def _make_tools(semantic_scholar_api_key: Optional[str] = None) -> list:
     @tool
     async def save_research_papers(papers_json: str) -> str:
         """Save the final curated research papers to the database. Call this ONCE at the end
-        with a JSON string containing: {"feedback_id": <int>, "therapeutic_goal_type": "<string>",
+        with a JSON string containing: {"feedback_id": <int> OR "issue_id": <int>,
+        "therapeutic_goal_type": "<string>",
         "papers": [{"title": "...", "authors": ["..."], "year": 2024, "doi": "10.xxx",
         "url": "...", "abstract": "...", "key_findings": ["..."], "therapeutic_techniques": ["..."],
         "evidence_level": "rct", "relevance_score": 0.85}]}. This persists the papers so the
-        therapist can review them later."""
+        therapist can review them later. Use issue_id when research was triggered for an issue,
+        feedback_id when triggered for feedback."""
         try:
             data = json.loads(papers_json)
         except json.JSONDecodeError as e:
             return f"Invalid JSON: {e}"
 
         feedback_id = data.get("feedback_id")
-        if not feedback_id:
-            return "Error: feedback_id is required"
+        issue_id = data.get("issue_id")
+        if not feedback_id and not issue_id:
+            return "Error: either feedback_id or issue_id is required"
 
         therapeutic_goal_type = data.get("therapeutic_goal_type", "")
         papers = data.get("papers", [])
@@ -147,7 +150,6 @@ def _make_tools(semantic_scholar_api_key: Optional[str] = None) -> list:
         for paper in papers[:10]:
             try:
                 await upsert_research_paper(
-                    feedback_id=feedback_id,
                     therapeutic_goal_type=therapeutic_goal_type,
                     title=paper.get("title", ""),
                     authors=paper.get("authors", []),
@@ -159,6 +161,8 @@ def _make_tools(semantic_scholar_api_key: Optional[str] = None) -> list:
                     therapeutic_techniques=paper.get("therapeutic_techniques", []),
                     evidence_level=paper.get("evidence_level"),
                     relevance_score=float(paper.get("relevance_score", 0)),
+                    feedback_id=feedback_id,
+                    issue_id=issue_id,
                 )
                 saved += 1
             except Exception as e:

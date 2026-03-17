@@ -1,5 +1,5 @@
 import type { MutationResolvers } from "./../../types.generated";
-import { d1Tools } from "@/src/db";
+import { createTeacherFeedback as _createTeacherFeedback, getTeacherFeedback } from "@/src/db";
 
 export const createTeacherFeedback: NonNullable<MutationResolvers['createTeacherFeedback']> = async (
   _parent,
@@ -11,7 +11,7 @@ export const createTeacherFeedback: NonNullable<MutationResolvers['createTeacher
     throw new Error("Authentication required");
   }
 
-  const id = await d1Tools.createTeacherFeedback({
+  const id = await _createTeacherFeedback({
     familyMemberId: args.input.familyMemberId,
     userId: userEmail,
     teacherName: args.input.teacherName,
@@ -22,7 +22,7 @@ export const createTeacherFeedback: NonNullable<MutationResolvers['createTeacher
     source: args.input.source ?? null,
   });
 
-  const fb = await d1Tools.getTeacherFeedback(id, userEmail);
+  const fb = await getTeacherFeedback(id, userEmail);
 
   if (!fb) {
     throw new Error("Failed to retrieve created teacher feedback");

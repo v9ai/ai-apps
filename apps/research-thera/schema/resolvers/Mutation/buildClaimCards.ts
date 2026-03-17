@@ -5,7 +5,7 @@ import { createDeepSeek } from "@ai-sdk/deepseek";
 import { generateObject } from "ai";
 import { z } from "zod";
 import { toGqlClaimCards } from "../utils/normalize-claim-card";
-import { d1 } from "../../../src/db";
+import { getResearchForNote } from "../../../src/db";
 import type { PaperDetails } from "../../../src/tools/sources.tools";
 
 // Suppress AI SDK warnings
@@ -24,33 +24,14 @@ const deepseek = createDeepSeek({
 async function loadLinkedResearchForNote(
   noteId: number,
 ): Promise<PaperCandidate[]> {
-  // Query the notes_research join table to get research papers for this note
-  const res = await d1.execute({
-    sql: `
-      SELECT
-        r.id as id,
-        r.title as title,
-        r.year as year,
-        r.doi as doi,
-        r.url as url,
-        r.authors as authors,
-        r.abstract as abstract,
-        r.journal as journal
-      FROM therapy_research r
-      INNER JOIN notes_research nr ON nr.research_id = r.id
-      WHERE nr.note_id = ?
-      ORDER BY r.year DESC
-    `,
-    args: [noteId],
-  });
-
-  return res.rows.map((r: any) => ({
+  const rows = await getResearchForNote(noteId);
+  return rows.map((r) => ({
     title: String(r.title),
     year: r.year != null ? Number(r.year) : undefined,
     doi: r.doi ? String(r.doi) : undefined,
     url: r.url ? String(r.url) : undefined,
     source: "linked",
-    authors: r.authors ? JSON.parse(String(r.authors)) : undefined,
+    authors: r.authors ? (Array.isArray(r.authors) ? r.authors : JSON.parse(String(r.authors))) : undefined,
     abstract: r.abstract ? String(r.abstract) : undefined,
     journal: r.journal ? String(r.journal) : undefined,
   }));

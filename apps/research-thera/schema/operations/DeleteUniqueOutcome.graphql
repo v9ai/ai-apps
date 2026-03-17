@@ -1,6 +1,0 @@
-mutation DeleteUniqueOutcome($id: Int!) {
-  deleteUniqueOutcome(id: $id) {
-    success
-    message
-  }
-}

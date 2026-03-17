@@ -54,7 +54,7 @@ Understanding Together (1-2 minutes) — explain the difficulty in simple concre
 
 Guided Practices (majority of time) — provide specific, actionable techniques. For children, frame as play, imagination, or adventure. Guide step-by-step with pauses between each instruction. Include at least one body-based activity (breathing, movement, squeezing hands). When including breathing, ALWAYS write counted timing: "Breathe in... two... three... four..."
 
-Wrapping Up (1 minute) — summarize in one or two simple sentences. Suggest one thing to practice with a parent or caregiver. End with warm encouragement and affirmation.
+Wrapping Up (1 minute) — summarize in one or two simple sentences. Suggest one thing the listener can practice (they can ask a parent or caregiver to help them). End with warm encouragement and affirmation. Always speak only to the listener — never directly address a parent or caregiver.
 
 ## LEGO Therapeutic Play Integration
 When LEGO play is appropriate (especially for children in EARLY_CHILDHOOD and MIDDLE_CHILDHOOD tiers), weave LEGO building into the therapeutic session as a hands-on modality:
@@ -145,16 +145,6 @@ TEST_CASES = [
                 "Comfort object use",
             ],
         },
-        "unique_outcomes": [
-            {
-                "observed_at": "2024-03-01",
-                "description": "Stayed in his room alone for 10 minutes without calling out",
-            },
-            {
-                "observed_at": "2024-03-08",
-                "description": "Fell asleep before a parent checked on him for the first time",
-            },
-        ],
         "feedback_context": None,
         "notes": None,
         "papers": [
@@ -184,7 +174,6 @@ TEST_CASES = [
         "minutes": 5,
         "language": "English",
         "issue": None,
-        "unique_outcomes": [],
         "feedback_context": None,
         "notes": None,
         "papers": [
@@ -208,7 +197,6 @@ TEST_CASES = [
         "minutes": 10,
         "language": "English",
         "issue": None,
-        "unique_outcomes": [],
         "feedback_context": {
             "subject": "Classroom observations — Sam",
             "date": "2024-03-10",
@@ -273,12 +261,6 @@ TEST_CASES = [
                 "Repair and reconnection after episodes",
             ],
         },
-        "unique_outcomes": [
-            {
-                "observed_at": "2024-03-05",
-                "description": "Used words to express frustration instead of hitting during a disagreement with his sister",
-            },
-        ],
         "feedback_context": None,
         "notes": [
             {
@@ -335,12 +317,6 @@ TEST_CASES = [
             "description": "Hesitation to approach peers and join group play; hangs back on the playground.",
             "recommendations": ["Friendship scripts", "Role-play practice", "Small-group exposure"],
         },
-        "unique_outcomes": [
-            {
-                "observed_at": "2024-03-07",
-                "description": "Asked a classmate to play and they spent recess together",
-            },
-        ],
         "feedback_context": None,
         "notes": None,
         "papers": [
@@ -364,7 +340,6 @@ TEST_CASES = [
         "minutes": 15,
         "language": "English",
         "issue": None,
-        "unique_outcomes": [],
         "feedback_context": None,
         "notes": None,
         "papers": [
@@ -394,7 +369,6 @@ TEST_CASES = [
         "minutes": 10,
         "language": "English",
         "issue": None,
-        "unique_outcomes": [],
         "feedback_context": None,
         "notes": None,
         "papers": [],  # no research — exercises the fallback code path
@@ -422,12 +396,6 @@ TEST_CASES = [
                 "Brave Tower — add a brick each night he stays in bed",
             ],
         },
-        "unique_outcomes": [
-            {
-                "observed_at": "2024-03-01",
-                "description": "Built a small LEGO house and said 'this is where brave kids sleep'",
-            },
-        ],
         "feedback_context": None,
         "notes": None,
         "papers": [
@@ -468,16 +436,6 @@ TEST_CASES = [
                 "Physical discharge strategies",
             ],
         },
-        "unique_outcomes": [
-            {
-                "observed_at": "2024-03-05",
-                "description": "Used words to express frustration instead of hitting during a disagreement with his sister",
-            },
-            {
-                "observed_at": "2024-03-10",
-                "description": "Built a 'feelings tower' with his dad and named each color-feeling",
-            },
-        ],
         "feedback_context": None,
         "notes": [
             {
@@ -507,7 +465,88 @@ TEST_CASES = [
         ],
         "lego_play": True,
     },
-    # 10. LEGO · social skills · Brave Bridge building for peer interaction
+    # 10. Issue-driven · aggression toward parent · single-recipient enforcement
+    {
+        "id": "sam-home-aggression-related-parent",
+        "context_type": "issue",
+        "goal_title": None,
+        "goal_description": None,
+        "person_name": "Sam",
+        "age_years": 7,
+        "developmental_tier": "MIDDLE_CHILDHOOD",
+        "minutes": 10,
+        "language": "English",
+        # Related person: the session must NEVER directly address Mom
+        "related_person_name": "Mom",
+        "related_person_relationship": "mother",
+        "issue": {
+            "title": "Aggressive Language Toward Parent During Transitions",
+            "category": "BEHAVIORAL",
+            "severity": "MODERATE",
+            "description": "Sam uses threatening language toward his mother when asked to stop playing.",
+            "recommendations": [
+                "Teach transition warnings (5-minute countdown)",
+                "Build emotional vocabulary for frustration",
+                "Practice a safe signal word for when feelings get too big",
+            ],
+        },
+        "feedback_context": None,
+        "notes": None,
+        "papers": [
+            {
+                "title": "Emotion regulation and transition management in middle childhood",
+                "year": 2023,
+                "key_findings": "Advance warnings and coping words reduced transition-related outbursts by 40% in ages 6-9",
+                "therapeutic_techniques": "Countdown warnings; feelings thermometer; coping self-talk; safe signal word",
+            },
+        ],
+        "lego_play": True,
+    },
+    # 11. Bogdan · aggression toward Mama · mirrors real story-8 failure
+    # Regression test: model previously greeted Mama directly and referred to Bogdan in 3rd person.
+    # The session must be addressed ONLY to Bogdan; Mama is context only.
+    {
+        "id": "bogdan-aggression-toward-mama",
+        "context_type": "issue",
+        "goal_title": None,
+        "goal_description": None,
+        "person_name": "Bogdan",
+        "age_years": 7,
+        "developmental_tier": "MIDDLE_CHILDHOOD",
+        "minutes": 10,
+        "language": "English",
+        "related_person_name": "Mama",
+        "related_person_relationship": "mother",
+        "issue": {
+            "title": "Aggressive Language Toward Mother During Transitions",
+            "category": "BEHAVIORAL",
+            "severity": "MODERATE",
+            "description": "Bogdan uses hurtful words toward his mother when asked to stop playing LEGO.",
+            "recommendations": [
+                "LEGO Feelings Tower — build one last brick before stopping to process the transition",
+                "5-minute countdown warning before screen or play stops",
+                "Repair conversation with Mama after an outburst: validate feeling, name behavior",
+            ],
+        },
+        "feedback_context": None,
+        "notes": None,
+        "papers": [
+            {
+                "title": "Emotion regulation and transition management in middle childhood",
+                "year": 2023,
+                "key_findings": "Advance warnings and coping words reduced transition-related outbursts by 40% in ages 6-9",
+                "therapeutic_techniques": "Countdown warnings; feelings thermometer; coping self-talk; safe signal word",
+            },
+            {
+                "title": "Parent-child emotion coaching for explosive behavior in middle childhood",
+                "year": 2022,
+                "key_findings": "Emotion coaching reduced aggression episodes and improved repair behavior over 8 weeks",
+                "therapeutic_techniques": "Emotion labeling; co-regulation breathing; post-episode repair conversations",
+            },
+        ],
+        "lego_play": True,
+    },
+    # 12. LEGO · social skills · Brave Bridge building for peer interaction
     {
         "id": "sam-lego-social-brave-bridge",
         "context_type": "goal",
@@ -529,16 +568,6 @@ TEST_CASES = [
                 "Role-play with LEGO figures for social scenario practice",
             ],
         },
-        "unique_outcomes": [
-            {
-                "observed_at": "2024-03-07",
-                "description": "Asked a classmate to play and they spent recess together",
-            },
-            {
-                "observed_at": "2024-03-12",
-                "description": "Brought LEGO to school and invited two classmates to build with him",
-            },
-        ],
         "feedback_context": None,
         "notes": None,
         "papers": [
@@ -614,6 +643,19 @@ def build_story_prompt(case_data: dict) -> str:
                 f"- NEVER use adult register, adult emotional vocabulary, or adult expectations.\n"
                 f"- If you find yourself writing for a grown-up, stop and rewrite for a {age_label}."
             )
+        # Mirror related_section from therapy_context.py
+        related_name = case_data.get("related_person_name")
+        if related_name:
+            rel_desc = case_data.get("related_person_relationship") or "family member"
+            person_line += (
+                f"\nRelational context: {related_name} ({rel_desc}) is part of "
+                f"{person_name}'s life and relevant to this issue. "
+                f"Use this as background context only. "
+                f"CRITICAL: This session is addressed ONLY to {person_name}. "
+                f"NEVER directly address or speak to {related_name} in the script. "
+                f"You may help {person_name} understand and navigate this relationship, "
+                f"but always speak directly to {person_name} alone."
+            )
     else:
         person_line = "This is for the listener themselves (first-person, self-directed session)."
 
@@ -631,12 +673,6 @@ def build_story_prompt(case_data: dict) -> str:
         if issue.get("recommendations"):
             lines.append("\n## Recommendations")
             lines.extend(f"- {r}" for r in issue["recommendations"])
-        if case_data.get("unique_outcomes"):
-            lines.append("\n## Sparkling Moments")
-            lines.extend(
-                f"- {o['observed_at']}: {o['description']}"
-                for o in case_data["unique_outcomes"]
-            )
         issue_section = "\n".join(lines) + "\n"
 
     # --- Feedback context section ---
@@ -776,8 +812,11 @@ def build_story_prompt(case_data: dict) -> str:
     prompt += f"\n- Target duration: {minutes} minutes (approximately {target_words} words at calm pace)\n"
     prompt += f"- Write in {language}\n"
     prompt += (
-        f"- Include a brief mention that a parent, caregiver, or professional "
-        f"can provide additional support if needed"
+        f"- Address ONLY {person_name} directly throughout the entire session. "
+        f"NEVER directly address or speak to any parent, caregiver, or other person — "
+        f"not even if a related person is mentioned in the context. "
+        f"You may suggest {person_name} ask a parent or caregiver for help, but always in third person "
+        f"(e.g., \"you can ask your mom to help you practice this\" — never \"Mom, do this with him\")"
     )
 
     return prompt

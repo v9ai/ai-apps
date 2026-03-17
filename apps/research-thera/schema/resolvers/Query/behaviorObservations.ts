@@ -1,5 +1,5 @@
 import type { QueryResolvers } from "./../../types.generated";
-import { d1Tools } from "@/src/db";
+import { getBehaviorObservationsForFamilyMember } from "@/src/db";
 
 export const behaviorObservations: NonNullable<QueryResolvers['behaviorObservations']> = async (
   _parent,
@@ -11,7 +11,7 @@ export const behaviorObservations: NonNullable<QueryResolvers['behaviorObservati
     throw new Error("Authentication required");
   }
 
-  const observations = await d1Tools.getBehaviorObservationsForFamilyMember(
+  const observations = await getBehaviorObservationsForFamilyMember(
     args.familyMemberId,
     userEmail,
     args.goalId ?? undefined,

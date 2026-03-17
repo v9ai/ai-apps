@@ -1,5 +1,5 @@
 import type { MutationResolvers } from "./../../types.generated";
-import { d1Tools } from "@/src/db";
+import { createContact as _createContact, getContact } from "@/src/db";
 
 export const createContact: NonNullable<MutationResolvers['createContact']> = async (
   _parent,
@@ -11,7 +11,7 @@ export const createContact: NonNullable<MutationResolvers['createContact']> = as
     throw new Error("Authentication required");
   }
 
-  const id = await d1Tools.createContact({
+  const id = await _createContact({
     userId: userEmail,
     firstName: args.input.firstName,
     lastName: args.input.lastName ?? null,
@@ -20,7 +20,7 @@ export const createContact: NonNullable<MutationResolvers['createContact']> = as
     notes: args.input.notes ?? null,
   });
 
-  const item = await d1Tools.getContact(id, userEmail);
+  const item = await getContact(id, userEmail);
   if (!item) {
     throw new Error("Failed to retrieve created contact");
   }

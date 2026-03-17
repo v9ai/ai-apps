@@ -15,7 +15,6 @@ def _get_conn_str() -> str:
 
 
 async def upsert_research_paper(
-    feedback_id: int,
     therapeutic_goal_type: str,
     title: str,
     authors: list[str],
@@ -27,6 +26,8 @@ async def upsert_research_paper(
     therapeutic_techniques: list[str],
     evidence_level: str | None,
     relevance_score: float,
+    feedback_id: int | None = None,
+    issue_id: int | None = None,
 ) -> int:
     """Insert or skip a research paper into Neon therapy_research table."""
     conn_str = _get_conn_str()
@@ -35,13 +36,19 @@ async def upsert_research_paper(
     techniques_json = json.dumps(therapeutic_techniques or [])
     score = int(relevance_score * 100) if relevance_score <= 1 else int(relevance_score)
 
+    # Build dedup condition based on which id is provided
+    if issue_id is not None:
+        dedup_col, dedup_val = "issue_id", issue_id
+    else:
+        dedup_col, dedup_val = "feedback_id", feedback_id
+
     async with await psycopg.AsyncConnection.connect(conn_str) as conn:
         async with conn.cursor() as cur:
             # Deduplicate by DOI
             if doi:
                 await cur.execute(
-                    "SELECT id FROM therapy_research WHERE doi = %s AND feedback_id = %s LIMIT 1",
-                    (doi, feedback_id),
+                    f"SELECT id FROM therapy_research WHERE doi = %s AND {dedup_col} = %s LIMIT 1",
+                    (doi, dedup_val),
                 )
                 row = await cur.fetchone()
                 if row:
@@ -49,8 +56,8 @@ async def upsert_research_paper(
 
             # Deduplicate by title
             await cur.execute(
-                "SELECT id FROM therapy_research WHERE title = %s AND feedback_id = %s LIMIT 1",
-                (title, feedback_id),
+                f"SELECT id FROM therapy_research WHERE title = %s AND {dedup_col} = %s LIMIT 1",
+                (title, dedup_val),
             )
             row = await cur.fetchone()
             if row:
@@ -59,15 +66,15 @@ async def upsert_research_paper(
             # Insert
             await cur.execute(
                 """INSERT INTO therapy_research (
-                    feedback_id, therapeutic_goal_type, title, authors, year, doi, url,
+                    feedback_id, issue_id, therapeutic_goal_type, title, authors, year, doi, url,
                     abstract, key_findings, therapeutic_techniques, evidence_level,
                     relevance_score, extracted_by, extraction_confidence,
                     created_at, updated_at
                 ) VALUES (
-                    %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, NOW(), NOW()
+                    %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, NOW(), NOW()
                 ) RETURNING id""",
                 (
-                    feedback_id, therapeutic_goal_type, title, authors_json,
+                    feedback_id, issue_id, therapeutic_goal_type, title, authors_json,
                     year, doi, url, abstract, findings_json, techniques_json,
                     evidence_level, score, "langgraph:deepseek-chat:v1", 75,
                 ),

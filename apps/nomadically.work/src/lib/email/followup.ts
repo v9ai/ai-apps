@@ -6,14 +6,9 @@
  * - Tracks reply status to stop follow-up chains
  */
 
-import { drizzle } from "drizzle-orm/d1";
 import { eq, and, or } from "drizzle-orm";
-import { createD1HttpClient } from "@/db/d1-http";
+import { db } from "@/db";
 import { contactEmails } from "@/db/schema";
-
-function getDb() {
-  return drizzle(createD1HttpClient() as any);
-}
 
 export interface FollowUpConfig {
   daysAfter: number;
@@ -37,7 +32,6 @@ export async function findEmailsNeedingFollowUp(
   companyId: number,
   previousSequence: number,
 ) {
-  const db = getDb();
   return db
     .select()
     .from(contactEmails)
@@ -126,8 +120,7 @@ export async function markEmailAsReplied(
   resendId: string,
 ): Promise<boolean> {
   try {
-    const db = getDb();
-    await db
+      await db
       .update(contactEmails)
       .set({
         reply_received: true,

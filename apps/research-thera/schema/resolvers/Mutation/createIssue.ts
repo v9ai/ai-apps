@@ -1,5 +1,5 @@
 import type { MutationResolvers } from "./../../types.generated";
-import { d1Tools } from "@/src/db";
+import { createIssue as _createIssue, getIssue } from "@/src/db";
 
 export const createIssue: NonNullable<MutationResolvers['createIssue']> = async (
   _parent,
@@ -11,7 +11,7 @@ export const createIssue: NonNullable<MutationResolvers['createIssue']> = async 
     throw new Error("Authentication required");
   }
 
-  const id = await d1Tools.createIssue({
+  const id = await _createIssue({
     feedbackId: args.input.feedbackId,
     familyMemberId: args.input.familyMemberId,
     userId: userEmail,
@@ -22,7 +22,7 @@ export const createIssue: NonNullable<MutationResolvers['createIssue']> = async 
     recommendations: args.input.recommendations ?? null,
   });
 
-  const issue = await d1Tools.getIssue(id, userEmail);
+  const issue = await getIssue(id, userEmail);
 
   if (!issue) {
     throw new Error("Failed to retrieve created issue");

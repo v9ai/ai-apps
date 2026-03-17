@@ -1,5 +1,5 @@
 import type { MutationResolvers } from "./../../types.generated";
-import { d1Tools } from "@/src/db";
+import { updateIssue as _updateIssue, getIssue } from "@/src/db";
 
 export const updateIssue: NonNullable<MutationResolvers['updateIssue']> = async (
   _parent,
@@ -11,7 +11,9 @@ export const updateIssue: NonNullable<MutationResolvers['updateIssue']> = async 
     throw new Error("Authentication required");
   }
 
-  await d1Tools.updateIssue(args.id, userEmail, {
+  await _updateIssue(args.id, userEmail, {
+    familyMemberId: args.input.familyMemberId ?? undefined,
+    relatedFamilyMemberId: args.input.relatedFamilyMemberId !== undefined ? (args.input.relatedFamilyMemberId ?? null) : undefined,
     title: args.input.title ?? undefined,
     description: args.input.description ?? undefined,
     category: args.input.category ?? undefined,
@@ -19,7 +21,7 @@ export const updateIssue: NonNullable<MutationResolvers['updateIssue']> = async 
     recommendations: args.input.recommendations ?? undefined,
   });
 
-  const issue = await d1Tools.getIssue(args.id, userEmail);
+  const issue = await getIssue(args.id, userEmail);
 
   if (!issue) {
     throw new Error("Failed to retrieve updated issue");
@@ -29,6 +31,7 @@ export const updateIssue: NonNullable<MutationResolvers['updateIssue']> = async 
     id: issue.id,
     feedbackId: issue.feedbackId,
     familyMemberId: issue.familyMemberId,
+    relatedFamilyMemberId: issue.relatedFamilyMemberId,
     createdBy: issue.userId,
     title: issue.title,
     description: issue.description,

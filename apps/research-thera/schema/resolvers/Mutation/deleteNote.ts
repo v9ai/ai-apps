@@ -1,5 +1,5 @@
 import type { MutationResolvers } from "./../../types.generated";
-import { d1 } from "@/src/db";
+import { sql as neonSql } from "@/src/db/neon";
 
 export const deleteNote: NonNullable<MutationResolvers['deleteNote']> = async (
   _parent,
@@ -12,22 +12,13 @@ export const deleteNote: NonNullable<MutationResolvers['deleteNote']> = async (
   }
 
   // Delete associated claim card links first
-  await d1.execute({
-    sql: `DELETE FROM notes_claims WHERE note_id = ?`,
-    args: [args.id],
-  });
+  await neonSql`DELETE FROM notes_claims WHERE note_id = ${args.id}`;
 
   // Delete research links
-  await d1.execute({
-    sql: `DELETE FROM notes_research WHERE note_id = ?`,
-    args: [args.id],
-  });
+  await neonSql`DELETE FROM notes_research WHERE note_id = ${args.id}`;
 
   // Delete the note itself
-  await d1.execute({
-    sql: `DELETE FROM notes WHERE id = ? AND user_id = ?`,
-    args: [args.id, userEmail],
-  });
+  await neonSql`DELETE FROM notes WHERE id = ${args.id} AND user_id = ${userEmail}`;
 
   return {
     success: true,

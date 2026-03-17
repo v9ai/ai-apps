@@ -1,9 +1,7 @@
 import { task, logger } from "@trigger.dev/sdk/v3";
-import { drizzle } from "drizzle-orm/d1";
 import { eq } from "drizzle-orm";
-import * as schema from "../db/schema";
 import { jobs } from "../db/schema";
-import { createD1HttpClient } from "../db/d1-http";
+import { db } from "../db";
 import {
   fetchGreenhouseJobPost,
   saveGreenhouseJobData,
@@ -24,11 +22,6 @@ export interface EnhanceJobPayload {
   companyKey: string;
   /** External ID URL for extracting identifiers */
   externalId?: string;
-}
-
-function getDb() {
-  const d1Client = createD1HttpClient();
-  return drizzle(d1Client as any, { schema });
 }
 
 export const enhanceJobTask = task({
@@ -52,7 +45,7 @@ export const enhanceJobTask = task({
       companyKey,
     });
 
-    const db = getDb();
+
 
     if (sourceLower === "greenhouse") {
       const data = await fetchGreenhouseJobPost(url, { questions: true });
@@ -91,7 +84,7 @@ export const enhanceJobTask = task({
     if (is404) {
       logger.info(`Job ${payload.jobId} no longer exists (404), marking as not-found`);
       try {
-        const db = getDb();
+    
         // Set absolute_url to sentinel so the scheduler's `IS NULL` filter skips it forever.
         await db
           .update(jobs)
