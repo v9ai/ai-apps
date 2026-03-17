@@ -1,4 +1,17 @@
-# DeepEval for Healthcare AI: Eval-Driven Compliance That Actually Catches PII Leakage Before the FDA Does
+---
+slug: deepeval-for-healthcare-ai-eval-driven-compliance-that-actually-catches-pii-leakage-before-the-fda-does
+title: "DeepEval for Healthcare AI: Eval-Driven Compliance That Actually Catches PII Leakage Before the FDA Does"
+description: "The most dangerous failure mode for a healthcare AI isn't inaccuracy—it's a compliance breach you didn't test for. A model can generate a perfect clinical summary and still violate HIPAA by hallucinat"
+date: 2026-03-17
+authors: [nicolad]
+tags:
+  - deepeval
+  - healthcare
+  - eval
+  - driven
+  - compliance
+  - that
+---
 
 The most dangerous failure mode for a healthcare AI isn't inaccuracy—it's a compliance breach you didn't test for. A model can generate a perfect clinical summary and still violate HIPAA by hallucinating a patient's name that never existed. Under the Breach Notification Rule, that fabricated yet plausible Protected Health Information (PHI) constitutes a reportable incident. Most teams discover these gaps during an audit or, worse, after a breach. The alternative is to treat compliance not as a post-hoc checklist, but as an integrated, automated evaluation layer that fails your CI pipeline before bad code ships. This is eval-driven compliance, and it's the only way to build healthcare AI that doesn't gamble with regulatory extinction.
 
