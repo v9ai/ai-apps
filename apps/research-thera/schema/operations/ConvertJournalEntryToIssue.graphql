@@ -1,0 +1,22 @@
+mutation ConvertJournalEntryToIssue($id: Int!, $input: ConvertJournalEntryToIssueInput!) {
+  convertJournalEntryToIssue(id: $id, input: $input) {
+    id
+    journalEntryId
+    feedbackId
+    familyMemberId
+    createdBy
+    title
+    description
+    category
+    severity
+    recommendations
+    createdAt
+    updatedAt
+    familyMember {
+      id
+      firstName
+      name
+      slug
+    }
+  }
+}

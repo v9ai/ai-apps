@@ -2000,6 +2000,7 @@ export async function saveExtractedIssues(
 interface IssueRow {
   id: number;
   feedback_id: number;
+  journal_entry_id: number | null;
   family_member_id: number;
   related_family_member_id: number | null;
   user_id: string;
@@ -2015,6 +2016,7 @@ interface IssueRow {
 interface Issue {
   id: number;
   feedbackId: number;
+  journalEntryId: number | null;
   familyMemberId: number;
   relatedFamilyMemberId: number | null;
   userId: string;
@@ -2031,6 +2033,7 @@ function mapIssueRow(row: IssueRow): Issue {
   return {
     id: row.id as number,
     feedbackId: row.feedback_id as number,
+    journalEntryId: (row.journal_entry_id as number) ?? null,
     familyMemberId: row.family_member_id as number,
     relatedFamilyMemberId: (row.related_family_member_id as number) ?? null,
     userId: row.user_id as string,
@@ -2072,6 +2075,7 @@ export async function getIssue(id: number, userId: string) {
 
 export async function createIssue(params: {
   feedbackId?: number | null;
+  journalEntryId?: number | null;
   familyMemberId: number;
   userId: string;
   title: string;
@@ -2081,10 +2085,16 @@ export async function createIssue(params: {
   recommendations?: string[] | null;
 }): Promise<number> {
   const rows = await neonSql`
-    INSERT INTO issues (feedback_id, family_member_id, user_id, title, description, category, severity, recommendations, created_at, updated_at)
-    VALUES (${params.feedbackId ?? null}, ${params.familyMemberId}, ${params.userId}, ${params.title}, ${params.description}, ${params.category}, ${params.severity}, ${params.recommendations ? JSON.stringify(params.recommendations) : null}, NOW(), NOW())
+    INSERT INTO issues (feedback_id, journal_entry_id, family_member_id, user_id, title, description, category, severity, recommendations, created_at, updated_at)
+    VALUES (${params.feedbackId ?? null}, ${params.journalEntryId ?? null}, ${params.familyMemberId}, ${params.userId}, ${params.title}, ${params.description}, ${params.category}, ${params.severity}, ${params.recommendations ? JSON.stringify(params.recommendations) : null}, NOW(), NOW())
     RETURNING id`;
   return rows[0].id as number;
+}
+
+export async function getIssueByJournalEntryId(journalEntryId: number, userId: string) {
+  const rows = await neonSql`SELECT * FROM issues WHERE journal_entry_id = ${journalEntryId} AND user_id = ${userId} LIMIT 1`;
+  if (rows.length === 0) return null;
+  return mapIssueRow(rows[0] as IssueRow);
 }
 
 export async function updateIssue(
@@ -2307,6 +2317,7 @@ export const d1Tools = {
   // Issues
   getIssuesForFamilyMember,
   getIssue,
+  getIssueByJournalEntryId,
   createIssue,
   updateIssue,
   deleteIssue,

@@ -1,1 +1,0 @@
-ALTER TABLE user_settings ADD COLUMN story_minutes INTEGER NOT NULL DEFAULT 10;

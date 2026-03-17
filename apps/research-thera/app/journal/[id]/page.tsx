@@ -27,6 +27,7 @@ import {
 import { authClient } from "@/app/lib/auth/client";
 import { Breadcrumbs } from "@/app/components/Breadcrumbs";
 import AddJournalEntryButton from "@/app/components/AddJournalEntryButton";
+import ConvertJournalToIssueButton from "@/app/components/ConvertJournalToIssueButton";
 
 const moodColor = (mood: string) =>
   (
@@ -139,6 +140,14 @@ function JournalEntryContent() {
               </Flex>
             </Flex>
             <Flex align="center" gap="2">
+              {!entry.issue && (
+                <ConvertJournalToIssueButton
+                  journalEntryId={entry.id}
+                  defaultTitle={entry.title ?? undefined}
+                  defaultDescription={entry.content}
+                  defaultFamilyMemberId={entry.familyMemberId}
+                />
+              )}
               <AddJournalEntryButton editEntry={entry} />
               <AlertDialog.Root>
                 <AlertDialog.Trigger>
@@ -226,6 +235,41 @@ function JournalEntryContent() {
                 }}
               >
                 {entry.goal.title}
+              </Badge>
+            </Flex>
+          )}
+
+          {/* Linked Issue */}
+          {entry.issue && (
+            <Flex align="center" gap="2">
+              <Text size="1" color="gray" weight="medium">
+                Linked Issue:
+              </Text>
+              <Badge
+                color="orange"
+                size="2"
+                style={{ width: "fit-content", cursor: "pointer" }}
+                onClick={(e) => {
+                  e.stopPropagation();
+                  router.push(
+                    `/family/${entry.issue!.familyMember?.id}/issues/${entry.issue!.id}`,
+                  );
+                }}
+              >
+                {entry.issue.title}
+              </Badge>
+              <Badge
+                color={
+                  entry.issue.severity === "high"
+                    ? "red"
+                    : entry.issue.severity === "medium"
+                      ? "orange"
+                      : "green"
+                }
+                variant="soft"
+                size="1"
+              >
+                {entry.issue.severity}
               </Badge>
             </Flex>
           )}

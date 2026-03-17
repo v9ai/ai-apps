@@ -169,6 +169,15 @@ type ContactFeedback {
   updatedAt: String!
 }
 
+input ConvertJournalEntryToIssueInput {
+  category: String!
+  description: String
+  familyMemberId: Int!
+  recommendations: [String!]
+  severity: String!
+  title: String
+}
+
 input CreateContactFeedbackInput {
   contactId: Int!
   content: String!
@@ -525,6 +534,8 @@ type Issue {
   feedback: ContactFeedback
   feedbackId: Int
   id: Int!
+  journalEntry: JournalEntry
+  journalEntryId: Int
   recommendations: [String!]
   relatedFamilyMember: FamilyMember
   relatedFamilyMemberId: Int
@@ -577,6 +588,7 @@ type JournalEntry {
   goalId: Int
   id: Int!
   isPrivate: Boolean!
+  issue: Issue
   mood: String
   moodScore: Int
   tags: [String!]
@@ -588,6 +600,7 @@ type Mutation {
   buildClaimCards(input: BuildClaimCardsInput!): BuildClaimCardsResult!
   checkNoteClaims(input: CheckNoteClaimsInput!): CheckNoteClaimsResult!
   convertIssueToGoal(id: Int!, input: CreateGoalInput!): Goal!
+  convertJournalEntryToIssue(id: Int!, input: ConvertJournalEntryToIssueInput!): Issue!
   createContact(input: CreateContactInput!): Contact!
   createContactFeedback(input: CreateContactFeedbackInput!): ContactFeedback!
   createFamilyMember(input: CreateFamilyMemberInput!): FamilyMember!

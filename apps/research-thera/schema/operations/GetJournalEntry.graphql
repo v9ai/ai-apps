@@ -19,6 +19,18 @@ query GetJournalEntry($id: Int!) {
       title
       description
     }
+    issue {
+      id
+      title
+      category
+      severity
+      familyMember {
+        id
+        firstName
+        name
+        slug
+      }
+    }
     isPrivate
     entryDate
     createdAt

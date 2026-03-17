@@ -201,6 +201,15 @@ export type ContactFeedback = {
   updatedAt: Scalars['String']['output'];
 };
 
+export type ConvertJournalEntryToIssueInput = {
+  category: Scalars['String']['input'];
+  description?: InputMaybe<Scalars['String']['input']>;
+  familyMemberId: Scalars['Int']['input'];
+  recommendations?: InputMaybe<Array<Scalars['String']['input']>>;
+  severity: Scalars['String']['input'];
+  title?: InputMaybe<Scalars['String']['input']>;
+};
+
 export type CreateContactFeedbackInput = {
   contactId: Scalars['Int']['input'];
   content: Scalars['String']['input'];
@@ -588,6 +597,8 @@ export type Issue = {
   feedback?: Maybe<ContactFeedback>;
   feedbackId?: Maybe<Scalars['Int']['output']>;
   id: Scalars['Int']['output'];
+  journalEntry?: Maybe<JournalEntry>;
+  journalEntryId?: Maybe<Scalars['Int']['output']>;
   recommendations?: Maybe<Array<Scalars['String']['output']>>;
   relatedFamilyMember?: Maybe<FamilyMember>;
   relatedFamilyMemberId?: Maybe<Scalars['Int']['output']>;
@@ -643,6 +654,7 @@ export type JournalEntry = {
   goalId?: Maybe<Scalars['Int']['output']>;
   id: Scalars['Int']['output'];
   isPrivate: Scalars['Boolean']['output'];
+  issue?: Maybe<Issue>;
   mood?: Maybe<Scalars['String']['output']>;
   moodScore?: Maybe<Scalars['Int']['output']>;
   tags?: Maybe<Array<Scalars['String']['output']>>;
@@ -655,6 +667,7 @@ export type Mutation = {
   buildClaimCards: BuildClaimCardsResult;
   checkNoteClaims: CheckNoteClaimsResult;
   convertIssueToGoal: Goal;
+  convertJournalEntryToIssue: Issue;
   createContact: Contact;
   createContactFeedback: ContactFeedback;
   createFamilyMember: FamilyMember;
@@ -722,6 +735,12 @@ export type MutationCheckNoteClaimsArgs = {
 export type MutationConvertIssueToGoalArgs = {
   id: Scalars['Int']['input'];
   input: CreateGoalInput;
+};
+
+
+export type MutationConvertJournalEntryToIssueArgs = {
+  id: Scalars['Int']['input'];
+  input: ConvertJournalEntryToIssueInput;
 };
 
 
@@ -1606,6 +1625,14 @@ export type ConvertIssueToGoalMutationVariables = Exact<{
 
 export type ConvertIssueToGoalMutation = { __typename?: 'Mutation', convertIssueToGoal: { __typename?: 'Goal', id: number, familyMemberId?: number | null, createdBy: string, slug?: string | null, title: string, description?: string | null, status: string, createdAt: string, updatedAt: string } };
 
+export type ConvertJournalEntryToIssueMutationVariables = Exact<{
+  id: Scalars['Int']['input'];
+  input: ConvertJournalEntryToIssueInput;
+}>;
+
+
+export type ConvertJournalEntryToIssueMutation = { __typename?: 'Mutation', convertJournalEntryToIssue: { __typename?: 'Issue', id: number, journalEntryId?: number | null, feedbackId?: number | null, familyMemberId: number, createdBy: string, title: string, description: string, category: string, severity: string, recommendations?: Array<string> | null, createdAt: string, updatedAt: string, familyMember?: { __typename?: 'FamilyMember', id: number, firstName: string, name?: string | null, slug?: string | null } | null } };
+
 export type CreateContactMutationVariables = Exact<{
   input: CreateContactInput;
 }>;
@@ -1929,7 +1956,7 @@ export type GetIssueQueryVariables = Exact<{
 }>;
 
 
-export type GetIssueQuery = { __typename?: 'Query', issue?: { __typename?: 'Issue', id: number, feedbackId?: number | null, familyMemberId: number, createdBy: string, title: string, description: string, category: string, severity: string, recommendations?: Array<string> | null, createdAt: string, updatedAt: string, relatedFamilyMemberId?: number | null, feedback?: { __typename?: 'ContactFeedback', id: number, contactId: number, familyMemberId: number, subject?: string | null, feedbackDate: string, content: string, tags?: Array<string> | null, source?: FeedbackSource | null, extracted: boolean, contact?: { __typename?: 'Contact', id: number, firstName: string, lastName?: string | null, slug?: string | null } | null, familyMember?: { __typename?: 'FamilyMember', id: number, firstName: string, name?: string | null, slug?: string | null } | null } | null, familyMember?: { __typename?: 'FamilyMember', id: number, firstName: string, name?: string | null, slug?: string | null } | null, relatedFamilyMember?: { __typename?: 'FamilyMember', id: number, firstName: string, name?: string | null, slug?: string | null } | null, stories: Array<{ __typename?: 'Story', id: number, language?: string | null, minutes?: number | null, createdAt: string }> } | null };
+export type GetIssueQuery = { __typename?: 'Query', issue?: { __typename?: 'Issue', id: number, feedbackId?: number | null, journalEntryId?: number | null, familyMemberId: number, createdBy: string, title: string, description: string, category: string, severity: string, recommendations?: Array<string> | null, createdAt: string, updatedAt: string, relatedFamilyMemberId?: number | null, feedback?: { __typename?: 'ContactFeedback', id: number, contactId: number, familyMemberId: number, subject?: string | null, feedbackDate: string, content: string, tags?: Array<string> | null, source?: FeedbackSource | null, extracted: boolean, contact?: { __typename?: 'Contact', id: number, firstName: string, lastName?: string | null, slug?: string | null } | null, familyMember?: { __typename?: 'FamilyMember', id: number, firstName: string, name?: string | null, slug?: string | null } | null } | null, familyMember?: { __typename?: 'FamilyMember', id: number, firstName: string, name?: string | null, slug?: string | null } | null, relatedFamilyMember?: { __typename?: 'FamilyMember', id: number, firstName: string, name?: string | null, slug?: string | null } | null, stories: Array<{ __typename?: 'Story', id: number, language?: string | null, minutes?: number | null, createdAt: string }> } | null };
 
 export type GetIssuesQueryVariables = Exact<{
   familyMemberId: Scalars['Int']['input'];
@@ -1955,7 +1982,7 @@ export type GetJournalEntryQueryVariables = Exact<{
 }>;
 
 
-export type GetJournalEntryQuery = { __typename?: 'Query', journalEntry?: { __typename?: 'JournalEntry', id: number, createdBy: string, familyMemberId?: number | null, title?: string | null, content: string, mood?: string | null, moodScore?: number | null, tags?: Array<string> | null, goalId?: number | null, isPrivate: boolean, entryDate: string, createdAt: string, updatedAt: string, familyMember?: { __typename?: 'FamilyMember', id: number, firstName: string, name?: string | null } | null, goal?: { __typename?: 'Goal', id: number, title: string, description?: string | null } | null } | null };
+export type GetJournalEntryQuery = { __typename?: 'Query', journalEntry?: { __typename?: 'JournalEntry', id: number, createdBy: string, familyMemberId?: number | null, title?: string | null, content: string, mood?: string | null, moodScore?: number | null, tags?: Array<string> | null, goalId?: number | null, isPrivate: boolean, entryDate: string, createdAt: string, updatedAt: string, familyMember?: { __typename?: 'FamilyMember', id: number, firstName: string, name?: string | null } | null, goal?: { __typename?: 'Goal', id: number, title: string, description?: string | null } | null, issue?: { __typename?: 'Issue', id: number, title: string, category: string, severity: string, familyMember?: { __typename?: 'FamilyMember', id: number, firstName: string, name?: string | null, slug?: string | null } | null } | null } | null };
 
 export type GetMySharedFamilyMembersQueryVariables = Exact<{ [key: string]: never; }>;
 
@@ -2576,6 +2603,57 @@ export function useConvertIssueToGoalMutation(baseOptions?: Apollo.MutationHookO
 export type ConvertIssueToGoalMutationHookResult = ReturnType<typeof useConvertIssueToGoalMutation>;
 export type ConvertIssueToGoalMutationResult = Apollo.MutationResult<ConvertIssueToGoalMutation>;
 export type ConvertIssueToGoalMutationOptions = Apollo.BaseMutationOptions<ConvertIssueToGoalMutation, ConvertIssueToGoalMutationVariables>;
+export const ConvertJournalEntryToIssueDocument = gql`
+    mutation ConvertJournalEntryToIssue($id: Int!, $input: ConvertJournalEntryToIssueInput!) {
+  convertJournalEntryToIssue(id: $id, input: $input) {
+    id
+    journalEntryId
+    feedbackId
+    familyMemberId
+    createdBy
+    title
+    description
+    category
+    severity
+    recommendations
+    createdAt
+    updatedAt
+    familyMember {
+      id
+      firstName
+      name
+      slug
+    }
+  }
+}
+    `;
+export type ConvertJournalEntryToIssueMutationFn = Apollo.MutationFunction<ConvertJournalEntryToIssueMutation, ConvertJournalEntryToIssueMutationVariables>;
+
+/**
+ * __useConvertJournalEntryToIssueMutation__
+ *
+ * To run a mutation, you first call `useConvertJournalEntryToIssueMutation` within a React component and pass it any options that fit your needs.
+ * When your component renders, `useConvertJournalEntryToIssueMutation` returns a tuple that includes:
+ * - A mutate function that you can call at any time to execute the mutation
+ * - An object with fields that represent the current status of the mutation's execution
+ *
+ * @param baseOptions options that will be passed into the mutation, supported options are listed on: https://www.apollographql.com/docs/react/api/react-hooks/#options-2;
+ *
+ * @example
+ * const [convertJournalEntryToIssueMutation, { data, loading, error }] = useConvertJournalEntryToIssueMutation({
+ *   variables: {
+ *      id: // value for 'id'
+ *      input: // value for 'input'
+ *   },
+ * });
+ */
+export function useConvertJournalEntryToIssueMutation(baseOptions?: Apollo.MutationHookOptions<ConvertJournalEntryToIssueMutation, ConvertJournalEntryToIssueMutationVariables>) {
+        const options = {...defaultOptions, ...baseOptions}
+        return Apollo.useMutation<ConvertJournalEntryToIssueMutation, ConvertJournalEntryToIssueMutationVariables>(ConvertJournalEntryToIssueDocument, options);
+      }
+export type ConvertJournalEntryToIssueMutationHookResult = ReturnType<typeof useConvertJournalEntryToIssueMutation>;
+export type ConvertJournalEntryToIssueMutationResult = Apollo.MutationResult<ConvertJournalEntryToIssueMutation>;
+export type ConvertJournalEntryToIssueMutationOptions = Apollo.BaseMutationOptions<ConvertJournalEntryToIssueMutation, ConvertJournalEntryToIssueMutationVariables>;
 export const CreateContactDocument = gql`
     mutation CreateContact($input: CreateContactInput!) {
   createContact(input: $input) {
@@ -4766,6 +4844,7 @@ export const GetIssueDocument = gql`
   issue(id: $id) {
     id
     feedbackId
+    journalEntryId
     familyMemberId
     createdBy
     title
@@ -5005,6 +5084,18 @@ export const GetJournalEntryDocument = gql`
       id
       title
       description
+    }
+    issue {
+      id
+      title
+      category
+      severity
+      familyMember {
+        id
+        firstName
+        name
+        slug
+      }
     }
     isPrivate
     entryDate

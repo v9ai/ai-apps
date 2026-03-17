@@ -1,34 +1,34 @@
 import { relations } from "drizzle-orm/relations";
-import { user, account, session, audioAssets, audioSegments, goals, stories } from "./schema";
+import { familyMembers, familyMemberShares, issues, notes, noteShares, goals, stories, user, session, account } from "./schema";
 
-export const accountRelations = relations(account, ({one}) => ({
-	user: one(user, {
-		fields: [account.userId],
-		references: [user.id]
+export const familyMemberSharesRelations = relations(familyMemberShares, ({one}) => ({
+	familyMember: one(familyMembers, {
+		fields: [familyMemberShares.familyMemberId],
+		references: [familyMembers.id]
 	}),
 }));
 
-export const userRelations = relations(user, ({many}) => ({
-	accounts: many(account),
-	sessions: many(session),
+export const familyMembersRelations = relations(familyMembers, ({many}) => ({
+	familyMemberShares: many(familyMemberShares),
+	issues: many(issues),
 }));
 
-export const sessionRelations = relations(session, ({one}) => ({
-	user: one(user, {
-		fields: [session.userId],
-		references: [user.id]
+export const issuesRelations = relations(issues, ({one}) => ({
+	familyMember: one(familyMembers, {
+		fields: [issues.relatedFamilyMemberId],
+		references: [familyMembers.id]
 	}),
 }));
 
-export const audioSegmentsRelations = relations(audioSegments, ({one}) => ({
-	audioAsset: one(audioAssets, {
-		fields: [audioSegments.assetId],
-		references: [audioAssets.id]
+export const noteSharesRelations = relations(noteShares, ({one}) => ({
+	note: one(notes, {
+		fields: [noteShares.noteId],
+		references: [notes.id]
 	}),
 }));
 
-export const audioAssetsRelations = relations(audioAssets, ({many}) => ({
-	audioSegments: many(audioSegments),
+export const notesRelations = relations(notes, ({many}) => ({
+	noteShares: many(noteShares),
 }));
 
 export const storiesRelations = relations(stories, ({one}) => ({
@@ -40,4 +40,23 @@ export const storiesRelations = relations(stories, ({one}) => ({
 
 export const goalsRelations = relations(goals, ({many}) => ({
 	stories: many(stories),
+}));
+
+export const sessionRelations = relations(session, ({one}) => ({
+	user: one(user, {
+		fields: [session.userId],
+		references: [user.id]
+	}),
+}));
+
+export const userRelations = relations(user, ({many}) => ({
+	sessions: many(session),
+	accounts: many(account),
+}));
+
+export const accountRelations = relations(account, ({one}) => ({
+	user: one(user, {
+		fields: [account.userId],
+		references: [user.id]
+	}),
 }));

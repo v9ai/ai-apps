@@ -1,5 +1,5 @@
 import type { JournalEntryResolvers } from './../types.generated';
-import { getFamilyMember, getGoal } from "@/src/db";
+import { getFamilyMember, getGoal, getIssueByJournalEntryId } from "@/src/db";
 
 export const JournalEntry: JournalEntryResolvers = {
   familyMember: async (parent) => {
@@ -18,5 +18,25 @@ export const JournalEntry: JournalEntryResolvers = {
     } catch {
       return null;
     }
+  },
+  issue: async (parent, _args, ctx) => {
+    const userEmail = ctx.userEmail;
+    if (!userEmail) return null;
+    const issue = await getIssueByJournalEntryId(parent.id, userEmail);
+    if (!issue) return null;
+    return {
+      id: issue.id,
+      feedbackId: issue.feedbackId,
+      journalEntryId: issue.journalEntryId,
+      familyMemberId: issue.familyMemberId,
+      createdBy: issue.userId,
+      title: issue.title,
+      description: issue.description,
+      category: issue.category,
+      severity: issue.severity,
+      recommendations: issue.recommendations,
+      createdAt: issue.createdAt,
+      updatedAt: issue.updatedAt,
+    } as any;
   },
 };

@@ -200,6 +200,15 @@ export type ContactFeedback = {
   updatedAt: Scalars['String']['output'];
 };
 
+export type ConvertJournalEntryToIssueInput = {
+  category: Scalars['String']['input'];
+  description?: InputMaybe<Scalars['String']['input']>;
+  familyMemberId: Scalars['Int']['input'];
+  recommendations?: InputMaybe<Array<Scalars['String']['input']>>;
+  severity: Scalars['String']['input'];
+  title?: InputMaybe<Scalars['String']['input']>;
+};
+
 export type CreateContactFeedbackInput = {
   contactId: Scalars['Int']['input'];
   content: Scalars['String']['input'];
@@ -583,6 +592,8 @@ export type Issue = {
   feedback?: Maybe<ContactFeedback>;
   feedbackId?: Maybe<Scalars['Int']['output']>;
   id: Scalars['Int']['output'];
+  journalEntry?: Maybe<JournalEntry>;
+  journalEntryId?: Maybe<Scalars['Int']['output']>;
   recommendations?: Maybe<Array<Scalars['String']['output']>>;
   relatedFamilyMember?: Maybe<FamilyMember>;
   relatedFamilyMemberId?: Maybe<Scalars['Int']['output']>;
@@ -636,6 +647,7 @@ export type JournalEntry = {
   goalId?: Maybe<Scalars['Int']['output']>;
   id: Scalars['Int']['output'];
   isPrivate: Scalars['Boolean']['output'];
+  issue?: Maybe<Issue>;
   mood?: Maybe<Scalars['String']['output']>;
   moodScore?: Maybe<Scalars['Int']['output']>;
   tags?: Maybe<Array<Scalars['String']['output']>>;
@@ -648,6 +660,7 @@ export type Mutation = {
   buildClaimCards: BuildClaimCardsResult;
   checkNoteClaims: CheckNoteClaimsResult;
   convertIssueToGoal: Goal;
+  convertJournalEntryToIssue: Issue;
   createContact: Contact;
   createContactFeedback: ContactFeedback;
   createFamilyMember: FamilyMember;
@@ -715,6 +728,12 @@ export type MutationcheckNoteClaimsArgs = {
 export type MutationconvertIssueToGoalArgs = {
   id: Scalars['Int']['input'];
   input: CreateGoalInput;
+};
+
+
+export type MutationconvertJournalEntryToIssueArgs = {
+  id: Scalars['Int']['input'];
+  input: ConvertJournalEntryToIssueInput;
 };
 
 
@@ -1641,6 +1660,7 @@ export type ResolversTypes = {
   ClaimVerdict: ResolverTypeWrapper<'CONTRADICTED' | 'INSUFFICIENT' | 'MIXED' | 'SUPPORTED' | 'UNVERIFIED'>;
   Contact: ResolverTypeWrapper<Contact>;
   ContactFeedback: ResolverTypeWrapper<Omit<ContactFeedback, 'familyMember' | 'issues' | 'source' | 'stories'> & { familyMember?: Maybe<ResolversTypes['FamilyMember']>, issues: Array<ResolversTypes['Issue']>, source?: Maybe<ResolversTypes['FeedbackSource']>, stories: Array<ResolversTypes['Story']> }>;
+  ConvertJournalEntryToIssueInput: ConvertJournalEntryToIssueInput;
   CreateContactFeedbackInput: CreateContactFeedbackInput;
   CreateContactInput: CreateContactInput;
   CreateFamilyMemberInput: CreateFamilyMemberInput;
@@ -1682,12 +1702,12 @@ export type ResolversTypes = {
   GenerateResearchResult: ResolverTypeWrapper<GenerateResearchResult>;
   GenerationJob: ResolverTypeWrapper<Omit<GenerationJob, 'status' | 'type'> & { status: ResolversTypes['JobStatus'], type: ResolversTypes['JobType'] }>;
   Goal: ResolverTypeWrapper<Omit<Goal, 'familyMember' | 'notes' | 'parentGoal' | 'research' | 'stories' | 'subGoals'> & { familyMember?: Maybe<ResolversTypes['FamilyMember']>, notes: Array<ResolversTypes['Note']>, parentGoal?: Maybe<ResolversTypes['Goal']>, research: Array<ResolversTypes['Research']>, stories: Array<ResolversTypes['Story']>, subGoals: Array<ResolversTypes['Goal']> }>;
-  Issue: ResolverTypeWrapper<Omit<Issue, 'familyMember' | 'feedback' | 'relatedFamilyMember' | 'stories'> & { familyMember?: Maybe<ResolversTypes['FamilyMember']>, feedback?: Maybe<ResolversTypes['ContactFeedback']>, relatedFamilyMember?: Maybe<ResolversTypes['FamilyMember']>, stories: Array<ResolversTypes['Story']> }>;
+  Issue: ResolverTypeWrapper<Omit<Issue, 'familyMember' | 'feedback' | 'journalEntry' | 'relatedFamilyMember' | 'stories'> & { familyMember?: Maybe<ResolversTypes['FamilyMember']>, feedback?: Maybe<ResolversTypes['ContactFeedback']>, journalEntry?: Maybe<ResolversTypes['JournalEntry']>, relatedFamilyMember?: Maybe<ResolversTypes['FamilyMember']>, stories: Array<ResolversTypes['Story']> }>;
   JobError: ResolverTypeWrapper<JobError>;
   JobResult: ResolverTypeWrapper<JobResult>;
   JobStatus: ResolverTypeWrapper<'RUNNING' | 'SUCCEEDED' | 'FAILED'>;
   JobType: ResolverTypeWrapper<'AUDIO' | 'RESEARCH' | 'QUESTIONS' | 'LONGFORM'>;
-  JournalEntry: ResolverTypeWrapper<Omit<JournalEntry, 'familyMember' | 'goal'> & { familyMember?: Maybe<ResolversTypes['FamilyMember']>, goal?: Maybe<ResolversTypes['Goal']> }>;
+  JournalEntry: ResolverTypeWrapper<Omit<JournalEntry, 'familyMember' | 'goal' | 'issue'> & { familyMember?: Maybe<ResolversTypes['FamilyMember']>, goal?: Maybe<ResolversTypes['Goal']>, issue?: Maybe<ResolversTypes['Issue']> }>;
   Mutation: ResolverTypeWrapper<Record<PropertyKey, never>>;
   Note: ResolverTypeWrapper<Omit<Note, 'claimCards' | 'goal' | 'linkedResearch' | 'shares' | 'visibility'> & { claimCards?: Maybe<Array<ResolversTypes['ClaimCard']>>, goal?: Maybe<ResolversTypes['Goal']>, linkedResearch?: Maybe<Array<ResolversTypes['Research']>>, shares: Array<ResolversTypes['NoteShare']>, visibility: ResolversTypes['NoteVisibility'] }>;
   NoteAccess: ResolverTypeWrapper<NoteAccess>;
@@ -1748,6 +1768,7 @@ export type ResolversParentTypes = {
   ClaimScope: ClaimScope;
   Contact: Contact;
   ContactFeedback: Omit<ContactFeedback, 'familyMember' | 'issues' | 'stories'> & { familyMember?: Maybe<ResolversParentTypes['FamilyMember']>, issues: Array<ResolversParentTypes['Issue']>, stories: Array<ResolversParentTypes['Story']> };
+  ConvertJournalEntryToIssueInput: ConvertJournalEntryToIssueInput;
   CreateContactFeedbackInput: CreateContactFeedbackInput;
   CreateContactInput: CreateContactInput;
   CreateFamilyMemberInput: CreateFamilyMemberInput;
@@ -1785,10 +1806,10 @@ export type ResolversParentTypes = {
   GenerateResearchResult: GenerateResearchResult;
   GenerationJob: GenerationJob;
   Goal: Omit<Goal, 'familyMember' | 'notes' | 'parentGoal' | 'research' | 'stories' | 'subGoals'> & { familyMember?: Maybe<ResolversParentTypes['FamilyMember']>, notes: Array<ResolversParentTypes['Note']>, parentGoal?: Maybe<ResolversParentTypes['Goal']>, research: Array<ResolversParentTypes['Research']>, stories: Array<ResolversParentTypes['Story']>, subGoals: Array<ResolversParentTypes['Goal']> };
-  Issue: Omit<Issue, 'familyMember' | 'feedback' | 'relatedFamilyMember' | 'stories'> & { familyMember?: Maybe<ResolversParentTypes['FamilyMember']>, feedback?: Maybe<ResolversParentTypes['ContactFeedback']>, relatedFamilyMember?: Maybe<ResolversParentTypes['FamilyMember']>, stories: Array<ResolversParentTypes['Story']> };
+  Issue: Omit<Issue, 'familyMember' | 'feedback' | 'journalEntry' | 'relatedFamilyMember' | 'stories'> & { familyMember?: Maybe<ResolversParentTypes['FamilyMember']>, feedback?: Maybe<ResolversParentTypes['ContactFeedback']>, journalEntry?: Maybe<ResolversParentTypes['JournalEntry']>, relatedFamilyMember?: Maybe<ResolversParentTypes['FamilyMember']>, stories: Array<ResolversParentTypes['Story']> };
   JobError: JobError;
   JobResult: JobResult;
-  JournalEntry: Omit<JournalEntry, 'familyMember' | 'goal'> & { familyMember?: Maybe<ResolversParentTypes['FamilyMember']>, goal?: Maybe<ResolversParentTypes['Goal']> };
+  JournalEntry: Omit<JournalEntry, 'familyMember' | 'goal' | 'issue'> & { familyMember?: Maybe<ResolversParentTypes['FamilyMember']>, goal?: Maybe<ResolversParentTypes['Goal']>, issue?: Maybe<ResolversParentTypes['Issue']> };
   Mutation: Record<PropertyKey, never>;
   Note: Omit<Note, 'claimCards' | 'goal' | 'linkedResearch' | 'shares'> & { claimCards?: Maybe<Array<ResolversParentTypes['ClaimCard']>>, goal?: Maybe<ResolversParentTypes['Goal']>, linkedResearch?: Maybe<Array<ResolversParentTypes['Research']>>, shares: Array<ResolversParentTypes['NoteShare']> };
   NoteAccess: NoteAccess;
@@ -2178,6 +2199,8 @@ export type IssueResolvers<ContextType = GraphQLContext, ParentType extends Reso
   feedback?: Resolver<Maybe<ResolversTypes['ContactFeedback']>, ParentType, ContextType>;
   feedbackId?: Resolver<Maybe<ResolversTypes['Int']>, ParentType, ContextType>;
   id?: Resolver<ResolversTypes['Int'], ParentType, ContextType>;
+  journalEntry?: Resolver<Maybe<ResolversTypes['JournalEntry']>, ParentType, ContextType>;
+  journalEntryId?: Resolver<Maybe<ResolversTypes['Int']>, ParentType, ContextType>;
   recommendations?: Resolver<Maybe<Array<ResolversTypes['String']>>, ParentType, ContextType>;
   relatedFamilyMember?: Resolver<Maybe<ResolversTypes['FamilyMember']>, ParentType, ContextType>;
   relatedFamilyMemberId?: Resolver<Maybe<ResolversTypes['Int']>, ParentType, ContextType>;
@@ -2221,6 +2244,7 @@ export type JournalEntryResolvers<ContextType = GraphQLContext, ParentType exten
   goalId?: Resolver<Maybe<ResolversTypes['Int']>, ParentType, ContextType>;
   id?: Resolver<ResolversTypes['Int'], ParentType, ContextType>;
   isPrivate?: Resolver<ResolversTypes['Boolean'], ParentType, ContextType>;
+  issue?: Resolver<Maybe<ResolversTypes['Issue']>, ParentType, ContextType>;
   mood?: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType>;
   moodScore?: Resolver<Maybe<ResolversTypes['Int']>, ParentType, ContextType>;
   tags?: Resolver<Maybe<Array<ResolversTypes['String']>>, ParentType, ContextType>;
@@ -2232,6 +2256,7 @@ export type MutationResolvers<ContextType = GraphQLContext, ParentType extends R
   buildClaimCards?: Resolver<ResolversTypes['BuildClaimCardsResult'], ParentType, ContextType, RequireFields<MutationbuildClaimCardsArgs, 'input'>>;
   checkNoteClaims?: Resolver<ResolversTypes['CheckNoteClaimsResult'], ParentType, ContextType, RequireFields<MutationcheckNoteClaimsArgs, 'input'>>;
   convertIssueToGoal?: Resolver<ResolversTypes['Goal'], ParentType, ContextType, RequireFields<MutationconvertIssueToGoalArgs, 'id' | 'input'>>;
+  convertJournalEntryToIssue?: Resolver<ResolversTypes['Issue'], ParentType, ContextType, RequireFields<MutationconvertJournalEntryToIssueArgs, 'id' | 'input'>>;
   createContact?: Resolver<ResolversTypes['Contact'], ParentType, ContextType, RequireFields<MutationcreateContactArgs, 'input'>>;
   createContactFeedback?: Resolver<ResolversTypes['ContactFeedback'], ParentType, ContextType, RequireFields<MutationcreateContactFeedbackArgs, 'input'>>;
   createFamilyMember?: Resolver<ResolversTypes['FamilyMember'], ParentType, ContextType, RequireFields<MutationcreateFamilyMemberArgs, 'input'>>;

@@ -16,7 +16,6 @@
     "mastra:dev": "mastra dev"
   },
   "dependencies": {
-    "@ai-apps/ui": "workspace:*",
     "@ai-sdk/deepseek": "^2.0.17",
     "@ai-sdk/openai": "^2.0.91",
     "@apollo/client": "^3.11.0",

@@ -23,6 +23,7 @@ export const issues: NonNullable<QueryResolvers['issues']> = async (
     return issues.map((issue) => ({
       id: issue.id,
       feedbackId: issue.feedbackId,
+      journalEntryId: issue.journalEntryId,
       familyMemberId: issue.familyMemberId,
       createdBy: issue.userId,
       title: issue.title,

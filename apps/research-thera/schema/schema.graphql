@@ -145,6 +145,9 @@ type Mutation {
   deleteIssue(id: Int!): DeleteIssueResult!
   convertIssueToGoal(id: Int!, input: CreateGoalInput!): Goal!
 
+  # Journal → Issue conversion
+  convertJournalEntryToIssue(id: Int!, input: ConvertJournalEntryToIssueInput!): Issue!
+
   # Contacts
   createContact(input: CreateContactInput!): Contact!
   updateContact(id: Int!, input: UpdateContactInput!): Contact!
@@ -784,6 +787,7 @@ type JournalEntry {
   tags: [String!]
   goalId: Int
   goal: Goal
+  issue: Issue
   isPrivate: Boolean!
   entryDate: String!
   createdAt: String!
@@ -936,6 +940,7 @@ type DeleteTeacherFeedbackResult {
 type Issue {
   id: Int!
   feedbackId: Int
+  journalEntryId: Int
   familyMemberId: Int!
   relatedFamilyMemberId: Int
   createdBy: String!
@@ -947,6 +952,7 @@ type Issue {
   createdAt: String!
   updatedAt: String!
   feedback: ContactFeedback
+  journalEntry: JournalEntry
   familyMember: FamilyMember
   relatedFamilyMember: FamilyMember
   stories: [Story!]!
@@ -1119,6 +1125,15 @@ input CreateIssueInput {
   familyMemberId: Int!
   title: String!
   description: String!
+  category: String!
+  severity: String!
+  recommendations: [String!]
+}
+
+input ConvertJournalEntryToIssueInput {
+  familyMemberId: Int!
+  title: String
+  description: String
   category: String!
   severity: String!
   recommendations: [String!]

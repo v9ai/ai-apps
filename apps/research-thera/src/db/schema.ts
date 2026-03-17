@@ -312,6 +312,7 @@ export const contactFeedbacks = pgTable("contact_feedbacks", {
 export const issues = pgTable("issues", {
   id: serial("id").primaryKey(),
   feedbackId: integer("feedback_id"),
+  journalEntryId: integer("journal_entry_id"),
   familyMemberId: integer("family_member_id").notNull(),
   relatedFamilyMemberId: integer("related_family_member_id"),
   userId: text("user_id").notNull(),

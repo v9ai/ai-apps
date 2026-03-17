@@ -2,6 +2,7 @@ query GetIssue($id: Int!) {
   issue(id: $id) {
     id
     feedbackId
+    journalEntryId
     familyMemberId
     createdBy
     title
