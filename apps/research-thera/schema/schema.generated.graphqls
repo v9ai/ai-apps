@@ -529,6 +529,7 @@ type Issue {
   relatedFamilyMember: FamilyMember
   relatedFamilyMemberId: Int
   severity: String!
+  stories: [Story!]!
   title: String!
   updatedAt: String!
 }
@@ -861,6 +862,7 @@ type Story {
   goal: Goal
   goalId: Int
   id: Int!
+  issue: Issue
   issueId: Int
   language: String
   minutes: Int

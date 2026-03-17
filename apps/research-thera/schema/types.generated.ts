@@ -587,6 +587,7 @@ export type Issue = {
   relatedFamilyMember?: Maybe<FamilyMember>;
   relatedFamilyMemberId?: Maybe<Scalars['Int']['output']>;
   severity: Scalars['String']['output'];
+  stories: Array<Story>;
   title: Scalars['String']['output'];
   updatedAt: Scalars['String']['output'];
 };
@@ -1375,6 +1376,7 @@ export type Story = {
   goal?: Maybe<Goal>;
   goalId?: Maybe<Scalars['Int']['output']>;
   id: Scalars['Int']['output'];
+  issue?: Maybe<Issue>;
   issueId?: Maybe<Scalars['Int']['output']>;
   language?: Maybe<Scalars['String']['output']>;
   minutes?: Maybe<Scalars['Int']['output']>;
@@ -1680,7 +1682,7 @@ export type ResolversTypes = {
   GenerateResearchResult: ResolverTypeWrapper<GenerateResearchResult>;
   GenerationJob: ResolverTypeWrapper<Omit<GenerationJob, 'status' | 'type'> & { status: ResolversTypes['JobStatus'], type: ResolversTypes['JobType'] }>;
   Goal: ResolverTypeWrapper<Omit<Goal, 'familyMember' | 'notes' | 'parentGoal' | 'research' | 'stories' | 'subGoals'> & { familyMember?: Maybe<ResolversTypes['FamilyMember']>, notes: Array<ResolversTypes['Note']>, parentGoal?: Maybe<ResolversTypes['Goal']>, research: Array<ResolversTypes['Research']>, stories: Array<ResolversTypes['Story']>, subGoals: Array<ResolversTypes['Goal']> }>;
-  Issue: ResolverTypeWrapper<Omit<Issue, 'familyMember' | 'feedback' | 'relatedFamilyMember'> & { familyMember?: Maybe<ResolversTypes['FamilyMember']>, feedback?: Maybe<ResolversTypes['ContactFeedback']>, relatedFamilyMember?: Maybe<ResolversTypes['FamilyMember']> }>;
+  Issue: ResolverTypeWrapper<Omit<Issue, 'familyMember' | 'feedback' | 'relatedFamilyMember' | 'stories'> & { familyMember?: Maybe<ResolversTypes['FamilyMember']>, feedback?: Maybe<ResolversTypes['ContactFeedback']>, relatedFamilyMember?: Maybe<ResolversTypes['FamilyMember']>, stories: Array<ResolversTypes['Story']> }>;
   JobError: ResolverTypeWrapper<JobError>;
   JobResult: ResolverTypeWrapper<JobResult>;
   JobStatus: ResolverTypeWrapper<'RUNNING' | 'SUCCEEDED' | 'FAILED'>;
@@ -1705,7 +1707,7 @@ export type ResolversTypes = {
   RelationshipStatus: ResolverTypeWrapper<'ACTIVE' | 'ENDED'>;
   Research: ResolverTypeWrapper<Omit<Research, 'goal'> & { goal?: Maybe<ResolversTypes['Goal']> }>;
   ResearchSource: ResolverTypeWrapper<'ARXIV' | 'CROSSREF' | 'DATACITE' | 'EUROPEPMC' | 'OPENALEX' | 'PUBMED' | 'SEMANTIC_SCHOLAR'>;
-  Story: ResolverTypeWrapper<Omit<Story, 'goal'> & { goal?: Maybe<ResolversTypes['Goal']> }>;
+  Story: ResolverTypeWrapper<Omit<Story, 'goal' | 'issue'> & { goal?: Maybe<ResolversTypes['Goal']>, issue?: Maybe<ResolversTypes['Issue']> }>;
   Subscription: ResolverTypeWrapper<Record<PropertyKey, never>>;
   TeacherFeedback: ResolverTypeWrapper<Omit<TeacherFeedback, 'familyMember' | 'source'> & { familyMember?: Maybe<ResolversTypes['FamilyMember']>, source?: Maybe<ResolversTypes['FeedbackSource']> }>;
   TextSegment: ResolverTypeWrapper<TextSegment>;
@@ -1783,7 +1785,7 @@ export type ResolversParentTypes = {
   GenerateResearchResult: GenerateResearchResult;
   GenerationJob: GenerationJob;
   Goal: Omit<Goal, 'familyMember' | 'notes' | 'parentGoal' | 'research' | 'stories' | 'subGoals'> & { familyMember?: Maybe<ResolversParentTypes['FamilyMember']>, notes: Array<ResolversParentTypes['Note']>, parentGoal?: Maybe<ResolversParentTypes['Goal']>, research: Array<ResolversParentTypes['Research']>, stories: Array<ResolversParentTypes['Story']>, subGoals: Array<ResolversParentTypes['Goal']> };
-  Issue: Omit<Issue, 'familyMember' | 'feedback' | 'relatedFamilyMember'> & { familyMember?: Maybe<ResolversParentTypes['FamilyMember']>, feedback?: Maybe<ResolversParentTypes['ContactFeedback']>, relatedFamilyMember?: Maybe<ResolversParentTypes['FamilyMember']> };
+  Issue: Omit<Issue, 'familyMember' | 'feedback' | 'relatedFamilyMember' | 'stories'> & { familyMember?: Maybe<ResolversParentTypes['FamilyMember']>, feedback?: Maybe<ResolversParentTypes['ContactFeedback']>, relatedFamilyMember?: Maybe<ResolversParentTypes['FamilyMember']>, stories: Array<ResolversParentTypes['Story']> };
   JobError: JobError;
   JobResult: JobResult;
   JournalEntry: Omit<JournalEntry, 'familyMember' | 'goal'> & { familyMember?: Maybe<ResolversParentTypes['FamilyMember']>, goal?: Maybe<ResolversParentTypes['Goal']> };
@@ -1797,7 +1799,7 @@ export type ResolversParentTypes = {
   Relationship: Omit<Relationship, 'related' | 'subject'> & { related?: Maybe<ResolversParentTypes['RelationshipPerson']>, subject?: Maybe<ResolversParentTypes['RelationshipPerson']> };
   RelationshipPerson: RelationshipPerson;
   Research: Omit<Research, 'goal'> & { goal?: Maybe<ResolversParentTypes['Goal']> };
-  Story: Omit<Story, 'goal'> & { goal?: Maybe<ResolversParentTypes['Goal']> };
+  Story: Omit<Story, 'goal' | 'issue'> & { goal?: Maybe<ResolversParentTypes['Goal']>, issue?: Maybe<ResolversParentTypes['Issue']> };
   Subscription: Record<PropertyKey, never>;
   TeacherFeedback: Omit<TeacherFeedback, 'familyMember'> & { familyMember?: Maybe<ResolversParentTypes['FamilyMember']> };
   TextSegment: TextSegment;
@@ -2180,6 +2182,7 @@ export type IssueResolvers<ContextType = GraphQLContext, ParentType extends Reso
   relatedFamilyMember?: Resolver<Maybe<ResolversTypes['FamilyMember']>, ParentType, ContextType>;
   relatedFamilyMemberId?: Resolver<Maybe<ResolversTypes['Int']>, ParentType, ContextType>;
   severity?: Resolver<ResolversTypes['String'], ParentType, ContextType>;
+  stories?: Resolver<Array<ResolversTypes['Story']>, ParentType, ContextType>;
   title?: Resolver<ResolversTypes['String'], ParentType, ContextType>;
   updatedAt?: Resolver<ResolversTypes['String'], ParentType, ContextType>;
 };
@@ -2455,6 +2458,7 @@ export type StoryResolvers<ContextType = GraphQLContext, ParentType extends Reso
   goal?: Resolver<Maybe<ResolversTypes['Goal']>, ParentType, ContextType>;
   goalId?: Resolver<Maybe<ResolversTypes['Int']>, ParentType, ContextType>;
   id?: Resolver<ResolversTypes['Int'], ParentType, ContextType>;
+  issue?: Resolver<Maybe<ResolversTypes['Issue']>, ParentType, ContextType>;
   issueId?: Resolver<Maybe<ResolversTypes['Int']>, ParentType, ContextType>;
   language?: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType>;
   minutes?: Resolver<Maybe<ResolversTypes['Int']>, ParentType, ContextType>;

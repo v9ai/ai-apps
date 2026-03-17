@@ -51,9 +51,12 @@ export default function StoryPage() {
   const [deleteStory, { loading: deleting }] = useDeleteStoryMutation({
     onCompleted: (data) => {
       if (data.deleteStory.success) {
-        const goalId = story?.goal?.id;
-        if (goalId) {
-          router.push(`/goals/${goalId}`);
+        if (story?.goal?.slug) {
+          router.push(`/goals/${story.goal.slug}`);
+        } else if (story?.goal?.id) {
+          router.push(`/goals/${story.goal.id}`);
+        } else if (story?.issue?.familyMember?.slug) {
+          router.push(`/family/${story.issue.familyMember.slug}/issues/${story.issueId}`);
         } else {
           router.push("/goals");
         }
@@ -83,7 +86,7 @@ export default function StoryPage() {
     await deleteStory({ variables: { id: storyId } });
   };
 
-  const canEdit = !!story?.createdBy && user?.email === story.createdBy;
+  const canEdit = !!user && (!story?.createdBy || user?.email === story.createdBy);
 
   return (
     <Flex direction="column" gap="5">
@@ -115,11 +118,15 @@ export default function StoryPage() {
                   ? `/goals/${story.goal.slug}`
                   : story?.goalId
                     ? `/goals/${story.goalId}`
-                    : "/goals"
+                    : story?.issue?.familyMember?.slug
+                      ? `/family/${story.issue.familyMember.slug}/issues/${story.issueId}`
+                      : story?.issueId
+                        ? `/family/unknown/issues/${story.issueId}`
+                        : "/goals"
               }
             >
               <ArrowLeftIcon />
-              Back to Goal
+              {story?.issueId && !story?.goalId ? "Back to Issue" : "Back to Goal"}
             </NextLink>
           </Button>
 
@@ -310,6 +317,27 @@ export default function StoryPage() {
                   >
                     <Flex direction="column" gap="2" p="3">
                       <Heading size="3">{story.goal.title}</Heading>
+                    </Flex>
+                  </Card>
+                </Flex>
+              </Card>
+            )}
+
+            {/* Related Issue */}
+            {story.issue && story.issue.familyMember && (
+              <Card>
+                <Flex direction="column" gap="3" p="4">
+                  <Heading size="4">Related Issue</Heading>
+                  <Card
+                    style={{ cursor: "pointer", backgroundColor: "var(--gray-2)" }}
+                    onClick={() => {
+                      const slug = story.issue!.familyMember!.slug ?? story.issue!.familyMember!.firstName?.toLowerCase();
+                      router.push(`/family/${slug}/issues/${story.issueId}`);
+                    }}
+                  >
+                    <Flex direction="column" gap="2" p="3">
+                      <Heading size="3">{story.issue.title}</Heading>
+                      <Text size="2" color="gray">{story.issue.familyMember.firstName}{story.issue.familyMember.name ? ` ${story.issue.familyMember.name}` : ""}</Text>
                     </Flex>
                   </Card>
                 </Flex>

@@ -167,23 +167,24 @@ function IssueDetailContent() {
       pollInterval: 2000,
       notifyOnNetworkStatusChange: true,
       fetchPolicy: "network-only",
-      onCompleted: (d) => {
-        const status = d.generationJob?.status;
-        if (status === "SUCCEEDED" || status === "FAILED") {
-          stopResearchPolling();
-          setResearchJobId(null);
-          if (status === "SUCCEEDED") {
-            setResearchMessage({ text: "Research generated successfully.", type: "success" });
-            refetchResearch();
-          } else {
-            setResearchMessage({
-              text: d.generationJob?.error?.message ?? "Research generation failed.",
-              type: "error",
-            });
-          }
-        }
-      },
     });
+
+  useEffect(() => {
+    const status = researchJobData?.generationJob?.status;
+    if (status === "SUCCEEDED" || status === "FAILED") {
+      stopResearchPolling();
+      setResearchJobId(null);
+      if (status === "SUCCEEDED") {
+        setResearchMessage({ text: "Research generated successfully.", type: "success" });
+        refetchResearch();
+      } else {
+        setResearchMessage({
+          text: researchJobData?.generationJob?.error?.message ?? "Research generation failed.",
+          type: "error",
+        });
+      }
+    }
+  }, [researchJobData]);
 
   const researchJobProgress = researchJobData?.generationJob?.progress ?? 0;
   const researchJobStatus = researchJobData?.generationJob?.status;
@@ -731,6 +732,30 @@ function IssueDetailContent() {
           )}
         </Flex>
       </Card>
+
+      {/* Linked Stories */}
+      {issue.stories && issue.stories.length > 0 && (
+        <Card>
+          <Flex direction="column" gap="3" p="4">
+            <Heading size="3">Stories ({issue.stories.length})</Heading>
+            <Separator size="4" />
+            {issue.stories.map((s) => (
+              <NextLink key={s.id} href={`/stories/${s.id}`} style={{ textDecoration: "none" }}>
+                <Card variant="surface" style={{ cursor: "pointer" }}>
+                  <Flex align="center" gap="3" p="3">
+                    <Flex direction="column" gap="1" style={{ flex: 1 }}>
+                      <Text size="2" weight="medium">Story #{s.id}</Text>
+                      <Text size="1" color="gray">
+                        {[s.language, s.minutes ? `${s.minutes} min` : null, new Date(s.createdAt).toLocaleDateString()].filter(Boolean).join(" · ")}
+                      </Text>
+                    </Flex>
+                  </Flex>
+                </Card>
+              </NextLink>
+            ))}
+          </Flex>
+        </Card>
+      )}
 
       {/* Edit Dialog */}
       <Dialog.Root open={editOpen} onOpenChange={setEditOpen}>

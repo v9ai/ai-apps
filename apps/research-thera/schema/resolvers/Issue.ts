@@ -1,5 +1,5 @@
 import type { IssueResolvers } from './../types.generated';
-import { getContactFeedback, getFamilyMember } from "@/src/db";
+import { getContactFeedback, getFamilyMember, listStoriesForIssue } from "@/src/db";
 
 export const Issue: IssueResolvers = {
   feedback: async (parent) => {
@@ -18,5 +18,9 @@ export const Issue: IssueResolvers = {
     const fm = await getFamilyMember(parent.relatedFamilyMemberId);
     if (!fm) return null;
     return fm as any;
+  },
+  stories: async (parent) => {
+    const rows = await listStoriesForIssue(parent.id);
+    return rows.map((s) => ({ ...s, goal: null, issue: null, segments: [], audioAssets: [] })) as any;
   },
 };

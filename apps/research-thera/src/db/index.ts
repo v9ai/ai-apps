@@ -993,7 +993,7 @@ export async function updateStoryAudio(id: number, audioKey: string, audioUrl: s
 }
 
 export async function deleteStory(storyId: number, createdBy: string) {
-  await neonSql`DELETE FROM stories WHERE id = ${storyId} AND user_id = ${createdBy}`;
+  await neonSql`DELETE FROM stories WHERE id = ${storyId} AND (user_id = ${createdBy} OR user_id IS NULL)`;
 }
 
 // ============================================

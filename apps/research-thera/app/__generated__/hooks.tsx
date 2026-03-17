@@ -592,6 +592,7 @@ export type Issue = {
   relatedFamilyMember?: Maybe<FamilyMember>;
   relatedFamilyMemberId?: Maybe<Scalars['Int']['output']>;
   severity: Scalars['String']['output'];
+  stories: Array<Story>;
   title: Scalars['String']['output'];
   updatedAt: Scalars['String']['output'];
 };
@@ -1391,6 +1392,7 @@ export type Story = {
   goal?: Maybe<Goal>;
   goalId?: Maybe<Scalars['Int']['output']>;
   id: Scalars['Int']['output'];
+  issue?: Maybe<Issue>;
   issueId?: Maybe<Scalars['Int']['output']>;
   language?: Maybe<Scalars['String']['output']>;
   minutes?: Maybe<Scalars['Int']['output']>;
@@ -1927,7 +1929,7 @@ export type GetIssueQueryVariables = Exact<{
 }>;
 
 
-export type GetIssueQuery = { __typename?: 'Query', issue?: { __typename?: 'Issue', id: number, feedbackId?: number | null, familyMemberId: number, createdBy: string, title: string, description: string, category: string, severity: string, recommendations?: Array<string> | null, createdAt: string, updatedAt: string, relatedFamilyMemberId?: number | null, feedback?: { __typename?: 'ContactFeedback', id: number, contactId: number, familyMemberId: number, subject?: string | null, feedbackDate: string, content: string, tags?: Array<string> | null, source?: FeedbackSource | null, extracted: boolean, contact?: { __typename?: 'Contact', id: number, firstName: string, lastName?: string | null, slug?: string | null } | null, familyMember?: { __typename?: 'FamilyMember', id: number, firstName: string, name?: string | null, slug?: string | null } | null } | null, familyMember?: { __typename?: 'FamilyMember', id: number, firstName: string, name?: string | null, slug?: string | null } | null, relatedFamilyMember?: { __typename?: 'FamilyMember', id: number, firstName: string, name?: string | null, slug?: string | null } | null } | null };
+export type GetIssueQuery = { __typename?: 'Query', issue?: { __typename?: 'Issue', id: number, feedbackId?: number | null, familyMemberId: number, createdBy: string, title: string, description: string, category: string, severity: string, recommendations?: Array<string> | null, createdAt: string, updatedAt: string, relatedFamilyMemberId?: number | null, feedback?: { __typename?: 'ContactFeedback', id: number, contactId: number, familyMemberId: number, subject?: string | null, feedbackDate: string, content: string, tags?: Array<string> | null, source?: FeedbackSource | null, extracted: boolean, contact?: { __typename?: 'Contact', id: number, firstName: string, lastName?: string | null, slug?: string | null } | null, familyMember?: { __typename?: 'FamilyMember', id: number, firstName: string, name?: string | null, slug?: string | null } | null } | null, familyMember?: { __typename?: 'FamilyMember', id: number, firstName: string, name?: string | null, slug?: string | null } | null, relatedFamilyMember?: { __typename?: 'FamilyMember', id: number, firstName: string, name?: string | null, slug?: string | null } | null, stories: Array<{ __typename?: 'Story', id: number, language?: string | null, minutes?: number | null, createdAt: string }> } | null };
 
 export type GetIssuesQueryVariables = Exact<{
   familyMemberId: Scalars['Int']['input'];
@@ -2012,7 +2014,7 @@ export type GetStoryQueryVariables = Exact<{
 }>;
 
 
-export type GetStoryQuery = { __typename?: 'Query', story?: { __typename?: 'Story', id: number, goalId?: number | null, issueId?: number | null, feedbackId?: number | null, createdBy?: string | null, content: string, language?: string | null, minutes?: number | null, audioKey?: string | null, audioUrl?: string | null, audioGeneratedAt?: string | null, createdAt: string, updatedAt: string, goal?: { __typename?: 'Goal', id: number, title: string, slug?: string | null } | null } | null };
+export type GetStoryQuery = { __typename?: 'Query', story?: { __typename?: 'Story', id: number, goalId?: number | null, issueId?: number | null, feedbackId?: number | null, createdBy?: string | null, content: string, language?: string | null, minutes?: number | null, audioKey?: string | null, audioUrl?: string | null, audioGeneratedAt?: string | null, createdAt: string, updatedAt: string, goal?: { __typename?: 'Goal', id: number, title: string, slug?: string | null } | null, issue?: { __typename?: 'Issue', id: number, title: string, familyMember?: { __typename?: 'FamilyMember', id: number, firstName: string, name?: string | null, slug?: string | null } | null } | null } | null };
 
 export type GetTeacherFeedbacksQueryVariables = Exact<{
   familyMemberId: Scalars['Int']['input'];
@@ -4809,6 +4811,12 @@ export const GetIssueDocument = gql`
       name
       slug
     }
+    stories {
+      id
+      language
+      minutes
+      createdAt
+    }
   }
 }
     `;
@@ -5532,6 +5540,16 @@ export const GetStoryDocument = gql`
       id
       title
       slug
+    }
+    issue {
+      id
+      title
+      familyMember {
+        id
+        firstName
+        name
+        slug
+      }
     }
   }
 }

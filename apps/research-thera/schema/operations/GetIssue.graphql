@@ -47,5 +47,11 @@ query GetIssue($id: Int!) {
       name
       slug
     }
+    stories {
+      id
+      language
+      minutes
+      createdAt
+    }
   }
 }

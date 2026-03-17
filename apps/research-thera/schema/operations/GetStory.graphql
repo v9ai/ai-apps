@@ -18,5 +18,15 @@ query GetStory($id: Int!) {
       title
       slug
     }
+    issue {
+      id
+      title
+      familyMember {
+        id
+        firstName
+        name
+        slug
+      }
+    }
   }
 }

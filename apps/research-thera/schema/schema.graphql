@@ -231,6 +231,7 @@ type Story {
   createdAt: String!
   updatedAt: String!
   goal: Goal
+  issue: Issue
   segments: [TextSegment!]!
   audioAssets: [AudioAsset!]!
 }
@@ -948,6 +949,7 @@ type Issue {
   feedback: ContactFeedback
   familyMember: FamilyMember
   relatedFamilyMember: FamilyMember
+  stories: [Story!]!
 }
 
 type ExtractedIssue {

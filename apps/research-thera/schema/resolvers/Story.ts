@@ -1,5 +1,5 @@
 import type { StoryResolvers } from "./../types.generated";
-import { getGoal, getTextSegmentsForStory, getAudioAssetsForStory } from "@/src/db";
+import { getGoal, getIssue, getTextSegmentsForStory, getAudioAssetsForStory } from "@/src/db";
 
 export const Story: StoryResolvers = {
   goal: async (parent, _args, ctx) => {
@@ -16,6 +16,19 @@ export const Story: StoryResolvers = {
         questions: [],
         stories: [],
       } as any;
+    } catch {
+      return null;
+    }
+  },
+
+  issue: async (parent, _args, ctx) => {
+    if (!parent.issueId) return null;
+    const userEmail = ctx.userEmail ?? parent.createdBy;
+    if (!userEmail) return null;
+    try {
+      const issue = await getIssue(parent.issueId, userEmail);
+      if (!issue) return null;
+      return { ...issue, feedback: null, familyMember: null, relatedFamilyMember: null, stories: [] } as any;
     } catch {
       return null;
     }
