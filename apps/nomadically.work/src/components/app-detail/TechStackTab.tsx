@@ -1,8 +1,8 @@
 "use client";
 
-import { useState, useEffect, useCallback } from "react";
-import { Heading, Flex, Text, Box, Card, Badge } from "@radix-ui/themes";
-import { InfoCircledIcon, ExternalLinkIcon, Cross2Icon, PlusIcon } from "@radix-ui/react-icons";
+import { useState, useEffect, useCallback, useRef } from "react";
+import { Heading, Flex, Text, Box, Card, Badge, Button, Spinner } from "@radix-ui/themes";
+import { InfoCircledIcon, ExternalLinkIcon, Cross2Icon, PlusIcon, RocketIcon } from "@radix-ui/react-icons";
 import type { TabBaseProps } from "./types";
 
 const KNOWLEDGE_APP_URL = "http://localhost:3006";
@@ -121,11 +121,41 @@ function parseSavedTechStack(raw: string | null | undefined): TechBadge[] | null
   return null;
 }
 
-export function TechStackTab({ app }: TabBaseProps) {
+export function TechStackTab({ app, isAdmin }: TabBaseProps) {
   // Prefer LLM-extracted tech stack (saved by pipeline), fall back to regex extraction
+  const hasLlmTech = !!parseSavedTechStack((app as any).aiTechStack);
   const techs = parseSavedTechStack((app as any).aiTechStack) ?? extractTechFromDescription(app.jobDescription);
   const [dismissed, setDismissed] = useState<Set<string>>(new Set());
   const [loading, setLoading] = useState(true);
+  const [running, setRunning] = useState(false);
+  const [prepError, setPrepError] = useState<string | null>(null);
+  const pollRef = useRef<ReturnType<typeof setInterval> | null>(null);
+
+  useEffect(() => () => { if (pollRef.current) clearInterval(pollRef.current); }, []);
+
+  const startPipeline = async () => {
+    setRunning(true);
+    setPrepError(null);
+    try {
+      const res = await fetch(`/api/applications/${app.id}/prep`, { method: "POST" });
+      const data = await res.json() as { error?: string };
+      if (!res.ok) throw new Error(data.error ?? "Failed to start pipeline");
+
+      pollRef.current = setInterval(async () => {
+        try {
+          const pollRes = await fetch(`/api/applications/${app.id}/prep`);
+          const pollData = await pollRes.json() as { hasTech?: boolean };
+          if (pollData.hasTech) {
+            if (pollRef.current) clearInterval(pollRef.current);
+            window.location.reload();
+          }
+        } catch {}
+      }, 4_000);
+    } catch (e) {
+      setRunning(false);
+      setPrepError(e instanceof Error ? e.message : "Failed");
+    }
+  };
 
   // Load dismissed tags from API
   useEffect(() => {
@@ -175,12 +205,29 @@ export function TechStackTab({ app }: TabBaseProps) {
       {/* Active technologies */}
       <Card style={{ borderLeft: "3px solid var(--cyan-6)", borderRadius: 0 }}>
         <Flex justify="between" align="center" mb="4">
-          <Heading size="4">Tech Stack</Heading>
+          <Flex align="center" gap="2">
+            <Heading size="4">Tech Stack</Heading>
+            {!hasLlmTech && (
+              <Badge size="1" color="gray" variant="outline">regex</Badge>
+            )}
+          </Flex>
           <Flex gap="2" align="center">
             <Badge size="1" color="cyan">{activeTechs.length} active</Badge>
             {dismissedTechs.length > 0 && (
               <Badge size="1" color="gray">{dismissedTechs.length} dismissed</Badge>
             )}
+            {isAdmin && !hasLlmTech && app.jobDescription && (
+              <Button
+                size="1"
+                variant="soft"
+                color="cyan"
+                disabled={running}
+                onClick={startPipeline}
+              >
+                {running ? <><Spinner size="1" /> Running...</> : <><RocketIcon /> Extract with AI</>}
+              </Button>
+            )}
+            {prepError && <Text size="1" color="red">{prepError}</Text>}
           </Flex>
         </Flex>
 

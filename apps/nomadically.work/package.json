@@ -18,7 +18,6 @@
     "try:skills": "tsx scripts/try-skills-production.ts",
     "deploy": "tsx scripts/deploy.ts",
     "codegen": "graphql-codegen",
-    "schema:generate": "tsx scripts/generate-worker-types.ts",
     "test:evals": "tsx src/evals/remote-eu/__tests__/run-local.ts",
     "test:email-evals": "tsx src/evals/email-generation/__tests__/run-local.ts",
     "test:openrouter": "tsx src/openrouter/test-integration.ts",
@@ -27,7 +26,6 @@
     "eval:heuristic": "tsx --env-file=.env.local scripts/eval-heuristic-comparison.ts",
     "eval:email": "tsx --env-file=.env.local scripts/eval-email-generation-langfuse.ts",
     "eval:ab": "tsx --env-file=.env.local scripts/eval-prompt-ab.ts",
-    "janitor:trigger": "tsx scripts/trigger-janitor.ts",
     "boards:discover": "tsx scripts/discover-ashby-boards.ts",
     "skills:seed": "tsx scripts/seed-skill-taxonomy.ts",
     "skills:extract": "tsx scripts/extract-job-skills.ts",
@@ -40,7 +38,6 @@
     "strategy:check:all": "tsx scripts/enforce-strategy.ts --all",
     "db:generate": "drizzle-kit generate",
     "db:migrate": "drizzle-kit migrate",
-    "db:push": "wrangler d1 migrations apply nomadically-work-db --remote",
     "db:studio": "drizzle-kit studio"
   },
   "dependencies": {
@@ -93,7 +90,6 @@
     "zod": "^3.25.76"
   },
   "devDependencies": {
-    "@cloudflare/workers-types": "^4.20260214.0",
     "@eddeee888/gcg-typescript-resolver-files": "^0.15.0",
     "@graphql-codegen/add": "^6.0.0",
     "@graphql-codegen/cli": "^6.1.1",
@@ -116,8 +112,7 @@
     "drizzle-kit": "^0.31.8",
     "eslint": "^9.37.0",
     "tsx": "^4.21.0",
-    "typescript": "^5.9.3",
-    "wrangler": "^4.61.1"
+    "typescript": "^5.9.3"
   },
   "version": "0.0.1"
 }

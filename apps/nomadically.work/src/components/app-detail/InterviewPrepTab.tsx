@@ -1,18 +1,104 @@
 "use client";
 
-import { Heading, Flex, Text, Box, Card } from "@radix-ui/themes";
-import { InfoCircledIcon } from "@radix-ui/react-icons";
+import { useState, useEffect, useRef, useCallback } from "react";
+import { Heading, Flex, Text, Box, Card, Button, Spinner } from "@radix-ui/themes";
+import { InfoCircledIcon, RocketIcon } from "@radix-ui/react-icons";
 import ReactMarkdown from "react-markdown";
 import remarkGfm from "remark-gfm";
 import type { TabBaseProps } from "./types";
 
-export function InterviewPrepTab({ app }: TabBaseProps) {
-  if (!app.aiInterviewQuestions) {
+const POLL_INTERVAL = 4_000;
+
+export function InterviewPrepTab({ app, isAdmin }: TabBaseProps) {
+  const [running, setRunning] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  const [prepContent, setPrepContent] = useState(app.aiInterviewQuestions ?? null);
+  const pollRef = useRef<ReturnType<typeof setInterval> | null>(null);
+
+  const stopPolling = useCallback(() => {
+    if (pollRef.current) {
+      clearInterval(pollRef.current);
+      pollRef.current = null;
+    }
+  }, []);
+
+  useEffect(() => () => stopPolling(), [stopPolling]);
+
+  // Sync when app data changes externally
+  useEffect(() => {
+    if (app.aiInterviewQuestions) {
+      setPrepContent(app.aiInterviewQuestions);
+      setRunning(false);
+      stopPolling();
+    }
+  }, [app.aiInterviewQuestions, stopPolling]);
+
+  const startPipeline = async () => {
+    setRunning(true);
+    setError(null);
+
+    try {
+      const res = await fetch(`/api/applications/${app.id}/prep`, { method: "POST" });
+      const data = await res.json() as { error?: string };
+      if (!res.ok) throw new Error(data.error ?? "Failed to start pipeline");
+
+      // Poll for results
+      pollRef.current = setInterval(async () => {
+        try {
+          const pollRes = await fetch(`/api/applications/${app.id}/prep`);
+          const pollData = await pollRes.json() as { hasInterview?: boolean };
+          if (pollData.hasInterview) {
+            stopPolling();
+            // Reload the page to get fresh GraphQL data
+            window.location.reload();
+          }
+        } catch {
+          // Ignore poll errors, keep trying
+        }
+      }, POLL_INTERVAL);
+    } catch (e) {
+      setRunning(false);
+      setError(e instanceof Error ? e.message : "Failed to start pipeline");
+    }
+  };
+
+  if (!prepContent) {
     return (
       <Card style={{ borderLeft: "3px solid var(--violet-6)", borderRadius: 0 }}>
-        <Flex direction="column" align="center" justify="center" gap="2" py="8" style={{ opacity: 0.7 }}>
-          <InfoCircledIcon width={24} height={24} color="var(--gray-8)" />
-          <Text size="2" color="gray">No interview prep generated yet.</Text>
+        <Flex direction="column" align="center" justify="center" gap="3" py="8">
+          {running ? (
+            <>
+              <Spinner size="3" />
+              <Text size="2" color="gray">
+                Generating interview prep + tech knowledge...
+              </Text>
+              <Text size="1" color="gray">
+                This takes 1-2 minutes (parsing JD, generating questions, creating study material)
+              </Text>
+            </>
+          ) : (
+            <>
+              <InfoCircledIcon width={24} height={24} color="var(--gray-8)" />
+              <Text size="2" color="gray">No interview prep generated yet.</Text>
+              {isAdmin && app.jobDescription && (
+                <Button
+                  size="2"
+                  variant="solid"
+                  color="violet"
+                  onClick={startPipeline}
+                >
+                  <RocketIcon />
+                  Generate Prep
+                </Button>
+              )}
+              {isAdmin && !app.jobDescription && (
+                <Text size="1" color="red">
+                  Add a job description first (enhance from Ashby or paste manually)
+                </Text>
+              )}
+              {error && <Text size="1" color="red">{error}</Text>}
+            </>
+          )}
         </Flex>
       </Card>
     );
@@ -20,7 +106,20 @@ export function InterviewPrepTab({ app }: TabBaseProps) {
 
   return (
     <Card style={{ borderLeft: "3px solid var(--violet-6)", borderRadius: 0 }}>
-      <Heading size="4" mb="4">Interview Prep</Heading>
+      <Flex justify="between" align="center" mb="4">
+        <Heading size="4">Interview Prep</Heading>
+        {isAdmin && (
+          <Button
+            size="1"
+            variant="ghost"
+            color="violet"
+            disabled={running}
+            onClick={startPipeline}
+          >
+            {running ? <><Spinner size="1" /> Regenerating...</> : "Regenerate"}
+          </Button>
+        )}
+      </Flex>
       <Box className="interview-prep-md">
         <ReactMarkdown
           remarkPlugins={[remarkGfm]}
@@ -76,7 +175,7 @@ export function InterviewPrepTab({ app }: TabBaseProps) {
             hr: () => <Box mb="4" style={{ borderTop: "1px solid var(--gray-4)" }} />,
           }}
         >
-          {app.aiInterviewQuestions}
+          {prepContent}
         </ReactMarkdown>
       </Box>
     </Card>

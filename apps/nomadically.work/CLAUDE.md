@@ -37,14 +37,8 @@ pnpm jobs:extract-skills          # Extract skills during ingestion
 pnpm skills:extract               # Extract skills from jobs
 pnpm skills:seed                  # Seed skill taxonomy
 pnpm boards:discover              # Discover Ashby boards
-pnpm janitor:trigger              # Manually trigger janitor worker
-
-# Workers
-cd workers/ashby-crawler && wrangler dev             # Ashby crawler local dev
-
 # Deployment
 pnpm deploy                       # Vercel deploy (runs scripts/deploy.ts)
-wrangler deploy --config workers/ashby-crawler/wrangler.toml  # Ashby crawler
 ```
 
 ---
@@ -56,20 +50,17 @@ wrangler deploy --config workers/ashby-crawler/wrangler.toml  # Ashby crawler
 **Next.js app (Vercel):** `Next.js → Neon PostgreSQL` via `@neondatabase/serverless` + Drizzle ORM.
 Import `db` from `@/db` for all queries. Schema in `src/db/schema.ts`, migrations in `migrations/`.
 
-**CF Workers (janitor, insert-jobs, process-companies-cron):** use Neon PostgreSQL via `neon()` from `@neondatabase/serverless` (HTTP transport, works in CF Workers without WebSocket).
-
 ### Data flow
 
 ```
-1. Discovery:      ATS Sources (Neon) --[Cron Worker]--> Trigger Ingestion
-2. Board Crawl:    Common Crawl CDX --[ashby-crawler (Rust)]--> Ashby boards → Neon
-3. Ingestion:      ATS APIs (Greenhouse/Lever/Ashby) --[Insert Worker]--> Neon
-4. Enhancement:    Job IDs --[Trigger.dev / GraphQL Mutation]--> ATS API --> Neon
-5. Classification: Unprocessed jobs --[process-jobs (Python) / DeepSeek]--> is_remote_eu --> Neon
-6. Skill Extract:  Job descriptions --[LLM pipeline]--> Skills → Neon
-7. Resume Match:   Resumes --[resume-rag (Python) / Vectorize]--> Vector search
-8. Serving:        Browser --[Apollo Client]--> /api/graphql --[Drizzle ORM]--> Neon
-9. Evaluation:     Langfuse --[LLM calls]--> Accuracy scores
+1. Board Crawl:    Common Crawl CDX --[ashby-crawler (Rust)]--> Ashby boards → Neon
+2. Ingestion:      ATS APIs (Greenhouse/Lever/Ashby) --[scripts / Trigger.dev]--> Neon
+3. Enhancement:    Job IDs --[Trigger.dev / GraphQL Mutation]--> ATS API --> Neon
+4. Classification: Unprocessed jobs --[process-jobs (Python) / DeepSeek]--> is_remote_eu --> Neon
+5. Skill Extract:  Job descriptions --[LLM pipeline]--> Skills → Neon
+6. Resume Match:   Resumes --[resume-rag (Python) / Vectorize]--> Vector search
+7. Serving:        Browser --[Apollo Client]--> /api/graphql --[Drizzle ORM]--> Neon
+8. Evaluation:     Langfuse --[LLM calls]--> Accuracy scores
 ```
 
 ### GraphQL codegen
@@ -81,16 +72,6 @@ Configuration in `codegen.ts`. Generates from `schema/**/*.graphql` into `src/__
 - `resolvers-types.ts` — Resolver types with `GraphQLContext`
 
 Custom scalars: `DateTime`/`URL`/`EmailAddress` → `string`, `Upload` → `File`, `JSON` → `any`.
-
-### Workers
-
-| Worker | Config | Runtime | Key details |
-|---|---|---|---|
-| `janitor` | `wrangler.toml` | TypeScript | Daily midnight UTC, triggers ATS ingestion (Neon) |
-| `insert-jobs` | `wrangler.insert-jobs.toml` | TypeScript | Queue-based ingestion (Neon) |
-| `process-jobs` | `workers/process-jobs/wrangler.jsonc` | Python/LangGraph | Every 6h + queue, DeepSeek classification |
-| `ashby-crawler` | `workers/ashby-crawler/wrangler.toml` | **Rust/WASM** | Common Crawl → Neon, rig_compat module |
-| `resume-rag` | `workers/resume-rag/wrangler.jsonc` | **Python** | Vectorize + Workers AI |
 
 ### API routes
 
@@ -117,10 +98,10 @@ GraphQL Playground: `http://localhost:3000/api/graphql`. Vercel routes have 60s 
 | API | Apollo Server 5 (GraphQL) |
 | Auth | Better Auth (`@ai-apps/auth`) |
 | AI/ML | Vercel AI SDK, Anthropic Claude (+ Agent SDK), DeepSeek, OpenRouter |
-| Background jobs | Trigger.dev, Cloudflare Workers (cron + queues) |
+| Background jobs | Trigger.dev |
 | Observability | Langfuse, LangSmith, OpenTelemetry (partially active) |
 | Evaluation | Langfuse |
-| Deployment | Vercel (app), Cloudflare Workers (workers) |
+| Deployment | Vercel |
 | Package manager | pnpm 10.10 |
 | UI | Radix UI (Themes + Icons) |
 
@@ -134,7 +115,6 @@ GraphQL Playground: `http://localhost:3000/api/graphql`. Vercel routes have 60s 
 - **Skills subsystem**: `src/lib/skills/` — taxonomy, extraction, vector ops, filtering.
 - **AI agents**: `src/agents/` (Vercel AI SDK — SQL, admin, strategy enforcer), `src/anthropic/` (Claude client, MCP, sub-agents, architect).
 - **Database tools for agents**: `src/tools/database/` (introspection + SQL execution).
-- **Rust worker**: `workers/ashby-crawler/src/lib.rs` — `rig_compat` module implements VectorStore, Pipeline, Tool patterns for WASM (swap to `rig::*` when rig-core ships wasm32 support).
 
 ---
 
@@ -195,20 +175,6 @@ Copy `.env.example` to `.env.local`. Key groups: `NEON_DATABASE_URL`, Better Aut
 ### Dependencies
 - `@ai-sdk/anthropic` pinned to `"latest"` — should use specific version.
 - `@libsql/client` and `drizzle-orm/d1` are likely unused — remove from `package.json`.
-
----
-
-## ashby-crawler (Rust/WASM) reference
-
-```bash
-cargo install worker-build                    # Install WASM build tool (once)
-cd workers/ashby-crawler && wrangler dev      # Local dev
-wrangler deploy --config workers/ashby-crawler/wrangler.toml  # Deploy
-wrangler d1 execute nomadically-work-db --remote \
-  --file workers/ashby-crawler/migrations/0001_init/up.sql    # Apply migrations
-```
-
-Key endpoints: `/crawl` (paginated CC crawl), `/boards` (list/search), `/search` (TF-IDF vector search), `/enrich` / `/enrich-all` (enrichment pipeline), `/tools` (OpenAI function-calling schemas), `/indexes`, `/progress`, `/stats`.
 
 ---
 
