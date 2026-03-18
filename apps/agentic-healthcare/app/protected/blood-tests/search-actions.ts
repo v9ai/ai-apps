@@ -2,13 +2,29 @@
 
 import { withAuth } from "@/lib/auth-helpers";
 import { db } from "@/lib/db";
-import { generateEmbedding, qwen } from "@/lib/embeddings";
+import { embedViaPython } from "@/lib/python-api";
+import { qwen } from "@/lib/embeddings";
 import { sql } from "drizzle-orm";
+
+/**
+ * Generate embedding via the Python FastEmbed service (same model used for
+ * indexing), so that query vectors live in the same embedding space as the
+ * stored blood-test vectors.
+ */
+async function generateSearchEmbedding(text: string): Promise<number[]> {
+  try {
+    return await embedViaPython(text);
+  } catch {
+    // Fallback to Qwen if Python service is unavailable
+    const { generateEmbedding } = await import("@/lib/embeddings");
+    return generateEmbedding(text);
+  }
+}
 
 export async function searchBloodTests(query: string) {
   const { userId } = await withAuth();
 
-  const embedding = await generateEmbedding(query);
+  const embedding = await generateSearchEmbedding(query);
   const embStr = `[${embedding.join(",")}]`;
 
   const data = await db.execute(sql`
@@ -36,7 +52,7 @@ export async function searchBloodTests(query: string) {
 export async function searchMarkers(query: string) {
   const { userId } = await withAuth();
 
-  const embedding = await generateEmbedding(query);
+  const embedding = await generateSearchEmbedding(query);
   const embStr = `[${embedding.join(",")}]`;
 
   const data = await db.execute(sql`
@@ -81,7 +97,7 @@ async function searchConditions(embStr: string, userId: string) {
 export async function askHealthQuestion(question: string) {
   const { userId } = await withAuth();
 
-  const embedding = await generateEmbedding(question);
+  const embedding = await generateSearchEmbedding(question);
   const embStr = `[${embedding.join(",")}]`;
 
   const [testResults, markerResults, conditionResults, medicationResults, symptomResults, appointmentResults] = await Promise.all([
@@ -279,7 +295,7 @@ export async function askHealthQuestion(question: string) {
 export async function getMarkerTrend(query: string, markerName?: string) {
   const { userId } = await withAuth();
 
-  const embedding = await generateEmbedding(query);
+  const embedding = await generateSearchEmbedding(query);
   const embStr = `[${embedding.join(",")}]`;
 
   const nameFilter = markerName

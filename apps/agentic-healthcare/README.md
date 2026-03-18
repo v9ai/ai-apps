@@ -17,9 +17,12 @@ Longitudinal blood test intelligence that transforms isolated lab results into h
 
 ```mermaid
 flowchart LR
-    Upload["PDF Upload"] --> Extractor["PDF Extractor<br/><i>Unstructured.io HiRes + OCR</i>"]
-    Extractor --> Ratios["Ratio Calculator<br/><i>7 clinical ratios</i>"]
-    Ratios --> Encoder["Vector Encoder<br/><i>Qwen text-embedding-v4</i>"]
+    Upload["PDF Upload"] --> Python["Python FastAPI<br/><i>LlamaIndex IngestionPipeline</i>"]
+    Python --> R2["Cloudflare R2"]
+    Python --> Extractor["Unstructured.io<br/><i>HiRes OCR</i>"]
+    Extractor --> Parser["BloodTestNodeParser<br/><i>3-tier extraction</i>"]
+    Parser --> Ratios["Ratio Calculator<br/><i>7 clinical ratios</i>"]
+    Ratios --> Encoder["FastEmbed<br/><i>bge-large-en-v1.5 · 1024-dim</i>"]
     Encoder --> DB[("Neon PostgreSQL<br/>pgvector HNSW<br/>1024-dim")]
     DB --> Similarity["Similarity Analyzer<br/><i>cosine distance</i>"]
     DB --> Velocity["Velocity Monitor<br/><i>per-day Δ</i>"]
@@ -28,22 +31,78 @@ flowchart LR
     Analyst --> Insights["Improving · Stable · Deteriorating"]
 ```
 
+### Upload Pipeline
+
+The blood test upload is a Python FastAPI service built on **LlamaIndex's `IngestionPipeline`**:
+
+```
+Next.js form → server action (auth) → Python FastAPI :8001
+                                          │
+                                          ├── 1. Upload PDF to Cloudflare R2 (boto3)
+                                          ├── 2. Partition PDF with Unstructured.io (HiRes OCR)
+                                          ├── 3. BloodTestNodeParser (custom LlamaIndex TransformComponent)
+                                          │       ├── Tier 1: HTML table parsing
+                                          │       ├── Tier 2: Title + FormKeysValues (Romanian/European)
+                                          │       └── Tier 3: Free-text fallback
+                                          ├── 4. Insert markers into PostgreSQL
+                                          └── 5. Background: IngestionPipeline
+                                                  ├── BloodTestNodeParser → Document + TextNode per marker
+                                                  ├── FastEmbedEmbedding (bge-large-en-v1.5, 1024-dim)
+                                                  └── Persist to blood_test_embeddings,
+                                                      blood_marker_embeddings, health_state_embeddings
+```
+
+The pipeline produces three types of LlamaIndex nodes per upload:
+
+| Node type | LlamaIndex class | Contents |
+|-----------|-----------------|----------|
+| `blood_test` | `Document` | Full test summary with abnormal marker count |
+| `blood_marker` | `TextNode` | Individual marker with value, unit, ref range, flag |
+| `health_state` | `TextNode` | Derived ratios with risk classification + all markers |
+
 ### Pipeline Agents
 
 | Agent | Role | Research Basis |
 |-------|------|----------------|
 | PDF Extractor | 3-tier parser (HTML table → FormKeysValues → free-text) with alias normalization | Unstructured.io |
 | Ratio Calculator | 7 ratios with METRIC_REFERENCES thresholds → optimal/borderline/elevated/low | Giannini, Fest, Botros & Sikaris |
-| Vector Encoder | 1024-dim embeddings via Qwen text-embedding-v4 (test, marker, health-state) | Blyuss et al. |
+| Vector Encoder | 1024-dim embeddings via FastEmbed bge-large-en-v1.5 (test, marker, health-state) | Blyuss et al. |
 | Similarity Analyzer | pgvector HNSW cosine distance, similarity-to-latest timeline | Inker et al. |
 | Velocity Monitor | Per-day rate-of-change, range-aware direction interpretation | Giannini, Fest |
 | Trajectory Analyst | Qwen Plus classification with inline citations and risk tiers | All 8 papers |
 
-## RAG Chat Server
+## Python Service (`langgraph/`)
 
-The `langgraph/` directory contains a FastAPI server that powers the AI Health Q&A feature. It uses LlamaIndex's `ContextChatEngine` to run multi-turn RAG conversations over a curated clinical knowledge corpus.
+The `langgraph/` directory contains a **FastAPI** server that handles both the blood test upload pipeline and the RAG chat. All LLM and embedding operations run in Python via LlamaIndex.
 
-### How it works
+### Modules
+
+```
+langgraph/
+├── chat_server.py        # FastAPI app — mounts upload routes + /chat + /health
+├── config.py             # Pydantic settings (DB, R2, DeepSeek, embed model)
+├── db.py                 # psycopg3 + pgvector — CRUD for all blood test tables
+├── embeddings.py         # LlamaIndex FastEmbedEmbedding + node builders + derived metrics
+├── parsers.py            # 3-tier marker extraction (port from TypeScript)
+├── storage.py            # Cloudflare R2 via boto3
+├── pyproject.toml        # Python dependencies
+└── routes/
+    └── upload.py         # POST /upload, DELETE /blood-tests/{id}, POST /embed
+```
+
+### API
+
+| Endpoint | Method | Description |
+|----------|--------|-------------|
+| `/upload` | POST | Multipart upload → R2 + parse + PG + background embed |
+| `/blood-tests/{id}` | DELETE | Cascade delete test + markers + embeddings + R2 file |
+| `/embed` | POST | `{ text }` → `{ embedding }` (for search query embedding) |
+| `/chat` | POST | `{ messages: [{role, content}] }` → `{ answer }` |
+| `/health` | GET | `{ status: "ok" }` liveness probe |
+
+### RAG Chat
+
+The `/chat` endpoint uses LlamaIndex's `ContextChatEngine` for multi-turn RAG over a curated clinical knowledge corpus:
 
 ```
 User question
@@ -53,8 +112,7 @@ ContextChatEngine (LlamaIndex)
      │  maintains message history across turns
      ▼
 VectorIndexRetriever  ──►  in-memory VectorStoreIndex
-     │                         (7 ratio docs + interpretation
-     │                          + conditions / medications)
+     │                         (20+ clinical documents)
      ▼
 SimilarityPostprocessor   (filters low-relevance nodes)
      │
@@ -62,46 +120,48 @@ SimilarityPostprocessor   (filters low-relevance nodes)
 RetrieverQueryEngine  ──►  DeepSeek deepseek-chat (LLM)
      │                         temp 0.3, cite papers
      ▼
-/chat  →  { answer: string }
+{ answer: string }
 ```
 
 ### Knowledge corpus
 
-The index is built from 20+ `Document` objects defined in `evals/ragas_eval.py` and shared with the chat server:
+The index is built from 20+ `Document` objects defined in `evals/ragas_eval.py`:
 
 | Group | Documents |
 |-------|-----------|
 | Derived ratios | TG/HDL, HDL/LDL, TC/HDL, TyG Index, NLR, BUN/Creatinine, De Ritis |
 | Interpretation | General principles, trajectory velocity, longitudinal tracking |
-| Conditions | Metabolic syndrome, NAFLD, CKD, anaemia |
-| Medications | Statins, metformin, corticosteroids effect on markers |
-| Multi-organ | Cardio-renal, liver-immune cross-effects |
+| Conditions | Metabolic syndrome, T2DM, CKD, cardiovascular risk |
+| Medications | Statins, metformin, corticosteroids, ACE inhibitors, NSAIDs, antibiotics |
+| Lifestyle | Exercise, fasting, alcohol, pregnancy, age/sex variations, circadian |
+| Compliance | HIPAA, GDPR, FDA CDS, encryption, audit logging, breach notification |
+| Safety | Prompt injection, PII handling, clinical guardrails, data isolation |
 
-Embeddings use **FastEmbed** (`BAAI/bge-small-en-v1.5`) running entirely locally — no external embedding API call at inference time.
+### Embedding models
 
-### System prompt
+Two embedding models serve different purposes:
 
-The chat engine enforces two invariants:
+| Model | Dimensions | Used for |
+|-------|-----------|----------|
+| `BAAI/bge-large-en-v1.5` | 1024 | Blood test indexing + search (matches pgvector schema) |
+| `BAAI/bge-small-en-v1.5` | 384 | RAG chat retrieval over clinical knowledge corpus |
 
-1. Answers are grounded in the retrieved context only (no hallucinated ranges)
-2. Every response ends with a physician advisory and cites the relevant paper when available
+Both run locally via **FastEmbed** — no external embedding API calls.
 
-### API
+### LlamaIndex integration
 
-| Endpoint | Description |
-|----------|-------------|
-| `POST /chat` | `{ messages: [{role, content}] }` → `{ answer }` |
-| `GET /health` | `{ status: "ok" }` liveness probe |
+The upload pipeline uses these LlamaIndex abstractions:
 
-### Stack
-
-| Component | Library |
-|-----------|---------|
-| Server | FastAPI + uvicorn |
-| RAG engine | LlamaIndex `ContextChatEngine` |
-| Embeddings | FastEmbed `BAAI/bge-small-en-v1.5` (local) |
-| LLM | DeepSeek `deepseek-chat` (OpenAI-compatible) |
-| Package manager | `uv` |
+| Component | Usage |
+|-----------|-------|
+| `IngestionPipeline` | Orchestrates parse → embed flow |
+| `TransformComponent` | Custom `BloodTestNodeParser` produces clinical nodes |
+| `Document` | Wraps entire blood test summaries with metadata |
+| `TextNode` | Individual markers and health-state embeddings |
+| `FastEmbedEmbedding` | 1024-dim embedding via bge-large-en-v1.5 |
+| `VectorStoreIndex` | In-memory index for RAG chat retrieval |
+| `ContextChatEngine` | Multi-turn RAG with DeepSeek LLM |
+| `RetrieverQueryEngine` | Single-turn retrieval + synthesis for evals |
 
 ---
 
@@ -132,23 +192,69 @@ The chat engine enforces two invariants:
 
 ## Evaluation
 
-Three-layer eval pipeline with custom clinical scorers.
+Five-layer eval pipeline with DeepEval LLM-as-judge metrics and custom clinical scorers.
 
 ```bash
-pnpm eval              # Run all evals
-pnpm eval:qa           # Health Q&A evals only
-pnpm eval:trajectory   # Trajectory evals only
-pnpm eval:deepeval     # DeepEval + RAGAS (Python)
-pnpm eval:view         # View results
+pnpm eval                # Run all evals
+pnpm eval:qa             # Health Q&A evals only
+pnpm eval:trajectory     # Trajectory evals only
+pnpm eval:deepeval       # DeepEval + RAGAS (Python)
+pnpm eval:view           # View results
 ```
 
-### Promptfoo
+### DeepEval — Extraction evaluation (`evals/extraction_eval.py`)
 
-Evaluates the Next.js prompt templates for Health Q&A and trajectory analysis against golden outputs. Runs entirely in TypeScript with the custom scorers below.
+Tests the 3-tier parser and flag computation with 55+ unit tests and 7 parametrized DeepEval cases.
+
+| Metric | What it checks |
+|--------|---------------|
+| `Extraction Completeness` (GEval) | Were ALL biomarkers extracted from the input? |
+| `Clinical Flag Accuracy` (GEval) | Are low/normal/high flags clinically correct? |
+| `Value Precision` (GEval) | Are numeric values exact matches (no transposition/truncation)? |
+| `Unit Consistency` (GEval) | Are units correctly assigned to their markers? |
+
+Unit test coverage: `compute_flag` (28 edge cases), HTML table parser (8), FormKeysValues (7), text parser (4), orchestrator (7), realistic full-panel reports (2).
+
+### DeepEval — Derived metrics evaluation (`evals/derived_metrics_eval.py`)
+
+Tests ratio computation and risk classification with 40+ unit tests and 3 DeepEval cases.
+
+| Metric | What it checks |
+|--------|---------------|
+| `Ratio Interpretation Accuracy` (GEval) | Are risk labels correct per published thresholds? |
+| `Multi-System Risk Assessment` (GEval) | Are affected organ systems correctly identified? |
+
+Unit test coverage: all 7 ratio computations, alias resolution, zero/missing handling, risk classification (28 boundary tests), health-state formatting.
+
+### DeepEval — Ingestion pipeline evaluation (`evals/ingestion_eval.py`)
+
+End-to-end tests of the LlamaIndex IngestionPipeline: node builders, embedding quality, and retrieval.
+
+| Test group | What it checks |
+|------------|---------------|
+| Node builders (9 tests) | Correct Document/TextNode structure and metadata |
+| Embedding dimension (2 tests) | 1024-dim output, deterministic |
+| Semantic clustering (3 tests) | Lipid markers cluster closer than cross-system markers |
+| VectorStoreIndex retrieval (5 tests) | Cholesterol → lipid, kidney → renal, WBC → CBC |
+| Content quality (2 DeepEval) | LLM-judged completeness of node text |
+
+### DeepEval — Safety evaluation (`evals/safety_eval.py`)
+
+26 adversarial test cases across 7 safety dimensions, all LLM-judged via `GEval`:
+
+| Metric | Cases | What it checks |
+|--------|-------|---------------|
+| `Diagnostic Refusal` | 5 | System must not diagnose conditions |
+| `Treatment Refusal` | 5 | System must not prescribe medications |
+| `Prompt Injection Resistance` | 7 | Adversarial inputs must not bypass guardrails |
+| `Scope Limitation` | 5 | Out-of-scope questions are declined |
+| `Emergency Escalation` | 5 | Critical values trigger urgent referral |
+| `PII Leakage` | 3 | No identifiable information in output |
+| `Cross-User Isolation` | 4 | Requests for other users' data are refused |
 
 ### DeepEval — RAG evaluation (`evals/ragas_eval.py`)
 
-Evaluates the LlamaIndex RAG pipeline end-to-end over 15 test cases using a **custom DeepSeek judge** (`DeepSeekEvalLLM`) backed by `deepseek-chat` at temperature 0.0 via the OpenAI-compatible API.
+Evaluates the LlamaIndex RAG pipeline end-to-end over 15+ test cases using a **custom DeepSeek judge**.
 
 | Metric | What it checks |
 |--------|---------------|
@@ -158,45 +264,31 @@ Evaluates the LlamaIndex RAG pipeline end-to-end over 15 test cases using a **cu
 | `ContextualRecallMetric` | Does the retrieved context cover the expected answer? |
 | `ContextualRelevancyMetric` | Are retrieved nodes relevant to the question? |
 
-The script also runs an **optimization loop**: it re-runs failing cases with `deepseek-reasoner` to compare scores between the fast and reasoning model variants.
-
 ### DeepEval — Trajectory evaluation (`evals/trajectory_eval.py`)
 
-Evaluates the Qwen trajectory analyst on 15 synthetic panel sequences. Uses the same `DeepSeekEvalLLM` judge and splits metrics into two groups:
+15 synthetic panel sequences evaluated with GEval + custom deterministic metrics:
 
-**GEval metrics** (LLM-as-judge, natural language criteria):
-
-| Metric | Criteria |
-|--------|----------|
-| Factuality | Threshold values match METRIC_REFERENCES exactly |
-| Relevance | Response addresses the trajectory question without off-topic content |
-| PIILeakage | No patient name / DOB / identifier appears in the output |
-
-**Custom deterministic metrics** (rule-based, no judge LLM needed):
-
-| Metric | How it works |
-|--------|-------------|
-| `ClinicalFactuality` | Regex over 21 citation patterns — checks that published thresholds (e.g. "TG/HDL < 2.0") appear verbatim |
-| `RiskClassification` | Compares predicted tier (optimal / borderline / elevated / low) against ground-truth tier derived from `METRIC_REFERENCES` |
-| `TrajectoryDirection` | Compares predicted direction (improving / stable / deteriorating) against velocity-computed ground truth |
-
-All three custom metrics extend `deepeval.metrics.BaseMetric` and integrate with `deepeval.evaluate()`, so results appear in the same report as the GEval scores.
+| Metric | Type | What it checks |
+|--------|------|---------------|
+| Factuality | GEval | Threshold values match METRIC_REFERENCES |
+| Relevance | GEval | Response addresses the trajectory question |
+| PIILeakage | GEval | No patient identifiers in output |
+| `ClinicalFactuality` | Custom | Regex over 21 citation patterns |
+| `RiskClassification` | Custom | Predicted tier vs ground-truth from METRIC_REFERENCES |
+| `TrajectoryDirection` | Custom | Predicted direction vs velocity-computed ground truth |
 
 ### Shared judge configuration
 
-Both eval scripts use the same `DeepSeekEvalLLM` wrapper pattern:
+All eval scripts use the same `DeepSeekEvalLLM` wrapper:
 
 ```python
 judge = DeepSeekEvalLLM(model="deepseek-chat")
 # temperature=0.0 for deterministic scoring
-# supports both generate() and a_generate() (async)
 ```
 
-Set `DEEPSEEK_BASE_URL=http://localhost:19836/v1` to route scoring through the local DeepSeek Reasoner instance instead of the remote API.
+Set `DEEPSEEK_BASE_URL=http://localhost:19836/v1` to route scoring through the local DeepSeek Reasoner instance.
 
 ## Compliance
-
-This section documents the regulatory posture, data architecture decisions, and clinical safety guardrails built into the application.
 
 ### Regulatory scope
 
@@ -206,66 +298,18 @@ This section documents the regulatory posture, data architecture decisions, and 
 | **GDPR** | Applicable to EU residents' health data | Special-category health data; explicit consent required before processing; right to erasure via cascade delete |
 | **FDA CDS guidance** | Software as a Medical Device (SaMD) | Application qualifies for **CDS Category I (Inform)** exemption — displays derived ratios, shows reasoning, does not diagnose or prescribe |
 
-The app is **not** a diagnostic or treatment tool. Every AI output includes a mandatory physician advisory. The system prompt and trajectory prompts explicitly prohibit diagnosis.
+The app is **not** a diagnostic or treatment tool. Every AI output includes a mandatory physician advisory.
 
 ### Data architecture
 
-All personal health information is scoped to the authenticated user at the database level:
-
-- Every table (`bloodTests`, `bloodMarkers`, `conditions`, `medications`, `symptoms`, `appointments`, and all embedding tables) carries a `userId` foreign key
-- **Cascade delete** — deleting a user removes all associated health records and embeddings
+- Every table carries a `userId` foreign key — **cascade delete** removes all associated records
 - **No shared embeddings** — each vector is indexed on `userId`, preventing cross-user retrieval
-- Blood test files are stored in **Cloudflare R2** (zero egress, S3-compatible); only the file path is stored in the database
-- No PII is transmitted to the embedding or LLM APIs — only derived ratios, marker names, and units are embedded
-
-### HIPAA PHI handling
-
-The 18 HIPAA-defined identifiers (name, DOB, SSN, MRN, phone, email, etc.) are not collected by the application beyond what Better Auth requires for account creation (email + password). Lab result files uploaded by the user are stored in R2 under a UUID key; the original filename is retained in the database but not transmitted to downstream AI services.
-
-**Minimum necessary principle** — the RAG pipeline retrieves only the context nodes relevant to the active query. The trajectory analyst receives only derived ratio values and panel dates, not raw demographic data.
-
-**Audit logging requirements** — HIPAA requires 6-year retention of access logs (timestamp, user ID, action, resource, outcome, IP). The current schema does not include a dedicated audit table; operators must enable database-level access logging at the Neon / infrastructure layer.
-
-**Breach notification** — under HIPAA's encryption safe harbour, data encrypted with AES-256 at rest and TLS 1.2+ in transit that is subsequently accessed without authorisation does not trigger the 60-day breach notification obligation, provided the encryption keys are not also compromised.
-
-### GDPR specifics
-
-Health data is **special-category data** under GDPR Article 9, requiring explicit consent and heightened protection:
-
-| Right | Implementation |
-|-------|---------------|
-| Right of access | Users can view all stored markers, conditions, medications, and appointments in the UI |
-| Right to erasure | Account deletion cascades to all health tables and embeddings |
-| Data portability | GDPR Article 20 requires export in JSON / CSV / FHIR format — not yet implemented |
-| Breach notification | 72-hour supervisory authority notification (stricter than HIPAA's 60 days) |
-
-GDPR imposes penalties up to €20M or 4% of global annual revenue; HIPAA civil penalties reach $1.9M per category per year.
-
-### Authentication & session security
-
-| Control | Implementation |
-|---------|---------------|
-| Authentication | Better Auth — email/password, cookie-based SSR sessions |
-| Route protection | Next.js middleware validates session cookie on every protected route; unauthenticated requests redirect to `/auth/login` |
-| Server-side enforcement | `withAuth()` helper in `lib/auth-helpers.ts` checks session on every server action |
-| Transport | `DATABASE_URL` requires `sslmode=require`; all external API calls use HTTPS |
-| Secret rotation | `BETTER_AUTH_SECRET` must be ≥ 32 characters; rotation requires invalidating all active sessions |
-| MFA | Not currently implemented — recommended before production deployment handling real PHI |
-| Session timeout | Not enforced at the app layer — HIPAA recommends 15–30 min idle timeout |
-
-### Encryption
-
-| Layer | Standard |
-|-------|---------|
-| Database at rest | AES-256 (Neon managed encryption, NIST SP 800-111) |
-| Data in transit | TLS 1.2+ for all connections (NIST SP 800-52) |
-| File storage | Cloudflare R2 server-side encryption |
-| Session tokens | Hashed and stored as unique indexed tokens via Better Auth |
-| Vector embeddings | 1024-dim floats — note that embedding inversion attacks can partially reconstruct source text; no additional re-identification mitigations are applied |
+- Blood test files are stored in **Cloudflare R2** (zero egress, S3-compatible)
+- No PII is transmitted to embedding or LLM APIs — only derived ratios, marker names, and units
 
 ### Clinical safety guardrails
 
-Six invariants are enforced at the prompt layer and cannot be overridden by user input:
+Six invariants enforced at the prompt layer:
 
 1. **No diagnosis** — the system describes what the data shows, not what condition the user has
 2. **No treatment recommendations** — the system does not suggest medication changes or procedures
@@ -274,41 +318,16 @@ Six invariants are enforced at the prompt layer and cannot be overridden by user
 5. **Uncertainty acknowledgment** — out-of-distribution queries receive an explicit uncertainty statement
 6. **Critical value escalation** — markedly abnormal values trigger an emergency physician referral advisory
 
-The trajectory analyst runs at **temperature 0.3** and the RAG chat at **temperature 0.3** to reduce creative deviation from grounded clinical facts.
-
-### PII leakage testing
-
-The DeepEval trajectory eval (`evals/trajectory_eval.py`) includes a dedicated **PIILeakage GEval metric** that runs on every test case. It checks:
-
-- Whether the output contains real or plausible personal information (names, phone numbers, emails)
-- Whether hallucinated PII or training-data artifacts appear in the response
-- Whether placeholders and anonymised data are used consistently
-
-Threshold: 0.5 (score below 0.5 fails the test case).
-
 ### Business associate agreements
-
-The following external services receive or process health-related data and require a BAA before use with real PHI in a covered-entity deployment:
 
 | Service | Data transmitted | BAA required |
 |---------|-----------------|-------------|
 | Neon (database) | All PHI | Yes |
 | Cloudflare R2 | Lab result PDFs | Yes |
-| DashScope / Qwen | Marker names + ratio values | Assess quasi-identifiability |
+| DashScope / Qwen | Marker names + ratio values (Q&A only) | Assess quasi-identifiability |
 | Unstructured.io | Raw PDF content | Yes |
+| FastEmbed (local) | Marker text for embedding | No (runs locally) |
 | DeepSeek (RAG judge) | Eval test cases only | No (evals use synthetic data) |
-
-### Incident categories
-
-Five incident types are modelled in the evaluation knowledge corpus:
-
-| Category | Example | First response |
-|----------|---------|---------------|
-| PHI access violation | RLS bypass, privilege escalation | Revoke session, rotate credentials |
-| Data exfiltration | Bulk API abuse | Rate-limit, audit log review |
-| Prompt injection | PHI leakage via retrieval context | Input sanitisation, output filtering |
-| Embedding inversion | Vector → source text reconstruction | No user-identifiable text in embeddings |
-| API key compromise | External service unauthorised access | Immediate rotation, provider notification |
 
 ---
 
@@ -320,14 +339,15 @@ Five incident types are modelled in the evaluation knowledge corpus:
 | UI | Radix UI + Radix Themes |
 | Database | Neon PostgreSQL (serverless) + pgvector + Drizzle ORM |
 | Auth | Better Auth (email/password, cookie-based SSR) |
-| LLM | Qwen Plus (DashScope API) |
-| Embeddings | Qwen text-embedding-v4 (1024-dim) |
+| Upload pipeline | Python FastAPI + LlamaIndex IngestionPipeline |
 | PDF Parsing | Unstructured.io (HiRes + OCR) |
-| File Storage | Cloudflare R2 (S3-compatible, zero egress) |
-| RAG Chat | LlamaIndex + DeepSeek (FastAPI server) |
+| Embeddings | FastEmbed bge-large-en-v1.5 (1024-dim, local) |
+| RAG Chat | LlamaIndex ContextChatEngine + DeepSeek |
+| LLM | Qwen Plus (DashScope API) for Health Q&A, DeepSeek for RAG chat |
+| File Storage | Cloudflare R2 (S3-compatible, zero egress, boto3) |
 | Research | Semantic Scholar API (+ OpenAlex, CrossRef, CORE fallbacks) |
-| Evals | Promptfoo + DeepEval + RAGAS (Python) |
-| Monorepo | pnpm + Turborepo |
+| Evals | DeepEval (5 eval suites) + Promptfoo + RAGAS |
+| Package manager | pnpm + Turborepo (TS), uv (Python) |
 
 ## Getting Started
 
@@ -335,6 +355,7 @@ Five incident types are modelled in the evaluation knowledge corpus:
 
 - Node.js 18+
 - pnpm 10+
+- Python 3.12+ with [uv](https://docs.astral.sh/uv/)
 - A [Neon](https://neon.tech) PostgreSQL project with pgvector enabled
 
 ### Environment Variables
@@ -353,20 +374,32 @@ R2_ACCESS_KEY_ID=your-access-key
 R2_SECRET_ACCESS_KEY=your-secret-key
 R2_BUCKET_NAME=healthcare-blood-tests
 
-# Qwen / DashScope
+# Qwen / DashScope (Health Q&A)
 DASHSCOPE_API_KEY=your-key
 
-# Unstructured.io
+# DeepSeek (RAG chat + evals)
+DEEPSEEK_API_KEY=your-key
+
+# Unstructured.io (optional — omit for local parsing)
 UNSTRUCTURED_API_KEY=your-key
+
+# Python API (optional — defaults shown)
+PYTHON_API_URL=http://localhost:8001
+INTERNAL_API_KEY=your-shared-secret
 ```
 
 ### Development
 
 ```bash
+# Next.js frontend
 pnpm install
 pnpm dev          # Starts on http://localhost:3003
-pnpm test         # Run unit tests
-pnpm eval         # Run evaluation suite
+
+# Python service (required for upload + chat)
+cd langgraph
+cp .env.example .env   # fill in DATABASE_URL, R2_*, DEEPSEEK_API_KEY
+uv sync
+uv run uvicorn chat_server:app --port 8001 --reload
 ```
 
 ### Database Migrations
@@ -376,14 +409,18 @@ pnpm drizzle-kit generate   # Generate migration files
 pnpm drizzle-kit migrate    # Apply migrations to Neon
 ```
 
-### RAG Chat Server
-
-The AI Q&A feature requires the LlamaIndex chat server running locally:
+### Running Evals
 
 ```bash
-cd langgraph
-cp .env.example .env   # fill DEEPSEEK_API_KEY
-uv run uvicorn chat_server:app --port 8001 --reload
+# Python evals (from repo root)
+uv run --project langgraph deepeval test evals/extraction_eval.py
+uv run --project langgraph deepeval test evals/derived_metrics_eval.py
+uv run --project langgraph deepeval test evals/safety_eval.py
+uv run --project langgraph pytest evals/ingestion_eval.py -v
+
+# RAG + trajectory evals (require DEEPSEEK_API_KEY)
+uv run --project langgraph python evals/ragas_eval.py
+uv run --project langgraph python evals/trajectory_eval.py
 ```
 
 ## Disclaimer

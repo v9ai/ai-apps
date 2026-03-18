@@ -3,7 +3,7 @@ FastAPI chat server — LlamaIndex + DeepSeek RAG over clinical blood marker doc
 
 Run:
   cd apps/agentic-healthcare/langgraph
-  cp .env.example .env  # fill in DEEPSEEK_API_KEY
+  cp .env.example .env  # fill in DEEPSEEK_API_KEY, DATABASE_URL, R2_*, etc.
   uv run uvicorn chat_server:app --port 8001 --reload
 """
 
@@ -24,6 +24,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
 from llama_index.core.chat_engine import ContextChatEngine
 from ragas_eval import DOCUMENTS, build_rag_pipeline  # noqa: E402
+from routes.upload import router as upload_router
 
 app = FastAPI(title="Blood Marker Intelligence Chat")
 app.add_middleware(
@@ -32,6 +33,9 @@ app.add_middleware(
     allow_methods=["*"],
     allow_headers=["*"],
 )
+
+# Mount upload/delete routes
+app.include_router(upload_router)
 
 # Build RAG pipeline once at startup
 _rag = build_rag_pipeline("deepseek-chat")
