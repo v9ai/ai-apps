@@ -19,8 +19,8 @@
     }
   },
   "scripts": {
-    "build": "bunchee",
-    "dev": "bunchee --watch"
+    "build": "echo 'private workspace package — consumed from source'",
+    "dev": "echo 'dev'"
   },
   "dependencies": {
     "better-auth": "^1.5.5"

@@ -357,6 +357,13 @@ def eval_interview_prep():
     run_evals()
 
 
+@main.command("eval-hierarchy")
+def eval_hierarchy():
+    """Run evals for the organize_hierarchy node (unit + integration + deepeval)."""
+    from src.graphs.application_prep.evals import main as run_evals
+    run_evals()
+
+
 # ---------------------------------------------------------------------------
 # Worker-ported commands (from Cloudflare Workers → LangGraph)
 # ---------------------------------------------------------------------------

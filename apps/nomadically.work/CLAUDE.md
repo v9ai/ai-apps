@@ -2,7 +2,7 @@
 
 This file provides guidance to Claude Code (claude.ai/code) when working with code in this repository.
 
-Remote EU job board aggregator. Next.js 16 frontend + GraphQL API backed by Neon PostgreSQL, with an AI/ML pipeline for job classification, skill extraction, and resume matching. CF Workers (janitor, insert-jobs) still write to D1 and are pending migration to Neon.
+Remote EU job board aggregator. Next.js 16 frontend + GraphQL API backed by Neon PostgreSQL, with an AI/ML pipeline for job classification, skill extraction, and resume matching. CF Workers (janitor, insert-jobs, process-companies-cron) all use Neon PostgreSQL via `@neondatabase/serverless`.
 
 ---
 
@@ -56,16 +56,16 @@ wrangler deploy --config workers/ashby-crawler/wrangler.toml  # Ashby crawler
 **Next.js app (Vercel):** `Next.js → Neon PostgreSQL` via `@neondatabase/serverless` + Drizzle ORM.
 Import `db` from `@/db` for all queries. Schema in `src/db/schema.ts`, migrations in `migrations/`.
 
-**CF Workers (janitor, insert-jobs, process-companies):** still use D1 binding (`env.DB`) directly — pending migration to Neon.
+**CF Workers (janitor, insert-jobs, process-companies-cron):** use Neon PostgreSQL via `neon()` from `@neondatabase/serverless` (HTTP transport, works in CF Workers without WebSocket).
 
 ### Data flow
 
 ```
-1. Discovery:      ATS Sources (D1) --[Cron Worker]--> Trigger Ingestion
-2. Board Crawl:    Common Crawl CDX --[ashby-crawler (Rust)]--> Ashby boards → D1
-3. Ingestion:      ATS APIs (Greenhouse/Lever/Ashby) --[Insert Worker]--> D1
+1. Discovery:      ATS Sources (Neon) --[Cron Worker]--> Trigger Ingestion
+2. Board Crawl:    Common Crawl CDX --[ashby-crawler (Rust)]--> Ashby boards → Neon
+3. Ingestion:      ATS APIs (Greenhouse/Lever/Ashby) --[Insert Worker]--> Neon
 4. Enhancement:    Job IDs --[Trigger.dev / GraphQL Mutation]--> ATS API --> Neon
-5. Classification: Unprocessed jobs --[process-jobs (Python) / DeepSeek]--> is_remote_eu --> D1
+5. Classification: Unprocessed jobs --[process-jobs (Python) / DeepSeek]--> is_remote_eu --> Neon
 6. Skill Extract:  Job descriptions --[LLM pipeline]--> Skills → Neon
 7. Resume Match:   Resumes --[resume-rag (Python) / Vectorize]--> Vector search
 8. Serving:        Browser --[Apollo Client]--> /api/graphql --[Drizzle ORM]--> Neon
@@ -86,10 +86,10 @@ Custom scalars: `DateTime`/`URL`/`EmailAddress` → `string`, `Upload` → `File
 
 | Worker | Config | Runtime | Key details |
 |---|---|---|---|
-| `janitor` | `wrangler.toml` | TypeScript | Daily midnight UTC, triggers ATS ingestion (D1) |
-| `insert-jobs` | `wrangler.insert-jobs.toml` | TypeScript | Queue-based (D1 — pending Neon migration) |
+| `janitor` | `wrangler.toml` | TypeScript | Daily midnight UTC, triggers ATS ingestion (Neon) |
+| `insert-jobs` | `wrangler.insert-jobs.toml` | TypeScript | Queue-based ingestion (Neon) |
 | `process-jobs` | `workers/process-jobs/wrangler.jsonc` | Python/LangGraph | Every 6h + queue, DeepSeek classification |
-| `ashby-crawler` | `workers/ashby-crawler/wrangler.toml` | **Rust/WASM** | Common Crawl → D1, rig_compat module |
+| `ashby-crawler` | `workers/ashby-crawler/wrangler.toml` | **Rust/WASM** | Common Crawl → Neon, rig_compat module |
 | `resume-rag` | `workers/resume-rag/wrangler.jsonc` | **Python** | Vectorize + Workers AI |
 
 ### API routes
@@ -112,7 +112,7 @@ GraphQL Playground: `http://localhost:3000/api/graphql`. Vercel routes have 60s 
 |---|---|
 | Frontend | Next.js 16, React 19, App Router |
 | Language | TypeScript 5.9 |
-| Database | Neon PostgreSQL (Next.js app) + Cloudflare D1 (workers, pending migration) |
+| Database | Neon PostgreSQL (all layers — Next.js app + CF Workers) |
 | ORM | Drizzle ORM |
 | API | Apollo Server 5 (GraphQL) |
 | Auth | Better Auth (`@ai-apps/auth`) |
