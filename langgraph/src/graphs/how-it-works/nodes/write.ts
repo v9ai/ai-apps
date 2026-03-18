@@ -1,7 +1,7 @@
 import { mkdirSync, writeFileSync, readFileSync, existsSync } from "fs";
 import { join } from "path";
 import type { State } from "../graph.js";
-import type { HowItWorksData, PaperData, AgentData, StatData, ProcessResult } from "../types.js";
+import type { HowItWorksData, PaperData, AgentData, StatData, TechnicalDetail, TechnicalDetailItem, ProcessResult } from "../types.js";
 
 // ─── Code generators ─────────────────────────────────────────────────────────
 
@@ -31,6 +31,30 @@ function agentToTS(a: AgentData): string {
   ];
   if (a.researchBasis) lines.push(`    researchBasis: ${JSON.stringify(a.researchBasis)},`);
   if (a.paperIndices?.length) lines.push(`    paperIndices: [${a.paperIndices.join(", ")}],`);
+  if (a.codeSnippet) lines.push(`    codeSnippet: ${JSON.stringify(a.codeSnippet)},`);
+  if (a.dataFlow) lines.push(`    dataFlow: ${JSON.stringify(a.dataFlow)},`);
+  return `  {\n${lines.join("\n")}\n  }`;
+}
+
+function technicalDetailItemToTS(item: TechnicalDetailItem): string {
+  const lines = [
+    `      label: ${JSON.stringify(item.label)},`,
+    `      value: ${JSON.stringify(item.value)},`,
+  ];
+  if (item.metadata) lines.push(`      metadata: ${JSON.stringify(item.metadata)},`);
+  return `    {\n${lines.join("\n")}\n    }`;
+}
+
+function technicalDetailToTS(td: TechnicalDetail): string {
+  const lines = [
+    `    type: ${JSON.stringify(td.type)},`,
+    `    heading: ${JSON.stringify(td.heading)},`,
+  ];
+  if (td.description) lines.push(`    description: ${JSON.stringify(td.description)},`);
+  if (td.items?.length) {
+    lines.push(`    items: [\n${td.items.map(technicalDetailItemToTS).join(",\n")},\n    ],`);
+  }
+  if (td.code) lines.push(`    code: ${JSON.stringify(td.code)},`);
   return `  {\n${lines.join("\n")}\n  }`;
 }
 
@@ -49,13 +73,19 @@ function generateDataTsx(data: HowItWorksData): string {
   const statsStr = (data.stats ?? []).map(statToTS).join(",\n");
   const agentsStr = (data.agents ?? []).map(agentToTS).join(",\n");
   const sectionsStr = (data.extraSections ?? [])
-    .map(
-      (s) =>
-        `  {\n    heading: ${JSON.stringify(s.heading)},\n    content: ${JSON.stringify(s.content)},\n  }`
-    )
+    .map((s) => {
+      const lines = [
+        `    heading: ${JSON.stringify(s.heading)},`,
+        `    content: ${JSON.stringify(s.content)},`,
+      ];
+      if (s.codeBlock) lines.push(`    codeBlock: ${JSON.stringify(s.codeBlock)},`);
+      return `  {\n${lines.join("\n")}\n  }`;
+    })
     .join(",\n");
 
-  return `import type { Paper, PipelineAgent, Stat } from "@ai-apps/ui/how-it-works";
+  const technicalDetailsStr = (data.technicalDetails ?? []).map(technicalDetailToTS).join(",\n");
+
+  return `import type { Paper, PipelineAgent, Stat, TechnicalDetail, ExtraSection } from "@ai-apps/ui/how-it-works";
 
 // ─── Technical Foundations ──────────────────────────────────────────
 
@@ -82,8 +112,14 @@ export const story =
 
 // ─── Deep-Dive Sections ────────────────────────────────────────────
 
-export const extraSections: { heading: string; content: string }[] = [
+export const extraSections: ExtraSection[] = [
 ${sectionsStr},
+];
+
+// ─── Technical Details ────────────────────────────────────────────
+
+export const technicalDetails: TechnicalDetail[] = [
+${technicalDetailsStr},
 ];
 `;
 }
@@ -98,15 +134,8 @@ function toDisplayName(appName: string): string {
 function generateClientTsx(data: HowItWorksData): string {
   return `"use client";
 
-import type { CSSProperties } from "react";
 import { HowItWorks } from "@ai-apps/ui/how-it-works";
-import { papers, researchStats, pipelineAgents, story, extraSections } from "./data";
-
-const rule: CSSProperties = {
-  border: "none",
-  borderTop: "1px solid var(--gray-a3, rgba(0,0,0,0.08))",
-  margin: "2.5rem 0",
-};
+import { papers, researchStats, pipelineAgents, story, extraSections, technicalDetails } from "./data";
 
 export function HowItWorksClient() {
   return (
@@ -117,17 +146,9 @@ export function HowItWorksClient() {
       stats={researchStats}
       agents={pipelineAgents}
       story={story}
-    >
-      {extraSections.map((section, i) => (
-        <div key={i}>
-          <hr style={rule} />
-          <h3 style={{ fontSize: "1.25rem", fontWeight: 600, margin: "0 0 0.75rem" }}>
-            {section.heading}
-          </h3>
-          <p>{section.content}</p>
-        </div>
-      ))}
-    </HowItWorks>
+      extraSections={extraSections}
+      technicalDetails={technicalDetails}
+    />
   );
 }
 `;
@@ -196,8 +217,14 @@ export async function writeNode(state: State): Promise<Partial<State>> {
     const files = [
       { name: "data.tsx", content: generateDataTsx(data) },
       { name: "how-it-works-client.tsx", content: generateClientTsx(data) },
-      { name: "page.tsx", content: generatePageTsx(data, app.name) },
     ];
+
+    // Skip page.tsx when app already has a custom how-it-works page (preserves custom layouts)
+    if (!app.hasHowItWorks) {
+      files.push({ name: "page.tsx", content: generatePageTsx(data, app.name) });
+    } else {
+      console.log(`  ⏭   Skipping page.tsx (custom page exists)`);
+    }
 
     const writtenPaths: string[] = [];
     for (const { name, content } of files) {

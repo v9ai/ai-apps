@@ -1,135 +1,105 @@
-interface Paper {
-  slug: string;
-  number: number;
-  title: string;
-  category: string;
-  wordCount: number;
-  readingTimeMin: number;
-  authors?: string;
-  year?: number;
-  venue?: string;
-  finding?: string;
-  relevance?: string;
-  url?: string;
-  categoryColor?: string;
-}
-
-interface PipelineAgent {
-  name: string;
-  icon?: React.ReactNode;
-  color?: string;
-  description: string;
-  researchBasis?: string;
-  paperIndices?: number[];
-}
-
-interface Stat {
-  number: string;
-  label: string;
-  source?: string;
-  paperIndex?: number;
-}
+import type { Paper, PipelineAgent, Stat, TechnicalDetail, ExtraSection } from "@ai-apps/ui/how-it-works";
 
 // ─── Technical Foundations ──────────────────────────────────────────
 
 export const papers: Paper[] = [
   {
-    slug: "nextjs-15-app-router",
+    slug: "nextjs-15",
     number: 1,
-    title: "Next.js 15 App Router",
+    title: "Next.js 15",
     category: "Frontend",
     wordCount: 0,
     readingTimeMin: 2,
     authors: "Vercel",
     year: 2024,
-    finding: "Server-side rendering by default with React Server Components, enabling efficient data fetching and reduced client-side JavaScript.",
-    relevance: "Used for all pages in app/protected/ (e.g., blood-tests, appointments) with async data fetching, Suspense boundaries for loading states, and server actions like uploadBloodTest.",
-    url: "https://nextjs.org/docs/app",
+    finding: "React framework with App Router, Server Components, and middleware for SSR/SSG with edge-compatible auth",
+    relevance: "Server Components in app/protected/ fetch data without client state; proxy.ts middleware redirects unauthenticated users via getSessionCookie()",
+    url: "https://nextjs.org/docs",
     categoryColor: "var(--blue-9)",
   },
   {
-    slug: "neon-postgresql",
+    slug: "postgresql-pgvector",
     number: 2,
-    title: "Neon PostgreSQL + Drizzle ORM",
+    title: "PostgreSQL + pgvector",
     category: "Database",
     wordCount: 0,
     readingTimeMin: 2,
-    authors: "Neon / Drizzle Team",
+    authors: "PostgreSQL / pgvector",
     year: 2024,
-    finding: "Serverless PostgreSQL with branching, autoscaling, and pgvector support, paired with a type-safe ORM for schema management.",
-    relevance: "Stores core tables like blood_tests, blood_markers, and appointments via Drizzle schema, with pgvector HNSW indexes for embedding similarity search and Cloudflare R2 for file storage.",
-    url: "https://neon.tech/docs",
+    finding: "Extends PostgreSQL with vector(N) columns, cosine distance operator (<=>), and HNSW/IVFFlat indexes for ANN search",
+    relevance: "Six embedding tables use vector(1024). search_markers_hybrid() combines 1 - (embedding <=> query) with ts_rank for hybrid scoring",
+    url: "https://github.com/pgvector/pgvector",
     categoryColor: "var(--green-9)",
   },
   {
-    slug: "qwen-embeddings",
-    number: 3,
-    title: "Qwen Embeddings",
-    category: "AI/LLM",
-    wordCount: 0,
-    readingTimeMin: 2,
-    authors: "Alibaba Cloud",
-    year: 2024,
-    finding: "text-embedding-v4 model generates 1024-dimensional vectors for semantic search and retrieval-augmented generation (RAG).",
-    relevance: "Powers embedding generation via QwenClient for test summaries (formatTestForEmbedding) and individual markers (formatMarkerForEmbedding), stored in blood_test_embeddings and blood_marker_embeddings tables.",
-    url: "https://help.aliyun.com/zh/dashscope/developer-reference/text-embedding-api-details",
-    categoryColor: "var(--amber-9)",
-  },
-  {
     slug: "better-auth",
-    number: 4,
+    number: 3,
     title: "Better Auth",
     category: "Authentication",
     wordCount: 0,
     readingTimeMin: 2,
     authors: "Better Auth",
     year: 2024,
-    finding: "Framework-agnostic authentication library with Drizzle adapter, email/password support, and Next.js cookie management.",
-    relevance: "Handles all authentication via lib/auth.ts with Drizzle adapter, providing server-side session checks via withAuth() and client-side auth via authClient hooks.",
-    url: "https://www.better-auth.com",
-    categoryColor: "var(--orange-9)",
+    finding: "Framework-agnostic auth with Drizzle adapter, email verification, HTTP-only cookie sessions",
+    relevance: "proxy.ts enforces auth via getSessionCookie(). Python API calls carry x-api-key from INTERNAL_API_KEY",
+    url: "https://better-auth.com/docs",
+    categoryColor: "var(--purple-9)",
   },
   {
-    slug: "radix-ui-themes",
-    number: 5,
-    title: "Radix UI Themes",
-    category: "Frontend",
-    wordCount: 0,
-    readingTimeMin: 2,
-    authors: "Radix UI",
-    year: 2024,
-    finding: "Accessible component library with built-in dark theme support and primitive building blocks.",
-    relevance: "Provides UI components like Dialog, Dropdown, and Skeleton across pages (e.g., app/protected/blood-tests/page.tsx) and enables theme management via next-themes.",
-    url: "https://www.radix-ui.com/themes",
-    categoryColor: "var(--blue-9)",
-  },
-  {
-    slug: "unstructured-api",
-    number: 6,
-    title: "Unstructured API",
+    slug: "qwen-plus",
+    number: 4,
+    title: "Qwen-Plus (DashScope)",
     category: "AI/LLM",
     wordCount: 0,
     readingTimeMin: 2,
-    authors: "Unstructured",
+    authors: "Alibaba Cloud",
     year: 2024,
-    finding: "Document parsing service that extracts structured data from PDFs and other file formats.",
-    relevance: "Parses uploaded blood test PDFs in the uploadBloodTest server action, converting them into marker data for insertion into the blood_markers table.",
-    url: "https://unstructured.io/api",
+    finding: "LLM via OpenAI-compatible DashScope API supporting chat completion and text-embedding-v4",
+    relevance: "QwenClient in lib/qwen-client.ts: chat() calls qwen-plus for RAG Q&A, embed() calls text-embedding-v4 as TS-side fallback",
+    url: "https://dashscope.aliyun.com",
     categoryColor: "var(--amber-9)",
   },
   {
-    slug: "semantic-scholar-api",
-    number: 7,
-    title: "Semantic Scholar API",
-    category: "Search",
+    slug: "bge-large",
+    number: 5,
+    title: "BAAI/bge-large-en-v1.5",
+    category: "AI/LLM",
     wordCount: 0,
     readingTimeMin: 2,
-    authors: "Allen Institute for AI",
+    authors: "Beijing Academy of AI",
+    year: 2023,
+    finding: "1024-dim embedding model ranked #1 on MTEB at release, optimized for retrieval",
+    relevance: "Primary embedder in Python via LlamaIndex FastEmbedEmbedding. All six entity types use dedicated format_*_for_embedding() functions",
+    url: "https://huggingface.co/BAAI/bge-large-en-v1.5",
+    categoryColor: "var(--amber-9)",
+  },
+  {
+    slug: "llamaindex",
+    number: 6,
+    title: "LlamaIndex",
+    category: "AI/LLM",
+    wordCount: 0,
+    readingTimeMin: 2,
+    authors: "LlamaIndex",
     year: 2024,
-    finding: "Academic search engine providing access to millions of research papers with metadata and summaries.",
-    relevance: "Used in lib/semantic-scholar.ts for research paper discovery, querying based on abnormal markers with fallbacks to OpenAlex, CrossRef, and CORE APIs.",
-    url: "https://api.semanticscholar.org",
-    categoryColor: "var(--indigo-9)",
+    finding: "RAG framework with IngestionPipeline, node parsers, ContextChatEngine, and retriever abstractions",
+    relevance: "3-stage IngestionPipeline: LlamaParse → BloodTestNodeParser → FastEmbedEmbedding. chat_server.py uses ContextChatEngine with DeepSeek",
+    url: "https://docs.llamaindex.ai",
+    categoryColor: "var(--amber-9)",
+  },
+  {
+    slug: "drizzle-orm",
+    number: 7,
+    title: "Drizzle ORM",
+    category: "Database",
+    wordCount: 0,
+    readingTimeMin: 2,
+    authors: "Drizzle Team",
+    year: 2024,
+    finding: "Zero-dependency TypeScript ORM with SQL-like query builder and schema-first migrations",
+    relevance: "12 tables in lib/db/schema.ts: 6 entity + 6 embedding tables. health_state_embeddings has JSONB derived_metrics column",
+    url: "https://orm.drizzle.team/docs",
+    categoryColor: "var(--green-9)",
   },
   {
     slug: "cloudflare-r2",
@@ -140,108 +110,272 @@ export const papers: Paper[] = [
     readingTimeMin: 2,
     authors: "Cloudflare",
     year: 2024,
-    finding: "S3-compatible object storage with zero egress fees, used for storing blood test PDF uploads.",
-    relevance: "Replaces Supabase Storage for file uploads via lib/storage.ts using @aws-sdk/client-s3, with files stored in the healthcare-blood-tests bucket.",
+    finding: "S3-compatible object storage with zero egress fees",
+    relevance: "langgraph/storage.py uploads PDFs to {user_id}/{timestamp}_{filename} via boto3",
     url: "https://developers.cloudflare.com/r2",
-    categoryColor: "var(--purple-9)",
+    categoryColor: "var(--cyan-9)",
+  },
+  {
+    slug: "llamaparse",
+    number: 9,
+    title: "LlamaParse",
+    category: "AI/LLM",
+    wordCount: 0,
+    readingTimeMin: 2,
+    authors: "LlamaIndex",
+    year: 2024,
+    finding: "Cloud PDF parser converting documents to high-fidelity markdown with table extraction",
+    relevance: "First IngestionPipeline stage — converts blood test PDFs into markdown. Output feeds into BloodTestNodeParser",
+    url: "https://docs.llamaindex.ai/en/stable/llama_cloud/llama_parse/",
+    categoryColor: "var(--amber-9)",
+  },
+  {
+    slug: "fastapi",
+    number: 10,
+    title: "FastAPI",
+    category: "API",
+    wordCount: 0,
+    readingTimeMin: 2,
+    authors: "Sebastián Ramírez",
+    year: 2024,
+    finding: "Async Python framework with automatic OpenAPI docs and Pydantic validation",
+    relevance: "12+ endpoints: /upload, /search/{tests,markers,multi,trend}, /embed/{condition,medication,symptom,appointment,reembed,text}, /chat",
+    url: "https://fastapi.tiangolo.com",
+    categoryColor: "var(--orange-9)",
+  },
+  {
+    slug: "neon-postgres",
+    number: 11,
+    title: "Neon Serverless PostgreSQL",
+    category: "Infrastructure",
+    wordCount: 0,
+    readingTimeMin: 2,
+    authors: "Neon",
+    year: 2024,
+    finding: "Serverless PostgreSQL with autoscaling, branching, and native pgvector",
+    relevance: "Hosts 12 tables and vector indexes. Accessed via DATABASE_URL from both Next.js and Python services",
+    url: "https://neon.tech/docs",
+    categoryColor: "var(--red-9)",
+  },
+  {
+    slug: "deepeval",
+    number: 12,
+    title: "DeepEval",
+    category: "Evaluation",
+    wordCount: 0,
+    readingTimeMin: 2,
+    authors: "Confident AI",
+    year: 2024,
+    finding: "Python eval framework with LLM-as-judge metrics (GEval, faithfulness, relevancy) and pytest integration",
+    relevance: "7 eval suites in evals/: extraction, derived_metrics, embedding_quality, search, safety, ragas, ingestion",
+    url: "https://docs.confident-ai.com",
+    categoryColor: "var(--pink-9)",
+  },
+  {
+    slug: "promptfoo",
+    number: 13,
+    title: "Promptfoo",
+    category: "Evaluation",
+    wordCount: 0,
+    readingTimeMin: 2,
+    authors: "Promptfoo",
+    year: 2024,
+    finding: "LLM eval framework with custom TypeScript scorers and YAML test suites",
+    relevance: "3 custom scorers: clinical-factuality.ts, risk-classification.ts, trajectory-direction.ts. Two configs for Q&A and trajectory analysis",
+    url: "https://www.promptfoo.dev/docs",
+    categoryColor: "var(--pink-9)",
+  },
+  {
+    slug: "deepseek",
+    number: 14,
+    title: "DeepSeek",
+    category: "AI/LLM",
+    wordCount: 0,
+    readingTimeMin: 2,
+    authors: "DeepSeek",
+    year: 2024,
+    finding: "Cost-effective LLM with strong reasoning, used as chat backend and evaluation judge",
+    relevance: "Chat LLM inside LlamaIndex ContextChatEngine (chat_server.py). Also serves as judge in trajectory evals",
+    url: "https://api.deepseek.com",
+    categoryColor: "var(--amber-9)",
   },
 ];
 
 // ─── Key Metrics ───────────────────────────────────────────────────
 
 export const researchStats: Stat[] = [
-  {
-    number: "1024-dim",
-    label: "Embedding vector dimensionality for semantic search",
-    source: "Qwen text-embedding-v4 model configuration",
-  },
-  {
-    number: "7",
-    label: "Predefined clinical ratios with published thresholds (e.g., TG/HDL, NLR)",
-    source: "Domain-specific implementation in trajectory tracking",
-  },
-  {
-    number: "4",
-    label: "API fallback layers for research paper retrieval (Semantic Scholar → OpenAlex → CrossRef → CORE)",
-    source: "Multi-source design in lib/semantic-scholar.ts",
-  },
-  {
-    number: "3",
-    label: "Embedding granularity levels: test, marker, and condition",
-    source: "Multi-level embedding strategy in lib/embeddings.ts",
-  },
-  {
-    number: "O(log n)",
-    label: "Query performance for vector similarity searches with pgvector indexes",
-    source: "PostgreSQL vector indexing for cosine similarity",
-  },
+  { number: "1024", label: "Embedding dimensions (BGE model)", source: "BAAI/bge-large-en-v1.5 via FastEmbedEmbedding" },
+  { number: "7", label: "Derived clinical ratios with published thresholds", source: "computeDerivedMetrics() → classifyMetricRisk()" },
+  { number: "3", label: "Parser tiers: HTML table → FormKeysValues → free-text", source: "langgraph/routes/upload.py" },
+  { number: "6", label: "Embeddable entity types with pgvector tables", source: "tests, markers, conditions, medications, symptoms, appointments" },
+  { number: "0.7 / 0.3", label: "Hybrid search: vector cosine vs FTS ts_rank", source: "search_markers_hybrid() SQL" },
+  { number: "12+", label: "Python API endpoints (upload, 4 search, 6 embed, chat)", source: "lib/python-api.ts" },
+  { number: "7", label: "Eval suites (extraction, metrics, embedding, search, safety, RAG, ingestion)", source: "evals/ + DeepEval" },
+  { number: "3", label: "Custom Promptfoo scorers (factuality, risk, trajectory)", source: "TypeScript scorers vs METRIC_REFERENCES" },
+  { number: "3", label: "LlamaIndex node types per test (doc, markers, health state)", source: "BloodTestNodeParser" },
 ];
 
 // ─── Pipeline Stages ───────────────────────────────────────────────
 
 export const pipelineAgents: PipelineAgent[] = [
   {
-    name: "PDF Upload and Parsing",
-    description: "Users upload blood test PDFs via the UploadForm component at /app/protected/blood-tests/upload-form, triggering the uploadBloodTest server action. This stores the file in Cloudflare R2, then calls the Unstructured API to parse the PDF into structured marker data. The parsed data is inserted into the blood_markers table via Drizzle ORM.",
-    researchBasis: "Unstructured Client for document parsing, Cloudflare R2 for file storage",
+    name: "PDF Upload & R2 Storage",
+    description: "PDFs are sent to POST /upload, stored in R2 at {user_id}/{timestamp}_{filename}, and a blood_tests row is created with status='pending'.",
+    researchBasis: "Cloudflare R2 S3-compatible API",
+    codeSnippet: "s3.put_object(Bucket=settings.r2_bucket_name,\n  Key=f\"{user_id}/{ts}_{filename}\",\n  Body=file_bytes)",
+    dataFlow: "PDF → POST /upload → R2 storage → blood_tests (status=pending)",
   },
   {
-    name: "Embedding Generation and Storage",
-    description: "After parsing, the system generates embeddings using QwenClient: test-level embeddings via formatTestForEmbedding() and marker-level embeddings via formatMarkerForEmbedding(). These 1024-dimensional vectors are stored in the blood_test_embeddings and blood_marker_embeddings tables, enabling semantic search capabilities.",
-    researchBasis: "Qwen text-embedding-v4 model for vector generation, PostgreSQL for vector storage",
+    name: "LlamaParse Document Extraction",
+    description: "LlamaParse converts PDFs to markdown preserving table structure and multi-column layouts. Output feeds into BloodTestNodeParser as the first stage of the LlamaIndex IngestionPipeline.",
+    researchBasis: "LlamaParse cloud document parser",
+    codeSnippet: "pipeline = IngestionPipeline([\n  LlamaParse(),\n  BloodTestNodeParser(),\n  FastEmbedEmbedding(),\n])",
+    dataFlow: "PDF → LlamaParse → markdown elements → BloodTestNodeParser",
   },
   {
-    name: "AI Health Q&A Retrieval",
-    description: "When a user asks a question, Drizzle raw SQL queries retrieve relevant embeddings from Neon using pgvector cosine similarity. A hybrid search combining FTS + vector similarity is performed on blood_marker_embeddings to find top-k relevant markers. This context is combined with the question and fed to QwenClient.chat() using the qwen-plus model.",
-    researchBasis: "Retrieval-Augmented Generation (RAG) pattern with vector similarity search",
+    name: "3-Tier Marker Extraction",
+    description: "BloodTestNodeParser applies a 3-tier cascade: Tier 1 parse_html_table() extracts <tr> rows; Tier 2 parse_form_key_values() handles Romanian/EU formats with comma decimals; Tier 3 parse_text_markers() matches free-text. compute_flag() handles ranges, ≤/≥, fullwidth operators, and 'undetectable' values.",
+    researchBasis: "Multi-format medical lab PDF parsing",
+    codeSnippet: "def compute_flag(value, ref_range):\n  # '10-20', '<5', '≥3.5', '＜5.0'\n  # comma decimals: '3,5'\n  # text: 'undetectable' → 'low'",
+    dataFlow: "markdown → Tier1 HTML → Tier2 form → Tier3 text → flagged markers",
   },
   {
-    name: "Research Paper Discovery",
-    description: "Abnormal markers flagged in blood tests trigger queries to the Semantic Scholar API via lib/semantic-scholar.ts. The query is built from marker names, values, and flags, using bulk search with filters for year and citation count. Results are ranked by relevance and displayed in the ResearchSection component with TLDR summaries and PDF links.",
-    researchBasis: "Semantic Scholar API for academic paper retrieval, multi-source fallback design",
+    name: "Derived Metric Computation",
+    description: "computeDerivedMetrics() calculates 7 ratios using MARKER_ALIAS_MAP for fuzzy matching. Each has peer-reviewed thresholds: HDL/LDL (Castelli 1996), TC/HDL (Millán 2009), TG/HDL (McLaughlin 2003), TyG = ln(TG×Glucose×0.5) (Simental-Mendía 2008), NLR (Forget 2017), BUN/Cr (Hosten 1990), De Ritis AST/ALT (De Ritis 1957). classifyMetricRisk() returns optimal/borderline/elevated/low.",
+    researchBasis: "Clinical biochemistry with peer-reviewed thresholds",
+    codeSnippet: "const tyg = Math.log(tg * glucose * 0.5);\nconst deRitis = ast / alt;\nclassifyMetricRisk('tyg', tyg)\n// → 'optimal'|'borderline'|'elevated'|'low'",
+    dataFlow: "markers → MARKER_ALIAS_MAP → 7 ratios → 4 risk tiers",
   },
   {
-    name: "Trajectory Tracking and Alerts",
-    description: "The system calculates health trajectories by comparing 1024-dimensional embeddings across time using cosine similarity in the database. Velocity alerts are generated by computing per-day rate-of-change for each biomarker, and clinical ratios (e.g., TG/HDL, NLR) are evaluated against published thresholds to detect early trends.",
-    researchBasis: "Vector mathematics for pattern detection, clinical ratio integration",
+    name: "Multi-Entity Embedding",
+    description: "Six entity types are embedded with dedicated formatters: format_test_for_embedding(), format_marker_for_embedding(), format_health_state_for_embedding() (markers + 7 ratios + risk tiers), format_condition/medication/symptom_for_embedding(). All use BGE 1024-dim via FastEmbedEmbedding.",
+    researchBasis: "BAAI/bge-large-en-v1.5 (1024-dim)",
+    codeSnippet: "def format_health_state_for_embedding(\n    markers, derived_metrics, meta):\n  lines = [f\"{m.name}: {m.value} [{m.flag}]\"\n           for m in markers]\n  lines += [f\"{k}: {v:.2f} [{classify(k,v)}]\"\n           for k, v in metrics.items()]",
+    dataFlow: "6 entity types → format_*() → BGE 1024-dim → 6 pgvector tables",
   },
   {
-    name: "Appointment Management",
-    description: "Users manage health appointments via the appointments module at /app/protected/appointments/page.tsx, using the AddAppointmentForm for creation and deleteAppointment server action for deletion. Data is stored in the appointments table via Drizzle ORM with fields like title, provider, and appointmentDate.",
-    researchBasis: "Drizzle ORM for type-safe queries, Next.js server actions for mutations",
+    name: "Hybrid Vector + FTS Search",
+    description: "Four search modes: /search/tests (vector-only), /search/markers (hybrid 0.7 cosine + 0.3 ts_rank), /search/multi (fan-out across all 6 tables), /search/trend (temporal with optional marker_name). All enforce user_id RLS, threshold > 0.3, limit 10.",
+    researchBasis: "Hybrid scoring: 0.7 vector + 0.3 FTS",
+    codeSnippet: "SELECT *,\n  0.7 * (1 - (embedding <=> $2))\n  + 0.3 * ts_rank(to_tsvector(content),\n    plainto_tsquery($1)) AS score\nFROM blood_marker_embeddings\nWHERE user_id = $3\nORDER BY score DESC LIMIT 10",
+    dataFlow: "query → BGE embed → hybrid SQL → top-10 ranked results",
+  },
+  {
+    name: "RAG Chat with ContextChatEngine",
+    description: "POST /chat uses LlamaIndex ContextChatEngine with a pgvector retriever and DeepSeek as LLM. The clinical system prompt covers derived ratios, trajectory interpretation, and medication effects — citing references and requiring physician disclaimers.",
+    researchBasis: "LlamaIndex ContextChatEngine + DeepSeek",
+    codeSnippet: "chat_engine = ContextChatEngine.from_defaults(\n  retriever=pgvector_retriever,\n  llm=DeepSeek(...),\n  system_prompt=CLINICAL_PROMPT\n)",
+    dataFlow: "messages → retriever → context → DeepSeek LLM → answer",
+  },
+  {
+    name: "Velocity Trajectory Analysis",
+    description: "computeMetricVelocity() tracks per-day rate-of-change. trajectory-direction.ts interprets velocity: HIGHER_IS_BETTER (hdl_ldl) → positive = improving; LOWER_IS_BETTER (tc_hdl, tg_hdl, tyg) → negative = improving; RANGE_OPTIMAL (nlr, bun_cr, ast_alt) → toward midpoint = improving. |velocity| < 0.001 = stable.",
+    researchBasis: "Clinical trend analysis with metric-specific semantics",
+    codeSnippet: "const HIGHER_IS_BETTER = ['hdl_ldl_ratio'];\nconst LOWER_IS_BETTER = ['tc_hdl','tg_hdl','tyg'];\nif (Math.abs(velocity) < 0.001) return 'stable';",
+    dataFlow: "sequential tests → velocity → direction semantics → improving/stable/deteriorating",
   },
 ];
 
 // ─── Narrative ─────────────────────────────────────────────────────
 
 export const story =
-  "Users upload blood test PDFs via a protected upload form, triggering a server action that stores files in Cloudflare R2 and parses them with Unstructured API. The parsed markers are inserted into the blood_markers table via Drizzle ORM, and Qwen generates 1024-dimensional embeddings for each marker and test summary, stored in Neon pgvector tables. For AI Q&A, Drizzle raw SQL queries retrieve relevant embeddings, perform cosine similarity searches, and feed context to QwenClient.chat for responses. Research paper discovery queries Semantic Scholar API based on abnormal markers, displaying results with summaries and links.";
+  "Blood test PDFs enter a LlamaIndex IngestionPipeline: LlamaParse extracts markdown, BloodTestNodeParser applies a 3-tier cascade (HTML → FormKeysValues → free-text) to extract markers with flags, then computeDerivedMetrics() calculates 7 clinically-referenced ratios (TG/HDL, NLR, De Ritis, BUN/Cr, TyG, TC/HDL, HDL/LDL) classified into 4 risk tiers. Six entity types are embedded with BAAI/bge-large-en-v1.5 (1024-dim) through dedicated formatters and stored in paired pgvector tables. Queries hit hybrid search (0.7 cosine + 0.3 ts_rank) feeding a LlamaIndex ContextChatEngine backed by DeepSeek with a clinical safety prompt. Three custom Promptfoo scorers and 7 DeepEval suites validate every pipeline stage from parser accuracy to clinical factuality.";
 
 // ─── Deep-Dive Sections ────────────────────────────────────────────
 
-export const extraSections: { heading: string; content: string }[] = [
+export const extraSections: ExtraSection[] = [
   {
     heading: "System Architecture",
-    content: "The app uses a Next.js 15 App Router with server components by default for pages like /app/protected/blood-tests/, leveraging Suspense boundaries for loading states. Data flows through a monorepo structure with Turbopack bundling, integrating Neon PostgreSQL via Drizzle ORM for type-safe queries and Better Auth for authentication. AI components are built with a custom QwenClient for embeddings and chat, and external APIs like Semantic Scholar are used for research retrieval.",
+    content: "Dual-runtime: Next.js 15 handles frontend + auth (proxy.ts middleware), Python FastAPI handles all AI workloads. They communicate via lib/python-api.ts with x-api-key auth. Embeddings are centralized in Python for consistent bge-large-en-v1.5 usage. TypeScript retains computeDerivedMetrics() and classifyMetricRisk() for frontend display.",
   },
   {
     heading: "Database Design",
-    content: "Core tables include blood_tests (id, user_id, status), blood_markers (test_id, name, value, flag), and appointments (user_id, title, appointment_date), defined in Drizzle schema at lib/db/schema.ts. Vector tables like blood_test_embeddings and blood_marker_embeddings store 1024-dimensional pgvector embeddings for semantic search with HNSW indexes. All queries are scoped to the authenticated user via withAuth(), and indexes are applied for performance on user_id and test_date columns.",
+    content: "Paired-table pattern: each entity table (blood_tests, blood_markers, conditions, medications, symptoms, appointments) has a companion _embeddings table with vector(1024). health_state_embeddings uniquely includes JSONB derived_metrics for structured metric queries alongside semantic search. Seven SQL search functions enforce user_id RLS with similarity threshold 0.3.",
+    codeBlock: "CREATE TABLE health_state_embeddings (\n  test_id UUID UNIQUE, user_id UUID,\n  content TEXT,\n  derived_metrics JSONB,  -- {\"tg_hdl\": 1.8, ...}\n  embedding vector(1024)\n);",
   },
   {
     heading: "Security & Auth",
-    content: "Authentication is handled by Better Auth with email/password, using a Drizzle adapter in lib/auth.ts. Middleware checks session cookies for route protection, and each page/action calls withAuth() server-side, redirecting unauthenticated users to /auth/login. All queries are scoped to the authenticated userId, and server actions like uploadBloodTest include validation. Environment variables secure API keys for DashScope and other services.",
+    content: "Better Auth with Drizzle adapter handles email/password + verification. proxy.ts checks getSessionCookie() for all /protected/* routes. Python API authenticates via x-api-key header. Row-level security is enforced in every SQL function — user_id is required, not optional. Embeddings contain only de-identified health data.",
+  },
+  {
+    heading: "RAG Pipeline Deep Dive",
+    content: "Two paths: Search uses bge-large-en-v1.5 to embed queries, then search_markers_hybrid() combines 70% vector cosine with 30% FTS ts_rank. Chat wraps a pgvector retriever in LlamaIndex ContextChatEngine with DeepSeek. /search/multi fans out to all 6 entity tables in parallel for comprehensive health queries.",
+    codeBlock: "retriever = VectorStoreIndex.from_vector_store(\n    pgvector_store\n).as_retriever(similarity_top_k=5)\nchat_engine = ContextChatEngine.from_defaults(\n    retriever=retriever,\n    llm=DeepSeek(api_key=settings.deepseek_api_key),\n    system_prompt=CLINICAL_SYSTEM_PROMPT\n)",
+  },
+  {
+    heading: "Evaluation Architecture",
+    content: "Seven DeepEval suites: extraction (3-tier parser + LLM-judged completeness), derived_metrics (7 ratios + alias resolution), embedding_quality (cross-organ separation, synonym resolution, temporal differentiation, abnormal-first bias), search (hybrid scoring + ranking), safety (guardrails), ragas (RAG faithfulness), ingestion (end-to-end). Three Promptfoo scorers: clinical-factuality.ts validates threshold claims against METRIC_REFERENCES, risk-classification.ts checks against classifyMetricRisk(), trajectory-direction.ts validates velocity semantics.",
+    codeBlock: "// clinical-factuality.ts\nconst ref = METRIC_REFERENCES['tg_hdl'];\nif (Math.abs(claim.threshold - ref.threshold) < 0.1)\n  matched++;",
+  },
+  {
+    heading: "Multi-Entity Embedding Strategy",
+    content: "Six entity types each have a dedicated formatter: format_test_for_embedding() (test summary), format_marker_for_embedding() (name/value/unit/flag), format_health_state_for_embedding() (all markers + 7 ratios + risk tiers — matches 'metabolic syndrome' queries across multiple markers), format_condition/medication/symptom_for_embedding(). The /search/multi endpoint queries all 6 tables in parallel.",
+  },
+  {
+    heading: "International Lab Format Support",
+    content: "compute_flag() handles: comma decimals ('3,5' → 3.5), fullwidth operators (＜, ＞), Unicode (≤, ≥), negative/undetectable values, and multiple range notations ('10-20', '<5'). FormKeysValues parser handles Romanian lab format. All edge cases covered in extraction_eval.py.",
+    codeBlock: "assert compute_flag('3,5', '<5,0')    == 'normal'\nassert compute_flag('2.1', '＜5.0')   == 'normal'\nassert compute_flag('8.1', '≤7.0')    == 'high'\nassert compute_flag('negative', '0-5') == 'low'",
   },
   {
     heading: "Deployment & Infrastructure",
-    content: "The app is deployed on Vercel with Neon PostgreSQL for the database, Better Auth for authentication, and Cloudflare R2 for file storage. The monorepo structure allows standalone deployments. Drizzle Kit manages schema migrations via `drizzle-kit push`, and HNSW vector indexes are created via raw SQL for optimal embedding search performance.",
+    content: "Next.js on Vercel with edge middleware. Python FastAPI runs separately (PYTHON_API_URL). Neon PostgreSQL hosts all tables with pgvector. Cloudflare R2 for PDF storage. External APIs: DashScope (Qwen), DeepSeek (chat + eval judge), LlamaCloud (LlamaParse), R2 (storage). Monorepo shares @ai-apps/auth and @ai-apps/ui via pnpm workspace.",
+  },
+];
+
+// ─── Technical Details ────────────────────────────────────────────
+
+export const technicalDetails: TechnicalDetail[] = [
+  {
+    type: "table",
+    heading: "Clinical Ratios — Formulas, Thresholds & References",
+    description: "Seven derived metrics from computeDerivedMetrics() with peer-reviewed thresholds",
+    items: [
+      { label: "HDL/LDL Ratio", value: "HDL / LDL", metadata: { optimal: "≥ 0.4", borderline: "0.3–0.4", reference: "Castelli WP, Atherosclerosis 1996" } },
+      { label: "TC/HDL Ratio", value: "Total Cholesterol / HDL", metadata: { optimal: "< 4.5", borderline: "4.5–5.5", reference: "Millán J et al, Vasc Health Risk 2009" } },
+      { label: "TG/HDL Ratio", value: "Triglycerides / HDL", metadata: { optimal: "< 2.0", borderline: "2.0–3.5", reference: "McLaughlin T et al, Ann Intern Med 2003" } },
+      { label: "TyG Index", value: "ln(TG × Glucose × 0.5)", metadata: { optimal: "< 8.5", borderline: "8.5–9.0", reference: "Simental-Mendía LE et al, 2008" } },
+      { label: "NLR", value: "Neutrophils / Lymphocytes", metadata: { optimal: "1.0–3.0", borderline: "3.0–5.0", reference: "Forget P et al, BMC Res Notes 2017" } },
+      { label: "BUN/Creatinine", value: "BUN / Creatinine", metadata: { optimal: "10–20", borderline: "20–25", reference: "Hosten AO, Clinical Methods 1990" } },
+      { label: "De Ritis (AST/ALT)", value: "AST / ALT", metadata: { optimal: "0.8–1.2", borderline: "1.2–2.0", reference: "De Ritis F et al, Clin Chim Acta 1957" } },
+    ],
   },
   {
-    heading: "AI Integration",
-    content: "AI capabilities are centered on Qwen models: text-embedding-v4 for generating 1024-dim vectors and qwen-plus for chat. Embeddings are created at test, marker, and condition levels via functions like formatTestForEmbedding(). RAG patterns enable health Q&A with cosine similarity searches on vector tables. Evaluation frameworks like promptfoo and Braintrust are used for LLM evaluation and experiment tracking.",
+    type: "diagram",
+    heading: "End-to-End Architecture",
+    description: "Data flow from PDF upload through embedding to RAG query",
+    code: "┌───────────────────────────────────────────────────┐\n│  Next.js 15 (Vercel)                              │\n│  UploadForm │ /chat │ /search │ proxy.ts (auth)    │\n└──────┬──────────┬────────┬────────────────────────┘\n       │          │        │   lib/python-api.ts\n       ▼          ▼        ▼   (x-api-key)\n┌───────────────────────────────────────────────────┐\n│  Python FastAPI (langgraph/)                      │\n│  /upload        /chat          /search/*          │\n│  LlamaParse →   ContextChat    Hybrid Search      │\n│  NodeParser →   Engine         0.7·cos + 0.3·fts  │\n│  BGE embed      (DeepSeek)                        │\n│  /embed/* (6 entity types)                        │\n└──────┬──────────────┬──────────────┬──────────────┘\n       ▼              ▼              ▼\n┌───────────────────────────────────────────────────┐\n│  Neon PostgreSQL + pgvector                       │\n│  6 entity + 6 embedding tables (vector(1024))     │\n│  + health_state_embeddings (vector + JSONB)        │\n│  + 7 search SQL functions (user_id RLS)            │\n└───────────────────────────────────────────────────┘",
   },
   {
-    heading: "UI/UX Design",
-    content: "The interface uses Radix UI Themes for components like Dialog and Skeleton, with Geist font and lucide-react icons. Pages feature status badges (done, error) and flag indicators (low, normal, high) in tabular displays. Progressive enhancement is achieved through Suspense and skeleton loaders, and theme management is handled by next-themes for dark/light mode support.",
+    type: "table",
+    heading: "Evaluation Coverage Matrix",
+    description: "7 DeepEval suites + 3 Promptfoo scorers covering every pipeline stage",
+    items: [
+      { label: "extraction_eval.py", value: "3-tier parser + compute_flag() + LLM-judged completeness", metadata: { pipeline: "PDF → markers", framework: "DeepEval" } },
+      { label: "derived_metrics_eval.py", value: "7 ratios, alias resolution, risk tiers", metadata: { pipeline: "markers → ratios", framework: "DeepEval" } },
+      { label: "embedding_quality_eval.py", value: "Cross-organ separation, synonym resolution, temporal diff", metadata: { pipeline: "text → vectors", framework: "DeepEval" } },
+      { label: "search_eval.py", value: "Hybrid scoring formula, ranking, threshold filtering", metadata: { pipeline: "query → results", framework: "DeepEval" } },
+      { label: "safety_eval.py", value: "Guardrail effectiveness, PII protection", metadata: { pipeline: "context → response", framework: "DeepEval" } },
+      { label: "clinical-factuality.ts", value: "Threshold claims vs METRIC_REFERENCES", metadata: { pipeline: "LLM → claims", framework: "Promptfoo" } },
+      { label: "trajectory-direction.ts", value: "Velocity semantics (HIGHER/LOWER_IS_BETTER)", metadata: { pipeline: "tests → direction", framework: "Promptfoo" } },
+    ],
+  },
+  {
+    type: "card-grid",
+    heading: "Embedding Tables & Search Functions",
+    description: "Six entity types with dedicated pgvector tables",
+    items: [
+      { label: "blood_test_embeddings", value: "Test-level summary — 'find tests with abnormal liver panels'", metadata: { search: "search_blood_tests()", key: "test_id UNIQUE" } },
+      { label: "blood_marker_embeddings", value: "Per-marker with name/value/flag — primary hybrid search target", metadata: { search: "search_markers_hybrid()", key: "marker_id UNIQUE" } },
+      { label: "health_state_embeddings", value: "All markers + 7 ratios + risk tiers — metabolic syndrome queries", metadata: { search: "vector similarity", key: "test_id + JSONB" } },
+      { label: "condition_embeddings", value: "Health conditions — cross-referenced in /search/multi", metadata: { search: "search_conditions()", key: "condition_id UNIQUE" } },
+      { label: "medication_embeddings", value: "Medications with dosage — drug-biomarker interaction queries", metadata: { search: "search_medications()", key: "medication_id UNIQUE" } },
+      { label: "symptom_embeddings", value: "Symptoms with severity/date — temporal symptom-marker correlation", metadata: { search: "search_symptoms()", key: "symptom_id UNIQUE" } },
+    ],
+  },
+  {
+    type: "code",
+    heading: "Clinical Safety System Prompt",
+    description: "System prompt for ContextChatEngine in chat_server.py",
+    code: "You are a clinical blood marker intelligence assistant.\n\nAnswer questions about derived ratios (TG/HDL, NLR,\nDe Ritis, BUN/Creatinine, TyG, TC/HDL, HDL/LDL),\ntrajectory interpretation, medication effects, and\nhealth conditions based only on the provided context.\n\nCite the relevant reference paper when available.\nAlways remind the user to consult their physician\nfor medical decisions.",
   },
 ];

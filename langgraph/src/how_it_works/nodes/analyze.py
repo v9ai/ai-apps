@@ -1,4 +1,4 @@
-"""Analyze node — calls DeepSeek with source files for a 10-point technical analysis."""
+"""Analyze node — calls DeepSeek with source files for a 13-point technical analysis."""
 
 from __future__ import annotations
 
@@ -21,6 +21,9 @@ Analyze the provided source files and produce a comprehensive technical deep-div
 8. **API design** — key routes/endpoints, request/response shapes, auth patterns
 9. **Auth & security** — authentication library, session handling, RLS policies, env secrets
 10. **Unique patterns** — anything architecturally interesting or non-obvious
+11. **Evaluation coverage** — test/eval frameworks used, what files exist in evals/, what they validate, coverage of critical paths
+12. **Ingestion/processing pipelines** — Python services, FastAPI endpoints, parser chains, embedding strategies, batch processing
+13. **Code patterns worth highlighting** — notable SQL queries, mathematical formulas, algorithms, search cascades, prompt engineering patterns
 
 Rules:
 - Be extremely specific: name actual files, functions, components, tables, API paths
@@ -47,7 +50,7 @@ async def analyze_node(state: dict[str, Any]) -> dict[str, Any]:
                 "content": f"App name: **{app.name}**\n\nSource files:\n\n{files_text}",
             },
         ],
-        max_tokens=4_500,
+        max_tokens=6_000,
     )
 
     if state.get("verbose"):

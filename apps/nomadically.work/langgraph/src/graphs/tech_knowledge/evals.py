@@ -246,7 +246,18 @@ def _assert_generated(generated: list, job: dict) -> None:
             f"{job['name']}: generated content for {g.get('tag')} too short "
             f"({g.get('word_count', 0)} words, expected > 500)"
         )
-        assert g.get("slug"), f"{job['name']}: generated item missing 'slug'"
+        slug = g.get("slug")
+        assert slug, f"{job['name']}: generated item missing 'slug'"
+        assert "/" in slug, (
+            f"{job['name']}: slug '{slug}' must be hierarchical (category/tag)"
+        )
+        cat_part, tag_part = slug.split("/", 1)
+        assert cat_part and tag_part, (
+            f"{job['name']}: slug '{slug}' has empty category or tag segment"
+        )
+        assert tag_part == g["tag"], (
+            f"{job['name']}: slug tag segment '{tag_part}' != tag '{g['tag']}'"
+        )
 
 
 # ---------------------------------------------------------------------------

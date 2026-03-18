@@ -12,6 +12,8 @@ from how_it_works.models import (
     PaperData,
     ProcessResult,
     StatData,
+    TechnicalDetail,
+    TechnicalDetailItem,
 )
 
 
@@ -50,6 +52,35 @@ def _agent_to_ts(a: AgentData) -> str:
         lines.append(f"    researchBasis: {json.dumps(a.research_basis)},")
     if a.paper_indices:
         lines.append(f"    paperIndices: [{', '.join(str(i) for i in a.paper_indices)}],")
+    if a.code_snippet:
+        lines.append(f"    codeSnippet: {json.dumps(a.code_snippet)},")
+    if a.data_flow:
+        lines.append(f"    dataFlow: {json.dumps(a.data_flow)},")
+    return "  {\n" + "\n".join(lines) + "\n  }"
+
+
+def _technical_detail_item_to_ts(item: TechnicalDetailItem) -> str:
+    lines = [
+        f"      label: {json.dumps(item.label)},",
+        f"      value: {json.dumps(item.value)},",
+    ]
+    if item.metadata:
+        lines.append(f"      metadata: {json.dumps(item.metadata)},")
+    return "    {\n" + "\n".join(lines) + "\n    }"
+
+
+def _technical_detail_to_ts(td: TechnicalDetail) -> str:
+    lines = [
+        f"    type: {json.dumps(td.type)},",
+        f"    heading: {json.dumps(td.heading)},",
+    ]
+    if td.description:
+        lines.append(f"    description: {json.dumps(td.description)},")
+    if td.items:
+        items_str = ",\n".join(_technical_detail_item_to_ts(item) for item in td.items)
+        lines.append(f"    items: [\n{items_str},\n    ],")
+    if td.code:
+        lines.append(f"    code: {json.dumps(td.code)},")
     return "  {\n" + "\n".join(lines) + "\n  }"
 
 
@@ -77,12 +108,21 @@ def generate_data_tsx(data: HowItWorksData) -> str:
     papers_str = ",\n".join(_paper_to_ts(p) for p in data.papers)
     stats_str = ",\n".join(_stat_to_ts(s) for s in data.stats)
     agents_str = ",\n".join(_agent_to_ts(a) for a in data.agents)
-    sections_str = ",\n".join(
-        f"  {{\n    heading: {json.dumps(s.heading)},\n    content: {json.dumps(s.content)},\n  }}"
-        for s in data.extra_sections
+    def _section_to_ts(s):
+        lines = [
+            f"    heading: {json.dumps(s.heading)},",
+            f"    content: {json.dumps(s.content)},",
+        ]
+        if s.code_block:
+            lines.append(f"    codeBlock: {json.dumps(s.code_block)},")
+        return "  {\n" + "\n".join(lines) + "\n  }"
+
+    sections_str = ",\n".join(_section_to_ts(s) for s in data.extra_sections)
+    technical_details_str = ",\n".join(
+        _technical_detail_to_ts(td) for td in data.technical_details
     )
 
-    return f'''import type {{ Paper, PipelineAgent, Stat }} from "@ai-apps/ui/how-it-works";
+    return f'''import type {{ Paper, PipelineAgent, Stat, TechnicalDetail, ExtraSection }} from "@ai-apps/ui/how-it-works";
 
 // ─── Technical Foundations ──────────────────────────────────────────
 
@@ -109,8 +149,14 @@ export const story =
 
 // ─── Deep-Dive Sections ────────────────────────────────────────────
 
-export const extraSections: {{ heading: string; content: string }}[] = [
+export const extraSections: ExtraSection[] = [
 {sections_str},
+];
+
+// ─── Technical Details ────────────────────────────────────────────
+
+export const technicalDetails: TechnicalDetail[] = [
+{technical_details_str},
 ];
 '''
 
@@ -118,15 +164,8 @@ export const extraSections: {{ heading: string; content: string }}[] = [
 def generate_client_tsx(data: HowItWorksData) -> str:
     return f'''"use client";
 
-import type {{ CSSProperties }} from "react";
 import {{ HowItWorks }} from "@ai-apps/ui/how-it-works";
-import {{ papers, researchStats, pipelineAgents, story, extraSections }} from "./data";
-
-const rule: CSSProperties = {{
-  border: "none",
-  borderTop: "1px solid var(--gray-a3, rgba(0,0,0,0.08))",
-  margin: "2.5rem 0",
-}};
+import {{ papers, researchStats, pipelineAgents, story, extraSections, technicalDetails }} from "./data";
 
 export function HowItWorksClient() {{
   return (
@@ -137,17 +176,9 @@ export function HowItWorksClient() {{
       stats={{researchStats}}
       agents={{pipelineAgents}}
       story={{story}}
-    >
-      {{extraSections.map((section, i) => (
-        <div key={{i}}>
-          <hr style={{rule}} />
-          <h3 style={{{{ fontSize: "1.25rem", fontWeight: 600, margin: "0 0 0.75rem" }}}}>
-            {{section.heading}}
-          </h3>
-          <p>{{section.content}}</p>
-        </div>
-      ))}}
-    </HowItWorks>
+      extraSections={{extraSections}}
+      technicalDetails={{technicalDetails}}
+    />
   );
 }}
 '''
@@ -199,8 +230,13 @@ async def write_node(state: dict[str, Any]) -> dict[str, Any]:
         gen_files = [
             ("data.tsx", generate_data_tsx(data)),
             ("how-it-works-client.tsx", generate_client_tsx(data)),
-            ("page.tsx", generate_page_tsx(data, app.name)),
         ]
+
+        # Skip page.tsx when app already has a custom how-it-works page
+        if not app.has_how_it_works:
+            gen_files.append(("page.tsx", generate_page_tsx(data, app.name)))
+        else:
+            print("  ⏭   Skipping page.tsx (custom page exists)")
 
         written_paths: list[str] = []
         for name, content in gen_files:

@@ -50,6 +50,9 @@ Analyze the provided source files and produce a comprehensive technical deep-div
 8. **API design** — key routes/endpoints, request/response shapes, auth patterns
 9. **Auth & security** — authentication library, session handling, RLS policies, env secrets
 10. **Unique patterns** — anything architecturally interesting or non-obvious
+11. **Evaluation coverage** — test/eval frameworks used, what files exist in evals/, what they validate, coverage of critical paths
+12. **Ingestion/processing pipelines** — Python services, FastAPI endpoints, parser chains, embedding strategies, batch processing
+13. **Code patterns worth highlighting** — notable SQL queries, mathematical formulas, algorithms, search cascades, prompt engineering patterns
 
 Rules:
 - Be extremely specific: name actual files, functions, components, tables, API paths
@@ -74,7 +77,7 @@ export async function analyzeNode(state: State): Promise<Partial<State>> {
         content: `App name: **${app.name}**\n\nSource files:\n\n${filesText}`,
       },
     ],
-    { maxTokens: 4_500 }
+    { maxTokens: 6_000 }
   );
 
   if (state.verbose) {

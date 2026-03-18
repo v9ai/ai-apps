@@ -32,6 +32,8 @@ export interface AgentData {
   description: string;
   researchBasis?: string;
   paperIndices?: number[];
+  codeSnippet?: string;
+  dataFlow?: string;
 }
 
 export interface StatData {
@@ -41,9 +43,24 @@ export interface StatData {
   paperIndex?: number;
 }
 
+export interface TechnicalDetailItem {
+  label: string;
+  value: string;
+  metadata?: Record<string, string>;
+}
+
+export interface TechnicalDetail {
+  type: "table" | "card-grid" | "code" | "diagram";
+  heading: string;
+  description?: string;
+  items?: TechnicalDetailItem[];
+  code?: string;
+}
+
 export interface ExtraSection {
   heading: string;
   content: string;
+  codeBlock?: string;
 }
 
 export interface HowItWorksData {
@@ -54,6 +71,7 @@ export interface HowItWorksData {
   agents: AgentData[];
   stats: StatData[];
   extraSections: ExtraSection[];
+  technicalDetails: TechnicalDetail[];
 }
 
 export interface ProcessResult {

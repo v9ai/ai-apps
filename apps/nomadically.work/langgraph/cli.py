@@ -13,6 +13,8 @@ Usage:
     python -m cli company-jobs --hours 24 --limit 50
     python -m cli report-job --job-id 123
     python -m cli app-prep --app-id 18
+    python -m cli app-prep --app-id 18 --eval
+    python -m cli app-prep --eval --unit-only
     python -m cli resume upload --user-id u1 --pdf /path/to/resume.pdf
     python -m cli resume search --user-id u1 --query "python experience"
     python -m cli resume chat --user-id u1 --message "what are my skills?"
@@ -247,16 +249,33 @@ def cleanup(dry_run: bool, cutoff_days: int):
 
 
 @main.command("app-prep")
-@click.option("--app-id", "-a", required=True, type=int, help="Application ID from the database")
+@click.option("--app-id", "-a", type=int, default=None, help="Application ID from the database")
 @click.option("--exclude", "-x", default="", help="Comma-separated tech tags to exclude (e.g. webpack,jest)")
 @click.option("--dry-run", is_flag=True, default=False, help="Extract and show technologies without persisting")
 @click.option("--save/--no-save", default=True, show_default=True, help="Save interview report to application")
-def app_prep(app_id: int, exclude: str, dry_run: bool, save: bool):
+@click.option("--eval", "run_eval", is_flag=True, default=False, help="Run eval suite (mock JDs, no DB needed)")
+@click.option("--unit-only", is_flag=True, default=False, help="With --eval: run only deterministic unit tests")
+def app_prep(app_id: int | None, exclude: str, dry_run: bool, save: bool, run_eval: bool, unit_only: bool):
     """Full application prep: interview questions + tech knowledge in one pass.
 
-    Merges the interview-prep and tech-knowledge pipelines. Parses the JD,
-    then fans out in parallel: 4 interview Q&A categories + N tech study lessons.
+    Run on a real application:
+        python -m cli app-prep --app-id 18
+
+    Run eval suite (mock JDs, no DB):
+        python -m cli app-prep --eval
+        python -m cli app-prep --eval --unit-only
     """
+    if run_eval:
+        from src.graphs.application_prep.evals import run_unit_tests, main as run_all
+        if unit_only:
+            run_unit_tests()
+        else:
+            run_all()
+        return
+
+    if not app_id:
+        raise click.UsageError("--app-id is required (or use --eval to run evals)")
+
     import json as _json
 
     from src.db.connection import get_connection
@@ -289,6 +308,7 @@ def app_prep(app_id: int, exclude: str, dry_run: bool, save: bool):
         )
         key_row = cur.fetchone()
     company_key = (key_row["company_key"] if key_row else company_name.lower()) or ""
+    conn.close()  # Close early — pipeline runs for minutes, Neon kills idle connections
 
     # Merge CLI --exclude with DB-dismissed tags
     exclude_tags = [t.strip() for t in exclude.split(",") if t.strip()]
@@ -322,6 +342,7 @@ def app_prep(app_id: int, exclude: str, dry_run: bool, save: bool):
         "question_sets": [],
         "generated": [],
         "report": "",
+        "knowledge_db_ok": False,
         "dry_run": dry_run,
         "exclude_tags": exclude_tags,
         "stats": {},
@@ -330,38 +351,18 @@ def app_prep(app_id: int, exclude: str, dry_run: bool, save: bool):
     report = result.get("report", "")
 
     if save and report:
-        with conn.cursor() as cur:
+        save_conn = get_connection()
+        with save_conn.cursor() as cur:
             cur.execute(
                 "UPDATE applications SET ai_interview_questions = %s, updated_at = now() WHERE id = %s",
                 [report, app_id],
             )
-        conn.commit()
+        save_conn.commit()
+        save_conn.close()
         print(f"\nSaved to applications.ai_interview_questions (app #{app_id})")
 
-    conn.close()
     print("\n" + "=" * 70)
     print(report)
-
-
-@main.command("eval-tech-knowledge")
-def eval_tech_knowledge():
-    """Run deepeval evals for the tech knowledge graph."""
-    from src.graphs.tech_knowledge.evals import main as run_evals
-    run_evals()
-
-
-@main.command("eval-interview-prep")
-def eval_interview_prep():
-    """Run deepeval evals for the interview prep graph."""
-    from src.graphs.interview_prep.evals import main as run_evals
-    run_evals()
-
-
-@main.command("eval-hierarchy")
-def eval_hierarchy():
-    """Run evals for the organize_hierarchy node (unit + integration + deepeval)."""
-    from src.graphs.application_prep.evals import main as run_evals
-    run_evals()
 
 
 # ---------------------------------------------------------------------------

@@ -2,8 +2,8 @@ import type { Lesson, LessonWithContent, GroupedLessons, CategoryMeta } from "./
 // Re-export types for single-source imports
 export type { Lesson, LessonWithContent, GroupedLessons, CategoryMeta };
 
-// Re-export static constants (always from articles.ts — no DB needed)
-export { CATEGORIES, CATEGORY_META, getCategoryMeta } from "./articles";
+// Re-export static constants for FS mode consumers
+export { CATEGORIES, CATEGORY_META } from "./articles";
 
 export interface SearchResult {
   resultType: "lesson" | "section";
@@ -15,6 +15,26 @@ export interface SearchResult {
 }
 
 const USE_DB = process.env.NEXT_PUBLIC_DATA_SOURCE === "neon";
+
+export async function getCategoryMeta(category: string): Promise<CategoryMeta> {
+  if (USE_DB) {
+    const { getCategoryMetaFromDb } = await import("./db/queries");
+    const meta = await getCategoryMetaFromDb(category);
+    if (meta) return meta;
+  }
+  // Fallback to static lookup
+  const { getCategoryMeta: staticMeta } = await import("./articles");
+  return staticMeta(category);
+}
+
+export async function getCategoryCount(): Promise<number> {
+  if (USE_DB) {
+    const { getCategoryCountFromDb } = await import("./db/queries");
+    return getCategoryCountFromDb();
+  }
+  const { CATEGORIES } = await import("./articles");
+  return CATEGORIES.length;
+}
 
 export async function getAllLessons(): Promise<Lesson[]> {
   if (USE_DB) {
@@ -68,27 +88,6 @@ export async function getRelatedLessons(
   return all
     .filter((p) => p.category === current.category && p.slug !== slug)
     .slice(0, 4);
-}
-
-// Podcasts
-export interface Podcast {
-  id: string;
-  spotifyId: string;
-  type: string;
-  name: string;
-  description: string | null;
-  publisher: string | null;
-  imageUrl: string | null;
-  externalUrl: string;
-  relevanceScore: number;
-}
-
-export async function getPodcastsForLesson(slug: string): Promise<Podcast[]> {
-  if (USE_DB) {
-    const { getPodcastsForLessonFromDb } = await import("./db/queries");
-    return getPodcastsForLessonFromDb(slug);
-  }
-  return [];
 }
 
 // Audio metadata

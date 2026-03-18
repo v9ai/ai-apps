@@ -1,28 +1,34 @@
 import Link from "next/link";
-import type { Lesson } from "@/lib/articles";
-import { getCategoryMeta } from "@/lib/articles";
+import type { Lesson, CategoryMeta } from "@/lib/articles";
 
 interface Props {
   prev: Lesson | null;
   next: Lesson | null;
   currentCategory?: string;
+  prevMeta?: CategoryMeta | null;
+  nextMeta?: CategoryMeta | null;
 }
 
-export function ArticleNav({ prev, next, currentCategory }: Props) {
+const FALLBACK_META: CategoryMeta = { slug: "other", icon: "\u{1F4C4}", description: "", gradient: ["#6366f1", "#818cf8"] };
+
+export function ArticleNav({ prev, next, currentCategory, prevMeta, nextMeta }: Props) {
   if (!prev && !next) return null;
+
+  const pm = prevMeta ?? FALLBACK_META;
+  const nm = nextMeta ?? FALLBACK_META;
 
   return (
     <div className="article-nav">
       {prev ? (
         <Link
           href={`/${prev.slug}`}
-          className={`article-nav-card cat-${getCategoryMeta(prev.category).slug}`}
+          className={`article-nav-card cat-${pm.slug}`}
         >
           <span className="article-nav-label">&larr; Previous</span>
           <span className="article-nav-title">{prev.title}</span>
           {currentCategory && prev.category !== currentCategory && (
             <span className="article-nav-transition">
-              From: {getCategoryMeta(prev.category).icon} {prev.category}
+              From: {pm.icon} {prev.category}
             </span>
           )}
         </Link>
@@ -32,13 +38,13 @@ export function ArticleNav({ prev, next, currentCategory }: Props) {
       {next ? (
         <Link
           href={`/${next.slug}`}
-          className={`article-nav-card article-nav-card--next cat-${getCategoryMeta(next.category).slug}`}
+          className={`article-nav-card article-nav-card--next cat-${nm.slug}`}
         >
           <span className="article-nav-label">Next &rarr;</span>
           <span className="article-nav-title">{next.title}</span>
           {currentCategory && next.category !== currentCategory && (
             <span className="article-nav-transition">
-              Up next: {getCategoryMeta(next.category).icon} {next.category}
+              Up next: {nm.icon} {next.category}
             </span>
           )}
         </Link>

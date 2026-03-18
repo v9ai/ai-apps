@@ -8,36 +8,19 @@
     "dist/**",
     "dist"
   ],
+  "type": "module",
   "exports": {
     "./counter-button": {
-      "import": {
-        "types": "./dist/es/counter-button.d.mts",
-        "default": "./dist/es/counter-button.mjs"
-      },
-      "require": {
-        "types": "./dist/cjs/counter-button.d.ts",
-        "default": "./dist/cjs/counter-button.js"
-      }
+      "types": "./dist/es/counter-button.d.mts",
+      "default": "./dist/es/counter-button.mjs"
     },
     "./how-it-works": {
-      "import": {
-        "types": "./dist/es/how-it-works.d.mts",
-        "default": "./dist/es/how-it-works.mjs"
-      },
-      "require": {
-        "types": "./dist/cjs/how-it-works.d.ts",
-        "default": "./dist/cjs/how-it-works.js"
-      }
+      "types": "./dist/es/how-it-works.d.mts",
+      "default": "./dist/es/how-it-works.mjs"
     },
     "./link": {
-      "import": {
-        "types": "./dist/es/link.d.mts",
-        "default": "./dist/es/link.mjs"
-      },
-      "require": {
-        "types": "./dist/cjs/link.d.ts",
-        "default": "./dist/cjs/link.js"
-      }
+      "types": "./dist/es/link.d.mts",
+      "default": "./dist/es/link.mjs"
     }
   },
   "scripts": {

@@ -49,6 +49,8 @@ class AgentData(_CamelModel):
     description: str
     research_basis: str | None = Field(None, alias="researchBasis")
     paper_indices: list[int] | None = Field(None, alias="paperIndices")
+    code_snippet: str | None = Field(None, alias="codeSnippet")
+    data_flow: str | None = Field(None, alias="dataFlow")
 
 
 class StatData(_CamelModel):
@@ -58,9 +60,24 @@ class StatData(_CamelModel):
     paper_index: int | None = Field(None, alias="paperIndex")
 
 
+class TechnicalDetailItem(_CamelModel):
+    label: str
+    value: str
+    metadata: dict[str, str] | None = None
+
+
+class TechnicalDetail(_CamelModel):
+    type: str  # "table" | "card-grid" | "code" | "diagram"
+    heading: str
+    description: str | None = None
+    items: list[TechnicalDetailItem] | None = None
+    code: str | None = None
+
+
 class ExtraSection(_CamelModel):
     heading: str
     content: str
+    code_block: str | None = Field(None, alias="codeBlock")
 
 
 class HowItWorksData(_CamelModel):
@@ -72,6 +89,9 @@ class HowItWorksData(_CamelModel):
     stats: list[StatData] = Field(default_factory=list)
     extra_sections: list[ExtraSection] = Field(
         default_factory=list, alias="extraSections"
+    )
+    technical_details: list[TechnicalDetail] = Field(
+        default_factory=list, alias="technicalDetails"
     )
 
 

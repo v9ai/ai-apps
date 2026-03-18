@@ -268,7 +268,19 @@ def _assert_generated(generated: list, job: dict) -> None:
             f"{job['name']}: generated content for {g.get('tag')} too short "
             f"({g.get('word_count', 0)} words, expected > 500)"
         )
-        assert g.get("slug"), f"{job['name']}: generated item missing 'slug'"
+        slug = g.get("slug") if isinstance(g, dict) else getattr(g, "slug", None)
+        assert slug, f"{job['name']}: generated item missing 'slug'"
+        assert "/" in slug, (
+            f"{job['name']}: slug '{slug}' must be hierarchical (category/tag)"
+        )
+        cat_part, tag_part = slug.split("/", 1)
+        assert cat_part and tag_part, (
+            f"{job['name']}: slug '{slug}' has empty category or tag segment"
+        )
+        tag = g.get("tag") if isinstance(g, dict) else getattr(g, "tag", None)
+        assert tag_part == tag, (
+            f"{job['name']}: slug tag segment '{tag_part}' != tag '{tag}'"
+        )
 
 
 # ---------------------------------------------------------------------------
@@ -451,6 +463,27 @@ def run_taxonomy_tests() -> None:
         print(f"  All {len(MUST_RESOLVE)} common extraction patterns resolve")
         print(f"  All {len(TAG_TO_CATEGORY)} TAG_TO_CATEGORY entries exist in SKILL_TAGS")
         print(f"  PASSED\n")
+
+    # 5. LLM frameworks must be in their own category
+    from .taxonomy import TECH_CATEGORIES, make_lesson_slug, make_cat_slug
+    assert "LLM Frameworks" in TECH_CATEGORIES, "missing 'LLM Frameworks' category"
+    for tag in ("langchain", "langgraph", "llamaindex"):
+        assert TAG_TO_CATEGORY.get(tag) == "LLM Frameworks", (
+            f"'{tag}' should be in 'LLM Frameworks', got '{TAG_TO_CATEGORY.get(tag)}'"
+        )
+
+    # 6. All lesson slugs must be hierarchical: {cat-slug}/{tag}
+    for tag, cat_name in TAG_TO_CATEGORY.items():
+        slug = make_lesson_slug(tag)
+        assert "/" in slug, f"slug '{slug}' for tag '{tag}' must be hierarchical"
+        cat_part, tag_part = slug.split("/", 1)
+        assert cat_part == make_cat_slug(cat_name), (
+            f"slug '{slug}': category segment '{cat_part}' != expected '{make_cat_slug(cat_name)}'"
+        )
+        assert tag_part == tag, f"slug '{slug}': tag segment '{tag_part}' != '{tag}'"
+
+    print(f"  All {len(TAG_TO_CATEGORY)} lesson slugs are hierarchical (category/tag)")
+    print(f"  LLM Frameworks category verified (langchain, langgraph, llamaindex)")
 
 
 # ---------------------------------------------------------------------------

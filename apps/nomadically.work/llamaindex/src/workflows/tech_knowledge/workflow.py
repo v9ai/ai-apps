@@ -21,7 +21,7 @@ from .events import (
     TechnologiesExtractedEvent,
 )
 from .prompts import EXTRACT_TECHNOLOGIES_SYSTEM, GENERATE_CONTENT_SYSTEM
-from .taxonomy import get_category_for_tag, get_label_for_tag, normalize_tag
+from .taxonomy import get_category_for_tag, get_label_for_tag, make_cat_slug, make_lesson_slug, normalize_tag
 
 
 class TechKnowledgeWorkflow(Workflow):
@@ -192,7 +192,7 @@ class TechKnowledgeWorkflow(Workflow):
             tag=tech["tag"],
             label=tech["label"],
             category=tech["category"],
-            slug=tech["tag"],
+            slug=make_lesson_slug(tech["tag"]),
             title=tech["label"],
             content=content,
             word_count=word_count,
@@ -287,7 +287,7 @@ class TechKnowledgeWorkflow(Workflow):
                 cat_name = g.category
                 if cat_name not in category_ids:
                     cat_meta = TECH_CATEGORIES.get(cat_name, {})
-                    cat_slug = cat_name.lower().replace(" & ", "-").replace(" ", "-")
+                    cat_slug = make_cat_slug(cat_name)
                     cat_id = upsert_category(
                         conn, name=cat_name, slug=cat_slug,
                         icon=cat_meta.get("icon", "&#x1f4da;"),

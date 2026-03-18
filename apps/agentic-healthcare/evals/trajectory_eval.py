@@ -31,6 +31,8 @@ from typing import Optional
 
 from openai import OpenAI
 
+import pytest
+
 from deepeval import evaluate
 from deepeval.models import DeepEvalBaseLLM
 from deepeval.metrics import GEval, BaseMetric
@@ -1372,6 +1374,135 @@ TRAJECTORY_CASES: list[dict] = [
 # ---------------------------------------------------------------------------
 # Main
 # ---------------------------------------------------------------------------
+
+# ---------------------------------------------------------------------------
+# Pytest integration
+# ---------------------------------------------------------------------------
+
+from conftest import skip_no_judge, skip_no_dashscope
+
+
+@pytest.fixture(scope="module")
+def trajectory_test_cases() -> list[LLMTestCase]:
+    """Run all trajectory cases through the Qwen LLM once per module."""
+    if not _DASHSCOPE_API_KEY:
+        pytest.skip("DASHSCOPE_API_KEY not set")
+    cases: list[LLMTestCase] = []
+    for tc in TRAJECTORY_CASES:
+        output = trajectory_task(tc)
+        cases.append(
+            LLMTestCase(
+                input=tc["description"],
+                actual_output=output,
+                expected_output=tc["ground_truth_summary"],
+                additional_metadata={"trajectory_case": tc},
+            )
+        )
+    return cases
+
+
+@skip_no_dashscope
+@skip_no_judge
+@pytest.mark.parametrize(
+    "case_idx,case",
+    list(enumerate(TRAJECTORY_CASES)),
+    ids=[tc["id"] for tc in TRAJECTORY_CASES],
+)
+def test_trajectory_clinical_factuality(case_idx, case):
+    """Clinical factuality — threshold claims validated against references."""
+    if not _DASHSCOPE_API_KEY:
+        pytest.skip("DASHSCOPE_API_KEY not set")
+    output = trajectory_task(case)
+    tc = LLMTestCase(
+        input=case["description"],
+        actual_output=output,
+        expected_output=case["ground_truth_summary"],
+        additional_metadata={"trajectory_case": case},
+    )
+    metric = ClinicalFactualityMetric(threshold=0.5)
+    metric.measure(tc)
+    assert metric.is_successful(), (
+        f"[{case['id']}] ClinicalFactuality={metric.score:.2f}: {metric.reason}"
+    )
+
+
+@skip_no_dashscope
+@skip_no_judge
+@pytest.mark.parametrize(
+    "case_idx,case",
+    list(enumerate(TRAJECTORY_CASES)),
+    ids=[tc["id"] for tc in TRAJECTORY_CASES],
+)
+def test_trajectory_risk_classification(case_idx, case):
+    """Risk classification — LLM assigns correct risk tiers."""
+    if not _DASHSCOPE_API_KEY:
+        pytest.skip("DASHSCOPE_API_KEY not set")
+    output = trajectory_task(case)
+    tc = LLMTestCase(
+        input=case["description"],
+        actual_output=output,
+        expected_output=case["ground_truth_summary"],
+        additional_metadata={"trajectory_case": case},
+    )
+    metric = RiskClassificationMetric(threshold=0.5)
+    metric.measure(tc)
+    assert metric.is_successful(), (
+        f"[{case['id']}] RiskClassification={metric.score:.2f}: {metric.reason}"
+    )
+
+
+@skip_no_dashscope
+@skip_no_judge
+@pytest.mark.parametrize(
+    "case_idx,case",
+    list(enumerate(TRAJECTORY_CASES)),
+    ids=[tc["id"] for tc in TRAJECTORY_CASES],
+)
+def test_trajectory_direction(case_idx, case):
+    """Trajectory direction — LLM identifies improving/stable/deteriorating."""
+    if not _DASHSCOPE_API_KEY:
+        pytest.skip("DASHSCOPE_API_KEY not set")
+    output = trajectory_task(case)
+    tc = LLMTestCase(
+        input=case["description"],
+        actual_output=output,
+        expected_output=case["ground_truth_summary"],
+        additional_metadata={"trajectory_case": case},
+    )
+    metric = TrajectoryDirectionMetric(threshold=0.5)
+    metric.measure(tc)
+    assert metric.is_successful(), (
+        f"[{case['id']}] TrajectoryDirection={metric.score:.2f}: {metric.reason}"
+    )
+
+
+@skip_no_dashscope
+@skip_no_judge
+def test_trajectory_batch_evaluation(trajectory_test_cases):
+    """Batch evaluation: all 6 metrics across all 15 trajectory cases."""
+    results = evaluate(
+        trajectory_test_cases,
+        metrics=[
+            factuality_metric,
+            relevance_metric,
+            pii_leakage,
+            ClinicalFactualityMetric(),
+            RiskClassificationMetric(),
+            TrajectoryDirectionMetric(),
+        ],
+    )
+    total = len(trajectory_test_cases)
+    passed = sum(1 for tr in results.test_results if tr.success)
+    pass_rate = passed / total if total else 0
+    assert pass_rate >= 0.6, (
+        f"Trajectory batch pass rate {pass_rate:.0%} ({passed}/{total})"
+    )
+
+
+# ---------------------------------------------------------------------------
+# Standalone mode
+# ---------------------------------------------------------------------------
+
 
 if __name__ == "__main__":
     test_cases: list[LLMTestCase] = []

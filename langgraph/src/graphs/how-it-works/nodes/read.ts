@@ -6,7 +6,7 @@ import type { FileContent } from "../types.js";
 // ─── Limits ──────────────────────────────────────────────────────────────────
 
 const MAX_FILE_CHARS = 3_000;
-const MAX_TOTAL_CHARS = 28_000;
+const MAX_TOTAL_CHARS = 48_000;
 
 // ─── Helpers ─────────────────────────────────────────────────────────────────
 
@@ -47,12 +47,12 @@ function findPageFiles(dir: string, depth = 0, maxDepth = 3): string[] {
   return results;
 }
 
-/** Collect TS/TSX files from a flat directory (max 5). */
-function readFlatDir(dir: string, max = 5): string[] {
+/** Collect files from a flat directory (max 5). */
+function readFlatDir(dir: string, max = 5, extPattern = /\.(ts|tsx)$/): string[] {
   if (!existsSync(dir)) return [];
   try {
     return readdirSync(dir, { withFileTypes: true })
-      .filter((e) => e.isFile() && /\.(ts|tsx)$/.test(e.name))
+      .filter((e) => e.isFile() && extPattern.test(e.name))
       .map((e) => join(dir, e.name))
       .slice(0, max);
   } catch {
@@ -107,7 +107,7 @@ export async function readNode(state: State): Promise<Partial<State>> {
 
   // 6. Lib / utils / server directories (up to 5 files each, 2 dirs max)
   for (const dir of ["lib", "src/lib", "utils", "src/utils", "server", "src/server"]) {
-    for (const p of readFlatDir(join(app.path, dir), 5)) add(p);
+    for (const p of readFlatDir(join(app.path, dir), 5)) add(p, 4_000);
     if (files.length > 30) break;
   }
 
@@ -118,6 +118,21 @@ export async function readNode(state: State): Promise<Partial<State>> {
   // 8. Schema / DB files
   for (const dir of ["src/db", "db", "schema"]) {
     for (const p of readFlatDir(join(app.path, dir), 4)) add(p);
+  }
+
+  // 9. Evals (test/eval files)
+  for (const p of readFlatDir(join(app.path, "evals"), 10, /\.(py|yaml|yml|ts)$/)) add(p);
+
+  // 10. App-local LangGraph pipelines
+  for (const p of readFlatDir(join(app.path, "langgraph"), 8, /\.py$/)) add(p);
+  for (const p of readFlatDir(join(app.path, "langgraph/src"), 8, /\.py$/)) add(p);
+
+  // 11. Prompts
+  for (const p of readFlatDir(join(app.path, "prompts"), 5, /\.(txt|md|yaml|ts)$/)) add(p);
+
+  // 12. Root configs
+  for (const name of ["promptfooconfig.yaml", "pytest.ini", "pyproject.toml"]) {
+    add(join(app.path, name), 1_500);
   }
 
   console.log(

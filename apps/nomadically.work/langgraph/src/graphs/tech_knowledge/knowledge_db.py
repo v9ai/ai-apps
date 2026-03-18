@@ -7,9 +7,27 @@ import psycopg
 from psycopg.rows import dict_row
 
 
+EXPECTED_DB_NAME = "knowledge"
+
+
 def get_knowledge_connection() -> psycopg.Connection:
     """Get a psycopg connection to the knowledge Neon PostgreSQL database."""
     url = os.environ["KNOWLEDGE_DATABASE_URL"]
+
+    # Guard: URL must target the 'knowledge' database, not 'neondb' or anything else.
+    # The knowledge app reads from 'knowledge' — writing to the wrong DB means
+    # categories/lessons won't appear on localhost:3006.
+    from urllib.parse import urlparse
+
+    parsed = urlparse(url)
+    db_name = parsed.path.lstrip("/").split("?")[0]
+    if db_name != EXPECTED_DB_NAME:
+        raise ValueError(
+            f"KNOWLEDGE_DATABASE_URL points to database '{db_name}', "
+            f"expected '{EXPECTED_DB_NAME}'. "
+            f"The knowledge app reads from '{EXPECTED_DB_NAME}' — fix the URL in .env"
+        )
+
     return psycopg.connect(url, row_factory=dict_row)
 
 

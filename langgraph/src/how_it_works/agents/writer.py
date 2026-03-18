@@ -35,8 +35,13 @@ async def write_files_node(state: dict[str, Any]) -> dict[str, Any]:
         gen_files = [
             ("data.tsx", generate_data_tsx(data)),
             ("how-it-works-client.tsx", generate_client_tsx(data)),
-            ("page.tsx", generate_page_tsx(data, app.name)),
         ]
+
+        # Skip page.tsx when app already has a custom how-it-works page
+        if not app.has_how_it_works:
+            gen_files.append(("page.tsx", generate_page_tsx(data, app.name)))
+        else:
+            print("  ⏭   Skipping page.tsx (custom page exists)")
 
         written_paths: list[str] = []
         for name, content in gen_files:

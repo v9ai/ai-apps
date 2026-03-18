@@ -19,6 +19,9 @@ Analyze the provided source files and produce a comprehensive technical deep-div
 8. **API design** — key routes/endpoints, request/response shapes, auth patterns
 9. **Auth & security** — authentication library, session handling, RLS policies, env secrets
 10. **Unique patterns** — anything architecturally interesting or non-obvious
+11. **Evaluation coverage** — test/eval frameworks used, what files exist in evals/, what they validate, coverage of critical paths
+12. **Ingestion/processing pipelines** — Python services, FastAPI endpoints, parser chains, embedding strategies, batch processing
+13. **Code patterns worth highlighting** — notable SQL queries, mathematical formulas, algorithms, search cascades, prompt engineering patterns
 
 Rules:
 - Be extremely specific: name actual files, functions, components, tables, API paths
@@ -35,7 +38,7 @@ Given the SOURCE FILES and the ANALYSIS, evaluate on five dimensions:
 table names, and API routes from the source? Or does it use vague phrases like "the database" or \
 "authentication is handled"?
 
-2. **Completeness** — Are all 10 required sections present with substantive content? Any empty \
+2. **Completeness** — Are all 13 required sections present with substantive content? Any empty \
 or one-sentence sections?
 
 3. **Accuracy** — Does every claim match the source code? Are there hallucinated functions, \
@@ -84,7 +87,7 @@ GENERATION_SCHEMA = """\
       "slug": "kebab-case-id",
       "number": 1,
       "title": "Technology or Concept Name",
-      "category": "Frontend | Database | Authentication | AI/LLM | API | Infrastructure | Storage | Search | Build Tool | State Management",
+      "category": "Frontend | Database | Authentication | AI/LLM | API | Infrastructure | Storage | Search | Build Tool | State Management | Evaluation | Research",
       "wordCount": 0,
       "readingTimeMin": 2,
       "authors": "Creator org (e.g. Vercel, Meta, Anthropic)",
@@ -98,8 +101,10 @@ GENERATION_SCHEMA = """\
   "agents": [
     {
       "name": "Step Name",
-      "description": "2-4 sentences with specific technical details — actual function/component names, data shapes, API calls",
-      "researchBasis": "Underlying library or design pattern (optional)"
+      "description": "3-6 sentences with specific technical details — actual function/component names, data shapes, API calls",
+      "researchBasis": "Underlying library or design pattern (optional)",
+      "codeSnippet": "Key code pattern for this step (optional, actual code)",
+      "dataFlow": "Data transformation: input → process → output (optional)"
     }
   ],
   "stats": [
@@ -109,10 +114,20 @@ GENERATION_SCHEMA = """\
       "source": "Where this fact comes from"
     }
   ],
+  "technicalDetails": [
+    {
+      "type": "table | card-grid | code | diagram",
+      "heading": "Section heading",
+      "description": "Brief explanation (optional)",
+      "items": [{"label": "...", "value": "...", "metadata": {"key": "val"}}],
+      "code": "code block content (for type 'code' or 'diagram')"
+    }
+  ],
   "extraSections": [
     {
       "heading": "Section heading",
-      "content": "3-5 sentences of technical deep-dive — actual table names, function names, security patterns"
+      "content": "3-5 sentences of technical deep-dive — actual table names, function names, security patterns",
+      "codeBlock": "Optional code example"
     }
   ]
 }"""
@@ -128,7 +143,9 @@ Category color guide:
 - Storage         → var(--cyan-9)
 - Search          → var(--indigo-9)
 - Build Tool      → var(--gray-9)
-- State Management→ var(--teal-9)"""
+- State Management→ var(--teal-9)
+- Evaluation      → var(--pink-9)
+- Research        → var(--violet-9)"""
 
 GENERATION_SYSTEM_PROMPT = f"""\
 You generate structured JSON for a HowItWorks React component that documents a web application.
@@ -137,14 +154,18 @@ The component renders:
 - **papers** — "Technical Foundations": the key technologies/libraries/concepts the app is built on.
   Repurpose the Paper type — "title" = technology name, "finding" = its core capability,
   "relevance" = how THIS app uses it (be precise: name functions, routes, tables).
-  Include 5–10 entries covering the most architecturally significant pieces.
-- **agents** — "Pipeline Stages": 4–8 ordered steps showing how data flows through the system.
+  Include 5–15 entries covering the most architecturally significant pieces.
+- **agents** — "Pipeline Stages": 4–10 ordered steps showing how data flows through the system.
   Each step should name actual code artefacts (functions, components, server actions).
-- **stats** — 3–6 key technical metrics, counts, or architectural facts.
+  Write 3-6 sentences, include codeSnippet with the key code pattern and dataFlow string.
+- **stats** — 3–10 key technical metrics, counts, or architectural facts.
 - **story** — a flowing 3–5 sentence narrative of the complete end-to-end journey.
-- **extraSections** — 3–6 deep-dive sections. Always include at least:
+- **extraSections** — 3–8 deep-dive sections. Always include at least:
   System Architecture, Database Design (if app has a DB), Security & Auth, Deployment & Infrastructure.
   Add AI Integration section if the app uses LLMs or embeddings.
+- **technicalDetails** — 2–5 structured blocks for tables (e.g., clinical ratios, eval coverage),
+  architecture breakdowns, API cascades, or code patterns. Use type "table" for key-value data,
+  "card-grid" for related items, "code" for code examples, "diagram" for ASCII architecture diagrams.
 
 {COLOR_GUIDE}
 

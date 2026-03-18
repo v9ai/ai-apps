@@ -12,6 +12,8 @@ from .taxonomy import (
     TECH_CATEGORIES,
     get_category_for_tag,
     get_label_for_tag,
+    make_cat_slug,
+    make_lesson_slug,
     normalize_tag,
 )
 
@@ -163,7 +165,7 @@ def organize_hierarchy_node(state: TechKnowledgeState) -> dict:
         conn = get_knowledge_connection()
         existing = get_existing_lesson_slugs(conn)
         conn.close()
-        existing_slugs = [t["tag"] for t in technologies if t["tag"] in existing]
+        existing_slugs = [t["tag"] for t in technologies if make_lesson_slug(t["tag"]) in existing]
     except Exception as e:
         print(f"  Warning: could not check knowledge DB — {e}")
 
@@ -277,7 +279,7 @@ def generate_content_node(state: dict) -> dict:
         if line.startswith("## "):
             subtopics.append(line[3:].strip())
 
-    slug = tech["tag"]
+    slug = make_lesson_slug(tech["tag"])
     title = f"{tech['label']}"
 
     print(f"  [{tech['tag']}] Generated {word_count} words, {len(subtopics)} sections")
@@ -357,12 +359,12 @@ def persist_to_knowledge_node(state: TechKnowledgeState) -> dict:
             cat_name = g["category"]
             if cat_name not in category_ids:
                 cat_meta = TECH_CATEGORIES.get(cat_name, {})
-                cat_slug = cat_name.lower().replace(" & ", "-").replace(" ", "-")
+                cat_slug = make_cat_slug(cat_name)
                 cat_id = upsert_category(
                     conn,
                     name=cat_name,
                     slug=cat_slug,
-                    icon=cat_meta.get("icon", "&#x1f4da;"),
+                    icon=cat_meta.get("icon", "\U0001f4da"),
                     description=cat_meta.get("description", f"Technologies in {cat_name}"),
                     gradient_from=cat_meta.get("gradient_from", "#6366f1"),
                     gradient_to=cat_meta.get("gradient_to", "#818cf8"),

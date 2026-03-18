@@ -68,6 +68,9 @@ class ApplicationPrepState(TypedDict):
     # Final
     report: str
 
+    # URL validation (from validate_urls node)
+    knowledge_db_ok: bool
+
     # Control
     dry_run: bool
     exclude_tags: list[str]

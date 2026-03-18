@@ -23,7 +23,9 @@
     "deploy:r": "vercel deploy --prod --cwd apps/research-thera",
     "deploy:re": "vercel deploy --prod --cwd apps/real-estate",
     "deploy:t": "vercel deploy --prod --cwd apps/todo",
-    "deploy:all": "pnpm deploy:n && pnpm deploy:l && pnpm deploy:h && pnpm deploy:r && pnpm deploy:re && pnpm deploy:blog"
+    "deploy:p": "vercel deploy --prod --cwd apps/podcasts",
+    "dev:p": "turbo run dev --filter=humans-of-ai",
+    "deploy:all": "pnpm deploy:n && pnpm deploy:l && pnpm deploy:h && pnpm deploy:r && pnpm deploy:re && pnpm deploy:blog && pnpm deploy:p"
   },
   "devDependencies": {
     "napi-postinstall": "^0.2.4",

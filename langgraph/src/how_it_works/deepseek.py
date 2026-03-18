@@ -45,7 +45,7 @@ async def chat(
 async def chat_json(
     messages: list[dict[str, str]],
     *,
-    max_tokens: int = 6_000,
+    max_tokens: int = 8_192,
     temperature: float = 0.2,
 ) -> Any:
     """Send a JSON-mode chat completion request and parse the response."""

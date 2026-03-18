@@ -28,8 +28,12 @@ from ..tech_knowledge.taxonomy import (
     TECH_CATEGORIES,
     get_category_for_tag,
     get_label_for_tag,
+    make_cat_slug,
+    make_lesson_slug,
     normalize_tag,
 )
+from html import unescape as _html_unescape
+
 from .state import (
     CATEGORIES,
     ApplicationPrepState,
@@ -39,6 +43,51 @@ from .state import (
     QAPair,
     QuestionSet,
 )
+
+
+def _ensure_unicode(text: str) -> str:
+    """Decode HTML entities to Unicode. Guards against &#x2699; being stored as literal text."""
+    return _html_unescape(text)
+
+
+# ---------------------------------------------------------------------------
+# Node 0: validate_urls — preflight check (runs in parallel with LLM nodes)
+# ---------------------------------------------------------------------------
+
+def validate_urls_node(state: ApplicationPrepState) -> dict:
+    """Validate knowledge DB URL and connectivity before expensive LLM work.
+
+    Runs in parallel with parse_jd and extract_technologies.
+    Sets knowledge_db_ok flag — persist_knowledge checks it before writing.
+    """
+    from ..tech_knowledge.knowledge_db import EXPECTED_DB_NAME
+
+    # Check URL format
+    url = os.environ.get("KNOWLEDGE_DATABASE_URL", "")
+    if not url:
+        print("  [validate_urls] KNOWLEDGE_DATABASE_URL not set — persistence will be skipped")
+        return {"knowledge_db_ok": False}
+
+    from urllib.parse import urlparse
+
+    parsed_url = urlparse(url)
+    db_name = parsed_url.path.lstrip("/").split("?")[0]
+    if db_name != EXPECTED_DB_NAME:
+        print(f"  [validate_urls] FAIL: URL points to '{db_name}', expected '{EXPECTED_DB_NAME}'")
+        return {"knowledge_db_ok": False}
+
+    # Check connectivity
+    try:
+        conn = get_knowledge_connection()
+        with conn.cursor() as cur:
+            cur.execute("SELECT 1")
+        conn.close()
+        print(f"  [validate_urls] OK: knowledge DB reachable ({db_name}@{parsed_url.hostname})")
+        return {"knowledge_db_ok": True}
+    except Exception as e:
+        print(f"  [validate_urls] WARN: knowledge DB unreachable — {e}")
+        return {"knowledge_db_ok": False}
+
 
 # ---------------------------------------------------------------------------
 # LLM factories
@@ -238,6 +287,15 @@ def organize_hierarchy_node(state: ApplicationPrepState) -> dict:
     technologies = state.get("technologies", [])
     exclude_tags = set(state.get("exclude_tags", []))
 
+    # Deduplicate by tag (keep first occurrence)
+    seen: set[str] = set()
+    deduped: list[ExtractedTech] = []
+    for t in technologies:
+        if t["tag"] not in seen:
+            seen.add(t["tag"])
+            deduped.append(t)
+    technologies = deduped
+
     if exclude_tags:
         excluded = [t["label"] for t in technologies if t["tag"] in exclude_tags]
         technologies = [t for t in technologies if t["tag"] not in exclude_tags]
@@ -249,7 +307,7 @@ def organize_hierarchy_node(state: ApplicationPrepState) -> dict:
         conn = get_knowledge_connection()
         existing = get_existing_lesson_slugs(conn)
         conn.close()
-        existing_slugs = [t["tag"] for t in technologies if t["tag"] in existing]
+        existing_slugs = [t["tag"] for t in technologies if make_lesson_slug(t["tag"]) in existing]
     except Exception as e:
         print(f"  Warning: could not check knowledge DB — {e}")
 
@@ -484,7 +542,7 @@ def generate_content_node(state: dict) -> dict:
         "tag": tech["tag"],
         "label": tech["label"],
         "category": tech["category"],
-        "slug": tech["tag"],
+        "slug": make_lesson_slug(tech["tag"]),
         "title": tech["label"],
         "content": content,
         "word_count": word_count,
@@ -546,6 +604,10 @@ def _persist_knowledge(state: ApplicationPrepState) -> dict:
         print("  No new tech content to persist.")
         return stats
 
+    if not state.get("knowledge_db_ok", False):
+        print("  Skipping persistence — knowledge DB validation failed (see validate_urls)")
+        return stats
+
     if dry_run:
         print(f"\n  [DRY RUN] Would persist {len(generated)} lessons:")
         for g in generated:
@@ -569,10 +631,10 @@ def _persist_knowledge(state: ApplicationPrepState) -> dict:
             cat_name = g["category"]
             if cat_name not in category_ids:
                 cat_meta = TECH_CATEGORIES.get(cat_name, {})
-                cat_slug = cat_name.lower().replace(" & ", "-").replace(" ", "-")
+                cat_slug = make_cat_slug(cat_name)
                 cat_id = upsert_category(
                     conn, name=cat_name, slug=cat_slug,
-                    icon=cat_meta.get("icon", "&#x1f4da;"),
+                    icon=_ensure_unicode(cat_meta.get("icon", "\U0001f4da")),
                     description=cat_meta.get("description", f"Technologies in {cat_name}"),
                     gradient_from=cat_meta.get("gradient_from", "#6366f1"),
                     gradient_to=cat_meta.get("gradient_to", "#818cf8"),
@@ -667,9 +729,130 @@ def _persist_knowledge(state: ApplicationPrepState) -> dict:
     return stats
 
 
-def finalize_node(state: ApplicationPrepState) -> dict:
-    """Compile interview report and persist tech knowledge to DB."""
+def sync_hierarchy_node(state: ApplicationPrepState) -> dict:
+    """Renumber pipeline-generated lessons so each category's lessons are contiguous.
+
+    The knowledge app's prev/next navigation uses global lesson number ordering.
+    Without this, lessons from different categories interleave (e.g. #56 Backend,
+    #57 Cloud, #58 Backend) making navigation jump across categories.
+
+    This node groups pipeline lessons by category and renumbers them so
+    all lessons in a category are sequential, then updates category ranges.
+    """
+    if not state.get("knowledge_db_ok", False) or state.get("dry_run", False):
+        return {}
+
+    generated = state.get("generated", [])
+    if not generated:
+        return {}
+
+    try:
+        conn = get_knowledge_connection()
+    except Exception as e:
+        print(f"  [sync_hierarchy] Could not connect: {e}")
+        return {}
+
+    try:
+        # Get the highest lesson number from the original curriculum (non-pipeline)
+        with conn.cursor() as cur:
+            cur.execute("""
+                SELECT COALESCE(MAX(l.number), 55) AS max_num
+                FROM lessons l
+                JOIN categories c ON l.category_id = c.id
+                WHERE c.name NOT IN (
+                    SELECT name FROM categories
+                    WHERE name IN ('Databases & Storage', 'Backend Frameworks',
+                                   'Frontend Frameworks', 'Cloud & DevOps',
+                                   'Languages', 'Testing & Quality', 'API & Communication')
+                )
+            """)
+            base_number = cur.fetchone()["max_num"]
+
+        # Get all pipeline categories and their lessons, ordered by category sort_order then lesson title
+        with conn.cursor() as cur:
+            cur.execute("""
+                SELECT c.id AS cat_id, c.name AS cat_name, c.sort_order,
+                       l.id AS lesson_id, l.slug, l.title, l.number
+                FROM categories c
+                JOIN lessons l ON l.category_id = c.id
+                WHERE c.name IN (
+                    'Databases & Storage', 'Backend Frameworks',
+                    'Frontend Frameworks', 'Cloud & DevOps',
+                    'Languages', 'Testing & Quality', 'API & Communication'
+                )
+                ORDER BY c.sort_order, l.title
+            """)
+            rows = cur.fetchall()
+
+        if not rows:
+            conn.close()
+            return {}
+
+        # Phase 1: shift all pipeline lessons to a high temporary range to avoid unique conflicts
+        temp_offset = 10000
+        with conn.cursor() as cur:
+            for row in rows:
+                cur.execute(
+                    "UPDATE lessons SET number = %s WHERE id = %s",
+                    [row["number"] + temp_offset, row["lesson_id"]],
+                )
+        conn.commit()
+
+        # Phase 2: renumber contiguously by category
+        next_num = base_number + 1
+        cat_ranges: dict[int, list[int]] = {}
+        renumbered = 0
+
+        for row in rows:
+            cat_id = row["cat_id"]
+            lesson_id = row["lesson_id"]
+
+            with conn.cursor() as cur:
+                cur.execute(
+                    "UPDATE lessons SET number = %s WHERE id = %s",
+                    [next_num, lesson_id],
+                )
+            renumbered += 1
+
+            cat_ranges.setdefault(cat_id, []).append(next_num)
+            next_num += 1
+
+        # Update category lesson ranges
+        for cat_id, nums in cat_ranges.items():
+            with conn.cursor() as cur:
+                cur.execute(
+                    """UPDATE categories
+                       SET lesson_range_lo = %s, lesson_range_hi = %s
+                       WHERE id = %s""",
+                    [min(nums), max(nums), cat_id],
+                )
+
+        conn.commit()
+        conn.close()
+
+        if renumbered > 0:
+            print(f"  [sync_hierarchy] Renumbered {renumbered} lessons across {len(cat_ranges)} categories")
+        else:
+            print(f"  [sync_hierarchy] Numbering already contiguous")
+
+    except Exception as e:
+        print(f"  [sync_hierarchy] Error: {e}")
+        import traceback
+        traceback.print_exc()
+
+    return {}
+
+
+def compile_report_node(state: ApplicationPrepState) -> dict:
+    """Assemble all Q&A sets into a markdown interview report."""
     report = _compile_report(state)
+    q_count = sum(len(qs["qa_pairs"]) for qs in state.get("question_sets", []))
+    print(f"  Compiled report: {q_count} questions, {len(report)} chars")
+    return {"report": report}
+
+
+def persist_knowledge_node(state: ApplicationPrepState) -> dict:
+    """Write generated tech content to the knowledge database."""
     stats = _persist_knowledge(state)
 
     print(f"\n--- Application Prep Summary ---")
@@ -678,4 +861,4 @@ def finalize_node(state: ApplicationPrepState) -> dict:
     print(f"  Tech content generated: {stats.get('content_generated', 0)}")
     print(f"  Lessons persisted: {stats.get('lessons_persisted', 0)}")
 
-    return {"report": report, "stats": stats}
+    return {"stats": stats}

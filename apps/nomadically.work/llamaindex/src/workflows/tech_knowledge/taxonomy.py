@@ -122,6 +122,12 @@ TECH_CATEGORIES: dict[str, dict] = {
         "gradient_from": "#6366f1",
         "gradient_to": "#818cf8",
     },
+    "LLM Frameworks": {
+        "icon": "&#x1f9e0;",
+        "description": "LLM orchestration frameworks, agents, and AI application toolkits",
+        "gradient_from": "#9333ea",
+        "gradient_to": "#c084fc",
+    },
 }
 
 # ── Tag to category mapping ───────────────────────────────────────────
@@ -140,8 +146,8 @@ TAG_TO_CATEGORY: dict[str, str] = {
     "spring-boot": "Backend Frameworks", "hono": "Backend Frameworks",
     "trpc": "Backend Frameworks", "drizzle-orm": "Backend Frameworks",
     "prisma": "Backend Frameworks",
-    "langchain": "Backend Frameworks", "langgraph": "Backend Frameworks",
-    "llamaindex": "Backend Frameworks",
+    "langchain": "LLM Frameworks", "langgraph": "LLM Frameworks",
+    "llamaindex": "LLM Frameworks",
     "react": "Frontend Frameworks", "vue": "Frontend Frameworks",
     "angular": "Frontend Frameworks", "svelte": "Frontend Frameworks",
     "nextjs": "Frontend Frameworks", "remix": "Frontend Frameworks",
@@ -223,3 +229,14 @@ def normalize_tag(raw: str) -> str | None:
         return aliases[lowered]
 
     return None
+
+
+def make_cat_slug(cat_name: str) -> str:
+    """Convert a category display name to a URL slug."""
+    return cat_name.lower().replace(" & ", "-").replace(" ", "-")
+
+
+def make_lesson_slug(tag: str) -> str:
+    """Build a hierarchical lesson slug: {category-slug}/{tag}."""
+    cat_name = get_category_for_tag(tag)
+    return f"{make_cat_slug(cat_name)}/{tag}"

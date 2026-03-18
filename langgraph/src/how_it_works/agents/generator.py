@@ -25,11 +25,12 @@ MAX_RETRIES = 2
 VALID_CATEGORIES = {
     "Frontend", "Database", "Authentication", "AI/LLM", "API",
     "Infrastructure", "Storage", "Search", "Build Tool", "State Management",
+    "Evaluation", "Research",
 }
 VALID_COLORS = {
     "var(--blue-9)", "var(--green-9)", "var(--purple-9)", "var(--amber-9)",
     "var(--orange-9)", "var(--red-9)", "var(--cyan-9)", "var(--indigo-9)",
-    "var(--gray-9)", "var(--teal-9)",
+    "var(--gray-9)", "var(--teal-9)", "var(--pink-9)", "var(--violet-9)",
 }
 
 
@@ -37,14 +38,14 @@ def _validate_data(data: HowItWorksData) -> list[str]:
     """Run structural validation beyond Pydantic and return error messages."""
     errors: list[str] = []
 
-    if not (5 <= len(data.papers) <= 10):
-        errors.append(f"papers count {len(data.papers)} not in [5, 10]")
-    if not (4 <= len(data.agents) <= 8):
-        errors.append(f"agents count {len(data.agents)} not in [4, 8]")
-    if not (3 <= len(data.stats) <= 6):
-        errors.append(f"stats count {len(data.stats)} not in [3, 6]")
-    if not (3 <= len(data.extra_sections) <= 6):
-        errors.append(f"extraSections count {len(data.extra_sections)} not in [3, 6]")
+    if not (5 <= len(data.papers) <= 15):
+        errors.append(f"papers count {len(data.papers)} not in [5, 15]")
+    if not (4 <= len(data.agents) <= 10):
+        errors.append(f"agents count {len(data.agents)} not in [4, 10]")
+    if not (3 <= len(data.stats) <= 10):
+        errors.append(f"stats count {len(data.stats)} not in [3, 10]")
+    if not (3 <= len(data.extra_sections) <= 8):
+        errors.append(f"extraSections count {len(data.extra_sections)} not in [3, 8]")
 
     for p in data.papers:
         if not re.match(r"^[a-z0-9]+(-[a-z0-9]+)*$", p.slug):

@@ -1,19 +1,7 @@
-import { eq, sql, desc } from "drizzle-orm";
+import { eq, sql } from "drizzle-orm";
 import { db } from "@/src/db";
-import { lessons, categories, podcasts } from "@/src/db/schema";
+import { lessons, categories } from "@/src/db/schema";
 import type { Lesson, LessonWithContent, GroupedLessons } from "../articles";
-
-export interface PodcastRow {
-  id: string;
-  spotifyId: string;
-  type: string;
-  name: string;
-  description: string | null;
-  publisher: string | null;
-  imageUrl: string | null;
-  externalUrl: string;
-  relevanceScore: number;
-}
 
 export async function getAllLessonsFromDb(): Promise<Lesson[]> {
   const rows = await db
@@ -102,35 +90,35 @@ export async function getTotalWordCountFromDb(): Promise<number> {
   return result.total;
 }
 
-export async function getPodcastsForLessonFromDb(
-  slug: string,
-  limit = 6,
-): Promise<PodcastRow[]> {
-  const lesson = await db.query.lessons.findFirst({
-    where: eq(lessons.slug, slug),
-    columns: { id: true },
+export async function getCategoryMetaFromDb(
+  categoryName: string,
+): Promise<{ slug: string; icon: string; description: string; gradient: [string, string] } | null> {
+  const row = await db.query.categories.findFirst({
+    where: eq(categories.name, categoryName),
+    columns: {
+      slug: true,
+      icon: true,
+      description: true,
+      gradientFrom: true,
+      gradientTo: true,
+    },
   });
 
-  if (!lesson) return [];
+  if (!row) return null;
 
-  const rows = await db
-    .select({
-      id: podcasts.id,
-      spotifyId: podcasts.spotifyId,
-      type: podcasts.type,
-      name: podcasts.name,
-      description: podcasts.description,
-      publisher: podcasts.publisher,
-      imageUrl: podcasts.imageUrl,
-      externalUrl: podcasts.externalUrl,
-      relevanceScore: podcasts.relevanceScore,
-    })
-    .from(podcasts)
-    .where(eq(podcasts.lessonId, lesson.id))
-    .orderBy(desc(podcasts.relevanceScore))
-    .limit(limit);
+  return {
+    slug: row.slug,
+    icon: row.icon,
+    description: row.description,
+    gradient: [row.gradientFrom, row.gradientTo],
+  };
+}
 
-  return rows;
+export async function getCategoryCountFromDb(): Promise<number> {
+  const [result] = await db
+    .select({ count: sql<number>`count(*)` })
+    .from(categories);
+  return result.count;
 }
 
 export async function getRelatedLessonsFromDb(

@@ -9,7 +9,7 @@ from typing import Any
 from how_it_works.models import FileContent
 
 MAX_FILE_CHARS = 3_000
-MAX_TOTAL_CHARS = 28_000
+MAX_TOTAL_CHARS = 48_000
 
 
 def _read_file(
@@ -43,14 +43,14 @@ def _find_page_files(directory: Path, depth: int = 0, max_depth: int = 3) -> lis
     return results
 
 
-def _read_flat_dir(directory: Path, max_files: int = 5) -> list[Path]:
+def _read_flat_dir(directory: Path, max_files: int = 5, ext_pattern: str = r"\.(ts|tsx)$") -> list[Path]:
     if not directory.is_dir():
         return []
     try:
         return [
             f
             for f in sorted(directory.iterdir())
-            if f.is_file() and re.search(r"\.(ts|tsx)$", f.name)
+            if f.is_file() and re.search(ext_pattern, f.name)
         ][:max_files]
     except OSError:
         return []
@@ -103,7 +103,7 @@ async def read_node(state: dict[str, Any]) -> dict[str, Any]:
     # 6. Lib / utils / server dirs
     for dir_name in ["lib", "src/lib", "utils", "src/utils", "server", "src/server"]:
         for p in _read_flat_dir(app_path / dir_name, 5):
-            add(p)
+            add(p, 4_000)
         if len(files) > 30:
             break
 
@@ -116,6 +116,24 @@ async def read_node(state: dict[str, Any]) -> dict[str, Any]:
     for dir_name in ["src/db", "db", "schema"]:
         for p in _read_flat_dir(app_path / dir_name, 4):
             add(p)
+
+    # 9. Evals (test/eval files)
+    for p in _read_flat_dir(app_path / "evals", 10, r"\.(py|yaml|yml|ts)$"):
+        add(p)
+
+    # 10. App-local LangGraph pipelines
+    for p in _read_flat_dir(app_path / "langgraph", 8, r"\.py$"):
+        add(p)
+    for p in _read_flat_dir(app_path / "langgraph" / "src", 8, r"\.py$"):
+        add(p)
+
+    # 11. Prompts
+    for p in _read_flat_dir(app_path / "prompts", 5, r"\.(txt|md|yaml|ts)$"):
+        add(p)
+
+    # 12. Root configs
+    for name in ["promptfooconfig.yaml", "pytest.ini", "pyproject.toml"]:
+        add(app_path / name, 1_500)
 
     print(f"  📁  Read {len(files)} files  ({round(total_chars / 1_000)}k chars)")
     if state.get("verbose"):

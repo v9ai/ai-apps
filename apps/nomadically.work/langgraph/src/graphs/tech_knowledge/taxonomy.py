@@ -7,46 +7,52 @@ from src.models.taxonomy import SKILL_TAGS, SKILL_LABELS
 
 TECH_CATEGORIES: dict[str, dict] = {
     "Databases & Storage": {
-        "icon": "&#x1f5c4;&#xfe0f;",
+        "icon": "\U0001f5c4\ufe0f",
         "description": "Database systems, caching, and data storage technologies",
         "gradient_from": "#0891b2",
         "gradient_to": "#22d3ee",
     },
     "Backend Frameworks": {
-        "icon": "&#x2699;&#xfe0f;",
+        "icon": "\u2699\ufe0f",
         "description": "Server-side frameworks and runtime environments",
         "gradient_from": "#059669",
         "gradient_to": "#34d399",
     },
     "Frontend Frameworks": {
-        "icon": "&#x1f3a8;",
+        "icon": "\U0001f3a8",
         "description": "Client-side frameworks, libraries, and UI toolkits",
         "gradient_from": "#7c3aed",
         "gradient_to": "#a78bfa",
     },
     "Cloud & DevOps": {
-        "icon": "&#x2601;&#xfe0f;",
+        "icon": "\u2601\ufe0f",
         "description": "Cloud platforms, containers, orchestration, and CI/CD",
         "gradient_from": "#2563eb",
         "gradient_to": "#60a5fa",
     },
     "Languages": {
-        "icon": "&#x1f4dd;",
+        "icon": "\U0001f4dd",
         "description": "Programming languages and their ecosystems",
         "gradient_from": "#d97706",
         "gradient_to": "#fbbf24",
     },
     "Testing & Quality": {
-        "icon": "&#x2705;",
+        "icon": "\u2705",
         "description": "Testing frameworks, quality assurance, and development practices",
         "gradient_from": "#e11d48",
         "gradient_to": "#fb7185",
     },
     "API & Communication": {
-        "icon": "&#x1f50c;",
+        "icon": "\U0001f50c",
         "description": "API protocols, real-time communication, and integration patterns",
         "gradient_from": "#6366f1",
         "gradient_to": "#818cf8",
+    },
+    "LLM Frameworks": {
+        "icon": "\U0001f9e0",
+        "description": "LLM orchestration frameworks, agents, and AI application toolkits",
+        "gradient_from": "#9333ea",
+        "gradient_to": "#c084fc",
     },
 }
 
@@ -81,9 +87,9 @@ TAG_TO_CATEGORY: dict[str, str] = {
     "trpc": "Backend Frameworks",
     "drizzle-orm": "Backend Frameworks",
     "prisma": "Backend Frameworks",
-    "langchain": "Backend Frameworks",
-    "langgraph": "Backend Frameworks",
-    "llamaindex": "Backend Frameworks",
+    "langchain": "LLM Frameworks",
+    "langgraph": "LLM Frameworks",
+    "llamaindex": "LLM Frameworks",
 
     # Frontend Frameworks
     "react": "Frontend Frameworks",
@@ -226,3 +232,14 @@ def normalize_tag(raw: str) -> str | None:
         return aliases[lowered]
 
     return None
+
+
+def make_cat_slug(cat_name: str) -> str:
+    """Convert a category display name to a URL slug."""
+    return cat_name.lower().replace(" & ", "-").replace(" ", "-")
+
+
+def make_lesson_slug(tag: str) -> str:
+    """Build a hierarchical lesson slug: {category-slug}/{tag}."""
+    cat_name = get_category_for_tag(tag)
+    return f"{make_cat_slug(cat_name)}/{tag}"
