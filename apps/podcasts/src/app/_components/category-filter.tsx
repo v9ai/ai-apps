@@ -26,28 +26,27 @@ export function CategoryFilter({
       >
         <button
           onClick={() => onCategoryChange(null)}
-          className={`shrink-0 rounded-full px-4 py-2 text-sm font-medium transition-all duration-200 ease-in-out ${
+          className={`shrink-0 rounded-full px-4 py-2 text-sm font-medium transition-all duration-200 ${
             activeCategory === null
-              ? "border border-white/[0.08] bg-white/[0.06] text-white"
-              : "border border-transparent bg-transparent text-neutral-500 hover:border-white/[0.06] hover:text-neutral-300"
+              ? "bg-[#1a1a1a] text-white"
+              : "border border-transparent bg-transparent text-neutral-500 hover:border-neutral-200 hover:bg-neutral-100 hover:text-neutral-800"
           }`}
         >
-          All{" "}
-          <span className="text-neutral-600">({totalCount})</span>
+          All <span className="text-neutral-400">({totalCount})</span>
         </button>
 
         {categories.map((category) => (
           <button
             key={category.slug}
             onClick={() => onCategoryChange(category.slug)}
-            className={`shrink-0 rounded-full px-4 py-2 text-sm font-medium transition-all duration-200 ease-in-out ${
+            className={`shrink-0 rounded-full px-4 py-2 text-sm font-medium transition-all duration-200 ${
               activeCategory === category.slug
-                ? "border border-white/[0.08] bg-white/[0.06] text-white"
-                : "border border-transparent bg-transparent text-neutral-500 hover:border-white/[0.06] hover:text-neutral-300"
+                ? "bg-[#1a1a1a] text-white"
+                : "border border-transparent bg-transparent text-neutral-500 hover:border-neutral-200 hover:bg-neutral-100 hover:text-neutral-800"
             }`}
           >
             {category.title}{" "}
-            <span className="text-neutral-600">
+            <span className="text-neutral-400">
               ({category.personalities.length})
             </span>
           </button>

@@ -10,12 +10,18 @@
   }
 
   body {
-    background: #0a0a0a;
+    background: #FAFAF7;
+    color: #4a4a4a;
+    font-family: 'Inter', system-ui, -apple-system, sans-serif;
+  }
+
+  h1, h2, h3, h4, h5, h6 {
+    color: #1a1a1a;
   }
 
   ::selection {
-    background: rgba(212, 168, 83, 0.35);
-    color: white;
+    background: rgba(196, 149, 106, 0.25);
+    color: #1a1a1a;
   }
 
   /* Custom scrollbar */
@@ -26,228 +32,88 @@
     background: transparent;
   }
   ::-webkit-scrollbar-thumb {
-    background: rgba(212, 168, 83, 0.2);
+    background: rgba(0, 0, 0, 0.12);
     border-radius: 3px;
   }
   ::-webkit-scrollbar-thumb:hover {
-    background: rgba(212, 168, 83, 0.4);
+    background: rgba(0, 0, 0, 0.22);
   }
 
   /* Firefox */
   * {
     scrollbar-width: thin;
-    scrollbar-color: rgba(212, 168, 83, 0.2) transparent;
+    scrollbar-color: rgba(0, 0, 0, 0.12) transparent;
   }
 }
 
 @layer components {
-  /* ---------- Glass card (warm) ---------- */
-  .glass-card {
-    @apply bg-white/[0.03] backdrop-blur-xl rounded-xl;
-    border: 1px solid rgba(212, 168, 83, 0.08);
-  }
-  .glass-card-hover {
-    @apply hover:bg-white/[0.07] hover:shadow-2xl;
-    transition: all 0.35s cubic-bezier(0.25, 0.46, 0.45, 0.94);
-  }
-  .glass-card-hover:hover {
-    border-color: rgba(212, 168, 83, 0.18);
-    box-shadow:
-      0 25px 50px -12px rgba(0, 0, 0, 0.4),
-      0 0 40px -8px rgba(212, 168, 83, 0.06);
-  }
-
-  /* ---------- Warm card glow ---------- */
-  .card-glow {
-    position: relative;
-  }
-  .card-glow::after {
-    content: '';
-    position: absolute;
-    inset: 0;
-    border-radius: inherit;
-    background: radial-gradient(
-      ellipse at 50% 50%,
-      rgba(212, 168, 83, 0.07),
-      transparent 70%
-    );
-    opacity: 0;
-    transition: opacity 0.5s ease;
-    z-index: -1;
-    filter: blur(24px);
-    pointer-events: none;
-  }
-  .card-glow:hover::after {
-    opacity: 1;
-  }
-
-  /* ---------- Hero ambient glow (warm amber) ---------- */
-  .hero-glow {
-    position: relative;
-    overflow: hidden;
-  }
-  .hero-glow::before,
-  .hero-glow::after {
-    content: '';
-    position: absolute;
-    border-radius: 50%;
-    pointer-events: none;
-    filter: blur(80px);
-  }
-  .hero-glow::before {
-    width: 600px;
-    height: 600px;
-    background: radial-gradient(circle, rgba(212, 168, 83, 0.07), transparent 70%);
-    top: -300px;
-    left: -150px;
-    animation: aurora 8s ease-in-out infinite;
-  }
-  .hero-glow::after {
-    width: 400px;
-    height: 400px;
-    background: radial-gradient(circle, rgba(180, 130, 50, 0.05), transparent 70%);
-    top: -100px;
-    right: -100px;
-    animation: aurora 10s ease-in-out infinite reverse;
-  }
-
-  /* ---------- Track row ---------- */
-  .track-row {
-    border-left: 2px solid transparent;
-    transition: border-color 0.2s ease, background-color 0.2s ease;
-  }
-  .track-row:hover {
-    border-left-color: #D4A853;
-  }
-
-  /* ---------- Decorative grid pattern ---------- */
-  .hero-grid {
-    background-image:
-      linear-gradient(rgba(255, 255, 255, 0.025) 1px, transparent 1px),
-      linear-gradient(90deg, rgba(255, 255, 255, 0.025) 1px, transparent 1px);
-    background-size: 60px 60px;
-  }
-
-  /* ---------- Gradient divider ---------- */
-  .gradient-divider {
-    height: 1px;
-    background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.12), transparent);
-  }
-
-  /* ---------- Editorial divider (warm) ---------- */
-  .editorial-divider {
-    height: 1px;
-    background: linear-gradient(
-      90deg,
-      transparent,
-      rgba(212, 168, 83, 0.3),
-      rgba(212, 168, 83, 0.5),
-      rgba(212, 168, 83, 0.3),
-      transparent
-    );
-  }
-
-  /* ---------- Podcast badge ---------- */
-  .podcast-badge {
-    transition: transform 0.25s ease, box-shadow 0.25s ease, background-color 0.25s ease;
-  }
-  .podcast-badge:hover {
-    transform: scale(1.05);
-    box-shadow: 0 0 14px 2px rgba(212, 168, 83, 0.15);
-    background-color: rgba(255, 255, 255, 0.08);
-  }
-
-  /* ---------- Stats glass ---------- */
-  .stat-glass {
-    @apply backdrop-blur-xl rounded-xl;
-    background: rgba(255, 255, 255, 0.05);
-    border: 1px solid rgba(212, 168, 83, 0.1);
-    box-shadow: inset 0 1px 1px rgba(255, 255, 255, 0.06);
-  }
-
-  /* ---------- Spotify color (keep for podcast-specific) ---------- */
-  .spotify {
-    color: #1DB954;
-  }
-  .spotify-bg {
-    background-color: #1DB954;
-  }
-
-  /* ========================================
-     HONY-inspired editorial components
-     ======================================== */
-
   /* ---------- Story card ---------- */
   .story-card {
-    @apply rounded-2xl backdrop-blur-xl;
-    background: rgba(255, 255, 255, 0.035);
-    border: 1px solid rgba(212, 168, 83, 0.1);
+    @apply rounded-lg;
+    background: #ffffff;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.04);
     transition:
-      transform 0.4s cubic-bezier(0.25, 0.46, 0.45, 0.94),
-      box-shadow 0.4s cubic-bezier(0.25, 0.46, 0.45, 0.94),
-      border-color 0.4s ease;
+      transform 0.35s cubic-bezier(0.25, 0.46, 0.45, 0.94),
+      box-shadow 0.35s cubic-bezier(0.25, 0.46, 0.45, 0.94);
   }
   .story-card:hover {
-    transform: translateY(-4px) scale(1.01);
-    border-color: rgba(212, 168, 83, 0.25);
+    transform: translateY(-3px);
     box-shadow:
-      0 20px 60px -15px rgba(0, 0, 0, 0.5),
-      0 0 50px -10px rgba(212, 168, 83, 0.08);
+      0 12px 40px -10px rgba(0, 0, 0, 0.1),
+      0 4px 12px -2px rgba(0, 0, 0, 0.04);
   }
 
   /* ---------- Featured card (hero-sized story) ---------- */
   .featured-card {
-    @apply rounded-3xl backdrop-blur-xl;
-    background: rgba(255, 255, 255, 0.04);
-    border: 1px solid rgba(212, 168, 83, 0.15);
+    @apply rounded-xl;
+    background: #ffffff;
     transition:
-      transform 0.5s cubic-bezier(0.25, 0.46, 0.45, 0.94),
-      box-shadow 0.5s cubic-bezier(0.25, 0.46, 0.45, 0.94),
-      border-color 0.5s ease;
+      transform 0.4s cubic-bezier(0.25, 0.46, 0.45, 0.94),
+      box-shadow 0.4s cubic-bezier(0.25, 0.46, 0.45, 0.94);
   }
   .featured-card:hover {
-    transform: translateY(-6px) scale(1.005);
-    border-color: rgba(212, 168, 83, 0.3);
+    transform: translateY(-2px);
+    box-shadow: 0 16px 48px -12px rgba(0, 0, 0, 0.08);
+  }
+
+  /* ---------- Portrait frame ---------- */
+  .portrait-frame {
+    border-radius: 9999px;
     box-shadow:
-      0 30px 80px -20px rgba(0, 0, 0, 0.5),
-      0 0 80px -15px rgba(212, 168, 83, 0.1);
+      0 4px 16px -2px rgba(0, 0, 0, 0.1),
+      0 1px 4px rgba(0, 0, 0, 0.05);
   }
 
   /* ---------- Quote text (serif, editorial) ---------- */
   .quote-text {
     font-style: italic;
-    font-family: Georgia, 'Times New Roman', serif;
-    line-height: 1.6;
-    letter-spacing: 0.01em;
-    color: rgba(255, 255, 255, 0.88);
+    font-family: 'Playfair Display', Georgia, 'Times New Roman', serif;
+    line-height: 1.65;
+    letter-spacing: 0.005em;
+    color: #1a1a1a;
   }
 
   /* ---------- Story quote with decorative mark ---------- */
   .story-quote {
     position: relative;
     padding-left: 2rem;
+    font-family: 'Playfair Display', Georgia, 'Times New Roman', serif;
+    font-style: italic;
+    font-size: 1.25rem;
+    line-height: 1.7;
+    color: #2C2C2C;
   }
   .story-quote::before {
     content: '\201C';
     position: absolute;
-    top: -0.35em;
+    top: -0.3em;
     left: -0.15em;
-    font-family: Georgia, 'Times New Roman', serif;
+    font-family: 'Playfair Display', Georgia, 'Times New Roman', serif;
     font-size: 4.5rem;
     line-height: 1;
-    color: rgba(212, 168, 83, 0.3);
+    color: rgba(0, 0, 0, 0.08);
     pointer-events: none;
     user-select: none;
-  }
-
-  /* ---------- Portrait frame ---------- */
-  .portrait-frame {
-    border-radius: 9999px;
-    border: 2px solid rgba(212, 168, 83, 0.25);
-    box-shadow:
-      0 0 20px -4px rgba(212, 168, 83, 0.15),
-      0 0 40px -8px rgba(212, 168, 83, 0.08);
-    animation: portrait-glow 4s ease-in-out infinite;
   }
 
   /* ---------- Masonry grid ---------- */
@@ -272,33 +138,59 @@
 
   /* ---------- Category pill ---------- */
   .category-pill {
-    @apply inline-flex items-center rounded-full text-xs font-medium;
+    @apply inline-flex items-center rounded-full text-xs font-medium tracking-wide;
     padding: 0.3rem 0.85rem;
-    background: rgba(212, 168, 83, 0.1);
-    color: rgba(212, 168, 83, 0.9);
-    border: 1px solid rgba(212, 168, 83, 0.15);
+    background: rgba(0, 0, 0, 0.04);
+    color: #888;
+    border: 1px solid rgba(0, 0, 0, 0.06);
     transition: all 0.25s ease;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
   }
   .category-pill:hover {
-    background: rgba(212, 168, 83, 0.18);
-    border-color: rgba(212, 168, 83, 0.3);
-    color: #D4A853;
+    background: rgba(0, 0, 0, 0.07);
+    color: #4a4a4a;
+    border-color: rgba(0, 0, 0, 0.1);
+  }
+
+  /* ---------- Editorial divider ---------- */
+  .editorial-divider {
+    height: 1px;
+    background: linear-gradient(
+      90deg,
+      transparent,
+      rgba(0, 0, 0, 0.1),
+      rgba(0, 0, 0, 0.1),
+      transparent
+    );
+  }
+
+  /* ---------- Gradient divider ---------- */
+  .gradient-divider {
+    height: 1px;
+    background: linear-gradient(90deg, transparent, rgba(0, 0, 0, 0.08), transparent);
   }
 }
 
 @layer utilities {
-  .text-gradient-green {
-    background: linear-gradient(135deg, #1DB954 0%, #1ed760 50%, #4ade80 100%);
-    -webkit-background-clip: text;
-    -webkit-text-fill-color: transparent;
-    background-clip: text;
+  .text-heading {
+    color: #1a1a1a;
   }
 
-  .text-gradient-gold {
-    background: linear-gradient(135deg, #D4A853 0%, #E8C97A 40%, #F0D68A 60%, #D4A853 100%);
-    -webkit-background-clip: text;
-    -webkit-text-fill-color: transparent;
-    background-clip: text;
+  .text-body {
+    color: #4a4a4a;
+  }
+
+  .text-secondary {
+    color: #888;
+  }
+
+  .text-accent {
+    color: #C4956A;
+  }
+
+  .font-serif-display {
+    font-family: 'Playfair Display', Georgia, 'Times New Roman', serif;
   }
 }
 
@@ -306,20 +198,10 @@
    Keyframes
    ======================================== */
 
-@keyframes sound-bar {
-  0%,
-  100% {
-    height: 10px;
-  }
-  50% {
-    height: 28px;
-  }
-}
-
 @keyframes fade-in-up {
   from {
     opacity: 0;
-    transform: translateY(20px);
+    transform: translateY(16px);
   }
   to {
     opacity: 1;
@@ -336,122 +218,10 @@
   }
 }
 
-@keyframes slide-in-right {
-  from {
-    opacity: 0;
-    transform: translateX(-12px);
-  }
-  to {
-    opacity: 1;
-    transform: translateX(0);
-  }
-}
-
-@keyframes aurora {
-  0%, 100% {
-    transform: translate(0, 0) scale(1);
-    opacity: 0.7;
-  }
-  33% {
-    transform: translate(30px, -25px) scale(1.05);
-    opacity: 1;
-  }
-  66% {
-    transform: translate(-20px, 15px) scale(0.95);
-    opacity: 0.7;
-  }
-}
-
-@keyframes stagger-in {
-  from {
-    opacity: 0;
-    transform: translateY(8px);
-  }
-  to {
-    opacity: 1;
-    transform: translateY(0);
-  }
-}
-
-@keyframes row-enter {
-  from {
-    opacity: 0;
-    transform: translateX(-6px);
-  }
-  to {
-    opacity: 1;
-    transform: translateX(0);
-  }
-}
-
-@keyframes pulse-glow {
-  0%, 100% {
-    box-shadow: 0 0 0 0 rgba(212, 168, 83, 0.3);
-  }
-  50% {
-    box-shadow: 0 0 16px 4px rgba(212, 168, 83, 0.12);
-  }
-}
-
-@keyframes float {
-  0%, 100% {
-    transform: translateY(0);
-  }
-  50% {
-    transform: translateY(-4px);
-  }
-}
-
-@keyframes shimmer {
-  0% {
-    background-position: -200% 0;
-  }
-  100% {
-    background-position: 200% 0;
-  }
-}
-
-@keyframes section-reveal {
-  from {
-    opacity: 0;
-    transform: scale(0.98);
-  }
-  to {
-    opacity: 1;
-    transform: scale(1);
-  }
-}
-
-/* --- New HONY keyframes --- */
-
-@keyframes quote-reveal {
-  from {
-    opacity: 0;
-    transform: translateX(-16px);
-  }
-  to {
-    opacity: 1;
-    transform: translateX(0);
-  }
-}
-
-@keyframes portrait-glow {
-  0%, 100% {
-    box-shadow:
-      0 0 20px -4px rgba(212, 168, 83, 0.15),
-      0 0 40px -8px rgba(212, 168, 83, 0.08);
-  }
-  50% {
-    box-shadow:
-      0 0 28px -2px rgba(212, 168, 83, 0.22),
-      0 0 56px -6px rgba(212, 168, 83, 0.12);
-  }
-}
-
 @keyframes card-enter {
   from {
     opacity: 0;
-    transform: scale(0.95);
+    transform: scale(0.97);
   }
   to {
     opacity: 1;

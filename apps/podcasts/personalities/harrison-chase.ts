@@ -5,10 +5,22 @@ const personality: Personality = {
   role: "CEO",
   org: "LangChain",
   description:
-    "Sequoia Training Data podcast (Jan 2026) on context engineering and long-horizon agents.",
+    "Built LangChain into the dominant LLM orchestration framework. Coined 'context engineering' as the key discipline for agent builders. Publishes on data quality assertions for LLM pipelines.",
   slug: "harrison-chase",
   podcasts: ["Sequoia Training Data", "VentureBeat", "This Week in Startups"],
   github: "hwchase17",
+  papers: [
+    {
+      title: "PROMPTEVALS: A Dataset of Assertions and Guardrails for Custom Production Large Language Model Pipelines",
+      arxiv: "2504.14738",
+      date: "2025-04-20",
+    },
+    {
+      title: "SPADE: Synthesizing Data Quality Assertions for Large Language Model Pipelines",
+      arxiv: "2401.03038",
+      date: "2024-01-05",
+    },
+  ],
 };
 
 export default personality;

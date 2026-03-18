@@ -23,18 +23,17 @@ export function StoryCard({
   const displayText = quote || personality.description;
   const isCompact = variant === "compact";
 
-  const avatarSize = isCompact ? 80 : 120;
+  const avatarSize = isCompact ? 72 : 96;
   const podcastCount = personality.podcasts.length;
 
   return (
     <Link
       href={`/person/${personality.slug}`}
       className={[
-        "group relative block",
-        "bg-white/[0.02] border border-white/[0.06] rounded-2xl",
+        "group relative block text-center",
+        "bg-white rounded-2xl border border-neutral-100 shadow-sm",
         isCompact ? "p-4" : "p-6",
-        "hover:bg-white/[0.04] hover:shadow-[0_8px_32px_rgba(217,170,56,0.06)]",
-        "hover:-translate-y-[2px]",
+        "hover:shadow-md hover:-translate-y-[2px]",
         "transition-all duration-[400ms] ease-out",
       ].join(" ")}
       style={{
@@ -52,21 +51,22 @@ export function StoryCard({
             height={avatarSize}
             className={[
               "rounded-full object-cover",
-              "ring-2 ring-white/[0.08] group-hover:ring-amber-400/30",
+              "ring-1 ring-neutral-200",
+              "shadow-sm group-hover:shadow-md",
               "transition-all duration-[400ms] ease-out",
-              "group-hover:shadow-[0_0_24px_rgba(217,170,56,0.12)]",
             ].join(" ")}
             style={{ width: avatarSize, height: avatarSize }}
           />
         ) : (
           <div
             className={[
-              "rounded-full bg-gradient-to-br from-amber-500/80 to-orange-600/80",
+              "rounded-full bg-neutral-100",
               "flex items-center justify-center",
-              "text-white font-bold",
-              "ring-2 ring-white/[0.08] group-hover:ring-amber-400/30",
+              "text-neutral-500 font-semibold",
+              "ring-1 ring-neutral-200",
+              "shadow-sm group-hover:shadow-md",
               "transition-all duration-[400ms] ease-out",
-              isCompact ? "text-lg" : "text-2xl",
+              isCompact ? "text-base" : "text-xl",
             ].join(" ")}
             style={{ width: avatarSize, height: avatarSize }}
           >
@@ -76,14 +76,13 @@ export function StoryCard({
       </div>
 
       {/* Quote block */}
-      <div className="relative mb-4">
+      <div className="relative mb-4 text-left">
         {/* Decorative opening quote mark */}
         <span
           className={[
             "absolute -top-3 -left-1 select-none pointer-events-none",
             "font-[family-name:var(--font-playfair)]",
-            "text-amber-500/40 leading-none",
-            isCompact ? "text-4xl" : "text-5xl",
+            "text-3xl text-neutral-300 leading-none",
           ].join(" ")}
           aria-hidden="true"
         >
@@ -93,7 +92,7 @@ export function StoryCard({
         <p
           className={[
             "font-[family-name:var(--font-playfair)] italic",
-            "text-neutral-300 leading-relaxed",
+            "text-[#2C2C2C] leading-relaxed",
             isCompact ? "text-base" : "text-lg",
             "pl-4 line-clamp-4",
           ].join(" ")}
@@ -103,8 +102,8 @@ export function StoryCard({
       </div>
 
       {/* Name and role */}
-      <div className="mb-3">
-        <h3 className="font-bold text-white text-[15px] leading-tight group-hover:text-amber-100 transition-colors duration-300">
+      <div className="mb-3 text-left">
+        <h3 className="text-[15px] font-semibold text-[#1a1a1a] leading-tight">
           {personality.name}
         </h3>
         <p className="text-sm text-neutral-500 mt-0.5">
@@ -113,8 +112,8 @@ export function StoryCard({
       </div>
 
       {/* Podcast count pill */}
-      <div>
-        <span className="inline-flex items-center gap-1.5 text-[11px] font-medium px-2.5 py-1 rounded-full bg-white/[0.04] text-neutral-500 border border-white/[0.04] group-hover:bg-white/[0.06] group-hover:text-neutral-400 transition-colors duration-300">
+      <div className="text-left">
+        <span className="inline-flex items-center gap-1.5 text-[11px] font-medium px-2.5 py-1 rounded-full bg-neutral-100 text-neutral-400 border border-neutral-200 transition-colors duration-300">
           <svg
             viewBox="0 0 16 16"
             className="w-3 h-3"

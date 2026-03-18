@@ -45,9 +45,9 @@ export default function RootLayout({
           rel="shortcut icon"
           href="/favicon/favicon.ico"
         />
-        <meta name="theme-color" content="#0a0a0a" />
+        <meta name="theme-color" content="#0B0B0F" />
       </head>
-      <body className="bg-[#0a0a0a] text-white antialiased font-[family-name:var(--font-inter)]">
+      <body className="bg-[#0B0B0F] text-[#E8E8ED] antialiased font-[family-name:var(--font-inter)]">
         {children}
       </body>
     </html>

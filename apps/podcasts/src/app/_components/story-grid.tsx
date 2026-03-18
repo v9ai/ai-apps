@@ -8,9 +8,9 @@ type StoryGridProps = {
 
 export function StoryGrid({ personalities, quotes }: StoryGridProps) {
   return (
-    <div className="columns-1 md:columns-2 lg:columns-3 gap-6">
+    <div className="columns-1 sm:columns-2 lg:columns-3 gap-7">
       {personalities.map((p, i) => (
-        <div key={p.slug} className="break-inside-avoid mb-6">
+        <div key={p.slug} className="break-inside-avoid mb-7">
           <StoryCard
             personality={p}
             quote={quotes[p.slug]}

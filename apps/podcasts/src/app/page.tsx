@@ -1,103 +1,176 @@
-import { CategorySection } from "@/app/_components/category-section";
-import { categories, getAllPersonalities } from "@/lib/personalities";
+"use client";
 
-export default function Index() {
-  const total = getAllPersonalities().length;
-  const totalPodcasts = getAllPersonalities().reduce(
-    (acc, p) => acc + p.podcasts.length,
-    0
+import { useState, useMemo } from "react";
+import NavHeader from "./_components/nav-header";
+import HeroSection from "./_components/hero-section";
+import { FeaturedStory } from "./_components/featured-story";
+import { CategoryFilter } from "./_components/category-filter";
+import { StoryGrid } from "./_components/story-grid";
+import {
+  categories,
+  getAllPersonalities,
+  getCategoryForPersonality,
+} from "@/lib/personalities";
+import type { Category } from "@/lib/personalities/types";
+
+/* ── Static quotes map ───────────────────────────────────────────── */
+
+const quotes: Record<string, string> = {
+  "sam-altman":
+    "The thing I lose the most sleep over is the hypothetical that we already have done something really bad by releasing these systems.",
+  "dario-amodei":
+    "I think the most important thing about AI safety is that it should be thought of as an engineering discipline, not a philosophical one.",
+  "andrej-karpathy":
+    "The hottest new programming language is English.",
+  "jensen-huang":
+    "Software is eating the world, but AI is going to eat software.",
+  "lex-fridman":
+    "I think the most beautiful thing about being human is the capacity for love in the face of suffering.",
+  "yann-lecun":
+    "Our intelligence is what makes us human, and AI is an extension of that quality.",
+  "geoffrey-hinton":
+    "I suddenly switched my views on whether these things are going to be more intelligent than us. I think they're going to be more intelligent than us.",
+  "demis-hassabis":
+    "If we can solve intelligence, we can use it to solve everything else.",
+  "fei-fei-li":
+    "If we want machines to think, we need to teach them to see.",
+  "ilya-sutskever":
+    "At some point it will be quite clear that the neural network is alive.",
+  "harrison-chase":
+    "We're building the connective tissue between language models and the rest of the world.",
+  "liang-wenfeng":
+    "We chose to open-source because we believe AI should be a shared technology for all of humanity.",
+  "mustafa-suleyman":
+    "The measure of our success will not be how smart we make our machines, but how much they help the most vulnerable.",
+  "dwarkesh-patel":
+    "The best conversations happen when you let brilliant people think out loud.",
+  "noam-shazeer":
+    "Attention is all you need... and a really good team.",
+  "amjad-masad":
+    "The future of programming is not about writing code, it's about describing what you want.",
+  "yang-zhilin":
+    "We don't just want to make models bigger — we want to make them think deeper.",
+  "boris-cherny":
+    "TypeScript isn't just a language — it's how we teach machines to understand our intentions.",
+  "jerry-liu":
+    "The future of AI isn't just about the models — it's about connecting them to the world's knowledge.",
+  "joao-moura":
+    "AI agents aren't replacing humans — they're giving humans superpowers.",
+  "samuel-colvin":
+    "Good tools should be invisible — they should just work and get out of your way.",
+  "amanda-askell":
+    "Making AI safe isn't about restrictions — it's about building systems that genuinely understand human values.",
+  "jeff-huber":
+    "The way we search will fundamentally change when machines truly understand meaning.",
+  "bob-van-luijt":
+    "Every piece of data has meaning. Vector databases help machines understand it.",
+  "athos-georgiou":
+    "The gap between research and reality is where the most interesting AI work happens.",
+};
+
+/* ── Featured personality ────────────────────────────────────────── */
+
+const FEATURED_SLUG = "andrej-karpathy";
+
+/* ── Page component ──────────────────────────────────────────────── */
+
+export default function HomePage() {
+  const [activeCategory, setActiveCategory] = useState<string | null>(null);
+
+  const allPersonalities = useMemo(() => getAllPersonalities(), []);
+
+  const totalPersonalities = allPersonalities.length;
+  const totalPodcasts = useMemo(
+    () => allPersonalities.reduce((acc, p) => acc + p.podcasts.length, 0),
+    [allPersonalities],
   );
 
+  const featured = useMemo(
+    () => allPersonalities.find((p) => p.slug === FEATURED_SLUG) ?? allPersonalities[0],
+    [allPersonalities],
+  );
+
+  const featuredCategory = useMemo(
+    () => getCategoryForPersonality(featured.slug),
+    [featured.slug],
+  );
+
+  /* Filtered personalities for the grid, excluding the featured */
+  const filteredPersonalities = useMemo(() => {
+    let pool: Category["personalities"];
+
+    if (activeCategory) {
+      const cat = categories.find((c) => c.slug === activeCategory);
+      pool = cat ? cat.personalities : [];
+    } else {
+      pool = allPersonalities;
+    }
+
+    return pool.filter((p) => p.slug !== featured.slug);
+  }, [activeCategory, allPersonalities, featured.slug]);
+
   return (
-    <main className="min-h-screen">
-      {/* ── Sticky nav ────────────────────────────────────── */}
-      <nav className="fixed top-0 w-full z-50 bg-[#050505]/80 backdrop-blur-xl border-b border-white/[0.06]">
-        <div className="max-w-7xl mx-auto px-6 h-14 flex items-center justify-between">
-          <div className="flex items-center gap-2.5">
-            <svg
-              viewBox="0 0 24 24"
-              className="w-6 h-6 text-spotify"
-              fill="currentColor"
-            >
-              <path d="M12 0C5.4 0 0 5.4 0 12s5.4 12 12 12 12-5.4 12-12S18.66 0 12 0zm5.521 17.34c-.24.359-.66.48-1.021.24-2.82-1.74-6.36-2.101-10.561-1.141-.418.122-.779-.179-.899-.539-.12-.421.18-.78.54-.9 4.56-1.021 8.52-.6 11.64 1.32.42.18.479.659.301 1.02zm1.44-3.3c-.301.42-.841.6-1.262.3-3.239-1.98-8.159-2.58-11.939-1.38-.479.12-1.02-.12-1.14-.6-.12-.48.12-1.021.6-1.141C9.6 9.9 15 10.561 18.72 12.84c.361.181.54.78.241 1.2zm.12-3.36C15.24 8.4 8.82 8.16 5.16 9.301c-.6.179-1.2-.181-1.38-.721-.18-.601.18-1.2.72-1.381 4.26-1.26 11.28-1.02 15.721 1.621.539.3.719 1.02.419 1.56-.299.421-1.02.599-1.559.3z" />
-            </svg>
-            <span className="font-semibold text-sm text-white">
-              AI Podcast Index
-            </span>
-          </div>
-          <div className="hidden sm:flex items-center gap-4 text-xs text-neutral-500">
-            <span>{total} personalities</span>
-            <span className="w-px h-3 bg-white/10" />
-            <span>{categories.length} categories</span>
-            <span className="w-px h-3 bg-white/10" />
-            <span>{totalPodcasts} appearances</span>
-          </div>
-        </div>
-      </nav>
+    <main className="min-h-screen bg-[#FAFAF7] text-[#1a1a1a]">
+      {/* ── Fixed navigation ──────────────────────────────────── */}
+      <NavHeader
+        totalPersonalities={totalPersonalities}
+        totalPodcasts={totalPodcasts}
+      />
 
-      {/* ── Hero ──────────────────────────────────────────── */}
-      <div className="pt-14">
-        <div className="max-w-7xl mx-auto px-6">
-          <div className="hero-glow">
-            <section className="pt-16 md:pt-20 pb-12">
-              <div className="flex items-start gap-6">
-                {/* Animated sound bars */}
-                <div className="hidden md:flex items-end gap-[3px] h-16 pt-6 flex-shrink-0">
-                  {[0, 1, 2, 3, 4].map((i) => (
-                    <div
-                      key={i}
-                      className="w-[3px] bg-spotify rounded-full"
-                      style={{
-                        animation: `sound-bar ${1.0 + i * 0.1}s ease-in-out ${i * 0.12}s infinite`,
-                        height: "10px",
-                      }}
-                    />
-                  ))}
-                </div>
+      {/* ── Hero section ──────────────────────────────────────── */}
+      <HeroSection totalPersonalities={totalPersonalities} />
 
-                <div>
-                  <h1 className="text-5xl md:text-6xl lg:text-7xl font-black tracking-tight leading-[0.95]">
-                    <span className="text-white">AI </span>
-                    <span className="text-gradient-green">Podcast</span>
-                    <br className="hidden sm:block" />
-                    <span className="text-white"> Index</span>
-                  </h1>
-                  <p className="text-neutral-400 text-base md:text-lg mt-5 max-w-2xl leading-relaxed">
-                    {total} voices shaping the AI landscape — indexed by podcast
-                    appearances, technical depth, and industry impact.
-                  </p>
-                </div>
-              </div>
-
-              {/* Category quick-nav pills */}
-              <div className="flex flex-wrap gap-2 mt-10">
-                {categories.map((cat) => (
-                  <a
-                    key={cat.slug}
-                    href={`#${cat.slug}`}
-                    className="px-3.5 py-1.5 rounded-full text-xs font-medium bg-white/[0.04] text-neutral-400 hover:bg-white/[0.1] hover:text-white border border-white/[0.06] transition-all duration-200"
-                  >
-                    {cat.title}
-                    <span className="ml-1.5 text-neutral-600">
-                      {cat.personalities.length}
-                    </span>
-                  </a>
-                ))}
-              </div>
-            </section>
-          </div>
-
-          {/* Divider between hero and first category */}
-          <div className="h-px bg-gradient-to-r from-transparent via-white/[0.06] to-transparent mb-10" />
-
-          {/* ── Category sections ─────────────────────────── */}
-          {categories.map((cat) => (
-            <CategorySection key={cat.slug} category={cat} />
-          ))}
-
-          <div className="pb-16" />
-        </div>
+      {/* ── Featured story ────────────────────────────────────── */}
+      <div className="max-w-4xl mx-auto px-6 pb-20">
+        <FeaturedStory
+          personality={featured}
+          quote={quotes[featured.slug] ?? featured.description}
+          categoryName={featuredCategory?.title ?? ""}
+        />
       </div>
+
+      {/* ── Divider ────────────────────────────────────────────── */}
+      <div className="max-w-7xl mx-auto px-6">
+        <div className="h-px bg-neutral-200" />
+      </div>
+
+      {/* ── "Their Stories" section ───────────────────────────── */}
+      <section className="max-w-7xl mx-auto px-6 pt-20 pb-28">
+        <h2
+          className="font-[family-name:var(--font-playfair)] text-4xl md:text-5xl font-bold text-[#1a1a1a] text-center mb-3"
+          style={{ animation: "fade-in-up 0.6s ease-out both" }}
+        >
+          Their Stories
+        </h2>
+        <p className="text-neutral-500 text-center text-sm mb-10">
+          {totalPersonalities} voices shaping the future of artificial
+          intelligence
+        </p>
+
+        {/* ── Category filter pills ───────────────────────────── */}
+        <div className="mb-12">
+          <CategoryFilter
+            categories={categories}
+            activeCategory={activeCategory}
+            onCategoryChange={setActiveCategory}
+          />
+        </div>
+
+        {/* ── Masonry story grid ──────────────────────────────── */}
+        <StoryGrid
+          personalities={filteredPersonalities}
+          quotes={quotes}
+        />
+
+        {/* Empty state */}
+        {filteredPersonalities.length === 0 && (
+          <div className="text-center py-20">
+            <p className="text-neutral-400 text-lg">
+              No stories found in this category.
+            </p>
+          </div>
+        )}
+      </section>
     </main>
   );
 }
