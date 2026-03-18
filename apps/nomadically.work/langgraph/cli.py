@@ -246,19 +246,26 @@ def cleanup(dry_run: bool, cutoff_days: int):
         print(f"Marked {stats.get('marked_stale', 0)} jobs stale.")
 
 
-@main.command("interview-prep")
+@main.command("app-prep")
 @click.option("--app-id", "-a", required=True, type=int, help="Application ID from the database")
-@click.option("--save/--no-save", default=True, show_default=True, help="Save report to applications.ai_interview_questions")
-def interview_prep(app_id: int, save: bool):
-    """Generate interview prep questions for a job application."""
-    import psycopg
+@click.option("--exclude", "-x", default="", help="Comma-separated tech tags to exclude (e.g. webpack,jest)")
+@click.option("--dry-run", is_flag=True, default=False, help="Extract and show technologies without persisting")
+@click.option("--save/--no-save", default=True, show_default=True, help="Save interview report to application")
+def app_prep(app_id: int, exclude: str, dry_run: bool, save: bool):
+    """Full application prep: interview questions + tech knowledge in one pass.
+
+    Merges the interview-prep and tech-knowledge pipelines. Parses the JD,
+    then fans out in parallel: 4 interview Q&A categories + N tech study lessons.
+    """
+    import json as _json
+
     from src.db.connection import get_connection
-    from src.graphs.interview_prep import build_interview_prep_graph
+    from src.graphs.application_prep import build_application_prep_graph
 
     conn = get_connection()
     with conn.cursor() as cur:
         cur.execute(
-            "SELECT id, job_title, company_name, job_description, status FROM applications WHERE id = %s",
+            "SELECT id, job_title, company_name, job_description, status, tech_dismissed_tags FROM applications WHERE id = %s",
             [app_id],
         )
         app = cur.fetchone()
@@ -269,7 +276,7 @@ def interview_prep(app_id: int, save: bool):
         return
 
     if not app.get("job_description"):
-        print("Application has no job description — cannot generate prep questions.")
+        print("Application has no job description — cannot run prep.")
         conn.close()
         return
 
@@ -283,11 +290,24 @@ def interview_prep(app_id: int, save: bool):
         key_row = cur.fetchone()
     company_key = (key_row["company_key"] if key_row else company_name.lower()) or ""
 
-    print(f"\nApplication #{app_id}: {app['job_title']} @ {company_name}")
-    print(f"Status: {app['status']} | company_key: {company_key}\n")
-    print("Running interview prep pipeline...\n")
+    # Merge CLI --exclude with DB-dismissed tags
+    exclude_tags = [t.strip() for t in exclude.split(",") if t.strip()]
+    if app.get("tech_dismissed_tags"):
+        try:
+            db_dismissed = _json.loads(app["tech_dismissed_tags"])
+            if isinstance(db_dismissed, list):
+                exclude_tags = list(set(exclude_tags) | set(db_dismissed))
+        except (ValueError, TypeError):
+            pass
 
-    graph = build_interview_prep_graph()
+    print(f"\nApplication #{app_id}: {app['job_title']} @ {company_name}")
+    print(f"Status: {app['status']} | company_key: {company_key}")
+    if exclude_tags:
+        print(f"Excluded tech: {', '.join(exclude_tags)}")
+    print(f"Dry run: {dry_run}\n")
+    print("Running application prep pipeline...\n")
+
+    graph = build_application_prep_graph()
     result = graph.invoke({
         "application_id": app_id,
         "job_title": app["job_title"] or "",
@@ -296,8 +316,15 @@ def interview_prep(app_id: int, save: bool):
         "job_description": app["job_description"] or "",
         "parsed": None,
         "company_context": "",
+        "technologies": [],
+        "organized": [],
+        "existing_slugs": [],
         "question_sets": [],
+        "generated": [],
         "report": "",
+        "dry_run": dry_run,
+        "exclude_tags": exclude_tags,
+        "stats": {},
     })
 
     report = result.get("report", "")
@@ -314,104 +341,6 @@ def interview_prep(app_id: int, save: bool):
     conn.close()
     print("\n" + "=" * 70)
     print(report)
-
-
-@main.command("tech-knowledge")
-@click.option("--app-id", "-a", type=int, default=None, help="Application ID to extract tech from")
-@click.option("--job-id", "-j", type=int, default=None, help="Job ID to extract tech from")
-@click.option("--exclude", "-x", default="", help="Comma-separated tags to exclude (e.g. webpack,jest)")
-@click.option("--dry-run", is_flag=True, default=False, help="Extract and show technologies without persisting")
-def tech_knowledge(app_id: int | None, job_id: int | None, exclude: str, dry_run: bool):
-    """Extract technologies from a job and generate knowledge study material."""
-    from src.db.connection import get_connection
-    from src.graphs.tech_knowledge import build_tech_knowledge_graph
-
-    if not app_id and not job_id:
-        print("Provide --app-id or --job-id.")
-        return
-
-    conn = get_connection()
-
-    if app_id:
-        with conn.cursor() as cur:
-            cur.execute(
-                "SELECT id, job_title, company_name, job_description, tech_dismissed_tags FROM applications WHERE id = %s",
-                [app_id],
-            )
-            row = cur.fetchone()
-        if not row:
-            print(f"Application {app_id} not found.")
-            conn.close()
-            return
-        if not row.get("job_description"):
-            print("Application has no job description.")
-            conn.close()
-            return
-        title = row["job_title"] or ""
-        company = row["company_name"] or ""
-        description = row["job_description"] or ""
-        source_id = app_id
-    else:
-        with conn.cursor() as cur:
-            cur.execute(
-                "SELECT id, title, company_name, description FROM jobs WHERE id = %s",
-                [job_id],
-            )
-            row = cur.fetchone()
-        if not row:
-            print(f"Job {job_id} not found.")
-            conn.close()
-            return
-        title = row["title"] or ""
-        company = row["company_name"] or ""
-        description = row["description"] or ""
-        source_id = job_id
-
-    conn.close()
-
-    # Merge CLI --exclude with DB-dismissed tags
-    import json as _json
-    exclude_tags = [t.strip() for t in exclude.split(",") if t.strip()]
-    if app_id and row.get("tech_dismissed_tags"):
-        try:
-            db_dismissed = _json.loads(row["tech_dismissed_tags"])
-            if isinstance(db_dismissed, list):
-                exclude_tags = list(set(exclude_tags) | set(db_dismissed))
-        except (ValueError, TypeError):
-            pass
-
-    source_label = f"application #{app_id}" if app_id else f"job #{job_id}"
-    print(f"\nTech Knowledge Pipeline — {title} @ {company}")
-    print(f"Source: {source_label}")
-    if exclude_tags:
-        print(f"Dismissed: {', '.join(exclude_tags)}")
-    print(f"Dry run: {dry_run}\n")
-
-    graph = build_tech_knowledge_graph()
-    result = graph.invoke({
-        "application_id": source_id,
-        "job_title": title,
-        "company_name": company,
-        "job_description": description,
-        "source_text": "",
-        "technologies": [],
-        "organized": [],
-        "existing_slugs": [],
-        "generated": [],
-        "dry_run": dry_run,
-        "exclude_tags": exclude_tags,
-        "stats": {},
-    })
-
-    stats = result.get("stats", {})
-    print(f"\n--- Tech Knowledge Summary ---")
-    print(f"  Technologies extracted: {stats.get('technologies_extracted', 0)}")
-    print(f"  Already in knowledge DB: {stats.get('already_existed', 0)}")
-    print(f"  Content generated: {stats.get('content_generated', 0)}")
-    if not dry_run:
-        print(f"  Lessons persisted: {stats.get('lessons_persisted', 0)}")
-        print(f"  Concepts created: {stats.get('concepts_created', 0)}")
-        print(f"  Edges created: {stats.get('edges_created', 0)}")
 
 
 @main.command("eval-tech-knowledge")
