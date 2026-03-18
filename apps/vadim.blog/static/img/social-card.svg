@@ -28,20 +28,20 @@
   <rect width="1200" height="630" fill="url(#glow)"/>
 
   <!-- Wordmark group, centered -->
-  <g transform="translate(600, 290)">
-    <!-- VADIM -->
-    <text x="-260" y="0" font-family="'Instrument Sans', 'Inter', sans-serif" font-size="96" font-weight="700" letter-spacing="8" fill="#f8fafc">VADIM</text>
+  <g transform="translate(600, 280)">
+    <!-- Vadim -->
+    <text x="-340" y="0" font-family="'Instrument Sans', 'Inter', sans-serif" font-size="144" font-weight="700" letter-spacing="10" fill="#f8fafc">Vadim</text>
 
     <!-- dot accent -->
-    <circle cx="42" cy="-2" r="8" fill="url(#dotGrad)"/>
+    <circle cx="90" cy="-4" r="11" fill="url(#dotGrad)"/>
 
     <!-- blog -->
-    <text x="66" y="0" font-family="'Instrument Sans', 'Inter', sans-serif" font-size="96" font-weight="500" letter-spacing="1" fill="url(#blogGrad)">blog</text>
+    <text x="118" y="0" font-family="'Instrument Sans', 'Inter', sans-serif" font-size="144" font-weight="500" letter-spacing="2" fill="url(#blogGrad)">blog</text>
   </g>
 
   <!-- Subtle underline accent -->
-  <rect x="310" y="310" width="580" height="2.5" rx="1.25" fill="url(#underline)"/>
+  <rect x="190" y="310" width="820" height="3" rx="1.5" fill="url(#underline)"/>
 
   <!-- Tagline -->
-  <text x="600" y="370" text-anchor="middle" font-family="'Instrument Sans', 'Inter', sans-serif" font-size="24" font-weight="400" letter-spacing="1.5" fill="#94a3b8">Software engineering, AI &amp; web development</text>
+  <text x="600" y="385" text-anchor="middle" font-family="'Instrument Sans', 'Inter', sans-serif" font-size="36" font-weight="400" letter-spacing="2" fill="#94a3b8">Software engineering, AI &amp; web development</text>
 </svg>
