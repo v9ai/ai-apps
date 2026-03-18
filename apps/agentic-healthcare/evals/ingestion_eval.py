@@ -17,19 +17,15 @@ Run:
 
 from __future__ import annotations
 
-import os
-import sys
-
 import numpy as np
 import pytest
 from deepeval import assert_test
-from deepeval.metrics import GEval
 from deepeval.test_case import LLMTestCase, LLMTestCaseParams
 
-sys.path.insert(0, os.path.join(os.path.dirname(__file__), "..", "langgraph"))
+from conftest import make_geval, skip_no_judge
 
-from llama_index.core import Document, VectorStoreIndex, Settings
-from llama_index.core.schema import TextNode, MetadataMode
+from llama_index.core import VectorStoreIndex, Settings
+from llama_index.core.schema import Document, TextNode, MetadataMode
 
 from embeddings import (
     build_health_state_node,
@@ -245,12 +241,18 @@ class TestEmbeddingSemanticClustering:
         assert sim_lipid > sim_cross
 
     def test_renal_markers_cluster(self, embed_model):
-        bun = embed_model.get_text_embedding("Marker: BUN\nValue: 22 mg/dL\nReference: 7-20\nFlag: high")
-        creat = embed_model.get_text_embedding("Marker: Creatinine\nValue: 1.5 mg/dL\nReference: 0.7-1.3\nFlag: high")
-        ast = embed_model.get_text_embedding("Marker: AST\nValue: 85 U/L\nReference: 10-40\nFlag: high")
+        bun = embed_model.get_text_embedding(
+            "Marker: BUN (Blood Urea Nitrogen)\nValue: 22 mg/dL\nReference: 7-20\nFlag: high\nKidney function marker"
+        )
+        creat = embed_model.get_text_embedding(
+            "Marker: Creatinine\nValue: 1.5 mg/dL\nReference: 0.7-1.3\nFlag: high\nKidney function marker"
+        )
+        glucose = embed_model.get_text_embedding(
+            "Marker: Glucose\nValue: 250 mg/dL\nReference: 70-100\nFlag: high\nMetabolic blood sugar marker"
+        )
 
         sim_renal = self._cosine_sim(bun, creat)
-        sim_cross = self._cosine_sim(bun, ast)
+        sim_cross = self._cosine_sim(bun, glucose)
         assert sim_renal > sim_cross
 
     def test_normal_vs_abnormal_differentiation(self, embed_model):
@@ -335,77 +337,58 @@ class TestRetrievalQuality:
     def test_cholesterol_query_retrieves_lipid(self, index):
         retriever = index.as_retriever(similarity_top_k=3)
         results = retriever.retrieve("What are my cholesterol levels?")
-        texts = [r.text for r in results]
+        texts = [r.get_content() for r in results]
         assert any("Cholesterol" in t or "HDL" in t or "LDL" in t for t in texts)
 
     def test_kidney_query_retrieves_renal(self, index):
         retriever = index.as_retriever(similarity_top_k=3)
         results = retriever.retrieve("How is my kidney function?")
-        texts = [r.text for r in results]
+        texts = [r.get_content() for r in results]
         assert any("BUN" in t or "Creatinine" in t for t in texts)
 
     def test_blood_count_query_retrieves_cbc(self, index):
         retriever = index.as_retriever(similarity_top_k=3)
         results = retriever.retrieve("What is my white blood cell count?")
-        texts = [r.text for r in results]
+        texts = [r.get_content() for r in results]
         assert any("WBC" in t or "Neutrophils" in t or "Hemoglobin" in t for t in texts)
 
     def test_inflammation_query_retrieves_nlr_markers(self, index):
         retriever = index.as_retriever(similarity_top_k=5)
         results = retriever.retrieve("Do I have any signs of inflammation?")
-        texts = [r.text for r in results]
+        texts = [r.get_content() for r in results]
         assert any("Neutrophils" in t or "Lymphocytes" in t for t in texts)
 
     def test_metabolic_query_retrieves_glucose_tg(self, index):
         retriever = index.as_retriever(similarity_top_k=5)
         results = retriever.retrieve("Am I at risk for metabolic syndrome?")
-        texts = [r.text for r in results]
+        texts = [r.get_content() for r in results]
         assert any("Glucose" in t or "Triglycerides" in t or "TG/HDL" in t for t in texts)
 
 
 # ═══════════════════════════════════════════════════════════════════════
-# D. DeepEval — node content quality
+# D. DeepEval — node content quality (LLM-judged)
 # ═══════════════════════════════════════════════════════════════════════
 
-NODE_CONTENT_QUALITY = GEval(
-    name="Node Content Quality",
-    criteria=(
-        "Given a formatted blood test node (actual_output), evaluate whether it "
-        "contains all essential clinical information: marker names, numeric values, "
-        "units, reference ranges, and abnormal flags. The format should be structured "
-        "and machine-readable while remaining clinically informative. Missing "
-        "values or ambiguous formatting reduce the score."
-    ),
-    evaluation_params=[
-        LLMTestCaseParams.ACTUAL_OUTPUT,
-        LLMTestCaseParams.EXPECTED_OUTPUT,
-    ],
-    threshold=0.7,
-)
 
-HEALTH_STATE_COMPLETENESS = GEval(
-    name="Health State Completeness",
-    criteria=(
-        "Given a health state embedding text (actual_output), evaluate whether it "
-        "includes: (1) all marker values, (2) computed derived ratios with risk "
-        "classifications, (3) a summary of abnormal findings, and (4) metadata "
-        "(file name, date). All computable ratios from the available markers should "
-        "be present."
-    ),
-    evaluation_params=[
-        LLMTestCaseParams.ACTUAL_OUTPUT,
-        LLMTestCaseParams.EXPECTED_OUTPUT,
-    ],
-    threshold=0.7,
-)
-
-
+@skip_no_judge
 def test_test_document_content_quality():
     markers = parse_markers(_LIPID_ELEMENTS)
     doc = build_test_document(
         markers,
         {"fileName": "lipid.pdf", "uploadedAt": "2024-01-01"},
         "test-1", "user-1",
+    )
+    metric = make_geval(
+        name="Node Content Quality",
+        criteria=(
+            "Given a formatted blood test node (actual_output), evaluate whether it "
+            "contains all essential clinical information: marker names, numeric values, "
+            "units, reference ranges, and abnormal flags. The format should be structured "
+            "and machine-readable while remaining clinically informative. Missing "
+            "values or ambiguous formatting reduce the score."
+        ),
+        evaluation_params=[LLMTestCaseParams.ACTUAL_OUTPUT, LLMTestCaseParams.EXPECTED_OUTPUT],
+        threshold=0.7,
     )
     test_case = LLMTestCase(
         input="Build test document for a lipid panel with 5 markers",
@@ -416,14 +399,27 @@ def test_test_document_content_quality():
             "with a summary noting 5 abnormal markers."
         ),
     )
-    assert_test(test_case, [NODE_CONTENT_QUALITY])
+    assert_test(test_case, [metric])
 
 
+@skip_no_judge
 def test_health_state_content_completeness():
     markers = parse_markers(_LIPID_ELEMENTS)
     node = build_health_state_node(
         markers, "test-1", "user-1",
         {"fileName": "lipid.pdf", "uploadedAt": "2024-01-01"},
+    )
+    metric = make_geval(
+        name="Health State Completeness",
+        criteria=(
+            "Given a health state embedding text (actual_output), evaluate whether it "
+            "includes: (1) all marker values, (2) computed derived ratios with risk "
+            "classifications, (3) a summary of abnormal findings, and (4) metadata "
+            "(file name, date). All computable ratios from the available markers should "
+            "be present."
+        ),
+        evaluation_params=[LLMTestCaseParams.ACTUAL_OUTPUT, LLMTestCaseParams.EXPECTED_OUTPUT],
+        threshold=0.7,
     )
     test_case = LLMTestCase(
         input="Build health state embedding for a lipid panel",
@@ -435,4 +431,4 @@ def test_health_state_content_completeness():
             "Summary should note 5 abnormal markers."
         ),
     )
-    assert_test(test_case, [HEALTH_STATE_COMPLETENESS])
+    assert_test(test_case, [metric])

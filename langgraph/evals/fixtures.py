@@ -2,7 +2,9 @@
 
 from __future__ import annotations
 
-# ── Sample source files (simulating what read_node would extract) ─────────────
+# ═══════════════════════════════════════════════════════════════════════════════
+# Standard todo-app fixtures
+# ═══════════════════════════════════════════════════════════════════════════════
 
 SAMPLE_PACKAGE_JSON = """{
   "name": "todo-app",
@@ -96,7 +98,9 @@ SAMPLE_FILES_TEXT = f"""\
 {SAMPLE_API_ROUTE}
 ```"""
 
-# ── Sample analysis output (what analyze_node produces) ──────────────────────
+# ═══════════════════════════════════════════════════════════════════════════════
+# Sample analysis (what analyze_node produces)
+# ═══════════════════════════════════════════════════════════════════════════════
 
 SAMPLE_ANALYSIS = """\
 ## Technical Analysis: todo-app
@@ -155,7 +159,9 @@ Two tables defined in `src/db/schema.ts`:
 - better-auth's drizzle adapter shares the same schema module, ensuring type consistency between auth tables and application tables
 """
 
-# ── Sample generated JSON (what generate_node produces) ──────────────────────
+# ═══════════════════════════════════════════════════════════════════════════════
+# Sample generated JSON (what generate_node produces)
+# ═══════════════════════════════════════════════════════════════════════════════
 
 SAMPLE_GENERATED_JSON = """{
   "title": "How It Works",
@@ -190,65 +196,273 @@ SAMPLE_GENERATED_JSON = """{
   ]
 }"""
 
-# ── Sample generated TypeScript files (what write_node produces) ─────────────
+# ═══════════════════════════════════════════════════════════════════════════════
+# Edge case: app with NO database, NO auth
+# ═══════════════════════════════════════════════════════════════════════════════
 
-SAMPLE_DATA_TSX = """\
-import type { Paper, PipelineAgent, Stat } from "@ai-apps/ui/how-it-works";
-
-// ─── Technical Foundations ──────────────────────────────────────────
-
-export const papers: Paper[] = [
-  {
-    slug: "nextjs-15",
-    number: 1,
-    title: "Next.js 15",
-    category: "Frontend",
-    wordCount: 0,
-    readingTimeMin: 2,
-    authors: "Vercel",
-    year: 2024,
-    finding: "React framework with App Router and server components",
-    relevance: "Powers the full-stack app with /app/api/ route handlers",
-    url: "https://nextjs.org/docs",
-    categoryColor: "var(--blue-9)",
+SAMPLE_NO_DB_NO_AUTH_FILES = """\
+### package.json
+```
+{
+  "name": "landing-page",
+  "version": "0.1.0",
+  "dependencies": {
+    "next": "15.0.0",
+    "framer-motion": "^11.0.0",
+    "@radix-ui/react-dialog": "^1.0.0"
   },
-];
+  "devDependencies": {
+    "typescript": "5.9.3",
+    "tailwindcss": "^3.4.0"
+  }
+}
+```
 
-// ─── Key Metrics ───────────────────────────────────────────────────
+### app/page.tsx
+```
+import { Hero } from "@/components/hero";
+import { Features } from "@/components/features";
+import { Pricing } from "@/components/pricing";
 
-export const researchStats: Stat[] = [
-  {
-    number: "2",
-    label: "Database tables (user, todo)",
-    source: "src/db/schema.ts",
-  },
-];
+export default function Home() {
+  return (
+    <main>
+      <Hero />
+      <Features />
+      <Pricing />
+    </main>
+  );
+}
+```
 
-// ─── Pipeline Stages ───────────────────────────────────────────────
+### components/hero.tsx
+```
+"use client";
+import { motion } from "framer-motion";
 
-export const pipelineAgents: PipelineAgent[] = [
-  {
-    name: "Authentication",
-    description: "User submits credentials, better-auth creates a session.",
-  },
-];
+export function Hero() {
+  return (
+    <motion.section
+      initial={{ opacity: 0, y: 20 }}
+      animate={{ opacity: 1, y: 0 }}
+      className="flex flex-col items-center py-24"
+    >
+      <h1 className="text-5xl font-bold">Ship faster</h1>
+      <p className="mt-4 text-xl text-gray-600">The modern dev platform</p>
+    </motion.section>
+  );
+}
+```"""
 
-// ─── Narrative ─────────────────────────────────────────────────────
+SAMPLE_NO_DB_NO_AUTH_ANALYSIS = """\
+## Technical Analysis: landing-page
 
-export const story =
-  "Users authenticate via better-auth and manage todos through a Next.js API.";
+### 1. Purpose
+A marketing landing page with animated hero, features, and pricing sections. Static site with no backend, no database, and no user authentication.
 
-// ─── Deep-Dive Sections ────────────────────────────────────────────
+### 2. Tech Stack
+- **Next.js 15.0.0** — React framework with App Router
+- **TypeScript 5.9.3** — type safety
+- **framer-motion 11.0.0** — animation library
+- **@radix-ui/react-dialog 1.0.0** — accessible dialog primitives
+- **tailwindcss 3.4.0** — utility-first CSS framework
 
-export const extraSections: { heading: string; content: string }[] = [
-  {
-    heading: "System Architecture",
-    content: "Standard Next.js 15 App Router with centralized auth.",
-  },
-];
+### 3. Data Flow
+1. User navigates to the landing page
+2. Next.js serves the static `page.tsx` with server-rendered HTML
+3. Client-side hydration activates framer-motion animations in `<Hero />`
+4. No API calls, no data fetching — purely static content
+
+### 4. Architecture
+- Next.js App Router with a single `app/page.tsx` entry point
+- Component-based structure: `components/hero.tsx`, `components/features.tsx`, `components/pricing.tsx`
+- All components are client-side (`"use client"`) for animation support
+
+### 5. Features
+- Animated hero section with fade-in effect via `motion.section` from framer-motion
+- Features showcase section
+- Pricing section
+- Responsive layout with Tailwind CSS utility classes
+
+### 6. AI / LLM Integration
+No AI or LLM integration detected in the provided source files.
+
+### 7. Database & Schema
+No database detected. This is a static landing page with no data persistence.
+
+### 8. API Design
+No API routes detected. All content is statically rendered.
+
+### 9. Auth & Security
+No authentication system detected. This is a public-facing static page.
+
+### 10. Unique Patterns
+- Combines server-rendered Next.js pages with client-side framer-motion animations
+- Uses Radix UI primitives for accessible interactive components
 """
 
-# ── Test case identifiers ────────────────────────────────────────────────────
+# ═══════════════════════════════════════════════════════════════════════════════
+# Edge case: AI-heavy app
+# ═══════════════════════════════════════════════════════════════════════════════
+
+SAMPLE_AI_HEAVY_FILES = """\
+### package.json
+```
+{
+  "name": "ai-chat",
+  "version": "0.1.0",
+  "dependencies": {
+    "next": "15.0.0",
+    "ai": "^4.0.0",
+    "@ai-sdk/openai": "^1.0.0",
+    "drizzle-orm": "^0.38.0",
+    "@neondatabase/serverless": "^0.10.0",
+    "zod": "^3.23.0"
+  }
+}
+```
+
+### app/api/chat/route.ts
+```
+import { openai } from "@ai-sdk/openai";
+import { streamText } from "ai";
+import { db } from "@/src/db";
+import { messages } from "@/src/db/schema";
+
+export async function POST(req: Request) {
+  const { prompt, conversationId } = await req.json();
+
+  await db.insert(messages).values({
+    conversationId,
+    role: "user",
+    content: prompt,
+  });
+
+  const result = streamText({
+    model: openai("gpt-4o"),
+    system: "You are a helpful coding assistant.",
+    messages: [{ role: "user", content: prompt }],
+  });
+
+  return result.toDataStreamResponse();
+}
+```
+
+### lib/embeddings.ts
+```
+import { openai } from "@ai-sdk/openai";
+import { embed } from "ai";
+import { db } from "@/src/db";
+import { documents } from "@/src/db/schema";
+import { cosineDistance, desc, sql } from "drizzle-orm";
+
+export async function generateEmbedding(text: string) {
+  const { embedding } = await embed({
+    model: openai.embedding("text-embedding-3-small"),
+    value: text,
+  });
+  return embedding;
+}
+
+export async function findSimilarDocuments(query: string, limit = 5) {
+  const queryEmbedding = await generateEmbedding(query);
+  return db
+    .select()
+    .from(documents)
+    .orderBy(cosineDistance(documents.embedding, queryEmbedding))
+    .limit(limit);
+}
+```"""
+
+# ═══════════════════════════════════════════════════════════════════════════════
+# Reflection fixtures: weak initial analysis and improved refined version
+# ═══════════════════════════════════════════════════════════════════════════════
+
+SAMPLE_WEAK_ANALYSIS = """\
+## Technical Analysis: todo-app
+
+### 1. Purpose
+A todo application.
+
+### 2. Tech Stack
+- Next.js
+- TypeScript
+- Database
+- Authentication
+
+### 3. Data Flow
+The user creates todos which are stored in the database.
+
+### 4. Architecture
+Standard Next.js app with App Router.
+
+### 5. Features
+- Create todos
+- Read todos
+- Authentication
+
+### 6. AI / LLM Integration
+None.
+
+### 7. Database & Schema
+Uses a PostgreSQL database with tables for users and todos.
+
+### 8. API Design
+REST API for todos.
+
+### 9. Auth & Security
+Uses authentication.
+
+### 10. Unique Patterns
+Nothing notable.
+"""
+
+SAMPLE_CRITIQUE_OF_WEAK = """\
+NEEDS_REFINEMENT:
+- Section 1 (Purpose): Too vague — should specify "authenticated users" and "personal task management"
+- Section 2 (Tech Stack): Missing version numbers for all packages. Should list: Next.js 15.0.0, TypeScript 5.9.3, better-auth 1.2.0, drizzle-orm 0.38.0, @neondatabase/serverless 0.10.0, zod 3.23.0
+- Section 3 (Data Flow): No specific code artefacts. Should trace: login → `auth.api.getSession()` → `/api/todos` GET/POST → `db.select().from(todo)` → `NextResponse.json()`
+- Section 4 (Architecture): Generic. Should mention `drizzleAdapter`, `src/db/schema.ts`, Neon serverless
+- Section 5 (Features): Missing details. Should name `defaultRandom()` for UUID PKs, `eq(todo.userId, session.user.id)` for filtering
+- Section 7 (Database): Should name specific columns: `user.id`, `user.email` (unique), `todo.user_id` (FK), `todo.completed` (boolean default false)
+- Section 8 (API Design): Should list `GET /api/todos`, `POST /api/todos` with request/response shapes
+- Section 9 (Auth): Should mention better-auth, `drizzleAdapter`, 7-day session TTL, 401 responses
+- Section 10 (Unique Patterns): Should note Neon serverless driver for edge compatibility and shared schema module between auth and app tables
+"""
+
+SAMPLE_REFINED_ANALYSIS = SAMPLE_ANALYSIS  # The "good" analysis is the refined version
+
+# ═══════════════════════════════════════════════════════════════════════════════
+# Invalid JSON for retry testing
+# ═══════════════════════════════════════════════════════════════════════════════
+
+SAMPLE_INVALID_JSON = """{
+  "title": "How It Works",
+  "subtitle": "A todo app",
+  "story": "It manages todos. Users can create and read them.",
+  "papers": [
+    {"slug": "NextJS", "number": 1, "title": "Next.js", "category": "Frontend", "wordCount": 0, "readingTimeMin": 2, "categoryColor": "var(--blue-9)"},
+    {"slug": "drizzle", "number": 3, "title": "Drizzle", "category": "Database", "wordCount": 0, "readingTimeMin": 2, "categoryColor": "var(--green-9)"},
+    {"slug": "better-auth", "number": 2, "title": "better-auth", "category": "Auth", "wordCount": 0, "readingTimeMin": 2, "categoryColor": "var(--pink-9)"}
+  ],
+  "agents": [
+    {"name": "Auth", "description": "Handles auth."},
+    {"name": "API", "description": "Handles API."},
+    {"name": "DB", "description": "Handles DB."}
+  ],
+  "stats": [
+    {"number": "some", "label": "Features"},
+    {"number": "many", "label": "Things"}
+  ],
+  "extraSections": [
+    {"heading": "Database Design", "content": "Uses a database."},
+    {"heading": "Deployment", "content": "Deploys somewhere."}
+  ]
+}"""
+
+# ═══════════════════════════════════════════════════════════════════════════════
+# Test case identifiers
+# ═══════════════════════════════════════════════════════════════════════════════
 
 TEST_CASES = [
     {

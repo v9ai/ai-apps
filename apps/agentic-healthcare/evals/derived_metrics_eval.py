@@ -6,21 +6,18 @@ health-state embedding pipeline to ensure clinical ratios are accurate.
 
 Run:
   cd apps/agentic-healthcare
-  uv run --project langgraph deepeval test evals/derived_metrics_eval.py
+  uv run --project langgraph pytest evals/derived_metrics_eval.py -v
 """
 
 from __future__ import annotations
 
 import math
-import os
-import sys
 
 import pytest
 from deepeval import assert_test
-from deepeval.metrics import GEval
 from deepeval.test_case import LLMTestCase, LLMTestCaseParams
 
-sys.path.insert(0, os.path.join(os.path.dirname(__file__), "..", "langgraph"))
+from conftest import make_geval, skip_no_judge
 
 from embeddings import (
     METRIC_REFERENCES,
@@ -59,7 +56,7 @@ class TestComputeDerivedMetrics:
     def test_tyg_index(self):
         markers = _make_markers(Triglycerides="150", Glucose="100")
         m = compute_derived_metrics(markers)
-        expected = math.log10(150 * 100 * 0.5)
+        expected = math.log(150 * 100 * 0.5)  # natural log, per TyG formula
         assert m["glucose_triglyceride_index"] == pytest.approx(expected, rel=1e-4)
 
     def test_nlr(self):
@@ -288,39 +285,6 @@ class TestHealthStateFormatting:
 # D. DeepEval LLM-as-judge: clinical ratio interpretation
 # ═══════════════════════════════════════════════════════════════════════
 
-RATIO_INTERPRETATION = GEval(
-    name="Ratio Interpretation Accuracy",
-    criteria=(
-        "Given a set of derived blood ratio values with risk classifications "
-        "(actual_output), evaluate whether the risk labels (optimal, borderline, "
-        "elevated, low) are clinically correct given the standard thresholds: "
-        "TG/HDL optimal <2.0, NLR optimal 1.0-3.0, De Ritis optimal 0.8-1.2, "
-        "BUN/Cr optimal 10-20, TC/HDL optimal <4.5, HDL/LDL optimal >=0.4, "
-        "TyG optimal <8.5."
-    ),
-    evaluation_params=[
-        LLMTestCaseParams.ACTUAL_OUTPUT,
-        LLMTestCaseParams.EXPECTED_OUTPUT,
-    ],
-    threshold=0.8,
-)
-
-MULTI_SYSTEM_ASSESSMENT = GEval(
-    name="Multi-System Risk Assessment",
-    criteria=(
-        "Given a health state summary with multiple derived ratios (actual_output), "
-        "evaluate whether the overall risk assessment correctly identifies which "
-        "organ systems are affected. Elevated NLR → inflammatory, elevated BUN/Cr → "
-        "renal, elevated De Ritis → hepatic, elevated TG/HDL or TyG → metabolic, "
-        "elevated TC/HDL or HDL/LDL → cardiovascular."
-    ),
-    evaluation_params=[
-        LLMTestCaseParams.ACTUAL_OUTPUT,
-        LLMTestCaseParams.EXPECTED_OUTPUT,
-    ],
-    threshold=0.7,
-)
-
 _RATIO_CASES = [
     # Case 1: Healthy profile — all optimal
     {
@@ -393,8 +357,37 @@ _RATIO_CASES = [
 ]
 
 
+@skip_no_judge
 @pytest.mark.parametrize("case", _RATIO_CASES, ids=["healthy", "metabolic_syndrome", "multi_system_crisis"])
 def test_ratio_interpretation(case):
+    metrics = [
+        make_geval(
+            name="Ratio Interpretation Accuracy",
+            criteria=(
+                "Given a set of derived blood ratio values with risk classifications "
+                "(actual_output), evaluate whether the risk labels (optimal, borderline, "
+                "elevated, low) are clinically correct given the standard thresholds: "
+                "TG/HDL optimal <2.0, NLR optimal 1.0-3.0, De Ritis optimal 0.8-1.2, "
+                "BUN/Cr optimal 10-20, TC/HDL optimal <4.5, HDL/LDL optimal >=0.4, "
+                "TyG optimal <8.5."
+            ),
+            evaluation_params=[LLMTestCaseParams.ACTUAL_OUTPUT, LLMTestCaseParams.EXPECTED_OUTPUT],
+            threshold=0.8,
+        ),
+        make_geval(
+            name="Multi-System Risk Assessment",
+            criteria=(
+                "Given a health state summary with multiple derived ratios (actual_output), "
+                "evaluate whether the overall risk assessment correctly identifies which "
+                "organ systems are affected. Elevated NLR → inflammatory, elevated BUN/Cr → "
+                "renal, elevated De Ritis → hepatic, elevated TG/HDL or TyG → metabolic, "
+                "elevated TC/HDL or HDL/LDL → cardiovascular."
+            ),
+            evaluation_params=[LLMTestCaseParams.ACTUAL_OUTPUT, LLMTestCaseParams.EXPECTED_OUTPUT],
+            threshold=0.7,
+        ),
+    ]
+
     markers = case["markers"]
     derived = compute_derived_metrics(markers)
     content = format_health_state_for_embedding(
@@ -405,4 +398,4 @@ def test_ratio_interpretation(case):
         actual_output=content,
         expected_output=case["expected"],
     )
-    assert_test(test_case, [RATIO_INTERPRETATION, MULTI_SYSTEM_ASSESSMENT])
+    assert_test(test_case, metrics)

@@ -56,7 +56,9 @@ from deepeval.test_case import LLMTestCase
 _API_KEY = os.environ.get("DEEPSEEK_API_KEY", "")
 _BASE_URL = os.environ.get("DEEPSEEK_BASE_URL", "https://api.deepseek.com/v1")
 
-if not _API_KEY:
+# Allow pytest collection even without API key — standalone usage still requires it
+_MISSING_KEY = not _API_KEY
+if _MISSING_KEY and "pytest" not in sys.modules:
     raise EnvironmentError("DEEPSEEK_API_KEY is required")
 
 

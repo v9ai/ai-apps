@@ -200,5 +200,43 @@ async def _counter(url: str, topic: str, output_dir: str, publish: bool, git_pus
     print(f"\n  Countering: {url}")
 
 
+@main.command(name="eval")
+@click.option("--input", "input_file", required=True, help="Path to article markdown")
+@click.option("--research", "research_file", default=None, help="Path to research brief")
+@click.option("--seo", "seo_file", default=None, help="Path to SEO strategy")
+@click.option(
+    "--metrics", default=None,
+    help="Comma-separated metric names to run (default: all 7). "
+         "Options: source_citation, anti_hallucination, writing_quality, "
+         "journalistic_standards, seo_alignment, structural_completeness, lead_quality",
+)
+def eval_cmd(input_file: str, research_file, seo_file, metrics):
+    """Evaluate article quality against journalism metrics (requires deepeval)."""
+    asyncio.run(_eval_article(input_file, research_file, seo_file, metrics))
+
+
+async def _eval_article(
+    input_file: str,
+    research_file: str | None,
+    seo_file: str | None,
+    metrics: str | None,
+):
+    from pathlib import Path
+    from press.evals import evaluate_file
+
+    metrics_list = [m.strip() for m in metrics.split(",")] if metrics else None
+    result = await evaluate_file(
+        Path(input_file),
+        Path(research_file) if research_file else None,
+        Path(seo_file) if seo_file else None,
+        metrics_to_run=metrics_list,
+    )
+
+    print("\n╔══════════════════════════════════════╗")
+    print("║       press eval — Results           ║")
+    print("╚══════════════════════════════════════╝\n")
+    print(result.summary())
+
+
 if __name__ == "__main__":
     main()

@@ -9,10 +9,6 @@ Tests:
   5. Threshold filtering logic
   6. DeepEval (GEval): search result relevance and multi-search coverage quality
 
-Environment variables:
-  DEEPSEEK_API_KEY   — required (judge LLM for GEval)
-  DEEPSEEK_BASE_URL  — optional, defaults to https://api.deepseek.com/v1
-
 Run:
   cd apps/agentic-healthcare
   uv run --project langgraph pytest evals/search_eval.py -v
@@ -20,55 +16,18 @@ Run:
 
 from __future__ import annotations
 
-import os
-import sys
-from typing import Optional
 from unittest.mock import patch
 
 import numpy as np
 import pytest
 from deepeval import assert_test
-from deepeval.models import DeepEvalBaseLLM
-from deepeval.metrics import GEval
 from deepeval.test_case import LLMTestCase, LLMTestCaseParams
 from fastapi import FastAPI
 from fastapi.testclient import TestClient
-from openai import OpenAI
 
-sys.path.insert(0, os.path.join(os.path.dirname(__file__), "..", "langgraph"))
+from conftest import make_geval, skip_no_judge
 
 from embeddings import generate_embedding, get_embed_model
-
-# ── DeepSeek judge ─────────────────────────────────────────────────────
-
-_DEEPSEEK_API_KEY = os.environ.get("DEEPSEEK_API_KEY", "")
-_DEEPSEEK_BASE_URL = os.environ.get("DEEPSEEK_BASE_URL", "https://api.deepseek.com/v1")
-
-
-class DeepSeekJudge(DeepEvalBaseLLM):
-    def __init__(self, model: str = "deepseek-chat") -> None:
-        self.model = model
-        self._client = OpenAI(api_key=_DEEPSEEK_API_KEY, base_url=_DEEPSEEK_BASE_URL)
-
-    def load_model(self) -> OpenAI:
-        return self._client
-
-    def generate(self, prompt: str, schema: Optional[type] = None) -> str:
-        resp = self._client.chat.completions.create(
-            model=self.model,
-            messages=[{"role": "user", "content": prompt}],
-            temperature=0.0,
-        )
-        return resp.choices[0].message.content or ""
-
-    async def a_generate(self, prompt: str, schema: Optional[type] = None) -> str:
-        return self.generate(prompt, schema)
-
-    def get_model_name(self) -> str:
-        return self.model
-
-
-_judge = DeepSeekJudge() if _DEEPSEEK_API_KEY else None
 
 # ── helpers ────────────────────────────────────────────────────────────
 
@@ -439,7 +398,7 @@ class TestThresholdFiltering:
 
 
 # ═══════════════════════════════════════════════════════════════════════
-# F. DeepEval — search result relevance (requires DEEPSEEK_API_KEY)
+# F. DeepEval — search result relevance (requires DeepSeek judge)
 # ═══════════════════════════════════════════════════════════════════════
 
 _RELEVANCE_CRITERIA = (
@@ -456,19 +415,14 @@ _COVERAGE_CRITERIA = (
     "dimensions needed to answer the question."
 )
 
-requires_judge = pytest.mark.skipif(
-    not _DEEPSEEK_API_KEY, reason="DEEPSEEK_API_KEY not set"
-)
 
-
-@requires_judge
+@skip_no_judge
 def test_cholesterol_search_relevance():
-    metric = GEval(
+    metric = make_geval(
         name="Search Result Relevance",
         criteria=_RELEVANCE_CRITERIA,
         evaluation_params=[LLMTestCaseParams.INPUT, LLMTestCaseParams.ACTUAL_OUTPUT],
         threshold=0.7,
-        model=_judge,
     )
     assert_test(
         LLMTestCase(
@@ -479,14 +433,13 @@ def test_cholesterol_search_relevance():
     )
 
 
-@requires_judge
+@skip_no_judge
 def test_kidney_search_relevance():
-    metric = GEval(
+    metric = make_geval(
         name="Search Result Relevance",
         criteria=_RELEVANCE_CRITERIA,
         evaluation_params=[LLMTestCaseParams.INPUT, LLMTestCaseParams.ACTUAL_OUTPUT],
         threshold=0.7,
-        model=_judge,
     )
     assert_test(
         LLMTestCase(
@@ -497,14 +450,13 @@ def test_kidney_search_relevance():
     )
 
 
-@requires_judge
+@skip_no_judge
 def test_multi_search_coverage():
-    metric = GEval(
+    metric = make_geval(
         name="Multi-Search Coverage",
         criteria=_COVERAGE_CRITERIA,
         evaluation_params=[LLMTestCaseParams.INPUT, LLMTestCaseParams.ACTUAL_OUTPUT],
         threshold=0.7,
-        model=_judge,
     )
     combined = "\n\n".join([
         f"=== Blood Tests ===\n{_LIPID_TEST}",
@@ -521,13 +473,12 @@ def test_multi_search_coverage():
     )
 
 
-@requires_judge
+@skip_no_judge
 def test_irrelevant_results_low_score():
-    metric = GEval(
+    metric = make_geval(
         name="Search Result Relevance",
         criteria=_RELEVANCE_CRITERIA,
         evaluation_params=[LLMTestCaseParams.INPUT, LLMTestCaseParams.ACTUAL_OUTPUT],
-        model=_judge,
     )
     test_case = LLMTestCase(
         input="What are my cholesterol and HDL levels?",

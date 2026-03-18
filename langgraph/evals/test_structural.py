@@ -327,24 +327,62 @@ class TestMarkdownStructure:
 
 
 class TestGraphImports:
-    def test_graph_module_imports(self):
+    def test_orchestrator_builds(self):
         from how_it_works.graph import build_how_it_works_graph
         graph = build_how_it_works_graph()
         assert graph is not None
 
-    def test_all_nodes_importable(self):
-        from how_it_works.nodes import (
-            analyze_node,
-            generate_node,
-            process_next_node,
-            read_node,
-            scan_node,
-            write_node,
+    def test_all_agent_subgraphs_build(self):
+        from how_it_works.agents import (
+            build_analyst_graph,
+            build_app_pipeline,
+            build_generator_graph,
+            build_reader_graph,
+            build_scanner_graph,
+            build_writer_graph,
         )
-        for node in [analyze_node, generate_node, process_next_node, read_node, scan_node, write_node]:
-            assert callable(node)
+        for builder in [
+            build_analyst_graph,
+            build_app_pipeline,
+            build_generator_graph,
+            build_reader_graph,
+            build_scanner_graph,
+            build_writer_graph,
+        ]:
+            graph = builder()
+            assert graph is not None
 
     def test_deepseek_client_importable(self):
         from how_it_works.deepseek import chat, chat_json
         assert callable(chat)
         assert callable(chat_json)
+
+    def test_state_types_importable(self):
+        from how_it_works.state import (
+            AnalystState,
+            AppProcessingState,
+            GeneratorState,
+            OrchestratorState,
+            ReaderState,
+            ScannerState,
+            WriterState,
+        )
+        for state_cls in [
+            AnalystState, AppProcessingState, GeneratorState,
+            OrchestratorState, ReaderState, ScannerState, WriterState,
+        ]:
+            assert state_cls is not None
+
+    def test_prompts_importable(self):
+        from how_it_works.prompts import (
+            ANALYSIS_SYSTEM_PROMPT,
+            CRITIQUE_PROMPT,
+            FIX_VALIDATION_PROMPT,
+            GENERATION_SYSTEM_PROMPT,
+            REFINE_PROMPT,
+        )
+        for prompt in [
+            ANALYSIS_SYSTEM_PROMPT, CRITIQUE_PROMPT,
+            FIX_VALIDATION_PROMPT, GENERATION_SYSTEM_PROMPT, REFINE_PROMPT,
+        ]:
+            assert len(prompt) > 50

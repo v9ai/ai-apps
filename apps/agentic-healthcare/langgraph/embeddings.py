@@ -274,8 +274,11 @@ def classify_metric_risk(
     if not ref:
         return "optimal"
     opt_lo, opt_hi = ref["optimal"]
-    _, bord_hi = ref["borderline"]
+    bord_lo, bord_hi = ref["borderline"]
     if value < opt_lo:
+        # Check if value falls in the borderline range below optimal
+        if value >= bord_lo:
+            return "borderline"
         return "low"
     if value <= opt_hi:
         return "optimal"
@@ -311,7 +314,7 @@ def compute_derived_metrics(markers: list[Marker]) -> dict[str, float | None]:
     trig = resolve("triglycerides")
     gluc = resolve("glucose")
     gti = (
-        math.log10(trig * gluc * 0.5)
+        math.log(trig * gluc * 0.5)
         if trig is not None and gluc is not None and trig > 0 and gluc > 0
         else None
     )

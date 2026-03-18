@@ -209,17 +209,15 @@ analysis_accuracy_metric = GEval(
 analysis_data_flow_metric = GEval(
     name="Data Flow Clarity",
     criteria=(
-        "Evaluate whether the analysis clearly traces the end-to-end data flow: "
-        "how data enters the system (user input, API call, webhook), "
-        "how it is processed (server actions, API routes, middleware), "
-        "how it is stored (database tables, cache, file system), "
-        "and how it is returned to the user (server components, client hydration, API response). "
-        "The flow should be described as a concrete sequence of steps with named artefacts, "
-        "not as abstract architecture. A reader should be able to trace a request through the code."
+        "Evaluate whether the analysis traces the end-to-end data flow with named artefacts. "
+        "Check that: (1) The flow is presented as numbered steps, "
+        "(2) Each step names at least one code artefact (function, route, table), "
+        "(3) The flow covers input → processing → storage → response, "
+        "(4) A reader could follow the sequence through the codebase."
     ),
     evaluation_params=[LLMTestCaseParams.ACTUAL_OUTPUT],
     model=model,
-    threshold=THRESHOLD,
+    threshold=0.6,
 )
 
 analysis_no_filler_metric = GEval(
@@ -426,6 +424,144 @@ markdown_to_json_fidelity_metric = GEval(
         "(6) No information is lost in the markdown→JSON transformation, "
         "(7) No information is invented that wasn't in the markdown. "
         "The JSON should be a structured mirror of the markdown, not a reinterpretation."
+    ),
+    evaluation_params=[LLMTestCaseParams.INPUT, LLMTestCaseParams.ACTUAL_OUTPUT],
+    model=model,
+    threshold=THRESHOLD,
+)
+
+# ═══════════════════════════════════════════════════════════════════════════════
+# REFLECTION METRICS (evaluate the critique/refine loop)
+# ═══════════════════════════════════════════════════════════════════════════════
+
+reflection_improvement_metric = GEval(
+    name="Reflection Improvement",
+    criteria=(
+        "You are given two technical analyses of the same codebase. "
+        "The input is the BEFORE version (pre-reflection). "
+        "The actual_output is the AFTER version (post-reflection). "
+        "Evaluate whether the refined version is meaningfully better: "
+        "(1) Does it add specific file/function/component names that were missing? "
+        "(2) Does it remove or correct any inaccurate claims? "
+        "(3) Does it fill in sections that were too thin? "
+        "(4) Does it reduce generic filler and increase code-specific detail? "
+        "(5) Is the overall structure maintained or improved? "
+        "Score 1.0 if the refined version is clearly better in at least 3 of 5 dimensions. "
+        "Score 0.5 if marginally better. Score 0.0 if the same or worse."
+    ),
+    evaluation_params=[LLMTestCaseParams.INPUT, LLMTestCaseParams.ACTUAL_OUTPUT],
+    model=model,
+    threshold=THRESHOLD,
+)
+
+critique_actionability_metric = GEval(
+    name="Critique Actionability",
+    criteria=(
+        "Evaluate whether the critique (actual_output) of a technical analysis provides "
+        "specific, actionable feedback. Check that: "
+        "(1) Each critique point names a specific section or claim to improve, "
+        "(2) Suggestions are concrete ('add the table name from schema.ts') not vague ('be more specific'), "
+        "(3) The critique correctly identifies real weaknesses, not phantom issues, "
+        "(4) The critique does not ask for information not available in the source files, "
+        "(5) Each point is independently addressable. "
+        "The input provides the source files for context."
+    ),
+    evaluation_params=[LLMTestCaseParams.INPUT, LLMTestCaseParams.ACTUAL_OUTPUT],
+    model=model,
+    threshold=THRESHOLD,
+)
+
+# ═══════════════════════════════════════════════════════════════════════════════
+# EDGE CASE METRICS
+# ═══════════════════════════════════════════════════════════════════════════════
+
+edge_case_no_hallucination_metric = GEval(
+    name="Edge Case: No Hallucination of Missing Features",
+    criteria=(
+        "The source code (input) is a static landing page with NO database, NO authentication, "
+        "and NO AI integration. Check the analysis (actual_output) for hallucinations. "
+        "Score 1.0 if the analysis explicitly says these features are absent and does not "
+        "invent any database tables, auth flows, or API routes. "
+        "Score 0.0 if the analysis fabricates features not in the source code."
+    ),
+    evaluation_params=[LLMTestCaseParams.INPUT, LLMTestCaseParams.ACTUAL_OUTPUT],
+    model=model,
+    threshold=0.6,
+)
+
+edge_case_ai_depth_metric = GEval(
+    name="Edge Case: AI Section Depth",
+    criteria=(
+        "Given an AI-heavy app's source code (input) and analysis (actual_output), "
+        "evaluate whether the AI/LLM Integration section has adequate depth. "
+        "Check that: (1) It names specific models (e.g., 'gpt-4o', 'text-embedding-3-small'), "
+        "(2) It describes the prompting strategy (system prompts, message format), "
+        "(3) It explains embedding/retrieval patterns (vector storage, cosine similarity), "
+        "(4) It identifies the AI SDK being used and its specific functions, "
+        "(5) It traces the AI data flow (input → model → output → storage). "
+        "This section should be one of the longest when AI is a core feature."
+    ),
+    evaluation_params=[LLMTestCaseParams.INPUT, LLMTestCaseParams.ACTUAL_OUTPUT],
+    model=model,
+    threshold=THRESHOLD,
+)
+
+# ═══════════════════════════════════════════════════════════════════════════════
+# COMPARATIVE / DELTA METRICS
+# ═══════════════════════════════════════════════════════════════════════════════
+
+comparative_specificity_delta_metric = GEval(
+    name="Specificity Delta",
+    criteria=(
+        "You are given two analyses. The input is the BEFORE version (pre-reflection). "
+        "The actual_output is the AFTER version (post-reflection). "
+        "Count the number of specific code artefact references (backticked file names, "
+        "function names, component names, table names) in each. "
+        "Score based on the improvement ratio: "
+        "1.0 = AFTER has 20%+ more specific references than BEFORE. "
+        "0.7 = AFTER has 5-20% more references. "
+        "0.5 = roughly the same count. "
+        "0.0 = AFTER has fewer references than BEFORE."
+    ),
+    evaluation_params=[LLMTestCaseParams.INPUT, LLMTestCaseParams.ACTUAL_OUTPUT],
+    model=model,
+    threshold=0.6,
+)
+
+comparative_accuracy_delta_metric = GEval(
+    name="Accuracy Delta",
+    criteria=(
+        "You are given two analyses of the same codebase. "
+        "The input is the BEFORE version (pre-reflection). "
+        "The actual_output is the AFTER version (post-reflection). "
+        "Check if the AFTER version has fewer hallucinated or inaccurate claims "
+        "and more precise, code-grounded statements. "
+        "Score 1.0 if AFTER is clearly more accurate. "
+        "Score 0.5 if about the same accuracy. "
+        "Score 0.0 if AFTER is less accurate."
+    ),
+    evaluation_params=[LLMTestCaseParams.INPUT, LLMTestCaseParams.ACTUAL_OUTPUT],
+    model=model,
+    threshold=0.6,
+)
+
+# ═══════════════════════════════════════════════════════════════════════════════
+# VALIDATION RETRY METRICS
+# ═══════════════════════════════════════════════════════════════════════════════
+
+retry_recovery_metric = GEval(
+    name="Retry Recovery",
+    criteria=(
+        "You are given an invalid JSON output (input) and a corrected version (actual_output). "
+        "The invalid version had specific structural errors (wrong counts, invalid slugs, "
+        "invalid categories, missing sections). Evaluate whether the corrected version: "
+        "(1) Fixes the specific validation errors, "
+        "(2) Preserves valid content from the original, "
+        "(3) Doesn't introduce new errors while fixing old ones, "
+        "(4) Maintains internal consistency after corrections. "
+        "Score 1.0 if all errors are fixed without regression. "
+        "Score 0.5 if most errors fixed but some new ones introduced. "
+        "Score 0.0 if errors persist or worsen."
     ),
     evaluation_params=[LLMTestCaseParams.INPUT, LLMTestCaseParams.ACTUAL_OUTPUT],
     model=model,

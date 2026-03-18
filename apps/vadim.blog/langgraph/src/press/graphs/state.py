@@ -27,6 +27,8 @@ class JournalismState(TypedDict, total=False):
     editor_output: str
     approved: bool
     revision_rounds: int
+    reference_report: str
+    reference_issues: list[str]
     broken_links: list[str]
 
 
@@ -45,6 +47,8 @@ class CounterArticleState(TypedDict, total=False):
     approved: bool
     revision_rounds: int
     paper_count: int
+    reference_report: str
+    reference_issues: list[str]
     broken_links: list[str]
 
 
@@ -65,4 +69,6 @@ class DeepDiveState(TypedDict, total=False):
     approved: bool
     revision_rounds: int
     paper_count: int
+    reference_report: str
+    reference_issues: list[str]
     broken_links: list[str]

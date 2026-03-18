@@ -1,7 +1,7 @@
 """Shared node implementations for editorial pipelines.
 
-Deduplicates publish, save_final, linkedin, write, edit, revise, and routing
-logic used across journalism, deep_dive, and counter_article graphs.
+Deduplicates publish, save_final, linkedin, write, edit, revise, check_references,
+and routing logic used across journalism, deep_dive, and counter_article graphs.
 """
 
 from __future__ import annotations
@@ -14,7 +14,12 @@ from press import extract_published_content, extract_seo_slug, slugify
 from press.agents import Agent
 from press.models import ModelPool, TeamRole
 from press import prompts
-from press.link_checker import check_content_links, format_report
+from press.link_checker import (
+    check_references,
+    check_content_links,
+    format_reference_report,
+    format_report,
+)
 from press.publisher import publish as publish_post, validate_before_publish
 
 logger = logging.getLogger(__name__)
@@ -45,8 +50,44 @@ def _save_draft(state: dict, draft: str, revisions: str | None = None) -> None:
 # ── Standalone nodes (no pool needed) ────────────────────────────────────────
 
 
+async def check_references_node(state: dict) -> dict:
+    """Analyse reference quality of the current draft before editorial review.
+
+    Runs HTTP checks on every [anchor](url) citation and classifies:
+      - anchor text quality (descriptive vs weak)
+      - domain authority tier (authoritative / credible / generic)
+      - broken links
+
+    Results are stored in state and included in the editor's prompt so the
+    editor can enforce citation standards before approving.
+    """
+    draft = state.get("draft", "")
+    if not draft:
+        return {}
+
+    report = await check_references(draft)
+    report_md = format_reference_report(report)
+
+    # Persist the report to disk alongside the draft
+    slug = slugify(_topic_key(state))
+    reports_dir = Path(state.get("output_dir", "./articles")) / "reports"
+    reports_dir.mkdir(parents=True, exist_ok=True)
+    (reports_dir / f"{slug}-refs.md").write_text(report_md)
+
+    logger.info(
+        "Reference check: %d refs, %d broken, %d weak anchors, score=%.2f",
+        report.total, len(report.broken), len(report.weak_anchors), report.score,
+    )
+
+    return {
+        "reference_report": report_md,
+        "reference_issues": report.issues,
+        "broken_links": [r.url for r in report.broken],
+    }
+
+
 async def publish_node(state: dict) -> dict:
-    """Save approved content to published/ and optionally deploy."""
+    """Save approved content to published/, run final reference check, optionally deploy."""
     topic = _topic_key(state)
     output_dir = state.get("output_dir", "./articles")
 
@@ -59,11 +100,16 @@ async def publish_node(state: dict) -> dict:
     content = extract_published_content(state["editor_output"], state["draft"])
     (published_dir / f"{slug}.md").write_text(content)
 
-    # Link check — runs before publish so broken links are caught early
-    link_results = await check_content_links(content)
-    report = format_report(link_results)
-    (published_dir / f"{slug}-links.md").write_text(f"# Link Check: {topic}\n\n{report}")
-    broken = [r.url for r in link_results if not r.ok]
+    # Final reference quality check on published content (editor may have changed links)
+    report = await check_references(content)
+    report_md = format_reference_report(report)
+    (published_dir / f"{slug}-refs.md").write_text(f"# References: {topic}\n\n{report_md}")
+    broken = [r.url for r in report.broken]
+
+    if report.issues:
+        logger.warning("Publish reference issues: %s", report.issues)
+    else:
+        logger.info("Published reference check passed (score=%.2f)", report.score)
 
     if state.get("publish"):
         issues = validate_before_publish(content)
@@ -131,7 +177,11 @@ def make_edit_node(
     agent_name: str,
     prompt_fn: Callable[[dict], str],
 ):
-    """Create an edit node. Agent name gets a -r{rounds} suffix per revision round."""
+    """Create an edit node.
+
+    Includes reference quality report in the editor's context when available,
+    so the editor can enforce citation standards as part of its review.
+    """
 
     async def node(state: dict) -> dict:
         rounds = state.get("revision_rounds", 0)
@@ -140,10 +190,28 @@ def make_edit_node(
             prompt_fn(state),
             pool.for_role(TeamRole.REVIEWER),
         )
+
+        # Build reference quality section for the editor's context
+        ref_section = ""
+        if state.get("reference_report"):
+            issues = state.get("reference_issues", [])
+            if issues:
+                issues_text = "\n".join(f"- ⚠️ {i}" for i in issues)
+                ref_section = (
+                    f"\n\n---\n\n## Reference Quality (MUST ADDRESS BEFORE APPROVING)\n\n"
+                    f"{issues_text}\n\n{state['reference_report']}"
+                )
+            else:
+                ref_section = (
+                    f"\n\n---\n\n## Reference Quality\n\n"
+                    f"✓ No critical issues\n\n{state['reference_report']}"
+                )
+
         editor_input = (
             f"## Draft\n\n{state['draft']}\n\n"
             f"---\n\n## Research Brief\n\n{state['research_output']}\n\n"
             f"---\n\n## SEO Strategy\n\n{state['seo_output']}"
+            + ref_section
         )
         editor_output = await editor.run(editor_input)
         return {"editor_output": editor_output, "approved": is_approved(editor_output)}

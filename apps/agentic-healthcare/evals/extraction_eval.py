@@ -7,21 +7,16 @@ via a LlamaIndex IngestionPipeline.
 
 Run:
   cd apps/agentic-healthcare
-  uv run --project langgraph deepeval test evals/extraction_eval.py
+  uv run --project langgraph pytest evals/extraction_eval.py -v
 """
 
 from __future__ import annotations
 
-import os
-import sys
-
 import pytest
 from deepeval import assert_test
-from deepeval.metrics import GEval
 from deepeval.test_case import LLMTestCase, LLMTestCaseParams
 
-# Add langgraph/ to path so we can import parsers
-sys.path.insert(0, os.path.join(os.path.dirname(__file__), "..", "langgraph"))
+from conftest import make_geval, skip_no_judge, HAS_JUDGE
 
 from parsers import (
     Marker,
@@ -510,71 +505,8 @@ class TestRealisticLabReports:
 
 
 # ═══════════════════════════════════════════════════════════════════════
-# G. DeepEval LLM-as-judge metrics
+# G. DeepEval LLM-as-judge metrics (require DeepSeek judge)
 # ═══════════════════════════════════════════════════════════════════════
-
-EXTRACTION_COMPLETENESS = GEval(
-    name="Extraction Completeness",
-    criteria=(
-        "Given a raw lab report text (input) and the extracted markers (actual_output), "
-        "evaluate whether ALL biomarkers present in the input were correctly extracted. "
-        "A complete extraction captures every marker name, numeric value, unit, and "
-        "reference range. Missing markers or wrong values reduce the score."
-    ),
-    evaluation_params=[
-        LLMTestCaseParams.INPUT,
-        LLMTestCaseParams.ACTUAL_OUTPUT,
-    ],
-    threshold=0.7,
-)
-
-CLINICAL_ACCURACY = GEval(
-    name="Clinical Flag Accuracy",
-    criteria=(
-        "Given extracted blood markers with their computed flags (actual_output), "
-        "evaluate whether the flag (low/normal/high) is clinically correct based on "
-        "the value and reference range. A flag of 'high' means the value exceeds the "
-        "upper reference limit; 'low' means below the lower limit."
-    ),
-    evaluation_params=[
-        LLMTestCaseParams.ACTUAL_OUTPUT,
-        LLMTestCaseParams.EXPECTED_OUTPUT,
-    ],
-    threshold=0.8,
-)
-
-VALUE_PRECISION = GEval(
-    name="Value Precision",
-    criteria=(
-        "Given expected markers (expected_output) and extracted markers (actual_output), "
-        "evaluate whether each extracted numeric value is an EXACT match to the value in "
-        "the input. Transposition errors (e.g., 95 vs 59), decimal shifts (9.5 vs 95), "
-        "or truncation (14 vs 14.5) should be heavily penalised."
-    ),
-    evaluation_params=[
-        LLMTestCaseParams.ACTUAL_OUTPUT,
-        LLMTestCaseParams.EXPECTED_OUTPUT,
-    ],
-    threshold=0.9,
-)
-
-UNIT_CONSISTENCY = GEval(
-    name="Unit Consistency",
-    criteria=(
-        "Given expected markers (expected_output) and extracted markers (actual_output), "
-        "evaluate whether the extracted units match the source. Common units include: "
-        "mg/dL, g/dL, U/L, K/uL, mEq/L, mmol/L, %, mii/µL. Units should not be "
-        "confused or swapped between markers."
-    ),
-    evaluation_params=[
-        LLMTestCaseParams.ACTUAL_OUTPUT,
-        LLMTestCaseParams.EXPECTED_OUTPUT,
-    ],
-    threshold=0.9,
-)
-
-
-# ── Parametrized extraction test cases ───────────────────────────────
 
 _EXTRACTION_CASES = [
     # Case 1: Basic lipid panel
@@ -630,8 +562,56 @@ _EXTRACTION_CASES = [
 ]
 
 
+@skip_no_judge
 @pytest.mark.parametrize("raw_text,expected_markers", _EXTRACTION_CASES)
 def test_extraction_completeness(raw_text: str, expected_markers: str):
+    metrics = [
+        make_geval(
+            name="Extraction Completeness",
+            criteria=(
+                "Given a raw lab report text (input) and the extracted markers (actual_output), "
+                "evaluate whether ALL biomarkers present in the input were correctly extracted. "
+                "A complete extraction captures every marker name, numeric value, unit, and "
+                "reference range. Missing markers or wrong values reduce the score."
+            ),
+            evaluation_params=[LLMTestCaseParams.INPUT, LLMTestCaseParams.ACTUAL_OUTPUT],
+            threshold=0.7,
+        ),
+        make_geval(
+            name="Clinical Flag Accuracy",
+            criteria=(
+                "Given extracted blood markers with their computed flags (actual_output), "
+                "evaluate whether the flag (low/normal/high) is clinically correct based on "
+                "the value and reference range. A flag of 'high' means the value exceeds the "
+                "upper reference limit; 'low' means below the lower limit."
+            ),
+            evaluation_params=[LLMTestCaseParams.ACTUAL_OUTPUT, LLMTestCaseParams.EXPECTED_OUTPUT],
+            threshold=0.8,
+        ),
+        make_geval(
+            name="Value Precision",
+            criteria=(
+                "Given expected markers (expected_output) and extracted markers (actual_output), "
+                "evaluate whether each extracted numeric value is an EXACT match to the value in "
+                "the input. Transposition errors (e.g., 95 vs 59), decimal shifts (9.5 vs 95), "
+                "or truncation (14 vs 14.5) should be heavily penalised."
+            ),
+            evaluation_params=[LLMTestCaseParams.ACTUAL_OUTPUT, LLMTestCaseParams.EXPECTED_OUTPUT],
+            threshold=0.9,
+        ),
+        make_geval(
+            name="Unit Consistency",
+            criteria=(
+                "Given expected markers (expected_output) and extracted markers (actual_output), "
+                "evaluate whether the extracted units match the source. Common units include: "
+                "mg/dL, g/dL, U/L, K/uL, mEq/L, mmol/L, %, mii/µL. Units should not be "
+                "confused or swapped between markers."
+            ),
+            evaluation_params=[LLMTestCaseParams.ACTUAL_OUTPUT, LLMTestCaseParams.EXPECTED_OUTPUT],
+            threshold=0.9,
+        ),
+    ]
+
     markers = parse_text_markers(raw_text)
     actual = ", ".join(f"{m.name}: {m.value} {m.unit} [{m.flag}]" for m in markers)
 
@@ -640,4 +620,4 @@ def test_extraction_completeness(raw_text: str, expected_markers: str):
         actual_output=actual,
         expected_output=expected_markers,
     )
-    assert_test(test_case, [EXTRACTION_COMPLETENESS, CLINICAL_ACCURACY, VALUE_PRECISION, UNIT_CONSISTENCY])
+    assert_test(test_case, metrics)

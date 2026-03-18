@@ -5,59 +5,65 @@ from __future__ import annotations
 from pydantic import BaseModel, Field
 
 
-class AppInfo(BaseModel):
+class _CamelModel(BaseModel):
+    """Base model that accepts both camelCase (from JSON) and snake_case."""
+
+    model_config = {"populate_by_name": True}
+
+
+class AppInfo(_CamelModel):
     name: str
     path: str  # absolute path to the app directory
-    app_dir: str  # absolute path to Next.js app/ or src/app/
-    has_how_it_works: bool
-    framework: str  # "nextjs" | "docusaurus" | "unknown"
+    app_dir: str = Field(alias="appDir", default="")
+    has_how_it_works: bool = Field(alias="hasHowItWorks", default=False)
+    framework: str = "unknown"  # "nextjs" | "docusaurus" | "unknown"
     # Feature detection (set by Scanner classify node)
     has_db: bool = False
     has_auth: bool = False
     has_ai: bool = False
 
 
-class FileContent(BaseModel):
-    relative_path: str
-    content: str
+class FileContent(_CamelModel):
+    relative_path: str = Field(alias="relativePath", default="")
+    content: str = ""
 
 
-class PaperData(BaseModel):
+class PaperData(_CamelModel):
     slug: str
     number: int
     title: str
     category: str
-    word_count: int = 0
-    reading_time_min: int = 2
+    word_count: int = Field(0, alias="wordCount")
+    reading_time_min: int = Field(2, alias="readingTimeMin")
     authors: str | None = None
     year: int | None = None
     venue: str | None = None
     finding: str | None = None
     relevance: str | None = None
     url: str | None = None
-    category_color: str | None = None
+    category_color: str | None = Field(None, alias="categoryColor")
 
 
-class AgentData(BaseModel):
+class AgentData(_CamelModel):
     name: str
     description: str
-    research_basis: str | None = None
-    paper_indices: list[int] | None = None
+    research_basis: str | None = Field(None, alias="researchBasis")
+    paper_indices: list[int] | None = Field(None, alias="paperIndices")
 
 
-class StatData(BaseModel):
+class StatData(_CamelModel):
     number: str
     label: str
     source: str | None = None
-    paper_index: int | None = None
+    paper_index: int | None = Field(None, alias="paperIndex")
 
 
-class ExtraSection(BaseModel):
+class ExtraSection(_CamelModel):
     heading: str
     content: str
 
 
-class HowItWorksData(BaseModel):
+class HowItWorksData(_CamelModel):
     title: str
     subtitle: str
     story: str
@@ -68,11 +74,9 @@ class HowItWorksData(BaseModel):
         default_factory=list, alias="extraSections"
     )
 
-    model_config = {"populate_by_name": True}
 
-
-class ProcessResult(BaseModel):
-    app_name: str
-    status: str  # "written" | "updated" | "skipped" | "error"
+class ProcessResult(_CamelModel):
+    app_name: str = Field(alias="appName", default="")
+    status: str = ""  # "written" | "updated" | "skipped" | "error"
     files: list[str] | None = None
     error: str | None = None

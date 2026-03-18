@@ -38,3 +38,6 @@ packages = ["src/press"]
 [tool.pytest.ini_options]
 asyncio_mode = "auto"
 testpaths = ["tests", "evals"]
+markers = [
+    "eval: requires deepeval + LLM API key (auto-skipped when deepeval is not installed)",
+]

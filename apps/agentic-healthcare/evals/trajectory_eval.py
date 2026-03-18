@@ -25,6 +25,7 @@ from __future__ import annotations
 import math
 import os
 import re
+import sys
 from datetime import date, timedelta
 from typing import Optional
 
@@ -47,10 +48,13 @@ _DASHSCOPE_BASE_URL = os.environ.get(
 _DEEPSEEK_API_KEY = os.environ.get("DEEPSEEK_API_KEY", "")
 _DEEPSEEK_BASE_URL = os.environ.get("DEEPSEEK_BASE_URL", "https://api.deepseek.com/v1")
 
-if not _DASHSCOPE_API_KEY:
-    raise EnvironmentError("DASHSCOPE_API_KEY is required")
-if not _DEEPSEEK_API_KEY:
-    raise EnvironmentError("DEEPSEEK_API_KEY is required")
+# Allow pytest collection even without API keys — standalone usage still requires them
+_MISSING_KEYS = not _DASHSCOPE_API_KEY or not _DEEPSEEK_API_KEY
+if _MISSING_KEYS and "pytest" not in sys.modules:
+    if not _DASHSCOPE_API_KEY:
+        raise EnvironmentError("DASHSCOPE_API_KEY is required")
+    if not _DEEPSEEK_API_KEY:
+        raise EnvironmentError("DEEPSEEK_API_KEY is required")
 
 
 # ---------------------------------------------------------------------------

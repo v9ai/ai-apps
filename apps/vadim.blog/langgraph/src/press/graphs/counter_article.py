@@ -23,6 +23,7 @@ from langgraph.graph import END, START, StateGraph
 from press import html_to_text, slugify
 from press.agents import Agent, run_all
 from press.graphs.nodes import (
+    check_references_node,
     make_edit_node,
     make_linkedin_node,
     make_revise_node,
@@ -85,28 +86,36 @@ def build_counter_article_graph(pool: ModelPool):
             f"---\n\n{paper_digest}\n\n"
             f"Counter-research this topic: {topic}"
         )
-        seo_input = f"Analyze SEO strategy for a counter-article about: {topic}"
+        seo_input = f"Counter-article topic: {topic}"
 
         researcher = Agent(
             "counter-researcher",
             prompts.counter_researcher(topic),
             pool.for_role(TeamRole.REASONER),
         )
-        seo_agent = Agent(
-            "counter-seo",
-            prompts.journalism_seo(topic),
+        seo_disc = Agent(
+            "counter-seo-discovery",
+            prompts.seo_discovery(topic),
+            pool.for_role(TeamRole.FAST),
+        )
+        seo_bp = Agent(
+            "counter-seo-blueprint",
+            prompts.seo_blueprint(topic),
             pool.for_role(TeamRole.FAST),
         )
 
-        research_output, seo_output = await run_all([
+        research_output, seo_disc_out, seo_bp_out = await run_all([
             (researcher, research_input),
-            (seo_agent, seo_input),
+            (seo_disc, seo_input),
+            (seo_bp, seo_input),
         ])
+        seo_output = f"{seo_disc_out}\n\n---\n\n{seo_bp_out}"
 
         research_dir = Path(output_dir) / "research"
         research_dir.mkdir(parents=True, exist_ok=True)
         (research_dir / f"{slug}-counter-research.md").write_text(research_output)
-        (research_dir / f"{slug}-counter-seo.md").write_text(seo_output)
+        (research_dir / f"{slug}-counter-seo-discovery.md").write_text(seo_disc_out)
+        (research_dir / f"{slug}-counter-seo-blueprint.md").write_text(seo_bp_out)
 
         return {
             "research_output": research_output,
@@ -136,6 +145,7 @@ def build_counter_article_graph(pool: ModelPool):
     graph.add_node("fetch_source", fetch_source)
     graph.add_node("research_and_seo", research_and_seo)
     graph.add_node("write", write)
+    graph.add_node("check_references", check_references_node)
     graph.add_node("edit", edit)
     graph.add_node("revise", revise)
     graph.add_node("linkedin_approved", linkedin)
@@ -146,7 +156,8 @@ def build_counter_article_graph(pool: ModelPool):
     graph.add_edge(START, "fetch_source")
     graph.add_edge("fetch_source", "research_and_seo")
     graph.add_edge("research_and_seo", "write")
-    graph.add_edge("write", "edit")
+    graph.add_edge("write", "check_references")
+    graph.add_edge("check_references", "edit")
     graph.add_conditional_edges(
         "edit",
         should_revise_with_linkedin,
@@ -156,7 +167,7 @@ def build_counter_article_graph(pool: ModelPool):
             "revise": "revise",
         },
     )
-    graph.add_edge("revise", "edit")
+    graph.add_edge("revise", "check_references")
     graph.add_edge("linkedin_approved", "publish")
     graph.add_edge("publish", END)
     graph.add_edge("linkedin_final", "save_final")

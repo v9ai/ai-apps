@@ -11,6 +11,7 @@ from langgraph.graph import END, START, StateGraph
 from press import slugify
 from press.agents import Agent
 from press.graphs.nodes import (
+    check_references_node,
     make_edit_node,
     make_linkedin_node,
     make_revise_node,
@@ -52,20 +53,25 @@ def build_deep_dive_graph(pool: ModelPool):
 
         enable_paper_search = state.get("enable_paper_search", True)
 
-        seo_agent = Agent(
-            "deep-dive-seo",
-            prompts.journalism_seo(title),
+        seo_disc = Agent(
+            "deep-dive-seo-discovery",
+            prompts.seo_discovery(title),
             pool.for_role(TeamRole.FAST),
         )
-        seo_input = f"Analyze SEO strategy for: {title}"
+        seo_bp = Agent(
+            "deep-dive-seo-blueprint",
+            prompts.seo_blueprint(title),
+            pool.for_role(TeamRole.FAST),
+        )
+        seo_input = f"Topic: {title}"
 
         if enable_paper_search:
             config = ResearchConfig(enable_paper_search=True)
-            research_task = research_phase(
-                title, title, niche, config, pool.for_role(TeamRole.REASONER)
+            research_result, seo_disc_out, seo_bp_out = await asyncio.gather(
+                research_phase(title, title, niche, config, pool.for_role(TeamRole.REASONER)),
+                seo_disc.run(seo_input),
+                seo_bp.run(seo_input),
             )
-            seo_task = seo_agent.run(seo_input)
-            research_result, seo_output = await asyncio.gather(research_task, seo_task)
             research_output = research_result.notes
             paper_count = research_result.paper_count
         else:
@@ -74,16 +80,20 @@ def build_deep_dive_graph(pool: ModelPool):
                 prompts.journalism_researcher(title),
                 pool.for_role(TeamRole.REASONER),
             )
-            research_input = f"Research this topic: {title}"
-            research_output, seo_output = await asyncio.gather(
-                researcher.run(research_input), seo_agent.run(seo_input)
+            research_output, seo_disc_out, seo_bp_out = await asyncio.gather(
+                researcher.run(f"Research this topic: {title}"),
+                seo_disc.run(seo_input),
+                seo_bp.run(seo_input),
             )
             paper_count = 0
+
+        seo_output = f"{seo_disc_out}\n\n---\n\n{seo_bp_out}"
 
         research_dir = Path(output_dir) / "research"
         research_dir.mkdir(parents=True, exist_ok=True)
         (research_dir / f"{slug}-research.md").write_text(research_output)
-        (research_dir / f"{slug}-seo.md").write_text(seo_output)
+        (research_dir / f"{slug}-seo-discovery.md").write_text(seo_disc_out)
+        (research_dir / f"{slug}-seo-blueprint.md").write_text(seo_bp_out)
 
         return {
             "research_output": research_output,
@@ -119,6 +129,7 @@ def build_deep_dive_graph(pool: ModelPool):
     graph.add_node("read_source", read_source)
     graph.add_node("research_and_seo", research_and_seo)
     graph.add_node("write", write)
+    graph.add_node("check_references", check_references_node)
     graph.add_node("edit", edit)
     graph.add_node("revise", revise)
     graph.add_node("linkedin_approved", linkedin)
@@ -129,7 +140,8 @@ def build_deep_dive_graph(pool: ModelPool):
     graph.add_edge(START, "read_source")
     graph.add_edge("read_source", "research_and_seo")
     graph.add_edge("research_and_seo", "write")
-    graph.add_edge("write", "edit")
+    graph.add_edge("write", "check_references")
+    graph.add_edge("check_references", "edit")
     graph.add_conditional_edges(
         "edit",
         should_revise_with_linkedin,
@@ -139,7 +151,7 @@ def build_deep_dive_graph(pool: ModelPool):
             "revise": "revise",
         },
     )
-    graph.add_edge("revise", "edit")
+    graph.add_edge("revise", "check_references")
     graph.add_edge("linkedin_approved", "publish")
     graph.add_edge("publish", END)
     graph.add_edge("linkedin_final", "save_final")
