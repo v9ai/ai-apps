@@ -77,45 +77,32 @@ def cmd_research(args):
 
 
 def _lookup_personality(slug: str, role: str, org: str, github: str) -> tuple[str, str, str, str]:
-    """Try to resolve person details from personalities.ts data."""
+    """Try to resolve person details from personalities/data/{slug}.ts."""
     import re
     from pathlib import Path
 
-    ts_path = Path(__file__).resolve().parent / "src" / ".." / "src" / "lib" / "personalities.ts"
-    ts_path = (Path(__file__).resolve().parents[1] / "src" / "lib" / "personalities.ts")
+    ts_path = Path(__file__).resolve().parents[1] / "src" / "lib" / "personalities" / "data" / f"{slug}.ts"
 
     if not ts_path.exists():
-        console.print(f"  [yellow]Could not find personalities.ts at {ts_path}[/]")
+        console.print(f"  [yellow]No personality file for '{slug}' — using defaults[/]")
         return slug.replace("-", " ").title(), role or "", org or "", github or ""
 
     content = ts_path.read_text()
 
-    # Find the block for this slug — anchor on slug first, then look backwards
-    # Extract the full personality object containing this slug
-    slug_pos = content.find(f'slug: "{slug}"')
-    if slug_pos == -1:
-        console.print(f"  [yellow]Slug '{slug}' not found in personalities.ts — using defaults[/]")
-        return slug.replace("-", " ").title(), role or "", org or "", github or ""
-
-    # Walk backwards to find the opening brace of this personality object
-    block_start = content.rfind("{", 0, slug_pos)
-    block_end = content.find("}", slug_pos)
-    block = content[block_start:block_end + 1] if block_start != -1 and block_end != -1 else ""
-
-    name_m = re.search(r'name:\s*"([^"]+)"', block)
-    role_m = re.search(r'role:\s*"([^"]+)"', block)
-    org_m = re.search(r'org:\s*"([^"]+)"', block)
-    gh_m = re.search(r'github:\s*"([^"]+)"', block)
+    name_m = re.search(r'name:\s*"([^"]+)"', content)
+    role_m = re.search(r'role:\s*"([^"]+)"', content)
+    org_m = re.search(r'org:\s*"([^"]+)"', content)
+    gh_m = re.search(r'github:\s*"([^"]+)"', content)
 
     if name_m:
         name = name_m.group(1)
         role = role or (role_m.group(1) if role_m else "")
         org = org or (org_m.group(1) if org_m else "")
         github = github or (gh_m.group(1) if gh_m else "")
-        console.print(f"  [green]Found {name} in personalities.ts[/]")
+        console.print(f"  [green]Found {name} in personalities/data/{slug}.ts[/]")
         return name, role, org, github
 
-    console.print(f"  [yellow]Slug '{slug}' not found in personalities.ts — using defaults[/]")
+    console.print(f"  [yellow]Could not parse '{slug}' personality file — using defaults[/]")
     return slug.replace("-", " ").title(), role or "", org or "", github or ""
 
 

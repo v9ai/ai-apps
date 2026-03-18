@@ -277,38 +277,21 @@ def eval_structure_depth(slug: str, research: dict) -> EvalResult:
 
 
 def eval_arxiv_papers(slug: str, research: dict) -> EvalResult:
-    """Verify arXiv paper count and IDs match ground truth in personalities.ts."""
+    """Verify arXiv paper count and IDs match ground truth in personality data file."""
     result = EvalResult("arxiv_papers", slug)
     expected = ARXIV_PAPER_COUNTS.get(slug)
     if not expected:
         return result  # no ground truth — skip
 
-    # Check personalities.ts papers
-    ts_path = RESEARCH_DIR.parent / "personalities.ts"
+    ts_path = RESEARCH_DIR.parent / "personalities" / "data" / f"{slug}.ts"
     if not ts_path.exists():
-        result.fail(f"personalities.ts not found at {ts_path}")
+        result.fail(f"Personality file not found at {ts_path}")
         return result
 
     import re
     content = ts_path.read_text()
 
-    # Find papers array for this slug
-    slug_pos = content.find(f'slug: "{slug}"')
-    if slug_pos == -1:
-        result.fail(f"Slug '{slug}' not found in personalities.ts")
-        return result
-
-    # Extract papers block after slug
-    papers_match = re.search(
-        r'slug:\s*"' + re.escape(slug) + r'".*?papers:\s*\[(.*?)\]',
-        content, re.DOTALL,
-    )
-    if not papers_match:
-        result.fail(f"No papers array found for {slug} in personalities.ts")
-        return result
-
-    papers_block = papers_match.group(1)
-    arxiv_ids = re.findall(r'arxiv:\s*"([^"]+)"', papers_block)
+    arxiv_ids = re.findall(r'arxiv:\s*"([^"]+)"', content)
 
     # Check count
     if len(arxiv_ids) != expected["count"]:
