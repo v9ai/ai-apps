@@ -79,26 +79,65 @@ The `langgraph/` directory contains a **FastAPI** server that handles both the b
 
 ```
 langgraph/
-├── chat_server.py        # FastAPI app — mounts upload routes + /chat + /health
+├── chat_server.py        # FastAPI app — mounts all routers + /chat + /health
 ├── config.py             # Pydantic settings (DB, R2, DeepSeek, embed model)
-├── db.py                 # psycopg3 + pgvector — CRUD for all blood test tables
+├── db.py                 # psycopg3 + pgvector — CRUD + vector search for all tables
 ├── embeddings.py         # LlamaIndex FastEmbedEmbedding + node builders + derived metrics
 ├── parsers.py            # 3-tier marker extraction (port from TypeScript)
 ├── storage.py            # Cloudflare R2 via boto3
 ├── pyproject.toml        # Python dependencies
 └── routes/
-    └── upload.py         # POST /upload, DELETE /blood-tests/{id}, POST /embed
+    ├── upload.py         # POST /upload, DELETE /blood-tests/{id}
+    ├── embed.py          # POST /embed/{text,condition,medication,symptom,appointment,reembed}
+    └── search.py         # POST /search/{tests,markers,multi,trend} — embed + pgvector query
 ```
 
 ### API
 
 | Endpoint | Method | Description |
 |----------|--------|-------------|
-| `/upload` | POST | Multipart upload → R2 + parse + PG + background embed |
+| `/upload` | POST | Multipart upload → R2 + parse + PG + background IngestionPipeline |
 | `/blood-tests/{id}` | DELETE | Cascade delete test + markers + embeddings + R2 file |
-| `/embed` | POST | `{ text }` → `{ embedding }` (for search query embedding) |
-| `/chat` | POST | `{ messages: [{role, content}] }` → `{ answer }` |
+| `/embed/text` | POST | `{ text }` → `{ embedding: float[] }` |
+| `/embed/condition` | POST | Embed + store a condition record |
+| `/embed/medication` | POST | Embed + store a medication record |
+| `/embed/symptom` | POST | Embed + store a symptom record |
+| `/embed/appointment` | POST | Embed + store an appointment record |
+| `/embed/reembed` | POST | Re-run IngestionPipeline for an existing test from stored markers |
+| `/search/tests` | POST | `{ query, user_id }` → embed + pgvector search on `blood_test_embeddings` |
+| `/search/markers` | POST | `{ query, user_id }` → hybrid FTS + vector search on `blood_marker_embeddings` |
+| `/search/multi` | POST | `{ query, user_id }` → embed once, search all 6 entity tables, return combined results |
+| `/search/trend` | POST | `{ query, user_id, marker_name? }` → marker trend search with optional name filter |
+| `/chat` | POST | `{ messages: [{role, content}] }` → `{ answer }` (RAG over clinical knowledge corpus) |
 | `/health` | GET | `{ status: "ok" }` liveness probe |
+
+### Search Pipeline
+
+All vector search operations run in Python — TypeScript never generates embeddings or executes similarity queries directly.
+
+```
+Next.js search/Q&A action
+     │
+     ▼  POST /search/multi  { query, user_id }
+Python FastAPI :8001
+     │
+     ├── 1. generate_embedding(query)       FastEmbedEmbedding · bge-large-en-v1.5 · 1024-dim
+     │
+     ├── 2. search_blood_tests()            cosine distance <=> · threshold 0.3
+     ├── 2. search_markers_hybrid()         30% ts_rank + 70% vector_similarity
+     ├── 2. search_conditions()             cosine distance
+     ├── 2. search_medications()            cosine distance
+     ├── 2. search_symptoms()               cosine distance
+     └── 2. search_appointments()           cosine distance
+          │
+          ▼
+     { tests, markers, conditions, medications, symptoms, appointments }
+          │
+          ▼  (TypeScript)
+     Qwen Plus · RAG context assembly · Health Q&A answer
+```
+
+The `/search/multi` endpoint embeds the query **exactly once** and fans out across all entity tables, so the TypeScript layer receives structured results and only needs to call the LLM.
 
 ### RAG Chat
 
@@ -192,7 +231,7 @@ The upload pipeline uses these LlamaIndex abstractions:
 
 ## Evaluation
 
-Five-layer eval pipeline with DeepEval LLM-as-judge metrics and custom clinical scorers.
+Six-layer eval pipeline with DeepEval LLM-as-judge metrics and custom clinical scorers.
 
 ```bash
 pnpm eval                # Run all evals
@@ -237,6 +276,19 @@ End-to-end tests of the LlamaIndex IngestionPipeline: node builders, embedding q
 | Semantic clustering (3 tests) | Lipid markers cluster closer than cross-system markers |
 | VectorStoreIndex retrieval (5 tests) | Cholesterol → lipid, kidney → renal, WBC → CBC |
 | Content quality (2 DeepEval) | LLM-judged completeness of node text |
+
+### DeepEval — Search pipeline evaluation (`evals/search_eval.py`)
+
+38 tests covering embedding quality, ranking correctness, route handlers, and LLM-judged relevance.
+
+| Test group | Tests | What it checks |
+|------------|-------|---------------|
+| Embedding quality (A) | 4 | 1024-dim output, deterministic, `generate_embedding` matches model, distinct queries differ |
+| Ranking correctness (B) | 7 | Cholesterol/renal/CBC/marker/condition/medication queries each rank relevant content higher via cosine similarity |
+| Hybrid scoring formula (C) | 8 | `combined_score = 0.3 * FTS + 0.7 * vector_similarity`, vector dominates, weights sum to 1 |
+| Route handlers (D) | 9 | Response shape for all 4 endpoints, embed-once for `/multi`, API key enforcement (401/200), empty results |
+| Threshold filtering (E) | 6 | Boundary at `> 0.3` (not `>=`), vector_sim drives inclusion |
+| Search relevance (F, GEval) | 4 | Cholesterol/kidney result relevance, multi-search coverage, off-topic results penalized — requires `DEEPSEEK_API_KEY` |
 
 ### DeepEval — Safety evaluation (`evals/safety_eval.py`)
 
@@ -417,10 +469,12 @@ uv run --project langgraph deepeval test evals/extraction_eval.py
 uv run --project langgraph deepeval test evals/derived_metrics_eval.py
 uv run --project langgraph deepeval test evals/safety_eval.py
 uv run --project langgraph pytest evals/ingestion_eval.py -v
+uv run --project langgraph pytest evals/search_eval.py -v
 
-# RAG + trajectory evals (require DEEPSEEK_API_KEY)
+# RAG + trajectory + search relevance evals (require DEEPSEEK_API_KEY)
 uv run --project langgraph python evals/ragas_eval.py
 uv run --project langgraph python evals/trajectory_eval.py
+DEEPSEEK_API_KEY=sk-... uv run --project langgraph pytest evals/search_eval.py -v
 ```
 
 ## Disclaimer

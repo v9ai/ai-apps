@@ -69,7 +69,118 @@ export async function deletePython(
   if (!res.ok) throw new Error(`Delete failed: ${await res.text()}`);
 }
 
-// ── Embed text (search queries) ─────────────────────────────────────
+// ── Search (embed + pgvector query — all in Python) ──────────────────
+
+export type TestSearchResult = {
+  id: string;
+  test_id: string;
+  content: string;
+  similarity: number;
+  file_name: string;
+  test_date: string | null;
+};
+
+export type MarkerSearchResult = {
+  marker_id: string;
+  test_id: string;
+  marker_name: string;
+  content: string;
+  fts_rank: number;
+  vector_similarity: number;
+  combined_score: number;
+};
+
+export type ConditionSearchResult = {
+  id: string;
+  condition_id: string;
+  content: string;
+  similarity: number;
+};
+
+export type MedicationSearchResult = {
+  id: string;
+  medication_id: string;
+  content: string;
+  similarity: number;
+};
+
+export type SymptomSearchResult = {
+  id: string;
+  symptom_id: string;
+  content: string;
+  similarity: number;
+};
+
+export type AppointmentSearchResult = {
+  id: string;
+  appointment_id: string;
+  content: string;
+  similarity: number;
+};
+
+export type TrendSearchResult = {
+  marker_id: string;
+  test_id: string;
+  marker_name: string;
+  content: string;
+  similarity: number;
+  value: string;
+  unit: string;
+  flag: string;
+  test_date: string | null;
+  file_name: string;
+};
+
+export type MultiSearchResult = {
+  tests: TestSearchResult[];
+  markers: MarkerSearchResult[];
+  conditions: ConditionSearchResult[];
+  medications: MedicationSearchResult[];
+  symptoms: SymptomSearchResult[];
+  appointments: AppointmentSearchResult[];
+};
+
+export async function searchTestsViaPython(
+  query: string,
+  userId: string,
+): Promise<TestSearchResult[]> {
+  const res = await post("/search/tests", { query, user_id: userId });
+  const data: { results: TestSearchResult[] } = await res.json();
+  return data.results;
+}
+
+export async function searchMarkersViaPython(
+  query: string,
+  userId: string,
+): Promise<MarkerSearchResult[]> {
+  const res = await post("/search/markers", { query, user_id: userId });
+  const data: { results: MarkerSearchResult[] } = await res.json();
+  return data.results;
+}
+
+export async function multiSearchViaPython(
+  question: string,
+  userId: string,
+): Promise<MultiSearchResult> {
+  const res = await post("/search/multi", { query: question, user_id: userId });
+  return res.json();
+}
+
+export async function markerTrendViaPython(
+  query: string,
+  userId: string,
+  markerName?: string,
+): Promise<TrendSearchResult[]> {
+  const res = await post("/search/trend", {
+    query,
+    user_id: userId,
+    marker_name: markerName ?? null,
+  });
+  const data: { results: TrendSearchResult[] } = await res.json();
+  return data.results;
+}
+
+// ── Embed text (search queries — kept for backwards compat) ──────────
 
 export async function embedViaPython(text: string): Promise<number[]> {
   const res = await post("/embed/text", { text });

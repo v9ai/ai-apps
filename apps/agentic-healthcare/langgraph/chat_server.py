@@ -26,6 +26,7 @@ from llama_index.core.chat_engine import ContextChatEngine
 from ragas_eval import DOCUMENTS, build_rag_pipeline  # noqa: E402
 from routes.upload import router as upload_router
 from routes.embed import router as embed_router
+from routes.search import router as search_router
 
 app = FastAPI(title="Blood Marker Intelligence Chat")
 app.add_middleware(
@@ -38,6 +39,7 @@ app.add_middleware(
 # Mount routes
 app.include_router(upload_router)
 app.include_router(embed_router)
+app.include_router(search_router)
 
 # Build RAG pipeline once at startup
 _rag = build_rag_pipeline("deepseek-chat")

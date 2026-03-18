@@ -315,3 +315,279 @@ def upsert_appointment_embedding(
             """,
             (emb_id, appointment_id, user_id, content, vec, now),
         )
+
+
+# ── Vector search ─────────────────────────────────────────────────────
+
+
+def search_blood_tests(
+    embedding: list[float],
+    user_id: str,
+    threshold: float = 0.3,
+    limit: int = 5,
+) -> list[dict]:
+    import numpy as np
+
+    vec = np.array(embedding, dtype=np.float32)
+    with get_conn() as conn:
+        rows = conn.execute(
+            """
+            SELECT e.id, e.test_id, e.content,
+                   1 - (e.embedding <=> %s) as similarity,
+                   t.file_name, t.test_date
+            FROM blood_test_embeddings e
+            JOIN blood_tests t ON t.id = e.test_id
+            WHERE e.user_id = %s
+              AND 1 - (e.embedding <=> %s) > %s
+            ORDER BY e.embedding <=> %s
+            LIMIT %s
+            """,
+            (vec, user_id, vec, threshold, vec, limit),
+        ).fetchall()
+    return [
+        {
+            "id": str(r[0]),
+            "test_id": str(r[1]),
+            "content": r[2],
+            "similarity": float(r[3]),
+            "file_name": r[4],
+            "test_date": str(r[5]) if r[5] else None,
+        }
+        for r in rows
+    ]
+
+
+def search_markers_hybrid(
+    query_text: str,
+    embedding: list[float],
+    user_id: str,
+    threshold: float = 0.3,
+    limit: int = 10,
+) -> list[dict]:
+    import numpy as np
+
+    vec = np.array(embedding, dtype=np.float32)
+    with get_conn() as conn:
+        rows = conn.execute(
+            """
+            SELECT marker_id, test_id, marker_name, content,
+                   ts_rank(to_tsvector('english', content), plainto_tsquery('english', %s)) as fts_rank,
+                   1 - (embedding <=> %s) as vector_similarity,
+                   (0.3 * ts_rank(to_tsvector('english', content), plainto_tsquery('english', %s))
+                    + 0.7 * (1 - (embedding <=> %s))) as combined_score
+            FROM blood_marker_embeddings
+            WHERE user_id = %s
+              AND 1 - (embedding <=> %s) > %s
+            ORDER BY combined_score DESC
+            LIMIT %s
+            """,
+            (query_text, vec, query_text, vec, user_id, vec, threshold, limit),
+        ).fetchall()
+    return [
+        {
+            "marker_id": str(r[0]),
+            "test_id": str(r[1]),
+            "marker_name": r[2],
+            "content": r[3],
+            "fts_rank": float(r[4]),
+            "vector_similarity": float(r[5]),
+            "combined_score": float(r[6]),
+        }
+        for r in rows
+    ]
+
+
+def search_conditions(
+    embedding: list[float],
+    user_id: str,
+    threshold: float = 0.3,
+    limit: int = 5,
+) -> list[dict]:
+    import numpy as np
+
+    vec = np.array(embedding, dtype=np.float32)
+    with get_conn() as conn:
+        rows = conn.execute(
+            """
+            SELECT id, condition_id, content,
+                   1 - (embedding <=> %s) as similarity
+            FROM condition_embeddings
+            WHERE user_id = %s
+              AND 1 - (embedding <=> %s) > %s
+            ORDER BY embedding <=> %s
+            LIMIT %s
+            """,
+            (vec, user_id, vec, threshold, vec, limit),
+        ).fetchall()
+    return [
+        {
+            "id": str(r[0]),
+            "condition_id": str(r[1]),
+            "content": r[2],
+            "similarity": float(r[3]),
+        }
+        for r in rows
+    ]
+
+
+def search_medications(
+    embedding: list[float],
+    user_id: str,
+    threshold: float = 0.3,
+    limit: int = 5,
+) -> list[dict]:
+    import numpy as np
+
+    vec = np.array(embedding, dtype=np.float32)
+    with get_conn() as conn:
+        rows = conn.execute(
+            """
+            SELECT id, medication_id, content,
+                   1 - (embedding <=> %s) as similarity
+            FROM medication_embeddings
+            WHERE user_id = %s
+              AND 1 - (embedding <=> %s) > %s
+            ORDER BY embedding <=> %s
+            LIMIT %s
+            """,
+            (vec, user_id, vec, threshold, vec, limit),
+        ).fetchall()
+    return [
+        {
+            "id": str(r[0]),
+            "medication_id": str(r[1]),
+            "content": r[2],
+            "similarity": float(r[3]),
+        }
+        for r in rows
+    ]
+
+
+def search_symptoms(
+    embedding: list[float],
+    user_id: str,
+    threshold: float = 0.3,
+    limit: int = 5,
+) -> list[dict]:
+    import numpy as np
+
+    vec = np.array(embedding, dtype=np.float32)
+    with get_conn() as conn:
+        rows = conn.execute(
+            """
+            SELECT id, symptom_id, content,
+                   1 - (embedding <=> %s) as similarity
+            FROM symptom_embeddings
+            WHERE user_id = %s
+              AND 1 - (embedding <=> %s) > %s
+            ORDER BY embedding <=> %s
+            LIMIT %s
+            """,
+            (vec, user_id, vec, threshold, vec, limit),
+        ).fetchall()
+    return [
+        {
+            "id": str(r[0]),
+            "symptom_id": str(r[1]),
+            "content": r[2],
+            "similarity": float(r[3]),
+        }
+        for r in rows
+    ]
+
+
+def search_appointments(
+    embedding: list[float],
+    user_id: str,
+    threshold: float = 0.3,
+    limit: int = 5,
+) -> list[dict]:
+    import numpy as np
+
+    vec = np.array(embedding, dtype=np.float32)
+    with get_conn() as conn:
+        rows = conn.execute(
+            """
+            SELECT id, appointment_id, content,
+                   1 - (embedding <=> %s) as similarity
+            FROM appointment_embeddings
+            WHERE user_id = %s
+              AND 1 - (embedding <=> %s) > %s
+            ORDER BY embedding <=> %s
+            LIMIT %s
+            """,
+            (vec, user_id, vec, threshold, vec, limit),
+        ).fetchall()
+    return [
+        {
+            "id": str(r[0]),
+            "appointment_id": str(r[1]),
+            "content": r[2],
+            "similarity": float(r[3]),
+        }
+        for r in rows
+    ]
+
+
+def search_marker_trend(
+    embedding: list[float],
+    user_id: str,
+    marker_name: str | None = None,
+    threshold: float = 0.3,
+    limit: int = 50,
+) -> list[dict]:
+    import numpy as np
+
+    vec = np.array(embedding, dtype=np.float32)
+    if marker_name:
+        with get_conn() as conn:
+            rows = conn.execute(
+                """
+                SELECT e.marker_id, e.test_id, e.marker_name, e.content,
+                       1 - (e.embedding <=> %s) as similarity,
+                       m.value, m.unit, m.flag,
+                       t.test_date, t.file_name
+                FROM blood_marker_embeddings e
+                JOIN blood_markers m ON m.id = e.marker_id
+                JOIN blood_tests t ON t.id = e.test_id
+                WHERE e.user_id = %s
+                  AND 1 - (e.embedding <=> %s) > %s
+                  AND e.marker_name = %s
+                ORDER BY e.embedding <=> %s
+                LIMIT %s
+                """,
+                (vec, user_id, vec, threshold, marker_name, vec, limit),
+            ).fetchall()
+    else:
+        with get_conn() as conn:
+            rows = conn.execute(
+                """
+                SELECT e.marker_id, e.test_id, e.marker_name, e.content,
+                       1 - (e.embedding <=> %s) as similarity,
+                       m.value, m.unit, m.flag,
+                       t.test_date, t.file_name
+                FROM blood_marker_embeddings e
+                JOIN blood_markers m ON m.id = e.marker_id
+                JOIN blood_tests t ON t.id = e.test_id
+                WHERE e.user_id = %s
+                  AND 1 - (e.embedding <=> %s) > %s
+                ORDER BY e.embedding <=> %s
+                LIMIT %s
+                """,
+                (vec, user_id, vec, threshold, vec, limit),
+            ).fetchall()
+    return [
+        {
+            "marker_id": str(r[0]),
+            "test_id": str(r[1]),
+            "marker_name": r[2],
+            "content": r[3],
+            "similarity": float(r[4]),
+            "value": r[5],
+            "unit": r[6],
+            "flag": r[7],
+            "test_date": str(r[8]) if r[8] else None,
+            "file_name": r[9],
+        }
+        for r in rows
+    ]
