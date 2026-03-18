@@ -1,7 +1,7 @@
-"""Blood test upload & delete — LlamaIndex IngestionPipeline over Unstructured → R2 + PG.
+"""Blood test upload & delete — LlamaIndex IngestionPipeline over LlamaParse → R2 + PG.
 
 The pipeline uses LlamaIndex abstractions end-to-end:
-  1. Unstructured partition → LlamaIndex Document
+  1. LlamaParse → LlamaIndex Document
   2. Custom BloodTestNodeParser → TextNode per marker + test summary + health state
   3. FastEmbedEmbedding (via LlamaIndex Settings) for vector generation
   4. IngestionPipeline orchestrates the transform + embed flow
@@ -72,7 +72,7 @@ class DeleteResponse(BaseModel):
 
 
 class BloodTestNodeParser(TransformComponent):
-    """Transform a Document of raw Unstructured elements into clinical TextNodes.
+    """Transform a Document of raw LlamaParse elements into clinical TextNodes.
 
     Produces three types of nodes:
       - blood_test: summary of entire test
@@ -213,37 +213,74 @@ def _run_ingestion(
         logger.exception("Ingestion pipeline failed for test %s (non-blocking)", test_id)
 
 
-# ── PDF parsing via Unstructured ─────────────────────────────────────
+# ── PDF parsing via LlamaParse ────────────────────────────────────────
 
 
 def _partition_pdf(file_bytes: bytes, file_name: str) -> list[dict]:
-    """Parse PDF/image with Unstructured (API or local)."""
-    if settings.unstructured_api_key:
-        from unstructured_client import UnstructuredClient
-        from unstructured_client.models.shared import Strategy
+    """Parse PDF/image with LlamaParse and convert output to element dicts."""
+    import os
+    import re
+    import tempfile
 
-        client = UnstructuredClient(api_key_auth=settings.unstructured_api_key)
-        res = client.general.partition(
-            partition_parameters={
-                "files": {"content": file_bytes, "file_name": file_name},
-                "strategy": Strategy.HI_RES,
-            },
-        )
-        return list(res) if res else []
-    else:
-        import os
-        import tempfile
+    from llama_parse import LlamaParse
 
-        from unstructured.partition.auto import partition
+    parser = LlamaParse(
+        api_key=settings.llama_cloud_api_key,
+        result_type="markdown",
+    )
+    suffix = os.path.splitext(file_name)[1] or ".pdf"
+    with tempfile.NamedTemporaryFile(delete=False, suffix=suffix) as tmp:
+        tmp.write(file_bytes)
+        tmp_path = tmp.name
+    try:
+        docs = parser.load_data(tmp_path)
+    finally:
+        os.unlink(tmp_path)
 
-        with tempfile.NamedTemporaryFile(delete=False, suffix=os.path.splitext(file_name)[1]) as tmp:
-            tmp.write(file_bytes)
-            tmp_path = tmp.name
-        try:
-            elements = partition(filename=tmp_path, strategy="hi_res")
-            return [el.to_dict() for el in elements]
-        finally:
-            os.unlink(tmp_path)
+    elements: list[dict] = []
+    for doc in docs:
+        elements.extend(_markdown_to_elements(doc.text))
+    return elements
+
+
+def _markdown_to_elements(md: str) -> list[dict]:
+    """Convert LlamaParse markdown output to element dicts compatible with parse_markers."""
+    import re
+
+    table_re = re.compile(
+        r"(\|.+\|\n\|[-| :]+\|\n(?:\|.+\|\n?)*)",
+        re.MULTILINE,
+    )
+    elements: list[dict] = []
+    last = 0
+    for m in table_re.finditer(md):
+        pre = md[last : m.start()].strip()
+        if pre:
+            elements.append({"type": "NarrativeText", "text": pre, "metadata": {}})
+        elements.append({
+            "type": "Table",
+            "text": "",
+            "metadata": {"text_as_html": _md_table_to_html(m.group(0))},
+        })
+        last = m.end()
+    tail = md[last:].strip()
+    if tail:
+        elements.append({"type": "NarrativeText", "text": tail, "metadata": {}})
+    return elements
+
+
+def _md_table_to_html(md_table: str) -> str:
+    """Convert a markdown table to an HTML table string."""
+    import re
+
+    rows = []
+    for line in md_table.strip().splitlines():
+        line = line.strip()
+        if not line.startswith("|") or re.match(r"^\|[-: |]+\|$", line):
+            continue
+        cells = [c.strip() for c in line.strip("|").split("|")]
+        rows.append("<tr>" + "".join(f"<td>{c}</td>" for c in cells) + "</tr>")
+    return "<table>" + "".join(rows) + "</table>"
 
 
 # ── Routes ────────────────────────────────────────────────────────────

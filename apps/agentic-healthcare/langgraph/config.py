@@ -25,8 +25,8 @@ class Settings(BaseSettings):
     # Internal API key (shared secret between Next.js ↔ Python)
     internal_api_key: str = ""
 
-    # Unstructured API (optional — omit to run locally)
-    unstructured_api_key: str = ""
+    # LlamaParse API key
+    llama_cloud_api_key: str = ""
 
     model_config = {"env_file": ".env", "extra": "ignore"}
 
