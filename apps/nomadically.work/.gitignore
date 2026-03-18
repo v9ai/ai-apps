@@ -89,3 +89,6 @@ public/docs/
 
 # Rust build artifacts
 **/target/
+
+# LlamaIndex local storage
+llamaindex/.storage/

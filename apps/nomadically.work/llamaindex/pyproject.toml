@@ -1,0 +1,17 @@
+[project]
+name = "nomadically-llamaindex"
+version = "0.1.0"
+description = "LlamaIndex Workflows pipelines for interview prep and tech knowledge extraction"
+requires-python = ">=3.12"
+dependencies = [
+    "click>=8.0",
+    "deepeval>=3.8.9",
+    "httpx>=0.28",
+    "llama-index-core>=0.12",
+    "llama-index-llms-deepseek>=0.1",
+    "psycopg[binary]>=3.2",
+    "python-dotenv>=1.0",
+]
+
+[project.scripts]
+cli = "cli:main"

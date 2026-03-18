@@ -1,5 +1,5 @@
 import { NextResponse, type NextRequest } from "next/server";
-import { getSessionCookie } from "better-auth/cookies";
+import { getSessionCookie } from "@ai-apps/auth";
 
 export function proxy(request: NextRequest) {
   const sessionCookie = getSessionCookie(request);

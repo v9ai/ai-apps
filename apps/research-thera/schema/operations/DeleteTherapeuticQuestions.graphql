@@ -1,0 +1,7 @@
+mutation DeleteTherapeuticQuestions($goalId: Int, $issueId: Int) {
+  deleteTherapeuticQuestions(goalId: $goalId, issueId: $issueId) {
+    success
+    message
+    deletedCount
+  }
+}

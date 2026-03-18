@@ -599,6 +599,7 @@ export type Issue = {
   id: Scalars['Int']['output'];
   journalEntry?: Maybe<JournalEntry>;
   journalEntryId?: Maybe<Scalars['Int']['output']>;
+  questions: Array<TherapeuticQuestion>;
   recommendations?: Maybe<Array<Scalars['String']['output']>>;
   relatedFamilyMember?: Maybe<FamilyMember>;
   relatedFamilyMemberId?: Maybe<Scalars['Int']['output']>;
@@ -866,7 +867,8 @@ export type MutationDeleteTeacherFeedbackArgs = {
 
 
 export type MutationDeleteTherapeuticQuestionsArgs = {
-  goalId: Scalars['Int']['input'];
+  goalId?: InputMaybe<Scalars['Int']['input']>;
+  issueId?: InputMaybe<Scalars['Int']['input']>;
 };
 
 
@@ -906,7 +908,8 @@ export type MutationGenerateResearchArgs = {
 
 
 export type MutationGenerateTherapeuticQuestionsArgs = {
-  goalId: Scalars['Int']['input'];
+  goalId?: InputMaybe<Scalars['Int']['input']>;
+  issueId?: InputMaybe<Scalars['Int']['input']>;
 };
 
 
@@ -1328,7 +1331,8 @@ export type QueryTeacherFeedbacksArgs = {
 
 
 export type QueryTherapeuticQuestionsArgs = {
-  goalId: Scalars['Int']['input'];
+  goalId?: InputMaybe<Scalars['Int']['input']>;
+  issueId?: InputMaybe<Scalars['Int']['input']>;
 };
 
 export type Relationship = {
@@ -1466,8 +1470,9 @@ export type TherapeuticQuestion = {
   __typename?: 'TherapeuticQuestion';
   createdAt: Scalars['String']['output'];
   generatedAt: Scalars['String']['output'];
-  goalId: Scalars['Int']['output'];
+  goalId?: Maybe<Scalars['Int']['output']>;
   id: Scalars['Int']['output'];
+  issueId?: Maybe<Scalars['Int']['output']>;
   question: Scalars['String']['output'];
   rationale: Scalars['String']['output'];
   researchId?: Maybe<Scalars['Int']['output']>;
@@ -1795,6 +1800,14 @@ export type DeleteTeacherFeedbackMutationVariables = Exact<{
 
 export type DeleteTeacherFeedbackMutation = { __typename?: 'Mutation', deleteTeacherFeedback: { __typename?: 'DeleteTeacherFeedbackResult', success: boolean, message?: string | null } };
 
+export type DeleteTherapeuticQuestionsMutationVariables = Exact<{
+  goalId?: InputMaybe<Scalars['Int']['input']>;
+  issueId?: InputMaybe<Scalars['Int']['input']>;
+}>;
+
+
+export type DeleteTherapeuticQuestionsMutation = { __typename?: 'Mutation', deleteTherapeuticQuestions: { __typename?: 'DeleteQuestionsResult', success: boolean, message?: string | null, deletedCount: number } };
+
 export type ExtractContactFeedbackIssuesMutationVariables = Exact<{
   id: Scalars['Int']['input'];
 }>;
@@ -1846,6 +1859,14 @@ export type GenerateResearchMutationVariables = Exact<{
 
 
 export type GenerateResearchMutation = { __typename?: 'Mutation', generateResearch: { __typename?: 'GenerateResearchResult', success: boolean, message?: string | null, jobId?: string | null, count?: number | null } };
+
+export type GenerateTherapeuticQuestionsMutationVariables = Exact<{
+  goalId?: InputMaybe<Scalars['Int']['input']>;
+  issueId?: InputMaybe<Scalars['Int']['input']>;
+}>;
+
+
+export type GenerateTherapeuticQuestionsMutation = { __typename?: 'Mutation', generateTherapeuticQuestions: { __typename?: 'GenerateQuestionsResult', success: boolean, message?: string | null, jobId?: string | null, questions: Array<{ __typename?: 'TherapeuticQuestion', id: number, goalId?: number | null, issueId?: number | null, question: string, researchId?: number | null, researchTitle?: string | null, rationale: string, generatedAt: string, createdAt: string, updatedAt: string }> } };
 
 export type GetAllNotesQueryVariables = Exact<{ [key: string]: never; }>;
 
@@ -1956,7 +1977,7 @@ export type GetIssueQueryVariables = Exact<{
 }>;
 
 
-export type GetIssueQuery = { __typename?: 'Query', issue?: { __typename?: 'Issue', id: number, feedbackId?: number | null, journalEntryId?: number | null, familyMemberId: number, createdBy: string, title: string, description: string, category: string, severity: string, recommendations?: Array<string> | null, createdAt: string, updatedAt: string, relatedFamilyMemberId?: number | null, feedback?: { __typename?: 'ContactFeedback', id: number, contactId: number, familyMemberId: number, subject?: string | null, feedbackDate: string, content: string, tags?: Array<string> | null, source?: FeedbackSource | null, extracted: boolean, contact?: { __typename?: 'Contact', id: number, firstName: string, lastName?: string | null, slug?: string | null } | null, familyMember?: { __typename?: 'FamilyMember', id: number, firstName: string, name?: string | null, slug?: string | null } | null } | null, familyMember?: { __typename?: 'FamilyMember', id: number, firstName: string, name?: string | null, slug?: string | null } | null, relatedFamilyMember?: { __typename?: 'FamilyMember', id: number, firstName: string, name?: string | null, slug?: string | null } | null, stories: Array<{ __typename?: 'Story', id: number, language?: string | null, minutes?: number | null, createdAt: string }> } | null };
+export type GetIssueQuery = { __typename?: 'Query', issue?: { __typename?: 'Issue', id: number, feedbackId?: number | null, journalEntryId?: number | null, familyMemberId: number, createdBy: string, title: string, description: string, category: string, severity: string, recommendations?: Array<string> | null, createdAt: string, updatedAt: string, relatedFamilyMemberId?: number | null, journalEntry?: { __typename?: 'JournalEntry', id: number, title?: string | null, entryDate: string } | null, feedback?: { __typename?: 'ContactFeedback', id: number, contactId: number, familyMemberId: number, subject?: string | null, feedbackDate: string, content: string, tags?: Array<string> | null, source?: FeedbackSource | null, extracted: boolean, contact?: { __typename?: 'Contact', id: number, firstName: string, lastName?: string | null, slug?: string | null } | null, familyMember?: { __typename?: 'FamilyMember', id: number, firstName: string, name?: string | null, slug?: string | null } | null } | null, familyMember?: { __typename?: 'FamilyMember', id: number, firstName: string, name?: string | null, slug?: string | null } | null, relatedFamilyMember?: { __typename?: 'FamilyMember', id: number, firstName: string, name?: string | null, slug?: string | null } | null, stories: Array<{ __typename?: 'Story', id: number, language?: string | null, minutes?: number | null, createdAt: string }> } | null };
 
 export type GetIssuesQueryVariables = Exact<{
   familyMemberId: Scalars['Int']['input'];
@@ -2049,6 +2070,14 @@ export type GetTeacherFeedbacksQueryVariables = Exact<{
 
 
 export type GetTeacherFeedbacksQuery = { __typename?: 'Query', teacherFeedbacks: Array<{ __typename?: 'TeacherFeedback', id: number, familyMemberId: number, createdBy: string, teacherName: string, subject?: string | null, feedbackDate: string, content: string, tags?: Array<string> | null, source?: FeedbackSource | null, extracted: boolean, createdAt: string, updatedAt: string, familyMember?: { __typename?: 'FamilyMember', id: number, firstName: string, name?: string | null } | null }> };
+
+export type GetTherapeuticQuestionsQueryVariables = Exact<{
+  goalId?: InputMaybe<Scalars['Int']['input']>;
+  issueId?: InputMaybe<Scalars['Int']['input']>;
+}>;
+
+
+export type GetTherapeuticQuestionsQuery = { __typename?: 'Query', therapeuticQuestions: Array<{ __typename?: 'TherapeuticQuestion', id: number, goalId?: number | null, issueId?: number | null, question: string, researchId?: number | null, researchTitle?: string | null, rationale: string, generatedAt: string, createdAt: string, updatedAt: string }> };
 
 export type ShareFamilyMemberMutationVariables = Exact<{
   familyMemberId: Scalars['Int']['input'];
@@ -3533,6 +3562,42 @@ export function useDeleteTeacherFeedbackMutation(baseOptions?: Apollo.MutationHo
 export type DeleteTeacherFeedbackMutationHookResult = ReturnType<typeof useDeleteTeacherFeedbackMutation>;
 export type DeleteTeacherFeedbackMutationResult = Apollo.MutationResult<DeleteTeacherFeedbackMutation>;
 export type DeleteTeacherFeedbackMutationOptions = Apollo.BaseMutationOptions<DeleteTeacherFeedbackMutation, DeleteTeacherFeedbackMutationVariables>;
+export const DeleteTherapeuticQuestionsDocument = gql`
+    mutation DeleteTherapeuticQuestions($goalId: Int, $issueId: Int) {
+  deleteTherapeuticQuestions(goalId: $goalId, issueId: $issueId) {
+    success
+    message
+    deletedCount
+  }
+}
+    `;
+export type DeleteTherapeuticQuestionsMutationFn = Apollo.MutationFunction<DeleteTherapeuticQuestionsMutation, DeleteTherapeuticQuestionsMutationVariables>;
+
+/**
+ * __useDeleteTherapeuticQuestionsMutation__
+ *
+ * To run a mutation, you first call `useDeleteTherapeuticQuestionsMutation` within a React component and pass it any options that fit your needs.
+ * When your component renders, `useDeleteTherapeuticQuestionsMutation` returns a tuple that includes:
+ * - A mutate function that you can call at any time to execute the mutation
+ * - An object with fields that represent the current status of the mutation's execution
+ *
+ * @param baseOptions options that will be passed into the mutation, supported options are listed on: https://www.apollographql.com/docs/react/api/react-hooks/#options-2;
+ *
+ * @example
+ * const [deleteTherapeuticQuestionsMutation, { data, loading, error }] = useDeleteTherapeuticQuestionsMutation({
+ *   variables: {
+ *      goalId: // value for 'goalId'
+ *      issueId: // value for 'issueId'
+ *   },
+ * });
+ */
+export function useDeleteTherapeuticQuestionsMutation(baseOptions?: Apollo.MutationHookOptions<DeleteTherapeuticQuestionsMutation, DeleteTherapeuticQuestionsMutationVariables>) {
+        const options = {...defaultOptions, ...baseOptions}
+        return Apollo.useMutation<DeleteTherapeuticQuestionsMutation, DeleteTherapeuticQuestionsMutationVariables>(DeleteTherapeuticQuestionsDocument, options);
+      }
+export type DeleteTherapeuticQuestionsMutationHookResult = ReturnType<typeof useDeleteTherapeuticQuestionsMutation>;
+export type DeleteTherapeuticQuestionsMutationResult = Apollo.MutationResult<DeleteTherapeuticQuestionsMutation>;
+export type DeleteTherapeuticQuestionsMutationOptions = Apollo.BaseMutationOptions<DeleteTherapeuticQuestionsMutation, DeleteTherapeuticQuestionsMutationVariables>;
 export const ExtractContactFeedbackIssuesDocument = gql`
     mutation ExtractContactFeedbackIssues($id: Int!) {
   extractContactFeedbackIssues(id: $id) {
@@ -3785,6 +3850,54 @@ export function useGenerateResearchMutation(baseOptions?: Apollo.MutationHookOpt
 export type GenerateResearchMutationHookResult = ReturnType<typeof useGenerateResearchMutation>;
 export type GenerateResearchMutationResult = Apollo.MutationResult<GenerateResearchMutation>;
 export type GenerateResearchMutationOptions = Apollo.BaseMutationOptions<GenerateResearchMutation, GenerateResearchMutationVariables>;
+export const GenerateTherapeuticQuestionsDocument = gql`
+    mutation GenerateTherapeuticQuestions($goalId: Int, $issueId: Int) {
+  generateTherapeuticQuestions(goalId: $goalId, issueId: $issueId) {
+    success
+    message
+    jobId
+    questions {
+      id
+      goalId
+      issueId
+      question
+      researchId
+      researchTitle
+      rationale
+      generatedAt
+      createdAt
+      updatedAt
+    }
+  }
+}
+    `;
+export type GenerateTherapeuticQuestionsMutationFn = Apollo.MutationFunction<GenerateTherapeuticQuestionsMutation, GenerateTherapeuticQuestionsMutationVariables>;
+
+/**
+ * __useGenerateTherapeuticQuestionsMutation__
+ *
+ * To run a mutation, you first call `useGenerateTherapeuticQuestionsMutation` within a React component and pass it any options that fit your needs.
+ * When your component renders, `useGenerateTherapeuticQuestionsMutation` returns a tuple that includes:
+ * - A mutate function that you can call at any time to execute the mutation
+ * - An object with fields that represent the current status of the mutation's execution
+ *
+ * @param baseOptions options that will be passed into the mutation, supported options are listed on: https://www.apollographql.com/docs/react/api/react-hooks/#options-2;
+ *
+ * @example
+ * const [generateTherapeuticQuestionsMutation, { data, loading, error }] = useGenerateTherapeuticQuestionsMutation({
+ *   variables: {
+ *      goalId: // value for 'goalId'
+ *      issueId: // value for 'issueId'
+ *   },
+ * });
+ */
+export function useGenerateTherapeuticQuestionsMutation(baseOptions?: Apollo.MutationHookOptions<GenerateTherapeuticQuestionsMutation, GenerateTherapeuticQuestionsMutationVariables>) {
+        const options = {...defaultOptions, ...baseOptions}
+        return Apollo.useMutation<GenerateTherapeuticQuestionsMutation, GenerateTherapeuticQuestionsMutationVariables>(GenerateTherapeuticQuestionsDocument, options);
+      }
+export type GenerateTherapeuticQuestionsMutationHookResult = ReturnType<typeof useGenerateTherapeuticQuestionsMutation>;
+export type GenerateTherapeuticQuestionsMutationResult = Apollo.MutationResult<GenerateTherapeuticQuestionsMutation>;
+export type GenerateTherapeuticQuestionsMutationOptions = Apollo.BaseMutationOptions<GenerateTherapeuticQuestionsMutation, GenerateTherapeuticQuestionsMutationVariables>;
 export const GetAllNotesDocument = gql`
     query GetAllNotes {
   allNotes {
@@ -4845,6 +4958,11 @@ export const GetIssueDocument = gql`
     id
     feedbackId
     journalEntryId
+    journalEntry {
+      id
+      title
+      entryDate
+    }
     familyMemberId
     createdBy
     title
@@ -5740,6 +5858,59 @@ export type GetTeacherFeedbacksQueryHookResult = ReturnType<typeof useGetTeacher
 export type GetTeacherFeedbacksLazyQueryHookResult = ReturnType<typeof useGetTeacherFeedbacksLazyQuery>;
 export type GetTeacherFeedbacksSuspenseQueryHookResult = ReturnType<typeof useGetTeacherFeedbacksSuspenseQuery>;
 export type GetTeacherFeedbacksQueryResult = Apollo.QueryResult<GetTeacherFeedbacksQuery, GetTeacherFeedbacksQueryVariables>;
+export const GetTherapeuticQuestionsDocument = gql`
+    query GetTherapeuticQuestions($goalId: Int, $issueId: Int) {
+  therapeuticQuestions(goalId: $goalId, issueId: $issueId) {
+    id
+    goalId
+    issueId
+    question
+    researchId
+    researchTitle
+    rationale
+    generatedAt
+    createdAt
+    updatedAt
+  }
+}
+    `;
+
+/**
+ * __useGetTherapeuticQuestionsQuery__
+ *
+ * To run a query within a React component, call `useGetTherapeuticQuestionsQuery` and pass it any options that fit your needs.
+ * When your component renders, `useGetTherapeuticQuestionsQuery` returns an object from Apollo Client that contains loading, error, and data properties
+ * you can use to render your UI.
+ *
+ * @param baseOptions options that will be passed into the query, supported options are listed on: https://www.apollographql.com/docs/react/api/react-hooks/#options;
+ *
+ * @example
+ * const { data, loading, error } = useGetTherapeuticQuestionsQuery({
+ *   variables: {
+ *      goalId: // value for 'goalId'
+ *      issueId: // value for 'issueId'
+ *   },
+ * });
+ */
+export function useGetTherapeuticQuestionsQuery(baseOptions?: Apollo.QueryHookOptions<GetTherapeuticQuestionsQuery, GetTherapeuticQuestionsQueryVariables>) {
+        const options = {...defaultOptions, ...baseOptions}
+        return Apollo.useQuery<GetTherapeuticQuestionsQuery, GetTherapeuticQuestionsQueryVariables>(GetTherapeuticQuestionsDocument, options);
+      }
+export function useGetTherapeuticQuestionsLazyQuery(baseOptions?: Apollo.LazyQueryHookOptions<GetTherapeuticQuestionsQuery, GetTherapeuticQuestionsQueryVariables>) {
+          const options = {...defaultOptions, ...baseOptions}
+          return Apollo.useLazyQuery<GetTherapeuticQuestionsQuery, GetTherapeuticQuestionsQueryVariables>(GetTherapeuticQuestionsDocument, options);
+        }
+// @ts-ignore
+export function useGetTherapeuticQuestionsSuspenseQuery(baseOptions?: Apollo.SuspenseQueryHookOptions<GetTherapeuticQuestionsQuery, GetTherapeuticQuestionsQueryVariables>): Apollo.UseSuspenseQueryResult<GetTherapeuticQuestionsQuery, GetTherapeuticQuestionsQueryVariables>;
+export function useGetTherapeuticQuestionsSuspenseQuery(baseOptions?: Apollo.SkipToken | Apollo.SuspenseQueryHookOptions<GetTherapeuticQuestionsQuery, GetTherapeuticQuestionsQueryVariables>): Apollo.UseSuspenseQueryResult<GetTherapeuticQuestionsQuery | undefined, GetTherapeuticQuestionsQueryVariables>;
+export function useGetTherapeuticQuestionsSuspenseQuery(baseOptions?: Apollo.SkipToken | Apollo.SuspenseQueryHookOptions<GetTherapeuticQuestionsQuery, GetTherapeuticQuestionsQueryVariables>) {
+          const options = baseOptions === Apollo.skipToken ? baseOptions : {...defaultOptions, ...baseOptions}
+          return Apollo.useSuspenseQuery<GetTherapeuticQuestionsQuery, GetTherapeuticQuestionsQueryVariables>(GetTherapeuticQuestionsDocument, options);
+        }
+export type GetTherapeuticQuestionsQueryHookResult = ReturnType<typeof useGetTherapeuticQuestionsQuery>;
+export type GetTherapeuticQuestionsLazyQueryHookResult = ReturnType<typeof useGetTherapeuticQuestionsLazyQuery>;
+export type GetTherapeuticQuestionsSuspenseQueryHookResult = ReturnType<typeof useGetTherapeuticQuestionsSuspenseQuery>;
+export type GetTherapeuticQuestionsQueryResult = Apollo.QueryResult<GetTherapeuticQuestionsQuery, GetTherapeuticQuestionsQueryVariables>;
 export const ShareFamilyMemberDocument = gql`
     mutation ShareFamilyMember($familyMemberId: Int!, $email: String!, $role: FamilyMemberShareRole) {
   shareFamilyMember(familyMemberId: $familyMemberId, email: $email, role: $role) {

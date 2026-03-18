@@ -536,6 +536,7 @@ type Issue {
   id: Int!
   journalEntry: JournalEntry
   journalEntryId: Int
+  questions: [TherapeuticQuestion!]!
   recommendations: [String!]
   relatedFamilyMember: FamilyMember
   relatedFamilyMemberId: Int
@@ -625,13 +626,13 @@ type Mutation {
   deleteResearch(goalId: Int!): DeleteResearchResult!
   deleteStory(id: Int!): DeleteStoryResult!
   deleteTeacherFeedback(id: Int!): DeleteTeacherFeedbackResult!
-  deleteTherapeuticQuestions(goalId: Int!): DeleteQuestionsResult!
+  deleteTherapeuticQuestions(goalId: Int, issueId: Int): DeleteQuestionsResult!
   extractContactFeedbackIssues(id: Int!): ContactFeedback!
   generateAudio(goalId: Int!, language: String, storyId: Int, text: String, voice: String): GenerateAudioResult!
   generateLongFormText(feedbackId: Int, goalId: Int, issueId: Int, language: String, minutes: Int): GenerateLongFormTextResult!
   generateOpenAIAudio(input: GenerateOpenAIAudioInput!): GenerateOpenAIAudioResult!
   generateResearch(feedbackId: Int, goalId: Int, issueId: Int): GenerateResearchResult!
-  generateTherapeuticQuestions(goalId: Int!): GenerateQuestionsResult!
+  generateTherapeuticQuestions(goalId: Int, issueId: Int): GenerateQuestionsResult!
   markTeacherFeedbackExtracted(id: Int!): TeacherFeedback!
   refreshClaimCard(id: ID!): ClaimCard!
   setNoteVisibility(noteId: Int!, visibility: NoteVisibility!): Note!
@@ -795,7 +796,7 @@ type Query {
   story(id: Int!): Story
   teacherFeedback(id: Int!): TeacherFeedback
   teacherFeedbacks(familyMemberId: Int!): [TeacherFeedback!]!
-  therapeuticQuestions(goalId: Int!): [TherapeuticQuestion!]!
+  therapeuticQuestions(goalId: Int, issueId: Int): [TherapeuticQuestion!]!
   userSettings: UserSettings!
 }
 
@@ -916,8 +917,9 @@ type TextSegment {
 type TherapeuticQuestion {
   createdAt: String!
   generatedAt: String!
-  goalId: Int!
+  goalId: Int
   id: Int!
+  issueId: Int
   question: String!
   rationale: String!
   researchId: Int

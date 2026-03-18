@@ -2,15 +2,19 @@
 
 from __future__ import annotations
 
+import asyncio
 import logging
 from pathlib import Path
 
 from langgraph.graph import END, START, StateGraph
 
 from press import slugify
-from press.agents import Agent, run_parallel
+from press.agents import Agent
 from press.graphs.nodes import (
+    make_edit_node,
     make_linkedin_node,
+    make_revise_node,
+    make_write_node,
     publish_node,
     save_final_node,
     should_revise_with_linkedin,
@@ -57,7 +61,6 @@ def build_deep_dive_graph(pool: ModelPool):
 
         if enable_paper_search:
             config = ResearchConfig(enable_paper_search=True)
-            import asyncio
             research_task = research_phase(
                 title, title, niche, config, pool.for_role(TeamRole.REASONER)
             )
@@ -72,8 +75,8 @@ def build_deep_dive_graph(pool: ModelPool):
                 pool.for_role(TeamRole.REASONER),
             )
             research_input = f"Research this topic: {title}"
-            research_output, seo_output = await run_parallel(
-                researcher, seo_agent, research_input
+            research_output, seo_output = await asyncio.gather(
+                researcher.run(research_input), seo_agent.run(seo_input)
             )
             paper_count = 0
 
@@ -88,72 +91,28 @@ def build_deep_dive_graph(pool: ModelPool):
             "paper_count": paper_count,
         }
 
-    async def write(state: DeepDiveState) -> dict:
-        title = state["title"]
-        writer = Agent(
-            "deep-dive-writer",
-            prompts.deep_dive_writer(title),
-            pool.for_role(TeamRole.REASONER),
-        )
-        writer_input = (
+    def _context(state: dict) -> str:
+        return (
             f"## Source Article\n\n{state['source_content']}\n\n"
             f"---\n\n## Academic Research\n\n{state['research_output']}\n\n"
             f"---\n\n## SEO Strategy\n\n{state['seo_output']}"
         )
-        draft = await writer.run(writer_input)
 
-        output_dir = state.get("output_dir", "./articles")
-        slug = slugify(title)
-        drafts_dir = Path(output_dir) / "drafts"
-        drafts_dir.mkdir(parents=True, exist_ok=True)
-        (drafts_dir / f"{slug}.md").write_text(draft)
-
-        return {"draft": draft}
-
-    async def edit(state: DeepDiveState) -> dict:
-        rounds = state.get("revision_rounds", 0)
-        editor = Agent(
-            f"deep-dive-editor-r{rounds}",
-            prompts.deep_dive_editor(),
-            pool.for_role(TeamRole.REVIEWER),
-        )
-        editor_input = (
-            f"## Draft\n\n{state['draft']}\n\n"
-            f"---\n\n## Research Brief\n\n{state['research_output']}\n\n"
-            f"---\n\n## SEO Strategy\n\n{state['seo_output']}"
-        )
-        editor_output = await editor.run(editor_input)
-        approved = "APPROVE" in editor_output or "status: published" in editor_output
-
-        return {"editor_output": editor_output, "approved": approved}
-
-    async def revise(state: DeepDiveState) -> dict:
-        title = state["title"]
-        rounds = state.get("revision_rounds", 0) + 1
-        logger.info("Editor requested revision — round %d", rounds)
-        writer = Agent(
-            f"deep-dive-writer-r{rounds}",
-            prompts.deep_dive_writer(title),
-            pool.for_role(TeamRole.REASONER),
-        )
-        revision_input = (
-            f"## Revision Notes from Editor\n\n{state['editor_output']}\n\n"
-            f"---\n\n## Source Article\n\n{state['source_content']}\n\n"
-            f"---\n\n## Academic Research\n\n{state['research_output']}\n\n"
-            f"---\n\n## SEO Strategy\n\n{state['seo_output']}\n\n"
-            f"---\n\n## Previous Draft (revise this, don't start from scratch)\n\n{state['draft']}"
-        )
-        draft = await writer.run(revision_input)
-
-        output_dir = state.get("output_dir", "./articles")
-        slug = slugify(title)
-        drafts_dir = Path(output_dir) / "drafts"
-        drafts_dir.mkdir(parents=True, exist_ok=True)
-        (drafts_dir / f"{slug}-revisions.md").write_text(state["editor_output"])
-        (drafts_dir / f"{slug}.md").write_text(draft)
-
-        return {"draft": draft, "revision_rounds": rounds}
-
+    write = make_write_node(
+        pool,
+        "deep-dive-writer",
+        lambda state: prompts.deep_dive_writer(state["title"]),
+        _context,
+    )
+    edit = make_edit_node(
+        pool, "deep-dive-editor", lambda _: prompts.deep_dive_editor()
+    )
+    revise = make_revise_node(
+        pool,
+        "deep-dive-writer",
+        lambda state: prompts.deep_dive_writer(state["title"]),
+        _context,
+    )
     linkedin = make_linkedin_node(pool, "deep-dive-linkedin")
 
     # Build graph

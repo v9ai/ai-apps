@@ -2,7 +2,7 @@ type Query {
   goals(familyMemberId: Int, status: String): [Goal!]!
   goal(id: Int, slug: String): Goal
   research(goalId: Int, issueId: Int, feedbackId: Int): [Research!]!
-  therapeuticQuestions(goalId: Int!): [TherapeuticQuestion!]!
+  therapeuticQuestions(goalId: Int, issueId: Int): [TherapeuticQuestion!]!
   notes(entityId: Int!, entityType: String!): [Note!]!
   allNotes: [Note!]!
   note(id: Int, slug: String): Note
@@ -70,8 +70,8 @@ type Mutation {
   # Async generation workflows
   generateResearch(goalId: Int, issueId: Int, feedbackId: Int): GenerateResearchResult!
   deleteResearch(goalId: Int!): DeleteResearchResult!
-  generateTherapeuticQuestions(goalId: Int!): GenerateQuestionsResult!
-  deleteTherapeuticQuestions(goalId: Int!): DeleteQuestionsResult!
+  generateTherapeuticQuestions(goalId: Int, issueId: Int): GenerateQuestionsResult!
+  deleteTherapeuticQuestions(goalId: Int, issueId: Int): DeleteQuestionsResult!
   generateLongFormText(
     goalId: Int
     issueId: Int
@@ -274,7 +274,8 @@ type Research {
 
 type TherapeuticQuestion {
   id: Int!
-  goalId: Int!
+  goalId: Int
+  issueId: Int
   question: String!
   researchId: Int
   researchTitle: String
@@ -956,6 +957,7 @@ type Issue {
   familyMember: FamilyMember
   relatedFamilyMember: FamilyMember
   stories: [Story!]!
+  questions: [TherapeuticQuestion!]!
 }
 
 type ExtractedIssue {

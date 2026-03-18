@@ -1129,12 +1129,17 @@ export async function getGenerationJob(id: string) {
 // Therapeutic Questions
 // ============================================
 
-export async function listTherapeuticQuestions(goalId: number) {
-  const rows = await neonSql`SELECT * FROM therapeutic_questions WHERE goal_id = ${goalId} ORDER BY created_at DESC`;
+export async function listTherapeuticQuestions(goalId?: number, issueId?: number) {
+  const rows = issueId
+    ? await neonSql`SELECT * FROM therapeutic_questions WHERE issue_id = ${issueId} ORDER BY created_at DESC`
+    : goalId
+      ? await neonSql`SELECT * FROM therapeutic_questions WHERE goal_id = ${goalId} ORDER BY created_at DESC`
+      : [];
 
   return rows.map((row) => ({
     id: row.id as number,
-    goalId: row.goal_id as number,
+    goalId: (row.goal_id as number) || null,
+    issueId: (row.issue_id as number) || null,
     question: row.question as string,
     researchId: (row.research_id as number) || null,
     researchTitle: (row.research_title as string) || null,
@@ -1143,6 +1148,52 @@ export async function listTherapeuticQuestions(goalId: number) {
     createdAt: row.created_at as string,
     updatedAt: row.updated_at as string,
   }));
+}
+
+export async function insertTherapeuticQuestions(
+  questions: Array<{
+    goalId?: number;
+    issueId?: number;
+    question: string;
+    researchId?: number;
+    researchTitle?: string;
+    rationale: string;
+  }>,
+) {
+  const now = new Date().toISOString();
+  const inserted = [];
+  for (const q of questions) {
+    const rows = await neonSql`
+      INSERT INTO therapeutic_questions (goal_id, issue_id, question, research_id, research_title, rationale, generated_at, created_at, updated_at)
+      VALUES (${q.goalId ?? null}, ${q.issueId ?? null}, ${q.question}, ${q.researchId ?? null}, ${q.researchTitle ?? null}, ${q.rationale}, ${now}, ${now}, ${now})
+      RETURNING *
+    `;
+    if (rows[0]) inserted.push(rows[0]);
+  }
+  return inserted.map((row) => ({
+    id: row.id as number,
+    goalId: (row.goal_id as number) || null,
+    issueId: (row.issue_id as number) || null,
+    question: row.question as string,
+    researchId: (row.research_id as number) || null,
+    researchTitle: (row.research_title as string) || null,
+    rationale: row.rationale as string,
+    generatedAt: row.generated_at as string,
+    createdAt: row.created_at as string,
+    updatedAt: row.updated_at as string,
+  }));
+}
+
+export async function deleteTherapeuticQuestions(goalId?: number, issueId?: number) {
+  if (issueId) {
+    const rows = await neonSql`DELETE FROM therapeutic_questions WHERE issue_id = ${issueId} RETURNING id`;
+    return rows.length;
+  }
+  if (goalId) {
+    const rows = await neonSql`DELETE FROM therapeutic_questions WHERE goal_id = ${goalId} RETURNING id`;
+    return rows.length;
+  }
+  return 0;
 }
 
 

@@ -86,7 +86,8 @@ export const therapyResearch = pgTable("therapy_research", {
 
 export const therapeuticQuestions = pgTable("therapeutic_questions", {
   id: serial("id").primaryKey(),
-  goalId: integer("goal_id").notNull(),
+  goalId: integer("goal_id"),
+  issueId: integer("issue_id"),
   question: text("question").notNull(),
   researchId: integer("research_id"),
   researchTitle: text("research_title"),

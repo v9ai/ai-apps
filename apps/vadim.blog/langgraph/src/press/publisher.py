@@ -20,7 +20,7 @@ def blog_root() -> Path:
     return Path(__file__).resolve().parents[3] / "blog"
 
 
-def _parse_frontmatter(md: str) -> tuple[dict, str]:
+def parse_frontmatter(md: str) -> tuple[dict, str]:
     """Parse YAML frontmatter using line-based delimiter matching.
 
     Returns (metadata_dict, body_after_frontmatter).
@@ -44,10 +44,11 @@ def publish(
     deploy: bool = False,
     git_push: bool = False,
     audio_url: str | None = None,
+    seo_slug: str | None = None,
 ) -> Path:
     """Publish a blog post to vadim.blog, optionally git push, then Vercel deploy."""
     # 0. Parse existing frontmatter so we don't double-wrap
-    meta, body = _parse_frontmatter(blog_md)
+    meta, body = parse_frontmatter(blog_md)
 
     # 1. Title: prefer frontmatter → first # heading → topic
     title = meta.get("title") or topic
@@ -58,7 +59,8 @@ def publish(
                 break
 
     # 2. Build slug & date (always use current date — LLM dates are unreliable)
-    slug = slugify(title)
+    # Prefer SEO-agent slug → existing frontmatter slug → title-derived slug
+    slug = seo_slug or meta.get("slug") or slugify(title)
     dt = datetime.now()
     today = dt.strftime("%m-%d")
     date_full = dt.strftime("%Y-%m-%d")
@@ -137,7 +139,7 @@ def validate_before_publish(md: str) -> list[str]:
     from datetime import timedelta
 
     issues: list[str] = []
-    meta, body = _parse_frontmatter(md)
+    meta, body = parse_frontmatter(md)
 
     # Double frontmatter: body itself starts with another ---
     if body.lstrip().startswith("---"):

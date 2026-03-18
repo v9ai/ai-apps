@@ -3,6 +3,11 @@ query GetIssue($id: Int!) {
     id
     feedbackId
     journalEntryId
+    journalEntry {
+      id
+      title
+      entryDate
+    }
     familyMemberId
     createdBy
     title

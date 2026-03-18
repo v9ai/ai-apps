@@ -249,6 +249,7 @@ Output format (markdown):
 ## Recommended Structure
 - **Format**: [article type]
 - **Word count**: [range]
+- **URL Slug**: [primary-keyword-slug] — 3-6 hyphenated words, primary keyword first, no stop words, no year/date
 - **Title tag**: "[optimized title]"
 - **Meta description**: "[150-160 chars]"
 - **H1**: [headline]

@@ -325,31 +325,3 @@ async def delete_test(
             logger.warning("R2 cleanup failed for %s (non-blocking)", file_path)
 
     return DeleteResponse(deleted=True)
-
-
-# ── Embedding endpoint (for search queries) ──────────────────────────
-
-
-class EmbedRequest(BaseModel):
-    text: str
-
-
-class EmbedResponse(BaseModel):
-    embedding: list[float]
-
-
-@router.post("/embed", response_model=EmbedResponse)
-async def embed_text(
-    req: EmbedRequest,
-    x_api_key: str | None = Header(None),
-) -> EmbedResponse:
-    """Generate an embedding vector for a search query.
-
-    Called by the Next.js search-actions to ensure the same FastEmbed
-    model is used for queries as was used for indexing.
-    """
-    _check_api_key(x_api_key)
-    from embeddings import generate_embedding
-
-    vec = generate_embedding(req.text)
-    return EmbedResponse(embedding=vec)

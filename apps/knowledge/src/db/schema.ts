@@ -224,6 +224,39 @@ export const lessonConcepts = pgTable(
   (table) => [primaryKey({ columns: [table.lessonId, table.conceptId] })],
 );
 
+// ── Podcasts ──────────────────────────────────────────────────────
+
+export const podcasts = pgTable(
+  "podcasts",
+  {
+    id: uuid("id").primaryKey().defaultRandom(),
+    lessonId: uuid("lesson_id")
+      .references(() => lessons.id, { onDelete: "cascade" })
+      .notNull(),
+    spotifyId: text("spotify_id").notNull(),
+    type: text("type").notNull(), // "show" | "episode"
+    name: text("name").notNull(),
+    description: text("description"),
+    publisher: text("publisher"),
+    imageUrl: text("image_url"),
+    externalUrl: text("external_url").notNull(),
+    relevanceScore: real("relevance_score").notNull().default(0.5),
+    createdAt: timestamp("created_at", { withTimezone: true })
+      .notNull()
+      .defaultNow(),
+    updatedAt: timestamp("updated_at", { withTimezone: true })
+      .notNull()
+      .defaultNow(),
+  },
+  (table) => [
+    uniqueIndex("podcasts_spotify_lesson_idx").on(
+      table.spotifyId,
+      table.lessonId,
+    ),
+    index("podcasts_lesson_idx").on(table.lessonId),
+  ],
+);
+
 // ── Knowledge Tracing ──────────────────────────────────────────────
 
 export const userProfiles = pgTable("user_profiles", {
@@ -407,6 +440,18 @@ export const chatMessages = pgTable(
   ],
 );
 
+// ── Spotify Tokens ────────────────────────────────────────────────
+
+export const spotifyTokens = pgTable("spotify_tokens", {
+  id: text("id").primaryKey().default("default"),
+  accessToken: text("access_token").notNull(),
+  refreshToken: text("refresh_token"),
+  expiresAt: timestamp("expires_at", { withTimezone: true }).notNull(),
+  updatedAt: timestamp("updated_at", { withTimezone: true })
+    .notNull()
+    .defaultNow(),
+});
+
 // ── Analytics ──────────────────────────────────────────────────────
 
 export const analyticsEvents = pgTable(
@@ -451,6 +496,14 @@ export const lessonsRelations = relations(lessons, ({ one, many }) => ({
   sections: many(lessonSections),
   lessonCitations: many(lessonCitations),
   lessonConcepts: many(lessonConcepts),
+  podcasts: many(podcasts),
+}));
+
+export const podcastsRelations = relations(podcasts, ({ one }) => ({
+  lesson: one(lessons, {
+    fields: [podcasts.lessonId],
+    references: [lessons.id],
+  }),
 }));
 
 export const lessonSectionsRelations = relations(lessonSections, ({ one }) => ({

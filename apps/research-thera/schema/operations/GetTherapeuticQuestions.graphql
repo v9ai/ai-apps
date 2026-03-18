@@ -1,0 +1,14 @@
+query GetTherapeuticQuestions($goalId: Int, $issueId: Int) {
+  therapeuticQuestions(goalId: $goalId, issueId: $issueId) {
+    id
+    goalId
+    issueId
+    question
+    researchId
+    researchTitle
+    rationale
+    generatedAt
+    createdAt
+    updatedAt
+  }
+}

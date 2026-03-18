@@ -9,7 +9,15 @@ from langgraph.graph import END, START, StateGraph
 
 from press import slugify
 from press.agents import Agent, run_parallel
-from press.graphs.nodes import publish_node, save_final_node, should_revise_simple
+from press.graphs.nodes import (
+    make_edit_node,
+    make_linkedin_node,
+    make_revise_node,
+    make_write_node,
+    publish_node,
+    save_final_node,
+    should_revise_simple,
+)
 from press.graphs.state import JournalismState
 from press.models import ModelPool, TeamRole
 from press import prompts
@@ -21,10 +29,10 @@ def build_journalism_graph(pool: ModelPool):
     """Build the Journalism pipeline StateGraph.
 
     Flow: research_and_seo -> write -> edit --(approve)--> publish
-                                         |                    |
-                                         +-(revise & <1)-> revise -> edit
-                                         |
-                                         +-(revise & >=1)-> save_final
+                                           |
+                                           +--(revise & <1)--> revise -> edit
+                                           |
+                                           +--(revise & >=1)--> save_final
     """
     graph = StateGraph(JournalismState)
 
@@ -47,7 +55,6 @@ def build_journalism_graph(pool: ModelPool):
         research_input = f"Research this topic: {topic}"
         research_output, seo_output = await run_parallel(researcher, seo, research_input)
 
-        # Save artifacts
         research_dir = Path(output_dir) / "research"
         research_dir.mkdir(parents=True, exist_ok=True)
         (research_dir / f"{slug}-research.md").write_text(research_output)
@@ -55,67 +62,21 @@ def build_journalism_graph(pool: ModelPool):
 
         return {"research_output": research_output, "seo_output": seo_output}
 
-    async def write(state: JournalismState) -> dict:
-        writer = Agent(
-            "journalist-writer",
-            prompts.journalism_writer(),
-            pool.for_role(TeamRole.REASONER),
-        )
-        writer_input = (
+    def _context(state: dict) -> str:
+        return (
             f"## Research Brief\n\n{state['research_output']}\n\n"
             f"---\n\n## SEO Strategy\n\n{state['seo_output']}"
         )
-        draft = await writer.run(writer_input)
 
-        output_dir = state.get("output_dir", "./articles")
-        slug = slugify(state["topic"])
-        drafts_dir = Path(output_dir) / "drafts"
-        drafts_dir.mkdir(parents=True, exist_ok=True)
-        (drafts_dir / f"{slug}.md").write_text(draft)
-
-        return {"draft": draft}
-
-    async def edit(state: JournalismState) -> dict:
-        rounds = state.get("revision_rounds", 0)
-        editor = Agent(
-            f"journalist-editor-r{rounds}",
-            prompts.journalism_editor(),
-            pool.for_role(TeamRole.REVIEWER),
-        )
-        editor_input = (
-            f"## Draft\n\n{state['draft']}\n\n"
-            f"---\n\n## Research Brief\n\n{state['research_output']}\n\n"
-            f"---\n\n## SEO Strategy\n\n{state['seo_output']}"
-        )
-        editor_output = await editor.run(editor_input)
-        approved = "APPROVE" in editor_output or "status: published" in editor_output
-
-        return {"editor_output": editor_output, "approved": approved}
-
-    async def revise(state: JournalismState) -> dict:
-        rounds = state.get("revision_rounds", 0) + 1
-        logger.info("Editor requested revision — round %d", rounds)
-        writer = Agent(
-            f"journalist-writer-r{rounds}",
-            prompts.journalism_writer(),
-            pool.for_role(TeamRole.REASONER),
-        )
-        revision_input = (
-            f"## Revision Notes from Editor\n\n{state['editor_output']}\n\n"
-            f"---\n\n## Original Research Brief\n\n{state['research_output']}\n\n"
-            f"---\n\n## SEO Strategy\n\n{state['seo_output']}\n\n"
-            f"---\n\n## Previous Draft (revise this, don't start from scratch)\n\n{state['draft']}"
-        )
-        draft = await writer.run(revision_input)
-
-        output_dir = state.get("output_dir", "./articles")
-        slug = slugify(state["topic"])
-        drafts_dir = Path(output_dir) / "drafts"
-        drafts_dir.mkdir(parents=True, exist_ok=True)
-        (drafts_dir / f"{slug}-revisions.md").write_text(state["editor_output"])
-        (drafts_dir / f"{slug}.md").write_text(draft)
-
-        return {"draft": draft, "revision_rounds": rounds}
+    write = make_write_node(
+        pool, "journalist-writer", lambda _: prompts.journalism_writer(), _context
+    )
+    edit = make_edit_node(
+        pool, "journalist-editor", lambda _: prompts.journalism_editor()
+    )
+    revise = make_revise_node(
+        pool, "journalist-writer", lambda _: prompts.journalism_writer(), _context
+    )
 
     # Build graph
     graph.add_node("research_and_seo", research_and_seo)

@@ -27,7 +27,7 @@
     "@radix-ui/react-separator": "^1.1.8",
     "@radix-ui/react-slot": "^1.2.2",
     "@radix-ui/themes": "^3.3.0",
-    "better-auth": "^1.5.5",
+    "@ai-apps/auth": "workspace:*",
     "drizzle-orm": "^0.45.1",
     "lucide-react": "^0.511.0",
     "next": "latest",

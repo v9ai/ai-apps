@@ -66,11 +66,17 @@ async def _deep_dive(
     papers = result.get("paper_count", 0)
     papers_info = f"  |  papers: {papers}" if papers else ""
 
+    broken = result.get("broken_links", [])
+    links_info = f"  |  broken links: {len(broken)}" if broken else "  |  links: ✓"
     print(
         f"\n  [{title}]\n"
         f"  draft: ~{words} words  |  linkedin: {li_lines} lines  |  "
-        f"status: {status}  |  revisions: {rounds}{papers_info}"
+        f"status: {status}  |  revisions: {rounds}{papers_info}{links_info}"
     )
+    if broken:
+        print("\n  Broken links:")
+        for url in broken:
+            print(f"    ✗ {url}")
 
 
 @main.command()
@@ -101,7 +107,12 @@ async def _journalism(topic: str, output_dir: str, publish: bool, git_push: bool
     status = "APPROVED" if result.get("approved") else "NEEDS REVISION"
     words = len(result.get("draft", "").split())
     rounds = result.get("revision_rounds", 0)
-    print(f"\n[{topic}] — {status} — ~{words} words — {rounds} revision(s)")
+    broken = result.get("broken_links", [])
+    links_info = f" — broken links: {len(broken)}" if broken else " — links: ✓"
+    print(f"\n[{topic}] — {status} — ~{words} words — {rounds} revision(s){links_info}")
+    if broken:
+        for url in broken:
+            print(f"  ✗ {url}")
 
 
 @main.command()
@@ -175,11 +186,17 @@ async def _counter(url: str, topic: str, output_dir: str, publish: bool, git_pus
     papers = result.get("paper_count", 0)
     papers_info = f"  |  papers: {papers}" if papers else ""
 
+    broken = result.get("broken_links", [])
+    links_info = f"  |  broken links: {len(broken)}" if broken else "  |  links: ✓"
     print(
         f"\n  [{topic}]\n"
         f"  draft: ~{words} words  |  linkedin: {li_lines} lines  |  "
-        f"status: {status}  |  revisions: {rounds}{papers_info}"
+        f"status: {status}  |  revisions: {rounds}{papers_info}{links_info}"
     )
+    if broken:
+        print("\n  Broken links:")
+        for link in broken:
+            print(f"    ✗ {link}")
     print(f"\n  Countering: {url}")
 
 

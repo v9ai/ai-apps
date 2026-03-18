@@ -70,6 +70,27 @@ export async function getRelatedLessons(
     .slice(0, 4);
 }
 
+// Podcasts
+export interface Podcast {
+  id: string;
+  spotifyId: string;
+  type: string;
+  name: string;
+  description: string | null;
+  publisher: string | null;
+  imageUrl: string | null;
+  externalUrl: string;
+  relevanceScore: number;
+}
+
+export async function getPodcastsForLesson(slug: string): Promise<Podcast[]> {
+  if (USE_DB) {
+    const { getPodcastsForLessonFromDb } = await import("./db/queries");
+    return getPodcastsForLessonFromDb(slug);
+  }
+  return [];
+}
+
 // Audio metadata
 export { getAudioMeta } from "./audio";
 export type { AudioMeta, AudioChapter } from "./audio";

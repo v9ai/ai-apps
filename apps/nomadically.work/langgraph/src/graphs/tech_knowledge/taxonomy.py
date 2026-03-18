@@ -81,6 +81,9 @@ TAG_TO_CATEGORY: dict[str, str] = {
     "trpc": "Backend Frameworks",
     "drizzle-orm": "Backend Frameworks",
     "prisma": "Backend Frameworks",
+    "langchain": "Backend Frameworks",
+    "langgraph": "Backend Frameworks",
+    "llamaindex": "Backend Frameworks",
 
     # Frontend Frameworks
     "react": "Frontend Frameworks",
@@ -216,6 +219,8 @@ def normalize_tag(raw: str) -> str | None:
         "cicd": "ci-cd",
         "rest": "rest-api",
         "restful": "rest-api",
+        "llama-index": "llamaindex",
+        "llama_index": "llamaindex",
     }
     if lowered in aliases:
         return aliases[lowered]

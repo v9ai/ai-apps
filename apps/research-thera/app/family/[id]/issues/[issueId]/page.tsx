@@ -33,8 +33,11 @@ import {
   useConvertIssueToGoalMutation,
   useGenerateLongFormTextMutation,
   useGenerateResearchMutation,
+  useGenerateTherapeuticQuestionsMutation,
+  useDeleteTherapeuticQuestionsMutation,
   useGetGenerationJobQuery,
   useGetResearchQuery,
+  useGetTherapeuticQuestionsQuery,
 } from "@/app/__generated__/hooks";
 
 const CATEGORY_OPTIONS = [
@@ -190,6 +193,54 @@ function IssueDetailContent() {
   const researchJobStatus = researchJobData?.generationJob?.status;
   const isResearchJobRunning =
     !!researchJobId && researchJobStatus !== "SUCCEEDED" && researchJobStatus !== "FAILED";
+
+  // Questions state
+  const { data: questionsData, refetch: refetchQuestions } = useGetTherapeuticQuestionsQuery({
+    variables: { issueId },
+    skip: isNaN(issueId),
+  });
+  const questions = questionsData?.therapeuticQuestions ?? [];
+
+  const [generateQuestions, { loading: generatingQuestions }] =
+    useGenerateTherapeuticQuestionsMutation({
+      onCompleted: () => refetchQuestions(),
+    });
+
+  const [deleteQuestions, { loading: deletingQuestions }] =
+    useDeleteTherapeuticQuestionsMutation({
+      onCompleted: () => refetchQuestions(),
+    });
+
+  const [questionsMessage, setQuestionsMessage] = useState<{
+    text: string;
+    type: "success" | "error";
+  } | null>(null);
+
+  const handleGenerateQuestions = async () => {
+    if (!issue) return;
+    setQuestionsMessage(null);
+    try {
+      const result = await generateQuestions({ variables: { issueId: issue.id } });
+      const res = result.data?.generateTherapeuticQuestions;
+      if (res?.success) {
+        setQuestionsMessage({ text: res.message || "Questions generated.", type: "success" });
+      } else {
+        setQuestionsMessage({ text: res?.message || "Failed to generate questions.", type: "error" });
+      }
+    } catch (err: any) {
+      setQuestionsMessage({ text: err.message || "Error generating questions.", type: "error" });
+    }
+  };
+
+  const handleDeleteQuestions = async () => {
+    if (!issue) return;
+    try {
+      await deleteQuestions({ variables: { issueId: issue.id } });
+      setQuestionsMessage(null);
+    } catch (err: any) {
+      setQuestionsMessage({ text: err.message || "Error deleting questions.", type: "error" });
+    }
+  };
 
   // Story generation state
   const [storyLanguage, setStoryLanguage] = useState("English");
@@ -468,7 +519,7 @@ function IssueDetailContent() {
           <Flex gap="6" wrap="wrap">
             <Box>
               <Text as="div" size="2" weight="medium" mb="1">
-                Source Feedback
+                Source
               </Text>
               {issue.feedback ? (
                 <NextLink
@@ -478,9 +529,15 @@ function IssueDetailContent() {
                     {issue.feedback.subject || "View Feedback"}
                   </Text>
                 </NextLink>
+              ) : issue.journalEntry ? (
+                <NextLink href={`/journal/${issue.journalEntry.id}`}>
+                  <Text size="2" color="iris" style={{ textDecoration: "underline" }}>
+                    {issue.journalEntry.title || `Journal Entry — ${issue.journalEntry.entryDate}`}
+                  </Text>
+                </NextLink>
               ) : (
                 <Text size="2" color="gray">
-                  No feedback linked
+                  No source linked
                 </Text>
               )}
             </Box>
@@ -641,6 +698,71 @@ function IssueDetailContent() {
                 </Flex>
               </Card>
             ))}
+          </Flex>
+        </Card>
+      )}
+
+      {/* Generate Questions */}
+      {researchPapers.length > 0 && (
+        <Card>
+          <Flex direction="column" gap="4" p="4">
+            <Flex justify="between" align="center">
+              <Box>
+                <Heading size="3" mb="1">Expand with Questions</Heading>
+                <Text size="2" color="gray">
+                  Generate follow-up questions based on research findings.
+                </Text>
+              </Box>
+              <Flex gap="2">
+                {questions.length > 0 && (
+                  <Button
+                    variant="soft"
+                    color="red"
+                    size="2"
+                    onClick={handleDeleteQuestions}
+                    disabled={deletingQuestions || generatingQuestions}
+                  >
+                    {deletingQuestions ? "Deleting..." : "Clear"}
+                  </Button>
+                )}
+                <Button
+                  onClick={handleGenerateQuestions}
+                  disabled={generatingQuestions}
+                >
+                  {generatingQuestions && <Spinner />}
+                  {generatingQuestions ? "Generating..." : questions.length > 0 ? "Regenerate" : "Generate Questions"}
+                </Button>
+              </Flex>
+            </Flex>
+
+            {questionsMessage && (
+              <Text size="2" color={questionsMessage.type === "success" ? "green" : "red"}>
+                {questionsMessage.text}
+              </Text>
+            )}
+
+            {questions.length > 0 && (
+              <>
+                <Separator size="4" />
+                {questions.map((q) => (
+                  <Card key={q.id} variant="surface">
+                    <Flex direction="column" gap="2" p="3">
+                      <Text size="2" weight="bold">{q.question}</Text>
+                      <Text size="1" color="gray" style={{ lineHeight: "1.6" }}>
+                        {q.rationale}
+                      </Text>
+                      {q.researchTitle && (
+                        <Flex gap="1" align="center">
+                          <Badge variant="outline" color="indigo" size="1">
+                            Based on: {q.researchTitle}
+                          </Badge>
+                        </Flex>
+                      )}
+                    </Flex>
+                  </Card>
+                ))}
+              </>
+            )}
           </Flex>
         </Card>
       )}

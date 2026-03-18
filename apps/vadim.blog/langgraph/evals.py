@@ -36,9 +36,15 @@ from __future__ import annotations
 import asyncio
 import os
 import re
+import sys
 from dataclasses import dataclass, field
 from pathlib import Path
 from typing import Optional
+
+# Allow `from press import ...` whether the package is installed or run from source
+_SRC = Path(__file__).resolve().parent / "src"
+if str(_SRC) not in sys.path:
+    sys.path.insert(0, str(_SRC))
 
 try:
     import pytest
@@ -190,19 +196,23 @@ Score:
 _SEO_ALIGNMENT = """
 The article (actual_output) should follow the SEO strategy (context).
 
-Check all six:
+Check all seven:
 1. PRIMARY KEYWORD in H1 headline — exact match or close variant required
 2. PRIMARY KEYWORD in first 100 words of body — must appear naturally
 3. SECONDARY KEYWORDS in H2 headings — should cover most recommended sections
 4. META DESCRIPTION in frontmatter — must be present and 150–160 characters
 5. TITLE TAG in frontmatter — matches or closely follows the SEO strategy's recommendation
 6. NATURAL INTEGRATION — keywords read fluently; obvious stuffing or awkward repetition = deduct
+7. URL SLUG — the SEO strategy must contain a "URL Slug" recommendation that: (a) starts with
+   or contains the primary keyword, (b) is 3–6 hyphenated words, (c) contains no English stop
+   words (the, a, an, is, are, for, of, to, in, on, at, by, with, etc.). If the article
+   frontmatter includes a `slug:` field, it should match or closely follow the recommended slug.
 
 Score:
-  1.0 — Strategy followed precisely; all 6 checks pass
-  0.8 — Primary keyword correct; secondary keywords mostly present; 1 minor gap
-  0.6 — Primary keyword in H1 but missing from body, or H2s diverge from strategy
-  0.4 — Partially follows strategy; meta description missing or wrong length
+  1.0 — Strategy followed precisely; all 7 checks pass including well-formed URL slug
+  0.8 — Primary keyword correct; secondary keywords mostly present; URL slug present; 1 minor gap
+  0.6 — Primary keyword in H1 but missing from body, or H2s diverge, or URL slug missing
+  0.4 — Partially follows strategy; meta description missing or wrong length; no URL slug
   0.2 — Significant deviations from the SEO strategy
   0.0 — Article ignores the SEO strategy entirely
 """
@@ -663,6 +673,7 @@ SAMPLE_SEO_STRATEGY = """\
 ## Recommended Structure
 - **Format**: data-driven analysis
 - **Word count**: 1400–1800 words
+- **URL Slug**: remote-work-productivity-data — primary keyword + qualifier, 4 words, no stop words
 - **Title tag**: "Remote Work Productivity: What the Data Actually Shows"
 - **Meta description**: "Four large-scale studies find remote workers are 13–20% more productive—but the effect disappears for junior engineers without mentorship infrastructure."
 - **H1**: Remote Work Productivity: What the Data Actually Shows
@@ -844,6 +855,61 @@ class TestGoldenSamples:
 
     def test_seo_strategy_has_primary_keyword(self):
         assert "remote work productivity" in SAMPLE_SEO_STRATEGY.lower()
+
+    def test_seo_strategy_has_url_slug(self):
+        assert "URL Slug" in SAMPLE_SEO_STRATEGY
+
+    def test_seo_strategy_url_slug_is_extractable(self):
+        from press import extract_seo_slug
+        slug = extract_seo_slug(SAMPLE_SEO_STRATEGY)
+        assert slug is not None, "extract_seo_slug returned None for SAMPLE_SEO_STRATEGY"
+        assert "remote-work-productivity" in slug
+
+
+class TestSeoSlugHelpers:
+    """Tests for SEO slug utilities — no LLM calls."""
+
+    def test_extract_seo_slug_basic(self):
+        from press import extract_seo_slug
+        strategy = "- **URL Slug**: remote-work-productivity-data — 4 words"
+        assert extract_seo_slug(strategy) == "remote-work-productivity-data"
+
+    def test_extract_seo_slug_with_backticks(self):
+        from press import extract_seo_slug
+        strategy = "- **URL Slug**: `langgraph-agent-patterns` — primary keyword"
+        assert extract_seo_slug(strategy) == "langgraph-agent-patterns"
+
+    def test_extract_seo_slug_returns_none_when_absent(self):
+        from press import extract_seo_slug
+        assert extract_seo_slug("No slug here") is None
+
+    def test_extract_seo_slug_lowercase(self):
+        from press import extract_seo_slug
+        strategy = "- **URL Slug**: Remote-Work-Guide"
+        slug = extract_seo_slug(strategy)
+        assert slug is not None
+        assert slug == slug.lower()
+
+    def test_slugify_seo_strips_stop_words(self):
+        from press import slugify_seo
+        slug = slugify_seo("How to Build an AI Agent with LangGraph")
+        # "how", "to", "build", "an", "ai", "agent", "with" — stop words stripped
+        assert "the" not in slug.split("-")
+        assert "an" not in slug.split("-")
+        assert "with" not in slug.split("-")
+        assert "to" not in slug.split("-")
+        assert "langgraph" in slug
+
+    def test_slugify_seo_respects_max_words(self):
+        from press import slugify_seo
+        slug = slugify_seo("Remote Work Productivity Data Senior Engineers Study Results", max_words=4)
+        assert len(slug.split("-")) <= 4
+
+    def test_slugify_seo_fallback_on_all_stop_words(self):
+        from press import slugify_seo
+        # All stop words → fallback to regular slugify
+        result = slugify_seo("a the and or")
+        assert result  # not empty
 
 
 # ── Pytest: LLM eval tests (slow — run with -m eval) ──────────────────────────

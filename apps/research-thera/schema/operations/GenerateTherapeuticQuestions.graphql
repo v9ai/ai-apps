@@ -1,0 +1,19 @@
+mutation GenerateTherapeuticQuestions($goalId: Int, $issueId: Int) {
+  generateTherapeuticQuestions(goalId: $goalId, issueId: $issueId) {
+    success
+    message
+    jobId
+    questions {
+      id
+      goalId
+      issueId
+      question
+      researchId
+      researchTitle
+      rationale
+      generatedAt
+      createdAt
+      updatedAt
+    }
+  }
+}

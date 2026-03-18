@@ -1,6 +1,6 @@
 import { notFound } from "next/navigation";
 import Link from "next/link";
-import { getAllLessons, getLessonBySlug, getCategoryMeta, getRelatedLessons, getAudioMeta } from "@/lib/data";
+import { getAllLessons, getLessonBySlug, getCategoryMeta, getRelatedLessons, getAudioMeta, getPodcastsForLesson } from "@/lib/data";
 import { Topbar } from "@/components/topbar";
 import { MarkdownProse } from "@/components/markdown-prose";
 import { TableOfContents } from "@/components/toc";
@@ -9,6 +9,7 @@ import { ScrollToTop } from "@/components/scroll-to-top";
 import { ArticleNav } from "@/components/article-nav";
 import { CategoryProgress } from "@/components/category-progress";
 import { RelatedLessons } from "@/components/related-lessons";
+import { PodcastRecommendations } from "@/components/podcast-recommendations";
 import { PageAnalytics } from "@/components/page-analytics";
 import { AudioPlayer } from "@/components/audio-player";
 
@@ -32,6 +33,7 @@ export default async function LessonPage({ params }: { params: Promise<{ slug: s
   const total = allLessons.length;
   const meta = getCategoryMeta(lesson.category);
   const related = await getRelatedLessons(slug);
+  const podcastsList = await getPodcastsForLesson(slug);
   const audioMeta = await getAudioMeta(lesson.fileSlug);
 
   // Same-category lessons for progress indicator
@@ -83,6 +85,9 @@ export default async function LessonPage({ params }: { params: Promise<{ slug: s
       <div className="article-grid">
         <div>
           <MarkdownProse content={lesson.content} />
+
+          {/* Related Podcasts */}
+          <PodcastRecommendations podcasts={podcastsList} />
 
           {/* Continue Learning */}
           <RelatedLessons lessons={related} meta={meta} />

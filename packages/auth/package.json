@@ -1,0 +1,49 @@
+{
+  "name": "@ai-apps/auth",
+  "version": "0.1.0",
+  "type": "module",
+  "private": true,
+  "files": ["dist"],
+  "exports": {
+    ".": {
+      "import": {
+        "types": "./dist/es/index.d.ts",
+        "default": "./dist/es/index.js"
+      }
+    },
+    "./client": {
+      "import": {
+        "types": "./dist/es/client.d.ts",
+        "default": "./dist/es/client.js"
+      }
+    },
+    "./schema": {
+      "import": {
+        "types": "./dist/es/schema.d.ts",
+        "default": "./dist/es/schema.js"
+      }
+    }
+  },
+  "scripts": {
+    "build": "bunchee",
+    "dev": "bunchee --watch"
+  },
+  "dependencies": {
+    "better-auth": "^1.5.5"
+  },
+  "peerDependencies": {
+    "drizzle-orm": ">=0.41.0",
+    "next": ">=14.0.0",
+    "react": ">=18.0.0"
+  },
+  "devDependencies": {
+    "@ai-apps/typescript-config": "workspace:*",
+    "@types/node": "^22",
+    "@types/react": "^19",
+    "bunchee": "^6.4.0",
+    "drizzle-orm": "^0.45.1",
+    "next": "latest",
+    "react": "^19.0.0",
+    "typescript": "5.9.3"
+  }
+}
