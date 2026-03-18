@@ -15,12 +15,13 @@ type TestResult = {
 };
 
 type MarkerResult = {
-  id: string;
   marker_id: string;
   test_id: string;
   marker_name: string;
   content: string;
-  similarity: number;
+  fts_rank: number;
+  vector_similarity: number;
+  combined_score: number;
 };
 
 export function SearchForm() {
@@ -118,7 +119,7 @@ export function SearchForm() {
             {markerResults.length} marker(s) found
           </Text>
           {markerResults.map((r) => (
-            <Card key={r.id}>
+            <Card key={r.marker_id}>
               <Flex direction="column" gap="2">
                 <Flex justify="between" align="center">
                   <Text size="2" weight="medium" asChild>
@@ -127,7 +128,7 @@ export function SearchForm() {
                     </Link>
                   </Text>
                   <Badge color="blue" variant="soft">
-                    {(r.similarity * 100).toFixed(0)}% match
+                    {(r.combined_score * 100).toFixed(0)}% match
                   </Badge>
                 </Flex>
                 <Text size="1" color="gray" style={{ whiteSpace: "pre-wrap" }}>
