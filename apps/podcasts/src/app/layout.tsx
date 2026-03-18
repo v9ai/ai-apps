@@ -1,14 +1,18 @@
 import type { Metadata } from "next";
-import { Inter } from "next/font/google";
+import { Inter, Playfair_Display } from "next/font/google";
 
 import "./globals.css";
 
 const inter = Inter({ subsets: ["latin"], variable: "--font-inter" });
+const playfair = Playfair_Display({
+  subsets: ["latin"],
+  variable: "--font-playfair",
+});
 
 export const metadata: Metadata = {
-  title: "AI Podcast Index",
+  title: "Humans of AI",
   description:
-    "Top AI personalities indexed by podcast appearances, technical depth, and industry impact.",
+    "Intimate portraits of the minds building artificial intelligence — their stories, their words, their vision.",
 };
 
 export default function RootLayout({
@@ -17,7 +21,7 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="en" className={inter.variable}>
+    <html lang="en" className={`${inter.variable} ${playfair.variable}`}>
       <head>
         <link
           rel="apple-touch-icon"
@@ -41,9 +45,9 @@ export default function RootLayout({
           rel="shortcut icon"
           href="/favicon/favicon.ico"
         />
-        <meta name="theme-color" content="#050505" />
+        <meta name="theme-color" content="#0a0a0a" />
       </head>
-      <body className="bg-[#050505] text-white antialiased font-[family-name:var(--font-inter)]">
+      <body className="bg-[#0a0a0a] text-white antialiased font-[family-name:var(--font-inter)]">
         {children}
       </body>
     </html>
