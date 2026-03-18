@@ -6,22 +6,16 @@
   "files": ["dist"],
   "exports": {
     ".": {
-      "import": {
-        "types": "./dist/es/index.d.ts",
-        "default": "./dist/es/index.js"
-      }
+      "types": "./src/index.ts",
+      "default": "./src/index.ts"
     },
     "./client": {
-      "import": {
-        "types": "./dist/es/client.d.ts",
-        "default": "./dist/es/client.js"
-      }
+      "types": "./src/client.ts",
+      "default": "./src/client.ts"
     },
     "./schema": {
-      "import": {
-        "types": "./dist/es/schema.d.ts",
-        "default": "./dist/es/schema.js"
-      }
+      "types": "./src/schema.ts",
+      "default": "./src/schema.ts"
     }
   },
   "scripts": {

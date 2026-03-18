@@ -1,6 +1,6 @@
 {
   "$schema": "https://openapi.vercel.sh/vercel.json",
-  "buildCommand": "pnpm --filter @ai-apps/auth build && next build",
+  "buildCommand": "next build",
   "devCommand": "next dev",
   "installCommand": "cd ../.. && pnpm install",
   "framework": "nextjs"
