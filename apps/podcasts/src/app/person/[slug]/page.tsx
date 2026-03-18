@@ -526,6 +526,206 @@ export default async function PersonPage({ params }: Props) {
           )}
         </div>
 
+        {/* ── Open Source Projects (GitHub) ────────────────── */}
+        {hasGitHub && (
+          <div className="mt-16">
+            <div className="flex items-center gap-4 mb-8">
+              <div className="w-14 h-14 rounded-full bg-white/[0.07] flex items-center justify-center shadow-xl border border-white/[0.08]">
+                <GitHubIcon className="w-6 h-6 text-neutral-300" />
+              </div>
+              <div>
+                <h2 className="text-xl font-bold text-white">Open Source Projects</h2>
+                <p className="text-xs text-neutral-500 mt-0.5">
+                  {enriched.github!.repos.length} repositories · {formatNumber(enriched.github!.totalStars)} total stars
+                </p>
+              </div>
+            </div>
+
+            <div className="grid gap-3 sm:grid-cols-2">
+              {enriched.github!.repos.slice(0, 8).map((repo, i) => (
+                <a
+                  key={repo.name}
+                  href={repo.url}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="block px-5 py-4 rounded-xl bg-white/[0.03] border border-white/[0.06] hover:bg-white/[0.06] hover:border-white/[0.1] transition-all duration-200 group animate-row-enter"
+                  style={{ animationDelay: `${i * 60}ms` }}
+                >
+                  <div className="flex items-start justify-between gap-3">
+                    <div className="min-w-0 flex-1">
+                      <div className="flex items-center gap-2">
+                        <span className="text-sm font-semibold text-neutral-200 group-hover:text-white transition-colors duration-200 truncate">
+                          {repo.name}
+                        </span>
+                        <ExternalLinkIcon className="w-3 h-3 text-neutral-700 group-hover:text-neutral-400 flex-shrink-0 transition-colors duration-200" />
+                      </div>
+                      {repo.description && (
+                        <p className="text-xs text-neutral-500 mt-1.5 leading-relaxed line-clamp-2">
+                          {repo.description}
+                        </p>
+                      )}
+                      <div className="flex items-center gap-3 mt-3">
+                        {repo.language && (
+                          <span className="inline-flex items-center gap-1.5 text-[11px] text-neutral-400">
+                            <span
+                              className="w-2.5 h-2.5 rounded-full flex-shrink-0"
+                              style={{ backgroundColor: enriched.github!.languages.find(l => l.name === repo.language)?.color || "#8b8b8b" }}
+                            />
+                            {repo.language}
+                          </span>
+                        )}
+                        {repo.stars > 0 && (
+                          <span className="inline-flex items-center gap-1 text-[11px] text-neutral-500">
+                            <svg viewBox="0 0 16 16" className="w-3 h-3" fill="currentColor">
+                              <polygon points="8 1.25 10.18 5.67 15 6.36 11.5 9.78 12.36 14.58 8 12.27 3.64 14.58 4.5 9.78 1 6.36 5.82 5.67 8 1.25" />
+                            </svg>
+                            {formatNumber(repo.stars)}
+                          </span>
+                        )}
+                        {repo.forks > 0 && (
+                          <span className="inline-flex items-center gap-1 text-[11px] text-neutral-500">
+                            <svg viewBox="0 0 16 16" className="w-3 h-3" fill="currentColor">
+                              <path d="M5 3.25a.75.75 0 1 1-1.5 0 .75.75 0 0 1 1.5 0zm-.25 2.51a2.25 2.25 0 1 0-1.5 0v1.29a.75.75 0 0 0 .22.53l2.25 2.25a.25.25 0 0 1 .073.177v1.232a2.251 2.251 0 1 0 1.5 0V10.01a1.75 1.75 0 0 0-.513-1.237L4.75 6.56V5.76zm7.5.75a.75.75 0 1 1-1.5 0 .75.75 0 0 1 1.5 0zm-.25 2.51a2.25 2.25 0 1 0-1.5 0v1.29a.75.75 0 0 0 .22.53l2.25 2.25a.25.25 0 0 1 .073.177v.232a2.251 2.251 0 1 0 1.5 0v-.482a1.75 1.75 0 0 0-.513-1.237L10.75 9.06V8.51z" />
+                            </svg>
+                            {repo.forks}
+                          </span>
+                        )}
+                      </div>
+                    </div>
+                  </div>
+                  {repo.topics.length > 0 && (
+                    <div className="flex flex-wrap gap-1.5 mt-3">
+                      {repo.topics.slice(0, 4).map((topic) => (
+                        <span
+                          key={topic}
+                          className="px-2 py-0.5 rounded-full bg-blue-500/10 border border-blue-500/20 text-[10px] text-blue-400"
+                        >
+                          {topic}
+                        </span>
+                      ))}
+                    </div>
+                  )}
+                </a>
+              ))}
+            </div>
+          </div>
+        )}
+
+        {/* ── AI Models (HuggingFace) ─────────────────────── */}
+        {hasHuggingFace && (
+          <div className="mt-16">
+            <div className="flex items-center gap-4 mb-8">
+              <div className="w-14 h-14 rounded-full bg-gradient-to-br from-yellow-500/20 to-orange-500/20 flex items-center justify-center shadow-xl border border-yellow-500/20">
+                <svg viewBox="0 0 24 24" className="w-6 h-6 text-yellow-400" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
+                  <path d="M12 2L2 7l10 5 10-5-10-5z" />
+                  <path d="M2 17l10 5 10-5" />
+                  <path d="M2 12l10 5 10-5" />
+                </svg>
+              </div>
+              <div>
+                <h2 className="text-xl font-bold text-white">AI Models</h2>
+                <p className="text-xs text-neutral-500 mt-0.5">
+                  {enriched.huggingface!.models.length} models on Hugging Face · {formatNumber(enriched.huggingface!.totalDownloads)} downloads
+                </p>
+              </div>
+            </div>
+
+            <div className="space-y-3">
+              {enriched.huggingface!.models.map((model, i) => (
+                <a
+                  key={model.id}
+                  href={`https://huggingface.co/${model.id}`}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="block px-5 py-4 rounded-xl bg-white/[0.03] border border-white/[0.06] hover:bg-white/[0.06] hover:border-white/[0.1] transition-all duration-200 group animate-row-enter"
+                  style={{ animationDelay: `${i * 80}ms` }}
+                >
+                  <div className="flex items-start gap-4">
+                    <div className="flex-shrink-0 mt-0.5 px-2.5 py-1 rounded-md bg-yellow-500/10 border border-yellow-500/20 text-[11px] font-mono font-semibold text-yellow-400 tracking-wide">
+                      HF
+                    </div>
+                    <div className="min-w-0 flex-1">
+                      <span className="text-sm font-medium text-neutral-200 group-hover:text-white transition-colors duration-200">
+                        {model.id.split("/").pop()}
+                      </span>
+                      {model.pipelineTag && (
+                        <span className="ml-2 px-2 py-0.5 rounded-full bg-purple-500/10 border border-purple-500/20 text-[10px] text-purple-400">
+                          {model.pipelineTag}
+                        </span>
+                      )}
+                      <div className="flex items-center gap-4 mt-2 text-xs text-neutral-500">
+                        <span className="inline-flex items-center gap-1">
+                          <svg viewBox="0 0 24 24" className="w-3.5 h-3.5" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                            <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
+                            <polyline points="7 10 12 15 17 10" />
+                            <line x1="12" y1="15" x2="12" y2="3" />
+                          </svg>
+                          {formatNumber(model.downloads)}
+                        </span>
+                        <span className="inline-flex items-center gap-1">
+                          <svg viewBox="0 0 24 24" className="w-3.5 h-3.5" fill="currentColor">
+                            <path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z" />
+                          </svg>
+                          {model.likes}
+                        </span>
+                      </div>
+                    </div>
+                    <ExternalLinkIcon className="w-4 h-4 text-neutral-600 group-hover:text-neutral-400 flex-shrink-0 mt-1 transition-colors duration-200" />
+                  </div>
+                </a>
+              ))}
+            </div>
+          </div>
+        )}
+
+        {/* ── Tech Stack ──────────────────────────────────── */}
+        {hasGitHub && enriched.github!.languages.length > 0 && (
+          <div className="mt-16">
+            <div className="flex items-center gap-4 mb-6">
+              <div className="w-14 h-14 rounded-full bg-white/[0.07] flex items-center justify-center shadow-xl border border-white/[0.08]">
+                <svg viewBox="0 0 24 24" className="w-5 h-5 text-neutral-300" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                  <polyline points="16 18 22 12 16 6" />
+                  <polyline points="8 6 2 12 8 18" />
+                </svg>
+              </div>
+              <h2 className="text-xl font-bold text-white">Tech Stack</h2>
+            </div>
+
+            {/* Language bar */}
+            <div className="h-3 rounded-full overflow-hidden flex bg-white/[0.03] border border-white/[0.06]">
+              {enriched.github!.languages.map((lang) => {
+                const total = enriched.github!.languages.reduce((s, l) => s + l.count, 0);
+                const pct = (lang.count / total) * 100;
+                return (
+                  <div
+                    key={lang.name}
+                    className="h-full first:rounded-l-full last:rounded-r-full transition-all duration-500"
+                    style={{ width: `${pct}%`, backgroundColor: lang.color }}
+                    title={`${lang.name}: ${pct.toFixed(0)}%`}
+                  />
+                );
+              })}
+            </div>
+
+            <div className="flex flex-wrap gap-x-5 gap-y-2 mt-4">
+              {enriched.github!.languages.slice(0, 8).map((lang) => {
+                const total = enriched.github!.languages.reduce((s, l) => s + l.count, 0);
+                const pct = (lang.count / total) * 100;
+                return (
+                  <span key={lang.name} className="inline-flex items-center gap-2 text-xs text-neutral-400">
+                    <span
+                      className="w-3 h-3 rounded-full flex-shrink-0"
+                      style={{ backgroundColor: lang.color }}
+                    />
+                    {lang.name}
+                    <span className="text-neutral-600">{pct.toFixed(0)}%</span>
+                  </span>
+                );
+              })}
+            </div>
+          </div>
+        )}
+
         {/* ── Podcast Appearances (Spotify episodes) ──────── */}
         {hasEpisodes && (
           <div className="mt-16">
