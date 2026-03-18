@@ -115,7 +115,7 @@ GraphQL Playground: `http://localhost:3000/api/graphql`. Vercel routes have 60s 
 | Database | Neon PostgreSQL (Next.js app) + Cloudflare D1 (workers, pending migration) |
 | ORM | Drizzle ORM |
 | API | Apollo Server 5 (GraphQL) |
-| Auth | Clerk |
+| Auth | Better Auth (`@ai-apps/auth`) |
 | AI/ML | Vercel AI SDK, Anthropic Claude (+ Agent SDK), DeepSeek, OpenRouter |
 | Background jobs | Trigger.dev, Cloudflare Workers (cron + queues) |
 | Observability | Langfuse, LangSmith, OpenTelemetry (partially active) |
@@ -170,7 +170,7 @@ The strategy enforcer (`src/agents/strategy-enforcer.ts`) is available as a plai
 
 ## Environment variables
 
-Copy `.env.example` to `.env.local`. Key groups: `NEON_DATABASE_URL`, Clerk auth, AI provider keys (Anthropic, DeepSeek, OpenAI, Gemini), Langfuse/LangSmith observability, admin email, app URL. See `.env.example` for full list.
+Copy `.env.example` to `.env.local`. Key groups: `NEON_DATABASE_URL`, Better Auth (`BETTER_AUTH_SECRET`, `NEXT_PUBLIC_BETTER_AUTH_URL`), AI provider keys (Anthropic, DeepSeek, OpenAI, Gemini), Langfuse/LangSmith observability, admin email, app URL. See `.env.example` for full list.
 
 ---
 

@@ -70,7 +70,7 @@ function validateScheduledAt(scheduledAt: string): string | null {
 export async function POST(
   request: NextRequest,
 ): Promise<NextResponse<BatchEmailResponse>> {
-  const { data: session } = await auth.getSession({ fetchOptions: { headers: request.headers } });
+  const session = await auth.api.getSession({ headers: request.headers });
   if (!session) {
     return NextResponse.json(
       { success: false, message: "Unauthorized", sent: [], failed: [] },

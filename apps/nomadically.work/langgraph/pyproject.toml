@@ -1,7 +1,7 @@
 [project]
 name = "nomadically-langgraph"
-version = "0.2.0"
-description = "LangGraph pipelines for job processing, classification, matching, and cleanup"
+version = "0.3.0"
+description = "LangGraph pipelines for job processing, classification, ingestion, discovery, resume RAG, and more"
 requires-python = ">=3.12"
 dependencies = [
     "click>=8.0",

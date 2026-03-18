@@ -1,6 +1,9 @@
 import { pgTable, text, integer, real, index, uniqueIndex, primaryKey, serial, boolean } from "drizzle-orm/pg-core";
 import { sql, relations } from "drizzle-orm";
 
+// Re-export Better Auth tables (user, session, account, verification)
+export { user, session, account, verification } from "@ai-apps/auth/schema";
+
 export const companies = pgTable("companies", {
   id: serial("id").primaryKey(),
   key: text("key").notNull().unique(), // Unique identifier (slug/domain)
@@ -852,6 +855,69 @@ export const receivedEmails = pgTable(
 
 export type ReceivedEmail = typeof receivedEmails.$inferSelect;
 export type NewReceivedEmail = typeof receivedEmails.$inferInsert;
+
+// ATS Pipeline — Job Sources (unified board registry used by janitor + insert-jobs)
+export const jobSources = pgTable(
+  "job_sources",
+  {
+    id: serial("id").primaryKey(),
+    kind: text("kind").notNull(), // greenhouse | lever | ashby | workable | onhires | unknown
+    company_key: text("company_key").notNull(),
+    canonical_url: text("canonical_url"),
+    first_seen_at: text("first_seen_at")
+      .notNull()
+      .default(sql`now()::text`),
+    last_synced_at: text("last_synced_at"),
+    last_fetched_at: text("last_fetched_at"),
+    consecutive_errors: integer("consecutive_errors").notNull().default(0),
+  },
+  (table) => ({
+    uniqueKindKey: uniqueIndex("idx_job_sources_kind_key").on(table.kind, table.company_key),
+  }),
+);
+
+export type JobSource = typeof jobSources.$inferSelect;
+export type NewJobSource = typeof jobSources.$inferInsert;
+
+// Greenhouse board discovery (written by crawlers, read by janitor)
+export const greenhouseBoards = pgTable("greenhouse_boards", {
+  id: serial("id").primaryKey(),
+  token: text("token").notNull().unique(),
+  url: text("url"),
+  first_seen: text("first_seen")
+    .notNull()
+    .default(sql`now()::text`),
+  is_active: boolean("is_active").notNull().default(true),
+  created_at: text("created_at")
+    .notNull()
+    .default(sql`now()::text`),
+  updated_at: text("updated_at")
+    .notNull()
+    .default(sql`now()::text`),
+});
+
+export type GreenhouseBoard = typeof greenhouseBoards.$inferSelect;
+export type NewGreenhouseBoard = typeof greenhouseBoards.$inferInsert;
+
+// Lever board discovery (written by crawlers, read by janitor)
+export const leverBoards = pgTable("lever_boards", {
+  id: serial("id").primaryKey(),
+  site: text("site").notNull().unique(),
+  url: text("url"),
+  first_seen: text("first_seen")
+    .notNull()
+    .default(sql`now()::text`),
+  is_active: boolean("is_active").notNull().default(true),
+  created_at: text("created_at")
+    .notNull()
+    .default(sql`now()::text`),
+  updated_at: text("updated_at")
+    .notNull()
+    .default(sql`now()::text`),
+});
+
+export type LeverBoard = typeof leverBoards.$inferSelect;
+export type NewLeverBoard = typeof leverBoards.$inferInsert;
 
 // ---------------------------------------------------------------------------
 // Drizzle relations() declarations

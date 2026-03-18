@@ -39,7 +39,7 @@ function textToHtml(text: string): string {
 }
 
 export async function POST(request: NextRequest) {
-  const { data: session } = await auth.getSession({ fetchOptions: { headers: request.headers } });
+  const session = await auth.api.getSession({ headers: request.headers });
   if (!session) {
     return NextResponse.json({ success: false, error: "Unauthorized" }, { status: 401 });
   }

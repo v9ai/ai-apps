@@ -12,7 +12,7 @@ import { isAdminEmail } from "@/lib/admin";
  */
 export async function POST(request: NextRequest) {
   try {
-    const { data: session } = await auth.getSession({ fetchOptions: { headers: request.headers } });
+    const session = await auth.api.getSession({ headers: request.headers });
     if (!session) {
       return NextResponse.json({ error: "Authentication required" }, { status: 401 });
     }

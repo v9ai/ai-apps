@@ -2,12 +2,13 @@
  * Cloudflare Worker — Job Ingestion + Queue Orchestrator
  *
  * Responsibilities:
- * 1. HTTP endpoint: Accept POST with job data, upsert into D1, enqueue for processing
+ * 1. HTTP endpoint: Accept POST with job data, upsert into Neon, enqueue for processing
  * 2. Scheduled (cron): Auto-ingest jobs from discovered ATS sources (job_sources table)
  * 3. Queue consumer: Forward ingested job batches to process-jobs worker queue
  * 4. Stalled job recovery: Re-enqueue jobs stuck in intermediate states
  */
 
+import { neon } from "@neondatabase/serverless";
 import { log, generateTraceId } from "./lib/logger";
 
 const WORKER = "insert-jobs";
@@ -46,7 +47,7 @@ type ScheduledEvent = {
 // ---------------------------------------------------------------------------
 
 interface Env {
-  DB: D1Database;
+  NEON_DATABASE_URL: string;
 
   /** Auth for the ingest endpoint (optional) */
   API_SECRET?: string;
@@ -111,7 +112,6 @@ function validateJob(job: JobInput): { valid: boolean; errors: string[] } {
   if (!job.externalId?.trim()) errors.push("externalId is required");
   if (!job.sourceKind?.trim()) errors.push("sourceKind is required");
 
-  // Reject spam company keys where >40% of characters are digits
   if (job.companyKey) {
     const digits = (job.companyKey.match(/\d/g) ?? []).length;
     if (digits / job.companyKey.length > 0.4) {
@@ -119,7 +119,6 @@ function validateJob(job: JobInput): { valid: boolean; errors: string[] } {
     }
   }
 
-  // Reject board-only URLs as external_id (e.g. "https://jobs.ashbyhq.com/company/")
   if (job.externalId && job.externalId.includes("://")) {
     try {
       const url = new URL(job.externalId);
@@ -128,7 +127,7 @@ function validateJob(job: JobInput): { valid: boolean; errors: string[] } {
         errors.push("externalId is a board URL, not a job-specific ID");
       }
     } catch {
-      // Not a valid URL — that's fine, treat as opaque ID
+      // Not a valid URL — treat as opaque ID
     }
   }
 
@@ -143,155 +142,99 @@ function jsonResponse(data: unknown, init?: ResponseInit) {
 }
 
 // ---------------------------------------------------------------------------
-// D1 helpers
-// ---------------------------------------------------------------------------
-
-type D1Row = Record<string, unknown>;
-
-async function d1Query(
-  db: D1Database,
-  sql: string,
-  params: (string | number | null)[] = [],
-): Promise<{ rows: D1Row[]; meta: { last_row_id: number; changes: number } }> {
-  const stmt = db.prepare(sql).bind(...params);
-  const result = await stmt.all();
-  return {
-    rows: (result.results ?? []) as D1Row[],
-    meta: {
-      last_row_id: result.meta?.last_row_id ?? 0,
-      changes: result.meta?.changes ?? 0,
-    },
-  };
-}
-
-async function d1Run(
-  db: D1Database,
-  sql: string,
-  params: (string | number | null)[] = [],
-): Promise<{ last_row_id: number; changes: number }> {
-  const stmt = db.prepare(sql).bind(...params);
-  const result = await stmt.run();
-  return {
-    last_row_id: result.meta?.last_row_id ?? 0,
-    changes: result.meta?.changes ?? 0,
-  };
-}
-
-// ---------------------------------------------------------------------------
-// Job insertion (D1)
+// Job insertion (Neon)
 // ---------------------------------------------------------------------------
 
 async function insertJob(
-  db: D1Database,
+  sql: ReturnType<typeof neon>,
   job: JobInput,
   traceId?: string,
 ): Promise<{ success: boolean; jobId?: number; isNew?: boolean; error?: string }> {
   try {
     const now = new Date().toISOString();
 
-    // Ensure the company exists
-    let companyId: number;
-    const companyLookup = await d1Query(
-      db,
-      `SELECT id FROM companies WHERE key = ? LIMIT 1`,
-      [job.companyKey!],
-    );
-
-    if (companyLookup.rows.length > 0) {
-      companyId = Number(companyLookup.rows[0].id);
-    } else {
-      // INSERT OR IGNORE handles concurrent workers inserting the same company key
-      await d1Run(
-        db,
-        `INSERT OR IGNORE INTO companies (key, name, created_at, updated_at) VALUES (?, ?, ?, ?)`,
-        [job.companyKey!, job.companyKey!, now, now],
-      );
-      const inserted = await d1Query(
-        db,
-        `SELECT id FROM companies WHERE key = ? LIMIT 1`,
-        [job.companyKey!],
-      );
-      companyId = Number(inserted.rows[0].id);
-    }
+    // Ensure company exists
+    await sql`
+      INSERT INTO companies (key, name, created_at, updated_at)
+      VALUES (${job.companyKey!}, ${job.companyKey!}, ${now}, ${now})
+      ON CONFLICT (key) DO NOTHING
+    `;
+    const companyRows = await sql<{ id: number }>`
+      SELECT id FROM companies WHERE key = ${job.companyKey!} LIMIT 1
+    `;
+    const companyId = companyRows[0]?.id ?? null;
 
     const incomingStatus = (job.status ?? "new").trim();
 
-    const args: (string | number | null)[] = [
-      job.externalId!,
-      job.sourceId ?? null,
-      job.sourceKind!,
-      companyId,
-      job.companyKey!,
-      job.title!,
-      job.location ?? null,
-      job.url!,
-      job.description ?? null,
-      job.postedAt ?? now,
-      job.score ?? null,
-      job.scoreReason ?? null,
-      incomingStatus,
-      now,
-      now,
-    ];
+    // Check if job exists before upsert
+    const existing = await sql<{ id: number; status: string }>`
+      SELECT id, status FROM jobs
+      WHERE source_kind = ${job.sourceKind!}
+        AND company_key = ${job.companyKey!}
+        AND external_id = ${job.externalId!}
+      LIMIT 1
+    `;
+    const existedBefore = existing.length > 0;
+    const existingStatus = existedBefore ? (existing[0].status ?? "new") : null;
 
-    // Check if job already exists (to determine if this is a new insertion)
-    const existing = await d1Query(
-      db,
-      `SELECT id, status FROM jobs WHERE source_kind = ? AND company_key = ? AND external_id = ? LIMIT 1`,
-      [job.sourceKind!, job.companyKey!, job.externalId!],
-    );
-    const existedBefore = existing.rows.length > 0;
-    const existingStatus = existedBefore
-      ? String(existing.rows[0].status ?? "new")
-      : null;
+    const result = await sql<{ id: number }>`
+      INSERT INTO jobs (
+        external_id, source_id, source_kind, company_id, company_key,
+        title, location, url, description, posted_at,
+        score, score_reason, status, created_at, updated_at
+      ) VALUES (
+        ${job.externalId!},
+        ${job.sourceId != null ? String(job.sourceId) : null},
+        ${job.sourceKind!},
+        ${companyId},
+        ${job.companyKey!},
+        ${job.title!},
+        ${job.location ?? null},
+        ${job.url!},
+        ${job.description ?? null},
+        ${job.postedAt ?? now},
+        ${job.score ?? null},
+        ${job.scoreReason ?? null},
+        ${incomingStatus},
+        ${now},
+        ${now}
+      )
+      ON CONFLICT (source_kind, company_key, external_id) DO UPDATE SET
+        source_id    = COALESCE(EXCLUDED.source_id, jobs.source_id),
+        company_id   = EXCLUDED.company_id,
+        title        = EXCLUDED.title,
+        location     = COALESCE(EXCLUDED.location, jobs.location),
+        url          = EXCLUDED.url,
+        description  = COALESCE(EXCLUDED.description, jobs.description),
+        posted_at    = EXCLUDED.posted_at,
+        score        = COALESCE(EXCLUDED.score, jobs.score),
+        score_reason = COALESCE(EXCLUDED.score_reason, jobs.score_reason),
+        status = CASE
+          WHEN jobs.status IS NOT NULL AND jobs.status != 'new' AND EXCLUDED.status = 'new'
+            THEN jobs.status
+          ELSE EXCLUDED.status
+        END,
+        updated_at   = EXCLUDED.updated_at
+      RETURNING id
+    `;
 
-    // Upsert: ON CONFLICT preserves downstream processing state
-    const result = await d1Query(
-      db,
-      `INSERT INTO jobs (
-          external_id, source_id, source_kind, company_id, company_key,
-          title, location, url, description, posted_at,
-          score, score_reason, status, created_at, updated_at
-        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
-        ON CONFLICT(source_kind, company_key, external_id) DO UPDATE SET
-          source_id    = COALESCE(excluded.source_id, jobs.source_id),
-          company_id   = excluded.company_id,
-          title        = excluded.title,
-          location     = COALESCE(excluded.location, jobs.location),
-          url          = excluded.url,
-          description  = COALESCE(excluded.description, jobs.description),
-          posted_at    = excluded.posted_at,
-          score        = COALESCE(excluded.score, jobs.score),
-          score_reason = COALESCE(excluded.score_reason, jobs.score_reason),
-          status = CASE
-            WHEN jobs.status IS NOT NULL AND jobs.status != 'new' AND excluded.status = 'new'
-              THEN jobs.status
-            ELSE excluded.status
-          END,
-          updated_at   = excluded.updated_at
-        RETURNING id;`,
-      args,
-    );
+    let id = result[0]?.id;
 
-    const row = result.rows?.[0];
-    let id = row?.id != null ? Number(row.id) : NaN;
-
-    if (!Number.isFinite(id)) {
-      // Fallback lookup
-      const lookup = await d1Query(
-        db,
-        `SELECT id FROM jobs WHERE source_kind = ? AND company_key = ? AND external_id = ? LIMIT 1`,
-        [job.sourceKind!, job.companyKey!, job.externalId!],
-      );
-      id = lookup.rows[0]?.id != null ? Number(lookup.rows[0].id) : NaN;
-      if (!Number.isFinite(id)) {
+    if (id == null) {
+      const lookup = await sql<{ id: number }>`
+        SELECT id FROM jobs
+        WHERE source_kind = ${job.sourceKind!}
+          AND company_key = ${job.companyKey!}
+          AND external_id = ${job.externalId!}
+        LIMIT 1
+      `;
+      id = lookup[0]?.id;
+      if (id == null) {
         throw new Error("Inserted/upserted but could not determine job id");
       }
     }
 
-    // A job is "new" (should be enqueued) if it didn't exist or was in 'new' status
     const isNew = !existedBefore || existingStatus === "new";
-
     return { success: true, jobId: id, isNew };
   } catch (error) {
     log({
@@ -321,10 +264,6 @@ interface ATSJob {
   companyKey?: string;
 }
 
-/**
- * Thrown when an ATS board returns a 4xx HTTP error, indicating the board
- * is gone or the company key is invalid (not a transient server-side error).
- */
 class ATSFetchError extends Error {
   constructor(public readonly status: number, message: string) {
     super(message);
@@ -344,7 +283,6 @@ async function fetchWithRetry(
       });
       if (res.status === 429 || (res.status >= 500 && res.status <= 599)) {
         if (attempt === retries) return res;
-        // Exponential backoff with jitter to avoid thundering herd
         const baseDelay = Math.min(5000, 300 * 2 ** attempt);
         const jitter = Math.random() * baseDelay * 0.5;
         await new Promise((r) => setTimeout(r, baseDelay + jitter));
@@ -389,7 +327,6 @@ async function fetchGreenhouseJobs(companyKey: string): Promise<ATSJob[]> {
 }
 
 async function fetchLeverJobs(companyKey: string): Promise<ATSJob[]> {
-  // Try global endpoint first, then EU
   const endpoints = [
     `https://api.lever.co/v0/postings/${companyKey}`,
     `https://api.eu.lever.co/v0/postings/${companyKey}`,
@@ -418,7 +355,6 @@ async function fetchLeverJobs(companyKey: string): Promise<ATSJob[]> {
       };
     });
   }
-  // Both endpoints returned 4xx — board is gone
   if (clientErrorCount === endpoints.length) {
     throw new ATSFetchError(404, `Lever board not found: ${companyKey}`);
   }
@@ -455,8 +391,6 @@ function slugifyCompany(name: string): string {
   return name.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, "") || "unknown";
 }
 
-// Remotive API categories relevant to EU remote tech roles.
-// Fetched sequentially to stay within Cloudflare Workers subrequest budget.
 const REMOTIVE_CATEGORIES = [
   "software-development",
   "devops-sysadmin",
@@ -499,7 +433,6 @@ async function fetchRemotiveCategory(category: string): Promise<ATSJob[]> {
 }
 
 async function fetchRemotiveJobs(_companyKey: string): Promise<ATSJob[]> {
-  // Fetch all categories in parallel to stay within HTTP time budget
   const results = await Promise.all(REMOTIVE_CATEGORIES.map(fetchRemotiveCategory));
 
   const seen = new Set<string>();
@@ -520,7 +453,6 @@ async function fetchRemotiveJobs(_companyKey: string): Promise<ATSJob[]> {
 
   return all;
 }
-
 
 async function fetchWorkableJobs(companyKey: string): Promise<ATSJob[]> {
   const url = `https://apply.workable.com/api/v3/accounts/${companyKey}/jobs`;
@@ -548,19 +480,17 @@ async function fetchWorkableJobs(companyKey: string): Promise<ATSJob[]> {
 }
 
 async function fetchRemoteOKJobs(_companyKey: string): Promise<ATSJob[]> {
-  // RemoteOK returns a JSON array; index 0 is a legal notice object, not a job.
   const res = await fetchWithRetry("https://remoteok.com/api", 2);
   if (!res.ok) {
     log({
       worker: WORKER, action: "fetch-ats", level: "error",
       error: `HTTP ${res.status}`, metadata: { kind: "remoteok" },
     });
-    if (res.status >= 400 && res.status < 500 && res.status !== 429) return [];
     return [];
   }
   const data = (await res.json()) as Array<Record<string, unknown>>;
   return data
-    .slice(1) // skip the legal notice at index 0
+    .slice(1)
     .filter((j) => j.id && j.position)
     .map((j) => ({
       externalId: String(j.id),
@@ -580,7 +510,6 @@ async function fetchHimalayasJobs(_companyKey: string): Promise<ATSJob[]> {
       worker: WORKER, action: "fetch-ats", level: "error",
       error: `HTTP ${res.status}`, metadata: { kind: "himalayas" },
     });
-    if (res.status >= 400 && res.status < 500 && res.status !== 429) return [];
     return [];
   }
   const data = (await res.json()) as { jobs?: Array<Record<string, unknown>> };
@@ -608,7 +537,6 @@ async function fetchJobicyJobs(_companyKey: string): Promise<ATSJob[]> {
       worker: WORKER, action: "fetch-ats", level: "error",
       error: `HTTP ${res.status}`, metadata: { kind: "jobicy" },
     });
-    if (res.status >= 400 && res.status < 500 && res.status !== 429) return [];
     return [];
   }
   const data = (await res.json()) as { jobs?: Array<Record<string, unknown>> };
@@ -625,24 +553,15 @@ async function fetchJobicyJobs(_companyKey: string): Promise<ATSJob[]> {
 
 function getATSFetcher(kind: string): ((key: string) => Promise<ATSJob[]>) | null {
   switch (kind) {
-    case "greenhouse":
-      return fetchGreenhouseJobs;
-    case "lever":
-      return fetchLeverJobs;
-    case "ashby":
-      return fetchAshbyJobs;
-    case "workable":
-      return fetchWorkableJobs;
-    case "remotive":
-      return fetchRemotiveJobs;
-    case "remoteok":
-      return fetchRemoteOKJobs;
-    case "himalayas":
-      return fetchHimalayasJobs;
-    case "jobicy":
-      return fetchJobicyJobs;
-    default:
-      return null;
+    case "greenhouse": return fetchGreenhouseJobs;
+    case "lever": return fetchLeverJobs;
+    case "ashby": return fetchAshbyJobs;
+    case "workable": return fetchWorkableJobs;
+    case "remotive": return fetchRemotiveJobs;
+    case "remoteok": return fetchRemoteOKJobs;
+    case "himalayas": return fetchHimalayasJobs;
+    case "jobicy": return fetchJobicyJobs;
+    default: return null;
   }
 }
 
@@ -661,7 +580,7 @@ interface IngestionStats {
 }
 
 export async function autoIngestFromSources(
-  db: D1Database,
+  sql: ReturnType<typeof neon>,
   options: { maxSources?: number; stalePeriodHours?: number; traceId?: string } = {},
 ): Promise<IngestionStats> {
   const { maxSources = 500, stalePeriodHours = 12, traceId } = options;
@@ -676,43 +595,38 @@ export async function autoIngestFromSources(
     deadBoardsDetected: 0,
   };
 
-  // Find sources not fetched recently, ordered by oldest-first
   const staleThreshold = new Date(
     Date.now() - stalePeriodHours * 60 * 60 * 1000,
   ).toISOString();
 
-  // Get total board count for coverage reporting (FR13)
-  const totalSourcesResult = await d1Query(
-    db,
-    `SELECT COUNT(*) as count FROM job_sources`,
-  );
-  const totalSources = Number(totalSourcesResult.rows[0]?.count ?? 0);
+  const totalSourcesRows = await sql<{ count: string }>`
+    SELECT COUNT(*) as count FROM job_sources
+  `;
+  const totalSources = Number(totalSourcesRows[0]?.count ?? 0);
 
-  // Prioritize AI-native/AI-first companies: join with companies table and order by AI classification
-  const sources = await d1Query(
-    db,
-    `SELECT js.id, js.kind, js.company_key, js.canonical_url
-     FROM job_sources js
-     LEFT JOIN companies c ON js.company_key = c.key
-     WHERE (js.last_fetched_at IS NULL OR js.last_fetched_at < ?)
-       AND (c.ai_tier >= 1 OR c.industries LIKE '%"ai-ml"%')
-     ORDER BY
-       COALESCE(c.ai_tier, 0) DESC,
-       COALESCE(c.ai_classification_confidence, 0.5) DESC,
-       js.last_fetched_at ASC NULLS FIRST
-     LIMIT ?`,
-    [staleThreshold, maxSources],
-  );
+  // Prioritize AI-native/AI-first companies
+  const sources = await sql<{ id: number; kind: string; company_key: string; canonical_url: string | null }>`
+    SELECT js.id, js.kind, js.company_key, js.canonical_url
+    FROM job_sources js
+    LEFT JOIN companies c ON js.company_key = c.key
+    WHERE (js.last_fetched_at IS NULL OR js.last_fetched_at < ${staleThreshold})
+      AND (c.ai_tier >= 1 OR c.industries LIKE '%"ai-ml"%')
+    ORDER BY
+      COALESCE(c.ai_tier, 0) DESC,
+      COALESCE(c.ai_classification_confidence, 0.5) DESC,
+      js.last_fetched_at ASC NULLS FIRST
+    LIMIT ${maxSources}
+  `;
 
   log({
     worker: WORKER, action: "ingest-start", level: "info", traceId,
-    metadata: { totalSources, staleSources: sources.rows.length },
+    metadata: { totalSources, staleSources: sources.length },
   });
 
-  for (const source of sources.rows) {
-    const kind = String(source.kind);
-    const companyKey = String(source.company_key);
-    const sourceId = Number(source.id);
+  for (const source of sources) {
+    const kind = source.kind;
+    const companyKey = source.company_key;
+    const sourceId = source.id;
 
     stats.sourcesChecked++;
 
@@ -726,7 +640,6 @@ export async function autoIngestFromSources(
     }
 
     try {
-      // Rate limit between sources
       if (stats.sourcesChecked > 1) {
         await new Promise((r) => setTimeout(r, 500));
       }
@@ -742,12 +655,11 @@ export async function autoIngestFromSources(
           worker: WORKER, action: "board-fetch-result", level: "info", traceId,
           sourceId, metadata: { kind, companyKey, jobsFetched: 0 },
         });
-        // Board is alive but has no open positions — reset error counter and mark fetched
-        await d1Run(
-          db,
-          `UPDATE job_sources SET last_fetched_at = datetime('now'), consecutive_errors = 0 WHERE id = ?`,
-          [sourceId],
-        );
+        await sql`
+          UPDATE job_sources
+          SET last_fetched_at = NOW()::text, consecutive_errors = 0
+          WHERE id = ${sourceId}
+        `;
         continue;
       }
 
@@ -757,7 +669,7 @@ export async function autoIngestFromSources(
         sourceId, metadata: { kind, companyKey, jobsFetched: atsJobs.length },
       });
 
-      // Filter valid jobs up-front (spam + missing required fields)
+      // Filter valid jobs
       const validJobs = atsJobs.filter((j) => {
         if (!j.externalId || !j.title) return false;
         const effectiveKey = j.companyKey ?? companyKey;
@@ -772,99 +684,89 @@ export async function autoIngestFromSources(
         return true;
       });
 
-      // ---------- Batch insert to minimise D1 subrequest usage ----------
-      // Without batching: 3-4 subrequests × N jobs per source → hits CF's
-      // 1000 subrequest limit for boards with >250 open positions.
-      // With db.batch(): 1+1 (companies) + ceil(N/50) (inserts) = ~13 total
-      // for a 436-job board vs the previous ~1744.
+      if (validJobs.length === 0) {
+        await sql`
+          UPDATE job_sources
+          SET last_fetched_at = NOW()::text, consecutive_errors = 0
+          WHERE id = ${sourceId}
+        `;
+        continue;
+      }
 
       const now = new Date().toISOString();
 
-      // Step 1: Ensure all unique companies exist (2 subrequests total)
+      // Step 1: Batch upsert companies
       const uniqueKeys = [...new Set(validJobs.map((j) => j.companyKey ?? companyKey))];
-      if (uniqueKeys.length > 0) {
-        await db.batch(
-          uniqueKeys.map((key) =>
-            db.prepare(
-              `INSERT OR IGNORE INTO companies (key, name, created_at, updated_at) VALUES (?, ?, ?, ?)`,
-            ).bind(key, key, now, now),
-          ),
-        );
-      }
-      const companyRows = uniqueKeys.length > 0
-        ? await db.batch(
-            uniqueKeys.map((key) =>
-              db.prepare(`SELECT id FROM companies WHERE key = ? LIMIT 1`).bind(key),
-            ),
-          )
-        : [];
-      const companyIdMap = new Map<string, number>();
-      uniqueKeys.forEach((key, i) => {
-        const row = (companyRows[i]?.results as Array<{ id: number }> | undefined)?.[0];
-        if (row?.id) companyIdMap.set(key, row.id);
-      });
+      const nows = new Array(uniqueKeys.length).fill(now);
+      await sql`
+        INSERT INTO companies (key, name, created_at, updated_at)
+        SELECT * FROM unnest(
+          ${uniqueKeys}::text[],
+          ${uniqueKeys}::text[],
+          ${nows}::text[],
+          ${nows}::text[]
+        ) AS t(key, name, created_at, updated_at)
+        ON CONFLICT (key) DO NOTHING
+      `;
 
-      // Step 2: INSERT OR IGNORE jobs in batches of 50 — 1 subrequest per batch
-      // INSERT OR IGNORE: new rows return RETURNING id; conflicts return nothing.
-      const newJobIds: number[] = [];
-      const BATCH_SIZE = 50;
-      for (let bi = 0; bi < validJobs.length; bi += BATCH_SIZE) {
-        const chunk = validJobs.slice(bi, bi + BATCH_SIZE);
-        let batchResults: Awaited<ReturnType<D1Database["batch"]>>;
-        try {
-          batchResults = await db.batch(
-            chunk.map((j) => {
-              const effectiveKey = j.companyKey ?? companyKey;
-              return db.prepare(
-                `INSERT OR IGNORE INTO jobs (
-                    external_id, source_id, source_kind, company_id, company_key,
-                    title, location, url, description, posted_at,
-                    status, created_at, updated_at
-                  ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 'new', datetime('now'), datetime('now'))
-                  RETURNING id`,
-              ).bind(
-                j.externalId,
-                sourceId,
-                kind,
-                companyIdMap.get(effectiveKey) ?? null,
-                effectiveKey,
-                j.title,
-                j.location ?? null,
-                j.url ?? "",
-                j.description ?? null,
-                j.postedAt ?? now,
-              );
-            }),
-          );
-        } catch (batchErr) {
-          log({
-            worker: WORKER, action: "batch-insert", level: "error", traceId,
-            error: batchErr instanceof Error ? batchErr.message : String(batchErr),
-            metadata: { kind, companyKey, batchIndex: bi, batchSize: chunk.length },
-          });
-          stats.errors.push(`${kind}/${companyKey} batch[${bi}]: ${batchErr instanceof Error ? batchErr.message : String(batchErr)}`);
-          continue;
-        }
-        for (const r of batchResults) {
-          const row = (r.results as Array<{ id: number }> | undefined)?.[0];
-          if (row?.id) {
-            newJobIds.push(row.id);
-            stats.jobsInserted++;
-          } else {
-            stats.jobsSkipped++;
-          }
-        }
-      }
+      // Step 2: Get company IDs
+      const companyRows = await sql<{ key: string; id: number }>`
+        SELECT key, id FROM companies WHERE key = ANY(${uniqueKeys}::text[])
+      `;
+      const companyIdMap = new Map<string, number>(companyRows.map((r) => [r.key, r.id]));
 
-      // Track inserted count for single trigger at end of ingest (not per-job queue messages)
-      stats.jobsEnqueued += newJobIds.length;
+      // Step 3: Batch insert jobs using unnest
+      const externalIds = validJobs.map((j) => j.externalId);
+      const sourceIdArr = validJobs.map(() => String(sourceId));
+      const sourceKindArr = validJobs.map(() => kind);
+      const companyIdArr = validJobs.map((j) => companyIdMap.get(j.companyKey ?? companyKey) ?? null);
+      const companyKeyArr = validJobs.map((j) => j.companyKey ?? companyKey);
+      const titleArr = validJobs.map((j) => j.title);
+      const locationArr = validJobs.map((j) => j.location ?? null);
+      const urlArr = validJobs.map((j) => j.url ?? "");
+      const descArr = validJobs.map((j) => j.description ?? null);
+      const postedArr = validJobs.map((j) => j.postedAt ?? now);
+      const statusArr = validJobs.map(() => "new");
+      const nowArr = validJobs.map(() => now);
 
-      // Update last_fetched_at and reset consecutive_errors on success
-      await d1Run(
-        db,
-        `UPDATE job_sources SET last_fetched_at = datetime('now'), consecutive_errors = 0 WHERE id = ?`,
-        [sourceId],
-      );
+      const inserted = await sql<{ id: number }>`
+        INSERT INTO jobs (
+          external_id, source_id, source_kind, company_id, company_key,
+          title, location, url, description, posted_at,
+          status, created_at, updated_at
+        )
+        SELECT * FROM unnest(
+          ${externalIds}::text[],
+          ${sourceIdArr}::text[],
+          ${sourceKindArr}::text[],
+          ${companyIdArr}::integer[],
+          ${companyKeyArr}::text[],
+          ${titleArr}::text[],
+          ${locationArr}::text[],
+          ${urlArr}::text[],
+          ${descArr}::text[],
+          ${postedArr}::text[],
+          ${statusArr}::text[],
+          ${nowArr}::text[],
+          ${nowArr}::text[]
+        ) AS t(
+          external_id, source_id, source_kind, company_id, company_key,
+          title, location, url, description, posted_at,
+          status, created_at, updated_at
+        )
+        ON CONFLICT (source_kind, company_key, external_id) DO NOTHING
+        RETURNING id
+      `;
+
+      stats.jobsInserted += inserted.length;
+      stats.jobsSkipped += validJobs.length - inserted.length;
+      stats.jobsEnqueued += inserted.length;
+
+      await sql`
+        UPDATE job_sources
+        SET last_fetched_at = NOW()::text, consecutive_errors = 0
+        WHERE id = ${sourceId}
+      `;
     } catch (err) {
       const isDeadBoard = err instanceof ATSFetchError;
       const msg = `${kind}/${companyKey}: ${err instanceof Error ? err.message : String(err)}`;
@@ -876,15 +778,12 @@ export async function autoIngestFromSources(
 
       if (isDeadBoard) {
         stats.deadBoardsDetected++;
-        // Increment consecutive_errors — janitor will clean up after threshold is reached
-        await d1Run(
-          db,
-          `UPDATE job_sources
-           SET last_fetched_at = datetime('now'),
-               consecutive_errors = consecutive_errors + 1
-           WHERE id = ?`,
-          [sourceId],
-        );
+        await sql`
+          UPDATE job_sources
+          SET last_fetched_at = NOW()::text,
+              consecutive_errors = consecutive_errors + 1
+          WHERE id = ${sourceId}
+        `;
       }
     }
   }
@@ -914,42 +813,35 @@ export async function autoIngestFromSources(
 // ---------------------------------------------------------------------------
 
 async function recoverStalledJobs(
-  db: D1Database,
+  sql: ReturnType<typeof neon>,
   traceId?: string,
 ): Promise<{ recovered: number }> {
-  // Find jobs stuck in 'new' status for more than 6 hours
   const stalledThreshold = new Date(
     Date.now() - 6 * 60 * 60 * 1000,
   ).toISOString();
 
-  const stalled = await d1Query(
-    db,
-    `SELECT id FROM jobs
-     WHERE status = 'new'
-       AND updated_at < ?
-     ORDER BY updated_at ASC
-     LIMIT 50`,
-    [stalledThreshold],
-  );
+  const stalled = await sql<{ id: number }>`
+    SELECT id FROM jobs
+    WHERE status = 'new'
+      AND updated_at < ${stalledThreshold}
+    ORDER BY updated_at ASC
+    LIMIT 50
+  `;
 
-  if (stalled.rows.length === 0) return { recovered: 0 };
+  if (stalled.length === 0) return { recovered: 0 };
 
   log({
     worker: WORKER, action: "recover-stalled", level: "info", traceId,
-    metadata: { stalledCount: stalled.rows.length },
+    metadata: { stalledCount: stalled.length },
   });
 
-  // Touch updated_at to prevent immediate re-recovery
-  const ids = stalled.rows.map((r) => Number(r.id));
-  for (const id of ids) {
-    await d1Run(
-      db,
-      `UPDATE jobs SET updated_at = datetime('now') WHERE id = ?`,
-      [id],
-    );
-  }
+  const ids = stalled.map((r) => r.id);
+  await sql`
+    UPDATE jobs
+    SET updated_at = NOW()::text
+    WHERE id = ANY(${ids}::integer[])
+  `;
 
-  // Caller sends a single trigger to process-jobs-queue (not per-job messages)
   return { recovered: ids.length };
 }
 
@@ -971,7 +863,6 @@ async function triggerProcessing(
   }
 
   try {
-    // Send a message to process-jobs worker to run the full pipeline
     await processQueue.send({
       action: "process",
       limit: Math.min(jobCount, 50),
@@ -1041,9 +932,6 @@ async function triggerProcessingViaHTTP(
 // ---------------------------------------------------------------------------
 
 export default {
-  /**
-   * HTTP endpoint: Accept POST with job data, upsert into D1, enqueue for processing.
-   */
   async fetch(request: Request, env: Env): Promise<Response> {
     const corsHeaders = {
       "Access-Control-Allow-Origin": "*",
@@ -1057,15 +945,16 @@ export default {
 
     const url = new URL(request.url);
     const traceId = request.headers.get("X-Trace-Id") || generateTraceId();
+    const sql = neon(env.NEON_DATABASE_URL);
 
-    // GET /health — health check
+    // GET /health
     if (request.method === "GET" && url.pathname === "/health") {
       try {
-        const result = await d1Query(env.DB, "SELECT COUNT(*) as count FROM jobs");
+        const result = await sql<{ count: string }>`SELECT COUNT(*) as count FROM jobs`;
         return jsonResponse(
           {
             status: "healthy",
-            jobCount: result.rows[0]?.count,
+            jobCount: Number(result[0]?.count ?? 0),
             hasQueue: !!env.JOBS_QUEUE,
             hasProcessQueue: !!env.PROCESS_JOBS_QUEUE,
           },
@@ -1083,38 +972,35 @@ export default {
       }
     }
 
-    // GET /stats — ingestion stats
+    // GET /stats
     if (request.method === "GET" && url.pathname === "/stats") {
       const [sourceCount, jobsByStatus, recentSources] = await Promise.all([
-        d1Query(env.DB, `SELECT COUNT(*) as count FROM job_sources`),
-        d1Query(env.DB, `SELECT status, COUNT(*) as count FROM jobs GROUP BY status ORDER BY count DESC`),
-        d1Query(
-          env.DB,
-          `SELECT kind, company_key, last_fetched_at
-           FROM job_sources
-           ORDER BY last_fetched_at DESC NULLS LAST
-           LIMIT 10`,
-        ),
+        sql<{ count: string }>`SELECT COUNT(*) as count FROM job_sources`,
+        sql<{ status: string; count: string }>`
+          SELECT status, COUNT(*) as count FROM jobs GROUP BY status ORDER BY count DESC
+        `,
+        sql<{ kind: string; company_key: string; last_fetched_at: string | null }>`
+          SELECT kind, company_key, last_fetched_at
+          FROM job_sources
+          ORDER BY last_fetched_at DESC NULLS LAST
+          LIMIT 10
+        `,
       ]);
 
       return jsonResponse(
         {
-          totalSources: sourceCount.rows[0]?.count,
-          jobsByStatus: jobsByStatus.rows,
-          recentlyFetched: recentSources.rows,
+          totalSources: Number(sourceCount[0]?.count ?? 0),
+          jobsByStatus,
+          recentlyFetched: recentSources,
         },
         { headers: corsHeaders },
       );
     }
 
-    // GET /ingest — manually trigger source ingestion (FR12: manual trigger for fix verification)
+    // GET /ingest — manually trigger source ingestion
     if (request.method === "GET" && url.pathname === "/ingest") {
       const maxSources = Number(url.searchParams.get("limit")) || 500;
-      const stats = await autoIngestFromSources(
-        env.DB,
-        { maxSources, traceId },
-      );
-      // Single trigger instead of per-job queue messages
+      const stats = await autoIngestFromSources(sql, { maxSources, traceId });
       if (stats.jobsInserted > 0) {
         await triggerProcessing(env.PROCESS_JOBS_QUEUE, stats.jobsInserted, traceId);
       }
@@ -1132,7 +1018,6 @@ export default {
       );
     }
 
-    // Optional authentication
     if (env.API_SECRET) {
       const authHeader = request.headers.get("Authorization");
       const providedSecret = authHeader?.replace("Bearer ", "");
@@ -1154,7 +1039,6 @@ export default {
         );
       }
 
-      // Validate
       const validationResults = body.jobs.map((job, index) => ({
         index,
         ...validateJob(job),
@@ -1171,16 +1055,14 @@ export default {
         );
       }
 
-      // Insert/upsert jobs
       const insertResults = await Promise.all(
-        body.jobs.map((job) => insertJob(env.DB, job, traceId)),
+        body.jobs.map((job) => insertJob(sql, job, traceId)),
       );
 
       const successful = insertResults.filter((r) => r.success && r.jobId != null);
       const newJobs = successful.filter((r) => r.isNew);
       const failed = insertResults.filter((r) => !r.success);
 
-      // Single trigger for new jobs (1 queue op instead of N_jobs ops)
       if (newJobs.length > 0) {
         await triggerProcessing(env.PROCESS_JOBS_QUEUE, newJobs.length, traceId);
       }
@@ -1225,13 +1107,6 @@ export default {
     }
   },
 
-  /**
-   * Scheduled handler — runs automatically on cron.
-   *
-   * Two responsibilities:
-   * 1. Auto-ingest: Fetch jobs from ATS sources that haven't been checked recently
-   * 2. Stalled recovery: Re-enqueue jobs stuck in 'new' status for too long
-   */
   async scheduled(
     event: ScheduledEvent,
     env: Env,
@@ -1239,6 +1114,7 @@ export default {
   ): Promise<void> {
     const traceId = generateTraceId();
     const start = Date.now();
+    const sql = neon(env.NEON_DATABASE_URL);
 
     log({
       worker: WORKER, action: "scheduled-start", level: "info", traceId,
@@ -1246,16 +1122,13 @@ export default {
     });
 
     try {
-      // Phase 1: Auto-ingest from ATS sources — no arbitrary cap; process all stale boards
       const ingestionStats = await autoIngestFromSources(
-        env.DB,
+        sql,
         { maxSources: 500, stalePeriodHours: 12, traceId },
       );
 
-      // Phase 2: Recover stalled jobs
-      const recovery = await recoverStalledJobs(env.DB, traceId);
+      const recovery = await recoverStalledJobs(sql, traceId);
 
-      // Phase 3: Single trigger to process-jobs (1 queue op instead of N_jobs ops)
       const totalToProcess = ingestionStats.jobsInserted + recovery.recovered;
       if (totalToProcess > 0) {
         await triggerProcessing(env.PROCESS_JOBS_QUEUE, totalToProcess, traceId);
@@ -1281,12 +1154,6 @@ export default {
     }
   },
 
-  /**
-   * Queue consumer — processes batched job IDs and triggers the processing pipeline.
-   *
-   * Instead of forwarding to a webhook, this accumulates job IDs from the batch
-   * and sends a single message to the process-jobs queue to handle them.
-   */
   async queue(
     batch: MessageBatch<QueueMessage>,
     env: Env,
@@ -1300,13 +1167,12 @@ export default {
         const { jobId, traceId } = message.body;
 
         if (typeof jobId !== "number" || !Number.isFinite(jobId)) {
-          // Log invalid message instead of silently acking
           log({
             worker: WORKER, action: "queue-consume", level: "error",
             traceId,
             error: `Invalid jobId in queue message: ${JSON.stringify(message.body)}`,
           });
-          message.ack(); // Still ack to prevent infinite retry of bad messages
+          message.ack();
           continue;
         }
 
@@ -1332,7 +1198,6 @@ export default {
       metadata: { jobCount: jobIds.length, batchSize: batch.messages.length },
     });
 
-    // Trigger processing for the batch
     const triggered =
       env.PROCESS_JOBS_QUEUE
         ? await triggerProcessing(env.PROCESS_JOBS_QUEUE, jobIds.length, batchTraceId).then(() => true)

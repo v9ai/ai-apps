@@ -7,6 +7,15 @@ Usage:
     python -m cli process --limit 5
     python -m cli match --skills react,typescript
     python -m cli cleanup --dry-run
+    python -m cli janitor
+    python -m cli ingest --limit 500
+    python -m cli crawl --provider ashby --pages 5
+    python -m cli company-jobs --hours 24 --limit 50
+    python -m cli report-job --job-id 123
+    python -m cli app-prep --app-id 18
+    python -m cli resume upload --user-id u1 --pdf /path/to/resume.pdf
+    python -m cli resume search --user-id u1 --query "python experience"
+    python -m cli resume chat --user-id u1 --message "what are my skills?"
 """
 
 import click
@@ -417,6 +426,276 @@ def eval_interview_prep():
     """Run deepeval evals for the interview prep graph."""
     from src.graphs.interview_prep.evals import main as run_evals
     run_evals()
+
+
+# ---------------------------------------------------------------------------
+# Worker-ported commands (from Cloudflare Workers → LangGraph)
+# ---------------------------------------------------------------------------
+
+@main.command()
+def janitor():
+    """Run the janitor pipeline: sync boards, purge spam, cleanup dead sources.
+
+    Ported from workers/janitor.ts (daily midnight UTC cron).
+    """
+    from src.graphs.janitor import build_janitor_graph
+
+    graph = build_janitor_graph()
+    print("Starting janitor pipeline...\n")
+
+    result = graph.invoke({
+        "phase_results": [],
+        "stats": {},
+    })
+
+    print("--- Janitor Results ---")
+    for phase in result.get("phase_results", []):
+        phase_name = phase.get("phase", "unknown")
+        print(f"\n  Phase: {phase_name}")
+        for k, v in phase.items():
+            if k != "phase":
+                print(f"    {k}: {v}")
+
+
+@main.command()
+@click.option("--limit", "-l", default=500, show_default=True, help="Max stale sources to process")
+def ingest(limit: int):
+    """Ingest jobs from ATS APIs for stale sources + aggregators.
+
+    Ported from workers/insert-jobs.ts (cron + queue).
+    """
+    from src.graphs.ingest_jobs import build_ingest_jobs_graph
+
+    graph = build_ingest_jobs_graph()
+    print(f"Starting job ingestion (limit={limit})...\n")
+
+    result = graph.invoke({
+        "limit": limit,
+        "sources": [],
+        "results": [],
+        "stats": {},
+    })
+
+    stats = result.get("stats", {})
+    print("\n--- Ingestion Summary ---")
+    print(f"  Sources processed: {stats.get('sources_processed', 0)}")
+    print(f"  Aggregators processed: {stats.get('aggregators_processed', 0)}")
+    print(f"  Total fetched: {stats.get('total_fetched', 0)}")
+    print(f"  Total inserted: {stats.get('total_inserted', 0)}")
+    print(f"  Errors: {stats.get('errors', 0)}")
+
+
+@main.command()
+@click.option("--provider", "-p", default="ashby",
+              type=click.Choice(["ashby", "greenhouse", "workable", "lever"]),
+              show_default=True, help="ATS provider to crawl")
+@click.option("--pages", default=3, show_default=True, help="CDX pages per run")
+def crawl(provider: str, pages: int):
+    """Crawl Common Crawl CDX to discover ATS job boards.
+
+    Ported from workers/ashby-crawler (Rust/WASM).
+    """
+    from src.graphs.board_crawler import build_board_crawler_graph
+
+    graph = build_board_crawler_graph()
+    print(f"Starting board crawler (provider={provider}, pages={pages})...\n")
+
+    result = graph.invoke({
+        "provider": provider,
+        "pages_per_run": pages,
+        "discovered": [],
+        "stats": {},
+    })
+
+    stats = result.get("stats", {})
+    print("\n--- Crawler Summary ---")
+    print(f"  Index: {stats.get('index_id', '?')}")
+    print(f"  Total discovered: {stats.get('total_discovered', 0)}")
+    print(f"  Unique boards: {stats.get('unique_boards', 0)}")
+    print(f"  Upserted: {stats.get('upserted', 0)}")
+
+
+@main.command("company-jobs")
+@click.option("--hours", "-h", default=24, show_default=True, help="Lookback hours for recent companies")
+@click.option("--limit", "-l", default=50, show_default=True, help="Max companies to process")
+def company_jobs(hours: int, limit: int):
+    """Fetch jobs for recently discovered AI-tier companies.
+
+    Ported from workers/process-companies-cron.ts (6h cron).
+    """
+    from src.graphs.company_jobs import build_company_jobs_graph
+
+    graph = build_company_jobs_graph()
+    print(f"Starting company jobs pipeline (hours={hours}, limit={limit})...\n")
+
+    result = graph.invoke({
+        "hours_lookback": hours,
+        "limit": limit,
+        "companies": [],
+        "results": [],
+        "stats": {},
+    })
+
+    stats = result.get("stats", {})
+    print("\n--- Company Jobs Summary ---")
+    print(f"  Companies processed: {stats.get('companies_processed', 0)}")
+    print(f"  Companies with jobs: {stats.get('companies_with_jobs', 0)}")
+    print(f"  Total inserted: {stats.get('total_inserted', 0)}")
+
+
+@main.command("report-job")
+@click.option("--job-id", "-j", required=True, type=int, help="Job ID to analyze")
+def report_job(job_id: int):
+    """Run two-pass DeepSeek classification on a reported job.
+
+    Ported from workers/job-reporter-llm (queue consumer).
+    """
+    from src.graphs.job_reporter import build_job_reporter_graph
+
+    graph = build_job_reporter_graph()
+    print(f"Analyzing reported job #{job_id}...\n")
+
+    result = graph.invoke({
+        "job_id": job_id,
+        "job_data": {},
+        "pass1_result": None,
+        "pass2_result": None,
+        "final_result": {},
+        "stats": {},
+    })
+
+    stats = result.get("stats", {})
+    final = result.get("final_result", {})
+    print(f"--- Report Analysis ---")
+    print(f"  Reason: {stats.get('reason', '?')}")
+    print(f"  Confidence: {stats.get('confidence', 0):.2f}")
+    print(f"  Action: {stats.get('action', '?')}")
+    print(f"  Model: {stats.get('model', '?')}")
+    print(f"  Passes: {stats.get('passes', 0)}")
+    if final.get("reasoning"):
+        print(f"  Reasoning: {final['reasoning']}")
+
+
+@main.group()
+def resume():
+    """Resume RAG commands: upload, search, chat.
+
+    Ported from workers/resume-rag (Python CF Worker).
+    """
+    pass
+
+
+@resume.command()
+@click.option("--user-id", "-u", required=True, help="User ID")
+@click.option("--pdf", "-f", default=None, help="Path to PDF file")
+@click.option("--text", "-t", default=None, help="Direct resume text")
+@click.option("--resume-id", "-r", default=None, help="Resume ID (auto-generated if omitted)")
+def upload(user_id: str, pdf: str | None, text: str | None, resume_id: str | None):
+    """Upload and embed a resume (PDF or text)."""
+    import base64
+    from src.graphs.resume_rag import build_resume_rag_graph
+
+    pdf_b64 = ""
+    filename = ""
+    resume_text = text or ""
+
+    if pdf:
+        with open(pdf, "rb") as f:
+            pdf_b64 = base64.b64encode(f.read()).decode()
+        filename = pdf.split("/")[-1]
+
+    if not pdf_b64 and not resume_text:
+        print("Provide --pdf or --text.")
+        return
+
+    graph = build_resume_rag_graph()
+    print(f"Uploading resume for user {user_id}...\n")
+
+    result = graph.invoke({
+        "action": "upload",
+        "user_id": user_id,
+        "resume_id": resume_id or "",
+        "resume_text": resume_text,
+        "pdf_base64": pdf_b64,
+        "filename": filename,
+        "query": "",
+        "limit": 5,
+        "chunks_stored": 0,
+        "search_results": [],
+        "chat_response": "",
+        "stats": {},
+    })
+
+    print(f"Chunks stored: {result.get('chunks_stored', 0)}")
+    print(f"Resume ID: {result.get('resume_id', '?')}")
+
+
+@resume.command()
+@click.option("--user-id", "-u", required=True, help="User ID")
+@click.option("--query", "-q", required=True, help="Search query")
+@click.option("--limit", "-l", default=5, show_default=True, help="Max results")
+@click.option("--resume-id", "-r", default="", help="Filter by resume ID")
+def search(user_id: str, query: str, limit: int, resume_id: str):
+    """Semantic search across resume chunks."""
+    from src.graphs.resume_rag import build_resume_rag_graph
+
+    graph = build_resume_rag_graph()
+    print(f"Searching resumes for: {query}\n")
+
+    result = graph.invoke({
+        "action": "search",
+        "user_id": user_id,
+        "resume_id": resume_id,
+        "resume_text": "",
+        "pdf_base64": "",
+        "filename": "",
+        "query": query,
+        "limit": limit,
+        "chunks_stored": 0,
+        "search_results": [],
+        "chat_response": "",
+        "stats": {},
+    })
+
+    results = result.get("search_results", [])
+    if not results:
+        print("No results found.")
+        return
+
+    for i, r in enumerate(results, 1):
+        score = r.get("score", 0)
+        text_preview = (r.get("text", ""))[:200]
+        print(f"\n  {i}. (score: {score:.3f})")
+        print(f"     {text_preview}...")
+
+
+@resume.command()
+@click.option("--user-id", "-u", required=True, help="User ID")
+@click.option("--message", "-m", required=True, help="Chat message")
+@click.option("--resume-id", "-r", default="", help="Resume ID for context")
+def chat(user_id: str, message: str, resume_id: str):
+    """RAG-powered chat about your resume."""
+    from src.graphs.resume_rag import build_resume_rag_graph
+
+    graph = build_resume_rag_graph()
+    print(f"Chatting about resume...\n")
+
+    result = graph.invoke({
+        "action": "chat",
+        "user_id": user_id,
+        "resume_id": resume_id,
+        "resume_text": "",
+        "pdf_base64": "",
+        "filename": "",
+        "query": message,
+        "limit": 5,
+        "chunks_stored": 0,
+        "search_results": [],
+        "chat_response": "",
+        "stats": {},
+    })
+
+    print(result.get("chat_response", "No response generated."))
 
 
 if __name__ == "__main__":

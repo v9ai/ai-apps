@@ -3,7 +3,7 @@ import { auth } from "@/lib/auth/server";
 import { ADMIN_EMAIL } from "@/lib/constants";
 
 export async function POST(request: NextRequest) {
-  const { data: session } = await auth.getSession({ fetchOptions: { headers: request.headers } });
+  const session = await auth.api.getSession({ headers: request.headers });
   if (session?.user.email !== ADMIN_EMAIL) {
     return NextResponse.json({ error: "Forbidden" }, { status: 403 });
   }

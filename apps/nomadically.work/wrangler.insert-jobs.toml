@@ -3,25 +3,18 @@ main = "workers/insert-jobs.ts"
 compatibility_date = "2026-02-01"
 
 # Cron: disabled — account is at 5-cron limit (free plan allows 5 total).
-# Ingestion is triggered by the janitor via INSERT_JOBS_URL secret (set on nomadically-janitor).
-# To add a cron later: either upgrade to Workers Paid or remove a cron from another worker.
+# Ingestion is triggered by the janitor via INSERT_JOBS_URL secret.
 # [triggers]
 # crons = ["0 */12 * * *"]
 
-# D1 Database
-[[d1_databases]]
-binding = "DB"
-database_name = "nomadically-work-db"
-database_id = "632b9c57-8262-40bd-86c2-bc08beab713b"
-
 # Secrets (set via: npx wrangler secret put SECRET_NAME --name nomadically-work-insert-jobs)
+# - NEON_DATABASE_URL  REQUIRED — Neon PostgreSQL connection string (postgresql://...)
+#   npx wrangler secret put NEON_DATABASE_URL --name nomadically-work-insert-jobs
 # - API_SECRET          (optional — authenticate the POST ingest endpoint)
 # - PROCESS_JOBS_URL    (optional — URL of the process-jobs worker for HTTP fallback)
 # - PROCESS_JOBS_SECRET (optional — shared secret for process-jobs worker auth)
 
 # Queue: jobs-pipeline — this worker produces AND consumes
-# Producer: insert-jobs sends newly inserted job IDs here
-# Consumer: batch-acks job IDs and triggers process-jobs pipeline
 [[queues.producers]]
 queue = "jobs-pipeline"
 binding = "JOBS_QUEUE"

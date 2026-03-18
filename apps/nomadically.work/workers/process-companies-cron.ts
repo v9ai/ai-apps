@@ -2,18 +2,15 @@
  * Cloudflare Workers Cron — Company Processing & Job Fetching
  *
  * Runs on a schedule (default: every 6 hours) to:
- * 1. Query newly added companies from ashby-crawler (from companies table)
- * 2. Discover/enrich ATS boards for those companies
- * 3. Fetch jobs from discovered ATS sources
- * 4. Store jobs in D1
- *
- * Prerequisites:
- * - D1 database with companies, ats_boards, and jobs tables
- * - Companies populated by ashby-crawler worker
+ * 1. Query newly added AI-tier companies from the companies table (Neon)
+ * 2. Fetch jobs from discovered ATS sources (Ashby, Greenhouse, Lever)
+ * 3. Upsert jobs into Neon
  */
 
+import { neon } from "@neondatabase/serverless";
+
 interface Env {
-  DB: D1Database;
+  NEON_DATABASE_URL: string;
   PROCESS_JOBS_WORKER_URL?: string;
   PROCESS_JOBS_QUEUE?: Queue<ProcessJobsMessage>;
 }
@@ -47,14 +44,6 @@ interface Company {
   created_at: string;
 }
 
-interface AshbyBoard {
-  id: number;
-  board_name: string;
-  job_count: number;
-  is_active: boolean;
-  last_synced_at?: string;
-}
-
 interface Job {
   external_id: string;
   source_kind: string;
@@ -80,31 +69,15 @@ interface AshbyJobPosting {
   description: string;
   isRemote: boolean;
   isListed: boolean;
-  team?: {
-    id: string;
-    name: string;
-  };
-  department?: {
-    id: string;
-    name: string;
-  };
+  team?: { id: string; name: string };
+  department?: { id: string; name: string };
   employmentType?: string;
   publishedAt?: string;
   secondaryLocations?: Array<{
     location: string;
-    address?: {
-      addressLocality?: string;
-      addressRegion?: string;
-      addressCountry?: string;
-    };
+    address?: { addressLocality?: string; addressRegion?: string; addressCountry?: string };
   }>;
-  compensation?: {
-    currency?: string;
-    tiers?: Array<{
-      id: string;
-      title: string;
-    }>;
-  };
+  compensation?: { currency?: string; tiers?: Array<{ id: string; title: string }> };
 }
 
 interface AshbyBoardResponse {
@@ -119,10 +92,7 @@ export async function fetchAshbyJobs(boardName: string): Promise<Job[]> {
   try {
     const response = await fetch(url, {
       method: "GET",
-      headers: {
-        Accept: "application/json",
-        "User-Agent": "nomadically-work-cron/1.0",
-      },
+      headers: { Accept: "application/json", "User-Agent": "nomadically-work-cron/1.0" },
     });
 
     if (!response.ok) {
@@ -131,11 +101,7 @@ export async function fetchAshbyJobs(boardName: string): Promise<Job[]> {
     }
 
     const data = (await response.json()) as AshbyBoardResponse;
-
-    if (!data.jobs || data.jobs.length === 0) {
-      console.log(`No jobs found for Ashby board: ${boardName}`);
-      return jobs;
-    }
+    if (!data.jobs?.length) return jobs;
 
     for (const posting of data.jobs) {
       if (!posting.isListed) continue;
@@ -159,10 +125,6 @@ export async function fetchAshbyJobs(boardName: string): Promise<Job[]> {
         posted_at: posting.publishedAt || new Date().toISOString(),
       });
     }
-
-    console.log(
-      `Fetched ${jobs.length} jobs from Ashby board: ${boardName}`
-    );
   } catch (error) {
     console.error(`Error fetching Ashby jobs for ${boardName}:`, error);
   }
@@ -181,14 +143,8 @@ interface GreenhouseJob {
   internal_job_id: number;
   updated_at: string;
   publication_date: string;
-  location?: {
-    name?: string;
-  };
+  location?: { name?: string };
   content?: string;
-}
-
-interface GreenhouseResponse {
-  jobs: GreenhouseJob[];
 }
 
 export async function fetchGreenhouseJobs(companyKey: string): Promise<Job[]> {
@@ -198,25 +154,16 @@ export async function fetchGreenhouseJobs(companyKey: string): Promise<Job[]> {
   try {
     const response = await fetch(url, {
       method: "GET",
-      headers: {
-        Accept: "application/json",
-        "User-Agent": "nomadically-work-cron/1.0",
-      },
+      headers: { Accept: "application/json", "User-Agent": "nomadically-work-cron/1.0" },
     });
 
     if (!response.ok) {
-      console.error(
-        `Greenhouse API error for ${companyKey}: ${response.status}`
-      );
+      console.error(`Greenhouse API error for ${companyKey}: ${response.status}`);
       return jobs;
     }
 
-    const data = (await response.json()) as GreenhouseResponse;
-
-    if (!data.jobs || data.jobs.length === 0) {
-      console.log(`No jobs found for Greenhouse board: ${companyKey}`);
-      return jobs;
-    }
+    const data = (await response.json()) as { jobs?: GreenhouseJob[] };
+    if (!data.jobs?.length) return jobs;
 
     for (const job of data.jobs) {
       jobs.push({
@@ -230,10 +177,6 @@ export async function fetchGreenhouseJobs(companyKey: string): Promise<Job[]> {
         posted_at: job.publication_date || job.updated_at,
       });
     }
-
-    console.log(
-      `Fetched ${jobs.length} jobs from Greenhouse board: ${companyKey}`
-    );
   } catch (error) {
     console.error(`Error fetching Greenhouse jobs for ${companyKey}:`, error);
   }
@@ -247,19 +190,11 @@ export async function fetchGreenhouseJobs(companyKey: string): Promise<Job[]> {
 
 interface LeverJob {
   id: string;
-  title: string;
-  jobUrl: string;
-  applyUrl?: string;
+  text: string;
+  hostedUrl: string;
   createdAt: number;
-  workplaceType?: string;
-  categories?: {
-    location?: Array<{ name: string }>;
-  };
+  categories?: { location?: string };
   descriptionPlain?: string;
-}
-
-interface LeverResponse {
-  postings: LeverJob[];
 }
 
 export async function fetchLeverJobs(companyKey: string): Promise<Job[]> {
@@ -269,10 +204,7 @@ export async function fetchLeverJobs(companyKey: string): Promise<Job[]> {
   try {
     const response = await fetch(url, {
       method: "GET",
-      headers: {
-        Accept: "application/json",
-        "User-Agent": "nomadically-work-cron/1.0",
-      },
+      headers: { Accept: "application/json", "User-Agent": "nomadically-work-cron/1.0" },
     });
 
     if (!response.ok) {
@@ -280,29 +212,21 @@ export async function fetchLeverJobs(companyKey: string): Promise<Job[]> {
       return jobs;
     }
 
-    const data = (await response.json()) as LeverResponse;
+    const data = (await response.json()) as LeverJob[];
+    if (!Array.isArray(data) || !data.length) return jobs;
 
-    if (!data.postings || data.postings.length === 0) {
-      console.log(`No jobs found for Lever board: ${companyKey}`);
-      return jobs;
-    }
-
-    for (const posting of data.postings) {
-      const location = posting.categories?.location?.[0]?.name;
-
+    for (const posting of data) {
       jobs.push({
         external_id: posting.id,
         source_kind: "lever",
         company_key: companyKey,
-        title: posting.title,
-        location,
-        url: posting.jobUrl,
+        title: posting.text,
+        location: posting.categories?.location,
+        url: posting.hostedUrl,
         description: posting.descriptionPlain,
         posted_at: new Date(posting.createdAt).toISOString(),
       });
     }
-
-    console.log(`Fetched ${jobs.length} jobs from Lever board: ${companyKey}`);
   } catch (error) {
     console.error(`Error fetching Lever jobs for ${companyKey}:`, error);
   }
@@ -311,76 +235,53 @@ export async function fetchLeverJobs(companyKey: string): Promise<Job[]> {
 }
 
 // ---------------------------------------------------------------------------
-// Database Operations
+// Database Operations (Neon)
 // ---------------------------------------------------------------------------
 
 export async function getRecentCompanies(
-  db: D1Database,
-  hoursAgo: number = 24
+  sql: ReturnType<typeof neon>,
+  hoursAgo: number = 24,
 ): Promise<Company[]> {
   const since = new Date(Date.now() - hoursAgo * 60 * 60 * 1000).toISOString();
-
-  // Filter exclusively for AI-native or AI-first companies (ai_tier >= 1)
-  const result = await db
-    .prepare(
-      `SELECT id, key, name, website, category, created_at
-       FROM companies
-       WHERE created_at > ?
-       AND category != 'DIRECTORY'
-       AND ai_tier >= 1
-       AND is_hidden != 1
-       ORDER BY ai_tier DESC, ai_classification_confidence DESC, created_at DESC
-       LIMIT 100`
-    )
-    .bind(since)
-    .all();
-
-  return (result.results as unknown as Company[]) || [];
+  return sql<Company>`
+    SELECT id, key, name, website, category, created_at
+    FROM companies
+    WHERE created_at > ${since}
+      AND category != 'DIRECTORY'
+      AND ai_tier >= 1
+      AND (is_hidden IS NULL OR is_hidden = false)
+    ORDER BY ai_tier DESC, ai_classification_confidence DESC, created_at DESC
+    LIMIT 100
+  `;
 }
 
-async function getAtsBoards(
-  db: D1Database,
-  companyId: number
-): Promise<AshbyBoard[]> {
-  const result = await db
-    .prepare(
-      `SELECT id, board_name, job_count, is_active, last_synced_at
-       FROM ashby_boards
-       WHERE board_name IN (
-         SELECT company_key FROM ats_boards WHERE company_id = ?
-       )
-       AND is_active = 1`
-    )
-    .bind(companyId)
-    .all();
+export async function upsertJob(sql: ReturnType<typeof neon>, job: Job): Promise<void> {
+  const now = new Date().toISOString();
 
-  return (result.results as unknown as AshbyBoard[]) || [];
-}
+  // Ensure company exists
+  await sql`
+    INSERT INTO companies (key, name, created_at, updated_at)
+    VALUES (${job.company_key}, ${job.company_key}, ${now}, ${now})
+    ON CONFLICT (key) DO NOTHING
+  `;
 
-export async function upsertJob(db: D1Database, job: Job): Promise<void> {
-  await db
-    .prepare(
-      `INSERT INTO jobs (external_id, source_kind, company_key, title, location, url, description, posted_at, created_at, updated_at)
-       VALUES (?, ?, ?, ?, ?, ?, ?, ?, datetime('now'), datetime('now'))
-       ON CONFLICT(external_id) DO UPDATE SET
-         title = EXCLUDED.title,
-         location = EXCLUDED.location,
-         url = EXCLUDED.url,
-         description = EXCLUDED.description,
-         posted_at = EXCLUDED.posted_at,
-         updated_at = datetime('now')`
+  await sql`
+    INSERT INTO jobs (
+      external_id, source_kind, company_key, title, location, url,
+      description, posted_at, status, created_at, updated_at
+    ) VALUES (
+      ${job.external_id}, ${job.source_kind}, ${job.company_key},
+      ${job.title}, ${job.location ?? null}, ${job.url},
+      ${job.description ?? null}, ${job.posted_at}, 'new', ${now}, ${now}
     )
-    .bind(
-      job.external_id,
-      job.source_kind,
-      job.company_key,
-      job.title,
-      job.location || null,
-      job.url,
-      job.description || null,
-      job.posted_at
-    )
-    .run();
+    ON CONFLICT (source_kind, company_key, external_id) DO UPDATE SET
+      title       = EXCLUDED.title,
+      location    = COALESCE(EXCLUDED.location, jobs.location),
+      url         = EXCLUDED.url,
+      description = COALESCE(EXCLUDED.description, jobs.description),
+      posted_at   = EXCLUDED.posted_at,
+      updated_at  = EXCLUDED.updated_at
+  `;
 }
 
 // ---------------------------------------------------------------------------
@@ -389,30 +290,19 @@ export async function upsertJob(db: D1Database, job: Job): Promise<void> {
 
 export async function processCompanies(
   env: Env,
-  options: { hoursAgo?: number; maxCompanies?: number } = {}
+  options: { hoursAgo?: number; maxCompanies?: number } = {},
 ): Promise<{
   success: boolean;
-  stats: {
-    companiesProcessed: number;
-    jobsDiscovered: number;
-    jobsInserted: number;
-    errors: string[];
-  };
+  stats: { companiesProcessed: number; jobsDiscovered: number; jobsInserted: number; errors: string[] };
 }> {
   const { hoursAgo = 24, maxCompanies = 50 } = options;
-  const stats = {
-    companiesProcessed: 0,
-    jobsDiscovered: 0,
-    jobsInserted: 0,
-    errors: [] as string[],
-  };
+  const sql = neon(env.NEON_DATABASE_URL);
+  const stats = { companiesProcessed: 0, jobsDiscovered: 0, jobsInserted: 0, errors: [] as string[] };
 
-  console.log(
-    `Processing companies added in the last ${hoursAgo} hours (max: ${maxCompanies})...`
-  );
+  console.log(`Processing companies added in the last ${hoursAgo} hours (max: ${maxCompanies})...`);
 
   try {
-    const companies = await getRecentCompanies(env.DB, hoursAgo);
+    const companies = await getRecentCompanies(sql, hoursAgo);
 
     if (companies.length === 0) {
       console.log("No recent companies found");
@@ -426,32 +316,20 @@ export async function processCompanies(
       stats.companiesProcessed++;
 
       try {
-        let jobsToInsert: Job[] = [];
+        const [ashbyJobs, greenhouseJobs, leverJobs] = await Promise.all([
+          fetchAshbyJobs(company.key),
+          fetchGreenhouseJobs(company.key),
+          fetchLeverJobs(company.key),
+        ]);
 
-        // Try to fetch from known ATS sources based on company category
-        if (company.key) {
-          // Try Ashby first (from ashby-crawler discoveries)
-          const ashbyJobs = await fetchAshbyJobs(company.key);
-          jobsToInsert.push(...ashbyJobs);
-
-          // Try Greenhouse
-          const greenhouseJobs = await fetchGreenhouseJobs(company.key);
-          jobsToInsert.push(...greenhouseJobs);
-
-          // Try Lever
-          const leverJobs = await fetchLeverJobs(company.key);
-          jobsToInsert.push(...leverJobs);
-        }
-
+        const jobsToInsert = [...ashbyJobs, ...greenhouseJobs, ...leverJobs];
         stats.jobsDiscovered += jobsToInsert.length;
 
-        // Insert jobs into D1
         for (const job of jobsToInsert) {
-          // Skip board-only URLs stored as external_id
           if (job.external_id.includes("://")) {
             try {
-              const url = new URL(job.external_id);
-              const segments = url.pathname.replace(/^\/+|\/+$/g, "").split("/").filter(Boolean);
+              const jobUrl = new URL(job.external_id);
+              const segments = jobUrl.pathname.replace(/^\/+|\/+$/g, "").split("/").filter(Boolean);
               if (segments.length < 2) {
                 console.warn(`Skipping board-only URL as external_id: ${job.external_id}`);
                 continue;
@@ -462,22 +340,15 @@ export async function processCompanies(
           }
 
           try {
-            await upsertJob(env.DB, job);
+            await upsertJob(sql, job);
             stats.jobsInserted++;
           } catch (error) {
-            const msg =
-              error instanceof Error ? error.message : String(error);
-            stats.errors.push(
-              `Failed to insert job ${job.external_id}: ${msg}`
-            );
-            console.error(
-              `Failed to insert job for ${company.key}/${job.external_id}:`,
-              error
-            );
+            const msg = error instanceof Error ? error.message : String(error);
+            stats.errors.push(`Failed to insert job ${job.external_id}: ${msg}`);
+            console.error(`Failed to insert job for ${company.key}/${job.external_id}:`, error);
           }
         }
 
-        // Rate limiting: be nice to ATS APIs
         await new Promise((resolve) => setTimeout(resolve, 500));
       } catch (error) {
         const msg = error instanceof Error ? error.message : String(error);
@@ -486,9 +357,7 @@ export async function processCompanies(
       }
     }
 
-    console.log(
-      `Processing complete: ${stats.companiesProcessed} companies, ${stats.jobsDiscovered} jobs discovered, ${stats.jobsInserted} inserted`
-    );
+    console.log(`Processing complete: ${stats.companiesProcessed} companies, ${stats.jobsDiscovered} jobs discovered, ${stats.jobsInserted} inserted`);
   } catch (error) {
     const msg = error instanceof Error ? error.message : String(error);
     stats.errors.push(`Fatal error: ${msg}`);
@@ -499,18 +368,11 @@ export async function processCompanies(
 }
 
 async function triggerProcessing(env: Env, jobsInserted: number): Promise<void> {
-  if (jobsInserted === 0) {
-    console.log("No jobs inserted, skipping process-jobs trigger");
-    return;
-  }
+  if (jobsInserted === 0) return;
 
-  // Method 1: Via Queue binding (preferred)
   if (env.PROCESS_JOBS_QUEUE) {
     try {
-      await env.PROCESS_JOBS_QUEUE.send({
-        action: "classify",
-        limit: jobsInserted,
-      });
+      await env.PROCESS_JOBS_QUEUE.send({ action: "classify", limit: jobsInserted });
       console.log(`Queued job processing for ${jobsInserted} jobs`);
       return;
     } catch (err) {
@@ -518,26 +380,15 @@ async function triggerProcessing(env: Env, jobsInserted: number): Promise<void> 
     }
   }
 
-  // Method 2: Via HTTP (fallback)
   if (env.PROCESS_JOBS_WORKER_URL) {
     try {
       const response = await fetch(env.PROCESS_JOBS_WORKER_URL, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          action: "classify",
-          limit: jobsInserted,
-        }),
+        body: JSON.stringify({ action: "classify", limit: jobsInserted }),
       });
-
-      if (response.ok) {
-        console.log(
-          `Triggered process-jobs worker via HTTP for ${jobsInserted} jobs`
-        );
-      } else {
-        console.error(
-          `Process-jobs worker returned ${response.status}: ${await response.text()}`
-        );
+      if (!response.ok) {
+        console.error(`Process-jobs worker returned ${response.status}: ${await response.text()}`);
       }
     } catch (err) {
       console.error("Process-jobs HTTP trigger error:", err);
@@ -552,80 +403,44 @@ async function triggerProcessing(env: Env, jobsInserted: number): Promise<void> 
 export default {
   async fetch(request: Request, env: Env): Promise<Response> {
     const url = new URL(request.url);
+    const sql = neon(env.NEON_DATABASE_URL);
 
-    // GET /health
     if (url.pathname === "/health") {
       try {
-        const result = await env.DB.prepare(
-          "SELECT COUNT(*) as count FROM companies"
-        ).first();
+        const result = await sql<{ count: string }>`SELECT COUNT(*) as count FROM companies`;
         return new Response(
-          JSON.stringify({
-            status: "healthy",
-            companyCount: result?.count,
-          }),
-          { headers: { "Content-Type": "application/json" } }
+          JSON.stringify({ status: "healthy", companyCount: Number(result[0]?.count ?? 0) }),
+          { headers: { "Content-Type": "application/json" } },
         );
       } catch (err) {
         return new Response(
           JSON.stringify({ status: "unhealthy", error: String(err) }),
-          { status: 500, headers: { "Content-Type": "application/json" } }
+          { status: 500, headers: { "Content-Type": "application/json" } },
         );
       }
     }
 
-    // GET /process?hours=24&limit=50 — manual trigger for testing
     if (url.pathname === "/process") {
       const hours = parseInt(url.searchParams.get("hours") || "24", 10);
       const limit = parseInt(url.searchParams.get("limit") || "50", 10);
-
-      const result = await processCompanies(env, {
-        hoursAgo: hours,
-        maxCompanies: limit,
-      });
-
-      return new Response(JSON.stringify(result), {
-        headers: { "Content-Type": "application/json" },
-      });
+      const result = await processCompanies(env, { hoursAgo: hours, maxCompanies: limit });
+      return new Response(JSON.stringify(result), { headers: { "Content-Type": "application/json" } });
     }
 
     return new Response(
       JSON.stringify({
         message: "Company processing cron worker",
-        endpoints: [
-          "/health",
-          "/process?hours=24&limit=50 (manual trigger for testing)",
-        ],
+        endpoints: ["/health", "/process?hours=24&limit=50 (manual trigger for testing)"],
         hint: "Cron runs every 6 hours by default. Use /process for manual trigger.",
       }),
-      { headers: { "Content-Type": "application/json" } }
+      { headers: { "Content-Type": "application/json" } },
     );
   },
 
-  async scheduled(
-    event: ScheduledEvent,
-    env: Env,
-    ctx: ExecutionContext
-  ): Promise<void> {
-    console.log("Cron: Starting company processing...");
-
-    try {
-      const result = await processCompanies(env, {
-        hoursAgo: 24,
-        maxCompanies: 50,
-      });
-
-      console.log(`Processing result:`, result.stats);
-
-      // Trigger job processing if jobs were inserted
-      if (result.stats.jobsInserted > 0) {
-        ctx.waitUntil(triggerProcessing(env, result.stats.jobsInserted));
-      }
-
-      console.log("Cron job completed");
-    } catch (error) {
-      console.error("Cron job failed:", error);
-      throw error;
-    }
+  async scheduled(_event: ScheduledEvent, env: Env, ctx: ExecutionContext): Promise<void> {
+    console.log("Starting scheduled company processing...");
+    const { stats } = await processCompanies(env, { hoursAgo: 24, maxCompanies: 50 });
+    ctx.waitUntil(triggerProcessing(env, stats.jobsInserted));
+    console.log("Scheduled company processing complete:", stats);
   },
 };

@@ -104,7 +104,7 @@ const handler = startServerAndCreateNextHandler<NextRequest, GraphQLContext>(
         let userId: string | null = null;
         let userEmail: string | null = null;
         try {
-          const { data: session } = await auth.getSession({ fetchOptions: { headers: req.headers } });
+          const session = await auth.api.getSession({ headers: req.headers });
           userId = session?.user.id ?? null;
           userEmail = session?.user.email ?? null;
         } catch {
@@ -115,7 +115,7 @@ const handler = startServerAndCreateNextHandler<NextRequest, GraphQLContext>(
       } catch (error) {
         console.error("❌ [GraphQL] Error in context setup:", error);
         console.error("❌ [GraphQL] Make sure environment variables are set in .env.local");
-        console.error("❌ [GraphQL] Required: NEON_DATABASE_URL");
+        console.error("❌ [GraphQL] Required: NEON_DATABASE_URL or DATABASE_URL");
         // Re-throw to show proper error to client
         throw error;
       }
@@ -128,7 +128,7 @@ async function getRateLimitIdentifier(request: NextRequest): Promise<string> {
     return `dev:local`;
   }
   try {
-    const { data: session } = await auth.getSession({ fetchOptions: { headers: request.headers } });
+    const session = await auth.api.getSession({ headers: request.headers });
     if (session?.user.id) {
       return `user:${session.user.id}`;
     }

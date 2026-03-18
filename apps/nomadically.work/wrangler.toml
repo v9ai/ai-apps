@@ -6,17 +6,13 @@ compatibility_date = "2026-02-01"
 [triggers]
 crons = ["0 0 * * *"]
 
-# D1 Database
-[[d1_databases]]
-binding = "DB"
-database_name = "nomadically-work-db"
-database_id = "632b9c57-8262-40bd-86c2-bc08beab713b"
-
 # Environment variables
 [vars]
 APP_URL = "https://nomadically.work"
 
 # Secrets (set via: npx wrangler secret put SECRET_NAME --name nomadically-janitor)
+# - NEON_DATABASE_URL REQUIRED — Neon PostgreSQL connection string (postgresql://...)
+#   npx wrangler secret put NEON_DATABASE_URL --name nomadically-janitor
 # - INSERT_JOBS_URL  REQUIRED — URL of deployed insert-jobs worker so janitor can trigger
 #                   ingestion immediately after board discovery (Phase 3).
 #                   Get the URL after deploying insert-jobs:
@@ -24,8 +20,7 @@ APP_URL = "https://nomadically.work"
 #                   Then set it:
 #                     echo "https://nomadically-work-insert-jobs.<your-subdomain>.workers.dev" | \
 #                       npx wrangler secret put INSERT_JOBS_URL --name nomadically-janitor
-#                   Without this, the janitor defers to insert-jobs' own 12h cron (still works,
-#                   but ingestion won't start immediately after board discovery).
+#                   Without this, ingestion is deferred to insert-jobs' own 12h cron.
 
 # Observability
 [observability]
