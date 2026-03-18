@@ -1,0 +1,354 @@
+{
+  "github": {
+    "profile": {
+      "bio": "I like to train Deep Neural Nets on large datasets.",
+      "publicRepos": 63,
+      "followers": 148656,
+      "location": "Stanford",
+      "createdAt": "2010-04-10T17:55:32Z"
+    },
+    "repos": [
+      {
+        "name": "nanoGPT",
+        "description": "The simplest, fastest repository for training/finetuning medium-sized GPTs.",
+        "url": "https://github.com/karpathy/nanoGPT",
+        "stars": 55130,
+        "forks": 9393,
+        "language": "Python",
+        "topics": [],
+        "updatedAt": "2026-03-18T21:10:22Z",
+        "createdAt": "2022-12-28T00:51:12Z"
+      },
+      {
+        "name": "nanochat",
+        "description": "The best ChatGPT that $100 can buy.",
+        "url": "https://github.com/karpathy/nanochat",
+        "stars": 49410,
+        "forks": 6475,
+        "language": "Python",
+        "topics": [],
+        "updatedAt": "2026-03-18T21:14:43Z",
+        "createdAt": "2025-10-13T13:46:35Z"
+      },
+      {
+        "name": "autoresearch",
+        "description": "AI agents running research on single-GPU nanochat training automatically",
+        "url": "https://github.com/karpathy/autoresearch",
+        "stars": 41928,
+        "forks": 5805,
+        "language": "Python",
+        "topics": [],
+        "updatedAt": "2026-03-18T21:17:38Z",
+        "createdAt": "2026-03-06T22:00:43Z"
+      },
+      {
+        "name": "LLM101n",
+        "description": "LLM101n: Let's build a Storyteller",
+        "url": "https://github.com/karpathy/LLM101n",
+        "stars": 36545,
+        "forks": 1997,
+        "language": null,
+        "topics": [],
+        "updatedAt": "2026-03-18T19:36:15Z",
+        "createdAt": "2024-05-27T00:23:38Z"
+      },
+      {
+        "name": "llm.c",
+        "description": "LLM training in simple, raw C/CUDA",
+        "url": "https://github.com/karpathy/llm.c",
+        "stars": 29192,
+        "forks": 3438,
+        "language": "Cuda",
+        "topics": [],
+        "updatedAt": "2026-03-18T19:07:51Z",
+        "createdAt": "2024-04-08T16:58:11Z"
+      },
+      {
+        "name": "minGPT",
+        "description": "A minimal PyTorch re-implementation of the OpenAI GPT (Generative Pretrained Transformer) training",
+        "url": "https://github.com/karpathy/minGPT",
+        "stars": 23944,
+        "forks": 3163,
+        "language": "Python",
+        "topics": [],
+        "updatedAt": "2026-03-18T19:34:47Z",
+        "createdAt": "2020-08-17T07:08:48Z"
+      },
+      {
+        "name": "nn-zero-to-hero",
+        "description": "Neural Networks: Zero to Hero",
+        "url": "https://github.com/karpathy/nn-zero-to-hero",
+        "stars": 20951,
+        "forks": 3010,
+        "language": "Jupyter Notebook",
+        "topics": [],
+        "updatedAt": "2026-03-18T20:51:37Z",
+        "createdAt": "2022-09-08T21:23:25Z"
+      },
+      {
+        "name": "llama2.c",
+        "description": "Inference Llama 2 in one file of pure C",
+        "url": "https://github.com/karpathy/llama2.c",
+        "stars": 19288,
+        "forks": 2467,
+        "language": "C",
+        "topics": [],
+        "updatedAt": "2026-03-18T14:08:09Z",
+        "createdAt": "2023-07-23T05:15:06Z"
+      },
+      {
+        "name": "llm-council",
+        "description": "LLM Council works together to answer your hardest questions",
+        "url": "https://github.com/karpathy/llm-council",
+        "stars": 15914,
+        "forks": 3192,
+        "language": "Python",
+        "topics": [],
+        "updatedAt": "2026-03-18T21:16:08Z",
+        "createdAt": "2025-11-22T23:24:14Z"
+      },
+      {
+        "name": "micrograd",
+        "description": "A tiny scalar-valued autograd engine and a neural net library on top of it with PyTorch-like API",
+        "url": "https://github.com/karpathy/micrograd",
+        "stars": 15093,
+        "forks": 2284,
+        "language": "Jupyter Notebook",
+        "topics": [],
+        "updatedAt": "2026-03-18T17:05:23Z",
+        "createdAt": "2020-04-13T04:31:18Z"
+      },
+      {
+        "name": "minbpe",
+        "description": "Minimal, clean code for the Byte Pair Encoding (BPE) algorithm commonly used in LLM tokenization.",
+        "url": "https://github.com/karpathy/minbpe",
+        "stars": 10378,
+        "forks": 1024,
+        "language": "Python",
+        "topics": [],
+        "updatedAt": "2026-03-18T19:53:43Z",
+        "createdAt": "2024-02-16T16:18:15Z"
+      },
+      {
+        "name": "build-nanogpt",
+        "description": "Video+code lecture on building nanoGPT from scratch",
+        "url": "https://github.com/karpathy/build-nanogpt",
+        "stars": 4839,
+        "forks": 770,
+        "language": "Python",
+        "topics": [],
+        "updatedAt": "2026-03-18T09:09:33Z",
+        "createdAt": "2024-06-09T05:16:13Z"
+      },
+      {
+        "name": "ng-video-lecture",
+        "description": null,
+        "url": "https://github.com/karpathy/ng-video-lecture",
+        "stars": 4577,
+        "forks": 1242,
+        "language": "Python",
+        "topics": [],
+        "updatedAt": "2026-03-18T18:57:06Z",
+        "createdAt": "2023-01-17T05:27:03Z"
+      },
+      {
+        "name": "makemore",
+        "description": "An autoregressive character-level language model for making more things",
+        "url": "https://github.com/karpathy/makemore",
+        "stars": 3747,
+        "forks": 925,
+        "language": "Python",
+        "topics": [],
+        "updatedAt": "2026-03-18T17:09:28Z",
+        "createdAt": "2022-06-09T19:29:36Z"
+      },
+      {
+        "name": "reader3",
+        "description": "Quick illustration of how one can easily read books together with LLMs. It's great and I highly recommend it.",
+        "url": "https://github.com/karpathy/reader3",
+        "stars": 3376,
+        "forks": 428,
+        "language": "Python",
+        "topics": [],
+        "updatedAt": "2026-03-18T18:43:19Z",
+        "createdAt": "2025-11-18T02:37:00Z"
+      },
+      {
+        "name": "rendergit",
+        "description": "Render any git repo into a single static HTML page for humans or LLMs",
+        "url": "https://github.com/karpathy/rendergit",
+        "stars": 2097,
+        "forks": 218,
+        "language": "Python",
+        "topics": [],
+        "updatedAt": "2026-03-18T18:45:12Z",
+        "createdAt": "2025-08-20T03:25:28Z"
+      },
+      {
+        "name": "cryptos",
+        "description": "Pure Python from-scratch zero-dependency implementation of Bitcoin for educational purposes",
+        "url": "https://github.com/karpathy/cryptos",
+        "stars": 1871,
+        "forks": 321,
+        "language": "Jupyter Notebook",
+        "topics": [
+          "bitcoin",
+          "crypto",
+          "cryptocurrency",
+          "elliptic-curves"
+        ],
+        "updatedAt": "2026-03-17T15:17:41Z",
+        "createdAt": "2021-04-25T00:56:19Z"
+      },
+      {
+        "name": "arxiv-sanity-lite",
+        "description": "arxiv-sanity lite: tag arxiv papers of interest get recommendations of similar papers in a nice UI using SVMs over tfidf feature vectors based on paper abstracts.",
+        "url": "https://github.com/karpathy/arxiv-sanity-lite",
+        "stars": 1502,
+        "forks": 184,
+        "language": "Python",
+        "topics": [
+          "arxiv",
+          "deep-learning",
+          "flask",
+          "machine-learning"
+        ],
+        "updatedAt": "2026-03-18T11:39:26Z",
+        "createdAt": "2021-11-13T04:34:22Z"
+      },
+      {
+        "name": "pytorch-normalizing-flows",
+        "description": "Normalizing flows in PyTorch. Current intended use is education not production.",
+        "url": "https://github.com/karpathy/pytorch-normalizing-flows",
+        "stars": 912,
+        "forks": 102,
+        "language": "Jupyter Notebook",
+        "topics": [],
+        "updatedAt": "2026-03-17T15:17:58Z",
+        "createdAt": "2019-12-09T17:55:39Z"
+      },
+      {
+        "name": "jobs",
+        "description": "A research tool for visually exploring Bureau of Labor Statistics Occupational Outlook Handbook data. This is not a report, a paper, or a serious economic publication \u2014 it is a development tool for exploring BLS data visually.",
+        "url": "https://github.com/karpathy/jobs",
+        "stars": 823,
+        "forks": 185,
+        "language": "HTML",
+        "topics": [],
+        "updatedAt": "2026-03-18T21:13:11Z",
+        "createdAt": "2026-03-14T20:45:40Z"
+      },
+      {
+        "name": "lecun1989-repro",
+        "description": "Reproducing Yann LeCun 1989 paper \"Backpropagation Applied to Handwritten Zip Code Recognition\", to my knowledge the earliest real-world application of a neural net trained with backpropagation.",
+        "url": "https://github.com/karpathy/lecun1989-repro",
+        "stars": 726,
+        "forks": 83,
+        "language": "Jupyter Notebook",
+        "topics": [],
+        "updatedAt": "2026-03-17T15:54:30Z",
+        "createdAt": "2022-03-10T22:15:51Z"
+      },
+      {
+        "name": "deep-vector-quantization",
+        "description": "VQVAEs, GumbelSoftmaxes and friends",
+        "url": "https://github.com/karpathy/deep-vector-quantization",
+        "stars": 635,
+        "forks": 54,
+        "language": "Jupyter Notebook",
+        "topics": [],
+        "updatedAt": "2026-03-18T14:26:31Z",
+        "createdAt": "2021-02-16T02:29:41Z"
+      },
+      {
+        "name": "hn-time-capsule",
+        "description": "Analyzing Hacker News discussions from a decade ago in hindsight with LLMs",
+        "url": "https://github.com/karpathy/hn-time-capsule",
+        "stars": 585,
+        "forks": 59,
+        "language": "Python",
+        "topics": [],
+        "updatedAt": "2026-03-18T17:09:46Z",
+        "createdAt": "2025-12-10T16:10:52Z"
+      },
+      {
+        "name": "rustbpe",
+        "description": "The missing tiktoken training code",
+        "url": "https://github.com/karpathy/rustbpe",
+        "stars": 398,
+        "forks": 36,
+        "language": "Rust",
+        "topics": [],
+        "updatedAt": "2026-03-18T17:09:54Z",
+        "createdAt": "2026-01-03T21:20:46Z"
+      },
+      {
+        "name": "covid-sanity",
+        "description": "Aspires to help the influx of bioRxiv / medRxiv papers on COVID-19",
+        "url": "https://github.com/karpathy/covid-sanity",
+        "stars": 389,
+        "forks": 53,
+        "language": "Python",
+        "topics": [],
+        "updatedAt": "2026-02-18T05:35:09Z",
+        "createdAt": "2020-03-30T01:20:10Z"
+      },
+      {
+        "name": "calorie",
+        "description": "nice and effective super simple calorie counter web app",
+        "url": "https://github.com/karpathy/calorie",
+        "stars": 133,
+        "forks": 17,
+        "language": "HTML",
+        "topics": [],
+        "updatedAt": "2026-03-17T15:16:50Z",
+        "createdAt": "2024-05-28T23:09:50Z"
+      },
+      {
+        "name": "karpathy",
+        "description": "root repo",
+        "url": "https://github.com/karpathy/karpathy",
+        "stars": 83,
+        "forks": 10,
+        "language": null,
+        "topics": [],
+        "updatedAt": "2026-03-15T14:17:28Z",
+        "createdAt": "2021-04-27T03:34:20Z"
+      }
+    ],
+    "totalStars": 344466,
+    "languages": [
+      {
+        "name": "Python",
+        "count": 14,
+        "color": "#3572A5"
+      },
+      {
+        "name": "Jupyter Notebook",
+        "count": 6,
+        "color": "#DA5B0B"
+      },
+      {
+        "name": "HTML",
+        "count": 2,
+        "color": "#e34c26"
+      },
+      {
+        "name": "Cuda",
+        "count": 1,
+        "color": "#8b8b8b"
+      },
+      {
+        "name": "C",
+        "count": 1,
+        "color": "#555555"
+      },
+      {
+        "name": "Rust",
+        "count": 1,
+        "color": "#dea584"
+      }
+    ]
+  },
+  "huggingface": null
+}

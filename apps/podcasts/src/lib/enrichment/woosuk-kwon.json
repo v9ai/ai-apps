@@ -1,0 +1,71 @@
+{
+  "github": {
+    "profile": {
+      "bio": "@Inferact | @vllm-project",
+      "publicRepos": 8,
+      "followers": 1262,
+      "location": "Berkeley, CA",
+      "createdAt": "2019-01-05T08:40:50Z"
+    },
+    "repos": [
+      {
+        "name": "retraining-free-pruning",
+        "description": "[NeurIPS 2022] A Fast Post-Training Pruning Framework for Transformers",
+        "url": "https://github.com/WoosukKwon/retraining-free-pruning",
+        "stars": 192,
+        "forks": 34,
+        "language": "Python",
+        "topics": [],
+        "updatedAt": "2025-09-15T07:42:55Z",
+        "createdAt": "2021-10-31T04:00:42Z"
+      },
+      {
+        "name": "scatter",
+        "description": null,
+        "url": "https://github.com/WoosukKwon/scatter",
+        "stars": 1,
+        "forks": 0,
+        "language": "Python",
+        "topics": [],
+        "updatedAt": "2026-01-18T01:48:11Z",
+        "createdAt": "2026-01-16T21:14:31Z"
+      },
+      {
+        "name": "scripts",
+        "description": null,
+        "url": "https://github.com/WoosukKwon/scripts",
+        "stars": 1,
+        "forks": 1,
+        "language": "Shell",
+        "topics": [],
+        "updatedAt": "2025-07-20T08:12:14Z",
+        "createdAt": "2025-07-19T23:31:25Z"
+      },
+      {
+        "name": "exp",
+        "description": null,
+        "url": "https://github.com/WoosukKwon/exp",
+        "stars": 1,
+        "forks": 0,
+        "language": "Python",
+        "topics": [],
+        "updatedAt": "2025-03-26T02:39:43Z",
+        "createdAt": "2025-03-25T15:56:05Z"
+      }
+    ],
+    "totalStars": 195,
+    "languages": [
+      {
+        "name": "Python",
+        "count": 3,
+        "color": "#3572A5"
+      },
+      {
+        "name": "Shell",
+        "count": 1,
+        "color": "#89e051"
+      }
+    ]
+  },
+  "huggingface": null
+}

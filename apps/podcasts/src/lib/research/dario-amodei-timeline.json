@@ -1,0 +1,24 @@
+{
+  "slug": "dario-amodei",
+  "generated_at": "2026-03-18T21:18:42.340487Z",
+  "events": [
+    {
+      "date": "2022-12-15",
+      "event": "Published \"Constitutional AI: Harmlessness from AI Feedback\"",
+      "url": "https://arxiv.org/abs/2212.08073",
+      "source": "paper"
+    },
+    {
+      "date": "2022-04-12",
+      "event": "Published \"Training a Helpful and Harmless Assistant with Reinforcement Learning from Human Feedback\"",
+      "url": "https://arxiv.org/abs/2204.05862",
+      "source": "paper"
+    },
+    {
+      "date": "2020-01-23",
+      "event": "Published \"Scaling Laws for Neural Language Models\"",
+      "url": "https://arxiv.org/abs/2001.08361",
+      "source": "paper"
+    }
+  ]
+}

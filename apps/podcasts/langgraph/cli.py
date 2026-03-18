@@ -49,9 +49,10 @@ def cmd_research(args):
     role = args.role
     org = args.org
     github = args.github
+    orcid = args.orcid
 
     if not name:
-        name, role, org, github = _lookup_personality(args.slug, role, org, github)
+        name, role, org, github, orcid = _lookup_personality(args.slug, role, org, github, orcid)
 
     graph = build_person_research_graph()
 
@@ -60,7 +61,8 @@ def cmd_research(args):
     console.print(f"  Name:    {name}")
     console.print(f"  Role:    {role}")
     console.print(f"  Org:     {org}")
-    console.print(f"  GitHub:  {github or '(none)'}\n")
+    console.print(f"  GitHub:  {github or '(none)'}")
+    console.print(f"  ORCID:   {orcid or '(none)'}\n")
 
     result = graph.invoke({
         "person_name": name,
@@ -68,6 +70,7 @@ def cmd_research(args):
         "person_role": role,
         "person_org": org,
         "person_github": github or "",
+        "person_orcid": orcid or "",
     })
 
     path = result.get("export_path", "")
@@ -76,16 +79,18 @@ def cmd_research(args):
         console.print(f"  [dim]{path}[/]\n")
 
 
-def _lookup_personality(slug: str, role: str, org: str, github: str) -> tuple[str, str, str, str]:
-    """Try to resolve person details from personalities/data/{slug}.ts."""
+def _lookup_personality(slug: str, role: str, org: str, github: str, orcid: str) -> tuple[str, str, str, str, str]:
+    """Try to resolve person details from personalities/{slug}.ts."""
     import re
     from pathlib import Path
 
-    ts_path = Path(__file__).resolve().parents[1] / "src" / "lib" / "personalities" / "data" / f"{slug}.ts"
+    # Try top-level personalities/ (app root), no legacy fallback needed
+    base = Path(__file__).resolve().parents[1]
+    ts_path = base / "personalities" / f"{slug}.ts"
 
     if not ts_path.exists():
         console.print(f"  [yellow]No personality file for '{slug}' — using defaults[/]")
-        return slug.replace("-", " ").title(), role or "", org or "", github or ""
+        return slug.replace("-", " ").title(), role or "", org or "", github or "", orcid or ""
 
     content = ts_path.read_text()
 
@@ -93,17 +98,19 @@ def _lookup_personality(slug: str, role: str, org: str, github: str) -> tuple[st
     role_m = re.search(r'role:\s*"([^"]+)"', content)
     org_m = re.search(r'org:\s*"([^"]+)"', content)
     gh_m = re.search(r'github:\s*"([^"]+)"', content)
+    orcid_m = re.search(r'orcid:\s*"([^"]+)"', content)
 
     if name_m:
         name = name_m.group(1)
         role = role or (role_m.group(1) if role_m else "")
         org = org or (org_m.group(1) if org_m else "")
         github = github or (gh_m.group(1) if gh_m else "")
-        console.print(f"  [green]Found {name} in personalities/data/{slug}.ts[/]")
-        return name, role, org, github
+        orcid = orcid or (orcid_m.group(1) if orcid_m else "")
+        console.print(f"  [green]Found {name} in {ts_path.name}[/]")
+        return name, role, org, github, orcid
 
     console.print(f"  [yellow]Could not parse '{slug}' personality file — using defaults[/]")
-    return slug.replace("-", " ").title(), role or "", org or "", github or ""
+    return slug.replace("-", " ").title(), role or "", org or "", github or "", orcid or ""
 
 
 def main():
@@ -123,6 +130,7 @@ def main():
     p_research.add_argument("--role", help="Role (auto-detected)")
     p_research.add_argument("--org", help="Organization (auto-detected)")
     p_research.add_argument("--github", help="GitHub username (auto-detected)")
+    p_research.add_argument("--orcid", help="ORCID iD, e.g. 0009-0004-3081-2883 (auto-detected)")
 
     args = parser.parse_args()
 

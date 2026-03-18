@@ -6,14 +6,15 @@ import {
   getCategoryForPersonality,
   getCategoryColor,
   getInitials,
-  getAvatarUrl,
+  getAvatarUrlWithEnrichment,
   getResearch,
+  getEnrichedTimeline,
 } from "@/lib/personalities";
 import { getEpisodesForPerson } from "@/lib/episodes";
-import { enrichPerson, formatNumber } from "@/lib/langchain";
+import { getEnrichment, formatNumber } from "@/lib/enrichment";
 import type { Metadata } from "next";
-import type { PersonResearch } from "@/lib/personalities";
-import type { EnrichedData, GitHubRepo, HFModel } from "@/lib/langchain";
+import type { PersonResearch, EnrichedTimelineEvent, TimelineSource } from "@/lib/personalities";
+import type { EnrichedData, GitHubRepo, HFModel } from "@/lib/enrichment";
 
 type Props = { params: Promise<{ slug: string }> };
 
@@ -60,32 +61,41 @@ function GitHubIcon({ className }: { className?: string }) {
   );
 }
 
+function PencilIcon({ className }: { className?: string }) {
+  return (
+    <svg viewBox="0 0 24 24" className={className} fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+      <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7" />
+      <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z" />
+    </svg>
+  );
+}
+
 /* ─── Research sections ───────────────────────────────── */
 
 function ResearchBio({ research }: { research: PersonResearch }) {
   return (
     <div className="mt-16">
-      <div className="flex items-center gap-4 mb-6">
-        <div className="w-14 h-14 rounded-full bg-neutral-100 flex items-center justify-center border border-neutral-200">
-          <svg viewBox="0 0 24 24" className="w-5 h-5 text-neutral-500" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+      <div className="flex items-center gap-3 mb-6">
+        <div className="w-10 h-10 rounded-full bg-white/[0.05] flex items-center justify-center border border-white/[0.08]">
+          <svg viewBox="0 0 24 24" className="w-5 h-5 text-[#7B7B86]" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
             <circle cx="12" cy="12" r="10" />
             <path d="M12 16v-4" />
             <path d="M12 8h.01" />
           </svg>
         </div>
-        <h2 className="text-xl font-bold text-[#1a1a1a] font-[family-name:var(--font-playfair)]">Deep Research</h2>
+        <h2 className="text-xl font-bold text-[#E8E8ED]">Deep Research</h2>
       </div>
-      <p className="text-[#4a4a4a] text-sm leading-relaxed max-w-3xl">
+      <p className="text-[#8B8B96] text-sm leading-relaxed max-w-3xl">
         {research.bio}
       </p>
 
       {/* Topics */}
       {research.topics.length > 0 && (
-        <div className="flex flex-wrap gap-2 mt-5">
+        <div className="flex flex-wrap gap-2 mt-3">
           {research.topics.map((topic) => (
             <span
               key={topic}
-              className="px-3 py-1 rounded-full bg-neutral-100 border border-neutral-200 text-xs text-neutral-600"
+              className="px-3 py-1 rounded-full bg-white/[0.05] border border-white/[0.08] text-xs text-[#8B8B96]"
             >
               {topic}
             </span>
@@ -96,45 +106,107 @@ function ResearchBio({ research }: { research: PersonResearch }) {
   );
 }
 
-function ResearchTimeline({ research }: { research: PersonResearch }) {
-  if (!research.timeline.length) return null;
+/* ─── Enriched Timeline ─────────────────────────────────── */
+
+const SOURCE_STYLES: Record<TimelineSource, { dot: string; badge: string; label: string }> = {
+  research: { dot: "bg-[#7B7B86]", badge: "bg-white/[0.06] text-[#8B8B96] border-white/[0.08]", label: "Research" },
+  github: { dot: "bg-[#3fb950]", badge: "bg-[#238636]/15 text-[#3fb950] border-[#238636]/30", label: "GitHub" },
+  paper: { dot: "bg-[#818cf8]", badge: "bg-[#6366f1]/15 text-[#818cf8] border-[#6366f1]/30", label: "Paper" },
+  huggingface: { dot: "bg-[#FFD21E]", badge: "bg-[#FFD21E]/15 text-[#FFD21E] border-[#FFD21E]/30", label: "HF" },
+};
+
+function EnrichedTimelineSection({ events }: { events: EnrichedTimelineEvent[] }) {
+  if (!events.length) return null;
+
+  // Group by year
+  const byYear: Record<string, EnrichedTimelineEvent[]> = {};
+  for (const event of events) {
+    const year = event.date.slice(0, 4) || "Unknown";
+    (byYear[year] ??= []).push(event);
+  }
+  const years = Object.keys(byYear).sort((a, b) => b.localeCompare(a));
+
+  // Source summary
+  const sourceCounts: Partial<Record<TimelineSource, number>> = {};
+  for (const e of events) {
+    sourceCounts[e.source] = (sourceCounts[e.source] || 0) + 1;
+  }
+
+  let globalIdx = 0;
+
   return (
-    <div className="mt-16">
-      <div className="flex items-center gap-4 mb-6">
-        <div className="w-14 h-14 rounded-full bg-neutral-100 flex items-center justify-center border border-neutral-200">
-          <svg viewBox="0 0 24 24" className="w-5 h-5 text-neutral-500" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+    <div className="mt-8">
+      <div className="flex items-center gap-3 mb-6">
+        <div className="w-10 h-10 rounded-full bg-white/[0.05] flex items-center justify-center border border-white/[0.08]">
+          <svg viewBox="0 0 24 24" className="w-5 h-5 text-[#7B7B86]" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
             <circle cx="12" cy="12" r="10" />
             <polyline points="12 6 12 12 16 14" />
           </svg>
         </div>
-        <h2 className="text-xl font-bold text-[#1a1a1a] font-[family-name:var(--font-playfair)]">Timeline</h2>
-        <span className="text-sm text-neutral-500">{research.timeline.length} events</span>
+        <div>
+          <h2 className="text-xl font-bold text-[#E8E8ED]">Timeline</h2>
+          <div className="flex flex-wrap items-center gap-1.5 mt-1">
+            {(Object.entries(sourceCounts) as [TimelineSource, number][]).map(([source, count]) => {
+              const style = SOURCE_STYLES[source];
+              return (
+                <span
+                  key={source}
+                  className={`inline-flex items-center gap-1.5 px-2 py-0.5 rounded-full text-[10px] font-medium border ${style.badge}`}
+                >
+                  <span className={`w-1.5 h-1.5 rounded-full ${style.dot}`} />
+                  {count} {style.label}
+                </span>
+              );
+            })}
+            <span className="text-[10px] text-[#7B7B86] ml-1">{events.length} total</span>
+          </div>
+        </div>
       </div>
 
-      <div className="relative ml-7 border-l border-neutral-200 pl-8 space-y-6">
-        {research.timeline.map((event, i) => (
-          <div
-            key={`${event.date}-${i}`}
-            className="relative animate-row-enter"
-            style={{ animationDelay: `${i * 60}ms` }}
-          >
-            {/* Dot on the timeline */}
-            <div className="absolute -left-[41px] top-1.5 w-2.5 h-2.5 rounded-full bg-neutral-400 border border-neutral-300" />
+      <div className="relative ml-7 border-l border-white/[0.08] pl-8 space-y-1">
+        {years.map((year) => (
+          <div key={year}>
+            {/* Year header */}
+            <div className="relative flex items-center gap-3 mb-3 mt-5 first:mt-0">
+              <div className="absolute -left-[41px] w-2.5 h-2.5 rounded-full bg-white/[0.15] border border-white/[0.2]" />
+              <span className="text-xs font-bold text-[#C4C4CC] tracking-wider uppercase">{year}</span>
+            </div>
 
-            <div className="text-xs text-neutral-500 font-mono mb-1">{event.date}</div>
-            {event.url ? (
-              <a
-                href={event.url}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="text-sm text-[#4a4a4a] hover:text-[#1a1a1a] transition-colors duration-200 inline-flex items-center gap-1.5"
-              >
-                {event.event}
-                <ExternalLinkIcon className="w-3 h-3 text-neutral-400" />
-              </a>
-            ) : (
-              <p className="text-sm text-[#4a4a4a]">{event.event}</p>
-            )}
+            {byYear[year].map((event) => {
+              const style = SOURCE_STYLES[event.source];
+              const idx = globalIdx++;
+              return (
+                <div
+                  key={`${event.date}-${event.source}-${idx}`}
+                  className="relative animate-row-enter pb-3"
+                  style={{ animationDelay: `${idx * 50}ms` }}
+                >
+                  {/* Source-colored dot */}
+                  <div className={`absolute -left-[41px] top-2 w-2.5 h-2.5 rounded-full ${style.dot} border border-white/[0.1]`} />
+
+                  <div className="flex items-center gap-2 mb-0.5">
+                    <span className="text-xs text-[#7B7B86] font-mono">{event.date}</span>
+                    <span className={`inline-flex items-center px-1.5 py-px rounded text-[9px] font-medium border ${style.badge}`}>
+                      {style.label}
+                    </span>
+                  </div>
+
+                  {event.url ? (
+                    <a
+                      href={event.url}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="text-sm text-[#8B8B96] hover:text-[#E8E8ED] transition-colors duration-200 inline-flex items-center gap-1.5"
+                    >
+                      {event.event}
+                      <ExternalLinkIcon className="w-3 h-3 text-[#7B7B86]" />
+                    </a>
+                  ) : (
+                    <p className="text-sm text-[#8B8B96]">{event.event}</p>
+                  )}
+                </div>
+              );
+            })}
           </div>
         ))}
       </div>
@@ -142,40 +214,49 @@ function ResearchTimeline({ research }: { research: PersonResearch }) {
   );
 }
 
+function ResearchTimeline({ research }: { research: PersonResearch }) {
+  if (!research.timeline.length) return null;
+  return (
+    <EnrichedTimelineSection
+      events={research.timeline.map((e) => ({ ...e, source: "research" as TimelineSource }))}
+    />
+  );
+}
+
 function ResearchContributions({ research }: { research: PersonResearch }) {
   if (!research.key_contributions.length) return null;
   return (
-    <div className="mt-16">
-      <div className="flex items-center gap-4 mb-6">
-        <div className="w-14 h-14 rounded-full bg-neutral-100 flex items-center justify-center border border-neutral-200">
-          <svg viewBox="0 0 24 24" className="w-5 h-5 text-neutral-500" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+    <div className="mt-8">
+      <div className="flex items-center gap-3 mb-6">
+        <div className="w-10 h-10 rounded-full bg-white/[0.05] flex items-center justify-center border border-white/[0.08]">
+          <svg viewBox="0 0 24 24" className="w-5 h-5 text-[#7B7B86]" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
             <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2" />
           </svg>
         </div>
-        <h2 className="text-xl font-bold text-[#1a1a1a] font-[family-name:var(--font-playfair)]">Key Contributions</h2>
+        <h2 className="text-xl font-bold text-[#E8E8ED]">Key Contributions</h2>
       </div>
 
-      <div className="grid gap-3 sm:grid-cols-2">
+      <div className="grid gap-3.5 sm:grid-cols-2">
         {research.key_contributions.map((c, i) => (
           <a
             key={c.title}
             href={c.url || undefined}
             target={c.url ? "_blank" : undefined}
             rel={c.url ? "noopener noreferrer" : undefined}
-            className={`block px-5 py-4 rounded-xl bg-white border border-neutral-100 shadow-sm hover:shadow-md hover:border-neutral-200 transition-all duration-200 group animate-row-enter ${!c.url ? "cursor-default" : ""}`}
+            className={`block px-5 py-4 rounded-xl bg-[#141418] border border-white/[0.06] hover:border-white/[0.1] transition-all duration-200 group animate-row-enter ${!c.url ? "cursor-default" : ""}`}
             style={{ animationDelay: `${i * 80}ms` }}
           >
             <div className="flex items-start gap-3">
               <div className="min-w-0 flex-1">
-                <span className="text-sm font-medium text-[#2C2C2C] group-hover:text-[#1a1a1a] transition-colors duration-200">
+                <span className="text-sm font-medium text-[#C4C4CC] group-hover:text-[#E8E8ED] transition-colors duration-200">
                   {c.title}
                 </span>
-                <p className="text-xs text-neutral-500 mt-1 leading-relaxed">
+                <p className="text-xs text-[#7B7B86] mt-1 leading-relaxed">
                   {c.description}
                 </p>
               </div>
               {c.url && (
-                <ExternalLinkIcon className="w-4 h-4 text-neutral-400 group-hover:text-[#C4956A] flex-shrink-0 mt-0.5 transition-colors duration-200" />
+                <ExternalLinkIcon className="w-4 h-4 text-[#7B7B86] group-hover:text-[#C4C4CC] flex-shrink-0 mt-0.5 transition-colors duration-200" />
               )}
             </div>
           </a>
@@ -188,29 +269,29 @@ function ResearchContributions({ research }: { research: PersonResearch }) {
 function ResearchQuotes({ research }: { research: PersonResearch }) {
   if (!research.quotes.length) return null;
   return (
-    <div className="mt-16">
-      <div className="flex items-center gap-4 mb-6">
-        <div className="w-14 h-14 rounded-full bg-neutral-100 flex items-center justify-center border border-neutral-200">
-          <svg viewBox="0 0 24 24" className="w-5 h-5 text-neutral-500" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+    <div className="mt-8">
+      <div className="flex items-center gap-3 mb-6">
+        <div className="w-10 h-10 rounded-full bg-white/[0.05] flex items-center justify-center border border-white/[0.08]">
+          <svg viewBox="0 0 24 24" className="w-5 h-5 text-[#7B7B86]" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
             <path d="M3 21c3 0 7-1 7-8V5c0-1.25-.756-2.017-2-2H4c-1.25 0-2 .75-2 1.972V11c0 1.25.75 2 2 2 1 0 1 0 1 1v1c0 1-1 2-2 2s-1 .008-1 1.031V21z" />
             <path d="M15 21c3 0 7-1 7-8V5c0-1.25-.757-2.017-2-2h-4c-1.25 0-2 .75-2 1.972V11c0 1.25.75 2 2 2h.75c0 2.25.25 4-2.75 4v3c0 1 0 1 1 1z" />
           </svg>
         </div>
-        <h2 className="text-xl font-bold text-[#1a1a1a] font-[family-name:var(--font-playfair)]">Notable Quotes</h2>
+        <h2 className="text-xl font-bold text-[#E8E8ED]">Notable Quotes</h2>
       </div>
 
       <div className="space-y-4">
         {research.quotes.map((q, i) => (
           <div
             key={i}
-            className="px-6 py-5 rounded-xl bg-white border border-neutral-100 shadow-sm animate-row-enter relative"
+            className="px-5 py-4 rounded-xl bg-[#141418] border border-white/[0.06] animate-row-enter relative"
             style={{ animationDelay: `${i * 80}ms` }}
           >
-            <span className="absolute top-3 left-4 text-4xl text-neutral-300 font-[family-name:var(--font-playfair)] leading-none select-none">&ldquo;</span>
-            <p className="text-sm text-[#2C2C2C] italic leading-relaxed font-[family-name:var(--font-playfair)] pl-5">
+            <span className="absolute top-3 left-4 text-4xl text-white/[0.07] leading-none select-none">&ldquo;</span>
+            <p className="text-sm text-[#C4C4CC] leading-relaxed pl-5">
               {q.text}
             </p>
-            <div className="mt-3 flex items-center gap-2 text-xs text-neutral-500 pl-5">
+            <div className="mt-3 flex items-center gap-2 text-xs text-[#7B7B86] pl-5">
               <span>{q.source}</span>
               {q.url && (
                 <>
@@ -219,7 +300,7 @@ function ResearchQuotes({ research }: { research: PersonResearch }) {
                     href={q.url}
                     target="_blank"
                     rel="noopener noreferrer"
-                    className="hover:text-[#C4956A] transition-colors duration-200 inline-flex items-center gap-1"
+                    className="hover:text-[#C4C4CC] transition-colors duration-200 inline-flex items-center gap-1"
                   >
                     Source <ExternalLinkIcon className="w-3 h-3" />
                   </a>
@@ -248,14 +329,14 @@ function ResearchSocial({ research }: { research: PersonResearch }) {
   };
 
   return (
-    <div className="mt-10 flex flex-wrap gap-3">
+    <div className="mt-4 flex flex-wrap gap-2">
       {socialEntries.map(([key, url]) => (
         <a
           key={key}
           href={url}
           target="_blank"
           rel="noopener noreferrer"
-          className="inline-flex items-center gap-2 px-4 py-2 rounded-lg bg-neutral-100 border border-neutral-200 hover:bg-neutral-200 hover:border-neutral-300 transition-all duration-200 text-xs text-neutral-600 hover:text-[#1a1a1a] capitalize"
+          className="inline-flex items-center gap-2 px-4 py-2 rounded-lg bg-white/[0.05] border border-white/[0.08] hover:bg-white/[0.08] hover:border-white/[0.12] transition-all duration-200 text-xs text-[#8B8B96] hover:text-[#E8E8ED] capitalize"
         >
           {icons[key] && (
             <svg viewBox="0 0 24 24" className="w-4 h-4" fill="currentColor">
@@ -272,15 +353,15 @@ function ResearchSocial({ research }: { research: PersonResearch }) {
 function ResearchSources({ research }: { research: PersonResearch }) {
   if (!research.sources.length) return null;
   return (
-    <div className="mt-16">
+    <div className="mt-8">
       <details className="group">
-        <summary className="flex items-center gap-3 cursor-pointer text-sm text-neutral-500 hover:text-[#1a1a1a] transition-colors duration-200">
+        <summary className="flex items-center gap-3 cursor-pointer text-sm text-[#7B7B86] hover:text-[#E8E8ED] transition-colors duration-200">
           <svg viewBox="0 0 24 24" className="w-4 h-4" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
             <path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71" />
             <path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71" />
           </svg>
           {research.sources.length} sources
-          <span className="text-neutral-400 text-xs">(click to expand)</span>
+          <span className="text-[#7B7B86] text-xs">(click to expand)</span>
         </summary>
         <div className="mt-4 space-y-1.5 pl-7">
           {research.sources.map((s, i) => (
@@ -289,14 +370,14 @@ function ResearchSources({ research }: { research: PersonResearch }) {
               href={s.url}
               target="_blank"
               rel="noopener noreferrer"
-              className="block text-xs text-neutral-500 hover:text-[#C4956A] transition-colors duration-200 truncate"
+              className="block text-xs text-[#7B7B86] hover:text-[#C4C4CC] transition-colors duration-200 truncate"
             >
               {s.title || s.url}
             </a>
           ))}
         </div>
       </details>
-      <p className="mt-3 text-[11px] text-neutral-400">
+      <p className="mt-3 text-[11px] text-[#7B7B86]">
         Research generated {new Date(research.generated_at).toLocaleDateString("en-US", { year: "numeric", month: "long", day: "numeric" })}
       </p>
     </div>
@@ -312,10 +393,11 @@ export default async function PersonPage({ params }: Props) {
 
   const category = getCategoryForPersonality(slug)!;
   const gradient = getCategoryColor(category.slug);
-  const avatar = getAvatarUrl(person);
   const episodes = getEpisodesForPerson(slug);
   const research = getResearch(slug);
-  const enriched = await enrichPerson(person.github, research?.social);
+  const enrichedTimeline = getEnrichedTimeline(slug);
+  const enriched = getEnrichment(slug);
+  const avatar = getAvatarUrlWithEnrichment(person, enriched.imageUrl);
 
   const hasEpisodes = episodes.length > 0;
   const hasPapers = person.papers && person.papers.length > 0;
@@ -324,16 +406,18 @@ export default async function PersonPage({ params }: Props) {
   const hasHuggingFace = !!enriched.huggingface && enriched.huggingface.models.length > 0;
   const hasContentSections = hasEpisodes || hasPapers || hasResearch || hasGitHub || hasHuggingFace;
 
+  const editUrl = `https://github.com/nicolad/ai-apps/blob/main/apps/podcasts/personalities/${slug}.ts`;
+
   return (
-    <main className="min-h-screen bg-[#FAFAF7]">
+    <main className="min-h-screen bg-[#0B0B0F]">
       {/* ── Hero ────────────────────────────────────────── */}
       <div className="relative overflow-hidden">
         <div className="relative z-10 max-w-7xl mx-auto px-6">
-          {/* Back nav */}
-          <div className="pt-8 pb-8 animate-fade-in" style={{ animationDelay: "0.1s" }}>
+          {/* Back nav + Edit btn */}
+          <div className="pt-8 pb-4 animate-fade-in flex items-center justify-between" style={{ animationDelay: "0.1s" }}>
             <Link
               href="/"
-              className="inline-flex items-center gap-2 text-sm text-neutral-500 hover:text-[#1a1a1a] transition-colors duration-200 group"
+              className="inline-flex items-center gap-2 text-sm text-[#7B7B86] hover:text-[#8B8B96] transition-colors duration-200 group"
             >
               <svg
                 viewBox="0 0 16 16"
@@ -342,25 +426,35 @@ export default async function PersonPage({ params }: Props) {
               >
                 <path d="M11.03 3.97a.75.75 0 0 1 0 1.06L7.56 8.5l3.47 3.47a.75.75 0 1 1-1.06 1.06l-4-4a.75.75 0 0 1 0-1.06l4-4a.75.75 0 0 1 1.06 0z" />
               </svg>
-              Back
+              <span>Back</span>
             </Link>
+            <a
+              href={editUrl}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="inline-flex items-center gap-2 px-4 py-2 rounded-lg bg-white/[0.05] border border-white/[0.08] hover:bg-white/[0.08] hover:border-white/[0.12] transition-all duration-200 text-xs text-[#8B8B96] hover:text-[#E8E8ED] group"
+            >
+              <PencilIcon className="w-3.5 h-3.5" />
+              <span>Edit</span>
+              <ExternalLinkIcon className="w-3 h-3 text-[#7B7B86] group-hover:text-[#C4C4CC] transition-colors duration-200" />
+            </a>
           </div>
 
           {/* Profile hero */}
-          <div className="flex flex-col items-center text-center pb-16">
+          <div className="flex items-center gap-6 pb-8">
             {/* Avatar */}
-            <div className="relative flex-shrink-0 mb-8">
+            <div className="relative flex-shrink-0">
               {avatar ? (
                 <img
                   src={avatar}
                   alt={person.name}
-                  width={232}
-                  height={232}
-                  className="relative w-44 h-44 md:w-56 md:h-56 rounded-full object-cover shadow-lg border-2 border-neutral-100"
+                  width={120}
+                  height={120}
+                  className="relative w-20 h-20 md:w-[120px] md:h-[120px] rounded-full object-cover shadow-lg border-2 border-white/[0.08]"
                 />
               ) : (
                 <div
-                  className={`relative w-44 h-44 md:w-56 md:h-56 rounded-full bg-gradient-to-br ${gradient} flex items-center justify-center text-white font-bold text-5xl shadow-lg border-2 border-neutral-100`}
+                  className={`relative w-20 h-20 md:w-[120px] md:h-[120px] rounded-full bg-gradient-to-br ${gradient} flex items-center justify-center text-white font-bold text-2xl md:text-3xl shadow-lg border-2 border-white/[0.08]`}
                 >
                   {getInitials(person.name)}
                 </div>
@@ -368,21 +462,21 @@ export default async function PersonPage({ params }: Props) {
             </div>
 
             <div
-              className="flex flex-col items-center animate-fade-in-up"
+              className="flex flex-col animate-fade-in-up min-w-0"
               style={{ animationDelay: "0.15s" }}
             >
-              <span className="inline-block text-[10px] font-bold uppercase tracking-[0.25em] mb-4 px-4 py-1.5 rounded-full bg-neutral-100 text-neutral-600 border border-neutral-200">
+              <span className="inline-block self-start text-[10px] font-bold uppercase tracking-[0.25em] mb-1.5 px-3 py-0.5 rounded-full bg-white/[0.06] text-[#8B8B96] border border-white/[0.08]">
                 {category.title}
               </span>
-              <h1 className="text-4xl sm:text-5xl md:text-7xl font-black text-[#1a1a1a] tracking-tight leading-[0.92] mb-4 font-[family-name:var(--font-playfair)]">
+              <h1 className="text-2xl sm:text-3xl md:text-4xl font-black text-[#E8E8ED] tracking-[-0.02em] leading-tight">
                 {person.name}
               </h1>
-              <p className="text-neutral-500 text-lg font-medium tracking-wide">
+              <p className="text-[#8B8B96] text-sm font-medium tracking-wide mt-1">
                 {person.role}{" "}
-                <span className="text-neutral-300 mx-1.5">|</span>
-                <span className="text-neutral-500">{person.org}</span>
+                <span className="text-[#7B7B86] mx-1.5">|</span>
+                <span className="text-[#8B8B96]">{person.org}</span>
               </p>
-              <p className="text-[#4a4a4a] text-[15px] mt-4 max-w-xl leading-relaxed">
+              <p className="text-[#C4C4CC] text-sm mt-2 max-w-xl leading-relaxed">
                 {person.description}
               </p>
             </div>
@@ -391,109 +485,109 @@ export default async function PersonPage({ params }: Props) {
 
         {/* Thin divider */}
         <div className="relative z-10 max-w-7xl mx-auto px-6">
-          <div className="h-px bg-neutral-200" />
+          <div className="h-px bg-white/[0.06]" />
         </div>
       </div>
 
       {/* ── Content ───────────────────────────────────────── */}
-      <div className="max-w-7xl mx-auto px-6">
+      <div className="max-w-7xl mx-auto px-6 pb-16">
 
         {/* ── Quick Info Bar ──────────────────────────────── */}
         <div
-          className="mt-10 flex flex-wrap items-center gap-3 animate-fade-in-up"
+          className="mt-8 flex flex-wrap items-center gap-2.5 animate-fade-in-up"
           style={{ animationDelay: "0.2s" }}
         >
           {person.podcasts.length > 0 && (
-            <div className="flex items-center gap-2.5 px-5 py-2.5 rounded-xl bg-white border border-neutral-100 shadow-sm">
-              <MicrophoneIcon className="w-4 h-4 text-neutral-400" />
-              <span className="text-sm font-medium text-[#2C2C2C]">
+            <div className="flex items-center gap-2.5 px-5 py-2.5 rounded-xl bg-[#141418] border border-white/[0.06]">
+              <MicrophoneIcon className="w-4 h-4 text-[#7B7B86]" />
+              <span className="text-sm font-medium text-[#E8E8ED]">
                 {person.podcasts.length}
               </span>
-              <span className="text-xs text-neutral-500">podcasts</span>
+              <span className="text-xs text-[#8B8B96]">podcasts</span>
             </div>
           )}
 
           {hasEpisodes && (
-            <div className="flex items-center gap-2.5 px-5 py-2.5 rounded-xl bg-white border border-neutral-100 shadow-sm">
+            <div className="flex items-center gap-2.5 px-5 py-2.5 rounded-xl bg-[#141418] border border-white/[0.06]">
               <svg viewBox="0 0 16 16" className="w-4 h-4 text-spotify" fill="currentColor">
                 <path d="M8 0a8 8 0 1 0 0 16A8 8 0 0 0 8 0zm3.669 11.538a.498.498 0 0 1-.686.166c-1.879-1.148-4.243-1.408-7.028-.771a.499.499 0 0 1-.222-.973c3.048-.696 5.662-.397 7.77.892a.5.5 0 0 1 .166.686zm.979-2.178a.624.624 0 0 1-.858.205c-2.15-1.321-5.428-1.704-7.972-.932a.625.625 0 0 1-.362-1.194c2.905-.881 6.517-.454 8.986 1.063a.624.624 0 0 1 .206.858zm.084-2.268C10.154 5.56 5.9 5.419 3.438 6.166a.748.748 0 1 1-.434-1.432c2.825-.857 7.523-.692 10.492 1.07a.747.747 0 1 1-.764 1.288z" />
               </svg>
-              <span className="text-sm font-medium text-[#2C2C2C]">
+              <span className="text-sm font-medium text-[#E8E8ED]">
                 {episodes.length}
               </span>
-              <span className="text-xs text-neutral-500">episodes</span>
+              <span className="text-xs text-[#8B8B96]">episodes</span>
             </div>
           )}
 
           {hasPapers && (
-            <div className="flex items-center gap-2.5 px-5 py-2.5 rounded-xl bg-white border border-neutral-100 shadow-sm">
-              <svg viewBox="0 0 24 24" className="w-4 h-4 text-red-400" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+            <div className="flex items-center gap-2.5 px-5 py-2.5 rounded-xl bg-[#141418] border border-white/[0.06]">
+              <svg viewBox="0 0 24 24" className="w-4 h-4 text-[#8B8B96]" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                 <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z" />
                 <polyline points="14 2 14 8 20 8" />
               </svg>
-              <span className="text-sm font-medium text-[#2C2C2C]">
+              <span className="text-sm font-medium text-[#E8E8ED]">
                 {person.papers!.length}
               </span>
-              <span className="text-xs text-neutral-500">papers</span>
+              <span className="text-xs text-[#8B8B96]">papers</span>
             </div>
           )}
 
           {hasGitHub && (
-            <div className="flex items-center gap-2.5 px-5 py-2.5 rounded-xl bg-white border border-neutral-100 shadow-sm">
-              <svg viewBox="0 0 24 24" className="w-4 h-4 text-yellow-500" fill="currentColor">
+            <div className="flex items-center gap-2.5 px-5 py-2.5 rounded-xl bg-[#141418] border border-white/[0.06]">
+              <svg viewBox="0 0 24 24" className="w-4 h-4 text-[#9B9BA6]" fill="currentColor">
                 <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2" />
               </svg>
-              <span className="text-sm font-medium text-[#2C2C2C]">
+              <span className="text-sm font-medium text-[#E8E8ED]">
                 {formatNumber(enriched.github!.totalStars)}
               </span>
-              <span className="text-xs text-neutral-500">stars</span>
+              <span className="text-xs text-[#8B8B96]">stars</span>
             </div>
           )}
 
           {hasHuggingFace && (
-            <div className="flex items-center gap-2.5 px-5 py-2.5 rounded-xl bg-white border border-neutral-100 shadow-sm">
-              <svg viewBox="0 0 24 24" className="w-4 h-4 text-neutral-500" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+            <div className="flex items-center gap-2.5 px-5 py-2.5 rounded-xl bg-[#141418] border border-white/[0.06]">
+              <svg viewBox="0 0 24 24" className="w-4 h-4 text-[#7B7B86]" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                 <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
                 <polyline points="7 10 12 15 17 10" />
                 <line x1="12" y1="15" x2="12" y2="3" />
               </svg>
-              <span className="text-sm font-medium text-[#2C2C2C]">
+              <span className="text-sm font-medium text-[#E8E8ED]">
                 {formatNumber(enriched.huggingface!.totalDownloads)}
               </span>
-              <span className="text-xs text-neutral-500">model downloads</span>
+              <span className="text-xs text-[#8B8B96]">model downloads</span>
             </div>
           )}
 
           {enriched.github?.profile && enriched.github.profile.followers > 0 && (
-            <div className="flex items-center gap-2.5 px-5 py-2.5 rounded-xl bg-white border border-neutral-100 shadow-sm">
-              <svg viewBox="0 0 24 24" className="w-4 h-4 text-neutral-400" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+            <div className="flex items-center gap-2.5 px-5 py-2.5 rounded-xl bg-[#141418] border border-white/[0.06]">
+              <svg viewBox="0 0 24 24" className="w-4 h-4 text-[#7B7B86]" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                 <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2" />
                 <circle cx="9" cy="7" r="4" />
                 <path d="M23 21v-2a4 4 0 0 0-3-3.87" />
                 <path d="M16 3.13a4 4 0 0 1 0 7.75" />
               </svg>
-              <span className="text-sm font-medium text-[#2C2C2C]">
+              <span className="text-sm font-medium text-[#E8E8ED]">
                 {formatNumber(enriched.github.profile.followers)}
               </span>
-              <span className="text-xs text-neutral-500">followers</span>
+              <span className="text-xs text-[#8B8B96]">followers</span>
             </div>
           )}
 
           {/* Separator */}
-          <div className="w-px h-6 bg-neutral-200 hidden sm:block" />
+          <div className="w-px h-6 bg-white/[0.08] hidden sm:block" />
 
           {person.github && (
             <a
               href={`https://github.com/${person.github}`}
               target="_blank"
               rel="noopener noreferrer"
-              className="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl bg-white border border-neutral-200 hover:border-neutral-300 hover:shadow-sm transition-all duration-200 group"
+              className="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl bg-white/[0.05] border border-white/[0.08] hover:border-white/[0.12] hover:bg-white/[0.08] transition-all duration-200 group"
             >
-              <GitHubIcon className="w-4 h-4 text-neutral-500 group-hover:text-[#1a1a1a] transition-colors duration-200" />
-              <span className="text-sm text-neutral-600 group-hover:text-[#1a1a1a] transition-colors duration-200">
+              <GitHubIcon className="w-4 h-4 text-[#7B7B86] group-hover:text-[#E8E8ED] transition-colors duration-200" />
+              <span className="text-sm text-[#8B8B96] group-hover:text-[#E8E8ED] transition-colors duration-200">
                 {person.github}
               </span>
-              <ExternalLinkIcon className="w-3 h-3 text-neutral-400 group-hover:text-[#C4956A] transition-colors duration-200" />
+              <ExternalLinkIcon className="w-3 h-3 text-[#7B7B86] group-hover:text-[#C4C4CC] transition-colors duration-200" />
             </a>
           )}
         </div>
@@ -501,44 +595,44 @@ export default async function PersonPage({ params }: Props) {
         {/* ── Open Source Projects (GitHub) ────────────────── */}
         {hasGitHub && (
           <div className="mt-16">
-            <div className="flex items-center gap-4 mb-8">
-              <div className="w-14 h-14 rounded-full bg-neutral-100 flex items-center justify-center border border-neutral-200">
-                <GitHubIcon className="w-6 h-6 text-neutral-500" />
+            <div className="flex items-center gap-3 mb-6">
+              <div className="w-10 h-10 rounded-full bg-white/[0.05] flex items-center justify-center border border-white/[0.08]">
+                <GitHubIcon className="w-5 h-5 text-[#7B7B86]" />
               </div>
               <div>
-                <h2 className="text-xl font-bold text-[#1a1a1a] font-[family-name:var(--font-playfair)]">Open Source Projects</h2>
-                <p className="text-xs text-neutral-500 mt-0.5">
+                <h2 className="text-xl font-bold text-[#E8E8ED]">Open Source Projects</h2>
+                <p className="text-xs text-[#7B7B86] mt-0.5">
                   {enriched.github!.repos.length} repositories · {formatNumber(enriched.github!.totalStars)} total stars
                 </p>
               </div>
             </div>
 
-            <div className="grid gap-3 sm:grid-cols-2">
+            <div className="grid gap-3.5 sm:grid-cols-2">
               {enriched.github!.repos.slice(0, 8).map((repo, i) => (
                 <a
                   key={repo.name}
                   href={repo.url}
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="block px-5 py-4 rounded-xl bg-white border border-neutral-100 shadow-sm hover:shadow-md hover:border-neutral-200 transition-all duration-200 group animate-row-enter"
+                  className="block px-5 py-4 rounded-xl bg-[#141418] border border-white/[0.06] hover:border-white/[0.1] transition-all duration-200 group animate-row-enter"
                   style={{ animationDelay: `${i * 60}ms` }}
                 >
                   <div className="flex items-start justify-between gap-3">
                     <div className="min-w-0 flex-1">
                       <div className="flex items-center gap-2">
-                        <span className="text-sm font-semibold text-[#2C2C2C] group-hover:text-[#1a1a1a] transition-colors duration-200 truncate">
+                        <span className="text-sm font-semibold text-[#C4C4CC] group-hover:text-[#E8E8ED] transition-colors duration-200 truncate">
                           {repo.name}
                         </span>
-                        <ExternalLinkIcon className="w-3 h-3 text-neutral-400 group-hover:text-[#C4956A] flex-shrink-0 transition-colors duration-200" />
+                        <ExternalLinkIcon className="w-3 h-3 text-[#7B7B86] group-hover:text-[#C4C4CC] flex-shrink-0 transition-colors duration-200" />
                       </div>
                       {repo.description && (
-                        <p className="text-xs text-neutral-500 mt-1.5 leading-relaxed line-clamp-2">
+                        <p className="text-xs text-[#7B7B86] mt-1.5 leading-relaxed line-clamp-2">
                           {repo.description}
                         </p>
                       )}
                       <div className="flex items-center gap-3 mt-3">
                         {repo.language && (
-                          <span className="inline-flex items-center gap-1.5 text-[11px] text-neutral-500">
+                          <span className="inline-flex items-center gap-1.5 text-[11px] text-[#7B7B86]">
                             <span
                               className="w-2.5 h-2.5 rounded-full flex-shrink-0"
                               style={{ backgroundColor: enriched.github!.languages.find(l => l.name === repo.language)?.color || "#8b8b8b" }}
@@ -547,7 +641,7 @@ export default async function PersonPage({ params }: Props) {
                           </span>
                         )}
                         {repo.stars > 0 && (
-                          <span className="inline-flex items-center gap-1 text-[11px] text-neutral-500">
+                          <span className="inline-flex items-center gap-1 text-[11px] text-[#7B7B86]">
                             <svg viewBox="0 0 16 16" className="w-3 h-3" fill="currentColor">
                               <polygon points="8 1.25 10.18 5.67 15 6.36 11.5 9.78 12.36 14.58 8 12.27 3.64 14.58 4.5 9.78 1 6.36 5.82 5.67 8 1.25" />
                             </svg>
@@ -555,7 +649,7 @@ export default async function PersonPage({ params }: Props) {
                           </span>
                         )}
                         {repo.forks > 0 && (
-                          <span className="inline-flex items-center gap-1 text-[11px] text-neutral-500">
+                          <span className="inline-flex items-center gap-1 text-[11px] text-[#7B7B86]">
                             <svg viewBox="0 0 16 16" className="w-3 h-3" fill="currentColor">
                               <path d="M5 3.25a.75.75 0 1 1-1.5 0 .75.75 0 0 1 1.5 0zm-.25 2.51a2.25 2.25 0 1 0-1.5 0v1.29a.75.75 0 0 0 .22.53l2.25 2.25a.25.25 0 0 1 .073.177v1.232a2.251 2.251 0 1 0 1.5 0V10.01a1.75 1.75 0 0 0-.513-1.237L4.75 6.56V5.76zm7.5.75a.75.75 0 1 1-1.5 0 .75.75 0 0 1 1.5 0zm-.25 2.51a2.25 2.25 0 1 0-1.5 0v1.29a.75.75 0 0 0 .22.53l2.25 2.25a.25.25 0 0 1 .073.177v.232a2.251 2.251 0 1 0 1.5 0v-.482a1.75 1.75 0 0 0-.513-1.237L10.75 9.06V8.51z" />
                             </svg>
@@ -570,7 +664,7 @@ export default async function PersonPage({ params }: Props) {
                       {repo.topics.slice(0, 4).map((topic) => (
                         <span
                           key={topic}
-                          className="px-2 py-0.5 rounded-full bg-neutral-100 border border-neutral-200 text-[10px] text-neutral-500"
+                          className="px-2 py-0.5 rounded-full bg-white/[0.05] border border-white/[0.08] text-[11px] text-[#7B7B86]"
                         >
                           {topic}
                         </span>
@@ -586,46 +680,46 @@ export default async function PersonPage({ params }: Props) {
         {/* ── AI Models (HuggingFace) ─────────────────────── */}
         {hasHuggingFace && (
           <div className="mt-16">
-            <div className="flex items-center gap-4 mb-8">
-              <div className="w-14 h-14 rounded-full bg-neutral-100 flex items-center justify-center border border-neutral-200">
-                <svg viewBox="0 0 24 24" className="w-6 h-6 text-neutral-500" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
+            <div className="flex items-center gap-3 mb-6">
+              <div className="w-10 h-10 rounded-full bg-white/[0.05] flex items-center justify-center border border-white/[0.08]">
+                <svg viewBox="0 0 24 24" className="w-5 h-5 text-[#7B7B86]" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
                   <path d="M12 2L2 7l10 5 10-5-10-5z" />
                   <path d="M2 17l10 5 10-5" />
                   <path d="M2 12l10 5 10-5" />
                 </svg>
               </div>
               <div>
-                <h2 className="text-xl font-bold text-[#1a1a1a] font-[family-name:var(--font-playfair)]">AI Models</h2>
-                <p className="text-xs text-neutral-500 mt-0.5">
+                <h2 className="text-xl font-bold text-[#E8E8ED]">AI Models</h2>
+                <p className="text-xs text-[#7B7B86] mt-0.5">
                   {enriched.huggingface!.models.length} models on Hugging Face · {formatNumber(enriched.huggingface!.totalDownloads)} downloads
                 </p>
               </div>
             </div>
 
-            <div className="space-y-3">
+            <div className="space-y-3.5">
               {enriched.huggingface!.models.map((model, i) => (
                 <a
                   key={model.id}
                   href={`https://huggingface.co/${model.id}`}
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="block px-5 py-4 rounded-xl bg-white border border-neutral-100 shadow-sm hover:shadow-md hover:border-neutral-200 transition-all duration-200 group animate-row-enter"
+                  className="block px-5 py-4 rounded-xl bg-[#141418] border border-white/[0.06] hover:border-white/[0.1] transition-all duration-200 group animate-row-enter"
                   style={{ animationDelay: `${i * 80}ms` }}
                 >
                   <div className="flex items-start gap-4">
-                    <div className="flex-shrink-0 mt-0.5 px-2.5 py-1 rounded-md bg-neutral-100 border border-neutral-200 text-[11px] font-mono font-semibold text-neutral-600 tracking-wide">
+                    <div className="flex-shrink-0 mt-0.5 px-2.5 py-1 rounded-md bg-white/[0.05] border border-white/[0.08] text-[11px] font-mono font-semibold text-[#8B8B96] tracking-wide">
                       HF
                     </div>
                     <div className="min-w-0 flex-1">
-                      <span className="text-sm font-medium text-[#2C2C2C] group-hover:text-[#1a1a1a] transition-colors duration-200">
+                      <span className="text-sm font-medium text-[#C4C4CC] group-hover:text-[#E8E8ED] transition-colors duration-200">
                         {model.id.split("/").pop()}
                       </span>
                       {model.pipelineTag && (
-                        <span className="ml-2 px-2 py-0.5 rounded-full bg-neutral-100 border border-neutral-200 text-[10px] text-neutral-500">
+                        <span className="ml-2 px-2 py-0.5 rounded-full bg-white/[0.05] border border-white/[0.08] text-[11px] text-[#7B7B86]">
                           {model.pipelineTag}
                         </span>
                       )}
-                      <div className="flex items-center gap-4 mt-2 text-xs text-neutral-500">
+                      <div className="flex items-center gap-4 mt-2 text-xs text-[#7B7B86]">
                         <span className="inline-flex items-center gap-1">
                           <svg viewBox="0 0 24 24" className="w-3.5 h-3.5" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                             <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
@@ -642,7 +736,7 @@ export default async function PersonPage({ params }: Props) {
                         </span>
                       </div>
                     </div>
-                    <ExternalLinkIcon className="w-4 h-4 text-neutral-400 group-hover:text-[#C4956A] flex-shrink-0 mt-1 transition-colors duration-200" />
+                    <ExternalLinkIcon className="w-4 h-4 text-[#7B7B86] group-hover:text-[#C4C4CC] flex-shrink-0 mt-1 transition-colors duration-200" />
                   </div>
                 </a>
               ))}
@@ -653,18 +747,18 @@ export default async function PersonPage({ params }: Props) {
         {/* ── Tech Stack ──────────────────────────────────── */}
         {hasGitHub && enriched.github!.languages.length > 0 && (
           <div className="mt-16">
-            <div className="flex items-center gap-4 mb-6">
-              <div className="w-14 h-14 rounded-full bg-neutral-100 flex items-center justify-center border border-neutral-200">
-                <svg viewBox="0 0 24 24" className="w-5 h-5 text-neutral-500" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+            <div className="flex items-center gap-3 mb-6">
+              <div className="w-10 h-10 rounded-full bg-white/[0.05] flex items-center justify-center border border-white/[0.08]">
+                <svg viewBox="0 0 24 24" className="w-4 h-4 text-[#7B7B86]" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                   <polyline points="16 18 22 12 16 6" />
                   <polyline points="8 6 2 12 8 18" />
                 </svg>
               </div>
-              <h2 className="text-xl font-bold text-[#1a1a1a] font-[family-name:var(--font-playfair)]">Tech Stack</h2>
+              <h2 className="text-xl font-bold text-[#E8E8ED]">Tech Stack</h2>
             </div>
 
             {/* Language bar */}
-            <div className="h-3 rounded-full overflow-hidden flex bg-neutral-100 border border-neutral-200">
+            <div className="h-3 rounded-full overflow-hidden flex bg-white/[0.05] border border-white/[0.08]">
               {enriched.github!.languages.map((lang) => {
                 const total = enriched.github!.languages.reduce((s, l) => s + l.count, 0);
                 const pct = (lang.count / total) * 100;
@@ -684,13 +778,13 @@ export default async function PersonPage({ params }: Props) {
                 const total = enriched.github!.languages.reduce((s, l) => s + l.count, 0);
                 const pct = (lang.count / total) * 100;
                 return (
-                  <span key={lang.name} className="inline-flex items-center gap-2 text-xs text-neutral-500">
+                  <span key={lang.name} className="inline-flex items-center gap-2 text-xs text-[#8B8B96]">
                     <span
                       className="w-3 h-3 rounded-full flex-shrink-0"
                       style={{ backgroundColor: lang.color }}
                     />
                     {lang.name}
-                    <span className="text-neutral-400">{pct.toFixed(0)}%</span>
+                    <span className="text-[#7B7B86]">{pct.toFixed(0)}%</span>
                   </span>
                 );
               })}
@@ -701,8 +795,8 @@ export default async function PersonPage({ params }: Props) {
         {/* ── Podcast Appearances (Spotify episodes) ──────── */}
         {hasEpisodes && (
           <div className="mt-16">
-            <div className="flex items-center gap-4 mb-8">
-              <div className="w-12 h-12 rounded-full bg-spotify flex items-center justify-center shadow-sm">
+            <div className="flex items-center gap-3 mb-6">
+              <div className="w-9 h-9 rounded-full bg-spotify flex items-center justify-center shadow-sm">
                 <svg
                   viewBox="0 0 16 16"
                   className="w-5 h-5 text-black ml-0.5"
@@ -712,24 +806,24 @@ export default async function PersonPage({ params }: Props) {
                 </svg>
               </div>
               <div>
-                <h2 className="text-lg font-bold text-[#1a1a1a] font-[family-name:var(--font-playfair)]">
+                <h2 className="text-lg font-bold text-[#E8E8ED]">
                   Podcast Appearances
                 </h2>
-                <p className="text-xs text-neutral-500 mt-0.5">
+                <p className="text-xs text-[#7B7B86] mt-0.5">
                   {episodes.length} {episodes.length === 1 ? "episode" : "episodes"} on Spotify
                 </p>
               </div>
             </div>
 
             {/* Column headers */}
-            <div className="flex items-center gap-4 px-4 py-2 mb-1 text-[11px] uppercase tracking-wider text-neutral-400 font-medium">
+            <div className="flex items-center gap-4 px-4 py-2 mb-1 text-[11px] uppercase tracking-wider text-[#7B7B86] font-medium">
               <div className="w-6 flex-shrink-0">#</div>
               <div className="w-10 flex-shrink-0" />
               <div className="flex-1">Title</div>
               <div className="flex-shrink-0 hidden sm:block w-24">Date</div>
               <div className="flex-shrink-0 w-12 text-right">Dur.</div>
             </div>
-            <div className="h-px bg-neutral-200 mb-1" />
+            <div className="h-px bg-white/[0.06] mb-1" />
 
             <div className="space-y-0.5">
               {episodes.map((ep, i) => (
@@ -738,17 +832,17 @@ export default async function PersonPage({ params }: Props) {
                   href={ep.url}
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="flex items-center gap-4 px-4 py-3 rounded-lg hover:bg-neutral-100 transition-all duration-200 group cursor-pointer animate-row-enter"
+                  className="flex items-center gap-4 px-4 py-3 rounded-lg hover:bg-white/[0.04] transition-all duration-200 group cursor-pointer animate-row-enter"
                   style={{ animationDelay: `${i * 60}ms` }}
                 >
                   {/* Track number / play icon */}
                   <div className="w-6 flex items-center justify-center flex-shrink-0">
-                    <span className="text-sm text-neutral-400 tabular-nums group-hover:hidden">
+                    <span className="text-sm text-[#7B7B86] tabular-nums group-hover:hidden">
                       {i + 1}
                     </span>
                     <svg
                       viewBox="0 0 16 16"
-                      className="w-4 h-4 text-[#1a1a1a] hidden group-hover:block"
+                      className="w-4 h-4 text-[#E8E8ED] hidden group-hover:block"
                       fill="currentColor"
                     >
                       <path d="M3 1.713a.7.7 0 0 1 1.05-.607l10.89 6.288a.7.7 0 0 1 0 1.212L4.05 14.894A.7.7 0 0 1 3 14.288V1.713z" />
@@ -765,10 +859,10 @@ export default async function PersonPage({ params }: Props) {
                       className="w-10 h-10 rounded-md object-cover flex-shrink-0"
                     />
                   ) : (
-                    <div className="w-10 h-10 rounded-md bg-neutral-100 border border-neutral-200 flex items-center justify-center flex-shrink-0 group-hover:bg-neutral-200 transition-colors duration-200">
+                    <div className="w-10 h-10 rounded-md bg-white/[0.05] border border-white/[0.08] flex items-center justify-center flex-shrink-0 group-hover:bg-white/[0.08] transition-colors duration-200">
                       <svg
                         viewBox="0 0 24 24"
-                        className="w-4 h-4 text-neutral-400 group-hover:text-spotify transition-colors duration-200"
+                        className="w-4 h-4 text-[#7B7B86] group-hover:text-spotify transition-colors duration-200"
                         fill="none"
                         stroke="currentColor"
                         strokeWidth="2"
@@ -785,21 +879,21 @@ export default async function PersonPage({ params }: Props) {
 
                   {/* Episode info */}
                   <div className="min-w-0 flex-1">
-                    <span className="text-sm font-medium text-[#2C2C2C] group-hover:text-[#1a1a1a] transition-colors duration-200 line-clamp-1">
+                    <span className="text-sm font-medium text-[#C4C4CC] group-hover:text-[#E8E8ED] transition-colors duration-200 line-clamp-1">
                       {ep.name}
                     </span>
-                    <span className="text-xs text-neutral-500 line-clamp-1">
+                    <span className="text-xs text-[#7B7B86] line-clamp-1">
                       {ep.show_name}
                     </span>
                   </div>
 
                   {/* Date */}
-                  <span className="text-xs text-neutral-500 flex-shrink-0 hidden sm:block">
+                  <span className="text-xs text-[#7B7B86] flex-shrink-0 hidden sm:block">
                     {ep.release_date}
                   </span>
 
                   {/* Duration */}
-                  <span className="text-xs text-neutral-500 tabular-nums flex-shrink-0 w-12 text-right">
+                  <span className="text-xs text-[#7B7B86] tabular-nums flex-shrink-0 w-12 text-right">
                     {ep.duration_min} min
                   </span>
                 </a>
@@ -811,9 +905,9 @@ export default async function PersonPage({ params }: Props) {
         {/* ── Research Papers ─────────────────────────────── */}
         {hasPapers && (
           <div className="mt-16">
-            <div className="flex items-center gap-4 mb-6">
-              <div className="w-14 h-14 rounded-full bg-neutral-100 flex items-center justify-center border border-neutral-200">
-                <svg viewBox="0 0 24 24" className="w-5 h-5 text-neutral-500" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+            <div className="flex items-center gap-3 mb-6">
+              <div className="w-10 h-10 rounded-full bg-white/[0.05] flex items-center justify-center border border-white/[0.08]">
+                <svg viewBox="0 0 24 24" className="w-5 h-5 text-[#7B7B86]" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                   <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z" />
                   <polyline points="14 2 14 8 20 8" />
                   <line x1="16" y1="13" x2="8" y2="13" />
@@ -821,40 +915,48 @@ export default async function PersonPage({ params }: Props) {
                   <polyline points="10 9 9 9 8 9" />
                 </svg>
               </div>
-              <h2 className="text-xl font-bold text-[#1a1a1a] font-[family-name:var(--font-playfair)]">Research Papers</h2>
-              <span className="text-sm text-neutral-500">
+              <h2 className="text-xl font-bold text-[#E8E8ED]">Research Papers</h2>
+              <span className="text-sm text-[#7B7B86]">
                 {person.papers!.length} {person.papers!.length === 1 ? "paper" : "papers"}
               </span>
             </div>
 
-            <div className="space-y-3">
-              {person.papers!.map((paper, i) => (
+            <div className="space-y-3.5">
+              {person.papers!.map((paper, i) => {
+                const isArxiv = !!paper.arxiv;
+                const href = isArxiv
+                  ? `https://arxiv.org/abs/${paper.arxiv}`
+                  : `https://doi.org/${paper.doi}`;
+                const badge = isArxiv ? "arXiv" : "DOI";
+                const id = isArxiv ? paper.arxiv : paper.doi;
+                return (
                 <a
-                  key={paper.arxiv}
-                  href={`https://arxiv.org/abs/${paper.arxiv}`}
+                  key={paper.arxiv ?? paper.doi}
+                  href={href}
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="block px-5 py-4 rounded-xl bg-white border border-neutral-100 shadow-sm hover:shadow-md hover:border-neutral-200 transition-all duration-200 group animate-row-enter"
+                  className="block px-5 py-4 rounded-xl bg-[#141418] border border-white/[0.06] hover:border-white/[0.1] transition-all duration-200 group animate-row-enter"
                   style={{ animationDelay: `${i * 80}ms` }}
                 >
                   <div className="flex items-start gap-4">
-                    <div className="flex-shrink-0 mt-0.5 px-2.5 py-1 rounded-md bg-red-50 border border-red-200 text-[11px] font-mono font-semibold text-red-500 tracking-wide">
-                      arXiv
+                    <div className="flex-shrink-0 mt-0.5 px-2.5 py-1 rounded-md bg-white/[0.05] border border-white/[0.08] text-[11px] font-mono font-semibold text-[#8B8B96] tracking-wide">
+                      {badge}
                     </div>
                     <div className="min-w-0 flex-1">
-                      <span className="text-sm font-medium text-[#2C2C2C] group-hover:text-[#1a1a1a] transition-colors duration-200 leading-snug">
+                      <span className="text-sm font-medium text-[#C4C4CC] group-hover:text-[#E8E8ED] transition-colors duration-200 leading-snug">
                         {paper.title}
                       </span>
-                      <div className="flex items-center gap-3 mt-1.5 text-xs text-neutral-500">
-                        <span className="font-mono">{paper.arxiv}</span>
+                      <div className="flex items-center gap-3 mt-1.5 text-xs text-[#7B7B86]">
+                        <span className="font-mono">{id}</span>
                         <span>·</span>
                         <span>{paper.date}</span>
                       </div>
                     </div>
-                    <ExternalLinkIcon className="w-4 h-4 text-neutral-400 group-hover:text-[#C4956A] flex-shrink-0 mt-1 transition-colors duration-200" />
+                    <ExternalLinkIcon className="w-4 h-4 text-[#7B7B86] group-hover:text-[#C4C4CC] flex-shrink-0 mt-1 transition-colors duration-200" />
                   </div>
                 </a>
-              ))}
+                );
+              })}
             </div>
           </div>
         )}
@@ -864,7 +966,11 @@ export default async function PersonPage({ params }: Props) {
           <>
             <ResearchBio research={research} />
             <ResearchSocial research={research} />
-            <ResearchTimeline research={research} />
+            {enrichedTimeline ? (
+              <EnrichedTimelineSection events={enrichedTimeline} />
+            ) : (
+              <ResearchTimeline research={research} />
+            )}
             <ResearchContributions research={research} />
             <ResearchQuotes research={research} />
             <ResearchSources research={research} />
@@ -874,38 +980,38 @@ export default async function PersonPage({ params }: Props) {
         {/* ── Empty State ─────────────────────────────────── */}
         {!hasContentSections && (
           <div
-            className="mt-16 bg-white border border-neutral-100 rounded-xl shadow-sm px-8 py-10 text-center animate-fade-in-up"
+            className="mt-10 bg-[#141418] border border-white/[0.06] rounded-xl px-6 py-8 text-center animate-fade-in-up"
             style={{ animationDelay: "0.35s" }}
           >
-            <div className="w-16 h-16 rounded-full bg-neutral-100 border border-neutral-200 flex items-center justify-center mx-auto mb-5">
-              <svg viewBox="0 0 24 24" className="w-6 h-6 text-neutral-400" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
+            <div className="w-12 h-12 rounded-full bg-white/[0.05] border border-white/[0.08] flex items-center justify-center mx-auto mb-4">
+              <svg viewBox="0 0 24 24" className="w-6 h-6 text-[#7B7B86]" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
                 <circle cx="12" cy="12" r="10" />
                 <path d="M8 12h8" />
                 <path d="M12 8v8" />
               </svg>
             </div>
-            <p className="text-[#4a4a4a] text-sm">
+            <p className="text-[#8B8B96] text-sm">
               More content coming soon
             </p>
-            <p className="text-neutral-400 text-xs mt-2">
+            <p className="text-[#7B7B86] text-xs mt-2">
               Episode data, research, and more will appear here as they become available.
             </p>
           </div>
         )}
 
         {/* ── Footer ──────────────────────────────────────── */}
-        <div className="mt-24 mb-16">
-          <div className="h-px bg-neutral-200 mb-10" />
-          <div className="flex flex-col sm:flex-row items-center justify-between gap-6">
+        <div className="mt-20">
+          <div className="h-px bg-white/[0.06] mb-8" />
+          <div className="flex flex-col sm:flex-row items-center justify-between gap-4">
             <div className="flex items-center gap-3 text-sm">
-              <div className="w-2.5 h-2.5 rounded-full bg-neutral-400" />
-              <span className="text-neutral-500">{category.title}</span>
-              <span className="text-neutral-300">/</span>
-              <span className="text-[#1a1a1a] font-medium">{person.name}</span>
+              <div className="w-2.5 h-2.5 rounded-full bg-[#7B7B86]" />
+              <span className="text-[#7B7B86]">{category.title}</span>
+              <span className="text-[#7B7B86]">/</span>
+              <span className="text-[#E8E8ED] font-medium">{person.name}</span>
             </div>
             <Link
               href="/"
-              className="inline-flex items-center gap-2.5 px-6 py-3 rounded-full bg-[#2C2C2C] text-white text-sm font-semibold shadow-sm hover:shadow-md hover:bg-[#1a1a1a] transition-all duration-200 group"
+              className="inline-flex items-center gap-2.5 px-6 py-3 rounded-full bg-white/[0.08] text-[#E8E8ED] text-sm font-semibold hover:bg-white/[0.12] transition-all duration-200 group"
             >
               <svg
                 viewBox="0 0 16 16"

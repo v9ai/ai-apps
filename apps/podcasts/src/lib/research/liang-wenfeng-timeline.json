@@ -1,0 +1,24 @@
+{
+  "slug": "liang-wenfeng",
+  "generated_at": "2026-03-18T21:18:51.140844Z",
+  "events": [
+    {
+      "date": "2025-01-22",
+      "event": "Published \"DeepSeek-R1: Incentivizing Reasoning Capability in LLMs via Reinforcement Learning\"",
+      "url": "https://arxiv.org/abs/2501.12948",
+      "source": "paper"
+    },
+    {
+      "date": "2024-12-27",
+      "event": "Published \"DeepSeek-V3 Technical Report\"",
+      "url": "https://arxiv.org/abs/2412.19437",
+      "source": "paper"
+    },
+    {
+      "date": "2024-05-07",
+      "event": "Published \"DeepSeek-V2: A Strong, Economical, and Efficient Mixture-of-Experts Language Model\"",
+      "url": "https://arxiv.org/abs/2405.04434",
+      "source": "paper"
+    }
+  ]
+}

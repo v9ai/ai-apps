@@ -1,0 +1,24 @@
+{
+  "slug": "fei-fei-li",
+  "generated_at": "2026-03-18T21:18:47.480234Z",
+  "events": [
+    {
+      "date": "2025-04-01",
+      "event": "Published \"WorldScore: A Unified Evaluation Benchmark for World Generation\"",
+      "url": "https://arxiv.org/abs/2504.00983",
+      "source": "paper"
+    },
+    {
+      "date": "2024-12-18",
+      "event": "Published \"Thinking in Space: How Multimodal Large Language Models See, Remember, and Recall Spaces\"",
+      "url": "https://arxiv.org/abs/2412.14171",
+      "source": "paper"
+    },
+    {
+      "date": "2024-01-07",
+      "event": "Published \"Agent AI: Surveying the Horizons of Multimodal Interaction\"",
+      "url": "https://arxiv.org/abs/2401.03568",
+      "source": "paper"
+    }
+  ]
+}

@@ -9,35 +9,35 @@ export function CategorySection({ category }: Props) {
   const gradient = getCategoryColor(category.slug);
 
   return (
-    <section id={category.slug} className="mb-14 scroll-mt-20">
-      {/* Gradient divider */}
-      <div className="h-px bg-gradient-to-r from-transparent via-white/[0.04] to-transparent mb-8" />
+    <section id={category.slug} className="mb-12 scroll-mt-20">
+      <div
+        className="h-px mb-6"
+        style={{
+          backgroundImage:
+            "linear-gradient(to right, transparent, rgba(255,255,255,0.06), transparent)",
+        }}
+      />
 
-      {/* Section header */}
-      <div className="flex items-center gap-3 mb-5">
+      <div className="flex items-center gap-3 mb-4">
         <div
-          className={`w-1 h-6 rounded-full bg-gradient-to-b ${gradient}`}
+          className={`w-[3px] h-5 rounded-full shrink-0 bg-gradient-to-b ${gradient}`}
         />
-        <h2 className="text-lg font-bold tracking-tight text-white">
+        <h2 className="text-lg font-semibold tracking-[-0.01em] text-ink-primary">
           {category.title}
         </h2>
-        <span className="text-[11px] text-neutral-500 font-medium bg-white/[0.05] px-2.5 py-0.5 rounded-full border border-white/[0.04]">
+        <span className="text-[0.6875rem] uppercase tracking-[0.08em] font-medium text-ink-muted bg-[rgba(255,255,255,0.04)] px-2.5 py-0.5 rounded-full border border-[rgba(255,255,255,0.06)]">
           {category.personalities.length}
         </span>
       </div>
 
-      {/* Grid */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
+      <div className="grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-3">
         {category.personalities.map((p, i) => (
           <div
             key={p.slug}
             className="animate-stagger-in"
             style={{ animationDelay: `${i * 60}ms` }}
           >
-            <PersonalityTile
-              personality={p}
-              accentGradient={gradient}
-            />
+            <PersonalityTile personality={p} accentGradient={gradient} />
           </div>
         ))}
       </div>

@@ -1,0 +1,194 @@
+{
+  "github": {
+    "profile": {
+      "bio": "\ud83d\udc68\u200d\ud83d\udcbb Claude Code @ Anthropic ",
+      "publicRepos": 269,
+      "followers": 5555,
+      "location": "San Francisco",
+      "createdAt": "2012-05-22T00:12:18Z"
+    },
+    "repos": [
+      {
+        "name": "bcherny.github.io",
+        "description": "My blog",
+        "url": "https://github.com/bcherny/bcherny.github.io",
+        "stars": 8,
+        "forks": 8,
+        "language": "SCSS",
+        "topics": [],
+        "updatedAt": "2026-02-21T17:09:32Z",
+        "createdAt": "2021-08-22T09:51:06Z"
+      },
+      {
+        "name": "programmingtypescriptbook.com",
+        "description": null,
+        "url": "https://github.com/bcherny/programmingtypescriptbook.com",
+        "stars": 4,
+        "forks": 0,
+        "language": "HTML",
+        "topics": [],
+        "updatedAt": "2026-03-18T06:28:51Z",
+        "createdAt": "2019-04-30T03:37:36Z"
+      },
+      {
+        "name": "redirect-claude",
+        "description": null,
+        "url": "https://github.com/bcherny/redirect-claude",
+        "stars": 2,
+        "forks": 0,
+        "language": null,
+        "topics": [],
+        "updatedAt": "2026-01-21T00:27:45Z",
+        "createdAt": "2025-06-12T21:05:46Z"
+      },
+      {
+        "name": "Flashcards",
+        "description": "Simple flashcards app",
+        "url": "https://github.com/bcherny/Flashcards",
+        "stars": 2,
+        "forks": 0,
+        "language": "TypeScript",
+        "topics": [],
+        "updatedAt": "2026-03-09T02:41:31Z",
+        "createdAt": "2021-12-07T04:34:57Z"
+      },
+      {
+        "name": "learning-scala-v2",
+        "description": null,
+        "url": "https://github.com/bcherny/learning-scala-v2",
+        "stars": 2,
+        "forks": 0,
+        "language": "Scala",
+        "topics": [],
+        "updatedAt": "2026-01-03T23:10:02Z",
+        "createdAt": "2021-02-26T21:05:04Z"
+      },
+      {
+        "name": "wordscapes-solver",
+        "description": "Solver for Wordscapes game",
+        "url": "https://github.com/bcherny/wordscapes-solver",
+        "stars": 2,
+        "forks": 0,
+        "language": "Haskell",
+        "topics": [],
+        "updatedAt": "2023-03-08T04:58:34Z",
+        "createdAt": "2019-12-29T10:12:07Z"
+      },
+      {
+        "name": "anthropic-stream-repro",
+        "description": null,
+        "url": "https://github.com/bcherny/anthropic-stream-repro",
+        "stars": 1,
+        "forks": 0,
+        "language": "JavaScript",
+        "topics": [],
+        "updatedAt": "2026-03-09T15:56:15Z",
+        "createdAt": "2025-06-04T18:52:53Z"
+      },
+      {
+        "name": "mcp-ping",
+        "description": null,
+        "url": "https://github.com/bcherny/mcp-ping",
+        "stars": 1,
+        "forks": 0,
+        "language": "JavaScript",
+        "topics": [],
+        "updatedAt": "2026-01-08T09:38:49Z",
+        "createdAt": "2024-12-12T00:56:50Z"
+      },
+      {
+        "name": "skymaps",
+        "description": null,
+        "url": "https://github.com/bcherny/skymaps",
+        "stars": 1,
+        "forks": 0,
+        "language": "TypeScript",
+        "topics": [],
+        "updatedAt": "2023-03-08T04:58:34Z",
+        "createdAt": "2021-12-16T04:45:00Z"
+      },
+      {
+        "name": "crdt-demo",
+        "description": null,
+        "url": "https://github.com/bcherny/crdt-demo",
+        "stars": 1,
+        "forks": 1,
+        "language": "TypeScript",
+        "topics": [],
+        "updatedAt": "2023-03-08T04:58:34Z",
+        "createdAt": "2020-05-23T01:46:59Z"
+      },
+      {
+        "name": "codenam.es",
+        "description": "https://codenam.es",
+        "url": "https://github.com/bcherny/codenam.es",
+        "stars": 1,
+        "forks": 0,
+        "language": "JavaScript",
+        "topics": [
+          "cool",
+          "great",
+          "nice"
+        ],
+        "updatedAt": "2023-03-08T04:58:34Z",
+        "createdAt": "2020-04-12T02:52:35Z"
+      },
+      {
+        "name": "js-math",
+        "description": null,
+        "url": "https://github.com/bcherny/js-math",
+        "stars": 1,
+        "forks": 0,
+        "language": "JavaScript",
+        "topics": [],
+        "updatedAt": "2023-03-08T04:58:34Z",
+        "createdAt": "2020-02-24T04:09:08Z"
+      },
+      {
+        "name": "es-module-stats",
+        "description": "Collecting statistics on how the internet uses ES modules",
+        "url": "https://github.com/bcherny/es-module-stats",
+        "stars": 0,
+        "forks": 0,
+        "language": "TypeScript",
+        "topics": [],
+        "updatedAt": "2024-06-20T13:17:45Z",
+        "createdAt": "2024-06-12T18:01:21Z"
+      }
+    ],
+    "totalStars": 26,
+    "languages": [
+      {
+        "name": "TypeScript",
+        "count": 4,
+        "color": "#3178c6"
+      },
+      {
+        "name": "JavaScript",
+        "count": 4,
+        "color": "#f1e05a"
+      },
+      {
+        "name": "SCSS",
+        "count": 1,
+        "color": "#c6538c"
+      },
+      {
+        "name": "HTML",
+        "count": 1,
+        "color": "#e34c26"
+      },
+      {
+        "name": "Scala",
+        "count": 1,
+        "color": "#8b8b8b"
+      },
+      {
+        "name": "Haskell",
+        "count": 1,
+        "color": "#8b8b8b"
+      }
+    ]
+  },
+  "huggingface": null
+}

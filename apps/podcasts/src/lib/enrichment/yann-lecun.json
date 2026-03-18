@@ -1,0 +1,82 @@
+{
+  "github": {
+    "profile": {
+      "bio": null,
+      "publicRepos": 12,
+      "followers": 1510,
+      "location": "New York, NY, USA",
+      "createdAt": "2012-02-14T03:55:33Z"
+    },
+    "repos": [
+      {
+        "name": "deep-learning-course",
+        "description": "Examples and exercises in Torch for the Deep Learning course at NYU",
+        "url": "https://github.com/ylecun/deep-learning-course",
+        "stars": 26,
+        "forks": 11,
+        "language": null,
+        "topics": [],
+        "updatedAt": "2026-03-03T17:13:17Z",
+        "createdAt": "2014-01-26T00:30:28Z"
+      },
+      {
+        "name": "yastro",
+        "description": null,
+        "url": "https://github.com/ylecun/yastro",
+        "stars": 13,
+        "forks": 1,
+        "language": "Python",
+        "topics": [],
+        "updatedAt": "2023-06-26T01:52:38Z",
+        "createdAt": "2021-07-05T23:09:58Z"
+      },
+      {
+        "name": "nyu-robotics",
+        "description": "repo for NYU robotics class",
+        "url": "https://github.com/ylecun/nyu-robotics",
+        "stars": 11,
+        "forks": 3,
+        "language": "C",
+        "topics": [],
+        "updatedAt": "2025-03-12T22:13:58Z",
+        "createdAt": "2012-02-14T03:59:51Z"
+      },
+      {
+        "name": "wingmaker",
+        "description": "Scripts to generate 3D-printable airplane wings.",
+        "url": "https://github.com/ylecun/wingmaker",
+        "stars": 0,
+        "forks": 1,
+        "language": null,
+        "topics": [],
+        "updatedAt": "2022-10-07T17:53:35Z",
+        "createdAt": "2014-11-29T08:06:14Z"
+      },
+      {
+        "name": "SpinGlass_repo",
+        "description": null,
+        "url": "https://github.com/ylecun/SpinGlass_repo",
+        "stars": 0,
+        "forks": 0,
+        "language": null,
+        "topics": [],
+        "updatedAt": "2014-10-25T23:00:15Z",
+        "createdAt": "2014-10-24T09:00:59Z"
+      }
+    ],
+    "totalStars": 50,
+    "languages": [
+      {
+        "name": "Python",
+        "count": 1,
+        "color": "#3572A5"
+      },
+      {
+        "name": "C",
+        "count": 1,
+        "color": "#555555"
+      }
+    ]
+  },
+  "huggingface": null
+}

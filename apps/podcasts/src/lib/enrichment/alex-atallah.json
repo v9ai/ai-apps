@@ -1,0 +1,131 @@
+{
+  "github": {
+    "profile": {
+      "bio": "CEO of OpenRouter, Co-founder of OpenSea",
+      "publicRepos": 63,
+      "followers": 508,
+      "location": "New York, NY",
+      "createdAt": "2011-08-29T08:58:01Z"
+    },
+    "repos": [
+      {
+        "name": "window.ai",
+        "description": "Use your own AI models on the web",
+        "url": "https://github.com/alexanderatallah/window.ai",
+        "stars": 967,
+        "forks": 92,
+        "language": "TypeScript",
+        "topics": [],
+        "updatedAt": "2026-03-17T08:05:33Z",
+        "createdAt": "2023-03-18T08:10:55Z"
+      },
+      {
+        "name": "redbase",
+        "description": "A simple, fast, type-safe database on top of Redis",
+        "url": "https://github.com/alexanderatallah/redbase",
+        "stars": 46,
+        "forks": 6,
+        "language": "TypeScript",
+        "topics": [
+          "caching",
+          "redis",
+          "redis-database",
+          "set-theory",
+          "typescript"
+        ],
+        "updatedAt": "2026-02-18T22:16:03Z",
+        "createdAt": "2023-01-29T21:22:57Z"
+      },
+      {
+        "name": "movie-bench",
+        "description": "Movie Bench is a simple benchmark for LLMs that ranks their ability to estimate box office receipts from prerelease data",
+        "url": "https://github.com/alexanderatallah/movie-bench",
+        "stars": 2,
+        "forks": 0,
+        "language": "TypeScript",
+        "topics": [],
+        "updatedAt": "2026-03-05T16:13:52Z",
+        "createdAt": "2026-03-02T03:26:10Z"
+      },
+      {
+        "name": "context",
+        "description": null,
+        "url": "https://github.com/alexanderatallah/context",
+        "stars": 2,
+        "forks": 38,
+        "language": "Python",
+        "topics": [],
+        "updatedAt": "2025-06-27T14:54:29Z",
+        "createdAt": "2023-11-08T17:11:28Z"
+      },
+      {
+        "name": "twiddle",
+        "description": "Experimenting",
+        "url": "https://github.com/alexanderatallah/twiddle",
+        "stars": 2,
+        "forks": 0,
+        "language": "Solidity",
+        "topics": [],
+        "updatedAt": "2022-11-14T02:11:41Z",
+        "createdAt": "2022-11-12T02:53:19Z"
+      },
+      {
+        "name": "vibe-fund-oracle",
+        "description": null,
+        "url": "https://github.com/alexanderatallah/vibe-fund-oracle",
+        "stars": 1,
+        "forks": 0,
+        "language": "TypeScript",
+        "topics": [],
+        "updatedAt": "2025-06-29T01:00:16Z",
+        "createdAt": "2025-04-20T22:48:37Z"
+      },
+      {
+        "name": "opensea-creatures",
+        "description": "Wyvern-only creatures",
+        "url": "https://github.com/alexanderatallah/opensea-creatures",
+        "stars": 1,
+        "forks": 1,
+        "language": "JavaScript",
+        "topics": [],
+        "updatedAt": "2022-07-30T03:39:23Z",
+        "createdAt": "2019-07-15T17:43:02Z"
+      },
+      {
+        "name": "niftygateway",
+        "description": "Code for the Nifty Gateway JS package",
+        "url": "https://github.com/alexanderatallah/niftygateway",
+        "stars": 1,
+        "forks": 0,
+        "language": "JavaScript",
+        "topics": [],
+        "updatedAt": "2022-07-30T03:39:28Z",
+        "createdAt": "2019-05-02T00:48:37Z"
+      }
+    ],
+    "totalStars": 1022,
+    "languages": [
+      {
+        "name": "TypeScript",
+        "count": 4,
+        "color": "#3178c6"
+      },
+      {
+        "name": "JavaScript",
+        "count": 2,
+        "color": "#f1e05a"
+      },
+      {
+        "name": "Python",
+        "count": 1,
+        "color": "#3572A5"
+      },
+      {
+        "name": "Solidity",
+        "count": 1,
+        "color": "#8b8b8b"
+      }
+    ]
+  },
+  "huggingface": null
+}

@@ -1,0 +1,256 @@
+{
+  "github": {
+    "profile": {
+      "bio": "The Pydantic Stack: Pydantic Validation, Pydantic AI and Pydantic Logfire",
+      "publicRepos": 304,
+      "followers": 6206,
+      "location": "London, United Kingdom",
+      "createdAt": "2013-04-02T17:24:42Z"
+    },
+    "repos": [
+      {
+        "name": "cloudkv",
+        "description": "key/value store for Python based on Cloudflare workers",
+        "url": "https://github.com/samuelcolvin/cloudkv",
+        "stars": 33,
+        "forks": 3,
+        "language": "Python",
+        "topics": [],
+        "updatedAt": "2025-08-19T12:37:07Z",
+        "createdAt": "2025-06-05T22:52:43Z"
+      },
+      {
+        "name": "uk-parliament-relatives",
+        "description": null,
+        "url": "https://github.com/samuelcolvin/uk-parliament-relatives",
+        "stars": 9,
+        "forks": 2,
+        "language": "Python",
+        "topics": [],
+        "updatedAt": "2025-04-21T15:54:11Z",
+        "createdAt": "2025-04-13T15:53:06Z"
+      },
+      {
+        "name": "email-me",
+        "description": "PWA to show a QR code with your email address.",
+        "url": "https://github.com/samuelcolvin/email-me",
+        "stars": 8,
+        "forks": 0,
+        "language": "HTML",
+        "topics": [],
+        "updatedAt": "2025-10-25T01:56:26Z",
+        "createdAt": "2025-10-12T17:48:12Z"
+      },
+      {
+        "name": "parplot",
+        "description": "plot data from a parquet file",
+        "url": "https://github.com/samuelcolvin/parplot",
+        "stars": 6,
+        "forks": 0,
+        "language": "Python",
+        "topics": [],
+        "updatedAt": "2025-04-26T05:42:03Z",
+        "createdAt": "2025-04-25T18:34:06Z"
+      },
+      {
+        "name": "forgettable",
+        "description": null,
+        "url": "https://github.com/samuelcolvin/forgettable",
+        "stars": 4,
+        "forks": 0,
+        "language": "TypeScript",
+        "topics": [],
+        "updatedAt": "2026-01-13T00:25:15Z",
+        "createdAt": "2026-01-07T19:20:11Z"
+      },
+      {
+        "name": "luck-or-judgement",
+        "description": null,
+        "url": "https://github.com/samuelcolvin/luck-or-judgement",
+        "stars": 4,
+        "forks": 0,
+        "language": "Python",
+        "topics": [],
+        "updatedAt": "2025-10-28T12:00:24Z",
+        "createdAt": "2025-09-07T02:20:39Z"
+      },
+      {
+        "name": "qrcam",
+        "description": null,
+        "url": "https://github.com/samuelcolvin/qrcam",
+        "stars": 3,
+        "forks": 0,
+        "language": "Rust",
+        "topics": [],
+        "updatedAt": "2025-08-19T12:37:19Z",
+        "createdAt": "2025-05-19T23:38:20Z"
+      },
+      {
+        "name": "tinicly",
+        "description": "CLI for tinifying images and checking they're tinified.",
+        "url": "https://github.com/samuelcolvin/tinicly",
+        "stars": 3,
+        "forks": 1,
+        "language": "Python",
+        "topics": [],
+        "updatedAt": "2025-12-25T16:08:20Z",
+        "createdAt": "2025-05-01T20:20:05Z"
+      },
+      {
+        "name": "antm",
+        "description": null,
+        "url": "https://github.com/samuelcolvin/antm",
+        "stars": 2,
+        "forks": 0,
+        "language": "Python",
+        "topics": [],
+        "updatedAt": "2025-11-17T10:05:44Z",
+        "createdAt": "2025-11-17T01:57:01Z"
+      },
+      {
+        "name": "py-ai-mcp",
+        "description": null,
+        "url": "https://github.com/samuelcolvin/py-ai-mcp",
+        "stars": 2,
+        "forks": 0,
+        "language": "Python",
+        "topics": [],
+        "updatedAt": "2026-02-08T23:33:51Z",
+        "createdAt": "2025-11-12T00:06:56Z"
+      },
+      {
+        "name": "call-alert",
+        "description": null,
+        "url": "https://github.com/samuelcolvin/call-alert",
+        "stars": 2,
+        "forks": 0,
+        "language": "Python",
+        "topics": [],
+        "updatedAt": "2025-09-22T21:39:47Z",
+        "createdAt": "2025-09-15T04:26:45Z"
+      },
+      {
+        "name": "mcpython",
+        "description": null,
+        "url": "https://github.com/samuelcolvin/mcpython",
+        "stars": 2,
+        "forks": 0,
+        "language": "Python",
+        "topics": [],
+        "updatedAt": "2025-09-04T17:20:33Z",
+        "createdAt": "2025-08-28T11:33:27Z"
+      },
+      {
+        "name": "uqrl",
+        "description": "Display a QR code for the current tab URL",
+        "url": "https://github.com/samuelcolvin/uqrl",
+        "stars": 2,
+        "forks": 0,
+        "language": "JavaScript",
+        "topics": [],
+        "updatedAt": "2025-08-19T12:37:11Z",
+        "createdAt": "2025-06-09T15:44:21Z"
+      },
+      {
+        "name": "pull_pull_request",
+        "description": null,
+        "url": "https://github.com/samuelcolvin/pull_pull_request",
+        "stars": 2,
+        "forks": 0,
+        "language": "Python",
+        "topics": [],
+        "updatedAt": "2025-08-19T12:37:24Z",
+        "createdAt": "2025-05-19T21:07:30Z"
+      },
+      {
+        "name": "datafusion-sql-udfs",
+        "description": null,
+        "url": "https://github.com/samuelcolvin/datafusion-sql-udfs",
+        "stars": 1,
+        "forks": 0,
+        "language": "Rust",
+        "topics": [],
+        "updatedAt": "2025-08-19T12:37:01Z",
+        "createdAt": "2025-06-18T10:36:19Z"
+      },
+      {
+        "name": "nextcall",
+        "description": null,
+        "url": "https://github.com/samuelcolvin/nextcall",
+        "stars": 0,
+        "forks": 0,
+        "language": "Rust",
+        "topics": [],
+        "updatedAt": "2025-10-28T04:23:27Z",
+        "createdAt": "2025-10-26T23:19:48Z"
+      },
+      {
+        "name": "cf-request-error",
+        "description": null,
+        "url": "https://github.com/samuelcolvin/cf-request-error",
+        "stars": 0,
+        "forks": 0,
+        "language": "TypeScript",
+        "topics": [],
+        "updatedAt": "2025-10-12T01:18:02Z",
+        "createdAt": "2025-10-12T01:17:19Z"
+      },
+      {
+        "name": "PaloAlto2SF",
+        "description": null,
+        "url": "https://github.com/samuelcolvin/PaloAlto2SF",
+        "stars": 0,
+        "forks": 0,
+        "language": "HTML",
+        "topics": [],
+        "updatedAt": "2025-10-08T03:15:29Z",
+        "createdAt": "2025-10-07T23:44:19Z"
+      },
+      {
+        "name": "logfire-go-logs",
+        "description": null,
+        "url": "https://github.com/samuelcolvin/logfire-go-logs",
+        "stars": 0,
+        "forks": 0,
+        "language": "Go",
+        "topics": [],
+        "updatedAt": "2025-04-09T16:26:51Z",
+        "createdAt": "2025-04-09T16:13:36Z"
+      }
+    ],
+    "totalStars": 83,
+    "languages": [
+      {
+        "name": "Python",
+        "count": 10,
+        "color": "#3572A5"
+      },
+      {
+        "name": "Rust",
+        "count": 3,
+        "color": "#dea584"
+      },
+      {
+        "name": "HTML",
+        "count": 2,
+        "color": "#e34c26"
+      },
+      {
+        "name": "TypeScript",
+        "count": 2,
+        "color": "#3178c6"
+      },
+      {
+        "name": "JavaScript",
+        "count": 1,
+        "color": "#f1e05a"
+      },
+      {
+        "name": "Go",
+        "count": 1,
+        "color": "#00ADD8"
+      }
+    ]
+  },
+  "huggingface": null
+}

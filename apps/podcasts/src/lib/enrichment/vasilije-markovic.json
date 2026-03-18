@@ -1,0 +1,65 @@
+{
+  "github": {
+    "profile": {
+      "bio": "Building cognee.ai, before that in Omio, Zalando, Taxfix and more\r\n",
+      "publicRepos": 39,
+      "followers": 172,
+      "location": "Berlin",
+      "createdAt": "2014-09-01T20:27:42Z"
+    },
+    "repos": [
+      {
+        "name": "docs",
+        "description": null,
+        "url": "https://github.com/Vasilije1990/docs",
+        "stars": 0,
+        "forks": 0,
+        "language": "MDX",
+        "topics": [],
+        "updatedAt": "2025-08-16T06:33:41Z",
+        "createdAt": "2025-08-16T06:33:36Z"
+      },
+      {
+        "name": "architecture",
+        "description": "Demo",
+        "url": "https://github.com/Vasilije1990/architecture",
+        "stars": 0,
+        "forks": 0,
+        "language": "Python",
+        "topics": [],
+        "updatedAt": "2023-11-19T19:02:36Z",
+        "createdAt": "2023-11-19T19:02:30Z"
+      },
+      {
+        "name": "ai_music",
+        "description": null,
+        "url": "https://github.com/Vasilije1990/ai_music",
+        "stars": 0,
+        "forks": 0,
+        "language": "Jupyter Notebook",
+        "topics": [],
+        "updatedAt": "2023-10-08T08:31:31Z",
+        "createdAt": "2022-01-07T12:25:54Z"
+      }
+    ],
+    "totalStars": 0,
+    "languages": [
+      {
+        "name": "MDX",
+        "count": 1,
+        "color": "#8b8b8b"
+      },
+      {
+        "name": "Python",
+        "count": 1,
+        "color": "#3572A5"
+      },
+      {
+        "name": "Jupyter Notebook",
+        "count": 1,
+        "color": "#DA5B0B"
+      }
+    ]
+  },
+  "huggingface": null
+}

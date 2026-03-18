@@ -1,0 +1,241 @@
+{
+  "github": {
+    "profile": {
+      "bio": null,
+      "publicRepos": 65,
+      "followers": 9581,
+      "location": null,
+      "createdAt": "2015-04-17T01:08:40Z"
+    },
+    "repos": [
+      {
+        "name": "auto-openai-prompter",
+        "description": null,
+        "url": "https://github.com/hwchase17/auto-openai-prompter",
+        "stars": 252,
+        "forks": 33,
+        "language": "Python",
+        "topics": [],
+        "updatedAt": "2026-03-11T12:10:10Z",
+        "createdAt": "2023-12-29T23:40:08Z"
+      },
+      {
+        "name": "ai-engineer",
+        "description": null,
+        "url": "https://github.com/hwchase17/ai-engineer",
+        "stars": 105,
+        "forks": 23,
+        "language": "Jupyter Notebook",
+        "topics": [],
+        "updatedAt": "2026-02-23T20:56:48Z",
+        "createdAt": "2023-10-07T23:19:47Z"
+      },
+      {
+        "name": "autoresearch-agents",
+        "description": null,
+        "url": "https://github.com/hwchase17/autoresearch-agents",
+        "stars": 99,
+        "forks": 21,
+        "language": "Python",
+        "topics": [],
+        "updatedAt": "2026-03-18T19:19:50Z",
+        "createdAt": "2026-03-09T17:07:22Z"
+      },
+      {
+        "name": "langchain-0.1-guides",
+        "description": null,
+        "url": "https://github.com/hwchase17/langchain-0.1-guides",
+        "stars": 95,
+        "forks": 21,
+        "language": "Jupyter Notebook",
+        "topics": [],
+        "updatedAt": "2025-10-06T09:43:06Z",
+        "createdAt": "2024-01-07T20:00:34Z"
+      },
+      {
+        "name": "langfuzz",
+        "description": null,
+        "url": "https://github.com/hwchase17/langfuzz",
+        "stars": 78,
+        "forks": 9,
+        "language": "Python",
+        "topics": [],
+        "updatedAt": "2026-02-17T20:57:58Z",
+        "createdAt": "2024-10-19T22:50:41Z"
+      },
+      {
+        "name": "conversational-retrieval-agent",
+        "description": null,
+        "url": "https://github.com/hwchase17/conversational-retrieval-agent",
+        "stars": 60,
+        "forks": 12,
+        "language": "Python",
+        "topics": [],
+        "updatedAt": "2025-11-11T19:00:28Z",
+        "createdAt": "2023-08-03T05:15:32Z"
+      },
+      {
+        "name": "conversation-qa-gradio",
+        "description": null,
+        "url": "https://github.com/hwchase17/conversation-qa-gradio",
+        "stars": 52,
+        "forks": 9,
+        "language": "Python",
+        "topics": [],
+        "updatedAt": "2026-03-05T17:49:57Z",
+        "createdAt": "2023-07-17T19:27:03Z"
+      },
+      {
+        "name": "sql-qa",
+        "description": null,
+        "url": "https://github.com/hwchase17/sql-qa",
+        "stars": 45,
+        "forks": 13,
+        "language": "Python",
+        "topics": [],
+        "updatedAt": "2024-02-19T13:01:44Z",
+        "createdAt": "2023-08-14T20:18:18Z"
+      },
+      {
+        "name": "chain-of-verification",
+        "description": null,
+        "url": "https://github.com/hwchase17/chain-of-verification",
+        "stars": 34,
+        "forks": 6,
+        "language": "Python",
+        "topics": [],
+        "updatedAt": "2026-03-17T07:53:15Z",
+        "createdAt": "2023-10-14T15:24:19Z"
+      },
+      {
+        "name": "langgraphgen",
+        "description": null,
+        "url": "https://github.com/hwchase17/langgraphgen",
+        "stars": 12,
+        "forks": 3,
+        "language": "Python",
+        "topics": [],
+        "updatedAt": "2026-02-19T05:06:23Z",
+        "createdAt": "2025-02-02T19:57:14Z"
+      },
+      {
+        "name": "agent-patterns",
+        "description": null,
+        "url": "https://github.com/hwchase17/agent-patterns",
+        "stars": 11,
+        "forks": 2,
+        "language": null,
+        "topics": [],
+        "updatedAt": "2025-10-16T08:31:49Z",
+        "createdAt": "2025-06-14T15:37:33Z"
+      },
+      {
+        "name": "dlai_class_langchain",
+        "description": null,
+        "url": "https://github.com/hwchase17/dlai_class_langchain",
+        "stars": 10,
+        "forks": 3,
+        "language": "Jupyter Notebook",
+        "topics": [],
+        "updatedAt": "2025-05-19T09:15:00Z",
+        "createdAt": "2023-06-08T21:17:35Z"
+      },
+      {
+        "name": "langchain-agent",
+        "description": null,
+        "url": "https://github.com/hwchase17/langchain-agent",
+        "stars": 5,
+        "forks": 2,
+        "language": null,
+        "topics": [],
+        "updatedAt": "2026-01-09T18:06:18Z",
+        "createdAt": "2026-01-09T04:42:02Z"
+      },
+      {
+        "name": "vulcan",
+        "description": null,
+        "url": "https://github.com/hwchase17/vulcan",
+        "stars": 5,
+        "forks": 3,
+        "language": "TypeScript",
+        "topics": [],
+        "updatedAt": "2026-02-14T16:46:53Z",
+        "createdAt": "2025-03-16T18:19:03Z"
+      },
+      {
+        "name": "chatbot",
+        "description": null,
+        "url": "https://github.com/hwchase17/chatbot",
+        "stars": 5,
+        "forks": 0,
+        "language": "Python",
+        "topics": [],
+        "updatedAt": "2025-10-16T08:31:29Z",
+        "createdAt": "2024-06-26T02:56:39Z"
+      },
+      {
+        "name": "optimizer-agent",
+        "description": null,
+        "url": "https://github.com/hwchase17/optimizer-agent",
+        "stars": 4,
+        "forks": 1,
+        "language": null,
+        "topics": [],
+        "updatedAt": "2026-03-10T09:54:52Z",
+        "createdAt": "2026-01-23T00:39:34Z"
+      },
+      {
+        "name": "testing-hosted-langserve",
+        "description": null,
+        "url": "https://github.com/hwchase17/testing-hosted-langserve",
+        "stars": 3,
+        "forks": 0,
+        "language": "Python",
+        "topics": [],
+        "updatedAt": "2025-11-11T20:29:02Z",
+        "createdAt": "2023-11-12T18:23:32Z"
+      },
+      {
+        "name": "mongo-hackathon",
+        "description": null,
+        "url": "https://github.com/hwchase17/mongo-hackathon",
+        "stars": 1,
+        "forks": 0,
+        "language": null,
+        "topics": [],
+        "updatedAt": "2023-11-08T13:54:22Z",
+        "createdAt": "2023-11-03T12:48:03Z"
+      },
+      {
+        "name": "testing-batch",
+        "description": null,
+        "url": "https://github.com/hwchase17/testing-batch",
+        "stars": 0,
+        "forks": 1,
+        "language": "Python",
+        "topics": [],
+        "updatedAt": "2025-05-02T05:10:05Z",
+        "createdAt": "2025-04-29T21:54:01Z"
+      }
+    ],
+    "totalStars": 876,
+    "languages": [
+      {
+        "name": "Python",
+        "count": 11,
+        "color": "#3572A5"
+      },
+      {
+        "name": "Jupyter Notebook",
+        "count": 3,
+        "color": "#DA5B0B"
+      },
+      {
+        "name": "TypeScript",
+        "count": 1,
+        "color": "#3178c6"
+      }
+    ]
+  },
+  "huggingface": null
+}

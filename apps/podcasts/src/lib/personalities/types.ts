@@ -1,13 +1,23 @@
 export type Paper = {
   title: string;
-  arxiv: string; // arXiv ID e.g. "2603.10031"
-  date: string;  // YYYY-MM-DD
+  arxiv?: string; // arXiv ID e.g. "2603.10031"
+  doi?: string;   // DOI e.g. "10.18429/jacow-icalepcs2023-tupdp044"
+  date: string;   // YYYY-MM-DD
 };
 
 export type TimelineEvent = {
   date: string;
   event: string;
   url: string;
+};
+
+export type TimelineSource = "research" | "github" | "paper" | "huggingface";
+
+export type EnrichedTimelineEvent = {
+  date: string;
+  event: string;
+  url: string;
+  source: TimelineSource;
 };
 
 export type Contribution = {
@@ -43,6 +53,8 @@ export type Personality = {
   slug: string;
   podcasts: string[];
   github?: string;
+  orcid?: string;
+  linkedinImage?: string;
   papers?: Paper[];
 };
 

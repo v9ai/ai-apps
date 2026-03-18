@@ -1,0 +1,186 @@
+{
+  "github": {
+    "profile": {
+      "bio": null,
+      "publicRepos": 50,
+      "followers": 4205,
+      "location": null,
+      "createdAt": "2013-06-28T01:46:57Z"
+    },
+    "repos": [
+      {
+        "name": "form_filling_app",
+        "description": null,
+        "url": "https://github.com/jerryjliu/form_filling_app",
+        "stars": 203,
+        "forks": 38,
+        "language": "Python",
+        "topics": [],
+        "updatedAt": "2026-03-10T11:13:37Z",
+        "createdAt": "2025-12-29T21:00:35Z"
+      },
+      {
+        "name": "presentation_app",
+        "description": null,
+        "url": "https://github.com/jerryjliu/presentation_app",
+        "stars": 113,
+        "forks": 23,
+        "language": "TypeScript",
+        "topics": [],
+        "updatedAt": "2026-03-13T08:56:30Z",
+        "createdAt": "2026-01-10T04:58:52Z"
+      },
+      {
+        "name": "semtools_parseout",
+        "description": null,
+        "url": "https://github.com/jerryjliu/semtools_parseout",
+        "stars": 41,
+        "forks": 4,
+        "language": "Shell",
+        "topics": [],
+        "updatedAt": "2026-03-11T02:42:26Z",
+        "createdAt": "2026-01-19T21:55:35Z"
+      },
+      {
+        "name": "classify_extract_sec",
+        "description": null,
+        "url": "https://github.com/jerryjliu/classify_extract_sec",
+        "stars": 16,
+        "forks": 5,
+        "language": "Python",
+        "topics": [],
+        "updatedAt": "2026-02-15T16:54:59Z",
+        "createdAt": "2025-10-18T22:34:35Z"
+      },
+      {
+        "name": "mongodb-demo-test",
+        "description": null,
+        "url": "https://github.com/jerryjliu/mongodb-demo-test",
+        "stars": 3,
+        "forks": 0,
+        "language": "Python",
+        "topics": [],
+        "updatedAt": "2024-06-12T16:06:46Z",
+        "createdAt": "2023-12-31T05:43:25Z"
+      },
+      {
+        "name": "llamaagents-market-research-extract",
+        "description": null,
+        "url": "https://github.com/jerryjliu/llamaagents-market-research-extract",
+        "stars": 1,
+        "forks": 0,
+        "language": "Python",
+        "topics": [],
+        "updatedAt": "2026-02-03T13:44:23Z",
+        "createdAt": "2026-01-28T03:08:30Z"
+      },
+      {
+        "name": "llamaagents-resume-split-extract",
+        "description": null,
+        "url": "https://github.com/jerryjliu/llamaagents-resume-split-extract",
+        "stars": 1,
+        "forks": 0,
+        "language": "Python",
+        "topics": [],
+        "updatedAt": "2026-02-03T13:44:22Z",
+        "createdAt": "2026-01-28T03:05:30Z"
+      },
+      {
+        "name": "llamaagents-court-order",
+        "description": null,
+        "url": "https://github.com/jerryjliu/llamaagents-court-order",
+        "stars": 1,
+        "forks": 0,
+        "language": "Python",
+        "topics": [],
+        "updatedAt": "2026-02-03T13:44:19Z",
+        "createdAt": "2026-01-28T02:40:30Z"
+      },
+      {
+        "name": "llamaagents-arxiv-summarizer",
+        "description": null,
+        "url": "https://github.com/jerryjliu/llamaagents-arxiv-summarizer",
+        "stars": 1,
+        "forks": 0,
+        "language": "Python",
+        "topics": [],
+        "updatedAt": "2026-02-03T13:44:32Z",
+        "createdAt": "2026-01-04T23:19:11Z"
+      },
+      {
+        "name": "llamaagent-statement-classifier",
+        "description": null,
+        "url": "https://github.com/jerryjliu/llamaagent-statement-classifier",
+        "stars": 1,
+        "forks": 0,
+        "language": "Python",
+        "topics": [],
+        "updatedAt": "2026-02-03T13:44:21Z",
+        "createdAt": "2026-01-04T22:42:24Z"
+      },
+      {
+        "name": "claude-agent-llama-agent-exp",
+        "description": null,
+        "url": "https://github.com/jerryjliu/claude-agent-llama-agent-exp",
+        "stars": 1,
+        "forks": 1,
+        "language": "Python",
+        "topics": [],
+        "updatedAt": "2025-11-02T16:58:27Z",
+        "createdAt": "2025-10-05T20:29:09Z"
+      },
+      {
+        "name": "llamaagents-us-patent",
+        "description": null,
+        "url": "https://github.com/jerryjliu/llamaagents-us-patent",
+        "stars": 0,
+        "forks": 0,
+        "language": "Python",
+        "topics": [],
+        "updatedAt": "2026-02-12T20:01:11Z",
+        "createdAt": "2026-02-12T19:38:40Z"
+      },
+      {
+        "name": "twitter_chart_parser",
+        "description": null,
+        "url": "https://github.com/jerryjliu/twitter_chart_parser",
+        "stars": 0,
+        "forks": 0,
+        "language": "Python",
+        "topics": [],
+        "updatedAt": "2026-02-20T06:13:51Z",
+        "createdAt": "2026-02-07T22:34:10Z"
+      },
+      {
+        "name": "llamaagents-10k-metrics-risks-2",
+        "description": null,
+        "url": "https://github.com/jerryjliu/llamaagents-10k-metrics-risks-2",
+        "stars": 0,
+        "forks": 0,
+        "language": "Python",
+        "topics": [],
+        "updatedAt": "2026-01-07T01:36:43Z",
+        "createdAt": "2026-01-07T01:24:46Z"
+      }
+    ],
+    "totalStars": 382,
+    "languages": [
+      {
+        "name": "Python",
+        "count": 12,
+        "color": "#3572A5"
+      },
+      {
+        "name": "TypeScript",
+        "count": 1,
+        "color": "#3178c6"
+      },
+      {
+        "name": "Shell",
+        "count": 1,
+        "color": "#89e051"
+      }
+    ]
+  },
+  "huggingface": null
+}

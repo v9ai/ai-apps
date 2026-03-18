@@ -1,0 +1,33 @@
+{
+  "github": {
+    "profile": {
+      "bio": null,
+      "publicRepos": 11,
+      "followers": 36,
+      "location": null,
+      "createdAt": "2011-08-10T17:23:08Z"
+    },
+    "repos": [
+      {
+        "name": "chatbot",
+        "description": null,
+        "url": "https://github.com/roh26it/chatbot",
+        "stars": 0,
+        "forks": 0,
+        "language": "Python",
+        "topics": [],
+        "updatedAt": "2024-08-16T19:59:48Z",
+        "createdAt": "2024-08-16T19:59:43Z"
+      }
+    ],
+    "totalStars": 0,
+    "languages": [
+      {
+        "name": "Python",
+        "count": 1,
+        "color": "#3572A5"
+      }
+    ]
+  },
+  "huggingface": null
+}

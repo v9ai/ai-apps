@@ -1,0 +1,12 @@
+{
+  "slug": "woosuk-kwon",
+  "generated_at": "2026-03-18T21:18:56.737300Z",
+  "events": [
+    {
+      "date": "2023-09-12",
+      "event": "Published \"Efficient Memory Management for Large Language Model Serving with PagedAttention\"",
+      "url": "https://arxiv.org/abs/2309.06180",
+      "source": "paper"
+    }
+  ]
+}

@@ -1,8 +1,29 @@
+@layer panda_reset, panda_base, panda_tokens, panda_recipes, panda_utilities;
+
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
 
 @layer base {
+  :root {
+    --color-base: #0B0B0F;
+    --color-surface: #141418;
+    --color-surface-raised: #16161D;
+    --color-surface-hover: #1C1C22;
+
+    --color-ink-primary: #E8E8ED;
+    --color-ink-secondary: #C4C4CC;
+    --color-ink-tertiary: #9B9BA6;
+    --color-ink-muted: #7B7B86;
+    --color-ink-subtle: #5A5A65;
+
+    --color-rim-subtle: rgba(255, 255, 255, 0.06);
+    --color-rim: rgba(255, 255, 255, 0.08);
+    --color-rim-strong: rgba(255, 255, 255, 0.12);
+
+    --color-spotify: #1DB954;
+  }
+
   html {
     scroll-behavior: smooth;
     -webkit-font-smoothing: antialiased;
@@ -10,18 +31,28 @@
   }
 
   body {
-    background: #FAFAF7;
-    color: #4a4a4a;
-    font-family: 'Inter', system-ui, -apple-system, sans-serif;
+    background: var(--color-base);
+    color: var(--color-ink-primary);
+    font-family: var(--font-inter), system-ui, -apple-system, sans-serif;
+    line-height: 1.65;
+    font-feature-settings: "kern" 1, "liga" 1;
   }
 
   h1, h2, h3, h4, h5, h6 {
-    color: #1a1a1a;
+    color: #E8E8ED;
+  }
+
+  h1 {
+    letter-spacing: -0.02em;
+  }
+
+  h2, h3 {
+    letter-spacing: -0.01em;
   }
 
   ::selection {
-    background: rgba(196, 149, 106, 0.25);
-    color: #1a1a1a;
+    background: rgba(139, 91, 246, 0.25);
+    color: #E8E8ED;
   }
 
   /* Custom scrollbar */
@@ -32,17 +63,17 @@
     background: transparent;
   }
   ::-webkit-scrollbar-thumb {
-    background: rgba(0, 0, 0, 0.12);
+    background: rgba(255, 255, 255, 0.12);
     border-radius: 3px;
   }
   ::-webkit-scrollbar-thumb:hover {
-    background: rgba(0, 0, 0, 0.22);
+    background: rgba(255, 255, 255, 0.22);
   }
 
   /* Firefox */
   * {
     scrollbar-width: thin;
-    scrollbar-color: rgba(0, 0, 0, 0.12) transparent;
+    scrollbar-color: rgba(255, 255, 255, 0.12) transparent;
   }
 }
 
@@ -50,68 +81,121 @@
   /* ---------- Story card ---------- */
   .story-card {
     @apply rounded-lg;
-    background: #ffffff;
-    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.04);
+    background: #16161D;
+    transform-style: preserve-3d;
+    box-shadow:
+      /* tight contact shadow */
+      0 1px 2px rgba(0, 0, 0, 0.4),
+      /* mid-range depth layer */
+      0 4px 12px -2px rgba(0, 0, 0, 0.3),
+      /* soft ambient spread */
+      0 8px 24px -6px rgba(0, 0, 0, 0.2);
     transition:
       transform 0.35s cubic-bezier(0.25, 0.46, 0.45, 0.94),
       box-shadow 0.35s cubic-bezier(0.25, 0.46, 0.45, 0.94);
   }
   .story-card:hover {
-    transform: translateY(-3px);
+    transform: perspective(800px) translateY(-4px) rotateX(1deg);
     box-shadow:
-      0 12px 40px -10px rgba(0, 0, 0, 0.1),
-      0 4px 12px -2px rgba(0, 0, 0, 0.04);
+      /* receding contact shadow */
+      0 1px 3px rgba(0, 0, 0, 0.4),
+      /* primary depth layer */
+      0 8px 24px -4px rgba(0, 0, 0, 0.35),
+      /* wide ambient glow */
+      0 20px 48px -12px rgba(0, 0, 0, 0.3),
+      /* ultra-soft ground shadow */
+      0 32px 64px -16px rgba(0, 0, 0, 0.2);
   }
 
   /* ---------- Featured card (hero-sized story) ---------- */
   .featured-card {
-    @apply rounded-xl;
-    background: #ffffff;
+    @apply rounded-2xl;
+    position: relative;
+    background: #16161D;
+    transform-style: preserve-3d;
+    border: 1px solid rgba(255, 255, 255, 0.06);
+    /* Layered 3D depth shadows — "floating card" at rest */
+    box-shadow:
+      0 1px 2px rgba(0, 0, 0, 0.4),
+      0 4px 12px -2px rgba(0, 0, 0, 0.3),
+      0 12px 32px -6px rgba(0, 0, 0, 0.25),
+      0 24px 56px -12px rgba(0, 0, 0, 0.2);
+    transform: perspective(1200px) rotateX(0deg) translateY(0px);
     transition:
-      transform 0.4s cubic-bezier(0.25, 0.46, 0.45, 0.94),
-      box-shadow 0.4s cubic-bezier(0.25, 0.46, 0.45, 0.94);
+      transform 0.5s cubic-bezier(0.25, 0.46, 0.45, 0.94),
+      box-shadow 0.5s cubic-bezier(0.25, 0.46, 0.45, 0.94),
+      border-color 0.5s ease;
+  }
+  /* Top-left directional light gradient overlay */
+  .featured-card::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    border-radius: inherit;
+    background: linear-gradient(
+      135deg,
+      rgba(255, 255, 255, 0.04) 0%,
+      rgba(255, 255, 255, 0.01) 25%,
+      transparent 60%
+    );
+    pointer-events: none;
+    z-index: 1;
+    transition: opacity 0.5s ease;
   }
   .featured-card:hover {
-    transform: translateY(-2px);
-    box-shadow: 0 16px 48px -12px rgba(0, 0, 0, 0.08);
+    transform: perspective(1200px) rotateX(0.5deg) translateY(-4px);
+    border-color: rgba(255, 255, 255, 0.1);
+    box-shadow:
+      0 2px 4px rgba(0, 0, 0, 0.4),
+      0 8px 20px -4px rgba(0, 0, 0, 0.35),
+      0 20px 48px -8px rgba(0, 0, 0, 0.3),
+      0 36px 72px -16px rgba(0, 0, 0, 0.2);
   }
 
   /* ---------- Portrait frame ---------- */
   .portrait-frame {
     border-radius: 9999px;
     box-shadow:
-      0 4px 16px -2px rgba(0, 0, 0, 0.1),
-      0 1px 4px rgba(0, 0, 0, 0.05);
+      /* inset recess — subtle pressed-in ring along upper edge */
+      inset 0 2px 4px rgba(0, 0, 0, 0.4),
+      /* inset bottom highlight — faint light wrap */
+      inset 0 -1px 2px rgba(255, 255, 255, 0.06),
+      /* tight outer edge definition */
+      0 1px 3px rgba(0, 0, 0, 0.4),
+      /* floating disc elevation */
+      0 6px 20px -4px rgba(0, 0, 0, 0.35),
+      /* ambient ground glow */
+      0 14px 36px -8px rgba(0, 0, 0, 0.25);
   }
 
   /* ---------- Quote text (serif, editorial) ---------- */
   .quote-text {
     font-style: italic;
-    font-family: 'Playfair Display', Georgia, 'Times New Roman', serif;
-    line-height: 1.65;
+    font-family: var(--font-inter), system-ui, -apple-system, sans-serif;
+    line-height: 1.72;
     letter-spacing: 0.005em;
-    color: #1a1a1a;
+    color: #C4C4CC;
   }
 
   /* ---------- Story quote with decorative mark ---------- */
   .story-quote {
     position: relative;
     padding-left: 2rem;
-    font-family: 'Playfair Display', Georgia, 'Times New Roman', serif;
+    font-family: var(--font-inter), system-ui, -apple-system, sans-serif;
     font-style: italic;
-    font-size: 1.25rem;
-    line-height: 1.7;
-    color: #2C2C2C;
+    font-size: 1.3125rem;
+    line-height: 1.8;
+    color: #C4C4CC;
   }
   .story-quote::before {
     content: '\201C';
     position: absolute;
     top: -0.3em;
     left: -0.15em;
-    font-family: 'Playfair Display', Georgia, 'Times New Roman', serif;
+    font-family: var(--font-inter), system-ui, -apple-system, sans-serif;
     font-size: 4.5rem;
     line-height: 1;
-    color: rgba(0, 0, 0, 0.08);
+    color: rgba(255, 255, 255, 0.07);
     pointer-events: none;
     user-select: none;
   }
@@ -140,17 +224,17 @@
   .category-pill {
     @apply inline-flex items-center rounded-full text-xs font-medium tracking-wide;
     padding: 0.3rem 0.85rem;
-    background: rgba(0, 0, 0, 0.04);
-    color: #888;
-    border: 1px solid rgba(0, 0, 0, 0.06);
+    background: rgba(255, 255, 255, 0.05);
+    color: #8B8B96;
+    border: 1px solid rgba(255, 255, 255, 0.08);
     transition: all 0.25s ease;
     text-transform: uppercase;
     letter-spacing: 0.05em;
   }
   .category-pill:hover {
-    background: rgba(0, 0, 0, 0.07);
-    color: #4a4a4a;
-    border-color: rgba(0, 0, 0, 0.1);
+    background: rgba(255, 255, 255, 0.09);
+    color: #C4C4CC;
+    border-color: rgba(255, 255, 255, 0.14);
   }
 
   /* ---------- Editorial divider ---------- */
@@ -159,8 +243,8 @@
     background: linear-gradient(
       90deg,
       transparent,
-      rgba(0, 0, 0, 0.1),
-      rgba(0, 0, 0, 0.1),
+      rgba(255, 255, 255, 0.1),
+      rgba(255, 255, 255, 0.1),
       transparent
     );
   }
@@ -168,29 +252,29 @@
   /* ---------- Gradient divider ---------- */
   .gradient-divider {
     height: 1px;
-    background: linear-gradient(90deg, transparent, rgba(0, 0, 0, 0.08), transparent);
+    background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.08), transparent);
   }
 }
 
 @layer utilities {
   .text-heading {
-    color: #1a1a1a;
+    color: var(--color-ink-primary);
   }
 
   .text-body {
-    color: #4a4a4a;
+    color: var(--color-ink-secondary);
   }
 
   .text-secondary {
-    color: #888;
+    color: var(--color-ink-muted);
   }
 
   .text-accent {
-    color: #C4956A;
+    color: #A78BFA;
   }
 
   .font-serif-display {
-    font-family: 'Playfair Display', Georgia, 'Times New Roman', serif;
+    font-family: var(--font-inter), system-ui, -apple-system, sans-serif;
   }
 }
 
@@ -201,7 +285,7 @@
 @keyframes fade-in-up {
   from {
     opacity: 0;
-    transform: translateY(16px);
+    transform: translateY(10px);
   }
   to {
     opacity: 1;
@@ -226,5 +310,16 @@
   to {
     opacity: 1;
     transform: scale(1);
+  }
+}
+
+@keyframes slide-in-left {
+  from {
+    opacity: 0;
+    transform: translateX(-16px);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(0);
   }
 }

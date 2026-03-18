@@ -1,0 +1,136 @@
+{
+  "github": {
+    "profile": {
+      "bio": null,
+      "publicRepos": 18,
+      "followers": 1384,
+      "location": null,
+      "createdAt": "2012-08-24T17:25:07Z"
+    },
+    "repos": [
+      {
+        "name": "transformer-xl",
+        "description": null,
+        "url": "https://github.com/kimiyoung/transformer-xl",
+        "stars": 3693,
+        "forks": 764,
+        "language": "Python",
+        "topics": [],
+        "updatedAt": "2026-03-16T13:54:10Z",
+        "createdAt": "2019-01-08T12:20:24Z"
+      },
+      {
+        "name": "planetoid",
+        "description": "Semi-supervised learning with graph embeddings",
+        "url": "https://github.com/kimiyoung/planetoid",
+        "stars": 946,
+        "forks": 306,
+        "language": "Python",
+        "topics": [],
+        "updatedAt": "2026-03-09T18:20:35Z",
+        "createdAt": "2016-06-26T17:45:11Z"
+      },
+      {
+        "name": "ssl_bad_gan",
+        "description": "Good Semi-Supervised Learning That Requires a Bad GAN",
+        "url": "https://github.com/kimiyoung/ssl_bad_gan",
+        "stars": 181,
+        "forks": 47,
+        "language": "Python",
+        "topics": [],
+        "updatedAt": "2026-01-20T00:39:07Z",
+        "createdAt": "2017-11-02T20:14:49Z"
+      },
+      {
+        "name": "review_net",
+        "description": "Review Network for Caption Generation",
+        "url": "https://github.com/kimiyoung/review_net",
+        "stars": 181,
+        "forks": 57,
+        "language": "Lua",
+        "topics": [],
+        "updatedAt": "2025-01-26T04:12:43Z",
+        "createdAt": "2016-09-14T03:57:51Z"
+      },
+      {
+        "name": "transfer",
+        "description": "Transfer Learning for Sequence Tagging with Hierarchical Recurrent Networks",
+        "url": "https://github.com/kimiyoung/transfer",
+        "stars": 137,
+        "forks": 31,
+        "language": "Python",
+        "topics": [],
+        "updatedAt": "2026-02-25T13:59:09Z",
+        "createdAt": "2017-03-03T20:44:32Z"
+      },
+      {
+        "name": "glomo",
+        "description": "Unsupervised Learning of Transferable Relational Graphs",
+        "url": "https://github.com/kimiyoung/glomo",
+        "stars": 69,
+        "forks": 5,
+        "language": "Python",
+        "topics": [],
+        "updatedAt": "2025-03-18T19:38:32Z",
+        "createdAt": "2019-03-20T01:29:34Z"
+      },
+      {
+        "name": "fg-gating",
+        "description": "Fine-grained Gating for Reading Comprehension",
+        "url": "https://github.com/kimiyoung/fg-gating",
+        "stars": 19,
+        "forks": 5,
+        "language": "Python",
+        "topics": [],
+        "updatedAt": "2024-04-26T04:59:36Z",
+        "createdAt": "2017-03-04T00:57:16Z"
+      },
+      {
+        "name": "genvector",
+        "description": "Multi-modal Bayesian embedding model",
+        "url": "https://github.com/kimiyoung/genvector",
+        "stars": 18,
+        "forks": 10,
+        "language": "C++",
+        "topics": [],
+        "updatedAt": "2025-01-26T04:12:44Z",
+        "createdAt": "2016-05-26T01:11:21Z"
+      },
+      {
+        "name": "kimiyoung.github.io",
+        "description": null,
+        "url": "https://github.com/kimiyoung/kimiyoung.github.io",
+        "stars": 3,
+        "forks": 0,
+        "language": "HTML",
+        "topics": [],
+        "updatedAt": "2024-06-11T05:29:40Z",
+        "createdAt": "2014-01-26T08:24:34Z"
+      }
+    ],
+    "totalStars": 5247,
+    "languages": [
+      {
+        "name": "Python",
+        "count": 6,
+        "color": "#3572A5"
+      },
+      {
+        "name": "Lua",
+        "count": 1,
+        "color": "#8b8b8b"
+      },
+      {
+        "name": "C++",
+        "count": 1,
+        "color": "#f34b7d"
+      },
+      {
+        "name": "HTML",
+        "count": 1,
+        "color": "#e34c26"
+      }
+    ]
+  },
+  "huggingface": null
+}

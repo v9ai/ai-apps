@@ -9,39 +9,38 @@ const config: Config = {
   theme: {
     extend: {
       colors: {
-        // Base surfaces — warm dark instead of pure black
-        base: "#0c0b09",
-        "base-dark": "#0a0a0a",
-        surface: "rgba(255, 248, 235, 0.03)",
-        "surface-hover": "rgba(255, 248, 235, 0.07)",
-        "surface-active": "rgba(255, 248, 235, 0.10)",
+        // Page background
+        base: "#0B0B0F",
 
-        // Primary accent — warm amber/gold
-        accent: {
-          DEFAULT: "#D4A853",
-          light: "#E4C47A",
-          dark: "#B08A3A",
-          muted: "rgba(212, 168, 83, 0.15)",
+        // Card / surface layers
+        surface: {
+          DEFAULT: "#141418",
+          raised: "#16161D",
+          hover: "#1C1C22",
         },
 
-        // Spotify — preserved for podcast links
+        // Text hierarchy
+        ink: {
+          primary: "#E8E8ED",
+          secondary: "#C4C4CC",
+          tertiary: "#9B9BA6",
+          muted: "#7B7B86",
+          subtle: "#5A5A65",
+        },
+
+        // Borders (as opaque fallback values — rgba used inline where needed)
+        rim: {
+          faint: "rgba(255,255,255,0.04)",
+          subtle: "rgba(255,255,255,0.06)",
+          DEFAULT: "rgba(255,255,255,0.08)",
+          strong: "rgba(255,255,255,0.12)",
+          active: "rgba(255,255,255,0.15)",
+        },
+
+        // Brand
         spotify: "#1DB954",
 
-        // Warm neutral palette
-        warm: {
-          50: "#faf8f5",
-          100: "#f3efe8",
-          200: "#e8e0d4",
-          300: "#d4c8b5",
-          400: "#b8a68e",
-          500: "#9c876a",
-          600: "#7f6b50",
-          700: "#5e4e3a",
-          800: "#3d3226",
-          900: "#1e1a14",
-        },
-
-        // Category colors — muted, sophisticated
+        // Category accent colors — muted, sophisticated
         category: {
           research: "#7B8FA1",
           engineering: "#8B7E74",
@@ -52,30 +51,11 @@ const config: Config = {
           safety: "#9B7B7B",
           open_source: "#7B8B7B",
         },
-
-        // Text hierarchy on dark backgrounds
-        text: {
-          primary: "#faf8f5",
-          secondary: "#b8a68e",
-          tertiary: "#7f6b50",
-          muted: "#5e4e3a",
-        },
       },
 
       fontFamily: {
-        serif: [
-          "Playfair Display",
-          "Georgia",
-          "Cambria",
-          "Times New Roman",
-          "serif",
-        ],
         sans: [
-          "Inter",
-          "system-ui",
-          "-apple-system",
-          "BlinkMacSystemFont",
-          "Segoe UI",
+          "var(--font-inter)",
           "sans-serif",
         ],
       },
@@ -106,7 +86,6 @@ const config: Config = {
         "pulse-glow": "pulse-glow 3s ease-in-out infinite",
         "story-card": "story-card 0.7s cubic-bezier(0.22, 1, 0.36, 1) both",
         "story-fade": "story-fade 0.9s cubic-bezier(0.22, 1, 0.36, 1) both",
-        "warm-pulse": "warm-pulse 4s ease-in-out infinite",
       },
 
       keyframes: {
@@ -158,14 +137,6 @@ const config: Config = {
             filter: "blur(0px)",
           },
         },
-        "warm-pulse": {
-          "0%, 100%": {
-            boxShadow: "0 0 20px rgba(212, 168, 83, 0.05)",
-          },
-          "50%": {
-            boxShadow: "0 0 30px rgba(212, 168, 83, 0.12)",
-          },
-        },
       },
 
       borderRadius: {
@@ -173,20 +144,8 @@ const config: Config = {
       },
 
       boxShadow: {
-        warm: "0 4px 24px rgba(212, 168, 83, 0.06)",
-        "warm-lg": "0 8px 40px rgba(212, 168, 83, 0.10)",
-        card: "0 1px 3px rgba(0, 0, 0, 0.3), 0 4px 16px rgba(0, 0, 0, 0.2)",
-        "card-hover":
-          "0 2px 8px rgba(0, 0, 0, 0.4), 0 8px 32px rgba(0, 0, 0, 0.3)",
-      },
-
-      backgroundImage: {
-        "warm-gradient":
-          "linear-gradient(135deg, rgba(212, 168, 83, 0.08), rgba(212, 168, 83, 0))",
-        "warm-radial":
-          "radial-gradient(ellipse at top, rgba(212, 168, 83, 0.06), transparent 70%)",
-        "editorial-fade":
-          "linear-gradient(to bottom, transparent, #0c0b09)",
+        card: "0 1px 3px rgba(0,0,0,0.3), 0 4px 16px rgba(0,0,0,0.2)",
+        "card-hover": "0 2px 8px rgba(0,0,0,0.4), 0 8px 32px rgba(0,0,0,0.3)",
       },
     },
   },

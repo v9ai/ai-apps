@@ -4,10 +4,10 @@
   "scripts": {
     "dev": "next dev --turbopack",
     "build": "next build --webpack",
-    "start": "next start"
+    "start": "next start",
+    "prepare": "panda codegen"
   },
   "dependencies": {
-    "@langchain/core": "^0.3.80",
     "classnames": "^2.5.1",
     "date-fns": "^3.6.0",
     "next": "latest",
@@ -15,6 +15,7 @@
     "react-dom": "^19"
   },
   "devDependencies": {
+    "@pandacss/dev": "^1.9.0",
     "@types/node": "^20.14.8",
     "@types/react": "^19",
     "@types/react-dom": "^19",

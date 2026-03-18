@@ -28,6 +28,7 @@ Commands:
 
 import argparse
 import json
+import os
 import re
 import time
 from http.server import HTTPServer, BaseHTTPRequestHandler
@@ -50,8 +51,8 @@ console = Console()
 # CONFIG
 # ═══════════════════════════════════════════════════════════════════════════
 
-SPOTIFY_CLIENT_ID = "REDACTED_SPOTIFY_CLIENT_ID"
-SPOTIFY_CLIENT_SECRET = "REDACTED_SPOTIFY_CLIENT_SECRET"
+SPOTIFY_CLIENT_ID = os.environ.get("SPOTIFY_CLIENT_ID", "")
+SPOTIFY_CLIENT_SECRET = os.environ.get("SPOTIFY_CLIENT_SECRET", "")
 SPOTIFY_MARKET = "US"
 
 CHROMA_DIR = "./chroma_podcasts"
@@ -76,7 +77,7 @@ AI_PEOPLE = [
     "Yann LeCun", "Demis Hassabis", "Fei-Fei Li", "Geoffrey Hinton",
     "Athos Georgiou",
     # Podcast Hosts & AI Personalities
-    "Lex Fridman", "Dwarkesh Patel",
+    "Dwarkesh Patel",
     # Rising Infrastructure & Product Leaders
     "Amjad Masad", "Mustafa Suleyman", "Amanda Askell", "Noam Shazeer",
     # AI Infrastructure & Inference
@@ -98,7 +99,7 @@ PERSON_SLUGS = {
     "Yann LeCun": "yann-lecun", "Demis Hassabis": "demis-hassabis",
     "Fei-Fei Li": "fei-fei-li", "Geoffrey Hinton": "geoffrey-hinton",
     "Athos Georgiou": "athos-georgiou",
-    "Lex Fridman": "lex-fridman", "Dwarkesh Patel": "dwarkesh-patel",
+    "Dwarkesh Patel": "dwarkesh-patel",
     "Amjad Masad": "amjad-masad", "Mustafa Suleyman": "mustafa-suleyman",
     "Amanda Askell": "amanda-askell", "Noam Shazeer": "noam-shazeer",
     "Swami Sivasubramanian": "swami-sivasubramanian",
@@ -121,7 +122,7 @@ PERSON_CATEGORIES = {
     "Yann LeCun": "researchers", "Demis Hassabis": "researchers",
     "Fei-Fei Li": "researchers", "Geoffrey Hinton": "researchers",
     "Athos Georgiou": "researchers",
-    "Lex Fridman": "hosts", "Dwarkesh Patel": "hosts",
+    "Dwarkesh Patel": "hosts",
     "Amjad Masad": "rising-leaders", "Mustafa Suleyman": "rising-leaders",
     "Amanda Askell": "rising-leaders", "Noam Shazeer": "rising-leaders",
     "Swami Sivasubramanian": "infrastructure", "Woosuk Kwon": "infrastructure",
@@ -151,7 +152,6 @@ PERSON_ALT_QUERIES: dict[str, list[str]] = {
     "Andrew Kane": ["Andrew Kane pgvector"],
     "Andre Zayarni": ["Andre Zayarni Qdrant", "Qdrant CEO"],
     "Yang Zhilin": ["Yang Zhilin Moonshot", "Kimi Moonshot AI", "Zhilin Yang Kimi"],
-    "Lex Fridman": ["Lex Fridman podcast interview"],
 }
 
 # Alternate name forms for filtering (person's name may appear differently)
@@ -1240,11 +1240,6 @@ GOLDEN_TESTS = [
         "guest": "Fei-Fei Li", "category": "researchers",
     },
     # ── Hosts ───────────────────────────────────────────────────────────
-    {
-        "input": "Lex Fridman podcast deep dive AI interviews",
-        "expected_output": "Lex Fridman conducts marathon deep-dive interviews with AI luminaries on his podcast.",
-        "guest": "Lex Fridman", "category": "hosts",
-    },
     {
         "input": "Dwarkesh Patel podcast AGI scaling interviews",
         "expected_output": "Dwarkesh Patel hosts long-form technical interviews on AI scaling and AGI timelines.",

@@ -1,5 +1,7 @@
 """Prompts for the person research pipeline."""
 
+import json
+
 GENERATE_QUERIES_SYSTEM = """\
 You are a research assistant that generates web search queries to deeply \
 research a specific person in the AI/tech industry. Given a person's name, \
@@ -50,7 +52,7 @@ def build_generate_queries_messages(
 SYNTHESIZE_SYSTEM = """\
 You are an expert research analyst synthesizing information about a person \
 in the AI/tech industry. You will receive web search results, GitHub data, \
-and existing knowledge about the person.
+ORCID academic record, and existing knowledge about the person.
 
 You may receive full page content from fetched URLs alongside search snippets. \
 Use this richer content to extract more accurate details, direct quotes, \
@@ -123,6 +125,7 @@ def build_synthesize_messages(
     org: str,
     web_results: str,
     github_data: str,
+    orcid_data: str = "(no ORCID data)",
 ) -> list[dict[str, str]]:
     return [
         {"role": "system", "content": SYNTHESIZE_SYSTEM},
@@ -135,7 +138,51 @@ def build_synthesize_messages(
                 f"Organization: {org}\n\n"
                 f"# Web Search Results\n{web_results}\n\n"
                 f"# GitHub Data\n{github_data}\n\n"
+                f"# ORCID Academic Record\n{orcid_data}\n\n"
                 f"Synthesize a comprehensive research profile."
+            ),
+        },
+    ]
+
+
+EVALUATE_SYSTEM = """\
+You are a research quality evaluator. Given a synthesized research profile \
+about a person in the AI/tech industry, evaluate its quality across 5 dimensions.
+
+Score each dimension 1 (very poor) to 10 (excellent):
+
+1. bio_quality — Is the bio specific, evidence-based, and informative? \
+Does it avoid vague or generic statements?
+2. source_coverage — Are there diverse, high-quality, verifiable sources \
+covering multiple aspects?
+3. timeline_completeness — Is the timeline detailed with specific dates? \
+Does it adequately cover their career arc?
+4. contributions_depth — Are contributions well-described with context \
+and verifiable URLs?
+5. name_disambiguation — Does the profile clearly focus on the right person? \
+No signs of confusion with similarly-named individuals?
+
+Return a JSON object:
+{
+  "bio_quality": {"score": <1-10>, "reasoning": "<1-2 sentences>"},
+  "source_coverage": {"score": <1-10>, "reasoning": "<1-2 sentences>"},
+  "timeline_completeness": {"score": <1-10>, "reasoning": "<1-2 sentences>"},
+  "contributions_depth": {"score": <1-10>, "reasoning": "<1-2 sentences>"},
+  "name_disambiguation": {"score": <1-10>, "reasoning": "<1-2 sentences>"},
+  "overall_score": <weighted average 1-10>,
+  "summary": "<2-3 sentence overall assessment with key strengths/weaknesses>"
+}
+"""
+
+
+def build_evaluate_messages(research: dict) -> list[dict[str, str]]:
+    return [
+        {"role": "system", "content": EVALUATE_SYSTEM},
+        {
+            "role": "user",
+            "content": (
+                f"Evaluate this research profile:\n\n"
+                f"{json.dumps(research, indent=2, ensure_ascii=False)}"
             ),
         },
     ]

@@ -1,0 +1,24 @@
+{
+  "slug": "amanda-askell",
+  "generated_at": "2026-03-18T21:18:45.678375Z",
+  "events": [
+    {
+      "date": "2025-04-21",
+      "event": "Published \"Values in the Wild: Discovering and Analyzing Values in Real-World Language Model Interactions\"",
+      "url": "https://arxiv.org/abs/2504.15236",
+      "source": "paper"
+    },
+    {
+      "date": "2023-10-20",
+      "event": "Published \"Towards Understanding Sycophancy in Language Models\"",
+      "url": "https://arxiv.org/abs/2310.13548",
+      "source": "paper"
+    },
+    {
+      "date": "2022-12-15",
+      "event": "Published \"Constitutional AI: Harmlessness from AI Feedback\"",
+      "url": "https://arxiv.org/abs/2212.08073",
+      "source": "paper"
+    }
+  ]
+}

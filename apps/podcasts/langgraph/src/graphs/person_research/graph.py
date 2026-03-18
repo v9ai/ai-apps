@@ -1,19 +1,24 @@
 """Person Research StateGraph.
 
 Flow:
-    START → generate_queries → [search_web ×N] → check_urls → fetch_github → synthesize → export → END
+    START → generate_queries → [search_web ×N] → check_urls → fetch_github ─┐
+    START → fetch_orcid ─────────────────────────────────────────────────────┤
+                                                                            └→ synthesize → evaluate → export → END
 
 Generates search queries via DeepSeek, fans out to DuckDuckGo for parallel
 web searches, fetches full page content from top URLs, fetches GitHub profile
-data, then synthesizes everything into a structured research profile via DeepSeek.
+data and ORCID academic record in parallel, synthesizes everything into a
+structured research profile via DeepSeek, then evaluates the profile quality.
 """
 
 from langgraph.graph import END, START, StateGraph
 
 from .nodes import (
     check_urls_node,
+    evaluate_node,
     export_node,
     fetch_github_node,
+    fetch_orcid_node,
     generate_queries_node,
     route_to_search,
     search_web_node,
@@ -29,11 +34,15 @@ def build_person_research_graph():
     builder.add_node("search_web", search_web_node)
     builder.add_node("check_urls", check_urls_node)
     builder.add_node("fetch_github", fetch_github_node)
+    builder.add_node("fetch_orcid", fetch_orcid_node)
     builder.add_node("synthesize", synthesize_node)
+    builder.add_node("evaluate", evaluate_node)
     builder.add_node("export", export_node)
 
     # START → generate_queries → fan-out to search_web
+    # START → fetch_orcid (runs in parallel with web search pipeline)
     builder.add_edge(START, "generate_queries")
+    builder.add_edge(START, "fetch_orcid")
     builder.add_conditional_edges(
         "generate_queries",
         route_to_search,
@@ -44,9 +53,11 @@ def build_person_research_graph():
     builder.add_edge("search_web", "check_urls")
     builder.add_edge("check_urls", "fetch_github")
 
-    # fetch_github → synthesize → export → END
+    # fetch_github + fetch_orcid both converge → synthesize → evaluate → export → END
     builder.add_edge("fetch_github", "synthesize")
-    builder.add_edge("synthesize", "export")
+    builder.add_edge("fetch_orcid", "synthesize")
+    builder.add_edge("synthesize", "evaluate")
+    builder.add_edge("evaluate", "export")
     builder.add_edge("export", END)
 
     return builder.compile()

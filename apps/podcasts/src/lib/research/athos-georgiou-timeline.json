@@ -1,0 +1,132 @@
+{
+  "slug": "athos-georgiou",
+  "generated_at": "2026-03-18T21:26:59.364322Z",
+  "events": [
+    {
+      "date": "2026-03-15",
+      "event": "Published blog post 'Diminishing Returns and the Art of Knowing When to Stop' on ColQwen3.5 optimization plateaus",
+      "url": "https://athrael.net/posts/diminishing-returns-benchmark-optimization",
+      "source": "research"
+    },
+    {
+      "date": "2026-03-15",
+      "event": "Published model colqwen3.5-4.5B-v3 on Hugging Face",
+      "url": "https://huggingface.co/athrael-soju/colqwen3.5-4.5B-v3",
+      "source": "huggingface"
+    },
+    {
+      "date": "2026-03-13",
+      "event": "Published model colqwen3.5-4.5B-v2 on Hugging Face",
+      "url": "https://huggingface.co/athrael-soju/colqwen3.5-4.5B-v2",
+      "source": "huggingface"
+    },
+    {
+      "date": "2026-03-10",
+      "event": "Published model colqwen3.5-4.5B-v1 on Hugging Face",
+      "url": "https://huggingface.co/athrael-soju/colqwen3.5-4.5B-v1",
+      "source": "huggingface"
+    },
+    {
+      "date": "2026-03",
+      "event": "Published ColQwen3.5-4.5B v1/v2/v3 visual document retrieval models on Hugging Face",
+      "url": "https://huggingface.co/athrael-soju/colqwen3.5-4.5B-v3",
+      "source": "research"
+    },
+    {
+      "date": "2026-02-27",
+      "event": "Published arXiv paper 'Architecture-Aware LLM Inference Optimization on AMD Instinct GPUs'",
+      "url": "https://arxiv.org/abs/2603.10031",
+      "source": "research"
+    },
+    {
+      "date": "2026-02-15",
+      "event": "Created larvling",
+      "url": "https://github.com/athrael-soju/larvling",
+      "source": "github"
+    },
+    {
+      "date": "2026-02-04",
+      "event": "Participated in the launch event for the Greek AI Startup Accelerator by OpenAI, the Hellenic Government, and Endeavor Greece",
+      "url": "https://luma.com/ooh81f9h",
+      "source": "research"
+    },
+    {
+      "date": "2026-01",
+      "event": "Published blog post 'Closing the AI Value Gap: Insights from Research' on enterprise AI adoption",
+      "url": "https://athrael.net/posts/closing-the-ai-value-gap",
+      "source": "research"
+    },
+    {
+      "date": "2025-12-02",
+      "event": "Published arXiv paper 'Spatially-Grounded Document Retrieval via Patch-to-Region Relevance Propagation'",
+      "url": "https://arxiv.org/abs/2512.02660",
+      "source": "research"
+    },
+    {
+      "date": "2025-10",
+      "event": "Released Snappy, a vision-language retrieval system unifying ColPali with structured OCR (83 stars)",
+      "url": "https://github.com/athrael-soju/Snappy",
+      "source": "research"
+    },
+    {
+      "date": "2025-09",
+      "event": "Published 'The Most Beautiful RAG' \u2014 end-to-end vision RAG with ColPali, Qdrant, and MinIO",
+      "url": "https://athrael.net/posts/the-most-beautiful-vision-rag",
+      "source": "research"
+    },
+    {
+      "date": "2025-07-28",
+      "event": "Created Snappy: Vision-language retrieval system unifying ColPali with structured OCR",
+      "url": "https://github.com/athrael-soju/Snappy",
+      "source": "github"
+    },
+    {
+      "date": "2025-05-24",
+      "event": "Created little-scripts: A monorepo of utility scripts and tools",
+      "url": "https://github.com/athrael-soju/little-scripts",
+      "source": "github"
+    },
+    {
+      "date": "2025-04-20",
+      "event": "Created video-annotation-and-disambiguation-using-RF-DETR-and-BLIP2",
+      "url": "https://github.com/athrael-soju/video-annotation-and-disambiguation-using-RF-DETR-and-BLIP2",
+      "source": "github"
+    },
+    {
+      "date": "2025-03-17",
+      "event": "Created nlp-graphrag-with-qdrant-and-neo4j",
+      "url": "https://github.com/athrael-soju/nlp-graphrag-with-qdrant-and-neo4j",
+      "source": "github"
+    },
+    {
+      "date": "2025-03-03",
+      "event": "Created Qdrant-Neo4j-Ollama-Graph-Rag",
+      "url": "https://github.com/athrael-soju/Qdrant-Neo4j-Ollama-Graph-Rag",
+      "source": "github"
+    },
+    {
+      "date": "2025-02-27",
+      "event": "Created colpali1.3-colqwen2.5-v0.1",
+      "url": "https://github.com/athrael-soju/colpali1.3-colqwen2.5-v0.1",
+      "source": "github"
+    },
+    {
+      "date": "2024-09-27",
+      "event": "Created grafana-alloy-example: Observability stack with Grafana Alloy, Prometheus, Mimir, Loki",
+      "url": "https://github.com/athrael-soju/grafana-alloy-example",
+      "source": "github"
+    },
+    {
+      "date": "2024-04",
+      "event": "Co-authored 'Raising Artificial Intelligence' on responsible AI frameworks with Olga Topchaya",
+      "url": "https://ai.plainenglish.io/raising-artificial-intelligence-62fe9ae40e90",
+      "source": "research"
+    },
+    {
+      "date": "2024-01",
+      "event": "Incorporated NCA LTD as a private limited company in the UK",
+      "url": "https://www.companiesintheuk.co.uk/ltd/nca-2",
+      "source": "research"
+    }
+  ]
+}

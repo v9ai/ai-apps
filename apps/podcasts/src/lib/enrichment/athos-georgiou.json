@@ -1,0 +1,96 @@
+{
+  "github": null,
+  "huggingface": {
+    "models": [
+      {
+        "id": "athrael-soju/colqwen3.5-4.5B-v1",
+        "likes": 11,
+        "downloads": 199,
+        "tags": [
+          "colpali_engine",
+          "safetensors",
+          "qwen3_5",
+          "colpali",
+          "colbert",
+          "visual-document-retrieval",
+          "document-retrieval",
+          "multimodal",
+          "embedding",
+          "vidore",
+          "late-interaction",
+          "en",
+          "de",
+          "es",
+          "fr",
+          "it",
+          "arxiv:2407.01449",
+          "base_model:Qwen/Qwen3.5-4B",
+          "base_model:finetune:Qwen/Qwen3.5-4B",
+          "license:apache-2.0",
+          "region:us"
+        ],
+        "pipelineTag": "visual-document-retrieval",
+        "createdAt": "2026-03-10T22:25:33.000Z"
+      },
+      {
+        "id": "athrael-soju/colqwen3.5-4.5B-v3",
+        "likes": 2,
+        "downloads": 123,
+        "tags": [
+          "colpali_engine",
+          "safetensors",
+          "qwen3_5",
+          "visual-document-retrieval",
+          "colbert",
+          "late-interaction",
+          "multi-vector",
+          "lora",
+          "model-soup",
+          "hpo",
+          "en",
+          "fr",
+          "de",
+          "es",
+          "zh",
+          "base_model:Qwen/Qwen3.5-4B",
+          "base_model:adapter:Qwen/Qwen3.5-4B",
+          "license:apache-2.0",
+          "region:us"
+        ],
+        "pipelineTag": "visual-document-retrieval",
+        "createdAt": "2026-03-15T21:33:30.000Z"
+      },
+      {
+        "id": "athrael-soju/colqwen3.5-4.5B-v2",
+        "likes": 1,
+        "downloads": 101,
+        "tags": [
+          "colpali_engine",
+          "safetensors",
+          "qwen3_5",
+          "visual-document-retrieval",
+          "colbert",
+          "late-interaction",
+          "multi-vector",
+          "lora",
+          "model-soup",
+          "en",
+          "fr",
+          "de",
+          "es",
+          "it",
+          "arxiv:2407.01449",
+          "base_model:Qwen/Qwen3.5-4B",
+          "base_model:adapter:Qwen/Qwen3.5-4B",
+          "license:apache-2.0",
+          "region:us"
+        ],
+        "pipelineTag": "visual-document-retrieval",
+        "createdAt": "2026-03-13T18:47:45.000Z"
+      }
+    ],
+    "totalDownloads": 423,
+    "totalLikes": 14
+  },
+  "imageUrl": "https://www.london.gov.uk/sites/default/files/2024-05/Alessandro+Georgiou+headshot.jpg"
+}

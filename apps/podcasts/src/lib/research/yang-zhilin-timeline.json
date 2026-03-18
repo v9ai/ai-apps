@@ -1,0 +1,24 @@
+{
+  "slug": "yang-zhilin",
+  "generated_at": "2026-03-18T21:19:06.536175Z",
+  "events": [
+    {
+      "date": "2025-04-10",
+      "event": "Published \"Kimi-VL Technical Report\"",
+      "url": "https://arxiv.org/abs/2504.07491",
+      "source": "paper"
+    },
+    {
+      "date": "2025-02-24",
+      "event": "Published \"Muon is Scalable for LLM Training\"",
+      "url": "https://arxiv.org/abs/2502.16982",
+      "source": "paper"
+    },
+    {
+      "date": "2025-02-18",
+      "event": "Published \"MoBA: Mixture of Block Attention for Long-Context LLMs\"",
+      "url": "https://arxiv.org/abs/2502.13189",
+      "source": "paper"
+    }
+  ]
+}

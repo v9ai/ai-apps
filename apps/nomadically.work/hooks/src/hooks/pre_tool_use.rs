@@ -14,7 +14,7 @@ Respond ONLY with JSON: {"ok": true} to allow, or {"ok": false, "reason": "expla
 Guidelines:
 - Block destructive filesystem operations (rm -rf /, deleting system files)
 - Block commands that exfiltrate data (curl with sensitive files, piping secrets)
-- Block writes to sensitive config files (.env, SSH keys, credentials)
+- Block writes to sensitive config files (SSH keys, credentials)
 - Allow normal development operations (testing, building, linting, reading files)
 - Allow git operations that don't force-push to main/master
 - When uncertain, allow — false positives are worse than false negatives

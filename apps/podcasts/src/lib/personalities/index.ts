@@ -6,9 +6,11 @@ export type {
   PersonResearch,
   Personality,
   Category,
+  TimelineSource,
+  EnrichedTimelineEvent,
 } from "./types";
 
-import type { Category, Personality, PersonResearch } from "./types";
+import type { Category, Personality, PersonResearch, EnrichedTimelineEvent } from "./types";
 
 // Lab Leaders & Founders
 import samAltman from "../../../personalities/sam-altman";
@@ -34,7 +36,6 @@ import geoffreyHinton from "../../../personalities/geoffrey-hinton";
 import athosGeorgiou from "../../../personalities/athos-georgiou";
 
 // Podcast Hosts & AI Personalities
-import lexFridman from "../../../personalities/lex-fridman";
 import dwarkeshPatel from "../../../personalities/dwarkesh-patel";
 
 // Rising Infrastructure & Product Leaders
@@ -79,7 +80,7 @@ export const categories: Category[] = [
   {
     title: "Podcast Hosts & AI Personalities",
     slug: "hosts",
-    personalities: [lexFridman, dwarkeshPatel],
+    personalities: [dwarkeshPatel],
   },
   {
     title: "Rising Infrastructure & Product Leaders",
@@ -121,6 +122,14 @@ export function getInitials(name: string): string {
 }
 
 export function getAvatarUrl(p: Personality): string | null {
+  if (p.linkedinImage) return p.linkedinImage;
+  return p.github ? `https://github.com/${p.github}.png?size=200` : null;
+}
+
+/** Server-only: resolve avatar with enrichment image search fallback. */
+export function getAvatarUrlWithEnrichment(p: Personality, enrichedImageUrl?: string | null): string | null {
+  if (p.linkedinImage) return p.linkedinImage;
+  if (enrichedImageUrl) return enrichedImageUrl;
   return p.github ? `https://github.com/${p.github}.png?size=200` : null;
 }
 
@@ -140,6 +149,18 @@ export function getResearch(slug: string): PersonResearch | null {
   try {
     // eslint-disable-next-line @typescript-eslint/no-require-imports
     return require(`../research/${slug}.json`) as PersonResearch;
+  } catch {
+    return null;
+  }
+}
+
+export function getEnrichedTimeline(slug: string): EnrichedTimelineEvent[] | null {
+  try {
+    // eslint-disable-next-line @typescript-eslint/no-require-imports
+    const data = require(`../research/${slug}-timeline.json`) as {
+      events: EnrichedTimelineEvent[];
+    };
+    return data.events;
   } catch {
     return null;
   }

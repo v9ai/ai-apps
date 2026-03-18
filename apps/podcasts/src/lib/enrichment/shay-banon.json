@@ -1,0 +1,81 @@
+{
+  "github": {
+    "profile": {
+      "bio": null,
+      "publicRepos": 11,
+      "followers": 1320,
+      "location": null,
+      "createdAt": "2008-12-18T16:55:47Z"
+    },
+    "repos": [
+      {
+        "name": "talks",
+        "description": "Source for talks I give here and there",
+        "url": "https://github.com/kimchy/talks",
+        "stars": 49,
+        "forks": 16,
+        "language": "Shell",
+        "topics": [],
+        "updatedAt": "2025-05-18T03:24:44Z",
+        "createdAt": "2011-05-31T16:13:35Z"
+      },
+      {
+        "name": "compass",
+        "description": null,
+        "url": "https://github.com/kimchy/compass",
+        "stars": 24,
+        "forks": 15,
+        "language": "Java",
+        "topics": [],
+        "updatedAt": "2025-06-05T07:46:08Z",
+        "createdAt": "2011-05-20T14:48:11Z"
+      },
+      {
+        "name": "kimchy.github.com",
+        "description": null,
+        "url": "https://github.com/kimchy/kimchy.github.com",
+        "stars": 17,
+        "forks": 7,
+        "language": "CSS",
+        "topics": [],
+        "updatedAt": "2025-02-28T05:29:11Z",
+        "createdAt": "2010-01-04T21:54:46Z"
+      },
+      {
+        "name": "kimchy.github.io",
+        "description": null,
+        "url": "https://github.com/kimchy/kimchy.github.io",
+        "stars": 1,
+        "forks": 1,
+        "language": "JavaScript",
+        "topics": [],
+        "updatedAt": "2025-05-18T03:24:36Z",
+        "createdAt": "2013-11-02T23:47:56Z"
+      }
+    ],
+    "totalStars": 91,
+    "languages": [
+      {
+        "name": "Shell",
+        "count": 1,
+        "color": "#89e051"
+      },
+      {
+        "name": "Java",
+        "count": 1,
+        "color": "#b07219"
+      },
+      {
+        "name": "CSS",
+        "count": 1,
+        "color": "#563d7c"
+      },
+      {
+        "name": "JavaScript",
+        "count": 1,
+        "color": "#f1e05a"
+      }
+    ]
+  },
+  "huggingface": null
+}

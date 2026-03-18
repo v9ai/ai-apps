@@ -1,0 +1,141 @@
+{
+  "github": {
+    "profile": {
+      "bio": null,
+      "publicRepos": 431,
+      "followers": 6836,
+      "location": "San Francisco, CA",
+      "createdAt": "2010-03-11T05:01:17Z"
+    },
+    "repos": [
+      {
+        "name": "iceberg-ruby",
+        "description": "Apache Iceberg for Ruby",
+        "url": "https://github.com/ankane/iceberg-ruby",
+        "stars": 34,
+        "forks": 1,
+        "language": "Rust",
+        "topics": [],
+        "updatedAt": "2026-03-14T10:48:34Z",
+        "createdAt": "2025-08-27T18:47:08Z"
+      },
+      {
+        "name": "ducklake-ruby",
+        "description": "Run your own data lake with a SQL database and file/object storage",
+        "url": "https://github.com/ankane/ducklake-ruby",
+        "stars": 26,
+        "forks": 0,
+        "language": "Ruby",
+        "topics": [],
+        "updatedAt": "2026-03-10T00:39:55Z",
+        "createdAt": "2025-08-18T04:54:11Z"
+      },
+      {
+        "name": "neighbor-s3",
+        "description": "Nearest neighbor search for Ruby and S3 Vectors",
+        "url": "https://github.com/ankane/neighbor-s3",
+        "stars": 13,
+        "forks": 0,
+        "language": "Ruby",
+        "topics": [],
+        "updatedAt": "2025-12-28T22:35:01Z",
+        "createdAt": "2025-10-03T03:18:44Z"
+      },
+      {
+        "name": "seaduck",
+        "description": "Apache Iceberg for Ruby, powered by libduckdb",
+        "url": "https://github.com/ankane/seaduck",
+        "stars": 7,
+        "forks": 0,
+        "language": "Ruby",
+        "topics": [],
+        "updatedAt": "2026-03-10T00:41:51Z",
+        "createdAt": "2025-10-01T00:36:45Z"
+      },
+      {
+        "name": "torchcodec-ruby",
+        "description": "Media encoding and decoding for Torch.rb",
+        "url": "https://github.com/ankane/torchcodec-ruby",
+        "stars": 2,
+        "forks": 0,
+        "language": "C++",
+        "topics": [],
+        "updatedAt": "2026-02-27T16:19:51Z",
+        "createdAt": "2026-02-27T03:26:37Z"
+      },
+      {
+        "name": "bayestest-c",
+        "description": "Bayesian A/B testing calculations for C",
+        "url": "https://github.com/ankane/bayestest-c",
+        "stars": 1,
+        "forks": 0,
+        "language": "C",
+        "topics": [],
+        "updatedAt": "2026-03-16T00:15:40Z",
+        "createdAt": "2026-03-13T04:26:01Z"
+      },
+      {
+        "name": "seaduck-php",
+        "description": "Apache Iceberg for PHP, powered by libduckdb",
+        "url": "https://github.com/ankane/seaduck-php",
+        "stars": 1,
+        "forks": 0,
+        "language": "PHP",
+        "topics": [],
+        "updatedAt": "2025-12-06T23:05:30Z",
+        "createdAt": "2025-11-09T19:09:09Z"
+      },
+      {
+        "name": "ducklake-php",
+        "description": "Run your own data lake with a SQL database and file/object storage",
+        "url": "https://github.com/ankane/ducklake-php",
+        "stars": 1,
+        "forks": 0,
+        "language": "PHP",
+        "topics": [],
+        "updatedAt": "2025-12-22T18:51:12Z",
+        "createdAt": "2025-11-05T19:18:39Z"
+      },
+      {
+        "name": "libpqxx-repro",
+        "description": null,
+        "url": "https://github.com/ankane/libpqxx-repro",
+        "stars": 0,
+        "forks": 0,
+        "language": "C++",
+        "topics": [],
+        "updatedAt": "2025-07-11T00:13:15Z",
+        "createdAt": "2025-07-11T00:12:30Z"
+      }
+    ],
+    "totalStars": 85,
+    "languages": [
+      {
+        "name": "Ruby",
+        "count": 3,
+        "color": "#701516"
+      },
+      {
+        "name": "C++",
+        "count": 2,
+        "color": "#f34b7d"
+      },
+      {
+        "name": "PHP",
+        "count": 2,
+        "color": "#8b8b8b"
+      },
+      {
+        "name": "Rust",
+        "count": 1,
+        "color": "#dea584"
+      },
+      {
+        "name": "C",
+        "count": 1,
+        "color": "#555555"
+      }
+    ]
+  },
+  "huggingface": null
+}

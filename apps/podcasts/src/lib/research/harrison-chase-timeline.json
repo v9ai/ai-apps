@@ -1,0 +1,18 @@
+{
+  "slug": "harrison-chase",
+  "generated_at": "2026-03-18T21:18:58.507828Z",
+  "events": [
+    {
+      "date": "2025-04-20",
+      "event": "Published \"PROMPTEVALS: A Dataset of Assertions and Guardrails for Custom Production Large Language Model Pipelines\"",
+      "url": "https://arxiv.org/abs/2504.14738",
+      "source": "paper"
+    },
+    {
+      "date": "2024-01-05",
+      "event": "Published \"SPADE: Synthesizing Data Quality Assertions for Large Language Model Pipelines\"",
+      "url": "https://arxiv.org/abs/2401.03038",
+      "source": "paper"
+    }
+  ]
+}

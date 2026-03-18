@@ -1,0 +1,229 @@
+{
+  "github": {
+    "profile": {
+      "bio": "Founder of crewAI / prev @clearbit (acc by @hubspot) ",
+      "publicRepos": 73,
+      "followers": 3328,
+      "location": "S\u00e3o Paulo, SP, Brazil",
+      "createdAt": "2011-03-13T15:15:08Z"
+    },
+    "repos": [
+      {
+        "name": "self-development",
+        "description": null,
+        "url": "https://github.com/joaomdmoura/self-development",
+        "stars": 13,
+        "forks": 1,
+        "language": "Python",
+        "topics": [],
+        "updatedAt": "2024-08-30T12:09:30Z",
+        "createdAt": "2024-06-04T22:13:36Z"
+      },
+      {
+        "name": "tailor-resumes",
+        "description": null,
+        "url": "https://github.com/joaomdmoura/tailor-resumes",
+        "stars": 11,
+        "forks": 7,
+        "language": "Python",
+        "topics": [],
+        "updatedAt": "2025-07-14T12:01:25Z",
+        "createdAt": "2024-07-03T05:22:57Z"
+      },
+      {
+        "name": "crewai-project-0514edfb1cfb73d513fb",
+        "description": null,
+        "url": "https://github.com/joaomdmoura/crewai-project-0514edfb1cfb73d513fb",
+        "stars": 7,
+        "forks": 2,
+        "language": "Python",
+        "topics": [],
+        "updatedAt": "2026-02-14T09:57:11Z",
+        "createdAt": "2024-09-07T18:00:10Z"
+      },
+      {
+        "name": "crewAI-JS",
+        "description": null,
+        "url": "https://github.com/joaomdmoura/crewAI-JS",
+        "stars": 7,
+        "forks": 0,
+        "language": null,
+        "topics": [],
+        "updatedAt": "2025-04-05T16:36:42Z",
+        "createdAt": "2024-01-05T13:44:25Z"
+      },
+      {
+        "name": "groq-test",
+        "description": null,
+        "url": "https://github.com/joaomdmoura/groq-test",
+        "stars": 5,
+        "forks": 1,
+        "language": "Python",
+        "topics": [],
+        "updatedAt": "2025-07-14T12:01:27Z",
+        "createdAt": "2024-05-30T17:29:54Z"
+      },
+      {
+        "name": "Elixir-With-a-Rubyist",
+        "description": null,
+        "url": "https://github.com/joaomdmoura/Elixir-With-a-Rubyist",
+        "stars": 5,
+        "forks": 1,
+        "language": "Elixir",
+        "topics": [],
+        "updatedAt": "2024-06-05T09:22:29Z",
+        "createdAt": "2017-05-05T05:49:02Z"
+      },
+      {
+        "name": "LightBot",
+        "description": "Lighthouse bot integration with GitHub PRs",
+        "url": "https://github.com/joaomdmoura/LightBot",
+        "stars": 4,
+        "forks": 1,
+        "language": "Ruby",
+        "topics": [],
+        "updatedAt": "2024-06-05T09:22:20Z",
+        "createdAt": "2018-05-14T21:10:52Z"
+      },
+      {
+        "name": "personal-allowed-list",
+        "description": null,
+        "url": "https://github.com/joaomdmoura/personal-allowed-list",
+        "stars": 1,
+        "forks": 0,
+        "language": null,
+        "topics": [],
+        "updatedAt": "2024-03-19T05:09:23Z",
+        "createdAt": "2022-11-19T13:10:37Z"
+      },
+      {
+        "name": "build-and-deploy-elixir-app-gh-action",
+        "description": null,
+        "url": "https://github.com/joaomdmoura/build-and-deploy-elixir-app-gh-action",
+        "stars": 1,
+        "forks": 0,
+        "language": null,
+        "topics": [],
+        "updatedAt": "2020-11-23T13:21:14Z",
+        "createdAt": "2020-11-21T20:56:10Z"
+      },
+      {
+        "name": "actiontest",
+        "description": null,
+        "url": "https://github.com/joaomdmoura/actiontest",
+        "stars": 1,
+        "forks": 0,
+        "language": "JavaScript",
+        "topics": [],
+        "updatedAt": "2025-07-19T05:00:22Z",
+        "createdAt": "2020-09-30T19:52:35Z"
+      },
+      {
+        "name": "challenge-gama",
+        "description": null,
+        "url": "https://github.com/joaomdmoura/challenge-gama",
+        "stars": 1,
+        "forks": 51,
+        "language": "Ruby",
+        "topics": [],
+        "updatedAt": "2017-06-03T17:36:03Z",
+        "createdAt": "2017-01-28T05:53:38Z"
+      },
+      {
+        "name": "tests",
+        "description": null,
+        "url": "https://github.com/joaomdmoura/tests",
+        "stars": 0,
+        "forks": 0,
+        "language": "JavaScript",
+        "topics": [],
+        "updatedAt": "2025-08-13T11:18:23Z",
+        "createdAt": "2025-08-13T10:36:17Z"
+      },
+      {
+        "name": "aula-004",
+        "description": "Aprendendo a utilizar o git e o github",
+        "url": "https://github.com/joaomdmoura/aula-004",
+        "stars": 0,
+        "forks": 0,
+        "language": "HTML",
+        "topics": [],
+        "updatedAt": "2019-01-09T22:49:21Z",
+        "createdAt": "2019-01-09T22:33:53Z"
+      },
+      {
+        "name": "slack-stagingbot",
+        "description": null,
+        "url": "https://github.com/joaomdmoura/slack-stagingbot",
+        "stars": 0,
+        "forks": 0,
+        "language": "Ruby",
+        "topics": [],
+        "updatedAt": "2018-02-27T23:06:19Z",
+        "createdAt": "2018-02-27T23:05:39Z"
+      },
+      {
+        "name": "datasciencecoursera",
+        "description": null,
+        "url": "https://github.com/joaomdmoura/datasciencecoursera",
+        "stars": 0,
+        "forks": 0,
+        "language": null,
+        "topics": [],
+        "updatedAt": "2017-05-02T21:19:21Z",
+        "createdAt": "2017-05-02T21:19:21Z"
+      },
+      {
+        "name": "test_app_arthur",
+        "description": null,
+        "url": "https://github.com/joaomdmoura/test_app_arthur",
+        "stars": 0,
+        "forks": 0,
+        "language": "Ruby",
+        "topics": [],
+        "updatedAt": "2017-04-19T23:59:44Z",
+        "createdAt": "2017-04-19T23:59:03Z"
+      },
+      {
+        "name": "pingpong-master",
+        "description": null,
+        "url": "https://github.com/joaomdmoura/pingpong-master",
+        "stars": 0,
+        "forks": 0,
+        "language": "Ruby",
+        "topics": [],
+        "updatedAt": "2017-02-16T02:58:49Z",
+        "createdAt": "2017-02-15T22:35:48Z"
+      }
+    ],
+    "totalStars": 56,
+    "languages": [
+      {
+        "name": "Ruby",
+        "count": 5,
+        "color": "#701516"
+      },
+      {
+        "name": "Python",
+        "count": 4,
+        "color": "#3572A5"
+      },
+      {
+        "name": "JavaScript",
+        "count": 2,
+        "color": "#f1e05a"
+      },
+      {
+        "name": "Elixir",
+        "count": 1,
+        "color": "#8b8b8b"
+      },
+      {
+        "name": "HTML",
+        "count": 1,
+        "color": "#e34c26"
+      }
+    ]
+  },
+  "huggingface": null
+}

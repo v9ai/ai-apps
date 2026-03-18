@@ -1,0 +1,80 @@
+{
+  "github": {
+    "profile": {
+      "bio": "CEO & co-founder of @weaviate",
+      "publicRepos": 156,
+      "followers": 184,
+      "location": "Amsterdam",
+      "createdAt": "2013-09-21T18:47:47Z"
+    },
+    "repos": [
+      {
+        "name": "weaviate-import-test",
+        "description": null,
+        "url": "https://github.com/bobvanluijt/weaviate-import-test",
+        "stars": 0,
+        "forks": 1,
+        "language": "Python",
+        "topics": [],
+        "updatedAt": "2025-07-24T13:24:27Z",
+        "createdAt": "2025-03-03T20:31:41Z"
+      },
+      {
+        "name": "langflow-railway",
+        "description": null,
+        "url": "https://github.com/bobvanluijt/langflow-railway",
+        "stars": 0,
+        "forks": 0,
+        "language": "Python",
+        "topics": [],
+        "updatedAt": "2023-10-01T19:53:24Z",
+        "createdAt": "2023-10-01T19:53:18Z"
+      },
+      {
+        "name": "weaviate-railway",
+        "description": null,
+        "url": "https://github.com/bobvanluijt/weaviate-railway",
+        "stars": 0,
+        "forks": 0,
+        "language": null,
+        "topics": [],
+        "updatedAt": "2023-09-30T15:55:53Z",
+        "createdAt": "2023-09-30T15:55:53Z"
+      },
+      {
+        "name": "DALL-E-Warhol",
+        "description": null,
+        "url": "https://github.com/bobvanluijt/DALL-E-Warhol",
+        "stars": 0,
+        "forks": 0,
+        "language": null,
+        "topics": [],
+        "updatedAt": "2022-06-04T17:25:05Z",
+        "createdAt": "2022-06-04T17:25:05Z"
+      },
+      {
+        "name": "RadLex-machine-translations",
+        "description": "Machine translations of RadLex codes",
+        "url": "https://github.com/bobvanluijt/RadLex-machine-translations",
+        "stars": 0,
+        "forks": 0,
+        "language": "Python",
+        "topics": [
+          "radiology",
+          "radlex"
+        ],
+        "updatedAt": "2021-12-03T08:35:43Z",
+        "createdAt": "2021-12-02T20:57:39Z"
+      }
+    ],
+    "totalStars": 0,
+    "languages": [
+      {
+        "name": "Python",
+        "count": 3,
+        "color": "#3572A5"
+      }
+    ]
+  },
+  "huggingface": null
+}

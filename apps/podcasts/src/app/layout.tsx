@@ -1,12 +1,13 @@
 import type { Metadata } from "next";
-import { Inter, Playfair_Display } from "next/font/google";
+import { Inter } from "next/font/google";
 
 import "./globals.css";
 
-const inter = Inter({ subsets: ["latin"], variable: "--font-inter" });
-const playfair = Playfair_Display({
+const inter = Inter({
   subsets: ["latin"],
-  variable: "--font-playfair",
+  variable: "--font-inter",
+  weight: ["300", "400", "500", "600", "700"],
+  display: "swap",
 });
 
 export const metadata: Metadata = {
@@ -21,7 +22,7 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="en" className={`${inter.variable} ${playfair.variable}`}>
+    <html lang="en">
       <head>
         <link
           rel="apple-touch-icon"
@@ -47,7 +48,7 @@ export default function RootLayout({
         />
         <meta name="theme-color" content="#0B0B0F" />
       </head>
-      <body className="bg-[#0B0B0F] text-[#E8E8ED] antialiased font-[family-name:var(--font-inter)]">
+      <body className={`${inter.variable} bg-[#0B0B0F] text-[#E8E8ED] font-sans antialiased`}>
         {children}
       </body>
     </html>

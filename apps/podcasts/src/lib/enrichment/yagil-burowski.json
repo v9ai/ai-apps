@@ -1,0 +1,114 @@
+{
+  "github": {
+    "profile": {
+      "bio": "https://lmstudio.ai/careers",
+      "publicRepos": 15,
+      "followers": 205,
+      "location": "New York, USA",
+      "createdAt": "2013-02-16T13:23:48Z"
+    },
+    "repos": [
+      {
+        "name": "ChatIDE",
+        "description": "AI Coding Assistant in your IDE - ChatGPT (OpenAI) and Claude (Anthropic) in a VSCode extension.",
+        "url": "https://github.com/yagil/ChatIDE",
+        "stars": 221,
+        "forks": 25,
+        "language": "TypeScript",
+        "topics": [
+          "ai",
+          "anthropic",
+          "gpt-4",
+          "openai",
+          "vscode",
+          "vscode-extension"
+        ],
+        "updatedAt": "2026-03-06T02:04:07Z",
+        "createdAt": "2023-04-04T01:09:04Z"
+      },
+      {
+        "name": "tokmon",
+        "description": "CLI to monitor your program's OpenAI API token usage.",
+        "url": "https://github.com/yagil/tokmon",
+        "stars": 57,
+        "forks": 5,
+        "language": "Python",
+        "topics": [
+          "ai",
+          "gpt",
+          "openai",
+          "openai-api",
+          "python"
+        ],
+        "updatedAt": "2026-01-09T23:53:20Z",
+        "createdAt": "2023-04-12T06:38:42Z"
+      },
+      {
+        "name": "tokmon-beam",
+        "description": "A self-hosted, real-time web UI + db for exploring your OpenAI API requests / responses.",
+        "url": "https://github.com/yagil/tokmon-beam",
+        "stars": 18,
+        "forks": 0,
+        "language": "TypeScript",
+        "topics": [
+          "chatgpt-api",
+          "nextjs",
+          "observability",
+          "openai-api",
+          "postgresql",
+          "self-hosted",
+          "typescript"
+        ],
+        "updatedAt": "2026-02-10T11:13:08Z",
+        "createdAt": "2023-04-20T01:16:04Z"
+      },
+      {
+        "name": "anthropic-simple-sdk-typescript",
+        "description": "Partial re-implementation of Anthropic's Typescript SDK that works for older versions of Node (v16).",
+        "url": "https://github.com/yagil/anthropic-simple-sdk-typescript",
+        "stars": 2,
+        "forks": 0,
+        "language": "TypeScript",
+        "topics": [],
+        "updatedAt": "2025-02-02T21:42:54Z",
+        "createdAt": "2023-04-15T21:22:40Z"
+      },
+      {
+        "name": "setbg",
+        "description": "Set the background color of the current Terminal window",
+        "url": "https://github.com/yagil/setbg",
+        "stars": 2,
+        "forks": 0,
+        "language": null,
+        "topics": [],
+        "updatedAt": "2023-11-10T17:13:56Z",
+        "createdAt": "2023-03-23T15:40:16Z"
+      },
+      {
+        "name": "complete",
+        "description": "TS/node program to prompt a base model local LLM in the terminal",
+        "url": "https://github.com/yagil/complete",
+        "stars": 0,
+        "forks": 0,
+        "language": "TypeScript",
+        "topics": [],
+        "updatedAt": "2024-05-04T16:45:02Z",
+        "createdAt": "2024-05-02T02:45:25Z"
+      }
+    ],
+    "totalStars": 300,
+    "languages": [
+      {
+        "name": "TypeScript",
+        "count": 4,
+        "color": "#3178c6"
+      },
+      {
+        "name": "Python",
+        "count": 1,
+        "color": "#3572A5"
+      }
+    ]
+  },
+  "huggingface": null
+}

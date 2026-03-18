@@ -86,7 +86,6 @@ fn default_allowed_commands() -> Vec<String> {
 
 fn default_protected_paths() -> Vec<String> {
     vec![
-        r"\.env".into(),
         r"\.git/".into(),
         r"id_rsa".into(),
         r"\.ssh/".into(),

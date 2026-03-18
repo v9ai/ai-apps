@@ -1,0 +1,60 @@
+{
+  "github": {
+    "profile": {
+      "bio": "Co-founder at Qdrant",
+      "publicRepos": 7,
+      "followers": 76,
+      "location": "Berlin",
+      "createdAt": "2011-07-19T20:50:13Z"
+    },
+    "repos": [
+      {
+        "name": "purl",
+        "description": "Simple cUrl PHP replacement library for hostings, which are not supporting native cUrl like Google App Engine",
+        "url": "https://github.com/azayarni/purl",
+        "stars": 46,
+        "forks": 16,
+        "language": "PHP",
+        "topics": [],
+        "updatedAt": "2023-06-15T23:54:49Z",
+        "createdAt": "2014-02-05T13:46:15Z"
+      },
+      {
+        "name": "botwork",
+        "description": "Framework for building messenger bots",
+        "url": "https://github.com/azayarni/botwork",
+        "stars": 1,
+        "forks": 2,
+        "language": "JavaScript",
+        "topics": [],
+        "updatedAt": "2018-08-19T12:20:51Z",
+        "createdAt": "2016-11-27T22:31:02Z"
+      },
+      {
+        "name": "nodesocket",
+        "description": "Socket communication demo made with node.js (sails.js), socket.io and mongoDB",
+        "url": "https://github.com/azayarni/nodesocket",
+        "stars": 0,
+        "forks": 0,
+        "language": "JavaScript",
+        "topics": [],
+        "updatedAt": "2015-07-29T17:19:12Z",
+        "createdAt": "2015-07-29T17:15:37Z"
+      }
+    ],
+    "totalStars": 47,
+    "languages": [
+      {
+        "name": "JavaScript",
+        "count": 2,
+        "color": "#f1e05a"
+      },
+      {
+        "name": "PHP",
+        "count": 1,
+        "color": "#8b8b8b"
+      }
+    ]
+  },
+  "huggingface": null
+}

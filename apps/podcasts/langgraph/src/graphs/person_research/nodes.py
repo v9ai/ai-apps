@@ -1,7 +1,7 @@
 """Nodes for the person research pipeline.
 
 Flow:
-    generate_queries → [search_web ×N] → check_urls → fetch_github → synthesize → export
+    generate_queries → [search_web ×N] → check_urls → fetch_github → fetch_orcid → synthesize → evaluate → export
 """
 
 import json
@@ -17,11 +17,14 @@ from rich.console import Console
 from rich.table import Table
 
 from .deepseek import chat_json
-from .prompts import build_generate_queries_messages, build_synthesize_messages
+from .prompts import build_evaluate_messages, build_generate_queries_messages, build_synthesize_messages
 from .state import (
     Contribution,
+    EvalResult,
     GitHubProfile,
     GitHubRepo,
+    OrcidData,
+    OrcidWork,
     PersonResearch,
     PersonResearchState,
     Quote,
@@ -267,7 +270,125 @@ def fetch_github_node(state: PersonResearchState) -> dict:
 
 
 # ---------------------------------------------------------------------------
-# Node 4: synthesize
+# Node: fetch_orcid
+# ---------------------------------------------------------------------------
+
+_ORCID_API = "https://pub.orcid.org/v3.0"
+
+
+def _parse_orcid_works(works_data: dict) -> list[OrcidWork]:
+    """Extract works from ORCID API /works response."""
+    items: list[OrcidWork] = []
+    for group in works_data.get("group", []):
+        summaries = group.get("work-summary", [])
+        if not summaries:
+            continue
+        s = summaries[0]  # take the preferred/first summary
+
+        title_obj = s.get("title", {})
+        title = ""
+        if title_obj and title_obj.get("title"):
+            title = title_obj["title"].get("value", "")
+
+        pub_date = s.get("publication-date") or {}
+        year = (pub_date.get("year") or {}).get("value", "")
+
+        # Extract DOI or URL from external-ids
+        doi = ""
+        url = ""
+        for eid in (s.get("external-ids") or {}).get("external-id", []):
+            id_type = eid.get("external-id-type", "")
+            id_value = eid.get("external-id-value", "")
+            if id_type == "doi":
+                doi = id_value
+                url = url or f"https://doi.org/{id_value}"
+            elif id_type == "arxiv":
+                url = url or f"https://arxiv.org/abs/{id_value}"
+
+        if not url and s.get("url", {}).get("value"):
+            url = s["url"]["value"]
+
+        if title:
+            items.append(OrcidWork(title=title, year=year, doi=doi, url=url))
+
+    return items
+
+
+def fetch_orcid_node(state: PersonResearchState) -> dict:
+    """Fetch structured data from the ORCID public API."""
+    orcid_id = state.get("person_orcid", "")
+    if not orcid_id:
+        console.print("  [yellow]No ORCID iD — skipping ORCID fetch.[/]")
+        return {"orcid_data": {}}
+
+    console.print(f"  [cyan]Fetching ORCID profile: {orcid_id}[/]")
+
+    data: OrcidData = {"orcid_id": orcid_id}
+    headers = {"Accept": "application/json"}
+
+    try:
+        with httpx.Client(timeout=_HTTP_TIMEOUT) as client:
+            # Person record
+            resp = client.get(f"{_ORCID_API}/{orcid_id}/person", headers=headers)
+            if resp.status_code == 200:
+                person = resp.json()
+
+                # Name
+                name_obj = person.get("name") or {}
+                given = (name_obj.get("given-names") or {}).get("value", "")
+                family = (name_obj.get("family-name") or {}).get("value", "")
+                if given or family:
+                    data["name"] = f"{given} {family}".strip()
+
+                # Other names
+                other = person.get("other-names", {}).get("other-name", [])
+                if other:
+                    data["other_names"] = [o.get("content", "") for o in other if o.get("content")]
+
+                # Biography
+                bio = (person.get("biography") or {}).get("content", "")
+                if bio:
+                    data["biography"] = bio
+
+                # Keywords
+                kws = person.get("keywords", {}).get("keyword", [])
+                if kws:
+                    data["keywords"] = [k.get("content", "") for k in kws if k.get("content")]
+
+                # Researcher URLs
+                urls = person.get("researcher-urls", {}).get("researcher-url", [])
+                if urls:
+                    data["urls"] = [
+                        {"name": u.get("url-name", ""), "url": (u.get("url") or {}).get("value", "")}
+                        for u in urls
+                        if (u.get("url") or {}).get("value")
+                    ]
+
+                console.print(f"  [green]ORCID person: {data.get('name', orcid_id)}[/]")
+
+            # Works
+            resp = client.get(f"{_ORCID_API}/{orcid_id}/works", headers=headers)
+            if resp.status_code == 200:
+                works = _parse_orcid_works(resp.json())
+                data["works"] = works
+                console.print(f"  [green]ORCID works: {len(works)}[/]")
+                if works:
+                    table = Table(title="ORCID Works")
+                    table.add_column("Year", style="yellow", width=6)
+                    table.add_column("Title", style="cyan", width=60)
+                    table.add_column("DOI", width=30)
+                    for w in works:
+                        table.add_row(w["year"], w["title"][:58], w["doi"][:28] or "—")
+                    console.print(table)
+
+    except httpx.HTTPError as e:
+        console.print(f"  [yellow]ORCID fetch error: {e}[/]")
+
+    return {"orcid_data": data}
+
+
+# ---------------------------------------------------------------------------
+# Node: synthesize
 # ---------------------------------------------------------------------------
 
 def _format_web_results(
@@ -318,6 +439,35 @@ def _format_github_data(profile: GitHubProfile, repos: list[GitHubRepo]) -> str:
     return "\n".join(lines)
 
 
+def _format_orcid_data(orcid: OrcidData) -> str:
+    """Format ORCID data for LLM consumption."""
+    if not orcid or not orcid.get("orcid_id"):
+        return "(no ORCID data)"
+
+    lines = [
+        f"ORCID iD: {orcid.get('orcid_id', '')}",
+        f"Name: {orcid.get('name', '')}",
+    ]
+    if orcid.get("other_names"):
+        lines.append(f"Also known as: {', '.join(orcid['other_names'])}")
+    if orcid.get("biography"):
+        lines.append(f"Biography: {orcid['biography']}")
+    if orcid.get("keywords"):
+        lines.append(f"Keywords: {', '.join(orcid['keywords'])}")
+    if orcid.get("urls"):
+        lines.append("URLs:")
+        for u in orcid["urls"]:
+            lines.append(f"  - {u.get('name', '')}: {u.get('url', '')}")
+    if orcid.get("works"):
+        lines.append(f"\nPublications ({len(orcid['works'])}):")
+        for w in orcid["works"]:
+            doi_part = f" (DOI: {w['doi']})" if w.get("doi") else ""
+            url_part = f" — {w['url']}" if w.get("url") else ""
+            lines.append(f"  - [{w.get('year', '?')}] {w['title']}{doi_part}{url_part}")
+
+    return "\n".join(lines)
+
+
 def synthesize_node(state: PersonResearchState) -> dict:
     """Use DeepSeek to synthesize all gathered data into a structured profile."""
     name = state["person_name"]
@@ -328,16 +478,20 @@ def synthesize_node(state: PersonResearchState) -> dict:
     url_content = state.get("url_content", {})
     github_profile = state.get("github_profile", {})
     github_repos = state.get("github_repos", [])
+    orcid_data = state.get("orcid_data", {})
 
     console.print(f"\n  [cyan]Synthesizing research profile for {name}...[/]")
     console.print(f"    Web results: {len(web_results)}")
     console.print(f"    Enriched URLs: {len(url_content)}")
     console.print(f"    GitHub repos: {len(github_repos)}")
+    if orcid_data and orcid_data.get("orcid_id"):
+        console.print(f"    ORCID works: {len(orcid_data.get('works', []))}")
 
     web_text = _format_web_results(web_results, url_content)
     github_text = _format_github_data(github_profile, github_repos)
+    orcid_text = _format_orcid_data(orcid_data)
 
-    messages = build_synthesize_messages(name, role, org, web_text, github_text)
+    messages = build_synthesize_messages(name, role, org, web_text, github_text, orcid_text)
     raw = chat_json(messages, max_tokens=8_192, temperature=0.2)
 
     # Build social links from GitHub data + synthesis
@@ -348,6 +502,18 @@ def synthesize_node(state: PersonResearchState) -> dict:
         social["twitter"] = f"https://x.com/{github_profile['twitter_username']}"
     if github_profile.get("blog") and "website" not in social:
         social["website"] = github_profile["blog"]
+
+    # Enrich social from ORCID URLs
+    if orcid_data and orcid_data.get("orcid_id"):
+        for u in orcid_data.get("urls", []):
+            url_val = u.get("url", "")
+            url_name = u.get("name", "").lower()
+            if "github" in url_name and "github" not in social:
+                social["github"] = url_val
+            elif "linkedin" in url_name and "linkedin" not in social:
+                social["linkedin"] = url_val
+            elif ("blog" in url_name or "website" in url_name) and "website" not in social:
+                social["website"] = url_val
 
     slug = state["person_slug"]
     now = datetime.now(timezone.utc).isoformat(timespec="seconds")
@@ -398,11 +564,53 @@ def synthesize_node(state: PersonResearchState) -> dict:
 
 
 # ---------------------------------------------------------------------------
-# Node 5: export
+# Node: evaluate
+# ---------------------------------------------------------------------------
+
+def evaluate_node(state: PersonResearchState) -> dict:
+    """Use DeepSeek to evaluate the quality of the synthesized research profile."""
+    research = state.get("research")
+    if not research:
+        return {"eval_result": {}}
+
+    name = state["person_name"]
+    console.print(f"\n  [cyan]Evaluating research quality for {name}...[/]")
+
+    messages = build_evaluate_messages(dict(research))
+    raw = chat_json(messages, max_tokens=2_048, temperature=0.1)
+
+    def _score(key: str) -> dict:
+        return raw.get(key, {"score": 0, "reasoning": ""})
+
+    eval_result: EvalResult = {
+        "bio_quality": _score("bio_quality"),
+        "source_coverage": _score("source_coverage"),
+        "timeline_completeness": _score("timeline_completeness"),
+        "contributions_depth": _score("contributions_depth"),
+        "name_disambiguation": _score("name_disambiguation"),
+        "overall_score": raw.get("overall_score", 0),
+        "summary": raw.get("summary", ""),
+    }
+
+    table = Table(title="Research Eval Scores")
+    table.add_column("Dimension", style="cyan", width=28)
+    table.add_column("Score", style="yellow", width=8)
+    table.add_column("Reasoning", width=60)
+    for dim in ("bio_quality", "source_coverage", "timeline_completeness", "contributions_depth", "name_disambiguation"):
+        s = eval_result[dim]  # type: ignore[literal-required]
+        table.add_row(dim.replace("_", " ").title(), f"{s['score']}/10", s["reasoning"][:58])
+    console.print(table)
+    console.print(f"  [bold green]Overall: {eval_result['overall_score']}/10[/] — {eval_result['summary'][:120]}")
+
+    return {"eval_result": eval_result}
+
+
+# ---------------------------------------------------------------------------
+# Node: export
 # ---------------------------------------------------------------------------
 
 def export_node(state: PersonResearchState) -> dict:
-    """Write the research profile to a JSON file."""
+    """Write the research profile and eval results to JSON files."""
     research = state.get("research")
     if not research:
         console.print("  [yellow]No research to export.[/]")
@@ -414,5 +622,17 @@ def export_node(state: PersonResearchState) -> dict:
 
     out_path.write_text(json.dumps(research, indent=2, ensure_ascii=False) + "\n")
     console.print(f"\n  [green]Exported research to {out_path}[/]")
+
+    eval_result = state.get("eval_result")
+    if eval_result:
+        eval_path = RESEARCH_DIR / f"{slug}.eval.json"
+        eval_out = {
+            "slug": slug,
+            "name": research.get("name", ""),
+            "generated_at": research.get("generated_at", ""),
+            "eval": eval_result,
+        }
+        eval_path.write_text(json.dumps(eval_out, indent=2, ensure_ascii=False) + "\n")
+        console.print(f"  [green]Exported eval to {eval_path}[/]")
 
     return {"export_path": str(out_path)}

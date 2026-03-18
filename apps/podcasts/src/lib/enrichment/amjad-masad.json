@@ -1,0 +1,190 @@
+{
+  "github": {
+    "profile": {
+      "bio": "ceo @ repl.it",
+      "publicRepos": 146,
+      "followers": 2357,
+      "location": "Bay Area, CA",
+      "createdAt": "2011-01-28T00:34:07Z"
+    },
+    "repos": [
+      {
+        "name": "jfk_files",
+        "description": null,
+        "url": "https://github.com/amasad/jfk_files",
+        "stars": 215,
+        "forks": 36,
+        "language": "Python",
+        "topics": [],
+        "updatedAt": "2026-03-12T11:12:23Z",
+        "createdAt": "2025-03-19T01:43:45Z"
+      },
+      {
+        "name": "github-slideshow",
+        "description": "A robot powered training repository :robot:",
+        "url": "https://github.com/amasad/github-slideshow",
+        "stars": 4,
+        "forks": 0,
+        "language": "Ruby",
+        "topics": [],
+        "updatedAt": "2023-03-10T11:22:09Z",
+        "createdAt": "2020-12-14T22:40:37Z"
+      },
+      {
+        "name": "nextjs-template",
+        "description": "for replit",
+        "url": "https://github.com/amasad/nextjs-template",
+        "stars": 4,
+        "forks": 3,
+        "language": "JavaScript",
+        "topics": [],
+        "updatedAt": "2023-04-26T12:19:15Z",
+        "createdAt": "2020-03-03T22:34:30Z"
+      },
+      {
+        "name": "scenec_drives",
+        "description": null,
+        "url": "https://github.com/amasad/scenec_drives",
+        "stars": 2,
+        "forks": 1,
+        "language": "Python",
+        "topics": [],
+        "updatedAt": "2024-10-14T09:35:21Z",
+        "createdAt": "2024-10-01T20:37:34Z"
+      },
+      {
+        "name": "test",
+        "description": null,
+        "url": "https://github.com/amasad/test",
+        "stars": 2,
+        "forks": 0,
+        "language": "EJS",
+        "topics": [],
+        "updatedAt": "2023-06-18T23:20:46Z",
+        "createdAt": "2022-07-21T19:42:34Z"
+      },
+      {
+        "name": "testing_with_zeb",
+        "description": null,
+        "url": "https://github.com/amasad/testing_with_zeb",
+        "stars": 2,
+        "forks": 0,
+        "language": "HTML",
+        "topics": [],
+        "updatedAt": "2023-06-18T23:20:17Z",
+        "createdAt": "2020-07-09T21:22:27Z"
+      },
+      {
+        "name": "esparse",
+        "description": null,
+        "url": "https://github.com/amasad/esparse",
+        "stars": 2,
+        "forks": 1,
+        "language": "Go",
+        "topics": [],
+        "updatedAt": "2023-03-10T11:22:10Z",
+        "createdAt": "2020-04-23T04:22:00Z"
+      },
+      {
+        "name": "jest-playground",
+        "description": "Play around with jest",
+        "url": "https://github.com/amasad/jest-playground",
+        "stars": 2,
+        "forks": 0,
+        "language": "JavaScript",
+        "topics": [],
+        "updatedAt": "2023-03-10T11:22:09Z",
+        "createdAt": "2019-12-31T01:42:35Z"
+      },
+      {
+        "name": "psut-demo",
+        "description": null,
+        "url": "https://github.com/amasad/psut-demo",
+        "stars": 1,
+        "forks": 0,
+        "language": "Python",
+        "topics": [],
+        "updatedAt": "2023-03-10T11:22:10Z",
+        "createdAt": "2020-03-17T16:18:17Z"
+      },
+      {
+        "name": "django-template",
+        "description": null,
+        "url": "https://github.com/amasad/django-template",
+        "stars": 1,
+        "forks": 21,
+        "language": "Python",
+        "topics": [],
+        "updatedAt": "2025-03-22T06:22:20Z",
+        "createdAt": "2020-01-27T04:21:23Z"
+      },
+      {
+        "name": "fdsa",
+        "description": null,
+        "url": "https://github.com/amasad/fdsa",
+        "stars": 1,
+        "forks": 0,
+        "language": null,
+        "topics": [],
+        "updatedAt": "2023-03-10T11:22:10Z",
+        "createdAt": "2020-01-07T02:35:55Z"
+      },
+      {
+        "name": "enzyme-playground",
+        "description": null,
+        "url": "https://github.com/amasad/enzyme-playground",
+        "stars": 1,
+        "forks": 0,
+        "language": "JavaScript",
+        "topics": [],
+        "updatedAt": "2023-03-10T11:22:09Z",
+        "createdAt": "2019-12-31T01:20:25Z"
+      },
+      {
+        "name": "hello_yc",
+        "description": null,
+        "url": "https://github.com/amasad/hello_yc",
+        "stars": 1,
+        "forks": 0,
+        "language": "Python",
+        "topics": [],
+        "updatedAt": "2023-03-10T11:22:10Z",
+        "createdAt": "2019-12-16T18:21:13Z"
+      }
+    ],
+    "totalStars": 238,
+    "languages": [
+      {
+        "name": "Python",
+        "count": 5,
+        "color": "#3572A5"
+      },
+      {
+        "name": "JavaScript",
+        "count": 3,
+        "color": "#f1e05a"
+      },
+      {
+        "name": "Ruby",
+        "count": 1,
+        "color": "#701516"
+      },
+      {
+        "name": "EJS",
+        "count": 1,
+        "color": "#8b8b8b"
+      },
+      {
+        "name": "HTML",
+        "count": 1,
+        "color": "#e34c26"
+      },
+      {
+        "name": "Go",
+        "count": 1,
+        "color": "#00ADD8"
+      }
+    ]
+  },
+  "huggingface": null
+}

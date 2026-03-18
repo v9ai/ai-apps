@@ -4,6 +4,38 @@ import operator
 from typing import Annotated, TypedDict
 
 
+class OrcidWork(TypedDict):
+    title: str
+    year: str
+    doi: str
+    url: str
+
+
+class OrcidData(TypedDict, total=False):
+    orcid_id: str
+    name: str
+    other_names: list[str]
+    biography: str
+    keywords: list[str]
+    urls: list[dict[str, str]]
+    works: list[OrcidWork]
+
+
+class EvalScore(TypedDict):
+    score: int  # 1-10
+    reasoning: str
+
+
+class EvalResult(TypedDict):
+    bio_quality: EvalScore
+    source_coverage: EvalScore
+    timeline_completeness: EvalScore
+    contributions_depth: EvalScore
+    name_disambiguation: EvalScore
+    overall_score: int
+    summary: str
+
+
 class WebResult(TypedDict):
     title: str
     url: str
@@ -88,8 +120,15 @@ class PersonResearchState(TypedDict):
     github_profile: GitHubProfile
     github_repos: list[GitHubRepo]
 
+    # After fetch_orcid
+    person_orcid: str           # ORCID ID (optional input)
+    orcid_data: OrcidData
+
     # After synthesize
     research: PersonResearch
+
+    # After evaluate
+    eval_result: EvalResult
 
     # After export
     export_path: str

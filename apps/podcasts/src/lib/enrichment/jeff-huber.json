@@ -1,0 +1,179 @@
+{
+  "github": {
+    "profile": {
+      "bio": null,
+      "publicRepos": 34,
+      "followers": 206,
+      "location": "San Francisco",
+      "createdAt": "2011-07-03T13:50:19Z"
+    },
+    "repos": [
+      {
+        "name": "chroma-demo",
+        "description": null,
+        "url": "https://github.com/jeffchuber/chroma-demo",
+        "stars": 12,
+        "forks": 0,
+        "language": "Jupyter Notebook",
+        "topics": [],
+        "updatedAt": "2023-12-24T11:33:29Z",
+        "createdAt": "2023-06-02T23:26:24Z"
+      },
+      {
+        "name": "chroma-doom",
+        "description": null,
+        "url": "https://github.com/jeffchuber/chroma-doom",
+        "stars": 10,
+        "forks": 0,
+        "language": null,
+        "topics": [],
+        "updatedAt": "2025-03-17T16:32:19Z",
+        "createdAt": "2025-03-12T01:50:13Z"
+      },
+      {
+        "name": "open-fs",
+        "description": null,
+        "url": "https://github.com/jeffchuber/open-fs",
+        "stars": 8,
+        "forks": 0,
+        "language": "Rust",
+        "topics": [],
+        "updatedAt": "2026-03-14T08:42:27Z",
+        "createdAt": "2026-02-23T05:10:21Z"
+      },
+      {
+        "name": "cvfs",
+        "description": null,
+        "url": "https://github.com/jeffchuber/cvfs",
+        "stars": 4,
+        "forks": 1,
+        "language": "Rust",
+        "topics": [],
+        "updatedAt": "2026-01-15T02:21:39Z",
+        "createdAt": "2026-01-11T05:06:00Z"
+      },
+      {
+        "name": "just-bash-openfs",
+        "description": null,
+        "url": "https://github.com/jeffchuber/just-bash-openfs",
+        "stars": 2,
+        "forks": 0,
+        "language": "TypeScript",
+        "topics": [],
+        "updatedAt": "2026-03-07T19:09:51Z",
+        "createdAt": "2026-02-23T05:14:51Z"
+      },
+      {
+        "name": "jekyll-bootstrap-boilerplate",
+        "description": "A great way to prototype ideas using Jekyll and Bootstrap",
+        "url": "https://github.com/jeffchuber/jekyll-bootstrap-boilerplate",
+        "stars": 2,
+        "forks": 2,
+        "language": "JavaScript",
+        "topics": [],
+        "updatedAt": "2016-08-17T18:04:39Z",
+        "createdAt": "2014-02-06T21:45:04Z"
+      },
+      {
+        "name": "simple-instapaper-add-script",
+        "description": "easily bulk add links to instapaper",
+        "url": "https://github.com/jeffchuber/simple-instapaper-add-script",
+        "stars": 2,
+        "forks": 1,
+        "language": "Ruby",
+        "topics": [],
+        "updatedAt": "2023-02-11T14:38:37Z",
+        "createdAt": "2014-02-03T20:17:20Z"
+      },
+      {
+        "name": "openfs-incident-app",
+        "description": null,
+        "url": "https://github.com/jeffchuber/openfs-incident-app",
+        "stars": 0,
+        "forks": 0,
+        "language": "TypeScript",
+        "topics": [],
+        "updatedAt": "2026-02-23T06:39:46Z",
+        "createdAt": "2026-02-23T05:48:31Z"
+      },
+      {
+        "name": "jeffhuber",
+        "description": null,
+        "url": "https://github.com/jeffchuber/jeffhuber",
+        "stars": 0,
+        "forks": 0,
+        "language": "JavaScript",
+        "topics": [],
+        "updatedAt": "2026-01-06T16:53:26Z",
+        "createdAt": "2026-01-03T22:37:40Z"
+      },
+      {
+        "name": "nextjs-chroma",
+        "description": null,
+        "url": "https://github.com/jeffchuber/nextjs-chroma",
+        "stars": 0,
+        "forks": 1,
+        "language": "CSS",
+        "topics": [],
+        "updatedAt": "2024-02-26T19:11:07Z",
+        "createdAt": "2023-08-09T06:23:49Z"
+      },
+      {
+        "name": "chroma_debugging",
+        "description": null,
+        "url": "https://github.com/jeffchuber/chroma_debugging",
+        "stars": 0,
+        "forks": 0,
+        "language": "Jupyter Notebook",
+        "topics": [],
+        "updatedAt": "2023-06-01T03:05:37Z",
+        "createdAt": "2023-06-01T03:05:26Z"
+      },
+      {
+        "name": "mk-gql",
+        "description": null,
+        "url": "https://github.com/jeffchuber/mk-gql",
+        "stars": 0,
+        "forks": 0,
+        "language": null,
+        "topics": [],
+        "updatedAt": "2020-09-09T21:58:50Z",
+        "createdAt": "2020-09-09T21:58:50Z"
+      }
+    ],
+    "totalStars": 40,
+    "languages": [
+      {
+        "name": "Jupyter Notebook",
+        "count": 2,
+        "color": "#DA5B0B"
+      },
+      {
+        "name": "Rust",
+        "count": 2,
+        "color": "#dea584"
+      },
+      {
+        "name": "TypeScript",
+        "count": 2,
+        "color": "#3178c6"
+      },
+      {
+        "name": "JavaScript",
+        "count": 2,
+        "color": "#f1e05a"
+      },
+      {
+        "name": "Ruby",
+        "count": 1,
+        "color": "#701516"
+      },
+      {
+        "name": "CSS",
+        "count": 1,
+        "color": "#563d7c"
+      }
+    ]
+  },
+  "huggingface": null
+}

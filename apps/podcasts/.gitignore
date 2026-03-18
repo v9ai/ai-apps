@@ -39,6 +39,9 @@ yarn-error.log*
 *.tsbuildinfo
 next-env.d.ts
 
+# panda css
+/styled-system
+
 # podcast search pipeline (local-first)
 chroma_podcasts/
 spotify_episodes.json

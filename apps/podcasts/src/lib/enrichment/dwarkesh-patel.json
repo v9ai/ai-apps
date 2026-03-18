@@ -1,0 +1,279 @@
+{
+  "github": {
+    "profile": {
+      "bio": null,
+      "publicRepos": 70,
+      "followers": 108,
+      "location": "Austin, TX",
+      "createdAt": "2018-12-01T16:38:06Z"
+    },
+    "repos": [
+      {
+        "name": "spaced-rep",
+        "description": null,
+        "url": "https://github.com/dwarkeshsp/spaced-rep",
+        "stars": 56,
+        "forks": 11,
+        "language": "JavaScript",
+        "topics": [],
+        "updatedAt": "2026-01-06T01:48:00Z",
+        "createdAt": "2025-03-02T04:05:56Z"
+      },
+      {
+        "name": "podcast-production",
+        "description": null,
+        "url": "https://github.com/dwarkeshsp/podcast-production",
+        "stars": 3,
+        "forks": 1,
+        "language": "Python",
+        "topics": [],
+        "updatedAt": "2024-09-16T18:19:16Z",
+        "createdAt": "2024-06-24T20:21:42Z"
+      },
+      {
+        "name": "producer",
+        "description": null,
+        "url": "https://github.com/dwarkeshsp/producer",
+        "stars": 2,
+        "forks": 0,
+        "language": "Python",
+        "topics": [],
+        "updatedAt": "2025-03-17T10:20:25Z",
+        "createdAt": "2025-01-02T20:38:12Z"
+      },
+      {
+        "name": "transcripts",
+        "description": null,
+        "url": "https://github.com/dwarkeshsp/transcripts",
+        "stars": 1,
+        "forks": 0,
+        "language": "TypeScript",
+        "topics": [],
+        "updatedAt": "2026-02-20T18:01:58Z",
+        "createdAt": "2026-01-29T18:56:36Z"
+      },
+      {
+        "name": "podcast-producer",
+        "description": null,
+        "url": "https://github.com/dwarkeshsp/podcast-producer",
+        "stars": 1,
+        "forks": 0,
+        "language": "Python",
+        "topics": [],
+        "updatedAt": "2025-11-02T17:00:11Z",
+        "createdAt": "2025-11-01T01:41:34Z"
+      },
+      {
+        "name": "spotify-chart-tracker",
+        "description": null,
+        "url": "https://github.com/dwarkeshsp/spotify-chart-tracker",
+        "stars": 1,
+        "forks": 0,
+        "language": "Python",
+        "topics": [],
+        "updatedAt": "2026-02-22T10:07:06Z",
+        "createdAt": "2025-10-14T00:58:48Z"
+      },
+      {
+        "name": "coresearcher",
+        "description": null,
+        "url": "https://github.com/dwarkeshsp/coresearcher",
+        "stars": 1,
+        "forks": 0,
+        "language": "TypeScript",
+        "topics": [],
+        "updatedAt": "2025-10-22T08:03:48Z",
+        "createdAt": "2025-08-30T01:30:14Z"
+      },
+      {
+        "name": "chunker",
+        "description": null,
+        "url": "https://github.com/dwarkeshsp/chunker",
+        "stars": 1,
+        "forks": 0,
+        "language": "Python",
+        "topics": [],
+        "updatedAt": "2025-08-30T00:26:55Z",
+        "createdAt": "2025-08-30T00:23:40Z"
+      },
+      {
+        "name": "ai-producer",
+        "description": null,
+        "url": "https://github.com/dwarkeshsp/ai-producer",
+        "stars": 1,
+        "forks": 0,
+        "language": "TypeScript",
+        "topics": [],
+        "updatedAt": "2025-08-22T19:26:54Z",
+        "createdAt": "2025-08-19T05:23:00Z"
+      },
+      {
+        "name": "SAE_MoE",
+        "description": null,
+        "url": "https://github.com/dwarkeshsp/SAE_MoE",
+        "stars": 1,
+        "forks": 0,
+        "language": "Jupyter Notebook",
+        "topics": [],
+        "updatedAt": "2024-04-05T04:35:45Z",
+        "createdAt": "2024-03-09T17:50:09Z"
+      },
+      {
+        "name": "reich-prep",
+        "description": null,
+        "url": "https://github.com/dwarkeshsp/reich-prep",
+        "stars": 0,
+        "forks": 0,
+        "language": null,
+        "topics": [],
+        "updatedAt": "2026-02-25T12:51:37Z",
+        "createdAt": "2026-02-20T23:05:35Z"
+      },
+      {
+        "name": "jane-street-reconstruct-layers-puzzle",
+        "description": null,
+        "url": "https://github.com/dwarkeshsp/jane-street-reconstruct-layers-puzzle",
+        "stars": 0,
+        "forks": 0,
+        "language": "Python",
+        "topics": [],
+        "updatedAt": "2026-01-30T02:31:04Z",
+        "createdAt": "2026-01-30T02:30:54Z"
+      },
+      {
+        "name": "dubbing",
+        "description": null,
+        "url": "https://github.com/dwarkeshsp/dubbing",
+        "stars": 0,
+        "forks": 0,
+        "language": "Python",
+        "topics": [],
+        "updatedAt": "2025-12-30T23:06:26Z",
+        "createdAt": "2025-12-30T03:53:52Z"
+      },
+      {
+        "name": "tweeter",
+        "description": null,
+        "url": "https://github.com/dwarkeshsp/tweeter",
+        "stars": 0,
+        "forks": 0,
+        "language": null,
+        "topics": [],
+        "updatedAt": "2025-10-29T23:04:57Z",
+        "createdAt": "2025-10-29T23:04:52Z"
+      },
+      {
+        "name": "ai-predictions",
+        "description": null,
+        "url": "https://github.com/dwarkeshsp/ai-predictions",
+        "stars": 0,
+        "forks": 0,
+        "language": "Python",
+        "topics": [],
+        "updatedAt": "2025-09-06T17:34:18Z",
+        "createdAt": "2025-09-06T17:23:50Z"
+      },
+      {
+        "name": "book-cards",
+        "description": null,
+        "url": "https://github.com/dwarkeshsp/book-cards",
+        "stars": 0,
+        "forks": 0,
+        "language": "JavaScript",
+        "topics": [],
+        "updatedAt": "2025-06-18T07:03:18Z",
+        "createdAt": "2025-06-18T07:03:11Z"
+      },
+      {
+        "name": "transcribe-generator",
+        "description": null,
+        "url": "https://github.com/dwarkeshsp/transcribe-generator",
+        "stars": 0,
+        "forks": 0,
+        "language": "TypeScript",
+        "topics": [],
+        "updatedAt": "2025-11-22T19:23:12Z",
+        "createdAt": "2025-05-27T05:27:28Z"
+      },
+      {
+        "name": "questions",
+        "description": null,
+        "url": "https://github.com/dwarkeshsp/questions",
+        "stars": 0,
+        "forks": 0,
+        "language": null,
+        "topics": [],
+        "updatedAt": "2025-04-21T04:35:57Z",
+        "createdAt": "2025-04-21T04:35:57Z"
+      },
+      {
+        "name": "jane-street-puzzle",
+        "description": null,
+        "url": "https://github.com/dwarkeshsp/jane-street-puzzle",
+        "stars": 0,
+        "forks": 0,
+        "language": "Jupyter Notebook",
+        "topics": [],
+        "updatedAt": "2025-03-31T02:22:31Z",
+        "createdAt": "2025-03-31T02:21:56Z"
+      },
+      {
+        "name": "workout-tracker",
+        "description": null,
+        "url": "https://github.com/dwarkeshsp/workout-tracker",
+        "stars": 0,
+        "forks": 0,
+        "language": null,
+        "topics": [],
+        "updatedAt": "2025-03-15T17:17:22Z",
+        "createdAt": "2025-03-15T17:15:53Z"
+      },
+      {
+        "name": "frontend-book-search",
+        "description": null,
+        "url": "https://github.com/dwarkeshsp/frontend-book-search",
+        "stars": 0,
+        "forks": 0,
+        "language": "JavaScript",
+        "topics": [],
+        "updatedAt": "2022-11-02T20:08:43Z",
+        "createdAt": "2022-11-02T20:08:35Z"
+      },
+      {
+        "name": "book-search-server",
+        "description": null,
+        "url": "https://github.com/dwarkeshsp/book-search-server",
+        "stars": 0,
+        "forks": 0,
+        "language": "Python",
+        "topics": [],
+        "updatedAt": "2022-11-06T22:58:48Z",
+        "createdAt": "2022-11-02T03:35:43Z"
+      }
+    ],
+    "totalStars": 68,
+    "languages": [
+      {
+        "name": "Python",
+        "count": 9,
+        "color": "#3572A5"
+      },
+      {
+        "name": "TypeScript",
+        "count": 4,
+        "color": "#3178c6"
+      },
+      {
+        "name": "JavaScript",
+        "count": 3,
+        "color": "#f1e05a"
+      },
+      {
+        "name": "Jupyter Notebook",
+        "count": 2,
+        "color": "#DA5B0B"
+      }
+    ]
+  },
+  "huggingface": null
+}
