@@ -11,54 +11,54 @@ export type {
 import type { Category, Personality, PersonResearch } from "./types";
 
 // Lab Leaders & Founders
-import samAltman from "./data/sam-altman";
-import darioAmodei from "./data/dario-amodei";
-import jensenHuang from "./data/jensen-huang";
-import liangWenfeng from "./data/liang-wenfeng";
-import yangZhilin from "./data/yang-zhilin";
+import samAltman from "../../../personalities/sam-altman";
+import darioAmodei from "../../../personalities/dario-amodei";
+import jensenHuang from "../../../personalities/jensen-huang";
+import liangWenfeng from "../../../personalities/liang-wenfeng";
+import yangZhilin from "../../../personalities/yang-zhilin";
 
 // Builders & Technical Leaders
-import andrejKarpathy from "./data/andrej-karpathy";
-import borisCherny from "./data/boris-cherny";
-import harrisonChase from "./data/harrison-chase";
-import jerryLiu from "./data/jerry-liu";
-import ilyaSutskever from "./data/ilya-sutskever";
-import joaoMoura from "./data/joao-moura";
-import samuelColvin from "./data/samuel-colvin";
+import andrejKarpathy from "../../../personalities/andrej-karpathy";
+import borisCherny from "../../../personalities/boris-cherny";
+import harrisonChase from "../../../personalities/harrison-chase";
+import jerryLiu from "../../../personalities/jerry-liu";
+import ilyaSutskever from "../../../personalities/ilya-sutskever";
+import joaoMoura from "../../../personalities/joao-moura";
+import samuelColvin from "../../../personalities/samuel-colvin";
 
 // Researchers & Thinkers
-import yannLecun from "./data/yann-lecun";
-import demisHassabis from "./data/demis-hassabis";
-import feifeiLi from "./data/fei-fei-li";
-import geoffreyHinton from "./data/geoffrey-hinton";
-import athosGeorgiou from "./data/athos-georgiou";
+import yannLecun from "../../../personalities/yann-lecun";
+import demisHassabis from "../../../personalities/demis-hassabis";
+import feifeiLi from "../../../personalities/fei-fei-li";
+import geoffreyHinton from "../../../personalities/geoffrey-hinton";
+import athosGeorgiou from "../../../personalities/athos-georgiou";
 
 // Podcast Hosts & AI Personalities
-import lexFridman from "./data/lex-fridman";
-import dwarkeshPatel from "./data/dwarkesh-patel";
+import lexFridman from "../../../personalities/lex-fridman";
+import dwarkeshPatel from "../../../personalities/dwarkesh-patel";
 
 // Rising Infrastructure & Product Leaders
-import amjadMasad from "./data/amjad-masad";
-import mustafaSuleyman from "./data/mustafa-suleyman";
-import amandaAskell from "./data/amanda-askell";
-import noamShazeer from "./data/noam-shazeer";
+import amjadMasad from "../../../personalities/amjad-masad";
+import mustafaSuleyman from "../../../personalities/mustafa-suleyman";
+import amandaAskell from "../../../personalities/amanda-askell";
+import noamShazeer from "../../../personalities/noam-shazeer";
 
 // AI Infrastructure & Inference
-import swamiSivasubramanian from "./data/swami-sivasubramanian";
-import woosukKwon from "./data/woosuk-kwon";
-import jeffreyMorgan from "./data/jeffrey-morgan";
-import alexAtallah from "./data/alex-atallah";
-import yagilBurowski from "./data/yagil-burowski";
-import krrishDholakia from "./data/krrish-dholakia";
-import rohitAgarwal from "./data/rohit-agarwal";
+import swamiSivasubramanian from "../../../personalities/swami-sivasubramanian";
+import woosukKwon from "../../../personalities/woosuk-kwon";
+import jeffreyMorgan from "../../../personalities/jeffrey-morgan";
+import alexAtallah from "../../../personalities/alex-atallah";
+import yagilBurowski from "../../../personalities/yagil-burowski";
+import krrishDholakia from "../../../personalities/krrish-dholakia";
+import rohitAgarwal from "../../../personalities/rohit-agarwal";
 
 // Vector Database Founders
-import jeffHuber from "./data/jeff-huber";
-import bobVanLuijt from "./data/bob-van-luijt";
-import andreZayarni from "./data/andre-zayarni";
-import vasilijeMarkovic from "./data/vasilije-markovic";
-import shayBanon from "./data/shay-banon";
-import andrewKane from "./data/andrew-kane";
+import jeffHuber from "../../../personalities/jeff-huber";
+import bobVanLuijt from "../../../personalities/bob-van-luijt";
+import andreZayarni from "../../../personalities/andre-zayarni";
+import vasilijeMarkovic from "../../../personalities/vasilije-markovic";
+import shayBanon from "../../../personalities/shay-banon";
+import andrewKane from "../../../personalities/andrew-kane";
 
 export const categories: Category[] = [
   {
