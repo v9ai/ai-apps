@@ -1,0 +1,187 @@
+{
+  "slug": "athos-georgiou",
+  "name": "Athos Georgiou",
+  "generated_at": "2026-03-18T18:38:56+00:00",
+  "bio": "Athos Georgiou is an applied AI researcher and the Founder & CEO of NCA, specializing in vision-language retrieval, LLM inference optimization, and multimodal document understanding. He created Snappy (83 stars), a vision-language retrieval system that unifies ColPali late-interaction with structured OCR via patch-to-region relevance propagation — the subject of both an arXiv paper and an open-source release. His benchmark study on architecture-aware LLM inference for AMD Instinct MI325X GPUs spans models from 235B to 1 trillion parameters. Georgiou trains and publishes his own ColQwen retrieval models on Hugging Face, and actively contributes to the Claude Code ecosystem with plugins like kimchi-cult and agent-debate.",
+  "topics": [
+    "Vision-Language Retrieval",
+    "ColPali / ColQwen Models",
+    "LLM Inference Optimization",
+    "Multimodal Document Understanding",
+    "Graph RAG",
+    "GPU Benchmarking (AMD Instinct)",
+    "Open-Source AI Tools",
+    "Responsible AI",
+    "Claude Code Plugins",
+    "Document OCR Processing"
+  ],
+  "timeline": [
+    {
+      "date": "2026-03-15",
+      "event": "Published blog post 'Diminishing Returns and the Art of Knowing When to Stop' on ColQwen3.5 optimization plateaus",
+      "url": "https://athrael.net/posts/diminishing-returns-benchmark-optimization"
+    },
+    {
+      "date": "2026-03",
+      "event": "Published ColQwen3.5-4.5B v1/v2/v3 visual document retrieval models on Hugging Face",
+      "url": "https://huggingface.co/athrael-soju/colqwen3.5-4.5B-v3"
+    },
+    {
+      "date": "2026-02-27",
+      "event": "Published arXiv paper 'Architecture-Aware LLM Inference Optimization on AMD Instinct GPUs'",
+      "url": "https://arxiv.org/abs/2603.10031"
+    },
+    {
+      "date": "2026-02-04",
+      "event": "Participated in the launch event for the Greek AI Startup Accelerator by OpenAI, the Hellenic Government, and Endeavor Greece",
+      "url": "https://luma.com/ooh81f9h"
+    },
+    {
+      "date": "2026-01",
+      "event": "Published blog post 'Closing the AI Value Gap: Insights from Research' on enterprise AI adoption",
+      "url": "https://athrael.net/posts/closing-the-ai-value-gap"
+    },
+    {
+      "date": "2025-12-02",
+      "event": "Published arXiv paper 'Spatially-Grounded Document Retrieval via Patch-to-Region Relevance Propagation'",
+      "url": "https://arxiv.org/abs/2512.02660"
+    },
+    {
+      "date": "2025-10",
+      "event": "Released Snappy, a vision-language retrieval system unifying ColPali with structured OCR (83 stars)",
+      "url": "https://github.com/athrael-soju/Snappy"
+    },
+    {
+      "date": "2025-09",
+      "event": "Published 'The Most Beautiful RAG' — end-to-end vision RAG with ColPali, Qdrant, and MinIO",
+      "url": "https://athrael.net/posts/the-most-beautiful-vision-rag"
+    },
+    {
+      "date": "2024-04",
+      "event": "Co-authored 'Raising Artificial Intelligence' on responsible AI frameworks with Olga Topchaya",
+      "url": "https://ai.plainenglish.io/raising-artificial-intelligence-62fe9ae40e90"
+    },
+    {
+      "date": "2024-01",
+      "event": "Incorporated NCA LTD as a private limited company in the UK",
+      "url": "https://www.companiesintheuk.co.uk/ltd/nca-2"
+    }
+  ],
+  "key_contributions": [
+    {
+      "title": "Snappy",
+      "description": "Vision-language retrieval system unifying ColPali late-interaction with structured OCR via patch-to-region relevance propagation. 83 stars on GitHub.",
+      "url": "https://github.com/athrael-soju/Snappy"
+    },
+    {
+      "title": "Architecture-Aware LLM Inference Optimization on AMD Instinct GPUs",
+      "description": "Comprehensive benchmark spanning 235B to 1T parameter models, co-optimizing model architecture, hardware, and serving-system configuration on MI325X GPUs",
+      "url": "https://arxiv.org/abs/2603.10031"
+    },
+    {
+      "title": "ColQwen3.5-4.5B (v1–v3)",
+      "description": "Series of visual document retrieval models trained and published on Hugging Face, iterating on ColQwen architecture for multimodal retrieval",
+      "url": "https://huggingface.co/athrael-soju/colqwen3.5-4.5B-v3"
+    },
+    {
+      "title": "Qdrant-Neo4j-Ollama Graph RAG",
+      "description": "Graph RAG implementation combining Qdrant vector search with Neo4j knowledge graphs and Ollama for local LLM inference. 58 stars.",
+      "url": "https://github.com/athrael-soju/Qdrant-Neo4j-Ollama-Graph-Rag"
+    },
+    {
+      "title": "Titanium",
+      "description": "Full-stack AI application framework. 47 stars on GitHub.",
+      "url": "https://github.com/athrael-soju/Titanium"
+    },
+    {
+      "title": "kimchi-cult",
+      "description": "Claude Code plugin marketplace for discovering and sharing AI development tools",
+      "url": "https://github.com/athrael-soju/kimchi-cult"
+    },
+    {
+      "title": "Raising Artificial Intelligence",
+      "description": "Co-authored framework for responsible AI development, addressing ethics, regulation, and governance through a parent-child relationship metaphor",
+      "url": "https://ai.plainenglish.io/raising-artificial-intelligence-62fe9ae40e90"
+    },
+    {
+      "title": "CopperAI",
+      "description": "Hands-free voice-to-voice interaction system with LLMs. 29 stars.",
+      "url": "https://github.com/athrael-soju/CopperAI"
+    }
+  ],
+  "quotes": [
+    {
+      "text": "AI development much like parenting, comes with rights and responsibilities. Creators, users, and regulators have distinct rights and responsibilities.",
+      "source": "Raising Artificial Intelligence article",
+      "url": "https://ai.plainenglish.io/raising-artificial-intelligence-62fe9ae40e90"
+    },
+    {
+      "text": "It's a powerful statistical model capable of generating text, but it lacks intelligence, creativity, and consciousness. Achieving AGI will likely require a combination of several models and technologies, not just GenAI.",
+      "source": "Personal blog post on athrael.net",
+      "url": "https://athrael.net/posts/it-must-have-been-love-is-it-over-now"
+    },
+    {
+      "text": "Helping organisations navigate AI adoption through applied research, performance engineering, and production-grade implementation.",
+      "source": "Personal website",
+      "url": "https://athosgeorgiou.com/"
+    }
+  ],
+  "social": {
+    "github": "https://github.com/athrael-soju",
+    "linkedin": "https://www.linkedin.com/in/athosg/",
+    "huggingface": "https://huggingface.co/athrael-soju",
+    "blog": "https://athrael.net",
+    "website": "https://athosgeorgiou.com/",
+    "devpost": "https://devpost.com/athrael-soju"
+  },
+  "sources": [
+    {
+      "title": "Athos Georgiou - AI Research & Consulting",
+      "url": "https://athosgeorgiou.com/"
+    },
+    {
+      "title": "Athos G - Founder & CEO @ NCA | LinkedIn",
+      "url": "https://www.linkedin.com/in/athosg/"
+    },
+    {
+      "title": "athrael-soju on Hugging Face (3 models, 1 dataset)",
+      "url": "https://huggingface.co/athrael-soju"
+    },
+    {
+      "title": "athrael-soju on GitHub (25+ repos, Snappy 83★)",
+      "url": "https://github.com/athrael-soju"
+    },
+    {
+      "title": "Athrael.net — Blog",
+      "url": "https://athrael.net"
+    },
+    {
+      "title": "Architecture-Aware LLM Inference Optimization on AMD Instinct GPUs (arXiv)",
+      "url": "https://arxiv.org/abs/2603.10031"
+    },
+    {
+      "title": "Spatially-Grounded Document Retrieval via Patch-to-Region Relevance Propagation (arXiv)",
+      "url": "https://arxiv.org/abs/2512.02660"
+    },
+    {
+      "title": "Raising Artificial Intelligence by Olga Topchaya and Athos Georgiou",
+      "url": "https://ai.plainenglish.io/raising-artificial-intelligence-62fe9ae40e90"
+    },
+    {
+      "title": "NCA LTD — Companies House SC795284",
+      "url": "https://www.companiesintheuk.co.uk/ltd/nca-2"
+    },
+    {
+      "title": "Athos Georgiou's software portfolio | Devpost",
+      "url": "https://devpost.com/athrael-soju"
+    },
+    {
+      "title": "Athos Georgiou on INSPIRE-HEP",
+      "url": "https://inspirehep.net/authors/2754230"
+    },
+    {
+      "title": "ORCID 0009-0004-3081-2883",
+      "url": "https://orcid.org/0009-0004-3081-2883"
+    }
+  ]
+}

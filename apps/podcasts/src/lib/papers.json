@@ -1,0 +1,14 @@
+{
+  "athos-georgiou": [
+    {
+      "title": "Architecture-Aware LLM Inference Optimization on AMD Instinct GPUs: A Comprehensive Benchmark and Deployment Study",
+      "arxiv": "2603.10031",
+      "date": "2026-02-27"
+    },
+    {
+      "title": "Spatially-Grounded Document Retrieval via Patch-to-Region Relevance Propagation",
+      "arxiv": "2512.02660",
+      "date": "2025-12-02"
+    }
+  ]
+}

@@ -1,0 +1,270 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  html {
+    scroll-behavior: smooth;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+  }
+
+  body {
+    background: #050505;
+  }
+
+  ::selection {
+    background: rgba(29, 185, 84, 0.3);
+    color: white;
+  }
+
+  /* Custom scrollbar */
+  ::-webkit-scrollbar {
+    width: 6px;
+  }
+  ::-webkit-scrollbar-track {
+    background: transparent;
+  }
+  ::-webkit-scrollbar-thumb {
+    background: rgba(255, 255, 255, 0.08);
+    border-radius: 3px;
+  }
+  ::-webkit-scrollbar-thumb:hover {
+    background: rgba(255, 255, 255, 0.16);
+  }
+
+  /* Firefox */
+  * {
+    scrollbar-width: thin;
+    scrollbar-color: rgba(255, 255, 255, 0.08) transparent;
+  }
+}
+
+@layer components {
+  .glass-card {
+    @apply bg-white/[0.03] backdrop-blur-xl border border-white/[0.06] rounded-xl;
+  }
+  .glass-card-hover {
+    @apply hover:bg-white/[0.07] hover:border-white/[0.12] hover:shadow-2xl hover:shadow-black/30;
+  }
+
+  /* Subtle glow behind card on hover */
+  .card-glow {
+    position: relative;
+  }
+  .card-glow::after {
+    content: '';
+    position: absolute;
+    inset: 0;
+    border-radius: inherit;
+    background: radial-gradient(
+      ellipse at 50% 50%,
+      rgba(29, 185, 84, 0.06),
+      transparent 70%
+    );
+    opacity: 0;
+    transition: opacity 0.5s ease;
+    z-index: -1;
+    filter: blur(24px);
+    pointer-events: none;
+  }
+  .card-glow:hover::after {
+    opacity: 1;
+  }
+
+  /* Hero ambient glow blobs */
+  .hero-glow {
+    position: relative;
+    overflow: hidden;
+  }
+  .hero-glow::before,
+  .hero-glow::after {
+    content: '';
+    position: absolute;
+    border-radius: 50%;
+    pointer-events: none;
+    filter: blur(80px);
+  }
+  .hero-glow::before {
+    width: 600px;
+    height: 600px;
+    background: radial-gradient(circle, rgba(29, 185, 84, 0.06), transparent 70%);
+    top: -300px;
+    left: -150px;
+    animation: aurora 8s ease-in-out infinite;
+  }
+  .hero-glow::after {
+    width: 400px;
+    height: 400px;
+    background: radial-gradient(circle, rgba(29, 185, 84, 0.04), transparent 70%);
+    top: -100px;
+    right: -100px;
+    animation: aurora 10s ease-in-out infinite reverse;
+  }
+
+  /* Track list row — subtle left accent on hover */
+  .track-row {
+    border-left: 2px solid transparent;
+    transition: border-color 0.2s ease, background-color 0.2s ease;
+  }
+  .track-row:hover {
+    border-left-color: #1DB954;
+  }
+
+  /* Decorative grid pattern for hero backgrounds */
+  .hero-grid {
+    background-image:
+      linear-gradient(rgba(255, 255, 255, 0.03) 1px, transparent 1px),
+      linear-gradient(90deg, rgba(255, 255, 255, 0.03) 1px, transparent 1px);
+    background-size: 60px 60px;
+  }
+
+  /* Horizontal gradient divider that fades at edges */
+  .gradient-divider {
+    height: 1px;
+    background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.12), transparent);
+  }
+
+  /* Podcast badge with scale + glow hover */
+  .podcast-badge {
+    transition: transform 0.25s ease, box-shadow 0.25s ease, background-color 0.25s ease;
+  }
+  .podcast-badge:hover {
+    transform: scale(1.05);
+    box-shadow: 0 0 14px 2px rgba(29, 185, 84, 0.15);
+    background-color: rgba(255, 255, 255, 0.08);
+  }
+
+  /* Stats card glass — slightly more opaque with inner glow */
+  .stat-glass {
+    @apply backdrop-blur-xl rounded-xl;
+    background: rgba(255, 255, 255, 0.05);
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    box-shadow: inset 0 1px 1px rgba(255, 255, 255, 0.06);
+  }
+}
+
+@layer utilities {
+  .text-gradient-green {
+    background: linear-gradient(135deg, #1DB954 0%, #1ed760 50%, #4ade80 100%);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+  }
+}
+
+@keyframes sound-bar {
+  0%,
+  100% {
+    height: 10px;
+  }
+  50% {
+    height: 28px;
+  }
+}
+
+@keyframes fade-in-up {
+  from {
+    opacity: 0;
+    transform: translateY(20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes fade-in {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+@keyframes slide-in-right {
+  from {
+    opacity: 0;
+    transform: translateX(-12px);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(0);
+  }
+}
+
+@keyframes aurora {
+  0%, 100% {
+    transform: translate(0, 0) scale(1);
+    opacity: 0.7;
+  }
+  33% {
+    transform: translate(30px, -25px) scale(1.05);
+    opacity: 1;
+  }
+  66% {
+    transform: translate(-20px, 15px) scale(0.95);
+    opacity: 0.7;
+  }
+}
+
+@keyframes stagger-in {
+  from {
+    opacity: 0;
+    transform: translateY(8px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes row-enter {
+  from {
+    opacity: 0;
+    transform: translateX(-6px);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(0);
+  }
+}
+
+@keyframes pulse-glow {
+  0%, 100% {
+    box-shadow: 0 0 0 0 rgba(29, 185, 84, 0.3);
+  }
+  50% {
+    box-shadow: 0 0 16px 4px rgba(29, 185, 84, 0.12);
+  }
+}
+
+@keyframes float {
+  0%, 100% {
+    transform: translateY(0);
+  }
+  50% {
+    transform: translateY(-4px);
+  }
+}
+
+@keyframes shimmer {
+  0% {
+    background-position: -200% 0;
+  }
+  100% {
+    background-position: 200% 0;
+  }
+}
+
+@keyframes section-reveal {
+  from {
+    opacity: 0;
+    transform: scale(0.98);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
