@@ -153,6 +153,58 @@ def format_marker_for_embedding(
     ])
 
 
+def format_condition_for_embedding(name: str, notes: str | None) -> str:
+    return f"Health condition: {name}\nNotes: {notes}" if notes else f"Health condition: {name}"
+
+
+def format_medication_for_embedding(
+    name: str,
+    *,
+    dosage: str | None = None,
+    frequency: str | None = None,
+    notes: str | None = None,
+) -> str:
+    lines = [f"Medication: {name}"]
+    if dosage:
+        lines.append(f"Dosage: {dosage}")
+    if frequency:
+        lines.append(f"Frequency: {frequency}")
+    if notes:
+        lines.append(f"Notes: {notes}")
+    return "\n".join(lines)
+
+
+def format_symptom_for_embedding(
+    description: str,
+    *,
+    severity: str | None = None,
+    logged_at: str | None = None,
+) -> str:
+    lines = [f"Symptom: {description}"]
+    if severity:
+        lines.append(f"Severity: {severity}")
+    if logged_at:
+        lines.append(f"Date: {logged_at}")
+    return "\n".join(lines)
+
+
+def format_appointment_for_embedding(
+    title: str,
+    *,
+    provider: str | None = None,
+    notes: str | None = None,
+    appointment_date: str | None = None,
+) -> str:
+    lines = [f"Appointment: {title}"]
+    if provider:
+        lines.append(f"Provider: {provider}")
+    if appointment_date:
+        lines.append(f"Date: {appointment_date}")
+    if notes:
+        lines.append(f"Notes: {notes}")
+    return "\n".join(lines)
+
+
 # ── Derived metrics ──────────────────────────────────────────────────
 
 MARKER_ALIAS_MAP: dict[str, list[str]] = {

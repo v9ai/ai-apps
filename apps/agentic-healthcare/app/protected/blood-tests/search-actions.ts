@@ -6,19 +6,8 @@ import { embedViaPython } from "@/lib/python-api";
 import { qwen } from "@/lib/embeddings";
 import { sql } from "drizzle-orm";
 
-/**
- * Generate embedding via the Python FastEmbed service (same model used for
- * indexing), so that query vectors live in the same embedding space as the
- * stored blood-test vectors.
- */
 async function generateSearchEmbedding(text: string): Promise<number[]> {
-  try {
-    return await embedViaPython(text);
-  } catch {
-    // Fallback to Qwen if Python service is unavailable
-    const { generateEmbedding } = await import("@/lib/embeddings");
-    return generateEmbedding(text);
-  }
+  return embedViaPython(text);
 }
 
 export async function searchBloodTests(query: string) {

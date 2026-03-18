@@ -195,3 +195,123 @@ def upsert_health_state_embedding(
             """,
             (emb_id, test_id, user_id, content, json.dumps(derived_metrics), vec, now),
         )
+
+
+# ── condition_embeddings ─────────────────────────────────────────────
+
+
+def upsert_condition_embedding(
+    *,
+    condition_id: str,
+    user_id: str,
+    content: str,
+    embedding: list[float],
+) -> None:
+    import numpy as np
+
+    vec = np.array(embedding, dtype=np.float32)
+    now = datetime.now(timezone.utc)
+    emb_id = str(uuid.uuid4())
+
+    with get_conn() as conn:
+        conn.execute(
+            """
+            INSERT INTO condition_embeddings (id, condition_id, user_id, content, embedding, created_at)
+            VALUES (%s, %s, %s, %s, %s, %s)
+            ON CONFLICT (condition_id) DO UPDATE
+            SET content = EXCLUDED.content,
+                embedding = EXCLUDED.embedding,
+                created_at = EXCLUDED.created_at
+            """,
+            (emb_id, condition_id, user_id, content, vec, now),
+        )
+
+
+# ── medication_embeddings ────────────────────────────────────────────
+
+
+def upsert_medication_embedding(
+    *,
+    medication_id: str,
+    user_id: str,
+    content: str,
+    embedding: list[float],
+) -> None:
+    import numpy as np
+
+    vec = np.array(embedding, dtype=np.float32)
+    now = datetime.now(timezone.utc)
+    emb_id = str(uuid.uuid4())
+
+    with get_conn() as conn:
+        conn.execute(
+            """
+            INSERT INTO medication_embeddings (id, medication_id, user_id, content, embedding, created_at)
+            VALUES (%s, %s, %s, %s, %s, %s)
+            ON CONFLICT (medication_id) DO UPDATE
+            SET content = EXCLUDED.content,
+                embedding = EXCLUDED.embedding,
+                created_at = EXCLUDED.created_at
+            """,
+            (emb_id, medication_id, user_id, content, vec, now),
+        )
+
+
+# ── symptom_embeddings ───────────────────────────────────────────────
+
+
+def upsert_symptom_embedding(
+    *,
+    symptom_id: str,
+    user_id: str,
+    content: str,
+    embedding: list[float],
+) -> None:
+    import numpy as np
+
+    vec = np.array(embedding, dtype=np.float32)
+    now = datetime.now(timezone.utc)
+    emb_id = str(uuid.uuid4())
+
+    with get_conn() as conn:
+        conn.execute(
+            """
+            INSERT INTO symptom_embeddings (id, symptom_id, user_id, content, embedding, created_at)
+            VALUES (%s, %s, %s, %s, %s, %s)
+            ON CONFLICT (symptom_id) DO UPDATE
+            SET content = EXCLUDED.content,
+                embedding = EXCLUDED.embedding,
+                created_at = EXCLUDED.created_at
+            """,
+            (emb_id, symptom_id, user_id, content, vec, now),
+        )
+
+
+# ── appointment_embeddings ───────────────────────────────────────────
+
+
+def upsert_appointment_embedding(
+    *,
+    appointment_id: str,
+    user_id: str,
+    content: str,
+    embedding: list[float],
+) -> None:
+    import numpy as np
+
+    vec = np.array(embedding, dtype=np.float32)
+    now = datetime.now(timezone.utc)
+    emb_id = str(uuid.uuid4())
+
+    with get_conn() as conn:
+        conn.execute(
+            """
+            INSERT INTO appointment_embeddings (id, appointment_id, user_id, content, embedding, created_at)
+            VALUES (%s, %s, %s, %s, %s, %s)
+            ON CONFLICT (appointment_id) DO UPDATE
+            SET content = EXCLUDED.content,
+                embedding = EXCLUDED.embedding,
+                created_at = EXCLUDED.created_at
+            """,
+            (emb_id, appointment_id, user_id, content, vec, now),
+        )

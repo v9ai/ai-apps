@@ -4,8 +4,14 @@ import { withAuth } from "@/lib/auth-helpers";
 import { db } from "@/lib/db";
 import { bloodTests, bloodMarkers, bloodTestEmbeddings } from "@/lib/db/schema";
 import { eq, and } from "drizzle-orm";
-import { embedBloodTest, embedBloodMarkers } from "@/lib/embeddings";
 
+const PYTHON_API_URL = process.env.PYTHON_API_URL ?? "http://localhost:8001";
+const INTERNAL_API_KEY = process.env.INTERNAL_API_KEY ?? "";
+
+/**
+ * Re-embed all blood tests that are missing embeddings by calling the
+ * Python /upload ingestion pipeline for each test's markers.
+ */
 export async function reembedAllTests() {
   const { userId } = await withAuth();
 
@@ -21,13 +27,13 @@ export async function reembedAllTests() {
 
   if (tests.length === 0) return { embedded: 0 };
 
-  const existingTest = await db
+  const existing = await db
     .select({ testId: bloodTestEmbeddings.testId })
     .from(bloodTestEmbeddings)
     .where(eq(bloodTestEmbeddings.userId, userId));
 
-  const existingTestIds = new Set(existingTest.map((e) => e.testId));
-  const missing = tests.filter((t) => !existingTestIds.has(t.id));
+  const existingIds = new Set(existing.map((e) => e.testId));
+  const missing = tests.filter((t) => !existingIds.has(t.id));
 
   let embedded = 0;
   for (const test of missing) {
@@ -38,30 +44,37 @@ export async function reembedAllTests() {
 
     if (markers.length === 0) continue;
 
-    const markerInputs = markers.map((m) => ({
-      name: m.name,
-      value: m.value,
-      unit: m.unit,
-      reference_range: m.referenceRange ?? "",
-      flag: m.flag,
-    }));
+    // Build Unstructured-style elements so the Python parser can process them
+    const elements = [
+      {
+        type: "Table",
+        text: "",
+        metadata: {
+          text_as_html: `<table>${markers.map((m) => `<tr><td>${m.name}</td><td>${m.value}</td><td>${m.unit}</td><td>${m.referenceRange ?? ""}</td></tr>`).join("")}</table>`,
+        },
+      },
+    ];
 
-    const meta = {
-      fileName: test.fileName,
-      uploadedAt: test.uploadedAt.toISOString(),
-    };
-    await embedBloodTest(test.id, userId, markerInputs, meta);
+    const headers: Record<string, string> = { "Content-Type": "application/json" };
+    if (INTERNAL_API_KEY) headers["x-api-key"] = INTERNAL_API_KEY;
 
-    const markersWithIds = markerInputs.map((m, i) => ({
-      ...m,
-      id: markers[i].id,
-    }));
-    await embedBloodMarkers(test.id, userId, markersWithIds, {
-      fileName: test.fileName,
-      testDate: test.testDate ?? test.uploadedAt.toISOString(),
-    });
-
-    embedded++;
+    try {
+      const res = await fetch(`${PYTHON_API_URL}/embed/reembed`, {
+        method: "POST",
+        headers,
+        body: JSON.stringify({
+          test_id: test.id,
+          user_id: userId,
+          file_name: test.fileName,
+          test_date: test.testDate ?? test.uploadedAt.toISOString(),
+          marker_ids: markers.map((m) => m.id),
+          elements,
+        }),
+      });
+      if (res.ok) embedded++;
+    } catch {
+      // Non-blocking
+    }
   }
 
   return { embedded };

@@ -5,7 +5,7 @@ import { db } from "@/lib/db";
 import { medications } from "@/lib/db/schema";
 import { eq } from "drizzle-orm";
 import { revalidatePath } from "next/cache";
-import { embedMedication } from "@/lib/embeddings";
+import { embedMedicationViaPython } from "@/lib/python-api";
 
 export async function addMedication(formData: FormData) {
   const { userId } = await withAuth();
@@ -33,7 +33,7 @@ export async function addMedication(formData: FormData) {
     .returning();
 
   try {
-    await embedMedication(medication.id, userId, name, {
+    await embedMedicationViaPython(medication.id, userId, name, {
       dosage,
       frequency,
       notes,
