@@ -1,47 +1,65 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 630" width="1200" height="630">
   <defs>
-    <linearGradient id="blogGrad" x1="0%" y1="0%" x2="100%" y2="0%">
-      <stop offset="0%" stop-color="#60a5fa"/>
+    <!-- Background gradient (subtle vertical depth) -->
+    <linearGradient id="bgGrad" x1="0%" y1="0%" x2="0%" y2="100%">
+      <stop offset="0%" stop-color="#0c1222"/>
+      <stop offset="100%" stop-color="#131d35"/>
+    </linearGradient>
+
+    <!-- blog text gradient (diagonal, indigo-to-cyan bridge) -->
+    <linearGradient id="blogGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#818cf8"/>
+      <stop offset="45%" stop-color="#38bdf8"/>
       <stop offset="100%" stop-color="#22d3ee"/>
     </linearGradient>
+
+    <!-- Dot accent gradient (concentrated purple) -->
     <linearGradient id="dotGrad" x1="0%" y1="0%" x2="100%" y2="100%">
-      <stop offset="0%" stop-color="#a78bfa"/>
-      <stop offset="100%" stop-color="#22d3ee"/>
+      <stop offset="0%" stop-color="#c084fc"/>
+      <stop offset="100%" stop-color="#a78bfa"/>
     </linearGradient>
+
+    <!-- Underline gradient (center-peaked, symmetric) -->
     <linearGradient id="underline" x1="0%" y1="0%" x2="100%" y2="0%">
-      <stop offset="0%" stop-color="#a78bfa" stop-opacity="0"/>
-      <stop offset="20%" stop-color="#a78bfa" stop-opacity="0.6"/>
-      <stop offset="50%" stop-color="#7dd3fc" stop-opacity="0.5"/>
-      <stop offset="88%" stop-color="#22d3ee" stop-opacity="0.6"/>
+      <stop offset="0%" stop-color="#818cf8" stop-opacity="0"/>
+      <stop offset="50%" stop-color="#38bdf8" stop-opacity="0.45"/>
       <stop offset="100%" stop-color="#22d3ee" stop-opacity="0"/>
     </linearGradient>
-    <radialGradient id="glow" cx="50%" cy="40%" r="50%">
-      <stop offset="0%" stop-color="#a78bfa" stop-opacity="0.15"/>
+
+    <!-- Primary glow (violet, behind Vadim) -->
+    <radialGradient id="glow1" cx="45%" cy="32%" r="45%">
+      <stop offset="0%" stop-color="#8b5cf6" stop-opacity="0.10"/>
+      <stop offset="50%" stop-color="#6366f1" stop-opacity="0.05"/>
+      <stop offset="100%" stop-color="#0f172a" stop-opacity="0"/>
+    </radialGradient>
+
+    <!-- Secondary glow (cyan, behind blog) -->
+    <radialGradient id="glow2" cx="60%" cy="60%" r="35%">
+      <stop offset="0%" stop-color="#0ea5e9" stop-opacity="0.07"/>
       <stop offset="100%" stop-color="#0f172a" stop-opacity="0"/>
     </radialGradient>
   </defs>
 
   <!-- Background -->
-  <rect width="1200" height="630" fill="#0f172a"/>
+  <rect width="1200" height="630" fill="url(#bgGrad)"/>
 
-  <!-- Radial glow -->
-  <rect width="1200" height="630" fill="url(#glow)"/>
+  <!-- Dual radial glows -->
+  <rect width="1200" height="630" fill="url(#glow1)"/>
+  <rect width="1200" height="630" fill="url(#glow2)"/>
 
-  <!-- Wordmark group, centered -->
-  <g transform="translate(560, 280)">
-    <!-- Vadim -->
-    <text x="-400" y="0" font-family="'Instrument Sans', 'Inter', sans-serif" font-size="200" font-weight="800" letter-spacing="8" fill="#f8fafc">Vadim</text>
+  <!-- Corner accents -->
+  <path d="M 40,80 L 40,40 L 80,40" stroke="#a78bfa" stroke-opacity="0.2" stroke-width="1.5" fill="none"/>
+  <path d="M 1120,550 L 1160,550 L 1160,590" stroke="#22d3ee" stroke-opacity="0.2" stroke-width="1.5" fill="none"/>
 
-    <!-- dot accent -->
-    <circle cx="150" cy="-8" r="15" fill="url(#dotGrad)"/>
+  <!-- Vadim. — primary mark -->
+  <text x="600" y="240" text-anchor="middle" font-family="'Instrument Sans', 'Inter', sans-serif" font-size="260" font-weight="700" letter-spacing="3" fill="#e2e8f0">Vadim<tspan fill="url(#dotGrad)" font-size="310">.</tspan></text>
 
-    <!-- blog -->
-    <text x="185" y="0" font-family="'Instrument Sans', 'Inter', sans-serif" font-size="200" font-weight="500" letter-spacing="2" fill="url(#blogGrad)">blog</text>
-  </g>
+  <!-- blog — secondary mark -->
+  <text x="600" y="420" text-anchor="middle" font-family="'Instrument Sans', 'Inter', sans-serif" font-size="176" font-weight="300" letter-spacing="18" fill="url(#blogGrad)">blog</text>
 
-  <!-- Subtle underline accent -->
-  <rect x="200" y="318" width="800" height="5" rx="2.5" fill="url(#underline)"/>
+  <!-- Underline accent -->
+  <rect x="260" y="452" width="680" height="2" rx="1" fill="url(#underline)"/>
 
   <!-- Tagline -->
-  <text x="600" y="400" text-anchor="middle" font-family="'Instrument Sans', 'Inter', sans-serif" font-size="48" font-weight="400" letter-spacing="4" fill="#cbd5e1">Software engineering, AI &amp; web development</text>
+  <text x="600" y="520" text-anchor="middle" font-family="'Instrument Sans', 'Inter', sans-serif" font-size="40" font-weight="400" letter-spacing="7" fill="#94a3b8">AI &amp; WEB DEVELOPMENT</text>
 </svg>
