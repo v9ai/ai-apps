@@ -1,7 +1,7 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 630" width="1200" height="630">
   <defs>
     <linearGradient id="blogGrad" x1="0%" y1="0%" x2="100%" y2="0%">
-      <stop offset="0%" stop-color="#7dd3fc"/>
+      <stop offset="0%" stop-color="#60a5fa"/>
       <stop offset="100%" stop-color="#22d3ee"/>
     </linearGradient>
     <linearGradient id="dotGrad" x1="0%" y1="0%" x2="100%" y2="100%">
@@ -12,11 +12,11 @@
       <stop offset="0%" stop-color="#a78bfa" stop-opacity="0"/>
       <stop offset="20%" stop-color="#a78bfa" stop-opacity="0.6"/>
       <stop offset="50%" stop-color="#7dd3fc" stop-opacity="0.5"/>
-      <stop offset="80%" stop-color="#22d3ee" stop-opacity="0.6"/>
+      <stop offset="88%" stop-color="#22d3ee" stop-opacity="0.6"/>
       <stop offset="100%" stop-color="#22d3ee" stop-opacity="0"/>
     </linearGradient>
-    <radialGradient id="glow" cx="50%" cy="45%" r="40%">
-      <stop offset="0%" stop-color="#a78bfa" stop-opacity="0.08"/>
+    <radialGradient id="glow" cx="50%" cy="40%" r="50%">
+      <stop offset="0%" stop-color="#a78bfa" stop-opacity="0.15"/>
       <stop offset="100%" stop-color="#0f172a" stop-opacity="0"/>
     </radialGradient>
   </defs>
@@ -28,20 +28,20 @@
   <rect width="1200" height="630" fill="url(#glow)"/>
 
   <!-- Wordmark group, centered -->
-  <g transform="translate(600, 300)">
+  <g transform="translate(560, 280)">
     <!-- Vadim -->
-    <text x="-470" y="0" font-family="'Instrument Sans', 'Inter', sans-serif" font-size="192" font-weight="700" letter-spacing="12" fill="#f8fafc">Vadim</text>
+    <text x="-400" y="0" font-family="'Instrument Sans', 'Inter', sans-serif" font-size="200" font-weight="800" letter-spacing="8" fill="#f8fafc">Vadim</text>
 
     <!-- dot accent -->
-    <circle cx="140" cy="-6" r="14" fill="url(#dotGrad)"/>
+    <circle cx="150" cy="-8" r="15" fill="url(#dotGrad)"/>
 
     <!-- blog -->
-    <text x="175" y="0" font-family="'Instrument Sans', 'Inter', sans-serif" font-size="192" font-weight="500" letter-spacing="3" fill="url(#blogGrad)">blog</text>
+    <text x="185" y="0" font-family="'Instrument Sans', 'Inter', sans-serif" font-size="200" font-weight="500" letter-spacing="2" fill="url(#blogGrad)">blog</text>
   </g>
 
   <!-- Subtle underline accent -->
-  <rect x="140" y="340" width="920" height="3.5" rx="1.75" fill="url(#underline)"/>
+  <rect x="200" y="318" width="800" height="5" rx="2.5" fill="url(#underline)"/>
 
   <!-- Tagline -->
-  <text x="600" y="420" text-anchor="middle" font-family="'Instrument Sans', 'Inter', sans-serif" font-size="44" font-weight="400" letter-spacing="3" fill="#94a3b8">Software engineering, AI &amp; web development</text>
+  <text x="600" y="400" text-anchor="middle" font-family="'Instrument Sans', 'Inter', sans-serif" font-size="48" font-weight="400" letter-spacing="4" fill="#cbd5e1">Software engineering, AI &amp; web development</text>
 </svg>
