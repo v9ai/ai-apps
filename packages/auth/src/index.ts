@@ -6,9 +6,9 @@ import { headers } from "next/headers";
 import { redirect } from "next/navigation";
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
-export function createAuth(db: any) {
+export function createAuth(db: any, schema?: Record<string, unknown>) {
   return betterAuth({
-    database: drizzleAdapter(db, { provider: "pg" }),
+    database: drizzleAdapter(db, { provider: "pg", schema }),
     emailAndPassword: { enabled: true },
     plugins: [nextCookies()],
   });
