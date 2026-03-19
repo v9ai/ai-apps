@@ -1,0 +1,122 @@
+[
+  {
+    "name": "chisinau_centru_mdl",
+    "input": "Title: Apartament 2 camere, Centru, Chisinau\nPrice: 900 000 MDL\nSuprafata: 65 m²\nEtaj: 4/9\nNumar camere: 2\nStare: Euroreparatie\nZona: Centru\nDescriere: Apartament spatios in centrul Chisinaului, reparatie europeana completa, geamuri termopan, parchet.",
+    "expected": {
+      "price_eur": 45000,
+      "currency": "MDL",
+      "size_m2": 65,
+      "rooms": 2,
+      "floor": 4,
+      "total_floors": 9,
+      "zone": "Centru",
+      "city": "Chisinau",
+      "condition": "renovated"
+    }
+  },
+  {
+    "name": "chisinau_botanica_eur",
+    "input": "Title: Vand apartament 3 odai, Botanica\nPret: 78 500 EUR\nSuprafata totala: 82 m²\nEtaj: 7 din 9\nCamere: 3\nStare: Buna\nSector: Botanica, str. Grenoble\nDescriere: Bloc sovietic consolidat, balcon, pivnita, loc de parcare.",
+    "expected": {
+      "price_eur": 78500,
+      "currency": "EUR",
+      "size_m2": 82,
+      "rooms": 3,
+      "floor": 7,
+      "total_floors": 9,
+      "zone": "Botanica",
+      "city": "Chisinau",
+      "condition": "good"
+    }
+  },
+  {
+    "name": "bucharest_s3_ron",
+    "input": "Apartament 2 camere de vanzare, Sector 3, Bucuresti\nPret: 145.000 RON\nSuprafata utila: 58 mp\nEtaj: 3/8\nNr. camere: 2\nAn constructie: 1985\nStare: necesita renovare\nZona: Sector 3 - Vitan\nDescriere: Apartament decomandat, bloc din 1985, necesita renovare completa.",
+    "expected": {
+      "price_eur": 29000,
+      "currency": "RON",
+      "size_m2": 58,
+      "rooms": 2,
+      "floor": 3,
+      "total_floors": 8,
+      "zone": "Sector 3",
+      "city": "Bucharest",
+      "condition": "needs_renovation"
+    }
+  },
+  {
+    "name": "cluj_new_build_eur",
+    "input": "Apartament nou 3 camere Cluj-Napoca, zona Centru\nPret: 320.000 EUR\nSuprafata: 105 mp\nEtaj: 5/10\nCamere: 3\nAn constructie: 2024\nFinisaje: Premium\nZona: Centru\nParcare: inclusa\nDescriere: Imobil nou 2024, finisaje premium, terasa proprie 15mp, loc parcare subteran inclus.",
+    "expected": {
+      "price_eur": 320000,
+      "currency": "EUR",
+      "size_m2": 105,
+      "rooms": 3,
+      "floor": 5,
+      "total_floors": 10,
+      "zone": "Centru",
+      "city": "Cluj-Napoca",
+      "condition": "new"
+    }
+  },
+  {
+    "name": "real_listing_aeroport",
+    "input": "Title: Apartament cu 1 cameră, Aeroport, Chișinău, Chișinău mun.\nPrice: 72 500 €\nSuprafata: 51 m²\nEtaj: 3/10\nNumar camere: 1\nStare: Variantă albă\nZona: Aeroport, str. Dacia 62\nTip imobil: Bloc nou (cărămidă)\nConstructor: Exfactor-grup\nDescriere: Se vind apartament 1odae (varianta alba)+loc de parcare subterana. Geamuri panoramice. Bloc nou, 10 etaje, etajul 3.",
+    "expected": {
+      "price_eur": 72500,
+      "currency": "EUR",
+      "size_m2": 51,
+      "rooms": 1,
+      "floor": 3,
+      "total_floors": 10,
+      "zone": "Aeroport",
+      "city": "Chisinau",
+      "condition": "new"
+    }
+  },
+  {
+    "name": "balti_mdl_spaces",
+    "input": "Title: Apartament 3 camere, Centru, Balti\nPrice: 1 800 000 MDL\nSuprafata: 70 m²\nEtaj: 2/5\nNumar camere: 3\nStare: Buna\nZona: Centru\nDescriere: Apartament spatios in centrul orasului Balti, stare buna, geamuri termopan.",
+    "expected": {
+      "price_eur": 90000,
+      "currency": "MDL",
+      "size_m2": 70,
+      "rooms": 3,
+      "floor": 2,
+      "total_floors": 5,
+      "zone": "Centru",
+      "city": "Balti",
+      "condition": "good"
+    }
+  },
+  {
+    "name": "timisoara_eur_dot_format",
+    "input": "Apartament 3 camere de vanzare, Centru, Timisoara\nPret: 250.000 EUR\nSuprafata: 92 mp\nEtaj: 6/8\nNr. camere: 3\nStare: renovata\nZona: Centru\nDescriere: Apartament complet renovat, 3 camere decomandate, zona centrala Timisoara.",
+    "expected": {
+      "price_eur": 250000,
+      "currency": "EUR",
+      "size_m2": 92,
+      "rooms": 3,
+      "floor": 6,
+      "total_floors": 8,
+      "zone": "Centru",
+      "city": "Timisoara",
+      "condition": "renovated"
+    }
+  },
+  {
+    "name": "iasi_ron",
+    "input": "Apartament 2 camere de vanzare, Centru, Iasi\nPret: 450.000 RON\nSuprafata: 75 mp\nEtaj: 3/7\nNr. camere: 2\nStare: buna\nZona: Centru\nDescriere: Apartament 2 camere in centrul Iasului, stare buna, acces rapid la transport public.",
+    "expected": {
+      "price_eur": 90000,
+      "currency": "RON",
+      "size_m2": 75,
+      "rooms": 2,
+      "floor": 3,
+      "total_floors": 7,
+      "zone": "Centru",
+      "city": "Iasi",
+      "condition": "good"
+    }
+  }
+]
