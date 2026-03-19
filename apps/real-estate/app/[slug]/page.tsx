@@ -36,8 +36,8 @@ export default async function PaperPage({ params }: { params: Promise<{ slug: st
 
   return (
     <div className={`cat-${meta.slug}`}>
-      <ReadingProgress />
-      <Topbar paperCount={total} />
+      <ReadingProgress showPercentage />
+      <Topbar />
 
       {/* Banner */}
       <div className="article-banner">
@@ -97,7 +97,7 @@ export default async function PaperPage({ params }: { params: Promise<{ slug: st
           )}
 
           {/* Prev/Next */}
-          <ArticleNav prev={prev} next={next} />
+          <ArticleNav prev={prev} next={next} current={idx + 1} total={total} />
         </div>
         <TableOfContents markdown={paper.content} />
       </div>
