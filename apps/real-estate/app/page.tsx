@@ -1,6 +1,7 @@
 import { getGroupedPapers, getAllPapers, getTotalWordCount, CATEGORIES } from "@/lib/articles";
 import { Topbar } from "@/components/topbar";
 import { Hero } from "@/components/hero";
+import { FeaturedListing } from "@/components/featured-listing";
 import { CategoryGrid } from "@/components/category-grid";
 import { Footer } from "@/components/footer";
 
@@ -13,6 +14,8 @@ export default function HomePage() {
       <Topbar paperCount={total} />
 
       <Hero paperCount={total} domainCount={catCount} wordCount={getTotalWordCount()} />
+
+      <FeaturedListing />
 
       {/* Search + Bento Grid */}
       <div id="research">

@@ -9,7 +9,7 @@
     "dev:n": "turbo run dev --filter=nomadically.work",
     "dev:r": "turbo run dev --filter=research-thera & cd apps/research-thera/langgraph && uv run langgraph dev",
     "dev:b": "turbo run dev --filter=vadim.blog",
-    "dev:re": "turbo run dev --filter=real-estate",
+    "dev:re": "turbo run dev --filter=real-estate & cd apps/real-estate/analyzer && uv run uvicorn server:app --port 8005 --reload",
     "dev:k": "turbo run dev --filter=knowledge",
     "dev:t": "turbo run dev --filter=todo",
     "format": "prettier --write \"**/*.{ts,tsx,md}\"",

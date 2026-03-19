@@ -1,1 +1,3 @@
 .vercel
+analyzer/.env
+analyzer/.venv
