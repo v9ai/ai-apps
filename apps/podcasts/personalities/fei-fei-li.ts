@@ -26,6 +26,7 @@ const personality: Personality = {
       date: "2024-01-07",
     },
   ],
+  knownFor: "ImageNet",
 };
 
 export default personality;

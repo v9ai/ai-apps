@@ -254,6 +254,24 @@
     height: 1px;
     background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.08), transparent);
   }
+
+  /* ---------- Story card 3D (grid variant) ---------- */
+  .story-card-3d {
+    transform: perspective(800px) rotateX(0deg) translateY(0px);
+    will-change: transform, box-shadow;
+  }
+  .story-card-3d:hover {
+    background-color: #1C1C22;
+    transform: perspective(800px) rotateX(0.8deg) translateY(-4px);
+    box-shadow: 0 8px 32px rgba(0,0,0,0.4), inset 0 1px 0 rgba(255,255,255,0.06) !important;
+  }
+  .story-card-3d:hover .story-card-avatar {
+    box-shadow: 0 0 0 1px rgba(255,255,255,0.14);
+  }
+  .story-card-3d:hover .known-for-badge {
+    border-color: rgba(139,92,246,0.25);
+    color: #c4b5fd;
+  }
 }
 
 @layer utilities {
@@ -322,4 +340,9 @@
     opacity: 1;
     transform: translateX(0);
   }
+}
+
+@keyframes story-card-enter {
+  from { opacity: 0; transform: perspective(800px) translateY(12px); }
+  to   { opacity: 1; transform: perspective(800px) translateY(0) rotateX(0deg); }
 }

@@ -8,6 +8,7 @@ const personality: Personality = {
     "Nobel Prize winner, appears on Fridman, podcasts about AlphaFold, Gemini, and AGI paths.",
   slug: "demis-hassabis",
   podcasts: ["Lex Fridman", "TED", "Bloomberg"],
+  knownFor: "AlphaFold",
 };
 
 export default personality;

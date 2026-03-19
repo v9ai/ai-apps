@@ -7,8 +7,9 @@ const personality: Personality = {
   description:
     "Created Pydantic (most used Python validation library) and Pydantic AI, bringing FastAPI-like ergonomics to agents.",
   slug: "samuel-colvin",
-  podcasts: ["Software Engineering Daily", "SE Radio", "Latent Space", "Vanishing Gradients"],
+  podcasts: ["Software Engineering Daily", "SE Radio", "Latent Space", "Vanishing Gradients", "AI Engineering Podcast", "AI Stories", "MLOps Community"],
   github: "samuelcolvin",
+  knownFor: "PydanticAI",
 };
 
 export default personality;

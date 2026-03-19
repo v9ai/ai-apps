@@ -9,6 +9,7 @@ const personality: Personality = {
   slug: "andrew-kane",
   podcasts: ["GitHub"],
   github: "ankane",
+  knownFor: "pgvector",
 };
 
 export default personality;

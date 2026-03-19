@@ -54,10 +54,11 @@ export default function HomePage() {
         >
           Their Stories
         </h2>
-        <p className="text-center text-[11px] uppercase tracking-[0.1em] font-medium text-[#7B7B86] mb-12">
+        <p className="text-center text-[11px] uppercase tracking-[0.1em] font-medium text-[#7B7B86] mb-6">
           {totalPersonalities} voices shaping the future of artificial
           intelligence
         </p>
+        <div className="gradient-divider max-w-xs mx-auto mb-10" />
 
         {/* ── Category filter pills ───────────────────────────── */}
         <div className="mb-12">

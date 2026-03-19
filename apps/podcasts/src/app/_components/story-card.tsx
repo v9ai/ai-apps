@@ -37,7 +37,7 @@ export function StoryCard({
       }}
     >
       {/* Portrait */}
-      <div className="flex justify-center mb-3">
+      <div className="flex justify-center mb-4">
         {avatar ? (
           <img
             src={avatar}
@@ -58,22 +58,22 @@ export function StoryCard({
       </div>
 
       {/* Quote block */}
-      <div className="relative mb-3 text-left">
+      <div className="relative mb-4 text-left">
         <span
-          className="absolute top-[-0.75rem] left-[-0.25rem] select-none pointer-events-none text-5xl text-[rgba(255,255,255,0.07)] leading-none"
+          className="absolute top-[-0.75rem] left-[-0.25rem] select-none pointer-events-none text-5xl text-[rgba(255,255,255,0.10)] leading-none"
           aria-hidden="true"
         >
           {"\u201C"}
         </span>
         <p
-          className={`italic text-ink-secondary leading-[1.78] tracking-[0.01em] pl-4 line-clamp-3 ${isCompact ? "text-[0.9375rem]" : "text-base"}`}
+          className={`italic text-ink-secondary leading-[1.78] tracking-[0.01em] pl-4 ${isCompact ? "text-[0.9375rem] line-clamp-3" : "text-base line-clamp-4"}`}
         >
           {displayText}
         </p>
       </div>
 
       {/* Name and role */}
-      <div className="mb-2 text-left">
+      <div className="mb-3 pt-3 border-t border-[rgba(255,255,255,0.04)] text-left">
         <h3 className="font-sans text-[0.9375rem] font-semibold text-ink-primary leading-tight tracking-[-0.01em]">
           {personality.name}
         </h3>
@@ -82,41 +82,25 @@ export function StoryCard({
         </p>
       </div>
 
-      {/* Podcast count pill */}
-      {podcastCount > 0 && (
-        <div className="text-left">
+      {/* Pills */}
+      <div className="flex flex-wrap items-center gap-1.5 mt-1 text-left">
+        {podcastCount > 0 && (
           <span className="inline-flex items-center gap-1.5 text-xs font-medium uppercase tracking-[0.06em] px-2.5 py-1 rounded-full bg-[rgba(255,255,255,0.05)] text-[#8B8B96] border border-[rgba(255,255,255,0.08)] transition-colors duration-300">
             <svg viewBox="0 0 16 16" className="w-3 h-3" fill="currentColor">
               <path d="M8 1a4 4 0 0 0-4 4v3a4 4 0 0 0 8 0V5a4 4 0 0 0-4-4zM3 9a5 5 0 0 0 4.5 4.975V15.5a.5.5 0 0 0 1 0v-1.525A5 5 0 0 0 13 9a.5.5 0 0 0-1 0 4 4 0 0 1-8 0 .5.5 0 0 0-1 0z" />
             </svg>
             {podcastCount} {podcastCount === 1 ? "podcast" : "podcasts"}
           </span>
-        </div>
-      )}
-
-      {/* 3D hover + entrance animation */}
-      <style
-        dangerouslySetInnerHTML={{
-          __html: `
-            @keyframes story-card-enter {
-              from { opacity: 0; transform: perspective(800px) translateY(12px); }
-              to   { opacity: 1; transform: perspective(800px) translateY(0) rotateX(0deg); }
-            }
-            .story-card-3d {
-              transform: perspective(800px) rotateX(0deg) translateY(0px);
-              will-change: transform, box-shadow;
-            }
-            .story-card-3d:hover {
-              background-color: #1C1C22;
-              transform: perspective(800px) rotateX(0.8deg) translateY(-4px);
-              box-shadow: 0 8px 32px rgba(0,0,0,0.4), inset 0 1px 0 rgba(255,255,255,0.06) !important;
-            }
-            .story-card-3d:hover .story-card-avatar {
-              box-shadow: 0 0 0 1px rgba(255,255,255,0.14);
-            }
-          `,
-        }}
-      />
+        )}
+        {personality.knownFor && (
+          <span className="known-for-badge inline-flex items-center gap-1 text-xs font-medium tracking-[0.02em] px-2.5 py-1 rounded-full bg-[rgba(139,92,246,0.08)] text-[#a78bfa] border border-[rgba(139,92,246,0.15)] transition-colors duration-300">
+            <svg viewBox="0 0 16 16" className="w-3 h-3" fill="currentColor">
+              <path d="M4.708 5.578L2.061 8.224a.498.498 0 0 0 .002.706l2.646 2.647a.5.5 0 1 1-.708.708L1.354 9.637a1.498 1.498 0 0 1-.002-2.12L3.999 4.87a.5.5 0 0 1 .709.707zm6.584 0L13.939 8.224a.498.498 0 0 1-.002.706l-2.646 2.647a.5.5 0 1 0 .708.708l2.647-2.648a1.498 1.498 0 0 0 .002-2.12L12.001 4.87a.5.5 0 1 0-.709.707zM7.09 13.241l2-9.5a.5.5 0 1 1 .977.206l-2 9.5a.5.5 0 0 1-.977-.206z" />
+            </svg>
+            {personality.knownFor}
+          </span>
+        )}
+      </div>
     </Link>
   );
 }

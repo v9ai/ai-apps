@@ -8,6 +8,7 @@ const personality: Personality = {
     "Built DynamoDB, SageMaker, and Bedrock. 250+ patents. Keynote speaker at AWS re:Invent.",
   slug: "swami-sivasubramanian",
   podcasts: ["AWS Executive Insights", "WEF Meet the Leader", "CNBC"],
+  knownFor: "AWS Bedrock",
 };
 
 export default personality;

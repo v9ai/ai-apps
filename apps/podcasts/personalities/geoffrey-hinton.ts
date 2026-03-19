@@ -8,6 +8,7 @@ const personality: Personality = {
     "Nobel Prize winner, high-profile appearances on AI safety and existential risk.",
   slug: "geoffrey-hinton",
   podcasts: ["Lex Fridman", "60 Minutes", "BBC"],
+  knownFor: "Deep Learning",
 };
 
 export default personality;

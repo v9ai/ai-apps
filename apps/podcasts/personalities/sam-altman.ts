@@ -8,6 +8,7 @@ const personality: Personality = {
     "Appears everywhere: Lex Fridman, Dwarkesh, Bloomberg, CNBC, YC events.",
   slug: "sam-altman",
   podcasts: ["Lex Fridman", "Dwarkesh Podcast", "Bloomberg", "CNBC"],
+  knownFor: "ChatGPT",
 };
 
 export default personality;

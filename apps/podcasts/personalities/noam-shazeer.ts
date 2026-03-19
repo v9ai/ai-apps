@@ -8,6 +8,7 @@ const personality: Personality = {
     "Pioneer of the Transformer architecture, rare but extremely high-value appearances.",
   slug: "noam-shazeer",
   podcasts: ["Lex Fridman", "NeurIPS"],
+  knownFor: "Transformer",
 };
 
 export default personality;

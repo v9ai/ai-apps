@@ -56,6 +56,7 @@ export type Personality = {
   orcid?: string;
   linkedinImage?: string;
   papers?: Paper[];
+  knownFor?: string;
 };
 
 export type Category = {

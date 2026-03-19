@@ -25,6 +25,7 @@ const personality: Personality = {
       date: "2024-05-07",
     },
   ],
+  knownFor: "DeepSeek",
 };
 
 export default personality;

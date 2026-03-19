@@ -9,6 +9,7 @@ const personality: Personality = {
   slug: "jerry-liu",
   podcasts: ["DataFramed", "Gradient Dissent", "MAD Podcast", "Latent Space"],
   github: "jerryjliu",
+  knownFor: "LlamaIndex",
 };
 
 export default personality;

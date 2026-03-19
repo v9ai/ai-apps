@@ -9,6 +9,7 @@ const personality: Personality = {
   slug: "amjad-masad",
   podcasts: ["Lex Fridman", "This Week in Startups", "Latent Space"],
   github: "amasad",
+  knownFor: "Replit",
 };
 
 export default personality;

@@ -21,6 +21,7 @@ const personality: Personality = {
       date: "2024-01-05",
     },
   ],
+  knownFor: "LangChain",
 };
 
 export default personality;
