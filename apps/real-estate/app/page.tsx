@@ -1,24 +1,25 @@
-import { getGroupedPapers, getAllPapers, getTotalWordCount, CATEGORIES } from "@/lib/articles";
+import { getGroupedPapers } from "@/lib/articles";
 import { Topbar } from "@/components/topbar";
 import { Hero } from "@/components/hero";
 import { FeaturedListing } from "@/components/featured-listing";
+import { TrustSignals } from "@/components/trust-signals";
 import { CategoryGrid } from "@/components/category-grid";
 import { Footer } from "@/components/footer";
 
 export default function HomePage() {
   const groups = getGroupedPapers();
-  const total = getAllPapers().length;
-  const catCount = CATEGORIES.length;
   return (
     <div>
-      <Topbar paperCount={total} />
+      <Topbar />
 
-      <Hero paperCount={total} domainCount={catCount} wordCount={getTotalWordCount()} />
+      <Hero />
 
       <FeaturedListing />
 
-      {/* Search + Bento Grid */}
-      <div id="research">
+      <TrustSignals />
+
+      {/* Research Papers */}
+      <div id="research" style={{ maxWidth: 1200, margin: "0 auto", padding: "0 24px 24px" }}>
         <CategoryGrid groups={groups} />
       </div>
 
