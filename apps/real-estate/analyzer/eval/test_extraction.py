@@ -9,58 +9,20 @@ slow) calls the real agent and applies the same metrics.
 import os
 import json
 import pytest
-import pytest_asyncio
-from deepeval import assert_test
-from deepeval.test_case import LLMTestCase, LLMTestCaseParams
-from deepeval.metrics import GEval
-from deepeval.models import DeepSeekModel
 
-judge = DeepSeekModel(
-    model="deepseek-reasoner",
-    api_key=os.getenv("DEEPSEEK_API_KEY"),
-    temperature=0,
-)
+_HAS_API_KEY = bool(os.getenv("DEEPSEEK_API_KEY"))
 
-extraction_completeness = GEval(
-    name="ExtractionCompleteness",
-    criteria="""Given raw listing text (INPUT) and the extracted JSON (ACTUAL_OUTPUT),
-evaluate whether the extraction captured all fields that are clearly present in the text:
-price (as price_eur in EUR), size_m2, rooms, zone/district, city, condition.
-Penalise for each field that is present in the text but missing (null) in the output.
-Do NOT penalise for fields that are genuinely absent from the listing text.""",
-    evaluation_params=[LLMTestCaseParams.INPUT, LLMTestCaseParams.ACTUAL_OUTPUT],
-    model=judge,
-    threshold=0.7,
-)
-
-extraction_correctness = GEval(
-    name="ExtractionCorrectness",
-    criteria="""Given raw listing text (INPUT) and the extracted JSON (ACTUAL_OUTPUT),
-verify that numeric values are correct:
-- price_eur must equal the listed price converted to EUR (MDL÷20, RON÷5, EUR as-is)
-- price_per_m2 = price_eur / size_m2 (within ±5 EUR/m² rounding)
-- size_m2, rooms, floor, total_floors must match numbers in the text exactly
-- zone and city must match the location mentioned in the text""",
-    evaluation_params=[LLMTestCaseParams.INPUT, LLMTestCaseParams.ACTUAL_OUTPUT],
-    model=judge,
-    threshold=0.75,
-)
-
-currency_conversion = GEval(
-    name="CurrencyConversion",
-    criteria="""Focus only on the price fields. Given the INPUT listing text and ACTUAL_OUTPUT JSON,
-verify that price_eur is correctly derived from the source currency:
-- MDL: divide by 20
-- RON: divide by 5
-- EUR: no conversion needed
-Score 1.0 if price_eur is within ±3% of the correct converted value, 0.0 otherwise.""",
-    evaluation_params=[LLMTestCaseParams.INPUT, LLMTestCaseParams.ACTUAL_OUTPUT],
-    model=judge,
-    threshold=0.9,
-)
+if _HAS_API_KEY:
+    from deepeval import assert_test
+    from deepeval.test_case import LLMTestCase
+    from eval._judge import (
+        extraction_completeness,
+        extraction_correctness,
+        currency_conversion,
+    )
 
 
-GOLDEN_CASES = [
+GOLDEN_CASES = [] if not _HAS_API_KEY else [
     # 999.md style — MDL price, Chisinau listing
     {
         "input": """Title: Apartament 2 camere, Centru, Chisinau
@@ -240,9 +202,215 @@ Descriere: Garsoniera cu reparatie cosmetica, fereastra spre curte.""",
         "expected_output": "price_eur=28000, size_m2=32, rooms=1, zone=Buiucani, city=Chisinau",
         "metrics": [extraction_completeness, extraction_correctness],
     },
+    # Parking included — extraction should capture parking fields
+    {
+        "input": """Title: Apartament 2 camere, Centru, Chisinau
+Price: 85 000 EUR
+Suprafata: 70 m²
+Etaj: 5/10
+Camere: 2
+Stare: Euroreparatie
+Zona: Centru
+Parcare: loc parcare subteran inclus in pret
+Descriere: Bloc nou 2024, parcare subterana inclusa, finisaje premium.""",
+        "actual_output": json.dumps({
+            "title": "Apartament 2 camere, Centru, Chisinau",
+            "price_eur": 85000,
+            "price_local": 85000,
+            "currency": "EUR",
+            "size_m2": 70,
+            "price_per_m2": 1214,
+            "rooms": 2,
+            "floor": 5,
+            "total_floors": 10,
+            "zone": "Centru",
+            "city": "Chisinau",
+            "condition": "renovated",
+            "features": ["parcare subterana", "finisaje premium"],
+            "parking_included": True,
+            "parking_price_eur": 12000,
+        }),
+        "expected_output": (
+            "price_eur=85000, size_m2=70, rooms=2, zone=Centru, city=Chisinau, "
+            "parking_included=true, parking_price_eur=12000"
+        ),
+        "metrics": [extraction_completeness, extraction_correctness],
+    },
+    # Parking separate — explicit separate price
+    {
+        "input": """Title: Apartament 1 camera, Aeroport
+Price: 55 000 EUR (apartament)
+Pret parcare separat — 15 000 EUR
+Suprafata: 45 m²
+Etaj: 3/10
+Camere: 1
+Stare: Variantă albă
+Zona: Aeroport
+Descriere: Bloc nou Exfactor, loc de parcare subteran se vinde separat 15000 EUR.""",
+        "actual_output": json.dumps({
+            "title": "Apartament 1 camera, Aeroport",
+            "price_eur": 55000,
+            "price_local": 55000,
+            "currency": "EUR",
+            "size_m2": 45,
+            "price_per_m2": 1222,
+            "rooms": 1,
+            "floor": 3,
+            "total_floors": 10,
+            "zone": "Aeroport",
+            "city": "Chisinau",
+            "condition": "new",
+            "features": ["bloc nou", "parcare subterana"],
+            "parking_included": False,
+            "parking_price_eur": 15000,
+        }),
+        "expected_output": (
+            "price_eur=55000, size_m2=45, rooms=1, zone=Aeroport, city=Chisinau, "
+            "parking_included=false, parking_price_eur=15000"
+        ),
+        "metrics": [extraction_completeness, extraction_correctness],
+    },
+    # Edge case: Balti MDL with spaces in price
+    {
+        "input": """Title: Apartament 3 camere, Centru, Balti
+Price: 1 800 000 MDL
+Suprafata: 70 m²
+Etaj: 2/5
+Numar camere: 3
+Stare: Buna
+Zona: Centru
+Descriere: Apartament spatios in centrul orasului Balti, stare buna, geamuri termopan.""",
+        "actual_output": json.dumps({
+            "title": "Apartament 3 camere, Centru, Balti",
+            "price_eur": 90000,
+            "price_local": 1800000,
+            "currency": "MDL",
+            "size_m2": 70,
+            "price_per_m2": 1286,
+            "rooms": 3,
+            "floor": 2,
+            "total_floors": 5,
+            "zone": "Centru",
+            "city": "Balti",
+            "condition": "good",
+            "features": ["termopan"],
+        }),
+        "expected_output": "price_eur=90000, size_m2=70, rooms=3, zone=Centru, city=Balti",
+        "metrics": [extraction_completeness, extraction_correctness, currency_conversion],
+    },
+    # Edge case: Romanian mp format with dot as thousands separator
+    {
+        "input": """Apartament 3 camere de vanzare, Centru, Timisoara
+Pret: 250.000 EUR
+Suprafata: 92 mp
+Etaj: 6/8
+Nr. camere: 3
+Stare: renovata
+Zona: Centru
+Descriere: Apartament complet renovat, 3 camere decomandate, zona centrala Timisoara.""",
+        "actual_output": json.dumps({
+            "title": "Apartament 3 camere de vanzare, Centru, Timisoara",
+            "price_eur": 250000,
+            "price_local": 250000,
+            "currency": "EUR",
+            "size_m2": 92,
+            "price_per_m2": 2717,
+            "rooms": 3,
+            "floor": 6,
+            "total_floors": 8,
+            "zone": "Centru",
+            "city": "Timisoara",
+            "condition": "renovated",
+            "features": ["decomandat"],
+        }),
+        "expected_output": "price_eur=250000, size_m2=92, rooms=3, zone=Centru, city=Timisoara",
+        "metrics": [extraction_completeness, extraction_correctness],
+    },
+    # Edge case: No condition mentioned anywhere in listing
+    {
+        "input": """Title: Apartament 2 camere, Ciocana, Chisinau
+Price: 38 000 EUR
+Suprafata: 55 m²
+Etaj: 6/9
+Numar camere: 2
+Zona: Ciocana
+Descriere: Apartament 2 camere in sectorul Ciocana, etajul 6, vedere spre parc.""",
+        "actual_output": json.dumps({
+            "title": "Apartament 2 camere, Ciocana, Chisinau",
+            "price_eur": 38000,
+            "price_local": 38000,
+            "currency": "EUR",
+            "size_m2": 55,
+            "price_per_m2": 691,
+            "rooms": 2,
+            "floor": 6,
+            "total_floors": 9,
+            "zone": "Ciocana",
+            "city": "Chisinau",
+            "condition": "unknown",
+            "features": [],
+        }),
+        "expected_output": "price_eur=38000, size_m2=55, rooms=2, zone=Ciocana, city=Chisinau, condition=unknown",
+        "metrics": [extraction_completeness, extraction_correctness],
+    },
+    # Edge case: Conflicting price formats — EUR in title, MDL in description (same value)
+    {
+        "input": """Garsoniera Buiucani 28000€
+Suprafata: 30 m²
+Etaj: 4/5
+Camere: 1
+Zona: Buiucani
+Descriere: Garsoniera compacta in Buiucani, pret 560 000 MDL, mobilata partial.""",
+        "actual_output": json.dumps({
+            "title": "Garsoniera Buiucani 28000€",
+            "price_eur": 28000,
+            "price_local": 28000,
+            "currency": "EUR",
+            "size_m2": 30,
+            "price_per_m2": 933,
+            "rooms": 1,
+            "floor": 4,
+            "total_floors": 5,
+            "zone": "Buiucani",
+            "city": "Chisinau",
+            "condition": "good",
+            "features": ["mobilata partial"],
+        }),
+        "expected_output": "price_eur=28000, currency=EUR, size_m2=30, rooms=1, zone=Buiucani, city=Chisinau",
+        "metrics": [extraction_completeness, extraction_correctness, currency_conversion],
+    },
+    # Edge case: Iasi listing in RON
+    {
+        "input": """Apartament 2 camere de vanzare, Centru, Iasi
+Pret: 450.000 RON
+Suprafata: 75 mp
+Etaj: 3/7
+Nr. camere: 2
+Stare: buna
+Zona: Centru
+Descriere: Apartament 2 camere in centrul Iasului, stare buna, acces rapid la transport public.""",
+        "actual_output": json.dumps({
+            "title": "Apartament 2 camere de vanzare, Centru, Iasi",
+            "price_eur": 90000,
+            "price_local": 450000,
+            "currency": "RON",
+            "size_m2": 75,
+            "price_per_m2": 1200,
+            "rooms": 2,
+            "floor": 3,
+            "total_floors": 7,
+            "zone": "Centru",
+            "city": "Iasi",
+            "condition": "good",
+            "features": [],
+        }),
+        "expected_output": "price_eur=90000, size_m2=75, rooms=2, zone=Centru, city=Iasi",
+        "metrics": [extraction_completeness, extraction_correctness, currency_conversion],
+    },
 ]
 
 
+@pytest.mark.skipif(not _HAS_API_KEY, reason="requires DEEPSEEK_API_KEY")
 @pytest.mark.parametrize("case", GOLDEN_CASES)
 def test_extraction(case):
     test_case = LLMTestCase(
@@ -302,12 +470,11 @@ async def test_extraction_live(case):
     import pathlib
     sys.path.insert(0, str(pathlib.Path(__file__).parent.parent.parent))
 
-    from analyzer.agent import extractor
+    from analyzer.agent import extract_listing
 
-    result = await extractor.run(
+    listing = await extract_listing(
         f"Extract apartment data from this listing:\nURL: {case['url']}\n\n{case['text']}"
     )
-    listing = result.data
 
     assert listing.city.lower() == case["expected_city"].lower(), (
         f"Expected city={case['expected_city']}, got {listing.city}"
