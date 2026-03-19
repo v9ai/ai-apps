@@ -39,13 +39,25 @@ import chromadb
 import spotipy
 from sentence_transformers import SentenceTransformer
 from spotipy.oauth2 import SpotifyClientCredentials
-from langchain_text_splitters import RecursiveCharacterTextSplitter
 from rich.console import Console
 from rich.table import Table
 from rich.panel import Panel
 from rich.progress import track
 
 console = Console()
+
+
+def _split_text(text: str, chunk_size: int, chunk_overlap: int) -> list[str]:
+    """Split text into chunks of chunk_size with chunk_overlap between them."""
+    if len(text) <= chunk_size:
+        return [text]
+    chunks = []
+    start = 0
+    while start < len(text):
+        chunks.append(text[start : start + chunk_size])
+        start += chunk_size - chunk_overlap
+    return chunks
+
 
 # ═══════════════════════════════════════════════════════════════════════════
 # CONFIG
@@ -432,9 +444,6 @@ def cmd_ingest(args):
     model = SentenceTransformer(EMBEDDING_MODEL)
 
     chunk_col = get_chunks_collection(client)
-    splitter = RecursiveCharacterTextSplitter(
-        chunk_size=args.chunk_size, chunk_overlap=CHUNK_OVERLAP,
-    )
 
     ids, documents, embeddings, metadatas = [], [], [], []
 
@@ -443,7 +452,7 @@ def cmd_ingest(args):
         if len(text.strip()) < 30:
             continue
 
-        chunks = splitter.split_text(text)
+        chunks = _split_text(text, args.chunk_size, CHUNK_OVERLAP)
         for i, chunk in enumerate(chunks):
             ids.append(f"{ep['spotify_id']}_{i}")
             documents.append(chunk)
@@ -1419,13 +1428,12 @@ def cmd_tune(args):
             name=temp_name, metadata={"hnsw:space": "cosine"},
         )
 
-        splitter = RecursiveCharacterTextSplitter(chunk_size=cs, chunk_overlap=80)
         ids, docs, embs, metas = [], [], [], []
         for ep in episodes:
             text = f"{ep['name']}\n\n{ep['description']}"
             if len(text.strip()) < 30:
                 continue
-            for i, chunk in enumerate(splitter.split_text(text)):
+            for i, chunk in enumerate(_split_text(text, cs, 80)):
                 ids.append(f"{ep['spotify_id']}_{i}")
                 docs.append(chunk)
                 embs.append(model.encode(chunk).tolist())

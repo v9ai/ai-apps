@@ -2,8 +2,7 @@
 """Person research pipeline — CrewAI implementation with 10 expert agents.
 
 Spawns 10 specialized expert agents that collaboratively research an AI/tech
-personality and produce a structured JSON profile compatible with the existing
-PersonResearch schema (same output as research.py / langgraph/cli.py research).
+personality and produce a structured JSON profile compatible with the existing PersonResearch schema.
 
 Usage:
     python3 crew.py

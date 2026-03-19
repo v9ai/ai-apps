@@ -1,7 +1,7 @@
 """
 timeline_enrichment.py
 ──────────────────────
-LangChain LCEL pipeline that enriches person timelines by merging events
+Pipeline that enriches person timelines by merging events
 from multiple sources: research JSON, GitHub repos, HuggingFace models,
 and arXiv papers.
 
@@ -14,6 +14,7 @@ Usage:
 from __future__ import annotations
 
 import argparse
+import asyncio
 import json
 import os
 import re
@@ -23,7 +24,6 @@ from pathlib import Path
 from typing import Any, TypedDict
 
 import httpx
-from langchain_core.runnables import RunnableLambda, RunnableParallel, RunnableSequence
 
 # ─── Paths ──────────────────────────────────────────────────
 
@@ -179,39 +179,16 @@ async def _search_person_image(inp: PipelineInput) -> str | None:
         with DDGS() as ddgs:
             results = list(ddgs.images(query, max_results=5))
             if results:
-                # Return the first image URL
                 return results[0].get("image") or results[0].get("thumbnail")
     except Exception:
         pass
     return None
 
 
-search_person_image = RunnableLambda(
-    func=lambda inp: None,
-    afunc=_search_person_image,
-    name="search_person_image",
-)
-
-
-# ─── LCEL Runnables ────────────────────────────────────────
-
-fetch_github_repos = RunnableLambda(
-    func=lambda inp: [],
-    afunc=_fetch_github_repos,
-    name="fetch_github_repos",
-)
-
-fetch_hf_models = RunnableLambda(
-    func=lambda inp: [],
-    afunc=_fetch_hf_models,
-    name="fetch_hf_models",
-)
-
-
 # ─── Event builders (pure transforms) ─────────────────────
 
-build_research_events = RunnableLambda(
-    lambda inp: [
+def _build_research_events(inp: PipelineInput) -> list[TimelineEvent]:
+    return [
         TimelineEvent(
             date=e["date"],
             event=e["event"],
@@ -219,12 +196,11 @@ build_research_events = RunnableLambda(
             source="research",
         )
         for e in inp.get("research_timeline", [])
-    ],
-    name="build_research_events",
-)
+    ]
 
-build_paper_events = RunnableLambda(
-    lambda inp: [
+
+def _build_paper_events(inp: PipelineInput) -> list[TimelineEvent]:
+    return [
         TimelineEvent(
             date=p["date"],
             event=f'Published "{p["title"]}"',
@@ -232,16 +208,10 @@ build_paper_events = RunnableLambda(
             source="paper",
         )
         for p in inp.get("papers", [])
-    ],
-    name="build_paper_events",
-)
+    ]
+
 
 MIN_STARS_FOR_TIMELINE = 3
-
-build_github_events = RunnableLambda(
-    lambda pair: _build_github_events(pair),
-    name="build_github_events",
-)
 
 
 def _build_github_events(
@@ -259,12 +229,6 @@ def _build_github_events(
         for r in repos
         if r["stars"] >= MIN_STARS_FOR_TIMELINE
     ]
-
-
-build_hf_events = RunnableLambda(
-    lambda pair: _build_hf_events(pair),
-    name="build_hf_events",
-)
 
 
 def _build_hf_events(
@@ -310,37 +274,28 @@ def merge_and_sort(gathered: GatheredEvents) -> list[TimelineEvent]:
     return deduped
 
 
-merge_step = RunnableLambda(merge_and_sort, name="merge_and_sort")
-
-
-# ─── Full LCEL Pipeline ───────────────────────────────────
+# ─── Full Pipeline ────────────────────────────────────────
 
 
 async def _run_pipeline(inp: PipelineInput) -> list[TimelineEvent]:
-    """Full enrichment pipeline composed via LCEL."""
+    """Full enrichment pipeline: parallel fetches, then event building."""
 
     # Stage 1: Fetch external data in parallel
-    fetch_parallel = RunnableParallel(
-        github_repos=fetch_github_repos,
-        hf_models=fetch_hf_models,
+    github_repos, hf_models = await asyncio.gather(
+        _fetch_github_repos(inp),
+        _fetch_hf_models(inp),
     )
-    fetched = await fetch_parallel.ainvoke(inp)
 
-    # Stage 2: Build events from each source in parallel
-    gather_parallel = RunnableParallel(
-        research=build_research_events,
-        papers=build_paper_events,
-        github=RunnableLambda(lambda _: _build_github_events((inp, fetched["github_repos"]))),
-        huggingface=RunnableLambda(lambda _: _build_hf_events((inp, fetched["hf_models"]))),
-    )
-    gathered = await gather_parallel.ainvoke(inp)
+    # Stage 2: Build events from each source
+    gathered: GatheredEvents = {
+        "research": _build_research_events(inp),
+        "papers": _build_paper_events(inp),
+        "github": _build_github_events((inp, github_repos)),
+        "huggingface": _build_hf_events((inp, hf_models)),
+    }
 
     # Stage 3: Merge, deduplicate, sort
     return merge_and_sort(gathered)
-
-
-# Expose as a single RunnableSequence-compatible callable
-enrich_timeline = RunnableLambda(_run_pipeline, name="enrich_timeline")
 
 
 # ─── Public API ────────────────────────────────────────────
@@ -371,7 +326,7 @@ async def enrich_person_timeline(slug: str) -> list[TimelineEvent]:
         papers=personality.get("papers", []),
     )
 
-    return await enrich_timeline.ainvoke(inp)
+    return await _run_pipeline(inp)
 
 
 def save_enriched_timeline(slug: str, events: list[TimelineEvent]) -> Path:
@@ -528,7 +483,7 @@ async def fetch_enrichment_data(
             except Exception:
                 pass
 
-    # ── Image search via LangChain ───────────────────────────
+    # ── Image search ───────────────────────────────────────
     if name:
         inp = PipelineInput(
             slug="",
@@ -539,7 +494,7 @@ async def fetch_enrichment_data(
             research_timeline=[],
             papers=[],
         )
-        image_url = await search_person_image.ainvoke(inp)
+        image_url = await _search_person_image(inp)
         if image_url:
             result["imageUrl"] = image_url
 
@@ -560,7 +515,6 @@ def save_enrichment(slug: str, data: dict[str, Any]) -> Path:
 # ─── CLI ───────────────────────────────────────────────────
 
 async def cmd_enrich(args: argparse.Namespace) -> None:
-    import asyncio
     from rich.console import Console
     from rich.table import Table
 
@@ -628,8 +582,6 @@ async def cmd_enrich(args: argparse.Namespace) -> None:
 
 
 def main() -> None:
-    import asyncio
-
     parser = argparse.ArgumentParser(description="Timeline enrichment pipeline")
     sub = parser.add_subparsers(dest="command")
 
