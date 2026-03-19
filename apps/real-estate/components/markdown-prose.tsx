@@ -249,21 +249,37 @@ export function MarkdownProse({ content }: { content: string }) {
         components={{
           h1: ({ children }) => {
             const id = slugify(extractText(children));
-            return <h1 id={id}>{children}</h1>;
+            return (
+              <h1 id={id}>
+                <a href={`#${id}`} className="heading-anchor" aria-hidden="true">#</a>
+                {children}
+              </h1>
+            );
           },
           h2: ({ children }) => {
             const id = slugify(extractText(children));
-            return <h2 id={id}>{children}</h2>;
+            return (
+              <h2 id={id}>
+                <a href={`#${id}`} className="heading-anchor" aria-hidden="true">#</a>
+                {children}
+              </h2>
+            );
           },
           h3: ({ children }) => {
             const id = slugify(extractText(children));
-            return <h3 id={id}>{children}</h3>;
+            return (
+              <h3 id={id}>
+                <a href={`#${id}`} className="heading-anchor" aria-hidden="true">#</a>
+                {children}
+              </h3>
+            );
           },
           a: ({ href, children, ...props }) => {
             const isExternal = href?.startsWith("http");
             return isExternal ? (
               <a href={href} target="_blank" rel="noopener noreferrer" {...props}>
                 {children}
+                <span className="external-link-icon" aria-hidden="true">&#8599;</span>
               </a>
             ) : (
               <a href={href} {...props}>
@@ -271,6 +287,12 @@ export function MarkdownProse({ content }: { content: string }) {
               </a>
             );
           },
+          blockquote: ({ children }) => (
+            <blockquote>
+              <div className="blockquote-border" aria-hidden="true" />
+              {children}
+            </blockquote>
+          ),
           pre: ({ children, ...props }) => {
             // Extract language from the code child
             let lang = "";
