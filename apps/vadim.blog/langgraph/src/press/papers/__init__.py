@@ -19,6 +19,11 @@ class PaperSource(Enum):
     OPENALEX = "OpenAlex"
     CROSSREF = "Crossref"
     CORE = "CORE"
+    # Editorial sources
+    INFOQ = "InfoQ"
+    THE_NEW_STACK = "TheNewStack"
+
+    TOWARDS_DATA_SCIENCE = "TowardsDataScience"
 
 
 @dataclass

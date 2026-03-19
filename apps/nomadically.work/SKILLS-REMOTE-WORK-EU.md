@@ -31,7 +31,7 @@ This document curates relevant skills and subagents from [awesome-agent-skills](
 
 ### Claude Code Subagents
 - **graphql-architect** (voltagent-core-dev) — Schema design for jobs, companies, applications, skills taxonomy
-- **backend-developer** (voltagent-core-dev) — Apollo Server 5 resolvers, context with Clerk auth, federation patterns
+- **backend-developer** (voltagent-core-dev) — Apollo Server 5 resolvers, context with Better Auth session, federation patterns
 - **database-administrator** (voltagent-infra) — Drizzle ORM optimization, D1 query performance, migration strategy
 - **api-designer** (voltagent-core-dev) — REST endpoint design for text-to-SQL, company enrichment, bulk imports
 - **database-optimizer** (voltagent-data-ai) — Index optimization for job search queries, skill extraction performance
@@ -117,7 +117,7 @@ This document curates relevant skills and subagents from [awesome-agent-skills](
 **Purpose:** Secure user data (resumes, preferences), ensure GDPR compliance for EU operations.
 
 ### Claude Code Subagents
-- **security-engineer** (voltagent-infra) — Audit GraphQL queries for injection, Clerk auth hardening, API key rotation
+- **security-engineer** (voltagent-infra) — Audit GraphQL queries for injection, Better Auth session hardening, API key rotation
 - **security-auditor** (voltagent-qa-sec) — GDPR data retention audits, PII detection in job descriptions and resumes
 - **compliance-auditor** (voltagent-qa-sec) — EU employment law compliance (working hours in job postings, anti-discrimination)
 

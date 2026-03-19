@@ -18,8 +18,8 @@
     "test": "turbo run test",
     "deploy:blog": "vercel deploy --prod --cwd apps/vadim.blog",
     "deploy:l": "vercel deploy --prod --cwd apps/law-adversarial",
-    "deploy:n": "vercel deploy --prod --cwd apps/nomadically.work",
-    "deploy:h": "vercel deploy --prod --cwd apps/agentic-healthcare",
+    "deploy:n": "VERCEL_PROJECT_ID=prj_YK5twFzCLh0okpfWRptY0AXwJZEL VERCEL_ORG_ID=team_PWwGsn3xORVtRDLLoES2BYVV vercel deploy --prod",
+    "deploy:h": "vercel deploy --prod",
     "deploy:r": "vercel deploy --prod --cwd apps/research-thera",
     "deploy:re": "vercel deploy --prod --cwd apps/real-estate",
     "deploy:t": "vercel deploy --prod --cwd apps/todo",
@@ -37,7 +37,6 @@
   "pnpm": {
     "onlyBuiltDependencies": [
       "@apollo/protobufjs",
-      "@clerk/shared",
       "@swc/core",
       "better-sqlite3",
       "core-js",

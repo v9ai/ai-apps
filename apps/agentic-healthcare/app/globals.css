@@ -313,3 +313,332 @@
 .research-card:hover {
   border-color: var(--indigo-a5);
 }
+
+/* ═════════════════════════════════════════════════════════════════════
+   How It Works — design system enhancements
+   ═════════════════════════════════════════════════════════════════════ */
+
+/* ── HIW: Story callout ── */
+
+.hiw-story {
+  position: relative;
+  overflow: hidden;
+}
+.hiw-story::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(
+    135deg,
+    var(--indigo-a2) 0%,
+    transparent 60%
+  );
+  pointer-events: none;
+}
+
+/* ── HIW: Stat cards ── */
+
+.hiw-stat-card {
+  transition: transform 200ms ease, border-color 200ms ease,
+    box-shadow 200ms ease;
+}
+.hiw-stat-card:hover {
+  transform: translateY(-2px);
+  border-color: var(--indigo-a5);
+  box-shadow: 0 0 24px var(--indigo-a3), 0 4px 12px rgba(0, 0, 0, 0.08);
+}
+.hiw-stat-number {
+  background: linear-gradient(135deg, var(--indigo-9), var(--indigo-11));
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+/* ── HIW: Paper cards ── */
+
+.hiw-paper-card {
+  transition: transform 200ms ease, border-color 200ms ease,
+    box-shadow 200ms ease;
+}
+.hiw-paper-card:hover {
+  transform: translateY(-2px);
+  border-color: var(--indigo-a5);
+  box-shadow: 0 0 20px var(--indigo-a3), inset 0 0 30px var(--indigo-a2);
+}
+.hiw-paper-card:hover .hiw-paper-link {
+  text-decoration: underline;
+}
+
+/* ── HIW: Pipeline stages ── */
+
+.hiw-pipeline-connector {
+  background: linear-gradient(
+    180deg,
+    var(--indigo-a4) 0%,
+    var(--indigo-9) 30%,
+    var(--indigo-9) 70%,
+    var(--indigo-a4) 100%
+  );
+}
+
+.hiw-pipeline-card {
+  transition: transform 200ms ease, border-color 200ms ease,
+    box-shadow 200ms ease;
+}
+.hiw-pipeline-card:hover {
+  transform: translateX(4px);
+  border-color: var(--indigo-a5);
+  box-shadow: -4px 0 20px var(--indigo-a3), 0 2px 8px rgba(0, 0, 0, 0.06);
+}
+
+.hiw-pipeline-dot {
+  transition: transform 200ms ease, box-shadow 200ms ease;
+}
+.hiw-pipeline-card:hover .hiw-pipeline-dot {
+  transform: scale(1.15);
+  box-shadow: 0 0 0 3px var(--color-background),
+    0 0 12px var(--indigo-a5);
+}
+
+.hiw-pipeline-code {
+  max-height: 0;
+  overflow: hidden;
+  opacity: 0;
+  transition: max-height 300ms ease, opacity 200ms ease, margin 200ms ease;
+  margin-top: 0;
+}
+.hiw-pipeline-card:hover .hiw-pipeline-code,
+.hiw-pipeline-card:focus-within .hiw-pipeline-code {
+  max-height: 300px;
+  opacity: 1;
+  margin-top: 0.625rem;
+}
+
+.hiw-data-flow {
+  transition: background-color 200ms ease;
+}
+.hiw-pipeline-card:hover .hiw-data-flow {
+  background-color: var(--indigo-a3);
+}
+
+/* ── HIW: Technical details table ── */
+
+.hiw-table-row {
+  transition: background-color 150ms ease;
+}
+.hiw-table-row:hover {
+  background-color: var(--indigo-a2) !important;
+}
+
+/* ── HIW: Technical detail cards ── */
+
+.hiw-detail-card {
+  transition: transform 200ms ease, border-color 200ms ease,
+    box-shadow 200ms ease;
+}
+.hiw-detail-card:hover {
+  transform: translateY(-2px);
+  border-color: var(--indigo-a5);
+  box-shadow: 0 0 16px var(--indigo-a3);
+}
+
+/* ── HIW: Code blocks ── */
+
+.hiw-code-block {
+  transition: border-color 200ms ease, box-shadow 200ms ease;
+}
+.hiw-code-block:hover {
+  border-color: var(--indigo-a4);
+  box-shadow: 0 0 20px var(--indigo-a2);
+}
+
+/* ── HIW: Extra section ── */
+
+.hiw-extra-section {
+  position: relative;
+}
+.hiw-extra-section::before {
+  content: "";
+  position: absolute;
+  left: -1.25rem;
+  top: 0;
+  bottom: 0;
+  width: 2px;
+  background: linear-gradient(180deg, var(--indigo-a4), transparent);
+  border-radius: 1px;
+  opacity: 0;
+  transition: opacity 300ms ease;
+}
+.hiw-extra-section:hover::before {
+  opacity: 1;
+}
+
+/* ── HIW: Section separator ── */
+
+.hiw-separator {
+  border: none;
+  height: 1px;
+  background: linear-gradient(
+    90deg,
+    transparent 0%,
+    var(--gray-a4) 20%,
+    var(--gray-a4) 80%,
+    transparent 100%
+  );
+  margin: 2.75rem 0;
+}
+
+/* ── HIW: Metadata tags ── */
+
+.hiw-meta-tag {
+  transition: background-color 150ms ease, border-color 150ms ease;
+}
+.hiw-meta-tag:hover {
+  background-color: var(--indigo-a2);
+  border-color: var(--indigo-a4);
+}
+
+/* ── HIW: Hero section ── */
+
+.hiw-hero {
+  position: relative;
+  overflow: hidden;
+  background: radial-gradient(
+    ellipse 80% 50% at 50% 100%,
+    var(--indigo-a3) 0%,
+    transparent 70%
+  );
+}
+.hiw-hero::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background: repeating-linear-gradient(
+      90deg,
+      var(--gray-a2) 0px,
+      var(--gray-a2) 1px,
+      transparent 1px,
+      transparent 80px
+    ),
+    repeating-linear-gradient(
+      0deg,
+      var(--gray-a2) 0px,
+      var(--gray-a2) 1px,
+      transparent 1px,
+      transparent 80px
+    );
+  mask-image: radial-gradient(ellipse 50% 60% at 50% 60%, black, transparent);
+  -webkit-mask-image: radial-gradient(
+    ellipse 50% 60% at 50% 60%,
+    black,
+    transparent
+  );
+  pointer-events: none;
+}
+
+/* ── HIW: Node flow visualization ── */
+
+.hiw-node-flow {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0;
+  flex-wrap: wrap;
+}
+
+.hiw-node {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 6px;
+  padding: 12px 20px;
+  border-radius: var(--radius-3);
+  border: 1px solid var(--indigo-a4);
+  background: var(--color-surface);
+  min-width: 100px;
+  transition: transform 200ms ease, box-shadow 200ms ease,
+    border-color 200ms ease;
+}
+.hiw-node:hover {
+  transform: translateY(-3px);
+  border-color: var(--indigo-a6);
+  box-shadow: 0 0 24px var(--indigo-a4), 0 8px 16px rgba(0, 0, 0, 0.1);
+}
+.hiw-node-icon {
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 16px;
+  font-weight: 800;
+  color: white;
+  background: var(--indigo-9);
+  box-shadow: 0 0 0 3px var(--indigo-a3);
+}
+.hiw-node-label {
+  font-size: 12px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: var(--gray-11);
+}
+.hiw-node-arrow {
+  font-size: 20px;
+  color: var(--indigo-a6);
+  padding: 0 4px;
+  flex-shrink: 0;
+}
+
+/* Stagger entrance for pipeline cards */
+@keyframes hiw-slide-in {
+  from {
+    opacity: 0;
+    transform: translateX(-12px);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(0);
+  }
+}
+.hiw-pipeline-card {
+  animation: hiw-slide-in 0.4s ease-out both;
+}
+.hiw-pipeline-card:nth-child(1) { animation-delay: 0ms; }
+.hiw-pipeline-card:nth-child(2) { animation-delay: 50ms; }
+.hiw-pipeline-card:nth-child(3) { animation-delay: 100ms; }
+.hiw-pipeline-card:nth-child(4) { animation-delay: 150ms; }
+.hiw-pipeline-card:nth-child(5) { animation-delay: 200ms; }
+.hiw-pipeline-card:nth-child(6) { animation-delay: 250ms; }
+.hiw-pipeline-card:nth-child(7) { animation-delay: 300ms; }
+.hiw-pipeline-card:nth-child(8) { animation-delay: 350ms; }
+.hiw-pipeline-card:nth-child(9) { animation-delay: 400ms; }
+.hiw-pipeline-card:nth-child(10) { animation-delay: 450ms; }
+.hiw-pipeline-card:nth-child(11) { animation-delay: 500ms; }
+.hiw-pipeline-card:nth-child(12) { animation-delay: 550ms; }
+
+/* Stagger entrance for stat cards */
+@keyframes hiw-fade-up {
+  from {
+    opacity: 0;
+    transform: translateY(8px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+.hiw-stat-card {
+  animation: hiw-fade-up 0.3s ease-out both;
+}
+.hiw-stat-card:nth-child(1) { animation-delay: 0ms; }
+.hiw-stat-card:nth-child(2) { animation-delay: 40ms; }
+.hiw-stat-card:nth-child(3) { animation-delay: 80ms; }
+.hiw-stat-card:nth-child(4) { animation-delay: 120ms; }
+.hiw-stat-card:nth-child(5) { animation-delay: 160ms; }
+.hiw-stat-card:nth-child(6) { animation-delay: 200ms; }
+.hiw-stat-card:nth-child(7) { animation-delay: 240ms; }
+.hiw-stat-card:nth-child(8) { animation-delay: 280ms; }
+.hiw-stat-card:nth-child(9) { animation-delay: 320ms; }
+.hiw-stat-card:nth-child(10) { animation-delay: 360ms; }

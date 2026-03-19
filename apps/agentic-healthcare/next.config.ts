@@ -1,9 +1,8 @@
 import type { NextConfig } from "next";
-import path from "path";
 
 const nextConfig: NextConfig = {
   turbopack: {
-    root: path.join(__dirname, "../.."),
+    root: new URL("../..", import.meta.url).pathname,
   },
 };
 

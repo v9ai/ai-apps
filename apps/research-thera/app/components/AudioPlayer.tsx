@@ -7,9 +7,6 @@ import {
   useGenerateOpenAiAudioMutation,
   useGetGenerationJobQuery,
   useGetGenerationJobsQuery,
-  OpenAittsVoice,
-  OpenAittsModel,
-  OpenAiAudioFormat,
   JobStatus,
   JobType,
 } from "@/app/__generated__/hooks";
@@ -212,9 +209,6 @@ export function AudioPlayer({
           input: {
             text: storyContent,
             storyId,
-            voice: OpenAittsVoice.Onyx,
-            model: OpenAittsModel.Gpt_4OMiniTts,
-            responseFormat: OpenAiAudioFormat.Mp3,
             uploadToCloud: true,
           },
         },
@@ -248,7 +242,8 @@ export function AudioPlayer({
     if (!audioSrc) return;
     const a = document.createElement("a");
     a.href = audioSrc;
-    a.download = `story-${effectiveStoryId}-audio.mp3`;
+    const ext = audioSrc.includes(".wav") ? "wav" : "mp3";
+    a.download = `story-${effectiveStoryId}-audio.${ext}`;
     a.click();
   };
 

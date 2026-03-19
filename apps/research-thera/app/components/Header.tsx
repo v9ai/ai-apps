@@ -1,8 +1,8 @@
 "use client";
 
-import { Box, Container, Flex, Heading, IconButton, Button, Separator } from "@radix-ui/themes";
-import { GitHubLogoIcon } from "@radix-ui/react-icons";
-import { usePathname } from "next/navigation";
+import { Box, Container, Flex, Heading, IconButton, Button, Separator, DropdownMenu } from "@radix-ui/themes";
+import { GitHubLogoIcon, HamburgerMenuIcon } from "@radix-ui/react-icons";
+import { usePathname, useRouter } from "next/navigation";
 import Link from "next/link";
 import UserMenu from "./UserMenu";
 
@@ -16,6 +16,7 @@ const NAV_LINKS = [
 
 export function Header() {
   const pathname = usePathname();
+  const router = useRouter();
 
   return (
     <Box
@@ -32,7 +33,7 @@ export function Header() {
       }}
     >
       <header>
-        <Container size="3" px="5">
+        <Container size="3" px={{ initial: "3", md: "5" }}>
           <Flex justify="between" align="center" py="3">
             {/* Left: logo + divider + nav */}
             <Flex align="center" gap="4">
@@ -49,36 +50,39 @@ export function Header() {
                 </Heading>
               </Link>
 
-              <Separator orientation="vertical" style={{ height: "16px", opacity: 0.4 }} />
+              {/* Desktop nav */}
+              <Flex align="center" gap="4" display={{ initial: "none", md: "flex" }}>
+                <Separator orientation="vertical" style={{ height: "16px", opacity: 0.4 }} />
 
-              <nav aria-label="Main navigation">
-                <Flex gap="5">
-                  {NAV_LINKS.map((link) => {
-                    const isActive = pathname.startsWith(link.href);
-                    return (
-                      <Button
-                        key={link.href}
-                        variant="ghost"
-                        size="2"
-                        color={isActive ? "indigo" : "gray"}
-                        highContrast={isActive}
-                        asChild
-                        style={
-                          isActive
-                            ? { boxShadow: "inset 0 -2px 0 var(--indigo-9)" }
-                            : undefined
-                        }
-                      >
-                        <Link href={link.href}>{link.label}</Link>
-                      </Button>
-                    );
-                  })}
-                </Flex>
-              </nav>
+                <nav aria-label="Main navigation">
+                  <Flex gap="5">
+                    {NAV_LINKS.map((link) => {
+                      const isActive = pathname.startsWith(link.href);
+                      return (
+                        <Button
+                          key={link.href}
+                          variant="ghost"
+                          size="2"
+                          color={isActive ? "indigo" : "gray"}
+                          highContrast={isActive}
+                          asChild
+                          style={
+                            isActive
+                              ? { boxShadow: "inset 0 -2px 0 var(--indigo-9)" }
+                              : undefined
+                          }
+                        >
+                          <Link href={link.href}>{link.label}</Link>
+                        </Button>
+                      );
+                    })}
+                  </Flex>
+                </nav>
+              </Flex>
             </Flex>
 
             {/* Right: user controls */}
-            <Flex align="center" gap="4">
+            <Flex align="center" gap="3">
               <UserMenu />
               <IconButton
                 asChild
@@ -95,6 +99,31 @@ export function Header() {
                   <GitHubLogoIcon width="16" height="16" />
                 </a>
               </IconButton>
+
+              {/* Mobile hamburger menu */}
+              <Box display={{ initial: "block", md: "none" }}>
+                <DropdownMenu.Root>
+                  <DropdownMenu.Trigger>
+                    <IconButton variant="ghost" size="2" color="gray" aria-label="Open menu">
+                      <HamburgerMenuIcon width="18" height="18" />
+                    </IconButton>
+                  </DropdownMenu.Trigger>
+                  <DropdownMenu.Content align="end">
+                    {NAV_LINKS.map((link) => {
+                      const isActive = pathname.startsWith(link.href);
+                      return (
+                        <DropdownMenu.Item
+                          key={link.href}
+                          color={isActive ? "indigo" : undefined}
+                          onClick={() => router.push(link.href)}
+                        >
+                          {link.label}
+                        </DropdownMenu.Item>
+                      );
+                    })}
+                  </DropdownMenu.Content>
+                </DropdownMenu.Root>
+              </Box>
             </Flex>
           </Flex>
         </Container>

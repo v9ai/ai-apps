@@ -1,0 +1,31 @@
+# Exclude all apps except agentic-healthcare and nomadically.work
+apps/knowledge
+apps/law-adversarial
+apps/podcasts
+apps/real-estate
+apps/research-thera
+apps/todo
+apps/vadim.blog
+
+# Exclude packages not needed by agentic-healthcare
+packages/deepseek
+packages/qwen
+packages/llm-router
+packages/og
+packages/logger
+
+# Exclude Rust/Python/other build artifacts
+crates
+langgraph
+scripts
+target
+
+# Common exclusions (use specific paths, not 'dist' to preserve packages/ui/dist)
+node_modules
+.turbo
+*.log
+apps/agentic-healthcare/.next
+__pycache__
+*.egg-info
+.langgraph_api
+.wrangler

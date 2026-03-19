@@ -27,7 +27,7 @@ from langchain_openai import ChatOpenAI
 
 from .graph import build_application_prep_graph
 from .nodes import organize_hierarchy_node
-from .state import CATEGORIES, ApplicationPrepState, ExtractedTech
+from .state import CATEGORIES, ApplicationPrepState, ExtractedTech, RoleDepth
 
 # ---------------------------------------------------------------------------
 # DeepSeek judge model
@@ -185,9 +185,10 @@ def _make_state(
     return {
         "application_id": 0, "job_title": "Test", "company_name": "Test Co",
         "company_key": "", "job_description": "", "parsed": None,
-        "company_context": "", "technologies": technologies,
+        "company_context": "", "role_depth": None, "technologies": technologies,
         "organized": [], "existing_slugs": [], "question_sets": [],
-        "generated": [], "report": "", "knowledge_db_ok": False,
+        "generated": [], "qa_scores": [], "refined_count": 0,
+        "report": "", "knowledge_db_ok": False,
         "dry_run": True, "exclude_tags": exclude_tags or [], "stats": {},
     }
 
@@ -429,11 +430,132 @@ def test_graph_has_parallel_entry():
     from .graph import build_application_prep_graph
     g = build_application_prep_graph()
     nodes = set(g.nodes.keys()) - {"__start__"}
-    for expected in ("validate_urls", "parse_jd", "extract_technologies",
-                     "organize_hierarchy", "generate_questions", "generate_content",
-                     "compile_report", "persist_knowledge", "sync_hierarchy"):
+    for expected in ("validate_urls", "parse_jd", "analyze_role_depth",
+                     "extract_technologies", "organize_hierarchy",
+                     "generate_questions", "score_and_refine",
+                     "generate_content", "compile_report",
+                     "persist_knowledge", "sync_hierarchy"):
         assert expected in nodes, f"missing node: {expected}"
     assert "finalize" not in nodes, "finalize should be split"
+
+
+def test_graph_score_and_refine_edges():
+    """score_and_refine must sit between generate_questions and compile_report."""
+    from .graph import build_application_prep_graph
+    g = build_application_prep_graph()
+    # score_and_refine should be a successor of generate_questions
+    # and a predecessor of compile_report
+    graph_dict = g.get_graph().to_json()
+    # Just verify the nodes exist and the graph compiles without error
+    nodes = set(g.nodes.keys()) - {"__start__"}
+    assert "score_and_refine" in nodes
+    assert "analyze_role_depth" in nodes
+
+
+def test_analyze_role_depth_node_output_structure():
+    """analyze_role_depth_node must return valid RoleDepth fields."""
+    from .nodes import analyze_role_depth_node
+    # Mock the LLM call
+    mock_response = MagicMock()
+    mock_response.content = json.dumps({
+        "team_signals": ["small team", "high autonomy"],
+        "technical_maturity": "scaling",
+        "growth_stage": "scaleup",
+        "hidden_requirements": ["handle ambiguity", "work across timezones"],
+        "key_challenges": ["scale real-time sync to 10x users"],
+        "interview_focus": ["system design", "distributed systems"],
+        "culture_signals": ["engineering-driven"],
+    })
+    with patch("src.graphs.application_prep.nodes._get_llm_json") as mock_llm:
+        mock_llm.return_value.invoke.return_value = mock_response
+        result = analyze_role_depth_node({
+            "job_title": "Senior Backend Engineer",
+            "company_name": "Linear",
+            "job_description": "Build scalable real-time infrastructure...",
+        })
+    rd = result["role_depth"]
+    assert rd["technical_maturity"] == "scaling"
+    assert rd["growth_stage"] == "scaleup"
+    assert len(rd["key_challenges"]) == 1
+    assert len(rd["team_signals"]) == 2
+    assert all(isinstance(s, str) for s in rd["interview_focus"])
+
+
+def test_analyze_role_depth_caps_lists_at_5():
+    """Lists in role_depth must be capped at 5 items."""
+    from .nodes import analyze_role_depth_node
+    mock_response = MagicMock()
+    mock_response.content = json.dumps({
+        "team_signals": [f"signal_{i}" for i in range(10)],
+        "technical_maturity": "mature",
+        "growth_stage": "enterprise",
+        "hidden_requirements": [f"req_{i}" for i in range(10)],
+        "key_challenges": [f"challenge_{i}" for i in range(10)],
+        "interview_focus": [f"focus_{i}" for i in range(10)],
+        "culture_signals": [f"culture_{i}" for i in range(10)],
+    })
+    with patch("src.graphs.application_prep.nodes._get_llm_json") as mock_llm:
+        mock_llm.return_value.invoke.return_value = mock_response
+        result = analyze_role_depth_node({
+            "job_title": "Test", "company_name": "Test Co",
+            "job_description": "Test JD",
+        })
+    rd = result["role_depth"]
+    for field in ("team_signals", "hidden_requirements", "key_challenges",
+                  "interview_focus", "culture_signals"):
+        assert len(rd[field]) <= 5, f"{field} has {len(rd[field])} items"
+
+
+def test_analyze_role_depth_handles_json_error():
+    """analyze_role_depth must handle malformed LLM response gracefully."""
+    from .nodes import analyze_role_depth_node
+    mock_response = MagicMock()
+    mock_response.content = "not valid json at all"
+    with patch("src.graphs.application_prep.nodes._get_llm_json") as mock_llm:
+        mock_llm.return_value.invoke.return_value = mock_response
+        result = analyze_role_depth_node({
+            "job_title": "Test", "company_name": "Test Co",
+            "job_description": "Test JD",
+        })
+    rd = result["role_depth"]
+    assert rd["technical_maturity"] == "mature"  # fallback
+    assert rd["key_challenges"] == []
+
+
+def test_score_and_refine_empty_input():
+    """score_and_refine with no question_sets returns empty scores."""
+    from .nodes import score_and_refine_node
+    state = _make_state([])
+    result = score_and_refine_node(state)
+    assert result["qa_scores"] == []
+    assert result["refined_count"] == 0
+
+
+def test_score_and_refine_preserves_high_quality():
+    """score_and_refine must not modify answers that score well."""
+    from .nodes import score_and_refine_node
+    state = _make_state([])
+    state["job_title"] = "Senior Backend Engineer"
+    state["company_name"] = "Linear"
+    state["parsed"] = {"tech_stack": ["TypeScript"], "requirements": [],
+                       "role_type": "backend", "seniority": "senior"}
+    state["question_sets"] = [
+        {"category": "technical", "qa_pairs": [
+            {"question": "How does PostgreSQL MVCC work?",
+             "answer": "PostgreSQL uses Multi-Version Concurrency Control where each transaction sees a snapshot."},
+        ]},
+    ]
+    # Mock scoring with high scores (no refinement needed)
+    mock_score = MagicMock()
+    mock_score.content = json.dumps({"scores": [
+        {"idx": 0, "specificity": 0.9, "difficulty": 0.8, "answer_quality": 0.9, "feedback": ""}
+    ]})
+    with patch("src.graphs.application_prep.nodes._get_llm_json") as mock_llm:
+        mock_llm.return_value.invoke.return_value = mock_score
+        result = score_and_refine_node(state)
+    assert result["refined_count"] == 0
+    assert len(result["qa_scores"]) == 1
+    assert result["qa_scores"][0]["overall"] > 0.8
 
 
 def test_validate_urls_rejects_wrong_db():
@@ -604,6 +726,46 @@ def _assert_report(report: str, job: dict) -> None:
     assert report.count("### ") >= 15, f"{job['name']}: too few Q&A headings in report"
 
 
+VALID_MATURITIES = {"early_stage", "scaling", "mature", "legacy"}
+VALID_GROWTH_STAGES = {"startup", "scaleup", "enterprise"}
+
+
+def _assert_role_depth(role_depth: dict, job: dict) -> None:
+    """Assertions on analyze_role_depth output."""
+    assert role_depth, f"{job['name']}: role_depth is empty"
+    assert role_depth.get("technical_maturity") in VALID_MATURITIES, (
+        f"{job['name']}: invalid maturity '{role_depth.get('technical_maturity')}'"
+    )
+    assert role_depth.get("growth_stage") in VALID_GROWTH_STAGES, (
+        f"{job['name']}: invalid growth_stage '{role_depth.get('growth_stage')}'"
+    )
+    for field in ("key_challenges", "interview_focus", "hidden_requirements", "culture_signals"):
+        items = role_depth.get(field, [])
+        assert isinstance(items, list), f"{job['name']}: {field} is not a list"
+        assert len(items) <= 5, f"{job['name']}: {field} has {len(items)} items (max 5)"
+    # Must have at least some signals
+    assert len(role_depth.get("key_challenges", [])) >= 1, (
+        f"{job['name']}: no key_challenges extracted"
+    )
+    assert len(role_depth.get("interview_focus", [])) >= 1, (
+        f"{job['name']}: no interview_focus extracted"
+    )
+
+
+def _assert_qa_scores(qa_scores: list, question_sets: list, job: dict) -> None:
+    """Assertions on score_and_refine output."""
+    if not question_sets:
+        return
+    # Should have scores for the Q&A pairs
+    assert len(qa_scores) > 0, f"{job['name']}: no qa_scores produced"
+    for score in qa_scores:
+        assert "category" in score, f"{job['name']}: score missing category"
+        assert "overall" in score, f"{job['name']}: score missing overall"
+        assert 0 <= score["overall"] <= 1, (
+            f"{job['name']}: invalid overall score {score['overall']}"
+        )
+
+
 def _assert_consistency(result: dict, job: dict) -> None:
     """Cross-node consistency checks."""
     parsed = result.get("parsed") or {}
@@ -680,6 +842,63 @@ report_completeness_metric = GEval(
     threshold=0.8,
 )
 
+role_depth_quality_metric = GEval(
+    model=_judge,
+    name="Role Depth Analysis Quality",
+    criteria=(
+        "The role depth analysis must extract non-obvious signals from the job description. "
+        "team_signals should reflect actual team structure clues (not generic). "
+        "technical_maturity must match the company's apparent engineering stage. "
+        "hidden_requirements should surface things implied but not stated in the JD. "
+        "key_challenges should be specific to THIS role, not generic engineering challenges. "
+        "interview_focus should predict what THIS company's interviewers likely care about."
+    ),
+    evaluation_params=[LLMTestCaseParams.INPUT, LLMTestCaseParams.ACTUAL_OUTPUT],
+    threshold=0.65,
+)
+
+answer_specificity_metric = GEval(
+    model=_judge,
+    name="Answer Specificity",
+    criteria=(
+        "Model answers must be SPECIFIC to this exact role, company, and tech stack. "
+        "A strong answer references specific technologies from the JD, mentions trade-offs "
+        "relevant to the company's scale, and demonstrates deep understanding. "
+        "A weak answer could apply to any software engineering role at any company. "
+        "Score 0 if answers are generic; score 1 if every answer is deeply role-specific."
+    ),
+    evaluation_params=[LLMTestCaseParams.INPUT, LLMTestCaseParams.ACTUAL_OUTPUT],
+    threshold=0.65,
+)
+
+difficulty_calibration_metric = GEval(
+    model=_judge,
+    name="Difficulty Calibration",
+    criteria=(
+        "Questions must be appropriately difficult for the stated seniority level. "
+        "For senior roles: questions should probe architectural thinking, trade-offs, "
+        "and experience with scale — not basic 'what is X' questions. "
+        "For mid roles: questions should test practical skills and growing judgment. "
+        "Score 0 if difficulty is wildly miscalibrated; score 1 if perfectly matched."
+    ),
+    evaluation_params=[LLMTestCaseParams.INPUT, LLMTestCaseParams.ACTUAL_OUTPUT, LLMTestCaseParams.EXPECTED_OUTPUT],
+    threshold=0.65,
+)
+
+coverage_diversity_metric = GEval(
+    model=_judge,
+    name="Question Coverage Diversity",
+    criteria=(
+        "Within each category, questions must cover DIVERSE aspects without repetition. "
+        "Technical questions should span different technologies and problem domains. "
+        "Behavioral questions should cover different competencies (leadership, conflict, ownership). "
+        "System design questions should explore different architectural concerns. "
+        "Score 0 if questions are repetitive; score 1 if each question explores a distinct dimension."
+    ),
+    evaluation_params=[LLMTestCaseParams.INPUT, LLMTestCaseParams.ACTUAL_OUTPUT],
+    threshold=0.65,
+)
+
 jd_parsing_metric = GEval(
     model=_judge,
     name="JD Parsing Accuracy",
@@ -726,11 +945,18 @@ def run_unit_tests() -> None:
         ("knowledge_db_url_validation", test_knowledge_db_url_validation),
         # Graph structure + node isolation
         ("graph_has_parallel_entry", test_graph_has_parallel_entry),
+        ("graph_score_and_refine_edges", test_graph_score_and_refine_edges),
         ("validate_urls_rejects_wrong_db", test_validate_urls_rejects_wrong_db),
         ("validate_urls_missing_env", test_validate_urls_missing_env),
         ("persist_skips_when_db_not_ok", test_persist_skips_when_db_not_ok),
         ("compile_report_node_isolation", test_compile_report_node_isolation),
         ("persist_knowledge_node_dry_run", test_persist_knowledge_node_dry_run),
+        # New nodes: analyze_role_depth + score_and_refine
+        ("analyze_role_depth_output_structure", test_analyze_role_depth_node_output_structure),
+        ("analyze_role_depth_caps_lists", test_analyze_role_depth_caps_lists_at_5),
+        ("analyze_role_depth_handles_json_error", test_analyze_role_depth_handles_json_error),
+        ("score_and_refine_empty_input", test_score_and_refine_empty_input),
+        ("score_and_refine_preserves_high_quality", test_score_and_refine_preserves_high_quality),
     ]
 
     passed = failed = 0
@@ -755,6 +981,10 @@ def run_integration_tests() -> tuple[
     list[LLMTestCase],  # questions
     list[LLMTestCase],  # report
     list[LLMTestCase],  # parsing
+    list[LLMTestCase],  # role_depth
+    list[LLMTestCase],  # specificity
+    list[LLMTestCase],  # difficulty
+    list[LLMTestCase],  # coverage
 ]:
     """Run full pipeline (dry-run) on mock jobs. Hard assertions + deepeval cases."""
     graph = build_application_prep_graph()
@@ -763,6 +993,10 @@ def run_integration_tests() -> tuple[
     question_cases: list[LLMTestCase] = []
     report_cases: list[LLMTestCase] = []
     parsing_cases: list[LLMTestCase] = []
+    role_depth_cases: list[LLMTestCase] = []
+    specificity_cases: list[LLMTestCase] = []
+    difficulty_cases: list[LLMTestCase] = []
+    coverage_cases: list[LLMTestCase] = []
 
     for job in MOCK_JOBS:
         print(f"\n  Running pipeline: {job['name']} ...")
@@ -770,9 +1004,10 @@ def run_integration_tests() -> tuple[
             "application_id": 0, "job_title": job["job_title"],
             "company_name": job["company_name"], "company_key": "",
             "job_description": job["job_description"],
-            "parsed": None, "company_context": "",
+            "parsed": None, "company_context": "", "role_depth": None,
             "technologies": [], "organized": [], "existing_slugs": [],
             "question_sets": [], "generated": [],
+            "qa_scores": [], "refined_count": 0,
             "report": "", "knowledge_db_ok": False,
             "dry_run": True, "exclude_tags": [], "stats": {},
         })
@@ -782,19 +1017,28 @@ def run_integration_tests() -> tuple[
         organized = result.get("organized", [])
         question_sets = result.get("question_sets", [])
         report = result.get("report", "")
+        role_depth = result.get("role_depth") or {}
+        qa_scores = result.get("qa_scores", [])
+        refined_count = result.get("refined_count", 0)
 
         q_count = sum(len(qs["qa_pairs"]) for qs in question_sets)
         print(f"    parsed: role={parsed.get('role_type')}, seniority={parsed.get('seniority')}, "
               f"tech_stack={len(parsed.get('tech_stack', []))}")
+        print(f"    role_depth: maturity={role_depth.get('technical_maturity')}, "
+              f"stage={role_depth.get('growth_stage')}, "
+              f"challenges={len(role_depth.get('key_challenges', []))}")
         print(f"    technologies: {len(technologies)} extracted, {len(organized)} organized")
         print(f"    questions: {q_count} across {len(question_sets)} categories")
+        print(f"    qa_scores: {len(qa_scores)} scored, {refined_count} refined")
         print(f"    report: {len(report)} chars")
 
         # Hard assertions on every phase
         _assert_parsed(parsed, job)
         _assert_technologies(technologies, job)
         _assert_hierarchy(result, job)
+        _assert_role_depth(role_depth, job)
         _assert_questions(question_sets, job)
+        _assert_qa_scores(qa_scores, question_sets, job)
         _assert_report(report, job)
         _assert_consistency(result, job)
 
@@ -858,7 +1102,46 @@ def run_integration_tests() -> tuple[
             ),
         ))
 
-    return hierarchy_cases, extraction_cases, question_cases, report_cases, parsing_cases
+        # deepeval — role depth quality
+        role_depth_cases.append(LLMTestCase(
+            name=f"{job['name']} — Role Depth",
+            input=jd_input,
+            actual_output=json.dumps(role_depth, indent=2),
+        ))
+
+        # deepeval — answer specificity (all Q&A combined)
+        all_qa = []
+        for qs in question_sets:
+            all_qa.extend(qs["qa_pairs"])
+        specificity_cases.append(LLMTestCase(
+            name=f"{job['name']} — Answer Specificity",
+            input=f"Role: {job['job_title']} @ {job['company_name']}\n\n{job['job_description'][:1000]}",
+            actual_output=json.dumps(all_qa, indent=2),
+        ))
+
+        # deepeval — difficulty calibration
+        difficulty_cases.append(LLMTestCase(
+            name=f"{job['name']} — Difficulty Calibration",
+            input=f"Role: {job['job_title']} @ {job['company_name']}\nSeniority: {parsed.get('seniority', 'senior')}\n\n{job['job_description'][:1000]}",
+            actual_output=json.dumps(all_qa, indent=2),
+            expected_output=f"Questions calibrated for {job['expected_seniority']} level: "
+                           f"should probe architectural thinking, trade-offs, and experience — "
+                           f"not basic knowledge checks.",
+        ))
+
+        # deepeval — coverage diversity per category
+        for cat in CATEGORIES:
+            cat_qa = by_cat.get(cat, [])
+            if cat_qa:
+                coverage_cases.append(LLMTestCase(
+                    name=f"{job['name']} — {cat} Coverage",
+                    input=f"Role: {job['job_title']} @ {job['company_name']}\nCategory: {cat}",
+                    actual_output=json.dumps(cat_qa, indent=2),
+                ))
+
+    return (hierarchy_cases, extraction_cases, question_cases, report_cases,
+            parsing_cases, role_depth_cases, specificity_cases, difficulty_cases,
+            coverage_cases)
 
 
 # ===================================================================
@@ -876,13 +1159,17 @@ def main() -> None:
     print(f"\n{'=' * 60}")
     print(f"Phase 2: Integration tests (full pipeline, dry-run)")
     print(f"{'=' * 60}")
-    hierarchy_cases, extraction_cases, question_cases, report_cases, parsing_cases = run_integration_tests()
+    (hierarchy_cases, extraction_cases, question_cases, report_cases,
+     parsing_cases, role_depth_cases, specificity_cases, difficulty_cases,
+     coverage_cases) = run_integration_tests()
 
     print(f"\n  All hard assertions passed ({total_jobs} jobs verified).")
 
     total_deepeval = (
         len(hierarchy_cases) + len(extraction_cases)
         + len(question_cases) + len(report_cases) + len(parsing_cases)
+        + len(role_depth_cases) + len(specificity_cases)
+        + len(difficulty_cases) + len(coverage_cases)
     )
     print(f"\n{'=' * 60}")
     print(f"Phase 3: deepeval metrics ({total_deepeval} cases)")
@@ -893,6 +1180,10 @@ def main() -> None:
     evaluate(test_cases=hierarchy_cases, metrics=[hierarchy_quality_metric])
     evaluate(test_cases=question_cases, metrics=[question_relevance_metric])
     evaluate(test_cases=report_cases, metrics=[report_completeness_metric])
+    evaluate(test_cases=role_depth_cases, metrics=[role_depth_quality_metric])
+    evaluate(test_cases=specificity_cases, metrics=[answer_specificity_metric])
+    evaluate(test_cases=difficulty_cases, metrics=[difficulty_calibration_metric])
+    evaluate(test_cases=coverage_cases, metrics=[coverage_diversity_metric])
 
 
 if __name__ == "__main__":

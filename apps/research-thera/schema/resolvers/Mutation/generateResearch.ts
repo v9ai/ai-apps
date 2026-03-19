@@ -207,11 +207,14 @@ export const generateResearch: NonNullable<MutationResolvers['generateResearch']
     prompt = [
       `Find evidence-based therapeutic research for the following goal:`,
       ``,
+      `goal_id: ${goalId}`,
       `Title: ${goal.title}`,
       goal.description ? `Description: ${goal.description}` : "",
       ``,
       `Search for academic papers that support this therapeutic goal.`,
       `Focus on evidence-based interventions, therapeutic techniques, and outcome measures.`,
+      ``,
+      `IMPORTANT: When calling save_research_papers, use goal_id: ${goalId} — do NOT use issue_id or feedback_id.`,
     ].filter(Boolean).join("\n");
   } else {
     throw new Error("Either goalId, issueId, or feedbackId is required");

@@ -29,7 +29,7 @@ export default function NotesPage() {
     >
     <Flex direction="column" gap="4">
       <Flex direction="column" gap="1">
-        <Heading size="8">Notes</Heading>
+        <Heading size={{ initial: "6", md: "8" }}>Notes</Heading>
         <Text size="3" color="gray">
           Manage your therapeutic notes and reflections
         </Text>

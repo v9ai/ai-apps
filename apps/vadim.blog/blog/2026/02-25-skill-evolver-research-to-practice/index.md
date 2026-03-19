@@ -21,6 +21,8 @@ The Skill Evolver is the third agent in our six-agent autonomous self-improvemen
 
 Five research papers informed its design, curated from the [VoltAgent/awesome-ai-agent-papers](https://github.com/VoltAgent/awesome-ai-agent-papers) collection. Each one solved a different aspect of the self-modification problem.
 
+<!-- truncate -->
+
 > **Note:** The implementation has since evolved from a generic skill evolver into a goal-driven "Classifier Tuner" focused on reducing false negatives in remote EU job classification. The research principles described here still underpin the architecture. The data structures and anti-patterns below reflect the original design that these papers informed.
 
 ## The Self-Modification Problem

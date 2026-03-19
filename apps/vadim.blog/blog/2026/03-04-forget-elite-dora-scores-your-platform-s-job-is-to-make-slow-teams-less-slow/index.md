@@ -17,6 +17,8 @@ If your platform team’s North Star is getting every development squad into the
 
 The corrective lens comes from a pivotal but under-appreciated source: the CNCF’s *Platform Engineering Metrics* whitepaper. It makes a contrarian, data-backed claim that cuts through the industry hype. The paper states bluntly that platform teams should focus on “improving the performance of the lowest-performing teams” and “reducing the spread of outcomes, not just the average.” This isn’t about settling for mediocrity. It’s about systemic stability and scaling effectively. When you measure platform success by how much you compress the variance in team performance, you start building for adoption and predictability—not vanity metrics.
 
+<!-- truncate -->
+
 ## The Misapplied DORA Dashboard
 
 The DORA research is foundational, but it’s been weaponized by poor management. Deployment Frequency, Lead Time for Changes, Time to Restore Service, and Change Failure Rate are diagnostic metrics for *teams*. They were never intended to be uniform, organization-wide KPIs. A team maintaining a legacy financial monolith with regulatory gates will never deploy daily. A greenfield mobile app team shouldn’t be the benchmark for everyone.

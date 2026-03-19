@@ -17,6 +17,8 @@ The most dangerous failure mode for a healthcare AI isn't inaccuracy—it's a co
 
 > **Reference implementation:** Every code example in this article is drawn from [Agentic Healthcare](https://agentic-healthcare.vercel.app/), an open-source blood test intelligence app that tracks 7 clinical ratios over time using velocity-based trajectory analysis. The full eval suite, compliance architecture, and production code are available in the [GitHub repository](https://github.com/nicolad/ai-apps/blob/main/apps/agentic-healthcare/README.md).
 
+<!-- truncate -->
+
 ## The Stakes: Why Healthcare's Evaluation Standard is Non-Negotiable
 
 Healthcare has a millennia-old culture of rigorous evidence assessment, a standard that AI development flagrantly ignores. Before any clinical intervention reaches a patient, it must survive structured, methodological scrutiny. Tools like the PRISMA checklist for systematic reviews (Liberati et al., 2009) and the AMSTAR 2 critical appraisal tool (Shea et al., 2017) enforce transparency and minimize bias. The scale of modern healthcare data makes this rigor non-optional. The Global Burden of Disease 2019 study (Vos et al., 2020) analyzed 369 diseases and injuries across 204 countries. At this scale, a tiny error rate affects millions.

@@ -28,6 +28,7 @@ async def upsert_research_paper(
     relevance_score: float,
     feedback_id: int | None = None,
     issue_id: int | None = None,
+    goal_id: int | None = None,
 ) -> int:
     """Insert or skip a research paper into Neon therapy_research table."""
     conn_str = _get_conn_str()
@@ -39,8 +40,10 @@ async def upsert_research_paper(
     # Build dedup condition based on which id is provided
     if issue_id is not None:
         dedup_col, dedup_val = "issue_id", issue_id
-    else:
+    elif feedback_id is not None:
         dedup_col, dedup_val = "feedback_id", feedback_id
+    else:
+        dedup_col, dedup_val = "goal_id", goal_id
 
     async with await psycopg.AsyncConnection.connect(conn_str) as conn:
         async with conn.cursor() as cur:
@@ -66,15 +69,15 @@ async def upsert_research_paper(
             # Insert
             await cur.execute(
                 """INSERT INTO therapy_research (
-                    feedback_id, issue_id, therapeutic_goal_type, title, authors, year, doi, url,
+                    goal_id, feedback_id, issue_id, therapeutic_goal_type, title, authors, year, doi, url,
                     abstract, key_findings, therapeutic_techniques, evidence_level,
                     relevance_score, extracted_by, extraction_confidence,
                     created_at, updated_at
                 ) VALUES (
-                    %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, NOW(), NOW()
+                    %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, NOW(), NOW()
                 ) RETURNING id""",
                 (
-                    feedback_id, issue_id, therapeutic_goal_type, title, authors_json,
+                    goal_id, feedback_id, issue_id, therapeutic_goal_type, title, authors_json,
                     year, doi, url, abstract, findings_json, techniques_json,
                     evidence_level, score, "langgraph:deepseek-chat:v1", 75,
                 ),

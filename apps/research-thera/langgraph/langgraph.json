@@ -3,7 +3,8 @@
   "dependencies": ["."],
   "graphs": {
     "research": "research_agent.graph:graph",
-    "story": "research_agent.story_graph:graph"
+    "story": "research_agent.story_graph:graph",
+    "tts": "research_agent.tts_graph:graph"
   },
   "env": ".env"
 }

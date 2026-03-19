@@ -17,6 +17,8 @@ The argument for an "office-first" culture is compelling on its face. It speaks 
 
 But intuition is not a strategy, and anecdotes are not data. When we examine the evidence and the unique constraints of an AI startup, a mandatory in-person policy looks like a self-imposed bottleneck. It limits access to the most critical resource—talent—and misunderstands how modern technical collaboration scales.
 
+<!-- truncate -->
+
 ## Debunking the Myth of the Serendipitous Office
 
 A common pro-office argument anchors on a powerful anecdote: the hallway conversation that sparked the Transformer architecture. This story is foundational to modern AI. Dust, an AI company building on top of enterprise data, articulates this position in [Build in Person](https://dust.tt/blog/build-in-person), arguing that “physical proximity matters when pushing boundaries.” It is tempting to extrapolate a universal rule from it. Some claim true innovation “only happens when talented people share the same space.”

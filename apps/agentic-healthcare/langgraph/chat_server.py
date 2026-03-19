@@ -1,5 +1,11 @@
 """
-FastAPI chat server — LlamaIndex + DeepSeek RAG over clinical blood marker documents.
+FastAPI chat server — LangGraph clinical intelligence pipeline.
+
+The /chat endpoint runs the full agentic graph:
+  triage → retrieve → synthesize → guard
+
+The /chat/simple endpoint retains the original LlamaIndex ContextChatEngine
+for backward compatibility and A/B testing.
 
 Run:
   cd apps/agentic-healthcare/langgraph
@@ -27,6 +33,7 @@ from ragas_eval import DOCUMENTS, build_rag_pipeline  # noqa: E402
 from routes.upload import router as upload_router
 from routes.embed import router as embed_router
 from routes.search import router as search_router
+from graph import run_graph
 
 app = FastAPI(title="Blood Marker Intelligence Chat")
 app.add_middleware(
@@ -41,7 +48,7 @@ app.include_router(upload_router)
 app.include_router(embed_router)
 app.include_router(search_router)
 
-# Build RAG pipeline once at startup
+# Build RAG pipeline once at startup (used by /chat/simple)
 _rag = build_rag_pipeline("deepseek-chat")
 
 SYSTEM_PROMPT = """You are a clinical blood marker intelligence assistant. Answer questions
@@ -58,10 +65,51 @@ chat_engine = ContextChatEngine.from_defaults(
 
 class ChatRequest(BaseModel):
     messages: list[dict]  # [{role: "user"|"assistant", content: str}]
+    user_id: str = ""
+
+
+class GraphChatResponse(BaseModel):
+    answer: str
+    intent: str
+    intent_confidence: float
+    retrieval_sources: list[str]
+    guard_passed: bool
+    guard_issues: list[str]
+    citations: list[str]
+
+
+# ── Primary endpoint: LangGraph agentic pipeline ────────────────────────
 
 
 @app.post("/chat")
-async def chat(req: ChatRequest) -> dict:
+async def chat(req: ChatRequest) -> GraphChatResponse:
+    """Run the full LangGraph clinical intelligence pipeline."""
+    last_message = req.messages[-1]["content"] if req.messages else ""
+    history = req.messages[:-1] if len(req.messages) > 1 else []
+
+    result = await run_graph(
+        query=last_message,
+        user_id=req.user_id,
+        chat_history=history,
+    )
+
+    return GraphChatResponse(
+        answer=result.get("final_answer", result.get("answer", "")),
+        intent=result.get("intent", ""),
+        intent_confidence=result.get("intent_confidence", 0.0),
+        retrieval_sources=list(set(result.get("retrieval_sources", []))),
+        guard_passed=result.get("guard_passed", True),
+        guard_issues=result.get("guard_issues", []),
+        citations=result.get("citations", []),
+    )
+
+
+# ── Backward-compatible endpoint: LlamaIndex ContextChatEngine ─────────
+
+
+@app.post("/chat/simple")
+async def chat_simple(req: ChatRequest) -> dict:
+    """Original LlamaIndex ContextChatEngine — retained for A/B testing."""
     chat_engine.reset()
     for msg in req.messages[:-1]:
         if msg["role"] == "user":

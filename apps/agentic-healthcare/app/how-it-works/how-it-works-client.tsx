@@ -8,7 +8,7 @@ export function HowItWorksClient() {
     <HowItWorks
       papers={papers}
       title="How It Works"
-      subtitle={"A longitudinal health tracking platform built with Next.js, PostgreSQL with pgvector, and AI-powered RAG using Qwen and BGE embeddings"}
+      subtitle="A LangGraph agentic pipeline built on Next.js 15, PostgreSQL with pgvector, and DeepSeek — with 8 eval suites validating every stage from triage to safety guard"
       stats={researchStats}
       agents={pipelineAgents}
       story={story}

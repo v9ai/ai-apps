@@ -138,7 +138,7 @@ export default function StoriesPage() {
       description="Your therapeutic stories are private. Sign in to read and listen to them."
     >
       <Flex direction="column" gap="4">
-        <Heading size="8">Stories</Heading>
+        <Heading size={{ initial: "6", md: "8" }}>Stories</Heading>
         <DynamicStoriesListContent />
       </Flex>
     </AuthGate>

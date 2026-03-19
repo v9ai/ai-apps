@@ -451,7 +451,7 @@ function GoalPageContent() {
                   Sub-Goal
                 </Badge>
               )}
-              <Heading size="7">{goal.title}</Heading>
+              <Heading size={{ initial: "5", md: "7" }}>{goal.title}</Heading>
               {editingFamilyMember ? (
                 <Flex align="center" gap="2">
                   <Select.Root
@@ -812,12 +812,12 @@ function GoalPageContent() {
       {/* Stories */}
       <Card>
         <Flex direction="column" gap="3" p="4">
-          <Flex justify="between" align="center">
+          <Flex justify="between" align="start" wrap="wrap" gap="3">
             <Heading size="4">
               Stories{" "}
               {goal.stories ? `(${goal.stories.length})` : ""}
             </Heading>
-            <Flex align="center" gap="3">
+            <Flex align="center" gap="3" wrap="wrap">
               <Button asChild variant="soft">
                 <NextLink href={goal ? `/stories/new?goalId=${goal.id}` : "/stories/new"}>
                   Add Story
@@ -981,7 +981,7 @@ function GoalPageContent() {
       {/* Linked Research */}
       <Card>
         <Flex direction="column" gap="3" p="4">
-          <Flex justify="between" align="center">
+          <Flex justify="between" align="start" wrap="wrap" gap="3">
             <Flex direction="column" gap="1">
               <Heading size="4">
                 Research {goal.research ? `(${goal.research.length})` : ""}
@@ -1000,7 +1000,7 @@ function GoalPageContent() {
                 </Text>
               )}
             </Flex>
-            <Flex gap="2" align="center">
+            <Flex gap="2" align="center" wrap="wrap">
               {goal.research && goal.research.length > 0 && (
                 <AlertDialog.Root>
                   <AlertDialog.Trigger>
@@ -1227,29 +1227,31 @@ export default function GoalPage() {
           background: "var(--color-panel)",
           borderBottom: "1px solid var(--gray-a6)",
           backdropFilter: "blur(10px)",
-          marginLeft: "calc(-1 * var(--space-5))",
-          marginRight: "calc(-1 * var(--space-5))",
-          paddingLeft: "var(--space-5)",
-          paddingRight: "var(--space-5)",
+          marginLeft: "calc(-1 * var(--space-3))",
+          marginRight: "calc(-1 * var(--space-3))",
+          paddingLeft: "var(--space-3)",
+          paddingRight: "var(--space-3)",
         }}
       >
         <Flex
-          py="4"
+          py="3"
           align="center"
-          gap="4"
+          gap={{ initial: "2", md: "4" }}
           style={{ maxWidth: "1200px", margin: "0 auto", width: "100%" }}
         >
           <Button variant="soft" size="2" radius="full" color="gray" asChild>
             <NextLink href={backHref}>
               <ArrowLeftIcon />
-              {backLabel}
+              <Box display={{ initial: "none", sm: "inline" }} asChild>
+                <span>{backLabel}</span>
+              </Box>
             </NextLink>
           </Button>
 
-          <Separator orientation="vertical" style={{ height: 20 }} />
+          <Box display={{ initial: "none", sm: "block" }}><Separator orientation="vertical" style={{ height: 20 }} /></Box>
 
           <Box minWidth="0" style={{ flex: 1 }}>
-            <Heading size="8" weight="bold" truncate>
+            <Heading size={{ initial: "5", md: "8" }} weight="bold" truncate>
               {goal?.title || "Loading goal\u2026"}
             </Heading>
           </Box>

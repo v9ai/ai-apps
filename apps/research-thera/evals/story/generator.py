@@ -27,96 +27,19 @@ _BASE_URL = "https://api.deepseek.com"
 FIXTURES_DIR = Path(__file__).resolve().parent / "fixtures"
 
 # ---------------------------------------------------------------------------
-# System prompt — verbatim from src/graphs/generateStory.ts
+# System prompt — use the shared builder from therapy_context
 # ---------------------------------------------------------------------------
 
-THERAPEUTIC_SYSTEM_PROMPT = """## Overview
-You are a Therapeutic Audio Content Agent. Your role is to create evidence-based, compassionate therapeutic guidance delivered as spoken audio. Every word you write will be read aloud by a text-to-speech engine, so you must write exclusively for the ear — never for the eye.
+import sys
+sys.path.insert(0, str(Path(__file__).resolve().parent.parent.parent / "langgraph"))
+from research_agent.therapy_context import build_therapeutic_system_prompt  # noqa: E402
 
-## Audio-First Writing Rules
-These rules are non-negotiable. Every sentence must pass the "read it aloud" test.
 
-1. NO markdown of any kind — no **, ##, *, -, bullet points, numbered lists, or formatting symbols. Write flowing spoken prose only.
-2. NO visual structure — no headers, labels, section dividers, or enumeration. Transitions happen through spoken cues: "Now let's try something new..." or "Here's what I'd love you to do next..."
-3. NO bracket markers — do NOT write [pause], [sound:x], or any bracket notation. TTS engines read these literally. Use "..." (three dots) for all pauses — between sections, after instructions, within sentences. A 7-year-old needs time to process — use "..." generously.
-4. Sentence length — maximum 15 words per sentence for children, 20 for adults. Break complex ideas into multiple short sentences.
-5. Spoken transitions — use temporal and sequential cues the listener can follow: "First..." "Now..." "Next..." "When you're ready..." "Good. Now let's..."
-6. Pronunciation-safe words — avoid homophones that confuse TTS, unusual punctuation, or words that sound different than they look. Prefer simple, common words.
-7. Pacing variation — alternate between instruction, story, and silence. Never give more than two instructions in a row without an ellipsis pause or encouragement.
-8. Breath cues — NEVER write "take a deep breath" or "breathe in deeply" without explicit counted timing immediately after. ALWAYS write the full count: "Breathe in... two... three... four... And slowly breathe out... two... three... four... five..." A child needs the counted pacing to follow along. If you mention breathing at all, you MUST include numbered counts.
-
-## Content Structure
-Create therapeutic audio content with these spoken sections (do NOT label them — just flow naturally):
-
-Warm Opening (about 30 seconds) — greet the child by name, acknowledge their challenge with empathy, set a calm playful tone, preview what comes next.
-
-Understanding Together (1-2 minutes) — explain the difficulty in simple concrete terms. Normalize: "Lots of kids feel this way." Use a short metaphor or story to illustrate.
-
-Guided Practices (majority of time) — provide specific, actionable techniques. For children, frame as play, imagination, or adventure. Guide step-by-step with pauses between each instruction. Include at least one body-based activity (breathing, movement, squeezing hands). When including breathing, ALWAYS write counted timing: "Breathe in... two... three... four..."
-
-Wrapping Up (1 minute) — summarize in one or two simple sentences. Suggest one thing the listener can practice (they can ask a parent or caregiver to help them). End with warm encouragement and affirmation. Always speak only to the listener — never directly address a parent or caregiver.
-
-## LEGO Therapeutic Play Integration
-When LEGO play is appropriate (especially for children in EARLY_CHILDHOOD and MIDDLE_CHILDHOOD tiers), weave LEGO building into the therapeutic session as a hands-on modality:
-
-Building as Metaphor — use LEGO construction as a therapeutic metaphor throughout the session. Examples:
-- Emotions as colored bricks: "Imagine each feeling is a different colored LEGO brick. The red ones might be angry feelings. The blue ones are sad feelings. And the yellow ones? Those are happy, sunny feelings."
-- Building resilience: "Every time you try something brave, you're adding another brick to your tower of courage."
-- Problem-solving: "When something doesn't work, you can take it apart and try building it a different way — just like with LEGO."
-- Safe container: "Let's build an imaginary LEGO box where you can put your worries. You choose the color and the size."
-
-Building Activities — guide the child through simple LEGO building during the session with clear spoken instructions:
-- "If you have some LEGO bricks nearby, pick up a few now... Choose a color that feels calm to you."
-- "Now add one brick for something that made you feel brave today... Good."
-- "Keep building while I tell you a story about a little builder who learned something important..."
-- Always make LEGO activities optional: "If you have LEGO bricks, you can build along. If not, just imagine building in your mind."
-
-Therapeutic LEGO Techniques:
-- Feelings Tower: Each brick represents a feeling from the day — build, name, and process
-- Worry Wall: Build a small wall, then practice "knocking it down" as a release
-- Brave Bridge: Build a bridge from "here" to "where I want to be" — each brick is a brave step
-- Memory Build: Construct something that reminds the child of a happy memory or person
-- Calm Castle: Build a safe place the child can "go to" when feelings get big
-
-Always connect the building back to the therapeutic goal. The LEGO activity is never just play — it's a concrete, hands-on way to practice the coping skill being taught.
-
-## Evidence-Based Approaches
-Draw from:
-- Cognitive Behavioral Therapy (CBT)
-- Mindfulness-Based Stress Reduction (MBSR)
-- Acceptance and Commitment Therapy (ACT)
-- Dialectical Behavior Therapy (DBT)
-- Positive Psychology interventions
-- LEGO-Based Therapy (LeGoff et al.) — collaborative building for social skills, turn-taking, and emotional regulation
-- Play Therapy — structured therapeutic play as primary modality for children
-
-## Voice Guidelines
-- Write for spoken audio, not reading — every sentence must sound natural when spoken aloud
-- Use natural, conversational language with contractions ("let's", "you're", "that's")
-- Create pauses using "..." — never bracket markers like [pause]
-- Avoid complex sentences or jargon
-- Use "you" to create direct connection with the listener
-- Maintain a calm, warm, professional tone
-- For children: playful, encouraging, gently excited when celebrating successes
-- Speak slowly and clearly for relaxation effects
-
-## Duration Management
-- For 5-minute sessions: One core technique with playful framing, very brief opening and close
-- For 10-minute sessions: Opening + 1-2 practices (one can be LEGO-based) + wrap-up
-- For 15-20 minute sessions: Full structure with multiple practices, at least one hands-on LEGO activity
-- For 30+ minute sessions: Deep dive with extended guided exercises and building projects
-
-## Safety & Ethics
-- Never diagnose or replace professional therapy
-- Encourage seeking professional help for serious concerns
-- Focus on skill-building and coping strategies
-- Maintain appropriate boundaries
-- Use inclusive, non-judgmental language
-- LEGO activities must be age-appropriate and safe (no small pieces for very young children without supervision mention)
-
-## Example Opening (7-year-old, with LEGO)
-"Hi there... I'm really glad you're here today... You know what? You're already being really brave just by listening... Today we're going to do something fun together. We're going to build something... and learn something cool about big feelings at the same time. If you have some LEGO bricks near you, grab a few now... Any colors you like... And if you don't have any, that's totally fine. We can imagine building together... Ready? Let's start..."
-"""
+def get_system_prompt(case_data: dict) -> str:
+    """Build the system prompt for a test case, matching production behavior."""
+    minutes = case_data.get("minutes", 10)
+    person_name = case_data.get("person_name", "")
+    return build_therapeutic_system_prompt(minutes, person_name)
 
 # ---------------------------------------------------------------------------
 # Test cases — all centered on Sam, a 7-year-old boy (MIDDLE_CHILDHOOD)
@@ -374,12 +297,12 @@ TEST_CASES = [
         "papers": [],  # no research — exercises the fallback code path
         "lego_play": False,
     },
-    # 8. LEGO · bedtime anxiety · Calm Castle building + brave tower
+    # 8. Sam · bedtime anxiety · no LEGO (Sam is not Bogdan)
     {
-        "id": "sam-lego-bedtime-calm-castle",
+        "id": "sam-bedtime-calm-castle",
         "context_type": "goal",
         "goal_title": "Reduce bedtime anxiety and fall asleep independently",
-        "goal_description": "Help Sam manage fear at bedtime using LEGO-based therapeutic play.",
+        "goal_description": "Help Sam manage fear at bedtime.",
         "person_name": "Sam",
         "age_years": 7,
         "developmental_tier": "MIDDLE_CHILDHOOD",
@@ -391,20 +314,14 @@ TEST_CASES = [
             "severity": "MODERATE",
             "description": "Sam becomes anxious at bedtime, needing a parent to stay until he falls asleep.",
             "recommendations": [
-                "Build a LEGO Calm Castle as a safe-place visualization",
+                "Safe-place visualization",
                 "Gradual fading of parent presence",
-                "Brave Tower — add a brick each night he stays in bed",
+                "Brave behavior reward",
             ],
         },
         "feedback_context": None,
         "notes": None,
         "papers": [
-            {
-                "title": "LEGO-based therapy for anxiety in middle childhood: a pilot RCT",
-                "year": 2023,
-                "key_findings": "Structured LEGO building reduced anxiety scores by 30% over 8 sessions; children reported feeling 'in control' during building",
-                "therapeutic_techniques": "Calm Castle building; feelings color-coding with bricks; gradual exposure through play scenarios",
-            },
             {
                 "title": "Graduated extinction and parental fading for pediatric sleep problems",
                 "year": 2023,
@@ -412,11 +329,11 @@ TEST_CASES = [
                 "therapeutic_techniques": "Parental fading; bedtime pass technique; positive reinforcement of brave behavior",
             },
         ],
-        "lego_play": True,
+        "lego_play": False,
     },
-    # 9. LEGO · anger management · Feelings Tower + Worry Wall
+    # 9. Sam · anger management · no LEGO (Sam is not Bogdan)
     {
-        "id": "sam-lego-anger-feelings-tower",
+        "id": "sam-anger-feelings-tower",
         "context_type": "issue",
         "goal_title": None,
         "goal_description": None,
@@ -431,31 +348,13 @@ TEST_CASES = [
             "severity": "MODERATE",
             "description": "Explosive anger episodes triggered by perceived unfairness or sudden transitions.",
             "recommendations": [
-                "Feelings Tower — name and stack feelings with colored bricks",
-                "Worry Wall — build and knock down to practice emotional release",
+                "Feelings thermometer",
                 "Physical discharge strategies",
             ],
         },
         "feedback_context": None,
-        "notes": [
-            {
-                "title": "LEGO as emotional regulation scaffold",
-                "content": (
-                    "Sam responds well to concrete, tactile activities. LEGO building provides "
-                    "a physical outlet that channels energy while maintaining cognitive engagement. "
-                    "The act of choosing, placing, and naming bricks creates a natural slow-down "
-                    "in his escalation cycle. LeGoff's LEGO therapy model shows collaborative "
-                    "building teaches turn-taking, frustration tolerance, and joint problem-solving."
-                ),
-            },
-        ],
+        "notes": None,
         "papers": [
-            {
-                "title": "LEGO-Based Therapy for emotional regulation in children with behavioral difficulties",
-                "year": 2023,
-                "key_findings": "LEGO-based therapy improved emotional regulation and reduced aggressive incidents by 45% in children aged 6-10",
-                "therapeutic_techniques": "Feelings Tower (color-coded emotional bricks); collaborative building for frustration tolerance; structured destruction and rebuild for anger release",
-            },
             {
                 "title": "Body-based interventions for childhood anger dysregulation",
                 "year": 2023,
@@ -463,9 +362,9 @@ TEST_CASES = [
                 "therapeutic_techniques": "Anger thermometer; physical discharge; belly breathing; feelings vocabulary",
             },
         ],
-        "lego_play": True,
+        "lego_play": False,
     },
-    # 10. Issue-driven · aggression toward parent · single-recipient enforcement
+    # 10. Issue-driven · aggression toward parent · single-recipient enforcement · no LEGO
     {
         "id": "sam-home-aggression-related-parent",
         "context_type": "issue",
@@ -500,7 +399,7 @@ TEST_CASES = [
                 "therapeutic_techniques": "Countdown warnings; feelings thermometer; coping self-talk; safe signal word",
             },
         ],
-        "lego_play": True,
+        "lego_play": False,
     },
     # 11. Bogdan · aggression toward Mama · mirrors real story-8 failure
     # Regression test: model previously greeted Mama directly and referred to Bogdan in 3rd person.
@@ -546,13 +445,13 @@ TEST_CASES = [
         ],
         "lego_play": True,
     },
-    # 12. LEGO · social skills · Brave Bridge building for peer interaction
+    # 12. Bogdan · LEGO · social skills · Brave Bridge (LEGO only for Bogdan)
     {
-        "id": "sam-lego-social-brave-bridge",
+        "id": "bogdan-lego-social-brave-bridge",
         "context_type": "goal",
         "goal_title": "Build social confidence and make friends",
-        "goal_description": "Help Sam approach peers using LEGO collaborative building as a social bridge.",
-        "person_name": "Sam",
+        "goal_description": "Help Bogdan approach peers using LEGO collaborative building as a social bridge.",
+        "person_name": "Bogdan",
         "age_years": 7,
         "developmental_tier": "MIDDLE_CHILDHOOD",
         "minutes": 10,
@@ -582,6 +481,40 @@ TEST_CASES = [
                 "year": 2022,
                 "key_findings": "Friendship scripts and role-play increased peer initiations in 6-9 year olds",
                 "therapeutic_techniques": "Conversation starters; joining-in scripts; brave-body posture; brave-step reward",
+            },
+        ],
+        "lego_play": True,
+    },
+    # 13. Bogdan · LEGO · bedtime · Calm Castle (LEGO only for Bogdan)
+    {
+        "id": "bogdan-lego-bedtime-calm-castle",
+        "context_type": "goal",
+        "goal_title": "Reduce bedtime anxiety and fall asleep independently",
+        "goal_description": "Help Bogdan manage fear at bedtime using LEGO-based therapeutic play.",
+        "person_name": "Bogdan",
+        "age_years": 7,
+        "developmental_tier": "MIDDLE_CHILDHOOD",
+        "minutes": 15,
+        "language": "English",
+        "issue": {
+            "title": "Bedtime Fear and Sleep Avoidance",
+            "category": "BEHAVIORAL",
+            "severity": "MODERATE",
+            "description": "Bogdan becomes anxious at bedtime, needing a parent to stay until he falls asleep.",
+            "recommendations": [
+                "Build a LEGO Calm Castle as a safe-place visualization",
+                "Gradual fading of parent presence",
+                "Brave Tower — add a brick each night he stays in bed",
+            ],
+        },
+        "feedback_context": None,
+        "notes": None,
+        "papers": [
+            {
+                "title": "LEGO-based therapy for anxiety in middle childhood: a pilot RCT",
+                "year": 2023,
+                "key_findings": "Structured LEGO building reduced anxiety scores by 30% over 8 sessions; children reported feeling 'in control' during building",
+                "therapeutic_techniques": "Calm Castle building; feelings color-coding with bricks; gradual exposure through play scenarios",
             },
         ],
         "lego_play": True,
@@ -726,12 +659,12 @@ def build_story_prompt(case_data: dict) -> str:
         notes_str = "\n\n".join(notes_lines)
 
     # --- LEGO play section ---
-    # If lego_play not explicitly set, derive from tier (matching production behavior)
+    # LEGO is only for Bogdan (matching production behavior)
     lego_str = ""
     if "lego_play" in case_data:
         lego_play = case_data["lego_play"]
     else:
-        lego_play = tier in ("EARLY_CHILDHOOD", "MIDDLE_CHILDHOOD", "EARLY_ADOLESCENCE")
+        lego_play = person_name.lower() == "bogdan"
     if lego_play:
         lego_str = (
             "\n## LEGO Therapeutic Play (REQUIRED)\n"
@@ -859,11 +792,12 @@ def generate_story(case_data: dict, force_regen: bool = False) -> str:
 
     client = OpenAI(api_key=_API_KEY, base_url=_BASE_URL)
     prompt = build_story_prompt(case_data)
+    system_prompt = get_system_prompt(case_data)
 
     response = client.chat.completions.create(
         model="deepseek-chat",
         messages=[
-            {"role": "system", "content": THERAPEUTIC_SYSTEM_PROMPT},
+            {"role": "system", "content": system_prompt},
             {"role": "user", "content": prompt},
         ],
         temperature=0.7,

@@ -1,5 +1,6 @@
 import React from "react";
 import { Theme } from "@radix-ui/themes";
+import { Analytics } from "@vercel/analytics/react";
 import "@radix-ui/themes/styles.css";
 
 export default function Root({ children }: { children: React.ReactNode }) {
@@ -11,6 +12,7 @@ export default function Root({ children }: { children: React.ReactNode }) {
       hasBackground={false}
     >
       {children}
+      <Analytics />
     </Theme>
   );
 }

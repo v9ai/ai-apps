@@ -86,17 +86,17 @@ export const papers: Paper[] = [
     categoryColor: "var(--green-9)",
   },
   {
-    slug: "clerk-auth",
+    slug: "better-auth",
     number: 5,
-    title: "Clerk Authentication",
+    title: "Better Auth",
     category: "Authentication",
     wordCount: 0,
     readingTimeMin: 2,
-    authors: "Clerk",
+    authors: "Better Auth",
     year: 2024,
-    finding: "Developer-friendly auth provider with JWT-based sessions and user management",
-    relevance: "Handles sign-in/sign-up for users and admins, with admin access controlled by email check in checkIsAdmin() function",
-    url: "https://clerk.com",
+    finding: "Self-hosted auth library with email/password sessions and Drizzle adapter for PostgreSQL",
+    relevance: "Handles sign-in/sign-up via @ai-apps/auth package, with admin access controlled by email check in isAdminEmail() function",
+    url: "https://www.better-auth.com",
     categoryColor: "var(--purple-9)",
   },
   {
@@ -193,7 +193,7 @@ export const pipelineAgents: PipelineAgent[] = [
   },
   {
     name: "Job Display & User Interaction",
-    description: "UnifiedJobsProvider component fetches jobs via GraphQL queries, filtered through Drizzle ORM, and renders them with search and pagination. Users authenticate via Clerk, and admins access protected routes like /admin/contacts.",
+    description: "UnifiedJobsProvider component fetches jobs via GraphQL queries, filtered through Drizzle ORM, and renders them with search and pagination. Users authenticate via Better Auth, and admins access protected routes like /admin/contacts.",
     researchBasis: "Next.js Server Components and GraphQL for real-time data fetching",
   },
   {
@@ -211,7 +211,7 @@ export const pipelineAgents: PipelineAgent[] = [
 // ── Narrative ─────────────────────────────────────────────────────
 
 export const story =
-  "Job seekers visit the platform where the UnifiedJobsProvider component fetches EU-remote jobs via GraphQL queries to PostgreSQL, filtered by Drizzle ORM. Recruiters post jobs that are ingested by Rust crawlers, classified for EU compatibility using DeepSeek via LangGraph workers, and stored with vector embeddings in Cloudflare D1 for matching. Administrators manage contacts and campaigns through Clerk-authenticated admin routes, using AI-assisted email drafting with the ComposeFromLinkedIn component and Resend for delivery.";
+  "Job seekers visit the platform where the UnifiedJobsProvider component fetches EU-remote jobs via GraphQL queries to PostgreSQL, filtered by Drizzle ORM. Recruiters post jobs that are ingested by Rust crawlers, classified for EU compatibility using DeepSeek via LangGraph workers, and stored with vector embeddings in Cloudflare D1 for matching. Administrators manage contacts and campaigns through Better Auth-authenticated admin routes, using AI-assisted email drafting with the ComposeFromLinkedIn component and Resend for delivery.";
 
 // ── Deep-Dive Sections ────────────────────────────────────────────
 
@@ -226,7 +226,7 @@ export const extraSections: { heading: string; content: string }[] = [
   },
   {
     heading: "Security & Auth",
-    content: "Clerk handles authentication with JWT tokens, while admin access is restricted by email check (user?.email === ADMIN_EMAIL) in functions like checkIsAdmin(). Row-Level Security (RLS) in PostgreSQL enforces data isolation, and environment variables store secrets like API keys. Input validation occurs on both client and server, with rate limiting likely implemented at the Cloudflare Worker level.",
+    content: "Better Auth handles authentication with session-based auth backed by Neon PostgreSQL, while admin access is restricted by email check (isAdminEmail()) in resolvers. Environment variables store secrets like API keys. Input validation occurs on both client and server, with rate limiting likely implemented at the Cloudflare Worker level.",
   },
   {
     heading: "Deployment & Infrastructure",

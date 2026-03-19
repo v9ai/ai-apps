@@ -55,7 +55,7 @@ GraphQL codegen (`pnpm codegen`) runs after the schema change to produce updated
 | Duplicate DB rows if two requests race on same text | Low | Unique index on `(study_topic_id, text_hash)`; resolver uses INSERT OR IGNORE + SELECT |
 | `window.getSelection()` lost before mutation fires (toolbar click clears selection) | Med | Capture `selectedText` into local state before toolbar renders; do not rely on live selection inside onClick |
 | D1 text hash column requires raw SQL for `hex(sha256(...))` | Low | Store hash as app-computed hex string (JS `crypto.subtle.digest`) — no DB-side hash needed |
-| Apollo mutation not guarded (unauthenticated cost) | Med | Require valid Clerk session (`context.userId`) in resolver; throw Forbidden if missing |
+| Apollo mutation not guarded (unauthenticated cost) | Med | Require valid Better Auth session (`context.userId`) in resolver; throw Forbidden if missing |
 
 ## Rollback Plan
 
@@ -72,7 +72,7 @@ The DB table is additive; no existing tables are altered. Rollback has zero impa
 - `crypto.subtle` available in Next.js App Router client components (browser + Node.js 18+ edge runtime)
 - Anthropic API key already configured (`ANTHROPIC_API_KEY` in `.env.local` / Vercel env)
 - Vercel AI SDK (`@ai-sdk/anthropic`) already in `package.json`
-- Clerk auth context already threaded through `GraphQLContext`
+- Better Auth session context already threaded through `GraphQLContext`
 
 ## Success Criteria
 

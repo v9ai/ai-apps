@@ -14,6 +14,38 @@ class ParsedJD(TypedDict):
     seniority: str
 
 
+class CompanyResearch(TypedDict):
+    """Structured company intelligence for interview prep."""
+    company_overview: str           # what the company does, mission, market position
+    product_focus: list[str]        # main products/services (max 5)
+    engineering_culture: list[str]  # engineering team signals (max 5)
+    tech_investment_signals: list[str]  # AI tier, tech stack signals (max 5)
+    competitive_landscape: str      # key competitors and differentiation
+    talking_points: list[str]       # specific things to reference in interview (max 5)
+    red_flags: list[str]            # potential concerns to probe (max 3)
+
+
+class RoleDepth(TypedDict):
+    """Deep signals extracted from the JD that go beyond simple parsing."""
+    team_signals: list[str]       # e.g. "small team", "high autonomy", "cross-functional"
+    technical_maturity: str       # "early_stage" | "scaling" | "mature" | "legacy"
+    growth_stage: str             # "startup" | "scaleup" | "enterprise"
+    hidden_requirements: list[str]  # things implied but not stated
+    key_challenges: list[str]     # specific challenges the role will face
+    interview_focus: list[str]    # what interviewers likely care about most
+    culture_signals: list[str]    # culture indicators from the JD
+
+
+class QAScore(TypedDict):
+    """Score for a single Q&A pair from the self-evaluation node."""
+    question_idx: int
+    specificity: float    # 0-1: how specific to this role vs generic
+    difficulty: float     # 0-1: appropriate for the seniority level
+    answer_quality: float # 0-1: substantive, actionable, specific
+    overall: float        # 0-1: combined score
+    feedback: str         # why it scored low (empty if good)
+
+
 class QAPair(TypedDict):
     question: str
     answer: str
@@ -54,6 +86,12 @@ class ApplicationPrepState(TypedDict):
     parsed: ParsedJD | None
     company_context: str
 
+    # After analyze_role_depth
+    role_depth: RoleDepth | None
+
+    # After research_company
+    company_research: CompanyResearch | None
+
     # After extract_technologies
     technologies: list[ExtractedTech]
 
@@ -64,6 +102,10 @@ class ApplicationPrepState(TypedDict):
     # Parallel fan-out results
     question_sets: Annotated[list[QuestionSet], operator.add]
     generated: Annotated[list[GeneratedContent], operator.add]
+
+    # After score_and_refine
+    qa_scores: list[dict]  # per-category scoring results
+    refined_count: int      # how many answers were regenerated
 
     # Final
     report: str

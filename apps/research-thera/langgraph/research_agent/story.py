@@ -8,7 +8,7 @@ from typing import Optional
 from openai import AsyncOpenAI
 
 from .d1 import D1Client, FeedbackTarget, parse_path
-from .therapy_context import IssueData, StoryContext, THERAPEUTIC_AUDIO_SYSTEM_PROMPT
+from .therapy_context import IssueData, StoryContext, build_therapeutic_system_prompt
 
 
 async def run_story_generation(
@@ -93,11 +93,11 @@ async def run_story_generation(
         resp = await client.chat.completions.create(
             model="deepseek-chat",
             messages=[
-                {"role": "system", "content": THERAPEUTIC_AUDIO_SYSTEM_PROMPT},
+                {"role": "system", "content": build_therapeutic_system_prompt(minutes, family_member.first_name)},
                 {"role": "user", "content": user_prompt},
             ],
             temperature=0.7,
-            max_tokens=8192,
+            max_tokens=16384,
         )
         story_text = (resp.choices[0].message.content or "").strip()
         if not story_text:

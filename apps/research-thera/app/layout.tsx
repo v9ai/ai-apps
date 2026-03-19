@@ -26,7 +26,7 @@ export default function RootLayout({
         >
           <ApolloProvider>
             <Header />
-            <Container size="3" pb="6" px="5">
+            <Container size="3" pb="6" px={{ initial: "3", md: "5" }}>
               {children}
             </Container>
           </ApolloProvider>

@@ -37,11 +37,14 @@ from html import unescape as _html_unescape
 from .state import (
     CATEGORIES,
     ApplicationPrepState,
+    CompanyResearch,
     ExtractedTech,
     GeneratedContent,
     ParsedJD,
     QAPair,
+    QAScore,
     QuestionSet,
+    RoleDepth,
 )
 
 
@@ -219,6 +222,245 @@ def parse_jd_node(state: ApplicationPrepState) -> dict:
 
 
 # ---------------------------------------------------------------------------
+# Node 1b: analyze_role_depth — deep JD signals beyond simple parsing
+# ---------------------------------------------------------------------------
+
+def analyze_role_depth_node(state: ApplicationPrepState) -> dict:
+    """Extract deeper signals from JD: team dynamics, maturity, hidden requirements.
+
+    Runs in parallel with parse_jd and extract_technologies. Output feeds into
+    generate_questions via route_all_work for more targeted Q&A.
+    """
+    messages = [
+        SystemMessage(content=(
+            "You are a senior engineering hiring manager who has conducted 500+ interviews. "
+            "Analyze this job description for signals that go BEYOND the explicit requirements. "
+            "Return JSON with this exact structure:\n"
+            "{\n"
+            '  "team_signals": ["small team", "high autonomy", ...],\n'
+            '  "technical_maturity": "early_stage|scaling|mature|legacy",\n'
+            '  "growth_stage": "startup|scaleup|enterprise",\n'
+            '  "hidden_requirements": ["must handle ambiguity", ...],\n'
+            '  "key_challenges": ["scaling real-time system to 10x", ...],\n'
+            '  "interview_focus": ["system design trade-offs", ...],\n'
+            '  "culture_signals": ["engineering-driven culture", ...]\n'
+            "}\n\n"
+            "Guidelines:\n"
+            "- team_signals: infer from phrases like 'small team', 'wear many hats', 'cross-functional'\n"
+            "- technical_maturity: early_stage (building from scratch), scaling (product-market fit, growing), "
+            "mature (established systems, optimization), legacy (modernization needed)\n"
+            "- growth_stage: startup (<50 people signals), scaleup (rapid hiring, Series B+), enterprise (large org)\n"
+            "- hidden_requirements: what's implied but not stated — e.g. 'fast-paced' means 'handle pressure'\n"
+            "- key_challenges: specific technical/organizational challenges this person will face\n"
+            "- interview_focus: what interviewers at this company likely care about most based on culture/stage\n"
+            "- culture_signals: values, work style, decision-making indicators\n"
+            "- Max 5 items per list. Be specific, not generic.\n"
+            "- Return ONLY valid JSON, no markdown fences."
+        )),
+        HumanMessage(content=(
+            f"Job title: {state['job_title']}\n"
+            f"Company: {state['company_name']}\n\n"
+            f"{state['job_description']}"
+        )),
+    ]
+    response = _get_llm_json().invoke(messages)
+    try:
+        raw = json.loads(response.content)
+        role_depth: RoleDepth = {
+            "team_signals": raw.get("team_signals", [])[:5],
+            "technical_maturity": raw.get("technical_maturity", "mature"),
+            "growth_stage": raw.get("growth_stage", "scaleup"),
+            "hidden_requirements": raw.get("hidden_requirements", [])[:5],
+            "key_challenges": raw.get("key_challenges", [])[:5],
+            "interview_focus": raw.get("interview_focus", [])[:5],
+            "culture_signals": raw.get("culture_signals", [])[:5],
+        }
+    except (json.JSONDecodeError, KeyError):
+        role_depth = {
+            "team_signals": [], "technical_maturity": "mature",
+            "growth_stage": "scaleup", "hidden_requirements": [],
+            "key_challenges": [], "interview_focus": [], "culture_signals": [],
+        }
+
+    print(f"  Role depth — maturity={role_depth['technical_maturity']}, "
+          f"stage={role_depth['growth_stage']}, "
+          f"challenges={len(role_depth['key_challenges'])}, "
+          f"focus={len(role_depth['interview_focus'])}")
+    return {"role_depth": role_depth}
+
+
+# ---------------------------------------------------------------------------
+# Node 1c: research_company — synthesize company intelligence from DB data
+# ---------------------------------------------------------------------------
+
+def _fetch_company_data(company_key: str, company_name: str) -> dict:
+    """Fetch company record from the companies table."""
+    try:
+        from src.db.connection import get_connection
+
+        conn = get_connection()
+        with conn.cursor() as cur:
+            # Try by key first, then by name
+            cur.execute(
+                """
+                SELECT name, description, industry, size, location, website,
+                       category, tags, services, industries,
+                       ai_tier, ai_classification_reason,
+                       deep_analysis, linkedin_url, github_url,
+                       ashby_industry_tags, ashby_tech_signals, ashby_size_signal
+                FROM companies
+                WHERE lower(key) = lower(%s)
+                   OR lower(name) = lower(%s)
+                LIMIT 1
+                """,
+                [company_key, company_name],
+            )
+            row = cur.fetchone()
+        conn.close()
+        return dict(row) if row else {}
+    except Exception as e:
+        print(f"  Warning: could not fetch company data — {e}")
+        return {}
+
+
+def _parse_json_field(value: str | None) -> list[str]:
+    """Safely parse a JSON array string field."""
+    if not value:
+        return []
+    try:
+        parsed = json.loads(value)
+        return parsed if isinstance(parsed, list) else []
+    except (json.JSONDecodeError, TypeError):
+        return []
+
+
+def research_company_node(state: ApplicationPrepState) -> dict:
+    """Synthesize structured company intelligence from DB data + LLM analysis.
+
+    Runs in parallel with parse_jd, analyze_role_depth, and extract_technologies.
+    Output feeds into generate_questions for more targeted company-specific Q&A.
+    """
+    company_key = state.get("company_key", "")
+    company_name = state.get("company_name", "")
+    job_description = state.get("job_description", "")
+    company_data = _fetch_company_data(company_key, company_name)
+
+    # Build a context document from available DB data
+    context_parts = []
+    if company_data:
+        if company_data.get("description"):
+            context_parts.append(f"Description: {company_data['description']}")
+        if company_data.get("industry"):
+            context_parts.append(f"Industry: {company_data['industry']}")
+        if company_data.get("size"):
+            context_parts.append(f"Size: {company_data['size']}")
+        if company_data.get("location"):
+            context_parts.append(f"Location: {company_data['location']}")
+        if company_data.get("website"):
+            context_parts.append(f"Website: {company_data['website']}")
+        if company_data.get("category"):
+            context_parts.append(f"Category: {company_data['category']}")
+
+        tags = _parse_json_field(company_data.get("tags"))
+        if tags:
+            context_parts.append(f"Tags: {', '.join(tags)}")
+
+        services = _parse_json_field(company_data.get("services"))
+        if services:
+            context_parts.append(f"Services: {', '.join(services)}")
+
+        industries = _parse_json_field(company_data.get("industries"))
+        if industries:
+            context_parts.append(f"Industries: {', '.join(industries)}")
+
+        ai_tier = company_data.get("ai_tier", 0)
+        ai_labels = {0: "Not AI-focused", 1: "AI-First", 2: "AI-Native"}
+        context_parts.append(f"AI Classification: {ai_labels.get(ai_tier, 'Unknown')}")
+        if company_data.get("ai_classification_reason"):
+            context_parts.append(f"AI Classification Reason: {company_data['ai_classification_reason']}")
+
+        ashby_tags = _parse_json_field(company_data.get("ashby_industry_tags"))
+        if ashby_tags:
+            context_parts.append(f"Industry Tags (Ashby): {', '.join(ashby_tags)}")
+
+        ashby_tech = _parse_json_field(company_data.get("ashby_tech_signals"))
+        if ashby_tech:
+            context_parts.append(f"Tech Signals (Ashby): {', '.join(ashby_tech)}")
+
+        if company_data.get("ashby_size_signal"):
+            context_parts.append(f"Size Signal: {company_data['ashby_size_signal']}")
+
+    deep_analysis = (company_data.get("deep_analysis") or "") if company_data else ""
+
+    db_source = "DB + JD" if context_parts else "JD only"
+    print(f"  [research_company] Source: {db_source} ({len(context_parts)} DB fields)")
+
+    company_context = "\n".join(context_parts) if context_parts else "(No structured company data in database)"
+    deep_analysis_block = f"\n\nDEEP ANALYSIS:\n{deep_analysis[:3000]}" if deep_analysis else ""
+
+    messages = [
+        SystemMessage(content=(
+            "You are a company research analyst preparing a candidate for a job interview. "
+            "Synthesize ALL available data about this company into a structured research brief.\n\n"
+            "You have two sources of information:\n"
+            "1. COMPANY DATA — structured fields from a database (may be sparse or empty)\n"
+            "2. JOB DESCRIPTION — the actual job posting, which reveals a LOT about the company: "
+            "what they build, how they work, their tech stack, team structure, growth stage, and values\n\n"
+            "Use BOTH sources. Even if company data is minimal, the job description is rich with signals. "
+            "Extract everything you can about the company from how they describe the role.\n\n"
+            "Return JSON with this exact structure:\n"
+            "{\n"
+            '  "company_overview": "2-3 sentences: what they do, market position, mission",\n'
+            '  "product_focus": ["main product/service 1", ...],\n'
+            '  "engineering_culture": ["signal about eng culture 1", ...],\n'
+            '  "tech_investment_signals": ["AI-native company", "uses X stack", ...],\n'
+            '  "competitive_landscape": "1-2 sentences: key competitors, differentiation",\n'
+            '  "talking_points": ["specific thing to reference in interview 1", ...],\n'
+            '  "red_flags": ["potential concern to probe 1", ...]\n'
+            "}\n\n"
+            "Guidelines:\n"
+            "- company_overview: Be specific about what the company DOES, not generic praise\n"
+            "- product_focus: Their actual products/services, max 5\n"
+            "- engineering_culture: Signals about how engineering works there (team size, autonomy, etc), max 5\n"
+            "- tech_investment_signals: Evidence of technical sophistication or AI investment, max 5\n"
+            "- competitive_landscape: Who they compete with, what makes them different\n"
+            "- talking_points: Specific facts a candidate should reference to show they researched the company, max 5\n"
+            "- red_flags: Potential concerns worth probing (not deal-breakers, just things to ask about), max 3\n"
+            "- If data is truly insufficient for a field, return an empty list [] or empty string \"\"\n"
+            "- Return ONLY valid JSON, no markdown fences."
+        )),
+        HumanMessage(content=(
+            f"Company: {company_name}\n"
+            f"Role being applied for: {state['job_title']}\n\n"
+            f"COMPANY DATA:\n{company_context}"
+            f"{deep_analysis_block}\n\n"
+            f"JOB DESCRIPTION:\n{job_description[:4000]}"
+        )),
+    ]
+
+    response = _get_llm_json().invoke(messages)
+    try:
+        raw = json.loads(response.content)
+        research: CompanyResearch = {
+            "company_overview": raw.get("company_overview", ""),
+            "product_focus": raw.get("product_focus", [])[:5],
+            "engineering_culture": raw.get("engineering_culture", [])[:5],
+            "tech_investment_signals": raw.get("tech_investment_signals", [])[:5],
+            "competitive_landscape": raw.get("competitive_landscape", ""),
+            "talking_points": raw.get("talking_points", [])[:5],
+            "red_flags": raw.get("red_flags", [])[:3],
+        }
+    except (json.JSONDecodeError, KeyError):
+        print(f"  [research_company] Failed to parse LLM response")
+        return {"company_research": None}
+
+    print(f"  [research_company] Synthesized: {len(research['product_focus'])} products, "
+          f"{len(research['talking_points'])} talking points, "
+          f"{len(research['engineering_culture'])} culture signals")
+    return {"company_research": research}
+
+
+# ---------------------------------------------------------------------------
 # Node 2: extract_technologies — LLM extract + normalize to canonical tags
 # ---------------------------------------------------------------------------
 
@@ -333,6 +575,8 @@ def route_all_work(state: ApplicationPrepState) -> list[Send]:
     # Interview questions — always 4 categories
     parsed = state.get("parsed") or {}
     company_context = state.get("company_context", "")
+    role_depth = state.get("role_depth") or {}
+    company_research = state.get("company_research") or {}
     for cat in CATEGORIES:
         sends.append(Send("generate_questions", {
             "category": cat,
@@ -341,6 +585,8 @@ def route_all_work(state: ApplicationPrepState) -> list[Send]:
             "job_description": state["job_description"],
             "parsed": parsed,
             "company_context": company_context,
+            "role_depth": role_depth,
+            "company_research": company_research,
         }))
 
     # Tech content — one per organized technology
@@ -438,16 +684,59 @@ def generate_questions_node(state: dict) -> dict:
     company_context = state.get("company_context", "")
     context_block = f"\n\n{company_context}" if company_context else ""
 
+    # Enrich with role depth signals
+    role_depth = state.get("role_depth") or {}
+    depth_block = ""
+    if role_depth:
+        depth_parts = []
+        if role_depth.get("key_challenges"):
+            depth_parts.append(f"Key challenges this person will face: {'; '.join(role_depth['key_challenges'])}")
+        if role_depth.get("interview_focus"):
+            depth_parts.append(f"What interviewers likely care about: {'; '.join(role_depth['interview_focus'])}")
+        if role_depth.get("hidden_requirements"):
+            depth_parts.append(f"Hidden requirements (implied but not stated): {'; '.join(role_depth['hidden_requirements'])}")
+        if role_depth.get("culture_signals"):
+            depth_parts.append(f"Culture signals: {'; '.join(role_depth['culture_signals'])}")
+        if role_depth.get("technical_maturity"):
+            depth_parts.append(f"Technical maturity: {role_depth['technical_maturity']}")
+        if depth_parts:
+            depth_block = "\n\nDEEP ROLE CONTEXT (use this to make questions more specific):\n" + "\n".join(depth_parts)
+
+    # Enrich with company research
+    company_research = state.get("company_research") or {}
+    research_block = ""
+    if company_research:
+        research_parts = []
+        if company_research.get("company_overview"):
+            research_parts.append(f"Company overview: {company_research['company_overview']}")
+        if company_research.get("product_focus"):
+            research_parts.append(f"Products/services: {'; '.join(company_research['product_focus'])}")
+        if company_research.get("engineering_culture"):
+            research_parts.append(f"Engineering culture: {'; '.join(company_research['engineering_culture'])}")
+        if company_research.get("tech_investment_signals"):
+            research_parts.append(f"Tech investment: {'; '.join(company_research['tech_investment_signals'])}")
+        if company_research.get("competitive_landscape"):
+            research_parts.append(f"Competitive landscape: {company_research['competitive_landscape']}")
+        if company_research.get("talking_points"):
+            research_parts.append(f"Key talking points: {'; '.join(company_research['talking_points'])}")
+        if research_parts:
+            research_block = "\n\nCOMPANY INTELLIGENCE (use this to make questions company-specific):\n" + "\n".join(research_parts)
+
     messages = [
         SystemMessage(content=(
             "You are an expert interview coach. Return ONLY valid JSON with this structure:\n"
             '{"qa_pairs": [{"question": "...", "answer": "..."}, ...]}\n'
-            "No markdown fences, no extra keys."
+            "No markdown fences, no extra keys.\n\n"
+            "IMPORTANT: Questions must be SPECIFIC to this exact role, company, and tech stack. "
+            "Generic questions that could apply to any software role are unacceptable. "
+            "Reference specific technologies, challenges, and company context in both questions and answers."
         )),
         HumanMessage(content=(
             f"Role: {state['job_title']} at {company}\n\n"
             f"Job description (excerpt):\n{state['job_description'][:2000]}"
-            f"{context_block}\n\n"
+            f"{context_block}"
+            f"{depth_block}"
+            f"{research_block}\n\n"
             f"QUESTIONS: {question_instr}\n\n"
             f"ANSWERS: {answer_instr}\n\n"
             f"Return exactly {spec['count']} Q&A pairs as JSON."
@@ -469,6 +758,141 @@ def generate_questions_node(state: dict) -> dict:
     print(f"  [{category}] {len(qa_pairs)} Q&A pairs")
     qs: QuestionSet = {"category": category, "qa_pairs": qa_pairs}
     return {"question_sets": [qs]}
+
+
+# ---------------------------------------------------------------------------
+# Node 4c: score_and_refine — self-evaluation + regeneration of weak answers
+# ---------------------------------------------------------------------------
+
+_REFINE_THRESHOLD = 0.6  # Q&A pairs scoring below this get regenerated
+
+def score_and_refine_node(state: ApplicationPrepState) -> dict:
+    """Score each Q&A pair and regenerate weak answers.
+
+    Evaluates specificity, difficulty calibration, and answer quality.
+    Pairs scoring below threshold get a targeted regeneration with feedback.
+    """
+    question_sets = state.get("question_sets", [])
+    parsed = state.get("parsed") or {}
+    role_depth = state.get("role_depth") or {}
+
+    if not question_sets:
+        return {"qa_scores": [], "refined_count": 0}
+
+    seniority = parsed.get("seniority", "senior")
+    role_type = parsed.get("role_type", "software")
+    all_scores: list[dict] = []
+    total_refined = 0
+
+    for qs in question_sets:
+        category = qs["category"]
+        pairs = qs["qa_pairs"]
+        if not pairs:
+            continue
+
+        # Score all Q&A pairs in this category
+        score_messages = [
+            SystemMessage(content=(
+                "You are an interview quality evaluator. Score each Q&A pair on three dimensions (0.0-1.0):\n"
+                "- specificity: How specific is this to the exact role/company/tech stack? "
+                "(0.0 = generic 'tell me about yourself', 1.0 = deeply role-specific)\n"
+                "- difficulty: Is the difficulty appropriate for a {seniority} {role_type} engineer? "
+                "(0.0 = too easy or too hard, 1.0 = perfectly calibrated)\n"
+                "- answer_quality: Is the answer substantive, actionable, and specific? "
+                "(0.0 = vague platitudes, 1.0 = concrete with examples and trade-offs)\n\n"
+                "Return JSON: {{\"scores\": [{{\"idx\": 0, \"specificity\": 0.8, \"difficulty\": 0.7, "
+                "\"answer_quality\": 0.9, \"feedback\": \"\"}}]}}\n"
+                "- Include feedback ONLY for pairs where any score < 0.6 — explain what's weak.\n"
+                "- Return ONLY valid JSON, no markdown fences."
+            ).format(seniority=seniority, role_type=role_type)),
+            HumanMessage(content=(
+                f"Role: {state['job_title']} at {state['company_name']}\n"
+                f"Category: {category}\n"
+                f"Seniority: {seniority}, Role type: {role_type}\n\n"
+                f"Q&A pairs to evaluate:\n{json.dumps(pairs, indent=2)}"
+            )),
+        ]
+        score_response = _get_llm_json().invoke(score_messages)
+        try:
+            raw_scores = json.loads(score_response.content)
+            scores = raw_scores.get("scores", [])
+        except (json.JSONDecodeError, KeyError):
+            scores = []
+
+        # Identify weak pairs
+        weak_indices: list[tuple[int, str]] = []
+        for s in scores:
+            idx = s.get("idx", -1)
+            specificity = s.get("specificity", 1.0)
+            difficulty = s.get("difficulty", 1.0)
+            answer_quality = s.get("answer_quality", 1.0)
+            overall = (specificity + difficulty + answer_quality) / 3
+            feedback = s.get("feedback", "")
+
+            score_entry: QAScore = {
+                "question_idx": idx,
+                "specificity": specificity,
+                "difficulty": difficulty,
+                "answer_quality": answer_quality,
+                "overall": overall,
+                "feedback": feedback,
+            }
+            all_scores.append({"category": category, **score_entry})
+
+            if overall < _REFINE_THRESHOLD and 0 <= idx < len(pairs) and feedback:
+                weak_indices.append((idx, feedback))
+
+        # Regenerate weak answers
+        if weak_indices:
+            weak_details = "\n".join(
+                f"- Q{idx}: \"{pairs[idx]['question']}\" — Weakness: {fb}"
+                for idx, fb in weak_indices
+                if idx < len(pairs)
+            )
+            interview_focus = "; ".join(role_depth.get("interview_focus", []))
+            key_challenges = "; ".join(role_depth.get("key_challenges", []))
+
+            refine_messages = [
+                SystemMessage(content=(
+                    "You are an expert interview coach. Some Q&A pairs were scored as weak. "
+                    "Rewrite ONLY the answers (keep questions unchanged) to be more:\n"
+                    "- Specific to this exact role and company\n"
+                    "- Appropriately difficult for a {seniority} engineer\n"
+                    "- Substantive with concrete examples, trade-offs, and technical depth\n\n"
+                    "Return JSON: {{\"refined\": [{{\"idx\": 0, \"answer\": \"improved answer...\"}}]}}\n"
+                    "Return ONLY valid JSON, no markdown fences."
+                ).format(seniority=seniority)),
+                HumanMessage(content=(
+                    f"Role: {state['job_title']} at {state['company_name']}\n"
+                    f"Tech stack: {', '.join(parsed.get('tech_stack', []))}\n"
+                    + (f"Interview focus: {interview_focus}\n" if interview_focus else "")
+                    + (f"Key challenges: {key_challenges}\n" if key_challenges else "")
+                    + f"\nWeak Q&A pairs to improve:\n{weak_details}"
+                )),
+            ]
+            refine_response = _get_llm_json().invoke(refine_messages)
+            try:
+                refined = json.loads(refine_response.content).get("refined", [])
+                for r in refined:
+                    idx = r.get("idx", -1)
+                    new_answer = r.get("answer", "")
+                    if 0 <= idx < len(pairs) and new_answer:
+                        pairs[idx]["answer"] = new_answer
+                        total_refined += 1
+            except (json.JSONDecodeError, KeyError):
+                pass
+
+            if total_refined > 0:
+                print(f"  [{category}] Refined {total_refined} weak answers")
+
+    avg_scores = {}
+    for cat in CATEGORIES:
+        cat_scores = [s for s in all_scores if s["category"] == cat]
+        if cat_scores:
+            avg_scores[cat] = round(sum(s["overall"] for s in cat_scores) / len(cat_scores), 2)
+    print(f"  Q&A scores: {avg_scores} | Refined: {total_refined} answers")
+
+    return {"qa_scores": all_scores, "refined_count": total_refined}
 
 
 # ---------------------------------------------------------------------------
@@ -559,10 +983,70 @@ def _compile_report(state: ApplicationPrepState) -> str:
     """Assemble all Q&A sets into a markdown report."""
     sets_by_category = {qs["category"]: qs["qa_pairs"] for qs in state.get("question_sets", [])}
     parsed = state.get("parsed") or {}
+    role_depth = state.get("role_depth") or {}
+
+    company_research = state.get("company_research") or {}
 
     lines = [f"# Interview Prep — {state['job_title']} @ {state['company_name']}", ""]
     if parsed.get("tech_stack"):
         lines += [f"**Tech stack:** {', '.join(parsed['tech_stack'])}", ""]
+
+    # Company intelligence section
+    if company_research and any(company_research.get(k) for k in ("company_overview", "product_focus", "talking_points")):
+        lines += ["## Company Intelligence", ""]
+        if company_research.get("company_overview"):
+            lines += [company_research["company_overview"], ""]
+        if company_research.get("product_focus"):
+            lines.append("**Products & services:**")
+            for p in company_research["product_focus"]:
+                lines.append(f"- {p}")
+            lines.append("")
+        if company_research.get("engineering_culture"):
+            lines.append("**Engineering culture signals:**")
+            for c in company_research["engineering_culture"]:
+                lines.append(f"- {c}")
+            lines.append("")
+        if company_research.get("tech_investment_signals"):
+            lines.append("**Tech investment signals:**")
+            for t in company_research["tech_investment_signals"]:
+                lines.append(f"- {t}")
+            lines.append("")
+        if company_research.get("competitive_landscape"):
+            lines += [f"**Competitive landscape:** {company_research['competitive_landscape']}", ""]
+        if company_research.get("talking_points"):
+            lines.append("**Talking points for your interview:**")
+            for tp in company_research["talking_points"]:
+                lines.append(f"- {tp}")
+            lines.append("")
+        if company_research.get("red_flags"):
+            lines.append("**Things to probe / ask about:**")
+            for rf in company_research["red_flags"]:
+                lines.append(f"- {rf}")
+            lines.append("")
+
+    # Role depth context section
+    if role_depth and any(role_depth.get(k) for k in ("key_challenges", "interview_focus", "hidden_requirements")):
+        lines += ["## Role Intelligence", ""]
+        if role_depth.get("technical_maturity"):
+            lines.append(f"**Technical maturity:** {role_depth['technical_maturity'].replace('_', ' ').title()}")
+        if role_depth.get("growth_stage"):
+            lines.append(f"**Company stage:** {role_depth['growth_stage'].title()}")
+        lines.append("")
+        if role_depth.get("key_challenges"):
+            lines.append("**Key challenges you'll face:**")
+            for c in role_depth["key_challenges"]:
+                lines.append(f"- {c}")
+            lines.append("")
+        if role_depth.get("interview_focus"):
+            lines.append("**What interviewers will likely focus on:**")
+            for f in role_depth["interview_focus"]:
+                lines.append(f"- {f}")
+            lines.append("")
+        if role_depth.get("hidden_requirements"):
+            lines.append("**Hidden requirements (read between the lines):**")
+            for h in role_depth["hidden_requirements"]:
+                lines.append(f"- {h}")
+            lines.append("")
 
     for cat in CATEGORIES:
         label = _CATEGORY_LABELS[cat]
@@ -581,6 +1065,19 @@ def _compile_report(state: ApplicationPrepState) -> str:
                 f"**{answer_label}:** {pair['answer']}",
                 "",
             ]
+
+    # Quality summary
+    qa_scores = state.get("qa_scores", [])
+    refined_count = state.get("refined_count", 0)
+    if qa_scores:
+        avg_overall = sum(s.get("overall", 0) for s in qa_scores) / len(qa_scores)
+        lines += [
+            "---",
+            "",
+            f"*Quality score: {avg_overall:.0%} avg across {len(qa_scores)} Q&A pairs"
+            + (f" ({refined_count} answers refined by self-evaluation)*" if refined_count else "*"),
+            "",
+        ]
 
     return "\n".join(lines)
 

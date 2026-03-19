@@ -15,6 +15,7 @@ from press.agents import Agent
 from press.papers import ResearchPaper
 from press.papers.core_api import CoreClient
 from press.papers.crossref import CrossrefClient
+from press.papers.editorial import search_editorial
 from press.papers.openalex import OpenAlexClient
 from press.papers.semantic_scholar import SemanticScholarClient
 
@@ -26,6 +27,7 @@ CURRENT_YEAR = datetime.now().year
 @dataclass
 class ResearchConfig:
     enable_paper_search: bool = True
+    enable_editorial_search: bool = True
 
 
 @dataclass
@@ -109,6 +111,30 @@ def format_paper_digest(papers: list[ResearchPaper]) -> str:
     return "\n".join(lines)
 
 
+def format_editorial_digest(articles: list[ResearchPaper]) -> str:
+    """Format editorial articles into a readable markdown digest."""
+    if not articles:
+        return ""
+
+    lines = ["## Editorial Sources Found\n"]
+    for i, a in enumerate(articles, 1):
+        authors = ", ".join(a.authors) if a.authors else "Staff"
+        year = str(a.year) if a.year else "n/a"
+        lines.append(
+            f"### {i}. {a.title} ({year}) [{a.source.value}]\n"
+            f"**Author(s):** {authors}\n"
+            f"**URL:** {a.url}"
+        )
+        if a.abstract_text:
+            abstract = a.abstract_text
+            if len(abstract) > 300:
+                abstract = abstract[:300] + "\u2026"
+            lines.append(f"**Summary:** {abstract}")
+        lines.append("")
+
+    return "\n".join(lines)
+
+
 def _expand_query(query: str) -> list[str]:
     """Generate query variants for broader coverage.
 
@@ -177,6 +203,14 @@ async def search_papers(query: str) -> tuple[list[ResearchPaper], str]:
     return all_papers, digest
 
 
+async def _empty_papers() -> tuple[list[ResearchPaper], str]:
+    return [], ""
+
+
+async def _empty_editorial() -> list[ResearchPaper]:
+    return []
+
+
 async def research_phase(
     topic: str,
     angle: str,
@@ -184,21 +218,35 @@ async def research_phase(
     config: ResearchConfig,
     model: ChatOpenAI,
 ) -> ResearchOutput:
-    """Full research phase: paper search + LLM synthesis."""
+    """Full research phase: paper search + editorial search + LLM synthesis."""
     brief = f"Topic: {topic}\nAngle: {angle}\n"
 
-    # Stage A — paper search
-    if config.enable_paper_search:
-        logger.info("Research phase: searching papers for '%s'", topic)
-        papers, paper_digest = await search_papers(topic)
-    else:
-        papers, paper_digest = [], ""
-    paper_count = len(papers)
+    # Stage A — parallel: paper search + editorial search
+    paper_coro = search_papers(topic) if config.enable_paper_search else _empty_papers()
+    editorial_coro = (
+        search_editorial(topic) if config.enable_editorial_search
+        else _empty_editorial()
+    )
 
-    # Stage B — synthesis
+    logger.info("Research phase: searching papers + editorial for '%s'", topic)
+    (papers, paper_digest), editorial_articles = await asyncio.gather(
+        paper_coro, editorial_coro,
+    )
+    paper_count = len(papers)
+    editorial_digest = format_editorial_digest(editorial_articles)
+
+    # Stage B — synthesis with all available sources
+    combined_digest = ""
     if paper_digest:
-        system = prompts.researcher_with_papers(niche)
-        user_input = f"{brief}\n{paper_digest}"
+        combined_digest += paper_digest
+    if editorial_digest:
+        if combined_digest:
+            combined_digest += "\n\n"
+        combined_digest += editorial_digest
+
+    if combined_digest:
+        system = prompts.researcher_with_sources(niche)
+        user_input = f"{brief}\n{combined_digest}"
     else:
         system = prompts.researcher(niche)
         user_input = brief

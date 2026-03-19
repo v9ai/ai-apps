@@ -1,0 +1,141 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32" fill="none">
+  <defs>
+    <!-- Primary indigo → teal gradient along the path direction -->
+    <linearGradient id="g-line" x1="2" y1="18" x2="30" y2="8" gradientUnits="userSpaceOnUse">
+      <stop offset="0%"   stop-color="#6366f1"/>
+      <stop offset="55%"  stop-color="#818cf8"/>
+      <stop offset="100%" stop-color="#22d3ee"/>
+    </linearGradient>
+
+    <!-- Soft glow behind the peak node -->
+    <radialGradient id="g-glow" cx="50%" cy="50%" r="50%">
+      <stop offset="0%"   stop-color="#22d3ee" stop-opacity="0.55"/>
+      <stop offset="100%" stop-color="#22d3ee" stop-opacity="0"/>
+    </radialGradient>
+
+    <!-- Drop-shadow filter for the node dot -->
+    <filter id="f-node" x="-80%" y="-80%" width="260%" height="260%">
+      <feGaussianBlur in="SourceGraphic" stdDeviation="1.4" result="blur"/>
+      <feMerge>
+        <feMergeNode in="blur"/>
+        <feMergeNode in="SourceGraphic"/>
+      </feMerge>
+    </filter>
+
+    <!-- Subtle glow on the whole path -->
+    <filter id="f-glow" x="-10%" y="-40%" width="120%" height="180%">
+      <feGaussianBlur in="SourceGraphic" stdDeviation="0.8" result="blur"/>
+      <feMerge>
+        <feMergeNode in="blur"/>
+        <feMergeNode in="SourceGraphic"/>
+      </feMerge>
+    </filter>
+
+    <style>
+      /* ── Heartbeat pulse on the EKG segment ── */
+      @keyframes heartbeat {
+        0%,  100% { opacity: 1;   stroke-width: 1.6; }
+        10%        { opacity: 1;   stroke-width: 2.1; }
+        20%        { opacity: 0.7; stroke-width: 1.6; }
+        30%        { opacity: 1;   stroke-width: 2.0; }
+        45%        { opacity: 0.75; stroke-width: 1.6; }
+        60%, 90%   { opacity: 1;   stroke-width: 1.6; }
+      }
+
+      /* Glow pulse on the node dot */
+      @keyframes node-pulse {
+        0%,  100% { r: 2.2; opacity: 1; }
+        15%        { r: 2.7; opacity: 0.9; }
+        30%        { r: 2.2; opacity: 1; }
+        45%        { r: 2.5; opacity: 0.85; }
+        60%, 90%   { r: 2.2; opacity: 1; }
+      }
+
+      /* Glow halo behind node */
+      @keyframes glow-pulse {
+        0%,  100% { r: 4.5; opacity: 0.35; }
+        15%        { r: 6.5; opacity: 0.55; }
+        30%        { r: 4.5; opacity: 0.35; }
+        45%        { r: 6;   opacity: 0.45; }
+        60%, 90%   { r: 4.5; opacity: 0.35; }
+      }
+
+      .ekg-path     { animation: heartbeat   2.5s ease-in-out infinite; }
+      .trend-path   { opacity: 1; }
+      .node-dot     { animation: node-pulse  2.5s ease-in-out infinite; }
+      .node-glow    { animation: glow-pulse  2.5s ease-in-out infinite; }
+    </style>
+  </defs>
+
+  <!--
+    Path design:
+      Start  : (2, 20)   — flat baseline entry
+      Flat L : (7, 20)   — baseline
+      Dip    : (9, 22)   — small pre-dip (Q wave)
+      Spike↑ : (11, 6)   — sharp R-wave peak  ← becomes the node
+      Spike↓ : (13, 22)  — S-wave trough
+      Rebound: (15.5,18) — J-point settle
+      Hump   : (18, 14)  — T-wave hump
+      Settle : (20, 20)  — return to baseline
+
+    Trend line departs the same peak (11,6):
+      Node   : (11, 6)   — the EKG peak doubles as the trend's first node
+      Step1  : (18, 14)  — the T-wave hump is also a data point
+      Step2  : (24, 10)  — rising data point
+      End    : (30, 6)   — top-right corner
+
+    The full stroke is ONE continuous gradient path split into two
+    <path> elements that share the peak vertex, rendered with
+    filter for glow.
+  -->
+
+  <!-- ── EKG segment (left side, animate) ── -->
+  <path
+    class="ekg-path"
+    d="M 2 20
+       L 7 20
+       L 9 22
+       L 11 6
+       L 13 22
+       Q 14.5 26 15.5 18
+       Q 17 11 18 14
+       Q 19 17 20 20"
+    stroke="url(#g-line)"
+    stroke-width="1.6"
+    stroke-linecap="round"
+    stroke-linejoin="round"
+    filter="url(#f-glow)"
+  />
+
+  <!-- ── Trend / trajectory segment (right side) ── -->
+  <path
+    class="trend-path"
+    d="M 11 6
+       L 18 14
+       L 24 10
+       L 30 6"
+    stroke="url(#g-line)"
+    stroke-width="1.6"
+    stroke-linecap="round"
+    stroke-linejoin="round"
+    filter="url(#f-glow)"
+  />
+
+  <!-- ── Data-point dots on the trend line ── -->
+  <!-- Small secondary dots -->
+  <circle cx="18" cy="14" r="1.2" fill="#818cf8" opacity="0.7"/>
+  <circle cx="24" cy="10" r="1.2" fill="#818cf8" opacity="0.7"/>
+  <circle cx="30" cy="6"  r="1.2" fill="#22d3ee" opacity="0.85"/>
+
+  <!-- ── Peak node glow halo ── -->
+  <circle class="node-glow" cx="11" cy="6" r="4.5" fill="url(#g-glow)"/>
+
+  <!-- ── Peak node dot (EKG spike = trend origin) ── -->
+  <circle class="node-dot" cx="11" cy="6" r="2.2"
+    fill="#22d3ee"
+    filter="url(#f-node)"
+  />
+  <!-- Inner bright core -->
+  <circle cx="11" cy="6" r="1" fill="white" opacity="0.9"/>
+
+</svg>

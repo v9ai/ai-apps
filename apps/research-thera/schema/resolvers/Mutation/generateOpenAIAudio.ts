@@ -1,7 +1,8 @@
 import type { MutationResolvers } from "./../../types.generated";
 import { sql as neonSql } from "@/src/db/neon";
-import { tasks } from "@trigger.dev/sdk/v3";
-import type { TTSPayload } from "@/src/trigger/tts-task";
+import { Client } from "@langchain/langgraph-sdk";
+
+const LANGGRAPH_URL = process.env.LANGGRAPH_URL || "http://127.0.0.1:2024";
 
 export const generateOpenAIAudio: NonNullable<MutationResolvers['generateOpenAIAudio']> = async (_parent, args, ctx) => {
   const userEmail = ctx.userEmail;
@@ -9,15 +10,7 @@ export const generateOpenAIAudio: NonNullable<MutationResolvers['generateOpenAIA
     throw new Error("Authentication required");
   }
 
-  const {
-    text,
-    storyId,
-    voice,
-    model,
-    speed,
-    responseFormat,
-    instructions,
-  } = args.input;
+  const { text, storyId, instructions } = args.input;
 
   if (!text) {
     throw new Error("Text is required");
@@ -34,8 +27,7 @@ export const generateOpenAIAudio: NonNullable<MutationResolvers['generateOpenAIA
       const lastUpdate = new Date(existing[0].updated_at as string ?? existing[0].created_at as string).getTime();
       const ageMs = Date.now() - lastUpdate;
 
-      if (ageMs < 10 * 60 * 1000) {
-        console.log(`[TTS:dedup] returning existing job`, { existingJobId, storyId, ageMs });
+      if (ageMs < 5 * 60 * 1000) {
         return {
           success: true,
           message: "Audio generation already in progress",
@@ -48,71 +40,52 @@ export const generateOpenAIAudio: NonNullable<MutationResolvers['generateOpenAIA
         };
       }
 
-      console.warn(`[TTS:stale] marking stale job FAILED`, { existingJobId, ageMs: Math.round(ageMs / 1000) });
-      await neonSql`UPDATE generation_jobs SET status = 'FAILED', error = ${JSON.stringify({ message: "Job timed out (stale RUNNING state)" })}, updated_at = NOW() WHERE id = ${existingJobId}`.catch((e) => {
-        console.error(`[TTS:stale] failed to mark stale job FAILED`, { existingJobId, error: String(e) });
-      });
+      // Stale job — mark failed
+      await neonSql`UPDATE generation_jobs SET status = 'FAILED', error = ${JSON.stringify({ message: "Job timed out" })}, updated_at = NOW() WHERE id = ${existingJobId}`.catch(() => {});
     }
   }
 
   const jobId = crypto.randomUUID();
 
+  // Look up story language from DB
+  let storyLanguage = "English";
   if (storyId) {
-    const storyRows = await neonSql`SELECT goal_id FROM stories WHERE id = ${storyId}`;
-    if (storyRows.length === 0) {
-      console.warn(`[TTS:job] story not found`, { storyId, userEmail });
+    const storyRows = await neonSql`SELECT goal_id, language FROM stories WHERE id = ${storyId}`;
+    if (storyRows.length > 0) {
+      storyLanguage = (storyRows[0].language as string) || "English";
+      const goalId = (storyRows[0].goal_id as number | undefined) ?? null;
+      await neonSql`INSERT INTO generation_jobs (id, user_id, type, goal_id, story_id, status, progress) VALUES (${jobId}, ${userEmail}, 'AUDIO', ${goalId}, ${storyId}, 'RUNNING', 0)`;
     }
-    const goalId = (storyRows[0]?.goal_id as number | undefined) ?? null;
-    await neonSql`INSERT INTO generation_jobs (id, user_id, type, goal_id, story_id, status, progress) VALUES (${jobId}, ${userEmail}, 'AUDIO', ${goalId}, ${storyId}, 'RUNNING', 0)`;
-    console.log(`[TTS:job] created job`, { jobId, storyId, goalId });
-  } else {
-    console.error(`[TTS:job] no storyId — job will not be tracked`, { jobId });
   }
 
-  const openAIVoice = voice?.toLowerCase() ?? "onyx";
-  const openAIModel =
-    model === "GPT_4O_MINI_TTS"
-      ? "gpt-4o-mini-tts"
-      : model === "TTS_1_HD"
-        ? "tts-1-hd"
-        : "tts-1";
-  const format = responseFormat?.toLowerCase() ?? "mp3";
+  console.log(`[TTS] dispatching LangGraph job=${jobId} storyId=${storyId} language=${storyLanguage} textLen=${text.length}`);
 
-  const ttsPayload: TTSPayload = {
-    text,
-    storyId: storyId != null ? String(storyId) : null,
-    jobId,
-    voice: openAIVoice,
-    model: openAIModel,
-    responseFormat: format,
-    speed: speed ?? 0.9,
-    userEmail,
-    ...(instructions ? { instructions } : {}),
-  };
+  // Fire-and-forget: dispatch to LangGraph and update job status async
+  const client = new Client({ apiUrl: LANGGRAPH_URL });
 
-  console.log(`[TTS] dispatching job=${jobId} storyId=${storyId} model=${openAIModel} voice=${openAIVoice} textLen=${text.length}`);
-
-  try {
-    const handle = await tasks.trigger("tts-generate-audio", ttsPayload);
-    console.log(`[TTS] dispatched job=${jobId} triggerRunId=${handle.id}`);
-  } catch (err) {
-    const errorMessage = err instanceof Error ? err.message : "Failed to dispatch TTS job";
-    console.error(`[TTS] dispatch FAILED job=${jobId}: ${errorMessage}`);
-    if (jobId) {
-      const now = new Date().toISOString();
-      await neonSql`UPDATE generation_jobs SET status = 'FAILED', error = ${JSON.stringify({ message: errorMessage })}, updated_at = ${now} WHERE id = ${jobId}`.catch(() => {});
+  client.runs.wait(null, "tts", {
+    input: {
+      story_id: storyId ?? null,
+      language: storyLanguage,
+      instructions: instructions || null,
+      user_email: userEmail,
+    },
+  }).then(async (result) => {
+    const res = result as Record<string, unknown>;
+    const error = res?.error as string | undefined;
+    if (error) {
+      console.error(`[TTS] LangGraph failed job=${jobId}: ${error}`);
+      await neonSql`UPDATE generation_jobs SET status = 'FAILED', error = ${JSON.stringify({ message: error })}, updated_at = NOW() WHERE id = ${jobId}`.catch(() => {});
+    } else {
+      const audioUrl = res?.audio_url as string | undefined;
+      console.log(`[TTS] LangGraph succeeded job=${jobId} audioUrl=${audioUrl}`);
+      await neonSql`UPDATE generation_jobs SET status = 'SUCCEEDED', result = ${JSON.stringify({ audioUrl })}, updated_at = NOW() WHERE id = ${jobId}`.catch(() => {});
     }
-    return {
-      success: false,
-      message: errorMessage,
-      jobId,
-      audioBuffer: null,
-      audioUrl: null,
-      key: null,
-      sizeBytes: null,
-      duration: null,
-    };
-  }
+  }).catch(async (err) => {
+    const message = err instanceof Error ? err.message : "TTS generation failed";
+    console.error(`[TTS] LangGraph error job=${jobId}: ${message}`);
+    await neonSql`UPDATE generation_jobs SET status = 'FAILED', error = ${JSON.stringify({ message })}, updated_at = NOW() WHERE id = ${jobId}`.catch(() => {});
+  });
 
   return {
     success: true,

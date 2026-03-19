@@ -511,31 +511,31 @@ export default function ContactDetailPage() {
           background: "var(--color-panel)",
           borderBottom: "1px solid var(--gray-a6)",
           backdropFilter: "blur(10px)",
-          marginLeft: "calc(-1 * var(--space-5))",
-          marginRight: "calc(-1 * var(--space-5))",
-          paddingLeft: "var(--space-5)",
-          paddingRight: "var(--space-5)",
+          marginLeft: "calc(-1 * var(--space-3))",
+          marginRight: "calc(-1 * var(--space-3))",
+          paddingLeft: "var(--space-3)",
+          paddingRight: "var(--space-3)",
         }}
       >
         <Flex
-          py="4"
+          py="3"
           align="center"
-          gap="4"
+          gap={{ initial: "2", md: "4" }}
           style={{ maxWidth: "1200px", margin: "0 auto", width: "100%" }}
         >
           <Button variant="soft" size="2" radius="full" color="gray" asChild>
             <NextLink href={`/family/${familySlug}`}>
               <ArrowLeftIcon />
-              <Text as="span" size="2" weight="medium">
-                Back
-              </Text>
+              <Box display={{ initial: "none", sm: "inline" }} asChild>
+                <span>Back</span>
+              </Box>
             </NextLink>
           </Button>
 
-          <Separator orientation="vertical" style={{ height: 20 }} />
+          <Box display={{ initial: "none", sm: "block" }}><Separator orientation="vertical" style={{ height: 20 }} /></Box>
 
           <Box minWidth="0" style={{ flex: 1 }}>
-            <Heading size="8" weight="bold" truncate>
+            <Heading size={{ initial: "5", md: "8" }} weight="bold" truncate>
               {contact
                 ? `${contact.firstName}${contact.lastName ? ` ${contact.lastName}` : ""}`
                 : "Contact"}

@@ -1,13 +1,16 @@
 /**
  * TTS Tasks — Trigger.dev
  *
+ * Dual-provider: Qwen TTS (DashScope) for English, OpenAI TTS for Romanian.
+ * Provider is selected by model name: "qwen3-*" → DashScope, else → OpenAI.
+ *
  * Fan-out pattern:
  *   tts-generate-audio  (orchestrator)
- *     └─ batchTriggerAndWait → tts-chunk × N  (one OpenAI call each)
+ *     └─ batchTriggerAndWait → tts-chunk × N
  *
  * Each chunk task uploads its audio to R2 as a temp file and returns the key.
  * The orchestrator downloads all chunks in order, merges them, uploads the
- * final file, updates D1, then deletes the temp chunk files.
+ * final file, updates Neon, then deletes the temp chunk files.
  */
 
 import { task, queue, logger } from "@trigger.dev/sdk/v3";
@@ -20,15 +23,24 @@ import {
 } from "@/lib/r2-uploader";
 import { sql as neonSql } from "@/src/db/neon";
 
-const MAX_CHARS = 4000;
+const QWEN_MAX_CHARS = 500; // DashScope API limit: 600 chars
+const OPENAI_MAX_CHARS = 4000; // OpenAI limit: 4096 chars
+const WAV_HEADER_SIZE = 44;
+
+const DASHSCOPE_BASE_URL = "https://dashscope-intl.aliyuncs.com/api/v1";
+const DASHSCOPE_TTS_PATH = "/services/aigc/multimodal-generation/generation";
+
+function isQwenModel(model: string): boolean {
+  return model.startsWith("qwen");
+}
 
 // ---------------------------------------------------------------------------
-// Shared queue — limits concurrent OpenAI TTS calls to avoid rate limits
+// Shared queue
 // ---------------------------------------------------------------------------
 
 export const ttsChunkQueue = queue({
   name: "tts-chunks",
-  concurrencyLimit: 5,
+  concurrencyLimit: 8,
 });
 
 // ---------------------------------------------------------------------------
@@ -60,23 +72,103 @@ interface ChunkPayload {
 }
 
 // ---------------------------------------------------------------------------
-// Audio merging
+// DashScope TTS (Qwen) — returns WAV
 // ---------------------------------------------------------------------------
 
-/**
- * Strip an ID3v2 tag from the start of a buffer (if present).
- *
- * OpenAI TTS returns MP3 data with an ID3v2 header on every chunk.
- * Concatenating raw chunks leaves multiple ID3 headers mid-stream, which
- * confuses many decoders. We keep the header from the first chunk only and
- * strip it from all subsequent ones before joining.
- *
- * ID3v2 layout:
- *   [0-2]  "ID3"
- *   [3-4]  version
- *   [5]    flags
- *   [6-9]  size as 4 × 7-bit synchsafe integer (big-endian, MSB first)
- */
+interface DashScopeResponse {
+  request_id: string;
+  output: { audio: { url?: string; data?: string } };
+}
+
+async function synthesizeQwen(
+  text: string,
+  voice: string,
+  model: string,
+  instructions?: string,
+): Promise<Buffer> {
+  const apiKey = process.env.DASHSCOPE_API_KEY;
+  if (!apiKey) throw new Error("DASHSCOPE_API_KEY not set");
+
+  const body: Record<string, unknown> = {
+    model,
+    input: {
+      text,
+      voice,
+      ...(instructions && { instructions }),
+    },
+    ...(instructions && { parameters: { optimize_instructions: true } }),
+  };
+
+  const resp = await fetch(`${DASHSCOPE_BASE_URL}${DASHSCOPE_TTS_PATH}`, {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+      Authorization: `Bearer ${apiKey}`,
+    },
+    body: JSON.stringify(body),
+  });
+
+  if (!resp.ok) {
+    const errorText = await resp.text();
+    throw new Error(`DashScope TTS error ${resp.status}: ${errorText}`);
+  }
+
+  const data = (await resp.json()) as DashScopeResponse;
+
+  if (data.output.audio.url) {
+    const audioResp = await fetch(data.output.audio.url);
+    if (!audioResp.ok) throw new Error("Failed to download audio from DashScope URL");
+    return Buffer.from(await audioResp.arrayBuffer());
+  }
+  if (data.output.audio.data) {
+    return Buffer.from(data.output.audio.data, "base64");
+  }
+  throw new Error("DashScope TTS returned no audio URL or data");
+}
+
+// ---------------------------------------------------------------------------
+// OpenAI TTS — returns MP3
+// ---------------------------------------------------------------------------
+
+async function synthesizeOpenAI(
+  text: string,
+  voice: string,
+  model: string,
+  responseFormat: string,
+  speed: number,
+  instructions?: string,
+): Promise<Buffer> {
+  const openai = new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
+  const params: Parameters<typeof openai.audio.speech.create>[0] = {
+    model,
+    input: text,
+    voice: voice as Parameters<typeof openai.audio.speech.create>[0]["voice"],
+    response_format:
+      responseFormat as Parameters<typeof openai.audio.speech.create>[0]["response_format"],
+    ...(model !== "gpt-4o-mini-tts" ? { speed } : {}),
+    ...(instructions && { instructions }),
+  };
+  const resp = await openai.audio.speech.create(params);
+  return Buffer.from(await resp.arrayBuffer());
+}
+
+// ---------------------------------------------------------------------------
+// Audio merging (WAV + MP3)
+// ---------------------------------------------------------------------------
+
+function mergeWavChunks(buffers: Buffer[]): Buffer {
+  if (buffers.length === 1) return buffers[0];
+  const parts = [buffers[0], ...buffers.slice(1).map((buf) =>
+    buf.length > WAV_HEADER_SIZE ? buf.subarray(WAV_HEADER_SIZE) : buf,
+  )];
+  const combined = Buffer.concat(parts);
+  if (combined.length > WAV_HEADER_SIZE) {
+    combined.writeUInt32LE(combined.length - 8, 4);
+    combined.writeUInt32LE(combined.length - WAV_HEADER_SIZE, 40);
+  }
+  return combined;
+}
+
 function stripId3v2(buf: Buffer): Buffer {
   if (buf.length >= 10 && buf[0] === 0x49 && buf[1] === 0x44 && buf[2] === 0x33) {
     const size =
@@ -89,69 +181,122 @@ function stripId3v2(buf: Buffer): Buffer {
   return buf;
 }
 
-function mergeAudioChunks(buffers: Buffer[], format: string): Buffer {
+function mergeMp3Chunks(buffers: Buffer[]): Buffer {
   if (buffers.length === 1) return buffers[0];
+  return Buffer.concat([buffers[0], ...buffers.slice(1).map(stripId3v2)]);
+}
 
-  if (format === "mp3") {
-    // Keep ID3 header from first chunk; strip from the rest
-    return Buffer.concat([buffers[0], ...buffers.slice(1).map(stripId3v2)]);
-  }
-
-  // wav/flac/opus/aac/pcm — straight concat (WAV header will only be valid
-  // for single-chunk output; multi-chunk WAV needs a proper mux, but OpenAI
-  // TTS output is always mp3 by default)
-  return Buffer.concat(buffers);
+function mergeAudioChunks(buffers: Buffer[], format: string): Buffer {
+  return format === "wav" ? mergeWavChunks(buffers) : mergeMp3Chunks(buffers);
 }
 
 // ---------------------------------------------------------------------------
-// Markdown stripper — removes formatting that breaks TTS delivery
+// Markdown stripper
 // ---------------------------------------------------------------------------
 
 function stripMarkdown(text: string): string {
   return text
-    // Remove bold/italic: **text** → text, *text* → text, __text__ → text, _text_ → text
     .replace(/\*\*(.+?)\*\*/gs, "$1")
     .replace(/\*(.+?)\*/gs, "$1")
     .replace(/__(.+?)__/gs, "$1")
     .replace(/_(.+?)_/gs, "$1")
-    // Remove ATX headings: ## Heading → Heading
     .replace(/^#{1,6}\s+/gm, "")
-    // Remove leading bullet/numbered list markers
     .replace(/^\s*[-*+]\s+/gm, "")
     .replace(/^\s*\d+\.\s+/gm, "")
-    // Collapse triple+ blank lines to double
     .replace(/\n{3,}/g, "\n\n")
     .trim();
 }
 
-// Default TTS speaking instructions for therapeutic content
 const DEFAULT_TTS_INSTRUCTIONS =
   "Speak in a calm, warm, and gentle therapeutic voice. Pace yourself slowly and deliberately. " +
   "Pause naturally at sentence boundaries and after pause cues. Use a soothing, reassuring tone throughout.";
 
 // ---------------------------------------------------------------------------
-// Text chunking
+// Sentence-aware text chunking (ported from crates/tts/src/split.rs)
 // ---------------------------------------------------------------------------
 
-function chunkText(text: string): string[] {
-  if (text.length <= MAX_CHARS) return [text];
+function splitSentences(text: string): string[] {
+  const sentences: string[] = [];
+  let current = "";
+  for (const ch of text) {
+    current += ch;
+    if (ch === "." || ch === "!" || ch === "?") {
+      sentences.push(current);
+      current = "";
+    }
+  }
+  if (current.trim()) sentences.push(current);
+  return sentences;
+}
+
+function hardSplit(text: string, maxChars: number): string[] {
+  const words = text.split(/\s+/);
+  const chunks: string[] = [];
+  let current = "";
+  for (const word of words) {
+    const sepLen = current ? 1 : 0;
+    if (current.length + sepLen + word.length > maxChars && current) {
+      chunks.push(current);
+      current = "";
+    }
+    current = current ? `${current} ${word}` : word;
+  }
+  if (current) chunks.push(current);
+  return chunks;
+}
+
+function chunkTextSentenceAware(text: string, maxChars: number): string[] {
+  if (text.length <= maxChars) return [text];
+
+  const sentences = splitSentences(text);
+  const chunks: string[] = [];
+  let current = "";
+
+  for (const sentence of sentences) {
+    const trimmed = sentence.trim();
+    if (!trimmed) continue;
+
+    if (trimmed.length > maxChars) {
+      if (current) {
+        chunks.push(current.trim());
+        current = "";
+      }
+      chunks.push(...hardSplit(trimmed, maxChars));
+      continue;
+    }
+
+    const sepLen = current ? 1 : 0;
+    if (current.length + sepLen + trimmed.length > maxChars && current) {
+      chunks.push(current.trim());
+      current = "";
+    }
+    current = current ? `${current} ${trimmed}` : trimmed;
+  }
+
+  if (current.trim()) chunks.push(current.trim());
+  return chunks.length ? chunks : [text];
+}
+
+// Paragraph-then-sentence chunker for larger chunk sizes (OpenAI)
+function chunkTextParagraph(text: string, maxChars: number): string[] {
+  if (text.length <= maxChars) return [text];
 
   const chunks: string[] = [];
   let current = "";
 
   for (const para of text.split("\n\n")) {
-    if (current.length + para.length + 2 <= MAX_CHARS) {
+    if (current.length + para.length + 2 <= maxChars) {
       current = current ? `${current}\n\n${para}` : para;
     } else {
       if (current) chunks.push(current);
-      if (para.length > MAX_CHARS) {
+      if (para.length > maxChars) {
         current = "";
         for (const sentence of para
           .replace(/\. /g, ".|")
           .replace(/! /g, "!|")
           .replace(/\? /g, "?|")
           .split("|")) {
-          if (current.length + sentence.length + 1 <= MAX_CHARS) {
+          if (current.length + sentence.length + 1 <= maxChars) {
             current = current ? `${current} ${sentence}` : sentence;
           } else {
             if (current) chunks.push(current);
@@ -192,13 +337,13 @@ async function updateJob(
 }
 
 // ---------------------------------------------------------------------------
-// Chunk task — one OpenAI TTS call, result stored in R2
+// Chunk task — one TTS call (Qwen or OpenAI), result stored in R2
 // ---------------------------------------------------------------------------
 
 export const ttsChunkTask = task({
   id: "tts-chunk",
   queue: ttsChunkQueue,
-  maxDuration: 120, // single chunk should never take >2 min
+  maxDuration: 120,
   retry: {
     maxAttempts: 3,
     factor: 2,
@@ -210,30 +355,20 @@ export const ttsChunkTask = task({
     const { chunk, index, total, tempKey, voice, model, responseFormat, speed, instructions } =
       payload;
 
-    const openai = new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
+    const buf = isQwenModel(model)
+      ? await synthesizeQwen(chunk, voice, model, instructions)
+      : await synthesizeOpenAI(chunk, voice, model, responseFormat, speed, instructions);
 
-    const params: Parameters<typeof openai.audio.speech.create>[0] = {
-      model,
-      input: chunk,
-      voice: voice as Parameters<typeof openai.audio.speech.create>[0]["voice"],
-      response_format:
-        responseFormat as Parameters<typeof openai.audio.speech.create>[0]["response_format"],
-      ...(model !== "gpt-4o-mini-tts" ? { speed } : {}),
-      ...(instructions && { instructions }),
-    };
-
-    const resp = await openai.audio.speech.create(params);
-    const buf = Buffer.from(await resp.arrayBuffer());
+    const contentType = isQwenModel(model) ? "audio/wav" : `audio/${responseFormat}`;
 
     await uploadToR2({
       key: tempKey,
       body: buf,
-      contentType: `audio/${responseFormat}`,
+      contentType,
       metadata: { chunkIndex: String(index), total: String(total) },
     });
 
     logger.info("tts.chunk_done", { index, total, tempKey, sizeBytes: buf.length });
-
     return { tempKey, sizeBytes: buf.length };
   },
 });
@@ -257,15 +392,12 @@ export const ttsTask = task({
     logger.error("tts.job_failed", {
       jobId: payload.jobId,
       storyId: payload.storyId,
-
       error: message,
     });
     if (payload.jobId) {
       try {
         await updateJob(payload.jobId, "FAILED", { error: message });
-        logger.info("tts.job_marked_failed", { jobId: payload.jobId });
       } catch (dbErr) {
-        // updateJob itself failed — log so the stale RUNNING job can be diagnosed
         logger.error("tts.job_update_failed", {
           jobId: payload.jobId,
           updateError: dbErr instanceof Error ? dbErr.message : String(dbErr),
@@ -279,25 +411,31 @@ export const ttsTask = task({
       text,
       storyId,
       jobId,
-      voice = "onyx",
-      model = "gpt-4o-mini-tts",
-      responseFormat = "mp3",
+      voice = "cherry",
+      model = "qwen3-tts-instruct-flash",
+      responseFormat = "wav",
       speed = 0.9,
       userEmail,
     } = payload;
 
-    // Strip any markdown formatting before chunking — ensures clean spoken output
-    const cleanText = stripMarkdown(text);
+    const qwen = isQwenModel(model);
+    const maxChars = qwen ? QWEN_MAX_CHARS : OPENAI_MAX_CHARS;
+    const audioFormat = qwen ? "wav" : (responseFormat || "mp3");
 
-    // Use caller-supplied instructions or fall back to default therapeutic voice guidance
+    // Strip any markdown formatting before chunking
+    const cleanText = stripMarkdown(text);
     const instructions = payload.instructions || DEFAULT_TTS_INSTRUCTIONS;
 
-    const chunks = chunkText(cleanText);
+    const chunks = qwen
+      ? chunkTextSentenceAware(cleanText, maxChars)
+      : chunkTextParagraph(cleanText, maxChars);
+
     const batchId = jobId ?? `tts-${Date.now()}`;
 
     logger.info("tts.started", {
       storyId,
       jobId,
+      provider: qwen ? "qwen" : "openai",
       chunks: chunks.length,
       textLen: text.length,
       cleanTextLen: cleanText.length,
@@ -305,27 +443,24 @@ export const ttsTask = task({
       model,
     });
 
-    // Mark progress=5 immediately so stale-job detection knows the task actually started
     if (jobId) {
       await updateJob(jobId, "RUNNING", { result: { progress: 5, stage: "started" } }).catch((e) =>
         logger.warn("tts.progress_update_failed", { jobId, stage: "started", error: String(e) }),
       );
     }
 
-    // Build chunk payloads — assign temp R2 keys upfront so we can clean up on failure
     const chunkPayloads: ChunkPayload[] = chunks.map((chunk, index) => ({
       chunk,
       index,
       total: chunks.length,
-      tempKey: `tts-chunks/${batchId}-${index}.${responseFormat}`,
+      tempKey: `tts-chunks/${batchId}-${index}.${audioFormat}`,
       voice,
       model,
-      responseFormat,
+      responseFormat: audioFormat,
       speed,
       instructions,
     }));
 
-    // Fan-out: all chunks run in parallel, capped by ttsChunkQueue concurrencyLimit
     if (jobId) {
       await updateJob(jobId, "RUNNING", { result: { progress: 10, stage: "generating_chunks" } }).catch((e) => {
         logger.warn("tts.progress_update_failed", { jobId, stage: "generating_chunks", error: String(e) });
@@ -352,11 +487,10 @@ export const ttsTask = task({
       });
     }
 
-    // Download chunks in order and merge
     const audioBuffers = await Promise.all(
       chunkPayloads.map((p) => downloadFromR2(p.tempKey)),
     );
-    const combined = mergeAudioChunks(audioBuffers, responseFormat);
+    const combined = mergeAudioChunks(audioBuffers, audioFormat);
     logger.info("tts.chunks_merged", { storyId, chunks: chunks.length, sizeBytes: combined.length });
 
     if (jobId) {
@@ -365,16 +499,16 @@ export const ttsTask = task({
       });
     }
 
-    // Upload final audio
     const baseKey = generateAudioKey("graphql-tts");
-    const key = responseFormat === "mp3" ? baseKey : baseKey.replace(/\.mp3$/, `.${responseFormat}`);
+    const key = audioFormat === "mp3" ? baseKey : baseKey.replace(/\.mp3$/, `.${audioFormat}`);
     const result = await uploadToR2({
       key,
       body: combined,
-      contentType: `audio/${responseFormat}`,
+      contentType: `audio/${audioFormat}`,
       metadata: {
         voice,
         model,
+        provider: qwen ? "qwen" : "openai",
         textLength: String(cleanText.length),
         chunks: String(chunks.length),
         ...(instructions && { instructions }),
@@ -391,7 +525,6 @@ export const ttsTask = task({
     await Promise.all(chunkPayloads.map((p) => deleteFromR2(p.tempKey).catch((e) => {
       logger.warn("tts.chunk_delete_failed", { tempKey: p.tempKey, error: String(e) });
     })));
-    logger.info("tts.chunks_cleaned", { storyId, count: chunkPayloads.length });
 
     // Update Neon stories row
     if (storyId) {
@@ -406,8 +539,6 @@ export const ttsTask = task({
         });
         throw dbErr;
       }
-    } else {
-      logger.warn("tts.no_story_target", { storyId, userEmail: userEmail ? "[set]" : "[missing]", jobId });
     }
 
     // Mark job SUCCEEDED
@@ -416,8 +547,6 @@ export const ttsTask = task({
         await updateJob(jobId, "SUCCEEDED", { result: { audioUrl } });
         logger.info("tts.job_succeeded", { jobId, storyId, audioUrl });
       } catch (dbErr) {
-        // Audio was generated and uploaded successfully — only the job status update failed.
-        // Log clearly so it can be manually corrected.
         logger.error("tts.job_success_update_failed", {
           jobId,
           audioUrl,

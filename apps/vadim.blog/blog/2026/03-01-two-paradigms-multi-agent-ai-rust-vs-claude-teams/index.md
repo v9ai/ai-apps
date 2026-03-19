@@ -27,6 +27,8 @@ Three multi-agent coordination positions, [one codebase](https://github.com/nico
 
 Multi-agent AI engineering has become a core discipline in production software development. The interesting question is no longer whether to build multi-agent systems. It is how — and specifically, which architectural pattern to reach for given the nature of the work. The clearest demonstration is that multiple fundamentally different paradigms live inside the [same codebase](https://github.com/nicolad/nomadically.work).
 
+<!-- truncate -->
+
 When this article was first published, the comparison was binary: the Rust crate used bare `tokio::spawn` fan-out while Claude Code provided the coordination model. That binary is no longer accurate. The research crate now ships `team.rs` — a 641-line generic coordination library in pure Rust that implements the complete Claude Code agent-teams model. The codebase now demonstrates all three positions simultaneously.
 
 ## Why Multi-Agent AI Systems Are Having a Moment in 2026

@@ -7,7 +7,7 @@ import {
   Separator,
   Text,
 } from "@radix-ui/themes";
-import { HeartPulse } from "lucide-react";
+import { Logo } from "@/components/logo";
 import Link from "next/link";
 import { Suspense } from "react";
 import { Nav } from "./nav";
@@ -51,10 +51,7 @@ export default function ProtectedLayout({
                       border: "1px solid var(--indigo-a5)",
                     }}
                   >
-                    <HeartPulse
-                      size={18}
-                      style={{ color: "var(--indigo-9)" }}
-                    />
+                    <Logo size={18} />
                   </Flex>
                   <Heading size="4">Agentic Healthcare</Heading>
                 </Link>

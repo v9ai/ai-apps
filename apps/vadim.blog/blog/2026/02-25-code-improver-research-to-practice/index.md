@@ -21,6 +21,8 @@ The Code Improver is the fourth agent in our six-agent autonomous self-improveme
 
 Five research papers informed its design, curated from the [VoltAgent/awesome-ai-agent-papers](https://github.com/VoltAgent/awesome-ai-agent-papers) collection. The central insight across all of them: structured repair workflows outperform ad-hoc fixing.
 
+<!-- truncate -->
+
 > **Note:** The implementation has since evolved from a generic code improver into a goal-driven "Skill Optimizer" focused on AI/ML skill taxonomy, extraction, and matching for the job search pipeline. The research principles described here still underpin the architecture. The meta-tools and scope constraints below reflect the original design that these papers informed.
 
 ## The Difference Between Editing and Repairing Code

@@ -11,16 +11,22 @@
   "type": "module",
   "exports": {
     "./counter-button": {
-      "types": "./dist/es/counter-button.d.mts",
-      "default": "./dist/es/counter-button.mjs"
+      "import": {
+        "types": "./dist/es/counter-button.d.mts",
+        "default": "./dist/es/counter-button.mjs"
+      }
     },
     "./how-it-works": {
-      "types": "./dist/es/how-it-works.d.mts",
-      "default": "./dist/es/how-it-works.mjs"
+      "import": {
+        "types": "./dist/es/how-it-works.d.mts",
+        "default": "./dist/es/how-it-works.mjs"
+      }
     },
     "./link": {
-      "types": "./dist/es/link.d.mts",
-      "default": "./dist/es/link.mjs"
+      "import": {
+        "types": "./dist/es/link.d.mts",
+        "default": "./dist/es/link.mjs"
+      }
     }
   },
   "scripts": {

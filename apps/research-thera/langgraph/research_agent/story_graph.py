@@ -11,7 +11,7 @@ from pydantic import BaseModel, Field
 
 import psycopg
 
-from .therapy_context import IssueData, StoryContext, THERAPEUTIC_AUDIO_SYSTEM_PROMPT
+from .therapy_context import IssueData, StoryContext, build_therapeutic_system_prompt
 from .embeddings import aembed_text, query_to_embedding_text
 
 from dotenv import load_dotenv
@@ -26,12 +26,14 @@ class StoryState(TypedDict, total=False):
     goal_id: Optional[int]
     language: str
     minutes: int
+    user_email: Optional[str]
     story_text: str
     story_id: int
     evals: str
     error: str
     _prompt: str
     _family_member_id: int
+    _person_name: str
     # Eval context — populated by load_context, consumed by eval_story
     _has_related_member: bool
     _related_person_name: Optional[str]
@@ -146,13 +148,30 @@ async def load_context(state: StoryState) -> dict:
                     return {"error": "No feedback_id, issue_id, or goal_id provided"}
 
                 # Primary family member
-                await cur.execute(
-                    "SELECT first_name, age_years FROM family_members WHERE id = %s",
-                    (family_member_id,),
-                )
-                fm_row = await cur.fetchone()
-                person_name = fm_row[0] if fm_row else "the child"
-                age_years = fm_row[1] if fm_row else None
+                fm_row = None
+                if family_member_id:
+                    await cur.execute(
+                        "SELECT first_name, age_years FROM family_members WHERE id = %s",
+                        (family_member_id,),
+                    )
+                    fm_row = await cur.fetchone()
+
+                if fm_row:
+                    person_name = fm_row[0]
+                    age_years = fm_row[1]
+                else:
+                    # No family member — default to the logged-in user
+                    age_years = None
+                    user_email = state.get("user_email")
+                    if user_email:
+                        await cur.execute(
+                            'SELECT name FROM "user" WHERE email = %s',
+                            (user_email,),
+                        )
+                        user_row = await cur.fetchone()
+                        person_name = (user_row[0].split()[0] if user_row and user_row[0] else "you")
+                    else:
+                        person_name = "you"
 
                 # Fall back to vector search if no direct papers
                 if paper_rows_direct:
@@ -205,6 +224,7 @@ async def load_context(state: StoryState) -> dict:
     return {
         "_prompt": story_ctx.build_story_prompt(),
         "_family_member_id": family_member_id,
+        "_person_name": person_name,
         "_has_related_member": has_related_member,
         "_related_person_name": related_person_name,
         "_issue_title": issue_title,
@@ -229,8 +249,12 @@ async def generate_story(state: dict) -> dict:
             max_tokens=16384,
         )
 
+        minutes = state.get("minutes", 10)
+        person_name = state.get("_person_name", "")
+        system_prompt = build_therapeutic_system_prompt(minutes, person_name)
+
         result = await llm.ainvoke([
-            {"role": "system", "content": THERAPEUTIC_AUDIO_SYSTEM_PROMPT},
+            {"role": "system", "content": system_prompt},
             {"role": "user", "content": prompt},
         ])
 
@@ -295,6 +319,8 @@ class _StoryEvalScores(BaseModel):
     clinical_accuracy: float = Field(ge=0, le=1, description="Correct use of evidence-based therapeutic techniques (0-1)")
     age_appropriateness: float = Field(ge=0, le=1, description="Vocabulary and framing suit the developmental stage (0-1)")
     issue_addressed: float = Field(ge=0, le=1, description="Script directly tackles the clinical issue or feedback topic (0-1)")
+    duration_compliance: float = Field(ge=0, le=1, description="Script word count matches the target duration (0-1). Score 1.0 if within 20% of target, 0.5 if within 40%, 0.0 if more than 50% off.")
+    lego_compliance: float = Field(ge=0, le=1, description="LEGO content compliance (0-1). If LEGO expected: 1.0 = present and therapeutic, 0.0 = missing. If LEGO NOT expected: 1.0 = absent, 0.0 = incorrectly included.")
     family_dynamics_coverage: float = Field(ge=0, le=1, description="Script addresses the relational dynamic between the two people involved (0-1)")
     rationale: str = Field(description="2-3 sentence evaluation summary")
 
@@ -312,6 +338,11 @@ async def eval_story(state: dict) -> dict:
         issue_category: Optional[str] = state.get("_issue_category")
         issue_id = state.get("issue_id")
         feedback_id = state.get("feedback_id")
+        minutes = state.get("minutes", 10)
+        person_name = state.get("_person_name", "")
+        target_words = minutes * 120
+        actual_words = len(story_text.split())
+        lego_expected = person_name.lower() == "bogdan"
 
         api_key = os.environ.get("DEEPSEEK_API_KEY", "")
         llm = ChatOpenAI(
@@ -332,6 +363,11 @@ async def eval_story(state: dict) -> dict:
         else:
             context_lines.append("Goal-based story")
 
+        context_lines.append(f"Person: {person_name}")
+        context_lines.append(f"Target duration: {minutes} minutes ({target_words} words at 120 wpm)")
+        context_lines.append(f"Actual word count: {actual_words} words")
+        context_lines.append(f"LEGO expected: {'YES — person is Bogdan' if lego_expected else 'NO — LEGO is only for Bogdan'}")
+
         if has_related_member and related_person_name:
             context_lines.append(
                 f"A related family member ({related_person_name}) is involved — "
@@ -348,6 +384,12 @@ async def eval_story(state: dict) -> dict:
             else "- family_dynamics_coverage: set to 0.5 — no related family member, not applicable"
         )
 
+        lego_instruction = (
+            "- lego_compliance: LEGO content IS expected for this person. Score 1.0 if LEGO building activities are present and therapeutically integrated, 0.0 if missing."
+            if lego_expected
+            else "- lego_compliance: LEGO content is NOT expected for this person (only for Bogdan). Score 1.0 if the script does NOT mention LEGO, 0.0 if LEGO content is incorrectly included."
+        )
+
         eval_prompt = f"""You are evaluating a therapeutic audio story script for clinical quality.
 
 ## Clinical Context
@@ -360,6 +402,8 @@ Score each dimension (0-1):
 - clinical_accuracy: correct use of evidence-based therapeutic techniques (CBT, mindfulness, play therapy, etc.)
 - age_appropriateness: vocabulary, framing, and pacing match the person's developmental stage
 - issue_addressed: script directly and meaningfully tackles the stated clinical issue or feedback topic
+- duration_compliance: the script has {actual_words} words, target was {target_words} words ({minutes} min at 120 wpm). Score 1.0 if within 20% of target, 0.5 if within 40%, 0.0 if more than 50% off.
+{lego_instruction}
 {family_instruction}
 - rationale: 2-3 sentence evaluation summary
 
@@ -367,7 +411,7 @@ Be honest: score low if the script is generic or misses the issue; score high if
 
         scores: _StoryEvalScores = await structured_llm.ainvoke(eval_prompt)
 
-        components = [scores.clinical_accuracy, scores.age_appropriateness, scores.issue_addressed]
+        components = [scores.clinical_accuracy, scores.age_appropriateness, scores.issue_addressed, scores.duration_compliance, scores.lego_compliance]
         if has_related_member:
             components.append(scores.family_dynamics_coverage)
         overall = round(sum(components) / len(components), 2)
@@ -376,6 +420,11 @@ Be honest: score low if the script is generic or misses the issue; score high if
             "clinicalAccuracy": round(scores.clinical_accuracy, 2),
             "ageAppropriateness": round(scores.age_appropriateness, 2),
             "issueAddressed": round(scores.issue_addressed, 2),
+            "durationCompliance": round(scores.duration_compliance, 2),
+            "legoCompliance": round(scores.lego_compliance, 2),
+            "legoExpected": lego_expected,
+            "targetWords": target_words,
+            "actualWords": actual_words,
             "overall": overall,
             "rationale": scores.rationale,
         }

@@ -17,7 +17,7 @@ export const FALLBACK: StackGroup[] = [
           "App Router with RSC reduces client-side JavaScript — job listings render server-side",
           "API routes colocate the GraphQL server with the frontend, simplifying deployment",
           "Vercel deployment is zero-config with automatic preview deploys per PR",
-          "Middleware supports edge auth checks via Clerk before route handlers run",
+          "Better Auth session checks via API route handler for protected routes",
         ],
         cons: [
           "60s Vercel function timeout constrains long-running ATS API calls",
@@ -27,7 +27,7 @@ export const FALLBACK: StackGroup[] = [
         alternatives_considered: [
           { name: "Remix", reason_not_chosen: "Loader/action model is great but Vercel deployment story was less mature at project start; Next.js App Router offered equivalent RSC capabilities with tighter Vercel integration" },
           { name: "Astro", reason_not_chosen: "Excellent for content sites but this is a data-heavy SPA with real-time filters, modals, and GraphQL subscriptions — Astro's island architecture adds friction for highly interactive pages" },
-          { name: "SvelteKit", reason_not_chosen: "Smaller ecosystem for enterprise-grade auth (Clerk), GraphQL tooling (Apollo), and AI SDK integrations that this project relies on" },
+          { name: "SvelteKit", reason_not_chosen: "Smaller ecosystem for GraphQL tooling (Apollo), and AI SDK integrations that this project relies on" },
         ],
         trade_offs: [
           "Accepted Vercel vendor lock-in for deployment simplicity — the 60s timeout is a real constraint for enhancement mutations",
@@ -42,7 +42,7 @@ export const FALLBACK: StackGroup[] = [
           "We use RSC to render job listings server-side — the initial page load sends zero JS for the job cards, then hydrates only the search/filter bar as a client component",
           "API routes host an Apollo Server 5 instance at /api/graphql — this lets us colocate the GraphQL layer without a separate backend service",
           "The 60s Vercel timeout is a real constraint — for bulk ATS enhancement we had to move to Trigger.dev background tasks instead of blocking the API route",
-          "We wrap providers (Clerk, Apollo, theme) in dedicated *-provider.tsx files to keep the root layout clean and make testing easier",
+          "We wrap providers (Apollo, theme) in dedicated *-provider.tsx files to keep the root layout clean and make testing easier",
         ],
       },
       {
@@ -54,7 +54,7 @@ export const FALLBACK: StackGroup[] = [
         why_chosen:
           "React 19 was a natural choice given Next.js 16 — it brings native RSC support, improved Suspense, and the new use() hook for cleaner async patterns.",
         pros: [
-          "Largest ecosystem — every library (Radix, Apollo, Clerk) has first-class React support",
+          "Largest ecosystem — every library (Radix, Apollo, Better Auth) has first-class React support",
           "RSC support eliminates the need for useEffect-based data fetching in most pages",
           "Concurrent features (Suspense, transitions) enable smooth filter/search UX",
         ],
@@ -63,7 +63,7 @@ export const FALLBACK: StackGroup[] = [
           "Bundle size for interactive components is non-trivial compared to Svelte/Solid",
         ],
         alternatives_considered: [
-          { name: "Svelte 5", reason_not_chosen: "Smaller ecosystem; Clerk, Apollo Client, and Radix UI don't have Svelte equivalents at the same maturity level" },
+          { name: "Svelte 5", reason_not_chosen: "Smaller ecosystem; Apollo Client and Radix UI don't have Svelte equivalents at the same maturity level" },
           { name: "Solid.js", reason_not_chosen: "Fine-grained reactivity is appealing but framework is too young for production job board with auth, GraphQL, and AI integrations" },
         ],
         trade_offs: [
@@ -77,7 +77,7 @@ export const FALLBACK: StackGroup[] = [
         ],
         interview_points: [
           "React 19's RSC lets us fetch job data at the component level without waterfalls — each section fetches its own data server-side",
-          "We use the provider composition pattern — Clerk, Apollo, sidebar state are separate *-provider.tsx files composed in the root layout",
+          "We use the provider composition pattern — Apollo, sidebar state are separate *-provider.tsx files composed in the root layout",
           "The 'use client' boundary is deliberate: job cards are RSC (no JS), but the search bar and filter panel are client components for interactivity",
         ],
       },
@@ -118,40 +118,42 @@ export const FALLBACK: StackGroup[] = [
         ],
       },
       {
-        name: "Clerk",
-        role: "Authentication and user management",
-        url: "https://clerk.com",
+        name: "Better Auth",
+        role: "Self-hosted authentication via @ai-apps/auth",
+        url: "https://www.better-auth.com",
         details:
-          "Clerk handles sign-in, sign-up, and session management. The current user's email is checked against ADMIN_EMAIL (src/lib/admin.ts) to gate admin mutations.",
+          "Better Auth handles sign-in, sign-up, and session management via the shared @ai-apps/auth package. Sessions are stored in Neon PostgreSQL via Drizzle adapter. The current user's email is checked against ADMIN_EMAIL (src/lib/admin.ts) to gate admin mutations.",
         why_chosen:
-          "Clerk provides drop-in auth with React/Next.js integration, eliminating the need to build session management, OAuth flows, or user management UI.",
+          "Better Auth is self-hosted with zero vendor lock-in, stores sessions in our existing Neon PostgreSQL database via Drizzle adapter, and is shared across apps via the @ai-apps/auth workspace package.",
         pros: [
-          "Pre-built sign-in/sign-up components with multiple OAuth providers",
-          "Middleware-based auth — protect routes at the edge before handlers run",
-          "User metadata accessible in both server and client components",
+          "Self-hosted — no vendor lock-in, no per-MAU pricing",
+          "Drizzle adapter stores auth tables (user, session, account, verification) in existing Neon PostgreSQL",
+          "Shared via @ai-apps/auth workspace package across multiple apps",
+          "TypeScript-native with full type safety",
         ],
         cons: [
-          "Vendor lock-in — migrating away means rebuilding auth flows",
-          "Pricing scales with MAU — can get expensive at scale",
-          "Admin role is manually checked via email comparison, not Clerk's RBAC",
+          "Custom sign-in/sign-up UI needed (built with Radix UI components)",
+          "No built-in OAuth providers out of the box — email/password only currently",
         ],
         alternatives_considered: [
-          { name: "NextAuth.js", reason_not_chosen: "Requires building your own UI and session storage; Clerk provides both out of the box with better DX" },
-          { name: "Supabase Auth", reason_not_chosen: "Would couple auth to Supabase's ecosystem; we use D1 for data — adding Supabase just for auth adds unnecessary infrastructure" },
-          { name: "Auth0", reason_not_chosen: "More enterprise-focused, heavier integration; Clerk's React-native components are simpler for a Next.js app" },
+          { name: "Clerk", reason_not_chosen: "Vendor lock-in and per-MAU pricing; migrated away to self-hosted Better Auth for cost control and data ownership" },
+          { name: "NextAuth.js", reason_not_chosen: "Less TypeScript-native than Better Auth; Better Auth's Drizzle adapter integrates cleanly with our existing ORM setup" },
+          { name: "Auth0", reason_not_chosen: "Enterprise-focused, heavier integration; Better Auth is lighter and self-hosted" },
         ],
         trade_offs: [
-          "Accepted vendor lock-in for development speed — building auth from scratch would have added weeks",
-          "Admin check is a simple email comparison (isAdminEmail) rather than Clerk RBAC — sufficient for single-admin use case",
+          "Built custom auth UI instead of using pre-built components — more control over UX but more initial work",
+          "Admin check is a simple email comparison (isAdminEmail) — sufficient for single-admin use case",
         ],
         patterns_used: [
-          "Middleware-based route protection — auth check runs at the edge before page renders",
+          "Shared auth package pattern — @ai-apps/auth exports createAuth, createAuthClient, schema tables",
           "Email-based admin guard pattern — simple but effective for single-admin apps",
+          "Session-based auth — server-side session validation in GraphQL context",
         ],
         interview_points: [
-          "We use Clerk's middleware to protect admin routes at the edge — unauthorized requests never reach the API handlers",
-          "Admin access uses a simple isAdminEmail() check against an env var rather than Clerk's RBAC — for a single-admin app this is pragmatic over over-engineered",
-          "Clerk gives us the user's email in the GraphQL context, which the resolver layer uses for mutation guards",
+          "We migrated from Clerk to self-hosted Better Auth to eliminate vendor lock-in and per-MAU costs — auth data now lives in our Neon PostgreSQL alongside application data",
+          "The @ai-apps/auth workspace package is shared across multiple apps — it exports createAuth (server), createAuthClient (client), and Drizzle schema tables",
+          "Admin access uses a simple isAdminEmail() check against an env var — for a single-admin app this is pragmatic over over-engineered",
+          "Better Auth sessions are validated server-side in the GraphQL context factory — the resolver layer gets userId and userEmail from the session",
         ],
       },
     ],
@@ -165,7 +167,7 @@ export const FALLBACK: StackGroup[] = [
         role: "GraphQL endpoint at /api/graphql",
         url: "https://www.apollographql.com/docs/apollo-server",
         details:
-          "The main API layer. Schema is split by domain under schema/ (jobs, companies, applications, prompts). Resolvers live in src/apollo/resolvers/. The GraphQL context injects the D1 HTTP client, Drizzle ORM instance, DataLoaders, and Clerk auth info.",
+          "The main API layer. Schema is split by domain under schema/ (jobs, companies, applications, prompts). Resolvers live in src/apollo/resolvers/. The GraphQL context injects the Drizzle ORM instance, DataLoaders, and Better Auth session info.",
         why_chosen:
           "Apollo Server 5 provides a production-grade GraphQL runtime with excellent TypeScript codegen support, DataLoader integration for N+1 prevention, and the ability to run inside Next.js API routes.",
         pros: [
@@ -199,7 +201,7 @@ export const FALLBACK: StackGroup[] = [
         interview_points: [
           "We use schema-first GraphQL with codegen generating typed hooks, resolver types, and fragment masking — a schema change automatically updates types across the entire stack",
           "DataLoaders solve the N+1 problem for skills, company, and ATS board sub-fields — each loader batches and caches within a single request lifecycle",
-          "The GraphQL context factory injects a Drizzle ORM instance, DataLoaders, and Clerk auth info — resolvers never instantiate their own DB connections",
+          "The GraphQL context factory injects a Drizzle ORM instance, DataLoaders, and Better Auth session info — resolvers never instantiate their own DB connections",
           "We split the schema by domain (jobs/, companies/, applications/, prompts/) so teams can own their schema slice without merge conflicts",
           "No query complexity limiting yet — it's a known gap. For a job board with trusted clients, we've deferred this in favor of shipping features, but it's on the roadmap",
         ],

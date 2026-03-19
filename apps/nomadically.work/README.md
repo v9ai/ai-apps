@@ -9,7 +9,7 @@ Remote EU job board aggregator with AI classification, CRM, email campaigns, and
 | Frontend | Next.js 16, React 19, Radix UI |
 | API | Apollo Server 5 (GraphQL), Drizzle ORM |
 | Database | Cloudflare D1 (SQLite) via D1 Gateway Worker |
-| Auth | Clerk |
+| Auth | Better Auth (`@ai-apps/auth`) |
 | AI/ML | Anthropic Claude, DeepSeek, Vercel AI SDK, OpenRouter |
 | Email | Resend |
 | Workers | Cloudflare Workers — TypeScript, Rust/WASM, Python |

@@ -10,8 +10,8 @@ import {
   Button,
   Grid,
 } from "@radix-ui/themes";
+import { Logo } from "@/components/logo";
 import {
-  HeartPulse,
   TrendingUp,
   Gauge,
   MessageCircleQuestion,
@@ -114,11 +114,7 @@ export default function Home() {
           <Container size="3">
             <Flex justify="between" align="center" py="3" px="4">
               <Flex align="center" gap="2">
-                <HeartPulse
-                  size={20}
-                  className="heartbeat"
-                  style={{ color: "var(--indigo-9)" }}
-                />
+                <Logo size={20} />
                 <Heading size="4" style={{ letterSpacing: "-0.02em" }}>
                   Agentic Healthcare
                 </Heading>
@@ -400,10 +396,7 @@ export default function Home() {
               {/* Brand */}
               <Flex direction="column" gap="2">
                 <Flex align="center" gap="2">
-                  <HeartPulse
-                    size={16}
-                    style={{ color: "var(--indigo-9)" }}
-                  />
+                  <Logo size={16} />
                   <Text size="3" weight="bold">
                     Agentic Healthcare
                   </Text>

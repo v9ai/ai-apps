@@ -409,7 +409,7 @@ function IssueDetailContent() {
   return (
     <Flex direction="column" gap="5" p="5">
       {/* Header */}
-      <Flex justify="between" align="center">
+      <Flex justify="between" align="start" wrap="wrap" gap="3">
         <Flex gap="3" align="center">
           <Button variant="ghost" size="2" asChild>
             <NextLink href={`/family/${familySlug}/issues`}>
@@ -418,7 +418,7 @@ function IssueDetailContent() {
           </Button>
           <Heading size="5">Issue Details</Heading>
         </Flex>
-        <Flex gap="2">
+        <Flex gap="2" wrap="wrap">
           <Button
             variant="soft"
             color="iris"
@@ -576,7 +576,7 @@ function IssueDetailContent() {
       {/* Research Generation */}
       <Card>
         <Flex direction="column" gap="4" p="4">
-          <Flex justify="between" align="center">
+          <Flex justify="between" align="start" wrap="wrap" gap="3">
             <Box>
               <Heading size="3" mb="1">Generate Research</Heading>
               <Text size="2" color="gray">
@@ -706,7 +706,7 @@ function IssueDetailContent() {
       {researchPapers.length > 0 && (
         <Card>
           <Flex direction="column" gap="4" p="4">
-            <Flex justify="between" align="center">
+            <Flex justify="between" align="start" wrap="wrap" gap="3">
               <Box>
                 <Heading size="3" mb="1">Expand with Questions</Heading>
                 <Text size="2" color="gray">

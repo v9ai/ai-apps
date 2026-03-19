@@ -21,6 +21,8 @@ The Codebase Auditor is the second agent in our six-agent autonomous self-improv
 
 Four research papers shaped its design, curated from the [VoltAgent/awesome-ai-agent-papers](https://github.com/VoltAgent/awesome-ai-agent-papers) collection. Here is how each one translated into practice.
 
+<!-- truncate -->
+
 > **Note:** The implementation has since evolved from a generic codebase auditor into a goal-driven "Discovery Expander" focused on finding more AI engineering companies and job boards. The research principles described here still underpin the architecture. The playbooks and data structures below reflect the original design that these papers informed.
 
 ## What Linters Miss

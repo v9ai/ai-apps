@@ -21,6 +21,8 @@ The Trajectory Miner is the first agent in our six-agent autonomous self-improve
 
 The design draws from four research papers, curated from the [VoltAgent/awesome-ai-agent-papers](https://github.com/VoltAgent/awesome-ai-agent-papers) collection. Here is what each paper contributes and how we translated academic ideas into a working system.
 
+<!-- truncate -->
+
 > **Note:** The implementation has since evolved from a generic trajectory mining agent into a goal-driven "Pipeline Monitor" focused on job search pipeline health. The research principles described here still underpin the architecture, but the agent's focus has shifted to domain-specific priorities. The data structures and patterns below reflect the original design that these papers informed.
 
 ## The Stateless Agent Problem

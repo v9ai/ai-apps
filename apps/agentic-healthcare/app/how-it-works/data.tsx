@@ -74,8 +74,22 @@ export const papers: Paper[] = [
     categoryColor: "var(--amber-9)",
   },
   {
-    slug: "llamaindex",
+    slug: "langgraph",
     number: 6,
+    title: "LangGraph",
+    category: "AI/LLM",
+    wordCount: 0,
+    readingTimeMin: 2,
+    authors: "LangChain",
+    year: 2024,
+    finding: "Stateful, multi-actor orchestration framework for LLM applications using directed graphs with typed state",
+    relevance: "Clinical intelligence StateGraph: triage → retrieve → synthesize → guard. Typed GraphState flows intent classification, multi-table retrieval, and safety auditing through discrete, testable nodes",
+    url: "https://langchain-ai.github.io/langgraph/",
+    categoryColor: "var(--amber-9)",
+  },
+  {
+    slug: "llamaindex",
+    number: 7,
     title: "LlamaIndex",
     category: "AI/LLM",
     wordCount: 0,
@@ -83,13 +97,13 @@ export const papers: Paper[] = [
     authors: "LlamaIndex",
     year: 2024,
     finding: "RAG framework with IngestionPipeline, node parsers, ContextChatEngine, and retriever abstractions",
-    relevance: "3-stage IngestionPipeline: LlamaParse → BloodTestNodeParser → FastEmbedEmbedding. chat_server.py uses ContextChatEngine with DeepSeek",
+    relevance: "3-stage IngestionPipeline: LlamaParse → BloodTestNodeParser → FastEmbedEmbedding. Retained as /chat/simple for A/B testing against the LangGraph pipeline",
     url: "https://docs.llamaindex.ai",
     categoryColor: "var(--amber-9)",
   },
   {
     slug: "drizzle-orm",
-    number: 7,
+    number: 8,
     title: "Drizzle ORM",
     category: "Database",
     wordCount: 0,
@@ -103,7 +117,7 @@ export const papers: Paper[] = [
   },
   {
     slug: "cloudflare-r2",
-    number: 8,
+    number: 9,
     title: "Cloudflare R2",
     category: "Storage",
     wordCount: 0,
@@ -117,7 +131,7 @@ export const papers: Paper[] = [
   },
   {
     slug: "llamaparse",
-    number: 9,
+    number: 10,
     title: "LlamaParse",
     category: "AI/LLM",
     wordCount: 0,
@@ -131,7 +145,7 @@ export const papers: Paper[] = [
   },
   {
     slug: "fastapi",
-    number: 10,
+    number: 11,
     title: "FastAPI",
     category: "API",
     wordCount: 0,
@@ -145,7 +159,7 @@ export const papers: Paper[] = [
   },
   {
     slug: "neon-postgres",
-    number: 11,
+    number: 12,
     title: "Neon Serverless PostgreSQL",
     category: "Infrastructure",
     wordCount: 0,
@@ -159,7 +173,7 @@ export const papers: Paper[] = [
   },
   {
     slug: "deepeval",
-    number: 12,
+    number: 13,
     title: "DeepEval",
     category: "Evaluation",
     wordCount: 0,
@@ -167,13 +181,13 @@ export const papers: Paper[] = [
     authors: "Confident AI",
     year: 2024,
     finding: "Python eval framework with LLM-as-judge metrics (GEval, faithfulness, relevancy) and pytest integration",
-    relevance: "7 eval suites in evals/: extraction, derived_metrics, embedding_quality, search, safety, ragas, ingestion",
+    relevance: "8 eval suites in evals/: extraction, derived_metrics, embedding_quality, search, safety, ragas, ingestion, graph (triage/routing/guard/end-to-end)",
     url: "https://docs.confident-ai.com",
     categoryColor: "var(--pink-9)",
   },
   {
     slug: "promptfoo",
-    number: 13,
+    number: 14,
     title: "Promptfoo",
     category: "Evaluation",
     wordCount: 0,
@@ -187,7 +201,7 @@ export const papers: Paper[] = [
   },
   {
     slug: "deepseek",
-    number: 14,
+    number: 15,
     title: "DeepSeek",
     category: "AI/LLM",
     wordCount: 0,
@@ -195,7 +209,7 @@ export const papers: Paper[] = [
     authors: "DeepSeek",
     year: 2024,
     finding: "Cost-effective LLM with strong reasoning, used as chat backend and evaluation judge",
-    relevance: "Chat LLM inside LlamaIndex ContextChatEngine (chat_server.py). Also serves as judge in trajectory evals",
+    relevance: "Chat LLM in the LangGraph synthesize node and LlamaIndex ContextChatEngine (/chat/simple). Also serves as triage classifier, safety guard auditor, and eval judge",
     url: "https://api.deepseek.com",
     categoryColor: "var(--amber-9)",
   },
@@ -204,14 +218,15 @@ export const papers: Paper[] = [
 // ─── Key Metrics ───────────────────────────────────────────────────
 
 export const researchStats: Stat[] = [
+  { number: "4", label: "LangGraph nodes: triage → retrieve → synthesize → guard", source: "graph.py StateGraph with typed GraphState" },
+  { number: "8", label: "Intent classes: markers, trajectory, conditions, medications, symptoms, appointments, general_health, safety_refusal", source: "triage node classifies every query" },
   { number: "1024", label: "Embedding dimensions (BGE model)", source: "BAAI/bge-large-en-v1.5 via FastEmbedEmbedding" },
   { number: "7", label: "Derived clinical ratios with published thresholds", source: "computeDerivedMetrics() → classifyMetricRisk()" },
   { number: "3", label: "Parser tiers: HTML table → FormKeysValues → free-text", source: "langgraph/routes/upload.py" },
   { number: "6", label: "Embeddable entity types with pgvector tables", source: "tests, markers, conditions, medications, symptoms, appointments" },
   { number: "0.7 / 0.3", label: "Hybrid search: vector cosine vs FTS ts_rank", source: "search_markers_hybrid() SQL" },
-  { number: "12+", label: "Python API endpoints (upload, 4 search, 6 embed, chat)", source: "lib/python-api.ts" },
-  { number: "7", label: "Eval suites (extraction, metrics, embedding, search, safety, RAG, ingestion)", source: "evals/ + DeepEval" },
-  { number: "3", label: "Custom Promptfoo scorers (factuality, risk, trajectory)", source: "TypeScript scorers vs METRIC_REFERENCES" },
+  { number: "8", label: "Eval suites (extraction, metrics, embedding, search, safety, RAG, ingestion, graph)", source: "evals/ + DeepEval + LangGraph graph_eval" },
+  { number: "5", label: "Safety guard checks: diagnosis, prescription, referral, PII, hallucination", source: "guard node audits every response" },
   { number: "3", label: "LlamaIndex node types per test (doc, markers, health state)", source: "BloodTestNodeParser" },
 ];
 
@@ -254,18 +269,32 @@ export const pipelineAgents: PipelineAgent[] = [
     dataFlow: "6 entity types → format_*() → BGE 1024-dim → 6 pgvector tables",
   },
   {
-    name: "Hybrid Vector + FTS Search",
-    description: "Four search modes: /search/tests (vector-only), /search/markers (hybrid 0.7 cosine + 0.3 ts_rank), /search/multi (fan-out across all 6 tables), /search/trend (temporal with optional marker_name). All enforce user_id RLS, threshold > 0.3, limit 10.",
-    researchBasis: "Hybrid scoring: 0.7 vector + 0.3 FTS",
-    codeSnippet: "SELECT *,\n  0.7 * (1 - (embedding <=> $2))\n  + 0.3 * ts_rank(to_tsvector(content),\n    plainto_tsquery($1)) AS score\nFROM blood_marker_embeddings\nWHERE user_id = $3\nORDER BY score DESC LIMIT 10",
-    dataFlow: "query → BGE embed → hybrid SQL → top-10 ranked results",
+    name: "LangGraph Triage Node",
+    description: "Every chat query enters the LangGraph StateGraph at the triage node. DeepSeek classifies intent into 8 categories (markers, trajectory, conditions, medications, symptoms, appointments, general_health, safety_refusal) and extracts entity names. The typed GraphState carries intent, confidence, and entities to downstream nodes.",
+    researchBasis: "LangGraph StateGraph with Pydantic-typed state",
+    codeSnippet: "class GraphState(BaseModel):\n  query: str\n  intent: str  # 8 categories\n  entities: list[str]\n  context_chunks: list[str]\n  guard_passed: bool\n  final_answer: str\n\ngraph.add_node(\"triage\", triage)\ngraph.set_entry_point(\"triage\")",
+    dataFlow: "query → DeepSeek classifier → {intent, confidence, entities}",
   },
   {
-    name: "RAG Chat with ContextChatEngine",
-    description: "POST /chat uses LlamaIndex ContextChatEngine with a pgvector retriever and DeepSeek as LLM. The clinical system prompt covers derived ratios, trajectory interpretation, and medication effects — citing references and requiring physician disclaimers.",
-    researchBasis: "LlamaIndex ContextChatEngine + DeepSeek",
-    codeSnippet: "chat_engine = ContextChatEngine.from_defaults(\n  retriever=pgvector_retriever,\n  llm=DeepSeek(...),\n  system_prompt=CLINICAL_PROMPT\n)",
-    dataFlow: "messages → retriever → context → DeepSeek LLM → answer",
+    name: "LangGraph Retrieve Node",
+    description: "The retrieve node uses the triage intent to fan out to the correct pgvector search functions. Marker queries hit hybrid search; trajectory adds trend data; conditions/medications/symptoms cross-reference with markers; general_health fans out to all 6 tables. Safety refusals skip retrieval entirely.",
+    researchBasis: "Intent-based retrieval routing over 6 entity tables",
+    codeSnippet: "if intent == 'trajectory' and entities:\n  for entity in entities[:3]:\n    trend_results = search_marker_trend(\n      embedding, user_id,\n      marker_name=entity)\nif intent == 'general_health':\n  # fan-out to all 6 tables",
+    dataFlow: "intent → conditional routing → pgvector search → context_chunks[]",
+  },
+  {
+    name: "LangGraph Synthesize Node",
+    description: "The synthesize node builds a prompt from retrieved context chunks, conversation history (last 3 turns), and a clinical safety system prompt. DeepSeek generates the response with rules: context-only answers, cite references, never diagnose, never prescribe, always refer to physician.",
+    researchBasis: "Clinical RAG with DeepSeek + safety system prompt",
+    codeSnippet: "SYNTHESIS_SYSTEM = \"\"\"...\nRULES:\n1. Answer ONLY based on context\n4. NEVER diagnose conditions\n5. NEVER prescribe treatments\n6. ALWAYS remind to consult physician\n7. For trajectory, use clinical semantics\n\"\"\"",
+    dataFlow: "context_chunks + history + query → DeepSeek → answer + citations",
+  },
+  {
+    name: "LangGraph Safety Guard Node",
+    description: "Every synthesised response passes through the guard node — a separate DeepSeek call that audits for 5 violations: DIAGNOSIS, PRESCRIPTION, missing PHYSICIAN_REFERRAL, PII_LEAKAGE, and HALLUCINATION. Failed responses get safety disclaimers appended. The guard output is the final_answer returned to the user.",
+    researchBasis: "LLM-as-auditor pattern for clinical safety",
+    codeSnippet: "GUARD_SYSTEM = \"\"\"Check for:\n1. DIAGNOSIS\n2. PRESCRIPTION\n3. PHYSICIAN_REFERRAL\n4. PII_LEAKAGE\n5. HALLUCINATION\nRespond: {passed, issues[]}\"\"\"\n\ngraph.add_edge(\"guard\", END)",
+    dataFlow: "answer → DeepSeek auditor → {passed, issues[]} → final_answer",
   },
   {
     name: "Velocity Trajectory Analysis",
@@ -279,14 +308,19 @@ export const pipelineAgents: PipelineAgent[] = [
 // ─── Narrative ─────────────────────────────────────────────────────
 
 export const story =
-  "Blood test PDFs enter a LlamaIndex IngestionPipeline: LlamaParse extracts markdown, BloodTestNodeParser applies a 3-tier cascade (HTML → FormKeysValues → free-text) to extract markers with flags, then computeDerivedMetrics() calculates 7 clinically-referenced ratios (TG/HDL, NLR, De Ritis, BUN/Cr, TyG, TC/HDL, HDL/LDL) classified into 4 risk tiers. Six entity types are embedded with BAAI/bge-large-en-v1.5 (1024-dim) through dedicated formatters and stored in paired pgvector tables. Queries hit hybrid search (0.7 cosine + 0.3 ts_rank) feeding a LlamaIndex ContextChatEngine backed by DeepSeek with a clinical safety prompt. Three custom Promptfoo scorers and 7 DeepEval suites validate every pipeline stage from parser accuracy to clinical factuality.";
+  "Blood test PDFs enter a LlamaIndex IngestionPipeline: LlamaParse extracts markdown, BloodTestNodeParser applies a 3-tier cascade (HTML → FormKeysValues → free-text) to extract markers with flags, then computeDerivedMetrics() calculates 7 clinically-referenced ratios classified into 4 risk tiers. Six entity types are embedded with BAAI/bge-large-en-v1.5 (1024-dim) and stored in paired pgvector tables. At query time, a LangGraph StateGraph orchestrates 4 agentic nodes: triage classifies intent into 8 categories, retrieve routes to the relevant pgvector tables with intent-specific strategies, synthesize generates answers with a clinical safety prompt, and guard audits every response for 5 safety violations (diagnosis, prescription, missing referral, PII, hallucination). The pipeline is validated by 8 DeepEval suites and 3 Promptfoo scorers covering every stage from parser accuracy to graph-level triage routing and safety gating.";
 
 // ─── Deep-Dive Sections ────────────────────────────────────────────
 
 export const extraSections: ExtraSection[] = [
   {
     heading: "System Architecture",
-    content: "Dual-runtime: Next.js 15 handles frontend + auth (proxy.ts middleware), Python FastAPI handles all AI workloads. They communicate via lib/python-api.ts with x-api-key auth. Embeddings are centralized in Python for consistent bge-large-en-v1.5 usage. TypeScript retains computeDerivedMetrics() and classifyMetricRisk() for frontend display.",
+    content: "Dual-runtime: Next.js 15 handles frontend + auth (proxy.ts middleware), Python FastAPI handles all AI workloads. They communicate via lib/python-api.ts with x-api-key auth. The chat pipeline is a LangGraph StateGraph (triage → retrieve → synthesize → guard) that replaces the simple LlamaIndex ContextChatEngine. The original engine is retained at /chat/simple for A/B testing. Embeddings are centralized in Python for consistent bge-large-en-v1.5 usage.",
+  },
+  {
+    heading: "LangGraph Agentic Pipeline",
+    content: "POST /chat runs a 4-node LangGraph StateGraph with typed Pydantic state. Triage classifies queries into 8 intents using DeepSeek. Retrieve uses intent-based routing: marker/trajectory queries hit hybrid search + trend data, conditions/medications cross-reference with markers, general_health fans out to all 6 tables, and safety_refusal skips retrieval entirely. Synthesize generates answers from context + history with a clinical safety prompt. Guard audits every response against 5 rules (no diagnosis, no prescription, physician referral required, no PII, no hallucination) and appends disclaimers to failing responses.",
+    codeBlock: "graph = StateGraph(GraphState)\ngraph.add_node(\"triage\", triage)\ngraph.add_node(\"retrieve\", retrieve)\ngraph.add_node(\"synthesize\", synthesize)\ngraph.add_node(\"guard\", guard)\ngraph.set_entry_point(\"triage\")\ngraph.add_edge(\"triage\", \"retrieve\")\ngraph.add_edge(\"retrieve\", \"synthesize\")\ngraph.add_edge(\"synthesize\", \"guard\")\ngraph.add_edge(\"guard\", END)",
   },
   {
     heading: "Database Design",
@@ -299,13 +333,13 @@ export const extraSections: ExtraSection[] = [
   },
   {
     heading: "RAG Pipeline Deep Dive",
-    content: "Two paths: Search uses bge-large-en-v1.5 to embed queries, then search_markers_hybrid() combines 70% vector cosine with 30% FTS ts_rank. Chat wraps a pgvector retriever in LlamaIndex ContextChatEngine with DeepSeek. /search/multi fans out to all 6 entity tables in parallel for comprehensive health queries.",
-    codeBlock: "retriever = VectorStoreIndex.from_vector_store(\n    pgvector_store\n).as_retriever(similarity_top_k=5)\nchat_engine = ContextChatEngine.from_defaults(\n    retriever=retriever,\n    llm=DeepSeek(api_key=settings.deepseek_api_key),\n    system_prompt=CLINICAL_SYSTEM_PROMPT\n)",
+    content: "Two chat paths: /chat runs the LangGraph pipeline where the retrieve node routes queries to specific tables based on triage intent (markers → hybrid search, trajectory → trend data, general_health → fan-out to all 6 tables). /chat/simple retains the original LlamaIndex ContextChatEngine for A/B testing. Both use bge-large-en-v1.5 (1024-dim) for embedding and DeepSeek for generation.",
+    codeBlock: "# LangGraph retrieve node — intent-based routing\nif intent in ('markers', 'trajectory'):\n    marker_results = search_markers_hybrid(query, emb, uid)\n    test_results = search_blood_tests(emb, uid)\n    if intent == 'trajectory' and entities:\n        for e in entities[:3]:\n            search_marker_trend(emb, uid, marker_name=e)\nelif intent == 'general_health':\n    # fan-out to all 6 entity tables",
   },
   {
     heading: "Evaluation Architecture",
-    content: "Seven DeepEval suites: extraction (3-tier parser + LLM-judged completeness), derived_metrics (7 ratios + alias resolution), embedding_quality (cross-organ separation, synonym resolution, temporal differentiation, abnormal-first bias), search (hybrid scoring + ranking), safety (guardrails), ragas (RAG faithfulness), ingestion (end-to-end). Three Promptfoo scorers: clinical-factuality.ts validates threshold claims against METRIC_REFERENCES, risk-classification.ts checks against classifyMetricRisk(), trajectory-direction.ts validates velocity semantics.",
-    codeBlock: "// clinical-factuality.ts\nconst ref = METRIC_REFERENCES['tg_hdl'];\nif (Math.abs(claim.threshold - ref.threshold) < 0.1)\n  matched++;",
+    content: "Eight DeepEval suites: extraction (3-tier parser + LLM-judged completeness), derived_metrics (7 ratios + alias resolution), embedding_quality (cross-organ separation, synonym resolution), search (hybrid scoring), safety (guardrails), ragas (RAG faithfulness), ingestion (end-to-end), and graph (70+ cases across 7 categories). The graph eval suite validates functional behaviour AND architectural invariants: triage accuracy for 8 intents, retrieval routing per intent, synthesis faithfulness/relevancy via GEval, safety guard catching violations, edge cases (prompt injection, non-English), and system design — graph topology (4 nodes, linear pipeline, no cycles), state schema completeness, prompt contract verification (all intents declared, all safety rules present, JSON output format), composition rules (safety refusal bypass, guard never removes content), and intent-to-table mapping coverage.",
+    codeBlock: "# graph_eval.py — 7 test classes\nclass TestTriageClassification:  # 10+ cases across 8 intents\nclass TestRetrievalRouting:      # verifies correct search functions per intent\nclass TestSynthesis:             # context usage, history, citations\nclass TestSafetyGuard:           # catches DIAGNOSIS, PRESCRIPTION, PII\nclass TestEndToEndQuality:       # GEval faithfulness + relevancy + no-diagnosis\nclass TestEdgeCases:             # empty, long, non-English, injection\nclass TestSystemDesign:          # topology, schema, prompts, composition",
   },
   {
     heading: "Multi-Entity Embedding Strategy",
@@ -342,19 +376,26 @@ export const technicalDetails: TechnicalDetail[] = [
   {
     type: "diagram",
     heading: "End-to-End Architecture",
-    description: "Data flow from PDF upload through embedding to RAG query",
-    code: "┌───────────────────────────────────────────────────┐\n│  Next.js 15 (Vercel)                              │\n│  UploadForm │ /chat │ /search │ proxy.ts (auth)    │\n└──────┬──────────┬────────┬────────────────────────┘\n       │          │        │   lib/python-api.ts\n       ▼          ▼        ▼   (x-api-key)\n┌───────────────────────────────────────────────────┐\n│  Python FastAPI (langgraph/)                      │\n│  /upload        /chat          /search/*          │\n│  LlamaParse →   ContextChat    Hybrid Search      │\n│  NodeParser →   Engine         0.7·cos + 0.3·fts  │\n│  BGE embed      (DeepSeek)                        │\n│  /embed/* (6 entity types)                        │\n└──────┬──────────────┬──────────────┬──────────────┘\n       ▼              ▼              ▼\n┌───────────────────────────────────────────────────┐\n│  Neon PostgreSQL + pgvector                       │\n│  6 entity + 6 embedding tables (vector(1024))     │\n│  + health_state_embeddings (vector + JSONB)        │\n│  + 7 search SQL functions (user_id RLS)            │\n└───────────────────────────────────────────────────┘",
+    description: "Data flow from PDF upload through LangGraph pipeline to guarded response",
+    code: "┌───────────────────────────────────────────────────┐\n│  Next.js 15 (Vercel)                              │\n│  UploadForm │ /chat │ /search │ proxy.ts (auth)    │\n└──────┬──────────┬────────┬────────────────────────┘\n       │          │        │   lib/python-api.ts\n       ▼          ▼        ▼   (x-api-key)\n┌───────────────────────────────────────────────────┐\n│  Python FastAPI (langgraph/)                      │\n│  /upload                       /search/*          │\n│  LlamaParse → NodeParser       Hybrid Search      │\n│  → BGE embed                   0.7·cos + 0.3·fts  │\n│  /embed/* (6 entity types)                        │\n│                                                   │\n│  /chat → LangGraph StateGraph:                    │\n│  ┌─────────┐  ┌──────────┐  ┌────────────┐  ┌───┐│\n│  │ TRIAGE  │→ │ RETRIEVE │→ │ SYNTHESIZE │→ │ G ││\n│  │ 8 intent│  │ intent   │  │ DeepSeek + │  │ U ││\n│  │ classes │  │ routing  │  │ clinical   │  │ A ││\n│  │ + entity│  │ to 6 PG  │  │ safety     │  │ R ││\n│  │ extract │  │ tables   │  │ prompt     │  │ D ││\n│  └─────────┘  └──────────┘  └────────────┘  └───┘│\n│                                                   │\n│  /chat/simple → LlamaIndex ContextChatEngine (A/B)│\n└──────┬──────────────┬──────────────┬──────────────┘\n       ▼              ▼              ▼\n┌───────────────────────────────────────────────────┐\n│  Neon PostgreSQL + pgvector                       │\n│  6 entity + 6 embedding tables (vector(1024))     │\n│  + health_state_embeddings (vector + JSONB)        │\n│  + 7 search SQL functions (user_id RLS)            │\n└───────────────────────────────────────────────────┘",
+  },
+  {
+    type: "diagram",
+    heading: "LangGraph Node Flow",
+    description: "Typed GraphState flows through 4 nodes with intent-based routing",
+    code: "                    GraphState\n                       │\n              ┌────────▼────────┐\n              │    TRIAGE       │\n              │  DeepSeek       │\n              │  classifies     │\n              │  → 8 intents    │\n              │  → entities[]   │\n              └────────┬────────┘\n                       │\n         ┌─────────────┼─────────────┐\n         ▼             ▼             ▼\n    ┌─────────┐  ┌──────────┐  ┌─────────┐\n    │ markers │  │ general  │  │ safety  │\n    │ hybrid  │  │ fan-out  │  │ refusal │\n    │ search  │  │ 6 tables │  │ skip    │\n    └────┬────┘  └────┬─────┘  └────┬────┘\n         └─────────────┼─────────────┘\n              ┌────────▼────────┐\n              │   SYNTHESIZE    │\n              │  context +      │\n              │  history +      │\n              │  safety prompt  │\n              │  → answer       │\n              └────────┬────────┘\n                       │\n              ┌────────▼────────┐\n              │     GUARD       │\n              │  5 safety rules │\n              │  → passed/fail  │\n              │  → disclaimer   │\n              └────────┬────────┘\n                       │\n                       ▼\n                  final_answer",
   },
   {
     type: "table",
     heading: "Evaluation Coverage Matrix",
-    description: "7 DeepEval suites + 3 Promptfoo scorers covering every pipeline stage",
+    description: "8 DeepEval suites + 3 Promptfoo scorers covering every pipeline stage",
     items: [
       { label: "extraction_eval.py", value: "3-tier parser + compute_flag() + LLM-judged completeness", metadata: { pipeline: "PDF → markers", framework: "DeepEval" } },
       { label: "derived_metrics_eval.py", value: "7 ratios, alias resolution, risk tiers", metadata: { pipeline: "markers → ratios", framework: "DeepEval" } },
       { label: "embedding_quality_eval.py", value: "Cross-organ separation, synonym resolution, temporal diff", metadata: { pipeline: "text → vectors", framework: "DeepEval" } },
       { label: "search_eval.py", value: "Hybrid scoring formula, ranking, threshold filtering", metadata: { pipeline: "query → results", framework: "DeepEval" } },
       { label: "safety_eval.py", value: "Guardrail effectiveness, PII protection", metadata: { pipeline: "context → response", framework: "DeepEval" } },
+      { label: "graph_eval.py", value: "7 test classes: triage (8 intents), routing, synthesis, guard (5 rules), end-to-end, edge cases, system design (topology, schema, prompts, composition)", metadata: { pipeline: "triage → retrieve → synthesize → guard", framework: "DeepEval + pytest" } },
       { label: "clinical-factuality.ts", value: "Threshold claims vs METRIC_REFERENCES", metadata: { pipeline: "LLM → claims", framework: "Promptfoo" } },
       { label: "trajectory-direction.ts", value: "Velocity semantics (HIGHER/LOWER_IS_BETTER)", metadata: { pipeline: "tests → direction", framework: "Promptfoo" } },
     ],
@@ -374,8 +415,20 @@ export const technicalDetails: TechnicalDetail[] = [
   },
   {
     type: "code",
-    heading: "Clinical Safety System Prompt",
-    description: "System prompt for ContextChatEngine in chat_server.py",
-    code: "You are a clinical blood marker intelligence assistant.\n\nAnswer questions about derived ratios (TG/HDL, NLR,\nDe Ritis, BUN/Creatinine, TyG, TC/HDL, HDL/LDL),\ntrajectory interpretation, medication effects, and\nhealth conditions based only on the provided context.\n\nCite the relevant reference paper when available.\nAlways remind the user to consult their physician\nfor medical decisions.",
+    heading: "LangGraph Synthesis System Prompt",
+    description: "7-rule safety prompt used by the synthesize node in graph.py",
+    code: "RULES:\n1. Answer ONLY based on the provided context\n2. Cite specific marker values and reference ranges\n3. For derived ratios, cite the peer-reviewed source\n4. NEVER diagnose conditions\n5. NEVER prescribe treatments or specific dosages\n6. ALWAYS remind user to consult their physician\n7. For trajectory questions, use clinical semantics\n   (rising HDL = improving, rising TG/HDL = deteriorating)",
+  },
+  {
+    type: "card-grid",
+    heading: "Safety Guard Audit Rules",
+    description: "5 rules checked by the guard node against every synthesised response",
+    items: [
+      { label: "DIAGNOSIS", value: "Response must not diagnose conditions ('you have X', 'this confirms Y')", metadata: { action: "Append educational-purposes disclaimer", severity: "critical" } },
+      { label: "PRESCRIPTION", value: "Response must not prescribe medications or specific dosages", metadata: { action: "Append cannot-recommend disclaimer", severity: "critical" } },
+      { label: "PHYSICIAN_REFERRAL", value: "Every clinical response must include a physician consultation reminder", metadata: { action: "Append consult-physician disclaimer", severity: "high" } },
+      { label: "PII_LEAKAGE", value: "Response must not contain personally identifiable information", metadata: { action: "Flag for review", severity: "critical" } },
+      { label: "HALLUCINATION", value: "Response must not claim facts unsupported by retrieved context", metadata: { action: "Flag for review", severity: "high" } },
+    ],
   },
 ];

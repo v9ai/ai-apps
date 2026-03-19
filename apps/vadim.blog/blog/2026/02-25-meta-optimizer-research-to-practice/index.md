@@ -21,6 +21,8 @@ The Meta-Optimizer is the sixth and final agent in our autonomous self-improveme
 
 Six research papers shaped its design. Together, they address the hardest problem in autonomous improvement: knowing when to improve, when to stop, and when to call for help.
 
+<!-- truncate -->
+
 > **Note:** The implementation has since evolved from a generic code-improvement coordinator into a goal-driven job-search optimizer ("Strategy Brain"). The research principles described here still underpin the architecture, but the phase names, decision tables, and state schema have changed to reflect domain-specific priorities. The code snippets below reflect the original design that these papers informed.
 
 ## Five Agents, Zero Coordination

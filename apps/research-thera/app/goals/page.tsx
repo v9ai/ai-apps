@@ -197,7 +197,7 @@ export default function GoalsPage() {
       description="Your therapeutic goals are private. Sign in to manage your progress."
     >
       <Flex direction="column" gap="4">
-        <Heading size="8">Goals</Heading>
+        <Heading size={{ initial: "6", md: "8" }}>Goals</Heading>
         <DynamicGoalsListContent />
       </Flex>
     </AuthGate>

@@ -152,7 +152,7 @@ const TARGETS: &[Target] = &[
     Target {
         label: "Frontend",
         color: "violet",
-        technologies: "Next.js, React, Radix UI (Themes + Icons), Clerk",
+        technologies: "Next.js, React, Radix UI (Themes + Icons), Better Auth",
         hints: "Read package.json for exact versions. Glob src/app/**/* to count routes. \
                 Glob src/components/**/* to count components. Read next.config.ts and vercel.json.",
     },

@@ -21,6 +21,8 @@ The Verification Gate is the fifth agent in our six-agent autonomous self-improv
 
 Five research papers shaped its design, curated from the [VoltAgent/awesome-ai-agent-papers](https://github.com/VoltAgent/awesome-ai-agent-papers) collection. The common thread: autonomous systems need calibrated self-awareness about the quality of their own outputs.
 
+<!-- truncate -->
+
 > **Note:** The implementation has since evolved from a generic verification gate into a goal-driven "Application Coach" focused on learning from application patterns and improving interview preparation. The research principles described here still underpin the architecture. The verification checks and verdict system below reflect the original design that these papers informed.
 
 ## Generation Is Easy. Verification Is Hard.

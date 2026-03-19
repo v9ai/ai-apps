@@ -1,5 +1,6 @@
 "use client";
 
+import { useState, useEffect } from "react";
 import { Select, Text, Flex, TextField } from "@radix-ui/themes";
 import {
   useGetUserSettingsQuery,
@@ -16,14 +17,22 @@ export function UserSettingsLanguageSelector() {
   const currentLanguage = data?.userSettings?.storyLanguage ?? "English";
   const currentMinutes = data?.userSettings?.storyMinutes ?? 10;
 
+  const [localMinutes, setLocalMinutes] = useState(String(currentMinutes));
+
+  useEffect(() => {
+    setLocalMinutes(String(currentMinutes));
+  }, [currentMinutes]);
+
   const handleLanguageChange = (lang: string) => {
     updateUserSettings({ variables: { storyLanguage: lang, storyMinutes: currentMinutes } });
   };
 
-  const handleMinutesChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const val = parseInt(e.target.value, 10);
-    if (!isNaN(val) && val > 0) {
+  const commitMinutes = () => {
+    const val = parseInt(localMinutes, 10);
+    if (!isNaN(val) && val > 0 && val !== currentMinutes) {
       updateUserSettings({ variables: { storyLanguage: currentLanguage, storyMinutes: val } });
+    } else {
+      setLocalMinutes(String(currentMinutes));
     }
   };
 
@@ -55,8 +64,10 @@ export function UserSettingsLanguageSelector() {
         </Text>
         <TextField.Root
           type="number"
-          value={currentMinutes}
-          onChange={handleMinutesChange}
+          value={localMinutes}
+          onChange={(e) => setLocalMinutes(e.target.value)}
+          onBlur={commitMinutes}
+          onKeyDown={(e) => { if (e.key === "Enter") commitMinutes(); }}
           disabled={loading || updating}
           size="1"
           min="1"

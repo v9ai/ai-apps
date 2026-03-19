@@ -238,7 +238,7 @@ export default function JournalPage() {
       description="Your journal entries are private. Sign in to write and read your reflections."
     >
       <Flex direction="column" gap="4">
-        <Heading size="8">Journal</Heading>
+        <Heading size={{ initial: "6", md: "8" }}>Journal</Heading>
         <DynamicJournalListContent />
       </Flex>
     </AuthGate>

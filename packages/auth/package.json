@@ -20,7 +20,8 @@
   },
   "scripts": {
     "build": "echo 'private workspace package — consumed from source'",
-    "dev": "echo 'dev'"
+    "dev": "echo 'dev'",
+    "test": "vitest run"
   },
   "dependencies": {
     "better-auth": "^1.5.5"
@@ -34,6 +35,7 @@
     "@ai-apps/typescript-config": "workspace:*",
     "@types/node": "^22",
     "@types/react": "^19",
+    "vitest": "^4.0.18",
     "bunchee": "^6.4.0",
     "drizzle-orm": "^0.45.1",
     "next": "latest",

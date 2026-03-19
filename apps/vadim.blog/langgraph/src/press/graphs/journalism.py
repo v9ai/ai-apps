@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import asyncio
 import logging
 from pathlib import Path
 
@@ -22,6 +23,8 @@ from press.graphs.nodes import (
 from press.graphs.state import JournalismState
 from press.models import ModelPool, TeamRole
 from press import prompts
+from press.papers.editorial import search_editorial
+from press.research import format_editorial_digest
 
 logger = logging.getLogger(__name__)
 
@@ -42,11 +45,8 @@ def build_journalism_graph(pool: ModelPool):
         output_dir = state.get("output_dir", "./articles")
         slug = slugify(topic)
 
-        researcher = Agent(
-            "journalist-researcher",
-            prompts.journalism_researcher(topic),
-            pool.for_role(TeamRole.REASONER),
-        )
+        # Stage 1: editorial search + SEO agents in parallel
+        # (editorial search feeds into the researcher in stage 2)
         seo_disc = Agent(
             "journalist-seo-discovery",
             prompts.seo_discovery(topic),
@@ -57,14 +57,33 @@ def build_journalism_graph(pool: ModelPool):
             prompts.seo_blueprint(topic),
             pool.for_role(TeamRole.FAST),
         )
-
-        research_input = f"Research this topic: {topic}"
         seo_input = f"Topic: {topic}"
-        research_output, seo_disc_out, seo_bp_out = await run_all([
-            (researcher, research_input),
-            (seo_disc, seo_input),
-            (seo_bp, seo_input),
-        ])
+
+        editorial_results, seo_disc_out, seo_bp_out = await asyncio.gather(
+            search_editorial(topic),
+            seo_disc.run(seo_input),
+            seo_bp.run(seo_input),
+        )
+
+        editorial_digest = format_editorial_digest(editorial_results)
+
+        # Stage 2: researcher with editorial context
+        research_input = f"Research this topic: {topic}"
+        if editorial_digest:
+            research_input += f"\n\n---\n\n{editorial_digest}"
+
+        researcher_prompt = (
+            prompts.journalism_researcher_with_editorial(topic)
+            if editorial_results
+            else prompts.journalism_researcher(topic)
+        )
+        researcher = Agent(
+            "journalist-researcher",
+            researcher_prompt,
+            pool.for_role(TeamRole.REASONER),
+        )
+        research_output = await researcher.run(research_input)
+
         seo_output = f"{seo_disc_out}\n\n---\n\n{seo_bp_out}"
 
         research_dir = Path(output_dir) / "research"
@@ -72,6 +91,8 @@ def build_journalism_graph(pool: ModelPool):
         (research_dir / f"{slug}-research.md").write_text(research_output)
         (research_dir / f"{slug}-seo-discovery.md").write_text(seo_disc_out)
         (research_dir / f"{slug}-seo-blueprint.md").write_text(seo_bp_out)
+        if editorial_digest:
+            (research_dir / f"{slug}-editorial.md").write_text(editorial_digest)
 
         return {"research_output": research_output, "seo_output": seo_output}
 

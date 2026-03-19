@@ -39,6 +39,7 @@ export const generateLongFormText: NonNullable<MutationResolvers['generateLongFo
       feedback_id: feedbackId ?? null,
       language: args.language ?? "English",
       minutes: args.minutes ?? 10,
+      user_email: userEmail,
     },
   }) as Record<string, unknown>;
 

@@ -31,7 +31,7 @@ GraphQL architecture checklist:
 | `src/graphql/` | Named operation documents (`.graphql`) — the MCP tool catalog |
 | `src/__generated__/` | Never edit — output of `pnpm codegen` |
 | `src/apollo/resolvers/` | Server resolvers; job resolvers in `resolvers/job/` |
-| `src/apollo/context.ts` | `GraphQLContext` — Clerk auth + D1 client |
+| `src/apollo/context.ts` | `GraphQLContext` — Better Auth session + Neon DB |
 | `src/anthropic/mcp.ts` | `mcpHTTP()` / `mcpStdio()` / `buildMcpServers()` helpers |
 | `codegen.ts` | GraphQL codegen config |
 

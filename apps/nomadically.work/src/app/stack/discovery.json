@@ -11,7 +11,7 @@
           "version": "5.3.0",
           "role": "GraphQL server implementation for the job search platform",
           "url": "https://www.apollographql.com/docs/apollo-server/",
-          "details": "Used as the primary GraphQL server with schema-first development approach. The server is configured in src/app/api/graphql/route.ts with custom rate limiting, authentication via Clerk, and D1 database integration. Uses @as-integrations/next for Next.js compatibility and runs on Node.js runtime for better I/O performance with D1 gateway calls.",
+          "details": "Used as the primary GraphQL server with schema-first development approach. The server is configured in src/app/api/graphql/route.ts with custom rate limiting, authentication via Better Auth, and Neon PostgreSQL integration. Uses @as-integrations/next for Next.js compatibility and runs on Node.js runtime for better I/O performance with D1 gateway calls.",
           "facts": [
             "13 GraphQL schema files organized by domain (applications, companies, jobs, etc.)",
             "41 API route files in src/app/api/**/*",
@@ -84,7 +84,7 @@
           ],
           "security_considerations": [
             "Rate limiting implemented at 100 requests/minute with user/IP identification",
-            "Authentication via Clerk with fallback to admin email in development only",
+            "Authentication via Better Auth with fallback to admin email in development only",
             "GraphQL introspection likely enabled in development but should be disabled in production"
           ],
           "performance_notes": [
@@ -161,7 +161,7 @@
           "interview_points": [
             "Implemented domain-driven schema organization with 13 separate .graphql files that get merged and type-generated, enabling team scalability",
             "Used DataLoader with SQLite-aware batch sizing (100 items) to work around D1's variable binding limits while maintaining query efficiency",
-            "Built a custom rate limiter that identifies users via Clerk auth first, then falls back to IP when unauthenticated, with proper headers for client feedback"
+            "Built a custom rate limiter that identifies users via Better Auth session first, then falls back to IP when unauthenticated, with proper headers for client feedback"
           ],
           "gotchas": [
             "GraphQL Code Generator requires careful configuration to avoid circular dependencies in generated types",
@@ -1747,86 +1747,83 @@
           ]
         },
         {
-          "name": "Clerk",
-          "version": "6.37.4",
-          "role": "Authentication and user management",
-          "url": "https://clerk.com",
-          "details": "Used for authentication throughout the application with ClerkProvider in root layout. Provides sign-in, sign-up pages, and user management hooks. Integrated with Next.js App Router.",
+          "name": "Better Auth",
+          "version": "1.5.5",
+          "role": "Self-hosted authentication via @ai-apps/auth",
+          "url": "https://www.better-auth.com",
+          "details": "Self-hosted auth library using the shared @ai-apps/auth workspace package. Sessions stored in Neon PostgreSQL via Drizzle adapter. Custom sign-in/sign-up UI built with Radix components.",
           "facts": [
-            "Version 6.37.4 of @clerk/nextjs",
-            "Used in 6 different component files",
-            "Provides authentication for admin and user features"
+            "@ai-apps/auth workspace package shared across apps",
+            "Drizzle adapter stores user, session, account, verification tables in Neon PostgreSQL",
+            "Custom auth hooks: useAuth, useIsAuthenticated, useIsAdmin"
           ],
           "source_locations": [
             {
-              "path": "package.json",
-              "line": 46,
-              "note": "@clerk/nextjs dependency"
-            },
-            {
-              "path": "src/app/layout.tsx",
-              "line": 5,
-              "note": "ClerkProvider in root layout"
-            },
-            {
-              "path": "src/app/sign-in/page.tsx",
+              "path": "src/lib/auth/server.ts",
               "line": 1,
-              "note": "SignIn component import"
+              "note": "Better Auth server instance with Drizzle adapter"
             },
             {
-              "path": "src/components/auth-header.tsx",
-              "line": 5,
-              "note": "useUser and useClerk hooks"
+              "path": "src/lib/auth/client.ts",
+              "line": 1,
+              "note": "Better Auth client via createAuthClient"
+            },
+            {
+              "path": "src/app/api/auth/[...path]/route.ts",
+              "line": 1,
+              "note": "Auth API route handler"
+            },
+            {
+              "path": "src/components/AuthDialog.tsx",
+              "line": 1,
+              "note": "Custom sign-in/sign-up dialog"
             }
           ],
-          "why_chosen": "Chosen over alternatives like Auth.js or Supabase Auth for its excellent Next.js integration, pre-built UI components, and enterprise features like multi-tenancy and user management.",
+          "why_chosen": "Migrated from Clerk to eliminate vendor lock-in and per-MAU pricing. Better Auth is self-hosted, stores data in existing Neon PostgreSQL, and is shared across apps via the @ai-apps/auth workspace package.",
           "pros": [
-            "Excellent Next.js App Router integration",
-            "Pre-built UI components",
-            "Enterprise features out of the box",
-            "Good developer experience"
+            "Self-hosted — no vendor lock-in or per-MAU costs",
+            "Drizzle adapter uses existing Neon PostgreSQL database",
+            "Shared via @ai-apps/auth workspace package",
+            "TypeScript-native with full type safety"
           ],
           "cons": [
-            "Vendor lock-in",
-            "Pricing can be high for scale",
-            "Less control than self-hosted solutions"
+            "Custom UI needed (built with Radix components)",
+            "Email/password only currently — no OAuth providers"
           ],
           "alternatives_considered": [
             {
-              "name": "Auth.js",
-              "reason_not_chosen": "Less pre-built UI and more setup required"
+              "name": "Clerk",
+              "reason_not_chosen": "Vendor lock-in and per-MAU pricing; migrated away for cost control and data ownership"
             },
             {
-              "name": "Supabase Auth",
-              "reason_not_chosen": "Tied to Supabase ecosystem and less feature-rich"
+              "name": "Auth.js",
+              "reason_not_chosen": "Less TypeScript-native; Better Auth Drizzle adapter integrates cleanly with existing ORM"
             }
           ],
           "trade_offs": [
-            "Chose convenience and features over control and cost",
-            "Accepted vendor lock-in for faster development"
+            "Custom auth UI vs pre-built components — more control but more initial work",
+            "Self-hosted means managing auth infrastructure ourselves"
           ],
           "patterns_used": [
-            "Provider pattern for auth context",
-            "Protected route patterns",
-            "User hook for client-side auth state"
+            "Shared auth package pattern — @ai-apps/auth exports createAuth, createAuthClient, schema tables",
+            "Session-based auth — server-side session validation in GraphQL context",
+            "Email-based admin guard pattern"
           ],
           "interview_points": [
-            "We use Clerk's middleware with Next.js to implement role-based access control that's evaluated at the edge, reducing latency for auth checks by 200ms compared to client-side checks."
+            "We migrated from Clerk to self-hosted Better Auth to eliminate vendor lock-in — auth data now lives in Neon PostgreSQL alongside application data, shared via the @ai-apps/auth workspace package."
           ],
           "gotchas": [
-            "Middleware must be configured correctly for App Router",
-            "User state hydration requires careful loading states",
-            "Organization features require specific plan tier"
+            "Auth API route must catch all paths via [...path]",
+            "Session validation is async — handle loading states in client"
           ],
           "security_considerations": [
-            "JWT validation happens at edge middleware",
-            "Session management includes automatic refresh",
-            "Rate limiting and brute force protection built-in"
+            "Session-based auth with server-side validation",
+            "BETTER_AUTH_SECRET must be set for secure session signing",
+            "Admin check via isAdminEmail() on every mutation"
           ],
           "performance_notes": [
-            "Auth checks happen at edge middleware",
-            "Session caching reduces database calls",
-            "Pre-built components reduce bundle size vs custom auth UI"
+            "Sessions stored in Neon PostgreSQL — validated on each GraphQL request",
+            "Client-side session caching via Better Auth React hooks"
           ]
         }
       ]

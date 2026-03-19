@@ -26,7 +26,7 @@ This article covers the mechanism, the research, and the biases that break LLM j
 
 > **What is LLM as a judge?** LLM-as-a-Judge is an evaluation methodology where a capable large language model scores or compares outputs from another LLM application against defined criteria -- such as helpfulness, factual accuracy, and relevance -- using structured prompts that request [chain-of-thought reasoning](https://arxiv.org/abs/2201.11903) before a final score. The method achieves approximately 80% agreement with human evaluators, matching human-to-human consistency, at 500x--5,000x lower cost than manual review.
 
-{/* truncate */}
+<!-- truncate -->
 
 ---
 

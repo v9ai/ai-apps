@@ -521,7 +521,7 @@ export default function FamilyPage() {
       description="Your family members are private. Sign in to manage your family profiles."
     >
       <Flex direction="column" gap="4">
-        <Heading size="8">My Family</Heading>
+        <Heading size={{ initial: "6", md: "8" }}>My Family</Heading>
         <DynamicFamilyListContent />
       </Flex>
     </AuthGate>

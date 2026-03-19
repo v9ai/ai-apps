@@ -8,7 +8,7 @@ context: |
   Testing: Vitest (evals), Promptfoo (LLM evaluation)
   Style: ESLint (next lint), kebab-case files, PascalCase components, pnpm 10.10
   Deploy: Vercel (app), Cloudflare Workers (workers)
-  Auth: Clerk
+  Auth: Better Auth (@ai-apps/auth)
   UI: Radix UI (Themes + Icons)
 
 rules:

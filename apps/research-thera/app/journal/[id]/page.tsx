@@ -107,9 +107,9 @@ function JournalEntryContent() {
       {/* Main Entry Card */}
       <Card style={{ backgroundColor: "var(--indigo-3)" }}>
         <Flex direction="column" gap="4" p="1">
-          <Flex justify="between" align="start" gap="3">
+          <Flex justify="between" align="start" wrap="wrap" gap="3">
             <Flex direction="column" gap="1">
-              <Heading size="7">{entryTitle}</Heading>
+              <Heading size={{ initial: "5", md: "7" }}>{entryTitle}</Heading>
               <Flex align="center" gap="2" wrap="wrap">
                 <Badge color="gray" variant="soft" size="2">
                   {new Date(entry.entryDate).toLocaleDateString("en-US", {
@@ -336,29 +336,31 @@ export default function JournalEntryPage() {
           background: "var(--color-panel)",
           borderBottom: "1px solid var(--gray-a6)",
           backdropFilter: "blur(10px)",
-          marginLeft: "calc(-1 * var(--space-5))",
-          marginRight: "calc(-1 * var(--space-5))",
-          paddingLeft: "var(--space-5)",
-          paddingRight: "var(--space-5)",
+          marginLeft: "calc(-1 * var(--space-3))",
+          marginRight: "calc(-1 * var(--space-3))",
+          paddingLeft: "var(--space-3)",
+          paddingRight: "var(--space-3)",
         }}
       >
         <Flex
-          py="4"
+          py="3"
           align="center"
-          gap="4"
+          gap={{ initial: "2", md: "4" }}
           style={{ maxWidth: "1200px", margin: "0 auto", width: "100%" }}
         >
           <Button variant="soft" size="2" radius="full" color="gray" asChild>
             <NextLink href="/journal">
               <ArrowLeftIcon />
-              Journal
+              <Box display={{ initial: "none", sm: "inline" }} asChild>
+                <span>Journal</span>
+              </Box>
             </NextLink>
           </Button>
 
-          <Separator orientation="vertical" style={{ height: 20 }} />
+          <Box display={{ initial: "none", sm: "block" }}><Separator orientation="vertical" style={{ height: 20 }} /></Box>
 
           <Box minWidth="0" style={{ flex: 1 }}>
-            <Heading size="8" weight="bold" truncate>
+            <Heading size={{ initial: "5", md: "8" }} weight="bold" truncate>
               {pageTitle}
             </Heading>
           </Box>

@@ -39,12 +39,12 @@ export default function Home() {
   return (
     <Flex direction="column" gap="6">
       {/* Hero Section */}
-      <Card size="4" style={{ background: "var(--indigo-3)" }}>
+      <Card size={{ initial: "2", md: "4" }} style={{ background: "var(--indigo-3)" }}>
         <Flex direction="column" gap="4" align="center" py="4">
           <Badge size="2" variant="soft" color="indigo">
             Research-backed &middot; Personal &middot; Private
           </Badge>
-          <Heading size="9" align="center" style={{ maxWidth: "800px" }}>
+          <Heading size={{ initial: "7", md: "9" }} align="center" style={{ maxWidth: "800px" }}>
             Research-Backed Therapy Notes & Reflections
           </Heading>
           <Text
