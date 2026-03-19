@@ -1,10 +1,10 @@
 [project]
 name = "real-estate-analyzer"
 version = "0.1.0"
-description = "PydanticAI apartment price analyzer for 999.md and imobiliare.ro"
+description = "Apartment price analyzer with DeepSeek extraction and valuation"
 requires-python = ">=3.12"
 dependencies = [
-    "pydantic-ai[openai]>=0.0.14",
+    "openai>=1.0.0",
     "pydantic>=2.0.0",
     "pydantic-settings>=2.0.0",
     "fastapi>=0.110.0",
@@ -18,6 +18,17 @@ dependencies = [
     "pgvector>=0.3.0",
     "pytest>=8.0.0",
     "pytest-asyncio>=0.23.0",
+    "pytest-xdist>=3.5.0",
+]
+
+[tool.pytest.ini_options]
+testpaths = ["eval"]
+asyncio_mode = "strict"
+markers = [
+    "slow: marks tests that call the live agent (deselect with '-m \"not slow\"')",
+    "safety: marks safety/bias evaluation tests",
+    "structural: marks structural schema validation tests",
+    "e2e: marks end-to-end pipeline tests",
 ]
 
 [build-system]
