@@ -3,10 +3,6 @@
 import os
 import statistics
 import pytest
-from deepeval import assert_test
-from deepeval.test_case import LLMTestCase, LLMTestCaseParams
-from deepeval.metrics import GEval
-from deepeval.models import DeepSeekModel
 
 # ---------------------------------------------------------------------------
 # Unit tests — pure functions, no LLM, no network
@@ -61,6 +57,18 @@ class TestParsePriceEur:
         result = _parse_price_eur({"price": 50000})
         assert result == 50000
 
+    def test_negative_price_returns_none(self):
+        assert _parse_price_eur({"price": -5000, "currency": "EUR"}) is None
+
+    def test_float_price(self):
+        # float prices are truncated via int()
+        result = _parse_price_eur({"price": 75000.50, "currency": "EUR"})
+        assert result == 75000
+
+    def test_mdl_large_with_spaces(self):
+        result = _parse_price_eur({"price": "1 800 000", "currency": "MDL"})
+        assert result == 90000
+
 
 # --- _parse_size_m2 ---
 
@@ -81,6 +89,14 @@ class TestParseSizeM2:
 
     def test_no_size_returns_none(self):
         assert _parse_size_m2({"title": "Apartament fara suprafata"}) is None
+
+    def test_mp_suffix(self):
+        # "mp" (Romanian shorthand) is not matched by the m²/m2 regex
+        assert _parse_size_m2({"title": "Apartament 92 mp Centru"}) is None
+
+    def test_decimal_size(self):
+        result = _parse_size_m2({"title": "65.5 m² bloc"})
+        assert result == 65.5
 
 
 # --- _parse_rooms ---
@@ -126,6 +142,19 @@ class TestScoreRelevance:
         # 88/80 = 1.1 — inside ±20%
         assert score == pytest.approx(0.3)
 
+    def test_same_zone_different_rooms(self):
+        # Zone matches (0.5), rooms differ by 2 (0.0), size within range (0.3)
+        comp = {"zone": "Botanica", "rooms": 4, "size_m2": 85}
+        score = _score_relevance(comp, zone="Botanica", rooms=2, size_m2=80)
+        assert score == pytest.approx(0.8)  # zone(0.5) + size(0.3), no rooms bonus
+
+    def test_null_zone_both_sides(self):
+        # Both zone=None → guard `if target_zone and comp_zone` is False → 0 zone score
+        comp = {"zone": None, "rooms": 2, "size_m2": 70}
+        score = _score_relevance(comp, zone=None, rooms=2, size_m2=70)
+        # rooms(0.2) + size(0.3) only, no zone contribution
+        assert score == pytest.approx(0.5)
+
 
 # --- _normalize_item ---
 
@@ -161,6 +190,12 @@ class TestNormalizeItem:
         item = {"title": "X", "price": 50000, "currency": "EUR", "url": "https://999.md/ro/ads/99"}
         result = _normalize_item(item)
         assert result["url"] == "https://999.md/ro/ads/99"
+
+    def test_missing_zone_defaults_none(self):
+        item = {"title": "Apartament simplu", "price": 60000, "currency": "EUR"}
+        result = _normalize_item(item)
+        assert result is not None
+        assert result["zone"] is None
 
 
 # --- _build_search_url ---
@@ -236,28 +271,6 @@ class TestComputeZoneStats:
 # GEval — comparable relevance (requires judge)
 # ---------------------------------------------------------------------------
 
-judge = DeepSeekModel(
-    model="deepseek-reasoner",
-    api_key=os.getenv("DEEPSEEK_API_KEY"),
-    temperature=0,
-)
-
-comparable_relevance = GEval(
-    name="ComparableRelevance",
-    criteria="""INPUT describes a target apartment (city, zone, rooms, size).
-ACTUAL_OUTPUT is a JSON list of comparable listings.
-Evaluate whether the comparables are genuinely similar:
-1. Same city as the target
-2. Similar zone (same or adjacent district) — most important
-3. Similar room count (±1 acceptable)
-4. Similar size (within ±30%)
-Score 1.0 if all comparables are clearly relevant, 0.0 if they are clearly irrelevant (wrong city, wildly different size).
-Partial scores for partially relevant sets.""",
-    evaluation_params=[LLMTestCaseParams.INPUT, LLMTestCaseParams.ACTUAL_OUTPUT],
-    model=judge,
-    threshold=0.65,
-)
-
 import json
 
 COMPARABLE_RELEVANCE_CASES = [
@@ -278,9 +291,27 @@ COMPARABLE_RELEVANCE_CASES = [
         ]),
         "expected_output": "not relevant",
     },
+    {
+        "input": "Target: Chisinau, Botanica, 2 rooms, 65 m²",
+        "actual_output": json.dumps([
+            {"title": "Apt 2 camere Botanica", "price_per_m2": 900, "size_m2": 62, "rooms": 2, "zone": "Botanica"},
+            {"title": "Apt 3 camere Bucuresti Sector 3", "price_per_m2": 1800, "size_m2": 70, "rooms": 3, "zone": "Sector 3"},
+        ]),
+        "expected_output": "not relevant",
+    },
+    {
+        "input": "Target: Chisinau, Centru, 3 rooms, 85 m²",
+        "actual_output": json.dumps([
+            {"title": "Apt 3 camere Centru 82m²", "price_per_m2": 1100, "size_m2": 82, "rooms": 3, "zone": "Centru"},
+            {"title": "Apt 3 camere Centru 88m²", "price_per_m2": 1050, "size_m2": 88, "rooms": 3, "zone": "Centru"},
+            {"title": "Apt 3 camere Centru 85m²", "price_per_m2": 1080, "size_m2": 85, "rooms": 3, "zone": "Centru"},
+        ]),
+        "expected_output": "relevant",
+    },
 ]
 
 
+@pytest.mark.skipif(not _HAS_API_KEY, reason="requires DEEPSEEK_API_KEY")
 @pytest.mark.parametrize("case", COMPARABLE_RELEVANCE_CASES)
 def test_comparable_relevance(case):
     test_case = LLMTestCase(
