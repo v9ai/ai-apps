@@ -1,5 +1,102 @@
 {
   "slug": "samuel-colvin",
-  "generated_at": "2026-03-18T21:19:04.280680Z",
-  "events": []
+  "generated_at": "2026-03-19T19:30:00.000000Z",
+  "events": [
+    {
+      "date": "2026",
+      "event": "Pydantic surpassed 10 billion total downloads",
+      "url": "https://pydantic.dev/articles/pydantic-validation-10-billion-downloads",
+      "source": "research"
+    },
+    {
+      "date": "2025-12-04",
+      "event": "Appeared on Software Engineering Daily: Pydantic AI",
+      "url": "https://softwareengineeringdaily.com/2025/12/04/pydantic-ai-with-samuel-colvin/",
+      "source": "research"
+    },
+    {
+      "date": "2025-10-07",
+      "event": "Appeared on AI Engineering Podcast: Building Production-Ready AI Agents with Pydantic AI",
+      "url": "https://www.aiengineeringpodcast.com/episodepage/building-production-ready-ai-agents-with-pydantic-ai",
+      "source": "research"
+    },
+    {
+      "date": "2025-09",
+      "event": "Released Pydantic AI v1.0 — stable production release with MCP, graphs, and durable execution",
+      "url": "https://pydantic.dev/articles/pydantic-ai-v1",
+      "source": "github"
+    },
+    {
+      "date": "2025-07-10",
+      "event": "Appeared on SE Radio #676: The Pydantic Ecosystem",
+      "url": "https://se-radio.net/2025/07/se-radio-676-samuel-colvin-on-the-pydantic-ecosystem/",
+      "source": "research"
+    },
+    {
+      "date": "2025-04",
+      "event": "Speaker at PyCon US 2025",
+      "url": "https://us.pycon.org/2025/speaker/profile/161/",
+      "source": "research"
+    },
+    {
+      "date": "2025-04-03",
+      "event": "Appeared on AI Stories podcast S4E10: Pydantic, Logfire & PydanticAI",
+      "url": "https://podcasts.apple.com/us/podcast/ai-stories/id1588432358",
+      "source": "research"
+    },
+    {
+      "date": "2025-02-06",
+      "event": "Appeared on Latent Space podcast: Agent Engineering with Pydantic + Graphs",
+      "url": "https://www.latent.space/p/pydantic",
+      "source": "research"
+    },
+    {
+      "date": "2024-12-19",
+      "event": "MLOps Community Agent Hour #2: Why we built PydanticAI",
+      "url": "https://home.mlops.community/public/videos/why-we-built-pydanticai-and-why-you-might-care-samuel-colvin-agent-hour-2-2024-12-19",
+      "source": "research"
+    },
+    {
+      "date": "2024-10",
+      "event": "Open sourced Pydantic AI agent framework",
+      "url": "https://github.com/pydantic/pydantic-ai",
+      "source": "github"
+    },
+    {
+      "date": "2024-10-01",
+      "event": "Raised $12.5M Series A led by Sequoia; launched Pydantic Logfire",
+      "url": "https://pydantic.dev/articles/logfire-announcement",
+      "source": "research"
+    },
+    {
+      "date": "2024-10",
+      "event": "Launched Pydantic Open Source Fund ($30k/year across 14 developers)",
+      "url": "https://pydantic.dev/articles/pydantic-oss-fund-2024",
+      "source": "research"
+    },
+    {
+      "date": "2023-06",
+      "event": "Released Pydantic v2.0 — full rewrite with Rust-based pydantic-core (5-50x faster)",
+      "url": "https://pydantic.dev/articles/pydantic-v2-final",
+      "source": "github"
+    },
+    {
+      "date": "2023-02-16",
+      "event": "Raised $4.7M seed round led by Sequoia Capital",
+      "url": "https://techcrunch.com/2023/02/16/sequoia-backs-open-source-data-validation-framework-pydantic-to-commercialize-with-cloud-services/",
+      "source": "research"
+    },
+    {
+      "date": "2019-10",
+      "event": "Released Pydantic v1.0",
+      "url": "https://github.com/pydantic/pydantic/releases",
+      "source": "github"
+    },
+    {
+      "date": "2017",
+      "event": "Started Pydantic — using Python type hints for runtime data validation",
+      "url": "https://github.com/pydantic/pydantic",
+      "source": "github"
+    }
+  ]
 }

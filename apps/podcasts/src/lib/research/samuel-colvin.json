@@ -1,0 +1,201 @@
+{
+  "slug": "samuel-colvin",
+  "name": "Samuel Colvin",
+  "generated_at": "2026-03-19T19:30:00+00:00",
+  "bio": "Samuel Colvin is a Python and Rust developer and the Founder & CEO of Pydantic, a Sequoia-backed company building the data validation and AI agent infrastructure used by millions of developers. He started Pydantic in 2017 out of frustration that Python type hints did nothing at runtime, and curiosity about whether they could be used to validate data. What began as a side project is now downloaded over 300 million times per month and has surpassed 10 billion total downloads. Colvin holds an MEng in Mechanics and Fluid Dynamics from the University of Cambridge (2006-2010). Before Pydantic, he was Director and CEO of TutorCruncher. In 2023 he raised $4.7M seed from Sequoia, and in 2024 closed a $12.5M Series A to launch Pydantic Logfire (an observability platform) and Pydantic AI (an agent framework that became the fastest-growing agent framework by downloads in 2025). He is based in London, UK.",
+  "topics": [
+    "Data Validation",
+    "Python Type Hints",
+    "AI Agent Frameworks",
+    "Rust Performance",
+    "Observability",
+    "Open Source Sustainability",
+    "Structured Outputs",
+    "Model Context Protocol (MCP)",
+    "Durable Execution",
+    "Type Safety"
+  ],
+  "timeline": [
+    {
+      "date": "2017",
+      "event": "Started Pydantic, using Python type hints for runtime data validation",
+      "url": "https://github.com/pydantic/pydantic"
+    },
+    {
+      "date": "2019-10",
+      "event": "Released Pydantic v1.0",
+      "url": "https://github.com/pydantic/pydantic/releases"
+    },
+    {
+      "date": "2023-02-16",
+      "event": "Raised $4.7M seed round led by Sequoia, with Partech and angel investors",
+      "url": "https://techcrunch.com/2023/02/16/sequoia-backs-open-source-data-validation-framework-pydantic-to-commercialize-with-cloud-services/"
+    },
+    {
+      "date": "2023-06",
+      "event": "Released Pydantic v2.0 — full rewrite with Rust-based pydantic-core, 5-50x faster",
+      "url": "https://pydantic.dev/articles/pydantic-v2-final"
+    },
+    {
+      "date": "2024-10-01",
+      "event": "Raised $12.5M Series A led by Sequoia; launched Pydantic Logfire observability platform",
+      "url": "https://techcrunch.com/2024/10/01/sequoia-backs-pydantic-to-expand-beyond-its-open-source-data-validation-framework/"
+    },
+    {
+      "date": "2024-10",
+      "event": "Open sourced Pydantic AI agent framework",
+      "url": "https://github.com/pydantic/pydantic-ai"
+    },
+    {
+      "date": "2025-02-06",
+      "event": "Appeared on Latent Space podcast: Agent Engineering with Pydantic + Graphs",
+      "url": "https://www.latent.space/p/pydantic"
+    },
+    {
+      "date": "2025-04",
+      "event": "Speaker at PyCon US 2025",
+      "url": "https://us.pycon.org/2025/speaker/profile/161/"
+    },
+    {
+      "date": "2025-07-10",
+      "event": "Appeared on SE Radio #676: The Pydantic Ecosystem",
+      "url": "https://se-radio.net/2025/07/se-radio-676-samuel-colvin-on-the-pydantic-ecosystem/"
+    },
+    {
+      "date": "2025-09",
+      "event": "Released Pydantic AI v1.0 — stable production release",
+      "url": "https://pydantic.dev/articles/pydantic-ai-v1"
+    },
+    {
+      "date": "2025-10-07",
+      "event": "Appeared on AI Engineering Podcast: Building Production-Ready AI Agents",
+      "url": "https://www.aiengineeringpodcast.com/episodepage/building-production-ready-ai-agents-with-pydantic-ai"
+    },
+    {
+      "date": "2025-12-04",
+      "event": "Appeared on Software Engineering Daily: Pydantic AI",
+      "url": "https://softwareengineeringdaily.com/2025/12/04/pydantic-ai-with-samuel-colvin/"
+    },
+    {
+      "date": "2026",
+      "event": "Pydantic surpassed 10 billion total downloads",
+      "url": "https://pydantic.dev/articles/pydantic-validation-10-billion-downloads"
+    }
+  ],
+  "key_contributions": [
+    {
+      "title": "Pydantic",
+      "description": "The most widely used data validation library in Python, with 300M+ monthly downloads. Pioneered using type hints for runtime validation.",
+      "url": "https://github.com/pydantic/pydantic"
+    },
+    {
+      "title": "pydantic-core",
+      "description": "Rust-based validation core powering Pydantic v2, delivering 5-50x performance improvements over the pure-Python v1.",
+      "url": "https://github.com/pydantic/pydantic-core"
+    },
+    {
+      "title": "Pydantic AI",
+      "description": "Type-safe AI agent framework bringing FastAPI-like ergonomics to LLM agents. Fastest-growing agent framework by downloads in 2025 (8M/month).",
+      "url": "https://github.com/pydantic/pydantic-ai"
+    },
+    {
+      "title": "Pydantic Logfire",
+      "description": "AI observability platform for production LLM and agent systems, providing tracing, monitoring and debugging.",
+      "url": "https://github.com/pydantic/logfire"
+    },
+    {
+      "title": "Jiter",
+      "description": "Fast, iterable JSON parser written in Rust, used as the JSON parsing backend in Pydantic.",
+      "url": "https://github.com/pydantic/jiter"
+    },
+    {
+      "title": "FastUI",
+      "description": "Framework for building web UIs defined by Python code, using Pydantic models for the component schema.",
+      "url": "https://github.com/pydantic/FastUI"
+    },
+    {
+      "title": "Pydantic Open Source Fund",
+      "description": "Annual fund investing $2,000+ per developer per year back into the open source ecosystem (currently $30k/year across 14 developers).",
+      "url": "https://pydantic.dev/articles/pydantic-oss-fund-2025"
+    }
+  ],
+  "quotes": [
+    {
+      "text": "Back in 2017, when I first started it, the different thing it was doing was using type hints to define your schema. That was controversial at the time... today that's no longer controversial in Python.",
+      "source": "Latent Space podcast, Feb 2025",
+      "url": "https://www.latent.space/p/pydantic"
+    },
+    {
+      "text": "Pydantic today is downloaded 300 million times a month. It's important to remember we're talking about GenAI today, but one of the powers of Pydantic is it is not just for GenAI.",
+      "source": "SE Radio #676, Jul 2025",
+      "url": "https://se-radio.net/2025/07/se-radio-676-samuel-colvin-on-the-pydantic-ecosystem/"
+    },
+    {
+      "text": "Good tools should be invisible — they should just work and get out of your way.",
+      "source": "Interview",
+      "url": "https://scolvin.com/"
+    },
+    {
+      "text": "For LLM agents to be reliable, they need a clear understanding of the tools they can access and the data they can expect — that's where Pydantic's principles of type safety become crucial.",
+      "source": "StartupHub.ai, Mar 2026",
+      "url": "https://www.startuphub.ai/ai-news/artificial-intelligence/2026/pydantic-ai-s-samuel-colvin-on-building-better-llm-agents"
+    }
+  ],
+  "social": {
+    "github": "https://github.com/samuelcolvin",
+    "twitter": "https://x.com/samuel_colvin",
+    "linkedin": "https://www.linkedin.com/in/samuel-colvin/",
+    "website": "https://scolvin.com/",
+    "blog": "https://pydantic.dev/articles"
+  },
+  "sources": [
+    {
+      "title": "Samuel Colvin — personal website",
+      "url": "https://scolvin.com/"
+    },
+    {
+      "title": "About Pydantic — Mission, Team & Story",
+      "url": "https://pydantic.dev/about"
+    },
+    {
+      "title": "Samuel Colvin | Sequoia Capital",
+      "url": "https://sequoiacap.com/founder/samuel-colvin/"
+    },
+    {
+      "title": "Sequoia backs Pydantic (TechCrunch, Feb 2023)",
+      "url": "https://techcrunch.com/2023/02/16/sequoia-backs-open-source-data-validation-framework-pydantic-to-commercialize-with-cloud-services/"
+    },
+    {
+      "title": "Sequoia backs Pydantic Series A (TechCrunch, Oct 2024)",
+      "url": "https://techcrunch.com/2024/10/01/sequoia-backs-pydantic-to-expand-beyond-its-open-source-data-validation-framework/"
+    },
+    {
+      "title": "Agent Engineering with Pydantic + Graphs — Latent Space",
+      "url": "https://www.latent.space/p/pydantic"
+    },
+    {
+      "title": "SE Radio 676: Samuel Colvin on the Pydantic Ecosystem",
+      "url": "https://se-radio.net/2025/07/se-radio-676-samuel-colvin-on-the-pydantic-ecosystem/"
+    },
+    {
+      "title": "Pydantic AI with Samuel Colvin — Software Engineering Daily",
+      "url": "https://softwareengineeringdaily.com/2025/12/04/pydantic-ai-with-samuel-colvin/"
+    },
+    {
+      "title": "Building Production-Ready AI Agents — AI Engineering Podcast",
+      "url": "https://www.aiengineeringpodcast.com/episodepage/building-production-ready-ai-agents-with-pydantic-ai"
+    },
+    {
+      "title": "Pydantic Just Hit 10 Billion Downloads",
+      "url": "https://pydantic.dev/articles/pydantic-validation-10-billion-downloads"
+    },
+    {
+      "title": "Exploring Pydantic with Samuel Colvin — Sourcegraph",
+      "url": "https://sourcegraph.com/blog/exploring-pydantic-with-samuel-colvin"
+    },
+    {
+      "title": "Durable Agents with Samuel Colvin — Vanishing Gradients",
+      "url": "https://hugobowne.substack.com/p/episode-71-durable-agents-how-to"
+    }
+  ]
+}
