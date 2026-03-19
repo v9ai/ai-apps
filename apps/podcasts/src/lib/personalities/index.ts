@@ -27,6 +27,7 @@ import jerryLiu from "../../../personalities/jerry-liu";
 import ilyaSutskever from "../../../personalities/ilya-sutskever";
 import joaoMoura from "../../../personalities/joao-moura";
 import samuelColvin from "../../../personalities/samuel-colvin";
+import jeffreyIp from "../../../personalities/jeffrey-ip";
 
 // Researchers & Thinkers
 import yannLecun from "../../../personalities/yann-lecun";
@@ -70,7 +71,7 @@ export const categories: Category[] = [
   {
     title: "Builders & Technical Leaders",
     slug: "builders",
-    personalities: [andrejKarpathy, borisCherny, harrisonChase, jerryLiu, ilyaSutskever, joaoMoura, samuelColvin],
+    personalities: [andrejKarpathy, borisCherny, harrisonChase, jerryLiu, ilyaSutskever, joaoMoura, samuelColvin, jeffreyIp],
   },
   {
     title: "Researchers & Thinkers",

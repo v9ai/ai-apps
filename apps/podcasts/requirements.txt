@@ -1,3 +1,4 @@
+crewai>=0.80
 spotipy>=2.24
 chromadb>=0.5
 sentence-transformers>=3.0

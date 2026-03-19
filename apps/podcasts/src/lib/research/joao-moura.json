@@ -1,0 +1,180 @@
+{
+  "slug": "joao-moura",
+  "name": "João Moura",
+  "generated_at": "2026-03-19T22:00:00+00:00",
+  "bio": "João Moura is a Brazilian software engineering leader with nearly 20 years of experience who founded CrewAI in October 2023 after building autonomous agents at Clearbit that generated 600+ inbound leads per day. Before CrewAI he was Director of AI Engineering at Clearbit (acquired by HubSpot), Engineering Manager at Toptal, and Lead Software Engineer at Packlane. CrewAI — a lean Python framework for orchestrating role-playing, collaborative AI agents built from scratch without LangChain dependencies — raised an $18M Series A led by Insight Partners in October 2024 with angels including Andrew Ng and Dharmesh Shah. By early 2026 the platform processes over 2 billion agentic workflows, running at 475M+ automations per month, with 150+ enterprise customers.",
+  "topics": [
+    "multi-agent AI orchestration",
+    "autonomous AI agents",
+    "enterprise AI automation",
+    "agentic workflow design",
+    "role-playing agent systems",
+    "LLM orchestration frameworks",
+    "AI-driven business process automation",
+    "open-source AI tooling"
+  ],
+  "timeline": [
+    {
+      "date": "2016",
+      "event": "Founded Urdog, a startup building smart collars for pets — early entrepreneurial venture before AI.",
+      "url": "https://www.favikon.com/blog/who-is-joao-moura"
+    },
+    {
+      "date": "2019",
+      "event": "Joined Packlane as Lead Software Engineer, contributing to product engineering across Ruby and JavaScript.",
+      "url": "https://www.linkedin.com/in/joaomdmoura"
+    },
+    {
+      "date": "2020",
+      "event": "Joined Toptal as Engineering Manager, leading distributed engineering teams remotely.",
+      "url": "https://www.linkedin.com/in/joaomdmoura"
+    },
+    {
+      "date": "2022-01",
+      "event": "Joined Clearbit as Senior Engineering Manager, later becoming Director of AI Engineering. Defined the company's AI product roadmap.",
+      "url": "https://www.insightpartners.com/ideas/crewai-scaleup-ai-story/"
+    },
+    {
+      "date": "2023-01",
+      "event": "HubSpot acquired Clearbit. Moura began experimenting with autonomous AI agents to automate internal content creation workflows, achieving 600+ new inbound leads per day.",
+      "url": "https://autogpt.net/crewai-joao-mouras-next-big-adventure/"
+    },
+    {
+      "date": "2023-10",
+      "event": "Finished building CrewAI — a Python framework for orchestrating collaborative, role-playing AI agents, built entirely from scratch without LangChain dependencies.",
+      "url": "https://github.com/crewAIInc/crewAI"
+    },
+    {
+      "date": "2023-11",
+      "event": "Released CrewAI as an open-source project on GitHub. Announced enterprise partnership with IBM to scale AI agent adoption.",
+      "url": "https://github.com/crewAIInc/crewAI"
+    },
+    {
+      "date": "2024-01",
+      "event": "CrewAI officially launched publicly. Rob Bailey (veteran AI entrepreneur) joined as COO. Within six months the company attracted 150+ enterprise customers.",
+      "url": "https://siliconangle.com/2024/10/22/agentic-ai-startup-crewai-closes-18m-funding-round/"
+    },
+    {
+      "date": "2024-05",
+      "event": "Launched multi-agent systems course on DeepLearning.AI, co-designed with Andrew Ng, teaching enterprise AI workflow development.",
+      "url": "https://www.insightpartners.com/ideas/crewai-scaleup-ai-story/"
+    },
+    {
+      "date": "2024-10",
+      "event": "Closed $18M Series A led by Insight Partners (boldstart ventures led seed). Investors include Blitzscaling Ventures, Craft Ventures, Earl Grey Capital, Andrew Ng, and Dharmesh Shah. Launched CrewAI Enterprise Cloud platform.",
+      "url": "https://x.com/joaomdmoura/status/1848739310159139161"
+    },
+    {
+      "date": "2025-06",
+      "event": "Appeared on Software Engineering Daily and Galileo's Chain of Thought podcast to discuss the emerging AI agent stack and enterprise agentic deployments.",
+      "url": "https://softwareengineeringdaily.com/2025/06/03/crew-ai-with-joao-moura/"
+    },
+    {
+      "date": "2025-09",
+      "event": "Spoke at ODSC AI X Podcast, announcing 475M+ agent automations per month and stating 'LLMs today are good enough for 99% of enterprise use cases'.",
+      "url": "https://odsc.medium.com/crewai-and-the-future-of-autonomous-agents-with-jo%C3%A3o-moura-b95312988d4b"
+    },
+    {
+      "date": "2026-01",
+      "event": "Published 'Lessons From 2 Billion Agentic Workflows' on the CrewAI blog, marking the 2B workflow milestone.",
+      "url": "https://blog.crewai.com/author/joao/"
+    },
+    {
+      "date": "2026-03",
+      "event": "Published 'Your First AI Agent Should Do One Thing Badly' — advocating for focused, iterative agent design over complex monolithic systems.",
+      "url": "https://blog.crewai.com/author/joao/"
+    }
+  ],
+  "key_contributions": [
+    {
+      "title": "CrewAI Framework",
+      "description": "Open-source Python framework for orchestrating role-playing, autonomous AI agents — built from scratch without LangChain dependencies. Empowers developers to define agents with roles, goals, and backstories that collaborate on complex tasks. Has grown to 100k+ GitHub stars and underpins 2B+ agentic workflows as of early 2026.",
+      "url": "https://github.com/crewAIInc/crewAI"
+    },
+    {
+      "title": "CrewAI Enterprise Cloud Platform",
+      "description": "Launched in October 2024, the Enterprise Cloud enables companies to deploy, monitor, and manage hundreds or thousands of AI agents in production. Addresses enterprise needs around provisioning, authentication, observability, and self-healing environments. Backed by 150+ enterprise customers within months of launch.",
+      "url": "https://siliconangle.com/2024/10/22/agentic-ai-startup-crewai-closes-18m-funding-round/"
+    },
+    {
+      "title": "DeepLearning.AI Multi-Agent Systems Course",
+      "description": "Co-designed a course on multi-agent systems with Andrew Ng on DeepLearning.AI (May 2024), teaching developers how to build enterprise-level AI workflows using the CrewAI framework. Significantly accelerated adoption among practitioners.",
+      "url": "https://www.insightpartners.com/ideas/crewai-scaleup-ai-story/"
+    },
+    {
+      "title": "IBM Enterprise AI Partnership",
+      "description": "Established a strategic partnership with IBM (November 2023) to scale AI agent adoption across large enterprises, integrating CrewAI into IBM's enterprise AI stack and validating the framework as production-ready infrastructure.",
+      "url": "https://www.insightpartners.com/ideas/crewai-scaleup-ai-story/"
+    }
+  ],
+  "quotes": [
+    {
+      "text": "LLMs today are good enough for 99% of enterprise use cases.",
+      "source": "ODSC AI X Podcast",
+      "url": "https://odsc.medium.com/crewai-and-the-future-of-autonomous-agents-with-jo%C3%A3o-moura-b95312988d4b"
+    },
+    {
+      "text": "We're now running over 475 million agent automations a month.",
+      "source": "ODSC AI X Podcast",
+      "url": "https://odsc.medium.com/crewai-and-the-future-of-autonomous-agents-with-jo%C3%A3o-moura-b95312988d4b"
+    },
+    {
+      "text": "AI agents will create MORE wealth than SaaS. Not only by replacing software, but by automating entire processes.",
+      "source": "LinkedIn / Twitter",
+      "url": "https://x.com/joaomdmoura"
+    },
+    {
+      "text": "Fully autonomous departments backed by AI? That was some of the most exciting things I've worked on.",
+      "source": "LinkedIn post",
+      "url": "https://www.linkedin.com/posts/joaomdmoura_fully-autonomous-departments-backed-by-ai-activity-7130285095780777985--4DP"
+    }
+  ],
+  "social": {
+    "github": "https://github.com/joaomdmoura",
+    "twitter": "https://x.com/joaomdmoura",
+    "linkedin": "https://www.linkedin.com/in/joaomdmoura",
+    "website": "https://blog.crewai.com/author/joao/"
+  },
+  "sources": [
+    {
+      "title": "CrewAI GitHub Repository",
+      "url": "https://github.com/crewAIInc/crewAI"
+    },
+    {
+      "title": "How CrewAI is orchestrating the next generation of AI Agents — Insight Partners",
+      "url": "https://www.insightpartners.com/ideas/crewai-scaleup-ai-story/"
+    },
+    {
+      "title": "Agentic AI startup CrewAI closes $18M funding round — SiliconANGLE",
+      "url": "https://siliconangle.com/2024/10/22/agentic-ai-startup-crewai-closes-18m-funding-round/"
+    },
+    {
+      "title": "Crew AI with João Moura — Software Engineering Daily",
+      "url": "https://softwareengineeringdaily.com/2025/06/03/crew-ai-with-joao-moura/"
+    },
+    {
+      "title": "CrewAI and the Future of Autonomous Agents with João Moura — ODSC",
+      "url": "https://odsc.medium.com/crewai-and-the-future-of-autonomous-agents-with-jo%C3%A3o-moura-b95312988d4b"
+    },
+    {
+      "title": "The Emerging AI Agent Stack — Chain of Thought Podcast",
+      "url": "https://podcasts.apple.com/nz/podcast/the-emerging-ai-agent-stack-crewais-jo%C3%A3o-moura/id1776879655?i=1000714486150"
+    },
+    {
+      "title": "CrewAI Redefines Business Automation Under João Moura — AutoGPT",
+      "url": "https://autogpt.net/crewai-joao-mouras-next-big-adventure/"
+    },
+    {
+      "title": "Who is João Moura? — Favikon",
+      "url": "https://www.favikon.com/blog/who-is-joao-moura"
+    },
+    {
+      "title": "João Moura — CrewAI Blog",
+      "url": "https://blog.crewai.com/author/joao/"
+    },
+    {
+      "title": "Series A announcement — João Moura on X",
+      "url": "https://x.com/joaomdmoura/status/1848739310159139161"
+    }
+  ]
+}
