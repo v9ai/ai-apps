@@ -83,6 +83,24 @@ The key move is **making specs executable.** A system prompt is a narrative spec
 
 This formalization addresses a core tension highlighted in research: the conflict between rigorous governance and development speed (**Mökander & Floridi, 2022**). By encoding governance rules (e.g., "never prescribe medication" as a schema constraint) into the build phase, you eliminate whole classes of post-hoc compliance checks. The spec *is* the governance mechanism.
 
+### The Spec Governance Gap: When Specs Become Code and Divergence Goes Undetected
+
+The Spec-Driven meta approach has a critical open problem that recent industry debate has surfaced.
+
+**The Gonzalez paradox: a sufficiently detailed spec is code.** Gabriella Gonzalez [argues](https://haskellforall.com/2026/03/a-sufficiently-detailed-spec-is-code) that if you try to make a specification precise enough to reliably generate a working implementation, "you must necessarily contort the document into code or something strongly resembling code." She dissects OpenAI's Symphony project, showing its SPEC.md is "less of a specification and more like pseudocode in markdown form." Her core claim: "Specification work is **supposed** to be harder than coding." The precision labor does not disappear — it just changes form. This echoes [Dijkstra's "separation of concerns" (1974)](https://www.cs.utexas.edu/~EWD/transcriptions/EWD04xx/EWD447.html) and [Borges's parable](https://en.wikipedia.org/wiki/On_Exactitude_in_Science) of a 1:1 map that is useless as a map.
+
+**But Gonzalez is solving a different problem than the one Spec-Driven addresses.** Her argument applies to specs-as-replacement-for-code. Spec-Driven as a meta approach is not about replacing code with specs. It is about making target behavior explicit, checkable, and enforceable. A Pydantic schema is code *and* a spec simultaneously. The Spec Ladder explicitly converges spec and code — that convergence is a feature, not a bug.
+
+**The empirical evidence for spec-implementation divergence is stark.** [SWE-bench](https://arxiv.org/abs/2310.06770) (ICLR 2024) tested LLMs against 2,294 real GitHub issues — the best model solved 1.96%. [SWE-agent](https://arxiv.org/abs/2405.15793) (NeurIPS 2024) improved this to 12.5%, meaning agents still fail ~87.5% of the time. [Sabra et al. (2025)](https://arxiv.org/abs/2508.14727) found **"no direct correlation between functional performance and code quality/security"** — code passing tests still diverges from specs. A [survey of 72+ studies](https://arxiv.org/abs/2512.05239) found ~40% of AI-generated code contains vulnerabilities from "incomplete understanding of program intent."
+
+**The Breunig triangle: spec, tests, and code must stay synchronized.** Drew Breunig [identifies the real operational problem](https://www.dbreunig.com/2026/03/04/the-spec-driven-development-triangle.html): spec-driven development is not a linear pipeline from spec → tests → code. It is a **triangle** where each node feeds back into the others. "The act of implementing code generates new decisions. Those decisions inform the spec." This parallels [Margaret Hamilton's](https://en.wikipedia.org/wiki/Margaret_Hamilton_(software_engineer)) Apollo-era insight and the [1968 NATO Software Engineering Conference](https://www.scrummanager.com/files/nato1968e.pdf), where Dijkstra warned "quality of the product can never be established afterwards." [ThoughtWorks](https://www.thoughtworks.com/en-us/insights/blog/agile-engineering-practices/spec-driven-development-unpacking-2025-new-engineering-practices) now warns: "Spec drift and hallucination are inherently difficult to avoid."
+
+**The governance question: who decides when to stop and replan?** [Janni Turunen](https://www.linkedin.com/in/janiturunen/) identifies the unresolved question: *who determines when divergence between specification and implementation warrants stopping work and replanning?* [Kolt (2025)](https://arxiv.org/abs/2501.07913) frames this through agency law: AI agents exhibit "information asymmetry, discretionary authority, and loyalty" problems — the same principal-agent dynamics that make corporate governance necessary.
+
+**External checkpoints as the solution.** [OpenAI](https://cdn.openai.com/papers/practices-for-governing-agentic-ai-systems.pdf) proposes constraining agent action spaces with human approval gates. [Anthropic](https://www.anthropic.com/research/building-effective-agents) recommends agents "pause for human feedback at checkpoints." [AgentSpec](https://arxiv.org/abs/2503.18666) (ICSE 2026) demonstrates runtime enforcement preventing unsafe executions in over 90% of code agent cases. Breunig's [Plumb](https://github.com/dbreunig/plumb) tool intercepts git commits, extracts decisions from diffs and agent traces, and **blocks the commit** until reviewed — infrastructure the agent cannot optimize around. [Qodo](https://www.qodo.ai) enforces ticket traceability during review; [Graphite](https://graphite.com) lets teams define codebase guidelines for AI review.
+
+The Spec Governance Gap reveals that Spec-Driven alone is necessary but insufficient for agentic development at scale. It requires pairing with **Eval-First** (detect behavioral divergence), **Observability-First** (detect decision divergence), and **HITL** (enforce intent alignment). Teams should establish a **spec-implementation reconciliation cadence** — a regular, automated, blocking checkpoint where spec, tests, and code are compared for drift.
+
 ## 7. The Integration Challenge: Multi-Model Routing and Cost Governance
 
 The **Multi-Model / Routing-First** approach recognizes the LLM layer as a fleet, not a single engine. Research by **Sofian et al. (2022)**, mapping AI's use within software engineering, highlights the "capability to make rapid, automated, impactful decisions." Routing is one such decision. It classifies task complexity and directs it to the optimal model for cost, latency, and capability.
@@ -119,6 +137,21 @@ The synthesis of recent academic research and industry patterns points to a fund
 The tools and methods will continue to evolve rapidly. The meta approaches are the stabilizing constants. They are the strategic layer that turns a collection of probabilistic components into a reliable system. As **Retzlaff et al. (2024)** insist, the paradigm is fundamentally human-in-the-loop. The meta approaches are how we, as engineers, architect that loop into the fabric of our systems. This moves us from building demos that impress to constructing guarantees that hold.
 
 **Further Reading & Citations:**
+*   Gonzalez, G. (2026). [A Sufficiently Detailed Spec is Code](https://haskellforall.com/2026/03/a-sufficiently-detailed-spec-is-code).
+*   Breunig, D. (2026). [Learnings from a No-Code Library: Keeping the Spec Driven Development Triangle in Sync](https://www.dbreunig.com/2026/03/04/the-spec-driven-development-triangle.html).
+*   Breunig, D. (2026). [The Rise of Spec-Driven Development](https://www.dbreunig.com/2026/02/06/the-rise-of-spec-driven-development.html).
+*   Breunig, D. (2026). [Plumb — spec-implementation reconciliation tool](https://github.com/dbreunig/plumb).
+*   Jimenez, C. E., et al. (2024). [SWE-bench: Can Language Models Resolve Real-World GitHub Issues?](https://arxiv.org/abs/2310.06770). ICLR 2024.
+*   Yang, J., et al. (2024). [SWE-agent: Agent-Computer Interfaces Enable Automated SE](https://arxiv.org/abs/2405.15793). NeurIPS 2024.
+*   Sabra, A., et al. (2025). [Assessing the Quality and Security of AI-Generated Code](https://arxiv.org/abs/2508.14727).
+*   Gao, R., et al. (2025). [A Survey of Bugs in AI-Generated Code](https://arxiv.org/abs/2512.05239).
+*   Wang, H., et al. (2025). [AgentSpec: Customizable Runtime Enforcement for LLM Agents](https://arxiv.org/abs/2503.18666). ICSE 2026.
+*   Kolt, N. (2025). [Governing AI Agents](https://arxiv.org/abs/2501.07913). Notre Dame Law Review.
+*   Shavit, Y., et al. (2023). [Practices for Governing Agentic AI Systems](https://cdn.openai.com/papers/practices-for-governing-agentic-ai-systems.pdf). OpenAI.
+*   Anthropic. (2024). [Building Effective Agents](https://www.anthropic.com/research/building-effective-agents).
+*   Dijkstra, E. W. (1974). [On the Role of Scientific Thought (EWD447)](https://www.cs.utexas.edu/~EWD/transcriptions/EWD04xx/EWD447.html).
+*   Naur, P. & Randell, B., eds. (1969). [NATO Software Engineering Conference Report](https://www.scrummanager.com/files/nato1968e.pdf).
+*   Hoare, C. A. R. (1996). [How Did Software Get So Reliable Without Proof?](https://link.springer.com/chapter/10.1007/3-540-60973-3_77). FME '96.
 *   Mökander, J., & Floridi, L. (2022). Ethics-Based Auditing to Bridge AI Principles and Practice.
 *   Retzlaff, C. O., et al. (2024). Reinforcement Learning is Fundamentally Human-in-the-Loop.
 *   Wieringa, M. (2020). What to Account for when Accounting for Algorithms.
