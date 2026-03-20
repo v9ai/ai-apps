@@ -97,13 +97,13 @@ flowchart LR
 
 | App | Description | Stack |
 |-----|-------------|-------|
-| [`nomadically.work`](apps/nomadically.work) | Remote EU job board aggregator with AI classification, CRM, and a multi-worker pipeline | Next.js 16, Neon, Apollo/GraphQL, CF Workers (TS + Rust/WASM + Python), Trigger.dev, Langfuse, LlamaIndex, Vanilla Extract, ReactFlow |
 | [`agentic-healthcare`](apps/agentic-healthcare) | Longitudinal blood test intelligence — clinical ratio tracking, health trajectories, AI Q&A | Next.js, Neon/Drizzle, S3/Unstructured, LangGraph, Qwen, promptfoo + deepeval evals |
-| [`law-adversarial`](apps/law-adversarial) | Legal brief stress-tester with adversarial multi-agent debate (Attacker -> Defender -> Judge) | Next.js, Supabase, DeepSeek R1 + Qwen Plus, D3, promptfoo evals |
-| [`podcasts`](apps/podcasts) | Humans of AI — editorial profiles of 90+ AI researchers and founders | Next.js, PandaCSS, CrewAI backend, RSS/JSON feeds, OG images, search, compare view |
-| [`research-thera`](apps/research-thera) | Multi-source therapeutic research platform (Crossref, PubMed, Semantic Scholar, OpenAlex, arXiv, Europe PMC) | Next.js, Mastra AI agents, Apollo/GraphQL, Neon/pgvector, Trigger.dev, Cloudflare R2/D1, better-auth, OpenAI TTS |
-| [`real-estate`](apps/real-estate) | Property intelligence platform — analyzer, cashflow, due diligence, portfolio, pipeline, AI advisor chat | Next.js, Neon/Drizzle/pgvector, Leaflet, Recharts, TanStack Table, FastAPI analyzer backend, deepeval evals |
 | [`knowledge`](apps/knowledge) | Knowledge management with AI agent evaluation | Next.js, Neon/Drizzle, Radix UI, deepeval evals |
+| [`law-adversarial`](apps/law-adversarial) | Legal brief stress-tester with adversarial multi-agent debate (Attacker -> Defender -> Judge) | Next.js, Supabase, DeepSeek R1 + Qwen Plus, D3, promptfoo evals |
+| [`nomadically.work`](apps/nomadically.work) | Remote EU job board aggregator with AI classification, CRM, and a multi-worker pipeline | Next.js 16, Neon, Apollo/GraphQL, CF Workers (TS + Rust/WASM + Python), Trigger.dev, Langfuse, LlamaIndex, Vanilla Extract, ReactFlow |
+| [`podcasts`](apps/podcasts) | Humans of AI — editorial profiles of 90+ AI researchers and founders | Next.js, PandaCSS, CrewAI backend, RSS/JSON feeds, OG images, search, compare view |
+| [`real-estate`](apps/real-estate) | Property intelligence platform — analyzer, cashflow, due diligence, portfolio, pipeline, AI advisor chat | Next.js, Neon/Drizzle/pgvector, Leaflet, Recharts, TanStack Table, FastAPI analyzer backend, deepeval evals |
+| [`research-thera`](apps/research-thera) | Multi-source therapeutic research platform (Crossref, PubMed, Semantic Scholar, OpenAlex, arXiv, Europe PMC) | Next.js, Mastra AI agents, Apollo/GraphQL, Neon/pgvector, Trigger.dev, Cloudflare R2/D1, better-auth, OpenAI TTS |
 | [`todo`](apps/todo) | Task management with auth | Next.js, Neon/Drizzle, @ai-apps/auth, @ai-apps/ui, vitest |
 | [`vadim.blog`](apps/vadim.blog) | Personal blog | Docusaurus, KaTeX, Mermaid, Vercel Analytics |
 
