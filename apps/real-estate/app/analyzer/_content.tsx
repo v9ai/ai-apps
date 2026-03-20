@@ -109,6 +109,51 @@ type EnvironmentalContext = {
   summary: string;
 };
 
+type RentalComparableData = {
+  title: string;
+  monthly_rent_eur: number;
+  size_m2: number | null;
+  rent_per_m2: number | null;
+  rooms: number | null;
+  zone: string | null;
+  url: string | null;
+};
+
+type RentalMarketData = {
+  avg_rent: number;
+  median_rent: number;
+  min_rent: number;
+  max_rent: number;
+  sample_count: number;
+  rent_per_m2_avg: number | null;
+  comparables: RentalComparableData[];
+};
+
+type ValidatedYieldData = {
+  gross_yield_pct: number;
+  net_yield_pct: number;
+  market_rent: number;
+  llm_estimate: number | null;
+  rent_confidence: string;
+};
+
+type RenovationItemData = {
+  category: string;
+  description: string;
+  cost_eur: number;
+  priority: string;
+};
+
+type RenovationEstimateData = {
+  scope: string;
+  items: RenovationItemData[];
+  total_cost_eur: number;
+  cost_per_m2: number;
+  duration_weeks: number;
+  roi_pct: number | null;
+  post_renovation_value: number | null;
+};
+
 type Result = {
   url: string;
   source: string;
@@ -119,6 +164,9 @@ type Result = {
   zone_stats: ZoneStats | null;
   price_history?: PriceSnapshot[];
   environmental?: EnvironmentalContext | null;
+  rental_market?: RentalMarketData | null;
+  validated_yield?: ValidatedYieldData | null;
+  renovation?: RenovationEstimateData | null;
 };
 
 const VERDICT_COLOR: Record<string, "green" | "blue" | "red"> = {
@@ -1157,6 +1205,99 @@ export function AnalyzerContent({ initialUrl }: { initialUrl?: string }) {
             {/* 3c2. ENVIRONMENTAL CONTEXT */}
             {result.environmental && result.environmental.hazards.length > 0 && (
               <EnvironmentalCard env={result.environmental} />
+            )}
+
+            {/* 3c3. RENTAL MARKET INTELLIGENCE */}
+            {result.rental_market && result.rental_market.sample_count > 0 && (
+              <div style={{ ...S.glass, borderLeft: "3px solid var(--blue-9)" }}>
+                <div style={{ ...S.secLabel, color: "var(--blue-11)" }}>Rental Market Intelligence</div>
+                <Flex gap="3" wrap="wrap" mb="3">
+                  <Flex align="center" gap="1">
+                    <Text size="1" color="gray" weight="bold" style={{ textTransform: "uppercase", letterSpacing: "0.06em" }}>Median Rent</Text>
+                    <Text size="4" weight="bold">{"\u20AC"}{result.rental_market.median_rent.toLocaleString()}/mo</Text>
+                  </Flex>
+                  <Text size="1" color="gray">&middot;</Text>
+                  <Flex align="center" gap="1">
+                    <Text size="1" color="gray" weight="bold" style={{ textTransform: "uppercase", letterSpacing: "0.06em" }}>Range</Text>
+                    <Text size="1" color="gray">{"\u20AC"}{result.rental_market.min_rent}{" \u2013 "}{"\u20AC"}{result.rental_market.max_rent}</Text>
+                  </Flex>
+                  <Text size="1" color="gray">&middot;</Text>
+                  <Text size="1" color="gray">{result.rental_market.sample_count} listing{result.rental_market.sample_count !== 1 ? "s" : ""}</Text>
+                  {result.rental_market.rent_per_m2_avg != null && (
+                    <>
+                      <Text size="1" color="gray">&middot;</Text>
+                      <Text size="1" color="gray">{"\u20AC"}{result.rental_market.rent_per_m2_avg.toFixed(1)}/m{"\u00B2"}/mo</Text>
+                    </>
+                  )}
+                </Flex>
+                {/* LLM vs Market comparison */}
+                {result.validated_yield && (
+                  <Flex gap="4" wrap="wrap" mb="2">
+                    <div style={{ flex: "1 1 140px", padding: "12px 14px", borderRadius: 10, background: "rgba(59,130,246,0.06)", border: "1px solid rgba(59,130,246,0.12)" }}>
+                      <Text size="1" color="gray" weight="bold" style={{ textTransform: "uppercase", letterSpacing: "0.06em", display: "block", marginBottom: 4 }}>Market Data</Text>
+                      <Text size="4" weight="bold" style={{ color: "var(--blue-11)" }}>{"\u20AC"}{result.validated_yield.market_rent}/mo</Text>
+                      <Flex gap="2" mt="1">
+                        <Badge size="1" variant="soft" color="blue">Gross {result.validated_yield.gross_yield_pct.toFixed(1)}%</Badge>
+                        <Badge size="1" variant="soft" color="teal">Net {result.validated_yield.net_yield_pct.toFixed(1)}%</Badge>
+                      </Flex>
+                    </div>
+                    {result.validated_yield.llm_estimate != null && (
+                      <div style={{ flex: "1 1 140px", padding: "12px 14px", borderRadius: 10, background: "rgba(255,255,255,0.03)", border: "1px solid rgba(255,255,255,0.06)" }}>
+                        <Text size="1" color="gray" weight="bold" style={{ textTransform: "uppercase", letterSpacing: "0.06em", display: "block", marginBottom: 4 }}>LLM Estimate</Text>
+                        <Text size="4" weight="bold">{"\u20AC"}{result.validated_yield.llm_estimate}/mo</Text>
+                        <Flex gap="2" mt="1">
+                          <Badge size="1" variant="soft" color={result.validated_yield.rent_confidence === "high" ? "green" : result.validated_yield.rent_confidence === "medium" ? "orange" : "red"}>
+                            {result.validated_yield.rent_confidence} confidence
+                          </Badge>
+                        </Flex>
+                      </div>
+                    )}
+                  </Flex>
+                )}
+              </div>
+            )}
+
+            {/* 3c4. RENOVATION ESTIMATE */}
+            {result.renovation && (
+              <div style={{ ...S.glass, borderLeft: "3px solid var(--teal-9)" }}>
+                <div style={{ ...S.secLabel, color: "var(--teal-11)" }}>Renovation Estimate</div>
+                <Flex gap="3" wrap="wrap" mb="3" align="center">
+                  <Badge size="2" variant="soft" color="teal" style={{ textTransform: "capitalize" }}>{result.renovation.scope}</Badge>
+                  <Text size="4" weight="bold">{"\u20AC"}{result.renovation.total_cost_eur.toLocaleString()}</Text>
+                  <Text size="1" color="gray">{"\u20AC"}{result.renovation.cost_per_m2.toFixed(0)}/m{"\u00B2"}</Text>
+                  <Text size="1" color="gray">&middot;</Text>
+                  <Text size="1" color="gray">{result.renovation.duration_weeks} weeks</Text>
+                  {result.renovation.roi_pct != null && (
+                    <>
+                      <Text size="1" color="gray">&middot;</Text>
+                      <Badge size="1" variant="soft" color={result.renovation.roi_pct > 50 ? "green" : result.renovation.roi_pct > 0 ? "teal" : "red"}>
+                        ROI {result.renovation.roi_pct.toFixed(0)}%
+                      </Badge>
+                    </>
+                  )}
+                </Flex>
+                {/* Itemized breakdown */}
+                <div style={{ display: "flex", flexDirection: "column", gap: 4 }}>
+                  {result.renovation.items.map((item, i) => (
+                    <Flex key={i} justify="between" align="center" style={{ padding: "6px 10px", borderRadius: 6, background: "rgba(255,255,255,0.02)", border: "1px solid rgba(255,255,255,0.04)" }}>
+                      <Flex gap="2" align="center" style={{ flex: 1, minWidth: 0 }}>
+                        <Text size="1" weight="bold" style={{ textTransform: "capitalize", color: "var(--gray-11)", minWidth: 70 }}>{item.category}</Text>
+                        <Text size="1" color="gray" style={{ overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{item.description}</Text>
+                      </Flex>
+                      <Text size="1" weight="bold" style={{ flexShrink: 0, fontVariantNumeric: "tabular-nums" }}>{"\u20AC"}{item.cost_eur.toLocaleString()}</Text>
+                    </Flex>
+                  ))}
+                </div>
+                {result.renovation.post_renovation_value != null && l.price_eur != null && (
+                  <Flex justify="between" align="center" mt="3" style={{ padding: "10px 12px", borderRadius: 8, background: "rgba(45,212,191,0.06)", border: "1px solid rgba(45,212,191,0.12)" }}>
+                    <Text size="1" color="gray">Post-renovation value</Text>
+                    <Flex gap="2" align="center">
+                      <Text size="1" color="gray" style={{ textDecoration: "line-through" }}>{"\u20AC"}{l.price_eur.toLocaleString()}</Text>
+                      <Text size="2" weight="bold" style={{ color: "var(--teal-11)" }}>{"\u20AC"}{result.renovation.post_renovation_value.toLocaleString()}</Text>
+                    </Flex>
+                  </Flex>
+                )}
+              </div>
             )}
 
             {/* 3d. INVESTMENT METRICS DASHBOARD */}

@@ -1,9 +1,12 @@
+import asyncio
 import json
 import logging
 import statistics
 from dataclasses import dataclass
 
-from openai import AsyncOpenAI
+from crewai import Agent as CrewAgent, Task, Crew, LLM
+from crewai.tools import tool
+
 from .models import ListingExtraction, ValuationResult, ComparableListing, ZoneStats
 from .config import settings
 from .scraper import _canonicalize_zone
@@ -19,6 +22,13 @@ from .market_data import get_or_build_prompt_section
 
 logger = logging.getLogger(__name__)
 
+# Instrument CrewAI for DeepEval observability and tracing
+try:
+    from deepeval.integrations.crewai import instrument_crewai
+    instrument_crewai()
+except Exception:
+    pass
+
 
 @dataclass
 class AnalyzerDeps:
@@ -31,27 +41,54 @@ class AnalyzerDeps:
     comparable_context: str | None = None
 
 
-def _build_client(api_key: str | None = None) -> AsyncOpenAI:
-    """Build the DeepSeek async client. Accepts optional key override for testing."""
-    return AsyncOpenAI(
-        base_url="https://api.deepseek.com/v1",
+# ---------------------------------------------------------------------------
+# LLM Configuration — DeepSeek via litellm (CrewAI's provider layer)
+# ---------------------------------------------------------------------------
+
+_llm: LLM | None = None
+
+
+def _build_llm(api_key: str | None = None) -> LLM:
+    """Build a CrewAI LLM instance pointing to DeepSeek."""
+    return LLM(
+        model="openai/deepseek-chat",
         api_key=api_key or settings.deepseek_api_key,
+        base_url="https://api.deepseek.com/v1",
     )
 
 
-_client: AsyncOpenAI | None = None
+def _get_llm() -> LLM:
+    """Lazy singleton LLM."""
+    global _llm
+    if _llm is None:
+        _llm = _build_llm()
+    return _llm
 
 
-def _get_client() -> AsyncOpenAI:
-    """Lazy singleton client."""
-    global _client
-    if _client is None:
-        _client = _build_client()
-    return _client
+# ---------------------------------------------------------------------------
+# CrewAI Tools — domain-specific validation
+# ---------------------------------------------------------------------------
+
+@tool
+def validate_valuation_output(valuation_json: str) -> str:
+    """Validate a valuation result for internal formula consistency.
+    Pass the full JSON string of the valuation to check for issues."""
+    try:
+        data = json.loads(valuation_json)
+        result = ValuationResult(**data)
+        issues = validate_valuation_formulas(result)
+        if issues:
+            return f"Formula issues found: {'; '.join(issues)}. Please fix these."
+        return "All formulas are consistent. Validation passed."
+    except Exception as e:
+        return f"Error parsing valuation: {e}"
 
 
-# DeepSeek — extracts structured data from raw listing text
-EXTRACTOR_SYSTEM_PROMPT = """You are a real estate data extraction specialist for Eastern European listings.
+# ---------------------------------------------------------------------------
+# System Prompts (used as CrewAI agent backstories)
+# ---------------------------------------------------------------------------
+
+EXTRACTOR_BACKSTORY = """You are a real estate data extraction specialist for Eastern European listings.
 Extract structured apartment data from listing page text.
 
 PRICE EXTRACTION (critical):
@@ -83,28 +120,9 @@ CONDITION mapping:
 - "Stare bună" → "good"
 - "Necesită reparație" → "needs_renovation"
 
-Return null for fields you cannot confidently determine.
+Return null for fields you cannot confidently determine."""
 
-Output a JSON object with these exact field names: title, price_eur, price_local, currency, size_m2, price_per_m2, rooms, floor, total_floors, zone, city, condition, features, parking_included, parking_price_eur."""
-
-
-async def extract_listing(text: str, client: AsyncOpenAI | None = None) -> ListingExtraction:
-    """Extract structured apartment data from raw listing text using DeepSeek."""
-    c = client or _get_client()
-    response = await c.chat.completions.create(
-        model="deepseek-chat",
-        messages=[
-            {"role": "system", "content": EXTRACTOR_SYSTEM_PROMPT},
-            {"role": "user", "content": text},
-        ],
-        response_format={"type": "json_object"},
-    )
-    data = json.loads(response.choices[0].message.content)
-    return ListingExtraction(**data)
-
-
-# Valuator — generates valuation verdict (DeepSeek)
-VALUATOR_SYSTEM_PROMPT = """You are a senior real estate investment analyst specializing in Eastern European markets.
+VALUATOR_BACKSTORY = """You are a senior real estate investment analyst specializing in Eastern European markets.
 Analyze apartment listings from Moldova (999.md) and Romania (imobiliare.ro).
 
 Market reference prices (EUR/m², 2025 — Chisinau market-wide avg ~1720, up ~12% from end-2024):
@@ -282,43 +300,83 @@ CHISINAU ZONE → STAGE MAPPING (2025):
       Romania: Bucharest Sector 1-2, Cluj center, Brasov center
     "declining": negative or flat appreciation, aging stock, reduced demand
       Moldova examples: Soviet-era industrial periphery (>5km from center), old unrenovated Telecentru panel blocks, outskirts with no transit
-      Romania: shrinking secondary cities (Vaslui, Bârlad etc.)
-
-Output a JSON object with all the required and derived metric fields described above."""
+      Romania: shrinking secondary cities (Vaslui, Bârlad etc.)"""
 
 
-async def valuate_listing(prompt: str, client: AsyncOpenAI | None = None) -> ValuationResult:
-    """Generate valuation verdict using DeepSeek, with retry on formula issues."""
-    c = client or _get_client()
-    messages = [
-        {"role": "system", "content": VALUATOR_SYSTEM_PROMPT},
-        {"role": "user", "content": prompt},
-    ]
-    result = None
+# ---------------------------------------------------------------------------
+# CrewAI Agent Factories — fresh per call for thread safety
+# ---------------------------------------------------------------------------
+
+def _make_extractor_agent() -> CrewAgent:
+    return CrewAgent(
+        role="Real Estate Data Extraction Specialist",
+        goal="Extract structured apartment data from Eastern European listing text with perfect accuracy",
+        backstory=EXTRACTOR_BACKSTORY,
+        llm=_get_llm(),
+        verbose=False,
+    )
+
+
+def _make_valuator_agent() -> CrewAgent:
+    return CrewAgent(
+        role="Senior Real Estate Investment Analyst",
+        goal="Produce accurate, formula-consistent property valuations for Eastern European markets",
+        backstory=VALUATOR_BACKSTORY,
+        llm=_get_llm(),
+        tools=[validate_valuation_output],
+        verbose=False,
+    )
+
+
+# ---------------------------------------------------------------------------
+# Public API — CrewAI-powered extraction and valuation
+# ---------------------------------------------------------------------------
+
+async def extract_listing(text: str) -> ListingExtraction:
+    """Extract structured apartment data from raw listing text using CrewAI + DeepSeek."""
+    agent = _make_extractor_agent()
+    task = Task(
+        description=text,
+        expected_output="Structured listing data with all available fields extracted from the text",
+        agent=agent,
+        output_pydantic=ListingExtraction,
+    )
+    crew = Crew(agents=[agent], tasks=[task], verbose=False)
+    result = await asyncio.to_thread(crew.kickoff)
+    return result.pydantic
+
+
+async def valuate_listing(prompt: str) -> ValuationResult:
+    """Generate valuation verdict using CrewAI + DeepSeek, with retry on formula issues."""
+    current_prompt = prompt
+    result_val = None
     for attempt in range(3):
-        response = await c.chat.completions.create(
-            model="deepseek-chat",
-            messages=messages,
-            response_format={"type": "json_object"},
+        agent = _make_valuator_agent()
+        task = Task(
+            description=current_prompt,
+            expected_output="Complete valuation analysis with all required and derived metric fields",
+            agent=agent,
+            output_pydantic=ValuationResult,
         )
-        content = response.choices[0].message.content
-        data = json.loads(content)
-        result = ValuationResult(**data)
+        crew = Crew(agents=[agent], tasks=[task], verbose=False)
+        result = await asyncio.to_thread(crew.kickoff)
+        result_val = result.pydantic
 
-        issues = validate_valuation_formulas(result)
+        issues = validate_valuation_formulas(result_val)
         severe = [i for i in issues if "verdict" in i.lower()]
         if severe and attempt < 2:
-            messages.append({"role": "assistant", "content": content})
-            messages.append({"role": "user", "content":
-                f"Valuation has formula inconsistencies — please fix: {'; '.join(severe)}"
-            })
+            current_prompt = (
+                f"{prompt}\n\n"
+                f"IMPORTANT: Fix these formula inconsistencies from your previous attempt: "
+                f"{'; '.join(severe)}"
+            )
             continue
 
         for issue in issues:
             logger.warning("Valuation formula issue: %s", issue)
-        return result
+        return result_val
 
-    return result
+    return result_val
 
 
 def validate_valuation_formulas(v: ValuationResult) -> list[str]:
@@ -478,7 +536,6 @@ async def analyze_listing(
     )
 
     # For Moldovan listings: fetch comparables FIRST to anchor fair value with real market data
-    # (comparable sales approach: research shows comp median beats reference tables by 20-30% RMSE)
     raw_comparables: list = []
     comp_zone_context: str | None = None
     if is_moldovan:
@@ -653,8 +710,67 @@ async def analyze_listing_v2(
         except Exception as e:
             logger.warning("Market reference fetch failed: %s", e)
 
+    # Fetch rental market data in parallel with valuation
+    rental_market_data = None
+    rental_context = ""
+    try:
+        from .rental_analysis import analyze_rental_market
+        rental_market_data = await analyze_rental_market(
+            city=listing.city, zone=listing.zone,
+            rooms=listing.rooms, size_m2=listing.size_m2, url=url,
+        )
+        if rental_market_data and rental_market_data.sample_count > 0:
+            rental_context = (
+                f"\n\nRENTAL MARKET DATA ({rental_market_data.sample_count} active rentals): "
+                f"median €{rental_market_data.median_rent}/mo, "
+                f"avg €{rental_market_data.avg_rent}/mo, "
+                f"range €{rental_market_data.min_rent}–€{rental_market_data.max_rent}/mo"
+            )
+            if rental_market_data.rent_per_m2_avg:
+                rental_context += f", avg €{rental_market_data.rent_per_m2_avg:.1f}/m²/mo"
+    except Exception as e:
+        logger.warning("Rental market fetch failed: %s", e)
+
     valuation_prompt = _build_valuation_prompt(listing, comp_zone_context, env_context_text, market_ref_prompt)
+    if rental_context:
+        valuation_prompt += rental_context
     valuation = await valuate_listing(valuation_prompt)
+
+    # Compute validated yield from real rental data
+    validated_yield = None
+    if rental_market_data and rental_market_data.sample_count > 0 and listing.price_eur:
+        try:
+            from .rental_analysis import compute_validated_yield
+            validated_yield = compute_validated_yield(
+                purchase_price=listing.price_eur,
+                rental_data=rental_market_data,
+                llm_estimate=valuation.rental_estimate_eur,
+            )
+        except Exception as e:
+            logger.warning("Validated yield computation failed: %s", e)
+
+    # Renovation estimation for properties that need it
+    renovation_estimate = None
+    if listing.condition in ("needs_renovation", "good") and listing.size_m2 and listing.price_per_m2:
+        try:
+            from .renovation import estimate_renovation, compute_renovation_roi
+            reno = estimate_renovation(
+                size_m2=listing.size_m2,
+                condition=listing.condition,
+                city=listing.city,
+            )
+            roi = compute_renovation_roi(
+                size_m2=listing.size_m2,
+                current_price_per_m2=listing.price_per_m2,
+                renovation=reno,
+                city=listing.city,
+            )
+            renovation_estimate = {
+                "scope": reno,
+                "roi": roi,
+            }
+        except Exception as e:
+            logger.warning("Renovation estimation failed: %s", e)
 
     comparables: list[ComparableListing] = []
     for raw in raw_comparables:
@@ -675,6 +791,9 @@ async def analyze_listing_v2(
         "feature_summary": feature_summary,
         "environmental": env_result,
         "neighborhood": neighborhood_profile,
+        "rental_market": rental_market_data,
+        "validated_yield": validated_yield,
+        "renovation": renovation_estimate,
     }
 
     return listing, valuation, comparables, zone_stats, extras

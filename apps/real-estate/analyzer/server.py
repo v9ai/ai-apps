@@ -25,6 +25,14 @@ from .predict_london import LondonPredictionRequest, LondonPredictionResponse, p
 from .batch import batch_router
 from .portfolio import portfolio_router, init_watchlist_tables
 from .trends import trends_router
+from .cashflow import cashflow_router
+from .rental_analysis import rental_router
+from .renovation import renovation_router
+from .due_diligence import due_diligence_router
+from .portfolio_analytics import analytics_router
+from .pipeline import pipeline_router
+from .alerts import alerts_router, init_alert_tables
+from .chat import chat_router, init_chat_tables
 from .market_data import init_market_tables
 from .valuation_config import init_valuation_config
 from .models import QualityAssessment, FeatureSummary, EnvironmentalContextResponse, EnvironmentalHazardResponse
@@ -115,6 +123,8 @@ async def lifespan(app: FastAPI):
     await init_market_tables(settings.database_url)
     await init_watchlist_tables(settings.database_url)
     await init_valuation_config(settings.database_url)
+    await init_alert_tables(settings.database_url)
+    await init_chat_tables(settings.database_url)
     yield
 
 
@@ -128,10 +138,18 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-# Include new routers
+# Include routers
 app.include_router(batch_router)
 app.include_router(portfolio_router)
 app.include_router(trends_router)
+app.include_router(cashflow_router)
+app.include_router(rental_router)
+app.include_router(renovation_router)
+app.include_router(due_diligence_router)
+app.include_router(analytics_router)
+app.include_router(pipeline_router)
+app.include_router(alerts_router)
+app.include_router(chat_router)
 
 
 # ---------------------------------------------------------------------------
@@ -248,6 +266,31 @@ async def analyze(req: AnalysisRequest):
             summary=env.summary,
         )
 
+    # Build rental market data
+    from .models import RentalMarketData, RentalComparable, ValidatedYield, RenovationEstimate, RenovationItem
+    rental_market_response = None
+    if extras.get("rental_market"):
+        rental_market_response = extras["rental_market"]
+
+    validated_yield_response = None
+    if extras.get("validated_yield"):
+        validated_yield_response = extras["validated_yield"]
+
+    renovation_response = None
+    if extras.get("renovation"):
+        reno_data = extras["renovation"]
+        scope = reno_data["scope"]
+        roi = reno_data["roi"]
+        renovation_response = RenovationEstimate(
+            scope=scope.scope,
+            items=[RenovationItem(**i.model_dump()) for i in scope.items],
+            total_cost_eur=scope.total_cost_eur,
+            cost_per_m2=scope.cost_per_m2,
+            duration_weeks=scope.duration_weeks,
+            roi_pct=roi.roi_pct,
+            post_renovation_value=roi.post_renovation_value,
+        )
+
     return AnalysisResponse(
         url=url,
         source=source,
@@ -261,6 +304,9 @@ async def analyze(req: AnalysisRequest):
         citations=citations_data,
         feature_summary=feature_data,
         environmental=env_data,
+        rental_market=rental_market_response,
+        validated_yield=validated_yield_response,
+        renovation=renovation_response,
         meta=AnalysisMeta(
             processing_time_ms=total_ms,
             scrape_time_ms=scrape_ms,

@@ -169,6 +169,51 @@ class ResponseMeta(BaseModel):
     timestamp: datetime
 
 
+class RentalComparable(BaseModel):
+    title: str
+    monthly_rent_eur: int
+    size_m2: float | None = None
+    rent_per_m2: float | None = None
+    rooms: int | None = None
+    zone: str | None = None
+    url: str | None = None
+
+
+class RentalMarketData(BaseModel):
+    avg_rent: int
+    median_rent: int
+    min_rent: int
+    max_rent: int
+    sample_count: int
+    rent_per_m2_avg: float | None = None
+    comparables: list[RentalComparable] = Field(default_factory=list)
+
+
+class ValidatedYield(BaseModel):
+    gross_yield_pct: float
+    net_yield_pct: float
+    market_rent: int
+    llm_estimate: int | None
+    rent_confidence: str
+
+
+class RenovationItem(BaseModel):
+    category: str
+    description: str
+    cost_eur: int
+    priority: str
+
+
+class RenovationEstimate(BaseModel):
+    scope: str
+    items: list[RenovationItem] = Field(default_factory=list)
+    total_cost_eur: int
+    cost_per_m2: float
+    duration_weeks: int
+    roi_pct: float | None = None
+    post_renovation_value: int | None = None
+
+
 class AnalysisResponse(BaseModel):
     url: str
     source: Literal["999md", "imobiliare", "unknown"]
@@ -182,6 +227,9 @@ class AnalysisResponse(BaseModel):
     citations: AnalysisCitations | None = None
     feature_summary: FeatureSummary | None = None
     environmental: EnvironmentalContextResponse | None = None
+    rental_market: RentalMarketData | None = None
+    validated_yield: ValidatedYield | None = None
+    renovation: RenovationEstimate | None = None
     meta: ResponseMeta | None = None
 
 

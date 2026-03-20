@@ -95,6 +95,59 @@ EXCEPTION WHEN others THEN NULL;
 END $$;
 """
 
+CREATE_RENTAL_SNAPSHOTS = """
+CREATE TABLE IF NOT EXISTS rental_snapshots (
+    id SERIAL PRIMARY KEY,
+    url TEXT NOT NULL,
+    city TEXT, zone TEXT, rooms INTEGER,
+    monthly_rent_eur INTEGER, size_m2 REAL, rent_per_m2 REAL,
+    scraped_at TIMESTAMPTZ DEFAULT NOW(),
+    UNIQUE(url, monthly_rent_eur)
+);
+"""
+
+MIGRATE_WATCHLIST_PIPELINE = """
+DO $$ BEGIN
+  ALTER TABLE watchlist ADD COLUMN IF NOT EXISTS pipeline_stage TEXT DEFAULT 'discovered';
+  ALTER TABLE watchlist ADD COLUMN IF NOT EXISTS notes TEXT;
+  ALTER TABLE watchlist ADD COLUMN IF NOT EXISTS target_price_eur INTEGER;
+  ALTER TABLE watchlist ADD COLUMN IF NOT EXISTS tags TEXT[] DEFAULT '{}';
+EXCEPTION WHEN others THEN NULL;
+END $$;
+"""
+
+CREATE_ALERTS_TABLES = """
+CREATE TABLE IF NOT EXISTS saved_alerts (
+    id SERIAL PRIMARY KEY, label TEXT,
+    criteria JSONB NOT NULL,
+    created_at TIMESTAMPTZ DEFAULT NOW(),
+    last_run_at TIMESTAMPTZ, is_active BOOLEAN DEFAULT TRUE
+);
+"""
+
+CREATE_ALERT_MATCHES = """
+CREATE TABLE IF NOT EXISTS alert_matches (
+    id SERIAL PRIMARY KEY,
+    alert_id INTEGER REFERENCES saved_alerts(id) ON DELETE CASCADE,
+    listing_url TEXT NOT NULL,
+    title TEXT, price_eur INTEGER, size_m2 REAL, price_per_m2 REAL,
+    rooms INTEGER, zone TEXT,
+    matched_at TIMESTAMPTZ DEFAULT NOW(),
+    seen BOOLEAN DEFAULT FALSE,
+    UNIQUE(alert_id, listing_url)
+);
+"""
+
+CREATE_CHAT_SESSIONS = """
+CREATE TABLE IF NOT EXISTS chat_sessions (
+    id TEXT PRIMARY KEY,
+    messages JSONB DEFAULT '[]',
+    context_urls TEXT[] DEFAULT '{}',
+    created_at TIMESTAMPTZ DEFAULT NOW(),
+    updated_at TIMESTAMPTZ DEFAULT NOW()
+);
+"""
+
 
 async def get_conn():
     return await psycopg.AsyncConnection.connect(settings.database_url, row_factory=dict_row)
@@ -104,6 +157,11 @@ async def init_db():
     async with await get_conn() as conn:
         await conn.execute(CREATE_TABLE)
         await conn.execute(MIGRATE_TABLE)
+        await conn.execute(CREATE_RENTAL_SNAPSHOTS)
+        await conn.execute(MIGRATE_WATCHLIST_PIPELINE)
+        await conn.execute(CREATE_ALERTS_TABLES)
+        await conn.execute(CREATE_ALERT_MATCHES)
+        await conn.execute(CREATE_CHAT_SESSIONS)
         await conn.commit()
 
 
@@ -242,6 +300,24 @@ async def get_price_history(url: str) -> list[dict]:
             (url,),
         )
         return await cursor.fetchall()
+
+
+async def record_rental_snapshot(
+    url: str, city: str | None, zone: str | None, rooms: int | None,
+    monthly_rent_eur: int, size_m2: float | None,
+):
+    """Record a rental listing snapshot."""
+    rent_per_m2 = round(monthly_rent_eur / size_m2, 2) if size_m2 and size_m2 > 0 else None
+    async with await get_conn() as conn:
+        await conn.execute(
+            """
+            INSERT INTO rental_snapshots (url, city, zone, rooms, monthly_rent_eur, size_m2, rent_per_m2)
+            VALUES (%s, %s, %s, %s, %s, %s, %s)
+            ON CONFLICT (url, monthly_rent_eur) DO NOTHING
+            """,
+            (url, city, zone, rooms, monthly_rent_eur, size_m2, rent_per_m2),
+        )
+        await conn.commit()
 
 
 async def get_recent_listings(limit: int = 20) -> list[dict]:
