@@ -1,3 +1,4 @@
+import { Suspense } from "react";
 import { CashFlowContent } from "./_content";
 
 export const metadata = {
@@ -6,5 +7,9 @@ export const metadata = {
 };
 
 export default function CashFlowPage() {
-  return <CashFlowContent />;
+  return (
+    <Suspense>
+      <CashFlowContent />
+    </Suspense>
+  );
 }
