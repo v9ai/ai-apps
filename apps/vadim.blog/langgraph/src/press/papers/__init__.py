@@ -15,15 +15,36 @@ T = TypeVar("T")
 
 
 class PaperSource(Enum):
+    # Academic databases
     SEMANTIC_SCHOLAR = "SemanticScholar"
     OPENALEX = "OpenAlex"
     CROSSREF = "Crossref"
     CORE = "CORE"
-    # Editorial sources
+    # ── AI engineering & MLOps/LLMOps ────────────────────────────────────
+    NEPTUNE_AI = "NeptuneAI"
+    WANDB = "WeightsAndBiases"
+    ARIZE_AI = "ArizeAI"
+    KDNUGGETS = "KDnuggets"
+    ML_MASTERY = "MachineLearningMastery"
+    DATACAMP = "DataCamp"
+    # ── AI research & technical analysis ─────────────────────────────────
+    MARKTECHPOST = "MarkTechPost"
+    TOWARDS_AI = "TowardsAI"
+    ANALYTICS_VIDHYA = "AnalyticsVidhya"
+    AI_PLAIN_ENGLISH = "AIPlainEnglish"
+    # ── Medium-based AI publications ─────────────────────────────────────
+    TOWARDS_DATA_SCIENCE = "TowardsDataScience"
+    BETTER_PROGRAMMING = "BetterProgramming"
+    LEVEL_UP_CODING = "LevelUpCoding"
+    # ── Developer platforms with editorial gates ─────────────────────────
     INFOQ = "InfoQ"
     THE_NEW_STACK = "TheNewStack"
-
-    TOWARDS_DATA_SCIENCE = "TowardsDataScience"
+    DZONE = "DZone"
+    LOGROCKET = "LogRocket"
+    SITEPOINT = "SitePoint"
+    # ── Industry & specialised AI ────────────────────────────────────────
+    SMASHING_MAG = "SmashingMagazine"
+    FREECODECAMP = "freeCodeCamp"
 
 
 @dataclass

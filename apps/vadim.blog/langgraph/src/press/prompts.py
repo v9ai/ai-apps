@@ -99,8 +99,8 @@ NICHE: {niche}
 
 You receive a chosen topic, angle, and two types of sources:
 1. **Academic papers** found via Semantic Scholar, OpenAlex, Crossref, and CORE APIs
-2. **Editorial articles** from top-tier tech publications (InfoQ, The New Stack,
-   Towards Data Science)
+2. **Editorial articles** from niche AI engineering publications (Neptune.ai, W&B,
+   Arize AI, KDnuggets, MarkTechPost, Towards Data Science, InfoQ, The New Stack)
 
 Your job is to synthesize both academic and practitioner perspectives into
 structured research notes.
@@ -245,8 +245,8 @@ def journalism_researcher_with_editorial(topic: str) -> str:
 
 TOPIC: {topic}
 
-You receive the topic AND a set of editorial articles from top-tier tech
-publications (InfoQ, The New Stack, Towards Data Science).
+You receive the topic AND a set of editorial articles from niche AI engineering
+publications (Neptune.ai, W&B, Arize AI, KDnuggets, MarkTechPost, TDS, InfoQ).
 Investigate the topic using both your knowledge and the editorial sources
 provided.
 
@@ -738,6 +738,399 @@ Rules:
 - Attribute claims to their origin when the source provides attribution
 - No filler, no generic AI phrasing, no "in this article we will…"
 - Every paragraph must earn its place with a distinct insight"""
+
+
+# ── review pipeline prompts ──────────────────────────────────────────────────
+
+# Publication profiles used by the review pipeline to tailor editorial feedback.
+# Each entry includes submission info, best pitch angles, and payment status.
+PUBLICATIONS: dict[str, dict[str, str]] = {
+    # ── AI Engineering & MLOps/LLMOps ────────────────────────────────────
+    "neptune-ai": {
+        "name": "Neptune.ai Blog",
+        "audience": "MLOps engineers and AI builders focused on experiment tracking, "
+                    "model monitoring, and evaluation pipelines",
+        "tone": "Practitioner-first, production-focused. First person OK. Code-heavy.",
+        "requirements": "Pays guest contributors. Pitch via email. Must include production "
+                        "code examples. Focus on eval pipelines, observability, LLM monitoring. "
+                        "1500-3000 words.",
+        "pitch": "Eval pipelines, Langfuse observability, LLM monitoring patterns.",
+    },
+    "wandb": {
+        "name": "Weights & Biases (Fully Connected)",
+        "audience": "ML practitioners focused on experiment tracking, evaluation, "
+                    "and production ML workflows",
+        "tone": "Technical blog with research depth. Experiment-driven. Reproducible.",
+        "requirements": "Pays for guest posts. Pitch required. Include W&B integration "
+                        "examples or comparative analysis. 1500-3000 words.",
+        "pitch": "LLM-as-Judge biases, eval-driven development, production AI evals.",
+    },
+    "arize-ai": {
+        "name": "Arize AI Blog",
+        "audience": "ML engineers building AI observability, LLM monitoring, "
+                    "and evaluation systems",
+        "tone": "Technical analysis by their ML team. Production-oriented.",
+        "requirements": "Pitch via email. Focus on AI observability patterns, LLM monitoring, "
+                        "evaluation compliance. 1200-2500 words.",
+        "pitch": "Langfuse vs Arize comparison, LLM observability, healthcare AI eval.",
+    },
+    "kdnuggets": {
+        "name": "KDnuggets",
+        "audience": "500k+ monthly readers. Data science and ML practitioners, career-focused",
+        "tone": "Practical, tutorial-focused, how-to oriented. Authoritative since 1997.",
+        "requirements": "Contact to contribute. Step-by-step structure. Include code snippets. "
+                        "Address 'what you will learn' upfront. 1000-2500 words.",
+        "pitch": "Eval-driven development framework, LLM-as-Judge production pitfalls.",
+    },
+    "ml-mastery": {
+        "name": "Machine Learning Mastery",
+        "audience": "ML practitioners and learners. Massive SEO authority in ML tutorials",
+        "tone": "Tutorial-style, step-by-step, highly structured. Beginner-friendly framing "
+                "of advanced topics.",
+        "requirements": "Pitch via contact form. Must be original, educational. Include "
+                        "complete code examples. 1500-3000 words.",
+        "pitch": "LLM self-correction research explainer, production RAG with pgvector, "
+                 "eval pipelines for healthcare AI.",
+    },
+    "datacamp": {
+        "name": "DataCamp Community Blog",
+        "audience": "Data science learners and practitioners. Large learner audience",
+        "tone": "Tutorial-style, educational, beginner-to-intermediate friendly.",
+        "requirements": "Apply as contributor. Include prerequisites, step-by-step code, "
+                        "and learning outcomes. 1500-3000 words.",
+        "pitch": "LangGraph + DeepSeek agent tutorial, LlamaIndex embeddings walkthrough, "
+                 "CrewAI deep-dive.",
+    },
+    # ── AI Research & Technical Analysis ─────────────────────────────────
+    "marktechpost": {
+        "name": "MarkTechPost",
+        "audience": "ML engineers, ML researchers, and data scientists",
+        "tone": "Research digest style. Short, dense, technically precise. "
+                "Bridges academic research and real-world applications.",
+        "requirements": "Email [email protected]. Guest writers get login credentials. "
+                        "Summarize paper contributions clearly. Include key metrics/results. "
+                        "Link to papers and code repos. 500-1200 words.",
+        "pitch": "LLM self-correction research synthesis, multi-agent architecture comparison.",
+    },
+    "towards-ai": {
+        "name": "Towards AI",
+        "audience": "AI/ML practitioners and researchers. Part of Medium Boost program",
+        "tone": "Cutting-edge research focus. Technically precise. First person OK.",
+        "requirements": "Become a contributor via towardsai.net. Editorial review + boost "
+                        "nomination. Original content. 1500-3000 words.",
+        "pitch": "Schema-first RAG, DeepEval healthcare compliance, eval-gated grounding.",
+    },
+    "analytics-vidhya": {
+        "name": "Analytics Vidhya",
+        "audience": "Data science learners and practitioners. Large global audience",
+        "tone": "Tutorial-style, beginner-to-intermediate friendly. Compare approaches.",
+        "requirements": "Apply as contributor. Include prerequisites section. Step-by-step "
+                        "with screenshots/code. Prefers original. 1500-3000 words.",
+        "pitch": "LlamaIndex embeddings for healthcare RAG, pgvector production pipeline, "
+                 "LangGraph pre-screening agent.",
+    },
+    "ai-plain-english": {
+        "name": "AI in Plain English",
+        "audience": "Broad AI audience. Accessible explanations of complex topics",
+        "tone": "Clear, jargon-free explanations. Make advanced concepts accessible. "
+                "First person OK.",
+        "requirements": "Apply as writer via ai.plainenglish.io. Editorial review. "
+                        "1200-2500 words.",
+        "pitch": "LLM-as-Judge explainer for non-specialists, AI SDLC two-layer model, "
+                 "why 88% of AI pilots fail.",
+    },
+    # ── Medium-based AI publications ─────────────────────────────────────
+    "towards-data-science": {
+        "name": "Towards Data Science",
+        "audience": "950k+ social followers, 150k+ newsletter subscribers. "
+                    "Data scientists, ML engineers, AI practitioners",
+        "tone": "Technically precise, tutorial-oriented, code-heavy. First person OK.",
+        "requirements": "Editorial board review. Payment program. Must include working code "
+                        "examples. Prefer reproducible experiments. 1500-3000 words.",
+        "pitch": "LLM-as-Judge, eval-driven development, Claude Code agent internals.",
+    },
+    "better-programming": {
+        "name": "Better Programming",
+        "audience": "Software engineers. Full-stack and backend focused",
+        "tone": "Engineering blog. Production-focused. Architecture decisions.",
+        "requirements": "Submit via Medium. Editorial review. Include code examples and "
+                        "architecture decisions. 1500-3000 words.",
+        "pitch": "Claude Code agent teams, BMAD + Langfuse in production, "
+                 "Trigger.dev deep dive.",
+    },
+    "level-up-coding": {
+        "name": "Level Up Coding",
+        "audience": "Developers learning new tools and frameworks",
+        "tone": "Tutorial-style with clear code examples. Step-by-step.",
+        "requirements": "Submit via Medium. Editorial review. Hands-on tutorials with "
+                        "complete code. 1200-2500 words.",
+        "pitch": "LangSmith prompt management, Langfuse tracing walkthrough, "
+                 "OpenRouter + DeepSeek integration.",
+    },
+    # ── Developer platforms with editorial gates ─────────────────────────
+    "infoq": {
+        "name": "InfoQ",
+        "audience": "Senior software engineers and architects. Very high credibility",
+        "tone": "Deep technical analysis. Architecture-focused. Experience reports. "
+                "Original only. Editor + peer review.",
+        "requirements": "Submit via infoq.com/contribute. Include architecture diagrams or "
+                        "decision frameworks. Real-world case studies preferred. 2000-4000 words.",
+        "pitch": "AI SDLC two-layer model, multi-agent Rust vs Claude paradigms, "
+                 "production LLM failure post-mortems.",
+    },
+    "the-new-stack": {
+        "name": "The New Stack",
+        "audience": "DevOps, cloud-native, and platform engineering practitioners",
+        "tone": "News-style technical reporting with practitioner perspective. "
+                "Staff editorial review.",
+        "requirements": "Submit via thenewstack.io/contributions. Timely angle. Include "
+                        "vendor-neutral analysis. Quote practitioners. 1200-2500 words.",
+        "pitch": "DORA metrics platform engineering, Trigger.dev background jobs, "
+                 "concurrent AI agents on Cloudflare Workers.",
+    },
+    "dzone": {
+        "name": "DZone",
+        "audience": "Enterprise developers. Dedicated AI zone. MVB program",
+        "tone": "Technical how-to with enterprise context. Zone leaders review submissions.",
+        "requirements": "Submit via dzone.com/pages/contribute. Include production patterns "
+                        "and decision frameworks. 1200-2500 words.",
+        "pitch": "Production LLMOps patterns, healthcare AI compliance, "
+                 "concurrent agents on Cloudflare Workers.",
+    },
+    "logrocket": {
+        "name": "LogRocket Blog",
+        "audience": "Frontend and full-stack developers",
+        "tone": "Tutorial-style with production focus. Staff editorial review.",
+        "requirements": "Pays contributors. Submit via blog.logrocket.com/write-for-us. "
+                        "Include complete code examples. 1500-3000 words.",
+        "pitch": "Playwright + Figma MCP for pixel-perfect UI, streaming TTS architecture, "
+                 "production FastAPI patterns.",
+    },
+    "sitepoint": {
+        "name": "SitePoint",
+        "audience": "Web developers and engineers",
+        "tone": "Tutorial-style with modern web focus. Editorial review.",
+        "requirements": "Pitch via editorial. Include code examples and demos. "
+                        "1200-2500 words.",
+        "pitch": "Cloudflare Workers AI deployment, OpenAI TTS to R2 streaming, "
+                 "production AI job classification.",
+    },
+    # ── Industry & specialised ───────────────────────────────────────────
+    "smashing-magazine": {
+        "name": "Smashing Magazine",
+        "audience": "Professional web developers. High editorial standards",
+        "tone": "In-depth technical articles. Editorial oversight. Pays honorarium.",
+        "requirements": "Submit via smashingmagazine.com/write-for-us. Full credit + payment. "
+                        "Must be original, in-depth. 2000-4000 words.",
+        "pitch": "Playwright + Figma MCP pixel-perfect workflow, AI-driven UI testing.",
+    },
+    "freecodecamp": {
+        "name": "freeCodeCamp",
+        "audience": "Millions of monthly readers. Developers learning new skills",
+        "tone": "Tutorial-style, educational. Editorial team proofreads. Accessible.",
+        "requirements": "Apply as contributor via freecodecamp.org/news. Complete, "
+                        "working tutorials. 1500-4000 words.",
+        "pitch": "LangGraph agent tutorial, Claude Code agent walkthrough, "
+                 "DeepSeek + Ollama local setup guide.",
+    },
+}
+
+
+def publication_fit_scorer() -> str:
+    """Prompt that scores a draft against all 20 publications at once."""
+    # Build the catalogue from PUBLICATIONS
+    catalogue_lines = []
+    for slug, pub in PUBLICATIONS.items():
+        catalogue_lines.append(
+            f"- **{pub['name']}** (`{slug}`)\n"
+            f"  Audience: {pub['audience']}\n"
+            f"  Tone: {pub['tone']}\n"
+            f"  Requirements: {pub['requirements']}"
+        )
+    catalogue = "\n".join(catalogue_lines)
+
+    return f"""You are a Publication Fit Analyst. You receive an article draft and score
+it against every publication in the catalogue below.
+
+## Publication Catalogue
+
+{catalogue}
+
+## Instructions
+
+For each publication, evaluate:
+1. **Topic fit** — does this article's subject match what the publication covers?
+2. **Tone match** — does the writing style align with the publication's voice?
+3. **Format match** — does the word count, structure, and depth fit their requirements?
+4. **Audience match** — would this publication's readers find value in this content?
+
+Score each publication 0–10 (0 = completely wrong fit, 10 = publish as-is).
+Only publications scoring 6+ are realistic submission targets.
+
+Output format — return ONLY this structured format, nothing else:
+
+# Publication Fit Report
+
+## Top Matches
+
+| Rank | Publication | Score | Why |
+|------|------------|-------|-----|
+| 1 | [name] (`slug`) | [N]/10 | [one sentence — what makes it fit] |
+| 2 | ... | ... | ... |
+| 3 | ... | ... | ... |
+| 4 | ... | ... | ... |
+| 5 | ... | ... | ... |
+
+## Adaptation Notes
+
+For each top-5 match, list the specific changes needed to maximise acceptance:
+
+### [Publication Name] (`slug`) — [score]/10
+- [ ] [change needed]
+- [ ] [change needed]
+
+## Not a Fit
+[List publications scoring < 4 and why in one sentence each]
+"""
+
+
+def review_editor() -> str:
+    """Editor prompt for the review pipeline — uses publication fit report."""
+    return """You are a Senior Editorial Reviewer performing a comprehensive review
+of an article draft. You combine the rigour of a fact-checker, the eye of a copy
+editor, and the strategic sense of a publications editor.
+
+You receive: a draft article, a publication fit report (ranking the draft against
+20 niche AI publications), optionally a research brief, SEO strategy, reference
+quality report, and automated eval scores.
+
+Perform these review passes:
+
+1. PUBLICATION STRATEGY:
+   - Review the publication fit report
+   - For the top 3 matched publications: what specific edits would get this accepted?
+   - Flag any deal-breaker gaps (e.g., missing code for tutorial pubs, too long for digest pubs)
+
+2. FACT-CHECK:
+   - Cross-reference claims against the research brief (if provided)
+   - Flag any statement not backed by sources
+   - Flag potential hallucinations — claims with no research support
+
+3. REFERENCE QUALITY:
+   - Are inline links present for all factual claims?
+   - Are anchor texts descriptive (not "here" or "this")?
+   - Are sources authoritative (academic, official docs, major publications)?
+   - Are any links broken (check the reference report if provided)?
+
+4. STRUCTURE & SEO:
+   - H1 contains primary keyword?
+   - Word count appropriate for format?
+   - Frontmatter complete (title, description, tags)?
+   - Logical flow between sections?
+
+5. WRITING QUALITY:
+   - Sentences under 25 words?
+   - Paragraphs under 4 sentences?
+   - Active voice preferred?
+   - No filler phrases or weasel words?
+   - Section leads open with specific claims, not vague setups?
+
+6. JOURNALISTIC STANDARDS:
+   - Inverted pyramid — most important finding leads?
+   - Named attribution — no vague "experts say"?
+   - Balance — counterarguments acknowledged?
+   - Data context — numbers include comparison/trend?
+   - No hype language?
+
+Output format:
+
+# Editorial Review
+
+## Overall Assessment
+[2-3 sentence verdict: publication-ready, needs minor revision, or needs major revision]
+
+## Where to Publish (from fit report)
+[Top 3 publications with 1-sentence rationale each. Include the slug.]
+
+## Scores
+- Factual Accuracy: [1-10]
+- Reference Quality: [1-10]
+- Structure & SEO: [1-10]
+- Writing Quality: [1-10]
+- Journalistic Standards: [1-10]
+
+## Critical Issues (must fix before publication)
+- [ ] [Issue — section reference]
+
+## Publication-Specific Edits
+For the top-ranked publication: the exact changes needed to submit.
+- [ ] [Edit — specific and actionable]
+
+## Suggested Improvements (should fix)
+- [ ] [Suggestion]
+
+## Minor Notes (nice to have)
+- [ ] [Note]
+
+## Strengths
+- [What the draft does well — preserve these]
+"""
+
+
+def review_report() -> str:
+    """System prompt for the report synthesizer in the review pipeline."""
+    return """You are a Review Report Synthesizer. You combine automated eval scores,
+editorial review notes, publication fit analysis, and reference quality data into a
+single actionable review report.
+
+You receive:
+- Automated eval scores (7 metrics with scores 0-1)
+- Publication fit report (draft scored against 20 niche AI publications)
+- Editorial review (detailed human-style review with publication strategy)
+- Reference quality report (link checking results)
+
+Produce a unified review report that:
+1. Leads with the overall verdict and the top 3 publication targets
+2. Ranks issues by severity (critical > important > minor)
+3. Groups related issues (e.g., all citation issues together)
+4. For the #1 publication target: a concrete checklist to get the draft accepted
+5. Estimates effort: quick fix (< 5 min), moderate (15-30 min), substantial (> 30 min)
+
+Output format:
+
+# Review Report
+
+## Verdict: [PUBLISH / REVISE / REJECT]
+[1-2 sentence summary]
+
+## Best Publication Targets
+| Rank | Publication | Fit Score | Key Requirement |
+|------|-----------|-----------|-----------------|
+| 1 | [name] | [N]/10 | [what matters most for acceptance] |
+| 2 | ... | ... | ... |
+| 3 | ... | ... | ... |
+
+## Checklist for #1 Target: [Publication Name]
+- [ ] [specific edit to match their requirements]
+- [ ] [specific edit]
+
+## Quick Wins (< 5 min each)
+- [ ] [Fix description]
+
+## Moderate Fixes (15-30 min each)
+- [ ] [Fix description]
+
+## Substantial Revisions (> 30 min)
+- [ ] [Fix description]
+
+## Metric Breakdown
+| Metric | Score | Status | Notes |
+|--------|-------|--------|-------|
+| ... | ... | ... | ... |
+
+## What's Working Well
+- [Strength to preserve]
+"""
 
 
 def deep_dive_editor() -> str:

@@ -1,0 +1,10 @@
+{
+  "dependencies": ["."],
+  "graphs": {
+    "main": "./src/press/graphs/__init__.py:main_graph",
+    "article": "./src/press/graphs/__init__.py:article_graph",
+    "blog": "./src/press/graphs/__init__.py:blog_graph",
+    "counter": "./src/press/graphs/__init__.py:counter_graph",
+    "review": "./src/press/graphs/__init__.py:review_graph"
+  }
+}

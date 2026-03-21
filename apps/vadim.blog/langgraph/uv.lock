@@ -1120,6 +1120,7 @@ version = "0.1.0"
 source = { editable = "." }
 dependencies = [
     { name = "click" },
+    { name = "deepeval" },
     { name = "httpx" },
     { name = "langchain-core" },
     { name = "langchain-openai" },
@@ -1143,6 +1144,7 @@ eval = [
 [package.metadata]
 requires-dist = [
     { name = "click", specifier = ">=8.1" },
+    { name = "deepeval", specifier = ">=3.8.9" },
     { name = "deepeval", marker = "extra == 'eval'", specifier = ">=2.0" },
     { name = "httpx", specifier = ">=0.28" },
     { name = "langchain-core", specifier = ">=0.3" },

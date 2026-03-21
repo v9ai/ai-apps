@@ -1,13 +1,39 @@
-"""Editorial source search — curated tech publications.
+"""Editorial source search — niche AI engineering publications.
 
-Searches top-tier editorial tech publications for articles relevant
-to a given topic.  Returns ResearchPaper objects that integrate with
-the existing paper dedup/rank/digest pipeline.
+Searches curated AI engineering, MLOps, and developer publications for
+articles relevant to a given topic.  Returns ResearchPaper objects that
+integrate with the existing paper dedup/rank/digest pipeline.
 
-Sources:
-  InfoQ               — Software architecture & engineering practices (RSS)
-  The New Stack       — Cloud native, DevOps, AI/ML (WordPress REST API)
-  Towards Data Science — ML/AI & data engineering (RSS)
+Sources (17 niche publications):
+
+  AI Engineering & MLOps/LLMOps:
+    W&B Fully Connected    — Experiment tracking, ML evals (RSS)
+    KDnuggets              — AI/ML practitioner tutorials (RSS)
+    ML Mastery             — ML tutorials, production patterns (RSS)
+
+  AI Research & Technical Analysis:
+    MarkTechPost           — AI research digests (RSS)
+    Towards AI             — Cutting-edge AI research (RSS/Medium)
+    Analytics Vidhya       — Data science tutorials (RSS)
+    AI in Plain English    — Accessible AI explanations (RSS/Medium)
+
+  Medium-based AI Publications:
+    Towards Data Science   — ML/AI practitioner articles (RSS/Medium)
+    Better Programming     — Software engineering + AI (RSS/Medium)
+    Level Up Coding        — Developer tutorials (RSS/Medium)
+
+  Developer Platforms with Editorial Gates:
+    InfoQ                  — Architecture & engineering (RSS)
+    The New Stack          — Cloud-native, DevOps, AI (WordPress API)
+    DZone                  — Enterprise AI development (RSS)
+    LogRocket Blog         — Frontend/full-stack + AI (WordPress API)
+
+  Industry & Specialised:
+    Smashing Magazine      — Web dev, AI-driven UX (RSS)
+    freeCodeCamp           — Developer tutorials, AI guides (RSS)
+
+Removed (2026-03): Neptune.ai (acquired by OpenAI), Arize AI (403),
+DataCamp (403), SitePoint (403).
 
 No API keys required.
 """
@@ -191,6 +217,21 @@ class RSSSearchClient:
         return results
 
 
+def _truncate_query(query: str, max_words: int = 8) -> str:
+    """Extract the most meaningful keywords from a query for API search.
+
+    Long topic slugs like 'crewai-unique-features-honest-technical-deep-dive...'
+    break WordPress search. Extract the top keywords by length (longer words are
+    more specific) and cap at max_words.
+    """
+    keywords = _extract_keywords(query)
+    if not keywords:
+        return query[:80]
+    # Prefer longer (more specific) keywords
+    keywords.sort(key=len, reverse=True)
+    return " ".join(keywords[:max_words])
+
+
 class WordPressSearchClient:
     """Search a WordPress site via its REST API (full-text search)."""
 
@@ -200,11 +241,12 @@ class WordPressSearchClient:
 
     @retry_async(max_attempts=2, base_delay=1.0, fallback=list)
     async def search(self, query: str, limit: int = 5) -> list[ResearchPaper]:
+        search_query = _truncate_query(query)
         async with httpx.AsyncClient(timeout=15, follow_redirects=True) as client:
             resp = await client.get(
                 self.api_base,
                 params={
-                    "search": query,
+                    "search": search_query,
                     "per_page": limit,
                     "orderby": "relevance",
                     "_fields": "title,link,excerpt,date",
@@ -246,15 +288,78 @@ class WordPressSearchClient:
 # ── Unified editorial search ────────────────────────────────────────────────
 
 _CLIENTS = [
-    RSSSearchClient("https://feed.infoq.com/", PaperSource.INFOQ),
+    # ── AI Engineering & MLOps/LLMOps ────────────────────────────────────
+    # Neptune.ai — removed 2026-03: acquired by OpenAI, feed dead (308→403)
+    # Arize AI   — removed 2026-03: feed returns 403
+    # DataCamp   — removed 2026-03: feed returns 403
+    RSSSearchClient(
+        "https://wandb.ai/fully-connected/feed",
+        PaperSource.WANDB,
+    ),
+    RSSSearchClient(
+        "https://www.kdnuggets.com/feed",
+        PaperSource.KDNUGGETS,
+    ),
+    RSSSearchClient(
+        "https://machinelearningmastery.com/feed/",
+        PaperSource.ML_MASTERY,
+    ),
+    # ── AI Research & Technical Analysis ─────────────────────────────────
+    RSSSearchClient(
+        "https://www.marktechpost.com/feed/",
+        PaperSource.MARKTECHPOST,
+    ),
+    RSSSearchClient(
+        "https://pub.towardsai.net/feed",
+        PaperSource.TOWARDS_AI,
+    ),
+    RSSSearchClient(
+        "https://www.analyticsvidhya.com/feed/",
+        PaperSource.ANALYTICS_VIDHYA,
+    ),
+    RSSSearchClient(
+        "https://ai.plainenglish.io/feed",
+        PaperSource.AI_PLAIN_ENGLISH,
+    ),
+    # ── Medium-based AI publications ─────────────────────────────────────
+    RSSSearchClient(
+        "https://towardsdatascience.com/feed",
+        PaperSource.TOWARDS_DATA_SCIENCE,
+    ),
+    RSSSearchClient(
+        "https://betterprogramming.pub/feed",
+        PaperSource.BETTER_PROGRAMMING,
+    ),
+    RSSSearchClient(
+        "https://levelup.gitconnected.com/feed",
+        PaperSource.LEVEL_UP_CODING,
+    ),
+    # ── Developer platforms with editorial gates ─────────────────────────
+    RSSSearchClient(
+        "https://feed.infoq.com/",
+        PaperSource.INFOQ,
+    ),
     WordPressSearchClient(
         "https://thenewstack.io/wp-json/wp/v2/posts",
         PaperSource.THE_NEW_STACK,
     ),
-
     RSSSearchClient(
-        "https://towardsdatascience.com/feed",
-        PaperSource.TOWARDS_DATA_SCIENCE,
+        "https://feeds.dzone.com/ai",
+        PaperSource.DZONE,
+    ),
+    WordPressSearchClient(
+        "https://blog.logrocket.com/wp-json/wp/v2/posts",
+        PaperSource.LOGROCKET,
+    ),
+    # SitePoint — removed 2026-03: feed returns 403
+    # ── Industry & specialised ───────────────────────────────────────────
+    RSSSearchClient(
+        "https://www.smashingmagazine.com/feed/",
+        PaperSource.SMASHING_MAG,
+    ),
+    RSSSearchClient(
+        "https://www.freecodecamp.org/news/rss/",
+        PaperSource.FREECODECAMP,
     ),
 ]
 
@@ -262,10 +367,10 @@ _CLIENTS = [
 async def search_editorial(
     query: str, limit_per_source: int = 5
 ) -> list[ResearchPaper]:
-    """Search all editorial sources in parallel.
+    """Search niche editorial sources in parallel.
 
-    Returns deduplicated articles from InfoQ, The New Stack,
-    and Towards Data Science.
+    Returns deduplicated articles from AI engineering, MLOps, developer
+    platform, and specialised AI publications.
     """
     results = await asyncio.gather(
         *[c.search(query, limit=limit_per_source) for c in _CLIENTS],
