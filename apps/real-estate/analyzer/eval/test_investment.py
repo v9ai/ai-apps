@@ -553,3 +553,48 @@ def test_investment(case):
         actual_output=case["actual_output"],
     )
     assert_test(test_case, case["metrics"])
+
+
+# ---------------------------------------------------------------------------
+# Live CrewAI investment metrics test — runs the actual agent with DeepEval tracing
+# ---------------------------------------------------------------------------
+
+@pytest.mark.asyncio
+@pytest.mark.slow
+@pytest.mark.skipif(not _HAS_API_KEY, reason="requires DEEPSEEK_API_KEY")
+async def test_investment_metrics_crew_live():
+    """Run the actual valuator crew and verify investment metrics are present and plausible."""
+    from deepeval.tracing import trace
+    from deepeval.metrics import AnswerRelevancyMetric
+    from analyzer.agent import valuate_listing, _build_valuation_prompt, validate_valuation_formulas
+    from analyzer.models import ListingExtraction
+
+    listing = ListingExtraction(
+        title="Apartament 3 camere, Botanica, Chisinau",
+        city="Chisinau",
+        zone="Botanica",
+        price_eur=75000,
+        size_m2=80,
+        price_per_m2=937,
+        rooms=3,
+        floor=6,
+        total_floors=9,
+        condition="good",
+    )
+    prompt = _build_valuation_prompt(listing)
+
+    with trace(trace_metrics=[AnswerRelevancyMetric()]):
+        valuation = await valuate_listing(prompt)
+
+    # Investment metrics must be present
+    assert valuation.investment_score is not None
+    assert valuation.rental_estimate_eur is not None
+    assert valuation.rental_yield_pct is not None
+    assert valuation.total_cost_eur is not None
+    assert valuation.negotiation_margin_pct is not None
+    assert valuation.recommendation is not None
+
+    # Formula consistency
+    issues = validate_valuation_formulas(valuation)
+    severe = [i for i in issues if "verdict" in i.lower()]
+    assert not severe, f"Severe formula issues: {severe}"

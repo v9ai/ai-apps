@@ -26,7 +26,6 @@ import {
   useUpdateFamilyMemberMutation,
   useShareFamilyMemberMutation,
   useUnshareFamilyMemberMutation,
-  useDeleteBehaviorObservationMutation,
   useDeleteIssueMutation,
   useDeleteTeacherFeedbackMutation,
   useDeleteRelationshipMutation,
@@ -35,7 +34,6 @@ import {
 } from "@/app/__generated__/hooks";
 import { authClient } from "@/app/lib/auth/client";
 import AddGoalButton from "@/app/components/AddGoalButton";
-import BehaviorObservationsList from "@/app/components/BehaviorObservationsList";
 import AddTeacherFeedbackButton from "@/app/components/AddTeacherFeedbackButton";
 import TeacherFeedbackList from "@/app/components/TeacherFeedbackList";
 import AddContactButton from "@/app/components/AddContactButton";
@@ -181,17 +179,6 @@ function FamilyMemberContent() {
     useUnshareFamilyMemberMutation({
       refetchQueries: ["GetFamilyMember"],
     });
-
-  const observations = member?.behaviorObservations ?? [];
-
-  const [deleteObservation, { loading: deletingObs }] =
-    useDeleteBehaviorObservationMutation({
-      refetchQueries: ["GetFamilyMember"],
-    });
-
-  const handleDeleteObservation = (obsId: number) => {
-    deleteObservation({ variables: { id: obsId } });
-  };
 
   const issues = member?.issues ?? [];
 
@@ -663,14 +650,6 @@ function FamilyMemberContent() {
               )}
             </Flex>
           )}
-          <Separator size="4" />
-          <Heading size="3">Behavior Observations ({observations.length})</Heading>
-          <BehaviorObservationsList
-            observations={observations}
-            onDelete={handleDeleteObservation}
-            deleting={deletingObs}
-            familyMemberId={memberId}
-          />
         </Flex>
       </Card>
 
@@ -1055,6 +1034,14 @@ export default function FamilyMemberPage() {
             >
               {member.relationship}
             </Badge>
+          )}
+
+          {member && (
+            <Button size="2" asChild>
+              <NextLink href={`/stories/new?familyMemberId=${member.id}`}>
+                Generate Story
+              </NextLink>
+            </Button>
           )}
         </Flex>
       </Box>

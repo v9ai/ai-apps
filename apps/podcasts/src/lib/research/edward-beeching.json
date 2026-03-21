@@ -1,0 +1,214 @@
+{
+  "slug": "edward-beeching",
+  "name": "Edward Beeching",
+  "generated_at": "2026-03-19T12:00:00+00:00",
+  "bio": "Edward Beeching is a Research Scientist at Hugging Face in Lyon, France, specializing in reinforcement learning for LLM alignment and embodied learning. He holds a PhD from INSA Lyon / INRIA CHROMA on deep RL for robotic navigation and planning. At Hugging Face he co-created the Open LLM Leaderboard, co-authored the Zephyr alignment model and the Alignment Handbook, integrated the Decision Transformer into the Transformers library, and co-authored TRL (Transformer Reinforcement Learning). He built Godot RL Agents (1,400 stars), an open-source framework connecting the Godot game engine to deep RL algorithms. His recent work includes SmolLM3, a 3B dual-mode reasoning model, the JAT multi-purpose transformer agent, and a survey of 16 open-source async RL training libraries. He has published 381 models and 103 datasets on Hugging Face.",
+  "topics": [
+    "Reinforcement Learning from Human Feedback (RLHF)",
+    "LLM Alignment & Preference Tuning",
+    "Open LLM Evaluation & Leaderboards",
+    "Decision Transformers & Offline RL",
+    "Async RL Training Infrastructure",
+    "Small Language Models (SmolLM)",
+    "Deep RL for Robotics & Navigation",
+    "Game Engine RL (Godot RL Agents)",
+    "Multi-Purpose Transformer Agents",
+    "Test-Time Compute Optimization"
+  ],
+  "timeline": [
+    {
+      "date": "2026-03-10",
+      "event": "Co-authored 'Keep the Tokens Flowing: Lessons from 16 Open-Source RL Libraries', a comprehensive survey of async RL training infrastructure",
+      "url": "https://huggingface.co/blog/async-rl-training-landscape"
+    },
+    {
+      "date": "2025-07-08",
+      "event": "Co-authored SmolLM3, a 3B parameter dual-mode reasoning model with multilingual and 128k context support",
+      "url": "https://huggingface.co/blog/smollm3"
+    },
+    {
+      "date": "2025-03",
+      "event": "Co-authored 'Optimizing Test-Time Compute via Meta Reinforcement Fine-Tuning' (ICML 2025)",
+      "url": "https://arxiv.org/abs/2503.07572"
+    },
+    {
+      "date": "2024-02",
+      "event": "Co-authored 'Jack of All Trades, Master of Some, a Multi-Purpose Transformer Agent' (JAT) — first fully open-sourced multi-task RL agent",
+      "url": "https://arxiv.org/abs/2402.09844"
+    },
+    {
+      "date": "2023-10",
+      "event": "Co-authored 'Zephyr: Direct Distillation of LM Alignment' — 7B chat model surpassing Llama2-Chat-70B on MT-Bench without human annotation",
+      "url": "https://arxiv.org/abs/2310.16944"
+    },
+    {
+      "date": "2023-05",
+      "event": "Co-created the Open LLM Leaderboard on Hugging Face to track open-source LLM progress",
+      "url": "https://huggingface.co/spaces/open-llm-leaderboard/open_llm_leaderboard"
+    },
+    {
+      "date": "2023-04-05",
+      "event": "Co-authored 'StackLLaMA: A hands-on guide to train LLaMA with RLHF' blog post on Hugging Face",
+      "url": "https://huggingface.co/blog/stackllama"
+    },
+    {
+      "date": "2022-05",
+      "event": "Defended PhD thesis 'Large-scale automatic learning of autonomous agent behavior with structured deep reinforcement learning' at INSA Lyon",
+      "url": "https://edbeeching.github.io/"
+    },
+    {
+      "date": "2022-03-28",
+      "event": "Published Decision Transformer integration in Hugging Face Transformers library",
+      "url": "https://huggingface.co/blog/decision-transformers"
+    },
+    {
+      "date": "2022-03",
+      "event": "Joined Hugging Face as a Research Scientist in Lyon",
+      "url": "https://x.com/edwardbeeching/status/1508456712348524559"
+    },
+    {
+      "date": "2021-12",
+      "event": "Published 'Godot Reinforcement Learning Agents' paper (arXiv 2112.03636)",
+      "url": "https://arxiv.org/abs/2112.03636"
+    },
+    {
+      "date": "2020-07",
+      "event": "Published 'Learning to Plan with Uncertain Topological Maps' at ECCV 2020 (spotlight)",
+      "url": "https://arxiv.org/abs/2007.05270"
+    }
+  ],
+  "key_contributions": [
+    {
+      "title": "Godot RL Agents",
+      "description": "Open-source framework connecting the Godot game engine to deep RL algorithms (StableBaselines3, Sample Factory, Ray RLLib, CleanRL). 1,400 stars on GitHub.",
+      "url": "https://github.com/edbeeching/godot_rl_agents"
+    },
+    {
+      "title": "Open LLM Leaderboard",
+      "description": "Co-created the Hugging Face Open LLM Leaderboard for benchmarking open-source large language models on IFEval, BBH, MATH, GPQA, MUSR, and MMLU-PRO",
+      "url": "https://huggingface.co/spaces/open-llm-leaderboard/open_llm_leaderboard"
+    },
+    {
+      "title": "Zephyr: Direct Distillation of LM Alignment",
+      "description": "Co-authored Zephyr-7B, a distilled chat model that surpassed Llama2-Chat-70B on MT-Bench using distilled direct preference optimization without human annotation",
+      "url": "https://arxiv.org/abs/2310.16944"
+    },
+    {
+      "title": "The Alignment Handbook",
+      "description": "Co-authored robust recipes for aligning language models with human and AI preferences, including fine-tuning recipes for SmolLM2-Instruct and Zephyr",
+      "url": "https://github.com/huggingface/alignment-handbook"
+    },
+    {
+      "title": "TRL (Transformer Reinforcement Learning)",
+      "description": "Co-author of Hugging Face's open-source library for training transformer language models with RL techniques including SFT, GRPO, and DPO",
+      "url": "https://github.com/huggingface/trl"
+    },
+    {
+      "title": "Decision Transformer in Transformers",
+      "description": "Integrated the Decision Transformer model into Hugging Face's transformers library, enabling offline RL via conditional sequence modeling",
+      "url": "https://huggingface.co/blog/decision-transformers"
+    },
+    {
+      "title": "SmolLM3",
+      "description": "Co-authored SmolLM3, a 3B parameter dual-mode reasoning model with multilingual support, 128k context, and state-of-the-art performance at 3B scale",
+      "url": "https://huggingface.co/blog/smollm3"
+    },
+    {
+      "title": "JAT: Jack of All Trades Multi-Purpose Transformer Agent",
+      "description": "Co-authored the first fully open-sourced multi-task RL agent capable of sequential decision-making, CV, and NLP with a single set of weights",
+      "url": "https://arxiv.org/abs/2402.09844"
+    },
+    {
+      "title": "Mixture-of-Thoughts Dataset",
+      "description": "Published the Mixture-of-Thoughts dataset on Hugging Face with 349k items and 197 likes, used for reasoning model training",
+      "url": "https://huggingface.co/datasets/edbeeching/Mixture-of-Thoughts"
+    }
+  ],
+  "quotes": [
+    {
+      "text": "I had the opportunity to spend the last month building an open-source, state of the art, dual-mode reasoning model at the 3B scale. Building on the amazing work of Hugging Face's Pretraining team. It was tough but we managed to get on the Pareto front with the Qwen3 models.",
+      "source": "X (Twitter) post on SmolLM3",
+      "url": "https://x.com/edwardbeeching/status/1942614110060851562"
+    },
+    {
+      "text": "A month ago I joined Hugging Face as a Research Scientist. They're great: opening an office in Lyon, allowing me to work on open-source projects and trusting me to define my own schedule. I am proud to have added the Decision Transformer to transformers.",
+      "source": "X (Twitter) post on joining Hugging Face",
+      "url": "https://x.com/edwardbeeching/status/1508456712348524559"
+    },
+    {
+      "text": "For those of you who don't have time to read 5,000 words about async RL plumbing (we get it, you have models to train).",
+      "source": "Keep the Tokens Flowing blog post",
+      "url": "https://huggingface.co/blog/async-rl-training-landscape"
+    }
+  ],
+  "social": {
+    "github": "https://github.com/edbeeching",
+    "twitter": "https://x.com/edwardbeeching",
+    "linkedin": "https://www.linkedin.com/in/ed-beeching-3553b468/",
+    "huggingface": "https://huggingface.co/edbeeching",
+    "website": "https://edbeeching.github.io/",
+    "scholar": "https://scholar.google.fr/citations?user=CFIgh78AAAAJ&hl=en"
+  },
+  "sources": [
+    {
+      "title": "Edward Beeching - Personal Website",
+      "url": "https://edbeeching.github.io/"
+    },
+    {
+      "title": "edbeeching on GitHub (90 repos, Godot RL Agents 1,400 stars)",
+      "url": "https://github.com/edbeeching"
+    },
+    {
+      "title": "edbeeching on Hugging Face (381 models, 103 datasets)",
+      "url": "https://huggingface.co/edbeeching"
+    },
+    {
+      "title": "Ed Beeching - Research Scientist - Hugging Face | LinkedIn",
+      "url": "https://www.linkedin.com/in/ed-beeching-3553b468/"
+    },
+    {
+      "title": "Edward Beeching on Google Scholar",
+      "url": "https://scholar.google.fr/citations?user=CFIgh78AAAAJ&hl=en"
+    },
+    {
+      "title": "DBLP: Edward Beeching publications",
+      "url": "https://dblp.org/pid/239/4323.html"
+    },
+    {
+      "title": "Zephyr: Direct Distillation of LM Alignment (arXiv)",
+      "url": "https://arxiv.org/abs/2310.16944"
+    },
+    {
+      "title": "Open LLM Leaderboard on Hugging Face",
+      "url": "https://huggingface.co/spaces/open-llm-leaderboard/open_llm_leaderboard"
+    },
+    {
+      "title": "The Alignment Handbook on GitHub",
+      "url": "https://github.com/huggingface/alignment-handbook"
+    },
+    {
+      "title": "TRL: Transformer Reinforcement Learning on GitHub",
+      "url": "https://github.com/huggingface/trl"
+    },
+    {
+      "title": "SmolLM3 blog post on Hugging Face",
+      "url": "https://huggingface.co/blog/smollm3"
+    },
+    {
+      "title": "Keep the Tokens Flowing: Lessons from 16 Open-Source RL Libraries",
+      "url": "https://huggingface.co/blog/async-rl-training-landscape"
+    },
+    {
+      "title": "Godot Reinforcement Learning Agents (arXiv)",
+      "url": "https://arxiv.org/abs/2112.03636"
+    },
+    {
+      "title": "Jack of All Trades, Master of Some (arXiv)",
+      "url": "https://arxiv.org/abs/2402.09844"
+    },
+    {
+      "title": "Optimizing Test-Time Compute via Meta Reinforcement Fine-Tuning (arXiv / ICML 2025)",
+      "url": "https://arxiv.org/abs/2503.07572"
+    }
+  ]
+}

@@ -8,7 +8,7 @@ const personality: Personality = {
     'Famously warned that the "age of pre-training" was ending, calling training data the "fossil fuel" of AI.',
   slug: "ilya-sutskever",
   podcasts: ["Lex Fridman", "NeurIPS"],
-  knownFor: "SSI",
+  knownFor: "GPT Architecture",
 };
 
 export default personality;

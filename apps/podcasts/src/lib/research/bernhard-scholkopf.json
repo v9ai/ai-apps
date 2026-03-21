@@ -1,0 +1,218 @@
+{
+  "slug": "bernhard-scholkopf",
+  "name": "Bernhard Scholkopf",
+  "generated_at": "2026-03-19T12:00:00+00:00",
+  "bio": "Bernhard Scholkopf is a German computer scientist and director at the Max Planck Institute for Intelligent Systems in Tubingen, where he heads the Department of Empirical Inference. He is a founding Scientific Director of the ELLIS Institute Tubingen, an affiliated professor at ETH Zurich, and an Amazon Distinguished Scholar. A pioneer of kernel methods and support vector machines alongside Vladimir Vapnik, he co-developed kernel PCA, proved the representer theorem for reproducing kernel Hilbert spaces, and co-founded the field of kernel embeddings of distributions. Starting around 2005 he shifted focus to causal inference in machine learning, arguing that the hardest open problems of AI are intrinsically linked to causality. He co-authored the landmark textbook 'Elements of Causal Inference' (MIT Press, 2017) and has introduced the concepts of independent causal mechanisms and sparse mechanism shift. His group has also applied ML to exoplanet discovery, contributing to the detection of K2-18b, the first habitable-zone exoplanet with water vapour in its atmosphere. He is among the most cited computer scientists in the world, with over 200,000 citations on Google Scholar.",
+  "topics": [
+    "Kernel Methods & SVMs",
+    "Causal Inference in Machine Learning",
+    "Causal Representation Learning",
+    "Reproducing Kernel Hilbert Spaces",
+    "Transfer Learning & Domain Adaptation",
+    "Independent Causal Mechanisms",
+    "Exoplanet Discovery with ML",
+    "AI Safety & Governance",
+    "Statistical Learning Theory",
+    "Dimensionality Reduction"
+  ],
+  "timeline": [
+    {
+      "date": "2026-02",
+      "event": "Contributed to the International AI Safety Report 2026 as Senior Adviser, commissioned by the UK Government and authored by 100+ leading experts",
+      "url": "https://institute-tue.ellis.eu/de/news/ellis-institute-pis-contribute-to-the-international-ai-safety-report-2026"
+    },
+    {
+      "date": "2025",
+      "event": "Elected to the UN Independent International Scientific Panel on AI; first annual report expected at the Global Dialogue on AI Governance, Geneva, July 2026",
+      "url": "https://is.mpg.de/news/bernhard-scholkopf-elected-for-un-ai-scientific-panel"
+    },
+    {
+      "date": "2022",
+      "event": "Received the ACM - AAAI Allen Newell Award for foundational contributions to machine learning including kernel methods and causal inference",
+      "url": "https://imprs.is.mpg.de/news/imprs-is-faculty-bernhard-scholkopf-receives-the-2022-acm-aaai-allen-newell-award"
+    },
+    {
+      "date": "2021",
+      "event": "Won the German AI Prize (100,000 EUR) from WELT for groundbreaking achievements in artificial intelligence",
+      "url": "https://www.amazon.science/latest-news/bernhard-scholkopf-wins-german-ai-innovation-award"
+    },
+    {
+      "date": "2021-02",
+      "event": "Published 'Towards Causal Representation Learning' (arXiv:2102.11107), laying out research agenda for discovering high-level causal variables from low-level observations",
+      "url": "https://arxiv.org/abs/2102.11107"
+    },
+    {
+      "date": "2019",
+      "event": "Received the Korber European Science Prize, the Hector Science Award, and the BBVA Frontiers of Knowledge Award in ICT (shared with Vapnik and Guyon)",
+      "url": "https://www.frontiersofknowledgeawards-fbbva.es/galardonados/bernhard-scholkopf-2/"
+    },
+    {
+      "date": "2019-11",
+      "event": "Published 'Causality for Machine Learning' (arXiv:1911.10500), a landmark paper connecting causal inference with core ML challenges",
+      "url": "https://arxiv.org/abs/1911.10500"
+    },
+    {
+      "date": "2018",
+      "event": "Awarded the Gottfried Wilhelm Leibniz Prize, the most important research award in Germany",
+      "url": "https://www.mpg.de/Leibniz-Prize"
+    },
+    {
+      "date": "2017",
+      "event": "Co-authored 'Elements of Causal Inference: Foundations and Learning Algorithms' with Jonas Peters and Dominik Janzing (MIT Press, open access)",
+      "url": "https://mitpress.mit.edu/9780262037310/elements-of-causal-inference/"
+    },
+    {
+      "date": "2014",
+      "event": "Received the Royal Society Milner Award for outstanding achievement in computer science",
+      "url": "https://en.wikipedia.org/wiki/Bernhard_Sch%C3%B6lkopf"
+    },
+    {
+      "date": "2011",
+      "event": "Became founding director of the Max Planck Institute for Intelligent Systems in Tubingen",
+      "url": "https://is.mpg.de/~bs"
+    },
+    {
+      "date": "2002",
+      "event": "Co-authored 'Learning with Kernels: Support Vector Machines, Regularization, Optimization, and Beyond' with Alexander Smola (MIT Press), a foundational textbook for the kernel methods field",
+      "url": "https://mitpress.mit.edu/9780262536578/learning-with-kernels/"
+    },
+    {
+      "date": "2001",
+      "event": "Founded the Department for Empirical Inference at the Max Planck Institute for Biological Cybernetics in Tubingen",
+      "url": "https://is.mpg.de/ei/~bs"
+    },
+    {
+      "date": "1998",
+      "event": "Introduced kernel PCA, showing that all dot-product algorithms can be generalized to nonlinear settings via reproducing kernels, co-founding the field of kernel methods",
+      "url": "https://link.springer.com/chapter/10.1007/BFb0020217"
+    },
+    {
+      "date": "1997",
+      "event": "Completed PhD in Computer Science at TU Berlin under Vladimir Vapnik (Bell Labs); thesis won the annual award of the German Informatics Society (GI)",
+      "url": "https://en.wikipedia.org/wiki/Bernhard_Sch%C3%B6lkopf"
+    }
+  ],
+  "key_contributions": [
+    {
+      "title": "Kernel PCA & the Kernel Methods Framework",
+      "description": "Introduced kernel PCA and proved the representer theorem, showing that SVMs are a special case of a much larger class of algorithms expressible in terms of dot products, all generalizable to nonlinear settings via reproducing kernels. Co-founded the field of kernel methods.",
+      "url": "https://link.springer.com/chapter/10.1007/BFb0020217"
+    },
+    {
+      "title": "Learning with Kernels (MIT Press, 2002)",
+      "description": "Co-authored with Alexander Smola, this textbook became the definitive reference for support vector machines, regularization, and kernel-based learning algorithms. One of the most cited ML books ever written.",
+      "url": "https://mitpress.mit.edu/9780262536578/learning-with-kernels/"
+    },
+    {
+      "title": "Elements of Causal Inference (MIT Press, 2017)",
+      "description": "Co-authored with Jonas Peters and Dominik Janzing, this open-access book provides a self-contained introduction to causal inference foundations and learning algorithms, bridging graphical models with modern ML.",
+      "url": "https://mitpress.mit.edu/9780262037310/elements-of-causal-inference/"
+    },
+    {
+      "title": "Causality for Machine Learning (2019)",
+      "description": "Landmark paper arguing that the hard open problems of ML and AI -- including transfer, generalization, and robustness -- are intrinsically related to causality, and introducing the independent causal mechanisms principle.",
+      "url": "https://arxiv.org/abs/1911.10500"
+    },
+    {
+      "title": "Towards Causal Representation Learning (2021)",
+      "description": "Laid out a research agenda for discovering high-level causal variables from low-level observations, connecting causal inference with representation learning, transfer, and generalization.",
+      "url": "https://arxiv.org/abs/2102.11107"
+    },
+    {
+      "title": "Exoplanet Discovery via ML",
+      "description": "Applied ML methods to transit photometry data, contributing to the discovery of multiple exoplanets including K2-18b, the first habitable-zone exoplanet found to have water vapour in its atmosphere.",
+      "url": "https://is.mpg.de/~bs"
+    },
+    {
+      "title": "ELLIS (European Laboratory for Learning and Intelligent Systems)",
+      "description": "Co-founded and serves as chairman of ELLIS, a pan-European network of AI research labs aiming to ensure Europe remains competitive in fundamental AI research and attracts world-class talent.",
+      "url": "https://ellis.eu/person/bernhard-scholkopf"
+    }
+  ],
+  "quotes": [
+    {
+      "text": "We are extremely far away from a machine being more intelligent than a human being.",
+      "source": "BBVA Frontiers of Knowledge Award interview",
+      "url": "https://www.frontiersofknowledgeawards-fbbva.es/galardonados/bernhard-scholkopf-2/"
+    },
+    {
+      "text": "The hard open problems of machine learning and AI are intrinsically related to causality.",
+      "source": "Causality for Machine Learning (arXiv:1911.10500)",
+      "url": "https://arxiv.org/abs/1911.10500"
+    },
+    {
+      "text": "Current models and the field of representation learning mostly represent statistical dependences. Thinking would require models that also tell us about the effect of our actions or interventions in the world -- i.e., world models.",
+      "source": "EE Times interview ahead of ICIP 2025 keynote",
+      "url": "https://www.eetimes.com/bernhard-scholkopf-on-ai-systems-that-understand-the-world/"
+    }
+  ],
+  "social": {
+    "twitter": "https://x.com/bschoelkopf",
+    "linkedin": "https://de.linkedin.com/in/bernhard-sch%C3%B6lkopf-732969238",
+    "google_scholar": "https://scholar.google.com/citations?user=DZ-fHPgAAAAJ&hl=en",
+    "website": "https://is.mpg.de/~bs",
+    "ellis": "https://ellis.eu/person/bernhard-scholkopf"
+  },
+  "sources": [
+    {
+      "title": "Bernhard Scholkopf - Wikipedia",
+      "url": "https://en.wikipedia.org/wiki/Bernhard_Sch%C3%B6lkopf"
+    },
+    {
+      "title": "Bernhard Scholkopf | Empirical Inference - MPI-IS",
+      "url": "https://is.mpg.de/~bs"
+    },
+    {
+      "title": "Bernhard Scholkopf - ACM Awards",
+      "url": "https://awards.acm.org/award-recipients/scholkopf_6585034"
+    },
+    {
+      "title": "Bernhard Scholkopf - BBVA Frontiers of Knowledge Award",
+      "url": "https://www.frontiersofknowledgeawards-fbbva.es/galardonados/bernhard-scholkopf-2/"
+    },
+    {
+      "title": "Bernhard Scholkopf wins German AI Innovation Award - Amazon Science",
+      "url": "https://www.amazon.science/latest-news/bernhard-scholkopf-wins-german-ai-innovation-award"
+    },
+    {
+      "title": "ELLIS Institute Tubingen",
+      "url": "https://institute-tue.ellis.eu/"
+    },
+    {
+      "title": "Bernhard Scholkopf on AI Systems That Understand the World - EE Times",
+      "url": "https://www.eetimes.com/bernhard-scholkopf-on-ai-systems-that-understand-the-world/"
+    },
+    {
+      "title": "Causality for Machine Learning (arXiv:1911.10500)",
+      "url": "https://arxiv.org/abs/1911.10500"
+    },
+    {
+      "title": "Towards Causal Representation Learning (arXiv:2102.11107)",
+      "url": "https://arxiv.org/abs/2102.11107"
+    },
+    {
+      "title": "Elements of Causal Inference - MIT Press",
+      "url": "https://mitpress.mit.edu/9780262037310/elements-of-causal-inference/"
+    },
+    {
+      "title": "Learning with Kernels - MIT Press",
+      "url": "https://mitpress.mit.edu/9780262536578/learning-with-kernels/"
+    },
+    {
+      "title": "Bernhard Scholkopf elected for UN AI Scientific Panel - MPI-IS",
+      "url": "https://is.mpg.de/news/bernhard-scholkopf-elected-for-un-ai-scientific-panel"
+    },
+    {
+      "title": "ELLIS Institute PIs contribute to the International AI Safety Report 2026",
+      "url": "https://institute-tue.ellis.eu/de/news/ellis-institute-pis-contribute-to-the-international-ai-safety-report-2026"
+    },
+    {
+      "title": "Bernhard Scholkopf receives ACM-AAAI Allen Newell Award - IMPRS-IS",
+      "url": "https://imprs.is.mpg.de/news/imprs-is-faculty-bernhard-scholkopf-receives-the-2022-acm-aaai-allen-newell-award"
+    },
+    {
+      "title": "Research.com - Bernhard Scholkopf Academic Profile",
+      "url": "https://research.com/u/bernhard-scholkopf"
+    }
+  ]
+}

@@ -1,0 +1,253 @@
+{
+  "slug": "simon-willison",
+  "name": "Simon Willison",
+  "generated_at": "2026-03-19T20:00:00+00:00",
+  "bio": "Simon Willison is a British software developer, independent open-source contributor, and the co-creator of the Django web framework. Born in January 1981, he studied at the University of Bath and began his career in 2000 as a webmaster at Gameplay. In 2003 he joined the Lawrence Journal-World in Kansas on a year-long internship, where he and Adrian Holovaty created Django to streamline newsroom web development. After graduating in 2005 he joined Yahoo's Technology Development team, then in 2008 became a software architect at The Guardian. In 2010 he co-founded Lanyrd, a social conference directory backed by Y Combinator, which was acquired by Eventbrite in 2013 where he rose to Engineering Director. Since leaving Eventbrite he has worked full-time as an independent open-source developer building tools for data journalism. He created Datasette (2017), an open-source tool for exploring and publishing SQLite data; sqlite-utils, a CLI and Python library for manipulating SQLite databases; and LLM (2023), a command-line tool and Python library for accessing large language models. He coined the term 'prompt injection' in 2022 to describe a critical class of LLM security vulnerabilities. Willison is a Python Software Foundation board member (since 2022), a GitHub Star, and a participant in the GitHub Accelerator program (2023). He is based in Half Moon Bay, California.",
+  "topics": [
+    "Data Journalism",
+    "SQLite & Datasette",
+    "LLM CLI Tools",
+    "Prompt Injection Security",
+    "Open Source Sustainability",
+    "Web Frameworks",
+    "AI-Assisted Coding",
+    "Developer Tooling",
+    "Data Exploration",
+    "Prompt Engineering"
+  ],
+  "timeline": [
+    {
+      "date": "2003",
+      "event": "Joined the Lawrence Journal-World; co-created Django web framework with Adrian Holovaty",
+      "url": "https://en.wikipedia.org/wiki/Django_(web_framework)"
+    },
+    {
+      "date": "2005-07",
+      "event": "Django publicly released as open source",
+      "url": "https://www.djangoproject.com/"
+    },
+    {
+      "date": "2008",
+      "event": "Joined The Guardian as software architect, applying data journalism techniques",
+      "url": "https://simonwillison.net/about/"
+    },
+    {
+      "date": "2010",
+      "event": "Co-founded Lanyrd, a social conference directory, with Natalie Downe",
+      "url": "https://simonwillison.net/about/"
+    },
+    {
+      "date": "2011",
+      "event": "Lanyrd accepted into Y Combinator",
+      "url": "https://simonwillison.net/about/"
+    },
+    {
+      "date": "2013",
+      "event": "Lanyrd acquired by Eventbrite; joined as engineering team member, later Engineering Director",
+      "url": "https://simonwillison.net/about/"
+    },
+    {
+      "date": "2017-11",
+      "event": "Created and launched Datasette, an open-source tool for exploring and publishing SQLite data",
+      "url": "https://github.com/simonw/datasette"
+    },
+    {
+      "date": "2022-09",
+      "event": "Coined the term 'prompt injection' to describe a fundamental class of LLM security vulnerabilities",
+      "url": "https://simonwillison.net/tags/prompt-injection/"
+    },
+    {
+      "date": "2022",
+      "event": "Elected to the Python Software Foundation board",
+      "url": "https://simonwillison.net/about/"
+    },
+    {
+      "date": "2023",
+      "event": "Launched LLM, a CLI tool and Python library for accessing large language models via plugins",
+      "url": "https://github.com/simonw/llm"
+    },
+    {
+      "date": "2023",
+      "event": "Participated in GitHub Accelerator program for Datasette",
+      "url": "https://simonwillison.net/about/"
+    },
+    {
+      "date": "2024-09",
+      "event": "Guest on inaugural Pragmatic Engineer Podcast: AI tools for software engineers, without the hype",
+      "url": "https://newsletter.pragmaticengineer.com/p/ai-tools-for-software-engineers-simon-willison"
+    },
+    {
+      "date": "2024-12",
+      "event": "Appeared on Latent Space podcast: Things We Learned About LLMs in 2024",
+      "url": "https://www.latent.space/p/2024-simonw"
+    },
+    {
+      "date": "2025-02",
+      "event": "Guest on Real Python Podcast #236: Using LLMs for Python Development",
+      "url": "https://realpython.com/podcasts/rpp/236/"
+    },
+    {
+      "date": "2025-02",
+      "event": "Appeared on Accessibility and Gen AI Podcast discussing Datasette and AI tooling",
+      "url": "https://podcasts.apple.com/us/podcast/simon-willison-creator-datasette/id1759047581?i=1000695537833"
+    },
+    {
+      "date": "2025-04",
+      "event": "Announced Datasette for Newsrooms, a product suite for investigative journalists, with Alex Garcia",
+      "url": "https://www.datasette.cloud/blog/"
+    },
+    {
+      "date": "2025-07",
+      "event": "Guest on Generationship podcast ep. #39: 'I Coined Prompt Injection'",
+      "url": "https://www.heavybit.com/library/podcasts/generationship/ep-39-simon-willison-i-coined-prompt-injection"
+    },
+    {
+      "date": "2025-12",
+      "event": "Released LLM 0.26 with tool-use support for OpenAI, Anthropic, Gemini, and Ollama models",
+      "url": "https://simonw.substack.com/p/large-language-models-can-run-tools"
+    },
+    {
+      "date": "2026-01",
+      "event": "Appeared on Half Stack Data Science podcast discussing LLMs for data journalism",
+      "url": "https://simonwillison.net/tags/podcasts/"
+    },
+    {
+      "date": "2026-03",
+      "event": "Led NICAR 2026 workshop: Coding Agents for Data Analysis (3-hour session for data journalists)",
+      "url": "https://simonwillison.net/"
+    }
+  ],
+  "key_contributions": [
+    {
+      "title": "Django",
+      "description": "Co-created the Django web framework in 2003 at the Lawrence Journal-World. Django became one of the most popular Python web frameworks, powering Instagram, Pinterest, Mozilla, and thousands of other sites.",
+      "url": "https://www.djangoproject.com/"
+    },
+    {
+      "title": "Datasette",
+      "description": "Open-source multi-tool for exploring and publishing data from SQLite databases as interactive web applications. 10,800+ GitHub stars, with a plugin ecosystem of 100+ extensions.",
+      "url": "https://github.com/simonw/datasette"
+    },
+    {
+      "title": "LLM",
+      "description": "Command-line tool and Python library for accessing large language models (OpenAI, Anthropic, Gemini, Ollama) via a plugin architecture. 11,300+ GitHub stars.",
+      "url": "https://github.com/simonw/llm"
+    },
+    {
+      "title": "sqlite-utils",
+      "description": "Python CLI utility and library for manipulating SQLite databases with a clean, composable API. 2,000+ GitHub stars.",
+      "url": "https://github.com/simonw/sqlite-utils"
+    },
+    {
+      "title": "files-to-prompt",
+      "description": "CLI tool to concatenate a directory of files into a single prompt for use with LLMs. 2,600+ GitHub stars.",
+      "url": "https://github.com/simonw/files-to-prompt"
+    },
+    {
+      "title": "shot-scraper",
+      "description": "Command-line utility for taking automated screenshots of websites, powered by Playwright. 2,300+ GitHub stars.",
+      "url": "https://github.com/simonw/shot-scraper"
+    },
+    {
+      "title": "Prompt Injection Research",
+      "description": "Coined the term 'prompt injection' in September 2022 (named after SQL injection). Became a leading voice on LLM security, developing concepts like the 'lethal trifecta' for AI agent vulnerabilities.",
+      "url": "https://simonwillison.net/tags/prompt-injection/"
+    },
+    {
+      "title": "Today I Learned (TIL)",
+      "description": "Public collection of 575+ short-form learning notes, published as a Datasette-powered site. 1,400+ GitHub stars.",
+      "url": "https://til.simonwillison.net/"
+    }
+  ],
+  "quotes": [
+    {
+      "text": "It's not about getting work done faster, it's about being able to ship projects that I wouldn't have been able to justify spending time on at all.",
+      "source": "How I use LLMs to help me write code, Substack",
+      "url": "https://simonw.substack.com/p/how-i-use-llms-to-help-me-write-code"
+    },
+    {
+      "text": "Think of them as an over-confident pair programming assistant who's lightning fast at looking things up.",
+      "source": "How I use LLMs to help me write code, Substack",
+      "url": "https://simonw.substack.com/p/how-i-use-llms-to-help-me-write-code"
+    },
+    {
+      "text": "If someone tells you that coding with LLMs is easy they are (probably unintentionally) misleading you.",
+      "source": "How I use LLMs to help me write code, Substack",
+      "url": "https://simonw.substack.com/p/how-i-use-llms-to-help-me-write-code"
+    },
+    {
+      "text": "Most of the craft of getting good results out of an LLM comes down to managing its context.",
+      "source": "How I use LLMs to help me write code, Substack",
+      "url": "https://simonw.substack.com/p/how-i-use-llms-to-help-me-write-code"
+    },
+    {
+      "text": "I think it's really useful to have a model hallucinate at you early because it helps you get that better mental model of what it can do.",
+      "source": "Pragmatic Engineer Podcast, Sep 2024",
+      "url": "https://newsletter.pragmaticengineer.com/p/ai-tools-for-software-engineers-simon-willison"
+    },
+    {
+      "text": "The one thing you absolutely cannot outsource to the machine is testing that the code actually works.",
+      "source": "How I use LLMs to help me write code, Substack",
+      "url": "https://simonw.substack.com/p/how-i-use-llms-to-help-me-write-code"
+    }
+  ],
+  "social": {
+    "github": "https://github.com/simonw",
+    "twitter": "https://x.com/simonw",
+    "website": "https://simonwillison.net/",
+    "blog": "https://simonwillison.net/",
+    "substack": "https://simonw.substack.com/",
+    "bluesky": "https://bsky.app/profile/simonwillison.net",
+    "mastodon": "https://fedi.simonwillison.net/@simon"
+  },
+  "sources": [
+    {
+      "title": "Simon Willison's Weblog - About",
+      "url": "https://simonwillison.net/about/"
+    },
+    {
+      "title": "Simon Willison - Wikipedia",
+      "url": "https://en.wikipedia.org/wiki/Simon_Willison"
+    },
+    {
+      "title": "simonw on GitHub",
+      "url": "https://github.com/simonw"
+    },
+    {
+      "title": "Datasette - GitHub",
+      "url": "https://github.com/simonw/datasette"
+    },
+    {
+      "title": "LLM - GitHub",
+      "url": "https://github.com/simonw/llm"
+    },
+    {
+      "title": "How I use LLMs to help me write code - Substack",
+      "url": "https://simonw.substack.com/p/how-i-use-llms-to-help-me-write-code"
+    },
+    {
+      "title": "AI tools for software engineers, without the hype - Pragmatic Engineer Podcast",
+      "url": "https://newsletter.pragmaticengineer.com/p/ai-tools-for-software-engineers-simon-willison"
+    },
+    {
+      "title": "Things We Learned About LLMs in 2024 - Latent Space",
+      "url": "https://www.latent.space/p/2024-simonw"
+    },
+    {
+      "title": "Generationship Ep. #39: I Coined Prompt Injection",
+      "url": "https://www.heavybit.com/library/podcasts/generationship/ep-39-simon-willison-i-coined-prompt-injection"
+    },
+    {
+      "title": "LLM 0.26: Tools support - Substack",
+      "url": "https://simonw.substack.com/p/large-language-models-can-run-tools"
+    },
+    {
+      "title": "Real Python Podcast #236: Using LLMs for Python Development",
+      "url": "https://realpython.com/podcasts/rpp/236/"
+    },
+    {
+      "title": "Datasette Cloud Blog",
+      "url": "https://www.datasette.cloud/blog/"
+    }
+  ]
+}

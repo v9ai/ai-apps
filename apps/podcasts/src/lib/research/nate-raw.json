@@ -1,0 +1,198 @@
+{
+  "slug": "nate-raw",
+  "name": "Nathan Raw",
+  "generated_at": "2026-03-19T21:00:00+00:00",
+  "bio": "Nathan (Nate) Raw is a machine learning engineer, open-source contributor, and former Developer Advocate at Hugging Face. He describes himself as a 'machine learning hacker passionate about building cool products with technology.' Before focusing on ML, he was an electronic music producer who released tracks on Beatport and produced, mixed, and mastered instrumental hip-hop and experimental music. He is affiliated with the University of Florida and Heriot-Watt University (visible through his HuggingFace organization memberships). He contributed extensively to the Hugging Face ecosystem (234 commits across HF org repos), built tooling for PyTorch Lightning (17 commits to Lightning-AI), and later worked at Splice applying ML to music and audio. His most recognized project is stable-diffusion-videos (4,670+ stars), which made him the top trending developer on GitHub. On the HuggingFace Hub he maintains 209 models, 131 datasets, and 65 Spaces spanning computer vision, audio generation, NLP, and video understanding.",
+  "topics": [
+    "Generative AI for Music & Audio",
+    "Stable Diffusion & Latent-Space Video Generation",
+    "Vision Transformers & Image Classification",
+    "Hugging Face Ecosystem & Developer Tooling",
+    "PyTorch Lightning",
+    "Open-Source ML Infrastructure",
+    "Fine-Tuning Foundation Models",
+    "Computer Vision",
+    "Distributed Training (FSDP)",
+    "AI Art & Creative ML"
+  ],
+  "timeline": [
+    {
+      "date": "2017-10",
+      "event": "Created GitHub account; began open-source ML journey",
+      "url": "https://github.com/nateraw"
+    },
+    {
+      "date": "2020-09",
+      "event": "First contributions to PyTorch Lightning (17 total commits to Lightning-AI org)",
+      "url": "https://github.com/Lightning-AI/pytorch-lightning"
+    },
+    {
+      "date": "2021",
+      "event": "Released HuggingPics: fine-tune Vision Transformers for anything using web images (314 stars)",
+      "url": "https://github.com/nateraw/huggingpics"
+    },
+    {
+      "date": "2021",
+      "event": "Created hf-hub-lightning: PyTorch Lightning callback for pushing models to Hugging Face Hub",
+      "url": "https://github.com/nateraw/hf-hub-lightning"
+    },
+    {
+      "date": "2021",
+      "event": "Built huggingface-sync-action: GitHub Action to sync repos with the HF Hub (79 stars)",
+      "url": "https://github.com/nateraw/huggingface-sync-action"
+    },
+    {
+      "date": "2022-03",
+      "event": "Launched the Hugging Face merch store beta",
+      "url": "https://x.com/_nateraw/status/1504868938076852251"
+    },
+    {
+      "date": "2022-09",
+      "event": "Released stable-diffusion-videos, became top trending developer on GitHub (4,670+ stars)",
+      "url": "https://github.com/nateraw/stable-diffusion-videos"
+    },
+    {
+      "date": "2023-04",
+      "event": "Co-authored 'Generative Disco: Text-to-Video Generation for Music Visualization' (arXiv:2304.08551)",
+      "url": "https://arxiv.org/abs/2304.08551"
+    },
+    {
+      "date": "2023",
+      "event": "Contributed to Hugging Face Zapier integration (ASR, zero-shot classification)",
+      "url": "https://github.com/huggingface/zapier"
+    },
+    {
+      "date": "2023",
+      "event": "Released MusicGen Songstarter v0.1: fine-tuned MusicGen on Splice melody loops for music producers",
+      "url": "https://huggingface.co/nateraw/musicgen-songstarter-v0.1"
+    },
+    {
+      "date": "2024",
+      "event": "Released MusicGen Songstarter v0.2: 3x more data, large transformer LM, trained on ~1,800 curated Splice samples",
+      "url": "https://huggingface.co/nateraw/musicgen-songstarter-v0.2"
+    },
+    {
+      "date": "2024",
+      "event": "Released singing-songstarter: sing an idea and get an AI music sample (123 stars)",
+      "url": "https://github.com/nateraw/singing-songstarter"
+    },
+    {
+      "date": "2024",
+      "event": "Published openai-vision-api-for-videos: extract info from videos using GPT-4V (62 stars)",
+      "url": "https://github.com/nateraw/openai-vision-api-for-videos"
+    }
+  ],
+  "key_contributions": [
+    {
+      "title": "stable-diffusion-videos",
+      "description": "Open-source tool for creating AI-generated videos by exploring Stable Diffusion's latent space and morphing between text prompts. 4,670+ stars, 450+ forks. Made Nate the top trending developer on GitHub.",
+      "url": "https://github.com/nateraw/stable-diffusion-videos"
+    },
+    {
+      "title": "HuggingPics",
+      "description": "Fine-tune Vision Transformers for any visual concept using images found on the web. Democratized ViT fine-tuning for the HuggingFace community. 314 stars.",
+      "url": "https://github.com/nateraw/huggingpics"
+    },
+    {
+      "title": "MusicGen Songstarter",
+      "description": "Fine-tuned MusicGen models trained on curated Splice samples, generating song ideas useful for music producers. v0.2 trained on ~1,800 hand-picked loops.",
+      "url": "https://huggingface.co/nateraw/musicgen-songstarter-v0.2"
+    },
+    {
+      "title": "singing-songstarter",
+      "description": "Sing a melody idea and let AI generate a full music sample from it. Bridges vocal input with MusicGen melody conditioning.",
+      "url": "https://github.com/nateraw/singing-songstarter"
+    },
+    {
+      "title": "vit-age-classifier",
+      "description": "Vision Transformer fine-tuned for age classification. One of his most downloaded HuggingFace models (293k+ downloads, 146 likes).",
+      "url": "https://huggingface.co/nateraw/vit-age-classifier"
+    },
+    {
+      "title": "Hugging Face Ecosystem Tooling",
+      "description": "Built huggingface-sync-action (GitHub Action for HF Hub sync), hf-hub-lightning (PyTorch Lightning callback), modelcards utility, spaces-docker-templates, and huggingface-datasets-converter.",
+      "url": "https://github.com/nateraw/huggingface-sync-action"
+    },
+    {
+      "title": "Generative Disco (Paper)",
+      "description": "Co-authored research on text-to-video generation for music visualization, introducing 'transitions' and 'holds' for coherent AI music videos (arXiv:2304.08551).",
+      "url": "https://arxiv.org/abs/2304.08551"
+    },
+    {
+      "title": "Hugging Face Platform Contributions",
+      "description": "234 commits across Hugging Face org repos including diffusers, huggingface.js, doc-builder, and Zapier integration. Helped build video classification pipelines for the Hub.",
+      "url": "https://github.com/huggingface"
+    }
+  ],
+  "quotes": [
+    {
+      "text": "I'm a machine learning hacker passionate about building cool products with technology.",
+      "source": "nateraw.com",
+      "url": "https://nateraw.com/"
+    },
+    {
+      "text": "Early on, I produced electronic dance music (EDM) and released tracks on Beatport through record labels...eventually I shifted to instrumental hiphop and more experimental stuff, producing, mixing, and mastering for local artist friends.",
+      "source": "nateraw.com blog - Training MusicGen Songstarter",
+      "url": "https://nateraw.com/posts/training_musicgen_songstarter.html"
+    },
+    {
+      "text": "I sat at my computer and listened to samples for a long time, purchasing samples carefully. I focused primarily on hip hop/rap/electronic melodic loops, as well as some soul/jazz samples.",
+      "source": "nateraw.com blog - Training MusicGen Songstarter",
+      "url": "https://nateraw.com/posts/training_musicgen_songstarter.html"
+    },
+    {
+      "text": "Pretending to program.",
+      "source": "GitHub bio",
+      "url": "https://github.com/nateraw"
+    }
+  ],
+  "social": {
+    "github": "https://github.com/nateraw",
+    "twitter": "https://x.com/_nateraw",
+    "linkedin": "https://www.linkedin.com/in/nathan-raw/",
+    "website": "https://nateraw.com/",
+    "huggingface": "https://huggingface.co/nateraw"
+  },
+  "sources": [
+    {
+      "title": "Nate Raw - GitHub Profile",
+      "url": "https://github.com/nateraw"
+    },
+    {
+      "title": "Nate Raw - Hugging Face Profile (209 models, 131 datasets, 65 Spaces)",
+      "url": "https://huggingface.co/nateraw"
+    },
+    {
+      "title": "nateraw.com - Personal Website & Blog",
+      "url": "https://nateraw.com/"
+    },
+    {
+      "title": "Why and How I Trained MusicGen Songstarter - nateraw.com",
+      "url": "https://nateraw.com/posts/training_musicgen_songstarter.html"
+    },
+    {
+      "title": "Creating AI Music Videos with Stable Diffusion - nateraw.com",
+      "url": "https://nateraw.com/posts/sd_music_videos.html"
+    },
+    {
+      "title": "Generative Disco: Text-to-Video Generation for Music Visualization (arXiv:2304.08551)",
+      "url": "https://arxiv.org/abs/2304.08551"
+    },
+    {
+      "title": "stable-diffusion-videos - GitHub (4,670+ stars)",
+      "url": "https://github.com/nateraw/stable-diffusion-videos"
+    },
+    {
+      "title": "MusicGen Songstarter v0.2 - Hugging Face",
+      "url": "https://huggingface.co/nateraw/musicgen-songstarter-v0.2"
+    },
+    {
+      "title": "Nathan Raw - LinkedIn",
+      "url": "https://www.linkedin.com/in/nathan-raw/"
+    },
+    {
+      "title": "Nate Raw - Twitter / X",
+      "url": "https://x.com/_nateraw"
+    }
+  ]
+}

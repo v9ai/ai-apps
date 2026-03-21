@@ -98,6 +98,8 @@ def validate_urls_node(state: ApplicationPrepState) -> dict:
 
 _llm_json: ChatOpenAI | None = None
 _llm_text: ChatOpenAI | None = None
+_llm_json_fallback: ChatOpenAI | None = None
+_llm_text_fallback: ChatOpenAI | None = None
 
 
 def _get_llm_json() -> ChatOpenAI:
@@ -124,6 +126,50 @@ def _get_llm_text() -> ChatOpenAI:
             max_tokens=4096,
         )
     return _llm_text
+
+
+def _get_fallback_json() -> ChatOpenAI | None:
+    global _llm_json_fallback
+    key = os.getenv("DASHSCOPE_API_KEY")
+    if not key:
+        return None
+    if _llm_json_fallback is None:
+        _llm_json_fallback = ChatOpenAI(
+            model="qwen-plus",
+            api_key=key,
+            base_url="https://dashscope-intl.aliyuncs.com/compatible-mode/v1",
+            temperature=0.3,
+            model_kwargs={"response_format": {"type": "json_object"}},
+        )
+    return _llm_json_fallback
+
+
+def _get_fallback_text() -> ChatOpenAI | None:
+    global _llm_text_fallback
+    key = os.getenv("DASHSCOPE_API_KEY")
+    if not key:
+        return None
+    if _llm_text_fallback is None:
+        _llm_text_fallback = ChatOpenAI(
+            model="qwen-plus",
+            api_key=key,
+            base_url="https://dashscope-intl.aliyuncs.com/compatible-mode/v1",
+            temperature=0.5,
+            max_tokens=4096,
+        )
+    return _llm_text_fallback
+
+
+def _invoke_with_fallback(llm: ChatOpenAI, messages, *, mode: str = "json"):
+    """Invoke LLM with Qwen fallback on failure."""
+    try:
+        return llm.invoke(messages)
+    except Exception as e:
+        fallback = _get_fallback_json() if mode == "json" else _get_fallback_text()
+        if fallback is None:
+            raise
+        print(f"  [fallback] DeepSeek failed ({type(e).__name__}), retrying with Qwen...")
+        return fallback.invoke(messages)
 
 
 # ---------------------------------------------------------------------------
@@ -202,7 +248,7 @@ def parse_jd_node(state: ApplicationPrepState) -> dict:
             f"{state['job_description']}"
         )),
     ]
-    response = _get_llm_json().invoke(messages)
+    response = _invoke_with_fallback(_get_llm_json(), messages, mode="json")
     try:
         raw = json.loads(response.content)
         parsed: ParsedJD = {
@@ -263,7 +309,7 @@ def analyze_role_depth_node(state: ApplicationPrepState) -> dict:
             f"{state['job_description']}"
         )),
     ]
-    response = _get_llm_json().invoke(messages)
+    response = _invoke_with_fallback(_get_llm_json(), messages, mode="json")
     try:
         raw = json.loads(response.content)
         role_depth: RoleDepth = {
@@ -438,7 +484,7 @@ def research_company_node(state: ApplicationPrepState) -> dict:
         )),
     ]
 
-    response = _get_llm_json().invoke(messages)
+    response = _invoke_with_fallback(_get_llm_json(), messages, mode="json")
     try:
         raw = json.loads(response.content)
         research: CompanyResearch = {
@@ -493,7 +539,7 @@ def extract_technologies_node(state: ApplicationPrepState) -> dict:
         )),
     ]
 
-    response = _get_llm_json().invoke(messages)
+    response = _invoke_with_fallback(_get_llm_json(), messages, mode="json")
     try:
         raw = json.loads(response.content)
         raw_techs = raw.get("technologies", [])
@@ -743,7 +789,7 @@ def generate_questions_node(state: dict) -> dict:
         )),
     ]
 
-    response = _get_llm_json().invoke(messages)
+    response = _invoke_with_fallback(_get_llm_json(), messages, mode="json")
     try:
         raw = json.loads(response.content)
         pairs = raw.get("qa_pairs") or raw.get("questions") or []
@@ -812,7 +858,7 @@ def score_and_refine_node(state: ApplicationPrepState) -> dict:
                 f"Q&A pairs to evaluate:\n{json.dumps(pairs, indent=2)}"
             )),
         ]
-        score_response = _get_llm_json().invoke(score_messages)
+        score_response = _invoke_with_fallback(_get_llm_json(), score_messages, mode="json")
         try:
             raw_scores = json.loads(score_response.content)
             scores = raw_scores.get("scores", [])
@@ -870,7 +916,7 @@ def score_and_refine_node(state: ApplicationPrepState) -> dict:
                     + f"\nWeak Q&A pairs to improve:\n{weak_details}"
                 )),
             ]
-            refine_response = _get_llm_json().invoke(refine_messages)
+            refine_response = _invoke_with_fallback(_get_llm_json(), refine_messages, mode="json")
             try:
                 refined = json.loads(refine_response.content).get("refined", [])
                 for r in refined:
@@ -955,7 +1001,7 @@ def generate_content_node(state: dict) -> dict:
         )),
     ]
 
-    response = _get_llm_text().invoke(messages)
+    response = _invoke_with_fallback(_get_llm_text(), messages, mode="text")
     content = response.content.strip()
     word_count = len(content.split())
     subtopics = [line[3:].strip() for line in content.split("\n") if line.startswith("## ")]

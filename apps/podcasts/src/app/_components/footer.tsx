@@ -142,7 +142,7 @@ export default function Footer() {
               className={css({
                 color: '#5A5A66',
                 fontSize: 'xs',
-                fontStyle: 'italic',
+                letterSpacing: '0.01em',
                 maxW: '52',
                 lineHeight: 'relaxed',
               })}

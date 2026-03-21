@@ -3,6 +3,7 @@
 import { useState, useTransition } from "react";
 import { Box, Button, Flex, Text, TextField } from "@radix-ui/themes";
 import { TaskCard } from "./TaskCard";
+import { TaskDetailModal } from "./TaskDetailModal";
 import { createTaskQuickAction } from "@/lib/actions/tasks";
 
 type Task = {
@@ -32,8 +33,14 @@ export function SubtaskList({
   const [title, setTitle] = useState("");
   const [isPending, startTransition] = useTransition();
 
+  const [openTaskId, setOpenTaskId] = useState<string | null>(null);
+
   // Enforce 2-level max: if parent already has a parent, no subtasks allowed
   if (parentHasParent) return null;
+
+  const openTask = openTaskId
+    ? subtasks.find((t) => t.id === openTaskId) ?? null
+    : null;
 
   function handleAdd() {
     if (!title.trim()) return;
@@ -51,11 +58,24 @@ export function SubtaskList({
 
   return (
     <Box style={{ marginLeft: 24, marginTop: 8 }}>
-      {subtasks.map((subtask) => (
+      {subtasks.map((subtask, i) => (
         <Box key={subtask.id} style={{ marginBottom: 4 }}>
-          <TaskCard task={subtask} />
+          <TaskCard
+            task={subtask}
+            index={i + 1}
+            onOpen={() => setOpenTaskId(subtask.id)}
+          />
         </Box>
       ))}
+      {openTask && (
+        <TaskDetailModal
+          task={openTask}
+          open={true}
+          onOpenChange={(open) => {
+            if (!open) setOpenTaskId(null);
+          }}
+        />
+      )}
 
       {adding ? (
         <Flex gap="2" align="center" style={{ marginTop: 4 }}>

@@ -25,7 +25,7 @@ export function StoryCard({
   const displayText = quote || personality.description;
   const isCompact = variant === "compact";
 
-  const avatarSize = isCompact ? 72 : 96;
+  const avatarSize = isCompact ? 56 : 72;
   const podcastCount = personality.podcasts.length;
 
   return (
@@ -37,7 +37,6 @@ export function StoryCard({
         css({
           pos: "relative",
           display: "block",
-          textAlign: "center",
           bg: "#141418",
           rounded: "2xl",
           borderWidth: "1px",
@@ -55,7 +54,7 @@ export function StoryCard({
         animation: `story-card-enter 320ms cubic-bezier(0.16,1,0.3,1) ${index * 55}ms forwards`,
       }}
     >
-      {/* Top-edge highlight gradient — like a subtle light reflection */}
+      {/* Top-edge highlight gradient */}
       <div
         className={css({
           pos: "absolute",
@@ -86,10 +85,20 @@ export function StoryCard({
             "linear-gradient(180deg, rgba(255,255,255,0.03) 0%, rgba(255,255,255,0) 100%)",
         }}
       />
-      {/* Portrait */}
-      <div className={css({ display: "flex", justifyContent: "center", mb: "5" })}>
+
+      {/* Identity block: Avatar + Name + Role */}
+      <div
+        className={css({
+          display: "flex",
+          alignItems: "center",
+          gap: "3.5",
+          mb: isCompact ? "3.5" : "5",
+        })}
+      >
+        {/* Portrait */}
         <div
           className={css({
+            flexShrink: 0,
             rounded: "full",
             transition: "all",
             transitionDuration: "400ms",
@@ -103,7 +112,7 @@ export function StoryCard({
             background:
               "linear-gradient(135deg, rgba(139,92,246,0.35) 0%, rgba(59,130,246,0.25) 50%, rgba(139,92,246,0.15) 100%)",
             boxShadow:
-              "0 0 0 1px rgba(255,255,255,0.07), 0 0 12px rgba(139,92,246,0.1)",
+              "0 0 0 1px rgba(255,255,255,0.07), 0 0 16px rgba(139,92,246,0.12)",
           }}
         >
           {avatar ? (
@@ -131,13 +140,13 @@ export function StoryCard({
                 "story-card-avatar",
                 css({
                   rounded: "full",
-                  bg: "rgba(255,255,255,0.06)",
+                  bg: "rgba(255,255,255,0.10)",
                   display: "flex",
                   alignItems: "center",
                   justifyContent: "center",
-                  color: "#8B8B96",
+                  color: "rgba(255,255,255,0.75)",
                   fontWeight: "semibold",
-                  fontSize: isCompact ? "base" : "xl",
+                  fontSize: isCompact ? "sm" : "base",
                 })
               )}
               style={{ width: avatarSize, height: avatarSize }}
@@ -148,19 +157,56 @@ export function StoryCard({
             </div>
           )}
         </div>
+
+        {/* Name and role — placed next to avatar for scannability */}
+        <div className={css({ minW: "0", flex: "1" })}>
+          <h3
+            className={css({
+              fontFamily: "sans",
+              fontSize: isCompact ? "0.9375rem" : "1rem",
+              fontWeight: "semibold",
+              color: "#E8E8ED",
+              lineHeight: "tight",
+              letterSpacing: "-0.01em",
+            })}
+          >
+            {personality.name}
+          </h3>
+          <p
+            className={css({
+              fontSize: "sm",
+              color: "#A8A8B3",
+              mt: "1",
+              lineHeight: "1.375",
+              letterSpacing: "0.005em",
+            })}
+          >
+            {personality.role}{" "}
+            <span
+              className={css({
+                mx: "1.5",
+                color: "rgba(255,255,255,0.18)",
+                fontWeight: "light",
+              })}
+            >
+              |
+            </span>
+            {personality.org}
+          </p>
+        </div>
       </div>
 
       {/* Quote block */}
-      <div className={css({ pos: "relative", textAlign: "left" })}>
+      <div className={css({ pos: "relative" })}>
         <span
           className={css({
             pos: "absolute",
-            top: "-0.75rem",
-            left: "-0.25rem",
+            top: "-0.5rem",
+            left: "-0.15rem",
             userSelect: "none",
             pointerEvents: "none",
             fontSize: "5xl",
-            color: "rgba(255,255,255,0.06)",
+            color: "rgba(255,255,255,0.10)",
             lineHeight: "1",
             fontFamily: "serif",
             letterSpacing: "tight",
@@ -169,21 +215,25 @@ export function StoryCard({
         >
           {"\u201C"}
         </span>
-        <div className={css({ pos: "relative" })}>
+        <div
+          className={css({ pos: "relative" })}
+          style={{
+            borderLeft: "2px solid rgba(139,92,246,0.35)",
+          }}
+        >
           <p
             className={css({
-              fontStyle: "italic",
               color: "#CDCDD6",
-              lineHeight: "1.8",
-              letterSpacing: "0.01em",
-              pl: { base: "5", sm: "6" },
+              lineHeight: "1.85",
+              letterSpacing: "0.012em",
+              pl: { base: "4", sm: "5" },
               fontSize: isCompact ? "0.9375rem" : "1.0625rem",
               lineClamp: isCompact ? 3 : 4,
             })}
           >
             {displayText}
           </p>
-          {/* Fade mask — matches the card surface colour so the clamp is never a hard cut */}
+          {/* Fade mask */}
           <div
             className={css({
               pointerEvents: "none",
@@ -204,7 +254,7 @@ export function StoryCard({
       {/* Gradient separator */}
       <div
         className={css({
-          mt: "5",
+          mt: isCompact ? "3.5" : "4",
           h: "1px",
           pointerEvents: "none",
         })}
@@ -213,49 +263,6 @@ export function StoryCard({
             "linear-gradient(90deg, rgba(139,92,246,0) 0%, rgba(139,92,246,0.3) 25%, rgba(59,130,246,0.25) 50%, rgba(139,92,246,0.3) 75%, rgba(139,92,246,0) 100%)",
         }}
       />
-
-      {/* Name and role */}
-      <div
-        className={css({
-          mb: "2",
-          pt: "4",
-          textAlign: "left",
-        })}
-      >
-        <h3
-          className={css({
-            fontFamily: "sans",
-            fontSize: "0.9375rem",
-            fontWeight: "semibold",
-            color: "#E8E8ED",
-            lineHeight: "tight",
-            letterSpacing: "-0.01em",
-          })}
-        >
-          {personality.name}
-        </h3>
-        <p
-          className={css({
-            fontSize: "sm",
-            color: "#9B9BA6",
-            mt: "1",
-            lineHeight: "1.375",
-            letterSpacing: "0.005em",
-          })}
-        >
-          {personality.role}{" "}
-          <span
-            className={css({
-              mx: "1.5",
-              color: "rgba(255,255,255,0.18)",
-              fontWeight: "light",
-            })}
-          >
-            |
-          </span>
-          {personality.org}
-        </p>
-      </div>
 
       {/* Pills */}
       <div
@@ -284,9 +291,9 @@ export function StoryCard({
                 py: "2",
                 rounded: "full",
                 bg: "rgba(255,255,255,0.05)",
-                color: "#8B8B96",
+                color: "#ADADB8",
                 borderWidth: "1px",
-                borderColor: "rgba(255,255,255,0.08)",
+                borderColor: "rgba(255,255,255,0.10)",
                 transition: "colors",
                 transitionDuration: "300ms",
               })
@@ -298,7 +305,6 @@ export function StoryCard({
               fill="currentColor"
               aria-hidden="true"
             >
-              {/* Waveform: 3 vertical bars of different heights, centred */}
               <rect x="0.5" y="3.5" width="2" height="5" rx="1" />
               <rect x="5"   y="1.5" width="2" height="9" rx="1" />
               <rect x="9.5" y="3.5" width="2" height="5" rx="1" />
@@ -341,10 +347,10 @@ export function StoryCard({
         )}
       </div>
 
-      {/* "Read story" hover link — slides up gently on hover */}
+      {/* "Read story" hover link */}
       <div
         className={css({
-          mt: "4",
+          mt: "3",
           textAlign: "left",
           overflow: "hidden",
           h: "0",

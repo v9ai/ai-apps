@@ -795,3 +795,40 @@ def test_valuation(case):
         expected_output=case["expected_output"],
     )
     assert_test(test_case, case["metrics"])
+
+
+# ---------------------------------------------------------------------------
+# Live CrewAI valuation test — runs the actual agent with DeepEval tracing
+# ---------------------------------------------------------------------------
+
+@pytest.mark.asyncio
+@pytest.mark.slow
+@pytest.mark.skipif(not _HAS_API_KEY, reason="requires DEEPSEEK_API_KEY")
+async def test_valuation_crew_live():
+    """Run the actual valuator crew on a golden input and evaluate with DeepEval trace."""
+    from deepeval.tracing import trace
+    from deepeval.metrics import AnswerRelevancyMetric
+    from analyzer.agent import valuate_listing, _build_valuation_prompt
+    from analyzer.models import ListingExtraction
+
+    listing = ListingExtraction(
+        title="Apartament 2 camere, Centru, Chisinau",
+        city="Chisinau",
+        zone="Centru",
+        price_eur=85000,
+        size_m2=65,
+        price_per_m2=1307,
+        rooms=2,
+        floor=5,
+        total_floors=9,
+        condition="renovated",
+    )
+    prompt = _build_valuation_prompt(listing)
+
+    with trace(trace_metrics=[AnswerRelevancyMetric()]):
+        valuation = await valuate_listing(prompt)
+
+    assert valuation.verdict in ("undervalued", "fair", "overvalued")
+    assert 0 <= valuation.confidence <= 1
+    assert valuation.fair_value_eur_per_m2 is not None
+    assert valuation.reasoning

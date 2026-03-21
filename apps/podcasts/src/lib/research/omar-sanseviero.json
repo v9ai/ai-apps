@@ -1,0 +1,212 @@
+{
+  "slug": "omar-sanseviero",
+  "name": "Omar Sanseviero",
+  "generated_at": "2026-03-19T22:00:00+00:00",
+  "bio": "Omar Sanseviero is a Peruvian-born ML engineer and developer experience leader who currently serves as Staff AI Developer Relations Engineer and Developer Experience Lead at Google DeepMind, where he leads a global team empowering developers to build with Gemini, Gemma, and AI Studio. Previously he was Chief Llama Officer and Head of Platform and Community at Hugging Face (2021-2024), where he grew the Hub from 3,000 to over 3 million repositories, launched Hugging Face Spaces (scaling from 500 to 400k+ community-built demos), and built the Developer Advocacy Engineering and Moonshot organizations (25 people). Before Hugging Face, Omar worked as a Software Engineer at Google on Google Assistant and as a 20% Product Manager on TensorFlow Graphics. He holds a BS in Computer Science from Tecnologico de Monterrey (2014-2018) and an MS in Computer Science from Georgia Institute of Technology (2019-2021). Omar co-authored the O'Reilly book 'Hands-On Generative AI with Transformers and Diffusion Models' (published December 2024), co-founded AI Learners (a Spanish-speaking AI education community), and writes The Hacker Llama Substack covering open ML news. At Google I/O Connect 2025 he announced Gemma had surpassed 180 million downloads and 80,000+ developer-built variants.",
+  "topics": [
+    "open-source machine learning",
+    "developer experience for AI products",
+    "generative AI with transformers and diffusion models",
+    "Hugging Face ecosystem and Spaces",
+    "Gemma open models and Gemini API",
+    "on-device ML and quantization",
+    "ML model documentation and model cards",
+    "democratizing AI education",
+    "AI developer advocacy",
+    "responsible AI and bias in ML models"
+  ],
+  "timeline": [
+    {
+      "date": "2014",
+      "event": "Enrolled at Tecnologico de Monterrey for a BS in Computer Science and Technology (graduated 2018). Completed a semester exchange at UC Berkeley in 2017.",
+      "url": "https://osanseviero.github.io/hackerllama/"
+    },
+    {
+      "date": "2018",
+      "event": "Joined Google as a Software Engineer, working on Google Assistant (building ML models and infrastructure) and serving as a 20% Product Manager on TensorFlow Graphics.",
+      "url": "https://osanseviero.github.io/hackerllama/"
+    },
+    {
+      "date": "2019",
+      "event": "Started MS in Computer Science at Georgia Institute of Technology (completed 2021).",
+      "url": "https://osanseviero.github.io/hackerllama/"
+    },
+    {
+      "date": "2021",
+      "event": "Joined Hugging Face as a Machine Learning Engineer on the Open Source team, working to democratize ML and grow the Hub ecosystem.",
+      "url": "https://huggingface.co/osanseviero"
+    },
+    {
+      "date": "2021",
+      "event": "Launched Hugging Face Spaces with the infra and product teams, enabling community members to create and share ML app demos. Scaled from 500 to over 400,000 Spaces.",
+      "url": "https://huggingface.co/spaces"
+    },
+    {
+      "date": "2022-03",
+      "event": "Spoke at QCon London 2022 on trends in Open Machine Learning, covering the expanding transformer ecosystem across vision, audio, speech, and reinforcement learning.",
+      "url": "https://archive.qconlondon.com/london2022/speakers/omar-sanseviero"
+    },
+    {
+      "date": "2022-07",
+      "event": "Interviewed on the InfoQ Podcast discussing transformer models, democratizing good ML practices, model documentation, bias detection, and carbon emissions of large models.",
+      "url": "https://www.infoq.com/podcasts/transformer-models-good-ml-practices/"
+    },
+    {
+      "date": "2022-07",
+      "event": "Presented at EuroPython 2022 in Dublin on machine learning topics and the Hugging Face ecosystem.",
+      "url": "https://programme.europython.eu/europython-2022/speaker/BGUJLS/"
+    },
+    {
+      "date": "2023",
+      "event": "Promoted to Chief Llama Officer and Head of Platform and Community at Hugging Face, leading developer advocacy engineering, on-device ML, and moonshot teams (25 people).",
+      "url": "https://osanseviero.github.io/hackerllama/"
+    },
+    {
+      "date": "2023-10",
+      "event": "Spoke at the Global Forum Latin America and the Caribbean 2023 on AI and open-source technology.",
+      "url": "https://www.globalforumlac.org/en/event/omar-sanseviero/"
+    },
+    {
+      "date": "2024-10",
+      "event": "Announced departure from Hugging Face after 3.5 years, having grown the Hub from 3,000 to over 3 million repositories.",
+      "url": "https://www.linkedin.com/posts/omarsanseviero_after-35-years-growing-the-open-source-ecosystem-activity-7254147882268712960-5Xvv"
+    },
+    {
+      "date": "2024-11",
+      "event": "Joined Google DeepMind as Staff AI Developer Relations Engineer and Developer Experience Lead, leading launches for Gemini, Gemma, and AI Studio.",
+      "url": "https://osanseviero.github.io/hackerllama/"
+    },
+    {
+      "date": "2024-12",
+      "event": "Published 'Hands-On Generative AI with Transformers and Diffusion Models' (O'Reilly) after 18 months of work, co-authored with Pedro Cuenca, Apolinario Passos, and Jonathan Whitaker.",
+      "url": "https://x.com/osanseviero/status/1868270360560369884"
+    },
+    {
+      "date": "2025-06",
+      "event": "At Google I/O Connect 2025, announced Gemma surpassed 180 million downloads and 80,000+ developer-built variants. Published developer guide for Gemma 3n.",
+      "url": "https://developers.googleblog.com/en/introducing-gemma-3n-developer-guide/"
+    },
+    {
+      "date": "2025",
+      "event": "Speaking at Abracadata Summit 2025 on 'Open Models: Use cases, fine-tuning and tooling ecosystem' and at Chatbot Summit Berlin.",
+      "url": "https://abracadata.space/speakers/omar-sanseviero/"
+    }
+  ],
+  "key_contributions": [
+    {
+      "title": "Hugging Face Spaces",
+      "description": "Launched and scaled Hugging Face Spaces from 500 to over 400,000 community-built ML demos, enabling developers and researchers worldwide to share interactive ML applications. Spaces became a cornerstone of the Hugging Face ecosystem for showcasing models and building ML portfolios.",
+      "url": "https://huggingface.co/spaces"
+    },
+    {
+      "title": "Hugging Face Hub Growth (3k to 3M repos)",
+      "description": "As Head of Platform and Community, led the growth of the Hugging Face Hub from 3,000 to over 3 million repositories during 3.5 years. Established key partnerships with labs (Meta, Google) and integrated open-source libraries like spaCy and Sentence Transformers.",
+      "url": "https://huggingface.co/osanseviero"
+    },
+    {
+      "title": "Hands-On Generative AI with Transformers and Diffusion Models (O'Reilly)",
+      "description": "Co-authored a comprehensive O'Reilly book (published December 2024) teaching practitioners how to use generative AI techniques to create text, images, audio, and music using transformers and diffusion models, with extensive code samples and illustrations.",
+      "url": "https://www.oreilly.com/library/view/hands-on-generative-ai/9781098149239/"
+    },
+    {
+      "title": "Google DeepMind Developer Experience for Gemma and Gemini",
+      "description": "Leads the global developer experience team at Google DeepMind, driving launches for Gemini 3, Gemma (180M+ downloads, 80k+ developer variants), AI Studio, MedGemma, EmbeddingGemma, and the GenAI Processors library. Focuses on empowering developers to build AI-powered products.",
+      "url": "https://developers.googleblog.com/en/search/?author=Omar+Sanseviero"
+    },
+    {
+      "title": "AI Learners Community",
+      "description": "Co-founded AI Learners, a Spanish-speaking open community for people interested in learning about AI and its applications. Created educational ML content in Spanish and ran monthly workshops to broaden access to AI knowledge in Latin America.",
+      "url": "https://osanseviero.github.io/hackerllama/"
+    },
+    {
+      "title": "The Hacker Llama (Blog & Newsletter)",
+      "description": "Created and maintains The Hacker Llama, a personal blog and Substack newsletter covering Machine Learning, Open Source, and developer tooling. Provides weekly ML news summaries covering open model releases, new tools, and research breakthroughs.",
+      "url": "https://thehackerllama.substack.com/"
+    }
+  ],
+  "quotes": [
+    {
+      "text": "We're trying to democratize good machine learning.",
+      "source": "InfoQ Podcast (July 2022)",
+      "url": "https://www.infoq.com/podcasts/transformer-models-good-ml-practices/"
+    },
+    {
+      "text": "You should also document your models...how it was trained, which data was used to train this model.",
+      "source": "InfoQ Podcast (July 2022)",
+      "url": "https://www.infoq.com/podcasts/transformer-models-good-ml-practices/"
+    },
+    {
+      "text": "It's about transparently communicating what these models do, how they work, what could be the impacts.",
+      "source": "InfoQ Podcast (July 2022)",
+      "url": "https://www.infoq.com/podcasts/transformer-models-good-ml-practices/"
+    },
+    {
+      "text": "After 3.5 years growing the open-source ecosystem at Hugging Face (from 3k to 3m repos!), it's time for a new adventure.",
+      "source": "LinkedIn post (October 2024)",
+      "url": "https://www.linkedin.com/posts/omarsanseviero_after-35-years-growing-the-open-source-ecosystem-activity-7254147882268712960-5Xvv"
+    },
+    {
+      "text": "Hugging Face isn't just a company -- it's a community where kindness and collaboration thrive at its core.",
+      "source": "LinkedIn post (October 2024)",
+      "url": "https://www.linkedin.com/posts/omarsanseviero_after-35-years-growing-the-open-source-ecosystem-activity-7254147882268712960-5Xvv"
+    }
+  ],
+  "social": {
+    "github": "https://github.com/osanseviero",
+    "twitter": "https://x.com/osanseviero",
+    "linkedin": "https://www.linkedin.com/in/omarsanseviero",
+    "website": "https://osanseviero.github.io/hackerllama/",
+    "huggingface": "https://huggingface.co/osanseviero",
+    "substack": "https://thehackerllama.substack.com/"
+  },
+  "sources": [
+    {
+      "title": "Omar Sanseviero -- hackerllama (personal website)",
+      "url": "https://osanseviero.github.io/hackerllama/"
+    },
+    {
+      "title": "osanseviero -- GitHub Profile",
+      "url": "https://github.com/osanseviero"
+    },
+    {
+      "title": "osanseviero -- Hugging Face Profile",
+      "url": "https://huggingface.co/osanseviero"
+    },
+    {
+      "title": "Omar Sanseviero on Transformer Models and Democratizing Good ML Practices -- InfoQ Podcast",
+      "url": "https://www.infoq.com/podcasts/transformer-models-good-ml-practices/"
+    },
+    {
+      "title": "Omar Sanseviero -- LinkedIn (Google DeepMind)",
+      "url": "https://www.linkedin.com/in/omarsanseviero"
+    },
+    {
+      "title": "Omar Sanseviero departure post -- LinkedIn (October 2024)",
+      "url": "https://www.linkedin.com/posts/omarsanseviero_after-35-years-growing-the-open-source-ecosystem-activity-7254147882268712960-5Xvv"
+    },
+    {
+      "title": "Hands-On Generative AI with Transformers and Diffusion Models -- O'Reilly",
+      "url": "https://www.oreilly.com/library/view/hands-on-generative-ai/9781098149239/"
+    },
+    {
+      "title": "Omar Sanseviero -- QCon Plus 2022 Speaker Page",
+      "url": "https://plus-archive.qconferences.com/plus2022/speakers/omar-sanseviero"
+    },
+    {
+      "title": "Omar Sanseviero -- Abracadata Summit 2025",
+      "url": "https://abracadata.space/speakers/omar-sanseviero/"
+    },
+    {
+      "title": "The Hacker Llama -- Substack",
+      "url": "https://thehackerllama.substack.com/"
+    },
+    {
+      "title": "Introducing Gemma 3n Developer Guide -- Google Developers Blog",
+      "url": "https://developers.googleblog.com/en/introducing-gemma-3n-developer-guide/"
+    },
+    {
+      "title": "Book announcement -- Omar Sanseviero on X (December 2024)",
+      "url": "https://x.com/osanseviero/status/1868270360560369884"
+    }
+  ]
+}

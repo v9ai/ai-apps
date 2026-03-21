@@ -15,6 +15,8 @@ _HAS_API_KEY = bool(os.getenv("DEEPSEEK_API_KEY"))
 if _HAS_API_KEY:
     from deepeval import assert_test
     from deepeval.test_case import LLMTestCase
+    from deepeval.tracing import trace
+    from deepeval.metrics import AnswerRelevancyMetric
     from eval._judge import (
         extraction_completeness,
         extraction_correctness,
@@ -472,9 +474,10 @@ async def test_extraction_live(case):
 
     from analyzer.agent import extract_listing
 
-    listing = await extract_listing(
-        f"Extract apartment data from this listing:\nURL: {case['url']}\n\n{case['text']}"
-    )
+    with trace(trace_metrics=[AnswerRelevancyMetric()]):
+        listing = await extract_listing(
+            f"Extract apartment data from this listing:\nURL: {case['url']}\n\n{case['text']}"
+        )
 
     assert listing.city.lower() == case["expected_city"].lower(), (
         f"Expected city={case['expected_city']}, got {listing.city}"

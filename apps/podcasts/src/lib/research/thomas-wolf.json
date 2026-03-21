@@ -1,0 +1,252 @@
+{
+  "slug": "thomas-wolf",
+  "name": "Thomas Wolf",
+  "generated_at": "2026-03-19T21:00:00+00:00",
+  "bio": "Thomas Wolf is co-founder and Chief Science Officer (CSO) of Hugging Face, the collaborative open-source platform for machine learning that hosts over 1 million public models and is valued at $4.5 billion. After graduating from Ecole Polytechnique (Paris), he researched laser-plasma interactions at the BELLA Center of Lawrence Berkeley National Laboratory. He completed his Ph.D. in Statistical/Quantum Physics at Sorbonne University and ESPCI, working on superconducting materials. He then pivoted to law, earning a degree from Pantheon Sorbonne University and spending five years as a European patent attorney at Cabinet Plasseraud. In 2015, consulting for deep-learning startups, he recognized that many AI methods were re-branded statistical physics approaches and taught himself modern ML. In 2016, alongside Clement Delangue and Julien Chaumond, he co-founded Hugging Face in New York City, initially as a chatbot app before pivoting to become the central hub for open-source AI. Wolf created the Transformers library (158k+ GitHub stars) and the Datasets library, co-authored the O'Reilly book 'Natural Language Processing with Transformers,' initiated and led the BigScience research workshop that produced BLOOM (a 176-billion-parameter multilingual LLM), and now leads Hugging Face's push into open-source robotics with LeRobot. His papers have been cited over 55,000 times.",
+  "topics": [
+    "Open-Source AI",
+    "Transformer Architectures",
+    "Natural Language Processing",
+    "Model Democratization",
+    "Large Language Models",
+    "Knowledge Distillation",
+    "Open Science",
+    "Multilingual AI",
+    "AI Robotics",
+    "Community-Driven Research",
+    "Dataset Curation",
+    "Small Language Models"
+  ],
+  "timeline": [
+    {
+      "date": "2014",
+      "event": "Completed Ph.D. in Statistical/Quantum Physics at Sorbonne University and ESPCI, Paris",
+      "url": "https://thomwolf.io/"
+    },
+    {
+      "date": "2016",
+      "event": "Co-founded Hugging Face with Clement Delangue and Julien Chaumond in New York City",
+      "url": "https://en.wikipedia.org/wiki/Hugging_Face"
+    },
+    {
+      "date": "2018",
+      "event": "Open-sourced PyTorch pretrained BERT, sparking what became the Transformers library",
+      "url": "https://github.com/huggingface/transformers"
+    },
+    {
+      "date": "2019",
+      "event": "Co-authored DistilBERT paper (NeurIPS 2019) — smaller, faster, cheaper BERT distillation",
+      "url": "https://arxiv.org/abs/1910.01108"
+    },
+    {
+      "date": "2019-12",
+      "event": "Hugging Face raised $15M Series A led by Lux Capital",
+      "url": "https://techcrunch.com/2019/12/17/hugging-face-raises-15-million-to-build-the-definitive-natural-language-processing-library/"
+    },
+    {
+      "date": "2020",
+      "event": "Published 'Transformers: State-of-the-art NLP' — won EMNLP 2020 Best Demo Paper",
+      "url": "https://aclanthology.org/2020.emnlp-demos.6/"
+    },
+    {
+      "date": "2021-05",
+      "event": "Launched BigScience research workshop — largest open collaboration in AI with 1,000+ researchers",
+      "url": "https://bigscience.huggingface.co/"
+    },
+    {
+      "date": "2021",
+      "event": "Published 'Datasets: A Community Library for NLP' — won EMNLP 2021 Best Demo Paper",
+      "url": "https://aclanthology.org/2021.emnlp-demo.21/"
+    },
+    {
+      "date": "2022-02",
+      "event": "Co-authored 'Natural Language Processing with Transformers' (O'Reilly, with Tunstall & von Werra)",
+      "url": "https://transformersbook.com/"
+    },
+    {
+      "date": "2022-07",
+      "event": "BigScience released BLOOM — 176B-parameter open multilingual LLM trained on 46 languages",
+      "url": "https://huggingface.co/bigscience/bloom"
+    },
+    {
+      "date": "2023-08",
+      "event": "Hugging Face raised $235M Series D at $4.5B valuation from Google, Nvidia, Amazon, Salesforce",
+      "url": "https://techcrunch.com/2023/08/24/hugging-face-raises-235m-from-investors-including-salesforce-and-nvidia/"
+    },
+    {
+      "date": "2024-05",
+      "event": "Launched LeRobot — open-source robotics library bringing the Hugging Face community approach to physical AI",
+      "url": "https://x.com/Thom_Wolf/status/1787384242277654786"
+    },
+    {
+      "date": "2024-06",
+      "event": "Co-authored FineWeb dataset paper — 15-trillion-token open pretraining dataset from Common Crawl",
+      "url": "https://huggingface.co/papers/2406.17557"
+    },
+    {
+      "date": "2024-07",
+      "event": "Released SmolLM family of small language models (135M to 1.7B) with open training corpus",
+      "url": "https://huggingface.co/HuggingFaceTB/SmolLM-1.7B"
+    },
+    {
+      "date": "2024-10",
+      "event": "Fortune interview: advocated that open-source AI benefits far outweigh risks",
+      "url": "https://fortune.com/2024/10/08/hugging-face-cofounder-wolf-open-source-ai-benefits-risks/"
+    },
+    {
+      "date": "2024-11",
+      "event": "Spoke at MLOps Community 'Agents in Production' event on LLMs, agents and open-source",
+      "url": "https://home.mlops.community/public/videos/llm-agents-and-opensource-thomas-wolf-agents-in-production-2024-11-15"
+    },
+    {
+      "date": "2025",
+      "event": "Released FineWeb2 — multilingual web dataset spanning 3 trillion words across many languages",
+      "url": "https://huggingface.co/datasets/HuggingFaceFW/fineweb-2"
+    },
+    {
+      "date": "2025-09",
+      "event": "Spoke at TechCrunch Disrupt 2025 on building the future of open AI",
+      "url": "https://techcrunch.com/2025/09/18/building-the-future-of-open-ai-with-thomas-wolf-at-techcrunch-disrupt-2025/"
+    },
+    {
+      "date": "2025-11",
+      "event": "Appeared on Sequoia's 'Training Data' podcast discussing LeRobot and the 'App Store for Robots'",
+      "url": "https://sequoiacap.com/podcast/training-data-thomas-wolf/"
+    }
+  ],
+  "key_contributions": [
+    {
+      "title": "Hugging Face Transformers",
+      "description": "Created the Transformers library (158k+ GitHub stars), providing a unified API for state-of-the-art pretrained models across PyTorch, TensorFlow, and JAX. Used by 5,000+ research organizations worldwide.",
+      "url": "https://github.com/huggingface/transformers"
+    },
+    {
+      "title": "Hugging Face Datasets",
+      "description": "Created the Datasets library for efficient access to thousands of ML datasets. Won EMNLP 2021 Best Demonstration Paper.",
+      "url": "https://github.com/huggingface/datasets"
+    },
+    {
+      "title": "BigScience / BLOOM",
+      "description": "Initiated and led BigScience, the largest open research collaboration in AI (1,000+ researchers, 60+ countries). Produced BLOOM, a 176B-parameter multilingual open LLM trained on 46 languages.",
+      "url": "https://huggingface.co/bigscience/bloom"
+    },
+    {
+      "title": "DistilBERT",
+      "description": "Co-authored DistilBERT (NeurIPS 2019), demonstrating that a 40% smaller BERT model retaining 97% of performance could be produced via knowledge distillation, enabling wider deployment.",
+      "url": "https://arxiv.org/abs/1910.01108"
+    },
+    {
+      "title": "Natural Language Processing with Transformers (O'Reilly)",
+      "description": "Co-authored the reference book on building language applications with Hugging Face, published by O'Reilly (2022).",
+      "url": "https://transformersbook.com/"
+    },
+    {
+      "title": "LeRobot",
+      "description": "Leading Hugging Face's open-source robotics initiative, bringing community-driven development to physical AI with affordable hardware like the $100 SO100 robotic arm.",
+      "url": "https://github.com/huggingface/lerobot"
+    },
+    {
+      "title": "FineWeb / FineWeb2",
+      "description": "Co-authored FineWeb (15T tokens) and FineWeb2 (3T+ words, multilingual) — open pretraining datasets that produce better-performing LLMs than other open data sources.",
+      "url": "https://huggingface.co/datasets/HuggingFaceFW/fineweb-2"
+    },
+    {
+      "title": "SmolLM",
+      "description": "Led release of SmolLM family of small language models (135M-1.7B params) with fully open training data, demonstrating that small open models can rival larger proprietary ones.",
+      "url": "https://huggingface.co/HuggingFaceTB/SmolLM-1.7B"
+    }
+  ],
+  "quotes": [
+    {
+      "text": "It's nice to give a fish to someone to feed them, it's even better to teach them to fish.",
+      "source": "Sequoia 'Training Data' podcast, Nov 2025",
+      "url": "https://sequoiacap.com/podcast/training-data-thomas-wolf/"
+    },
+    {
+      "text": "Everyone feels like they can build with AI and not just consuming AI.",
+      "source": "Sequoia 'Training Data' podcast, Nov 2025",
+      "url": "https://sequoiacap.com/podcast/training-data-thomas-wolf/"
+    },
+    {
+      "text": "All of these people also become roboticists in a way, if you give them the tools.",
+      "source": "Sequoia 'Training Data' podcast, Nov 2025",
+      "url": "https://sequoiacap.com/podcast/training-data-thomas-wolf/"
+    },
+    {
+      "text": "The missing brick was really software that could adapt, that could be dynamic.",
+      "source": "TechCrunch Disrupt 2025",
+      "url": "https://techcrunch.com/2025/09/18/building-the-future-of-open-ai-with-thomas-wolf-at-techcrunch-disrupt-2025/"
+    },
+    {
+      "text": "The big bet was, can you build a big community in robotics as well?",
+      "source": "Sequoia 'Training Data' podcast, Nov 2025",
+      "url": "https://sequoiacap.com/podcast/training-data-thomas-wolf/"
+    }
+  ],
+  "social": {
+    "github": "https://github.com/thomwolf",
+    "twitter": "https://x.com/Thom_wolf",
+    "linkedin": "https://www.linkedin.com/in/thom-wolf/",
+    "website": "https://thomwolf.io/",
+    "google_scholar": "https://scholar.google.com/citations?user=D2H5EFEAAAAJ",
+    "huggingface": "https://huggingface.co/thomwolf"
+  },
+  "sources": [
+    {
+      "title": "Thomas Wolf - personal website",
+      "url": "https://thomwolf.io/"
+    },
+    {
+      "title": "Hugging Face - Wikipedia",
+      "url": "https://en.wikipedia.org/wiki/Hugging_Face"
+    },
+    {
+      "title": "Thomas Wolf | World Economic Forum",
+      "url": "https://www.weforum.org/people/thomas-wolf/"
+    },
+    {
+      "title": "Thomas Wolf - Crunchbase",
+      "url": "https://www.crunchbase.com/person/thomas-wolf-125f"
+    },
+    {
+      "title": "Hugging Face raises $235M (TechCrunch, Aug 2023)",
+      "url": "https://techcrunch.com/2023/08/24/hugging-face-raises-235m-from-investors-including-salesforce-and-nvidia/"
+    },
+    {
+      "title": "Open-source AI benefits outweigh risks (Fortune, Oct 2024)",
+      "url": "https://fortune.com/2024/10/08/hugging-face-cofounder-wolf-open-source-ai-benefits-risks/"
+    },
+    {
+      "title": "Thomas Wolf at TechCrunch Disrupt 2025",
+      "url": "https://techcrunch.com/2025/09/18/building-the-future-of-open-ai-with-thomas-wolf-at-techcrunch-disrupt-2025/"
+    },
+    {
+      "title": "Hugging Face's Thomas Wolf on the 'App Store' for Robots (Sequoia)",
+      "url": "https://sequoiacap.com/podcast/training-data-thomas-wolf/"
+    },
+    {
+      "title": "HuggingFace's Transformers: State-of-the-art NLP (arXiv)",
+      "url": "https://arxiv.org/abs/1910.03771"
+    },
+    {
+      "title": "FineWeb Datasets paper",
+      "url": "https://huggingface.co/papers/2406.17557"
+    },
+    {
+      "title": "BigScience BLOOM model page",
+      "url": "https://huggingface.co/bigscience/bloom"
+    },
+    {
+      "title": "Natural Language Processing with Transformers (O'Reilly)",
+      "url": "https://transformersbook.com/"
+    },
+    {
+      "title": "The Past, Present and Future of Hugging Face - Analytics Vidhya",
+      "url": "https://www.analyticsvidhya.com/blog/2024/01/the-past-present-and-future-of-hugging-face-with-thomas-wolf/"
+    },
+    {
+      "title": "LLM, Agents and Open Source - MLOps Community",
+      "url": "https://home.mlops.community/public/videos/llm-agents-and-opensource-thomas-wolf-agents-in-production-2024-11-15"
+    }
+  ]
+}

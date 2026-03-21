@@ -26,7 +26,7 @@ const personality: Personality = {
       date: "2022-04-12",
     },
   ],
-  knownFor: "Claude",
+  knownFor: "Claude AI",
 };
 
 export default personality;

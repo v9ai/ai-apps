@@ -1,0 +1,211 @@
+{
+  "slug": "xingyao-wang",
+  "name": "Xingyao Wang",
+  "generated_at": "2026-03-19T21:00:00+00:00",
+  "bio": "Xingyao Wang (born 1999, Fujian, China) is the Co-founder and Chief AI Officer of All Hands AI, building OpenHands -- the leading open-source AI software development agent with 69,000+ GitHub stars and 300+ contributors. He is a PhD candidate in Computer Science at the University of Illinois Urbana-Champaign, advised by Prof. Heng Ji and collaborating with Prof. Hao Peng. He earned his B.S. in Computer Science and Data Science from the University of Michigan, where he graduated with University Honors and received an Honorable Mention for the CRA Outstanding Undergraduate Researcher Award. His research focuses on AI agents that interact with computers through code, assist humans, and continuously self-improve. He is the first author of the foundational CodeAct paper (ICML 2024), which proposed using executable Python code as a unified action space for LLM agents -- the architectural insight that underpins OpenHands. He co-founded All Hands AI in 2024 alongside Robert Brennan (CEO) and Graham Neubig (CMU professor), raising $5M seed led by Menlo Ventures / Anthology Fund (Anthropic) and $18.8M Series A led by Madrona. Previously interned at Google Research, Microsoft, ByteDance, and Tencent.",
+  "topics": [
+    "AI Software Engineering Agents",
+    "Code-Based Agent Actions",
+    "Open Source AI Infrastructure",
+    "LLM Agent Benchmarks",
+    "Multi-Turn Tool Interaction",
+    "Sandboxed Agent Execution",
+    "SWE-Bench Evaluation",
+    "Agent Self-Improvement",
+    "Multimodal LLM Pre-Training",
+    "Reasoning Models"
+  ],
+  "timeline": [
+    {
+      "date": "2021",
+      "event": "Graduated from University of Michigan with B.S. in Computer Science and Data Science; received University Honors and Honorable Mention for CRA Outstanding Undergraduate Researcher Award",
+      "url": "https://xwang.dev/"
+    },
+    {
+      "date": "2021",
+      "event": "Started PhD in Computer Science at UIUC, advised by Prof. Heng Ji",
+      "url": "https://xwang.dev/"
+    },
+    {
+      "date": "2023-05",
+      "event": "Summer student researcher at Google Research NYC, working on multimodal LLM pre-training",
+      "url": "https://xwang.dev/"
+    },
+    {
+      "date": "2023-07",
+      "event": "Published Code4Struct at ACL 2023 -- code generation for few-shot event structure prediction",
+      "url": "https://aclanthology.org/2023.acl-long.202/"
+    },
+    {
+      "date": "2024-01",
+      "event": "MINT and CRAFT papers accepted to ICLR 2024 -- evaluating LLMs in multi-turn interaction with tools",
+      "url": "https://arxiv.org/abs/2309.10691"
+    },
+    {
+      "date": "2024-02",
+      "event": "Released CodeAct paper: 'Executable Code Actions Elicit Better LLM Agents' -- proposed using executable Python code as unified action space (later accepted ICML 2024 Oral)",
+      "url": "https://arxiv.org/abs/2402.01030"
+    },
+    {
+      "date": "2024-03-13",
+      "event": "OpenDevin (later renamed OpenHands) launched on GitHub as open-source AI software development agent",
+      "url": "https://github.com/All-Hands-AI/OpenHands"
+    },
+    {
+      "date": "2024-06",
+      "event": "R-Tuning paper received Outstanding Paper Award at NAACL 2024",
+      "url": "https://xwang.dev/news/"
+    },
+    {
+      "date": "2024-07",
+      "event": "Published OpenHands paper: 'An Open Platform for AI Software Developers as Generalist Agents' (accepted ICLR 2025)",
+      "url": "https://arxiv.org/abs/2407.16741"
+    },
+    {
+      "date": "2024-09-05",
+      "event": "All Hands AI raised $5M seed round led by Menlo Ventures / Anthology Fund (Anthropic); co-founded with Robert Brennan and Graham Neubig",
+      "url": "https://openhands.dev/blog/press-release-all-hands-announces-5m-to-scale-ai-agent-for-software-development"
+    },
+    {
+      "date": "2025-04",
+      "event": "OpenHands paper presented at ICLR 2025 as a conference paper",
+      "url": "https://iclr.cc/virtual/2025/poster/29831"
+    },
+    {
+      "date": "2025-07",
+      "event": "OpenHands agent surpassed the last human developer contributing code to its own repository",
+      "url": "https://www.madrona.com/our-investment-in-openhands-building-the-os-for-agentic-software-development/"
+    },
+    {
+      "date": "2025-07",
+      "event": "Published SWE-Gym: Training Software Engineering Agents and Verifiers (accepted ICML 2025)",
+      "url": "https://arxiv.org/abs/2412.21139"
+    },
+    {
+      "date": "2025-11",
+      "event": "All Hands AI raised $18.8M Series A led by Madrona, with Menlo Ventures, Obvious Ventures, Fujitsu Ventures, Alumni Ventures",
+      "url": "https://www.thesaasnews.com/news/openhands-raises-18-8-million-series-a"
+    },
+    {
+      "date": "2025-11",
+      "event": "Released OpenHands Software Agent SDK -- composable and extensible foundation for production agents",
+      "url": "https://arxiv.org/abs/2511.03690"
+    },
+    {
+      "date": "2026-03",
+      "event": "OpenHands surpassed 69,000 GitHub stars with 300+ contributors",
+      "url": "https://github.com/All-Hands-AI/OpenHands"
+    }
+  ],
+  "key_contributions": [
+    {
+      "title": "OpenHands",
+      "description": "The leading open-source AI software development agent (69K+ GitHub stars, 300+ contributors). Autonomously solves software engineering tasks end-to-end -- writing code, running commands, and browsing the web in sandboxed environments. First open AI agent to surpass 50% on SWE-Bench Verified.",
+      "url": "https://github.com/All-Hands-AI/OpenHands"
+    },
+    {
+      "title": "CodeAct",
+      "description": "ICML 2024 Oral paper proposing executable Python code as a unified action space for LLM agents, achieving up to 20% higher success rates than JSON/text alternatives. The foundational architecture behind OpenHands.",
+      "url": "https://github.com/xingyaoww/code-act"
+    },
+    {
+      "title": "MINT Benchmark",
+      "description": "ICLR 2024 benchmark for evaluating LLMs in multi-turn interaction with tools and language feedback, providing a rigorous framework for assessing agent capabilities across iterative problem-solving.",
+      "url": "https://arxiv.org/abs/2309.10691"
+    },
+    {
+      "title": "SWE-Gym",
+      "description": "Training framework for software engineering agents and verifiers (ICML 2025). Provides environments for training and evaluating AI agents on real-world software engineering tasks.",
+      "url": "https://arxiv.org/abs/2412.21139"
+    },
+    {
+      "title": "OpenHands Software Agent SDK",
+      "description": "A composable and extensible SDK for building production-grade AI agents, providing the building blocks for multi-agent orchestration and tool integration.",
+      "url": "https://arxiv.org/abs/2511.03690"
+    },
+    {
+      "title": "CRAFT",
+      "description": "ICLR 2024 paper on customizing LLMs by creating and retrieving from specialized toolsets, enabling dynamic tool creation for novel tasks.",
+      "url": "https://arxiv.org/abs/2309.17428"
+    }
+  ],
+  "quotes": [
+    {
+      "text": "Instead of AI demanding constant attention, I prefer autonomous AI that solves problems independently.",
+      "source": "Z Potentials interview, Feb 2025",
+      "url": "https://zpotentials.substack.com/p/z-potentials-xingyao-wang-99-born"
+    },
+    {
+      "text": "When it comes to dev tools, open source generally wins.",
+      "source": "All Hands AI team, referenced in Z Potentials, Feb 2025",
+      "url": "https://zpotentials.substack.com/p/z-potentials-xingyao-wang-99-born"
+    },
+    {
+      "text": "We're building open source AI agents that can tackle all the toil involved in an engineer's day-to-day work, so developers can focus on what they do best -- creative problem-solving.",
+      "source": "All Hands AI press release, Sep 2024",
+      "url": "https://openhands.dev/blog/press-release-all-hands-announces-5m-to-scale-ai-agent-for-software-development"
+    },
+    {
+      "text": "Xingyao's deep empathy for the developer creates the perfect storm to tackle this market.",
+      "source": "Madrona Ventures investment blog, Nov 2025",
+      "url": "https://www.madrona.com/our-investment-in-openhands-building-the-os-for-agentic-software-development/"
+    }
+  ],
+  "social": {
+    "github": "https://github.com/xingyaoww",
+    "twitter": "https://x.com/xingyaow_",
+    "website": "https://xwang.dev/",
+    "google_scholar": "https://scholar.google.com/citations?user=F7qq3YcAAAAJ",
+    "linkedin": "https://www.linkedin.com/in/xingyao-wang/"
+  },
+  "sources": [
+    {
+      "title": "Xingyao Wang -- personal website",
+      "url": "https://xwang.dev/"
+    },
+    {
+      "title": "xingyaoww (Xingyao Wang) -- GitHub profile",
+      "url": "https://github.com/xingyaoww"
+    },
+    {
+      "title": "OpenHands: An Open Platform for AI Software Developers (ICLR 2025)",
+      "url": "https://arxiv.org/abs/2407.16741"
+    },
+    {
+      "title": "Executable Code Actions Elicit Better LLM Agents (ICML 2024)",
+      "url": "https://arxiv.org/abs/2402.01030"
+    },
+    {
+      "title": "All Hands AI $5M Seed Announcement",
+      "url": "https://openhands.dev/blog/press-release-all-hands-announces-5m-to-scale-ai-agent-for-software-development"
+    },
+    {
+      "title": "OpenHands Raises $18.8M Series A -- The SaaS News",
+      "url": "https://www.thesaasnews.com/news/openhands-raises-18-8-million-series-a"
+    },
+    {
+      "title": "Madrona Investment in OpenHands",
+      "url": "https://www.madrona.com/our-investment-in-openhands-building-the-os-for-agentic-software-development/"
+    },
+    {
+      "title": "Z Potentials -- Xingyao Wang: 99-born PhD Founder in AI Programming",
+      "url": "https://zpotentials.substack.com/p/z-potentials-xingyao-wang-99-born"
+    },
+    {
+      "title": "One Year of OpenHands -- All Hands AI Blog",
+      "url": "https://openhands.dev/blog/one-year-of-openhands-a-journey-of-open-source-ai-development"
+    },
+    {
+      "title": "Xingyao Wang -- Google Scholar",
+      "url": "https://scholar.google.com/citations?user=F7qq3YcAAAAJ"
+    },
+    {
+      "title": "MINT: Evaluating LLMs in Multi-turn Interaction (ICLR 2024)",
+      "url": "https://arxiv.org/abs/2309.10691"
+    },
+    {
+      "title": "SWE-Gym: Training Software Engineering Agents (ICML 2025)",
+      "url": "https://arxiv.org/abs/2412.21139"
+    }
+  ]
+}

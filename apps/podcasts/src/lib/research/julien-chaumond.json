@@ -1,0 +1,259 @@
+{
+  "slug": "julien-chaumond",
+  "name": "Julien Chaumond",
+  "generated_at": "2026-03-19",
+  "bio": "Julien Chaumond is the co-founder and Chief Technology Officer (CTO) of Hugging Face, the leading open-source AI platform often called 'the GitHub of machine learning.' He co-founded the company in 2016 with Clement Delangue (CEO) and Thomas Wolf (CSO), initially as a chatbot for teenagers before pivoting in 2018 to building open-source ML infrastructure. Under his technical leadership, Hugging Face created the Transformers library (158k+ GitHub stars), the Hugging Face Hub (hosting 1M+ models, 300k+ datasets, and 300k+ Spaces), and helped launch the BigScience initiative that produced BLOOM, a 176B-parameter open-access multilingual language model. Chaumond studied Applied Mathematics at Ecole Polytechnique (2003-2006), Computer Science at Telecom Paris (2006), and earned an M.S. in Electrical Engineering and Computer Science from Stanford University (2006-2007). Before Hugging Face, he co-founded Glose (a social reading app), served as an advisor to the French Deputy Minister for Digital Affairs, and worked at Stupeflix and Corps des Telecommunications. Hugging Face raised $235M in its Series D at a $4.5B valuation in August 2023, with investors including Google, Amazon, Nvidia, Salesforce, Intel, AMD, and Qualcomm. The company reached $130M+ annual revenue by late 2024. Based in Brooklyn, NY, Chaumond continues to champion open-source AI, on-device inference, and community-driven ML development.",
+  "topics": [
+    "Open Source AI",
+    "Transformer Architecture",
+    "Model Hub & Distribution",
+    "On-Device Inference",
+    "AI Democratization",
+    "Production ML Infrastructure",
+    "Multilingual Language Models",
+    "Robotics & Embodied AI",
+    "Inference Optimization",
+    "Community-Driven ML"
+  ],
+  "timeline": [
+    {
+      "date": "2006",
+      "event": "Graduated from Ecole Polytechnique (Applied Mathematics) and Telecom Paris (Computer Science)",
+      "url": "https://www.linkedin.com/in/julienchaumond/"
+    },
+    {
+      "date": "2007",
+      "event": "Earned M.S. in Electrical Engineering and Computer Science from Stanford University",
+      "url": "https://www.linkedin.com/in/julienchaumond/"
+    },
+    {
+      "date": "2013-01",
+      "event": "Co-founded Glose, a social reading app, as CTO",
+      "url": "https://www.crunchbase.com/person/julien-chaumond"
+    },
+    {
+      "date": "2016-01",
+      "event": "Served as advisor to the French Deputy Minister for Digital Affairs at Ministere de l'Economie et des Finances",
+      "url": "https://www.clay.com/dossier/hugging-face-cto"
+    },
+    {
+      "date": "2016-08",
+      "event": "Co-founded Hugging Face with Clement Delangue and Thomas Wolf as an AI chatbot for teenagers",
+      "url": "https://www.crunchbase.com/person/julien-chaumond"
+    },
+    {
+      "date": "2017",
+      "event": "Hugging Face raised $1.2M angel round from Betaworks, SV Angel, and Kevin Durant",
+      "url": "https://sacra.com/c/hugging-face/"
+    },
+    {
+      "date": "2018",
+      "event": "Pivoted Hugging Face from chatbot to open-source ML infrastructure; created simplified PyTorch BERT implementation and open-sourced it",
+      "url": "https://www.pathtopivot.com/hugging-face-pivot-case-study/"
+    },
+    {
+      "date": "2019",
+      "event": "Released the Transformers library with a unified API for BERT, GPT-2, and other models — now 158k+ GitHub stars",
+      "url": "https://github.com/huggingface/transformers"
+    },
+    {
+      "date": "2019-07",
+      "event": "Created swift-coreml-transformers: Swift Core ML implementations of GPT-2, DistilGPT-2, BERT for on-device inference",
+      "url": "https://github.com/huggingface/swift-coreml-transformers"
+    },
+    {
+      "date": "2020",
+      "event": "Launched the Hugging Face Hub, a git-based repository for sharing ML models and datasets",
+      "url": "https://huggingface.co/blog/huggingface-hub-v1"
+    },
+    {
+      "date": "2021-05",
+      "event": "Co-launched BigScience, a year-long open research workshop with 1,200+ researchers across 39 countries to train BLOOM",
+      "url": "https://huggingface.co/bigscience/bloom"
+    },
+    {
+      "date": "2021-12",
+      "event": "Hugging Face acquired Gradio, the open-source ML demo library, integrating it into Spaces",
+      "url": "https://huggingface.co/blog"
+    },
+    {
+      "date": "2022-07",
+      "event": "Released BLOOM: a 176B-parameter open-access multilingual language model trained collaboratively via BigScience",
+      "url": "https://arxiv.org/abs/2211.05100"
+    },
+    {
+      "date": "2023-04",
+      "event": "Launched HuggingChat, the first open-source alternative to ChatGPT",
+      "url": "https://x.com/julien_c/status/1650884245823320065"
+    },
+    {
+      "date": "2023-08",
+      "event": "Hugging Face raised $235M Series D at $4.5B valuation from Google, Amazon, Nvidia, Salesforce, Intel, AMD, Qualcomm",
+      "url": "https://techcrunch.com/2023/08/24/hugging-face-raises-235m-from-investors-including-salesforce-and-nvidia/"
+    },
+    {
+      "date": "2024-08",
+      "event": "Acquired XetHub to improve large-file storage backend for Hub repositories",
+      "url": "https://huggingface.co/blog/xethub-joins-hf"
+    },
+    {
+      "date": "2024-10",
+      "event": "Hugging Face reached $130M+ annual revenue with 50k+ customers",
+      "url": "https://getlatka.com/companies/hugging-face"
+    },
+    {
+      "date": "2025-04",
+      "event": "Acquired Pollen Robotics, entering embodied AI with the open-source Reachy 2 humanoid robot",
+      "url": "https://huggingface.co/blog/hugging-face-pollen-robotics-acquisition"
+    },
+    {
+      "date": "2025",
+      "event": "Published Tiny Agents concept: a 50-line JavaScript agent implementation using Model Context Protocol (MCP)",
+      "url": "https://huggingface.co/julien-c"
+    }
+  ],
+  "key_contributions": [
+    {
+      "title": "Hugging Face Transformers",
+      "description": "Co-created the most popular ML framework (158k+ GitHub stars), providing a unified API for thousands of pretrained models across NLP, vision, audio, and multimodal tasks.",
+      "url": "https://github.com/huggingface/transformers"
+    },
+    {
+      "title": "Hugging Face Hub",
+      "description": "Architected the git-based platform hosting 1M+ models, 300k+ datasets, and 300k+ Spaces, becoming the central distribution layer for open-source AI.",
+      "url": "https://huggingface.co/"
+    },
+    {
+      "title": "BigScience / BLOOM",
+      "description": "Co-launched the BigScience workshop that brought 1,200+ researchers across 39 countries together to train BLOOM, a 176B-parameter open-access multilingual language model.",
+      "url": "https://huggingface.co/bigscience/bloom"
+    },
+    {
+      "title": "Swift CoreML Transformers",
+      "description": "Pioneered on-device transformer inference on Apple platforms by building Swift Core ML implementations of GPT-2, BERT, and DistilBERT.",
+      "url": "https://github.com/huggingface/swift-coreml-transformers"
+    },
+    {
+      "title": "HuggingChat",
+      "description": "Launched the first major open-source alternative to ChatGPT, powered by community-built open models.",
+      "url": "https://huggingface.co/chat"
+    },
+    {
+      "title": "Inference Endpoints & Optimization",
+      "description": "Led development of production inference infrastructure including ONNX optimization, serverless GPU endpoints, and sub-millisecond latency for BERT-scale models.",
+      "url": "https://huggingface.co/inference-endpoints"
+    },
+    {
+      "title": "Tiny Agents",
+      "description": "Published a minimalist 50-line JavaScript agent implementation demonstrating Model Context Protocol (MCP) integration with Hugging Face models.",
+      "url": "https://huggingface.co/julien-c"
+    }
+  ],
+  "quotes": [
+    {
+      "text": "Some people said that closed APIs were winning... but we will never give up the fight for open source AI.",
+      "source": "X post on HuggingChat launch, Apr 2023",
+      "url": "https://x.com/julien_c/status/1650884245823320065"
+    },
+    {
+      "text": "The intersection of open source, open science, and machine learning is going to be incredibly successful and it's going to bring life to a new generation of open-source-type companies.",
+      "source": "DagsHub MLOps Podcast",
+      "url": "https://dagshub.com/blog/huggingface-cto-julien-chaumond-on-large-models-in-production/"
+    },
+    {
+      "text": "Language is the API to humans right? Between humans. It's what you use to communicate.",
+      "source": "DagsHub MLOps Podcast",
+      "url": "https://dagshub.com/blog/huggingface-cto-julien-chaumond-on-large-models-in-production/"
+    },
+    {
+      "text": "If you manage to achieve a cost-effective way of reaching a few milliseconds inference times at scale on BERT size models, there's pretty much no reason not to put them into production.",
+      "source": "DagsHub MLOps Podcast",
+      "url": "https://dagshub.com/blog/huggingface-cto-julien-chaumond-on-large-models-in-production/"
+    },
+    {
+      "text": "Machine learning is going to be one way to make software engineering more accessible. So anyone can start building stuff no matter where they are.",
+      "source": "DagsHub MLOps Podcast",
+      "url": "https://dagshub.com/blog/huggingface-cto-julien-chaumond-on-large-models-in-production/"
+    },
+    {
+      "text": "Democratization of AI will be one of the biggest achievements for society and no single company, not even a Big Tech business, can do it alone.",
+      "source": "VentureBeat interview",
+      "url": "https://venturebeat.com/technology/hugging-face-triples-investment-in-open-source-machine-learning-models/"
+    },
+    {
+      "text": "Let's make AI OPEN and not the other way around.",
+      "source": "LinkedIn post on AWS partnership, Feb 2023",
+      "url": "https://www.linkedin.com/in/julienchaumond/"
+    }
+  ],
+  "social": {
+    "github": "https://github.com/julien-c",
+    "twitter": "https://x.com/julien_c",
+    "linkedin": "https://www.linkedin.com/in/julienchaumond/",
+    "huggingface": "https://huggingface.co/julien-c",
+    "bluesky": "https://bsky.app/profile/julien-c.hf.co",
+    "website": "https://huggingface.co/julien-c"
+  },
+  "sources": [
+    {
+      "title": "julien-c (Julien Chaumond) - GitHub",
+      "url": "https://github.com/julien-c"
+    },
+    {
+      "title": "Julien Chaumond - Hugging Face Profile",
+      "url": "https://huggingface.co/julien-c"
+    },
+    {
+      "title": "Julien Chaumond - LinkedIn",
+      "url": "https://www.linkedin.com/in/julienchaumond/"
+    },
+    {
+      "title": "Julien Chaumond Bio - Clay Dossier",
+      "url": "https://www.clay.com/dossier/hugging-face-cto"
+    },
+    {
+      "title": "Julien Chaumond - Crunchbase",
+      "url": "https://www.crunchbase.com/person/julien-chaumond"
+    },
+    {
+      "title": "Julien Chaumond | Sequoia Capital",
+      "url": "https://sequoiacap.com/founder/julien-chaumond/"
+    },
+    {
+      "title": "Large ML Models in Production with HuggingFace CTO - DagsHub",
+      "url": "https://dagshub.com/blog/huggingface-cto-julien-chaumond-on-large-models-in-production/"
+    },
+    {
+      "title": "Hugging Face raises $235M Series D - TechCrunch",
+      "url": "https://techcrunch.com/2023/08/24/hugging-face-raises-235m-from-investors-including-salesforce-and-nvidia/"
+    },
+    {
+      "title": "Hugging Face revenue and funding - Sacra",
+      "url": "https://sacra.com/c/hugging-face/"
+    },
+    {
+      "title": "Hugging Face Pivot Case Study - Path to Pivot",
+      "url": "https://www.pathtopivot.com/hugging-face-pivot-case-study/"
+    },
+    {
+      "title": "HuggingChat launch - X post by Julien Chaumond",
+      "url": "https://x.com/julien_c/status/1650884245823320065"
+    },
+    {
+      "title": "BLOOM: 176B-Parameter Open-Access Multilingual Language Model - arXiv",
+      "url": "https://arxiv.org/abs/2211.05100"
+    },
+    {
+      "title": "Hugging Face acquires Pollen Robotics",
+      "url": "https://huggingface.co/blog/hugging-face-pollen-robotics-acquisition"
+    },
+    {
+      "title": "XetHub joins Hugging Face",
+      "url": "https://huggingface.co/blog/xethub-joins-hf"
+    },
+    {
+      "title": "Who is Julien Chaumond? - Favikon",
+      "url": "https://www.favikon.com/blog/who-is-julien-chaumond"
+    }
+  ]
+}

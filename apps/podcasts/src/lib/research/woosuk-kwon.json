@@ -1,0 +1,221 @@
+{
+  "slug": "woosuk-kwon",
+  "name": "Woosuk Kwon",
+  "generated_at": "2026-03-19T21:00:00+00:00",
+  "bio": "Woosuk Kwon is the co-founder and CTO of Inferact, an AI inference infrastructure startup that launched in January 2026 with $150M in seed funding at an $800M valuation led by Andreessen Horowitz and Lightspeed. He co-created vLLM, the most widely adopted open-source LLM inference engine with over 2,000 contributors, and invented PagedAttention, an algorithm inspired by OS virtual memory that eliminates 60-80% of GPU memory waste in KV caches. Kwon earned dual B.S. degrees in Computer Science and Mathematical Sciences from Seoul National University (ranked 1st of 134 students) and a Ph.D. in Computer Science from UC Berkeley under Ion Stoica with a 4.0 GPA, completing his dissertation in December 2025. Before founding Inferact, he was a Research Scientist at Google DeepMind (2024-2025) and a Member of Technical Staff at Thinking Machines Lab (May-Nov 2025).",
+  "topics": [
+    "LLM Inference Optimization",
+    "KV Cache Memory Management",
+    "PagedAttention",
+    "GPU Scheduling",
+    "Speculative Decoding",
+    "Model Pruning",
+    "Distributed Systems",
+    "Open Source AI Infrastructure",
+    "Serverless AI Serving",
+    "Systems for Machine Learning"
+  ],
+  "timeline": [
+    {
+      "date": "2015-03",
+      "event": "Began dual B.S. in Computer Science and Mathematical Sciences at Seoul National University",
+      "url": "https://woosuk.me/"
+    },
+    {
+      "date": "2020",
+      "event": "Published 'Nimble: Lightweight and Parallel GPU Task Scheduling for Deep Learning' at NeurIPS 2020",
+      "url": "https://dblp.org/pid/177/2702.html"
+    },
+    {
+      "date": "2020",
+      "event": "Published 'Graphene: Strong yet Lightweight Row Hammer Protection' at MICRO 2020",
+      "url": "https://dblp.org/pid/177/2702.html"
+    },
+    {
+      "date": "2021-08",
+      "event": "Graduated from Seoul National University; began Ph.D. at UC Berkeley under Ion Stoica",
+      "url": "https://woosuk.me/"
+    },
+    {
+      "date": "2022",
+      "event": "Published 'Learned Token Pruning for Transformers' at KDD 2022 and post-training pruning framework at NeurIPS 2022",
+      "url": "https://dblp.org/pid/177/2702.html"
+    },
+    {
+      "date": "2023-04",
+      "event": "vLLM deployed at LMSYS Chatbot Arena and Vicuna Demo, handling 30K daily requests",
+      "url": "https://vllm.ai/blog/vllm"
+    },
+    {
+      "date": "2023-06-20",
+      "event": "Publicly announced vLLM with PagedAttention, achieving 24x throughput over HuggingFace Transformers",
+      "url": "https://vllm.ai/blog/vllm"
+    },
+    {
+      "date": "2023-06",
+      "event": "Published 'SkyPilot: An Intercloud Broker for Sky Computing' at NSDI 2023",
+      "url": "https://www.usenix.org/conference/nsdi23/presentation/yang-zongheng"
+    },
+    {
+      "date": "2023-09-12",
+      "event": "Published 'Efficient Memory Management for Large Language Model Serving with PagedAttention' at SOSP 2023",
+      "url": "https://arxiv.org/abs/2309.06180"
+    },
+    {
+      "date": "2023",
+      "event": "Received a16z Open Source AI Grant for vLLM",
+      "url": "https://woosuk.me/"
+    },
+    {
+      "date": "2024-03",
+      "event": "Joined Google DeepMind as Research Scientist",
+      "url": "https://woosuk.me/"
+    },
+    {
+      "date": "2024",
+      "event": "Selected as Sequoia Open Source Fellow",
+      "url": "https://woosuk.me/"
+    },
+    {
+      "date": "2024-09-19",
+      "event": "Presented 'vLLM: Easy, Fast, and Cheap LLM Serving for Everyone' at PyTorch Conference 2024",
+      "url": "https://pytorch2024.sched.com/event/1fHmx/vllm-easy-fast-and-cheap-llm-serving-for-everyone-woosuk-kwon-uc-berkeley-xiaoxuan-liu-ucb"
+    },
+    {
+      "date": "2025-05",
+      "event": "Joined Thinking Machines Lab as Member of Technical Staff",
+      "url": "https://woosuk.me/"
+    },
+    {
+      "date": "2025-12",
+      "event": "Completed Ph.D. at UC Berkeley; dissertation: 'vLLM: An Efficient Inference Engine for Large Language Models'",
+      "url": "https://www2.eecs.berkeley.edu/Pubs/TechRpts/2025/EECS-2025-192.html"
+    },
+    {
+      "date": "2025-11",
+      "event": "Co-founded Inferact with Ion Stoica and other vLLM core maintainers",
+      "url": "https://siliconangle.com/2026/01/22/inferact-launches-150m-funding-commercialize-vllm/"
+    },
+    {
+      "date": "2025",
+      "event": "Published 'Jenga: Effective Memory Management for Serving LLM with Heterogeneity' at SOSP 2025",
+      "url": "https://dblp.org/pid/177/2702.html"
+    },
+    {
+      "date": "2026-01-22",
+      "event": "Inferact launched publicly with $150M seed funding at $800M valuation, led by a16z and Lightspeed",
+      "url": "https://siliconangle.com/2026/01/22/inferact-launches-150m-funding-commercialize-vllm/"
+    }
+  ],
+  "key_contributions": [
+    {
+      "title": "vLLM",
+      "description": "The most widely adopted open-source LLM inference and serving engine, achieving 24x throughput over HuggingFace Transformers and 3.5x over TGI. Over 2,000 contributors and used by major AI labs globally.",
+      "url": "https://github.com/vllm-project/vllm"
+    },
+    {
+      "title": "PagedAttention",
+      "description": "Novel attention algorithm inspired by OS virtual memory paging that partitions KV caches into non-contiguous blocks, reducing memory waste from 60-80% to under 4% and enabling copy-on-write memory sharing across requests.",
+      "url": "https://arxiv.org/abs/2309.06180"
+    },
+    {
+      "title": "Inferact",
+      "description": "AI inference infrastructure company commercializing vLLM with a serverless managed offering, observability, and multi-hardware support. Raised $150M seed at $800M valuation from a16z, Lightspeed, Sequoia, and Databricks.",
+      "url": "https://siliconangle.com/2026/01/22/inferact-launches-150m-funding-commercialize-vllm/"
+    },
+    {
+      "title": "Jenga (SOSP 2025)",
+      "description": "Memory management system for serving LLMs with heterogeneous hardware, extending PagedAttention principles to mixed GPU environments.",
+      "url": "https://dblp.org/pid/177/2702.html"
+    },
+    {
+      "title": "SkyPilot (NSDI 2023)",
+      "description": "Intercloud broker for sky computing that optimizes workload placement across multiple cloud providers for cost and performance.",
+      "url": "https://www.usenix.org/conference/nsdi23/presentation/yang-zongheng"
+    },
+    {
+      "title": "Learned Token Pruning (KDD 2022)",
+      "description": "Method for pruning tokens in Transformer models to accelerate inference while maintaining accuracy.",
+      "url": "https://dblp.org/pid/177/2702.html"
+    },
+    {
+      "title": "Nimble (NeurIPS 2020)",
+      "description": "Lightweight and parallel GPU task scheduling framework for deep learning workloads.",
+      "url": "https://dblp.org/pid/177/2702.html"
+    }
+  ],
+  "quotes": [
+    {
+      "text": "We see a future where serving AI becomes effortless. Today, deploying a frontier model at scale requires a dedicated infrastructure team. Tomorrow, it should be as simple as spinning up a serverless database. The complexity doesn't disappear; it gets absorbed into the infrastructure we're building.",
+      "source": "Inferact launch blog post, Jan 2026",
+      "url": "https://siliconangle.com/2026/01/22/inferact-launches-150m-funding-commercialize-vllm/"
+    },
+    {
+      "text": "vLLM taught me a tough lesson: to keep the GPU fully utilized, we need to pay close attention to everything happening on the CPU.",
+      "source": "X (@woosuk_k)",
+      "url": "https://x.com/woosuk_k"
+    },
+    {
+      "text": "vLLM improves the throughput of popular LLMs by 2-4x with the same level of latency compared to the state-of-the-art systems, such as FasterTransformer and Orca.",
+      "source": "PagedAttention paper (SOSP 2023)",
+      "url": "https://arxiv.org/abs/2309.06180"
+    }
+  ],
+  "social": {
+    "github": "https://github.com/WoosukKwon",
+    "twitter": "https://x.com/woosuk_k",
+    "linkedin": "https://www.linkedin.com/in/woosuk-kwon-986551262/",
+    "website": "https://woosuk.me/",
+    "scholar": "https://scholar.google.com/citations?user=_AT3eUcAAAAJ&hl=en"
+  },
+  "sources": [
+    {
+      "title": "Woosuk Kwon - Personal Website",
+      "url": "https://woosuk.me/"
+    },
+    {
+      "title": "WoosukKwon - GitHub Profile",
+      "url": "https://github.com/WoosukKwon"
+    },
+    {
+      "title": "Efficient Memory Management for LLM Serving with PagedAttention (arXiv)",
+      "url": "https://arxiv.org/abs/2309.06180"
+    },
+    {
+      "title": "vLLM: Easy, Fast, and Cheap LLM Serving with PagedAttention (blog)",
+      "url": "https://vllm.ai/blog/vllm"
+    },
+    {
+      "title": "vLLM GitHub Repository",
+      "url": "https://github.com/vllm-project/vllm"
+    },
+    {
+      "title": "Inferact launches with $150M funding to commercialize vLLM (SiliconANGLE)",
+      "url": "https://siliconangle.com/2026/01/22/inferact-launches-150m-funding-commercialize-vllm/"
+    },
+    {
+      "title": "a16z announces $150M seed for Inferact (X)",
+      "url": "https://x.com/a16z/status/2014387286788698122"
+    },
+    {
+      "title": "Woosuk Kwon | Sequoia Capital",
+      "url": "https://sequoiacap.com/founder/woosuk-kwon/"
+    },
+    {
+      "title": "vLLM: An Efficient Inference Engine for LLMs - Ph.D. Dissertation (UC Berkeley)",
+      "url": "https://www2.eecs.berkeley.edu/Pubs/TechRpts/2025/EECS-2025-192.html"
+    },
+    {
+      "title": "Woosuk Kwon - DBLP Bibliography",
+      "url": "https://dblp.org/pid/177/2702.html"
+    },
+    {
+      "title": "PyTorch Conference 2024 - vLLM Talk",
+      "url": "https://pytorch2024.sched.com/event/1fHmx/vllm-easy-fast-and-cheap-llm-serving-for-everyone-woosuk-kwon-uc-berkeley-xiaoxuan-liu-ucb"
+    },
+    {
+      "title": "UC Berkeley Sky Computing Lab - vLLM Project Page",
+      "url": "https://sky.cs.berkeley.edu/project/vllm/"
+    }
+  ]
+}

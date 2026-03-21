@@ -1,0 +1,182 @@
+{
+  "slug": "richard-liaw",
+  "name": "Richard Liaw",
+  "generated_at": "2026-03-19T12:00:00+00:00",
+  "bio": "Richard Liaw is a co-creator of Ray Tune and a Product leader at Anyscale, the company commercializing the Ray distributed computing framework. A UC Berkeley RISELab graduate researcher under Joseph Gonzalez, Ion Stoica, and Ken Goldberg, Liaw is a co-author of the foundational Ray paper (OSDI 2018, 1,560 citations), the RLlib reinforcement learning library (ICML, 1,006 citations), and the Tune hyperparameter tuning platform (1,079 citations). He co-authored 'Learning Ray' (O'Reilly, 2023) and has an h-index of 13 with over 4,300 total citations across 20 publications. His research spans distributed systems, hyperparameter optimization (HyperSched, RubberBand), and scalable reinforcement learning.",
+  "topics": [
+    "Distributed Hyperparameter Tuning",
+    "Ray Tune",
+    "Ray Distributed Framework",
+    "Scalable Reinforcement Learning (RLlib)",
+    "AutoML & Neural Architecture Search",
+    "Cloud-Based Model Training",
+    "Kubernetes + Ray (KubeRay)",
+    "Population-Based Training (PBT)",
+    "Distributed Systems for ML",
+    "Open-Source AI Infrastructure"
+  ],
+  "timeline": [
+    {
+      "date": "2023-03-21",
+      "event": "Co-authored 'Learning Ray: Flexible Distributed Python for Machine Learning' published by O'Reilly Media (with Max Pumperla and Edward Oakes)",
+      "url": "https://www.oreilly.com/library/view/learning-ray/9781098117214/"
+    },
+    {
+      "date": "2022-02-15",
+      "event": "Co-authored Anyscale blog post 'How to Distribute Hyperparameter Tuning Using Ray Tune'",
+      "url": "https://www.anyscale.com/blog/how-to-distribute-hyperparameter-tuning-using-ray-tune"
+    },
+    {
+      "date": "2021-04-21",
+      "event": "Published 'RubberBand: Cloud-based Hyperparameter Tuning' at EuroSys 2021 (28 citations)",
+      "url": "https://www.semanticscholar.org/paper/RubberBand:-Cloud-based-Hyperparameter-Tuning/4afa7896ad35c5fc65112dc586c7a3e90f0404f3"
+    },
+    {
+      "date": "2020-12-16",
+      "event": "Joined Anyscale full-time as software engineer, transitioning from UC Berkeley PhD program",
+      "url": "https://www.linkedin.com/posts/richardliaw_why-im-joining-anyscale-activity-6755555403351908352-322H"
+    },
+    {
+      "date": "2020-07-24",
+      "event": "Interviewed on Software Engineering Daily about Ray applications, RLlib, and Tune",
+      "url": "https://softwareengineeringdaily.com/2020/07/24/ray-applications-with-richard-liaw/"
+    },
+    {
+      "date": "2020-06-17",
+      "event": "Presented 'The Road to AutoML: Hyperparameter Tuning and Neural Architecture Search' at Anyscale event",
+      "url": "https://www.anyscale.com/events/2020/06/17/the-challenges-of-hyperparameter-tuning"
+    },
+    {
+      "date": "2019-11-20",
+      "event": "Published 'HyperSched: Dynamic Resource Reallocation for Model Development on a Deadline' at ACM SoCC 2019 (49 citations)",
+      "url": "https://github.com/ucbrise/hypersched"
+    },
+    {
+      "date": "2019-10",
+      "event": "Presented at PyData Los Angeles 2019 on distributed hyperparameter tuning with Ray Tune",
+      "url": "https://pydata.org/la2019/speaker/profile/49/richard-liaw/"
+    },
+    {
+      "date": "2018-10",
+      "event": "Co-authored 'Ray: A Distributed Framework for Emerging AI Applications' at OSDI 2018 (1,560 citations)",
+      "url": "https://www.usenix.org/conference/osdi18/presentation/moritz"
+    },
+    {
+      "date": "2018-07-13",
+      "event": "Published 'Tune: A Research Platform for Distributed Model Selection and Training' (1,079 citations), presented at ICML AutoML Workshop 2018",
+      "url": "https://arxiv.org/abs/1807.05118"
+    },
+    {
+      "date": "2017-12-26",
+      "event": "Co-authored 'RLlib: Abstractions for Distributed Reinforcement Learning' at ICML (1,006 citations)",
+      "url": "https://www.semanticscholar.org/paper/RLlib:-Abstractions-for-Distributed-Reinforcement/3393220"
+    }
+  ],
+  "key_contributions": [
+    {
+      "title": "Ray Tune",
+      "description": "Co-created Tune, a unified framework for distributed hyperparameter tuning and model selection that supports ASHA, BOHB, PBT, and integrates with PyTorch, TensorFlow, XGBoost, and Keras. Over 1,079 citations.",
+      "url": "https://docs.ray.io/en/latest/tune/index.html"
+    },
+    {
+      "title": "Ray (OSDI 2018)",
+      "description": "Co-authored the foundational Ray paper introducing a general-purpose distributed framework for emerging AI applications with fault-tolerant primitives. 1,560 citations.",
+      "url": "https://www.usenix.org/conference/osdi18/presentation/moritz"
+    },
+    {
+      "title": "RLlib",
+      "description": "Co-authored the scalable reinforcement learning library providing composable abstractions for multi-agent environments and policy serving. 1,006 citations.",
+      "url": "https://docs.ray.io/en/latest/rllib/index.html"
+    },
+    {
+      "title": "Learning Ray (O'Reilly, 2023)",
+      "description": "Co-authored the definitive O'Reilly book on Ray with Max Pumperla and Edward Oakes, covering distributed Python for machine learning including training and cluster management.",
+      "url": "https://www.oreilly.com/library/view/learning-ray/9781098117214/"
+    },
+    {
+      "title": "HyperSched",
+      "description": "Developed a dynamic application-level resource scheduler that reallocates resources to best-performing hyperparameter trials under deadline constraints. Published at ACM SoCC 2019.",
+      "url": "https://github.com/ucbrise/hypersched"
+    },
+    {
+      "title": "RubberBand",
+      "description": "Cloud-based hyperparameter tuning system for cost-efficient model selection, published at EuroSys 2021.",
+      "url": "https://dl.acm.org/doi/10.1145/3447786.3456245"
+    }
+  ],
+  "quotes": [
+    {
+      "text": "Ray is a compute engine for scaling AI workloads, offering libraries for training, serving, and data processing.",
+      "source": "Kubernetes Podcast from Google, Episode 235",
+      "url": "https://kubernetespodcast.com/episode/235-ray/index.html"
+    },
+    {
+      "text": "Developing locally and scaling into large-scale contexts without needing a distributed systems PhD was a key design principle.",
+      "source": "Kubernetes Podcast from Google, Episode 235",
+      "url": "https://kubernetespodcast.com/episode/235-ray/index.html"
+    },
+    {
+      "text": "Ray Data makes batch inference and image processing pipelines 100 times easier than forcing them into weird setups.",
+      "source": "Kubernetes Podcast from Google, Episode 235",
+      "url": "https://kubernetespodcast.com/episode/235-ray/index.html"
+    }
+  ],
+  "social": {
+    "github": "https://github.com/richardliaw",
+    "linkedin": "https://www.linkedin.com/in/richardliaw/",
+    "twitter": "https://twitter.com/richliaw",
+    "medium": "https://medium.com/@richliaw",
+    "scholar": "https://scholar.google.com/citations?user=IcaU830AAAAJ",
+    "website": "http://people.eecs.berkeley.edu/~rliaw/"
+  },
+  "sources": [
+    {
+      "title": "richardliaw on GitHub (114 repos, 269 followers)",
+      "url": "https://github.com/richardliaw"
+    },
+    {
+      "title": "Richard Liaw on Semantic Scholar (20 publications, h-index 13, 4,347 citations)",
+      "url": "https://www.semanticscholar.org/author/Richard-Liaw/3393220"
+    },
+    {
+      "title": "Richard Liaw on Google Scholar",
+      "url": "https://scholar.google.com/citations?user=IcaU830AAAAJ&hl=en"
+    },
+    {
+      "title": "Tune: A Research Platform for Distributed Model Selection and Training (arXiv)",
+      "url": "https://arxiv.org/abs/1807.05118"
+    },
+    {
+      "title": "Ray: A Distributed Framework for Emerging AI Applications (OSDI 2018)",
+      "url": "https://www.usenix.org/conference/osdi18/presentation/moritz"
+    },
+    {
+      "title": "Learning Ray: Flexible Distributed Python for Machine Learning (O'Reilly)",
+      "url": "https://www.oreilly.com/library/view/learning-ray/9781098117214/"
+    },
+    {
+      "title": "Kubernetes Podcast Episode 235 - Ray & KubeRay with Richard Liaw",
+      "url": "https://kubernetespodcast.com/episode/235-ray/index.html"
+    },
+    {
+      "title": "Software Engineering Daily - Ray Applications with Richard Liaw",
+      "url": "https://softwareengineeringdaily.com/2020/07/24/ray-applications-with-richard-liaw/"
+    },
+    {
+      "title": "Richard Liaw on Anyscale Blog",
+      "url": "https://www.anyscale.com/blog?author=richard-liaw"
+    },
+    {
+      "title": "Richard Liaw - Anyscale | LinkedIn",
+      "url": "https://www.linkedin.com/in/richardliaw/"
+    },
+    {
+      "title": "Richard Liaw on DBLP",
+      "url": "https://dblp.org/pid/179/2214.html"
+    },
+    {
+      "title": "Richard Liaw - Engineering Manager @ Anyscale (Crunchbase)",
+      "url": "https://www.crunchbase.com/person/richard-liaw"
+    }
+  ]
+}

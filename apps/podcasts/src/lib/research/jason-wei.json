@@ -1,0 +1,204 @@
+{
+  "slug": "jason-wei",
+  "name": "Jason Wei",
+  "generated_at": "2026-03-19T12:00:00+00:00",
+  "bio": "Jason Wei is an American AI researcher currently at Meta Superintelligence Labs, known for pioneering chain-of-thought prompting, instruction tuning (FLAN), and the concept of emergent abilities in large language models. He earned a BS in Computer Science and Mathematics from Harvey Mudd College (2016) and a PhD in Computer Science from Dartmouth College (2020, advised by Lorenzo Torresani). He joined Google as an AI Resident in October 2020, rising to Research Scientist at Google Brain, where he authored three of the most influential papers in modern LLM research: chain-of-thought prompting (5,000+ citations), FLAN instruction tuning, and emergent abilities of LLMs. In February 2023 he joined OpenAI, where he co-created the o1 reasoning model and contributed to o3 and Deep Research. In July 2025 he and colleague Hyung Won Chung left OpenAI to join Meta's newly formed Superintelligence Labs, where he focuses on reasoning and reinforcement learning for frontier AI systems.",
+  "topics": [
+    "chain-of-thought prompting",
+    "instruction tuning",
+    "emergent abilities of large language models",
+    "scaling laws",
+    "reasoning in LLMs",
+    "reinforcement learning for AI reasoning",
+    "test-time compute",
+    "data augmentation for NLP",
+    "AI safety and alignment",
+    "superintelligence research"
+  ],
+  "timeline": [
+    {
+      "date": "2016",
+      "event": "Graduated from Harvey Mudd College with a BS in Computer Science and Mathematics.",
+      "url": "https://grokipedia.com/page/Jason_Wei"
+    },
+    {
+      "date": "2019-01",
+      "event": "Published 'EDA: Easy Data Augmentation Techniques for Boosting Performance on Text Classification Tasks' — his first paper, completed at age 20, accepted at EMNLP 2019 with three positive reviews.",
+      "url": "https://arxiv.org/abs/1901.11196"
+    },
+    {
+      "date": "2020",
+      "event": "Earned PhD in Computer Science from Dartmouth College, advised by Professor Lorenzo Torresani.",
+      "url": "https://home.dartmouth.edu/news/2023/05/recent-alumnus-lectures-advances-ai"
+    },
+    {
+      "date": "2020-10",
+      "event": "Joined Google as an AI Resident in the Brain team (Google AI Residency program).",
+      "url": "https://x.com/_jasonwei/status/1706161324797853859"
+    },
+    {
+      "date": "2021-09",
+      "event": "Published 'Finetuned Language Models Are Zero-Shot Learners' (FLAN) — demonstrated that instruction tuning a 137B-parameter model on 60+ NLP tasks substantially improves zero-shot performance on unseen tasks.",
+      "url": "https://arxiv.org/abs/2109.01652"
+    },
+    {
+      "date": "2022-01",
+      "event": "Published 'Chain-of-Thought Prompting Elicits Reasoning in Large Language Models' — the seminal paper showing LLMs can perform complex reasoning by generating intermediate steps. Now cited over 5,000 times.",
+      "url": "https://arxiv.org/abs/2201.11903"
+    },
+    {
+      "date": "2022-06",
+      "event": "Published 'Emergent Abilities of Large Language Models' — defined emergence in LLMs and cataloged 137 emergent abilities that appear unpredictably at scale.",
+      "url": "https://arxiv.org/abs/2206.07682"
+    },
+    {
+      "date": "2022-10",
+      "event": "Published 'Scaling Instruction-Finetuned Language Models' (Flan-PaLM) — scaled instruction tuning to 1,800 tasks on PaLM 540B, achieving +9.4% average improvement and SOTA on MMLU at the time.",
+      "url": "https://arxiv.org/abs/2210.11416"
+    },
+    {
+      "date": "2023-02",
+      "event": "Left Google Brain to join OpenAI, working on the ChatGPT team focused on reasoning and agents.",
+      "url": "https://www.jasonwei.net/"
+    },
+    {
+      "date": "2023-05",
+      "event": "Returned to Dartmouth College as a guest lecturer on recent advances in AI.",
+      "url": "https://home.dartmouth.edu/news/2023/05/recent-alumnus-lectures-advances-ai"
+    },
+    {
+      "date": "2024-09",
+      "event": "Co-created and launched OpenAI o1 — a reasoning model that uses reinforcement learning to perform chain-of-thought at inference time rather than via prompting alone.",
+      "url": "https://x.com/_jasonwei/status/1834278706522849788"
+    },
+    {
+      "date": "2025-07",
+      "event": "Left OpenAI alongside Hyung Won Chung to join Meta's newly formed Superintelligence Labs, bringing expertise in reasoning and reinforcement learning.",
+      "url": "https://techcrunch.com/2025/07/16/meta-reportedly-scores-two-more-high-profile-openai-researchers/"
+    },
+    {
+      "date": "2025-11",
+      "event": "Spoke at Stanford AI Club on '3 Key Ideas in AI' — introduced the Verifier's Law, the Commoditization of Intelligence, and the Jagged Edge of Intelligence as a framework for understanding AI progress.",
+      "url": "https://langcopilot.com/posts/2025-11-08-jason-weis-3-laws-ai-future"
+    }
+  ],
+  "key_contributions": [
+    {
+      "title": "Chain-of-Thought Prompting",
+      "description": "Introduced chain-of-thought (CoT) prompting in January 2022, demonstrating that large language models can solve complex reasoning tasks by generating intermediate reasoning steps. The paper has been cited over 5,000 times and fundamentally changed how practitioners interact with LLMs, directly inspiring OpenAI's o1 reasoning model.",
+      "url": "https://arxiv.org/abs/2201.11903"
+    },
+    {
+      "title": "FLAN (Finetuned Language Net) and Instruction Tuning",
+      "description": "Led the FLAN series of research showing that finetuning language models on tasks described via natural language instructions dramatically improves zero-shot and few-shot performance. The initial FLAN (2021) used 60+ tasks on a 137B model; Flan-PaLM (2022) scaled to 1,800 tasks on PaLM 540B, achieving SOTA on MMLU. This work laid the foundation for instruction-tuned models like ChatGPT.",
+      "url": "https://arxiv.org/abs/2109.01652"
+    },
+    {
+      "title": "Emergent Abilities of Large Language Models",
+      "description": "Defined and cataloged 137 emergent abilities — capabilities that appear unpredictably as models scale — providing a conceptual framework for understanding why larger models exhibit qualitatively new behaviors. Published in TMLR 2022.",
+      "url": "https://arxiv.org/abs/2206.07682"
+    },
+    {
+      "title": "OpenAI o1 Reasoning Model",
+      "description": "Co-created OpenAI's o1 model (launched September 2024), which uses reinforcement learning to train models to perform chain-of-thought reasoning at inference time. This shifted the field from prompt-based CoT to learned reasoning, enabling adaptive test-time compute scaling.",
+      "url": "https://x.com/_jasonwei/status/1834278706522849788"
+    },
+    {
+      "title": "EDA: Easy Data Augmentation",
+      "description": "First paper (2019), presenting four simple text augmentation techniques (synonym replacement, random insertion, random swap, random deletion) that boosted text classification performance, especially on small datasets. Accepted at EMNLP 2019.",
+      "url": "https://arxiv.org/abs/1901.11196"
+    }
+  ],
+  "quotes": [
+    {
+      "text": "Don't do chain of thought purely via prompting. Train models to do better chain of thought using RL.",
+      "source": "X post on o1 launch, Sep 2024",
+      "url": "https://x.com/_jasonwei/status/1834278706522849788"
+    },
+    {
+      "text": "In the history of deep learning we have always tried to scale training compute, but chain of thought is a form of adaptive compute that can also be scaled at inference time.",
+      "source": "X post on o1 launch, Sep 2024",
+      "url": "https://x.com/_jasonwei/status/1834278706522849788"
+    },
+    {
+      "text": "o1-mini is the most surprising research result I've seen in the past year.",
+      "source": "OpenAI o1 announcement, Sep 2024",
+      "url": "https://simonwillison.net/2024/Sep/12/jason-wei-openai/"
+    },
+    {
+      "text": "Beating the teacher requires walking your own path and taking risks and rewards from the environment.",
+      "source": "Personal reflection on RL philosophy",
+      "url": "https://www.jasonwei.net/thoughts"
+    },
+    {
+      "text": "There will be no fast takeoff, because there is a jagged edge of intelligence capability and rate of improvement.",
+      "source": "Public talk, 2025",
+      "url": "https://www.threads.com/@ociubotaru/post/DQCctIFDPpk/"
+    }
+  ],
+  "social": {
+    "github": "https://github.com/jasonwei20",
+    "twitter": "https://x.com/_jasonwei",
+    "linkedin": "https://www.linkedin.com/in/jason-wei-5a7323b0/",
+    "website": "https://www.jasonwei.net/",
+    "scholar": "https://scholar.google.com/citations?user=wA5TK_0AAAAJ"
+  },
+  "sources": [
+    {
+      "title": "Jason Wei — Personal Website",
+      "url": "https://www.jasonwei.net/"
+    },
+    {
+      "title": "Jason Wei — Google Scholar",
+      "url": "https://scholar.google.com/citations?user=wA5TK_0AAAAJ"
+    },
+    {
+      "title": "Chain-of-Thought Prompting Elicits Reasoning in Large Language Models (arXiv)",
+      "url": "https://arxiv.org/abs/2201.11903"
+    },
+    {
+      "title": "Finetuned Language Models Are Zero-Shot Learners (arXiv)",
+      "url": "https://arxiv.org/abs/2109.01652"
+    },
+    {
+      "title": "Emergent Abilities of Large Language Models (arXiv)",
+      "url": "https://arxiv.org/abs/2206.07682"
+    },
+    {
+      "title": "Scaling Instruction-Finetuned Language Models (arXiv)",
+      "url": "https://arxiv.org/abs/2210.11416"
+    },
+    {
+      "title": "EDA: Easy Data Augmentation Techniques (arXiv)",
+      "url": "https://arxiv.org/abs/1901.11196"
+    },
+    {
+      "title": "Jason Wei on o1 Launch — X post",
+      "url": "https://x.com/_jasonwei/status/1834278706522849788"
+    },
+    {
+      "title": "Meta reportedly scores two more high-profile OpenAI researchers — TechCrunch",
+      "url": "https://techcrunch.com/2025/07/16/meta-reportedly-scores-two-more-high-profile-openai-researchers/"
+    },
+    {
+      "title": "Jason Wei — Grokipedia",
+      "url": "https://grokipedia.com/page/Jason_Wei"
+    },
+    {
+      "title": "Recent Alumnus Lectures on Advances in AI — Dartmouth",
+      "url": "https://home.dartmouth.edu/news/2023/05/recent-alumnus-lectures-advances-ai"
+    },
+    {
+      "title": "Jason Wei's 3 Laws of AI — LLM Practical Experience Hub",
+      "url": "https://langcopilot.com/posts/2025-11-08-jason-weis-3-laws-ai-future"
+    },
+    {
+      "title": "A quote from Jason Wei (OpenAI) — Simon Willison",
+      "url": "https://simonwillison.net/2024/Sep/12/jason-wei-openai/"
+    },
+    {
+      "title": "Jason Wei, Ex-OpenAI Core Researcher, Defines the Boundaries of RL — 36Kr",
+      "url": "https://eu.36kr.com/en/p/3381459171653380"
+    }
+  ]
+}

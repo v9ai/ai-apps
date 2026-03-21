@@ -1,6 +1,7 @@
 "use client";
 
-import { useState, Suspense } from "react";
+import { Suspense, useEffect } from "react";
+import { create } from "zustand";
 import { useRouter, useSearchParams } from "next/navigation";
 import {
   Box,
@@ -8,52 +9,84 @@ import {
   Flex,
   Heading,
   Text,
-  Link,
   Separator,
   TextArea,
   Card,
   Spinner,
+  Select,
 } from "@radix-ui/themes";
-import { GlassButton } from "@/app/components/GlassButton";
-import { Breadcrumbs } from "@/app/components/Breadcrumbs";
 import { ArrowLeftIcon } from "@radix-ui/react-icons";
 import NextLink from "next/link";
 import {
-  useCreateStoryMutation,
+  useGenerateLongFormTextMutation,
   useGetGoalQuery,
+  useGetFamilyMembersQuery,
 } from "@/app/__generated__/hooks";
 import { authClient } from "@/app/lib/auth/client";
+
+interface StoryFormState {
+  familyMemberId: string | undefined;
+  userContext: string;
+  language: string;
+  minutes: string;
+  setFamilyMemberId: (v: string | undefined) => void;
+  setUserContext: (v: string) => void;
+  setLanguage: (v: string) => void;
+  setMinutes: (v: string) => void;
+}
+
+const useStoryFormStore = create<StoryFormState>((set) => ({
+  familyMemberId: undefined,
+  userContext: "",
+  language: "English",
+  minutes: "10",
+  setFamilyMemberId: (v) => set({ familyMemberId: v }),
+  setUserContext: (v) => set({ userContext: v }),
+  setLanguage: (v) => set({ language: v }),
+  setMinutes: (v) => set({ minutes: v }),
+}));
 
 function NewStoryContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const goalId = searchParams.get("goalId");
+  const familyMemberIdParam = searchParams.get("familyMemberId");
   const { data: session } = authClient.useSession();
   const user = session?.user;
-  const [storyContent, setStoryContent] = useState("");
+
+  const { familyMemberId: selectedFamilyMemberId, userContext, language, minutes,
+    setFamilyMemberId: setSelectedFamilyMemberId, setUserContext, setLanguage, setMinutes,
+  } = useStoryFormStore();
+
+  useEffect(() => {
+    if (familyMemberIdParam) setSelectedFamilyMemberId(familyMemberIdParam);
+  }, [familyMemberIdParam]);
+
+  const { data: familyMembersData } = useGetFamilyMembersQuery({ skip: !user });
 
   const { data: goalData } = useGetGoalQuery({
     variables: { id: goalId ? parseInt(goalId) : undefined },
     skip: !goalId,
   });
 
-  const [createStory, { loading: creatingStory }] = useCreateStoryMutation({
+  const [generateStory, { loading: generating, error: generateError }] = useGenerateLongFormTextMutation({
     onCompleted: (data) => {
-      if (data.createStory?.id) {
-        router.push(`/stories/${data.createStory.id}`);
-      }
+      const jobId = data.generateLongFormText?.jobId;
+      if (jobId) router.push(`/stories/generating?jobId=${jobId}`);
     },
   });
 
-  const handleCreateStory = async () => {
-    if (!storyContent.trim() || !goalId) return;
+  const canGenerate = !!(selectedFamilyMemberId || goalId || userContext.trim());
 
-    await createStory({
+  const handleGenerate = async () => {
+    if (!canGenerate) return;
+    await generateStory({
       variables: {
-        input: {
-          goalId: parseInt(goalId),
-          content: storyContent,
-        },
+        goalId: goalId ? parseInt(goalId) : undefined,
+        familyMemberId: selectedFamilyMemberId ? parseInt(selectedFamilyMemberId) : undefined,
+        userContext: userContext.trim() || undefined,
+        language,
+        minutes: parseInt(minutes),
       },
     });
   };
@@ -90,12 +123,12 @@ function NewStoryContent() {
                   ? `/goals/${goal.slug}`
                   : goalId
                     ? `/goals/${goalId}`
-                    : "/goals"
+                    : "/stories"
               }
             >
               <ArrowLeftIcon />
               <Box display={{ initial: "none", sm: "inline" }} asChild>
-                <span>Back to Goal</span>
+                <span>{goal ? "Back to Goal" : "Back to Stories"}</span>
               </Box>
             </NextLink>
           </Button>
@@ -111,20 +144,6 @@ function NewStoryContent() {
       </Box>
 
       <Box style={{ width: "100%" }}>
-        <Breadcrumbs
-          crumbs={[
-            { label: "Goals", href: "/goals" },
-            {
-              label: goal?.title || "Goal",
-              href: goal?.slug
-                ? `/goals/${goal.slug}`
-                : goalId
-                  ? `/goals/${goalId}`
-                  : "/goals",
-            },
-            { label: "New Story" },
-          ]}
-        />
         <Card>
           <Flex direction="column" gap="4" p="4">
             {goal && (
@@ -138,45 +157,87 @@ function NewStoryContent() {
 
             <Flex direction="column" gap="2">
               <Text size="2" weight="medium">
-                Your Story
+                Family Member
               </Text>
-              <Text size="2" color="gray">
-                Share your thoughts, reflections, or experiences related to this
-                goal.
-              </Text>
+              <Select.Root
+                value={selectedFamilyMemberId}
+                onValueChange={setSelectedFamilyMemberId}
+              >
+                <Select.Trigger placeholder="Select a family member (optional)" style={{ width: "100%" }} />
+                <Select.Content>
+                  {(familyMembersData?.familyMembers ?? []).map((member) => (
+                    <Select.Item key={member.id} value={String(member.id)}>
+                      {member.firstName || member.name}
+                    </Select.Item>
+                  ))}
+                </Select.Content>
+              </Select.Root>
             </Flex>
 
-            <TextArea
-              value={storyContent}
-              onChange={(e) => setStoryContent(e.target.value)}
-              placeholder="Write your story here..."
-              size="3"
-              style={{ minHeight: "400px" }}
-            />
+            <Flex direction="column" gap="2">
+              <Text size="2" weight="medium">
+                Context
+              </Text>
+              <Text size="2" color="gray">
+                Describe the situation, what you want the story to address, or any details that should shape the session.
+              </Text>
+              <TextArea
+                value={userContext}
+                onChange={(e) => setUserContext(e.target.value)}
+                placeholder="e.g. He's been struggling with bedtime anxiety lately and refuses to sleep alone..."
+                size="3"
+                style={{ minHeight: "160px" }}
+              />
+            </Flex>
+
+            <Flex direction="column" gap="2">
+              <Text size="2" weight="medium">
+                Language
+              </Text>
+              <Select.Root value={language} onValueChange={setLanguage}>
+                <Select.Trigger style={{ width: "100%" }} />
+                <Select.Content>
+                  <Select.Item value="English">English</Select.Item>
+                  <Select.Item value="Romanian">Romanian</Select.Item>
+                </Select.Content>
+              </Select.Root>
+            </Flex>
+
+            <Flex direction="column" gap="2">
+              <Text size="2" weight="medium">
+                Duration
+              </Text>
+              <Select.Root value={minutes} onValueChange={setMinutes}>
+                <Select.Trigger style={{ width: "100%" }} />
+                <Select.Content>
+                  <Select.Item value="5">5 minutes</Select.Item>
+                  <Select.Item value="10">10 minutes</Select.Item>
+                  <Select.Item value="15">15 minutes</Select.Item>
+                  <Select.Item value="20">20 minutes</Select.Item>
+                  <Select.Item value="30">30 minutes</Select.Item>
+                </Select.Content>
+              </Select.Root>
+            </Flex>
+
+            {generateError && (
+              <Text size="2" color="red">{generateError.message}</Text>
+            )}
 
             <Flex gap="2" justify="end">
               <Button
                 variant="soft"
                 color="gray"
-                onClick={() => {
-                  if (goal?.slug) {
-                    router.push(`/goals/${goal.slug}`);
-                  } else if (goalId) {
-                    router.push(`/goals/${goalId}`);
-                  } else {
-                    router.push("/goals");
-                  }
-                }}
-                disabled={creatingStory}
+                onClick={() => router.push(goal?.slug ? `/goals/${goal.slug}` : goalId ? `/goals/${goalId}` : "/stories")}
+                disabled={generating}
               >
                 Cancel
               </Button>
               <Button
-                onClick={handleCreateStory}
-                disabled={!storyContent.trim() || creatingStory}
-                loading={creatingStory}
+                onClick={handleGenerate}
+                disabled={!canGenerate || generating}
+                loading={generating}
               >
-                Create Story
+                Generate Story
               </Button>
             </Flex>
           </Flex>

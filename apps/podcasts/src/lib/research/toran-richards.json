@@ -1,0 +1,157 @@
+{
+  "slug": "toran-richards",
+  "name": "Toran Bruce Richards",
+  "generated_at": "2026-03-19",
+  "bio": "Toran Bruce Richards is a British software developer and entrepreneur best known as the creator of AutoGPT, one of the first widely accessible autonomous AI agent applications built on top of OpenAI's GPT-4. A 2020 graduate of Edinburgh Napier University with a BSc in Game Development, Richards founded Significant Gravitas Ltd. in 2018 to bring cutting-edge game technology techniques to non-gaming industries. He released AutoGPT as open source on March 30, 2023, just weeks after GPT-4's launch, and the project rapidly became one of the fastest-growing GitHub repositories in history, amassing over 182,000 stars. In October 2023, Significant Gravitas raised $12 million in venture funding to evolve AutoGPT from an experimental agent into a full platform with a visual Agent Builder and Agent Server. Richards is a vocal advocate for democratizing AI through open source, believing that giving everyone access to autonomous agents levels the playing field between individuals and corporate giants.",
+  "topics": [
+    "Autonomous AI Agents",
+    "AutoGPT Platform",
+    "Open-Source AI",
+    "LLM-Powered Automation",
+    "Agent Workflows & Orchestration",
+    "AI Democratization",
+    "GPT-4 Applications",
+    "Low-Code AI Agent Builder",
+    "AI Agent Marketplace",
+    "Game Development & AI"
+  ],
+  "timeline": [
+    {
+      "date": "2018-06",
+      "event": "Founded Significant Gravitas Ltd., a company focused on bringing game technology techniques to non-gaming industries",
+      "url": "https://uk.linkedin.com/in/toran-richards"
+    },
+    {
+      "date": "2020",
+      "event": "Graduated from Edinburgh Napier University with a BSc in Game Development",
+      "url": "https://uk.linkedin.com/in/toran-richards"
+    },
+    {
+      "date": "2023-03-30",
+      "event": "Released AutoGPT as an open-source project, one of the first autonomous AI agents leveraging GPT-4 for goal-directed task execution",
+      "url": "https://github.com/Significant-Gravitas/AutoGPT"
+    },
+    {
+      "date": "2023-04",
+      "event": "AutoGPT became the fastest-growing GitHub repository, trending globally and sparking widespread interest in autonomous AI agents",
+      "url": "https://github.com/Significant-Gravitas/AutoGPT"
+    },
+    {
+      "date": "2023-04",
+      "event": "Discussed on the All-In Podcast (E124) as hosts explored AutoGPT's massive potential and risks for autonomous AI",
+      "url": "https://open.spotify.com/episode/4z6yDSxWeoYUTQIWBHqVSK"
+    },
+    {
+      "date": "2023-10",
+      "event": "Significant Gravitas Ltd. raised $12 million in venture funding to scale AutoGPT development into a full platform",
+      "url": "https://autogpt.net/autogpt-raised-12m-to-take-the-project-to-the-next-level/"
+    },
+    {
+      "date": "2024-02",
+      "event": "Featured in OpenUK's State of Open: The UK in 2024 fireside chat, discussing open-source AI and democratization",
+      "url": "https://openuk.uk/thought-leadership/fireside-chat-toran-bruce-richards-2024-phase-one/"
+    },
+    {
+      "date": "2024-07",
+      "event": "Launched the redesigned AutoGPT Platform with Agent Builder (low-code visual interface) and Agent Server for continuous agent deployment",
+      "url": "https://agpt.co/blog/introducing-the-autogpt-platform"
+    },
+    {
+      "date": "2025",
+      "event": "AutoGPT Platform evolved to include an Agent Marketplace, enhanced workflow management, and deployment controls for production agents",
+      "url": "https://platform.agpt.co/"
+    },
+    {
+      "date": "2026-03",
+      "event": "AutoGPT Platform reaches v0.6.50 with 182,600+ GitHub stars, 46,200+ forks, and a 50,000+ member Discord community",
+      "url": "https://github.com/Significant-Gravitas/AutoGPT"
+    }
+  ],
+  "key_contributions": [
+    {
+      "title": "AutoGPT",
+      "description": "Open-source autonomous AI agent that chains GPT-4 'thoughts' together to autonomously achieve user-defined goals. One of the first widely accessible demonstrations of autonomous LLM agents, with over 182,000 GitHub stars and 46,000 forks. Pioneered the concept of self-prompting, goal-directed AI agents accessible to everyone.",
+      "url": "https://github.com/Significant-Gravitas/AutoGPT"
+    },
+    {
+      "title": "AutoGPT Platform (Agent Builder + Server)",
+      "description": "Full platform for building, deploying, and managing continuous AI agents. The Agent Builder provides a low-code visual interface where modular 'blocks' with inputs, outputs, and transform functions are connected into workflows. The Agent Server handles continuous agent execution in production.",
+      "url": "https://agpt.co/"
+    },
+    {
+      "title": "AutoGPT Agent Marketplace",
+      "description": "Community-driven marketplace for discovering, sharing, and deploying pre-built AI agents, enabling non-technical users to leverage autonomous AI workflows without building from scratch.",
+      "url": "https://docs.agpt.co/platform/submit-agent-to-marketplace/"
+    },
+    {
+      "title": "AutoGPT Forge",
+      "description": "Comprehensive framework and template system for building custom AI agents, providing modularity, extensibility, and production readiness. Serves as the foundation for the AutoGPT agent ecosystem.",
+      "url": "https://github.com/Significant-Gravitas/AutoGPT"
+    },
+    {
+      "title": "Significant Gravitas Ltd.",
+      "description": "Company founded in 2018 to bridge game technology and broader industries, which became the parent organization for AutoGPT. Raised $12M in venture funding in October 2023 to support the project's evolution into a full-scale platform.",
+      "url": "https://uk.linkedin.com/in/toran-richards"
+    }
+  ],
+  "quotes": [
+    {
+      "text": "Auto-GPT has the potential to save humanity from mass job loss caused by automation from closed-source AI. If everyone has access to their own team of autonomous agents, everyone is enabled and complete.",
+      "source": "Toran Bruce Richards on X (April 2023)",
+      "url": "https://x.com/SigGravitas/status/1643593670011273216"
+    },
+    {
+      "text": "By open-sourcing this technology; giving everyone equal access, the playing field is levelled somewhat. The individual can have just as much ability to utilise this technology as a corporate giant.",
+      "source": "OpenUK State of Open: The UK in 2024 fireside chat",
+      "url": "https://openuk.uk/thought-leadership/fireside-chat-toran-bruce-richards-2024-phase-one/"
+    }
+  ],
+  "social": {
+    "github": "https://github.com/Torantulino",
+    "twitter": "https://x.com/SigGravitas",
+    "linkedin": "https://uk.linkedin.com/in/toran-richards",
+    "website": "https://agpt.co/"
+  },
+  "sources": [
+    {
+      "title": "Significant-Gravitas/AutoGPT - GitHub Repository",
+      "url": "https://github.com/Significant-Gravitas/AutoGPT"
+    },
+    {
+      "title": "Torantulino (Toran Bruce Richards) - GitHub Profile",
+      "url": "https://github.com/Torantulino"
+    },
+    {
+      "title": "AutoGPT - Wikipedia",
+      "url": "https://en.wikipedia.org/wiki/Auto-GPT"
+    },
+    {
+      "title": "Who Created Auto-GPT? - Tinker Assist Blog",
+      "url": "https://www.tinkerassist.com/blog/who-created-auto-gpt"
+    },
+    {
+      "title": "OpenUK Fireside Chat - Toran Bruce Richards, State of Open 2024",
+      "url": "https://openuk.uk/thought-leadership/fireside-chat-toran-bruce-richards-2024-phase-one/"
+    },
+    {
+      "title": "AutoGPT Raised $12M - AutoGPT.net",
+      "url": "https://autogpt.net/autogpt-raised-12m-to-take-the-project-to-the-next-level/"
+    },
+    {
+      "title": "Introducing the AutoGPT Platform - agpt.co Blog",
+      "url": "https://agpt.co/blog/introducing-the-autogpt-platform"
+    },
+    {
+      "title": "Toran Bruce Richards - LinkedIn",
+      "url": "https://uk.linkedin.com/in/toran-richards"
+    },
+    {
+      "title": "All-In Podcast E124: AutoGPT's massive potential and risk",
+      "url": "https://open.spotify.com/episode/4z6yDSxWeoYUTQIWBHqVSK"
+    },
+    {
+      "title": "GitHub API - Significant-Gravitas/AutoGPT contributors",
+      "url": "https://github.com/Significant-Gravitas/AutoGPT/graphs/contributors"
+    }
+  ]
+}

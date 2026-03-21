@@ -1,0 +1,226 @@
+{
+  "slug": "jeremy-howard",
+  "name": "Jeremy Howard",
+  "generated_at": "2026-03-19T20:00:00+00:00",
+  "bio": "Jeremy Howard is an Australian data scientist, entrepreneur, and educator. He is the founding CEO of Answer.AI, an AI R&D lab creating practical end-user products from foundational research breakthroughs, and co-founder of fast.ai, a research institute dedicated to making deep learning accessible. Howard created ULMFiT (Universal Language Model Fine-tuning), the transfer-learning method credited as the precursor to all modern large language models including GPT and Gemini. He previously served as President and Chief Scientist of Kaggle (where he was the top-ranked ML competition participant globally in 2010-2011), founded Enlitic (the first company to apply deep learning to medicine, named one of MIT Tech Review's 50 smartest companies), and founded FastMail and Optimal Decisions Group (acquired by LexisNexis). He spent eight years in management consulting at McKinsey & Co and AT Kearney. Howard is an Honorary Professor at the University of Queensland, a Digital Fellow at Stanford University, and co-authored 'Deep Learning for Coders with Fastai and PyTorch'. His TED talk on the implications of machine learning has over 2.5 million views. He also co-founded the Masks4All movement during COVID-19 and led the largest masks evidence review published in PNAS.",
+  "topics": [
+    "Transfer Learning",
+    "Fine-tuning LLMs",
+    "Democratizing Deep Learning",
+    "NLP & Language Models",
+    "Medical AI",
+    "AI Education",
+    "Open Source AI",
+    "Practical AI Products",
+    "Web Development with Python",
+    "Dialogue Engineering"
+  ],
+  "timeline": [
+    {
+      "date": "1999",
+      "event": "Founded FastMail (email service) and Optimal Decisions Group (insurance analytics, later acquired by LexisNexis)",
+      "url": "https://www.fast.ai/about.html"
+    },
+    {
+      "date": "2010",
+      "event": "Became the top-ranked participant in international machine learning competitions on Kaggle",
+      "url": "https://en.wikipedia.org/wiki/Jeremy_Howard_(entrepreneur)"
+    },
+    {
+      "date": "2012",
+      "event": "Became President and Chief Scientist of Kaggle",
+      "url": "https://en.wikipedia.org/wiki/Jeremy_Howard_(entrepreneur)"
+    },
+    {
+      "date": "2014-08",
+      "event": "Founded Enlitic, the first company to apply deep learning to medical diagnostics",
+      "url": "https://en.wikipedia.org/wiki/Jeremy_Howard_(entrepreneur)"
+    },
+    {
+      "date": "2016",
+      "event": "Co-founded fast.ai with Rachel Thomas to democratize deep learning education",
+      "url": "https://www.fast.ai/about.html"
+    },
+    {
+      "date": "2018-01",
+      "event": "Published ULMFiT paper (with Sebastian Ruder) at ACL 2018, pioneering transfer learning for NLP",
+      "url": "https://arxiv.org/abs/1801.06146"
+    },
+    {
+      "date": "2019-08-27",
+      "event": "Appeared on Lex Fridman Podcast: fast.ai Deep Learning Courses and Research",
+      "url": "https://lexfridman.com/jeremy-howard/"
+    },
+    {
+      "date": "2020-02",
+      "event": "Published fastai v2 library with layered API architecture",
+      "url": "https://github.com/fastai/fastai"
+    },
+    {
+      "date": "2020-03",
+      "event": "Co-founded Masks4All movement; led largest masks evidence review published in PNAS",
+      "url": "https://en.wikipedia.org/wiki/Jeremy_Howard_(entrepreneur)"
+    },
+    {
+      "date": "2020",
+      "event": "Co-authored 'Deep Learning for Coders with Fastai and PyTorch' (O'Reilly)",
+      "url": "https://www.oreilly.com/people/jeremy-howard/"
+    },
+    {
+      "date": "2023-10-19",
+      "event": "Appeared on Latent Space podcast: The End of Finetuning",
+      "url": "https://www.latent.space/p/fastai"
+    },
+    {
+      "date": "2023-12-12",
+      "event": "Launched Answer.AI with Eric Ries, backed by $10M from Decibel VC",
+      "url": "https://www.answer.ai/posts/2023-12-12-launch.html"
+    },
+    {
+      "date": "2024-03-06",
+      "event": "Released FSDP + QLoRA: training 70B models on consumer GPUs (with Tim Dettmers & Hugging Face)",
+      "url": "https://www.answer.ai/posts/2024-03-06-fsdp-qlora.html"
+    },
+    {
+      "date": "2024-04-26",
+      "event": "Released QDoRA: efficient fine-tuning of Llama 3 matching full-weight training accuracy",
+      "url": "https://www.answer.ai/posts/2024-04-26-fsdp-qdora-llama3.html"
+    },
+    {
+      "date": "2024-08-16",
+      "event": "Appeared on Latent Space podcast: AI Magic — Shipping 1000s of products with no managers and a team of 12",
+      "url": "https://www.latent.space/p/answerai"
+    },
+    {
+      "date": "2024",
+      "event": "Released FastHTML web framework and Claudette (Anthropic API SDK) from Answer.AI",
+      "url": "https://github.com/AnswerDotAI/fasthtml"
+    },
+    {
+      "date": "2025-05-15",
+      "event": "Appeared on The MAD Podcast with Matt Turck: Building 5,000 AI Products with 14 People",
+      "url": "https://podcasts.apple.com/us/podcast/jeremy-howard-on-building-5-000-ai-products-with-14/id1686238724?i=1000708580767"
+    }
+  ],
+  "key_contributions": [
+    {
+      "title": "ULMFiT",
+      "description": "Universal Language Model Fine-tuning for Text Classification (ACL 2018, with Sebastian Ruder). Pioneered transfer learning in NLP, reducing error by 18-24% on six benchmarks and demonstrating that fine-tuning pre-trained language models is effective for downstream tasks -- the foundation of all modern LLMs.",
+      "url": "https://arxiv.org/abs/1801.06146"
+    },
+    {
+      "title": "fastai",
+      "description": "One of the world's most popular deep learning frameworks, providing a layered API from high-level learners to low-level callbacks. Powers the free 'Practical Deep Learning for Coders' MOOC taken by hundreds of thousands of students worldwide.",
+      "url": "https://github.com/fastai/fastai"
+    },
+    {
+      "title": "fast.ai Courses",
+      "description": "Free deep learning courses co-created with Rachel Thomas that democratized AI education, making cutting-edge techniques accessible without requiring a PhD or expensive compute.",
+      "url": "https://course.fast.ai/"
+    },
+    {
+      "title": "FSDP + QLoRA",
+      "description": "Collaboration with Tim Dettmers and Hugging Face enabling training of 70B-parameter language models on consumer GPUs with two RTX 3090/4090 cards, dramatically lowering the barrier to fine-tuning large models.",
+      "url": "https://www.answer.ai/posts/2024-03-06-fsdp-qlora.html"
+    },
+    {
+      "title": "FastHTML",
+      "description": "Python web framework from Answer.AI built on Starlette, Uvicorn, and HTMX, enabling complete web applications in a single Python file for rapid AI product prototyping.",
+      "url": "https://github.com/AnswerDotAI/fasthtml"
+    },
+    {
+      "title": "Claudette",
+      "description": "Pythonic wrapper around the Anthropic SDK with progressive abstractions, culminating in a complete agentic tool loop in a dozen lines of code.",
+      "url": "https://github.com/AnswerDotAI/claudette"
+    },
+    {
+      "title": "nbdev",
+      "description": "Literate programming system for Python that combines code, tests, and documentation in Jupyter notebooks, generating library code, docs, and CI automatically.",
+      "url": "https://github.com/fastai/nbdev"
+    },
+    {
+      "title": "Enlitic",
+      "description": "First company to apply deep learning to medical diagnostics (founded 2014). Named one of MIT Tech Review's 50 smartest companies two years running.",
+      "url": "https://en.wikipedia.org/wiki/Jeremy_Howard_(entrepreneur)"
+    }
+  ],
+  "quotes": [
+    {
+      "text": "We should treat it as a continuum, and we should have much higher expectations of how much you can do.",
+      "source": "Latent Space podcast, Aug 2024",
+      "url": "https://www.latent.space/p/answerai"
+    },
+    {
+      "text": "You can create a complete web application in a single Python file... working with web foundations directly, but entirely in pure Python.",
+      "source": "Latent Space podcast, Aug 2024 (on FastHTML)",
+      "url": "https://www.latent.space/p/answerai"
+    },
+    {
+      "text": "We don't have any managers. We don't have any hierarchy from that point of view.",
+      "source": "Latent Space podcast, Aug 2024 (on Answer.AI's structure)",
+      "url": "https://www.latent.space/p/answerai"
+    },
+    {
+      "text": "The only people who could wield this tool were a very small group of basically, white men with technical skills attached to a small number of esteemed universities. We felt this was a shame.",
+      "source": "Interview on fast.ai's founding motivation",
+      "url": "https://www.fast.ai/about.html"
+    }
+  ],
+  "social": {
+    "github": "https://github.com/jph00",
+    "twitter": "https://x.com/jeremyphoward",
+    "linkedin": "https://www.linkedin.com/in/howardjeremy/",
+    "website": "https://jeremy.fast.ai/",
+    "blog": "https://www.answer.ai/posts"
+  },
+  "sources": [
+    {
+      "title": "fast.ai -- About",
+      "url": "https://www.fast.ai/about.html"
+    },
+    {
+      "title": "Jeremy Howard (entrepreneur) -- Wikipedia",
+      "url": "https://en.wikipedia.org/wiki/Jeremy_Howard_(entrepreneur)"
+    },
+    {
+      "title": "ULMFiT paper (arXiv)",
+      "url": "https://arxiv.org/abs/1801.06146"
+    },
+    {
+      "title": "Answer.AI launch announcement",
+      "url": "https://www.answer.ai/posts/2023-12-12-launch.html"
+    },
+    {
+      "title": "FSDP + QLoRA -- Answer.AI",
+      "url": "https://www.answer.ai/posts/2024-03-06-fsdp-qlora.html"
+    },
+    {
+      "title": "AI Magic: Shipping 1000s of products -- Latent Space",
+      "url": "https://www.latent.space/p/answerai"
+    },
+    {
+      "title": "The End of Finetuning -- Latent Space",
+      "url": "https://www.latent.space/p/fastai"
+    },
+    {
+      "title": "Jeremy Howard on Lex Fridman Podcast",
+      "url": "https://lexfridman.com/jeremy-howard/"
+    },
+    {
+      "title": "Jeremy Howard on MAD Podcast with Matt Turck",
+      "url": "https://podcasts.apple.com/us/podcast/jeremy-howard-on-building-5-000-ai-products-with-14/id1686238724?i=1000708580767"
+    },
+    {
+      "title": "SE Radio 391: Jeremy Howard on Deep Learning and fast.ai",
+      "url": "https://se-radio.net/2019/12/episode-391-jeremy-howard-on-deep-learning-and-fast-ai/"
+    },
+    {
+      "title": "GitHub profile: jph00",
+      "url": "https://github.com/jph00"
+    },
+    {
+      "title": "Jeremy Howard -- Stanford Digital Economy Lab",
+      "url": "https://digitaleconomy.stanford.edu/person/jeremy-howard/"
+    }
+  ]
+}

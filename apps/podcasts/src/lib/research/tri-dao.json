@@ -1,0 +1,205 @@
+{
+  "slug": "tri-dao",
+  "name": "Tri Dao",
+  "generated_at": "2026-03-19T21:00:00+00:00",
+  "bio": "Tri Dao is an Assistant Professor of Computer Science at Princeton University and Co-founder & Chief Scientist of Together AI. He earned his PhD in Computer Science from Stanford University, co-advised by Christopher Re and Stefano Ermon, with a dissertation on hardware-aware algorithms for efficient machine learning. His research sits at the intersection of machine learning and systems, with a focus on hardware-aware algorithms and sequence models with long-range memory. He is the creator of FlashAttention, the IO-aware exact attention algorithm now used in virtually every Transformer-based model, and co-creator (with Albert Gu) of Mamba, the selective state space model that achieves linear-time sequence modeling with 5x higher throughput than Transformers. He joined Together AI as Chief Scientist in July 2023 and Princeton as Assistant Professor in September 2024. His work has received the ICML 2022 Outstanding Paper runner-up (Monarch), the COLM 2024 Outstanding Paper (Mamba), the MLSys 2025 Outstanding Paper Honorable Mention (Marconi), and the Schmidt Sciences AI2050 Early Career Fellowship.",
+  "topics": [
+    "Hardware-Aware Algorithms",
+    "FlashAttention",
+    "State Space Models",
+    "Efficient Training & Inference",
+    "IO-Aware Computing",
+    "Sequence Modeling",
+    "Structured Matrices",
+    "GPU Kernel Optimization",
+    "Long-Context LLMs",
+    "Open Source AI"
+  ],
+  "timeline": [
+    {
+      "date": "2022-05",
+      "event": "Published FlashAttention: Fast and Memory-Efficient Exact Attention with IO-Awareness (NeurIPS 2022)",
+      "url": "https://arxiv.org/abs/2205.14135"
+    },
+    {
+      "date": "2022-07",
+      "event": "Monarch paper selected as ICML 2022 Outstanding Paper runner-up",
+      "url": "https://proceedings.mlr.press/v162/dao22a.html"
+    },
+    {
+      "date": "2023-07-17",
+      "event": "Joined Together AI as Chief Scientist; released FlashAttention-2 (2x faster, ICLR 2024)",
+      "url": "https://www.together.ai/blog/tri-dao-flash-attention"
+    },
+    {
+      "date": "2023-07-26",
+      "event": "Appeared on Latent Space podcast: FlashAttention 2 — making Transformers 800% faster",
+      "url": "https://www.latent.space/p/flashattention"
+    },
+    {
+      "date": "2023-12",
+      "event": "Published Mamba: Linear-Time Sequence Modeling with Selective State Spaces (with Albert Gu, COLM 2024 Outstanding Paper)",
+      "url": "https://arxiv.org/abs/2312.00752"
+    },
+    {
+      "date": "2024-02-08",
+      "event": "Appeared on Generally Intelligent podcast: FlashAttention, sparsity, quantization & efficient inference",
+      "url": "https://imbue.com/podcast/2024-02-08-podcast-episode-33-tri-dao/"
+    },
+    {
+      "date": "2024-05",
+      "event": "Published Mamba-2: Structured State Space Duality — faster than Mamba-1 with tensor core support (ICML 2024)",
+      "url": "https://tridao.me/blog/2024/mamba2-part1-model/"
+    },
+    {
+      "date": "2024-07",
+      "event": "Published FlashAttention-3: Asynchrony and low-precision on H100, achieving 740 TFLOPS (NeurIPS 2024)",
+      "url": "https://arxiv.org/abs/2407.08608"
+    },
+    {
+      "date": "2024-09",
+      "event": "Joined Princeton University as Assistant Professor of Computer Science",
+      "url": "https://www.cs.princeton.edu/people/profile/td8762"
+    },
+    {
+      "date": "2025-03-27",
+      "event": "Delivered TED Talk: How AI is Transforming Work and Everyday Life (TEDAI San Francisco)",
+      "url": "https://www.ted.com/talks/tri_dao_how_ai_is_transforming_work_and_everyday_life"
+    },
+    {
+      "date": "2025",
+      "event": "Received Schmidt Sciences AI2050 Early Career Fellowship, Google ML & Systems Junior Faculty Award, and Google Research Scholar award",
+      "url": "https://ai2050.schmidtsciences.org/fellow/tri-dao/"
+    },
+    {
+      "date": "2025",
+      "event": "Published Marconi: Prefix Caching for Hybrid LLMs (MLSys 2025 Outstanding Paper Honorable Mention)",
+      "url": "https://tridao.me"
+    }
+  ],
+  "key_contributions": [
+    {
+      "title": "FlashAttention",
+      "description": "IO-aware exact attention algorithm that reduces memory from quadratic to linear in sequence length and runs 2-4x faster than standard attention. Now used in virtually every Transformer-based model and enabled context lengths to grow from 2-4K to 128K-1M tokens.",
+      "url": "https://github.com/Dao-AILab/flash-attention"
+    },
+    {
+      "title": "Mamba (Selective State Space Model)",
+      "description": "Linear-time sequence model co-created with Albert Gu that achieves 5x higher throughput than Transformers by letting SSM parameters be functions of the input, with a hardware-aware parallel scan algorithm. 17.5K+ GitHub stars.",
+      "url": "https://github.com/state-spaces/mamba"
+    },
+    {
+      "title": "Mamba-2 (Structured State Space Duality)",
+      "description": "Theoretical framework proving SSMs and attention are dual views of the same model, enabling tensor-core-optimized SSM computation that is 2-8x faster than Mamba-1's parallel scan.",
+      "url": "https://tridao.me/blog/2024/mamba2-part1-model/"
+    },
+    {
+      "title": "FlashAttention-3",
+      "description": "Third-generation attention kernel exploiting H100 asynchrony and FP8 low-precision to achieve up to 740 TFLOPS, 1.5-2x faster than FlashAttention-2 on Hopper GPUs.",
+      "url": "https://arxiv.org/abs/2407.08608"
+    },
+    {
+      "title": "Monarch Matrices",
+      "description": "Class of hardware-efficient structured matrices (products of block-diagonal matrices) enabling 2x training speedup for ViT and GPT-2 with comparable quality. ICML 2022 Outstanding Paper runner-up.",
+      "url": "https://proceedings.mlr.press/v162/dao22a.html"
+    },
+    {
+      "title": "Dao-AILab Open Source Ecosystem",
+      "description": "GitHub organization hosting flash-attention (22.8K stars), causal-conv1d, fast-hadamard-transform, and other high-performance CUDA kernels widely adopted across the ML community.",
+      "url": "https://github.com/Dao-AILab"
+    }
+  ],
+  "quotes": [
+    {
+      "text": "Try to understand both the algorithm and the systems that these algorithms run on.",
+      "source": "Latent Space podcast, Jul 2023",
+      "url": "https://www.latent.space/p/flashattention"
+    },
+    {
+      "text": "I'm excited to announce that I'm joining Together AI as Chief Scientist, with the goal of making open source AI more accessible and cost-competitive.",
+      "source": "Together AI blog, Jul 2023",
+      "url": "https://www.together.ai/blog/tri-dao-flash-attention"
+    },
+    {
+      "text": "The memory is linear in sequence length. In terms of computation, it's still quadratic, but we managed to make it much more hardware friendly.",
+      "source": "Latent Space podcast, Jul 2023",
+      "url": "https://www.latent.space/p/flashattention"
+    },
+    {
+      "text": "I think my prior is that as long as your model architecture is reasonable and is hardware efficient, and you have lots of compute, and you have lots of data, the model would just do well.",
+      "source": "Generally Intelligent podcast, Feb 2024",
+      "url": "https://imbue.com/podcast/2024-02-08-podcast-episode-33-tri-dao/"
+    },
+    {
+      "text": "Certainly, I didn't anticipate the level of popularity.",
+      "source": "On FlashAttention adoption",
+      "url": "https://imbue.com/podcast/2024-02-08-podcast-episode-33-tri-dao/"
+    }
+  ],
+  "social": {
+    "github": "https://github.com/tridao",
+    "twitter": "https://x.com/tri_dao",
+    "website": "https://tridao.me",
+    "google_scholar": "https://scholar.google.com/citations?user=NQRw0bQAAAAJ",
+    "linkedin": "https://www.linkedin.com/in/tri-dao-71544155/",
+    "princeton": "https://www.cs.princeton.edu/people/profile/td8762"
+  },
+  "sources": [
+    {
+      "title": "Tri Dao — personal website",
+      "url": "https://tridao.me"
+    },
+    {
+      "title": "Tri Dao — Princeton CS profile",
+      "url": "https://www.cs.princeton.edu/people/profile/td8762"
+    },
+    {
+      "title": "AI2050 Fellow: Tri Dao — Schmidt Sciences",
+      "url": "https://ai2050.schmidtsciences.org/fellow/tri-dao/"
+    },
+    {
+      "title": "Together AI: Introducing Chief Scientist Tri Dao",
+      "url": "https://www.together.ai/blog/tri-dao-flash-attention"
+    },
+    {
+      "title": "FlashAttention: Fast and Memory-Efficient Exact Attention (arXiv)",
+      "url": "https://arxiv.org/abs/2205.14135"
+    },
+    {
+      "title": "FlashAttention-2: Faster Attention with Better Parallelism (arXiv)",
+      "url": "https://arxiv.org/abs/2307.08691"
+    },
+    {
+      "title": "FlashAttention-3: Fast and Accurate Attention (arXiv)",
+      "url": "https://arxiv.org/abs/2407.08608"
+    },
+    {
+      "title": "Mamba: Linear-Time Sequence Modeling (arXiv)",
+      "url": "https://arxiv.org/abs/2312.00752"
+    },
+    {
+      "title": "Mamba-2 Blog Series — Structured State Space Duality",
+      "url": "https://tridao.me/blog/2024/mamba2-part1-model/"
+    },
+    {
+      "title": "Monarch: Expressive Structured Matrices (ICML 2022)",
+      "url": "https://proceedings.mlr.press/v162/dao22a.html"
+    },
+    {
+      "title": "Latent Space: FlashAttention 2 — 800% faster Transformers",
+      "url": "https://www.latent.space/p/flashattention"
+    },
+    {
+      "title": "Generally Intelligent: Tri Dao on FlashAttention & efficient inference",
+      "url": "https://imbue.com/podcast/2024-02-08-podcast-episode-33-tri-dao/"
+    },
+    {
+      "title": "TED Talk: How AI is Transforming Work and Everyday Life",
+      "url": "https://www.ted.com/talks/tri_dao_how_ai_is_transforming_work_and_everyday_life"
+    },
+    {
+      "title": "Dao-AILab — GitHub organization",
+      "url": "https://github.com/Dao-AILab"
+    }
+  ]
+}

@@ -1,0 +1,169 @@
+{
+  "slug": "ishaan-jaff",
+  "name": "Ishaan Jaff",
+  "generated_at": "2026-03-19T12:00:00+00:00",
+  "bio": "Ishaan Jaff is the Co-Founder and CTO of LiteLLM (YC W23), an open-source LLM gateway that provides a unified OpenAI-compatible API for calling 100+ large language model providers. A Carnegie Mellon University graduate with a BS in Electrical and Computer Engineering and a minor in Machine Learning, Jaff previously held engineering roles at Coinbase, Qualcomm, and Credit Suisse. He co-founded BerriAI with Krrish Dholakia in 2023 after encountering the fragmentation problem of managing multiple LLM API providers first-hand. LiteLLM has grown to 39,000+ GitHub stars, 240M+ Docker pulls, and $7M ARR, serving enterprise customers including Adobe, NASA, Netflix, Stripe, and Nvidia.",
+  "topics": [
+    "LLM API Gateways",
+    "Multi-Provider LLM Routing",
+    "AI Infrastructure",
+    "OpenAI-Compatible SDKs",
+    "LLM Cost Tracking & Budgeting",
+    "LLM Proxy Servers",
+    "Model Fallback & Load Balancing",
+    "Guardrails & Observability",
+    "Model Context Protocol (MCP)",
+    "Agent-to-Agent (A2A) Protocol",
+    "Open-Source AI Tooling",
+    "Enterprise LLM Operations"
+  ],
+  "timeline": [
+    {
+      "date": "2026-03",
+      "event": "LiteLLM v1.82 released with MCP OAuth2 support, Anthropic Files API integration, and performance improvements (2.9x lower median latency at 1K concurrent users)",
+      "url": "https://github.com/BerriAI/litellm/releases"
+    },
+    {
+      "date": "2026-02",
+      "event": "LiteLLM introduces Agent Hub: register, publish, and share agents via the AI Gateway (v1.80.0-stable)",
+      "url": "https://docs.litellm.ai/release_notes/v1-80-0"
+    },
+    {
+      "date": "2026-01",
+      "event": "LiteLLM adds BYOM (Bring Your Own MCP) with non-admin MCP server submission and admin review workflow",
+      "url": "https://docs.litellm.ai/docs/mcp"
+    },
+    {
+      "date": "2025-12",
+      "event": "LiteLLM MCP protocol support launched (v1.80.18), cutting p99 latency by 70% on AI Gateway",
+      "url": "https://docs.litellm.ai/docs/mcp"
+    },
+    {
+      "date": "2025-07",
+      "event": "LiteLLM v1.74.10 introduces per-tool consumption tracking and daily active users metrics",
+      "url": "https://x.com/ishaan_jaff/status/1950801293490147799"
+    },
+    {
+      "date": "2025-06",
+      "event": "LiteLLM v1.41.5 adds guardrail configuration UI for the Proxy, enabling per-call guardrail control",
+      "url": "https://x.com/ishaan_jaff/status/1808707930730213585"
+    },
+    {
+      "date": "2024",
+      "event": "BerriAI reaches $2.5M annual recurring revenue; launches Enterprise tiers (Basic at $250/mo, Premium at $30K/yr)",
+      "url": "https://www.litellm.ai/enterprise"
+    },
+    {
+      "date": "2024-01",
+      "event": "LiteLLM v1.17.0 optimizes Proxy cold boot times, adds gunicorn workers for Kubernetes/distributed systems",
+      "url": "https://x.com/ishaan_jaff/status/1745140375143264465"
+    },
+    {
+      "date": "2023",
+      "event": "BerriAI participates in Y Combinator W23 batch; raises $1.6M seed from YC, Gravity Fund, and Pioneer Fund",
+      "url": "https://www.ycombinator.com/companies/litellm"
+    },
+    {
+      "date": "2023-08-09",
+      "event": "Initial release of LiteLLM open-source SDK for unified LLM API calls",
+      "url": "https://github.com/BerriAI/litellm"
+    },
+    {
+      "date": "2023",
+      "event": "Co-founded BerriAI with Krrish Dholakia to solve LLM API fragmentation across providers",
+      "url": "https://grokipedia.com/page/LiteLLM"
+    }
+  ],
+  "key_contributions": [
+    {
+      "title": "LiteLLM",
+      "description": "Open-source Python SDK and AI Gateway (Proxy Server) providing a unified OpenAI-compatible interface for 100+ LLM providers with cost tracking, guardrails, load balancing, and logging. 39,000+ GitHub stars, 240M+ Docker pulls, 6,500+ forks.",
+      "url": "https://github.com/BerriAI/litellm"
+    },
+    {
+      "title": "LiteLLM Proxy Server",
+      "description": "FastAPI-based LLM proxy gateway enabling model fallback, virtual key management, spend tracking, SSO/SCIM/JWT auth, and web UI configuration without code redeployment.",
+      "url": "https://docs.litellm.ai/docs/simple_proxy"
+    },
+    {
+      "title": "LiteLLM Agent Hub",
+      "description": "Agent-to-Agent (A2A) gateway for registering, publishing, and invoking agents through the AI Gateway with request/response logging and access controls.",
+      "url": "https://docs.litellm.ai/docs/proxy/ai_hub"
+    },
+    {
+      "title": "LiteLLM MCP Integration",
+      "description": "Model Context Protocol support on chat completions endpoint, enabling direct MCP server usage with 70% p99 latency reduction and BYOM (Bring Your Own MCP) admin workflows.",
+      "url": "https://docs.litellm.ai/docs/mcp"
+    },
+    {
+      "title": "ReliableGPT",
+      "description": "Early open-source tool for uptime and reliability handling of OpenAI API calls, providing automatic retries and fallback logic.",
+      "url": "https://github.com/ishaan-jaff/reliablegpt"
+    },
+    {
+      "title": "Clerkie-CLI",
+      "description": "LLM-powered debugging tool for multiple programming languages, using AI to diagnose and explain code errors from the command line.",
+      "url": "https://github.com/ishaan-jaff/clerkie-cli"
+    }
+  ],
+  "quotes": [
+    {
+      "text": "Calling LLM APIs involved multiple ~100 line if/else statements which made our debugging problems explode... provider-specific logic meant our code became increasingly complex and hard to debug. That's when we decided to abstract our LLM calls behind a single package - LiteLLM.",
+      "source": "LiteLLM founding story",
+      "url": "https://github.com/BerriAI/litellm"
+    },
+    {
+      "text": "We needed I/O that just worked, so we could spend time improving other parts of our system - error-handling, model-fallback logic, and more.",
+      "source": "LiteLLM founding motivation",
+      "url": "https://github.com/BerriAI/litellm"
+    }
+  ],
+  "social": {
+    "github": "https://github.com/ishaan-jaff",
+    "twitter": "https://x.com/ishaan_jaff",
+    "linkedin": "https://www.linkedin.com/in/reffajnaahsi/",
+    "website": "https://www.litellm.ai/"
+  },
+  "sources": [
+    {
+      "title": "ishaan-jaff (Ishaan Jaff) - GitHub Profile",
+      "url": "https://github.com/ishaan-jaff"
+    },
+    {
+      "title": "BerriAI/litellm - GitHub Repository (39K+ stars)",
+      "url": "https://github.com/BerriAI/litellm"
+    },
+    {
+      "title": "LiteLLM - Y Combinator Company Page",
+      "url": "https://www.ycombinator.com/companies/litellm"
+    },
+    {
+      "title": "LiteLLM - Grokipedia (founding story, milestones)",
+      "url": "https://grokipedia.com/page/LiteLLM"
+    },
+    {
+      "title": "Ishaan Jaff (@ishaan_jaff) - X / Twitter",
+      "url": "https://x.com/ishaan_jaff"
+    },
+    {
+      "title": "Ishaan Jaffer - LinkedIn",
+      "url": "https://www.linkedin.com/in/reffajnaahsi/"
+    },
+    {
+      "title": "LiteLLM Official Documentation",
+      "url": "https://docs.litellm.ai/"
+    },
+    {
+      "title": "LiteLLM Official Website",
+      "url": "https://www.litellm.ai/"
+    },
+    {
+      "title": "Unveiling BerriAI: Revolutionizing AI Debugging with LiteLLM - HireTop",
+      "url": "https://hiretop.com/blog2/berriai-litellm-call-all-llm-apis-using-openai-format/"
+    },
+    {
+      "title": "LiteLLM Release Notes",
+      "url": "https://docs.litellm.ai/release_notes"
+    }
+  ]
+}

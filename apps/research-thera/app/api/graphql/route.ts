@@ -18,6 +18,7 @@ const handler = startServerAndCreateNextHandler<NextRequest, GraphQLContext>(
       return {
         userId: session?.user?.id,
         userEmail: session?.user?.email,
+        userName: session?.user?.name ?? undefined,
       };
     },
   },

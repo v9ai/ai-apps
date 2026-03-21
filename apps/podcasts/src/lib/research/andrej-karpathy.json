@@ -1,0 +1,279 @@
+{
+  "slug": "andrej-karpathy",
+  "name": "Andrej Karpathy",
+  "generated_at": "2026-03-19T12:00:00+00:00",
+  "bio": "Andrej Karpathy is a Slovakian-Canadian AI researcher, educator, and engineer who has shaped modern deep learning practice across research, industry, and education. Born in Bratislava, he moved to Toronto at 15, earned a BSc in Computer Science and Physics from the University of Toronto (2009), an MSc from the University of British Columbia (2011), and a PhD from Stanford under Fei-Fei Li (2015) with the thesis 'Connecting Images and Natural Language.' He co-designed and was lead instructor of Stanford's CS231n, the first deep learning course at Stanford. As a founding member of OpenAI (2015-2017) he worked on deep learning, generative models, and reinforcement learning. As Director of AI at Tesla (2017-2022) he led the Autopilot computer vision team. After a brief return to OpenAI (2023-2024) working on midtraining and synthetic data, he founded Eureka Labs in July 2024, an AI-native education company. Karpathy is the creator of iconic open-source projects including char-rnn, convnetjs, nanoGPT, minGPT, micrograd, llm.c, llama2.c, minbpe, nanochat, autoresearch, and LLM101n. His YouTube channel 'Neural Networks: Zero to Hero' has over 1 million subscribers. He coined the terms 'Software 2.0' and 'vibe coding,' and popularized 'context engineering' as a replacement for 'prompt engineering.' His GitHub has 149,000+ followers, making him one of the most followed developers on the platform.",
+  "topics": [
+    "Deep Learning Education",
+    "Large Language Models",
+    "Neural Network Training from Scratch",
+    "Computer Vision",
+    "Self-Driving / Autonomous Vehicles",
+    "Software 3.0 / LLM-as-Computer",
+    "Vibe Coding",
+    "Context Engineering",
+    "Tokenization (BPE)",
+    "AI Safety & AGI Timelines",
+    "Open-Source AI Infrastructure",
+    "AI-Native Education",
+    "Autonomous Research Agents"
+  ],
+  "timeline": [
+    {
+      "date": "2026-03-07",
+      "event": "Released autoresearch: AI agents running ML experiments autonomously on a single GPU in 630 lines of Python, built on nanochat training core",
+      "url": "https://github.com/karpathy/autoresearch"
+    },
+    {
+      "date": "2026-01",
+      "event": "Published '2025 LLM Year in Review' blog post surveying the state of LLMs, coining 'ghost intelligence' and 'ambient programming' concepts",
+      "url": "https://karpathy.bearblog.dev/year-in-review-2025/"
+    },
+    {
+      "date": "2025-11-22",
+      "event": "Released llm-council: an ensemble system where multiple LLMs debate and collaborate to answer hard questions",
+      "url": "https://github.com/karpathy/llm-council"
+    },
+    {
+      "date": "2025-11-18",
+      "event": "Released reader3: a lightweight EPUB reader for reading books with LLMs, '90% vibe coded'",
+      "url": "https://github.com/karpathy/reader3"
+    },
+    {
+      "date": "2025-10-17",
+      "event": "Appeared on Dwarkesh Podcast: 'AGI is still a decade away' — argued AI companies are exaggerating agentic capabilities and called this the 'decade of agents' not 'year of agents'",
+      "url": "https://podcasts.apple.com/us/podcast/andrej-karpathy-agi-is-still-a-decade-away/id1516093381?i=1000732326311"
+    },
+    {
+      "date": "2025-10-13",
+      "event": "Released nanochat: full-stack ChatGPT clone training/inference pipeline in ~8,000 lines of PyTorch, trainable for under $100",
+      "url": "https://github.com/karpathy/nanochat"
+    },
+    {
+      "date": "2025-06-25",
+      "event": "Popularized 'context engineering' over 'prompt engineering' on X, stating it is 'the delicate art and science of filling the context window with just the right information for the next step'",
+      "url": "https://x.com/karpathy/status/1937902205765607626"
+    },
+    {
+      "date": "2025-06-19",
+      "event": "Delivered keynote 'Software Is Changing (Again)' at YC AI Startup School, introducing Software 3.0 where natural language is the programming interface",
+      "url": "https://www.ycombinator.com/library/MW-andrej-karpathy-software-is-changing-again"
+    },
+    {
+      "date": "2025-02",
+      "event": "Coined 'vibe coding' — 'a new kind of coding where you fully give in to the vibes, embrace exponentials, and forget that the code even exists'",
+      "url": "https://x.com/karpathy"
+    },
+    {
+      "date": "2024-07-16",
+      "event": "Announced founding of Eureka Labs, an AI-native education company, with LLM101n as its first course",
+      "url": "https://eurekalabs.ai/"
+    },
+    {
+      "date": "2024-04-08",
+      "event": "Released llm.c: GPT-2 training in simple, raw C/CUDA — no PyTorch, no Python. Achieved 7% faster than PyTorch nightly within weeks",
+      "url": "https://github.com/karpathy/llm.c"
+    },
+    {
+      "date": "2024-02-20",
+      "event": "Released minbpe: minimal, clean code for the Byte Pair Encoding (BPE) algorithm used in LLM tokenization",
+      "url": "https://github.com/karpathy/minbpe"
+    },
+    {
+      "date": "2023-07",
+      "event": "Released llama2.c: inference of Llama 2 in a single file of pure C (~700 lines), ran on devices as small as a Samsung Galaxy Watch",
+      "url": "https://github.com/karpathy/llama2.c"
+    },
+    {
+      "date": "2023-01",
+      "event": "Launched 'Neural Networks: Zero to Hero' YouTube series covering backpropagation, tokenization, attention, and transformer training from scratch",
+      "url": "https://github.com/karpathy/nn-zero-to-hero"
+    },
+    {
+      "date": "2022-12",
+      "event": "Released nanoGPT: minimal, hackable GPT-2/GPT-3 training codebase — became one of the most starred ML repos on GitHub (55k+ stars)",
+      "url": "https://github.com/karpathy/nanoGPT"
+    },
+    {
+      "date": "2022-07",
+      "event": "Left Tesla after 5 years as Director of AI leading the Autopilot computer vision team",
+      "url": "https://x.com/karpathy"
+    },
+    {
+      "date": "2020",
+      "event": "Released minGPT: a minimal PyTorch re-implementation of GPT training (24k stars), foundational educational resource",
+      "url": "https://github.com/karpathy/minGPT"
+    },
+    {
+      "date": "2017",
+      "event": "Joined Tesla as Senior Director of AI, leading the Autopilot Vision team and briefly Tesla Optimus",
+      "url": "https://karpathy.ai/"
+    },
+    {
+      "date": "2015-11",
+      "event": "Co-founded OpenAI as a founding member and research scientist, working on deep learning, generative models, and reinforcement learning",
+      "url": "https://karpathy.ai/"
+    },
+    {
+      "date": "2015",
+      "event": "Co-designed and became primary instructor of Stanford CS231n (Convolutional Neural Networks for Visual Recognition), growing from 150 to 750 students",
+      "url": "https://cs.stanford.edu/people/karpathy/"
+    },
+    {
+      "date": "2015",
+      "event": "Completed PhD at Stanford under Fei-Fei Li with thesis 'Connecting Images and Natural Language'",
+      "url": "https://cs.stanford.edu/people/karpathy/"
+    },
+    {
+      "date": "2015-05",
+      "event": "Published iconic blog post 'The Unreasonable Effectiveness of Recurrent Neural Networks' demonstrating char-rnn generating Shakespeare, Wikipedia, LaTeX, and C code",
+      "url": "https://karpathy.github.io/2015/05/21/rnn-effectiveness/"
+    },
+    {
+      "date": "2014-12",
+      "event": "Published 'Deep Visual-Semantic Alignments for Generating Image Descriptions' (CVPR 2015 oral) — pioneered image captioning with CNNs + RNNs",
+      "url": "https://arxiv.org/abs/1412.2306"
+    }
+  ],
+  "key_contributions": [
+    {
+      "title": "nanoGPT",
+      "description": "The simplest, fastest repository for training/finetuning medium-sized GPTs. Arguably the most influential educational ML codebase, with 55k+ GitHub stars. Made transformer training accessible to individual developers.",
+      "url": "https://github.com/karpathy/nanoGPT"
+    },
+    {
+      "title": "nanochat",
+      "description": "Full-stack ChatGPT clone: pretraining, SFT, RLHF, and inference in ~8,000 lines of PyTorch. Trainable end-to-end on a single GPU for under $100. 49k+ stars.",
+      "url": "https://github.com/karpathy/nanochat"
+    },
+    {
+      "title": "autoresearch",
+      "description": "AI agents that autonomously run ML experiments on a single GPU overnight. 630 lines of Python, built on the nanochat training core. 43k+ stars.",
+      "url": "https://github.com/karpathy/autoresearch"
+    },
+    {
+      "title": "llm.c",
+      "description": "LLM training in simple, raw C/CUDA with no PyTorch or Python dependency. Achieved multi-GPU bfloat16 training with flash attention 7% faster than PyTorch nightly. 29k+ stars.",
+      "url": "https://github.com/karpathy/llm.c"
+    },
+    {
+      "title": "LLM101n",
+      "description": "Eureka Labs' first course: 'Let's Build a Storyteller.' An undergraduate-level guide to training your own AI from scratch, designed to be guided by an AI Teaching Assistant. 36k+ stars for the course repo alone.",
+      "url": "https://github.com/karpathy/LLM101n"
+    },
+    {
+      "title": "micrograd",
+      "description": "A tiny scalar-valued autograd engine and neural net library with PyTorch-like API. The canonical educational resource for understanding backpropagation. 15k+ stars.",
+      "url": "https://github.com/karpathy/micrograd"
+    },
+    {
+      "title": "Neural Networks: Zero to Hero (YouTube)",
+      "description": "YouTube lecture series covering backpropagation, language modeling, tokenization, attention, and GPT training from scratch. Over 1 million subscribers. Required viewing for aspiring ML engineers.",
+      "url": "https://www.youtube.com/@AndrejKarpathy"
+    },
+    {
+      "title": "Stanford CS231n",
+      "description": "Co-designed and was primary instructor for Stanford's first deep learning course, Convolutional Neural Networks for Visual Recognition. Grew from 150 to 750 students and became one of the most popular CS courses at Stanford.",
+      "url": "https://cs.stanford.edu/people/karpathy/"
+    },
+    {
+      "title": "Tesla Autopilot Vision",
+      "description": "As Director of AI at Tesla (2017-2022), led the computer vision team responsible for Autopilot's vision-based self-driving pipeline, moving Tesla from radar+camera to a vision-only approach.",
+      "url": "https://karpathy.ai/"
+    },
+    {
+      "title": "Software 2.0 / Software 3.0",
+      "description": "Coined 'Software 2.0' (neural networks as code written by optimization) and later 'Software 3.0' (natural language as the programming interface for LLMs), reshaping how the industry thinks about software development paradigms.",
+      "url": "https://www.ycombinator.com/library/MW-andrej-karpathy-software-is-changing-again"
+    }
+  ],
+  "quotes": [
+    {
+      "text": "Context engineering is the delicate art and science of filling the context window with just the right information for the next step.",
+      "source": "X (Twitter), June 2025",
+      "url": "https://x.com/karpathy/status/1937902205765607626"
+    },
+    {
+      "text": "I've never felt this much behind as a programmer. The profession is being dramatically refactored as the bits contributed by the programmer are increasingly sparse and between.",
+      "source": "X (Twitter), 2025",
+      "url": "https://x.com/karpathy"
+    },
+    {
+      "text": "Vibe coding is a new kind of coding where you fully give in to the vibes, embrace exponentials, and forget that the code even exists.",
+      "source": "X (Twitter), February 2025",
+      "url": "https://x.com/karpathy"
+    },
+    {
+      "text": "I like to train Deep Neural Nets on large datasets.",
+      "source": "GitHub profile bio",
+      "url": "https://github.com/karpathy"
+    },
+    {
+      "text": "The most important quality in a startup founder right now is taste. You need to know what is good because AI can produce infinite slop.",
+      "source": "Dwarkesh Podcast, October 2025",
+      "url": "https://podcasts.apple.com/us/podcast/andrej-karpathy-agi-is-still-a-decade-away/id1516093381?i=1000732326311"
+    }
+  ],
+  "social": {
+    "github": "https://github.com/karpathy",
+    "twitter": "https://x.com/karpathy",
+    "youtube": "https://www.youtube.com/@AndrejKarpathy",
+    "website": "https://karpathy.ai/",
+    "blog_github": "https://karpathy.github.io",
+    "blog_bear": "https://karpathy.bearblog.dev/blog/",
+    "blog_medium": "https://medium.com/@karpathy",
+    "stanford": "https://cs.stanford.edu/people/karpathy/",
+    "google_scholar": "https://scholar.google.com/citations?user=l8WuQJgAAAAJ",
+    "eureka_labs": "https://eurekalabs.ai/"
+  },
+  "sources": [
+    {
+      "title": "Andrej Karpathy - Personal Website",
+      "url": "https://karpathy.ai/"
+    },
+    {
+      "title": "Andrej Karpathy - Wikipedia",
+      "url": "https://en.wikipedia.org/wiki/Andrej_Karpathy"
+    },
+    {
+      "title": "karpathy on GitHub (63 repos, 149k followers)",
+      "url": "https://github.com/karpathy"
+    },
+    {
+      "title": "Andrej Karpathy - Stanford Computer Science",
+      "url": "https://cs.stanford.edu/people/karpathy/"
+    },
+    {
+      "title": "Eureka Labs - AI-Native Education",
+      "url": "https://eurekalabs.ai/"
+    },
+    {
+      "title": "Andrej Karpathy: Software Is Changing (Again) - YC AI Startup School keynote",
+      "url": "https://www.ycombinator.com/library/MW-andrej-karpathy-software-is-changing-again"
+    },
+    {
+      "title": "Andrej Karpathy on Dwarkesh Podcast: 'AGI is still a decade away'",
+      "url": "https://podcasts.apple.com/us/podcast/andrej-karpathy-agi-is-still-a-decade-away/id1516093381?i=1000732326311"
+    },
+    {
+      "title": "Deep Visual-Semantic Alignments for Generating Image Descriptions (arXiv)",
+      "url": "https://arxiv.org/abs/1412.2306"
+    },
+    {
+      "title": "Visualizing and Understanding Recurrent Networks (arXiv)",
+      "url": "https://arxiv.org/abs/1506.02078"
+    },
+    {
+      "title": "2025 LLM Year in Review - Karpathy Bear Blog",
+      "url": "https://karpathy.bearblog.dev/year-in-review-2025/"
+    },
+    {
+      "title": "Andrej Karpathy on Google Scholar",
+      "url": "https://scholar.google.com/citations?user=l8WuQJgAAAAJ"
+    },
+    {
+      "title": "Andrej Karpathy - Lex Fridman Podcast #333",
+      "url": "https://lexfridman.com/andrej-karpathy/"
+    }
+  ]
+}

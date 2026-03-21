@@ -1,0 +1,213 @@
+{
+  "slug": "yih-dar-shieh",
+  "name": "Yih-Dar Shieh",
+  "generated_at": "2026-03-19T21:00:00+00:00",
+  "bio": "Yih-Dar Shieh is a Machine Learning Engineer at Hugging Face, where he has been a core maintainer of the Transformers library since February 2022. With over 1,370 merged commits and 1,530+ pull requests in huggingface/transformers, he is one of the most prolific contributors to the project. His work spans three major areas: adding vision and multimodal model implementations (TFViT, TFCLIPModel, FlaxVisionEncoderDecoderModel, Kosmos-2), building and maintaining CI/CD testing infrastructure (tiny model creation, PR comment CI, failure reporting, CircleCI and GitHub Actions workflows), and ensuring cross-framework parity between PyTorch, TensorFlow, and JAX/Flax models. Before joining Hugging Face, he was an AI Engineer at Biggerpan (2018-2021) working on NLP intent/entity classification. He holds a Ph.D. in Mathematics (number theory) from Aix-Marseille University (2015), with a dissertation on 'Arithmetic Aspects of Point Counting and Frobenius Distributions' supervised by David Kohel and Gilles Lachaud, and an engineering degree in Computer Science from Polytech Marseille (2018). He is based in Paris, France.",
+  "topics": [
+    "Vision Transformers",
+    "Multimodal Models",
+    "CI/CD Infrastructure",
+    "TensorFlow-PyTorch Parity",
+    "JAX/Flax Models",
+    "Encoder-Decoder Architectures",
+    "CLIP",
+    "Object-Level Grounding (Kosmos-2)",
+    "Gradient Accumulation",
+    "Tiny Model Testing",
+    "Open Source ML Infrastructure",
+    "Diffusion Models"
+  ],
+  "timeline": [
+    {
+      "date": "2015",
+      "event": "Completed Ph.D. in Mathematics (number theory) at Aix-Marseille University, dissertation on point counting and Frobenius distributions",
+      "url": "https://www.mathgenealogy.org/id.php?id=236016"
+    },
+    {
+      "date": "2018",
+      "event": "Completed engineering degree in Computer Science from Polytech Marseille; joined Biggerpan as AI Engineer building NLP models",
+      "url": "https://www.linkedin.com/in/yih-dar-shieh/"
+    },
+    {
+      "date": "2020-09-02",
+      "event": "First merged PR in huggingface/transformers: Fix mixed precision issue in TF DistilBert",
+      "url": "https://github.com/huggingface/transformers/pulls?q=author%3Aydshieh+sort%3Acreated-asc+is%3Amerged"
+    },
+    {
+      "date": "2021-08-23",
+      "event": "Added TFEncoderDecoderModel with cross-attention support to Transformers",
+      "url": "https://github.com/huggingface/transformers/pulls?q=author%3Aydshieh+TFEncoderDecoderModel+is%3Amerged"
+    },
+    {
+      "date": "2021-08-31",
+      "event": "Added FlaxVisionEncoderDecoderModel to Transformers, enabling Flax-based image captioning",
+      "url": "https://github.com/huggingface/transformers/pulls?q=author%3Aydshieh+FlaxVisionEncoderDecoderModel+is%3Amerged"
+    },
+    {
+      "date": "2021-09-28",
+      "event": "Added TFViTModel (TensorFlow Vision Transformer) to Transformers",
+      "url": "https://github.com/huggingface/transformers/pulls?q=author%3Aydshieh+TFViTModel+is%3Amerged"
+    },
+    {
+      "date": "2021-10-11",
+      "event": "Added TFCLIPModel (TensorFlow CLIP) to Transformers",
+      "url": "https://github.com/huggingface/transformers/pulls?q=author%3Aydshieh+TFCLIPModel+is%3Amerged"
+    },
+    {
+      "date": "2021-10-25",
+      "event": "Added TFVisionEncoderDecoderModel to Transformers",
+      "url": "https://github.com/huggingface/transformers/pulls?q=author%3Aydshieh+TFVisionEncoderDecoderModel+is%3Amerged"
+    },
+    {
+      "date": "2022-02-28",
+      "event": "Joined Hugging Face open source team as Machine Learning Engineer, focusing on CI reliability and testing infrastructure",
+      "url": "https://ke.linkedin.com/posts/yih-dar-shieh_today-is-my-1st-day-at-hugging-face-open-activity-6903952286150643712-9Xfr"
+    },
+    {
+      "date": "2022-09",
+      "event": "Fixed critical bugs in Diffusers library: upsample/downsample and cross-attention logic in diffusion architectures",
+      "url": "https://github.com/huggingface/diffusers/pulls?q=author%3Aydshieh+is%3Amerged"
+    },
+    {
+      "date": "2023-02-08",
+      "event": "Major rework of Transformers pipeline testing by removing PipelineTestCaseMeta",
+      "url": "https://github.com/huggingface/transformers/pull/21956"
+    },
+    {
+      "date": "2023-10-30",
+      "event": "Merged Kosmos-2 (Microsoft's grounding multimodal LLM) into Transformers, released in v4.35",
+      "url": "https://github.com/huggingface/transformers/pull/24709"
+    },
+    {
+      "date": "2024",
+      "event": "Co-authored 'Fixing Gradient Accumulation' blog post on Hugging Face, addressing mathematical equivalence issues with full batch training",
+      "url": "https://huggingface.co/blog/gradient_accumulation"
+    },
+    {
+      "date": "2025-10-15",
+      "event": "Removed head masking block in vision models, continuing vision model maintenance",
+      "url": "https://github.com/huggingface/transformers/pulls?q=author%3Aydshieh+vision+head+masking+is%3Amerged"
+    },
+    {
+      "date": "2026-03",
+      "event": "Surpassed 1,370 merged commits in huggingface/transformers, maintaining CI infrastructure and fixing model issues daily",
+      "url": "https://github.com/huggingface/transformers/commits?author=ydshieh"
+    }
+  ],
+  "key_contributions": [
+    {
+      "title": "Kosmos-2 in Transformers",
+      "description": "Implemented Microsoft's Kosmos-2 grounding multimodal LLM in Hugging Face Transformers (v4.35), enabling object-level image-text interaction via bounding boxes. Acknowledged by Microsoft for the HuggingFace implementation and online demo.",
+      "url": "https://huggingface.co/docs/transformers/model_doc/kosmos-2"
+    },
+    {
+      "title": "TF/Flax Vision Model Ports",
+      "description": "Added TFViTModel, TFCLIPModel, TFVisionEncoderDecoderModel, and FlaxVisionEncoderDecoderModel to Transformers, bringing vision and multimodal capabilities to TensorFlow and JAX/Flax frameworks.",
+      "url": "https://github.com/huggingface/transformers/pulls?q=author%3Aydshieh+%22Add+TF%22+OR+%22Add+Flax%22+is%3Amerged"
+    },
+    {
+      "title": "Transformers CI/CD Infrastructure",
+      "description": "Built and maintains the CI testing infrastructure for huggingface/transformers: PR comment CI feedback, new failure reporting, CircleCI and GitHub Actions workflows, tiny model creation scripts, and cross-framework equivalence tests.",
+      "url": "https://github.com/huggingface/transformers/commits?author=ydshieh"
+    },
+    {
+      "title": "Fixing Gradient Accumulation",
+      "description": "Co-authored the influential Hugging Face blog post identifying and fixing a bug where gradient accumulation was not mathematically equivalent to full batch training across popular ML frameworks.",
+      "url": "https://huggingface.co/blog/gradient_accumulation"
+    },
+    {
+      "title": "Diffusers Bug Fixes",
+      "description": "Fixed critical upsampling, downsampling, and cross-attention bugs in the Hugging Face Diffusers library's core architecture.",
+      "url": "https://github.com/huggingface/diffusers/pulls?q=author%3Aydshieh+is%3Amerged"
+    },
+    {
+      "title": "Cross-Framework Parity",
+      "description": "Systematically fixed discrepancies between PyTorch, TensorFlow, and Flax model implementations across dozens of model architectures, including loss calculation, hidden states, and attention outputs.",
+      "url": "https://github.com/huggingface/transformers/pulls?q=author%3Aydshieh+%22Fix+TF%22+OR+%22Fix+Flax%22+is%3Amerged"
+    },
+    {
+      "title": "Flax Image Captioning (ViT-GPT2)",
+      "description": "Created the Flax image captioning example and published the ViT-GPT2 proof-of-concept model for the FlaxVisionEncoderDecoder framework, demonstrating vision-language generation.",
+      "url": "https://huggingface.co/ydshieh/vit-gpt2-coco-en"
+    }
+  ],
+  "quotes": [
+    {
+      "text": "Today is my 1st day at Hugging Face open source team! My main focus is on the reliability of the ecosystem, the testing and the production readiness - tools that are used & loved by a large community and +10000 organizations.",
+      "source": "LinkedIn, Feb 2022",
+      "url": "https://ke.linkedin.com/posts/yih-dar-shieh_today-is-my-1st-day-at-hugging-face-open-activity-6903952286150643712-9Xfr"
+    },
+    {
+      "text": "Very proud (and surprised) to see the demo of my work on (Flax) Vision Encoder Decoder model being featured.",
+      "source": "LinkedIn, Oct 2021",
+      "url": "https://eg.linkedin.com/posts/yih-dar-shieh_very-proud-and-surprised-to-see-the-demo-activity-6864313880072609792-nvaJ"
+    },
+    {
+      "text": "Microsoft KOSMOS-2 model is now available in Transformers v 4.35! It is a grounding multimodal large language model (MLLM) which enables interacting the text and image at the object level (via bounding boxes).",
+      "source": "LinkedIn, Nov 2023",
+      "url": "https://www.linkedin.com/posts/yih-dar-shieh_microsoft-kosmos-2-model-is-now-available-activity-7125897844833542146-VQkF"
+    },
+    {
+      "text": "Joining an open source startup has converted me from a silent user to an active contributor.",
+      "source": "LinkedIn, Jun 2022",
+      "url": "https://ke.linkedin.com/posts/yih-dar-shieh_joining-an-open-source-startup-has-converted-activity-6967555990317584386-mLqn"
+    }
+  ],
+  "social": {
+    "github": "https://github.com/ydshieh",
+    "linkedin": "https://www.linkedin.com/in/yih-dar-shieh/",
+    "huggingface": "https://huggingface.co/ydshieh",
+    "kaggle": "https://www.kaggle.com/yihdarshieh",
+    "semantic_scholar": "https://www.semanticscholar.org/author/Yih-Dar-Shieh/102443375"
+  },
+  "sources": [
+    {
+      "title": "ydshieh (Yih-Dar) - GitHub profile",
+      "url": "https://github.com/ydshieh"
+    },
+    {
+      "title": "Yih-Dar SHIEH - Hugging Face profile",
+      "url": "https://huggingface.co/ydshieh"
+    },
+    {
+      "title": "Yih-Dar SHIEH - LinkedIn",
+      "url": "https://www.linkedin.com/in/yih-dar-shieh/"
+    },
+    {
+      "title": "Yih-Dar Shieh - ML Engineer at Hugging Face (The Org)",
+      "url": "https://theorg.com/org/hugging-face/org-chart/yih-dar-shieh"
+    },
+    {
+      "title": "Yih-Dar Shieh - Mathematics Genealogy Project (Ph.D. details)",
+      "url": "https://www.mathgenealogy.org/id.php?id=236016"
+    },
+    {
+      "title": "Yih-Dar Shieh - Semantic Scholar (academic publications)",
+      "url": "https://www.semanticscholar.org/author/Yih-Dar-Shieh/102443375"
+    },
+    {
+      "title": "Kosmos-2 model documentation - Hugging Face Transformers",
+      "url": "https://huggingface.co/docs/transformers/model_doc/kosmos-2"
+    },
+    {
+      "title": "Add Kosmos-2 model - Pull Request #24709",
+      "url": "https://github.com/huggingface/transformers/pull/24709"
+    },
+    {
+      "title": "Fixing Gradient Accumulation - Hugging Face Blog",
+      "url": "https://huggingface.co/blog/gradient_accumulation"
+    },
+    {
+      "title": "ydshieh/kosmos-2-patch14-224 - HuggingFace model card",
+      "url": "https://huggingface.co/ydshieh/kosmos-2-patch14-224"
+    },
+    {
+      "title": "ydshieh/vit-gpt2-coco-en - Flax ViT-GPT2 image captioning model",
+      "url": "https://huggingface.co/ydshieh/vit-gpt2-coco-en"
+    },
+    {
+      "title": "LinkedIn: First day at Hugging Face announcement",
+      "url": "https://ke.linkedin.com/posts/yih-dar-shieh_today-is-my-1st-day-at-hugging-face-open-activity-6903952286150643712-9Xfr"
+    }
+  ]
+}

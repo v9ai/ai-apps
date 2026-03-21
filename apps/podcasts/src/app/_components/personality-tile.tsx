@@ -1,3 +1,4 @@
+import { css, cx } from "styled-system/css";
 import Link from "next/link";
 import {
   getInitials,
@@ -16,9 +17,33 @@ export function PersonalityTile({ personality, accentGradient }: Props) {
   return (
     <Link
       href={`/person/${personality.slug}`}
-      className="group glass-card card-glow relative block p-4 transition-all duration-300 shadow-[inset_0_1px_0_rgba(255,255,255,0.06)] hover:bg-surface-hover hover:-translate-y-0.5 hover:shadow-[0_8px_24px_rgba(0,0,0,0.45),inset_0_1px_0_rgba(255,255,255,0.06)]"
+      className={cx(
+        "group",
+        "glass-card",
+        "card-glow",
+        css({
+          pos: "relative",
+          display: "block",
+          p: { base: "5", sm: "6" },
+          transition: "all",
+          transitionDuration: "300ms",
+          boxShadow: "inset 0 1px 0 rgba(255,255,255,0.06)",
+          _hover: {
+            bg: "#1C1C22",
+            translateY: "-0.125rem",
+            boxShadow:
+              "0 8px 24px rgba(0,0,0,0.45), inset 0 1px 0 rgba(255,255,255,0.06)",
+          },
+        }),
+      )}
     >
-      <div className="flex items-start gap-3">
+      <div
+        className={css({
+          display: "flex",
+          alignItems: "flex-start",
+          gap: { base: "3.5", sm: "4" },
+        })}
+      >
         {/* Avatar */}
         {avatar ? (
           <img
@@ -26,41 +51,135 @@ export function PersonalityTile({ personality, accentGradient }: Props) {
             alt={personality.name}
             width={52}
             height={52}
-            className="shrink-0 w-[52px] h-[52px] rounded-full object-cover shadow-[0_0_0_1px_rgba(255,255,255,0.08)] transition-shadow duration-300 group-hover:shadow-[0_0_0_1px_rgba(255,255,255,0.15)]"
+            className={css({
+              flexShrink: 0,
+              w: "52px",
+              h: "52px",
+              rounded: "full",
+              objectFit: "cover",
+              boxShadow: "0 0 0 1px rgba(255,255,255,0.08)",
+              transition: "box-shadow",
+              transitionDuration: "300ms",
+              _groupHover: {
+                boxShadow: "0 0 0 1px rgba(255,255,255,0.15)",
+              },
+            })}
           />
         ) : (
           <div
-            className={`shrink-0 w-[52px] h-[52px] rounded-full flex items-center justify-center text-white font-bold text-sm shadow-[0_0_0_1px_rgba(255,255,255,0.08)] transition-shadow duration-300 group-hover:shadow-[0_0_0_1px_rgba(255,255,255,0.15)] bg-gradient-to-br ${accentGradient}`}
+            className={css({
+              flexShrink: 0,
+              w: "52px",
+              h: "52px",
+              rounded: "full",
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "center",
+              color: "white",
+              fontWeight: "bold",
+              fontSize: "sm",
+              boxShadow: "0 0 0 1px rgba(255,255,255,0.08)",
+              transition: "box-shadow",
+              transitionDuration: "300ms",
+              _groupHover: {
+                boxShadow: "0 0 0 1px rgba(255,255,255,0.15)",
+              },
+            })}
+            style={{ background: accentGradient }}
           >
             {getInitials(personality.name)}
           </div>
         )}
 
         {/* Info */}
-        <div className="min-w-0 flex-1">
-          <h3 className="font-semibold text-[0.9375rem] text-ink-primary leading-tight transition-colors duration-200 group-hover:text-white">
+        <div className={css({ minW: "0", flex: "1" })}>
+          <h3
+            className={css({
+              fontWeight: "semibold",
+              fontSize: "0.9375rem",
+              color: "#E8E8ED",
+              lineHeight: "tight",
+              transition: "colors",
+              transitionDuration: "200ms",
+              _groupHover: { color: "white" },
+            })}
+          >
             {personality.name}
           </h3>
-          <p className="text-sm text-ink-tertiary mt-0.5 font-normal">
+          <p
+            className={css({
+              fontSize: "sm",
+              color: "#A8A8B3",
+              mt: "1",
+              fontWeight: "normal",
+            })}
+          >
             {personality.role} · {personality.org}
           </p>
-          <p className="italic text-sm text-ink-secondary mt-1 line-clamp-2 leading-[1.75] tracking-[0.01em]">
+          <p
+            className={css({
+              fontSize: "sm",
+              color: "#B0B0BC",
+              mt: "2",
+              lineClamp: 2,
+              lineHeight: "1.8",
+              letterSpacing: "0.012em",
+            })}
+          >
             {personality.description}
           </p>
 
           {/* Podcast tags */}
           {personality.podcasts.length > 0 && (
-            <div className="flex flex-wrap gap-1 mt-2">
+            <div
+              className={css({
+                display: "flex",
+                flexWrap: "wrap",
+                gap: "2",
+                mt: "4",
+              })}
+            >
               {personality.podcasts.slice(0, 3).map((pod) => (
                 <span
                   key={pod}
-                  className="inline-flex items-center text-xs px-2.5 py-1 rounded-full bg-[rgba(255,255,255,0.05)] text-ink-tertiary border border-[rgba(255,255,255,0.06)] transition-all duration-200 group-hover:bg-[rgba(255,255,255,0.08)] group-hover:border-[rgba(255,255,255,0.10)] group-hover:text-ink-secondary"
+                  className={css({
+                    display: "inline-flex",
+                    alignItems: "center",
+                    fontSize: "xs",
+                    px: "2.5",
+                    py: "1.5",
+                    rounded: "full",
+                    bg: "rgba(255,255,255,0.07)",
+                    color: "#ADADB8",
+                    borderWidth: "1px",
+                    borderColor: "rgba(255,255,255,0.10)",
+                    transition: "all",
+                    transitionDuration: "200ms",
+                    _groupHover: {
+                      bg: "rgba(255,255,255,0.10)",
+                      borderColor: "rgba(255,255,255,0.14)",
+                      color: "#C4C4CC",
+                    },
+                  })}
                 >
                   {pod}
                 </span>
               ))}
               {personality.podcasts.length > 3 && (
-                <span className="inline-flex items-center text-xs px-2.5 py-1 rounded-full bg-[rgba(255,255,255,0.03)] text-ink-muted border border-[rgba(255,255,255,0.06)]">
+                <span
+                  className={css({
+                    display: "inline-flex",
+                    alignItems: "center",
+                    fontSize: "xs",
+                    px: "2.5",
+                    py: "1",
+                    rounded: "full",
+                    bg: "rgba(255,255,255,0.05)",
+                    color: "#A0A0AB",
+                    borderWidth: "1px",
+                    borderColor: "rgba(255,255,255,0.06)",
+                  })}
+                >
                   +{personality.podcasts.length - 3}
                 </span>
               )}
@@ -70,11 +189,44 @@ export function PersonalityTile({ personality, accentGradient }: Props) {
 
         {/* Play button */}
         {personality.podcasts.length > 0 && (
-          <div className="opacity-0 translate-y-1 transition-all duration-300 absolute bottom-4 right-4 group-hover:opacity-100 group-hover:translate-y-0">
-            <div className="w-10 h-10 rounded-full bg-spotify flex items-center justify-center shadow-[0_8px_16px_rgba(29,185,84,0.25)] transition-transform duration-200 hover:scale-110">
+          <div
+            className={css({
+              opacity: 0,
+              translateY: "0.25rem",
+              transition: "all",
+              transitionDuration: "300ms",
+              pos: "absolute",
+              bottom: { base: "5", sm: "6" },
+              right: { base: "5", sm: "6" },
+              _groupHover: {
+                opacity: 1,
+                translateY: "0",
+              },
+            })}
+          >
+            <div
+              className={css({
+                w: "10",
+                h: "10",
+                rounded: "full",
+                bg: "#1DB954",
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "center",
+                boxShadow: "0 8px 16px rgba(29,185,84,0.25)",
+                transition: "transform",
+                transitionDuration: "200ms",
+                _hover: { transform: "scale(1.1)" },
+              })}
+            >
               <svg
                 viewBox="0 0 16 16"
-                className="w-4 h-4 text-black ml-0.5"
+                className={css({
+                  w: "4",
+                  h: "4",
+                  color: "black",
+                  ml: "0.5",
+                })}
                 fill="currentColor"
               >
                 <path d="M3 1.713a.7.7 0 0 1 1.05-.607l10.89 6.288a.7.7 0 0 1 0 1.212L4.05 14.894A.7.7 0 0 1 3 14.288V1.713z" />

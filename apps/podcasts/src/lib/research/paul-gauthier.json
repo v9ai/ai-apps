@@ -1,0 +1,210 @@
+{
+  "slug": "paul-gauthier",
+  "name": "Paul Gauthier",
+  "generated_at": "2026-03-19T12:00:00+00:00",
+  "bio": "Paul Gauthier is a serial technology entrepreneur, investor, and the creator of Aider, the leading open-source AI pair programming tool for the terminal. Aider has amassed over 42,000 GitHub stars, 5.7 million PyPI installations, and processes 15 billion tokens per week. Gauthier co-founded Inktomi with Eric Brewer in 1996 while at UC Berkeley, building the first commercial search engine based on distributed-memory parallel computation — it went on to power Yahoo, AOL, and other major search engines before being acquired by Yahoo in 2002. He served as CTO at Groupon (after his local search startup Ludic Labs was acquired) and as VP of Engineering at Geomagical Labs, which developed AR-based room visualization technology and was acquired by IKEA in 2021. Gauthier holds a BSc in Computer Science from Dalhousie University (1994) and a master's from the University of Washington, with PhD-level research at UC Berkeley. He was awarded an honorary degree from Dalhousie University at its June 2025 Convocation in recognition of his contributions to technology and society. A native of Cole Harbour, Nova Scotia, he is also a philanthropist who founded the Cole Harbour Foundation supporting children's education and launched the 100 Wild Islands conservation campaign through the Nova Scotia Nature Trust.",
+  "topics": [
+    "AI Pair Programming",
+    "AI-Assisted Code Editing",
+    "LLM Code Benchmarks",
+    "Repository Mapping & Context Management",
+    "Diff-Based Code Generation",
+    "Open Source Developer Tools",
+    "Search Engine Technology",
+    "Computer Vision & AR",
+    "Distributed Systems",
+    "Startup Entrepreneurship"
+  ],
+  "timeline": [
+    {
+      "date": "1994",
+      "event": "Graduated from Dalhousie University with BSc in Computer Science",
+      "url": "https://www.dal.ca/faculty/computerscience/news-events/news/2021/12/14/paul_gauthier__bsc_94__nurtures_ideas_into_ways_to_simplify_everyday_life_.html"
+    },
+    {
+      "date": "1996",
+      "event": "Co-founded Inktomi with Eric Brewer at UC Berkeley, building the first commercial distributed-memory search engine",
+      "url": "https://en.wikipedia.org/wiki/Inktomi"
+    },
+    {
+      "date": "2002",
+      "event": "Inktomi acquired by Yahoo for $235 million",
+      "url": "https://en.wikipedia.org/wiki/Inktomi"
+    },
+    {
+      "date": "2012",
+      "event": "Served as CTO at Groupon after Ludic Labs acquisition",
+      "url": "https://www.crunchbase.com/person/paul-gauthier"
+    },
+    {
+      "date": "2021-07",
+      "event": "Geomagical Labs (where Gauthier was VP of Engineering) acquired by IKEA for AR room visualization technology",
+      "url": "https://www.geomagical.com/about.html"
+    },
+    {
+      "date": "2023-05",
+      "event": "Launched Aider, an AI pair programming tool for the terminal using GPT-4",
+      "url": "https://github.com/Aider-AI/aider"
+    },
+    {
+      "date": "2023-07-02",
+      "event": "Published initial GPT code editing benchmarks for Aider",
+      "url": "https://aider.chat/blog/"
+    },
+    {
+      "date": "2023-10-22",
+      "event": "Introduced tree-sitter-based repository mapping for better codebase understanding",
+      "url": "https://aider.chat/blog/"
+    },
+    {
+      "date": "2024-05-02",
+      "event": "Launched Aider browser UI for web-based AI pair programming",
+      "url": "https://aider.chat/blog/"
+    },
+    {
+      "date": "2024-06-02",
+      "event": "Aider achieved state-of-the-art on both SWE-Bench and SWE-Bench Lite",
+      "url": "https://aider.chat/blog/"
+    },
+    {
+      "date": "2024-09-26",
+      "event": "Introduced Architect/Editor dual-model approach separating code reasoning from editing",
+      "url": "https://aider.chat/blog/"
+    },
+    {
+      "date": "2024-12-21",
+      "event": "Launched polyglot leaderboard benchmarking 225 Exercism exercises across 6 languages",
+      "url": "https://aider.chat/docs/leaderboards/"
+    },
+    {
+      "date": "2025-01",
+      "event": "DeepSeek R1 + Sonnet achieved new SOTA on Aider polyglot benchmark at lower cost",
+      "url": "https://aider.chat/blog/"
+    },
+    {
+      "date": "2025-06-18",
+      "event": "Awarded honorary degree from Dalhousie University for contributions to technology and society",
+      "url": "https://www.dal.ca/alumni/news-and-spotlights/alumni-news/paul-gauthier-entrepreneur-digital-thought-leader-environmental-champion-honorary-degree.html"
+    },
+    {
+      "date": "2025-08-09",
+      "event": "Released Aider v0.86.0; Aider had written 92% of its own code",
+      "url": "https://github.com/Aider-AI/aider/releases"
+    },
+    {
+      "date": "2026-03",
+      "event": "Aider surpassed 42,000 GitHub stars and 5.7 million PyPI installations",
+      "url": "https://aider.chat/"
+    }
+  ],
+  "key_contributions": [
+    {
+      "title": "Aider",
+      "description": "Open-source AI pair programming tool for the terminal with 42,000+ GitHub stars. Pioneered repository mapping, diff-based editing, and the Architect/Editor dual-model approach for LLM-assisted coding. Processes 15 billion tokens weekly and 88% of its own new code was written by itself.",
+      "url": "https://github.com/Aider-AI/aider"
+    },
+    {
+      "title": "Aider Polyglot Coding Benchmark",
+      "description": "Widely-cited LLM code editing benchmark suite testing 225 Exercism exercises across C++, Go, Java, JavaScript, Python, and Rust. Used industry-wide to evaluate and compare LLM coding capabilities.",
+      "url": "https://aider.chat/docs/leaderboards/"
+    },
+    {
+      "title": "Inktomi Search Engine",
+      "description": "Co-founded with Eric Brewer in 1996. Built the first commercial search engine based on distributed-memory parallel computation, powering Yahoo, AOL, and other major portals. Acquired by Yahoo in 2002.",
+      "url": "https://en.wikipedia.org/wiki/Inktomi"
+    },
+    {
+      "title": "Geomagical Labs AR Technology",
+      "description": "As VP of Engineering, developed computer vision technology enabling smartphone users to build and decorate 3D augmented reality versions of their homes. Acquired by IKEA in 2021.",
+      "url": "https://www.geomagical.com/about.html"
+    },
+    {
+      "title": "Tree-Sitter Repository Mapping",
+      "description": "Developed a novel approach using tree-sitter AST parsing to create concise repository maps, giving LLMs better understanding of large codebases for more accurate code edits.",
+      "url": "https://aider.chat/blog/"
+    },
+    {
+      "title": "Architect/Editor Dual-Model Pattern",
+      "description": "Pioneered separating code reasoning (architect) from code editing (editor) using two models in tandem, enabling reasoning models like o1 and DeepSeek R1 to direct faster editing models.",
+      "url": "https://aider.chat/blog/"
+    },
+    {
+      "title": "Cole Harbour Foundation",
+      "description": "Founded philanthropic organization supporting children's education from birth through post-secondary in Cole Harbour, Nova Scotia.",
+      "url": "https://www.dal.ca/alumni/news-and-spotlights/alumni-news/paul-gauthier-entrepreneur-digital-thought-leader-environmental-champion-honorary-degree.html"
+    }
+  ],
+  "quotes": [
+    {
+      "text": "Very large context windows aren't useful in practice. Every model seems to get confused when you feed them more than ~25-30k tokens.",
+      "source": "Paul Gauthier, cited by Simon Willison, Jan 2025",
+      "url": "https://simonwillison.net/2025/Jan/26/paul-gauthier/"
+    },
+    {
+      "text": "Aider is designed for developers who live in the terminal. It's fast, precise, and gets out of your way while still providing powerful AI assistance.",
+      "source": "Paul Gauthier on Aider",
+      "url": "https://aider.chat/"
+    },
+    {
+      "text": "I'm an entrepreneur, investor and advisor whose passion is consumer internet products. I like figuring out and looking out for new capabilities, then gathering up a good group of people and having some luck while working hard.",
+      "source": "Dalhousie University alumni profile",
+      "url": "https://www.dal.ca/faculty/computerscience/news-events/news/2021/12/14/paul_gauthier__bsc_94__nurtures_ideas_into_ways_to_simplify_everyday_life_.html"
+    }
+  ],
+  "social": {
+    "github": "https://github.com/paul-gauthier",
+    "twitter": "https://x.com/paulgauthier",
+    "linkedin": "https://www.linkedin.com/in/paulgauthier/",
+    "website": "https://aider.chat/"
+  },
+  "sources": [
+    {
+      "title": "paul-gauthier on GitHub (16 repos, 1.5k followers)",
+      "url": "https://github.com/paul-gauthier"
+    },
+    {
+      "title": "Aider-AI/aider on GitHub (42k+ stars)",
+      "url": "https://github.com/Aider-AI/aider"
+    },
+    {
+      "title": "Aider: AI Pair Programming in Your Terminal",
+      "url": "https://aider.chat/"
+    },
+    {
+      "title": "Aider Blog: Development History and Benchmarks",
+      "url": "https://aider.chat/blog/"
+    },
+    {
+      "title": "Aider LLM Leaderboards",
+      "url": "https://aider.chat/docs/leaderboards/"
+    },
+    {
+      "title": "Paul Gauthier (BSC'94) nurtures ideas - Dalhousie University",
+      "url": "https://www.dal.ca/faculty/computerscience/news-events/news/2021/12/14/paul_gauthier__bsc_94__nurtures_ideas_into_ways_to_simplify_everyday_life_.html"
+    },
+    {
+      "title": "Paul Gauthier awarded honorary Dalhousie degree (Jun 2025)",
+      "url": "https://www.dal.ca/alumni/news-and-spotlights/alumni-news/paul-gauthier-entrepreneur-digital-thought-leader-environmental-champion-honorary-degree.html"
+    },
+    {
+      "title": "Paul Gauthier - Crunchbase Person Profile",
+      "url": "https://www.crunchbase.com/person/paul-gauthier"
+    },
+    {
+      "title": "Aider on Grokipedia",
+      "url": "https://grokipedia.com/page/Aider"
+    },
+    {
+      "title": "Paul Gauthier context windows quote - Simon Willison",
+      "url": "https://simonwillison.net/2025/Jan/26/paul-gauthier/"
+    },
+    {
+      "title": "Inktomi - Wikipedia",
+      "url": "https://en.wikipedia.org/wiki/Inktomi"
+    },
+    {
+      "title": "Paul Gauthier - Aider AI | LinkedIn",
+      "url": "https://www.linkedin.com/in/paulgauthier/"
+    }
+  ]
+}

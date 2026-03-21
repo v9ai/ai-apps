@@ -405,8 +405,11 @@ This session MUST integrate LEGO building as a hands-on therapeutic activity. Th
                 f"but always speak directly to {self.person_name} alone."
             )
 
+        min_words = int(target_words * 0.9)
         return f"""\
 Create a therapeutic audio session for the following feedback. Write the full script in {self.language}, approximately {self.minutes} minutes long when read aloud at a calm pace of about 120 words per minute.
+
+WORD COUNT REQUIREMENT (NON-NEGOTIABLE): You MUST write at least {min_words} words (target: {target_words} words). Do NOT wrap up or end the session until you have written at least {min_words} words. If you feel the session is complete before reaching {min_words} words, keep going — add more guided exercises, deeper explorations of the techniques, longer pauses with narration, or additional metaphors. The session is incomplete until the word count is reached.
 
 CRITICAL: This script will be read aloud by a text-to-speech engine. Write ONLY plain spoken prose. Absolutely NO markdown formatting — no **, ##, *, -, bullet points, numbered lists, headers, bold, or italic syntax. No section labels. Just natural flowing speech.
 
@@ -525,8 +528,11 @@ These rules are non-negotiable. Every sentence must pass the "read it aloud" tes
 7. Pacing variation — alternate between instruction, story, and silence. Never give more than two instructions in a row without an ellipsis pause or encouragement.
 8. Breath cues — when guiding breathing exercises, write the timing explicitly: "Breathe in... two... three... four... And slowly breathe out... two... three... four... five..."
 
-## CRITICAL: Duration Requirement
-This session MUST be {minutes} minutes long when read aloud at 120 words per minute. That means you MUST write approximately {target_words} words. This is a hard requirement — do NOT write less.
+## CRITICAL: Duration Requirement — DO NOT END EARLY
+This session MUST be {minutes} minutes long when read aloud at 120 words per minute.
+You MUST write at least {int(target_words * 0.9)} words (target: {target_words} words).
+Do NOT write a closing/wrap-up until you have written at least {int(target_words * 0.9)} words.
+If the content feels complete before reaching the word count, expand the Guided Practices section with additional exercises, deeper technique walkthroughs, longer narrated pauses, or a second metaphor. Keep going until the minimum is met.
 
 ## Content Structure (scaled to {minutes} minutes)
 Create therapeutic audio content with these spoken sections (do NOT label them — just flow naturally):

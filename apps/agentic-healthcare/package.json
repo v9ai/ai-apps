@@ -2,7 +2,7 @@
   "name": "agentic-healthcare",
   "private": true,
   "scripts": {
-    "dev": "next dev -p 3003",
+    "dev": "next dev -p 3001",
     "build": "next build",
     "start": "next start",
     "db:push": "drizzle-kit push",

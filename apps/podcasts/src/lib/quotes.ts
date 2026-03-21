@@ -45,4 +45,28 @@ export const quotes: Record<string, string> = {
     "Every piece of data has meaning. Vector databases help machines understand it.",
   "athos-georgiou":
     "The gap between research and reality is where the most interesting AI work happens.",
+  "andre-zayarni":
+    "Vector search is the bridge between human language and machine understanding.",
+  "vasilije-markovic":
+    "The future of search is understanding context, not just matching keywords.",
+  "shay-banon":
+    "Search is the fundamental way humans interact with data at scale.",
+  "andrew-kane":
+    "Sometimes the best solution is the one that works with what you already have.",
+  "swami-sivasubramanian":
+    "AI is not about replacing humans — it's about augmenting human capabilities at cloud scale.",
+  "woosuk-kwon":
+    "Efficient inference is the bottleneck that stands between AI research and AI reality.",
+  "jeffrey-morgan":
+    "Running models locally isn't just about privacy — it's about putting AI in everyone's hands.",
+  "alex-atallah":
+    "The best developer tools disappear into the workflow — they just make you faster.",
+  "yagil-burowski":
+    "Code completion was just the beginning. AI will transform every part of how we build software.",
+  "krrish-dholakia":
+    "The future is model-agnostic. The best apps will seamlessly use whatever model is best for each task.",
+  "rohit-agarwal":
+    "Reliability in AI isn't optional — it's the difference between a demo and a product.",
+  "andrej-karpathy":
+    "The hottest new programming language is English.",
 };

@@ -1,0 +1,236 @@
+{
+  "slug": "nicholas-carlini",
+  "name": "Nicholas Carlini",
+  "generated_at": "2026-03-19T12:00:00+00:00",
+  "bio": "Nicholas Carlini is a Research Scientist at Anthropic (since March 2025), previously at Google DeepMind (2023-2025) and Google Brain (2018-2023). He holds a Ph.D. and B.A. in Computer Science and Mathematics from UC Berkeley (advisor: David Wagner). His research sits at the intersection of machine learning and computer security, focusing on adversarial robustness, training-data extraction, membership inference, model stealing, and LLM safety. His papers have received best paper awards at IEEE S&P (1), USENIX Security (2), and ICML (3), and have been covered by the New York Times, BBC, Nature, Science, Wired, and Popular Science. In February 2026 he led the landmark experiment where 16 parallel Claude agents autonomously built a 100,000-line Rust-based C compiler capable of compiling the Linux kernel. On GitHub (carlini, 1.9k followers, 42 public repos) his projects range from foundational adversarial-ML tooling (nn_robust_attacks, obfuscated-gradients) to creative hacks (printf-tac-toe, regex-chess) and LLM evaluation (yet-another-applied-llm-benchmark).",
+  "topics": [
+    "Adversarial Machine Learning",
+    "LLM Security & Safety",
+    "Training Data Extraction & Privacy",
+    "Membership Inference Attacks",
+    "Model Stealing & Extraction",
+    "Neural Network Robustness",
+    "Data Poisoning Attacks",
+    "AI Alignment & Responsible AI",
+    "Multi-Agent Software Engineering",
+    "Creative Programming & Code Golf"
+  ],
+  "timeline": [
+    {
+      "date": "2026-02-05",
+      "event": "Published Anthropic engineering blog post: 16 Claude agents built a 100K-line Rust-based C compiler that compiles Linux 6.9 on x86/ARM/RISC-V, costing ~$20K over ~2,000 sessions",
+      "url": "https://www.anthropic.com/engineering/building-c-compiler"
+    },
+    {
+      "date": "2026",
+      "event": "Published blog post 'How to win a best paper award' -- reflections on a decade of impactful research",
+      "url": "https://nicholas.carlini.com/writing"
+    },
+    {
+      "date": "2025-03",
+      "event": "Career update: left Google DeepMind after seven years, joined Anthropic to work on safety and security research",
+      "url": "https://nicholas.carlini.com/writing/2025/career-update.html"
+    },
+    {
+      "date": "2025",
+      "event": "Keynote at CoLM: 'Are Large Language Models Worth It?' -- comprehensive cost-benefit analysis of LLM risks and benefits",
+      "url": "https://nicholas.carlini.com/writing/2025/are-llms-worth-it.html"
+    },
+    {
+      "date": "2025",
+      "event": "Published 'Machines of Ruthless Efficiency' -- essay on near-term AI harms including surveillance, phishing, and job displacement",
+      "url": "https://nicholas.carlini.com/writing/2025/machines-of-ruthless-efficiency.html"
+    },
+    {
+      "date": "2025-01",
+      "event": "Appeared on Machine Learning Street Talk (MLST) discussing AI security, emergent LLM capabilities, and model-stealing research",
+      "url": "https://open.spotify.com/episode/6hpiK9c7uglUNH3N0LQCO4"
+    },
+    {
+      "date": "2025-01",
+      "event": "Appeared on 'Security, Cryptography, Whatever' podcast discussing differential cryptanalysis on LLMs",
+      "url": "https://securitycryptographywhatever.com/2025/01/28/cryptanalyzing-llms-with-nicholas-carlini/"
+    },
+    {
+      "date": "2024",
+      "event": "Best Paper at ICML 2024 for 'Stealing Part of a Production Language Model' -- extracted embedding layers from ChatGPT for under $20",
+      "url": "https://arxiv.org/abs/2403.06634"
+    },
+    {
+      "date": "2023",
+      "event": "Published 'Scalable Extraction of Training Data from (Production) Language Models' showing adversaries can extract gigabytes of training data from open and closed models",
+      "url": "https://arxiv.org/abs/2311.17035"
+    },
+    {
+      "date": "2023",
+      "event": "Published 'Quantifying Memorization Across Neural Language Models' at ICLR 2023 establishing log-linear memorization relationships",
+      "url": "https://arxiv.org/abs/2202.07646"
+    },
+    {
+      "date": "2022",
+      "event": "Published 'Deduplicating Training Data Makes Language Models Better' at ACL 2022 showing near-duplicate removal reduces verbatim memorization by 10x",
+      "url": "https://arxiv.org/abs/2107.06499"
+    },
+    {
+      "date": "2022",
+      "event": "Published 'Membership Inference Attacks From First Principles' at IEEE S&P 2022 introducing the LiRA attack (10x more powerful at low FPR)",
+      "url": "https://arxiv.org/abs/2112.03570"
+    },
+    {
+      "date": "2021",
+      "event": "Published 'Extracting Training Data from Large Language Models' at USENIX Security 2021 -- landmark paper extracting verbatim PII from GPT-2",
+      "url": "https://arxiv.org/abs/2012.07805"
+    },
+    {
+      "date": "2021",
+      "event": "Distinguished Paper at USENIX Security 2021 for 'Poisoning the Unlabeled Dataset of Semi-Supervised Learning'",
+      "url": "https://arxiv.org/abs/2105.01622"
+    },
+    {
+      "date": "2020",
+      "event": "Published 'Cryptanalytic Extraction of Neural Network Models' at CRYPTO 2020 -- novel cryptanalytic approach requiring 100x fewer queries",
+      "url": "https://arxiv.org/abs/2003.04884"
+    },
+    {
+      "date": "2018",
+      "event": "Best Paper at ICML 2018 for 'Obfuscated Gradients Give a False Sense of Security' -- landmark work identifying gradient masking pitfalls in adversarial defenses",
+      "url": "https://arxiv.org/abs/1802.00420"
+    },
+    {
+      "date": "2017",
+      "event": "Best Student Paper at IEEE S&P 2017 for 'Towards Evaluating the Robustness of Neural Networks' -- foundational C&W attack methodology",
+      "url": "https://arxiv.org/abs/1608.04644"
+    }
+  ],
+  "key_contributions": [
+    {
+      "title": "Carlini & Wagner (C&W) Attack",
+      "description": "Foundational adversarial robustness evaluation methodology for neural networks. The C&W attack became the standard benchmark for evaluating adversarial defenses. Best Student Paper at IEEE S&P 2017.",
+      "url": "https://arxiv.org/abs/1608.04644"
+    },
+    {
+      "title": "Obfuscated Gradients",
+      "description": "Landmark ICML 2018 Best Paper showing that most adversarial example defenses at ICLR 2018 relied on gradient masking and could be circumvented. 909 stars on GitHub.",
+      "url": "https://github.com/carlini/obfuscated-gradients"
+    },
+    {
+      "title": "Training Data Extraction from LLMs",
+      "description": "Series of papers demonstrating that language models leak individual training examples, including PII. Showed adversaries can extract gigabytes of training data from production models like GPT-2 and ChatGPT.",
+      "url": "https://arxiv.org/abs/2012.07805"
+    },
+    {
+      "title": "Stealing Part of a Production Language Model",
+      "description": "ICML 2024 Best Paper demonstrating model-stealing attacks on production LLMs, recovering embedding layers from ChatGPT for under $20.",
+      "url": "https://arxiv.org/abs/2403.06634"
+    },
+    {
+      "title": "16 Claude Agents C Compiler",
+      "description": "Led experiment where 16 parallel Claude agents autonomously wrote a 100,000-line Rust-based C compiler capable of compiling Linux 6.9, achieving 99% pass rate on GCC torture tests. Cost ~$20K over ~2,000 sessions.",
+      "url": "https://www.anthropic.com/engineering/building-c-compiler"
+    },
+    {
+      "title": "yet-another-applied-llm-benchmark",
+      "description": "Evaluation benchmark for language models on practical problem-solving tasks Carlini has previously encountered. 1,049 stars on GitHub.",
+      "url": "https://github.com/carlini/yet-another-applied-llm-benchmark"
+    },
+    {
+      "title": "deduplicate-text-datasets",
+      "description": "Rust tool for text dataset deduplication, supporting the ACL 2022 paper showing near-duplicate removal reduces memorization by 10x. 1,300 stars (archived).",
+      "url": "https://github.com/carlini/deduplicate-text-datasets"
+    },
+    {
+      "title": "nn_robust_attacks",
+      "description": "Reference implementation of robust evasion attacks against neural networks for finding adversarial examples. 860 stars on GitHub.",
+      "url": "https://github.com/carlini/nn_robust_attacks"
+    }
+  ],
+  "quotes": [
+    {
+      "text": "The science of security and flaws in machine learning should be open by default.",
+      "source": "Career Update: Google DeepMind -> Anthropic",
+      "url": "https://nicholas.carlini.com/writing/2025/career-update.html"
+    },
+    {
+      "text": "Ensuring that the benefits of LLMs outweigh the risks is literally your job.",
+      "source": "Are Large Language Models Worth It? (CoLM keynote)",
+      "url": "https://nicholas.carlini.com/writing/2025/are-llms-worth-it.html"
+    },
+    {
+      "text": "It's worth being really careful and honest with yourself about whether or not what you're doing is actually net positive.",
+      "source": "Are Large Language Models Worth It? (CoLM keynote)",
+      "url": "https://nicholas.carlini.com/writing/2025/are-llms-worth-it.html"
+    },
+    {
+      "text": "The LLMs that we're developing are already sufficiently advanced that we probably would have called them science fiction just five or ten years ago.",
+      "source": "Are Large Language Models Worth It? (CoLM keynote)",
+      "url": "https://nicholas.carlini.com/writing/2025/are-llms-worth-it.html"
+    },
+    {
+      "text": "We are building new AI systems because they are ruthlessly efficient, and this efficiency directly enables harms previously constrained by human limitations.",
+      "source": "Machines of Ruthless Efficiency",
+      "url": "https://nicholas.carlini.com/writing/2025/machines-of-ruthless-efficiency.html"
+    },
+    {
+      "text": "Agent teams show the possibility of implementing entire, complex projects autonomously.",
+      "source": "Building a C Compiler with a Team of Parallel Claudes (Anthropic Engineering)",
+      "url": "https://www.anthropic.com/engineering/building-c-compiler"
+    }
+  ],
+  "social": {
+    "github": "https://github.com/carlini",
+    "website": "https://nicholas.carlini.com",
+    "scholar": "https://scholar.google.com/citations?user=q4qDvAoAAAAJ",
+    "blog": "https://nicholas.carlini.com/writing",
+    "email": "nicholas@carlini.com"
+  },
+  "sources": [
+    {
+      "title": "Nicholas Carlini - Personal Website",
+      "url": "https://nicholas.carlini.com/"
+    },
+    {
+      "title": "carlini (Nicholas Carlini) on GitHub (42 repos, 1.9k followers)",
+      "url": "https://github.com/carlini"
+    },
+    {
+      "title": "Nicholas Carlini on Google Scholar",
+      "url": "https://scholar.google.com/citations?user=q4qDvAoAAAAJ"
+    },
+    {
+      "title": "Career Update: Google DeepMind -> Anthropic (March 2025)",
+      "url": "https://nicholas.carlini.com/writing/2025/career-update.html"
+    },
+    {
+      "title": "Are Large Language Models Worth It? (CoLM keynote, 2025)",
+      "url": "https://nicholas.carlini.com/writing/2025/are-llms-worth-it.html"
+    },
+    {
+      "title": "Machines of Ruthless Efficiency (2025 essay)",
+      "url": "https://nicholas.carlini.com/writing/2025/machines-of-ruthless-efficiency.html"
+    },
+    {
+      "title": "Building a C Compiler with a Team of Parallel Claudes (Anthropic, Feb 2026)",
+      "url": "https://www.anthropic.com/engineering/building-c-compiler"
+    },
+    {
+      "title": "Papers by Nicholas Carlini",
+      "url": "https://nicholas.carlini.com/papers"
+    },
+    {
+      "title": "MLST Podcast: Nicholas Carlini (Google DeepMind) - Jan 2025",
+      "url": "https://open.spotify.com/episode/6hpiK9c7uglUNH3N0LQCO4"
+    },
+    {
+      "title": "Security, Cryptography, Whatever: Cryptanalyzing LLMs with Nicholas Carlini",
+      "url": "https://securitycryptographywhatever.com/2025/01/28/cryptanalyzing-llms-with-nicholas-carlini/"
+    },
+    {
+      "title": "Nicholas Carlini on dblp (full publication list)",
+      "url": "https://dblp.org/pid/145/1806.html"
+    },
+    {
+      "title": "Future of Life Institute: Defeating AI Defenses with Nicholas Carlini",
+      "url": "https://futureoflife.org/podcast/special-defeating-ai-defenses-with-nicholas-carlini-and-nathan-labenz/"
+    }
+  ]
+}

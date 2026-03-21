@@ -1,0 +1,237 @@
+{
+  "slug": "sean-owen",
+  "name": "Sean Owen",
+  "generated_at": "2026-03-19T12:00:00+00:00",
+  "bio": "Sean Owen is a veteran open-source engineer and applied researcher currently working in Mosaic Applied Research at Databricks. He is an Apache Spark PMC member and long-time committer with deep contributions to Spark's MLlib machine-learning library. Before Databricks he was Director of Data Science (EMEA) at Cloudera, where he arrived via the acqui-hire of his startup Myrrix Ltd, which commercialized real-time recommender systems on Hadoop. Earlier in his career he was a senior engineer at Google, where he helped build and launch Mobile Web search and created ZXing ('Zebra Crossing'), the ubiquitous open-source barcode scanning library for Java and Android (33.9k stars). Owen also served as VP and primary committer of Apache Mahout, authoring its Taste recommender framework. He co-authored two O'Reilly books -- 'Advanced Analytics with Spark' and 'Mahout in Action' -- and co-authored the MLlib paper in JMLR. He holds a BA in Computer Science from Harvard University and an MBA from London Business School, where he was selected as a Kauffman Fellow. He received the 2022 ACM SIGMOD Systems Award as part of the Apache Spark community.",
+  "topics": [
+    "Apache Spark",
+    "MLlib / Distributed Machine Learning",
+    "Recommender Systems",
+    "Apache Mahout",
+    "Barcode Recognition (ZXing)",
+    "Lambda Architecture",
+    "Real-Time Streaming Analytics",
+    "AutoML on Databricks",
+    "Big Data Engineering",
+    "Open-Source Software"
+  ],
+  "timeline": [
+    {
+      "date": "1996",
+      "event": "Enrolled at Harvard University to study Computer Science (BA)",
+      "url": "https://datasciencefestival.com/speaker/sean-owen/"
+    },
+    {
+      "date": "2000",
+      "event": "Joined Google as a software engineer; helped build and launch Mobile Web search",
+      "url": "https://www.oreilly.com/people/sean-owen/"
+    },
+    {
+      "date": "2008",
+      "event": "Created ZXing ('Zebra Crossing'), an open-source barcode scanning library for Java and Android that now has 33.9k GitHub stars",
+      "url": "https://github.com/zxing/zxing"
+    },
+    {
+      "date": "2008",
+      "event": "Started MBA at London Business School (graduated 2010); selected as a Kauffman Fellow",
+      "url": "https://www.london.edu/news/sean-owen-and-christian-carrillo-offered-prestigious-kauffman-fellowship"
+    },
+    {
+      "date": "2009",
+      "event": "Became a primary committer and VP of Apache Mahout; authored the Taste recommender framework",
+      "url": "https://www.oreilly.com/people/sean-owen/"
+    },
+    {
+      "date": "2012",
+      "event": "Published 'Mahout in Action' (Manning) with Robin Anil, Ted Dunning, and Ellen Friedman",
+      "url": "https://www.amazon.com/Mahout-Action-Sean-Owen/dp/1935182684"
+    },
+    {
+      "date": "2012",
+      "event": "Founded Myrrix Ltd to commercialize real-time recommender systems on Apache Hadoop",
+      "url": "https://www.bigdatawire.com/2013/07/17/cloudera_snaps_up_mahout_distro_myrrix/"
+    },
+    {
+      "date": "2013",
+      "event": "Myrrix acqui-hired by Cloudera; became Director of Data Science (EMEA), based in London",
+      "url": "https://www.bigdatawire.com/2013/07/17/cloudera_snaps_up_mahout_distro_myrrix/"
+    },
+    {
+      "date": "2014",
+      "event": "Launched Oryx project -- lambda architecture on Apache Spark and Kafka for real-time large-scale machine learning (1.8k stars, now archived)",
+      "url": "https://github.com/OryxProject/oryx"
+    },
+    {
+      "date": "2015-05-26",
+      "event": "Co-authored 'MLlib: Machine Learning in Apache Spark' paper (JMLR) with Xiangrui Meng, Matei Zaharia et al.",
+      "url": "https://arxiv.org/abs/1505.06807"
+    },
+    {
+      "date": "2015",
+      "event": "Published 'Advanced Analytics with Spark' (O'Reilly) with Sandy Ryza, Uri Laserson, and Josh Wills",
+      "url": "https://www.amazon.com/Advanced-Analytics-Spark-Patterns-Learning/dp/1491912766"
+    },
+    {
+      "date": "2018",
+      "event": "Joined Databricks as Principal Product Specialist for Data Science and Machine Learning",
+      "url": "https://github.com/srowen"
+    },
+    {
+      "date": "2022-06",
+      "event": "Received the 2022 ACM SIGMOD Systems Award as part of the Apache Spark community",
+      "url": "https://sigmod.org/2022-sigmod-systems-award/"
+    },
+    {
+      "date": "2022",
+      "event": "Published 'Advanced Analytics with PySpark' (O'Reilly, 2nd edition) adding Akash Tandon as co-author",
+      "url": "https://www.amazon.com/Advanced-Analytics-PySpark-Patterns-Learning/dp/1098103653"
+    },
+    {
+      "date": "2024-01",
+      "event": "Recent Apache Spark commit: corrected DateTimeFormat.withZone usage in UIUtils (SPARK-46611)",
+      "url": "https://github.com/apache/spark/commits?author=srowen"
+    },
+    {
+      "date": "2024-06",
+      "event": "Speaker at Databricks Data + AI Summit 2024",
+      "url": "https://www.databricks.com/dataaisummit/speaker/sean-owen/"
+    },
+    {
+      "date": "2025",
+      "event": "Transitioned to Applied Research at Mosaic (Databricks), focusing on foundation model research",
+      "url": "https://github.com/srowen"
+    }
+  ],
+  "key_contributions": [
+    {
+      "title": "ZXing (Zebra Crossing)",
+      "description": "Open-source multi-format 1D/2D barcode image processing library for Java and Android. Primary author. 33.9k GitHub stars.",
+      "url": "https://github.com/zxing/zxing"
+    },
+    {
+      "title": "Apache Spark MLlib",
+      "description": "Long-time committer and PMC member of Apache Spark with deep contributions to MLlib, Spark's distributed machine learning library.",
+      "url": "https://spark.apache.org/"
+    },
+    {
+      "title": "Apache Mahout -- Taste Recommender Framework",
+      "description": "VP and primary committer of Apache Mahout. Authored the Taste collaborative-filtering recommender framework.",
+      "url": "https://mahout.apache.org/"
+    },
+    {
+      "title": "Oryx Project",
+      "description": "Lambda architecture on Apache Spark and Apache Kafka for real-time large-scale machine learning. 1.8k stars (archived).",
+      "url": "https://github.com/OryxProject/oryx"
+    },
+    {
+      "title": "Advanced Analytics with Spark / PySpark (O'Reilly)",
+      "description": "Co-authored the definitive O'Reilly book on practical large-scale analytics with Spark, covering classification, clustering, collaborative filtering, anomaly detection, genomics, and more.",
+      "url": "https://www.oreilly.com/library/view/advanced-analytics-with/9781098103644/"
+    },
+    {
+      "title": "Mahout in Action (Manning)",
+      "description": "Co-authored with Robin Anil, Ted Dunning, and Ellen Friedman. Practical guide to Apache Mahout's machine learning algorithms.",
+      "url": "https://www.amazon.com/Mahout-Action-Sean-Owen/dp/1935182684"
+    },
+    {
+      "title": "MLlib: Machine Learning in Apache Spark (JMLR Paper)",
+      "description": "Co-authored the foundational JMLR paper describing MLlib's design, algorithms, and distributed optimization foundations.",
+      "url": "https://arxiv.org/abs/1505.06807"
+    },
+    {
+      "title": "Myrrix Ltd",
+      "description": "Founded startup commercializing real-time recommender systems on Hadoop. Acqui-hired by Cloudera in 2013 and evolved into the open-source Oryx project.",
+      "url": "https://www.bigdatawire.com/2013/07/17/cloudera_snaps_up_mahout_distro_myrrix/"
+    }
+  ],
+  "quotes": [
+    {
+      "text": "Big data was a name for this phenomenon. We suddenly went from a data scarce world to one where you could collect as much data as you cared to.",
+      "source": "All Things Data Podcast (University of St. Thomas)",
+      "url": "https://news.stthomas.edu/podcast-all-things-data-with-guest-sean-owen/"
+    },
+    {
+      "text": "Data is one of the remaining differentiators in this new era of big data and data analytics.",
+      "source": "All Things Data Podcast (University of St. Thomas)",
+      "url": "https://news.stthomas.edu/podcast-all-things-data-with-guest-sean-owen/"
+    },
+    {
+      "text": "Applied research @ Mosaic @ Databricks. Formerly Principal DS/ML Specialist @ Databricks. Apache Spark PMC / committer. Primary author, zxing and Oryx project.",
+      "source": "GitHub profile bio",
+      "url": "https://github.com/srowen"
+    }
+  ],
+  "social": {
+    "github": "https://github.com/srowen",
+    "linkedin": "https://www.linkedin.com/in/srowen/",
+    "medium": "https://medium.com/@srowen",
+    "google_scholar": "https://scholar.google.com/citations?user=P0a4jhUAAAAJ",
+    "email": "sean.owen@databricks.com"
+  },
+  "sources": [
+    {
+      "title": "srowen (Sean Owen) -- GitHub Profile",
+      "url": "https://github.com/srowen"
+    },
+    {
+      "title": "Sean Owen -- LinkedIn",
+      "url": "https://www.linkedin.com/in/srowen/"
+    },
+    {
+      "title": "Sean Owen -- O'Reilly Author Page",
+      "url": "https://www.oreilly.com/people/sean-owen/"
+    },
+    {
+      "title": "Sean Owen -- Data Science Festival Speaker Bio",
+      "url": "https://datasciencefestival.com/speaker/sean-owen/"
+    },
+    {
+      "title": "Sean Owen -- QCon London 2014 Speaker Page",
+      "url": "https://qconlondon.com/london-2014/london-2014/speaker/Sean+Owen.html"
+    },
+    {
+      "title": "ZXing Barcode Scanning Library (33.9k stars)",
+      "url": "https://github.com/zxing/zxing"
+    },
+    {
+      "title": "Oryx Project -- Lambda Architecture on Spark + Kafka",
+      "url": "https://github.com/OryxProject/oryx"
+    },
+    {
+      "title": "MLlib: Machine Learning in Apache Spark (arXiv / JMLR)",
+      "url": "https://arxiv.org/abs/1505.06807"
+    },
+    {
+      "title": "2022 SIGMOD Systems Award for Apache Spark",
+      "url": "https://sigmod.org/2022-sigmod-systems-award/"
+    },
+    {
+      "title": "Cloudera Acqui-hires Myrrix (BigDataWire)",
+      "url": "https://www.bigdatawire.com/2013/07/17/cloudera_snaps_up_mahout_distro_myrrix/"
+    },
+    {
+      "title": "Advanced Analytics with PySpark (O'Reilly)",
+      "url": "https://www.oreilly.com/library/view/advanced-analytics-with/9781098103644/"
+    },
+    {
+      "title": "Mahout in Action (Manning / Amazon)",
+      "url": "https://www.amazon.com/Mahout-Action-Sean-Owen/dp/1935182684"
+    },
+    {
+      "title": "GreyBeards Podcast #123 with Sean Owen",
+      "url": "https://greybeardsonstorage.com/2021/09/14/123-greybeards-talk-data-analytics-with-sean-owen-apache-spark-committee-pmc-member-databricks-lead-data-scientist/"
+    },
+    {
+      "title": "All Things Data Podcast -- Sean Owen of Cloudera",
+      "url": "https://news.stthomas.edu/podcast-all-things-data-with-guest-sean-owen/"
+    },
+    {
+      "title": "Kauffman Fellowship -- Owen and Carrillo (London Business School)",
+      "url": "https://www.london.edu/news/sean-owen-and-christian-carrillo-offered-prestigious-kauffman-fellowship"
+    },
+    {
+      "title": "Sean Owen -- Databricks Data + AI Summit 2024",
+      "url": "https://www.databricks.com/dataaisummit/speaker/sean-owen/"
+    }
+  ]
+}

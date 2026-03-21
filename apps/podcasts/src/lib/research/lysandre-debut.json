@@ -1,0 +1,154 @@
+{
+  "slug": "lysandre-debut",
+  "name": "Lysandre Debut",
+  "generated_at": "2026-03-19",
+  "bio": "Lysandre Debut is the Chief Open Source Officer at Hugging Face and a core maintainer of the Transformers library, the most widely used framework for state-of-the-art machine learning models in text, vision, audio, and multimodal domains. He co-authored the seminal paper \"Transformers: State-of-the-Art Natural Language Processing\" presented at EMNLP 2020, and was the first engineer at Hugging Face to focus entirely on the open-source mission. Educated at ESEO Angers in Computer Science Engineering with a Data Science major (2016-2019), he joined Hugging Face in 2019 and has since led the growth of the Transformers library from 40 architectures and 20,000 daily downloads to over 400 architectures and 3 million daily pip installs. In January 2026, he shipped Transformers v5 -- the first major version release in five years -- featuring performance optimizations, a unified tokenizer backend, PyTorch-first focus, and deep ecosystem interoperability.",
+  "topics": [
+    "Transformer Architectures",
+    "Open Source ML Infrastructure",
+    "Natural Language Processing",
+    "Model Interoperability",
+    "Tokenization",
+    "Safetensors",
+    "Diffusion Models",
+    "PyTorch Ecosystem",
+    "Model Hubs and Distribution",
+    "ML Benchmarking"
+  ],
+  "timeline": [
+    {
+      "date": "2017-08-05",
+      "event": "Created GitHub account (LysandreJik)",
+      "url": "https://github.com/LysandreJik"
+    },
+    {
+      "date": "2019-07-09",
+      "event": "First merged PR to huggingface/transformers (documentation)",
+      "url": "https://github.com/huggingface/transformers/pull/767"
+    },
+    {
+      "date": "2019-10-09",
+      "event": "Co-authored \"HuggingFace's Transformers: State-of-the-art Natural Language Processing\" (arXiv preprint)",
+      "url": "https://arxiv.org/abs/1910.03771"
+    },
+    {
+      "date": "2020-11-19",
+      "event": "Paper presented at EMNLP 2020 System Demonstrations; Transformers v4.0.0-rc-1 released",
+      "url": "https://aclanthology.org/2020.emnlp-demos.6/"
+    },
+    {
+      "date": "2023-10",
+      "event": "Lightning talk at PyTorch Conference 2023: \"Diffusers: Bringing Cutting-Edge Diffusion Models to the Masses\"",
+      "url": "https://pytorch2023.sched.com/event/1QBUQ/lightning-talk-diffusers-bringing-cutting-edge-diffusion-models-to-the-masses-lysandre-debut-hugging-face"
+    },
+    {
+      "date": "2025-09-15",
+      "event": "Announced kick-off of Transformers v5 development with ArthurZ and cyrilvallez",
+      "url": "https://huggingface.co/posts/lysandre/194539610907979"
+    },
+    {
+      "date": "2025-12-01",
+      "event": "Published Transformers v5 blog post and released v5.0.0rc0 -- the first major release in five years",
+      "url": "https://huggingface.co/blog/transformers-v5"
+    },
+    {
+      "date": "2026-01-26",
+      "event": "Released Transformers v5.0.0 stable -- 400+ architectures, 3M daily installs, PyTorch-first, unified tokenizers",
+      "url": "https://github.com/huggingface/transformers/releases/tag/v5.0.0"
+    },
+    {
+      "date": "2026-03-04",
+      "event": "Released Transformers v5.3.0 (EuroBERT, VibeVoice ASR, TimesFM2.5, and more)",
+      "url": "https://github.com/huggingface/transformers/releases/tag/v5.3.0"
+    },
+    {
+      "date": "2026-03-05",
+      "event": "Contributed project governance and security contribution guide to huggingface/safetensors",
+      "url": "https://github.com/huggingface/safetensors"
+    }
+  ],
+  "key_contributions": [
+    {
+      "title": "Hugging Face Transformers",
+      "description": "Core maintainer and co-author of the Transformers library, the de facto standard for state-of-the-art ML models. Over 400 architectures, 750,000+ model checkpoints on the Hub, and 3 million daily pip installs. Led the Transformers v5 release.",
+      "url": "https://github.com/huggingface/transformers"
+    },
+    {
+      "title": "Transformers v5",
+      "description": "Led the first major version release in five years. Introduced modular model definitions, unified tokenizer backend (removing slow/fast split), PyTorch-first backend, AttentionInterface abstraction, and deep interoperability with vLLM, SGLang, llama.cpp, MLX, and TensorRT.",
+      "url": "https://huggingface.co/blog/transformers-v5"
+    },
+    {
+      "title": "EMNLP 2020 Paper: Transformers Library",
+      "description": "Co-authored the foundational paper \"Transformers: State-of-the-Art Natural Language Processing\" (Wolf, Debut et al.), published at EMNLP 2020 and cited thousands of times.",
+      "url": "https://aclanthology.org/2020.emnlp-demos.6/"
+    },
+    {
+      "title": "Safetensors Adoption",
+      "description": "Drove the default adoption of safetensors serialization in Transformers (v4.35+), improving model loading safety and performance by replacing pickle-based torch files.",
+      "url": "https://github.com/huggingface/safetensors"
+    },
+    {
+      "title": "Hugging Face Diffusers",
+      "description": "Contributed to the Diffusers library for state-of-the-art pretrained diffusion models, enabling generation of images, audio, and 3D structures.",
+      "url": "https://github.com/huggingface/diffusers"
+    },
+    {
+      "title": "Benchmarking Transformers",
+      "description": "Published benchmarking analyses comparing PyTorch and TensorFlow performance for Transformer inference, guiding framework optimization decisions.",
+      "url": "https://medium.com/huggingface/benchmarking-transformers-pytorch-and-tensorflow-e2917fb891c2"
+    }
+  ],
+  "quotes": [],
+  "social": {
+    "github": "https://github.com/LysandreJik",
+    "twitter": "https://x.com/LysandreJik",
+    "linkedin": "https://www.linkedin.com/in/lysandredebut/",
+    "website": "https://lysand.re",
+    "huggingface": "https://huggingface.co/lysandre",
+    "scholar": "https://scholar.google.com/citations?user=i9jjNaAAAAAJ",
+    "email": "hi@lysand.re"
+  },
+  "sources": [
+    {
+      "title": "LysandreJik GitHub Profile",
+      "url": "https://github.com/LysandreJik"
+    },
+    {
+      "title": "Lysandre on Hugging Face Hub",
+      "url": "https://huggingface.co/lysandre"
+    },
+    {
+      "title": "Transformers: State-of-the-Art Natural Language Processing (EMNLP 2020)",
+      "url": "https://aclanthology.org/2020.emnlp-demos.6/"
+    },
+    {
+      "title": "arXiv: HuggingFace's Transformers (1910.03771)",
+      "url": "https://arxiv.org/abs/1910.03771"
+    },
+    {
+      "title": "Transformers v5: Simple model definitions powering the AI ecosystem (HF Blog)",
+      "url": "https://huggingface.co/blog/transformers-v5"
+    },
+    {
+      "title": "Lysandre Debut LinkedIn Profile",
+      "url": "https://www.linkedin.com/in/lysandredebut/"
+    },
+    {
+      "title": "Lysandre's Transformers v5 RC announcement on X",
+      "url": "https://x.com/LysandreJik/status/1995558230567878975"
+    },
+    {
+      "title": "Benchmarking Transformers: PyTorch and TensorFlow (Medium)",
+      "url": "https://medium.com/huggingface/benchmarking-transformers-pytorch-and-tensorflow-e2917fb891c2"
+    },
+    {
+      "title": "PyTorch Conference 2023 — Diffusers Lightning Talk",
+      "url": "https://pytorch2023.sched.com/event/1QBUQ/lightning-talk-diffusers-bringing-cutting-edge-diffusion-models-to-the-masses-lysandre-debut-hugging-face"
+    },
+    {
+      "title": "Lysandre Debut on Google Scholar",
+      "url": "https://scholar.google.com/citations?user=i9jjNaAAAAAJ"
+    }
+  ]
+}

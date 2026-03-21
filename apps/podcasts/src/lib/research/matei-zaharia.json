@@ -1,0 +1,246 @@
+{
+  "slug": "matei-zaharia",
+  "name": "Matei Zaharia",
+  "generated_at": "2026-03-19",
+  "bio": "Matei Zaharia is a Romanian-Canadian computer scientist, co-founder and CTO of Databricks, and Associate Professor of EECS at UC Berkeley. Born in Bucharest, Romania, he earned his BMath (double major in Computer Science and Combinatorics & Optimization) from the University of Waterloo in 2007, where his ICPC team placed 4th globally and 1st in North America. He completed his PhD at UC Berkeley's AMPLab in 2013, winning the 2014 ACM Doctoral Dissertation Award. During his PhD he created Apache Spark (2009), now the most widely used engine for large-scale data processing. He co-founded Databricks in 2013 alongside Ali Ghodsi, Ion Stoica, and four other Berkeley researchers, growing it to a $134 billion valuation by late 2025. He has also driven the creation of MLflow, Delta Lake, ColBERT, DSPy, DBRX, and Dolly. His 2024 blog post 'The Shift from Models to Compound AI Systems' has become a defining reference for the industry's move beyond monolithic LLMs. He was previously an assistant professor at MIT (2015) and Stanford (2016-2023) before returning to UC Berkeley in 2023.",
+  "topics": [
+    "Apache Spark",
+    "Distributed Data Processing",
+    "Compound AI Systems",
+    "MLflow & ML Lifecycle",
+    "Delta Lake & Lakehouse Architecture",
+    "Large Language Models (DBRX, Dolly)",
+    "DSPy & LLM Programming Frameworks",
+    "ColBERT & Neural Information Retrieval",
+    "Open Source Data Infrastructure",
+    "Cloud Computing & Big Data",
+    "AI for Enterprise",
+    "Data Quality & Governance"
+  ],
+  "timeline": [
+    {
+      "date": "2025-12",
+      "event": "Databricks raises $4B+ at $134B valuation (Series L), surpassing $4.8B revenue run-rate with 55% YoY growth",
+      "url": "https://www.databricks.com/company/newsroom/press-releases/databricks-surpasses-4-8b-revenue-run-rate-growing-55-year-over-year"
+    },
+    {
+      "date": "2024-06",
+      "event": "Announced Mosaic AI platform expansion and compound AI systems tooling at Data+AI Summit 2024",
+      "url": "https://techcrunch.com/2024/06/12/databricks-expands-mosaic-ai-to-help-enterprises-build-with-llms/"
+    },
+    {
+      "date": "2024-03",
+      "event": "Released DBRX, Databricks' open-source LLM with 132B parameters (mixture-of-experts), exceeding GPT-3.5 on benchmarks",
+      "url": "https://x.com/matei_zaharia/status/1772972271721763199"
+    },
+    {
+      "date": "2024-02",
+      "event": "Published 'The Shift from Models to Compound AI Systems' on the BAIR blog, defining a major AI architecture trend",
+      "url": "https://bair.berkeley.edu/blog/2024/02/18/compound-ai-systems/"
+    },
+    {
+      "date": "2024-01",
+      "event": "DSPy accepted at ICLR 2024: 'Compiling Declarative Language Model Calls into Self-Improving Pipelines'",
+      "url": "https://github.com/stanfordnlp/dspy"
+    },
+    {
+      "date": "2023-07",
+      "event": "Databricks completed acquisition of MosaicML for $1.3B, strengthening generative AI capabilities",
+      "url": "https://www.databricks.com/company/newsroom/press-releases/databricks-completes-acquisition-mosaicml"
+    },
+    {
+      "date": "2023",
+      "event": "Joined UC Berkeley as Associate Professor of EECS, moving from Stanford; received the Mark Weiser Award",
+      "url": "https://people.eecs.berkeley.edu/~matei/"
+    },
+    {
+      "date": "2022",
+      "event": "Received SIGMOD Systems Award for Apache Spark and Sloan Research Fellowship; promoted to Associate Professor at Stanford",
+      "url": "https://people.eecs.berkeley.edu/~matei/"
+    },
+    {
+      "date": "2019",
+      "event": "Received US Presidential Early Career Award for Scientists and Engineers (PECASE)",
+      "url": "https://people.eecs.berkeley.edu/~matei/"
+    },
+    {
+      "date": "2018",
+      "event": "Launched MLflow, open-source platform for the machine learning lifecycle; published foundational paper in IEEE Data Engineering Bulletin",
+      "url": "https://people.eecs.berkeley.edu/~matei/papers/2018/ieee_mlflow.pdf"
+    },
+    {
+      "date": "2017",
+      "event": "Received NSF CAREER Award for research on large-scale data systems",
+      "url": "https://people.eecs.berkeley.edu/~matei/"
+    },
+    {
+      "date": "2016",
+      "event": "Joined Stanford University as Assistant Professor of Computer Science",
+      "url": "https://online.stanford.edu/instructors/matei-zaharia"
+    },
+    {
+      "date": "2015",
+      "event": "Joined MIT as faculty member before moving to Stanford the following year",
+      "url": "https://people.eecs.berkeley.edu/~matei/"
+    },
+    {
+      "date": "2014",
+      "event": "Received the 2014 ACM Doctoral Dissertation Award for PhD thesis on large-scale data processing",
+      "url": "https://awards.acm.org/award-recipients/zaharia_7692208"
+    },
+    {
+      "date": "2013",
+      "event": "Co-founded Databricks with Ali Ghodsi, Ion Stoica, and four other UC Berkeley researchers; completed PhD",
+      "url": "https://www.databricks.com/company/newsroom/press-releases/databricks-raising-10b-series-j-investment-62b-valuation"
+    },
+    {
+      "date": "2012-04",
+      "event": "Published 'Resilient Distributed Datasets' paper at NSDI 2012, winning Best Paper Award",
+      "url": "https://www.usenix.org/conference/nsdi12/technical-sessions/presentation/zaharia"
+    },
+    {
+      "date": "2009",
+      "event": "Created Apache Spark at UC Berkeley's AMPLab as a faster alternative to MapReduce",
+      "url": "https://spark.apache.org/research.html"
+    },
+    {
+      "date": "2007",
+      "event": "Graduated from University of Waterloo with BMath (CS + Combinatorics & Optimization); ICPC gold medalist (4th worldwide, 1st North America in 2005)",
+      "url": "https://uwaterloo.ca/math/profiles/matei-zaharia"
+    }
+  ],
+  "key_contributions": [
+    {
+      "title": "Apache Spark",
+      "description": "Created the Apache Spark distributed computing framework during his PhD at UC Berkeley's AMPLab in 2009. Spark introduced Resilient Distributed Datasets (RDDs) for fault-tolerant in-memory cluster computing, becoming the most widely used engine for large-scale data processing, with over 2,000 contributors and adoption across virtually every Fortune 500 company.",
+      "url": "https://spark.apache.org/"
+    },
+    {
+      "title": "Databricks",
+      "description": "Co-founded Databricks in 2013 and serves as CTO, building the Lakehouse platform that unifies data warehousing and data lakes. The company reached a $134B valuation by late 2025 with $4.8B+ annual revenue run-rate, becoming the leading enterprise data and AI platform.",
+      "url": "https://www.databricks.com/"
+    },
+    {
+      "title": "MLflow",
+      "description": "Created MLflow in 2018 as an open-source platform for managing the complete machine learning lifecycle -- experiment tracking, reproducibility, and model deployment. MLflow is now the most popular ML lifecycle management tool, with tens of thousands of users.",
+      "url": "https://mlflow.org/"
+    },
+    {
+      "title": "Delta Lake",
+      "description": "Co-created Delta Lake, an open-source ACID transaction layer for cloud data lakes, enabling reliable data engineering at scale. Published at VLDB 2020, Delta Lake is a cornerstone of the Lakehouse architecture.",
+      "url": "https://delta.io/"
+    },
+    {
+      "title": "Compound AI Systems",
+      "description": "Authored the influential 2024 BAIR blog post 'The Shift from Models to Compound AI Systems,' arguing that state-of-the-art AI results increasingly come from multi-component systems rather than monolithic models, shaping industry direction toward retrieval-augmented and agent-based architectures.",
+      "url": "https://bair.berkeley.edu/blog/2024/02/18/compound-ai-systems/"
+    },
+    {
+      "title": "DSPy",
+      "description": "Co-developed DSPy, a framework for programming (rather than prompting) language models, enabling declarative composition of LLM pipelines that self-optimize. Accepted at ICLR 2024.",
+      "url": "https://github.com/stanfordnlp/dspy"
+    },
+    {
+      "title": "ColBERT",
+      "description": "Co-developed ColBERT (and ColBERTv2), a late-interaction neural retrieval model that achieves state-of-the-art passage search quality with practical efficiency. Published at NAACL 2022.",
+      "url": "https://github.com/stanford-futuredata/ColBERT"
+    }
+  ],
+  "quotes": [
+    {
+      "text": "Interesting trend in AI: the best results are increasingly obtained by compound systems, not monolithic models.",
+      "source": "X post announcing Compound AI Systems blog post (Feb 2024)",
+      "url": "https://x.com/matei_zaharia/status/1759614283066089684"
+    },
+    {
+      "text": "Your AI is only as good as the data you put into it.",
+      "source": "Q&A with Monte Carlo Data",
+      "url": "https://www.montecarlodata.com/blog-conversation-with-databricks-matei-zaharia/"
+    },
+    {
+      "text": "AI or machine learning should really have been called something like 'data extrapolation', because that's basically what machine learning algorithms do by definition.",
+      "source": "Q&A with Monte Carlo Data",
+      "url": "https://www.montecarlodata.com/blog-conversation-with-databricks-matei-zaharia/"
+    },
+    {
+      "text": "The fewer data copy, ETL, and transport steps you have, the more likely your system is to be reliable.",
+      "source": "Q&A with Monte Carlo Data",
+      "url": "https://www.montecarlodata.com/blog-conversation-with-databricks-matei-zaharia/"
+    },
+    {
+      "text": "The open source model is a good basis to start from, but I think everyone will then kind of tune it for their domain and get something better.",
+      "source": "Interview on open-source AI strategy",
+      "url": "https://www.databricks.com/blog/author/matei-zaharia"
+    },
+    {
+      "text": "Compound AI systems will be the best way to maximize the quality, reliability, and measurement of AI applications going forward, and may be one of the most important trends in AI in 2024.",
+      "source": "Data+AI Summit 2024 keynote",
+      "url": "https://www.databricks.com/dataaisummit/speaker/matei-zaharia"
+    }
+  ],
+  "social": {
+    "github": "https://github.com/mateiz",
+    "twitter": "https://x.com/matei_zaharia",
+    "linkedin": "https://www.linkedin.com/in/mateizaharia/",
+    "website": "https://people.eecs.berkeley.edu/~matei/",
+    "scholar": "https://scholar.google.com/citations?user=I1EvjZsAAAAJ&hl=en"
+  },
+  "sources": [
+    {
+      "title": "Matei Zaharia - UC Berkeley Faculty Page",
+      "url": "https://people.eecs.berkeley.edu/~matei/"
+    },
+    {
+      "title": "Matei Zaharia - Wikipedia",
+      "url": "https://en.wikipedia.org/wiki/Matei_Zaharia"
+    },
+    {
+      "title": "Matei Zaharia - ACM Award Recipient Profile",
+      "url": "https://awards.acm.org/award-recipients/zaharia_7692208"
+    },
+    {
+      "title": "The Shift from Models to Compound AI Systems - BAIR Blog",
+      "url": "https://bair.berkeley.edu/blog/2024/02/18/compound-ai-systems/"
+    },
+    {
+      "title": "Bringing Reliable Data And AI To The Cloud: Q&A with Databricks' Matei Zaharia",
+      "url": "https://www.montecarlodata.com/blog-conversation-with-databricks-matei-zaharia/"
+    },
+    {
+      "title": "ACM ByteCast Episode 32 - Matei Zaharia",
+      "url": "https://learning.acm.org/bytecast/ep32-matei-zaharia"
+    },
+    {
+      "title": "Matei Zaharia: The Bazaar in the Cathedral - Data Radicals Podcast",
+      "url": "https://www.alation.com/podcast/episodes/bazaar-cathedral-matei-zaharia/"
+    },
+    {
+      "title": "Resilient Distributed Datasets: A Fault-Tolerant Abstraction for In-Memory Cluster Computing (NSDI 2012)",
+      "url": "https://www.usenix.org/conference/nsdi12/technical-sessions/presentation/zaharia"
+    },
+    {
+      "title": "Accelerating the Machine Learning Lifecycle with MLflow (IEEE Data Eng. Bull. 2018)",
+      "url": "https://people.eecs.berkeley.edu/~matei/papers/2018/ieee_mlflow.pdf"
+    },
+    {
+      "title": "Databricks raises $4B+ at $134B valuation (Dec 2025)",
+      "url": "https://www.databricks.com/company/newsroom/press-releases/databricks-surpasses-4-8b-revenue-run-rate-growing-55-year-over-year"
+    },
+    {
+      "title": "Databricks completes acquisition of MosaicML",
+      "url": "https://www.databricks.com/company/newsroom/press-releases/databricks-completes-acquisition-mosaicml"
+    },
+    {
+      "title": "Matei Zaharia on Google Scholar",
+      "url": "https://scholar.google.com/citations?user=I1EvjZsAAAAJ&hl=en"
+    },
+    {
+      "title": "Matei Zaharia - GitHub Profile (mateiz)",
+      "url": "https://github.com/mateiz"
+    },
+    {
+      "title": "DBRX announcement tweet by Matei Zaharia",
+      "url": "https://x.com/matei_zaharia/status/1772972271721763199"
+    }
+  ]
+}

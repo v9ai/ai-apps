@@ -1,0 +1,191 @@
+{
+  "slug": "zach-nussbaum",
+  "name": "Zach Nussbaum",
+  "generated_at": "2026-03-19",
+  "bio": "Zach Nussbaum is a Principal Machine Learning Engineer at Nomic AI, where he leads the development of the Nomic Embed family of open-source text and vision embedding models. He is a co-creator of GPT4All, the pioneering open-source local LLM chatbot that became the third-fastest-growing GitHub repository of all time with over 77,000 stars and 250,000 monthly active users. Before Nomic, he worked at Deep Genomics on machine learning for drug discovery, contributing to BigRNA, a foundation model for tissue-specific RNA expression prediction. A former Division I baseball player at Davidson College, he also participated in open-community research with ML Collective and OpenBioML.",
+  "topics": [
+    "Local LLM Inference",
+    "Open-Source Embedding Models",
+    "Reproducible ML Training",
+    "Matryoshka Representation Learning",
+    "Multimodal Embeddings",
+    "Mixture-of-Experts Architectures",
+    "Democratizing AI Access",
+    "Code Retrieval & Ranking",
+    "Computational Biology & Genomics",
+    "WebGPU ML Acceleration"
+  ],
+  "timeline": [
+    {
+      "date": "2021",
+      "event": "Presented 'A Tale of Two Long Tails' at ICML UDL Workshop",
+      "url": "https://zanussbaum.github.io/"
+    },
+    {
+      "date": "2023-03",
+      "event": "Co-created GPT4All at Nomic AI — trained on ~1M GPT-3.5-Turbo prompt-response pairs collected March 20-26, 2023; released model, data, and training code openly",
+      "url": "https://github.com/nomic-ai/gpt4all"
+    },
+    {
+      "date": "2023-09",
+      "event": "Co-authored BigRNA preprint at Deep Genomics — an RNA foundation model for disease mechanisms and candidate therapeutics",
+      "url": "https://www.biorxiv.org/content/10.1101/2023.09.20.558508v1"
+    },
+    {
+      "date": "2023-11",
+      "event": "GPT4All ecosystem paper published at NLP-OSS @ EMNLP 2023",
+      "url": "https://arxiv.org/abs/2311.04931"
+    },
+    {
+      "date": "2024-02",
+      "event": "Lead author on Nomic Embed v1 paper — first fully reproducible, open-source, open-data 8192-context text embedding model outperforming OpenAI Ada-002",
+      "url": "https://arxiv.org/abs/2402.01613"
+    },
+    {
+      "date": "2024-02-01",
+      "event": "Appeared on MAD Podcast with Matt Turck: 'How Nomic AI Is Driving The Open Source Revolution'",
+      "url": "https://zanussbaum.github.io/blog/2024/mad-podcast/"
+    },
+    {
+      "date": "2024-02-20",
+      "event": "Appeared on Weaviate Podcast: 'Matryoshka Embeddings' with Aditya Kusupati and Zain Hasan",
+      "url": "https://zanussbaum.github.io/blog/2024/matryoshka/"
+    },
+    {
+      "date": "2024-06",
+      "event": "Co-authored Nomic Embed Vision — multimodal embedding model sharing latent space with Nomic Embed Text",
+      "url": "https://arxiv.org/abs/2406.18587"
+    },
+    {
+      "date": "2024-07-10",
+      "event": "Published blog post on multimodal embedding observability",
+      "url": "https://zanussbaum.github.io/blog/2024/multimodal/"
+    },
+    {
+      "date": "2024-11-11",
+      "event": "Published blog post: 'Optimizing a WebGPU Matmul Kernel for 1TFLOP+ Performance'",
+      "url": "https://zanussbaum.github.io/blog/2024/webgpu/"
+    },
+    {
+      "date": "2025-02",
+      "event": "Co-authored Nomic Embed Text v2 (MoE) — first general-purpose Mixture-of-Experts text embedding model supporting ~100 languages with 475M total / 305M active parameters",
+      "url": "https://arxiv.org/abs/2502.07972"
+    },
+    {
+      "date": "2025",
+      "event": "CoRNStack paper accepted at ICLR 2025 — large-scale dataset for code retrieval powering nomic-embed-code",
+      "url": "https://huggingface.co/nomic-ai/nomic-embed-code"
+    }
+  ],
+  "key_contributions": [
+    {
+      "title": "GPT4All",
+      "description": "Co-created the open-source local LLM chatbot that became the 3rd fastest-growing GitHub repo of all time (77k+ stars, 250k+ MAU). Demonstrated that capable assistant-style chatbots could run on consumer CPUs without API calls.",
+      "url": "https://github.com/nomic-ai/gpt4all"
+    },
+    {
+      "title": "Nomic Embed",
+      "description": "Lead author of the first fully reproducible, open-source, open-data text embedding model (v1) that outperformed OpenAI Ada-002. Evolved into v1.5 with Matryoshka dimensions, v2 with MoE architecture supporting ~100 languages, and a vision variant.",
+      "url": "https://arxiv.org/abs/2402.01613"
+    },
+    {
+      "title": "Nomic Embed Vision",
+      "description": "Co-authored multimodal vision embedding model that shares the same latent space as Nomic Embed Text, enabling unified text-image retrieval with fully open weights and training code.",
+      "url": "https://arxiv.org/abs/2406.18587"
+    },
+    {
+      "title": "CoRNStack",
+      "description": "High-quality contrastive dataset for code retrieval across multiple programming languages, accepted at ICLR 2025. Powers nomic-embed-code and CodeRankEmbed models.",
+      "url": "https://huggingface.co/nomic-ai/nomic-embed-code"
+    },
+    {
+      "title": "Contrastors",
+      "description": "Open-source PyTorch library for training contrastive models, used as the training framework behind the Nomic Embed model family.",
+      "url": "https://github.com/nomic-ai/contrastors"
+    },
+    {
+      "title": "BigRNA (Deep Genomics)",
+      "description": "Contributed to training BigRNA, an RNA foundation model predicting tissue-specific RNA expression, splicing, microRNA sites, and RNA binding protein specificity from DNA sequence.",
+      "url": "https://www.biorxiv.org/content/10.1101/2023.09.20.558508v1"
+    }
+  ],
+  "quotes": [
+    {
+      "text": "We describe the training of nomic-embed-text-v1, the first fully reproducible, open-source, open-weights, open-data, 8192 context length English text embedding model that outperforms both OpenAI Ada-002 and OpenAI text-embedding-3-small.",
+      "source": "Nomic Embed paper, Feb 2024",
+      "url": "https://arxiv.org/abs/2402.01613"
+    },
+    {
+      "text": "Large language models have recently achieved human-level performance on a range of professional and academic benchmarks. The accessibility of these models has lagged behind their performance.",
+      "source": "GPT4All: An Ecosystem of Open Source Compressed Language Models, EMNLP 2023",
+      "url": "https://arxiv.org/abs/2311.04931"
+    },
+    {
+      "text": "In contrast with other open-source models, we release the full curated training data and code to allow for full replication of nomic-embed-text-v1. This sets a new standard for transparency in the embedding model space.",
+      "source": "Nomic Embed paper, Feb 2024",
+      "url": "https://arxiv.org/abs/2402.01613"
+    },
+    {
+      "text": "GPT4All aims to democratize access to LLMs. Quantized 4-bit versions of the model allow virtually anyone to run the model on CPU.",
+      "source": "GPT4All Technical Report, Mar 2023",
+      "url": "https://s3.amazonaws.com/static.nomic.ai/gpt4all/2023_GPT4All_Technical_Report.pdf"
+    }
+  ],
+  "social": {
+    "github": "https://github.com/zanussbaum",
+    "twitter": "https://x.com/zach_nussbaum",
+    "linkedin": "https://www.linkedin.com/in/zach-nussbaum",
+    "website": "https://zanussbaum.github.io/",
+    "scholar": "https://openreview.net/profile?id=~Zach_Nussbaum1"
+  },
+  "sources": [
+    {
+      "title": "Zach Nussbaum — personal website",
+      "url": "https://zanussbaum.github.io/"
+    },
+    {
+      "title": "zanussbaum — GitHub profile",
+      "url": "https://github.com/zanussbaum"
+    },
+    {
+      "title": "GPT4All: An Ecosystem of Open Source Compressed Language Models (EMNLP 2023)",
+      "url": "https://arxiv.org/abs/2311.04931"
+    },
+    {
+      "title": "GPT4All Technical Report (Mar 2023)",
+      "url": "https://s3.amazonaws.com/static.nomic.ai/gpt4all/2023_GPT4All_Technical_Report.pdf"
+    },
+    {
+      "title": "Nomic Embed: Training a Reproducible Long Context Text Embedder (arXiv)",
+      "url": "https://arxiv.org/abs/2402.01613"
+    },
+    {
+      "title": "Nomic Embed Vision: Expanding the Latent Space (arXiv)",
+      "url": "https://arxiv.org/abs/2406.18587"
+    },
+    {
+      "title": "Training Sparse Mixture Of Experts Text Embedding Models (arXiv)",
+      "url": "https://arxiv.org/abs/2502.07972"
+    },
+    {
+      "title": "nomic-ai/gpt4all — GitHub repository (77k+ stars)",
+      "url": "https://github.com/nomic-ai/gpt4all"
+    },
+    {
+      "title": "GPT4All — Nomic product page",
+      "url": "https://www.nomic.ai/gpt4all"
+    },
+    {
+      "title": "Matryoshka Embeddings — Weaviate Podcast (Feb 2024)",
+      "url": "https://zanussbaum.github.io/blog/2024/matryoshka/"
+    },
+    {
+      "title": "How Nomic AI Is Driving The Open Source Revolution — MAD Podcast (Feb 2024)",
+      "url": "https://zanussbaum.github.io/blog/2024/mad-podcast/"
+    },
+    {
+      "title": "CoRNStack — ICLR 2025 dataset for code retrieval",
+      "url": "https://huggingface.co/nomic-ai/nomic-embed-code"
+    }
+  ]
+}

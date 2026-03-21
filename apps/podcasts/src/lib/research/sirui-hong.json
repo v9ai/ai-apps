@@ -1,0 +1,194 @@
+{
+  "slug": "sirui-hong",
+  "name": "Sirui Hong",
+  "generated_at": "2026-03-19T23:00:00+00:00",
+  "bio": "Sirui Hong is the co-founder of DeepWisdom and the technical leader of NLP/AIGC Algorithms at the company, best known as the creator and first author of MetaGPT — the pioneering multi-agent framework that models an entire AI software company with product managers, architects, project managers, and engineers collaborating via Standardized Operating Procedures (SOPs). The MetaGPT paper received an oral presentation (top 1.2%) at ICLR 2024, ranking #1 in the LLM-based Agent category. Hong is also the first author of the Data Interpreter paper (ACL 2024) and a co-author of AFlow (ICLR 2025 Oral, top 1.8%). Under the FoundationAgents GitHub organization, MetaGPT has 65k+ stars and OpenManus has 55k+ stars. Hong's research focuses on multi-agent collaboration, automated workflow generation, and code generation. DeepWisdom, a Shenzhen-based company founded in 2019, launched MGX (MetaGPT X) in February 2025 — later rebranded as Atoms in January 2026 — reaching 500k users in its first month and crossing $1M ARR. In the first half of 2025, DeepWisdom raised ~$30.8M (RMB 220M) from Ant Group, Cathay Capital, Baidu Ventures, and others, representing the largest financing in the domestic coding agent track.",
+  "topics": [
+    "multi-agent collaborative frameworks",
+    "meta programming for LLM agents",
+    "AI software company simulation",
+    "automated agentic workflow generation",
+    "LLM-based code generation",
+    "standardized operating procedures for AI agents",
+    "data science automation with LLM agents",
+    "vibe coding and AI-powered development"
+  ],
+  "timeline": [
+    {
+      "date": "2019",
+      "event": "DeepWisdom founded in Shenzhen by Wu Chenglin. Sirui Hong joins as co-founder and technical lead for NLP/AIGC algorithms.",
+      "url": "https://www.deepwisdom.ai/"
+    },
+    {
+      "date": "2019-12",
+      "event": "DeepWisdom team wins NeurIPS 2019 AutoDL Challenge (NLP track), demonstrating early expertise in automated deep learning.",
+      "url": "https://arxiv.org/abs/2201.03801"
+    },
+    {
+      "date": "2023-06-30",
+      "event": "MetaGPT repository created on GitHub under geekan/MetaGPT. The multi-agent framework models an AI software company with product managers, architects, project managers, and engineers.",
+      "url": "https://github.com/FoundationAgents/MetaGPT"
+    },
+    {
+      "date": "2023-08-01",
+      "event": "Published 'MetaGPT: Meta Programming for A Multi-Agent Collaborative Framework' on arXiv (2308.00352). Introduces SOP-based prompt sequences for multi-agent collaboration.",
+      "url": "https://arxiv.org/abs/2308.00352"
+    },
+    {
+      "date": "2024-01",
+      "event": "MetaGPT paper accepted for oral presentation (top 1.2%) at ICLR 2024, ranking #1 in the LLM-based Agent category. Achieves state-of-the-art 85.9% and 87.7% Pass@1 on code generation benchmarks.",
+      "url": "https://iclr.cc/virtual/2024/oral/19756"
+    },
+    {
+      "date": "2024-05",
+      "event": "Published 'Data Interpreter: An LLM Agent For Data Science' — accepted at ACL 2024. Introduces hierarchical graph modeling and programmable node generation for automated data analysis.",
+      "url": "https://www.semanticscholar.org/paper/Data-Interpreter:-An-LLM-Agent-For-Data-Science-Hong-Lin/01e863776846ebd1a9a7acc4a9ca24217f953aa2"
+    },
+    {
+      "date": "2024-10",
+      "event": "Published three papers in October 2024: AFlow (automating agentic workflow generation), FACT, and SELA (tree-search enhanced LLM agents for AutoML).",
+      "url": "https://arxiv.org/pdf/2410.10762"
+    },
+    {
+      "date": "2025-01",
+      "event": "AFlow paper accepted for oral presentation (top 1.8%) at ICLR 2025, ranking #2 in the LLM-based Agent category. Achieves 80.3% average performance across QA, Code, and Math benchmarks.",
+      "url": "https://arxiv.org/pdf/2410.10762"
+    },
+    {
+      "date": "2025-02",
+      "event": "DeepWisdom launches MGX (MetaGPT X) — the world's first AI multi-agent development team product. Reaches 500,000 registered users within one month and crosses $1M ARR without paid marketing.",
+      "url": "https://pressadvantage.com/story/77512-metagpt-team-launches-metagpt-x-world-s-first-ai-multi-agent-team-platform"
+    },
+    {
+      "date": "2025-03",
+      "event": "OpenManus released under FoundationAgents org — an open-source general AI agent framework built by MetaGPT contributors. Rapidly grows to 55k+ GitHub stars.",
+      "url": "https://github.com/FoundationAgents/OpenManus"
+    },
+    {
+      "date": "2025-H1",
+      "event": "DeepWisdom completes two funding rounds totaling ~RMB 220M ($30.8M USD), backed by Ant Group, Cathay Capital, Jinqiu Capital, MindWorks Capital, Baidu Ventures, and Concept Capital.",
+      "url": "https://eu.36kr.com/en/p/3640426144812417"
+    },
+    {
+      "date": "2025-09",
+      "event": "MGX reaches ~1.2 million monthly visits and generates 10,000+ applications per day. DeepWisdom grows to 80+ employees and plans first Silicon Valley office.",
+      "url": "https://kr-asia.com/from-metagpt-to-atoms-deepwisdom-leads-chinas-push-into-vibe-coding"
+    },
+    {
+      "date": "2025-10",
+      "event": "Spoke at GOSIM AI Paris 2025 conference on multi-agent systems and foundation agents.",
+      "url": "https://paris2025.gosim.org/speakers/sirui-hong/"
+    },
+    {
+      "date": "2026-01-13",
+      "event": "DeepWisdom rebrands MGX as Atoms — a production-ready AI development platform with built-in login, databases, authentication, deployment, and payments. Specialized agents include Iris (research) and Sarah (SEO).",
+      "url": "https://atoms.dev/"
+    }
+  ],
+  "key_contributions": [
+    {
+      "title": "MetaGPT Framework",
+      "description": "Created MetaGPT, the first multi-agent framework to model an entire AI software company with distinct roles (product manager, architect, project manager, engineer) collaborating via Standardized Operating Procedures. Encodes SOPs into prompt sequences for structured multi-agent collaboration, achieving state-of-the-art code generation results. ICLR 2024 Oral (top 1.2%, #1 in LLM-based Agent category). 65k+ GitHub stars, 1,489 citations.",
+      "url": "https://github.com/FoundationAgents/MetaGPT"
+    },
+    {
+      "title": "Data Interpreter",
+      "description": "Developed Data Interpreter, an LLM agent for automated data science that uses hierarchical graph modeling to decompose complex problems into manageable subproblems and programmable node generation to iteratively refine code. Accepted at ACL 2024 with 182 citations.",
+      "url": "https://www.semanticscholar.org/paper/Data-Interpreter:-An-LLM-Agent-For-Data-Science-Hong-Lin/01e863776846ebd1a9a7acc4a9ca24217f953aa2"
+    },
+    {
+      "title": "AFlow: Automating Agentic Workflow Generation",
+      "description": "Co-authored AFlow, a system for automatically generating agentic workflows that outperforms all manually designed methods by 5.7% on average and surpasses contemporary automatic workflow optimization by 19.5%. ICLR 2025 Oral (top 1.8%, #2 in LLM-based Agent category). 169 citations.",
+      "url": "https://arxiv.org/pdf/2410.10762"
+    },
+    {
+      "title": "OpenManus",
+      "description": "Core contributor to OpenManus, an open-source general AI agent framework under the FoundationAgents organization enabling users to complete complex tasks (coding, information retrieval, file processing, web browsing) through natural language instructions. 55k+ GitHub stars.",
+      "url": "https://github.com/FoundationAgents/OpenManus"
+    },
+    {
+      "title": "MGX / Atoms Platform",
+      "description": "Technical leader behind MGX (MetaGPT X), the world's first AI multi-agent development team product launched February 2025. Rebranded as Atoms in January 2026 with production-ready features including databases, auth, deployment, and payments. 500k users in first month, $1M+ ARR.",
+      "url": "https://atoms.dev/"
+    }
+  ],
+  "quotes": [
+    {
+      "text": "It is true that the success rate of solving many problems increases as the capabilities of larger models increase, but the problems themselves do not go away.",
+      "source": "OpenManus Core Author Interview (KDJingPai)",
+      "url": "https://www.kdjingpai.com/en/openmanus-hexinzuoai/"
+    },
+    {
+      "text": "There are still a large number of extremely complex problems with long-tail effects in human society, including machine learning, code fixing, and problems that require searching for combinations.",
+      "source": "OpenManus Core Author Interview (KDJingPai)",
+      "url": "https://www.kdjingpai.com/en/openmanus-hexinzuoai/"
+    },
+    {
+      "text": "The most important thing is to maximize the tasks and effects in real scenarios, including personalization features.",
+      "source": "OpenManus Core Author Interview (KDJingPai)",
+      "url": "https://www.kdjingpai.com/en/openmanus-hexinzuoai/"
+    },
+    {
+      "text": "The business prospects of multi-agent systems are clear and strong in terms of really effectively solving the actual needs of users, and code generation is a scenario that Agent technology is currently able to solve better.",
+      "source": "OpenManus Core Author Interview (KDJingPai)",
+      "url": "https://www.kdjingpai.com/en/openmanus-hexinzuoai/"
+    }
+  ],
+  "social": {
+    "github": "https://github.com/geekan",
+    "twitter": "https://x.com/AlexanderWu0",
+    "linkedin": "https://www.linkedin.com/in/sirui-hong-b23593292/",
+    "website": "https://www.deepwisdom.ai/",
+    "semanticScholar": "https://www.semanticscholar.org/author/Sirui-Hong/2004160930"
+  },
+  "sources": [
+    {
+      "title": "MetaGPT GitHub Repository (FoundationAgents)",
+      "url": "https://github.com/FoundationAgents/MetaGPT"
+    },
+    {
+      "title": "MetaGPT: Meta Programming for A Multi-Agent Collaborative Framework (arXiv)",
+      "url": "https://arxiv.org/abs/2308.00352"
+    },
+    {
+      "title": "ICLR 2024 Oral — MetaGPT",
+      "url": "https://iclr.cc/virtual/2024/oral/19756"
+    },
+    {
+      "title": "From MetaGPT to Atoms: DeepWisdom leads China's push into vibe coding (KrASIA)",
+      "url": "https://kr-asia.com/from-metagpt-to-atoms-deepwisdom-leads-chinas-push-into-vibe-coding"
+    },
+    {
+      "title": "China's Coding Agent Secures Largest Financing (36Kr)",
+      "url": "https://eu.36kr.com/en/p/3640426144812417"
+    },
+    {
+      "title": "Sirui Hong — GOSIM AI Paris 2025 Speaker Profile",
+      "url": "https://paris2025.gosim.org/speakers/sirui-hong/"
+    },
+    {
+      "title": "OpenManus Core Author Interview (KDJingPai)",
+      "url": "https://www.kdjingpai.com/en/openmanus-hexinzuoai/"
+    },
+    {
+      "title": "Sirui Hong — Semantic Scholar Profile",
+      "url": "https://www.semanticscholar.org/author/Sirui-Hong/2004160930"
+    },
+    {
+      "title": "OpenManus GitHub Repository",
+      "url": "https://github.com/FoundationAgents/OpenManus"
+    },
+    {
+      "title": "MGX (Now Atoms) — Product Hunt",
+      "url": "https://www.producthunt.com/products/metagpt-x"
+    },
+    {
+      "title": "DeepWisdom Official Website",
+      "url": "https://www.deepwisdom.ai/"
+    },
+    {
+      "title": "Winning solutions of the ChaLearn AutoDL challenge 2019 (arXiv)",
+      "url": "https://arxiv.org/abs/2201.03801"
+    }
+  ]
+}

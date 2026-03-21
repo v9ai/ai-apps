@@ -1,0 +1,229 @@
+{
+  "slug": "tim-dettmers",
+  "name": "Tim Dettmers",
+  "generated_at": "2026-03-19T12:00:00+00:00",
+  "bio": "Tim Dettmers is an Assistant Professor at Carnegie Mellon University (Machine Learning and Computer Science departments) and a Research Scientist at the Allen Institute for Artificial Intelligence (Ai2). He earned his PhD from the University of Washington under Luke Zettlemoyer. Dettmers is the creator and maintainer of bitsandbytes (8,000+ stars, 2.2 million monthly installs), the foundational open-source library for k-bit quantization in PyTorch that powers efficient LLM inference and fine-tuning across the ecosystem. He is the lead author of QLoRA, an efficient fine-tuning method that enables training a 65B-parameter model on a single 48GB GPU while preserving full 16-bit performance, and LLM.int8(), which brought 8-bit matrix multiplication to transformers at scale. His current research focuses on open-source coding agents (SERA) and making foundation models accessible on consumer hardware. Before his PhD he worked three years in factory automation and studied psychology. He describes himself as dyslexic with bottom-5% working memory, which he credits for driving him toward simpler, more elegant solutions.",
+  "topics": [
+    "Quantization (4-bit, 8-bit, NormalFloat)",
+    "Efficient LLM Fine-Tuning (QLoRA, LoRA)",
+    "bitsandbytes Library",
+    "Open-Source Coding Agents (SERA)",
+    "LLM Inference Optimization",
+    "Sparse Learning",
+    "Knowledge Graph Embeddings (ConvE)",
+    "AI Accessibility & Democratization",
+    "Hardware Scaling Limits",
+    "On-Device Mixture of Experts"
+  ],
+  "timeline": [
+    {
+      "date": "2026-01-27",
+      "event": "Published SERA (Soft-Verified Efficient Repository Agents) with Ai2 -- first open coding agent series, 32B model solving 54.2% of SWE-Bench Verified at $400 reproduction cost",
+      "url": "https://timdettmers.com/2026/01/27/building-open-coding-agent-sera/"
+    },
+    {
+      "date": "2026-01-13",
+      "event": "Published blog post 'Use Agents or Be Left Behind? A Personal Guide to Automating Your Own Work'",
+      "url": "https://timdettmers.com/2026/01/13/use-agents-or-be-left-behind/"
+    },
+    {
+      "date": "2025-12",
+      "event": "Interviewed by The Register, argued AGI and superintelligence thinking is 'fundamentally flawed' and GPU scaling has 1-2 years left",
+      "url": "https://www.theregister.com/2025/12/11/ai_superintelligence_fantasy/"
+    },
+    {
+      "date": "2025",
+      "event": "Received Google ML and Systems Junior Faculty Award ($100K unrestricted funding) as one of 50+ assistant professors selected across 27 U.S. universities",
+      "url": "https://csd.cmu.edu/news/dettmers-receives-google-ml-and-systems-junior-faculty-award"
+    },
+    {
+      "date": "2025",
+      "event": "Joined Carnegie Mellon University as Assistant Professor in MLD and CSD",
+      "url": "https://csd.cmu.edu/people/faculty/tim-dettmers"
+    },
+    {
+      "date": "2024",
+      "event": "Named AI2050 Early Career Fellow by Schmidt Sciences (2-year research grant)",
+      "url": "https://www.csd.cmu.edu/news/tim-dettmers-aviral-kumar-named-ai2050-early-career-fellows"
+    },
+    {
+      "date": "2023-12",
+      "event": "QLoRA paper presented at NeurIPS 2023, receiving Outstanding Paper designation",
+      "url": "https://proceedings.neurips.cc/paper_files/paper/2023/file/1feb87871436031bdc0f2beaa62a049b-Paper-Conference.pdf"
+    },
+    {
+      "date": "2023",
+      "event": "Received Madrona Prize, Google Open Source Award, and PyTorch Foundation Award for bitsandbytes",
+      "url": "https://timdettmers.com/about/"
+    },
+    {
+      "date": "2023-05",
+      "event": "Released QLoRA: Efficient Finetuning of Quantized LLMs (arXiv 2305.14314), enabling 65B model fine-tuning on a single GPU",
+      "url": "https://arxiv.org/abs/2305.14314"
+    },
+    {
+      "date": "2022",
+      "event": "Published LLM.int8(): 8-bit Matrix Multiplication for Transformers at Scale, enabling efficient inference for large language models",
+      "url": "https://arxiv.org/abs/2208.07339"
+    },
+    {
+      "date": "2021",
+      "event": "Received NeurIPS 2021 Best Reviewer Award",
+      "url": "https://timdettmers.com/about/"
+    },
+    {
+      "date": "2018",
+      "event": "Published ConvE: Convolutional 2D Knowledge Graph Embeddings (692 stars), a widely-cited approach for link prediction in knowledge graphs",
+      "url": "https://github.com/TimDettmers/ConvE"
+    },
+    {
+      "date": "2013-08",
+      "event": "Created GitHub account (TimDettmers), later growing to 59 public repos and 1,395 followers",
+      "url": "https://github.com/TimDettmers"
+    }
+  ],
+  "key_contributions": [
+    {
+      "title": "bitsandbytes",
+      "description": "Foundational open-source library for k-bit quantization in PyTorch. Enables accessible LLM inference and training via 4-bit and 8-bit optimizers. 8,000+ stars, 2.2 million monthly installs, received Google Open Source and PyTorch Foundation awards.",
+      "url": "https://github.com/bitsandbytes-foundation/bitsandbytes"
+    },
+    {
+      "title": "QLoRA",
+      "description": "Efficient fine-tuning method using 4-bit NormalFloat quantization and double quantization that enables training a 65B-parameter model on a single 48GB GPU. Guanaco models reached 99.3% of ChatGPT performance on Vicuna benchmark. 10,800+ stars. NeurIPS 2023.",
+      "url": "https://github.com/artidoro/qlora"
+    },
+    {
+      "title": "LLM.int8()",
+      "description": "8-bit matrix multiplication method for transformers at scale, enabling efficient inference for billion-parameter models without significant quality degradation. A key building block in the quantization ecosystem.",
+      "url": "https://arxiv.org/abs/2208.07339"
+    },
+    {
+      "title": "SERA (Soft-Verified Efficient Repository Agents)",
+      "description": "Open-source coding agent from Ai2 that solves 54.2% of SWE-Bench Verified. Built with 32 GPUs and 5 researchers, reproducible for ~$400, 26x more efficient than RL approaches.",
+      "url": "https://arxiv.org/abs/2601.20789"
+    },
+    {
+      "title": "ConvE",
+      "description": "Convolutional 2D Knowledge Graph Embeddings -- a pioneering approach for link prediction in knowledge graphs using 2D convolutions over embedding matrices. 692 stars.",
+      "url": "https://github.com/TimDettmers/ConvE"
+    },
+    {
+      "title": "Sparse Momentum",
+      "description": "Sparse learning library implementing sparse momentum for training sparse neural networks. 385 stars.",
+      "url": "https://github.com/TimDettmers/sparse_learning"
+    }
+  ],
+  "quotes": [
+    {
+      "text": "The thinking around AGI and superintelligence is not just optimistic, but fundamentally flawed.",
+      "source": "The Register interview (Dec 2025)",
+      "url": "https://www.theregister.com/2025/12/11/ai_superintelligence_fantasy/"
+    },
+    {
+      "text": "We have maybe one, maybe two more years of scaling left before further improvements become physically infeasible.",
+      "source": "The Register interview (Dec 2025)",
+      "url": "https://www.theregister.com/2025/12/11/ai_superintelligence_fantasy/"
+    },
+    {
+      "text": "Sometimes constraints force you to find simpler solutions -- and sometimes those solutions turn out to be better.",
+      "source": "Building SERA blog post (Jan 2026)",
+      "url": "https://timdettmers.com/2026/01/27/building-open-coding-agent-sera/"
+    },
+    {
+      "text": "Because our method is cheap, it opens coding agent research to everyone. You do not need large teams or thousands of dollars.",
+      "source": "Building SERA blog post (Jan 2026)",
+      "url": "https://timdettmers.com/2026/01/27/building-open-coding-agent-sera/"
+    },
+    {
+      "text": "Switching fields from one that you are well established in to something completely new is probably one of the hardest things you can do in research.",
+      "source": "Building SERA blog post (Jan 2026)",
+      "url": "https://timdettmers.com/2026/01/27/building-open-coding-agent-sera/"
+    },
+    {
+      "text": "I made much more progress with less compute.",
+      "source": "Interconnects interview",
+      "url": "https://www.interconnects.ai/p/tim-dettmers"
+    },
+    {
+      "text": "Constraints give you creativity.",
+      "source": "Interconnects interview",
+      "url": "https://www.interconnects.ai/p/tim-dettmers"
+    },
+    {
+      "text": "Open source can be competitive and might actually overtake closed source APIs.",
+      "source": "Interconnects interview",
+      "url": "https://www.interconnects.ai/p/tim-dettmers"
+    }
+  ],
+  "social": {
+    "github": "https://github.com/TimDettmers",
+    "twitter": "https://x.com/Tim_Dettmers",
+    "website": "https://timdettmers.com",
+    "google_scholar": "https://scholar.google.com/citations?user=lHI3w5kAAAAJ",
+    "cmu_profile": "https://csd.cmu.edu/people/faculty/tim-dettmers",
+    "ai2_profile": "https://ai2050.schmidtsciences.org/fellow/tim-dettmers/"
+  },
+  "sources": [
+    {
+      "title": "About Me -- Tim Dettmers (personal website)",
+      "url": "https://timdettmers.com/about/"
+    },
+    {
+      "title": "Tim Dettmers -- CMU Faculty Profile",
+      "url": "https://csd.cmu.edu/people/faculty/tim-dettmers"
+    },
+    {
+      "title": "TimDettmers on GitHub (59 repos, 1.4K followers)",
+      "url": "https://github.com/TimDettmers"
+    },
+    {
+      "title": "bitsandbytes-foundation/bitsandbytes on GitHub (8K+ stars)",
+      "url": "https://github.com/bitsandbytes-foundation/bitsandbytes"
+    },
+    {
+      "title": "QLoRA: Efficient Finetuning of Quantized LLMs (arXiv 2305.14314)",
+      "url": "https://arxiv.org/abs/2305.14314"
+    },
+    {
+      "title": "QLoRA NeurIPS 2023 proceedings",
+      "url": "https://proceedings.neurips.cc/paper_files/paper/2023/file/1feb87871436031bdc0f2beaa62a049b-Paper-Conference.pdf"
+    },
+    {
+      "title": "SERA: Soft-Verified Efficient Repository Agents (arXiv 2601.20789)",
+      "url": "https://arxiv.org/abs/2601.20789"
+    },
+    {
+      "title": "Interviewing Tim Dettmers on open-source AI (Interconnects)",
+      "url": "https://www.interconnects.ai/p/tim-dettmers"
+    },
+    {
+      "title": "Ai2's Tim Dettmers: AGI is a fantasy (The Register)",
+      "url": "https://www.theregister.com/2025/12/11/ai_superintelligence_fantasy/"
+    },
+    {
+      "title": "Dettmers Receives Google ML and Systems Junior Faculty Award (CMU)",
+      "url": "https://csd.cmu.edu/news/dettmers-receives-google-ml-and-systems-junior-faculty-award"
+    },
+    {
+      "title": "Tim Dettmers & Aviral Kumar Named AI2050 Early Career Fellows (CMU)",
+      "url": "https://www.csd.cmu.edu/news/tim-dettmers-aviral-kumar-named-ai2050-early-career-fellows"
+    },
+    {
+      "title": "My Journey Towards Coding Agents: Building SERA (blog)",
+      "url": "https://timdettmers.com/2026/01/27/building-open-coding-agent-sera/"
+    },
+    {
+      "title": "Tim Dettmers on Google Scholar",
+      "url": "https://scholar.google.com/citations?user=lHI3w5kAAAAJ"
+    },
+    {
+      "title": "Making LLMs accessible with bitsandbytes and QLoRA (Hugging Face blog)",
+      "url": "https://huggingface.co/blog/4bit-transformers-bitsandbytes"
+    },
+    {
+      "title": "Open Coding Agents (Ai2 blog)",
+      "url": "https://allenai.org/blog/open-coding-agents"
+    }
+  ]
+}

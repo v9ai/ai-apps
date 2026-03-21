@@ -26,7 +26,7 @@ const personality: Personality = {
       date: "2025-04-10",
     },
   ],
-  knownFor: "MoE",
+  knownFor: "Moonshot AI",
 };
 
 export default personality;

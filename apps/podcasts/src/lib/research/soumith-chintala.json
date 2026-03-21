@@ -1,0 +1,183 @@
+{
+  "slug": "soumith-chintala",
+  "name": "Soumith Chintala",
+  "generated_at": "2026-03-19",
+  "bio": "Soumith Chintala is an Indian-American AI researcher and engineer best known as the co-creator and long-time lead of PyTorch, the open-source deep learning framework that powers the majority of the world's AI research and production systems. He spent eleven years at Meta (formerly Facebook) AI Research (FAIR), where he rose to VP of AI Infrastructure and contributed to foundational work on GANs, StarCraft AI, and large-scale computing clusters. After leaving Meta in November 2025, he was appointed CTO of Thinking Machines Lab, the AI startup co-founded by former OpenAI executive Mira Murati. Chintala studied at Vellore Institute of Technology (VIT) in India before earning his MS in Computer Science at NYU under the mentorship of Yann LeCun.",
+  "topics": [
+    "PyTorch",
+    "Deep Learning Frameworks",
+    "Generative Adversarial Networks (GANs)",
+    "Open Source AI",
+    "AI Infrastructure at Scale",
+    "GPU Computing & Resource Allocation",
+    "Robotics",
+    "AI Democratization",
+    "Meta FAIR Research",
+    "Foundation Models",
+    "Synthetic Data",
+    "AI Governance & Trust"
+  ],
+  "timeline": [
+    {
+      "date": "2026-01",
+      "event": "Appointed CTO of Thinking Machines Lab, co-founded by Mira Murati, replacing Barret Zoph",
+      "url": "https://americanbazaaronline.com/2026/01/16/soumith-chintala-joins-thinking-machine-labs-as-cto-473408/"
+    },
+    {
+      "date": "2025-11",
+      "event": "Left Meta and stepped down from PyTorch leadership after 11 years",
+      "url": "https://soumith.ch/blog/2025-11-06-leaving-meta-and-pytorch.md.html"
+    },
+    {
+      "date": "2024-08",
+      "event": "Confirmed PyTorch leadership transition readiness during parental leave",
+      "url": "https://soumith.ch/blog/2025-11-06-leaving-meta-and-pytorch.md.html"
+    },
+    {
+      "date": "2020",
+      "event": "Took hiatus from PyTorch to pursue robotics research at Meta before returning",
+      "url": "https://soumith.ch/blog/2025-11-06-leaving-meta-and-pytorch.md.html"
+    },
+    {
+      "date": "2017-01",
+      "event": "Co-authored Wasserstein GAN paper with Martin Arjovsky and Leon Bottou (ICML 2017)",
+      "url": "https://arxiv.org/abs/1701.07875"
+    },
+    {
+      "date": "2016",
+      "event": "Public release of PyTorch, which grew to dominate AI research and production",
+      "url": "https://pytorch.org/"
+    },
+    {
+      "date": "2015-11",
+      "event": "Co-authored DCGAN paper with Alec Radford and Luke Metz, advancing generative image models",
+      "url": "https://arxiv.org/abs/1511.06434"
+    },
+    {
+      "date": "2014-05",
+      "event": "Joined Facebook AI Research (FAIR) as a founding member of the small early team",
+      "url": "https://soumith.ch/"
+    },
+    {
+      "date": "2012",
+      "event": "Began doctoral studies in Computer Science at NYU under Yann LeCun's mentorship",
+      "url": "https://scholar.google.com/citations?user=36ofBJgAAAAJ&hl=en"
+    },
+    {
+      "date": "2010",
+      "event": "Enrolled at New York University for MS in Computer Science after moving to the US on a J-1 visa",
+      "url": "https://www.indianewsnetwork.com/en/soumith-chintala-tier-2-college-ai-leader-meta-20251115"
+    }
+  ],
+  "key_contributions": [
+    {
+      "title": "PyTorch",
+      "description": "Co-created and led the PyTorch deep learning framework for nearly eight years, growing it from a research tool to the dominant platform powering AI research and production at hundreds of companies, research labs, and educational institutions worldwide.",
+      "url": "https://pytorch.org/"
+    },
+    {
+      "title": "Wasserstein GAN (WGAN)",
+      "description": "Co-authored the seminal paper introducing Wasserstein distance as a training objective for GANs, solving mode collapse and training instability issues. Published at ICML 2017.",
+      "url": "https://arxiv.org/abs/1701.07875"
+    },
+    {
+      "title": "DCGAN (Deep Convolutional GAN)",
+      "description": "Co-authored the paper on unsupervised representation learning with deep convolutional GANs, one of the most cited works in generative modeling, establishing architectural guidelines for stable GAN training.",
+      "url": "https://arxiv.org/abs/1511.06434"
+    },
+    {
+      "title": "FAIR Computing Infrastructure",
+      "description": "Built the first FAIR computing cluster and contributed to scaling Meta's AI infrastructure to 600K+ H100-equivalent GPUs, enabling training of Llama and other foundation models.",
+      "url": "https://soumith.ch/"
+    },
+    {
+      "title": "Open Source AI Advocacy",
+      "description": "Championed open-source AI at Meta with the philosophy 'if it helps the world, it probably helps us,' answering thousands of community questions on PyTorch and Torch forums and advocating for a centralized feedback system for open-source models.",
+      "url": "https://www.latent.space/p/soumith"
+    }
+  ],
+  "quotes": [
+    {
+      "text": "I needed to do something small again. I couldn't live with the counterfactual regret of never trying something outside Meta.",
+      "source": "Leaving Meta and PyTorch blog post",
+      "url": "https://soumith.ch/blog/2025-11-06-leaving-meta-and-pytorch.md.html"
+    },
+    {
+      "text": "I probably have one of the AI industry's most leveraged seats... This kind of power is really hard to give up.",
+      "source": "Leaving Meta and PyTorch blog post",
+      "url": "https://soumith.ch/blog/2025-11-06-leaving-meta-and-pytorch.md.html"
+    },
+    {
+      "text": "Closed AI rate-limits against people's imaginations and needs.",
+      "source": "Latent Space podcast interview",
+      "url": "https://www.latent.space/p/soumith"
+    },
+    {
+      "text": "I grew up in India... knowledge was centralized, but open source helped me learn faster for zero dollars.",
+      "source": "Latent Space podcast interview",
+      "url": "https://www.latent.space/p/soumith"
+    },
+    {
+      "text": "I don't want to be like Guido or Linus -- bound to a single thing for decades.",
+      "source": "Farewell statement on leaving Meta",
+      "url": "https://eu.36kr.com/en/p/3542919734800265"
+    },
+    {
+      "text": "Keeping close to the grassroots is really important to build great products and organizations.",
+      "source": "Gradient Dissent podcast with W&B",
+      "url": "https://wandb.ai/site/resources/podcast/episodes/exploring-pytorch-and-open-source-communities-with-soumith-chintala-vp-fellow-of-meta-co-creator-of-pytorch/"
+    }
+  ],
+  "social": {
+    "github": "https://github.com/soumith",
+    "twitter": "https://x.com/soumithchintala",
+    "website": "https://soumith.ch/",
+    "scholar": "https://scholar.google.com/citations?user=36ofBJgAAAAJ&hl=en"
+  },
+  "sources": [
+    {
+      "title": "Soumith Chintala - Personal Website",
+      "url": "https://soumith.ch/"
+    },
+    {
+      "title": "Leaving Meta and PyTorch - Blog Post (Nov 2025)",
+      "url": "https://soumith.ch/blog/2025-11-06-leaving-meta-and-pytorch.md.html"
+    },
+    {
+      "title": "Open Source AI is AI we can Trust - Latent Space Podcast",
+      "url": "https://www.latent.space/p/soumith"
+    },
+    {
+      "title": "Soumith Chintala: PyTorch - The Gradient Podcast",
+      "url": "https://thegradientpub.substack.com/p/soumith-chintala-pytorch"
+    },
+    {
+      "title": "Exploring PyTorch and Open-Source Communities - Gradient Dissent / W&B",
+      "url": "https://wandb.ai/site/resources/podcast/episodes/exploring-pytorch-and-open-source-communities-with-soumith-chintala-vp-fellow-of-meta-co-creator-of-pytorch/"
+    },
+    {
+      "title": "Soumith Chintala: From Tier 2 College to AI Leader at Meta",
+      "url": "https://www.indianewsnetwork.com/en/soumith-chintala-tier-2-college-ai-leader-meta-20251115"
+    },
+    {
+      "title": "Soumith Chintala joins Thinking Machine Labs as CTO",
+      "url": "https://americanbazaaronline.com/2026/01/16/soumith-chintala-joins-thinking-machine-labs-as-cto-473408/"
+    },
+    {
+      "title": "Mira Murati announces Soumith Chintala as CTO of Thinking Machines",
+      "url": "https://x.com/miramurati/status/2011577319295692801"
+    },
+    {
+      "title": "Soumith Chintala on Google Scholar",
+      "url": "https://scholar.google.com/citations?user=36ofBJgAAAAJ&hl=en"
+    },
+    {
+      "title": "Wasserstein GAN (arXiv:1701.07875)",
+      "url": "https://arxiv.org/abs/1701.07875"
+    },
+    {
+      "title": "DCGAN - Unsupervised Representation Learning with Deep Convolutional GANs (arXiv:1511.06434)",
+      "url": "https://arxiv.org/abs/1511.06434"
+    }
+  ]
+}

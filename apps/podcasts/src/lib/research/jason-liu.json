@@ -1,0 +1,196 @@
+{
+  "slug": "jason-liu",
+  "name": "Jason Liu",
+  "generated_at": "2026-03-19T21:00:00+00:00",
+  "bio": "Jason Liu is a staff-level machine learning engineer, angel investor, a16z scout, and the creator of Instructor, a Python library for structured outputs from LLMs with 12,500+ GitHub stars and 6M+ monthly downloads. The OpenAI team cited Instructor as direct inspiration for their native structured output feature. Liu studied Computational Mathematics & Statistics at the University of Waterloo (2012-2017). He worked as a Data Scientist at Meta (Facebook) in 2017 on content detection algorithms at 2B+ user scale, then spent five years as a Staff ML Engineer at Stitch Fix (2018-2023), where he led a team of 6-7 engineers building multimodal embedding systems and created the Flight framework processing 350M+ daily requests. In 2023 he founded 567 Studios, a solo AI consulting practice advising seed-to-Series B startups including Zapier, HubSpot, Limitless AI, Weights & Biases, Modal Labs, Timescale, and Pydantic. He ran cohort-based training programs on Maven with students from OpenAI, Anthropic, Google, Microsoft, Amazon, and McKinsey. In February 2026 he sunset 567 Labs and open-sourced all course content. He is based in New York.",
+  "topics": [
+    "Structured LLM Outputs",
+    "Pydantic Integration",
+    "RAG Systems",
+    "Context Engineering",
+    "AI Consulting",
+    "Multimodal Embeddings",
+    "Evaluation Frameworks",
+    "Function Calling",
+    "Open Source",
+    "AI Engineering Education"
+  ],
+  "timeline": [
+    {
+      "date": "2012",
+      "event": "Enrolled at University of Waterloo, Computational Mathematics & Statistics",
+      "url": "https://jxnl.co/resume/"
+    },
+    {
+      "date": "2017",
+      "event": "Data Scientist at Meta (Facebook), building content detection algorithms at 2B+ user scale",
+      "url": "https://jxnl.co/resume/"
+    },
+    {
+      "date": "2018",
+      "event": "Joined Stitch Fix as Staff ML Engineer; led multimodal AI and search team (6-7 engineers)",
+      "url": "https://jxnl.co/resume/"
+    },
+    {
+      "date": "2023-06-14",
+      "event": "Open-sourced Instructor (originally 'OpenAI Function Call and Pydantic Integration Module') on GitHub",
+      "url": "https://github.com/567-labs/instructor"
+    },
+    {
+      "date": "2023",
+      "event": "Left Stitch Fix; founded 567 Studios as an independent AI consultant",
+      "url": "https://jxnl.co/"
+    },
+    {
+      "date": "2024-04-19",
+      "event": "Appeared on Latent Space podcast: 'High Agency Pydantic > VC Backed Frameworks'",
+      "url": "https://www.latent.space/p/instructor"
+    },
+    {
+      "date": "2024-06-10",
+      "event": "Appeared on devtools.fm podcast: 'Instructor, Shipping LLMs to Production'",
+      "url": "https://www.devtools.fm/episode/102"
+    },
+    {
+      "date": "2024",
+      "event": "Appeared on Weaviate Podcast #88 discussing Instructor and AI consulting",
+      "url": "https://videohighlight.com/v/higlHgYDc5E"
+    },
+    {
+      "date": "2024-08",
+      "event": "OpenAI launched native structured outputs, citing Instructor as inspiration",
+      "url": "https://openai.com/index/introducing-structured-outputs-in-the-api/"
+    },
+    {
+      "date": "2024",
+      "event": "Launched Maven course 'Systematically Improving RAG Applications' (6-week cohort-based)",
+      "url": "https://maven.com/applied-llms/rag-playbook"
+    },
+    {
+      "date": "2025",
+      "event": "Instructor surpassed 6M+ monthly PyPI downloads and 12,000+ GitHub stars",
+      "url": "https://pypi.org/project/instructor/"
+    },
+    {
+      "date": "2026-02-02",
+      "event": "Sunset 567 Labs; open-sourced all course content (RAG Playbook + Consulting Archive)",
+      "url": "https://jxnl.co/writing/2026/02/02/sunsetting-567-labs/"
+    }
+  ],
+  "key_contributions": [
+    {
+      "title": "Instructor",
+      "description": "Python library for structured outputs from LLMs, patching provider SDKs to return Pydantic models. 12,500+ GitHub stars, 6M+ monthly downloads, cited by OpenAI as inspiration for their structured output feature.",
+      "url": "https://github.com/567-labs/instructor"
+    },
+    {
+      "title": "Instructor JS/TS",
+      "description": "TypeScript port of Instructor for structured extraction from LLMs in the JavaScript ecosystem.",
+      "url": "https://github.com/567-labs/instructor-js"
+    },
+    {
+      "title": "Flight Framework (Stitch Fix)",
+      "description": "Internal ML pipeline framework at Stitch Fix processing 350M+ daily requests with 80% internal adoption, serving as a semantic bridge integrating multiple systems.",
+      "url": "https://jxnl.co/resume/"
+    },
+    {
+      "title": "Systematically Improving RAG (Maven Course)",
+      "description": "6-week hands-on course covering synthetic evaluation, embedding fine-tuning for 20-40% gains, query segmentation, and multimodal indices. Students from OpenAI, Anthropic, Google, Microsoft, Amazon.",
+      "url": "https://maven.com/applied-llms/rag-playbook"
+    },
+    {
+      "title": "567 Labs Open-Source Course Archive",
+      "description": "Open-sourced written content from RAG Playbook and Consulting courses as freely available ebooks after sunsetting 567 Labs.",
+      "url": "https://jxnl.co/writing/2026/02/02/sunsetting-567-labs/"
+    },
+    {
+      "title": "Context Engineering for RAG",
+      "description": "Prolific writing on building better agentic RAG systems, evaluation frameworks, and practical AI engineering patterns.",
+      "url": "https://jxnl.co/writing/category/rag/"
+    }
+  ],
+  "quotes": [
+    {
+      "text": "It's just Python, right? Like, if you're going to use the LLM SDKs, you're obviously going to install instructor.",
+      "source": "Latent Space podcast, Apr 2024",
+      "url": "https://www.latent.space/p/instructor"
+    },
+    {
+      "text": "Really, I care a lot more than just the fact that it is JSON. Function calling really shines when you can specify the schema.",
+      "source": "Latent Space podcast, Apr 2024",
+      "url": "https://www.latent.space/p/instructor"
+    },
+    {
+      "text": "I just don't think it's a billion dollar company. I think if I make a million dollars as a consultant, I'm super happy.",
+      "source": "Latent Space podcast, Apr 2024",
+      "url": "https://www.latent.space/p/instructor"
+    },
+    {
+      "text": "Agency is just a matter of having courage and doing the thing that's scary. The higher agency person just falls down and tries.",
+      "source": "Latent Space podcast, Apr 2024",
+      "url": "https://www.latent.space/p/instructor"
+    },
+    {
+      "text": "Most of the time you're not going to need someone writing PyTorch code. You're gonna need someone to write instructor code.",
+      "source": "Latent Space podcast, Apr 2024",
+      "url": "https://www.latent.space/p/instructor"
+    }
+  ],
+  "social": {
+    "github": "https://github.com/jxnl",
+    "twitter": "https://x.com/jxnlco",
+    "linkedin": "https://www.linkedin.com/in/jxnlco",
+    "website": "https://jxnl.co/",
+    "blog": "https://jxnl.co/writing/"
+  },
+  "sources": [
+    {
+      "title": "Jason Liu - personal website & introductions",
+      "url": "https://jxnl.co/"
+    },
+    {
+      "title": "Jason Liu - Resume",
+      "url": "https://jxnl.co/resume/"
+    },
+    {
+      "title": "jxnl (Jason Liu) - GitHub profile",
+      "url": "https://github.com/jxnl"
+    },
+    {
+      "title": "Instructor - structured outputs for LLMs (GitHub)",
+      "url": "https://github.com/567-labs/instructor"
+    },
+    {
+      "title": "Instructor - Python documentation site",
+      "url": "https://python.useinstructor.com/"
+    },
+    {
+      "title": "High Agency Pydantic > VC Backed Frameworks - Latent Space podcast",
+      "url": "https://www.latent.space/p/instructor"
+    },
+    {
+      "title": "Jason Liu - Instructor, Shipping LLMs to Production - devtools.fm",
+      "url": "https://www.devtools.fm/episode/102"
+    },
+    {
+      "title": "Instructor with Jason Liu - Weaviate Podcast #88",
+      "url": "https://videohighlight.com/v/higlHgYDc5E"
+    },
+    {
+      "title": "Systematically Improving RAG Applications - Maven course",
+      "url": "https://maven.com/applied-llms/rag-playbook"
+    },
+    {
+      "title": "Sunsetting 567 Labs and Open Sourcing the Course Content",
+      "url": "https://jxnl.co/writing/2026/02/02/sunsetting-567-labs/"
+    },
+    {
+      "title": "Bridging Language Models with Python - Jason Liu on Medium",
+      "url": "https://medium.com/@jxnlco/bridging-language-model-with-python-with-instructor-pydantic-and-openais-function-calling-f32fb1cdb401"
+    },
+    {
+      "title": "Instructor on PyPI",
+      "url": "https://pypi.org/project/instructor/"
+    }
+  ]
+}

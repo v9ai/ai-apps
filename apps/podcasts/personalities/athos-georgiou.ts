@@ -33,7 +33,7 @@ const personality: Personality = {
       date: "2023-11-27",
     },
   ],
-  knownFor: "ColQwen",
+  knownFor: "AI Ethics",
 };
 
 export default personality;

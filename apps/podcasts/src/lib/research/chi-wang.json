@@ -1,0 +1,180 @@
+{
+  "slug": "chi-wang",
+  "name": "Chi Wang",
+  "generated_at": "2026-03-19T22:00:00+00:00",
+  "bio": "Chi Wang is a Senior Staff Research Scientist at Google DeepMind and the creator of AutoGen (now AG2) and FLAML. He spent a decade at Microsoft Research (2014-2024) as a Principal Researcher before departing in late 2024 to join DeepMind and fork AutoGen into the community-governed AG2 project. Wang earned his PhD in 2014 from the University of Illinois at Urbana-Champaign under Jiawei Han, winning the 2015 SIGKDD Dissertation Award for his work on mining latent entity structures from unstructured data. He holds a BS from Tsinghua University and was the first and only Illinois CS student to receive the Microsoft Research PhD Fellowship. His AutoGen paper (2308.08155) won Best Paper at the ICLR 2024 LLM Agents Workshop and was published at COLM 2024. AutoGen pioneered multi-agent conversation as a generic programming paradigm for agentic AI and has become one of the most widely used agent frameworks in production, with applications ranging from chip design at NVIDIA to scientific research. In July 2025 he launched MassGen, an open-source multi-agent scaling system enabling parallel intelligence sharing and consensus across agents.",
+  "topics": [
+    "multi-agent AI systems",
+    "agentic AI programming frameworks",
+    "automated machine learning (AutoML)",
+    "LLM application orchestration",
+    "cost-effective LLM inference optimization",
+    "knowledge mining from unstructured data",
+    "open-source AI infrastructure",
+    "agent evaluation and observability"
+  ],
+  "timeline": [
+    {
+      "date": "2014",
+      "event": "Completed PhD in Computer Science at UIUC under Jiawei Han, researching mining latent entity structures from unstructured data. Published ~30 papers during doctoral studies.",
+      "url": "https://siebelschool.illinois.edu/news/wang-wins-2015-sigkdd-dissertation-award-0"
+    },
+    {
+      "date": "2014",
+      "event": "Joined Microsoft Research in Redmond as a Researcher, developing algorithms to discover knowledge from unstructured data for enterprise applications.",
+      "url": "https://www.microsoft.com/en-us/research/people/chiw/selected-publications/"
+    },
+    {
+      "date": "2015-08",
+      "event": "Won the 2015 SIGKDD Dissertation Award — a highly competitive honor in data mining, machine learning, and data sciences.",
+      "url": "https://siebelschool.illinois.edu/news/wang-wins-2015-sigkdd-dissertation-award-0"
+    },
+    {
+      "date": "2019",
+      "event": "Began AutoML research at Microsoft Research, leading to the development of FLAML (Fast and Lightweight AutoML Library).",
+      "url": "https://microsoft.github.io/FLAML/docs/Research/"
+    },
+    {
+      "date": "2021",
+      "event": "Published the FLAML paper at MLSys 2021 with Qingyun Wu, Markus Weimer, and Erkang Zhu. FLAML adopted by Microsoft, Google, and Amazon for AutoML and hyperparameter optimization.",
+      "url": "https://arxiv.org/abs/1911.04706"
+    },
+    {
+      "date": "2023-03",
+      "event": "Published EcoOptiGen — a cost-effective hyperparameter optimization framework for LLM inference, integrated into FLAML.",
+      "url": "https://www.microsoft.com/en-us/research/publication/cost-effective-hyperparameter-optimization-for-large-language-model-generation-inference/"
+    },
+    {
+      "date": "2023-08",
+      "event": "Released the AutoGen paper (arXiv 2308.08155) with Qingyun Wu, Gagan Bansal, and collaborators — introducing multi-agent conversation as a programming paradigm for LLM applications.",
+      "url": "https://arxiv.org/abs/2308.08155"
+    },
+    {
+      "date": "2023-10",
+      "event": "AutoGen moved from FLAML to a standalone GitHub repository, rapidly gaining adoption as the leading open-source multi-agent framework.",
+      "url": "https://github.com/ag2ai/ag2"
+    },
+    {
+      "date": "2024-01",
+      "event": "Won Best Paper at the ICLR 2024 LLM Agents Workshop for the AutoGen paper. Named in TheSequence's top 5 AI papers of 2023 and the Open100 list.",
+      "url": "https://arxiv.org/abs/2308.08155"
+    },
+    {
+      "date": "2024-08",
+      "event": "AutoGen paper published at COLM 2024 conference. Framework demonstrated effectiveness across mathematics, coding, Q&A, supply-chain optimization, and entertainment domains.",
+      "url": "https://www.microsoft.com/en-us/research/publication/autogen-enabling-next-gen-llm-applications-via-multi-agent-conversation-framework/"
+    },
+    {
+      "date": "2024-10",
+      "event": "Gave lecture 'AutoGen: A Programming Framework for Agentic AI' at FER Zagreb, describing AutoGen as 'a pioneering attempt to solve the issue of generic programming for agentic AI.'",
+      "url": "https://www.fer.unizg.hr/en/news_insights?@=30ye2"
+    },
+    {
+      "date": "2024-11",
+      "event": "Departed Microsoft Research after 10 years. Forked AutoGen into AG2 (AutoGen 2.0) under community governance with co-creator Qingyun Wu. Joined Google DeepMind as Senior Staff Research Scientist.",
+      "url": "https://github.com/ag2ai/ag2"
+    },
+    {
+      "date": "2025-03",
+      "event": "Appeared on The Data Exchange podcast discussing AG2's roadmap, multi-agent evaluation, and real-world agentic applications including NVIDIA chip design (days to minutes) and SWE-Bench (~50% bug fix rate at ~$1/bug).",
+      "url": "https://thedataexchange.media/ag2/"
+    },
+    {
+      "date": "2025-07",
+      "event": "Launched MassGen — an open-source multi-agent scaling project enabling parallel intelligence sharing, iterative refinement, and consensus across agents.",
+      "url": "https://github.com/sonichi"
+    }
+  ],
+  "key_contributions": [
+    {
+      "title": "AutoGen / AG2 Framework",
+      "description": "Created AutoGen, the first truly generic multi-agent conversation framework for LLM applications, enabling developers to compose customizable agents that converse to accomplish tasks. After departing Microsoft, forked the project as AG2 under open community governance. The framework supports sequential chats, group chats, nested chats, swarm patterns, teachability, and captain agents. Won Best Paper at ICLR 2024 LLM Agents Workshop.",
+      "url": "https://github.com/ag2ai/ag2"
+    },
+    {
+      "title": "FLAML (Fast and Lightweight AutoML Library)",
+      "description": "Created FLAML, a widely adopted open-source AutoML library providing fast hyperparameter optimization with minimal computational overhead. Published at MLSys 2021. Used by Microsoft, Google, and Amazon. Served as the incubation ground for AutoGen's early development.",
+      "url": "https://github.com/microsoft/FLAML"
+    },
+    {
+      "title": "EcoOptiGen",
+      "description": "Developed a cost-effective hyperparameter optimization framework for LLM generation inference that tunes multiple parameters jointly (temperature, max tokens, number of responses, prompts) under budget constraints. Published in 2023 and integrated into FLAML.",
+      "url": "https://arxiv.org/abs/2303.04673"
+    },
+    {
+      "title": "MassGen",
+      "description": "Launched an open-source multi-agent scaling system (July 2025) enabling parallel intelligence sharing, iterative refinement, and consensus across agents. Supports diverse backends including open-source and proprietary models as well as multiple agent frameworks (AG2, LangGraph, Claude Code, smolagents).",
+      "url": "https://github.com/sonichi"
+    },
+    {
+      "title": "Mining Latent Entity Structures",
+      "description": "PhD dissertation at UIUC developing a comprehensive mining framework for extracting hierarchical topics, entity roles, and entity relations from unstructured text-rich heterogeneous information networks. Won the 2015 SIGKDD Dissertation Award. Published as a book with advisor Jiawei Han.",
+      "url": "https://siebelschool.illinois.edu/news/wang-wins-2015-sigkdd-dissertation-award-0"
+    }
+  ],
+  "quotes": [
+    {
+      "text": "AutoGen is a pioneering attempt to solve the issue of generic programming for agentic AI.",
+      "source": "FER Zagreb lecture, October 2024",
+      "url": "https://www.fer.unizg.hr/en/news_insights?@=30ye2"
+    },
+    {
+      "text": "An enormous difference in performance based on how you configure and use these models — performance ranged from 6% to 90%.",
+      "source": "The Data Exchange podcast, March 2025",
+      "url": "https://thedataexchange.media/ag2/"
+    },
+    {
+      "text": "Support the full development lifecycle — from prototyping to testing to production deployment, including observability, monitoring.",
+      "source": "The Data Exchange podcast, March 2025",
+      "url": "https://thedataexchange.media/ag2/"
+    }
+  ],
+  "social": {
+    "github": "https://github.com/sonichi",
+    "twitter": "https://x.com/Chi_Wang_",
+    "linkedin": "https://www.linkedin.com/in/chi-wang-autogen",
+    "scholar": "https://scholar.google.com/citations?user=IiSNwnAAAAAJ&hl=en"
+  },
+  "sources": [
+    {
+      "title": "AutoGen: Enabling Next-Gen LLM Applications via Multi-Agent Conversation — arXiv",
+      "url": "https://arxiv.org/abs/2308.08155"
+    },
+    {
+      "title": "AutoGen publication page — Microsoft Research",
+      "url": "https://www.microsoft.com/en-us/research/publication/autogen-enabling-next-gen-llm-applications-via-multi-agent-conversation-framework/"
+    },
+    {
+      "title": "AG2 (formerly AutoGen) GitHub Repository",
+      "url": "https://github.com/ag2ai/ag2"
+    },
+    {
+      "title": "FLAML: A Fast and Lightweight AutoML Library — arXiv",
+      "url": "https://arxiv.org/abs/1911.04706"
+    },
+    {
+      "title": "Cost-Effective Hyperparameter Optimization for LLM Generation Inference — Microsoft Research",
+      "url": "https://www.microsoft.com/en-us/research/publication/cost-effective-hyperparameter-optimization-for-large-language-model-generation-inference/"
+    },
+    {
+      "title": "Wang Wins 2015 SIGKDD Dissertation Award — Illinois CS",
+      "url": "https://siebelschool.illinois.edu/news/wang-wins-2015-sigkdd-dissertation-award-0"
+    },
+    {
+      "title": "Building the Operating System for AI Agents — The Data Exchange",
+      "url": "https://thedataexchange.media/ag2/"
+    },
+    {
+      "title": "What is AutoGen? — IBM",
+      "url": "https://www.ibm.com/think/topics/autogen"
+    },
+    {
+      "title": "FER hosts Chi Wang from Google DeepMind — University of Zagreb",
+      "url": "https://www.fer.unizg.hr/en/news_insights?@=30ye2"
+    },
+    {
+      "title": "Chi Wang GitHub Profile (sonichi)",
+      "url": "https://github.com/sonichi"
+    }
+  ]
+}

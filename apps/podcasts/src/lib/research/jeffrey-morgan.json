@@ -1,0 +1,246 @@
+{
+  "slug": "jeffrey-morgan",
+  "name": "Jeffrey Morgan",
+  "generated_at": "2026-03-19T12:00:00+00:00",
+  "bio": "Jeffrey Morgan is the Co-Founder and CEO of Ollama, the leading open-source platform for running large language models locally. Ollama's GitHub repository has amassed over 165,000 stars, making it one of the fastest-growing open-source projects in history and the winner of GitHub's inaugural Awesome AI Award in 2024. Before Ollama, Morgan co-founded Kitematic, a Mac tool for simplifying Docker container management that was acquired by Docker in March 2015. He then served as a Senior Engineer and Product Manager at Docker from 2014 to 2019. He subsequently co-founded Infra (2021-2023), an infrastructure access management startup. Morgan holds a Bachelor of Software Engineering from the University of Waterloo (2008-2013) and had early career stints at Google and Twitter. He co-founded Ollama in 2023 with Michael Chiang; the company graduated from Y Combinator's W21 batch and is headquartered in Palo Alto.",
+  "topics": [
+    "Local LLM Inference",
+    "Open-Source AI Infrastructure",
+    "Developer Tools for AI",
+    "Model Distribution & Packaging",
+    "On-Device AI & Privacy",
+    "Container & DevOps Tooling",
+    "CLI-First Developer Experience",
+    "Multi-GPU & Hardware Support",
+    "AI Democratization",
+    "Cloud-Local Hybrid AI"
+  ],
+  "timeline": [
+    {
+      "date": "2008",
+      "event": "Enrolled in Bachelor of Software Engineering at University of Waterloo",
+      "url": "https://uwaterloo.ca/software-engineering/"
+    },
+    {
+      "date": "2013",
+      "event": "Co-founded Kitematic, a Mac GUI for managing Docker containers, while at University of Waterloo",
+      "url": "https://uwaterloo.ca/engineering/news/software-startup-waterloo-engineering-roots-acquired-docker"
+    },
+    {
+      "date": "2015-03-12",
+      "event": "Kitematic acquired by Docker Inc.; the tool had garnered 2,600+ GitHub stars in six months",
+      "url": "https://techcrunch.com/2015/03/12/kitematic-founders-barely-two-years-out-of-college-sell-to-docker/"
+    },
+    {
+      "date": "2015",
+      "event": "Joined Docker Inc. as Senior Engineer and Product Manager following Kitematic acquisition",
+      "url": "https://www.linkedin.com/in/jmorganca/"
+    },
+    {
+      "date": "2019",
+      "event": "Left Docker after five years; contributed to Docker Toolbox and container developer experience",
+      "url": "https://www.linkedin.com/in/jmorganca/"
+    },
+    {
+      "date": "2021",
+      "event": "Co-founded Infra, an infrastructure access management startup focused on safe, automated provisioning",
+      "url": "https://www.crunchbase.com/person/jeffrey-morgan"
+    },
+    {
+      "date": "2023-08-01",
+      "event": "Launched Ollama publicly with initial support for Llama 2; first blog post 'Run Llama 2 uncensored locally'",
+      "url": "https://ollama.com/blog"
+    },
+    {
+      "date": "2023-08-24",
+      "event": "Added Code Llama support to Ollama, expanding local coding assistant capabilities",
+      "url": "https://ollama.com/blog"
+    },
+    {
+      "date": "2023-10-05",
+      "event": "Ollama released as an official Docker image, bridging containerization and local LLM inference",
+      "url": "https://ollama.com/blog"
+    },
+    {
+      "date": "2024-01-23",
+      "event": "Released official Ollama Python and JavaScript client libraries",
+      "url": "https://ollama.com/blog"
+    },
+    {
+      "date": "2024-02-08",
+      "event": "Shipped OpenAI API compatibility layer, enabling drop-in replacement for OpenAI-based applications",
+      "url": "https://ollama.com/blog"
+    },
+    {
+      "date": "2024-02-15",
+      "event": "Launched Windows preview, bringing Ollama to the Windows ecosystem",
+      "url": "https://ollama.com/blog"
+    },
+    {
+      "date": "2024-03-14",
+      "event": "Added AMD GPU support, expanding beyond NVIDIA-only hardware",
+      "url": "https://ollama.com/blog"
+    },
+    {
+      "date": "2024-04-08",
+      "event": "Introduced embedding model support for search and RAG applications",
+      "url": "https://ollama.com/blog"
+    },
+    {
+      "date": "2024-07-25",
+      "event": "Shipped tool/function calling support for Ollama models",
+      "url": "https://x.com/jmorgan/status/1816635634502586480"
+    },
+    {
+      "date": "2024-12-06",
+      "event": "Released structured outputs support, enabling JSON schema-constrained generation",
+      "url": "https://ollama.com/blog"
+    },
+    {
+      "date": "2024-12",
+      "event": "Ollama surpassed 105,000 GitHub stars (261% growth in 2024) and won GitHub's inaugural Awesome AI Award",
+      "url": "https://github.blog/news-insights/company-news/celebrating-the-github-awards-2024-recipients/"
+    },
+    {
+      "date": "2025-02-25",
+      "event": "Published 'Minions: where local and cloud LLMs meet' -- hybrid local-cloud inference paradigm",
+      "url": "https://ollama.com/blog"
+    },
+    {
+      "date": "2025-05-15",
+      "event": "Launched new engine for multimodal models, expanding beyond text to vision capabilities",
+      "url": "https://ollama.com/blog"
+    },
+    {
+      "date": "2025-09-19",
+      "event": "Introduced cloud models alongside local models, enabling seamless local-cloud switching",
+      "url": "https://ollama.com/blog"
+    },
+    {
+      "date": "2026-01-23",
+      "event": "Launched 'ollama launch' -- integrated agent runner for Claude Code and OpenClaw",
+      "url": "https://ollama.com/blog"
+    },
+    {
+      "date": "2026-03",
+      "event": "Ollama repository reaches 165,600+ GitHub stars; supports Kimi-K2.5, DeepSeek, Qwen, Gemma and dozens more model families",
+      "url": "https://github.com/ollama/ollama"
+    }
+  ],
+  "key_contributions": [
+    {
+      "title": "Ollama",
+      "description": "Open-source platform for running LLMs locally with a simple CLI (ollama run). 165,600+ GitHub stars, winner of GitHub's inaugural Awesome AI Award (2024). Supports dozens of model families including Llama, DeepSeek, Qwen, Gemma, Mistral, and more across macOS, Linux, and Windows.",
+      "url": "https://github.com/ollama/ollama"
+    },
+    {
+      "title": "Ollama Python Library",
+      "description": "Official Python client for the Ollama API, enabling programmatic access to local LLM inference. 9,600+ GitHub stars.",
+      "url": "https://github.com/ollama/ollama-python"
+    },
+    {
+      "title": "Ollama JavaScript Library",
+      "description": "Official JavaScript/TypeScript client for Ollama, powering web and Node.js integrations with local models. 4,070+ GitHub stars.",
+      "url": "https://github.com/ollama/ollama-js"
+    },
+    {
+      "title": "Kitematic (acquired by Docker)",
+      "description": "Mac GUI for managing Docker containers that reduced Docker setup from 30-60 minutes to a few minutes. Co-founded with Michael Chiang and Sean Li while at University of Waterloo. Acquired by Docker in March 2015.",
+      "url": "https://techcrunch.com/2015/03/12/kitematic-founders-barely-two-years-out-of-college-sell-to-docker/"
+    },
+    {
+      "title": "Infra",
+      "description": "Infrastructure access management platform for safe, consistent, and fully automated provisioning. Co-founded in 2021.",
+      "url": "https://www.crunchbase.com/person/jeffrey-morgan"
+    },
+    {
+      "title": "OpenAI API Compatibility Layer",
+      "description": "Drop-in API compatibility with OpenAI's chat completions format, allowing existing OpenAI-based applications to switch to local models with minimal code changes.",
+      "url": "https://ollama.com/blog"
+    },
+    {
+      "title": "Minions: Local-Cloud Hybrid Inference",
+      "description": "Research-driven approach combining local and cloud LLMs for privacy-preserving yet capable AI workflows, including the 'Secure Minions' extension.",
+      "url": "https://ollama.com/blog"
+    }
+  ],
+  "quotes": [
+    {
+      "text": "Get up and running with large language models.",
+      "source": "Ollama tagline / Y Combinator profile",
+      "url": "https://www.ycombinator.com/companies/ollama"
+    },
+    {
+      "text": "Building @ollama. Previously at @docker @twitter @google.",
+      "source": "GitHub bio",
+      "url": "https://github.com/jmorganca"
+    },
+    {
+      "text": "Ollama now supports tools!",
+      "source": "X/Twitter announcement of function calling support",
+      "url": "https://x.com/jmorgan/status/1816635634502586480"
+    },
+    {
+      "text": "ollama run deepseek-r1",
+      "source": "X/Twitter post demonstrating one-command local DeepSeek R1 inference",
+      "url": "https://x.com/jmorgan/status/1881428791064773003"
+    }
+  ],
+  "social": {
+    "github": "https://github.com/jmorganca",
+    "twitter": "https://x.com/jmorgan",
+    "linkedin": "https://www.linkedin.com/in/jmorganca/",
+    "website": "https://ollama.com",
+    "email": "jmorganca@gmail.com"
+  },
+  "sources": [
+    {
+      "title": "jmorganca (Jeffrey Morgan) - GitHub Profile",
+      "url": "https://github.com/jmorganca"
+    },
+    {
+      "title": "Ollama - Y Combinator Company Page",
+      "url": "https://www.ycombinator.com/companies/ollama"
+    },
+    {
+      "title": "Jeffrey Morgan - LinkedIn",
+      "url": "https://www.linkedin.com/in/jmorganca/"
+    },
+    {
+      "title": "Three 20-Somethings Sell College Project To Docker - TechCrunch",
+      "url": "https://techcrunch.com/2015/03/12/kitematic-founders-barely-two-years-out-of-college-sell-to-docker/"
+    },
+    {
+      "title": "Software startup with Waterloo Engineering roots acquired by Docker Inc. - University of Waterloo",
+      "url": "https://uwaterloo.ca/engineering/news/software-startup-waterloo-engineering-roots-acquired-docker"
+    },
+    {
+      "title": "Jeffrey Morgan - Crunchbase Person Profile",
+      "url": "https://www.crunchbase.com/person/jeffrey-morgan"
+    },
+    {
+      "title": "Celebrating the GitHub Awards 2024 recipients - GitHub Blog",
+      "url": "https://github.blog/news-insights/company-news/celebrating-the-github-awards-2024-recipients/"
+    },
+    {
+      "title": "The 20 hottest open source startups of 2024 - TechCrunch",
+      "url": "https://techcrunch.com/2025/03/22/the-20-hottest-open-source-startups-of-2024/"
+    },
+    {
+      "title": "Ollama Blog",
+      "url": "https://ollama.com/blog"
+    },
+    {
+      "title": "ollama/ollama - GitHub Repository (165k+ stars)",
+      "url": "https://github.com/ollama/ollama"
+    },
+    {
+      "title": "Jeffrey Morgan (@jmorgan) - X/Twitter",
+      "url": "https://x.com/jmorgan"
+    },
+    {
+      "title": "Top trending open-source startups in 2024 - Runa Capital ROSS Index",
+      "url": "https://runacap.com/ross-index/annual-2024/"
+    }
+  ]
+}

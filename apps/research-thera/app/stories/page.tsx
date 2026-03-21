@@ -132,13 +132,19 @@ const DynamicStoriesListContent = dynamic(
 );
 
 export default function StoriesPage() {
+  const router = useRouter();
   return (
     <AuthGate
       pageName="Stories"
       description="Your therapeutic stories are private. Sign in to read and listen to them."
     >
       <Flex direction="column" gap="4">
-        <Heading size={{ initial: "6", md: "8" }}>Stories</Heading>
+        <Flex justify="between" align="center">
+          <Heading size={{ initial: "6", md: "8" }}>Stories</Heading>
+          <Button onClick={() => router.push("/stories/new")}>
+            Generate Story
+          </Button>
+        </Flex>
         <DynamicStoriesListContent />
       </Flex>
     </AuthGate>

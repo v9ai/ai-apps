@@ -1,0 +1,192 @@
+{
+  "slug": "erik-bjareholt",
+  "name": "Erik Bjäreholt",
+  "generated_at": "2026-03-19T21:00:00+00:00",
+  "bio": "Erik Bjäreholt is a Swedish open-source developer, founder of Superuser Labs, and creator of ActivityWatch and gptme. He started building ActivityWatch in 2014 out of frustration with RescueTime's closed-source model, lack of privacy, and limited extensibility. The project grew into the most popular free and open-source automated time tracker, with 17,000+ GitHub stars, 400,000+ downloads, and citations in 50+ academic papers. In 2023 he created gptme, one of the earliest terminal-based AI agent CLIs (now 4,200+ stars), positioning it as an open-source alternative to Claude Code and Cursor Agents. He holds an MSc in Computer Science from Lund University (LTH), where his thesis classified developer brain activity using EEG combined with ActivityWatch data. He was the first hire at Lovable (formerly GPT Engineer) but left in 2024 to return to Superuser Labs full-time. He also maintains uniswap-python (a DeFi library), eeg-notebooks (democratizing cognitive neuroscience), and the resource page 'Are Copilots Local Yet?'. Based in Lund, Sweden, he is a vocal advocate for local-first software, privacy-first architecture, and the power of individual open-source contributors augmented by AI.",
+  "topics": [
+    "Open-Source Time Tracking",
+    "Privacy-First Software",
+    "AI Agents & CLI Tools",
+    "Local-First Architecture",
+    "Quantified Self",
+    "Brain-Computer Interfaces",
+    "LLM Copilots",
+    "Autonomous AI Agents",
+    "Algorithmic Trading & DeFi",
+    "Developer Productivity"
+  ],
+  "timeline": [
+    {
+      "date": "2012",
+      "event": "Built Algobit, an algorithmic trading system, while studying at Lund University",
+      "url": "https://github.com/ErikBjare"
+    },
+    {
+      "date": "2012-02-03",
+      "event": "Created GitHub account (ErikBjare), beginning a prolific open-source career",
+      "url": "https://github.com/ErikBjare"
+    },
+    {
+      "date": "2014",
+      "event": "Started building the first version of ActivityWatch, frustrated with RescueTime",
+      "url": "https://activitywatch.net/blog/activitywatch-vs-rescuetime/"
+    },
+    {
+      "date": "2016-04",
+      "event": "Rewrote ActivityWatch from scratch and published it on GitHub",
+      "url": "https://github.com/ActivityWatch/activitywatch"
+    },
+    {
+      "date": "2017",
+      "event": "Founded Superuser Labs (formally incorporated as Superuser Labs Lund AB in 2022)",
+      "url": "https://superuserlabs.org/"
+    },
+    {
+      "date": "2017",
+      "event": "Received Leapfrogs grant to support ActivityWatch development",
+      "url": "https://erik.bjareholt.com"
+    },
+    {
+      "date": "2021",
+      "event": "Completed MSc thesis at Lund University: Classifying brain activity using EEG and ActivityWatch",
+      "url": "https://www.researchgate.net/profile/Erik-Bjaereholt"
+    },
+    {
+      "date": "2021",
+      "event": "Received Uniswap grant for uniswap-python, a Python wrapper for Uniswap smart contracts",
+      "url": "https://github.com/ErikBjare/uniswap-python"
+    },
+    {
+      "date": "2023-03",
+      "event": "Created gptme, a terminal-based AI agent supporting GPT-4, Claude, and local models",
+      "url": "https://github.com/ErikBjare/gptme"
+    },
+    {
+      "date": "2023-07",
+      "event": "Published 'Are Copilots Local Yet?' — a curated survey of local LLM coding tools",
+      "url": "https://github.com/ErikBjare/are-copilots-local-yet"
+    },
+    {
+      "date": "2024",
+      "event": "Joined Lovable (formerly GPT Engineer) as first hire; later departed to focus on Superuser Labs",
+      "url": "https://lovable.dev/"
+    },
+    {
+      "date": "2025-12",
+      "event": "Released gptme v0.31.0: background jobs, form tool, cost tracking, content-addressable storage",
+      "url": "https://github.com/ErikBjare/gptme/releases"
+    },
+    {
+      "date": "2026-01",
+      "event": "Launched gptme-agent-template v0.4 with Bob reaching 1,000+ autonomous sessions",
+      "url": "https://github.com/ErikBjare/gptme"
+    }
+  ],
+  "key_contributions": [
+    {
+      "title": "ActivityWatch",
+      "description": "The best free and open-source automated time tracker. Cross-platform, extensible, and privacy-focused with 17,000+ GitHub stars, 400,000+ downloads, and 50+ academic citations.",
+      "url": "https://github.com/ActivityWatch/activitywatch"
+    },
+    {
+      "title": "gptme",
+      "description": "An open-source terminal-based AI agent that writes code, uses the terminal, browses the web, and supports vision. One of the earliest agent CLIs (Spring 2023), with 4,200+ GitHub stars.",
+      "url": "https://github.com/ErikBjare/gptme"
+    },
+    {
+      "title": "Are Copilots Local Yet?",
+      "description": "A curated resource tracking the frontier of local LLM copilots for code completion, project generation, and shell assistance. 590+ GitHub stars.",
+      "url": "https://github.com/ErikBjare/are-copilots-local-yet"
+    },
+    {
+      "title": "uniswap-python",
+      "description": "A Python wrapper for Uniswap DEX smart contracts, grant-funded by Uniswap, enabling programmatic DeFi trading.",
+      "url": "https://github.com/ErikBjare/uniswap-python"
+    },
+    {
+      "title": "eeg-notebooks",
+      "description": "Open-source neuroscience project democratizing cognitive neuroscience experiments using consumer EEG devices.",
+      "url": "https://github.com/NeuroTechX/eeg-notebooks"
+    },
+    {
+      "title": "Bob (gptme-agent-template)",
+      "description": "A 24/7 autonomous AI agent running on VM infrastructure, built on top of the gptme framework, with 1,000+ autonomous sessions completed.",
+      "url": "https://github.com/ErikBjare/gptme"
+    }
+  ],
+  "quotes": [
+    {
+      "text": "I started building ActivityWatch because I was frustrated with RescueTime.",
+      "source": "ActivityWatch blog: ActivityWatch vs RescueTime",
+      "url": "https://activitywatch.net/blog/activitywatch-vs-rescuetime/"
+    },
+    {
+      "text": "My data wasn't mine. RescueTime stores everything on their servers.",
+      "source": "ActivityWatch blog: ActivityWatch vs RescueTime",
+      "url": "https://activitywatch.net/blog/activitywatch-vs-rescuetime/"
+    },
+    {
+      "text": "A free, open-source, privacy-first time tracker that keeps your data on your device and lets you extend it however you want.",
+      "source": "ActivityWatch blog: ActivityWatch vs RescueTime",
+      "url": "https://activitywatch.net/blog/activitywatch-vs-rescuetime/"
+    },
+    {
+      "text": "It wasn't open source. When I found bugs — like Xbox controller input being tracked incorrectly — I couldn't fix them myself.",
+      "source": "ActivityWatch blog: ActivityWatch vs RescueTime",
+      "url": "https://activitywatch.net/blog/activitywatch-vs-rescuetime/"
+    }
+  ],
+  "social": {
+    "github": "https://github.com/ErikBjare",
+    "twitter": "https://x.com/ErikBjare",
+    "linkedin": "https://www.linkedin.com/in/erikbjareholt/",
+    "website": "https://erik.bjareholt.com",
+    "patreon": "https://www.patreon.com/erikbjare"
+  },
+  "sources": [
+    {
+      "title": "ErikBjare (Erik Bjäreholt) - GitHub Profile",
+      "url": "https://github.com/ErikBjare"
+    },
+    {
+      "title": "Erik Bjäreholt - Personal Website",
+      "url": "https://erik.bjareholt.com"
+    },
+    {
+      "title": "ActivityWatch vs RescueTime - Why I Built a Free Open-Source Alternative",
+      "url": "https://activitywatch.net/blog/activitywatch-vs-rescuetime/"
+    },
+    {
+      "title": "ActivityWatch - Official Website",
+      "url": "https://activitywatch.net/"
+    },
+    {
+      "title": "gptme - GitHub Repository",
+      "url": "https://github.com/ErikBjare/gptme"
+    },
+    {
+      "title": "Superuser Labs",
+      "url": "https://superuserlabs.org/"
+    },
+    {
+      "title": "Are Copilots Local Yet? - GitHub Repository",
+      "url": "https://github.com/ErikBjare/are-copilots-local-yet"
+    },
+    {
+      "title": "Erik Bjäreholt - ResearchGate Profile",
+      "url": "https://www.researchgate.net/profile/Erik-Bjaereholt"
+    },
+    {
+      "title": "A User's Guide to Erik Bjäreholt",
+      "url": "https://erik.bjareholt.com/wiki/user-guide/"
+    },
+    {
+      "title": "gptme - MIT AI Agent Index",
+      "url": "https://aiagentindex.mit.edu/gptme/"
+    },
+    {
+      "title": "Erik Bjäreholt - GitHub README Profile",
+      "url": "https://github.com/ErikBjare/ErikBjare"
+    }
+  ]
+}

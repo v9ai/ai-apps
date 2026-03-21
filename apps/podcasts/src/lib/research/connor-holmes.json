@@ -1,0 +1,194 @@
+{
+  "slug": "connor-holmes",
+  "name": "Connor Holmes",
+  "generated_at": "2026-03-19T23:00:00+00:00",
+  "bio": "Connor Holmes is a systems researcher specializing in high-performance GPU computing for deep learning training and inference. He holds a PhD in High Performance Computing and a BS in Electrical and Electronics Engineering, both from the Colorado School of Mines (2016-2022). During his PhD he published GRNN, a GPU-based RNN inference library achieving up to 17.5x speedups over CPU baselines, at EuroSys 2019. He joined Microsoft Research full-time in June 2022 after multiple internships (2019-2021) and became a core member of the DeepSpeed team, co-authoring key papers including DeepSpeed-FastGen (lead author), ZeRO++, DeepSpeed-Chat, Random-LTD, and the DeepSpeed4Science Initiative. His DeepSpeed-FastGen system introduced Dynamic SplitFuse, delivering up to 2.3x higher throughput and 3.7x lower tail latency for LLM serving. In December 2023 he moved to OpenAI as a researcher and became the Systems Lead for Sora, OpenAI's video generation model, where he has supported the launches of both Sora and Sora 2.",
+  "topics": [
+    "Distributed Training Systems",
+    "LLM Inference Optimization",
+    "GPU Kernel Engineering",
+    "Communication-Efficient Training (ZeRO++)",
+    "RLHF Training Systems",
+    "Video Generation Infrastructure",
+    "Token Dropping for Efficient Training",
+    "High-Performance RNN Inference",
+    "Quantization Kernels",
+    "Scientific AI Systems"
+  ],
+  "timeline": [
+    {
+      "date": "2016-08",
+      "event": "Began undergraduate and graduate studies in High Performance Computing at Colorado School of Mines",
+      "url": "https://cs.mines.edu/"
+    },
+    {
+      "date": "2019-02",
+      "event": "Started first internship at Microsoft, beginning a series of internships with the DeepSpeed team (Feb 2019 - Jul 2021)",
+      "url": "https://www.microsoft.com/en-us/research/project/deepspeed/"
+    },
+    {
+      "date": "2019-03",
+      "event": "Published GRNN: Low-Latency and Scalable RNN Inference on GPUs at EuroSys 2019 in Dresden, Germany, achieving up to 17.5x speedup over CPU and 9x over GPU baselines",
+      "url": "https://dl.acm.org/doi/abs/10.1145/3302424.3303949"
+    },
+    {
+      "date": "2022-05",
+      "event": "Completed PhD in High Performance Computing from Colorado School of Mines",
+      "url": "https://cs.mines.edu/"
+    },
+    {
+      "date": "2022-06",
+      "event": "Joined Microsoft Research full-time as a Researcher on the DeepSpeed team",
+      "url": "https://www.microsoft.com/en-us/research/project/deepspeed/"
+    },
+    {
+      "date": "2022-11",
+      "event": "Co-authored Random-LTD: Random and Layerwise Token Dropping Brings Efficient Training for Large-scale Transformers",
+      "url": "https://arxiv.org/abs/2211.11586"
+    },
+    {
+      "date": "2022-11",
+      "event": "Contributed Stable Diffusion inference enhancements to DeepSpeed via custom CUDA kernels",
+      "url": "https://github.com/microsoft/DeepSpeed/pull/2491"
+    },
+    {
+      "date": "2023-06",
+      "event": "Co-authored ZeRO++: Extremely Efficient Collective Communication for Giant Model Training, contributing high-performance quantization kernels that reduced communication volume by 4x",
+      "url": "https://arxiv.org/abs/2306.10209"
+    },
+    {
+      "date": "2023-08",
+      "event": "Co-authored DeepSpeed-Chat: Easy, Fast and Affordable RLHF Training of ChatGPT-like Models at All Scales",
+      "url": "https://arxiv.org/abs/2308.01320"
+    },
+    {
+      "date": "2023-10",
+      "event": "Co-authored DeepSpeed4Science Initiative: Enabling Large-Scale Scientific Discovery through Sophisticated AI System Technologies",
+      "url": "https://arxiv.org/abs/2310.04610"
+    },
+    {
+      "date": "2023-12",
+      "event": "Left Microsoft Research; joined OpenAI as a Researcher",
+      "url": "https://theorg.com/org/openai/org-chart/connor-holmes"
+    },
+    {
+      "date": "2024-01",
+      "event": "Published DeepSpeed-FastGen (lead author): introduced Dynamic SplitFuse for up to 2.3x higher throughput and 3.7x lower tail latency in LLM serving",
+      "url": "https://arxiv.org/abs/2401.08671"
+    },
+    {
+      "date": "2024-02",
+      "event": "Supported the launch of OpenAI Sora as Systems Lead, enabling up to 1-minute 1080p video generation",
+      "url": "https://x.com/cmikeh2/status/1758194214851264935"
+    },
+    {
+      "date": "2025-12",
+      "event": "Supported the launch of Sora 2 at OpenAI",
+      "url": "https://openai.com/index/sora-2/"
+    }
+  ],
+  "key_contributions": [
+    {
+      "title": "DeepSpeed-FastGen",
+      "description": "Lead author of DeepSpeed-FastGen, a high-throughput LLM text generation system combining DeepSpeed-MII and DeepSpeed-Inference. Introduced Dynamic SplitFuse, a novel prompt and generation composition strategy delivering up to 2.3x higher effective throughput, 2x lower average latency, and 3.7x lower tail latency compared to existing systems.",
+      "url": "https://arxiv.org/abs/2401.08671"
+    },
+    {
+      "title": "ZeRO++ Quantization Kernels",
+      "description": "Designed and implemented high-performance CUDA quantization kernels for ZeRO++, enabling 4x reduction in communication volume for distributed LLM training. The block-quantization approach was 3x more accurate and 5x faster than basic quantization, yielding up to 2.16x better throughput at 384 GPU scale.",
+      "url": "https://arxiv.org/abs/2306.10209"
+    },
+    {
+      "title": "DeepSpeed-Chat RLHF System",
+      "description": "Co-authored the DeepSpeed-Chat system that democratized RLHF training of ChatGPT-like models at all scales, combining training and inference optimizations to enable training of models with hundreds of billions of parameters at a fraction of the cost.",
+      "url": "https://arxiv.org/abs/2308.01320"
+    },
+    {
+      "title": "GRNN: GPU-Based RNN Inference Library",
+      "description": "Created GRNN during his PhD at Colorado School of Mines, a CUDA library for low-latency, scalable RNN inference on GPUs. Achieved up to 17.5x speedup over state-of-the-art CPU inference and 9x over GPU inference libraries through novel data reorganization, thread mapping, and performance modeling. Published at EuroSys 2019.",
+      "url": "https://github.com/cmikeh2/grnn"
+    },
+    {
+      "title": "OpenAI Sora Systems Infrastructure",
+      "description": "Served as Systems Lead for Sora at OpenAI, building the systems infrastructure enabling generation of up to 1-minute 1080p videos. Supported the launches of both Sora (Feb 2024) and Sora 2 (Dec 2025).",
+      "url": "https://openai.com/index/sora-2/"
+    },
+    {
+      "title": "DeepSpeed4Science Initiative",
+      "description": "Co-authored the DeepSpeed4Science initiative enabling large-scale scientific discovery, addressing challenges like memory explosion in protein-structure prediction (Evoformer) and very-long sequence support for virus evolutionary landscape modeling.",
+      "url": "https://arxiv.org/abs/2310.04610"
+    }
+  ],
+  "quotes": [
+    {
+      "text": "Excited to share Sora today from @OpenAI !!! Sora can generate up to a minute of 1080p video. @_tim_brooks and @billpeeb have been pushing hard on this and it's been wonderful supporting their work!",
+      "source": "X (Twitter), Feb 2024",
+      "url": "https://x.com/cmikeh2/status/1758194214851264935"
+    },
+    {
+      "text": "So proud of @LiLiunian, @DmytroOk, Avi and the rest of the team. @billpeeb has an incredible vision. Best place to work in the world.",
+      "source": "X (Twitter), on Sora 2 launch",
+      "url": "https://x.com/cmikeh2/status/1973097704868749733"
+    }
+  ],
+  "social": {
+    "github": "https://github.com/cmikeh2",
+    "twitter": "https://x.com/cmikeh2",
+    "linkedin": "https://www.linkedin.com/in/connor-holmes-23a68b73/",
+    "scholar": "https://scholar.google.com/citations?user=Ju0qKrQAAAAJ&hl=en"
+  },
+  "sources": [
+    {
+      "title": "Connor Holmes GitHub Profile (cmikeh2)",
+      "url": "https://github.com/cmikeh2"
+    },
+    {
+      "title": "Connor Holmes on X (@cmikeh2)",
+      "url": "https://x.com/cmikeh2"
+    },
+    {
+      "title": "Connor Holmes - Researcher at OpenAI | The Org",
+      "url": "https://theorg.com/org/openai/org-chart/connor-holmes"
+    },
+    {
+      "title": "Connor Holmes - Google Scholar",
+      "url": "https://scholar.google.com/citations?user=Ju0qKrQAAAAJ&hl=en"
+    },
+    {
+      "title": "Connor Holmes' research works | ResearchGate",
+      "url": "https://www.researchgate.net/scientific-contributions/Connor-Holmes-2167379936"
+    },
+    {
+      "title": "DeepSpeed-FastGen: High-throughput Text Generation for LLMs via MII and DeepSpeed-Inference (arXiv)",
+      "url": "https://arxiv.org/abs/2401.08671"
+    },
+    {
+      "title": "ZeRO++: Extremely Efficient Collective Communication for Giant Model Training (arXiv)",
+      "url": "https://arxiv.org/abs/2306.10209"
+    },
+    {
+      "title": "DeepSpeed-Chat: Easy, Fast and Affordable RLHF Training (arXiv)",
+      "url": "https://arxiv.org/abs/2308.01320"
+    },
+    {
+      "title": "DeepSpeed4Science Initiative (arXiv)",
+      "url": "https://arxiv.org/abs/2310.04610"
+    },
+    {
+      "title": "Random-LTD: Random and Layerwise Token Dropping (arXiv)",
+      "url": "https://arxiv.org/abs/2211.11586"
+    },
+    {
+      "title": "GRNN: Low-Latency and Scalable RNN Inference on GPUs (ACM)",
+      "url": "https://dl.acm.org/doi/abs/10.1145/3302424.3303949"
+    },
+    {
+      "title": "DeepSpeed ZeRO++ Blog - Microsoft Research",
+      "url": "https://www.microsoft.com/en-us/research/blog/deepspeed-zero-a-leap-in-speed-for-llm-and-chat-model-training-with-4x-less-communication/"
+    },
+    {
+      "title": "DeepSpeed GitHub Repository",
+      "url": "https://github.com/deepspeedai/DeepSpeed"
+    }
+  ]
+}

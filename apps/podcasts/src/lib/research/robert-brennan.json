@@ -1,0 +1,201 @@
+{
+  "slug": "robert-brennan",
+  "name": "Robert Brennan",
+  "generated_at": "2026-03-19T21:00:00+00:00",
+  "bio": "Robert Brennan is the Co-Founder and CEO of All Hands AI, the company behind OpenHands (formerly OpenDevin), an open-source platform for AI-driven software development that has become the most popular open-source coding agent with 69,000+ GitHub stars. Brennan graduated from Columbia College and Columbia Engineering with degrees in Computer Science, Mathematics, and Linguistics. He began his career at Google as a senior software engineer focused on natural language processing, where he wrote an algorithm to extract answers to open-ended questions (e.g., 'Why is the sky blue?') that was incorporated into Google Search in August 2013, resulting in Patent US9940367B1. He subsequently co-founded DataFire.io (an open-source API integration platform) and LucyBot (automated API documentation deployed by Fortune 500 companies), before joining Fairwinds as VP of Product Development, where he conceptualized and built Fairwinds Insights, a Kubernetes auditing platform. In March 2024, inspired by Cognition's Devin demo, he co-founded All Hands AI alongside Graham Neubig (CMU professor, chief scientist) and Xingyao Wang (chief AI officer) to build OpenHands in the open. The company raised a $5M seed round led by Menlo Ventures in September 2024, and has grown to approximately 30 people with over $20M raised. OpenHands reached #1 on the SWE-bench Verified leaderboard in November 2025 and its foundational paper was published at ICLR 2025. He is based in Boston, Massachusetts.",
+  "topics": [
+    "AI Coding Agents",
+    "Open Source AI",
+    "Software Engineering Automation",
+    "SWE-bench Benchmarking",
+    "Agentic Workflows",
+    "Natural Language Processing",
+    "Developer Tools",
+    "Kubernetes Infrastructure",
+    "Inference-Time Scaling",
+    "Agent Architecture"
+  ],
+  "timeline": [
+    {
+      "date": "2013-08",
+      "event": "Algorithm for extracting answers to open-ended questions incorporated into Google Search (Patent US9940367B1)",
+      "url": "https://patents.google.com/patent/US9940367B1"
+    },
+    {
+      "date": "2017",
+      "event": "Co-founded DataFire.io, an open-source platform for building APIs and integrations",
+      "url": "https://github.com/DataFire/DataFire"
+    },
+    {
+      "date": "2020",
+      "event": "Joined Fairwinds as VP of Product Development; conceptualized and built Fairwinds Insights (Kubernetes auditing platform)",
+      "url": "https://www.fairwinds.com/insights"
+    },
+    {
+      "date": "2024-03-13",
+      "event": "Co-founded All Hands AI; launched OpenDevin (later renamed OpenHands) as an open-source coding agent platform",
+      "url": "https://github.com/All-Hands-AI/OpenHands"
+    },
+    {
+      "date": "2024-07-23",
+      "event": "Published OpenHands paper on arXiv (2407.16741) describing the open platform for AI software developers",
+      "url": "https://arxiv.org/abs/2407.16741"
+    },
+    {
+      "date": "2024-09-05",
+      "event": "All Hands AI raised $5M seed round led by Menlo Ventures, with Pillar VC, Betaworks, and Rebellion",
+      "url": "https://techcrunch.com/2024/09/05/all-hands-ai-raises-5m-to-build-open-source-agents-for-developers/"
+    },
+    {
+      "date": "2025-01",
+      "event": "Appeared on Practical AI podcast: Open source AI to tackle your backlog",
+      "url": "https://practicalai.fm/310/transcript"
+    },
+    {
+      "date": "2025-06",
+      "event": "Speaker at QCon AI New York 2025",
+      "url": "https://ai.qconferences.com/speakers/robertopenhandsdev"
+    },
+    {
+      "date": "2025-11-12",
+      "event": "OpenHands achieved #1 on SWE-bench Verified leaderboard with inference-time scaling and critic model, solving 53% of Verified set",
+      "url": "https://openhands.dev/blog/sota-on-swe-bench-verified-with-inference-time-scaling-and-critic-model"
+    },
+    {
+      "date": "2025-11-12",
+      "event": "Published 'One Year of OpenHands' retrospective: 50K+ GitHub stars, 250+ contributors, 3,500+ commits",
+      "url": "https://openhands.dev/blog/one-year-of-openhands-a-journey-of-open-source-ai-development"
+    },
+    {
+      "date": "2025-11",
+      "event": "Released OpenHands Software Agent SDK paper (arXiv 2511.03690) and OpenHands 1.0.0",
+      "url": "https://arxiv.org/abs/2511.03690"
+    },
+    {
+      "date": "2025",
+      "event": "OpenHands paper published as a conference paper at ICLR 2025",
+      "url": "https://openreview.net/forum?id=OJd3ayDDoF"
+    },
+    {
+      "date": "2026-01-20",
+      "event": "Appeared on Open Source Startup Podcast (Episode 190): Open Sourcing AI Coding Platform Devin to Create OpenHands",
+      "url": "https://ossstartuppodcast.substack.com/p/episode-190-open-sourcing-ai-coding"
+    }
+  ],
+  "key_contributions": [
+    {
+      "title": "OpenHands",
+      "description": "The most popular open-source AI coding agent platform with 69K+ GitHub stars. Provides a sandboxed environment where AI agents write code, run commands, and browse the web to solve software engineering tasks autonomously.",
+      "url": "https://github.com/All-Hands-AI/OpenHands"
+    },
+    {
+      "title": "SWE-bench #1 (Open Source)",
+      "description": "Led OpenHands to #1 on SWE-bench Verified leaderboard (53% resolve rate) using inference-time scaling and a critic model -- the only open-source agent in the top 10.",
+      "url": "https://openhands.dev/blog/sota-on-swe-bench-verified-with-inference-time-scaling-and-critic-model"
+    },
+    {
+      "title": "OpenHands Software Agent SDK",
+      "description": "A composable and extensible foundation for building production AI agents, enabling developers to create custom agents on top of the OpenHands runtime.",
+      "url": "https://github.com/OpenHands/software-agent-sdk"
+    },
+    {
+      "title": "Google Search Answer Extraction",
+      "description": "Authored the algorithm at Google for extracting answers to open-ended questions (Patent US9940367B1), incorporated into Google Search in 2013.",
+      "url": "https://patents.google.com/patent/US9940367B1"
+    },
+    {
+      "title": "Fairwinds Insights",
+      "description": "Conceptualized and built Fairwinds Insights, a Kubernetes auditing and governance platform used by enterprises to manage cluster security and compliance.",
+      "url": "https://www.fairwinds.com/insights"
+    },
+    {
+      "title": "DataFire",
+      "description": "Co-founded DataFire.io, an open-source platform for building APIs and integrations, enabling developers to connect hundreds of services.",
+      "url": "https://github.com/DataFire/DataFire"
+    }
+  ],
+  "quotes": [
+    {
+      "text": "The Cognition folks came out with their Devin demo and I -- and I think every other software engineer in the world -- was amazed at that video. It scared us that it was being developed as closed source and being kept in this walled garden we couldn't see and contribute to and really own as a development community.",
+      "source": "TechCrunch, Sep 2024",
+      "url": "https://techcrunch.com/2024/09/05/all-hands-ai-raises-5m-to-build-open-source-agents-for-developers/"
+    },
+    {
+      "text": "The collective intelligence of a global community, working in the open, will always outpace what can be accomplished behind closed doors.",
+      "source": "Substack: The Best AI Software Engineer is Open Source",
+      "url": "https://rbren.substack.com/p/the-best-ai-software-engineer-is"
+    },
+    {
+      "text": "The agent isn't always right. You do need to read its code and understand what it's trying to do... trust but verify.",
+      "source": "Practical AI podcast, 2025",
+      "url": "https://practicalai.fm/310/transcript"
+    },
+    {
+      "text": "We are really oriented towards senior engineers who are working on production grade code bases.",
+      "source": "Practical AI podcast, 2025",
+      "url": "https://practicalai.fm/310/transcript"
+    },
+    {
+      "text": "All the research we do and all the know-how for how the agents do as good a job as possible at solving software tasks, that should be open source. That should be available to every developer.",
+      "source": "TechCrunch, Sep 2024",
+      "url": "https://techcrunch.com/2024/09/05/all-hands-ai-raises-5m-to-build-open-source-agents-for-developers/"
+    }
+  ],
+  "social": {
+    "github": "https://github.com/rbren",
+    "twitter": "https://x.com/rbren_dev",
+    "linkedin": "https://www.linkedin.com/in/robert-a-brennan/",
+    "website": "https://rbren.io/",
+    "blog": "https://rbren.substack.com/"
+  },
+  "sources": [
+    {
+      "title": "Robert Brennan -- personal website",
+      "url": "https://rbren.io/"
+    },
+    {
+      "title": "About OpenHands | Our Mission, Team, and Community",
+      "url": "https://openhands.dev/about"
+    },
+    {
+      "title": "All Hands AI raises $5M (TechCrunch, Sep 2024)",
+      "url": "https://techcrunch.com/2024/09/05/all-hands-ai-raises-5m-to-build-open-source-agents-for-developers/"
+    },
+    {
+      "title": "OpenHands: An Open Platform for AI Software Developers (arXiv 2407.16741)",
+      "url": "https://arxiv.org/abs/2407.16741"
+    },
+    {
+      "title": "SOTA on SWE-Bench Verified with Inference-Time Scaling and Critic Model",
+      "url": "https://openhands.dev/blog/sota-on-swe-bench-verified-with-inference-time-scaling-and-critic-model"
+    },
+    {
+      "title": "One Year of OpenHands: A Journey of Open Source AI Development",
+      "url": "https://openhands.dev/blog/one-year-of-openhands-a-journey-of-open-source-ai-development"
+    },
+    {
+      "title": "The Best AI Software Engineer is Open Source -- Robert Brennan Substack",
+      "url": "https://rbren.substack.com/p/the-best-ai-software-engineer-is"
+    },
+    {
+      "title": "Practical AI #310: Open source AI to tackle your backlog (transcript)",
+      "url": "https://practicalai.fm/310/transcript"
+    },
+    {
+      "title": "ODSC Ai X Podcast: Open Agents with Robert Brennan",
+      "url": "https://creators.spotify.com/pod/show/ai-x-podcast/episodes/Open-Agents-Redefining-Software-Engineering-with-AI-with-Robert-Brennan-e2s8ft7"
+    },
+    {
+      "title": "Open Source Startup Podcast Ep 190: OpenHands",
+      "url": "https://ossstartuppodcast.substack.com/p/episode-190-open-sourcing-ai-coding"
+    },
+    {
+      "title": "Robert Brennan | QCon AI New York 2025",
+      "url": "https://ai.qconferences.com/speakers/robertopenhandsdev"
+    },
+    {
+      "title": "OpenHands ICLR 2025 paper (OpenReview)",
+      "url": "https://openreview.net/forum?id=OJd3ayDDoF"
+    }
+  ]
+}

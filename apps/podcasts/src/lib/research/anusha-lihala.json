@@ -1,0 +1,166 @@
+{
+  "slug": "anusha-lihala",
+  "name": "Anusha Lihala",
+  "generated_at": "2026-03-20T12:10:00+00:00",
+  "bio": "Anusha Lihala's career spans roles at Nihilent, Zamphyr, Koneksys, Microsoft, and LivePerson before joining Wellness Coach as an AI engineer. She holds an MS from Trinity College Dublin and a BCA from BIT Mesra. Her recent work focuses on combining graph databases with LLM orchestration frameworks, while her earlier writing in Towards Data Science explored attention mechanisms and explainable NLP. She has been an active open-source contributor since participating in the 1MillionWomenToTech Summer of Code in 2018.",
+  "executive_summary": {
+    "one_liner": "AI engineer bridging knowledge graphs, NLP, and computer vision across industry roles at LivePerson, Microsoft, and Wellness Coach.",
+    "key_facts": [
+      "Industry experience spanning Microsoft, LivePerson, and Wellness Coach",
+      "Published in Towards Data Science on attention, memory networks, and explainability",
+      "Builds GraphRAG pipelines combining ArangoDB with LangChain and LangGraph",
+      "MS from Trinity College Dublin, BCA from BIT Mesra"
+    ],
+    "career_arc": "Progressed from roles at Nihilent, Zamphyr, and Koneksys through Microsoft and LivePerson to AI engineering at Wellness Coach, while maintaining a parallel practice of technical writing and open-source contribution.",
+    "current_focus": "GraphRAG pipelines with knowledge graphs, AI agent development, and ML fundamentals education through technical writing.",
+    "confidence_level": "medium — limited public profile; career details sourced from LinkedIn/ZoomInfo summaries"
+  },
+  "topics": [
+    "GraphRAG & Knowledge Graphs",
+    "Computer Vision",
+    "Natural Language Processing",
+    "Explainable AI",
+    "Transfer Learning",
+    "LLM Orchestration",
+    "Ensemble Methods",
+    "ML Education"
+  ],
+  "timeline": [
+    {
+      "date": "2018",
+      "event": "Contributed to 1MillionWomenToTech Summer of Code, producing guides across Python, JavaScript, and data science",
+      "url": "https://github.com/anushalihala/SOC2018"
+    },
+    {
+      "date": "2018-06",
+      "event": "First Medium article: 'Regression Simplified' using the Feynman technique",
+      "url": "https://medium.com/@anusha.lihala/regression-simplified-an-explanation-using-the-feynman-technique-ffd304915aa7"
+    },
+    {
+      "date": "2019-03",
+      "event": "Published three articles in Towards Data Science on attention mechanisms, counterfactual explanations, and dynamic memory networks",
+      "url": "https://medium.com/data-science/attention-and-its-different-forms-7fc3674d14dc"
+    },
+    {
+      "date": "2024-12",
+      "event": "Resumed technical writing with articles on decision trees and ensemble methods",
+      "url": "https://medium.com/@anusha.lihala/decision-tree-theory-recap-79413e5ef35c"
+    },
+    {
+      "date": "2025-01",
+      "event": "Created SkillSync, an AI-powered skill assessment and career matching platform",
+      "url": "https://github.com/anushalihala/skillsync-be"
+    },
+    {
+      "date": "2025-03",
+      "event": "Built KnowledgeGraph-RAG: GraphRAG over location-based social media data using ArangoDB, LangChain, and LangGraph",
+      "url": "https://github.com/anushalihala/KnowledgeGraph-RAG"
+    }
+  ],
+  "key_contributions": [
+    {
+      "title": "KnowledgeGraph-RAG",
+      "description": "GraphRAG pipeline combining ArangoDB with LangChain and LangGraph for knowledge-graph-augmented retrieval over location-based social media data, using graph neural networks and networkx.",
+      "url": "https://github.com/anushalihala/KnowledgeGraph-RAG"
+    },
+    {
+      "title": "CNN & Transfer Learning Projects",
+      "description": "Convolutional neural networks built from scratch and an image classifier using PyTorch transfer learning — both pinned repositories demonstrating computer vision fundamentals.",
+      "url": "https://github.com/anushalihala"
+    },
+    {
+      "title": "SkillSync",
+      "description": "AI-powered platform for skill assessment and career matching using NLP and machine learning.",
+      "url": "https://github.com/anushalihala/skillsync-be"
+    },
+    {
+      "title": "Towards Data Science Writing",
+      "description": "Three articles (2019) making advanced NLP research accessible: attention mechanism forms, counterfactual document classification, and dynamic memory networks for question answering.",
+      "url": "https://medium.com/data-science/attention-and-its-different-forms-7fc3674d14dc"
+    }
+  ],
+  "quotes": [],
+  "social": {
+    "github": "https://github.com/anushalihala",
+    "medium": "https://medium.com/@anusha.lihala",
+    "linkedin": "https://in.linkedin.com/in/anusha-lihala"
+  },
+  "medium_articles": [
+    {
+      "title": "Regression Simplified: A Thorough Step by Step Guide",
+      "date": "2018-06",
+      "url": "https://medium.com/@anusha.lihala/regression-simplified-an-explanation-using-the-feynman-technique-ffd304915aa7",
+      "publication": "Medium"
+    },
+    {
+      "title": "Attention and its Different Forms",
+      "date": "2019-03",
+      "url": "https://medium.com/data-science/attention-and-its-different-forms-7fc3674d14dc",
+      "publication": "Towards Data Science"
+    },
+    {
+      "title": "Explaining Document Classifications with Counterfactuals",
+      "date": "2019-04",
+      "url": "https://medium.com/data-science/explaining-document-classifications-with-counterfactuals-f8dc89d7d4e3",
+      "publication": "Towards Data Science"
+    },
+    {
+      "title": "A Step Towards General NLP with Dynamic Memory Networks",
+      "date": "2019-04",
+      "url": "https://medium.com/towards-data-science/a-step-towards-general-nlp-with-dynamic-memory-networks-2a888376ce8f",
+      "publication": "Towards Data Science"
+    },
+    {
+      "title": "Decision Tree Theory Recap",
+      "date": "2024-12",
+      "url": "https://medium.com/@anusha.lihala/decision-tree-theory-recap-79413e5ef35c",
+      "publication": "Medium"
+    },
+    {
+      "title": "Ensemble Methods: Random Forest and AdaBoost Recap",
+      "date": "2024-12",
+      "url": "https://medium.com/@anusha.lihala/ensemble-methods-random-forest-and-adaboost-recap-6ad171393e65",
+      "publication": "Medium"
+    }
+  ],
+  "technical_philosophy": {
+    "core_thesis": "Advanced ML concepts should be accessible through clear writing and hands-on implementation, while production systems benefit from structured knowledge representations.",
+    "positions": {
+      "education_through_implementation": "Consistently pairs theory with code examples across her Medium and Towards Data Science articles.",
+      "graph_structured_knowledge": "Advocates for integrating knowledge graphs with LLMs, as demonstrated by KnowledgeGraph-RAG combining ArangoDB with LangChain.",
+      "fundamentals_first": "Returns to foundational topics (decision trees, ensemble methods) even while building advanced systems."
+    }
+  },
+  "competitive_landscape": {},
+  "collaboration_network": {},
+  "funding": {},
+  "conferences": {},
+  "podcast_appearances": [],
+  "news": [],
+  "sources": [
+    {
+      "title": "Anusha Lihala - GitHub",
+      "url": "https://github.com/anushalihala"
+    },
+    {
+      "title": "Anusha Lihala - Medium",
+      "url": "https://medium.com/@anusha.lihala"
+    },
+    {
+      "title": "Anusha Lihala - LinkedIn",
+      "url": "https://in.linkedin.com/in/anusha-lihala"
+    },
+    {
+      "title": "Attention and its Different Forms - Towards Data Science",
+      "url": "https://medium.com/data-science/attention-and-its-different-forms-7fc3674d14dc"
+    },
+    {
+      "title": "KnowledgeGraph-RAG - GitHub",
+      "url": "https://github.com/anushalihala/KnowledgeGraph-RAG"
+    },
+    {
+      "title": "Anusha Lihala - ZoomInfo",
+      "url": "https://www.zoominfo.com/p/Anusha-Lihala/11483497183"
+    }
+  ]
+}

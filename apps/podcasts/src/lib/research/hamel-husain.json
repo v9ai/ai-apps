@@ -1,0 +1,223 @@
+{
+  "slug": "hamel-husain",
+  "name": "Hamel Husain",
+  "generated_at": "2026-03-19T12:00:00+00:00",
+  "bio": "Hamel Husain is a machine learning engineer with over 20 years of experience, currently an independent consultant at Parlance Labs. He previously held applied ML roles at GitHub (2017-2022) and Airbnb (2016-2017), and earlier at DataRobot. At GitHub he led CodeSearchNet, a large-scale benchmark for semantic code search that laid groundwork later used by OpenAI for code understanding models. He co-created nbdev (5.3k stars), a literate-programming system built on Jupyter Notebooks, and fastpages (3.6k stars), an open-source notebook blogging platform. In January 2026 he published 'Why I Stopped Using nbdev', explaining how AI coding assistants changed the trade-offs of literate programming. Husain now focuses on AI evaluation methodology, co-teaching the 'AI Evals for Engineers & PMs' course on Maven with Shreya Shankar, with over 3,000 students from 500+ companies including OpenAI, Anthropic, and Google.",
+  "topics": [
+    "AI Evaluation (Evals)",
+    "LLM Product Development",
+    "Literate Programming",
+    "Semantic Code Search",
+    "MLOps & ML Infrastructure",
+    "Fine-Tuning LLMs",
+    "Open-Source Developer Tools",
+    "Data Science for AI",
+    "Jupyter Notebook Workflows",
+    "AI-Assisted Development"
+  ],
+  "timeline": [
+    {
+      "date": "2026-03-02",
+      "event": "Published blog post 'Evals Skills for Coding Agents' on hamel.dev",
+      "url": "https://hamel.dev/blog/posts/evals-skills/"
+    },
+    {
+      "date": "2026-01-18",
+      "event": "Published 'Why I Stopped Using nbdev', explaining how AI coding tools changed literate programming trade-offs",
+      "url": "https://hamel.dev/blog/posts/ai-stack/"
+    },
+    {
+      "date": "2026-01-15",
+      "event": "Published 'LLM Evals: Everything You Need to Know' comprehensive FAQ on hamel.dev",
+      "url": "https://hamel.dev/blog/posts/evals-faq/"
+    },
+    {
+      "date": "2025-10-01",
+      "event": "Published 'Selecting The Right AI Evals Tool' on hamel.dev",
+      "url": "https://hamel.dev/blog/posts/eval-tools/"
+    },
+    {
+      "date": "2025-09-25",
+      "event": "Appeared on Lenny's Podcast with Shreya Shankar discussing why AI evals are the hottest new skill for product builders",
+      "url": "https://www.lennysnewsletter.com/p/why-ai-evals-are-the-hottest-new-skill"
+    },
+    {
+      "date": "2025-07-11",
+      "event": "Published 'Stop Saying RAG Is Dead' blog post",
+      "url": "https://hamel.dev/blog/posts/rag/"
+    },
+    {
+      "date": "2025-06-23",
+      "event": "Published blog post on Inspect AI, an OSS Python library for LLM evals",
+      "url": "https://hamel.dev/blog/posts/inspect/"
+    },
+    {
+      "date": "2024-07-23",
+      "event": "Appeared on TWIML AI Podcast #694: 'Building Real-World LLM Products with Fine-Tuning and More'",
+      "url": "https://twimlai.com/podcast/twimlai/guest/hamel-husain/"
+    },
+    {
+      "date": "2024-04",
+      "event": "Published 'Your AI Product Needs Evals' foundational blog post on AI evaluation methodology",
+      "url": "https://hamel.dev/blog/posts/evals/"
+    },
+    {
+      "date": "2022",
+      "event": "Helped lead a complete rewrite of nbdev (v2) with fast.ai",
+      "url": "https://github.com/fastai/nbdev"
+    },
+    {
+      "date": "2020",
+      "event": "Presented fastpages at JupyterCon 2020 and released the notebook blogging system",
+      "url": "https://github.com/fastai/fastpages"
+    },
+    {
+      "date": "2019",
+      "event": "Led launch of CodeSearchNet, a large-scale benchmark and dataset for semantic code search at GitHub",
+      "url": "https://github.com/github/CodeSearchNet"
+    },
+    {
+      "date": "2018",
+      "event": "Gave talks on 'Semantic Search at GitHub' and 'Natural Language Code Search With Kubeflow' at KubeCon 2018",
+      "url": "https://github.blog/author/hamelsmu/"
+    },
+    {
+      "date": "2017",
+      "event": "Joined GitHub as Staff Machine Learning Engineer, began work on code representation learning",
+      "url": "https://github.com/hamelsmu"
+    },
+    {
+      "date": "2016",
+      "event": "Joined Airbnb as Data Scientist, discovered critical data-leakage bug in growth marketing model, created blueprints that informed BigHead ML platform",
+      "url": "https://applyingml.com/mentors/hamel-husain/"
+    },
+    {
+      "date": "2003",
+      "event": "Started career building credit risk models at a bank, entering ML before the term was common",
+      "url": "https://applyingml.com/mentors/hamel-husain/"
+    }
+  ],
+  "key_contributions": [
+    {
+      "title": "nbdev",
+      "description": "Co-created with fast.ai the literate programming framework 'Create delightful software with Jupyter Notebooks'. 5.3k stars on GitHub. Led the v2 rewrite in 2022.",
+      "url": "https://github.com/fastai/nbdev"
+    },
+    {
+      "title": "fastpages",
+      "description": "Open-source blogging platform with enhanced Jupyter Notebook support, enabling data scientists to publish notebooks as blog posts. 3.6k stars (archived).",
+      "url": "https://github.com/fastai/fastpages"
+    },
+    {
+      "title": "CodeSearchNet",
+      "description": "Large-scale benchmark and dataset for semantic code search, enabling representation learning of code across multiple programming languages. 2.4k stars. Led at GitHub.",
+      "url": "https://github.com/github/CodeSearchNet"
+    },
+    {
+      "title": "AI Evals for Engineers & PMs (Maven course)",
+      "description": "Co-taught with Shreya Shankar, enrolled 3,000+ students from 500+ companies including OpenAI, Anthropic, and Google. Teaches systematic AI product evaluation methodology.",
+      "url": "https://maven.com/parlance-labs/evals"
+    },
+    {
+      "title": "evals-skills",
+      "description": "Skills resource complementing the AI Evals course, providing practical evaluation templates and examples. 891 stars on GitHub.",
+      "url": "https://github.com/hamelsmu/evals-skills"
+    },
+    {
+      "title": "claude-review-loop",
+      "description": "Automated code review tool using Claude for iterative review feedback. 590 stars on GitHub.",
+      "url": "https://github.com/hamelsmu/claude-review-loop"
+    },
+    {
+      "title": "'Your AI Product Needs Evals' (blog post)",
+      "description": "Influential blog post establishing the case that unsuccessful AI products almost always share a common root cause: failure to create robust evaluation systems.",
+      "url": "https://hamel.dev/blog/posts/evals/"
+    }
+  ],
+  "quotes": [
+    {
+      "text": "Unsuccessful products almost always share a common root cause: a failure to create robust evaluation systems.",
+      "source": "Your AI Product Needs Evals (blog post)",
+      "url": "https://hamel.dev/blog/posts/evals/"
+    },
+    {
+      "text": "Don't rely on generic evaluation frameworks to measure the quality of your AI. Instead, create an evaluation system specific to your problem.",
+      "source": "Your AI Product Needs Evals (blog post)",
+      "url": "https://hamel.dev/blog/posts/evals/"
+    },
+    {
+      "text": "Like software engineering, success with AI hinges on how fast you can iterate.",
+      "source": "Your AI Product Needs Evals (blog post)",
+      "url": "https://hamel.dev/blog/posts/evals/"
+    },
+    {
+      "text": "The abuse of generic metrics is endemic. Many eval vendors promote off the shelf metrics, which ensnare engineers into superfluous tasks.",
+      "source": "LLM Evals: Everything You Need to Know",
+      "url": "https://hamel.dev/blog/posts/evals-faq/"
+    },
+    {
+      "text": "I write software to solve problems, not to write code. I want to work in an environment where AI has the highest chance of success.",
+      "source": "Why I Stopped Using nbdev",
+      "url": "https://hamel.dev/blog/posts/ai-stack/"
+    },
+    {
+      "text": "99% of the labor involved with fine-tuning is assembling high-quality data that covers your AI product's surface area.",
+      "source": "Your AI Product Needs Evals (blog post)",
+      "url": "https://hamel.dev/blog/posts/evals/"
+    }
+  ],
+  "social": {
+    "github": "https://github.com/hamelsmu",
+    "twitter": "https://x.com/HamelHusain",
+    "linkedin": "https://www.linkedin.com/in/hamelhusain/",
+    "blog": "https://hamel.dev",
+    "substack": "https://hamelhusain.substack.com",
+    "website": "https://parlance-labs.com"
+  },
+  "sources": [
+    {
+      "title": "hamelsmu (Hamel Husain) on GitHub — 389 repos, 2.5k followers",
+      "url": "https://github.com/hamelsmu"
+    },
+    {
+      "title": "Hamel Husain's Blog (hamel.dev)",
+      "url": "https://hamel.dev/"
+    },
+    {
+      "title": "Hamel Husain - Staff Machine Learning Engineer @ GitHub (ApplyingML interview)",
+      "url": "https://applyingml.com/mentors/hamel-husain/"
+    },
+    {
+      "title": "Hamel Husain - Parlance Labs | LinkedIn",
+      "url": "https://www.linkedin.com/in/hamelhusain/"
+    },
+    {
+      "title": "AI Evals For Engineers & PMs — Maven course",
+      "url": "https://maven.com/parlance-labs/evals"
+    },
+    {
+      "title": "Why AI evals are the hottest new skill — Lenny's Podcast",
+      "url": "https://www.lennysnewsletter.com/p/why-ai-evals-are-the-hottest-new-skill"
+    },
+    {
+      "title": "TWIML AI Podcast #694: Building Real-World LLM Products with Hamel Husain",
+      "url": "https://twimlai.com/podcast/twimlai/guest/hamel-husain/"
+    },
+    {
+      "title": "Why I Stopped Using nbdev — Hamel's Blog",
+      "url": "https://hamel.dev/blog/posts/ai-stack/"
+    },
+    {
+      "title": "Hamel Husain, Author at The GitHub Blog",
+      "url": "https://github.blog/author/hamelsmu/"
+    },
+    {
+      "title": "Your AI Product Needs Evals — Hamel's Blog",
+      "url": "https://hamel.dev/blog/posts/evals/"
+    },
+    {
+      "title": "An interview with Hamel Husain by Sayak Paul (Medium)",
+      "url": "https://sayakpaul.medium.com/an-interview-with-hamel-husain-staff-machine-learning-engineer-at-github-a39c21af0414"
+    }
+  ]
+}

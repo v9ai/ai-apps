@@ -3,6 +3,7 @@ query GetGenerationJob($id: String!) {
     id
     status
     progress
+    storyId
     result {
       audioUrl
       progress

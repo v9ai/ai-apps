@@ -1029,6 +1029,7 @@ export async function updateGenerationJob(
     progress?: number;
     result?: any;
     error?: any;
+    storyId?: number;
   },
 ) {
   const fields: string[] = [];
@@ -1036,6 +1037,7 @@ export async function updateGenerationJob(
 
   if (updates.status) { fields.push("status = ?"); args.push(updates.status); }
   if (updates.progress !== undefined) { fields.push("progress = ?"); args.push(updates.progress); }
+  if (updates.storyId !== undefined) { fields.push("story_id = ?"); args.push(updates.storyId); }
   if (updates.result) {
     fields.push("result = ?");
     args.push(typeof updates.result === "string" ? updates.result : JSON.stringify(updates.result));

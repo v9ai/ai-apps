@@ -1,0 +1,196 @@
+{
+  "slug": "sylvain-gugger",
+  "name": "Sylvain Gugger",
+  "generated_at": "2026-03-19T21:00:00+00:00",
+  "bio": "Sylvain Gugger is a Machine Learning Engineer at Jane Street on the ML-infra team, where he helps traders and researchers accelerate their model training and inference. Before Jane Street, he spent three years at Hugging Face (2020-2023) as a core maintainer of the Transformers library (1,250+ commits) and creator of the Accelerate library (290+ commits, 9.5k+ GitHub stars), which simplifies distributed PyTorch training across GPUs, TPUs, and mixed-precision setups with minimal code changes. Prior to Hugging Face, he worked at fast.ai (2017-2019) alongside Jeremy Howard, co-authoring \"Deep Learning for Coders with fastai and PyTorch\" (O'Reilly, 2020) and helping build the fastai library and courses. Gugger began his career as a mathematics and computer science teacher in France, spending seven years at CPGE (Classes Preparatoires aux Grandes Ecoles), where he authored 10 math textbooks published by Dunod. He discovered machine learning through Jeremy Howard's fast.ai MOOC after relocating to New York City around 2015. A key moment in his early ML career was the Stanford DAWNBench competition, where his implementation of Leslie Smith's super-convergence method helped the fast.ai team achieve first place on CIFAR-10 (fastest and cheapest training). His widely read blog posts on the 1-cycle learning rate policy and learning rate finders have become foundational references in the deep learning community. He holds a Masters in Mathematics and Computer Science from Ecole normale superieure (2003-2007).",
+  "topics": [
+    "Distributed Training",
+    "PyTorch Performance Optimization",
+    "Learning Rate Schedules",
+    "Super-Convergence",
+    "Mixed Precision Training",
+    "GPU Acceleration",
+    "ML Infrastructure",
+    "Open Source ML Libraries",
+    "Transfer Learning",
+    "Transformer Models"
+  ],
+  "timeline": [
+    {
+      "date": "2003",
+      "event": "Began Masters in Mathematics and Computer Science at Ecole normale superieure",
+      "url": "https://sgugger.github.io/pages/about-me.html"
+    },
+    {
+      "date": "2007",
+      "event": "Started teaching mathematics and computer science at CPGE in France; authored 10 textbooks for Dunod editions",
+      "url": "https://sgugger.github.io/pages/about-me.html"
+    },
+    {
+      "date": "2015",
+      "event": "Relocated to New York City; discovered deep learning through fast.ai MOOC",
+      "url": "https://sgugger.github.io/pages/about-me.html"
+    },
+    {
+      "date": "2018-04-07",
+      "event": "Published influential blog post on the 1-cycle learning rate policy, popularizing super-convergence techniques",
+      "url": "https://sgugger.github.io/the-1cycle-policy.html"
+    },
+    {
+      "date": "2018-04",
+      "event": "Fast.ai team (with Gugger's super-convergence implementation) won DAWNBench CIFAR-10: fastest and cheapest training on public infrastructure",
+      "url": "https://www.fast.ai/posts/2018-04-30-dawnbench-fastai.html"
+    },
+    {
+      "date": "2018",
+      "event": "Joined fast.ai as a research scientist, co-developing the fastai library and deep learning courses with Jeremy Howard",
+      "url": "https://github.com/fastai/fastai"
+    },
+    {
+      "date": "2020-06",
+      "event": "Co-authored \"Deep Learning for Coders with fastai and PyTorch\" (O'Reilly) with Jeremy Howard",
+      "url": "https://www.amazon.com/Deep-Learning-Coders-fastai-PyTorch/dp/1492045527"
+    },
+    {
+      "date": "2020",
+      "event": "Joined Hugging Face; became core maintainer of the Transformers library and developed the Trainer API",
+      "url": "https://github.com/huggingface/transformers"
+    },
+    {
+      "date": "2021-04-16",
+      "event": "Launched Hugging Face Accelerate library for simplified distributed PyTorch training",
+      "url": "https://huggingface.co/blog/accelerate-library"
+    },
+    {
+      "date": "2023-08",
+      "event": "Left Hugging Face after three years; announced continued open-source contributions to Transformers and Accelerate",
+      "url": "https://x.com/GuggerSylvain/status/1695478037121294405"
+    },
+    {
+      "date": "2023",
+      "event": "Joined Jane Street as Machine Learning Engineer on the ML-infra team",
+      "url": "https://signalsandthreads.com/the-uncertain-art-of-accelerating-ml-models/"
+    },
+    {
+      "date": "2024-10",
+      "event": "Appeared on Signals and Threads podcast: \"The Uncertain Art of Accelerating ML Models\"",
+      "url": "https://signalsandthreads.com/the-uncertain-art-of-accelerating-ml-models/"
+    }
+  ],
+  "key_contributions": [
+    {
+      "title": "Hugging Face Accelerate",
+      "description": "Created the Accelerate library (9.5k+ GitHub stars), a thin PyTorch wrapper that simplifies distributed training across GPUs, TPUs, and mixed-precision setups with only 5 lines of code changes. Supports FSDP, DeepSpeed, and data/pipeline/tensor parallelism.",
+      "url": "https://github.com/huggingface/accelerate"
+    },
+    {
+      "title": "Hugging Face Transformers (Core Maintainer)",
+      "description": "Contributed 1,250+ commits to the Transformers library as a core maintainer, working on the Trainer API, model implementations, and training infrastructure that powers millions of ML workflows.",
+      "url": "https://github.com/huggingface/transformers"
+    },
+    {
+      "title": "Deep Learning for Coders with fastai and PyTorch",
+      "description": "Co-authored with Jeremy Howard the O'Reilly book (2020) and accompanying Jupyter notebooks (fastbook), making deep learning accessible to programmers without a PhD. Cited by 16,500+ researchers.",
+      "url": "https://github.com/fastai/fastbook"
+    },
+    {
+      "title": "1-Cycle Learning Rate Policy & Super-Convergence",
+      "description": "Popularized and implemented Leslie Smith's 1-cycle policy and super-convergence technique, enabling dramatically faster training. His blog posts became foundational references adopted across PyTorch, TensorFlow, and Keras ecosystems.",
+      "url": "https://sgugger.github.io/the-1cycle-policy.html"
+    },
+    {
+      "title": "DAWNBench Competition (fast.ai team)",
+      "description": "Key contributor to the fast.ai team that won Stanford's DAWNBench CIFAR-10 competition for fastest and cheapest training on publicly available infrastructure, beating entries from Google and Intel clusters.",
+      "url": "https://www.fast.ai/posts/2018-04-30-dawnbench-fastai.html"
+    },
+    {
+      "title": "fastai Library",
+      "description": "Co-developed the fastai deep learning library with Jeremy Howard, introducing progressive resizing, learning rate finders, and one-cycle training as default practices that influenced the broader PyTorch ecosystem.",
+      "url": "https://github.com/fastai/fastai"
+    }
+  ],
+  "quotes": [
+    {
+      "text": "I created a new open source library to make it much more lightweight to help people with our trainings.",
+      "source": "Signals and Threads podcast, Oct 2024 (on creating Accelerate)",
+      "url": "https://signalsandthreads.com/the-uncertain-art-of-accelerating-ml-models/"
+    },
+    {
+      "text": "No one knows anything about machine learning. Like, it's really just a cooking sense.",
+      "source": "Signals and Threads podcast, Oct 2024",
+      "url": "https://signalsandthreads.com/the-uncertain-art-of-accelerating-ml-models/"
+    },
+    {
+      "text": "Making sure that your code is there... you can change a small line of code in your model and think 'Oh, this is totally harmless,' but then it actually destroys the performance.",
+      "source": "Signals and Threads podcast, Oct 2024 (on ML reproducibility)",
+      "url": "https://signalsandthreads.com/the-uncertain-art-of-accelerating-ml-models/"
+    },
+    {
+      "text": "Yesterday was my last day at Hugging Face. The past three years have been exhilarating and I am very proud of what the team has accomplished during that time!",
+      "source": "X (Twitter), Aug 2023",
+      "url": "https://x.com/GuggerSylvain/status/1695478037121294405"
+    },
+    {
+      "text": "The way we tune all the other hyper-parameters of the model will impact the best learning rate.",
+      "source": "Blog: The 1cycle policy, Apr 2018",
+      "url": "https://sgugger.github.io/the-1cycle-policy.html"
+    }
+  ],
+  "social": {
+    "github": "https://github.com/sgugger",
+    "twitter": "https://x.com/GuggerSylvain",
+    "huggingface": "https://huggingface.co/sgugger",
+    "blog": "https://sgugger.github.io",
+    "google_scholar": "https://scholar.google.com/citations?user=YcWVZqMAAAAJ"
+  },
+  "sources": [
+    {
+      "title": "sgugger (Sylvain Gugger) -- GitHub Profile",
+      "url": "https://github.com/sgugger"
+    },
+    {
+      "title": "Sylvain Gugger -- About Me (personal blog)",
+      "url": "https://sgugger.github.io/pages/about-me.html"
+    },
+    {
+      "title": "Introducing Accelerate -- Hugging Face Blog",
+      "url": "https://huggingface.co/blog/accelerate-library"
+    },
+    {
+      "title": "The Uncertain Art of Accelerating ML Models -- Signals and Threads (Jane Street podcast)",
+      "url": "https://signalsandthreads.com/the-uncertain-art-of-accelerating-ml-models/"
+    },
+    {
+      "title": "Sylvain Gugger's departure from Hugging Face -- X (Twitter)",
+      "url": "https://x.com/GuggerSylvain/status/1695478037121294405"
+    },
+    {
+      "title": "Deep Learning for Coders with fastai and PyTorch -- O'Reilly / Amazon",
+      "url": "https://www.amazon.com/Deep-Learning-Coders-fastai-PyTorch/dp/1492045527"
+    },
+    {
+      "title": "Training Imagenet in 3 hours for $25 -- fast.ai DAWNBench announcement",
+      "url": "https://www.fast.ai/posts/2018-04-30-dawnbench-fastai.html"
+    },
+    {
+      "title": "The 1cycle policy -- Sylvain Gugger's blog",
+      "url": "https://sgugger.github.io/the-1cycle-policy.html"
+    },
+    {
+      "title": "huggingface/accelerate -- GitHub repository (9.5k stars)",
+      "url": "https://github.com/huggingface/accelerate"
+    },
+    {
+      "title": "sgugger on Hugging Face Hub",
+      "url": "https://huggingface.co/sgugger"
+    },
+    {
+      "title": "Sylvain Gugger -- Google Scholar",
+      "url": "https://scholar.google.com/citations?user=YcWVZqMAAAAJ"
+    },
+    {
+      "title": "Chai Time Data Science -- Interview with Sylvain Gugger",
+      "url": "https://creators.spotify.com/pod/show/chaitimedatascience/episodes/Interview-w-Sylvain-Gugger--fast-ai-The-new-Framework--course--FastBook--Research-at-fast-ai-eb5a6a"
+    }
+  ]
+}

@@ -3,6 +3,7 @@
 import { useState, useRef, useEffect, useTransition } from "react";
 import { Button, Flex } from "@radix-ui/themes";
 import { TaskCard } from "./TaskCard";
+import { TaskDetailModal } from "./TaskDetailModal";
 import { loadMoreTasks } from "@/lib/actions/tasks";
 
 type Task = {
@@ -33,20 +34,39 @@ export function TaskList({
   const [tasks, setTasks] = useState<Task[]>(initialTasks);
   const [isPending, startTransition] = useTransition();
   const knownIds = useRef(new Set(initialTasks.map((t) => t.id)));
-  const newIds = useRef(new Set<string>());
+  const [openTaskId, setOpenTaskId] = useState<string | null>(null);
   const hasMore = tasks.length < totalCount;
 
-  // Sync when server data changes (after router.refresh)
   useEffect(() => {
     const incoming = new Set(initialTasks.map((t) => t.id));
-    for (const id of incoming) {
-      if (!knownIds.current.has(id)) {
-        newIds.current.add(id);
+    let firstNewId: string | null = null;
+    for (const t of initialTasks) {
+      if (!knownIds.current.has(t.id)) {
+        if (firstNewId === null) firstNewId = t.id;
       }
     }
     knownIds.current = incoming;
     setTasks(initialTasks);
+    if (firstNewId !== null) setOpenTaskId(firstNewId);
   }, [initialTasks]);
+
+  // Keyboard: 1-9 opens modal for that task
+  useEffect(() => {
+    function onKeyDown(e: KeyboardEvent) {
+      const tag = (e.target as HTMLElement).tagName;
+      if (tag === "INPUT" || tag === "TEXTAREA" || tag === "SELECT") return;
+      if ((e.target as HTMLElement).isContentEditable) return;
+      if (e.metaKey || e.ctrlKey || e.altKey) return;
+
+      const num = parseInt(e.key, 10);
+      if (num >= 1 && num <= 9 && num <= tasks.length) {
+        e.preventDefault();
+        setOpenTaskId(tasks[num - 1].id);
+      }
+    }
+    document.addEventListener("keydown", onKeyDown);
+    return () => document.removeEventListener("keydown", onKeyDown);
+  }, [tasks]);
 
   function handleLoadMore() {
     startTransition(async () => {
@@ -57,13 +77,18 @@ export function TaskList({
     });
   }
 
+  const openTask = openTaskId
+    ? tasks.find((t) => t.id === openTaskId) ?? null
+    : null;
+
   return (
     <Flex direction="column" gap="2">
-      {tasks.map((task) => (
+      {tasks.map((task, i) => (
         <TaskCard
           key={task.id}
           task={task}
-          defaultExpanded={newIds.current.has(task.id)}
+          index={i + 1}
+          onOpen={() => setOpenTaskId(task.id)}
         />
       ))}
       {hasMore && (
@@ -74,8 +99,19 @@ export function TaskList({
           disabled={isPending}
           style={{ alignSelf: "center", marginTop: 8 }}
         >
-          {isPending ? "Loading..." : `Load more (${totalCount - tasks.length} remaining)`}
+          {isPending
+            ? "Loading..."
+            : `Load more (${totalCount - tasks.length} remaining)`}
         </Button>
+      )}
+      {openTask && (
+        <TaskDetailModal
+          task={openTask}
+          open={true}
+          onOpenChange={(open) => {
+            if (!open) setOpenTaskId(null);
+          }}
+        />
       )}
     </Flex>
   );

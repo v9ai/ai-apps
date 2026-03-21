@@ -1,0 +1,29 @@
+{
+  "slug": "jeffrey-ip",
+  "name": "Jeffrey Ip",
+  "generated_at": "2026-03-21T09:22:37+00:00",
+  "eval": {
+    "bio_quality": {
+      "score": 9,
+      "reasoning": "The biography is highly specific, evidence-based, and informative. It clearly establishes Jeffrey Ip's role (Cofounder & CEO @ Confident AI), his career trajectory (Google, Microsoft AI), the founding story (2024 with Kritin Vongthongsri), and his key creation (DeepEval). It provides concrete metrics (14.2k GitHub stars, $2.2M seed round in 5 days, enterprise customers like BCG, AstraZeneca) and highlights his unique pragmatic philosophy on responsible AI through developer tooling. The mention of his active GitHub presence (@penguine-ip) adds a personal, verifiable layer. It effectively synthesizes his professional identity, achievements, and vision."
+    },
+    "source_coverage": {
+      "score": 8,
+      "reasoning": "Sources are diverse and generally high-quality, covering multiple domains: official company blog and website (confident-ai.com), technical documentation (deepeval.com/docs), personal Medium articles, GitHub repository data, Y Combinator profile, and a Muck Rack profile (though its content wasn't fully retrieved in the provided snippet). This provides a mix of first-person narratives, technical specifications, and third-party platform data. A minor gap is the lack of direct links to major news coverage of the funding round or in-depth third-party technical reviews of DeepEval, but the available sources are sufficient for strong verification."
+    },
+    "timeline_completeness": {
+      "score": 7,
+      "reasoning": "The timeline is well-structured with key business and technical milestones from 2023 (creation of DeepEval) through 2025 (seed funding). It effectively sequences the project's evolution from open-source framework to YC-backed startup. However, it relies heavily on the funding announcement blog post for dating key events. There is a lack of granular, dated evidence for earlier technical milestones (e.g., the exact initial release date of DeepEval on GitHub, version history of major features). The timeline is strong on the business narrative but could be more precisely anchored with primary technical repository data (commit history, release tags)."
+    },
+    "contributions_depth": {
+      "score": 9,
+      "reasoning": "Contributions are described with exceptional specificity and impact data. Each entry (DeepEval, G-Eval, Deterministic Metrics, Confident AI Platform, HuggingFace Integration) is clearly defined with its technical purpose ('why it matters'), and backed by concrete adoption metrics (14.2k stars, 3M+ monthly downloads, 600k-800k daily evals, enterprise customer names). The descriptions go beyond feature lists to explain architectural concepts (LLM-as-a-Judge, DAG metrics) and business impact (cost savings, development hours saved). This demonstrates a deep understanding of both the technical innovation and its practical value in the market."
+    },
+    "name_disambiguation": {
+      "score": 10,
+      "reasoning": "The profile is unambiguously focused on the correct Jeffrey Ip. Multiple unique identifiers firmly establish his identity: his role as CEO of Confident AI, his GitHub handle (@penguine-ip), his authorship of specific Medium articles, his leadership of the DeepEval project, and his involvement in the Y Combinator W25 batch. The consistent narrative across all sources and the specific details of his career path (Google/YouTube, Microsoft AI) make confusion with other individuals named Jeffrey Ip extremely unlikely. The profile successfully isolates the subject."
+    },
+    "overall_score": 8.6,
+    "summary": "This is a high-quality, well-researched profile that presents a coherent and compelling picture of Jeffrey Ip as a technical founder and CEO. Its greatest strengths are the depth and specificity of the contributions analysis and the clear, evidence-based biography. The source coverage is robust, though it could be supplemented with more third-party technical commentary. The main area for improvement is the timeline, which could be enhanced with more granular dates sourced directly from the GitHub repository's release history to complement the strong business narrative. The profile excels at disambiguation and effectively communicates both the 'what' and the 'why' of Ip's work in the LLM evaluation space."
+  }
+}

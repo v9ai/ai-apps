@@ -1,0 +1,188 @@
+{
+  "slug": "daniel-han",
+  "name": "Daniel Han",
+  "generated_at": "2026-03-19",
+  "bio": "Daniel Han is an Australian software engineer and CEO/co-founder of Unsloth AI (YC S24), based in San Francisco. Together with his brother Michael Han, he created Unsloth, an open-source framework that accelerates LLM fine-tuning by up to 30x while using up to 90% less memory, making custom model training accessible on consumer GPUs. Before founding Unsloth, Daniel spent over 8 years in production ML engineering and numerical optimization: at NVIDIA he sped up t-SNE by 2000x and reduced SVD memory usage in cuPy by ~50%, and he maintained HyperLearn, an open-source ML acceleration package used by NASA and Microsoft engineers. Trained in Data Science and Actuarial/Law at UNSW Australia, he declined a lifetime NVIDIA offer to pursue Unsloth full-time. He is also known for finding and fixing 20+ bugs in major open-source LLMs including Gemma, Llama, Mistral, and Phi, and for pioneering dynamic quantization techniques that preserve model accuracy at extremely low bit-widths. Unsloth's models have surpassed 10 million monthly downloads on Hugging Face.",
+  "topics": [
+    "LLM Fine-Tuning Optimization",
+    "LoRA / QLoRA Techniques",
+    "Reinforcement Learning for LLMs (GRPO)",
+    "Custom Triton Kernels",
+    "Dynamic Quantization (1.58-bit, 2-bit, 4-bit)",
+    "Memory-Efficient Training",
+    "Open-Source AI Infrastructure",
+    "GPU Kernel Optimization (CUDA, Triton)",
+    "Flash Attention Integration",
+    "Model Bug-Fixing & Quality Assurance"
+  ],
+  "timeline": [
+    {
+      "date": "2016-10",
+      "event": "Created GitHub account and began open-source contributions in ML optimization",
+      "url": "https://github.com/danielhanchen"
+    },
+    {
+      "date": "2019",
+      "event": "Released HyperLearn, an open-source ML acceleration package adopted by NASA, Microsoft, NVIDIA, Facebook, and Intel",
+      "url": "https://github.com/danielhanchen/hyperlearn"
+    },
+    {
+      "date": "2023",
+      "event": "Co-founded Unsloth AI with brother Michael Han, targeting LLM fine-tuning acceleration",
+      "url": "https://unsloth.ai/about"
+    },
+    {
+      "date": "2023-11-29",
+      "event": "Unsloth repository created on GitHub, open-sourcing the fine-tuning framework",
+      "url": "https://github.com/unslothai/unsloth"
+    },
+    {
+      "date": "2023-12",
+      "event": "Launched Unsloth publicly, achieving 2x faster training with 50% less memory on initial release",
+      "url": "https://unsloth.ai/introducing"
+    },
+    {
+      "date": "2024-01",
+      "event": "Uploaded quantized models to Hugging Face, quickly reaching millions of downloads",
+      "url": "https://huggingface.co/unsloth"
+    },
+    {
+      "date": "2024-03",
+      "event": "Found and fixed 8 bugs in Google's Gemma models, establishing reputation for LLM quality assurance",
+      "url": "https://unsloth.ai/blog/reintroducing"
+    },
+    {
+      "date": "2024-04",
+      "event": "Introduced Unsloth Gradient Checkpointing for 4x longer context lengths; enabled Llama 3 70B to fit on 48GB VRAM",
+      "url": "https://unsloth.ai/blog/reintroducing"
+    },
+    {
+      "date": "2024-05",
+      "event": "Selected for the 2024 GitHub Accelerator program as one of 11 projects shaping open-source AI, receiving $40K in funding",
+      "url": "https://github.blog/news-insights/company-news/2024-github-accelerator-meet-the-11-projects-shaping-open-source-ai/"
+    },
+    {
+      "date": "2024-06",
+      "event": "Accepted into Y Combinator Summer 2024 batch (YC S24)",
+      "url": "https://www.ycombinator.com/companies/unsloth-ai"
+    },
+    {
+      "date": "2024-10",
+      "event": "Completed seed funding round of $500K",
+      "url": "https://www.crunchbase.com/organization/unsloth-ai"
+    },
+    {
+      "date": "2024-11",
+      "event": "Introduced 2x faster and 70% less VRAM vision fine-tuning supporting Llama, Qwen, Pixtral, and Llava models",
+      "url": "https://unsloth.ai/blog/reintroducing"
+    },
+    {
+      "date": "2025-01",
+      "event": "Released DeepSeek-R1 dynamic 1.58-bit quantization, preserving model accuracy at extreme compression levels",
+      "url": "https://unsloth.ai/blog/deepseekr1-dynamic"
+    },
+    {
+      "date": "2025-11",
+      "event": "Introduced FP8 Reinforcement Learning and GRPO support, enabling 1.4x faster RL training with 60% less VRAM",
+      "url": "https://unsloth.ai/docs/get-started/reinforcement-learning-rl-guide/fp8-reinforcement-learning"
+    },
+    {
+      "date": "2026-01-15",
+      "event": "Launched ultra long context RL training, enabling gpt-oss models with 380K context windows, plus faster MoE training and embedding model support",
+      "url": "https://github.com/unslothai/unsloth/releases"
+    }
+  ],
+  "key_contributions": [
+    {
+      "title": "Unsloth",
+      "description": "Open-source LLM fine-tuning framework that achieves up to 30x speedup with 90% less memory by rewriting PyTorch modules into custom Triton kernels and manually deriving backpropagation steps. Over 56,000 GitHub stars and 10 million monthly Hugging Face downloads.",
+      "url": "https://github.com/unslothai/unsloth"
+    },
+    {
+      "title": "Dynamic Quantization (Unsloth Dynamic 2.0)",
+      "description": "Novel quantization method that selectively avoids quantizing sensitive parameters, enabling 1.58-bit and 2-bit model compression while preserving accuracy. Applied to DeepSeek-R1, Llama, Qwen, and other models, solving the problem of output degradation at extreme compression levels.",
+      "url": "https://unsloth.ai/blog/deepseekr1-dynamic"
+    },
+    {
+      "title": "LLM Bug Discovery and Fixes",
+      "description": "Found and fixed over 20 bugs in major open-source LLMs including Google Gemma (8 bugs), Meta Llama, Mistral, and Microsoft Phi, improving model reliability across the ecosystem. Partnered with Google, OpenAI, Meta, and NVIDIA on quality assurance.",
+      "url": "https://unsloth.ai/blog/reintroducing"
+    },
+    {
+      "title": "HyperLearn",
+      "description": "Open-source ML acceleration package that makes machine learning algorithms significantly faster, adopted by engineers at NASA, Microsoft, NVIDIA, Facebook, HP, VMware, and Intel.",
+      "url": "https://github.com/danielhanchen/hyperlearn"
+    },
+    {
+      "title": "GRPO and FP8 Reinforcement Learning",
+      "description": "Implementation of Group Relative Policy Optimization (GRPO) and FP8 precision reinforcement learning in Unsloth, enabling efficient reasoning model training with 1.4x faster performance and 60% less VRAM usage.",
+      "url": "https://unsloth.ai/docs/get-started/reinforcement-learning-rl-guide"
+    }
+  ],
+  "quotes": [
+    {
+      "text": "We're trying to make fine-tuning extremely easy for people.",
+      "source": "VentureBeat interview on GitHub Accelerator",
+      "url": "https://venturebeat.com/ai/github-accelerator-fuels-open-source-ai-revolution-empowering-startups-to-democratize-access"
+    },
+    {
+      "text": "Our open source package uses 70% less memory and is twice as fast as existing solutions, with no accuracy degradation.",
+      "source": "VentureBeat interview on GitHub Accelerator",
+      "url": "https://venturebeat.com/ai/github-accelerator-fuels-open-source-ai-revolution-empowering-startups-to-democratize-access"
+    }
+  ],
+  "social": {
+    "github": "https://github.com/danielhanchen",
+    "twitter": "https://x.com/danielhanchen",
+    "website": "https://unsloth.ai",
+    "linkedin": "https://linkedin.com/in/danielhanchen",
+    "huggingface": "https://huggingface.co/danielhanchen",
+    "kaggle": "https://www.kaggle.com/danielhanchen"
+  },
+  "sources": [
+    {
+      "title": "danielhanchen (Daniel Han) - GitHub Profile",
+      "url": "https://github.com/danielhanchen"
+    },
+    {
+      "title": "Unsloth AI - Y Combinator Company Page",
+      "url": "https://www.ycombinator.com/companies/unsloth-ai"
+    },
+    {
+      "title": "Introducing Unsloth - Official Blog",
+      "url": "https://unsloth.ai/introducing"
+    },
+    {
+      "title": "Unsloth About Page",
+      "url": "https://unsloth.ai/about"
+    },
+    {
+      "title": "2024 GitHub Accelerator: Meet the 11 projects shaping open source AI - GitHub Blog",
+      "url": "https://github.blog/news-insights/company-news/2024-github-accelerator-meet-the-11-projects-shaping-open-source-ai/"
+    },
+    {
+      "title": "GitHub Accelerator fuels open source AI revolution - VentureBeat",
+      "url": "https://venturebeat.com/ai/github-accelerator-fuels-open-source-ai-revolution-empowering-startups-to-democratize-access"
+    },
+    {
+      "title": "Unsloth GitHub Repository",
+      "url": "https://github.com/unslothai/unsloth"
+    },
+    {
+      "title": "Daniel Han - No Cap Blog Profile",
+      "url": "https://nocap.blog/founder/daniel-han/"
+    },
+    {
+      "title": "DeepSeek-R1 Dynamic 1.58-bit Quantization - Unsloth Blog",
+      "url": "https://unsloth.ai/blog/deepseekr1-dynamic"
+    },
+    {
+      "title": "Unsloth AI - Crunchbase",
+      "url": "https://www.crunchbase.com/organization/unsloth-ai"
+    },
+    {
+      "title": "GitHub API - users/danielhanchen",
+      "url": "https://api.github.com/users/danielhanchen"
+    }
+  ]
+}

@@ -1,0 +1,186 @@
+{
+  "slug": "omar-khattab",
+  "name": "Omar Khattab",
+  "generated_at": "2026-03-19T12:00:00+00:00",
+  "bio": "Omar Khattab is an Assistant Professor at MIT EECS & CSAIL (TIBCO Founders' Career Development Professor) and the creator of DSPy and ColBERT. He completed his CS PhD at Stanford NLP, advised by Matei Zaharia and Christopher Potts, supported by the Apple Scholars in AI/ML Fellowship. Before joining MIT in July 2025, he was a Research Scientist at Databricks. His research investigates how to program intelligent software systems that are partly specified in natural language, that process natural language at scale, and whose quality and cost can be optimized using language models. DSPy has exceeded 500,000 downloads per month and sparked applications at Google, Amazon, IBM, VMware, Databricks, Baidu, AliExpress, and dozens of startups. ColBERT has won five SIGIR paper awards since 2020, including the SIGIR 2025 Best Paper for the WARP retrieval engine.",
+  "topics": [
+    "Declarative AI Programming",
+    "Language Model Program Optimization",
+    "Neural Information Retrieval",
+    "Late Interaction Retrieval (ColBERT)",
+    "Multi-Vector Search",
+    "Recursive Language Models",
+    "Natural Language Programs",
+    "Retrieval-Augmented Generation",
+    "Foundation Model Programming",
+    "Scalable IR Infrastructure"
+  ],
+  "timeline": [
+    {
+      "date": "2026-01",
+      "event": "Published updated Recursive Language Models (RLM) paper with Alex Zhang and Tim Kraska; RLM-Qwen3-8B outperforms vanilla GPT-5 on long-context tasks",
+      "url": "https://arxiv.org/abs/2512.24601"
+    },
+    {
+      "date": "2025-07",
+      "event": "Joined MIT EECS & CSAIL as Assistant Professor (TIBCO Founders' Career Development Professor)",
+      "url": "https://www.eecs.mit.edu/people/omar-khattab/"
+    },
+    {
+      "date": "2025-07",
+      "event": "WARP: An Efficient Engine for Multi-Vector Retrieval wins SIGIR 2025 Best Paper Award",
+      "url": "https://arxiv.org/abs/2501.17788"
+    },
+    {
+      "date": "2025-01",
+      "event": "Completed PhD thesis 'Building more reliable and scalable AI systems with foundation model programming' at Stanford",
+      "url": "https://purl.stanford.edu/zc625xj7842"
+    },
+    {
+      "date": "2024-10",
+      "event": "MIPRO optimizer paper published at EMNLP 2024, achieving up to 13% accuracy gains on multi-stage LM programs",
+      "url": "https://arxiv.org/abs/2406.11695"
+    },
+    {
+      "date": "2024-06",
+      "event": "Joined Databricks as Research Scientist, increasing investment in open-source DSPy community",
+      "url": "https://x.com/lateinteraction/status/1825623373655024035"
+    },
+    {
+      "date": "2024-01",
+      "event": "DSPy paper accepted as ICLR 2024 Spotlight ('Compiling Declarative Language Model Calls into Self-Improving Pipelines')",
+      "url": "https://arxiv.org/abs/2310.03714"
+    },
+    {
+      "date": "2024-01",
+      "event": "STORM knowledge curation system published at NAACL 2024, built on DSPy",
+      "url": "https://omarkhattab.com/"
+    },
+    {
+      "date": "2023-01",
+      "event": "DSPy framework open-sourced under stanfordnlp on GitHub",
+      "url": "https://github.com/stanfordnlp/dspy"
+    },
+    {
+      "date": "2022-04",
+      "event": "ColBERTv2 published at NAACL 2022, advancing efficient neural retrieval with residual compression",
+      "url": "https://aclanthology.org/2022.naacl-main.272.pdf"
+    },
+    {
+      "date": "2020-07",
+      "event": "ColBERT published at SIGIR 2020, introducing late interaction for efficient passage search over BERT (1,500+ citations)",
+      "url": "https://arxiv.org/abs/2004.12832"
+    }
+  ],
+  "key_contributions": [
+    {
+      "title": "DSPy",
+      "description": "The framework for programming -- not prompting -- language models. A declarative programming model for composing and automatically optimizing natural language programs using modular signatures, with optimizers like MIPRO and GEPA. 32,900+ stars, 500K+ monthly downloads.",
+      "url": "https://github.com/stanfordnlp/dspy"
+    },
+    {
+      "title": "ColBERT",
+      "description": "Late interaction retrieval model that independently encodes queries and documents with BERT, then uses fine-grained MaxSim for efficient scoring. Foundational to modern neural IR with 1,500+ citations and five SIGIR paper awards.",
+      "url": "https://arxiv.org/abs/2004.12832"
+    },
+    {
+      "title": "ColBERTv2 & PLAID",
+      "description": "Improved ColBERT with residual compression and the PLAID indexing engine, dramatically reducing storage and latency while preserving retrieval quality.",
+      "url": "https://aclanthology.org/2022.naacl-main.272.pdf"
+    },
+    {
+      "title": "WARP",
+      "description": "Efficient engine for multi-vector retrieval achieving 3x speedup over ColBERTv2/PLAID with dynamic similarity imputation and implicit decompression. Won SIGIR 2025 Best Paper Award.",
+      "url": "https://arxiv.org/abs/2501.17788"
+    },
+    {
+      "title": "Recursive Language Models (RLM)",
+      "description": "General inference paradigm allowing LLMs to programmatically examine, decompose, and recursively call themselves over long inputs, processing contexts up to two orders of magnitude beyond model windows.",
+      "url": "https://arxiv.org/abs/2512.24601"
+    },
+    {
+      "title": "MIPRO Optimizer",
+      "description": "Algorithm for optimizing instructions and few-shot demonstrations in multi-stage language model programs, achieving up to 13% accuracy improvement over baselines.",
+      "url": "https://arxiv.org/abs/2406.11695"
+    },
+    {
+      "title": "STORM",
+      "description": "Knowledge curation system built on DSPy that automatically researches and writes Wikipedia-style articles from scratch. Published at NAACL 2024.",
+      "url": "https://omarkhattab.com/"
+    }
+  ],
+  "quotes": [
+    {
+      "text": "DSPy is basically a programming language for building AI systems. We ask you to write your system in normal Python, but express your AI steps in the form of DSPy signatures. If you do that well, we give you two things automatically.",
+      "source": "X/Twitter post",
+      "url": "https://x.com/lateinteraction/status/1851324349216927856"
+    },
+    {
+      "text": "We need higher-level programming languages. We have only one: DSPy.",
+      "source": "X/Twitter post responding to OpenAI",
+      "url": "https://x.com/lateinteraction/status/1932557410679599520"
+    },
+    {
+      "text": "One of the biggest challenges facing DSPy is the lack of competition. As far as I can tell, there's just no other serious programming model for general-purpose, declarative AI programming.",
+      "source": "X/Twitter post",
+      "url": "https://x.com/lateinteraction/status/1964129738819268850"
+    }
+  ],
+  "social": {
+    "github": "https://github.com/okhat",
+    "twitter": "https://x.com/lateinteraction",
+    "website": "https://omarkhattab.com/",
+    "google_scholar": "https://scholar.google.com/citations?user=Lwr5ozgAAAAJ",
+    "mit_page": "https://www.eecs.mit.edu/people/omar-khattab/"
+  },
+  "sources": [
+    {
+      "title": "Omar Khattab - Personal Website",
+      "url": "https://omarkhattab.com/"
+    },
+    {
+      "title": "Omar Khattab - MIT EECS Faculty Profile",
+      "url": "https://www.eecs.mit.edu/people/omar-khattab/"
+    },
+    {
+      "title": "okhat (Omar Khattab) on GitHub",
+      "url": "https://github.com/okhat"
+    },
+    {
+      "title": "DSPy: The framework for programming -- not prompting -- language models (GitHub)",
+      "url": "https://github.com/stanfordnlp/dspy"
+    },
+    {
+      "title": "ColBERT: Efficient and Effective Passage Search via Contextualized Late Interaction over BERT (SIGIR 2020)",
+      "url": "https://arxiv.org/abs/2004.12832"
+    },
+    {
+      "title": "DSPy: Compiling Declarative Language Model Calls into Self-Improving Pipelines (ICLR 2024 Spotlight)",
+      "url": "https://arxiv.org/abs/2310.03714"
+    },
+    {
+      "title": "WARP: An Efficient Engine for Multi-Vector Retrieval (SIGIR 2025 Best Paper)",
+      "url": "https://arxiv.org/abs/2501.17788"
+    },
+    {
+      "title": "Recursive Language Models (arXiv 2025)",
+      "url": "https://arxiv.org/abs/2512.24601"
+    },
+    {
+      "title": "MIPRO: Optimizing Instructions and Demonstrations for Multi-Stage Language Model Programs (EMNLP 2024)",
+      "url": "https://arxiv.org/abs/2406.11695"
+    },
+    {
+      "title": "Omar Khattab PhD Thesis - Stanford Digital Repository",
+      "url": "https://purl.stanford.edu/zc625xj7842"
+    },
+    {
+      "title": "Omar Khattab on Google Scholar",
+      "url": "https://scholar.google.com/citations?user=Lwr5ozgAAAAJ"
+    },
+    {
+      "title": "MIT School of Engineering welcomes new faculty in 2024-25",
+      "url": "https://news.mit.edu/2025/school-engineering-welcomes-eight-new-faculty-1017"
+    }
+  ]
+}

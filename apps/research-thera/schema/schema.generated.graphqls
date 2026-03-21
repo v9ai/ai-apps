@@ -629,7 +629,7 @@ type Mutation {
   deleteTherapeuticQuestions(goalId: Int, issueId: Int): DeleteQuestionsResult!
   extractContactFeedbackIssues(id: Int!): ContactFeedback!
   generateAudio(goalId: Int!, language: String, storyId: Int, text: String, voice: String): GenerateAudioResult!
-  generateLongFormText(feedbackId: Int, goalId: Int, issueId: Int, language: String, minutes: Int): GenerateLongFormTextResult!
+  generateLongFormText(familyMemberId: Int, feedbackId: Int, goalId: Int, issueId: Int, language: String, minutes: Int, userContext: String): GenerateLongFormTextResult!
   generateOpenAIAudio(input: GenerateOpenAIAudioInput!): GenerateOpenAIAudioResult!
   generateResearch(feedbackId: Int, goalId: Int, issueId: Int): GenerateResearchResult!
   generateTherapeuticQuestions(goalId: Int, issueId: Int): GenerateQuestionsResult!

@@ -1,0 +1,29 @@
+{
+  "slug": "joshua-mo",
+  "name": "Joshua Mo",
+  "generated_at": "2026-03-20T16:29:04+00:00",
+  "eval": {
+    "bio_quality": {
+      "score": 8,
+      "reasoning": "The bio is specific and evidence-based with clear professional focus, though it lacks personal background details and educational history."
+    },
+    "source_coverage": {
+      "score": 7,
+      "reasoning": "Sources include Twitter, YouTube, Substack, and professional platforms, but some URLs appear to be placeholders rather than verified links."
+    },
+    "timeline_completeness": {
+      "score": 6,
+      "reasoning": "While current role at 0xPlaygrounds is clear, the timeline lacks chronological career progression, specific dates, and previous employment history."
+    },
+    "contributions_depth": {
+      "score": 9,
+      "reasoning": "Technical contributions are exceptionally well-documented with specific frameworks, architectures, and practical implementation details across multiple domains."
+    },
+    "name_disambiguation": {
+      "score": 10,
+      "reasoning": "Perfectly focused on the correct individual with consistent professional identity as DevRel Engineer at 0xPlaygrounds across all sources."
+    },
+    "overall_score": 8,
+    "summary": "This research profile demonstrates excellent technical specificity and perfect name disambiguation, with strong philosophical positioning and contribution depth, but suffers from incomplete biographical timeline, some unverified source links, and missing personal/educational background that would provide fuller context."
+  }
+}

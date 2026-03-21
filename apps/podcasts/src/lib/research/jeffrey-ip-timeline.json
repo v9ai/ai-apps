@@ -1,0 +1,120 @@
+{
+  "slug": "jeffrey-ip",
+  "generated_at": "2026-03-21T08:54:05.878188Z",
+  "events": [
+    {
+      "date": "2026-03",
+      "event": "DeepEval reaches 14,200+ GitHub stars and 3M+ monthly downloads; DeepTeam reaches 1,400+ stars; 20M+ daily evaluations platform-wide",
+      "url": "https://github.com/confident-ai/deepeval",
+      "source": "research"
+    },
+    {
+      "date": "2025-12",
+      "event": "DeepEval v3.7 introduced multimodal test cases, GEPA/MIPROv2/COPRO/SIMBA prompt optimization algorithms, and Azure OpenAI support",
+      "url": "https://deepeval.com/changelog/changelog-2025",
+      "source": "research"
+    },
+    {
+      "date": "2025-11",
+      "event": "Added Anthropic integration, CrewAI knowledge retrieval tracing, and ExactMatch/PatternMatch deterministic metrics",
+      "url": "https://deepeval.com/changelog/changelog-2025",
+      "source": "research"
+    },
+    {
+      "date": "2025-10",
+      "event": "Shipped new agent evaluation metrics: Goal Accuracy, Topic Adherence, Plan Adherence with cooperative timeout budgeting",
+      "url": "https://deepeval.com/changelog/changelog-2025",
+      "source": "research"
+    },
+    {
+      "date": "2025-09",
+      "event": "DeepEval v3.5 added PydanticAI agent wrapper, OpenAI Agents integration, and MCP evaluation support",
+      "url": "https://deepeval.com/changelog/changelog-2025",
+      "source": "research"
+    },
+    {
+      "date": "2025-03-07",
+      "event": "Closed oversubscribed $2.2M seed round in 5 days with YC, Flex Capital, Liquid 2 Ventures, January Capital, and others",
+      "url": "https://www.confident-ai.com/blog/how-i-closed-confident-ais-2-2m-seed-round-in-5-days",
+      "source": "research"
+    },
+    {
+      "date": "2025-03-05",
+      "event": "Created DeepTeam \u2014 open-source framework to red team LLMs with 50+ vulnerability tests and 20+ automated attack methods",
+      "url": "https://github.com/confident-ai/deepteam",
+      "source": "research"
+    },
+    {
+      "date": "2025-02-18",
+      "event": "Launch HN: Confident AI (YC W25) \u2014 presented the platform with Dataset Editor, Regression Catcher, and Iteration Insights",
+      "url": "https://news.ycombinator.com/item?id=43116633",
+      "source": "research"
+    },
+    {
+      "date": "2025-02-06",
+      "event": "Introduced the DAG Metric \u2014 a deterministic, decision-tree-based evaluation method for structured LLM evaluation",
+      "url": "https://www.confident-ai.com/blog/how-i-built-deterministic-llm-evaluation-metrics-for-deepeval",
+      "source": "research"
+    },
+    {
+      "date": "2025-02",
+      "event": "Accepted into Y Combinator's Winter 2025 batch (YC W25)",
+      "url": "https://www.ycombinator.com/companies/confident-ai",
+      "source": "research"
+    },
+    {
+      "date": "2024-12",
+      "event": "Launched JudgementalGPT \u2014 an LLM agent purpose-built for evaluation tasks",
+      "url": "https://www.linkedin.com/posts/jeffrey-ip-2295ab224_metrics-deepeval-activity-7130115516504932352-lN7z",
+      "source": "research"
+    },
+    {
+      "date": "2024-06",
+      "event": "DeepEval surpassed 5,000 GitHub stars and 600,000 monthly downloads",
+      "url": "https://github.com/confident-ai/deepeval",
+      "source": "research"
+    },
+    {
+      "date": "2024-01",
+      "event": "DeepEval v0.20 introduced LLM tracing with Confident AI platform integration",
+      "url": "https://www.linkedin.com/posts/jeffrey-ip-2295ab224_opensource-llm-llmops-activity-7127607801928945665-DPiZ",
+      "source": "research"
+    },
+    {
+      "date": "2024",
+      "event": "Co-founded Confident AI with Kritin Vongthongsri to build a cloud platform around DeepEval for enterprise LLM evaluation",
+      "url": "https://www.ycombinator.com/companies/confident-ai",
+      "source": "research"
+    },
+    {
+      "date": "2023-10",
+      "event": "Published first technical articles on LLM evaluation metrics and strategies on Medium and DEV Community",
+      "url": "https://medium.com/@jeffreyip54",
+      "source": "research"
+    },
+    {
+      "date": "2023-08-10",
+      "event": "Created the DeepEval repository on GitHub \u2014 an open-source LLM evaluation framework ('Pytest for LLMs')",
+      "url": "https://github.com/confident-ai/deepeval",
+      "source": "research"
+    },
+    {
+      "date": "2022",
+      "event": "Moved to Microsoft AI, building document recommenders for Office 365",
+      "url": "https://www.linkedin.com/in/jeffreyipp/",
+      "source": "research"
+    },
+    {
+      "date": "2021",
+      "event": "Joined Google as a Software Engineer scaling YouTube's creators studio infrastructure",
+      "url": "https://www.linkedin.com/in/jeffreyipp/",
+      "source": "research"
+    },
+    {
+      "date": "2020",
+      "event": "Graduated from Imperial College London with a Bachelor's degree",
+      "url": "https://www.linkedin.com/in/jeffreyipp/",
+      "source": "research"
+    }
+  ]
+}

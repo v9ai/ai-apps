@@ -1,0 +1,198 @@
+{
+  "slug": "eric-hartford",
+  "name": "Eric Hartford",
+  "generated_at": "2026-03-19T12:00:00+00:00",
+  "bio": "Eric Hartford is a leading open-source AI researcher, Chief Scientist at Lazarus AI, and the creator of the Dolphin and Samantha families of large language models. He founded Cognitive Computations and is the foremost advocate of composable alignment -- the idea that base models should ship uncensored so that downstream developers can layer their own alignment on top. Hartford holds an MS from the University of Washington and a BS from Pacific Lutheran University, with prior engineering roles at Microsoft, eBay, Amazon, Zillow, TensorWave, and Abacus.AI. His Dolphin series, based on Microsoft's Orca paper, spans dozens of variants across Llama, Mistral, Mixtral, Qwen, Phi, and Gemma architectures, with Dolphin 3.0 adding reasoning traces and function-calling. He also created Samantha, an empathetic AI companion fine-tuned on GPT-4 distillation data to emulate the personality from the film Her. On HuggingFace he maintains 11+ personal models and the cognitivecomputations organization. On GitHub (864 followers, 72 public repos) he contributes to Axolotl, the open-source fine-tuning framework used by many top model creators. Hartford's uncensored-models blog post became the de facto manifesto for the composable-alignment movement.",
+  "topics": [
+    "Uncensored / Composable Alignment",
+    "LLM Fine-Tuning (LoRA, QLoRA, Axolotl)",
+    "Dolphin Model Family",
+    "Samantha AI Companion",
+    "Open-Source LLM Research",
+    "Dataset Curation & Filtering",
+    "Function Calling & Agentic Models",
+    "Reasoning Traces (Dolphin-R1)",
+    "Text-to-Speech (VibeVoice)",
+    "AI Ethics & Model Ownership"
+  ],
+  "timeline": [
+    {
+      "date": "2025-09",
+      "event": "Released VibeVoice text-to-speech models (1.5B, 7B, Large) on HuggingFace",
+      "url": "https://huggingface.co/ehartford/VibeVoice-Large"
+    },
+    {
+      "date": "2025-01",
+      "event": "Released Dolphin 3.0 series (Llama 3.1 8B, Qwen 2.5 0.5B-3B) with function calling and agentic capabilities",
+      "url": "https://huggingface.co/cognitivecomputations/Dolphin3.0-Llama3.1-8B"
+    },
+    {
+      "date": "2025-01",
+      "event": "Released Dolphin 3.0-R1-Mistral-24B with 800k reasoning traces from the Dolphin-R1 dataset",
+      "url": "https://huggingface.co/cognitivecomputations/Dolphin3.0-R1-Mistral-24B"
+    },
+    {
+      "date": "2024-08",
+      "event": "Released Dolphin 2.9.4 on Gemma-2 2B and Llama 3.1 8B architectures",
+      "url": "https://huggingface.co/ehartford/dolphin-2.9.4-gemma2-2b"
+    },
+    {
+      "date": "2024-06",
+      "event": "Released Dolphin-2.9.3-qwen2 tiny variants (0.5B, 1.5B) for edge deployment",
+      "url": "https://x.com/cognitivecompai/status/1801423898250031273"
+    },
+    {
+      "date": "2024-04",
+      "event": "Released Dolphin-2.9-Llama3-70b with Fernando Neto and Cognitive Computations, sponsored by Crusoe Energy",
+      "url": "https://x.com/erhartford/status/1783273948022755770"
+    },
+    {
+      "date": "2024-03",
+      "event": "Released Dolphin 2.8 based on Mistral-7b-v0.2 with instruction, conversational, and coding skills",
+      "url": "https://huggingface.co/dphn/dolphin-2.8-mistral-7b-v02"
+    },
+    {
+      "date": "2023-12",
+      "event": "Released Dolphin 2.5 Mixtral-8x7b one day after MistralAI's Mixtral release, with viral system-prompt blog post",
+      "url": "https://erichartford.com/dolphin-25-mixtral-8x7b"
+    },
+    {
+      "date": "2023-11",
+      "event": "Released Dolphin 2.2 on Yi-34B and 70B architectures",
+      "url": "https://huggingface.co/TheBloke/dolphin-2_2-yi-34b-AWQ"
+    },
+    {
+      "date": "2023-05",
+      "event": "Published the 'Uncensored Models' blog post, establishing the composable-alignment manifesto",
+      "url": "https://erichartford.com/uncensored-models"
+    },
+    {
+      "date": "2023-05",
+      "event": "Released WizardLM-30B-Uncensored, WizardLM-13B-Uncensored, and WizardLM-7B-Uncensored on HuggingFace",
+      "url": "https://huggingface.co/ehartford/WizardLM-7B-Uncensored"
+    },
+    {
+      "date": "2023-04",
+      "event": "Released alpaca1337-7b-4bit, early quantized instruction-tuned model",
+      "url": "https://huggingface.co/ehartford/alpaca1337-7b-4bit"
+    }
+  ],
+  "key_contributions": [
+    {
+      "title": "Dolphin Model Family",
+      "description": "Open-source, commercially licensed, uncensored instruct-tuned LLM series based on Microsoft's Orca paper. Spans dozens of variants across Llama, Mistral, Mixtral, Qwen, Phi, and Gemma architectures from 0.5B to 70B+ parameters. Dolphin 3.0 adds reasoning traces, function calling, and agentic capabilities.",
+      "url": "https://erichartford.com/dolphin"
+    },
+    {
+      "title": "Uncensored Models / Composable Alignment",
+      "description": "Authored the influential 'Uncensored Models' blog post arguing that base models should be alignment-free so developers can compose their own alignment layers. Pioneered dataset filtering techniques to remove refusal and bias patterns while preserving model capability.",
+      "url": "https://erichartford.com/uncensored-models"
+    },
+    {
+      "title": "Samantha AI Companion",
+      "description": "Fine-tuned empathetic AI companion model (7B, 13B, 33B parameters) trained on GPT-4 distillation data to emulate the personality from the film Her. Trained in philosophy, psychology, and personal relationships, prioritizing emotional engagement over transactional interactions.",
+      "url": "https://ollama.com/library/samantha-mistral"
+    },
+    {
+      "title": "WizardLM Uncensored Series",
+      "description": "Created uncensored variants of WizardLM (7B, 13B, 30B, 65B) by filtering the WizardLM dataset to remove alignment and moralizing responses, enabling users to add their own RLHF LoRA for personalized alignment.",
+      "url": "https://huggingface.co/ehartford/WizardLM-7B-Uncensored"
+    },
+    {
+      "title": "VibeVoice Text-to-Speech",
+      "description": "Series of text-to-speech models in 1.5B, 7B, and Large (9B) sizes, published on HuggingFace in September 2025.",
+      "url": "https://huggingface.co/ehartford/VibeVoice-Large"
+    },
+    {
+      "title": "Cognitive Computations",
+      "description": "Founded Cognitive Computations as the organizational home for Dolphin, Samantha, and other open-source AI projects. Maintains the cognitivecomputations HuggingFace organization and erichartford.com blog.",
+      "url": "https://erichartford.com"
+    },
+    {
+      "title": "Axolotl Fine-Tuning Ecosystem",
+      "description": "Prominent contributor and power user of the Axolotl open-source fine-tuning framework from OpenAccess AI Collective, using it to train Dolphin, Samantha, and other models with QLoRA, FSDP, and sample packing techniques.",
+      "url": "https://github.com/OpenAccess-AI-Collective/axolotl"
+    }
+  ],
+  "quotes": [
+    {
+      "text": "To architect a composable alignment, one must start with an unaligned instruct model. Without an unaligned base, we have nothing to build alignment on top of.",
+      "source": "Uncensored Models blog post",
+      "url": "https://erichartford.com/uncensored-models"
+    },
+    {
+      "text": "Why should the open-source AI running on my computer, get to decide for itself when it wants to answer my question? This is about ownership and control. If I ask my model a question, I want an answer, I do not want it arguing with me.",
+      "source": "Uncensored Models blog post",
+      "url": "https://erichartford.com/uncensored-models"
+    },
+    {
+      "text": "American popular culture isn't the only culture. There is no 'one true correct alignment'.",
+      "source": "Uncensored Models blog post",
+      "url": "https://erichartford.com/uncensored-models"
+    },
+    {
+      "text": "Dolphin is steerable and gives control to the system owner. You set the system prompt, decide the alignment, and have control of your data. Dolphin does not impose its ethics or guidelines on you.",
+      "source": "Dolphin 3.0 model card",
+      "url": "https://huggingface.co/cognitivecomputations/Dolphin3.0-Llama3.1-8B"
+    }
+  ],
+  "social": {
+    "github": "https://github.com/ehartford",
+    "twitter": "https://x.com/cognitivecompai",
+    "linkedin": "https://www.linkedin.com/in/ehartford/",
+    "huggingface": "https://huggingface.co/ehartford",
+    "huggingface_org": "https://huggingface.co/cognitivecomputations",
+    "blog": "https://erichartford.com",
+    "kofi": "https://ko-fi.com/erichartford"
+  },
+  "sources": [
+    {
+      "title": "Cognitive Computations - Eric Hartford's Blog",
+      "url": "https://erichartford.com"
+    },
+    {
+      "title": "Uncensored Models - Blog Post (May 2023)",
+      "url": "https://erichartford.com/uncensored-models"
+    },
+    {
+      "title": "Dolphin - Model Family Overview",
+      "url": "https://erichartford.com/dolphin"
+    },
+    {
+      "title": "ehartford on GitHub (72 repos, 864 followers)",
+      "url": "https://github.com/ehartford"
+    },
+    {
+      "title": "ehartford on HuggingFace (11 models, 5.5k followers)",
+      "url": "https://huggingface.co/ehartford"
+    },
+    {
+      "title": "cognitivecomputations on HuggingFace",
+      "url": "https://huggingface.co/cognitivecomputations"
+    },
+    {
+      "title": "Eric Hartford - Lazarus AI Chief Scientist (ZoomInfo)",
+      "url": "https://www.zoominfo.com/p/Eric-Hartford/1830753243"
+    },
+    {
+      "title": "Eric Hartford - Research Scientist profile (getprog.ai)",
+      "url": "https://www.getprog.ai/profile/1117701"
+    },
+    {
+      "title": "Dolphin 3.0-Llama3.1-8B on HuggingFace",
+      "url": "https://huggingface.co/cognitivecomputations/Dolphin3.0-Llama3.1-8B"
+    },
+    {
+      "title": "Dolphin 3.0-R1-Mistral-24B on HuggingFace",
+      "url": "https://huggingface.co/cognitivecomputations/Dolphin3.0-R1-Mistral-24B"
+    },
+    {
+      "title": "Axolotl - OpenAccess AI Collective Fine-Tuning Framework",
+      "url": "https://github.com/OpenAccess-AI-Collective/axolotl"
+    },
+    {
+      "title": "Dolphin 2.5 Mixtral-8x7b Blog Post",
+      "url": "https://erichartford.com/dolphin-25-mixtral-8x7b"
+    }
+  ]
+}

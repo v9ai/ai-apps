@@ -887,11 +887,13 @@ export type MutationGenerateAudioArgs = {
 
 
 export type MutationGenerateLongFormTextArgs = {
+  familyMemberId?: InputMaybe<Scalars['Int']['input']>;
   feedbackId?: InputMaybe<Scalars['Int']['input']>;
   goalId?: InputMaybe<Scalars['Int']['input']>;
   issueId?: InputMaybe<Scalars['Int']['input']>;
   language?: InputMaybe<Scalars['String']['input']>;
   minutes?: InputMaybe<Scalars['Int']['input']>;
+  userContext?: InputMaybe<Scalars['String']['input']>;
 };
 
 
@@ -1830,6 +1832,8 @@ export type GenerateLongFormTextMutationVariables = Exact<{
   goalId?: InputMaybe<Scalars['Int']['input']>;
   issueId?: InputMaybe<Scalars['Int']['input']>;
   feedbackId?: InputMaybe<Scalars['Int']['input']>;
+  familyMemberId?: InputMaybe<Scalars['Int']['input']>;
+  userContext?: InputMaybe<Scalars['String']['input']>;
   language?: InputMaybe<Scalars['String']['input']>;
   minutes?: InputMaybe<Scalars['Int']['input']>;
 }>;
@@ -1946,7 +1950,7 @@ export type GetGenerationJobQueryVariables = Exact<{
 }>;
 
 
-export type GetGenerationJobQuery = { __typename?: 'Query', generationJob?: { __typename?: 'GenerationJob', id: string, status: JobStatus, progress: number, updatedAt: string, result?: { __typename?: 'JobResult', audioUrl?: string | null, progress?: number | null, stage?: string | null, count?: number | null, diagnostics?: { __typename?: 'PipelineDiagnostics', searchCount?: number | null, enrichedCount?: number | null, extractedCount?: number | null, qualifiedCount?: number | null, persistedCount?: number | null, searchUsedFallback?: boolean | null, enrichedDropped?: number | null } | null } | null, error?: { __typename?: 'JobError', message: string } | null } | null };
+export type GetGenerationJobQuery = { __typename?: 'Query', generationJob?: { __typename?: 'GenerationJob', id: string, status: JobStatus, progress: number, storyId?: number | null, updatedAt: string, result?: { __typename?: 'JobResult', audioUrl?: string | null, progress?: number | null, stage?: string | null, count?: number | null, diagnostics?: { __typename?: 'PipelineDiagnostics', searchCount?: number | null, enrichedCount?: number | null, extractedCount?: number | null, qualifiedCount?: number | null, persistedCount?: number | null, searchUsedFallback?: boolean | null, enrichedDropped?: number | null } | null } | null, error?: { __typename?: 'JobError', message: string } | null } | null };
 
 export type GetGenerationJobsQueryVariables = Exact<{
   goalId?: InputMaybe<Scalars['Int']['input']>;
@@ -3686,11 +3690,13 @@ export type GenerateAudioMutationHookResult = ReturnType<typeof useGenerateAudio
 export type GenerateAudioMutationResult = Apollo.MutationResult<GenerateAudioMutation>;
 export type GenerateAudioMutationOptions = Apollo.BaseMutationOptions<GenerateAudioMutation, GenerateAudioMutationVariables>;
 export const GenerateLongFormTextDocument = gql`
-    mutation GenerateLongFormText($goalId: Int, $issueId: Int, $feedbackId: Int, $language: String, $minutes: Int) {
+    mutation GenerateLongFormText($goalId: Int, $issueId: Int, $feedbackId: Int, $familyMemberId: Int, $userContext: String, $language: String, $minutes: Int) {
   generateLongFormText(
     goalId: $goalId
     issueId: $issueId
     feedbackId: $feedbackId
+    familyMemberId: $familyMemberId
+    userContext: $userContext
     language: $language
     minutes: $minutes
   ) {
@@ -3723,6 +3729,8 @@ export type GenerateLongFormTextMutationFn = Apollo.MutationFunction<GenerateLon
  *      goalId: // value for 'goalId'
  *      issueId: // value for 'issueId'
  *      feedbackId: // value for 'feedbackId'
+ *      familyMemberId: // value for 'familyMemberId'
+ *      userContext: // value for 'userContext'
  *      language: // value for 'language'
  *      minutes: // value for 'minutes'
  *   },
@@ -4663,6 +4671,7 @@ export const GetGenerationJobDocument = gql`
     id
     status
     progress
+    storyId
     result {
       audioUrl
       progress

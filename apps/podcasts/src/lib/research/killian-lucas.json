@@ -1,0 +1,162 @@
+{
+  "slug": "killian-lucas",
+  "name": "Killian Lucas",
+  "generated_at": "2026-03-19T12:00:00+00:00",
+  "bio": "Killian Lucas is the creator of Open Interpreter, a natural language interface for computers that lets language models run code locally. Launched in September 2023, Open Interpreter became the #1 trending repository on GitHub, amassing over 23,000 stars in its first week and now exceeding 62,000 stars. Based in Seattle, WA, Lucas studied at Western Washington University and previously served as Co-Founder & CTO at Lena Business Solutions, specializing in Generative AI, Deep Learning, and Computer Vision. He expanded Open Interpreter into hardware with the 01 Light, a portable open-source voice interface that controls desktop computers, and later launched Interpreter, a desktop agent for document automation that fills PDFs, edits Excel and Word files, and learns new skills — running offline with any model. Lucas is a vocal advocate for open-source, decentralized AI and aims to make Open Interpreter the 'Linux' of AI-powered computing.",
+  "topics": [
+    "Open-Source AI Agents",
+    "Code Interpretation via LLMs",
+    "Local AI Inference",
+    "Natural Language Computer Interfaces",
+    "Desktop AI Automation",
+    "AI Hardware Devices",
+    "Voice Interfaces",
+    "Document Automation",
+    "Open-Source Software",
+    "Vibe Coding"
+  ],
+  "timeline": [
+    {
+      "date": "2023-07-14",
+      "event": "Created the open-interpreter repository on GitHub, building a natural language interface for computers",
+      "url": "https://github.com/openinterpreter/open-interpreter"
+    },
+    {
+      "date": "2023-09-06",
+      "event": "Publicly launched Open Interpreter, reaching #1 trending repo on GitHub with 23,000+ stars in the first week",
+      "url": "https://x.com/hellokillian/status/1699156860073640038"
+    },
+    {
+      "date": "2023-09",
+      "event": "Featured on ThursdAI podcast in a special interview about Open Interpreter's explosive launch",
+      "url": "https://sub.thursdai.news/p/thursdai-special-interview-with-killian"
+    },
+    {
+      "date": "2024-01-11",
+      "event": "Created the 01 project — an open-source voice interface for desktop, mobile, and ESP32 chips",
+      "url": "https://github.com/openinterpreter/01"
+    },
+    {
+      "date": "2024-01",
+      "event": "Announced the 01 Light hardware device at $99, achieving 1 million video views and 1,000 pre-orders within 24 hours",
+      "url": "https://datasciencelearningcenter.substack.com/p/what-is-open-interpreter-and-its"
+    },
+    {
+      "date": "2025",
+      "event": "Launched 01OS, a 'vibe-coded' operating system built with AI, sparking debate in the tech community",
+      "url": "https://www.webpronews.com/when-ai-writes-the-code-inside-the-buggy-launch-of-the-vibe-coded-01os/"
+    },
+    {
+      "date": "2025",
+      "event": "Launched Interpreter desktop agent — AI-powered document automation for PDFs, Excel, Word, and Markdown with offline support",
+      "url": "https://www.openinterpreter.com/"
+    },
+    {
+      "date": "2025",
+      "event": "Released open-procedures, a library of tiny structured coding tutorials searchable semantically (162 stars)",
+      "url": "https://github.com/KillianLucas/open-procedures"
+    }
+  ],
+  "key_contributions": [
+    {
+      "title": "Open Interpreter",
+      "description": "A natural language interface for computers that lets LLMs run Python, JavaScript, and Shell code locally. Over 62,000 GitHub stars, making it one of the most popular open-source AI agent projects.",
+      "url": "https://github.com/openinterpreter/open-interpreter"
+    },
+    {
+      "title": "01 — Open-Source Voice Interface",
+      "description": "The #1 open-source voice interface for desktop, mobile, and ESP32 chips. A portable device that controls home computers via natural language, with open-source software, CAD files, and wiring diagrams. Over 5,100 GitHub stars.",
+      "url": "https://github.com/openinterpreter/01"
+    },
+    {
+      "title": "Interpreter Desktop Agent",
+      "description": "A desktop AI agent that fills PDF forms, edits Excel spreadsheets and Word documents, runs offline via Ollama, and works with any model including ChatGPT, Anthropic, and Groq.",
+      "url": "https://www.openinterpreter.com/"
+    },
+    {
+      "title": "open-procedures",
+      "description": "Tiny, structured coding tutorials that can be searched semantically, enabling AI systems to learn new programming skills. 162 GitHub stars.",
+      "url": "https://github.com/KillianLucas/open-procedures"
+    },
+    {
+      "title": "tokentrim",
+      "description": "A utility to easily trim 'messages' arrays for use with GPTs, preventing context window overflow. 74 GitHub stars.",
+      "url": "https://github.com/KillianLucas/tokentrim"
+    },
+    {
+      "title": "aifs — Local Semantic Search",
+      "description": "Stupidly simple local semantic search library for building AI applications. 452 GitHub stars, under the Open Interpreter organization.",
+      "url": "https://github.com/openinterpreter/aifs"
+    }
+  ],
+  "quotes": [
+    {
+      "text": "Today I'm launching Open Interpreter, an open-source Code Interpreter that runs locally. Summarize PDFs, visualize datasets, and control your browser — all from a ChatGPT-like interface in your terminal.",
+      "source": "Launch announcement on X (Twitter)",
+      "url": "https://x.com/hellokillian/status/1699156860073640038"
+    },
+    {
+      "text": "So excited to launch Open Interpreter (#1 trending repo on Github), an open-source, locally running implementation of OpenAI's Code Interpreter.",
+      "source": "LinkedIn post",
+      "url": "https://www.linkedin.com/posts/killian-lucas-764377234_so-excited-to-launch-open-interpreter-1-activity-7104901274956926976-G85V"
+    },
+    {
+      "text": "Everything runs locally, giving you peace of mind. The 01 Project aims to become the 'Linux' of this new space — open, modular, and free for personal or commercial use.",
+      "source": "Open Interpreter 01 Project announcement",
+      "url": "https://datasciencelearningcenter.substack.com/p/what-is-open-interpreter-and-its"
+    }
+  ],
+  "social": {
+    "github": "https://github.com/KillianLucas",
+    "twitter": "https://x.com/hellokillian",
+    "linkedin": "https://www.linkedin.com/in/killian-lucas-764377234/",
+    "website": "https://www.openinterpreter.com/",
+    "email": "killian@openinterpreter.com"
+  },
+  "sources": [
+    {
+      "title": "KillianLucas on GitHub (2,281 followers, 11 public repos)",
+      "url": "https://github.com/KillianLucas"
+    },
+    {
+      "title": "openinterpreter/open-interpreter — A natural language interface for computers (62,792 stars)",
+      "url": "https://github.com/openinterpreter/open-interpreter"
+    },
+    {
+      "title": "openinterpreter/01 — Open-source voice interface (5,119 stars)",
+      "url": "https://github.com/openinterpreter/01"
+    },
+    {
+      "title": "Interpreter: The Desktop Agent — openinterpreter.com",
+      "url": "https://www.openinterpreter.com/"
+    },
+    {
+      "title": "Killian Lucas on LinkedIn — Open Interpreter",
+      "url": "https://www.linkedin.com/in/killian-lucas-764377234/"
+    },
+    {
+      "title": "killian (@hellokillian) on X",
+      "url": "https://x.com/hellokillian"
+    },
+    {
+      "title": "ThursdAI — Special interview with Killian Lucas, Author of Open Interpreter",
+      "url": "https://sub.thursdai.news/p/thursdai-special-interview-with-killian"
+    },
+    {
+      "title": "What is Open Interpreter and its first 01 Light AI Device? — Data Science Learning Center",
+      "url": "https://datasciencelearningcenter.substack.com/p/what-is-open-interpreter-and-its"
+    },
+    {
+      "title": "When AI Writes the Code: Inside the Buggy Launch of the 'Vibe-Coded' 01OS — WebProNews",
+      "url": "https://www.webpronews.com/when-ai-writes-the-code-inside-the-buggy-launch-of-the-vibe-coded-01os/"
+    },
+    {
+      "title": "Open Interpreter on Product Hunt — Makers and Employees",
+      "url": "https://www.producthunt.com/products/open-interpreter/makers"
+    },
+    {
+      "title": "Meet Open Interpreter — Analytics Drift",
+      "url": "https://analyticsdrift.com/meet-open-interpreter-an-open-source-code-interpreter-that-runs-locally/"
+    }
+  ]
+}

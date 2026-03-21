@@ -322,3 +322,39 @@ class TestBuildValuationPromptParking:
         assert "INCLUDED" in prompt
         assert "12,000" in prompt
         assert "COMPARABLE MARKET DATA" in prompt
+
+
+# ---------------------------------------------------------------------------
+# Live CrewAI parking extraction test — runs the actual extractor crew
+# ---------------------------------------------------------------------------
+
+@pytest.mark.asyncio
+@pytest.mark.slow
+@pytest.mark.skipif(not _HAS_API_KEY, reason="requires DEEPSEEK_API_KEY")
+async def test_parking_extraction_crew_live():
+    """Run the actual extractor crew on a listing with parking info and verify extraction."""
+    from deepeval.tracing import trace
+    from deepeval.metrics import AnswerRelevancyMetric
+    from analyzer.agent import extract_listing
+
+    listing_text = (
+        "Title: Apartament 2 camere, Centru, Chisinau\n"
+        "Price: 85 000 EUR\n"
+        "Suprafata: 70 m²\n"
+        "Etaj: 5/10\n"
+        "Camere: 2\n"
+        "Stare: Euroreparatie\n"
+        "Zona: Centru\n"
+        "Parcare: loc parcare subteran inclus in pret\n"
+        "Descriere: Bloc nou 2024, parcare subterana inclusa, finisaje premium."
+    )
+
+    with trace(trace_metrics=[AnswerRelevancyMetric()]):
+        listing = await extract_listing(
+            f"Extract apartment data from this listing:\n\n{listing_text}"
+        )
+
+    assert listing.price_eur == 85000
+    assert listing.parking_included is True
+    assert listing.parking_price_eur is not None
+    assert listing.parking_price_eur >= 5000  # Should estimate underground parking value

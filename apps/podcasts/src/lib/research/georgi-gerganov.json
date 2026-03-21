@@ -1,0 +1,139 @@
+{
+  "slug": "georgi-gerganov",
+  "name": "Georgi Gerganov",
+  "generated_at": "2026-03-19",
+  "bio": "Georgi Gerganov is a Bulgarian software engineer based in Sofia, best known as the creator of llama.cpp and the GGML tensor library, which together democratized local LLM inference on consumer hardware. He first gained prominence with whisper.cpp, a pure C/C++ port of OpenAI's Whisper speech-to-text model, before releasing llama.cpp in March 2023 to run Meta's LLaMA models without heavy dependencies. In 2023 he founded ggml.ai with pre-seed funding from Nat Friedman and Daniel Gross, and in February 2026 he and the ggml team joined Hugging Face while retaining full autonomy over the llama.cpp project. His work emphasizes minimal dependencies, integer quantization, and cross-platform efficiency, enabling AI inference on everything from Raspberry Pis to server GPUs.",
+  "topics": [
+    "LLM Inference in C/C++",
+    "GGML Tensor Library",
+    "Model Quantization (GGUF)",
+    "On-Device AI / Edge Inference",
+    "whisper.cpp / Speech-to-Text",
+    "Cross-Platform ML (Metal, Vulkan, CUDA)",
+    "Open-Source AI Infrastructure",
+    "Local-First AI",
+    "FlashAttention Implementation",
+    "Hardware-Optimized Computing"
+  ],
+  "timeline": [
+    {
+      "date": "2022-09",
+      "event": "Started development of GGML, a C tensor library for machine learning with strict memory management and multi-threading",
+      "url": "https://github.com/ggml-org/ggml"
+    },
+    {
+      "date": "2022-10",
+      "event": "Released whisper.cpp, a pure C/C++ port of OpenAI's Whisper speech-to-text model",
+      "url": "https://github.com/ggml-org/whisper.cpp"
+    },
+    {
+      "date": "2023-03-10",
+      "event": "Released llama.cpp, implementing Meta's LLaMA inference in pure C/C++ with no dependencies",
+      "url": "https://github.com/ggml-org/llama.cpp"
+    },
+    {
+      "date": "2023-03-22",
+      "event": "Appeared on Changelog Interviews #532: 'Bringing Whisper and LLaMA to the masses'",
+      "url": "https://changelog.com/podcast/532"
+    },
+    {
+      "date": "2023-06",
+      "event": "Published the llama.cpp / ggml roadmap for June 2023, outlining project direction",
+      "url": "https://twitter.com/ggerganov/status/1666298761960620034"
+    },
+    {
+      "date": "2023-08",
+      "event": "Introduced the GGUF file format to replace GGML format, improving backwards compatibility for multiple model architectures",
+      "url": "https://github.com/ggml-org/llama.cpp"
+    },
+    {
+      "date": "2023",
+      "event": "Founded ggml.ai with pre-seed funding from Nat Friedman and Daniel Gross to advance GGML development",
+      "url": "https://ggml.ai/"
+    },
+    {
+      "date": "2024-04-30",
+      "event": "Merged FlashAttention support into llama.cpp, significantly improving inference performance",
+      "url": "https://github.com/ggml-org/llama.cpp"
+    },
+    {
+      "date": "2024",
+      "event": "Added Vulkan, SYCL, and expanded Metal/CUDA backend support for broader hardware compatibility",
+      "url": "https://github.com/ggml-org/llama.cpp"
+    },
+    {
+      "date": "2026-02-20",
+      "event": "GGML and llama.cpp team joined Hugging Face, maintaining full autonomy and 100% open-source commitment",
+      "url": "https://huggingface.co/blog/ggml-joins-hf"
+    }
+  ],
+  "key_contributions": [
+    {
+      "title": "llama.cpp",
+      "description": "LLM inference engine in pure C/C++ with no dependencies, supporting quantization from 2-bit to 8-bit, multiple GPU backends (Metal, CUDA, Vulkan), and running on commodity hardware. Over 91,000 GitHub stars and 14,000 forks.",
+      "url": "https://github.com/ggml-org/llama.cpp"
+    },
+    {
+      "title": "GGML",
+      "description": "Minimalist C tensor library for machine learning that enables large model inference on commodity hardware with integer quantization, zero runtime memory allocations, and no third-party dependencies. Released under MIT license.",
+      "url": "https://github.com/ggml-org/ggml"
+    },
+    {
+      "title": "whisper.cpp",
+      "description": "Pure C/C++ port of OpenAI's Whisper automatic speech recognition model, enabling on-device speech-to-text without Python dependencies. Pioneered the approach later applied to LLMs with llama.cpp.",
+      "url": "https://github.com/ggml-org/whisper.cpp"
+    },
+    {
+      "title": "GGUF File Format",
+      "description": "Binary file format for storing quantized ML models, supporting 2-bit to 8-bit integer quantization, float16, bfloat16, float32, and 1.58-bit quantization. Replaced the original GGML format for better architecture extensibility.",
+      "url": "https://huggingface.co/docs/hub/en/gguf-llamacpp"
+    },
+    {
+      "title": "ggml.ai",
+      "description": "Company founded in 2023 to support open-source ML inference development, backed by Nat Friedman and Daniel Gross. Acquired by Hugging Face in February 2026.",
+      "url": "https://ggml.ai/"
+    }
+  ],
+  "quotes": [],
+  "social": {
+    "github": "https://github.com/ggerganov",
+    "twitter": "https://x.com/ggerganov",
+    "website": "https://ggerganov.com",
+    "huggingface": "https://huggingface.co/ggerganov",
+    "email": "ggerganov@gmail.com"
+  },
+  "sources": [
+    {
+      "title": "ggerganov (Georgi Gerganov) - GitHub Profile",
+      "url": "https://github.com/ggerganov"
+    },
+    {
+      "title": "llama.cpp - Wikipedia",
+      "url": "https://en.wikipedia.org/wiki/Llama.cpp"
+    },
+    {
+      "title": "GGML and llama.cpp join HF to ensure the long-term progress of Local AI",
+      "url": "https://huggingface.co/blog/ggml-joins-hf"
+    },
+    {
+      "title": "ggml.ai - Official Website",
+      "url": "https://ggml.ai/"
+    },
+    {
+      "title": "Changelog Interviews #532 - Bringing Whisper and LLaMA to the masses with Georgi Gerganov",
+      "url": "https://changelog.com/podcast/532"
+    },
+    {
+      "title": "llama.cpp GitHub Repository",
+      "url": "https://github.com/ggml-org/llama.cpp"
+    },
+    {
+      "title": "whisper.cpp GitHub Repository",
+      "url": "https://github.com/ggml-org/whisper.cpp"
+    },
+    {
+      "title": "GitHub API - users/ggerganov",
+      "url": "https://api.github.com/users/ggerganov"
+    }
+  ]
+}

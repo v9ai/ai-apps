@@ -211,13 +211,17 @@ class TestAnalyzerDeps:
 
 _HAS_API_KEY = bool(os.getenv("DEEPSEEK_API_KEY"))
 
+if _HAS_API_KEY:
+    from deepeval.tracing import trace
+    from deepeval.metrics import AnswerRelevancyMetric
+
 
 @pytest.mark.asyncio
 @pytest.mark.slow
 @pytest.mark.e2e
 @pytest.mark.skipif(not _HAS_API_KEY, reason="requires DEEPSEEK_API_KEY")
 async def test_full_pipeline_live():
-    """Run the full analyze_listing pipeline with real API calls."""
+    """Run the full analyze_listing pipeline with real API calls, traced by DeepEval."""
     from analyzer.agent import analyze_listing
 
     listing_text = (
@@ -231,7 +235,8 @@ async def test_full_pipeline_live():
     )
     url = "https://999.md/ro/test-pipeline"
 
-    listing, valuation, comparables, zone_stats = await analyze_listing(listing_text, url)
+    with trace(trace_metrics=[AnswerRelevancyMetric()]):
+        listing, valuation, comparables, zone_stats = await analyze_listing(listing_text, url)
 
     # Extraction checks
     assert listing.price_eur == 75000
@@ -245,7 +250,7 @@ async def test_full_pipeline_live():
     assert valuation.reasoning
 
     # Formula consistency check
+    from analyzer.agent import validate_valuation_formulas
     issues = validate_valuation_formulas(valuation)
-    # Allow minor issues but no severe ones
     severe = [i for i in issues if "verdict" in i.lower()]
     assert not severe, f"Severe formula issues: {severe}"

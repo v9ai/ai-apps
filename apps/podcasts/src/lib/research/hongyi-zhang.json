@@ -1,0 +1,197 @@
+{
+  "slug": "hongyi-zhang",
+  "name": "Hongyi Zhang",
+  "generated_at": "2026-03-19T12:00:00+00:00",
+  "bio": "Hongyi Zhang is a machine learning researcher and co-creator of Mixup, one of the most influential data augmentation techniques in deep learning (11,000+ citations). He earned his PhD in Brain and Cognitive Sciences from MIT in 2019 under Suvrit Sra at LIDS, with a thesis on non-convex optimization and learning covering Riemannian optimization on manifolds and deep neural network training. His research at Facebook AI Research (FAIR) produced Mixup (ICLR 2018) and Fixup Initialization (ICLR 2019). He holds a BS in Machine Intelligence from Peking University (2009-2013). Since 2019, he has been a Research Scientist at ByteDance, working on Monetization GenAI, LLM post-training, reinforcement learning for LLMs, and the ByteBrain AI-for-Infrastructure platform. His team co-developed ChatTS, a time-series multimodal LLM accepted to VLDB 2025.",
+  "topics": [
+    "Mixup Data Augmentation",
+    "Riemannian Optimization",
+    "Deep Neural Network Initialization",
+    "Non-Convex Optimization",
+    "Reinforcement Learning for LLMs",
+    "Multimodal Foundation Models",
+    "Time-Series LLMs (ChatTS)",
+    "AI for Infrastructure (ByteBrain)",
+    "Adversarial Robustness",
+    "GAN Training Stabilization"
+  ],
+  "timeline": [
+    {
+      "date": "2025-06",
+      "event": "Forked verl (Volcano Engine Reinforcement Learning for LLMs) on GitHub, signaling active work on RL-based LLM post-training at ByteDance",
+      "url": "https://github.com/hongyi-zhang/verl"
+    },
+    {
+      "date": "2025",
+      "event": "ChatTS, a time-series multimodal LLM co-developed with Tsinghua University, accepted to VLDB 2025",
+      "url": "https://scholar.google.com/citations?user=6Wg-hF4AAAAJ&hl=en"
+    },
+    {
+      "date": "2019-03",
+      "event": "Released Fixup (Fixed-update Initialization) on GitHub, enabling deep ResNet training without normalization (156 stars)",
+      "url": "https://github.com/hongyi-zhang/Fixup"
+    },
+    {
+      "date": "2019-01",
+      "event": "Completed PhD thesis 'Topics in non-convex optimization and learning' at MIT under Suvrit Sra",
+      "url": "https://dspace.mit.edu/handle/1721.1/121830"
+    },
+    {
+      "date": "2019",
+      "event": "Joined ByteDance as Research Scientist in Monetization GenAI",
+      "url": "https://www.linkedin.com/in/hongyizhang/"
+    },
+    {
+      "date": "2019-01",
+      "event": "Published 'Fixup Initialization: Residual Learning Without Normalization' at ICLR 2019 with Yann N. Dauphin and Tengyu Ma",
+      "url": "https://arxiv.org/abs/1901.09321"
+    },
+    {
+      "date": "2018-06",
+      "event": "Published 'An Estimate Sequence for Geodesically Convex Optimization' at COLT 2018 with Suvrit Sra",
+      "url": "https://arxiv.org/abs/1806.02812"
+    },
+    {
+      "date": "2018",
+      "event": "Research intern at Facebook AI Research (FAIR), second stint",
+      "url": "https://openreview.net/profile?id=~Hongyi_Zhang1"
+    },
+    {
+      "date": "2018-04",
+      "event": "Mixup paper published at ICLR 2018 as poster, accumulating 11,000+ citations",
+      "url": "https://openreview.net/forum?id=r1Ddp1-Rb"
+    },
+    {
+      "date": "2017-10",
+      "event": "Submitted 'mixup: Beyond Empirical Risk Minimization' to arXiv with Moustapha Cisse, Yann N. Dauphin, and David Lopez-Paz",
+      "url": "https://arxiv.org/abs/1710.09412"
+    },
+    {
+      "date": "2017",
+      "event": "Research intern at Facebook AI Research (FAIR)",
+      "url": "https://openreview.net/profile?id=~Hongyi_Zhang1"
+    },
+    {
+      "date": "2016-12",
+      "event": "Published 'Riemannian SVRG: Fast Stochastic Optimization on Riemannian Manifolds' at NIPS 2016",
+      "url": "https://www.semanticscholar.org/paper/Riemannian-SVRG%3A-Fast-Stochastic-Optimization-on-Zhang-Reddi/a8f9a55a04f274cbc67fc9705a4a242dcd6c89bf"
+    },
+    {
+      "date": "2016",
+      "event": "Published 'First-order Methods for Geodesically Convex Optimization' at COLT 2016",
+      "url": "http://proceedings.mlr.press/v49/zhang16b.pdf"
+    },
+    {
+      "date": "2013-09",
+      "event": "Began PhD in Brain and Cognitive Sciences at MIT, Laboratory for Information and Decision Systems (LIDS)",
+      "url": "https://bcs.mit.edu/users/zhangxymitedu"
+    },
+    {
+      "date": "2013",
+      "event": "Graduated from Peking University with BS in Machine Intelligence",
+      "url": "https://openreview.net/profile?id=~Hongyi_Zhang1"
+    },
+    {
+      "date": "2012",
+      "event": "Research internship at Toyota Technological Institute at Chicago (TTIC)",
+      "url": "https://openreview.net/profile?id=~Hongyi_Zhang1"
+    }
+  ],
+  "key_contributions": [
+    {
+      "title": "Mixup: Beyond Empirical Risk Minimization",
+      "description": "Introduced Mixup, a data augmentation technique that trains neural networks on convex combinations of pairs of examples and their labels. With 11,000+ citations, it became one of the most influential regularization methods in deep learning, improving generalization, adversarial robustness, and GAN training stability.",
+      "url": "https://arxiv.org/abs/1710.09412"
+    },
+    {
+      "title": "Fixup Initialization",
+      "description": "Proposed Fixup (Fixed-update Initialization), enabling training of very deep residual networks (up to 10,000 layers) without batch normalization by properly rescaling standard initialization. Achieved state-of-the-art performance in image classification and machine translation.",
+      "url": "https://arxiv.org/abs/1901.09321"
+    },
+    {
+      "title": "Riemannian SVRG",
+      "description": "Developed the first variance-reduced stochastic optimization method for Riemannian manifolds, achieving global linear convergence rates for geodesically strongly convex functions.",
+      "url": "https://github.com/hongyi-zhang/mixup"
+    },
+    {
+      "title": "R-SPIDER",
+      "description": "Adapted the SPIDER algorithm to Riemannian manifolds, achieving curvature-independent convergence rates for both nonconvex and strongly convex optimization problems.",
+      "url": "https://www.semanticscholar.org/paper/R-SPIDER:-A-Fast-Riemannian-Stochastic-Optimization-Zhang-Zhang/c00127be71bf840c475486baf1236f8dea17a273"
+    },
+    {
+      "title": "ChatTS",
+      "description": "Co-developed with Tsinghua University at ByteDance, ChatTS is the first multimodal LLM that takes multivariate time series as input for understanding and reasoning, achieving 46% improvement in alignment and 25.8% improvement in reasoning over GPT-4o. Accepted to VLDB 2025.",
+      "url": "https://scholar.google.com/citations?user=6Wg-hF4AAAAJ&hl=en"
+    },
+    {
+      "title": "mixup (GitHub implementation)",
+      "description": "Open-source reference implementation of the Mixup training method with code for CIFAR and GAN experiments. 469 stars on GitHub.",
+      "url": "https://github.com/hongyi-zhang/mixup"
+    }
+  ],
+  "quotes": [
+    {
+      "text": "mixup extends the training distribution by incorporating the prior knowledge that linear interpolations of feature vectors should lead to linear interpolations of targets.",
+      "source": "mixup: Beyond Empirical Risk Minimization (ICLR 2018)",
+      "url": "https://arxiv.org/abs/1710.09412"
+    },
+    {
+      "text": "mixup regularizes the neural network to favor simple linear behavior in-between training examples.",
+      "source": "mixup: Beyond Empirical Risk Minimization (ICLR 2018)",
+      "url": "https://arxiv.org/abs/1710.09412"
+    },
+    {
+      "text": "mixup can be implemented in a few lines of code, and introduces minimal computation overhead.",
+      "source": "mixup: Beyond Empirical Risk Minimization (ICLR 2018)",
+      "url": "https://arxiv.org/abs/1710.09412"
+    }
+  ],
+  "social": {
+    "github": "https://github.com/hongyi-zhang",
+    "scholar": "https://scholar.google.com/citations?user=6Wg-hF4AAAAJ&hl=en",
+    "linkedin": "https://www.linkedin.com/in/hongyizhang/",
+    "openreview": "https://openreview.net/profile?id=~Hongyi_Zhang1"
+  },
+  "sources": [
+    {
+      "title": "hongyi-zhang on GitHub (8 repos, mixup 469 stars, Fixup 156 stars)",
+      "url": "https://github.com/hongyi-zhang"
+    },
+    {
+      "title": "Hongyi Zhang - Google Scholar (17,000+ citations)",
+      "url": "https://scholar.google.com/citations?user=6Wg-hF4AAAAJ&hl=en"
+    },
+    {
+      "title": "mixup: Beyond Empirical Risk Minimization (arXiv, 11,000+ citations)",
+      "url": "https://arxiv.org/abs/1710.09412"
+    },
+    {
+      "title": "Fixup Initialization: Residual Learning Without Normalization (ICLR 2019)",
+      "url": "https://arxiv.org/abs/1901.09321"
+    },
+    {
+      "title": "Topics in non-convex optimization and learning (MIT PhD thesis, 2019)",
+      "url": "https://dspace.mit.edu/handle/1721.1/121830"
+    },
+    {
+      "title": "Hongyi Zhang on OpenReview",
+      "url": "https://openreview.net/profile?id=~Hongyi_Zhang1"
+    },
+    {
+      "title": "Hongyi Zhang - ByteDance (LinkedIn)",
+      "url": "https://www.linkedin.com/in/hongyizhang/"
+    },
+    {
+      "title": "mixup: Beyond Empirical Risk Minimization (Semantic Scholar)",
+      "url": "https://www.semanticscholar.org/paper/mixup:-Beyond-Empirical-Risk-Minimization-Zhang-Ciss%C3%A9/4feef0fd284feb1233399b400eb897f59ec92755"
+    },
+    {
+      "title": "Hongyi Zhang - ResearchGate (MIT / LIDS)",
+      "url": "https://www.researchgate.net/profile/Hongyi-Zhang-2"
+    },
+    {
+      "title": "facebookresearch/mixup-cifar10 (official FAIR implementation)",
+      "url": "https://github.com/facebookresearch/mixup-cifar10"
+    }
+  ]
+}

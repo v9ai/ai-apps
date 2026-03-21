@@ -1,0 +1,258 @@
+{
+  "slug": "francois-chollet",
+  "name": "Francois Chollet",
+  "generated_at": "2026-03-19T22:00:00+00:00",
+  "bio": "Francois Chollet is a French software engineer and AI researcher, born October 20, 1989. He graduated with a Diplome d'Ingenieur (Master of Engineering) from ENSTA Paris, part of the Polytechnic Institute of Paris, in 2012. He is the creator of Keras, one of the most widely used deep learning libraries with over two million users, and the author of 'Deep Learning with Python' (Manning, 2017; 2nd ed. 2021), which sold over 100,000 copies and was translated into 10+ languages. Chollet joined Google in 2015, shortly after releasing Keras, and rose to Senior Staff Engineer over a nine-year tenure focused on computer vision, formal reasoning, and abstraction. In 2019, he published 'On the Measure of Intelligence' (arXiv:1911.01547), introducing the Abstraction and Reasoning Corpus (ARC) — a benchmark measuring general fluid intelligence via novel reasoning problems that humans find easy but AI struggles with. In 2024 he co-launched ARC Prize, a $1M competition that raised the ARC-AGI state-of-the-art from 33% to 55.5%. He departed Google in November 2024 and in January 2025 co-founded Ndea with Zapier co-founder Mike Knoop — an AI lab pursuing AGI through deep learning-guided program synthesis. The ARC Prize Foundation expanded into a non-profit in early 2025, with ARC-AGI-2 released in March 2025 and ARC-AGI-3 (an interactive reasoning benchmark) launching March 25, 2026. On December 1, 2021, Chollet won the Global Swiss AI Award for breakthroughs in AI.",
+  "topics": [
+    "Artificial General Intelligence (AGI)",
+    "Abstraction and Reasoning",
+    "Intelligence Measurement",
+    "Deep Learning",
+    "Program Synthesis",
+    "Keras and Deep Learning Frameworks",
+    "Computer Vision",
+    "Neural Architecture Design",
+    "AI Benchmarking",
+    "Cognitive Science and Developmental Psychology"
+  ],
+  "timeline": [
+    {
+      "date": "2012",
+      "event": "Graduated with Diplome d'Ingenieur (Master of Engineering) from ENSTA Paris, Polytechnic Institute of Paris.",
+      "url": "https://fchollet.com/"
+    },
+    {
+      "date": "2015-03",
+      "event": "Released Keras, an open-source deep learning library written in Python, designed to enable fast experimentation with neural networks.",
+      "url": "https://github.com/keras-team/keras"
+    },
+    {
+      "date": "2015",
+      "event": "Joined Google shortly after releasing Keras; contributed to TensorFlow and rose to Senior Staff Engineer.",
+      "url": "https://en.wikipedia.org/wiki/Fran%C3%A7ois_Chollet"
+    },
+    {
+      "date": "2016",
+      "event": "Published 'Xception: Deep Learning with Depthwise Separable Convolutions' (CVPR 2017) — introduced the Xception architecture, a milestone in efficient neural network design.",
+      "url": "https://arxiv.org/abs/1610.02357"
+    },
+    {
+      "date": "2016",
+      "event": "Co-authored 'DeepMath: Deep Sequence Models for Premise Selection' at NeurIPS 2016.",
+      "url": "https://arxiv.org/abs/1606.04442"
+    },
+    {
+      "date": "2017",
+      "event": "Published 'Deep Learning with Python' (Manning Publications), which became a bestseller (100k+ copies sold, translated into 10+ languages).",
+      "url": "https://www.manning.com/books/deep-learning-with-python"
+    },
+    {
+      "date": "2019-11",
+      "event": "Published 'On the Measure of Intelligence' (arXiv:1911.01547), proposing a formal framework for measuring intelligence via skill-acquisition efficiency and introducing the ARC benchmark.",
+      "url": "https://arxiv.org/abs/1911.01547"
+    },
+    {
+      "date": "2019-09",
+      "event": "Appeared on Lex Fridman Podcast #38: 'Keras, Deep Learning, and the Progress of AI'.",
+      "url": "https://lexfridman.com/francois-chollet/"
+    },
+    {
+      "date": "2020-08",
+      "event": "Appeared on Lex Fridman Podcast #120: 'Measures of Intelligence'.",
+      "url": "https://lexfridman.com/francois-chollet-2/"
+    },
+    {
+      "date": "2021-12-01",
+      "event": "Won the Global Swiss AI Award for breakthroughs in artificial intelligence.",
+      "url": "https://en.wikipedia.org/wiki/Fran%C3%A7ois_Chollet"
+    },
+    {
+      "date": "2021",
+      "event": "Published 'Deep Learning with Python, Second Edition' (Manning), fully updated with Keras 2 and generative AI coverage.",
+      "url": "https://www.manning.com/books/deep-learning-with-python-second-edition"
+    },
+    {
+      "date": "2023-11",
+      "event": "Released Keras 3.0 — a full rewrite making Keras multi-backend again, supporting TensorFlow, JAX, and PyTorch with a single codebase.",
+      "url": "https://github.com/keras-team/keras"
+    },
+    {
+      "date": "2024-06-11",
+      "event": "Appeared on Dwarkesh Podcast with Mike Knoop: 'LLMs won't lead to AGI — $1,000,000 Prize to find true solution'. Announced ARC Prize.",
+      "url": "https://www.dwarkesh.com/p/francois-chollet"
+    },
+    {
+      "date": "2024-06",
+      "event": "Appeared on Sean Carroll's Mindscape Podcast #280: 'Deep Learning and the Meaning of Intelligence'.",
+      "url": "https://www.preposterousuniverse.com/podcast/2024/06/24/280-francois-chollet-on-deep-learning-and-the-meaning-of-intelligence/"
+    },
+    {
+      "date": "2024-10",
+      "event": "Delivered keynote at AGI-24: 'It's Not About Scale, It's About Abstraction' — proposing a path to AGI via combining deep learning with program synthesis.",
+      "url": "https://deepcast.fm/episode/its-not-about-scale-its-about-abstraction-francois-chollet"
+    },
+    {
+      "date": "2024-11",
+      "event": "Departed Google after 9+ years as Senior Staff Engineer to focus on ARC Prize and his new venture.",
+      "url": "https://techcrunch.com/2024/11/14/ai-pioneer-francois-chollet-leaves-google/"
+    },
+    {
+      "date": "2024-12",
+      "event": "ARC Prize 2024 concluded: state-of-the-art on ARC-AGI private evaluation rose from 33% to 55.5%. Published ARC Prize 2024 Technical Report.",
+      "url": "https://arxiv.org/abs/2412.04604"
+    },
+    {
+      "date": "2025-01-15",
+      "event": "Co-founded Ndea with Mike Knoop (Zapier co-founder) — an AI lab pursuing AGI through deep learning-guided program synthesis.",
+      "url": "https://techcrunch.com/2025/01/15/ai-researcher-francois-chollet-founds-a-new-ai-lab-focused-on-agi/"
+    },
+    {
+      "date": "2025-01",
+      "event": "Appeared on MLST podcast: 'ARC reflections — NeurIPS 2024', discussing competition outcomes and future directions.",
+      "url": "https://open.spotify.com/episode/087N01jW5MUNdoH9AKEXYB"
+    },
+    {
+      "date": "2025-03",
+      "event": "Released ARC-AGI-2, a harder benchmark resisting brute-force approaches and stressing efficiency and reasoning capabilities.",
+      "url": "https://x.com/fchollet/status/1904265979192086882"
+    },
+    {
+      "date": "2025",
+      "event": "ARC Prize Foundation expanded into a full-fledged non-profit. ARC Prize 2025 competition concluded: 1,455 teams, 15,154 entries, top Kaggle score of 24% on ARC-AGI-2.",
+      "url": "https://arcprize.org/blog/arc-prize-2025-results-analysis"
+    },
+    {
+      "date": "2026-03-25",
+      "event": "ARC-AGI-3 launching — an interactive reasoning benchmark where AI agents navigate novel game environments to evaluate exploration, goal-directedness, and memory.",
+      "url": "https://arcprize.org/"
+    }
+  ],
+  "key_contributions": [
+    {
+      "title": "Keras",
+      "description": "Created Keras (2015), the most popular high-level deep learning API with 2M+ users. Originally multi-backend, it became TensorFlow's official high-level API, then returned to multi-backend support (TF, JAX, PyTorch) with the Keras 3.0 rewrite in 2023. Keras democratized deep learning by making neural network experimentation accessible to non-specialists.",
+      "url": "https://github.com/keras-team/keras"
+    },
+    {
+      "title": "ARC-AGI Benchmark",
+      "description": "Designed the Abstraction and Reasoning Corpus (ARC-AGI), introduced in the 2019 paper 'On the Measure of Intelligence'. ARC measures general fluid intelligence via novel visual reasoning tasks that humans find easy but AI struggles with. ARC-AGI-2 (2025) and ARC-AGI-3 (2026) progressively raise the bar.",
+      "url": "https://github.com/fchollet/ARC-AGI"
+    },
+    {
+      "title": "ARC Prize Foundation",
+      "description": "Co-founded with Mike Knoop, a non-profit offering $1M+ in prizes to advance AGI research. The 2024 competition drove state-of-the-art from 33% to 55.5%. The 2025 competition attracted 1,455 teams. Notable donors include xAI, Google, and Tyler Cowen.",
+      "url": "https://arcprize.org/"
+    },
+    {
+      "title": "'On the Measure of Intelligence' (2019)",
+      "description": "Seminal paper proposing a formal framework for measuring intelligence as skill-acquisition efficiency, grounded in Algorithmic Information Theory. Introduced concepts of scope, generalization difficulty, priors, and experience — foundational for ARC and the broader debate on LLMs vs. true intelligence.",
+      "url": "https://arxiv.org/abs/1911.01547"
+    },
+    {
+      "title": "Xception Architecture",
+      "description": "Introduced depthwise separable convolutions as the basis for the Xception network (CVPR 2017), an influential architecture that improved efficiency and accuracy in computer vision. The concept became standard in mobile and efficient network design (MobileNet, EfficientNet).",
+      "url": "https://arxiv.org/abs/1610.02357"
+    },
+    {
+      "title": "'Deep Learning with Python'",
+      "description": "Bestselling book (Manning, 2017; 2nd ed. 2021) that sold 100k+ copies and was translated into 10+ languages. Widely regarded as the definitive practical introduction to deep learning, co-authored 'Deep Learning with R' (2018) with J.J. Allaire.",
+      "url": "https://www.manning.com/books/deep-learning-with-python-second-edition"
+    },
+    {
+      "title": "Ndea",
+      "description": "AI lab co-founded in January 2025 with Mike Knoop (Zapier co-founder), pursuing AGI through deep learning-guided program synthesis. The name derives from Greek 'ennoia' (intuitive understanding) and 'dianoia' (logical reasoning).",
+      "url": "https://ndea.com/about.html"
+    }
+  ],
+  "quotes": [
+    {
+      "text": "Skill is not intelligence. And displaying skill at any number of tasks does not show intelligence.",
+      "source": "Dwarkesh Podcast, Jun 2024",
+      "url": "https://www.dwarkesh.com/p/francois-chollet"
+    },
+    {
+      "text": "The next frontier is abstraction and reasoning, which will enable extreme generalization and decent sample efficiency.",
+      "source": "Twitter/X",
+      "url": "https://x.com/fchollet/status/1027442845655814145"
+    },
+    {
+      "text": "Forget about scale, forget about benchmarks. Using human exams to evaluate AI models is a terrible idea.",
+      "source": "AGI-24 Keynote, Oct 2024",
+      "url": "https://deepcast.fm/episode/its-not-about-scale-its-about-abstraction-francois-chollet"
+    },
+    {
+      "text": "I'm joining forces with Mike Knoop to start Ndea, a new AI lab. Our focus: deep learning-guided program synthesis. We're betting on a different path to build AI capable of true invention, adaptation, and innovation.",
+      "source": "Twitter/X, Jan 2025",
+      "url": "https://x.com/fchollet/status/1879583863368032432"
+    }
+  ],
+  "social": {
+    "github": "https://github.com/fchollet",
+    "twitter": "https://x.com/fchollet",
+    "linkedin": "https://www.linkedin.com/in/fchollet/",
+    "website": "https://fchollet.com/",
+    "substack": "https://fchollet.substack.com/"
+  },
+  "sources": [
+    {
+      "title": "Francois Chollet — Personal Page",
+      "url": "https://fchollet.com/"
+    },
+    {
+      "title": "Francois Chollet — Wikipedia",
+      "url": "https://en.wikipedia.org/wiki/Fran%C3%A7ois_Chollet"
+    },
+    {
+      "title": "AI pioneer Francois Chollet leaves Google — TechCrunch",
+      "url": "https://techcrunch.com/2024/11/14/ai-pioneer-francois-chollet-leaves-google/"
+    },
+    {
+      "title": "AI researcher Francois Chollet founds a new AI lab focused on AGI — TechCrunch",
+      "url": "https://techcrunch.com/2025/01/15/ai-researcher-francois-chollet-founds-a-new-ai-lab-focused-on-agi/"
+    },
+    {
+      "title": "ARC Prize Foundation",
+      "url": "https://arcprize.org/"
+    },
+    {
+      "title": "ARC Prize 2024: Technical Report — arXiv",
+      "url": "https://arxiv.org/abs/2412.04604"
+    },
+    {
+      "title": "ARC Prize 2025 Results and Analysis",
+      "url": "https://arcprize.org/blog/arc-prize-2025-results-analysis"
+    },
+    {
+      "title": "On the Measure of Intelligence — arXiv",
+      "url": "https://arxiv.org/abs/1911.01547"
+    },
+    {
+      "title": "Dwarkesh Podcast: LLMs won't lead to AGI",
+      "url": "https://www.dwarkesh.com/p/francois-chollet"
+    },
+    {
+      "title": "Lex Fridman Podcast #120: Measures of Intelligence",
+      "url": "https://lexfridman.com/francois-chollet-2/"
+    },
+    {
+      "title": "Lex Fridman Podcast #38: Keras, Deep Learning, and the Progress of AI",
+      "url": "https://lexfridman.com/francois-chollet/"
+    },
+    {
+      "title": "Sean Carroll Mindscape #280: Deep Learning and the Meaning of Intelligence",
+      "url": "https://www.preposterousuniverse.com/podcast/2024/06/24/280-francois-chollet-on-deep-learning-and-the-meaning-of-intelligence/"
+    },
+    {
+      "title": "Ndea — About",
+      "url": "https://ndea.com/about.html"
+    },
+    {
+      "title": "Deep Learning with Python — Manning",
+      "url": "https://www.manning.com/books/deep-learning-with-python-second-edition"
+    },
+    {
+      "title": "Keras GitHub Repository",
+      "url": "https://github.com/keras-team/keras"
+    }
+  ]
+}

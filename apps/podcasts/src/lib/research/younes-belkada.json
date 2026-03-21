@@ -1,0 +1,212 @@
+{
+  "slug": "younes-belkada",
+  "name": "Younes Belkada",
+  "generated_at": "2026-03-19T12:00:00+00:00",
+  "bio": "Younes Belkada is a Senior AI Engineer at the Technology Innovation Institute (TII) in Abu Dhabi, where he works on pre-training, evaluation, and tooling for the Falcon family of large language models. Previously he spent three years (2021-2024) as a Machine Learning Engineer on the Hugging Face Open Source team, where he became a core developer of PEFT (Parameter-Efficient Fine-Tuning), TRL (Transformers Reinforcement Learning), and the bitsandbytes quantization integration in Transformers. He co-authored the landmark LLM.int8() paper with Tim Dettmers, pioneered the native Flash Attention 2 integration in Hugging Face Transformers, and wrote the widely-used 4-bit QLoRA integration blog post. He holds an MSc in Mathematics, Vision, and Learning (MVA) from ENS Paris-Saclay and studied Applied Mathematics and Computer Science at Polytech Sorbonne (Sorbonne Universite), with an exchange semester in Data Science at EPFL. He has co-authored 10+ papers spanning BLOOM, StarCoder 2, Zephyr, Petals, Falcon Mamba, and Falcon-H1, and co-instructed the DeepLearning.AI course 'Open Source Models with Hugging Face'.",
+  "topics": [
+    "Parameter-Efficient Fine-Tuning (PEFT / LoRA / QLoRA)",
+    "Model Quantization (bitsandbytes, LLM.int8, 4-bit NF4)",
+    "Transformers Reinforcement Learning (TRL / RLHF / DPO)",
+    "Flash Attention Integration",
+    "Falcon LLM Family (Falcon Mamba, Falcon-H1, Falcon 3)",
+    "Hybrid Transformer-SSM Architectures",
+    "Large-Scale Pre-training (BLOOM 176B, StarCoder 2)",
+    "Distributed Inference (Petals)",
+    "LLM Alignment (Zephyr, Direct Distillation)",
+    "Open-Source ML Tooling & Developer Education"
+  ],
+  "timeline": [
+    {
+      "date": "2026-01",
+      "event": "Co-authored 'Learnable Multipliers: Freeing the Scale of Language Model Matrix Layers' on optimizing weight scaling during LLM pretraining",
+      "url": "https://www.catalyzex.com/paper/learnable-multipliers-freeing-the-scale-of"
+    },
+    {
+      "date": "2025-07",
+      "event": "Co-authored 'Falcon-H1: A Family of Hybrid-Head Language Models Redefining Efficiency and Performance' — hybrid Transformer-SSM architecture at TII",
+      "url": "https://arxiv.org/abs/2507.22448"
+    },
+    {
+      "date": "2025-06",
+      "event": "Co-authored NeurIPS 2025 E2LM Competition paper on Early Training Evaluation of Language Models; served as platform administrator and evaluator",
+      "url": "https://arxiv.org/abs/2506.07731"
+    },
+    {
+      "date": "2024-10",
+      "event": "Co-authored 'Falcon Mamba: The First Competitive Attention-free 7B Language Model' at TII",
+      "url": "https://www.catalyzex.com/paper/falcon-mamba-the-first-competitive-attention"
+    },
+    {
+      "date": "2024-07",
+      "event": "Joined Technology Innovation Institute (TII) as Senior AI Engineer working on Falcon LLM pre-training and evaluation",
+      "url": "https://www.tii.ae/"
+    },
+    {
+      "date": "2024-02",
+      "event": "Co-authored 'StarCoder 2 and The Stack v2: The Next Generation' — code LLMs trained on 619 programming languages",
+      "url": "https://www.catalyzex.com/paper/starcoder-2-and-the-stack-v2-the-next"
+    },
+    {
+      "date": "2023-10",
+      "event": "Co-authored 'Zephyr: Direct Distillation of LM Alignment' — distilled alignment technique for smaller LMs",
+      "url": "https://www.catalyzex.com/paper/zephyr-direct-distillation-of-lm-alignment"
+    },
+    {
+      "date": "2023-09",
+      "event": "Integrated native Flash Attention 2 support into Hugging Face Transformers, acknowledged by Tri Dao",
+      "url": "https://x.com/tri_dao/status/1705291715446452281"
+    },
+    {
+      "date": "2023-09",
+      "event": "Spoke at DataFest 2023 on 'Making RLHF more accessible with TRL and PEFT libraries'",
+      "url": "https://www.linkedin.com/posts/younes-belkada-b1a903145_very-excited-for-the-talk-i-will-be-giving-activity-7095769182838935552-fGg8"
+    },
+    {
+      "date": "2023-05",
+      "event": "Co-authored HF blog post 'Making LLMs even more accessible with bitsandbytes, 4-bit quantization and QLoRA' (176 upvotes)",
+      "url": "https://huggingface.co/blog/4bit-transformers-bitsandbytes"
+    },
+    {
+      "date": "2023-12",
+      "event": "Co-authored 'Distributed Inference and Fine-tuning of Large Language Models Over The Internet' (Petals system)",
+      "url": "https://www.catalyzex.com/paper/distributed-inference-and-fine-tuning-of"
+    },
+    {
+      "date": "2022-11",
+      "event": "Co-authored BLOOM: A 176B-Parameter Open-Access Multilingual Language Model with the BigScience Workshop",
+      "url": "https://www.catalyzex.com/paper/bloom-a-176b-parameter-open-access"
+    },
+    {
+      "date": "2022-09",
+      "event": "Co-authored 'Petals: Collaborative Inference and Fine-tuning of Large Models' with Tim Dettmers and collaborators",
+      "url": "https://www.catalyzex.com/paper/petals-collaborative-inference-and-fine"
+    },
+    {
+      "date": "2022-08",
+      "event": "Co-authored 'LLM.int8(): 8-bit Matrix Multiplication for Transformers at Scale' (NeurIPS 2022) with Tim Dettmers, Mike Lewis, Luke Zettlemoyer",
+      "url": "https://arxiv.org/abs/2208.07339"
+    },
+    {
+      "date": "2021",
+      "event": "Joined Hugging Face Open Source team as Machine Learning Engineer; began core contributions to transformers, PEFT, and TRL",
+      "url": "https://huggingface.co/ybelkada"
+    }
+  ],
+  "key_contributions": [
+    {
+      "title": "PEFT (Parameter-Efficient Fine-Tuning)",
+      "description": "Core developer of Hugging Face's PEFT library (20.8k stars) enabling LoRA, QLoRA, and other parameter-efficient methods for fine-tuning large models on consumer hardware",
+      "url": "https://github.com/huggingface/peft"
+    },
+    {
+      "title": "bitsandbytes / QLoRA Integration in Transformers",
+      "description": "Built the native 4-bit and 8-bit quantization integration in Hugging Face Transformers via bitsandbytes, making it possible to load and fine-tune 65B-parameter models on a single 48GB GPU",
+      "url": "https://huggingface.co/blog/4bit-transformers-bitsandbytes"
+    },
+    {
+      "title": "TRL (Transformers Reinforcement Learning)",
+      "description": "Core contributor to the TRL library (17.7k stars) for training transformer language models with RLHF, DPO, and PPO",
+      "url": "https://github.com/huggingface/trl"
+    },
+    {
+      "title": "LLM.int8() — 8-bit Matrix Multiplication at Scale",
+      "description": "Co-authored the LLM.int8() paper (NeurIPS 2022) introducing mixed-precision decomposition that halves inference memory without accuracy loss, enabling 175B models on consumer GPUs",
+      "url": "https://arxiv.org/abs/2208.07339"
+    },
+    {
+      "title": "Flash Attention 2 Integration in Transformers",
+      "description": "Led the native integration of Flash Attention 2 into Hugging Face Transformers, enabling faster and more memory-efficient training and inference across 30+ model architectures",
+      "url": "https://x.com/tri_dao/status/1705291715446452281"
+    },
+    {
+      "title": "Falcon-H1 Hybrid Language Models",
+      "description": "Co-authored the Falcon-H1 family of hybrid Transformer-SSM models at TII, spanning 0.5B to 34B parameters with state-of-the-art efficiency",
+      "url": "https://arxiv.org/abs/2507.22448"
+    },
+    {
+      "title": "BLOOM 176B",
+      "description": "Contributed to the BigScience Workshop's BLOOM, a 176B-parameter open-access multilingual language model trained collaboratively by 1000+ researchers",
+      "url": "https://www.catalyzex.com/paper/bloom-a-176b-parameter-open-access"
+    },
+    {
+      "title": "Open Source Models with Hugging Face (DeepLearning.AI)",
+      "description": "Co-instructed the DeepLearning.AI short course teaching NLP, audio, image, and multimodal tasks using open-source Hugging Face models",
+      "url": "https://www.deeplearning.ai/short-courses/open-source-models-hugging-face/"
+    }
+  ],
+  "quotes": [
+    {
+      "text": "Use PEFT (Parameter-Efficient Fine-Tuning)! In the Hugging Face ecosystem, you can now fine-tune large language models with a fraction of the memory using LoRA and QLoRA.",
+      "source": "LinkedIn post on PEFT adoption",
+      "url": "https://www.linkedin.com/posts/younes-belkada-b1a903145_use-peft-parameter-efficient-fine-tuning-activity-7029925223252512769-qPl2"
+    },
+    {
+      "text": "GPTQ quantized models can be now loaded out of the box in transformers, making large model inference accessible to everyone.",
+      "source": "LinkedIn post on GPTQ integration",
+      "url": "https://www.linkedin.com/posts/younes-belkada-b1a903145_gptq-quantized-models-can-be-now-loaded-out-activity-7100103021996466176-W3V7"
+    },
+    {
+      "text": "The Falcon has landed in the Hugging Face ecosystem.",
+      "source": "LinkedIn post on Falcon integration at Hugging Face",
+      "url": "https://gh.linkedin.com/posts/younes-belkada-b1a903145_the-falcon-has-landed-in-the-hugging-face-activity-7071524620910088192-T3ZX"
+    }
+  ],
+  "social": {
+    "github": "https://github.com/younesbelkada",
+    "huggingface": "https://huggingface.co/ybelkada",
+    "linkedin": "https://www.linkedin.com/in/younes-belkada-b1a903145",
+    "medium": "https://medium.com/@younes_belkada",
+    "blog": "https://younesbelkada.github.io",
+    "coursera": "https://www.coursera.org/instructor/~132283682"
+  },
+  "sources": [
+    {
+      "title": "younesbelkada on GitHub (91 repos, 861 followers)",
+      "url": "https://github.com/younesbelkada"
+    },
+    {
+      "title": "ybelkada on Hugging Face (144+ models, 25 spaces, 11 papers)",
+      "url": "https://huggingface.co/ybelkada"
+    },
+    {
+      "title": "Younes Belkada on LinkedIn",
+      "url": "https://www.linkedin.com/in/younes-belkada-b1a903145"
+    },
+    {
+      "title": "LLM.int8(): 8-bit Matrix Multiplication for Transformers at Scale (NeurIPS 2022)",
+      "url": "https://arxiv.org/abs/2208.07339"
+    },
+    {
+      "title": "Making LLMs even more accessible with bitsandbytes, 4-bit quantization and QLoRA (HF Blog)",
+      "url": "https://huggingface.co/blog/4bit-transformers-bitsandbytes"
+    },
+    {
+      "title": "Falcon-H1: A Family of Hybrid-Head Language Models (arXiv)",
+      "url": "https://arxiv.org/abs/2507.22448"
+    },
+    {
+      "title": "NeurIPS 2025 E2LM Competition (arXiv)",
+      "url": "https://arxiv.org/abs/2506.07731"
+    },
+    {
+      "title": "Open Source Models with Hugging Face (DeepLearning.AI)",
+      "url": "https://www.deeplearning.ai/short-courses/open-source-models-hugging-face/"
+    },
+    {
+      "title": "Younes Belkada on CatalyzeX (publications list)",
+      "url": "https://www.catalyzex.com/author/Younes%20Belkada"
+    },
+    {
+      "title": "Younes Belkada's personal blog (about page)",
+      "url": "https://younesbelkada.github.io/about/"
+    },
+    {
+      "title": "Tri Dao acknowledging Flash Attention 2 HF integration (X/Twitter)",
+      "url": "https://x.com/tri_dao/status/1705291715446452281"
+    },
+    {
+      "title": "Younes Belkada on ResearchGate (MVA, ENS Paris-Saclay)",
+      "url": "https://www.researchgate.net/profile/Younes-Belkada"
+    }
+  ]
+}

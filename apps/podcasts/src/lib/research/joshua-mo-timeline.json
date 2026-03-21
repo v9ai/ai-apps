@@ -1,0 +1,60 @@
+{
+  "slug": "joshua-mo",
+  "generated_at": "2026-03-20T16:29:58.163073Z",
+  "events": [
+    {
+      "date": "2022-11",
+      "event": "Taught himself Rust from 'The Rust Book' and joined Shuttle's Heroes volunteer program after career burnout in food wholesale",
+      "url": "https://joshmo.bearblog.dev/my-first-tech-job-using-rust/",
+      "source": "research"
+    },
+    {
+      "date": "2023-03",
+      "event": "Published 'Next.js and Rust' — 100k+ hits and HackerNews front page, leading to a paid Shuttle contract",
+      "url": "https://joshmo.bearblog.dev/lets-build-a-saas-with-rust/",
+      "source": "research"
+    },
+    {
+      "date": "2023-04",
+      "event": "Published 'Can Rust Beat JavaScript in 2023?' — went viral, reviewed by ThePrimeagen",
+      "url": "https://joshmo.bearblog.dev/can-rust-beat-javascript-in-2023/",
+      "source": "research"
+    },
+    {
+      "date": "2023-09",
+      "event": "Promoted to full-time DevRel Engineer at Shuttle.rs at EuroRust conference after 10x traffic growth",
+      "url": "https://joshmo.bearblog.dev/my-first-tech-job-using-rust/",
+      "source": "research"
+    },
+    {
+      "date": "2025-02",
+      "event": "Joined 0xPlaygrounds as DevRel Engineer for the Rig AI agent SDK",
+      "url": "https://github.com/0xPlaygrounds",
+      "source": "research"
+    },
+    {
+      "date": "2025-06-09",
+      "event": "Created rig-experimental: Companion crate for `rig`, the Rust-based agentic AI framework.",
+      "url": "https://github.com/joshua-mo-143/rig-experimental",
+      "source": "github"
+    },
+    {
+      "date": "2025-10-23",
+      "event": "Created bolter: An experimental agent runtime using sandboxed tool execution.",
+      "url": "https://github.com/joshua-mo-143/bolter",
+      "source": "github"
+    },
+    {
+      "date": "2025-11-24",
+      "event": "Created braindump: An ergonomic, opinionated memory interface for AI agents",
+      "url": "https://github.com/joshua-mo-143/braindump",
+      "source": "github"
+    },
+    {
+      "date": "2025-12-20",
+      "event": "Created rig-rlm: An example of creating a Recursive Language Model with Rust",
+      "url": "https://github.com/joshua-mo-143/rig-rlm",
+      "source": "github"
+    }
+  ]
+}

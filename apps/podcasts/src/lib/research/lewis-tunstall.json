@@ -1,0 +1,225 @@
+{
+  "slug": "lewis-tunstall",
+  "name": "Lewis Tunstall",
+  "generated_at": "2026-03-19",
+  "bio": "Lewis Tunstall is a Machine Learning Engineer at Hugging Face, where he leads post-training efforts and builds open-source tools to align language models with human preferences. He co-authored the O'Reilly bestseller \"Natural Language Processing with Transformers\" (2022) with Leandro von Werra and Thomas Wolf, and is a core contributor to TRL (Transformer Reinforcement Learning) and the Alignment Handbook. Before transitioning to ML, Tunstall earned a PhD in Theoretical Physics from the University of Adelaide, was a 2010 Fulbright Scholar, and held research positions in Australia, the USA, and Switzerland (University of Bern). He grew up in northwest Tasmania, Australia and is now based in Bern, Switzerland.",
+  "topics": [
+    "Reinforcement Learning from Human Feedback (RLHF)",
+    "LLM Alignment & Post-Training",
+    "Transformer Architectures",
+    "Few-Shot Learning",
+    "Synthetic Data for Fine-Tuning",
+    "Direct Preference Optimization (DPO)",
+    "Small Language Models",
+    "Open Source AI",
+    "Mathematical Reasoning in LLMs",
+    "NLP & Text Classification"
+  ],
+  "timeline": [
+    {
+      "date": "2010",
+      "event": "Awarded inaugural Fulbright South Australia Scholarship; PhD candidate at University of Adelaide in Theoretical Physics (particle physics)",
+      "url": "https://www.adelaide.edu.au/alumni/recognised/fulbright-scholars"
+    },
+    {
+      "date": "2016-11",
+      "event": "Visiting researcher at Higgs Centre for Theoretical Physics, University of Edinburgh; affiliated with University of Bern ITP",
+      "url": "https://higgs.ph.ed.ac.uk/people/tunstall-lewis/"
+    },
+    {
+      "date": "2019",
+      "event": "Conceived idea for NLP with Transformers book; partnered with Leandro von Werra and sent cold email to Thomas Wolf at Hugging Face",
+      "url": "https://huggingface.co/blog/lewis-tunstall-interview"
+    },
+    {
+      "date": "2020",
+      "event": "Co-created TRL (Transformer Reinforcement Learning) library for fine-tuning LLMs with RLHF",
+      "url": "https://github.com/huggingface/trl"
+    },
+    {
+      "date": "2021",
+      "event": "Joined Hugging Face as Machine Learning Engineer; co-developed Hugging Face Course with Sylvain Gugger and Lysandre Jik",
+      "url": "https://huggingface.co/blog/lewis-tunstall-interview"
+    },
+    {
+      "date": "2022-02",
+      "event": "Published \"Natural Language Processing with Transformers\" (O'Reilly) with Leandro von Werra and Thomas Wolf",
+      "url": "https://www.oreilly.com/library/view/natural-language-processing/9781098136789/"
+    },
+    {
+      "date": "2022-09",
+      "event": "Released SetFit: Efficient Few-Shot Learning Without Prompts (arXiv:2209.11055)",
+      "url": "https://arxiv.org/abs/2209.11055"
+    },
+    {
+      "date": "2023-10",
+      "event": "Released Zephyr-7B: Direct Distillation of LM Alignment — surpassed Llama2-Chat-70B on MT-Bench using dDPO without human annotation (arXiv:2310.16944)",
+      "url": "https://arxiv.org/abs/2310.16944"
+    },
+    {
+      "date": "2023-11",
+      "event": "Published Alignment Handbook: robust open-source recipes to align language models with human and AI preferences",
+      "url": "https://github.com/huggingface/alignment-handbook"
+    },
+    {
+      "date": "2024-06",
+      "event": "Won first AI Math Olympiad (AIMO) progress prize with NuminaMath — 850k math problem-solution pairs dataset",
+      "url": "https://thesequence.substack.com/p/the-sequence-chat-lewis-tunstall"
+    },
+    {
+      "date": "2024-08",
+      "event": "Released SmolLM2-Instruct alignment recipe via Alignment Handbook",
+      "url": "https://github.com/huggingface/alignment-handbook"
+    },
+    {
+      "date": "2025",
+      "event": "Co-authored SmolLM3-3B: small multilingual long-context reasoner with Anchored Preference Optimization post-training",
+      "url": "https://huggingface.co/blog/smollm3"
+    },
+    {
+      "date": "2025",
+      "event": "Co-launched Open-R1 initiative to reproduce DeepSeek R1 distillation pipeline; released OlympicCoder for competitive programming",
+      "url": "https://huggingface.co/HuggingFaceTB"
+    }
+  ],
+  "key_contributions": [
+    {
+      "title": "Natural Language Processing with Transformers (O'Reilly)",
+      "description": "Bestselling book co-authored with Leandro von Werra and Thomas Wolf, providing a hands-on guide to building NLP applications with Hugging Face Transformers. Revised edition published in full color.",
+      "url": "https://transformersbook.com/"
+    },
+    {
+      "title": "TRL (Transformer Reinforcement Learning)",
+      "description": "Core contributor to Hugging Face's library for fine-tuning and aligning language models via RLHF, DPO, and other preference learning methods. One of the most widely used alignment libraries in the open-source ecosystem.",
+      "url": "https://github.com/huggingface/trl"
+    },
+    {
+      "title": "Zephyr-7B",
+      "description": "Led the Zephyr project demonstrating that distilled DPO (dDPO) with AI feedback can produce a 7B-parameter chat model surpassing Llama2-Chat-70B on MT-Bench, without requiring human annotation.",
+      "url": "https://arxiv.org/abs/2310.16944"
+    },
+    {
+      "title": "Alignment Handbook",
+      "description": "Open-source collection of robust recipes to align language models with human and AI preferences, covering SFT, DPO, Constitutional AI, and model-specific fine-tuning guides.",
+      "url": "https://github.com/huggingface/alignment-handbook"
+    },
+    {
+      "title": "SetFit",
+      "description": "Efficient few-shot learning framework that fine-tunes Sentence Transformers contrastively on small labeled sets, achieving competitive accuracy with orders of magnitude fewer parameters than prompt-based methods.",
+      "url": "https://arxiv.org/abs/2209.11055"
+    },
+    {
+      "title": "NuminaMath / AIMO Prize Winner",
+      "description": "Teamed up with Numina to create an 850k math problem-solution dataset and won the first AI Math Olympiad progress prize, demonstrating the power of high-quality open datasets for mathematical reasoning.",
+      "url": "https://thesequence.substack.com/p/the-sequence-chat-lewis-tunstall"
+    },
+    {
+      "title": "SmolLM Series & Open-R1",
+      "description": "Co-authored SmolLM2 and SmolLM3 small language models and co-launched the Open-R1 initiative to reproduce open reasoning model training, including OlympicCoder for competitive programming.",
+      "url": "https://huggingface.co/blog/smollm3"
+    },
+    {
+      "title": "Hugging Face Course",
+      "description": "Co-developed the free Hugging Face NLP course bridging software engineers into the Transformers ecosystem, covering tokenization, fine-tuning, and deployment across multiple modalities.",
+      "url": "https://huggingface.co/course"
+    }
+  ],
+  "quotes": [
+    {
+      "text": "A few lines of code could outperform features that had been carefully designed by physicists over many years.",
+      "source": "The Sequence Chat: Hugging Face's Lewis Tunstall on Zephyr, RLHF and LLM Innovation",
+      "url": "https://thesequence.substack.com/p/the-sequence-chat-hugging-faces-lewis"
+    },
+    {
+      "text": "You could skip the costly human annotation step altogether and focus on generating data for specific tasks.",
+      "source": "The Sequence Chat: Hugging Face's Lewis Tunstall on Zephyr, RLHF and LLM Innovation",
+      "url": "https://thesequence.substack.com/p/the-sequence-chat-hugging-faces-lewis"
+    },
+    {
+      "text": "Just start. Just start coding. Just start contributing if you want to do open-source. You can always find reasons not to do it but you just have to get your hands dirty.",
+      "source": "Machine Learning Experts Interview, Hugging Face Blog",
+      "url": "https://huggingface.co/blog/lewis-tunstall-interview"
+    },
+    {
+      "text": "The biggest lesson I learned when I was starting out in the field is using baseline models when starting out... you can actually get quite far with regular expressions and linear models like logistic regression.",
+      "source": "Machine Learning Experts Interview, Hugging Face Blog",
+      "url": "https://huggingface.co/blog/lewis-tunstall-interview"
+    },
+    {
+      "text": "History generally shows that one shouldn't bet against deep learning!",
+      "source": "The Sequence Chat: Lewis Tunstall on Building the Model that Won the AI Math Olympiad",
+      "url": "https://thesequence.substack.com/p/the-sequence-chat-lewis-tunstall"
+    },
+    {
+      "text": "Although there are several open weight models for mathematics, the training datasets are rarely, if ever, made public.",
+      "source": "The Sequence Chat: Lewis Tunstall on Building the Model that Won the AI Math Olympiad",
+      "url": "https://thesequence.substack.com/p/the-sequence-chat-lewis-tunstall"
+    }
+  ],
+  "social": {
+    "github": "https://github.com/lewtun",
+    "twitter": "https://x.com/_lewtun",
+    "linkedin": "https://www.linkedin.com/in/lewis-tunstall/",
+    "huggingface": "https://huggingface.co/lewtun",
+    "website": "https://lewtun.github.io/blog/",
+    "google_scholar": "https://scholar.google.com/citations?user=Hc6MI0QAAAAJ"
+  },
+  "sources": [
+    {
+      "title": "Machine Learning Experts - Lewis Tunstall (Hugging Face Blog)",
+      "url": "https://huggingface.co/blog/lewis-tunstall-interview"
+    },
+    {
+      "title": "Natural Language Processing with Transformers (O'Reilly)",
+      "url": "https://www.oreilly.com/library/view/natural-language-processing/9781098136789/"
+    },
+    {
+      "title": "Zephyr: Direct Distillation of LM Alignment (arXiv:2310.16944)",
+      "url": "https://arxiv.org/abs/2310.16944"
+    },
+    {
+      "title": "SetFit: Efficient Few-Shot Learning Without Prompts (arXiv:2209.11055)",
+      "url": "https://arxiv.org/abs/2209.11055"
+    },
+    {
+      "title": "The Sequence Chat: Lewis Tunstall on Zephyr, RLHF and LLM Innovation",
+      "url": "https://thesequence.substack.com/p/the-sequence-chat-hugging-faces-lewis"
+    },
+    {
+      "title": "The Sequence Chat: Lewis Tunstall on the AI Math Olympiad",
+      "url": "https://thesequence.substack.com/p/the-sequence-chat-lewis-tunstall"
+    },
+    {
+      "title": "Lewis Tunstall GitHub Profile",
+      "url": "https://github.com/lewtun"
+    },
+    {
+      "title": "Alignment Handbook (GitHub)",
+      "url": "https://github.com/huggingface/alignment-handbook"
+    },
+    {
+      "title": "TRL - Transformer Reinforcement Learning (Hugging Face)",
+      "url": "https://huggingface.co/docs/trl/index"
+    },
+    {
+      "title": "SmolLM3: smol, multilingual, long-context reasoner (Hugging Face Blog)",
+      "url": "https://huggingface.co/blog/smollm3"
+    },
+    {
+      "title": "SDS 695: NLP with Transformers (SuperDataScience Podcast)",
+      "url": "https://www.superdatascience.com/podcast/sds-695-nlp-with-transformers-feat-hugging-faces-lewis-tunstall"
+    },
+    {
+      "title": "Lewis Tunstall - DataTalks.Club",
+      "url": "https://datatalks.club/people/lewistunstall.html"
+    },
+    {
+      "title": "University of Adelaide Fulbright Scholars",
+      "url": "https://www.adelaide.edu.au/alumni/recognised/fulbright-scholars"
+    },
+    {
+      "title": "Lewis Tunstall - Uphill Conference Speaker",
+      "url": "https://www.uphillconf.com/speakers/lewis-tunstall"
+    }
+  ]
+}

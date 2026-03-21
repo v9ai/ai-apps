@@ -139,6 +139,41 @@ export default function StoryPage() {
               Story
             </Heading>
           </Box>
+
+          {canEdit && !isEditing && (
+            <AlertDialog.Root open={deleteOpen} onOpenChange={setDeleteOpen}>
+              <AlertDialog.Trigger>
+                <Button
+                  variant="soft"
+                  color="red"
+                  size="2"
+                  disabled={deleting}
+                  loading={deleting}
+                >
+                  <TrashIcon />
+                  <Box display={{ initial: "none", sm: "inline" }} asChild>
+                    <span>Delete</span>
+                  </Box>
+                </Button>
+              </AlertDialog.Trigger>
+              <AlertDialog.Content maxWidth="420px">
+                <AlertDialog.Title>Delete this story?</AlertDialog.Title>
+                <AlertDialog.Description size="2">
+                  This story will be permanently deleted and cannot be recovered.
+                </AlertDialog.Description>
+                <Flex gap="3" mt="4" justify="end">
+                  <AlertDialog.Cancel>
+                    <Button variant="soft" color="gray">Cancel</Button>
+                  </AlertDialog.Cancel>
+                  <AlertDialog.Action>
+                    <Button variant="solid" color="red" onClick={handleDelete}>
+                      Delete Story
+                    </Button>
+                  </AlertDialog.Action>
+                </Flex>
+              </AlertDialog.Content>
+            </AlertDialog.Root>
+          )}
         </Flex>
       </Box>
 

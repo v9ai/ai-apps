@@ -76,6 +76,8 @@ type Mutation {
     goalId: Int
     issueId: Int
     feedbackId: Int
+    familyMemberId: Int
+    userContext: String
     language: String
     minutes: Int
   ): GenerateLongFormTextResult!

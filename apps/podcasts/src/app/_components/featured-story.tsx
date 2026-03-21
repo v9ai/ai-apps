@@ -159,7 +159,7 @@ export function FeaturedStory({
                 >
                   {"\u201C"}
                 </span>
-                <p className={css({ fontSize: { base: 'xl', sm: '2xl', md: '3xl' }, fontStyle: 'italic', color: '#C4C4CC', lineHeight: { base: '1.7', sm: '1.65', md: '1.6' } })}>
+                <p className={css({ fontSize: { base: 'xl', sm: '2xl', md: '3xl' }, color: '#CDCDD6', lineHeight: { base: '1.7', sm: '1.65', md: '1.6' }, letterSpacing: '0.01em' })}>
                   {quote}
                 </p>
               </blockquote>

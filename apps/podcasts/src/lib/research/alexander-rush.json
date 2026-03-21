@@ -1,0 +1,224 @@
+{
+  "slug": "alexander-rush",
+  "name": "Alexander Rush",
+  "generated_at": "2026-03-19T22:00:00+00:00",
+  "bio": "Alexander \"Sasha\" Rush is a computer scientist, educator, and engineer known for pioneering work in NLP education and open-source ML tooling. He is an Associate Professor of Computer Science at Cornell Tech and the Cornell Ann S. Bowers College of Computing and Information Science, and currently works at Cursor building frontier RL models for code generation. Rush earned his PhD from MIT (2014) in Electrical Engineering and Computer Science under Michael Collins, focusing on Lagrangian relaxation methods for natural language decoding. He was an Assistant Professor at Harvard SEAS (2015-2019) before moving to Cornell Tech. He also served as a part-time researcher at Hugging Face. His group's work has been recognized with an NSF CAREER Award, a Sloan Fellowship, a NeurIPS 2023 Outstanding Main Track Runner-Up award for \"Scaling Data-Constrained Language Models,\" and paper awards at EMNLP, NLP, Hardware, and Visualization conferences. He is widely known for The Annotated Transformer (a literate-programming walkthrough of \"Attention is All You Need\"), GPU Puzzles (12k+ stars), Tensor Puzzles, MiniTorch, and a series of educational puzzle repositories that have become standard learning resources in the ML community. In March 2025 he joined Cursor, where he co-designed the Composer model — a frontier MoE model trained with RL for real-world coding. He is based in New York.",
+  "topics": [
+    "Natural Language Processing",
+    "Transformer Architecture",
+    "GPU Programming & CUDA",
+    "Deep Learning Education",
+    "Structured Prediction",
+    "Efficient Inference",
+    "Reinforcement Learning for Code",
+    "Language Model Scaling",
+    "Open Source ML Tooling",
+    "Sequence-to-Sequence Models"
+  ],
+  "timeline": [
+    {
+      "date": "2014",
+      "event": "Completed PhD at MIT EECS under Michael Collins on Lagrangian relaxation for natural language decoding",
+      "url": "https://dspace.mit.edu/handle/1721.1/89999"
+    },
+    {
+      "date": "2015",
+      "event": "Joined Harvard SEAS as Assistant Professor of Computer Science",
+      "url": "https://www.harvardmagazine.com/2015/08/seas-hires-five-computers-scientists"
+    },
+    {
+      "date": "2018-04",
+      "event": "Published The Annotated Transformer — literate-code walkthrough of \"Attention is All You Need\" using PyTorch",
+      "url": "https://nlp.seas.harvard.edu/2018/04/03/attention.html"
+    },
+    {
+      "date": "2019-03",
+      "event": "Awarded NSF CAREER grant for research on controllable text generation",
+      "url": "https://seas.harvard.edu/news/2019/03/alexander-rush-awarded-nsf-career-grant"
+    },
+    {
+      "date": "2019-09",
+      "event": "Moved from Harvard to Cornell Tech as Associate Professor; joined NYC NLP community",
+      "url": "https://x.com/srush_nlp/status/1133396376660971521"
+    },
+    {
+      "date": "2020-02",
+      "event": "Released Torch-Struct: Deep Structured Prediction Library (arXiv:2002.00876)",
+      "url": "https://arxiv.org/abs/2002.00876"
+    },
+    {
+      "date": "2021",
+      "event": "Launched MiniTorch — educational deep learning library for Cornell Tech ML Engineering course",
+      "url": "https://minitorch.github.io/"
+    },
+    {
+      "date": "2022-08",
+      "event": "Released GPU Puzzles — learn CUDA through 14 interactive puzzles (now 12k+ GitHub stars)",
+      "url": "https://github.com/srush/GPU-Puzzles"
+    },
+    {
+      "date": "2022-10",
+      "event": "Appeared on CS224U podcast: NLP research, engineering, and education",
+      "url": "https://podcasts.apple.com/us/podcast/sasha-rush-on-nlp-research-engineering-and-education/id1622466721?i=1000582152476"
+    },
+    {
+      "date": "2023-01",
+      "event": "Released MiniChain — tiny library for coding with large language models (1.2k stars)",
+      "url": "https://github.com/srush/MiniChain"
+    },
+    {
+      "date": "2023-12",
+      "event": "Won NeurIPS 2023 Outstanding Main Track Runner-Up for \"Scaling Data-Constrained Language Models\" with Hugging Face",
+      "url": "https://tech.cornell.edu/news/award-winning-paper-unravels-challenges-of-scaling-language-models/"
+    },
+    {
+      "date": "2024",
+      "event": "Released Annotated S4 and Annotated Mamba — literate implementations of state-space models",
+      "url": "https://github.com/srush/annotated-s4"
+    },
+    {
+      "date": "2025-03-20",
+      "event": "Announced joining Cursor to build frontier RL models at scale in real-world coding environments",
+      "url": "https://x.com/srush_nlp/status/1902736199636205914"
+    },
+    {
+      "date": "2025-10-29",
+      "event": "Announced Composer — a frontier MoE model trained with RL for real-world coding, co-designed with Cursor",
+      "url": "https://x.com/srush_nlp/status/1983572683355725869"
+    }
+  ],
+  "key_contributions": [
+    {
+      "title": "The Annotated Transformer",
+      "description": "A literate-programming blog post that walks through the \"Attention is All You Need\" paper line-by-line with a complete PyTorch implementation. Became the definitive educational resource for understanding Transformer internals, refreshed with community contributions in 2022.",
+      "url": "https://nlp.seas.harvard.edu/2018/04/03/attention.html"
+    },
+    {
+      "title": "GPU Puzzles",
+      "description": "A collection of 14 interactive CUDA puzzles with a visual debugger, requiring no background knowledge. The most popular GPU programming tutorial on GitHub with 12k+ stars, teaching parallel programming through hands-on problem solving.",
+      "url": "https://github.com/srush/GPU-Puzzles"
+    },
+    {
+      "title": "Tensor Puzzles",
+      "description": "A set of 21 puzzles for learning PyTorch tensor operations through constraint-based challenges. Companion to GPU Puzzles with 4k stars, training developers to think in terms of vectorized operations.",
+      "url": "https://github.com/srush/Tensor-Puzzles"
+    },
+    {
+      "title": "MiniTorch",
+      "description": "A pure Python re-implementation of the PyTorch API designed for education. Used in Cornell Tech's ML Engineering course, it teaches deep learning internals through incremental implementation of autodiff, tensors, and neural networks from scratch.",
+      "url": "https://minitorch.github.io/"
+    },
+    {
+      "title": "Scaling Data-Constrained Language Models (NeurIPS 2023)",
+      "description": "Award-winning research with Hugging Face studying the impact of training dataset size on LLM scaling laws. Won Outstanding Main Track Runner-Up at NeurIPS 2023 out of 13,321 submissions.",
+      "url": "https://tech.cornell.edu/news/award-winning-paper-unravels-challenges-of-scaling-language-models/"
+    },
+    {
+      "title": "Annotated S4 / Annotated Mamba",
+      "description": "Literate-code walkthroughs of state-space models (S4 and Mamba), continuing the Annotated Transformer tradition for next-generation sequence architectures.",
+      "url": "https://github.com/srush/annotated-s4"
+    },
+    {
+      "title": "Cursor Composer Model",
+      "description": "A frontier MoE model trained with RL for real-world coding, co-designed with the Cursor platform. Represents a new approach to building specialized AI coding models with reinforcement learning at scale.",
+      "url": "https://x.com/srush_nlp/status/1983572683355725869"
+    },
+    {
+      "title": "llama2.rs",
+      "description": "A fast llama2 decoder implementation in pure Rust, demonstrating efficient inference techniques for large language models (1k+ stars).",
+      "url": "https://github.com/srush/llama2.rs"
+    }
+  ],
+  "quotes": [
+    {
+      "text": "If you can do half as good a job, but do it on a topic that a lot of people are trying to learn right now, that can be a valuable service.",
+      "source": "CS224U Podcast, Oct 2022",
+      "url": "https://web.stanford.edu/class/cs224u/podcast/rush/"
+    },
+    {
+      "text": "A bottleneck for young CS researchers is internalizing the core scale and unit calculations of LLMs. This video is about learning to think in a 'physics' style.",
+      "source": "Twitter/X, Jul 2024",
+      "url": "https://x.com/srush_nlp/status/1814288147892576303"
+    },
+    {
+      "text": "At the end of the day, our interest is in building open source NLP.",
+      "source": "Practical AI Podcast",
+      "url": "https://practicalai.fm/people/sasha-rush"
+    },
+    {
+      "text": "Cursor is a small, ambitious team, and they've created my favorite AI systems. We're now building frontier RL models at scale in real-world coding environments. Excited for how good coding is going to be.",
+      "source": "Twitter/X announcement, Mar 2025",
+      "url": "https://x.com/srush_nlp/status/1902736199636205914"
+    },
+    {
+      "text": "One personal reflection is how interesting a challenge RL is. Unlike other ML systems, you can't abstract much from the full-scale system. Roughly, we co-designed this project and Cursor together in order to allow running the agent at the necessary scale.",
+      "source": "Twitter/X, Oct 2025",
+      "url": "https://x.com/srush_nlp/status/1983575198629593348"
+    }
+  ],
+  "social": {
+    "github": "https://github.com/srush",
+    "twitter": "https://x.com/srush_nlp",
+    "linkedin": "https://www.linkedin.com/in/sasha-rush-a69b6917",
+    "website": "https://rush-nlp.com/",
+    "google_scholar": "https://scholar.google.com/citations?user=LIjnUGgAAAAJ"
+  },
+  "sources": [
+    {
+      "title": "Alexander Rush — personal website",
+      "url": "https://rush-nlp.com/"
+    },
+    {
+      "title": "Cornell Tech — Alexander \"Sasha\" Rush",
+      "url": "https://tech.cornell.edu/people/alexander-rush/"
+    },
+    {
+      "title": "GitHub profile — srush",
+      "url": "https://github.com/srush"
+    },
+    {
+      "title": "The Annotated Transformer (Harvard NLP)",
+      "url": "https://nlp.seas.harvard.edu/2018/04/03/attention.html"
+    },
+    {
+      "title": "The Annotated Transformer — ACL Anthology",
+      "url": "https://aclanthology.org/W18-2509/"
+    },
+    {
+      "title": "MiniTorch — educational deep learning library",
+      "url": "https://minitorch.github.io/"
+    },
+    {
+      "title": "PhD Thesis: Lagrangian relaxation for natural language decoding (MIT, 2014)",
+      "url": "https://dspace.mit.edu/handle/1721.1/89999"
+    },
+    {
+      "title": "Cornell Tech award-winning paper on scaling language models (NeurIPS 2023)",
+      "url": "https://tech.cornell.edu/news/award-winning-paper-unravels-challenges-of-scaling-language-models/"
+    },
+    {
+      "title": "NSF CAREER Award announcement (Harvard SEAS, 2019)",
+      "url": "https://seas.harvard.edu/news/2019/03/alexander-rush-awarded-nsf-career-grant"
+    },
+    {
+      "title": "CS224U Podcast: Sasha Rush on NLP research, engineering, and education",
+      "url": "https://web.stanford.edu/class/cs224u/podcast/rush/"
+    },
+    {
+      "title": "Sasha Rush interview — Medium (Sayak Paul)",
+      "url": "https://sayakpaul.medium.com/an-interview-with-alexander-sasha-rush-associate-professor-at-cornell-university-220fed1e87ea"
+    },
+    {
+      "title": "Cursor announcement — Twitter/X",
+      "url": "https://x.com/srush_nlp/status/1902736199636205914"
+    },
+    {
+      "title": "Composer model announcement — Twitter/X",
+      "url": "https://x.com/srush_nlp/status/1983572683355725869"
+    },
+    {
+      "title": "Practical AI — Sasha Rush episodes",
+      "url": "https://practicalai.fm/people/sasha-rush"
+    }
+  ]
+}

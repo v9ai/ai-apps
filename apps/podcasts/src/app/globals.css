@@ -191,20 +191,20 @@ kbd {
 }
 
 .quote-text {
-  font-style: italic;
   font-family: var(--font-inter), system-ui, -apple-system, sans-serif;
-  line-height: 1.72; letter-spacing: 0.005em; color: #C4C4CC;
+  line-height: 1.78; letter-spacing: 0.008em; color: #CDCDD6;
 }
 
 .story-quote {
-  position: relative; padding-left: 2rem;
+  position: relative; padding-left: 1.75rem;
   font-family: var(--font-inter), system-ui, -apple-system, sans-serif;
-  font-style: italic; font-size: 1.3125rem; line-height: 1.8; color: #C4C4CC;
+  font-size: 1.25rem; line-height: 1.85; color: #CDCDD6;
+  border-left: 2px solid rgba(139,92,246,0.35);
 }
 .story-quote::before {
   content: '\201C'; position: absolute; top: -0.3em; left: -0.15em;
   font-family: var(--font-inter), system-ui, -apple-system, sans-serif;
-  font-size: 3.5rem; line-height: 1; color: rgba(255,255,255,0.06);
+  font-size: 3.5rem; line-height: 1; color: rgba(255,255,255,0.10);
   pointer-events: none; user-select: none;
 }
 
@@ -285,9 +285,9 @@ kbd {
   color: #c4b5fd;
 }
 .story-card-3d:hover .podcast-count-pill {
-  background-color: rgba(255,255,255,0.08);
-  border-color: rgba(255,255,255,0.14);
-  color: #C4C4CC;
+  background-color: rgba(255,255,255,0.10);
+  border-color: rgba(255,255,255,0.16);
+  color: #CDCDD6;
 }
 
 /* ── Utility classes ──────────────────────────────────────────── */

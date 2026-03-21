@@ -880,11 +880,13 @@ export type MutationgenerateAudioArgs = {
 
 
 export type MutationgenerateLongFormTextArgs = {
+  familyMemberId?: InputMaybe<Scalars['Int']['input']>;
   feedbackId?: InputMaybe<Scalars['Int']['input']>;
   goalId?: InputMaybe<Scalars['Int']['input']>;
   issueId?: InputMaybe<Scalars['Int']['input']>;
   language?: InputMaybe<Scalars['String']['input']>;
   minutes?: InputMaybe<Scalars['Int']['input']>;
+  userContext?: InputMaybe<Scalars['String']['input']>;
 };
 
 

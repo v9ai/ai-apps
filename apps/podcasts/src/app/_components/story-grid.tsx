@@ -44,7 +44,7 @@ export function StoryGrid({ personalities, quotes }: StoryGridProps) {
             fontSize: "xs",
             fontWeight: "400",
             letterSpacing: "0.04em",
-            color: "#4A4A55",
+            color: "#7B7B86",
             mb: { base: "5", md: "6" },
           })}
         >

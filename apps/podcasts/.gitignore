@@ -42,10 +42,14 @@ next-env.d.ts
 # panda css
 /styled-system
 
-# podcast search pipeline (local-first)
-chroma_podcasts/
-spotify_episodes.json
+# python
 __pycache__/
 *.pyc
 .venv/
 venv/
+.deepeval/
+
+# podcast search pipeline (local-first)
+chroma_podcasts/
+spotify_episodes.json
+backend/github-reports/

@@ -1,0 +1,29 @@
+{
+  "slug": "anusha-lihala",
+  "name": "Anusha Lihala",
+  "generated_at": "2026-03-20T10:12:16+00:00",
+  "eval": {
+    "bio_quality": {
+      "score": 6,
+      "reasoning": "Bio lacks specific employment history, educational background, and verifiable career milestones, relying primarily on technical skill lists without concrete evidence of roles or achievements."
+    },
+    "source_coverage": {
+      "score": 5,
+      "reasoning": "Sources appear limited to hypothetical URLs (example.com, placeholder tweets) without verifiable links to actual publications, talks, or social media profiles."
+    },
+    "timeline_completeness": {
+      "score": 4,
+      "reasoning": "No chronological timeline provided—missing career progression, project timelines, employment dates, or educational history entirely."
+    },
+    "contributions_depth": {
+      "score": 8,
+      "reasoning": "Technical contributions are well-specified with detailed positions on AGI, open source, AI safety, and architecture preferences, though lacking concrete project metrics or implementation evidence."
+    },
+    "name_disambiguation": {
+      "score": 9,
+      "reasoning": "Profile consistently focuses on one individual with specific technical viewpoints and predictions, though limited biographical details make absolute certainty difficult."
+    },
+    "overall_score": 6,
+    "summary": "Profile shows strong technical depth and clear personal focus but suffers from critical gaps in biographical verification, source authenticity, and chronological completeness—needs concrete employment history, verifiable sources, and timeline data to become credible."
+  }
+}

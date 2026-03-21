@@ -1,10 +1,17 @@
+import asyncio
 import json
 
-from openai import AsyncOpenAI
+from crewai import Agent as CrewAgent, Task, Crew, LLM
 from pydantic import BaseModel, Field
 from typing import Literal
 
 from .config import settings
+
+try:
+    from deepeval.integrations.crewai import instrument_crewai
+    instrument_crewai()
+except Exception:
+    pass
 
 
 class LondonPredictionRequest(BaseModel):
@@ -81,17 +88,7 @@ class LondonPredictionResponse(BaseModel):
     prediction: LondonPrediction
 
 
-# DeepSeek agent with comprehensive London market data
-london_predictor = Agent(
-    OpenAIChatModel(
-        "deepseek-chat",
-        provider=OpenAIProvider(
-            base_url="https://api.deepseek.com/v1",
-            api_key=settings.deepseek_api_key,
-        ),
-    ),
-    output_type=LondonPrediction,
-    system_prompt="""You are a senior London property valuation specialist with deep expertise in the UK residential market.
+LONDON_PREDICTOR_BACKSTORY = """You are a senior London property valuation specialist with deep expertise in the UK residential market.
 Given property features (postcode, type, bedrooms, size, condition), produce a structured price prediction.
 
 LONDON MARKET REFERENCE PRICES (£/m², 2025-2026, Land Registry + ONS derived):
@@ -268,8 +265,23 @@ REQUIRED OUTPUT:
   - key_factors: 3-5 short tags
   - opportunity_factors: concrete positives
   - risk_factors: concrete risks
-  - All numeric fields computed explicitly using the formulas above""",
-)
+  - All numeric fields computed explicitly using the formulas above
+
+Output a JSON object with all the required fields."""
+
+
+_llm: LLM | None = None
+
+
+def _get_llm() -> LLM:
+    global _llm
+    if _llm is None:
+        _llm = LLM(
+            model="openai/deepseek-chat",
+            api_key=settings.deepseek_api_key,
+            base_url="https://api.deepseek.com/v1",
+        )
+    return _llm
 
 
 def _compute_stamp_duty(price: int) -> int:
@@ -333,8 +345,22 @@ EPC rating: {req.epc_rating or 'not specified'}
 Identify the borough from the postcode and use the market reference data to produce your prediction.
 Compute stamp duty using the standard rates. Add £3,000 for other acquisition costs."""
 
-    result = await london_predictor.run(prompt)
-    prediction = result.output
+    agent = CrewAgent(
+        role="London Property Valuation Specialist",
+        goal="Produce accurate property price predictions for the London residential market",
+        backstory=LONDON_PREDICTOR_BACKSTORY,
+        llm=_get_llm(),
+        verbose=False,
+    )
+    task = Task(
+        description=prompt,
+        expected_output="Complete London property prediction with all required fields",
+        agent=agent,
+        output_pydantic=LondonPrediction,
+    )
+    crew = Crew(agents=[agent], tasks=[task], verbose=False)
+    result = await asyncio.to_thread(crew.kickoff)
+    prediction = result.pydantic
 
     return LondonPredictionResponse(
         postcode=req.postcode,

@@ -1,0 +1,222 @@
+{
+  "slug": "patrick-von-platen",
+  "name": "Patrick von Platen",
+  "generated_at": "2026-03-19T12:00:00+00:00",
+  "bio": "Patrick von Platen is a Research Engineer at Mistral AI, formerly at Hugging Face, where he was the core developer and creator of the Diffusers library -- the leading open-source toolbox for state-of-the-art diffusion models powering image, video, and audio generation in PyTorch (33k+ GitHub stars). He holds a PhD in Computer Engineering from the University of Cambridge (2019) and previously worked at Uber AI and RWTH Aachen University. At Hugging Face he was also a core maintainer of the Transformers library, specializing in encoder-decoder models, long-range sequence modeling, and speech recognition (Wav2Vec2). He has published influential papers on cross-lingual speech representation learning (XLS-R), speech benchmarking (XTREME-S, ESB), and knowledge distillation (Distil-Whisper, LCM-LoRA). At Mistral AI he co-authored the Pixtral 12B multimodal model paper. His work consistently focuses on democratizing advanced ML through open-source software and community-driven development.",
+  "topics": [
+    "Diffusion Models",
+    "Text-to-Image Generation",
+    "Open-Source ML Libraries",
+    "Stable Diffusion",
+    "Speech Recognition (ASR)",
+    "Cross-Lingual Speech Representations",
+    "Knowledge Distillation",
+    "Transformer Architectures",
+    "Multimodal Language Models",
+    "Community-Driven AI Development"
+  ],
+  "timeline": [
+    {
+      "date": "2024-10-09",
+      "event": "Co-authored Pixtral 12B paper at Mistral AI -- a 12B-parameter multimodal language model for natural images and documents",
+      "url": "https://arxiv.org/abs/2410.07073"
+    },
+    {
+      "date": "2024-01",
+      "event": "Co-authored aMUSEd paper -- an open MUSE reproduction for efficient text-to-image generation",
+      "url": "https://arxiv.org/abs/2401.01808"
+    },
+    {
+      "date": "2023-11",
+      "event": "Co-authored Distil-Whisper paper on robust knowledge distillation via large-scale pseudo labelling for speech recognition",
+      "url": "https://arxiv.org/abs/2311.05556"
+    },
+    {
+      "date": "2023-10",
+      "event": "Co-authored LCM-LoRA paper -- a universal Stable Diffusion acceleration module achieving significant inference speedups",
+      "url": "https://arxiv.org/abs/2311.05556"
+    },
+    {
+      "date": "2023",
+      "event": "Co-authored AfroDigits -- a community-driven spoken digit dataset covering 38 African languages, presented at AfricaNLP 2023",
+      "url": "https://huggingface.co/papers/2303.12582"
+    },
+    {
+      "date": "2023-07",
+      "event": "Announced Diffusers 0.19.0 with full SDXL (Stable Diffusion XL 1.0) support",
+      "url": "https://www.linkedin.com/posts/patrick-von-platen-343401123_sd-xl-10-is-out-and-with-it-diffusers-activity-7090061101614133248-VG-n"
+    },
+    {
+      "date": "2023-04",
+      "event": "Released Diffusers v0.15.0 'Beyond Image Generation' expanding the library to audio and 3D generation",
+      "url": "https://www.linkedin.com/posts/patrick-von-platen-343401123_release-v0150-beyond-image-generation-activity-7051959841677811712-qUlQ"
+    },
+    {
+      "date": "2022-11-10",
+      "event": "Delivered colloquium 'Generating Images and Audio With the Hugging Face Diffusers Library' at Cross-Modal Learning, Hamburg",
+      "url": "https://www.crossmodal-learning.org/news/2022-11-von-platen-talk.html"
+    },
+    {
+      "date": "2022-08-22",
+      "event": "Co-authored 'Stable Diffusion with Diffusers' blog post -- the first public guide to using Stable Diffusion via the Diffusers library",
+      "url": "https://huggingface.co/blog/stable_diffusion"
+    },
+    {
+      "date": "2022-05-30",
+      "event": "Created the Hugging Face Diffusers repository on GitHub, initiating the open-source diffusion model library",
+      "url": "https://github.com/huggingface/diffusers"
+    },
+    {
+      "date": "2022",
+      "event": "Co-authored XLS-R paper on self-supervised cross-lingual speech representation learning at scale (128 languages, 500K hours), published at INTERSPEECH 2022",
+      "url": "https://arxiv.org/abs/2111.09296"
+    },
+    {
+      "date": "2022",
+      "event": "Co-authored XTREME-S benchmark for evaluating cross-lingual speech representations across 102 languages, published at INTERSPEECH 2022",
+      "url": "https://arxiv.org/abs/2203.10752"
+    },
+    {
+      "date": "2021-11",
+      "event": "Co-authored 'Datasets: A Community Library for Natural Language Processing' paper, published at EMNLP 2021 Demos (650+ datasets, 250+ contributors)",
+      "url": "https://arxiv.org/abs/2109.02846"
+    },
+    {
+      "date": "2021-03-12",
+      "event": "Published 'Fine-Tune Wav2Vec2 for English ASR' blog post on Hugging Face, making speech recognition accessible to the community",
+      "url": "https://huggingface.co/blog/fine-tune-wav2vec2-english"
+    },
+    {
+      "date": "2019",
+      "event": "Completed PhD in Computer Engineering at the University of Cambridge",
+      "url": "https://scholar.google.com/citations?hl=en&user=dC9i0-0AAAAJ"
+    }
+  ],
+  "key_contributions": [
+    {
+      "title": "Hugging Face Diffusers",
+      "description": "Created and led development of the Diffusers library -- the go-to open-source toolbox for state-of-the-art pretrained diffusion models for image, video, audio, and 3D generation in PyTorch. Over 33,000 GitHub stars.",
+      "url": "https://github.com/huggingface/diffusers"
+    },
+    {
+      "title": "XLS-R: Cross-Lingual Speech Representations at Scale",
+      "description": "Large-scale self-supervised model trained on 128 languages using 500K hours of speech data, achieving state-of-the-art results on speech translation, recognition, and language identification tasks.",
+      "url": "https://arxiv.org/abs/2111.09296"
+    },
+    {
+      "title": "Wav2Vec2 Integration in HF Transformers",
+      "description": "Contributed the Wav2Vec2 model to Hugging Face Transformers and authored tutorials that made self-supervised speech recognition accessible to the broader community.",
+      "url": "https://huggingface.co/blog/fine-tune-wav2vec2-english"
+    },
+    {
+      "title": "Pixtral 12B",
+      "description": "Co-authored at Mistral AI -- a 12-billion-parameter multimodal language model trained to understand both natural images and documents, with a novel vision encoder.",
+      "url": "https://arxiv.org/abs/2410.07073"
+    },
+    {
+      "title": "Distil-Whisper",
+      "description": "Robust knowledge distillation approach for speech recognition via large-scale pseudo labelling, enabling faster and smaller Whisper models.",
+      "url": "https://arxiv.org/abs/2311.05556"
+    },
+    {
+      "title": "LCM-LoRA",
+      "description": "Universal Stable Diffusion acceleration module that dramatically reduces inference steps while maintaining quality, enabling real-time image generation.",
+      "url": "https://huggingface.co/papers/2311.05556"
+    },
+    {
+      "title": "XTREME-S Benchmark",
+      "description": "Evaluation benchmark covering 102 languages across speech recognition, classification, translation, and retrieval tasks for cross-lingual speech representations.",
+      "url": "https://arxiv.org/abs/2203.10752"
+    },
+    {
+      "title": "HF Datasets Library",
+      "description": "Co-authored the Datasets community library for NLP, providing 650+ datasets and tools for efficient data loading and processing, published at EMNLP 2021.",
+      "url": "https://arxiv.org/abs/2109.02846"
+    }
+  ],
+  "quotes": [
+    {
+      "text": "Most recent research on diffusion models like DALL-E 2 and Imagen have not been made accessible and remain behind closed doors of large tech companies. This is why, at Hugging Face, we decided to build and open-source Diffusers.",
+      "source": "Hugging Face Diffusers announcement",
+      "url": "https://www.linkedin.com/posts/patrick-von-platen-343401123_github-huggingfacediffusers-diffusers-activity-6955904095106797569-RbTx"
+    },
+    {
+      "text": "We want Diffusers to be built by and for the community -- if you want to build the future of the hottest ML models, come join us!",
+      "source": "LinkedIn post on Diffusers community",
+      "url": "https://www.linkedin.com/posts/patrick-von-platen-343401123_want-to-become-a-core-maintainer-of-huggingfaces-activity-6985916005369675776-YtcD"
+    },
+    {
+      "text": "The power of open-source is impressive -- Diffusers is one month old and has over 20 external contributors.",
+      "source": "LinkedIn post on Diffusers growth",
+      "url": "https://www.linkedin.com/posts/patrick-von-platen-343401123_stable-diffusion-meets-diffusers-activity-6965396386926186498-_DOE"
+    },
+    {
+      "text": "The speed at which Diffusion models are getting better and faster is mind-blowing.",
+      "source": "LinkedIn post on real-time image translation",
+      "url": "https://www.linkedin.com/posts/patrick-von-platen-343401123_real-time-image-translation-has-arrived-activity-7128459887579156481-srDO"
+    },
+    {
+      "text": "Diffusion models can do more than just image!",
+      "source": "LinkedIn post on Diffusers v0.15.0",
+      "url": "https://www.linkedin.com/posts/patrick-von-platen-343401123_diffusion-models-can-do-more-than-just-image-activity-7051985722819399681-QhBl"
+    }
+  ],
+  "social": {
+    "github": "https://github.com/patrickvonplaten",
+    "linkedin": "https://www.linkedin.com/in/patrick-von-platen-343401123/",
+    "huggingface": "https://huggingface.co/patrickvonplaten",
+    "twitter": "https://twitter.com/patrickplaten",
+    "google_scholar": "https://scholar.google.com/citations?hl=en&user=dC9i0-0AAAAJ",
+    "medium": "https://medium.com/@patrickvonplaten"
+  },
+  "sources": [
+    {
+      "title": "Patrick von Platen - GitHub Profile (2.1k followers, 99 repos)",
+      "url": "https://github.com/patrickvonplaten"
+    },
+    {
+      "title": "Patrick von Platen - Hugging Face Profile (268 models, 12 papers, 819 followers)",
+      "url": "https://huggingface.co/patrickvonplaten"
+    },
+    {
+      "title": "Patrick von Platen - Mistral AI | LinkedIn",
+      "url": "https://www.linkedin.com/in/patrick-von-platen-343401123/"
+    },
+    {
+      "title": "Hugging Face Diffusers - GitHub (33k+ stars)",
+      "url": "https://github.com/huggingface/diffusers"
+    },
+    {
+      "title": "Stable Diffusion with Diffusers - Hugging Face Blog (Aug 2022)",
+      "url": "https://huggingface.co/blog/stable_diffusion"
+    },
+    {
+      "title": "Colloquium: Generating Images and Audio With the HF Diffusers Library (Nov 2022)",
+      "url": "https://www.crossmodal-learning.org/news/2022-11-von-platen-talk.html"
+    },
+    {
+      "title": "Patrick von Platen - Google Scholar (16,993 citations)",
+      "url": "https://scholar.google.com/citations?hl=en&user=dC9i0-0AAAAJ"
+    },
+    {
+      "title": "Patrick von Platen - DBLP Bibliography",
+      "url": "https://dblp.org/pid/243/6122.html"
+    },
+    {
+      "title": "Patrick von Platen - DeepAI Profile",
+      "url": "https://deepai.org/profile/patrick-von-platen"
+    },
+    {
+      "title": "Pixtral 12B - arXiv (Oct 2024)",
+      "url": "https://arxiv.org/abs/2410.07073"
+    },
+    {
+      "title": "Patrick von Platen - Research Engineer at Mistral AI | The Org",
+      "url": "https://theorg.com/org/mistral-ai/org-chart/patrick-von-platen"
+    },
+    {
+      "title": "Fine-Tune Wav2Vec2 for English ASR - Hugging Face Blog (Mar 2021)",
+      "url": "https://huggingface.co/blog/fine-tune-wav2vec2-english"
+    }
+  ]
+}

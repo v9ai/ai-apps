@@ -1,0 +1,254 @@
+{
+  "slug": "george-hotz",
+  "name": "George Hotz",
+  "generated_at": "2026-03-19T22:00:00+00:00",
+  "bio": "George Hotz (geohot) is an American hacker, entrepreneur, and software engineer born October 2, 1989 in Glen Rock, New Jersey. At age 17 he became the first person to publicly jailbreak an iPhone (2007), and later reverse-engineered the PlayStation 3's security (2010), prompting a high-profile lawsuit from Sony that settled in 2011. He interned at Facebook, won $150K from Google for Chrome exploits (2014), and joined Google's Project Zero elite security team. He won DEF CON CTF with Carnegie Mellon's PPP (2013, 2014) and placed first solo at NYU CSAW CTF (2013). In 2015 he founded comma.ai, building openpilot into the leading open-source driver-assistance system supporting 300+ car models (60k+ GitHub stars). He stepped down from day-to-day comma.ai leadership in October 2022, departed entirely in November 2025. He briefly interned at Twitter under Elon Musk in late 2022, resigning after four weeks. In November 2022 he founded tiny corp, raising $5.1M in May 2023 to build tinygrad (31k+ GitHub stars), a minimalist deep learning framework, and the tinybox, a $15,000 AI computer with petaflop-class performance. His mission: commoditize the petaflop. Tiny corp is building a fully sovereign AMD compute stack, rewriting the entire driver/runtime/library layer in roughly 12,000 lines of code. Based in San Diego, CA.",
+  "topics": [
+    "Deep Learning Frameworks",
+    "Hardware-Software Co-design",
+    "GPU Compute Infrastructure",
+    "Open-Source Self-Driving",
+    "Security Research & Reverse Engineering",
+    "AMD vs NVIDIA Ecosystem",
+    "AI Democratization",
+    "Compiler & Runtime Engineering",
+    "Decentralization of Compute",
+    "Neural Network Optimization"
+  ],
+  "timeline": [
+    {
+      "date": "2007",
+      "event": "Became the first person to publicly jailbreak an iPhone at age 17, enabling carrier-unlocked use and third-party apps",
+      "url": "https://en.wikipedia.org/wiki/George_Hotz"
+    },
+    {
+      "date": "2010-01-22",
+      "event": "Announced read/write access to PS3 system memory and hypervisor-level CPU access; published the exploit publicly on January 26",
+      "url": "https://en.wikipedia.org/wiki/George_Hotz"
+    },
+    {
+      "date": "2011-01",
+      "event": "Sony filed lawsuit (SCEA v. Hotz) alleging DMCA violations over PS3 jailbreak; settled in April 2011",
+      "url": "https://en.wikipedia.org/wiki/Sony_Computer_Entertainment_America,_Inc._v._Hotz"
+    },
+    {
+      "date": "2013-08",
+      "event": "Won DEF CON CTF with Carnegie Mellon's Plaid Parliament of Pwning (PPP); later won NYU CSAW CTF solo under pseudonym tomcr00se",
+      "url": "https://en.wikipedia.org/wiki/George_Hotz"
+    },
+    {
+      "date": "2014-03",
+      "event": "Won $150,000 from Google for discovering Chrome exploits; subsequently joined Google's Project Zero security team",
+      "url": "https://www.idownloadblog.com/2014/07/17/geohot-google-project-zero/"
+    },
+    {
+      "date": "2015-09",
+      "event": "Founded comma.ai to develop advanced driver-assistance systems using machine learning",
+      "url": "https://techcrunch.com/2022/11/02/george-hotz-aka-geohot-is-leaving-comma-ai-for-a-lofty-ai-project/"
+    },
+    {
+      "date": "2016-11",
+      "event": "Released openpilot as open-source software after canceling the comma one hardware device due to NHTSA regulatory pressure",
+      "url": "https://en.wikipedia.org/wiki/Openpilot"
+    },
+    {
+      "date": "2020",
+      "event": "Launched comma two hardware device for running openpilot; started tinygrad as a side project (repo created October 2020)",
+      "url": "https://github.com/tinygrad/tinygrad"
+    },
+    {
+      "date": "2021",
+      "event": "Launched comma three hardware device with improved compute for openpilot",
+      "url": "https://en.wikipedia.org/wiki/George_Hotz"
+    },
+    {
+      "date": "2022-10",
+      "event": "Stepped down from day-to-day leadership at comma.ai, saying the company 'is no longer a racecar, but a boat'",
+      "url": "https://www.autoevolution.com/news/comma-ai-founder-george-hotz-is-stepping-down-they-are-still-in-business-202663.html"
+    },
+    {
+      "date": "2022-11-05",
+      "event": "Founded tiny corp to build AI compute infrastructure and develop the tinygrad deep learning framework",
+      "url": "https://techcrunch.com/2022/11/02/george-hotz-aka-geohot-is-leaving-comma-ai-for-a-lofty-ai-project/"
+    },
+    {
+      "date": "2022-11-18",
+      "event": "Joined Twitter as an intern under Elon Musk; resigned four weeks later on December 20, citing inability to make 'any real impact'",
+      "url": "https://www.techmeme.com/221221/p9"
+    },
+    {
+      "date": "2023-05-24",
+      "event": "Tiny corp raised $5.1M to build computers for machine learning and develop tinygrad",
+      "url": "https://geohot.github.io/blog/jekyll/update/2023/05/24/the-tiny-corp-raised-5M.html"
+    },
+    {
+      "date": "2023-06-20",
+      "event": "Appeared on Latent Space podcast: 'Commoditizing the Petaflop' discussing tinygrad, tinybox, and challenging NVIDIA",
+      "url": "https://www.latent.space/p/geohot"
+    },
+    {
+      "date": "2023-06-29",
+      "event": "Appeared on Lex Fridman Podcast #387: Tiny Corp, Twitter, AI Safety, Self-Driving, GPT, AGI & God",
+      "url": "https://lexfridman.com/george-hotz-3/"
+    },
+    {
+      "date": "2023-08-17",
+      "event": "Debated Eliezer Yudkowsky on AI safety on the Dwarkesh Patel podcast",
+      "url": "https://www.dwarkeshpatel.com"
+    },
+    {
+      "date": "2025-03-08",
+      "event": "Published 'AMD YOLO' blog post: AMD sent two MI300X systems; announced fully sovereign AMD stack in tinygrad; bought $250K in AMD stock",
+      "url": "https://geohot.github.io/blog/jekyll/update/2025/03/08/AMD-YOLO.html"
+    },
+    {
+      "date": "2025-11",
+      "event": "Departed comma.ai entirely, ending all remaining board/advisory involvement",
+      "url": "https://en.wikipedia.org/wiki/George_Hotz"
+    },
+    {
+      "date": "2026-01-12",
+      "event": "Released tinygrad v0.12.0 on PyPI",
+      "url": "https://pypi.org/project/tinygrad/"
+    }
+  ],
+  "key_contributions": [
+    {
+      "title": "tinygrad",
+      "description": "Minimalist deep learning framework aiming to be a balance between micrograd simplicity and PyTorch functionality. 31k+ GitHub stars. Written in Python with a fully sovereign AMD compute stack in ~12,000 lines. Powers comma.ai's openpilot on Snapdragon 845 GPU.",
+      "url": "https://github.com/tinygrad/tinygrad"
+    },
+    {
+      "title": "openpilot (comma.ai)",
+      "description": "Open-source advanced driver-assistance system supporting 300+ car models. 60k+ GitHub stars. The leading open-source self-driving software, running on comma two, comma three, and comma 3X hardware devices.",
+      "url": "https://github.com/commaai/openpilot"
+    },
+    {
+      "title": "tinybox",
+      "description": "$15,000 'luxury AI computer' with petaflop-class FP16 performance using six AMD GPUs. Designed to democratize access to AI training and inference by making local compute affordable for researchers and small teams.",
+      "url": "https://tinygrad.org"
+    },
+    {
+      "title": "Sovereign AMD Compute Stack",
+      "description": "Complete rewrite of the GPU compute stack for AMD hardware: custom driver, runtime, libraries, and emulator in ~12,000 lines of code, aiming to break NVIDIA's CUDA ecosystem lock-in.",
+      "url": "https://www.phoronix.com/news/Tiny-Sovereign-Stack-AMD-Close"
+    },
+    {
+      "title": "First iPhone Jailbreak",
+      "description": "In 2007 at age 17, became the first person to publicly carrier-unlock and jailbreak an iPhone, enabling third-party software installation and network carrier freedom.",
+      "url": "https://en.wikipedia.org/wiki/George_Hotz"
+    },
+    {
+      "title": "PlayStation 3 Security Research",
+      "description": "Reverse-engineered the PS3's hypervisor and published exploits enabling homebrew software, leading to the landmark SCEA v. Hotz lawsuit and raising questions about digital ownership rights.",
+      "url": "https://en.wikipedia.org/wiki/Sony_Computer_Entertainment_America,_Inc._v._Hotz"
+    }
+  ],
+  "quotes": [
+    {
+      "text": "We will commoditize the petaflop.",
+      "source": "GitHub bio / tiny corp mission statement",
+      "url": "https://github.com/geohot"
+    },
+    {
+      "text": "My central thesis about the world is there are things that centralize power and they're bad, and there are things that decentralize power and they're good. Everything I can do to help decentralize power I'd like to do.",
+      "source": "Interview",
+      "url": "https://geohot.spicytakes.org/"
+    },
+    {
+      "text": "CUDA isn't really the moat people think it is, it is just an early ecosystem.",
+      "source": "AMD YOLO blog post, March 2025",
+      "url": "https://geohot.github.io/blog/jekyll/update/2025/03/08/AMD-YOLO.html"
+    },
+    {
+      "text": "AMD passed my cultural test. I now believe they aren't going to shoot themselves in the foot on software.",
+      "source": "AMD YOLO blog post, March 2025",
+      "url": "https://geohot.github.io/blog/jekyll/update/2025/03/08/AMD-YOLO.html"
+    },
+    {
+      "text": "Will GPT-12 be AGI? My answer is no, of course not. Cross-entropy loss is never going to get you there. You probably need reinforcement learning in fancy environments to get something that would be considered AGI-like.",
+      "source": "Lex Fridman Podcast #387, June 2023",
+      "url": "https://lexfridman.com/george-hotz-3/"
+    },
+    {
+      "text": "Hacking isn't about getting what you didn't pay for, it's about making sure you do get what you did.",
+      "source": "Interview / frequently cited",
+      "url": "https://en.wikipedia.org/wiki/George_Hotz"
+    },
+    {
+      "text": "Resigned from Twitter today. Appreciate the opportunity, but didn't think there was any real impact I could make there.",
+      "source": "Twitter post, December 20, 2022",
+      "url": "https://www.techmeme.com/221221/p9"
+    }
+  ],
+  "social": {
+    "github": "https://github.com/geohot",
+    "twitter": "https://x.com/realGeorgeHotz",
+    "linkedin": "https://www.linkedin.com/in/george-hotz-b3866476/",
+    "blog": "https://geohot.github.io/blog/",
+    "website": "https://geohot.com",
+    "youtube": "https://www.youtube.com/@gaborhotz"
+  },
+  "sources": [
+    {
+      "title": "George Hotz - Wikipedia",
+      "url": "https://en.wikipedia.org/wiki/George_Hotz"
+    },
+    {
+      "title": "geohot on GitHub (101 public repos, 46k+ followers)",
+      "url": "https://github.com/geohot"
+    },
+    {
+      "title": "tinygrad/tinygrad on GitHub (31k+ stars)",
+      "url": "https://github.com/tinygrad/tinygrad"
+    },
+    {
+      "title": "commaai/openpilot on GitHub (60k+ stars)",
+      "url": "https://github.com/commaai/openpilot"
+    },
+    {
+      "title": "The Singularity Is Nearer - geohot's blog",
+      "url": "https://geohot.github.io/blog/"
+    },
+    {
+      "title": "AMD YOLO - geohot blog post, March 2025",
+      "url": "https://geohot.github.io/blog/jekyll/update/2025/03/08/AMD-YOLO.html"
+    },
+    {
+      "title": "Tiny Corp Nearing Completely Sovereign Compute Stack For AMD GPUs - Phoronix",
+      "url": "https://www.phoronix.com/news/Tiny-Sovereign-Stack-AMD-Close"
+    },
+    {
+      "title": "George Hotz, aka 'geohot,' is leaving Comma.ai - TechCrunch",
+      "url": "https://techcrunch.com/2022/11/02/george-hotz-aka-geohot-is-leaving-comma-ai-for-a-lofty-ai-project/"
+    },
+    {
+      "title": "Commoditizing the Petaflop - Latent Space Podcast",
+      "url": "https://www.latent.space/p/geohot"
+    },
+    {
+      "title": "Lex Fridman Podcast #387 - George Hotz: Tiny Corp, Twitter, AI Safety, Self-Driving, GPT, AGI & God",
+      "url": "https://lexfridman.com/george-hotz-3/"
+    },
+    {
+      "title": "Sony Computer Entertainment America, Inc. v. Hotz - Wikipedia",
+      "url": "https://en.wikipedia.org/wiki/Sony_Computer_Entertainment_America,_Inc._v._Hotz"
+    },
+    {
+      "title": "the tiny corp raised $5.1M - geohot blog",
+      "url": "https://geohot.github.io/blog/jekyll/update/2023/05/24/the-tiny-corp-raised-5M.html"
+    },
+    {
+      "title": "tinygrad on PyPI (v0.12.0, Jan 2026)",
+      "url": "https://pypi.org/project/tinygrad/"
+    },
+    {
+      "title": "Comma AI Founder George Hotz Is Stepping Down - autoevolution",
+      "url": "https://www.autoevolution.com/news/comma-ai-founder-george-hotz-is-stepping-down-they-are-still-in-business-202663.html"
+    },
+    {
+      "title": "tinygrad pitch deck",
+      "url": "https://tinygrad.org/pitch.pdf"
+    }
+  ]
+}

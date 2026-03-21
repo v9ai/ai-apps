@@ -1,0 +1,176 @@
+{
+  "slug": "teknium",
+  "name": "Teknium",
+  "generated_at": "2026-03-19",
+  "bio": "Teknium (Ryan Teknium) is Co-founder and Head of Post-Training at Nous Research, an open-source AI lab focused on advancing foundational models through community-driven research. He is best known as the creator of the Hermes series of fine-tuned language models and the OpenHermes datasets, which have been collectively downloaded over 55 million times and power more than 120 applications. Before co-founding Nous Research in 2023, he worked at Stability AI. Starting from early GPT-4-generated instruction datasets like GPTeacher, he pioneered large-scale synthetic data curation for LLM post-training, scaling from 242K examples in OpenHermes 1 to over 5 million samples in Hermes 4. His work on neutrally-aligned, highly steerable instruct models has made the Hermes family one of the most widely adopted open-source fine-tune lines in the LLM ecosystem.",
+  "topics": [
+    "LLM Fine-Tuning & Post-Training",
+    "Synthetic Data Generation for LLMs",
+    "Open-Source Language Models",
+    "Instruction Tuning & Alignment",
+    "Chain-of-Thought Reasoning Training",
+    "Reinforcement Learning for LLMs",
+    "AI Agent Development",
+    "Dataset Curation & Quality",
+    "Model Benchmarking & Evaluation",
+    "Decentralized AI Training"
+  ],
+  "timeline": [
+    {
+      "date": "2023-03",
+      "event": "Created GitHub account and began releasing AI tools including alpaca-discord and AlpacaDataCleaned, entering the open-source LLM community",
+      "url": "https://github.com/teknium1"
+    },
+    {
+      "date": "2023-04",
+      "event": "Released GPTeacher, a collection of modular GPT-4-generated datasets (General-Instruct, Roleplay, Code-Instruct, Toolformer) that became a foundational resource for LLM fine-tuning",
+      "url": "https://github.com/teknium1/GPTeacher"
+    },
+    {
+      "date": "2023-06",
+      "event": "Co-founded Nous Research with Jeffrey Quesnelle, Karan Malhotra, and Shivani Mitra as an open-source AI research collective",
+      "url": "https://nousresearch.com"
+    },
+    {
+      "date": "2023-07",
+      "event": "Released OpenHermes 7B and 13B, the first open-source Hermes fine-tunes trained on 242K entries of primarily GPT-4-generated data",
+      "url": "https://huggingface.co/teknium/OpenHermes-7B"
+    },
+    {
+      "date": "2023-10",
+      "event": "Released OpenHermes 2 Mistral 7B with improved training data and ChatML prompt format support",
+      "url": "https://huggingface.co/teknium/OpenHermes-2-Mistral-7B"
+    },
+    {
+      "date": "2023-11",
+      "event": "Released OpenHermes 2.5 Mistral 7B, trained on 1M high-quality synthetic samples, achieving 50.7% on HumanEval and becoming the most downloaded OpenHermes model",
+      "url": "https://huggingface.co/teknium/OpenHermes-2.5-Mistral-7B"
+    },
+    {
+      "date": "2023-12",
+      "event": "Partnered with Together Compute to release StripedHyena-Nous-7B, combining Hermes data with the novel StripedHyena sub-quadratic architecture",
+      "url": "https://x.com/Teknium1/status/1733233296962953567"
+    },
+    {
+      "date": "2024-01",
+      "event": "Nous Research raised $5.2M seed round co-led by Distributed Global and OSS Capital, transitioning from volunteer project to funded company",
+      "url": "https://x.com/NousResearch/status/1744865874471985636"
+    },
+    {
+      "date": "2024-08",
+      "event": "Published Hermes 3 Technical Report (arXiv 2408.11857) and released Hermes 3 on Llama 3.1 (8B, 70B, 405B), achieving state-of-the-art among open-weight models",
+      "url": "https://arxiv.org/abs/2408.11857"
+    },
+    {
+      "date": "2025-02",
+      "event": "Released DeepHermes 3 Preview, one of the first models to unify deep reasoning (chain-of-thought) and traditional response modes in a single model",
+      "url": "https://huggingface.co/NousResearch/DeepHermes-3-Llama-3-8B-Preview"
+    },
+    {
+      "date": "2025-04",
+      "event": "Nous Research raised $65M ($50M Series A led by Paradigm) at approximately $1B token valuation to expand R&D and build the Psyche decentralized training network",
+      "url": "https://www.theblock.co/post/352000/paradigm-leads-50-million-usd-round-decentralized-ai-project-nous-research"
+    },
+    {
+      "date": "2025-08",
+      "event": "Published Hermes 4 Technical Report and released Hermes 4 models (70B, 405B), scaling post-training corpus from 1M to ~5M samples / ~60B tokens with stronger reasoning and schema-adherent outputs",
+      "url": "https://huggingface.co/NousResearch/Hermes-4-70B"
+    }
+  ],
+  "key_contributions": [
+    {
+      "title": "Hermes Model Family",
+      "description": "Flagship series of neutrally-aligned, highly steerable instruct-tuned language models released through Nous Research, spanning Hermes, Hermes 2, Hermes 3 (Llama 3.1), DeepHermes 3, and Hermes 4. Collectively downloaded over 55 million times and powering 120+ applications. Known for strong system prompt adherence and tool-use capabilities.",
+      "url": "https://nousresearch.com/hermes3/"
+    },
+    {
+      "title": "OpenHermes Datasets & Models",
+      "description": "Open-source series of fine-tuned models and their training datasets, starting with 242K GPT-4-generated examples in OpenHermes 1 and scaling to 1M samples in OpenHermes 2.5. The OpenHermes 2.5 Mistral 7B model became one of the most popular open-source fine-tunes, with 152K+ downloads on Hugging Face.",
+      "url": "https://huggingface.co/teknium/OpenHermes-2.5-Mistral-7B"
+    },
+    {
+      "title": "GPTeacher",
+      "description": "Early collection of modular GPT-4-generated datasets including General-Instruct, Roleplay, Code-Instruct, and Toolformer modules. Over 1,600 GitHub stars. Became a foundational dataset component in the OpenHermes training pipeline and influenced the broader synthetic data movement for LLM fine-tuning.",
+      "url": "https://github.com/teknium1/GPTeacher"
+    },
+    {
+      "title": "Nous Research",
+      "description": "Co-founded open-source AI research lab in 2023 that grew from a volunteer collective into a $65M-funded company. Produces the Hermes model family, Psyche decentralized training network, and Atropos RL environments framework. Serves as Head of Post-Training, overseeing all fine-tuning, alignment, and RLHF pipelines.",
+      "url": "https://nousresearch.com"
+    },
+    {
+      "title": "Prompt Engineering Toolkit",
+      "description": "Popular open-source toolkit for prompt engineering with over 420 GitHub stars, providing structured approaches to crafting effective prompts for large language models.",
+      "url": "https://github.com/teknium1/Prompt-Engineering-Toolkit"
+    }
+  ],
+  "quotes": [
+    {
+      "text": "I saw Alpaca, and I wanted to remake it with GPT-4.",
+      "source": "ThursdAI Podcast - Interview with Nous Research",
+      "url": "https://sub.thursdai.news/p/thursdai-special-episode-interview"
+    },
+    {
+      "text": "Post-training takes pre-trained models and molds them into a smarter, more steerable, and fine-tuned version of it, which can be aligned to the morals or ethics you want, or built specifically for working with your product or other tooling.",
+      "source": "Delphi Intelligence AMA with Nous Research",
+      "url": "https://www.delphiintelligence.io/research/ama-1-transcript-with-nous-research-co-founder-and-post-training-lead-teknium1"
+    }
+  ],
+  "social": {
+    "github": "https://github.com/teknium1",
+    "twitter": "https://x.com/Teknium1",
+    "website": "https://teknium.io",
+    "huggingface": "https://huggingface.co/teknium",
+    "linkedin": "https://www.linkedin.com/in/teknium-b538932ab/"
+  },
+  "sources": [
+    {
+      "title": "teknium1 (Teknium) - GitHub Profile",
+      "url": "https://github.com/teknium1"
+    },
+    {
+      "title": "Teknium - Hugging Face Profile (Models & Datasets)",
+      "url": "https://huggingface.co/teknium"
+    },
+    {
+      "title": "Hermes 3 Technical Report - arXiv 2408.11857",
+      "url": "https://arxiv.org/abs/2408.11857"
+    },
+    {
+      "title": "Hermes 4 Technical Report - Nous Research",
+      "url": "https://nousresearch.com/wp-content/uploads/2025/08/Hermes_4_Technical_Report.pdf"
+    },
+    {
+      "title": "OpenHermes 2.5 Mistral 7B - Hugging Face Model Card",
+      "url": "https://huggingface.co/teknium/OpenHermes-2.5-Mistral-7B"
+    },
+    {
+      "title": "AMA Transcript with Nous Research Co-Founder @teknium1 - Delphi Intelligence",
+      "url": "https://www.delphiintelligence.io/research/ama-1-transcript-with-nous-research-co-founder-and-post-training-lead-teknium1"
+    },
+    {
+      "title": "ThursdAI - Interview with Nous Research",
+      "url": "https://sub.thursdai.news/p/thursdai-special-episode-interview"
+    },
+    {
+      "title": "Paradigm leads $50M Series A for Nous Research - The Block",
+      "url": "https://www.theblock.co/post/352000/paradigm-leads-50-million-usd-round-decentralized-ai-project-nous-research"
+    },
+    {
+      "title": "Nous Research Raises $65M in Funding - FinSMEs",
+      "url": "https://www.finsmes.com/2025/04/nous-research-raises-65m-in-funding.html"
+    },
+    {
+      "title": "Meet Hermes 3 - VentureBeat",
+      "url": "https://venturebeat.com/ai/meet-hermes-3-the-powerful-new-open-source-ai-model-that-has-existential-crises"
+    },
+    {
+      "title": "Teknium.io - Personal Website",
+      "url": "https://teknium.io/"
+    },
+    {
+      "title": "GPTeacher - GitHub Repository",
+      "url": "https://github.com/teknium1/GPTeacher"
+    }
+  ]
+}
