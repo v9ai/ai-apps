@@ -4,7 +4,7 @@ Searches curated AI engineering, MLOps, and developer publications for
 articles relevant to a given topic.  Returns ResearchPaper objects that
 integrate with the existing paper dedup/rank/digest pipeline.
 
-Sources (17 niche publications):
+Sources (16 niche publications):
 
   AI Engineering & MLOps/LLMOps:
     W&B Fully Connected    — Experiment tracking, ML evals (RSS)
@@ -102,6 +102,36 @@ def _extract_year(date_str: str) -> int | None:
 # ── RSS/Atom feed parsing ────────────────────────────────────────────────────
 
 _DC_NS = "http://purl.org/dc/elements/1.1/"
+
+
+async def _resolve_redirects(urls: list[str]) -> dict[str, str]:
+    """Resolve redirect URLs to their final destinations.
+
+    Used for feeds (e.g. DZone) that use tracking redirects in entry links.
+    Returns a mapping of original URL -> resolved URL. Failures keep the original.
+    """
+    if not urls:
+        return {}
+
+    redirect_urls = [u for u in urls if "feeds." in u or "/link/" in u]
+    if not redirect_urls:
+        return {}
+
+    resolved: dict[str, str] = {}
+    async with httpx.AsyncClient(timeout=10, follow_redirects=True) as client:
+        async def _resolve_one(url: str):
+            try:
+                resp = await client.head(url)
+                if str(resp.url) != url:
+                    resolved[url] = str(resp.url)
+            except Exception:
+                pass  # keep original
+
+        await asyncio.gather(*[_resolve_one(u) for u in redirect_urls])
+
+    if resolved:
+        logger.info("Resolved %d redirect URLs", len(resolved))
+    return resolved
 
 
 def _parse_feed(xml_text: str, source: PaperSource) -> list[ResearchPaper]:
@@ -209,6 +239,14 @@ class RSSSearchClient:
 
         scored.sort(key=lambda x: x[0], reverse=True)
         results = [a for _, a in scored[:limit]]
+
+        # Resolve redirect URLs (e.g. DZone feeds.dzone.com/link/...)
+        if results:
+            urls = [a.url for a in results if a.url]
+            resolved = await _resolve_redirects(urls)
+            for a in results:
+                if a.url in resolved:
+                    a.url = resolved[a.url]
 
         logger.info(
             "Editorial [%s]: %d/%d articles matched '%s'",

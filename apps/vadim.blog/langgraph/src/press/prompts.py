@@ -459,6 +459,13 @@ SEO integration (natural, never forced):
   end of the article with those Q&A pairs (can be copied verbatim from the SEO strategy)
 - Use the og:title and og:description from the SEO strategy as frontmatter fields
 
+Code and technical depth (when relevant):
+- If the SEO strategy Format is "comparison" or "technical deep-dive", INCLUDE
+  short code snippets (5-15 lines each) that illustrate the key differences
+- Show the same task implemented in each framework/tool being compared
+- Use real API syntax from the official docs — do not invent method names
+- Code is a signal of expertise and E-E-A-T — include it for any technical article
+
 Voice and tone:
 - Authoritative but approachable — not lecturing
 - Practical — every article should help someone make a decision or take action
