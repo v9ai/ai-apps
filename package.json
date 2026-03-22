@@ -22,6 +22,7 @@
     "deploy:h": "vercel deploy --prod",
     "deploy:r": "vercel deploy --prod --cwd apps/research-thera",
     "deploy:re": "vercel deploy --prod --cwd apps/real-estate",
+    "deploy:k": "VERCEL_PROJECT_ID=prj_HmZ37BPDql0kOnFT9iiPsnQBOryr VERCEL_ORG_ID=team_PWwGsn3xORVtRDLLoES2BYVV vercel deploy --prod",
     "deploy:t": "vercel deploy --prod --cwd apps/todo",
     "deploy:p": "vercel deploy --prod --cwd apps/podcasts",
     "dev:p": "turbo run dev --filter=humans-of-ai",

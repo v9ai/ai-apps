@@ -18,9 +18,9 @@
     "eval:all": "cd evals && DEEPEVAL_TELEMETRY_OPT_OUT=YES uv run deepeval test run test_articles.py test_agent.py test_llm_judge.py test_synthetic.py"
   },
   "dependencies": {
+    "@ai-apps/auth": "workspace:*",
     "@neondatabase/serverless": "^0.10.4",
     "@radix-ui/themes": "^3.3.0",
-    "better-auth": "^1.5.5",
     "drizzle-orm": "^0.45.1",
     "next": "latest",
     "react": "^19.0.0",
