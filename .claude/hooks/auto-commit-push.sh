@@ -11,7 +11,7 @@ if git diff --quiet HEAD 2>/dev/null && [ -z "$(git ls-files --others --exclude-
     exit 0
 fi
 
-git add -A
+git add -A -- . ':!.env*' ':!*.local'
 
 # Detect scope from changed files (e.g. apps/knowledge -> knowledge)
 FILES=$(git diff --cached --name-only)
