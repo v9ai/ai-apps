@@ -150,6 +150,11 @@ async def upsert_research_paper(
     findings_json = json.dumps(key_findings or [])
     techniques_json = json.dumps(therapeutic_techniques or [])
     score = int(relevance_score * 100) if relevance_score <= 1 else int(relevance_score)
+    # Derive confidence from abstract quality + key findings count
+    has_abstract = bool(abstract and len(abstract.strip()) >= 100)
+    has_findings = len(key_findings) >= 2
+    has_techniques = len(therapeutic_techniques) >= 1
+    confidence = 40 + (has_abstract * 25) + (has_findings * 20) + (has_techniques * 15)
 
     # Build dedup condition based on which id is provided
     if issue_id is not None:
@@ -193,7 +198,7 @@ async def upsert_research_paper(
                 (
                     goal_id, feedback_id, issue_id, therapeutic_goal_type, title, authors_json,
                     year, doi, url, abstract, findings_json, techniques_json,
-                    evidence_level, score, "langgraph:deepseek-chat:v1", 75,
+                    evidence_level, score, "langgraph:deepseek-chat:v1", confidence,
                 ),
             )
             row = await cur.fetchone()

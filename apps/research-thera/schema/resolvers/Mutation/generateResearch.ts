@@ -59,12 +59,15 @@ function buildSiblingIssuesSection(
 async function runResearchEvals(
   issueId: number | undefined,
   feedbackId: number | undefined,
+  goalId: number | undefined,
   prompt: string,
   hasRelatedMember: boolean,
 ): Promise<Record<string, number | string>> {
   const rows = issueId
     ? await neonSql`SELECT title, abstract, key_findings, therapeutic_techniques, evidence_level FROM therapy_research WHERE issue_id = ${issueId} ORDER BY relevance_score DESC LIMIT 10`
-    : await neonSql`SELECT title, abstract, key_findings, therapeutic_techniques, evidence_level FROM therapy_research WHERE feedback_id = ${feedbackId} ORDER BY relevance_score DESC LIMIT 10`;
+    : feedbackId
+      ? await neonSql`SELECT title, abstract, key_findings, therapeutic_techniques, evidence_level FROM therapy_research WHERE feedback_id = ${feedbackId} ORDER BY relevance_score DESC LIMIT 10`
+      : await neonSql`SELECT title, abstract, key_findings, therapeutic_techniques, evidence_level FROM therapy_research WHERE goal_id = ${goalId} ORDER BY relevance_score DESC LIMIT 10`;
 
   if (!rows.length) return { error: "no papers found" };
 
@@ -235,9 +238,16 @@ export const generateResearch: NonNullable<MutationResolvers['generateResearch']
   } else if (goalId) {
     const goal = await db.getGoal(goalId, userEmail);
     let goalSiblingSection = "";
+    let memberContext = "";
     if (goal.familyMemberId) {
       const allIssues = await db.getIssuesForFamilyMember(goal.familyMemberId, undefined, userEmail);
       goalSiblingSection = buildSiblingIssuesSection(allIssues);
+      try {
+        const fm = await db.getFamilyMember(goal.familyMemberId);
+        if (fm) {
+          memberContext = `Patient: ${fm.firstName}${fm.name ? ` ${fm.name}` : ""}${fm.ageYears ? `, age ${fm.ageYears}` : ""}${fm.relationship ? ` (${fm.relationship})` : ""}`;
+        }
+      } catch { /* non-fatal */ }
     }
     prompt = [
       `Find evidence-based therapeutic research for the following goal:`,
@@ -245,10 +255,16 @@ export const generateResearch: NonNullable<MutationResolvers['generateResearch']
       `goal_id: ${goalId}`,
       `Title: ${goal.title}`,
       goal.description ? `Description: ${goal.description}` : "",
+      memberContext,
+      ``,
+      `IMPORTANT: If the goal title is NOT in English, first translate it to English before searching.`,
+      `For example, "Creste rezistenta la frustrare" (Romanian) = "Increase frustration tolerance".`,
+      `Use the TRANSLATED English terms as your search queries.`,
       goalSiblingSection,
       ``,
       `Search for academic papers that support this therapeutic goal.`,
       `Focus on evidence-based interventions, therapeutic techniques, and outcome measures.`,
+      `Only save papers with real abstracts (not "None", "...", or empty). Skip papers lacking abstracts.`,
       ``,
       `IMPORTANT: When calling save_research_papers, use goal_id: ${goalId} — do NOT use issue_id or feedback_id.`,
     ].filter(Boolean).join("\n");
@@ -274,12 +290,10 @@ export const generateResearch: NonNullable<MutationResolvers['generateResearch']
     const count = messages?.filter((m) => m.type === "ai").length ?? 0;
 
     let evals: Record<string, number | string> | undefined;
-    if (issueId || feedbackId) {
-      try {
-        evals = await runResearchEvals(issueId, feedbackId, prompt, hasRelatedMember);
-      } catch (evalErr) {
-        console.error("[generateResearch] Eval error:", evalErr);
-      }
+    try {
+      evals = await runResearchEvals(issueId, feedbackId, goalId, prompt, hasRelatedMember);
+    } catch (evalErr) {
+      console.error("[generateResearch] Eval error:", evalErr);
     }
 
     await db.updateGenerationJob(jobId, {

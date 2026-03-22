@@ -156,8 +156,13 @@ def _make_tools(semantic_scholar_api_key: Optional[str] = None) -> list:
             return "No papers to save"
 
         saved = 0
+        skipped = 0
         failed = 0
         for paper in papers[:10]:
+            abstract = (paper.get("abstract") or "").strip()
+            if not abstract or abstract.lower() in ("none", "...", "n/a", "no abstract available") or len(abstract) < 50:
+                skipped += 1
+                continue
             try:
                 await upsert_research_paper(
                     therapeutic_goal_type=therapeutic_goal_type,
@@ -180,7 +185,12 @@ def _make_tools(semantic_scholar_api_key: Optional[str] = None) -> list:
                 failed += 1
                 print(f"[save_research_papers] Error saving paper: {e}")
 
-        return f"Saved {saved} papers to database ({failed} failed)"
+        parts = [f"Saved {saved} papers to database"]
+        if skipped:
+            parts.append(f"{skipped} skipped (no abstract)")
+        if failed:
+            parts.append(f"{failed} failed")
+        return ", ".join(parts)
 
     return [search_papers, get_paper_detail, save_research_papers]
 

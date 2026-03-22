@@ -515,8 +515,10 @@ export async function upsertTherapyResearch(
     return value;
   };
 
-  const relevanceScore = sanitizeNumber(research.relevanceScore, 0);
-  const extractionConfidence = sanitizeNumber(research.extractionConfidence, 0);
+  const rawRelevance = sanitizeNumber(research.relevanceScore, 0) ?? 0;
+  const relevanceScore = rawRelevance <= 1 ? Math.round(rawRelevance * 100) : Math.round(rawRelevance);
+  const rawConfidence = sanitizeNumber(research.extractionConfidence, 0) ?? 0;
+  const extractionConfidence = rawConfidence <= 1 ? Math.round(rawConfidence * 100) : Math.round(rawConfidence);
 
   if (existingId) {
     await neonSql`
@@ -603,9 +605,9 @@ export async function listTherapyResearch(goalId?: number, issueId?: number, fee
       row.therapeutic_techniques as string,
     ) as string[],
     evidenceLevel: (row.evidence_level as string) || null,
-    relevanceScore: row.relevance_score as number,
+    relevanceScore: (row.relevance_score as number) / 100,
     extractedBy: row.extracted_by as string,
-    extractionConfidence: row.extraction_confidence as number,
+    extractionConfidence: (row.extraction_confidence as number) / 100,
     createdAt: row.created_at as string,
     updatedAt: row.updated_at as string,
   }));
@@ -644,9 +646,9 @@ export async function getResearchForNote(noteId: number) {
       row.therapeutic_techniques as string,
     ) as string[],
     evidenceLevel: (row.evidence_level as string) || null,
-    relevanceScore: row.relevance_score as number,
+    relevanceScore: (row.relevance_score as number) / 100,
     extractedBy: row.extracted_by as string,
-    extractionConfidence: row.extraction_confidence as number,
+    extractionConfidence: (row.extraction_confidence as number) / 100,
     createdAt: row.created_at as string,
     updatedAt: row.updated_at as string,
   }));

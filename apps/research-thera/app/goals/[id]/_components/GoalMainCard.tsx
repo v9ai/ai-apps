@@ -12,6 +12,7 @@ import {
   Select,
   IconButton,
   TextArea,
+  TextField,
   AlertDialog,
 } from "@radix-ui/themes";
 import {
@@ -50,6 +51,10 @@ function getStatusColor(status: string) {
 
 export default function GoalMainCard({ goal }: { goal: Goal }) {
   const router = useRouter();
+
+  // Title editing
+  const [editingTitle, setEditingTitle] = useState(false);
+  const [editedTitle, setEditedTitle] = useState("");
 
   // Description editing
   const [editingDescription, setEditingDescription] = useState(false);
@@ -93,6 +98,12 @@ export default function GoalMainCard({ goal }: { goal: Goal }) {
     refetchQueries: ["GetGoals", "GetGoal"],
   });
 
+  const handleTitleSave = async () => {
+    if (!editedTitle.trim()) return;
+    await updateGoal({ variables: { id: goal.id, input: { title: editedTitle.trim() } } });
+    setEditingTitle(false);
+  };
+
   const handleFamilyMemberSave = async () => {
     if (!selectedFamilyMemberId) return;
     await updateGoal({
@@ -127,7 +138,34 @@ export default function GoalMainCard({ goal }: { goal: Goal }) {
                 Sub-Goal
               </Badge>
             )}
-            <Heading size={{ initial: "5", md: "7" }}>{goal.title}</Heading>
+            {editingTitle ? (
+              <Flex align="center" gap="2">
+                <TextField.Root
+                  size="3"
+                  value={editedTitle}
+                  onChange={(e) => setEditedTitle(e.target.value)}
+                  onKeyDown={(e) => {
+                    if (e.key === "Enter") handleTitleSave();
+                    if (e.key === "Escape") setEditingTitle(false);
+                  }}
+                  autoFocus
+                  style={{ fontWeight: "bold", fontSize: "inherit" }}
+                />
+                <IconButton size="1" variant="soft" color="green" disabled={!editedTitle.trim() || updating} onClick={handleTitleSave}>
+                  <CheckIcon />
+                </IconButton>
+                <IconButton size="1" variant="soft" color="gray" disabled={updating} onClick={() => setEditingTitle(false)}>
+                  <Cross2Icon />
+                </IconButton>
+              </Flex>
+            ) : (
+              <Flex align="center" gap="2" style={{ cursor: "pointer" }} onClick={() => { setEditedTitle(goal.title); setEditingTitle(true); }}>
+                <Heading size={{ initial: "5", md: "7" }}>{goal.title}</Heading>
+                <IconButton size="1" variant="ghost" color="gray" onClick={(e) => { e.stopPropagation(); setEditedTitle(goal.title); setEditingTitle(true); }}>
+                  <Pencil2Icon />
+                </IconButton>
+              </Flex>
+            )}
 
             {/* Family member */}
             {editingFamilyMember ? (

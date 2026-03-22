@@ -295,6 +295,50 @@ TEST_CASES = [
         "expected_query_keywords": ["eye contact", "social skills", "ASD", "autism", "children"],
     },
     {
+        "id": "frustration-tolerance-child",
+        "goal_title": "Creste/ ridica rezistenta la frustrare",
+        "goal_description": "",
+        "family_member_name": "Bogdan",
+        "family_member_age": 7,
+        "notes": [
+            "Se loveste cu capul de perete cand e frustrat",
+            "Arunca piesele Lego cand nu reuseste",
+            "Spune 'o sa te omor' cand e intrerupt",
+        ],
+        "feedback_content": (
+            "Bogdan has significant difficulty tolerating frustration. When asked to stop playing "
+            "or transition to another activity, he becomes immediately aggressive — hitting, "
+            "throwing objects, and making verbal threats. He hit his head against a wall when "
+            "his mother offered him an apple he didn't want. He refuses to eat even when hungry. "
+            "He says things like 'I shouldn't have been born' and 'life isn't fair' when upset. "
+            "Multiple behavioral issues at school: talks over teacher, walks around during class, "
+            "makes inappropriate sounds. Shows remorse after episodes but cannot self-regulate in the moment."
+        ),
+        "extracted_issues": [
+            {
+                "title": "Self-harm during frustration episodes",
+                "description": "Hit head against wall when frustrated. Throws objects. Physical aggression when interrupted.",
+                "category": "behavioral",
+                "severity": "high",
+            },
+            {
+                "title": "Verbal threats and negative self-talk",
+                "description": "Says 'I'll kill you' and 'I shouldn't have been born' during frustration episodes.",
+                "category": "emotional",
+                "severity": "high",
+            },
+            {
+                "title": "Food refusal and oppositional behavior",
+                "description": "Refuses to eat even when hungry. Won't say what he wants to eat.",
+                "category": "behavioral",
+                "severity": "medium",
+            },
+        ],
+        "expected_clinical_domain": "frustration_tolerance",
+        "expected_behavior_direction": "INCREASE",
+        "expected_query_keywords": ["frustration tolerance", "emotion regulation", "children", "behavioral"],
+    },
+    {
         "id": "aggression-sibling",
         "goal_title": "Stop hitting siblings",
         "goal_description": "Child hits younger sibling multiple times per day, especially during transitions.",
@@ -554,6 +598,26 @@ SYNTHETIC_PAPERS = {
             "strategies and environmental arrangement. Children with higher baseline language showed "
             "greater improvements. Results suggest that embedding social communication goals in "
             "play routines is more effective than discrete trial training for this age group."
+        ),
+    },
+    "frustration-tolerance-child": {
+        "title": "Frustration Tolerance Interventions for Young Children with Disruptive Behavior: A Systematic Review",
+        "authors": ["Roberts, M.", "Fernandez, A.", "Kowalski, P."],
+        "year": 2023,
+        "journal": "Journal of Child Psychology and Psychiatry",
+        "doi": "10.1234/jcpp.2023.087",
+        "abstract": (
+            "This systematic review examined 34 studies on frustration tolerance interventions for "
+            "children aged 4-10 with disruptive behavior disorders. Cognitive-behavioral interventions "
+            "targeting emotion regulation showed the strongest effects (d=0.92), particularly those "
+            "combining child-focused anger management with parent training in contingency management. "
+            "Dialectical behavior therapy adapted for children (DBT-C) showed promising results for "
+            "reducing self-harm behaviors during frustration episodes (d=0.78). Token economy systems "
+            "combined with graduated exposure to frustrating tasks improved distress tolerance in "
+            "school settings. Children with comorbid ADHD required longer treatment duration but showed "
+            "comparable gains at 6-month follow-up. Parent-Child Interaction Therapy (PCIT) was "
+            "effective for reducing oppositional behavior and improving parent-child communication "
+            "during frustration-inducing situations."
         ),
     },
     "aggression-sibling": {
