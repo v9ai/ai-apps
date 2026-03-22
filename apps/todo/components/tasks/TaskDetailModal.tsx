@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useRef, useCallback, useEffect, useTransition } from "react";
+import { useState, useRef, useCallback, useEffect, useTransition, forwardRef } from "react";
 import { useRouter } from "next/navigation";
 import {
   Box,
@@ -31,24 +31,23 @@ type Task = {
   completedAt: Date | null;
 };
 
-function AutoGrowTextArea({
-  value,
-  onChange,
-  onBlur,
-  placeholder,
-  className,
-  ariaLabel,
-}: {
-  value: string;
-  onChange: (e: React.ChangeEvent<HTMLTextAreaElement>) => void;
-  onBlur: () => void;
-  placeholder?: string;
-  className?: string;
-  ariaLabel?: string;
-}) {
-  const ref = useRef<HTMLTextAreaElement>(null);
+const AutoGrowTextArea = forwardRef<
+  HTMLTextAreaElement,
+  {
+    value: string;
+    onChange: (e: React.ChangeEvent<HTMLTextAreaElement>) => void;
+    onBlur: () => void;
+    placeholder?: string;
+    className?: string;
+    ariaLabel?: string;
+  }
+>(function AutoGrowTextArea(
+  { value, onChange, onBlur, placeholder, className, ariaLabel },
+  forwardedRef
+) {
+  const innerRef = useRef<HTMLTextAreaElement>(null);
   const resize = useCallback(() => {
-    const el = ref.current;
+    const el = innerRef.current;
     if (!el) return;
     el.style.height = "0";
     el.style.height = `${el.scrollHeight}px`;
@@ -60,7 +59,11 @@ function AutoGrowTextArea({
 
   return (
     <textarea
-      ref={ref}
+      ref={(el) => {
+        innerRef.current = el;
+        if (typeof forwardedRef === "function") forwardedRef(el);
+        else if (forwardedRef) forwardedRef.current = el;
+      }}
       className={className}
       value={value}
       onChange={(e) => {
