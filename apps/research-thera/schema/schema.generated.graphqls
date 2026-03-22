@@ -299,6 +299,7 @@ type DeepIssueAnalysis {
   id: Int!
   jobId: String
   model: String!
+  parentAdvice: [ParentAdviceItem!]!
   patternClusters: [PatternCluster!]!
   priorityRecommendations: [PriorityRecommendation!]!
   researchRelevance: [ResearchRelevanceMapping!]!
@@ -820,6 +821,20 @@ type PaperCandidate {
   title: String!
   url: String
   year: Int
+}
+
+type ParentAdviceItem {
+  advice: String!
+  ageAppropriate: Boolean!
+  concreteSteps: [String!]!
+  developmentalContext: String
+  priority: String!
+  relatedPatternCluster: String
+  relatedResearchIds: [Int!]
+  relatedResearchTitles: [String!]
+  targetIssueIds: [Int!]!
+  targetIssueTitles: [String!]!
+  title: String!
 }
 
 type PatternCluster {

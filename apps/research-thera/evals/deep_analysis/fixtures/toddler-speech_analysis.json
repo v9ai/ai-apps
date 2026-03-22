@@ -1,13 +1,13 @@
 {
   "id": "toddler-speech",
   "stage": "deep_analysis",
-  "prompt": "You are a clinical psychologist and family systems analyst. Your PRIMARY task is to provide an in-depth analysis of a SPECIFIC issue for this family member. The other issues, observations, and feedback are provided as CONTEXT to help you understand how this issue fits into the broader picture \u2014 but your analysis must CENTER on the trigger issue.\n\nIMPORTANT: Only reference issue IDs that appear in the data below. Pay careful attention to the family member's age and date of birth \u2014 all analysis, recommendations, and developmental references must be consistent with their actual age.\n\n## Family Member Profile\nName: Matei\nAge: 2 years old\nDate of Birth Year: 2024\nRelationship: son\n\n## TRIGGER ISSUE (Primary Focus)\n- [ID:401] \"Limited vocabulary for age\" (communication, high severity)\n  Only uses 5-10 words at 24 months, should be using 50+.\n\nYour summary, pattern clusters, and priority recommendations must primarily address the trigger issue above. Other issues should be referenced only when they relate to or shed light on the trigger issue.\n\n## Other Issues (Context)\n- [ID:402] \"Frustration tantrums from communication gaps\" (behavioral, medium severity)\n  Screams and throws objects when cannot communicate needs.\n\n## Behavior Observations (1)\n- 2026-03-09: communication frustration, freq=5x/day, intensity=high, Context: mealtimes, requesting toys\n\n## Instructions\nAnalyze the data above with PRIMARY FOCUS on the trigger issue (ID:401: \"Limited vocabulary for age\").\nProduce a structured JSON analysis with these fields:\n\n1. **summary**: 2-3 paragraph executive summary for a parent/caregiver CENTERED on the trigger issue. Start with the trigger issue, then explain how other issues relate to it. MUST correctly reference the child's age and use age-appropriate language.\n2. **patternClusters**: Array of related issue groups. The trigger issue MUST appear in at least one cluster. Each has: name, description, issueIds (array of ints), issueTitles (array of strings), categories (array of strings), pattern (recurring|escalating|co-occurring|seasonal|triggered), confidence (0-1), suggestedRootCause (optional string).\n3. **timelineAnalysis**: Object with phases (array of {period, issueIds, description, moodTrend (declining|improving|stable|volatile), keyEvents (array of strings)}), moodCorrelation (optional string), escalationTrend (improving|worsening|stable|cyclical), criticalPeriods (array of strings). Focus timeline on the trigger issue's evolution.\n4. **familySystemInsights**: Array of {insight, involvedMemberIds (array of ints), involvedMemberNames (array of strings), evidenceIssueIds (array of ints), systemicPattern (optional string), actionable (bool)}. Prioritize insights related to the trigger issue.\n5. **priorityRecommendations**: Array of {rank (int), issueId (optional int), issueTitle (optional string), rationale, urgency (immediate|short_term|long_term), suggestedApproach, relatedResearchIds (optional array of ints)}. The FIRST recommendation (rank 1) MUST address the trigger issue directly. Recommendations MUST be age-appropriate for the child's actual age.\n6. **researchRelevance**: Array of {patternClusterName, relevantResearchIds (array of ints), relevantResearchTitles (array of strings), coverageGaps (array of strings)}.\n7. **developmentalContext**: Object with {statedAge (int), dobYear (int), developmentalStage (string), ageAppropriateExpectations (string), flags (array of strings for any developmental concerns)}.\n\nIMPORTANT: All fields marked as \"array\" MUST be JSON arrays, never bare strings. For example coverageGaps must be [\"gap1\", \"gap2\"], not \"gap1, gap2\".\n\nWrite the analysis in English.",
+  "prompt": "You are a clinical psychologist and family systems analyst. Your PRIMARY task is to provide an in-depth analysis of a SPECIFIC issue for this family member. The other issues, observations, and feedback are provided as CONTEXT to help you understand how this issue fits into the broader picture \u2014 but your analysis must CENTER on the trigger issue.\n\nIMPORTANT: Only reference issue IDs that appear in the data below. Pay careful attention to the family member's age and date of birth \u2014 all analysis, recommendations, and developmental references must be consistent with their actual age.\n\n## Family Member Profile\nName: Matei\nAge: 2 years old\nDate of Birth Year: 2024\nRelationship: son\n\n## TRIGGER ISSUE (Primary Focus)\n- [ID:401] \"Limited vocabulary for age\" (communication, high severity)\n  Only uses 5-10 words at 24 months, should be using 50+.\n\nYour summary, pattern clusters, and priority recommendations must primarily address the trigger issue above. Other issues should be referenced only when they relate to or shed light on the trigger issue.\n\n## Other Issues (Context)\n- [ID:402] \"Frustration tantrums from communication gaps\" (behavioral, medium severity)\n  Screams and throws objects when cannot communicate needs.\n\n## Behavior Observations (1)\n- 2026-03-09: communication frustration, freq=5x/day, intensity=high, Context: mealtimes, requesting toys\n\n## Instructions\nAnalyze the data above with PRIMARY FOCUS on the trigger issue (ID:401: \"Limited vocabulary for age\").\nProduce a structured JSON analysis with these fields:\n\n1. **summary**: 2-3 paragraph executive summary for a parent/caregiver CENTERED on the trigger issue. Start with the trigger issue, then explain how other issues relate to it. MUST correctly reference the child's age and use age-appropriate language.\n2. **patternClusters**: Array of related issue groups. The trigger issue MUST appear in at least one cluster. Each has: name, description, issueIds (array of ints), issueTitles (array of strings), categories (array of strings), pattern (recurring|escalating|co-occurring|seasonal|triggered), confidence (0-1), suggestedRootCause (optional string).\n3. **timelineAnalysis**: Object with phases (array of {period, issueIds, description, moodTrend (declining|improving|stable|volatile), keyEvents (array of strings)}), moodCorrelation (optional string), escalationTrend (improving|worsening|stable|cyclical), criticalPeriods (array of strings). Focus timeline on the trigger issue's evolution.\n4. **familySystemInsights**: Array of {insight, involvedMemberIds (array of ints), involvedMemberNames (array of strings), evidenceIssueIds (array of ints), systemicPattern (optional string), actionable (bool)}. Prioritize insights related to the trigger issue.\n5. **priorityRecommendations**: Array of {rank (int), issueId (optional int), issueTitle (optional string), rationale, urgency (immediate|short_term|long_term), suggestedApproach, relatedResearchIds (optional array of ints)}. The FIRST recommendation (rank 1) MUST address the trigger issue directly. Recommendations MUST be age-appropriate for the child's actual age.\n6. **researchRelevance**: Array of {patternClusterName, relevantResearchIds (array of ints), relevantResearchTitles (array of strings), coverageGaps (array of strings)}.\n7. **developmentalContext**: Object with {statedAge (int), dobYear (int), developmentalStage (string), ageAppropriateExpectations (string), flags (array of strings for any developmental concerns)}.\n8. **parentAdvice**: Array of practical, evidence-based parenting advice items. Each has: title (string), advice (string: 2-4 sentences), targetIssueIds (array of ints), targetIssueTitles (array of strings), relatedPatternCluster (optional string \u2014 must match a patternClusters[].name), relatedResearchIds (optional array of ints), relatedResearchTitles (optional array of strings), ageAppropriate (bool), developmentalContext (optional string), priority (immediate|short_term|long_term), concreteSteps (array of strings). Generate 3-5 items. The FIRST item MUST address the trigger issue. Every item MUST reference issue IDs from the data. concreteSteps must be specific.\n\nIMPORTANT: All fields marked as \"array\" MUST be JSON arrays, never bare strings. For example coverageGaps must be [\"gap1\", \"gap2\"], not \"gap1, gap2\".\n\nWrite the analysis in English.",
   "result": {
-    "summary": "Matei, at 2 years old, is experiencing a significant delay in language development, which is the primary concern. The trigger issue is his limited vocabulary of only 5-10 words, whereas most children his age are using 50 or more words. This communication gap is directly impacting his ability to express his needs and wants effectively.\n\nThe other issue, frustration tantrums, appears to be a direct consequence of this vocabulary limitation. When Matei cannot communicate what he wants\u2014particularly during mealtimes or when requesting toys\u2014he becomes frustrated and expresses this through screaming and throwing objects. This behavioral issue is secondary to and fueled by the core communication deficit.\n\nAt 24 months, language development is a critical milestone. While some variation exists, Matei's current vocabulary level falls well below typical expectations, indicating a need for focused intervention. The combination of limited expressive language and resulting frustration behaviors creates a cycle that could hinder his social-emotional development if not addressed promptly.",
+    "summary": "Matei, at 2 years old, is experiencing a significant delay in language development, which is the primary concern. The trigger issue (ID:401) indicates he has a limited vocabulary of only 5-10 words, whereas typical development for his age would involve using 50+ words. This communication gap is directly impacting his ability to express needs and wants effectively.\n\nThe secondary issue (ID:402) of frustration tantrums is closely related to this language delay. When Matei cannot communicate his needs\u2014particularly during mealtimes or when requesting toys\u2014he becomes frustrated, leading to high-intensity screaming and object-throwing behaviors. These tantrums are not isolated behavioral problems but rather a direct consequence of his limited verbal communication skills.\n\nAddressing the vocabulary delay should be the central focus, as improvement in this area will likely reduce the frequency and intensity of the frustration tantrums. At 24 months, this is a critical period for language development, and targeted interventions can help Matei build the communication skills needed for his age.",
     "patternClusters": [
       {
         "name": "Communication-Frustration Cycle",
-        "description": "Limited expressive language leads to communication breakdowns, which trigger frustration and behavioral outbursts.",
+        "description": "Limited vocabulary leads to communication breakdowns, which trigger frustration and behavioral outbursts.",
         "issueIds": [
           401,
           402
@@ -22,44 +22,33 @@
         ],
         "pattern": "co-occurring",
         "confidence": 0.9,
-        "suggestedRootCause": "Expressive language delay creating barriers to need communication"
+        "suggestedRootCause": "Underdeveloped expressive language skills at a critical developmental stage"
       }
     ],
     "timelineAnalysis": {
       "phases": [
         {
-          "period": "2025-2026 (12-24 months)",
-          "issueIds": [
-            401
-          ],
-          "description": "Language development period where vocabulary expansion typically accelerates. Matei's vocabulary remained limited to 5-10 words.",
-          "moodTrend": "stable",
-          "keyEvents": [
-            "Expected vocabulary milestone not reached by 24 months"
-          ]
-        },
-        {
-          "period": "2026 (24 months onward)",
+          "period": "2026-03-09 (current observation)",
           "issueIds": [
             401,
             402
           ],
-          "description": "Current phase where limited vocabulary is actively impacting daily functioning, leading to frustration behaviors.",
+          "description": "Limited vocabulary (5-10 words) consistently observed alongside frequent frustration tantrums during communication attempts.",
           "moodTrend": "volatile",
           "keyEvents": [
-            "Frequent frustration tantrums (5x/day) observed during mealtimes and toy requests"
+            "Communication frustration observed 5x/day during mealtimes and toy requests"
           ]
         }
       ],
-      "moodCorrelation": "Frustration behaviors (ID:402) correlate directly with communication attempts during high-need situations when vocabulary limitations prevent effective expression.",
-      "escalationTrend": "worsening",
+      "moodCorrelation": "Frustration and volatility directly correlate with communication attempts where vocabulary limitations prevent effective expression.",
+      "escalationTrend": "stable",
       "criticalPeriods": [
-        "Current 24-month period - critical window for language intervention"
+        "Current period (24 months) - critical language development window"
       ]
     },
     "familySystemInsights": [
       {
-        "insight": "Matei's communication limitations create stress points during routine caregiving interactions, particularly around basic needs like feeding and play.",
+        "insight": "Matei's communication limitations create a feedback loop where parental responses to his frustration may inadvertently reinforce tantrum behaviors rather than addressing the underlying language deficit.",
         "involvedMemberIds": [
           401
         ],
@@ -70,11 +59,11 @@
           401,
           402
         ],
-        "systemicPattern": "Caregiver-child communication breakdown during daily routines",
+        "systemicPattern": "Communication breakdown leading to behavioral escalation",
         "actionable": true
       },
       {
-        "insight": "The family system may be adapting to Matei's limited vocabulary by anticipating needs or using non-verbal cues, potentially reducing opportunities for language practice.",
+        "insight": "The family's daily routines (particularly mealtimes) have become stress points where communication gaps are most apparent, suggesting these contexts could be leveraged for targeted language intervention.",
         "involvedMemberIds": [
           401
         ],
@@ -82,9 +71,10 @@
           "Matei"
         ],
         "evidenceIssueIds": [
-          401
+          401,
+          402
         ],
-        "systemicPattern": "Compensatory communication patterns",
+        "systemicPattern": "Context-specific communication challenges",
         "actionable": true
       }
     ],
@@ -93,25 +83,18 @@
         "rank": 1,
         "issueId": 401,
         "issueTitle": "Limited vocabulary for age",
-        "rationale": "This is the core developmental delay requiring immediate intervention to prevent secondary behavioral and social-emotional issues.",
+        "rationale": "This is the foundational issue causing secondary behavioral problems. At 24 months, vocabulary expansion is developmentally critical.",
         "urgency": "immediate",
-        "suggestedApproach": "Schedule comprehensive speech-language evaluation. Implement daily language-rich activities: narrate daily routines, use simple picture books, emphasize repetition of core words (more, eat, play, etc.).",
+        "suggestedApproach": "Implement intensive language modeling and expansion techniques during daily routines, with professional evaluation if no improvement within 4-6 weeks.",
         "relatedResearchIds": []
       },
       {
         "rank": 2,
         "issueId": 402,
         "issueTitle": "Frustration tantrums from communication gaps",
-        "rationale": "These behaviors are secondary to the communication deficit and will likely improve as vocabulary expands.",
+        "rationale": "These tantrums are directly caused by communication limitations and will likely decrease as vocabulary improves.",
         "urgency": "short_term",
-        "suggestedApproach": "Teach simple sign language for key needs (eat, drink, more, help). Acknowledge frustration verbally ('I see you're upset'). Provide choices between two items to encourage communication attempts.",
-        "relatedResearchIds": []
-      },
-      {
-        "rank": 3,
-        "rationale": "Support overall development while addressing specific language delay.",
-        "urgency": "long_term",
-        "suggestedApproach": "Monitor social interaction with peers. Encourage playdates with verbal peers. Continue language stimulation even after initial progress.",
+        "suggestedApproach": "Teach alternative communication methods (simple signs, pointing) while verbal skills develop, and respond to frustration by modeling appropriate words rather than focusing solely on behavior.",
         "relatedResearchIds": []
       }
     ],
@@ -121,23 +104,92 @@
         "relevantResearchIds": [],
         "relevantResearchTitles": [],
         "coverageGaps": [
-          "Specific interventions for 24-month-olds with severe vocabulary delay",
-          "Family-centered approaches to early language intervention",
-          "Effectiveness of sign language supplementation for toddlers with expressive delays"
+          "Specific intervention efficacy for 24-month-olds with vocabulary under 10 words",
+          "Cultural/family context factors in language delay interventions"
         ]
       }
     ],
     "developmentalContext": {
       "statedAge": 2,
       "dobYear": 2024,
-      "developmentalStage": "Toddler (early childhood)",
-      "ageAppropriateExpectations": "By 24 months, children typically: use 50+ words, combine 2 words ('more milk'), follow simple commands, point to named body parts, engage in pretend play.",
+      "developmentalStage": "Toddler (24 months) - rapid language acquisition phase",
+      "ageAppropriateExpectations": "Should use 50+ words, combine 2 words, follow simple instructions, point to named body parts",
       "flags": [
-        "Severe expressive language delay",
-        "Risk for social-emotional difficulties due to communication frustration"
+        "Significant vocabulary delay (5-10 words vs. expected 50+)",
+        "Communication-related behavioral issues"
       ]
-    }
+    },
+    "parentAdvice": [
+      {
+        "title": "Boost Vocabulary Through Daily Routines",
+        "advice": "Focus on expanding Matei's vocabulary by narrating your actions during daily activities. During mealtimes, name foods, utensils, and actions ('apple,' 'spoon,' 'eating'). Keep language simple and repeat key words frequently. This builds vocabulary in natural contexts where he's already motivated to communicate.",
+        "targetIssueIds": [
+          401
+        ],
+        "targetIssueTitles": [
+          "Limited vocabulary for age"
+        ],
+        "relatedPatternCluster": "Communication-Frustration Cycle",
+        "relatedResearchIds": [],
+        "relatedResearchTitles": [],
+        "ageAppropriate": true,
+        "developmentalContext": "24-month-olds learn best through repetition in meaningful contexts",
+        "priority": "immediate",
+        "concreteSteps": [
+          "Name 3-5 objects during each meal",
+          "Repeat new words 5-10 times in context",
+          "Use simple 1-2 word phrases consistently",
+          "Pause and wait for him to attempt words"
+        ]
+      },
+      {
+        "title": "Respond to Frustration with Communication Modeling",
+        "advice": "When Matei shows frustration from communication gaps, immediately model the words he needs. If he screams for a toy, calmly say 'You want ball. Ball.' then hand it to him. This connects his emotional experience with specific vocabulary rather than reinforcing tantrum behavior.",
+        "targetIssueIds": [
+          401,
+          402
+        ],
+        "targetIssueTitles": [
+          "Limited vocabulary for age",
+          "Frustration tantrums from communication gaps"
+        ],
+        "relatedPatternCluster": "Communication-Frustration Cycle",
+        "relatedResearchIds": [],
+        "relatedResearchTitles": [],
+        "ageAppropriate": true,
+        "developmentalContext": "Toddlers need immediate word-meaning connections during emotional moments",
+        "priority": "immediate",
+        "concreteSteps": [
+          "Identify common frustration triggers (toys, food)",
+          "Prepare 2-3 key words for each trigger",
+          "Model words BEFORE frustration escalates",
+          "Use calm, clear pronunciation"
+        ]
+      },
+      {
+        "title": "Create Communication Opportunities",
+        "advice": "Place favorite toys slightly out of reach to encourage verbal requests. During play, hold up two toys and ask 'Which one?' waiting for any vocalization or approximation. These structured opportunities build communication confidence and vocabulary use in low-pressure situations.",
+        "targetIssueIds": [
+          401
+        ],
+        "targetIssueTitles": [
+          "Limited vocabulary for age"
+        ],
+        "relatedPatternCluster": "Communication-Frustration Cycle",
+        "relatedResearchIds": [],
+        "relatedResearchTitles": [],
+        "ageAppropriate": true,
+        "developmentalContext": "24-month-olds benefit from motivated communication practice",
+        "priority": "short_term",
+        "concreteSteps": [
+          "Place 2-3 favorite toys on high shelf daily",
+          "Offer choices between preferred items",
+          "Wait 5-10 seconds for response attempts",
+          "Celebrate any vocalization attempt"
+        ]
+      }
+    ]
   },
   "model": "deepseek-chat",
-  "generated_at": "2026-03-21T22:23:40.350637+00:00"
+  "generated_at": "2026-03-22T09:55:44.497555+00:00"
 }

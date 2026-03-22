@@ -1210,6 +1210,7 @@ type DeepIssueAnalysis {
   familySystemInsights: [FamilySystemInsight!]!
   priorityRecommendations: [PriorityRecommendation!]!
   researchRelevance: [ResearchRelevanceMapping!]!
+  parentAdvice: [ParentAdviceItem!]!
   dataSnapshot: DataSnapshot!
   model: String!
   createdAt: String!
@@ -1268,6 +1269,20 @@ type ResearchRelevanceMapping {
   relevantResearchIds: [Int!]!
   relevantResearchTitles: [String!]!
   coverageGaps: [String!]!
+}
+
+type ParentAdviceItem {
+  title: String!
+  advice: String!
+  targetIssueIds: [Int!]!
+  targetIssueTitles: [String!]!
+  relatedPatternCluster: String
+  relatedResearchIds: [Int!]
+  relatedResearchTitles: [String!]
+  ageAppropriate: Boolean!
+  developmentalContext: String
+  priority: String!
+  concreteSteps: [String!]!
 }
 
 type DataSnapshot {

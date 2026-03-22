@@ -38,8 +38,17 @@ body::before {
 }
 
 @keyframes brick-bounce {
-  0%, 100% { transform: translateY(0); }
-  50% { transform: translateY(-3px); }
+  0%   { transform: translateY(0); }
+  30%  { transform: translateY(-6px); }
+  50%  { transform: translateY(-1px); }
+  70%  { transform: translateY(-3px); }
+  100% { transform: translateY(0); }
+}
+
+@keyframes stud-sparkle {
+  0%   { transform: scale(1); }
+  50%  { transform: scale(1.5); background-color: #FFE566; }
+  100% { transform: scale(1); }
 }
 
 @keyframes stud-pulse {

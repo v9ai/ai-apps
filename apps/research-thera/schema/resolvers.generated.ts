@@ -152,6 +152,7 @@ import    { Note } from './resolvers/Note';
 import    { NoteAccess } from './resolvers/NoteAccess';
 import    { NoteShare } from './resolvers/NoteShare';
 import    { PaperCandidate } from './resolvers/PaperCandidate';
+import    { ParentAdviceItem } from './resolvers/ParentAdviceItem';
 import    { PatternCluster } from './resolvers/PatternCluster';
 import    { PipelineDiagnostics } from './resolvers/PipelineDiagnostics';
 import    { PriorityRecommendation } from './resolvers/PriorityRecommendation';
@@ -224,6 +225,7 @@ Note: Note,
 NoteAccess: NoteAccess,
 NoteShare: NoteShare,
 PaperCandidate: PaperCandidate,
+ParentAdviceItem: ParentAdviceItem,
 PatternCluster: PatternCluster,
 PipelineDiagnostics: PipelineDiagnostics,
 PriorityRecommendation: PriorityRecommendation,

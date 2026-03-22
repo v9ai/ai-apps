@@ -19,6 +19,14 @@ export default defineConfig({
   },
 
   theme: {
+    keyframes: {
+      legoClick: {
+        "0%": { opacity: "0", transform: "translateY(-8px)" },
+        "60%": { opacity: "1", transform: "translateY(1px)" },
+        "80%": { transform: "translateY(-0.5px)" },
+        "100%": { opacity: "1", transform: "translateY(0)" },
+      },
+    },
     extend: {
       tokens: {
         colors: {

@@ -357,6 +357,7 @@ export const deepIssueAnalyses = pgTable("deep_issue_analyses", {
   familySystemInsights: text("family_system_insights").notNull(), // JSON
   priorityRecommendations: text("priority_recommendations").notNull(), // JSON
   researchRelevance: text("research_relevance").notNull(), // JSON
+  parentAdvice: text("parent_advice").notNull().default("[]"), // JSON
   dataSnapshot: text("data_snapshot").notNull(), // JSON
   model: text("model").notNull().default("deepseek-chat"),
   createdAt: text("created_at")

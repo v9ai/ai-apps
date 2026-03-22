@@ -18,7 +18,7 @@ load_dotenv(Path(__file__).resolve().parent.parent / ".env")
 
 # ── deepseek_client from shared pypackages ────────────────────────────────
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent.parent.parent.parent / "pypackages" / "deepseek" / "src"))
-from deepseek_client import DeepSeekClient, ChatMessage  # noqa: E402
+from deepseek_client import DeepSeekClient, ChatMessage, DeepSeekConfig  # noqa: E402
 
 
 class DeepAnalysisState(TypedDict, total=False):
@@ -323,6 +323,7 @@ Produce a structured JSON analysis with these fields:
 4. **familySystemInsights** (array of objects): {{insight (string), involvedMemberIds (array of ints), involvedMemberNames (array of strings), evidenceIssueIds (array of ints), systemicPattern (optional string), actionable (bool)}}. Prioritize insights related to the trigger issue.
 5. **priorityRecommendations** (array of objects): {{rank (int), issueId (optional int), issueTitle (optional string), rationale (string), urgency (string: immediate|short_term|long_term), suggestedApproach (string), relatedResearchIds (optional array of ints)}}. The FIRST recommendation (rank 1) MUST address the trigger issue directly.
 6. **researchRelevance** (array of objects): {{patternClusterName (string), relevantResearchIds (array of ints), relevantResearchTitles (array of strings), coverageGaps (array of strings)}}.
+7. **parentAdvice** (array of objects): Practical, evidence-based parenting advice linked to the analysis above. Generate 3-7 items. The FIRST item MUST address the trigger issue directly. Each has: title (string), advice (string: 2-4 sentences explaining the recommendation with research context), targetIssueIds (array of ints from the issues above), targetIssueTitles (array of strings), relatedPatternCluster (optional string — MUST match a patternClusters[].name from section 2 if provided), relatedResearchIds (optional array of ints from ## Existing Research), relatedResearchTitles (optional array of strings — exact titles from research), ageAppropriate (bool: true if suitable for the child's age in ## Family Member Profile), developmentalContext (optional string: why this advice fits the child's developmental stage), priority (string: immediate|short_term|long_term), concreteSteps (array of strings: specific actionable steps the parent can implement at home — be specific, e.g. "Set a 20-minute homework timer after snack" not "Help with homework"). Every item MUST reference at least one issue ID from the data. If research is available, cite specific ResearchIDs — do NOT invent research references. Verify age-appropriateness against the child's age in ## Family Member Profile.
 
 IMPORTANT: Every field annotated as "array of" MUST be a JSON array, even when there is only one item. For example: coverageGaps must be ["single gap"], NOT "single gap".
 
@@ -337,6 +338,7 @@ Analyze all the data above and produce a structured JSON analysis with these fie
 4. **familySystemInsights** (array of objects): {insight (string), involvedMemberIds (array of ints), involvedMemberNames (array of strings), evidenceIssueIds (array of ints), systemicPattern (optional string), actionable (bool)}.
 5. **priorityRecommendations** (array of objects): {rank (int), issueId (optional int), issueTitle (optional string), rationale (string), urgency (string: immediate|short_term|long_term), suggestedApproach (string), relatedResearchIds (optional array of ints)}.
 6. **researchRelevance** (array of objects): {patternClusterName (string), relevantResearchIds (array of ints), relevantResearchTitles (array of strings), coverageGaps (array of strings)}.
+7. **parentAdvice** (array of objects): Practical, evidence-based parenting advice linked to the analysis above. Generate 3-7 items, prioritized by urgency. Each has: title (string), advice (string: 2-4 sentences explaining the recommendation with research context), targetIssueIds (array of ints from the issues above), targetIssueTitles (array of strings), relatedPatternCluster (optional string — MUST match a patternClusters[].name from section 2 if provided), relatedResearchIds (optional array of ints from ## Existing Research), relatedResearchTitles (optional array of strings — exact titles from research), ageAppropriate (bool: true if suitable for the child's age in ## Family Member Profile), developmentalContext (optional string: why this advice fits the child's developmental stage), priority (string: immediate|short_term|long_term), concreteSteps (array of strings: specific actionable steps the parent can implement at home — be specific, e.g. "Set a 20-minute homework timer after snack" not "Help with homework"). Every item MUST reference at least one issue ID from the data. If research is available, cite specific ResearchIDs — do NOT invent research references. Verify age-appropriateness against the child's age in ## Family Member Profile.
 
 IMPORTANT: Every field annotated as "array of" MUST be a JSON array, even when there is only one item. For example: coverageGaps must be ["single gap"], NOT "single gap".
 
@@ -446,6 +448,31 @@ class ResearchRelevanceMapping(BaseModel):
     def _coerce(cls, v):
         return _coerce_list(v)
 
+class ParentAdviceItem(BaseModel):
+    title: str
+    advice: str
+    targetIssueIds: list[int]
+    targetIssueTitles: list[str]
+    relatedPatternCluster: Optional[str] = None
+    relatedResearchIds: Optional[list[int]] = None
+    relatedResearchTitles: Optional[list[str]] = None
+    ageAppropriate: bool = True
+    developmentalContext: Optional[str] = None
+    priority: str  # immediate|short_term|long_term
+    concreteSteps: list[str]
+
+    @field_validator("targetIssueIds", "targetIssueTitles", "concreteSteps", mode="before")
+    @classmethod
+    def _coerce(cls, v):
+        return _coerce_list(v)
+
+    @field_validator("relatedResearchIds", "relatedResearchTitles", mode="before")
+    @classmethod
+    def _coerce_opt(cls, v):
+        if v is None:
+            return v
+        return _coerce_list(v)
+
 class DeepAnalysisOutput(BaseModel):
     summary: str
     patternClusters: list[PatternCluster]
@@ -453,23 +480,54 @@ class DeepAnalysisOutput(BaseModel):
     familySystemInsights: list[FamilySystemInsight]
     priorityRecommendations: list[PriorityRecommendation]
     researchRelevance: list[ResearchRelevanceMapping]
+    parentAdvice: list[ParentAdviceItem]
+
+
+_CONCISE_SYSTEM = (
+    "CRITICAL: Your JSON response MUST fit within 8000 tokens. "
+    "Use brief descriptions (1-2 sentences max per field). "
+    "Limit patternClusters to 3, familySystemInsights to 3, "
+    "priorityRecommendations to 4, parentAdvice to 3 items. "
+    "Keep concreteSteps to 2-3 per advice item. Be concise."
+)
 
 
 async def analyze(state: dict) -> dict:
-    """Call DeepSeek with structured output to produce the deep analysis."""
+    """Call DeepSeek with structured output to produce the deep analysis.
+
+    Detects output truncation (finish_reason == 'length') and retries
+    with a conciseness system prompt to fit within the 8192 token limit.
+    """
     if state.get("error"):
         return {}
 
     try:
         prompt = state.get("_prompt", "")
 
-        async with DeepSeekClient() as client:
+        async with DeepSeekClient(DeepSeekConfig(timeout=300.0)) as client:
+            # First attempt — full output
+            messages = [ChatMessage(role="user", content=prompt)]
             resp = await client.chat(
-                [ChatMessage(role="user", content=prompt)],
+                messages,
                 model="deepseek-chat",
                 temperature=0.3,
+                max_tokens=8192,
                 response_format={"type": "json_object"},
             )
+
+            # If truncated, retry with conciseness instruction
+            if resp.choices[0].finish_reason == "length":
+                messages = [
+                    ChatMessage(role="system", content=_CONCISE_SYSTEM),
+                    ChatMessage(role="user", content=prompt),
+                ]
+                resp = await client.chat(
+                    messages,
+                    model="deepseek-chat",
+                    temperature=0.2,
+                    max_tokens=8192,
+                    response_format={"type": "json_object"},
+                )
 
         content = resp.choices[0].message.content
         result = DeepAnalysisOutput.model_validate_json(content)
@@ -499,8 +557,8 @@ async def persist(state: dict) -> dict:
                     "INSERT INTO deep_issue_analyses "
                     "(family_member_id, trigger_issue_id, user_id, summary, "
                     "pattern_clusters, timeline_analysis, family_system_insights, "
-                    "priority_recommendations, research_relevance, data_snapshot, model, created_at, updated_at) "
-                    "VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, NOW(), NOW()) RETURNING id",
+                    "priority_recommendations, research_relevance, parent_advice, data_snapshot, model, created_at, updated_at) "
+                    "VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, NOW(), NOW()) RETURNING id",
                     (
                         family_member_id,
                         trigger_issue_id,
@@ -511,6 +569,7 @@ async def persist(state: dict) -> dict:
                         json.dumps(analysis.get("familySystemInsights", [])),
                         json.dumps(analysis.get("priorityRecommendations", [])),
                         json.dumps(analysis.get("researchRelevance", [])),
+                        json.dumps(analysis.get("parentAdvice", [])),
                         data_snapshot,
                         "deepseek-chat",
                     ),

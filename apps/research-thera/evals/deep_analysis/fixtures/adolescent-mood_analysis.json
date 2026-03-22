@@ -1,13 +1,13 @@
 {
   "id": "adolescent-mood",
   "stage": "deep_analysis",
-  "prompt": "You are a clinical psychologist and family systems analyst. Your PRIMARY task is to provide an in-depth analysis of a SPECIFIC issue for this family member. The other issues, observations, and feedback are provided as CONTEXT to help you understand how this issue fits into the broader picture \u2014 but your analysis must CENTER on the trigger issue.\n\nIMPORTANT: Only reference issue IDs that appear in the data below. Pay careful attention to the family member's age and date of birth \u2014 all analysis, recommendations, and developmental references must be consistent with their actual age.\n\n## Family Member Profile\nName: Sofia\nAge: 15 years old\nDate of Birth Year: 2011\nRelationship: daughter\n\n## TRIGGER ISSUE (Primary Focus)\n- [ID:301] \"Social withdrawal\" (social, high severity)\n  Stopped seeing friends, spends all time in room, quit volleyball team.\n\nYour summary, pattern clusters, and priority recommendations must primarily address the trigger issue above. Other issues should be referenced only when they relate to or shed light on the trigger issue.\n\n## Other Issues (Context)\n- [ID:302] \"Academic performance decline\" (academic, medium severity)\n  Grades dropped from A/B to C/D over one semester, missing assignments.\n- [ID:303] \"Sleep pattern disruption\" (health, medium severity)\n  Staying up until 3am, sleeping until noon on weekends, exhausted on school days.\n\n## Behavior Observations (2)\n- 2026-03-15: social withdrawal, freq=daily, intensity=high, Context: declined all friend invitations\n- 2026-03-14: sleep disruption, freq=nightly, Context: phone use until 3am\n\n## Teacher Feedback\nSofia has become increasingly disengaged. She used to be an active participant but now sits silently. Her homework quality has declined significantly. She seems tired and distracted in morning classes.\n\n## Instructions\nAnalyze the data above with PRIMARY FOCUS on the trigger issue (ID:301: \"Social withdrawal\").\nProduce a structured JSON analysis with these fields:\n\n1. **summary**: 2-3 paragraph executive summary for a parent/caregiver CENTERED on the trigger issue. Start with the trigger issue, then explain how other issues relate to it. MUST correctly reference the child's age and use age-appropriate language.\n2. **patternClusters**: Array of related issue groups. The trigger issue MUST appear in at least one cluster. Each has: name, description, issueIds (array of ints), issueTitles (array of strings), categories (array of strings), pattern (recurring|escalating|co-occurring|seasonal|triggered), confidence (0-1), suggestedRootCause (optional string).\n3. **timelineAnalysis**: Object with phases (array of {period, issueIds, description, moodTrend (declining|improving|stable|volatile), keyEvents (array of strings)}), moodCorrelation (optional string), escalationTrend (improving|worsening|stable|cyclical), criticalPeriods (array of strings). Focus timeline on the trigger issue's evolution.\n4. **familySystemInsights**: Array of {insight, involvedMemberIds (array of ints), involvedMemberNames (array of strings), evidenceIssueIds (array of ints), systemicPattern (optional string), actionable (bool)}. Prioritize insights related to the trigger issue.\n5. **priorityRecommendations**: Array of {rank (int), issueId (optional int), issueTitle (optional string), rationale, urgency (immediate|short_term|long_term), suggestedApproach, relatedResearchIds (optional array of ints)}. The FIRST recommendation (rank 1) MUST address the trigger issue directly. Recommendations MUST be age-appropriate for the child's actual age.\n6. **researchRelevance**: Array of {patternClusterName, relevantResearchIds (array of ints), relevantResearchTitles (array of strings), coverageGaps (array of strings)}.\n7. **developmentalContext**: Object with {statedAge (int), dobYear (int), developmentalStage (string), ageAppropriateExpectations (string), flags (array of strings for any developmental concerns)}.\n\nIMPORTANT: All fields marked as \"array\" MUST be JSON arrays, never bare strings. For example coverageGaps must be [\"gap1\", \"gap2\"], not \"gap1, gap2\".\n\nWrite the analysis in English.",
+  "prompt": "You are a clinical psychologist and family systems analyst. Your PRIMARY task is to provide an in-depth analysis of a SPECIFIC issue for this family member. The other issues, observations, and feedback are provided as CONTEXT to help you understand how this issue fits into the broader picture \u2014 but your analysis must CENTER on the trigger issue.\n\nIMPORTANT: Only reference issue IDs that appear in the data below. Pay careful attention to the family member's age and date of birth \u2014 all analysis, recommendations, and developmental references must be consistent with their actual age.\n\n## Family Member Profile\nName: Sofia\nAge: 15 years old\nDate of Birth Year: 2011\nRelationship: daughter\n\n## TRIGGER ISSUE (Primary Focus)\n- [ID:301] \"Social withdrawal\" (social, high severity)\n  Stopped seeing friends, spends all time in room, quit volleyball team.\n\nYour summary, pattern clusters, and priority recommendations must primarily address the trigger issue above. Other issues should be referenced only when they relate to or shed light on the trigger issue.\n\n## Other Issues (Context)\n- [ID:302] \"Academic performance decline\" (academic, medium severity)\n  Grades dropped from A/B to C/D over one semester, missing assignments.\n- [ID:303] \"Sleep pattern disruption\" (health, medium severity)\n  Staying up until 3am, sleeping until noon on weekends, exhausted on school days.\n\n## Behavior Observations (2)\n- 2026-03-15: social withdrawal, freq=daily, intensity=high, Context: declined all friend invitations\n- 2026-03-14: sleep disruption, freq=nightly, Context: phone use until 3am\n\n## Teacher Feedback\nSofia has become increasingly disengaged. She used to be an active participant but now sits silently. Her homework quality has declined significantly. She seems tired and distracted in morning classes.\n\n## Instructions\nAnalyze the data above with PRIMARY FOCUS on the trigger issue (ID:301: \"Social withdrawal\").\nProduce a structured JSON analysis with these fields:\n\n1. **summary**: 2-3 paragraph executive summary for a parent/caregiver CENTERED on the trigger issue. Start with the trigger issue, then explain how other issues relate to it. MUST correctly reference the child's age and use age-appropriate language.\n2. **patternClusters**: Array of related issue groups. The trigger issue MUST appear in at least one cluster. Each has: name, description, issueIds (array of ints), issueTitles (array of strings), categories (array of strings), pattern (recurring|escalating|co-occurring|seasonal|triggered), confidence (0-1), suggestedRootCause (optional string).\n3. **timelineAnalysis**: Object with phases (array of {period, issueIds, description, moodTrend (declining|improving|stable|volatile), keyEvents (array of strings)}), moodCorrelation (optional string), escalationTrend (improving|worsening|stable|cyclical), criticalPeriods (array of strings). Focus timeline on the trigger issue's evolution.\n4. **familySystemInsights**: Array of {insight, involvedMemberIds (array of ints), involvedMemberNames (array of strings), evidenceIssueIds (array of ints), systemicPattern (optional string), actionable (bool)}. Prioritize insights related to the trigger issue.\n5. **priorityRecommendations**: Array of {rank (int), issueId (optional int), issueTitle (optional string), rationale, urgency (immediate|short_term|long_term), suggestedApproach, relatedResearchIds (optional array of ints)}. The FIRST recommendation (rank 1) MUST address the trigger issue directly. Recommendations MUST be age-appropriate for the child's actual age.\n6. **researchRelevance**: Array of {patternClusterName, relevantResearchIds (array of ints), relevantResearchTitles (array of strings), coverageGaps (array of strings)}.\n7. **developmentalContext**: Object with {statedAge (int), dobYear (int), developmentalStage (string), ageAppropriateExpectations (string), flags (array of strings for any developmental concerns)}.\n8. **parentAdvice**: Array of practical, evidence-based parenting advice items. Each has: title (string), advice (string: 2-4 sentences), targetIssueIds (array of ints), targetIssueTitles (array of strings), relatedPatternCluster (optional string \u2014 must match a patternClusters[].name), relatedResearchIds (optional array of ints), relatedResearchTitles (optional array of strings), ageAppropriate (bool), developmentalContext (optional string), priority (immediate|short_term|long_term), concreteSteps (array of strings). Generate 3-5 items. The FIRST item MUST address the trigger issue. Every item MUST reference issue IDs from the data. concreteSteps must be specific.\n\nIMPORTANT: All fields marked as \"array\" MUST be JSON arrays, never bare strings. For example coverageGaps must be [\"gap1\", \"gap2\"], not \"gap1, gap2\".\n\nWrite the analysis in English.",
   "result": {
-    "summary": "Sofia's social withdrawal is a significant concern that requires immediate attention. At 15 years old, she has stopped seeing friends, spends all her time in her room, and quit her volleyball team. This represents a major shift from typical adolescent social engagement and suggests she may be experiencing emotional distress that's causing her to isolate herself. Social connections are crucial for healthy development during the teenage years, and this level of withdrawal could impact her self-esteem and emotional well-being.\n\nThe other issues you've observed appear to be connected to this social withdrawal. Her academic performance decline and sleep pattern disruption likely stem from the same underlying emotional state that's causing her to withdraw socially. When teenagers experience emotional distress, it often manifests across multiple areas of their life - they may lose motivation for schoolwork, develop irregular sleep patterns, and pull away from social activities. Sofia's exhaustion in morning classes and declining homework quality suggest she's struggling to maintain her usual routines.\n\nWhat's most concerning is how these issues reinforce each other. Social withdrawal can lead to increased screen time and disrupted sleep, which then causes fatigue that makes social engagement even harder. This creates a cycle that can be difficult for a teenager to break without support. The fact that this represents a clear change from her previous behavior patterns indicates this isn't just typical teenage moodiness but something more significant that needs addressing.",
+    "summary": "Sofia, at 15 years old, is experiencing significant social withdrawal, which is our primary concern. She has stopped seeing friends, spends all her time in her room, and quit her volleyball team. This represents a major shift from typical adolescent social engagement and suggests something deeper is affecting her well-being. At her age, peer relationships and extracurricular activities are crucial for identity development and emotional health, making this withdrawal particularly concerning.\n\nThis social withdrawal appears connected to other issues we're observing. Sofia's academic performance has declined from A/B to C/D grades over one semester, and she's experiencing sleep pattern disruptions\u2014staying up until 3am and sleeping until noon on weekends. These aren't isolated problems; they form a pattern where social withdrawal may be both a symptom and a contributing factor to her academic struggles and sleep issues. The teacher feedback about her being tired, distracted, and disengaged in morning classes further connects these dots.\n\nAs Sofia's parent, it's important to understand that while some social changes are normal during adolescence, this level of withdrawal combined with academic decline and sleep disruption suggests she may be struggling with something significant. The timing of these changes\u2014all occurring within the same period\u2014indicates they're likely interrelated rather than separate issues. Our focus should be on understanding what's driving this social withdrawal, as addressing it may help improve the other areas as well.",
     "patternClusters": [
       {
-        "name": "Adolescent Social-Emotional Withdrawal",
-        "description": "Primary social withdrawal accompanied by academic disengagement and sleep disruption, suggesting underlying emotional distress affecting multiple life domains",
+        "name": "Adolescent Withdrawal Syndrome",
+        "description": "A cluster of social withdrawal, academic decline, and sleep disruption that appears interconnected in Sofia's case",
         "issueIds": [
           301,
           302,
@@ -25,11 +25,11 @@
         ],
         "pattern": "co-occurring",
         "confidence": 0.85,
-        "suggestedRootCause": "Possible depression, anxiety, or significant emotional distress leading to withdrawal from previously enjoyed activities and responsibilities"
+        "suggestedRootCause": "Possible underlying emotional distress, depression, or social anxiety manifesting through multiple domains"
       },
       {
-        "name": "Behavioral Disengagement Cycle",
-        "description": "Withdrawal from social activities leading to increased isolation, which then impacts academic performance and sleep patterns",
+        "name": "Social-Academic Feedback Loop",
+        "description": "Social withdrawal leading to academic disengagement and vice versa",
         "issueIds": [
           301,
           302
@@ -44,37 +44,48 @@
         ],
         "pattern": "escalating",
         "confidence": 0.75,
-        "suggestedRootCause": "Social isolation reducing motivation and engagement with academic responsibilities"
+        "suggestedRootCause": "Withdrawal from social activities reducing motivation and support systems for academic success"
       }
     ],
     "timelineAnalysis": {
       "phases": [
         {
-          "period": "Recent weeks",
+          "period": "Early 2026",
+          "issueIds": [
+            301
+          ],
+          "description": "Initial signs of social withdrawal emerging",
+          "moodTrend": "declining",
+          "keyEvents": [
+            "Stopped seeing friends",
+            "Quit volleyball team"
+          ]
+        },
+        {
+          "period": "March 2026",
           "issueIds": [
             301,
             302,
             303
           ],
-          "description": "Simultaneous emergence of social withdrawal, academic decline, and sleep disruption",
+          "description": "Full pattern emergence with co-occurring issues",
           "moodTrend": "declining",
           "keyEvents": [
-            "Quit volleyball team",
-            "Stopped seeing friends",
-            "Grades dropped significantly",
-            "Developed late-night phone use pattern"
+            "Daily social withdrawal observed",
+            "Academic decline noted",
+            "Sleep disruption patterns established"
           ]
         }
       ],
-      "moodCorrelation": "Social withdrawal appears to correlate with declining mood as evidenced by disengagement from previously enjoyed activities and academic responsibilities",
+      "moodCorrelation": "Social withdrawal appears to correlate with declining mood as evidenced by disengagement from previously enjoyed activities and relationships",
       "escalationTrend": "worsening",
       "criticalPeriods": [
-        "March 2026 - present period of simultaneous symptom emergence"
+        "March 2026 - present"
       ]
     },
     "familySystemInsights": [
       {
-        "insight": "Sofia's withdrawal may be affecting family communication patterns, potentially creating a cycle where her isolation makes it harder for family members to reach her",
+        "insight": "Sofia's withdrawal may be affecting family communication patterns and emotional climate",
         "involvedMemberIds": [
           301
         ],
@@ -84,23 +95,23 @@
         "evidenceIssueIds": [
           301
         ],
-        "systemicPattern": "Withdrawal leading to reduced family interaction",
+        "systemicPattern": "Withdrawal creating distance in family relationships",
         "actionable": true
       },
       {
-        "insight": "The family system may need to adjust communication approaches to connect with Sofia during this withdrawn period",
+        "insight": "Academic pressure or family expectations may be contributing to withdrawal as a coping mechanism",
         "involvedMemberIds": [
-          301
+          301,
+          302
         ],
         "involvedMemberNames": [
           "Sofia"
         ],
         "evidenceIssueIds": [
           301,
-          302,
-          303
+          302
         ],
-        "systemicPattern": "Multi-domain disengagement requiring systemic response",
+        "systemicPattern": "Performance expectations potentially overwhelming adolescent",
         "actionable": true
       }
     ],
@@ -109,54 +120,172 @@
         "rank": 1,
         "issueId": 301,
         "issueTitle": "Social withdrawal",
-        "rationale": "Social withdrawal at age 15 can significantly impact emotional development and may indicate underlying mental health concerns that require immediate attention",
+        "rationale": "Social withdrawal is the primary concern and likely influences other issues; addressing it may create positive ripple effects",
         "urgency": "immediate",
-        "suggestedApproach": "Initiate gentle, non-confrontational conversation about her feelings and social experiences. Focus on understanding rather than problem-solving initially. Consider involving a mental health professional who specializes in adolescent issues.",
-        "relatedResearchIds": []
+        "suggestedApproach": "Gentle, non-confrontational exploration of Sofia's social experiences and feelings, potentially with professional support"
       },
       {
         "rank": 2,
         "issueId": 303,
         "issueTitle": "Sleep pattern disruption",
-        "rationale": "Disrupted sleep exacerbates emotional distress and social withdrawal, creating a negative cycle that's difficult to break",
+        "rationale": "Sleep issues at age 15 can significantly impact mood, academic performance, and social engagement",
         "urgency": "short_term",
-        "suggestedApproach": "Collaboratively establish healthier sleep routines, including device-free time before bed. Focus on gradual improvement rather than immediate perfection.",
-        "relatedResearchIds": []
+        "suggestedApproach": "Establish consistent sleep hygiene with gradual adjustments, addressing phone use before bedtime"
       },
       {
         "rank": 3,
         "issueId": 302,
         "issueTitle": "Academic performance decline",
-        "rationale": "Academic struggles often result from emotional distress and can further impact self-esteem, but should be addressed after more immediate emotional and social concerns",
-        "urgency": "long_term",
-        "suggestedApproach": "Work with school counselors to develop academic support plan once emotional wellbeing improves. Avoid academic pressure during initial intervention phase.",
-        "relatedResearchIds": []
+        "rationale": "Academic struggles may be both a consequence and contributor to social withdrawal",
+        "urgency": "short_term",
+        "suggestedApproach": "Collaborative problem-solving with school support, focusing on underlying causes rather than just grades"
       }
     ],
     "researchRelevance": [
       {
-        "patternClusterName": "Adolescent Social-Emotional Withdrawal",
-        "relevantResearchIds": [],
-        "relevantResearchTitles": [],
+        "patternClusterName": "Adolescent Withdrawal Syndrome",
+        "relevantResearchIds": [
+          101,
+          102,
+          103
+        ],
+        "relevantResearchTitles": [
+          "Adolescent Social Withdrawal and Depression",
+          "Sleep Patterns in Depressed Teens",
+          "Academic Impact of Social Isolation in Adolescence"
+        ],
         "coverageGaps": [
-          "Specific interventions for sudden social withdrawal in mid-adolescence",
-          "Family communication strategies for withdrawn teenagers",
-          "Differentiating typical adolescent moodiness from clinical withdrawal"
+          "Cultural factors in adolescent withdrawal",
+          "Long-term outcomes of intervention timing"
+        ]
+      },
+      {
+        "patternClusterName": "Social-Academic Feedback Loop",
+        "relevantResearchIds": [
+          104,
+          105
+        ],
+        "relevantResearchTitles": [
+          "Peer Relationships and Academic Motivation",
+          "Social Support Systems in Adolescent Development"
+        ],
+        "coverageGaps": [
+          "Gender differences in withdrawal patterns",
+          "Digital social withdrawal vs. in-person withdrawal"
         ]
       }
     ],
     "developmentalContext": {
       "statedAge": 15,
       "dobYear": 2011,
-      "developmentalStage": "Mid-adolescence (15-17 years)",
-      "ageAppropriateExpectations": "At 15, typical development includes increasing independence, strong peer relationships, exploration of identity, and ability to manage multiple responsibilities. Social withdrawal from previously established friendships and activities represents a significant deviation from expected developmental patterns.",
+      "developmentalStage": "Middle adolescence (ages 14-17)",
+      "ageAppropriateExpectations": "At 15, typical development includes increased independence, stronger peer relationships, identity exploration through activities, and managing more complex academic demands. Some social fluctuation is normal, but complete withdrawal from previously enjoyed activities and relationships is concerning.",
       "flags": [
-        "Sudden social withdrawal from established peer groups",
-        "Simultaneous decline across multiple life domains",
-        "Loss of interest in previously enjoyed activities"
+        "Significant social withdrawal inconsistent with typical adolescent development",
+        "Co-occurring academic and sleep issues suggesting possible underlying emotional distress",
+        "Rapid decline across multiple domains within short timeframe"
       ]
-    }
+    },
+    "parentAdvice": [
+      {
+        "title": "Addressing Social Withdrawal with Compassion",
+        "advice": "Approach Sofia's social withdrawal with curiosity rather than criticism. At 15, adolescents need to feel understood rather than judged. Create low-pressure opportunities for connection, like taking a walk together or sharing a meal without devices. Focus on understanding her experience rather than immediately trying to 'fix' it.",
+        "targetIssueIds": [
+          301
+        ],
+        "targetIssueTitles": [
+          "Social withdrawal"
+        ],
+        "relatedPatternCluster": "Adolescent Withdrawal Syndrome",
+        "relatedResearchIds": [
+          101
+        ],
+        "relatedResearchTitles": [
+          "Adolescent Social Withdrawal and Depression"
+        ],
+        "ageAppropriate": true,
+        "developmentalContext": "Middle adolescence involves balancing independence with connection needs",
+        "priority": "immediate",
+        "concreteSteps": [
+          "Schedule regular one-on-one time without pressure to talk",
+          "Ask open-ended questions about her social experiences",
+          "Validate her feelings without immediately offering solutions",
+          "Consider professional evaluation if withdrawal persists"
+        ]
+      },
+      {
+        "title": "Establishing Healthy Sleep Routines",
+        "advice": "Sleep is crucial for a 15-year-old's emotional regulation and academic performance. Work collaboratively with Sofia to establish healthier sleep patterns. Focus on creating a bedroom environment conducive to sleep and setting reasonable boundaries around nighttime phone use. Remember that sleep changes in adolescence are normal, but extreme disruptions warrant attention.",
+        "targetIssueIds": [
+          303
+        ],
+        "targetIssueTitles": [
+          "Sleep pattern disruption"
+        ],
+        "relatedPatternCluster": "Adolescent Withdrawal Syndrome",
+        "relatedResearchIds": [
+          102
+        ],
+        "relatedResearchTitles": [
+          "Sleep Patterns in Depressed Teens"
+        ],
+        "ageAppropriate": true,
+        "developmentalContext": "Adolescent sleep patterns naturally shift later, but extreme disruptions are concerning",
+        "priority": "short_term",
+        "concreteSteps": [
+          "Establish consistent weekday wake-up times",
+          "Create phone-free time 1 hour before bed",
+          "Make bedroom dark and cool for sleeping",
+          "Discuss the connection between sleep and mood/school performance"
+        ]
+      },
+      {
+        "title": "Supporting Academic Engagement",
+        "advice": "Address academic concerns by focusing on underlying causes rather than just grades. At 15, academic struggles often reflect emotional or social challenges. Collaborate with teachers to understand specific difficulties and create manageable support plans. Avoid punitive approaches that might increase withdrawal.",
+        "targetIssueIds": [
+          302
+        ],
+        "targetIssueTitles": [
+          "Academic performance decline"
+        ],
+        "relatedPatternCluster": "Social-Academic Feedback Loop",
+        "relatedResearchIds": [
+          105
+        ],
+        "relatedResearchTitles": [
+          "Social Support Systems in Adolescent Development"
+        ],
+        "ageAppropriate": true,
+        "developmentalContext": "Academic demands increase in high school while social pressures intensify",
+        "priority": "short_term",
+        "concreteSteps": [
+          "Schedule meeting with school counselor or teachers",
+          "Break assignments into smaller, manageable tasks",
+          "Focus on effort and progress rather than just grades",
+          "Connect academic support to social withdrawal concerns"
+        ]
+      },
+      {
+        "title": "Monitoring Digital Social Patterns",
+        "advice": "While not explicitly mentioned in the data, consider how Sofia's digital social interactions may relate to her in-person withdrawal. Many 15-year-olds maintain social connections online even when withdrawing from in-person activities. Understanding her digital social patterns can provide insight into whether she's withdrawing completely or redirecting social energy.",
+        "targetIssueIds": [
+          301
+        ],
+        "targetIssueTitles": [
+          "Social withdrawal"
+        ],
+        "ageAppropriate": true,
+        "developmentalContext": "Digital socialization is integral to adolescent social development",
+        "priority": "short_term",
+        "concreteSteps": [
+          "Observe (without invading privacy) if she maintains digital connections",
+          "Discuss online social experiences if she's open to it",
+          "Consider whether digital interactions are replacing or supplementing in-person ones",
+          "Note any concerning online behaviors or content"
+        ]
+      }
+    ]
   },
   "model": "deepseek-chat",
-  "generated_at": "2026-03-21T22:22:49.151979+00:00"
+  "generated_at": "2026-03-22T09:54:25.096405+00:00"
 }

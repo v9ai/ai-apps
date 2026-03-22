@@ -2,7 +2,8 @@
   "$schema": "https://langgra.ph/schema.json",
   "dependencies": ["."],
   "graphs": {
-    "analyze_video": "bricks_agent.graph:graph"
+    "analyze_video": "bricks_agent.graph:graph",
+    "research_topic": "bricks_agent.topic_graph:topic_graph"
   },
   "env": ".env"
 }

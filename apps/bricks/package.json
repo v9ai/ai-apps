@@ -10,18 +10,21 @@
     "start": "next start"
   },
   "dependencies": {
+    "@ai-apps/auth": "workspace:*",
+    "@neondatabase/serverless": "^1.0.2",
+    "drizzle-orm": "^0.45.1",
     "next": "latest",
     "react": "^19",
     "react-dom": "^19"
   },
   "devDependencies": {
+    "@pandacss/dev": "^1.9.0",
     "@types/node": "^20",
     "@types/react": "^19",
     "@types/react-dom": "^19",
+    "autoprefixer": "^10.4.19",
     "concurrently": "^9.2.1",
     "postcss": "^8",
-    "@pandacss/dev": "^1.9.0",
-    "autoprefixer": "^10.4.19",
     "typescript": "^5"
   }
 }

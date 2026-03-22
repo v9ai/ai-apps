@@ -20,6 +20,7 @@ if str(_backend) not in sys.path:
 from research_agent.deep_analysis_graph import (  # noqa: E402
     DeepAnalysisOutput,
     FamilySystemInsight,
+    ParentAdviceItem,
     PatternCluster,
     PriorityRecommendation,
     ResearchRelevanceMapping,
@@ -260,3 +261,111 @@ def test_normal_lists_pass_through():
     assert obj.issueIds == [1, 2, 3]
     assert obj.issueTitles == ["a", "b", "c"]
     assert obj.categories == ["behavioral", "social"]
+
+
+# ═══════════════════════════════════════════════════════════════════════════
+# ParentAdviceItem — LLM output validation
+# ═══════════════════════════════════════════════════════════════════════════
+
+
+def test_pydantic_parent_advice(analysis_output):
+    """Each parentAdvice entry must validate as ParentAdviceItem."""
+    _, output = analysis_output
+    for i, item in enumerate(output.get("parentAdvice", [])):
+        try:
+            ParentAdviceItem.model_validate(item)
+        except ValidationError as exc:
+            pytest.fail(f"parentAdvice[{i}] validation failed:\n{exc}")
+
+
+def test_parent_advice_present(analysis_output):
+    """parentAdvice must be present and non-empty."""
+    _, output = analysis_output
+    advice = output.get("parentAdvice", [])
+    assert len(advice) >= 1, "parentAdvice must contain at least 1 item"
+
+
+def test_parent_advice_references_issues(analysis_output):
+    """Every parentAdvice item must reference at least one issue ID from the data."""
+    case, output = analysis_output
+    valid_ids = {i["id"] for i in case["issues"]}
+    for i, item in enumerate(output.get("parentAdvice", [])):
+        target_ids = item.get("targetIssueIds", [])
+        if isinstance(target_ids, int):
+            target_ids = [target_ids]
+        assert len(target_ids) >= 1, f"parentAdvice[{i}] has no targetIssueIds"
+        for tid in target_ids:
+            assert tid in valid_ids, (
+                f"parentAdvice[{i}] references issue ID {tid} not in input data {valid_ids}"
+            )
+
+
+def test_parent_advice_has_concrete_steps(analysis_output):
+    """Every parentAdvice item must have at least one concrete step."""
+    _, output = analysis_output
+    for i, item in enumerate(output.get("parentAdvice", [])):
+        steps = item.get("concreteSteps", [])
+        if isinstance(steps, str):
+            steps = [steps]
+        assert len(steps) >= 1, f"parentAdvice[{i}] has no concreteSteps"
+
+
+# --- ParentAdviceItem coercion ---
+
+_ADVICE_BASE = {
+    "title": "test",
+    "advice": "test advice text",
+    "ageAppropriate": True,
+    "priority": "immediate",
+}
+
+
+def test_coercion_advice_targetIssueIds_int():
+    """ParentAdviceItem.targetIssueIds: bare int -> [int]"""
+    obj = ParentAdviceItem.model_validate({
+        **_ADVICE_BASE, "targetIssueIds": 42, "targetIssueTitles": ["t"], "concreteSteps": ["s"]
+    })
+    assert obj.targetIssueIds == [42]
+
+
+def test_coercion_advice_targetIssueTitles_string():
+    """ParentAdviceItem.targetIssueTitles: bare string -> [string]"""
+    obj = ParentAdviceItem.model_validate({
+        **_ADVICE_BASE, "targetIssueIds": [1], "targetIssueTitles": "One title", "concreteSteps": ["s"]
+    })
+    assert obj.targetIssueTitles == ["One title"]
+
+
+def test_coercion_advice_concreteSteps_string():
+    """ParentAdviceItem.concreteSteps: bare string -> [string]"""
+    obj = ParentAdviceItem.model_validate({
+        **_ADVICE_BASE, "targetIssueIds": [1], "targetIssueTitles": ["t"], "concreteSteps": "Do this"
+    })
+    assert obj.concreteSteps == ["Do this"]
+
+
+def test_coercion_advice_relatedResearchIds_int():
+    """ParentAdviceItem.relatedResearchIds: bare int -> [int]"""
+    obj = ParentAdviceItem.model_validate({
+        **_ADVICE_BASE, "targetIssueIds": [1], "targetIssueTitles": ["t"],
+        "concreteSteps": ["s"], "relatedResearchIds": 5
+    })
+    assert obj.relatedResearchIds == [5]
+
+
+def test_coercion_advice_relatedResearchIds_none():
+    """ParentAdviceItem.relatedResearchIds: None stays None"""
+    obj = ParentAdviceItem.model_validate({
+        **_ADVICE_BASE, "targetIssueIds": [1], "targetIssueTitles": ["t"],
+        "concreteSteps": ["s"], "relatedResearchIds": None
+    })
+    assert obj.relatedResearchIds is None
+
+
+def test_coercion_advice_relatedResearchTitles_string():
+    """ParentAdviceItem.relatedResearchTitles: bare string -> [string]"""
+    obj = ParentAdviceItem.model_validate({
+        **_ADVICE_BASE, "targetIssueIds": [1], "targetIssueTitles": ["t"],
+        "concreteSteps": ["s"], "relatedResearchTitles": "A study"
+    })
+    assert obj.relatedResearchTitles == ["A study"]

@@ -2408,6 +2408,7 @@ interface DeepIssueAnalysisRow {
   family_system_insights: string;
   priority_recommendations: string;
   research_relevance: string;
+  parent_advice: string;
   data_snapshot: string;
   model: string;
   created_at: string;
@@ -2427,6 +2428,7 @@ function mapDeepIssueAnalysisRow(row: DeepIssueAnalysisRow) {
     familySystemInsights: JSON.parse(row.family_system_insights),
     priorityRecommendations: JSON.parse(row.priority_recommendations),
     researchRelevance: JSON.parse(row.research_relevance),
+    parentAdvice: JSON.parse(row.parent_advice),
     dataSnapshot: JSON.parse(row.data_snapshot),
     model: row.model,
     createdAt: row.created_at,
@@ -2445,12 +2447,13 @@ export async function createDeepIssueAnalysis(params: {
   familySystemInsights: unknown[];
   priorityRecommendations: unknown[];
   researchRelevance: unknown[];
+  parentAdvice: unknown[];
   dataSnapshot: unknown;
   model?: string;
 }): Promise<number> {
   const rows = await neonSql`
-    INSERT INTO deep_issue_analyses (family_member_id, trigger_issue_id, user_id, job_id, summary, pattern_clusters, timeline_analysis, family_system_insights, priority_recommendations, research_relevance, data_snapshot, model, created_at, updated_at)
-    VALUES (${params.familyMemberId}, ${params.triggerIssueId ?? null}, ${params.userId}, ${params.jobId ?? null}, ${params.summary}, ${JSON.stringify(params.patternClusters)}, ${JSON.stringify(params.timelineAnalysis)}, ${JSON.stringify(params.familySystemInsights)}, ${JSON.stringify(params.priorityRecommendations)}, ${JSON.stringify(params.researchRelevance)}, ${JSON.stringify(params.dataSnapshot)}, ${params.model ?? "deepseek-chat"}, NOW(), NOW())
+    INSERT INTO deep_issue_analyses (family_member_id, trigger_issue_id, user_id, job_id, summary, pattern_clusters, timeline_analysis, family_system_insights, priority_recommendations, research_relevance, parent_advice, data_snapshot, model, created_at, updated_at)
+    VALUES (${params.familyMemberId}, ${params.triggerIssueId ?? null}, ${params.userId}, ${params.jobId ?? null}, ${params.summary}, ${JSON.stringify(params.patternClusters)}, ${JSON.stringify(params.timelineAnalysis)}, ${JSON.stringify(params.familySystemInsights)}, ${JSON.stringify(params.priorityRecommendations)}, ${JSON.stringify(params.researchRelevance)}, ${JSON.stringify(params.parentAdvice)}, ${JSON.stringify(params.dataSnapshot)}, ${params.model ?? "deepseek-chat"}, NOW(), NOW())
     RETURNING id`;
   return rows[0].id as number;
 }

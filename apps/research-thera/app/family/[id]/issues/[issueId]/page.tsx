@@ -10,6 +10,8 @@ import {
   Badge,
   Spinner,
   Button,
+  IconButton,
+  Tooltip,
   Separator,
   Dialog,
   AlertDialog,
@@ -25,6 +27,8 @@ import {
   Link2Icon,
   PlusIcon,
   Cross2Icon,
+  CopyIcon,
+  CheckIcon,
 } from "@radix-ui/react-icons";
 import { useRouter, useParams } from "next/navigation";
 import NextLink from "next/link";
@@ -285,7 +289,22 @@ function IssueDetailContent() {
   // Deep Issue Analysis state
   const [deepAnalysisJobId, setDeepAnalysisJobId] = useState<string | null>(null);
   const [deepAnalysisMessage, setDeepAnalysisMessage] = useState<{ text: string; type: "success" | "error" } | null>(null);
-  const [activeAnalysisTab, setActiveAnalysisTab] = useState<"patterns" | "timeline" | "family" | "priorities" | "research">("patterns");
+  const [activeAnalysisTab, setActiveAnalysisTab] = useState<"advice" | "patterns" | "timeline" | "family" | "priorities" | "research">("advice");
+  const [copiedAdviceIdx, setCopiedAdviceIdx] = useState<number | null>(null);
+
+  const formatAdviceText = (item: { title: string; advice: string; concreteSteps: string[]; developmentalContext?: string | null; relatedResearchTitles?: string[] | null }) => {
+    let text = `${item.title}\n\n${item.advice}`;
+    if (item.developmentalContext) text += `\n\nDevelopmental context: ${item.developmentalContext}`;
+    if (item.concreteSteps.length > 0) text += `\n\nConcrete steps:\n${item.concreteSteps.map((s, i) => `${i + 1}. ${s}`).join("\n")}`;
+    if (item.relatedResearchTitles?.length) text += `\n\nResearch: ${item.relatedResearchTitles.join("; ")}`;
+    return text;
+  };
+
+  const copyAdvice = async (text: string, idx: number) => {
+    await navigator.clipboard.writeText(text);
+    setCopiedAdviceIdx(idx);
+    setTimeout(() => setCopiedAdviceIdx(null), 2000);
+  };
 
   const { data: deepAnalysesData, refetch: refetchDeepAnalyses } = useGetDeepIssueAnalysesQuery({
     variables: { familyMemberId: issue?.familyMemberId ?? 0 },
@@ -889,14 +908,15 @@ function IssueDetailContent() {
 
               {/* Tabs */}
               <Flex gap="2" wrap="wrap">
-                {(["patterns", "timeline", "family", "priorities", "research"] as const).map((tab) => (
+                {(["advice", "patterns", "timeline", "family", "priorities", "research"] as const).map((tab) => (
                   <Button
                     key={tab}
                     variant={activeAnalysisTab === tab ? "solid" : "soft"}
                     size="1"
                     onClick={() => setActiveAnalysisTab(tab)}
                   >
-                    {tab === "patterns" ? `Patterns (${latestAnalysis.patternClusters.length})`
+                    {tab === "advice" ? `Advice (${latestAnalysis.parentAdvice.length})`
+                      : tab === "patterns" ? `Patterns (${latestAnalysis.patternClusters.length})`
                       : tab === "timeline" ? "Timeline"
                       : tab === "family" ? `Family (${latestAnalysis.familySystemInsights.length})`
                       : tab === "priorities" ? `Priorities (${latestAnalysis.priorityRecommendations.length})`
@@ -1062,6 +1082,104 @@ function IssueDetailContent() {
                   </Flex>
                 </Card>
               ))}
+
+              {/* Tab Content: Parent Advice */}
+              {activeAnalysisTab === "advice" && <>
+                <Flex justify="end">
+                  <Tooltip content={copiedAdviceIdx === -1 ? "Copied!" : "Copy all advice"}>
+                    <Button
+                      size="1"
+                      variant="soft"
+                      color={copiedAdviceIdx === -1 ? "green" : "gray"}
+                      onClick={() => {
+                        const allText = latestAnalysis.parentAdvice.map(a => formatAdviceText(a)).join("\n\n---\n\n");
+                        copyAdvice(allText, -1);
+                      }}
+                    >
+                      {copiedAdviceIdx === -1 ? <CheckIcon /> : <CopyIcon />}
+                      {copiedAdviceIdx === -1 ? "Copied" : "Copy all"}
+                    </Button>
+                  </Tooltip>
+                </Flex>
+                {latestAnalysis.parentAdvice.map((item, idx) => (
+                <Card key={idx} variant="surface">
+                  <Flex direction="column" gap="2" p="3">
+                    <Flex justify="between" align="center" wrap="wrap" gap="2">
+                      <Text size="2" weight="bold">{item.title}</Text>
+                      <Flex gap="1" align="center">
+                        <Badge
+                          variant="soft"
+                          color={item.priority === "immediate" ? "red" : item.priority === "short_term" ? "orange" : "blue"}
+                          size="1"
+                        >
+                          {item.priority.replace(/_/g, " ")}
+                        </Badge>
+                        {item.ageAppropriate ? (
+                          <Badge variant="soft" color="green" size="1">age-appropriate</Badge>
+                        ) : (
+                          <Badge variant="soft" color="red" size="1">review age fit</Badge>
+                        )}
+                        <Tooltip content={copiedAdviceIdx === idx ? "Copied!" : "Copy"}>
+                          <IconButton
+                            size="1"
+                            variant="ghost"
+                            color={copiedAdviceIdx === idx ? "green" : "gray"}
+                            onClick={() => copyAdvice(formatAdviceText(item), idx)}
+                          >
+                            {copiedAdviceIdx === idx ? <CheckIcon /> : <CopyIcon />}
+                          </IconButton>
+                        </Tooltip>
+                      </Flex>
+                    </Flex>
+
+                    <Text size="2" color="gray" style={{ lineHeight: "1.6" }}>{item.advice}</Text>
+
+                    {item.developmentalContext && (
+                      <Box style={{ borderLeft: "3px solid var(--cyan-7)", paddingLeft: 12, marginTop: 4 }}>
+                        <Text size="1" weight="medium" color="cyan">Developmental context</Text>
+                        <Text size="2" color="gray" style={{ display: "block" }}>{item.developmentalContext}</Text>
+                      </Box>
+                    )}
+
+                    {item.concreteSteps.length > 0 && (
+                      <Box>
+                        <Text size="1" weight="medium" mb="1">Concrete steps:</Text>
+                        <ol style={{ margin: 0, paddingLeft: "20px" }}>
+                          {item.concreteSteps.map((step, i) => (
+                            <li key={i}><Text size="2" color="gray">{step}</Text></li>
+                          ))}
+                        </ol>
+                      </Box>
+                    )}
+
+                    {item.targetIssueTitles.length > 0 && (
+                      <Flex gap="1" wrap="wrap">
+                        {item.targetIssueTitles.map((title, i) => (
+                          <Badge key={i} variant="outline" color="indigo" size="1">{title}</Badge>
+                        ))}
+                      </Flex>
+                    )}
+
+                    {item.relatedPatternCluster && (
+                      <Badge variant="outline" color="orange" size="1">
+                        Pattern: {item.relatedPatternCluster}
+                      </Badge>
+                    )}
+
+                    {item.relatedResearchTitles && item.relatedResearchTitles.length > 0 && (
+                      <Box>
+                        <Text size="1" weight="medium" color="gray" mb="1">Research basis:</Text>
+                        <ul style={{ margin: 0, paddingLeft: "16px" }}>
+                          {item.relatedResearchTitles.map((t, i) => (
+                            <li key={i}><Text size="1" color="gray">{t}</Text></li>
+                          ))}
+                        </ul>
+                      </Box>
+                    )}
+                  </Flex>
+                </Card>
+              ))}
+              </>}
             </>
           )}
         </Flex>

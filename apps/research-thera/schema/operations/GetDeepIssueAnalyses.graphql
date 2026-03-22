@@ -51,6 +51,19 @@ query GetDeepIssueAnalyses($familyMemberId: Int!) {
       relevantResearchTitles
       coverageGaps
     }
+    parentAdvice {
+      title
+      advice
+      targetIssueIds
+      targetIssueTitles
+      relatedPatternCluster
+      relatedResearchIds
+      relatedResearchTitles
+      ageAppropriate
+      developmentalContext
+      priority
+      concreteSteps
+    }
     dataSnapshot {
       issueCount
       observationCount

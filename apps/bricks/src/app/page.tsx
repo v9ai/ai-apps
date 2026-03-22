@@ -2,10 +2,14 @@
 
 import { useState } from "react";
 import { css } from "styled-system/css";
+import { useSession, signOut } from "@/lib/auth-client";
 import { VideoEmbed } from "./_components/VideoEmbed";
 import { PartsList } from "./_components/PartsList";
 import { BuildSteps } from "./_components/BuildSteps";
 import { BuildScheme } from "./_components/BuildScheme";
+import { TopicResearch } from "./_components/TopicResearch";
+import { SavedResearch } from "./_components/SavedResearch";
+import { Favorites } from "./_components/Favorites";
 
 interface AnalysisResult {
   video_info: {
@@ -38,6 +42,7 @@ interface AnalysisResult {
 }
 
 export default function Home() {
+  const { data: session, isPending } = useSession();
   const [url, setUrl] = useState("");
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -77,32 +82,79 @@ export default function Home() {
         py: "12",
       })}
     >
+      {/* Auth */}
+      <div className={css({ display: "flex", justifyContent: "flex-end", alignItems: "center", gap: "3", mb: "4" })}>
+        {isPending ? (
+          <span className={css({ fontSize: "sm", color: "ink.faint" })}>…</span>
+        ) : session ? (
+          <>
+            <span className={css({ fontSize: "sm", color: "ink.secondary", fontWeight: "500" })}>
+              {session.user.name || session.user.email}
+            </span>
+            <button
+              onClick={() => signOut().then(() => window.location.reload())}
+              className={css({
+                fontSize: "sm",
+                fontWeight: "700",
+                fontFamily: "display",
+                color: "ink.muted",
+                bg: "transparent",
+                border: "none",
+                cursor: "pointer",
+                transition: "color 0.15s",
+                _hover: { color: "ink.primary" },
+              })}
+            >
+              Sign Out
+            </button>
+          </>
+        ) : (
+          <>
+            <a
+              href="/login"
+              className={css({
+                fontSize: "sm",
+                fontWeight: "700",
+                fontFamily: "display",
+                color: "ink.secondary",
+                textDecoration: "none",
+                bg: "plate.surface",
+                border: "1px solid",
+                borderColor: "plate.border",
+                rounded: "lg",
+                px: "4",
+                py: "2",
+                transition: "all 0.15s ease",
+                _hover: { color: "ink.primary", borderColor: "plate.borderHover", bg: "plate.raised" },
+              })}
+            >
+              Sign In
+            </a>
+            <a
+              href="/signup"
+              className={css({
+                fontSize: "sm",
+                fontWeight: "700",
+                fontFamily: "display",
+                color: "white",
+                textDecoration: "none",
+                bg: "lego.red",
+                rounded: "lg",
+                px: "4",
+                py: "2",
+                transition: "all 0.15s ease",
+                boxShadow: "inset 0 1px 0 rgba(255,255,255,0.2), 0 2px 0 #A30008, 0 3px 6px rgba(0,0,0,0.3)",
+                _hover: { bg: "#FF1A1A", transform: "translateY(-1px)", boxShadow: "inset 0 1px 0 rgba(255,255,255,0.25), 0 3px 0 #A30008, 0 5px 10px rgba(0,0,0,0.35)" },
+              })}
+            >
+              Sign Up
+            </a>
+          </>
+        )}
+      </div>
+
       {/* Hero */}
       <div className={css({ mb: "10", textAlign: "center" })}>
-        {/* Logo studs */}
-        <div
-          className={css({
-            display: "flex",
-            justifyContent: "center",
-            gap: "2",
-            mb: "4",
-          })}
-        >
-          {["#E3000B", "#FFD500", "#006CB7", "#00852B", "#FE8A18"].map(
-            (color, i) => (
-              <div
-                key={i}
-                className={css({
-                  w: "4",
-                  h: "4",
-                  rounded: "stud",
-                  boxShadow: "stud",
-                })}
-                style={{ background: color }}
-              />
-            )
-          )}
-        </div>
         <h1
           className={css({
             fontSize: "5xl",
@@ -123,20 +175,6 @@ export default function Home() {
         >
           Paste a YouTube LEGO video to extract building instructions
         </p>
-        <a
-          href="/scripts"
-          className={css({
-            display: "inline-block",
-            mt: "4",
-            fontSize: "sm",
-            fontWeight: "600",
-            color: "lego.orange",
-            textDecoration: "none",
-            _hover: { textDecoration: "underline" },
-          })}
-        >
-          Browse Pybricks Scripts →
-        </a>
       </div>
 
       {/* Input — brick-shaped search bar */}
@@ -257,6 +295,15 @@ export default function Home() {
           {error}
         </div>
       )}
+
+      {/* Topic Research */}
+      <TopicResearch isLoggedIn={!!session} />
+
+      {/* Saved Research — only when logged in */}
+      {session && <SavedResearch />}
+
+      {/* Favorite MOCs */}
+      <Favorites />
 
       {/* Results */}
       {result && (

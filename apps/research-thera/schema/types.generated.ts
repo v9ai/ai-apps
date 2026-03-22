@@ -332,6 +332,7 @@ export type DeepIssueAnalysis = {
   id: Scalars['Int']['output'];
   jobId?: Maybe<Scalars['String']['output']>;
   model: Scalars['String']['output'];
+  parentAdvice: Array<ParentAdviceItem>;
   patternClusters: Array<PatternCluster>;
   priorityRecommendations: Array<PriorityRecommendation>;
   researchRelevance: Array<ResearchRelevanceMapping>;
@@ -1235,6 +1236,21 @@ export type PaperCandidate = {
   year?: Maybe<Scalars['Int']['output']>;
 };
 
+export type ParentAdviceItem = {
+  __typename?: 'ParentAdviceItem';
+  advice: Scalars['String']['output'];
+  ageAppropriate: Scalars['Boolean']['output'];
+  concreteSteps: Array<Scalars['String']['output']>;
+  developmentalContext?: Maybe<Scalars['String']['output']>;
+  priority: Scalars['String']['output'];
+  relatedPatternCluster?: Maybe<Scalars['String']['output']>;
+  relatedResearchIds?: Maybe<Array<Scalars['Int']['output']>>;
+  relatedResearchTitles?: Maybe<Array<Scalars['String']['output']>>;
+  targetIssueIds: Array<Scalars['Int']['output']>;
+  targetIssueTitles: Array<Scalars['String']['output']>;
+  title: Scalars['String']['output'];
+};
+
 export type PatternCluster = {
   __typename?: 'PatternCluster';
   categories: Array<Scalars['String']['output']>;
@@ -1918,6 +1934,7 @@ export type ResolversTypes = {
   OpenAITTSModel: ResolverTypeWrapper<'TTS_1' | 'TTS_1_HD' | 'GPT_4O_MINI_TTS'>;
   OpenAITTSVoice: ResolverTypeWrapper<'ALLOY' | 'ASH' | 'BALLAD' | 'CORAL' | 'ECHO' | 'FABLE' | 'ONYX' | 'NOVA' | 'SAGE' | 'SHIMMER' | 'VERSE' | 'MARIN' | 'CEDAR'>;
   PaperCandidate: ResolverTypeWrapper<PaperCandidate>;
+  ParentAdviceItem: ResolverTypeWrapper<ParentAdviceItem>;
   PatternCluster: ResolverTypeWrapper<PatternCluster>;
   PersonType: ResolverTypeWrapper<'FAMILY_MEMBER' | 'CONTACT'>;
   PipelineDiagnostics: ResolverTypeWrapper<PipelineDiagnostics>;
@@ -2027,6 +2044,7 @@ export type ResolversParentTypes = {
   NoteAccess: NoteAccess;
   NoteShare: NoteShare;
   PaperCandidate: PaperCandidate;
+  ParentAdviceItem: ParentAdviceItem;
   PatternCluster: PatternCluster;
   PipelineDiagnostics: PipelineDiagnostics;
   PriorityRecommendation: PriorityRecommendation;
@@ -2215,6 +2233,7 @@ export type DeepIssueAnalysisResolvers<ContextType = GraphQLContext, ParentType 
   id?: Resolver<ResolversTypes['Int'], ParentType, ContextType>;
   jobId?: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType>;
   model?: Resolver<ResolversTypes['String'], ParentType, ContextType>;
+  parentAdvice?: Resolver<Array<ResolversTypes['ParentAdviceItem']>, ParentType, ContextType>;
   patternClusters?: Resolver<Array<ResolversTypes['PatternCluster']>, ParentType, ContextType>;
   priorityRecommendations?: Resolver<Array<ResolversTypes['PriorityRecommendation']>, ParentType, ContextType>;
   researchRelevance?: Resolver<Array<ResolversTypes['ResearchRelevanceMapping']>, ParentType, ContextType>;
@@ -2662,6 +2681,20 @@ export type PaperCandidateResolvers<ContextType = GraphQLContext, ParentType ext
   year?: Resolver<Maybe<ResolversTypes['Int']>, ParentType, ContextType>;
 };
 
+export type ParentAdviceItemResolvers<ContextType = GraphQLContext, ParentType extends ResolversParentTypes['ParentAdviceItem'] = ResolversParentTypes['ParentAdviceItem']> = {
+  advice?: Resolver<ResolversTypes['String'], ParentType, ContextType>;
+  ageAppropriate?: Resolver<ResolversTypes['Boolean'], ParentType, ContextType>;
+  concreteSteps?: Resolver<Array<ResolversTypes['String']>, ParentType, ContextType>;
+  developmentalContext?: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType>;
+  priority?: Resolver<ResolversTypes['String'], ParentType, ContextType>;
+  relatedPatternCluster?: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType>;
+  relatedResearchIds?: Resolver<Maybe<Array<ResolversTypes['Int']>>, ParentType, ContextType>;
+  relatedResearchTitles?: Resolver<Maybe<Array<ResolversTypes['String']>>, ParentType, ContextType>;
+  targetIssueIds?: Resolver<Array<ResolversTypes['Int']>, ParentType, ContextType>;
+  targetIssueTitles?: Resolver<Array<ResolversTypes['String']>, ParentType, ContextType>;
+  title?: Resolver<ResolversTypes['String'], ParentType, ContextType>;
+};
+
 export type PatternClusterResolvers<ContextType = GraphQLContext, ParentType extends ResolversParentTypes['PatternCluster'] = ResolversParentTypes['PatternCluster']> = {
   categories?: Resolver<Array<ResolversTypes['String']>, ParentType, ContextType>;
   confidence?: Resolver<ResolversTypes['Float'], ParentType, ContextType>;
@@ -2952,6 +2985,7 @@ export type Resolvers<ContextType = GraphQLContext> = {
   OpenAITTSModel?: OpenAITTSModelResolvers;
   OpenAITTSVoice?: OpenAITTSVoiceResolvers;
   PaperCandidate?: PaperCandidateResolvers<ContextType>;
+  ParentAdviceItem?: ParentAdviceItemResolvers<ContextType>;
   PatternCluster?: PatternClusterResolvers<ContextType>;
   PersonType?: PersonTypeResolvers;
   PipelineDiagnostics?: PipelineDiagnosticsResolvers<ContextType>;

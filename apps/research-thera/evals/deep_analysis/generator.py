@@ -258,6 +258,7 @@ Produce a structured JSON analysis with these fields:
 5. **priorityRecommendations**: Array of {{rank (int), issueId (optional int), issueTitle (optional string), rationale, urgency (immediate|short_term|long_term), suggestedApproach, relatedResearchIds (optional array of ints)}}. The FIRST recommendation (rank 1) MUST address the trigger issue directly. Recommendations MUST be age-appropriate for the child's actual age.
 6. **researchRelevance**: Array of {{patternClusterName, relevantResearchIds (array of ints), relevantResearchTitles (array of strings), coverageGaps (array of strings)}}.
 7. **developmentalContext**: Object with {{statedAge (int), dobYear (int), developmentalStage (string), ageAppropriateExpectations (string), flags (array of strings for any developmental concerns)}}.
+8. **parentAdvice**: Array of practical, evidence-based parenting advice items. Each has: title (string), advice (string: 2-4 sentences), targetIssueIds (array of ints), targetIssueTitles (array of strings), relatedPatternCluster (optional string — must match a patternClusters[].name), relatedResearchIds (optional array of ints), relatedResearchTitles (optional array of strings), ageAppropriate (bool), developmentalContext (optional string), priority (immediate|short_term|long_term), concreteSteps (array of strings). Generate 3-5 items. The FIRST item MUST address the trigger issue. Every item MUST reference issue IDs from the data. concreteSteps must be specific.
 
 IMPORTANT: All fields marked as "array" MUST be JSON arrays, never bare strings. For example coverageGaps must be ["gap1", "gap2"], not "gap1, gap2".
 
@@ -273,6 +274,7 @@ Analyze all the data above and produce a structured JSON analysis with these fie
 5. **priorityRecommendations**: Array of {rank (int), issueId (optional int), issueTitle (optional string), rationale, urgency (immediate|short_term|long_term), suggestedApproach, relatedResearchIds (optional array of ints)}. Recommendations MUST be age-appropriate for the child's actual age.
 6. **researchRelevance**: Array of {patternClusterName, relevantResearchIds (array of ints), relevantResearchTitles (array of strings), coverageGaps (array of strings)}.
 7. **developmentalContext**: Object with {statedAge (int), dobYear (int), developmentalStage (string), ageAppropriateExpectations (string), flags (array of strings for any developmental concerns)}.
+8. **parentAdvice**: Array of practical, evidence-based parenting advice items. Each has: title (string), advice (string: 2-4 sentences), targetIssueIds (array of ints), targetIssueTitles (array of strings), relatedPatternCluster (optional string — must match a patternClusters[].name), relatedResearchIds (optional array of ints), relatedResearchTitles (optional array of strings), ageAppropriate (bool), developmentalContext (optional string), priority (immediate|short_term|long_term), concreteSteps (array of strings). Generate 3-5 items, prioritized by urgency. Every item MUST reference issue IDs. concreteSteps must be specific.
 
 IMPORTANT: All fields marked as "array" MUST be JSON arrays, never bare strings. For example coverageGaps must be ["gap1", "gap2"], not "gap1, gap2".
 
@@ -304,13 +306,31 @@ def build_input_description(case: dict) -> str:
 # ---------------------------------------------------------------------------
 
 
+_CONCISE_SYSTEM = (
+    "CRITICAL: Your JSON response MUST fit within 8000 tokens. "
+    "Use brief descriptions (1-2 sentences max per field). "
+    "Limit patternClusters to 3, familySystemInsights to 3, "
+    "priorityRecommendations to 4, parentAdvice to 3 items. "
+    "Keep concreteSteps to 2-3 per advice item. Be concise."
+)
+
+
 def _call_deepseek(prompt: str, temperature: float = 0.3, retries: int = 2) -> dict:
-    """Call DeepSeek and return parsed JSON."""
+    """Call DeepSeek and return parsed JSON. Retries on truncation with conciseness prompt."""
     import httpx
     from json_repair import repair_json
 
     last_err = None
     for attempt in range(retries + 1):
+        messages = [{"role": "user", "content": prompt}]
+        # On retry after truncation, add conciseness system prompt
+        if attempt > 0 and last_err and "truncated" in str(last_err).lower():
+            messages = [
+                {"role": "system", "content": _CONCISE_SYSTEM},
+                {"role": "user", "content": prompt},
+            ]
+            temperature = 0.2
+
         response = httpx.post(
             f"{_BASE_URL}/chat/completions",
             headers={
@@ -319,14 +339,32 @@ def _call_deepseek(prompt: str, temperature: float = 0.3, retries: int = 2) -> d
             },
             json={
                 "model": _MODEL,
-                "messages": [{"role": "user", "content": prompt}],
+                "messages": messages,
                 "response_format": {"type": "json_object"},
                 "temperature": temperature,
+                "max_tokens": 8192,
             },
-            timeout=180,
+            timeout=300,
         )
         response.raise_for_status()
-        content = response.json()["choices"][0]["message"]["content"]
+        resp_json = response.json()
+        finish_reason = resp_json["choices"][0].get("finish_reason", "")
+        content = resp_json["choices"][0]["message"]["content"]
+
+        if finish_reason == "length":
+            last_err = ValueError(f"Output truncated (finish_reason=length, attempt={attempt})")
+            if attempt < retries:
+                continue
+            # Last attempt: try to repair the truncated JSON
+            try:
+                from json_repair import repair_json
+                repaired = repair_json(content, return_objects=True)
+                if isinstance(repaired, dict):
+                    return repaired
+            except Exception:
+                pass
+            raise last_err
+
         cleaned = re.sub(r"```(?:json)?\s*", "", content)
         cleaned = re.sub(r"```\s*", "", cleaned).strip()
         try:

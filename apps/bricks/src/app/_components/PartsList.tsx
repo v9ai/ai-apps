@@ -1,5 +1,6 @@
 "use client";
 
+import Link from "next/link";
 import { css } from "styled-system/css";
 
 interface Part {
@@ -96,9 +97,13 @@ export function PartsList({ parts }: { parts: Part[] }) {
       >
         {parts.map((part, i) => {
           const hex = getColorHex(part.color);
+          const partLink = part.part_number ? `/parts/${encodeURIComponent(part.part_number)}` : null;
+          const Wrapper = partLink ? Link : "div";
+          const wrapperProps = partLink ? { href: partLink } : {};
           return (
-            <div
+            <Wrapper
               key={i}
+              {...wrapperProps as any}
               className={css({
                 display: "flex",
                 alignItems: "center",
@@ -110,6 +115,8 @@ export function PartsList({ parts }: { parts: Part[] }) {
                 border: "1px solid",
                 borderColor: "plate.border",
                 boxShadow: "plate",
+                textDecoration: "none",
+                cursor: partLink ? "pointer" : "default",
                 transition: "all 0.15s ease",
                 _hover: {
                   bg: "plate.hover",
@@ -175,7 +182,7 @@ export function PartsList({ parts }: { parts: Part[] }) {
               >
                 ×{part.quantity}
               </div>
-            </div>
+            </Wrapper>
           );
         })}
       </div>

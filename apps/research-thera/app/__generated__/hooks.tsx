@@ -333,6 +333,7 @@ export type DeepIssueAnalysis = {
   id: Scalars['Int']['output'];
   jobId?: Maybe<Scalars['String']['output']>;
   model: Scalars['String']['output'];
+  parentAdvice: Array<ParentAdviceItem>;
   patternClusters: Array<PatternCluster>;
   priorityRecommendations: Array<PriorityRecommendation>;
   researchRelevance: Array<ResearchRelevanceMapping>;
@@ -1248,6 +1249,21 @@ export type PaperCandidate = {
   year?: Maybe<Scalars['Int']['output']>;
 };
 
+export type ParentAdviceItem = {
+  __typename?: 'ParentAdviceItem';
+  advice: Scalars['String']['output'];
+  ageAppropriate: Scalars['Boolean']['output'];
+  concreteSteps: Array<Scalars['String']['output']>;
+  developmentalContext?: Maybe<Scalars['String']['output']>;
+  priority: Scalars['String']['output'];
+  relatedPatternCluster?: Maybe<Scalars['String']['output']>;
+  relatedResearchIds?: Maybe<Array<Scalars['Int']['output']>>;
+  relatedResearchTitles?: Maybe<Array<Scalars['String']['output']>>;
+  targetIssueIds: Array<Scalars['Int']['output']>;
+  targetIssueTitles: Array<Scalars['String']['output']>;
+  title: Scalars['String']['output'];
+};
+
 export type PatternCluster = {
   __typename?: 'PatternCluster';
   categories: Array<Scalars['String']['output']>;
@@ -2154,7 +2170,7 @@ export type GetDeepIssueAnalysesQueryVariables = Exact<{
 }>;
 
 
-export type GetDeepIssueAnalysesQuery = { __typename?: 'Query', deepIssueAnalyses: Array<{ __typename?: 'DeepIssueAnalysis', id: number, familyMemberId: number, triggerIssueId?: number | null, createdBy: string, jobId?: string | null, summary: string, model: string, createdAt: string, updatedAt: string, patternClusters: Array<{ __typename?: 'PatternCluster', name: string, description: string, issueIds: Array<number>, issueTitles: Array<string>, categories: Array<string>, pattern: string, confidence: number, suggestedRootCause?: string | null }>, timelineAnalysis: { __typename?: 'TimelineAnalysis', moodCorrelation?: string | null, escalationTrend?: string | null, criticalPeriods: Array<string>, phases: Array<{ __typename?: 'TimelinePhase', period: string, issueIds: Array<number>, description: string, moodTrend?: string | null, keyEvents: Array<string> }> }, familySystemInsights: Array<{ __typename?: 'FamilySystemInsight', insight: string, involvedMemberIds: Array<number>, involvedMemberNames: Array<string>, evidenceIssueIds: Array<number>, systemicPattern?: string | null, actionable: boolean }>, priorityRecommendations: Array<{ __typename?: 'PriorityRecommendation', rank: number, issueId?: number | null, issueTitle?: string | null, rationale: string, urgency: string, suggestedApproach: string, relatedResearchIds?: Array<number> | null }>, researchRelevance: Array<{ __typename?: 'ResearchRelevanceMapping', patternClusterName: string, relevantResearchIds: Array<number>, relevantResearchTitles: Array<string>, coverageGaps: Array<string> }>, dataSnapshot: { __typename?: 'DataSnapshot', issueCount: number, observationCount: number, journalEntryCount: number, contactFeedbackCount: number, teacherFeedbackCount: number, researchPaperCount: number, relatedMemberIssueCount: number } }> };
+export type GetDeepIssueAnalysesQuery = { __typename?: 'Query', deepIssueAnalyses: Array<{ __typename?: 'DeepIssueAnalysis', id: number, familyMemberId: number, triggerIssueId?: number | null, createdBy: string, jobId?: string | null, summary: string, model: string, createdAt: string, updatedAt: string, patternClusters: Array<{ __typename?: 'PatternCluster', name: string, description: string, issueIds: Array<number>, issueTitles: Array<string>, categories: Array<string>, pattern: string, confidence: number, suggestedRootCause?: string | null }>, timelineAnalysis: { __typename?: 'TimelineAnalysis', moodCorrelation?: string | null, escalationTrend?: string | null, criticalPeriods: Array<string>, phases: Array<{ __typename?: 'TimelinePhase', period: string, issueIds: Array<number>, description: string, moodTrend?: string | null, keyEvents: Array<string> }> }, familySystemInsights: Array<{ __typename?: 'FamilySystemInsight', insight: string, involvedMemberIds: Array<number>, involvedMemberNames: Array<string>, evidenceIssueIds: Array<number>, systemicPattern?: string | null, actionable: boolean }>, priorityRecommendations: Array<{ __typename?: 'PriorityRecommendation', rank: number, issueId?: number | null, issueTitle?: string | null, rationale: string, urgency: string, suggestedApproach: string, relatedResearchIds?: Array<number> | null }>, researchRelevance: Array<{ __typename?: 'ResearchRelevanceMapping', patternClusterName: string, relevantResearchIds: Array<number>, relevantResearchTitles: Array<string>, coverageGaps: Array<string> }>, parentAdvice: Array<{ __typename?: 'ParentAdviceItem', title: string, advice: string, targetIssueIds: Array<number>, targetIssueTitles: Array<string>, relatedPatternCluster?: string | null, relatedResearchIds?: Array<number> | null, relatedResearchTitles?: Array<string> | null, ageAppropriate: boolean, developmentalContext?: string | null, priority: string, concreteSteps: Array<string> }>, dataSnapshot: { __typename?: 'DataSnapshot', issueCount: number, observationCount: number, journalEntryCount: number, contactFeedbackCount: number, teacherFeedbackCount: number, researchPaperCount: number, relatedMemberIssueCount: number } }> };
 
 export type GetFamilyMemberQueryVariables = Exact<{
   id?: InputMaybe<Scalars['Int']['input']>;
@@ -4918,6 +4934,19 @@ export const GetDeepIssueAnalysesDocument = gql`
       relevantResearchIds
       relevantResearchTitles
       coverageGaps
+    }
+    parentAdvice {
+      title
+      advice
+      targetIssueIds
+      targetIssueTitles
+      relatedPatternCluster
+      relatedResearchIds
+      relatedResearchTitles
+      ageAppropriate
+      developmentalContext
+      priority
+      concreteSteps
     }
     dataSnapshot {
       issueCount
