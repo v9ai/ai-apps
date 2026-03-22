@@ -16,6 +16,10 @@ import {
 } from "drizzle-orm/pg-core";
 import { relations } from "drizzle-orm";
 
+// ── Better Auth tables ──────────────────────────────────────────────
+
+export { user, session, account, verification } from "@ai-apps/auth/schema";
+
 // ── Custom type: pgvector ──────────────────────────────────────────
 
 const vector = customType<{ data: number[]; driverData: string }>({
