@@ -1,5 +1,5 @@
 import type { QueryResolvers } from "./../../types.generated";
-import { listFamilyMembers } from "@/src/db";
+import { listFamilyMembers, createFamilyMember } from "@/src/db";
 
 export const familyMembers: NonNullable<QueryResolvers['familyMembers']> = async (_parent, _arg, ctx) => {
   const userEmail = ctx.userEmail;
@@ -7,7 +7,21 @@ export const familyMembers: NonNullable<QueryResolvers['familyMembers']> = async
     throw new Error("Authentication required");
   }
 
-  const members = await listFamilyMembers(userEmail);
+  let members = await listFamilyMembers(userEmail);
+
+  // Auto-create "self" member on first access
+  if (!members.some((m) => m.relationship === "self")) {
+    const firstName = ctx.userName?.split(" ")[0] ?? "Me";
+    const lastName = ctx.userName?.split(" ").slice(1).join(" ") || null;
+    await createFamilyMember({
+      userId: userEmail,
+      firstName,
+      name: lastName,
+      relationship: "self",
+    });
+    members = await listFamilyMembers(userEmail);
+  }
+
   return members.map((m) => ({
     ...m,
     goals: [],
