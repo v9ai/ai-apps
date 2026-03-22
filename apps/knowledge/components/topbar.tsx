@@ -1,6 +1,13 @@
+"use client";
+
 import Link from "next/link";
+import { useSession, signOut } from "@/lib/auth-client";
+import { useRouter } from "next/navigation";
 
 export function Topbar({ lessonCount }: { lessonCount: number }) {
+  const { data: session } = useSession();
+  const router = useRouter();
+
   return (
     <div className="yc-topbar">
       <Link href="/">
@@ -10,9 +17,21 @@ export function Topbar({ lessonCount }: { lessonCount: number }) {
       <span className="yc-topbar-count">
         {lessonCount} lessons
       </span>
-      <Link href="/login" className="yc-topbar-signin">
-        Sign In
-      </Link>
+      {session?.user ? (
+        <div className="yc-topbar-user">
+          <span className="yc-topbar-username">{session.user.name}</span>
+          <button
+            className="yc-topbar-signin"
+            onClick={() => signOut().then(() => router.push("/login"))}
+          >
+            Sign Out
+          </button>
+        </div>
+      ) : (
+        <Link href="/login" className="yc-topbar-signin">
+          Sign In
+        </Link>
+      )}
     </div>
   );
 }

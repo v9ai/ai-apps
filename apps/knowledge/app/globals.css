@@ -96,12 +96,30 @@ body {
   font-variant-numeric: tabular-nums;
 }
 
+.yc-topbar-user {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-left: 16px;
+}
+
+.yc-topbar-username {
+  font-size: 12px;
+  font-weight: 500;
+  color: var(--gray-11);
+}
+
 .yc-topbar-signin {
   margin-left: 16px;
   font-size: 12px;
   font-weight: 500;
   color: var(--gray-11);
   text-decoration: none;
+  background: none;
+  border: none;
+  cursor: pointer;
+  padding: 0;
+  font-family: inherit;
 }
 .yc-topbar-signin:hover { color: var(--accent-11); }
 
