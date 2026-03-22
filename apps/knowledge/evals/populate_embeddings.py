@@ -16,6 +16,7 @@ import os
 from pathlib import Path
 
 import psycopg2
+from psycopg2.extras import execute_values
 from dotenv import load_dotenv
 from pgvector.psycopg2 import register_vector
 
@@ -34,7 +35,7 @@ def _connect():
     return conn
 
 
-def populate_lesson_embeddings(conn, embedder: FastEmbedEmbedder, batch_size: int = 20, dry_run: bool = False):
+def populate_lesson_embeddings(conn, embedder: FastEmbedEmbedder, batch_size: int = 128, dry_run: bool = False):
     with conn.cursor() as cur:
         cur.execute(
             """
@@ -55,17 +56,21 @@ def populate_lesson_embeddings(conn, embedder: FastEmbedEmbedder, batch_size: in
         texts = [f"{row[2]}\n\n{row[3][:4000]}" for row in batch]
         embeddings = embedder.embed_texts(texts)
 
+        values = [
+            (lesson_id, f"{title}\n\n{content[:4000]}", emb)
+            for (lesson_id, slug, title, content), emb in zip(batch, embeddings)
+        ]
         with conn.cursor() as cur:
-            for (lesson_id, slug, title, content), emb in zip(batch, embeddings):
-                cur.execute(
-                    "INSERT INTO lesson_embeddings (lesson_id, content, embedding) VALUES (%s, %s, %s)",
-                    (lesson_id, f"{title}\n\n{content[:4000]}", emb),
-                )
+            execute_values(
+                cur,
+                "INSERT INTO lesson_embeddings (lesson_id, content, embedding) VALUES %s",
+                values,
+            )
         conn.commit()
         print(f"  Embedded lessons {i + 1}–{min(i + batch_size, len(rows))}")
 
 
-def populate_section_embeddings(conn, embedder: FastEmbedEmbedder, batch_size: int = 50, dry_run: bool = False):
+def populate_section_embeddings(conn, embedder: FastEmbedEmbedder, batch_size: int = 128, dry_run: bool = False):
     with conn.cursor() as cur:
         cur.execute(
             """
@@ -87,17 +92,21 @@ def populate_section_embeddings(conn, embedder: FastEmbedEmbedder, batch_size: i
         texts = [f"{row[4]} > {row[2]}\n\n{row[3]}" for row in batch]
         embeddings = embedder.embed_texts(texts)
 
+        values = [
+            (section_id, lesson_id, f"{lesson_title} > {heading}\n\n{content}", emb)
+            for (section_id, lesson_id, heading, content, lesson_title), emb in zip(batch, embeddings)
+        ]
         with conn.cursor() as cur:
-            for (section_id, lesson_id, heading, content, lesson_title), emb in zip(batch, embeddings):
-                cur.execute(
-                    "INSERT INTO section_embeddings (section_id, lesson_id, content, embedding) VALUES (%s, %s, %s, %s)",
-                    (section_id, lesson_id, f"{lesson_title} > {heading}\n\n{content}", emb),
-                )
+            execute_values(
+                cur,
+                "INSERT INTO section_embeddings (section_id, lesson_id, content, embedding) VALUES %s",
+                values,
+            )
         conn.commit()
         print(f"  Embedded sections {i + 1}–{min(i + batch_size, len(rows))}")
 
 
-def populate_concept_embeddings(conn, embedder: FastEmbedEmbedder, batch_size: int = 50, dry_run: bool = False):
+def populate_concept_embeddings(conn, embedder: FastEmbedEmbedder, batch_size: int = 128, dry_run: bool = False):
     with conn.cursor() as cur:
         cur.execute(
             """
@@ -118,12 +127,16 @@ def populate_concept_embeddings(conn, embedder: FastEmbedEmbedder, batch_size: i
         texts = [f"{row[1]}: {row[2] or ''}" for row in batch]
         embeddings = embedder.embed_texts(texts)
 
+        values = [
+            (concept_id, f"{name}: {description or ''}", emb)
+            for (concept_id, name, description), emb in zip(batch, embeddings)
+        ]
         with conn.cursor() as cur:
-            for (concept_id, name, description), emb in zip(batch, embeddings):
-                cur.execute(
-                    "INSERT INTO concept_embeddings (concept_id, content, embedding) VALUES (%s, %s, %s)",
-                    (concept_id, f"{name}: {description or ''}", emb),
-                )
+            execute_values(
+                cur,
+                "INSERT INTO concept_embeddings (concept_id, content, embedding) VALUES %s",
+                values,
+            )
         conn.commit()
         print(f"  Embedded concepts {i + 1}–{min(i + batch_size, len(rows))}")
 
@@ -132,11 +145,12 @@ def main():
     parser = argparse.ArgumentParser(description="Populate pgvector embedding tables using FastEmbed")
     parser.add_argument("--table", choices=["lessons", "sections", "concepts"], help="Populate only this table")
     parser.add_argument("--dry-run", action="store_true", help="Count rows without embedding")
-    parser.add_argument("--batch-size", type=int, default=32, help="Batch size for embedding (default: 32)")
+    parser.add_argument("--batch-size", type=int, default=128, help="Batch size for embedding (default: 128)")
+    parser.add_argument("--parallel", type=int, default=None, help="Number of parallel workers for embedding")
     args = parser.parse_args()
 
     conn = _connect()
-    embedder = FastEmbedEmbedder()
+    embedder = FastEmbedEmbedder(parallel=args.parallel)
     tables = [args.table] if args.table else ["lessons", "sections", "concepts"]
 
     print(f"Model: {embedder.get_model_name()}")

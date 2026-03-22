@@ -12,8 +12,9 @@ _DEFAULT_MODEL = "BAAI/bge-large-en-v1.5"
 
 class FastEmbedEmbedder(DeepEvalBaseEmbeddingModel):
 
-    def __init__(self, model_name: str = _DEFAULT_MODEL):
+    def __init__(self, model_name: str = _DEFAULT_MODEL, parallel: int | None = None):
         self._model_name = model_name
+        self._parallel = parallel
         self._model = TextEmbedding(model_name=model_name)
 
     def load_model(self):
@@ -27,7 +28,7 @@ class FastEmbedEmbedder(DeepEvalBaseEmbeddingModel):
         return self.embed_text(text)
 
     def embed_texts(self, texts: list[str]) -> list[list[float]]:
-        return [e.tolist() for e in self._model.embed(texts)]
+        return [e.tolist() for e in self._model.embed(texts, parallel=self._parallel)]
 
     async def a_embed_texts(self, texts: list[str]) -> list[list[float]]:
         return self.embed_texts(texts)
