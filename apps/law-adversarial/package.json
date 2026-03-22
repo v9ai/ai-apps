@@ -8,11 +8,14 @@
     "lint": "eslint .",
     "test": "vitest run",
     "test:watch": "vitest",
-    "test:deepteam": "cd deepteam && python run_all.py all",
-    "test:deepteam:attacker": "cd deepteam && python eval_attacker.py",
-    "test:deepteam:judge": "cd deepteam && python eval_judge.py",
-    "test:deepteam:pipeline": "cd deepteam && python eval_pipeline.py",
-    "deepteam:install": "pip install -r deepteam/requirements.txt"
+    "redteam": "python -m redteam all",
+    "redteam:attacker": "python -m redteam attacker",
+    "redteam:defender": "python -m redteam defender",
+    "redteam:judge": "python -m redteam judge",
+    "redteam:pipeline": "python -m redteam pipeline",
+    "redteam:owasp": "python -m redteam owasp",
+    "redteam:nist": "python -m redteam nist",
+    "redteam:install": "pip install -e redteam/"
   },
   "dependencies": {
     "@supabase/ssr": "^0.6.1",

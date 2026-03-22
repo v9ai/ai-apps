@@ -26,6 +26,8 @@ from how_it_works.models import (
     PaperData,
     ProcessResult,
     StatData,
+    TechnicalDetail,
+    TechnicalDetailItem,
 )
 from how_it_works.nodes.write import (
     generate_client_tsx,
@@ -87,6 +89,47 @@ class TestModels:
         err = ProcessResult(app_name="app", status="error", error="boom")
         assert err.error == "boom"
 
+    def test_extra_section_creation(self):
+        s = ExtraSection(heading="System Architecture", content="Uses Next.js App Router.")
+        assert s.heading == "System Architecture"
+        assert s.code_block is None
+
+    def test_extra_section_with_code_block(self):
+        s = ExtraSection(
+            heading="Example", content="desc", codeBlock="const x = 1;"
+        )
+        assert s.code_block == "const x = 1;"
+
+    def test_technical_detail_creation(self):
+        td = TechnicalDetail(type="table", heading="API Routes")
+        assert td.type == "table"
+        assert td.items is None
+        assert td.code is None
+
+    def test_technical_detail_with_items(self):
+        td = TechnicalDetail(
+            type="table",
+            heading="Routes",
+            items=[TechnicalDetailItem(label="GET /todos", value="List todos")],
+        )
+        assert len(td.items) == 1
+        assert td.items[0].label == "GET /todos"
+
+    def test_technical_detail_item_with_metadata(self):
+        item = TechnicalDetailItem(label="L", value="V", metadata={"auth": "required"})
+        assert item.metadata == {"auth": "required"}
+
+    def test_app_info_feature_flags_default_false(self):
+        app = AppInfo(name="test", path="/tmp/test", app_dir="/tmp/test/app")
+        assert app.has_db is False
+        assert app.has_auth is False
+        assert app.has_ai is False
+
+    def test_how_it_works_data_technical_details_defaults_empty(self):
+        raw = json.loads(SAMPLE_GENERATED_JSON)
+        data = HowItWorksData.model_validate(raw)
+        assert data.technical_details == []
+
 
 # ═══════════════════════════════════════════════════════════════════════════════
 # Code generation tests
@@ -101,7 +144,7 @@ def sample_data() -> HowItWorksData:
 class TestCodeGeneration:
     def test_data_tsx_imports(self, sample_data: HowItWorksData):
         code = generate_data_tsx(sample_data)
-        assert 'import type { Paper, PipelineAgent, Stat }' in code
+        assert 'import type { Paper, PipelineAgent, Stat, TechnicalDetail, ExtraSection }' in code
         assert 'from "@ai-apps/ui/how-it-works"' in code
 
     def test_data_tsx_exports_papers(self, sample_data: HowItWorksData):
@@ -139,6 +182,19 @@ class TestCodeGeneration:
         code = generate_client_tsx(sample_data)
         assert "<HowItWorks" in code
         assert "papers={papers}" in code
+
+    def test_client_tsx_passes_technical_details(self, sample_data: HowItWorksData):
+        code = generate_client_tsx(sample_data)
+        assert "technicalDetails={technicalDetails}" in code
+
+    def test_data_tsx_exports_technical_details(self, sample_data: HowItWorksData):
+        code = generate_data_tsx(sample_data)
+        assert "export const technicalDetails: TechnicalDetail[]" in code
+
+    def test_data_tsx_imports_technical_detail_type(self, sample_data: HowItWorksData):
+        code = generate_data_tsx(sample_data)
+        assert "TechnicalDetail" in code
+        assert "ExtraSection" in code
 
     def test_page_tsx_has_metadata(self, sample_data: HowItWorksData):
         code = generate_page_tsx(sample_data, "todo-app")

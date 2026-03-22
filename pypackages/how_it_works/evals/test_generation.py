@@ -24,8 +24,13 @@ from conftest import (
     papers_quality_metric,
     stats_quality_metric,
     story_quality_metric,
+    technical_details_quality_metric,
 )
-from fixtures import SAMPLE_ANALYSIS, SAMPLE_GENERATED_JSON
+from fixtures import (
+    SAMPLE_ANALYSIS,
+    SAMPLE_GENERATED_JSON,
+    SAMPLE_GENERATED_JSON_WITH_TECHNICAL_DETAILS,
+)
 
 
 @pytest.mark.eval
@@ -98,3 +103,15 @@ class TestJsonSchemaCompliance:
             actual_output=SAMPLE_GENERATED_JSON,
         )
         assert_test(test_case, [json_schema_compliance_metric])
+
+
+@pytest.mark.eval
+class TestTechnicalDetailsQuality:
+    """Do technicalDetails blocks contain specific, structured, non-generic content?"""
+
+    def test_technical_details(self):
+        test_case = LLMTestCase(
+            input=SAMPLE_ANALYSIS,
+            actual_output=SAMPLE_GENERATED_JSON_WITH_TECHNICAL_DETAILS,
+        )
+        assert_test(test_case, [technical_details_quality_metric])

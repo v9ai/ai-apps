@@ -8,7 +8,7 @@ export function HowItWorksClient() {
     <HowItWorks
       papers={papers}
       title="How It Works"
-      subtitle="A Next.js 15 and Supabase-powered adversarial AI pipeline that stress-tests legal briefs using DeepSeek and DashScope LLMs"
+      subtitle={"A multi-agent AI system built with Next.js 15, Supabase, and DeepSeek API that stress-tests legal briefs through adversarial debate rounds"}
       stats={researchStats}
       agents={pipelineAgents}
       story={story}

@@ -293,9 +293,6 @@ importers:
       eslint-config-next:
         specifier: 15.3.1
         version: 15.3.1(eslint@9.39.4(jiti@2.6.1))(typescript@5.9.3)
-      promptfoo:
-        specifier: ^0.120.26
-        version: 0.120.27(@cfworker/json-schema@4.1.1)(@cloudflare/workers-types@4.20260307.1)(@langchain/core@0.3.80(@opentelemetry/api@1.9.0)(@opentelemetry/exporter-trace-otlp-proto@0.52.1(@opentelemetry/api@1.9.0))(@opentelemetry/sdk-trace-base@2.6.0(@opentelemetry/api@1.9.0))(openai@6.27.0(ws@8.19.0)(zod@3.25.76)))(@neondatabase/serverless@1.0.2)(@noble/hashes@2.0.1)(@swc/helpers@0.5.19)(@types/json-schema@7.0.15)(@types/node@20.19.37)(@types/pg@8.11.6)(@types/react@19.2.14)(encoding@0.1.13)(gel@2.2.0)(kysely@0.28.11)(pg@8.20.0)(playwright-core@1.58.2)(socks@2.8.7)
       typescript:
         specifier: ^5
         version: 5.9.3
@@ -888,28 +885,6 @@ importers:
         specifier: ~5.5.2
         version: 5.5.4
 
-  langgraph:
-    dependencies:
-      '@langchain/core':
-        specifier: ^0.3.0
-        version: 0.3.80(@opentelemetry/api@1.9.0)(@opentelemetry/exporter-trace-otlp-proto@0.52.1(@opentelemetry/api@1.9.0))(@opentelemetry/sdk-trace-base@2.6.0(@opentelemetry/api@1.9.0))(openai@6.27.0(ws@8.19.0)(zod@3.25.76))
-      '@langchain/langgraph':
-        specifier: ^0.2.0
-        version: 0.2.74(@langchain/core@0.3.80(@opentelemetry/api@1.9.0)(@opentelemetry/exporter-trace-otlp-proto@0.52.1(@opentelemetry/api@1.9.0))(@opentelemetry/sdk-trace-base@2.6.0(@opentelemetry/api@1.9.0))(openai@6.27.0(ws@8.19.0)(zod@3.25.76)))(react-dom@19.1.1(react@19.2.4))(react@19.2.4)(zod-to-json-schema@3.25.1(zod@3.25.76))
-      dotenv:
-        specifier: ^16.0.0
-        version: 16.6.1
-    devDependencies:
-      '@types/node':
-        specifier: ^22.0.0
-        version: 22.19.7
-      tsx:
-        specifier: ^4.19.0
-        version: 4.21.0
-      typescript:
-        specifier: 5.9.3
-        version: 5.9.3
-
   packages/auth:
     dependencies:
       better-auth:
@@ -1168,6 +1143,28 @@ importers:
       jest:
         specifier: ^30.2.0
         version: 30.2.0(@types/node@22.19.7)(esbuild-register@3.6.0(esbuild@0.27.3))
+      typescript:
+        specifier: 5.9.3
+        version: 5.9.3
+
+  pypackages/how_it_works:
+    dependencies:
+      '@langchain/core':
+        specifier: ^0.3.0
+        version: 0.3.80(@opentelemetry/api@1.9.0)(@opentelemetry/exporter-trace-otlp-proto@0.52.1(@opentelemetry/api@1.9.0))(@opentelemetry/sdk-trace-base@2.6.0(@opentelemetry/api@1.9.0))(openai@6.27.0(ws@8.19.0)(zod@3.25.76))
+      '@langchain/langgraph':
+        specifier: ^0.2.0
+        version: 0.2.74(@langchain/core@0.3.80(@opentelemetry/api@1.9.0)(@opentelemetry/exporter-trace-otlp-proto@0.52.1(@opentelemetry/api@1.9.0))(@opentelemetry/sdk-trace-base@2.6.0(@opentelemetry/api@1.9.0))(openai@6.27.0(ws@8.19.0)(zod@3.25.76)))(react-dom@19.1.1(react@19.2.4))(react@19.2.4)(zod-to-json-schema@3.25.1(zod@3.25.76))
+      dotenv:
+        specifier: ^16.0.0
+        version: 16.6.1
+    devDependencies:
+      '@types/node':
+        specifier: ^22.0.0
+        version: 22.19.7
+      tsx:
+        specifier: ^4.19.0
+        version: 4.21.0
       typescript:
         specifier: 5.9.3
         version: 5.9.3
@@ -22920,15 +22917,6 @@ snapshots:
     optionalDependencies:
       '@types/node': 22.19.7
 
-  '@inquirer/checkbox@5.1.0(@types/node@20.19.37)':
-    dependencies:
-      '@inquirer/ansi': 2.0.3
-      '@inquirer/core': 11.1.5(@types/node@20.19.37)
-      '@inquirer/figures': 2.0.3
-      '@inquirer/type': 4.0.3(@types/node@20.19.37)
-    optionalDependencies:
-      '@types/node': 20.19.37
-
   '@inquirer/checkbox@5.1.0(@types/node@22.19.7)':
     dependencies:
       '@inquirer/ansi': 2.0.3
@@ -22951,13 +22939,6 @@ snapshots:
       '@inquirer/type': 3.0.10(@types/node@22.19.7)
     optionalDependencies:
       '@types/node': 22.19.7
-
-  '@inquirer/confirm@6.0.8(@types/node@20.19.37)':
-    dependencies:
-      '@inquirer/core': 11.1.5(@types/node@20.19.37)
-      '@inquirer/type': 4.0.3(@types/node@20.19.37)
-    optionalDependencies:
-      '@types/node': 20.19.37
 
   '@inquirer/confirm@6.0.8(@types/node@22.19.7)':
     dependencies:
@@ -22992,18 +22973,6 @@ snapshots:
     optionalDependencies:
       '@types/node': 22.19.7
 
-  '@inquirer/core@11.1.5(@types/node@20.19.37)':
-    dependencies:
-      '@inquirer/ansi': 2.0.3
-      '@inquirer/figures': 2.0.3
-      '@inquirer/type': 4.0.3(@types/node@20.19.37)
-      cli-width: 4.1.0
-      fast-wrap-ansi: 0.2.0
-      mute-stream: 3.0.0
-      signal-exit: 4.1.0
-    optionalDependencies:
-      '@types/node': 20.19.37
-
   '@inquirer/core@11.1.5(@types/node@22.19.7)':
     dependencies:
       '@inquirer/ansi': 2.0.3
@@ -23031,14 +23000,6 @@ snapshots:
       '@inquirer/type': 3.0.10(@types/node@22.19.7)
     optionalDependencies:
       '@types/node': 22.19.7
-
-  '@inquirer/editor@5.0.8(@types/node@20.19.37)':
-    dependencies:
-      '@inquirer/core': 11.1.5(@types/node@20.19.37)
-      '@inquirer/external-editor': 2.0.3(@types/node@20.19.37)
-      '@inquirer/type': 4.0.3(@types/node@20.19.37)
-    optionalDependencies:
-      '@types/node': 20.19.37
 
   '@inquirer/editor@5.0.8(@types/node@22.19.7)':
     dependencies:
@@ -23078,13 +23039,6 @@ snapshots:
     optionalDependencies:
       '@types/node': 22.19.7
 
-  '@inquirer/external-editor@2.0.3(@types/node@20.19.37)':
-    dependencies:
-      chardet: 2.1.1
-      iconv-lite: 0.7.2
-    optionalDependencies:
-      '@types/node': 20.19.37
-
   '@inquirer/external-editor@2.0.3(@types/node@22.19.7)':
     dependencies:
       chardet: 2.1.1
@@ -23109,13 +23063,6 @@ snapshots:
       '@inquirer/type': 3.0.10(@types/node@22.19.7)
     optionalDependencies:
       '@types/node': 22.19.7
-
-  '@inquirer/input@5.0.8(@types/node@20.19.37)':
-    dependencies:
-      '@inquirer/core': 11.1.5(@types/node@20.19.37)
-      '@inquirer/type': 4.0.3(@types/node@20.19.37)
-    optionalDependencies:
-      '@types/node': 20.19.37
 
   '@inquirer/input@5.0.8(@types/node@22.19.7)':
     dependencies:
@@ -23238,15 +23185,6 @@ snapshots:
     optionalDependencies:
       '@types/node': 22.19.7
 
-  '@inquirer/select@5.1.0(@types/node@20.19.37)':
-    dependencies:
-      '@inquirer/ansi': 2.0.3
-      '@inquirer/core': 11.1.5(@types/node@20.19.37)
-      '@inquirer/figures': 2.0.3
-      '@inquirer/type': 4.0.3(@types/node@20.19.37)
-    optionalDependencies:
-      '@types/node': 20.19.37
-
   '@inquirer/select@5.1.0(@types/node@22.19.7)':
     dependencies:
       '@inquirer/ansi': 2.0.3
@@ -23263,10 +23201,6 @@ snapshots:
   '@inquirer/type@3.0.10(@types/node@22.19.7)':
     optionalDependencies:
       '@types/node': 22.19.7
-
-  '@inquirer/type@4.0.3(@types/node@20.19.37)':
-    optionalDependencies:
-      '@types/node': 20.19.37
 
   '@inquirer/type@4.0.3(@types/node@22.19.7)':
     optionalDependencies:
@@ -31747,8 +31681,8 @@ snapshots:
       '@typescript-eslint/parser': 8.56.1(eslint@9.39.4(jiti@2.6.1))(typescript@5.9.3)
       eslint: 9.39.4(jiti@2.6.1)
       eslint-import-resolver-node: 0.3.9
-      eslint-import-resolver-typescript: 3.10.1(eslint-plugin-import@2.32.0)(eslint@9.39.4(jiti@2.6.1))
-      eslint-plugin-import: 2.32.0(@typescript-eslint/parser@8.56.1(eslint@9.39.4(jiti@2.6.1))(typescript@5.9.3))(eslint-import-resolver-typescript@3.10.1)(eslint@9.39.4(jiti@2.6.1))
+      eslint-import-resolver-typescript: 3.10.1(eslint-plugin-import@2.32.0(@typescript-eslint/parser@8.56.1(eslint@9.39.4(jiti@2.6.1))(typescript@5.9.3))(eslint@9.39.4(jiti@2.6.1)))(eslint@9.39.4(jiti@2.6.1))
+      eslint-plugin-import: 2.32.0(@typescript-eslint/parser@8.56.1(eslint@9.39.4(jiti@2.6.1))(typescript@5.9.3))(eslint-import-resolver-typescript@3.10.1(eslint-plugin-import@2.32.0(@typescript-eslint/parser@8.56.1(eslint@9.39.4(jiti@2.6.1))(typescript@5.9.3))(eslint@9.39.4(jiti@2.6.1)))(eslint@9.39.4(jiti@2.6.1)))(eslint@9.39.4(jiti@2.6.1))
       eslint-plugin-jsx-a11y: 6.10.2(eslint@9.39.4(jiti@2.6.1))
       eslint-plugin-react: 7.37.5(eslint@9.39.4(jiti@2.6.1))
       eslint-plugin-react-hooks: 5.2.0(eslint@9.39.4(jiti@2.6.1))
@@ -31791,6 +31725,21 @@ snapshots:
     transitivePeerDependencies:
       - supports-color
 
+  eslint-import-resolver-typescript@3.10.1(eslint-plugin-import@2.32.0(@typescript-eslint/parser@8.56.1(eslint@9.39.4(jiti@2.6.1))(typescript@5.9.3))(eslint@9.39.4(jiti@2.6.1)))(eslint@9.39.4(jiti@2.6.1)):
+    dependencies:
+      '@nolyfill/is-core-module': 1.0.39
+      debug: 4.4.3
+      eslint: 9.39.4(jiti@2.6.1)
+      get-tsconfig: 4.13.6
+      is-bun-module: 2.0.0
+      stable-hash: 0.0.5
+      tinyglobby: 0.2.15
+      unrs-resolver: 1.11.1
+    optionalDependencies:
+      eslint-plugin-import: 2.32.0(@typescript-eslint/parser@8.56.1(eslint@9.39.4(jiti@2.6.1))(typescript@5.9.3))(eslint-import-resolver-typescript@3.10.1(eslint-plugin-import@2.32.0(@typescript-eslint/parser@8.56.1(eslint@9.39.4(jiti@2.6.1))(typescript@5.9.3))(eslint@9.39.4(jiti@2.6.1)))(eslint@9.39.4(jiti@2.6.1)))(eslint@9.39.4(jiti@2.6.1))
+    transitivePeerDependencies:
+      - supports-color
+
   eslint-import-resolver-typescript@3.10.1(eslint-plugin-import@2.32.0(eslint@9.39.4(jiti@2.6.1)))(eslint@9.39.4(jiti@2.6.1)):
     dependencies:
       '@nolyfill/is-core-module': 1.0.39
@@ -31806,29 +31755,14 @@ snapshots:
     transitivePeerDependencies:
       - supports-color
 
-  eslint-import-resolver-typescript@3.10.1(eslint-plugin-import@2.32.0)(eslint@9.39.4(jiti@2.6.1)):
-    dependencies:
-      '@nolyfill/is-core-module': 1.0.39
-      debug: 4.4.3
-      eslint: 9.39.4(jiti@2.6.1)
-      get-tsconfig: 4.13.6
-      is-bun-module: 2.0.0
-      stable-hash: 0.0.5
-      tinyglobby: 0.2.15
-      unrs-resolver: 1.11.1
-    optionalDependencies:
-      eslint-plugin-import: 2.32.0(@typescript-eslint/parser@8.56.1(eslint@9.39.4(jiti@2.6.1))(typescript@5.9.3))(eslint-import-resolver-typescript@3.10.1)(eslint@9.39.4(jiti@2.6.1))
-    transitivePeerDependencies:
-      - supports-color
-
-  eslint-module-utils@2.12.1(@typescript-eslint/parser@8.56.1(eslint@9.39.4(jiti@2.6.1))(typescript@5.9.3))(eslint-import-resolver-node@0.3.9)(eslint-import-resolver-typescript@3.10.1)(eslint@9.39.4(jiti@2.6.1)):
+  eslint-module-utils@2.12.1(@typescript-eslint/parser@8.56.1(eslint@9.39.4(jiti@2.6.1))(typescript@5.9.3))(eslint-import-resolver-node@0.3.9)(eslint-import-resolver-typescript@3.10.1(eslint-plugin-import@2.32.0(@typescript-eslint/parser@8.56.1(eslint@9.39.4(jiti@2.6.1))(typescript@5.9.3))(eslint@9.39.4(jiti@2.6.1)))(eslint@9.39.4(jiti@2.6.1)))(eslint@9.39.4(jiti@2.6.1)):
     dependencies:
       debug: 3.2.7
     optionalDependencies:
       '@typescript-eslint/parser': 8.56.1(eslint@9.39.4(jiti@2.6.1))(typescript@5.9.3)
       eslint: 9.39.4(jiti@2.6.1)
       eslint-import-resolver-node: 0.3.9
-      eslint-import-resolver-typescript: 3.10.1(eslint-plugin-import@2.32.0)(eslint@9.39.4(jiti@2.6.1))
+      eslint-import-resolver-typescript: 3.10.1(eslint-plugin-import@2.32.0(@typescript-eslint/parser@8.56.1(eslint@9.39.4(jiti@2.6.1))(typescript@5.9.3))(eslint@9.39.4(jiti@2.6.1)))(eslint@9.39.4(jiti@2.6.1))
     transitivePeerDependencies:
       - supports-color
 
@@ -31842,7 +31776,7 @@ snapshots:
     transitivePeerDependencies:
       - supports-color
 
-  eslint-plugin-import@2.32.0(@typescript-eslint/parser@8.56.1(eslint@9.39.4(jiti@2.6.1))(typescript@5.9.3))(eslint-import-resolver-typescript@3.10.1)(eslint@9.39.4(jiti@2.6.1)):
+  eslint-plugin-import@2.32.0(@typescript-eslint/parser@8.56.1(eslint@9.39.4(jiti@2.6.1))(typescript@5.9.3))(eslint-import-resolver-typescript@3.10.1(eslint-plugin-import@2.32.0(@typescript-eslint/parser@8.56.1(eslint@9.39.4(jiti@2.6.1))(typescript@5.9.3))(eslint@9.39.4(jiti@2.6.1)))(eslint@9.39.4(jiti@2.6.1)))(eslint@9.39.4(jiti@2.6.1)):
     dependencies:
       '@rtsao/scc': 1.1.0
       array-includes: 3.1.9
@@ -31853,7 +31787,7 @@ snapshots:
       doctrine: 2.1.0
       eslint: 9.39.4(jiti@2.6.1)
       eslint-import-resolver-node: 0.3.9
-      eslint-module-utils: 2.12.1(@typescript-eslint/parser@8.56.1(eslint@9.39.4(jiti@2.6.1))(typescript@5.9.3))(eslint-import-resolver-node@0.3.9)(eslint-import-resolver-typescript@3.10.1)(eslint@9.39.4(jiti@2.6.1))
+      eslint-module-utils: 2.12.1(@typescript-eslint/parser@8.56.1(eslint@9.39.4(jiti@2.6.1))(typescript@5.9.3))(eslint-import-resolver-node@0.3.9)(eslint-import-resolver-typescript@3.10.1(eslint-plugin-import@2.32.0(@typescript-eslint/parser@8.56.1(eslint@9.39.4(jiti@2.6.1))(typescript@5.9.3))(eslint@9.39.4(jiti@2.6.1)))(eslint@9.39.4(jiti@2.6.1)))(eslint@9.39.4(jiti@2.6.1))
       hasown: 2.0.2
       is-core-module: 2.16.1
       is-glob: 4.0.3
@@ -37132,185 +37066,6 @@ snapshots:
       tdigest: 0.1.2
 
   promisepipe@3.0.0: {}
-
-  promptfoo@0.120.27(@cfworker/json-schema@4.1.1)(@cloudflare/workers-types@4.20260307.1)(@langchain/core@0.3.80(@opentelemetry/api@1.9.0)(@opentelemetry/exporter-trace-otlp-proto@0.52.1(@opentelemetry/api@1.9.0))(@opentelemetry/sdk-trace-base@2.6.0(@opentelemetry/api@1.9.0))(openai@6.27.0(ws@8.19.0)(zod@3.25.76)))(@neondatabase/serverless@1.0.2)(@noble/hashes@2.0.1)(@swc/helpers@0.5.19)(@types/json-schema@7.0.15)(@types/node@20.19.37)(@types/pg@8.11.6)(@types/react@19.2.14)(encoding@0.1.13)(gel@2.2.0)(kysely@0.28.11)(pg@8.20.0)(playwright-core@1.58.2)(socks@2.8.7):
-    dependencies:
-      '@anthropic-ai/sdk': 0.78.0(zod@4.3.6)
-      '@apidevtools/json-schema-ref-parser': 15.3.1(@types/json-schema@7.0.15)
-      '@googleapis/sheets': 13.0.1
-      '@inquirer/checkbox': 5.1.0(@types/node@20.19.37)
-      '@inquirer/confirm': 6.0.8(@types/node@20.19.37)
-      '@inquirer/core': 11.1.5(@types/node@20.19.37)
-      '@inquirer/editor': 5.0.8(@types/node@20.19.37)
-      '@inquirer/input': 5.0.8(@types/node@20.19.37)
-      '@inquirer/select': 5.1.0(@types/node@20.19.37)
-      '@modelcontextprotocol/sdk': 1.27.1(@cfworker/json-schema@4.1.1)(zod@4.3.6)
-      '@openai/agents': 0.5.4(@cfworker/json-schema@4.1.1)(ws@8.19.0)(zod@4.3.6)
-      '@opencode-ai/sdk': 1.2.23
-      '@opentelemetry/api': 1.9.0
-      '@opentelemetry/core': 2.6.0(@opentelemetry/api@1.9.0)
-      '@opentelemetry/exporter-trace-otlp-http': 0.212.0(@opentelemetry/api@1.9.0)
-      '@opentelemetry/resources': 2.6.0(@opentelemetry/api@1.9.0)
-      '@opentelemetry/sdk-trace-base': 2.6.0(@opentelemetry/api@1.9.0)
-      '@opentelemetry/sdk-trace-node': 2.6.0(@opentelemetry/api@1.9.0)
-      '@opentelemetry/semantic-conventions': 1.40.0
-      '@types/ws': 8.18.1
-      ai: 6.0.116(zod@4.3.6)
-      ajv: 8.18.0
-      ajv-formats: 3.0.1(ajv@8.18.0)
-      async: 3.2.6
-      better-sqlite3: 12.6.2
-      binary-extensions: 3.1.0
-      cache-manager: 7.2.8
-      chalk: 5.6.2
-      chokidar: 5.0.0
-      cli-progress: 3.12.0
-      cli-table3: 0.6.5
-      commander: 14.0.3
-      compression: 1.8.1
-      cors: 2.8.6
-      csv-parse: 6.1.0
-      csv-stringify: 6.6.0
-      debounce: 3.0.0
-      dedent: 1.7.2
-      dotenv: 17.3.1
-      drizzle-orm: 0.45.1(@cloudflare/workers-types@4.20260307.1)(@neondatabase/serverless@1.0.2)(@opentelemetry/api@1.9.0)(@types/pg@8.11.6)(better-sqlite3@12.6.2)(gel@2.2.0)(kysely@0.28.11)(pg@8.20.0)
-      execa: 9.6.1
-      express: 5.2.1
-      exsolve: 1.0.8
-      fast-deep-equal: 3.1.3
-      fast-safe-stringify: 2.1.1
-      fast-xml-parser: 5.4.2
-      fastest-levenshtein: 1.0.16
-      gcp-metadata: 8.1.2
-      glob: 13.0.6
-      http-z: 8.1.1
-      ink: 6.8.0(@types/react@19.2.14)(react@19.2.4)
-      istextorbinary: 9.5.0
-      jks-js: 1.1.5
-      js-rouge: 3.2.0
-      js-yaml: 4.1.1
-      jsdom: 28.1.0(@noble/hashes@2.0.1)
-      keyv: 5.6.0
-      keyv-file: 5.3.3
-      lru-cache: 11.2.6
-      mathjs: 15.1.1
-      minimatch: 10.2.4
-      nunjucks: 3.2.4(chokidar@5.0.0)
-      openai: 6.27.0(ws@8.19.0)(zod@4.3.6)
-      opener: 1.5.2
-      ora: 9.3.0
-      pem: 1.14.8
-      posthog-node: 5.24.17
-      protobufjs: 8.0.0
-      proxy-agent: 6.5.0
-      proxy-from-env: 2.0.0
-      python-shell: 5.0.0
-      react: 19.2.4
-      rfdc: 1.4.1
-      rxjs: 7.8.2
-      semver: 7.7.4
-      simple-git: 3.32.3
-      socket.io: 4.8.3
-      socket.io-client: 4.8.3
-      text-extensions: 3.1.0
-      tsx: 4.21.0
-      undici: 7.22.0
-      winston: 3.19.0
-      ws: 8.19.0
-      zod: 4.3.6
-    optionalDependencies:
-      '@anthropic-ai/claude-agent-sdk': 0.2.71(zod@4.3.6)
-      '@aws-sdk/client-bedrock-agent-runtime': 3.1004.0
-      '@aws-sdk/client-bedrock-runtime': 3.1004.0
-      '@aws-sdk/client-s3': 3.1004.0
-      '@aws-sdk/client-sagemaker-runtime': 3.1004.0
-      '@aws-sdk/credential-provider-sso': 3.972.17
-      '@azure/ai-projects': 1.0.1(ws@8.19.0)(zod@4.3.6)
-      '@azure/identity': 4.13.0
-      '@azure/msal-node': 5.0.6
-      '@azure/openai-assistants': 1.0.0-beta.6
-      '@fal-ai/client': 1.9.4
-      '@huggingface/transformers': 3.8.1
-      '@ibm-cloud/watsonx-ai': 1.7.9
-      '@ibm-generative-ai/node-sdk': 3.2.4(@langchain/core@0.3.80(@opentelemetry/api@1.9.0)(@opentelemetry/exporter-trace-otlp-proto@0.52.1(@opentelemetry/api@1.9.0))(@opentelemetry/sdk-trace-base@2.6.0(@opentelemetry/api@1.9.0))(openai@6.27.0(ws@8.19.0)(zod@3.25.76)))(encoding@0.1.13)
-      '@openai/codex-sdk': 0.110.0
-      '@playwright/browser-chromium': 1.58.2
-      '@rollup/rollup-linux-x64-gnu': 4.59.0
-      '@slack/web-api': 7.14.1
-      '@smithy/node-http-handler': 4.4.14
-      '@swc/core': 1.15.18(@swc/helpers@0.5.19)
-      '@swc/core-darwin-arm64': 1.15.18
-      '@swc/core-darwin-x64': 1.15.18
-      '@swc/core-linux-x64-gnu': 1.15.18
-      '@swc/core-linux-x64-musl': 1.15.18
-      '@swc/core-win32-x64-msvc': 1.15.18
-      google-auth-library: 10.6.1
-      hono: 4.12.5
-      ibm-cloud-sdk-core: 5.4.8
-      langfuse: 3.38.6
-      natural: 8.1.1(gcp-metadata@8.1.2)(socks@2.8.7)
-      node-sql-parser: 5.4.0
-      pdf-parse: 2.4.5
-      playwright: 1.58.2
-      playwright-extra: 4.3.6(playwright-core@1.58.2)(playwright@1.58.2)
-      puppeteer-extra-plugin-stealth: 2.11.2(playwright-extra@4.3.6(playwright-core@1.58.2)(playwright@1.58.2))
-      read-excel-file: 7.0.2
-      sharp: 0.34.5
-    transitivePeerDependencies:
-      - '@aws-sdk/client-rds-data'
-      - '@aws-sdk/credential-providers'
-      - '@cfworker/json-schema'
-      - '@cloudflare/workers-types'
-      - '@electric-sql/pglite'
-      - '@langchain/core'
-      - '@libsql/client'
-      - '@libsql/client-wasm'
-      - '@mongodb-js/zstd'
-      - '@neondatabase/serverless'
-      - '@noble/hashes'
-      - '@node-rs/xxhash'
-      - '@op-engineering/op-sqlite'
-      - '@planetscale/database'
-      - '@prisma/client'
-      - '@swc/helpers'
-      - '@tidbcloud/serverless'
-      - '@types/better-sqlite3'
-      - '@types/json-schema'
-      - '@types/node'
-      - '@types/pg'
-      - '@types/react'
-      - '@types/sql.js'
-      - '@upstash/redis'
-      - '@vercel/postgres'
-      - '@xata.io/client'
-      - aws-crt
-      - babel-plugin-macros
-      - bufferutil
-      - bun-types
-      - canvas
-      - debug
-      - encoding
-      - expo-sqlite
-      - gel
-      - kerberos
-      - knex
-      - kysely
-      - mongodb-client-encryption
-      - mysql2
-      - pg
-      - pg-native
-      - playwright-core
-      - postgres
-      - prisma
-      - puppeteer-extra
-      - react-devtools-core
-      - snappy
-      - socks
-      - sql.js
-      - sqlite3
-      - supports-color
-      - utf-8-validate
 
   promptfoo@0.120.27(@cfworker/json-schema@4.1.1)(@cloudflare/workers-types@4.20260307.1)(@langchain/core@0.3.80(@opentelemetry/api@1.9.0)(@opentelemetry/exporter-trace-otlp-proto@0.52.1(@opentelemetry/api@1.9.0))(@opentelemetry/sdk-trace-base@2.6.0(@opentelemetry/api@1.9.0))(openai@6.27.0(ws@8.19.0)(zod@3.25.76)))(@neondatabase/serverless@1.0.2)(@noble/hashes@2.0.1)(@swc/helpers@0.5.19)(@types/json-schema@7.0.15)(@types/node@22.19.7)(@types/pg@8.11.6)(@types/react@19.2.14)(encoding@0.1.13)(gel@2.2.0)(kysely@0.28.11)(pg@8.20.0)(playwright-core@1.58.2)(socks@2.8.7):
     dependencies:

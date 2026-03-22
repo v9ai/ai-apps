@@ -31,7 +31,7 @@ def _detect_app_dir(app_path: Path) -> Path | None:
 
 
 async def scan_node(state: dict[str, Any]) -> dict[str, Any]:
-    apps_root = Path(__file__).resolve().parents[4] / "apps"
+    apps_root = Path(__file__).resolve().parents[5] / "apps"
     filter_app: str | None = state.get("filter_app")
 
     print(f"\n🔍  Scanning apps in {apps_root}\n")

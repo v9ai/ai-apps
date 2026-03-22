@@ -328,6 +328,29 @@ extra_sections_metric = GEval(
     threshold=THRESHOLD,
 )
 
+technical_details_quality_metric = GEval(
+    name="Technical Details Quality",
+    criteria=(
+        "Evaluate the 'technicalDetails' array in the JSON output. "
+        "These are structured blocks (table, card-grid, code, diagram) that visualise "
+        "key architectural facts. Check that: "
+        "(1) There are 2–5 entries covering distinct, significant aspects of the app, "
+        "(2) Types are valid: 'table', 'card-grid', 'code', or 'diagram', "
+        "(3) Table/card-grid entries have specific items with named labels and values "
+        "(e.g., route paths, table columns, library functions — not generic descriptions), "
+        "(4) Code entries contain actual code patterns from the codebase, not pseudocode, "
+        "(5) Headings are unique and descriptive (e.g., 'API Routes', 'Database Schema'), "
+        "(6) Technical detail blocks supplement extraSections with structured data — "
+        "they should not just repeat prose already in extraSections, "
+        "(7) All labels and values reference concrete artefacts (function names, "
+        "table names, API paths, package names). "
+        "Penalize empty items arrays, generic placeholder values, or duplicate headings."
+    ),
+    evaluation_params=[LLMTestCaseParams.INPUT, LLMTestCaseParams.ACTUAL_OUTPUT],
+    model=model,
+    threshold=THRESHOLD,
+)
+
 json_schema_compliance_metric = GEval(
     name="JSON Schema Compliance",
     criteria=(

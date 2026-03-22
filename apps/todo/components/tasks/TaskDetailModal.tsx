@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useRef, useCallback, useEffect, useTransition, forwardRef } from "react";
+import { useState, useRef, useEffect, useTransition } from "react";
 import { useRouter } from "next/navigation";
 import {
   Box,
@@ -10,6 +10,7 @@ import {
   Text,
   Badge,
   TextField,
+  TextArea,
   Select,
 } from "@radix-ui/themes";
 import { PriorityBadge } from "./PriorityBadge";
@@ -31,69 +32,6 @@ type Task = {
   completedAt: Date | null;
 };
 
-const AutoGrowTextArea = forwardRef<
-  HTMLTextAreaElement,
-  {
-    value: string;
-    onChange: (e: React.ChangeEvent<HTMLTextAreaElement>) => void;
-    onBlur: () => void;
-    placeholder?: string;
-    className?: string;
-    ariaLabel?: string;
-  }
->(function AutoGrowTextArea(
-  { value, onChange, onBlur, placeholder, className, ariaLabel },
-  forwardedRef
-) {
-  const innerRef = useRef<HTMLTextAreaElement>(null);
-  const resize = useCallback(() => {
-    const el = innerRef.current;
-    if (!el) return;
-    el.style.height = "0";
-    el.style.height = `${el.scrollHeight}px`;
-  }, []);
-
-  useEffect(() => {
-    resize();
-  }, [value, resize]);
-
-  return (
-    <textarea
-      ref={(el) => {
-        innerRef.current = el;
-        if (typeof forwardedRef === "function") forwardedRef(el);
-        else if (forwardedRef) forwardedRef.current = el;
-      }}
-      className={className}
-      value={value}
-      onChange={(e) => {
-        onChange(e);
-        resize();
-      }}
-      onBlur={onBlur}
-      placeholder={placeholder}
-      aria-label={ariaLabel}
-      rows={1}
-      style={{
-        width: "100%",
-        resize: "none",
-        overflow: "hidden",
-        marginBottom: 8,
-        padding: "6px 8px",
-        fontSize: "var(--font-size-2)",
-        lineHeight: "var(--line-height-2)",
-        minHeight: "calc(var(--line-height-2) + 12px)",
-        fontFamily: "inherit",
-        borderRadius: "var(--radius-1)",
-        border: "1px solid transparent",
-        background: "transparent",
-        color: "var(--gray-12)",
-        outline: "none",
-        transition: "border-color 150ms, background 150ms",
-      }}
-    />
-  );
-});
 
 export function TaskDetailModal({
   task,
@@ -289,14 +227,14 @@ export function TaskDetailModal({
             )
           ) : (
             <>
-              <AutoGrowTextArea
+              <TextArea
                 ref={descriptionRef}
-                className="auto-grow-textarea"
                 value={editDescription}
                 onChange={(e) => setEditDescription(e.target.value)}
                 onBlur={handleDescriptionBlur}
                 placeholder="Notes"
-                ariaLabel={`Description for ${editTitle}`}
+                aria-label={`Description for ${editTitle}`}
+                rows={3}
               />
               <Flex gap="2" wrap="wrap">
                 <TextField.Root

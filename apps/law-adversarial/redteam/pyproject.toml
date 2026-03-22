@@ -1,0 +1,17 @@
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[project]
+name = "law-redteam"
+version = "0.1.0"
+description = "DeepTeam red-teaming evals for the law-adversarial pipeline"
+requires-python = ">=3.9"
+dependencies = [
+    "deepteam>=1.0",
+    "openai",
+    "python-dotenv",
+]
+
+[project.scripts]
+law-redteam = "redteam.run_all:main"

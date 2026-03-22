@@ -461,6 +461,61 @@ SAMPLE_INVALID_JSON = """{
 }"""
 
 # ═══════════════════════════════════════════════════════════════════════════════
+# SAMPLE_GENERATED_JSON extended with technicalDetails (for tech-details evals)
+# ═══════════════════════════════════════════════════════════════════════════════
+
+import json as _json
+
+_base = _json.loads(SAMPLE_GENERATED_JSON)
+_base["technicalDetails"] = [
+    {
+        "type": "table",
+        "heading": "API Routes",
+        "description": "Authenticated REST endpoints for todo management",
+        "items": [
+            {
+                "label": "GET /api/todos",
+                "value": "List all todos for the authenticated user; "
+                "filtered via eq(todo.userId, session.user.id)",
+            },
+            {
+                "label": "POST /api/todos",
+                "value": "Create a new todo; expects { title }; "
+                "returns 201 with created row via .returning()",
+            },
+        ],
+    },
+    {
+        "type": "table",
+        "heading": "Database Schema",
+        "description": "PostgreSQL tables defined in src/db/schema.ts",
+        "items": [
+            {
+                "label": "user",
+                "value": "id (text PK), name (text), email (text unique), "
+                "created_at (timestamp defaultNow)",
+            },
+            {
+                "label": "todo",
+                "value": "id (uuid PK, defaultRandom), user_id (text FK → user.id), "
+                "title (text), completed (boolean default false), created_at (timestamp)",
+            },
+        ],
+    },
+    {
+        "type": "code",
+        "heading": "Session-Gated Query Pattern",
+        "description": "Pattern repeated in every API route handler",
+        "code": (
+            "const session = await auth.api.getSession({ headers: req.headers });\n"
+            "if (!session) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });\n"
+            "const todos = await db.select().from(todo).where(eq(todo.userId, session.user.id));"
+        ),
+    },
+]
+SAMPLE_GENERATED_JSON_WITH_TECHNICAL_DETAILS = _json.dumps(_base)
+
+# ═══════════════════════════════════════════════════════════════════════════════
 # Test case identifiers
 # ═══════════════════════════════════════════════════════════════════════════════
 

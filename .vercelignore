@@ -1,14 +1,11 @@
-# Exclude all apps except agentic-healthcare and nomadically.work
+# Exclude all apps except agentic-healthcare, nomadically.work, and todo
 apps/knowledge
-apps/law-adversarial
 apps/podcasts
 apps/real-estate
 apps/research-thera
-apps/todo
 apps/vadim.blog
 
 # Exclude packages not needed by agentic-healthcare
-packages/deepseek
 packages/qwen
 packages/llm-router
 packages/og
