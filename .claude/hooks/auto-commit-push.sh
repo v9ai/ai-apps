@@ -29,7 +29,7 @@ if [ -z "$SUMMARY" ]; then
     SUMMARY=$(git diff --cached --stat | tail -1)
 fi
 
-git commit -m "auto: ${SUMMARY}" --no-verify > /dev/null 2>&1 || exit 0
+git commit -m "${SUMMARY}" --no-verify > /dev/null 2>&1 || exit 0
 
 # Push (best-effort, don't block Claude)
 git push --no-verify > /dev/null 2>&1 &
