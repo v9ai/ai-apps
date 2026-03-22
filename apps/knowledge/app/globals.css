@@ -96,6 +96,15 @@ body {
   font-variant-numeric: tabular-nums;
 }
 
+.yc-topbar-signin {
+  margin-left: 16px;
+  font-size: 12px;
+  font-weight: 500;
+  color: var(--gray-11);
+  text-decoration: none;
+}
+.yc-topbar-signin:hover { color: var(--accent-11); }
+
 /* ================================================================
    READING PROGRESS BAR
    ================================================================ */
