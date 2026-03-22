@@ -20,6 +20,8 @@ N_SCOPE=$(echo "$SCOPE" | grep -c . 2>/dev/null || echo 0)
 
 if [ "$N_SCOPE" -eq 1 ] && [ -n "$SCOPE" ]; then
     TAG="($SCOPE)"
+elif [ "$N_SCOPE" -gt 1 ]; then
+    TAG="($(echo "$SCOPE" | paste -sd ',' -))"
 elif echo "$FILES" | grep -q '^crates/'; then
     TAG="(crates)"
 elif echo "$FILES" | grep -q '^packages/'; then
