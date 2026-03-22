@@ -238,7 +238,7 @@ export function SearchModal({ open: controlledOpen, onClose, triggerRef }: Searc
   return (
     <div
       ref={modalRef}
-      className={css({ pos: 'fixed', inset: '0', zIndex: 100, display: 'flex', alignItems: 'flex-start', justifyContent: 'center', pt: 'min(20vh, 10rem)' })}
+      className={css({ pos: 'fixed', inset: '0', zIndex: 100, display: 'flex', alignItems: 'flex-start', justifyContent: 'center', pt: { base: '5rem', sm: 'min(20vh, 10rem)' } })}
       role="dialog"
       aria-modal="true"
       aria-label="Search personalities"
@@ -546,7 +546,7 @@ export function SearchModal({ open: controlledOpen, onClose, triggerRef }: Searc
 
         {/* Footer keyboard hints */}
         <div className={css({ h: '1px', bg: 'linear-gradient(90deg, transparent 0%, rgba(255,255,255,0.08) 20%, rgba(255,255,255,0.12) 50%, rgba(255,255,255,0.08) 80%, transparent 100%)' })} />
-        <div className={css({ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '5', px: '4', py: '2.5', fontSize: '11px', color: '#55555F' })}>
+        <div className={css({ display: 'none', sm: { display: 'flex' }, alignItems: 'center', justifyContent: 'center', gap: '5', px: '4', py: '2.5', fontSize: '11px', color: '#55555F' })}>
           <span className={css({ display: 'flex', alignItems: 'center', gap: '1.5' })}>
             <span className={css({ display: 'inline-flex', gap: '2px' })}>
               <kbd className={css({ display: 'inline-flex', alignItems: 'center', justifyContent: 'center', w: '20px', h: '20px', rounded: 'md', bg: 'rgba(255,255,255,0.05)', borderWidth: '1px', borderColor: 'rgba(255,255,255,0.07)', boxShadow: 'inset 0 1px 0 rgba(255,255,255,0.04), 0 1px 2px rgba(0,0,0,0.15)' })}>&uarr;</kbd>

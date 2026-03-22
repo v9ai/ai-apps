@@ -1,0 +1,29 @@
+{
+  "slug": "crispin-courtenay",
+  "name": "Crispin Courtenay",
+  "generated_at": "2026-03-22T15:44:54+00:00",
+  "eval": {
+    "bio_quality": {
+      "score": 9,
+      "reasoning": "The biography is highly specific, evidence-based, and informative. It clearly articulates Crispin Courtenay's role as founder of VerticGraph, his consulting background (AI Strategy, 2016), technical focus (graph-based precedent mapping, Neo4j GraphRAG, zero-trust AI), quantifiable impact metrics (70% reduction in document review time, 40% compliance prep reduction), and professional positioning (fractional CTO, Clio Developer Partner). It integrates entrepreneurial, technical, and domain-specific (legal tech) elements cohesively. Minor deduction for lack of explicit citation to the source of impact metrics."
+    },
+    "source_coverage": {
+      "score": 7,
+      "reasoning": "Sources are moderately diverse but uneven in depth. Strong sources include the VerticGraph website, GitHub repository for the DBS Protocol, and Contra profile, which provide technical and product details. However, attempts to fetch Crunchbase, podcast appearances, and personal websites returned incomplete or no results, indicating gaps in biographical and media coverage. The competitive landscape analysis is well-reasoned but appears synthesized rather than directly cited from competitor materials. Reliance on the company's own domain for multiple contributions limits external validation."
+    },
+    "timeline_completeness": {
+      "score": 6,
+      "reasoning": "Timeline is fragmented and lacks consistent chronological sourcing. The biography provides key dates (2016 for AI Strategy, 2023-2024 for VerticGraph launch, 2025 for v5.1), and the funding section includes business milestones, but there is no unified, well-sourced timeline. The attempted Crunchbase fetch did not return content, and no alternative professional history (previous roles, education) is provided. The timeline is inferred from narrative mentions rather than structured event data."
+    },
+    "contributions_depth": {
+      "score": 9,
+      "reasoning": "Contributions are exceptionally detailed, specific, and include tangible impact data. The four listed contributions (DBS Protocol, VerticGraph Platform, Governance-First GraphRAG Architecture, Zero-Trust AI Framework) are each described with clear technical differentiation, significance, adoption context, and validation (e.g., alignment with NIST, ISO standards, quantifiable efficiency gains). URLs are provided for verification. The depth demonstrates a strong architectural and governance-focused approach to AI in legal tech. Minor deduction because some impact metrics are presented without independent validation."
+    },
+    "name_disambiguation": {
+      "score": 10,
+      "reasoning": "Perfect score. All research is tightly focused on Crispin Courvenay as founder of VerticGraph and AI Strategy. No ambiguous references or confusion with other individuals. The profile consistently ties all contributions, topics, competitive positioning, and collaborations to this specific entrepreneurial and technical identity in the legal AI/graph technology space."
+    },
+    "overall_score": 8.2,
+    "summary": "Crispin Courvenay's research profile is highly specific and technically detailed, particularly strong in bio specificity, contribution depth, and name disambiguation. The profile paints a clear picture of a legal tech entrepreneur focused on graph-based AI, governance, and enterprise security. Primary gaps are in source diversity and timeline completeness: missing independent validation of impact metrics, limited media/podcast coverage, and no structured career chronology. The competitive analysis is robust but internally synthesized. To improve, add verified third-party coverage (news articles, podcast recordings), fetch complete Crunchbase/LinkedIn data for timeline, and seek external validation of adoption claims from client case studies or industry reports."
+  }
+}

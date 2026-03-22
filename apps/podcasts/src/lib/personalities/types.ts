@@ -54,6 +54,23 @@ export type PersonResearch = {
   social: Record<string, string>;
   sources: { title: string; url: string }[];
   videos?: Video[];
+  executive_summary?: {
+    one_liner: string;
+    key_facts: string[];
+    career_arc: string;
+    current_focus: string;
+    industry_significance?: string;
+    risk_factors?: string[];
+    meeting_prep?: string[];
+    confidence_level?: string;
+  };
+  competitive_landscape?: Record<string, unknown>;
+  collaboration_network?: Record<string, unknown>;
+  funding?: Record<string, unknown>;
+  conferences?: Record<string, unknown>;
+  technical_philosophy?: Record<string, unknown>;
+  podcast_appearances?: Record<string, unknown>[];
+  news?: Record<string, string>[];
 };
 
 export type Personality = {

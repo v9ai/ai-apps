@@ -56,7 +56,7 @@ export function StoryGrid({ personalities, quotes }: StoryGridProps) {
           className={css({
             display: "grid",
             gridTemplateColumns: {
-              base: "1fr",
+              base: "repeat(auto-fill, minmax(min(100%, 280px), 1fr))",
               sm: "repeat(2, 1fr)",
               lg: "repeat(3, 1fr)",
               xl: "repeat(4, 1fr)",
@@ -88,8 +88,8 @@ export function StoryGrid({ personalities, quotes }: StoryGridProps) {
         aria-label="Scroll to top"
         className={css({
           position: "fixed",
-          bottom: "8",
-          right: "8",
+          bottom: { base: "4", md: "8" },
+          right: { base: "4", md: "8" },
           zIndex: 50,
           display: "flex",
           alignItems: "center",

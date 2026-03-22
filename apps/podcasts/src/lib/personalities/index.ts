@@ -132,6 +132,8 @@ import vasilijeMarkovic from "../../../personalities/vasilije-markovic";
 import shayBanon from "../../../personalities/shay-banon";
 import andrewKane from "../../../personalities/andrew-kane";
 
+import crispinCourtenay from "../../../personalities/crispin-courtenay";
+
 export const categories: Category[] = [
   {
     title: "Lab Leaders & Founders",
@@ -141,7 +143,7 @@ export const categories: Category[] = [
   {
     title: "Builders & Technical Leaders",
     slug: "builders",
-    personalities: [andrejKarpathy, borisCherny, harrisonChase, jerryLiu, ilyaSutskever, joaoMoura, samuelColvin, simonWillison, jeffreyIp, gregBrockman, miraMurati, chrisLattner, georgeHotz, guillaumeLample, mateiZaharia, soumithChintala, paulGauthier, jeremyHoward, omarSanseviero, sylvainGugger, lewisTunstall, philippSchmid, toranRichards, xingyaoWang, younesBelkada, killianLucas, teknium, ericHartford, robertBrennan, erikBjareholt, jasonLiu, nateRaw, yihDarShieh, siruiHong, hamelHusain, patrickVonPlaten, chiWang, lysandreDebut, anushaLihala, joshuaMo, janniTurunen],
+    personalities: [andrejKarpathy, borisCherny, harrisonChase, jerryLiu, ilyaSutskever, joaoMoura, samuelColvin, simonWillison, jeffreyIp, gregBrockman, miraMurati, chrisLattner, georgeHotz, guillaumeLample, mateiZaharia, soumithChintala, paulGauthier, jeremyHoward, omarSanseviero, sylvainGugger, lewisTunstall, philippSchmid, toranRichards, xingyaoWang, younesBelkada, killianLucas, teknium, ericHartford, robertBrennan, erikBjareholt, jasonLiu, nateRaw, yihDarShieh, siruiHong, hamelHusain, patrickVonPlaten, chiWang, lysandreDebut, anushaLihala, joshuaMo, janniTurunen, crispinCourtenay],
   },
   {
     title: "Researchers & Thinkers",

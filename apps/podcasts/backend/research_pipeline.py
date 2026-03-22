@@ -93,7 +93,7 @@ def _make_client() -> DeepSeekClient:
 _SKIP_DOMAINS = {
     "twitter.com", "x.com", "linkedin.com", "youtube.com", "youtu.be",
     "reddit.com", "facebook.com", "instagram.com", "tiktok.com",
-    "pinterest.com", "amazon.com", "wikipedia.org", "wikimedia.org",
+    "pinterest.com", "amazon.com",
     "cnn.com", "bbc.com", "bbc.co.uk", "foxnews.com", "nytimes.com",
     "washingtonpost.com", "reuters.com", "apnews.com", "goodreads.com",
 }
@@ -106,7 +106,7 @@ def web_search(query: str) -> str:
     results = []
     try:
         with DDGS() as ddgs:
-            for r in ddgs.text(query, max_results=10):
+            for r in ddgs.text(query, max_results=20):
                 results.append(
                     f"- [{r.get('title', 'Untitled')}]({r.get('href', '')})\n"
                     f"  {r.get('body', '')[:300]}"
@@ -123,7 +123,7 @@ def web_news_search(query: str) -> str:
     results = []
     try:
         with DDGS() as ddgs:
-            for r in ddgs.news(query, max_results=10):
+            for r in ddgs.news(query, max_results=15):
                 results.append(
                     f"- [{r.get('title', 'Untitled')}]({r.get('url', '')})\n"
                     f"  {r.get('date', '')} | {r.get('source', '')}\n"
@@ -141,7 +141,7 @@ def video_search(query: str) -> str:
     results = []
     try:
         with DDGS() as ddgs:
-            for r in ddgs.videos(query, max_results=10):
+            for r in ddgs.videos(query, max_results=20):
                 results.append(
                     f"- [{r.get('title', 'Untitled')}]({r.get('content', '')})\n"
                     f"  Duration: {r.get('duration', 'N/A')} | Publisher: {r.get('publisher', '')}\n"
@@ -165,7 +165,7 @@ def fetch_url_content(url: str) -> str:
             text = re.sub(r"<script[^>]*>.*?</script>", " ", resp.text, flags=re.S | re.I)
             text = re.sub(r"<style[^>]*>.*?</style>", " ", text, flags=re.S | re.I)
             text = re.sub(r"<[^>]+>", " ", text)
-            return re.sub(r"\s+", " ", text).strip()[:5000]
+            return re.sub(r"\s+", " ", text).strip()[:12000]
     except Exception as e:
         return f"Fetch failed: {e}"
 
@@ -413,6 +413,155 @@ def fetch_hf_author(username: str) -> str:
     return "\n".join(lines) if lines else "(no HuggingFace data)"
 
 
+def fetch_wikipedia_summary(query: str) -> str:
+    """Fetch Wikipedia summary and key facts for a person or topic."""
+    try:
+        with httpx.Client(timeout=_HTTP_TIMEOUT) as client:
+            search_resp = client.get(
+                "https://en.wikipedia.org/w/api.php",
+                params={
+                    "action": "query", "list": "search",
+                    "srsearch": query, "format": "json", "srlimit": 3,
+                },
+            )
+            if search_resp.status_code != 200:
+                return "(Wikipedia search failed)"
+            results = search_resp.json().get("query", {}).get("search", [])
+            if not results:
+                return "(no Wikipedia article found)"
+
+            title = results[0]["title"]
+            summary_resp = client.get(
+                f"https://en.wikipedia.org/api/rest_v1/page/summary/{title}",
+                headers={"User-Agent": "ResearchBot/1.0"},
+            )
+            if summary_resp.status_code != 200:
+                return f"(Wikipedia HTTP {summary_resp.status_code})"
+            data = summary_resp.json()
+
+            lines = [
+                f"Title: {data.get('title', '')}",
+                f"Description: {data.get('description', '')}",
+                f"Extract: {data.get('extract', '')}",
+                f"URL: {data.get('content_urls', {}).get('desktop', {}).get('page', '')}",
+            ]
+
+            parse_resp = client.get(
+                "https://en.wikipedia.org/w/api.php",
+                params={
+                    "action": "parse", "page": title,
+                    "prop": "wikitext", "section": 0,
+                    "format": "json",
+                },
+            )
+            if parse_resp.status_code == 200:
+                wikitext = parse_resp.json().get("parse", {}).get("wikitext", {}).get("*", "")
+                clean = re.sub(r"\{\{[^}]+\}\}", "", wikitext)
+                clean = re.sub(r"\[\[(?:[^|\]]*\|)?([^\]]+)\]\]", r"\1", clean)
+                clean = re.sub(r"'{2,}", "", clean)
+                clean = re.sub(r"<[^>]+>", "", clean)
+                if len(clean) > 200:
+                    lines.append(f"\nFull intro:\n{clean[:3000]}")
+
+            return "\n".join(lines)
+    except Exception as e:
+        return f"Wikipedia fetch failed: {e}"
+
+
+def search_openalex(query: str) -> str:
+    """Search OpenAlex for academic works and author profiles. Free, no API key needed."""
+    lines = []
+    try:
+        with httpx.Client(timeout=_HTTP_TIMEOUT) as client:
+            resp = client.get(
+                "https://api.openalex.org/authors",
+                params={"search": query, "per_page": 3},
+                headers={"User-Agent": "mailto:research@example.com"},
+            )
+            if resp.status_code == 200:
+                for author in resp.json().get("results", []):
+                    affiliations = ", ".join(
+                        inst.get("display_name", "")
+                        for inst in (author.get("affiliations") or [])[:3]
+                    )
+                    lines.append(
+                        f"Author: {author.get('display_name', '')}\n"
+                        f"  Works: {author.get('works_count', 0)}\n"
+                        f"  Citations: {author.get('cited_by_count', 0)}\n"
+                        f"  h-index: {author.get('summary_stats', {}).get('h_index', 'N/A')}\n"
+                        f"  Affiliations: {affiliations}"
+                    )
+            resp = client.get(
+                "https://api.openalex.org/works",
+                params={"search": query, "per_page": 10, "sort": "cited_by_count:desc"},
+                headers={"User-Agent": "mailto:research@example.com"},
+            )
+            if resp.status_code == 200:
+                works = resp.json().get("results", [])
+                if works:
+                    lines.append("\nTop Works:")
+                    for w in works:
+                        authors = ", ".join(
+                            a.get("author", {}).get("display_name", "")
+                            for a in (w.get("authorships") or [])[:3]
+                        )
+                        lines.append(
+                            f"  - [{w.get('publication_year', '')}] {w.get('title', '')}\n"
+                            f"    Citations: {w.get('cited_by_count', 0)} | {authors}\n"
+                            f"    DOI: {w.get('doi', '')}"
+                        )
+    except Exception as e:
+        return f"OpenAlex search failed: {e}"
+    return "\n".join(lines) if lines else "(no OpenAlex results)"
+
+
+def check_social_url(url: str) -> str:
+    """Check if a URL exists (HTTP HEAD). Returns status code and final URL after redirects."""
+    try:
+        with httpx.Client(timeout=8, follow_redirects=True) as client:
+            resp = client.head(url, headers={"User-Agent": "Mozilla/5.0"})
+            return f"Status: {resp.status_code} | Final URL: {resp.url}"
+    except Exception as e:
+        return f"URL check failed: {e}"
+
+
+def fetch_github_repos_extended(username: str) -> str:
+    """Fetch all significant repositories for a GitHub user with creation dates and topics."""
+    if not username or username.strip() in ("", "unknown"):
+        return "(no username provided)"
+    lines = []
+    headers = {"Accept": "application/vnd.github.v3+json"}
+    token = os.environ.get("GITHUB_TOKEN", "")
+    if token:
+        headers["Authorization"] = f"token {token}"
+    try:
+        with httpx.Client(timeout=_HTTP_TIMEOUT) as client:
+            for page in range(1, 4):
+                resp = client.get(
+                    f"https://api.github.com/users/{username}/repos",
+                    params={"sort": "stars", "direction": "desc", "per_page": 30, "page": page},
+                    headers=headers,
+                )
+                if resp.status_code != 200:
+                    break
+                repos = resp.json()
+                if not repos:
+                    break
+                for r in repos:
+                    if r.get("fork") or r.get("stargazers_count", 0) < 5:
+                        continue
+                    lines.append(
+                        f"- {r['name']} ({r.get('stargazers_count', 0)} stars)\n"
+                        f"  Created: {r.get('created_at', '')[:10]}\n"
+                        f"  Language: {r.get('language', 'N/A')}\n"
+                        f"  Topics: {', '.join(r.get('topics', []))}\n"
+                        f"  Description: {r.get('description', '') or ''}"
+                    )
+    except Exception as e:
+        lines.append(f"GitHub repos error: {e}")
+    return "\n".join(lines) if lines else "(no repos found)"
+
+
 # ═══════════════════════════════════════════════════════════════════════════
 # Tool definitions for DeepSeek function calling
 # ═══════════════════════════════════════════════════════════════════════════
@@ -427,6 +576,10 @@ _TOOL_FNS: dict[str, Any] = {
     "search_semantic_scholar": search_semantic_scholar,
     "fetch_hf_author": fetch_hf_author,
     "video_search": video_search,
+    "fetch_wikipedia_summary": fetch_wikipedia_summary,
+    "search_openalex": search_openalex,
+    "check_social_url": check_social_url,
+    "fetch_github_repos_extended": fetch_github_repos_extended,
 }
 
 def _tool_def(name: str, description: str, params: dict) -> FunctionTool:
@@ -446,12 +599,16 @@ TOOL_ARXIV = _tool_def("search_arxiv", "Search arXiv for papers matching a query
 TOOL_SEMANTIC = _tool_def("search_semantic_scholar", "Search Semantic Scholar for papers and author profiles.", _SINGLE_STR)
 TOOL_HF = _tool_def("fetch_hf_author", "Fetch HuggingFace models, datasets, and spaces for an author.", _SINGLE_USERNAME)
 TOOL_VIDEO = _tool_def("video_search", "Search DuckDuckGo Videos for video content matching a query.", _SINGLE_STR)
+TOOL_WIKIPEDIA = _tool_def("fetch_wikipedia_summary", "Fetch Wikipedia summary and key facts for a person or topic.", _SINGLE_STR)
+TOOL_OPENALEX = _tool_def("search_openalex", "Search OpenAlex for academic works and author profiles.", _SINGLE_STR)
+TOOL_CHECK_URL = _tool_def("check_social_url", "Check if a URL exists (HTTP HEAD). Returns status code and final URL.", _SINGLE_URL)
+TOOL_GITHUB_EXT = _tool_def("fetch_github_repos_extended", "Fetch all significant repos with creation dates and topics.", _SINGLE_USERNAME)
 
 # Convenience groups matching original tool lists
 TOOLS_SEARCH = [TOOL_WEB_SEARCH, TOOL_FETCH_URL]
 TOOLS_NEWS = [TOOL_WEB_NEWS, TOOL_WEB_SEARCH, TOOL_FETCH_URL]
-TOOLS_ACADEMIC = [TOOL_ARXIV, TOOL_SEMANTIC]
-TOOLS_VIDEO = [TOOL_VIDEO, TOOL_WEB_SEARCH]
+TOOLS_ACADEMIC = [TOOL_ARXIV, TOOL_SEMANTIC, TOOL_OPENALEX]
+TOOLS_VIDEO = [TOOL_VIDEO, TOOL_WEB_SEARCH, TOOL_FETCH_URL]
 
 
 # ═══════════════════════════════════════════════════════════════════════════
@@ -506,6 +663,9 @@ class ResearchState(TypedDict, total=False):
     news_data: str
     hf_data: str
     video_data: str
+    # Phase 1.5
+    wikipedia_data: str
+    deep_fetched_urls: str
     # Phase 2
     bio: str
     timeline: str
@@ -521,6 +681,8 @@ class ResearchState(TypedDict, total=False):
     # Phase 3
     eval_data: str
     executive: str
+    # Re-research
+    reresearch_count: int
 
 
 # ═══════════════════════════════════════════════════════════════════════════
@@ -587,7 +749,30 @@ def _ctx_block(label: str, content: str) -> str:
     """Format a context block for inclusion in agent prompts."""
     if not content or content.strip().startswith("("):
         return ""
-    return f"\n### {label}\n{content[:3000]}\n"
+    return f"\n### {label}\n{content[:6000]}\n"
+
+
+def _build_context(
+    state: ResearchState,
+    primary: list[tuple[str, str]],
+    secondary: list[tuple[str, str]] | None = None,
+    *,
+    primary_limit: int = 8000,
+    secondary_limit: int = 3000,
+) -> str:
+    """Build context from state with primary sources getting more space."""
+    parts = []
+    for label, key in primary:
+        content = state.get(key, "")
+        if not content or (isinstance(content, str) and content.strip().startswith("(")):
+            continue
+        parts.append(f"\n### {label}\n{str(content)[:primary_limit]}\n")
+    for label, key in (secondary or []):
+        content = state.get(key, "")
+        if not content or (isinstance(content, str) and content.strip().startswith("(")):
+            continue
+        parts.append(f"\n### {label}\n{str(content)[:secondary_limit]}\n")
+    return "".join(parts)
 
 
 # ═══════════════════════════════════════════════════════════════════════════
@@ -749,24 +934,24 @@ async def phase1(state: ResearchState) -> dict:
                 "You are a video content researcher specializing in tracking AI/tech leaders "
                 "across YouTube, conference recordings, and video platforms. You find keynote "
                 "recordings, technical talks, panel discussions, interviews, and educational "
-                "content. CRITICAL: You ONLY include videos where the person is a SPEAKER, "
-                "GUEST, PRESENTER, or INTERVIEWEE — they must actually appear in the video. "
-                "You NEVER include videos that merely mention, credit, or reference the person, "
-                "or third-party tutorials about their tools/projects."
+                "content. You include videos where the person is a SPEAKER, GUEST, PRESENTER, "
+                "or INTERVIEWEE, as well as substantive videos prominently featuring their work. "
+                "You search thoroughly — if initial video_search returns few results, you fall "
+                "back to web_search with site:youtube.com."
             ),
             (
-                f"Find YouTube videos and other video content where {ctx} is a speaker, "
-                f"guest, or presenter. "
-                f"Search for: '{name} YouTube', '{name} {org} talk', '{name} keynote video', "
-                f"'{name} interview video', '{name} conference talk'. "
+                f"Find YouTube videos and other video content featuring {ctx}. "
+                f"Search strategy:\n"
+                f"(1) Use video_search for: '{name} {org}', '{name} talk', '{name} interview'\n"
+                f"(2) If few results, use web_search for: 'site:youtube.com \"{name}\"'\n"
+                f"(3) Use fetch_url_content on promising YouTube URLs to verify content\n"
                 f"For each video, identify: title, URL, platform (YouTube/Vimeo/etc), "
                 f"upload date, duration, channel/uploader, and a brief description. "
-                f"IMPORTANT FILTERING RULES:\n"
-                f"- ONLY include videos where {name} actually appears as speaker/guest/presenter\n"
-                f"- EXCLUDE videos that merely mention or credit {name} in passing\n"
-                f"- EXCLUDE third-party tutorials about {name}'s tools or projects\n"
-                f"- EXCLUDE videos by other people with similar names\n"
-                f"- Focus on substantive content: conference talks, interviews, panels — not short clips\n\n"
+                f"FILTERING RULES:\n"
+                f"- Include videos where {name} appears as speaker/guest/presenter\n"
+                f"- Include substantive videos prominently about {name}'s work or projects\n"
+                f"- EXCLUDE third-party tutorials not about {name} directly\n"
+                f"- EXCLUDE videos by other people with similar names\n\n"
                 f"Output a JSON array: "
                 f'[{{"title": "...", "url": "https://...", "platform": "YouTube", '
                 f'"date": "YYYY-MM-DD", "duration": "MM:SS", '
@@ -789,6 +974,50 @@ async def phase1(state: ResearchState) -> dict:
 
 
 # ═══════════════════════════════════════════════════════════════════════════
+# Phase 1.5: Wikipedia + Deep URL Fetch
+# ═══════════════════════════════════════════════════════════════════════════
+
+async def phase1_5(state: ResearchState) -> dict:
+    """Phase 1.5: Fetch Wikipedia article and deep-fetch top URLs from web_research."""
+    person = state["person"]
+    name = person.get("name", "")
+    role = person.get("role", "")
+    org = person.get("org", "")
+
+    console.print("\n[bold cyan]Phase 1.5: Wikipedia + Deep URL Fetch[/]")
+
+    # 1. Wikipedia summary
+    wiki_query = f"{name} {org}" if org else name
+    wiki = await asyncio.to_thread(fetch_wikipedia_summary, wiki_query)
+    console.print(f"  [green]✓[/] wikipedia_data ({len(wiki)} chars)")
+
+    # 2. Extract top URLs from web_research and deep-fetch them
+    web_research = state.get("web_research", "")
+    urls = re.findall(r'https?://[^\s\)\]>]+', web_research)
+    seen: set[str] = set()
+    unique_urls: list[str] = []
+    for url in urls:
+        domain = urlparse(url).netloc
+        if domain not in seen and domain not in _SKIP_DOMAINS:
+            seen.add(domain)
+            unique_urls.append(url)
+            if len(unique_urls) >= 5:
+                break
+
+    fetched = await asyncio.gather(*[
+        asyncio.to_thread(fetch_url_content, url) for url in unique_urls
+    ])
+    deep_content = "\n\n".join(
+        f"### {url}\n{content[:4000]}"
+        for url, content in zip(unique_urls, fetched)
+        if content and not content.startswith("(")
+    )
+    console.print(f"  [green]✓[/] deep_fetched_urls ({len(deep_content)} chars from {len(unique_urls)} URLs)")
+
+    return {"wikipedia_data": wiki, "deep_fetched_urls": deep_content}
+
+
+# ═══════════════════════════════════════════════════════════════════════════
 # Phase 2: Deep Analysis (11 agents in parallel, depends on Phase 1)
 # ═══════════════════════════════════════════════════════════════════════════
 
@@ -802,9 +1031,11 @@ async def phase2(state: ResearchState) -> dict:
 
     console.print("\n[bold cyan]Phase 2: Deep Analysis (11 agents in parallel)[/]")
 
-    # Build context from Phase 1 results
+    # Build context from Phase 1 + 1.5 results
     all_p1 = (
         _ctx_block("Web Research", state.get("web_research", ""))
+        + _ctx_block("Wikipedia", state.get("wikipedia_data", ""))
+        + _ctx_block("Deep-Fetched URLs", state.get("deep_fetched_urls", ""))
         + _ctx_block("GitHub Profile", state.get("github_data", ""))
         + _ctx_block("ORCID / Academic", state.get("orcid_data", ""))
         + _ctx_block("arXiv & Semantic Scholar", state.get("arxiv_data", ""))
@@ -812,6 +1043,28 @@ async def phase2(state: ResearchState) -> dict:
         + _ctx_block("News & Press", state.get("news_data", ""))
         + _ctx_block("HuggingFace", state.get("hf_data", ""))
         + _ctx_block("Video Content", state.get("video_data", ""))
+    )
+
+    # Selective context for specific agents
+    bio_ctx = _build_context(state,
+        primary=[("Web Research", "web_research"), ("Wikipedia", "wikipedia_data"), ("Deep-Fetched URLs", "deep_fetched_urls")],
+        secondary=[("GitHub Profile", "github_data"), ("News & Press", "news_data"), ("arXiv & Semantic Scholar", "arxiv_data")],
+    )
+    timeline_ctx = _build_context(state,
+        primary=[("Web Research", "web_research"), ("Wikipedia", "wikipedia_data"), ("News & Press", "news_data")],
+        secondary=[("GitHub Profile", "github_data"), ("arXiv & Semantic Scholar", "arxiv_data"), ("Deep-Fetched URLs", "deep_fetched_urls")],
+    )
+    quote_ctx = _build_context(state,
+        primary=[("Deep-Fetched URLs", "deep_fetched_urls"), ("Podcast & Media", "podcast_data"), ("Web Research", "web_research")],
+        secondary=[("News & Press", "news_data"), ("Wikipedia", "wikipedia_data")],
+    )
+    social_ctx = _build_context(state,
+        primary=[("Web Research", "web_research"), ("GitHub Profile", "github_data")],
+        secondary=[("HuggingFace", "hf_data"), ("Wikipedia", "wikipedia_data")],
+    )
+    contrib_ctx = _build_context(state,
+        primary=[("Web Research", "web_research"), ("GitHub Profile", "github_data"), ("arXiv & Semantic Scholar", "arxiv_data")],
+        secondary=[("HuggingFace", "hf_data"), ("Deep-Fetched URLs", "deep_fetched_urls")],
     )
 
     tools_search = TOOLS_SEARCH
@@ -826,12 +1079,13 @@ async def phase2(state: ResearchState) -> dict:
                 "fabricate and always stay grounded in verifiable evidence."
             ),
             (
-                f"Write a precise 3-5 sentence biography for {ctx} synthesizing the following research:\n"
-                f"{all_p1}\n"
+                f"Write a precise 4-6 sentence biography for {ctx} synthesizing the following research:\n"
+                f"{bio_ctx}\n"
                 f"Focus on: career origin or founding story, key technical achievements, "
                 f"current role and impact, what makes them unique in AI/tech. "
                 f"Be specific — name actual projects, frameworks, papers, or companies. "
-                f"Every sentence must contain a verifiable, specific fact."
+                f"Every sentence must contain a verifiable, specific fact. "
+                f"If the person is less well-known, use web_search to find additional info."
             ),
             tools_search,
         ),
@@ -840,19 +1094,24 @@ async def phase2(state: ResearchState) -> dict:
             (
                 "You are obsessed with chronological accuracy. You reconstruct career histories "
                 "from scattered data: LinkedIn mentions, press releases, GitHub commit histories, "
-                "conference programs, and funding announcements. Every event you record has a "
-                "verified date (YYYY-MM format) and a source URL."
+                "conference programs, Wikipedia articles, and funding announcements. Every event you "
+                "record has a verified date (YYYY-MM format) and a source URL. When information is "
+                "scarce, you search harder — trying alternative queries, fetching personal websites, "
+                "and checking Wikipedia for key dates."
             ),
             (
                 f"Build a chronological timeline of key career events for {ctx} "
-                f"using the following research:\n{all_p1}\n"
+                f"using the following research:\n{timeline_ctx}\n"
                 f"Include: education milestones, job changes, major product/paper launches, "
-                f"funding rounds, conference keynotes, notable interviews, and open-source releases. "
+                f"funding rounds, conference keynotes, notable interviews, open-source releases, "
+                f"and GitHub repo creation dates. "
                 f"Each event requires: date (YYYY-MM format), description, source URL. "
-                f"Aim for at least 10-15 events covering the full career arc.\n\n"
+                f"Aim for at least 10-15 events covering the full career arc. "
+                f"If the context is thin, search for '{name} career history', '{name} biography', "
+                f"'{name} curriculum vitae', '{name} {org} founded' to find more dates.\n\n"
                 f'Output a JSON array: [{{"date": "YYYY-MM", "event": "description", "url": "https://..."}}]'
             ),
-            tools_search,
+            [TOOL_WEB_SEARCH, TOOL_FETCH_URL, TOOL_WIKIPEDIA],
         ),
         (
             "contributions",
@@ -864,7 +1123,7 @@ async def phase2(state: ResearchState) -> dict:
             ),
             (
                 f"Identify and describe the 3-6 most significant technical contributions of {ctx}. "
-                f"Based on this research:\n{all_p1}\n"
+                f"Based on this research:\n{contrib_ctx}\n"
                 f"For each: what is it, why does it matter, what impact has it had (adoption, "
                 f"citations, derivatives), who uses it, what numbers validate its importance.\n\n"
                 f'Output a JSON array: [{{"title": "name", "description": "2-3 sentences", "url": "https://..."}}]'
@@ -877,16 +1136,20 @@ async def phase2(state: ResearchState) -> dict:
                 "You have an ear for authentic voice. You track down actual quotes from podcast "
                 "transcripts, blog posts, conference keynotes, and social posts. You NEVER "
                 "paraphrase or fabricate — if you cannot find the exact quote with a source URL, "
-                "you skip it entirely. Quality over quantity."
+                "you return an empty array. You search aggressively: fetching transcripts, blog "
+                "posts, and interview articles to find first-person statements."
             ),
             (
                 f"Find 3-5 authentic, verbatim quotes from {ctx} in interviews, podcasts, "
                 f"blog posts, or public talks. Based on this research:\n"
-                f"{_ctx_block('Web Research', state.get('web_research', ''))}"
-                f"{_ctx_block('Podcast & Media', state.get('podcast_data', ''))}"
-                f"{_ctx_block('News & Press', state.get('news_data', ''))}\n"
-                f"For each: find the exact text, identify the source, and provide the URL. "
-                f"DO NOT paraphrase or fabricate.\n\n"
+                f"{quote_ctx}\n"
+                f"Strategy: "
+                f"(1) Search for '{name} quote' and '{name} transcript' "
+                f"(2) Fetch podcast show-notes and transcript URLs from the context above "
+                f"(3) Search for '{name} blog post' or '{name} \"I think\" OR \"I believe\" OR \"We need\"' "
+                f"(4) Use fetch_url_content on the most promising results to extract exact quotes. "
+                f"CRITICAL: Every quote MUST be exact text, not paraphrased. "
+                f"If you cannot find exact quotes with source URLs, return an empty array [].\n\n"
                 f'Output a JSON array: [{{"text": "verbatim quote", "source": "podcast/article name", "url": "https://..."}}]'
             ),
             tools_search,
@@ -895,20 +1158,24 @@ async def phase2(state: ResearchState) -> dict:
             "social",
             (
                 "You specialize in digital identity mapping. You find GitHub, Twitter/X, LinkedIn, "
-                "personal websites, Substack, HuggingFace, and other platform presences. You only "
-                "include URLs you can verify exist, organized into a clean key-value mapping."
+                "personal websites, Substack, HuggingFace, and other platform presences. You "
+                "VERIFY every URL exists by using check_social_url before including it. You "
+                "systematically construct candidate URLs and test them."
             ),
             (
                 f"Map all verified public social profiles and online presence for {ctx}. "
-                f"Based on this research:\n"
-                f"{_ctx_block('Web Research', state.get('web_research', ''))}"
-                f"{_ctx_block('GitHub Profile', state.get('github_data', ''))}"
-                f"{_ctx_block('HuggingFace', state.get('hf_data', ''))}\n"
-                f"Find: GitHub URL, Twitter/X handle, LinkedIn profile, personal website/blog, "
-                f"HuggingFace profile, Substack, and any other relevant platforms.\n\n"
+                f"Based on this research:\n{social_ctx}\n"
+                f"Strategy: "
+                f"(1) Check these candidate URLs with check_social_url:\n"
+                f"    - https://github.com/{person.get('github', name.lower().replace(' ', ''))}\n"
+                f"    - https://huggingface.co/{person.get('github', name.lower().replace(' ', ''))}\n"
+                f"    - https://www.linkedin.com/in/{name.lower().replace(' ', '-')}\n"
+                f"(2) Search: '{name} {org} site:substack.com OR site:medium.com OR site:twitter.com'\n"
+                f"(3) Search: '{name} personal website blog'\n"
+                f"Only include URLs confirmed with HTTP 200 via check_social_url.\n\n"
                 f'Output a JSON object: {{"github": "https://...", "twitter": "https://...", "website": "https://..."}}'
             ),
-            tools_search,
+            [TOOL_WEB_SEARCH, TOOL_CHECK_URL, TOOL_FETCH_URL],
         ),
         (
             "topics",
@@ -1155,27 +1422,7 @@ async def phase3_exec(state: ResearchState) -> dict:
 
 
 # ═══════════════════════════════════════════════════════════════════════════
-# Graph builder
-# ═══════════════════════════════════════════════════════════════════════════
-
-def build_graph():
-    builder = StateGraph(ResearchState)
-    builder.add_node("phase1", phase1)
-    builder.add_node("phase2", phase2)
-    builder.add_node("phase3_eval", phase3_eval)
-    builder.add_node("phase3_exec", phase3_exec)
-
-    builder.add_edge(START, "phase1")
-    builder.add_edge("phase1", "phase2")
-    builder.add_edge("phase2", "phase3_eval")
-    builder.add_edge("phase3_eval", "phase3_exec")
-    builder.add_edge("phase3_exec", END)
-
-    return builder.compile()
-
-
-# ═══════════════════════════════════════════════════════════════════════════
-# Output assembly & export
+# JSON extraction helper
 # ═══════════════════════════════════════════════════════════════════════════
 
 def _extract_json(text: str) -> Any:
@@ -1200,6 +1447,156 @@ def _extract_json(text: str) -> Any:
     return None
 
 
+# ═══════════════════════════════════════════════════════════════════════════
+# Re-research loop — targeted retry for weak dimensions
+# ═══════════════════════════════════════════════════════════════════════════
+
+def _should_reresearch(state: ResearchState) -> str:
+    """Decide whether to re-research or proceed to executive summary."""
+    if state.get("reresearch_count", 0) >= 1:
+        return "phase3_exec"
+
+    eval_text = state.get("eval_data", "")
+    eval_data = _extract_json(eval_text)
+    if not eval_data or not isinstance(eval_data, dict):
+        return "phase3_exec"
+
+    overall = eval_data.get("overall_score", 10)
+    weak_dims = []
+    for dim in ("bio_quality", "source_coverage", "timeline_completeness", "contributions_depth"):
+        score = eval_data.get(dim, {})
+        if isinstance(score, dict) and score.get("score", 10) < 5:
+            weak_dims.append(dim)
+
+    if overall < 7 or len(weak_dims) >= 1:
+        return "reresearch"
+    return "phase3_exec"
+
+
+async def reresearch(state: ResearchState) -> dict:
+    """Targeted re-research for weak dimensions."""
+    client = _make_client()
+    person = state["person"]
+    name = person.get("name", "")
+    org = person.get("org", "")
+    ctx = f"{name} ({person.get('role', '')} @ {org})"
+
+    console.print("\n[bold yellow]Re-research: targeting weak dimensions[/]")
+
+    eval_data = _extract_json(state.get("eval_data", "")) or {}
+    updates: dict[str, Any] = {"reresearch_count": state.get("reresearch_count", 0) + 1}
+
+    tasks: list[tuple[str, Any]] = []
+
+    # Re-research timeline if weak
+    tl_score = eval_data.get("timeline_completeness", {})
+    if isinstance(tl_score, dict) and tl_score.get("score", 10) < 6:
+        console.print("  [yellow]→[/] Re-researching timeline")
+        tasks.append(("timeline", _run_agent(client,
+            (
+                "You are a timeline recovery specialist. The previous timeline attempt was "
+                "incomplete. You try alternative search strategies: career history pages, "
+                "Wikipedia, CV/resume pages, personal websites, and GitHub repo dates."
+            ),
+            (
+                f"The previous timeline for {ctx} was incomplete. Try harder:\n"
+                f"Search for: '{name} career history', '{name} biography timeline', "
+                f"'{name} curriculum vitae', '{name} {org} founded when', "
+                f"'{name} education university'. "
+                f"Also try Wikipedia: fetch_wikipedia_summary for '{name}'. "
+                f"Previous research context:\n"
+                f"{_ctx_block('Web Research', state.get('web_research', ''))}"
+                f"{_ctx_block('Wikipedia', state.get('wikipedia_data', ''))}\n"
+                f"Previous timeline:\n{state.get('timeline', '')}\n"
+                f"Find MORE events with verified dates.\n\n"
+                f'Output a JSON array: [{{"date": "YYYY-MM", "event": "description", "url": "https://..."}}]'
+            ),
+            [TOOL_WEB_SEARCH, TOOL_FETCH_URL, TOOL_WIKIPEDIA],
+        )))
+
+    # Re-research quotes if empty
+    existing_quotes = _extract_json(state.get("quotes", "")) or []
+    if not existing_quotes:
+        console.print("  [yellow]→[/] Re-researching quotes")
+        tasks.append(("quotes", _run_agent(client,
+            (
+                "You are a quote recovery specialist. The first attempt found zero quotes. "
+                "You try harder: searching for blog posts, transcripts, tweets, and interviews."
+            ),
+            (
+                f"No quotes were found for {ctx} in the first pass. Try harder:\n"
+                f"Search for: '{name} transcript', '{name} blog post', "
+                f"'{name} \"said\" OR \"stated\" OR \"wrote\"', '{name} interview quote'. "
+                f"Fetch the top 3-5 results with fetch_url_content and extract exact quotes.\n"
+                f"If you still cannot find any, return [].\n\n"
+                f'Output a JSON array: [{{"text": "verbatim quote", "source": "name", "url": "https://..."}}]'
+            ),
+            TOOLS_SEARCH,
+        )))
+
+    # Re-research social if empty
+    existing_social = _extract_json(state.get("social", "")) or {}
+    if not existing_social:
+        console.print("  [yellow]→[/] Re-researching social links")
+        tasks.append(("social", _run_agent(client,
+            (
+                "You are a social link recovery specialist. You systematically check platform "
+                "URLs and verify with HTTP HEAD requests."
+            ),
+            (
+                f"No social links were found for {ctx}. Try harder:\n"
+                f"Check these URLs with check_social_url:\n"
+                f"  - https://github.com/{name.lower().replace(' ', '')}\n"
+                f"  - https://github.com/{name.lower().replace(' ', '-')}\n"
+                f"  - https://www.linkedin.com/in/{name.lower().replace(' ', '-')}\n"
+                f"  - https://www.linkedin.com/in/{name.lower().replace(' ', '')}\n"
+                f"Also search: '{name} {org} github OR twitter OR linkedin OR website'\n"
+                f"Only include URLs confirmed with HTTP 200.\n\n"
+                f'Output a JSON object: {{"github": "https://...", "linkedin": "https://...", ...}}'
+            ),
+            [TOOL_WEB_SEARCH, TOOL_CHECK_URL],
+        )))
+
+    if tasks:
+        results = await asyncio.gather(*[t[1] for t in tasks])
+        for (key, _), result in zip(tasks, results):
+            updates[key] = result
+            console.print(f"  [green]✓[/] {key} re-researched ({len(result)} chars)")
+    else:
+        console.print("  [dim]No dimensions need re-research[/]")
+
+    return updates
+
+
+# ═══════════════════════════════════════════════════════════════════════════
+# Graph builder
+# ═══════════════════════════════════════════════════════════════════════════
+
+def build_graph():
+    builder = StateGraph(ResearchState)
+    builder.add_node("phase1", phase1)
+    builder.add_node("phase1_5", phase1_5)
+    builder.add_node("phase2", phase2)
+    builder.add_node("phase3_eval", phase3_eval)
+    builder.add_node("reresearch", reresearch)
+    builder.add_node("phase3_exec", phase3_exec)
+
+    builder.add_edge(START, "phase1")
+    builder.add_edge("phase1", "phase1_5")
+    builder.add_edge("phase1_5", "phase2")
+    builder.add_edge("phase2", "phase3_eval")
+    builder.add_conditional_edges("phase3_eval", _should_reresearch,
+        {"reresearch": "reresearch", "phase3_exec": "phase3_exec"})
+    builder.add_edge("reresearch", "phase3_eval")
+    builder.add_edge("phase3_exec", END)
+
+    return builder.compile()
+
+
+# ═══════════════════════════════════════════════════════════════════════════
+# Output assembly & export
+# ═══════════════════════════════════════════════════════════════════════════
+
 def export_results(state: ResearchState) -> None:
     person = state["person"]
     name = person.get("name", person["slug"])
@@ -1208,8 +1605,8 @@ def export_results(state: ResearchState) -> None:
     console.rule(f"[bold green]Exporting: {name}[/]")
 
     bio = state.get("bio", "").strip()
-    if len(bio) > 600:
-        bio = bio[:600]
+    if len(bio) > 2000:
+        bio = bio[:2000]
 
     timeline = _extract_json(state.get("timeline", "")) or []
     if not isinstance(timeline, list):

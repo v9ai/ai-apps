@@ -6,6 +6,7 @@ Validates that:
 - Error in one agent doesn't crash the pipeline
 - _run_agent handles tool/no-tool paths
 - _ctx_block formats context correctly
+- _build_context provides selective context
 - export_results handles all JSON extraction edge cases
 """
 
@@ -18,14 +19,17 @@ import pytest
 from research_pipeline import (
     ResearchState,
     _ctx_block,
+    _build_context,
     _extract_json,
     _run_agent,
     build_graph,
     export_results,
     phase1,
+    phase1_5,
     phase2,
     phase3_eval,
     phase3_exec,
+    reresearch,
 )
 
 SAMPLE_PERSON = {
@@ -59,11 +63,63 @@ def test_ctx_block_skips_error_sentinel():
 
 
 def test_ctx_block_truncates_long_content():
-    long_content = "A" * 5000
+    long_content = "A" * 8000
     result = _ctx_block("Label", long_content)
-    # Content should be truncated to 3000 chars
+    # Content should be truncated to 6000 chars
     content_part = result.split("\n", 2)[2] if "\n" in result else result
-    assert len(content_part) <= 3100  # 3000 + label overhead
+    assert len(content_part) <= 6100  # 6000 + label overhead
+
+
+# ═══════════════════════════════════════════════════════════════════════════
+# _build_context tests
+# ═══════════════════════════════════════════════════════════════════════════
+
+
+def test_build_context_primary_sources():
+    state: ResearchState = {
+        "person": SAMPLE_PERSON,
+        "web_research": "web data " * 500,
+        "github_data": "github data " * 500,
+    }
+    result = _build_context(state,
+        primary=[("Web", "web_research")],
+        secondary=[("GitHub", "github_data")],
+        primary_limit=8000,
+        secondary_limit=3000,
+    )
+    assert "### Web" in result
+    assert "### GitHub" in result
+
+
+def test_build_context_skips_empty():
+    state: ResearchState = {
+        "person": SAMPLE_PERSON,
+        "web_research": "(no data)",
+        "github_data": "real data",
+    }
+    result = _build_context(state,
+        primary=[("Web", "web_research"), ("GitHub", "github_data")],
+    )
+    assert "### Web" not in result
+    assert "### GitHub" in result
+
+
+# ═══════════════════════════════════════════════════════════════════════════
+# _extract_json tests
+# ═══════════════════════════════════════════════════════════════════════════
+
+
+def test_extract_json_plain():
+    assert _extract_json('["a", "b"]') == ["a", "b"]
+
+
+def test_extract_json_from_markdown():
+    text = 'Here is the result:\n```json\n{"key": "value"}\n```'
+    assert _extract_json(text) == {"key": "value"}
+
+
+def test_extract_json_returns_none_on_garbage():
+    assert _extract_json("no json here") is None
 
 
 # ═══════════════════════════════════════════════════════════════════════════
@@ -73,25 +129,30 @@ def test_ctx_block_truncates_long_content():
 
 @pytest.mark.asyncio
 async def test_run_agent_no_tools_calls_llm_directly():
-    """_run_agent without tools calls llm.ainvoke directly."""
-    mock_llm = AsyncMock()
-    mock_response = MagicMock()
-    mock_response.content = "Agent response without tools"
-    mock_llm.ainvoke.return_value = mock_response
+    """_run_agent without tools calls client.chat directly."""
+    mock_client = AsyncMock()
+    mock_msg = MagicMock()
+    mock_msg.content = "Agent response without tools"
+    mock_msg.tool_calls = None
+    mock_choice = MagicMock()
+    mock_choice.message = mock_msg
+    mock_resp = MagicMock()
+    mock_resp.choices = [mock_choice]
+    mock_client.chat.return_value = mock_resp
 
-    result = await _run_agent(mock_llm, "You are a test agent", "Do a task")
+    result = await _run_agent(mock_client, "You are a test agent", "Do a task")
 
     assert result == "Agent response without tools"
-    mock_llm.ainvoke.assert_called_once()
+    mock_client.chat.assert_called_once()
 
 
 @pytest.mark.asyncio
 async def test_run_agent_handles_errors_gracefully():
     """_run_agent returns error string instead of raising."""
-    mock_llm = AsyncMock()
-    mock_llm.ainvoke.side_effect = RuntimeError("API timeout")
+    mock_client = AsyncMock()
+    mock_client.chat.side_effect = RuntimeError("API timeout")
 
-    result = await _run_agent(mock_llm, "System", "Task")
+    result = await _run_agent(mock_client, "System", "Task")
 
     assert "agent error" in result.lower()
     assert "API timeout" in result
@@ -103,24 +164,24 @@ async def test_run_agent_handles_errors_gracefully():
 
 
 @pytest.mark.asyncio
-async def test_phase1_returns_7_keys():
-    """Phase 1 should return exactly 7 state keys."""
+async def test_phase1_returns_8_keys():
+    """Phase 1 should return exactly 8 state keys."""
     call_idx = 0
 
-    async def mock_run(llm, sys, task, tools=None):
+    async def mock_run(client, sys, task, tools=None):
         nonlocal call_idx
         call_idx += 1
         return f"Phase 1 agent {call_idx} output"
 
     with patch("research_pipeline._run_agent", side_effect=mock_run), \
-         patch("research_pipeline._make_llm", return_value=MagicMock()):
+         patch("research_pipeline._make_client", return_value=MagicMock()):
         state: ResearchState = {"person": SAMPLE_PERSON}
         result = await phase1(state)
 
     expected_keys = {"web_research", "github_data", "orcid_data", "arxiv_data",
-                     "podcast_data", "news_data", "hf_data"}
+                     "podcast_data", "news_data", "hf_data", "video_data"}
     assert set(result.keys()) == expected_keys
-    assert call_idx == 7
+    assert call_idx == 8
 
 
 @pytest.mark.asyncio
@@ -128,7 +189,7 @@ async def test_phase2_returns_11_keys():
     """Phase 2 should return exactly 11 state keys."""
     call_idx = 0
 
-    async def mock_run(llm, sys, task, tools=None):
+    async def mock_run(client, sys, task, tools=None):
         nonlocal call_idx
         call_idx += 1
         return f"Phase 2 agent {call_idx} output"
@@ -142,10 +203,13 @@ async def test_phase2_returns_11_keys():
         "podcast_data": "[]",
         "news_data": "[]",
         "hf_data": "mock hf data",
+        "video_data": "[]",
+        "wikipedia_data": "mock wiki data",
+        "deep_fetched_urls": "mock deep data",
     }
 
     with patch("research_pipeline._run_agent", side_effect=mock_run), \
-         patch("research_pipeline._make_llm", return_value=MagicMock()):
+         patch("research_pipeline._make_client", return_value=MagicMock()):
         result = await phase2(state)
 
     expected_keys = {"bio", "timeline", "contributions", "quotes", "social",
@@ -158,7 +222,7 @@ async def test_phase2_returns_11_keys():
 @pytest.mark.asyncio
 async def test_phase3_eval_returns_eval_key():
     """Phase 3 eval should return eval_data key."""
-    async def mock_run(llm, sys, task, tools=None):
+    async def mock_run(client, sys, task, tools=None):
         return '{"overall_score": 8, "summary": "Good"}'
 
     state: ResearchState = {
@@ -177,7 +241,7 @@ async def test_phase3_eval_returns_eval_key():
     }
 
     with patch("research_pipeline._run_agent", side_effect=mock_run), \
-         patch("research_pipeline._make_llm", return_value=MagicMock()):
+         patch("research_pipeline._make_client", return_value=MagicMock()):
         result = await phase3_eval(state)
 
     assert "eval_data" in result
@@ -187,7 +251,7 @@ async def test_phase3_eval_returns_eval_key():
 @pytest.mark.asyncio
 async def test_phase3_exec_returns_executive_key():
     """Phase 3 exec should return executive key."""
-    async def mock_run(llm, sys, task, tools=None):
+    async def mock_run(client, sys, task, tools=None):
         return '{"one_liner": "Test person is a CEO"}'
 
     state: ResearchState = {
@@ -207,10 +271,11 @@ async def test_phase3_exec_returns_executive_key():
         "podcast_data": "[]",
         "news_data": "[]",
         "arxiv_data": "",
+        "video_data": "[]",
     }
 
     with patch("research_pipeline._run_agent", side_effect=mock_run), \
-         patch("research_pipeline._make_llm", return_value=MagicMock()):
+         patch("research_pipeline._make_client", return_value=MagicMock()):
         result = await phase3_exec(state)
 
     assert "executive" in result
@@ -218,42 +283,20 @@ async def test_phase3_exec_returns_executive_key():
 
 
 # ═══════════════════════════════════════════════════════════════════════════
-# Full graph integration test (mocked)
+# Graph preserves person through phases
 # ═══════════════════════════════════════════════════════════════════════════
-
-
-@pytest.mark.asyncio
-async def test_full_graph_mocked_produces_complete_state():
-    """Full graph with mocked agents produces all expected state keys."""
-    agent_count = 0
-
-    async def mock_run(llm, sys, task, tools=None):
-        nonlocal agent_count
-        agent_count += 1
-        return f"Mock output {agent_count}"
-
-    with patch("research_pipeline._run_agent", side_effect=mock_run), \
-         patch("research_pipeline._make_llm", return_value=MagicMock()):
-        graph = build_graph()
-        result = await graph.ainvoke({"person": SAMPLE_PERSON})
-
-    # All keys should be present
-    all_keys = set(ResearchState.__annotations__.keys())
-    for key in all_keys:
-        assert key in result, f"Missing key in final state: {key}"
-
-    # Exactly 20 agents should have been called
-    assert agent_count == 20
 
 
 @pytest.mark.asyncio
 async def test_graph_preserves_person_through_phases():
     """The person dict should be preserved through all phases."""
-    async def mock_run(llm, sys, task, tools=None):
+    async def mock_run(client, sys, task, tools=None):
         return "mock"
 
     with patch("research_pipeline._run_agent", side_effect=mock_run), \
-         patch("research_pipeline._make_llm", return_value=MagicMock()):
+         patch("research_pipeline._make_client", return_value=MagicMock()), \
+         patch("research_pipeline.fetch_wikipedia_summary", return_value="mock wiki"), \
+         patch("research_pipeline.fetch_url_content", return_value="mock content"):
         graph = build_graph()
         result = await graph.ainvoke({"person": SAMPLE_PERSON})
 

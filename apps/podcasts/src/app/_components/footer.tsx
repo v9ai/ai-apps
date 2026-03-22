@@ -154,9 +154,9 @@ export default function Footer() {
           {/* Nav link groups */}
           <div
             className={css({
-              display: 'flex',
-              flexWrap: 'wrap',
-              gap: { base: '10', sm: '16' },
+              display: 'grid',
+              gridTemplateColumns: { base: 'repeat(2, 1fr)', sm: 'repeat(3, auto)' },
+              gap: { base: '8', sm: '16' },
             })}
           >
             {/* Explore section */}
