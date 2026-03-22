@@ -8,19 +8,11 @@
     "lint": "eslint .",
     "test": "vitest run",
     "test:watch": "vitest",
-    "test:prompts": "promptfoo eval --env-file .env.evals -c evals/attacker.yaml && promptfoo eval --env-file .env.evals -c evals/defender.yaml && promptfoo eval --env-file .env.evals -c evals/judge.yaml",
-    "test:prompts:attacker": "promptfoo eval --env-file .env.evals -c evals/attacker.yaml",
-    "test:prompts:defender": "promptfoo eval --env-file .env.evals -c evals/defender.yaml",
-    "test:prompts:judge": "promptfoo eval --env-file .env.evals -c evals/judge.yaml",
-    "test:prompts:redteam": "promptfoo eval --env-file .env.evals -c evals/redteam.yaml",
-    "test:prompts:consistency": "promptfoo eval --env-file .env.evals -c evals/consistency.yaml",
-    "test:prompts:citations": "promptfoo eval --env-file .env.evals -c evals/citation-verifier.yaml",
-    "test:prompts:jurisdiction": "promptfoo eval --env-file .env.evals -c evals/jurisdiction-expert.yaml",
-    "test:prompts:rewriter": "promptfoo eval --env-file .env.evals -c evals/brief-rewriter.yaml",
-    "test:prompts:e2e": "promptfoo eval --env-file .env.evals -c evals/e2e-pipeline.yaml",
-    "test:prompts:round2": "promptfoo eval --env-file .env.evals -c evals/round2-consistency.yaml",
-    "test:prompts:all": "promptfoo eval --env-file .env.evals -c evals/attacker.yaml && promptfoo eval --env-file .env.evals -c evals/defender.yaml && promptfoo eval --env-file .env.evals -c evals/judge.yaml && promptfoo eval --env-file .env.evals -c evals/redteam.yaml && promptfoo eval --env-file .env.evals -c evals/consistency.yaml && promptfoo eval --env-file .env.evals -c evals/citation-verifier.yaml && promptfoo eval --env-file .env.evals -c evals/jurisdiction-expert.yaml && promptfoo eval --env-file .env.evals -c evals/brief-rewriter.yaml && promptfoo eval --env-file .env.evals -c evals/e2e-pipeline.yaml && promptfoo eval --env-file .env.evals -c evals/round2-consistency.yaml",
-    "test:prompts:view": "promptfoo view"
+    "test:deepteam": "cd deepteam && python run_all.py all",
+    "test:deepteam:attacker": "cd deepteam && python eval_attacker.py",
+    "test:deepteam:judge": "cd deepteam && python eval_judge.py",
+    "test:deepteam:pipeline": "cd deepteam && python eval_pipeline.py",
+    "deepteam:install": "pip install -r deepteam/requirements.txt"
   },
   "dependencies": {
     "@supabase/ssr": "^0.6.1",
@@ -49,8 +41,7 @@
     "dotenv": "^17.3.1",
     "eslint": "^9",
     "eslint-config-next": "15.3.1",
-    "promptfoo": "^0.120.26",
-    "typescript": "^5",
+"typescript": "^5",
     "vitest": "^4.0.18"
   }
 }

@@ -1,34 +1,4 @@
-interface Paper {
-  slug: string;
-  number: number;
-  title: string;
-  category: string;
-  wordCount: number;
-  readingTimeMin: number;
-  authors?: string;
-  year?: number;
-  venue?: string;
-  finding?: string;
-  relevance?: string;
-  url?: string;
-  categoryColor?: string;
-}
-
-interface PipelineAgent {
-  name: string;
-  icon?: React.ReactNode;
-  color?: string;
-  description: string;
-  researchBasis?: string;
-  paperIndices?: number[];
-}
-
-interface Stat {
-  number: string;
-  label: string;
-  source?: string;
-  paperIndex?: number;
-}
+import type { Paper, PipelineAgent, Stat, TechnicalDetail, ExtraSection } from "@ai-apps/ui/how-it-works";
 
 // ─── Technical Foundations ──────────────────────────────────────────
 
@@ -214,7 +184,7 @@ export const story =
 
 // ─── Deep-Dive Sections ────────────────────────────────────────────
 
-export const extraSections: { heading: string; content: string }[] = [
+export const extraSections: ExtraSection[] = [
   {
     heading: "System Architecture",
     content: "Built with Next.js 15 App Router, using Server Components by default for routes like /app/sessions/[id]/page.tsx and Client Components (via 'use client') for interactive elements like SessionLive. The multi-agent pipeline runs as server actions or API routes, with data flow managed through Supabase tables: stress_test_sessions, findings, and audit_trail. Demo data fallback via lib/demo-data.ts allows development without a live database.",
@@ -238,5 +208,46 @@ export const extraSections: { heading: string; content: string }[] = [
   {
     heading: "Testing & Evaluation",
     content: "Unit testing with Vitest and comprehensive LLM prompt evaluation via promptfoo with over 10 configs (e.g., for consistency, citations). The audit_trail table logs every agent action for transparency and debugging. Demo data system in lib/demo-data.ts enables testing without external dependencies, ensuring robustness in development environments.",
+  },
+];
+
+// ─── Technical Details ─────────────────────────────────────────────
+
+export const technicalDetails: TechnicalDetail[] = [
+  {
+    type: "table",
+    heading: "Tech Stack",
+    description: "Core technologies powering the adversarial pipeline",
+    items: [
+      { label: "Frontend", value: "Next.js 15 App Router + Radix UI", metadata: { category: "Frontend" } },
+      { label: "Database", value: "Supabase PostgreSQL", metadata: { category: "Database" } },
+      { label: "Auth", value: "Supabase Auth with RLS", metadata: { category: "Security" } },
+      { label: "LLMs", value: "DeepSeek + DashScope (Alibaba)", metadata: { category: "AI" } },
+      { label: "File Parsing", value: "pdf-parse + mammoth", metadata: { category: "Processing" } },
+      { label: "Evals", value: "promptfoo (10+ configs)", metadata: { category: "Testing" } },
+    ],
+  },
+  {
+    type: "card-grid",
+    heading: "Pipeline Agents",
+    description: "Six specialized agents in the adversarial stress-test pipeline",
+    items: [
+      { label: "Attacker", value: "Identifies weaknesses in legal arguments and citations", metadata: { step: "1" } },
+      { label: "Defender", value: "Responds to attacks and strengthens argument positions", metadata: { step: "2" } },
+      { label: "Judge", value: "Scores arguments on a 0–100 scale for filing readiness", metadata: { step: "3" } },
+      { label: "Citation Verifier", value: "Validates all cited cases and statutes for accuracy", metadata: { step: "4" } },
+      { label: "Jurisdiction Expert", value: "Checks compliance with jurisdiction-specific rules", metadata: { step: "5" } },
+      { label: "Brief Rewriter", value: "Produces an improved brief incorporating all feedback", metadata: { step: "6" } },
+    ],
+  },
+  {
+    type: "table",
+    heading: "Database Schema",
+    description: "Supabase PostgreSQL tables with RLS policies",
+    items: [
+      { label: "stress_test_sessions", value: "id, slug, user_id, status, overall_score, created_at" },
+      { label: "findings", value: "session_id, type, severity, confidence, description, suggested_fix" },
+      { label: "audit_trail", value: "session_id, agent, action, round, output, created_at" },
+    ],
   },
 ];
