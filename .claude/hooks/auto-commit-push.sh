@@ -18,16 +18,24 @@ fi
 # Stage everything
 git add -A
 
-# Extract first meaningful line from Claude's last message as commit summary
-SUMMARY=""
-if command -v jq > /dev/null 2>&1; then
-    SUMMARY=$(echo "$INPUT" | jq -r '.last_assistant_message // empty' 2>/dev/null | head -1 | cut -c1-120)
+# Detect scope from changed files (e.g. apps/knowledge -> knowledge)
+CHANGED_FILES=$(git diff --cached --name-only)
+SCOPE=$(echo "$CHANGED_FILES" | sed -n 's|^apps/\([^/]*\)/.*|\1|p' | sort -u)
+if [ "$(echo "$SCOPE" | wc -l | tr -d ' ')" -eq 1 ] && [ -n "$SCOPE" ]; then
+    PREFIX="chore(${SCOPE}): "
+elif echo "$CHANGED_FILES" | grep -q '^crates/'; then
+    PREFIX="chore(crates): "
+elif echo "$CHANGED_FILES" | grep -q '^packages/'; then
+    PREFIX="chore(packages): "
+elif echo "$CHANGED_FILES" | grep -q '\.claude/'; then
+    PREFIX="chore(hooks): "
+else
+    PREFIX="chore: "
 fi
 
-# Fallback to diff stat if no message available
-if [ -z "$SUMMARY" ]; then
-    SUMMARY=$(git diff --cached --stat | tail -1)
-fi
+# Build summary from diff stat (no API/token usage)
+STAT=$(git diff --cached --stat | tail -1 | sed 's/^ *//')
+SUMMARY="${PREFIX}${STAT}"
 
 git commit -m "${SUMMARY}" --no-verify > /dev/null 2>&1 || exit 0
 

@@ -1,0 +1,7 @@
+{
+  "generated_at": "2026-03-22T21:17:52.945478+00:00",
+  "num_goldens": 17,
+  "mode": "db_sections",
+  "category_filter": "rag",
+  "goldens_per_lesson": 2
+}
