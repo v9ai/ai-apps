@@ -25,6 +25,11 @@ from typing import Any, TypedDict
 
 import httpx
 
+# ─── DeepSeek client from shared pypackages ─────────────────
+
+sys.path.insert(0, str(Path(__file__).resolve().parent.parent.parent.parent / "pypackages" / "deepseek" / "src"))
+from deepseek_client import DeepSeekClient, DeepSeekConfig, ChatMessage  # noqa: E402
+
 # ─── Paths ──────────────────────────────────────────────────
 
 ROOT = Path(__file__).parent
@@ -57,6 +62,7 @@ class GatheredEvents(TypedDict):
     github: list[TimelineEvent]
     papers: list[TimelineEvent]
     huggingface: list[TimelineEvent]
+    web: list[TimelineEvent]
 
 
 # ─── Data loaders ──────────────────────────────────────────
@@ -259,7 +265,7 @@ def merge_and_sort(gathered: GatheredEvents) -> list[TimelineEvent]:
     """Merge events from all sources, deduplicate by date+url, sort newest first."""
     all_events: list[TimelineEvent] = []
     # Research events come first (priority for dedup)
-    for key in ("research", "papers", "github", "huggingface"):
+    for key in ("research", "papers", "github", "huggingface", "web"):
         all_events.extend(gathered.get(key, []))
 
     seen: set[str] = set()
@@ -275,6 +281,94 @@ def merge_and_sort(gathered: GatheredEvents) -> list[TimelineEvent]:
     return deduped
 
 
+# ─── DeepSeek helpers ─────────────────────────────────────
+
+
+def _make_deepseek_client() -> DeepSeekClient:
+    return DeepSeekClient(DeepSeekConfig(
+        default_temperature=0.1,
+        default_max_tokens=2048,
+        timeout=60.0,
+    ))
+
+
+def _extract_json(text: str) -> Any:
+    text = text.strip()
+    try:
+        return json.loads(text)
+    except Exception:
+        pass
+    m = re.search(r"```(?:json)?\s*(\[.*?\]|\{.*?\})\s*```", text, re.S)
+    if m:
+        try:
+            return json.loads(m.group(1))
+        except Exception:
+            pass
+    m = re.search(r"(\[[\s\S]*?\]|\{[\s\S]*?\})", text)
+    if m:
+        try:
+            return json.loads(m.group(1))
+        except Exception:
+            pass
+    return None
+
+
+async def _search_web_timeline_events(inp: PipelineInput) -> list[TimelineEvent]:
+    """Use DuckDuckGo + DeepSeek to find career timeline events from the web."""
+    name = inp.get("name", "")
+    org = inp.get("org", "")
+    if not name:
+        return []
+
+    snippets: list[str] = []
+    try:
+        from ddgs import DDGS
+        queries = [
+            f"{name} career history biography",
+            f'"{name}" {org} founded started launched',
+        ]
+        with DDGS() as ddgs:
+            for q in queries:
+                for r in ddgs.text(q, max_results=8):
+                    snippets.append(
+                        f"- {r.get('title', '')}: {r.get('body', '')[:250]} ({r.get('href', '')})"
+                    )
+    except Exception:
+        return []
+
+    if not snippets:
+        return []
+
+    client = _make_deepseek_client()
+    prompt = (
+        f"Extract chronological career timeline events for {name} ({org}) from these search results:\n\n"
+        + "\n".join(snippets[:20])
+        + '\n\nReturn a JSON array: [{"date": "YYYY-MM", "event": "description", "url": "https://..."}]\n'
+        "Only include events with a specific date (year at minimum). "
+        "Return [] if no reliable dated events are found."
+    )
+    try:
+        resp = await client.chat([
+            ChatMessage(role="system", content="You extract structured timeline events from web search results. Output only valid JSON."),
+            ChatMessage(role="user", content=prompt),
+        ])
+        raw = _extract_json(resp.choices[0].message.content or "")
+        if not isinstance(raw, list):
+            return []
+        return [
+            TimelineEvent(
+                date=e.get("date", "")[:10],
+                event=e.get("event", ""),
+                url=e.get("url", ""),
+                source="web",
+            )
+            for e in raw
+            if isinstance(e, dict) and e.get("date") and e.get("event")
+        ]
+    except Exception:
+        return []
+
+
 # ─── Full Pipeline ────────────────────────────────────────
 
 
@@ -282,9 +376,10 @@ async def _run_pipeline(inp: PipelineInput) -> list[TimelineEvent]:
     """Full enrichment pipeline: parallel fetches, then event building."""
 
     # Stage 1: Fetch external data in parallel
-    github_repos, hf_models = await asyncio.gather(
+    github_repos, hf_models, web_events = await asyncio.gather(
         _fetch_github_repos(inp),
         _fetch_hf_models(inp),
+        _search_web_timeline_events(inp),
     )
 
     # Stage 2: Build events from each source
@@ -293,6 +388,7 @@ async def _run_pipeline(inp: PipelineInput) -> list[TimelineEvent]:
         "papers": _build_paper_events(inp),
         "github": _build_github_events((inp, github_repos)),
         "huggingface": _build_hf_events((inp, hf_models)),
+        "web": web_events,
     }
 
     # Stage 3: Merge, deduplicate, sort
@@ -502,7 +598,7 @@ async def fetch_enrichment_data(
     return result
 
 
-ENRICHMENT_DIR = ROOT / "src" / "lib" / "enrichment"
+ENRICHMENT_DIR = PROJECT_ROOT / "src" / "lib" / "enrichment"
 
 
 def save_enrichment(slug: str, data: dict[str, Any]) -> Path:
@@ -548,7 +644,7 @@ async def cmd_enrich(args: argparse.Namespace) -> None:
             # Timeline enrichment
             events = await enrich_person_timeline(slug)
             tl_path = save_enriched_timeline(slug, events)
-            console.print(f"  [green]{len(events)} events[/] → {tl_path.relative_to(ROOT)}")
+            console.print(f"  [green]{len(events)} events[/] → {tl_path.relative_to(PROJECT_ROOT)}")
 
             # GitHub + HuggingFace + Image enrichment
             enrichment = await fetch_enrichment_data(
@@ -560,7 +656,7 @@ async def cmd_enrich(args: argparse.Namespace) -> None:
             gh_repos = len(enrichment.get("github", {}).get("repos", [])) if enrichment.get("github") else 0
             hf_models = len(enrichment.get("huggingface", {}).get("models", [])) if enrichment.get("huggingface") else 0
             img = "yes" if enrichment.get("imageUrl") else "no"
-            console.print(f"  [green]{gh_repos} repos, {hf_models} models, image: {img}[/] → {en_path.relative_to(ROOT)}")
+            console.print(f"  [green]{gh_repos} repos, {hf_models} models, image: {img}[/] → {en_path.relative_to(PROJECT_ROOT)}")
 
             # Print summary table
             source_counts: dict[str, int] = {}
@@ -574,6 +670,7 @@ async def cmd_enrich(args: argparse.Namespace) -> None:
                     "github": "green",
                     "paper": "blue",
                     "huggingface": "yellow",
+                    "web": "magenta",
                 }.get(src, "white")
                 table.add_row(f"[{color}]{src}[/]", str(count))
             console.print(table)

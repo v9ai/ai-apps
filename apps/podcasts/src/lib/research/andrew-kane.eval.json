@@ -1,0 +1,29 @@
+{
+  "slug": "andrew-kane",
+  "name": "Andrew Kane",
+  "generated_at": "2026-03-22T20:09:46+00:00",
+  "eval": {
+    "bio_quality": {
+      "score": 8,
+      "reasoning": "The biography is specific, evidence-based, and informative, clearly identifying Andrew Kane as the creator/maintainer of PGVector and highlighting his prolific open-source portfolio (431 repositories). It includes concrete metrics (GitHub stars, cloud platform integrations) and establishes his role in the AI infrastructure ecosystem. However, it lacks personal background details (education, career progression) and relies heavily on GitHub metrics without independent verification of his professional history."
+    },
+    "source_coverage": {
+      "score": 7,
+      "reasoning": "Sources are moderately diverse but heavily skewed toward GitHub and technical documentation. High-quality sources include GitHub repositories (PGVector, Searchkick, PGHero) and integration announcements from AWS, Azure, and Supabase. However, there is a lack of primary interviews, conference talks, or personal blog posts from Andrew Kane himself. The attempted fetch_url_content calls for about.me and GitHub issues returned no usable data, indicating gaps in direct sourcing. Reliance on inferred patterns (e.g., 'battle-tested at Instacart') without explicit citation reduces verifiability."
+    },
+    "timeline_completeness": {
+      "score": 6,
+      "reasoning": "The timeline is fragmented and incomplete. While business milestones (PGVector releases, cloud integrations) are noted, there is no coherent chronological narrative of Andrew Kane's career. Key gaps include: education background, early career steps, transition from Adobe/Instacart to full-time open-source work, and evolution of his project portfolio over time. The fetch_url_content attempt for about.me failed, leaving personal timeline details unverified. The provided 'business_milestones' in the Funding section are useful but not integrated into a full timeline."
+    },
+    "contributions_depth": {
+      "score": 9,
+      "reasoning": "Contributions are exceptionally well-documented with specific impact data. The JSON array details six major projects (PGVector, Searchkick, PGHero, etc.) with clear descriptions, URLs, and quantitative metrics (GitHub stars, forks, downloads, adoption stats). Impact narratives are strong (e.g., '150x speedup', '374M+ downloads', cloud provider integrations). The analysis connects his work to broader trends (AI infrastructure, Ruby ecosystem dominance). Minor deduction for some inferred metrics (e.g., 'used by thousands of companies') without direct citation."
+    },
+    "name_disambiguation": {
+      "score": 10,
+      "reasoning": "Excellent disambiguation. The profile explicitly distinguishes Andrew Kane (ankane, PGVector creator) from Andrew Kane (CFO at Act! CRM). It consistently focuses on the correct individual, using GitHub handle 'ankane' as a key identifier and aligning all contributions (PGVector, Searchkick) with this identity. No contamination from the other Andrew Kane is present."
+    },
+    "overall_score": 8,
+    "summary": "This research profile provides a strong, technically detailed view of Andrew Kane's open-source contributions, particularly PGVector, with robust impact metrics and clear name disambiguation. However, it lacks depth in personal biography, career timeline, and diverse primary sources. Improvements needed: 1) Gather verified personal/career background (LinkedIn, interviews), 2) Construct a complete timeline with dates for education, employment, and project evolution, 3) Source direct quotes or talks from Andrew Kane, 4) Supplement GitHub data with independent articles or case studies on PGVector adoption."
+  }
+}

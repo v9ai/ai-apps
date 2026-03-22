@@ -1,5 +1,54 @@
 {
   "slug": "andrew-kane",
-  "generated_at": "2026-03-18T21:18:48.172348Z",
-  "events": []
+  "generated_at": "2026-03-22T20:23:40.812761Z",
+  "events": [
+    {
+      "date": "2025-10-03",
+      "event": "Created neighbor-s3: Nearest neighbor search for Ruby and S3 Vectors",
+      "url": "https://github.com/ankane/neighbor-s3",
+      "source": "github"
+    },
+    {
+      "date": "2025-10-01",
+      "event": "Created seaduck: Apache Iceberg for Ruby, powered by libduckdb",
+      "url": "https://github.com/ankane/seaduck",
+      "source": "github"
+    },
+    {
+      "date": "2025-08-27",
+      "event": "Created iceberg-ruby: Apache Iceberg for Ruby",
+      "url": "https://github.com/ankane/iceberg-ruby",
+      "source": "github"
+    },
+    {
+      "date": "2025-08-18",
+      "event": "Created ducklake-ruby: Run your own data lake with a SQL database and file/object storage",
+      "url": "https://github.com/ankane/ducklake-ruby",
+      "source": "github"
+    },
+    {
+      "date": "2023-05",
+      "event": "Announced pgvector availability on Amazon RDS and support for 11 programming language libraries",
+      "url": "https://aguea.net/andrewkane",
+      "source": "web"
+    },
+    {
+      "date": "2023-05",
+      "event": "pgvector made available on Amazon RDS — Amazon RDS support for pgvector announced",
+      "url": "https://aws.amazon.com/about-aws/whats-new/2023/05/amazon-rds-postgresql-pgvector-open-source-extension/",
+      "source": "web"
+    },
+    {
+      "date": "2021-01",
+      "event": "Released pgvector: open-source PostgreSQL extension for vector similarity search",
+      "url": "https://github.com/pgvector/pgvector",
+      "source": "web"
+    },
+    {
+      "date": "2017-09-08",
+      "event": "Gave talk \"How Postgres Could Index Itself\" at PostgresOpen (presenting Dexter, the automatic PostgreSQL indexer)",
+      "url": "https://speakerdeck.com/ankane/how-postgres-could-index-itself",
+      "source": "web"
+    }
+  ]
 }
