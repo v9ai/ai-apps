@@ -7,6 +7,7 @@ export const SOURCE_STYLES: Record<TimelineSource, { dot: string; badge: string;
   github: { dot: css({ bg: '#3fb950' }), badge: css({ bg: 'rgba(35,134,54,0.15)', color: '#3fb950', borderColor: 'rgba(35,134,54,0.3)' }), label: "GitHub" },
   paper: { dot: css({ bg: '#818cf8' }), badge: css({ bg: 'rgba(99,102,241,0.15)', color: '#818cf8', borderColor: 'rgba(99,102,241,0.3)' }), label: "Paper" },
   huggingface: { dot: css({ bg: '#FFD21E' }), badge: css({ bg: 'rgba(255,210,30,0.15)', color: '#FFD21E', borderColor: 'rgba(255,210,30,0.3)' }), label: "HF" },
+  web: { dot: css({ bg: '#60a5fa' }), badge: css({ bg: 'rgba(96,165,250,0.15)', color: '#60a5fa', borderColor: 'rgba(96,165,250,0.3)' }), label: "Web" },
 };
 
 export function EnrichedTimelineSection({ events }: { events: EnrichedTimelineEvent[] }) {

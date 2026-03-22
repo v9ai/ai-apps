@@ -11,7 +11,7 @@ export type TimelineEvent = {
   url: string;
 };
 
-export type TimelineSource = "research" | "github" | "paper" | "huggingface";
+export type TimelineSource = "research" | "github" | "paper" | "huggingface" | "web";
 
 export type EnrichedTimelineEvent = {
   date: string;
