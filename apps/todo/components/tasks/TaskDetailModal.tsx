@@ -93,7 +93,7 @@ const AutoGrowTextArea = forwardRef<
       }}
     />
   );
-}
+});
 
 export function TaskDetailModal({
   task,
@@ -106,6 +106,7 @@ export function TaskDetailModal({
 }) {
   const router = useRouter();
   const [isPending, startTransition] = useTransition();
+  const descriptionRef = useRef<HTMLTextAreaElement>(null);
 
   const [editTitle, setEditTitle] = useState(task.title);
   const [editDescription, setEditDescription] = useState(
@@ -211,7 +212,13 @@ export function TaskDetailModal({
 
   return (
     <Dialog.Root open={open} onOpenChange={onOpenChange}>
-      <Dialog.Content maxWidth="500px">
+      <Dialog.Content
+        maxWidth="500px"
+        onOpenAutoFocus={(e) => {
+          e.preventDefault();
+          descriptionRef.current?.focus();
+        }}
+      >
         <Flex direction="column" gap="3">
           {isCompleted ? (
             <Dialog.Title
@@ -283,6 +290,7 @@ export function TaskDetailModal({
           ) : (
             <>
               <AutoGrowTextArea
+                ref={descriptionRef}
                 className="auto-grow-textarea"
                 value={editDescription}
                 onChange={(e) => setEditDescription(e.target.value)}
