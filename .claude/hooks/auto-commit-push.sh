@@ -32,8 +32,8 @@ else
     TAG=""
 fi
 
-# List changed filenames, truncate if too many
-NAMES=$(echo "$FILES" | xargs -n1 basename | sort -u)
+# Strip extensions, dedupe, truncate if too many
+NAMES=$(echo "$FILES" | xargs -n1 basename | sed 's/\.[^.]*$//' | sort -u)
 COUNT=$(echo "$NAMES" | wc -l | tr -d ' ')
 if [ "$COUNT" -le 5 ]; then
     SUMMARY="chore${TAG}: $(echo "$NAMES" | paste -sd ', ' -)"
