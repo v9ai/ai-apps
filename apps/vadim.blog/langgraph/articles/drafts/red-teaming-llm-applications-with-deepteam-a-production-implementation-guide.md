@@ -80,7 +80,7 @@ Testing these requires simulating the full agentic loop, validating that reliabi
 
 ## Compliance as Code and Runtime Guardrails
 
-Engineers need pass/fail results; compliance officers need evidence mapped to regulations. DeepTeam bridges this gap by aligning tests with major standards like the [NIST AI Risk Management Framework](https://www.nist.gov/artificial-intelligence/executive-order-safe-secure-and-trustworthy-artificial-intelligence), [OWASP Top 10 for LLMs](https://owasp.org/www-project-top-10-for-large-language-model-applications/), and MITRE ATLAS. This mapping turns a JSON report into a governance artifact, operationalizing the need for unified governance in AI-first enterprises [[Source Article](#source-article)].
+Engineers need pass/fail results; compliance officers need evidence mapped to regulations. DeepTeam bridges this gap by aligning tests with major standards like the [NIST AI Risk Management Framework](https://www.nist.gov/itl/ai-risk-management-framework), [OWASP Top 10 for LLMs](https://owasp.org/www-project-top-10-for-large-language-model-applications/), and MITRE ATLAS. This mapping turns a JSON report into a governance artifact, operationalizing the need for unified governance in AI-first enterprises [[Source Article](#source-article)].
 
 Guardrails are LLM-based filters (e.g., `PromptInjectionGuard`, `TopicalGuard`) that block harmful inputs or outputs. They are a vital **last line of defense but a dangerous first resort**.
 

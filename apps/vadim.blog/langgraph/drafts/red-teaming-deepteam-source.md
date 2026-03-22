@@ -226,7 +226,7 @@ risk = red_teamer.red_team(
 
 Four frameworks are supported:
 
-- **[NIST AI Risk Management Framework](https://www.nist.gov/artificial-intelligence/executive-order-safe-secure-and-trustworthy-artificial-intelligence)** — 4 measurement categories covering identification, governance, monitoring, and management of AI risks
+- **[NIST AI Risk Management Framework](https://www.nist.gov/itl/ai-risk-management-framework)** — 4 measurement categories covering identification, governance, monitoring, and management of AI risks
 - **[OWASP Top 10 for LLMs](https://owasp.org/www-project-top-10-for-large-language-model-applications/)** — the 10 most critical security risks in LLM applications, from prompt injection to model denial of service
 - **OWASP ASI 2026** — the Agentic Security Initiative, covering 10 categories of agent-specific risks like tool abuse, goal hijacking, and inter-agent communication vulnerabilities
 - **[MITRE ATLAS](https://atlas.mitre.org/)** — 6 adversarial ML attack categories from reconnaissance through impact, adapted from the [MITRE ATT&CK](https://attack.mitre.org/) framework for traditional cybersecurity

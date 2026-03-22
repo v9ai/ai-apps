@@ -1673,7 +1673,7 @@ function IssueDetailContent() {
                     </Select.Item>
                   ))}
                   {availableToLink.length === 0 && (
-                    <Select.Item value="" disabled>No issues available to link</Select.Item>
+                    <Select.Item value="__none__" disabled>No issues available to link</Select.Item>
                   )}
                 </Select.Content>
               </Select.Root>

@@ -112,7 +112,7 @@ attacks=[
 A worried parent asking leading questions (simulated by Roleplay) is a more probable and dangerous attacker than one using Base64-encoded prompts. This focus on domain-specific harm is your highest-leverage safety work.
 
 ## Compliance Frameworks: From Test Results to Audit Trails
-Engineers need test results; compliance officers need framework mappings. DeepTeam bridges this by aligning vulnerabilities with standards like the [NIST AI Risk Management Framework](https://www.nist.gov/artificial-intelligence/executive-order-safe-secure-and-trustworthy-artificial-intelligence) and [MITRE ATLAS](https://atlas.mitre.org/). You can run tests scoped to a framework, and DeepTeam generates the appropriate vulnerability set and maps results to compliance categories.
+Engineers need test results; compliance officers need framework mappings. DeepTeam bridges this by aligning vulnerabilities with standards like the [NIST AI Risk Management Framework](https://www.nist.gov/itl/ai-risk-management-framework) and [MITRE ATLAS](https://atlas.mitre.org/). You can run tests scoped to a framework, and DeepTeam generates the appropriate vulnerability set and maps results to compliance categories.
 
 This turns a technical security report into a governance artifact for auditors. A pass rate ≥80% is typically considered compliant. This structured approach is a step towards the unified governance required to manage the coming "agentic chaos".
 
