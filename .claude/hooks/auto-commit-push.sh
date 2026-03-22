@@ -31,7 +31,7 @@ fi
 
 git commit -m "${SUMMARY}" --no-verify > /dev/null 2>&1 || exit 0
 
-# Push (best-effort, don't block Claude)
-git push --no-verify > /dev/null 2>&1 &
+# Push (foreground so it completes reliably)
+git push --no-verify > /dev/null 2>&1
 
 exit 0
