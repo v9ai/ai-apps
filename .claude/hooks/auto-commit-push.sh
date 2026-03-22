@@ -30,9 +30,15 @@ else
     TAG=""
 fi
 
-# List changed filenames (without paths) as summary
-NAMES=$(echo "$FILES" | xargs -n1 basename | sort -u | paste -sd ', ' -)
-SUMMARY="chore${TAG}: ${NAMES}"
+# List changed filenames, truncate if too many
+NAMES=$(echo "$FILES" | xargs -n1 basename | sort -u)
+COUNT=$(echo "$NAMES" | wc -l | tr -d ' ')
+if [ "$COUNT" -le 5 ]; then
+    SUMMARY="chore${TAG}: $(echo "$NAMES" | paste -sd ', ' -)"
+else
+    TOP=$(echo "$NAMES" | head -3 | paste -sd ', ' -)
+    SUMMARY="chore${TAG}: ${TOP} (+$((COUNT - 3)) more)"
+fi
 
 git commit -m "${SUMMARY}" --no-verify > /dev/null 2>&1 || exit 0
 git push --no-verify > /dev/null 2>&1
