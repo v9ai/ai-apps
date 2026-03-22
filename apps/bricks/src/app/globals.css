@@ -45,6 +45,14 @@ body::before {
   100% { transform: translateY(0); }
 }
 
+@keyframes brickFlip {
+  0%   { transform: rotateX(0deg); filter: brightness(1); }
+  40%  { transform: rotateX(-90deg); filter: brightness(0.35); }
+  55%  { transform: rotateX(-90deg); filter: brightness(0.35); }
+  85%  { transform: rotateX(8deg); filter: brightness(1.1); }
+  100% { transform: rotateX(0deg); filter: brightness(1); }
+}
+
 @keyframes stud-sparkle {
   0%   { transform: scale(1); }
   50%  { transform: scale(1.5); background-color: #FFE566; }

@@ -27,16 +27,27 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
 
-  const { url } = await req.json();
-  if (!url || typeof url !== "string") {
-    return NextResponse.json({ error: "url is required" }, { status: 400 });
-  }
+  const body = await req.json();
 
-  let parsed;
-  try {
-    parsed = parseMocUrl(url);
-  } catch {
-    return NextResponse.json({ error: "Invalid Rebrickable MOC URL" }, { status: 400 });
+  let parsed: { mocId: string; designer: string; name: string; url: string };
+
+  if (body.mocId && body.designer && body.name) {
+    // Direct MOC data (from MOC detail page)
+    parsed = {
+      mocId: body.mocId,
+      designer: body.designer,
+      name: body.name,
+      url: body.url || `https://rebrickable.com/mocs/${body.mocId}/`,
+    };
+  } else if (body.url && typeof body.url === "string") {
+    // Legacy: parse from Rebrickable URL
+    try {
+      parsed = parseMocUrl(body.url);
+    } catch {
+      return NextResponse.json({ error: "Invalid Rebrickable MOC URL" }, { status: 400 });
+    }
+  } else {
+    return NextResponse.json({ error: "url or mocId+designer+name required" }, { status: 400 });
   }
 
   const [row] = await db

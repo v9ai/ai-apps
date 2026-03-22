@@ -55,38 +55,6 @@ export function LegoName({ name }: LegoNameProps) {
           animationPlayState: "running",
         },
 
-        // @keyframes brickFlip — 3D tile flip along the X axis
-        //
-        //   0% : resting, full brightness
-        //  40% : rotated to -90° (edge-on). Letter face is invisible (zero width).
-        //        brightness(0.35) simulates the darker plastic back face —
-        //        this is the "back face flash" without needing a real back element.
-        //  55% : held at -90° for a brief beat (the "thunk" of a stud clicking).
-        //  85% : overshoots +8° — elastic snap landing.
-        // 100% : settled at 0°, full brightness restored.
-        "@keyframes brickFlip": {
-          "0%": {
-            transform: "rotateX(0deg)",
-            filter: "brightness(1)",
-          },
-          "40%": {
-            transform: "rotateX(-90deg)",
-            filter: "brightness(0.35)",
-          },
-          "55%": {
-            transform: "rotateX(-90deg)",
-            filter: "brightness(0.35)",
-          },
-          "85%": {
-            transform: "rotateX(8deg)",
-            filter: "brightness(1.1)",
-          },
-          "100%": {
-            transform: "rotateX(0deg)",
-            filter: "brightness(1)",
-          },
-        },
-
         // Reduced motion: disable all animation layers
         "@media (prefers-reduced-motion: reduce)": {
           "--flip-play": "paused !important",

@@ -3,7 +3,8 @@
   "dependencies": ["."],
   "graphs": {
     "analyze_video": "bricks_agent.graph:graph",
-    "research_topic": "bricks_agent.topic_graph:topic_graph"
+    "research_topic": "bricks_agent.topic_graph:topic_graph",
+    "part_mocs": "bricks_agent.part_mocs_graph:part_mocs_graph"
   },
   "env": ".env"
 }

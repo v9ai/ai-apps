@@ -1,11 +1,12 @@
 "use client";
 
-import { useState, useEffect } from "react";
-import { useParams } from "next/navigation";
+import { useState, useEffect, useCallback } from "react";
+import { useParams, useSearchParams } from "next/navigation";
 import Link from "next/link";
 import { css } from "styled-system/css";
+import { useSession } from "@/lib/auth-client";
 
-interface SetPart {
+interface MocPart {
   partNum: string;
   name: string;
   imageUrl: string | null;
@@ -16,50 +17,90 @@ interface SetPart {
   isSpare: boolean;
 }
 
-interface SetMoc {
+interface MocDetail {
   mocId: string;
   name: string;
-  year: number;
-  numParts: number;
+  year: number | null;
+  numParts: number | null;
   imageUrl: string | null;
   mocUrl: string;
-  designer: string;
-}
-
-interface SetDetail {
-  setNum: string;
-  name: string;
-  year: number;
-  themeId: number;
-  themeName: string;
-  numParts: number;
-  imageUrl: string | null;
-  setUrl: string;
-  parts: SetPart[];
+  designer: string | null;
+  parts: MocPart[];
   partsCount: number;
-  mocs: SetMoc[];
 }
 
-export default function SetPage() {
-  const { setNum } = useParams<{ setNum: string }>();
-  const [set, setSet] = useState<SetDetail | null>(null);
+export default function MocPage() {
+  const { mocId } = useParams<{ mocId: string }>();
+  const searchParams = useSearchParams();
+  const { data: session } = useSession();
+  const [moc, setMoc] = useState<MocDetail | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [showSpares, setShowSpares] = useState(false);
+  const [isFavorited, setIsFavorited] = useState(false);
+  const [favLoading, setFavLoading] = useState(false);
+
+  // Check if this MOC is already favorited
+  useEffect(() => {
+    if (!session) return;
+    fetch("/api/favorites")
+      .then((res) => res.ok ? res.json() : null)
+      .then((data) => {
+        if (data?.items?.some((f: { mocId: string }) => f.mocId === mocId)) {
+          setIsFavorited(true);
+        }
+      })
+      .catch(() => {});
+  }, [session, mocId]);
+
+  const toggleFavorite = useCallback(async () => {
+    if (!moc || favLoading) return;
+    setFavLoading(true);
+    try {
+      if (isFavorited) {
+        const res = await fetch("/api/favorites", {
+          method: "DELETE",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ mocId: moc.mocId }),
+        });
+        if (res.ok) setIsFavorited(false);
+      } else {
+        const res = await fetch("/api/favorites", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            mocId: moc.mocId,
+            name: moc.name,
+            designer: moc.designer || "Unknown",
+            url: moc.mocUrl,
+          }),
+        });
+        if (res.ok) setIsFavorited(true);
+      }
+    } finally {
+      setFavLoading(false);
+    }
+  }, [moc, isFavorited, favLoading]);
 
   useEffect(() => {
-    fetch(`/api/sets/${encodeURIComponent(setNum)}`)
+    // Forward search params to the API so it has MOC metadata
+    const apiParams = new URLSearchParams();
+    for (const [key, value] of searchParams.entries()) {
+      apiParams.set(key, value);
+    }
+    const qs = apiParams.toString();
+    fetch(`/api/mocs/${encodeURIComponent(mocId)}${qs ? `?${qs}` : ""}`)
       .then(async (res) => {
         if (!res.ok) {
           const data = await res.json();
-          throw new Error(data.error || "Set not found");
+          throw new Error(data.error || "MOC not found");
         }
         return res.json();
       })
-      .then((data) => setSet(data))
+      .then((data) => setMoc(data))
       .catch((err) => setError(err.message))
       .finally(() => setLoading(false));
-  }, [setNum]);
+  }, [mocId, searchParams]);
 
   if (loading) {
     return (
@@ -70,7 +111,7 @@ export default function SetPage() {
             w: "12",
             h: "12",
             rounded: "stud",
-            bg: "lego.orange",
+            bg: "lego.green",
             boxShadow: "stud",
             animation: "spin 1s linear infinite",
           })}
@@ -79,7 +120,7 @@ export default function SetPage() {
     );
   }
 
-  if (error || !set) {
+  if (error || !moc) {
     return (
       <main className={css({ mx: "auto", maxW: "3xl", px: "4", py: "16" })}>
         <a
@@ -109,15 +150,15 @@ export default function SetPage() {
             color: "#FF6B6B",
           })}
         >
-          {error || "Set not found"}
+          {error || "MOC not found"}
         </div>
       </main>
     );
   }
 
-  const mainParts = set.parts.filter((p) => !p.isSpare);
-  const spareParts = set.parts.filter((p) => p.isSpare);
-  const displayParts = showSpares ? set.parts : mainParts;
+  const mainParts = moc.parts.filter((p) => !p.isSpare);
+  const spareParts = moc.parts.filter((p) => p.isSpare);
+  const displayParts = showSpares ? moc.parts : mainParts;
   const totalPieces = mainParts.reduce((sum, p) => sum + p.quantity, 0);
 
   return (
@@ -137,7 +178,7 @@ export default function SetPage() {
         &larr; Back
       </a>
 
-      {/* Set card */}
+      {/* MOC card */}
       <div
         className={css({
           mt: "6",
@@ -149,8 +190,8 @@ export default function SetPage() {
           overflow: "hidden",
         })}
       >
-        {/* Set image */}
-        {set.imageUrl && (
+        {/* MOC image */}
+        {moc.imageUrl && (
           <div
             className={css({
               display: "flex",
@@ -163,8 +204,8 @@ export default function SetPage() {
             })}
           >
             <img
-              src={set.imageUrl}
-              alt={set.name}
+              src={moc.imageUrl}
+              alt={moc.name}
               className={css({
                 maxW: "400px",
                 maxH: "300px",
@@ -175,7 +216,7 @@ export default function SetPage() {
         )}
 
         <div className={css({ p: "6" })}>
-          {/* Set number badge + title */}
+          {/* MOC badge + title */}
           <div className={css({ display: "flex", alignItems: "flex-start", gap: "4", mb: "6" })}>
             <div
               className={css({
@@ -190,12 +231,12 @@ export default function SetPage() {
                 fontWeight: "900",
                 fontFamily: "display",
                 color: "white",
-                bg: "lego.red",
+                bg: "lego.green",
                 boxShadow: "stud",
                 textShadow: "0 1px 2px rgba(0,0,0,0.5)",
               })}
             >
-              {set.year}
+              MOC
             </div>
             <div>
               <h1
@@ -208,11 +249,13 @@ export default function SetPage() {
                   lineHeight: 1.2,
                 })}
               >
-                {set.name}
+                {moc.name}
               </h1>
-              <p className={css({ mt: "1", fontSize: "sm", color: "ink.muted" })}>
-                Set #{set.setNum}
-              </p>
+              {moc.designer && (
+                <p className={css({ mt: "1", fontSize: "sm", color: "ink.muted" })}>
+                  by {moc.designer}
+                </p>
+              )}
             </div>
           </div>
 
@@ -226,10 +269,11 @@ export default function SetPage() {
             })}
           >
             {[
-              { label: "Theme", value: set.themeName },
-              { label: "Year", value: String(set.year) },
-              { label: "Parts", value: `${set.numParts} pcs` },
-            ].map(({ label, value }) => (
+              { label: "MOC ID", value: moc.mocId },
+              { label: "Designer", value: moc.designer },
+              { label: "Year", value: moc.year ? String(moc.year) : null },
+              { label: "Parts", value: moc.numParts ? `${moc.numParts} pcs` : null },
+            ].filter((item): item is { label: string; value: string } => item.value != null).map(({ label, value }) => (
               <div
                 key={label}
                 className={css({
@@ -269,43 +313,78 @@ export default function SetPage() {
             ))}
           </div>
 
-          {/* External link */}
-          <a
-            href={set.setUrl}
-            target="_blank"
-            rel="noopener noreferrer"
-            className={css({
-              display: "inline-flex",
-              alignItems: "center",
-              gap: "2",
-              rounded: "brick",
-              bg: "lego.red",
-              px: "5",
-              py: "2.5",
-              fontSize: "sm",
-              fontWeight: "800",
-              fontFamily: "display",
-              color: "white",
-              textDecoration: "none",
-              cursor: "pointer",
-              transition: "all 0.15s ease",
-              boxShadow:
-                "inset 0 1px 0 rgba(255,255,255,0.2), 0 2px 0 #A30008, 0 3px 6px rgba(0,0,0,0.3)",
-              _hover: {
-                bg: "#FF1A1A",
-                transform: "translateY(-1px)",
+          {/* Action buttons */}
+          <div className={css({ display: "flex", gap: "3", flexWrap: "wrap" })}>
+            <a
+              href={moc.mocUrl}
+              target="_blank"
+              rel="noopener noreferrer"
+              className={css({
+                display: "inline-flex",
+                alignItems: "center",
+                gap: "2",
+                rounded: "brick",
+                bg: "lego.green",
+                px: "5",
+                py: "2.5",
+                fontSize: "sm",
+                fontWeight: "800",
+                fontFamily: "display",
+                color: "white",
+                textDecoration: "none",
+                cursor: "pointer",
+                transition: "all 0.15s ease",
                 boxShadow:
-                  "inset 0 1px 0 rgba(255,255,255,0.25), 0 3px 0 #A30008, 0 5px 10px rgba(0,0,0,0.35)",
-              },
-            })}
-          >
-            View on Rebrickable &rarr;
-          </a>
+                  "inset 0 1px 0 rgba(255,255,255,0.2), 0 2px 0 #005A1B, 0 3px 6px rgba(0,0,0,0.3)",
+                _hover: {
+                  bg: "#00A333",
+                  transform: "translateY(-1px)",
+                  boxShadow:
+                    "inset 0 1px 0 rgba(255,255,255,0.25), 0 3px 0 #005A1B, 0 5px 10px rgba(0,0,0,0.35)",
+                },
+              })}
+            >
+              View on Rebrickable &rarr;
+            </a>
+
+            {session && (
+              <button
+                onClick={toggleFavorite}
+                disabled={favLoading}
+                className={css({
+                  display: "inline-flex",
+                  alignItems: "center",
+                  gap: "2",
+                  rounded: "brick",
+                  bg: isFavorited ? "lego.red" : "lego.orange",
+                  px: "5",
+                  py: "2.5",
+                  fontSize: "sm",
+                  fontWeight: "800",
+                  fontFamily: "display",
+                  color: "white",
+                  border: "none",
+                  cursor: "pointer",
+                  transition: "all 0.15s ease",
+                  boxShadow: isFavorited
+                    ? "inset 0 1px 0 rgba(255,255,255,0.2), 0 2px 0 #A30008, 0 3px 6px rgba(0,0,0,0.3)"
+                    : "inset 0 1px 0 rgba(255,255,255,0.2), 0 2px 0 #B56A00, 0 3px 6px rgba(0,0,0,0.3)",
+                  _hover: {
+                    bg: isFavorited ? "#FF1A1A" : "#FF9F2E",
+                    transform: "translateY(-1px)",
+                  },
+                  _disabled: { opacity: 0.5, cursor: "not-allowed" },
+                })}
+              >
+                {favLoading ? "..." : isFavorited ? "Remove from Favorites" : "Add to Favorites"}
+              </button>
+            )}
+          </div>
         </div>
       </div>
 
       {/* Parts list */}
-      {set.parts.length > 0 && (
+      {moc.parts.length > 0 && (
         <div
           className={css({
             mt: "6",
@@ -328,7 +407,7 @@ export default function SetPage() {
                 color: "ink.muted",
               })}
             >
-              Parts ({totalPieces} pcs / {set.partsCount} unique)
+              Parts ({totalPieces} pcs / {moc.partsCount} unique)
             </h2>
             {spareParts.length > 0 && (
               <button
@@ -374,7 +453,6 @@ export default function SetPage() {
                   },
                 })}
               >
-                {/* Part image or color stud */}
                 {part.imageUrl ? (
                   <img
                     src={part.imageUrl}
@@ -401,7 +479,6 @@ export default function SetPage() {
                   />
                 )}
 
-                {/* Part info */}
                 <div className={css({ flex: 1, minW: 0 })}>
                   <span
                     className={css({
@@ -434,7 +511,6 @@ export default function SetPage() {
                   </div>
                 </div>
 
-                {/* Quantity */}
                 <div
                   className={css({
                     fontSize: "sm",
@@ -450,159 +526,17 @@ export default function SetPage() {
                     flexShrink: 0,
                   })}
                 >
-                  ×{part.quantity}
+                  x{part.quantity}
                 </div>
               </Link>
             ))}
           </div>
 
-          {set.partsCount > set.parts.length && (
+          {moc.partsCount > moc.parts.length && (
             <p className={css({ mt: "3", fontSize: "xs", color: "ink.faint", textAlign: "center" })}>
-              Showing {set.parts.length} of {set.partsCount} unique parts
+              Showing {moc.parts.length} of {moc.partsCount} unique parts
             </p>
           )}
-        </div>
-      )}
-
-      {/* MOC Alternates */}
-      {set.mocs.length > 0 && (
-        <div
-          className={css({
-            mt: "6",
-            bg: "plate.surface",
-            rounded: "brick",
-            border: "2px solid",
-            borderColor: "plate.border",
-            boxShadow: "brick",
-            p: "6",
-          })}
-        >
-          <h2
-            className={css({
-              fontSize: "sm",
-              fontWeight: "900",
-              fontFamily: "display",
-              letterSpacing: "0.08em",
-              textTransform: "uppercase",
-              color: "ink.muted",
-              mb: "4",
-            })}
-          >
-            Alternate Builds ({set.mocs.length})
-          </h2>
-
-          <div
-            className={css({
-              display: "grid",
-              gridTemplateColumns: "repeat(auto-fill, minmax(200px, 1fr))",
-              gap: "3",
-            })}
-          >
-            {set.mocs.map((moc) => (
-              <Link
-                key={moc.mocId}
-                href={`/mocs/${encodeURIComponent(moc.mocId)}?${new URLSearchParams({ name: moc.name, designer: moc.designer, year: String(moc.year), numParts: String(moc.numParts), ...(moc.imageUrl ? { imageUrl: moc.imageUrl } : {}), ...(moc.mocUrl ? { mocUrl: moc.mocUrl } : {}) }).toString()}`}
-                className={css({
-                  bg: "plate.raised",
-                  rounded: "brick",
-                  border: "1px solid",
-                  borderColor: "plate.border",
-                  boxShadow: "plate",
-                  overflow: "hidden",
-                  textDecoration: "none",
-                  transition: "all 0.15s ease",
-                  _hover: {
-                    bg: "plate.hover",
-                    borderColor: "plate.borderHover",
-                    transform: "translateY(-1px)",
-                    boxShadow: "brick",
-                  },
-                })}
-              >
-                <div
-                  className={css({
-                    display: "flex",
-                    alignItems: "center",
-                    justifyContent: "center",
-                    bg: "white",
-                    p: "4",
-                    h: "120px",
-                  })}
-                >
-                  {moc.imageUrl ? (
-                    <img
-                      src={moc.imageUrl}
-                      alt={moc.name}
-                      className={css({
-                        maxW: "100%",
-                        maxH: "100%",
-                        objectFit: "contain",
-                      })}
-                    />
-                  ) : (
-                    <div
-                      className={css({
-                        w: "10",
-                        h: "10",
-                        rounded: "stud",
-                        bg: "lego.green",
-                        boxShadow: "stud",
-                      })}
-                    />
-                  )}
-                </div>
-
-                <div className={css({ p: "3" })}>
-                  <span
-                    className={css({
-                      fontSize: "sm",
-                      fontWeight: "700",
-                      fontFamily: "display",
-                      color: "ink.primary",
-                      display: "block",
-                      overflow: "hidden",
-                      textOverflow: "ellipsis",
-                      whiteSpace: "nowrap",
-                    })}
-                  >
-                    {moc.name}
-                  </span>
-                  <span className={css({ fontSize: "xs", color: "ink.muted", display: "block", mt: "0.5" })}>
-                    by {moc.designer}
-                  </span>
-
-                  <div className={css({ display: "flex", gap: "2", mt: "2" })}>
-                    <span
-                      className={css({
-                        fontSize: "xs",
-                        fontWeight: "700",
-                        color: "lego.green",
-                        bg: "rgba(0, 133, 43, 0.1)",
-                        px: "2",
-                        py: "0.5",
-                        rounded: "md",
-                      })}
-                    >
-                      MOC
-                    </span>
-                    <span
-                      className={css({
-                        fontSize: "xs",
-                        fontWeight: "700",
-                        color: "lego.yellow",
-                        bg: "rgba(255, 213, 0, 0.1)",
-                        px: "2",
-                        py: "0.5",
-                        rounded: "md",
-                      })}
-                    >
-                      {moc.numParts} pcs
-                    </span>
-                  </div>
-                </div>
-              </Link>
-            ))}
-          </div>
         </div>
       )}
     </main>

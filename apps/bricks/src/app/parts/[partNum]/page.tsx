@@ -16,8 +16,9 @@ interface PartDetail {
   partNum: string;
   name: string;
   imageUrl: string | null;
-  categoryId: number;
+  categoryId: number | null;
   colors: PartColor[];
+  isSet?: boolean;
 }
 
 interface PartSet {
@@ -36,6 +37,7 @@ interface Moc {
   imageUrl: string | null;
   mocUrl: string;
   designer: string;
+  topPick?: boolean;
 }
 
 export default function PartPage() {
@@ -137,6 +139,40 @@ export default function PartPage() {
     return () => controller.abort();
   }, [sets, setsLoading, partNum]);
 
+  // Fallback: use LangGraph discover-mocs for set-type items or when standard flow yields nothing
+  const [discoveryDone, setDiscoveryDone] = useState(false);
+  useEffect(() => {
+    if (!part || loading || discoveryDone) return;
+    if (mocs.length > 0) return;
+    if (part.colors.length > 0 && setsLoading) return;
+
+    setDiscoveryDone(true);
+    setMocsLoading(true);
+
+    fetch(`/api/parts/${encodeURIComponent(partNum)}/discover-mocs`)
+      .then(async (res) => {
+        if (!res.ok) throw new Error("Discovery failed");
+        return res.json();
+      })
+      .then((data) => {
+        const discovered: Moc[] = (data.mocs ?? []).map(
+          (m: { moc_id: string; name: string; year: number; num_parts: number; image_url: string | null; moc_url: string; designer: string; top_pick?: boolean }) => ({
+            mocId: m.moc_id,
+            name: m.name,
+            year: m.year,
+            numParts: m.num_parts,
+            imageUrl: m.image_url,
+            mocUrl: m.moc_url,
+            designer: m.designer,
+            topPick: m.top_pick,
+          })
+        );
+        setMocs(discovered);
+      })
+      .catch(() => {})
+      .finally(() => setMocsLoading(false));
+  }, [part, loading, mocs.length, partNum, setsLoading, discoveryDone]);
+
   async function loadMoreSets() {
     if (!selectedColor) return;
     const nextPage = setsPage + 1;
@@ -157,7 +193,7 @@ export default function PartPage() {
 
   if (loading) {
     return (
-      <main className={css({ mx: "auto", maxW: "3xl", px: "4", py: "16", textAlign: "center" })}>
+      <main className={css({ mx: "auto", maxW: "100%", px: "4", py: "16", textAlign: "center" })}>
         <div
           className={css({
             mx: "auto",
@@ -175,7 +211,7 @@ export default function PartPage() {
 
   if (error || !part) {
     return (
-      <main className={css({ mx: "auto", maxW: "3xl", px: "4", py: "16" })}>
+      <main className={css({ mx: "auto", maxW: "100%", px: "4", py: "16" })}>
         <a
           href="/"
           className={css({
@@ -212,7 +248,7 @@ export default function PartPage() {
   const displayImage = selectedColor?.imageUrl || part.imageUrl;
 
   return (
-    <main className={css({ mx: "auto", maxW: "3xl", px: "4", py: "12" })}>
+    <main className={css({ mx: "auto", maxW: "100%", px: "4", py: "12" })}>
       {/* Back link */}
       <a
         href="/"
@@ -309,7 +345,7 @@ export default function PartPage() {
 
           {/* External link */}
           <a
-            href={`https://rebrickable.com/parts/${part.partNum}/`}
+            href={part.isSet ? `https://rebrickable.com/sets/${part.partNum}-1/` : `https://rebrickable.com/parts/${part.partNum}/`}
             target="_blank"
             rel="noopener noreferrer"
             className={css({
@@ -497,21 +533,19 @@ export default function PartPage() {
             <div
               className={css({
                 display: "grid",
-                gridTemplateColumns: "repeat(auto-fill, minmax(200px, 1fr))",
-                gap: "3",
+                gridTemplateColumns: "repeat(auto-fill, minmax(260px, 1fr))",
+                gap: "4",
               })}
             >
               {mocs.map((moc) => (
-                <a
+                <Link
                   key={moc.mocId}
-                  href={moc.mocUrl}
-                  target="_blank"
-                  rel="noopener noreferrer"
+                  href={`/mocs/${encodeURIComponent(moc.mocId)}?${new URLSearchParams({ name: moc.name, designer: moc.designer, year: String(moc.year), numParts: String(moc.numParts), ...(moc.imageUrl ? { imageUrl: moc.imageUrl } : {}), ...(moc.mocUrl ? { mocUrl: moc.mocUrl } : {}) }).toString()}`}
                   className={css({
                     bg: "plate.raised",
                     rounded: "brick",
-                    border: "1px solid",
-                    borderColor: "plate.border",
+                    border: moc.topPick ? "2px solid" : "1px solid",
+                    borderColor: moc.topPick ? "lego.orange" : "plate.border",
                     boxShadow: "plate",
                     overflow: "hidden",
                     textDecoration: "none",
@@ -531,7 +565,7 @@ export default function PartPage() {
                       justifyContent: "center",
                       bg: "white",
                       p: "4",
-                      h: "120px",
+                      h: "200px",
                     })}
                   >
                     {moc.imageUrl ? (
@@ -558,6 +592,23 @@ export default function PartPage() {
                   </div>
 
                   <div className={css({ p: "3" })}>
+                    {moc.topPick && (
+                      <span
+                        className={css({
+                          display: "inline-block",
+                          fontSize: "xs",
+                          fontWeight: "800",
+                          color: "lego.orange",
+                          bg: "rgba(254,138,24,0.1)",
+                          px: "2",
+                          py: "0.5",
+                          rounded: "md",
+                          mb: "1",
+                        })}
+                      >
+                        Top Pick
+                      </span>
+                    )}
                     <span
                       className={css({
                         fontSize: "sm",
@@ -618,7 +669,7 @@ export default function PartPage() {
                       </span>
                     </div>
                   </div>
-                </a>
+                </Link>
               ))}
             </div>
           )}

@@ -1,7 +1,8 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { useParams } from "next/navigation";
+import Link from "next/link";
 import { css } from "styled-system/css";
 import { useSession } from "@/lib/auth-client";
 import { mocImageUrl } from "@/lib/moc-image";
@@ -17,6 +18,24 @@ interface Favorite {
   pdfUrl: string | null;
   parts: Part[];
   createdAt: string;
+}
+
+interface DiscoveredMoc {
+  moc_id: string;
+  name: string;
+  year: number | null;
+  num_parts: number;
+  image_url: string | null;
+  moc_url: string;
+  designer: string;
+  top_pick?: boolean;
+}
+
+interface DiscoveryResult {
+  partNum: string;
+  partName: string;
+  mocs: DiscoveredMoc[];
+  summary: string;
 }
 
 const LEGO_COLORS = ["#E3000B", "#FFD500", "#006CB7", "#00852B", "#FE8A18"];
@@ -44,6 +63,49 @@ export default function FavoriteDetailPage() {
   // PDF URL input state
   const [pdfInput, setPdfInput] = useState("");
   const [saving, setSaving] = useState(false);
+
+  // MOC discovery state
+  const [discoveries, setDiscoveries] = useState<DiscoveryResult[]>([]);
+  const [discovering, setDiscovering] = useState(false);
+  const [discoveryPartNum, setDiscoveryPartNum] = useState("");
+  const [discoveryError, setDiscoveryError] = useState<string | null>(null);
+
+  const discoverMocsForPart = useCallback(async (partNum: string) => {
+    setDiscovering(true);
+    setDiscoveryError(null);
+    try {
+      const res = await fetch(`/api/parts/${encodeURIComponent(partNum)}/discover-mocs`);
+      if (!res.ok) {
+        const data = await res.json();
+        setDiscoveryError(data.error || "Discovery failed");
+        return;
+      }
+      const data = await res.json();
+      setDiscoveries((prev) => {
+        const filtered = prev.filter((d) => d.partNum !== data.partNum);
+        return [...filtered, { partNum: data.partNum, partName: data.partName, mocs: data.mocs, summary: data.summary }];
+      });
+    } catch {
+      setDiscoveryError("Network error during discovery");
+    } finally {
+      setDiscovering(false);
+    }
+  }, []);
+
+  async function handleDiscoverAll() {
+    if (!fav?.parts?.length) return;
+    setDiscoveries([]);
+    for (const part of fav.parts) {
+      await discoverMocsForPart(part.partNum);
+    }
+  }
+
+  async function handleDiscoverSingle() {
+    const trimmed = discoveryPartNum.trim();
+    if (!trimmed) return;
+    await discoverMocsForPart(trimmed);
+    setDiscoveryPartNum("");
+  }
 
   useEffect(() => {
     if (authPending) return;
@@ -499,6 +561,343 @@ export default function FavoriteDetailPage() {
 
       {/* Parts list */}
       <PartsEditor mocId={fav.mocId} initialParts={fav.parts ?? []} />
+
+      {/* Discover Related MOCs */}
+      <div
+        className={css({
+          mt: "6",
+          bg: "plate.surface",
+          rounded: "brick",
+          border: "2px solid",
+          borderColor: "plate.border",
+          boxShadow: "brick",
+          p: "6",
+        })}
+      >
+        <h2
+          className={css({
+            fontSize: "sm",
+            fontWeight: "900",
+            fontFamily: "display",
+            letterSpacing: "0.08em",
+            textTransform: "uppercase",
+            color: "ink.muted",
+            mb: "4",
+          })}
+        >
+          Discover Related MOCs
+        </h2>
+
+        <p className={css({ fontSize: "sm", color: "ink.faint", mb: "4" })}>
+          Find MOC builds that share parts with this design. Enter a part number or discover from all parts above.
+        </p>
+
+        {/* Discovery input */}
+        <div
+          className={css({
+            display: "flex",
+            gap: "2",
+            flexWrap: "wrap",
+            bg: "plate.raised",
+            rounded: "lg",
+            border: "1.5px solid",
+            borderColor: "plate.border",
+            p: "2",
+            mb: "4",
+            _focusWithin: { borderColor: "lego.orange" },
+          })}
+        >
+          <input
+            value={discoveryPartNum}
+            onChange={(e) => setDiscoveryPartNum(e.target.value)}
+            onKeyDown={(e) => e.key === "Enter" && handleDiscoverSingle()}
+            placeholder="Part # (e.g. 3001)"
+            disabled={discovering}
+            className={css({
+              flex: 1,
+              minW: "120px",
+              bg: "transparent",
+              px: "3",
+              py: "2",
+              fontSize: "sm",
+              color: "ink.primary",
+              outline: "none",
+              border: "none",
+              _placeholder: { color: "ink.faint" },
+            })}
+          />
+          <button
+            onClick={handleDiscoverSingle}
+            disabled={discovering || !discoveryPartNum.trim()}
+            className={css({
+              rounded: "lg",
+              bg: "lego.blue",
+              px: "4",
+              py: "2",
+              fontSize: "sm",
+              fontWeight: "800",
+              fontFamily: "display",
+              color: "white",
+              cursor: "pointer",
+              transition: "all 0.15s ease",
+              flexShrink: 0,
+              boxShadow:
+                "inset 0 1px 0 rgba(255,255,255,0.2), 0 2px 0 #004A80, 0 3px 6px rgba(0,0,0,0.3)",
+              _hover: { bg: "#0080D0", transform: "translateY(-1px)" },
+              _disabled: { opacity: 0.5, cursor: "not-allowed" },
+            })}
+          >
+            {discovering ? "Discovering..." : "Discover"}
+          </button>
+        </div>
+
+        {/* Discover All button */}
+        {fav.parts && fav.parts.length > 0 && (
+          <button
+            onClick={handleDiscoverAll}
+            disabled={discovering}
+            className={css({
+              w: "100%",
+              py: "3",
+              mb: "4",
+              bg: "plate.raised",
+              rounded: "brick",
+              border: "1.5px solid",
+              borderColor: "plate.border",
+              fontSize: "sm",
+              fontWeight: "700",
+              fontFamily: "display",
+              color: "ink.secondary",
+              cursor: "pointer",
+              transition: "all 0.15s ease",
+              _hover: { borderColor: "plate.borderHover", bg: "plate.hover" },
+              _disabled: { opacity: 0.5, cursor: "not-allowed" },
+            })}
+          >
+            {discovering
+              ? "Discovering..."
+              : `Discover MOCs for all ${fav.parts.length} parts`}
+          </button>
+        )}
+
+        {discoveryError && (
+          <div
+            className={css({
+              mb: "4",
+              rounded: "brick",
+              border: "2px solid",
+              borderColor: "rgba(227, 0, 11, 0.3)",
+              bg: "rgba(227, 0, 11, 0.08)",
+              px: "4",
+              py: "3",
+              fontSize: "sm",
+              fontWeight: "500",
+              color: "#FF6B6B",
+            })}
+          >
+            {discoveryError}
+          </div>
+        )}
+
+        {/* Discovery results */}
+        {discoveries.map((disc) => (
+          <div key={disc.partNum} className={css({ mb: "6" })}>
+            <div className={css({ display: "flex", alignItems: "center", gap: "2", mb: "3" })}>
+              <Link
+                href={`/parts/${encodeURIComponent(disc.partNum)}`}
+                className={css({
+                  fontSize: "sm",
+                  fontWeight: "800",
+                  fontFamily: "display",
+                  color: "lego.orange",
+                  textDecoration: "none",
+                  _hover: { textDecoration: "underline" },
+                })}
+              >
+                #{disc.partNum}
+              </Link>
+              <span className={css({ fontSize: "sm", fontWeight: "700", color: "ink.primary" })}>
+                {disc.partName}
+              </span>
+              <span className={css({ fontSize: "xs", color: "ink.faint", fontWeight: "700" })}>
+                {disc.mocs.length} MOCs
+              </span>
+            </div>
+
+            {disc.summary && (
+              <p className={css({ fontSize: "sm", color: "ink.muted", mb: "3", lineHeight: "1.5" })}>
+                {disc.summary}
+              </p>
+            )}
+
+            {disc.mocs.length === 0 ? (
+              <p className={css({ fontSize: "sm", color: "ink.faint" })}>
+                No MOC builds found for this part.
+              </p>
+            ) : (
+              <div
+                className={css({
+                  display: "grid",
+                  gridTemplateColumns: "repeat(auto-fill, minmax(200px, 1fr))",
+                  gap: "3",
+                })}
+              >
+                {disc.mocs.map((moc) => (
+                  <Link
+                    key={moc.moc_id}
+                    href={`/mocs/${encodeURIComponent(moc.moc_id)}?${new URLSearchParams({ name: moc.name, designer: moc.designer, ...(moc.year ? { year: String(moc.year) } : {}), numParts: String(moc.num_parts), ...(moc.image_url ? { imageUrl: moc.image_url } : {}), ...(moc.moc_url ? { mocUrl: moc.moc_url } : {}) }).toString()}`}
+                    className={css({
+                      bg: "plate.raised",
+                      rounded: "brick",
+                      border: moc.top_pick ? "2px solid" : "1px solid",
+                      borderColor: moc.top_pick ? "lego.orange" : "plate.border",
+                      boxShadow: "plate",
+                      overflow: "hidden",
+                      textDecoration: "none",
+                      transition: "all 0.15s ease",
+                      _hover: {
+                        bg: "plate.hover",
+                        borderColor: "plate.borderHover",
+                        transform: "translateY(-1px)",
+                        boxShadow: "brick",
+                      },
+                    })}
+                  >
+                    <div
+                      className={css({
+                        display: "flex",
+                        alignItems: "center",
+                        justifyContent: "center",
+                        bg: "white",
+                        p: "4",
+                        h: "120px",
+                      })}
+                    >
+                      {moc.image_url ? (
+                        <img
+                          src={moc.image_url}
+                          alt={moc.name}
+                          className={css({ maxW: "100%", maxH: "100%", objectFit: "contain" })}
+                        />
+                      ) : (
+                        <div
+                          className={css({
+                            w: "10",
+                            h: "10",
+                            rounded: "stud",
+                            bg: "lego.green",
+                            boxShadow: "stud",
+                          })}
+                        />
+                      )}
+                    </div>
+
+                    <div className={css({ p: "3" })}>
+                      {moc.top_pick && (
+                        <span
+                          className={css({
+                            display: "inline-block",
+                            fontSize: "xs",
+                            fontWeight: "800",
+                            color: "lego.orange",
+                            bg: "rgba(254,138,24,0.1)",
+                            px: "2",
+                            py: "0.5",
+                            rounded: "md",
+                            mb: "1",
+                          })}
+                        >
+                          Top Pick
+                        </span>
+                      )}
+                      <span
+                        className={css({
+                          fontSize: "sm",
+                          fontWeight: "700",
+                          fontFamily: "display",
+                          color: "ink.primary",
+                          display: "block",
+                          overflow: "hidden",
+                          textOverflow: "ellipsis",
+                          whiteSpace: "nowrap",
+                        })}
+                      >
+                        {moc.name}
+                      </span>
+                      <span className={css({ fontSize: "xs", color: "ink.muted", display: "block", mt: "0.5" })}>
+                        by {moc.designer}
+                      </span>
+                      <div className={css({ display: "flex", gap: "2", mt: "2" })}>
+                        <span
+                          className={css({
+                            fontSize: "xs",
+                            fontWeight: "700",
+                            color: "lego.green",
+                            bg: "rgba(0, 133, 43, 0.1)",
+                            px: "2",
+                            py: "0.5",
+                            rounded: "md",
+                          })}
+                        >
+                          MOC
+                        </span>
+                        {moc.year && (
+                          <span
+                            className={css({
+                              fontSize: "xs",
+                              fontWeight: "700",
+                              color: "lego.blue",
+                              bg: "rgba(0, 108, 183, 0.1)",
+                              px: "2",
+                              py: "0.5",
+                              rounded: "md",
+                            })}
+                          >
+                            {moc.year}
+                          </span>
+                        )}
+                        <span
+                          className={css({
+                            fontSize: "xs",
+                            fontWeight: "700",
+                            color: "lego.yellow",
+                            bg: "rgba(255, 213, 0, 0.1)",
+                            px: "2",
+                            py: "0.5",
+                            rounded: "md",
+                          })}
+                        >
+                          {moc.num_parts} pcs
+                        </span>
+                      </div>
+                    </div>
+                  </Link>
+                ))}
+              </div>
+            )}
+          </div>
+        ))}
+
+        {/* Loading spinner */}
+        {discovering && discoveries.length === 0 && (
+          <div className={css({ textAlign: "center", py: "8" })}>
+            <div
+              className={css({
+                mx: "auto",
+                w: "8",
+                h: "8",
+                rounded: "stud",
+                bg: "lego.green",
+                boxShadow: "stud",
+                animation: "spin 1s linear infinite",
+              })}
+            />
+            <p className={css({ mt: "3", fontSize: "sm", color: "ink.faint" })}>
+              Running MOC discovery pipeline...
+            </p>
+          </div>
+        )}
+      </div>
     </main>
   );
 }

@@ -100,6 +100,7 @@ export function Header() {
             <nav className={css({ display: "flex", gap: "1" })}>
               {[
                 { label: "Analyze", href: "/" },
+                { label: "My Parts", href: "/my-parts" },
                 { label: "Scripts", href: "/scripts" },
                 { label: "Favorites", href: "/favorites" },
                 { label: "Settings", href: "/settings" },
