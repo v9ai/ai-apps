@@ -98,9 +98,7 @@ async function seed() {
 
   // ── 0. Clean existing data (order respects FK constraints) ────
   console.log("Cleaning existing data...");
-  await db.delete(schema.lessonCitations);
   await db.delete(schema.lessonSections);
-  await db.delete(schema.citations);
   await db.delete(schema.lessons);
   await db.delete(schema.categories);
 

@@ -65,7 +65,6 @@ export const interactionTypeEnum = pgEnum("interaction_type", [
   "highlight",
   "search",
   "concept_click",
-  "citation_click",
   "nav_next",
   "nav_prev",
 ]);
@@ -134,38 +133,6 @@ export const lessonSections = pgTable(
     wordCount: integer("word_count").notNull().default(0),
   },
   (table) => [index("lesson_sections_lesson_idx").on(table.lessonId)],
-);
-
-export const citations = pgTable(
-  "citations",
-  {
-    id: uuid("id").primaryKey().defaultRandom(),
-    title: text("title").notNull(),
-    authors: text("authors"),
-    year: integer("year"),
-    url: text("url").notNull(),
-    venue: text("venue"),
-    normalizedTitle: text("normalized_title").notNull(),
-  },
-  (table) => [
-    uniqueIndex("citations_normalized_title_year_idx").on(
-      table.normalizedTitle,
-      table.year,
-    ),
-  ],
-);
-
-export const lessonCitations = pgTable(
-  "lesson_citations",
-  {
-    lessonId: uuid("lesson_id")
-      .references(() => lessons.id, { onDelete: "cascade" })
-      .notNull(),
-    citationId: uuid("citation_id")
-      .references(() => citations.id, { onDelete: "cascade" })
-      .notNull(),
-  },
-  (table) => [primaryKey({ columns: [table.lessonId, table.citationId] })],
 );
 
 // ── Knowledge Graph ────────────────────────────────────────────────
@@ -453,7 +420,6 @@ export const lessonsRelations = relations(lessons, ({ one, many }) => ({
     references: [categories.id],
   }),
   sections: many(lessonSections),
-  lessonCitations: many(lessonCitations),
   lessonConcepts: many(lessonConcepts),
 }));
 
@@ -463,24 +429,6 @@ export const lessonSectionsRelations = relations(lessonSections, ({ one }) => ({
     references: [lessons.id],
   }),
 }));
-
-export const citationsRelations = relations(citations, ({ many }) => ({
-  lessonCitations: many(lessonCitations),
-}));
-
-export const lessonCitationsRelations = relations(
-  lessonCitations,
-  ({ one }) => ({
-    lesson: one(lessons, {
-      fields: [lessonCitations.lessonId],
-      references: [lessons.id],
-    }),
-    citation: one(citations, {
-      fields: [lessonCitations.citationId],
-      references: [citations.id],
-    }),
-  }),
-);
 
 export const conceptsRelations = relations(concepts, ({ many }) => ({
   outgoingEdges: many(conceptEdges, { relationName: "source" }),

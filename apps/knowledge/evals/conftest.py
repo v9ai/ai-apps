@@ -10,6 +10,7 @@ from deepeval.test_case import LLMTestCaseParams
 from deepseek_model import DeepSeekModel
 
 CONTENT_DIR = Path(__file__).resolve().parent.parent / "content"
+DATASETS_DIR = Path(__file__).resolve().parent / "datasets"
 THRESHOLD = 0.7
 
 model = DeepSeekModel()

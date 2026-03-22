@@ -55,11 +55,9 @@ graph TD
 erDiagram
     categories ||--o{ lessons : contains
     lessons ||--o{ lesson_sections : has
-    lessons ||--o{ lesson_citations : references
     lessons ||--o{ lesson_concepts : tagged_with
     lessons ||--o{ lesson_embeddings : embedded_as
     lesson_sections ||--o{ section_embeddings : embedded_as
-    citations ||--o{ lesson_citations : cited_in
     concepts ||--o{ concept_edges : connects
     concepts ||--o{ lesson_concepts : appears_in
     concepts ||--o{ concept_embeddings : embedded_as
@@ -129,7 +127,7 @@ sequenceDiagram
 
     User->>Page: GET /transformer-architecture
     Page->>Adapter: getLessonBySlug(slug)
-    Adapter->>DB: SELECT lesson + sections + citations
+    Adapter->>DB: SELECT lesson + sections
     DB-->>Adapter: lesson data
     Adapter-->>Page: LessonWithSections
     Page->>DB: getSimilarLessons (pgvector cosine)

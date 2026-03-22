@@ -11,6 +11,14 @@ dependencies = [
     "langchain-openai>=0.3.0",
     "langchain-core>=0.3.0",
     "langgraph-checkpoint-postgres>=2.0.0",
+    "sentence-transformers>=3.0.0",
+    "chromadb>=1.0.0",
+    "langchain-text-splitters>=0.3.0",
+    "langchain-community>=0.3.0",
+    "deepteam>=1.0",
+    "psycopg2-binary>=2.9.0",
+    "pgvector>=0.3.0",
+    "fastembed>=0.4.0",
 ]
 
 [tool.pytest.ini_options]

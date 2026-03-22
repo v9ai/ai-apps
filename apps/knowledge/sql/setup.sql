@@ -31,16 +31,6 @@ ALTER TABLE lesson_sections
 
 CREATE INDEX IF NOT EXISTS lesson_sections_fts_idx ON lesson_sections USING gin (fts);
 
-ALTER TABLE citations
-  ADD COLUMN IF NOT EXISTS fts tsvector
-  GENERATED ALWAYS AS (
-    setweight(to_tsvector('english', coalesce(title, '')), 'A') ||
-    setweight(to_tsvector('english', coalesce(authors, '')), 'B') ||
-    setweight(to_tsvector('english', coalesce(venue, '')), 'C')
-  ) STORED;
-
-CREATE INDEX IF NOT EXISTS citations_fts_idx ON citations USING gin (fts);
-
 ALTER TABLE concepts
   ADD COLUMN IF NOT EXISTS fts tsvector
   GENERATED ALWAYS AS (
@@ -444,8 +434,8 @@ RETURNS TABLE (
   title text,
   snippet text,
   rank float,
-  paper_slug text,   -- kept for API compat (maps to lesson slug)
-  paper_title text   -- kept for API compat (maps to lesson title)
+  lesson_slug text,
+  lesson_title text
 )
 LANGUAGE sql STABLE
 SET search_path = public, pg_catalog
@@ -458,8 +448,8 @@ AS $$
       ts_headline('english', l.content, websearch_to_tsquery('english', query_text),
         'MaxWords=40, MinWords=20, StartSel=**, StopSel=**') AS snippet,
       ts_rank(l.fts, websearch_to_tsquery('english', query_text))::float AS rank,
-      l.slug AS paper_slug,
-      l.title AS paper_title
+      l.slug AS lesson_slug,
+      l.title AS lesson_title
     FROM lessons l
     WHERE l.fts @@ websearch_to_tsquery('english', query_text)
     ORDER BY rank DESC
@@ -480,22 +470,6 @@ AS $$
     JOIN lessons l ON l.id = ls.lesson_id
     WHERE ls.fts @@ websearch_to_tsquery('english', query_text)
     ORDER BY ts_rank(ls.fts, websearch_to_tsquery('english', query_text)) DESC
-    LIMIT result_limit
-  )
-  UNION ALL
-  (
-    SELECT
-      'citation'::text,
-      c.id,
-      c.title,
-      coalesce(c.authors, '') || CASE WHEN c.year IS NOT NULL THEN ' (' || c.year || ')' ELSE '' END
-        || CASE WHEN c.venue IS NOT NULL THEN ' - ' || c.venue ELSE '' END,
-      ts_rank(c.fts, websearch_to_tsquery('english', query_text))::float,
-      NULL,
-      NULL
-    FROM citations c
-    WHERE c.fts @@ websearch_to_tsquery('english', query_text)
-    ORDER BY ts_rank(c.fts, websearch_to_tsquery('english', query_text)) DESC
     LIMIT result_limit
   )
   UNION ALL

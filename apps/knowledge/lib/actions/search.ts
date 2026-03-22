@@ -21,8 +21,8 @@ export async function searchContent(
         title: r.title as string,
         snippet: r.snippet as string,
         rank: r.rank as number,
-        lessonSlug: (r.paper_slug as string) ?? null,
-        lessonTitle: (r.paper_title as string) ?? null,
+        lessonSlug: (r.lesson_slug as string) ?? null,
+        lessonTitle: (r.lesson_title as string) ?? null,
       }),
     );
   } catch (error) {

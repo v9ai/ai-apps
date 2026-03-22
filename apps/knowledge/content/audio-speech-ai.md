@@ -23,7 +23,7 @@ OpenAI's Whisper (Radford et al., 2023) is an encoder-decoder Transformer traine
 **Decoder**: A standard Transformer decoder with learned positional embeddings autoregressively generates output tokens. Special tokens control task behavior:
 
 ```text
-<|startoftranscript|> <|en|> <|transcribe|> <|notimestamps|> Hello, world <|endoftext|>
+[startoftranscript] [en] [transcribe] [notimestamps] Hello, world [endoftext]
 ```
 
 The genius of Whisper lies not in architectural novelty but in training data scale and multitask formulation. The same model handles transcription, translation, language identification, and timestamp prediction, selected by special tokens.
