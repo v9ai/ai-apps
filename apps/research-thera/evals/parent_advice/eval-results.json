@@ -1,0 +1,127 @@
+{
+  "timestamp": "2026-03-21T22:54:34.222647+00:00",
+  "model": "deepseek-chat",
+  "judge": "deepseek-chat",
+  "threshold": 0.7,
+  "summary": {
+    "total": 15,
+    "passed": 15,
+    "failed": 0
+  },
+  "results": [
+    {
+      "case_id": "selective-mutism-7yo",
+      "suites": {
+        "grounding": {
+          "research_grounding": {
+            "score": 0.9,
+            "passed": true,
+            "reason": "The response correctly references both provided papers, accurately describes their techniques (graduated exposure, contingency management, psychoeducation, parent coaching), and aligns key findings with recommendations. All advice is explicitly tied to the papers' evidence, with no hallucinated sources. However, minor overstatements exist, such as implying the deep analysis explicitly labels the behavior as 'anxiety-driven selective vocalization' (not directly stated in input), slightly reducing precision."
+          },
+          "technique_traceability": {
+            "score": 1.0,
+            "passed": true,
+            "reason": "The response accurately cites all techniques from both input papers (graduated exposure therapy, contingency management, stimulus fading, teacher training, peer-mediated strategies, parent coaching, psychoeducation, anxiety management training, brave modeling) and correctly attributes each to the corresponding source paper. Descriptions align with the cited evidence, and no techniques are presented as novel contributions. All input techniques are accounted for with clear citations."
+          }
+        },
+        "analysis": {
+          "deep_analysis_integration": {
+            "score": 1.0,
+            "passed": true,
+            "reason": "The response demonstrates strong alignment with all evaluation steps. It incorporates key insights from the executive summary (anxiety-driven selective vocalization), translates priority recommendations into actionable at-home steps, addresses underlying patterns and root causes (anxiety, avoidance), and incorporates specific insights on family dynamics (parent coaching, modeling, home practice). All advice is explicitly tied to the provided research evidence."
+          }
+        },
+        "age": {
+          "age_appropriateness": {
+            "score": 1.0,
+            "passed": true,
+            "reason": "The response strongly aligns with all evaluation steps. It tailors interventions to a 7-year-old's developmental stage, using concepts like a 'brave ladder', simple rewards, and age-appropriate explanations of anxiety. The language is engaging and understandable for a child (e.g., 'wiggly' feelings, 'balloon breaths'). All recommended activities, such as short 5-minute practice lessons, role-playing, and using stickers, are realistic for a 7-year-old's attention span and skills. No recommendations are mismatched; they appropriately address anxiety-driven behavior through graduated, play-based steps."
+          }
+        },
+        "quality": {
+          "practical_quality": {
+            "score": 1.0,
+            "passed": true,
+            "reason": "The response provides specific, actionable at-home steps for each recommendation, such as creating a 'brave ladder' and practicing brave modeling. The tone is consistently warm and empathetic, acknowledging the parent's challenges. Clear examples and relatable scenarios are included, like explaining anxiety in age-appropriate terms and role-playing with siblings. The output is well-organized with headers and includes a dedicated section on when to seek professional help, explicitly guiding the parent."
+          }
+        }
+      }
+    },
+    {
+      "case_id": "test-anxiety-teen",
+      "suites": {
+        "grounding": {
+          "research_grounding": {
+            "score": 1.0,
+            "passed": true,
+            "reason": "The response correctly references both papers, accurately describes their techniques and findings, and provides concrete recommendations derived from the evidence. All suggestions are explicitly supported by the input papers, with no hallucinated content. The advice respects the strength of evidence (RCTs) and appropriately links each recommendation to specific study components."
+          },
+          "technique_traceability": {
+            "score": 1.0,
+            "passed": true,
+            "reason": "The response strongly aligns with all evaluation steps: it correctly lists all techniques from both input papers (cognitive restructuring, graduated exposure, study skills, relaxation from Williams & Lee 2024; mindfulness, body scan, breathing, present-moment awareness from Chen & Patel 2023) with accurate citations, presents none as novel, provides descriptions that match the cited papers' content, and accounts for every technique with clear, correct citations."
+          }
+        },
+        "analysis": {
+          "deep_analysis_integration": {
+            "score": 1.0,
+            "passed": true,
+            "reason": "The response demonstrates deep analysis by identifying the anxiety-avoidance cycle and root causes. It incorporates key insights from the executive summary, such as cognitive restructuring as the most effective component and mindfulness benefits. It translates priority recommendations into actionable advice with specific steps for each technique. It addresses underlying patterns like catastrophic thoughts and avoidance. It incorporates family dynamics by advising on parental pressure and collaborative problem-solving."
+          }
+        },
+        "age": {
+          "age_appropriateness": {
+            "score": 1.0,
+            "passed": true,
+            "reason": "The response strongly aligns with all evaluation steps. It tailors interventions (CBT, mindfulness, graduated exposure) to a 14-year-old's developmental stage, using age-appropriate language and concrete examples (e.g., 4-7-8 breathing, mock exams). All recommendations match adolescent capabilities, attention spans, and interests, with realistic behavioral expectations and family involvement. No mismatched or simplistic suggestions are present."
+          }
+        },
+        "quality": {
+          "practical_quality": {
+            "score": 1.0,
+            "passed": true,
+            "reason": "The response provides specific, actionable steps for each recommendation (e.g., thought identification, 4-7-8 breathing, mock exams), maintains a consistently warm and empathetic tone, includes clear examples and scenarios (e.g., sample week plan, thought columns), uses well-organized headers for each section, and explicitly guides on when to seek professional help with specific criteria."
+          }
+        }
+      }
+    },
+    {
+      "case_id": "toddler-speech-delay",
+      "suites": {
+        "grounding": {
+          "research_grounding": {
+            "score": 1.0,
+            "passed": true,
+            "reason": "The response accurately references the single provided paper, correctly describes its techniques (responsive interaction, environmental arrangement, milieu teaching, parallel talk, expansion, video feedback coaching), and accurately reports its key findings (40% vocabulary increase, most effective techniques). All recommendations are explicitly derived from and supported by the paper's evidence, with no hallucinated techniques or unsupported suggestions."
+          },
+          "technique_traceability": {
+            "score": 1.0,
+            "passed": true,
+            "reason": "The response correctly cites the single source paper for all six techniques from the input (responsive interaction, milieu teaching, environmental arrangement, video feedback coaching, parallel talk, expansion). It does not present any technique as novel and accurately describes each technique's application, aligning with the paper's key findings. All input techniques are accounted for with clear, correct citations."
+          }
+        },
+        "analysis": {
+          "deep_analysis_integration": {
+            "score": 1.0,
+            "passed": true,
+            "reason": "Skipped: no deep analysis"
+          }
+        },
+        "age": {
+          "age_appropriateness": {
+            "score": 1.0,
+            "passed": true,
+            "reason": "The response strongly aligns with all evaluation steps. It tailors interventions (responsive interaction, environmental arrangement, milieu teaching) to a 2-year-old's developmental capabilities, using simple, repetitive language and concrete examples (e.g., labeling objects, offering choices) that are engaging and understandable. Activities match a toddler's attention span and skills (short play sessions, routine integration), and behavioral expectations (teaching gestures, managing frustration proactively) are age-appropriate. No recommendations are mismatched; all are suitable for a late-talking 24-month-old."
+          }
+        },
+        "quality": {
+          "practical_quality": {
+            "score": 1.0,
+            "passed": true,
+            "reason": "The response provides specific, actionable steps for each recommended technique (e.g., responsive interaction, environmental arrangement), maintains a warm and empathetic tone throughout, includes clear examples tailored to Matei's daily routines, uses well-organized sections with headers, and explicitly guides on when to seek professional help. All evaluation steps are fully met."
+          }
+        }
+      }
+    }
+  ]
+}

@@ -4,8 +4,7 @@
  * Implements Extractor and Judge interfaces using DeepSeek LLM.
  */
 
-import { createDeepSeek } from "@ai-sdk/deepseek";
-import { generateObject } from "ai";
+import { generateObject } from "../lib/deepseek";
 import {
   extractedClaimsSchema,
   buildExtractionPrompt,
@@ -18,10 +17,6 @@ import {
   type EvidencePolarity,
 } from "../tools/generic-claim-cards.tools";
 import { z } from "zod";
-
-const deepseek = createDeepSeek({
-  apiKey: process.env.DEEPSEEK_API_KEY,
-});
 
 /**
  * DeepSeek-based claim extractor
@@ -41,7 +36,7 @@ export function createDeepSeekExtractor(
 
       try {
         const result = await generateObject({
-          model: deepseek(modelName),
+          model: modelName,
           schema: extractedClaimsSchema,
           prompt,
         });
@@ -98,7 +93,7 @@ Focus on whether the abstract directly addresses the claim, not just topical rel
 
       try {
         const result = await generateObject({
-          model: deepseek(modelName),
+          model: modelName,
           schema: judgeSchema,
           prompt,
         });

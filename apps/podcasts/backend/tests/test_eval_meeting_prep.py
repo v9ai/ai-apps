@@ -111,7 +111,7 @@ _PROFILES = _load_profiles()
 class TestMeetingPrepStructure:
     def _profiles(self):
         if not _PROFILES:
-            pytest.skip("No profiles with executive_summary.meeting_prep — run crew.py first")
+            pytest.skip("No profiles with executive_summary.meeting_prep — run research_pipeline.py first")
         return _PROFILES
 
     def test_meeting_prep_count(self):

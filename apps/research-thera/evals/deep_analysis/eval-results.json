@@ -1,0 +1,197 @@
+{
+  "timestamp": "2026-03-21T22:24:02.926278+00:00",
+  "model": "deepseek-chat",
+  "judge": "deepseek-chat",
+  "threshold": 0.7,
+  "summary": {
+    "total": 28,
+    "passed": 28,
+    "failed": 0
+  },
+  "results": [
+    {
+      "case_id": "preschooler-behavioral",
+      "suites": {
+        "dob": {
+          "dob_summary_consistency": {
+            "score": 1.0,
+            "passed": true,
+            "reason": "The output correctly states Emilia's age as 4, consistent with the 2022 birth year. The language (e.g., 'emotional regulation skills', 'egocentric perspective') and described behaviors (tantrums during transitions, difficulty sharing) are developmentally appropriate for a 4-year-old preschooler. Milestones like struggling with flexibility and learning social rules are accurately referenced. The summary explicitly and clearly mentions the correct age and developmental stage."
+          },
+          "dob_recommendations_age": {
+            "score": 1.0,
+            "passed": true,
+            "reason": "All suggested approaches (visual timers, countdowns, transition rituals, first-then language, limited choices, emotion cards, deep breathing, timer games, social stories) are explicitly designed for and commonly applied to preschool-aged children (age 4). No recommendations require atypical or advanced cognitive, social, or physical skills for this developmental stage. School-related recommendations (coordinating with daycare) correspond to the child's current preschool/daycare level. The analysis correctly frames the behaviors within age-appropriate expectations for emotional regulation."
+          },
+          "dob_developmental_context": {
+            "score": 1.0,
+            "passed": true,
+            "reason": "The statedAge (4) and dobYear (2022) in the output match the input exactly. The developmentalStage 'Preschooler (early childhood)' is correct for a 4-year-old. The ageAppropriateExpectations are clinically accurate, describing emerging emotional regulation and egocentrism typical for this age. The flags (escalation to biting, high-intensity daily tantrums) correctly identify genuine, age-relevant concerns that warrant attention."
+          }
+        },
+        "schema": {
+          "schema_compliance": {
+            "score": 1.0,
+            "passed": true,
+            "reason": "The output contains all required top-level fields with correct types, arrays contain valid integers, confidence is within range, and enums use allowed values. No type mismatches or extra fields are present."
+          }
+        },
+        "issue_focus": {
+          "issue_focus_summary": {
+            "score": 1.0,
+            "passed": true,
+            "reason": "The first paragraph leads with and focuses on the trigger issue (tantrums during transitions). The summary prominently paraphrases the trigger issue. Other issues (difficulty sharing) are discussed only in relation to how they connect to the trigger issue, not as separate topics of equal focus. The overall narrative is centered on understanding the trigger issue's context and implications."
+          },
+          "issue_focus_recommendations": {
+            "score": 1.0,
+            "passed": true,
+            "reason": "The first recommendation directly addresses the trigger issue (Tantrums during transitions) with specific, context-appropriate strategies. A majority (2 out of 3) of the recommendations are related to the trigger issue. The third recommendation, while addressing a different issue, is explicitly framed as supporting the resolution of the trigger issue (rationale: 'Social flexibility skills support transition adaptability'). All suggested approaches are specific to the nature and context of the issues, not generic."
+          },
+          "issue_focus_patterns": {
+            "score": 1.0,
+            "passed": true,
+            "reason": "The response fully satisfies all evaluation steps. The trigger issue ID 101 is present in the single cluster's issueIds list. The cluster description explicitly explains the connection between the trigger issue (tantrums during transitions) and the other issue (difficulty sharing) as both stemming from 'difficulty managing emotions when faced with demands for flexibility'. The clusters are organized thematically around the trigger issue, making it a central element in the 'Emotional Regulation Challenges During Demands' cluster. The suggested root cause ('Underdeveloped emotional regulation skills combined with difficulty adapting to changing expectations') is logically connected back to the trigger issue of tantrums during transitions."
+          }
+        }
+      }
+    },
+    {
+      "case_id": "school-age-anxiety",
+      "suites": {
+        "dob": {
+          "dob_summary_consistency": {
+            "score": 1.0,
+            "passed": true,
+            "reason": "The output correctly states David's age as 9, consistent with the 2017 birth year. The language and developmental expectations (e.g., increasing independence, peer relationships) are appropriately tailored for a 9-year-old in middle childhood. The summary and developmental context explicitly reference the correct age and stage, and the flagged behaviors (school refusal, separation anxiety) are accurately identified as developmentally concerning for this age."
+          },
+          "dob_recommendations_age": {
+            "score": 1.0,
+            "passed": true,
+            "reason": "All suggested approaches are developmentally appropriate for a 9-year-old, focusing on evidence-based strategies like graduated exposure, CBT, and consistent routines without requiring atypical skills. School-related recommendations (e.g., coordination with teacher, school psychologist) align with elementary school level. The analysis correctly flags the behaviors as developmentally concerning, reinforcing age-appropriate expectations."
+          },
+          "dob_developmental_context": {
+            "score": 1.0,
+            "passed": true,
+            "reason": "StatedAge (9) and dobYear (2017) match input exactly. DevelopmentalStage 'Middle childhood (concrete operational stage)' is correct for a 9-year-old. AgeAppropriateExpectations are clinically accurate, describing typical independence and peer engagement, and flags correctly identify severe, age-relevant concerns (school refusal, separation anxiety, peer avoidance)."
+          }
+        },
+        "schema": {
+          "schema_compliance": {
+            "score": 1.0,
+            "passed": true,
+            "reason": "All required top-level fields are present with correct types. Arrays contain valid integers for issueIds. Confidence values are within [0,1] range and enums use allowed values. No type mismatches detected."
+          }
+        },
+        "issue_focus": {
+          "issue_focus_summary": {
+            "score": 1.0,
+            "passed": true,
+            "reason": "The first paragraph leads with and focuses on the trigger issue 'School refusal', explicitly naming it and detailing its manifestations. The summary prominently includes the trigger issue and discusses the secondary issue only in relation to it, maintaining the primary focus. The overall narrative centers on understanding the trigger issue's context and implications, with other issues consistently framed as connected patterns rather than separate topics of equal weight."
+          },
+          "issue_focus_recommendations": {
+            "score": 1.0,
+            "passed": true,
+            "reason": "The first recommendation directly addresses the trigger issue (school refusal) with specific, context-appropriate actions. A majority (2 of 3) of the recommendations are directly related to the trigger issue, and the third recommendation, while addressing a broader underlying cause, is explicitly framed as supporting the resolution of the trigger issue. All suggested approaches are specific to the nature of the child's anxiety and school refusal context."
+          },
+          "issue_focus_patterns": {
+            "score": 1.0,
+            "passed": true,
+            "reason": "The response fully satisfies all evaluation steps: trigger issue ID 201 is present in the cluster's issueIds; the cluster description explicitly explains the connection between school refusal and separation anxiety; the clusters are thematically organized around separation anxiety with the trigger as a central element; and the suggested root cause logically connects back to the trigger issue as part of an underlying anxiety disorder."
+          }
+        }
+      }
+    },
+    {
+      "case_id": "adolescent-mood",
+      "suites": {
+        "dob": {
+          "dob_summary_consistency": {
+            "score": 1.0,
+            "passed": true,
+            "reason": "The response strongly aligns with all evaluation steps. It correctly calculates age 15 from DOB 2011, explicitly states the age and developmental stage (mid-adolescence), and uses language (e.g., 'adolescent', 'teenager', 'peer relationships') appropriate for a 15-year-old. It accurately references typical developmental expectations and flags for this age, such as strong peer relationships and independence, and correctly identifies the described behaviors (social withdrawal, academic decline) as significant deviations from those norms."
+          },
+          "dob_recommendations_age": {
+            "score": 1.0,
+            "passed": true,
+            "reason": "The response demonstrates strong alignment with all evaluation steps. It explicitly addresses the 15-year-old's developmental stage, recommending age-appropriate strategies like gentle, non-confrontational conversation and collaboration on sleep routines. No recommendations require atypical skills for a mid-adolescent. Suggested interventions (e.g., involving a mental health professional specializing in adolescents, working with school counselors) are evidence-based for this age group. School-related recommendations appropriately correspond to a high school context, advising collaboration with counselors rather than elementary-level accommodations."
+          },
+          "dob_developmental_context": {
+            "score": 1.0,
+            "passed": true,
+            "reason": "The statedAge (15) and dobYear (2011) in the output match the input exactly. The developmentalStage 'Mid-adolescence (15-17 years)' is correct for a 15-year-old. The ageAppropriateExpectations accurately describe typical development for this stage, and the flags correctly identify clinically significant, age-relevant concerns such as sudden social withdrawal and multi-domain decline."
+          }
+        },
+        "schema": {
+          "schema_compliance": {
+            "score": 1.0,
+            "passed": true,
+            "reason": "The output contains all required top-level fields with correct types, arrays contain valid integers, confidence values are within [0,1], and enums use allowed values. No type mismatches or extra fields are present."
+          }
+        },
+        "issue_focus": {
+          "issue_focus_summary": {
+            "score": 1.0,
+            "passed": true,
+            "reason": "The first paragraph leads with and focuses on the trigger issue (social withdrawal), explicitly naming it as the primary concern. The summary prominently features the trigger issue and discusses other issues only in relation to how they connect to or stem from it, maintaining the trigger issue as the central narrative throughout. All evaluation steps are fully satisfied."
+          },
+          "issue_focus_recommendations": {
+            "score": 1.0,
+            "passed": true,
+            "reason": "The first recommendation directly addresses the trigger issue (Social withdrawal) with specific, non-generic actions. A majority (2 of 3) of the recommendations are related to the trigger issue, and the third (Academic performance) is explicitly framed as secondary to the primary emotional and social concerns. All approaches are specific to the adolescent context and interconnected issues."
+          },
+          "issue_focus_patterns": {
+            "score": 1.0,
+            "passed": true,
+            "reason": "The response strongly aligns with all evaluation steps. The trigger issue ID 301 appears in both clusters. Cluster descriptions explicitly link social withdrawal to other issues, explaining relationships like 'underlying emotional distress affecting multiple life domains' and 'leading to increased isolation, which then impacts academic performance'. The clusters are thematically organized around social withdrawal as a central connecting element. Suggested root causes (e.g., 'Possible depression, anxiety, or significant emotional distress') are logically connected back to the trigger issue, explaining how it drives the other issues."
+          }
+        }
+      }
+    },
+    {
+      "case_id": "toddler-speech",
+      "suites": {
+        "dob": {
+          "dob_summary_consistency": {
+            "score": 1.0,
+            "passed": true,
+            "reason": "The output correctly states Matei's age as 2 years old, derived from the 2024 birth year, and consistently uses '2-year-old' and '24 months' throughout. The language, concepts (e.g., vocabulary counts, simple sign language), and developmental milestones (e.g., typical 50+ word vocabulary, 2-word combinations) are all highly appropriate and specific for a 2-year-old/toddler. The summary explicitly and accurately references the child's age and developmental stage."
+          },
+          "dob_recommendations_age": {
+            "score": 1.0,
+            "passed": true,
+            "reason": "The response aligns well with the evaluation steps. All suggested approaches (speech-language evaluation, daily language-rich activities, simple sign language, providing choices) are explicitly designed for and commonly applied to 2-year-olds. No recommendations require atypical or advanced skills for a toddler. The recommendations are general strategies, not specific named programs, so step 3 is not directly applicable but not violated. School-related recommendations are not made, which is appropriate as the child is not yet of typical school age, aligning with step 4."
+          },
+          "dob_developmental_context": {
+            "score": 1.0,
+            "passed": true,
+            "reason": "The statedAge (2) and dobYear (2024) in the output match the input exactly. The developmentalStage 'Toddler (early childhood)' is correct for age 2. The ageAppropriateExpectations are clinically accurate for a 24-month-old, and the flags correctly identify severe expressive language delay and related risk."
+          }
+        },
+        "schema": {
+          "schema_compliance": {
+            "score": 1.0,
+            "passed": true,
+            "reason": "All required top-level fields are present with correct types. Arrays contain valid integer issueIds. Confidence values are within [0,1] and enums use allowed values. No type mismatches detected."
+          }
+        },
+        "issue_focus": {
+          "issue_focus_summary": {
+            "score": 1.0,
+            "passed": true,
+            "reason": "The first paragraph leads with and focuses on the trigger issue (limited vocabulary). The summary prominently paraphrases the trigger issue. Other issues (tantrums) are discussed only as consequences of the vocabulary limitation, not as separate equal topics. The overall narrative centers on the trigger issue's context, causes, and implications."
+          },
+          "issue_focus_recommendations": {
+            "score": 1.0,
+            "passed": true,
+            "reason": "The first recommendation directly targets the trigger issue (Limited vocabulary for age) with a specific, immediate intervention. A majority (2 of 3) of the recommendations are related to the trigger issue, and the second recommendation, while addressing a different issue, is explicitly framed as supporting the resolution of the primary communication deficit. The suggested approaches are specific to the context of a 2-year-old's language delay and resulting frustration, not generic."
+          },
+          "issue_focus_patterns": {
+            "score": 1.0,
+            "passed": true,
+            "reason": "The response fully satisfies all evaluation steps. The trigger issue ID 401 is present in the single cluster's issue list. The cluster description explicitly explains the relationship between the limited vocabulary and the frustration tantrums. The cluster is thematically organized around the communication-frustration cycle, making the trigger issue the central, connecting element. The suggested root cause ('Expressive language delay') is logically and directly connected back to the trigger issue."
+          }
+        }
+      }
+    }
+  ]
+}

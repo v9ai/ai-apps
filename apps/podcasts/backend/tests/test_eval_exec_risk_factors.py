@@ -103,7 +103,7 @@ class TestRiskFactorsStructure:
     def _profiles(self):
         p = _load_profiles()
         if not p:
-            pytest.skip("No profiles with executive_summary — run crew.py first")
+            pytest.skip("No profiles with executive_summary — run research_pipeline.py first")
         return p
 
     def test_risk_factors_are_list(self):

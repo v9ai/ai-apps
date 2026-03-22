@@ -45,7 +45,7 @@ export function FilterableGrid({
   return (
     <>
       {/* -- Category filter pills -- */}
-      <div className={css({ mb: { base: "10", md: "12" } })}>
+      <div className={css({ mb: { base: "4", md: "5" } })}>
         <CategoryFilter
           categories={categories}
           activeCategory={activeCategory}
@@ -53,22 +53,7 @@ export function FilterableGrid({
         />
       </div>
 
-      {/* -- Result count (only when a category is active) -- */}
-      {activeCategory && (
-        <p
-          className={css({
-            fontSize: "xs",
-            color: "#5A5A65",
-            textAlign: "center",
-            mb: { base: "8", md: "10" },
-          })}
-        >
-          Showing {filteredPersonalities.length}{" "}
-          {filteredPersonalities.length === 1 ? "profile" : "profiles"}
-        </p>
-      )}
-
-      {/* -- Masonry story grid -- */}
+      {/* -- Story grid -- */}
       {filteredPersonalities.length > 0 ? (
         <StoryGrid personalities={filteredPersonalities} quotes={quotes} />
       ) : (

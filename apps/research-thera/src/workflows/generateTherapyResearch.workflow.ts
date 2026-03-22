@@ -1,24 +1,22 @@
-import { createWorkflow, createStep } from "@mastra/core/workflows";
 import { z } from "zod";
-import { createDeepSeek } from "@ai-sdk/deepseek";
-import { generateObject } from "ai";
-import { d1Tools } from "@/src/db";
+import { generateObject } from "@/src/lib/deepseek";
+import { db } from "@/src/db";
 import { ragTools } from "@/src/tools/rag.tools";
 import { sourceTools } from "@/src/tools/sources.tools";
 import { extractorTools } from "@/src/tools/extractor.tools";
 import { openAlexTools } from "@/src/tools/openalex.tools";
 
 /**
- * Deep Research Workflow
+ * Deep Research Pipeline
  *
- * Multi-step workflow with quality gating:
- * 1. Load goal + notes from D1 database
- * 2. Ensure Langfuse prompts exist (DeepSeek generates goal-specific templates)
+ * Multi-step pipeline with quality gating:
+ * 1. Load goal + notes from database
+ * 2. Normalize goal (translate + clinical classify)
  * 3. Plan query (goal type + keywords + multi-source query expansion)
  * 4. Multi-source search (Crossref, PubMed, Semantic Scholar)
  * 5. Enrich abstracts via OpenAlex (controlled concurrency)
  * 6. Extract + gate each candidate (batch processing with per-candidate error handling)
- * 7. Persist top results to D1 database + vector store
+ * 7. Persist top results to database + vector store
  */
 
 // Tunable constants
@@ -26,10 +24,10 @@ const ENRICH_CANDIDATES_LIMIT = 300;
 const ENRICH_CONCURRENCY = 15;
 const EXTRACT_CANDIDATES_LIMIT = 50;
 const EXTRACTION_BATCH_SIZE = 6;
-const PERSIST_CANDIDATES_LIMIT = 20; // lowered from 50: quality over quantity
-const RELEVANCE_THRESHOLD = 0.75; // raised from 0.6: require clear topic match
-const CONFIDENCE_THRESHOLD = 0.55; // raised from 0.5
-const BLENDED_THRESHOLD = 0.72; // raised from 0.45 (was a dead-code no-op gate)
+const PERSIST_CANDIDATES_LIMIT = 20;
+const RELEVANCE_THRESHOLD = 0.75;
+const CONFIDENCE_THRESHOLD = 0.55;
+const BLENDED_THRESHOLD = 0.72;
 
 // Input/Output schemas
 const inputSchema = z.object({
@@ -48,8 +46,11 @@ const outputSchema = z.object({
   count: z.number().int(),
 });
 
+type Input = z.infer<typeof inputSchema>;
+type Output = z.infer<typeof outputSchema>;
+
 /**
- * Clinical normalization schema — output of normalizeGoalStep
+ * Clinical normalization schema
  */
 const ClinicalContextSchema = z.object({
   translatedGoalTitle: z.string(),
@@ -71,9 +72,6 @@ const ClinicalContextSchema = z.object({
 
 type ClinicalContext = z.infer<typeof ClinicalContextSchema>;
 
-/**
- * Derive developmental tier from age (years).
- */
 function ageToTier(age: number | null | undefined): ClinicalContext["developmentalTier"] {
   if (!age) return "unknown";
   if (age <= 5) return "preschool";
@@ -83,95 +81,117 @@ function ageToTier(age: number | null | undefined): ClinicalContext["development
   return "adult";
 }
 
-/**
- * Step 1b: Normalize goal — translate non-English titles and classify the
- * clinical construct before Langfuse prompts are generated.
- *
- * This step runs between loadContextStep and ensurePromptsStep.  Without it,
- * Romanian (or any non-English) goal titles confuse DeepSeek into generating
- * semantically drifted search queries (e.g. "homework completion" instead of
- * "selective mutism classroom vocalization").
- *
- * Failure is non-fatal: we fall back to the original title + safe defaults.
- */
-const normalizeGoalStep = createStep({
-  id: "normalize-goal",
-  inputSchema: z.object({
-    userId: z.string(),
-    goalId: z.number().int().optional(),
-    jobId: z.string().optional(),
-    issueId: z.number().int().optional(),
-    feedbackId: z.number().int().optional(),
-    goal: z.object({
-      id: z.number().int(),
-      title: z.string(),
-      description: z.string().nullable(),
-    }),
-    notes: z.array(z.object({ id: z.number().int(), content: z.string() })),
-    familyMemberName: z.string().nullable(),
-    familyMemberAge: z.number().int().nullable(),
-  }),
-  outputSchema: z.object({
-    userId: z.string(),
-    goalId: z.number().int().optional(),
-    jobId: z.string().optional(),
-    issueId: z.number().int().optional(),
-    feedbackId: z.number().int().optional(),
-    goal: z.object({
-      id: z.number().int(),
-      title: z.string(),
-      description: z.string().nullable(),
-    }),
-    notes: z.array(z.object({ id: z.number().int(), content: z.string() })),
-    familyMemberName: z.string().nullable(),
-    familyMemberAge: z.number().int().nullable(),
-    translatedGoalTitle: z.string(),
-    originalLanguage: z.string(),
-    clinicalRestatement: z.string(),
-    clinicalDomain: z.string(),
-    behaviorDirection: z.enum(["INCREASE", "REDUCE", "MAINTAIN", "UNCLEAR"]),
-    developmentalTier: z.enum([
-      "preschool",
-      "early_school",
-      "middle_childhood",
-      "adolescent",
-      "adult",
-      "unknown",
-    ]),
-    requiredKeywords: z.array(z.string()),
-    excludedTopics: z.array(z.string()),
-  }),
-  execute: async ({ inputData }) => {
-    const fallback: ClinicalContext = {
-      translatedGoalTitle: inputData.goal.title,
-      originalLanguage: "unknown",
-      clinicalRestatement: inputData.goal.title,
-      clinicalDomain: "behavioral_change",
-      behaviorDirection: "UNCLEAR",
-      developmentalTier: ageToTier(inputData.familyMemberAge),
-      requiredKeywords: [],
-      excludedTopics: [],
+function escapeRegExp(input: string): string {
+  return input.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+}
+
+// ---------------------------------------------------------------------------
+// Step functions
+// ---------------------------------------------------------------------------
+
+async function loadContext(input: Input) {
+  if (input.jobId) {
+    await db.updateGenerationJob(input.jobId, { progress: 5 }).catch(() => {});
+  }
+
+  let familyMemberName: string | null = null;
+  let familyMemberAge: number | null = null;
+
+  if (input.goalId) {
+    const goal = await db.getGoal(input.goalId, input.userId);
+    const notes = await db.listNotesForEntity(input.goalId, "Goal", input.userId);
+
+    if (goal.familyMemberId) {
+      try {
+        const fm = await db.getFamilyMember(goal.familyMemberId);
+        if (fm) {
+          familyMemberName = fm.firstName ?? fm.name ?? null;
+          familyMemberAge = fm.ageYears ?? null;
+        }
+      } catch {
+        // Non-fatal
+      }
+    }
+
+    return {
+      userId: input.userId,
+      goalId: input.goalId,
+      jobId: input.jobId,
+      issueId: input.issueId,
+      feedbackId: input.feedbackId,
+      goal: { id: goal.id, title: goal.title, description: goal.description },
+      notes: notes.map((n: any) => ({ id: n.id, content: n.content })),
+      familyMemberName,
+      familyMemberAge,
     };
+  }
 
-    try {
-      const deepseek = createDeepSeek({ apiKey: process.env.DEEPSEEK_API_KEY });
+  if (input.feedbackId) {
+    const feedback = await db.getContactFeedback(input.feedbackId, input.userId);
+    if (!feedback) throw new Error(`Feedback ${input.feedbackId} not found`);
 
-      const ageCtx = inputData.familyMemberAge
-        ? `The patient is ${inputData.familyMemberAge} years old.`
-        : "";
-      const nameCtx = inputData.familyMemberName
-        ? `Patient name: ${inputData.familyMemberName}.`
-        : "";
-      const notesCtx =
-        inputData.notes.map((n) => n.content).join("; ") || "(none)";
+    const issues = feedback.extractedIssues ?? [];
+    const issuesTitles = issues.map((i: any) => i.title).join("; ");
+    const title = issuesTitles || feedback.subject || "Feedback-based research";
+    const description = feedback.content;
 
-      const { object } = await generateObject({
-        model: deepseek("deepseek-chat"),
-        schema: ClinicalContextSchema,
-        prompt: `You are a clinical psychologist specializing in translating parent/family-reported therapeutic goals into precise clinical language for academic research queries.
+    if (feedback.familyMemberId) {
+      try {
+        const fm = await db.getFamilyMember(feedback.familyMemberId);
+        if (fm) {
+          familyMemberName = fm.firstName ?? fm.name ?? null;
+          familyMemberAge = fm.ageYears ?? null;
+        }
+      } catch {
+        // Non-fatal
+      }
+    }
 
-Goal Title: "${inputData.goal.title}"
-Goal Description: "${inputData.goal.description ?? ""}"
+    return {
+      userId: input.userId,
+      goalId: undefined as number | undefined,
+      jobId: input.jobId,
+      issueId: input.issueId,
+      feedbackId: input.feedbackId,
+      goal: { id: input.feedbackId, title, description },
+      notes: [{ id: input.feedbackId, content: feedback.content }],
+      familyMemberName,
+      familyMemberAge,
+    };
+  }
+
+  throw new Error("Either goalId or feedbackId must be provided");
+}
+
+async function normalizeGoal<T extends {
+  goal: { title: string; description: string | null };
+  notes: Array<{ content: string }>;
+  familyMemberName: string | null;
+  familyMemberAge: number | null;
+}>(ctx: T): Promise<T & ClinicalContext> {
+  const fallback: ClinicalContext = {
+    translatedGoalTitle: ctx.goal.title,
+    originalLanguage: "unknown",
+    clinicalRestatement: ctx.goal.title,
+    clinicalDomain: "behavioral_change",
+    behaviorDirection: "UNCLEAR",
+    developmentalTier: ageToTier(ctx.familyMemberAge),
+    requiredKeywords: [],
+    excludedTopics: [],
+  };
+
+  try {
+
+    const ageCtx = ctx.familyMemberAge ? `The patient is ${ctx.familyMemberAge} years old.` : "";
+    const nameCtx = ctx.familyMemberName ? `Patient name: ${ctx.familyMemberName}.` : "";
+    const notesCtx = ctx.notes.map((n) => n.content).join("; ") || "(none)";
+
+    const { object } = await generateObject({
+      schema: ClinicalContextSchema,
+      prompt: `You are a clinical psychologist specializing in translating parent/family-reported therapeutic goals into precise clinical language for academic research queries.
+
+Goal Title: "${ctx.goal.title}"
+Goal Description: "${ctx.goal.description ?? ""}"
 Notes: ${notesCtx}
 ${ageCtx} ${nameCtx}
 
@@ -205,570 +225,219 @@ EXCLUDED TOPICS: topics that look related but are NOT relevant.
 Example for selective mutism: ["homework completion", "academic achievement", "family therapy engagement", "adolescent depression", "adult psychotherapy"]
 
 Return JSON matching the schema exactly.`,
-      });
-
-      console.log(
-        `🌐 Goal normalized: "${inputData.goal.title}" → "${object.translatedGoalTitle}" (${object.clinicalDomain}, ${object.behaviorDirection})`,
-      );
-
-      return { ...inputData, ...object };
-    } catch (err) {
-      console.warn(
-        `⚠️ Goal normalization failed, using fallback: ${err instanceof Error ? err.message : String(err)}`,
-      );
-      return { ...inputData, ...fallback };
-    }
-  },
-});
-
-// Step 1: Load context
-const loadContextStep = createStep({
-  id: "load-context",
-  inputSchema,
-  outputSchema: z.object({
-    userId: z.string(),
-    goalId: z.number().int().optional(),
-    jobId: z.string().optional(),
-    issueId: z.number().int().optional(),
-    feedbackId: z.number().int().optional(),
-    goal: z.object({
-      id: z.number().int(),
-      title: z.string(),
-      description: z.string().nullable(),
-    }),
-    notes: z.array(z.object({ id: z.number().int(), content: z.string() })),
-    familyMemberName: z.string().nullable(),
-    familyMemberAge: z.number().int().nullable(),
-  }),
-  execute: async ({ inputData }) => {
-    if (inputData.jobId) {
-      await d1Tools.updateGenerationJob(inputData.jobId, { progress: 5 }).catch(() => {});
-    }
-
-    let familyMemberName: string | null = null;
-    let familyMemberAge: number | null = null;
-
-    // When goalId is provided, load goal context (original path)
-    if (inputData.goalId) {
-      const goal = await d1Tools.getGoal(inputData.goalId, inputData.userId);
-      const notes = await d1Tools.listNotesForEntity(
-        inputData.goalId,
-        "Goal",
-        inputData.userId,
-      );
-
-      if (goal.familyMemberId) {
-        try {
-          const fm = await d1Tools.getFamilyMember(goal.familyMemberId);
-          if (fm) {
-            familyMemberName = fm.firstName ?? fm.name ?? null;
-            familyMemberAge = fm.ageYears ?? null;
-          }
-        } catch {
-          // Non-fatal: proceed without family member context
-        }
-      }
-
-      return {
-        userId: inputData.userId,
-        goalId: inputData.goalId,
-        jobId: inputData.jobId,
-        issueId: inputData.issueId,
-        feedbackId: inputData.feedbackId,
-        goal: {
-          id: goal.id,
-          title: goal.title,
-          description: goal.description,
-        },
-        notes: notes.map((n) => ({ id: n.id, content: n.content })),
-        familyMemberName,
-        familyMemberAge,
-      };
-    }
-
-    // Feedback-based research: build a synthetic goal from feedback content
-    if (inputData.feedbackId) {
-      const feedback = await d1Tools.getContactFeedback(inputData.feedbackId, inputData.userId);
-      if (!feedback) throw new Error(`Feedback ${inputData.feedbackId} not found`);
-
-      // Build title from extracted issues or subject
-      const issues = feedback.extractedIssues ?? [];
-      const issuesTitles = issues.map((i: any) => i.title).join("; ");
-      const title = issuesTitles || feedback.subject || "Feedback-based research";
-      const description = feedback.content;
-
-      // Try to load family member context
-      if (feedback.familyMemberId) {
-        try {
-          const fm = await d1Tools.getFamilyMember(feedback.familyMemberId);
-          if (fm) {
-            familyMemberName = fm.firstName ?? fm.name ?? null;
-            familyMemberAge = fm.ageYears ?? null;
-          }
-        } catch {
-          // Non-fatal
-        }
-      }
-
-      return {
-        userId: inputData.userId,
-        goalId: undefined,
-        jobId: inputData.jobId,
-        issueId: inputData.issueId,
-        feedbackId: inputData.feedbackId,
-        goal: {
-          id: inputData.feedbackId, // use feedbackId as synthetic goal id
-          title,
-          description,
-        },
-        notes: [{ id: inputData.feedbackId, content: feedback.content }],
-        familyMemberName,
-        familyMemberAge,
-      };
-    }
-
-    throw new Error("Either goalId or feedbackId must be provided");
-  },
-});
-
-const clinicalContextFields = {
-  translatedGoalTitle: z.string(),
-  originalLanguage: z.string(),
-  clinicalRestatement: z.string(),
-  clinicalDomain: z.string(),
-  behaviorDirection: z.enum(["INCREASE", "REDUCE", "MAINTAIN", "UNCLEAR"]),
-  developmentalTier: z.enum([
-    "preschool",
-    "early_school",
-    "middle_childhood",
-    "adolescent",
-    "adult",
-    "unknown",
-  ]),
-  requiredKeywords: z.array(z.string()),
-  excludedTopics: z.array(z.string()),
-};
-
-// Step 2: Pass-through step (formerly ensurePromptsStep — Langfuse removed)
-const ensurePromptsStep = createStep({
-  id: "ensure-langfuse-prompts",
-  inputSchema: z.object({
-    userId: z.string(),
-    goalId: z.number().int().optional(),
-    jobId: z.string().optional(),
-    issueId: z.number().int().optional(),
-    feedbackId: z.number().int().optional(),
-    goal: z.object({
-      id: z.number().int(),
-      title: z.string(),
-      description: z.string().nullable(),
-    }),
-    notes: z.array(z.object({ id: z.number().int(), content: z.string() })),
-    familyMemberName: z.string().nullable(),
-    familyMemberAge: z.number().int().nullable(),
-    ...clinicalContextFields,
-  }),
-  outputSchema: z.object({
-    userId: z.string(),
-    goalId: z.number().int().optional(),
-    jobId: z.string().optional(),
-    issueId: z.number().int().optional(),
-    feedbackId: z.number().int().optional(),
-    goal: z.object({
-      id: z.number().int(),
-      title: z.string(),
-      description: z.string().nullable(),
-    }),
-    notes: z.array(z.object({ content: z.string() })),
-    familyMemberName: z.string().nullable(),
-    familyMemberAge: z.number().int().nullable(),
-    ...clinicalContextFields,
-  }),
-  execute: async ({ inputData }) => {
-    if (inputData.jobId) {
-      await d1Tools.updateGenerationJob(inputData.jobId, { progress: 10 }).catch(() => {});
-    }
-    return {
-      ...inputData,
-      notes: inputData.notes.map((n) => ({ content: n.content })),
-    };
-  },
-});
-
-// Step 3: Plan query
-const planQueryStep = createStep({
-  id: "plan-query",
-  inputSchema: z.object({
-    userId: z.string(),
-    goalId: z.number().int().optional(),
-    jobId: z.string().optional(),
-    issueId: z.number().int().optional(),
-    feedbackId: z.number().int().optional(),
-    goal: z.object({ title: z.string(), description: z.string().nullable() }),
-    notes: z.array(z.object({ content: z.string() })),
-    familyMemberName: z.string().nullable(),
-    familyMemberAge: z.number().int().nullable(),
-  }),
-  outputSchema: z.object({
-    userId: z.string(),
-    goalId: z.number().int().optional(),
-    jobId: z.string().optional(),
-    issueId: z.number().int().optional(),
-    feedbackId: z.number().int().optional(),
-    goal: z.object({ title: z.string(), description: z.string().nullable() }),
-    notes: z.array(z.object({ content: z.string() })),
-    familyMemberName: z.string().nullable(),
-    familyMemberAge: z.number().int().nullable(),
-    goalType: z.string(),
-    keywords: z.array(z.string()),
-    semanticScholarQueries: z.array(z.string()),
-    crossrefQueries: z.array(z.string()),
-    pubmedQueries: z.array(z.string()),
-    inclusion: z.array(z.string()),
-    exclusion: z.array(z.string()),
-  }),
-  execute: async ({ inputData }) => {
-    if (inputData.jobId) {
-      await d1Tools.updateGenerationJob(inputData.jobId, { progress: 20 }).catch(() => {});
-    }
-    // Use the translated title so the planner prompt runs in clinical English
-    const planTitle = (inputData as any).translatedGoalTitle ?? inputData.goal.title;
-
-    const rawPlan = await extractorTools.plan({
-      title: planTitle,
-      description: inputData.goal.description ?? "",
-      notes: inputData.notes.map((n) => n.content),
     });
 
-    const plan = extractorTools.sanitize(rawPlan);
-
-    console.log(`\n📋 Query Plan:`);
-    console.log(`   Goal Type: ${plan.goalType ?? plan.therapeuticGoalType}`);
     console.log(
-      `   Semantic Scholar Queries: ${plan.semanticScholarQueries?.length ?? 0}`,
+      `Goal normalized: "${ctx.goal.title}" → "${object.translatedGoalTitle}" (${object.clinicalDomain}, ${object.behaviorDirection})`,
     );
-    console.log(`   Crossref Queries: ${plan.crossrefQueries?.length ?? 0}`);
-    console.log(`   PubMed Queries: ${plan.pubmedQueries?.length ?? 0}\n`);
 
-    return {
-      ...inputData,
-      ...plan,
-      goalType:
-        plan.goalType ?? plan.therapeuticGoalType ?? "behavioral_change",
-      jobId: inputData.jobId,
-    };
-  },
-});
-
-/**
- * Escape special regex characters
- */
-function escapeRegExp(input: string): string {
-  return input.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+    return { ...ctx, ...object };
+  } catch (err) {
+    console.warn(
+      `Goal normalization failed, using fallback: ${err instanceof Error ? err.message : String(err)}`,
+    );
+    return { ...ctx, ...fallback };
+  }
 }
 
-// Step 4: Multi-source search with multi-query expansion
-const searchStep = createStep({
-  id: "search",
-  inputSchema: z.object({
-    userId: z.string(),
-    goalId: z.number().int().optional(),
-    jobId: z.string().optional(),
-    issueId: z.number().int().optional(),
-    feedbackId: z.number().int().optional(),
-    goal: z.any(),
-    notes: z.any(),
-    goalType: z.string(),
-    keywords: z.array(z.string()),
-    semanticScholarQueries: z.array(z.string()).optional(),
-    crossrefQueries: z.array(z.string()).optional(),
-    pubmedQueries: z.array(z.string()).optional(),
-    exclusion: z.array(z.string()).optional(),
-  }),
-  outputSchema: z.object({
-    userId: z.string(),
-    goalId: z.number().int().optional(),
-    jobId: z.string().optional(),
-    issueId: z.number().int().optional(),
-    feedbackId: z.number().int().optional(),
-    goal: z.any(),
-    notes: z.any(),
-    goalType: z.string(),
-    keywords: z.array(z.string()),
-    candidates: z.array(
-      z.object({
-        title: z.string(),
-        doi: z.string().optional(),
-        url: z.string().optional(),
-        year: z.number().int().optional(),
-        source: z.string(),
-      }),
-    ),
-  }),
-  execute: async ({ inputData }) => {
-    if (inputData.jobId) {
-      await d1Tools.updateGenerationJob(inputData.jobId, { progress: 40 }).catch(() => {});
-    }
-    // Increase recall aggressively; filter later
-    const PER_QUERY = 50;
+async function planQuery<T extends {
+  jobId?: string;
+  goal: { title: string; description: string | null };
+  notes: Array<{ content: string }>;
+  translatedGoalTitle?: string;
+}>(ctx: T) {
+  if (ctx.jobId) {
+    await db.updateGenerationJob(ctx.jobId, { progress: 20 }).catch(() => {});
+  }
 
-    console.log(`\n🔍 Multi-source search with query expansion...\n`);
+  const planTitle = (ctx as any).translatedGoalTitle ?? ctx.goal.title;
 
-    // Fallback queries — child/behavioral defaults if planner didn't provide them.
-    // These are intentionally pediatric-focused to avoid adult-CBT drift.
-    const crossrefQueries = inputData.crossrefQueries?.length
-      ? inputData.crossrefQueries.slice(0, 15)
-      : [
-          "behavioral intervention children school-age evidence-based",
-          "CBT cognitive behavioral therapy children school",
-          "anxiety disorder children behavioral treatment",
-          "social skills intervention school-age children",
-          "child behavioral therapy evidence-based outcomes",
-        ];
+  const rawPlan = await extractorTools.plan({
+    title: planTitle,
+    description: ctx.goal.description ?? "",
+    notes: ctx.notes.map((n) => n.content),
+  });
 
-    const semanticQueries = inputData.semanticScholarQueries?.length
-      ? inputData.semanticScholarQueries.slice(0, 20)
-      : [
-          "evidence-based behavioral intervention children",
-          "CBT children anxiety school outcomes",
-          "pediatric behavioral therapy effectiveness",
-          "school-based mental health intervention children",
-          "child psychology therapeutic techniques",
-        ];
+  const plan = extractorTools.sanitize(rawPlan);
 
-    const pubmedQueries = inputData.pubmedQueries?.length
-      ? inputData.pubmedQueries.slice(0, 12)
-      : [
-          "behavioral intervention children[MeSH] school",
-          "CBT anxiety children school-based treatment",
-        ];
+  console.log(`Query Plan:`);
+  console.log(`  Goal Type: ${plan.goalType ?? (plan as any).therapeuticGoalType}`);
+  console.log(`  Semantic Scholar Queries: ${plan.semanticScholarQueries?.length ?? 0}`);
+  console.log(`  Crossref Queries: ${plan.crossrefQueries?.length ?? 0}`);
+  console.log(`  PubMed Queries: ${plan.pubmedQueries?.length ?? 0}`);
 
-    console.log(`   Crossref: ${crossrefQueries.length} queries`);
-    console.log(`   Semantic Scholar: ${semanticQueries.length} queries`);
-    console.log(`   PubMed: ${pubmedQueries.length} queries\n`);
-
-    // Sequential with delays to respect free-tier API rate limits
-    const delay = (ms: number) =>
-      new Promise((resolve) => setTimeout(resolve, ms));
-
-    console.log("Fetching Crossref results...");
-    const crossrefBatches: any[][] = [];
-    for (const q of crossrefQueries) {
-      crossrefBatches.push(await sourceTools.searchCrossref(q, PER_QUERY));
-      await delay(500);
-    }
-
-    console.log("Fetching PubMed results...");
-    const pubmedBatches: any[][] = [];
-    for (const q of pubmedQueries) {
-      pubmedBatches.push(await sourceTools.searchPubMed(q, PER_QUERY));
-      await delay(1000); // NCBI rate limit: 3 req/sec without API key
-    }
-
-    console.log("Fetching Semantic Scholar results...");
-    const semanticBatches: any[][] = [];
-    // With API key: introductory limit is 1 RPS → 1100ms safe gap.
-    // Without API key: shared pool of 1000 RPS → 200ms is conservative enough.
-    const s2Delay = process.env.SEMANTIC_SCHOLAR_API_KEY ? 1100 : 200;
-    for (const q of semanticQueries) {
-      semanticBatches.push(
-        await sourceTools.searchSemanticScholar(q, PER_QUERY),
-      );
-      await delay(s2Delay);
-    }
-
-    // Expand candidate pool using S2 paper recommendations.
-    // Pick the most-cited paper from the initial S2 results and fetch papers
-    // that S2 considers similar — these are often highly relevant but missed
-    // by keyword search alone.
-    const s2Results = semanticBatches.flat();
-    const topS2Paper = s2Results
-      .filter((p: any) => p.s2PaperId && (p.influentialCitationCount || 0) > 0)
-      .sort(
-        (a: any, b: any) =>
-          (b.influentialCitationCount || 0) - (a.influentialCitationCount || 0),
-      )[0];
-
-    let recommendationResults: any[] = [];
-    if (topS2Paper?.s2PaperId) {
-      console.log(
-        `🔗 Fetching S2 recommendations for: "${topS2Paper.title}"`,
-      );
-      recommendationResults = await sourceTools.getSemanticScholarRecommendations(
-        topS2Paper.s2PaperId,
-        20,
-      );
-      await delay(s2Delay);
-    }
-
-    const combined = [
-      ...crossrefBatches.flat(),
-      ...pubmedBatches.flat(),
-      ...s2Results,
-      ...recommendationResults,
-    ];
-
-    console.log(
-      `📚 Raw results: Crossref(${crossrefBatches.flat().length}), PubMed(${pubmedBatches.flat().length}), Semantic(${s2Results.length}), S2 Recs(${recommendationResults.length})`,
-    );
-
-    // Title blacklist: avoid obvious out-of-domain papers.
-    // NOTE: "occupational therapy" intentionally removed — it's a valid co-treatment
-    // domain for pediatric communication and sensory goals.
-    const staticBadTerms = [
-      "forensic",
-      "witness",
-      "court",
-      "police",
-      "legal",
-      "pre-admission",
-      "homework completion",
-      "homework adherence",
-      "homework refusal",
-      "dating violence",
-      "teen dating",
-      "cybersex",
-      "internet pornography",
-      "weight control",
-      "obesity intervention",
-      "gang-affiliated",
-      "delinquency",
-      "marital therapy",
-      "marriage therapy",
-      "couples therapy",
-    ];
-
-    // Also incorporate excludedTopics from the clinical normalization step
-    const dynamicBadTerms: string[] = (inputData as any).excludedTopics ?? [];
-
-    const allBadTerms = [...staticBadTerms, ...dynamicBadTerms];
-
-    const bad = new RegExp(
-      `\\b(${allBadTerms.map(escapeRegExp).join("|")})\\b`,
-      "i",
-    );
-
-    const deduped = sourceTools.dedupeCandidates(combined);
-    const titleFiltered = deduped.filter((c: any) => {
-      const title = c.title ?? "";
-      return !bad.test(title);
-    });
-
-    console.log(`🔗 After dedup: ${deduped.length} candidates`);
-    console.log(`🚫 After title filter: ${titleFiltered.length} candidates`);
-
-    // Filter book chapters but keep candidates without abstracts (enriched next)
-    const filtered = sourceTools.filterBookChapters(titleFiltered);
-
-    console.log(
-      `✅ After book chapter filter: ${filtered.length} candidates\n`,
-    );
-
-    return {
-      ...inputData,
-      candidates: filtered,
-      jobId: inputData.jobId,
-    };
-  },
-});
-
-// Step 5: Enrich abstracts from OpenAlex (controlled concurrency)
-const enrichAbstractsStep = createStep({
-  id: "enrich-abstracts",
-  inputSchema: z.object({
-    userId: z.string(),
-    goalId: z.number().int().optional(),
-    jobId: z.string().optional(),
-    issueId: z.number().int().optional(),
-    feedbackId: z.number().int().optional(),
-    goal: z.any(),
-    notes: z.any(),
-    goalType: z.string(),
-    keywords: z.array(z.string()),
-    candidates: z.array(z.any()),
-  }),
-  outputSchema: z.object({
-    userId: z.string(),
-    goalId: z.number().int().optional(),
-    jobId: z.string().optional(),
-    issueId: z.number().int().optional(),
-    feedbackId: z.number().int().optional(),
-    goal: z.any(),
-    notes: z.any(),
-    goalType: z.string(),
-    keywords: z.array(z.string()),
-    candidates: z.array(z.any()),
-  }),
-  execute: async ({ inputData }) => {
-    if (inputData.jobId) {
-      await d1Tools.updateGenerationJob(inputData.jobId, { progress: 60 }).catch(() => {});
-    }
-    const candidates = inputData.candidates;
-
-    console.log(`\n🔬 Enriching abstracts from OpenAlex...\n`);
-
-    const slice = candidates.slice(0, ENRICH_CANDIDATES_LIMIT);
-
-    // Use mapLimit to cap concurrent OpenAlex requests
-    const enriched = await sourceTools.mapLimit(
-      slice,
-      ENRICH_CONCURRENCY,
-      async (c: any, idx: number) => {
-        const doi = (c.doi ?? "").toString().trim();
-        if (!doi || c.abstract) {
-          return c;
-        }
-
-        if (idx > 0 && idx % 50 === 0) {
-          console.log(`   Enriched ${idx} / ${slice.length}...`);
-        }
-
-        try {
-          const oa = await openAlexTools.fetchAbstractByDoi(doi);
-          return {
-            ...c,
-            _enrichedAbstract: oa.abstract,
-            _enrichedYear: oa.year,
-            _enrichedVenue: oa.venue,
-            _enrichedAuthors: oa.authors,
-          };
-        } catch {
-          return c;
-        }
-      },
-    );
-
-    const withAbstracts = enriched.filter(
-      // Raised from 150 to 300 chars: a 150-char abstract is ~2 sentences,
-      // too short for the extractor to score accurately
-      (c: any) => (c.abstract || c._enrichedAbstract || "").length >= 300,
-    );
-
-    console.log(`   Enriched: ${enriched.length} candidates`);
-    console.log(`   With abstracts (≥150 chars): ${withAbstracts.length}\n`);
-
-    return {
-      ...inputData,
-      candidates: [
-        ...withAbstracts,
-        ...candidates.slice(ENRICH_CANDIDATES_LIMIT),
-      ],
-      jobId: inputData.jobId,
-    };
-  },
-});
-
-// Plain async function for single-paper extraction.
-// Not a Mastra step — avoids the `step.execute!()` anti-pattern.
-async function extractOnePaper(params: {
-  candidate: {
-    title: string;
-    doi?: string;
-    url?: string;
-    year?: number;
-    source: string;
-    [key: string]: any;
+  return {
+    ...ctx,
+    ...plan,
+    goalType: plan.goalType ?? (plan as any).therapeuticGoalType ?? "behavioral_change",
   };
+}
+
+async function search<T extends {
+  jobId?: string;
+  goalType: string;
+  keywords: string[];
+  semanticScholarQueries?: string[];
+  crossrefQueries?: string[];
+  pubmedQueries?: string[];
+  excludedTopics?: string[];
+  [key: string]: any;
+}>(ctx: T) {
+  if (ctx.jobId) {
+    await db.updateGenerationJob(ctx.jobId, { progress: 40 }).catch(() => {});
+  }
+
+  const PER_QUERY = 50;
+  const delay = (ms: number) => new Promise((resolve) => setTimeout(resolve, ms));
+
+  const crossrefQueries = ctx.crossrefQueries?.length
+    ? ctx.crossrefQueries.slice(0, 15)
+    : [
+        "behavioral intervention children school-age evidence-based",
+        "CBT cognitive behavioral therapy children school",
+        "anxiety disorder children behavioral treatment",
+        "social skills intervention school-age children",
+        "child behavioral therapy evidence-based outcomes",
+      ];
+
+  const semanticQueries = ctx.semanticScholarQueries?.length
+    ? ctx.semanticScholarQueries.slice(0, 20)
+    : [
+        "evidence-based behavioral intervention children",
+        "CBT children anxiety school outcomes",
+        "pediatric behavioral therapy effectiveness",
+        "school-based mental health intervention children",
+        "child psychology therapeutic techniques",
+      ];
+
+  const pubmedQueries = ctx.pubmedQueries?.length
+    ? ctx.pubmedQueries.slice(0, 12)
+    : [
+        "behavioral intervention children[MeSH] school",
+        "CBT anxiety children school-based treatment",
+      ];
+
+  console.log(`  Crossref: ${crossrefQueries.length} queries`);
+  console.log(`  Semantic Scholar: ${semanticQueries.length} queries`);
+  console.log(`  PubMed: ${pubmedQueries.length} queries`);
+
+  console.log("Fetching Crossref results...");
+  const crossrefBatches: any[][] = [];
+  for (const q of crossrefQueries) {
+    crossrefBatches.push(await sourceTools.searchCrossref(q, PER_QUERY));
+    await delay(500);
+  }
+
+  console.log("Fetching PubMed results...");
+  const pubmedBatches: any[][] = [];
+  for (const q of pubmedQueries) {
+    pubmedBatches.push(await sourceTools.searchPubMed(q, PER_QUERY));
+    await delay(1000);
+  }
+
+  console.log("Fetching Semantic Scholar results...");
+  const semanticBatches: any[][] = [];
+  const s2Delay = process.env.SEMANTIC_SCHOLAR_API_KEY ? 1100 : 200;
+  for (const q of semanticQueries) {
+    semanticBatches.push(await sourceTools.searchSemanticScholar(q, PER_QUERY));
+    await delay(s2Delay);
+  }
+
+  const s2Results = semanticBatches.flat();
+  const topS2Paper = s2Results
+    .filter((p: any) => p.s2PaperId && (p.influentialCitationCount || 0) > 0)
+    .sort((a: any, b: any) => (b.influentialCitationCount || 0) - (a.influentialCitationCount || 0))[0];
+
+  let recommendationResults: any[] = [];
+  if (topS2Paper?.s2PaperId) {
+    console.log(`Fetching S2 recommendations for: "${topS2Paper.title}"`);
+    recommendationResults = await sourceTools.getSemanticScholarRecommendations(topS2Paper.s2PaperId, 20);
+    await delay(s2Delay);
+  }
+
+  const combined = [
+    ...crossrefBatches.flat(),
+    ...pubmedBatches.flat(),
+    ...s2Results,
+    ...recommendationResults,
+  ];
+
+  console.log(
+    `Raw results: Crossref(${crossrefBatches.flat().length}), PubMed(${pubmedBatches.flat().length}), Semantic(${s2Results.length}), S2 Recs(${recommendationResults.length})`,
+  );
+
+  const staticBadTerms = [
+    "forensic", "witness", "court", "police", "legal", "pre-admission",
+    "homework completion", "homework adherence", "homework refusal",
+    "dating violence", "teen dating", "cybersex", "internet pornography",
+    "weight control", "obesity intervention", "gang-affiliated",
+    "delinquency", "marital therapy", "marriage therapy", "couples therapy",
+  ];
+
+  const dynamicBadTerms: string[] = ctx.excludedTopics ?? [];
+  const allBadTerms = [...staticBadTerms, ...dynamicBadTerms];
+  const bad = new RegExp(`\\b(${allBadTerms.map(escapeRegExp).join("|")})\\b`, "i");
+
+  const deduped = sourceTools.dedupeCandidates(combined);
+  const titleFiltered = deduped.filter((c: any) => !bad.test(c.title ?? ""));
+  const filtered = sourceTools.filterBookChapters(titleFiltered);
+
+  console.log(`After dedup: ${deduped.length}, title filter: ${titleFiltered.length}, book chapter filter: ${filtered.length}`);
+
+  return { ...ctx, candidates: filtered };
+}
+
+async function enrichAbstracts<T extends {
+  jobId?: string;
+  candidates: any[];
+  [key: string]: any;
+}>(ctx: T) {
+  if (ctx.jobId) {
+    await db.updateGenerationJob(ctx.jobId, { progress: 60 }).catch(() => {});
+  }
+
+  const slice = ctx.candidates.slice(0, ENRICH_CANDIDATES_LIMIT);
+
+  const enriched = await sourceTools.mapLimit(
+    slice,
+    ENRICH_CONCURRENCY,
+    async (c: any, idx: number) => {
+      const doi = (c.doi ?? "").toString().trim();
+      if (!doi || c.abstract) return c;
+
+      if (idx > 0 && idx % 50 === 0) {
+        console.log(`  Enriched ${idx} / ${slice.length}...`);
+      }
+
+      try {
+        const oa = await openAlexTools.fetchAbstractByDoi(doi);
+        return {
+          ...c,
+          _enrichedAbstract: oa.abstract,
+          _enrichedYear: oa.year,
+          _enrichedVenue: oa.venue,
+          _enrichedAuthors: oa.authors,
+        };
+      } catch {
+        return c;
+      }
+    },
+  );
+
+  const withAbstracts = enriched.filter(
+    (c: any) => (c.abstract || c._enrichedAbstract || "").length >= 300,
+  );
+
+  console.log(`  Enriched: ${enriched.length}, with abstracts: ${withAbstracts.length}`);
+
+  return {
+    ...ctx,
+    candidates: [...withAbstracts, ...ctx.candidates.slice(ENRICH_CANDIDATES_LIMIT)],
+  };
+}
+
+async function extractOnePaper(params: {
+  candidate: any;
   goalType: string;
   goalTitle: string;
   goalDescription: string | null;
@@ -793,7 +462,6 @@ async function extractOnePaper(params: {
       score: extracted.relevanceScore,
       research: ok
         ? {
-            // Map to DB schema
             therapeuticGoalType: params.goalType,
             title: extracted.paperMeta.title,
             authors: extracted.paperMeta.authors,
@@ -807,7 +475,7 @@ async function extractOnePaper(params: {
             evidenceLevel: extracted.studyType,
             relevanceScore: extracted.relevanceScore,
             extractionConfidence: extracted.confidence,
-            extractedBy: "mastra:deepseek-langfuse:v2",
+            extractedBy: "pipeline:deepseek:v2",
           }
         : undefined,
       reason: ok ? "passed" : (extracted.rejectReason ?? "failed_thresholds"),
@@ -819,247 +487,179 @@ async function extractOnePaper(params: {
   }
 }
 
-// Step 6: Reshape data for the extraction step
-const prepExtractStep = createStep({
-  id: "prep-extract",
-  inputSchema: z.any(),
-  outputSchema: z.any(),
-  execute: async ({ inputData }) => {
-    if (inputData.jobId) {
-      await d1Tools.updateGenerationJob(inputData.jobId, { progress: 65 }).catch(() => {});
-    }
-    return {
-      userId: inputData.userId,
-      goalId: inputData.goalId,
-      jobId: inputData.jobId,
-      issueId: (inputData as any).issueId,
-      feedbackId: (inputData as any).feedbackId,
-      context: {
-        goal: inputData.goal,
-        notes: inputData.notes,
-        // Pass translated title so extractor scores against the correct clinical domain
-        translatedGoalTitle: inputData.translatedGoalTitle ?? inputData.goal?.title,
-      },
-      plan: {
-        goalType: inputData.goalType,
-        keywords: inputData.keywords,
-        // Pass requiredKeywords for keyword-overlap scoring in persistStep
-        requiredKeywords: inputData.requiredKeywords ?? [],
-      },
-      search: {
-        candidates: inputData.candidates,
-      },
-    };
-  },
-});
+async function extractAll<T extends {
+  jobId?: string;
+  goalId?: number;
+  issueId?: number;
+  feedbackId?: number;
+  goal: { title: string; description: string | null };
+  goalType: string;
+  candidates: any[];
+  translatedGoalTitle?: string;
+  requiredKeywords?: string[];
+  [key: string]: any;
+}>(ctx: T) {
+  if (ctx.jobId) {
+    await db.updateGenerationJob(ctx.jobId, { progress: 85 }).catch(() => {});
+  }
 
-// Step 7: Extract all candidates in batches
-const extractAllStep = createStep({
-  id: "extract-all",
-  inputSchema: z.object({
-    userId: z.string(),
-    goalId: z.number().int().optional(),
-    jobId: z.string().optional(),
-    context: z.any(),
-    plan: z.any(),
-    search: z.any(),
-  }),
-  outputSchema: z.object({
-    userId: z.string(),
-    goalId: z.number().int().optional(),
-    jobId: z.string().optional(),
-    issueId: z.number().int().optional(),
-    feedbackId: z.number().int().optional(),
-    results: z.array(z.any()),
-    requiredKeywords: z.array(z.string()).optional(),
-  }),
-  execute: async ({ inputData }) => {
-    if (inputData.jobId) {
-      await d1Tools.updateGenerationJob(inputData.jobId, { progress: 85 }).catch(() => {});
-    }
-    const goal = inputData.context.goal;
-    const plan = inputData.plan;
-    const candidates = inputData.search.candidates.slice(
-      0,
-      EXTRACT_CANDIDATES_LIMIT,
-    );
+  const candidates = ctx.candidates.slice(0, EXTRACT_CANDIDATES_LIMIT);
+
+  console.log(`Extracting ${candidates.length} candidates (batches of ${EXTRACTION_BATCH_SIZE})...`);
+
+  const results: any[] = [];
+
+  for (let i = 0; i < candidates.length; i += EXTRACTION_BATCH_SIZE) {
+    const batch = candidates.slice(i, i + EXTRACTION_BATCH_SIZE);
+    const batchNum = Math.floor(i / EXTRACTION_BATCH_SIZE) + 1;
+    const totalBatches = Math.ceil(candidates.length / EXTRACTION_BATCH_SIZE);
 
     console.log(
-      `\n🧠 Extracting ${candidates.length} candidates (batches of ${EXTRACTION_BATCH_SIZE})...\n`,
+      `  Batch ${batchNum}/${totalBatches} (candidates ${i + 1}-${Math.min(i + EXTRACTION_BATCH_SIZE, candidates.length)})`,
     );
 
-    const results: any[] = [];
-
-    for (let i = 0; i < candidates.length; i += EXTRACTION_BATCH_SIZE) {
-      const batch = candidates.slice(i, i + EXTRACTION_BATCH_SIZE);
-      const batchNum = Math.floor(i / EXTRACTION_BATCH_SIZE) + 1;
-      const totalBatches = Math.ceil(candidates.length / EXTRACTION_BATCH_SIZE);
-
-      console.log(
-        `   Batch ${batchNum}/${totalBatches} (candidates ${i + 1}-${Math.min(i + EXTRACTION_BATCH_SIZE, candidates.length)})`,
-      );
-
-      const batchResults = await Promise.all(
-        batch.map((candidate: any) =>
-          extractOnePaper({
-            candidate,
-            goalType: plan.goalType,
-            // Use translated title so extractor scores against the correct clinical domain
-            goalTitle: inputData.context.translatedGoalTitle ?? goal.title,
-            goalDescription: goal.description,
-          }),
-        ),
-      );
-
-      results.push(...batchResults);
-    }
-
-    const passed = results.filter((r) => r.ok).length;
-    console.log(
-      `\n   Extraction complete: ${passed}/${results.length} passed initial gate\n`,
+    const batchResults = await Promise.all(
+      batch.map((candidate: any) =>
+        extractOnePaper({
+          candidate,
+          goalType: ctx.goalType,
+          goalTitle: ctx.translatedGoalTitle ?? ctx.goal.title,
+          goalDescription: ctx.goal.description,
+        }),
+      ),
     );
 
-    return {
-      userId: inputData.userId,
-      goalId: inputData.goalId,
-      jobId: inputData.jobId,
-      issueId: (inputData as any).issueId,
-      feedbackId: (inputData as any).feedbackId,
-      results,
-      requiredKeywords: inputData.plan?.requiredKeywords ?? [],
-    };
-  },
-});
+    results.push(...batchResults);
+  }
 
-// Step 8: Persist results with multi-stage quality gating
-const persistStep = createStep({
-  id: "persist",
-  inputSchema: z.object({
-    userId: z.string(),
-    goalId: z.number().int().optional(),
-    jobId: z.string().optional(),
-    issueId: z.number().int().optional(),
-    feedbackId: z.number().int().optional(),
-    results: z.array(z.any()),
-    // requiredKeywords from normalizeGoalStep, passed via prepExtractStep → extractAllStep
-    requiredKeywords: z.array(z.string()).optional(),
-  }),
-  outputSchema,
-  execute: async ({ inputData }) => {
-    if (inputData.jobId) {
-      await d1Tools.updateGenerationJob(inputData.jobId, { progress: 95 }).catch(() => {});
-    }
-    console.log(`\n📊 Extraction results: ${inputData.results.length} total\n`);
+  const passed = results.filter((r) => r.ok).length;
+  console.log(`  Extraction complete: ${passed}/${results.length} passed initial gate`);
 
-    const requiredKeywords = (inputData.requiredKeywords ?? []).map((k) =>
-      k.toLowerCase(),
-    );
+  return { ...ctx, results, requiredKeywords: ctx.requiredKeywords ?? [] };
+}
 
-    /**
-     * Keyword-overlap score: fraction of required keywords found in title + abstract.
-     * Used as a tie-breaker and a weak signal that the paper is in the right domain.
-     * Returns 0 if no requiredKeywords are defined (no penalty for legacy runs).
-     */
-    function keywordOverlapScore(research: any): number {
-      if (!requiredKeywords.length) return 0.5; // neutral if no keywords defined
-      const haystack = `${research.title ?? ""} ${research.abstract ?? ""}`.toLowerCase();
-      const hits = requiredKeywords.filter((kw) => haystack.includes(kw)).length;
-      return hits / requiredKeywords.length;
-    }
+async function persist<T extends {
+  jobId?: string;
+  goalId?: number;
+  userId: string;
+  issueId?: number;
+  feedbackId?: number;
+  results: any[];
+  requiredKeywords?: string[];
+}>(ctx: T): Promise<Output> {
+  if (ctx.jobId) {
+    await db.updateGenerationJob(ctx.jobId, { progress: 95 }).catch(() => {});
+  }
 
-    // Stage 1: must have passed extractor gate + have key findings + no rejectReason
-    // Stage 2: rank by adjusted blended score (60% LLM-blended + 40% keyword-overlap)
-    const qualified = inputData.results
-      .filter((r) => r.ok && r.research)
-      .filter((r) => (r.research.keyFindings?.length ?? 0) > 0)
-      // Enforce rejectReason: if the LLM explicitly rejected, exclude regardless of score
-      .filter((r) => !r.rejectReason && !r.research?.rejectReason)
-      .map((r) => {
-        const relevance = r.research.relevanceScore ?? 0;
-        const confidence = r.research.extractionConfidence ?? 0;
-        const llmBlended = 0.7 * relevance + 0.3 * confidence;
-        const kwOverlap = keywordOverlapScore(r.research);
-        // Adjusted blended: 60% LLM score + 40% keyword presence
-        const adjustedBlended =
-          requiredKeywords.length > 0
-            ? 0.6 * llmBlended + 0.4 * kwOverlap
-            : llmBlended;
-        return { ...r, blended: adjustedBlended, llmBlended, kwOverlap };
-      })
-      .filter((r) => r.blended >= BLENDED_THRESHOLD)
-      .sort((a, b) => b.blended - a.blended);
+  const requiredKeywords = (ctx.requiredKeywords ?? []).map((k) => k.toLowerCase());
 
-    const top = qualified.slice(0, PERSIST_CANDIDATES_LIMIT);
+  function keywordOverlapScore(research: any): number {
+    if (!requiredKeywords.length) return 0.5;
+    const haystack = `${research.title ?? ""} ${research.abstract ?? ""}`.toLowerCase();
+    const hits = requiredKeywords.filter((kw) => haystack.includes(kw)).length;
+    return hits / requiredKeywords.length;
+  }
 
-    console.log(`\n🎯 Persisting top ${top.length} papers:\n`);
+  const qualified = ctx.results
+    .filter((r) => r.ok && r.research)
+    .filter((r) => (r.research.keyFindings?.length ?? 0) > 0)
+    .filter((r) => !r.rejectReason && !r.research?.rejectReason)
+    .map((r) => {
+      const relevance = r.research.relevanceScore ?? 0;
+      const confidence = r.research.extractionConfidence ?? 0;
+      const llmBlended = 0.7 * relevance + 0.3 * confidence;
+      const kwOverlap = keywordOverlapScore(r.research);
+      const adjustedBlended =
+        requiredKeywords.length > 0
+          ? 0.6 * llmBlended + 0.4 * kwOverlap
+          : llmBlended;
+      return { ...r, blended: adjustedBlended, llmBlended, kwOverlap };
+    })
+    .filter((r) => r.blended >= BLENDED_THRESHOLD)
+    .sort((a, b) => b.blended - a.blended);
 
-    let count = 0;
-    let errors = 0;
+  const top = qualified.slice(0, PERSIST_CANDIDATES_LIMIT);
 
-    for (const r of top) {
-      const research = r.research;
-      const displayTitle =
-        research.title.length > 80
-          ? `${research.title.substring(0, 80)}…`
-          : research.title;
+  console.log(`Persisting top ${top.length} papers...`);
 
-      console.log(
-        `   ${count + errors + 1}. [blended=${r.blended.toFixed(2)} llm=${r.llmBlended?.toFixed(2) ?? "?"} kw=${r.kwOverlap?.toFixed(2) ?? "?"}] ${displayTitle}`,
-      );
+  let count = 0;
+  let errors = 0;
 
-      try {
-        const rowId = await d1Tools.upsertTherapyResearch(
-          inputData.goalId,
-          inputData.userId,
-          { ...research, issueId: inputData.issueId ?? null, feedbackId: inputData.feedbackId ?? null },
-        );
-        count++;
-
-        await ragTools.upsertResearchChunks({
-          goalId: inputData.goalId,
-          entityType: "TherapyResearch",
-          entityId: rowId,
-          title: research.title,
-          abstract: research.abstract ?? "",
-          keyFindings: research.keyFindings,
-          techniques: research.therapeuticTechniques,
-        });
-      } catch (err) {
-        errors++;
-        const msg = err instanceof Error ? err.message : String(err);
-        console.error(`   ⚠️  Failed to persist "${research.title}": ${msg}`);
-      }
-    }
+  for (const r of top) {
+    const research = r.research;
+    const displayTitle =
+      research.title.length > 80 ? `${research.title.substring(0, 80)}...` : research.title;
 
     console.log(
-      `\n✨ Persisted ${count} papers${errors > 0 ? `, ${errors} failed` : ""}\n`,
+      `  ${count + errors + 1}. [blended=${r.blended.toFixed(2)}] ${displayTitle}`,
     );
 
-    return {
-      success: count > 0 || errors === 0,
-      count,
-      message: count
-        ? `Generated ${count} research papers (blended quality score ≥ ${BLENDED_THRESHOLD}, ranked by relevance)`
-        : errors > 0
-          ? `All ${errors} persist attempts failed`
-          : "No papers met minimum quality thresholds",
-    };
-  },
-});
+    try {
+      const rowId = await db.upsertTherapyResearch(
+        ctx.goalId,
+        ctx.userId,
+        { ...research, issueId: ctx.issueId ?? null, feedbackId: ctx.feedbackId ?? null },
+      );
+      count++;
 
-// Build workflow
-export const generateTherapyResearchWorkflow = createWorkflow({
-  id: "generate-therapy-research",
-  inputSchema,
-  outputSchema,
-})
-  .then(loadContextStep)
-  .then(normalizeGoalStep)  // translate + clinical classify before Langfuse prompt generation
-  .then(ensurePromptsStep)
-  .then(planQueryStep)
-  .then(searchStep)
-  .then(enrichAbstractsStep)
-  .then(prepExtractStep)
-  .then(extractAllStep)
-  .then(persistStep)
-  .commit();
+      await ragTools.upsertResearchChunks({
+        goalId: ctx.goalId,
+        entityType: "TherapyResearch",
+        entityId: rowId,
+        title: research.title,
+        abstract: research.abstract ?? "",
+        keyFindings: research.keyFindings,
+        techniques: research.therapeuticTechniques,
+      });
+    } catch (err) {
+      errors++;
+      const msg = err instanceof Error ? err.message : String(err);
+      console.error(`  Failed to persist "${research.title}": ${msg}`);
+    }
+  }
+
+  console.log(`Persisted ${count} papers${errors > 0 ? `, ${errors} failed` : ""}`);
+
+  return {
+    success: count > 0 || errors === 0,
+    count,
+    message: count
+      ? `Generated ${count} research papers (blended quality score >= ${BLENDED_THRESHOLD}, ranked by relevance)`
+      : errors > 0
+        ? `All ${errors} persist attempts failed`
+        : "No papers met minimum quality thresholds",
+  };
+}
+
+// ---------------------------------------------------------------------------
+// Main pipeline function
+// ---------------------------------------------------------------------------
+
+export async function generateTherapyResearch(inputData: Input): Promise<Output> {
+  const ctx1 = await loadContext(inputData);
+  const ctx2 = await normalizeGoal(ctx1);
+
+  // Progress: 10% (formerly ensurePromptsStep)
+  if (inputData.jobId) {
+    await db.updateGenerationJob(inputData.jobId, { progress: 10 }).catch(() => {});
+  }
+
+  const ctx3 = await planQuery({ ...ctx2, notes: ctx2.notes.map((n: any) => ({ content: n.content })) });
+  const ctx4 = await search(ctx3);
+  const ctx5 = await enrichAbstracts(ctx4);
+  const ctx6 = await extractAll({
+    ...ctx5,
+    issueId: (inputData as any).issueId,
+    feedbackId: (inputData as any).feedbackId,
+  });
+  return persist({
+    userId: inputData.userId,
+    goalId: ctx1.goalId,
+    jobId: inputData.jobId,
+    issueId: (inputData as any).issueId,
+    feedbackId: (inputData as any).feedbackId,
+    results: ctx6.results,
+    requiredKeywords: (ctx6 as any).requiredKeywords ?? [],
+  });
+}
+

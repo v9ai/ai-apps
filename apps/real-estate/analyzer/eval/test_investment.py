@@ -556,7 +556,7 @@ def test_investment(case):
 
 
 # ---------------------------------------------------------------------------
-# Live CrewAI investment metrics test — runs the actual agent with DeepEval tracing
+# Live investment metrics test — runs the actual agent with DeepEval tracing
 # ---------------------------------------------------------------------------
 
 @pytest.mark.asyncio

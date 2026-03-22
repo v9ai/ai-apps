@@ -103,7 +103,7 @@ class TestCollabStructure:
     def _profiles(self):
         p = _load_profiles()
         if not p:
-            pytest.skip("No profiles with collaboration_network — run crew.py first")
+            pytest.skip("No profiles with collaboration_network — run research_pipeline.py first")
         return p
 
     def test_collab_structure(self):
@@ -120,7 +120,7 @@ class TestCollabHasCollaborators:
     def _profiles(self):
         p = _load_profiles()
         if not p:
-            pytest.skip("No profiles with collaboration_network — run crew.py first")
+            pytest.skip("No profiles with collaboration_network — run research_pipeline.py first")
         return p
 
     def test_collab_has_collaborators(self):
@@ -140,7 +140,7 @@ class TestCollabNoSelfReference:
     def _profiles(self):
         p = _load_profiles()
         if not p:
-            pytest.skip("No profiles with collaboration_network — run crew.py first")
+            pytest.skip("No profiles with collaboration_network — run research_pipeline.py first")
         return p
 
     def test_collab_no_self_reference(self):

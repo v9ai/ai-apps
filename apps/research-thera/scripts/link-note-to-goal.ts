@@ -7,7 +7,8 @@
  *   tsx scripts/link-note-to-goal.ts --noteId=<id> --goalTitle="Goal Title"
  */
 
-import { d1Tools, d1 } from "@/src/db";
+import { db } from "@/src/db";
+import { sql } from "@/src/db/neon";
 
 async function main() {
   const args = process.argv.slice(2);
@@ -51,24 +52,21 @@ async function main() {
   let note;
   if (noteSlug) {
     console.log(`📝 Finding note by slug: ${noteSlug}`);
-    note = await d1Tools.getNoteBySlug(noteSlug, createdBy);
+    note = await db.getNoteBySlug(noteSlug, createdBy);
   } else if (noteId) {
     console.log(`📝 Finding note by ID: ${noteId}`);
-    note = await d1Tools.getNoteById(noteId, createdBy);
+    note = await db.getNoteById(noteId, createdBy);
   } else {
     // If no note specified, list all notes to help the user
     console.log("❌ No note specified. Use --noteSlug or --noteId");
     console.log("\nListing all existing notes:\n");
 
-    const result = await d1.execute({
-      sql: `SELECT id, slug, entity_type, entity_id, content, tags, created_at FROM notes WHERE user_id = ? ORDER BY created_at DESC LIMIT 20`,
-      args: [createdBy],
-    });
+    const rows = await sql`SELECT id, slug, entity_type, entity_id, content, tags, created_at FROM notes WHERE user_id = ${createdBy} ORDER BY created_at DESC LIMIT 20`;
 
-    if (result.rows.length === 0) {
+    if (rows.length === 0) {
       console.log("No notes found.");
     } else {
-      result.rows.forEach((row: any) => {
+      rows.forEach((row: any) => {
         const tags = row.tags ? JSON.parse(row.tags as string) : [];
         const preview = (row.content as string).substring(0, 100);
         console.log(`ID: ${row.id}`);
@@ -94,31 +92,31 @@ async function main() {
   console.log(`   Created: ${note.createdAt}\n`);
 
   // Get linked research count
-  const linkedResearch = await d1Tools.getResearchForNote(note.id);
+  const linkedResearch = await db.getResearchForNote(note.id);
   console.log(`   Linked Research: ${linkedResearch.length} papers\n`);
 
   // Step 2: Create the goal
   console.log(`🎯 Creating goal: "${goalTitle}"`);
-  const goalId = await d1Tools.createGoal({
+  const goalId = await db.createGoal({
     familyMemberId,
     createdBy,
     title: goalTitle,
     description: goalDescription || null,
   });
 
-  const goal = await d1Tools.getGoal(goalId, createdBy);
+  const goal = await db.getGoal(goalId, createdBy);
   console.log(`✅ Created goal: ID=${goal.id}`);
   console.log(`   Title: ${goal.title}`);
   console.log(`   Status: ${goal.status}\n`);
 
   // Step 3: Update the note to link to the goal
   console.log(`🔗 Linking note ${note.id} to goal ${goalId}...`);
-  await d1Tools.updateNote(note.id, createdBy, {
+  await db.updateNote(note.id, createdBy, {
     entityId: goalId,
     entityType: "Goal",
   });
 
-  const updatedNote = await d1Tools.getNoteById(note.id, createdBy);
+  const updatedNote = await db.getNoteById(note.id, createdBy);
   console.log(`✅ Updated note successfully!`);
   console.log(
     `   New entity: ${updatedNote?.entityType}/${updatedNote?.entityId}\n`,

@@ -26,7 +26,7 @@ backend-dev:
   - schema/operations/**
   - src/db/schema.ts
   - src/db/index.ts
-  - src/trigger/**
+  - backend/**
   - drizzle/**
 
 frontend-dev:
@@ -91,7 +91,7 @@ Review plans for:
 Project context:
 - GraphQL schema-first: schema/schema.graphql
 - Codegen: pnpm codegen (generates app/__generated__/)
-- DB: Cloudflare D1 via Drizzle ORM
+- DB: Neon PostgreSQL via Drizzle ORM
 - UI: Radix UI Themes (dark mode, Indigo accent)
 - Auth: Clerk (@clerk/nextjs)
 - State: Apollo Client with cache

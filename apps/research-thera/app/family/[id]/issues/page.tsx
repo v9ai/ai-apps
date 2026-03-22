@@ -166,6 +166,9 @@ function IssuesListContent() {
                         {issue.category}
                       </Badge>
                     </Flex>
+                    <Text size="1" color="gray">
+                      {new Date(issue.createdAt).toLocaleDateString(undefined, { year: "numeric", month: "short", day: "numeric" })}
+                    </Text>
                     <Text size="2" color="gray">
                       {issue.description}
                     </Text>

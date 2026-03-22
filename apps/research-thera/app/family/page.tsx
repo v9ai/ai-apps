@@ -164,11 +164,45 @@ function FamilyListContent() {
     );
   }
 
-  const members = ownData?.familyMembers ?? [];
+  const allMembers = ownData?.familyMembers ?? [];
+  const selfMember = allMembers.find((m) => m.relationship === "self");
+  const members = allMembers.filter((m) => m.relationship !== "self");
   const sharedMembers = sharedData?.mySharedFamilyMembers ?? [];
 
   return (
     <Flex direction="column" gap="4">
+      {/* Self Member */}
+      {selfMember && (
+        <Link
+          href={`/family/${selfMember.slug ?? selfMember.id}`}
+          style={{ textDecoration: "none", color: "inherit" }}
+        >
+          <Card
+            style={{
+              cursor: "pointer",
+              borderLeft: "3px solid var(--indigo-9)",
+            }}
+          >
+            <Flex direction="column" gap="2" p="4">
+              <Flex justify="between" align="center">
+                <Flex gap="2" align="center">
+                  <Heading size="4">
+                    {selfMember.firstName}
+                    {selfMember.name ? ` ${selfMember.name}` : ""}
+                  </Heading>
+                  <Badge color="indigo" variant="solid" size="2">
+                    You
+                  </Badge>
+                </Flex>
+              </Flex>
+              <Text size="1" color="gray">
+                Your profile in the family map
+              </Text>
+            </Flex>
+          </Card>
+        </Link>
+      )}
+
       <Flex justify="between" align="center" wrap="wrap" gap="3">
         <Heading size="5">My Family Members ({members.length})</Heading>
         <Dialog.Root
@@ -446,6 +480,26 @@ function FamilyListContent() {
                     Added {new Date(member.createdAt).toLocaleDateString()}
                   </Text>
                 </Flex>
+                {member.relationships && member.relationships.filter((r) => r.related).length > 0 && (
+                  <Flex gap="2" wrap="wrap">
+                    {member.relationships
+                      .filter((r) => r.related)
+                      .map((r) => (
+                        <Badge
+                          key={r.id}
+                          color="blue"
+                          variant="outline"
+                          size="1"
+                        >
+                          {r.relationshipType.replace(/_/g, " ")}{" "}
+                          {r.related!.firstName}
+                          {r.related!.lastName
+                            ? ` ${r.related!.lastName}`
+                            : ""}
+                        </Badge>
+                      ))}
+                  </Flex>
+                )}
               </Flex>
             </Card>
             </Link>

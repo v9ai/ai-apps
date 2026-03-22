@@ -102,7 +102,7 @@ class TestContribDedup:
     def _profiles(self):
         p = _load_profiles()
         if not p:
-            pytest.skip("No profiles -- run crew.py first")
+            pytest.skip("No profiles -- run research_pipeline.py first")
         return p
 
     def test_no_duplicate_contribs_within_profile(self):

@@ -32,6 +32,16 @@ export type Quote = {
   url: string;
 };
 
+export type Video = {
+  title: string;
+  url: string;
+  platform: string;
+  date: string;
+  duration: string;
+  channel: string;
+  description: string;
+};
+
 export type PersonResearch = {
   slug: string;
   name: string;
@@ -43,6 +53,7 @@ export type PersonResearch = {
   quotes: Quote[];
   social: Record<string, string>;
   sources: { title: string; url: string }[];
+  videos?: Video[];
 };
 
 export type Personality = {

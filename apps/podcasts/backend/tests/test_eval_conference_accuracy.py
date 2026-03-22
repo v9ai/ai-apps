@@ -118,7 +118,7 @@ class TestConferenceStructure:
     def _profiles(self):
         p = _profiles_with_conferences()
         if not p:
-            pytest.skip("No profiles with conferences -- run crew.py first")
+            pytest.skip("No profiles with conferences -- run research_pipeline.py first")
         return p
 
     def test_conference_structure(self):
@@ -147,7 +147,7 @@ class TestConferenceSpeakingTier:
     def _profiles(self):
         p = _profiles_with_conferences()
         if not p:
-            pytest.skip("No profiles with conferences -- run crew.py first")
+            pytest.skip("No profiles with conferences -- run research_pipeline.py first")
         return p
 
     def test_conference_speaking_tier(self):
@@ -217,7 +217,7 @@ class TestConferenceTalksHaveDates:
     def _profiles(self):
         p = _profiles_with_conferences()
         if not p:
-            pytest.skip("No profiles with conferences -- run crew.py first")
+            pytest.skip("No profiles with conferences -- run research_pipeline.py first")
         return p
 
     def test_conference_talks_have_dates(self):

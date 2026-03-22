@@ -100,7 +100,7 @@ class TestMegaReportCompleteness:
     def _report(self):
         r = _load_mega_report()
         if not r:
-            pytest.skip("No mega-discovery.json — run crew.py first")
+            pytest.skip("No mega-discovery.json — run research_pipeline.py first")
         return r
 
     def test_report_has_all_sections(self):

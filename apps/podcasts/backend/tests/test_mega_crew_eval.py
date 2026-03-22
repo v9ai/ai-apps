@@ -143,7 +143,7 @@ class TestMegaSchema:
     def _profiles(self):
         p = _load_profiles()
         if not p:
-            pytest.skip("No profiles — run crew.py first")
+            pytest.skip("No profiles — run research_pipeline.py first")
         return p
 
     def test_required_fields(self):
@@ -309,7 +309,7 @@ class TestMegaReport:
     def _report(self):
         r = _load_mega_report()
         if not r:
-            pytest.skip("No mega report — run crew.py first")
+            pytest.skip("No mega report — run research_pipeline.py first")
         return r
 
     def test_has_discovery_data(self):
@@ -479,7 +479,7 @@ class TestMegaQuality:
     def _quality(self):
         q = _load_mega_quality()
         if not q:
-            pytest.skip("No quality report — run crew.py first")
+            pytest.skip("No quality report — run research_pipeline.py first")
         return q.get("quality", {})
 
     def test_batch_score_exists(self):

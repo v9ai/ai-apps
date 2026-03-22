@@ -122,7 +122,7 @@ class TestFundingStructure:
     def _funded(self):
         p = _profiles_with_funding()
         if not p:
-            pytest.skip("No profiles with funding data — run crew.py first")
+            pytest.skip("No profiles with funding data — run research_pipeline.py first")
         return p
 
     def test_funding_structure(self):

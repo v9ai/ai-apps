@@ -15,7 +15,7 @@ import pytest
 PROJECT_ROOT = Path(__file__).resolve().parent.parent
 sys.path.insert(0, str(PROJECT_ROOT))
 
-from crew import fetch_orcid_profile
+from research_pipeline import fetch_orcid_profile
 
 # ── network availability flag ────────────────────────────────────────────
 

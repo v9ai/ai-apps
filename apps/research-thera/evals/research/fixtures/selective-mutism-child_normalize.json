@@ -1,36 +1,39 @@
 {
   "id": "selective-mutism-child",
   "stage": "normalize",
-  "prompt": "You are a clinical psychologist specializing in translating parent/family-reported therapeutic goals into precise clinical language for academic research queries.\n\nGoal Title: \"Face sunete la lec\u021bii\"\nGoal Description: \"Copilul face sunete repetitive \u00een timpul lec\u021biilor, perturb\u00e2nd clasa.\"\nNotes: Face zgomote repetitive c\u00e2nd e stresat; Nu vorbe\u0219te cu profesorii dar e vocal cu prietenii\n\nExtracted Issues from Teacher Feedback:\n- [MEDIUM] Repetitive vocal sounds during structured lessons: Child produces repetitive vocal sounds during math and reading, especially when asked to read aloud.\n- [HIGH] Selective verbal communication: Complete silence during group work and recess, but responds to written instructions.\n\nRecent Teacher Feedback:\nBogdan continues to make repetitive vocal sounds during math and reading lessons. The sounds increase when he is asked to read aloud or answer questions directly. He is completely silent during group work and recess. He responds well to written instructions and communicates through nodding and pointing.\nThe patient is 7 years old. Patient name: Bogdan.\n\nTASK:\n1. Detect the language (ISO 639-1 code, e.g. \"en\", \"ro\", \"fr\")\n2. Translate to English if not already English\n3. Identify the SPECIFIC clinical construct (not generic \"behavioral_change\")\n4. Determine if goal is to INCREASE or REDUCE the behavior\n5. Infer developmental stage from age\n6. Generate 5-10 required keywords that MUST appear in relevant research papers\n7. Generate 5-10 excluded topics that are NOT relevant to this goal\n\nCLINICAL DOMAIN EXAMPLES (be this specific, never use \"behavioral_change\"):\n- \"Face sunete la lectii\" (Romanian: makes sounds during lessons) \u2192 if child context:\n  \"selective_mutism\" OR \"adhd_vocalization\" OR \"vocal_stereotypy_asd\"\n- \"Reduce test anxiety\" \u2192 \"test_anxiety_children\"\n- \"Improve eye contact\" \u2192 \"social_communication_asd\"\n- \"Stop hitting siblings\" \u2192 \"aggression_children\"\n- \"Talk more at school\" \u2192 \"selective_mutism\" or \"school_social_anxiety\"\n\nBEHAVIOR DIRECTION:\n- INCREASE: goal is to produce MORE of a behavior\n- REDUCE: goal is to produce LESS of a behavior\n- MAINTAIN: keep current level\n- UNCLEAR: cannot determine\n\nREQUIRED KEYWORDS: clinical terms that MUST appear in papers for them to be relevant.\nExample for selective mutism: [\"selective mutism\", \"classroom vocalization\", \"speech anxiety\", \"school\", \"children\", \"behavioral intervention\"]\n\nEXCLUDED TOPICS: topics that look related but are NOT relevant.\nExample for selective mutism: [\"homework completion\", \"academic achievement\", \"family therapy engagement\", \"adolescent depression\", \"adult psychotherapy\"]\n\nReturn JSON matching the schema exactly.",
+  "prompt": "You are a clinical psychologist specializing in translating parent/family-reported therapeutic goals into precise clinical language for academic research queries.\n\nGoal Title: \"Face sunete la lec\u021bii\"\nGoal Description: \"Copilul face sunete repetitive \u00een timpul lec\u021biilor, perturb\u00e2nd clasa.\"\nNotes: Face zgomote repetitive c\u00e2nd e stresat; Nu vorbe\u0219te cu profesorii dar e vocal cu prietenii\n\nExtracted Issues from Teacher Feedback:\n- [MEDIUM] Repetitive vocal sounds during structured lessons: Child produces repetitive vocal sounds during math and reading, especially when asked to read aloud.\n- [HIGH] Selective verbal communication: Complete silence during group work and recess, but responds to written instructions.\n\nRecent Teacher Feedback:\nBogdan continues to make repetitive vocal sounds during math and reading lessons. The sounds increase when he is asked to read aloud or answer questions directly. He is completely silent during group work and recess. He responds well to written instructions and communicates through nodding and pointing.\nThe patient is 7 years old. Patient name: Bogdan.\n\nTASK:\n1. Detect the language (ISO 639-1 code, e.g. \"en\", \"ro\", \"fr\")\n2. Translate to English if not already English\n3. Identify the SPECIFIC clinical construct (not generic \"behavioral_change\")\n4. Determine if goal is to INCREASE or REDUCE the behavior\n5. Infer developmental stage from age\n6. Generate 5-10 required keywords that MUST appear in relevant research papers\n7. Generate 5-10 excluded topics that are NOT relevant to this goal\n\nCLINICAL DOMAIN EXAMPLES (be this specific, never use \"behavioral_change\"):\n- \"Face sunete la lectii\" (Romanian: makes sounds during lessons) \u2192 if child context:\n  \"selective_mutism\" OR \"adhd_vocalization\" OR \"vocal_stereotypy_asd\"\n- \"Reduce test anxiety\" \u2192 \"test_anxiety_children\"\n- \"Improve eye contact\" \u2192 \"social_communication_asd\"\n- \"Stop hitting siblings\" \u2192 \"aggression_children\"\n- \"Talk more at school\" \u2192 \"selective_mutism\" or \"school_social_anxiety\"\n\nDEVELOPMENTAL TIER (use these exact values based on age):\n- infant: 0-2 years\n- preschool: 3-5 years\n- school_age: 6-11 years\n- adolescent: 12-17 years\n- adult: 18+ years\n\nBEHAVIOR DIRECTION:\n- INCREASE: goal is to produce MORE of a behavior\n- REDUCE: goal is to produce LESS of a behavior\n- MAINTAIN: keep current level\n- UNCLEAR: cannot determine\n\nREQUIRED KEYWORDS: clinical terms that MUST appear in papers for them to be relevant.\nExample for selective mutism: [\"selective mutism\", \"classroom vocalization\", \"speech anxiety\", \"school\", \"children\", \"behavioral intervention\"]\n\nEXCLUDED TOPICS: topics that look related but are NOT relevant.\nExample for selective mutism: [\"homework completion\", \"academic achievement\", \"family therapy engagement\", \"adolescent depression\", \"adult psychotherapy\"]\n\nReturn JSON with these exact fields:\n- translatedGoalTitle: string (English translation of the goal title)\n- originalLanguage: string (ISO 639-1 code)\n- clinicalRestatement: string (clinical rephrasing of the goal)\n- clinicalDomain: string (specific clinical construct)\n- behaviorDirection: string (INCREASE, REDUCE, MAINTAIN, or UNCLEAR)\n- developmentalTier: string (infant, preschool, school_age, adolescent, or adult)\n- requiredKeywords: string[] (5-10 clinical search terms)\n- excludedTopics: string[] (5-10 irrelevant adjacent topics)",
   "result": {
-    "detected_language": "ro",
-    "english_translation": "Child makes repetitive sounds during lessons, disrupting the class.",
-    "specific_clinical_construct": "vocal_stereotypy_anxiety_context",
-    "behavior_direction": "REDUCE",
-    "developmental_stage": "early_childhood",
-    "required_keywords": [
+    "translatedGoalTitle": "Makes sounds during lessons",
+    "originalLanguage": "ro",
+    "clinicalRestatement": "Reduce repetitive vocalizations during structured academic activities while increasing verbal communication in school settings",
+    "clinicalDomain": "selective_mutism_with_vocal_stereotypy",
+    "behaviorDirection": "REDUCE",
+    "developmentalTier": "school_age",
+    "requiredKeywords": [
+      "selective mutism",
       "vocal stereotypy",
       "repetitive vocalizations",
-      "classroom disruption",
-      "anxiety-related vocalizations",
       "school-aged children",
+      "classroom behavior",
+      "anxiety-related vocalizations",
+      "verbal communication in school",
       "behavioral intervention",
-      "selective mutism",
-      "stress-induced vocalizations",
-      "7-year-old"
+      "7-year-old",
+      "structured academic settings"
     ],
-    "excluded_topics": [
-      "intellectual disability",
+    "excludedTopics": [
       "autism spectrum disorder",
-      "Tourette syndrome",
-      "language delay",
+      "intellectual disability",
+      "speech articulation disorders",
       "hearing impairment",
-      "social skills training",
-      "academic tutoring",
-      "parent-child interaction therapy",
-      "adolescent anxiety"
+      "oppositional defiant disorder",
+      "academic achievement testing",
+      "family systems therapy",
+      "adolescent social anxiety",
+      "adult selective mutism",
+      "non-verbal learning disability"
     ]
   },
   "model": "deepseek-chat",
-  "generated_at": "2026-03-14T14:01:58.653313+00:00"
+  "generated_at": "2026-03-21T21:59:41.014957+00:00"
 }

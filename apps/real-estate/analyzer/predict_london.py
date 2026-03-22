@@ -1,17 +1,12 @@
-import asyncio
 import json
 
-from crewai import Agent as CrewAgent, Task, Crew, LLM
+import httpx
 from pydantic import BaseModel, Field
 from typing import Literal
 
 from .config import settings
 
-try:
-    from deepeval.integrations.crewai import instrument_crewai
-    instrument_crewai()
-except Exception:
-    pass
+_DEEPSEEK_BASE = "https://api.deepseek.com/v1"
 
 
 class LondonPredictionRequest(BaseModel):
@@ -270,20 +265,6 @@ REQUIRED OUTPUT:
 Output a JSON object with all the required fields."""
 
 
-_llm: LLM | None = None
-
-
-def _get_llm() -> LLM:
-    global _llm
-    if _llm is None:
-        _llm = LLM(
-            model="openai/deepseek-chat",
-            api_key=settings.deepseek_api_key,
-            base_url="https://api.deepseek.com/v1",
-        )
-    return _llm
-
-
 def _compute_stamp_duty(price: int) -> int:
     """Standard moving-home SDLT rates (2025-2026)."""
     if price <= 250_000:
@@ -345,22 +326,26 @@ EPC rating: {req.epc_rating or 'not specified'}
 Identify the borough from the postcode and use the market reference data to produce your prediction.
 Compute stamp duty using the standard rates. Add £3,000 for other acquisition costs."""
 
-    agent = CrewAgent(
-        role="London Property Valuation Specialist",
-        goal="Produce accurate property price predictions for the London residential market",
-        backstory=LONDON_PREDICTOR_BACKSTORY,
-        llm=_get_llm(),
-        verbose=False,
-    )
-    task = Task(
-        description=prompt,
-        expected_output="Complete London property prediction with all required fields",
-        agent=agent,
-        output_pydantic=LondonPrediction,
-    )
-    crew = Crew(agents=[agent], tasks=[task], verbose=False)
-    result = await asyncio.to_thread(crew.kickoff)
-    prediction = result.pydantic
+    system = LONDON_PREDICTOR_BACKSTORY
+    async with httpx.AsyncClient(timeout=120) as client:
+        resp = await client.post(
+            f"{_DEEPSEEK_BASE}/chat/completions",
+            headers={
+                "Authorization": f"Bearer {settings.deepseek_api_key}",
+                "Content-Type": "application/json",
+            },
+            json={
+                "model": "deepseek-chat",
+                "messages": [
+                    {"role": "system", "content": system},
+                    {"role": "user", "content": prompt},
+                ],
+                "response_format": {"type": "json_object"},
+            },
+        )
+        resp.raise_for_status()
+        content = resp.json()["choices"][0]["message"]["content"]
+    prediction = LondonPrediction.model_validate_json(content)
 
     return LondonPredictionResponse(
         postcode=req.postcode,

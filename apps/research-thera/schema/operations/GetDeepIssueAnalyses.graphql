@@ -1,0 +1,67 @@
+query GetDeepIssueAnalyses($familyMemberId: Int!) {
+  deepIssueAnalyses(familyMemberId: $familyMemberId) {
+    id
+    familyMemberId
+    triggerIssueId
+    createdBy
+    jobId
+    summary
+    patternClusters {
+      name
+      description
+      issueIds
+      issueTitles
+      categories
+      pattern
+      confidence
+      suggestedRootCause
+    }
+    timelineAnalysis {
+      phases {
+        period
+        issueIds
+        description
+        moodTrend
+        keyEvents
+      }
+      moodCorrelation
+      escalationTrend
+      criticalPeriods
+    }
+    familySystemInsights {
+      insight
+      involvedMemberIds
+      involvedMemberNames
+      evidenceIssueIds
+      systemicPattern
+      actionable
+    }
+    priorityRecommendations {
+      rank
+      issueId
+      issueTitle
+      rationale
+      urgency
+      suggestedApproach
+      relatedResearchIds
+    }
+    researchRelevance {
+      patternClusterName
+      relevantResearchIds
+      relevantResearchTitles
+      coverageGaps
+    }
+    dataSnapshot {
+      issueCount
+      observationCount
+      journalEntryCount
+      contactFeedbackCount
+      teacherFeedbackCount
+      researchPaperCount
+      relatedMemberIssueCount
+    }
+    model
+    createdAt
+    updatedAt
+  }
+}

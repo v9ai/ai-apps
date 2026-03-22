@@ -1,0 +1,6 @@
+mutation DeleteDeepIssueAnalysis($id: Int!) {
+  deleteDeepIssueAnalysis(id: $id) {
+    success
+    message
+  }
+}

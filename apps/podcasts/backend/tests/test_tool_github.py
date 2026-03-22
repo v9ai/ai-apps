@@ -8,7 +8,7 @@ import os
 
 import pytest
 
-from crew import fetch_github_profile
+from research_pipeline import fetch_github_profile
 
 SKIP_NETWORK = os.getenv("SKIP_NETWORK_TESTS", "0") == "1"
 _SKIP_REASON = "SKIP_NETWORK_TESTS is set"

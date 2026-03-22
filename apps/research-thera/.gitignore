@@ -49,7 +49,6 @@ next-env.d.ts
 /.cache
 
 # Cloned repositories
-better-auth/
 src/elevenlabs-examples/
 .trigger/
 

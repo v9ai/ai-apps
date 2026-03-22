@@ -57,7 +57,7 @@ class TestProfileJsonSizes:
     def _files(self) -> list[Path]:
         files = _research_json_files()
         if not files:
-            pytest.skip("No research JSON files — run crew.py first")
+            pytest.skip("No research JSON files — run research_pipeline.py first")
         return files
 
     def test_profile_json_min_size(self):
@@ -111,7 +111,7 @@ class TestReportJsonValidity:
         """If mega-discovery.json exists, assert it's valid JSON."""
         p = REPORTS_DIR / "mega-discovery.json"
         if not p.exists():
-            pytest.skip("mega-discovery.json not found — run crew.py first")
+            pytest.skip("mega-discovery.json not found — run research_pipeline.py first")
         text = p.read_text(encoding="utf-8")
         try:
             data = json.loads(text)
@@ -125,7 +125,7 @@ class TestReportJsonValidity:
         """If mega-quality.json exists, assert it's valid JSON."""
         p = REPORTS_DIR / "mega-quality.json"
         if not p.exists():
-            pytest.skip("mega-quality.json not found — run crew.py first")
+            pytest.skip("mega-quality.json not found — run research_pipeline.py first")
         text = p.read_text(encoding="utf-8")
         try:
             data = json.loads(text)

@@ -1,4 +1,4 @@
-"""Tests for web_search and web_news_search tool functions from crew.py.
+"""Tests for web_search and web_news_search tool functions from research_pipeline.py.
 
 These are LangChain @tool-decorated functions that wrap DuckDuckGo searches.
 All tests hit the network and are skipped when SKIP_NETWORK_TESTS=1.
@@ -12,7 +12,7 @@ import pytest
 SKIP_NETWORK = os.getenv("SKIP_NETWORK_TESTS", "0") == "1"
 network = pytest.mark.skipif(SKIP_NETWORK, reason="Network tests disabled")
 
-from crew import web_news_search, web_search
+from research_pipeline import web_news_search, web_search
 
 
 # ---------------------------------------------------------------------------

@@ -4,7 +4,7 @@ import { sql } from "@/src/db/neon";
 import { buildClaimCardsFromItem } from "@/src/tools/generic-claim-cards.tools";
 import { createDeepSeekAdapters } from "@/src/adapters/deepseek.adapter";
 import { createResearchSourceResolver } from "@/src/adapters/research-resolver.adapter";
-import { createD1StorageAdapter } from "@/src/adapters/d1-storage.adapter";
+import { createStorageAdapter } from "@/src/adapters/storage.adapter";
 import type { LinkedSourceRef } from "@/src/tools/generic-claim-cards.tools";
 
 export const checkNoteClaims: NonNullable<MutationResolvers['checkNoteClaims']> = async (_parent, { input }, _ctx) => {
@@ -68,7 +68,7 @@ export const checkNoteClaims: NonNullable<MutationResolvers['checkNoteClaims']> 
     // 4. Set up adapters
     const { extractor, judge } = createDeepSeekAdapters();
     const resolver = createResearchSourceResolver();
-    const storage = createD1StorageAdapter();
+    const storage = createStorageAdapter();
 
     // Map GraphQL sources to resolution hints
     const resolutionHints = sources

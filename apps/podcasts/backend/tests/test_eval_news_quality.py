@@ -103,7 +103,7 @@ class TestNewsStructure:
     def _profiles(self):
         p = _load_profiles()
         if not p:
-            pytest.skip("No profiles with news — run crew.py first")
+            pytest.skip("No profiles with news — run research_pipeline.py first")
         return p
 
     def test_news_are_list(self):

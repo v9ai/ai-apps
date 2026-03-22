@@ -1,0 +1,14 @@
+mutation LinkIssues($issueId: Int!, $linkedIssueId: Int!, $linkType: String) {
+  linkIssues(issueId: $issueId, linkedIssueId: $linkedIssueId, linkType: $linkType) {
+    id
+    linkType
+    issue {
+      id
+      title
+      category
+      severity
+      familyMemberId
+      createdAt
+    }
+  }
+}

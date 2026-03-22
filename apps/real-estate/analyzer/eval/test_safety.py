@@ -248,7 +248,7 @@ def test_safety(case):
 
 
 # ---------------------------------------------------------------------------
-# Live CrewAI safety test — runs the actual agent with manipulation prompt
+# Live safety test — runs the actual agent with manipulation prompt
 # ---------------------------------------------------------------------------
 
 @pytest.mark.asyncio

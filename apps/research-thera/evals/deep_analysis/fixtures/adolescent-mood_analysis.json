@@ -1,0 +1,162 @@
+{
+  "id": "adolescent-mood",
+  "stage": "deep_analysis",
+  "prompt": "You are a clinical psychologist and family systems analyst. Your PRIMARY task is to provide an in-depth analysis of a SPECIFIC issue for this family member. The other issues, observations, and feedback are provided as CONTEXT to help you understand how this issue fits into the broader picture \u2014 but your analysis must CENTER on the trigger issue.\n\nIMPORTANT: Only reference issue IDs that appear in the data below. Pay careful attention to the family member's age and date of birth \u2014 all analysis, recommendations, and developmental references must be consistent with their actual age.\n\n## Family Member Profile\nName: Sofia\nAge: 15 years old\nDate of Birth Year: 2011\nRelationship: daughter\n\n## TRIGGER ISSUE (Primary Focus)\n- [ID:301] \"Social withdrawal\" (social, high severity)\n  Stopped seeing friends, spends all time in room, quit volleyball team.\n\nYour summary, pattern clusters, and priority recommendations must primarily address the trigger issue above. Other issues should be referenced only when they relate to or shed light on the trigger issue.\n\n## Other Issues (Context)\n- [ID:302] \"Academic performance decline\" (academic, medium severity)\n  Grades dropped from A/B to C/D over one semester, missing assignments.\n- [ID:303] \"Sleep pattern disruption\" (health, medium severity)\n  Staying up until 3am, sleeping until noon on weekends, exhausted on school days.\n\n## Behavior Observations (2)\n- 2026-03-15: social withdrawal, freq=daily, intensity=high, Context: declined all friend invitations\n- 2026-03-14: sleep disruption, freq=nightly, Context: phone use until 3am\n\n## Teacher Feedback\nSofia has become increasingly disengaged. She used to be an active participant but now sits silently. Her homework quality has declined significantly. She seems tired and distracted in morning classes.\n\n## Instructions\nAnalyze the data above with PRIMARY FOCUS on the trigger issue (ID:301: \"Social withdrawal\").\nProduce a structured JSON analysis with these fields:\n\n1. **summary**: 2-3 paragraph executive summary for a parent/caregiver CENTERED on the trigger issue. Start with the trigger issue, then explain how other issues relate to it. MUST correctly reference the child's age and use age-appropriate language.\n2. **patternClusters**: Array of related issue groups. The trigger issue MUST appear in at least one cluster. Each has: name, description, issueIds (array of ints), issueTitles (array of strings), categories (array of strings), pattern (recurring|escalating|co-occurring|seasonal|triggered), confidence (0-1), suggestedRootCause (optional string).\n3. **timelineAnalysis**: Object with phases (array of {period, issueIds, description, moodTrend (declining|improving|stable|volatile), keyEvents (array of strings)}), moodCorrelation (optional string), escalationTrend (improving|worsening|stable|cyclical), criticalPeriods (array of strings). Focus timeline on the trigger issue's evolution.\n4. **familySystemInsights**: Array of {insight, involvedMemberIds (array of ints), involvedMemberNames (array of strings), evidenceIssueIds (array of ints), systemicPattern (optional string), actionable (bool)}. Prioritize insights related to the trigger issue.\n5. **priorityRecommendations**: Array of {rank (int), issueId (optional int), issueTitle (optional string), rationale, urgency (immediate|short_term|long_term), suggestedApproach, relatedResearchIds (optional array of ints)}. The FIRST recommendation (rank 1) MUST address the trigger issue directly. Recommendations MUST be age-appropriate for the child's actual age.\n6. **researchRelevance**: Array of {patternClusterName, relevantResearchIds (array of ints), relevantResearchTitles (array of strings), coverageGaps (array of strings)}.\n7. **developmentalContext**: Object with {statedAge (int), dobYear (int), developmentalStage (string), ageAppropriateExpectations (string), flags (array of strings for any developmental concerns)}.\n\nIMPORTANT: All fields marked as \"array\" MUST be JSON arrays, never bare strings. For example coverageGaps must be [\"gap1\", \"gap2\"], not \"gap1, gap2\".\n\nWrite the analysis in English.",
+  "result": {
+    "summary": "Sofia's social withdrawal is a significant concern that requires immediate attention. At 15 years old, she has stopped seeing friends, spends all her time in her room, and quit her volleyball team. This represents a major shift from typical adolescent social engagement and suggests she may be experiencing emotional distress that's causing her to isolate herself. Social connections are crucial for healthy development during the teenage years, and this level of withdrawal could impact her self-esteem and emotional well-being.\n\nThe other issues you've observed appear to be connected to this social withdrawal. Her academic performance decline and sleep pattern disruption likely stem from the same underlying emotional state that's causing her to withdraw socially. When teenagers experience emotional distress, it often manifests across multiple areas of their life - they may lose motivation for schoolwork, develop irregular sleep patterns, and pull away from social activities. Sofia's exhaustion in morning classes and declining homework quality suggest she's struggling to maintain her usual routines.\n\nWhat's most concerning is how these issues reinforce each other. Social withdrawal can lead to increased screen time and disrupted sleep, which then causes fatigue that makes social engagement even harder. This creates a cycle that can be difficult for a teenager to break without support. The fact that this represents a clear change from her previous behavior patterns indicates this isn't just typical teenage moodiness but something more significant that needs addressing.",
+    "patternClusters": [
+      {
+        "name": "Adolescent Social-Emotional Withdrawal",
+        "description": "Primary social withdrawal accompanied by academic disengagement and sleep disruption, suggesting underlying emotional distress affecting multiple life domains",
+        "issueIds": [
+          301,
+          302,
+          303
+        ],
+        "issueTitles": [
+          "Social withdrawal",
+          "Academic performance decline",
+          "Sleep pattern disruption"
+        ],
+        "categories": [
+          "social",
+          "academic",
+          "health"
+        ],
+        "pattern": "co-occurring",
+        "confidence": 0.85,
+        "suggestedRootCause": "Possible depression, anxiety, or significant emotional distress leading to withdrawal from previously enjoyed activities and responsibilities"
+      },
+      {
+        "name": "Behavioral Disengagement Cycle",
+        "description": "Withdrawal from social activities leading to increased isolation, which then impacts academic performance and sleep patterns",
+        "issueIds": [
+          301,
+          302
+        ],
+        "issueTitles": [
+          "Social withdrawal",
+          "Academic performance decline"
+        ],
+        "categories": [
+          "social",
+          "academic"
+        ],
+        "pattern": "escalating",
+        "confidence": 0.75,
+        "suggestedRootCause": "Social isolation reducing motivation and engagement with academic responsibilities"
+      }
+    ],
+    "timelineAnalysis": {
+      "phases": [
+        {
+          "period": "Recent weeks",
+          "issueIds": [
+            301,
+            302,
+            303
+          ],
+          "description": "Simultaneous emergence of social withdrawal, academic decline, and sleep disruption",
+          "moodTrend": "declining",
+          "keyEvents": [
+            "Quit volleyball team",
+            "Stopped seeing friends",
+            "Grades dropped significantly",
+            "Developed late-night phone use pattern"
+          ]
+        }
+      ],
+      "moodCorrelation": "Social withdrawal appears to correlate with declining mood as evidenced by disengagement from previously enjoyed activities and academic responsibilities",
+      "escalationTrend": "worsening",
+      "criticalPeriods": [
+        "March 2026 - present period of simultaneous symptom emergence"
+      ]
+    },
+    "familySystemInsights": [
+      {
+        "insight": "Sofia's withdrawal may be affecting family communication patterns, potentially creating a cycle where her isolation makes it harder for family members to reach her",
+        "involvedMemberIds": [
+          301
+        ],
+        "involvedMemberNames": [
+          "Sofia"
+        ],
+        "evidenceIssueIds": [
+          301
+        ],
+        "systemicPattern": "Withdrawal leading to reduced family interaction",
+        "actionable": true
+      },
+      {
+        "insight": "The family system may need to adjust communication approaches to connect with Sofia during this withdrawn period",
+        "involvedMemberIds": [
+          301
+        ],
+        "involvedMemberNames": [
+          "Sofia"
+        ],
+        "evidenceIssueIds": [
+          301,
+          302,
+          303
+        ],
+        "systemicPattern": "Multi-domain disengagement requiring systemic response",
+        "actionable": true
+      }
+    ],
+    "priorityRecommendations": [
+      {
+        "rank": 1,
+        "issueId": 301,
+        "issueTitle": "Social withdrawal",
+        "rationale": "Social withdrawal at age 15 can significantly impact emotional development and may indicate underlying mental health concerns that require immediate attention",
+        "urgency": "immediate",
+        "suggestedApproach": "Initiate gentle, non-confrontational conversation about her feelings and social experiences. Focus on understanding rather than problem-solving initially. Consider involving a mental health professional who specializes in adolescent issues.",
+        "relatedResearchIds": []
+      },
+      {
+        "rank": 2,
+        "issueId": 303,
+        "issueTitle": "Sleep pattern disruption",
+        "rationale": "Disrupted sleep exacerbates emotional distress and social withdrawal, creating a negative cycle that's difficult to break",
+        "urgency": "short_term",
+        "suggestedApproach": "Collaboratively establish healthier sleep routines, including device-free time before bed. Focus on gradual improvement rather than immediate perfection.",
+        "relatedResearchIds": []
+      },
+      {
+        "rank": 3,
+        "issueId": 302,
+        "issueTitle": "Academic performance decline",
+        "rationale": "Academic struggles often result from emotional distress and can further impact self-esteem, but should be addressed after more immediate emotional and social concerns",
+        "urgency": "long_term",
+        "suggestedApproach": "Work with school counselors to develop academic support plan once emotional wellbeing improves. Avoid academic pressure during initial intervention phase.",
+        "relatedResearchIds": []
+      }
+    ],
+    "researchRelevance": [
+      {
+        "patternClusterName": "Adolescent Social-Emotional Withdrawal",
+        "relevantResearchIds": [],
+        "relevantResearchTitles": [],
+        "coverageGaps": [
+          "Specific interventions for sudden social withdrawal in mid-adolescence",
+          "Family communication strategies for withdrawn teenagers",
+          "Differentiating typical adolescent moodiness from clinical withdrawal"
+        ]
+      }
+    ],
+    "developmentalContext": {
+      "statedAge": 15,
+      "dobYear": 2011,
+      "developmentalStage": "Mid-adolescence (15-17 years)",
+      "ageAppropriateExpectations": "At 15, typical development includes increasing independence, strong peer relationships, exploration of identity, and ability to manage multiple responsibilities. Social withdrawal from previously established friendships and activities represents a significant deviation from expected developmental patterns.",
+      "flags": [
+        "Sudden social withdrawal from established peer groups",
+        "Simultaneous decline across multiple life domains",
+        "Loss of interest in previously enjoyed activities"
+      ]
+    }
+  },
+  "model": "deepseek-chat",
+  "generated_at": "2026-03-21T22:22:49.151979+00:00"
+}

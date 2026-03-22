@@ -1,5 +1,5 @@
 import type { MutationResolvers } from "./../../types.generated";
-import { d1Tools } from "@/src/db";
+import { db } from "@/src/db";
 
 export const createSubGoal: NonNullable<MutationResolvers['createSubGoal']> = async (
   _parent,
@@ -12,9 +12,9 @@ export const createSubGoal: NonNullable<MutationResolvers['createSubGoal']> = as
   }
 
   // Get the parent goal to verify it exists and get its familyMemberId
-  const parentGoal = await d1Tools.getGoal(args.goalId, userEmail);
+  const parentGoal = await db.getGoal(args.goalId, userEmail);
 
-  const subGoalId = await d1Tools.createGoal({
+  const subGoalId = await db.createGoal({
     familyMemberId: parentGoal.familyMemberId,
     createdBy: userEmail,
     title: args.input.title,
@@ -23,7 +23,7 @@ export const createSubGoal: NonNullable<MutationResolvers['createSubGoal']> = as
   });
 
   // Fetch the created sub-goal to return it
-  const subGoal = await d1Tools.getGoal(subGoalId, userEmail);
+  const subGoal = await db.getGoal(subGoalId, userEmail);
 
   return {
     id: subGoal.id,

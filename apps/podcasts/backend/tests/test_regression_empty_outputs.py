@@ -8,7 +8,7 @@ trailing commentary, and large payloads.
 import json
 import pytest
 
-from crew import _extract_json
+from research_pipeline import _extract_json
 
 
 # ── 1. Empty string ─────────────────────────────────────────────────────

@@ -20,7 +20,7 @@ from deepeval.tracing import trace
 from deepeval.dataset import EvaluationDataset, Golden
 from deepeval.metrics import AnswerRelevancyMetric
 
-from crew import build_graph
+from research_pipeline import build_graph
 
 
 # ── Test 1: LangGraph graph is buildable ────────────────────────────────

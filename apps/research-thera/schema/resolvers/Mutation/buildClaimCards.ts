@@ -1,8 +1,7 @@
 import type { MutationResolvers } from "../../types.generated";
 import { claimCardsTools } from "../../../src/tools/claim-cards.tools";
 import { sourceTools, PaperCandidate } from "../../../src/tools/sources.tools";
-import { createDeepSeek } from "@ai-sdk/deepseek";
-import { generateObject } from "ai";
+import { generateObject } from "../../../src/lib/deepseek";
 import { z } from "zod";
 import { toGqlClaimCards } from "../utils/normalize-claim-card";
 import { getResearchForNote } from "../../../src/db";
@@ -12,10 +11,6 @@ import type { PaperDetails } from "../../../src/tools/sources.tools";
 if (typeof globalThis !== "undefined") {
   (globalThis as any).AI_SDK_LOG_WARNINGS = false;
 }
-
-const deepseek = createDeepSeek({
-  apiKey: process.env.DEEPSEEK_API_KEY,
-});
 
 /**
  * Load the 182 linked research items for a note
@@ -77,7 +72,7 @@ async function extractClaimsFromPapersBatched(
       .join("\n\n---\n\n");
 
     const result = await generateObject({
-      model: deepseek("deepseek-chat"),
+
       schema: claimsSchema,
       prompt: `You are extracting evidence-based claims from research abstracts.
 
@@ -268,7 +263,7 @@ export const buildClaimCards: NonNullable<MutationResolvers['buildClaimCards']> 
         const claimsSchema = z.object({ claims: z.array(z.string()) });
 
         const result = await generateObject({
-          model: deepseek("deepseek-chat"),
+    
           schema: claimsSchema,
           prompt: `Extract 5-12 high-quality claims from these abstracts:\n\n${papersContext}`,
         });

@@ -106,7 +106,7 @@ class TestPodcastStructure:
     def _profiles(self):
         p = _load_profiles()
         if not p:
-            pytest.skip("No profiles with podcast_appearances — run crew first")
+            pytest.skip("No profiles with podcast_appearances — run research_pipeline.py first")
         return p
 
     def test_podcasts_are_list(self):

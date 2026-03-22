@@ -4,7 +4,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Project Overview
 
-Research-based therapeutic platform combining AI-powered content generation, multi-source academic research integration, and audio delivery. Built with Next.js App Router, GraphQL (Apollo), Mastra AI agents, and Cloudflare D1/R2.
+Research-based therapeutic platform combining AI-powered content generation, multi-source academic research integration, and audio delivery. Built with Next.js App Router, GraphQL (Apollo), AI agents (DeepSeek), Neon PostgreSQL, and Cloudflare R2.
 
 ## Commands
 
@@ -13,22 +13,20 @@ pnpm dev              # Next.js dev server (localhost:3000)
 pnpm build            # Production build
 pnpm lint             # ESLint
 pnpm codegen          # GraphQL code generation (resolvers + client hooks)
-pnpm mastra:dev       # Mastra agent dev server
 ```
 
-Database migrations (Cloudflare D1 via Wrangler):
+Database migrations (Neon PostgreSQL via Drizzle Kit):
 ```bash
-wrangler d1 migrations create research-thera-db <migration-name>
-wrangler d1 migrations apply research-thera-db --remote   # ALWAYS use --remote
+pnpm drizzle-kit generate    # Generate migration SQL from schema changes
+pnpm drizzle-kit migrate     # Apply pending migrations to Neon
+pnpm drizzle-kit push        # Push schema directly (dev only)
 ```
-
-**IMPORTANT: Always use `--remote` when running D1 commands (migrations apply, execute, etc.). Never run against local D1 — the app uses the HTTP API client, not Workers bindings, so local D1 state is unused.**
 
 ## Architecture
 
 ### Data Flow
 
-Client (React + Apollo) → GraphQL API (`/api/graphql`) → Resolvers → D1 database / Mastra agents → External APIs (DeepSeek, OpenAI, research sources)
+Client (React + Apollo) → GraphQL API (`/api/graphql`) → Resolvers → Neon PostgreSQL / AI agents → External APIs (DeepSeek, OpenAI, research sources)
 
 ### GraphQL (Schema-First)
 
@@ -38,21 +36,20 @@ Client (React + Apollo) → GraphQL API (`/api/graphql`) → Resolvers → D1 da
 - Generated client types and hooks: `app/__generated__/`
 - **Always run `pnpm codegen` after modifying `.graphql` files**
 
-### AI Agents (Mastra)
+### AI Agents (DeepSeek)
 
-- Agent definitions: `src/agents/index.ts` — `storyTellerAgent` and `therapeuticAgent` (DeepSeek LLM)
+- Agent definitions: `src/agents/index.ts` — `storyTellerAgent` and `therapeuticAgent` (DeepSeek via `@ai-apps/deepseek`)
 - Workflows: `src/workflows/` — `generateTherapyResearchWorkflow` is a multi-step pipeline (load context → plan queries → multi-source search → extract → persist)
 - Tools: `src/tools/` — research source APIs, paper extraction, RAG chunking, claim verification
-- Mastra instance: `src/mastra.ts`
-- Prompt management and tracing: Langfuse
+- DeepSeek module: `src/lib/deepseek.ts` — centralized `generateObject` (JSON mode + Zod) and `deepseekModel` (AI SDK provider)
 
-### Database (Cloudflare D1 + Drizzle ORM)
+### Database (Neon PostgreSQL + Drizzle ORM)
 
-- Schema: `src/db/schema.ts` (SQLite tables via Drizzle)
-- DB operations: `src/db/index.ts` (all CRUD functions)
-- D1 HTTP client: `src/db/d1.ts` (remote access, not Workers binding)
+- Schema: `src/db/schema.ts` (PostgreSQL tables via Drizzle `pgTable`)
+- DB operations: `src/db/index.ts` (all CRUD functions, exported as `db` namespace)
+- Neon serverless client: `src/db/neon.ts` (`@neondatabase/serverless`)
 - Migrations: `drizzle/`
-- Config: `drizzle.config.ts`, `src/config/d1.ts`
+- Config: `drizzle.config.ts` (uses `NEON_DATABASE_URL`)
 
 ### Authentication
 
@@ -68,7 +65,7 @@ Neon Auth (`@neondatabase/auth`) built on Better Auth. Modal sign-in/sign-up via
 ### Storage
 
 - Audio assets (TTS output): Cloudflare R2 via S3-compatible SDK (`lib/r2-uploader.ts`)
-- TTS API route: `app/api/tts/route.ts` (OpenAI TTS with text chunking via Mastra RAG MDocument)
+- TTS API route: `app/api/tts/route.ts` (OpenAI TTS with text chunking)
 
 ### Research Sources
 
@@ -76,9 +73,8 @@ Multi-source integration: Crossref, PubMed, Semantic Scholar, OpenAlex, arXiv, E
 
 ## Key Conventions
 
-- D1 operations use HTTP API client (not Workers bindings) for local development
+- Database accessed via `@neondatabase/serverless` SQL tagged template
 - JSON serialization for complex DB fields (authors, tags, evidence arrays)
-- Numeric values sanitized before D1 writes to prevent NaN/Infinity in SQLite
 - Note sharing uses normalized emails (trim + lowercase)
 - GraphQL subscriptions via WebSocket for job status updates (research, audio generation)
 
@@ -118,7 +114,7 @@ When asked to create a team from a spec (e.g. "create a team from the feature-bu
 Custom agents live in `.claude/agents/`. Each has a domain-specific prompt, tool restrictions, and file ownership boundaries:
 
 - `research-analyst` — Academic research pipeline specialist
-- `backend-dev` — GraphQL schema, resolvers, D1, Trigger.dev
+- `backend-dev` — GraphQL schema, resolvers, Neon DB, LangGraph
 - `frontend-dev` — React components, pages, Apollo, Radix UI
 - `qa-engineer` — Tests, type checking, build verification
 - `security-reviewer` — OWASP, auth, access control
@@ -133,7 +129,7 @@ Custom agents live in `.claude/agents/`. Each has a domain-specific prompt, tool
 When running agent teams, agents must only edit files within their ownership:
 
 ```
-backend-dev:  schema/, src/db/, src/trigger/, drizzle/
+backend-dev:  schema/, src/db/, backend/, drizzle/
 frontend-dev: app/components/, app/goals/, app/notes/, app/stories/, app/providers/, app/lib/
 qa-engineer:  **/*.test.ts, **/*.spec.ts, __tests__/
 research-*:   Read-only (no code edits)

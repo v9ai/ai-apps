@@ -1,0 +1,29 @@
+{
+  "slug": "janni-turunen",
+  "name": "Janni Turunen",
+  "generated_at": "2026-03-21T17:22:36+00:00",
+  "eval": {
+    "bio_quality": {
+      "score": 9,
+      "reasoning": "The biography is highly specific, evidence-based, and informative. It effectively synthesizes key aspects: early career context (1983 computer), educational pivot (SOAS), current role impact (500k+ users, 50M daily tasks), technical contributions (Qwen3 embeddings, GitHub repos), and unique positioning (design-oriented approach across social enterprises). It connects technical depth with business impact and includes quantitative metrics. Minor deduction for not explicitly citing sources within the bio text itself."
+    },
+    "source_coverage": {
+      "score": 8,
+      "reasoning": "Sources are diverse and generally high-quality: LinkedIn, The Org, Hugging Face, GitHub, company press releases (TechMoran, AIM Group), and personal website. Multiple domains (professional networks, code repositories, news) provide triangulation. Some sources like Medium and YouTube are noted but with limited content verification. The timeline uses specific URLs, though a few entries (e.g., 2021 Custobar role) rely on indirect LinkedIn references. Overall coverage is robust for an industry professional without academic publications."
+    },
+    "timeline_completeness": {
+      "score": 7,
+      "reasoning": "Timeline is well-structured and sourced, covering education (1992-2000), company milestones (2013-2024), and key career transitions (2021-2022). It includes technical outputs (2023 Hugging Face model, 2024 GitHub projects). However, there are gaps: early career roles between 2000 and 2013 are omitted (only hinted at in bio as 'internet and design roles'), and the 2021 Custobar role appears without preceding context. The contributions section is truncated mid-entry. Timeline would benefit from inclusion of earlier professional experiences and completion of the contributions array."
+    },
+    "contributions_depth": {
+      "score": 9,
+      "reasoning": "Contributions are exceptionally well-documented with specific impact metrics: model size reduction (8x), inference speedup (2-4x), download counts, stars, and business metrics (funding, users). Each entry includes clear description, target users, and significance. The selection spans low-level ML optimization (Qwen3 quantization), developer tools (Rust-based 'oo'), and platform architecture (Fuzu AI recruitment). This demonstrates both hands-on technical work and strategic engineering leadership. Minor deduction because the final contribution entry is incomplete in the provided text."
+    },
+    "name_disambiguation": {
+      "score": 10,
+      "reasoning": "Excellent disambiguation. Multiple verified profiles (GitHub, LinkedIn, Hugging Face, personal website) consistently point to the same individual—Janni Turunen, Head of Engineering at Fuzu. The social profiles mapping includes verification notes and acknowledges unverified platforms (Instagram). All technical contributions are linked to his accounts (janni-t, randomm). No confusion with other individuals named Janni Turunen is evident; the profile is tightly scoped to the correct person."
+    },
+    "overall_score": 8.6,
+    "summary": "The research profile for Janni Turunen is of high quality, particularly strong in bio specificity, contributions depth, and name disambiguation. The profile paints a coherent picture of a design-oriented engineering leader who combines practical ML optimization with scalable platform development for emerging markets. Sources are diverse and verifiable. Primary gaps are in timeline completeness (missing early career details, truncated contributions) and some light verification on social platforms. Recommended improvements: 1) Expand timeline with pre-2013 roles and complete contributions list, 2) Flesh out collaboration network using LinkedIn connections and company press, 3) Verify Medium/YouTube content to strengthen source coverage, 4) Include direct quotes from technical writing or talks to enrich technical philosophy."
+  }
+}

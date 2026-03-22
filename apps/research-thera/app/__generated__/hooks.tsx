@@ -311,6 +311,38 @@ export type CreateTeacherFeedbackInput = {
   teacherName: Scalars['String']['input'];
 };
 
+export type DataSnapshot = {
+  __typename?: 'DataSnapshot';
+  contactFeedbackCount: Scalars['Int']['output'];
+  issueCount: Scalars['Int']['output'];
+  journalEntryCount: Scalars['Int']['output'];
+  observationCount: Scalars['Int']['output'];
+  relatedMemberIssueCount: Scalars['Int']['output'];
+  researchPaperCount: Scalars['Int']['output'];
+  teacherFeedbackCount: Scalars['Int']['output'];
+};
+
+export type DeepIssueAnalysis = {
+  __typename?: 'DeepIssueAnalysis';
+  createdAt: Scalars['String']['output'];
+  createdBy: Scalars['String']['output'];
+  dataSnapshot: DataSnapshot;
+  familyMember?: Maybe<FamilyMember>;
+  familyMemberId: Scalars['Int']['output'];
+  familySystemInsights: Array<FamilySystemInsight>;
+  id: Scalars['Int']['output'];
+  jobId?: Maybe<Scalars['String']['output']>;
+  model: Scalars['String']['output'];
+  patternClusters: Array<PatternCluster>;
+  priorityRecommendations: Array<PriorityRecommendation>;
+  researchRelevance: Array<ResearchRelevanceMapping>;
+  summary: Scalars['String']['output'];
+  timelineAnalysis: TimelineAnalysis;
+  triggerIssue?: Maybe<Issue>;
+  triggerIssueId?: Maybe<Scalars['Int']['output']>;
+  updatedAt: Scalars['String']['output'];
+};
+
 export type DeleteBehaviorObservationResult = {
   __typename?: 'DeleteBehaviorObservationResult';
   message?: Maybe<Scalars['String']['output']>;
@@ -325,6 +357,12 @@ export type DeleteContactFeedbackResult = {
 
 export type DeleteContactResult = {
   __typename?: 'DeleteContactResult';
+  message?: Maybe<Scalars['String']['output']>;
+  success: Scalars['Boolean']['output'];
+};
+
+export type DeleteDeepAnalysisResult = {
+  __typename?: 'DeleteDeepAnalysisResult';
   message?: Maybe<Scalars['String']['output']>;
   success: Scalars['Boolean']['output'];
 };
@@ -476,6 +514,16 @@ export enum FamilyMemberShareRole {
   Viewer = 'VIEWER'
 }
 
+export type FamilySystemInsight = {
+  __typename?: 'FamilySystemInsight';
+  actionable: Scalars['Boolean']['output'];
+  evidenceIssueIds: Array<Scalars['Int']['output']>;
+  insight: Scalars['String']['output'];
+  involvedMemberIds: Array<Scalars['Int']['output']>;
+  involvedMemberNames: Array<Scalars['String']['output']>;
+  systemicPattern?: Maybe<Scalars['String']['output']>;
+};
+
 export enum FeedbackSource {
   Email = 'EMAIL',
   Meeting = 'MEETING',
@@ -489,6 +537,13 @@ export type GenerateAudioResult = {
   __typename?: 'GenerateAudioResult';
   audioUrl?: Maybe<Scalars['String']['output']>;
   jobId: Scalars['String']['output'];
+  message?: Maybe<Scalars['String']['output']>;
+  success: Scalars['Boolean']['output'];
+};
+
+export type GenerateDeepAnalysisResult = {
+  __typename?: 'GenerateDeepAnalysisResult';
+  jobId?: Maybe<Scalars['String']['output']>;
   message?: Maybe<Scalars['String']['output']>;
   success: Scalars['Boolean']['output'];
 };
@@ -527,6 +582,13 @@ export type GenerateOpenAiAudioResult = {
   key?: Maybe<Scalars['String']['output']>;
   message?: Maybe<Scalars['String']['output']>;
   sizeBytes?: Maybe<Scalars['Int']['output']>;
+  success: Scalars['Boolean']['output'];
+};
+
+export type GenerateParentAdviceResult = {
+  __typename?: 'GenerateParentAdviceResult';
+  message?: Maybe<Scalars['String']['output']>;
+  parentAdvice?: Maybe<Scalars['String']['output']>;
   success: Scalars['Boolean']['output'];
 };
 
@@ -570,8 +632,12 @@ export type Goal = {
   familyMemberId?: Maybe<Scalars['Int']['output']>;
   id: Scalars['Int']['output'];
   notes: Array<Note>;
+  parentAdvice?: Maybe<Scalars['String']['output']>;
+  parentAdviceGeneratedAt?: Maybe<Scalars['String']['output']>;
+  parentAdviceLanguage?: Maybe<Scalars['String']['output']>;
   parentGoal?: Maybe<Goal>;
   parentGoalId?: Maybe<Scalars['Int']['output']>;
+  priority: Scalars['String']['output'];
   questions: Array<TherapeuticQuestion>;
   research: Array<Research>;
   slug?: Maybe<Scalars['String']['output']>;
@@ -579,6 +645,7 @@ export type Goal = {
   stories: Array<Story>;
   storyLanguage?: Maybe<Scalars['String']['output']>;
   subGoals: Array<Goal>;
+  targetDate?: Maybe<Scalars['String']['output']>;
   therapeuticText?: Maybe<Scalars['String']['output']>;
   therapeuticTextGeneratedAt?: Maybe<Scalars['String']['output']>;
   therapeuticTextLanguage?: Maybe<Scalars['String']['output']>;
@@ -603,10 +670,18 @@ export type Issue = {
   recommendations?: Maybe<Array<Scalars['String']['output']>>;
   relatedFamilyMember?: Maybe<FamilyMember>;
   relatedFamilyMemberId?: Maybe<Scalars['Int']['output']>;
+  relatedIssues: Array<IssueLink>;
   severity: Scalars['String']['output'];
   stories: Array<Story>;
   title: Scalars['String']['output'];
   updatedAt: Scalars['String']['output'];
+};
+
+export type IssueLink = {
+  __typename?: 'IssueLink';
+  id: Scalars['Int']['output'];
+  issue: Issue;
+  linkType: Scalars['String']['output'];
 };
 
 export type JobError = {
@@ -676,6 +751,7 @@ export type Mutation = {
   createIssue: Issue;
   createJournalEntry: JournalEntry;
   createNote: Note;
+  createRelatedIssue: IssueLink;
   createRelationship: Relationship;
   createStory: Story;
   createSubGoal: Goal;
@@ -684,6 +760,7 @@ export type Mutation = {
   deleteClaimCard: Scalars['Boolean']['output'];
   deleteContact: DeleteContactResult;
   deleteContactFeedback: DeleteContactFeedbackResult;
+  deleteDeepIssueAnalysis: DeleteDeepAnalysisResult;
   deleteFamilyMember: DeleteFamilyMemberResult;
   deleteGoal: DeleteGoalResult;
   deleteIssue: DeleteIssueResult;
@@ -696,16 +773,20 @@ export type Mutation = {
   deleteTherapeuticQuestions: DeleteQuestionsResult;
   extractContactFeedbackIssues: ContactFeedback;
   generateAudio: GenerateAudioResult;
+  generateDeepIssueAnalysis: GenerateDeepAnalysisResult;
   generateLongFormText: GenerateLongFormTextResult;
   generateOpenAIAudio: GenerateOpenAiAudioResult;
+  generateParentAdvice: GenerateParentAdviceResult;
   generateResearch: GenerateResearchResult;
   generateTherapeuticQuestions: GenerateQuestionsResult;
+  linkIssues: IssueLink;
   markTeacherFeedbackExtracted: TeacherFeedback;
   refreshClaimCard: ClaimCard;
   setNoteVisibility: Note;
   shareFamilyMember: FamilyMemberShare;
   shareNote: NoteShare;
   unlinkGoalFamilyMember: Goal;
+  unlinkIssues: UnlinkIssuesResult;
   unshareFamilyMember: Scalars['Boolean']['output'];
   unshareNote: Scalars['Boolean']['output'];
   updateBehaviorObservation: BehaviorObservation;
@@ -780,6 +861,13 @@ export type MutationCreateNoteArgs = {
 };
 
 
+export type MutationCreateRelatedIssueArgs = {
+  input: CreateIssueInput;
+  issueId: Scalars['Int']['input'];
+  linkType?: InputMaybe<Scalars['String']['input']>;
+};
+
+
 export type MutationCreateRelationshipArgs = {
   input: CreateRelationshipInput;
 };
@@ -817,6 +905,11 @@ export type MutationDeleteContactArgs = {
 
 
 export type MutationDeleteContactFeedbackArgs = {
+  id: Scalars['Int']['input'];
+};
+
+
+export type MutationDeleteDeepIssueAnalysisArgs = {
   id: Scalars['Int']['input'];
 };
 
@@ -886,6 +979,12 @@ export type MutationGenerateAudioArgs = {
 };
 
 
+export type MutationGenerateDeepIssueAnalysisArgs = {
+  familyMemberId: Scalars['Int']['input'];
+  triggerIssueId?: InputMaybe<Scalars['Int']['input']>;
+};
+
+
 export type MutationGenerateLongFormTextArgs = {
   familyMemberId?: InputMaybe<Scalars['Int']['input']>;
   feedbackId?: InputMaybe<Scalars['Int']['input']>;
@@ -902,6 +1001,12 @@ export type MutationGenerateOpenAiAudioArgs = {
 };
 
 
+export type MutationGenerateParentAdviceArgs = {
+  goalId: Scalars['Int']['input'];
+  language?: InputMaybe<Scalars['String']['input']>;
+};
+
+
 export type MutationGenerateResearchArgs = {
   feedbackId?: InputMaybe<Scalars['Int']['input']>;
   goalId?: InputMaybe<Scalars['Int']['input']>;
@@ -912,6 +1017,13 @@ export type MutationGenerateResearchArgs = {
 export type MutationGenerateTherapeuticQuestionsArgs = {
   goalId?: InputMaybe<Scalars['Int']['input']>;
   issueId?: InputMaybe<Scalars['Int']['input']>;
+};
+
+
+export type MutationLinkIssuesArgs = {
+  issueId: Scalars['Int']['input'];
+  linkType?: InputMaybe<Scalars['String']['input']>;
+  linkedIssueId: Scalars['Int']['input'];
 };
 
 
@@ -947,6 +1059,12 @@ export type MutationShareNoteArgs = {
 
 export type MutationUnlinkGoalFamilyMemberArgs = {
   id: Scalars['Int']['input'];
+};
+
+
+export type MutationUnlinkIssuesArgs = {
+  issueId: Scalars['Int']['input'];
+  linkedIssueId: Scalars['Int']['input'];
 };
 
 
@@ -1130,6 +1248,18 @@ export type PaperCandidate = {
   year?: Maybe<Scalars['Int']['output']>;
 };
 
+export type PatternCluster = {
+  __typename?: 'PatternCluster';
+  categories: Array<Scalars['String']['output']>;
+  confidence: Scalars['Float']['output'];
+  description: Scalars['String']['output'];
+  issueIds: Array<Scalars['Int']['output']>;
+  issueTitles: Array<Scalars['String']['output']>;
+  name: Scalars['String']['output'];
+  pattern: Scalars['String']['output'];
+  suggestedRootCause?: Maybe<Scalars['String']['output']>;
+};
+
 export enum PersonType {
   Contact = 'CONTACT',
   FamilyMember = 'FAMILY_MEMBER'
@@ -1146,6 +1276,17 @@ export type PipelineDiagnostics = {
   searchUsedFallback?: Maybe<Scalars['Boolean']['output']>;
 };
 
+export type PriorityRecommendation = {
+  __typename?: 'PriorityRecommendation';
+  issueId?: Maybe<Scalars['Int']['output']>;
+  issueTitle?: Maybe<Scalars['String']['output']>;
+  rank: Scalars['Int']['output'];
+  rationale: Scalars['String']['output'];
+  relatedResearchIds?: Maybe<Array<Scalars['Int']['output']>>;
+  suggestedApproach: Scalars['String']['output'];
+  urgency: Scalars['String']['output'];
+};
+
 export type Query = {
   __typename?: 'Query';
   allNotes: Array<Note>;
@@ -1159,6 +1300,8 @@ export type Query = {
   contactFeedback?: Maybe<ContactFeedback>;
   contactFeedbacks: Array<ContactFeedback>;
   contacts: Array<Contact>;
+  deepIssueAnalyses: Array<DeepIssueAnalysis>;
+  deepIssueAnalysis?: Maybe<DeepIssueAnalysis>;
   familyMember?: Maybe<FamilyMember>;
   familyMembers: Array<FamilyMember>;
   generationJob?: Maybe<GenerationJob>;
@@ -1225,6 +1368,16 @@ export type QueryContactFeedbackArgs = {
 export type QueryContactFeedbacksArgs = {
   contactId: Scalars['Int']['input'];
   familyMemberId: Scalars['Int']['input'];
+};
+
+
+export type QueryDeepIssueAnalysesArgs = {
+  familyMemberId: Scalars['Int']['input'];
+};
+
+
+export type QueryDeepIssueAnalysisArgs = {
+  id: Scalars['Int']['input'];
 };
 
 
@@ -1394,6 +1547,14 @@ export type Research = {
   year?: Maybe<Scalars['Int']['output']>;
 };
 
+export type ResearchRelevanceMapping = {
+  __typename?: 'ResearchRelevanceMapping';
+  coverageGaps: Array<Scalars['String']['output']>;
+  patternClusterName: Scalars['String']['output'];
+  relevantResearchIds: Array<Scalars['Int']['output']>;
+  relevantResearchTitles: Array<Scalars['String']['output']>;
+};
+
 export enum ResearchSource {
   Arxiv = 'ARXIV',
   Crossref = 'CROSSREF',
@@ -1482,6 +1643,28 @@ export type TherapeuticQuestion = {
   updatedAt: Scalars['String']['output'];
 };
 
+export type TimelineAnalysis = {
+  __typename?: 'TimelineAnalysis';
+  criticalPeriods: Array<Scalars['String']['output']>;
+  escalationTrend?: Maybe<Scalars['String']['output']>;
+  moodCorrelation?: Maybe<Scalars['String']['output']>;
+  phases: Array<TimelinePhase>;
+};
+
+export type TimelinePhase = {
+  __typename?: 'TimelinePhase';
+  description: Scalars['String']['output'];
+  issueIds: Array<Scalars['Int']['output']>;
+  keyEvents: Array<Scalars['String']['output']>;
+  moodTrend?: Maybe<Scalars['String']['output']>;
+  period: Scalars['String']['output'];
+};
+
+export type UnlinkIssuesResult = {
+  __typename?: 'UnlinkIssuesResult';
+  success: Scalars['Boolean']['output'];
+};
+
 export type UpdateBehaviorObservationInput = {
   context?: InputMaybe<Scalars['String']['input']>;
   frequency?: InputMaybe<Scalars['Int']['input']>;
@@ -1524,8 +1707,10 @@ export type UpdateFamilyMemberInput = {
 export type UpdateGoalInput = {
   description?: InputMaybe<Scalars['String']['input']>;
   familyMemberId?: InputMaybe<Scalars['Int']['input']>;
+  priority?: InputMaybe<Scalars['String']['input']>;
   status?: InputMaybe<Scalars['String']['input']>;
   storyLanguage?: InputMaybe<Scalars['String']['input']>;
+  targetDate?: InputMaybe<Scalars['String']['input']>;
   title?: InputMaybe<Scalars['String']['input']>;
 };
 
@@ -1689,6 +1874,15 @@ export type CreateNoteMutationVariables = Exact<{
 
 export type CreateNoteMutation = { __typename?: 'Mutation', createNote: { __typename?: 'Note', id: number, entityId: number, entityType: string, createdBy: string, noteType?: string | null, slug?: string | null, content: string, tags?: Array<string> | null, createdAt: string, updatedAt: string } };
 
+export type CreateRelatedIssueMutationVariables = Exact<{
+  issueId: Scalars['Int']['input'];
+  input: CreateIssueInput;
+  linkType?: InputMaybe<Scalars['String']['input']>;
+}>;
+
+
+export type CreateRelatedIssueMutation = { __typename?: 'Mutation', createRelatedIssue: { __typename?: 'IssueLink', id: number, linkType: string, issue: { __typename?: 'Issue', id: number, title: string, description: string, category: string, severity: string, familyMemberId: number, createdBy: string, createdAt: string, updatedAt: string } } };
+
 export type CreateRelationshipMutationVariables = Exact<{
   input: CreateRelationshipInput;
 }>;
@@ -1738,6 +1932,13 @@ export type DeleteContactFeedbackMutationVariables = Exact<{
 
 
 export type DeleteContactFeedbackMutation = { __typename?: 'Mutation', deleteContactFeedback: { __typename?: 'DeleteContactFeedbackResult', success: boolean, message?: string | null } };
+
+export type DeleteDeepIssueAnalysisMutationVariables = Exact<{
+  id: Scalars['Int']['input'];
+}>;
+
+
+export type DeleteDeepIssueAnalysisMutation = { __typename?: 'Mutation', deleteDeepIssueAnalysis: { __typename?: 'DeleteDeepAnalysisResult', success: boolean, message?: string | null } };
 
 export type DeleteFamilyMemberMutationVariables = Exact<{
   id: Scalars['Int']['input'];
@@ -1828,6 +2029,14 @@ export type GenerateAudioMutationVariables = Exact<{
 
 export type GenerateAudioMutation = { __typename?: 'Mutation', generateAudio: { __typename?: 'GenerateAudioResult', success: boolean, message?: string | null, jobId: string, audioUrl?: string | null } };
 
+export type GenerateDeepIssueAnalysisMutationVariables = Exact<{
+  familyMemberId: Scalars['Int']['input'];
+  triggerIssueId?: InputMaybe<Scalars['Int']['input']>;
+}>;
+
+
+export type GenerateDeepIssueAnalysisMutation = { __typename?: 'Mutation', generateDeepIssueAnalysis: { __typename?: 'GenerateDeepAnalysisResult', success: boolean, message?: string | null, jobId?: string | null } };
+
 export type GenerateLongFormTextMutationVariables = Exact<{
   goalId?: InputMaybe<Scalars['Int']['input']>;
   issueId?: InputMaybe<Scalars['Int']['input']>;
@@ -1854,6 +2063,14 @@ export type GenerateOpenAiAudioMutationVariables = Exact<{
 
 
 export type GenerateOpenAiAudioMutation = { __typename?: 'Mutation', generateOpenAIAudio: { __typename?: 'GenerateOpenAIAudioResult', success: boolean, message?: string | null, jobId?: string | null, audioBuffer?: string | null, audioUrl?: string | null, sizeBytes?: number | null, duration?: number | null } };
+
+export type GenerateParentAdviceMutationVariables = Exact<{
+  goalId: Scalars['Int']['input'];
+  language?: InputMaybe<Scalars['String']['input']>;
+}>;
+
+
+export type GenerateParentAdviceMutation = { __typename?: 'Mutation', generateParentAdvice: { __typename?: 'GenerateParentAdviceResult', success: boolean, message?: string | null, parentAdvice?: string | null } };
 
 export type GenerateResearchMutationVariables = Exact<{
   goalId?: InputMaybe<Scalars['Int']['input']>;
@@ -1932,6 +2149,13 @@ export type GetContactsQueryVariables = Exact<{ [key: string]: never; }>;
 
 export type GetContactsQuery = { __typename?: 'Query', contacts: Array<{ __typename?: 'Contact', id: number, createdBy: string, slug?: string | null, firstName: string, lastName?: string | null, role?: string | null, ageYears?: number | null, notes?: string | null, createdAt: string, updatedAt: string }> };
 
+export type GetDeepIssueAnalysesQueryVariables = Exact<{
+  familyMemberId: Scalars['Int']['input'];
+}>;
+
+
+export type GetDeepIssueAnalysesQuery = { __typename?: 'Query', deepIssueAnalyses: Array<{ __typename?: 'DeepIssueAnalysis', id: number, familyMemberId: number, triggerIssueId?: number | null, createdBy: string, jobId?: string | null, summary: string, model: string, createdAt: string, updatedAt: string, patternClusters: Array<{ __typename?: 'PatternCluster', name: string, description: string, issueIds: Array<number>, issueTitles: Array<string>, categories: Array<string>, pattern: string, confidence: number, suggestedRootCause?: string | null }>, timelineAnalysis: { __typename?: 'TimelineAnalysis', moodCorrelation?: string | null, escalationTrend?: string | null, criticalPeriods: Array<string>, phases: Array<{ __typename?: 'TimelinePhase', period: string, issueIds: Array<number>, description: string, moodTrend?: string | null, keyEvents: Array<string> }> }, familySystemInsights: Array<{ __typename?: 'FamilySystemInsight', insight: string, involvedMemberIds: Array<number>, involvedMemberNames: Array<string>, evidenceIssueIds: Array<number>, systemicPattern?: string | null, actionable: boolean }>, priorityRecommendations: Array<{ __typename?: 'PriorityRecommendation', rank: number, issueId?: number | null, issueTitle?: string | null, rationale: string, urgency: string, suggestedApproach: string, relatedResearchIds?: Array<number> | null }>, researchRelevance: Array<{ __typename?: 'ResearchRelevanceMapping', patternClusterName: string, relevantResearchIds: Array<number>, relevantResearchTitles: Array<string>, coverageGaps: Array<string> }>, dataSnapshot: { __typename?: 'DataSnapshot', issueCount: number, observationCount: number, journalEntryCount: number, contactFeedbackCount: number, teacherFeedbackCount: number, researchPaperCount: number, relatedMemberIssueCount: number } }> };
+
 export type GetFamilyMemberQueryVariables = Exact<{
   id?: InputMaybe<Scalars['Int']['input']>;
   slug?: InputMaybe<Scalars['String']['input']>;
@@ -1943,7 +2167,7 @@ export type GetFamilyMemberQuery = { __typename?: 'Query', familyMember?: { __ty
 export type GetFamilyMembersQueryVariables = Exact<{ [key: string]: never; }>;
 
 
-export type GetFamilyMembersQuery = { __typename?: 'Query', familyMembers: Array<{ __typename?: 'FamilyMember', id: number, userId: string, slug?: string | null, firstName: string, name?: string | null, ageYears?: number | null, relationship?: string | null, email?: string | null, phone?: string | null, location?: string | null, occupation?: string | null, dateOfBirth?: string | null, bio?: string | null, createdAt: string, updatedAt: string, shares: Array<{ __typename?: 'FamilyMemberShare', familyMemberId: number, email: string, role: FamilyMemberShareRole, createdAt: string, createdBy: string }> }> };
+export type GetFamilyMembersQuery = { __typename?: 'Query', familyMembers: Array<{ __typename?: 'FamilyMember', id: number, userId: string, slug?: string | null, firstName: string, name?: string | null, ageYears?: number | null, relationship?: string | null, email?: string | null, phone?: string | null, location?: string | null, occupation?: string | null, dateOfBirth?: string | null, bio?: string | null, createdAt: string, updatedAt: string, shares: Array<{ __typename?: 'FamilyMemberShare', familyMemberId: number, email: string, role: FamilyMemberShareRole, createdAt: string, createdBy: string }>, relationships: Array<{ __typename?: 'Relationship', id: number, subjectType: PersonType, subjectId: number, relatedType: PersonType, relatedId: number, relationshipType: string, status: RelationshipStatus, related?: { __typename?: 'RelationshipPerson', id: number, type: PersonType, slug?: string | null, firstName: string, lastName?: string | null } | null }> }> };
 
 export type GetGenerationJobQueryVariables = Exact<{
   id: Scalars['String']['input'];
@@ -1966,7 +2190,7 @@ export type GetGoalQueryVariables = Exact<{
 }>;
 
 
-export type GetGoalQuery = { __typename?: 'Query', goal?: { __typename?: 'Goal', id: number, slug?: string | null, title: string, description?: string | null, status: string, familyMemberId?: number | null, createdBy: string, parentGoalId?: number | null, therapeuticText?: string | null, therapeuticTextLanguage?: string | null, therapeuticTextGeneratedAt?: string | null, storyLanguage?: string | null, createdAt: string, updatedAt: string, familyMember?: { __typename?: 'FamilyMember', id: number, firstName: string, name?: string | null, ageYears?: number | null, relationship?: string | null } | null, parentGoal?: { __typename?: 'Goal', id: number, slug?: string | null, title: string, status: string } | null, subGoals: Array<{ __typename?: 'Goal', id: number, slug?: string | null, title: string, description?: string | null, status: string, createdAt: string, updatedAt: string }>, notes: Array<{ __typename?: 'Note', id: number, slug?: string | null, content: string, noteType?: string | null, tags?: Array<string> | null, createdAt: string, updatedAt: string }>, research: Array<{ __typename?: 'Research', id: number, title: string, authors: Array<string>, year?: number | null, journal?: string | null, url?: string | null }>, stories: Array<{ __typename?: 'Story', id: number, goalId?: number | null, issueId?: number | null, feedbackId?: number | null, createdBy?: string | null, content: string, language?: string | null, minutes?: number | null, audioKey?: string | null, audioUrl?: string | null, audioGeneratedAt?: string | null, createdAt: string, updatedAt: string }> } | null };
+export type GetGoalQuery = { __typename?: 'Query', goal?: { __typename?: 'Goal', id: number, slug?: string | null, title: string, description?: string | null, status: string, priority: string, targetDate?: string | null, familyMemberId?: number | null, createdBy: string, parentGoalId?: number | null, therapeuticText?: string | null, therapeuticTextLanguage?: string | null, therapeuticTextGeneratedAt?: string | null, parentAdvice?: string | null, parentAdviceLanguage?: string | null, parentAdviceGeneratedAt?: string | null, storyLanguage?: string | null, createdAt: string, updatedAt: string, familyMember?: { __typename?: 'FamilyMember', id: number, slug?: string | null, firstName: string, name?: string | null, ageYears?: number | null, relationship?: string | null } | null, parentGoal?: { __typename?: 'Goal', id: number, slug?: string | null, title: string, status: string } | null, subGoals: Array<{ __typename?: 'Goal', id: number, slug?: string | null, title: string, description?: string | null, status: string, createdAt: string, updatedAt: string }>, notes: Array<{ __typename?: 'Note', id: number, slug?: string | null, content: string, noteType?: string | null, tags?: Array<string> | null, createdAt: string, updatedAt: string }>, questions: Array<{ __typename?: 'TherapeuticQuestion', id: number, question: string, researchId?: number | null, researchTitle?: string | null, rationale: string, generatedAt: string }>, research: Array<{ __typename?: 'Research', id: number, title: string, authors: Array<string>, year?: number | null, journal?: string | null, doi?: string | null, url?: string | null, abstract?: string | null, keyFindings: Array<string>, therapeuticTechniques: Array<string>, evidenceLevel?: string | null, relevanceScore: number, extractionConfidence: number }>, stories: Array<{ __typename?: 'Story', id: number, goalId?: number | null, issueId?: number | null, feedbackId?: number | null, createdBy?: string | null, content: string, language?: string | null, minutes?: number | null, audioKey?: string | null, audioUrl?: string | null, audioGeneratedAt?: string | null, createdAt: string, updatedAt: string }> } | null };
 
 export type GetGoalsQueryVariables = Exact<{
   familyMemberId?: InputMaybe<Scalars['Int']['input']>;
@@ -1981,7 +2205,7 @@ export type GetIssueQueryVariables = Exact<{
 }>;
 
 
-export type GetIssueQuery = { __typename?: 'Query', issue?: { __typename?: 'Issue', id: number, feedbackId?: number | null, journalEntryId?: number | null, familyMemberId: number, createdBy: string, title: string, description: string, category: string, severity: string, recommendations?: Array<string> | null, createdAt: string, updatedAt: string, relatedFamilyMemberId?: number | null, journalEntry?: { __typename?: 'JournalEntry', id: number, title?: string | null, entryDate: string } | null, feedback?: { __typename?: 'ContactFeedback', id: number, contactId: number, familyMemberId: number, subject?: string | null, feedbackDate: string, content: string, tags?: Array<string> | null, source?: FeedbackSource | null, extracted: boolean, contact?: { __typename?: 'Contact', id: number, firstName: string, lastName?: string | null, slug?: string | null } | null, familyMember?: { __typename?: 'FamilyMember', id: number, firstName: string, name?: string | null, slug?: string | null } | null } | null, familyMember?: { __typename?: 'FamilyMember', id: number, firstName: string, name?: string | null, slug?: string | null } | null, relatedFamilyMember?: { __typename?: 'FamilyMember', id: number, firstName: string, name?: string | null, slug?: string | null } | null, stories: Array<{ __typename?: 'Story', id: number, language?: string | null, minutes?: number | null, createdAt: string }> } | null };
+export type GetIssueQuery = { __typename?: 'Query', issue?: { __typename?: 'Issue', id: number, feedbackId?: number | null, journalEntryId?: number | null, familyMemberId: number, createdBy: string, title: string, description: string, category: string, severity: string, recommendations?: Array<string> | null, createdAt: string, updatedAt: string, relatedFamilyMemberId?: number | null, journalEntry?: { __typename?: 'JournalEntry', id: number, title?: string | null, entryDate: string } | null, feedback?: { __typename?: 'ContactFeedback', id: number, contactId: number, familyMemberId: number, subject?: string | null, feedbackDate: string, content: string, tags?: Array<string> | null, source?: FeedbackSource | null, extracted: boolean, contact?: { __typename?: 'Contact', id: number, firstName: string, lastName?: string | null, slug?: string | null } | null, familyMember?: { __typename?: 'FamilyMember', id: number, firstName: string, name?: string | null, slug?: string | null } | null } | null, familyMember?: { __typename?: 'FamilyMember', id: number, firstName: string, name?: string | null, slug?: string | null } | null, relatedFamilyMember?: { __typename?: 'FamilyMember', id: number, firstName: string, name?: string | null, slug?: string | null } | null, stories: Array<{ __typename?: 'Story', id: number, language?: string | null, minutes?: number | null, createdAt: string }>, relatedIssues: Array<{ __typename?: 'IssueLink', id: number, linkType: string, issue: { __typename?: 'Issue', id: number, title: string, category: string, severity: string, familyMemberId: number, createdAt: string, familyMember?: { __typename?: 'FamilyMember', id: number, firstName: string, name?: string | null, slug?: string | null } | null } }> } | null };
 
 export type GetIssuesQueryVariables = Exact<{
   familyMemberId: Scalars['Int']['input'];
@@ -2083,6 +2307,15 @@ export type GetTherapeuticQuestionsQueryVariables = Exact<{
 
 export type GetTherapeuticQuestionsQuery = { __typename?: 'Query', therapeuticQuestions: Array<{ __typename?: 'TherapeuticQuestion', id: number, goalId?: number | null, issueId?: number | null, question: string, researchId?: number | null, researchTitle?: string | null, rationale: string, generatedAt: string, createdAt: string, updatedAt: string }> };
 
+export type LinkIssuesMutationVariables = Exact<{
+  issueId: Scalars['Int']['input'];
+  linkedIssueId: Scalars['Int']['input'];
+  linkType?: InputMaybe<Scalars['String']['input']>;
+}>;
+
+
+export type LinkIssuesMutation = { __typename?: 'Mutation', linkIssues: { __typename?: 'IssueLink', id: number, linkType: string, issue: { __typename?: 'Issue', id: number, title: string, category: string, severity: string, familyMemberId: number, createdAt: string } } };
+
 export type ShareFamilyMemberMutationVariables = Exact<{
   familyMemberId: Scalars['Int']['input'];
   email: Scalars['String']['input'];
@@ -2098,6 +2331,14 @@ export type UnlinkGoalFamilyMemberMutationVariables = Exact<{
 
 
 export type UnlinkGoalFamilyMemberMutation = { __typename?: 'Mutation', unlinkGoalFamilyMember: { __typename?: 'Goal', id: number, familyMemberId?: number | null, familyMember?: { __typename?: 'FamilyMember', id: number, firstName: string, name?: string | null, relationship?: string | null } | null } };
+
+export type UnlinkIssuesMutationVariables = Exact<{
+  issueId: Scalars['Int']['input'];
+  linkedIssueId: Scalars['Int']['input'];
+}>;
+
+
+export type UnlinkIssuesMutation = { __typename?: 'Mutation', unlinkIssues: { __typename?: 'UnlinkIssuesResult', success: boolean } };
 
 export type UnshareFamilyMemberMutationVariables = Exact<{
   familyMemberId: Scalars['Int']['input'];
@@ -2989,6 +3230,53 @@ export function useCreateNoteMutation(baseOptions?: Apollo.MutationHookOptions<C
 export type CreateNoteMutationHookResult = ReturnType<typeof useCreateNoteMutation>;
 export type CreateNoteMutationResult = Apollo.MutationResult<CreateNoteMutation>;
 export type CreateNoteMutationOptions = Apollo.BaseMutationOptions<CreateNoteMutation, CreateNoteMutationVariables>;
+export const CreateRelatedIssueDocument = gql`
+    mutation CreateRelatedIssue($issueId: Int!, $input: CreateIssueInput!, $linkType: String) {
+  createRelatedIssue(issueId: $issueId, input: $input, linkType: $linkType) {
+    id
+    linkType
+    issue {
+      id
+      title
+      description
+      category
+      severity
+      familyMemberId
+      createdBy
+      createdAt
+      updatedAt
+    }
+  }
+}
+    `;
+export type CreateRelatedIssueMutationFn = Apollo.MutationFunction<CreateRelatedIssueMutation, CreateRelatedIssueMutationVariables>;
+
+/**
+ * __useCreateRelatedIssueMutation__
+ *
+ * To run a mutation, you first call `useCreateRelatedIssueMutation` within a React component and pass it any options that fit your needs.
+ * When your component renders, `useCreateRelatedIssueMutation` returns a tuple that includes:
+ * - A mutate function that you can call at any time to execute the mutation
+ * - An object with fields that represent the current status of the mutation's execution
+ *
+ * @param baseOptions options that will be passed into the mutation, supported options are listed on: https://www.apollographql.com/docs/react/api/react-hooks/#options-2;
+ *
+ * @example
+ * const [createRelatedIssueMutation, { data, loading, error }] = useCreateRelatedIssueMutation({
+ *   variables: {
+ *      issueId: // value for 'issueId'
+ *      input: // value for 'input'
+ *      linkType: // value for 'linkType'
+ *   },
+ * });
+ */
+export function useCreateRelatedIssueMutation(baseOptions?: Apollo.MutationHookOptions<CreateRelatedIssueMutation, CreateRelatedIssueMutationVariables>) {
+        const options = {...defaultOptions, ...baseOptions}
+        return Apollo.useMutation<CreateRelatedIssueMutation, CreateRelatedIssueMutationVariables>(CreateRelatedIssueDocument, options);
+      }
+export type CreateRelatedIssueMutationHookResult = ReturnType<typeof useCreateRelatedIssueMutation>;
+export type CreateRelatedIssueMutationResult = Apollo.MutationResult<CreateRelatedIssueMutation>;
+export type CreateRelatedIssueMutationOptions = Apollo.BaseMutationOptions<CreateRelatedIssueMutation, CreateRelatedIssueMutationVariables>;
 export const CreateRelationshipDocument = gql`
     mutation CreateRelationship($input: CreateRelationshipInput!) {
   createRelationship(input: $input) {
@@ -3259,6 +3547,40 @@ export function useDeleteContactFeedbackMutation(baseOptions?: Apollo.MutationHo
 export type DeleteContactFeedbackMutationHookResult = ReturnType<typeof useDeleteContactFeedbackMutation>;
 export type DeleteContactFeedbackMutationResult = Apollo.MutationResult<DeleteContactFeedbackMutation>;
 export type DeleteContactFeedbackMutationOptions = Apollo.BaseMutationOptions<DeleteContactFeedbackMutation, DeleteContactFeedbackMutationVariables>;
+export const DeleteDeepIssueAnalysisDocument = gql`
+    mutation DeleteDeepIssueAnalysis($id: Int!) {
+  deleteDeepIssueAnalysis(id: $id) {
+    success
+    message
+  }
+}
+    `;
+export type DeleteDeepIssueAnalysisMutationFn = Apollo.MutationFunction<DeleteDeepIssueAnalysisMutation, DeleteDeepIssueAnalysisMutationVariables>;
+
+/**
+ * __useDeleteDeepIssueAnalysisMutation__
+ *
+ * To run a mutation, you first call `useDeleteDeepIssueAnalysisMutation` within a React component and pass it any options that fit your needs.
+ * When your component renders, `useDeleteDeepIssueAnalysisMutation` returns a tuple that includes:
+ * - A mutate function that you can call at any time to execute the mutation
+ * - An object with fields that represent the current status of the mutation's execution
+ *
+ * @param baseOptions options that will be passed into the mutation, supported options are listed on: https://www.apollographql.com/docs/react/api/react-hooks/#options-2;
+ *
+ * @example
+ * const [deleteDeepIssueAnalysisMutation, { data, loading, error }] = useDeleteDeepIssueAnalysisMutation({
+ *   variables: {
+ *      id: // value for 'id'
+ *   },
+ * });
+ */
+export function useDeleteDeepIssueAnalysisMutation(baseOptions?: Apollo.MutationHookOptions<DeleteDeepIssueAnalysisMutation, DeleteDeepIssueAnalysisMutationVariables>) {
+        const options = {...defaultOptions, ...baseOptions}
+        return Apollo.useMutation<DeleteDeepIssueAnalysisMutation, DeleteDeepIssueAnalysisMutationVariables>(DeleteDeepIssueAnalysisDocument, options);
+      }
+export type DeleteDeepIssueAnalysisMutationHookResult = ReturnType<typeof useDeleteDeepIssueAnalysisMutation>;
+export type DeleteDeepIssueAnalysisMutationResult = Apollo.MutationResult<DeleteDeepIssueAnalysisMutation>;
+export type DeleteDeepIssueAnalysisMutationOptions = Apollo.BaseMutationOptions<DeleteDeepIssueAnalysisMutation, DeleteDeepIssueAnalysisMutationVariables>;
 export const DeleteFamilyMemberDocument = gql`
     mutation DeleteFamilyMember($id: Int!) {
   deleteFamilyMember(id: $id) {
@@ -3689,6 +4011,45 @@ export function useGenerateAudioMutation(baseOptions?: Apollo.MutationHookOption
 export type GenerateAudioMutationHookResult = ReturnType<typeof useGenerateAudioMutation>;
 export type GenerateAudioMutationResult = Apollo.MutationResult<GenerateAudioMutation>;
 export type GenerateAudioMutationOptions = Apollo.BaseMutationOptions<GenerateAudioMutation, GenerateAudioMutationVariables>;
+export const GenerateDeepIssueAnalysisDocument = gql`
+    mutation GenerateDeepIssueAnalysis($familyMemberId: Int!, $triggerIssueId: Int) {
+  generateDeepIssueAnalysis(
+    familyMemberId: $familyMemberId
+    triggerIssueId: $triggerIssueId
+  ) {
+    success
+    message
+    jobId
+  }
+}
+    `;
+export type GenerateDeepIssueAnalysisMutationFn = Apollo.MutationFunction<GenerateDeepIssueAnalysisMutation, GenerateDeepIssueAnalysisMutationVariables>;
+
+/**
+ * __useGenerateDeepIssueAnalysisMutation__
+ *
+ * To run a mutation, you first call `useGenerateDeepIssueAnalysisMutation` within a React component and pass it any options that fit your needs.
+ * When your component renders, `useGenerateDeepIssueAnalysisMutation` returns a tuple that includes:
+ * - A mutate function that you can call at any time to execute the mutation
+ * - An object with fields that represent the current status of the mutation's execution
+ *
+ * @param baseOptions options that will be passed into the mutation, supported options are listed on: https://www.apollographql.com/docs/react/api/react-hooks/#options-2;
+ *
+ * @example
+ * const [generateDeepIssueAnalysisMutation, { data, loading, error }] = useGenerateDeepIssueAnalysisMutation({
+ *   variables: {
+ *      familyMemberId: // value for 'familyMemberId'
+ *      triggerIssueId: // value for 'triggerIssueId'
+ *   },
+ * });
+ */
+export function useGenerateDeepIssueAnalysisMutation(baseOptions?: Apollo.MutationHookOptions<GenerateDeepIssueAnalysisMutation, GenerateDeepIssueAnalysisMutationVariables>) {
+        const options = {...defaultOptions, ...baseOptions}
+        return Apollo.useMutation<GenerateDeepIssueAnalysisMutation, GenerateDeepIssueAnalysisMutationVariables>(GenerateDeepIssueAnalysisDocument, options);
+      }
+export type GenerateDeepIssueAnalysisMutationHookResult = ReturnType<typeof useGenerateDeepIssueAnalysisMutation>;
+export type GenerateDeepIssueAnalysisMutationResult = Apollo.MutationResult<GenerateDeepIssueAnalysisMutation>;
+export type GenerateDeepIssueAnalysisMutationOptions = Apollo.BaseMutationOptions<GenerateDeepIssueAnalysisMutation, GenerateDeepIssueAnalysisMutationVariables>;
 export const GenerateLongFormTextDocument = gql`
     mutation GenerateLongFormText($goalId: Int, $issueId: Int, $feedbackId: Int, $familyMemberId: Int, $userContext: String, $language: String, $minutes: Int) {
   generateLongFormText(
@@ -3820,6 +4181,42 @@ export function useGenerateOpenAiAudioMutation(baseOptions?: Apollo.MutationHook
 export type GenerateOpenAiAudioMutationHookResult = ReturnType<typeof useGenerateOpenAiAudioMutation>;
 export type GenerateOpenAiAudioMutationResult = Apollo.MutationResult<GenerateOpenAiAudioMutation>;
 export type GenerateOpenAiAudioMutationOptions = Apollo.BaseMutationOptions<GenerateOpenAiAudioMutation, GenerateOpenAiAudioMutationVariables>;
+export const GenerateParentAdviceDocument = gql`
+    mutation GenerateParentAdvice($goalId: Int!, $language: String) {
+  generateParentAdvice(goalId: $goalId, language: $language) {
+    success
+    message
+    parentAdvice
+  }
+}
+    `;
+export type GenerateParentAdviceMutationFn = Apollo.MutationFunction<GenerateParentAdviceMutation, GenerateParentAdviceMutationVariables>;
+
+/**
+ * __useGenerateParentAdviceMutation__
+ *
+ * To run a mutation, you first call `useGenerateParentAdviceMutation` within a React component and pass it any options that fit your needs.
+ * When your component renders, `useGenerateParentAdviceMutation` returns a tuple that includes:
+ * - A mutate function that you can call at any time to execute the mutation
+ * - An object with fields that represent the current status of the mutation's execution
+ *
+ * @param baseOptions options that will be passed into the mutation, supported options are listed on: https://www.apollographql.com/docs/react/api/react-hooks/#options-2;
+ *
+ * @example
+ * const [generateParentAdviceMutation, { data, loading, error }] = useGenerateParentAdviceMutation({
+ *   variables: {
+ *      goalId: // value for 'goalId'
+ *      language: // value for 'language'
+ *   },
+ * });
+ */
+export function useGenerateParentAdviceMutation(baseOptions?: Apollo.MutationHookOptions<GenerateParentAdviceMutation, GenerateParentAdviceMutationVariables>) {
+        const options = {...defaultOptions, ...baseOptions}
+        return Apollo.useMutation<GenerateParentAdviceMutation, GenerateParentAdviceMutationVariables>(GenerateParentAdviceDocument, options);
+      }
+export type GenerateParentAdviceMutationHookResult = ReturnType<typeof useGenerateParentAdviceMutation>;
+export type GenerateParentAdviceMutationResult = Apollo.MutationResult<GenerateParentAdviceMutation>;
+export type GenerateParentAdviceMutationOptions = Apollo.BaseMutationOptions<GenerateParentAdviceMutation, GenerateParentAdviceMutationVariables>;
 export const GenerateResearchDocument = gql`
     mutation GenerateResearch($goalId: Int, $issueId: Int, $feedbackId: Int) {
   generateResearch(goalId: $goalId, issueId: $issueId, feedbackId: $feedbackId) {
@@ -4468,6 +4865,111 @@ export type GetContactsQueryHookResult = ReturnType<typeof useGetContactsQuery>;
 export type GetContactsLazyQueryHookResult = ReturnType<typeof useGetContactsLazyQuery>;
 export type GetContactsSuspenseQueryHookResult = ReturnType<typeof useGetContactsSuspenseQuery>;
 export type GetContactsQueryResult = Apollo.QueryResult<GetContactsQuery, GetContactsQueryVariables>;
+export const GetDeepIssueAnalysesDocument = gql`
+    query GetDeepIssueAnalyses($familyMemberId: Int!) {
+  deepIssueAnalyses(familyMemberId: $familyMemberId) {
+    id
+    familyMemberId
+    triggerIssueId
+    createdBy
+    jobId
+    summary
+    patternClusters {
+      name
+      description
+      issueIds
+      issueTitles
+      categories
+      pattern
+      confidence
+      suggestedRootCause
+    }
+    timelineAnalysis {
+      phases {
+        period
+        issueIds
+        description
+        moodTrend
+        keyEvents
+      }
+      moodCorrelation
+      escalationTrend
+      criticalPeriods
+    }
+    familySystemInsights {
+      insight
+      involvedMemberIds
+      involvedMemberNames
+      evidenceIssueIds
+      systemicPattern
+      actionable
+    }
+    priorityRecommendations {
+      rank
+      issueId
+      issueTitle
+      rationale
+      urgency
+      suggestedApproach
+      relatedResearchIds
+    }
+    researchRelevance {
+      patternClusterName
+      relevantResearchIds
+      relevantResearchTitles
+      coverageGaps
+    }
+    dataSnapshot {
+      issueCount
+      observationCount
+      journalEntryCount
+      contactFeedbackCount
+      teacherFeedbackCount
+      researchPaperCount
+      relatedMemberIssueCount
+    }
+    model
+    createdAt
+    updatedAt
+  }
+}
+    `;
+
+/**
+ * __useGetDeepIssueAnalysesQuery__
+ *
+ * To run a query within a React component, call `useGetDeepIssueAnalysesQuery` and pass it any options that fit your needs.
+ * When your component renders, `useGetDeepIssueAnalysesQuery` returns an object from Apollo Client that contains loading, error, and data properties
+ * you can use to render your UI.
+ *
+ * @param baseOptions options that will be passed into the query, supported options are listed on: https://www.apollographql.com/docs/react/api/react-hooks/#options;
+ *
+ * @example
+ * const { data, loading, error } = useGetDeepIssueAnalysesQuery({
+ *   variables: {
+ *      familyMemberId: // value for 'familyMemberId'
+ *   },
+ * });
+ */
+export function useGetDeepIssueAnalysesQuery(baseOptions: Apollo.QueryHookOptions<GetDeepIssueAnalysesQuery, GetDeepIssueAnalysesQueryVariables> & ({ variables: GetDeepIssueAnalysesQueryVariables; skip?: boolean; } | { skip: boolean; }) ) {
+        const options = {...defaultOptions, ...baseOptions}
+        return Apollo.useQuery<GetDeepIssueAnalysesQuery, GetDeepIssueAnalysesQueryVariables>(GetDeepIssueAnalysesDocument, options);
+      }
+export function useGetDeepIssueAnalysesLazyQuery(baseOptions?: Apollo.LazyQueryHookOptions<GetDeepIssueAnalysesQuery, GetDeepIssueAnalysesQueryVariables>) {
+          const options = {...defaultOptions, ...baseOptions}
+          return Apollo.useLazyQuery<GetDeepIssueAnalysesQuery, GetDeepIssueAnalysesQueryVariables>(GetDeepIssueAnalysesDocument, options);
+        }
+// @ts-ignore
+export function useGetDeepIssueAnalysesSuspenseQuery(baseOptions?: Apollo.SuspenseQueryHookOptions<GetDeepIssueAnalysesQuery, GetDeepIssueAnalysesQueryVariables>): Apollo.UseSuspenseQueryResult<GetDeepIssueAnalysesQuery, GetDeepIssueAnalysesQueryVariables>;
+export function useGetDeepIssueAnalysesSuspenseQuery(baseOptions?: Apollo.SkipToken | Apollo.SuspenseQueryHookOptions<GetDeepIssueAnalysesQuery, GetDeepIssueAnalysesQueryVariables>): Apollo.UseSuspenseQueryResult<GetDeepIssueAnalysesQuery | undefined, GetDeepIssueAnalysesQueryVariables>;
+export function useGetDeepIssueAnalysesSuspenseQuery(baseOptions?: Apollo.SkipToken | Apollo.SuspenseQueryHookOptions<GetDeepIssueAnalysesQuery, GetDeepIssueAnalysesQueryVariables>) {
+          const options = baseOptions === Apollo.skipToken ? baseOptions : {...defaultOptions, ...baseOptions}
+          return Apollo.useSuspenseQuery<GetDeepIssueAnalysesQuery, GetDeepIssueAnalysesQueryVariables>(GetDeepIssueAnalysesDocument, options);
+        }
+export type GetDeepIssueAnalysesQueryHookResult = ReturnType<typeof useGetDeepIssueAnalysesQuery>;
+export type GetDeepIssueAnalysesLazyQueryHookResult = ReturnType<typeof useGetDeepIssueAnalysesLazyQuery>;
+export type GetDeepIssueAnalysesSuspenseQueryHookResult = ReturnType<typeof useGetDeepIssueAnalysesSuspenseQuery>;
+export type GetDeepIssueAnalysesQueryResult = Apollo.QueryResult<GetDeepIssueAnalysesQuery, GetDeepIssueAnalysesQueryVariables>;
 export const GetFamilyMemberDocument = gql`
     query GetFamilyMember($id: Int, $slug: String) {
   familyMember(id: $id, slug: $slug) {
@@ -4626,6 +5128,22 @@ export const GetFamilyMembersDocument = gql`
       role
       createdAt
       createdBy
+    }
+    relationships {
+      id
+      subjectType
+      subjectId
+      relatedType
+      relatedId
+      relationshipType
+      status
+      related {
+        id
+        type
+        slug
+        firstName
+        lastName
+      }
     }
   }
 }
@@ -4793,9 +5311,12 @@ export const GetGoalDocument = gql`
     title
     description
     status
+    priority
+    targetDate
     familyMemberId
     familyMember {
       id
+      slug
       firstName
       name
       ageYears
@@ -4812,6 +5333,9 @@ export const GetGoalDocument = gql`
     therapeuticText
     therapeuticTextLanguage
     therapeuticTextGeneratedAt
+    parentAdvice
+    parentAdviceLanguage
+    parentAdviceGeneratedAt
     storyLanguage
     subGoals {
       id
@@ -4831,13 +5355,28 @@ export const GetGoalDocument = gql`
       createdAt
       updatedAt
     }
+    questions {
+      id
+      question
+      researchId
+      researchTitle
+      rationale
+      generatedAt
+    }
     research {
       id
       title
       authors
       year
       journal
+      doi
       url
+      abstract
+      keyFindings
+      therapeuticTechniques
+      evidenceLevel
+      relevanceScore
+      extractionConfidence
     }
     stories {
       id
@@ -5022,6 +5561,24 @@ export const GetIssueDocument = gql`
       language
       minutes
       createdAt
+    }
+    relatedIssues {
+      id
+      linkType
+      issue {
+        id
+        title
+        category
+        severity
+        familyMemberId
+        familyMember {
+          id
+          firstName
+          name
+          slug
+        }
+        createdAt
+      }
     }
   }
 }
@@ -5920,6 +6477,54 @@ export type GetTherapeuticQuestionsQueryHookResult = ReturnType<typeof useGetThe
 export type GetTherapeuticQuestionsLazyQueryHookResult = ReturnType<typeof useGetTherapeuticQuestionsLazyQuery>;
 export type GetTherapeuticQuestionsSuspenseQueryHookResult = ReturnType<typeof useGetTherapeuticQuestionsSuspenseQuery>;
 export type GetTherapeuticQuestionsQueryResult = Apollo.QueryResult<GetTherapeuticQuestionsQuery, GetTherapeuticQuestionsQueryVariables>;
+export const LinkIssuesDocument = gql`
+    mutation LinkIssues($issueId: Int!, $linkedIssueId: Int!, $linkType: String) {
+  linkIssues(
+    issueId: $issueId
+    linkedIssueId: $linkedIssueId
+    linkType: $linkType
+  ) {
+    id
+    linkType
+    issue {
+      id
+      title
+      category
+      severity
+      familyMemberId
+      createdAt
+    }
+  }
+}
+    `;
+export type LinkIssuesMutationFn = Apollo.MutationFunction<LinkIssuesMutation, LinkIssuesMutationVariables>;
+
+/**
+ * __useLinkIssuesMutation__
+ *
+ * To run a mutation, you first call `useLinkIssuesMutation` within a React component and pass it any options that fit your needs.
+ * When your component renders, `useLinkIssuesMutation` returns a tuple that includes:
+ * - A mutate function that you can call at any time to execute the mutation
+ * - An object with fields that represent the current status of the mutation's execution
+ *
+ * @param baseOptions options that will be passed into the mutation, supported options are listed on: https://www.apollographql.com/docs/react/api/react-hooks/#options-2;
+ *
+ * @example
+ * const [linkIssuesMutation, { data, loading, error }] = useLinkIssuesMutation({
+ *   variables: {
+ *      issueId: // value for 'issueId'
+ *      linkedIssueId: // value for 'linkedIssueId'
+ *      linkType: // value for 'linkType'
+ *   },
+ * });
+ */
+export function useLinkIssuesMutation(baseOptions?: Apollo.MutationHookOptions<LinkIssuesMutation, LinkIssuesMutationVariables>) {
+        const options = {...defaultOptions, ...baseOptions}
+        return Apollo.useMutation<LinkIssuesMutation, LinkIssuesMutationVariables>(LinkIssuesDocument, options);
+      }
+export type LinkIssuesMutationHookResult = ReturnType<typeof useLinkIssuesMutation>;
+export type LinkIssuesMutationResult = Apollo.MutationResult<LinkIssuesMutation>;
+export type LinkIssuesMutationOptions = Apollo.BaseMutationOptions<LinkIssuesMutation, LinkIssuesMutationVariables>;
 export const ShareFamilyMemberDocument = gql`
     mutation ShareFamilyMember($familyMemberId: Int!, $email: String!, $role: FamilyMemberShareRole) {
   shareFamilyMember(familyMemberId: $familyMemberId, email: $email, role: $role) {
@@ -5998,6 +6603,40 @@ export function useUnlinkGoalFamilyMemberMutation(baseOptions?: Apollo.MutationH
 export type UnlinkGoalFamilyMemberMutationHookResult = ReturnType<typeof useUnlinkGoalFamilyMemberMutation>;
 export type UnlinkGoalFamilyMemberMutationResult = Apollo.MutationResult<UnlinkGoalFamilyMemberMutation>;
 export type UnlinkGoalFamilyMemberMutationOptions = Apollo.BaseMutationOptions<UnlinkGoalFamilyMemberMutation, UnlinkGoalFamilyMemberMutationVariables>;
+export const UnlinkIssuesDocument = gql`
+    mutation UnlinkIssues($issueId: Int!, $linkedIssueId: Int!) {
+  unlinkIssues(issueId: $issueId, linkedIssueId: $linkedIssueId) {
+    success
+  }
+}
+    `;
+export type UnlinkIssuesMutationFn = Apollo.MutationFunction<UnlinkIssuesMutation, UnlinkIssuesMutationVariables>;
+
+/**
+ * __useUnlinkIssuesMutation__
+ *
+ * To run a mutation, you first call `useUnlinkIssuesMutation` within a React component and pass it any options that fit your needs.
+ * When your component renders, `useUnlinkIssuesMutation` returns a tuple that includes:
+ * - A mutate function that you can call at any time to execute the mutation
+ * - An object with fields that represent the current status of the mutation's execution
+ *
+ * @param baseOptions options that will be passed into the mutation, supported options are listed on: https://www.apollographql.com/docs/react/api/react-hooks/#options-2;
+ *
+ * @example
+ * const [unlinkIssuesMutation, { data, loading, error }] = useUnlinkIssuesMutation({
+ *   variables: {
+ *      issueId: // value for 'issueId'
+ *      linkedIssueId: // value for 'linkedIssueId'
+ *   },
+ * });
+ */
+export function useUnlinkIssuesMutation(baseOptions?: Apollo.MutationHookOptions<UnlinkIssuesMutation, UnlinkIssuesMutationVariables>) {
+        const options = {...defaultOptions, ...baseOptions}
+        return Apollo.useMutation<UnlinkIssuesMutation, UnlinkIssuesMutationVariables>(UnlinkIssuesDocument, options);
+      }
+export type UnlinkIssuesMutationHookResult = ReturnType<typeof useUnlinkIssuesMutation>;
+export type UnlinkIssuesMutationResult = Apollo.MutationResult<UnlinkIssuesMutation>;
+export type UnlinkIssuesMutationOptions = Apollo.BaseMutationOptions<UnlinkIssuesMutation, UnlinkIssuesMutationVariables>;
 export const UnshareFamilyMemberDocument = gql`
     mutation UnshareFamilyMember($familyMemberId: Int!, $email: String!) {
   unshareFamilyMember(familyMemberId: $familyMemberId, email: $email)

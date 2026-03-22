@@ -16,15 +16,14 @@
  *
  * Environment:
  *   CONTACT_EMAIL        - Required for API politeness
- *   CLOUDFLARE_D1_TOKEN  - Cloudflare API token for D1 database access
+ *   NEON_DATABASE_URL    - Neon PostgreSQL connection string
  *   DEEPSEEK_API_KEY     - For claim extraction
  *   OPENALEX_API_KEY     - Optional (required after Feb 13, 2026)
  *   S2_API_KEY           - Optional Semantic Scholar key
  */
 
 import "dotenv/config";
-import { createDeepSeek } from "@ai-sdk/deepseek";
-import { generateObject } from "ai";
+import { generateObject } from "../src/lib/deepseek";
 import { z } from "zod";
 import { claimCardsTools } from "../src/tools/claim-cards.tools";
 import type { PaperDetails } from "../src/tools/sources.tools";
@@ -55,10 +54,6 @@ const CFG = {
 };
 
 const USER_AGENT = `ai-therapist/1.0 (${CFG.CONTACT_EMAIL ? `mailto:${CFG.CONTACT_EMAIL}` : "research@example.com"})`;
-
-const deepseek = createDeepSeek({
-  apiKey: process.env.DEEPSEEK_API_KEY,
-});
 
 // ============================================================================
 // UTILITIES
@@ -667,7 +662,7 @@ async function extractClaimsFromPapersBatched(
     console.log(`🤖 Extracting claims from batch ${bi + 1}/${batches.length}…`);
 
     const result = await generateObject({
-      model: deepseek("deepseek-chat"),
+
       schema: claimsSchema,
       prompt: `
 You are extracting evidence-based claims from research abstracts.

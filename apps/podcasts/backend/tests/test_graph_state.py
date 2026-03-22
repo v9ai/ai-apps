@@ -15,7 +15,7 @@ from unittest.mock import AsyncMock, MagicMock, patch
 
 import pytest
 
-from crew import (
+from research_pipeline import (
     ResearchState,
     _ctx_block,
     _extract_json,
@@ -112,8 +112,8 @@ async def test_phase1_returns_7_keys():
         call_idx += 1
         return f"Phase 1 agent {call_idx} output"
 
-    with patch("crew._run_agent", side_effect=mock_run), \
-         patch("crew._make_llm", return_value=MagicMock()):
+    with patch("research_pipeline._run_agent", side_effect=mock_run), \
+         patch("research_pipeline._make_llm", return_value=MagicMock()):
         state: ResearchState = {"person": SAMPLE_PERSON}
         result = await phase1(state)
 
@@ -144,8 +144,8 @@ async def test_phase2_returns_11_keys():
         "hf_data": "mock hf data",
     }
 
-    with patch("crew._run_agent", side_effect=mock_run), \
-         patch("crew._make_llm", return_value=MagicMock()):
+    with patch("research_pipeline._run_agent", side_effect=mock_run), \
+         patch("research_pipeline._make_llm", return_value=MagicMock()):
         result = await phase2(state)
 
     expected_keys = {"bio", "timeline", "contributions", "quotes", "social",
@@ -176,8 +176,8 @@ async def test_phase3_eval_returns_eval_key():
         "philosophy": "{}",
     }
 
-    with patch("crew._run_agent", side_effect=mock_run), \
-         patch("crew._make_llm", return_value=MagicMock()):
+    with patch("research_pipeline._run_agent", side_effect=mock_run), \
+         patch("research_pipeline._make_llm", return_value=MagicMock()):
         result = await phase3_eval(state)
 
     assert "eval_data" in result
@@ -209,8 +209,8 @@ async def test_phase3_exec_returns_executive_key():
         "arxiv_data": "",
     }
 
-    with patch("crew._run_agent", side_effect=mock_run), \
-         patch("crew._make_llm", return_value=MagicMock()):
+    with patch("research_pipeline._run_agent", side_effect=mock_run), \
+         patch("research_pipeline._make_llm", return_value=MagicMock()):
         result = await phase3_exec(state)
 
     assert "executive" in result
@@ -232,8 +232,8 @@ async def test_full_graph_mocked_produces_complete_state():
         agent_count += 1
         return f"Mock output {agent_count}"
 
-    with patch("crew._run_agent", side_effect=mock_run), \
-         patch("crew._make_llm", return_value=MagicMock()):
+    with patch("research_pipeline._run_agent", side_effect=mock_run), \
+         patch("research_pipeline._make_llm", return_value=MagicMock()):
         graph = build_graph()
         result = await graph.ainvoke({"person": SAMPLE_PERSON})
 
@@ -252,8 +252,8 @@ async def test_graph_preserves_person_through_phases():
     async def mock_run(llm, sys, task, tools=None):
         return "mock"
 
-    with patch("crew._run_agent", side_effect=mock_run), \
-         patch("crew._make_llm", return_value=MagicMock()):
+    with patch("research_pipeline._run_agent", side_effect=mock_run), \
+         patch("research_pipeline._make_llm", return_value=MagicMock()):
         graph = build_graph()
         result = await graph.ainvoke({"person": SAMPLE_PERSON})
 

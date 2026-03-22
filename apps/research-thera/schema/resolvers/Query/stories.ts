@@ -1,5 +1,5 @@
 import type { QueryResolvers } from "./../../types.generated";
-import { d1Tools } from "@/src/db";
+import { db } from "@/src/db";
 
 export const stories: NonNullable<QueryResolvers['stories']> = async (
   _parent,
@@ -11,5 +11,5 @@ export const stories: NonNullable<QueryResolvers['stories']> = async (
     throw new Error("Authentication required");
   }
 
-  return d1Tools.listStories(args.goalId) as any;
+  return db.listStories(args.goalId) as any;
 };

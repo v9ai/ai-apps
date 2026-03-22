@@ -49,6 +49,10 @@ export const goals = pgTable("goals", {
   therapeuticTextLanguage: text("therapeutic_text_language"),
   therapeuticTextGeneratedAt: text("therapeutic_text_generated_at"),
   storyLanguage: text("story_language"),
+  parentAdvice: text("parent_advice"),
+  parentAdviceLanguage: text("parent_advice_language"),
+  parentAdviceGeneratedAt: text("parent_advice_generated_at"),
+  parentGoalId: integer("parent_goal_id"),
   createdAt: text("created_at")
     .notNull()
     .default(sql`NOW()`),
@@ -330,6 +334,39 @@ export const issues = pgTable("issues", {
     .default(sql`NOW()`),
 });
 
+export const issueLinks = pgTable("issue_links", {
+  id: serial("id").primaryKey(),
+  issueId: integer("issue_id").notNull(),
+  linkedIssueId: integer("linked_issue_id").notNull(),
+  linkType: text("link_type").notNull().default("related"), // related, causes, caused_by, duplicate
+  userId: text("user_id").notNull(),
+  createdAt: text("created_at")
+    .notNull()
+    .default(sql`NOW()`),
+});
+
+export const deepIssueAnalyses = pgTable("deep_issue_analyses", {
+  id: serial("id").primaryKey(),
+  familyMemberId: integer("family_member_id").notNull(),
+  triggerIssueId: integer("trigger_issue_id"),
+  userId: text("user_id").notNull(),
+  jobId: text("job_id"),
+  summary: text("summary").notNull(),
+  patternClusters: text("pattern_clusters").notNull(), // JSON
+  timelineAnalysis: text("timeline_analysis").notNull(), // JSON
+  familySystemInsights: text("family_system_insights").notNull(), // JSON
+  priorityRecommendations: text("priority_recommendations").notNull(), // JSON
+  researchRelevance: text("research_relevance").notNull(), // JSON
+  dataSnapshot: text("data_snapshot").notNull(), // JSON
+  model: text("model").notNull().default("deepseek-chat"),
+  createdAt: text("created_at")
+    .notNull()
+    .default(sql`NOW()`),
+  updatedAt: text("updated_at")
+    .notNull()
+    .default(sql`NOW()`),
+});
+
 export const contacts = pgTable("contacts", {
   id: serial("id").primaryKey(),
   userId: text("user_id").notNull(),
@@ -428,3 +465,28 @@ export const verification = pgTable("verification", {
   createdAt: timestamp("createdAt"),
   updatedAt: timestamp("updatedAt"),
 });
+
+export const familyMemberCharacteristics = pgTable("family_member_characteristics", {
+  id: serial("id").primaryKey(),
+  familyMemberId: integer("family_member_id").notNull(),
+  userId: text("user_id").notNull(),
+  category: text("category").notNull(),
+  title: text("title").notNull(),
+  description: text("description"),
+  severity: text("severity"),
+  frequencyPerWeek: integer("frequency_per_week"),
+  durationWeeks: integer("duration_weeks"),
+  ageOfOnset: integer("age_of_onset"),
+  impairmentDomains: text("impairment_domains"),
+  externalizedName: text("externalized_name"),
+  strengths: text("strengths"),
+  riskTier: text("risk_tier").notNull().default("NONE"),
+  tags: text("tags"),
+  createdAt: text("created_at")
+    .notNull()
+    .default(sql`NOW()`),
+  updatedAt: text("updated_at")
+    .notNull()
+    .default(sql`NOW()`),
+});
+

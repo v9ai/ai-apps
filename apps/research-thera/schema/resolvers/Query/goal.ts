@@ -1,5 +1,5 @@
 import type { QueryResolvers } from "./../../types.generated";
-import { d1Tools } from "@/src/db";
+import { db } from "@/src/db";
 
 export const goal: NonNullable<QueryResolvers['goal']> = async (
   _parent,
@@ -14,9 +14,9 @@ export const goal: NonNullable<QueryResolvers['goal']> = async (
   let goal;
 
   if (args.slug) {
-    goal = await d1Tools.getGoalBySlug(args.slug, userEmail);
+    goal = await db.getGoalBySlug(args.slug, userEmail);
   } else if (args.id) {
-    goal = await d1Tools.getGoal(args.id, userEmail);
+    goal = await db.getGoal(args.id, userEmail);
   } else {
     throw new Error("Either id or slug must be provided");
   }
@@ -29,10 +29,15 @@ export const goal: NonNullable<QueryResolvers['goal']> = async (
     title: goal.title,
     description: goal.description,
     status: goal.status,
+    priority: goal.priority,
+    targetDate: goal.targetDate,
     parentGoalId: goal.parentGoalId,
     therapeuticText: goal.therapeuticText,
     therapeuticTextLanguage: goal.therapeuticTextLanguage,
     therapeuticTextGeneratedAt: goal.therapeuticTextGeneratedAt,
+    parentAdvice: goal.parentAdvice,
+    parentAdviceLanguage: goal.parentAdviceLanguage,
+    parentAdviceGeneratedAt: goal.parentAdviceGeneratedAt,
     createdAt: goal.createdAt,
     updatedAt: goal.updatedAt,
     questions: [],

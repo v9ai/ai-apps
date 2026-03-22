@@ -15,7 +15,7 @@ from unittest.mock import AsyncMock, MagicMock, patch
 from deepeval.tracing import trace
 from deepeval.metrics import AnswerRelevancyMetric
 
-from crew import build_graph, ResearchState
+from research_pipeline import build_graph, ResearchState
 
 pytestmark = [pytest.mark.deepeval, pytest.mark.e2e]
 skip_no_key = pytest.mark.skipif(
@@ -110,8 +110,8 @@ async def test_full_flow_mocked(sample_person):
         call_count += 1
         return f"Mock agent output #{call_count}"
 
-    with patch("crew._run_agent", side_effect=mock_run_agent), \
-         patch("crew._make_llm", return_value=MagicMock()):
+    with patch("research_pipeline._run_agent", side_effect=mock_run_agent), \
+         patch("research_pipeline._make_llm", return_value=MagicMock()):
         graph = build_graph()
         result = await graph.ainvoke({"person": sample_person})
 

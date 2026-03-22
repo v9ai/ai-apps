@@ -7,7 +7,7 @@
     "dev:h": "turbo run dev --filter=agentic-healthcare & cd apps/agentic-healthcare/langgraph && uv run uvicorn chat_server:app --port 8001 --reload",
     "dev:l": "turbo run dev --filter=law-adversarial",
     "dev:n": "turbo run dev --filter=nomadically.work",
-    "dev:r": "turbo run dev --filter=research-thera & cd apps/research-thera/langgraph && uv run langgraph dev",
+    "dev:r": "turbo run dev --filter=research-thera",
     "dev:b": "turbo run dev --filter=vadim.blog",
     "dev:re": "turbo run dev --filter=real-estate & cd apps/real-estate/analyzer && uv run uvicorn server:app --port 8005 --reload",
     "dev:k": "turbo run dev --filter=knowledge",
@@ -25,6 +25,7 @@
     "deploy:t": "vercel deploy --prod --cwd apps/todo",
     "deploy:p": "vercel deploy --prod --cwd apps/podcasts",
     "dev:p": "turbo run dev --filter=humans-of-ai",
+    "dev:br": "turbo run dev --filter=bricks",
     "deploy:all": "pnpm deploy:n && pnpm deploy:l && pnpm deploy:h && pnpm deploy:r && pnpm deploy:re && pnpm deploy:blog && pnpm deploy:p"
   },
   "devDependencies": {

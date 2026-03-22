@@ -1,11 +1,11 @@
 {
-  "timestamp": "2026-03-14T16:30:46.878660+00:00",
+  "timestamp": "2026-03-21T22:02:35.959611+00:00",
   "model": "deepseek-chat",
   "judge": "deepseek-chat",
   "threshold": 0.7,
   "summary": {
-    "total": 20,
-    "passed": 20,
+    "total": 24,
+    "passed": 24,
     "failed": 0
   },
   "results": [
@@ -13,34 +13,39 @@
       "case_id": "selective-mutism-child",
       "stages": {
         "normalize": {
-          "normalization_accuracy": {
-            "score": 0.8,
+          "dob_age_consistency": {
+            "score": 0.9,
             "passed": true,
-            "reason": "The output correctly translates the Romanian title, identifies a specific clinical construct (vocal_stereotypy_anxiety_context) that aligns with the described repetitive sounds in an anxiety/stress context, and correctly sets behavior direction to REDUCE. The developmental stage (early_childhood) is appropriate for a 7-year-old. However, the required keywords list includes 'selective mutism', which is a core issue from the input and should not be a required keyword for a search focused on reducing vocal stereotypy; it is more logically an excluded topic or a separate construct. The excluded topics list appropriately filters out unrelated conditions (e.g., Tourette syndrome, hearing impairment)."
+            "reason": "The output correctly identifies the developmental tier as 'school_age' for a 7-year-old, aligning with the criteria. The clinical restatement and domain appropriately address the child's age context without contradiction. Required keywords are age-appropriate and specific. However, the clinical domain 'selective_mutism_with_vocal_stereotypy' is a combined construct not explicitly listed in the examples, and some excluded topics (e.g., 'autism spectrum disorder') may be overly broad but not entirely irrelevant given the described symptoms."
+          },
+          "normalization_accuracy": {
+            "score": 0.7,
+            "passed": true,
+            "reason": "The response correctly identifies the language and translates the title, but the clinical domain 'selective_mutism_with_vocal_stereotypy' is overly specific and conflates two distinct constructs, not fully aligning with the core intent of reducing disruptive vocalizations. The behavior direction is correctly 'REDUCE', and the developmental tier is appropriate. Required keywords are generally relevant, though some like 'selective mutism' may not fully match the primary issue. Excluded topics are well-chosen and specific, filtering out irrelevant domains effectively."
           },
           "feedback_integration": {
-            "score": 0.6,
+            "score": 0.7,
             "passed": true,
-            "reason": "The output correctly identifies language, translates, and sets direction to REDUCE. However, the clinical construct 'vocal_stereotypy_anxiety_context' is not specific enough; feedback points to selective mutism and anxiety-triggered vocalizations, but the construct should be more precise like 'selective_mutism_with_anxiety_vocalizations' or similar. Keywords include relevant terms like 'selective mutism' and 'stress-induced vocalizations', showing some feedback integration, but excluded topics overly broad (e.g., excluding autism may be premature given vocal stereotypy). Developmental stage 'early_childhood' is accurate for age 7. Overall, feedback is partially used but construct specificity and exclusion precision need improvement."
+            "reason": "The output correctly identifies the language, translates the goal, and aligns developmental tier and behavior direction. However, the clinical domain 'selective_mutism_with_vocal_stereotypy' is a speculative composite not directly supported by the feedback, which more strongly indicates vocal stereotypy in a school context, possibly related to anxiety or ASD. The required keywords include relevant terms like 'selective mutism' and 'vocal stereotypy', but some (e.g., 'verbal communication in school') are less precise given the feedback emphasizes selective verbal communication and response to written instructions. Excluded topics appropriately filter out unrelated conditions, though 'autism spectrum disorder' might be overly broad as it could be relevant. The integration of feedback is present but imperfect in clinical specificity."
           }
         },
         "plan": {
           "query_planning_quality": {
             "score": 1.0,
             "passed": true,
-            "reason": "The response aligns well with all evaluation steps. Queries are clinically specific and directly relevant to the context (e.g., 'repetitive vocal sounds during school lessons', 'selective mutism classroom interventions'). The set spans different search strategies: Semantic Scholar uses synonyms and constructs, Crossref uses natural language, and PubMed uses MeSH terms, covering interventions, population, outcomes, and mechanisms. The total number of queries is sufficient (39, 40, and 35 respectively, meeting the \u226510 per source and 40-87 total target). The queries logically incorporate feedback and extracted issues, focusing on selective mutism, vocal stereotypy, classroom settings, and anxiety, avoiding generic terms."
+            "reason": "The response aligns well with all evaluation steps. Queries are clinically specific and directly relevant to the context (e.g., 'repetitive vocal sounds during reading lessons', 'selective mutism classroom interventions'). The set spans different search strategies: Semantic Scholar uses synonyms and constructs, Crossref uses natural language, and PubMed uses MeSH terms. It covers key facets: interventions (behavioral therapy, classroom accommodations), population (children in school), outcomes (treatment effectiveness), and mechanisms (anxiety). The total query count (39+40+35=114) exceeds the minimum requirement (\u226510 per source type, \u226530 total) and incorporates specific feedback from the input (e.g., 'selective verbal communication', 'repetitive vocal sounds during structured lessons'). The queries are diverse, exploring distinct angles like behavioral interventions, environmental modifications, teacher strategies, and different study designs, avoiding redundancy."
           }
         },
         "extract": {
           "extraction_faithfulness": {
             "score": 0.9,
             "passed": true,
-            "reason": "The output aligns well with the evaluation steps: key findings are explicitly stated in the abstract, techniques are correctly identified, evidence level is accurately labeled as 'review', and relevance score is appropriately justified given the match to condition and population. However, the relevance score of 0.8 slightly overstates directness per the rubric, as the paper is a review rather than a direct study of the specific intervention, and the goal description mentions 'face sunete la lec\u021bii' which is not explicitly addressed in the abstract beyond 'classroom vocalization'."
+            "reason": "The output aligns well with the evaluation steps: key findings are explicitly stated in the abstract, therapeutic techniques are correctly identified, evidence level is accurately classified as systematic_review, and quantitative claim (d=0.89) is numerically accurate. Relevance score of 0.8 is appropriate given the direct match to condition and population, though the goal description mentions 'face sunete la lec\u021bii' which is not explicitly addressed in the abstract, but the condition and techniques are relevant."
           },
           "relevance_scoring": {
             "score": 1.0,
             "passed": true,
-            "reason": "The paper is directly relevant to the therapeutic goal of selective mutism in a school-age child, addressing classroom vocalization. The relevance score of 0.8 aligns with the rubric for studying the same condition in a closely related population, as the paper's population (ages 4-12) matches the child context. The score is directionally correct and reasonable, meeting the strict criteria for a score of 0.8 or above."
+            "reason": "The paper is directly relevant to the therapeutic goal of selective mutism in a school setting. The relevance score of 0.8 is appropriate as it aligns with the rubric for studying the same condition in a closely related population (school-age children). The score is directionally correct and reasonable, as the abstract explicitly addresses classroom vocalization and school-based interventions."
           }
         }
       }
@@ -49,34 +54,39 @@
       "case_id": "anxiety-reduction-teen",
       "stages": {
         "normalize": {
+          "dob_age_consistency": {
+            "score": 1.0,
+            "passed": true,
+            "reason": "The output correctly identifies the developmental tier as 'adolescent' for a 14-year-old, aligning with the criteria. Required keywords are age-appropriate and specific to the clinical domain. The clinical restatement is consistent with the patient's age and does not suggest a different age group. The clinical domain 'test_anxiety_adolescents' is appropriately specific. All evaluation steps are satisfied with no mismatches or contradictions."
+          },
           "normalization_accuracy": {
             "score": 0.9,
             "passed": true,
-            "reason": "The output aligns well with evaluation steps: the clinical construct 'test_anxiety_adolescents' correctly preserves the core intent and is specific; behavior direction matches the goal; developmental tier fits age 14; keywords are clinically appropriate (e.g., 'panic attacks', 'school avoidance') and excluded topics filter irrelevant domains (e.g., 'learning disabilities', 'adult psychotherapy'). Minor improvement possible in keyword specificity (e.g., adding 'avoidance coping'), but overall strong."
+            "reason": "The response aligns well with evaluation steps: translation correct, clinical domain specific to adolescents, behavior direction matches therapeutic intent, developmental tier appropriate, keywords clinically relevant, excluded topics filter out irrelevant domains like adult test anxiety and other disorders. Minor improvement could be making clinical domain slightly more specific (e.g., 'test_anxiety_adolescents_avoidance') but overall strong."
           },
           "feedback_integration": {
-            "score": 0.9,
+            "score": 1.0,
             "passed": true,
-            "reason": "The output aligns well with the feedback: it uses specific clinical terms like 'panic attacks' and 'school avoidance' from the teacher's notes, correctly identifies 'test_anxiety_adolescents' as the construct, and includes relevant keywords (e.g., 'cognitive behavioral therapy', 'exposure therapy') while excluding unrelated topics (e.g., 'learning disabilities', 'adult psychotherapy'). However, it could have been more explicit about the avoidance coping pattern in the keywords."
+            "reason": "The response strongly aligns with the evaluation steps. It incorporates specific feedback details like physical symptoms (nausea, dizziness) and avoidance coping into the clinical restatement and keywords. The clinical domain is appropriately specific ('test_anxiety_adolescents'), and excluded topics correctly filter out irrelevant adjacent conditions (e.g., generalized anxiety, adult test anxiety). The output elaborates beyond the basic goal, showing integration of teacher feedback to improve clinical precision."
           }
         },
         "plan": {
           "query_planning_quality": {
-            "score": 0.9,
+            "score": 1.0,
             "passed": true,
-            "reason": "The response aligns well with all evaluation steps. Queries are clinically specific and directly relevant to the context (e.g., 'test anxiety nausea dizziness', 'avoidance behavior'). The set spans different search strategies (PICO-like, free-text, MeSH terms) and covers key facets: interventions (CBT, exposure), population (students, adolescent), outcomes (performance, symptom reduction), and mechanisms (avoidance, emotion regulation). The total query counts (39, 42, 37) meet the implied sufficiency target (\u226510 per source). The queries logically incorporate the extracted issues, addressing severe anxiety with physical symptoms and avoidance coping patterns. Minor room for improvement exists in query novelty, but overall coverage is strong."
+            "reason": "The response aligns well with the evaluation steps: queries are clinically specific and directly relevant to the context (e.g., addressing physical symptoms like nausea/dizziness and avoidance coping). The set spans different search strategies (PICO-like, free-text, MeSH terms) and covers key facets (interventions, population, outcomes, mechanisms). The total number of queries meets the minimum per source type (Semantic Scholar: 39, Crossref: 42, PubMed: 37), and they incorporate specific feedback from the input (e.g., 'test anxiety nausea dizziness', 'avoidance behavior'). Diversity is strong, with queries exploring distinct angles like interventions, symptoms, populations, and mechanisms, avoiding redundancy."
           }
         },
         "extract": {
           "extraction_faithfulness": {
-            "score": 0.9,
+            "score": 1.0,
             "passed": true,
-            "reason": "The output aligns well with the evaluation steps: key findings are explicitly stated in the abstract, therapeutic techniques are correctly identified, evidence level matches the study design, and relevance score is appropriately adjusted for population mismatch (adolescents vs. unspecified patient age). However, 'relaxation training' is listed as a therapeutic technique but is part of the comparison group, not a component of the intervention studied for the goal; this is a minor misrepresentation. All other details are accurate and supported."
+            "reason": "All key findings are explicitly stated in the abstract, techniques are correctly identified, evidence level 'rct' matches the abstract's description of an RCT, and quantitative claims are accurate. The relevance score of 0.8 is appropriate as the study directly addresses test anxiety, though a slight deduction for population mismatch (adolescents vs. unspecified patient age) is not applied, which is acceptable given the strict rubric. No errors or fabrications are present."
           },
           "relevance_scoring": {
-            "score": 0.9,
+            "score": 1.0,
             "passed": true,
-            "reason": "The paper is directly relevant to the therapeutic goal of reducing test anxiety, as it is an RCT on CBT for test anxiety in adolescents. The relevance score of 0.8 is appropriate per the rubric for studying the same condition in a closely related population (adolescents vs. unspecified age in goal). The score is directionally correct and reasonable, and the extraction aligns well with the abstract. Minor deduction because the rubric specifies a score of 1.0 for exact population match, and the goal's patient age is not specified, making the 0.8 score slightly generous but still acceptable."
+            "reason": "The paper is directly relevant to the therapeutic goal of reducing test anxiety, as it is an RCT on CBT for test anxiety in adolescents. The relevance score of 0.8 is appropriate per the rubric for studying the same condition in a closely related population (adolescents vs. unspecified age in goal). The score is directionally correct and reasonable, meeting the threshold of 0.7+ for direct relevance."
           }
         }
       }
@@ -85,34 +95,39 @@
       "case_id": "social-skills-asd",
       "stages": {
         "normalize": {
-          "normalization_accuracy": {
+          "dob_age_consistency": {
             "score": 1.0,
             "passed": true,
-            "reason": "The output correctly translates the title, identifies a specific clinical domain (social_communication_asd), and matches the behavior direction (INCREASE). The developmental stage (early_childhood) is appropriate for age 5. Keywords are clinically relevant and include core issues (eye contact, peer interaction, ASD level 1). Excluded topics correctly filter out irrelevant domains (e.g., academic achievement, aggression). All evaluation steps are strongly met."
+            "reason": "The output correctly identifies the developmental tier as 'preschool' for a 5-year-old, aligning with the 3-5 age range. All required keywords and the clinical restatement are age-appropriate and do not contradict the patient's age. The clinical domain and behavior direction are specific and accurate. The excluded topics appropriately filter out irrelevant areas like adolescent or adult issues."
+          },
+          "normalization_accuracy": {
+            "score": 0.9,
+            "passed": true,
+            "reason": "The output correctly translates and preserves the core clinical intent, with a specific clinical domain ('social_communication_asd') and appropriate behavior direction (INCREASE). The developmental tier ('preschool') matches the age. Required keywords are clinically appropriate and relevant. Excluded topics are generally well-chosen to filter irrelevant domains, though some (e.g., 'sensory processing disorder') could be borderline given ASD context but are acceptable. Minor weakness: the clinical domain could be slightly more specific (e.g., 'social_engagement_asd') but remains adequate."
           },
           "feedback_integration": {
-            "score": 0.8,
+            "score": 0.9,
             "passed": true,
-            "reason": "The output aligns well with the feedback by incorporating specific issues (e.g., eye contact avoidance, peer interaction initiation) into required keywords and excluded topics, and correctly identifies clinical constructs and direction. However, it could be more precise in mapping feedback details to keywords (e.g., missing 'initiation' explicitly) and excluded topics are overly broad."
+            "reason": "The output strongly aligns with the evaluation steps: it incorporates specific feedback details (e.g., 'initiation and responsiveness in peer social interactions' reflects teacher notes on limited initiation; 'eye contact with adults and peers' matches feedback on consistent avoidance). The clinical domain and keywords are appropriately specific and elaborated beyond the goal title alone (e.g., 'joint attention', 'social initiation', 'ASD level 1'). The integration of feedback is useful and improves the response's precision, though some excluded topics (e.g., 'sensory processing disorder') could be more tightly scoped."
           }
         },
         "plan": {
           "query_planning_quality": {
             "score": 0.9,
             "passed": true,
-            "reason": "The response demonstrates strong alignment with the evaluation steps. Queries are clinically specific and directly relevant to the provided context (ASD, eye contact, social initiation). The sets collectively span different search strategies: Semantic Scholar uses broad/specific terms and synonyms, Crossref uses natural language, and PubMed uses MeSH terms, covering interventions, population, outcomes, and mechanisms. The total query count (40+44+~40) meets the volume requirement. The queries logically incorporate the extracted issues (e.g., 'social initiation', 'eye contact avoidance', 'peer interaction'). Minor shortcomings include some PubMed queries being formatted as arrays rather than pure strings, slightly deviating from the expected output structure, but this does not significantly impact search functionality."
+            "reason": "The response aligns well with the evaluation steps: queries are clinically specific and directly relevant to the context (e.g., addressing eye contact, peer initiation, ASD). The set spans different search strategies (PICO-like, free-text, MeSH terms) and covers key facets (interventions, population, outcomes). Total queries meet minimum counts per source (40 Semantic Scholar, 44 Crossref, 40 PubMed). Diversity is strong, with varied angles (behavioral, play-based, technology-assisted) and incorporation of extracted issues. Minor issues include some PubMed queries being formatted as arrays rather than strings, but overall coverage is comprehensive."
           }
         },
         "extract": {
           "extraction_faithfulness": {
-            "score": 0.9,
+            "score": 1.0,
             "passed": true,
-            "reason": "The output aligns well with evaluation steps: key findings are explicitly stated in the abstract, therapeutic techniques are correctly extracted, evidence level is accurately identified as RCT (though the abstract does not explicitly state RCT, it implies an intervention study), and relevance score is appropriately assigned with a minor deduction for population match. However, the evidence level 'RCT' is not explicitly mentioned in the abstract, which is a slight overstep, but other elements are strongly supported."
+            "reason": "All key findings are explicitly stated in the abstract, techniques are correctly extracted, evidence level is accurately classified as quasi_experimental (pre-post without mention of randomization), quantitative claims match the abstract, and relevance score is appropriately high given direct alignment with the therapeutic goal, population, and condition."
           },
           "relevance_scoring": {
             "score": 1.0,
             "passed": true,
-            "reason": "The paper is directly relevant to the therapeutic goal of improving eye contact and social interaction for a child with ASD. The relevance score of 0.8 is appropriate as it aligns with the rubric for a study directly targeting the exact behavior and condition in a closely related population (preschoolers with ASD). The score is directionally correct and reasonable, and all extracted fields are accurate and complete."
+            "reason": "The paper is directly relevant to the therapeutic goal of improving eye contact and social interaction for a child with ASD. The relevance score of 1.0 is correctly high (\u22650.7) as per the rubric for directly studying the exact behavior and population. The evidence level is correctly classified as quasi_experimental, and the extraction is accurate and confident."
           }
         }
       }
@@ -121,34 +136,39 @@
       "case_id": "aggression-sibling",
       "stages": {
         "normalize": {
+          "dob_age_consistency": {
+            "score": 0.9,
+            "passed": true,
+            "reason": "The response correctly identifies the developmental tier as 'school_age' for a 6-year-old, aligning with the criteria. Required keywords are age-appropriate and specific to the clinical domain. The clinical restatement is consistent with the patient's age and does not suggest a different age group. However, the clinical domain 'sibling_aggression_children' could be more precise, as the input includes peer aggression and emotional regulation issues, suggesting a broader construct like 'childhood_aggression' or 'emotional_dysregulation_aggression' might be more accurate."
+          },
           "normalization_accuracy": {
             "score": 0.7,
             "passed": true,
-            "reason": "The output correctly translates the goal, identifies a specific clinical construct (sibling-directed_aggression_children), and correctly sets behavior direction to REDUCE. The developmental stage is appropriate for a 6-year-old. However, the required keywords are overly broad and include topics like 'peer aggression' and 'structured vs unstructured activities' that are more aligned with the teacher feedback about school peers than the core home-based sibling aggression goal, indicating a partial mismatch with the extracted issues. Excluded topics are generally appropriate but could be more precise."
+            "reason": "The output correctly translates the title, identifies the language, and sets behavior direction to REDUCE. Developmental tier is accurate. However, the clinical domain 'sibling_aggression_children' is overly specific and does not fully integrate the broader peer aggression and emotional regulation issues from the teacher feedback, which should be reflected in a more comprehensive domain like 'aggression_children' or 'emotional_dysregulation_aggression'. Required keywords are appropriate but could be more precise for research (e.g., 'proactive aggression', 'reactive aggression'). Excluded topics are generally relevant but some (e.g., 'autism spectrum disorder', 'intellectual disability') may be too broad given the context."
           },
           "feedback_integration": {
-            "score": 0.5,
+            "score": 0.8,
             "passed": true,
-            "reason": "The output correctly identifies language, direction, and developmental stage, and the clinical construct is specific. However, it fails to integrate key feedback: the teacher's report shifts the context to peer aggression in school (unstructured time, toy disputes), but the output's construct ('sibling-directed_aggression_children'), keywords, and exclusions remain narrowly focused on the original sibling/home context, missing the critical shift to peer aggression and structured vs. unstructured settings highlighted in the feedback. Required keywords like 'peer aggression' are listed but not central, and excluded topics are too broad/generic rather than precisely filtering out the irrelevant aspects (e.g., excluding 'sibling conflict' would be more aligned given the feedback)."
+            "reason": "The output aligns well with the evaluation steps: it incorporates teacher feedback by referencing peer aggression and emotional dysregulation in the clinical restatement and required keywords, modifies clinical content to account for feedback issues, provides specific details like 'transition difficulties' and 'parental attention' beyond the goal title, and integrates feedback usefully to improve relevance. However, the clinical domain 'sibling_aggression_children' could be more precise to match the aggression_children example, and some excluded topics (e.g., autism spectrum disorder) may be overly broad given the context."
           }
         },
         "plan": {
           "query_planning_quality": {
-            "score": 0.9,
+            "score": 1.0,
             "passed": true,
-            "reason": "Queries are clinically specific and directly relevant to the context (e.g., sibling hitting, transitions, unstructured time, toy disputes). The set spans different search strategies: Semantic Scholar uses keyword/synonym mixes, Crossref uses natural language phrases, and PubMed uses MeSH terms, covering interventions, population, outcomes, and mechanisms. Total query counts meet or exceed minimums (40, 44, 43). Queries incorporate feedback and extracted issues (e.g., 'transitions trigger aggression', 'remorse without insight', 'unstructured time aggression'). Minor weakness: some PubMed queries are overly broad (e.g., 'Cost-benefit analysis') but overall alignment is strong."
+            "reason": "The response aligns well with the evaluation steps: queries are clinically specific and relevant to the context (e.g., hitting siblings, emotional regulation, unstructured time). The set spans different search strategies (PICO-like, free-text, MeSH terms) and covers key facets (interventions, population, outcomes, mechanisms). The total number of queries meets the minimum per source type (20-40 each) and incorporates feedback from the input (e.g., sticker chart limitations, toy disputes). Diversity is strong, with queries exploring multiple angles (behavioral, cognitive, environmental) and avoiding redundancy."
           }
         },
         "extract": {
           "extraction_faithfulness": {
             "score": 1.0,
             "passed": true,
-            "reason": "All key findings are explicitly stated in the abstract, techniques are correctly extracted, evidence level is accurate, and relevance score is appropriately justified given the population match and direct focus on aggression in children. No unsupported statements are present."
+            "reason": "All key findings are explicitly stated in the abstract, techniques are correctly extracted, evidence level matches the described meta-analysis, and quantitative claims are accurate. The relevance score of 0.8 is appropriate as the paper directly studies aggression in children aged 4-10, closely matching the goal's population and condition, though not the exact behavior of sibling hitting."
           },
           "relevance_scoring": {
             "score": 1.0,
             "passed": true,
-            "reason": "The paper is directly relevant to the therapeutic goal of reducing childhood aggression, as it is a meta-analysis of parent management training for aggression in children aged 4-10. The relevance score of 0.8 is appropriate per the rubric for studying the same condition in a closely related population, and it is directionally correct and reasonable. The extraction accurately reflects the abstract, and all required JSON fields are correctly populated."
+            "reason": "The paper is directly relevant to the therapeutic goal of reducing childhood aggression, matching the condition and population. The relevance score of 0.8 is appropriate per the rubric for a paper studying the same condition in a closely related population, as it is a meta-analysis on aggression in children aged 4-10. The score is directionally correct and reasonable, aligning with the strict scoring guidelines."
           }
         }
       }

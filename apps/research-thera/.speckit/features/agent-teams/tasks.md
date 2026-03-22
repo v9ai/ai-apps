@@ -21,7 +21,7 @@
 - [x] Create `.claude/agents/evidence-hunter.md`
 - [x] Create `.claude/agents/counter-evidence.md`
 - [x] Create `.claude/agents/evidence-judge.md`
-- [ ] Update existing `.claude/agents/research-analyst.md` (remove Mastra refs)
+- [x] Update existing `.claude/agents/research-analyst.md` (remove Mastra refs)
 
 ## Phase 3: Claude Code Integration
 

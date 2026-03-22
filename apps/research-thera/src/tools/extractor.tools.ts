@@ -1,11 +1,6 @@
-import { createDeepSeek } from "@ai-sdk/deepseek";
-import { generateObject } from "ai";
+import { generateObject } from "../lib/deepseek";
 import { z } from "zod";
 import type { PaperDetails } from "./sources.tools";
-
-const deepseek = createDeepSeek({
-  apiKey: process.env.DEEPSEEK_API_KEY,
-});
 
 /**
  * Research Extraction Tools
@@ -169,7 +164,7 @@ export async function planResearchQuery(params: {
   const { title, description, notes } = params;
 
   const { object } = await generateObject({
-    model: deepseek("deepseek-chat"),
+
     schema: PlanSchema,
     prompt: `Plan a research query strategy for this therapeutic/psychological goal.
 
@@ -188,7 +183,11 @@ Focus on finding psychological research relevant to the specific therapeutic goa
 Include queries about: therapeutic interventions, mechanisms, evidence-based treatments, coping strategies.`,
   });
 
-  return object;
+  return {
+    ...object,
+    inclusion: object.inclusion ?? [],
+    exclusion: object.exclusion ?? [],
+  };
 }
 
 /**
@@ -273,7 +272,7 @@ CRITICAL: Return VALID JSON ONLY. No markdown, no code blocks, no extra text.`;
 
   try {
     const { object } = await generateObject({
-      model: deepseek("deepseek-chat"),
+
       schema: ResearchExtractionSchema,
       prompt: compiledPrompt + schemaInstructions,
     });
@@ -307,7 +306,7 @@ export async function extractResearchLegacy(params: {
   const { therapeuticGoalType, goalTitle, goalDescription, paper } = params;
 
   const { object } = await generateObject({
-    model: deepseek("deepseek-chat"),
+
     schema: TherapyResearchSchema,
     prompt: `Extract therapeutic research information from this paper.
 
@@ -351,7 +350,7 @@ STRICT FILTERING:
 
   return {
     ...object,
-    extractedBy: "mastra:gpt-4o-mini:v1",
+    extractedBy: "pipeline:deepseek:v1",
   };
 }
 
@@ -366,7 +365,7 @@ export async function repairResearch(params: {
   const { extracted, abstract, feedback } = params;
 
   const { object } = await generateObject({
-    model: deepseek("deepseek-chat"),
+
     schema: TherapyResearchSchema,
     prompt: `Repair this research extraction based on feedback.
 
@@ -389,7 +388,7 @@ Instructions:
 
   return {
     ...object,
-    extractedBy: "mastra:gpt-4o-mini:v1-repaired",
+    extractedBy: "pipeline:deepseek:v1-repaired",
   };
 }
 
@@ -404,7 +403,7 @@ export async function planResearchQueryLegacy(params: {
   const { title, description, notes } = params;
 
   const { object } = await generateObject({
-    model: deepseek("deepseek-chat"),
+
     temperature: 1.5,
     schema: z.object({
       therapeuticGoalType: z.string().describe("Type of therapeutic goal"),

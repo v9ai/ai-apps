@@ -42,7 +42,7 @@ class TestContribUrlValidity:
     def _profiles(self):
         p = _load_profiles()
         if not p:
-            pytest.skip("No profiles — run crew.py first")
+            pytest.skip("No profiles — run research_pipeline.py first")
         return p
 
     def _all_contrib_urls(self) -> list[tuple[str, str]]:

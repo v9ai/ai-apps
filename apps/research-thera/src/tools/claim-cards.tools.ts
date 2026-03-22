@@ -1,5 +1,4 @@
-import { createDeepSeek } from "@ai-sdk/deepseek";
-import { generateObject } from "ai";
+import { generateObject } from "../lib/deepseek";
 import { z } from "zod";
 import crypto from "crypto";
 import {
@@ -7,10 +6,6 @@ import {
   type PaperCandidate,
   type PaperDetails,
 } from "./sources.tools";
-
-const deepseek = createDeepSeek({
-  apiKey: process.env.DEEPSEEK_API_KEY,
-});
 
 /**
  * Claim Cards Tools
@@ -90,7 +85,7 @@ export async function extractClaims(text: string): Promise<string[]> {
   });
 
   const result = await generateObject({
-    model: deepseek("deepseek-chat"),
+
     schema,
     prompt: `Extract all factual claims from the following text. Make each claim:
 1. Atomic (one testable statement)
@@ -167,7 +162,7 @@ async function judgeEvidence(
 
   try {
     const result = await generateObject({
-      model: deepseek("deepseek-chat"),
+  
       schema,
       prompt: `Evaluate whether this research paper supports, contradicts, or is irrelevant to the claim.
 
@@ -449,7 +444,7 @@ export async function buildClaimCardsFromClaims(
       createdAt: new Date().toISOString(),
       updatedAt: new Date().toISOString(),
       provenance: {
-        generatedBy: "mastra:claim-cards@1",
+        generatedBy: "pipeline:claim-cards@1",
         model: useLlmJudge ? "deepseek-chat" : undefined,
         sourceTools: sourceNames,
       },

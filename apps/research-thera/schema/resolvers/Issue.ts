@@ -1,5 +1,5 @@
 import type { IssueResolvers } from './../types.generated';
-import { getContactFeedback, getFamilyMember, getJournalEntry, listStoriesForIssue, listTherapeuticQuestions } from "@/src/db";
+import { getContactFeedback, getFamilyMember, getJournalEntry, getLinkedIssues, listStoriesForIssue, listTherapeuticQuestions } from "@/src/db";
 
 export const Issue: IssueResolvers = {
   feedback: async (parent) => {
@@ -47,5 +47,27 @@ export const Issue: IssueResolvers = {
   },
   questions: async (parent) => {
     return listTherapeuticQuestions(undefined, parent.id);
+  },
+  relatedIssues: async (parent) => {
+    const links = await getLinkedIssues(parent.id, parent.createdBy);
+    return links.map((l) => ({
+      id: l.linkId,
+      linkType: l.linkType,
+      issue: {
+        id: l.issue.id,
+        feedbackId: l.issue.feedbackId,
+        journalEntryId: l.issue.journalEntryId,
+        familyMemberId: l.issue.familyMemberId,
+        relatedFamilyMemberId: l.issue.relatedFamilyMemberId,
+        createdBy: l.issue.userId,
+        title: l.issue.title,
+        description: l.issue.description,
+        category: l.issue.category,
+        severity: l.issue.severity,
+        recommendations: l.issue.recommendations,
+        createdAt: l.issue.createdAt,
+        updatedAt: l.issue.updatedAt,
+      },
+    })) as any;
   },
 };

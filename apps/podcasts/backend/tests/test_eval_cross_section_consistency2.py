@@ -106,7 +106,7 @@ class TestNameConsistentAcrossSections:
     def _profiles(self):
         p = _load_profiles()
         if not p:
-            pytest.skip("No profiles -- run crew.py first")
+            pytest.skip("No profiles -- run research_pipeline.py first")
         return p
 
     def test_name_consistent_across_sections(self):
@@ -131,7 +131,7 @@ class TestSocialGithubMatchesSlug:
     def _profiles(self):
         p = _load_profiles()
         if not p:
-            pytest.skip("No profiles -- run crew.py first")
+            pytest.skip("No profiles -- run research_pipeline.py first")
         return p
 
     def test_social_github_matches_slug(self):
@@ -192,7 +192,7 @@ class TestTopicsAppearInBioOrContribs:
     def _profiles(self):
         p = _load_profiles()
         if not p:
-            pytest.skip("No profiles -- run crew.py first")
+            pytest.skip("No profiles -- run research_pipeline.py first")
         return p
 
     def test_topics_appear_in_bio_or_contribs(self):

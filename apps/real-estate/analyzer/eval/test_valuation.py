@@ -798,7 +798,7 @@ def test_valuation(case):
 
 
 # ---------------------------------------------------------------------------
-# Live CrewAI valuation test — runs the actual agent with DeepEval tracing
+# Live valuation test — runs the actual agent with DeepEval tracing
 # ---------------------------------------------------------------------------
 
 @pytest.mark.asyncio

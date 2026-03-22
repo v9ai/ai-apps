@@ -1,0 +1,147 @@
+{
+  "slug": "janni-turunen",
+  "name": "Janni Turunen",
+  "generated_at": "2026-03-21T17:22:36+00:00",
+  "bio": "Janni Turunen is a Helsinki-based technology, design, and ML leader. Turunen studied Politics and Development Studies at SOAS University of London (1997-2000) before pivoting to internet and engineering roles. After leading engineering and analytics at Custobar and holding CTO/Partner roles across Solita, Aitomation, and D2 Solutions, Turunen joined Fuzu Ltd as Head of Engineering. At Fuzu, Turunen leads development of an AI-powered career platform serving 2.8M+ users across East Africa. Turunen publishes optimized open-source models on HuggingFace, including INT8-quantized Qwen3 embeddings, and builds Rust-based developer tools like vipune (semantic memory) and oo (context compression for AI coding agents).",
+  "executive_summary": {
+    "one_liner": "Janni Turunen is a pragmatic, design-oriented engineering leader who applies creative AI and optimized infrastructure to build scalable, white-labeled recruitment platforms for emerging markets, most notably as Head of Engineering at Fuzu.",
+    "key_facts": [
+      "Leads engineering for Fuzu's AI-powered career platform, serving 2.8M+ users across East Africa with AI-driven job matching and career development.",
+      "A hands-on ML practitioner who publishes optimized open-source models, notably creating INT8-quantized Qwen3 embeddings achieving 8x size reduction and 2-4x faster CPU inference.",
+      "Turunen's career uniquely blends a background in Politics & Development Studies with deep technical execution across social enterprises, non-profits, and startups, focusing on product-first solutions."
+    ],
+    "career_arc": "Beginning with a foundation in Politics and Development Studies at SOAS, Turunen pivoted to technology, weaving together design, internet roles, and social impact across various startups and non-profits. Turunen progressed through data science and engineering leadership roles (including at Custobar and OP Financial Group) before joining Fuzu in 2022, where Turunen now synthesizes technical depth and social enterprise experience to scale AI recruitment in Africa.",
+    "current_focus": "Scaling Fuzu's AI recruitment platform across African markets, while continuing hands-on work in model optimization—publishing quantized embedding models on HuggingFace and building Rust tools like vipune and oo to improve AI-augmented development workflows.",
+    "industry_significance": "Turunen represents a critical bridge: applying European engineering rigor and cutting-edge AI optimization techniques to solve acute, high-impact problems in African talent markets. Turunen's work demonstrates how pragmatic, infrastructure-focused AI deployment can drive socioeconomic mobility in emerging economies, challenging the dominance of global platforms with localized, ethical solutions.",
+    "risk_factors": [
+      "Fuzu operates as a challenger in a competitive African job platform market against established players like BrighterMonday and indirect giants like LinkedIn.",
+      "Total raised capital (~$5.8M from Finnfund, Sparkmind.vc, Barona, and others) is modest compared to global HR tech players, potentially limiting R&D and market expansion.",
+      "Turunen maintains a low public profile with minimal conference speaking or media commentary, which could limit personal brand influence and industry networking reach."
+    ],
+    "meeting_prep": [
+      "Ask about the unique infrastructure challenges of deploying AI recruitment platforms in African markets, given Turunen's work on CPU-optimized models and the 'oo' tool for AI coding agents.",
+      "Discuss the strategic balance between building proprietary platform solutions and contributing back to the open-source ecosystem (e.g., Turunen's HuggingFace models and Rust tools).",
+      "Explore how Turunen's background in Development Studies and social enterprises informs the ethical design and localization of Fuzu's AI matching algorithms for diverse African job seekers."
+    ],
+    "confidence_level": "High. The profile is built from multiple consistent, high-quality sources: verified LinkedIn, GitHub, and HuggingFace profiles; company press releases and funding reports; and a personal website. Technical contributions are well-documented with specific metrics. Minor gaps exist in early career details and direct quotes, but the core narrative is robust and triangulated."
+  },
+  "topics": [
+    "ONNX model optimization for production deployment",
+    "INT8 quantization of transformer embedding models",
+    "Text Embeddings Inference (TEI) pipeline optimization",
+    "CPU-optimized inference for embedding models",
+    "Qwen embedding model fine-tuning and deployment",
+    "Rust-based systems programming for AI infrastructure",
+    "Infrastructure as Code (IaC) for AI platform scaling",
+    "White-labeled AI recruitment platform architecture",
+    "AI-powered job matching and candidate screening systems",
+    "TypeScript integration for AI API services"
+  ],
+  "timeline": [
+    {
+      "date": "1992-09",
+      "event": "Started secondary education at Oulun Lyseon Lukio, pursuing IB Diploma",
+      "url": "https://theorg.com/org/fuzu/org-chart/janni-turunen"
+    },
+    {
+      "date": "1997-09",
+      "event": "Began Development Studies and Politics degree at SOAS University of London",
+      "url": "https://theorg.com/org/fuzu/org-chart/janni-turunen"
+    },
+    {
+      "date": "2000-06",
+      "event": "Completed Development Studies and Politics degree at SOAS University of London",
+      "url": "https://theorg.com/org/fuzu/org-chart/janni-turunen"
+    },
+    {
+      "date": "2021-01",
+      "event": "Started role as Head of Engineering & Analytics at Custobar",
+      "url": "https://fi.linkedin.com/in/janiturunen"
+    },
+    {
+      "date": "2021-06",
+      "event": "Completed tenure at D2 Solutions | Data & Analytics and Aitomation Oy after company merger",
+      "url": "https://www.linkedin.com/posts/janiturunen_so-that-was-my-last-day-of-a-whirlwind-adventure-activity-6776220452252651520-LgAI"
+    },
+    {
+      "date": "2022-01",
+      "event": "Joined Fuzu Ltd as Head of Engineering, leading platform engineering team",
+      "url": "https://theorg.com/org/fuzu/org-chart/janni-turunen"
+    },
+    {
+      "date": "2025-06",
+      "event": "Published HuggingFace models: Qwen3-Embedding ONNX variants optimized for Text Embeddings Inference",
+      "url": "https://huggingface.co/janni-t"
+    },
+    {
+      "date": "2024-03",
+      "event": "Released vipune Rust project on GitHub - a single binary application with SQLite database",
+      "url": "https://github.com/randomm/vipune"
+    },
+    {
+      "date": "2024-06",
+      "event": "Published opencode-claude-skill-sync TypeScript project for Claude AI integration",
+      "url": "https://github.com/randomm/opencode-claude-skill-sync"
+    },
+    {
+      "date": "2025-06",
+      "event": "Released INT8 quantized version of Qwen3 embedding model (0.56GB vs 4.7GB original) with 2-4x CPU speed improvement",
+      "url": "https://huggingface.co/janni-t/qwen3-embedding-0.6b-int8-tei-onnx"
+    }
+  ],
+  "key_contributions": [
+    {
+      "title": "Qwen3-Embedding ONNX INT8 Quantized Models",
+      "description": "Created INT8 quantized ONNX versions of Qwen3 embedding models optimized for Text Embeddings Inference (TEI) with CPU acceleration. These models achieve 8x size reduction (0.56GB vs 4.7GB) and 2-4x faster CPU inference while maintaining accuracy.",
+      "url": "https://huggingface.co/janni-t/qwen3-embedding-0.6b-int8-tei-onnx"
+    },
+    {
+      "title": "oo - Context-Efficient Command Runner for AI Coding Agents",
+      "description": "Developed a Rust-based tool that intelligently compresses command output for AI coding agents, reducing context token waste by classifying and summarizing verbose build/test output while preserving essential information.",
+      "url": "https://github.com/randomm/oo"
+    },
+    {
+      "title": "Fuzu AI Recruitment Platform Architecture",
+      "description": "Led engineering for Fuzu's white-labeled AI-powered recruitment platform serving African markets, implementing scalable job matching, candidate screening, and career development systems that process thousands of job applications daily.",
+      "url": "https://www.fuzu.com/employers"
+    },
+    {
+      "title": "TEI Porter Deployment System",
+      "description": "Created deployment infrastructure for Text Embeddings Inference models using ONNX runtime with AMD-optimized builds, enabling efficient CPU inference for embedding models in production environments.",
+      "url": "https://github.com/Fuzu-com/tei-porter-deployment"
+    }
+  ],
+  "quotes": [],
+  "social": {
+    "github": "https://github.com/randomm",
+    "twitter": "https://twitter.com/_j_a_n_n_i",
+    "linkedin": "https://fi.linkedin.com/in/janiturunen",
+    "website": "http://jani.turunen.in/",
+    "huggingface": "https://huggingface.co/janni-t",
+    "medium": "https://medium.com/@randommman",
+    "youtube": "https://www.youtube.com/channel/UCXtRPTXZWO34trwp96aM3Lw",
+    "chess": "https://www.chess.com/member/jannnii",
+    "fuzu_profile": "https://www.fuzu.com/profile/jani-turunen"
+  },
+  "podcast_appearances": [],
+  "news": [],
+  "videos": [],
+  "competitive_landscape": {},
+  "collaboration_network": {
+    "co_founders": [],
+    "key_collaborators": [
+      {
+        "name": "Fuzu Leadership & Engineering Team",
+        "relationship": "Professional Colleague",
+        "context": "As Head of Engineering at Fuzu, key collaborators would include the company's co-founders (e.g., Jussi Hinkkanen, CEO), other C-suite members, and the engineering team. Specific names cannot be verified from the provided data."
+      }
+    ],
+    "mentors": [],
+    "mentees": [],
+    "academic_lineage": "No verifiable academic publication record found. Therefore, PhD advisor and academic lineage cannot be determined."
+  },
+  "funding": {},
+  "conferences": {},
+  "technical_philosophy": {},
+  "sources": []
+}

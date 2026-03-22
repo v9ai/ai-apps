@@ -1,5 +1,5 @@
 import type { QueryResolvers } from "./../../types.generated";
-import { d1Tools } from "@/src/db";
+import { db } from "@/src/db";
 
 export const goals: NonNullable<QueryResolvers['goals']> = async (
   _parent,
@@ -11,7 +11,7 @@ export const goals: NonNullable<QueryResolvers['goals']> = async (
     throw new Error("Authentication required");
   }
 
-  const goalsList = await d1Tools.listGoals(
+  const goalsList = await db.listGoals(
     userEmail,
     args.familyMemberId ?? undefined,
   );
@@ -23,20 +23,13 @@ export const goals: NonNullable<QueryResolvers['goals']> = async (
   }
 
   return filtered.map((goal) => ({
-    id: goal.id,
-    familyMemberId: goal.familyMemberId,
+    ...goal,
     createdBy: goal.createdBy,
-    title: goal.title,
-    description: goal.description,
-    status: goal.status,
-    parentGoalId: goal.parentGoalId,
-    createdAt: goal.createdAt,
-    updatedAt: goal.updatedAt,
     research: [],
     questions: [],
     stories: [],
     notes: [],
     subGoals: [],
     parentGoal: null,
-  }));
+  })) as any;
 };

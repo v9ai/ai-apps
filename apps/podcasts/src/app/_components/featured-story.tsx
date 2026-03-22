@@ -101,7 +101,7 @@ export function FeaturedStory({
             Spotlight
           </div>
 
-          <div className={css({ display: 'flex', flexDir: 'column', alignItems: 'center', gap: { base: '6', sm: '8', md: '10', lg: '14' }, md: { flexDir: 'row', alignItems: 'flex-start' } })}>
+          <div className={css({ display: 'flex', flexDir: 'column', alignItems: 'center', gap: { base: '6', sm: '8', md: '8', lg: '10' }, md: { flexDir: 'row', alignItems: 'flex-start' } })}>
             {/* Portrait column */}
             <div className={css({ flexShrink: 0, display: 'flex', flexDir: 'column', alignItems: 'center', pb: '2', md: { w: '40%', pb: '0', pt: '2' } })}>
               {avatar ? (
@@ -165,7 +165,7 @@ export function FeaturedStory({
               </blockquote>
 
               <h2
-                className={css({ fontSize: 'xl', fontWeight: 'bold', color: '#E8E8ED', mt: { base: '8', md: '10' } })}
+                className={css({ fontSize: 'xl', fontWeight: 'bold', color: '#E8E8ED', mt: { base: '5', md: '6' } })}
                 style={{ animation: 'fade-in-up 0.6s ease-out 0.5s both' }}
               >
                 {personality.name}
@@ -186,7 +186,7 @@ export function FeaturedStory({
                   display: 'flex',
                   alignItems: 'center',
                   gap: '4',
-                  mt: { base: '8', md: '10' },
+                  mt: { base: '6', md: '8' },
                   justifyContent: { base: 'center', md: 'flex-start' },
                   flexWrap: 'wrap',
                 })}

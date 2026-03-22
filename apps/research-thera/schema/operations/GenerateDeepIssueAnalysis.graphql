@@ -1,0 +1,7 @@
+mutation GenerateDeepIssueAnalysis($familyMemberId: Int!, $triggerIssueId: Int) {
+  generateDeepIssueAnalysis(familyMemberId: $familyMemberId, triggerIssueId: $triggerIssueId) {
+    success
+    message
+    jobId
+  }
+}

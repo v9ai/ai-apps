@@ -9,7 +9,7 @@ from unittest.mock import AsyncMock, patch
 
 import pytest
 
-from crew import (
+from research_pipeline import (
     ResearchState,
     build_graph,
     phase1,
@@ -37,7 +37,7 @@ SAMPLE_PERSON = {
 }
 
 
-# ── 1. All 10 tools are importable from crew ────────────────────────────
+# ── 1. All 10 tools are importable from research_pipeline ────────────────────────────
 
 def test_all_tools_importable():
     tools = [

@@ -1,0 +1,19 @@
+[project]
+name = "deep-analysis-evals"
+version = "0.1.0"
+description = "DeepEval evaluations for deep issue analysis — DOB/age consistency and output quality"
+requires-python = ">=3.12"
+dependencies = [
+    "deepeval>=2.5.0",
+    "json-repair>=0.58.5",
+    "langgraph>=0.2",
+    "openai>=1.0.0",
+    "psycopg[binary]>=3.1",
+    "pydantic>=2.0",
+    "python-dotenv>=1.0.0",
+]
+
+[tool.pytest.ini_options]
+env = [
+    "DEEPEVAL_TELEMETRY_OPT_OUT=YES",
+]

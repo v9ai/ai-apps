@@ -1,0 +1,135 @@
+{
+  "id": "school-age-anxiety",
+  "stage": "deep_analysis",
+  "prompt": "You are a clinical psychologist and family systems analyst. Your PRIMARY task is to provide an in-depth analysis of a SPECIFIC issue for this family member. The other issues, observations, and feedback are provided as CONTEXT to help you understand how this issue fits into the broader picture \u2014 but your analysis must CENTER on the trigger issue.\n\nIMPORTANT: Only reference issue IDs that appear in the data below. Pay careful attention to the family member's age and date of birth \u2014 all analysis, recommendations, and developmental references must be consistent with their actual age.\n\n## Family Member Profile\nName: David\nAge: 9 years old\nDate of Birth Year: 2017\nRelationship: son\n\n## TRIGGER ISSUE (Primary Focus)\n- [ID:201] \"School refusal\" (emotional, high severity)\n  Refuses to go to school 2-3 days per week, complains of stomachaches.\n\nYour summary, pattern clusters, and priority recommendations must primarily address the trigger issue above. Other issues should be referenced only when they relate to or shed light on the trigger issue.\n\n## Other Issues (Context)\n- [ID:202] \"Separation anxiety at bedtime\" (emotional, medium severity)\n  Cannot fall asleep without parent in room, wakes up crying at night.\n\n## Behavior Observations (2)\n- 2026-03-12: school refusal, freq=2-3x/week, intensity=high, Context: Monday mornings worst\n- 2026-03-11: bedtime anxiety, freq=nightly, intensity=medium, Context: parent leaves room\n\n## Teacher Feedback\nDavid is a bright student but has been absent frequently. When he does attend, he is clingy with the teacher and avoids group work. He asks to call his mother multiple times per day.\n\n## Instructions\nAnalyze the data above with PRIMARY FOCUS on the trigger issue (ID:201: \"School refusal\").\nProduce a structured JSON analysis with these fields:\n\n1. **summary**: 2-3 paragraph executive summary for a parent/caregiver CENTERED on the trigger issue. Start with the trigger issue, then explain how other issues relate to it. MUST correctly reference the child's age and use age-appropriate language.\n2. **patternClusters**: Array of related issue groups. The trigger issue MUST appear in at least one cluster. Each has: name, description, issueIds (array of ints), issueTitles (array of strings), categories (array of strings), pattern (recurring|escalating|co-occurring|seasonal|triggered), confidence (0-1), suggestedRootCause (optional string).\n3. **timelineAnalysis**: Object with phases (array of {period, issueIds, description, moodTrend (declining|improving|stable|volatile), keyEvents (array of strings)}), moodCorrelation (optional string), escalationTrend (improving|worsening|stable|cyclical), criticalPeriods (array of strings). Focus timeline on the trigger issue's evolution.\n4. **familySystemInsights**: Array of {insight, involvedMemberIds (array of ints), involvedMemberNames (array of strings), evidenceIssueIds (array of ints), systemicPattern (optional string), actionable (bool)}. Prioritize insights related to the trigger issue.\n5. **priorityRecommendations**: Array of {rank (int), issueId (optional int), issueTitle (optional string), rationale, urgency (immediate|short_term|long_term), suggestedApproach, relatedResearchIds (optional array of ints)}. The FIRST recommendation (rank 1) MUST address the trigger issue directly. Recommendations MUST be age-appropriate for the child's actual age.\n6. **researchRelevance**: Array of {patternClusterName, relevantResearchIds (array of ints), relevantResearchTitles (array of strings), coverageGaps (array of strings)}.\n7. **developmentalContext**: Object with {statedAge (int), dobYear (int), developmentalStage (string), ageAppropriateExpectations (string), flags (array of strings for any developmental concerns)}.\n\nIMPORTANT: All fields marked as \"array\" MUST be JSON arrays, never bare strings. For example coverageGaps must be [\"gap1\", \"gap2\"], not \"gap1, gap2\".\n\nWrite the analysis in English.",
+  "result": {
+    "summary": "David's school refusal is a significant emotional issue that requires immediate attention. At 9 years old, he's refusing to attend school 2-3 days per week, complaining of stomachaches, with Monday mornings being particularly difficult. This pattern of avoidance suggests underlying anxiety that's manifesting physically and interfering with his education and social development.\n\nThe school refusal connects directly to his separation anxiety at bedtime, where he cannot fall asleep without a parent present and wakes up crying. Both issues share a common theme of separation distress and difficulty with transitions. His teacher's feedback about clinginess with adults and avoidance of group work at school further supports this pattern of anxiety in separation situations.\n\nThese behaviors are developmentally concerning for a 9-year-old, as children at this age typically demonstrate increasing independence and comfort with peer relationships. The co-occurrence of school refusal and bedtime anxiety suggests a broader anxiety pattern that requires a coordinated approach rather than addressing each symptom in isolation.",
+    "patternClusters": [
+      {
+        "name": "Separation Anxiety Cluster",
+        "description": "Pattern of distress and avoidance behaviors related to separation from primary caregivers across multiple contexts",
+        "issueIds": [
+          201,
+          202
+        ],
+        "issueTitles": [
+          "School refusal",
+          "Separation anxiety at bedtime"
+        ],
+        "categories": [
+          "emotional",
+          "behavioral"
+        ],
+        "pattern": "co-occurring",
+        "confidence": 0.85,
+        "suggestedRootCause": "Underlying anxiety disorder with separation anxiety features, possibly exacerbated by developmental transitions or school-related stressors"
+      }
+    ],
+    "timelineAnalysis": {
+      "phases": [
+        {
+          "period": "Current (March 2026)",
+          "issueIds": [
+            201,
+            202
+          ],
+          "description": "School refusal occurring 2-3 times weekly with high intensity, particularly on Monday mornings. Bedtime anxiety occurring nightly with medium intensity when parent leaves room.",
+          "moodTrend": "declining",
+          "keyEvents": [
+            "Frequent school absences",
+            "Teacher reports clinginess and avoidance of group work",
+            "Requests to call mother multiple times daily"
+          ]
+        }
+      ],
+      "escalationTrend": "worsening",
+      "criticalPeriods": [
+        "Monday mornings",
+        "Bedtime transitions"
+      ]
+    },
+    "familySystemInsights": [
+      {
+        "insight": "Parent-child attachment patterns may be contributing to separation difficulties, with David showing excessive dependence on parental presence for emotional regulation",
+        "involvedMemberIds": [
+          201
+        ],
+        "involvedMemberNames": [
+          "David"
+        ],
+        "evidenceIssueIds": [
+          201,
+          202
+        ],
+        "systemicPattern": "Anxious attachment behaviors across multiple contexts",
+        "actionable": true
+      },
+      {
+        "insight": "School refusal may be reinforced by parental responses to physical complaints, creating a cycle of avoidance",
+        "involvedMemberIds": [
+          201
+        ],
+        "involvedMemberNames": [
+          "David"
+        ],
+        "evidenceIssueIds": [
+          201
+        ],
+        "systemicPattern": "Secondary gain from symptom expression",
+        "actionable": true
+      }
+    ],
+    "priorityRecommendations": [
+      {
+        "rank": 1,
+        "issueId": 201,
+        "issueTitle": "School refusal",
+        "rationale": "School refusal is high severity and directly impacts David's education, social development, and daily functioning. Immediate intervention is needed to prevent academic consequences and worsening anxiety.",
+        "urgency": "immediate",
+        "suggestedApproach": "Implement a graduated exposure plan with school psychologist support. Create a consistent morning routine with visual schedule. Use cognitive-behavioral strategies to address anxiety thoughts about school. Coordinate with teacher to create a safe arrival routine.",
+        "relatedResearchIds": []
+      },
+      {
+        "rank": 2,
+        "issueId": 202,
+        "issueTitle": "Separation anxiety at bedtime",
+        "rationale": "Bedtime anxiety reinforces separation fears and disrupts sleep, which can exacerbate daytime anxiety and school refusal.",
+        "urgency": "short_term",
+        "suggestedApproach": "Implement a gradual fading procedure for bedtime presence. Use a consistent bedtime routine with relaxation techniques. Introduce transitional objects and positive reinforcement for independent sleep.",
+        "relatedResearchIds": []
+      },
+      {
+        "rank": 3,
+        "rationale": "Addressing underlying anxiety patterns requires professional assessment to determine if clinical intervention is needed.",
+        "urgency": "short_term",
+        "suggestedApproach": "Schedule evaluation with child psychologist specializing in anxiety disorders. Consider cognitive-behavioral therapy focused on separation anxiety and school refusal.",
+        "relatedResearchIds": []
+      }
+    ],
+    "researchRelevance": [
+      {
+        "patternClusterName": "Separation Anxiety Cluster",
+        "relevantResearchIds": [],
+        "relevantResearchTitles": [],
+        "coverageGaps": [
+          "School refusal interventions for 9-year-olds",
+          "Co-occurring separation anxiety and school refusal treatment protocols",
+          "Family systems approaches to childhood anxiety disorders"
+        ]
+      }
+    ],
+    "developmentalContext": {
+      "statedAge": 9,
+      "dobYear": 2017,
+      "developmentalStage": "Middle childhood (concrete operational stage)",
+      "ageAppropriateExpectations": "At 9 years old, children typically demonstrate increasing independence, manage school transitions with minimal distress, engage in peer relationships, and separate from parents for school and activities without significant anxiety.",
+      "flags": [
+        "School refusal at high frequency",
+        "Separation anxiety interfering with daily functioning",
+        "Avoidance of peer interactions in school setting"
+      ]
+    }
+  },
+  "model": "deepseek-chat",
+  "generated_at": "2026-03-21T22:21:55.693261+00:00"
+}

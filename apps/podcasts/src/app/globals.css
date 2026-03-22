@@ -225,77 +225,49 @@ kbd {
 }
 .info-pill:hover { border-color: rgba(255,255,255,0.10); background: #1C1C22; }
 
-/* ---------- Story card 3D (grid variant) ---------- */
+/* ---------- Story card (grid variant) ---------- */
 .story-card-3d {
-  transform: perspective(1000px) rotateX(0deg) translateY(0px);
-  will-change: transform, box-shadow;
   box-shadow:
     0 1px 2px rgba(0,0,0,0.35),
     0 4px 16px -4px rgba(0,0,0,0.25),
     inset 0 1px 0 rgba(255,255,255,0.06);
   transition:
-    background-color 0.4s var(--ease-smooth),
-    transform 0.4s var(--ease-smooth),
-    box-shadow 0.4s var(--ease-smooth),
-    border-color 0.4s var(--ease-smooth);
+    background-color 0.3s var(--ease-smooth),
+    transform 0.3s var(--ease-smooth),
+    box-shadow 0.3s var(--ease-smooth),
+    border-color 0.3s var(--ease-smooth);
 }
 .story-card-3d:hover {
-  background-color: #1C1C22;
-  border-color: rgba(255, 255, 255, 0.10);
-  transform: perspective(1000px) rotateX(1.2deg) translateY(-6px);
+  background-color: #1E1E26;
+  border-color: rgba(255, 255, 255, 0.12);
+  transform: translateY(-2px);
   box-shadow:
-    0 2px 4px rgba(0,0,0,0.45),
-    0 12px 36px -6px rgba(0,0,0,0.4),
-    0 24px 56px -12px rgba(0,0,0,0.25),
-    inset 0 1px 0 rgba(255,255,255,0.08),
-    inset 0 0 30px -8px rgba(139,92,246,0.06);
+    0 4px 20px -4px rgba(0,0,0,0.4),
+    inset 0 1px 0 rgba(255,255,255,0.08);
 }
 .story-card-3d:focus-visible {
   outline: none;
   border-color: rgba(139, 92, 246, 0.5);
   background-color: #1C1C22;
-  transform: perspective(1000px) rotateX(1.2deg) translateY(-6px);
+  transform: translateY(-2px);
   box-shadow:
     0 0 0 3px rgba(139,92,246,0.18),
-    0 2px 4px rgba(0,0,0,0.45),
-    0 12px 36px -6px rgba(0,0,0,0.4),
+    0 4px 20px -4px rgba(0,0,0,0.4),
     inset 0 1px 0 rgba(255,255,255,0.08);
 }
 .story-card-3d:active {
-  transform: perspective(1000px) rotateX(0.4deg) translateY(-2px);
+  transform: translateY(-1px);
   box-shadow:
     0 1px 3px rgba(0,0,0,0.5),
-    0 6px 20px -4px rgba(0,0,0,0.4),
+    0 4px 12px -4px rgba(0,0,0,0.3),
     inset 0 1px 0 rgba(255,255,255,0.06);
   transition-duration: 80ms;
-}
-.story-card-avatar {
-  transition: transform 0.35s var(--ease-smooth), box-shadow 0.35s var(--ease-smooth);
-}
-.story-card-3d:hover .story-card-avatar {
-  box-shadow: 0 0 0 2px rgba(255,255,255,0.12);
-  transform: scale(1.04);
-}
-.story-card-3d .known-for-badge {
-  transition: background-color 0.35s var(--ease-smooth), border-color 0.35s var(--ease-smooth), color 0.35s var(--ease-smooth);
-}
-.story-card-3d:hover .known-for-badge {
-  background: rgba(139,92,246,0.12);
-  border-color: rgba(139,92,246,0.28);
-  color: #c4b5fd;
-}
-.story-card-3d:hover .podcast-count-pill {
-  background-color: rgba(255,255,255,0.10);
-  border-color: rgba(255,255,255,0.16);
-  color: #CDCDD6;
 }
 
 /* ── Utility classes ──────────────────────────────────────────── */
 
 .animate-fade-in { animation: fade-in 0.35s var(--ease-expo-out) both; }
 .animate-fade-in-up { animation: fade-in-up 0.55s var(--ease-expo-out) both; }
-.animate-row-enter { animation: row-enter 0.35s var(--ease-expo-out) both; }
-.animate-stagger-in { animation: stagger-in 0.45s var(--ease-expo-out) both; }
 
 .stat-pill { transition: background-color 0.15s var(--ease-expo-out), border-color 0.15s var(--ease-expo-out); }
 .stat-pill:hover { background: rgba(255,255,255,0.08); border-color: rgba(255,255,255,0.10); }
@@ -312,77 +284,17 @@ kbd {
     radial-gradient(ellipse 90% 70% at 20% -10%, rgba(139,92,246,0.14) 0%, transparent 65%),
     radial-gradient(ellipse 60% 80% at 80% 5%, rgba(180,120,255,0.06) 0%, transparent 60%),
     radial-gradient(ellipse 50% 40% at 55% 80%, rgba(200,140,80,0.03) 0%, transparent 55%);
-  animation: hero-mesh-drift 20s linear infinite alternate;
 }
-
-.hero-grain-overlay {
-  position: absolute; inset: 0; pointer-events: none; opacity: 0.045;
-  background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noise)'/%3E%3C/svg%3E");
-  background-size: 256px 256px;
-  mask-image: radial-gradient(ellipse 90% 70% at 50% 20%, black 0%, transparent 80%);
-  -webkit-mask-image: radial-gradient(ellipse 90% 70% at 50% 20%, black 0%, transparent 80%);
-  mix-blend-mode: overlay;
-}
-
-.hero-orb {
-  position: absolute; border-radius: 9999px; pointer-events: none;
-  opacity: 0.4;
-  animation: hero-orb-float 18s ease-in-out infinite alternate;
-}
-.hero-orb--1 {
-  width: 420px; height: 420px; top: -120px; left: 8%;
-  background: radial-gradient(circle, rgba(139,92,246,0.18) 0%, rgba(139,92,246,0.04) 60%, transparent 100%);
-  filter: blur(80px); animation-delay: 0s; animation-duration: 18s;
-}
-.hero-orb--2 {
-  width: 240px; height: 240px; top: -40px; right: 12%;
-  background: radial-gradient(circle, rgba(99,102,241,0.10) 0%, transparent 70%);
-  filter: blur(70px); animation-delay: -6s; animation-duration: 24s;
-}
-.hero-orb--3 {
-  width: 180px; height: 180px; bottom: -20px; left: 42%;
-  background: radial-gradient(circle, rgba(200,150,90,0.06) 0%, transparent 70%);
-  filter: blur(60px); animation-delay: -14s; animation-duration: 28s;
-}
-
-.hero-pulse-line { animation: hero-pulse-fade 3.2s ease-in-out infinite; }
 
 /* ========================================
    Keyframes
    ======================================== */
 
-@keyframes hero-mesh-drift {
-  0%   { opacity: 0.85; transform: translateX(0) translateY(0); }
-  50%  { opacity: 1;    transform: translateX(-12px) translateY(6px); }
-  100% { opacity: 0.9;  transform: translateX(8px) translateY(-10px); }
-}
-@keyframes hero-orb-float {
-  0%   { opacity: 0.5; transform: translateY(0) translateX(0) scale(1); }
-  25%  { opacity: 0.65; transform: translateY(-8px) translateX(3px) scale(1.06); }
-  50%  { opacity: 0.85; transform: translateY(-14px) translateX(6px) scale(1.02); }
-  75%  { opacity: 0.7; transform: translateY(-20px) translateX(2px) scale(1.08); }
-  100% { opacity: 0.55; transform: translateY(-18px) translateX(6px) scale(1.04); }
-}
-@keyframes hero-pulse-fade {
-  0%, 100% { opacity: 0; }
-  15%      { opacity: 0; }
-  50%      { opacity: 0.55; }
-  85%      { opacity: 0; }
-}
 @keyframes fade-in-up { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: translateY(0); } }
 @keyframes fade-in-micro { from { opacity: 0; transform: translateY(4px); } to { opacity: 1; transform: translateY(0); } }
 @keyframes fade-in { from { opacity: 0; } to { opacity: 1; } }
-@keyframes card-enter { from { opacity: 0; transform: scale(0.97); } to { opacity: 1; transform: scale(1); } }
-@keyframes slide-in-left { from { opacity: 0; transform: translateX(-16px); } to { opacity: 1; transform: translateX(0); } }
-@keyframes story-card-enter { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
 @keyframes search-modal-in { from { opacity: 0; transform: scale(0.98) translateY(-8px); } to { opacity: 1; transform: scale(1) translateY(0); } }
-@keyframes row-enter { from { opacity: 0; transform: translateY(6px); } to { opacity: 1; transform: translateY(0); } }
-@keyframes stagger-in { from { opacity: 0; transform: translateY(12px) scale(0.98); } to { opacity: 1; transform: translateY(0) scale(1); } }
 @keyframes skeleton-shimmer { 0% { background-position: 200% 0; } 100% { background-position: -200% 0; } }
-@keyframes hero-scroll-bounce {
-  0%, 100% { transform: translateY(0); opacity: 0.4; }
-  50% { transform: translateY(6px); opacity: 0.8; }
-}
 
 /* ========================================
    New keyframes

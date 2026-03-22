@@ -12,6 +12,30 @@ THRESHOLD = 0.7
 model = DeepSeekModel()
 
 # ---------------------------------------------------------------------------
+# Metrics — DOB / age consistency
+# ---------------------------------------------------------------------------
+
+dob_age_consistency_metric = GEval(
+    name="DOB Age-Developmental Consistency",
+    criteria=(
+        "Evaluate whether the normalization output is consistent with the patient's age. "
+        "Check that: "
+        "(1) the developmental tier/stage is appropriate for the stated age "
+        "(e.g. ages 3-5 = early_childhood/preschool, 6-11 = school_age/middle_childhood, "
+        "12-17 = adolescent, 18+ = adult), "
+        "(2) required keywords reference age-appropriate terminology "
+        "(e.g. 'children' not 'adults' for a 7-year-old), "
+        "(3) the clinical restatement does not contradict the patient's age, "
+        "(4) no language suggests a different age group than the actual patient. "
+        "Penalize heavily if the developmental tier is clearly wrong for the age "
+        "(e.g. 'adolescent' for a 5-year-old, or 'preschool' for a 14-year-old)."
+    ),
+    evaluation_params=[LLMTestCaseParams.INPUT, LLMTestCaseParams.ACTUAL_OUTPUT],
+    model=model,
+    threshold=THRESHOLD,
+)
+
+# ---------------------------------------------------------------------------
 # Metrics — Normalization stage
 # ---------------------------------------------------------------------------
 

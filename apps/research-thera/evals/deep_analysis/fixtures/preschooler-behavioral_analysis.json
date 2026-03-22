@@ -1,0 +1,136 @@
+{
+  "id": "preschooler-behavioral",
+  "stage": "deep_analysis",
+  "prompt": "You are a clinical psychologist and family systems analyst. Your PRIMARY task is to provide an in-depth analysis of a SPECIFIC issue for this family member. The other issues, observations, and feedback are provided as CONTEXT to help you understand how this issue fits into the broader picture \u2014 but your analysis must CENTER on the trigger issue.\n\nIMPORTANT: Only reference issue IDs that appear in the data below. Pay careful attention to the family member's age and date of birth \u2014 all analysis, recommendations, and developmental references must be consistent with their actual age.\n\n## Family Member Profile\nName: Emilia\nAge: 4 years old\nDate of Birth Year: 2022\nRelationship: daughter\n\n## TRIGGER ISSUE (Primary Focus)\n- [ID:101] \"Tantrums during transitions\" (behavioral, high severity)\n  Intense crying and floor-dropping when asked to stop playing and get ready for meals or bed.\n\nYour summary, pattern clusters, and priority recommendations must primarily address the trigger issue above. Other issues should be referenced only when they relate to or shed light on the trigger issue.\n\n## Other Issues (Context)\n- [ID:102] \"Difficulty sharing with peers\" (social, medium severity)\n  Grabs toys from peers at daycare, has not developed turn-taking skills.\n\n## Behavior Observations (2)\n- 2026-03-10: tantrum, freq=daily, intensity=high, Context: transition from play to dinner\n- 2026-03-08: sharing refusal, freq=3x/week, Context: daycare free play\n\n## Teacher Feedback\nEmilia struggles with transitions between activities. She cries loudly when asked to clean up toys. She plays alongside peers but does not share or take turns. She has started biting when frustrated.\n\n## Instructions\nAnalyze the data above with PRIMARY FOCUS on the trigger issue (ID:101: \"Tantrums during transitions\").\nProduce a structured JSON analysis with these fields:\n\n1. **summary**: 2-3 paragraph executive summary for a parent/caregiver CENTERED on the trigger issue. Start with the trigger issue, then explain how other issues relate to it. MUST correctly reference the child's age and use age-appropriate language.\n2. **patternClusters**: Array of related issue groups. The trigger issue MUST appear in at least one cluster. Each has: name, description, issueIds (array of ints), issueTitles (array of strings), categories (array of strings), pattern (recurring|escalating|co-occurring|seasonal|triggered), confidence (0-1), suggestedRootCause (optional string).\n3. **timelineAnalysis**: Object with phases (array of {period, issueIds, description, moodTrend (declining|improving|stable|volatile), keyEvents (array of strings)}), moodCorrelation (optional string), escalationTrend (improving|worsening|stable|cyclical), criticalPeriods (array of strings). Focus timeline on the trigger issue's evolution.\n4. **familySystemInsights**: Array of {insight, involvedMemberIds (array of ints), involvedMemberNames (array of strings), evidenceIssueIds (array of ints), systemicPattern (optional string), actionable (bool)}. Prioritize insights related to the trigger issue.\n5. **priorityRecommendations**: Array of {rank (int), issueId (optional int), issueTitle (optional string), rationale, urgency (immediate|short_term|long_term), suggestedApproach, relatedResearchIds (optional array of ints)}. The FIRST recommendation (rank 1) MUST address the trigger issue directly. Recommendations MUST be age-appropriate for the child's actual age.\n6. **researchRelevance**: Array of {patternClusterName, relevantResearchIds (array of ints), relevantResearchTitles (array of strings), coverageGaps (array of strings)}.\n7. **developmentalContext**: Object with {statedAge (int), dobYear (int), developmentalStage (string), ageAppropriateExpectations (string), flags (array of strings for any developmental concerns)}.\n\nIMPORTANT: All fields marked as \"array\" MUST be JSON arrays, never bare strings. For example coverageGaps must be [\"gap1\", \"gap2\"], not \"gap1, gap2\".\n\nWrite the analysis in English.",
+  "result": {
+    "summary": "Emilia, at 4 years old, is experiencing intense tantrums during transitions, particularly when moving from playtime to meals or bedtime. This is developmentally common as children her age are still developing emotional regulation skills and struggle with shifting focus from preferred activities. The tantrums (floor-dropping, intense crying) represent her difficulty managing frustration when routines change.\n\nThese transition tantrums appear connected to her social challenges at daycare. The difficulty sharing toys and turn-taking suggests a broader pattern of struggling with flexibility and adapting to others' needs. When Emilia faces transitions (like cleaning up toys), she may feel a similar loss of control as when asked to share, leading to escalated behaviors like biting when frustrated. Both issues point to challenges with emotional regulation in situations requiring flexibility.\n\nUnderstanding this as a developmental phase rather than deliberate defiance is key. At 4, children are learning to navigate boundaries while asserting independence. Her reactions are age-appropriate expressions of frustration, though the intensity warrants supportive intervention to help her develop better coping strategies.",
+    "patternClusters": [
+      {
+        "name": "Emotional Regulation Challenges During Demands",
+        "description": "Difficulty managing emotions when faced with demands for flexibility, whether during transitions or social interactions",
+        "issueIds": [
+          101,
+          102
+        ],
+        "issueTitles": [
+          "Tantrums during transitions",
+          "Difficulty sharing with peers"
+        ],
+        "categories": [
+          "behavioral",
+          "social"
+        ],
+        "pattern": "co-occurring",
+        "confidence": 0.85,
+        "suggestedRootCause": "Underdeveloped emotional regulation skills combined with difficulty adapting to changing expectations"
+      }
+    ],
+    "timelineAnalysis": {
+      "phases": [
+        {
+          "period": "March 2026",
+          "issueIds": [
+            101,
+            102
+          ],
+          "description": "Daily high-intensity tantrums during transitions and weekly sharing refusals observed, with teacher reporting escalation to biting when frustrated",
+          "moodTrend": "volatile",
+          "keyEvents": [
+            "Teacher feedback indicates crying during clean-up transitions",
+            "Biting reported as new frustration response"
+          ]
+        }
+      ],
+      "moodCorrelation": "Frustration during transitions correlates with social frustration during sharing situations",
+      "escalationTrend": "worsening",
+      "criticalPeriods": [
+        "Transition times (play to meals/bed)",
+        "Daycare free play with peers"
+      ]
+    },
+    "familySystemInsights": [
+      {
+        "insight": "Transition routines may lack consistent preparation or warning signals, contributing to Emilia's distress",
+        "involvedMemberIds": [
+          101
+        ],
+        "involvedMemberNames": [
+          "Emilia"
+        ],
+        "evidenceIssueIds": [
+          101
+        ],
+        "systemicPattern": "Potential inconsistency in transition management",
+        "actionable": true
+      },
+      {
+        "insight": "Social skill development at daycare may be influencing home behavior patterns",
+        "involvedMemberIds": [
+          101,
+          102
+        ],
+        "involvedMemberNames": [
+          "Emilia"
+        ],
+        "evidenceIssueIds": [
+          101,
+          102
+        ],
+        "systemicPattern": "Cross-context emotional regulation challenges",
+        "actionable": true
+      }
+    ],
+    "priorityRecommendations": [
+      {
+        "rank": 1,
+        "issueId": 101,
+        "issueTitle": "Tantrums during transitions",
+        "rationale": "This is the highest severity issue causing daily distress and disrupting family routines",
+        "urgency": "immediate",
+        "suggestedApproach": "Implement consistent transition warnings using visual timers and countdowns (\"5-minute warning\"), create transition rituals (special song for clean-up), use first-then language (\"First clean up, then story\"), and offer limited choices (\"Do you want to walk or hop to the table?\")",
+        "relatedResearchIds": []
+      },
+      {
+        "rank": 2,
+        "issueId": 101,
+        "issueTitle": "Tantrums during transitions",
+        "rationale": "Building emotional vocabulary will help Emilia express frustration verbally rather than through tantrums",
+        "urgency": "short_term",
+        "suggestedApproach": "Teach and model feeling words (\"I see you're frustrated\"), use emotion cards to help identify feelings, practice calming strategies like deep breathing (\"smell the flower, blow out the candle\") during calm moments",
+        "relatedResearchIds": []
+      },
+      {
+        "rank": 3,
+        "issueId": 102,
+        "issueTitle": "Difficulty sharing with peers",
+        "rationale": "Social flexibility skills support transition adaptability",
+        "urgency": "short_term",
+        "suggestedApproach": "Practice turn-taking at home with timer games, use social stories about sharing, reinforce waiting with immediate praise, coordinate with daycare on consistent sharing approaches",
+        "relatedResearchIds": []
+      }
+    ],
+    "researchRelevance": [
+      {
+        "patternClusterName": "Emotional Regulation Challenges During Demands",
+        "relevantResearchIds": [],
+        "relevantResearchTitles": [],
+        "coverageGaps": [
+          "Specific interventions for transition tantrums in 4-year-olds",
+          "Cross-context emotional regulation transfer between home and daycare"
+        ]
+      }
+    ],
+    "developmentalContext": {
+      "statedAge": 4,
+      "dobYear": 2022,
+      "developmentalStage": "Preschooler (early childhood)",
+      "ageAppropriateExpectations": "Typical for age: emerging emotional regulation, egocentric perspective, concrete thinking, learning social rules through experience. Expected to follow simple routines with reminders but may resist transitions.",
+      "flags": [
+        "Escalation to biting when frustrated",
+        "High-intensity daily tantrums"
+      ]
+    }
+  },
+  "model": "deepseek-chat",
+  "generated_at": "2026-03-21T22:20:40.188510+00:00"
+}

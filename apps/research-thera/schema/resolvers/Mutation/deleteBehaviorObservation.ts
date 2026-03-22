@@ -1,5 +1,5 @@
 import type { MutationResolvers } from "./../../types.generated";
-import { d1Tools } from "@/src/db";
+import { db } from "@/src/db";
 
 export const deleteBehaviorObservation: NonNullable<MutationResolvers['deleteBehaviorObservation']> = async (
   _parent,
@@ -11,7 +11,7 @@ export const deleteBehaviorObservation: NonNullable<MutationResolvers['deleteBeh
     throw new Error("Authentication required");
   }
 
-  await d1Tools.deleteBehaviorObservation(args.id, userEmail);
+  await db.deleteBehaviorObservation(args.id, userEmail);
 
   return {
     success: true,

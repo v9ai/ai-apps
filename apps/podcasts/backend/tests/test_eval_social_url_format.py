@@ -39,7 +39,7 @@ class TestSocialURLFormat:
     def _profiles(self):
         p = _load_profiles()
         if not p:
-            pytest.skip("No profiles — run crew.py first")
+            pytest.skip("No profiles — run research_pipeline.py first")
         return p
 
     def test_social_urls_start_with_https(self):

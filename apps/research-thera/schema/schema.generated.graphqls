@@ -279,6 +279,36 @@ input CreateTeacherFeedbackInput {
   teacherName: String!
 }
 
+type DataSnapshot {
+  contactFeedbackCount: Int!
+  issueCount: Int!
+  journalEntryCount: Int!
+  observationCount: Int!
+  relatedMemberIssueCount: Int!
+  researchPaperCount: Int!
+  teacherFeedbackCount: Int!
+}
+
+type DeepIssueAnalysis {
+  createdAt: String!
+  createdBy: String!
+  dataSnapshot: DataSnapshot!
+  familyMember: FamilyMember
+  familyMemberId: Int!
+  familySystemInsights: [FamilySystemInsight!]!
+  id: Int!
+  jobId: String
+  model: String!
+  patternClusters: [PatternCluster!]!
+  priorityRecommendations: [PriorityRecommendation!]!
+  researchRelevance: [ResearchRelevanceMapping!]!
+  summary: String!
+  timelineAnalysis: TimelineAnalysis!
+  triggerIssue: Issue
+  triggerIssueId: Int
+  updatedAt: String!
+}
+
 type DeleteBehaviorObservationResult {
   message: String
   success: Boolean!
@@ -290,6 +320,11 @@ type DeleteContactFeedbackResult {
 }
 
 type DeleteContactResult {
+  message: String
+  success: Boolean!
+}
+
+type DeleteDeepAnalysisResult {
   message: String
   success: Boolean!
 }
@@ -421,6 +456,15 @@ enum FamilyMemberShareRole {
   VIEWER
 }
 
+type FamilySystemInsight {
+  actionable: Boolean!
+  evidenceIssueIds: [Int!]!
+  insight: String!
+  involvedMemberIds: [Int!]!
+  involvedMemberNames: [String!]!
+  systemicPattern: String
+}
+
 enum FeedbackSource {
   EMAIL
   MEETING
@@ -433,6 +477,12 @@ enum FeedbackSource {
 type GenerateAudioResult {
   audioUrl: String
   jobId: String!
+  message: String
+  success: Boolean!
+}
+
+type GenerateDeepAnalysisResult {
+  jobId: String
   message: String
   success: Boolean!
 }
@@ -472,6 +522,12 @@ type GenerateOpenAIAudioResult {
   success: Boolean!
 }
 
+type GenerateParentAdviceResult {
+  message: String
+  parentAdvice: String
+  success: Boolean!
+}
+
 type GenerateQuestionsResult {
   jobId: String
   message: String
@@ -508,8 +564,12 @@ type Goal {
   familyMemberId: Int
   id: Int!
   notes: [Note!]!
+  parentAdvice: String
+  parentAdviceGeneratedAt: String
+  parentAdviceLanguage: String
   parentGoal: Goal
   parentGoalId: Int
+  priority: String!
   questions: [TherapeuticQuestion!]!
   research: [Research!]!
   slug: String
@@ -517,6 +577,7 @@ type Goal {
   stories: [Story!]!
   storyLanguage: String
   subGoals: [Goal!]!
+  targetDate: String
   therapeuticText: String
   therapeuticTextGeneratedAt: String
   therapeuticTextLanguage: String
@@ -540,10 +601,17 @@ type Issue {
   recommendations: [String!]
   relatedFamilyMember: FamilyMember
   relatedFamilyMemberId: Int
+  relatedIssues: [IssueLink!]!
   severity: String!
   stories: [Story!]!
   title: String!
   updatedAt: String!
+}
+
+type IssueLink {
+  id: Int!
+  issue: Issue!
+  linkType: String!
 }
 
 type JobError {
@@ -609,6 +677,7 @@ type Mutation {
   createIssue(input: CreateIssueInput!): Issue!
   createJournalEntry(input: CreateJournalEntryInput!): JournalEntry!
   createNote(input: CreateNoteInput!): Note!
+  createRelatedIssue(input: CreateIssueInput!, issueId: Int!, linkType: String): IssueLink!
   createRelationship(input: CreateRelationshipInput!): Relationship!
   createStory(input: CreateStoryInput!): Story!
   createSubGoal(goalId: Int!, input: CreateSubGoalInput!): Goal!
@@ -617,6 +686,7 @@ type Mutation {
   deleteClaimCard(id: ID!): Boolean!
   deleteContact(id: Int!): DeleteContactResult!
   deleteContactFeedback(id: Int!): DeleteContactFeedbackResult!
+  deleteDeepIssueAnalysis(id: Int!): DeleteDeepAnalysisResult!
   deleteFamilyMember(id: Int!): DeleteFamilyMemberResult!
   deleteGoal(id: Int!): DeleteGoalResult!
   deleteIssue(id: Int!): DeleteIssueResult!
@@ -629,16 +699,20 @@ type Mutation {
   deleteTherapeuticQuestions(goalId: Int, issueId: Int): DeleteQuestionsResult!
   extractContactFeedbackIssues(id: Int!): ContactFeedback!
   generateAudio(goalId: Int!, language: String, storyId: Int, text: String, voice: String): GenerateAudioResult!
+  generateDeepIssueAnalysis(familyMemberId: Int!, triggerIssueId: Int): GenerateDeepAnalysisResult!
   generateLongFormText(familyMemberId: Int, feedbackId: Int, goalId: Int, issueId: Int, language: String, minutes: Int, userContext: String): GenerateLongFormTextResult!
   generateOpenAIAudio(input: GenerateOpenAIAudioInput!): GenerateOpenAIAudioResult!
+  generateParentAdvice(goalId: Int!, language: String): GenerateParentAdviceResult!
   generateResearch(feedbackId: Int, goalId: Int, issueId: Int): GenerateResearchResult!
   generateTherapeuticQuestions(goalId: Int, issueId: Int): GenerateQuestionsResult!
+  linkIssues(issueId: Int!, linkType: String, linkedIssueId: Int!): IssueLink!
   markTeacherFeedbackExtracted(id: Int!): TeacherFeedback!
   refreshClaimCard(id: ID!): ClaimCard!
   setNoteVisibility(noteId: Int!, visibility: NoteVisibility!): Note!
   shareFamilyMember(email: String!, familyMemberId: Int!, role: FamilyMemberShareRole): FamilyMemberShare!
   shareNote(email: String!, noteId: Int!, role: NoteShareRole): NoteShare!
   unlinkGoalFamilyMember(id: Int!): Goal!
+  unlinkIssues(issueId: Int!, linkedIssueId: Int!): UnlinkIssuesResult!
   unshareFamilyMember(email: String!, familyMemberId: Int!): Boolean!
   unshareNote(email: String!, noteId: Int!): Boolean!
   updateBehaviorObservation(id: Int!, input: UpdateBehaviorObservationInput!): BehaviorObservation!
@@ -748,6 +822,17 @@ type PaperCandidate {
   year: Int
 }
 
+type PatternCluster {
+  categories: [String!]!
+  confidence: Float!
+  description: String!
+  issueIds: [Int!]!
+  issueTitles: [String!]!
+  name: String!
+  pattern: String!
+  suggestedRootCause: String
+}
+
 enum PersonType {
   CONTACT
   FAMILY_MEMBER
@@ -763,6 +848,16 @@ type PipelineDiagnostics {
   searchUsedFallback: Boolean
 }
 
+type PriorityRecommendation {
+  issueId: Int
+  issueTitle: String
+  rank: Int!
+  rationale: String!
+  relatedResearchIds: [Int!]
+  suggestedApproach: String!
+  urgency: String!
+}
+
 type Query {
   allNotes: [Note!]!
   allStories: [Story!]!
@@ -775,6 +870,8 @@ type Query {
   contactFeedback(id: Int!): ContactFeedback
   contactFeedbacks(contactId: Int!, familyMemberId: Int!): [ContactFeedback!]!
   contacts: [Contact!]!
+  deepIssueAnalyses(familyMemberId: Int!): [DeepIssueAnalysis!]!
+  deepIssueAnalysis(id: Int!): DeepIssueAnalysis
   familyMember(id: Int, slug: String): FamilyMember
   familyMembers: [FamilyMember!]!
   generationJob(id: String!): GenerationJob
@@ -854,6 +951,13 @@ type Research {
   year: Int
 }
 
+type ResearchRelevanceMapping {
+  coverageGaps: [String!]!
+  patternClusterName: String!
+  relevantResearchIds: [Int!]!
+  relevantResearchTitles: [String!]!
+}
+
 enum ResearchSource {
   ARXIV
   CROSSREF
@@ -927,6 +1031,25 @@ type TherapeuticQuestion {
   updatedAt: String!
 }
 
+type TimelineAnalysis {
+  criticalPeriods: [String!]!
+  escalationTrend: String
+  moodCorrelation: String
+  phases: [TimelinePhase!]!
+}
+
+type TimelinePhase {
+  description: String!
+  issueIds: [Int!]!
+  keyEvents: [String!]!
+  moodTrend: String
+  period: String!
+}
+
+type UnlinkIssuesResult {
+  success: Boolean!
+}
+
 input UpdateBehaviorObservationInput {
   context: String
   frequency: Int
@@ -969,8 +1092,10 @@ input UpdateFamilyMemberInput {
 input UpdateGoalInput {
   description: String
   familyMemberId: Int
+  priority: String
   status: String
   storyLanguage: String
+  targetDate: String
   title: String
 }
 

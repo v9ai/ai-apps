@@ -1,0 +1,12 @@
+{
+  "$schema": "https://langgra.ph/schema.json",
+  "dependencies": ["."],
+  "graphs": {
+    "research": "research_agent.graph:graph",
+    "story": "research_agent.story_graph:graph",
+    "tts": "research_agent.tts_graph:graph",
+    "deep_analysis": "research_agent.deep_analysis_graph:graph",
+    "parent_advice": "research_agent.parent_advice_graph:graph"
+  },
+  "env": ".env"
+}

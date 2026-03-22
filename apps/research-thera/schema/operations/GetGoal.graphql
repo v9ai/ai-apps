@@ -5,9 +5,12 @@ query GetGoal($id: Int, $slug: String) {
     title
     description
     status
+    priority
+    targetDate
     familyMemberId
     familyMember {
       id
+      slug
       firstName
       name
       ageYears
@@ -24,6 +27,9 @@ query GetGoal($id: Int, $slug: String) {
     therapeuticText
     therapeuticTextLanguage
     therapeuticTextGeneratedAt
+    parentAdvice
+    parentAdviceLanguage
+    parentAdviceGeneratedAt
     storyLanguage
     subGoals {
       id
@@ -43,13 +49,28 @@ query GetGoal($id: Int, $slug: String) {
       createdAt
       updatedAt
     }
+    questions {
+      id
+      question
+      researchId
+      researchTitle
+      rationale
+      generatedAt
+    }
     research {
       id
       title
       authors
       year
       journal
+      doi
       url
+      abstract
+      keyFindings
+      therapeuticTechniques
+      evidenceLevel
+      relevanceScore
+      extractionConfidence
     }
     stories {
       id

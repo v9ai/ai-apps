@@ -47,6 +47,10 @@ type Query {
   relationships(subjectType: PersonType!, subjectId: Int!): [Relationship!]!
   relationship(id: Int!): Relationship
 
+  # Deep Issue Analysis
+  deepIssueAnalysis(id: Int!): DeepIssueAnalysis
+  deepIssueAnalyses(familyMemberId: Int!): [DeepIssueAnalysis!]!
+
   # Claim Cards
   claimCard(id: ID!): ClaimCard
   claimCardsForNote(noteId: Int!): [ClaimCard!]!
@@ -81,6 +85,7 @@ type Mutation {
     language: String
     minutes: Int
   ): GenerateLongFormTextResult!
+  generateParentAdvice(goalId: Int!, language: String): GenerateParentAdviceResult!
   generateAudio(
     goalId: Int!
     storyId: Int
@@ -146,6 +151,13 @@ type Mutation {
   updateIssue(id: Int!, input: UpdateIssueInput!): Issue!
   deleteIssue(id: Int!): DeleteIssueResult!
   convertIssueToGoal(id: Int!, input: CreateGoalInput!): Goal!
+  createRelatedIssue(issueId: Int!, input: CreateIssueInput!, linkType: String): IssueLink!
+  linkIssues(issueId: Int!, linkedIssueId: Int!, linkType: String): IssueLink!
+  unlinkIssues(issueId: Int!, linkedIssueId: Int!): UnlinkIssuesResult!
+
+  # Deep Issue Analysis
+  generateDeepIssueAnalysis(familyMemberId: Int!, triggerIssueId: Int): GenerateDeepAnalysisResult!
+  deleteDeepIssueAnalysis(id: Int!): DeleteDeepAnalysisResult!
 
   # Journal → Issue conversion
   convertJournalEntryToIssue(id: Int!, input: ConvertJournalEntryToIssueInput!): Issue!
@@ -206,6 +218,8 @@ type Goal {
   title: String!
   description: String
   status: String!
+  priority: String!
+  targetDate: String
   parentGoalId: Int
   parentGoal: Goal
   subGoals: [Goal!]!
@@ -218,6 +232,9 @@ type Goal {
   therapeuticText: String
   therapeuticTextLanguage: String
   therapeuticTextGeneratedAt: String
+  parentAdvice: String
+  parentAdviceLanguage: String
+  parentAdviceGeneratedAt: String
   storyLanguage: String
 }
 
@@ -411,6 +428,8 @@ input UpdateGoalInput {
   title: String
   description: String
   status: String
+  priority: String
+  targetDate: String
   storyLanguage: String
 }
 
@@ -464,6 +483,12 @@ type GenerateLongFormTextResult {
   manifestUrl: String
   segmentUrls: [String!]
   evals: String
+}
+
+type GenerateParentAdviceResult {
+  success: Boolean!
+  message: String
+  parentAdvice: String
 }
 
 type GenerateAudioResult {
@@ -960,6 +985,13 @@ type Issue {
   relatedFamilyMember: FamilyMember
   stories: [Story!]!
   questions: [TherapeuticQuestion!]!
+  relatedIssues: [IssueLink!]!
+}
+
+type IssueLink {
+  id: Int!
+  linkType: String!
+  issue: Issue!
 }
 
 type ExtractedIssue {
@@ -1154,6 +1186,107 @@ input UpdateIssueInput {
 }
 
 type DeleteIssueResult {
+  success: Boolean!
+  message: String
+}
+
+type UnlinkIssuesResult {
+  success: Boolean!
+}
+
+# ============================================
+# Deep Issue Analysis
+# ============================================
+
+type DeepIssueAnalysis {
+  id: Int!
+  familyMemberId: Int!
+  triggerIssueId: Int
+  createdBy: String!
+  jobId: String
+  summary: String!
+  patternClusters: [PatternCluster!]!
+  timelineAnalysis: TimelineAnalysis!
+  familySystemInsights: [FamilySystemInsight!]!
+  priorityRecommendations: [PriorityRecommendation!]!
+  researchRelevance: [ResearchRelevanceMapping!]!
+  dataSnapshot: DataSnapshot!
+  model: String!
+  createdAt: String!
+  updatedAt: String!
+  familyMember: FamilyMember
+  triggerIssue: Issue
+}
+
+type PatternCluster {
+  name: String!
+  description: String!
+  issueIds: [Int!]!
+  issueTitles: [String!]!
+  categories: [String!]!
+  pattern: String!
+  confidence: Float!
+  suggestedRootCause: String
+}
+
+type TimelineAnalysis {
+  phases: [TimelinePhase!]!
+  moodCorrelation: String
+  escalationTrend: String
+  criticalPeriods: [String!]!
+}
+
+type TimelinePhase {
+  period: String!
+  issueIds: [Int!]!
+  description: String!
+  moodTrend: String
+  keyEvents: [String!]!
+}
+
+type FamilySystemInsight {
+  insight: String!
+  involvedMemberIds: [Int!]!
+  involvedMemberNames: [String!]!
+  evidenceIssueIds: [Int!]!
+  systemicPattern: String
+  actionable: Boolean!
+}
+
+type PriorityRecommendation {
+  rank: Int!
+  issueId: Int
+  issueTitle: String
+  rationale: String!
+  urgency: String!
+  suggestedApproach: String!
+  relatedResearchIds: [Int!]
+}
+
+type ResearchRelevanceMapping {
+  patternClusterName: String!
+  relevantResearchIds: [Int!]!
+  relevantResearchTitles: [String!]!
+  coverageGaps: [String!]!
+}
+
+type DataSnapshot {
+  issueCount: Int!
+  observationCount: Int!
+  journalEntryCount: Int!
+  contactFeedbackCount: Int!
+  teacherFeedbackCount: Int!
+  researchPaperCount: Int!
+  relatedMemberIssueCount: Int!
+}
+
+type GenerateDeepAnalysisResult {
+  success: Boolean!
+  message: String
+  jobId: String
+}
+
+type DeleteDeepAnalysisResult {
   success: Boolean!
   message: String
 }

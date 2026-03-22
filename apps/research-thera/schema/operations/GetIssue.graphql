@@ -59,5 +59,23 @@ query GetIssue($id: Int!) {
       minutes
       createdAt
     }
+    relatedIssues {
+      id
+      linkType
+      issue {
+        id
+        title
+        category
+        severity
+        familyMemberId
+        familyMember {
+          id
+          firstName
+          name
+          slug
+        }
+        createdAt
+      }
+    }
   }
 }

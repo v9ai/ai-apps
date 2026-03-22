@@ -1,5 +1,5 @@
 import type { MutationResolvers } from "./../../types.generated";
-import { d1Tools } from "@/src/db";
+import { db } from "@/src/db";
 
 export const createRelationship: NonNullable<MutationResolvers['createRelationship']> = async (
   _parent,
@@ -11,7 +11,7 @@ export const createRelationship: NonNullable<MutationResolvers['createRelationsh
     throw new Error("Authentication required");
   }
 
-  const id = await d1Tools.createRelationship({
+  const id = await db.createRelationship({
     userId: userEmail,
     subjectType: args.input.subjectType,
     subjectId: args.input.subjectId,
@@ -23,7 +23,7 @@ export const createRelationship: NonNullable<MutationResolvers['createRelationsh
     status: args.input.status ?? "ACTIVE",
   });
 
-  const item = await d1Tools.getRelationship(id, userEmail);
+  const item = await db.getRelationship(id, userEmail);
   if (!item) {
     throw new Error("Failed to retrieve created relationship");
   }

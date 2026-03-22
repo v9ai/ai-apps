@@ -29,6 +29,7 @@ import { ResearchContributions } from "./_components/research-contributions";
 import { ResearchQuotes } from "./_components/research-quotes";
 import { ResearchSocial } from "./_components/research-social";
 import { ResearchSources } from "./_components/research-sources";
+import { VideosSection } from "./_components/videos-section";
 
 type Props = { params: Promise<{ slug: string }> };
 
@@ -346,6 +347,9 @@ export default async function PersonPage({ params }: Props) {
           <TechStackSection languages={enriched.github.languages} />
         )}
         <EpisodesSection episodes={episodes} />
+        {research?.videos && research.videos.length > 0 && (
+          <VideosSection videos={research.videos} />
+        )}
         {person.papers && person.papers.length > 0 && (
           <PapersSection papers={person.papers} />
         )}

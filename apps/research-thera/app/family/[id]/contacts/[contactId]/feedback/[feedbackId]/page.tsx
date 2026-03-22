@@ -550,10 +550,12 @@ function ContactFeedbackDetailContent() {
                 <Text size="2" weight="medium" style={{ minWidth: 100 }}>
                   Contact
                 </Text>
-                <Text size="2" color="gray">
-                  {fb.contact.firstName}
-                  {fb.contact.lastName ? ` ${fb.contact.lastName}` : ""}
-                </Text>
+                <NextLink href={`/family/${familySlug}/contacts/${fb.contact.slug ?? fb.contact.id}`} style={{ textDecoration: "none" }}>
+                  <Text size="2" color="iris">
+                    {fb.contact.firstName}
+                    {fb.contact.lastName ? ` ${fb.contact.lastName}` : ""}
+                  </Text>
+                </NextLink>
               </Flex>
             )}
             {fb.familyMember && (
@@ -561,10 +563,12 @@ function ContactFeedbackDetailContent() {
                 <Text size="2" weight="medium" style={{ minWidth: 100 }}>
                   Family Member
                 </Text>
-                <Text size="2" color="gray">
-                  {fb.familyMember.firstName}
-                  {fb.familyMember.name ? ` ${fb.familyMember.name}` : ""}
-                </Text>
+                <NextLink href={`/family/${fb.familyMember.slug ?? fb.familyMember.id}`} style={{ textDecoration: "none" }}>
+                  <Text size="2" color="iris">
+                    {fb.familyMember.firstName}
+                    {fb.familyMember.name ? ` ${fb.familyMember.name}` : ""}
+                  </Text>
+                </NextLink>
               </Flex>
             )}
           </Flex>

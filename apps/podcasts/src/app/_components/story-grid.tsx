@@ -18,7 +18,6 @@ export function StoryGrid({ personalities, quotes }: StoryGridProps) {
     const handleScroll = () => {
       if (!gridRef.current) return;
       const rect = gridRef.current.getBoundingClientRect();
-      // Show button once the user scrolls past the top of the grid
       setShowScrollTop(rect.top < -200);
     };
     window.addEventListener("scroll", handleScroll, { passive: true });
@@ -35,7 +34,7 @@ export function StoryGrid({ personalities, quotes }: StoryGridProps) {
         className={css({
           borderTopWidth: "1px",
           borderTopColor: "rgba(255,255,255,0.06)",
-          pt: { base: "6", md: "8" },
+          pt: { base: "3", md: "4" },
         })}
       >
         {/* -- Story count -- */}
@@ -45,31 +44,31 @@ export function StoryGrid({ personalities, quotes }: StoryGridProps) {
             fontWeight: "400",
             letterSpacing: "0.04em",
             color: "#7B7B86",
-            mb: { base: "5", md: "6" },
+            mb: { base: "3", md: "4" },
           })}
         >
           Showing {personalities.length}{" "}
           {personalities.length === 1 ? "story" : "stories"}
         </p>
 
-        {/* -- Masonry grid -- */}
+        {/* -- Grid -- */}
         <div
           className={css({
-            columns: { base: 1, sm: 2, lg: 3, xl: 4, "2xl": 5 },
-            gap: { base: "5", sm: "7", lg: "8" },
+            display: "grid",
+            gridTemplateColumns: {
+              base: "1fr",
+              sm: "repeat(2, 1fr)",
+              lg: "repeat(3, 1fr)",
+              xl: "repeat(4, 1fr)",
+            },
+            gap: { base: "3", sm: "4", lg: "5" },
+            alignItems: "start",
           })}
           role="list"
         >
           {personalities.map((p, i) => (
             <div
               key={p.slug}
-              className={css({
-                breakInside: "avoid",
-                mb: { base: "5", sm: "7", lg: "8" },
-                opacity: 0,
-                animation: "fade-in-up 0.5s var(--ease-expo-out) both",
-              })}
-              style={{ animationDelay: `${Math.min(i * 45, 600)}ms` }}
               role="listitem"
             >
               <StoryCard

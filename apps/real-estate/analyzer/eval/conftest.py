@@ -11,13 +11,6 @@ import pathlib
 
 import pytest
 
-# Instrument CrewAI for DeepEval tracing
-try:
-    from deepeval.integrations.crewai import instrument_crewai
-    instrument_crewai()
-except Exception:
-    pass
-
 # Ensure the analyzer package is importable from tests
 sys.path.insert(0, str(pathlib.Path(__file__).parent.parent.parent))
 

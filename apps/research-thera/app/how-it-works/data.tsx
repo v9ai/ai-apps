@@ -71,22 +71,21 @@ export const papers: Paper[] = [
     authors: "PostgreSQL Global Development Group",
     year: 2024,
     finding: "A relational database extended with vector embeddings for semantic search, enabling efficient similarity queries and AI integration",
-    relevance: "Stores user data in tables like goals and journal_entries, with research_papers using pgvector embeddings for RAG retrieval via Mastra AI, hosted on Neon for serverless scaling",
+    relevance: "Stores user data in tables like goals and journal_entries, with research_papers using pgvector embeddings for RAG retrieval, hosted on Neon for serverless scaling",
     url: "https://www.postgresql.org/docs/",
     categoryColor: "var(--green-9)",
   },
   {
-    slug: "mastra-ai",
+    slug: "deepseek-ai",
     number: 4,
-    title: "Mastra AI Framework",
+    title: "DeepSeek AI",
     category: "AI/LLM",
     wordCount: 0,
     readingTimeMin: 2,
-    authors: "Mastra",
+    authors: "DeepSeek",
     year: 2024,
-    finding: "Orchestrates multi-step AI workflows with built-in RAG, memory, and evaluation capabilities for complex agent-based tasks",
-    relevance: "Powers the research generation pipeline via @mastra/rag, handling steps from search planning to paper enrichment, and uses @mastra/memory for persistent AI context across user sessions",
-    url: "https://mastra.ai/docs",
+    finding: "High-performance LLM for structured data extraction, clinical text analysis, and therapeutic content generation",
+    relevance: "Powers the research generation pipeline via the AI SDK, handling steps from search planning and paper enrichment to therapeutic story generation",
     categoryColor: "var(--amber-9)",
   },
   {
@@ -118,17 +117,17 @@ export const papers: Paper[] = [
     categoryColor: "var(--purple-9)",
   },
   {
-    slug: "trigger-dev",
+    slug: "langgraph",
     number: 7,
-    title: "Trigger.dev",
+    title: "LangGraph",
     category: "Infrastructure",
     wordCount: 0,
     readingTimeMin: 2,
-    authors: "Trigger.dev",
+    authors: "LangChain",
     year: 2024,
-    finding: "Manages background jobs and queues with polling and retries for long-running tasks, ensuring reliability in asynchronous workflows",
-    relevance: "Orchestrates AI research generation jobs triggered by useGenerateResearchMutation, with progress tracked via useGetGenerationJobQuery for real-time updates",
-    url: "https://trigger.dev/docs",
+    finding: "A framework for building stateful, multi-step AI agent workflows as directed graphs with tool calling, retries, and conditional branching",
+    relevance: "Orchestrates all three AI pipelines (research, story generation, TTS) as LangGraph graphs, called from GraphQL resolvers via the LangGraph SDK with progress tracked via generation_jobs polling",
+    url: "https://langchain-ai.github.io/langgraph/",
     categoryColor: "var(--red-9)",
   },
   {
@@ -158,7 +157,7 @@ export const researchStats: Stat[] = [
   {
     number: "3",
     label: "Academic search sources (Crossref, PubMed, Semantic Scholar)",
-    source: "Mastra AI pipeline configuration for multi-source retrieval",
+    source: "Research pipeline configuration for multi-source retrieval",
   },
   {
     number: "7",
@@ -191,13 +190,13 @@ export const pipelineAgents: PipelineAgent[] = [
     researchBasis: "GraphQL mutation pattern with type-safe inputs",
   },
   {
-    name: "Research Generation Trigger",
-    description: "When the user clicks 'Generate Research' in app/goals/[id]/page.tsx, useGenerateResearchMutation fires with the goalId. This triggers a background job via Trigger.dev, which initializes a Mastra AI pipeline. The job status is stored in the generation_jobs table, and the client starts polling with useGetGenerationJobQuery at 1-second intervals.",
+    name: "Research Generation via LangGraph",
+    description: "When the user clicks 'Generate Research' in app/goals/[id]/page.tsx, useGenerateResearchMutation fires with the goalId. The resolver dispatches a LangGraph research agent that uses DeepSeek with academic search tools. The job status is stored in the generation_jobs table, and the client starts polling with useGetGenerationJobQuery at 1-second intervals.",
     researchBasis: "Background job orchestration with real-time polling",
   },
   {
     name: "AI Research Pipeline Execution",
-    description: "The Mastra framework executes a 9-step workflow defined in STEP_LABELS: it loads goal context, plans searches using LangGraph, queries academic sources (Crossref, PubMed, Semantic Scholar), enriches paper abstracts, extracts findings via @mastra/rag, and stores results. Papers are saved to the research_papers table with pgvector embeddings, linked via goal_research_papers junction table.",
+    description: "The research pipeline executes 9 steps: it loads goal context, plans searches, queries academic sources (Crossref, PubMed, Semantic Scholar), enriches paper abstracts, extracts findings via DeepSeek AI, and stores results. Papers are saved to the research_papers table with pgvector embeddings, linked via goal_research_papers junction table.",
     researchBasis: "Retrieval Augmented Generation (RAG) with multi-source search",
   },
   {
@@ -212,7 +211,7 @@ export const pipelineAgents: PipelineAgent[] = [
   },
   {
     name: "Audio Content Generation and Storage",
-    description: "For therapeutic audio, text is sent to @mastra/voice-openai for synthesis, then uploaded to AWS S3 via @aws-sdk/client-s3. Presigned URLs are generated for secure access, and metadata is processed with music-metadata, linking audio files to journal entries or goals in the database.",
+    description: "For therapeutic audio, text is sent to OpenAI TTS for synthesis, then uploaded to Cloudflare R2 via the S3-compatible SDK. Presigned URLs are generated for secure access, and metadata is processed with music-metadata, linking audio files to journal entries or goals in the database.",
     researchBasis: "Cloud storage with presigned URL patterns",
   },
 ];
@@ -220,14 +219,14 @@ export const pipelineAgents: PipelineAgent[] = [
 // ─── Narrative ─────────────────────────────────────────────────────
 
 export const story =
-  "A user logs in via Neon Auth and creates a therapeutic goal using the AddGoalButton component, which triggers a GraphQL mutation to store it in PostgreSQL via Drizzle ORM. When they click 'Generate Research', the useGenerateResearchMutation initiates a 9-step Mastra AI pipeline that searches academic databases, enriches papers, and stores results with pgvector embeddings. The system polls via useGetGenerationJobQuery to show real-time progress, then displays validated research alongside their journal entries and family member profiles, all secured with row-level security and role-based sharing permissions.";
+  "A user logs in via Neon Auth and creates a therapeutic goal using the AddGoalButton component, which triggers a GraphQL mutation to store it in PostgreSQL via Drizzle ORM. When they click 'Generate Research', the useGenerateResearchMutation initiates a 9-step AI research pipeline that searches academic databases, enriches papers, and stores results with pgvector embeddings. The system polls via useGetGenerationJobQuery to show real-time progress, then displays validated research alongside their journal entries and family member profiles, all secured with row-level security and role-based sharing permissions.";
 
 // ─── Deep-Dive Sections ────────────────────────────────────────────
 
 export const extraSections: { heading: string; content: string }[] = [
   {
     heading: "System Architecture",
-    content: "The app uses a Next.js App Router with most pages as client components for interactivity, such as app/goals/[id]/page.tsx. GraphQL via Apollo Server handles all data operations, with Drizzle ORM writing to PostgreSQL tables like goals and research_papers. AI workflows are orchestrated by Mastra with LangGraph, and background jobs run on Trigger.dev for long-running tasks like research generation. The architecture supports real-time updates via polling and multi-tenant isolation through row-level security.",
+    content: "The app uses a Next.js App Router with most pages as client components for interactivity, such as app/goals/[id]/page.tsx. GraphQL via Apollo Server handles all data operations, with Drizzle ORM writing to PostgreSQL tables like goals and research_papers. AI workflows run as LangGraph Python graphs (research, story, TTS) called from resolvers via the LangGraph SDK. The architecture supports real-time updates via polling and multi-tenant isolation through row-level security.",
   },
   {
     heading: "Database Design",
@@ -239,11 +238,11 @@ export const extraSections: { heading: string; content: string }[] = [
   },
   {
     heading: "AI Integration",
-    content: "AI powers research generation via Mastra framework with @mastra/rag for RAG, using OpenAI and DeepSeek models through @ai-sdk integrations. The 9-step pipeline includes search planning, multi-source academic queries, and paper enrichment, with embeddings stored in PostgreSQL via pgvector. @mastra/memory provides persistent AI context, and @mastra/voice-openai generates therapeutic audio. LangGraph orchestrates complex workflows, and Trigger.dev manages background jobs for reliable execution.",
+    content: "AI powers research generation via LangGraph agents using DeepSeek for structured extraction and OpenAI for audio. The research agent searches academic databases with tool calling, the story agent generates therapeutic scripts with eval-based retry loops, and the TTS agent synthesizes audio with Qwen or OpenAI. Embeddings are stored in PostgreSQL via pgvector for semantic retrieval.",
   },
   {
     heading: "Deployment & Infrastructure",
-    content: "The app is deployed on Vercel with Next.js for serverless functions, using Neon for serverless PostgreSQL hosting. AWS S3 stores audio files with @aws-sdk/client-s3, and Trigger.dev handles background job queues. Environment variables configure API keys and database connections, with GraphQL code generation ensuring type safety. Monitoring includes Mastra observability for AI workflows, and the infrastructure supports scaling with real-time polling and efficient caching via Apollo Client.",
+    content: "The app is deployed on Vercel with Next.js for serverless functions, using Neon for serverless PostgreSQL hosting. Cloudflare R2 stores audio files, and LangGraph serves the AI agent graphs. Environment variables configure API keys and database connections, with GraphQL code generation ensuring type safety. The infrastructure supports scaling with real-time polling and efficient caching via Apollo Client.",
   },
   {
     heading: "UI/UX Patterns",

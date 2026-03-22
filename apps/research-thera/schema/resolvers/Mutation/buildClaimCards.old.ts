@@ -1,8 +1,7 @@
 import type { MutationResolvers } from "../../types.generated";
 import { claimCardsTools } from "../../../src/tools/claim-cards.tools";
 import { sourceTools } from "../../../src/tools/sources.tools";
-import { createDeepSeek } from "@ai-sdk/deepseek";
-import { generateObject } from "ai";
+import { generateObject } from "../../../src/lib/deepseek";
 import { z } from "zod";
 import { toGqlClaimCards } from "../utils/normalize-claim-card";
 
@@ -10,10 +9,6 @@ import { toGqlClaimCards } from "../utils/normalize-claim-card";
 if (typeof globalThis !== "undefined") {
   (globalThis as any).AI_SDK_LOG_WARNINGS = false;
 }
-
-const deepseek = createDeepSeek({
-  apiKey: process.env.DEEPSEEK_API_KEY,
-});
 
 /**
  * Build Claim Cards Resolver
@@ -187,7 +182,7 @@ export const buildClaimCards: NonNullable<
       });
 
       const result = await generateObject({
-        model: deepseek("deepseek-chat"),
+
         schema: claimsSchema,
         prompt: `You are extracting evidence-based claims from research papers.
 

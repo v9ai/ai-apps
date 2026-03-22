@@ -1,8 +1,7 @@
 import type { MutationResolvers } from "./../../types.generated";
-import { d1Tools, insertTherapeuticQuestions } from "@/src/db";
+import { db, insertTherapeuticQuestions } from "@/src/db";
 import { listTherapyResearch } from "@/src/db";
-import { createDeepSeek } from "@ai-sdk/deepseek";
-import { generateObject } from "ai";
+import { generateObject } from "@/src/lib/deepseek";
 import { z } from "zod";
 
 export const generateTherapeuticQuestions: NonNullable<MutationResolvers['generateTherapeuticQuestions']> = async (_parent, args, ctx) => {
@@ -21,7 +20,7 @@ export const generateTherapeuticQuestions: NonNullable<MutationResolvers['genera
   // Build context from issue or goal
   let contextText: string;
   if (issueId) {
-    const issue = await d1Tools.getIssue(issueId, userEmail);
+    const issue = await db.getIssue(issueId, userEmail);
     if (!issue) throw new Error("Issue not found");
     contextText = [
       `Issue: ${issue.title}`,
@@ -31,7 +30,7 @@ export const generateTherapeuticQuestions: NonNullable<MutationResolvers['genera
       issue.recommendations ? `Recommendations: ${issue.recommendations}` : "",
     ].filter(Boolean).join("\n");
   } else {
-    const goal = await d1Tools.getGoal(goalId!, userEmail);
+    const goal = await db.getGoal(goalId!, userEmail);
     contextText = [
       `Goal: ${goal.title}`,
       goal.description ? `Description: ${goal.description}` : "",
@@ -64,8 +63,6 @@ export const generateTherapeuticQuestions: NonNullable<MutationResolvers['genera
     })
     .join("\n\n");
 
-  const deepseek = createDeepSeek({ apiKey: process.env.DEEPSEEK_API_KEY });
-
   const questionSchema = z.object({
     questions: z.array(z.object({
       question: z.string().describe("A specific, actionable therapeutic question"),
@@ -97,7 +94,7 @@ export const generateTherapeuticQuestions: NonNullable<MutationResolvers['genera
   ].join("\n");
 
   const { object } = await generateObject({
-    model: deepseek("deepseek-chat"),
+
     schema: questionSchema,
     prompt,
   });

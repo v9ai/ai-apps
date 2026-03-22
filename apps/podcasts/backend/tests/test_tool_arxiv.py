@@ -1,10 +1,10 @@
-"""Tests for search_arxiv and search_semantic_scholar tools from crew.py."""
+"""Tests for search_arxiv and search_semantic_scholar tools from research_pipeline.py."""
 
 import os
 
 import pytest
 
-from crew import search_arxiv, search_semantic_scholar
+from research_pipeline import search_arxiv, search_semantic_scholar
 
 _skip_network = pytest.mark.skipif(
     os.getenv("SKIP_NETWORK_TESTS", "0") == "1",

@@ -22,6 +22,9 @@ import {
   Pencil1Icon,
   TrashIcon,
   TargetIcon,
+  Link2Icon,
+  PlusIcon,
+  Cross2Icon,
 } from "@radix-ui/react-icons";
 import { useRouter, useParams } from "next/navigation";
 import NextLink from "next/link";
@@ -38,6 +41,13 @@ import {
   useGetGenerationJobQuery,
   useGetResearchQuery,
   useGetTherapeuticQuestionsQuery,
+  useGenerateDeepIssueAnalysisMutation,
+  useGetDeepIssueAnalysesQuery,
+  useDeleteDeepIssueAnalysisMutation,
+  useCreateRelatedIssueMutation,
+  useLinkIssuesMutation,
+  useUnlinkIssuesMutation,
+  useGetIssuesQuery,
 } from "@/app/__generated__/hooks";
 
 const CATEGORY_OPTIONS = [
@@ -272,6 +282,74 @@ function IssueDetailContent() {
 
   const issue = data?.issue;
 
+  // Deep Issue Analysis state
+  const [deepAnalysisJobId, setDeepAnalysisJobId] = useState<string | null>(null);
+  const [deepAnalysisMessage, setDeepAnalysisMessage] = useState<{ text: string; type: "success" | "error" } | null>(null);
+  const [activeAnalysisTab, setActiveAnalysisTab] = useState<"patterns" | "timeline" | "family" | "priorities" | "research">("patterns");
+
+  const { data: deepAnalysesData, refetch: refetchDeepAnalyses } = useGetDeepIssueAnalysesQuery({
+    variables: { familyMemberId: issue?.familyMemberId ?? 0 },
+    skip: !issue?.familyMemberId,
+  });
+  const latestAnalysis = deepAnalysesData?.deepIssueAnalyses?.find(a => a.triggerIssueId === issue?.id) ?? null;
+
+  const [generateDeepAnalysis, { loading: generatingDeepAnalysis }] = useGenerateDeepIssueAnalysisMutation({
+    onCompleted: (data) => {
+      if (data.generateDeepIssueAnalysis.success && data.generateDeepIssueAnalysis.jobId) {
+        setDeepAnalysisMessage(null);
+        setDeepAnalysisJobId(data.generateDeepIssueAnalysis.jobId);
+      } else {
+        setDeepAnalysisMessage({ text: data.generateDeepIssueAnalysis.message || "Failed", type: "error" });
+      }
+    },
+    onError: (err) => {
+      setDeepAnalysisMessage({ text: err.message, type: "error" });
+    },
+  });
+
+  const { data: deepAnalysisJobData, stopPolling: stopDeepAnalysisPolling } = useGetGenerationJobQuery({
+    variables: { id: deepAnalysisJobId! },
+    skip: !deepAnalysisJobId,
+    pollInterval: 3000,
+    notifyOnNetworkStatusChange: true,
+    fetchPolicy: "network-only",
+  });
+
+  useEffect(() => {
+    const status = deepAnalysisJobData?.generationJob?.status;
+    if (status === "SUCCEEDED" || status === "FAILED") {
+      stopDeepAnalysisPolling();
+      setDeepAnalysisJobId(null);
+      if (status === "SUCCEEDED") {
+        setDeepAnalysisMessage({ text: "Deep analysis complete.", type: "success" });
+        refetchDeepAnalyses();
+      } else {
+        setDeepAnalysisMessage({ text: deepAnalysisJobData?.generationJob?.error?.message ?? "Analysis failed.", type: "error" });
+      }
+    }
+  }, [deepAnalysisJobData]);
+
+  const deepAnalysisProgress = deepAnalysisJobData?.generationJob?.progress ?? 0;
+  const isDeepAnalysisRunning = !!deepAnalysisJobId && deepAnalysisJobData?.generationJob?.status !== "SUCCEEDED" && deepAnalysisJobData?.generationJob?.status !== "FAILED";
+
+  const [deleteDeepAnalysis, { loading: deletingDeepAnalysis }] = useDeleteDeepIssueAnalysisMutation({
+    onCompleted: () => {
+      setDeepAnalysisMessage(null);
+      refetchDeepAnalyses();
+    },
+  });
+
+  const handleGenerateDeepAnalysis = async () => {
+    if (!issue) return;
+    setDeepAnalysisMessage(null);
+    await generateDeepAnalysis({ variables: { familyMemberId: issue.familyMemberId, triggerIssueId: issue.id } });
+  };
+
+  const handleDeleteDeepAnalysis = async () => {
+    if (!latestAnalysis) return;
+    await deleteDeepAnalysis({ variables: { id: latestAnalysis.id } });
+  };
+
   const handleGenerateResearch = async () => {
     if (!issue) return;
     setResearchMessage(null);
@@ -385,6 +463,82 @@ function IssueDetailContent() {
     }
   };
 
+  // Related Issues state
+  const [createRelatedOpen, setCreateRelatedOpen] = useState(false);
+  const [linkExistingOpen, setLinkExistingOpen] = useState(false);
+  const [relatedTitle, setRelatedTitle] = useState("");
+  const [relatedDescription, setRelatedDescription] = useState("");
+  const [relatedCategory, setRelatedCategory] = useState("behavioral");
+  const [relatedSeverity, setRelatedSeverity] = useState("medium");
+  const [relatedLinkType, setRelatedLinkType] = useState("related");
+  const [linkExistingIssueId, setLinkExistingIssueId] = useState("");
+  const [linkExistingLinkType, setLinkExistingLinkType] = useState("related");
+
+  const [createRelatedIssue, { loading: creatingRelated }] = useCreateRelatedIssueMutation({
+    refetchQueries: ["GetIssue"],
+  });
+  const [linkIssuesMutation, { loading: linking }] = useLinkIssuesMutation({
+    refetchQueries: ["GetIssue"],
+  });
+  const [unlinkIssuesMutation] = useUnlinkIssuesMutation({
+    refetchQueries: ["GetIssue"],
+  });
+
+  // Fetch sibling issues for the "link existing" picker
+  const { data: siblingIssuesData } = useGetIssuesQuery({
+    variables: { familyMemberId: issue?.familyMemberId ?? 0 },
+    skip: !issue?.familyMemberId || !linkExistingOpen,
+  });
+
+  const handleCreateRelated = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!issue) return;
+    try {
+      await createRelatedIssue({
+        variables: {
+          issueId: issue.id,
+          input: {
+            familyMemberId: issue.familyMemberId,
+            title: relatedTitle.trim(),
+            description: relatedDescription.trim(),
+            category: relatedCategory,
+            severity: relatedSeverity,
+          },
+          linkType: relatedLinkType,
+        },
+      });
+      setCreateRelatedOpen(false);
+      setRelatedTitle("");
+      setRelatedDescription("");
+    } catch (err: any) {
+      console.error("Failed to create related issue:", err);
+    }
+  };
+
+  const handleLinkExisting = async () => {
+    if (!issue || !linkExistingIssueId) return;
+    try {
+      await linkIssuesMutation({
+        variables: {
+          issueId: issue.id,
+          linkedIssueId: parseInt(linkExistingIssueId, 10),
+          linkType: linkExistingLinkType,
+        },
+      });
+      setLinkExistingOpen(false);
+      setLinkExistingIssueId("");
+    } catch (err: any) {
+      console.error("Failed to link issue:", err);
+    }
+  };
+
+  const handleUnlink = async (linkedIssueId: number) => {
+    if (!issue) return;
+    await unlinkIssuesMutation({
+      variables: { issueId: issue.id, linkedIssueId },
+    });
+  };
+
   if (loading) {
     return (
       <Flex justify="center" align="center" style={{ minHeight: "200px" }}>
@@ -404,6 +558,10 @@ function IssueDetailContent() {
   }
 
   const isGenerating = generatingStory || !!storyJobId;
+  const relatedIssues = issue.relatedIssues ?? [];
+  const availableToLink = (siblingIssuesData?.issues ?? []).filter(
+    (i) => i.id !== issue.id && !relatedIssues.some((r) => r.issue.id === i.id),
+  );
   const jobStatus = jobData?.generationJob;
 
   return (
@@ -570,6 +728,342 @@ function IssueDetailContent() {
               </Box>
             )}
           </Flex>
+        </Flex>
+      </Card>
+
+      {/* Related Issues */}
+      <Card>
+        <Flex direction="column" gap="4" p="4">
+          <Flex justify="between" align="start" wrap="wrap" gap="3">
+            <Box>
+              <Heading size="3" mb="1">Related Issues ({relatedIssues.length})</Heading>
+              <Text size="2" color="gray">
+                Link related issues to track connections and patterns.
+              </Text>
+            </Box>
+            <Flex gap="2">
+              <Button variant="soft" size="2" onClick={() => setLinkExistingOpen(true)}>
+                <Link2Icon />
+                Link Existing
+              </Button>
+              <Button size="2" onClick={() => setCreateRelatedOpen(true)}>
+                <PlusIcon />
+                Create Related
+              </Button>
+            </Flex>
+          </Flex>
+
+          {relatedIssues.length > 0 && (
+            <>
+              <Separator size="4" />
+              {relatedIssues.map((link) => (
+                <Card key={link.id} variant="surface">
+                  <Flex align="center" gap="3" p="3">
+                    <Flex direction="column" gap="1" style={{ flex: 1 }}>
+                      <Flex gap="2" align="center">
+                        <NextLink
+                          href={`/family/${link.issue.familyMember?.slug ?? familySlug}/issues/${link.issue.id}`}
+                          style={{ textDecoration: "none" }}
+                        >
+                          <Text size="2" weight="medium" color="iris" style={{ textDecoration: "underline" }}>
+                            {link.issue.title}
+                          </Text>
+                        </NextLink>
+                        <Badge variant="outline" color="gray" size="1">
+                          {link.linkType}
+                        </Badge>
+                      </Flex>
+                      <Flex gap="2" wrap="wrap">
+                        <Badge color={getSeverityColor(link.issue.severity)} variant="soft" size="1">
+                          {link.issue.severity}
+                        </Badge>
+                        <Badge color={getCategoryColor(link.issue.category)} variant="outline" size="1">
+                          {link.issue.category}
+                        </Badge>
+                        {link.issue.familyMember && (
+                          <Text size="1" color="gray">
+                            {link.issue.familyMember.firstName}
+                            {link.issue.familyMember.name ? ` ${link.issue.familyMember.name}` : ""}
+                          </Text>
+                        )}
+                      </Flex>
+                    </Flex>
+                    <Button
+                      variant="ghost"
+                      color="red"
+                      size="1"
+                      onClick={() => handleUnlink(link.issue.id)}
+                    >
+                      <Cross2Icon />
+                    </Button>
+                  </Flex>
+                </Card>
+              ))}
+            </>
+          )}
+        </Flex>
+      </Card>
+
+      {/* Deep Issue Analysis */}
+      <Card>
+        <Flex direction="column" gap="4" p="4">
+          <Flex justify="between" align="start" wrap="wrap" gap="3">
+            <Box>
+              <Heading size="3" mb="1">Deep Issue Analysis</Heading>
+              <Text size="2" color="gray">
+                Analyze all issues for {issue.familyMember?.firstName ?? "this member"} to find patterns, systemic dynamics, and priorities.
+              </Text>
+            </Box>
+            <Flex gap="2">
+              {latestAnalysis && (
+                <Button
+                  variant="soft"
+                  color="red"
+                  size="2"
+                  onClick={handleDeleteDeepAnalysis}
+                  disabled={deletingDeepAnalysis || isDeepAnalysisRunning}
+                >
+                  {deletingDeepAnalysis ? "Deleting..." : "Delete"}
+                </Button>
+              )}
+              <Button
+                onClick={handleGenerateDeepAnalysis}
+                disabled={generatingDeepAnalysis || isDeepAnalysisRunning}
+              >
+                {(generatingDeepAnalysis || isDeepAnalysisRunning) && <Spinner />}
+                {generatingDeepAnalysis || isDeepAnalysisRunning ? "Analyzing..." : latestAnalysis ? "Regenerate" : "Run Deep Analysis"}
+              </Button>
+            </Flex>
+          </Flex>
+
+          {isDeepAnalysisRunning && (
+            <Flex direction="column" gap="2">
+              <Text size="2" color="gray">
+                {deepAnalysisProgress > 0 ? `Analyzing... ${deepAnalysisProgress}%` : "Collecting data and analyzing..."}
+              </Text>
+              <Box style={{ height: 6, borderRadius: 3, background: "var(--gray-4)", overflow: "hidden" }}>
+                {deepAnalysisProgress > 0 ? (
+                  <Box style={{ height: "100%", width: `${deepAnalysisProgress}%`, background: "var(--indigo-9)", transition: "width 0.4s ease", borderRadius: 3 }} />
+                ) : (
+                  <Box style={{ height: "100%", width: "40%", background: "var(--indigo-9)", borderRadius: 3, animation: "researchSweep 1.4s ease-in-out infinite" }} />
+                )}
+              </Box>
+            </Flex>
+          )}
+
+          {deepAnalysisMessage && (
+            <Text size="2" color={deepAnalysisMessage.type === "success" ? "green" : "red"}>
+              {deepAnalysisMessage.text}
+            </Text>
+          )}
+
+          {latestAnalysis && (
+            <>
+              <Separator size="4" />
+
+              {/* Summary */}
+              <Box>
+                <Text size="2" style={{ whiteSpace: "pre-wrap", lineHeight: "1.7" }}>
+                  {latestAnalysis.summary}
+                </Text>
+                <Flex gap="2" mt="2" wrap="wrap">
+                  <Badge variant="outline" color="gray" size="1">
+                    {latestAnalysis.dataSnapshot.issueCount} issues
+                  </Badge>
+                  <Badge variant="outline" color="gray" size="1">
+                    {latestAnalysis.dataSnapshot.observationCount} observations
+                  </Badge>
+                  <Badge variant="outline" color="gray" size="1">
+                    {latestAnalysis.dataSnapshot.journalEntryCount} journal entries
+                  </Badge>
+                  {latestAnalysis.dataSnapshot.relatedMemberIssueCount > 0 && (
+                    <Badge variant="outline" color="purple" size="1">
+                      {latestAnalysis.dataSnapshot.relatedMemberIssueCount} cross-member issues
+                    </Badge>
+                  )}
+                  <Badge variant="outline" color="gray" size="1">
+                    {new Date(latestAnalysis.createdAt).toLocaleDateString()}
+                  </Badge>
+                </Flex>
+              </Box>
+
+              {/* Tabs */}
+              <Flex gap="2" wrap="wrap">
+                {(["patterns", "timeline", "family", "priorities", "research"] as const).map((tab) => (
+                  <Button
+                    key={tab}
+                    variant={activeAnalysisTab === tab ? "solid" : "soft"}
+                    size="1"
+                    onClick={() => setActiveAnalysisTab(tab)}
+                  >
+                    {tab === "patterns" ? `Patterns (${latestAnalysis.patternClusters.length})`
+                      : tab === "timeline" ? "Timeline"
+                      : tab === "family" ? `Family (${latestAnalysis.familySystemInsights.length})`
+                      : tab === "priorities" ? `Priorities (${latestAnalysis.priorityRecommendations.length})`
+                      : `Research (${latestAnalysis.researchRelevance.length})`}
+                  </Button>
+                ))}
+              </Flex>
+
+              {/* Tab Content: Patterns */}
+              {activeAnalysisTab === "patterns" && latestAnalysis.patternClusters.map((cluster, idx) => (
+                <Card key={idx} variant="surface">
+                  <Flex direction="column" gap="2" p="3">
+                    <Flex justify="between" align="center" wrap="wrap" gap="2">
+                      <Text size="2" weight="bold">{cluster.name}</Text>
+                      <Flex gap="1">
+                        <Badge variant="soft" color={cluster.pattern === "escalating" ? "red" : cluster.pattern === "recurring" ? "orange" : "blue"} size="1">
+                          {cluster.pattern}
+                        </Badge>
+                        <Badge variant="outline" color="gray" size="1">
+                          {Math.round(cluster.confidence * 100)}% confidence
+                        </Badge>
+                      </Flex>
+                    </Flex>
+                    <Text size="2" color="gray" style={{ lineHeight: "1.6" }}>{cluster.description}</Text>
+                    <Flex gap="1" wrap="wrap">
+                      {cluster.issueTitles.map((title, i) => (
+                        <Badge key={i} variant="outline" color="indigo" size="1">{title}</Badge>
+                      ))}
+                    </Flex>
+                    {cluster.categories.length > 0 && (
+                      <Flex gap="1" wrap="wrap">
+                        {cluster.categories.map((cat, i) => (
+                          <Badge key={i} variant="outline" color={getCategoryColor(cat)} size="1">{cat}</Badge>
+                        ))}
+                      </Flex>
+                    )}
+                    {cluster.suggestedRootCause && (
+                      <Box style={{ borderLeft: "3px solid var(--orange-7)", paddingLeft: 12, marginTop: 4 }}>
+                        <Text size="1" weight="medium" color="orange">Possible root cause</Text>
+                        <Text size="2" color="gray" style={{ display: "block" }}>{cluster.suggestedRootCause}</Text>
+                      </Box>
+                    )}
+                  </Flex>
+                </Card>
+              ))}
+
+              {/* Tab Content: Timeline */}
+              {activeAnalysisTab === "timeline" && (
+                <Flex direction="column" gap="3">
+                  <Flex gap="2" wrap="wrap">
+                    <Badge variant="soft" color={
+                      latestAnalysis.timelineAnalysis.escalationTrend === "worsening" ? "red"
+                      : latestAnalysis.timelineAnalysis.escalationTrend === "improving" ? "green"
+                      : "gray"
+                    } size="2">
+                      Trend: {latestAnalysis.timelineAnalysis.escalationTrend}
+                    </Badge>
+                    {latestAnalysis.timelineAnalysis.criticalPeriods.map((p, i) => (
+                      <Badge key={i} variant="outline" color="red" size="1">Critical: {p}</Badge>
+                    ))}
+                  </Flex>
+                  {latestAnalysis.timelineAnalysis.moodCorrelation && (
+                    <Text size="2" color="gray" style={{ lineHeight: "1.6" }}>
+                      {latestAnalysis.timelineAnalysis.moodCorrelation}
+                    </Text>
+                  )}
+                  {latestAnalysis.timelineAnalysis.phases.map((phase, idx) => (
+                    <Card key={idx} variant="surface">
+                      <Flex direction="column" gap="2" p="3">
+                        <Flex justify="between" align="center" wrap="wrap" gap="2">
+                          <Text size="2" weight="bold">{phase.period}</Text>
+                          {phase.moodTrend && (
+                            <Badge variant="soft" color={phase.moodTrend === "declining" ? "red" : phase.moodTrend === "improving" ? "green" : "gray"} size="1">
+                              Mood: {phase.moodTrend}
+                            </Badge>
+                          )}
+                        </Flex>
+                        <Text size="2" color="gray" style={{ lineHeight: "1.6" }}>{phase.description}</Text>
+                        {phase.keyEvents.length > 0 && (
+                          <ul style={{ margin: 0, paddingLeft: "16px" }}>
+                            {phase.keyEvents.map((e, i) => (
+                              <li key={i}><Text size="1" color="gray">{e}</Text></li>
+                            ))}
+                          </ul>
+                        )}
+                      </Flex>
+                    </Card>
+                  ))}
+                </Flex>
+              )}
+
+              {/* Tab Content: Family System */}
+              {activeAnalysisTab === "family" && latestAnalysis.familySystemInsights.map((insight, idx) => (
+                <Card key={idx} variant="surface">
+                  <Flex direction="column" gap="2" p="3">
+                    <Flex justify="between" align="center" wrap="wrap" gap="2">
+                      <Flex gap="1" wrap="wrap">
+                        {insight.involvedMemberNames.map((name, i) => (
+                          <Badge key={i} variant="soft" color="purple" size="1">{name}</Badge>
+                        ))}
+                      </Flex>
+                      <Flex gap="1">
+                        {insight.systemicPattern && (
+                          <Badge variant="outline" color="orange" size="1">{insight.systemicPattern.replace(/_/g, " ")}</Badge>
+                        )}
+                        {insight.actionable && (
+                          <Badge variant="soft" color="green" size="1">actionable</Badge>
+                        )}
+                      </Flex>
+                    </Flex>
+                    <Text size="2" color="gray" style={{ lineHeight: "1.6" }}>{insight.insight}</Text>
+                  </Flex>
+                </Card>
+              ))}
+
+              {/* Tab Content: Priorities */}
+              {activeAnalysisTab === "priorities" && latestAnalysis.priorityRecommendations.map((rec, idx) => (
+                <Card key={idx} variant="surface">
+                  <Flex direction="column" gap="2" p="3">
+                    <Flex justify="between" align="center" wrap="wrap" gap="2">
+                      <Flex gap="2" align="center">
+                        <Badge variant="solid" color="gray" size="1">#{rec.rank}</Badge>
+                        <Text size="2" weight="bold">{rec.issueTitle || "General"}</Text>
+                      </Flex>
+                      <Badge variant="soft" color={rec.urgency === "immediate" ? "red" : rec.urgency === "short_term" ? "orange" : "blue"} size="1">
+                        {rec.urgency.replace(/_/g, " ")}
+                      </Badge>
+                    </Flex>
+                    <Text size="2" color="gray" style={{ lineHeight: "1.6" }}>{rec.rationale}</Text>
+                    <Box style={{ borderLeft: "3px solid var(--indigo-7)", paddingLeft: 12 }}>
+                      <Text size="1" weight="medium" color="indigo">Suggested approach</Text>
+                      <Text size="2" color="gray" style={{ display: "block" }}>{rec.suggestedApproach}</Text>
+                    </Box>
+                  </Flex>
+                </Card>
+              ))}
+
+              {/* Tab Content: Research Gaps */}
+              {activeAnalysisTab === "research" && latestAnalysis.researchRelevance.map((rr, idx) => (
+                <Card key={idx} variant="surface">
+                  <Flex direction="column" gap="2" p="3">
+                    <Text size="2" weight="bold">{rr.patternClusterName}</Text>
+                    {rr.relevantResearchTitles.length > 0 && (
+                      <Box>
+                        <Text size="1" weight="medium" mb="1">Covered by research:</Text>
+                        <ul style={{ margin: 0, paddingLeft: "16px" }}>
+                          {rr.relevantResearchTitles.map((t, i) => (
+                            <li key={i}><Text size="1" color="gray">{t}</Text></li>
+                          ))}
+                        </ul>
+                      </Box>
+                    )}
+                    {rr.coverageGaps.length > 0 && (
+                      <Box>
+                        <Text size="1" weight="medium" color="orange" mb="1">Gaps — needs more research:</Text>
+                        <ul style={{ margin: 0, paddingLeft: "16px" }}>
+                          {rr.coverageGaps.map((g, i) => (
+                            <li key={i}><Text size="1" color="orange">{g}</Text></li>
+                          ))}
+                        </ul>
+                      </Box>
+                    )}
+                  </Flex>
+                </Card>
+              ))}
+            </>
+          )}
         </Flex>
       </Card>
 
@@ -1080,6 +1574,131 @@ function IssueDetailContent() {
               </Flex>
             </Flex>
           </form>
+        </Dialog.Content>
+      </Dialog.Root>
+
+      {/* Create Related Issue Dialog */}
+      <Dialog.Root open={createRelatedOpen} onOpenChange={setCreateRelatedOpen}>
+        <Dialog.Content style={{ maxWidth: 540 }}>
+          <Dialog.Title>Create Related Issue</Dialog.Title>
+          <form onSubmit={handleCreateRelated}>
+            <Flex direction="column" gap="4">
+              <label>
+                <Text as="div" size="2" mb="1" weight="medium">Title</Text>
+                <TextField.Root
+                  placeholder="Related issue title"
+                  value={relatedTitle}
+                  onChange={(e) => setRelatedTitle(e.target.value)}
+                  disabled={creatingRelated}
+                  required
+                />
+              </label>
+              <label>
+                <Text as="div" size="2" mb="1" weight="medium">Description</Text>
+                <TextArea
+                  placeholder="Describe the related issue"
+                  value={relatedDescription}
+                  onChange={(e) => setRelatedDescription(e.target.value)}
+                  rows={3}
+                  disabled={creatingRelated}
+                  required
+                />
+              </label>
+              <Flex gap="3">
+                <label style={{ flex: 1 }}>
+                  <Text as="div" size="2" mb="1" weight="medium">Category</Text>
+                  <Select.Root value={relatedCategory} onValueChange={setRelatedCategory} disabled={creatingRelated}>
+                    <Select.Trigger style={{ width: "100%" }} />
+                    <Select.Content>
+                      {CATEGORY_OPTIONS.map((opt) => (
+                        <Select.Item key={opt} value={opt}>
+                          {opt.charAt(0).toUpperCase() + opt.slice(1)}
+                        </Select.Item>
+                      ))}
+                    </Select.Content>
+                  </Select.Root>
+                </label>
+                <label style={{ flex: 1 }}>
+                  <Text as="div" size="2" mb="1" weight="medium">Severity</Text>
+                  <Select.Root value={relatedSeverity} onValueChange={setRelatedSeverity} disabled={creatingRelated}>
+                    <Select.Trigger style={{ width: "100%" }} />
+                    <Select.Content>
+                      {SEVERITY_OPTIONS.map((opt) => (
+                        <Select.Item key={opt} value={opt}>
+                          {opt.charAt(0).toUpperCase() + opt.slice(1)}
+                        </Select.Item>
+                      ))}
+                    </Select.Content>
+                  </Select.Root>
+                </label>
+              </Flex>
+              <label>
+                <Text as="div" size="2" mb="1" weight="medium">Link Type</Text>
+                <Select.Root value={relatedLinkType} onValueChange={setRelatedLinkType} disabled={creatingRelated}>
+                  <Select.Trigger style={{ width: "100%" }} />
+                  <Select.Content>
+                    <Select.Item value="related">Related</Select.Item>
+                    <Select.Item value="causes">Causes</Select.Item>
+                    <Select.Item value="caused_by">Caused By</Select.Item>
+                    <Select.Item value="duplicate">Duplicate</Select.Item>
+                  </Select.Content>
+                </Select.Root>
+              </label>
+              <Flex gap="3" justify="end" mt="4">
+                <Dialog.Close>
+                  <Button variant="soft" color="gray">Cancel</Button>
+                </Dialog.Close>
+                <Button type="submit" disabled={creatingRelated}>
+                  {creatingRelated ? "Creating..." : "Create & Link"}
+                </Button>
+              </Flex>
+            </Flex>
+          </form>
+        </Dialog.Content>
+      </Dialog.Root>
+
+      {/* Link Existing Issue Dialog */}
+      <Dialog.Root open={linkExistingOpen} onOpenChange={setLinkExistingOpen}>
+        <Dialog.Content style={{ maxWidth: 540 }}>
+          <Dialog.Title>Link Existing Issue</Dialog.Title>
+          <Flex direction="column" gap="4">
+            <label>
+              <Text as="div" size="2" mb="1" weight="medium">Select Issue</Text>
+              <Select.Root value={linkExistingIssueId} onValueChange={setLinkExistingIssueId} disabled={linking}>
+                <Select.Trigger style={{ width: "100%" }} placeholder="Choose an issue..." />
+                <Select.Content>
+                  {availableToLink.map((i) => (
+                    <Select.Item key={i.id} value={String(i.id)}>
+                      {i.title} ({i.category}, {i.severity})
+                    </Select.Item>
+                  ))}
+                  {availableToLink.length === 0 && (
+                    <Select.Item value="" disabled>No issues available to link</Select.Item>
+                  )}
+                </Select.Content>
+              </Select.Root>
+            </label>
+            <label>
+              <Text as="div" size="2" mb="1" weight="medium">Link Type</Text>
+              <Select.Root value={linkExistingLinkType} onValueChange={setLinkExistingLinkType} disabled={linking}>
+                <Select.Trigger style={{ width: "100%" }} />
+                <Select.Content>
+                  <Select.Item value="related">Related</Select.Item>
+                  <Select.Item value="causes">Causes</Select.Item>
+                  <Select.Item value="caused_by">Caused By</Select.Item>
+                  <Select.Item value="duplicate">Duplicate</Select.Item>
+                </Select.Content>
+              </Select.Root>
+            </label>
+            <Flex gap="3" justify="end" mt="4">
+              <Dialog.Close>
+                <Button variant="soft" color="gray">Cancel</Button>
+              </Dialog.Close>
+              <Button onClick={handleLinkExisting} disabled={linking || !linkExistingIssueId}>
+                {linking ? "Linking..." : "Link Issue"}
+              </Button>
+            </Flex>
+          </Flex>
         </Dialog.Content>
       </Dialog.Root>
     </Flex>

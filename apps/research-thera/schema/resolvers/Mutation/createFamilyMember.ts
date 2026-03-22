@@ -1,10 +1,17 @@
 import type { MutationResolvers } from "./../../types.generated";
-import { createFamilyMember as _createFamilyMember, getFamilyMember } from "@/src/db";
+import { createFamilyMember as _createFamilyMember, getFamilyMember, getSelfFamilyMember } from "@/src/db";
 
 export const createFamilyMember: NonNullable<MutationResolvers['createFamilyMember']> = async (_parent, args, ctx) => {
   const userEmail = ctx.userEmail;
   if (!userEmail) {
     throw new Error("Authentication required");
+  }
+
+  if (args.input.relationship === "self") {
+    const existing = await getSelfFamilyMember(userEmail);
+    if (existing) {
+      return { ...existing, goals: [], shares: [] } as any;
+    }
   }
 
   const id = await _createFamilyMember({

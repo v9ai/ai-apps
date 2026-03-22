@@ -93,8 +93,11 @@ def format_paper_digest(papers: list[ResearchPaper]) -> str:
         authors = ", ".join(p.authors) if p.authors else "Unknown"
         year = str(p.year) if p.year else "n/a"
         cites = p.citation_count or 0
+        url = p.url or ""
+        title_link = f"[{p.title}]({url})" if url else p.title
+        source_link = f"[{p.source.value}]({url})" if url else p.source.value
         lines.append(
-            f"### {i}. {p.title} ({year}) [{p.source.value}]\n"
+            f"### {i}. {title_link} ({year}) — {source_link}\n"
             f"**Authors:** {authors}\n"
             f"**Citations:** {cites}"
         )
@@ -120,10 +123,11 @@ def format_editorial_digest(articles: list[ResearchPaper]) -> str:
     for i, a in enumerate(articles, 1):
         authors = ", ".join(a.authors) if a.authors else "Staff"
         year = str(a.year) if a.year else "n/a"
+        url = a.url or ""
+        source_link = f"[{a.source.value}]({url})" if url else a.source.value
         lines.append(
-            f"### {i}. {a.title} ({year}) [{a.source.value}]\n"
-            f"**Author(s):** {authors}\n"
-            f"**URL:** {a.url}"
+            f"### {i}. [{a.title}]({url}) ({year}) — {source_link}\n"
+            f"**Author(s):** {authors}"
         )
         if a.abstract_text:
             abstract = a.abstract_text

@@ -2,7 +2,7 @@
 
 These are zero-dependency tests that confirm:
 - conftest fixtures are wired up
-- key packages (crew, deepeval, langgraph, langchain) are importable
+- key packages (research_pipeline, deepeval, langgraph, langchain) are importable
 - the test suite has sufficient coverage files
 """
 
@@ -21,8 +21,8 @@ def test_conftest_fixtures_available(sample_research):
 
 
 def test_crew_importable():
-    """Can import build_graph and _extract_json from the crew module."""
-    from crew import build_graph, _extract_json  # noqa: F401
+    """Can import build_graph and _extract_json from the research_pipeline module."""
+    from research_pipeline import build_graph, _extract_json  # noqa: F401
 
     assert callable(build_graph)
     assert callable(_extract_json)

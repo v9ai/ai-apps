@@ -1,8 +1,8 @@
-"""Tests for _extract_json helper in crew.py."""
+"""Tests for _extract_json helper in research_pipeline.py."""
 
 import pytest
 
-from crew import _extract_json
+from research_pipeline import _extract_json
 
 
 # ── 1. Pure JSON array ─────────────────────────────────────────────────────

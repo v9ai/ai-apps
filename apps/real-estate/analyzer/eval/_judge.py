@@ -8,13 +8,6 @@ ensures consistent model / threshold configuration across the suite.
 import os
 from typing import Any
 
-# Instrument CrewAI for DeepEval tracing in eval tests
-try:
-    from deepeval.integrations.crewai import instrument_crewai
-    instrument_crewai()
-except Exception:
-    pass
-
 _HAS_API_KEY = bool(os.getenv("DEEPSEEK_API_KEY"))
 
 judge = None

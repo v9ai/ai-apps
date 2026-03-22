@@ -64,13 +64,13 @@ class TestSlugNameMatch:
     def _profiles(self):
         p = _load_profiles()
         if not p:
-            pytest.skip("No profiles — run crew.py first")
+            pytest.skip("No profiles — run research_pipeline.py first")
         return p
 
     def _profiles_with_filenames(self):
         p = _load_profiles_with_filenames()
         if not p:
-            pytest.skip("No profiles — run crew.py first")
+            pytest.skip("No profiles — run research_pipeline.py first")
         return p
 
     def test_slug_derived_from_name(self):

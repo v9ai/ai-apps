@@ -6,7 +6,7 @@ Centralized voice and text-to-speech functionality for the AI Therapist applicat
 
 This module provides:
 
-- **Mastra ElevenLabs Integration**: For agent-based TTS in conversational AI
+- **ElevenLabs Integration**: For TTS in conversational AI
 - **Direct ElevenLabs API**: For custom audio generation and fine-grained control
 - **Voice Presets**: Curated therapeutic voices optimized for mental health content
 
@@ -14,20 +14,13 @@ This module provides:
 
 ### `createElevenLabsVoice(speaker, options?)`
 
-Creates an ElevenLabsVoice instance for use with Mastra agents.
+Creates an ElevenLabsVoice instance for use with agents.
 
 ```typescript
 import { createElevenLabsVoice } from "@/voice";
 
 const voice = createElevenLabsVoice("george", {
   modelName: "eleven_multilingual_v2"
-});
-
-// Use with Mastra Agent
-const agent = new Agent({
-  id: "my-agent",
-  voice: createElevenLabsVoice("rachel"),
-  // ... other config
 });
 ```
 
@@ -43,10 +36,10 @@ import { THERAPEUTIC_VOICES } from "@/voice";
 
 // Available voices:
 // - george: Professional, calm, reassuring
-// - rachel: Warm, clear, empathetic  
+// - rachel: Warm, clear, empathetic
 // - bella: Soft, soothing, gentle
 // - adam: Deep, calming, authoritative
-// - aria: Default Mastra voice, balanced and clear
+// - aria: Balanced and clear
 ```
 
 ## Direct ElevenLabs API
@@ -104,43 +97,6 @@ Requires `ELEVENLABS_API_KEY` environment variable:
 ELEVENLABS_API_KEY=your_api_key_here
 ```
 
-## Usage in Agents
-
-```typescript
-import { Agent } from "@mastra/core/agent";
-import { createElevenLabsVoice } from "@/voice";
-
-export const therapeuticAgent = new Agent({
-  id: "therapeutic-agent",
-  name: "Therapeutic Audio Agent",
-  instructions: "...",
-  model: deepseek("deepseek-chat"),
-  voice: createElevenLabsVoice("george"),
-});
-```
-
-## Mastra Voice API
-
-The `createElevenLabsVoice` function wraps Mastra's `@mastra/voice-elevenlabs` package:
-
-### Methods Available on Voice Instance
-
-- **`speak(input, options?)`**: Convert text to speech stream
-- **`listen(input, options?)`**: Convert audio to text (STT)
-- **`getSpeakers()`**: Get available voice options
-
-### Voice Options
-
-```typescript
-{
-  speechModel: {
-    name: "eleven_multilingual_v2" | "eleven_turbo_v2",
-    apiKey: string
-  },
-  speaker: string // Voice ID
-}
-```
-
 ## Best Practices
 
 1. **Use presets for consistency**: Stick to `THERAPEUTIC_VOICES` presets
@@ -151,19 +107,11 @@ The `createElevenLabsVoice` function wraps Mastra's `@mastra/voice-elevenlabs` p
 ## Example: Complete Workflow
 
 ```typescript
-import { 
-  createElevenLabsVoice, 
+import {
   createAudioFileFromText,
-  THERAPEUTIC_VOICES 
+  THERAPEUTIC_VOICES
 } from "@/voice";
 
-// For Mastra agents
-const agent = new Agent({
-  voice: createElevenLabsVoice("rachel"),
-  // ...
-});
-
-// For custom audio generation
 const audioFile = await createAudioFileFromText(
   "Let's take a deep breath together",
   THERAPEUTIC_VOICES.rachel.id,
@@ -173,5 +121,4 @@ const audioFile = await createAudioFileFromText(
 
 ## References
 
-- [Mastra ElevenLabs Voice Documentation](https://mastra.dev/reference/voice/elevenlabs)
 - [ElevenLabs API Documentation](https://elevenlabs.io/docs)

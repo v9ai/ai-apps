@@ -1,5 +1,5 @@
 import type { MutationResolvers } from "./../../types.generated";
-import { d1Tools } from "@/src/db";
+import { db } from "@/src/db";
 
 export const updateFamilyMember: NonNullable<MutationResolvers['updateFamilyMember']> = async (_parent, args, ctx) => {
   const userEmail = ctx.userEmail;
@@ -7,7 +7,7 @@ export const updateFamilyMember: NonNullable<MutationResolvers['updateFamilyMemb
     throw new Error("Authentication required");
   }
 
-  await d1Tools.updateFamilyMember(args.id, {
+  await db.updateFamilyMember(args.id, {
     firstName: args.input.firstName ?? undefined,
     name: args.input.name,
     ageYears: args.input.ageYears,
@@ -20,7 +20,7 @@ export const updateFamilyMember: NonNullable<MutationResolvers['updateFamilyMemb
     occupation: args.input.occupation,
   });
 
-  const member = await d1Tools.getFamilyMember(args.id);
+  const member = await db.getFamilyMember(args.id);
   if (!member) throw new Error("Family member not found");
 
   return {

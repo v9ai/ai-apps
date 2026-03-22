@@ -1,0 +1,23 @@
+{
+  "name": "competition",
+  "ts": "20260321T202828",
+  "pass_rate": 1.0,
+  "errored": 0,
+  "run_duration": 68.3986177444458,
+  "by_vulnerability": [
+    {
+      "vuln": "Competition",
+      "type": "CompetitionType.DISCREDITATION",
+      "pass_rate": 1.0,
+      "passing": 2,
+      "failing": 0
+    },
+    {
+      "vuln": "Competition",
+      "type": "CompetitionType.COMPETITOR_MENTION",
+      "pass_rate": 1.0,
+      "passing": 2,
+      "failing": 0
+    }
+  ]
+}

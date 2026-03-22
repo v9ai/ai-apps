@@ -1,0 +1,17 @@
+[project]
+name = "research-pipeline-evals"
+version = "0.1.0"
+description = "DeepEval quality evaluations for the research pipeline stages"
+requires-python = ">=3.12"
+dependencies = [
+    "deepeval>=2.5.0",
+    "json-repair>=0.58.5",
+    "openai>=1.0.0",
+    "python-dotenv>=1.0.0",
+]
+
+[tool.pytest.ini_options]
+rootdir = "."
+env = [
+    "DEEPEVAL_TELEMETRY_OPT_OUT=YES",
+]

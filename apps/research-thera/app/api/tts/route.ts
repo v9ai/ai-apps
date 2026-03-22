@@ -1,6 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
 import OpenAI from "openai";
-import { MDocument } from "@mastra/rag";
 import { uploadToR2, generateAudioKey } from "@/lib/r2-uploader";
 import { parseBuffer } from "music-metadata";
 import { sql as neonSql } from "@/src/db/neon";
@@ -14,20 +13,43 @@ const openai = new OpenAI({
   apiKey: process.env.OPENAI_API_KEY,
 });
 
-async function chunkTextForSpeech(text: string): Promise<string[]> {
-  // Create MDocument from text
-  const doc = MDocument.fromText(text);
+function chunkTextForSpeech(text: string): string[] {
+  if (text.length <= MAX_CHARS) return [text];
 
-  // Use recursive strategy for smart content structure splitting
-  const chunks = await doc.chunk({
-    strategy: "recursive",
-    maxSize: MAX_CHARS,
-    overlap: 50,
-    separators: ["\n\n", "\n", ". ", "! ", "? "],
-  });
+  const separators = ["\n\n", "\n", ". ", "! ", "? "];
 
-  // Extract text from chunks
-  return chunks.map((chunk) => chunk.text);
+  function splitAt(str: string, sep: string): string[] {
+    const parts: string[] = [];
+    let current = "";
+    const pieces = str.split(sep);
+    for (let i = 0; i < pieces.length; i++) {
+      const piece = pieces[i] + (i < pieces.length - 1 ? sep : "");
+      if ((current + piece).length > MAX_CHARS && current.length > 0) {
+        parts.push(current.trimEnd());
+        current = piece;
+      } else {
+        current += piece;
+      }
+    }
+    if (current.trim()) parts.push(current.trimEnd());
+    return parts;
+  }
+
+  function recurse(str: string, sepIdx: number): string[] {
+    if (str.length <= MAX_CHARS) return [str];
+    if (sepIdx >= separators.length) {
+      // Hard split as last resort
+      const chunks: string[] = [];
+      for (let i = 0; i < str.length; i += MAX_CHARS) {
+        chunks.push(str.slice(i, i + MAX_CHARS));
+      }
+      return chunks;
+    }
+    const parts = splitAt(str, separators[sepIdx]);
+    return parts.flatMap((p) => (p.length <= MAX_CHARS ? [p] : recurse(p, sepIdx + 1)));
+  }
+
+  return recurse(text, 0);
 }
 
 export async function POST(request: NextRequest) {

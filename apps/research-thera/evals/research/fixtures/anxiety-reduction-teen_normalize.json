@@ -1,36 +1,39 @@
 {
   "id": "anxiety-reduction-teen",
   "stage": "normalize",
-  "prompt": "You are a clinical psychologist specializing in translating parent/family-reported therapeutic goals into precise clinical language for academic research queries.\n\nGoal Title: \"Reduce test anxiety\"\nGoal Description: \"Sarah experiences severe anxiety before and during tests, leading to poor performance.\"\nNotes: Panic attacks before exams started this semester; Good grades on homework but fails tests\n\nExtracted Issues from Teacher Feedback:\n- [HIGH] Severe test anxiety with physical symptoms: Experiences nausea and dizziness before tests, unable to complete exams despite knowledge.\n- [MEDIUM] Avoidance coping pattern: Avoids studying as coping mechanism, creating cycle of unpreparedness and increased anxiety.\n\nRecent Teacher Feedback:\nSarah's test anxiety has worsened this term. She was unable to complete the mid-term biology exam, leaving 40% blank despite demonstrating strong knowledge in class discussions. She reports feeling nauseous and dizzy before tests. The school counselor has noted she avoids studying as a coping mechanism, which creates a cycle of unpreparedness.\nThe patient is 14 years old. Patient name: Sarah.\n\nTASK:\n1. Detect the language (ISO 639-1 code, e.g. \"en\", \"ro\", \"fr\")\n2. Translate to English if not already English\n3. Identify the SPECIFIC clinical construct (not generic \"behavioral_change\")\n4. Determine if goal is to INCREASE or REDUCE the behavior\n5. Infer developmental stage from age\n6. Generate 5-10 required keywords that MUST appear in relevant research papers\n7. Generate 5-10 excluded topics that are NOT relevant to this goal\n\nCLINICAL DOMAIN EXAMPLES (be this specific, never use \"behavioral_change\"):\n- \"Face sunete la lectii\" (Romanian: makes sounds during lessons) \u2192 if child context:\n  \"selective_mutism\" OR \"adhd_vocalization\" OR \"vocal_stereotypy_asd\"\n- \"Reduce test anxiety\" \u2192 \"test_anxiety_children\"\n- \"Improve eye contact\" \u2192 \"social_communication_asd\"\n- \"Stop hitting siblings\" \u2192 \"aggression_children\"\n- \"Talk more at school\" \u2192 \"selective_mutism\" or \"school_social_anxiety\"\n\nBEHAVIOR DIRECTION:\n- INCREASE: goal is to produce MORE of a behavior\n- REDUCE: goal is to produce LESS of a behavior\n- MAINTAIN: keep current level\n- UNCLEAR: cannot determine\n\nREQUIRED KEYWORDS: clinical terms that MUST appear in papers for them to be relevant.\nExample for selective mutism: [\"selective mutism\", \"classroom vocalization\", \"speech anxiety\", \"school\", \"children\", \"behavioral intervention\"]\n\nEXCLUDED TOPICS: topics that look related but are NOT relevant.\nExample for selective mutism: [\"homework completion\", \"academic achievement\", \"family therapy engagement\", \"adolescent depression\", \"adult psychotherapy\"]\n\nReturn JSON matching the schema exactly.",
+  "prompt": "You are a clinical psychologist specializing in translating parent/family-reported therapeutic goals into precise clinical language for academic research queries.\n\nGoal Title: \"Reduce test anxiety\"\nGoal Description: \"Sarah experiences severe anxiety before and during tests, leading to poor performance.\"\nNotes: Panic attacks before exams started this semester; Good grades on homework but fails tests\n\nExtracted Issues from Teacher Feedback:\n- [HIGH] Severe test anxiety with physical symptoms: Experiences nausea and dizziness before tests, unable to complete exams despite knowledge.\n- [MEDIUM] Avoidance coping pattern: Avoids studying as coping mechanism, creating cycle of unpreparedness and increased anxiety.\n\nRecent Teacher Feedback:\nSarah's test anxiety has worsened this term. She was unable to complete the mid-term biology exam, leaving 40% blank despite demonstrating strong knowledge in class discussions. She reports feeling nauseous and dizzy before tests. The school counselor has noted she avoids studying as a coping mechanism, which creates a cycle of unpreparedness.\nThe patient is 14 years old. Patient name: Sarah.\n\nTASK:\n1. Detect the language (ISO 639-1 code, e.g. \"en\", \"ro\", \"fr\")\n2. Translate to English if not already English\n3. Identify the SPECIFIC clinical construct (not generic \"behavioral_change\")\n4. Determine if goal is to INCREASE or REDUCE the behavior\n5. Infer developmental stage from age\n6. Generate 5-10 required keywords that MUST appear in relevant research papers\n7. Generate 5-10 excluded topics that are NOT relevant to this goal\n\nCLINICAL DOMAIN EXAMPLES (be this specific, never use \"behavioral_change\"):\n- \"Face sunete la lectii\" (Romanian: makes sounds during lessons) \u2192 if child context:\n  \"selective_mutism\" OR \"adhd_vocalization\" OR \"vocal_stereotypy_asd\"\n- \"Reduce test anxiety\" \u2192 \"test_anxiety_children\"\n- \"Improve eye contact\" \u2192 \"social_communication_asd\"\n- \"Stop hitting siblings\" \u2192 \"aggression_children\"\n- \"Talk more at school\" \u2192 \"selective_mutism\" or \"school_social_anxiety\"\n\nDEVELOPMENTAL TIER (use these exact values based on age):\n- infant: 0-2 years\n- preschool: 3-5 years\n- school_age: 6-11 years\n- adolescent: 12-17 years\n- adult: 18+ years\n\nBEHAVIOR DIRECTION:\n- INCREASE: goal is to produce MORE of a behavior\n- REDUCE: goal is to produce LESS of a behavior\n- MAINTAIN: keep current level\n- UNCLEAR: cannot determine\n\nREQUIRED KEYWORDS: clinical terms that MUST appear in papers for them to be relevant.\nExample for selective mutism: [\"selective mutism\", \"classroom vocalization\", \"speech anxiety\", \"school\", \"children\", \"behavioral intervention\"]\n\nEXCLUDED TOPICS: topics that look related but are NOT relevant.\nExample for selective mutism: [\"homework completion\", \"academic achievement\", \"family therapy engagement\", \"adolescent depression\", \"adult psychotherapy\"]\n\nReturn JSON with these exact fields:\n- translatedGoalTitle: string (English translation of the goal title)\n- originalLanguage: string (ISO 639-1 code)\n- clinicalRestatement: string (clinical rephrasing of the goal)\n- clinicalDomain: string (specific clinical construct)\n- behaviorDirection: string (INCREASE, REDUCE, MAINTAIN, or UNCLEAR)\n- developmentalTier: string (infant, preschool, school_age, adolescent, or adult)\n- requiredKeywords: string[] (5-10 clinical search terms)\n- excludedTopics: string[] (5-10 irrelevant adjacent topics)",
   "result": {
-    "detected_language": "en",
-    "translated_goal": "Reduce test anxiety",
-    "clinical_construct": "test_anxiety_adolescents",
-    "behavior_direction": "REDUCE",
-    "developmental_stage": "adolescence",
-    "required_keywords": [
+    "translatedGoalTitle": "Reduce test anxiety",
+    "originalLanguage": "en",
+    "clinicalRestatement": "Reduce severe test anxiety with physical symptoms (nausea, dizziness) and avoidance coping patterns in a 14-year-old female student, to improve test completion and academic performance.",
+    "clinicalDomain": "test_anxiety_adolescents",
+    "behaviorDirection": "REDUCE",
+    "developmentalTier": "adolescent",
+    "requiredKeywords": [
       "test anxiety",
-      "performance anxiety",
+      "adolescent",
+      "academic performance",
       "panic attacks",
-      "academic stress",
-      "adolescents",
-      "school avoidance",
+      "avoidance coping",
+      "school counseling",
       "cognitive behavioral therapy",
-      "exposure therapy",
-      "psychoeducation"
+      "examination stress",
+      "physical symptoms",
+      "performance anxiety"
     ],
-    "excluded_topics": [
+    "excludedTopics": [
       "generalized anxiety disorder",
       "social anxiety disorder",
+      "adult test anxiety",
       "learning disabilities",
       "attention deficit hyperactivity disorder",
       "oppositional defiant disorder",
       "family therapy",
       "medication management",
-      "adult psychotherapy",
-      "college students"
+      "college students",
+      "workplace stress"
     ]
   },
   "model": "deepseek-chat",
-  "generated_at": "2026-03-14T14:05:20.927372+00:00"
+  "generated_at": "2026-03-21T22:00:48.972396+00:00"
 }

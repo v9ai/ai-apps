@@ -1,8 +1,8 @@
 import type { QueryResolvers } from "./../../types.generated";
-import { d1Tools } from "@/src/db";
+import { db } from "@/src/db";
 
 export const generationJob: NonNullable<QueryResolvers['generationJob']> = async (_parent, args, _ctx) => {
-  const job = await d1Tools.getGenerationJob(args.id);
+  const job = await db.getGenerationJob(args.id);
   if (!job) return null;
 
   return {

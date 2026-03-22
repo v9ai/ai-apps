@@ -6,7 +6,7 @@ and that each phase reads/writes the correct state keys.
 
 import pytest
 
-from crew import build_graph, ResearchState
+from research_pipeline import build_graph, ResearchState
 
 
 @pytest.fixture

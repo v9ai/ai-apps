@@ -1,12 +1,9 @@
 import type { MutationResolvers } from "./../../types.generated";
-import { d1Tools } from "@/src/db";
+import { db } from "@/src/db";
 import { sql as neonSql } from "@/src/db/neon";
-import { Client } from "@langchain/langgraph-sdk";
-import { createDeepSeek } from "@ai-sdk/deepseek";
-import { generateObject } from "ai";
+import { runGraphAndWait } from "@/src/lib/langgraph-client";
+import { generateObject } from "@/src/lib/deepseek";
 import { z } from "zod";
-
-const LANGGRAPH_URL = process.env.LANGGRAPH_URL || "http://127.0.0.1:2024";
 
 const EVIDENCE_WEIGHTS: Record<string, number> = {
   "meta-analysis": 1.0,
@@ -34,6 +31,31 @@ function parseJsonField(value: unknown): string[] {
   }
 }
 
+function buildSiblingIssuesSection(
+  allIssues: Array<{ id: number; title: string; category: string; severity: string; description: string }>,
+  primaryIssueId?: number,
+): string {
+  const siblings = primaryIssueId
+    ? allIssues.filter((i) => i.id !== primaryIssueId)
+    : allIssues;
+  if (siblings.length === 0) return "";
+
+  const lines = siblings
+    .map((i) =>
+      `- [${i.severity.toUpperCase()}] ${i.title} (${i.category})${i.description ? `: ${i.description.slice(0, 150)}` : ""}`,
+    )
+    .join("\n");
+
+  return [
+    ``,
+    `## Other Known Issues for This Family Member (${siblings.length})`,
+    lines,
+    ``,
+    `Consider this broader clinical picture when selecting research papers.`,
+    `Focus on the primary topic above, but prefer papers that address comorbidities or interaction effects when relevant.`,
+  ].join("\n");
+}
+
 async function runResearchEvals(
   issueId: number | undefined,
   feedbackId: number | undefined,
@@ -52,8 +74,6 @@ async function runResearchEvals(
     rows.length;
 
   // LLM-based relevance, actionability, and family dynamics scoring
-  const deepseek = createDeepSeek({ apiKey: process.env.DEEPSEEK_API_KEY });
-
   const papersText = rows
     .map((r, i) => {
       const kf = parseJsonField(r.key_findings).slice(0, 3).join("; ");
@@ -105,7 +125,7 @@ async function runResearchEvals(
     .join("\n");
 
   const { object } = await generateObject({
-    model: deepseek("deepseek-chat"),
+
     schema: evalSchema,
     prompt: evalPrompt,
   });
@@ -141,22 +161,27 @@ export const generateResearch: NonNullable<MutationResolvers['generateResearch']
 
   // Verify the goal exists and belongs to the user (only when goalId is provided)
   if (goalId) {
-    await d1Tools.getGoal(goalId, userEmail);
+    await db.getGoal(goalId, userEmail);
   }
 
   // Clean up any stale RUNNING jobs (stuck > 15 min) before creating a new one
-  await d1Tools.cleanupStaleJobs(15);
+  await db.cleanupStaleJobs(15);
 
   // Create a tracking job (inserted with status='RUNNING')
   const jobId = crypto.randomUUID();
-  await d1Tools.createGenerationJob(jobId, userEmail, "RESEARCH", goalId);
+  await db.createGenerationJob(jobId, userEmail, "RESEARCH", goalId);
 
   // Build prompt from goal, issue, or feedback context
   let prompt: string;
-  let relatedFamilyMember: Awaited<ReturnType<typeof d1Tools.getFamilyMember>> | null = null;
+  let relatedFamilyMember: Awaited<ReturnType<typeof db.getFamilyMember>> | null = null;
   if (feedbackId) {
-    const feedback = await d1Tools.getContactFeedback(feedbackId, userEmail);
+    const feedback = await db.getContactFeedback(feedbackId, userEmail);
     if (!feedback) throw new Error("Feedback not found");
+    let feedbackSiblingSection = "";
+    if (feedback.familyMemberId) {
+      const allIssues = await db.getIssuesForFamilyMember(feedback.familyMemberId, undefined, userEmail);
+      feedbackSiblingSection = buildSiblingIssuesSection(allIssues);
+    }
     prompt = [
       `Find evidence-based therapeutic research for the following clinical feedback:`,
       ``,
@@ -164,6 +189,7 @@ export const generateResearch: NonNullable<MutationResolvers['generateResearch']
       `Subject: ${feedback.subject}`,
       `Content: ${feedback.content}`,
       feedback.tags ? `Tags: ${feedback.tags}` : "",
+      feedbackSiblingSection,
       ``,
       `Search for academic papers that address the issues described.`,
       `Focus on evidence-based interventions, therapeutic techniques, and outcome measures.`,
@@ -171,14 +197,17 @@ export const generateResearch: NonNullable<MutationResolvers['generateResearch']
       `IMPORTANT: When calling save_research_papers, use feedback_id: ${feedbackId} — do NOT use issue_id.`,
     ].filter(Boolean).join("\n");
   } else if (issueId) {
-    const issue = await d1Tools.getIssue(issueId, userEmail);
+    const issue = await db.getIssue(issueId, userEmail);
     if (!issue) throw new Error("Issue not found");
 
-    const primaryMember = await d1Tools.getFamilyMember(issue.familyMemberId);
+    const primaryMember = await db.getFamilyMember(issue.familyMemberId);
     relatedFamilyMember = issue.relatedFamilyMemberId
-      ? await d1Tools.getFamilyMember(issue.relatedFamilyMemberId)
+      ? await db.getFamilyMember(issue.relatedFamilyMemberId)
       : null;
     const relatedMember = relatedFamilyMember;
+
+    const allIssues = await db.getIssuesForFamilyMember(issue.familyMemberId, undefined, userEmail);
+    const issueSiblingSection = buildSiblingIssuesSection(allIssues, issueId);
 
     prompt = [
       `Find evidence-based therapeutic research for the following clinical issue:`,
@@ -196,6 +225,7 @@ export const generateResearch: NonNullable<MutationResolvers['generateResearch']
       relatedMember
         ? `Also involves: ${relatedMember.firstName}${relatedMember.name ? ` ${relatedMember.name}` : ""}${relatedMember.ageYears ? `, age ${relatedMember.ageYears}` : ""}${relatedMember.relationship ? ` (${relatedMember.relationship})` : ""}`
         : "",
+      issueSiblingSection,
       ``,
       `Search for academic papers that address this issue, considering the relational and family dynamics involved.`,
       `Focus on evidence-based interventions, therapeutic techniques, and outcome measures.`,
@@ -203,13 +233,19 @@ export const generateResearch: NonNullable<MutationResolvers['generateResearch']
       `IMPORTANT: When calling save_research_papers, use issue_id: ${issueId} — do NOT use feedback_id.`,
     ].filter(Boolean).join("\n");
   } else if (goalId) {
-    const goal = await d1Tools.getGoal(goalId, userEmail);
+    const goal = await db.getGoal(goalId, userEmail);
+    let goalSiblingSection = "";
+    if (goal.familyMemberId) {
+      const allIssues = await db.getIssuesForFamilyMember(goal.familyMemberId, undefined, userEmail);
+      goalSiblingSection = buildSiblingIssuesSection(allIssues);
+    }
     prompt = [
       `Find evidence-based therapeutic research for the following goal:`,
       ``,
       `goal_id: ${goalId}`,
       `Title: ${goal.title}`,
       goal.description ? `Description: ${goal.description}` : "",
+      goalSiblingSection,
       ``,
       `Search for academic papers that support this therapeutic goal.`,
       `Focus on evidence-based interventions, therapeutic techniques, and outcome measures.`,
@@ -223,14 +259,12 @@ export const generateResearch: NonNullable<MutationResolvers['generateResearch']
   const hasRelatedMember = relatedFamilyMember !== null;
 
   // Fire-and-forget: run LangGraph agent in background, update job on completion
-  const client = new Client({ apiUrl: LANGGRAPH_URL });
-
-  client.runs.wait(null, "research", {
+  runGraphAndWait("research", {
     input: {
       messages: [{ role: "user", content: prompt }],
     },
   }).then(async (result) => {
-    const messages = (result as Record<string, unknown>)?.messages as
+    const messages = result?.messages as
       | Array<{ content: string; type?: string }>
       | undefined;
     const lastAiMessage = messages
@@ -248,7 +282,7 @@ export const generateResearch: NonNullable<MutationResolvers['generateResearch']
       }
     }
 
-    await d1Tools.updateGenerationJob(jobId, {
+    await db.updateGenerationJob(jobId, {
       status: "SUCCEEDED",
       progress: 100,
       result: JSON.stringify({ count, output, ...(evals ? { evals } : {}) }),
@@ -256,7 +290,7 @@ export const generateResearch: NonNullable<MutationResolvers['generateResearch']
   }).catch(async (err) => {
     const message = err instanceof Error ? err.message : "LangGraph agent failed";
     console.error("[generateResearch] LangGraph error:", message);
-    await d1Tools.updateGenerationJob(jobId, {
+    await db.updateGenerationJob(jobId, {
       status: "FAILED",
       error: JSON.stringify({ message }),
     });

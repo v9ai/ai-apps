@@ -325,7 +325,7 @@ class TestBuildValuationPromptParking:
 
 
 # ---------------------------------------------------------------------------
-# Live CrewAI parking extraction test — runs the actual extractor crew
+# Live parking extraction test — runs the actual extractor
 # ---------------------------------------------------------------------------
 
 @pytest.mark.asyncio

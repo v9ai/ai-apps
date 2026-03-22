@@ -1,0 +1,17 @@
+mutation CreateRelatedIssue($issueId: Int!, $input: CreateIssueInput!, $linkType: String) {
+  createRelatedIssue(issueId: $issueId, input: $input, linkType: $linkType) {
+    id
+    linkType
+    issue {
+      id
+      title
+      description
+      category
+      severity
+      familyMemberId
+      createdBy
+      createdAt
+      updatedAt
+    }
+  }
+}

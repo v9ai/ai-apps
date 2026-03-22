@@ -109,7 +109,7 @@ class TestPhilosophyStructure:
     def _profiles(self):
         p = _load_profiles()
         if not p:
-            pytest.skip("No profiles with technical_philosophy — run crew.py first")
+            pytest.skip("No profiles with technical_philosophy — run research_pipeline.py first")
         return p
 
     def test_philosophy_structure(self):

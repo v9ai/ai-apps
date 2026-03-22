@@ -1,5 +1,5 @@
 import type { MutationResolvers } from "./../../types.generated";
-import { d1Tools } from "@/src/db";
+import { db } from "@/src/db";
 
 export const createContactFeedback: NonNullable<MutationResolvers['createContactFeedback']> = async (
   _parent,
@@ -11,7 +11,7 @@ export const createContactFeedback: NonNullable<MutationResolvers['createContact
     throw new Error("Authentication required");
   }
 
-  const id = await d1Tools.createContactFeedback({
+  const id = await db.createContactFeedback({
     contactId: args.input.contactId,
     familyMemberId: args.input.familyMemberId,
     userId: userEmail,
@@ -22,7 +22,7 @@ export const createContactFeedback: NonNullable<MutationResolvers['createContact
     source: args.input.source ?? null,
   });
 
-  const fb = await d1Tools.getContactFeedback(id, userEmail);
+  const fb = await db.getContactFeedback(id, userEmail);
 
   if (!fb) {
     throw new Error("Failed to retrieve created contact feedback");

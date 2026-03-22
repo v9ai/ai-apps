@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { auth } from "@/app/lib/auth/server";
-import * as d1Tools from "@/src/db/index";
+import * as db from "@/src/db/index";
 
 export const runtime = "nodejs";
 
@@ -35,7 +35,7 @@ export async function POST(request: NextRequest) {
   }
 
   // Fetch all notes.
-  const notes = await d1Tools.listNotesForEntity(
+  const notes = await db.listNotesForEntity(
     entityId,
     entityType,
     userEmail,
@@ -119,7 +119,7 @@ export async function POST(request: NextRequest) {
     ),
   ];
 
-  const noteId = await d1Tools.createNote({
+  const noteId = await db.createNote({
     entityId,
     entityType,
     userId: userEmail,
@@ -130,7 +130,7 @@ export async function POST(request: NextRequest) {
   });
 
   // Update the title (createNote doesn't accept title directly).
-  await d1Tools.updateNote(noteId, userEmail, { title: mergedTitle });
+  await db.updateNote(noteId, userEmail, { title: mergedTitle });
 
   return NextResponse.json({
     success: true,

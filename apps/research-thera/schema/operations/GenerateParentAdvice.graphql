@@ -1,0 +1,7 @@
+mutation GenerateParentAdvice($goalId: Int!, $language: String) {
+  generateParentAdvice(goalId: $goalId, language: $language) {
+    success
+    message
+    parentAdvice
+  }
+}

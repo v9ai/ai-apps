@@ -31,7 +31,7 @@ Multi-lens PR review with security, performance, and correctness focus.
 ### perf-reviewer
 **Focus**: N+1 queries, unbounded lists, missing indexes, bundle size
 **Checks**:
-- D1 queries use appropriate WHERE clauses
+- Neon queries use appropriate WHERE clauses
 - No unbounded `SELECT *` without LIMIT
 - Apollo cache policies set correctly
 - No unnecessary re-renders in React components
@@ -40,8 +40,8 @@ Multi-lens PR review with security, performance, and correctness focus.
 ### correctness-reviewer
 **Focus**: Logic errors, edge cases, type safety, data integrity
 **Checks**:
-- JSON serialization/deserialization for D1 fields
-- NaN/Infinity sanitization before D1 writes
+- JSON serialization/deserialization for text fields storing JSON
+- NaN/Infinity sanitization before numeric DB writes
 - Email normalization (trim + lowercase) for sharing
 - GraphQL schema matches resolver return types
 - Error handling doesn't swallow useful information

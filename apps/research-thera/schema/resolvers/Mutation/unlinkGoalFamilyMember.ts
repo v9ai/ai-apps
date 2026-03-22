@@ -1,5 +1,5 @@
 import type { MutationResolvers } from "./../../types.generated";
-import { d1Tools, updateGoal as updateGoalDb } from "@/src/db";
+import { db, updateGoal as updateGoalDb } from "@/src/db";
 
 export const unlinkGoalFamilyMember: NonNullable<MutationResolvers['unlinkGoalFamilyMember']> = async (
   _parent,
@@ -13,7 +13,7 @@ export const unlinkGoalFamilyMember: NonNullable<MutationResolvers['unlinkGoalFa
 
   await updateGoalDb(args.id, userEmail, { familyMemberId: null });
 
-  const goal = await d1Tools.getGoal(args.id, userEmail);
+  const goal = await db.getGoal(args.id, userEmail);
 
   return {
     id: goal.id,

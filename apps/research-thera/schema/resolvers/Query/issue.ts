@@ -1,5 +1,5 @@
 import type { QueryResolvers } from "./../../types.generated";
-import { d1Tools } from "@/src/db";
+import { db } from "@/src/db";
 
 export const issue: NonNullable<QueryResolvers['issue']> = async (
   _parent,
@@ -11,7 +11,7 @@ export const issue: NonNullable<QueryResolvers['issue']> = async (
     throw new Error("Authentication required");
   }
 
-  const issue = await d1Tools.getIssue(args.id, userEmail);
+  const issue = await db.getIssue(args.id, userEmail);
 
   if (!issue) {
     return null;

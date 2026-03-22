@@ -1,4 +1,4 @@
-"""Tests for the fetch_hf_author tool from crew.py.
+"""Tests for the fetch_hf_author tool from research_pipeline.py.
 
 Covers:
 - Known HF org returns data (network)
@@ -15,7 +15,7 @@ import os
 
 import pytest
 
-from crew import fetch_hf_author
+from research_pipeline import fetch_hf_author
 
 # Skip network tests when HF_SKIP_NETWORK is set or CI is detected.
 SKIP_NETWORK = bool(os.getenv("HF_SKIP_NETWORK") or os.getenv("CI"))

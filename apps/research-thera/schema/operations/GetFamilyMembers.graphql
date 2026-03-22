@@ -22,5 +22,21 @@ query GetFamilyMembers {
       createdAt
       createdBy
     }
+    relationships {
+      id
+      subjectType
+      subjectId
+      relatedType
+      relatedId
+      relationshipType
+      status
+      related {
+        id
+        type
+        slug
+        firstName
+        lastName
+      }
+    }
   }
 }

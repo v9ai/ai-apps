@@ -1,6 +1,6 @@
 import type { NoteResolvers } from "./../types.generated";
 import { getResearchForNote, getGoal, getNoteShares, canViewerReadNote } from "@/src/db";
-import { createD1StorageAdapter } from "@/src/adapters/d1-storage.adapter";
+import { createStorageAdapter } from "@/src/adapters/storage.adapter";
 
 export const Note: NoteResolvers = {
   linkedResearch: async (parent, _args, _ctx) => {
@@ -9,7 +9,7 @@ export const Note: NoteResolvers = {
   },
 
   claimCards: async (parent, _args, _ctx) => {
-    const storage = createD1StorageAdapter();
+    const storage = createStorageAdapter();
     const cards = await storage.getCardsForItem?.(parent.id);
     return (cards || []) as any;
   },

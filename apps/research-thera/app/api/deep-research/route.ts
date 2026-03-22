@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { auth } from "@/app/lib/auth/server";
 import { spawn } from "child_process";
 import path from "path";
-import * as d1Tools from "@/src/db/index";
+import * as db from "@/src/db/index";
 
 export const runtime = "nodejs";
 
@@ -25,7 +25,7 @@ export async function POST(request: NextRequest) {
     );
   }
 
-  const issue = await d1Tools.getIssue(issueId, userEmail);
+  const issue = await db.getIssue(issueId, userEmail);
   if (!issue) {
     return NextResponse.json(
       { error: "Issue not found" },
@@ -33,7 +33,7 @@ export async function POST(request: NextRequest) {
     );
   }
 
-  const fm = await d1Tools.getFamilyMember(issue.familyMemberId);
+  const fm = await db.getFamilyMember(issue.familyMemberId);
 
   const inputJson = JSON.stringify({
     id: issue.id,
@@ -77,7 +77,7 @@ export async function POST(request: NextRequest) {
         const output = JSON.parse(stdout.trim());
 
         // Create synthesis note linked to the issue.
-        const noteId = await d1Tools.createNote({
+        const noteId = await db.createNote({
           entityId: issueId,
           entityType: "issue",
           userId: userEmail,
@@ -88,11 +88,11 @@ export async function POST(request: NextRequest) {
         });
 
         // Set the note title.
-        await d1Tools.updateNote(noteId, userEmail, { title: `Research Synthesis: ${issue.title}` });
+        await db.updateNote(noteId, userEmail, { title: `Research Synthesis: ${issue.title}` });
 
         // Store per-agent findings as separate notes.
         for (const finding of output.findings) {
-          const fNoteId = await d1Tools.createNote({
+          const fNoteId = await db.createNote({
             entityId: issueId,
             entityType: "issue",
             userId: userEmail,
@@ -101,7 +101,7 @@ export async function POST(request: NextRequest) {
             createdBy: userEmail,
             tags: ["deep-research", finding.subject],
           });
-          await d1Tools.updateNote(fNoteId, userEmail, {
+          await db.updateNote(fNoteId, userEmail, {
             title: `Research: ${finding.subject.replace(/-/g, " ")}`,
           });
         }
@@ -149,7 +149,7 @@ export async function GET(request: NextRequest) {
   }
 
   // Check for existing synthesis notes.
-  const notes = await d1Tools.listNotesForEntity(
+  const notes = await db.listNotesForEntity(
     parseInt(issueId, 10),
     "issue",
     userEmail,

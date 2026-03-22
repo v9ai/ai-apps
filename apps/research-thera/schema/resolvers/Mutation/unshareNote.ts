@@ -1,5 +1,5 @@
 import type { MutationResolvers } from "./../../types.generated";
-import { d1Tools } from "@/src/db";
+import { db } from "@/src/db";
 
 export const unshareNote: NonNullable<MutationResolvers['unshareNote']> = async (_parent, args, ctx) => {
   const userEmail = ctx.userEmail;
@@ -8,7 +8,7 @@ export const unshareNote: NonNullable<MutationResolvers['unshareNote']> = async 
   }
 
   // Check if user is the owner
-  const note = await d1Tools.getNoteById(args.noteId, userEmail);
+  const note = await db.getNoteById(args.noteId, userEmail);
   if (!note) {
     throw new Error("Note not found");
   }
@@ -17,7 +17,7 @@ export const unshareNote: NonNullable<MutationResolvers['unshareNote']> = async 
     throw new Error("Only the note owner can unshare it");
   }
 
-  const success = await d1Tools.unshareNote(
+  const success = await db.unshareNote(
     args.noteId,
     args.email,
     userEmail,

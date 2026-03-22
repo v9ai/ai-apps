@@ -1,5 +1,5 @@
 import type { QueryResolvers } from "../../types.generated";
-import { d1Tools } from "@/src/db";
+import { db } from "@/src/db";
 
 export const allNotes: NonNullable<QueryResolvers['allNotes']> = async (
   _parent,
@@ -11,6 +11,6 @@ export const allNotes: NonNullable<QueryResolvers['allNotes']> = async (
     throw new Error("Authentication required");
   }
 
-  const notes = await d1Tools.getAllNotesForUser(userEmail);
+  const notes = await db.getAllNotesForUser(userEmail);
   return notes as any; // Field resolvers will populate viewerAccess
 };

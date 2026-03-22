@@ -50,7 +50,7 @@ class TestTimelineChronological:
     def _profiles(self):
         p = _profiles_with_timeline()
         if not p:
-            pytest.skip("No profiles with timeline — run crew.py first")
+            pytest.skip("No profiles with timeline — run research_pipeline.py first")
         return p
 
     def test_timeline_dates_ascending(self):

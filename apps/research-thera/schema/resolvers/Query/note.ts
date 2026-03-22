@@ -1,5 +1,5 @@
 import type { QueryResolvers } from "./../../types.generated";
-import { d1Tools } from "@/src/db";
+import { db } from "@/src/db";
 
 export const note: NonNullable<QueryResolvers['note']> = async (
   _parent,
@@ -12,10 +12,10 @@ export const note: NonNullable<QueryResolvers['note']> = async (
 
   if (args.slug) {
     // Query by slug
-    foundNote = await d1Tools.getNoteBySlug(args.slug, userEmail || '');
+    foundNote = await db.getNoteBySlug(args.slug, userEmail || '');
   } else if (args.id) {
     // Query by ID
-    foundNote = await d1Tools.getNoteById(args.id, userEmail || '');
+    foundNote = await db.getNoteById(args.id, userEmail || '');
   } else {
     return null;
   }
@@ -25,7 +25,7 @@ export const note: NonNullable<QueryResolvers['note']> = async (
   }
 
   // Check if viewer can read this note
-  const access = await d1Tools.canViewerReadNote(foundNote.id, userEmail || null);
+  const access = await db.canViewerReadNote(foundNote.id, userEmail || null);
   
   if (!access.canRead) {
     return null; // Return null instead of error to avoid leaking note existence

@@ -140,6 +140,35 @@
       "Suggests that the 'reasoning' gap in current models will be solved more by training data curation and novel loss functions than by architectural revolution."
     ]
   },
+  "videos": [
+    {
+      "title": "Rust vs Python for AI: Is Rig better than Langchain? - Running Python inside Rust?",
+      "url": "https://www.youtube.com/watch?v=cyZXVgzy7DA",
+      "platform": "YouTube",
+      "date": "2026-01-13",
+      "duration": "15:17",
+      "channel": "Francesco Ciulla",
+      "description": "OpenAI's Co-founder said Rust is the perfect language for AI agents. Joshua Mo, maintainer of Rig (the LangChain of Rust), builds a scalable, modular AI application from scratch using PyO3 to run Python inside Rust."
+    },
+    {
+      "title": "Building the Rig AI framework with Rust",
+      "url": "https://www.youtube.com/watch?v=euq7dhs-nQU",
+      "platform": "YouTube",
+      "date": "2026-01-02",
+      "duration": "",
+      "channel": "Coding Chats",
+      "description": "Full-length interview with Joshua Mo — he discusses building the Rig AI agent framework in Rust, its architecture, the benefits of Rust for AI systems, agents, embeddings, and managing context windows in AI models."
+    },
+    {
+      "title": "Rust & Rig: Building for Stability in a Rapidly Changing AI Landscape",
+      "url": "https://www.youtube.com/watch?v=nLlY2nNgBgM",
+      "platform": "YouTube",
+      "date": "2026-02-27",
+      "duration": "29:14",
+      "channel": "Rust Nation UK",
+      "description": "Joshua Mo's Rust Nation UK talk on Rig, the leading agentic AI framework in Rust. Discusses building a library at the cutting edge of AI in a language that prioritises safety and robustness."
+    }
+  ],
   "sources": [
     { "title": "My First Tech Job (Using Rust) — Josh Mo Blog", "url": "https://joshmo.bearblog.dev/my-first-tech-job-using-rust/" },
     { "title": "How I Write My Articles — Josh Mo Blog", "url": "https://joshmo.bearblog.dev/how-i-write-my-articles/" },

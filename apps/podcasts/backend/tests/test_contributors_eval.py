@@ -169,7 +169,7 @@ class TestSchemaConformance:
     def _profiles(self):
         profiles = _load_research_profiles()
         if not profiles:
-            pytest.skip("No research profiles found — run the crew first")
+            pytest.skip("No research profiles found — run the pipeline first")
         return profiles
 
     def test_required_fields_present(self):
@@ -245,7 +245,7 @@ class TestAIRelevance:
     def _profiles(self):
         profiles = _load_research_profiles()
         if not profiles:
-            pytest.skip("No research profiles found — run the crew first")
+            pytest.skip("No research profiles found — run the pipeline first")
         return profiles
 
     def test_bio_mentions_ai(self):
@@ -287,7 +287,7 @@ class TestBioQuality:
     def _profiles(self):
         profiles = _load_research_profiles()
         if not profiles:
-            pytest.skip("No research profiles found — run the crew first")
+            pytest.skip("No research profiles found — run the pipeline first")
         return profiles
 
     @pytest.mark.parametrize("profile", _load_research_profiles()[:10],
@@ -360,7 +360,7 @@ class TestDeduplication:
     def _profiles(self):
         profiles = _load_research_profiles()
         if not profiles:
-            pytest.skip("No research profiles found — run the crew first")
+            pytest.skip("No research profiles found — run the pipeline first")
         return profiles
 
     def test_no_duplicate_slugs(self):
@@ -393,7 +393,7 @@ class TestCompleteness:
     def _profiles(self):
         profiles = _load_research_profiles()
         if not profiles:
-            pytest.skip("No research profiles found — run the crew first")
+            pytest.skip("No research profiles found — run the pipeline first")
         return profiles
 
     def test_minimum_completeness_score(self):
@@ -457,7 +457,7 @@ class TestDiscoveryReport:
     def _report(self):
         report = _load_discovery_report()
         if not report:
-            pytest.skip("No discovery report found — run the crew first")
+            pytest.skip("No discovery report found — run the pipeline first")
         return report
 
     def test_report_has_discovery_data(self):

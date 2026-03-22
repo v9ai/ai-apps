@@ -4,7 +4,7 @@ __pycache__
 .next
 better-auth
 evals
-langgraph
+backend
 .wrangler
 .agents
 .pytest_cache

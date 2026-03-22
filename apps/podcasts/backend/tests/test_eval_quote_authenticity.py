@@ -102,7 +102,7 @@ class TestQuoteStructure:
     def _profiles(self):
         p = _load_profiles()
         if not p:
-            pytest.skip("No profiles with quotes — run crew.py first")
+            pytest.skip("No profiles with quotes — run research_pipeline.py first")
         return p
 
     def test_quotes_are_list(self):

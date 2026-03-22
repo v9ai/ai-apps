@@ -148,7 +148,7 @@ class TestOrgDiversity:
     def _profiles(self):
         p = _load_profiles()
         if not p:
-            pytest.skip("No profiles -- run crew.py first")
+            pytest.skip("No profiles -- run research_pipeline.py first")
         return p
 
     def test_extract_orgs_from_bios(self):
@@ -211,7 +211,7 @@ class TestOrgDiversityGEval:
         """G-Eval: assess organizational diversity across all profile bios."""
         profiles = _load_profiles()
         if not profiles:
-            pytest.skip("No profiles -- run crew.py first")
+            pytest.skip("No profiles -- run research_pipeline.py first")
 
         n = len(profiles)
         bio_summaries = []

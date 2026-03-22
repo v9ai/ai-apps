@@ -1,11 +1,9 @@
-import asyncio
 import json
 import logging
 import statistics
 from dataclasses import dataclass
 
-from crewai import Agent as CrewAgent, Task, Crew, LLM
-from crewai.tools import tool
+import httpx
 
 from .models import ListingExtraction, ValuationResult, ComparableListing, ZoneStats
 from .config import settings
@@ -22,13 +20,6 @@ from .market_data import get_or_build_prompt_section
 
 logger = logging.getLogger(__name__)
 
-# Instrument CrewAI for DeepEval observability and tracing
-try:
-    from deepeval.integrations.crewai import instrument_crewai
-    instrument_crewai()
-except Exception:
-    pass
-
 
 @dataclass
 class AnalyzerDeps:
@@ -42,34 +33,36 @@ class AnalyzerDeps:
 
 
 # ---------------------------------------------------------------------------
-# LLM Configuration — DeepSeek via litellm (CrewAI's provider layer)
+# DeepSeek API helper
 # ---------------------------------------------------------------------------
 
-_llm: LLM | None = None
+_DEEPSEEK_BASE = "https://api.deepseek.com/v1"
 
 
-def _build_llm(api_key: str | None = None) -> LLM:
-    """Build a CrewAI LLM instance pointing to DeepSeek."""
-    return LLM(
-        model="openai/deepseek-chat",
-        api_key=api_key or settings.deepseek_api_key,
-        base_url="https://api.deepseek.com/v1",
-    )
-
-
-def _get_llm() -> LLM:
-    """Lazy singleton LLM."""
-    global _llm
-    if _llm is None:
-        _llm = _build_llm()
-    return _llm
+async def _call_deepseek(system: str, user: str, api_key: str | None = None) -> str:
+    """Call DeepSeek with a system + user message, returning the raw content string."""
+    key = api_key or settings.deepseek_api_key
+    async with httpx.AsyncClient(timeout=120) as client:
+        resp = await client.post(
+            f"{_DEEPSEEK_BASE}/chat/completions",
+            headers={"Authorization": f"Bearer {key}", "Content-Type": "application/json"},
+            json={
+                "model": "deepseek-chat",
+                "messages": [
+                    {"role": "system", "content": system},
+                    {"role": "user", "content": user},
+                ],
+                "response_format": {"type": "json_object"},
+            },
+        )
+        resp.raise_for_status()
+        return resp.json()["choices"][0]["message"]["content"]
 
 
 # ---------------------------------------------------------------------------
-# CrewAI Tools — domain-specific validation
+# Domain-specific validation
 # ---------------------------------------------------------------------------
 
-@tool
 def validate_valuation_output(valuation_json: str) -> str:
     """Validate a valuation result for internal formula consistency.
     Pass the full JSON string of the valuation to check for issues."""
@@ -304,63 +297,24 @@ CHISINAU ZONE → STAGE MAPPING (2025):
 
 
 # ---------------------------------------------------------------------------
-# CrewAI Agent Factories — fresh per call for thread safety
-# ---------------------------------------------------------------------------
-
-def _make_extractor_agent() -> CrewAgent:
-    return CrewAgent(
-        role="Real Estate Data Extraction Specialist",
-        goal="Extract structured apartment data from Eastern European listing text with perfect accuracy",
-        backstory=EXTRACTOR_BACKSTORY,
-        llm=_get_llm(),
-        verbose=False,
-    )
-
-
-def _make_valuator_agent() -> CrewAgent:
-    return CrewAgent(
-        role="Senior Real Estate Investment Analyst",
-        goal="Produce accurate, formula-consistent property valuations for Eastern European markets",
-        backstory=VALUATOR_BACKSTORY,
-        llm=_get_llm(),
-        tools=[validate_valuation_output],
-        verbose=False,
-    )
-
-
-# ---------------------------------------------------------------------------
-# Public API — CrewAI-powered extraction and valuation
+# Public API — extraction and valuation via direct DeepSeek calls
 # ---------------------------------------------------------------------------
 
 async def extract_listing(text: str) -> ListingExtraction:
-    """Extract structured apartment data from raw listing text using CrewAI + DeepSeek."""
-    agent = _make_extractor_agent()
-    task = Task(
-        description=text,
-        expected_output="Structured listing data with all available fields extracted from the text",
-        agent=agent,
-        output_pydantic=ListingExtraction,
-    )
-    crew = Crew(agents=[agent], tasks=[task], verbose=False)
-    result = await asyncio.to_thread(crew.kickoff)
-    return result.pydantic
+    """Extract structured apartment data from raw listing text using DeepSeek."""
+    system = EXTRACTOR_BACKSTORY + "\n\nReturn a JSON object with all the extracted fields."
+    content = await _call_deepseek(system=system, user=text)
+    return ListingExtraction.model_validate_json(content)
 
 
 async def valuate_listing(prompt: str) -> ValuationResult:
-    """Generate valuation verdict using CrewAI + DeepSeek, with retry on formula issues."""
+    """Generate valuation verdict using DeepSeek, with retry on formula issues."""
+    system = VALUATOR_BACKSTORY + "\n\nReturn a JSON object with all the required fields."
     current_prompt = prompt
     result_val = None
     for attempt in range(3):
-        agent = _make_valuator_agent()
-        task = Task(
-            description=current_prompt,
-            expected_output="Complete valuation analysis with all required and derived metric fields",
-            agent=agent,
-            output_pydantic=ValuationResult,
-        )
-        crew = Crew(agents=[agent], tasks=[task], verbose=False)
-        result = await asyncio.to_thread(crew.kickoff)
-        result_val = result.pydantic
+        content = await _call_deepseek(system=system, user=current_prompt)
+        result_val = ValuationResult.model_validate_json(content)
 
         issues = validate_valuation_formulas(result_val)
         severe = [i for i in issues if "verdict" in i.lower()]

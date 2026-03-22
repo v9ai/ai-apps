@@ -1,12 +1,10 @@
 import { NextRequest, NextResponse } from "next/server";
 import { auth } from "@/app/lib/auth/server";
-import { Client } from "@langchain/langgraph-sdk";
-import * as d1Tools from "@/src/db/index";
+import { runGraphAndWait } from "@/src/lib/langgraph-client";
+import * as db from "@/src/db/index";
 
 export const runtime = "nodejs";
 export const maxDuration = 300;
-
-const LANGGRAPH_URL = process.env.LANGGRAPH_URL || "http://127.0.0.1:2024";
 
 export async function POST(request: NextRequest) {
   const { data: session } = await auth.getSession();
@@ -30,7 +28,7 @@ export async function POST(request: NextRequest) {
     );
   }
 
-  const feedback = await d1Tools.getContactFeedback(feedbackId, userEmail);
+  const feedback = await db.getContactFeedback(feedbackId, userEmail);
   if (!feedback) {
     return NextResponse.json(
       { error: "Feedback not found" },
@@ -55,16 +53,14 @@ export async function POST(request: NextRequest) {
     .join("\n");
 
   try {
-    const client = new Client({ apiUrl: LANGGRAPH_URL, timeoutMs: 300_000 });
-
-    const result = await client.runs.wait(null, "research", {
+    const result = await runGraphAndWait("research", {
       input: {
         messages: [{ role: "user", content: prompt }],
       },
     });
 
     // Extract the last AI message
-    const messages = (result as Record<string, unknown>)?.messages as
+    const messages = result?.messages as
       | Array<{ content: string; type?: string }>
       | undefined;
     const lastAiMessage = messages

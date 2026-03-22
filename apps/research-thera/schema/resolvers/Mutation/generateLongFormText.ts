@@ -1,8 +1,6 @@
 import type { MutationResolvers } from "./../../types.generated";
 import { getGoal, getIssue, getContactFeedback, createGenerationJob, updateGenerationJob } from "@/src/db";
-import { Client } from "@langchain/langgraph-sdk";
-
-const LANGGRAPH_URL = process.env.LANGGRAPH_URL || "http://127.0.0.1:2024";
+import { runGraphAndWait } from "@/src/lib/langgraph-client";
 
 export const generateLongFormText: NonNullable<MutationResolvers['generateLongFormText']> = async (_parent, args, ctx) => {
   const userEmail = ctx.userEmail;
@@ -36,10 +34,8 @@ export const generateLongFormText: NonNullable<MutationResolvers['generateLongFo
   const jobId = crypto.randomUUID();
   await createGenerationJob(jobId, userEmail, "LONGFORM", goalId ?? null);
 
-  const client = new Client({ apiUrl: LANGGRAPH_URL });
-
   // Fire-and-forget — update the job when done
-  client.runs.wait(null, "story", {
+  runGraphAndWait("story", {
     input: {
       goal_id: goalId ?? null,
       issue_id: issueId ?? null,
@@ -51,8 +47,7 @@ export const generateLongFormText: NonNullable<MutationResolvers['generateLongFo
       user_email: userEmail,
       user_name: userName ?? null,
     },
-  }).then(async (result) => {
-    const r = result as Record<string, unknown>;
+  }).then(async (r) => {
     const storyId = r?.story_id as number | undefined;
     const text = r?.story_text as string | undefined;
     const evals = r?.evals as string | undefined;

@@ -86,6 +86,26 @@ async def check_references_node(state: dict) -> dict:
     }
 
 
+def resolve_published_content(state: dict) -> str:
+    """Extract article content from editor output, falling back to draft or disk.
+
+    1. Try extracting published content from editor output.
+    2. If extraction returned editor notes (not article text), fall back to
+       the draft saved on disk (always the latest revision).
+    3. Final fallback: use the draft from state.
+    """
+    content = extract_published_content(state["editor_output"], state["draft"])
+    stripped = content.lstrip().lstrip("-").lstrip()
+    if stripped.startswith(("**DECISION", "**Instructions", "## Critical", "Instructions for")):
+        topic = _topic_key(state)
+        output_dir = state.get("output_dir", "./articles")
+        draft_path = Path(output_dir) / "drafts" / f"{slugify(topic)}.md"
+        if draft_path.exists():
+            logger.warning("Extraction returned editor notes; using draft from disk")
+            content = draft_path.read_text()
+    return content
+
+
 async def publish_node(state: dict) -> dict:
     """Save approved content to published/, run final reference check, optionally deploy."""
     topic = _topic_key(state)
@@ -97,7 +117,7 @@ async def publish_node(state: dict) -> dict:
 
     published_dir = Path(output_dir) / "published"
     published_dir.mkdir(parents=True, exist_ok=True)
-    content = extract_published_content(state["editor_output"], state["draft"])
+    content = resolve_published_content(state)
     (published_dir / f"{slug}.md").write_text(content)
 
     # Final reference quality check on published content (editor may have changed links)
@@ -115,13 +135,20 @@ async def publish_node(state: dict) -> dict:
         issues = validate_before_publish(content)
         if issues:
             logger.warning("Publish validation issues: %s", issues)
-        publish_post(
-            content,
-            topic,
-            git_push=state.get("git_push", False),
-            deploy=True,
-            seo_slug=seo_slug,
-        )
+        has_no_refs = any("no_inline_refs" in i for i in report.issues)
+        if has_no_refs:
+            logger.error(
+                "BLOCKED deploy: article has zero inline [anchor](url) citations. "
+                "Content saved to published/ but NOT deployed."
+            )
+        else:
+            publish_post(
+                content,
+                topic,
+                git_push=state.get("git_push", False),
+                deploy=True,
+                seo_slug=seo_slug,
+            )
 
     return {"broken_links": broken}
 
@@ -172,6 +199,40 @@ def make_write_node(
     return node
 
 
+def build_editor_input(state: dict) -> str:
+    """Assemble the full context document the editor reviews.
+
+    Sections: Draft, Research Brief, SEO Strategy, Reference Quality (if available),
+    Source Article (deep-dive mode only).
+    """
+    sections = [
+        f"## Draft\n\n{state['draft']}",
+        f"## Research Brief\n\n{state['research_output']}",
+        f"## SEO Strategy\n\n{state['seo_output']}",
+    ]
+
+    if state.get("reference_report"):
+        issues = state.get("reference_issues", [])
+        if issues:
+            issues_text = "\n".join(f"- \u26a0\ufe0f {i}" for i in issues)
+            sections.append(
+                f"## Reference Quality (MUST ADDRESS BEFORE APPROVING)\n\n"
+                f"{issues_text}\n\n{state['reference_report']}"
+            )
+        else:
+            sections.append(
+                f"## Reference Quality\n\n"
+                f"\u2713 No critical issues\n\n{state['reference_report']}"
+            )
+
+    if state.get("source_content"):
+        sections.append(
+            f"## Source Article (ground truth)\n\n{state['source_content']}"
+        )
+
+    return "\n\n---\n\n".join(sections)
+
+
 def make_edit_node(
     pool: ModelPool,
     agent_name: str,
@@ -190,29 +251,7 @@ def make_edit_node(
             prompt_fn(state),
             pool.for_role(TeamRole.REVIEWER),
         )
-
-        # Build reference quality section for the editor's context
-        ref_section = ""
-        if state.get("reference_report"):
-            issues = state.get("reference_issues", [])
-            if issues:
-                issues_text = "\n".join(f"- ⚠️ {i}" for i in issues)
-                ref_section = (
-                    f"\n\n---\n\n## Reference Quality (MUST ADDRESS BEFORE APPROVING)\n\n"
-                    f"{issues_text}\n\n{state['reference_report']}"
-                )
-            else:
-                ref_section = (
-                    f"\n\n---\n\n## Reference Quality\n\n"
-                    f"✓ No critical issues\n\n{state['reference_report']}"
-                )
-
-        editor_input = (
-            f"## Draft\n\n{state['draft']}\n\n"
-            f"---\n\n## Research Brief\n\n{state['research_output']}\n\n"
-            f"---\n\n## SEO Strategy\n\n{state['seo_output']}"
-            + ref_section
-        )
+        editor_input = build_editor_input(state)
         editor_output = await editor.run(editor_input)
         return {"editor_output": editor_output, "approved": is_approved(editor_output)}
 

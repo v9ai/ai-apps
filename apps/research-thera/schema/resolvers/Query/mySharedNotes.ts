@@ -1,5 +1,5 @@
 import type { QueryResolvers } from "./../../types.generated";
-import { d1Tools } from "@/src/db";
+import { db } from "@/src/db";
 
 export const mySharedNotes: NonNullable<QueryResolvers['mySharedNotes']> = async (_parent, _args, ctx) => {
   const userEmail = ctx.userEmail;
@@ -7,7 +7,7 @@ export const mySharedNotes: NonNullable<QueryResolvers['mySharedNotes']> = async
     throw new Error("Authentication required");
   }
 
-  const notes = await d1Tools.getSharedNotes(userEmail);
+  const notes = await db.getSharedNotes(userEmail);
 
   return notes.map((note) => ({
     id: note.id,

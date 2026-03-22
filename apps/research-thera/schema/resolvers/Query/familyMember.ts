@@ -1,5 +1,5 @@
 import type { QueryResolvers } from "./../../types.generated";
-import { d1Tools } from "@/src/db";
+import { db } from "@/src/db";
 
 export const familyMember: NonNullable<QueryResolvers['familyMember']> = async (
   _parent,
@@ -14,9 +14,9 @@ export const familyMember: NonNullable<QueryResolvers['familyMember']> = async (
   let member;
 
   if (args.slug) {
-    member = await d1Tools.getFamilyMemberBySlug(args.slug, userEmail);
+    member = await db.getFamilyMemberBySlug(args.slug, userEmail);
   } else if (args.id) {
-    member = await d1Tools.getFamilyMember(args.id);
+    member = await db.getFamilyMember(args.id);
   } else {
     throw new Error("Either id or slug must be provided");
   }

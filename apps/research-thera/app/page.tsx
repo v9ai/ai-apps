@@ -221,8 +221,8 @@ export default function Home() {
                 <Heading size="4">AI Workflows</Heading>
               </Flex>
               <Text color="gray">
-                Powered by Mastra for async research generation, therapeutic
-                questions, and long-form synthesis.
+                AI-powered async research generation, therapeutic questions,
+                and long-form synthesis.
               </Text>
               <Badge
                 variant="soft"
@@ -269,7 +269,7 @@ export default function Home() {
                   Apollo Server
                 </Text>
                 <Text size="2" color="gray">
-                  Cloudflare D1
+                  Neon PostgreSQL
                 </Text>
               </Flex>
               <Flex direction="column" gap="1">
@@ -283,7 +283,7 @@ export default function Home() {
                   ElevenLabs
                 </Text>
                 <Text size="2" color="gray">
-                  Mastra
+                  DeepSeek
                 </Text>
               </Flex>
               <Flex direction="column" gap="1">
@@ -294,10 +294,10 @@ export default function Home() {
                   Drizzle ORM
                 </Text>
                 <Text size="2" color="gray">
-                  SQLite
+                  PostgreSQL
                 </Text>
                 <Text size="2" color="gray">
-                  Edge-Ready
+                  Serverless
                 </Text>
               </Flex>
             </Grid>

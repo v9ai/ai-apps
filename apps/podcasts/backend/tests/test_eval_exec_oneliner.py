@@ -110,7 +110,7 @@ class TestOneLinerStructure:
     def _profiles(self):
         p = _profiles_with_exec_summary()
         if not p:
-            pytest.skip("No profiles with executive_summary — run crew.py first")
+            pytest.skip("No profiles with executive_summary — run research_pipeline.py first")
         return p
 
     def test_oneliner_exists(self):

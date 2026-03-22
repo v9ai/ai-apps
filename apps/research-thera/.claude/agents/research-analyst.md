@@ -10,7 +10,7 @@ You are a comprehensive research specialist for the research-thera therapeutic p
 ## Project Research Architecture
 
 ### Workflow
-The core research pipeline lives in `src/workflows/generateTherapyResearch.workflow.ts`. It is a multi-step Mastra workflow:
+The core research pipeline lives in `src/workflows/generateTherapyResearch.workflow.ts`. It is a multi-step workflow:
 1. **Load Context** – Fetch goal + notes from D1
 2. **Ensure Langfuse Prompts** – Generate goal-specific prompt templates
 3. **Plan Query** – Create targeted search queries from the therapeutic goal
@@ -62,7 +62,7 @@ extractedBy, createdAt, updatedAt
 ## Development Workflow
 
 ### When Debugging Research Generation
-1. Check the Mastra workflow in `src/workflows/generateTherapyResearch.workflow.ts`
+1. Check the workflow in `src/workflows/generateTherapyResearch.workflow.ts`
 2. Verify the GraphQL resolver at `schema/resolvers/Mutation/generateResearch.ts`
 3. Inspect the job status via `generationJobs` query or `researchJobStatus` subscription
 4. Check D1 database directly via `src/db/index.ts`

@@ -1,11 +1,9 @@
 import { NextRequest, NextResponse } from "next/server";
 import { auth } from "@/app/lib/auth/server";
-import { Client } from "@langchain/langgraph-sdk";
+import { runGraphAndWait } from "@/src/lib/langgraph-client";
 
 export const runtime = "nodejs";
 export const maxDuration = 300;
-
-const LANGGRAPH_URL = process.env.LANGGRAPH_URL || "http://127.0.0.1:2024";
 
 export async function POST(request: NextRequest) {
   const { data: session } = await auth.getSession();
@@ -23,17 +21,13 @@ export async function POST(request: NextRequest) {
   }
 
   try {
-    const client = new Client({ apiUrl: LANGGRAPH_URL, timeoutMs: 300_000 });
-
-    const result = await client.runs.wait(null, "story", {
+    const state = await runGraphAndWait("story", {
       input: {
         feedback_id: feedbackId,
         language,
         minutes,
       },
     });
-
-    const state = result as Record<string, unknown>;
 
     if (state.error) {
       return NextResponse.json(

@@ -1,5 +1,5 @@
 import type { MutationResolvers } from "./../../types.generated";
-import { d1Tools } from "@/src/db";
+import { db } from "@/src/db";
 import { updateGoal as updateGoalDb } from "@/src/db";
 
 export const updateGoal: NonNullable<MutationResolvers['updateGoal']> = async (
@@ -17,11 +17,13 @@ export const updateGoal: NonNullable<MutationResolvers['updateGoal']> = async (
     title: args.input.title ?? undefined,
     description: args.input.description ?? undefined,
     status: args.input.status ?? undefined,
+    priority: args.input.priority ?? undefined,
+    targetDate: args.input.targetDate ?? undefined,
     storyLanguage: args.input.storyLanguage ?? undefined,
   });
 
   // Fetch the updated goal to return it
-  const goal = await d1Tools.getGoal(args.id, userEmail);
+  const goal = await db.getGoal(args.id, userEmail);
 
   return {
     id: goal.id,
@@ -30,6 +32,8 @@ export const updateGoal: NonNullable<MutationResolvers['updateGoal']> = async (
     title: goal.title,
     description: goal.description,
     status: goal.status,
+    priority: goal.priority,
+    targetDate: goal.targetDate,
     therapeuticText: goal.therapeuticText,
     therapeuticTextLanguage: goal.therapeuticTextLanguage,
     therapeuticTextGeneratedAt: goal.therapeuticTextGeneratedAt,

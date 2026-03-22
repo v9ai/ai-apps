@@ -1,4 +1,4 @@
-"""AI investment advisor chat backed by CrewAI."""
+"""AI investment advisor chat."""
 
 import json
 import uuid
@@ -6,15 +6,15 @@ import logging
 import asyncio
 from datetime import datetime, timezone
 from pydantic import BaseModel
+import httpx
 import psycopg
 from psycopg.rows import dict_row
 from fastapi import APIRouter, HTTPException
-from fastapi.responses import StreamingResponse
-from crewai import Agent as CrewAgent, Task, Crew, LLM
-from crewai.tools import tool
 from .config import settings
 
 logger = logging.getLogger(__name__)
+
+_DEEPSEEK_BASE = "https://api.deepseek.com/v1"
 
 
 # ---------------------------------------------------------------------------
@@ -70,99 +70,145 @@ async def init_chat_tables(conn_str: str):
 
 
 # ---------------------------------------------------------------------------
-# Tools for the advisor agent
+# Tool implementations (async)
 # ---------------------------------------------------------------------------
 
-@tool
-def lookup_analysis(url: str) -> str:
-    """Look up a saved analysis for a listing URL. Returns key metrics."""
-    async def _fetch():
-        async with await _conn(settings.database_url) as conn:
-            cursor = await conn.execute(
-                """SELECT url, title, city, zone, price_eur, price_per_m2, size_m2, rooms,
-                          verdict, investment_score, price_deviation_pct, rental_estimate_eur,
-                          rental_yield_pct, recommendation, condition, reasoning
-                   FROM listings WHERE url = %s""",
-                (url,),
-            )
-            return await cursor.fetchone()
-
-    row = asyncio.get_event_loop().run_until_complete(_fetch())
+async def _lookup_analysis(url: str) -> str:
+    """Look up a saved analysis for a listing URL."""
+    async with await _conn(settings.database_url) as conn:
+        cursor = await conn.execute(
+            """SELECT url, title, city, zone, price_eur, price_per_m2, size_m2, rooms,
+                      verdict, investment_score, price_deviation_pct, rental_estimate_eur,
+                      rental_yield_pct, recommendation, condition, reasoning
+               FROM listings WHERE url = %s""",
+            (url,),
+        )
+        row = await cursor.fetchone()
     if not row:
         return f"No analysis found for {url}"
     return json.dumps({k: v for k, v in dict(row).items() if v is not None}, default=str)
 
 
-@tool
-def get_zone_stats(city: str, zone: str) -> str:
+async def _get_zone_stats(city: str, zone: str) -> str:
     """Get aggregate statistics for a specific zone."""
-    async def _fetch():
-        async with await _conn(settings.database_url) as conn:
-            cursor = await conn.execute(
-                """SELECT zone, COUNT(*) as count, AVG(price_per_m2) as avg_ppm2,
-                          AVG(investment_score) as avg_score, AVG(price_deviation_pct) as avg_dev
-                   FROM listings WHERE city = %s AND zone = %s AND price_per_m2 IS NOT NULL
-                   GROUP BY zone""",
-                (city, zone),
-            )
-            return await cursor.fetchone()
-
-    row = asyncio.get_event_loop().run_until_complete(_fetch())
+    async with await _conn(settings.database_url) as conn:
+        cursor = await conn.execute(
+            """SELECT zone, COUNT(*) as count, AVG(price_per_m2) as avg_ppm2,
+                      AVG(investment_score) as avg_score, AVG(price_deviation_pct) as avg_dev
+               FROM listings WHERE city = %s AND zone = %s AND price_per_m2 IS NOT NULL
+               GROUP BY zone""",
+            (city, zone),
+        )
+        row = await cursor.fetchone()
     if not row:
         return f"No data for {zone} in {city}"
     return json.dumps(dict(row), default=str)
 
 
-@tool
-def get_portfolio_summary() -> str:
+async def _get_portfolio_summary() -> str:
     """Get a summary of the user's watchlist/portfolio."""
-    async def _fetch():
-        async with await _conn(settings.database_url) as conn:
-            cursor = await conn.execute("""
-                SELECT w.url, w.label, w.city, w.zone, w.price_eur, w.verdict,
-                       w.investment_score, l.rental_yield_pct
-                FROM watchlist w
-                LEFT JOIN listings l ON l.url = w.url
-                ORDER BY w.added_at DESC LIMIT 20
-            """)
-            return await cursor.fetchall()
-
-    rows = asyncio.get_event_loop().run_until_complete(_fetch())
+    async with await _conn(settings.database_url) as conn:
+        cursor = await conn.execute("""
+            SELECT w.url, w.label, w.city, w.zone, w.price_eur, w.verdict,
+                   w.investment_score, l.rental_yield_pct
+            FROM watchlist w
+            LEFT JOIN listings l ON l.url = w.url
+            ORDER BY w.added_at DESC LIMIT 20
+        """)
+        rows = await cursor.fetchall()
     if not rows:
         return "Portfolio is empty"
     return json.dumps([dict(r) for r in rows], default=str)
 
 
-@tool
-def compare_listings(url1: str, url2: str) -> str:
+async def _compare_listings(url1: str, url2: str) -> str:
     """Compare two analyzed listings side by side."""
-    async def _fetch():
-        async with await _conn(settings.database_url) as conn:
-            cursor = await conn.execute(
-                """SELECT url, title, city, zone, price_eur, price_per_m2, size_m2,
-                          verdict, investment_score, rental_yield_pct, recommendation
-                   FROM listings WHERE url IN (%s, %s)""",
-                (url1, url2),
-            )
-            return await cursor.fetchall()
-
-    rows = asyncio.get_event_loop().run_until_complete(_fetch())
+    async with await _conn(settings.database_url) as conn:
+        cursor = await conn.execute(
+            """SELECT url, title, city, zone, price_eur, price_per_m2, size_m2,
+                      verdict, investment_score, rental_yield_pct, recommendation
+               FROM listings WHERE url IN (%s, %s)""",
+            (url1, url2),
+        )
+        rows = await cursor.fetchall()
     if len(rows) < 2:
         return "Could not find both listings"
     return json.dumps([dict(r) for r in rows], default=str)
 
 
+async def _dispatch_tool(name: str, args: dict) -> str:
+    if name == "lookup_analysis":
+        return await _lookup_analysis(args["url"])
+    if name == "get_zone_stats":
+        return await _get_zone_stats(args["city"], args["zone"])
+    if name == "get_portfolio_summary":
+        return await _get_portfolio_summary()
+    if name == "compare_listings":
+        return await _compare_listings(args["url1"], args["url2"])
+    return f"Unknown tool: {name}"
+
+
+# ---------------------------------------------------------------------------
+# Tool specs for function calling
+# ---------------------------------------------------------------------------
+
+_TOOLS = [
+    {
+        "type": "function",
+        "function": {
+            "name": "lookup_analysis",
+            "description": "Look up a saved analysis for a listing URL. Returns key metrics.",
+            "parameters": {
+                "type": "object",
+                "properties": {"url": {"type": "string", "description": "The listing URL"}},
+                "required": ["url"],
+            },
+        },
+    },
+    {
+        "type": "function",
+        "function": {
+            "name": "get_zone_stats",
+            "description": "Get aggregate statistics for a specific zone.",
+            "parameters": {
+                "type": "object",
+                "properties": {
+                    "city": {"type": "string"},
+                    "zone": {"type": "string"},
+                },
+                "required": ["city", "zone"],
+            },
+        },
+    },
+    {
+        "type": "function",
+        "function": {
+            "name": "get_portfolio_summary",
+            "description": "Get a summary of the user's watchlist/portfolio.",
+            "parameters": {"type": "object", "properties": {}},
+        },
+    },
+    {
+        "type": "function",
+        "function": {
+            "name": "compare_listings",
+            "description": "Compare two analyzed listings side by side.",
+            "parameters": {
+                "type": "object",
+                "properties": {
+                    "url1": {"type": "string"},
+                    "url2": {"type": "string"},
+                },
+                "required": ["url1", "url2"],
+            },
+        },
+    },
+]
+
+
 # ---------------------------------------------------------------------------
 # Advisor Agent
 # ---------------------------------------------------------------------------
-
-def _build_advisor_llm() -> LLM:
-    return LLM(
-        model="openai/deepseek-chat",
-        api_key=settings.deepseek_api_key,
-        base_url="https://api.deepseek.com/v1",
-    )
-
 
 ADVISOR_BACKSTORY = """You are an expert real estate investment advisor for Eastern European markets.
 You help investors make buy/hold/sell decisions using data from analyzed listings.
@@ -170,6 +216,48 @@ You have access to tools that can look up specific listing analyses, compare lis
 check zone statistics, and review the user's portfolio.
 Always back your advice with specific data from the tools.
 Be concise but thorough. Use numbers and percentages to support your points."""
+
+
+async def _run_advisor(prompt: str) -> str:
+    """Run the advisor with a tool-calling loop."""
+    messages: list[dict] = [
+        {"role": "system", "content": ADVISOR_BACKSTORY},
+        {"role": "user", "content": prompt},
+    ]
+    async with httpx.AsyncClient(timeout=120) as client:
+        for _ in range(10):  # max iterations
+            resp = await client.post(
+                f"{_DEEPSEEK_BASE}/chat/completions",
+                headers={
+                    "Authorization": f"Bearer {settings.deepseek_api_key}",
+                    "Content-Type": "application/json",
+                },
+                json={
+                    "model": "deepseek-chat",
+                    "messages": messages,
+                    "tools": _TOOLS,
+                    "tool_choice": "auto",
+                },
+            )
+            resp.raise_for_status()
+            choice = resp.json()["choices"][0]
+            msg = choice["message"]
+            messages.append(msg)
+
+            if choice["finish_reason"] != "tool_calls":
+                return msg.get("content") or ""
+
+            for tc in msg.get("tool_calls", []):
+                fn = tc["function"]
+                args = json.loads(fn.get("arguments", "{}"))
+                result = await _dispatch_tool(fn["name"], args)
+                messages.append({
+                    "role": "tool",
+                    "tool_call_id": tc["id"],
+                    "content": result,
+                })
+
+    return messages[-1].get("content") or ""
 
 
 async def handle_chat(req: ChatRequest) -> ChatResponse:
@@ -180,34 +268,18 @@ async def handle_chat(req: ChatRequest) -> ChatResponse:
     context = ""
     if req.context_urls:
         for url in req.context_urls[:3]:
-            result = lookup_analysis.run(url)
+            result = await _lookup_analysis(url)
             context += f"\nContext for {url}:\n{result}\n"
 
     full_prompt = req.message
     if context:
         full_prompt = f"User has these listings in context:\n{context}\n\nUser question: {req.message}"
 
-    agent = CrewAgent(
-        role="Real Estate Investment Advisor",
-        goal="Provide data-backed investment advice for Eastern European property markets",
-        backstory=ADVISOR_BACKSTORY,
-        llm=_build_advisor_llm(),
-        tools=[lookup_analysis, get_zone_stats, get_portfolio_summary, compare_listings],
-        verbose=False,
-    )
-
-    task = Task(
-        description=full_prompt,
-        expected_output="Clear, actionable investment advice backed by data from the tools",
-        agent=agent,
-    )
-
-    crew = Crew(agents=[agent], tasks=[task], verbose=False)
-    result = await asyncio.to_thread(crew.kickoff)
+    response_text = await _run_advisor(full_prompt)
 
     assistant_msg = ChatMessage(
         role="assistant",
-        content=result.raw,
+        content=response_text,
         timestamp=datetime.now(timezone.utc).isoformat(),
     )
 

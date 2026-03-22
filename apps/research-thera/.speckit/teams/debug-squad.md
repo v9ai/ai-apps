@@ -64,9 +64,9 @@ Read the bug report, reproduce if possible, then:
 6. The winning investigator implements the fix
 
 Key debugging resources:
-- D1 database: wrangler d1 execute research-thera-db
+- Neon database: pnpm drizzle-kit studio (or query via MCP Neon tool)
 - GraphQL playground: localhost:3000/api/graphql
-- Trigger.dev dashboard: for async job failures
+- LangGraph server: for agent execution failures
 - Logs: check generation_jobs table for error field
 
 Communication rules:

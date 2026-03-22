@@ -31,7 +31,7 @@ FIXTURES_DIR = Path(__file__).resolve().parent / "fixtures"
 # ---------------------------------------------------------------------------
 
 import sys
-sys.path.insert(0, str(Path(__file__).resolve().parent.parent.parent / "langgraph"))
+sys.path.insert(0, str(Path(__file__).resolve().parent.parent.parent / "backend"))
 from research_agent.therapy_context import build_therapeutic_system_prompt  # noqa: E402
 
 

@@ -1,4 +1,4 @@
-"""Tests for output assembly logic in crew.py — how raw agent outputs are
+"""Tests for output assembly logic in research_pipeline.py — how raw agent outputs are
 parsed into the final research JSON via _extract_json and the type-checking
 guards in run_person.
 """
@@ -6,7 +6,7 @@ guards in run_person.
 import json
 import pytest
 
-from crew import _extract_json
+from research_pipeline import _extract_json
 
 
 # ── 1. test_bio_extraction ────────────────────────────────────────────────

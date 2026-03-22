@@ -142,6 +142,26 @@ SAMPLE_RESEARCH: dict[str, Any] = {
     "news": [
         {"headline": "LangChain Raises $25M Series A", "source": "TechCrunch", "date": "2023-04-15", "category": "Funding", "summary": "LangChain raises Series A led by Sequoia.", "url": "https://techcrunch.com/langchain"},
     ],
+    "videos": [
+        {
+            "title": "Harrison Chase: Building LangChain and the Future of AI Agents",
+            "url": "https://www.youtube.com/watch?v=dQw4w9WgXcQ",
+            "platform": "YouTube",
+            "date": "2025-03-15",
+            "duration": "45:32",
+            "channel": "AI Engineer Summit",
+            "description": "Harrison Chase discusses LangChain, LangGraph, and context engineering at AI Engineer Summit 2025.",
+        },
+        {
+            "title": "Context Engineering Deep Dive with Harrison Chase",
+            "url": "https://www.youtube.com/watch?v=abc123def45",
+            "platform": "YouTube",
+            "date": "2025-06-20",
+            "duration": "1:12:45",
+            "channel": "Latent Space Podcast",
+            "description": "Deep technical discussion about context engineering principles and how they differ from prompt engineering.",
+        },
+    ],
     "competitive_landscape": {
         "market_position": "leader",
         "competitors": [
@@ -259,6 +279,11 @@ def sample_podcasts() -> list[dict]:
 @pytest.fixture
 def sample_news() -> list[dict]:
     return list(SAMPLE_RESEARCH["news"])
+
+
+@pytest.fixture
+def sample_videos() -> list[dict]:
+    return list(SAMPLE_RESEARCH["videos"])
 
 
 # ── load real research files from disk ──────────────────────────────────

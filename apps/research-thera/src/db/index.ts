@@ -62,6 +62,29 @@ export async function getFamilyMember(id: number) {
   };
 }
 
+export async function getSelfFamilyMember(userId: string) {
+  const rows = await neonSql`SELECT * FROM family_members WHERE user_id = ${userId} AND relationship = 'self' LIMIT 1`;
+  if (rows.length === 0) return null;
+  const row = rows[0];
+  return {
+    id: row.id as number,
+    userId: row.user_id as string,
+    slug: (row.slug as string) || null,
+    firstName: row.first_name as string,
+    name: (row.name as string) || null,
+    ageYears: (row.age_years as number) || null,
+    relationship: (row.relationship as string) || null,
+    dateOfBirth: (row.date_of_birth as string) || null,
+    bio: (row.bio as string) || null,
+    email: (row.email as string) || null,
+    phone: (row.phone as string) || null,
+    location: (row.location as string) || null,
+    occupation: (row.occupation as string) || null,
+    createdAt: row.created_at as string,
+    updatedAt: row.updated_at as string,
+  };
+}
+
 export async function getFamilyMemberBySlug(slug: string, userId: string) {
   const rows = await neonSql`SELECT * FROM family_members WHERE slug = ${slug} AND user_id = ${userId}`;
   if (rows.length === 0) return null;
@@ -276,6 +299,11 @@ export async function getGoal(goalId: number, createdBy: string) {
     therapeuticTextGeneratedAt:
       (row.therapeutic_text_generated_at as string) || null,
     storyLanguage: (row.story_language as string) || null,
+    parentAdvice: (row.parent_advice as string) || null,
+    parentAdviceLanguage: (row.parent_advice_language as string) || null,
+    parentAdviceGeneratedAt: (row.parent_advice_generated_at as string) || null,
+    priority: (row.priority as string) || "medium",
+    targetDate: (row.target_date as string) || null,
     createdAt: row.created_at as string,
     updatedAt: row.updated_at as string,
   };
@@ -303,6 +331,11 @@ export async function getGoalBySlug(slug: string, createdBy: string) {
     therapeuticTextGeneratedAt:
       (row.therapeutic_text_generated_at as string) || null,
     storyLanguage: (row.story_language as string) || null,
+    parentAdvice: (row.parent_advice as string) || null,
+    parentAdviceLanguage: (row.parent_advice_language as string) || null,
+    parentAdviceGeneratedAt: (row.parent_advice_generated_at as string) || null,
+    priority: (row.priority as string) || "medium",
+    targetDate: (row.target_date as string) || null,
     createdAt: row.created_at as string,
     updatedAt: row.updated_at as string,
   };
@@ -369,6 +402,8 @@ export async function updateGoal(
     title?: string;
     description?: string | null;
     status?: string;
+    priority?: string;
+    targetDate?: string | null;
     storyLanguage?: string | null;
   },
 ) {
@@ -380,6 +415,8 @@ export async function updateGoal(
   if (updates.title !== undefined) { fields.push("title = ?"); args.push(updates.title); }
   if (updates.description !== undefined) { fields.push("description = ?"); args.push(updates.description); }
   if (updates.status !== undefined) { fields.push("status = ?"); args.push(updates.status); }
+  if (updates.priority !== undefined) { fields.push("priority = ?"); args.push(updates.priority); }
+  if (updates.targetDate !== undefined) { fields.push("target_date = ?"); args.push(updates.targetDate); }
   if (updates.storyLanguage !== undefined) { fields.push("story_language = ?"); args.push(updates.storyLanguage); }
 
   fields.push("updated_at = NOW()");
@@ -387,6 +424,21 @@ export async function updateGoal(
 
   const [query, params] = p(`UPDATE goals SET ${fields.join(", ")} WHERE id = ? AND user_id = ?`, args);
   await neonSql(query, params);
+}
+
+export async function saveParentAdvice(
+  goalId: number,
+  userId: string,
+  advice: string,
+  language: string,
+) {
+  await neonSql`
+    UPDATE goals
+    SET parent_advice = ${advice},
+        parent_advice_language = ${language},
+        parent_advice_generated_at = ${new Date().toISOString()},
+        updated_at = NOW()
+    WHERE id = ${goalId} AND user_id = ${userId}`;
 }
 
 // ============================================
@@ -1013,7 +1065,7 @@ export async function cleanupStaleJobs(minutes = 15): Promise<void> {
 export async function createGenerationJob(
   id: string,
   userId: string,
-  type: "AUDIO" | "RESEARCH" | "QUESTIONS" | "LONGFORM",
+  type: "AUDIO" | "RESEARCH" | "QUESTIONS" | "LONGFORM" | "DEEP_ANALYSIS",
   goalId?: number | null,
   storyId?: number,
 ) {
@@ -2226,6 +2278,76 @@ export async function saveIssuesToTable(
   return issueIds;
 }
 
+// Issue Links
+export async function linkIssues(
+  issueId: number,
+  linkedIssueId: number,
+  userId: string,
+  linkType: string = "related",
+): Promise<number> {
+  // Check for existing link in either direction
+  const existing = await neonSql`
+    SELECT id FROM issue_links
+    WHERE user_id = ${userId}
+      AND ((issue_id = ${issueId} AND linked_issue_id = ${linkedIssueId})
+        OR (issue_id = ${linkedIssueId} AND linked_issue_id = ${issueId}))
+    LIMIT 1`;
+  if (existing.length > 0) return existing[0].id as number;
+
+  const rows = await neonSql`
+    INSERT INTO issue_links (issue_id, linked_issue_id, link_type, user_id, created_at)
+    VALUES (${issueId}, ${linkedIssueId}, ${linkType}, ${userId}, NOW())
+    RETURNING id`;
+  return rows[0].id as number;
+}
+
+export async function unlinkIssues(
+  issueId: number,
+  linkedIssueId: number,
+  userId: string,
+): Promise<void> {
+  await neonSql`
+    DELETE FROM issue_links
+    WHERE user_id = ${userId}
+      AND ((issue_id = ${issueId} AND linked_issue_id = ${linkedIssueId})
+        OR (issue_id = ${linkedIssueId} AND linked_issue_id = ${issueId}))`;
+}
+
+export async function getLinkedIssues(
+  issueId: number,
+  userId: string,
+): Promise<Array<{ linkId: number; linkType: string; issue: ReturnType<typeof mapIssueRow> }>> {
+  const rows = await neonSql`
+    SELECT il.id as link_id, il.link_type,
+           i.*
+    FROM issue_links il
+    JOIN issues i ON (
+      CASE WHEN il.issue_id = ${issueId} THEN il.linked_issue_id ELSE il.issue_id END
+    ) = i.id
+    WHERE il.user_id = ${userId}
+      AND (il.issue_id = ${issueId} OR il.linked_issue_id = ${issueId})
+    ORDER BY il.created_at DESC`;
+  return rows.map((r: any) => ({
+    linkId: r.link_id as number,
+    linkType: r.link_type as string,
+    issue: mapIssueRow({
+      id: r.id,
+      feedback_id: r.feedback_id,
+      journal_entry_id: r.journal_entry_id,
+      family_member_id: r.family_member_id,
+      related_family_member_id: r.related_family_member_id,
+      user_id: r.user_id,
+      title: r.title,
+      description: r.description,
+      category: r.category,
+      severity: r.severity,
+      recommendations: r.recommendations,
+      created_at: r.created_at,
+      updated_at: r.updated_at,
+    } as IssueRow),
+  }));
+}
+
 export async function getGoalById(goalId: number) {
   const rows = await neonSql`SELECT * FROM goals WHERE id = ${goalId}`;
   if (rows.length === 0) return null;
@@ -2243,6 +2365,9 @@ export async function getGoalById(goalId: number) {
     therapeuticTextLanguage: (row.therapeutic_text_language as string) || null,
     therapeuticTextGeneratedAt: (row.therapeutic_text_generated_at as string) || null,
     storyLanguage: (row.story_language as string) || null,
+    parentAdvice: (row.parent_advice as string) || null,
+    parentAdviceLanguage: (row.parent_advice_language as string) || null,
+    parentAdviceGeneratedAt: (row.parent_advice_generated_at as string) || null,
     createdAt: row.created_at as string,
     updatedAt: row.updated_at as string,
   };
@@ -2268,13 +2393,122 @@ export async function deleteGoal(goalId: number, userEmail: string): Promise<voi
 }
 
 // ============================================
-// Namespace export (backward compat with resolvers)
+// Deep Issue Analyses
 // ============================================
 
-export const d1Tools = {
+interface DeepIssueAnalysisRow {
+  id: number;
+  family_member_id: number;
+  trigger_issue_id: number | null;
+  user_id: string;
+  job_id: string | null;
+  summary: string;
+  pattern_clusters: string;
+  timeline_analysis: string;
+  family_system_insights: string;
+  priority_recommendations: string;
+  research_relevance: string;
+  data_snapshot: string;
+  model: string;
+  created_at: string;
+  updated_at: string;
+}
+
+function mapDeepIssueAnalysisRow(row: DeepIssueAnalysisRow) {
+  return {
+    id: row.id,
+    familyMemberId: row.family_member_id,
+    triggerIssueId: row.trigger_issue_id,
+    userId: row.user_id,
+    jobId: row.job_id,
+    summary: row.summary,
+    patternClusters: JSON.parse(row.pattern_clusters),
+    timelineAnalysis: JSON.parse(row.timeline_analysis),
+    familySystemInsights: JSON.parse(row.family_system_insights),
+    priorityRecommendations: JSON.parse(row.priority_recommendations),
+    researchRelevance: JSON.parse(row.research_relevance),
+    dataSnapshot: JSON.parse(row.data_snapshot),
+    model: row.model,
+    createdAt: row.created_at,
+    updatedAt: row.updated_at,
+  };
+}
+
+export async function createDeepIssueAnalysis(params: {
+  familyMemberId: number;
+  triggerIssueId?: number | null;
+  userId: string;
+  jobId?: string | null;
+  summary: string;
+  patternClusters: unknown[];
+  timelineAnalysis: unknown;
+  familySystemInsights: unknown[];
+  priorityRecommendations: unknown[];
+  researchRelevance: unknown[];
+  dataSnapshot: unknown;
+  model?: string;
+}): Promise<number> {
+  const rows = await neonSql`
+    INSERT INTO deep_issue_analyses (family_member_id, trigger_issue_id, user_id, job_id, summary, pattern_clusters, timeline_analysis, family_system_insights, priority_recommendations, research_relevance, data_snapshot, model, created_at, updated_at)
+    VALUES (${params.familyMemberId}, ${params.triggerIssueId ?? null}, ${params.userId}, ${params.jobId ?? null}, ${params.summary}, ${JSON.stringify(params.patternClusters)}, ${JSON.stringify(params.timelineAnalysis)}, ${JSON.stringify(params.familySystemInsights)}, ${JSON.stringify(params.priorityRecommendations)}, ${JSON.stringify(params.researchRelevance)}, ${JSON.stringify(params.dataSnapshot)}, ${params.model ?? "deepseek-chat"}, NOW(), NOW())
+    RETURNING id`;
+  return rows[0].id as number;
+}
+
+export async function getDeepIssueAnalysis(id: number, userId: string) {
+  const rows = await neonSql`SELECT * FROM deep_issue_analyses WHERE id = ${id} AND user_id = ${userId}`;
+  if (rows.length === 0) return null;
+  return mapDeepIssueAnalysisRow(rows[0] as unknown as DeepIssueAnalysisRow);
+}
+
+export async function getDeepIssueAnalysesForFamilyMember(familyMemberId: number, userId: string) {
+  const rows = await neonSql`SELECT * FROM deep_issue_analyses WHERE family_member_id = ${familyMemberId} AND user_id = ${userId} ORDER BY created_at DESC`;
+  return rows.map((r) => mapDeepIssueAnalysisRow(r as unknown as DeepIssueAnalysisRow));
+}
+
+export async function deleteDeepIssueAnalysis(id: number, userId: string): Promise<void> {
+  await neonSql`DELETE FROM deep_issue_analyses WHERE id = ${id} AND user_id = ${userId}`;
+}
+
+// Helper: all contact feedbacks for a family member (no contactId filter)
+export async function getContactFeedbacksForFamilyMember(familyMemberId: number, userId: string) {
+  const rows = await neonSql`SELECT * FROM contact_feedbacks WHERE family_member_id = ${familyMemberId} AND user_id = ${userId} ORDER BY feedback_date DESC, created_at DESC`;
+  return rows.map(mapContactFeedbackRow);
+}
+
+// Helper: issues where this family member is the relatedFamilyMemberId
+export async function getIssuesReferencingFamilyMember(familyMemberId: number, userId: string) {
+  const rows = await neonSql`SELECT * FROM issues WHERE related_family_member_id = ${familyMemberId} AND user_id = ${userId} ORDER BY created_at DESC`;
+  return rows.map((r) => mapIssueRow(r as IssueRow));
+}
+
+// Helper: all research for a family member (across all their issues)
+export async function getResearchForFamilyMemberIssues(issueIds: number[]) {
+  if (issueIds.length === 0) return [];
+  const placeholders = issueIds.map(() => "?").join(",");
+  const sqlStr = `SELECT * FROM therapy_research WHERE issue_id IN (${placeholders}) ORDER BY relevance_score DESC`;
+  const [query, params] = p(sqlStr, issueIds);
+  const rows = await neonSql(query, params);
+  return rows.map((row) => ({
+    id: row.id as number,
+    goalId: (row.goal_id as number) || null,
+    issueId: (row.issue_id as number) || null,
+    title: row.title as string,
+    keyFindings: JSON.parse(row.key_findings as string) as string[],
+    therapeuticTechniques: JSON.parse(row.therapeutic_techniques as string) as string[],
+    evidenceLevel: (row.evidence_level as string) || null,
+  }));
+}
+
+// ============================================
+// Namespace export
+// ============================================
+
+export const db = {
   // Family Members
   listFamilyMembers,
   getFamilyMember,
+  getSelfFamilyMember,
   getFamilyMemberBySlug,
   createFamilyMember,
   updateFamilyMember,
@@ -2289,6 +2523,7 @@ export const d1Tools = {
   listGoals,
   createGoal,
   updateGoal,
+  saveParentAdvice,
   deleteGoal,
   // Research
   upsertTherapyResearch,
@@ -2375,7 +2610,17 @@ export const d1Tools = {
   updateIssue,
   deleteIssue,
   saveIssuesToTable,
+  // Issue Links
+  linkIssues,
+  unlinkIssues,
+  getLinkedIssues,
+  // Deep Issue Analyses
+  createDeepIssueAnalysis,
+  getDeepIssueAnalysis,
+  getDeepIssueAnalysesForFamilyMember,
+  deleteDeepIssueAnalysis,
+  getContactFeedbacksForFamilyMember,
+  getIssuesReferencingFamilyMember,
+  getResearchForFamilyMemberIssues,
 };
 
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-export const d1 = null as any; // legacy compat — scripts not yet migrated to Neon

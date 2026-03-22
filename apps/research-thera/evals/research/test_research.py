@@ -7,6 +7,7 @@ from deepeval import assert_test
 from deepeval.test_case import LLMTestCase
 
 from conftest import (
+    dob_age_consistency_metric,
     extraction_faithfulness_metric,
     feedback_integration_metric,
     normalization_accuracy_metric,
@@ -86,6 +87,90 @@ def test_relevance_scoring(extract_output):
     if not result:
         pytest.skip("No synthetic paper defined for this case")
     assert_test(_extract_test_case(case, result), [relevance_scoring_metric])
+
+
+# ---------------------------------------------------------------------------
+# LLM-judged: DOB / age consistency
+# ---------------------------------------------------------------------------
+
+
+def test_dob_age_consistency(normalize_output):
+    """LLM-judged: developmental tier and language must be consistent with patient age."""
+    case, result = normalize_output
+    assert_test(_normalize_test_case(case, result), [dob_age_consistency_metric])
+
+
+# ---------------------------------------------------------------------------
+# Deterministic: DOB / age validation
+# ---------------------------------------------------------------------------
+
+# Maps age ranges to acceptable developmental tier values
+_AGE_TIER_MAP = {
+    (0, 2): {"infant", "toddler", "infant_toddler", "early_development"},
+    (3, 5): {"early_childhood", "preschool", "pre_school", "pre-school"},
+    (6, 11): {"school_age", "school-age", "middle_childhood", "elementary", "school_aged"},
+    (12, 17): {"adolescent", "adolescence", "teen", "teenager", "young_adolescent"},
+    (18, 25): {"young_adult", "young-adult", "emerging_adult", "late_adolescent"},
+    (26, 120): {"adult", "mature_adult"},
+}
+
+
+def _expected_tiers_for_age(age: int) -> set[str]:
+    """Return the set of acceptable developmental tier labels for a given age."""
+    for (low, high), tiers in _AGE_TIER_MAP.items():
+        if low <= age <= high:
+            return tiers
+    return set()
+
+
+def test_normalization_developmental_tier_age_consistent(normalize_output):
+    """Developmental tier must match the patient's actual age."""
+    case, result = normalize_output
+    age = case.get("family_member_age")
+    if not age:
+        pytest.skip("No family_member_age defined")
+
+    # Handle both field name variants from different prompt versions
+    tier = (
+        result.get("developmentalTier")
+        or result.get("developmental_stage")
+        or result.get("developmental_tier")
+        or ""
+    ).lower().strip()
+
+    assert tier, "Developmental tier/stage is empty"
+
+    expected = _expected_tiers_for_age(age)
+    assert tier in expected, (
+        f"Age {age} expects tier in {sorted(expected)}, got '{tier}'"
+    )
+
+
+def test_normalization_keywords_age_appropriate(normalize_output):
+    """Required keywords must not reference a contradictory age group."""
+    case, result = normalize_output
+    age = case.get("family_member_age")
+    if not age:
+        pytest.skip("No family_member_age defined")
+
+    keywords = result.get("requiredKeywords") or result.get("required_keywords") or []
+    keywords_text = " ".join(kw.lower() for kw in keywords)
+
+    # Children (age < 12) should not have adult-only terms in keywords
+    if age < 12:
+        adult_terms = ["adult", "geriatric", "elderly", "aging"]
+        found = [t for t in adult_terms if t in keywords_text]
+        assert not found, (
+            f"Child age {age} has adult-oriented keywords: {found}"
+        )
+
+    # Teens/adults should not have infant terms
+    if age >= 12:
+        infant_terms = ["infant", "toddler", "neonatal", "newborn"]
+        found = [t for t in infant_terms if t in keywords_text]
+        assert not found, (
+            f"Age {age} has infant-oriented keywords: {found}"
+        )
 
 
 # ---------------------------------------------------------------------------
@@ -183,11 +268,20 @@ def test_plan_contains_expected_keywords(plan_output):
     if not expected:
         pytest.skip("No expected_query_keywords defined")
 
+    def _flatten(items: list) -> list[str]:
+        out = []
+        for item in items:
+            if isinstance(item, list):
+                out.extend(str(i) for i in item)
+            else:
+                out.append(str(item))
+        return out
+
     all_queries = " ".join(
-        result.get("semanticScholarQueries", [])
-        + result.get("crossrefQueries", [])
-        + result.get("pubmedQueries", [])
-        + result.get("keywords", [])
+        _flatten(result.get("semanticScholarQueries", []))
+        + _flatten(result.get("crossrefQueries", []))
+        + _flatten(result.get("pubmedQueries", []))
+        + _flatten(result.get("keywords", []))
     ).lower()
 
     found = [kw for kw in expected if kw.lower() in all_queries]

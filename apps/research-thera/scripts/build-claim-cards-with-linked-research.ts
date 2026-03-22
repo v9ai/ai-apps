@@ -21,14 +21,9 @@ if (typeof globalThis !== "undefined") {
 import { claimCardsTools } from "../src/tools/claim-cards.tools";
 import { sql as neonSql } from "../src/db/neon";
 import { sourceTools } from "../src/tools/sources.tools";
-import { createDeepSeek } from "@ai-sdk/deepseek";
-import { generateObject } from "ai";
+import { generateObject } from "../src/lib/deepseek";
 import { z } from "zod";
 import type { PaperDetails } from "../src/tools/sources.tools";
-
-const deepseek = createDeepSeek({
-  apiKey: process.env.DEEPSEEK_API_KEY,
-});
 
 /**
  * Extract claims from paper titles when abstracts are unavailable
@@ -52,7 +47,7 @@ async function extractClaimsFromTitles(
   console.log(`   Analyzing ${papers.length} paper titles...`);
 
   const result = await generateObject({
-    model: deepseek("deepseek-chat"),
+
     schema: claimsSchema,
     prompt: `You are extracting evidence-based claims from research paper titles.
 
@@ -173,7 +168,7 @@ async function extractClaimsFromPapersBatched(
     console.log(`🤖 Extracting claims from batch ${bi + 1}/${batches.length}…`);
 
     const result = await generateObject({
-      model: deepseek("deepseek-chat"),
+  
       schema: claimsSchema,
       prompt: `
 You are extracting evidence-based claims from research abstracts.

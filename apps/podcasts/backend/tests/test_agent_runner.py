@@ -11,7 +11,7 @@ from unittest.mock import AsyncMock, MagicMock, patch
 
 import pytest
 
-from crew import _run_agent
+from research_pipeline import _run_agent
 
 
 @pytest.mark.asyncio
@@ -43,7 +43,7 @@ async def test_with_tools_path_creates_react_agent():
         "messages": [MagicMock(content="Agent with tools response")]
     }
 
-    with patch("crew.create_react_agent", return_value=mock_agent) as mock_create:
+    with patch("research_pipeline.create_react_agent", return_value=mock_agent) as mock_create:
         result = await _run_agent(mock_llm, "System prompt", "Task prompt", [mock_tool])
 
     assert result == "Agent with tools response"
@@ -69,7 +69,7 @@ async def test_tool_agent_error_returns_error_string():
     mock_llm = MagicMock()
     mock_tool = MagicMock()
 
-    with patch("crew.create_react_agent", side_effect=ValueError("Bad tool config")):
+    with patch("research_pipeline.create_react_agent", side_effect=ValueError("Bad tool config")):
         result = await _run_agent(mock_llm, "System", "Task", [mock_tool])
 
     assert "agent error" in result.lower()

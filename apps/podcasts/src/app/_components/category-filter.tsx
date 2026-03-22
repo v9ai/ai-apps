@@ -9,24 +9,23 @@ type CategoryFilterProps = {
   activeCategory: string | null;
 };
 
-/* ── icon map: small inline SVGs per category slug ── */
 const categoryIcons: Record<string, string> = {
-  "lab-leaders": "\u2726",        // sparkle ✦
-  builders: "\u2692",             // hammer & pick ⚒
-  researchers: "\u2609",          // microscope-like sun ☉ — using atom-like symbol
-  hosts: "\u266A",                // music note ♪
-  "rising-leaders": "\u2197",     // arrow ↗
-  infrastructure: "\u2699",       // gear ⚙
-  "vector-dbs": "\u25C8",         // diamond ◈
+  "lab-leaders": "\u2726",
+  builders: "\u2692",
+  researchers: "\u2609",
+  hosts: "\u266A",
+  "rising-leaders": "\u2197",
+  infrastructure: "\u2699",
+  "vector-dbs": "\u25C8",
 };
 
 const btnBase = css({
   flexShrink: 0,
   rounded: "full",
-  px: { base: "4", sm: "5" },
-  py: "2",
-  minH: "44px",
-  fontSize: "sm",
+  px: { base: "3", sm: "3.5" },
+  py: "1.5",
+  minH: { base: "36px", sm: "40px" },
+  fontSize: { base: "xs", sm: "sm" },
   fontWeight: "medium",
   letterSpacing: "0.01em",
   whiteSpace: "nowrap",
@@ -34,74 +33,55 @@ const btnBase = css({
   borderWidth: "1px",
   display: "inline-flex",
   alignItems: "center",
-  gap: "1.5",
-  transition: "all 250ms cubic-bezier(0.34, 1.56, 0.64, 1)",
+  gap: "1",
+  transition: "all 200ms var(--ease-smooth)",
 });
 
 const btnActive = css({
-  borderColor: "rgba(139,92,246,0.30)",
-  bg: "rgba(139,92,246,0.13)",
+  borderColor: "rgba(139,92,246,0.25)",
+  bg: "rgba(139,92,246,0.10)",
   color: "#c4b5fd",
-  boxShadow: "0 0 12px 2px rgba(139,92,246,0.18), 0 0 4px 1px rgba(139,92,246,0.10)",
-  transform: "scale(1.04)",
 });
 
 const btnInactive = css({
   borderColor: "rgba(255,255,255,0.06)",
   bg: "transparent",
   color: "#7B7B86",
-  transform: "scale(1)",
   _hover: {
     borderColor: "rgba(255,255,255,0.12)",
     bg: "rgba(255,255,255,0.06)",
     color: "#C4C4CC",
-    transform: "scale(1.02)",
   },
 });
 
-const countBadgeActive = css({
+const countBadge = css({
   ml: "0.5",
-  fontSize: "xs",
+  fontSize: { base: "10px", sm: "xs" },
   fontWeight: "semibold",
-  bg: "rgba(139,92,246,0.22)",
-  color: "#a78bfa",
   rounded: "full",
   px: "1.5",
   py: "0.5",
   lineHeight: "1",
-  minW: "20px",
+  minW: "18px",
   textAlign: "center",
 });
 
-const countBadgeInactive = css({
-  ml: "0.5",
-  fontSize: "xs",
-  fontWeight: "semibold",
+const countActive = css({
+  bg: "rgba(139,92,246,0.22)",
+  color: "#a78bfa",
+});
+
+const countInactive = css({
   bg: "rgba(255,255,255,0.06)",
   color: "#7B7B86",
-  rounded: "full",
-  px: "1.5",
-  py: "0.5",
-  lineHeight: "1",
-  minW: "20px",
-  textAlign: "center",
   opacity: 0.7,
 });
 
 const iconStyle = css({
-  fontSize: "0.85em",
+  fontSize: "0.8em",
   lineHeight: "1",
   opacity: 0.75,
-});
-
-const dividerDot = css({
-  display: { base: "none", md: "flex" },
-  alignItems: "center",
-  flexShrink: 0,
-  color: "rgba(255,255,255,0.12)",
-  fontSize: "8px",
-  userSelect: "none",
-  lineHeight: "1",
+  display: { base: "none", sm: "inline" },
 });
 
 export function CategoryFilter({
@@ -115,82 +95,80 @@ export function CategoryFilter({
   );
 
   return (
-    <div className={css({ display: "flex", justifyContent: "center", maxW: "100%", overflow: "hidden" })}>
+    <div
+      className={css({
+        pos: "relative",
+        maxW: "100%",
+      })}
+    >
       <div
+        role="group"
+        aria-label="Filter by category"
         className={css({
-          rounded: "full",
-          borderWidth: "1px",
-          borderColor: "rgba(255,255,255,0.08)",
-          p: "1.5",
+          display: "flex",
+          gap: { base: "1.5", sm: "2" },
+          alignItems: "center",
+          overflowX: "auto",
+          pb: "2",
           maxW: "100%",
-          overflow: "hidden",
+          lg: { justifyContent: "center", flexWrap: "wrap", pb: "0" },
         })}
+        style={{ scrollbarWidth: "none" }}
       >
-        <div
-          role="group"
-          aria-label="Filter by category"
-          className={css({
-            display: "flex",
-            gap: { base: "1.5", sm: "1.5" },
-            alignItems: "center",
-            overflowX: "auto",
-            pb: "1",
-            md: { justifyContent: "center", pb: "0" },
-          })}
-          style={{ scrollbarWidth: "none" }}
+        <button
+          onClick={() => onCategoryChange(null)}
+          aria-pressed={activeCategory === null}
+          className={cx(
+            btnBase,
+            activeCategory === null ? btnActive : btnInactive,
+          )}
         >
-          {/* ── "All" pill ── */}
+          All
+          <span className={cx(countBadge, activeCategory === null ? countActive : countInactive)}>
+            {totalCount}
+          </span>
+        </button>
+
+        {categories.map((category) => (
           <button
-            onClick={() => onCategoryChange(null)}
-            aria-pressed={activeCategory === null}
+            key={category.slug}
+            onClick={() => onCategoryChange(category.slug)}
+            aria-pressed={activeCategory === category.slug}
             className={cx(
               btnBase,
-              activeCategory === null ? btnActive : btnInactive,
+              activeCategory === category.slug ? btnActive : btnInactive,
             )}
           >
-            <span className={iconStyle}>&#9670;</span>
-            All
+            <span className={iconStyle}>
+              {categoryIcons[category.slug] ?? "\u25CF"}
+            </span>
+            {category.title}
             <span
-              className={
-                activeCategory === null ? countBadgeActive : countBadgeInactive
-              }
+              className={cx(
+                countBadge,
+                activeCategory === category.slug ? countActive : countInactive,
+              )}
             >
-              {totalCount}
+              {category.personalities.length}
             </span>
           </button>
-
-          {categories.map((category) => (
-            <span key={category.slug} className={css({ display: "contents" })}>
-              {/* divider dot between pills on desktop */}
-              <span className={dividerDot} aria-hidden="true">
-                &#9679;
-              </span>
-              <button
-                onClick={() => onCategoryChange(category.slug)}
-                aria-pressed={activeCategory === category.slug}
-                className={cx(
-                  btnBase,
-                  activeCategory === category.slug ? btnActive : btnInactive,
-                )}
-              >
-                <span className={iconStyle}>
-                  {categoryIcons[category.slug] ?? "\u25CF"}
-                </span>
-                {category.title}
-                <span
-                  className={
-                    activeCategory === category.slug
-                      ? countBadgeActive
-                      : countBadgeInactive
-                  }
-                >
-                  {category.personalities.length}
-                </span>
-              </button>
-            </span>
-          ))}
-        </div>
+        ))}
       </div>
+
+      {/* Mobile fade mask */}
+      <div
+        className={css({
+          pos: "absolute",
+          top: 0,
+          right: 0,
+          bottom: 0,
+          w: "40px",
+          pointerEvents: "none",
+          background: "linear-gradient(to right, transparent, #0B0B0F)",
+          lg: { display: "none" },
+        })}
+        aria-hidden="true"
+      />
     </div>
   );
 }

@@ -1,1 +1,1 @@
-export { generateTherapyResearchWorkflow } from "./generateTherapyResearch.workflow";
+export { generateTherapyResearch } from "./generateTherapyResearch.workflow";

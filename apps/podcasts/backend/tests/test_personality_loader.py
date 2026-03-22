@@ -4,7 +4,7 @@ from pathlib import Path
 
 import pytest
 
-from crew import _parse_ts, load_personalities
+from research_pipeline import _parse_ts, load_personalities
 
 PERSONALITIES_DIR = Path(__file__).resolve().parent.parent / "personalities"
 

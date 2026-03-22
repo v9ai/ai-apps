@@ -6,7 +6,7 @@ can be disabled with SKIP_NETWORK_TESTS=1.
 """
 
 import os, time, pytest
-from crew import web_search, fetch_github_profile, search_arxiv, fetch_hf_author, fetch_url_content
+from research_pipeline import web_search, fetch_github_profile, search_arxiv, fetch_hf_author, fetch_url_content
 
 SKIP_NETWORK = os.getenv("SKIP_NETWORK_TESTS", "0") == "1"
 network = pytest.mark.skipif(SKIP_NETWORK, reason="Network tests disabled")

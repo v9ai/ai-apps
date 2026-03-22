@@ -45,7 +45,7 @@ Agent `.md` files live in `.claude/agents/`. Each defines:
 To prevent conflicts, each team spec declares which directories/files each agent owns:
 
 ```
-backend-dev:  schema/, src/db/, src/trigger/
+backend-dev:  schema/, src/db/, backend/
 frontend-dev: app/components/, app/goals/, app/notes/, app/stories/
 qa:           __tests__/, *.test.ts, *.spec.ts
 lead:         CLAUDE.md, .speckit/, package.json (coordination only)

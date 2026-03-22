@@ -1,8 +1,6 @@
 import type { MutationResolvers } from "./../../types.generated";
 import { sql as neonSql } from "@/src/db/neon";
-import { Client } from "@langchain/langgraph-sdk";
-
-const LANGGRAPH_URL = process.env.LANGGRAPH_URL || "http://127.0.0.1:2024";
+import { runGraphAndWait } from "@/src/lib/langgraph-client";
 
 export const generateOpenAIAudio: NonNullable<MutationResolvers['generateOpenAIAudio']> = async (_parent, args, ctx) => {
   const userEmail = ctx.userEmail;
@@ -61,17 +59,14 @@ export const generateOpenAIAudio: NonNullable<MutationResolvers['generateOpenAIA
   console.log(`[TTS] dispatching LangGraph job=${jobId} storyId=${storyId} language=${storyLanguage} textLen=${text.length}`);
 
   // Fire-and-forget: dispatch to LangGraph and update job status async
-  const client = new Client({ apiUrl: LANGGRAPH_URL });
-
-  client.runs.wait(null, "tts", {
+  runGraphAndWait("tts", {
     input: {
       story_id: storyId ?? null,
       language: storyLanguage,
       instructions: instructions || null,
       user_email: userEmail,
     },
-  }).then(async (result) => {
-    const res = result as Record<string, unknown>;
+  }).then(async (res) => {
     const error = res?.error as string | undefined;
     if (error) {
       console.error(`[TTS] LangGraph failed job=${jobId}: ${error}`);

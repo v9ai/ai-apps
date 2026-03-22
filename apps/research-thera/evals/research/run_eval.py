@@ -37,6 +37,21 @@ def build_metrics(model: DeepSeekModel) -> dict[str, dict]:
     """Build metrics organized by stage."""
     return {
         "normalize": {
+            "dob_age_consistency": GEval(
+                name="DOB Age-Developmental Consistency",
+                criteria=(
+                    "Evaluate whether the normalization output is consistent with the patient's age. "
+                    "Check that: (1) the developmental tier/stage is appropriate for the stated age "
+                    "(e.g. ages 3-5 = early_childhood/preschool, 6-11 = school_age/middle_childhood, "
+                    "12-17 = adolescent, 18+ = adult), (2) required keywords reference age-appropriate "
+                    "terminology, (3) the clinical restatement does not contradict the patient's age, "
+                    "(4) no language suggests a different age group than the actual patient. "
+                    "Penalize heavily if the developmental tier is clearly wrong for the age."
+                ),
+                evaluation_params=[LLMTestCaseParams.INPUT, LLMTestCaseParams.ACTUAL_OUTPUT],
+                model=model,
+                threshold=THRESHOLD,
+            ),
             "normalization_accuracy": GEval(
                 name="Clinical Normalization Accuracy",
                 criteria=(

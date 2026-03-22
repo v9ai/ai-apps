@@ -7,7 +7,6 @@ and caches the output as fixtures for reproducible evaluation.
 import json
 import os
 import re
-import sys
 from datetime import datetime, timezone
 from pathlib import Path
 
@@ -23,17 +22,163 @@ _MODEL = "deepseek-chat"
 FIXTURES_DIR = Path(__file__).resolve().parent / "fixtures"
 
 # ---------------------------------------------------------------------------
-# Prompts — verbatim from the worker's src/prompts/
+# Prompts — inlined from the former workers/research-pipeline/src/prompts/
 # ---------------------------------------------------------------------------
 
-# Import prompts by adding worker src to path
-_worker_src = Path(__file__).resolve().parent.parent.parent / "workers" / "research-pipeline" / "src"
-if str(_worker_src) not in sys.path:
-    sys.path.insert(0, str(_worker_src))
+NORMALIZE_GOAL_PROMPT = """\
+You are a clinical psychologist specializing in translating parent/family-reported \
+therapeutic goals into precise clinical language for academic research queries.
 
-from prompts.normalizer import NORMALIZE_GOAL_PROMPT  # noqa: E402
-from prompts.planner import PLAN_QUERY_PROMPT  # noqa: E402
-from prompts.extractor import EXTRACT_RESEARCH_PROMPT  # noqa: E402
+Goal Title: "{goal_title}"
+Goal Description: "{goal_description}"
+Notes: {notes}
+{age_ctx} {name_ctx}
+
+TASK:
+1. Detect the language (ISO 639-1 code, e.g. "en", "ro", "fr")
+2. Translate to English if not already English
+3. Identify the SPECIFIC clinical construct (not generic "behavioral_change")
+4. Determine if goal is to INCREASE or REDUCE the behavior
+5. Infer developmental stage from age
+6. Generate 5-10 required keywords that MUST appear in relevant research papers
+7. Generate 5-10 excluded topics that are NOT relevant to this goal
+
+CLINICAL DOMAIN EXAMPLES (be this specific, never use "behavioral_change"):
+- "Face sunete la lectii" (Romanian: makes sounds during lessons) → if child context:
+  "selective_mutism" OR "adhd_vocalization" OR "vocal_stereotypy_asd"
+- "Reduce test anxiety" → "test_anxiety_children"
+- "Improve eye contact" → "social_communication_asd"
+- "Stop hitting siblings" → "aggression_children"
+- "Talk more at school" → "selective_mutism" or "school_social_anxiety"
+
+DEVELOPMENTAL TIER (use these exact values based on age):
+- infant: 0-2 years
+- preschool: 3-5 years
+- school_age: 6-11 years
+- adolescent: 12-17 years
+- adult: 18+ years
+
+BEHAVIOR DIRECTION:
+- INCREASE: goal is to produce MORE of a behavior
+- REDUCE: goal is to produce LESS of a behavior
+- MAINTAIN: keep current level
+- UNCLEAR: cannot determine
+
+REQUIRED KEYWORDS: clinical terms that MUST appear in papers for them to be relevant.
+Example for selective mutism: ["selective mutism", "classroom vocalization", \
+"speech anxiety", "school", "children", "behavioral intervention"]
+
+EXCLUDED TOPICS: topics that look related but are NOT relevant.
+Example for selective mutism: ["homework completion", "academic achievement", \
+"family therapy engagement", "adolescent depression", "adult psychotherapy"]
+
+Return JSON with these exact fields:
+- translatedGoalTitle: string (English translation of the goal title)
+- originalLanguage: string (ISO 639-1 code)
+- clinicalRestatement: string (clinical rephrasing of the goal)
+- clinicalDomain: string (specific clinical construct)
+- behaviorDirection: string (INCREASE, REDUCE, MAINTAIN, or UNCLEAR)
+- developmentalTier: string (infant, preschool, school_age, adolescent, or adult)
+- requiredKeywords: string[] (5-10 clinical search terms)
+- excludedTopics: string[] (5-10 irrelevant adjacent topics)"""
+
+PLAN_QUERY_PROMPT = """\
+Plan a research query strategy for this therapeutic/psychological goal.
+
+Goal: {title}
+Description: {description}
+Notes: {notes}
+
+Generate MULTIPLE diverse queries to maximize recall from different \
+psychological/therapy databases.
+
+QUERY STRATEGY:
+1. Semantic Scholar queries (20-40): Mix broad + specific, use synonyms and related constructs
+2. Crossref queries (20-45): Use natural language phrases common in therapy/psychology literature
+3. PubMed queries (20-40): Use MeSH terms and clinical psychology terminology
+
+Focus on finding psychological research relevant to the specific therapeutic goal.
+Include queries about: therapeutic interventions, mechanisms, evidence-based treatments, \
+coping strategies.
+
+Return 40-87 total queries across all sources for maximum recall.
+
+Return JSON with these exact fields:
+- therapeuticGoalType: string (type of therapeutic goal)
+- keywords: string[] (5-8 core search keywords)
+- semanticScholarQueries: string[] (20-40 queries)
+- crossrefQueries: string[] (20-45 queries)
+- pubmedQueries: string[] (20-40 queries)
+- inclusion: string[] (inclusion criteria)
+- exclusion: string[] (exclusion criteria)"""
+
+EXTRACT_RESEARCH_PROMPT = """\
+Extract therapeutic research information from this paper.
+
+Therapeutic Goal: {goal_title}
+Goal Description: {goal_description}
+Goal Type: {goal_type}
+
+Paper:
+Title: {paper_title}
+Authors: {paper_authors}
+Year: {paper_year}
+Journal: {paper_journal}
+DOI: {paper_doi}
+Abstract: {paper_abstract}
+
+CRITICAL: This should be THERAPEUTIC/PSYCHOLOGICAL research for clinical/counseling applications.
+
+Extract:
+1. Key findings (3-5) that are DIRECTLY relevant to the therapeutic goal
+2. Specific therapeutic techniques mentioned (e.g., CBT, exposure therapy, mindfulness)
+3. Evidence level — classify carefully based on study design described in the abstract:
+   - meta-analysis: explicitly pools results from multiple studies
+   - systematic_review: structured review of multiple studies with defined criteria
+   - rct: MUST mention randomization, random assignment, or randomized controlled trial
+   - cohort: prospective observational study following a group over time
+   - quasi_experimental: pre-post study WITHOUT randomization or control group
+   - case_control: retrospective comparison of groups
+   - case_series: multiple case reports
+   - case_study: single case report
+   - expert_opinion: clinical consensus
+   If the abstract describes a pre-post intervention study without mentioning randomization, classify as quasi_experimental, NOT rct.
+4. Relevance score (0-1) based on how well it addresses the THERAPEUTIC goal
+
+RELEVANCE SCORING RUBRIC (be strict):
+- 1.0: Directly studies the exact behavior/condition in the therapeutic goal in the same population
+- 0.8: Studies the same condition in a closely related population
+- 0.6: Studies an adjacent condition using the same modality for the goal's population
+- 0.4: Same modality but different condition or population
+- 0.2: General clinical psychology with no specific relevance to this goal
+- 0.1 or below: NOT about the specific clinical domain of this goal
+
+STRICT FILTERING:
+- Score 0.1 or lower if paper is about: forensic interviews, legal proceedings, \
+homework completion, academic achievement, adult populations (when goal is for a child), \
+family therapy engagement (unless directly relevant)
+- Score 0.1 or lower if NOT about the specific clinical domain of the therapeutic goal
+- Score 0.8+ ONLY if directly studying the specific intervention for the goal type and population
+- Population mismatch: reduce score by 0.3 if study population age does not match patient age
+- Only extract findings EXPLICITLY stated in the abstract
+- Do not infer or extrapolate beyond what is written
+- Rate your extraction confidence honestly
+
+Return JSON with these exact fields:
+- therapeuticGoalType: string
+- title: string
+- authors: string[]
+- year: number | null
+- journal: string | null
+- doi: string | null
+- url: string | null
+- abstract: string | null
+- keyFindings: string[]
+- therapeuticTechniques: string[]
+- evidenceLevel: string | null
+- relevanceScore: number (0-1)
+- extractedBy: string
+- extractionConfidence: number (0-1)"""
 
 # ---------------------------------------------------------------------------
 # Test cases — therapeutic goals with feedback + extracted issues context

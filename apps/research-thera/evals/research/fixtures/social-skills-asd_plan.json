@@ -9,98 +9,97 @@
       "eye contact",
       "social interaction",
       "peer engagement",
-      "initiation skills",
-      "social communication",
-      "play therapy",
-      "behavioral intervention"
+      "initiation",
+      "social skills training",
+      "behavioral intervention",
+      "preschool"
     ],
     "semanticScholarQueries": [
-      "eye contact interventions autism",
-      "improving social initiation ASD children",
+      "eye contact intervention autism",
+      "social initiation training ASD",
       "peer interaction strategies autism",
-      "play-based interventions for social skills",
-      "behavioral therapy for eye contact avoidance",
-      "social communication training autism",
-      "visual attention training ASD",
-      "joint attention interventions autism",
-      "social skills groups for children with ASD",
-      "peer-mediated interventions autism",
-      "video modeling for social skills",
-      "pivotal response treatment social initiation",
+      "behavioral therapy for social avoidance",
+      "visual attention training autism",
+      "joint attention intervention",
+      "pivotal response treatment social skills",
       "discrete trial training eye contact",
       "naturalistic developmental behavioral interventions",
       "social stories for eye contact",
-      "self-management strategies social interaction",
-      "reinforcement techniques for social engagement",
-      "parent-mediated social skills training",
-      "school-based social interventions ASD",
-      "technology-assisted social skills training",
-      "augmentative communication social interaction",
-      "sensory integration social engagement",
-      "cognitive behavioral therapy social anxiety autism",
-      "executive function social initiation",
-      "theory of mind training social skills",
-      "emotion recognition eye contact",
-      "facial expression training autism",
-      "proxemics personal space autism",
-      "turn-taking interventions peer play",
-      "reciprocal conversation skills autism",
-      "social motivation interventions ASD",
-      "reducing social avoidance behaviors",
+      "video modeling social interaction",
+      "peer-mediated intervention autism",
+      "incidental teaching social skills",
+      "social communication therapy",
+      "reciprocal interaction training",
+      "play-based intervention autism",
+      "social motivation in autism",
+      "eye gaze avoidance mechanisms",
+      "social anxiety autism",
+      "theory of mind training",
+      "executive function social skills",
+      "sensory processing social interaction",
+      "augmentative communication social initiation",
+      "parent-implemented social intervention",
+      "school-based social skills program",
+      "technology-assisted social training",
+      "virtual reality social scenarios",
+      "robot-assisted therapy autism",
+      "tablet-based social stories",
+      "wearable devices eye contact",
+      "biofeedback social anxiety",
+      "neurofeedback social cognition",
+      "oxytocin social behavior",
+      "transcranial magnetic stimulation social",
+      "genetic factors social motivation",
+      "early intervention social outcomes",
+      "long-term social skills maintenance",
       "generalization of social skills",
-      "maintenance of eye contact gains",
-      "individual differences social intervention response",
-      "long-term outcomes social skills training",
-      "combined interventions social communication",
-      "early intensive behavioral intervention social outcomes",
-      "preschool social skills programs ASD",
-      "elementary school peer interaction supports"
+      "individual differences treatment response"
     ],
     "crossrefQueries": [
       "How to improve eye contact in children with autism",
       "Strategies for increasing peer interaction in ASD",
       "Teaching social initiation skills to autistic children",
-      "Play therapy techniques for social engagement",
-      "Behavioral interventions for social communication deficits",
-      "Supporting peer relationships in autism spectrum disorder",
-      "Classroom strategies for social interaction",
-      "Parent training for social skills development",
-      "Social skills groups for autistic children",
-      "Video modeling to teach eye contact",
-      "Using reinforcement to increase social behaviors",
-      "Naturalistic teaching of social skills",
-      "Peer buddy programs for autism",
-      "Social stories for teaching eye contact",
-      "Self-monitoring techniques for social interaction",
+      "Behavioral interventions for social avoidance",
+      "Play therapy for social communication deficits",
+      "Social skills training programs for preschoolers",
+      "Peer engagement techniques in autism",
+      "Visual attention training for social interaction",
+      "Joint attention interventions in early childhood",
+      "Naturalistic teaching methods for social skills",
+      "Parent coaching for social development",
+      "Classroom strategies for social inclusion",
+      "Technology-based social skills interventions",
+      "Video modeling for peer interaction",
+      "Social stories for eye contact improvement",
+      "Role-playing activities for social initiation",
+      "Structured play groups for autism",
+      "Friendship skills training for children",
+      "Emotion recognition and social interaction",
+      "Conversation skills development in autism",
+      "Turn-taking and sharing interventions",
+      "Group therapy for social anxiety",
+      "Self-monitoring strategies for social behavior",
+      "Reinforcement systems for social engagement",
+      "Environmental modifications for social participation",
       "Sensory-friendly social activities",
-      "Technology tools for social skills practice",
-      "Visual supports for social communication",
-      "Structured play activities for peer engagement",
-      "Teaching turn-taking and sharing skills",
-      "Reducing social anxiety in autism",
-      "Building social motivation in children with ASD",
-      "Generalizing social skills across settings",
-      "Maintaining social skill gains over time",
-      "Individualized social skills programming",
-      "Early intervention for social communication",
-      "School-based social skills interventions",
-      "Home-based social skills practice",
-      "Community inclusion strategies for autism",
-      "Friendship development in autism",
-      "Social communication assessment tools",
-      "Progress monitoring for social skills",
-      "Evidence-based practices for social skills",
-      "Multicomponent social interventions",
+      "Transition supports for social situations",
+      "Individualized education plans for social goals",
+      "Collaborative team approaches for social skills",
+      "Data collection methods for social behavior",
+      "Progress monitoring in social interventions",
+      "Family-centered social skills programs",
+      "Community-based social opportunities",
+      "Summer camp programs for social development",
+      "Mentorship programs for autistic children",
+      "Social skills assessment tools",
+      "Treatment fidelity in social interventions",
       "Cultural considerations in social skills training",
-      "Family-centered social skills approaches",
-      "Collaborative team approaches to social goals",
-      "Transition planning for social skills",
-      "Peer acceptance and autism",
-      "Social skills curriculum development",
-      "Teacher training for social support",
-      "Paraprofessional support for social interaction",
-      "Environmental modifications for social success",
-      "Positive behavior support for social goals"
+      "Cost-effectiveness of social interventions",
+      "Implementation science in autism services",
+      "Stakeholder perspectives on social outcomes",
+      "Qualitative research on social experiences",
+      "Mixed methods in social skills research",
+      "Longitudinal studies of social development"
     ],
     "pubmedQueries": [
       "Autistic Disorder/therapy",
@@ -112,17 +111,14 @@
       [
         "Mesh"
       ],
+      ", ",
       "Social Skills",
       [
         "Mesh"
       ],
       "AND",
-      "Child Development Disorders",
-      "Pervasive",
-      [
-        "Mesh"
-      ],
-      "Peer Group",
+      "Child",
+      "Preschool",
       [
         "Mesh"
       ],
@@ -131,7 +127,24 @@
       [
         "Mesh"
       ],
-      "Play Therapy",
+      ", ",
+      "Peer Group",
+      [
+        "Mesh"
+      ],
+      "AND",
+      "Interpersonal Relations",
+      [
+        "Mesh"
+      ],
+      "AND",
+      "Autism Spectrum Disorder/therapy",
+      [
+        "Mesh"
+      ],
+      ", ",
+      "Early Intervention",
+      "Educational",
       [
         "Mesh"
       ],
@@ -140,38 +153,18 @@
       [
         "Mesh"
       ],
-      "Communication Disorders/therapy",
-      [
-        "Mesh"
-      ],
-      "AND",
-      "Child",
-      [
-        "Mesh"
-      ],
-      "Early Intervention, Educational",
-      [
-        "Mesh"
-      ],
-      "AND",
-      "Social Interaction",
-      [
-        "Mesh"
-      ],
+      ", ",
       "Behavior Therapy",
       [
         "Mesh"
       ],
       "AND",
-      "Eye Contact",
+      "Social Communication Disorder",
       [
         "Mesh"
       ],
-      "Social Communication Disorder/therapy",
-      [
-        "Mesh"
-      ],
-      "Joint Attention",
+      ", ",
+      "Play Therapy",
       [
         "Mesh"
       ],
@@ -180,7 +173,18 @@
       [
         "Mesh"
       ],
-      "Video Recording",
+      ", ",
+      "Speech Therapy",
+      [
+        "Mesh"
+      ],
+      "AND",
+      "Social Skills",
+      [
+        "Mesh"
+      ],
+      ", ",
+      "Parent-Child Relations",
       [
         "Mesh"
       ],
@@ -189,25 +193,8 @@
       [
         "Mesh"
       ],
-      "Reinforcement, Psychology",
-      [
-        "Mesh"
-      ],
-      "AND",
-      "Social Behavior",
-      [
-        "Mesh"
-      ],
-      "Parent-Child Relations",
-      [
-        "Mesh"
-      ],
-      "AND",
-      "Social Skills",
-      [
-        "Mesh"
-      ],
-      "Schools",
+      ", ",
+      "School Health Services",
       [
         "Mesh"
       ],
@@ -216,25 +203,8 @@
       [
         "Mesh"
       ],
-      "Self-Management",
-      [
-        "Mesh"
-      ],
-      "AND",
-      "Social Behavior Disorders",
-      [
-        "Mesh"
-      ],
-      "Sensory Thresholds",
-      [
-        "Mesh"
-      ],
-      "AND",
-      "Social Interaction",
-      [
-        "Mesh"
-      ],
-      "Computer-Assisted Instruction",
+      ", ",
+      "Video Recording",
       [
         "Mesh"
       ],
@@ -243,105 +213,12 @@
       [
         "Mesh"
       ],
-      "Communication Aids for Disabled",
-      [
-        "Mesh"
-      ],
-      "AND",
-      "Social Participation",
-      [
-        "Mesh"
-      ],
-      "Anxiety/therapy",
-      [
-        "Mesh"
-      ],
       "AND",
       "Autism Spectrum Disorder",
       [
         "Mesh"
       ],
-      "Executive Function",
-      [
-        "Mesh"
-      ],
-      "AND",
-      "Social Skills",
-      [
-        "Mesh"
-      ],
-      "Theory of Mind",
-      [
-        "Mesh"
-      ],
-      "AND",
-      "Autism Spectrum Disorder",
-      [
-        "Mesh"
-      ],
-      "Facial Expression",
-      [
-        "Mesh"
-      ],
-      "AND",
-      "Autism Spectrum Disorder",
-      [
-        "Mesh"
-      ],
-      "Personal Space",
-      [
-        "Mesh"
-      ],
-      "AND",
-      "Autism Spectrum Disorder",
-      [
-        "Mesh"
-      ],
-      "Play and Playthings",
-      [
-        "Mesh"
-      ],
-      "AND",
-      "Social Behavior",
-      [
-        "Mesh"
-      ],
-      "Conversation",
-      [
-        "Mesh"
-      ],
-      "AND",
-      "Autism Spectrum Disorder",
-      [
-        "Mesh"
-      ],
-      "Motivation",
-      [
-        "Mesh"
-      ],
-      "AND",
-      "Social Behavior",
-      [
-        "Mesh"
-      ],
-      "Avoidance Learning",
-      [
-        "Mesh"
-      ],
-      "AND",
-      "Social Interaction",
-      [
-        "Mesh"
-      ],
-      "Generalization, Psychological",
-      [
-        "Mesh"
-      ],
-      "AND",
-      "Social Skills",
-      [
-        "Mesh"
-      ],
+      ", ",
       "Treatment Outcome",
       [
         "Mesh"
@@ -351,131 +228,341 @@
       [
         "Mesh"
       ],
-      "Individuality",
+      ", ",
+      "Randomized Controlled Trial",
       [
-        "Mesh"
+        "pt"
       ],
       "AND",
       "Autism Spectrum Disorder/therapy",
       [
         "Mesh"
       ],
-      "Follow-Up Studies",
+      "AND",
+      "Social Skills",
       [
         "Mesh"
+      ],
+      ", ",
+      "Clinical Trial",
+      [
+        "pt"
+      ],
+      "AND",
+      "Eye Contact",
+      [
+        "tiab"
+      ],
+      "AND",
+      "Autism",
+      [
+        "tiab"
+      ],
+      ", ",
+      "Systematic Review",
+      [
+        "pt"
       ],
       "AND",
       "Social Skills Training",
       [
-        "Mesh"
+        "tiab"
       ],
-      "Combined Modality Therapy",
+      "AND",
+      "Autism",
       [
-        "Mesh"
+        "tiab"
+      ],
+      ", ",
+      "Meta-Analysis",
+      [
+        "pt"
+      ],
+      "AND",
+      "Peer Interaction",
+      [
+        "tiab"
       ],
       "AND",
       "Autism Spectrum Disorder",
       [
-        "Mesh"
+        "tiab"
       ],
-      "Early Diagnosis",
+      ", ",
+      "Comparative Study",
       [
-        "Mesh"
+        "pt"
+      ],
+      "AND",
+      "Behavioral Intervention",
+      [
+        "tiab"
+      ],
+      "AND",
+      "Social Initiation",
+      [
+        "tiab"
+      ],
+      ", ",
+      "Evaluation Study",
+      [
+        "pt"
+      ],
+      "AND",
+      "Preschool",
+      [
+        "tiab"
+      ],
+      "AND",
+      "Autism",
+      [
+        "tiab"
+      ],
+      "AND",
+      "Social",
+      [
+        "tiab"
+      ],
+      ", ",
+      "Case Report",
+      [
+        "pt"
+      ],
+      "AND",
+      "Eye Contact Avoidance",
+      [
+        "tiab"
+      ],
+      "AND",
+      "Child",
+      [
+        "tiab"
+      ],
+      ", ",
+      "Observational Study",
+      [
+        "pt"
+      ],
+      "AND",
+      "Play Behavior",
+      [
+        "tiab"
+      ],
+      "AND",
+      "Autism",
+      [
+        "tiab"
+      ],
+      ", ",
+      "Longitudinal Study",
+      [
+        "pt"
+      ],
+      "AND",
+      "Social Outcomes",
+      [
+        "tiab"
+      ],
+      "AND",
+      "Autism",
+      [
+        "tiab"
+      ],
+      ", ",
+      "Follow-Up Study",
+      [
+        "pt"
+      ],
+      "AND",
+      "Generalization",
+      [
+        "tiab"
       ],
       "AND",
       "Social Skills",
       [
-        "Mesh"
+        "tiab"
       ],
-      "Preschool Education",
+      ", ",
+      "Pilot Study",
       [
-        "Mesh"
-      ],
-      "AND",
-      "Autism Spectrum Disorder",
-      [
-        "Mesh"
-      ],
-      "Maintenance",
-      [
-        "Mesh"
+        "pt"
       ],
       "AND",
-      "Social Behavior",
+      "Technology",
       [
-        "Mesh"
-      ],
-      "Evidence-Based Practice",
-      [
-        "Mesh"
+        "tiab"
       ],
       "AND",
-      "Autism Spectrum Disorder",
+      "Social Training",
       [
-        "Mesh"
+        "tiab"
       ],
-      "Cultural Competency",
+      ", ",
+      "Feasibility Study",
       [
-        "Mesh"
+        "pt"
       ],
       "AND",
-      "Autism Spectrum Disorder",
+      "School-Based",
       [
-        "Mesh"
+        "tiab"
       ],
-      "Family Therapy",
+      "AND",
+      "Intervention",
       [
-        "Mesh"
+        "tiab"
+      ],
+      ", ",
+      "Cost-Benefit Analysis",
+      [
+        "pt"
+      ],
+      "AND",
+      "Autism Services",
+      [
+        "tiab"
+      ],
+      ", ",
+      "Qualitative Research",
+      [
+        "pt"
+      ],
+      "AND",
+      "Social Experiences",
+      [
+        "tiab"
+      ],
+      "AND",
+      "Autism",
+      [
+        "tiab"
+      ],
+      ", ",
+      "Cross-Sectional Study",
+      [
+        "pt"
+      ],
+      "AND",
+      "Social Motivation",
+      [
+        "tiab"
+      ],
+      ", ",
+      "Prospective Study",
+      [
+        "pt"
+      ],
+      "AND",
+      "Early Intervention",
+      [
+        "tiab"
+      ],
+      "AND",
+      "Social Communication",
+      [
+        "tiab"
+      ],
+      ", ",
+      "Retrospective Study",
+      [
+        "pt"
+      ],
+      "AND",
+      "Treatment Response",
+      [
+        "tiab"
       ],
       "AND",
       "Social Skills",
       [
-        "Mesh"
+        "tiab"
       ],
-      "Patient Care Team",
+      ", ",
+      "Multicenter Study",
       [
-        "Mesh"
-      ],
-      "AND",
-      "Autism Spectrum Disorder",
-      [
-        "Mesh"
-      ],
-      "Transition to Adult Care",
-      [
-        "Mesh"
+        "pt"
       ],
       "AND",
-      "Social Skills",
+      "Autism",
       [
-        "Mesh"
-      ]
-    ],
-    "inclusion": [
-      "Children aged 3-12 years",
-      "Autism Spectrum Disorder diagnosis (Level 1/ASD)",
-      "Focus on social communication/interaction goals",
-      "Eye contact or social initiation interventions",
-      "Peer interaction or engagement strategies",
-      "Behavioral, developmental, or educational interventions",
-      "Empirical research (RCTs, quasi-experimental, single-case)",
-      "Published in peer-reviewed journals",
+        "tiab"
+      ],
+      "AND",
+      "Therapy",
+      [
+        "tiab"
+      ],
+      ", ",
+      "Controlled Clinical Trial",
+      [
+        "pt"
+      ],
+      "AND",
+      "Behavioral",
+      [
+        "tiab"
+      ],
+      "AND",
+      "Social",
+      [
+        "tiab"
+      ],
+      ", ",
+      "Community Trial",
+      [
+        "pt"
+      ],
+      "AND",
+      "Implementation",
+      [
+        "tiab"
+      ],
+      "AND",
+      "Autism",
+      [
+        "tiab"
+      ],
+      ", ",
+      "Epidemiologic Study",
+      [
+        "pt"
+      ],
+      "AND",
+      "Prevalence",
+      [
+        "tiab"
+      ],
+      "AND",
+      "Social Deficits",
+      [
+        "tiab"
+      ],
+      "],\n    ",
+      "inclusion\": [\"Preschool-aged children (3-6 years)",
+      "Autism Spectrum Disorder diagnosis",
+      "Level 1 ASD or equivalent",
+      "Social communication/intervention focus",
+      "Eye contact or social initiation outcomes",
+      "Peer interaction measures",
+      "Behavioral or therapeutic interventions",
+      "Empirical research studies",
       "English language publications",
-      "Publication years 2000-2024"
+      "Published 2000-2024"
     ],
     "exclusion": [
-      "Adolescent or adult populations (>12 years)",
-      "Non-ASD populations",
-      "Severe/profound intellectual disability focus",
+      "Adolescent or adult populations",
+      "Severe ASD (Level 3) or intellectual disability",
       "Pharmacological interventions only",
-      "Purely diagnostic or assessment studies",
+      "Comorbid severe medical conditions",
+      "Non-social outcomes (e.g., academic only)",
       "Non-English publications",
-      "Publication before 2000",
-      "Opinion pieces, editorials, non-research articles",
-      "Studies focusing solely on language without social component",
-      "Studies without measurable social outcomes"
+      "Pre-2000 publications",
+      "Opinion pieces/editorials",
+      "Animal studies",
+      "Genetic/neuroimaging only without intervention"
     ]
   },
   "model": "deepseek-chat",
-  "generated_at": "2026-03-14T16:17:53.515236+00:00"
+  "generated_at": "2026-03-21T22:09:10.040263+00:00"
 }

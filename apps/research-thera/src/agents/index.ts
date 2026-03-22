@@ -1,21 +1,21 @@
-import { createDeepSeek } from "@ai-sdk/deepseek";
-import { Agent } from "@mastra/core/agent";
-import { CompositeVoice } from "@mastra/core/voice";
-import { Memory } from "@mastra/memory";
-// import { LibSQLStore } from "@mastra/libsql"; // Disabled: Not compatible with D1
+import { deepseekModel } from "@/src/lib/deepseek";
+import { generateText } from "ai";
 
-const deepseek = createDeepSeek({
-  apiKey: process.env.DEEPSEEK_API_KEY,
-});
-
-// TODO: Agent-level storage for conversation history
-// LibSQLStore is not compatible with D1. Need to implement D1-compatible storage adapter.
-// const agentStorage = new LibSQLStore({
-//   id: "agent-memory-storage",
-//   url: "...",
-//   authToken: "...",
-// });
-const agentStorage = null as any; // Temporary: Storage disabled pending D1 adapter
+function createAgent(instructions: string) {
+  return {
+    async generate(
+      messages: Array<{ role: string; content: string }>,
+      _opts?: any,
+    ): Promise<{ text: string }> {
+      const { text } = await generateText({
+        model: deepseekModel(),
+        system: instructions,
+        messages: messages as any,
+      });
+      return { text };
+    },
+  };
+}
 
 const storyInstructions = `
 ## Overview
@@ -70,34 +70,7 @@ Each story unfolds in three parts:
 - Focus on clear decision points that drive the story forward.
 - Avoid complex words or sentence structures that might sound awkward when read by TTS.
 - Use contractions and natural speech patterns where appropriate.
-
-## Examples
-
-### Example First Part:
-In the heart of Seattle, amidst the aroma of freshly brewed coffee, 20-year-old Yujohn, a dedicated barista, found himself caught in the throes of an unexpected war. The city, once bustling with life, now echoed with the distant rumble of conflict, and Yujohn's café had become a refuge for those seeking solace. As he served lattes with a steady hand, he contemplated his next move.
-
-1. Join the underground resistance.
-2. Stay at the café, offering support to those in need.
-3. Flee the city in search of safety.
-
-### Example Second Part (if choice 1 was selected):
-Yujohn slipped away during the night, following whispered directions to the resistance's hidden bunker beneath an abandoned bookstore. His skills as a barista proved unexpectedly valuable, as he could move through the city unnoticed, gathering intelligence while delivering coffee to military checkpoints. Now, with crucial information about an imminent attack, he must decide how to use it.
-
-1. Share the information directly with resistance leaders.
-2. Attempt to warn civilians in the targeted area.
-3. Use the information to negotiate safe passage out of the city for refugees.
 `;
-
-export const storyTellerAgent = new Agent({
-  id: "story-teller-agent",
-  name: "Story Teller Agent",
-  instructions: storyInstructions,
-  model: deepseek("deepseek-chat"),
-  // Voice removed - use OpenAI TTS via GraphQL
-  memory: new Memory({
-    storage: agentStorage,
-  }),
-});
 
 // Therapeutic Agent Instructions — optimized for TTS audio delivery and LEGO therapeutic play
 const therapeuticInstructions = `
@@ -142,15 +115,6 @@ Building Activities — guide the child through simple LEGO building during the 
 - "Keep building while I tell you a story about a little builder who learned something important..."
 - Always make LEGO activities optional: "If you have LEGO bricks, you can build along. If not, just imagine building in your mind."
 
-Therapeutic LEGO Techniques:
-- Feelings Tower: Each brick represents a feeling from the day — build, name, and process
-- Worry Wall: Build a small wall, then practice "knocking it down" as a release
-- Brave Bridge: Build a bridge from "here" to "where I want to be" — each brick is a brave step
-- Memory Build: Construct something that reminds the child of a happy memory or person
-- Calm Castle: Build a safe place the child can "go to" when feelings get big
-
-Always connect the building back to the therapeutic goal. The LEGO activity is never just play — it's a concrete, hands-on way to practice the coping skill being taught.
-
 ## Evidence-Based Approaches
 Draw from:
 - Cognitive Behavioral Therapy (CBT)
@@ -161,39 +125,13 @@ Draw from:
 - LEGO-Based Therapy (LeGoff et al.) — collaborative building for social skills, turn-taking, and emotional regulation
 - Play Therapy — structured therapeutic play as primary modality for children
 
-## Voice Guidelines
-- Write for spoken audio, not reading — every sentence must sound natural when spoken aloud
-- Use natural, conversational language with contractions ("let's", "you're", "that's")
-- Create pauses using "..." — never bracket markers like [pause]
-- Avoid complex sentences or jargon
-- Use "you" to create direct connection with the listener
-- Maintain a calm, warm, professional tone
-- For children: playful, encouraging, gently excited when celebrating successes
-- Speak slowly and clearly for relaxation effects
-
-## Duration Management
-- For 5-minute sessions: One core technique with playful framing, very brief opening and close
-- For 10-minute sessions: Opening + 1-2 practices (one can be LEGO-based) + wrap-up
-- For 15-20 minute sessions: Full structure with multiple practices, at least one hands-on LEGO activity
-- For 30+ minute sessions: Deep dive with extended guided exercises and building projects
-
 ## Safety & Ethics
 - Never diagnose or replace professional therapy
 - Encourage seeking professional help for serious concerns
 - Focus on skill-building and coping strategies
 - Maintain appropriate boundaries
 - Use inclusive, non-judgmental language
-- LEGO activities must be age-appropriate and safe (no small pieces for very young children without supervision mention)
-
-## Example Opening (7-year-old, with LEGO)
-"Hi there... I'm really glad you're here today... You know what? You're already being really brave just by listening... Today we're going to do something fun together. We're going to build something... and learn something cool about big feelings at the same time. If you have some LEGO bricks near you, grab a few now... Any colors you like... And if you don't have any, that's totally fine. We can imagine building together... Ready? Let's start..."
 `;
 
-// Therapeutic Agent with OpenAI TTS (via GraphQL)
-export const therapeuticAgent = new Agent({
-  id: "therapeutic-agent",
-  name: "Therapeutic Audio Agent",
-  instructions: therapeuticInstructions,
-  model: deepseek("deepseek-chat"),
-});
-
+export const storyTellerAgent = createAgent(storyInstructions);
+export const therapeuticAgent = createAgent(therapeuticInstructions);

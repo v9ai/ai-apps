@@ -34,6 +34,7 @@ import {
 } from "@/app/__generated__/hooks";
 import { authClient } from "@/app/lib/auth/client";
 import AddGoalButton from "@/app/components/AddGoalButton";
+import AddFamilyRelationshipButton from "@/app/components/AddFamilyRelationshipButton";
 import AddTeacherFeedbackButton from "@/app/components/AddTeacherFeedbackButton";
 import TeacherFeedbackList from "@/app/components/TeacherFeedbackList";
 import AddContactButton from "@/app/components/AddContactButton";
@@ -204,6 +205,12 @@ function FamilyMemberContent() {
   };
 
   const relationships = member?.relationships ?? [];
+  const familyRelationships = relationships.filter(
+    (r) => r.relatedType === "FAMILY_MEMBER",
+  );
+  const contactRelationships = relationships.filter(
+    (r) => r.relatedType === "CONTACT",
+  );
 
   const [deleteRelationship, { loading: deletingRelationship }] =
     useDeleteRelationshipMutation({
@@ -395,27 +402,128 @@ function FamilyMemberContent() {
         </Flex>
       </Card>
 
-      {/* Contacts */}
+      {/* Family Relationships */}
       <Card>
         <Flex direction="column" gap="3" p="4">
           <Flex justify="between" align="center">
-            <Heading size="4">Contacts ({relationships.length})</Heading>
+            <Heading size="4">
+              Family Relationships ({familyRelationships.length})
+            </Heading>
             {isOwner && (
-              <AddContactButton
+              <AddFamilyRelationshipButton
                 familyMemberId={memberId}
-                refetchQueries={["GetRelationships"]}
+                familyMemberName={memberName}
                 size="2"
               />
             )}
           </Flex>
           <Separator size="4" />
-          {relationships.length === 0 ? (
+          {familyRelationships.length === 0 ? (
+            <Text size="2" color="gray">
+              No family relationships yet. Link this member to siblings,
+              parents, or other family members.
+            </Text>
+          ) : (
+            <Flex direction="column" gap="2">
+              {familyRelationships.map((rel) => {
+                const person = rel.related;
+                if (!person) return null;
+                const personHref = `/family/${person.slug || person.id}`;
+                return (
+                  <Flex
+                    key={rel.id}
+                    justify="between"
+                    align="center"
+                    p="2"
+                    style={{
+                      borderRadius: "var(--radius-2)",
+                      background: "var(--gray-a2)",
+                      cursor: "pointer",
+                    }}
+                    onClick={() => router.push(personHref)}
+                  >
+                    <Flex gap="2" align="center">
+                      <Text size="2" weight="medium" color="indigo">
+                        {person.firstName}
+                        {person.lastName ? ` ${person.lastName}` : ""}
+                      </Text>
+                      <Badge color="blue" variant="soft" size="1">
+                        {rel.relationshipType.replace(/_/g, " ")}
+                      </Badge>
+                    </Flex>
+                    {isOwner && (
+                      <AlertDialog.Root>
+                        <AlertDialog.Trigger>
+                          <Button
+                            variant="ghost"
+                            color="red"
+                            size="1"
+                            onClick={(e) => e.stopPropagation()}
+                          >
+                            <TrashIcon />
+                          </Button>
+                        </AlertDialog.Trigger>
+                        <AlertDialog.Content>
+                          <AlertDialog.Title>
+                            Remove Relationship
+                          </AlertDialog.Title>
+                          <AlertDialog.Description>
+                            Remove the relationship with {person.firstName}?
+                          </AlertDialog.Description>
+                          <Flex gap="3" justify="end" mt="4">
+                            <AlertDialog.Cancel>
+                              <Button variant="soft" color="gray">
+                                Cancel
+                              </Button>
+                            </AlertDialog.Cancel>
+                            <AlertDialog.Action>
+                              <Button
+                                color="red"
+                                disabled={deletingRelationship}
+                                onClick={() =>
+                                  deleteRelationship({
+                                    variables: { id: rel.id },
+                                  })
+                                }
+                              >
+                                Remove
+                              </Button>
+                            </AlertDialog.Action>
+                          </Flex>
+                        </AlertDialog.Content>
+                      </AlertDialog.Root>
+                    )}
+                  </Flex>
+                );
+              })}
+            </Flex>
+          )}
+        </Flex>
+      </Card>
+
+      {/* Contacts */}
+      <Card>
+        <Flex direction="column" gap="3" p="4">
+          <Flex justify="between" align="center">
+            <Heading size="4">
+              Contacts ({contactRelationships.length})
+            </Heading>
+            {isOwner && (
+              <AddContactButton
+                familyMemberId={memberId}
+                refetchQueries={["GetFamilyMember"]}
+                size="2"
+              />
+            )}
+          </Flex>
+          <Separator size="4" />
+          {contactRelationships.length === 0 ? (
             <Text size="2" color="gray">
               No contacts added yet
             </Text>
           ) : (
             <Flex direction="column" gap="2">
-              {relationships.map((rel) => {
+              {contactRelationships.map((rel) => {
                 const contact = rel.related;
                 if (!contact) return null;
                 const contactHref = `/family/${memberSlugOrId}/contacts/${contact.slug || contact.id}`;
@@ -444,7 +552,12 @@ function FamilyMemberContent() {
                     {isOwner && (
                       <AlertDialog.Root>
                         <AlertDialog.Trigger>
-                          <Button variant="ghost" color="red" size="1">
+                          <Button
+                            variant="ghost"
+                            color="red"
+                            size="1"
+                            onClick={(e) => e.stopPropagation()}
+                          >
                             <TrashIcon />
                           </Button>
                         </AlertDialog.Trigger>
@@ -1026,7 +1139,11 @@ export default function FamilyMemberPage() {
             </Heading>
           </Box>
 
-          {member?.relationship && (
+          {member?.relationship === "self" ? (
+            <Badge color="indigo" variant="solid" size="2">
+              You
+            </Badge>
+          ) : member?.relationship ? (
             <Badge
               color={getRelationshipColor(member.relationship)}
               variant="soft"
@@ -1034,7 +1151,7 @@ export default function FamilyMemberPage() {
             >
               {member.relationship}
             </Badge>
-          )}
+          ) : null}
 
           {member && (
             <Button size="2" asChild>

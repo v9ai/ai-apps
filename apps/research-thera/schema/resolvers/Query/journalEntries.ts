@@ -1,5 +1,5 @@
 import type { QueryResolvers } from "./../../types.generated";
-import { d1Tools } from "@/src/db";
+import { db } from "@/src/db";
 
 export const journalEntries: NonNullable<QueryResolvers['journalEntries']> = async (
   _parent,
@@ -11,7 +11,7 @@ export const journalEntries: NonNullable<QueryResolvers['journalEntries']> = asy
     throw new Error("Authentication required");
   }
 
-  const entries = await d1Tools.listJournalEntries(userEmail, {
+  const entries = await db.listJournalEntries(userEmail, {
     familyMemberId: args.familyMemberId ?? undefined,
     goalId: args.goalId ?? undefined,
     mood: args.mood ?? undefined,

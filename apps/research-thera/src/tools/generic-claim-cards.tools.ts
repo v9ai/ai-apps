@@ -7,12 +7,12 @@
  * 2) Extracts cross-source atomic claims scoped to the parent's theme
  * 3) Maps/grades evidence from the linked set to each claim
  * 4) Aggregates verdict + confidence into auditable "cards"
- * 5) Optional persistence via a pluggable storage adapter (SQL, D1, Prisma, etc.)
+ * 5) Optional persistence via a pluggable storage adapter (SQL, Prisma, etc.)
  *
  * Design goals:
  * - Domain-agnostic (works for any topic, not just remote work)
  * - Provider-agnostic (swap Semantic Scholar/OpenAlex/Crossref/etc.)
- * - Storage-agnostic (swap D1/SQLite/Postgres/whatever)
+ * - Storage-agnostic (swap SQLite/Postgres/whatever)
  * - Auditable output (evidence list + rationale + provenance)
  *
  * Usage:
