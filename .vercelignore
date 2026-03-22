@@ -1,5 +1,4 @@
-# Exclude all apps except agentic-healthcare, nomadically.work, and todo
-apps/knowledge
+# Exclude all apps except agentic-healthcare, nomadically.work, todo, and knowledge
 apps/podcasts
 apps/real-estate
 apps/research-thera
