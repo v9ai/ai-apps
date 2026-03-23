@@ -71,6 +71,7 @@ export function StoryGrid({ personalities, quotes }: StoryGridProps) {
             <div
               key={p.slug}
               role="listitem"
+              className={css({ minW: 0 })}
             >
               <StoryCard
                 personality={p}
