@@ -77,7 +77,7 @@ The DB table is additive; no existing tables are altered. Rollback has zero impa
 ## Success Criteria
 
 - [ ] User can select any text on a study topic page, see the "Explain this" toolbar appear, click it, and receive a markdown explanation in a dialog within 10 seconds
-- [ ] Explanation is scoped to the topic's category and difficulty (system prompt includes that context, visible in Langfuse traces)
+- [ ] Explanation is scoped to the topic's category and difficulty (system prompt includes that context)
 - [ ] Identical selected text on the same topic returns the cached DB result (no second LLM call)
 - [ ] Unauthenticated requests to the mutation return a 403-equivalent GraphQL error
 - [ ] `pnpm build` passes with no new type errors

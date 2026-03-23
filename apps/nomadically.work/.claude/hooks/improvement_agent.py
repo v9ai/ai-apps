@@ -2,7 +2,7 @@
 """
 improvement_agent.py — Processes the improvement queue from stop_hook.py.
 Reads low-scoring sessions, generates concrete improvement suggestions via
-Claude Sonnet, and logs results to Langfuse.
+Claude Sonnet, and saves results to disk.
 
 Spawned as a subprocess by stop_hook.py when CC_AUTO_IMPROVE=true.
 """
@@ -20,11 +20,6 @@ try:
     import anthropic
 except Exception:
     sys.exit(0)
-
-try:
-    from langfuse import Langfuse
-except Exception:
-    Langfuse = None  # type: ignore
 
 # ── Config ────────────────────────────────────────────────────────────────────
 STATE_DIR       = Path.home() / ".claude" / "state"
@@ -191,33 +186,6 @@ def generate_improvement(session_entry: Dict, transcript_summary: str) -> Option
         return None
 
 
-# ── Langfuse logging ─────────────────────────────────────────────────────────
-def log_to_langfuse(session_id: str, suggestions: Dict) -> None:
-    if not Langfuse:
-        return
-    public_key = os.environ.get("LANGFUSE_PUBLIC_KEY")
-    secret_key = os.environ.get("LANGFUSE_SECRET_KEY")
-    host = os.environ.get("LANGFUSE_BASE_URL", "https://cloud.langfuse.com")
-    if not public_key or not secret_key:
-        return
-
-    try:
-        lf = Langfuse(public_key=public_key, secret_key=secret_key, host=host)
-        trace = lf.trace(
-            name="Improvement Agent",
-            tags=["improvement-agent", "claude-code"],
-            metadata={
-                "source_session_id": session_id,
-                "suggestion_count": len(suggestions.get("suggestions", [])),
-            },
-            input={"session_id": session_id},
-            output=suggestions,
-        )
-        lf.flush()
-    except Exception as e:
-        log("ERROR", f"Langfuse logging failed: {e}")
-
-
 # ── Main ──────────────────────────────────────────────────────────────────────
 def main() -> int:
     q = load_queue()
@@ -269,9 +237,6 @@ def main() -> int:
             tmp = IMPROVEMENTS_DIR / f"{session_id}.{os.getpid()}.tmp"
             tmp.write_text(json.dumps(output_data, indent=2))
             tmp.replace(output_path)
-
-            # Log to Langfuse
-            log_to_langfuse(session_id, suggestions)
 
             log("INFO", f"Generated improvements for session {session_id}")
             processed_ids.append(session_id)

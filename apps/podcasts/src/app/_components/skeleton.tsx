@@ -236,7 +236,7 @@ export function ProfileHeroSkeleton({ className = "" }: { className?: string }) 
         </div>
 
         {/* ── Horizontal rule ───────────────────────────────── */}
-        <div className={css({ h: '1px', bg: 'rgba(255,255,255,0.06)' })} />
+        <div className={css({ h: '1px', bg: 'card.border' })} />
 
         {/* ── Quick-info bar ────────────────────────────────── */}
         {/*

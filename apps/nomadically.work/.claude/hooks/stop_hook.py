@@ -1,10 +1,9 @@
 #!/usr/bin/env python3
 """
 stop_hook.py — Claude Code Stop hook
-Runs after every session. Does three things:
-  1. Sends trace to Langfuse
-  2. Scores the session across all four improvement surfaces
-  3. If score is low, queues the session for improvement generation
+Runs after every session. Does two things:
+  1. Scores the session across all four improvement surfaces
+  2. If score is low, queues the session for improvement generation
 """
 
 import copy
@@ -15,12 +14,6 @@ import sys
 from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any, Dict, List, Optional, Tuple
-
-# ── Fail-open imports ─────────────────────────────────────────────────────────
-try:
-    from langfuse import Langfuse, propagate_attributes
-except Exception:
-    sys.exit(0)
 
 try:
     import anthropic
@@ -40,10 +33,9 @@ DEBUG           = os.environ.get("CC_DEBUG", "").lower() == "true"
 
 # Keys forwarded to the improvement subprocess (no full-env leak)
 _CHILD_ENV_KEYS = {
-    "ANTHROPIC_API_KEY", "LANGFUSE_PUBLIC_KEY", "LANGFUSE_SECRET_KEY",
-    "LANGFUSE_BASE_URL", "AGENT_VERSION", "PRODUCT_FEATURE",
+    "ANTHROPIC_API_KEY", "AGENT_VERSION", "PRODUCT_FEATURE",
     "ACTIVE_SUBAGENT", "CC_DEBUG", "PATH", "HOME",
-    "TRACE_TO_LANGFUSE", "CC_IMPROVE_THRESHOLD",
+    "CC_IMPROVE_THRESHOLD",
 }
 
 # ── Logging ───────────────────────────────────────────────────────────────────
@@ -137,7 +129,6 @@ def build_session_summary(msgs: List[Dict]) -> Dict:
     for msg in msgs:
         role = get_role(msg)
         if role == "user":
-            # Only flush a pending turn when there was real user content
             if user_text:
                 turns.append({"user": user_text, "assistant": assistant_text})
             user_text = extract_text(get_content(msg))
@@ -184,12 +175,11 @@ failure_type options: "ignored_request"|"hallucination"|"incomplete"|"off_topic"
                       "out_of_role"|"misrouted"|null
 """
 
-_MAX_TURN_CHARS     = 1500   # per turn side (user / assistant)
-_MAX_TOOL_INPUT_CHARS = 400  # per tool call input
+_MAX_TURN_CHARS     = 1500
+_MAX_TOOL_INPUT_CHARS = 400
 
 
 def _truncate_summary_for_prompt(summary: Dict) -> Dict:
-    """Truncate text fields so the serialised JSON is well-formed and token-safe."""
     s = copy.deepcopy(summary)
     for turn in s["turns"]:
         for key in ("user", "assistant"):
@@ -204,7 +194,6 @@ def _truncate_summary_for_prompt(summary: Dict) -> Dict:
 
 
 def _strip_markdown_fences(text: str) -> str:
-    """Remove ```json ... ``` wrappers that models add despite instructions."""
     if text.startswith("```"):
         parts = text.split("```", 2)
         inner = parts[1] if len(parts) > 1 else text
@@ -255,7 +244,6 @@ def load_queue() -> List[Dict]:
 
 def enqueue_session(session_id: str, transcript_path: Path,
                     scores: Dict, summary: Dict) -> None:
-    """Add a low-scoring session to the improvement queue (lock-protected, atomic write)."""
     STATE_DIR.mkdir(parents=True, exist_ok=True)
     lock_path = STATE_DIR / "improvement_queue.lock"
 
@@ -277,7 +265,7 @@ def enqueue_session(session_id: str, transcript_path: Path,
             })
             tmp = STATE_DIR / f"improvement_queue.{os.getpid()}.tmp"
             tmp.write_text(json.dumps(q, indent=2))
-            tmp.replace(QUEUE_FILE)   # atomic rename on POSIX
+            tmp.replace(QUEUE_FILE)
         finally:
             fcntl.flock(lock_file, fcntl.LOCK_UN)
 
@@ -285,90 +273,8 @@ def enqueue_session(session_id: str, transcript_path: Path,
     low = min(dim_scores) if dim_scores else 0
     log("INFO", f"Queued session {session_id} for improvement (lowest score: {low:.2f})")
 
-# ── Langfuse emit ─────────────────────────────────────────────────────────────
-_MAX_TOOL_OBS_BYTES = 4_000   # Langfuse ingest API limit per event
-
-
-def emit_to_langfuse(lf: Langfuse, session_id: str,
-                     summary: Dict, scores: Optional[Dict],
-                     transcript_path: Path) -> None:
-    session_text = "\n\n".join(
-        f"User: {t['user']}\nAssistant: {t['assistant']}"
-        for t in summary["turns"]
-    )
-
-    tags = ["claude-code", ACTIVE_SUBAGENT, AGENT_VERSION]
-
-    with propagate_attributes(
-        session_id=session_id,
-        trace_name="Claude Code Session",
-        tags=tags,
-    ):
-        with lf.start_as_current_observation(
-            as_type="span",
-            name="Session",
-            input=summary["turns"][0]["user"] if summary["turns"] else "",
-            metadata={
-                "session_id":      session_id,
-                "subagent":        ACTIVE_SUBAGENT,
-                "agent_version":   AGENT_VERSION,
-                "product_feature": PRODUCT_FEATURE,
-                "turn_count":      summary["turn_count"],
-                "tool_count":      len(summary["tool_calls"]),
-                "transcript_path": str(transcript_path),
-            },
-        ) as span:
-            # LLM generation observation
-            with lf.start_as_current_observation(
-                as_type="generation",
-                name="LLM Response",
-                model=summary["model"],
-                input=session_text[:4000],
-                output=summary["turns"][-1]["assistant"][:2000] if summary["turns"] else "",
-            ):
-                pass
-
-            # Tool observations — cap input size to avoid 413s
-            for tc in summary["tool_calls"]:
-                inp = tc["input"]
-                serialized = json.dumps(inp)
-                if len(serialized) > _MAX_TOOL_OBS_BYTES:
-                    inp = {"_truncated": serialized[:_MAX_TOOL_OBS_BYTES] + "…"}
-                with lf.start_as_current_observation(
-                    as_type="tool",
-                    name=f"Tool: {tc['name']}",
-                    input=inp,
-                ):
-                    pass
-
-            span.update(
-                output=summary["turns"][-1]["assistant"][:2000] if summary["turns"] else "",
-                metadata={"scores": scores} if scores else {},
-            )
-
-            # Scores attached to the current trace
-            if scores:
-                for dim, data in scores.items():
-                    if isinstance(data, dict) and "score" in data:
-                        lf.score_current_trace(
-                            name=dim,
-                            value=data["score"],
-                            comment=data.get("reason", ""),
-                            data_type="NUMERIC",
-                        )
-
 # ── Main ──────────────────────────────────────────────────────────────────────
 def main() -> int:
-    if os.environ.get("TRACE_TO_LANGFUSE", "").lower() != "true":
-        return 0
-
-    public_key = os.environ.get("LANGFUSE_PUBLIC_KEY")
-    secret_key = os.environ.get("LANGFUSE_SECRET_KEY")
-    host       = os.environ.get("LANGFUSE_BASE_URL", "https://cloud.langfuse.com")
-
-    if not public_key or not secret_key:
-        return 0
-
     payload = read_payload()
     session_id, transcript_path = extract_session(payload)
 
@@ -385,10 +291,6 @@ def main() -> int:
         scores = score_session(summary)
         if DEBUG and scores:
             log("DEBUG", f"Scores: {json.dumps(scores)}")
-
-        lf = Langfuse(public_key=public_key, secret_key=secret_key, host=host)
-        emit_to_langfuse(lf, session_id, summary, scores, transcript_path)
-        lf.flush()
 
         # Check threshold for improvement queue
         all_dim_scores: List[float] = []

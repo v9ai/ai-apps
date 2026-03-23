@@ -57,13 +57,13 @@ body::after {
   background-size: 128px 128px;
 }
 
-h1, h2, h3, h4, h5, h6 { color: #E8E8ED; }
+h1, h2, h3, h4, h5, h6 { color: var(--color-ink-primary); }
 h1 { letter-spacing: -0.03em; }
 h2, h3 { letter-spacing: -0.01em; }
 
 ::selection {
   background: rgba(139, 91, 246, 0.25);
-  color: #E8E8ED;
+  color: var(--color-ink-primary);
 }
 
 ::-webkit-scrollbar { width: 6px; }
@@ -99,7 +99,7 @@ kbd {
 
 .story-card {
   border-radius: 1rem;
-  background: #17151E;
+  background: var(--color-surface-raised);
   transform-style: preserve-3d;
   border: 1px solid rgba(255, 255, 255, 0.05);
   box-shadow: 0 1px 2px rgba(0,0,0,0.4), 0 4px 12px -2px rgba(0,0,0,0.3), 0 8px 24px -6px rgba(0,0,0,0.2);
@@ -114,7 +114,7 @@ kbd {
 .featured-card {
   border-radius: 1rem;
   position: relative;
-  background: #17151E;
+  background: var(--color-surface-raised);
   transform-style: preserve-3d;
   border: 1px solid rgba(255,255,255,0.06);
   box-shadow: inset 0 1px 0 rgba(255,255,255,0.06), 0 1px 2px rgba(0,0,0,0.4), 0 4px 12px -2px rgba(0,0,0,0.3), 0 12px 32px -6px rgba(0,0,0,0.25), 0 24px 56px -12px rgba(0,0,0,0.2);
@@ -158,7 +158,7 @@ kbd {
 
 .glass-card {
   border-radius: 1rem;
-  background: #17151E;
+  background: var(--color-surface-raised);
   border: 1px solid rgba(255, 255, 255, 0.06);
   transition: background-color 0.3s var(--ease-smooth), border-color 0.3s var(--ease-smooth);
 }
@@ -220,10 +220,10 @@ kbd {
 
 .info-pill {
   display: inline-flex; align-items: center; gap: 0.5rem; padding: 0.5rem 1rem;
-  border-radius: 0.75rem; background: #15141A; border: 1px solid rgba(255,255,255,0.06);
+  border-radius: 0.75rem; background: var(--color-surface); border: 1px solid var(--color-rim-subtle);
   transition: all 0.15s var(--ease-expo-out);
 }
-.info-pill:hover { border-color: rgba(255,255,255,0.10); background: #1C1C22; }
+.info-pill:hover { border-color: var(--color-rim); background: var(--color-surface-hover); }
 
 /* ---------- Story card (grid variant) ---------- */
 .story-card-3d {

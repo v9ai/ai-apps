@@ -42,6 +42,17 @@ function createBlockButton(companyName: string): HTMLButtonElement {
     chrome.runtime.sendMessage(
       { action: "blockCompany", companyName },
       (response) => {
+        if (chrome.runtime.lastError) {
+          console.error("[Nomad] Message error:", chrome.runtime.lastError.message);
+          btn.textContent = "Error";
+          btn.style.backgroundColor = "#ef4444";
+          btn.disabled = false;
+          setTimeout(() => {
+            btn.textContent = "Block Company";
+            btn.style.backgroundColor = "#dc2626";
+          }, 2000);
+          return;
+        }
         if (response?.success) {
           btn.textContent = "Blocked";
           btn.style.backgroundColor = "#6b7280";

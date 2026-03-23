@@ -212,7 +212,7 @@ export function FeaturedStory({
                     _groupHover: {
                       bg: 'rgba(167, 139, 250, 0.14)',
                       borderColor: 'rgba(167, 139, 250, 0.3)',
-                      color: '#FFFFFF',
+                      color: 'white',
                       boxShadow: '0 0 16px rgba(167, 139, 250, 0.1)',
                     },
                   })}

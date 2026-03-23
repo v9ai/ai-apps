@@ -209,7 +209,7 @@ export function PersonalityTile({ personality, accentGradient }: Props) {
                 w: "10",
                 h: "10",
                 rounded: "full",
-                bg: "#1DB954",
+                bg: "spotify",
                 display: "flex",
                 alignItems: "center",
                 justifyContent: "center",

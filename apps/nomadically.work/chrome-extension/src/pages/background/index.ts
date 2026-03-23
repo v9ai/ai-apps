@@ -12,7 +12,7 @@ if (import.meta.env.DEV) {
     };
     ws.onclose = () => {
       // Reconnect after 2s if server restarts
-      setTimeout(connect, 2000);
+      setTimeout(connect, 5000);
     };
     ws.onerror = () => ws.close();
   };
@@ -44,7 +44,7 @@ async function graphqlMutation(
     "Content-Type": "application/json",
   };
   if (sessionToken) {
-    headers["Cookie"] = `better-auth.session_token=${sessionToken}`;
+    headers["Authorization"] = `Bearer ${sessionToken}`;
   }
 
   const res = await fetch(GRAPHQL_URL, {

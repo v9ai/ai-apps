@@ -281,12 +281,10 @@ export default defineConfig({
 
 ```ts
 import { PrismaInstrumentation } from "@prisma/instrumentation";
-import { OpenAIInstrumentation } from "@langfuse/openai";
-
 export default defineConfig({
   // ... other config
   telemetry: {
-    instrumentations: [new PrismaInstrumentation(), new OpenAIInstrumentation()],
+    instrumentations: [new PrismaInstrumentation()],
     exporters: [customExporter], // Optional custom exporters
   },
 });
