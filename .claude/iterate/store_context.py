@@ -137,20 +137,6 @@ def store(iteration: int, content: str, task: str):
         "timestamp": datetime.now().isoformat(),
     })
 
-    # Store git diff as separate searchable chunk
-    if git_diff:
-        ids.append(f"iter-{iteration}-diff")
-        documents.append(f"Git diff for iteration {iteration}:\n{git_diff}")
-        metadatas.append({
-            "iteration": iteration,
-            "chunk_index": -2,
-            "total_chunks": len(chunks),
-            "task": task,
-            "doc_type": "diff",
-            "has_errors": False,
-            "timestamp": datetime.now().isoformat(),
-        })
-
     collection.upsert(ids=ids, documents=documents, metadatas=metadatas)
     print(json.dumps({
         "stored": len(ids),

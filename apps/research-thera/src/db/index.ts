@@ -2516,6 +2516,7 @@ export async function listHabits(userId: string, status?: string, familyMemberId
     userId: row.user_id as string,
     goalId: (row.goal_id as number) || null,
     familyMemberId: (row.family_member_id as number) || null,
+    issueId: (row.issue_id as number) || null,
     title: row.title as string,
     description: (row.description as string) || null,
     frequency: row.frequency as string,
@@ -2538,6 +2539,7 @@ export async function getHabit(id: number, userId: string) {
     userId: row.user_id as string,
     goalId: (row.goal_id as number) || null,
     familyMemberId: (row.family_member_id as number) || null,
+    issueId: (row.issue_id as number) || null,
     title: row.title as string,
     description: (row.description as string) || null,
     frequency: row.frequency as string,
@@ -2552,17 +2554,19 @@ export async function createHabit(input: {
   userId: string;
   goalId?: number | null;
   familyMemberId?: number | null;
+  issueId?: number | null;
   title: string;
   description?: string | null;
   frequency?: string;
   targetCount?: number;
 }) {
   const rows = await neonSql`
-    INSERT INTO habits (user_id, goal_id, family_member_id, title, description, frequency, target_count)
+    INSERT INTO habits (user_id, goal_id, family_member_id, issue_id, title, description, frequency, target_count)
     VALUES (
       ${input.userId},
       ${input.goalId ?? null},
       ${input.familyMemberId ?? null},
+      ${input.issueId ?? null},
       ${input.title},
       ${input.description ?? null},
       ${input.frequency ?? "daily"},

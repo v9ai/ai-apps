@@ -1,6 +1,6 @@
 // LinkedIn Job Helper — salary extraction + Block Company button
 
-console.log("LinkedIn Job Helper Extension loaded");
+// LinkedIn job helper — salary extraction + Block Company button
 
 // ── Block Company Button ──────────────────────────────────────────────
 
@@ -535,25 +535,6 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
     return true;
   }
 
-  if (message.action === "getPaginationInfo") {
-    // Check if this is a Google search - let Google Search Helper (ashby-helper.ts) handle it
-    const isGoogleSearch =
-      window.location.hostname.includes("google.com") &&
-      window.location.pathname.includes("/search");
-
-    if (isGoogleSearch) {
-      // Don't respond - let Google Search Helper (ashby-helper.ts) handle this
-      console.log(
-        "LinkedIn helper: Detected Google search for pagination, skipping",
-      );
-      return false;
-    }
-
-    // For other sites, return no pagination info
-    sendResponse({ paginationInfo: null });
-    return true;
-  }
-
   if (message.action === "extractJobsWithPagination") {
     (async () => {
       try {
@@ -762,11 +743,16 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
         });
       }
     } else {
-      clickNextPage()
-        .then(() => sendResponse({ success: true }))
-        .catch((err: Error) =>
-          sendResponse({ success: false, error: err.message }),
-        );
+      const info = getLinkedInPaginationInfo();
+      if (info) {
+        clickLinkedInPageNumber(info.currentPage + 1)
+          .then((ok) => sendResponse({ success: ok }))
+          .catch((err: Error) =>
+            sendResponse({ success: false, error: err.message }),
+          );
+      } else {
+        sendResponse({ success: false, error: "No pagination info" });
+      }
     }
     return true;
   }

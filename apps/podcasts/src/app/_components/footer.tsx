@@ -107,7 +107,7 @@ export default function Footer() {
           pos: 'relative',
           maxW: '7xl',
           mx: 'auto',
-          px: { base: '5', sm: '6', md: '8' },
+          px: { base: '4', sm: '6', md: '8', lg: '10' },
         })}
       >
         {/* Row 1: brand + nav link groups */}

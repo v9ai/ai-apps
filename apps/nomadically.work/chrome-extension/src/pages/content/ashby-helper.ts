@@ -1,7 +1,4 @@
-console.log(
-  "Google Search scraper content script loaded:",
-  window.location.href,
-);
+// Google Search / Ashby job scraper
 
 function isGoogleSearchPage(): boolean {
   try {
@@ -264,7 +261,8 @@ function getPaginationInfo() {
 }
 
 chrome.runtime.onMessage.addListener((message, _sender, sendResponse) => {
-  console.log("[Google Search Helper] Message received:", message);
+  // Only handle messages on Google search pages
+  if (!isGoogleSearchPage()) return false;
 
   try {
     if (message?.action === "ping") {
@@ -273,24 +271,19 @@ chrome.runtime.onMessage.addListener((message, _sender, sendResponse) => {
     }
 
     if (message?.action === "extractJobs") {
-      console.log("[Google Search Helper] Extracting jobs...");
       const jobs = extractJobDataFromGoogle();
-      console.log("[Google Search Helper] Sending response with jobs:", jobs);
       sendResponse({ jobs });
       return true;
     }
 
     if (message?.action === "getPaginationInfo") {
-      console.log("[Google Search Helper] Getting pagination info...");
       const info = getPaginationInfo();
-      console.log("[Google Search Helper] Sending pagination info:", info);
       sendResponse({ paginationInfo: info });
       return true;
     }
 
-    console.log("[Google Search Helper] Unknown action:", message?.action);
-    sendResponse({ ok: false, error: "Unknown action" });
-    return true;
+    // Unknown action — don't respond, let other listeners handle it
+    return false;
   } catch (err) {
     console.error("[Google Search Helper] Error:", err);
     sendResponse({

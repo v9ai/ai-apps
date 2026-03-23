@@ -18,6 +18,7 @@ import {
   TextArea,
   TextField,
   Select,
+  Callout,
 } from "@radix-ui/themes";
 import {
   ArrowLeftIcon,
@@ -29,6 +30,7 @@ import {
   Cross2Icon,
   CopyIcon,
   CheckIcon,
+  MagicWandIcon,
 } from "@radix-ui/react-icons";
 import { useRouter, useParams } from "next/navigation";
 import NextLink from "next/link";
@@ -52,6 +54,7 @@ import {
   useLinkIssuesMutation,
   useUnlinkIssuesMutation,
   useGetIssuesQuery,
+  useGenerateHabitsFromIssueMutation,
 } from "@/app/__generated__/hooks";
 
 const CATEGORY_OPTIONS = [
@@ -122,6 +125,19 @@ function IssueDetailContent() {
 
   const [convertIssueToGoal, { loading: converting }] =
     useConvertIssueToGoalMutation();
+
+  const [generateHabitsFromIssue, { loading: generatingHabits }] =
+    useGenerateHabitsFromIssueMutation({
+      onCompleted: (data) => {
+        const n = data.generateHabitsFromIssue.count ?? 0;
+        setHabitsMessage({ text: `Generated ${n} habit${n !== 1 ? "s" : ""} from this issue`, type: "success" });
+      },
+      onError: (err) => {
+        setHabitsMessage({ text: err.message, type: "error" });
+      },
+    });
+
+  const [habitsMessage, setHabitsMessage] = useState<{ text: string; type: "success" | "error" } | null>(null);
 
   const { data: familyMembersData } = useGetFamilyMembersQuery();
   const familyMembers = familyMembersData?.familyMembers ?? [];
@@ -606,6 +622,19 @@ function IssueDetailContent() {
             <TargetIcon />
             {converting ? "Converting..." : "Convert to Goal"}
           </Button>
+          <Button
+            variant="soft"
+            color="indigo"
+            size="2"
+            disabled={generatingHabits}
+            onClick={() => {
+              setHabitsMessage(null);
+              generateHabitsFromIssue({ variables: { issueId, count: 3 } });
+            }}
+          >
+            <MagicWandIcon />
+            {generatingHabits ? "Generating..." : "Generate Habits"}
+          </Button>
           <Button variant="soft" size="2" onClick={handleEdit}>
             <Pencil1Icon />
             Edit
@@ -643,6 +672,12 @@ function IssueDetailContent() {
           </AlertDialog.Root>
         </Flex>
       </Flex>
+
+      {habitsMessage && (
+        <Callout.Root color={habitsMessage.type === "success" ? "green" : "red"} size="1">
+          <Callout.Text>{habitsMessage.text}</Callout.Text>
+        </Callout.Root>
+      )}
 
       <Separator size="4" />
 

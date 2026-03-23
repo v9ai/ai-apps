@@ -9,7 +9,7 @@ export const habits: NonNullable<QueryResolvers['habits']> = async (
   const userEmail = ctx.userEmail;
   if (!userEmail) throw new Error("Authentication required");
 
-  const list = await db.listHabits(userEmail, args.status ?? undefined);
+  const list = await db.listHabits(userEmail, args.status ?? undefined, args.familyMemberId ?? undefined);
   const today = new Date().toISOString().slice(0, 10);
 
   return Promise.all(

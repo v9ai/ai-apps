@@ -1,0 +1,17 @@
+mutation GenerateHabitsFromIssue($issueId: Int!, $count: Int) {
+  generateHabitsFromIssue(issueId: $issueId, count: $count) {
+    success
+    message
+    count
+    habits {
+      id
+      title
+      description
+      frequency
+      targetCount
+      status
+      familyMemberId
+      createdAt
+    }
+  }
+}

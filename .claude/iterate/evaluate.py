@@ -17,7 +17,7 @@ EVAL_URL = os.environ.get(
 EVAL_MODEL = os.environ.get("EVAL_LLM_MODEL", "deepseek-reasoner")
 
 EVAL_PROMPT = """\
-You are an iteration evaluator for an AI coding loop. Score the output of iteration {iteration}.
+You are an iteration evaluator for a multi-step AI coding task. Score the output of iteration {iteration}.
 
 ## Task
 {task}

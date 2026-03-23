@@ -49,6 +49,12 @@ SESSION_ID=$(echo "$INPUT" | jq -r '.session_id // empty')
 # Debug log
 echo "[kick-session] iter=$COUNT session=$SESSION_ID cwd=$CWD" >> "$ITER_DIR/debug.log" 2>/dev/null || true
 
+# --- Session isolation: only the session that started iterate should continue ---
+OWNER_SESSION=$(cat "$ITER_DIR/session.txt" 2>/dev/null || echo "")
+if [ -n "$OWNER_SESSION" ] && [ -n "$SESSION_ID" ] && [ "$OWNER_SESSION" != "$SESSION_ID" ]; then
+    exit 0
+fi
+
 # --- Capture this iteration's output from transcript ---
 ITER_OUTPUT="$ITER_DIR/output-iter-${COUNT}.txt"
 
@@ -105,21 +111,30 @@ if [ "$COUNT" -gt 0 ] && [ -f "$ITER_OUTPUT" ] && [ -s "$ITER_OUTPUT" ]; then
         SHOULD_CONTINUE=false
     fi
 
-    EVAL_FEEDBACK=$(echo "$EVAL_RESULT" | jq -r '
-        "\n## Evaluation of iteration \(.iteration)\n" +
-        (.scores | to_entries | map(
-            "- **\(.key)**: \(.value.score // "n/a") — \(.value.reason // "")"
-        ) | join("\n"))
-    ' 2>/dev/null) || EVAL_FEEDBACK=""
+    # Skip eval/trend feedback if all scores are fallback (0.5)
+    IS_FALLBACK=$(echo "$EVAL_RESULT" | jq -r '
+        [.scores | to_entries[] | .value.reason] | all(. == "fallback" or startswith("Eval LLM unavailable"))
+    ' 2>/dev/null) || IS_FALLBACK="false"
 
-    TREND_FEEDBACK=$(echo "$EVAL_RESULT" | jq -r '
-        if .trends then
-            "\n## Trends\n" +
-            (.trends | to_entries | map(
-                "- **\(.key)**: \(.value.direction // "n/a") (delta: \(.value.avg_delta // "n/a"), recent: \(.value.values // []))"
+    if [ "$IS_FALLBACK" != "true" ]; then
+        EVAL_FEEDBACK=$(echo "$EVAL_RESULT" | jq -r '
+            "\n## Eval (iter \(.iteration))\n" +
+            (.scores | to_entries | map(
+                "- **\(.key)**: \(.value.score // "n/a") — \(.value.reason // "")"
             ) | join("\n"))
-        else "" end
-    ' 2>/dev/null) || TREND_FEEDBACK=""
+        ' 2>/dev/null) || EVAL_FEEDBACK=""
+
+        TREND_FEEDBACK=$(echo "$EVAL_RESULT" | jq -r '
+            if .trends then
+                (.trends | to_entries
+                    | map(select(.value.direction != "insufficient_data"))
+                    | if length > 0 then
+                        "\n## Trends\n" +
+                        (map("- **\(.key)**: \(.value.direction) (Δ\(.value.avg_delta))") | join("\n"))
+                      else "" end)
+            else "" end
+        ' 2>/dev/null) || TREND_FEEDBACK=""
+    fi
 fi
 
 # --- Stop ---
@@ -142,27 +157,14 @@ RETRIEVED_CONTEXT=$(python3.12 "$SCRIPTS_DIR/retrieve_context.py" \
 
 # --- Step 4: Return inline via stderr → Claude sees it and keeps working ---
 cat >&2 <<EOF
-ITERATION ${NEXT} of ${MAX_ITERATIONS}
+ITERATION ${NEXT}/${MAX_ITERATIONS} — ${TASK}
+Working directory: ${ITER_CWD}
 
-## Task
-${TASK}
-
-## Working directory
-${ITER_CWD}
-All work must be scoped to this directory.
-
-## Context from previous iterations (semantic retrieval)
 ${RETRIEVED_CONTEXT}
 ${EVAL_FEEDBACK}
 ${TREND_FEEDBACK}
 
-## Instructions for this iteration
-- Do NOT repeat work already done (see context above)
-- Focus on what's missing, broken, or needs improvement
-- Be specific about what you changed
-- If the task is fully complete, state it clearly
-
-Continue working.
+Do NOT repeat prior work. Focus on what's missing or broken. State clearly if complete.
 EOF
 
 exit 2

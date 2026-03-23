@@ -23,19 +23,16 @@ def retrieve(
     current_iteration: int,
     n_results: int = 8,
     include_errors: bool = True,
-    include_diffs: bool = True,
 ) -> str:
     collection = get_collection()
 
     if collection.count() == 0:
         return "No previous context available. This is the first iteration."
 
-    # Multi-query: task-level + error-focused + diff-focused
+    # Multi-query: task-level + error-focused
     queries = [query]
     if include_errors:
         queries.append(f"errors failures bugs in: {query}")
-    if include_diffs:
-        queries.append(f"files changed git diff for: {query}")
 
     all_docs: dict[str, tuple[str, dict, float]] = {}
 
@@ -67,18 +64,14 @@ def retrieve(
     sections = []
     for it in sorted(iter_chunks.keys()):
         items = iter_chunks[it]
-        # Separate summaries, diffs, and output chunks
+        # Separate summaries and output chunks
         summaries = [d for d, m, _ in items if m.get("doc_type") == "summary"]
-        diffs = [d for d, m, _ in items if m.get("doc_type") == "diff"]
         outputs = [d for d, m, _ in items if m.get("doc_type") == "output"]
 
         parts = []
         if summaries:
             parts.append(summaries[0])
-        if diffs:
-            parts.append(diffs[0])
         if outputs:
-            # Limit output chunks per iteration to avoid flooding
             parts.extend(outputs[:3])
 
         sections.append(f"### Iteration {it}\n" + "\n\n".join(parts))
@@ -113,7 +106,6 @@ if __name__ == "__main__":
     parser.add_argument("--iteration", type=int, required=True)
     parser.add_argument("--n-results", type=int, default=8)
     parser.add_argument("--no-errors", action="store_true")
-    parser.add_argument("--no-diffs", action="store_true")
     args = parser.parse_args()
 
     print(retrieve(
@@ -121,5 +113,4 @@ if __name__ == "__main__":
         args.iteration,
         args.n_results,
         include_errors=not args.no_errors,
-        include_diffs=not args.no_diffs,
     ))

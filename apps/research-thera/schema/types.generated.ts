@@ -248,8 +248,10 @@ export type CreateGoalInput = {
 
 export type CreateHabitInput = {
   description?: InputMaybe<Scalars['String']['input']>;
+  familyMemberId?: InputMaybe<Scalars['Int']['input']>;
   frequency?: InputMaybe<HabitFrequency>;
   goalId?: InputMaybe<Scalars['Int']['input']>;
+  issueId?: InputMaybe<Scalars['Int']['input']>;
   targetCount?: InputMaybe<Scalars['Int']['input']>;
   title: Scalars['String']['input'];
 };
@@ -558,6 +560,14 @@ export type GenerateDeepAnalysisResult = {
   success: Scalars['Boolean']['output'];
 };
 
+export type GenerateHabitsResult = {
+  __typename?: 'GenerateHabitsResult';
+  count?: Maybe<Scalars['Int']['output']>;
+  habits?: Maybe<Array<Habit>>;
+  message?: Maybe<Scalars['String']['output']>;
+  success: Scalars['Boolean']['output'];
+};
+
 export type GenerateLongFormTextResult = {
   __typename?: 'GenerateLongFormTextResult';
   audioUrl?: Maybe<Scalars['String']['output']>;
@@ -667,9 +677,11 @@ export type Habit = {
   __typename?: 'Habit';
   createdAt: Scalars['String']['output'];
   description?: Maybe<Scalars['String']['output']>;
+  familyMemberId?: Maybe<Scalars['Int']['output']>;
   frequency: HabitFrequency;
   goalId?: Maybe<Scalars['Int']['output']>;
   id: Scalars['Int']['output'];
+  issueId?: Maybe<Scalars['Int']['output']>;
   logs: Array<HabitLog>;
   status: HabitStatus;
   targetCount: Scalars['Int']['output'];
@@ -821,6 +833,8 @@ export type Mutation = {
   extractContactFeedbackIssues: ContactFeedback;
   generateAudio: GenerateAudioResult;
   generateDeepIssueAnalysis: GenerateDeepAnalysisResult;
+  generateHabitsForFamilyMember: GenerateHabitsResult;
+  generateHabitsFromIssue: GenerateHabitsResult;
   generateLongFormText: GenerateLongFormTextResult;
   generateOpenAIAudio: GenerateOpenAIAudioResult;
   generateParentAdvice: GenerateParentAdviceResult;
@@ -1046,6 +1060,18 @@ export type MutationgenerateAudioArgs = {
 export type MutationgenerateDeepIssueAnalysisArgs = {
   familyMemberId: Scalars['Int']['input'];
   triggerIssueId?: InputMaybe<Scalars['Int']['input']>;
+};
+
+
+export type MutationgenerateHabitsForFamilyMemberArgs = {
+  count?: InputMaybe<Scalars['Int']['input']>;
+  familyMemberId: Scalars['Int']['input'];
+};
+
+
+export type MutationgenerateHabitsFromIssueArgs = {
+  count?: InputMaybe<Scalars['Int']['input']>;
+  issueId: Scalars['Int']['input'];
 };
 
 
@@ -1504,6 +1530,7 @@ export type QueryhabitArgs = {
 
 
 export type QueryhabitsArgs = {
+  familyMemberId?: InputMaybe<Scalars['Int']['input']>;
   status?: InputMaybe<Scalars['String']['input']>;
 };
 
@@ -2015,6 +2042,7 @@ export type ResolversTypes = {
   FeedbackSource: ResolverTypeWrapper<'EMAIL' | 'MEETING' | 'REPORT' | 'PHONE' | 'NOTE' | 'OTHER'>;
   GenerateAudioResult: ResolverTypeWrapper<GenerateAudioResult>;
   GenerateDeepAnalysisResult: ResolverTypeWrapper<GenerateDeepAnalysisResult>;
+  GenerateHabitsResult: ResolverTypeWrapper<Omit<GenerateHabitsResult, 'habits'> & { habits?: Maybe<Array<ResolversTypes['Habit']>> }>;
   GenerateLongFormTextResult: ResolverTypeWrapper<GenerateLongFormTextResult>;
   GenerateOpenAIAudioInput: GenerateOpenAIAudioInput;
   GenerateOpenAIAudioResult: ResolverTypeWrapper<GenerateOpenAIAudioResult>;
@@ -2140,6 +2168,7 @@ export type ResolversParentTypes = {
   FamilySystemInsight: FamilySystemInsight;
   GenerateAudioResult: GenerateAudioResult;
   GenerateDeepAnalysisResult: GenerateDeepAnalysisResult;
+  GenerateHabitsResult: Omit<GenerateHabitsResult, 'habits'> & { habits?: Maybe<Array<ResolversParentTypes['Habit']>> };
   GenerateLongFormTextResult: GenerateLongFormTextResult;
   GenerateOpenAIAudioInput: GenerateOpenAIAudioInput;
   GenerateOpenAIAudioResult: GenerateOpenAIAudioResult;
@@ -2523,6 +2552,13 @@ export type GenerateDeepAnalysisResultResolvers<ContextType = GraphQLContext, Pa
   success?: Resolver<ResolversTypes['Boolean'], ParentType, ContextType>;
 };
 
+export type GenerateHabitsResultResolvers<ContextType = GraphQLContext, ParentType extends ResolversParentTypes['GenerateHabitsResult'] = ResolversParentTypes['GenerateHabitsResult']> = {
+  count?: Resolver<Maybe<ResolversTypes['Int']>, ParentType, ContextType>;
+  habits?: Resolver<Maybe<Array<ResolversTypes['Habit']>>, ParentType, ContextType>;
+  message?: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType>;
+  success?: Resolver<ResolversTypes['Boolean'], ParentType, ContextType>;
+};
+
 export type GenerateLongFormTextResultResolvers<ContextType = GraphQLContext, ParentType extends ResolversParentTypes['GenerateLongFormTextResult'] = ResolversParentTypes['GenerateLongFormTextResult']> = {
   audioUrl?: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType>;
   evals?: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType>;
@@ -2612,9 +2648,11 @@ export type GoalResolvers<ContextType = GraphQLContext, ParentType extends Resol
 export type HabitResolvers<ContextType = GraphQLContext, ParentType extends ResolversParentTypes['Habit'] = ResolversParentTypes['Habit']> = {
   createdAt?: Resolver<ResolversTypes['String'], ParentType, ContextType>;
   description?: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType>;
+  familyMemberId?: Resolver<Maybe<ResolversTypes['Int']>, ParentType, ContextType>;
   frequency?: Resolver<ResolversTypes['HabitFrequency'], ParentType, ContextType>;
   goalId?: Resolver<Maybe<ResolversTypes['Int']>, ParentType, ContextType>;
   id?: Resolver<ResolversTypes['Int'], ParentType, ContextType>;
+  issueId?: Resolver<Maybe<ResolversTypes['Int']>, ParentType, ContextType>;
   logs?: Resolver<Array<ResolversTypes['HabitLog']>, ParentType, ContextType>;
   status?: Resolver<ResolversTypes['HabitStatus'], ParentType, ContextType>;
   targetCount?: Resolver<ResolversTypes['Int'], ParentType, ContextType>;
@@ -2747,6 +2785,8 @@ export type MutationResolvers<ContextType = GraphQLContext, ParentType extends R
   extractContactFeedbackIssues?: Resolver<ResolversTypes['ContactFeedback'], ParentType, ContextType, RequireFields<MutationextractContactFeedbackIssuesArgs, 'id'>>;
   generateAudio?: Resolver<ResolversTypes['GenerateAudioResult'], ParentType, ContextType, RequireFields<MutationgenerateAudioArgs, 'goalId'>>;
   generateDeepIssueAnalysis?: Resolver<ResolversTypes['GenerateDeepAnalysisResult'], ParentType, ContextType, RequireFields<MutationgenerateDeepIssueAnalysisArgs, 'familyMemberId'>>;
+  generateHabitsForFamilyMember?: Resolver<ResolversTypes['GenerateHabitsResult'], ParentType, ContextType, RequireFields<MutationgenerateHabitsForFamilyMemberArgs, 'familyMemberId'>>;
+  generateHabitsFromIssue?: Resolver<ResolversTypes['GenerateHabitsResult'], ParentType, ContextType, RequireFields<MutationgenerateHabitsFromIssueArgs, 'issueId'>>;
   generateLongFormText?: Resolver<ResolversTypes['GenerateLongFormTextResult'], ParentType, ContextType, Partial<MutationgenerateLongFormTextArgs>>;
   generateOpenAIAudio?: Resolver<ResolversTypes['GenerateOpenAIAudioResult'], ParentType, ContextType, RequireFields<MutationgenerateOpenAIAudioArgs, 'input'>>;
   generateParentAdvice?: Resolver<ResolversTypes['GenerateParentAdviceResult'], ParentType, ContextType, RequireFields<MutationgenerateParentAdviceArgs, 'goalId'>>;
@@ -3119,6 +3159,7 @@ export type Resolvers<ContextType = GraphQLContext> = {
   FeedbackSource?: FeedbackSourceResolvers;
   GenerateAudioResult?: GenerateAudioResultResolvers<ContextType>;
   GenerateDeepAnalysisResult?: GenerateDeepAnalysisResultResolvers<ContextType>;
+  GenerateHabitsResult?: GenerateHabitsResultResolvers<ContextType>;
   GenerateLongFormTextResult?: GenerateLongFormTextResultResolvers<ContextType>;
   GenerateOpenAIAudioResult?: GenerateOpenAIAudioResultResolvers<ContextType>;
   GenerateParentAdviceResult?: GenerateParentAdviceResultResolvers<ContextType>;

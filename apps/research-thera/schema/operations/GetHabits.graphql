@@ -1,5 +1,5 @@
-query GetHabits($status: String) {
-  habits(status: $status) {
+query GetHabits($status: String, $familyMemberId: Int) {
+  habits(status: $status, familyMemberId: $familyMemberId) {
     id
     title
     description
@@ -7,6 +7,7 @@ query GetHabits($status: String) {
     targetCount
     status
     goalId
+    familyMemberId
     createdAt
     updatedAt
     todayLog {

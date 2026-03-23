@@ -1,0 +1,17 @@
+mutation GenerateHabitsForFamilyMember($familyMemberId: Int!, $count: Int) {
+  generateHabitsForFamilyMember(familyMemberId: $familyMemberId, count: $count) {
+    success
+    message
+    count
+    habits {
+      id
+      title
+      description
+      frequency
+      targetCount
+      status
+      familyMemberId
+      createdAt
+    }
+  }
+}

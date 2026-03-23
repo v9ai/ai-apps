@@ -1,5 +1,5 @@
 import { blockedCompanies } from "@/db/schema";
-import { eq } from "drizzle-orm";
+import { eq, sql } from "drizzle-orm";
 import type { GraphQLContext } from "../context";
 import { isAdminEmail } from "@/lib/admin";
 
@@ -25,14 +25,26 @@ export const blockedCompanyResolvers = {
       if (!context.userId || !isAdminEmail(context.userEmail)) {
         throw new Error("Forbidden");
       }
+
+      // Upsert — if already blocked, return existing row
       const rows = await context.db
         .insert(blockedCompanies)
         .values({
           name: args.name,
           reason: args.reason ?? null,
         })
+        .onConflictDoNothing({ target: blockedCompanies.name })
         .returning();
-      return rows[0];
+
+      if (rows.length > 0) return rows[0];
+
+      // Already existed — fetch and return it
+      const existing = await context.db
+        .select()
+        .from(blockedCompanies)
+        .where(sql`lower(${blockedCompanies.name}) = ${args.name.toLowerCase()}`)
+        .limit(1);
+      return existing[0];
     },
 
     async unblockCompany(

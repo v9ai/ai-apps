@@ -421,6 +421,7 @@ export const habits = pgTable("habits", {
   userId: text("user_id").notNull(),
   goalId: integer("goal_id"),
   familyMemberId: integer("family_member_id"),
+  issueId: integer("issue_id"),
   title: text("title").notNull(),
   description: text("description"),
   frequency: text("frequency").notNull().default("daily"), // daily, weekly

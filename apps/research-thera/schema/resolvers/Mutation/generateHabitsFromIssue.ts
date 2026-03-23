@@ -1,11 +1,14 @@
 import type { MutationResolvers } from "./../../types.generated";
 import { db } from "@/src/db";
 
-export const generateHabitsForFamilyMember: NonNullable<MutationResolvers['generateHabitsForFamilyMember']> = async (_parent, args, ctx) => {
+export const generateHabitsFromIssue: NonNullable<MutationResolvers['generateHabitsFromIssue']> = async (_parent, args, ctx) => {
   const userEmail = ctx.userEmail;
   if (!userEmail) throw new Error("Authentication required");
 
-  const { familyMemberId, count = 5 } = args;
+  const { issueId, count = 3 } = args;
+
+  const issue = await db.getIssue(issueId, userEmail);
+  if (!issue) throw new Error("Issue not found");
 
   const LANGGRAPH_URL =
     process.env.LANGGRAPH_URL || "http://127.0.0.1:2024";
@@ -16,9 +19,15 @@ export const generateHabitsForFamilyMember: NonNullable<MutationResolvers['gener
     body: JSON.stringify({
       assistant_id: "habits",
       input: {
-        family_member_id: familyMemberId,
+        family_member_id: issue.familyMemberId,
         user_email: userEmail,
         count,
+        issue_id: issueId,
+        issue_title: issue.title,
+        issue_description: issue.description,
+        issue_category: issue.category,
+        issue_severity: issue.severity,
+        issue_recommendations: issue.recommendations,
       },
     }),
   });
@@ -34,8 +43,7 @@ export const generateHabitsForFamilyMember: NonNullable<MutationResolvers['gener
     throw new Error(result.error);
   }
 
-  // Fetch the newly created habits for this family member
-  const habits = await db.listHabits(userEmail, "active", familyMemberId);
+  const habits = await db.listHabits(userEmail, "active", issue.familyMemberId);
   const today = new Date().toISOString().slice(0, 10);
   const habitsWithLogs = await Promise.all(
     habits.map(async (h) => {
@@ -52,7 +60,7 @@ export const generateHabitsForFamilyMember: NonNullable<MutationResolvers['gener
 
   return {
     success: true,
-    message: `Generated ${result.habits?.length ?? 0} habits for family member`,
+    message: `Generated ${result.habits?.length ?? 0} habits from issue "${issue.title}"`,
     count: result.habits?.length ?? habitsWithLogs.length,
     habits: habitsWithLogs,
   };

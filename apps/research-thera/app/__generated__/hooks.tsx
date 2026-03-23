@@ -249,8 +249,10 @@ export type CreateGoalInput = {
 
 export type CreateHabitInput = {
   description?: InputMaybe<Scalars['String']['input']>;
+  familyMemberId?: InputMaybe<Scalars['Int']['input']>;
   frequency?: InputMaybe<HabitFrequency>;
   goalId?: InputMaybe<Scalars['Int']['input']>;
+  issueId?: InputMaybe<Scalars['Int']['input']>;
   targetCount?: InputMaybe<Scalars['Int']['input']>;
   title: Scalars['String']['input'];
 };
@@ -563,6 +565,14 @@ export type GenerateDeepAnalysisResult = {
   success: Scalars['Boolean']['output'];
 };
 
+export type GenerateHabitsResult = {
+  __typename?: 'GenerateHabitsResult';
+  count?: Maybe<Scalars['Int']['output']>;
+  habits?: Maybe<Array<Habit>>;
+  message?: Maybe<Scalars['String']['output']>;
+  success: Scalars['Boolean']['output'];
+};
+
 export type GenerateLongFormTextResult = {
   __typename?: 'GenerateLongFormTextResult';
   audioUrl?: Maybe<Scalars['String']['output']>;
@@ -672,9 +682,11 @@ export type Habit = {
   __typename?: 'Habit';
   createdAt: Scalars['String']['output'];
   description?: Maybe<Scalars['String']['output']>;
+  familyMemberId?: Maybe<Scalars['Int']['output']>;
   frequency: HabitFrequency;
   goalId?: Maybe<Scalars['Int']['output']>;
   id: Scalars['Int']['output'];
+  issueId?: Maybe<Scalars['Int']['output']>;
   logs: Array<HabitLog>;
   status: HabitStatus;
   targetCount: Scalars['Int']['output'];
@@ -830,6 +842,8 @@ export type Mutation = {
   extractContactFeedbackIssues: ContactFeedback;
   generateAudio: GenerateAudioResult;
   generateDeepIssueAnalysis: GenerateDeepAnalysisResult;
+  generateHabitsForFamilyMember: GenerateHabitsResult;
+  generateHabitsFromIssue: GenerateHabitsResult;
   generateLongFormText: GenerateLongFormTextResult;
   generateOpenAIAudio: GenerateOpenAiAudioResult;
   generateParentAdvice: GenerateParentAdviceResult;
@@ -1055,6 +1069,18 @@ export type MutationGenerateAudioArgs = {
 export type MutationGenerateDeepIssueAnalysisArgs = {
   familyMemberId: Scalars['Int']['input'];
   triggerIssueId?: InputMaybe<Scalars['Int']['input']>;
+};
+
+
+export type MutationGenerateHabitsForFamilyMemberArgs = {
+  count?: InputMaybe<Scalars['Int']['input']>;
+  familyMemberId: Scalars['Int']['input'];
+};
+
+
+export type MutationGenerateHabitsFromIssueArgs = {
+  count?: InputMaybe<Scalars['Int']['input']>;
+  issueId: Scalars['Int']['input'];
 };
 
 
@@ -1520,6 +1546,7 @@ export type QueryHabitArgs = {
 
 
 export type QueryHabitsArgs = {
+  familyMemberId?: InputMaybe<Scalars['Int']['input']>;
   status?: InputMaybe<Scalars['String']['input']>;
 };
 
@@ -2181,6 +2208,22 @@ export type GenerateDeepIssueAnalysisMutationVariables = Exact<{
 
 export type GenerateDeepIssueAnalysisMutation = { __typename?: 'Mutation', generateDeepIssueAnalysis: { __typename?: 'GenerateDeepAnalysisResult', success: boolean, message?: string | null, jobId?: string | null } };
 
+export type GenerateHabitsForFamilyMemberMutationVariables = Exact<{
+  familyMemberId: Scalars['Int']['input'];
+  count?: InputMaybe<Scalars['Int']['input']>;
+}>;
+
+
+export type GenerateHabitsForFamilyMemberMutation = { __typename?: 'Mutation', generateHabitsForFamilyMember: { __typename?: 'GenerateHabitsResult', success: boolean, message?: string | null, count?: number | null, habits?: Array<{ __typename?: 'Habit', id: number, title: string, description?: string | null, frequency: HabitFrequency, targetCount: number, status: HabitStatus, familyMemberId?: number | null, createdAt: string }> | null } };
+
+export type GenerateHabitsFromIssueMutationVariables = Exact<{
+  issueId: Scalars['Int']['input'];
+  count?: InputMaybe<Scalars['Int']['input']>;
+}>;
+
+
+export type GenerateHabitsFromIssueMutation = { __typename?: 'Mutation', generateHabitsFromIssue: { __typename?: 'GenerateHabitsResult', success: boolean, message?: string | null, count?: number | null, habits?: Array<{ __typename?: 'Habit', id: number, title: string, description?: string | null, frequency: HabitFrequency, targetCount: number, status: HabitStatus, familyMemberId?: number | null, createdAt: string }> | null } };
+
 export type GenerateLongFormTextMutationVariables = Exact<{
   goalId?: InputMaybe<Scalars['Int']['input']>;
   issueId?: InputMaybe<Scalars['Int']['input']>;
@@ -2346,10 +2389,11 @@ export type GetGoalsQuery = { __typename?: 'Query', goals: Array<{ __typename?: 
 
 export type GetHabitsQueryVariables = Exact<{
   status?: InputMaybe<Scalars['String']['input']>;
+  familyMemberId?: InputMaybe<Scalars['Int']['input']>;
 }>;
 
 
-export type GetHabitsQuery = { __typename?: 'Query', habits: Array<{ __typename?: 'Habit', id: number, title: string, description?: string | null, frequency: HabitFrequency, targetCount: number, status: HabitStatus, goalId?: number | null, createdAt: string, updatedAt: string, todayLog?: { __typename?: 'HabitLog', id: number, loggedDate: string, count: number } | null }> };
+export type GetHabitsQuery = { __typename?: 'Query', habits: Array<{ __typename?: 'Habit', id: number, title: string, description?: string | null, frequency: HabitFrequency, targetCount: number, status: HabitStatus, goalId?: number | null, familyMemberId?: number | null, createdAt: string, updatedAt: string, todayLog?: { __typename?: 'HabitLog', id: number, loggedDate: string, count: number } | null }> };
 
 export type GetIssueQueryVariables = Exact<{
   id: Scalars['Int']['input'];
@@ -4325,6 +4369,98 @@ export function useGenerateDeepIssueAnalysisMutation(baseOptions?: Apollo.Mutati
 export type GenerateDeepIssueAnalysisMutationHookResult = ReturnType<typeof useGenerateDeepIssueAnalysisMutation>;
 export type GenerateDeepIssueAnalysisMutationResult = Apollo.MutationResult<GenerateDeepIssueAnalysisMutation>;
 export type GenerateDeepIssueAnalysisMutationOptions = Apollo.BaseMutationOptions<GenerateDeepIssueAnalysisMutation, GenerateDeepIssueAnalysisMutationVariables>;
+export const GenerateHabitsForFamilyMemberDocument = gql`
+    mutation GenerateHabitsForFamilyMember($familyMemberId: Int!, $count: Int) {
+  generateHabitsForFamilyMember(familyMemberId: $familyMemberId, count: $count) {
+    success
+    message
+    count
+    habits {
+      id
+      title
+      description
+      frequency
+      targetCount
+      status
+      familyMemberId
+      createdAt
+    }
+  }
+}
+    `;
+export type GenerateHabitsForFamilyMemberMutationFn = Apollo.MutationFunction<GenerateHabitsForFamilyMemberMutation, GenerateHabitsForFamilyMemberMutationVariables>;
+
+/**
+ * __useGenerateHabitsForFamilyMemberMutation__
+ *
+ * To run a mutation, you first call `useGenerateHabitsForFamilyMemberMutation` within a React component and pass it any options that fit your needs.
+ * When your component renders, `useGenerateHabitsForFamilyMemberMutation` returns a tuple that includes:
+ * - A mutate function that you can call at any time to execute the mutation
+ * - An object with fields that represent the current status of the mutation's execution
+ *
+ * @param baseOptions options that will be passed into the mutation, supported options are listed on: https://www.apollographql.com/docs/react/api/react-hooks/#options-2;
+ *
+ * @example
+ * const [generateHabitsForFamilyMemberMutation, { data, loading, error }] = useGenerateHabitsForFamilyMemberMutation({
+ *   variables: {
+ *      familyMemberId: // value for 'familyMemberId'
+ *      count: // value for 'count'
+ *   },
+ * });
+ */
+export function useGenerateHabitsForFamilyMemberMutation(baseOptions?: Apollo.MutationHookOptions<GenerateHabitsForFamilyMemberMutation, GenerateHabitsForFamilyMemberMutationVariables>) {
+        const options = {...defaultOptions, ...baseOptions}
+        return Apollo.useMutation<GenerateHabitsForFamilyMemberMutation, GenerateHabitsForFamilyMemberMutationVariables>(GenerateHabitsForFamilyMemberDocument, options);
+      }
+export type GenerateHabitsForFamilyMemberMutationHookResult = ReturnType<typeof useGenerateHabitsForFamilyMemberMutation>;
+export type GenerateHabitsForFamilyMemberMutationResult = Apollo.MutationResult<GenerateHabitsForFamilyMemberMutation>;
+export type GenerateHabitsForFamilyMemberMutationOptions = Apollo.BaseMutationOptions<GenerateHabitsForFamilyMemberMutation, GenerateHabitsForFamilyMemberMutationVariables>;
+export const GenerateHabitsFromIssueDocument = gql`
+    mutation GenerateHabitsFromIssue($issueId: Int!, $count: Int) {
+  generateHabitsFromIssue(issueId: $issueId, count: $count) {
+    success
+    message
+    count
+    habits {
+      id
+      title
+      description
+      frequency
+      targetCount
+      status
+      familyMemberId
+      createdAt
+    }
+  }
+}
+    `;
+export type GenerateHabitsFromIssueMutationFn = Apollo.MutationFunction<GenerateHabitsFromIssueMutation, GenerateHabitsFromIssueMutationVariables>;
+
+/**
+ * __useGenerateHabitsFromIssueMutation__
+ *
+ * To run a mutation, you first call `useGenerateHabitsFromIssueMutation` within a React component and pass it any options that fit your needs.
+ * When your component renders, `useGenerateHabitsFromIssueMutation` returns a tuple that includes:
+ * - A mutate function that you can call at any time to execute the mutation
+ * - An object with fields that represent the current status of the mutation's execution
+ *
+ * @param baseOptions options that will be passed into the mutation, supported options are listed on: https://www.apollographql.com/docs/react/api/react-hooks/#options-2;
+ *
+ * @example
+ * const [generateHabitsFromIssueMutation, { data, loading, error }] = useGenerateHabitsFromIssueMutation({
+ *   variables: {
+ *      issueId: // value for 'issueId'
+ *      count: // value for 'count'
+ *   },
+ * });
+ */
+export function useGenerateHabitsFromIssueMutation(baseOptions?: Apollo.MutationHookOptions<GenerateHabitsFromIssueMutation, GenerateHabitsFromIssueMutationVariables>) {
+        const options = {...defaultOptions, ...baseOptions}
+        return Apollo.useMutation<GenerateHabitsFromIssueMutation, GenerateHabitsFromIssueMutationVariables>(GenerateHabitsFromIssueDocument, options);
+      }
+export type GenerateHabitsFromIssueMutationHookResult = ReturnType<typeof useGenerateHabitsFromIssueMutation>;
+export type GenerateHabitsFromIssueMutationResult = Apollo.MutationResult<GenerateHabitsFromIssueMutation>;
+export type GenerateHabitsFromIssueMutationOptions = Apollo.BaseMutationOptions<GenerateHabitsFromIssueMutation, GenerateHabitsFromIssueMutationVariables>;
 export const GenerateLongFormTextDocument = gql`
     mutation GenerateLongFormText($goalId: Int, $issueId: Int, $feedbackId: Int, $familyMemberId: Int, $userContext: String, $language: String, $minutes: Int) {
   generateLongFormText(
@@ -5789,8 +5925,8 @@ export type GetGoalsLazyQueryHookResult = ReturnType<typeof useGetGoalsLazyQuery
 export type GetGoalsSuspenseQueryHookResult = ReturnType<typeof useGetGoalsSuspenseQuery>;
 export type GetGoalsQueryResult = Apollo.QueryResult<GetGoalsQuery, GetGoalsQueryVariables>;
 export const GetHabitsDocument = gql`
-    query GetHabits($status: String) {
-  habits(status: $status) {
+    query GetHabits($status: String, $familyMemberId: Int) {
+  habits(status: $status, familyMemberId: $familyMemberId) {
     id
     title
     description
@@ -5798,6 +5934,7 @@ export const GetHabitsDocument = gql`
     targetCount
     status
     goalId
+    familyMemberId
     createdAt
     updatedAt
     todayLog {
@@ -5822,6 +5959,7 @@ export const GetHabitsDocument = gql`
  * const { data, loading, error } = useGetHabitsQuery({
  *   variables: {
  *      status: // value for 'status'
+ *      familyMemberId: // value for 'familyMemberId'
  *   },
  * });
  */

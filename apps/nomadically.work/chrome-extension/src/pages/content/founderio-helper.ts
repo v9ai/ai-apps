@@ -1,4 +1,4 @@
-console.log("Founderio scraper content script loaded:", window.location.href);
+// Founderio job scraper
 
 function isFounderioJobsPage(): boolean {
   try {
@@ -233,9 +233,9 @@ async function clickFounderioNextPage(): Promise<boolean> {
   return true;
 }
 
-// Set up message listener for the content script
+// Set up message listener — only on Founderio pages
 chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
-  console.log("[Founderio Helper] Message received:", message);
+  if (!isFounderioJobsPage()) return false;
 
   if (message.action === "extractJobs") {
     const jobs = extractFounderioJobData();
@@ -269,4 +269,3 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
 (window as any).getFounderioPaginationInfo = getFounderioPaginationInfo;
 (window as any).clickFounderioNextPage = clickFounderioNextPage;
 
-console.log("[Founderio Helper] Content script ready");

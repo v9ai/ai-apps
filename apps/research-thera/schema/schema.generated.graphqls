@@ -217,8 +217,10 @@ input CreateGoalInput {
 
 input CreateHabitInput {
   description: String
+  familyMemberId: Int
   frequency: HabitFrequency
   goalId: Int
+  issueId: Int
   targetCount: Int
   title: String!
 }
@@ -501,6 +503,13 @@ type GenerateDeepAnalysisResult {
   success: Boolean!
 }
 
+type GenerateHabitsResult {
+  count: Int
+  habits: [Habit!]
+  message: String
+  success: Boolean!
+}
+
 type GenerateLongFormTextResult {
   audioUrl: String
   evals: String
@@ -602,9 +611,11 @@ type Goal {
 type Habit {
   createdAt: String!
   description: String
+  familyMemberId: Int
   frequency: HabitFrequency!
   goalId: Int
   id: Int!
+  issueId: Int
   logs: [HabitLog!]!
   status: HabitStatus!
   targetCount: Int!
@@ -753,6 +764,8 @@ type Mutation {
   extractContactFeedbackIssues(id: Int!): ContactFeedback!
   generateAudio(goalId: Int!, language: String, storyId: Int, text: String, voice: String): GenerateAudioResult!
   generateDeepIssueAnalysis(familyMemberId: Int!, triggerIssueId: Int): GenerateDeepAnalysisResult!
+  generateHabitsForFamilyMember(count: Int, familyMemberId: Int!): GenerateHabitsResult!
+  generateHabitsFromIssue(count: Int, issueId: Int!): GenerateHabitsResult!
   generateLongFormText(familyMemberId: Int, feedbackId: Int, goalId: Int, issueId: Int, language: String, minutes: Int, userContext: String): GenerateLongFormTextResult!
   generateOpenAIAudio(input: GenerateOpenAIAudioInput!): GenerateOpenAIAudioResult!
   generateParentAdvice(goalId: Int!, language: String): GenerateParentAdviceResult!
@@ -948,7 +961,7 @@ type Query {
   goal(id: Int, slug: String): Goal
   goals(familyMemberId: Int, status: String): [Goal!]!
   habit(id: Int!): Habit
-  habits(status: String): [Habit!]!
+  habits(familyMemberId: Int, status: String): [Habit!]!
   issue(id: Int!): Issue
   issues(familyMemberId: Int!, feedbackId: Int): [Issue!]!
   journalEntries(familyMemberId: Int, fromDate: String, goalId: Int, mood: String, toDate: String): [JournalEntry!]!

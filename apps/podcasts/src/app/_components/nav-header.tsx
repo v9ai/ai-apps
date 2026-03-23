@@ -124,7 +124,7 @@ export default function NavHeader({
             className={css({
               display: 'flex',
               alignItems: 'center',
-              gap: { base: '2', md: '3' },
+              gap: { base: '2', sm: '2.5', md: '3' },
               h: 'full',
             })}
           >
@@ -263,7 +263,7 @@ export default function NavHeader({
                       h: '2px',
                       w: '18px',
                       rounded: 'full',
-                      bg: '#E0E0E6',
+                      bg: 'ui.heading',
                       transition: 'all',
                       transitionDuration: '300ms',
                       transitionTimingFunction: 'ease-in-out',
@@ -280,7 +280,7 @@ export default function NavHeader({
                       h: '2px',
                       w: '18px',
                       rounded: 'full',
-                      bg: '#E0E0E6',
+                      bg: 'ui.heading',
                       transition: 'all',
                       transitionDuration: '300ms',
                       transitionTimingFunction: 'ease-in-out',
@@ -297,7 +297,7 @@ export default function NavHeader({
                       h: '2px',
                       w: '18px',
                       rounded: 'full',
-                      bg: '#E0E0E6',
+                      bg: 'ui.heading',
                       transition: 'all',
                       transitionDuration: '300ms',
                       transitionTimingFunction: 'ease-in-out',

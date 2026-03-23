@@ -13,6 +13,7 @@ export const createHabit: NonNullable<MutationResolvers['createHabit']> = async 
   const id = await db.createHabit({
     userId: userEmail,
     goalId: input.goalId ?? null,
+    familyMemberId: input.familyMemberId ?? null,
     title: input.title,
     description: input.description ?? null,
     frequency: input.frequency?.toLowerCase() ?? "daily",

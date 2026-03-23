@@ -7,6 +7,7 @@ type Habit {
   userId: String!
   goalId: Int
   familyMemberId: Int
+  issueId: Int
   title: String!
   description: String
   frequency: HabitFrequency!
@@ -42,6 +43,7 @@ enum HabitStatus {
 input CreateHabitInput {
   goalId: Int
   familyMemberId: Int
+  issueId: Int
   title: String!
   description: String
   frequency: HabitFrequency
@@ -257,6 +259,7 @@ type Mutation {
   logHabit(habitId: Int!, loggedDate: String!, count: Int, notes: String): HabitLog!
   deleteHabitLog(id: Int!): Boolean!
   generateHabitsForFamilyMember(familyMemberId: Int!, count: Int): GenerateHabitsResult!
+  generateHabitsFromIssue(issueId: Int!, count: Int): GenerateHabitsResult!
 }
 
 type Subscription {

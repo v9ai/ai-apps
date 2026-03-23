@@ -1,4 +1,4 @@
-console.log("[Wellfound Helper] Content script loaded:", window.location.href);
+// Wellfound job scraper
 
 function isWellfoundJobsPage(): boolean {
   try {
@@ -350,43 +350,4 @@ Only include jobs that are good matches. If no jobs match well, return an empty 
   isWellfoundPage: isWellfoundJobsPage,
 };
 
-console.log("[Wellfound Helper] Functions exposed on window.wellfoundHelper");
-
-// Also inject into the page's main world for executeScript access
-const scriptContent = `
-(function() {
-  ${isWellfoundJobsPage.toString()}
-  ${extractWellfoundJobs.toString()}
-  ${clickLearnMoreButton.toString()}
-  ${scrollDown.toString()}
-  ${clickJobLink.toString()}
-  ${analyzeJobsWithDeepSeek.toString()}
-  
-  window.wellfoundHelper = {
-    extractJobs: extractWellfoundJobs,
-    clickLearnMore: clickLearnMoreButton,
-    scrollDown: scrollDown,
-    clickJobLink: clickJobLink,
-    analyzeWithDeepSeek: analyzeJobsWithDeepSeek,
-    isWellfoundPage: isWellfoundJobsPage,
-  };
-  console.log("[Wellfound Helper] Injected into page main world");
-})();
-`;
-
-const script = document.createElement("script");
-script.id = "wellfound-helper-script";
-script.textContent = scriptContent;
-
-// Wait for DOM to be ready before injecting
-if (document.readyState === "loading") {
-  document.addEventListener("DOMContentLoaded", () => {
-    (document.head || document.documentElement).appendChild(script);
-    script.remove();
-    console.log("[Wellfound Helper] Script injected after DOM loaded");
-  });
-} else {
-  (document.head || document.documentElement).appendChild(script);
-  script.remove();
-  console.log("[Wellfound Helper] Script injected immediately");
-}
+// Functions available via window.wellfoundHelper in content script context
