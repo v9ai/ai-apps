@@ -36,7 +36,7 @@ COUNT=$(cat "$COUNTER_FILE")
 
 # --- Hard limit ---
 if [ "$COUNT" -ge "$MAX_ITERATIONS" ]; then
-    rm -f "$COUNTER_FILE" "$TASK_FILE"
+    rm -f "$COUNTER_FILE" "$TASK_FILE" "$ITER_DIR/session.txt"
     echo "Iterate: complete — reached $MAX_ITERATIONS iterations." >&2
     exit 0
 fi
@@ -141,7 +141,7 @@ fi
 if [ "$SHOULD_CONTINUE" = false ]; then
     STOP_REASON=$(echo "$EVAL_RESULT" | jq -r '.stop_reason // "evaluation threshold"' 2>/dev/null) || STOP_REASON="evaluation threshold"
     echo "Iterate: stopped — ${STOP_REASON}" >&2
-    rm -f "$COUNTER_FILE" "$TASK_FILE"
+    rm -f "$COUNTER_FILE" "$TASK_FILE" "$ITER_DIR/session.txt"
     exit 0
 fi
 

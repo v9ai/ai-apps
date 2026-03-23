@@ -34,14 +34,14 @@ if [ "$STATUS" = true ]; then
     echo "Iterate: ${CURRENT}/${MAX} — ${TASK_NAME}"
     echo "Session: ${SESSION_OWNER:0:8}…"
     if [ -f "$ITER_DIR/scores.json" ]; then
-        python3.12 -c "
+        python3.12 - "$ITER_DIR/scores.json" 2>/dev/null <<'PYEOF' || true
 import json, sys
-scores = json.load(open('$ITER_DIR/scores.json'))
+scores = json.load(open(sys.argv[1]))
 for i, s in enumerate(scores):
     tc = s.get('Task Completion', {}).get('score', '?')
     pr = s.get('Incremental Progress', {}).get('score', '?')
     print(f'  iter {i+1}: completion={tc} progress={pr}')
-" 2>/dev/null || true
+PYEOF
     fi
     exit 0
 fi
@@ -52,7 +52,10 @@ if [ -z "$TASK" ]; then
     exit 1
 fi
 
-python3.12 -c "import chromadb" 2>/dev/null || python3.12 -m pip install chromadb -q
+python3.12 -c "import chromadb" 2>/dev/null || {
+    echo "Installing chromadb…"
+    python3.12 -m pip install chromadb -q
+}
 
 rm -r "$ITER_DIR" 2>/dev/null || true
 mkdir -p "$ITER_DIR"
