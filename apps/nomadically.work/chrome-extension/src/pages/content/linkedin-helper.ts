@@ -81,8 +81,7 @@ function createBlockButton(companyName: string): HTMLButtonElement {
         }
         if (response?.success) {
           blockedCompaniesSet.add(companyName.toLowerCase());
-          btn.textContent = "Blocked";
-          btn.style.backgroundColor = "#6b7280";
+          markAllButtonsBlocked(companyName);
           dismissJobCard(btn);
         } else {
           console.error("[Nomad] Block failed:", response?.error);
