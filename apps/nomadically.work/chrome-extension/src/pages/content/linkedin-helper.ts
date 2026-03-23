@@ -1,7 +1,97 @@
-// LinkedIn Job Salary Extractor
-// Automatically clicks on salary information for job listings
+// LinkedIn Job Helper — salary extraction + Block Company button
 
 console.log("LinkedIn Job Helper Extension loaded");
+
+// ── Block Company Button ──────────────────────────────────────────────
+
+const BLOCK_BTN_ATTR = "data-nomad-block-btn";
+
+function createBlockButton(companyName: string): HTMLButtonElement {
+  const btn = document.createElement("button");
+  btn.setAttribute(BLOCK_BTN_ATTR, "true");
+  btn.textContent = "Block Company";
+  btn.title = `Block ${companyName}`;
+  Object.assign(btn.style, {
+    marginLeft: "8px",
+    padding: "2px 8px",
+    fontSize: "11px",
+    fontWeight: "600",
+    fontFamily: "system-ui, sans-serif",
+    color: "#fff",
+    backgroundColor: "#dc2626",
+    border: "none",
+    borderRadius: "4px",
+    cursor: "pointer",
+    lineHeight: "18px",
+    verticalAlign: "middle",
+    zIndex: "9999",
+    position: "relative",
+  });
+  btn.addEventListener("mouseenter", () => {
+    btn.style.backgroundColor = "#b91c1c";
+  });
+  btn.addEventListener("mouseleave", () => {
+    btn.style.backgroundColor = "#dc2626";
+  });
+  btn.addEventListener("click", (e) => {
+    e.preventDefault();
+    e.stopPropagation();
+    // TODO: wire to GraphQL mutation
+    console.log(`[Nomad] Block company: "${companyName}"`);
+    btn.textContent = "Blocked";
+    btn.style.backgroundColor = "#6b7280";
+    btn.disabled = true;
+  });
+  return btn;
+}
+
+function injectBlockButtons() {
+  // ── Logged-in view: job cards ──
+  document.querySelectorAll(".job-card-container").forEach((card) => {
+    if (card.querySelector(`[${BLOCK_BTN_ATTR}]`)) return;
+    const companyEl = card.querySelector(
+      ".artdeco-entity-lockup__subtitle, .job-card-container__primary-description",
+    );
+    if (!companyEl) return;
+    const companyName = companyEl.textContent?.trim() || "Unknown";
+    companyEl.appendChild(createBlockButton(companyName));
+  });
+
+  // ── Logged-in view: detail panel top card ──
+  const detailCompany = document.querySelector(
+    ".job-details-jobs-unified-top-card__company-name",
+  );
+  if (detailCompany && !detailCompany.querySelector(`[${BLOCK_BTN_ATTR}]`)) {
+    const name = detailCompany.textContent?.trim() || "Unknown";
+    detailCompany.appendChild(createBlockButton(name));
+  }
+
+  // ── Public view: job cards ──
+  document.querySelectorAll(".base-card.job-search-card").forEach((card) => {
+    if (card.querySelector(`[${BLOCK_BTN_ATTR}]`)) return;
+    const companyEl = card.querySelector(
+      "h4.base-search-card__subtitle",
+    );
+    if (!companyEl) return;
+    const companyName = companyEl.textContent?.trim() || "Unknown";
+    companyEl.appendChild(createBlockButton(companyName));
+  });
+}
+
+function observeBlockButtons() {
+  if (!window.location.hostname.includes("linkedin.com")) return;
+
+  // Initial injection (delayed for page load)
+  setTimeout(injectBlockButtons, 1500);
+
+  // Re-inject on DOM changes (job list scroll, detail panel switch)
+  const obs = new MutationObserver(() => {
+    injectBlockButtons();
+  });
+  obs.observe(document.body, { childList: true, subtree: true });
+}
+
+observeBlockButtons();
 
 // Wait for the page to be fully loaded
 function waitForElement(selector: string, timeout = 5000): Promise<Element> {

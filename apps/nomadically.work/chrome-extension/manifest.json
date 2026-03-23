@@ -33,7 +33,8 @@
   "host_permissions": [
     "http://localhost:3000/*",
     "https://*.google.com/*",
-    "https://*.wellfound.com/*"
+    "https://*.wellfound.com/*",
+    "https://*.linkedin.com/*"
   ],
   "side_panel": {
     "default_path": "src/pages/popup/index.html"
