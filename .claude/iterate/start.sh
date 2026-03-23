@@ -9,7 +9,14 @@ TASK=""
 
 while [[ $# -gt 0 ]]; do
     case $1 in
-        --max) MAX_ITERATIONS="$2"; shift 2 ;;
+        --max)
+            if [[ "$2" =~ ^[0-9]+$ ]]; then
+                MAX_ITERATIONS="$2"
+            else
+                echo "Error: --max requires a number, got '$2'" >&2
+                exit 1
+            fi
+            shift 2 ;;
         --reset) RESET=true; shift ;;
         --status) STATUS=true; shift ;;
         *) TASK="$1"; shift ;;

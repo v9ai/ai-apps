@@ -12,7 +12,7 @@
       "32": "icon-32.png"
     }
   },
-"icons": {
+  "icons": {
     "128": "icon-128.png"
   },
   "background": {
@@ -22,7 +22,6 @@
   "permissions": [
     "activeTab",
     "scripting",
-    "sidePanel",
     "storage",
     "tabs",
     "cookies"
@@ -30,16 +29,28 @@
   "host_permissions": [
     "http://localhost:3000/*",
     "http://localhost:3004/*",
+    "https://*.linkedin.com/*",
     "https://*.google.com/*",
+    "https://*.ashbyhq.com/*",
+    "https://*.greenhouse.io/*",
+    "https://*.lever.co/*",
     "https://*.wellfound.com/*",
-    "https://*.linkedin.com/*"
+    "https://*.workable.com/*",
+    "https://www.founderio.com/*"
   ],
-  "side_panel": {
-    "default_path": "src/pages/popup/index.html"
-  },
   "content_scripts": [
     {
-      "matches": ["http://*/*", "https://*/*"],
+      "matches": [
+        "https://*.linkedin.com/jobs/*",
+        "https://*.google.com/search*",
+        "https://*.ashbyhq.com/*",
+        "https://*.greenhouse.io/*",
+        "https://*.lever.co/*",
+        "https://*.wellfound.com/jobs*",
+        "https://www.founderio.com/jobs*",
+        "https://www.founderio.com/job/*",
+        "https://*.workable.com/*"
+      ],
       "js": ["src/pages/content/index.tsx"],
       "run_at": "document_idle"
     }

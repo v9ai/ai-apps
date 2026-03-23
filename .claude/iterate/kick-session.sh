@@ -14,6 +14,9 @@ TASK_FILE="$ITER_DIR/task.txt"
 SCORES_FILE="$ITER_DIR/scores.json"
 SCRIPTS_DIR="$(cd "$(dirname "$0")" && pwd)"
 
+# --- Read hook input (must drain stdin before any exit) ---
+INPUT=$(cat)
+
 # --- No task file = not iterating ---
 if [ ! -f "$TASK_FILE" ]; then
     exit 0
@@ -23,6 +26,8 @@ mkdir -p "$ITER_DIR"
 TASK=$(cat "$TASK_FILE")
 ITER_CWD=$(cat "$ITER_DIR/cwd.txt" 2>/dev/null || echo "")
 MAX_ITERATIONS=$(cat "$ITER_DIR/max.txt" 2>/dev/null || echo "10")
+# Guard against non-numeric max
+[[ "$MAX_ITERATIONS" =~ ^[0-9]+$ ]] || MAX_ITERATIONS=10
 
 export CLAUDE_ITERATE_CHROMA_PATH="$ITER_DIR/chroma"
 export CLAUDE_ITERATE_CWD="$ITER_CWD"
@@ -33,9 +38,6 @@ if [ ! -f "$COUNTER_FILE" ]; then
 fi
 
 COUNT=$(cat "$COUNTER_FILE")
-
-# --- Read hook input (must drain stdin before any exit) ---
-INPUT=$(cat)
 CWD=$(echo "$INPUT" | jq -r '.cwd')
 SESSION_ID=$(echo "$INPUT" | jq -r '.session_id // empty')
 
@@ -49,8 +51,13 @@ if [ "$COUNT" -ge "$MAX_ITERATIONS" ]; then
     exit 0
 fi
 
-# --- Session isolation: only the session that started iterate should continue ---
+# --- Session isolation ---
 OWNER_SESSION=$(cat "$ITER_DIR/session.txt" 2>/dev/null || echo "")
+# If session.txt is empty (env var wasn't available at start), claim it on first run
+if [ -z "$OWNER_SESSION" ] && [ -n "$SESSION_ID" ]; then
+    echo "$SESSION_ID" > "$ITER_DIR/session.txt"
+    OWNER_SESSION="$SESSION_ID"
+fi
 if [ -n "$OWNER_SESSION" ] && [ -n "$SESSION_ID" ] && [ "$OWNER_SESSION" != "$SESSION_ID" ]; then
     exit 0
 fi
@@ -83,6 +90,28 @@ if [ -f "$ITER_OUTPUT" ] && [ -s "$ITER_OUTPUT" ]; then
         --task "$TASK" \
         --file "$ITER_OUTPUT" \
         >> "$ITER_DIR/debug.log" 2>&1 || true
+fi
+
+# --- Stall detection: if no new code changes for 2+ iterations, stop ---
+if [ "$COUNT" -ge 1 ]; then
+    # Use committed file list (excludes iterate state files) as the change fingerprint
+    CURRENT_DIFF=$(cd "$ITER_CWD" 2>/dev/null && git diff HEAD~1 --name-only --no-color 2>/dev/null | grep -v '^\.claude/' | sort || echo "")
+    PREV_DIFF=$(cat "$ITER_DIR/prev-diff-names.txt" 2>/dev/null || echo "")
+    echo "$CURRENT_DIFF" > "$ITER_DIR/prev-diff-names.txt"
+
+    if [ -n "$CURRENT_DIFF" ] && [ "$CURRENT_DIFF" = "$PREV_DIFF" ]; then
+        STALL_COUNT=$(cat "$ITER_DIR/stall-count.txt" 2>/dev/null || echo "0")
+        STALL_COUNT=$((STALL_COUNT + 1))
+        echo "$STALL_COUNT" > "$ITER_DIR/stall-count.txt"
+        echo "[kick-session] stall=$STALL_COUNT" >> "$ITER_DIR/debug.log" 2>/dev/null || true
+        if [ "$STALL_COUNT" -ge 2 ]; then
+            echo "Iterate: stopped — no new code changes for $STALL_COUNT iterations" >&2
+            rm -f "$COUNTER_FILE" "$TASK_FILE" "$ITER_DIR/session.txt"
+            exit 0
+        fi
+    else
+        echo "0" > "$ITER_DIR/stall-count.txt"
+    fi
 fi
 
 # --- Step 2: Evaluate ---
@@ -120,8 +149,7 @@ PYEOF
         SHOULD_CONTINUE=false
     fi
 
-    # Skip eval/trend feedback if all scores are fallback (0.5)
-    EVAL_METHOD=$(echo "$EVAL_RESULT" | jq -r '.eval_method // "unknown"' 2>/dev/null) || EVAL_METHOD="unknown"
+    # Skip eval/trend feedback if fallback
     IS_FALLBACK=$(echo "$EVAL_RESULT" | jq -r '
         .eval_method == "fallback"
     ' 2>/dev/null) || IS_FALLBACK="false"

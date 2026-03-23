@@ -1,5 +1,5 @@
-query GetHabits($status: String, $familyMemberId: Int) {
-  habits(status: $status, familyMemberId: $familyMemberId) {
+query GetHabit($id: Int!) {
+  habit(id: $id) {
     id
     title
     description
@@ -11,6 +11,14 @@ query GetHabits($status: String, $familyMemberId: Int) {
     issueId
     createdAt
     updatedAt
+    logs {
+      id
+      habitId
+      loggedDate
+      count
+      notes
+      createdAt
+    }
     todayLog {
       id
       loggedDate

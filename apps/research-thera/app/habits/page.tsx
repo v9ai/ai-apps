@@ -21,6 +21,7 @@ import {
   InfoCircledIcon,
 } from "@radix-ui/react-icons";
 import dynamic from "next/dynamic";
+import NextLink from "next/link";
 import {
   useGetHabitsQuery,
   useLogHabitMutation,
@@ -287,7 +288,8 @@ function HabitsListContent() {
             const isComplete = todayCount >= habit.targetCount;
 
             return (
-              <Card key={habit.id}>
+              <NextLink key={habit.id} href={`/habits/${habit.id}`} style={{ textDecoration: "none", color: "inherit" }}>
+              <Card style={{ cursor: "pointer" }}>
                 <Flex direction="column" gap="3" p="4">
                   <Flex justify="between" align="start" gap="3">
                     <Flex direction="column" gap="2" style={{ flex: 1 }}>
@@ -379,6 +381,7 @@ function HabitsListContent() {
                   </Flex>
                 </Flex>
               </Card>
+              </NextLink>
             );
           })}
         </Flex>

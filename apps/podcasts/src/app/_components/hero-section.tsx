@@ -15,6 +15,7 @@ const section = css({
 
 const inner = css({
   pos: "relative",
+  w: "100%",
   maxW: "800px",
   mx: "auto",
   px: { base: "4", sm: "6", md: "8", lg: "10" },

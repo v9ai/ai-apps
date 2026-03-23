@@ -155,8 +155,8 @@ export default function Footer() {
           <div
             className={css({
               display: 'grid',
-              gridTemplateColumns: { base: 'repeat(2, 1fr)', sm: 'repeat(3, auto)' },
-              gap: { base: '8', sm: '16' },
+              gridTemplateColumns: { base: 'repeat(3, 1fr)', sm: 'repeat(3, auto)' },
+              gap: { base: '6', sm: '16' },
             })}
           >
             {/* Explore section */}

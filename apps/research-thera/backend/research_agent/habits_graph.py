@@ -271,7 +271,7 @@ async def generate(state: HabitsState) -> dict:
     count = state.get("count", 5)
 
     try:
-        async with DeepSeekClient(DeepSeekConfig(timeout=60.0)) as client:
+        async with DeepSeekClient(DeepSeekConfig(timeout=120.0)) as client:
             resp = await client.chat(
                 [ChatMessage(role="user", content=prompt)],
                 model="deepseek-chat",

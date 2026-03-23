@@ -2387,13 +2387,20 @@ export type GetGoalsQueryVariables = Exact<{
 
 export type GetGoalsQuery = { __typename?: 'Query', goals: Array<{ __typename?: 'Goal', id: number, title: string, description?: string | null, status: string, familyMemberId?: number | null, createdBy: string, parentGoalId?: number | null, createdAt: string, updatedAt: string, familyMember?: { __typename?: 'FamilyMember', id: number, firstName: string, name?: string | null, relationship?: string | null } | null, notes: Array<{ __typename?: 'Note', id: number, slug?: string | null, noteType?: string | null, tags?: Array<string> | null, createdAt: string }> }> };
 
+export type GetHabitQueryVariables = Exact<{
+  id: Scalars['Int']['input'];
+}>;
+
+
+export type GetHabitQuery = { __typename?: 'Query', habit?: { __typename?: 'Habit', id: number, title: string, description?: string | null, frequency: HabitFrequency, targetCount: number, status: HabitStatus, goalId?: number | null, familyMemberId?: number | null, issueId?: number | null, createdAt: string, updatedAt: string, logs: Array<{ __typename?: 'HabitLog', id: number, habitId: number, loggedDate: string, count: number, notes?: string | null, createdAt: string }>, todayLog?: { __typename?: 'HabitLog', id: number, loggedDate: string, count: number } | null } | null };
+
 export type GetHabitsQueryVariables = Exact<{
   status?: InputMaybe<Scalars['String']['input']>;
   familyMemberId?: InputMaybe<Scalars['Int']['input']>;
 }>;
 
 
-export type GetHabitsQuery = { __typename?: 'Query', habits: Array<{ __typename?: 'Habit', id: number, title: string, description?: string | null, frequency: HabitFrequency, targetCount: number, status: HabitStatus, goalId?: number | null, familyMemberId?: number | null, createdAt: string, updatedAt: string, todayLog?: { __typename?: 'HabitLog', id: number, loggedDate: string, count: number } | null }> };
+export type GetHabitsQuery = { __typename?: 'Query', habits: Array<{ __typename?: 'Habit', id: number, title: string, description?: string | null, frequency: HabitFrequency, targetCount: number, status: HabitStatus, goalId?: number | null, familyMemberId?: number | null, issueId?: number | null, createdAt: string, updatedAt: string, todayLog?: { __typename?: 'HabitLog', id: number, loggedDate: string, count: number } | null }> };
 
 export type GetIssueQueryVariables = Exact<{
   id: Scalars['Int']['input'];
@@ -5924,6 +5931,72 @@ export type GetGoalsQueryHookResult = ReturnType<typeof useGetGoalsQuery>;
 export type GetGoalsLazyQueryHookResult = ReturnType<typeof useGetGoalsLazyQuery>;
 export type GetGoalsSuspenseQueryHookResult = ReturnType<typeof useGetGoalsSuspenseQuery>;
 export type GetGoalsQueryResult = Apollo.QueryResult<GetGoalsQuery, GetGoalsQueryVariables>;
+export const GetHabitDocument = gql`
+    query GetHabit($id: Int!) {
+  habit(id: $id) {
+    id
+    title
+    description
+    frequency
+    targetCount
+    status
+    goalId
+    familyMemberId
+    issueId
+    createdAt
+    updatedAt
+    logs {
+      id
+      habitId
+      loggedDate
+      count
+      notes
+      createdAt
+    }
+    todayLog {
+      id
+      loggedDate
+      count
+    }
+  }
+}
+    `;
+
+/**
+ * __useGetHabitQuery__
+ *
+ * To run a query within a React component, call `useGetHabitQuery` and pass it any options that fit your needs.
+ * When your component renders, `useGetHabitQuery` returns an object from Apollo Client that contains loading, error, and data properties
+ * you can use to render your UI.
+ *
+ * @param baseOptions options that will be passed into the query, supported options are listed on: https://www.apollographql.com/docs/react/api/react-hooks/#options;
+ *
+ * @example
+ * const { data, loading, error } = useGetHabitQuery({
+ *   variables: {
+ *      id: // value for 'id'
+ *   },
+ * });
+ */
+export function useGetHabitQuery(baseOptions: Apollo.QueryHookOptions<GetHabitQuery, GetHabitQueryVariables> & ({ variables: GetHabitQueryVariables; skip?: boolean; } | { skip: boolean; }) ) {
+        const options = {...defaultOptions, ...baseOptions}
+        return Apollo.useQuery<GetHabitQuery, GetHabitQueryVariables>(GetHabitDocument, options);
+      }
+export function useGetHabitLazyQuery(baseOptions?: Apollo.LazyQueryHookOptions<GetHabitQuery, GetHabitQueryVariables>) {
+          const options = {...defaultOptions, ...baseOptions}
+          return Apollo.useLazyQuery<GetHabitQuery, GetHabitQueryVariables>(GetHabitDocument, options);
+        }
+// @ts-ignore
+export function useGetHabitSuspenseQuery(baseOptions?: Apollo.SuspenseQueryHookOptions<GetHabitQuery, GetHabitQueryVariables>): Apollo.UseSuspenseQueryResult<GetHabitQuery, GetHabitQueryVariables>;
+export function useGetHabitSuspenseQuery(baseOptions?: Apollo.SkipToken | Apollo.SuspenseQueryHookOptions<GetHabitQuery, GetHabitQueryVariables>): Apollo.UseSuspenseQueryResult<GetHabitQuery | undefined, GetHabitQueryVariables>;
+export function useGetHabitSuspenseQuery(baseOptions?: Apollo.SkipToken | Apollo.SuspenseQueryHookOptions<GetHabitQuery, GetHabitQueryVariables>) {
+          const options = baseOptions === Apollo.skipToken ? baseOptions : {...defaultOptions, ...baseOptions}
+          return Apollo.useSuspenseQuery<GetHabitQuery, GetHabitQueryVariables>(GetHabitDocument, options);
+        }
+export type GetHabitQueryHookResult = ReturnType<typeof useGetHabitQuery>;
+export type GetHabitLazyQueryHookResult = ReturnType<typeof useGetHabitLazyQuery>;
+export type GetHabitSuspenseQueryHookResult = ReturnType<typeof useGetHabitSuspenseQuery>;
+export type GetHabitQueryResult = Apollo.QueryResult<GetHabitQuery, GetHabitQueryVariables>;
 export const GetHabitsDocument = gql`
     query GetHabits($status: String, $familyMemberId: Int) {
   habits(status: $status, familyMemberId: $familyMemberId) {
@@ -5935,6 +6008,7 @@ export const GetHabitsDocument = gql`
     status
     goalId
     familyMemberId
+    issueId
     createdAt
     updatedAt
     todayLog {

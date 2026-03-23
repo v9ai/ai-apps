@@ -181,36 +181,8 @@
     "aiProjects": [
       {
         "id": "1",
-        "name": "Nomadically.work",
-        "description": "AI job board aggregator for remote EU roles — agentic classification, hybrid RAG search, eval-driven prompt tuning with 38-case dataset and 80% accuracy threshold. Next.js 16, GraphQL, Neon PostgreSQL, multi-model LLM pipeline.",
-        "githubUrl": "https://github.com/nicolad/nomadically.work",
-        "websiteUrl": "https://nomadically.work",
-        "highlights": [
-          "Multi-LLM routing (Claude, DeepSeek, Workers AI) with dataset evals (38 test cases, 80% accuracy gate), A/B prompt routing, zero-downtime model swaps, cost-optimized multi-tier inference.",
-          "4 specialized agents (SQL query, SQL generation, admin assistant, strategy enforcer) via Mastra, LangGraph, Vercel AI SDK v6 — real-time job classification, skill extraction, EU remote categorization with 20+ edge-case test suite.",
-          "Hybrid RAG search: BM25 lexical + 1024-dim BGE vector embeddings (LlamaIndex) + text-to-SQL converting natural language into parameterized Drizzle ORM expressions.",
-          "Event-driven ingestion from 3 ATS platforms (Greenhouse, Lever, Ashby) via Trigger.dev — retry policies, dead-letter queues, CI/CD pipeline validation.",
-          "GraphQL API (Apollo Server 5) with DataLoader batching, 10+ API routes, TypeScript type safety (Drizzle ORM + GraphQL Codegen), Cloudflare D1 Gateway Worker — 10-100x throughput via batch queries and stale-while-revalidate caching."
-        ]
-      },
-      {
-        "id": "2",
-        "name": "ResearchThera.com",
-        "description": "AI therapeutic journaling — agentic orchestration, 7-source research pipeline, clinical NLP, RAG, voice synthesis, Harbor containerized eval trials for multi-agent non-determinism. Next.js 16, GraphQL, Cloudflare D1/R2.",
-        "githubUrl": "https://github.com/nicolad/research-thera",
-        "websiteUrl": "https://researchthera.com",
-        "highlights": [
-          "Multi-stage agentic workflow (6-20 agents per session): clinical NLP normalization → parallel 7-source ingestion → OpenAlex enrichment (300 candidates) → LLM quality gate → top-20 persistence to D1 + vector store for RAG.",
-          "DeepSeek-as-judge evaluation scorer; 3-threshold gating (relevance 0.75, confidence 0.55, blended 0.72) filtering unsupported clinical claims.",
-          "Prompt versioning with runtime registry, no-deploy updates, distributed tracing, per-model cost tracking, A/B evaluation across LangChain/LangGraph Python workers.",
-          "Serverless TTS microservice: RAG-based content chunking, streaming audio to R2 via Trigger.dev v4 durable tasks.",
-          "Harbor eval harness: containerized trials-at-scale across 6-20 non-deterministic agents, standardized task/grader format mapped to ResearchTask definitions."
-        ]
-      },
-      {
-        "id": "3",
         "name": "Agentic Healthcare",
-        "description": "AI health trajectory platform — blood test marker analysis, risk classification, medication tracking, Braintrust Factuality/Relevance scorers for clinical accuracy. Next.js 16, Supabase, Qwen embeddings.",
+        "description": "AI health trajectory — biomarker analysis, risk classification, Braintrust evals. Next.js 16, Supabase.",
         "githubUrl": "https://github.com/nicolad/agentic-healthcare",
         "websiteUrl": "https://agentic-healthcare.vercel.app",
         "highlights": [
@@ -222,9 +194,37 @@
         ]
       },
       {
+        "id": "2",
+        "name": "Knowledge",
+        "description": "AI engineering learning platform — 55 lessons, knowledge graph, Bayesian tracing, DeepEval evals, LangGraph pipeline. Next.js 15, Neon.",
+        "githubUrl": "https://github.com/nicolad/knowledge",
+        "websiteUrl": "https://agentic-knowledge.vercel.app/",
+        "highlights": [
+          "Knowledge graph with 6 relationship types (prerequisite, related, builds_on, part_of, contrasts_with, applies_to), pgvector cosine similarity search at 1024 dimensions for lesson recommendations across 55 embedded lessons.",
+          "Bayesian knowledge tracing (p_mastery, p_transit, p_slip, p_guess per concept per user), mastery classification (novice → expert), 9 interaction event types with time-on-page and completion analytics.",
+          "DeepEval framework: parametrized tests across 55 articles (Coherence, Factual Grounding, Completeness, Readability at 0.7 threshold), RAG triad evaluation (Faithfulness, Answer Relevancy, Contextual Relevancy), LLM-as-judge consistency, agent task completion, red-team adversarial harness.",
+          "LangGraph editorial pipeline: 6-agent fan-out/fan-in workflow (researcher, SEO, intro-strategist, writer, editor) with multi-round revision loops, DeepSeek R1 reasoning + OpenAI fast models.",
+          "Streaming DeepSeek chat with thread-scoped message persistence, context injection from lesson data, 17-table Drizzle ORM schema with pgvector embeddings, Cloudflare R2 audio storage."
+        ]
+      },
+      {
+        "id": "3",
+        "name": "ResearchThera.com",
+        "description": "AI therapeutic journaling — agentic orchestration, 7-source research pipeline, RAG, Harbor evals. Next.js 16, Cloudflare D1/R2.",
+        "githubUrl": "https://github.com/nicolad/research-thera",
+        "websiteUrl": "https://researchthera.com",
+        "highlights": [
+          "Multi-stage agentic workflow (6-20 agents per session): clinical NLP normalization → parallel 7-source ingestion → OpenAlex enrichment (300 candidates) → LLM quality gate → top-20 persistence to D1 + vector store for RAG.",
+          "DeepSeek-as-judge evaluation scorer; 3-threshold gating (relevance 0.75, confidence 0.55, blended 0.72) filtering unsupported clinical claims.",
+          "Prompt versioning with runtime registry, no-deploy updates, distributed tracing, per-model cost tracking, A/B evaluation across LangChain/LangGraph Python workers.",
+          "Serverless TTS microservice: RAG-based content chunking, streaming audio to R2 via Trigger.dev v4 durable tasks.",
+          "Harbor eval harness: containerized trials-at-scale across 6-20 non-deterministic agents, standardized task/grader format mapped to ResearchTask definitions."
+        ]
+      },
+      {
         "id": "4",
         "name": "Law Adversarial",
-        "description": "Multi-agent adversarial brief stress-tester — Attacker/Defender/Judge debate, citation verification, jurisdiction analysis, tracked-change rewriting, 8-suite Promptfoo eval harness. Next.js 16, Supabase, DeepSeek + Qwen.",
+        "description": "Adversarial brief stress-tester — Attacker/Defender/Judge debate, Promptfoo + DeepTeam red-teaming. Next.js 16, DeepSeek + Qwen.",
         "githubUrl": "https://github.com/nicolad/law-adversarial",
         "websiteUrl": "https://law-adversarial.vercel.app",
         "highlights": [
@@ -232,7 +232,8 @@
           "Citation verification and fabrication detection via DeepSeek R1 extended reasoning with chain-of-thought audit trails.",
           "Jurisdiction-specific precedent hierarchy mapping with specialized expert agent, multi-jurisdiction comparison.",
           "Real-time SSE streaming of round progress with per-agent audit logging and structured action metadata.",
-          "Promptfoo: 8 declarative YAML suites (attacker, defender, judge, citations, jurisdiction, rewriter, red-team, consistency), custom JS assertions, LLM-as-judge rubrics validating structured JSON across all 6 agents."
+          "Promptfoo: 8 declarative YAML suites (attacker, defender, judge, citations, jurisdiction, rewriter, red-team, consistency), custom JS assertions, LLM-as-judge rubrics validating structured JSON across all 6 agents.",
+          "DeepTeam red-teaming: 5 custom legal vulnerabilities (citation hallucination, prompt injection resistance, legal misinformation, analysis completeness, judge bias) tested via 7 attack methods (PromptInjection, ContextPoisoning, CrescendoJailbreaking, GoalRedirection) across the full multi-agent pipeline."
         ]
       }
     ]

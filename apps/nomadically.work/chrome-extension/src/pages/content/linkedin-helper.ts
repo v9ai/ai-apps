@@ -1,19 +1,34 @@
-// LinkedIn Job Helper — salary extraction + Block Company button
-
 // LinkedIn job helper — salary extraction + Block Company button
+
+function isGoogleAshbySearch(): boolean {
+  return (
+    window.location.hostname.includes("google.com") &&
+    window.location.pathname.includes("/search") &&
+    (window.location.search.includes("ashbyhq.com") ||
+      !!document.body.textContent?.includes("jobs.ashbyhq.com"))
+  );
+}
 
 // ── Blocked Companies Cache ───────────────────────────────────────────
 
 const blockedCompaniesSet = new Set<string>();
 
-function loadBlockedCompanies() {
+let blockedCompaniesLoaded = false;
+
+function loadBlockedCompanies(onDone?: () => void) {
   chrome.runtime.sendMessage(
     { action: "getBlockedCompanies" },
     (response) => {
-      if (chrome.runtime.lastError || !response?.success) return;
+      if (chrome.runtime.lastError || !response?.success) {
+        blockedCompaniesLoaded = true;
+        onDone?.();
+        return;
+      }
       for (const c of response.companies) {
         blockedCompaniesSet.add(c.name.toLowerCase());
       }
+      blockedCompaniesLoaded = true;
+      onDone?.();
     },
   );
 }
@@ -35,30 +50,6 @@ function createBlockButton(companyName: string): HTMLButtonElement {
   btn.textContent = alreadyBlocked ? "Blocked" : "Block Company";
   btn.title = alreadyBlocked ? `${companyName} is blocked` : `Block ${companyName}`;
   btn.disabled = alreadyBlocked;
-  Object.assign(btn.style, {
-    marginLeft: "8px",
-    padding: "2px 8px",
-    fontSize: "11px",
-    fontWeight: "600",
-    fontFamily: "system-ui, sans-serif",
-    color: "#fff",
-    backgroundColor: alreadyBlocked ? "#6b7280" : "#dc2626",
-    border: "none",
-    borderRadius: "4px",
-    cursor: alreadyBlocked ? "default" : "pointer",
-    lineHeight: "18px",
-    verticalAlign: "middle",
-    zIndex: "9999",
-    position: "relative",
-  });
-  if (!alreadyBlocked) {
-    btn.addEventListener("mouseenter", () => {
-      btn.style.backgroundColor = "#b91c1c";
-    });
-    btn.addEventListener("mouseleave", () => {
-      btn.style.backgroundColor = "#dc2626";
-    });
-  }
   btn.addEventListener("click", (e) => {
     e.preventDefault();
     e.stopPropagation();
@@ -104,8 +95,6 @@ function markAllButtonsBlocked(companyName: string) {
     const btn = el as HTMLButtonElement;
     if (btn.title.toLowerCase().includes(companyName.toLowerCase())) {
       btn.textContent = "Blocked";
-      btn.style.backgroundColor = "#6b7280";
-      btn.style.cursor = "default";
       btn.disabled = true;
     }
   });
@@ -122,16 +111,52 @@ function dismissJobCard(btn: HTMLElement) {
   }
 }
 
+// ── Auto-Dismiss India-Related Jobs ─────────────────────────────────
+
+const INDIA_LOCATION_PATTERNS = /\b(india|bengaluru|bangalore|mumbai|hyderabad|delhi|chennai|pune|gurugram|gurgaon|noida|kolkata|ahmedabad|jaipur|lucknow|thiruvananthapuram|kochi|coimbatore|indore|nagpur|chandigarh|bhubaneswar|visakhapatnam|mysore|mangalore)\b/i;
+
+function autoDismissIndiaCards() {
+
+  let dismissed = 0;
+  document.querySelectorAll(".job-card-container").forEach((card) => {
+    if (card.getAttribute("data-nomad-dismissed")) return;
+
+    // Check location in first metadata UL
+    const metadataUls = card.querySelectorAll("ul.job-card-container__metadata-wrapper");
+    const locationText = metadataUls[0]?.textContent?.trim() || "";
+
+    // Also check the caption element
+    const captionEl = card.querySelector(".artdeco-entity-lockup__caption");
+    const captionText = captionEl?.textContent?.trim() || "";
+
+    const combined = `${locationText} ${captionText}`;
+    if (!INDIA_LOCATION_PATTERNS.test(combined)) return;
+
+    card.setAttribute("data-nomad-dismissed", "true");
+    const dismissBtn = card.querySelector(
+      'button[aria-label*="Dismiss"], button.job-card-container__action',
+    ) as HTMLButtonElement | null;
+    if (dismissBtn) {
+      dismissBtn.click();
+      dismissed++;
+    }
+  });
+
+  if (dismissed > 0) {
+    console.log(`[Nomad] Auto-dismissed ${dismissed} India-related job(s)`);
+  }
+}
+
 function autoDismissBlockedCards() {
   let dismissed = 0;
   document.querySelectorAll(".job-card-container").forEach((card) => {
+    if (card.getAttribute("data-nomad-dismissed")) return;
     const companyEl = card.querySelector(
       ".artdeco-entity-lockup__subtitle, .job-card-container__primary-description",
     );
     if (!companyEl) return;
     const companyName = companyEl.textContent?.trim() || "";
     if (!isCompanyBlocked(companyName)) return;
-    if (card.getAttribute("data-nomad-dismissed")) return;
     card.setAttribute("data-nomad-dismissed", "true");
     const dismissBtn = card.querySelector(
       'button[aria-label*="Dismiss"], button.job-card-container__action',
@@ -142,15 +167,15 @@ function autoDismissBlockedCards() {
     }
   });
   if (dismissed > 0) {
-    // Scroll down to load more cards, then refresh
-    window.scrollTo({ top: document.body.scrollHeight, behavior: "smooth" });
-    setTimeout(() => window.location.reload(), 2000);
+    console.log(`[Nomad] Auto-dismissed ${dismissed} blocked company job(s)`);
   }
 }
 
 function injectBlockButtons() {
-  // Auto-dismiss blocked company cards
+  // Auto-dismiss blocked company cards and India-related jobs
   autoDismissBlockedCards();
+  autoDismissIndiaCards();
+  clickSalaryMetadata();
 
   // ── Logged-in view: job cards ──
   document.querySelectorAll(".job-card-container").forEach((card) => {
@@ -187,84 +212,36 @@ function injectBlockButtons() {
 function observeBlockButtons() {
   if (!window.location.hostname.includes("linkedin.com")) return;
 
-  // Fetch blocked companies first, then inject buttons
-  loadBlockedCompanies();
-  setTimeout(injectBlockButtons, 1500);
+  // Fetch blocked companies, then inject buttons once loaded
+  loadBlockedCompanies(() => injectBlockButtons());
+  // Fallback: inject after 3s even if fetch hasn't returned
+  setTimeout(() => { if (!blockedCompaniesLoaded) injectBlockButtons(); }, 3000);
 
-  // Re-inject on DOM changes (job list scroll, detail panel switch)
+  // Re-inject on DOM changes (debounced to prevent excessive calls)
+  let debounceTimer: ReturnType<typeof setTimeout> | null = null;
   const obs = new MutationObserver(() => {
-    injectBlockButtons();
+    if (debounceTimer) clearTimeout(debounceTimer);
+    debounceTimer = setTimeout(injectBlockButtons, 300);
   });
   obs.observe(document.body, { childList: true, subtree: true });
 }
 
 observeBlockButtons();
 
-// Wait for the page to be fully loaded
-function waitForElement(selector: string, timeout = 5000): Promise<Element> {
-  return new Promise((resolve, reject) => {
-    const element = document.querySelector(selector);
-    if (element) {
-      resolve(element);
-      return;
-    }
-
-    const observer = new MutationObserver(() => {
-      const element = document.querySelector(selector);
-      if (element) {
-        observer.disconnect();
-        resolve(element);
-      }
-    });
-
-    observer.observe(document.body, {
-      childList: true,
-      subtree: true,
-    });
-
-    setTimeout(() => {
-      observer.disconnect();
-      reject(new Error(`Element ${selector} not found within ${timeout}ms`));
-    }, timeout);
-  });
-}
-
-// Click on the second salary UL for each job
 function clickSalaryMetadata() {
-  // Find all job card containers
-  const jobCards = document.querySelectorAll(".job-card-container");
-
-  console.log(`Found ${jobCards.length} job cards`);
-
-  jobCards.forEach((jobCard, index) => {
-    // Find all UL elements with the specific class within this job card
+  document.querySelectorAll(".job-card-container").forEach((jobCard) => {
     const metadataUls = jobCard.querySelectorAll(
       "ul.job-card-container__metadata-wrapper",
     );
-
-    if (metadataUls.length >= 2) {
-      const salaryUl = metadataUls[1]; // Second UL contains salary info
-      const salaryText = salaryUl.textContent?.trim();
-
-      console.log(`Job ${index + 1} salary:`, salaryText);
-
-      // You can click or extract data here
-      // For now, let's just highlight it
-      (salaryUl as HTMLElement).style.border = "2px solid #0a66c2";
-      (salaryUl as HTMLElement).style.borderRadius = "4px";
-      (salaryUl as HTMLElement).style.padding = "4px";
-
-      // If you want to actually click it:
-      // (salaryUl as HTMLElement).click();
-    }
+    if (metadataUls.length < 2) return;
+    const salaryUl = metadataUls[1] as HTMLElement;
+    if (salaryUl.hasAttribute("data-nomad-salary-highlight")) return;
+    salaryUl.setAttribute("data-nomad-salary-highlight", "true");
   });
 }
 
 // Function to extract job data including salary
 function extractJobData() {
-  console.log("extractJobData called");
-  console.log("Current URL:", window.location.href);
-
   // Detect the page type
   const isLinkedIn = window.location.hostname.includes("linkedin.com");
 
@@ -279,14 +256,8 @@ function extractJobData() {
     (window.location.pathname === "/jobs" ||
       window.location.pathname.startsWith("/job/"));
 
-  // Check if we're on Google search results for Ashby jobs
-  const isGoogleAshbySearch =
-    isGoogleSearch &&
-    (window.location.search.includes("ashbyhq.com") ||
-      document.body.textContent?.includes("jobs.ashbyhq.com"));
-
   const isAshby =
-    isGoogleAshbySearch ||
+    isGoogleAshbySearch() ||
     window.location.hostname.includes("ashbyhq.com") ||
     window.location.hostname.includes(".ashbyhq.com");
 
@@ -294,56 +265,26 @@ function extractJobData() {
     '[data-provides="search-result"]',
   ).length;
 
-  console.log("Is LinkedIn:", isLinkedIn);
-  console.log("Is Google Search:", isGoogleSearch);
-  console.log("Is Founderio:", isFounderio);
-  console.log("Is Google Ashby Search:", isGoogleAshbySearch);
-  console.log("Is Ashby:", isAshby);
-  console.log("Generic jobs count:", genericJobsCount);
-
-  // Handle Google Search pages - delegate to Google Search Helper
-  if (isGoogleSearch) {
-    console.log("Deferring to Google Search Helper");
-    // Return empty array - the Google Search Helper will handle this
-    return [];
-  }
+  if (isGoogleSearch) return [];
 
   if (isFounderio) {
-    console.log("Using extractFounderioJobData");
-    // Use the Founderio extractor from founderio-helper.ts
     const founderioExtractor = (window as any).extractFounderioJobData;
-    if (founderioExtractor) {
-      return founderioExtractor();
-    } else {
-      console.warn("Founderio extractor not loaded");
-      return [];
-    }
+    return founderioExtractor ? founderioExtractor() : [];
   } else if (isAshby && !isGoogleSearch) {
-    console.log("Using extractAshbyJobData");
-    // Use the Ashby extractor from ashby-helper.ts
     const ashbyExtractor = (window as any).extractAshbyJobData;
-    if (ashbyExtractor) {
-      return ashbyExtractor();
-    } else {
-      console.warn("Ashby extractor not loaded");
-      return [];
-    }
+    return ashbyExtractor ? ashbyExtractor() : [];
   } else if (genericJobsCount > 0) {
-    console.log("Using extractGenericJobData");
     return extractGenericJobData();
   } else if (isLinkedIn) {
-    console.log("Using extractLinkedInJobData");
     return extractLinkedInJobData();
   }
 
-  console.log("No matching extractor found, returning empty array");
   return [];
 }
 
 // Extract LinkedIn job data
 function extractLinkedInJobData() {
   const jobCards = document.querySelectorAll(".job-card-container");
-  console.log(`LinkedIn: Found ${jobCards.length} job cards`);
   const jobs: any[] = [];
 
   jobCards.forEach((jobCard, index) => {
@@ -382,11 +323,8 @@ function extractLinkedInJobData() {
 
     if (jobData.title) {
       jobs.push(jobData);
-      console.log(`LinkedIn job ${index + 1}:`, jobData);
     }
   });
-
-  console.log(`LinkedIn: Extracted ${jobs.length} jobs`);
   return jobs;
 }
 
@@ -410,7 +348,6 @@ function getLinkedInPaginationInfo() {
 
 // Function to click specific page number on LinkedIn
 async function clickLinkedInPageNumber(pageNumber: number): Promise<boolean> {
-  console.log(`Attempting to click page ${pageNumber}`);
 
   // Find the button with the specific page number
   const pageButtons = document.querySelectorAll(
@@ -428,14 +365,12 @@ async function clickLinkedInPageNumber(pageNumber: number): Promise<boolean> {
   }
 
   if (!targetButton) {
-    console.log(`Page ${pageNumber} button not found, trying Next button`);
     // Fallback to Next button
     const nextButton = document.querySelector(
       'button[aria-label="View next page"]',
     ) as HTMLButtonElement;
 
     if (!nextButton || nextButton.disabled) {
-      console.log("Next button not available");
       return false;
     }
 
@@ -448,7 +383,6 @@ async function clickLinkedInPageNumber(pageNumber: number): Promise<boolean> {
   ).length;
 
   targetButton.click();
-  console.log(`Clicked page ${pageNumber} button`);
 
   // Wait for new jobs to load (check for changes in job cards)
   let attempts = 0;
@@ -461,7 +395,6 @@ async function clickLinkedInPageNumber(pageNumber: number): Promise<boolean> {
     // Check if page changed by looking at pagination state or job count change
     const paginationInfo = getLinkedInPaginationInfo();
     if (paginationInfo && paginationInfo.currentPage === pageNumber) {
-      console.log(`Successfully navigated to page ${pageNumber}`);
       // Wait a bit more for all content to load
       await new Promise((resolve) => setTimeout(resolve, 1500));
       return true;
@@ -470,14 +403,12 @@ async function clickLinkedInPageNumber(pageNumber: number): Promise<boolean> {
     attempts++;
   }
 
-  console.log(`Timeout waiting for page ${pageNumber} to load`);
   return true; // Continue anyway
 }
 
 // Extract generic job board data (Greenhouse, Wellfound, etc.)
 function extractGenericJobData() {
   const jobCards = document.querySelectorAll('[data-provides="search-result"]');
-  console.log(`Generic: Found ${jobCards.length} job cards`);
   const jobs: any[] = [];
 
   jobCards.forEach((jobCard, index) => {
@@ -495,14 +426,6 @@ function extractGenericJobData() {
       jobCard.classList.contains("closed") ||
       jobCard.classList.contains("archived");
 
-    console.log(`Generic job ${index + 1} elements:`, {
-      titleElement,
-      companyElement,
-      linkElement,
-      locationTags: locationTags.length,
-      isArchived,
-    });
-
     const jobData: any = {
       title: titleElement?.textContent?.trim(),
       company: companyElement?.textContent?.trim(),
@@ -517,13 +440,8 @@ function extractGenericJobData() {
 
     if (jobData.title) {
       jobs.push(jobData);
-      console.log(`Generic job ${index + 1}:`, jobData);
-    } else {
-      console.log(`Generic job ${index + 1}: Skipped (no title)`);
     }
   });
-
-  console.log(`Generic: Extracted ${jobs.length} jobs`);
   return jobs;
 }
 
@@ -538,7 +456,6 @@ function clickSecondJobPost() {
     ) as HTMLElement;
 
     if (link) {
-      console.log("Clicking second job post:", link.textContent?.trim());
       link.click();
       return { success: true, title: link.textContent?.trim() };
     }
@@ -593,12 +510,10 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
 
     if (isGoogleSearch) {
       // Don't respond - let Google Search Helper (ashby-helper.ts) handle this
-      console.log("LinkedIn helper: Detected Google search, skipping");
       return false;
     }
 
     const jobs = extractJobData();
-    console.log(`Sending ${jobs.length} jobs back to popup`);
     sendResponse({ jobs });
     return true;
   }
@@ -606,15 +521,7 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
   if (message.action === "extractJobsWithPagination") {
     (async () => {
       try {
-        // Check if we're on Google search for Ashby
-        const isGoogleAshbySearch =
-          window.location.hostname.includes("google.com") &&
-          window.location.pathname.includes("/search") &&
-          (window.location.search.includes("ashbyhq.com") ||
-            document.body.textContent?.includes("jobs.ashbyhq.com"));
-
-        if (isGoogleAshbySearch) {
-          // Handle Ashby (Google search) pagination differently
+        if (isGoogleAshbySearch()) {
           const ashbyPaginationGetter = (window as any).getAshbyPaginationInfo;
           const ashbyExtractor = (window as any).extractAshbyJobData;
           const ashbyPageClicker = (window as any).clickAshbyPageNumber;
@@ -656,12 +563,10 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
           // Navigate through remaining pages (limit to avoid too many pages)
           const maxPagesToScrape = Math.min(totalPages, startPage + 4); // Scrape up to 5 pages
           for (let page = startPage + 1; page <= maxPagesToScrape; page++) {
-            console.log(`\nNavigating to page ${page}/${totalPages}...`);
 
             const success = await ashbyPageClicker(page);
 
             if (!success) {
-              console.log(`Failed to navigate to page ${page}, stopping`);
               break;
             }
 
@@ -670,7 +575,6 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
 
             // Extract jobs from new page
             const pageJobs = ashbyExtractor();
-            console.log(`Extracted ${pageJobs.length} jobs from page ${page}`);
             allJobs.push(...pageJobs);
 
             // Send progress update
@@ -721,12 +625,9 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
 
         // Navigate through remaining pages
         for (let page = startPage + 1; page <= totalPages; page++) {
-          console.log(`\nScraping page ${page}/${totalPages}...`);
-
           const success = await clickLinkedInPageNumber(page);
 
           if (!success) {
-            console.log(`Failed to navigate to page ${page}, stopping`);
             break;
           }
 
@@ -735,7 +636,6 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
 
           // Extract jobs from new page
           const pageJobs = extractLinkedInJobData();
-          console.log(`Extracted ${pageJobs.length} jobs from page ${page}`);
           allJobs.push(...pageJobs);
 
           // Send progress update
@@ -764,39 +664,23 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
   }
 
   if (message.action === "getPaginationInfo") {
-    // Check if we're on Google search for Ashby
-    const isGoogleAshbySearch =
-      window.location.hostname.includes("google.com") &&
-      window.location.pathname.includes("/search") &&
-      (window.location.search.includes("ashbyhq.com") ||
-        document.body.textContent?.includes("jobs.ashbyhq.com"));
-
-    if (isGoogleAshbySearch) {
+    if (isGoogleAshbySearch()) {
       const ashbyPaginationGetter = (window as any).getAshbyPaginationInfo;
       if (ashbyPaginationGetter) {
         const paginationInfo = ashbyPaginationGetter();
-        console.log("Sending Ashby pagination info:", paginationInfo);
         sendResponse({ paginationInfo });
       } else {
         sendResponse({ paginationInfo: null });
       }
     } else {
       const paginationInfo = getLinkedInPaginationInfo();
-      console.log("Sending LinkedIn pagination info:", paginationInfo);
       sendResponse({ paginationInfo });
     }
     return true;
   }
 
   if (message.action === "goToNextPage") {
-    // Check if we're on Google search for Ashby
-    const isGoogleAshbySearch =
-      window.location.hostname.includes("google.com") &&
-      window.location.pathname.includes("/search") &&
-      (window.location.search.includes("ashbyhq.com") ||
-        document.body.textContent?.includes("jobs.ashbyhq.com"));
-
-    if (isGoogleAshbySearch) {
+    if (isGoogleAshbySearch()) {
       const ashbyNextPageClicker = (window as any).clickAshbyNextPage;
       if (ashbyNextPageClicker) {
         ashbyNextPageClicker()
@@ -837,35 +721,7 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
     return true;
   }
 
-  return true;
+  return false;
 });
-
-// Auto-run when on LinkedIn jobs page
-if (
-  window.location.hostname.includes("linkedin.com") &&
-  window.location.pathname.includes("/jobs")
-) {
-  waitForElement(".job-card-container")
-    .then(() => {
-      console.log("LinkedIn jobs page detected, highlighting salaries...");
-      setTimeout(clickSalaryMetadata, 1000);
-    })
-    .catch((err) => console.log("No job cards found:", err.message));
-}
-
-// Watch for new job cards being loaded (infinite scroll)
-const observer = new MutationObserver(() => {
-  const jobCards = document.querySelectorAll(".job-card-container");
-  if (jobCards.length > 0) {
-    clickSalaryMetadata();
-  }
-});
-
-if (window.location.hostname.includes("linkedin.com")) {
-  observer.observe(document.body, {
-    childList: true,
-    subtree: true,
-  });
-}
 
 export {};

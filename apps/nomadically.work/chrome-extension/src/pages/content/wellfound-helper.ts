@@ -8,18 +8,8 @@ function isWellfoundJobsPage(): boolean {
       url.hostname.endsWith(".wellfound.com");
     const isJobsPath =
       url.pathname === "/jobs" || url.pathname.startsWith("/jobs/");
-
-    console.log("[Wellfound Helper] isWellfoundJobsPage check:", {
-      hostname: url.hostname,
-      pathname: url.pathname,
-      isWellfound,
-      isJobsPath,
-      result: isWellfound && isJobsPath,
-    });
-
     return isWellfound && isJobsPath;
-  } catch (error) {
-    console.log("[Wellfound Helper] isWellfoundJobsPage check failed:", error);
+  } catch {
     return false;
   }
 }
@@ -38,52 +28,20 @@ interface WellfoundJob {
 }
 
 function extractWellfoundJobs(): WellfoundJob[] {
-  console.log("[Wellfound Helper] Starting job extraction");
-  console.log("[Wellfound Helper] URL:", window.location.href);
-  console.log("[Wellfound Helper] Document ready state:", document.readyState);
 
   if (!isWellfoundJobsPage()) {
-    console.log("[Wellfound Helper] Not a Wellfound jobs page");
     return [];
   }
 
   const jobs: WellfoundJob[] = [];
 
-  // Try multiple selectors to find job listings
-  console.log("[Wellfound Helper] Testing different selectors...");
-
-  const testSelectors = [
-    '[data-testid="job-listing-list"]',
-    '[data-test="StartupResult"]',
-    ".styles_component__Ey28k",
-    "a.styles_jobLink__US40J",
-    'div[data-testid="job-listing"]',
-  ];
-
-  testSelectors.forEach((selector) => {
-    const elements = document.querySelectorAll(selector);
-    console.log(
-      `[Wellfound Helper] Selector "${selector}": found ${elements.length} elements`,
-    );
-  });
-
   // Find all job listing containers
-  // Based on the HTML structure provided, job listings are in elements with data-testid="job-listing-list"
   const jobListContainers = document.querySelectorAll(
     '[data-testid="job-listing-list"]',
   );
 
-  console.log(
-    `[Wellfound Helper] Found ${jobListContainers.length} job list containers`,
-  );
-
-  jobListContainers.forEach((container, containerIndex) => {
-    // Each job is in a div with class starting with "styles_component__"
+  jobListContainers.forEach((container) => {
     const jobElements = container.querySelectorAll(".styles_component__Ey28k");
-
-    console.log(
-      `[Wellfound Helper] Container ${containerIndex + 1}: Found ${jobElements.length} jobs`,
-    );
 
     jobElements.forEach((jobElement, jobIndex) => {
       try {
@@ -91,12 +49,7 @@ function extractWellfoundJobs(): WellfoundJob[] {
         const jobLink = jobElement.querySelector(
           "a.styles_jobLink__US40J",
         ) as HTMLAnchorElement;
-        if (!jobLink) {
-          console.log(
-            `[Wellfound Helper] Job ${jobIndex + 1}: No job link found`,
-          );
-          return;
-        }
+        if (!jobLink) return;
 
         const href = jobLink.href;
 
@@ -163,14 +116,6 @@ function extractWellfoundJobs(): WellfoundJob[] {
         };
 
         jobs.push(job);
-
-        console.log(`[Wellfound Helper] Job ${jobs.length}:`, {
-          title,
-          company,
-          location,
-          compensation,
-          link: href.substring(0, 50) + "...",
-        });
       } catch (error) {
         console.error(
           `[Wellfound Helper] Error extracting job ${jobIndex + 1}:`,
@@ -180,7 +125,6 @@ function extractWellfoundJobs(): WellfoundJob[] {
     });
   });
 
-  console.log(`[Wellfound Helper] Total jobs extracted: ${jobs.length}`);
   return jobs;
 }
 
@@ -211,24 +155,12 @@ function clickLearnMoreButton(jobIndex: number): boolean {
     return false;
   }
 
-  console.log(
-    `[Wellfound Helper] Clicking Learn More button for: ${job.title}`,
-  );
-  console.log(`[Wellfound Helper] Button element:`, learnMoreButton);
-  console.log(`[Wellfound Helper] Button disabled:`, learnMoreButton.disabled);
-  console.log(`[Wellfound Helper] Button type:`, learnMoreButton.type);
-
-  // Click the button directly
   learnMoreButton.click();
-
-  console.log(`[Wellfound Helper] ✓ Click executed for job ${jobIndex}`);
-
   return true;
 }
 
 // Function to scroll down on the page
 function scrollDown(pixels: number = 300): void {
-  console.log(`[Wellfound Helper] Scrolling down ${pixels} pixels`);
   window.scrollBy({
     top: pixels,
     behavior: "smooth",
@@ -246,7 +178,6 @@ function clickJobLink(jobIndex: number): boolean {
 
   const job = jobs[jobIndex];
 
-  console.log(`[Wellfound Helper] Opening job link: ${job.title}`);
   window.open(job.link, "_blank");
   return true;
 }
@@ -256,7 +187,6 @@ async function analyzeJobsWithDeepSeek(
   jobs: WellfoundJob[],
   criteria: string = "software engineer, full stack, remote",
 ): Promise<{ jobIndex: number; reasoning: string }[]> {
-  console.log(`[Wellfound Helper] Analyzing ${jobs.length} jobs with DeepSeek`);
 
   // Prepare job summaries for DeepSeek
   const jobSummaries = jobs.map((job, index) => ({
@@ -318,19 +248,13 @@ Only include jobs that are good matches. If no jobs match well, return an empty 
       }
     }
 
-    console.log("[Wellfound Helper] DeepSeek response:", accumulated);
 
     // Try to extract JSON from the response
     const jsonMatch = accumulated.match(/\[[\s\S]*\]/);
     if (jsonMatch) {
-      const recommendations = JSON.parse(jsonMatch[0]);
-      console.log("[Wellfound Helper] Recommendations:", recommendations);
-      return recommendations;
+      return JSON.parse(jsonMatch[0]);
     }
 
-    console.warn(
-      "[Wellfound Helper] Could not parse JSON from DeepSeek response",
-    );
     return [];
   } catch (error) {
     console.error(
@@ -346,6 +270,7 @@ Only include jobs that are good matches. If no jobs match well, return an empty 
   extractJobs: extractWellfoundJobs,
   clickLearnMore: clickLearnMoreButton,
   clickJobLink: clickJobLink,
+  scrollDown: scrollDown,
   analyzeWithDeepSeek: analyzeJobsWithDeepSeek,
   isWellfoundPage: isWellfoundJobsPage,
 };

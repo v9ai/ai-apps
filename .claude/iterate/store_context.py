@@ -46,12 +46,12 @@ def chunk_content(content: str, max_chars: int = 1200) -> list[str]:
     return chunks if chunks else [content[:max_chars]]
 
 
-def dedup_chunks(chunks: list[str], threshold: int = 50) -> list[str]:
-    """Remove near-duplicate chunks by comparing first N chars."""
+def dedup_chunks(chunks: list[str]) -> list[str]:
+    """Remove exact-duplicate chunks by full content hash."""
     seen = set()
     deduped = []
     for chunk in chunks:
-        sig = hashlib.md5(chunk[:threshold].encode()).hexdigest()
+        sig = hashlib.md5(chunk.encode()).hexdigest()
         if sig not in seen:
             seen.add(sig)
             deduped.append(chunk)
@@ -79,20 +79,20 @@ def get_git_diff() -> tuple[str | None, list[str]]:
 def extract_errors(content: str) -> list[str]:
     """Extract error-like lines from actual error output (not prose)."""
     patterns = [
-        # Stack traces and compiler errors (colon-delimited)
-        r'(?:error|Error|ERROR):[ \t]+\S.*',
-        # Common JS/Python exceptions
-        r'(?:TypeError|SyntaxError|ReferenceError|ImportError|KeyError|ValueError|AttributeError|ModuleNotFoundError)[:( ].*',
-        # Build/test failures
-        r'(?:FAIL|FAILED)[ \t]+\S.*',
+        # Stack traces and compiler errors — must be at line start
+        r'^(?:error|Error|ERROR):[ \t]+\S.*',
+        # Common JS/Python exceptions — class name at line start
+        r'^(?:TypeError|SyntaxError|ReferenceError|ImportError|KeyError|ValueError|AttributeError|ModuleNotFoundError)[:( ].*',
+        # Build/test failures at line start
+        r'^(?:FAIL|FAILED)[ \t]+\S.*',
         # Rust panics
-        r'panic:.*',
+        r'^panic:.*',
         # Exit codes
         r'exit code [1-9]\d*',
     ]
     errors = []
     for pattern in patterns:
-        errors.extend(re.findall(pattern, content)[:5])
+        errors.extend(re.findall(pattern, content, re.MULTILINE)[:5])
     return errors[:10]
 
 

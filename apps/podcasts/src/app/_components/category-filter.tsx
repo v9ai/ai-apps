@@ -189,7 +189,7 @@ export function CategoryFilter({
           bottom: 0,
           w: "40px",
           pointerEvents: "none",
-          background: "linear-gradient(to left, transparent, var(--colors-ui-base))",
+          background: "linear-gradient(to left, transparent, #0B0B0F)",
           transition: "opacity 0.2s ease",
           lg: { display: "none" },
         })}
@@ -205,7 +205,7 @@ export function CategoryFilter({
           bottom: 0,
           w: "40px",
           pointerEvents: "none",
-          background: "linear-gradient(to right, transparent, var(--colors-ui-base))",
+          background: "linear-gradient(to right, transparent, #0B0B0F)",
           transition: "opacity 0.2s ease",
           lg: { display: "none" },
         })}

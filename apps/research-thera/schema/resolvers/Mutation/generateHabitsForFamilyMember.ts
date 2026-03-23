@@ -13,6 +13,7 @@ export const generateHabitsForFamilyMember: NonNullable<MutationResolvers['gener
   const response = await fetch(`${LANGGRAPH_URL}/runs/wait`, {
     method: "POST",
     headers: { "Content-Type": "application/json" },
+    signal: AbortSignal.timeout(180_000),
     body: JSON.stringify({
       assistant_id: "habits",
       input: {

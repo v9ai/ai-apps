@@ -9,16 +9,8 @@ function isGoogleSearchPage(): boolean {
       url.hostname.endsWith(".google.com") ||
       url.hostname.startsWith("google.") ||
       url.hostname.includes(".google.");
-    console.log("[Google Search Helper] isGoogleSearchPage check:", {
-      hostname: url.hostname,
-      pathname: url.pathname,
-      isGoogle,
-      isSearch,
-      result: isGoogle && isSearch,
-    });
     return isGoogle && isSearch;
   } catch {
-    console.log("[Google Search Helper] isGoogleSearchPage check failed");
     return false;
   }
 }
@@ -28,8 +20,7 @@ function isJobSearchQuery(): boolean {
   const searchParams = new URL(window.location.href).searchParams;
   const query = searchParams.get("q") || "";
 
-  // Check if it's a job-related search
-  const result =
+  return (
     href.includes("workable.com") ||
     href.includes("ashbyhq.com") ||
     href.includes("greenhouse.io") ||
@@ -37,14 +28,8 @@ function isJobSearchQuery(): boolean {
     href.includes("jobs.") ||
     query.toLowerCase().includes("remote") ||
     query.toLowerCase().includes("developer") ||
-    query.toLowerCase().includes("engineer");
-
-  console.log("[Google Search Helper] isJobSearchQuery check:", {
-    href: href.substring(0, 100),
-    query: query.substring(0, 50),
-    result,
-  });
-  return result;
+    query.toLowerCase().includes("engineer")
+  );
 }
 
 function extractCompanyFromUrl(url: string): string {
@@ -52,9 +37,7 @@ function extractCompanyFromUrl(url: string): string {
     const urlObj = new URL(url);
     const hostname = urlObj.hostname;
 
-    // Extract company name from various job board URLs
     if (hostname.includes("workable.com")) {
-      // Extract from path like /view/company-name-job-title
       const match = url.match(/workable\.com\/view\/([^/]+)/);
       if (match) {
         const parts = match[1].split("-");
@@ -66,13 +49,8 @@ function extractCompanyFromUrl(url: string): string {
     }
 
     if (hostname.includes("ashbyhq.com")) {
-      // Ashby URLs can be:
-      // - https://jobs.ashbyhq.com/CompanyName/...
-      // - https://jobs.ashbyhq.com/company-name/...
-      // Extract the company slug from the path (first segment after domain)
       const match = url.match(/ashbyhq\.com\/([^/?]+)/);
       if (match && match[1]) {
-        // Capitalize each word in the company slug
         return match[1]
           .split(/[-_]/)
           .map((w) => w.charAt(0).toUpperCase() + w.slice(1).toLowerCase())
@@ -90,7 +68,6 @@ function extractCompanyFromUrl(url: string): string {
       }
     }
 
-    // Generic fallback - use domain name
     const domain = hostname
       .replace(/^(www\.|jobs\.|careers\.|apply\.)/, "")
       .split(".")[0];
@@ -101,46 +78,28 @@ function extractCompanyFromUrl(url: string): string {
 }
 
 function extractJobDataFromGoogle() {
-  console.log("[Google Search Helper] Starting job extraction");
-  console.log("[Google Search Helper] URL:", window.location.href);
+  if (!isGoogleSearchPage()) return [];
 
-  if (!isGoogleSearchPage()) {
-    console.log("[Google Search Helper] Not a Google search page");
-    return [];
-  }
-
-  // Find all search result cards
   const searchResults = Array.from(
     document.querySelectorAll("div.g, div.tF2Cxc, div[data-sokoban-container]"),
-  );
-
-  console.log(
-    `[Google Search Helper] Found ${searchResults.length} search result cards`,
   );
 
   const seenUrls = new Set<string>();
   const jobs: any[] = [];
 
-  searchResults.forEach((resultCard, index) => {
+  searchResults.forEach((resultCard) => {
     const card = resultCard as HTMLElement;
 
-    // Find the main link (h3 parent or first link)
     const titleLink = card
       .querySelector("h3")
       ?.closest("a") as HTMLAnchorElement | null;
     const mainLink =
       titleLink || (card.querySelector("a") as HTMLAnchorElement | null);
 
-    if (!mainLink) {
-      console.log(
-        `[Google Search Helper] Result ${index + 1} - No main link found`,
-      );
-      return;
-    }
+    if (!mainLink) return;
 
     const url = mainLink.href;
 
-    // Skip Google's own pages, cached pages, and duplicates
     if (
       url.includes("google.com") ||
       url.includes("webcache") ||
@@ -151,52 +110,33 @@ function extractJobDataFromGoogle() {
 
     seenUrls.add(url);
 
-    // Extract title from h3
     const titleEl = card.querySelector("h3") as HTMLElement | null;
     const title =
       titleEl?.textContent?.trim() || mainLink.textContent?.trim() || "";
 
-    if (!title) {
-      console.log(
-        `[Google Search Helper] Result ${index + 1} - No title found`,
-      );
-      return;
-    }
+    if (!title) return;
 
-    console.log(
-      `[Google Search Helper] Result ${index + 1} - Processing: "${title}"`,
-    );
-    console.log(`[Google Search Helper] Result ${index + 1} - URL: ${url}`);
-
-    // Extract company from URL (more reliable for ATS platforms like Ashby)
     const companyFromUrl = extractCompanyFromUrl(url);
-
-    // For Ashby URLs, always use URL-extracted company name
-    // Citation often shows "Ashby" (the ATS platform) instead of actual company
     const isAshbyUrl = url.includes("ashbyhq.com");
 
     let company: string;
     if (isAshbyUrl && companyFromUrl !== "Unknown Company") {
       company = companyFromUrl;
     } else {
-      // For other job boards, try citation first, then URL
       const citationEl = card.querySelector(
         ".VuuXrf, cite",
       ) as HTMLElement | null;
       company = citationEl?.textContent?.trim() || companyFromUrl;
     }
 
-    // Extract description/snippet
     const descEl = card.querySelector(
       ".VwiC3b, .yXK7lf, .s, [data-sncf='1']",
     ) as HTMLElement | null;
     const description = descEl?.textContent?.trim() || "";
 
-    // Extract posted date if available
     const dateEl = card.querySelector(".f, .LEwnzc") as HTMLElement | null;
     const postedDate = dateEl?.textContent?.trim() || "";
 
-    // Check if archived/closed
     const text = card.textContent || "";
     const archived =
       text.includes("No longer accepting") ||
@@ -204,7 +144,7 @@ function extractJobDataFromGoogle() {
       text.includes("Closed") ||
       /\bclosed\b/i.test(text);
 
-    const job = {
+    jobs.push({
       title,
       company,
       url,
@@ -213,28 +153,14 @@ function extractJobDataFromGoogle() {
       postedDate,
       archived,
       source: "google_search",
-    };
-
-    console.log(
-      `[Google Search Helper] Result ${index + 1} - Extracted job:`,
-      job,
-    );
-    jobs.push(job);
+    });
   });
 
-  console.log(`[Google Search Helper] Total jobs extracted: ${jobs.length}`);
   return jobs;
 }
 
 function getPaginationInfo() {
-  console.log("[Google Search Helper] getPaginationInfo called");
-
-  if (!isGoogleSearchPage()) {
-    console.log(
-      "[Google Search Helper] Not a Google search page, returning null",
-    );
-    return null;
-  }
+  if (!isGoogleSearchPage()) return null;
 
   const url = new URL(window.location.href);
   const start = parseInt(url.searchParams.get("start") || "0", 10);
@@ -243,14 +169,6 @@ function getPaginationInfo() {
 
   const nextBtn = document.querySelector("#pnnext") as HTMLAnchorElement | null;
   const nextUrl = nextBtn?.href || undefined;
-
-  console.log("[Google Search Helper] Pagination info:", {
-    currentPage,
-    currentStart,
-    hasNext: !!nextUrl,
-    nextUrl,
-    nextBtnFound: !!nextBtn,
-  });
 
   return {
     currentPage,
@@ -261,7 +179,6 @@ function getPaginationInfo() {
 }
 
 chrome.runtime.onMessage.addListener((message, _sender, sendResponse) => {
-  // Only handle messages on Google search pages
   if (!isGoogleSearchPage()) return false;
 
   try {
@@ -282,7 +199,6 @@ chrome.runtime.onMessage.addListener((message, _sender, sendResponse) => {
       return true;
     }
 
-    // Unknown action — don't respond, let other listeners handle it
     return false;
   } catch (err) {
     console.error("[Google Search Helper] Error:", err);

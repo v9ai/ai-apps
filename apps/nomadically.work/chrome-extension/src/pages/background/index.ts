@@ -1,4 +1,4 @@
-console.log("background script loaded");
+// Background service worker
 
 // ── Dev hot-reload via WebSocket ──────────────────────────────────────
 if (import.meta.env.DEV) {
@@ -35,7 +35,7 @@ async function getSessionCookie(): Promise<string | undefined> {
   }
 }
 
-async function graphqlMutation(
+async function gqlRequest(
   query: string,
   variables: Record<string, unknown>,
 ) {
@@ -57,19 +57,11 @@ async function graphqlMutation(
 
 // Listen for messages from content scripts
 chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
-  console.log("Background received message:", message);
-
-  // Handle pagination progress updates
-  if (message.action === "paginationProgress") {
-    console.log(
-      `Pagination progress: Page ${message.currentPage}/${message.totalPages}, Jobs: ${message.jobsCollected}`,
-    );
-    return false;
-  }
+  if (message.action === "paginationProgress") return false;
 
   // ── Get Blocked Companies ──
   if (message.action === "getBlockedCompanies") {
-    graphqlMutation(
+    gqlRequest(
       `query { blockedCompanies { id name } }`,
       {},
     )
@@ -89,7 +81,7 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
   // ── Block Company ──
   if (message.action === "blockCompany") {
     const { companyName } = message;
-    graphqlMutation(
+    gqlRequest(
       `mutation BlockCompany($name: String!, $reason: String) {
         blockCompany(name: $name, reason: $reason) { id name }
       }`,

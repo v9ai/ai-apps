@@ -319,7 +319,7 @@ export function SearchModal({ open: controlledOpen, onClose, triggerRef }: Searc
         {/* Results area */}
         <div
           ref={listRef}
-          className={css({ maxH: '26rem', overflowY: 'auto', overscrollBehavior: 'contain', py: '2' })}
+          className={css({ maxH: { base: '55vh', sm: '26rem' }, overflowY: 'auto', overscrollBehavior: 'contain', py: '2' })}
         >
           {!hasQuery ? (
             /* ── Empty state with suggested searches ── */

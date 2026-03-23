@@ -1,6 +1,33 @@
-/* Tailwind removed - it was breaking website styles */
-/* Only add scoped styles here if needed for content script UI */
+/* Content script styles — scoped via data attributes to avoid breaking host pages */
 
-.your-class {
-  color: aliceblue;
+[data-nomad-block-btn] {
+  margin-left: 8px;
+  padding: 2px 8px;
+  font-size: 11px;
+  font-weight: 600;
+  font-family: system-ui, sans-serif;
+  color: #fff;
+  background-color: #dc2626;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+  line-height: 18px;
+  vertical-align: middle;
+  z-index: 9999;
+  position: relative;
+}
+
+[data-nomad-block-btn]:hover {
+  background-color: #b91c1c;
+}
+
+[data-nomad-block-btn]:disabled {
+  background-color: #6b7280;
+  cursor: default;
+}
+
+[data-nomad-salary-highlight] {
+  border: 2px solid #0a66c2;
+  border-radius: 4px;
+  padding: 4px;
 }

@@ -16,6 +16,7 @@ export const generateHabitsFromIssue: NonNullable<MutationResolvers['generateHab
   const response = await fetch(`${LANGGRAPH_URL}/runs/wait`, {
     method: "POST",
     headers: { "Content-Type": "application/json" },
+    signal: AbortSignal.timeout(180_000),
     body: JSON.stringify({
       assistant_id: "habits",
       input: {
@@ -23,11 +24,6 @@ export const generateHabitsFromIssue: NonNullable<MutationResolvers['generateHab
         user_email: userEmail,
         count,
         issue_id: issueId,
-        issue_title: issue.title,
-        issue_description: issue.description,
-        issue_category: issue.category,
-        issue_severity: issue.severity,
-        issue_recommendations: issue.recommendations,
       },
     }),
   });
