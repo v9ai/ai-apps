@@ -37,7 +37,7 @@ factual_grounding_metric = GEval(
     name="Factual Grounding",
     criteria=(
         "Evaluate whether claims are properly attributed to sources. "
-        "Check for citation of specific papers, benchmarks, or established results. "
+        "Check for citation of specific benchmarks or established results. "
         "Penalize unsourced quantitative claims and vague attributions like "
         "'studies show' without specifics."
     ),

@@ -7,6 +7,9 @@ import os
 import chromadb
 
 from embeddings import get_embedding_function
+from reranker import rerank, reranker_available
+from bm25_index import build_or_load as bm25_build_or_load, bm25_available
+from rrf import reciprocal_rank_fusion
 
 CHROMA_PATH = os.environ.get("CLAUDE_ITERATE_CHROMA_PATH", "/tmp/claude-iterate/chroma")
 COLLECTION_NAME = "iterate_context"
@@ -35,9 +38,9 @@ def _cosine_similarity(a: list[float], b: list[float]) -> float:
     return dot / (norm_a * norm_b)
 
 
-def _mean_embedding(embeddings: list[list[float]]) -> list[float] | None:
+def _mean_embedding(embeddings) -> list[float] | None:
     """Return element-wise mean of a list of embedding vectors."""
-    if not embeddings:
+    if embeddings is None or len(embeddings) == 0:
         return None
     dim = len(embeddings[0])
     mean = [0.0] * dim
@@ -65,8 +68,15 @@ def compute_iter_similarity(collection, iter_a: int, iter_b: int) -> float | Non
                 where={"$and": [{"iteration": it}, {"doc_type": "output"}]},
                 include=["embeddings"],
             )
-            if r["embeddings"]:
-                results[it] = r["embeddings"]
+            if r["embeddings"] is not None and len(r["embeddings"]) > 0:
+                # Convert numpy arrays to plain Python lists for safe
+                # truthiness checks and arithmetic downstream.
+                embs = r["embeddings"]
+                try:
+                    embs = [e.tolist() if hasattr(e, "tolist") else list(e) for e in embs]
+                except Exception:
+                    embs = list(embs)
+                results[it] = embs
         except Exception:
             return None
 
@@ -233,7 +243,46 @@ def retrieve(
                 all_docs[doc_id] = (doc, meta, boosted)
 
     # Sort by boosted distance for candidate selection, then by iteration for display
-    candidate_docs = sorted(all_docs.values(), key=lambda x: x[2])
+    dense_candidates = sorted(all_docs.values(), key=lambda x: x[2])
+
+    # BM25 keyword retrieval leg — fuse with dense results via RRF
+    use_bm25 = os.environ.get("ITERATE_BM25", "1") == "1"
+    if use_bm25 and bm25_available():
+        try:
+            bm25_idx = bm25_build_or_load(CHROMA_PATH)
+            if bm25_idx is not None and bm25_idx.size > 0:
+                bm25_results = bm25_idx.query(query, n_results=n_results * 2)
+                if bm25_results:
+                    # RRF expects ranked lists sorted best-first.
+                    # dense_candidates is sorted by distance (lower=better) — already best-first.
+                    # bm25_results is sorted by BM25 score (higher=better) — already best-first.
+                    candidate_docs = reciprocal_rank_fusion(
+                        [dense_candidates, bm25_results],
+                        k=60,
+                        weights=[1.0, 1.0],
+                    )
+                    # Convert RRF scores to distance-like values (lower=better)
+                    # by inverting: max_rrf - rrf_score, so MMR's distance math works.
+                    if candidate_docs:
+                        max_rrf = candidate_docs[0][2]  # highest RRF score (first item)
+                        candidate_docs = [
+                            (doc, meta, max_rrf - score + 0.01)
+                            for doc, meta, score in candidate_docs
+                        ]
+                else:
+                    candidate_docs = dense_candidates
+            else:
+                candidate_docs = dense_candidates
+        except Exception:
+            candidate_docs = dense_candidates
+    else:
+        candidate_docs = dense_candidates
+
+    # CrossEncoder reranking: rescore candidates for higher-quality ranking
+    # before MMR diversity selection (gives MMR better candidates to pick from)
+    use_rerank = os.environ.get("ITERATE_RERANK", "1") == "1"
+    if use_rerank and reranker_available() and len(candidate_docs) > 1:
+        candidate_docs = rerank(query, candidate_docs, top_k=n_results * 2)
 
     # Apply MMR to select a diverse subset from the candidates
     if use_mmr and ef is not None and len(candidate_docs) > n_results:

@@ -73,6 +73,7 @@ fi
 COUNTER_FILE="$ITER_DIR/counter"
 TASK_FILE="$ITER_DIR/task.txt"
 SCORES_FILE="$ITER_DIR/scores.json"
+DONE_WHEN=$(cat "$ITER_DIR/done-when.txt" 2>/dev/null || echo "")
 
 _record_end() {
     local reason="$1" score="${2:-0.0}"
@@ -159,6 +160,17 @@ if [ -n "$SESSION_ID" ]; then
         fi
         _output_size=$(wc -c < "$ITER_OUTPUT" 2>/dev/null | tr -d '[:space:]' || echo "0")
         echo "[kick-session] transcript window: lines ${PREV_OFFSET}->${CURRENT_LINES}, output_size=${_output_size}" >> "$ITER_DIR/debug.log" 2>/dev/null || true
+    fi
+fi
+
+# --- Completion promise check (Ralph Loop pattern) ---
+# If --done-when was set and the output contains the promise string, stop.
+if [ -n "$DONE_WHEN" ] && [ -f "$ITER_OUTPUT" ] && [ -s "$ITER_OUTPUT" ]; then
+    if grep -qF "$DONE_WHEN" "$ITER_OUTPUT" 2>/dev/null; then
+        _record_end "completion promise matched: $DONE_WHEN" "1.0"
+        echo "Iterate: complete — output contained '$DONE_WHEN'" >&2
+        rm -f "$COUNTER_FILE" "$TASK_FILE" "$ITER_DIR/session.txt"
+        exit 0
     fi
 fi
 

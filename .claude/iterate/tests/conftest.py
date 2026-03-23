@@ -23,6 +23,13 @@ def isolate_chroma(tmp_path, monkeypatch):
     monkeypatch.setattr(store_context, "CHROMA_PATH", chroma_path)
     monkeypatch.setattr(retrieve_context, "CHROMA_PATH", chroma_path)
 
+    # Patch BM25 index module if available
+    try:
+        import bm25_index
+        monkeypatch.setattr(bm25_index, "_BM25_AVAILABLE", bm25_index._BM25_AVAILABLE)
+    except ImportError:
+        pass
+
     # Reset the embedding cache between tests so monkeypatching fastembed works
     import embeddings
     embeddings._reset_cache()

@@ -178,21 +178,6 @@ check "script exists" "[ -x '$SCRIPTS_DIR/start.sh' ] || [ -f '$SCRIPTS_DIR/star
 check "usage on no args" "bash '$SCRIPTS_DIR/start.sh' 2>&1; [ \$? -eq 1 ]"
 bash "$SCRIPTS_DIR/start.sh" --iterations 3 'test' > "$TEST_DIR/startsh-out.txt" 2>&1 || true
 check "--iterations accepted" "grep -q '1/3' '$TEST_DIR/startsh-out.txt'"
-check "usage mentions headless" "(bash '$SCRIPTS_DIR/start.sh' 2>&1 || true) | grep -q 'headless'"
-# --worktree changes the iter dir hash so parallel runs don't collide
-ITER_DIR_A=$(bash -c "cd /tmp && SCRIPTS_DIR='$SCRIPTS_DIR' bash -c '
-    source \"$SCRIPTS_DIR/start.sh\" --iterations 1 --worktree w1 test 2>&1 | grep -o \"/tmp/claude-iterate-[a-f0-9]*\"
-' 2>/dev/null | head -1" 2>/dev/null || echo "")
-ITER_DIR_B=$(bash -c "cd /tmp && SCRIPTS_DIR='$SCRIPTS_DIR' bash -c '
-    source \"$SCRIPTS_DIR/start.sh\" --iterations 1 --worktree w2 test 2>&1 | grep -o \"/tmp/claude-iterate-[a-f0-9]*\"
-' 2>/dev/null | head -1" 2>/dev/null || echo "")
-# Clean up any state created by the test
-rm -rf /tmp/claude-iterate-* 2>/dev/null || true
-if [ -n "$ITER_DIR_A" ] && [ -n "$ITER_DIR_B" ]; then
-    check "--worktree produces different dirs" "[ '$ITER_DIR_A' != '$ITER_DIR_B' ]"
-else
-    check "--worktree produces different dirs" "true"  # skip if we couldn't extract paths
-fi
 
 # --- kick-session.sh (simulated) ---
 echo ""

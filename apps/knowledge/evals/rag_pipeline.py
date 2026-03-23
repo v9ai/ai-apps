@@ -128,8 +128,8 @@ def retrieve(state: RAGState) -> dict:
             for r in results:
                 title = r.get("title", "")
                 snippet = r.get("snippet", "")
-                paper_title = r.get("paper_title", "")
-                label = f"[{paper_title} > {title}]" if paper_title and paper_title != title else f"[{title}]"
+                lesson_title = r.get("lesson_title", "")
+                label = f"[{lesson_title} > {title}]" if lesson_title and lesson_title != title else f"[{title}]"
                 chunks.append(f"{label}\n{snippet}")
                 scores.append(r.get("rank", 0.0))
     finally:

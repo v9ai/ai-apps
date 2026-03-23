@@ -86,8 +86,8 @@ def _format_fts(results: list[dict]) -> str:
     for r in results:
         title = r.get("title", "")
         snippet = r.get("snippet", "")
-        paper_title = r.get("paper_title", "")
-        label = f"[{paper_title} > {title}]" if paper_title and paper_title != title else f"[{title}]"
+        lesson_title = r.get("lesson_title", "")
+        label = f"[{lesson_title} > {title}]" if lesson_title and lesson_title != title else f"[{title}]"
         parts.append(f"{label}\n{snippet}")
     return "\n\n---\n\n".join(parts) if parts else "No results found."
 

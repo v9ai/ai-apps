@@ -11,6 +11,7 @@ import chromadb
 from datetime import datetime
 
 from embeddings import get_embedding_function
+from bm25_index import build_or_load as bm25_build_or_load, bm25_available
 
 CHROMA_PATH = os.environ.get("CLAUDE_ITERATE_CHROMA_PATH", "/tmp/claude-iterate/chroma")
 COLLECTION_NAME = "iterate_context"
@@ -192,6 +193,15 @@ def store(iteration: int, content: str, task: str):
 
     collection.upsert(ids=ids, documents=documents, metadatas=metadatas)
 
+    # Update BM25 index alongside ChromaDB
+    try:
+        bm25_idx = bm25_build_or_load(CHROMA_PATH)
+        if bm25_idx is not None:
+            bm25_idx.add_documents(documents, metadatas, ids)
+            bm25_idx.save()
+    except Exception:
+        pass
+
     # Semantic similarity with the previous iteration (0.0 = new, 1.0 = repetitive).
     # Computed post-upsert so both iterations' embeddings are available in ChromaDB.
     semantic_similarity: float | None = None
@@ -224,20 +234,28 @@ def store_eval(iteration: int, scores: dict, task: str, eval_method: str = "unkn
         r = data.get("reason", "")
         lines.append(f"  {name}: {s} — {r}")
 
-    collection.upsert(
-        ids=[f"iter-{iteration}-eval"],
-        documents=["\n".join(lines)],
-        metadatas=[{
-            "iteration": iteration,
-            "chunk_index": -3,
-            "total_chunks": 0,
-            "task": task,
-            "doc_type": "eval",
-            "eval_method": eval_method,
-            "has_errors": False,
-            "timestamp": datetime.now().isoformat(),
-        }],
-    )
+    eval_ids = [f"iter-{iteration}-eval"]
+    eval_docs = ["\n".join(lines)]
+    eval_metas = [{
+        "iteration": iteration,
+        "chunk_index": -3,
+        "total_chunks": 0,
+        "task": task,
+        "doc_type": "eval",
+        "eval_method": eval_method,
+        "has_errors": False,
+        "timestamp": datetime.now().isoformat(),
+    }]
+    collection.upsert(ids=eval_ids, documents=eval_docs, metadatas=eval_metas)
+
+    # Update BM25 index
+    try:
+        bm25_idx = bm25_build_or_load(CHROMA_PATH)
+        if bm25_idx is not None:
+            bm25_idx.add_documents(eval_docs, eval_metas, eval_ids)
+            bm25_idx.save()
+    except Exception:
+        pass
 
 
 if __name__ == "__main__":

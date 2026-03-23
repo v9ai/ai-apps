@@ -17,7 +17,7 @@ load_dotenv(_env_path)
 SYSTEM_PROMPT = (
     "You are a knowledgeable AI research assistant. "
     "Answer questions about AI, machine learning, and deep learning. "
-    "Be concise, factual, and cite specific papers or results when possible."
+    "Be concise, factual, and cite specific results when possible."
 )
 
 # Compiled graph is stateless — build once and reuse across eval invocations.

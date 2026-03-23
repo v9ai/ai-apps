@@ -108,12 +108,10 @@ def build_synthesizer(
         task="Answer questions about AI/ML with accuracy and depth",
         input_format=(
             "A conceptual question about the lesson topic. "
-            "Do NOT ask about specific research papers, author names, or publication years. "
             "Focus on concepts, mechanisms, trade-offs, and practical applications."
         ),
         expected_output_format=(
             "A comprehensive, factual answer explaining concepts clearly. "
-            "Do NOT cite specific papers or authors. "
             "Focus on what the concept is, how it works, why it matters, and when to use it."
         ),
     )

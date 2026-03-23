@@ -658,7 +658,7 @@ metrics = {
     "factual_grounding": GEval(
         name="Factual Grounding",
         criteria=(
-            "Check for citation of specific papers, benchmarks, or results. "
+            "Check for citation of specific benchmarks or results. "
             "Penalize unsourced quantitative claims and vague attributions."
         ),
         evaluation_params=[LLMTestCaseParams.ACTUAL_OUTPUT],

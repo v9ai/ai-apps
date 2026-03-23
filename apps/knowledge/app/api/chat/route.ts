@@ -24,7 +24,7 @@ export async function POST(req: NextRequest) {
   }
 
   // Load history and retrieve FTS context in parallel — they're independent.
-  type SearchRow = { title: string; snippet: string; paper_title: string | null };
+  type SearchRow = { title: string; snippet: string; lesson_title: string | null };
   const [history, searchResult] = await Promise.all([
     db
       .select({ role: chatMessages.role, content: chatMessages.content })
@@ -34,7 +34,7 @@ export async function POST(req: NextRequest) {
       .limit(50),
     db
       .execute<SearchRow>(
-        sql`SELECT title, snippet, paper_title FROM search_content(${message}, ${4})`,
+        sql`SELECT title, snippet, lesson_title FROM search_content(${message}, ${4})`,
       )
       .catch(() => null),
   ]);
@@ -42,8 +42,8 @@ export async function POST(req: NextRequest) {
   let context = "";
   if (searchResult && searchResult.rows.length > 0) {
     const parts = searchResult.rows.map((r) => {
-      const label = r.paper_title && r.paper_title !== r.title
-        ? `[${r.paper_title} > ${r.title}]`
+      const label = r.lesson_title && r.lesson_title !== r.title
+        ? `[${r.lesson_title} > ${r.title}]`
         : `[${r.title}]`;
       return `${label}\n${r.snippet}`;
     });
@@ -54,7 +54,7 @@ export async function POST(req: NextRequest) {
     role: "system",
     content:
       "You are an AI engineering tutor for a knowledge base covering transformers, RAG, agents, fine-tuning, evaluations, infrastructure, safety, and multimodal AI. " +
-      "Answer questions concisely and accurately. Cite specific papers, architectures, or lesson topics when relevant. " +
+      "Answer questions concisely and accurately. Cite specific architectures or lesson topics when relevant. " +
       "When context excerpts are provided, base your answer on them and cite the lesson title. " +
       "If a question is outside AI/ML engineering, politely redirect the conversation back to the subject matter." +
       context,

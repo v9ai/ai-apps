@@ -188,7 +188,7 @@ collection = client.create_collection("docs")
 # Add documents -- Chroma can auto-embed
 collection.add(
     documents=["RAG combines retrieval with generation"],
-    metadatas=[{"source": "paper"}],
+    metadatas=[{"source": "article"}],
     ids=["doc1"]
 )
 
@@ -196,7 +196,7 @@ collection.add(
 results = collection.query(
     query_texts=["How does RAG work?"],
     n_results=5,
-    where={"source": "paper"}
+    where={"source": "article"}
 )
 ```
 
