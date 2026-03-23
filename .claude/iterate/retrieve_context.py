@@ -171,6 +171,7 @@ def retrieve(
     n_results: int = 8,
     include_errors: bool = True,
     use_mmr: bool = True,
+    similarity_override: float | None = None,
 ) -> str:
     collection = get_collection()
     ef = get_embedding_function()
@@ -217,6 +218,9 @@ def retrieve(
             except Exception:
                 continue
 
+        if not results.get("documents") or not results["documents"][0]:
+            continue
+
         for doc, meta, dist in zip(
             results["documents"][0],
             results["metadatas"][0],
@@ -228,8 +232,8 @@ def retrieve(
             if doc_id not in all_docs or boosted < all_docs[doc_id][2]:
                 all_docs[doc_id] = (doc, meta, boosted)
 
-    # Sort: recency-boosted distance (ascending = best match)
-    candidate_docs = sorted(all_docs.values(), key=lambda x: (x[1]["iteration"], x[2]))
+    # Sort by boosted distance for candidate selection, then by iteration for display
+    candidate_docs = sorted(all_docs.values(), key=lambda x: x[2])
 
     # Apply MMR to select a diverse subset from the candidates
     if use_mmr and ef is not None and len(candidate_docs) > n_results:

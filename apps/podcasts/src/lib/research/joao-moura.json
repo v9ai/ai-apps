@@ -2,7 +2,7 @@
   "slug": "joao-moura",
   "name": "João Moura",
   "generated_at": "2026-03-19T22:00:00+00:00",
-  "bio": "João Moura is a Brazilian software engineering leader with nearly 20 years of experience who founded CrewAI in October 2023 after building autonomous agents at Clearbit that generated 600+ inbound leads per day. Before CrewAI he was Director of AI Engineering at Clearbit (acquired by HubSpot), Engineering Manager at Toptal, and Lead Software Engineer at Packlane. CrewAI — a lean Python framework for orchestrating role-playing, collaborative AI agents built from scratch without LangChain dependencies — raised an $18M Series A led by Insight Partners in October 2024 with angels including Andrew Ng and Dharmesh Shah. By early 2026 the platform processes over 2 billion agentic workflows, running at 475M+ automations per month, with 150+ enterprise customers.",
+  "bio": "João Moura is a Brazilian software engineering leader with nearly 20 years of experience who founded CrewAI in October 2023 after building autonomous AI agents at Clearbit that generated 600+ inbound leads per day. Before CrewAI he was Director of AI Engineering at Clearbit (acquired by HubSpot), Engineering Manager at Toptal, and Lead Software Engineer at Packlane. CrewAI — a lean Python framework for orchestrating role-playing, collaborative AI agents built from scratch without LangChain dependencies — raised an $18M Series A led by Insight Partners in October 2024 with angels including Andrew Ng and Dharmesh Shah. By early 2026 the platform processes over 2 billion agentic workflows, running at 475M+ automations per month, with 150+ enterprise customers.",
   "topics": [
     "multi-agent AI orchestration",
     "autonomous AI agents",

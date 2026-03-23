@@ -19,7 +19,7 @@
       "The company's open-source commercialization model ('keep the engine open, monetize the car') is unproven at Chroma's scale and must balance community trust with revenue growth."
     ],
     "meeting_prep": [
-      "Ask about the practical implications of 'context rot' for teams building with long-context LLMs: 'Beyond the research, what are the first two things an engineering team should change in their workflow today?'",
+      "Ask about 'context rot' for long-context LLM teams: 'What are the first two things an engineering team should change in their workflow today?'",
       "Probe the competitive landscape: 'You've positioned Chroma as developer-first versus Pinecone's infrastructure-first approach. As enterprises standardize, how do you avoid being sidelined as a prototyping tool versus a production system?'",
       "Discuss the evolution of his thesis: 'You've moved from calling it a vector database to \"modern search for AI.\" What does search infrastructure look like in three years, and does the vector database category even exist?'"
     ],
@@ -94,7 +94,9 @@
     }
   ],
   "social": {
-    "github": "https://github.com/jeffchuber"
+    "github": "https://github.com/jeffchuber",
+    "linkedin": "https://www.linkedin.com/in/jeffchuber",
+    "website": "https://www.trychroma.com"
   },
   "podcast_appearances": [],
   "news": [],

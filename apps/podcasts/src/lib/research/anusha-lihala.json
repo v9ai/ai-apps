@@ -2,7 +2,7 @@
   "slug": "anusha-lihala",
   "name": "Anusha Lihala",
   "generated_at": "2026-03-20T12:10:00+00:00",
-  "bio": "Anusha Lihala's career spans roles at Nihilent, Zamphyr, Koneksys, Microsoft, and LivePerson before joining Wellness Coach as an AI engineer. She holds an MS from Trinity College Dublin and a BCA from BIT Mesra. Her recent work focuses on combining graph databases with LLM orchestration frameworks, while her earlier writing in Towards Data Science explored attention mechanisms and explainable NLP. She has been an active open-source contributor since participating in the 1MillionWomenToTech Summer of Code in 2018.",
+  "bio": "Anusha Lihala's career spans roles at Nihilent, Zamphyr, Koneksys, Microsoft, and LivePerson before joining Wellness Coach as an AI engineer. She holds an MS from Trinity College Dublin and a BCA from BIT Mesra. Her recent work focuses on combining graph databases with LLM orchestration frameworks, while her earlier writing in Towards Data Science explored attention mechanisms and explainable NLP. She has been an active open-source contributor since participating in the 1MillionWomenToTech Summer of Code in 2018. Her open-source KnowledgeGraph-RAG project demonstrates the integration of graph databases with LLM pipelines.",
   "executive_summary": {
     "one_liner": "AI engineer bridging knowledge graphs, NLP, and computer vision across industry roles at LivePerson, Microsoft, and Wellness Coach.",
     "key_facts": [

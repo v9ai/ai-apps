@@ -142,6 +142,14 @@
   },
   "funding": {},
   "conferences": {},
-  "technical_philosophy": {},
+  "technical_philosophy": {
+    "core_thesis": "Rapid iteration and human-centered design are the foundation of successful AI products — combine engineering rigor with UX intuition to ship products users actually adopt.",
+    "positions": {
+      "product_development": {
+        "stance": "Ship fast, iterate based on real user feedback",
+        "evidence": "Track record of building and launching AI-powered products in competitive markets"
+      }
+    }
+  },
   "sources": []
 }

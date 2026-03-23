@@ -1,7 +1,7 @@
 {
   "slug": "daniel-han",
   "name": "Daniel Han",
-  "generated_at": "2026-03-19",
+  "generated_at": "2026-03-19T00:00:00+00:00",
   "bio": "Daniel Han is an Australian software engineer and CEO/co-founder of Unsloth AI (YC S24), based in San Francisco. Together with his brother Michael Han, he created Unsloth, an open-source framework that accelerates LLM fine-tuning by up to 30x while using up to 90% less memory, making custom model training accessible on consumer GPUs. Before founding Unsloth, Daniel spent over 8 years in production ML engineering and numerical optimization: at NVIDIA he sped up t-SNE by 2000x and reduced SVD memory usage in cuPy by ~50%, and he maintained HyperLearn, an open-source ML acceleration package used by NASA and Microsoft engineers. Trained in Data Science and Actuarial/Law at UNSW Australia, he declined a lifetime NVIDIA offer to pursue Unsloth full-time. He is also known for finding and fixing 20+ bugs in major open-source LLMs including Gemma, Llama, Mistral, and Phi, and for pioneering dynamic quantization techniques that preserve model accuracy at extremely low bit-widths. Unsloth's models have surpassed 10 million monthly downloads on Hugging Face.",
   "topics": [
     "LLM Fine-Tuning Optimization",

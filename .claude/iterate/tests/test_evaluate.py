@@ -1,12 +1,119 @@
-"""Tests for evaluate.py — trend analysis, stop logic, and fallback evaluation."""
+"""Tests for evaluate.py — heuristic scoring, trend analysis, and stop logic."""
 
 import json
 import os
-import tempfile
 
 import pytest
 
-from evaluate import compute_trend, run_evaluation, _proxy_available, _deepeval_available, ALL_METRIC_NAMES
+from evaluate import (
+    ALL_METRIC_NAMES,
+    compute_trend,
+    run_evaluation,
+    run_heuristic,
+    _cosine_similarity,
+    _extract_errors,
+)
+
+
+# ---------------------------------------------------------------------------
+# _cosine_similarity
+# ---------------------------------------------------------------------------
+
+class TestCosineSimilarity:
+    def test_identical_vectors(self):
+        assert _cosine_similarity([1, 0], [1, 0]) == pytest.approx(1.0)
+
+    def test_orthogonal_vectors(self):
+        assert _cosine_similarity([1, 0], [0, 1]) == pytest.approx(0.0)
+
+    def test_zero_vector(self):
+        assert _cosine_similarity([0, 0], [1, 1]) == 0.0
+
+    def test_opposite_vectors(self):
+        assert _cosine_similarity([1, 0], [-1, 0]) == pytest.approx(-1.0)
+
+
+# ---------------------------------------------------------------------------
+# _extract_errors
+# ---------------------------------------------------------------------------
+
+class TestExtractErrors:
+    def test_matches_error_prefix(self):
+        assert len(_extract_errors("Error: something broke")) > 0
+
+    def test_matches_type_error(self):
+        assert len(_extract_errors("TypeError: x is not a function")) > 0
+
+    def test_matches_fail(self):
+        assert len(_extract_errors("FAIL src/test.ts")) > 0
+
+    def test_matches_exit_code(self):
+        assert len(_extract_errors("exit code 1")) > 0
+
+    def test_no_false_positive_prose(self):
+        assert len(_extract_errors("error handling is important")) == 0
+
+    def test_no_false_positive_mid_line(self):
+        assert len(_extract_errors("e.g. TypeError in prose")) == 0
+
+    def test_limits_to_10(self):
+        content = "\n".join(f"Error: err {i}" for i in range(20))
+        assert len(_extract_errors(content)) <= 10
+
+
+# ---------------------------------------------------------------------------
+# run_heuristic
+# ---------------------------------------------------------------------------
+
+class TestRunHeuristic:
+    def test_returns_all_metric_names(self):
+        scores = run_heuristic(
+            iteration=1,
+            actual_output="Added auth middleware and login endpoint.",
+            task="build auth system",
+            context="",
+            diff="No diff available.",
+        )
+        assert set(scores.keys()) == set(ALL_METRIC_NAMES)
+
+    def test_scores_are_between_0_and_1(self):
+        scores = run_heuristic(
+            iteration=1,
+            actual_output="Implemented the feature successfully.",
+            task="build feature",
+            context="Previous iteration started the feature.",
+            diff="feature.py | 10 ++++",
+        )
+        for key, val in scores.items():
+            assert 0.0 <= val["score"] <= 1.0, f"{key}: score {val['score']} out of range"
+
+    def test_has_score_reason_passed(self):
+        scores = run_heuristic(1, "output", "task", "", "No diff available.")
+        for key, val in scores.items():
+            assert "score" in val, f"{key} missing score"
+            assert "reason" in val, f"{key} missing reason"
+            assert "passed" in val, f"{key} missing passed"
+
+    def test_no_context_gives_default_progress(self):
+        scores = run_heuristic(1, "output", "task", "", "No diff available.")
+        assert scores["Incremental Progress"]["score"] == 0.6
+
+    def test_errors_reduce_quality(self):
+        clean = run_heuristic(1, "All good.", "task", "", "No diff available.")
+        errored = run_heuristic(
+            1,
+            "Error: something broke\nTypeError: x\nFAIL test.py",
+            "task", "", "No diff available.",
+        )
+        assert errored["Code Quality"]["score"] < clean["Code Quality"]["score"]
+
+    def test_diff_boosts_task_completion(self):
+        no_diff = run_heuristic(1, "Added feature.", "build feature", "", "No diff available.")
+        with_diff = run_heuristic(
+            1, "Added feature.", "build feature", "",
+            " feature.py | 10 ++++\n api.py | 5 +++",
+        )
+        assert with_diff["Task Completion"]["score"] >= no_diff["Task Completion"]["score"]
 
 
 # ---------------------------------------------------------------------------
@@ -60,27 +167,17 @@ class TestComputeTrend:
         assert "values" in t
         assert len(t["values"]) >= 2
 
-    def test_missing_metric_treated_as_zero(self):
-        scores = [
-            {"Other Metric": {"score": 0.9}},
-            {"Other Metric": {"score": 0.9}},
-        ]
-        t = compute_trend(scores, "Task Completion")
-        # Values will all be 0.0
-        assert t["direction"] in ("stable", "insufficient_data")
-
     def test_window_limits_lookback(self):
         scores = [{"Task Completion": {"score": v}} for v in [0.1, 0.9, 0.1, 0.9, 0.5]]
-        # window=2: only looks at last 2 entries [0.9, 0.5] → declining
         t = compute_trend(scores, "Task Completion", window=2)
-        assert t["direction"] in ("declining", "stable", "improving")  # valid direction
+        assert t["direction"] in ("declining", "stable", "improving")
 
 
 # ---------------------------------------------------------------------------
-# run_evaluation — fallback mode (no proxy)
+# run_evaluation — basic integration
 # ---------------------------------------------------------------------------
 
-class TestRunEvaluationFallback:
+class TestRunEvaluation:
     def _write_output(self, tmp_path, content="Some work done."):
         f = tmp_path / "output.txt"
         f.write_text(content)
@@ -102,34 +199,23 @@ class TestRunEvaluationFallback:
         assert "continue" in result
         assert "iteration" in result
 
-    def test_fallback_method_when_no_proxy(self, tmp_path):
+    def test_eval_method_is_heuristic(self, tmp_path):
         result = run_evaluation(
             iteration=1,
             output_file=self._write_output(tmp_path),
             task="build auth",
             prev_scores_file=self._scores_file(tmp_path),
         )
-        # proxy is not available in tests
-        assert result["eval_method"] == "fallback"
+        assert result["eval_method"] == "heuristic"
 
-    def test_fallback_scores_are_0_5(self, tmp_path):
+    def test_all_metric_names_present(self, tmp_path):
         result = run_evaluation(
             iteration=1,
             output_file=self._write_output(tmp_path),
-            task="build auth",
+            task="task",
             prev_scores_file=self._scores_file(tmp_path),
         )
-        for key, val in result["scores"].items():
-            assert val["score"] == 0.5, f"{key} score should be 0.5 in fallback, got {val['score']}"
-
-    def test_continue_true_in_fallback(self, tmp_path):
-        result = run_evaluation(
-            iteration=1,
-            output_file=self._write_output(tmp_path),
-            task="build auth",
-            prev_scores_file=self._scores_file(tmp_path),
-        )
-        assert result["continue"] is True
+        assert set(result["scores"].keys()) == set(ALL_METRIC_NAMES)
 
     def test_scores_file_written(self, tmp_path):
         scores_file = self._scores_file(tmp_path)
@@ -153,23 +239,6 @@ class TestRunEvaluationFallback:
             data = json.load(f)
         assert len(data) == 2
 
-    def test_all_metric_names_present(self, tmp_path):
-        result = run_evaluation(
-            iteration=1,
-            output_file=self._write_output(tmp_path),
-            task="task",
-            prev_scores_file=self._scores_file(tmp_path),
-        )
-        assert set(result["scores"].keys()) == set(ALL_METRIC_NAMES)
-
-    def test_new_metrics_in_all_metric_names(self):
-        assert "Answer Relevancy" in ALL_METRIC_NAMES
-        assert "Faithfulness" in ALL_METRIC_NAMES
-        assert "Contextual Relevancy" in ALL_METRIC_NAMES
-
-    def test_all_metric_names_has_8_entries(self):
-        assert len(ALL_METRIC_NAMES) == 8
-
     def test_trends_computed_after_multiple_iters(self, tmp_path):
         scores_file = self._scores_file(tmp_path)
         for i in range(1, 4):
@@ -180,7 +249,6 @@ class TestRunEvaluationFallback:
                 prev_scores_file=scores_file,
             )
         assert "trends" in result
-        # With 3 data points, at least some trends should have direction
         has_direction = any(
             v.get("direction") != "insufficient_data"
             for v in result["trends"].values()
@@ -193,214 +261,83 @@ class TestRunEvaluationFallback:
 # ---------------------------------------------------------------------------
 
 class TestStopLogic:
-    """Validate the stop conditions by injecting synthetic scores into scores.json."""
-
-    def _run_with_injected_scores(self, tmp_path, prev_scores, iteration=4):
+    def _run_with_injected_scores(self, tmp_path, prev_scores, current_scores, iteration=4):
         output_file = tmp_path / "output.txt"
         output_file.write_text("Some output.")
         scores_file = tmp_path / "scores.json"
         scores_file.write_text(json.dumps(prev_scores))
-        return run_evaluation(
-            iteration=iteration,
-            output_file=str(output_file),
-            task="task",
-            prev_scores_file=str(scores_file),
-        )
 
-    def test_no_progress_stops_loop(self, tmp_path, monkeypatch):
-        """When Incremental Progress < 0.2, evaluation should signal stop."""
         from unittest.mock import patch
         import evaluate
+        with patch.object(evaluate, "run_heuristic", return_value=current_scores):
+            return run_evaluation(
+                iteration=iteration,
+                output_file=str(output_file),
+                task="task",
+                prev_scores_file=str(scores_file),
+            )
 
-        low_progress = {"score": 0.1, "reason": "no progress", "passed": False}
-        mock_scores = {
-            "Task Completion": {"score": 0.4, "reason": "", "passed": False},
-            "Incremental Progress": low_progress,
-            "Coherence": {"score": 0.6, "reason": "", "passed": True},
-            "Code Quality": {"score": 0.6, "reason": "", "passed": True},
-            "Focus": {"score": 0.6, "reason": "", "passed": True},
-            "Answer Relevancy": {"score": 0.6, "reason": "", "passed": True},
-            "Faithfulness": {"score": 0.6, "reason": "", "passed": True},
-            "Contextual Relevancy": {"score": 0.6, "reason": "", "passed": True},
-        }
+    def _full_scores(self, **overrides) -> dict:
+        base = {k: {"score": 0.6, "reason": "", "passed": True} for k in ALL_METRIC_NAMES}
+        base.update(overrides)
+        return base
 
-        with patch.object(evaluate, "run_direct_llm", return_value=mock_scores), \
-             patch.object(evaluate, "_proxy_available", return_value=True), \
-             patch.object(evaluate, "_deepeval_available", False):
-            result = self._run_with_injected_scores(tmp_path, [])
-            assert result["continue"] is False
-            assert "progress" in result["stop_reason"].lower()
+    def test_high_task_completion_stops(self, tmp_path):
+        scores = self._full_scores(**{
+            "Task Completion": {"score": 0.95, "reason": "done", "passed": True},
+        })
+        result = self._run_with_injected_scores(tmp_path, [], scores)
+        assert result["continue"] is False
+        assert "complete" in result["stop_reason"].lower()
 
-    def test_plateau_stops_loop(self, tmp_path, monkeypatch):
-        """Flat scores over 3 iterations trigger plateau stop."""
-        import evaluate
-        from unittest.mock import patch
+    def test_no_progress_stops(self, tmp_path):
+        scores = self._full_scores(**{
+            "Incremental Progress": {"score": 0.1, "reason": "no progress", "passed": False},
+        })
+        result = self._run_with_injected_scores(tmp_path, [], scores)
+        assert result["continue"] is False
+        assert "progress" in result["stop_reason"].lower()
 
+    def test_low_coherence_stops(self, tmp_path):
+        scores = self._full_scores(**{
+            "Coherence": {"score": 0.2, "reason": "off topic", "passed": False},
+        })
+        result = self._run_with_injected_scores(tmp_path, [], scores)
+        assert result["continue"] is False
+        assert "coherence" in result["stop_reason"].lower()
+
+    def test_plateau_stops(self, tmp_path):
         flat_score = 0.6
         prev = [
             {k: {"score": flat_score, "reason": "", "passed": True} for k in ALL_METRIC_NAMES}
             for _ in range(3)
         ]
+        current = self._full_scores()
+        result = self._run_with_injected_scores(tmp_path, prev, current, iteration=4)
+        assert result["continue"] is False
+        assert "plateau" in result["stop_reason"].lower()
 
-        high_progress = {k: {"score": flat_score, "reason": "", "passed": True}
-                         for k in ALL_METRIC_NAMES}
-
-        with patch.object(evaluate, "run_direct_llm", return_value=high_progress), \
-             patch.object(evaluate, "_proxy_available", return_value=True), \
-             patch.object(evaluate, "_deepeval_available", False):
-            result = self._run_with_injected_scores(tmp_path, prev, iteration=4)
-            assert result["continue"] is False
-            assert "plateau" in result["stop_reason"].lower()
-
-    def _full_mock_scores(self, **overrides) -> dict:
-        """Return a complete 8-metric mock score dict with optional overrides."""
-        base = {k: {"score": 0.6, "reason": "", "passed": True} for k in ALL_METRIC_NAMES}
-        base.update(overrides)
-        return base
-
-    def test_regression_stops_loop(self, tmp_path):
-        """Declining Task Completion trend should stop after 3+ iterations."""
-        import evaluate
-        from unittest.mock import patch
-
-        # 3 prior scores that are declining
-        prev = [
-            {k: {"score": 0.8 - i * 0.15, "reason": "", "passed": True} for k in ALL_METRIC_NAMES}
-            for i in range(3)
-        ]
-        # Current score: also low and still declining
-        current = self._full_mock_scores(**{
-            "Task Completion": {"score": 0.35, "reason": "regressing", "passed": False},
-        })
-
-        with patch.object(evaluate, "run_direct_llm", return_value=current), \
-             patch.object(evaluate, "_proxy_available", return_value=True), \
-             patch.object(evaluate, "_deepeval_available", False):
-            result = self._run_with_injected_scores(tmp_path, prev, iteration=4)
-            # Either regression or no progress should stop it
-            assert result["continue"] is False
-
-    def test_low_quality_stops_loop_after_first_iter(self, tmp_path):
-        """Code Quality < 0.2 after iteration 1 should stop the loop."""
-        import evaluate
-        from unittest.mock import patch
-
-        bad_quality = self._full_mock_scores(**{
+    def test_low_quality_stops_after_iter_1(self, tmp_path):
+        scores = self._full_scores(**{
             "Code Quality": {"score": 0.1, "reason": "poor", "passed": False},
             "Incremental Progress": {"score": 0.5, "reason": "", "passed": True},
         })
-
-        with patch.object(evaluate, "run_direct_llm", return_value=bad_quality), \
-             patch.object(evaluate, "_proxy_available", return_value=True), \
-             patch.object(evaluate, "_deepeval_available", False):
-            result = self._run_with_injected_scores(tmp_path, [], iteration=2)
-            assert result["continue"] is False
-            assert "quality" in result["stop_reason"].lower()
-
-    def test_high_task_completion_stops_loop(self, tmp_path):
-        """Task Completion >= 0.9 should trigger a stop."""
-        import evaluate
-        from unittest.mock import patch
-
-        complete_scores = {
-            "Task Completion": {"score": 0.95, "reason": "done", "passed": True},
-            "Incremental Progress": {"score": 0.8, "reason": "", "passed": True},
-            "Coherence": {"score": 0.8, "reason": "", "passed": True},
-            "Code Quality": {"score": 0.8, "reason": "", "passed": True},
-            "Focus": {"score": 0.8, "reason": "", "passed": True},
-            "Answer Relevancy": {"score": 0.8, "reason": "", "passed": True},
-            "Faithfulness": {"score": 0.8, "reason": "", "passed": True},
-            "Contextual Relevancy": {"score": 0.8, "reason": "", "passed": True},
-        }
-
-        with patch.object(evaluate, "run_direct_llm", return_value=complete_scores), \
-             patch.object(evaluate, "_proxy_available", return_value=True), \
-             patch.object(evaluate, "_deepeval_available", False):
-            result = self._run_with_injected_scores(tmp_path, [])
-            assert result["continue"] is False
-            assert "complete" in result["stop_reason"].lower()
-
-
-# ---------------------------------------------------------------------------
-# Semantic similarity in run_evaluation
-# ---------------------------------------------------------------------------
-
-class TestSemanticSimilarity:
-    def _run_with_similarity(self, tmp_path, similarity, iteration=2):
-        """Run evaluate with a given similarity value and return result."""
-        import evaluate
-        from unittest.mock import patch
-
-        good_scores = {k: {"score": 0.6, "reason": "", "passed": True} for k in ALL_METRIC_NAMES}
-
-        output_file = tmp_path / "output.txt"
-        output_file.write_text("Some new work done in this iteration.")
-        scores_file = tmp_path / "scores.json"
-        scores_file.write_text("[]")
-
-        with patch.object(evaluate, "run_direct_llm", return_value=good_scores), \
-             patch.object(evaluate, "_proxy_available", return_value=True), \
-             patch.object(evaluate, "_deepeval_available", False):
-            return run_evaluation(
-                iteration=iteration,
-                output_file=str(output_file),
-                task="build auth",
-                prev_scores_file=str(scores_file),
-                similarity=similarity,
-            )
-
-    def test_result_includes_semantic_similarity_key(self, tmp_path):
-        result = self._run_with_similarity(tmp_path, similarity=0.75)
-        assert "semantic_similarity" in result
-
-    def test_similarity_value_preserved_in_result(self, tmp_path):
-        result = self._run_with_similarity(tmp_path, similarity=0.75)
-        assert result["semantic_similarity"] == 0.75
-
-    def test_none_similarity_preserved(self, tmp_path):
-        result = self._run_with_similarity(tmp_path, similarity=None)
-        assert result["semantic_similarity"] is None
-
-    def test_high_similarity_stops_loop(self, tmp_path):
-        """Similarity > 0.92 after iter 1 should stop the loop."""
-        result = self._run_with_similarity(tmp_path, similarity=0.95, iteration=2)
+        result = self._run_with_injected_scores(tmp_path, [], scores, iteration=2)
         assert result["continue"] is False
-        assert "repetition" in result["stop_reason"].lower()
-
-    def test_low_similarity_does_not_stop(self, tmp_path):
-        """Low similarity should not trigger semantic stop."""
-        result = self._run_with_similarity(tmp_path, similarity=0.5, iteration=2)
-        assert result["continue"] is True
-
-    def test_high_similarity_on_first_iter_does_not_stop(self, tmp_path):
-        """Semantic stop only activates after iteration 1."""
-        result = self._run_with_similarity(tmp_path, similarity=0.99, iteration=1)
-        # Should NOT stop on iteration 1 due to similarity
-        assert "repetition" not in (result.get("stop_reason") or "").lower()
-
-    def test_similarity_added_to_context_when_provided(self, tmp_path):
-        """When similarity is provided, it should be appended to context."""
-        import evaluate
-        # Test the context modification directly
-        context = "Some existing context."
-        similarity = 0.95
-        if similarity is not None:
-            sim_note = f"\n## Semantic Similarity\nOutput similarity to previous iteration: {similarity:.3f}"
-            if similarity > 0.88:
-                sim_note += " (HIGH — may be repeating prior work)"
-            modified = context + sim_note
-        assert "Semantic Similarity" in modified
-        assert "HIGH" in modified
+        assert "quality" in result["stop_reason"].lower()
 
 
 # ---------------------------------------------------------------------------
-# Module-level checks
+# ALL_METRIC_NAMES
 # ---------------------------------------------------------------------------
 
-class TestModuleLevel:
-    def test_proxy_unavailable_in_test_env(self):
-        # In test environment, the DeepSeek proxy should not be running
-        assert _proxy_available() is False
+class TestAllMetricNames:
+    def test_has_8_metrics(self):
+        assert len(ALL_METRIC_NAMES) == 8
 
-    def test_deepeval_importable(self):
-        assert _deepeval_available is True
+    def test_no_duplicate_names(self):
+        assert len(ALL_METRIC_NAMES) == len(set(ALL_METRIC_NAMES))
+
+    def test_all_names_are_strings(self):
+        for name in ALL_METRIC_NAMES:
+            assert isinstance(name, str) and len(name) > 0

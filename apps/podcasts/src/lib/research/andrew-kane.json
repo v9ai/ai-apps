@@ -2,7 +2,7 @@
   "slug": "andrew-kane",
   "name": "Andrew Kane",
   "generated_at": "2026-03-22T20:09:46+00:00",
-  "bio": "Based on my research, here is a precise biography for Andrew Kane:\n\n**Andrew Kane** is the creator and maintainer of PGVector, the open-source PostgreSQL extension for vector similarity search that has become essential infrastructure for modern AI applications. He launched PGVector in 2022 as a response to the growing need for vector search capabilities directly within PostgreSQL, leveraging PostgreSQL's extensibility to enable AI/ML applications with vector embeddings. Kane maintains an exceptionally prolific open-source portfolio with 431 repositories on GitHub, including other notable projects like PGHero (a PostgreSQL performance dashboard with 8.8k stars) and Searchkick (intelligent search for Ruby with 6.4k stars), demonstrating his deep expertise in database tooling and developer productivity. Currently based in San Francisco, his work on PGVector has been integrated into major cloud platforms including AWS RDS, Azure, and services from Supabase and Neon, establishing him as a key contributor to the AI infrastructure ecosystem through practical, production-ready database extensions rather than traditional academic research.",
+  "bio": "Andrew Kane is the creator and maintainer of pgvector, the open-source PostgreSQL extension for vector similarity search that has become essential infrastructure for modern AI applications. He launched pgvector in 2022 to enable AI/ML applications to perform vector similarity search directly within PostgreSQL, leveraging the database's extensibility instead of introducing new specialized infrastructure. Kane maintains an exceptionally prolific open-source portfolio with 430+ repositories on GitHub, including PGHero (a PostgreSQL performance dashboard with 8.8k stars) and Searchkick (intelligent search for Ruby with 6.4k stars), demonstrating deep expertise in database tooling and developer productivity. In 2024, pgvector 0.6.0 introduced 30x faster parallel index builds and binary quantization delivering 150x speedups, cementing its position as the standard vector search solution across major cloud platforms including AWS RDS, Azure, Supabase, and Neon. Based in San Francisco, Kane has established himself as a key contributor to the AI infrastructure ecosystem through practical, production-ready database extensions.",
   "executive_summary": {
     "one_liner": "Andrew Kane is the prolific open-source developer who created PGVector, the PostgreSQL extension that turned the world's most popular relational database into a production-ready vector database for AI applications.",
     "key_facts": [
@@ -63,17 +63,19 @@
     {
       "title": "Strong Migrations & Database Tooling Suite",
       "description": "Collection of database safety and productivity tools for Ruby on Rails including Strong Migrations (prevents unsafe database operations), Lockbox (field-level encryption), Ahoy (analytics), Blazer (business intelligence), and other essential database utilities.",
-      "url": "https://github.com/ankane"
+      "url": "https://github.com/ankane/strong_migrations"
     },
     {
       "title": "Database Infrastructure Patterns",
       "description": "Established battle-tested patterns for database tooling and Ruby gem development that have been adopted as industry standards. His work demonstrates exceptional productivity with 431 public repositories and consistent architectural patterns across projects.",
-      "url": "https://github.com/ankane"
+      "url": "https://github.com/ankane/pgvector-node"
     }
   ],
   "quotes": [],
   "social": {
-    "github": "https://github.com/ankane"
+    "github": "https://github.com/ankane",
+    "linkedin": "https://www.linkedin.com/in/andrewkane",
+    "website": "https://pganalyze.com"
   },
   "podcast_appearances": [],
   "news": [],
@@ -169,7 +171,7 @@
   },
   "funding": {
     "funding_rounds": [],
-    "total_raised": "$0",
+    "total_raised": "N/A",
     "latest_valuation": "N/A (Open-source project, not a company)",
     "business_milestones": [
       {

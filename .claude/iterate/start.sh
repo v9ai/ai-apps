@@ -10,16 +10,20 @@ TASK=""
 while [[ $# -gt 0 ]]; do
     case $1 in
         --iterations)
-            if [[ "$2" =~ ^[0-9]+$ ]]; then
+            if [[ $# -lt 2 ]]; then
+                echo "Error: --iterations requires a value" >&2
+                exit 1
+            fi
+            if [[ "$2" =~ ^[1-9][0-9]*$ ]]; then
                 ITERATIONS="$2"
             else
-                echo "Error: --iterations requires a number, got '$2'" >&2
+                echo "Error: --iterations requires a positive number, got '$2'" >&2
                 exit 1
             fi
             shift 2 ;;
         --reset) RESET=true; shift ;;
         --status) STATUS=true; shift ;;
-        *) TASK="$1"; shift ;;
+        *) TASK="${TASK:+$TASK }$1"; shift ;;
     esac
 done
 
@@ -33,8 +37,8 @@ _iter_dir() {
     else
         local h
         h=$(printf '%s' "$(pwd)" | md5 -q 2>/dev/null \
-            || printf '%s' "$(pwd)" | md5sum 2>/dev/null | cut -c1-12)
-        echo "/tmp/claude-iterate-${h}"
+            || printf '%s' "$(pwd)" | md5sum 2>/dev/null | cut -d' ' -f1)
+        echo "/tmp/claude-iterate-${h:0:12}"
     fi
 }
 
@@ -81,10 +85,6 @@ fi
 python3.12 -c "import chromadb" 2>/dev/null || {
     echo "Installing chromadb…"
     python3.12 -m pip install chromadb -q || true
-}
-python3.12 -c "import deepeval" 2>/dev/null || {
-    echo "Installing deepeval…"
-    python3.12 -m pip install deepeval -q || true
 }
 python3.12 -c "import fastembed" 2>/dev/null || {
     echo "Installing fastembed (optional, will fall back to chroma default)…"

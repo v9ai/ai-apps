@@ -175,11 +175,15 @@ def fetch_github_profile(username: str) -> str:
     if not username or username.strip() in ("", "unknown"):
         return "(no username provided)"
     lines = []
+    token = os.environ.get("GITHUB_TOKEN", "")
+    headers: dict[str, str] = {"Accept": "application/vnd.github.v3+json"}
+    if token:
+        headers["Authorization"] = f"token {token}"
     try:
         with httpx.Client(timeout=_HTTP_TIMEOUT) as client:
             resp = client.get(
                 f"https://api.github.com/users/{username}",
-                headers={"Accept": "application/vnd.github.v3+json"},
+                headers=headers,
             )
             if resp.status_code == 200:
                 d = resp.json()
@@ -193,7 +197,7 @@ def fetch_github_profile(username: str) -> str:
             resp = client.get(
                 f"https://api.github.com/users/{username}/repos",
                 params={"sort": "stars", "direction": "desc", "per_page": 10},
-                headers={"Accept": "application/vnd.github.v3+json"},
+                headers=headers,
             )
             if resp.status_code == 200:
                 lines.append("Top repositories:")

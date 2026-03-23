@@ -79,18 +79,22 @@ class TestSlugNameMatch:
             slug = p["slug"]
             name = p.get("name", "")
             parts = name.lower().split()
-            assert len(parts) >= 2, (
-                f"Name '{name}' has fewer than 2 parts for slug '{slug}'"
-            )
-            for part in parts:
+            if len(parts) < 2:
+                continue  # mononyms (e.g. "Teknium") use a single-word slug — OK
+            # Only check first and last name parts (skip middle names)
+            parts_to_check = [parts[0], parts[-1]] if len(parts) > 2 else parts
+            for part in parts_to_check:
                 # Transliterate Unicode to ASCII (e.g. "João" -> "joao")
                 # then strip any remaining non-alpha chars.
                 nfkd = unicodedata.normalize("NFKD", part)
                 ascii_part = nfkd.encode("ascii", "ignore").decode("ascii")
-                cleaned = re.sub(r"[^a-z]", "", ascii_part)
+                cleaned = re.sub(r"[^a-z-]", "", ascii_part).strip("-")
                 if not cleaned:
                     continue
-                assert cleaned in slug, (
+                # Handle hyphenated first names like "Yih-Dar" → slug has "yih-dar"
+                slug_no_hyphens = slug.replace("-", "")
+                cleaned_no_hyphens = cleaned.replace("-", "")
+                assert cleaned in slug or cleaned_no_hyphens in slug_no_hyphens, (
                     f"Slug '{slug}' does not contain name part '{cleaned}' "
                     f"(from name '{name}')"
                 )

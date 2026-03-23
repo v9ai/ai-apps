@@ -1,6 +1,6 @@
 {
   "slug": "nate-raw",
-  "name": "Nathan Raw",
+  "name": "Nate Raw",
   "generated_at": "2026-03-19T21:00:00+00:00",
   "bio": "Nathan (Nate) Raw is a machine learning engineer, open-source contributor, and former Developer Advocate at Hugging Face. He describes himself as a 'machine learning hacker passionate about building cool products with technology.' Before focusing on ML, he was an electronic music producer who released tracks on Beatport and produced, mixed, and mastered instrumental hip-hop and experimental music. He is affiliated with the University of Florida and Heriot-Watt University (visible through his HuggingFace organization memberships). He contributed extensively to the Hugging Face ecosystem (234 commits across HF org repos), built tooling for PyTorch Lightning (17 commits to Lightning-AI), and later worked at Splice applying ML to music and audio. His most recognized project is stable-diffusion-videos (4,670+ stars), which made him the top trending developer on GitHub. On the HuggingFace Hub he maintains 209 models, 131 datasets, and 65 Spaces spanning computer vision, audio generation, NLP, and video understanding.",
   "topics": [

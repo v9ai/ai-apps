@@ -39,7 +39,9 @@ def git_cwd(tmp_path, monkeypatch):
     repo.mkdir()
     os.system(f"git init -q {repo} && git -C {repo} commit --allow-empty -m 'init' -q")
     monkeypatch.setenv("CLAUDE_ITERATE_CWD", str(repo))
-    monkeypatch.setattr("store_context.CHROMA_PATH", str(tmp_path / "chroma"))
+    chroma_path = str(tmp_path / "chroma")
+    monkeypatch.setattr("store_context.CHROMA_PATH", chroma_path)
+    monkeypatch.setattr("retrieve_context.CHROMA_PATH", chroma_path)
     return str(repo)
 
 

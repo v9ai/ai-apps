@@ -74,7 +74,7 @@ def get_git_diff() -> tuple[str | None, list[str], str | None]:
     cwd = os.environ.get("CLAUDE_ITERATE_CWD", ".")
     used_base: list[str] | None = None
 
-    for diff_base in (["HEAD~1"], ["HEAD"]):
+    for diff_base in (["HEAD~1", "HEAD"], ["HEAD"]):
         try:
             r = subprocess.run(
                 ["git", "diff"] + diff_base + ["--stat", "--no-color"],
@@ -113,8 +113,8 @@ def extract_errors(content: str) -> list[str]:
         r'^(?:FAIL|FAILED)[ \t]+\S.*',
         # Rust panics
         r'^panic:.*',
-        # Exit codes
-        r'exit code [1-9]\d*',
+        # Exit codes — anchored to line start
+        r'^.*exit(?:ed with)? code [1-9]\d*',
     ]
     errors = []
     for pattern in patterns:
@@ -197,9 +197,8 @@ def store(iteration: int, content: str, task: str):
     semantic_similarity: float | None = None
     if iteration >= 1:
         try:
-            from retrieve_context import compute_iter_similarity, get_collection as _rc_get_collection
-            _col = _rc_get_collection()
-            semantic_similarity = compute_iter_similarity(_col, iteration, iteration - 1)
+            from retrieve_context import compute_iter_similarity
+            semantic_similarity = compute_iter_similarity(collection, iteration, iteration - 1)
         except Exception:
             pass
 

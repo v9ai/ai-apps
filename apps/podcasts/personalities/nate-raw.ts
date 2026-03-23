@@ -1,7 +1,7 @@
 import type { Personality } from "@/lib/personalities/types";
 
 const personality: Personality = {
-  name: "Nathan Raw",
+  name: "Nate Raw",
   role: "ML Engineer & Developer Advocate",
   org: "Hugging Face",
   description:

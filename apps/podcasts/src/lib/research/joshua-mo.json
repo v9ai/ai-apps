@@ -23,10 +23,7 @@
       "Given your interest in 'AI-native software' and orchestrating specialized models, how does the work at 0xPlaygrounds on on-chain agents address the current fragmentation in multi-agent system design?",
       "You're a strong advocate for open weights over proprietary models. What's the one practical, near-term milestone the open-source community needs to hit to decisively win over the developer mainstream?"
     ],
-    "confidence_level": {
-      "level": "Medium",
-      "reasoning": "The profile is built on high-quality, consistent data regarding Joshua Mo's technical philosophy, current role, and public positions, which are well-sourced from his own content (blogs, talks, tweets). However, confidence is tempered by significant gaps in biographical timeline and career history, and the fact that some source URLs provided in the research appear to be placeholders ('example_tweet'), indicating they were synthesized rather than directly cited. The core narrative is coherent and actionable, but lacks complete foundational verification."
-    }
+    "confidence_level": "medium"
   },
   "topics": [
     "RAG pipeline optimization",
@@ -41,22 +38,78 @@
     "on-chain AI agent systems"
   ],
   "timeline": [
-    { "date": "2022-11", "event": "Taught himself Rust from 'The Rust Book' and joined Shuttle's Heroes volunteer program after career burnout in food wholesale", "url": "https://joshmo.bearblog.dev/my-first-tech-job-using-rust/" },
-    { "date": "2023-03", "event": "Published 'Next.js and Rust' article — 100k+ hits and HackerNews front page, leading to a paid Shuttle contract", "url": "https://joshmo.bearblog.dev/lets-build-a-saas-with-rust/" },
-    { "date": "2023-04", "event": "Published 'Can Rust Beat JavaScript in 2023?' — went viral, reviewed by ThePrimeagen", "url": "https://joshmo.bearblog.dev/can-rust-beat-javascript-in-2023/" },
-    { "date": "2023-09", "event": "Promoted to full-time DevRel Engineer at Shuttle.rs at EuroRust conference after 10x traffic growth", "url": "https://joshmo.bearblog.dev/my-first-tech-job-using-rust/" },
-    { "date": "2025-02", "event": "Joined 0xPlaygrounds as DevRel Engineer to build developer relations for the Rig AI agent SDK", "url": "https://github.com/0xPlaygrounds" },
-    { "date": "2025-06", "event": "Published rig-experimental: companion crate for Rig, the Rust-based agentic AI framework", "url": "https://github.com/joshua-mo-143/rig-experimental" },
-    { "date": "2025-10", "event": "Released bolter: an experimental agent runtime using sandboxed tool execution", "url": "https://github.com/joshua-mo-143/bolter" },
-    { "date": "2025-11", "event": "Released braindump: an ergonomic, opinionated memory interface for AI agents", "url": "https://github.com/joshua-mo-143/braindump" },
-    { "date": "2025-12", "event": "Created rig-rlm: an example implementation of Recursive Language Models in Rust", "url": "https://github.com/joshua-mo-143/rig-rlm" }
+    {
+      "date": "2022-11",
+      "event": "Taught himself Rust from 'The Rust Book' and joined Shuttle's Heroes volunteer program after career burnout in food wholesale",
+      "url": "https://joshmo.bearblog.dev/my-first-tech-job-using-rust/"
+    },
+    {
+      "date": "2023-03",
+      "event": "Published 'Next.js and Rust' article — 100k+ hits and HackerNews front page, leading to a paid Shuttle contract",
+      "url": "https://joshmo.bearblog.dev/lets-build-a-saas-with-rust/"
+    },
+    {
+      "date": "2023-04",
+      "event": "Published 'Can Rust Beat JavaScript in 2023?' — went viral, reviewed by ThePrimeagen",
+      "url": "https://joshmo.bearblog.dev/can-rust-beat-javascript-in-2023/"
+    },
+    {
+      "date": "2023-09",
+      "event": "Promoted to full-time DevRel Engineer at Shuttle.rs at EuroRust conference after 10x traffic growth",
+      "url": "https://joshmo.bearblog.dev/my-first-tech-job-using-rust/"
+    },
+    {
+      "date": "2025-02",
+      "event": "Joined 0xPlaygrounds as DevRel Engineer to build developer relations for the Rig AI agent SDK",
+      "url": "https://github.com/0xPlaygrounds"
+    },
+    {
+      "date": "2025-06",
+      "event": "Published rig-experimental: companion crate for Rig, the Rust-based agentic AI framework",
+      "url": "https://github.com/joshua-mo-143/rig-experimental"
+    },
+    {
+      "date": "2025-10",
+      "event": "Released bolter: an experimental agent runtime using sandboxed tool execution",
+      "url": "https://github.com/joshua-mo-143/bolter"
+    },
+    {
+      "date": "2025-11",
+      "event": "Released braindump: an ergonomic, opinionated memory interface for AI agents",
+      "url": "https://github.com/joshua-mo-143/braindump"
+    },
+    {
+      "date": "2025-12",
+      "event": "Created rig-rlm: an example implementation of Recursive Language Models in Rust",
+      "url": "https://github.com/joshua-mo-143/rig-rlm"
+    }
   ],
   "key_contributions": [
-    { "title": "Rig — Rust AI Agent SDK", "description": "Core contributor and DevRel for Rig, an open-source Rust SDK by 0xPlaygrounds for building LLM-powered agents, RAG pipelines, and multi-agent systems.", "url": "https://github.com/0xPlaygrounds/rig" },
-    { "title": "'Next.js and Rust' article (100k+ hits)", "description": "Viral technical article that hit HackerNews front page with over 100,000 reads, directly landing Joshua his first paid tech contract at Shuttle.rs.", "url": "https://joshmo.bearblog.dev/lets-build-a-saas-with-rust/" },
-    { "title": "'Can Rust Beat JavaScript in 2023?'", "description": "Viral piece reviewed by ThePrimeagen that established Joshua's voice in the Rust community and drove 10x traffic growth for Shuttle.rs.", "url": "https://joshmo.bearblog.dev/can-rust-beat-javascript-in-2023/" },
-    { "title": "braindump", "description": "An ergonomic, opinionated memory interface for AI agents, enabling persistent and structured agent memory in Rust.", "url": "https://github.com/joshua-mo-143/braindump" },
-    { "title": "bolter", "description": "An experimental agent runtime with sandboxed tool execution for safer, more controlled AI agent deployments.", "url": "https://github.com/joshua-mo-143/bolter" }
+    {
+      "title": "Rig — Rust AI Agent SDK",
+      "description": "Core contributor and DevRel for Rig, an open-source Rust SDK by 0xPlaygrounds for building LLM-powered agents, RAG pipelines, and multi-agent systems.",
+      "url": "https://github.com/0xPlaygrounds/rig"
+    },
+    {
+      "title": "'Next.js and Rust' article (100k+ hits)",
+      "description": "Viral technical article that hit HackerNews front page with over 100,000 reads, directly landing Joshua his first paid tech contract at Shuttle.rs.",
+      "url": "https://joshmo.bearblog.dev/lets-build-a-saas-with-rust/"
+    },
+    {
+      "title": "'Can Rust Beat JavaScript in 2023?'",
+      "description": "Viral piece reviewed by ThePrimeagen that established Joshua's voice in the Rust community and drove 10x traffic growth for Shuttle.rs.",
+      "url": "https://joshmo.bearblog.dev/can-rust-beat-javascript-in-2023/"
+    },
+    {
+      "title": "braindump",
+      "description": "An ergonomic, opinionated memory interface for AI agents, enabling persistent and structured agent memory in Rust.",
+      "url": "https://github.com/joshua-mo-143/braindump"
+    },
+    {
+      "title": "bolter",
+      "description": "An experimental agent runtime with sandboxed tool execution for safer, more controlled AI agent deployments.",
+      "url": "https://github.com/joshua-mo-143/bolter"
+    }
   ],
   "quotes": [],
   "social": {
@@ -170,10 +223,25 @@
     }
   ],
   "sources": [
-    { "title": "My First Tech Job (Using Rust) — Josh Mo Blog", "url": "https://joshmo.bearblog.dev/my-first-tech-job-using-rust/" },
-    { "title": "How I Write My Articles — Josh Mo Blog", "url": "https://joshmo.bearblog.dev/how-i-write-my-articles/" },
-    { "title": "Building a SaaS with Rust and Next.js — Josh Mo Blog", "url": "https://joshmo.bearblog.dev/lets-build-a-saas-with-rust/" },
-    { "title": "Can Rust Beat JavaScript in 2023? — Josh Mo Blog", "url": "https://joshmo.bearblog.dev/can-rust-beat-javascript-in-2023/" },
-    { "title": "joshua-mo-143 GitHub Profile", "url": "https://github.com/joshua-mo-143" }
+    {
+      "title": "My First Tech Job (Using Rust) — Josh Mo Blog",
+      "url": "https://joshmo.bearblog.dev/my-first-tech-job-using-rust/"
+    },
+    {
+      "title": "How I Write My Articles — Josh Mo Blog",
+      "url": "https://joshmo.bearblog.dev/how-i-write-my-articles/"
+    },
+    {
+      "title": "Building a SaaS with Rust and Next.js — Josh Mo Blog",
+      "url": "https://joshmo.bearblog.dev/lets-build-a-saas-with-rust/"
+    },
+    {
+      "title": "Can Rust Beat JavaScript in 2023? — Josh Mo Blog",
+      "url": "https://joshmo.bearblog.dev/can-rust-beat-javascript-in-2023/"
+    },
+    {
+      "title": "joshua-mo-143 GitHub Profile",
+      "url": "https://github.com/joshua-mo-143"
+    }
   ]
 }

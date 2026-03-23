@@ -63,7 +63,7 @@ def _extract_errors(content: str) -> list[str]:
         r'^(?:TypeError|SyntaxError|ReferenceError|ImportError|KeyError|ValueError|AttributeError|ModuleNotFoundError)[:( ].*',
         r'^(?:FAIL|FAILED)[ \t]+\S.*',
         r'^panic:.*',
-        r'exit code [1-9]\d*',
+        r'^.*exit(?:ed with)? code [1-9]\d*',
     ]
     errors = []
     for pattern in patterns:
@@ -226,7 +226,14 @@ def compute_trend(prev_scores: list[dict], metric_name: str, window: int = 3) ->
 # Main evaluation
 # ---------------------------------------------------------------------------
 
-def run_evaluation(iteration, output_file, task, context_file=None, prev_scores_file=None):
+def run_evaluation(
+    iteration,
+    output_file,
+    task,
+    context_file=None,
+    prev_scores_file=None,
+    similarity=None,
+):
     with open(output_file) as f:
         actual_output = f.read()
     context = ""
@@ -242,7 +249,7 @@ def run_evaluation(iteration, output_file, task, context_file=None, prev_scores_
     # Git diff
     diff = "No diff available."
     try:
-        r = subprocess.run(["git", "diff", "HEAD~1", "--stat", "--no-color"],
+        r = subprocess.run(["git", "diff", "HEAD~1", "HEAD", "--stat", "--no-color"],
                            capture_output=True, text=True, timeout=5,
                            cwd=os.environ.get("CLAUDE_ITERATE_CWD", "."))
         if r.returncode == 0 and r.stdout.strip():
@@ -256,6 +263,13 @@ def run_evaluation(iteration, output_file, task, context_file=None, prev_scores_
         actual_output = actual_output[:max_len] + "\n... (truncated)"
     if len(context) > max_len:
         context = context[:max_len] + "\n... (truncated)"
+
+    # Append semantic similarity note to context so heuristic metrics can factor it in
+    if similarity is not None:
+        sim_note = f"\n## Semantic Similarity\nOutput similarity to previous iteration: {similarity:.3f}"
+        if similarity > 0.88:
+            sim_note += " (HIGH — may be repeating prior work)"
+        context = context + sim_note if context else sim_note.lstrip()
 
     scores = run_heuristic(iteration, actual_output, task, context, diff)
     eval_method = "heuristic"
@@ -277,8 +291,8 @@ def run_evaluation(iteration, output_file, task, context_file=None, prev_scores_
         should_continue, stop_reason = False, f"No progress ({pr:.2f})"
     elif co < 0.3:
         should_continue, stop_reason = False, f"Coherence degraded ({co:.2f})"
-    elif len(prev_scores) >= 3:
-        recent = [s.get("Task Completion", {}).get("score", 0) for s in prev_scores[-3:]]
+    elif len(all_scores) >= 4:
+        recent = [s.get("Task Completion", {}).get("score", 0) for s in all_scores[-4:]]
         if all(r is not None for r in recent) and max(recent) - min(recent) < 0.05 and tc > 0:
             should_continue, stop_reason = False, f"Score plateau (spread: {max(recent)-min(recent):.3f})"
 
@@ -290,6 +304,10 @@ def run_evaluation(iteration, output_file, task, context_file=None, prev_scores_
     if should_continue and qu < 0.2 and iteration > 1:
         should_continue, stop_reason = False, f"Quality too low ({qu:.2f})"
 
+    # Semantic repetition stop (belt-and-suspenders alongside kick-session.sh)
+    if should_continue and similarity is not None and similarity > 0.92 and iteration > 1:
+        should_continue, stop_reason = False, f"Semantic repetition ({similarity:.3f})"
+
     result = {
         "iteration": iteration,
         "scores": scores,
@@ -297,6 +315,7 @@ def run_evaluation(iteration, output_file, task, context_file=None, prev_scores_
         "eval_method": eval_method,
         "continue": should_continue,
         "stop_reason": stop_reason,
+        "semantic_similarity": similarity,
     }
 
     prev_scores.append(scores)
@@ -314,6 +333,8 @@ if __name__ == "__main__":
     parser.add_argument("--task", type=str, required=True)
     parser.add_argument("--context-file", type=str)
     parser.add_argument("--scores-file", type=str, default="/tmp/claude-iterate/scores.json")
+    parser.add_argument("--similarity", type=float, default=None,
+                        help="Semantic similarity to previous iteration (0.0-1.0)")
     args = parser.parse_args()
 
     result = run_evaluation(
@@ -322,6 +343,7 @@ if __name__ == "__main__":
         task=args.task,
         context_file=args.context_file,
         prev_scores_file=args.scores_file,
+        similarity=args.similarity,
     )
     print(json.dumps(result, indent=2))
     if not result["continue"]:

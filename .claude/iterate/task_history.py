@@ -88,12 +88,18 @@ def find_similar(task: str, n: int = 3) -> list[dict]:
     if total == 0:
         return []
 
-    results = col.query(
-        query_texts=[task],
-        n_results=min(n * 2, total),
-        include=["documents", "metadatas", "distances"],
-        where={"status": {"$in": ["completed", "stopped"]}},
-    )
+    try:
+        results = col.query(
+            query_texts=[task],
+            n_results=min(n * 2, total),
+            include=["documents", "metadatas", "distances"],
+            where={"status": {"$in": ["completed", "stopped"]}},
+        )
+    except Exception:
+        return []
+
+    if not results.get("documents") or not results["documents"][0]:
+        return []
 
     seen_tasks: set[str] = set()
     out = []
@@ -111,7 +117,7 @@ def find_similar(task: str, n: int = 3) -> list[dict]:
             "status": meta.get("status", "?"),
             "iterations": meta.get("iterations", 0),
             "final_score": meta.get("final_score", -1.0),
-            "similarity": round(1.0 - dist, 3),
+            "similarity": round(max(0.0, 1.0 - dist), 3),
             "timestamp": meta.get("timestamp", ""),
         })
         if len(out) >= n:

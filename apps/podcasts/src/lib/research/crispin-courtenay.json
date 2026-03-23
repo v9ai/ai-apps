@@ -174,12 +174,13 @@
   "conferences": {},
   "technical_philosophy": {
     "core_thesis": "Enterprise AI must be governed by explicit rules and audit trails before deployment — safety, compliance, and determinism take precedence over raw capability.",
-    "positions": [
-      {
-        "claim": "Graph-based RAG outperforms vector search for structured legal document retrieval",
+    "positions": {
+      "graph_rag_vs_vector_search": {
+        "stance": "Graph-based RAG outperforms vector search for structured legal document retrieval",
+        "evidence": "VerticGraph platform demonstrates knowledge graph superiority for complex legal reasoning chains",
         "source_url": "https://www.verticgraph.com"
       }
-    ],
+    },
     "predictions": [],
     "contrarian_takes": [
       "LLMs should not make autonomous decisions in legal workflows without human-in-the-loop review"

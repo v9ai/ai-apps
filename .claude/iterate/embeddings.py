@@ -40,7 +40,6 @@ def get_embedding_function():
     global _cached_fn, _initialized
     if _initialized:
         return _cached_fn
-    _initialized = True
 
     if not fastembed_available():
         _cached_fn = None
@@ -73,7 +72,7 @@ def get_embedding_function():
 
             @staticmethod
             def is_legacy() -> bool:
-                return False
+                return True
 
             @staticmethod
             def supported_spaces() -> list[str]:
@@ -100,6 +99,7 @@ def get_embedding_function():
     except Exception:
         _cached_fn = None
 
+    _initialized = True
     return _cached_fn
 
 

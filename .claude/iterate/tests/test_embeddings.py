@@ -53,7 +53,7 @@ def test_fastembed_fn_chroma_interface():
     assert callable(fn.is_legacy)
     assert callable(fn.supported_spaces)
     assert callable(fn.get_config)
-    assert fn.is_legacy() is False
+    assert fn.is_legacy() is True
     assert isinstance(fn.name(), str)
     assert isinstance(fn.get_config(), dict)
 

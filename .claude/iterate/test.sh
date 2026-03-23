@@ -71,9 +71,9 @@ check "returns non-empty" "[ -s '$TEST_DIR/retrieve_out.txt' ]"
 check "contains iteration 0" "grep -q 'Iteration 0' '$TEST_DIR/retrieve_out.txt'"
 check "no 'first iteration' msg" "! grep -q 'first iteration' '$TEST_DIR/retrieve_out.txt'"
 
-# --- evaluate (fallback mode, no proxy) ---
+# --- evaluate (heuristic mode) ---
 echo ""
-echo "evaluate.py (fallback):"
+echo "evaluate.py (heuristic):"
 EVAL_OUT=$(python3.12 "$SCRIPTS_DIR/evaluate.py" \
     --iteration 1 \
     --output-file "$TEST_DIR/output-0.txt" \
@@ -85,8 +85,8 @@ check "has scores" "echo '$EVAL_OUT' | python3.12 -c 'import json,sys; d=json.lo
 check "has eval_method" "echo '$EVAL_OUT' | python3.12 -c 'import json,sys; d=json.load(sys.stdin); assert \"eval_method\" in d'"
 check "has trends" "echo '$EVAL_OUT' | python3.12 -c 'import json,sys; d=json.load(sys.stdin); assert \"trends\" in d'"
 check "scores.json written" "[ -f '$TEST_DIR/scores.json' ]"
-check "eval_method is fallback" "echo '$EVAL_OUT' | python3.12 -c 'import json,sys; d=json.load(sys.stdin); assert d[\"eval_method\"] == \"fallback\", d[\"eval_method\"]'"
-check "all scores are 0.5" "echo '$EVAL_OUT' | python3.12 -c 'import json,sys; d=json.load(sys.stdin); assert all(v[\"score\"]==0.5 for v in d[\"scores\"].values())'"
+check "eval_method is heuristic" "echo '$EVAL_OUT' | python3.12 -c 'import json,sys; d=json.load(sys.stdin); assert d[\"eval_method\"] == \"heuristic\", d[\"eval_method\"]'"
+check "scores are numeric" "echo '$EVAL_OUT' | python3.12 -c 'import json,sys; d=json.load(sys.stdin); assert all(isinstance(v[\"score\"], (int,float)) for v in d[\"scores\"].values())'"
 check "continue is true" "echo '$EVAL_OUT' | python3.12 -c 'import json,sys; d=json.load(sys.stdin); assert d[\"continue\"] == True'"
 
 # --- evaluate internals ---
@@ -95,13 +95,7 @@ echo "evaluate.py (internals):"
 python3.12 - "$SCRIPTS_DIR" 2>&1 <<'PYEOF'
 import sys
 sys.path.insert(0, sys.argv[1])
-from evaluate import _proxy_available, _deepeval_available, compute_trend
-
-# proxy should be unavailable in test
-assert _proxy_available() == False, "proxy should be down in tests"
-
-# deepeval should be importable on 3.12
-assert _deepeval_available == True, "deepeval not available"
+from evaluate import compute_trend
 
 # trend with insufficient data
 t = compute_trend([], "Task Completion")

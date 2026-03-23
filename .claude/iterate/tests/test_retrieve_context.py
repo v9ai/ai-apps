@@ -371,7 +371,8 @@ class TestRetrieveSimilarityHeader:
         """Similarity header only appears from iteration 2 onwards."""
         store(0, "First iteration work.", "task")
         result = retrieve("task", current_iteration=1)
-        assert "similarity" not in result.lower() or "Output similarity" not in result
+        # The specific similarity header format should not appear for iter < 2
+        assert "**Output similarity (iter" not in result
 
     def test_similarity_header_present_from_iteration_2(self):
         """After two stored iterations, similarity may appear in header."""
@@ -381,7 +382,7 @@ class TestRetrieveSimilarityHeader:
         # May or may not show similarity depending on embedding availability
         assert isinstance(result, str) and len(result) > 0
 
-    def test_high_similarity_triggers_warning(self):
+    def test_high_similarity_triggers_warning(self, git_cwd):
         """Highly similar consecutive outputs should trigger a warning in the header."""
         from embeddings import fastembed_available
         if not fastembed_available():
@@ -391,7 +392,7 @@ class TestRetrieveSimilarityHeader:
         store(1, identical, "task")
         result = retrieve("task", current_iteration=2)
         # With fastembed, similarity > 0.88 should trigger the WARNING
-        assert "WARNING" in result or "similarity" in result.lower()
+        assert "WARNING" in result or "**Output similarity" in result
 
     def test_mmr_flag_no_mmr_returns_string(self):
         """Passing use_mmr=False still returns valid context."""

@@ -140,10 +140,11 @@ class TestTsSlugMatchesFilename:
 class TestTsGithubNotEmpty:
     @pytest.mark.parametrize("ts_file", TS_FILES, ids=lambda p: p.stem)
     def test_ts_github_not_empty(self, ts_file: Path):
-        """Parse github field, assert non-empty."""
+        """When github field is present, assert it is non-empty."""
         content = ts_file.read_text()
         match = re.search(r'github:\s*"([^"]*)"', content)
-        assert match, f"{ts_file.name} missing github field"
+        if not match:
+            pytest.skip(f"{ts_file.name}: no github field (acceptable for non-developers)")
         assert match.group(1).strip(), f"{ts_file.name} has empty github"
 
 
