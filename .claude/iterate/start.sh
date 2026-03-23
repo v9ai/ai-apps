@@ -30,7 +30,9 @@ if [ "$STATUS" = true ]; then
     CURRENT=$(cat "$ITER_DIR/counter" 2>/dev/null || echo "?")
     MAX=$(cat "$ITER_DIR/max.txt" 2>/dev/null || echo "?")
     TASK_NAME=$(cat "$ITER_DIR/task.txt" 2>/dev/null || echo "?")
+    SESSION_OWNER=$(cat "$ITER_DIR/session.txt" 2>/dev/null || echo "unknown")
     echo "Iterate: ${CURRENT}/${MAX} — ${TASK_NAME}"
+    echo "Session: ${SESSION_OWNER:0:8}…"
     if [ -f "$ITER_DIR/scores.json" ]; then
         python3.12 -c "
 import json, sys

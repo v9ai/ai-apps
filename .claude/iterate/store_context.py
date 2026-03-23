@@ -74,13 +74,19 @@ def get_git_diff() -> str | None:
 
 
 def extract_errors(content: str) -> list[str]:
-    """Extract error-like lines from output."""
+    """Extract error-like lines from actual error output (not prose)."""
     import re
     patterns = [
-        r'(?:error|Error|ERROR)[:\s].*',
-        r'(?:failed|Failed|FAILED)[:\s].*',
-        r'(?:TypeError|SyntaxError|ReferenceError|ImportError).*',
+        # Stack traces and compiler errors (colon-delimited)
+        r'(?:error|Error|ERROR):[ \t]+\S.*',
+        # Common JS/Python exceptions
+        r'(?:TypeError|SyntaxError|ReferenceError|ImportError|KeyError|ValueError|AttributeError|ModuleNotFoundError)[:( ].*',
+        # Build/test failures
+        r'(?:FAIL|FAILED)[ \t]+\S.*',
+        # Rust panics
         r'panic:.*',
+        # Exit codes
+        r'exit code [1-9]\d*',
     ]
     errors = []
     for pattern in patterns:
