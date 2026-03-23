@@ -1,7 +1,7 @@
 #!/bin/bash
 set -euo pipefail
 
-LOOP_DIR="/tmp/claude-loop"
+ITER_DIR="/tmp/claude-iterate"
 MAX_ITERATIONS=10
 RESET=false
 TASK=""
@@ -15,31 +15,31 @@ while [[ $# -gt 0 ]]; do
 done
 
 if [ "$RESET" = true ]; then
-    rm -rf "$LOOP_DIR"
-    echo "Loop state cleared."
+    rm -rf "$ITER_DIR"
+    echo "Iterate: state cleared."
     exit 0
 fi
 
 if [ -z "$TASK" ]; then
-    echo "Usage: ./start-loop.sh \"Your task description\""
-    echo "       ./start-loop.sh --max 5 \"Your task\""
-    echo "       ./start-loop.sh --reset"
+    echo "Usage: ./start.sh \"Your task description\""
+    echo "       ./start.sh --max 5 \"Your task\""
+    echo "       ./start.sh --reset"
     exit 1
 fi
 
 python3.12 -c "import chromadb" 2>/dev/null || python3.12 -m pip install chromadb -q
 
-rm -rf "$LOOP_DIR"
-mkdir -p "$LOOP_DIR"
+rm -rf "$ITER_DIR"
+mkdir -p "$ITER_DIR"
 
-echo "0" > "$LOOP_DIR/counter"
-echo "$TASK" > "$LOOP_DIR/task.txt"
-echo "[]" > "$LOOP_DIR/scores.json"
-pwd > "$LOOP_DIR/cwd.txt"
-export CLAUDE_LOOP_MAX="$MAX_ITERATIONS"
+echo "0" > "$ITER_DIR/counter"
+echo "$TASK" > "$ITER_DIR/task.txt"
+echo "[]" > "$ITER_DIR/scores.json"
+pwd > "$ITER_DIR/cwd.txt"
+export CLAUDE_ITERATE_MAX="$MAX_ITERATIONS"
 
-echo "Loop initialized: $TASK (max $MAX_ITERATIONS iterations)"
+echo "Iterate: initialized — $TASK (max $MAX_ITERATIONS iterations)"
 echo "Now run your first Claude Code prompt. The Stop hook handles the rest."
 echo ""
-echo "Monitor: cat /tmp/claude-loop/eval-iter-*.json | jq '.scores'"
-echo "Abort:   ./start-loop.sh --reset"
+echo "Monitor: cat /tmp/claude-iterate/eval-iter-*.json | jq '.scores'"
+echo "Abort:   ./start.sh --reset"

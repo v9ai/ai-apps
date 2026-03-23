@@ -103,7 +103,7 @@ export function StoryCardSkeleton({ className = "" }: { className?: string }) {
       <div
         className={cx(css({
           pos: 'relative', display: 'block', textAlign: 'center',
-          bg: '#141418', rounded: '2xl', borderWidth: '1px',
+          bg: 'card.bg', rounded: '2xl', borderWidth: '1px',
           borderColor: 'rgba(255,255,255,0.06)',
           shadow: 'inset 0 1px 0 rgba(255,255,255,0.06)', p: '4',
         }), className)}
@@ -386,7 +386,7 @@ export function SkeletonCard({
       <div
         className={cx(css({
           pos: 'relative', display: 'block', textAlign: 'center',
-          bg: '#141418', rounded: '2xl', borderWidth: '1px',
+          bg: 'card.bg', rounded: '2xl', borderWidth: '1px',
           borderColor: 'rgba(255,255,255,0.06)',
           shadow: 'inset 0 1px 0 rgba(255,255,255,0.06)', p: '4',
         }), className)}
@@ -454,7 +454,7 @@ export function SkeletonStatCard({
   return (
     <>
       <SweepKeyframes />
-      <div className={cx(css({ rounded: 'xl', bg: '#141418', borderWidth: '1px', borderColor: 'rgba(255,255,255,0.06)', p: '6' }), className)}>
+      <div className={cx(css({ rounded: 'xl', bg: 'card.bg', borderWidth: '1px', borderColor: 'rgba(255,255,255,0.06)', p: '6' }), className)}>
         <div className={css({ display: 'flex', alignItems: 'center', gap: '3', mb: '3' })}>
           <div className={css({ h: '9', w: '9', rounded: 'lg' })}  style={shimmer(delay)}       aria-hidden="true" />
           <div className={css({ h: '3', w: '20', rounded: 'md' })} style={shimmer(delay + 50)} aria-hidden="true" />
