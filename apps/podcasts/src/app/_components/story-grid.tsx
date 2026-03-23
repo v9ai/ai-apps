@@ -33,8 +33,8 @@ export function StoryGrid({ personalities, quotes }: StoryGridProps) {
       <div
         className={css({
           borderTopWidth: "1px",
-          borderTopColor: "rgba(255,255,255,0.06)",
-          pt: { base: "3", md: "4" },
+          borderTopColor: "card.border",
+          pt: { base: "3", sm: "3.5", md: "4" },
         })}
       >
         {/* -- Story count -- */}
@@ -61,7 +61,7 @@ export function StoryGrid({ personalities, quotes }: StoryGridProps) {
               lg: "repeat(3, 1fr)",
               xl: "repeat(4, 1fr)",
             },
-            gap: { base: "3", sm: "4", lg: "5" },
+            gap: { base: "3", sm: "4", md: "4", lg: "5" },
             alignItems: "start",
           })}
           role="list"

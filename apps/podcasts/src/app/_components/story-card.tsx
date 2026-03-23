@@ -39,7 +39,7 @@ export function StoryCard({
           rounded: "2xl",
           borderWidth: "1px",
           borderColor: "whiteAlpha.8",
-          p: isCompact ? "3.5" : { base: "3.5", sm: "4", lg: "5" },
+          p: isCompact ? "3.5" : { base: "3.5", sm: "4", md: "4.5", lg: "5" },
           overflow: "hidden",
         })
       )}
@@ -58,7 +58,8 @@ export function StoryCard({
           className={css({
             flexShrink: 0,
             rounded: "full",
-            border: "2px solid rgba(255,255,255,0.08)",
+            borderWidth: "2px",
+            borderColor: "whiteAlpha.8",
           })}
         >
           {avatar ? (

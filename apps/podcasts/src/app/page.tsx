@@ -46,8 +46,8 @@ export const metadata: Metadata = {
 
 const mainStyle = css({
   minH: "screen",
-  bg: "#0B0B0F",
-  color: "#E8E8ED",
+  bg: "ui.base",
+  color: "ui.heading",
   pt: { base: "14", sm: "16" },
   overflowX: "hidden",
 });

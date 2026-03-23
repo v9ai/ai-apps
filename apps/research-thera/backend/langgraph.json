@@ -6,7 +6,8 @@
     "story": "research_agent.story_graph:graph",
     "tts": "research_agent.tts_graph:graph",
     "deep_analysis": "research_agent.deep_analysis_graph:graph",
-    "parent_advice": "research_agent.parent_advice_graph:graph"
+    "parent_advice": "research_agent.parent_advice_graph:graph",
+    "habits": "research_agent.habits_graph:graph"
   },
   "env": ".env"
 }

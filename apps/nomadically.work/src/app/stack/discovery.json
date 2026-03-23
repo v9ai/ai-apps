@@ -1034,7 +1034,7 @@
           "security_considerations": [
             "API keys stored as Workers secrets, not in code",
             "AI Gateway provides request logging and rate limiting",
-            "Langfuse integration traces all LLM calls for auditability"
+            "LLM call tracing for auditability"
           ],
           "performance_notes": [
             "Cold start ~200-300ms vs ~5ms for JS",
