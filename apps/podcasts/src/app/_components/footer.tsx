@@ -256,8 +256,8 @@ export default function Footer() {
         {/* Divider */}
         <div
           className={css({
-            mt: { base: '12', md: '14' },
-            mb: { base: '6', md: '8' },
+            mt: { base: '12', sm: '13', md: '14' },
+            mb: { base: '6', sm: '7', md: '8' },
             h: '1px',
           })}
           style={{
@@ -289,19 +289,20 @@ export default function Footer() {
               display: 'inline-flex',
               alignItems: 'center',
               gap: '1.5',
-              color: '#7B7B86',
+              color: 'ui.dim',
               fontSize: 'xs',
               cursor: 'pointer',
-              bg: 'rgba(255,255,255,0.04)',
-              border: '1px solid rgba(255,255,255,0.08)',
+              bg: 'whiteAlpha.4',
+              borderWidth: '1px',
+              borderColor: 'whiteAlpha.8',
               rounded: 'md',
               px: '3',
               py: '1.5',
               transition: 'all 0.2s ease',
               _hover: {
-                color: '#C4C4CC',
-                bg: 'rgba(255,255,255,0.07)',
-                borderColor: 'rgba(255,255,255,0.12)',
+                color: 'ui.body',
+                bg: 'whiteAlpha.7',
+                borderColor: 'whiteAlpha.12',
               },
             })}
             aria-label="Back to top"

@@ -55,7 +55,7 @@ export default function NavHeader({
           bg: 'rgba(11,11,15,0.82)',
           backdropFilter: 'blur(40px)',
           borderBottomWidth: '1px',
-          borderColor: 'rgba(255,255,255,0.08)',
+          borderColor: 'whiteAlpha.8',
           animation: 'fade-in 0.4s var(--ease-expo-out) 0.05s both',
           _after: {
             content: '""',
@@ -72,7 +72,7 @@ export default function NavHeader({
           className={css({
             maxW: '80rem',
             mx: 'auto',
-            px: { base: '4', sm: '6', md: '8' },
+            px: { base: '4', sm: '6', md: '8', lg: '10' },
             h: 'full',
             display: 'flex',
             alignItems: 'center',
