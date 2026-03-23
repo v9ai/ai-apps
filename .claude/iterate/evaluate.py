@@ -118,12 +118,16 @@ def run_deepeval(iteration: int, actual_output: str, task: str, context: str, di
         ),
     ]
 
-    # DeepEval built-in metrics for richer evaluation coverage
+    # DeepEval built-in metrics for richer evaluation coverage.
+    # Built-in metrics don't expose .name — set it explicitly so the
+    # score-collection loop below can key results by name consistently.
     builtin_metrics = [
         AnswerRelevancyMetric(threshold=0.5, model=llm),
         FaithfulnessMetric(threshold=0.5, model=llm),
         ContextualRelevancyMetric(threshold=0.5, model=llm),
     ]
+    for m, n in zip(builtin_metrics, ["Answer Relevancy", "Faithfulness", "Contextual Relevancy"]):
+        m.name = n
     metrics = geval_metrics + builtin_metrics
 
     test_case = LLMTestCase(
@@ -135,7 +139,13 @@ def run_deepeval(iteration: int, actual_output: str, task: str, context: str, di
     )
 
     from deepeval import evaluate as de_evaluate
-    de_evaluate(test_cases=[test_case], metrics=metrics, run_async=False, print_results=False)
+    from deepeval.evaluate.configs import AsyncConfig, DisplayConfig
+    de_evaluate(
+        test_cases=[test_case],
+        metrics=metrics,
+        async_config=AsyncConfig(run_async=False),
+        display_config=DisplayConfig(print_results=False, show_indicator=False),
+    )
 
     scores = {}
     for m in metrics:

@@ -57,21 +57,44 @@ def retrieve(
     if total == 0:
         return "No previous context available. This is the first iteration."
 
-    # Multi-query: task-level + error-focused + eval-focused + diff-focused
-    queries = [query]
+    # Multi-query strategy:
+    # 1. General query — no filter, broad semantic match
+    # 2. Error-focused — filter to docs that recorded errors (where has_errors=True)
+    # 3. Eval-focused  — filter to eval doc_type for score history
+    # 4. Diff-focused  — filter to diff doc_type for code change context
+    queries_with_filters: list[tuple[str, dict | None]] = [
+        (query, None),
+        (f"eval scores completion progress quality for: {query}", {"doc_type": "eval"}),
+        (f"code changes git diff files modified for: {query}", {"doc_type": "diff"}),
+    ]
     if include_errors:
-        queries.append(f"errors failures bugs in: {query}")
-    queries.append(f"eval scores completion progress quality for: {query}")
-    queries.append(f"code changes git diff files modified for: {query}")
+        queries_with_filters.append(
+            (f"errors failures bugs in: {query}", {"has_errors": True})
+        )
 
     all_docs: dict[str, tuple[str, dict, float]] = {}
 
-    for q in queries:
-        results = collection.query(
-            query_texts=[q],
-            n_results=min(n_results, total),
-            include=["documents", "metadatas", "distances"],
-        )
+    for q, where_filter in queries_with_filters:
+        kwargs: dict = {
+            "query_texts": [q],
+            "n_results": min(n_results, total),
+            "include": ["documents", "metadatas", "distances"],
+        }
+        if where_filter:
+            kwargs["where"] = where_filter
+        try:
+            results = collection.query(**kwargs)
+        except Exception:
+            # where filter may match 0 docs — fall back to unfiltered
+            try:
+                results = collection.query(
+                    query_texts=[q],
+                    n_results=min(n_results, total),
+                    include=["documents", "metadatas", "distances"],
+                )
+            except Exception:
+                continue
+
         for doc, meta, dist in zip(
             results["documents"][0],
             results["metadatas"][0],

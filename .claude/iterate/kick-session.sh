@@ -82,9 +82,9 @@ _record_end() {
 mkdir -p "$ITER_DIR"
 TASK=$(cat "$TASK_FILE")
 ITER_CWD=$(cat "$ITER_DIR/cwd.txt" 2>/dev/null || echo "")
-MAX_ITERATIONS=$(cat "$ITER_DIR/max.txt" 2>/dev/null || echo "10")
-# Guard against non-numeric max
-[[ "$MAX_ITERATIONS" =~ ^[0-9]+$ ]] || MAX_ITERATIONS=10
+ITERATIONS=$(cat "$ITER_DIR/iterations.txt" 2>/dev/null || echo "10")
+# Guard against non-numeric value
+[[ "$ITERATIONS" =~ ^[0-9]+$ ]] || ITERATIONS=10
 
 export CLAUDE_ITERATE_CHROMA_PATH="$ITER_DIR/chroma"
 export CLAUDE_ITERATE_CWD="$ITER_CWD"
@@ -100,8 +100,8 @@ CWD=$(echo "$INPUT" | jq -r '.cwd')
 # Debug log
 echo "[kick-session] iter=$COUNT session=${SESSION_ID:0:8} dir=$ITER_DIR cwd=$CWD" >> "$ITER_DIR/debug.log" 2>/dev/null || true
 
-# --- Hard limit ---
-if [ "$COUNT" -ge "$MAX_ITERATIONS" ]; then
+# --- Iteration limit ---
+if [ "$COUNT" -ge "$ITERATIONS" ]; then
     _last_score=$(python3.12 -c "
 import sys, json, os
 f = '${SCORES_FILE}'
@@ -112,14 +112,15 @@ if os.path.exists(f):
         sys.exit(0)
 print(0.0)
 " 2>/dev/null || echo "0.0")
-    _record_end "max iterations reached" "$_last_score"
+    _record_end "iterations complete" "$_last_score"
     rm -f "$COUNTER_FILE" "$TASK_FILE" "$ITER_DIR/session.txt"
-    echo "Iterate: complete — reached $MAX_ITERATIONS iterations." >&2
+    echo "Iterate: complete — finished $ITERATIONS iterations." >&2
     exit 0
 fi
 
 # --- Capture this iteration's output from transcript ---
 ITER_OUTPUT="$ITER_DIR/output-iter-${COUNT}.txt"
+TRANSCRIPT_FILE=""
 
 if [ -n "$SESSION_ID" ]; then
     # Transcripts are stored as {session_id}.jsonl directly in the project dir
@@ -127,15 +128,32 @@ if [ -n "$SESSION_ID" ]; then
     echo "[kick-session] transcript_file=$TRANSCRIPT_FILE" >> "$ITER_DIR/debug.log" 2>/dev/null || true
 
     if [ -n "$TRANSCRIPT_FILE" ] && [ -f "$TRANSCRIPT_FILE" ]; then
-        jq -rs '
-            [.[] | select(.type == "assistant") | .message.content // empty]
-            | last
-            | if type == "array" then map(select(.type == "text") | .text) | join("\n")
-              elif type == "string" then .
-              else ""
-              end
-        ' "$TRANSCRIPT_FILE" > "$ITER_OUTPUT" 2>/dev/null || true
-        echo "[kick-session] output_size=$(wc -c < "$ITER_OUTPUT" 2>/dev/null)" >> "$ITER_DIR/debug.log" 2>/dev/null || true
+        # Read the line offset saved by the previous iteration's stop hook.
+        # This lets us extract only the messages from the CURRENT iteration window
+        # rather than just the last message in the entire transcript.
+        PREV_OFFSET=$(cat "$ITER_DIR/transcript-offset.txt" 2>/dev/null | tr -d '[:space:]' || echo "0")
+        PREV_OFFSET="${PREV_OFFSET:-0}"
+        CURRENT_LINES=$(wc -l < "$TRANSCRIPT_FILE" 2>/dev/null | tr -d '[:space:]' || echo "0")
+        CURRENT_LINES="${CURRENT_LINES:-0}"
+
+        echo "[kick-session] step: jq extraction skip=$PREV_OFFSET" >> "$ITER_DIR/debug.log" 2>/dev/null || true
+
+        # Use tail to pre-filter lines before jq (avoids slurping entire file + skipping)
+        # tail -n +N prints from line N onwards; +1 = whole file, +(PREV_OFFSET+1) = skip first N lines
+        _skip_line=$((PREV_OFFSET + 1))
+        tail -n +"$_skip_line" "$TRANSCRIPT_FILE" 2>/dev/null \
+            | jq -rs '
+                [.[] | select(.type == "assistant") | .message.content // empty]
+                | map(if type == "array" then map(select(.type == "text") | .text) | join("\n")
+                      elif type == "string" then .
+                      else "" end)
+                | join("\n\n")
+            ' > "$ITER_OUTPUT" 2>/dev/null || true
+
+        # Save current line count so next iteration extracts only new messages
+        echo "$CURRENT_LINES" > "$ITER_DIR/transcript-offset.txt"
+        _output_size=$(wc -c < "$ITER_OUTPUT" 2>/dev/null | tr -d '[:space:]' || echo "0")
+        echo "[kick-session] transcript window: lines $PREV_OFFSET→$CURRENT_LINES, output_size=$_output_size" >> "$ITER_DIR/debug.log" 2>/dev/null || true
     fi
 fi
 
@@ -194,11 +212,13 @@ if [ "$COUNT" -gt 0 ] && [ -f "$ITER_OUTPUT" ] && [ -s "$ITER_OUTPUT" ]; then
     echo "$EVAL_RESULT" > "$ITER_DIR/eval-iter-${COUNT}.json" 2>> "$ITER_DIR/debug.log" || true
 
     # Store eval scores in Chroma for cross-iteration retrieval
-    echo "$EVAL_RESULT" | python3.12 - "$SCRIPTS_DIR" "$COUNT" "$TASK" >> "$ITER_DIR/debug.log" 2>&1 <<'PYEOF' || true
+    # Read from the eval file (not stdin) to avoid the pipe+heredoc stdin conflict.
+    python3.12 - "$SCRIPTS_DIR" "$COUNT" "$TASK" "$ITER_DIR/eval-iter-${COUNT}.json" >> "$ITER_DIR/debug.log" 2>&1 <<'PYEOF' || true
 import sys, json
 sys.path.insert(0, sys.argv[1])
 from store_context import store_eval
-data = json.load(sys.stdin)
+with open(sys.argv[4]) as f:
+    data = json.load(f)
 store_eval(int(sys.argv[2]), data.get("scores", {}), sys.argv[3], data.get("eval_method", "unknown"))
 PYEOF
 
@@ -254,7 +274,7 @@ RETRIEVED_CONTEXT=$(python3.12 "$SCRIPTS_DIR/retrieve_context.py" \
 
 # --- Step 4: Return inline via stderr → Claude sees it and keeps working ---
 cat >&2 <<EOF
-ITERATION ${NEXT}/${MAX_ITERATIONS} — ${TASK}
+ITERATION ${NEXT}/${ITERATIONS} — ${TASK}
 Working directory: ${ITER_CWD}
 
 ${RETRIEVED_CONTEXT}

@@ -113,7 +113,7 @@ class TestExtractErrors:
         assert len(extract_errors("no errors found")) == 0
 
     def test_ignores_quoted_error_message(self):
-        assert len(extract_errors('got `Error: --max requires a number`')) == 0
+        assert len(extract_errors('got `Error: --iterations requires a number`')) == 0
 
     def test_ignores_midline_typeerror(self):
         assert len(extract_errors("e.g. TypeError in prose")) == 0
@@ -201,11 +201,7 @@ class TestGetGitDiff:
         mock_stat = subprocess.CompletedProcess([], 0, stdout="file.py | 5 ++\n", stderr="")
         mock_diff = subprocess.CompletedProcess([], 0, stdout=huge_diff, stderr="")
 
-        call_count = [0]
-        originals = []
-
         def mock_run(cmd, **kwargs):
-            call_count[0] += 1
             if "--stat" in cmd:
                 return mock_stat
             return mock_diff
@@ -214,6 +210,30 @@ class TestGetGitDiff:
         _, _, content = get_git_diff()
         if content is not None:
             assert len(content) <= 6000 + 10  # allow tiny slack
+
+    def test_falls_back_to_head_when_no_head_minus_one(self, monkeypatch):
+        """When HEAD~1 has no diff, falls back to HEAD (uncommitted changes)."""
+        from store_context import get_git_diff
+        import subprocess
+
+        empty = subprocess.CompletedProcess([], 0, stdout="", stderr="")
+        head_stat = subprocess.CompletedProcess([], 0, stdout="app.py | 3 +++\n", stderr="")
+        head_diff = subprocess.CompletedProcess([], 0, stdout="+new line\n", stderr="")
+
+        def mock_run(cmd, **kwargs):
+            if "HEAD~1" in cmd and "--stat" in cmd:
+                return empty
+            if "HEAD~1" in cmd:
+                return empty
+            if "--stat" in cmd:
+                return head_stat
+            return head_diff
+
+        monkeypatch.setattr("store_context.subprocess.run", mock_run)
+        stat, files, content = get_git_diff()
+        assert stat is not None
+        assert "app.py" in stat
+        assert content is not None
 
 
 # ---------------------------------------------------------------------------

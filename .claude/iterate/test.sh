@@ -170,7 +170,7 @@ assert len(extract_errors("exit code 1")) > 0, "missed exit code"
 assert len(extract_errors("error handling is important")) == 0, "false positive: error handling"
 assert len(extract_errors("the error callout component")) == 0, "false positive: error callout"
 assert len(extract_errors("no errors found")) == 0, "false positive: no errors"
-assert len(extract_errors('got `Error: --max requires a number`')) == 0, "false positive: quoted error msg"
+assert len(extract_errors('got `Error: --iterations requires a number`')) == 0, "false positive: quoted error msg"
 assert len(extract_errors("e.g. TypeError in prose")) == 0, "false positive: mid-line TypeError"
 
 print("  all unit tests passed")
@@ -182,6 +182,8 @@ echo ""
 echo "start.sh:"
 check "script exists" "[ -x '$SCRIPTS_DIR/start.sh' ] || [ -f '$SCRIPTS_DIR/start.sh' ]"
 check "usage on no args" "bash '$SCRIPTS_DIR/start.sh' 2>&1; [ \$? -eq 1 ]"
+bash "$SCRIPTS_DIR/start.sh" --iterations 3 'test' > "$TEST_DIR/startsh-out.txt" 2>&1 || true
+check "--iterations accepted" "grep -q '1/3' '$TEST_DIR/startsh-out.txt'"
 
 # --- kick-session.sh (simulated) ---
 echo ""
@@ -191,7 +193,7 @@ echo "kick-session.sh:"
 KICK_DIR="$TEST_DIR/kick"
 mkdir -p "$KICK_DIR"
 echo "0" > "$KICK_DIR/counter"
-echo "2" > "$KICK_DIR/max.txt"
+echo "2" > "$KICK_DIR/iterations.txt"
 echo "test task" > "$KICK_DIR/task.txt"
 echo "[]" > "$KICK_DIR/scores.json"
 echo "test-session-123" > "$KICK_DIR/session.txt"
@@ -301,6 +303,48 @@ SC=0; [ "$H1" = "$H2" ] && SC=1
 check "stall increments on match" "[ $SC -eq 1 ]"
 # 2+ stalls should stop
 check "stall >= 2 means stop" "[ 2 -ge 2 ]"
+
+# --- Transcript window extraction ---
+echo ""
+echo "transcript window:"
+
+# JSONL fixture: two assistant messages across two "iterations"
+JSONL_DIR="$TEST_DIR/transcript"
+mkdir -p "$JSONL_DIR"
+JSONL_FILE="$JSONL_DIR/session.jsonl"
+cat > "$JSONL_FILE" <<'JSONEOF'
+{"type":"assistant","message":{"content":[{"type":"text","text":"iteration 0 work"}]}}
+{"type":"user","message":{"content":"user msg"}}
+{"type":"assistant","message":{"content":[{"type":"text","text":"iteration 1 work"}]}}
+JSONEOF
+
+# Extract full file (offset=0)
+tail -n +1 "$JSONL_FILE" | jq -rs '
+    [.[] | select(.type == "assistant") | .message.content // empty]
+    | map(if type == "array" then map(select(.type == "text") | .text) | join("\n")
+          elif type == "string" then . else "" end)
+    | join("\n\n")
+' > "$JSONL_DIR/full.txt" 2>/dev/null
+check "tail+jq extracts all assistant messages" "grep -q 'iteration 0 work' '$JSONL_DIR/full.txt' && grep -q 'iteration 1 work' '$JSONL_DIR/full.txt'"
+
+# Extract from offset=2 (skip first 2 lines → only line 3)
+tail -n +3 "$JSONL_FILE" | jq -rs '
+    [.[] | select(.type == "assistant") | .message.content // empty]
+    | map(if type == "array" then map(select(.type == "text") | .text) | join("\n")
+          elif type == "string" then . else "" end)
+    | join("\n\n")
+' > "$JSONL_DIR/window.txt" 2>/dev/null
+check "tail+jq window skips first N lines" "grep -q 'iteration 1 work' '$JSONL_DIR/window.txt'"
+check "tail+jq window excludes prior lines" "! grep -q 'iteration 0 work' '$JSONL_DIR/window.txt'"
+
+# wc -l whitespace trimming
+RAW_LINES=$(wc -l < "$JSONL_FILE" 2>/dev/null)
+TRIMMED=$(echo "$RAW_LINES" | tr -d '[:space:]')
+check "wc -l trimmed is numeric" "[[ '$TRIMMED' =~ ^[0-9]+$ ]]"
+check "wc -l trimmed equals 3" "[ '$TRIMMED' -eq 3 ]"
+
+# ITERATIONS used (not MAX_ITERATIONS) — grep kick-session.sh
+check "kick-session uses ITERATIONS in feedback" "grep -q 'NEXT}/\${ITERATIONS}' '$SCRIPTS_DIR/kick-session.sh'"
 
 # --- Cleanup ---
 rm -r "$TEST_DIR" 2>/dev/null || true

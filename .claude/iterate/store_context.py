@@ -62,33 +62,42 @@ def dedup_chunks(chunks: list[str]) -> list[str]:
 
 
 def get_git_diff() -> tuple[str | None, list[str], str | None]:
-    """Capture git diff stat, changed file paths, and full diff content."""
+    """Capture git diff stat, changed file paths, and full diff content.
+
+    Tries in order:
+      1. HEAD~1 (last committed diff) — accurate after auto-commit
+      2. HEAD   (uncommitted changes vs last commit) — fallback for mid-session work
+    """
     stat: str | None = None
     files: list[str] = []
     diff_content: str | None = None
+    cwd = os.environ.get("CLAUDE_ITERATE_CWD", ".")
+    used_base: list[str] | None = None
 
-    try:
-        r = subprocess.run(
-            ["git", "diff", "HEAD~1", "--stat", "--no-color"],
-            capture_output=True, text=True, timeout=5,
-            cwd=os.environ.get("CLAUDE_ITERATE_CWD", "."),
-        )
-        if r.returncode == 0 and r.stdout.strip():
-            stat = r.stdout.strip()
-            files = [m.group(1) for m in re.finditer(r'^\s*(.+?)\s+\|', stat, re.MULTILINE)]
-    except Exception:
-        pass
+    for diff_base in (["HEAD~1"], ["HEAD"]):
+        try:
+            r = subprocess.run(
+                ["git", "diff"] + diff_base + ["--stat", "--no-color"],
+                capture_output=True, text=True, timeout=5, cwd=cwd,
+            )
+            if r.returncode == 0 and r.stdout.strip():
+                stat = r.stdout.strip()
+                files = [m.group(1) for m in re.finditer(r'^\s*(.+?)\s+\|', stat, re.MULTILINE)]
+                used_base = diff_base
+                break
+        except Exception:
+            pass
 
-    try:
-        r = subprocess.run(
-            ["git", "diff", "HEAD~1", "--no-color", "-U2"],
-            capture_output=True, text=True, timeout=10,
-            cwd=os.environ.get("CLAUDE_ITERATE_CWD", "."),
-        )
-        if r.returncode == 0 and r.stdout.strip():
-            diff_content = r.stdout.strip()[:6000]  # cap at 6 KB
-    except Exception:
-        pass
+    if used_base:
+        try:
+            r = subprocess.run(
+                ["git", "diff"] + used_base + ["--no-color", "-U2"],
+                capture_output=True, text=True, timeout=10, cwd=cwd,
+            )
+            if r.returncode == 0 and r.stdout.strip():
+                diff_content = r.stdout.strip()[:6000]  # cap at 6 KB
+        except Exception:
+            pass
 
     return stat, files, diff_content
 

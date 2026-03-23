@@ -2,18 +2,18 @@
 set -euo pipefail
 
 SCRIPTS_DIR="$(cd "$(dirname "$0")" && pwd)"
-MAX_ITERATIONS=10
+ITERATIONS=10
 RESET=false
 STATUS=false
 TASK=""
 
 while [[ $# -gt 0 ]]; do
     case $1 in
-        --max)
+        --iterations)
             if [[ "$2" =~ ^[0-9]+$ ]]; then
-                MAX_ITERATIONS="$2"
+                ITERATIONS="$2"
             else
-                echo "Error: --max requires a number, got '$2'" >&2
+                echo "Error: --iterations requires a number, got '$2'" >&2
                 exit 1
             fi
             shift 2 ;;
@@ -52,10 +52,10 @@ if [ "$STATUS" = true ]; then
         [ -f "$d/task.txt" ] || continue
         found=1
         CURRENT=$(cat "${d}counter" 2>/dev/null || echo "?")
-        MAX=$(cat "${d}max.txt" 2>/dev/null || echo "?")
+        TOTAL=$(cat "${d}iterations.txt" 2>/dev/null || echo "?")
         TASK_NAME=$(cat "${d}task.txt" 2>/dev/null || echo "?")
         SESSION_OWNER=$(cat "${d}session.txt" 2>/dev/null || echo "unknown")
-        echo "[${d%/}]  ${CURRENT}/${MAX} — ${TASK_NAME}  (session ${SESSION_OWNER:0:8}…)"
+        echo "[${d%/}]  ${CURRENT}/${TOTAL} — ${TASK_NAME}  (session ${SESSION_OWNER:0:8}…)"
         if [ -f "${d}scores.json" ]; then
             python3.12 - "${d}scores.json" 2>/dev/null <<'PYEOF' || true
 import json, sys
@@ -95,7 +95,7 @@ rm -rf "$ITER_DIR" 2>/dev/null || true
 mkdir -p "$ITER_DIR"
 
 echo "0" > "$ITER_DIR/counter"
-echo "$MAX_ITERATIONS" > "$ITER_DIR/max.txt"
+echo "$ITERATIONS" > "$ITER_DIR/iterations.txt"
 echo "$TASK" > "$ITER_DIR/task.txt"
 echo "[]" > "$ITER_DIR/scores.json"
 pwd > "$ITER_DIR/cwd.txt"
@@ -117,6 +117,6 @@ python3.12 "${SCRIPTS_DIR}/task_history.py" start \
     --session "${CLAUDE_CODE_SESSION_ID:-none}" \
     --cwd "$(pwd)" 2>/dev/null || true
 
-echo "Iterate: initialized — $TASK (max $MAX_ITERATIONS)"
+echo "Iterate: starting iteration 1/$ITERATIONS — $TASK"
 echo "Monitor: cat ${ITER_DIR}/eval-iter-*.json | jq '.scores'"
 echo "Abort:   /iterate reset"

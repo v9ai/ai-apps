@@ -221,6 +221,7 @@ class TestStopLogic:
             "Focus": {"score": 0.6, "reason": "", "passed": True},
             "Answer Relevancy": {"score": 0.6, "reason": "", "passed": True},
             "Faithfulness": {"score": 0.6, "reason": "", "passed": True},
+            "Contextual Relevancy": {"score": 0.6, "reason": "", "passed": True},
         }
 
         with patch.object(evaluate, "run_direct_llm", return_value=mock_scores), \
@@ -251,6 +252,51 @@ class TestStopLogic:
             assert result["continue"] is False
             assert "plateau" in result["stop_reason"].lower()
 
+    def _full_mock_scores(self, **overrides) -> dict:
+        """Return a complete 8-metric mock score dict with optional overrides."""
+        base = {k: {"score": 0.6, "reason": "", "passed": True} for k in ALL_METRIC_NAMES}
+        base.update(overrides)
+        return base
+
+    def test_regression_stops_loop(self, tmp_path):
+        """Declining Task Completion trend should stop after 3+ iterations."""
+        import evaluate
+        from unittest.mock import patch
+
+        # 3 prior scores that are declining
+        prev = [
+            {k: {"score": 0.8 - i * 0.15, "reason": "", "passed": True} for k in ALL_METRIC_NAMES}
+            for i in range(3)
+        ]
+        # Current score: also low and still declining
+        current = self._full_mock_scores(**{
+            "Task Completion": {"score": 0.35, "reason": "regressing", "passed": False},
+        })
+
+        with patch.object(evaluate, "run_direct_llm", return_value=current), \
+             patch.object(evaluate, "_proxy_available", return_value=True), \
+             patch.object(evaluate, "_deepeval_available", False):
+            result = self._run_with_injected_scores(tmp_path, prev, iteration=4)
+            # Either regression or no progress should stop it
+            assert result["continue"] is False
+
+    def test_low_quality_stops_loop_after_first_iter(self, tmp_path):
+        """Code Quality < 0.2 after iteration 1 should stop the loop."""
+        import evaluate
+        from unittest.mock import patch
+
+        bad_quality = self._full_mock_scores(**{
+            "Code Quality": {"score": 0.1, "reason": "poor", "passed": False},
+            "Incremental Progress": {"score": 0.5, "reason": "", "passed": True},
+        })
+
+        with patch.object(evaluate, "run_direct_llm", return_value=bad_quality), \
+             patch.object(evaluate, "_proxy_available", return_value=True), \
+             patch.object(evaluate, "_deepeval_available", False):
+            result = self._run_with_injected_scores(tmp_path, [], iteration=2)
+            assert result["continue"] is False
+            assert "quality" in result["stop_reason"].lower()
+
     def test_high_task_completion_stops_loop(self, tmp_path):
         """Task Completion >= 0.9 should trigger a stop."""
         import evaluate
@@ -264,6 +310,7 @@ class TestStopLogic:
             "Focus": {"score": 0.8, "reason": "", "passed": True},
             "Answer Relevancy": {"score": 0.8, "reason": "", "passed": True},
             "Faithfulness": {"score": 0.8, "reason": "", "passed": True},
+            "Contextual Relevancy": {"score": 0.8, "reason": "", "passed": True},
         }
 
         with patch.object(evaluate, "run_direct_llm", return_value=complete_scores), \

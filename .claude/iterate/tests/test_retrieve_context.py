@@ -146,6 +146,29 @@ class TestGetLatestEval:
         assert result is not None
         assert "0.8" in result
 
+    def test_where_filter_no_matching_docs_does_not_crash(self):
+        """retrieve() with where filter should not crash when no docs match the filter."""
+        # Store clean output (has_errors=False), then retrieve with include_errors=True
+        # The error-focused where filter will find 0 matching docs but should not raise.
+        store(0, "Everything looks great, no errors at all.", "task")
+        result = retrieve("task", current_iteration=1, include_errors=True)
+        assert isinstance(result, str)
+        assert len(result.strip()) > 0
+
+    def test_where_filter_retrieves_eval_docs(self):
+        """Eval-focused query with where filter should find eval docs specifically."""
+        store(0, "Some work done.", "task")
+        store_eval(0, {"Task Completion": {"score": 0.7, "reason": "partial"}}, "task", "direct_llm")
+        result = retrieve("task", current_iteration=1)
+        # Eval content should appear (either in Latest eval header or context body)
+        assert "0.7" in result or "Task Completion" in result
+
+    def test_where_filter_retrieves_error_docs(self):
+        """Error-focused query with where filter finds docs that have errors."""
+        store(0, "TypeError: something broke badly.", "task")
+        result = retrieve("task", current_iteration=1, include_errors=True)
+        assert "Iteration 0" in result
+
     def test_retrieve_header_includes_latest_eval(self):
         store(0, "Some work.", "task")
         store_eval(0, {"Task Completion": {"score": 0.65, "reason": "partial"}}, "task", "direct_llm")
