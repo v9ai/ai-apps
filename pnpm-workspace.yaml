@@ -1,4 +1,5 @@
 packages:
   - "apps/*"
+  - "apps/nomadically.work/chrome-extension"
   - "packages/*"
   - "pypackages/how_it_works"

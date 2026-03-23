@@ -8,10 +8,10 @@
     "url": "https://github.com/JohnBra/vite-web-extension.git"
   },
   "scripts": {
-    "build": "pnpm exec vite build --config vite.config.chrome.ts",
-    "dev": "pnpm exec nodemon --config nodemon.chrome.json",
-    "dev:chrome": "pnpm exec nodemon --config nodemon.chrome.json",
-    "dev:firefox": "pnpm exec nodemon --config nodemon.firefox.json"
+    "build": "npx vite build --config vite.config.chrome.ts",
+    "dev": "npx nodemon --config nodemon.chrome.json",
+    "dev:chrome": "npx nodemon --config nodemon.chrome.json",
+    "dev:firefox": "npx nodemon --config nodemon.firefox.json"
   },
   "type": "module",
   "dependencies": {
