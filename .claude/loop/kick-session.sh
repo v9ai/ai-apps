@@ -46,15 +46,18 @@ INPUT=$(cat)
 CWD=$(echo "$INPUT" | jq -r '.cwd')
 SESSION_ID=$(echo "$INPUT" | jq -r '.session_id // empty')
 
+# Debug log
+echo "[kick-session] iter=$COUNT session=$SESSION_ID cwd=$CWD" >> "$LOOP_DIR/debug.log" 2>/dev/null || true
+
 # --- Capture this iteration's output from transcript ---
 ITER_OUTPUT="$LOOP_DIR/output-iter-${COUNT}.txt"
 
 if [ -n "$SESSION_ID" ]; then
     # Transcripts are stored as {session_id}.jsonl directly in the project dir
-    TRANSCRIPT_PATTERN="$HOME/.claude/projects/*/${SESSION_ID}.jsonl"
-    # shellcheck disable=SC2086
-    if ls $TRANSCRIPT_PATTERN 1>/dev/null 2>&1; then
-        # shellcheck disable=SC2086
+    TRANSCRIPT_FILE=$(find "$HOME/.claude/projects" -name "${SESSION_ID}.jsonl" -maxdepth 2 2>/dev/null | head -1)
+    echo "[kick-session] transcript_file=$TRANSCRIPT_FILE" >> "$LOOP_DIR/debug.log" 2>/dev/null || true
+
+    if [ -n "$TRANSCRIPT_FILE" ] && [ -f "$TRANSCRIPT_FILE" ]; then
         jq -rs '
             [.[] | select(.type == "assistant") | .message.content // empty]
             | last
@@ -62,7 +65,8 @@ if [ -n "$SESSION_ID" ]; then
               elif type == "string" then .
               else ""
               end
-        ' $TRANSCRIPT_PATTERN > "$ITER_OUTPUT" 2>/dev/null || true
+        ' "$TRANSCRIPT_FILE" > "$ITER_OUTPUT" 2>/dev/null || true
+        echo "[kick-session] output_size=$(wc -c < "$ITER_OUTPUT" 2>/dev/null)" >> "$LOOP_DIR/debug.log" 2>/dev/null || true
     fi
 fi
 
