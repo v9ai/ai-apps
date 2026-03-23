@@ -14,8 +14,6 @@ TASK_FILE="$LOOP_DIR/task.txt"
 SCORES_FILE="$LOOP_DIR/scores.json"
 SCRIPTS_DIR="$(cd "$(dirname "$0")" && pwd)"
 
-export CLAUDE_LOOP_CHROMA_PATH="$LOOP_DIR/chroma"
-
 # --- No task file = not in a loop ---
 if [ ! -f "$TASK_FILE" ]; then
     exit 0
@@ -25,6 +23,9 @@ mkdir -p "$LOOP_DIR"
 TASK=$(cat "$TASK_FILE")
 LOOP_CWD=$(cat "$LOOP_DIR/cwd.txt" 2>/dev/null || echo "")
 MAX_ITERATIONS=${CLAUDE_LOOP_MAX:-10}
+
+export CLAUDE_LOOP_CHROMA_PATH="$LOOP_DIR/chroma"
+export CLAUDE_LOOP_CWD="$LOOP_CWD"
 
 # --- Counter ---
 if [ ! -f "$COUNTER_FILE" ]; then
@@ -76,6 +77,7 @@ fi
 # --- Step 2: Evaluate with DeepEval ---
 SHOULD_CONTINUE=true
 EVAL_FEEDBACK=""
+TREND_FEEDBACK=""
 
 if [ "$COUNT" -gt 0 ] && [ -f "$ITER_OUTPUT" ] && [ -s "$ITER_OUTPUT" ]; then
     CONTEXT_FILE="$LOOP_DIR/context-eval-${COUNT}.txt"
@@ -104,10 +106,21 @@ if [ "$COUNT" -gt 0 ] && [ -f "$ITER_OUTPUT" ] && [ -s "$ITER_OUTPUT" ]; then
             "- **\(.key)**: \(.value.score // "n/a") — \(.value.reason // "")"
         ) | join("\n"))
     ' 2>/dev/null) || EVAL_FEEDBACK=""
+
+    TREND_FEEDBACK=$(echo "$EVAL_RESULT" | jq -r '
+        if .trends then
+            "\n## Trends\n" +
+            (.trends | to_entries | map(
+                "- **\(.key)**: \(.value.direction // "n/a") (delta: \(.value.avg_delta // "n/a"), recent: \(.value.values // []))"
+            ) | join("\n"))
+        else "" end
+    ' 2>/dev/null) || TREND_FEEDBACK=""
 fi
 
 # --- Stop ---
 if [ "$SHOULD_CONTINUE" = false ]; then
+    STOP_REASON=$(echo "$EVAL_RESULT" | jq -r '.stop_reason // "evaluation threshold"' 2>/dev/null) || STOP_REASON="evaluation threshold"
+    echo "Loop stopped — ${STOP_REASON}" >&2
     rm -f "$COUNTER_FILE"
     exit 0
 fi
@@ -136,6 +149,7 @@ All work must be scoped to this directory.
 ## Context from previous iterations (semantic retrieval)
 ${RETRIEVED_CONTEXT}
 ${EVAL_FEEDBACK}
+${TREND_FEEDBACK}
 
 ## Instructions for this iteration
 - Do NOT repeat work already done (see context above)

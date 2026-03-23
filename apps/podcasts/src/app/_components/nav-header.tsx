@@ -154,13 +154,13 @@ export default function NavHeader({
                   }),
                   pathname === "/stats"
                     ? css({
-                        color: '#A78BFA',
-                        bg: 'rgba(167,139,250,0.10)',
-                        _hover: { bg: 'rgba(167,139,250,0.15)' },
+                        color: 'accent.purple',
+                        bg: 'accent.purpleBg',
+                        _hover: { bg: 'accent.purpleGlow' },
                       })
                     : css({
-                        color: '#5A5A65',
-                        _hover: { color: '#C4C4CC', bg: 'rgba(255,255,255,0.07)' },
+                        color: 'ui.faint',
+                        _hover: { color: 'ui.body', bg: 'whiteAlpha.7' },
                       })
                 )}
               >
@@ -182,7 +182,7 @@ export default function NavHeader({
                 ml: '2',
                 pl: '4',
                 borderLeftWidth: '1px',
-                borderColor: 'rgba(255,255,255,0.08)',
+                borderColor: 'whiteAlpha.8',
                 sm: { display: 'flex' },
               })}
             >
@@ -192,7 +192,7 @@ export default function NavHeader({
                   fontWeight: 'medium',
                   textTransform: 'uppercase',
                   letterSpacing: '0.08em',
-                  color: '#9E9EAB',
+                  color: 'ui.secondary',
                 })}
               >
                 {totalPersonalities} Stories
@@ -201,7 +201,7 @@ export default function NavHeader({
                 aria-hidden="true"
                 className={css({
                   fontSize: 'xs',
-                  color: '#6E6E7A',
+                  color: 'ui.faint',
                   userSelect: 'none',
                 })}
               >
@@ -213,7 +213,7 @@ export default function NavHeader({
                   fontWeight: 'medium',
                   textTransform: 'uppercase',
                   letterSpacing: '0.08em',
-                  color: '#9E9EAB',
+                  color: 'ui.secondary',
                 })}
               >
                 {totalPodcasts} Podcasts
@@ -237,10 +237,11 @@ export default function NavHeader({
                 transition: 'all',
                 transitionDuration: '200ms',
                 ml: '1',
-                border: '1px solid rgba(255,255,255,0.10)',
-                bg: 'rgba(255,255,255,0.04)',
+                borderWidth: '1px',
+                borderColor: 'whiteAlpha.10',
+                bg: 'whiteAlpha.4',
                 md: { display: 'none' },
-                _hover: { bg: 'rgba(255,255,255,0.08)', borderColor: 'rgba(255,255,255,0.15)' },
+                _hover: { bg: 'whiteAlpha.8', borderColor: 'whiteAlpha.15' },
               })}
             >
               {/* Three bars that morph into an X */}
@@ -346,7 +347,7 @@ export default function NavHeader({
             zIndex: 40,
             bg: 'rgba(11,11,15,0.98)',
             borderBottomWidth: '1px',
-            borderColor: 'rgba(255,255,255,0.06)',
+            borderColor: 'card.border',
             shadow: '2xl',
             willChange: 'transform',
             transition: 'all',
@@ -387,12 +388,12 @@ export default function NavHeader({
               }),
               pathname === "/stats"
                 ? css({
-                    color: '#A78BFA',
-                    bg: 'rgba(167,139,250,0.10)',
+                    color: 'accent.purple',
+                    bg: 'accent.purpleBg',
                   })
                 : css({
-                    color: '#C4C4CC',
-                    _hover: { color: 'white', bg: 'rgba(255,255,255,0.06)' },
+                    color: 'ui.body',
+                    _hover: { color: 'white', bg: 'card.border' },
                   })
             )}
           >
@@ -419,7 +420,7 @@ export default function NavHeader({
                 fontWeight: 'medium',
                 textTransform: 'uppercase',
                 letterSpacing: '0.08em',
-                color: '#9E9EAB',
+                color: 'ui.secondary',
               })}
             >
               {totalPersonalities} Stories
@@ -428,7 +429,7 @@ export default function NavHeader({
               aria-hidden="true"
               className={css({
                 fontSize: 'xs',
-                color: '#6E6E7A',
+                color: 'ui.faint',
                 userSelect: 'none',
               })}
             >
@@ -440,7 +441,7 @@ export default function NavHeader({
                 fontWeight: 'medium',
                 textTransform: 'uppercase',
                 letterSpacing: '0.08em',
-                color: '#9E9EAB',
+                color: 'ui.secondary',
               })}
             >
               {totalPodcasts} Podcasts
