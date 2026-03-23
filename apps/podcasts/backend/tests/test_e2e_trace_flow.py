@@ -15,6 +15,7 @@ from unittest.mock import AsyncMock, MagicMock, patch
 from deepeval.tracing import trace
 from deepeval.metrics import AnswerRelevancyMetric
 
+from helpers import get_eval_model
 from research_pipeline import build_graph, ResearchState
 
 pytestmark = [pytest.mark.deepeval, pytest.mark.e2e]
@@ -47,13 +48,13 @@ def test_trace_wraps_function():
 # ── 3. trace() accepts trace_metrics kwarg ────────────────────────────
 
 def test_trace_with_metrics():
-    """trace() should accept a trace_metrics list containing deepeval metrics."""
+    """trace() should accept a metrics list containing deepeval metrics."""
     metric = AnswerRelevancyMetric(
         threshold=0.5,
-        model="deepseek/deepseek-chat",
+        model=get_eval_model(),
     )
 
-    @trace(name="metric_trace", trace_metrics=[metric])
+    @trace(name="metric_trace", metrics=[metric])
     def echo(text: str) -> str:
         return text
 
@@ -64,15 +65,15 @@ def test_trace_with_metrics():
 # ── 4. Graph structure is correct after build ────────────────────────────
 
 def test_graph_structure():
-    """Graph has 4 nodes and 5 edges after compilation."""
+    """Graph has 7 nodes and 9 edges after compilation."""
     graph = build_graph()
     g = graph.get_graph()
 
     node_names = set(g.nodes.keys()) - {"__start__", "__end__"}
-    assert len(node_names) == 4
+    assert len(node_names) == 7
 
     edges = [(e.source, e.target) for e in g.edges]
-    assert len(edges) == 5
+    assert len(edges) == 9
 
 
 # ── 5. Full flow with mocked LLM — graph invocation ─────────────────────
@@ -111,7 +112,7 @@ async def test_full_flow_mocked(sample_person):
         return f"Mock agent output #{call_count}"
 
     with patch("research_pipeline._run_agent", side_effect=mock_run_agent), \
-         patch("research_pipeline._make_llm", return_value=MagicMock()):
+         patch("research_pipeline._should_reresearch", return_value="phase3_exec"):
         graph = build_graph()
         result = await graph.ainvoke({"person": sample_person})
 
@@ -132,5 +133,5 @@ async def test_full_flow_mocked(sample_person):
     assert "eval_data" in result
     assert "executive" in result
 
-    # Total agents: 7 (phase1) + 11 (phase2) + 1 (eval) + 1 (exec) = 20
-    assert call_count == 20, f"Expected 20 agent calls, got {call_count}"
+    # Total agents: 8 (phase1) + 11 (phase2) + 1 (eval) + 1 (exec) + 1 (questions) = 22
+    assert call_count == 22, f"Expected 22 agent calls, got {call_count}"

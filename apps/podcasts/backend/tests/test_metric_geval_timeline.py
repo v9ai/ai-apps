@@ -15,6 +15,7 @@ import os
 import pytest
 from deepeval.metrics import GEval
 from deepeval.test_case import LLMTestCase, LLMTestCaseParams
+from helpers import get_eval_model
 
 pytestmark = pytest.mark.deepeval
 skip_no_key = pytest.mark.skipif(
@@ -45,7 +46,7 @@ def test_timeline_chronological(sample_timeline):
         ),
         evaluation_params=[LLMTestCaseParams.ACTUAL_OUTPUT],
         threshold=THRESHOLD,
-        model=MODEL,
+        model=get_eval_model(),
     )
     metric.measure(test_case)
     assert metric.score >= THRESHOLD, (
@@ -74,7 +75,7 @@ def test_timeline_date_format(sample_timeline):
         ),
         evaluation_params=[LLMTestCaseParams.ACTUAL_OUTPUT],
         threshold=THRESHOLD,
-        model=MODEL,
+        model=get_eval_model(),
     )
     metric.measure(test_case)
     assert metric.score >= THRESHOLD, (
@@ -105,7 +106,7 @@ def test_timeline_event_specificity(sample_timeline):
         ),
         evaluation_params=[LLMTestCaseParams.ACTUAL_OUTPUT],
         threshold=THRESHOLD,
-        model=MODEL,
+        model=get_eval_model(),
     )
     metric.measure(test_case)
     assert metric.score >= THRESHOLD, (
@@ -134,7 +135,7 @@ def test_timeline_source_urls(sample_timeline):
         ),
         evaluation_params=[LLMTestCaseParams.ACTUAL_OUTPUT],
         threshold=THRESHOLD,
-        model=MODEL,
+        model=get_eval_model(),
     )
     metric.measure(test_case)
     assert metric.score >= THRESHOLD, (
@@ -167,7 +168,7 @@ def test_timeline_coverage(sample_timeline):
         ),
         evaluation_params=[LLMTestCaseParams.ACTUAL_OUTPUT],
         threshold=THRESHOLD,
-        model=MODEL,
+        model=get_eval_model(),
     )
     metric.measure(test_case)
     assert metric.score >= THRESHOLD, (

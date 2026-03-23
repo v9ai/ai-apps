@@ -12,6 +12,8 @@ Usage:
     cd evals && DEEPEVAL_TELEMETRY_OPT_OUT=YES uv run deepeval test run test_rag_custom.py -k "citation"
 """
 
+from concurrent.futures import ThreadPoolExecutor
+
 import pytest
 from deepeval import assert_test
 from deepeval.metrics import GEval
@@ -134,6 +136,42 @@ def _run_rag(golden: dict) -> LLMTestCase:
     )
 
 
+def _make_custom_metrics() -> list[GEval]:
+    """Create fresh GEval instances — GEval stores state, so not safe to share across threads."""
+    srcs = [citation_accuracy, technical_depth, cross_lesson_synthesis,
+            pedagogical_quality, context_utilization]
+    return [
+        GEval(
+            name=m.name,
+            criteria=m.criteria,
+            evaluation_params=m.evaluation_params,
+            model=model,
+            threshold=m.threshold,
+        )
+        for m in srcs
+    ]
+
+
+def _eval_golden_custom(golden: dict, rag_result) -> dict | None:
+    """Measure all applicable custom metrics in parallel with fresh instances."""
+    if rag_result is None or not rag_result.get("retrieval_context"):
+        return None
+    tc = LLMTestCase(
+        input=golden["input"],
+        actual_output=rag_result["actual_output"],
+        retrieval_context=rag_result["retrieval_context"],
+        expected_output=golden.get("expected_output"),
+    )
+    fresh = _make_custom_metrics()
+    applicable = [
+        m for m in fresh
+        if not (m.name == "Cross-Lesson Synthesis" and len(tc.retrieval_context) < 2)
+    ]
+    with ThreadPoolExecutor(max_workers=len(applicable)) as pool:
+        list(pool.map(lambda m: m.measure(tc), applicable))
+    return {m.name: (m.score or 0) >= m.threshold for m in applicable}
+
+
 # -- Parametrized tests --------------------------------------------------------
 
 
@@ -185,43 +223,32 @@ def test_context_utilization(golden: dict):
 
 def test_custom_metrics_batch():
     """Run all 5 custom metrics on all goldens. Report aggregate pass rates."""
-    metrics = [citation_accuracy, technical_depth, cross_lesson_synthesis,
-               pedagogical_quality, context_utilization]
-    metric_pass_counts = {m.name: 0 for m in metrics}
-    total = 0
+    all_metric_names = [m.name for m in [citation_accuracy, technical_depth,
+                                          cross_lesson_synthesis, pedagogical_quality,
+                                          context_utilization]]
+    metric_pass_counts = {name: 0 for name in all_metric_names}
 
-    # Pre-fetch all RAG results in parallel, then score sequentially.
     rag_results = invoke_rag_batch([g["input"] for g in GOLDENS])
 
-    for golden, rag_result in zip(GOLDENS, rag_results):
-        if rag_result is None:
-            continue
-        tc = LLMTestCase(
-            input=golden["input"],
-            actual_output=rag_result["actual_output"],
-            retrieval_context=rag_result["retrieval_context"],
-            expected_output=golden.get("expected_output"),
-        )
-        if not tc.retrieval_context:
+    # Evaluate each golden concurrently; within each, measure all metrics in parallel.
+    with ThreadPoolExecutor(max_workers=4) as pool:
+        futs = [pool.submit(_eval_golden_custom, g, r) for g, r in zip(GOLDENS, rag_results)]
+        raw = [fut.result() for fut in futs]
+
+    total = 0
+    for result in raw:
+        if result is None:
             continue
         total += 1
-
-        for m in metrics:
-            if m.name == "Cross-Lesson Synthesis" and len(tc.retrieval_context) < 2:
-                continue
-            m.measure(tc)
-            if (m.score or 0) >= m.threshold:
-                metric_pass_counts[m.name] += 1
+        for name, passed in result.items():
+            if passed:
+                metric_pass_counts[name] += 1
 
     if total == 0:
         pytest.skip("No goldens with retrieval context")
 
     report = {name: f"{count}/{total}" for name, count in metric_pass_counts.items()}
-    # At least 3 of 5 metrics should have >= 60% pass rate
-    passing_metrics = sum(
-        1 for count in metric_pass_counts.values()
-        if count >= total * 0.6
-    )
+    passing_metrics = sum(1 for count in metric_pass_counts.values() if count >= total * 0.6)
     assert passing_metrics >= 3, (
         f"Only {passing_metrics}/5 custom metrics achieved 60% pass rate. Report: {report}"
     )

@@ -15,6 +15,7 @@ import os
 import pytest
 from deepeval.metrics import GEval
 from deepeval.test_case import LLMTestCase, LLMTestCaseParams
+from helpers import get_eval_model
 
 pytestmark = pytest.mark.deepeval
 skip_no_key = pytest.mark.skipif(
@@ -42,7 +43,7 @@ def test_one_liner_concise(sample_executive):
         ),
         evaluation_params=[LLMTestCaseParams.ACTUAL_OUTPUT],
         threshold=THRESHOLD,
-        model=MODEL,
+        model=get_eval_model(),
     )
     test_case = LLMTestCase(
         input="Write a one-liner summary capturing the essence of Harrison Chase",
@@ -72,7 +73,7 @@ def test_key_facts_actionable(sample_executive):
         ),
         evaluation_params=[LLMTestCaseParams.ACTUAL_OUTPUT],
         threshold=THRESHOLD,
-        model=MODEL,
+        model=get_eval_model(),
     )
     test_case = LLMTestCase(
         input="List key facts about Harrison Chase that an executive should know before a meeting",
@@ -102,7 +103,7 @@ def test_career_arc_narrative(sample_executive):
         ),
         evaluation_params=[LLMTestCaseParams.ACTUAL_OUTPUT],
         threshold=THRESHOLD,
-        model=MODEL,
+        model=get_eval_model(),
     )
     test_case = LLMTestCase(
         input="Describe the career arc of Harrison Chase as a coherent narrative",
@@ -132,7 +133,7 @@ def test_meeting_prep_useful(sample_executive):
         ),
         evaluation_params=[LLMTestCaseParams.ACTUAL_OUTPUT],
         threshold=THRESHOLD,
-        model=MODEL,
+        model=get_eval_model(),
     )
     test_case = LLMTestCase(
         input="Suggest meeting preparation talking points for a meeting with Harrison Chase",
@@ -163,7 +164,7 @@ def test_risk_factors_specific(sample_executive):
         ),
         evaluation_params=[LLMTestCaseParams.ACTUAL_OUTPUT],
         threshold=THRESHOLD,
-        model=MODEL,
+        model=get_eval_model(),
     )
     test_case = LLMTestCase(
         input="Identify specific risk factors for Harrison Chase and LangChain",
@@ -197,7 +198,7 @@ def test_confidence_justified(sample_executive):
             LLMTestCaseParams.ACTUAL_OUTPUT,
         ],
         threshold=THRESHOLD,
-        model=MODEL,
+        model=get_eval_model(),
     )
     # Provide full executive summary as context in the input so the LLM judge
     # can assess whether the confidence level is warranted by the evidence.

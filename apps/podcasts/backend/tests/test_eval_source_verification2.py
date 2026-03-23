@@ -58,7 +58,7 @@ def _collect_all_urls(profile: dict[str, Any]) -> list[str]:
             urls.append(item["url"])
 
     for _key, val in profile.get("social", {}).items():
-        if isinstance(val, str) and val:
+        if isinstance(val, str) and val and val.startswith("http"):
             urls.append(val)
 
     for item in profile.get("quotes", []):

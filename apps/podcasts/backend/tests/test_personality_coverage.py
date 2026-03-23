@@ -5,8 +5,8 @@ import json
 import pytest
 from pathlib import Path
 
-RESEARCH_DIR = Path(__file__).resolve().parent.parent / "src" / "lib" / "research"
-PERSONALITIES_DIR = Path(__file__).resolve().parent.parent / "personalities"
+RESEARCH_DIR = Path(__file__).resolve().parent.parent.parent / "src" / "lib" / "research"
+PERSONALITIES_DIR = Path(__file__).resolve().parent.parent.parent / "personalities"
 
 _personalities_exist = PERSONALITIES_DIR.exists() and any(PERSONALITIES_DIR.glob("*.ts"))
 _research_exists = RESEARCH_DIR.exists() and any(RESEARCH_DIR.glob("*.json"))

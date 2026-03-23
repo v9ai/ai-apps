@@ -93,10 +93,12 @@ def _load_profiles() -> list[dict[str, Any]]:
 
 
 def _profiles_with_competitive() -> list[dict[str, Any]]:
-    """Return only profiles that have a competitive_landscape dict."""
+    """Return only profiles that have a non-empty competitive_landscape with market_position."""
     return [
         p for p in _load_profiles()
         if isinstance(p.get("competitive_landscape"), dict)
+        and p["competitive_landscape"]  # not empty dict
+        and p["competitive_landscape"].get("market_position")  # has market_position
     ]
 
 

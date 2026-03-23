@@ -19,7 +19,7 @@ REPORTS_DIR = SCRIPT_DIR / "github-reports"
 
 MIN_PROFILE_BYTES = 500
 MAX_PROFILE_BYTES = 200 * 1024  # 200 KB
-MAX_NESTING_DEPTH = 5
+MAX_NESTING_DEPTH = 6  # conferences.talks[n].topics creates depth 6
 
 
 def _research_json_files() -> list[Path]:

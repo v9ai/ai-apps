@@ -13,7 +13,9 @@ import sys
 from pathlib import Path
 from typing import Any
 
+import httpx
 import pytest
+from deepeval.models import DeepEvalBaseLLM
 
 # Ensure backend modules are importable
 BACKEND_DIR = Path(__file__).resolve().parent.parent
@@ -58,6 +60,54 @@ def _load_env_key(key: str):
 _load_env_key("DEEPSEEK_API_KEY")
 
 
+# ── Shared DeepSeek eval model (used by fixtures below) ─────────────────
+
+class _DeepSeekEvalModel(DeepEvalBaseLLM):
+    """Shared DeepSeek model for all GEval tests — avoids OpenAI dependency."""
+
+    def __init__(self):
+        self._api_key = os.getenv("DEEPSEEK_API_KEY", "")
+        self._base_url = "https://api.deepseek.com/v1"
+        self._model_name = "deepseek-chat"
+        super().__init__(model=self._model_name)
+
+    def load_model(self):
+        return self
+
+    def get_model_name(self) -> str:
+        return self._model_name
+
+    def _call_api(self, prompt: str) -> str:
+        if not self._api_key:
+            raise RuntimeError("DEEPSEEK_API_KEY not set")
+        with httpx.Client(timeout=60) as client:
+            resp = client.post(
+                f"{self._base_url}/chat/completions",
+                headers={"Authorization": f"Bearer {self._api_key}", "Content-Type": "application/json"},
+                json={"model": self._model_name, "messages": [{"role": "user", "content": prompt}],
+                      "temperature": 0.0, "max_tokens": 2048},
+            )
+            resp.raise_for_status()
+            return resp.json()["choices"][0]["message"]["content"]
+
+    def generate(self, prompt: str, **kwargs) -> str:
+        return self._call_api(prompt)
+
+    async def a_generate(self, prompt: str, **kwargs) -> str:
+        import asyncio
+        return await asyncio.to_thread(self._call_api, prompt)
+
+
+_shared_eval_model: "_DeepSeekEvalModel | None" = None
+
+
+def _get_shared_eval_model() -> "_DeepSeekEvalModel":
+    global _shared_eval_model
+    if _shared_eval_model is None:
+        _shared_eval_model = _DeepSeekEvalModel()
+    return _shared_eval_model
+
+
 # ── sample research data (inline fallback) ──────────────────────────────
 
 SAMPLE_RESEARCH: dict[str, Any] = {
@@ -100,7 +150,7 @@ SAMPLE_RESEARCH: dict[str, Any] = {
     "timeline": [
         {"date": "2022-10", "event": "Founded LangChain", "url": "https://github.com/langchain-ai/langchain"},
         {"date": "2023-04", "event": "Raised $25M Series A led by Sequoia", "url": "https://techcrunch.com/langchain"},
-        {"date": "2024-01", "event": "Published SPADE paper on arXiv", "url": "https://arxiv.org/abs/2401.03038"},
+        {"date": "2024-01", "event": "Published SPADE paper on arXiv (LangChain data-quality research)", "url": "https://arxiv.org/abs/2401.03038"},
         {"date": "2024-06", "event": "Launched LangGraph for multi-agent systems", "url": "https://langchain-ai.github.io/langgraph/"},
     ],
     "key_contributions": [
@@ -340,9 +390,6 @@ def sample_person() -> dict[str, str]:
 # ── deepeval metric helpers ─────────────────────────────────────────────
 
 @pytest.fixture
-def deepeval_model() -> str:
-    """Return the model string for deepeval metrics.
-
-    Uses DEEPEVAL_MODEL env var, falls back to deepseek.
-    """
-    return os.getenv("DEEPEVAL_MODEL", "deepseek/deepseek-chat")
+def deepeval_model() -> "_DeepSeekEvalModel":
+    """Return a shared DeepSeekEvalModel instance for GEval metrics."""
+    return _get_shared_eval_model()

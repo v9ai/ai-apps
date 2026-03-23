@@ -191,10 +191,13 @@ function extractTitle(content: string): string {
   return "Untitled";
 }
 
+let _lessons: Lesson[] | null = null;
+
 export function getAllLessons(): Lesson[] {
+  if (_lessons) return _lessons;
   const files = fs.readdirSync(CONTENT_DIR).filter((f) => f.endsWith(".md"));
 
-  return files
+  _lessons = files
     .map((file) => {
       const slug = file.replace(/\.md$/, "");
       const number = LESSON_NUMBER[slug] ?? 0;
@@ -206,6 +209,7 @@ export function getAllLessons(): Lesson[] {
       return { slug, fileSlug: slug, number, title, category, wordCount, readingTimeMin };
     })
     .sort((a, b) => a.number - b.number);
+  return _lessons;
 }
 
 export function getLessonBySlug(slug: string): LessonWithContent | null {

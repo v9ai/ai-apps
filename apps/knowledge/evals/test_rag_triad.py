@@ -11,8 +11,11 @@ Usage:
     cd evals && DEEPEVAL_TELEMETRY_OPT_OUT=YES uv run deepeval test run test_rag_triad.py -k "batch"
 """
 
+from concurrent.futures import ThreadPoolExecutor
+
 import pytest
 from deepeval import assert_test
+from deepeval.metrics import AnswerRelevancyMetric, ContextualRelevancyMetric, FaithfulnessMetric
 from deepeval.test_case import LLMTestCase
 
 from conftest_rag import (
@@ -20,7 +23,9 @@ from conftest_rag import (
     contextual_relevancy,
     faithfulness,
     load_rag_goldens,
+    model,
     rag_golden_params,
+    RAG_THRESHOLD,
 )
 from rag_pipeline import invoke_rag, invoke_rag_batch
 
@@ -43,6 +48,35 @@ def _run_rag(golden: dict) -> LLMTestCase:
         retrieval_context=result["retrieval_context"],
         expected_output=golden.get("expected_output"),
     )
+
+
+def _eval_golden(golden: dict, rag_result) -> dict | None:
+    """Measure the full triad in parallel with fresh metric instances per call."""
+    if rag_result is None or not rag_result.get("retrieval_context"):
+        return None
+    tc = LLMTestCase(
+        input=golden["input"],
+        actual_output=rag_result["actual_output"],
+        retrieval_context=rag_result["retrieval_context"],
+        expected_output=golden.get("expected_output"),
+    )
+    # Fresh instances — singletons store .score/.reason state and are not thread-safe.
+    f_m = FaithfulnessMetric(model=model, threshold=RAG_THRESHOLD)
+    ar_m = AnswerRelevancyMetric(model=model, threshold=RAG_THRESHOLD)
+    cr_m = ContextualRelevancyMetric(model=model, threshold=RAG_THRESHOLD)
+    with ThreadPoolExecutor(max_workers=3) as pool:
+        list(pool.map(lambda m: m.measure(tc), [f_m, ar_m, cr_m]))
+    return {
+        "input": golden["input"][:80],
+        "faithfulness": f_m.score or 0,
+        "answer_relevancy": ar_m.score or 0,
+        "contextual_relevancy": cr_m.score or 0,
+        "all_pass": (
+            (f_m.score or 0) >= RAG_THRESHOLD
+            and (ar_m.score or 0) >= RAG_THRESHOLD
+            and (cr_m.score or 0) >= RAG_THRESHOLD
+        ),
+    }
 
 
 # -- Parametrized per-golden tests --------------------------------------------
@@ -78,38 +112,12 @@ def test_rag_contextual_relevancy(golden: dict):
 
 def test_rag_triad_batch():
     """Run all goldens through the full RAG triad. 70% must pass all three."""
-    # Pre-fetch all RAG results in parallel, then measure metrics sequentially.
     rag_results = invoke_rag_batch([g["input"] for g in GOLDENS])
 
-    results = []
-    for golden, rag_result in zip(GOLDENS, rag_results):
-        if rag_result is None:
-            continue
-        tc = LLMTestCase(
-            input=golden["input"],
-            actual_output=rag_result["actual_output"],
-            retrieval_context=rag_result["retrieval_context"],
-            expected_output=golden.get("expected_output"),
-        )
-        if not tc.retrieval_context:
-            continue
-
-        faithfulness.measure(tc)
-        answer_relevancy.measure(tc)
-        contextual_relevancy.measure(tc)
-
-        all_pass = (
-            (faithfulness.score or 0) >= faithfulness.threshold
-            and (answer_relevancy.score or 0) >= answer_relevancy.threshold
-            and (contextual_relevancy.score or 0) >= contextual_relevancy.threshold
-        )
-        results.append({
-            "input": golden["input"][:80],
-            "faithfulness": faithfulness.score,
-            "answer_relevancy": answer_relevancy.score,
-            "contextual_relevancy": contextual_relevancy.score,
-            "all_pass": all_pass,
-        })
+    # Evaluate each golden concurrently; each call measures 3 metrics in parallel.
+    with ThreadPoolExecutor(max_workers=4) as pool:
+        futs = [pool.submit(_eval_golden, g, r) for g, r in zip(GOLDENS, rag_results)]
+        results = [r for fut in futs for r in [fut.result()] if r is not None]
 
     if not results:
         pytest.skip("No goldens with retrieval context")

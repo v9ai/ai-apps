@@ -30,7 +30,7 @@ def test_graph_buildable():
     graph = build_graph()
     assert graph is not None
     nodes = set(graph.get_graph().nodes.keys()) - {"__start__", "__end__"}
-    assert len(nodes) == 4
+    assert len(nodes) == 7
 
 
 # ── Test 2: trace is importable ─────────────────────────────────────────
@@ -83,9 +83,7 @@ def test_trace_context_manager(sample_person, deepeval_model):
     }
 
     with trace(
-        type="llm",
         name="langgraph-research-pipeline",
-        model=deepeval_model,
         input=f"Research {sample_person['name']}",
         output=json.dumps(mock_result),
     ):
@@ -102,9 +100,10 @@ def test_graph_inspectable():
     graph = build_graph()
     g = graph.get_graph()
     edges = [(e.source, e.target) for e in g.edges]
-    assert len(edges) == 5
+    assert len(edges) == 9
     assert ("__start__", "phase1") in edges
-    assert ("phase3_exec", "__end__") in edges
+    assert ("phase3_exec", "question_generator") in edges
+    assert ("question_generator", "__end__") in edges
 
 
 # ── Test 6: EvaluationDataset from all personalities ────────────────────

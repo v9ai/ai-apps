@@ -5,6 +5,7 @@ Each callback matches deepteam's CallbackType:
 """
 
 import sys
+import threading
 from pathlib import Path
 
 from deepteam.test_case.test_case import RTTurn
@@ -17,22 +18,28 @@ if _evals_dir not in sys.path:
 from agent import build_agent  # noqa: E402
 from editorial.graph import build_journalism_graph  # noqa: E402
 
-# Cache agent instances to avoid rebuilding per call
+# Cache agent instances — attack_worker nodes run in parallel via Send().
 _agent = None
+_agent_lock: threading.Lock = threading.Lock()
 _editorial = None
+_editorial_lock: threading.Lock = threading.Lock()
 
 
 def _get_agent():
     global _agent
     if _agent is None:
-        _agent = build_agent()
+        with _agent_lock:
+            if _agent is None:
+                _agent = build_agent()
     return _agent
 
 
 def _get_editorial():
     global _editorial
     if _editorial is None:
-        _editorial = build_journalism_graph()
+        with _editorial_lock:
+            if _editorial is None:
+                _editorial = build_journalism_graph()
     return _editorial
 
 

@@ -202,7 +202,12 @@
         "conference": "PostgresOpen",
         "date": "2017-09-08",
         "url": "https://speakerdeck.com/ankane/how-postgres-could-index-itself",
-        "topics": ["PostgreSQL", "indexing", "query planning", "Dexter automatic indexer"]
+        "topics": [
+          "PostgreSQL",
+          "indexing",
+          "query planning",
+          "Dexter automatic indexer"
+        ]
       }
     ],
     "notable_moments": [
@@ -225,22 +230,21 @@
       "future_of_software_development": {
         "stance": "AI capabilities should integrate into existing developer workflows",
         "evidence": "PGVector enables vector search using standard SQL queries rather than requiring new APIs or languages. This allows developers to add AI features without learning new systems or changing application architecture. The approach suggests Kane believes the future involves augmenting existing tools with AI capabilities rather than replacing established development paradigms.",
-        "source_url": "PGVector documentation showing SQL-based vector operations"
+        "source_url": "https://github.com/pgvector/pgvector"
       },
       "scaling_laws": {
         "stance": "Practical scaling through algorithmic optimization, not just hardware",
         "evidence": "PGVector's development focuses on algorithmic improvements (HNSW indexes, parallel builds, quantization) that provide 30-150x speedups. This suggests Kane believes scaling challenges can often be addressed through better algorithms and implementation rather than just throwing more hardware at problems. The focus on reducing index size by 50% through 2-byte floats shows attention to practical scaling constraints.",
-        "source_url": "Jonathan Katz's '150x PGVector Speedup' article (April 2024)"
+        "source_url": "https://jkatz05.com/post/postgres/pgvector-overview-0.7.0/"
       },
       "ai_safety": {
         "stance": "Implied position: Safety through transparency and control",
         "evidence": "By keeping vector operations within PostgreSQL, developers maintain full control and visibility over their AI data and operations. This architectural choice suggests a preference for systems where AI capabilities are transparent and integrated into existing governance frameworks rather than black-box external services. No direct statements on existential risk, but the approach emphasizes practical control and auditability.",
-        "source_url": "PGVector architecture enabling SQL-based audit trails"
+        "source_url": "https://github.com/pgvector/pgvector"
       },
       "agi_timeline": {
         "stance": "No public position (pragmatic focus on current capabilities)",
-        "evidence": "Andrew Kane has not publicly commented on AGI timelines. His work focuses on practical, immediate applications of current AI/ML capabilities rather than speculative future developments. PGVector addresses today's need for vector search in production applications, suggesting a present-focused, incremental improvement philosophy.",
-        "source_url": "No public statements found on AGI"
+        "evidence": "Andrew Kane has not publicly commented on AGI timelines. His work focuses on practical, immediate applications of current AI/ML capabilities rather than speculative future developments. PGVector addresses today's need for vector search in production applications, suggesting a present-focused, incremental improvement philosophy."
       }
     },
     "predictions": [

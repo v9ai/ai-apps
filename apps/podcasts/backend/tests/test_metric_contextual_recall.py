@@ -25,6 +25,7 @@ from helpers import (
     MOCK_NEWS_RESULT,
     MOCK_SEMANTIC_SCHOLAR_RESULT,
     MOCK_WEB_SEARCH_RESULT,
+    get_eval_model,
     make_test_case_input,
 )
 
@@ -41,7 +42,6 @@ PERSON = {
 }
 
 THRESHOLD = 0.5
-MODEL = "deepseek/deepseek-chat"
 
 EXPECTED_BIO = (
     "Harrison Chase is the CEO and co-founder of LangChain, the dominant open-source "
@@ -52,7 +52,7 @@ EXPECTED_BIO = (
 
 
 def _contextual_recall_metric() -> ContextualRecallMetric:
-    return ContextualRecallMetric(threshold=THRESHOLD, model=MODEL)
+    return ContextualRecallMetric(threshold=THRESHOLD, model=get_eval_model())
 
 
 # -- Test 1: Sufficient context from web search + GitHub supports the bio ------

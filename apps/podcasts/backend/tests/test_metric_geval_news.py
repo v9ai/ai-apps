@@ -17,6 +17,7 @@ import os
 import pytest
 from deepeval.metrics import GEval
 from deepeval.test_case import LLMTestCase, LLMTestCaseParams
+from helpers import get_eval_model
 
 pytestmark = pytest.mark.deepeval
 skip_no_key = pytest.mark.skipif(
@@ -48,7 +49,7 @@ def test_news_have_headlines(sample_news):
         ),
         evaluation_params=[LLMTestCaseParams.ACTUAL_OUTPUT],
         threshold=THRESHOLD,
-        model=MODEL,
+        model=get_eval_model(),
     )
     metric.measure(test_case)
     assert metric.score >= THRESHOLD, (
@@ -77,7 +78,7 @@ def test_news_have_sources(sample_news):
         ),
         evaluation_params=[LLMTestCaseParams.ACTUAL_OUTPUT],
         threshold=THRESHOLD,
-        model=MODEL,
+        model=get_eval_model(),
     )
     metric.measure(test_case)
     assert metric.score >= THRESHOLD, (
@@ -108,7 +109,7 @@ def test_news_have_dates(sample_news):
         ),
         evaluation_params=[LLMTestCaseParams.ACTUAL_OUTPUT],
         threshold=THRESHOLD,
-        model=MODEL,
+        model=get_eval_model(),
     )
     metric.measure(test_case)
     assert metric.score >= THRESHOLD, (
@@ -139,7 +140,7 @@ def test_news_categorized(sample_news):
         ),
         evaluation_params=[LLMTestCaseParams.ACTUAL_OUTPUT],
         threshold=THRESHOLD,
-        model=MODEL,
+        model=get_eval_model(),
     )
     metric.measure(test_case)
     assert metric.score >= THRESHOLD, (

@@ -55,6 +55,11 @@
       "url": "https://arxiv.org/pdf/2410.10762"
     },
     {
+      "date": "2025-01",
+      "event": "DeepWisdom completes two funding rounds totaling ~RMB 220M ($30.8M USD), backed by Ant Group, Cathay Capital, Jinqiu Capital, MindWorks Capital, Baidu Ventures, and Concept Capital.",
+      "url": "https://eu.36kr.com/en/p/3640426144812417"
+    },
+    {
       "date": "2025-02",
       "event": "DeepWisdom launches MGX (MetaGPT X) — the world's first AI multi-agent development team product. Reaches 500,000 registered users within one month and crosses $1M ARR without paid marketing.",
       "url": "https://pressadvantage.com/story/77512-metagpt-team-launches-metagpt-x-world-s-first-ai-multi-agent-team-platform"
@@ -73,11 +78,6 @@
       "date": "2025-10",
       "event": "Spoke at GOSIM AI Paris 2025 conference on multi-agent systems and foundation agents.",
       "url": "https://paris2025.gosim.org/speakers/sirui-hong/"
-    },
-    {
-      "date": "2025-H1",
-      "event": "DeepWisdom completes two funding rounds totaling ~RMB 220M ($30.8M USD), backed by Ant Group, Cathay Capital, Jinqiu Capital, MindWorks Capital, Baidu Ventures, and Concept Capital.",
-      "url": "https://eu.36kr.com/en/p/3640426144812417"
     },
     {
       "date": "2026-01",
@@ -139,7 +139,7 @@
     "twitter": "https://x.com/AlexanderWu0",
     "linkedin": "https://www.linkedin.com/in/sirui-hong-b23593292/",
     "website": "https://www.deepwisdom.ai/",
-    "semanticScholar": "https://www.semanticscholar.org/author/Sirui-Hong/2004160930"
+    "semanticscholar": "https://www.semanticscholar.org/author/Sirui-Hong/2004160930"
   },
   "sources": [
     {

@@ -69,11 +69,6 @@
       "url": "https://theorg.com/org/fuzu/org-chart/janni-turunen"
     },
     {
-      "date": "2025-06",
-      "event": "Published HuggingFace models: Qwen3-Embedding ONNX variants optimized for Text Embeddings Inference",
-      "url": "https://huggingface.co/janni-t"
-    },
-    {
       "date": "2024-03",
       "event": "Released vipune Rust project on GitHub - a single binary application with SQLite database",
       "url": "https://github.com/randomm/vipune"
@@ -82,6 +77,11 @@
       "date": "2024-06",
       "event": "Published opencode-claude-skill-sync TypeScript project for Claude AI integration",
       "url": "https://github.com/randomm/opencode-claude-skill-sync"
+    },
+    {
+      "date": "2025-06",
+      "event": "Published HuggingFace models: Qwen3-Embedding ONNX variants optimized for Text Embeddings Inference",
+      "url": "https://huggingface.co/janni-t"
     },
     {
       "date": "2025-06",

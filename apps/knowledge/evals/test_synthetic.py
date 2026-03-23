@@ -115,11 +115,6 @@ hallucination_metric = HallucinationMetric(
     threshold=THRESHOLD,
 )
 
-bias_metric = BiasMetric(
-    model=model,
-    threshold=THRESHOLD,
-)
-
 
 # -- Helpers -------------------------------------------------------------------
 
@@ -211,18 +206,20 @@ def _invoke_agents_batch(agent, goldens: list[Golden]) -> list[str]:
 
 def test_synthetic_batch_task_completion(agent):
     """Run all goldens through the agent. 60% must pass TaskCompletion."""
-    metric = TaskCompletionMetric(model=model, threshold=THRESHOLD)
     outputs = _invoke_agents_batch(agent, GOLDENS)
 
-    results = []
-    for golden, actual_output in zip(GOLDENS, outputs):
-        tc = LLMTestCase(
+    def _measure(args: tuple) -> tuple:
+        golden, actual_output = args
+        m = TaskCompletionMetric(model=model, threshold=THRESHOLD)
+        m.measure(LLMTestCase(
             input=golden.input,
             actual_output=actual_output,
             expected_output=golden.expected_output,
-        )
-        metric.measure(tc)
-        results.append((golden.input, metric.score))
+        ))
+        return golden.input, m.score
+
+    with ThreadPoolExecutor(max_workers=min(4, len(GOLDENS) or 1)) as pool:
+        results = list(pool.map(_measure, zip(GOLDENS, outputs)))
 
     passing = sum(1 for _, score in results if score and score >= THRESHOLD)
     total = len(results)
@@ -236,14 +233,14 @@ def test_synthetic_batch_bias(agent):
     """Educational content should have near-zero bias. 90% must pass."""
     outputs = _invoke_agents_batch(agent, GOLDENS)
 
-    results = []
-    for golden, actual_output in zip(GOLDENS, outputs):
-        tc = LLMTestCase(
-            input=golden.input,
-            actual_output=actual_output,
-        )
-        bias_metric.measure(tc)
-        results.append((golden.input, bias_metric.score))
+    def _measure(args: tuple) -> tuple:
+        golden, actual_output = args
+        m = BiasMetric(model=model, threshold=THRESHOLD)
+        m.measure(LLMTestCase(input=golden.input, actual_output=actual_output))
+        return golden.input, m.score
+
+    with ThreadPoolExecutor(max_workers=min(4, len(GOLDENS) or 1)) as pool:
+        results = list(pool.map(_measure, zip(GOLDENS, outputs)))
 
     passing = sum(1 for _, score in results if score is not None and score <= THRESHOLD)
     total = len(results)

@@ -15,6 +15,7 @@ import json, os, pytest
 from deepeval.test_case import LLMTestCase
 from deepeval.metrics import GEval
 from deepeval.test_case import LLMTestCaseParams
+from helpers import get_eval_model
 
 pytestmark = pytest.mark.deepeval
 skip_no_key = pytest.mark.skipif(not os.getenv("DEEPSEEK_API_KEY"), reason="No DEEPSEEK_API_KEY")
@@ -43,7 +44,7 @@ def test_speaking_tier_valid(sample_conferences):
         ),
         evaluation_params=[LLMTestCaseParams.ACTUAL_OUTPUT],
         threshold=THRESHOLD,
-        model=MODEL,
+        model=get_eval_model(),
     )
     metric.measure(test_case)
     assert metric.score >= THRESHOLD, (
@@ -75,7 +76,7 @@ def test_talks_have_events(sample_conferences):
         ),
         evaluation_params=[LLMTestCaseParams.ACTUAL_OUTPUT],
         threshold=THRESHOLD,
-        model=MODEL,
+        model=get_eval_model(),
     )
     metric.measure(test_case)
     assert metric.score >= THRESHOLD, (
@@ -105,7 +106,7 @@ def test_talks_typed(sample_conferences):
         ),
         evaluation_params=[LLMTestCaseParams.ACTUAL_OUTPUT],
         threshold=THRESHOLD,
-        model=MODEL,
+        model=get_eval_model(),
     )
     metric.measure(test_case)
     assert metric.score >= THRESHOLD, (
@@ -138,7 +139,7 @@ def test_notable_moments_specific(sample_conferences):
         ),
         evaluation_params=[LLMTestCaseParams.ACTUAL_OUTPUT],
         threshold=THRESHOLD,
-        model=MODEL,
+        model=get_eval_model(),
     )
     metric.measure(test_case)
     assert metric.score >= THRESHOLD, (

@@ -15,6 +15,7 @@ import os
 import pytest
 from deepeval.metrics import ToxicityMetric
 from deepeval.test_case import LLMTestCase
+from helpers import get_eval_model
 
 pytestmark = pytest.mark.deepeval
 skip_no_key = pytest.mark.skipif(
@@ -26,7 +27,7 @@ MODEL = "deepseek/deepseek-chat"
 
 
 def _toxicity_metric() -> ToxicityMetric:
-    return ToxicityMetric(threshold=THRESHOLD, model=MODEL)
+    return ToxicityMetric(threshold=THRESHOLD, model=get_eval_model())
 
 
 # ── Test 1: Biography is professional and non-toxic ──────────────────────

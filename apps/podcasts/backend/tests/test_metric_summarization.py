@@ -16,6 +16,7 @@ Usage:
 import json, os, pytest
 from deepeval.test_case import LLMTestCase
 from deepeval.metrics import SummarizationMetric
+from helpers import get_eval_model
 
 pytestmark = pytest.mark.deepeval
 skip_no_key = pytest.mark.skipif(not os.getenv("DEEPSEEK_API_KEY"), reason="No DEEPSEEK_API_KEY")
@@ -25,7 +26,7 @@ MODEL = "deepseek/deepseek-chat"
 
 
 def _summarization_metric() -> SummarizationMetric:
-    return SummarizationMetric(threshold=THRESHOLD, model=MODEL)
+    return SummarizationMetric(threshold=THRESHOLD, model=get_eval_model())
 
 
 # ── helpers to build source texts ──────────────────────────────────────

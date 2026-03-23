@@ -131,8 +131,33 @@
       "fundamentals_first": "Returns to foundational topics (decision trees, ensemble methods) even while building advanced systems."
     }
   },
-  "competitive_landscape": {},
-  "collaboration_network": {},
+  "competitive_landscape": {
+    "market_position": "practitioner",
+    "competitors": [
+      {
+        "name": "Other ML Engineers",
+        "relationship": "peers",
+        "differentiation": "Focus on GraphRAG and knowledge graphs with LangGraph"
+      }
+    ],
+    "moats": [
+      "Unique combination of enterprise ML experience and GraphRAG expertise"
+    ],
+    "ecosystem_role": "Practitioner building GraphRAG pipelines with LangChain and LangGraph"
+  },
+  "collaboration_network": {
+    "co_founders": [],
+    "key_collaborators": [
+      {
+        "name": "ArangoDB Team",
+        "relationship": "technical collaborator",
+        "context": "GraphRAG pipeline development"
+      }
+    ],
+    "mentors": [],
+    "mentees": [],
+    "academic_lineage": "MS from Trinity College Dublin; BCA from BIT Mesra"
+  },
   "funding": {},
   "conferences": {},
   "podcast_appearances": [],

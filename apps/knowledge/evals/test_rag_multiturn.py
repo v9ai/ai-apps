@@ -7,6 +7,8 @@ Usage:
     cd evals && DEEPEVAL_TELEMETRY_OPT_OUT=YES uv run deepeval test run test_rag_multiturn.py
 """
 
+from concurrent.futures import ThreadPoolExecutor
+
 import pytest
 from deepeval import assert_test
 from deepeval.metrics import (
@@ -97,6 +99,24 @@ def _run_conversation_turns(turns: list[str]) -> list[LLMTestCase]:
     ]
 
 
+def _eval_conversation_faithfulness(conv: dict) -> list[dict]:
+    """Fetch and score one conversation's turns; fresh metric instance per call."""
+    test_cases = _run_conversation_turns(conv["turns"])
+    fm = FaithfulnessMetric(model=model, threshold=THRESHOLD)
+    results = []
+    for tc in test_cases:
+        if not tc.retrieval_context:
+            continue
+        fm.measure(tc)
+        results.append({
+            "conv": conv["id"],
+            "input": tc.input[:60],
+            "score": fm.score,
+            "pass": (fm.score or 0) >= THRESHOLD,
+        })
+    return results
+
+
 # -- Per-conversation tests ----------------------------------------------------
 
 
@@ -153,19 +173,10 @@ def test_multiturn_progressive_depth(conv):
 
 def test_multiturn_aggregate():
     """Across all conversations, 75% of turns must pass faithfulness."""
-    all_results = []
-    for conv in CONVERSATIONS:
-        test_cases = _run_conversation_turns(conv["turns"])
-        for tc in test_cases:
-            if not tc.retrieval_context:
-                continue
-            faithfulness_metric.measure(tc)
-            all_results.append({
-                "conv": conv["id"],
-                "input": tc.input[:60],
-                "score": faithfulness_metric.score,
-                "pass": (faithfulness_metric.score or 0) >= THRESHOLD,
-            })
+    # Process all conversations in parallel — each gets its own metric instance.
+    with ThreadPoolExecutor(max_workers=min(4, len(CONVERSATIONS))) as pool:
+        all_conv_results = list(pool.map(_eval_conversation_faithfulness, CONVERSATIONS))
+    all_results = [r for conv_results in all_conv_results for r in conv_results]
 
     if not all_results:
         pytest.skip("No turns with retrieval context")

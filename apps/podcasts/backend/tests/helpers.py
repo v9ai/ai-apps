@@ -1,8 +1,62 @@
 """Test helpers — mock data generators, output validators, and metric factories."""
 
 import json
+import os
 import re
 from typing import Any
+
+import httpx
+from deepeval.models import DeepEvalBaseLLM
+
+
+class DeepSeekEvalModel(DeepEvalBaseLLM):
+    """Shared DeepSeek model for deepeval metrics.
+
+    Import via: ``from helpers import get_eval_model``
+    """
+
+    def __init__(self):
+        self._api_key = os.getenv("DEEPSEEK_API_KEY", "")
+        self._base_url = "https://api.deepseek.com/v1"
+        self._model_name = "deepseek-chat"
+        super().__init__(model=self._model_name)
+
+    def load_model(self):
+        return self
+
+    def get_model_name(self) -> str:
+        return self._model_name
+
+    def _call_api(self, prompt: str) -> str:
+        if not self._api_key:
+            raise RuntimeError("DEEPSEEK_API_KEY not set")
+        with httpx.Client(timeout=60) as client:
+            resp = client.post(
+                f"{self._base_url}/chat/completions",
+                headers={"Authorization": f"Bearer {self._api_key}", "Content-Type": "application/json"},
+                json={"model": self._model_name, "messages": [{"role": "user", "content": prompt}],
+                      "temperature": 0.0, "max_tokens": 2048},
+            )
+            resp.raise_for_status()
+            return resp.json()["choices"][0]["message"]["content"]
+
+    def generate(self, prompt: str, **kwargs) -> str:
+        return self._call_api(prompt)
+
+    async def a_generate(self, prompt: str, **kwargs) -> str:
+        import asyncio
+        return await asyncio.to_thread(self._call_api, prompt)
+
+
+_shared_model: "DeepSeekEvalModel | None" = None
+
+
+def get_eval_model() -> DeepSeekEvalModel:
+    """Return the shared singleton DeepSeekEvalModel instance."""
+    global _shared_model
+    if _shared_model is None:
+        _shared_model = DeepSeekEvalModel()
+    return _shared_model
 
 
 def make_test_case_input(person: dict[str, str], task_description: str) -> str:

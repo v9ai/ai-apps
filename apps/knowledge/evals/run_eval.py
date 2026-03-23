@@ -102,21 +102,27 @@ def _eval_article(
     metric_filter: str | None,
     model: DeepSeekModel,
 ) -> dict:
-    """Evaluate one article with fresh metric instances (thread-safe)."""
+    """Evaluate one article: measure all metrics in parallel (fresh instances, thread-safe)."""
     metrics = build_metrics(model)
     if metric_filter:
         metrics = {metric_filter: metrics[metric_filter]}
     test_case = LLMTestCase(input="Evaluate article quality", actual_output=content)
     article_result: dict = {"article_id": article_id, "metrics": {}}
-    for metric_name, metric in metrics.items():
+
+    def _measure(name_metric: tuple[str, GEval]) -> tuple[str, GEval]:
+        name, metric = name_metric
         metric.measure(test_case)
-        score = metric.score
-        passed = score >= THRESHOLD if score is not None else False
-        article_result["metrics"][metric_name] = {
-            "score": score,
-            "passed": passed,
-            "reason": metric.reason or "",
-        }
+        return name, metric
+
+    with ThreadPoolExecutor(max_workers=len(metrics)) as pool:
+        for name, metric in pool.map(_measure, metrics.items()):
+            score = metric.score
+            passed = score >= THRESHOLD if score is not None else False
+            article_result["metrics"][name] = {
+                "score": score,
+                "passed": passed,
+                "reason": metric.reason or "",
+            }
     return article_result
 
 

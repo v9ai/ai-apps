@@ -1,4 +1,8 @@
 {
+  "statusLine": {
+    "type": "command",
+    "command": "bash $CLAUDE_PROJECT_DIR/.claude/iterate/statusline.sh"
+  },
   "hooks": {
     "Stop": [
       {

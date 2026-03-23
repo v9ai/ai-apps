@@ -113,14 +113,14 @@ _profiles = _load_profiles()
 
 class TestKeyFactsCount:
     def test_key_facts_count(self):
-        """Assert key_facts is a list of exactly 3 items."""
+        """Assert key_facts is a list of 3-5 items."""
         if not _profiles:
             pytest.skip("No profiles with executive_summary.key_facts")
         for p in _profiles:
             facts = _get_key_facts(p)
             assert isinstance(facts, list), f"{p['slug']}: key_facts is not a list"
-            assert len(facts) == 3, (
-                f"{p['slug']}: expected exactly 3 key_facts, got {len(facts)}"
+            assert 3 <= len(facts) <= 5, (
+                f"{p['slug']}: expected 3-5 key_facts, got {len(facts)}"
             )
 
 

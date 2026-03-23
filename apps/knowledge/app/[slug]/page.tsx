@@ -26,26 +26,25 @@ export async function generateMetadata({ params }: { params: Promise<{ slug: str
 
 export default async function LessonPage({ params }: { params: Promise<{ slug: string }> }) {
   const { slug } = await params;
-  const lesson = await getLessonBySlug(slug);
+
+  // Fetch lesson and full lesson list in parallel — they are independent.
+  const [lesson, allLessons] = await Promise.all([
+    getLessonBySlug(slug),
+    getAllLessons(),
+  ]);
   if (!lesson) notFound();
 
-  const [allLessons, meta, related, audioMeta] = await Promise.all([
-    getAllLessons(),
-    getCategoryMeta(lesson.category),
-    getRelatedLessons(slug),
-    getAudioMeta(lesson.fileSlug),
-  ]);
-  const total = allLessons.length;
-
-  // Same-category lessons for progress indicator
-  const categoryLessons = allLessons.filter((l) => l.category === lesson.category);
-
-  // Prev/next with their category meta
+  // Compute prev/next synchronously, then fire all remaining fetches in parallel.
   const idx = allLessons.findIndex((l) => l.slug === slug);
   const prev = idx > 0 ? allLessons[idx - 1] : null;
   const next = idx < allLessons.length - 1 ? allLessons[idx + 1] : null;
+  const total = allLessons.length;
+  const categoryLessons = allLessons.filter((l) => l.category === lesson.category);
 
-  const [prevMeta, nextMeta] = await Promise.all([
+  const [meta, related, audioMeta, prevMeta, nextMeta] = await Promise.all([
+    getCategoryMeta(lesson.category),
+    getRelatedLessons(slug),
+    getAudioMeta(lesson.fileSlug),
     prev ? getCategoryMeta(prev.category) : Promise.resolve(null),
     next ? getCategoryMeta(next.category) : Promise.resolve(null),
   ]);

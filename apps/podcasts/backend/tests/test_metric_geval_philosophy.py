@@ -16,6 +16,7 @@ import json, os, pytest
 from deepeval.test_case import LLMTestCase
 from deepeval.metrics import GEval
 from deepeval.test_case import LLMTestCaseParams
+from helpers import get_eval_model
 
 pytestmark = pytest.mark.deepeval
 skip_no_key = pytest.mark.skipif(not os.getenv("DEEPSEEK_API_KEY"), reason="No DEEPSEEK_API_KEY")
@@ -47,7 +48,7 @@ def test_core_thesis_articulate(sample_philosophy):
         ),
         evaluation_params=[LLMTestCaseParams.ACTUAL_OUTPUT],
         threshold=THRESHOLD,
-        model=MODEL,
+        model=get_eval_model(),
     )
     metric.measure(test_case)
     assert metric.score >= THRESHOLD, (
@@ -80,7 +81,7 @@ def test_positions_evidence_based(sample_philosophy):
         ),
         evaluation_params=[LLMTestCaseParams.ACTUAL_OUTPUT],
         threshold=THRESHOLD,
-        model=MODEL,
+        model=get_eval_model(),
     )
     metric.measure(test_case)
     assert metric.score >= THRESHOLD, (
@@ -112,7 +113,7 @@ def test_predictions_timestamped(sample_philosophy):
         ),
         evaluation_params=[LLMTestCaseParams.ACTUAL_OUTPUT],
         threshold=THRESHOLD,
-        model=MODEL,
+        model=get_eval_model(),
     )
     metric.measure(test_case)
     assert metric.score >= THRESHOLD, (
@@ -146,7 +147,7 @@ def test_contrarian_takes_genuine(sample_philosophy):
         ),
         evaluation_params=[LLMTestCaseParams.ACTUAL_OUTPUT],
         threshold=THRESHOLD,
-        model=MODEL,
+        model=get_eval_model(),
     )
     metric.measure(test_case)
     assert metric.score >= THRESHOLD, (
@@ -182,7 +183,7 @@ def test_positions_cover_key_debates(sample_philosophy):
         ),
         evaluation_params=[LLMTestCaseParams.ACTUAL_OUTPUT],
         threshold=THRESHOLD,
-        model=MODEL,
+        model=get_eval_model(),
     )
     metric.measure(test_case)
     assert metric.score >= THRESHOLD, (

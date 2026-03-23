@@ -18,6 +18,7 @@ import os
 import pytest
 from deepeval.metrics import GEval
 from deepeval.test_case import LLMTestCase, LLMTestCaseParams
+from helpers import get_eval_model
 
 pytestmark = pytest.mark.deepeval
 skip_no_key = pytest.mark.skipif(
@@ -47,7 +48,7 @@ def test_quotes_have_attribution(sample_quotes):
         ),
         evaluation_params=[LLMTestCaseParams.ACTUAL_OUTPUT],
         threshold=THRESHOLD,
-        model=MODEL,
+        model=get_eval_model(),
     )
     metric.measure(test_case)
     assert metric.score >= THRESHOLD, (
@@ -75,7 +76,7 @@ def test_quotes_have_urls(sample_quotes):
         ),
         evaluation_params=[LLMTestCaseParams.ACTUAL_OUTPUT],
         threshold=THRESHOLD,
-        model=MODEL,
+        model=get_eval_model(),
     )
     metric.measure(test_case)
     assert metric.score >= THRESHOLD, (
@@ -105,7 +106,7 @@ def test_quotes_sound_authentic(sample_quotes):
         ),
         evaluation_params=[LLMTestCaseParams.ACTUAL_OUTPUT],
         threshold=THRESHOLD,
-        model=MODEL,
+        model=get_eval_model(),
     )
     metric.measure(test_case)
     assert metric.score >= THRESHOLD, (
@@ -135,7 +136,7 @@ def test_quotes_are_substantive(sample_quotes):
         ),
         evaluation_params=[LLMTestCaseParams.ACTUAL_OUTPUT],
         threshold=THRESHOLD,
-        model=MODEL,
+        model=get_eval_model(),
     )
     metric.measure(test_case)
     assert metric.score >= THRESHOLD, (
@@ -165,7 +166,7 @@ def test_quotes_are_distinct(sample_quotes):
         ),
         evaluation_params=[LLMTestCaseParams.ACTUAL_OUTPUT],
         threshold=THRESHOLD,
-        model=MODEL,
+        model=get_eval_model(),
     )
     metric.measure(test_case)
     assert metric.score >= THRESHOLD, (

@@ -105,8 +105,6 @@ def test_agent_batch(agent):
         Golden(input=case.values[0], expected_output=case.values[1])
         for case in AGENT_CASES
     ]
-    metric = TaskCompletionMetric(model=model, threshold=THRESHOLD)
-
     # Parallelize agent invocations — compiled graph is stateless and thread-safe.
     with ThreadPoolExecutor(max_workers=min(4, len(goldens))) as pool:
         futures = {pool.submit(_invoke_agent, agent, g.input): i for i, g in enumerate(goldens)}
@@ -118,16 +116,18 @@ def test_agent_batch(agent):
             except Exception:
                 outputs[i] = ""
 
-    results = []
-    for golden, actual_output in zip(goldens, outputs):
-        metric.measure(
-            LLMTestCase(
-                input=golden.input,
-                actual_output=actual_output,
-                expected_output=golden.expected_output,
-            )
-        )
-        results.append((golden.input, actual_output, metric.score))
+    def _measure(args: tuple) -> tuple:
+        golden, actual_output = args
+        m = TaskCompletionMetric(model=model, threshold=THRESHOLD)
+        m.measure(LLMTestCase(
+            input=golden.input,
+            actual_output=actual_output,
+            expected_output=golden.expected_output,
+        ))
+        return golden.input, actual_output, m.score
+
+    with ThreadPoolExecutor(max_workers=min(4, len(goldens))) as pool:
+        results = list(pool.map(_measure, zip(goldens, outputs)))
 
     # At least 60% of cases should pass
     passing = sum(1 for _, _, score in results if score and score >= THRESHOLD)

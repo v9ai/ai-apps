@@ -9,7 +9,7 @@ import json
 import pytest
 from pathlib import Path
 
-RESEARCH_DIR = Path(__file__).resolve().parent.parent / "src" / "lib" / "research"
+RESEARCH_DIR = Path(__file__).resolve().parent.parent.parent / "src" / "lib" / "research"
 
 SCORING_DIMENSIONS = [
     "bio_quality",

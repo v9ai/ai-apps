@@ -14,8 +14,8 @@ from pathlib import Path
 from deepeval.dataset import EvaluationDataset, Golden
 from deepeval.test_case import LLMTestCase
 
-PERSONALITIES_DIR = Path(__file__).resolve().parent.parent / "personalities"
-RESEARCH_DIR = Path(__file__).resolve().parent.parent / "src" / "lib" / "research"
+PERSONALITIES_DIR = Path(__file__).resolve().parent.parent.parent / "personalities"
+RESEARCH_DIR = Path(__file__).resolve().parent.parent.parent / "src" / "lib" / "research"
 
 pytestmark = [pytest.mark.deepeval, pytest.mark.e2e]
 

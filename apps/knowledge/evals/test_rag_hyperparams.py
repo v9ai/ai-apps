@@ -10,6 +10,7 @@ Usage:
 
 import json
 import os
+from concurrent.futures import ThreadPoolExecutor
 from datetime import datetime, timezone
 from pathlib import Path
 
@@ -77,38 +78,38 @@ EVAL_QUERIES = [
 ]
 
 
+def _measure_query(query: str, rag_result) -> dict:
+    """Measure all 3 triad metrics on one query with fresh instances in parallel."""
+    if rag_result is None:
+        return {"query": query[:60], "error": "invoke_rag failed"}
+    tc = LLMTestCase(
+        input=query,
+        actual_output=rag_result["actual_output"],
+        retrieval_context=rag_result["retrieval_context"],
+    )
+    scores: dict = {"query": query[:60], "num_chunks": len(rag_result["retrieval_context"])}
+    # Fresh instances per call — metrics store state and are not thread-safe.
+    f_m = FaithfulnessMetric(model=model, threshold=THRESHOLD)
+    ar_m = AnswerRelevancyMetric(model=model, threshold=THRESHOLD)
+    cr_m = ContextualRelevancyMetric(model=model, threshold=THRESHOLD)
+    if tc.retrieval_context:
+        with ThreadPoolExecutor(max_workers=3) as pool:
+            list(pool.map(lambda m: m.measure(tc), [f_m, ar_m, cr_m]))
+        scores["faithfulness"] = f_m.score
+        scores["contextual_relevancy"] = cr_m.score
+    else:
+        ar_m.measure(tc)
+    scores["answer_relevancy"] = ar_m.score
+    return scores
+
+
 def _evaluate_config(config_name: str, config: RAGConfig) -> dict:
     """Run all queries through a config and measure RAG triad metrics."""
-    faithfulness_m = FaithfulnessMetric(model=model, threshold=THRESHOLD)
-    answer_rel_m = AnswerRelevancyMetric(model=model, threshold=THRESHOLD)
-    context_rel_m = ContextualRelevancyMetric(model=model, threshold=THRESHOLD)
-
-    # Run all queries in parallel, then measure metrics sequentially.
+    # Fetch all query results in parallel, then evaluate each in parallel too.
     rag_results = invoke_rag_batch(EVAL_QUERIES, config)
 
-    results = []
-    for query, rag_result in zip(EVAL_QUERIES, rag_results):
-        if rag_result is None:
-            results.append({"query": query[:60], "error": "invoke_rag failed"})
-            continue
-
-        tc = LLMTestCase(
-            input=query,
-            actual_output=rag_result["actual_output"],
-            retrieval_context=rag_result["retrieval_context"],
-        )
-
-        scores = {"query": query[:60], "num_chunks": len(rag_result["retrieval_context"])}
-
-        if tc.retrieval_context:
-            faithfulness_m.measure(tc)
-            context_rel_m.measure(tc)
-            scores["faithfulness"] = faithfulness_m.score
-            scores["contextual_relevancy"] = context_rel_m.score
-
-        answer_rel_m.measure(tc)
-        scores["answer_relevancy"] = answer_rel_m.score
-        results.append(scores)
+    with ThreadPoolExecutor(max_workers=4) as pool:
+        results = list(pool.map(lambda qr: _measure_query(*qr), zip(EVAL_QUERIES, rag_results)))
 
     # Aggregate
     valid = [r for r in results if "error" not in r]
@@ -141,19 +142,24 @@ def run_sweep():
 
     report = {"generated_at": datetime.now(timezone.utc).isoformat(), "configs": {}}
 
-    for name, config in CONFIGS.items():
-        print(f"Evaluating config: {name}...")
+    def _safe_evaluate(name_config):
+        name, config = name_config
         try:
-            result = _evaluate_config(name, config)
-            report["configs"][name] = result
-            print(
-                f"  faithfulness={result.get('avg_faithfulness', 'N/A')}, "
-                f"relevancy={result.get('avg_answer_relevancy', 'N/A')}, "
-                f"ctx_relevancy={result.get('avg_contextual_relevancy', 'N/A')}"
-            )
+            return name, _evaluate_config(name, config)
         except Exception as e:
-            print(f"  ERROR: {e}")
-            report["configs"][name] = {"config": name, "error": str(e)}
+            return name, {"config": name, "error": str(e)}
+
+    with ThreadPoolExecutor(max_workers=min(4, len(CONFIGS))) as pool:
+        for name, result in pool.map(_safe_evaluate, CONFIGS.items()):
+            report["configs"][name] = result
+            if "error" in result:
+                print(f"  {name}: ERROR: {result['error']}")
+            else:
+                print(
+                    f"  {name}: faithfulness={result.get('avg_faithfulness', 'N/A')}, "
+                    f"relevancy={result.get('avg_answer_relevancy', 'N/A')}, "
+                    f"ctx_relevancy={result.get('avg_contextual_relevancy', 'N/A')}"
+                )
 
     # Find best config
     valid_configs = {k: v for k, v in report["configs"].items() if "error" not in v}
@@ -199,9 +205,10 @@ def test_fts_baseline():
 
 def test_config_comparison():
     """Run FTS top-3 vs top-5 vs top-10 and verify top-5 is reasonable."""
-    results = {}
-    for name in ["fts_top3", "fts_top5", "fts_top10"]:
-        results[name] = _evaluate_config(name, CONFIGS[name])
+    names = ["fts_top3", "fts_top5", "fts_top10"]
+    with ThreadPoolExecutor(max_workers=3) as pool:
+        raw = list(pool.map(lambda n: _evaluate_config(n, CONFIGS[n]), names))
+    results = dict(zip(names, raw))
 
     # top-5 should have higher answer relevancy than top-3 (more context helps)
     top3_rel = results["fts_top3"].get("avg_answer_relevancy", 0)

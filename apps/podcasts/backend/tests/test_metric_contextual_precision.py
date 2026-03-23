@@ -24,6 +24,7 @@ from deepeval.test_case import LLMTestCase
 from helpers import (
     MOCK_GITHUB_PROFILE,
     MOCK_WEB_SEARCH_RESULT,
+    get_eval_model,
     make_test_case_input,
 )
 
@@ -40,7 +41,6 @@ PERSON = {
 }
 
 THRESHOLD = 0.5
-MODEL = "deepseek/deepseek-chat"
 
 # ── Irrelevant context items (noise) ──────────────────────────────────────
 
@@ -62,7 +62,7 @@ IRRELEVANT_SPORTS = (
 
 
 def _contextual_precision_metric() -> ContextualPrecisionMetric:
-    return ContextualPrecisionMetric(threshold=THRESHOLD, model=MODEL)
+    return ContextualPrecisionMetric(threshold=THRESHOLD, model=get_eval_model())
 
 
 # ── Test 1: Relevant context ranked first beats irrelevant ────────────────

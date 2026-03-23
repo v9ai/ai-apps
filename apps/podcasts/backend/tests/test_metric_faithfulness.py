@@ -22,6 +22,7 @@ from helpers import (
     MOCK_NEWS_RESULT,
     MOCK_SEMANTIC_SCHOLAR_RESULT,
     MOCK_WEB_SEARCH_RESULT,
+    get_eval_model,
     make_test_case_input,
 )
 
@@ -48,11 +49,10 @@ PERSON = {
 }
 
 THRESHOLD = 0.5
-MODEL = "deepseek/deepseek-chat"
 
 
 def _faithfulness_metric() -> FaithfulnessMetric:
-    return FaithfulnessMetric(threshold=THRESHOLD, model=MODEL)
+    return FaithfulnessMetric(threshold=THRESHOLD, model=get_eval_model())
 
 
 # ── Test 1: Bio faithful to web search + GitHub data ─────────────────────

@@ -6,6 +6,7 @@ collects results via operator.add reducer, and generates a report.
 
 import json
 import os
+import threading
 from datetime import datetime, timezone
 from pathlib import Path
 
@@ -266,18 +267,26 @@ def report(state: RedTeamState) -> dict:
 
 # -- Build the graph ----------------------------------------------------------
 
+_redteam_graph = None
+_redteam_graph_lock: threading.Lock = threading.Lock()
+
 
 def build_redteam_graph():
-    """Build the LangGraph red-team orchestrator."""
-    graph = StateGraph(RedTeamState)
+    """Return the cached compiled red-team StateGraph, building it on first call."""
+    global _redteam_graph
+    if _redteam_graph is None:
+        with _redteam_graph_lock:
+            if _redteam_graph is None:
+                graph = StateGraph(RedTeamState)
 
-    graph.add_node("plan_attacks", plan_attacks)
-    graph.add_node("attack_worker", attack_worker)
-    graph.add_node("report", report)
+                graph.add_node("plan_attacks", plan_attacks)
+                graph.add_node("attack_worker", attack_worker)
+                graph.add_node("report", report)
 
-    graph.add_edge(START, "plan_attacks")
-    graph.add_conditional_edges("plan_attacks", fan_out, ["attack_worker"])
-    graph.add_edge("attack_worker", "report")
-    graph.add_edge("report", END)
+                graph.add_edge(START, "plan_attacks")
+                graph.add_conditional_edges("plan_attacks", fan_out, ["attack_worker"])
+                graph.add_edge("attack_worker", "report")
+                graph.add_edge("report", END)
 
-    return graph.compile()
+                _redteam_graph = graph.compile()
+    return _redteam_graph

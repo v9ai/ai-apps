@@ -18,6 +18,7 @@ import json, os, pytest
 from deepeval.test_case import LLMTestCase
 from deepeval.metrics import GEval
 from deepeval.test_case import LLMTestCaseParams
+from helpers import get_eval_model
 
 pytestmark = pytest.mark.deepeval
 skip_no_key = pytest.mark.skipif(not os.getenv("DEEPSEEK_API_KEY"), reason="No DEEPSEEK_API_KEY")
@@ -53,7 +54,7 @@ def test_contributions_impact_metrics(sample_contributions):
         ),
         evaluation_params=[LLMTestCaseParams.ACTUAL_OUTPUT],
         threshold=THRESHOLD,
-        model=MODEL,
+        model=get_eval_model(),
         async_mode=False,
     )
     test_case = LLMTestCase(
@@ -87,7 +88,7 @@ def test_contributions_have_urls(sample_contributions):
         ),
         evaluation_params=[LLMTestCaseParams.ACTUAL_OUTPUT],
         threshold=THRESHOLD,
-        model=MODEL,
+        model=get_eval_model(),
         async_mode=False,
     )
     test_case = LLMTestCase(
@@ -122,7 +123,7 @@ def test_contributions_are_distinct(sample_contributions):
         ),
         evaluation_params=[LLMTestCaseParams.ACTUAL_OUTPUT],
         threshold=THRESHOLD,
-        model=MODEL,
+        model=get_eval_model(),
         async_mode=False,
     )
     test_case = LLMTestCase(
@@ -158,7 +159,7 @@ def test_contributions_descriptions_specific(sample_contributions):
         ),
         evaluation_params=[LLMTestCaseParams.ACTUAL_OUTPUT],
         threshold=THRESHOLD,
-        model=MODEL,
+        model=get_eval_model(),
         async_mode=False,
     )
     test_case = LLMTestCase(
@@ -193,7 +194,7 @@ def test_contributions_count_reasonable(sample_contributions):
         ),
         evaluation_params=[LLMTestCaseParams.ACTUAL_OUTPUT],
         threshold=THRESHOLD,
-        model=MODEL,
+        model=get_eval_model(),
         async_mode=False,
     )
     test_case = LLMTestCase(

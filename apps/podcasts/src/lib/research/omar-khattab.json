@@ -17,34 +17,19 @@
   ],
   "timeline": [
     {
-      "date": "2026-01",
-      "event": "Published updated Recursive Language Models (RLM) paper with Alex Zhang and Tim Kraska; RLM-Qwen3-8B outperforms vanilla GPT-5 on long-context tasks",
-      "url": "https://arxiv.org/abs/2512.24601"
+      "date": "2020-07",
+      "event": "ColBERT published at SIGIR 2020, introducing late interaction for efficient passage search over BERT (1,500+ citations)",
+      "url": "https://arxiv.org/abs/2004.12832"
     },
     {
-      "date": "2025-07",
-      "event": "Joined MIT EECS & CSAIL as Assistant Professor (TIBCO Founders' Career Development Professor)",
-      "url": "https://www.eecs.mit.edu/people/omar-khattab/"
+      "date": "2022-04",
+      "event": "ColBERTv2 published at NAACL 2022, advancing efficient neural retrieval with residual compression",
+      "url": "https://aclanthology.org/2022.naacl-main.272.pdf"
     },
     {
-      "date": "2025-07",
-      "event": "WARP: An Efficient Engine for Multi-Vector Retrieval wins SIGIR 2025 Best Paper Award",
-      "url": "https://arxiv.org/abs/2501.17788"
-    },
-    {
-      "date": "2025-01",
-      "event": "Completed PhD thesis 'Building more reliable and scalable AI systems with foundation model programming' at Stanford",
-      "url": "https://purl.stanford.edu/zc625xj7842"
-    },
-    {
-      "date": "2024-10",
-      "event": "MIPRO optimizer paper published at EMNLP 2024, achieving up to 13% accuracy gains on multi-stage LM programs",
-      "url": "https://arxiv.org/abs/2406.11695"
-    },
-    {
-      "date": "2024-06",
-      "event": "Joined Databricks as Research Scientist, increasing investment in open-source DSPy community",
-      "url": "https://x.com/lateinteraction/status/1825623373655024035"
+      "date": "2023-01",
+      "event": "DSPy framework open-sourced under stanfordnlp on GitHub",
+      "url": "https://github.com/stanfordnlp/dspy"
     },
     {
       "date": "2024-01",
@@ -57,19 +42,34 @@
       "url": "https://omarkhattab.com/"
     },
     {
-      "date": "2023-01",
-      "event": "DSPy framework open-sourced under stanfordnlp on GitHub",
-      "url": "https://github.com/stanfordnlp/dspy"
+      "date": "2024-06",
+      "event": "Joined Databricks as Research Scientist, increasing investment in open-source DSPy community",
+      "url": "https://x.com/lateinteraction/status/1825623373655024035"
     },
     {
-      "date": "2022-04",
-      "event": "ColBERTv2 published at NAACL 2022, advancing efficient neural retrieval with residual compression",
-      "url": "https://aclanthology.org/2022.naacl-main.272.pdf"
+      "date": "2024-10",
+      "event": "MIPRO optimizer paper published at EMNLP 2024, achieving up to 13% accuracy gains on multi-stage LM programs",
+      "url": "https://arxiv.org/abs/2406.11695"
     },
     {
-      "date": "2020-07",
-      "event": "ColBERT published at SIGIR 2020, introducing late interaction for efficient passage search over BERT (1,500+ citations)",
-      "url": "https://arxiv.org/abs/2004.12832"
+      "date": "2025-01",
+      "event": "Completed PhD thesis 'Building more reliable and scalable AI systems with foundation model programming' at Stanford",
+      "url": "https://purl.stanford.edu/zc625xj7842"
+    },
+    {
+      "date": "2025-07",
+      "event": "Joined MIT EECS & CSAIL as Assistant Professor (TIBCO Founders' Career Development Professor)",
+      "url": "https://www.eecs.mit.edu/people/omar-khattab/"
+    },
+    {
+      "date": "2025-07",
+      "event": "WARP: An Efficient Engine for Multi-Vector Retrieval wins SIGIR 2025 Best Paper Award",
+      "url": "https://arxiv.org/abs/2501.17788"
+    },
+    {
+      "date": "2026-01",
+      "event": "Published updated Recursive Language Models (RLM) paper with Alex Zhang and Tim Kraska; RLM-Qwen3-8B outperforms vanilla GPT-5 on long-context tasks",
+      "url": "https://arxiv.org/abs/2512.24601"
     }
   ],
   "key_contributions": [

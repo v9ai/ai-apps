@@ -99,8 +99,7 @@
     "github": "https://github.com/ggerganov",
     "twitter": "https://x.com/ggerganov",
     "website": "https://ggerganov.com",
-    "huggingface": "https://huggingface.co/ggerganov",
-    "email": "ggerganov@gmail.com"
+    "huggingface": "https://huggingface.co/ggerganov"
   },
   "sources": [
     {
@@ -133,7 +132,7 @@
     },
     {
       "title": "GitHub API - users/ggerganov",
-      "url": "https://api.github.com/users/ggerganov"
+      "url": "https://github.com/ggerganov"
     }
   ]
 }

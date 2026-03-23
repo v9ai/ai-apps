@@ -17,49 +17,9 @@
   ],
   "timeline": [
     {
-      "date": "2025-09",
-      "event": "Released VibeVoice text-to-speech models (1.5B, 7B, Large) on HuggingFace",
-      "url": "https://huggingface.co/ehartford/VibeVoice-Large"
-    },
-    {
-      "date": "2025-01",
-      "event": "Released Dolphin 3.0 series (Llama 3.1 8B, Qwen 2.5 0.5B-3B) with function calling and agentic capabilities",
-      "url": "https://huggingface.co/cognitivecomputations/Dolphin3.0-Llama3.1-8B"
-    },
-    {
-      "date": "2025-01",
-      "event": "Released Dolphin 3.0-R1-Mistral-24B with 800k reasoning traces from the Dolphin-R1 dataset",
-      "url": "https://huggingface.co/cognitivecomputations/Dolphin3.0-R1-Mistral-24B"
-    },
-    {
-      "date": "2024-08",
-      "event": "Released Dolphin 2.9.4 on Gemma-2 2B and Llama 3.1 8B architectures",
-      "url": "https://huggingface.co/ehartford/dolphin-2.9.4-gemma2-2b"
-    },
-    {
-      "date": "2024-06",
-      "event": "Released Dolphin-2.9.3-qwen2 tiny variants (0.5B, 1.5B) for edge deployment",
-      "url": "https://x.com/cognitivecompai/status/1801423898250031273"
-    },
-    {
-      "date": "2024-04",
-      "event": "Released Dolphin-2.9-Llama3-70b with Fernando Neto and Cognitive Computations, sponsored by Crusoe Energy",
-      "url": "https://x.com/erhartford/status/1783273948022755770"
-    },
-    {
-      "date": "2024-03",
-      "event": "Released Dolphin 2.8 based on Mistral-7b-v0.2 with instruction, conversational, and coding skills",
-      "url": "https://huggingface.co/dphn/dolphin-2.8-mistral-7b-v02"
-    },
-    {
-      "date": "2023-12",
-      "event": "Released Dolphin 2.5 Mixtral-8x7b one day after MistralAI's Mixtral release, with viral system-prompt blog post",
-      "url": "https://erichartford.com/dolphin-25-mixtral-8x7b"
-    },
-    {
-      "date": "2023-11",
-      "event": "Released Dolphin 2.2 on Yi-34B and 70B architectures",
-      "url": "https://huggingface.co/TheBloke/dolphin-2_2-yi-34b-AWQ"
+      "date": "2023-04",
+      "event": "Released alpaca1337-7b-4bit, early quantized instruction-tuned model",
+      "url": "https://huggingface.co/ehartford/alpaca1337-7b-4bit"
     },
     {
       "date": "2023-05",
@@ -72,9 +32,49 @@
       "url": "https://huggingface.co/ehartford/WizardLM-7B-Uncensored"
     },
     {
-      "date": "2023-04",
-      "event": "Released alpaca1337-7b-4bit, early quantized instruction-tuned model",
-      "url": "https://huggingface.co/ehartford/alpaca1337-7b-4bit"
+      "date": "2023-11",
+      "event": "Released Dolphin 2.2 on Yi-34B and 70B architectures",
+      "url": "https://huggingface.co/TheBloke/dolphin-2_2-yi-34b-AWQ"
+    },
+    {
+      "date": "2023-12",
+      "event": "Released Dolphin 2.5 Mixtral-8x7b one day after MistralAI's Mixtral release, with viral system-prompt blog post",
+      "url": "https://erichartford.com/dolphin-25-mixtral-8x7b"
+    },
+    {
+      "date": "2024-03",
+      "event": "Released Dolphin 2.8 based on Mistral-7b-v0.2 with instruction, conversational, and coding skills",
+      "url": "https://huggingface.co/dphn/dolphin-2.8-mistral-7b-v02"
+    },
+    {
+      "date": "2024-04",
+      "event": "Released Dolphin-2.9-Llama3-70b with Fernando Neto and Cognitive Computations, sponsored by Crusoe Energy",
+      "url": "https://x.com/erhartford/status/1783273948022755770"
+    },
+    {
+      "date": "2024-06",
+      "event": "Released Dolphin-2.9.3-qwen2 tiny variants (0.5B, 1.5B) for edge deployment",
+      "url": "https://x.com/cognitivecompai/status/1801423898250031273"
+    },
+    {
+      "date": "2024-08",
+      "event": "Released Dolphin 2.9.4 on Gemma-2 2B and Llama 3.1 8B architectures",
+      "url": "https://huggingface.co/ehartford/dolphin-2.9.4-gemma2-2b"
+    },
+    {
+      "date": "2025-01",
+      "event": "Released Dolphin 3.0 series (Llama 3.1 8B, Qwen 2.5 0.5B-3B) with function calling and agentic capabilities",
+      "url": "https://huggingface.co/cognitivecomputations/Dolphin3.0-Llama3.1-8B"
+    },
+    {
+      "date": "2025-01",
+      "event": "Released Dolphin 3.0-R1-Mistral-24B with 800k reasoning traces from the Dolphin-R1 dataset",
+      "url": "https://huggingface.co/cognitivecomputations/Dolphin3.0-R1-Mistral-24B"
+    },
+    {
+      "date": "2025-09",
+      "event": "Released VibeVoice text-to-speech models (1.5B, 7B, Large) on HuggingFace",
+      "url": "https://huggingface.co/ehartford/VibeVoice-Large"
     }
   ],
   "key_contributions": [

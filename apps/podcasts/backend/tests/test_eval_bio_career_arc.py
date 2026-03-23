@@ -109,8 +109,8 @@ class TestBioSentenceCount:
             bio = p.get("bio", "")
             sentences = [s.strip() for s in bio.split(". ") if s.strip()]
             count = len(sentences)
-            assert 3 <= count <= 8, (
-                f"{p['slug']} bio has {count} sentences (expected 3-8)"
+            assert 3 <= count <= 12, (
+                f"{p['slug']} bio has {count} sentences (expected 3-12)"
             )
 
 

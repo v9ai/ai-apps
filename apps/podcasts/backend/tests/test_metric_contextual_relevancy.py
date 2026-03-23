@@ -20,6 +20,7 @@ from helpers import (
     MOCK_ARXIV_RESULT,
     MOCK_GITHUB_PROFILE,
     MOCK_WEB_SEARCH_RESULT,
+    get_eval_model,
 )
 
 pytestmark = pytest.mark.deepeval
@@ -28,11 +29,10 @@ skip_no_key = pytest.mark.skipif(
 )
 
 THRESHOLD = 0.5
-MODEL = "deepseek/deepseek-chat"
 
 
 def _contextual_relevancy_metric() -> ContextualRelevancyMetric:
-    return ContextualRelevancyMetric(threshold=THRESHOLD, model=MODEL)
+    return ContextualRelevancyMetric(threshold=THRESHOLD, model=get_eval_model())
 
 
 # ── Test 1: Web search context relevant to research query ────────────────

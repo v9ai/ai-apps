@@ -16,6 +16,7 @@ import os
 import pytest
 from deepeval.metrics import HallucinationMetric
 from deepeval.test_case import LLMTestCase
+from helpers import get_eval_model
 
 pytestmark = pytest.mark.deepeval
 
@@ -76,7 +77,7 @@ def test_bio_no_hallucination(sample_bio):
         actual_output=sample_bio,
         context=BIO_CONTEXT,
     )
-    metric = HallucinationMetric(threshold=THRESHOLD, model=MODEL)
+    metric = HallucinationMetric(threshold=THRESHOLD, model=get_eval_model())
     metric.measure(test_case)
     assert metric.score <= THRESHOLD, (
         f"Bio hallucination score {metric.score} exceeds threshold {THRESHOLD}: {metric.reason}"
@@ -91,7 +92,7 @@ def test_timeline_no_hallucination(sample_timeline):
         actual_output=json.dumps(sample_timeline),
         context=TIMELINE_CONTEXT,
     )
-    metric = HallucinationMetric(threshold=THRESHOLD, model=MODEL)
+    metric = HallucinationMetric(threshold=THRESHOLD, model=get_eval_model())
     metric.measure(test_case)
     assert metric.score <= THRESHOLD, (
         f"Timeline hallucination score {metric.score} exceeds threshold {THRESHOLD}: {metric.reason}"
@@ -106,7 +107,7 @@ def test_quotes_no_hallucination(sample_quotes):
         actual_output=json.dumps(sample_quotes),
         context=QUOTES_CONTEXT,
     )
-    metric = HallucinationMetric(threshold=THRESHOLD, model=MODEL)
+    metric = HallucinationMetric(threshold=THRESHOLD, model=get_eval_model())
     metric.measure(test_case)
     assert metric.score <= THRESHOLD, (
         f"Quotes hallucination score {metric.score} exceeds threshold {THRESHOLD}: {metric.reason}"
@@ -121,7 +122,7 @@ def test_contributions_no_hallucination(sample_contributions):
         actual_output=json.dumps(sample_contributions),
         context=CONTRIBUTIONS_CONTEXT,
     )
-    metric = HallucinationMetric(threshold=THRESHOLD, model=MODEL)
+    metric = HallucinationMetric(threshold=THRESHOLD, model=get_eval_model())
     metric.measure(test_case)
     assert metric.score <= THRESHOLD, (
         f"Contributions hallucination score {metric.score} exceeds threshold {THRESHOLD}: {metric.reason}"
@@ -143,7 +144,7 @@ def test_known_hallucination_detected():
         actual_output=fabricated_output,
         context=BIO_CONTEXT,
     )
-    metric = HallucinationMetric(threshold=THRESHOLD, model=MODEL)
+    metric = HallucinationMetric(threshold=THRESHOLD, model=get_eval_model())
     metric.measure(test_case)
     assert metric.score > THRESHOLD, (
         f"Fabricated bio scored only {metric.score} -- metric failed to detect obvious hallucinations: {metric.reason}"
@@ -158,7 +159,7 @@ def test_executive_grounded(sample_executive):
         actual_output=json.dumps(sample_executive),
         context=EXECUTIVE_CONTEXT,
     )
-    metric = HallucinationMetric(threshold=THRESHOLD, model=MODEL)
+    metric = HallucinationMetric(threshold=THRESHOLD, model=get_eval_model())
     metric.measure(test_case)
     assert metric.score <= THRESHOLD, (
         f"Executive summary hallucination score {metric.score} exceeds threshold {THRESHOLD}: {metric.reason}"

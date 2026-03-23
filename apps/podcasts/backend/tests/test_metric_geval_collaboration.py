@@ -14,6 +14,7 @@ import json, os, pytest
 from deepeval.test_case import LLMTestCase
 from deepeval.metrics import GEval
 from deepeval.test_case import LLMTestCaseParams
+from helpers import get_eval_model
 
 pytestmark = pytest.mark.deepeval
 skip_no_key = pytest.mark.skipif(not os.getenv("DEEPSEEK_API_KEY"), reason="No DEEPSEEK_API_KEY")
@@ -41,7 +42,7 @@ def test_collaborators_have_context(sample_collaboration):
         ),
         evaluation_params=[LLMTestCaseParams.ACTUAL_OUTPUT],
         threshold=THRESHOLD,
-        model=MODEL,
+        model=get_eval_model(),
     )
     test_case = LLMTestCase(
         input="List key collaborators with their relationship and context for Harrison Chase.",
@@ -72,7 +73,7 @@ def test_co_founders_named(sample_collaboration):
         ),
         evaluation_params=[LLMTestCaseParams.ACTUAL_OUTPUT],
         threshold=THRESHOLD,
-        model=MODEL,
+        model=get_eval_model(),
     )
     test_case = LLMTestCase(
         input="List the co-founders of Harrison Chase's ventures.",
@@ -105,7 +106,7 @@ def test_academic_lineage_informative(sample_collaboration):
         ),
         evaluation_params=[LLMTestCaseParams.ACTUAL_OUTPUT],
         threshold=THRESHOLD,
-        model=MODEL,
+        model=get_eval_model(),
     )
     test_case = LLMTestCase(
         input="Describe the academic lineage of Harrison Chase.",
@@ -138,7 +139,7 @@ def test_network_reveals_influence(sample_collaboration):
         ),
         evaluation_params=[LLMTestCaseParams.INPUT, LLMTestCaseParams.ACTUAL_OUTPUT],
         threshold=THRESHOLD,
-        model=MODEL,
+        model=get_eval_model(),
     )
     test_case = LLMTestCase(
         input=(

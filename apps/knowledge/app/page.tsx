@@ -1,17 +1,15 @@
-import { getAllLessons, getGroupedLessons, getTotalWordCount, getCategoryCount } from "@/lib/data";
+import { getGroupedLessons } from "@/lib/data";
 import { Topbar } from "@/components/topbar";
 import { Hero } from "@/components/hero";
 import { Search } from "@/components/search";
 import { Footer } from "@/components/footer";
 
 export default async function HomePage() {
-  const [groups, allLessons, catCount, wordCount] = await Promise.all([
-    getGroupedLessons(),
-    getAllLessons(),
-    getCategoryCount(),
-    getTotalWordCount(),
-  ]);
+  const groups = await getGroupedLessons();
+  const allLessons = groups.flatMap((g) => g.articles);
   const total = allLessons.length;
+  const catCount = groups.length;
+  const wordCount = allLessons.reduce((sum, l) => sum + l.wordCount, 0);
   return (
     <div>
       <Topbar lessonCount={total} />
