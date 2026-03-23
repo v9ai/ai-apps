@@ -14,7 +14,7 @@ import urllib.request
 EVAL_URL = os.environ.get(
     "EVAL_LLM_URL", "http://127.0.0.1:19836/v1/chat/completions"
 )
-EVAL_MODEL = os.environ.get("EVAL_LLM_MODEL", "deepseek-reasoner")
+EVAL_MODEL = os.environ.get("EVAL_LLM_MODEL", "deepseek-chat")
 
 EVAL_PROMPT = """\
 You are an iteration evaluator for a multi-step AI coding task. Score the output of iteration {iteration}.

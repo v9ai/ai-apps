@@ -48,6 +48,7 @@ fi
 
 if [ -z "$TASK" ]; then
     echo "Usage: /iterate 5 Your task description"
+    echo "       /iterate status"
     echo "       /iterate reset"
     exit 1
 fi

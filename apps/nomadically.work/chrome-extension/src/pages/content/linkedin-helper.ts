@@ -2,6 +2,26 @@
 
 // LinkedIn job helper — salary extraction + Block Company button
 
+// ── Blocked Companies Cache ───────────────────────────────────────────
+
+const blockedCompaniesSet = new Set<string>();
+
+function loadBlockedCompanies() {
+  chrome.runtime.sendMessage(
+    { action: "getBlockedCompanies" },
+    (response) => {
+      if (chrome.runtime.lastError || !response?.success) return;
+      for (const c of response.companies) {
+        blockedCompaniesSet.add(c.name.toLowerCase());
+      }
+    },
+  );
+}
+
+function isCompanyBlocked(name: string): boolean {
+  return blockedCompaniesSet.has(name.toLowerCase());
+}
+
 // ── Block Company Button ──────────────────────────────────────────────
 
 const BLOCK_BTN_ATTR = "data-nomad-block-btn";
@@ -9,8 +29,12 @@ const BLOCK_BTN_ATTR = "data-nomad-block-btn";
 function createBlockButton(companyName: string): HTMLButtonElement {
   const btn = document.createElement("button");
   btn.setAttribute(BLOCK_BTN_ATTR, "true");
-  btn.textContent = "Block Company";
-  btn.title = `Block ${companyName}`;
+
+  const alreadyBlocked = isCompanyBlocked(companyName);
+
+  btn.textContent = alreadyBlocked ? "Blocked" : "Block Company";
+  btn.title = alreadyBlocked ? `${companyName} is blocked` : `Block ${companyName}`;
+  btn.disabled = alreadyBlocked;
   Object.assign(btn.style, {
     marginLeft: "8px",
     padding: "2px 8px",
@@ -18,21 +42,23 @@ function createBlockButton(companyName: string): HTMLButtonElement {
     fontWeight: "600",
     fontFamily: "system-ui, sans-serif",
     color: "#fff",
-    backgroundColor: "#dc2626",
+    backgroundColor: alreadyBlocked ? "#6b7280" : "#dc2626",
     border: "none",
     borderRadius: "4px",
-    cursor: "pointer",
+    cursor: alreadyBlocked ? "default" : "pointer",
     lineHeight: "18px",
     verticalAlign: "middle",
     zIndex: "9999",
     position: "relative",
   });
-  btn.addEventListener("mouseenter", () => {
-    btn.style.backgroundColor = "#b91c1c";
-  });
-  btn.addEventListener("mouseleave", () => {
-    btn.style.backgroundColor = "#dc2626";
-  });
+  if (!alreadyBlocked) {
+    btn.addEventListener("mouseenter", () => {
+      btn.style.backgroundColor = "#b91c1c";
+    });
+    btn.addEventListener("mouseleave", () => {
+      btn.style.backgroundColor = "#dc2626";
+    });
+  }
   btn.addEventListener("click", (e) => {
     e.preventDefault();
     e.stopPropagation();
@@ -54,6 +80,7 @@ function createBlockButton(companyName: string): HTMLButtonElement {
           return;
         }
         if (response?.success) {
+          blockedCompaniesSet.add(companyName.toLowerCase());
           btn.textContent = "Blocked";
           btn.style.backgroundColor = "#6b7280";
           dismissJobCard(btn);
@@ -120,7 +147,8 @@ function injectBlockButtons() {
 function observeBlockButtons() {
   if (!window.location.hostname.includes("linkedin.com")) return;
 
-  // Initial injection (delayed for page load)
+  // Fetch blocked companies first, then inject buttons
+  loadBlockedCompanies();
   setTimeout(injectBlockButtons, 1500);
 
   // Re-inject on DOM changes (job list scroll, detail panel switch)

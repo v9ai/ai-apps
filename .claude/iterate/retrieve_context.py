@@ -25,8 +25,9 @@ def retrieve(
     include_errors: bool = True,
 ) -> str:
     collection = get_collection()
+    total = collection.count()
 
-    if collection.count() == 0:
+    if total == 0:
         return "No previous context available. This is the first iteration."
 
     # Multi-query: task-level + error-focused
@@ -39,7 +40,7 @@ def retrieve(
     for q in queries:
         results = collection.query(
             query_texts=[q],
-            n_results=min(n_results, collection.count()),
+            n_results=min(n_results, total),
             include=["documents", "metadatas", "distances"],
         )
         for doc, meta, dist in zip(

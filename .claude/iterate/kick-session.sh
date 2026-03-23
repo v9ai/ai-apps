@@ -34,20 +34,20 @@ fi
 
 COUNT=$(cat "$COUNTER_FILE")
 
-# --- Hard limit ---
-if [ "$COUNT" -ge "$MAX_ITERATIONS" ]; then
-    rm -f "$COUNTER_FILE" "$TASK_FILE" "$ITER_DIR/session.txt"
-    echo "Iterate: complete — reached $MAX_ITERATIONS iterations." >&2
-    exit 0
-fi
-
-# --- Read hook input ---
+# --- Read hook input (must drain stdin before any exit) ---
 INPUT=$(cat)
 CWD=$(echo "$INPUT" | jq -r '.cwd')
 SESSION_ID=$(echo "$INPUT" | jq -r '.session_id // empty')
 
 # Debug log
 echo "[kick-session] iter=$COUNT session=$SESSION_ID cwd=$CWD" >> "$ITER_DIR/debug.log" 2>/dev/null || true
+
+# --- Hard limit ---
+if [ "$COUNT" -ge "$MAX_ITERATIONS" ]; then
+    rm -f "$COUNTER_FILE" "$TASK_FILE" "$ITER_DIR/session.txt"
+    echo "Iterate: complete — reached $MAX_ITERATIONS iterations." >&2
+    exit 0
+fi
 
 # --- Session isolation: only the session that started iterate should continue ---
 OWNER_SESSION=$(cat "$ITER_DIR/session.txt" 2>/dev/null || echo "")

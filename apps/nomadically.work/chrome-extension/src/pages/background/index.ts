@@ -67,6 +67,25 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
     return false;
   }
 
+  // ── Get Blocked Companies ──
+  if (message.action === "getBlockedCompanies") {
+    graphqlMutation(
+      `query { blockedCompanies { id name } }`,
+      {},
+    )
+      .then((data) => {
+        if (data.errors) {
+          sendResponse({ success: false, error: data.errors[0].message });
+        } else {
+          sendResponse({ success: true, companies: data.data.blockedCompanies });
+        }
+      })
+      .catch((err) => {
+        sendResponse({ success: false, error: String(err) });
+      });
+    return true;
+  }
+
   // ── Block Company ──
   if (message.action === "blockCompany") {
     const { companyName } = message;
