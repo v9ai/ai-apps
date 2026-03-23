@@ -29,7 +29,7 @@ export function PersonalityTile({ personality, accentGradient }: Props) {
           transitionDuration: "300ms",
           boxShadow: "inset 0 1px 0 rgba(255,255,255,0.06)",
           _hover: {
-            bg: "#1C1C22",
+            bg: "card.bgHover",
             translateY: "-0.125rem",
             boxShadow:
               "0 8px 24px rgba(0,0,0,0.45), inset 0 1px 0 rgba(255,255,255,0.06)",
@@ -97,7 +97,7 @@ export function PersonalityTile({ personality, accentGradient }: Props) {
             className={css({
               fontWeight: "semibold",
               fontSize: "0.9375rem",
-              color: "#E8E8ED",
+              color: "ui.heading",
               lineHeight: "tight",
               transition: "colors",
               transitionDuration: "200ms",

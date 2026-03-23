@@ -1,3 +1,65 @@
+# ============================================
+# Habits
+# ============================================
+
+type Habit {
+  id: Int!
+  userId: String!
+  goalId: Int
+  title: String!
+  description: String
+  frequency: HabitFrequency!
+  targetCount: Int!
+  status: HabitStatus!
+  createdAt: String!
+  updatedAt: String!
+  logs: [HabitLog!]!
+  todayLog: HabitLog
+}
+
+type HabitLog {
+  id: Int!
+  habitId: Int!
+  userId: String!
+  loggedDate: String!
+  count: Int!
+  notes: String
+  createdAt: String!
+}
+
+enum HabitFrequency {
+  DAILY
+  WEEKLY
+}
+
+enum HabitStatus {
+  ACTIVE
+  PAUSED
+  ARCHIVED
+}
+
+input CreateHabitInput {
+  goalId: Int
+  title: String!
+  description: String
+  frequency: HabitFrequency
+  targetCount: Int
+}
+
+input UpdateHabitInput {
+  goalId: Int
+  title: String
+  description: String
+  frequency: HabitFrequency
+  targetCount: Int
+  status: HabitStatus
+}
+
+type DeleteHabitResult {
+  success: Boolean!
+  message: String
+}
+
 type Query {
   goals(familyMemberId: Int, status: String): [Goal!]!
   goal(id: Int, slug: String): Goal
@@ -60,6 +122,10 @@ type Query {
 
   # User Settings
   userSettings: UserSettings!
+
+  # Habits
+  habits(status: String): [Habit!]!
+  habit(id: Int!): Habit
 }
 
 type Mutation {

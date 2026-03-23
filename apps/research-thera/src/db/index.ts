@@ -2506,6 +2506,154 @@ export async function getResearchForFamilyMemberIssues(issueIds: number[]) {
 }
 
 // ============================================
+// Habits
+// ============================================
+
+export async function listHabits(userId: string, status?: string) {
+  const rows = await neonSql`SELECT * FROM habits WHERE user_id = ${userId} ORDER BY created_at DESC`;
+  const all = rows.map((row) => ({
+    id: row.id as number,
+    userId: row.user_id as string,
+    goalId: (row.goal_id as number) || null,
+    title: row.title as string,
+    description: (row.description as string) || null,
+    frequency: row.frequency as string,
+    targetCount: row.target_count as number,
+    status: row.status as string,
+    createdAt: row.created_at as string,
+    updatedAt: row.updated_at as string,
+  }));
+  return status ? all.filter((h) => h.status === status) : all;
+}
+
+export async function getHabit(id: number, userId: string) {
+  const rows = await neonSql`SELECT * FROM habits WHERE id = ${id} AND user_id = ${userId}`;
+  if (rows.length === 0) return null;
+  const row = rows[0];
+  return {
+    id: row.id as number,
+    userId: row.user_id as string,
+    goalId: (row.goal_id as number) || null,
+    title: row.title as string,
+    description: (row.description as string) || null,
+    frequency: row.frequency as string,
+    targetCount: row.target_count as number,
+    status: row.status as string,
+    createdAt: row.created_at as string,
+    updatedAt: row.updated_at as string,
+  };
+}
+
+export async function createHabit(input: {
+  userId: string;
+  goalId?: number | null;
+  title: string;
+  description?: string | null;
+  frequency?: string;
+  targetCount?: number;
+}) {
+  const rows = await neonSql`
+    INSERT INTO habits (user_id, goal_id, title, description, frequency, target_count)
+    VALUES (
+      ${input.userId},
+      ${input.goalId ?? null},
+      ${input.title},
+      ${input.description ?? null},
+      ${input.frequency ?? "daily"},
+      ${input.targetCount ?? 1}
+    )
+    RETURNING id
+  `;
+  return rows[0].id as number;
+}
+
+export async function updateHabit(
+  id: number,
+  userId: string,
+  input: {
+    title?: string | null;
+    description?: string | null;
+    frequency?: string | null;
+    targetCount?: number | null;
+    status?: string | null;
+    goalId?: number | null;
+  },
+) {
+  await neonSql`
+    UPDATE habits SET
+      title = COALESCE(${input.title ?? null}, title),
+      description = COALESCE(${input.description ?? null}, description),
+      frequency = COALESCE(${input.frequency ?? null}, frequency),
+      target_count = COALESCE(${input.targetCount ?? null}, target_count),
+      status = COALESCE(${input.status ?? null}, status),
+      goal_id = COALESCE(${input.goalId ?? null}, goal_id),
+      updated_at = NOW()
+    WHERE id = ${id} AND user_id = ${userId}
+  `;
+}
+
+export async function deleteHabit(id: number, userId: string) {
+  await neonSql`DELETE FROM habits WHERE id = ${id} AND user_id = ${userId}`;
+}
+
+export async function logHabit(input: {
+  habitId: number;
+  userId: string;
+  loggedDate: string;
+  count?: number;
+  notes?: string | null;
+}) {
+  const rows = await neonSql`
+    INSERT INTO habit_logs (habit_id, user_id, logged_date, count, notes)
+    VALUES (
+      ${input.habitId},
+      ${input.userId},
+      ${input.loggedDate},
+      ${input.count ?? 1},
+      ${input.notes ?? null}
+    )
+    RETURNING id
+  `;
+  return rows[0].id as number;
+}
+
+export async function deleteHabitLog(id: number, userId: string) {
+  await neonSql`DELETE FROM habit_logs WHERE id = ${id} AND user_id = ${userId}`;
+}
+
+export async function listHabitLogs(habitId: number, userId: string) {
+  const rows = await neonSql`
+    SELECT * FROM habit_logs WHERE habit_id = ${habitId} AND user_id = ${userId} ORDER BY logged_date DESC
+  `;
+  return rows.map((row) => ({
+    id: row.id as number,
+    habitId: row.habit_id as number,
+    userId: row.user_id as string,
+    loggedDate: row.logged_date as string,
+    count: row.count as number,
+    notes: (row.notes as string) || null,
+    createdAt: row.created_at as string,
+  }));
+}
+
+export async function getTodayLogForHabit(habitId: number, userId: string, today: string) {
+  const rows = await neonSql`
+    SELECT * FROM habit_logs WHERE habit_id = ${habitId} AND user_id = ${userId} AND logged_date = ${today}
+  `;
+  if (rows.length === 0) return null;
+  const row = rows[0];
+  return {
+    id: row.id as number,
+    habitId: row.habit_id as number,
+    userId: row.user_id as string,
+    loggedDate: row.logged_date as string,
+    count: row.count as number,
+    notes: (row.notes as string) || null,
+    createdAt: row.created_at as string,
+  };
+}
+
+// ============================================
 // Namespace export
 // ============================================
 
@@ -2627,5 +2775,15 @@ export const db = {
   getContactFeedbacksForFamilyMember,
   getIssuesReferencingFamilyMember,
   getResearchForFamilyMemberIssues,
+  // Habits
+  listHabits,
+  getHabit,
+  createHabit,
+  updateHabit,
+  deleteHabit,
+  logHabit,
+  deleteHabitLog,
+  listHabitLogs,
+  getTodayLogForHabit,
 };
 

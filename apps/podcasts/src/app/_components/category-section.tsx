@@ -44,7 +44,7 @@ export function CategorySection({ category }: Props) {
             fontSize: { base: "lg", md: "xl" },
             fontWeight: "semibold",
             letterSpacing: "-0.01em",
-            color: "#E8E8ED",
+            color: "ui.heading",
           })}
         >
           {category.title}
@@ -55,13 +55,13 @@ export function CategorySection({ category }: Props) {
             textTransform: "uppercase",
             letterSpacing: "0.08em",
             fontWeight: "medium",
-            color: "#7B7B86",
-            bg: "rgba(255,255,255,0.04)",
+            color: "ui.dim",
+            bg: "whiteAlpha.4",
             px: "2.5",
             py: "1",
             rounded: "full",
             borderWidth: "1px",
-            borderColor: "rgba(255,255,255,0.06)",
+            borderColor: "card.border",
           })}
         >
           {category.personalities.length}
