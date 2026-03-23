@@ -1,0 +1,6 @@
+/* Tailwind removed - it was breaking website styles */
+/* Only add scoped styles here if needed for content script UI */
+
+.your-class {
+  color: aliceblue;
+}
