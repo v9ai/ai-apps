@@ -30,10 +30,11 @@ def retrieve(
     if total == 0:
         return "No previous context available. This is the first iteration."
 
-    # Multi-query: task-level + error-focused
+    # Multi-query: task-level + error-focused + eval-focused
     queries = [query]
     if include_errors:
         queries.append(f"errors failures bugs in: {query}")
+    queries.append(f"eval scores completion progress quality for: {query}")
 
     all_docs: dict[str, tuple[str, dict, float]] = {}
 
@@ -65,13 +66,16 @@ def retrieve(
     sections = []
     for it in sorted(iter_chunks.keys()):
         items = iter_chunks[it]
-        # Separate summaries and output chunks
+        # Separate summaries, evals, and output chunks
         summaries = [d for d, m, _ in items if m.get("doc_type") == "summary"]
+        evals = [d for d, m, _ in items if m.get("doc_type") == "eval"]
         outputs = [d for d, m, _ in items if m.get("doc_type") == "output"]
 
         parts = []
         if summaries:
             parts.append(summaries[0])
+        if evals:
+            parts.append(evals[0])
         if outputs:
             parts.extend(outputs[:3])
 
@@ -79,17 +83,12 @@ def retrieve(
 
     context = "\n\n---\n\n".join(sections)
 
-    # Header with iteration tracking
-    all_metas = collection.get(
-        where={"iteration": {"$lt": current_iteration}},
-    )
-    all_iters = sorted({m["iteration"] for m in all_metas["metadatas"]}) if all_metas["metadatas"] else []
-
-    # Count errors across iterations
+    # Header — derived from retrieved docs (no extra DB call)
+    all_iters = sorted(iter_chunks.keys())
     error_iters = sorted({
-        m["iteration"] for m in all_metas["metadatas"]
-        if m.get("has_errors")
-    }) if all_metas["metadatas"] else []
+        it for it, items in iter_chunks.items()
+        if any(m.get("has_errors") for _, m, _ in items)
+    })
 
     header = f"**Iterations completed:** {all_iters or 'None'}\n"
     header += f"**Current iteration:** {current_iteration}\n"

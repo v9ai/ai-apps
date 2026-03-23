@@ -5,6 +5,7 @@ import argparse
 import json
 import hashlib
 import os
+import re
 import subprocess
 import chromadb
 from datetime import datetime
@@ -23,7 +24,6 @@ def get_collection():
 
 def chunk_content(content: str, max_chars: int = 1200) -> list[str]:
     """Split content on semantic boundaries: code blocks, headers, double newlines."""
-    import re
 
     # Split on code fences, markdown headers, and double newlines
     boundaries = re.split(r'(```[\s\S]*?```|^#{1,3} .+$|\n\n+)', content, flags=re.MULTILINE)
@@ -58,8 +58,8 @@ def dedup_chunks(chunks: list[str], threshold: int = 50) -> list[str]:
     return deduped
 
 
-def get_git_diff() -> str | None:
-    """Capture staged + unstaged git diff for the current iteration."""
+def get_git_diff() -> tuple[str | None, list[str]]:
+    """Capture git diff stat and extract changed file paths."""
     try:
         result = subprocess.run(
             ["git", "diff", "HEAD~1", "--stat", "--no-color"],
@@ -67,15 +67,17 @@ def get_git_diff() -> str | None:
             cwd=os.environ.get("CLAUDE_ITERATE_CWD", "."),
         )
         if result.returncode == 0 and result.stdout.strip():
-            return result.stdout.strip()
+            stat = result.stdout.strip()
+            # Extract file paths from stat lines (e.g. " path/to/file | 5 ++-")
+            files = [m.group(1) for m in re.finditer(r'^\s*(.+?)\s+\|', stat, re.MULTILINE)]
+            return stat, files
     except Exception:
         pass
-    return None
+    return None, []
 
 
 def extract_errors(content: str) -> list[str]:
     """Extract error-like lines from actual error output (not prose)."""
-    import re
     patterns = [
         # Stack traces and compiler errors (colon-delimited)
         r'(?:error|Error|ERROR):[ \t]+\S.*',
@@ -103,7 +105,8 @@ def store(iteration: int, content: str, task: str):
     metadatas = []
 
     errors = extract_errors(content)
-    git_diff = get_git_diff()
+    git_diff, changed_files = get_git_diff()
+    now = datetime.now().isoformat()
 
     for i, chunk in enumerate(chunks):
         ids.append(f"iter-{iteration}-chunk-{i}")
@@ -115,7 +118,7 @@ def store(iteration: int, content: str, task: str):
             "task": task,
             "doc_type": "output",
             "has_errors": len(errors) > 0,
-            "timestamp": datetime.now().isoformat(),
+            "timestamp": now,
         })
 
     # Store iteration summary as a dedicated document
@@ -124,11 +127,12 @@ def store(iteration: int, content: str, task: str):
         f"Task: {task}",
         f"Output chunks: {len(chunks)}",
         f"Errors found: {len(errors)}",
+        f"Files changed: {len(changed_files)}",
     ]
     if errors:
         summary_lines.append("Errors:\n" + "\n".join(f"  - {e[:120]}" for e in errors))
-    if git_diff:
-        summary_lines.append(f"Files changed:\n{git_diff}")
+    if changed_files:
+        summary_lines.append("Changed:\n" + "\n".join(f"  - {f}" for f in changed_files[:20]))
 
     summary = "\n".join(summary_lines)
     ids.append(f"iter-{iteration}-summary")
@@ -140,17 +144,45 @@ def store(iteration: int, content: str, task: str):
         "task": task,
         "doc_type": "summary",
         "has_errors": len(errors) > 0,
-        "timestamp": datetime.now().isoformat(),
+        "files_changed": len(changed_files),
+        "timestamp": now,
     })
 
     collection.upsert(ids=ids, documents=documents, metadatas=metadatas)
-    print(json.dumps({
+    result = {
         "stored": len(ids),
         "iteration": iteration,
         "errors": len(errors),
-        "has_diff": git_diff is not None,
+        "files_changed": len(changed_files),
         "collection_count": collection.count(),
-    }))
+    }
+    print(json.dumps(result))
+    return result
+
+
+def store_eval(iteration: int, scores: dict, task: str, eval_method: str = "unknown"):
+    """Store eval scores in Chroma so they're retrievable for trend analysis."""
+    collection = get_collection()
+    lines = [f"Eval scores for iteration {iteration} (method: {eval_method}):"]
+    for name, data in scores.items():
+        s = data.get("score", "?")
+        r = data.get("reason", "")
+        lines.append(f"  {name}: {s} — {r}")
+
+    collection.upsert(
+        ids=[f"iter-{iteration}-eval"],
+        documents=["\n".join(lines)],
+        metadatas=[{
+            "iteration": iteration,
+            "chunk_index": -3,
+            "total_chunks": 0,
+            "task": task,
+            "doc_type": "eval",
+            "eval_method": eval_method,
+            "has_errors": False,
+            "timestamp": datetime.now().isoformat(),
+        }],
+    )
 
 
 if __name__ == "__main__":

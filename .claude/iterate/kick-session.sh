@@ -107,18 +107,28 @@ if [ "$COUNT" -gt 0 ] && [ -f "$ITER_OUTPUT" ] && [ -s "$ITER_OUTPUT" ]; then
 
     echo "$EVAL_RESULT" > "$ITER_DIR/eval-iter-${COUNT}.json" 2>> "$ITER_DIR/debug.log" || true
 
+    # Store eval scores in Chroma for cross-iteration retrieval
+    echo "$EVAL_RESULT" | python3.12 - "$SCRIPTS_DIR" "$COUNT" "$TASK" >> "$ITER_DIR/debug.log" 2>&1 <<'PYEOF' || true
+import sys, json
+sys.path.insert(0, sys.argv[1])
+from store_context import store_eval
+data = json.load(sys.stdin)
+store_eval(int(sys.argv[2]), data.get("scores", {}), sys.argv[3], data.get("eval_method", "unknown"))
+PYEOF
+
     if [ "$EVAL_EXIT" -eq 10 ]; then
         SHOULD_CONTINUE=false
     fi
 
     # Skip eval/trend feedback if all scores are fallback (0.5)
+    EVAL_METHOD=$(echo "$EVAL_RESULT" | jq -r '.eval_method // "unknown"' 2>/dev/null) || EVAL_METHOD="unknown"
     IS_FALLBACK=$(echo "$EVAL_RESULT" | jq -r '
-        [.scores | to_entries[] | .value.reason] | all(. == "fallback" or startswith("Eval LLM unavailable"))
+        .eval_method == "fallback"
     ' 2>/dev/null) || IS_FALLBACK="false"
 
     if [ "$IS_FALLBACK" != "true" ]; then
         EVAL_FEEDBACK=$(echo "$EVAL_RESULT" | jq -r '
-            "\n## Eval (iter \(.iteration))\n" +
+            "\n## Eval (iter \(.iteration), \(.eval_method // "unknown"))\n" +
             (.scores | to_entries | map(
                 "- **\(.key)**: \(.value.score // "n/a") — \(.value.reason // "")"
             ) | join("\n"))

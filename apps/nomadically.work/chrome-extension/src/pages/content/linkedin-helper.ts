@@ -122,7 +122,36 @@ function dismissJobCard(btn: HTMLElement) {
   }
 }
 
+function autoDismissBlockedCards() {
+  let dismissed = 0;
+  document.querySelectorAll(".job-card-container").forEach((card) => {
+    const companyEl = card.querySelector(
+      ".artdeco-entity-lockup__subtitle, .job-card-container__primary-description",
+    );
+    if (!companyEl) return;
+    const companyName = companyEl.textContent?.trim() || "";
+    if (!isCompanyBlocked(companyName)) return;
+    if (card.getAttribute("data-nomad-dismissed")) return;
+    card.setAttribute("data-nomad-dismissed", "true");
+    const dismissBtn = card.querySelector(
+      'button[aria-label*="Dismiss"], button.job-card-container__action',
+    ) as HTMLButtonElement | null;
+    if (dismissBtn) {
+      dismissBtn.click();
+      dismissed++;
+    }
+  });
+  if (dismissed > 0) {
+    // Scroll down to load more cards, then refresh
+    window.scrollTo({ top: document.body.scrollHeight, behavior: "smooth" });
+    setTimeout(() => window.location.reload(), 2000);
+  }
+}
+
 function injectBlockButtons() {
+  // Auto-dismiss blocked company cards
+  autoDismissBlockedCards();
+
   // ── Logged-in view: job cards ──
   document.querySelectorAll(".job-card-container").forEach((card) => {
     if (card.querySelector(`[${BLOCK_BTN_ATTR}]`)) return;

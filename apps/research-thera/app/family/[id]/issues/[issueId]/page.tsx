@@ -633,7 +633,7 @@ function IssueDetailContent() {
             }}
           >
             <MagicWandIcon />
-            {generatingHabits ? "Generating..." : "Generate Habits"}
+            {generatingHabits ? "Generating..." : "Generate Habit"}
           </Button>
           <Button variant="soft" size="2" onClick={handleEdit}>
             <Pencil1Icon />

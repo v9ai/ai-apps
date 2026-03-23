@@ -34,13 +34,21 @@ if [ "$STATUS" = true ]; then
     echo "Iterate: ${CURRENT}/${MAX} — ${TASK_NAME}"
     echo "Session: ${SESSION_OWNER:0:8}…"
     if [ -f "$ITER_DIR/scores.json" ]; then
-        python3.12 - "$ITER_DIR/scores.json" 2>/dev/null <<'PYEOF' || true
+        python3.12 - "$ITER_DIR/scores.json" "$ITER_DIR/chroma" 2>/dev/null <<'PYEOF' || true
 import json, sys
 scores = json.load(open(sys.argv[1]))
 for i, s in enumerate(scores):
     tc = s.get('Task Completion', {}).get('score', '?')
     pr = s.get('Incremental Progress', {}).get('score', '?')
+    em = s.get('eval_method', '?') if isinstance(s, dict) and 'eval_method' in s else '?'
     print(f'  iter {i+1}: completion={tc} progress={pr}')
+try:
+    import chromadb
+    c = chromadb.PersistentClient(path=sys.argv[2])
+    col = c.get_or_create_collection("iterate_context")
+    print(f"Chroma: {col.count()} docs")
+except Exception:
+    pass
 PYEOF
     fi
     exit 0
@@ -56,6 +64,10 @@ fi
 python3.12 -c "import chromadb" 2>/dev/null || {
     echo "Installing chromadb…"
     python3.12 -m pip install chromadb -q
+}
+python3.12 -c "import deepeval" 2>/dev/null || {
+    echo "Installing deepeval…"
+    python3.12 -m pip install deepeval -q
 }
 
 rm -r "$ITER_DIR" 2>/dev/null || true
