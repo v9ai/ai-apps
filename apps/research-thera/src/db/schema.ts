@@ -416,6 +416,35 @@ export const userSettings = pgTable("user_settings", {
     .default(sql`NOW()`),
 });
 
+export const habits = pgTable("habits", {
+  id: serial("id").primaryKey(),
+  userId: text("user_id").notNull(),
+  goalId: integer("goal_id"),
+  title: text("title").notNull(),
+  description: text("description"),
+  frequency: text("frequency").notNull().default("daily"), // daily, weekly
+  targetCount: integer("target_count").notNull().default(1),
+  status: text("status").notNull().default("active"), // active, paused, archived
+  createdAt: text("created_at")
+    .notNull()
+    .default(sql`NOW()`),
+  updatedAt: text("updated_at")
+    .notNull()
+    .default(sql`NOW()`),
+});
+
+export const habitLogs = pgTable("habit_logs", {
+  id: serial("id").primaryKey(),
+  habitId: integer("habit_id").notNull().references(() => habits.id, { onDelete: "cascade" }),
+  userId: text("user_id").notNull(),
+  loggedDate: text("logged_date").notNull(), // YYYY-MM-DD
+  count: integer("count").notNull().default(1),
+  notes: text("notes"),
+  createdAt: text("created_at")
+    .notNull()
+    .default(sql`NOW()`),
+});
+
 // Better Auth Tables
 export const user = pgTable("user", {
   id: text("id").primaryKey(),

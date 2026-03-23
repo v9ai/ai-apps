@@ -5,7 +5,7 @@
   "scripts": {
     "stack": "cd crates/agentic-search && cargo run --release -- --root ../.. discover --output ../../src/app/stack/discovery.json",
     "dev": "next dev --webpack -p 3004",
-    "dev:ext": "concurrently -n next,ext -c blue,green \"pnpm dev\" \"pnpm --filter vite-web-extension dev\"",
+    "dev:ext": "concurrently -n next,ext,ws -c blue,green,yellow \"pnpm dev\" \"pnpm --filter vite-web-extension dev\" \"tsx scripts/ext-reload-server.ts\"",
     "dev:all": "cargo run --manifest-path crates/nomad/Cargo.toml --release",
     "build": "next build --webpack",
     "start": "next start",
