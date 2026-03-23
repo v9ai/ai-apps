@@ -116,3 +116,16 @@ body {
   overflow: hidden;
   white-space: pre-wrap;
 }
+
+.drag-handle {
+  opacity: 0;
+  transition: opacity 150ms;
+}
+
+.task-card:hover .drag-handle {
+  opacity: 0.5;
+}
+
+.drag-handle:hover {
+  opacity: 1 !important;
+}

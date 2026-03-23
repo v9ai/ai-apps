@@ -12,7 +12,7 @@ export async function getTasksByStatus(
     .select()
     .from(tasks)
     .where(and(eq(tasks.userId, userId), eq(tasks.status, status)))
-    .orderBy(desc(tasks.priorityScore), asc(tasks.position))
+    .orderBy(asc(tasks.position), desc(tasks.priorityScore))
     .limit(limit)
     .offset(offset);
 }

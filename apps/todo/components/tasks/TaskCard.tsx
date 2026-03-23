@@ -3,10 +3,33 @@
 import { useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
 import { Box, Card, Checkbox, Flex, Text, Badge } from "@radix-ui/themes";
+import { useSortable } from "@dnd-kit/sortable";
+import { CSS } from "@dnd-kit/utilities";
 import { PriorityBadge } from "./PriorityBadge";
 import { Linkify } from "./Linkify";
 import { updateTaskAction } from "@/lib/actions/tasks";
 import { format } from "date-fns";
+
+const PRIORITY_COLORS = {
+  1: "red",
+  2: "orange",
+  3: "amber",
+  4: "blue",
+  5: "gray",
+} as const;
+
+function GripIcon() {
+  return (
+    <svg width="10" height="14" viewBox="0 0 10 14" fill="currentColor">
+      <circle cx="3" cy="2.5" r="1.5" />
+      <circle cx="7" cy="2.5" r="1.5" />
+      <circle cx="3" cy="7" r="1.5" />
+      <circle cx="7" cy="7" r="1.5" />
+      <circle cx="3" cy="11.5" r="1.5" />
+      <circle cx="7" cy="11.5" r="1.5" />
+    </svg>
+  );
+}
 
 type Task = {
   id: string;
@@ -35,6 +58,9 @@ export function TaskCard({
   const [completing, setCompleting] = useState(false);
   const [isPending, startTransition] = useTransition();
 
+  const { attributes, listeners, setNodeRef, transform, transition, isDragging } =
+    useSortable({ id: task.id });
+
   const isCompleted = task.status === "completed";
 
   function handleComplete() {
@@ -47,15 +73,37 @@ export function TaskCard({
 
   return (
     <Card
-      className={completing ? "task-completing" : "fade-in"}
+      ref={setNodeRef}
+      className={`task-card ${completing ? "task-completing" : "fade-in"}`}
       style={{
-        opacity: isPending && !completing ? 0.6 : 1,
-        transition: "opacity 150ms",
+        opacity: isDragging ? 0.4 : isPending && !completing ? 0.6 : 1,
+        transform: CSS.Transform.toString(transform),
+        transition: transition ?? "opacity 150ms",
         cursor: "pointer",
+        zIndex: isDragging ? 10 : undefined,
+        position: "relative",
       }}
       onClick={onOpen}
     >
       <Flex align="center" gap="3">
+        <Box
+          {...attributes}
+          {...listeners}
+          className="drag-handle"
+          style={{
+            cursor: isDragging ? "grabbing" : "grab",
+            color: "var(--gray-6)",
+            display: "flex",
+            alignItems: "center",
+            padding: "2px",
+            flexShrink: 0,
+            touchAction: "none",
+          }}
+          onClick={(e) => e.stopPropagation()}
+        >
+          <GripIcon />
+        </Box>
+
         <Text
           size="1"
           weight="bold"
@@ -94,6 +142,15 @@ export function TaskCard({
             >
               {task.title}
             </Text>
+            {task.priorityManual && (
+              <Badge
+                size="1"
+                variant="solid"
+                color={PRIORITY_COLORS[task.priorityManual as keyof typeof PRIORITY_COLORS] ?? "gray"}
+              >
+                P{task.priorityManual}
+              </Badge>
+            )}
             <PriorityBadge
               score={task.priorityScore}
               manual={task.priorityManual}

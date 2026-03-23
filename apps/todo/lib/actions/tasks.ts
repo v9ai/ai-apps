@@ -76,6 +76,18 @@ export async function deleteTaskAction(taskId: string) {
   revalidatePath("/app");
 }
 
+export async function reorderTasksAction(
+  updates: { id: string; position: number }[]
+) {
+  const session = await getSessionOrThrow();
+  await Promise.all(
+    updates.map(({ id, position }) =>
+      taskQueries.updateTask(session.user.id, id, { position })
+    )
+  );
+  revalidatePath("/app");
+}
+
 export async function loadMoreTasks(
   status: "inbox" | "active" | "completed" | "archived",
   offset: number,

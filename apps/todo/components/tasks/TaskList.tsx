@@ -2,9 +2,22 @@
 
 import { useState, useRef, useEffect, useTransition } from "react";
 import { Button, Flex } from "@radix-ui/themes";
+import {
+  DndContext,
+  closestCenter,
+  PointerSensor,
+  useSensor,
+  useSensors,
+  type DragEndEvent,
+} from "@dnd-kit/core";
+import {
+  SortableContext,
+  verticalListSortingStrategy,
+  arrayMove,
+} from "@dnd-kit/sortable";
 import { TaskCard } from "./TaskCard";
 import { TaskDetailModal } from "./TaskDetailModal";
-import { loadMoreTasks } from "@/lib/actions/tasks";
+import { loadMoreTasks, reorderTasksAction } from "@/lib/actions/tasks";
 
 type Task = {
   id: string;
@@ -36,6 +49,25 @@ export function TaskList({
   const knownIds = useRef(new Set(initialTasks.map((t) => t.id)));
   const [openTaskId, setOpenTaskId] = useState<string | null>(null);
   const hasMore = tasks.length < totalCount;
+
+  const sensors = useSensors(
+    useSensor(PointerSensor, { activationConstraint: { distance: 5 } })
+  );
+
+  function handleDragEnd(event: DragEndEvent) {
+    const { active, over } = event;
+    if (!over || active.id === over.id) return;
+
+    const oldIndex = tasks.findIndex((t) => t.id === active.id);
+    const newIndex = tasks.findIndex((t) => t.id === over.id);
+    const reordered = arrayMove(tasks, oldIndex, newIndex);
+    setTasks(reordered);
+
+    const updates = reordered.map((t, i) => ({ id: t.id, position: i + 1 }));
+    startTransition(async () => {
+      await reorderTasksAction(updates);
+    });
+  }
 
   useEffect(() => {
     const incoming = new Set(initialTasks.map((t) => t.id));
@@ -83,14 +115,25 @@ export function TaskList({
 
   return (
     <Flex direction="column" gap="2">
-      {tasks.map((task, i) => (
-        <TaskCard
-          key={task.id}
-          task={task}
-          index={i + 1}
-          onOpen={() => setOpenTaskId(task.id)}
-        />
-      ))}
+      <DndContext
+        sensors={sensors}
+        collisionDetection={closestCenter}
+        onDragEnd={handleDragEnd}
+      >
+        <SortableContext
+          items={tasks.map((t) => t.id)}
+          strategy={verticalListSortingStrategy}
+        >
+          {tasks.map((task, i) => (
+            <TaskCard
+              key={task.id}
+              task={task}
+              index={i + 1}
+              onOpen={() => setOpenTaskId(task.id)}
+            />
+          ))}
+        </SortableContext>
+      </DndContext>
       {hasMore && (
         <Button
           variant="ghost"
