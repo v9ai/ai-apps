@@ -6,6 +6,7 @@ type Habit {
   id: Int!
   userId: String!
   goalId: Int
+  familyMemberId: Int
   title: String!
   description: String
   frequency: HabitFrequency!
@@ -40,6 +41,7 @@ enum HabitStatus {
 
 input CreateHabitInput {
   goalId: Int
+  familyMemberId: Int
   title: String!
   description: String
   frequency: HabitFrequency
@@ -58,6 +60,13 @@ input UpdateHabitInput {
 type DeleteHabitResult {
   success: Boolean!
   message: String
+}
+
+type GenerateHabitsResult {
+  success: Boolean!
+  message: String
+  count: Int
+  habits: [Habit!]
 }
 
 type Query {
@@ -124,7 +133,7 @@ type Query {
   userSettings: UserSettings!
 
   # Habits
-  habits(status: String): [Habit!]!
+  habits(status: String, familyMemberId: Int): [Habit!]!
   habit(id: Int!): Habit
 }
 
@@ -247,6 +256,7 @@ type Mutation {
   deleteHabit(id: Int!): DeleteHabitResult!
   logHabit(habitId: Int!, loggedDate: String!, count: Int, notes: String): HabitLog!
   deleteHabitLog(id: Int!): Boolean!
+  generateHabitsForFamilyMember(familyMemberId: Int!, count: Int): GenerateHabitsResult!
 }
 
 type Subscription {

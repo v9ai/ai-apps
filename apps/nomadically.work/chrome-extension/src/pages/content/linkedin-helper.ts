@@ -479,14 +479,26 @@ function clickSecondJobPost() {
   return { success: false, error: "Second job post not found" };
 }
 
-// Listen for messages from popup
+// Listen for messages from popup — only respond on relevant sites
 chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
-  console.log("Content script received message:", message.action);
-
   if (message.action === "ping") {
     sendResponse({ ok: true });
     return true;
   }
+
+  // Guard: only handle job-related messages on supported sites
+  const hostname = window.location.hostname;
+  const isSupportedSite =
+    hostname.includes("linkedin.com") ||
+    hostname.includes("google.com") ||
+    hostname.includes("ashbyhq.com") ||
+    hostname.includes("greenhouse.io") ||
+    hostname.includes("lever.co") ||
+    hostname.includes("wellfound.com") ||
+    hostname.includes("founderio.com") ||
+    hostname.includes("workable.com");
+
+  if (!isSupportedSite) return false;
 
   if (message.action === "navigateToPage") {
     // Handle Google Ashby pagination navigation

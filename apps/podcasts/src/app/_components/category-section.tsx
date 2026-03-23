@@ -12,10 +12,10 @@ export function CategorySection({ category }: Props) {
   return (
     <section
       id={category.slug}
-      className={css({ mb: { base: "16", md: "20" }, scrollMarginTop: "24" })}
+      className={css({ mb: { base: "16", sm: "18", md: "20" }, scrollMarginTop: "24" })}
     >
       <div
-        className={css({ h: "1px", mb: { base: "8", md: "10" } })}
+        className={css({ h: "1px", mb: { base: "8", sm: "9", md: "10" } })}
         style={{
           backgroundImage:
             "linear-gradient(to right, transparent, rgba(255,255,255,0.06), transparent)",
@@ -27,7 +27,7 @@ export function CategorySection({ category }: Props) {
           display: "flex",
           alignItems: "center",
           gap: "3",
-          mb: { base: "6", md: "8" },
+          mb: { base: "6", sm: "7", md: "8" },
         })}
       >
         <div

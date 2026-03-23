@@ -45,7 +45,7 @@ export function FilterableGrid({
   return (
     <>
       {/* -- Category filter pills -- */}
-      <div className={css({ mb: { base: "4", md: "5" } })}>
+      <div className={css({ mb: { base: "4", sm: "5", md: "5" } })}>
         <CategoryFilter
           categories={categories}
           activeCategory={activeCategory}

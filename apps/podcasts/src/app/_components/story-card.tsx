@@ -80,7 +80,7 @@ export function StoryCard({
             <div
               className={css({
                 rounded: "full",
-                bg: "rgba(255,255,255,0.10)",
+                bg: "whiteAlpha.10",
                 display: "flex",
                 alignItems: "center",
                 justifyContent: "center",
