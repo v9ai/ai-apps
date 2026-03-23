@@ -1629,6 +1629,7 @@ def build_graph():
     builder.add_node("phase3_eval", phase3_eval)
     builder.add_node("reresearch", reresearch)
     builder.add_node("phase3_exec", phase3_exec)
+    builder.add_node("question_generator", question_generator)
 
     builder.add_edge(START, "phase1")
     builder.add_edge("phase1", "phase1_5")
@@ -1637,7 +1638,8 @@ def build_graph():
     builder.add_conditional_edges("phase3_eval", _should_reresearch,
         {"reresearch": "reresearch", "phase3_exec": "phase3_exec"})
     builder.add_edge("reresearch", "phase3_eval")
-    builder.add_edge("phase3_exec", END)
+    builder.add_edge("phase3_exec", "question_generator")
+    builder.add_edge("question_generator", END)
 
     return builder.compile()
 
@@ -1703,6 +1705,10 @@ def export_results(state: ResearchState) -> None:
     if not isinstance(executive, dict):
         executive = {}
 
+    questions = _extract_json(state.get("questions", "")) or []
+    if not isinstance(questions, list):
+        questions = []
+
     podcast_appearances = _extract_json(state.get("podcast_data", "")) or []
     if not isinstance(podcast_appearances, list):
         podcast_appearances = []
@@ -1762,6 +1768,10 @@ def export_results(state: ResearchState) -> None:
         "funding": funding,
         "conferences": conference,
         "technical_philosophy": philosophy,
+        "questions": [
+            {"category": q.get("category", ""), "question": q.get("question", "")}
+            for q in questions if isinstance(q, dict)
+        ],
         "sources": [],
     }
 

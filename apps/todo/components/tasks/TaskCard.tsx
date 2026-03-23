@@ -72,21 +72,26 @@ export function TaskCard({
   }
 
   return (
-    <Card
+    <div
       ref={setNodeRef}
+      style={{
+        transform: CSS.Transform.toString(transform),
+        transition: transition ?? undefined,
+        position: "relative",
+        zIndex: isDragging ? 10 : undefined,
+      }}
+    >
+    <Card
       className={`task-card ${completing ? "task-completing" : "fade-in"}`}
       style={{
         opacity: isDragging ? 0.4 : isPending && !completing ? 0.6 : 1,
-        transform: CSS.Transform.toString(transform),
-        transition: transition ?? "opacity 150ms",
+        transition: "opacity 150ms",
         cursor: "pointer",
-        zIndex: isDragging ? 10 : undefined,
-        position: "relative",
       }}
       onClick={onOpen}
     >
       <Flex align="center" gap="3">
-        <Box
+        <div
           {...attributes}
           {...listeners}
           className="drag-handle"
@@ -102,7 +107,7 @@ export function TaskCard({
           onClick={(e) => e.stopPropagation()}
         >
           <GripIcon />
-        </Box>
+        </div>
 
         <Text
           size="1"
@@ -192,5 +197,6 @@ export function TaskCard({
         </Box>
       </Flex>
     </Card>
+    </div>
   );
 }
