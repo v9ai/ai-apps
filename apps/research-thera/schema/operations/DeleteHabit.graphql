@@ -1,0 +1,6 @@
+mutation DeleteHabit($id: Int!) {
+  deleteHabit(id: $id) {
+    success
+    message
+  }
+}

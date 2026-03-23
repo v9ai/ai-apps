@@ -247,6 +247,14 @@ export type CreateGoalInput = {
   title: Scalars['String']['input'];
 };
 
+export type CreateHabitInput = {
+  description?: InputMaybe<Scalars['String']['input']>;
+  frequency?: InputMaybe<HabitFrequency>;
+  goalId?: InputMaybe<Scalars['Int']['input']>;
+  targetCount?: InputMaybe<Scalars['Int']['input']>;
+  title: Scalars['String']['input'];
+};
+
 export type CreateIssueInput = {
   category: Scalars['String']['input'];
   description: Scalars['String']['input'];
@@ -376,6 +384,12 @@ export type DeleteFamilyMemberResult = {
 
 export type DeleteGoalResult = {
   __typename?: 'DeleteGoalResult';
+  message?: Maybe<Scalars['String']['output']>;
+  success: Scalars['Boolean']['output'];
+};
+
+export type DeleteHabitResult = {
+  __typename?: 'DeleteHabitResult';
   message?: Maybe<Scalars['String']['output']>;
   success: Scalars['Boolean']['output'];
 };
@@ -654,6 +668,44 @@ export type Goal = {
   updatedAt: Scalars['String']['output'];
 };
 
+export type Habit = {
+  __typename?: 'Habit';
+  createdAt: Scalars['String']['output'];
+  description?: Maybe<Scalars['String']['output']>;
+  frequency: HabitFrequency;
+  goalId?: Maybe<Scalars['Int']['output']>;
+  id: Scalars['Int']['output'];
+  logs: Array<HabitLog>;
+  status: HabitStatus;
+  targetCount: Scalars['Int']['output'];
+  title: Scalars['String']['output'];
+  todayLog?: Maybe<HabitLog>;
+  updatedAt: Scalars['String']['output'];
+  userId: Scalars['String']['output'];
+};
+
+export enum HabitFrequency {
+  Daily = 'DAILY',
+  Weekly = 'WEEKLY'
+}
+
+export type HabitLog = {
+  __typename?: 'HabitLog';
+  count: Scalars['Int']['output'];
+  createdAt: Scalars['String']['output'];
+  habitId: Scalars['Int']['output'];
+  id: Scalars['Int']['output'];
+  loggedDate: Scalars['String']['output'];
+  notes?: Maybe<Scalars['String']['output']>;
+  userId: Scalars['String']['output'];
+};
+
+export enum HabitStatus {
+  Active = 'ACTIVE',
+  Archived = 'ARCHIVED',
+  Paused = 'PAUSED'
+}
+
 export type Issue = {
   __typename?: 'Issue';
   category: Scalars['String']['output'];
@@ -749,6 +801,7 @@ export type Mutation = {
   createContactFeedback: ContactFeedback;
   createFamilyMember: FamilyMember;
   createGoal: Goal;
+  createHabit: Habit;
   createIssue: Issue;
   createJournalEntry: JournalEntry;
   createNote: Note;
@@ -764,6 +817,8 @@ export type Mutation = {
   deleteDeepIssueAnalysis: DeleteDeepAnalysisResult;
   deleteFamilyMember: DeleteFamilyMemberResult;
   deleteGoal: DeleteGoalResult;
+  deleteHabit: DeleteHabitResult;
+  deleteHabitLog: Scalars['Boolean']['output'];
   deleteIssue: DeleteIssueResult;
   deleteJournalEntry: DeleteJournalEntryResult;
   deleteNote: DeleteNoteResult;
@@ -781,6 +836,7 @@ export type Mutation = {
   generateResearch: GenerateResearchResult;
   generateTherapeuticQuestions: GenerateQuestionsResult;
   linkIssues: IssueLink;
+  logHabit: HabitLog;
   markTeacherFeedbackExtracted: TeacherFeedback;
   refreshClaimCard: ClaimCard;
   setNoteVisibility: Note;
@@ -795,6 +851,7 @@ export type Mutation = {
   updateContactFeedback: ContactFeedback;
   updateFamilyMember: FamilyMember;
   updateGoal: Goal;
+  updateHabit: Habit;
   updateIssue: Issue;
   updateJournalEntry: JournalEntry;
   updateNote: Note;
@@ -844,6 +901,11 @@ export type MutationCreateFamilyMemberArgs = {
 
 export type MutationCreateGoalArgs = {
   input: CreateGoalInput;
+};
+
+
+export type MutationCreateHabitArgs = {
+  input: CreateHabitInput;
 };
 
 
@@ -921,6 +983,16 @@ export type MutationDeleteFamilyMemberArgs = {
 
 
 export type MutationDeleteGoalArgs = {
+  id: Scalars['Int']['input'];
+};
+
+
+export type MutationDeleteHabitArgs = {
+  id: Scalars['Int']['input'];
+};
+
+
+export type MutationDeleteHabitLogArgs = {
   id: Scalars['Int']['input'];
 };
 
@@ -1028,6 +1100,14 @@ export type MutationLinkIssuesArgs = {
 };
 
 
+export type MutationLogHabitArgs = {
+  count?: InputMaybe<Scalars['Int']['input']>;
+  habitId: Scalars['Int']['input'];
+  loggedDate: Scalars['String']['input'];
+  notes?: InputMaybe<Scalars['String']['input']>;
+};
+
+
 export type MutationMarkTeacherFeedbackExtractedArgs = {
   id: Scalars['Int']['input'];
 };
@@ -1108,6 +1188,12 @@ export type MutationUpdateFamilyMemberArgs = {
 export type MutationUpdateGoalArgs = {
   id: Scalars['Int']['input'];
   input: UpdateGoalInput;
+};
+
+
+export type MutationUpdateHabitArgs = {
+  id: Scalars['Int']['input'];
+  input: UpdateHabitInput;
 };
 
 
@@ -1324,6 +1410,8 @@ export type Query = {
   generationJobs: Array<GenerationJob>;
   goal?: Maybe<Goal>;
   goals: Array<Goal>;
+  habit?: Maybe<Habit>;
+  habits: Array<Habit>;
   issue?: Maybe<Issue>;
   issues: Array<Issue>;
   journalEntries: Array<JournalEntry>;
@@ -1422,6 +1510,16 @@ export type QueryGoalArgs = {
 
 export type QueryGoalsArgs = {
   familyMemberId?: InputMaybe<Scalars['Int']['input']>;
+  status?: InputMaybe<Scalars['String']['input']>;
+};
+
+
+export type QueryHabitArgs = {
+  id: Scalars['Int']['input'];
+};
+
+
+export type QueryHabitsArgs = {
   status?: InputMaybe<Scalars['String']['input']>;
 };
 
@@ -1730,6 +1828,15 @@ export type UpdateGoalInput = {
   title?: InputMaybe<Scalars['String']['input']>;
 };
 
+export type UpdateHabitInput = {
+  description?: InputMaybe<Scalars['String']['input']>;
+  frequency?: InputMaybe<HabitFrequency>;
+  goalId?: InputMaybe<Scalars['Int']['input']>;
+  status?: InputMaybe<HabitStatus>;
+  targetCount?: InputMaybe<Scalars['Int']['input']>;
+  title?: InputMaybe<Scalars['String']['input']>;
+};
+
 export type UpdateIssueInput = {
   category?: InputMaybe<Scalars['String']['input']>;
   description?: InputMaybe<Scalars['String']['input']>;
@@ -1869,6 +1976,13 @@ export type CreateGoalMutationVariables = Exact<{
 
 export type CreateGoalMutation = { __typename?: 'Mutation', createGoal: { __typename?: 'Goal', id: number, slug?: string | null, title: string, description?: string | null, status: string, createdAt: string, updatedAt: string, familyMemberId?: number | null } };
 
+export type CreateHabitMutationVariables = Exact<{
+  input: CreateHabitInput;
+}>;
+
+
+export type CreateHabitMutation = { __typename?: 'Mutation', createHabit: { __typename?: 'Habit', id: number, title: string, description?: string | null, frequency: HabitFrequency, targetCount: number, status: HabitStatus, goalId?: number | null, createdAt: string, updatedAt: string } };
+
 export type CreateIssueMutationVariables = Exact<{
   input: CreateIssueInput;
 }>;
@@ -1969,6 +2083,20 @@ export type DeleteGoalMutationVariables = Exact<{
 
 
 export type DeleteGoalMutation = { __typename?: 'Mutation', deleteGoal: { __typename?: 'DeleteGoalResult', success: boolean, message?: string | null } };
+
+export type DeleteHabitMutationVariables = Exact<{
+  id: Scalars['Int']['input'];
+}>;
+
+
+export type DeleteHabitMutation = { __typename?: 'Mutation', deleteHabit: { __typename?: 'DeleteHabitResult', success: boolean, message?: string | null } };
+
+export type DeleteHabitLogMutationVariables = Exact<{
+  id: Scalars['Int']['input'];
+}>;
+
+
+export type DeleteHabitLogMutation = { __typename?: 'Mutation', deleteHabitLog: boolean };
 
 export type DeleteIssueMutationVariables = Exact<{
   id: Scalars['Int']['input'];
@@ -2216,6 +2344,13 @@ export type GetGoalsQueryVariables = Exact<{
 
 export type GetGoalsQuery = { __typename?: 'Query', goals: Array<{ __typename?: 'Goal', id: number, title: string, description?: string | null, status: string, familyMemberId?: number | null, createdBy: string, parentGoalId?: number | null, createdAt: string, updatedAt: string, familyMember?: { __typename?: 'FamilyMember', id: number, firstName: string, name?: string | null, relationship?: string | null } | null, notes: Array<{ __typename?: 'Note', id: number, slug?: string | null, noteType?: string | null, tags?: Array<string> | null, createdAt: string }> }> };
 
+export type GetHabitsQueryVariables = Exact<{
+  status?: InputMaybe<Scalars['String']['input']>;
+}>;
+
+
+export type GetHabitsQuery = { __typename?: 'Query', habits: Array<{ __typename?: 'Habit', id: number, title: string, description?: string | null, frequency: HabitFrequency, targetCount: number, status: HabitStatus, goalId?: number | null, createdAt: string, updatedAt: string, todayLog?: { __typename?: 'HabitLog', id: number, loggedDate: string, count: number } | null }> };
+
 export type GetIssueQueryVariables = Exact<{
   id: Scalars['Int']['input'];
 }>;
@@ -2332,6 +2467,16 @@ export type LinkIssuesMutationVariables = Exact<{
 
 export type LinkIssuesMutation = { __typename?: 'Mutation', linkIssues: { __typename?: 'IssueLink', id: number, linkType: string, issue: { __typename?: 'Issue', id: number, title: string, category: string, severity: string, familyMemberId: number, createdAt: string } } };
 
+export type LogHabitMutationVariables = Exact<{
+  habitId: Scalars['Int']['input'];
+  loggedDate: Scalars['String']['input'];
+  count?: InputMaybe<Scalars['Int']['input']>;
+  notes?: InputMaybe<Scalars['String']['input']>;
+}>;
+
+
+export type LogHabitMutation = { __typename?: 'Mutation', logHabit: { __typename?: 'HabitLog', id: number, habitId: number, loggedDate: string, count: number, notes?: string | null, createdAt: string } };
+
 export type ShareFamilyMemberMutationVariables = Exact<{
   familyMemberId: Scalars['Int']['input'];
   email: Scalars['String']['input'];
@@ -2403,6 +2548,14 @@ export type UpdateGoalMutationVariables = Exact<{
 
 
 export type UpdateGoalMutation = { __typename?: 'Mutation', updateGoal: { __typename?: 'Goal', id: number, slug?: string | null, title: string, description?: string | null, status: string, familyMemberId?: number | null, storyLanguage?: string | null, createdAt: string, updatedAt: string, familyMember?: { __typename?: 'FamilyMember', id: number, firstName: string, name?: string | null, relationship?: string | null } | null } };
+
+export type UpdateHabitMutationVariables = Exact<{
+  id: Scalars['Int']['input'];
+  input: UpdateHabitInput;
+}>;
+
+
+export type UpdateHabitMutation = { __typename?: 'Mutation', updateHabit: { __typename?: 'Habit', id: number, title: string, description?: string | null, frequency: HabitFrequency, targetCount: number, status: HabitStatus, goalId?: number | null, updatedAt: string } };
 
 export type UpdateIssueMutationVariables = Exact<{
   id: Scalars['Int']['input'];
@@ -3115,6 +3268,47 @@ export function useCreateGoalMutation(baseOptions?: Apollo.MutationHookOptions<C
 export type CreateGoalMutationHookResult = ReturnType<typeof useCreateGoalMutation>;
 export type CreateGoalMutationResult = Apollo.MutationResult<CreateGoalMutation>;
 export type CreateGoalMutationOptions = Apollo.BaseMutationOptions<CreateGoalMutation, CreateGoalMutationVariables>;
+export const CreateHabitDocument = gql`
+    mutation CreateHabit($input: CreateHabitInput!) {
+  createHabit(input: $input) {
+    id
+    title
+    description
+    frequency
+    targetCount
+    status
+    goalId
+    createdAt
+    updatedAt
+  }
+}
+    `;
+export type CreateHabitMutationFn = Apollo.MutationFunction<CreateHabitMutation, CreateHabitMutationVariables>;
+
+/**
+ * __useCreateHabitMutation__
+ *
+ * To run a mutation, you first call `useCreateHabitMutation` within a React component and pass it any options that fit your needs.
+ * When your component renders, `useCreateHabitMutation` returns a tuple that includes:
+ * - A mutate function that you can call at any time to execute the mutation
+ * - An object with fields that represent the current status of the mutation's execution
+ *
+ * @param baseOptions options that will be passed into the mutation, supported options are listed on: https://www.apollographql.com/docs/react/api/react-hooks/#options-2;
+ *
+ * @example
+ * const [createHabitMutation, { data, loading, error }] = useCreateHabitMutation({
+ *   variables: {
+ *      input: // value for 'input'
+ *   },
+ * });
+ */
+export function useCreateHabitMutation(baseOptions?: Apollo.MutationHookOptions<CreateHabitMutation, CreateHabitMutationVariables>) {
+        const options = {...defaultOptions, ...baseOptions}
+        return Apollo.useMutation<CreateHabitMutation, CreateHabitMutationVariables>(CreateHabitDocument, options);
+      }
+export type CreateHabitMutationHookResult = ReturnType<typeof useCreateHabitMutation>;
+export type CreateHabitMutationResult = Apollo.MutationResult<CreateHabitMutation>;
+export type CreateHabitMutationOptions = Apollo.BaseMutationOptions<CreateHabitMutation, CreateHabitMutationVariables>;
 export const CreateIssueDocument = gql`
     mutation CreateIssue($input: CreateIssueInput!) {
   createIssue(input: $input) {
@@ -3665,6 +3859,71 @@ export function useDeleteGoalMutation(baseOptions?: Apollo.MutationHookOptions<D
 export type DeleteGoalMutationHookResult = ReturnType<typeof useDeleteGoalMutation>;
 export type DeleteGoalMutationResult = Apollo.MutationResult<DeleteGoalMutation>;
 export type DeleteGoalMutationOptions = Apollo.BaseMutationOptions<DeleteGoalMutation, DeleteGoalMutationVariables>;
+export const DeleteHabitDocument = gql`
+    mutation DeleteHabit($id: Int!) {
+  deleteHabit(id: $id) {
+    success
+    message
+  }
+}
+    `;
+export type DeleteHabitMutationFn = Apollo.MutationFunction<DeleteHabitMutation, DeleteHabitMutationVariables>;
+
+/**
+ * __useDeleteHabitMutation__
+ *
+ * To run a mutation, you first call `useDeleteHabitMutation` within a React component and pass it any options that fit your needs.
+ * When your component renders, `useDeleteHabitMutation` returns a tuple that includes:
+ * - A mutate function that you can call at any time to execute the mutation
+ * - An object with fields that represent the current status of the mutation's execution
+ *
+ * @param baseOptions options that will be passed into the mutation, supported options are listed on: https://www.apollographql.com/docs/react/api/react-hooks/#options-2;
+ *
+ * @example
+ * const [deleteHabitMutation, { data, loading, error }] = useDeleteHabitMutation({
+ *   variables: {
+ *      id: // value for 'id'
+ *   },
+ * });
+ */
+export function useDeleteHabitMutation(baseOptions?: Apollo.MutationHookOptions<DeleteHabitMutation, DeleteHabitMutationVariables>) {
+        const options = {...defaultOptions, ...baseOptions}
+        return Apollo.useMutation<DeleteHabitMutation, DeleteHabitMutationVariables>(DeleteHabitDocument, options);
+      }
+export type DeleteHabitMutationHookResult = ReturnType<typeof useDeleteHabitMutation>;
+export type DeleteHabitMutationResult = Apollo.MutationResult<DeleteHabitMutation>;
+export type DeleteHabitMutationOptions = Apollo.BaseMutationOptions<DeleteHabitMutation, DeleteHabitMutationVariables>;
+export const DeleteHabitLogDocument = gql`
+    mutation DeleteHabitLog($id: Int!) {
+  deleteHabitLog(id: $id)
+}
+    `;
+export type DeleteHabitLogMutationFn = Apollo.MutationFunction<DeleteHabitLogMutation, DeleteHabitLogMutationVariables>;
+
+/**
+ * __useDeleteHabitLogMutation__
+ *
+ * To run a mutation, you first call `useDeleteHabitLogMutation` within a React component and pass it any options that fit your needs.
+ * When your component renders, `useDeleteHabitLogMutation` returns a tuple that includes:
+ * - A mutate function that you can call at any time to execute the mutation
+ * - An object with fields that represent the current status of the mutation's execution
+ *
+ * @param baseOptions options that will be passed into the mutation, supported options are listed on: https://www.apollographql.com/docs/react/api/react-hooks/#options-2;
+ *
+ * @example
+ * const [deleteHabitLogMutation, { data, loading, error }] = useDeleteHabitLogMutation({
+ *   variables: {
+ *      id: // value for 'id'
+ *   },
+ * });
+ */
+export function useDeleteHabitLogMutation(baseOptions?: Apollo.MutationHookOptions<DeleteHabitLogMutation, DeleteHabitLogMutationVariables>) {
+        const options = {...defaultOptions, ...baseOptions}
+        return Apollo.useMutation<DeleteHabitLogMutation, DeleteHabitLogMutationVariables>(DeleteHabitLogDocument, options);
+      }
+export type DeleteHabitLogMutationHookResult = ReturnType<typeof useDeleteHabitLogMutation>;
+export type DeleteHabitLogMutationResult = Apollo.MutationResult<DeleteHabitLogMutation>;
+export type DeleteHabitLogMutationOptions = Apollo.BaseMutationOptions<DeleteHabitLogMutation, DeleteHabitLogMutationVariables>;
 export const DeleteIssueDocument = gql`
     mutation DeleteIssue($id: Int!) {
   deleteIssue(id: $id) {
@@ -5529,6 +5788,62 @@ export type GetGoalsQueryHookResult = ReturnType<typeof useGetGoalsQuery>;
 export type GetGoalsLazyQueryHookResult = ReturnType<typeof useGetGoalsLazyQuery>;
 export type GetGoalsSuspenseQueryHookResult = ReturnType<typeof useGetGoalsSuspenseQuery>;
 export type GetGoalsQueryResult = Apollo.QueryResult<GetGoalsQuery, GetGoalsQueryVariables>;
+export const GetHabitsDocument = gql`
+    query GetHabits($status: String) {
+  habits(status: $status) {
+    id
+    title
+    description
+    frequency
+    targetCount
+    status
+    goalId
+    createdAt
+    updatedAt
+    todayLog {
+      id
+      loggedDate
+      count
+    }
+  }
+}
+    `;
+
+/**
+ * __useGetHabitsQuery__
+ *
+ * To run a query within a React component, call `useGetHabitsQuery` and pass it any options that fit your needs.
+ * When your component renders, `useGetHabitsQuery` returns an object from Apollo Client that contains loading, error, and data properties
+ * you can use to render your UI.
+ *
+ * @param baseOptions options that will be passed into the query, supported options are listed on: https://www.apollographql.com/docs/react/api/react-hooks/#options;
+ *
+ * @example
+ * const { data, loading, error } = useGetHabitsQuery({
+ *   variables: {
+ *      status: // value for 'status'
+ *   },
+ * });
+ */
+export function useGetHabitsQuery(baseOptions?: Apollo.QueryHookOptions<GetHabitsQuery, GetHabitsQueryVariables>) {
+        const options = {...defaultOptions, ...baseOptions}
+        return Apollo.useQuery<GetHabitsQuery, GetHabitsQueryVariables>(GetHabitsDocument, options);
+      }
+export function useGetHabitsLazyQuery(baseOptions?: Apollo.LazyQueryHookOptions<GetHabitsQuery, GetHabitsQueryVariables>) {
+          const options = {...defaultOptions, ...baseOptions}
+          return Apollo.useLazyQuery<GetHabitsQuery, GetHabitsQueryVariables>(GetHabitsDocument, options);
+        }
+// @ts-ignore
+export function useGetHabitsSuspenseQuery(baseOptions?: Apollo.SuspenseQueryHookOptions<GetHabitsQuery, GetHabitsQueryVariables>): Apollo.UseSuspenseQueryResult<GetHabitsQuery, GetHabitsQueryVariables>;
+export function useGetHabitsSuspenseQuery(baseOptions?: Apollo.SkipToken | Apollo.SuspenseQueryHookOptions<GetHabitsQuery, GetHabitsQueryVariables>): Apollo.UseSuspenseQueryResult<GetHabitsQuery | undefined, GetHabitsQueryVariables>;
+export function useGetHabitsSuspenseQuery(baseOptions?: Apollo.SkipToken | Apollo.SuspenseQueryHookOptions<GetHabitsQuery, GetHabitsQueryVariables>) {
+          const options = baseOptions === Apollo.skipToken ? baseOptions : {...defaultOptions, ...baseOptions}
+          return Apollo.useSuspenseQuery<GetHabitsQuery, GetHabitsQueryVariables>(GetHabitsDocument, options);
+        }
+export type GetHabitsQueryHookResult = ReturnType<typeof useGetHabitsQuery>;
+export type GetHabitsLazyQueryHookResult = ReturnType<typeof useGetHabitsLazyQuery>;
+export type GetHabitsSuspenseQueryHookResult = ReturnType<typeof useGetHabitsSuspenseQuery>;
+export type GetHabitsQueryResult = Apollo.QueryResult<GetHabitsQuery, GetHabitsQueryVariables>;
 export const GetIssueDocument = gql`
     query GetIssue($id: Int!) {
   issue(id: $id) {
@@ -6554,6 +6869,52 @@ export function useLinkIssuesMutation(baseOptions?: Apollo.MutationHookOptions<L
 export type LinkIssuesMutationHookResult = ReturnType<typeof useLinkIssuesMutation>;
 export type LinkIssuesMutationResult = Apollo.MutationResult<LinkIssuesMutation>;
 export type LinkIssuesMutationOptions = Apollo.BaseMutationOptions<LinkIssuesMutation, LinkIssuesMutationVariables>;
+export const LogHabitDocument = gql`
+    mutation LogHabit($habitId: Int!, $loggedDate: String!, $count: Int, $notes: String) {
+  logHabit(
+    habitId: $habitId
+    loggedDate: $loggedDate
+    count: $count
+    notes: $notes
+  ) {
+    id
+    habitId
+    loggedDate
+    count
+    notes
+    createdAt
+  }
+}
+    `;
+export type LogHabitMutationFn = Apollo.MutationFunction<LogHabitMutation, LogHabitMutationVariables>;
+
+/**
+ * __useLogHabitMutation__
+ *
+ * To run a mutation, you first call `useLogHabitMutation` within a React component and pass it any options that fit your needs.
+ * When your component renders, `useLogHabitMutation` returns a tuple that includes:
+ * - A mutate function that you can call at any time to execute the mutation
+ * - An object with fields that represent the current status of the mutation's execution
+ *
+ * @param baseOptions options that will be passed into the mutation, supported options are listed on: https://www.apollographql.com/docs/react/api/react-hooks/#options-2;
+ *
+ * @example
+ * const [logHabitMutation, { data, loading, error }] = useLogHabitMutation({
+ *   variables: {
+ *      habitId: // value for 'habitId'
+ *      loggedDate: // value for 'loggedDate'
+ *      count: // value for 'count'
+ *      notes: // value for 'notes'
+ *   },
+ * });
+ */
+export function useLogHabitMutation(baseOptions?: Apollo.MutationHookOptions<LogHabitMutation, LogHabitMutationVariables>) {
+        const options = {...defaultOptions, ...baseOptions}
+        return Apollo.useMutation<LogHabitMutation, LogHabitMutationVariables>(LogHabitDocument, options);
+      }
+export type LogHabitMutationHookResult = ReturnType<typeof useLogHabitMutation>;
+export type LogHabitMutationResult = Apollo.MutationResult<LogHabitMutation>;
+export type LogHabitMutationOptions = Apollo.BaseMutationOptions<LogHabitMutation, LogHabitMutationVariables>;
 export const ShareFamilyMemberDocument = gql`
     mutation ShareFamilyMember($familyMemberId: Int!, $email: String!, $role: FamilyMemberShareRole) {
   shareFamilyMember(familyMemberId: $familyMemberId, email: $email, role: $role) {
@@ -6925,6 +7286,47 @@ export function useUpdateGoalMutation(baseOptions?: Apollo.MutationHookOptions<U
 export type UpdateGoalMutationHookResult = ReturnType<typeof useUpdateGoalMutation>;
 export type UpdateGoalMutationResult = Apollo.MutationResult<UpdateGoalMutation>;
 export type UpdateGoalMutationOptions = Apollo.BaseMutationOptions<UpdateGoalMutation, UpdateGoalMutationVariables>;
+export const UpdateHabitDocument = gql`
+    mutation UpdateHabit($id: Int!, $input: UpdateHabitInput!) {
+  updateHabit(id: $id, input: $input) {
+    id
+    title
+    description
+    frequency
+    targetCount
+    status
+    goalId
+    updatedAt
+  }
+}
+    `;
+export type UpdateHabitMutationFn = Apollo.MutationFunction<UpdateHabitMutation, UpdateHabitMutationVariables>;
+
+/**
+ * __useUpdateHabitMutation__
+ *
+ * To run a mutation, you first call `useUpdateHabitMutation` within a React component and pass it any options that fit your needs.
+ * When your component renders, `useUpdateHabitMutation` returns a tuple that includes:
+ * - A mutate function that you can call at any time to execute the mutation
+ * - An object with fields that represent the current status of the mutation's execution
+ *
+ * @param baseOptions options that will be passed into the mutation, supported options are listed on: https://www.apollographql.com/docs/react/api/react-hooks/#options-2;
+ *
+ * @example
+ * const [updateHabitMutation, { data, loading, error }] = useUpdateHabitMutation({
+ *   variables: {
+ *      id: // value for 'id'
+ *      input: // value for 'input'
+ *   },
+ * });
+ */
+export function useUpdateHabitMutation(baseOptions?: Apollo.MutationHookOptions<UpdateHabitMutation, UpdateHabitMutationVariables>) {
+        const options = {...defaultOptions, ...baseOptions}
+        return Apollo.useMutation<UpdateHabitMutation, UpdateHabitMutationVariables>(UpdateHabitDocument, options);
+      }
+export type UpdateHabitMutationHookResult = ReturnType<typeof useUpdateHabitMutation>;
+export type UpdateHabitMutationResult = Apollo.MutationResult<UpdateHabitMutation>;
+export type UpdateHabitMutationOptions = Apollo.BaseMutationOptions<UpdateHabitMutation, UpdateHabitMutationVariables>;
 export const UpdateIssueDocument = gql`
     mutation UpdateIssue($id: Int!, $input: UpdateIssueInput!) {
   updateIssue(id: $id, input: $input) {

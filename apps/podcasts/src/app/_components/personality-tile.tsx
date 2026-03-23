@@ -149,16 +149,16 @@ export function PersonalityTile({ personality, accentGradient }: Props) {
                     px: "2.5",
                     py: "1.5",
                     rounded: "full",
-                    bg: "rgba(255,255,255,0.07)",
+                    bg: "whiteAlpha.7",
                     color: "#ADADB8",
                     borderWidth: "1px",
-                    borderColor: "rgba(255,255,255,0.10)",
+                    borderColor: "whiteAlpha.10",
                     transition: "all",
                     transitionDuration: "200ms",
                     _groupHover: {
-                      bg: "rgba(255,255,255,0.10)",
+                      bg: "whiteAlpha.10",
                       borderColor: "rgba(255,255,255,0.14)",
-                      color: "#C4C4CC",
+                      color: "ui.body",
                     },
                   })}
                 >
@@ -174,10 +174,10 @@ export function PersonalityTile({ personality, accentGradient }: Props) {
                     px: "2.5",
                     py: "1",
                     rounded: "full",
-                    bg: "rgba(255,255,255,0.05)",
+                    bg: "whiteAlpha.5",
                     color: "#A0A0AB",
                     borderWidth: "1px",
-                    borderColor: "rgba(255,255,255,0.06)",
+                    borderColor: "card.border",
                   })}
                 >
                   +{personality.podcasts.length - 3}

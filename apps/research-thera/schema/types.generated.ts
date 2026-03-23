@@ -246,6 +246,14 @@ export type CreateGoalInput = {
   title: Scalars['String']['input'];
 };
 
+export type CreateHabitInput = {
+  description?: InputMaybe<Scalars['String']['input']>;
+  frequency?: InputMaybe<HabitFrequency>;
+  goalId?: InputMaybe<Scalars['Int']['input']>;
+  targetCount?: InputMaybe<Scalars['Int']['input']>;
+  title: Scalars['String']['input'];
+};
+
 export type CreateIssueInput = {
   category: Scalars['String']['input'];
   description: Scalars['String']['input'];
@@ -375,6 +383,12 @@ export type DeleteFamilyMemberResult = {
 
 export type DeleteGoalResult = {
   __typename?: 'DeleteGoalResult';
+  message?: Maybe<Scalars['String']['output']>;
+  success: Scalars['Boolean']['output'];
+};
+
+export type DeleteHabitResult = {
+  __typename?: 'DeleteHabitResult';
   message?: Maybe<Scalars['String']['output']>;
   success: Scalars['Boolean']['output'];
 };
@@ -649,6 +663,42 @@ export type Goal = {
   updatedAt: Scalars['String']['output'];
 };
 
+export type Habit = {
+  __typename?: 'Habit';
+  createdAt: Scalars['String']['output'];
+  description?: Maybe<Scalars['String']['output']>;
+  frequency: HabitFrequency;
+  goalId?: Maybe<Scalars['Int']['output']>;
+  id: Scalars['Int']['output'];
+  logs: Array<HabitLog>;
+  status: HabitStatus;
+  targetCount: Scalars['Int']['output'];
+  title: Scalars['String']['output'];
+  todayLog?: Maybe<HabitLog>;
+  updatedAt: Scalars['String']['output'];
+  userId: Scalars['String']['output'];
+};
+
+export type HabitFrequency =
+  | 'DAILY'
+  | 'WEEKLY';
+
+export type HabitLog = {
+  __typename?: 'HabitLog';
+  count: Scalars['Int']['output'];
+  createdAt: Scalars['String']['output'];
+  habitId: Scalars['Int']['output'];
+  id: Scalars['Int']['output'];
+  loggedDate: Scalars['String']['output'];
+  notes?: Maybe<Scalars['String']['output']>;
+  userId: Scalars['String']['output'];
+};
+
+export type HabitStatus =
+  | 'ACTIVE'
+  | 'ARCHIVED'
+  | 'PAUSED';
+
 export type Issue = {
   __typename?: 'Issue';
   category: Scalars['String']['output'];
@@ -742,6 +792,7 @@ export type Mutation = {
   createContactFeedback: ContactFeedback;
   createFamilyMember: FamilyMember;
   createGoal: Goal;
+  createHabit: Habit;
   createIssue: Issue;
   createJournalEntry: JournalEntry;
   createNote: Note;
@@ -757,6 +808,8 @@ export type Mutation = {
   deleteDeepIssueAnalysis: DeleteDeepAnalysisResult;
   deleteFamilyMember: DeleteFamilyMemberResult;
   deleteGoal: DeleteGoalResult;
+  deleteHabit: DeleteHabitResult;
+  deleteHabitLog: Scalars['Boolean']['output'];
   deleteIssue: DeleteIssueResult;
   deleteJournalEntry: DeleteJournalEntryResult;
   deleteNote: DeleteNoteResult;
@@ -774,6 +827,7 @@ export type Mutation = {
   generateResearch: GenerateResearchResult;
   generateTherapeuticQuestions: GenerateQuestionsResult;
   linkIssues: IssueLink;
+  logHabit: HabitLog;
   markTeacherFeedbackExtracted: TeacherFeedback;
   refreshClaimCard: ClaimCard;
   setNoteVisibility: Note;
@@ -788,6 +842,7 @@ export type Mutation = {
   updateContactFeedback: ContactFeedback;
   updateFamilyMember: FamilyMember;
   updateGoal: Goal;
+  updateHabit: Habit;
   updateIssue: Issue;
   updateJournalEntry: JournalEntry;
   updateNote: Note;
@@ -837,6 +892,11 @@ export type MutationcreateFamilyMemberArgs = {
 
 export type MutationcreateGoalArgs = {
   input: CreateGoalInput;
+};
+
+
+export type MutationcreateHabitArgs = {
+  input: CreateHabitInput;
 };
 
 
@@ -914,6 +974,16 @@ export type MutationdeleteFamilyMemberArgs = {
 
 
 export type MutationdeleteGoalArgs = {
+  id: Scalars['Int']['input'];
+};
+
+
+export type MutationdeleteHabitArgs = {
+  id: Scalars['Int']['input'];
+};
+
+
+export type MutationdeleteHabitLogArgs = {
   id: Scalars['Int']['input'];
 };
 
@@ -1021,6 +1091,14 @@ export type MutationlinkIssuesArgs = {
 };
 
 
+export type MutationlogHabitArgs = {
+  count?: InputMaybe<Scalars['Int']['input']>;
+  habitId: Scalars['Int']['input'];
+  loggedDate: Scalars['String']['input'];
+  notes?: InputMaybe<Scalars['String']['input']>;
+};
+
+
 export type MutationmarkTeacherFeedbackExtractedArgs = {
   id: Scalars['Int']['input'];
 };
@@ -1101,6 +1179,12 @@ export type MutationupdateFamilyMemberArgs = {
 export type MutationupdateGoalArgs = {
   id: Scalars['Int']['input'];
   input: UpdateGoalInput;
+};
+
+
+export type MutationupdateHabitArgs = {
+  id: Scalars['Int']['input'];
+  input: UpdateHabitInput;
 };
 
 
@@ -1310,6 +1394,8 @@ export type Query = {
   generationJobs: Array<GenerationJob>;
   goal?: Maybe<Goal>;
   goals: Array<Goal>;
+  habit?: Maybe<Habit>;
+  habits: Array<Habit>;
   issue?: Maybe<Issue>;
   issues: Array<Issue>;
   journalEntries: Array<JournalEntry>;
@@ -1408,6 +1494,16 @@ export type QuerygoalArgs = {
 
 export type QuerygoalsArgs = {
   familyMemberId?: InputMaybe<Scalars['Int']['input']>;
+  status?: InputMaybe<Scalars['String']['input']>;
+};
+
+
+export type QueryhabitArgs = {
+  id: Scalars['Int']['input'];
+};
+
+
+export type QueryhabitsArgs = {
   status?: InputMaybe<Scalars['String']['input']>;
 };
 
@@ -1714,6 +1810,15 @@ export type UpdateGoalInput = {
   title?: InputMaybe<Scalars['String']['input']>;
 };
 
+export type UpdateHabitInput = {
+  description?: InputMaybe<Scalars['String']['input']>;
+  frequency?: InputMaybe<HabitFrequency>;
+  goalId?: InputMaybe<Scalars['Int']['input']>;
+  status?: InputMaybe<HabitStatus>;
+  targetCount?: InputMaybe<Scalars['Int']['input']>;
+  title?: InputMaybe<Scalars['String']['input']>;
+};
+
 export type UpdateIssueInput = {
   category?: InputMaybe<Scalars['String']['input']>;
   description?: InputMaybe<Scalars['String']['input']>;
@@ -1873,6 +1978,7 @@ export type ResolversTypes = {
   CreateContactInput: CreateContactInput;
   CreateFamilyMemberInput: CreateFamilyMemberInput;
   CreateGoalInput: CreateGoalInput;
+  CreateHabitInput: CreateHabitInput;
   CreateIssueInput: CreateIssueInput;
   CreateJournalEntryInput: CreateJournalEntryInput;
   CreateNoteInput: CreateNoteInput;
@@ -1888,6 +1994,7 @@ export type ResolversTypes = {
   DeleteDeepAnalysisResult: ResolverTypeWrapper<DeleteDeepAnalysisResult>;
   DeleteFamilyMemberResult: ResolverTypeWrapper<DeleteFamilyMemberResult>;
   DeleteGoalResult: ResolverTypeWrapper<DeleteGoalResult>;
+  DeleteHabitResult: ResolverTypeWrapper<DeleteHabitResult>;
   DeleteIssueResult: ResolverTypeWrapper<DeleteIssueResult>;
   DeleteJournalEntryResult: ResolverTypeWrapper<DeleteJournalEntryResult>;
   DeleteNoteResult: ResolverTypeWrapper<DeleteNoteResult>;
@@ -1916,6 +2023,10 @@ export type ResolversTypes = {
   GenerateResearchResult: ResolverTypeWrapper<GenerateResearchResult>;
   GenerationJob: ResolverTypeWrapper<Omit<GenerationJob, 'status' | 'type'> & { status: ResolversTypes['JobStatus'], type: ResolversTypes['JobType'] }>;
   Goal: ResolverTypeWrapper<Omit<Goal, 'familyMember' | 'notes' | 'parentGoal' | 'research' | 'stories' | 'subGoals'> & { familyMember?: Maybe<ResolversTypes['FamilyMember']>, notes: Array<ResolversTypes['Note']>, parentGoal?: Maybe<ResolversTypes['Goal']>, research: Array<ResolversTypes['Research']>, stories: Array<ResolversTypes['Story']>, subGoals: Array<ResolversTypes['Goal']> }>;
+  Habit: ResolverTypeWrapper<Omit<Habit, 'frequency' | 'status'> & { frequency: ResolversTypes['HabitFrequency'], status: ResolversTypes['HabitStatus'] }>;
+  HabitFrequency: ResolverTypeWrapper<'DAILY' | 'WEEKLY'>;
+  HabitLog: ResolverTypeWrapper<HabitLog>;
+  HabitStatus: ResolverTypeWrapper<'ACTIVE' | 'PAUSED' | 'ARCHIVED'>;
   Issue: ResolverTypeWrapper<Omit<Issue, 'familyMember' | 'feedback' | 'journalEntry' | 'relatedFamilyMember' | 'relatedIssues' | 'stories'> & { familyMember?: Maybe<ResolversTypes['FamilyMember']>, feedback?: Maybe<ResolversTypes['ContactFeedback']>, journalEntry?: Maybe<ResolversTypes['JournalEntry']>, relatedFamilyMember?: Maybe<ResolversTypes['FamilyMember']>, relatedIssues: Array<ResolversTypes['IssueLink']>, stories: Array<ResolversTypes['Story']> }>;
   IssueLink: ResolverTypeWrapper<Omit<IssueLink, 'issue'> & { issue: ResolversTypes['Issue'] }>;
   JobError: ResolverTypeWrapper<JobError>;
@@ -1959,6 +2070,7 @@ export type ResolversTypes = {
   UpdateContactInput: UpdateContactInput;
   UpdateFamilyMemberInput: UpdateFamilyMemberInput;
   UpdateGoalInput: UpdateGoalInput;
+  UpdateHabitInput: UpdateHabitInput;
   UpdateIssueInput: UpdateIssueInput;
   UpdateJournalEntryInput: UpdateJournalEntryInput;
   UpdateNoteInput: UpdateNoteInput;
@@ -1995,6 +2107,7 @@ export type ResolversParentTypes = {
   CreateContactInput: CreateContactInput;
   CreateFamilyMemberInput: CreateFamilyMemberInput;
   CreateGoalInput: CreateGoalInput;
+  CreateHabitInput: CreateHabitInput;
   CreateIssueInput: CreateIssueInput;
   CreateJournalEntryInput: CreateJournalEntryInput;
   CreateNoteInput: CreateNoteInput;
@@ -2010,6 +2123,7 @@ export type ResolversParentTypes = {
   DeleteDeepAnalysisResult: DeleteDeepAnalysisResult;
   DeleteFamilyMemberResult: DeleteFamilyMemberResult;
   DeleteGoalResult: DeleteGoalResult;
+  DeleteHabitResult: DeleteHabitResult;
   DeleteIssueResult: DeleteIssueResult;
   DeleteJournalEntryResult: DeleteJournalEntryResult;
   DeleteNoteResult: DeleteNoteResult;
@@ -2034,6 +2148,8 @@ export type ResolversParentTypes = {
   GenerateResearchResult: GenerateResearchResult;
   GenerationJob: GenerationJob;
   Goal: Omit<Goal, 'familyMember' | 'notes' | 'parentGoal' | 'research' | 'stories' | 'subGoals'> & { familyMember?: Maybe<ResolversParentTypes['FamilyMember']>, notes: Array<ResolversParentTypes['Note']>, parentGoal?: Maybe<ResolversParentTypes['Goal']>, research: Array<ResolversParentTypes['Research']>, stories: Array<ResolversParentTypes['Story']>, subGoals: Array<ResolversParentTypes['Goal']> };
+  Habit: Habit;
+  HabitLog: HabitLog;
   Issue: Omit<Issue, 'familyMember' | 'feedback' | 'journalEntry' | 'relatedFamilyMember' | 'relatedIssues' | 'stories'> & { familyMember?: Maybe<ResolversParentTypes['FamilyMember']>, feedback?: Maybe<ResolversParentTypes['ContactFeedback']>, journalEntry?: Maybe<ResolversParentTypes['JournalEntry']>, relatedFamilyMember?: Maybe<ResolversParentTypes['FamilyMember']>, relatedIssues: Array<ResolversParentTypes['IssueLink']>, stories: Array<ResolversParentTypes['Story']> };
   IssueLink: Omit<IssueLink, 'issue'> & { issue: ResolversParentTypes['Issue'] };
   JobError: JobError;
@@ -2066,6 +2182,7 @@ export type ResolversParentTypes = {
   UpdateContactInput: UpdateContactInput;
   UpdateFamilyMemberInput: UpdateFamilyMemberInput;
   UpdateGoalInput: UpdateGoalInput;
+  UpdateHabitInput: UpdateHabitInput;
   UpdateIssueInput: UpdateIssueInput;
   UpdateJournalEntryInput: UpdateJournalEntryInput;
   UpdateNoteInput: UpdateNoteInput;
@@ -2270,6 +2387,11 @@ export type DeleteFamilyMemberResultResolvers<ContextType = GraphQLContext, Pare
 };
 
 export type DeleteGoalResultResolvers<ContextType = GraphQLContext, ParentType extends ResolversParentTypes['DeleteGoalResult'] = ResolversParentTypes['DeleteGoalResult']> = {
+  message?: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType>;
+  success?: Resolver<ResolversTypes['Boolean'], ParentType, ContextType>;
+};
+
+export type DeleteHabitResultResolvers<ContextType = GraphQLContext, ParentType extends ResolversParentTypes['DeleteHabitResult'] = ResolversParentTypes['DeleteHabitResult']> = {
   message?: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType>;
   success?: Resolver<ResolversTypes['Boolean'], ParentType, ContextType>;
 };
@@ -2487,6 +2609,35 @@ export type GoalResolvers<ContextType = GraphQLContext, ParentType extends Resol
   updatedAt?: Resolver<ResolversTypes['String'], ParentType, ContextType>;
 };
 
+export type HabitResolvers<ContextType = GraphQLContext, ParentType extends ResolversParentTypes['Habit'] = ResolversParentTypes['Habit']> = {
+  createdAt?: Resolver<ResolversTypes['String'], ParentType, ContextType>;
+  description?: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType>;
+  frequency?: Resolver<ResolversTypes['HabitFrequency'], ParentType, ContextType>;
+  goalId?: Resolver<Maybe<ResolversTypes['Int']>, ParentType, ContextType>;
+  id?: Resolver<ResolversTypes['Int'], ParentType, ContextType>;
+  logs?: Resolver<Array<ResolversTypes['HabitLog']>, ParentType, ContextType>;
+  status?: Resolver<ResolversTypes['HabitStatus'], ParentType, ContextType>;
+  targetCount?: Resolver<ResolversTypes['Int'], ParentType, ContextType>;
+  title?: Resolver<ResolversTypes['String'], ParentType, ContextType>;
+  todayLog?: Resolver<Maybe<ResolversTypes['HabitLog']>, ParentType, ContextType>;
+  updatedAt?: Resolver<ResolversTypes['String'], ParentType, ContextType>;
+  userId?: Resolver<ResolversTypes['String'], ParentType, ContextType>;
+};
+
+export type HabitFrequencyResolvers = EnumResolverSignature<{ DAILY?: any, WEEKLY?: any }, ResolversTypes['HabitFrequency']>;
+
+export type HabitLogResolvers<ContextType = GraphQLContext, ParentType extends ResolversParentTypes['HabitLog'] = ResolversParentTypes['HabitLog']> = {
+  count?: Resolver<ResolversTypes['Int'], ParentType, ContextType>;
+  createdAt?: Resolver<ResolversTypes['String'], ParentType, ContextType>;
+  habitId?: Resolver<ResolversTypes['Int'], ParentType, ContextType>;
+  id?: Resolver<ResolversTypes['Int'], ParentType, ContextType>;
+  loggedDate?: Resolver<ResolversTypes['String'], ParentType, ContextType>;
+  notes?: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType>;
+  userId?: Resolver<ResolversTypes['String'], ParentType, ContextType>;
+};
+
+export type HabitStatusResolvers = EnumResolverSignature<{ ACTIVE?: any, ARCHIVED?: any, PAUSED?: any }, ResolversTypes['HabitStatus']>;
+
 export type IssueResolvers<ContextType = GraphQLContext, ParentType extends ResolversParentTypes['Issue'] = ResolversParentTypes['Issue']> = {
   category?: Resolver<ResolversTypes['String'], ParentType, ContextType>;
   createdAt?: Resolver<ResolversTypes['String'], ParentType, ContextType>;
@@ -2567,6 +2718,7 @@ export type MutationResolvers<ContextType = GraphQLContext, ParentType extends R
   createContactFeedback?: Resolver<ResolversTypes['ContactFeedback'], ParentType, ContextType, RequireFields<MutationcreateContactFeedbackArgs, 'input'>>;
   createFamilyMember?: Resolver<ResolversTypes['FamilyMember'], ParentType, ContextType, RequireFields<MutationcreateFamilyMemberArgs, 'input'>>;
   createGoal?: Resolver<ResolversTypes['Goal'], ParentType, ContextType, RequireFields<MutationcreateGoalArgs, 'input'>>;
+  createHabit?: Resolver<ResolversTypes['Habit'], ParentType, ContextType, RequireFields<MutationcreateHabitArgs, 'input'>>;
   createIssue?: Resolver<ResolversTypes['Issue'], ParentType, ContextType, RequireFields<MutationcreateIssueArgs, 'input'>>;
   createJournalEntry?: Resolver<ResolversTypes['JournalEntry'], ParentType, ContextType, RequireFields<MutationcreateJournalEntryArgs, 'input'>>;
   createNote?: Resolver<ResolversTypes['Note'], ParentType, ContextType, RequireFields<MutationcreateNoteArgs, 'input'>>;
@@ -2582,6 +2734,8 @@ export type MutationResolvers<ContextType = GraphQLContext, ParentType extends R
   deleteDeepIssueAnalysis?: Resolver<ResolversTypes['DeleteDeepAnalysisResult'], ParentType, ContextType, RequireFields<MutationdeleteDeepIssueAnalysisArgs, 'id'>>;
   deleteFamilyMember?: Resolver<ResolversTypes['DeleteFamilyMemberResult'], ParentType, ContextType, RequireFields<MutationdeleteFamilyMemberArgs, 'id'>>;
   deleteGoal?: Resolver<ResolversTypes['DeleteGoalResult'], ParentType, ContextType, RequireFields<MutationdeleteGoalArgs, 'id'>>;
+  deleteHabit?: Resolver<ResolversTypes['DeleteHabitResult'], ParentType, ContextType, RequireFields<MutationdeleteHabitArgs, 'id'>>;
+  deleteHabitLog?: Resolver<ResolversTypes['Boolean'], ParentType, ContextType, RequireFields<MutationdeleteHabitLogArgs, 'id'>>;
   deleteIssue?: Resolver<ResolversTypes['DeleteIssueResult'], ParentType, ContextType, RequireFields<MutationdeleteIssueArgs, 'id'>>;
   deleteJournalEntry?: Resolver<ResolversTypes['DeleteJournalEntryResult'], ParentType, ContextType, RequireFields<MutationdeleteJournalEntryArgs, 'id'>>;
   deleteNote?: Resolver<ResolversTypes['DeleteNoteResult'], ParentType, ContextType, RequireFields<MutationdeleteNoteArgs, 'id'>>;
@@ -2599,6 +2753,7 @@ export type MutationResolvers<ContextType = GraphQLContext, ParentType extends R
   generateResearch?: Resolver<ResolversTypes['GenerateResearchResult'], ParentType, ContextType, Partial<MutationgenerateResearchArgs>>;
   generateTherapeuticQuestions?: Resolver<ResolversTypes['GenerateQuestionsResult'], ParentType, ContextType, Partial<MutationgenerateTherapeuticQuestionsArgs>>;
   linkIssues?: Resolver<ResolversTypes['IssueLink'], ParentType, ContextType, RequireFields<MutationlinkIssuesArgs, 'issueId' | 'linkedIssueId'>>;
+  logHabit?: Resolver<ResolversTypes['HabitLog'], ParentType, ContextType, RequireFields<MutationlogHabitArgs, 'habitId' | 'loggedDate'>>;
   markTeacherFeedbackExtracted?: Resolver<ResolversTypes['TeacherFeedback'], ParentType, ContextType, RequireFields<MutationmarkTeacherFeedbackExtractedArgs, 'id'>>;
   refreshClaimCard?: Resolver<ResolversTypes['ClaimCard'], ParentType, ContextType, RequireFields<MutationrefreshClaimCardArgs, 'id'>>;
   setNoteVisibility?: Resolver<ResolversTypes['Note'], ParentType, ContextType, RequireFields<MutationsetNoteVisibilityArgs, 'noteId' | 'visibility'>>;
@@ -2613,6 +2768,7 @@ export type MutationResolvers<ContextType = GraphQLContext, ParentType extends R
   updateContactFeedback?: Resolver<ResolversTypes['ContactFeedback'], ParentType, ContextType, RequireFields<MutationupdateContactFeedbackArgs, 'id' | 'input'>>;
   updateFamilyMember?: Resolver<ResolversTypes['FamilyMember'], ParentType, ContextType, RequireFields<MutationupdateFamilyMemberArgs, 'id' | 'input'>>;
   updateGoal?: Resolver<ResolversTypes['Goal'], ParentType, ContextType, RequireFields<MutationupdateGoalArgs, 'id' | 'input'>>;
+  updateHabit?: Resolver<ResolversTypes['Habit'], ParentType, ContextType, RequireFields<MutationupdateHabitArgs, 'id' | 'input'>>;
   updateIssue?: Resolver<ResolversTypes['Issue'], ParentType, ContextType, RequireFields<MutationupdateIssueArgs, 'id' | 'input'>>;
   updateJournalEntry?: Resolver<ResolversTypes['JournalEntry'], ParentType, ContextType, RequireFields<MutationupdateJournalEntryArgs, 'id' | 'input'>>;
   updateNote?: Resolver<ResolversTypes['Note'], ParentType, ContextType, RequireFields<MutationupdateNoteArgs, 'id' | 'input'>>;
@@ -2748,6 +2904,8 @@ export type QueryResolvers<ContextType = GraphQLContext, ParentType extends Reso
   generationJobs?: Resolver<Array<ResolversTypes['GenerationJob']>, ParentType, ContextType, Partial<QuerygenerationJobsArgs>>;
   goal?: Resolver<Maybe<ResolversTypes['Goal']>, ParentType, ContextType, Partial<QuerygoalArgs>>;
   goals?: Resolver<Array<ResolversTypes['Goal']>, ParentType, ContextType, Partial<QuerygoalsArgs>>;
+  habit?: Resolver<Maybe<ResolversTypes['Habit']>, ParentType, ContextType, RequireFields<QueryhabitArgs, 'id'>>;
+  habits?: Resolver<Array<ResolversTypes['Habit']>, ParentType, ContextType, Partial<QueryhabitsArgs>>;
   issue?: Resolver<Maybe<ResolversTypes['Issue']>, ParentType, ContextType, RequireFields<QueryissueArgs, 'id'>>;
   issues?: Resolver<Array<ResolversTypes['Issue']>, ParentType, ContextType, RequireFields<QueryissuesArgs, 'familyMemberId'>>;
   journalEntries?: Resolver<Array<ResolversTypes['JournalEntry']>, ParentType, ContextType, Partial<QueryjournalEntriesArgs>>;
@@ -2940,6 +3098,7 @@ export type Resolvers<ContextType = GraphQLContext> = {
   DeleteDeepAnalysisResult?: DeleteDeepAnalysisResultResolvers<ContextType>;
   DeleteFamilyMemberResult?: DeleteFamilyMemberResultResolvers<ContextType>;
   DeleteGoalResult?: DeleteGoalResultResolvers<ContextType>;
+  DeleteHabitResult?: DeleteHabitResultResolvers<ContextType>;
   DeleteIssueResult?: DeleteIssueResultResolvers<ContextType>;
   DeleteJournalEntryResult?: DeleteJournalEntryResultResolvers<ContextType>;
   DeleteNoteResult?: DeleteNoteResultResolvers<ContextType>;
@@ -2967,6 +3126,10 @@ export type Resolvers<ContextType = GraphQLContext> = {
   GenerateResearchResult?: GenerateResearchResultResolvers<ContextType>;
   GenerationJob?: GenerationJobResolvers<ContextType>;
   Goal?: GoalResolvers<ContextType>;
+  Habit?: HabitResolvers<ContextType>;
+  HabitFrequency?: HabitFrequencyResolvers;
+  HabitLog?: HabitLogResolvers<ContextType>;
+  HabitStatus?: HabitStatusResolvers;
   Issue?: IssueResolvers<ContextType>;
   IssueLink?: IssueLinkResolvers<ContextType>;
   JobError?: JobErrorResolvers<ContextType>;

@@ -253,7 +253,7 @@ export function SearchModal({ open: controlledOpen, onClose, triggerRef }: Searc
 
       {/* Modal card */}
       <div
-        className={css({ pos: 'relative', bg: '#141418', borderWidth: '1px', borderColor: 'rgba(255,255,255,0.08)', rounded: '2xl', maxW: 'lg', w: 'full', mx: '4', shadow: '2xl', overflow: 'hidden' })}
+        className={css({ pos: 'relative', bg: 'card.bg', borderWidth: '1px', borderColor: 'whiteAlpha.8', rounded: '2xl', maxW: 'lg', w: 'full', mx: '4', shadow: '2xl', overflow: 'hidden' })}
         style={{ animation: "search-modal-in 0.15s ease-out both" }}
       >
         {/* Search input row */}

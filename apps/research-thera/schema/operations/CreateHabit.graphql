@@ -1,0 +1,13 @@
+mutation CreateHabit($input: CreateHabitInput!) {
+  createHabit(input: $input) {
+    id
+    title
+    description
+    frequency
+    targetCount
+    status
+    goalId
+    createdAt
+    updatedAt
+  }
+}

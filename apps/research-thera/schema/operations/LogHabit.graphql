@@ -1,0 +1,10 @@
+mutation LogHabit($habitId: Int!, $loggedDate: String!, $count: Int, $notes: String) {
+  logHabit(habitId: $habitId, loggedDate: $loggedDate, count: $count, notes: $notes) {
+    id
+    habitId
+    loggedDate
+    count
+    notes
+    createdAt
+  }
+}

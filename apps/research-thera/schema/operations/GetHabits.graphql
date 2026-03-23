@@ -1,0 +1,18 @@
+query GetHabits($status: String) {
+  habits(status: $status) {
+    id
+    title
+    description
+    frequency
+    targetCount
+    status
+    goalId
+    createdAt
+    updatedAt
+    todayLog {
+      id
+      loggedDate
+      count
+    }
+  }
+}

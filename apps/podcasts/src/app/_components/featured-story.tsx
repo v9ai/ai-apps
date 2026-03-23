@@ -115,15 +115,15 @@ export function FeaturedStory({
                 />
               ) : (
                 <div
-                  className={css({ w: '200px', h: '200px', rounded: 'full', display: 'flex', alignItems: 'center', justifyContent: 'center', bg: '#1C1C22', transition: 'transform', transitionDuration: '500ms', _groupHover: { transform: 'scale(1.02)' }, md: { w: '60', h: '60' }, lg: { w: '280px', h: '280px' } })}
+                  className={css({ w: '200px', h: '200px', rounded: 'full', display: 'flex', alignItems: 'center', justifyContent: 'center', bg: 'card.bgHover', transition: 'transform', transitionDuration: '500ms', _groupHover: { transform: 'scale(1.02)' }, md: { w: '60', h: '60' }, lg: { w: '280px', h: '280px' } })}
                   style={{ boxShadow: avatarBoxShadow }}
                 >
-                  <span className={css({ fontSize: '4xl', fontWeight: 'bold', color: '#7B7B86', userSelect: 'none', md: { fontSize: '5xl' }, lg: { fontSize: '6xl' } })}>
+                  <span className={css({ fontSize: '4xl', fontWeight: 'bold', color: 'ui.dim', userSelect: 'none', md: { fontSize: '5xl' }, lg: { fontSize: '6xl' } })}>
                     {initials}
                   </span>
                 </div>
               )}
-              <span className={css({ mt: '6', rounded: 'full', px: '4', py: '1.5', fontSize: 'xs', fontWeight: 'medium', letterSpacing: '0.05em', textTransform: 'uppercase', color: '#8B8B96', borderWidth: '1px', borderColor: 'rgba(255,255,255,0.08)', bg: 'rgba(255,255,255,0.04)', boxShadow: '0 1px 3px rgba(0,0,0,0.3), inset 0 1px 0 rgba(255,255,255,0.04)' })}>
+              <span className={css({ mt: '6', rounded: 'full', px: '4', py: '1.5', fontSize: 'xs', fontWeight: 'medium', letterSpacing: '0.05em', textTransform: 'uppercase', color: 'ui.tertiary', borderWidth: '1px', borderColor: 'whiteAlpha.8', bg: 'whiteAlpha.4', boxShadow: '0 1px 3px rgba(0,0,0,0.3), inset 0 1px 0 rgba(255,255,255,0.04)' })}>
                 {categoryName}
               </span>
             </div>
@@ -165,18 +165,18 @@ export function FeaturedStory({
               </blockquote>
 
               <h2
-                className={css({ fontSize: 'xl', fontWeight: 'bold', color: '#E8E8ED', mt: { base: '5', md: '6' } })}
+                className={css({ fontSize: 'xl', fontWeight: 'bold', color: 'ui.heading', mt: { base: '5', md: '6' } })}
                 style={{ animation: 'fade-in-up 0.6s ease-out 0.5s both' }}
               >
                 {personality.name}
               </h2>
 
               <p
-                className={css({ color: '#9B9BA6', fontSize: '0.9375rem', mt: '2' })}
+                className={css({ color: 'ui.secondary', fontSize: '0.9375rem', mt: '2' })}
                 style={{ animation: 'fade-in-up 0.6s ease-out 0.6s both' }}
               >
                 {personality.role}
-                <span className={css({ mx: '2', color: '#3A3A45' })}>&middot;</span>
+                <span className={css({ mx: '2', color: 'ui.dark' })}>&middot;</span>
                 {personality.org}
               </p>
 
@@ -203,7 +203,7 @@ export function FeaturedStory({
                     rounded: 'full',
                     fontSize: 'sm',
                     fontWeight: '600',
-                    color: '#E8E8ED',
+                    color: 'ui.heading',
                     bg: 'rgba(167, 139, 250, 0.08)',
                     borderWidth: '1px',
                     borderColor: 'rgba(167, 139, 250, 0.18)',
@@ -232,7 +232,7 @@ export function FeaturedStory({
                       gap: '1.5',
                       fontSize: 'xs',
                       fontWeight: '500',
-                      color: '#7B7B86',
+                      color: 'ui.dim',
                       letterSpacing: '0.02em',
                     })}
                   >

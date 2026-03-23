@@ -215,6 +215,14 @@ input CreateGoalInput {
   title: String!
 }
 
+input CreateHabitInput {
+  description: String
+  frequency: HabitFrequency
+  goalId: Int
+  targetCount: Int
+  title: String!
+}
+
 input CreateIssueInput {
   category: String!
   description: String!
@@ -336,6 +344,11 @@ type DeleteFamilyMemberResult {
 }
 
 type DeleteGoalResult {
+  message: String
+  success: Boolean!
+}
+
+type DeleteHabitResult {
   message: String
   success: Boolean!
 }
@@ -586,6 +599,42 @@ type Goal {
   updatedAt: String!
 }
 
+type Habit {
+  createdAt: String!
+  description: String
+  frequency: HabitFrequency!
+  goalId: Int
+  id: Int!
+  logs: [HabitLog!]!
+  status: HabitStatus!
+  targetCount: Int!
+  title: String!
+  todayLog: HabitLog
+  updatedAt: String!
+  userId: String!
+}
+
+enum HabitFrequency {
+  DAILY
+  WEEKLY
+}
+
+type HabitLog {
+  count: Int!
+  createdAt: String!
+  habitId: Int!
+  id: Int!
+  loggedDate: String!
+  notes: String
+  userId: String!
+}
+
+enum HabitStatus {
+  ACTIVE
+  ARCHIVED
+  PAUSED
+}
+
 type Issue {
   category: String!
   createdAt: String!
@@ -675,6 +724,7 @@ type Mutation {
   createContactFeedback(input: CreateContactFeedbackInput!): ContactFeedback!
   createFamilyMember(input: CreateFamilyMemberInput!): FamilyMember!
   createGoal(input: CreateGoalInput!): Goal!
+  createHabit(input: CreateHabitInput!): Habit!
   createIssue(input: CreateIssueInput!): Issue!
   createJournalEntry(input: CreateJournalEntryInput!): JournalEntry!
   createNote(input: CreateNoteInput!): Note!
@@ -690,6 +740,8 @@ type Mutation {
   deleteDeepIssueAnalysis(id: Int!): DeleteDeepAnalysisResult!
   deleteFamilyMember(id: Int!): DeleteFamilyMemberResult!
   deleteGoal(id: Int!): DeleteGoalResult!
+  deleteHabit(id: Int!): DeleteHabitResult!
+  deleteHabitLog(id: Int!): Boolean!
   deleteIssue(id: Int!): DeleteIssueResult!
   deleteJournalEntry(id: Int!): DeleteJournalEntryResult!
   deleteNote(id: Int!): DeleteNoteResult!
@@ -707,6 +759,7 @@ type Mutation {
   generateResearch(feedbackId: Int, goalId: Int, issueId: Int): GenerateResearchResult!
   generateTherapeuticQuestions(goalId: Int, issueId: Int): GenerateQuestionsResult!
   linkIssues(issueId: Int!, linkType: String, linkedIssueId: Int!): IssueLink!
+  logHabit(count: Int, habitId: Int!, loggedDate: String!, notes: String): HabitLog!
   markTeacherFeedbackExtracted(id: Int!): TeacherFeedback!
   refreshClaimCard(id: ID!): ClaimCard!
   setNoteVisibility(noteId: Int!, visibility: NoteVisibility!): Note!
@@ -721,6 +774,7 @@ type Mutation {
   updateContactFeedback(id: Int!, input: UpdateContactFeedbackInput!): ContactFeedback!
   updateFamilyMember(id: Int!, input: UpdateFamilyMemberInput!): FamilyMember!
   updateGoal(id: Int!, input: UpdateGoalInput!): Goal!
+  updateHabit(id: Int!, input: UpdateHabitInput!): Habit!
   updateIssue(id: Int!, input: UpdateIssueInput!): Issue!
   updateJournalEntry(id: Int!, input: UpdateJournalEntryInput!): JournalEntry!
   updateNote(id: Int!, input: UpdateNoteInput!): Note!
@@ -893,6 +947,8 @@ type Query {
   generationJobs(goalId: Int, status: String): [GenerationJob!]!
   goal(id: Int, slug: String): Goal
   goals(familyMemberId: Int, status: String): [Goal!]!
+  habit(id: Int!): Habit
+  habits(status: String): [Habit!]!
   issue(id: Int!): Issue
   issues(familyMemberId: Int!, feedbackId: Int): [Issue!]!
   journalEntries(familyMemberId: Int, fromDate: String, goalId: Int, mood: String, toDate: String): [JournalEntry!]!
@@ -1111,6 +1167,15 @@ input UpdateGoalInput {
   status: String
   storyLanguage: String
   targetDate: String
+  title: String
+}
+
+input UpdateHabitInput {
+  description: String
+  frequency: HabitFrequency
+  goalId: Int
+  status: HabitStatus
+  targetCount: Int
   title: String
 }
 

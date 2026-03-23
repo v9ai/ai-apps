@@ -1,0 +1,3 @@
+mutation DeleteHabitLog($id: Int!) {
+  deleteHabitLog(id: $id)
+}

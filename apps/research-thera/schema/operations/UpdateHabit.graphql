@@ -1,0 +1,12 @@
+mutation UpdateHabit($id: Int!, $input: UpdateHabitInput!) {
+  updateHabit(id: $id, input: $input) {
+    id
+    title
+    description
+    frequency
+    targetCount
+    status
+    goalId
+    updatedAt
+  }
+}

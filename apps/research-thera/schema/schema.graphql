@@ -240,6 +240,13 @@ type Mutation {
 
   # User Settings
   updateUserSettings(storyLanguage: String!, storyMinutes: Int): UserSettings!
+
+  # Habits
+  createHabit(input: CreateHabitInput!): Habit!
+  updateHabit(id: Int!, input: UpdateHabitInput!): Habit!
+  deleteHabit(id: Int!): DeleteHabitResult!
+  logHabit(habitId: Int!, loggedDate: String!, count: Int, notes: String): HabitLog!
+  deleteHabitLog(id: Int!): Boolean!
 }
 
 type Subscription {
