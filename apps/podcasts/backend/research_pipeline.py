@@ -681,6 +681,7 @@ class ResearchState(TypedDict, total=False):
     # Phase 3
     eval_data: str
     executive: str
+    questions: str
     # Re-research
     reresearch_count: int
 
@@ -1419,6 +1420,54 @@ async def phase3_exec(state: ResearchState) -> dict:
 
     console.print(f"  [green]✓[/] executive ({len(result)} chars)")
     return {"executive": result}
+
+
+async def question_generator(state: ResearchState) -> dict:
+    client = _make_client()
+    person = state["person"]
+    ctx = f"{person.get('name', '')} ({person.get('role', '')} @ {person.get('org', '')})"
+
+    console.print("\n[bold cyan]Phase 3c: Question Generator[/]")
+
+    all_context = (
+        _ctx_block("Biography", state.get("bio", ""))
+        + _ctx_block("Timeline", state.get("timeline", ""))
+        + _ctx_block("Contributions", state.get("contributions", ""))
+        + _ctx_block("Quotes", state.get("quotes", ""))
+        + _ctx_block("Technical Philosophy", state.get("philosophy", ""))
+        + _ctx_block("Competitive Landscape", state.get("competitive", ""))
+        + _ctx_block("Collaboration Network", state.get("collaboration", ""))
+        + _ctx_block("Funding", state.get("funding", ""))
+        + _ctx_block("Executive Summary", state.get("executive", ""))
+        + _ctx_block("Podcast & Media", state.get("podcast_data", ""))
+    )
+
+    result = await _run_agent(
+        client,
+        (
+            "You are an expert podcast host and interviewer who specializes in deep technical "
+            "conversations with AI/tech leaders. You craft questions that reveal genuine insight — "
+            "referencing the person's specific work, intellectual tensions in their field, and "
+            "decisions they've made. You never ask generic or Wikipedia-level questions. Each "
+            "question opens a thread the guest hasn't been asked before."
+        ),
+        (
+            f"Generate 10 high-quality interview questions for a podcast episode featuring {ctx}.\n"
+            f"Use the following research to make questions specific and probing:\n{all_context}\n\n"
+            f"Question categories (2 per category):\n"
+            f"1. Origin & turning point — decisions that shaped their career path\n"
+            f"2. Technical depth — architectural trade-offs or design choices in their core work\n"
+            f"3. Philosophy & contrarian views — where they disagree with the mainstream\n"
+            f"4. Collaboration & ecosystem — relationships that shaped key projects\n"
+            f"5. Future & predictions — specific bets they're making on where the field goes\n\n"
+            f"Rules: reference actual project names, papers, or events from the research. "
+            f"Each question must be standalone (no follow-ups). Keep each under 40 words.\n\n"
+            f'Output JSON array: [{{"category": "origin", "question": "..."}}, ...]'
+        ),
+    )
+
+    console.print(f"  [green]✓[/] questions ({len(result)} chars)")
+    return {"questions": result}
 
 
 # ═══════════════════════════════════════════════════════════════════════════

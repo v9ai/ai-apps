@@ -50,7 +50,8 @@ SESSION_ID=$(echo "$INPUT" | jq -r '.session_id // empty')
 ITER_OUTPUT="$LOOP_DIR/output-iter-${COUNT}.txt"
 
 if [ -n "$SESSION_ID" ]; then
-    TRANSCRIPT_PATTERN="$HOME/.claude/projects/*/sessions/$SESSION_ID/transcript.jsonl"
+    # Transcripts are stored as {session_id}.jsonl directly in the project dir
+    TRANSCRIPT_PATTERN="$HOME/.claude/projects/*/${SESSION_ID}.jsonl"
     # shellcheck disable=SC2086
     if ls $TRANSCRIPT_PATTERN 1>/dev/null 2>&1; then
         # shellcheck disable=SC2086
