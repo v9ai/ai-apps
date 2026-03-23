@@ -66,9 +66,9 @@ export function FilterableGrid({
             justifyContent: "center",
             rounded: "2xl",
             borderWidth: "1px",
-            borderColor: "rgba(255,255,255,0.06)",
-            bg: "#141418",
-            p: { base: "10", md: "14" },
+            borderColor: "card.border",
+            bg: "card.bg",
+            p: { base: "10", sm: "12", md: "14" },
             textAlign: "center",
           })}
         >
@@ -83,16 +83,16 @@ export function FilterableGrid({
             strokeWidth="1.5"
             strokeLinecap="round"
             strokeLinejoin="round"
-            className={css({ mb: "6", color: "#3A3A45" })}
+            className={css({ mb: "6", color: "ui.dark" })}
             aria-hidden="true"
           >
             <circle cx="11" cy="11" r="8" />
             <line x1="21" y1="21" x2="16.65" y2="16.65" />
           </svg>
 
-          <p className={css({ color: "#7B7B86", fontSize: "base", mb: "3" })}>
+          <p className={css({ color: "ui.dim", fontSize: "base", mb: "3" })}>
             No stories in{" "}
-            <span className={css({ color: "#A78BFA" })}>
+            <span className={css({ color: "accent.purple" })}>
               {categories.find((c) => c.slug === activeCategory)?.title ??
                 activeCategory}
             </span>{" "}
@@ -105,15 +105,15 @@ export function FilterableGrid({
               mt: "6",
               rounded: "md",
               borderWidth: "1px",
-              borderColor: "rgba(255,255,255,0.08)",
+              borderColor: "whiteAlpha.8",
               px: "4",
               py: "1.5",
               fontSize: "xs",
-              color: "#7B7B86",
+              color: "ui.dim",
               transition: "colors",
               _hover: {
-                borderColor: "rgba(255,255,255,0.14)",
-                color: "#E8E8ED",
+                borderColor: "whiteAlpha.13",
+                color: "ui.heading",
               },
             })}
           >

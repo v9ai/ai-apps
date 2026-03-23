@@ -57,8 +57,8 @@ const sectionStyle = css({
   maxW: "80rem",
   mx: "auto",
   px: { base: "4", sm: "6", md: "8", lg: "10" },
-  pt: { base: "2", md: "4" },
-  pb: { base: "12", md: "16", lg: "20" },
+  pt: { base: "2", sm: "3", md: "4" },
+  pb: { base: "12", sm: "14", md: "16", lg: "20" },
 });
 
 /* ── Page component (Server) ──────────────────────────────────── */

@@ -39,19 +39,19 @@ const btnBase = css({
 });
 
 const btnActive = css({
-  borderColor: "rgba(139,92,246,0.25)",
-  bg: "rgba(139,92,246,0.10)",
-  color: "#c4b5fd",
+  borderColor: "accent.purpleBorder",
+  bg: "accent.purpleBg",
+  color: "accent.purpleLight",
 });
 
 const btnInactive = css({
-  borderColor: "rgba(255,255,255,0.06)",
+  borderColor: "card.border",
   bg: "transparent",
-  color: "#7B7B86",
+  color: "ui.dim",
   _hover: {
-    borderColor: "rgba(255,255,255,0.12)",
-    bg: "rgba(255,255,255,0.06)",
-    color: "#C4C4CC",
+    borderColor: "whiteAlpha.12",
+    bg: "whiteAlpha.6",
+    color: "ui.body",
   },
 });
 
@@ -68,13 +68,13 @@ const countBadge = css({
 });
 
 const countActive = css({
-  bg: "rgba(139,92,246,0.22)",
-  color: "#a78bfa",
+  bg: "accent.purpleGlow",
+  color: "accent.purple",
 });
 
 const countInactive = css({
-  bg: "rgba(255,255,255,0.06)",
-  color: "#7B7B86",
+  bg: "whiteAlpha.6",
+  color: "ui.dim",
   opacity: 0.7,
 });
 
@@ -189,7 +189,7 @@ export function CategoryFilter({
           bottom: 0,
           w: "40px",
           pointerEvents: "none",
-          background: "linear-gradient(to left, transparent, #0B0B0F)",
+          background: "linear-gradient(to left, transparent, var(--colors-ui-base))",
           transition: "opacity 0.2s ease",
           lg: { display: "none" },
         })}
@@ -205,7 +205,7 @@ export function CategoryFilter({
           bottom: 0,
           w: "40px",
           pointerEvents: "none",
-          background: "linear-gradient(to right, transparent, #0B0B0F)",
+          background: "linear-gradient(to right, transparent, var(--colors-ui-base))",
           transition: "opacity 0.2s ease",
           lg: { display: "none" },
         })}

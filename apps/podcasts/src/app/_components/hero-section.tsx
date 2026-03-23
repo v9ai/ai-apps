@@ -4,8 +4,8 @@ const section = css({
   pos: "relative",
   overflow: "hidden",
   overflowX: "clip",
-  pt: { base: "8", sm: "10", lg: "14" },
-  pb: { base: "4", sm: "6", lg: "8" },
+  pt: { base: "8", sm: "10", md: "12", lg: "14" },
+  pb: { base: "4", sm: "5", md: "6", lg: "8" },
   textAlign: "center",
   display: "flex",
   flexDir: "column",
@@ -17,7 +17,7 @@ const inner = css({
   pos: "relative",
   maxW: "800px",
   mx: "auto",
-  px: { base: "4", sm: "6", md: "8" },
+  px: { base: "4", sm: "6", md: "8", lg: "10" },
 });
 
 const h1 = css({
@@ -51,7 +51,7 @@ const taglineSep = css({
 });
 
 const subtitle = css({
-  mt: { base: "4", sm: "5" },
+  mt: { base: "4", sm: "5", md: "6" },
   mb: { base: "3", sm: "4" },
   maxW: "36rem",
   mx: "auto",

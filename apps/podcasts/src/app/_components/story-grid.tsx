@@ -43,8 +43,8 @@ export function StoryGrid({ personalities, quotes }: StoryGridProps) {
             fontSize: "xs",
             fontWeight: "400",
             letterSpacing: "0.04em",
-            color: "#7B7B86",
-            mb: { base: "3", md: "4" },
+            color: "ui.dim",
+            mb: { base: "3", sm: "3.5", md: "4" },
           })}
         >
           Showing {personalities.length}{" "}
@@ -97,20 +97,20 @@ export function StoryGrid({ personalities, quotes }: StoryGridProps) {
           w: "10",
           h: "10",
           rounded: "full",
-          bg: "rgba(255,255,255,0.08)",
+          bg: "whiteAlpha.8",
           backdropFilter: "blur(12px)",
           borderWidth: "1px",
-          borderColor: "rgba(255,255,255,0.1)",
-          color: "#8A8A95",
+          borderColor: "whiteAlpha.10",
+          color: "ui.tertiary",
           cursor: "pointer",
           transition: "all 0.25s ease",
           opacity: 0,
           pointerEvents: "none",
           transform: "translateY(8px)",
           _hover: {
-            bg: "rgba(255,255,255,0.14)",
-            color: "#E8E8ED",
-            borderColor: "rgba(255,255,255,0.18)",
+            bg: "whiteAlpha.13",
+            color: "ui.heading",
+            borderColor: "whiteAlpha.18",
           },
         })}
         style={

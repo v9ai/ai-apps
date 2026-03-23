@@ -35,10 +35,10 @@ export function StoryCard({
         css({
           pos: "relative",
           display: "block",
-          bg: "#17171D",
+          bg: "card.bgRaised",
           rounded: "2xl",
           borderWidth: "1px",
-          borderColor: "rgba(255,255,255,0.08)",
+          borderColor: "whiteAlpha.8",
           p: isCompact ? "3.5" : { base: "3.5", sm: "4", lg: "5" },
           overflow: "hidden",
         })
@@ -103,7 +103,7 @@ export function StoryCard({
             className={css({
               fontSize: "0.9375rem",
               fontWeight: "semibold",
-              color: "#E8E8ED",
+              color: "ui.heading",
               lineHeight: "tight",
               letterSpacing: "-0.01em",
             })}
@@ -113,7 +113,7 @@ export function StoryCard({
           <p
             className={css({
               fontSize: "sm",
-              color: "#8A8A95",
+              color: "ui.tertiary",
               mt: "0.5",
               lineHeight: "1.375",
               truncate: true,
@@ -131,7 +131,7 @@ export function StoryCard({
       {/* Description text */}
       <p
         className={css({
-          color: "#B8B8C2",
+          color: "ui.body",
           lineHeight: "1.7",
           letterSpacing: "0.01em",
           fontSize: isCompact ? "0.8125rem" : { base: "0.8125rem", sm: "0.875rem" },
@@ -150,7 +150,7 @@ export function StoryCard({
           mt: { base: "3", sm: "4" },
           pt: { base: "2.5", sm: "3" },
           borderTopWidth: "1px",
-          borderTopColor: "rgba(255,255,255,0.06)",
+          borderTopColor: "card.border",
         })}
       >
         {podcastCount > 0 && (
@@ -160,7 +160,7 @@ export function StoryCard({
               alignItems: "center",
               gap: "1.5",
               fontSize: "xs",
-              color: "#7B7B86",
+              color: "ui.dim",
             })}
           >
             <svg
@@ -184,10 +184,10 @@ export function StoryCard({
             gap: "1",
             fontSize: "sm",
             fontWeight: "medium",
-            color: "#7B7B86",
+            color: "ui.dim",
             ml: "auto",
             transition: "color 0.2s var(--ease-smooth)",
-            _groupHover: { color: "#a78bfa" },
+            _groupHover: { color: "accent.purple" },
           })}
         >
           Read story
