@@ -1,7 +1,6 @@
 import { NextRequest } from "next/server";
 import OpenAI from "openai";
 import { emailSchema } from "@/lib/email-schema";
-import { ingestLangfuseEvents, isLangfuseConfigured } from "@/langfuse";
 import { buildComposePrompt } from "@/prompts/compose-email";
 
 export const runtime = "nodejs";
@@ -27,15 +26,10 @@ export async function POST(request: NextRequest) {
 
     const encoder = new TextEncoder();
 
-    const traceId = crypto.randomUUID();
-    const generationId = crypto.randomUUID();
-    const hasLinkedIn = !!input.linkedinPostContent;
-
     const stream = new ReadableStream({
       async start(controller) {
         try {
           const prompt = buildComposePrompt(input);
-          const startTime = new Date().toISOString();
 
           const messages: OpenAI.Chat.ChatCompletionMessageParam[] = [
             {
@@ -48,42 +42,6 @@ export async function POST(request: NextRequest) {
               content: prompt,
             },
           ];
-
-          if (isLangfuseConfigured()) {
-            void ingestLangfuseEvents([
-              {
-                id: crypto.randomUUID(),
-                type: "trace-create",
-                body: {
-                  id: traceId,
-                  name: "email-generate-stream",
-                  tags: [
-                    "feature:email-compose",
-                    ...(hasLinkedIn ? ["source:linkedin"] : []),
-                  ],
-                  metadata: {
-                    recipientName: input.recipientName,
-                    companyName: input.companyName,
-                    hasLinkedInContent: hasLinkedIn,
-                  },
-                },
-              },
-              {
-                id: crypto.randomUUID(),
-                type: "observation-create",
-                body: {
-                  id: generationId,
-                  traceId,
-                  type: "GENERATION",
-                  name: "deepseek-chat",
-                  model: "deepseek-chat",
-                  input: messages,
-                  startTime,
-                  modelParameters: { temperature: 1.3, response_format: "json_object" },
-                },
-              },
-            ]);
-          }
 
           const completion = await openai.chat.completions.create({
             model: "deepseek-chat",
@@ -116,23 +74,6 @@ export async function POST(request: NextRequest) {
             const parsed = JSON.parse(fullText);
             const validated = emailSchema.parse(parsed);
 
-            if (isLangfuseConfigured()) {
-              void ingestLangfuseEvents([
-                {
-                  id: crypto.randomUUID(),
-                  type: "observation-update",
-                  body: {
-                    id: generationId,
-                    traceId,
-                    type: "GENERATION",
-                    output: validated,
-                    endTime: new Date().toISOString(),
-                    statusMessage: "success",
-                  },
-                },
-              ]);
-            }
-
             controller.enqueue(
               encoder.encode(
                 `data: ${JSON.stringify({ type: "complete", data: validated })}\n\n`,
@@ -146,23 +87,6 @@ export async function POST(request: NextRequest) {
               subject: subjectMatch?.[1] || "Follow up",
               body: bodyMatch?.[1] || fullText,
             };
-
-            if (isLangfuseConfigured()) {
-              void ingestLangfuseEvents([
-                {
-                  id: crypto.randomUUID(),
-                  type: "observation-update",
-                  body: {
-                    id: generationId,
-                    traceId,
-                    type: "GENERATION",
-                    output: fallback,
-                    endTime: new Date().toISOString(),
-                    statusMessage: "fallback-parse",
-                  },
-                },
-              ]);
-            }
 
             controller.enqueue(
               encoder.encode(
