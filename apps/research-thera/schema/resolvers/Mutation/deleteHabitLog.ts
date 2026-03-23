@@ -6,9 +6,9 @@ export const deleteHabitLog: NonNullable<MutationResolvers['deleteHabitLog']> = 
   args,
   ctx,
 ) => {
-  const userId = ctx.userId;
-  if (!userId) throw new Error("Authentication required");
+  const userEmail = ctx.userEmail;
+  if (!userEmail) throw new Error("Authentication required");
 
-  await db.deleteHabitLog(args.id, userId);
+  await db.deleteHabitLog(args.id, userEmail);
   return true;
 };

@@ -382,7 +382,7 @@ export function SearchModal({ open: controlledOpen, onClose, triggerRef }: Searc
             /* ── No results ── */
             <div className={css({ display: 'flex', flexDir: 'column', alignItems: 'center', justifyContent: 'center', gap: '4', px: '4', py: '12', textAlign: 'center', userSelect: 'none' })}>
               <svg
-                className={css({ w: '8', h: '8', color: '#3D3D45' })}
+                className={css({ w: '8', h: '8', color: 'ui.dark' })}
                 fill="none"
                 viewBox="0 0 24 24"
                 strokeWidth={1.5}
@@ -396,11 +396,11 @@ export function SearchModal({ open: controlledOpen, onClose, triggerRef }: Searc
                 />
               </svg>
               <div className={css({ display: 'flex', flexDir: 'column', gap: '1.5', alignItems: 'center' })}>
-                <span className={css({ fontSize: 'sm', color: '#7B7B86' })}>
+                <span className={css({ fontSize: 'sm', color: 'ui.dim' })}>
                   No results for{" "}
                   <span className={css({ color: '#ADADB8', fontWeight: 'medium' })}>&ldquo;{query.trim()}&rdquo;</span>
                 </span>
-                <span className={css({ fontSize: '12px', color: '#55555F' })}>Try a different name, org, or topic</span>
+                <span className={css({ fontSize: '12px', color: 'ui.faint' })}>Try a different name, org, or topic</span>
               </div>
             </div>
           ) : (

@@ -28,7 +28,6 @@ if [ -z "$TASK" ]; then
 fi
 
 python3.12 -c "import chromadb" 2>/dev/null || python3.12 -m pip install chromadb -q
-python3.12 -c "import deepeval" 2>/dev/null || python3.12 -m pip install deepeval -q
 
 rm -rf "$LOOP_DIR"
 mkdir -p "$LOOP_DIR"

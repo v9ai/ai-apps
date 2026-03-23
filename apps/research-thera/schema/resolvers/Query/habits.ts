@@ -1,7 +1,7 @@
 import type { QueryResolvers } from "./../../types.generated";
 import { db } from "@/src/db";
 
-export const habits: NonNullable<QueryResolvers["habits"]> = async (
+export const habits: NonNullable<QueryResolvers['habits']> = async (
   _parent,
   args,
   ctx,
