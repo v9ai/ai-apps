@@ -2509,12 +2509,13 @@ export async function getResearchForFamilyMemberIssues(issueIds: number[]) {
 // Habits
 // ============================================
 
-export async function listHabits(userId: string, status?: string) {
+export async function listHabits(userId: string, status?: string, familyMemberId?: number) {
   const rows = await neonSql`SELECT * FROM habits WHERE user_id = ${userId} ORDER BY created_at DESC`;
-  const all = rows.map((row) => ({
+  let all = rows.map((row) => ({
     id: row.id as number,
     userId: row.user_id as string,
     goalId: (row.goal_id as number) || null,
+    familyMemberId: (row.family_member_id as number) || null,
     title: row.title as string,
     description: (row.description as string) || null,
     frequency: row.frequency as string,
@@ -2523,7 +2524,9 @@ export async function listHabits(userId: string, status?: string) {
     createdAt: row.created_at as string,
     updatedAt: row.updated_at as string,
   }));
-  return status ? all.filter((h) => h.status === status) : all;
+  if (status) all = all.filter((h) => h.status === status);
+  if (familyMemberId) all = all.filter((h) => h.familyMemberId === familyMemberId);
+  return all;
 }
 
 export async function getHabit(id: number, userId: string) {
@@ -2534,6 +2537,7 @@ export async function getHabit(id: number, userId: string) {
     id: row.id as number,
     userId: row.user_id as string,
     goalId: (row.goal_id as number) || null,
+    familyMemberId: (row.family_member_id as number) || null,
     title: row.title as string,
     description: (row.description as string) || null,
     frequency: row.frequency as string,
@@ -2547,16 +2551,18 @@ export async function getHabit(id: number, userId: string) {
 export async function createHabit(input: {
   userId: string;
   goalId?: number | null;
+  familyMemberId?: number | null;
   title: string;
   description?: string | null;
   frequency?: string;
   targetCount?: number;
 }) {
   const rows = await neonSql`
-    INSERT INTO habits (user_id, goal_id, title, description, frequency, target_count)
+    INSERT INTO habits (user_id, goal_id, family_member_id, title, description, frequency, target_count)
     VALUES (
       ${input.userId},
       ${input.goalId ?? null},
+      ${input.familyMemberId ?? null},
       ${input.title},
       ${input.description ?? null},
       ${input.frequency ?? "daily"},

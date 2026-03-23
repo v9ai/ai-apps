@@ -804,7 +804,7 @@
               "note": "Custom LangSmith Python module"
             }
           ],
-          "why_chosen": "Chosen for Python-based workers where LangChain integration is native and Edge Runtime compatibility isn't required, complementing Langfuse for Python-specific tracing needs.",
+          "why_chosen": "Chosen for Python-based workers where LangChain integration is native.",
           "pros": [
             "Native LangChain integration",
             "Python-first design",
@@ -813,12 +813,12 @@
           "cons": [
             "Limited to Python environments",
             "No Edge Runtime support",
-            "Less integrated prompt management than Langfuse"
+            "No integrated prompt management"
           ],
           "alternatives_considered": [
             {
-              "name": "Langfuse Python SDK",
-              "reason_not_chosen": "Already using Langfuse in TypeScript/Edge parts, but LangSmith better for Python LangChain integration"
+              "name": "Custom tracing",
+              "reason_not_chosen": "LangSmith provides better integration with LangChain ecosystem"
             }
           ],
           "trade_offs": [
@@ -832,7 +832,7 @@
             "Custom Python module for shared utilities"
           ],
           "interview_points": [
-            "Used LangSmith for Python workers and Langfuse for TypeScript/Edge components, creating a polyglot observability strategy that leverages each platform's strengths while maintaining trace correlation through metadata.",
+            "Used LangSmith for Python workers, leveraging native LangChain integration for trace correlation.",
             "Implemented custom Python modules for LangSmith utilities to standardize configuration across multiple Cloudflare Workers, ensuring consistent tracing behavior despite separate deployment units.",
             "Designed worker-specific project names (nomadically-work-eu-classifier, nomadically-work-process-jobs) in LangSmith to isolate traces while maintaining organizational context across the application."
           ],
@@ -850,81 +850,6 @@
             "Tracing adds minimal overhead in Python workers",
             "Batch uploading of traces reduces API calls",
             "Project-based organization aids trace query performance"
-          ]
-        },
-        {
-          "name": "OpenTelemetry with @langfuse/otel",
-          "version": "4.6.1",
-          "role": "Low-level distributed tracing integration",
-          "url": "https://opentelemetry.io",
-          "details": "Used as the underlying tracing infrastructure through @langfuse/otel package. Provides OpenTelemetry compatibility for Langfuse tracing. Also uses @opentelemetry/sdk-trace-node for Node.js tracing capabilities.",
-          "facts": [
-            "@langfuse/otel version 4.6.1 matches Langfuse version",
-            "@opentelemetry/sdk-trace-node version 2.5.1 for Node.js tracing",
-            "Part of Langfuse's OpenTelemetry integration strategy"
-          ],
-          "source_locations": [
-            {
-              "path": "package.json",
-              "line": 51,
-              "note": "@langfuse/otel dependency version 4.6.1"
-            },
-            {
-              "path": "package.json",
-              "line": 54,
-              "note": "@opentelemetry/sdk-trace-node dependency version 2.5.1"
-            },
-            {
-              "path": "instrumentation.ts",
-              "line": 1,
-              "note": "OpenTelemetry instrumentation setup"
-            }
-          ],
-          "why_chosen": "Chosen as the standardized tracing layer that Langfuse builds upon, providing OpenTelemetry compatibility and future-proofing for multi-vendor observability.",
-          "pros": [
-            "Standardized tracing format (OTLP)",
-            "Vendor-agnostic instrumentation",
-            "Future-proof for observability vendor changes"
-          ],
-          "cons": [
-            "Additional dependency layer",
-            "Configuration complexity",
-            "Primarily used through Langfuse abstraction"
-          ],
-          "alternatives_considered": [
-            {
-              "name": "Custom tracing",
-              "reason_not_chosen": "OpenTelemetry provides standardization and vendor flexibility"
-            }
-          ],
-          "trade_offs": [
-            "Standardization vs. implementation complexity",
-            "Vendor abstraction vs. direct integration",
-            "Future flexibility vs. current simplicity"
-          ],
-          "patterns_used": [
-            "OpenTelemetry instrumentation pattern",
-            "Vendor-agnostic tracing abstraction",
-            "Standardized trace export format"
-          ],
-          "interview_points": [
-            "Leveraged OpenTelemetry as the underlying tracing standard through @langfuse/otel, ensuring vendor-agnostic instrumentation while getting Langfuse's enhanced LLM-specific observability features on top.",
-            "Used the OpenTelemetry Node.js SDK alongside Langfuse's OTel integration to create a layered observability strategy where low-level traces feed into high-level LLM-focused analysis."
-          ],
-          "gotchas": [
-            "OpenTelemetry configuration can conflict with other instrumentation",
-            "Trace sampling needs careful configuration to control costs",
-            "OTLP export requires proper endpoint and authentication setup"
-          ],
-          "security_considerations": [
-            "Trace data may contain PII from LLM interactions",
-            "OTLP export should use secure channels",
-            "Sampling should exclude sensitive operations"
-          ],
-          "performance_notes": [
-            "OpenTelemetry adds minimal overhead with sampling",
-            "Batch trace export reduces network calls",
-            "OTLP is efficient binary protocol for trace data"
           ]
         }
       ]
@@ -1096,7 +1021,7 @@
             "Queue-based batch processing",
             "AI Gateway proxy pattern",
             "Confidence threshold cascading",
-            "Langfuse observability integration"
+            "LLM observability integration"
           ],
           "interview_points": [
             "We use Python Workers specifically for the LLM layer, leveraging Cloudflare's AI Gateway to cache $0.40/1M token DeepSeek API calls while maintaining LangChain's prompt templating and chain composition."

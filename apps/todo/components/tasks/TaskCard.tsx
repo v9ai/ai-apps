@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useTransition } from "react";
+import { useState, useTransition, useEffect, useRef } from "react";
 import { useRouter } from "next/navigation";
 import { Box, Card, Checkbox, Flex, Text, Badge } from "@radix-ui/themes";
 import { useSortable } from "@dnd-kit/sortable";
@@ -58,8 +58,13 @@ export function TaskCard({
   const [completing, setCompleting] = useState(false);
   const [isPending, startTransition] = useTransition();
 
-  const { attributes, listeners, setNodeRef, transform, transition, isDragging } =
+  const { attributes, listeners, setNodeRef, setActivatorNodeRef, transform, transition, isDragging } =
     useSortable({ id: task.id });
+
+  const wasDragging = useRef(false);
+  useEffect(() => {
+    if (isDragging) wasDragging.current = true;
+  }, [isDragging]);
 
   const isCompleted = task.status === "completed";
 
@@ -88,10 +93,14 @@ export function TaskCard({
         transition: "opacity 150ms",
         cursor: "pointer",
       }}
-      onClick={onOpen}
+      onClick={() => {
+        if (wasDragging.current) { wasDragging.current = false; return; }
+        onOpen();
+      }}
     >
       <Flex align="center" gap="3">
         <div
+          ref={setActivatorNodeRef}
           {...attributes}
           {...listeners}
           className="drag-handle"

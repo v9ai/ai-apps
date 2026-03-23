@@ -15,7 +15,7 @@ while [[ $# -gt 0 ]]; do
 done
 
 if [ "$RESET" = true ]; then
-    rm -rf "$ITER_DIR"
+    rm -r "$ITER_DIR" 2>/dev/null || true
     echo "Iterate: state cleared."
     exit 0
 fi

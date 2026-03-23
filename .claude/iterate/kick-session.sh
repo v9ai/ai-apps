@@ -36,7 +36,7 @@ COUNT=$(cat "$COUNTER_FILE")
 
 # --- Hard limit ---
 if [ "$COUNT" -ge "$MAX_ITERATIONS" ]; then
-    rm -f "$COUNTER_FILE"
+    rm -f "$COUNTER_FILE" "$TASK_FILE"
     echo "Iterate: complete — reached $MAX_ITERATIONS iterations." >&2
     exit 0
 fi
@@ -76,7 +76,7 @@ if [ -f "$ITER_OUTPUT" ] && [ -s "$ITER_OUTPUT" ]; then
         --iteration "$COUNT" \
         --task "$TASK" \
         --file "$ITER_OUTPUT" \
-        2>/dev/null || true
+        >> "$ITER_DIR/debug.log" 2>&1 || true
 fi
 
 # --- Step 2: Evaluate ---
@@ -89,7 +89,7 @@ if [ "$COUNT" -gt 0 ] && [ -f "$ITER_OUTPUT" ] && [ -s "$ITER_OUTPUT" ]; then
     python3.12 "$SCRIPTS_DIR/retrieve_context.py" \
         --query "$TASK" \
         --iteration "$COUNT" \
-        > "$CONTEXT_FILE" 2>/dev/null || true
+        > "$CONTEXT_FILE" 2>> "$ITER_DIR/debug.log" || true
 
     EVAL_RESULT=$(python3.12 "$SCRIPTS_DIR/evaluate.py" \
         --iteration "$COUNT" \
@@ -97,9 +97,9 @@ if [ "$COUNT" -gt 0 ] && [ -f "$ITER_OUTPUT" ] && [ -s "$ITER_OUTPUT" ]; then
         --task "$TASK" \
         --context-file "$CONTEXT_FILE" \
         --scores-file "$SCORES_FILE" \
-        2>/dev/null) && EVAL_EXIT=0 || EVAL_EXIT=$?
+        2>> "$ITER_DIR/debug.log") && EVAL_EXIT=0 || EVAL_EXIT=$?
 
-    echo "$EVAL_RESULT" > "$ITER_DIR/eval-iter-${COUNT}.json" 2>/dev/null || true
+    echo "$EVAL_RESULT" > "$ITER_DIR/eval-iter-${COUNT}.json" 2>> "$ITER_DIR/debug.log" || true
 
     if [ "$EVAL_EXIT" -eq 10 ]; then
         SHOULD_CONTINUE=false
@@ -126,7 +126,7 @@ fi
 if [ "$SHOULD_CONTINUE" = false ]; then
     STOP_REASON=$(echo "$EVAL_RESULT" | jq -r '.stop_reason // "evaluation threshold"' 2>/dev/null) || STOP_REASON="evaluation threshold"
     echo "Iterate: stopped — ${STOP_REASON}" >&2
-    rm -f "$COUNTER_FILE"
+    rm -f "$COUNTER_FILE" "$TASK_FILE"
     exit 0
 fi
 
@@ -138,7 +138,7 @@ RETRIEVED_CONTEXT=$(python3.12 "$SCRIPTS_DIR/retrieve_context.py" \
     --query "$TASK — what should iteration $NEXT focus on next?" \
     --iteration "$NEXT" \
     --n-results 8 \
-    2>/dev/null) || RETRIEVED_CONTEXT="No previous context available."
+    2>> "$ITER_DIR/debug.log") || RETRIEVED_CONTEXT="No previous context available."
 
 # --- Step 4: Return inline via stderr → Claude sees it and keeps working ---
 cat >&2 <<EOF
