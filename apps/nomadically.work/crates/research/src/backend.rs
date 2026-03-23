@@ -251,7 +251,7 @@ const SECTIONS: &[BackendSectionDef] = &[
     BackendSectionDef {
         slug: "ai_ml_integration",
         title: "AI/ML Integration in Backend Systems",
-        prompt_template: "{ctx}\n\nSearch for academic papers on integrating machine learning models into production systems, MLOps, and AI-powered applications. Then create a backend interview prep section on AI/ML INTEGRATION tailored to this role. Cover: embedding APIs (OpenAI, Anthropic), RAG architecture, vector databases, prompt engineering patterns, model serving, AI observability (Langfuse), guardrails. Include 4 interview questions with research-backed answers. Cite papers.\n\n{schema}",
+        prompt_template: "{ctx}\n\nSearch for academic papers on integrating machine learning models into production systems, MLOps, and AI-powered applications. Then create a backend interview prep section on AI/ML INTEGRATION tailored to this role. Cover: embedding APIs (OpenAI, Anthropic), RAG architecture, vector databases, prompt engineering patterns, model serving, AI observability, guardrails. Include 4 interview questions with research-backed answers. Cite papers.\n\n{schema}",
         max_tokens: 8192,
         use_scholar: true,
     },

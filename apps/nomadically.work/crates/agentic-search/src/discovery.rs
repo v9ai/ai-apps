@@ -116,9 +116,8 @@ const TARGETS: &[Target] = &[
     Target {
         label: "Observability",
         color: "green",
-        technologies: "Langfuse, LangSmith, OpenTelemetry",
-        hints: "Read .env.example for LANGFUSE_ and LANGCHAIN_ vars. \
-                Grep for 'langfuse' in src/ to find tracing call sites. \
+        technologies: "LangSmith",
+        hints: "Read .env.example for LANGCHAIN_ vars. \
                 Read .claude/hooks/stop_hook.py for scoring pipeline. \
                 Check package.json for observability deps.",
     },

@@ -6,8 +6,8 @@ import json
 import os
 import chromadb
 
-CHROMA_PATH = os.environ.get("CLAUDE_LOOP_CHROMA_PATH", "/tmp/claude-loop/chroma")
-COLLECTION_NAME = "loop_iterations"
+CHROMA_PATH = os.environ.get("CLAUDE_ITERATE_CHROMA_PATH", "/tmp/claude-iterate/chroma")
+COLLECTION_NAME = "iterate_context"
 
 
 def get_collection():

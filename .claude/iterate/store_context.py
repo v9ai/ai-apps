@@ -9,8 +9,8 @@ import subprocess
 import chromadb
 from datetime import datetime
 
-CHROMA_PATH = os.environ.get("CLAUDE_LOOP_CHROMA_PATH", "/tmp/claude-loop/chroma")
-COLLECTION_NAME = "loop_iterations"
+CHROMA_PATH = os.environ.get("CLAUDE_ITERATE_CHROMA_PATH", "/tmp/claude-iterate/chroma")
+COLLECTION_NAME = "iterate_context"
 
 
 def get_collection():
@@ -64,7 +64,7 @@ def get_git_diff() -> str | None:
         result = subprocess.run(
             ["git", "diff", "HEAD~1", "--stat", "--no-color"],
             capture_output=True, text=True, timeout=5,
-            cwd=os.environ.get("CLAUDE_LOOP_CWD", "."),
+            cwd=os.environ.get("CLAUDE_ITERATE_CWD", "."),
         )
         if result.returncode == 0 and result.stdout.strip():
             return result.stdout.strip()

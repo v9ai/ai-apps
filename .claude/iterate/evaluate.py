@@ -245,7 +245,7 @@ if __name__ == "__main__":
     parser.add_argument("--output-file", type=str, required=True)
     parser.add_argument("--task", type=str, required=True)
     parser.add_argument("--context-file", type=str)
-    parser.add_argument("--scores-file", type=str, default="/tmp/claude-loop/scores.json")
+    parser.add_argument("--scores-file", type=str, default="/tmp/claude-iterate/scores.json")
     args = parser.parse_args()
 
     result = run_evaluation(

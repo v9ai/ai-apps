@@ -2,30 +2,30 @@
 set -uo pipefail
 
 # ==============================================================
-# Claude Code Stop Hook — Inline Loop with Chroma + DeepEval
+# Claude Code Stop Hook — Iterate with Chroma + Eval
 #
-# Exit 0  = done, stop looping
+# Exit 0  = done, stop iterating
 # Exit 2  = send feedback to Claude via stderr, keep going
 # ==============================================================
 
-LOOP_DIR="/tmp/claude-loop"
-COUNTER_FILE="$LOOP_DIR/counter"
-TASK_FILE="$LOOP_DIR/task.txt"
-SCORES_FILE="$LOOP_DIR/scores.json"
+ITER_DIR="/tmp/claude-iterate"
+COUNTER_FILE="$ITER_DIR/counter"
+TASK_FILE="$ITER_DIR/task.txt"
+SCORES_FILE="$ITER_DIR/scores.json"
 SCRIPTS_DIR="$(cd "$(dirname "$0")" && pwd)"
 
-# --- No task file = not in a loop ---
+# --- No task file = not iterating ---
 if [ ! -f "$TASK_FILE" ]; then
     exit 0
 fi
 
-mkdir -p "$LOOP_DIR"
+mkdir -p "$ITER_DIR"
 TASK=$(cat "$TASK_FILE")
-LOOP_CWD=$(cat "$LOOP_DIR/cwd.txt" 2>/dev/null || echo "")
-MAX_ITERATIONS=${CLAUDE_LOOP_MAX:-10}
+ITER_CWD=$(cat "$ITER_DIR/cwd.txt" 2>/dev/null || echo "")
+MAX_ITERATIONS=${CLAUDE_ITERATE_MAX:-10}
 
-export CLAUDE_LOOP_CHROMA_PATH="$LOOP_DIR/chroma"
-export CLAUDE_LOOP_CWD="$LOOP_CWD"
+export CLAUDE_ITERATE_CHROMA_PATH="$ITER_DIR/chroma"
+export CLAUDE_ITERATE_CWD="$ITER_CWD"
 
 # --- Counter ---
 if [ ! -f "$COUNTER_FILE" ]; then
@@ -37,7 +37,7 @@ COUNT=$(cat "$COUNTER_FILE")
 # --- Hard limit ---
 if [ "$COUNT" -ge "$MAX_ITERATIONS" ]; then
     rm -f "$COUNTER_FILE"
-    echo "Loop complete — reached $MAX_ITERATIONS iterations." >&2
+    echo "Iterate: complete — reached $MAX_ITERATIONS iterations." >&2
     exit 0
 fi
 
@@ -47,15 +47,15 @@ CWD=$(echo "$INPUT" | jq -r '.cwd')
 SESSION_ID=$(echo "$INPUT" | jq -r '.session_id // empty')
 
 # Debug log
-echo "[kick-session] iter=$COUNT session=$SESSION_ID cwd=$CWD" >> "$LOOP_DIR/debug.log" 2>/dev/null || true
+echo "[kick-session] iter=$COUNT session=$SESSION_ID cwd=$CWD" >> "$ITER_DIR/debug.log" 2>/dev/null || true
 
 # --- Capture this iteration's output from transcript ---
-ITER_OUTPUT="$LOOP_DIR/output-iter-${COUNT}.txt"
+ITER_OUTPUT="$ITER_DIR/output-iter-${COUNT}.txt"
 
 if [ -n "$SESSION_ID" ]; then
     # Transcripts are stored as {session_id}.jsonl directly in the project dir
     TRANSCRIPT_FILE=$(find "$HOME/.claude/projects" -name "${SESSION_ID}.jsonl" -maxdepth 2 2>/dev/null | head -1)
-    echo "[kick-session] transcript_file=$TRANSCRIPT_FILE" >> "$LOOP_DIR/debug.log" 2>/dev/null || true
+    echo "[kick-session] transcript_file=$TRANSCRIPT_FILE" >> "$ITER_DIR/debug.log" 2>/dev/null || true
 
     if [ -n "$TRANSCRIPT_FILE" ] && [ -f "$TRANSCRIPT_FILE" ]; then
         jq -rs '
@@ -66,7 +66,7 @@ if [ -n "$SESSION_ID" ]; then
               else ""
               end
         ' "$TRANSCRIPT_FILE" > "$ITER_OUTPUT" 2>/dev/null || true
-        echo "[kick-session] output_size=$(wc -c < "$ITER_OUTPUT" 2>/dev/null)" >> "$LOOP_DIR/debug.log" 2>/dev/null || true
+        echo "[kick-session] output_size=$(wc -c < "$ITER_OUTPUT" 2>/dev/null)" >> "$ITER_DIR/debug.log" 2>/dev/null || true
     fi
 fi
 
@@ -79,13 +79,13 @@ if [ -f "$ITER_OUTPUT" ] && [ -s "$ITER_OUTPUT" ]; then
         2>/dev/null || true
 fi
 
-# --- Step 2: Evaluate with DeepEval ---
+# --- Step 2: Evaluate ---
 SHOULD_CONTINUE=true
 EVAL_FEEDBACK=""
 TREND_FEEDBACK=""
 
 if [ "$COUNT" -gt 0 ] && [ -f "$ITER_OUTPUT" ] && [ -s "$ITER_OUTPUT" ]; then
-    CONTEXT_FILE="$LOOP_DIR/context-eval-${COUNT}.txt"
+    CONTEXT_FILE="$ITER_DIR/context-eval-${COUNT}.txt"
     python3.12 "$SCRIPTS_DIR/retrieve_context.py" \
         --query "$TASK" \
         --iteration "$COUNT" \
@@ -99,7 +99,7 @@ if [ "$COUNT" -gt 0 ] && [ -f "$ITER_OUTPUT" ] && [ -s "$ITER_OUTPUT" ]; then
         --scores-file "$SCORES_FILE" \
         2>/dev/null) && EVAL_EXIT=0 || EVAL_EXIT=$?
 
-    echo "$EVAL_RESULT" > "$LOOP_DIR/eval-iter-${COUNT}.json" 2>/dev/null || true
+    echo "$EVAL_RESULT" > "$ITER_DIR/eval-iter-${COUNT}.json" 2>/dev/null || true
 
     if [ "$EVAL_EXIT" -eq 10 ]; then
         SHOULD_CONTINUE=false
@@ -125,7 +125,7 @@ fi
 # --- Stop ---
 if [ "$SHOULD_CONTINUE" = false ]; then
     STOP_REASON=$(echo "$EVAL_RESULT" | jq -r '.stop_reason // "evaluation threshold"' 2>/dev/null) || STOP_REASON="evaluation threshold"
-    echo "Loop stopped — ${STOP_REASON}" >&2
+    echo "Iterate: stopped — ${STOP_REASON}" >&2
     rm -f "$COUNTER_FILE"
     exit 0
 fi
@@ -148,7 +148,7 @@ ITERATION ${NEXT} of ${MAX_ITERATIONS}
 ${TASK}
 
 ## Working directory
-${LOOP_CWD}
+${ITER_CWD}
 All work must be scoped to this directory.
 
 ## Context from previous iterations (semantic retrieval)

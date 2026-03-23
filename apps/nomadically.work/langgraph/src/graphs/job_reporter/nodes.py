@@ -1,4 +1,4 @@
-"""Job Reporter graph nodes — two-pass DeepSeek classification with Langfuse.
+"""Job Reporter graph nodes — two-pass DeepSeek classification.
 
 Ported from workers/job-reporter-llm. Uses DeepSeek for classification
 with confidence-based escalation to a second pass.
