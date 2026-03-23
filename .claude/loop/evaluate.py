@@ -1,100 +1,120 @@
 #!/usr/bin/env python3
 """
-Evaluate iteration output with DeepEval.
-Exit 0  = continue (or first iteration)
-Exit 10 = stop (task complete, plateau, or no progress)
+Evaluate iteration output via DeepSeek Reasoner (local proxy).
+Exit 0  = continue
+Exit 10 = stop (task complete, plateau, regression, or no progress)
 """
 
 import argparse
 import json
 import os
 import sys
+import urllib.request
 
-from deepeval import evaluate
-from deepeval.metrics import GEval
-from deepeval.test_case import LLMTestCase, LLMTestCaseParams
+EVAL_URL = os.environ.get(
+    "EVAL_LLM_URL", "http://127.0.0.1:19836/v1/chat/completions"
+)
+EVAL_MODEL = os.environ.get("EVAL_LLM_MODEL", "deepseek-reasoner")
+
+EVAL_PROMPT = """\
+You are an iteration evaluator for an AI coding loop. Score the output of iteration {iteration}.
+
+## Task
+{task}
+
+## Previous context (from earlier iterations)
+{context}
+
+## Current iteration output
+{output}
+
+Score each dimension 0.0–1.0 and give a one-sentence reason:
+
+1. **Task Completion** — How close is the overall task to done? 1.0 = fully complete.
+2. **Incremental Progress** — Did THIS iteration add new work vs prior iterations? 0.0 = pure repetition.
+3. **Coherence** — Does the output logically build on prior work? Penalize going in circles.
+4. **Code Quality** — Are code changes correct, secure, following patterns? 0.5 if no code changes.
+5. **Focus** — Did the work stay on-task? Penalize scope creep and tangential changes.
+
+Respond with ONLY valid JSON (no markdown fences):
+{{
+  "Task Completion": {{"score": 0.0, "reason": "..."}},
+  "Incremental Progress": {{"score": 0.0, "reason": "..."}},
+  "Coherence": {{"score": 0.0, "reason": "..."}},
+  "Code Quality": {{"score": 0.0, "reason": "..."}},
+  "Focus": {{"score": 0.0, "reason": "..."}}
+}}
+"""
 
 
-def build_metrics(task: str):
-    task_completion = GEval(
-        name="Task Completion",
-        criteria=(
-            f"Evaluate progress toward completing the task: {task}. "
-            "Score 1.0 if fully complete, 0.0 if no meaningful progress."
-        ),
-        evaluation_params=[
-            LLMTestCaseParams.ACTUAL_OUTPUT,
-            LLMTestCaseParams.EXPECTED_OUTPUT,
-        ],
-        threshold=0.5,
+def call_llm(prompt: str) -> str:
+    """Call the local DeepSeek proxy for evaluation."""
+    payload = json.dumps({
+        "model": EVAL_MODEL,
+        "messages": [{"role": "user", "content": prompt}],
+        "temperature": 0.1,
+        "max_tokens": 1024,
+    }).encode()
+
+    req = urllib.request.Request(
+        EVAL_URL,
+        data=payload,
+        headers={"Content-Type": "application/json"},
     )
 
-    coherence = GEval(
-        name="Coherence",
-        criteria=(
-            "Evaluate whether the output is coherent and logically builds on "
-            "previous iterations. Penalize repetition or going in circles."
-        ),
-        evaluation_params=[
-            LLMTestCaseParams.ACTUAL_OUTPUT,
-            LLMTestCaseParams.CONTEXT,
-        ],
-        threshold=0.5,
-    )
+    try:
+        with urllib.request.urlopen(req, timeout=30) as resp:
+            data = json.loads(resp.read())
+            return data["choices"][0]["message"]["content"]
+    except Exception as e:
+        return json.dumps({
+            "Task Completion": {"score": 0.5, "reason": f"Eval LLM unavailable: {e}"},
+            "Incremental Progress": {"score": 0.5, "reason": "fallback"},
+            "Coherence": {"score": 0.5, "reason": "fallback"},
+            "Code Quality": {"score": 0.5, "reason": "fallback"},
+            "Focus": {"score": 0.5, "reason": "fallback"},
+        })
 
-    progress = GEval(
-        name="Incremental Progress",
-        criteria=(
-            "Evaluate whether this iteration made NEW progress compared to "
-            "previous iterations in context. Score 0.0 if mostly repeating "
-            "prior work, 1.0 if substantial new work."
-        ),
-        evaluation_params=[
-            LLMTestCaseParams.ACTUAL_OUTPUT,
-            LLMTestCaseParams.CONTEXT,
-        ],
-        threshold=0.4,
-    )
 
-    code_quality = GEval(
-        name="Code Quality",
-        criteria=(
-            "Evaluate the quality of code changes in the output. Consider: "
-            "correct syntax, no obvious bugs, follows existing patterns, "
-            "no security issues introduced. Score 0.5 if no code changes. "
-            "Score 1.0 for clean, correct code."
-        ),
-        evaluation_params=[
-            LLMTestCaseParams.ACTUAL_OUTPUT,
-            LLMTestCaseParams.EXPECTED_OUTPUT,
-        ],
-        threshold=0.5,
-    )
+def parse_scores(raw: str) -> dict:
+    """Parse LLM JSON response, handling markdown fences."""
+    text = raw.strip()
+    if text.startswith("```"):
+        text = "\n".join(text.split("\n")[1:])
+    if text.endswith("```"):
+        text = "\n".join(text.split("\n")[:-1])
 
-    focus = GEval(
-        name="Focus",
-        criteria=(
-            f"Evaluate whether the output stays focused on the task: {task}. "
-            "Penalize tangential work, unnecessary refactoring, or scope creep. "
-            "Score 1.0 if tightly focused, 0.0 if mostly off-task."
-        ),
-        evaluation_params=[
-            LLMTestCaseParams.ACTUAL_OUTPUT,
-            LLMTestCaseParams.EXPECTED_OUTPUT,
-        ],
-        threshold=0.5,
-    )
+    try:
+        scores = json.loads(text)
+    except json.JSONDecodeError:
+        # Try to extract JSON from the response
+        start = text.find("{")
+        end = text.rfind("}") + 1
+        if start >= 0 and end > start:
+            scores = json.loads(text[start:end])
+        else:
+            scores = {}
 
-    return [task_completion, coherence, progress, code_quality, focus]
+    # Normalize: ensure all expected keys exist
+    for key in ["Task Completion", "Incremental Progress", "Coherence", "Code Quality", "Focus"]:
+        if key not in scores:
+            scores[key] = {"score": 0.5, "reason": "not evaluated"}
+        entry = scores[key]
+        if "score" not in entry or entry["score"] is None:
+            entry["score"] = 0.5
+        entry["score"] = float(entry["score"])
+        entry["passed"] = entry["score"] >= 0.5
+
+    return scores
 
 
 def compute_trend(prev_scores: list[dict], metric_name: str, window: int = 3) -> dict:
-    """Compute trend info for a metric over recent iterations."""
+    """Compute trend for a metric over recent iterations."""
     values = []
     for s in prev_scores:
         v = s.get(metric_name, {}).get("score")
         if v is not None:
-            values.append(v)
+            values.append(float(v))
 
     if len(values) < 2:
         return {"direction": "insufficient_data", "values": values}
@@ -124,92 +144,84 @@ def run_evaluation(
     iteration: int,
     output_file: str,
     task: str,
-    context_file: str | None = None,
-    prev_scores_file: str | None = None,
+    context_file: str = None,
+    prev_scores_file: str = None,
 ) -> dict:
     with open(output_file, "r") as f:
         actual_output = f.read()
 
-    context = []
+    context = "No previous context."
     if context_file and os.path.exists(context_file):
         with open(context_file, "r") as f:
-            context = [f.read()]
+            context = f.read() or "No previous context."
 
     prev_scores = []
     if prev_scores_file and os.path.exists(prev_scores_file):
         with open(prev_scores_file, "r") as f:
             prev_scores = json.load(f)
 
-    metrics = build_metrics(task)
+    # Truncate to avoid token limits
+    max_len = 8000
+    if len(actual_output) > max_len:
+        actual_output = actual_output[:max_len] + "\n... (truncated)"
+    if len(context) > max_len:
+        context = context[:max_len] + "\n... (truncated)"
 
-    test_case = LLMTestCase(
-        input=f"Iteration {iteration} of loop task: {task}",
-        actual_output=actual_output,
-        expected_output=f"Complete the following task: {task}",
+    prompt = EVAL_PROMPT.format(
+        iteration=iteration,
+        task=task,
         context=context,
+        output=actual_output,
     )
 
-    evaluate(test_cases=[test_case], metrics=metrics, run_async=False)
+    raw = call_llm(prompt)
+    scores = parse_scores(raw)
 
-    scores = {}
-    for metric in metrics:
-        name = metric.name if hasattr(metric, "name") else metric.__class__.__name__
-        scores[name] = {
-            "score": metric.score,
-            "reason": metric.reason,
-            "passed": metric.score >= metric.threshold if metric.score is not None else False,
-        }
-
-    task_score = scores.get("Task Completion", {}).get("score", 0) or 0
-    progress_score = scores.get("Incremental Progress", {}).get("score", 0) or 0
-    coherence_score = scores.get("Coherence", {}).get("score", 0) or 0
-    quality_score = scores.get("Code Quality", {}).get("score", 0) or 0
-    focus_score = scores.get("Focus", {}).get("score", 0) or 0
+    task_score = scores["Task Completion"]["score"]
+    progress_score = scores["Incremental Progress"]["score"]
+    coherence_score = scores["Coherence"]["score"]
+    quality_score = scores["Code Quality"]["score"]
 
     # Compute trends
+    all_scores = prev_scores + [scores]
     trends = {}
-    for metric_name in ["Task Completion", "Incremental Progress", "Coherence", "Code Quality", "Focus"]:
-        all_scores = prev_scores + [scores]
-        trends[metric_name] = compute_trend(all_scores, metric_name)
+    for name in ["Task Completion", "Incremental Progress", "Coherence", "Code Quality", "Focus"]:
+        trends[name] = compute_trend(all_scores, name)
 
     should_continue = True
     stop_reason = None
 
-    # Stop: task complete
     if task_score >= 0.9:
         should_continue = False
-        stop_reason = f"Task appears complete (score: {task_score:.2f})"
+        stop_reason = "Task appears complete (score: {:.2f})".format(task_score)
 
-    # Stop: no progress
     elif progress_score < 0.2:
         should_continue = False
-        stop_reason = f"No meaningful progress (score: {progress_score:.2f})"
+        stop_reason = "No meaningful progress (score: {:.2f})".format(progress_score)
 
-    # Stop: coherence collapse
     elif coherence_score < 0.3:
         should_continue = False
-        stop_reason = f"Coherence degraded (score: {coherence_score:.2f})"
+        stop_reason = "Coherence degraded (score: {:.2f})".format(coherence_score)
 
-    # Stop: score plateau over 3 iterations
     elif len(prev_scores) >= 3:
         recent = [s.get("Task Completion", {}).get("score", 0) for s in prev_scores[-3:]]
         if all(r is not None for r in recent):
             spread = max(recent) - min(recent)
             if spread < 0.05 and task_score > 0:
                 should_continue = False
-                stop_reason = f"Score plateau over last 3 iterations (spread: {spread:.3f})"
+                stop_reason = "Score plateau over last 3 iterations (spread: {:.3f})".format(spread)
 
-    # Stop: regression — task completion declining over 3 iterations
+    # Regression detection
     if should_continue and len(prev_scores) >= 3:
         tc_trend = trends.get("Task Completion", {})
         if tc_trend.get("direction") == "declining" and tc_trend.get("avg_delta", 0) < -0.1:
             should_continue = False
-            stop_reason = f"Task completion regressing (avg delta: {tc_trend['avg_delta']})"
+            stop_reason = "Task completion regressing (avg delta: {})".format(tc_trend["avg_delta"])
 
-    # Stop: quality collapse
+    # Quality gate
     if should_continue and quality_score < 0.2 and iteration > 1:
         should_continue = False
-        stop_reason = f"Code quality too low (score: {quality_score:.2f})"
+        stop_reason = "Code quality too low (score: {:.2f})".format(quality_score)
 
     result = {
         "iteration": iteration,

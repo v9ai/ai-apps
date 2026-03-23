@@ -72,7 +72,7 @@ fi
 
 # --- Step 1: Store in Chroma ---
 if [ -f "$ITER_OUTPUT" ] && [ -s "$ITER_OUTPUT" ]; then
-    python3 "$SCRIPTS_DIR/store_context.py" \
+    python3.12 "$SCRIPTS_DIR/store_context.py" \
         --iteration "$COUNT" \
         --task "$TASK" \
         --file "$ITER_OUTPUT" \
@@ -86,12 +86,12 @@ TREND_FEEDBACK=""
 
 if [ "$COUNT" -gt 0 ] && [ -f "$ITER_OUTPUT" ] && [ -s "$ITER_OUTPUT" ]; then
     CONTEXT_FILE="$LOOP_DIR/context-eval-${COUNT}.txt"
-    python3 "$SCRIPTS_DIR/retrieve_context.py" \
+    python3.12 "$SCRIPTS_DIR/retrieve_context.py" \
         --query "$TASK" \
         --iteration "$COUNT" \
         > "$CONTEXT_FILE" 2>/dev/null || true
 
-    EVAL_RESULT=$(python3 "$SCRIPTS_DIR/evaluate.py" \
+    EVAL_RESULT=$(python3.12 "$SCRIPTS_DIR/evaluate.py" \
         --iteration "$COUNT" \
         --output-file "$ITER_OUTPUT" \
         --task "$TASK" \
@@ -134,7 +134,7 @@ fi
 NEXT=$((COUNT + 1))
 echo "$NEXT" > "$COUNTER_FILE"
 
-RETRIEVED_CONTEXT=$(python3 "$SCRIPTS_DIR/retrieve_context.py" \
+RETRIEVED_CONTEXT=$(python3.12 "$SCRIPTS_DIR/retrieve_context.py" \
     --query "$TASK — what should iteration $NEXT focus on next?" \
     --iteration "$NEXT" \
     --n-results 8 \

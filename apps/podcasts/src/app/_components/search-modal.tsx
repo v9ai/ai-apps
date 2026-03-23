@@ -260,7 +260,7 @@ export function SearchModal({ open: controlledOpen, onClose, triggerRef }: Searc
         <div className={css({ display: 'flex', alignItems: 'center', gap: '3.5', px: '5', py: '3.5' })}>
           {/* Search icon */}
           <svg
-            className={css({ w: '5', h: '5', flexShrink: 0, color: '#7B7B86' })}
+            className={css({ w: '5', h: '5', flexShrink: 0, color: 'ui.dim' })}
             fill="none"
             viewBox="0 0 24 24"
             strokeWidth={2}
@@ -280,7 +280,7 @@ export function SearchModal({ open: controlledOpen, onClose, triggerRef }: Searc
             onChange={(e) => setQuery(e.target.value)}
             onKeyDown={handleInputKeyDown}
             placeholder="Search researchers, topics, podcasts..."
-            className={css({ flex: '1', bg: 'transparent', color: '#E8E8ED', _placeholder: { color: '#7B7B86' }, fontSize: '0.9375rem', outline: 'none' })}
+            className={css({ flex: '1', bg: 'transparent', color: 'ui.heading', _placeholder: { color: 'ui.dim' }, fontSize: '0.9375rem', outline: 'none' })}
             spellCheck={false}
             autoComplete="off"
             autoFocus
@@ -288,7 +288,7 @@ export function SearchModal({ open: controlledOpen, onClose, triggerRef }: Searc
 
           {/* Result count indicator */}
           {hasQuery && results.length > 0 && (
-            <span className={css({ flexShrink: 0, fontSize: '11px', color: '#55555F', fontWeight: 'medium', whiteSpace: 'nowrap' })}>
+            <span className={css({ flexShrink: 0, fontSize: '11px', color: 'ui.faint', fontWeight: 'medium', whiteSpace: 'nowrap' })}>
               {results.length} result{results.length !== 1 ? "s" : ""}
             </span>
           )}
@@ -303,10 +303,10 @@ export function SearchModal({ open: controlledOpen, onClose, triggerRef }: Searc
             rounded: 'md',
             fontSize: '11px',
             fontWeight: 'medium',
-            color: '#7B7B86',
-            bg: 'rgba(255,255,255,0.06)',
+            color: 'ui.dim',
+            bg: 'whiteAlpha.6',
             borderWidth: '1px',
-            borderColor: 'rgba(255,255,255,0.08)',
+            borderColor: 'whiteAlpha.8',
             boxShadow: 'inset 0 1px 0 rgba(255,255,255,0.04)',
           })}>
             ESC
@@ -326,7 +326,7 @@ export function SearchModal({ open: controlledOpen, onClose, triggerRef }: Searc
             <div className={css({ display: 'flex', flexDir: 'column', alignItems: 'center', justifyContent: 'center', gap: '5', px: '5', py: '10', textAlign: 'center', userSelect: 'none' })}>
               <div className={css({ display: 'flex', flexDir: 'column', alignItems: 'center', gap: '2.5' })}>
                 <svg
-                  className={css({ w: '7', h: '7', color: '#3D3D45' })}
+                  className={css({ w: '7', h: '7', color: 'ui.dark' })}
                   fill="none"
                   viewBox="0 0 24 24"
                   strokeWidth={1.5}
@@ -339,12 +339,12 @@ export function SearchModal({ open: controlledOpen, onClose, triggerRef }: Searc
                     d="m21 21-5.197-5.197m0 0A7.5 7.5 0 1 0 5.196 5.196a7.5 7.5 0 0 0 10.607 10.607Z"
                   />
                 </svg>
-                <span className={css({ fontSize: 'sm', color: '#55555F' })}>Start typing to search</span>
+                <span className={css({ fontSize: 'sm', color: 'ui.faint' })}>Start typing to search</span>
               </div>
 
               {/* Suggested searches */}
               <div className={css({ display: 'flex', flexDir: 'column', alignItems: 'center', gap: '2.5', w: 'full' })}>
-                <span className={css({ fontSize: '11px', fontWeight: 'medium', color: '#3D3D45', textTransform: 'uppercase', letterSpacing: '0.08em' })}>Popular</span>
+                <span className={css({ fontSize: '11px', fontWeight: 'medium', color: 'ui.dark', textTransform: 'uppercase', letterSpacing: '0.08em' })}>Popular</span>
                 <div className={css({ display: 'flex', flexWrap: 'wrap', justifyContent: 'center', gap: '2' })}>
                   {SUGGESTED_SEARCHES.map((s) => (
                     <button
@@ -358,17 +358,17 @@ export function SearchModal({ open: controlledOpen, onClose, triggerRef }: Searc
                         py: '4px',
                         rounded: 'full',
                         fontSize: '12px',
-                        color: '#9B9BA6',
-                        bg: 'rgba(255,255,255,0.04)',
+                        color: 'ui.secondary',
+                        bg: 'whiteAlpha.4',
                         borderWidth: '1px',
-                        borderColor: 'rgba(255,255,255,0.06)',
+                        borderColor: 'card.border',
                         cursor: 'pointer',
                         transition: 'all',
                         transitionDuration: '150ms',
                         _hover: {
                           bg: 'rgba(139,92,246,0.08)',
                           borderColor: 'rgba(139,92,246,0.20)',
-                          color: '#C4B5FD',
+                          color: 'accent.purpleLight',
                         },
                       })}
                     >

@@ -4,9 +4,6 @@
  * Loads and validates environment variables for scripts and applications.
  *
  * Environment variables required:
- * - LANGFUSE_SECRET_KEY
- * - LANGFUSE_PUBLIC_KEY
- * - LANGFUSE_BASE_URL
  * - OPENAI_API_KEY (or other LLM provider)
  *
  * Note: Next.js automatically loads .env files at build time.
@@ -18,13 +15,6 @@
  * Environment variable configuration with validation
  */
 export interface EnvConfig {
-  // Langfuse Configuration
-  langfuse: {
-    secretKey: string;
-    publicKey: string;
-    baseUrl: string;
-  };
-
   // LLM Provider Configuration
   llm: {
     openaiApiKey?: string;
@@ -39,20 +29,6 @@ export interface EnvConfig {
 }
 
 /**
- * Get required environment variable or throw error
- */
-function getRequiredEnv(key: string): string {
-  const value = process.env[key]?.trim();
-  if (!value) {
-    throw new Error(
-      `Missing required environment variable: ${key}\n` +
-        `Please ensure it's set in .env.local`,
-    );
-  }
-  return value;
-}
-
-/**
  * Get optional environment variable
  */
 function getOptionalEnv(key: string): string | undefined {
@@ -64,12 +40,6 @@ function getOptionalEnv(key: string): string | undefined {
  */
 export function loadEnvConfig(): EnvConfig {
   return {
-    langfuse: {
-      secretKey: getRequiredEnv("LANGFUSE_SECRET_KEY"),
-      publicKey: getRequiredEnv("LANGFUSE_PUBLIC_KEY"),
-      baseUrl: getRequiredEnv("LANGFUSE_BASE_URL"),
-    },
-
     llm: {
       openaiApiKey: getOptionalEnv("OPENAI_API_KEY"),
       deepseekApiKey: getOptionalEnv("DEEPSEEK_API_KEY"),
@@ -93,8 +63,6 @@ try {
 } catch (error) {
   console.error("❌ Environment configuration error:");
   console.error(error instanceof Error ? error.message : error);
-  // Re-throw the error to prevent app from starting with invalid config
-  // Note: process.exit() is not available in Edge Runtime
   throw error;
 }
 
@@ -106,9 +74,6 @@ export const env = envConfig;
 /**
  * Export individual environment variables for convenience
  */
-export const LANGFUSE_SECRET_KEY = env.langfuse.secretKey;
-export const LANGFUSE_PUBLIC_KEY = env.langfuse.publicKey;
-export const LANGFUSE_BASE_URL = env.langfuse.baseUrl;
 export const OPENAI_API_KEY = env.llm.openaiApiKey?.trim();
 export const DEEPSEEK_API_KEY = env.llm.deepseekApiKey?.trim();
 

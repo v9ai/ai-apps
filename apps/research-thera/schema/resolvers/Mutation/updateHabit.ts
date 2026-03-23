@@ -1,16 +1,16 @@
 import type { MutationResolvers } from "./../../types.generated";
 import { db } from "@/src/db";
 
-export const updateHabit: NonNullable<MutationResolvers['updateHabit']> = async (
+export const updateHabit: NonNullable<MutationResolvers["updateHabit"]> = async (
   _parent,
   args,
   ctx,
 ) => {
-  const userId = ctx.userId;
-  if (!userId) throw new Error("Authentication required");
+  const userEmail = ctx.userEmail;
+  if (!userEmail) throw new Error("Authentication required");
 
   const { id, input } = args;
-  await db.updateHabit(id, userId, {
+  await db.updateHabit(id, userEmail, {
     title: input.title ?? null,
     description: input.description ?? null,
     frequency: input.frequency ? input.frequency.toLowerCase() : null,
@@ -19,7 +19,7 @@ export const updateHabit: NonNullable<MutationResolvers['updateHabit']> = async 
     goalId: input.goalId ?? null,
   });
 
-  const habit = await db.getHabit(id, userId);
+  const habit = await db.getHabit(id, userEmail);
   if (!habit) throw new Error("Habit not found");
 
   return {
