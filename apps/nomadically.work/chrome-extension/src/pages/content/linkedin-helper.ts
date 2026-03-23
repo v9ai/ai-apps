@@ -99,6 +99,18 @@ function createBlockButton(companyName: string): HTMLButtonElement {
   return btn;
 }
 
+function markAllButtonsBlocked(companyName: string) {
+  document.querySelectorAll(`[${BLOCK_BTN_ATTR}]`).forEach((el) => {
+    const btn = el as HTMLButtonElement;
+    if (btn.title.toLowerCase().includes(companyName.toLowerCase())) {
+      btn.textContent = "Blocked";
+      btn.style.backgroundColor = "#6b7280";
+      btn.style.cursor = "default";
+      btn.disabled = true;
+    }
+  });
+}
+
 function dismissJobCard(btn: HTMLElement) {
   const card = btn.closest(".job-card-container, .base-card");
   if (!card) return;
