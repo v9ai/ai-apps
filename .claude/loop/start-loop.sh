@@ -36,6 +36,7 @@ mkdir -p "$LOOP_DIR"
 echo "0" > "$LOOP_DIR/counter"
 echo "$TASK" > "$LOOP_DIR/task.txt"
 echo "[]" > "$LOOP_DIR/scores.json"
+pwd > "$LOOP_DIR/cwd.txt"
 export CLAUDE_LOOP_MAX="$MAX_ITERATIONS"
 
 echo "Loop initialized: $TASK (max $MAX_ITERATIONS iterations)"

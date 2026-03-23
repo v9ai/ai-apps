@@ -41,6 +41,7 @@
     "db:studio": "drizzle-kit studio"
   },
   "dependencies": {
+    "@ai-apps/auth": "workspace:*",
     "@ai-sdk/anthropic": "^3.0.35",
     "@ai-sdk/deepseek": "^2.0.17",
     "@ai-sdk/openai": "^3.0.26",
@@ -53,7 +54,6 @@
     "@langfuse/otel": "^4.6.1",
     "@langfuse/tracing": "^4.6.1",
     "@llamaindex/llama-cloud": "^1.6.0",
-    "@ai-apps/auth": "workspace:*",
     "@neondatabase/serverless": "^1.0.2",
     "@opentelemetry/sdk-trace-node": "^2.5.1",
     "@radix-ui/react-icons": "^1.3.2",
@@ -102,6 +102,7 @@
     "@types/node": "22.19.7",
     "@types/react": "^19.1.12",
     "@types/react-dom": "^19.1.9",
+    "@types/ws": "^8.18.1",
     "@vanilla-extract/babel-plugin": "^1.2.0",
     "@vanilla-extract/integration": "^8.0.7",
     "@vanilla-extract/next-plugin": "^2.4.17",
@@ -111,7 +112,8 @@
     "drizzle-kit": "^0.31.8",
     "eslint": "^9.37.0",
     "tsx": "^4.21.0",
-    "typescript": "^5.9.3"
+    "typescript": "^5.9.3",
+    "ws": "^8.20.0"
   },
   "version": "0.0.1"
 }

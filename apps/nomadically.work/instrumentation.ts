@@ -93,4 +93,40 @@ export async function register() {
   process.on("SIGTERM", async () => {
     await provider.shutdown();
   });
+
+  // ── Chrome extension dev-reload WebSocket server ──
+  await startExtensionReloadServer();
+}
+
+async function startExtensionReloadServer() {
+  if (process.env.NODE_ENV !== "development") return;
+
+  const key = "__ext_reload_wss" as keyof typeof globalThis;
+  if ((globalThis as Record<string, unknown>)[key]) return;
+
+  const { WebSocketServer } = await import("ws");
+  const { watch } = await import("fs");
+  const { resolve } = await import("path");
+
+  const PORT = 35729;
+  const DIST_DIR = resolve(process.cwd(), "chrome-extension/dist_chrome");
+
+  const wss = new WebSocketServer({ port: PORT });
+  (globalThis as Record<string, unknown>)[key] = wss;
+
+  wss.on("listening", () => {
+    console.log(`[ext-reload] ws://localhost:${PORT} — watching ${DIST_DIR}`);
+  });
+
+  let debounce: ReturnType<typeof setTimeout> | null = null;
+  watch(DIST_DIR, { recursive: true }, (_event, filename) => {
+    if (!filename || filename.startsWith(".")) return;
+    if (debounce) clearTimeout(debounce);
+    debounce = setTimeout(() => {
+      console.log(`[ext-reload] ${filename} changed — reloading extension`);
+      for (const client of wss.clients) {
+        client.send("reload");
+      }
+    }, 300);
+  });
 }

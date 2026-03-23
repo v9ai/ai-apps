@@ -23,6 +23,7 @@ fi
 
 mkdir -p "$LOOP_DIR"
 TASK=$(cat "$TASK_FILE")
+LOOP_CWD=$(cat "$LOOP_DIR/cwd.txt" 2>/dev/null || echo "")
 MAX_ITERATIONS=${CLAUDE_LOOP_MAX:-10}
 
 # --- Counter ---
@@ -127,6 +128,10 @@ ITERATION ${NEXT} of ${MAX_ITERATIONS}
 
 ## Task
 ${TASK}
+
+## Working directory
+${LOOP_CWD}
+All work must be scoped to this directory.
 
 ## Context from previous iterations (semantic retrieval)
 ${RETRIEVED_CONTEXT}
