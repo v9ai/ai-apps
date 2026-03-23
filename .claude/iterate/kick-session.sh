@@ -55,6 +55,11 @@ if [ -z "$ITER_DIR" ]; then
     done
 fi
 
+# --- Check explicit env var (set by run-loop.sh for worktree sessions) ---
+if [ -z "$ITER_DIR" ] && [ -n "${CLAUDE_ITERATE_DIR:-}" ] && [ -f "${CLAUDE_ITERATE_DIR}/task.txt" ]; then
+    ITER_DIR="$CLAUDE_ITERATE_DIR"
+fi
+
 # --- No matching iterate session ---
 if [ -z "$ITER_DIR" ] || [ ! -f "$ITER_DIR/task.txt" ]; then
     exit 0

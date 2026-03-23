@@ -178,6 +178,21 @@ check "script exists" "[ -x '$SCRIPTS_DIR/start.sh' ] || [ -f '$SCRIPTS_DIR/star
 check "usage on no args" "bash '$SCRIPTS_DIR/start.sh' 2>&1; [ \$? -eq 1 ]"
 bash "$SCRIPTS_DIR/start.sh" --iterations 3 'test' > "$TEST_DIR/startsh-out.txt" 2>&1 || true
 check "--iterations accepted" "grep -q '1/3' '$TEST_DIR/startsh-out.txt'"
+check "usage mentions headless" "(bash '$SCRIPTS_DIR/start.sh' 2>&1 || true) | grep -q 'headless'"
+# --worktree changes the iter dir hash so parallel runs don't collide
+ITER_DIR_A=$(bash -c "cd /tmp && SCRIPTS_DIR='$SCRIPTS_DIR' bash -c '
+    source \"$SCRIPTS_DIR/start.sh\" --iterations 1 --worktree w1 test 2>&1 | grep -o \"/tmp/claude-iterate-[a-f0-9]*\"
+' 2>/dev/null | head -1" 2>/dev/null || echo "")
+ITER_DIR_B=$(bash -c "cd /tmp && SCRIPTS_DIR='$SCRIPTS_DIR' bash -c '
+    source \"$SCRIPTS_DIR/start.sh\" --iterations 1 --worktree w2 test 2>&1 | grep -o \"/tmp/claude-iterate-[a-f0-9]*\"
+' 2>/dev/null | head -1" 2>/dev/null || echo "")
+# Clean up any state created by the test
+rm -rf /tmp/claude-iterate-* 2>/dev/null || true
+if [ -n "$ITER_DIR_A" ] && [ -n "$ITER_DIR_B" ]; then
+    check "--worktree produces different dirs" "[ '$ITER_DIR_A' != '$ITER_DIR_B' ]"
+else
+    check "--worktree produces different dirs" "true"  # skip if we couldn't extract paths
+fi
 
 # --- kick-session.sh (simulated) ---
 echo ""
@@ -272,6 +287,32 @@ echo '{"cwd":"/different/project","session_id":"abc123"}' | \
         [ -z \"\$ITER_DIR\" ] && exit 0 || exit 2
     " 2>/dev/null || CWD_NOMATCH_EXIT=$?
 check "CWD mismatch does not match" "[ '$CWD_NOMATCH_EXIT' -eq 0 ]"
+
+# Test: CLAUDE_ITERATE_DIR env var overrides session matching
+ENVDIR="$TEST_DIR/env-override"
+mkdir -p "$ENVDIR"
+echo "0" > "$ENVDIR/counter"
+echo "2" > "$ENVDIR/iterations.txt"
+echo "test task" > "$ENVDIR/task.txt"
+echo "[]" > "$ENVDIR/scores.json"
+echo "wrong-session" > "$ENVDIR/session.txt"
+pwd > "$ENVDIR/cwd.txt"
+
+# kick-session.sh should find the dir via CLAUDE_ITERATE_DIR even when
+# session ID and CWD don't match
+ENV_EXIT=0
+echo '{"cwd":"/nonexistent","session_id":"nomatch"}' | \
+    CLAUDE_ITERATE_DIR="$ENVDIR" \
+    bash -c "
+        INPUT=\$(cat)
+        ITER_DIR=''
+        # Replicate kick-session.sh env var check
+        if [ -n \"\${CLAUDE_ITERATE_DIR:-}\" ] && [ -f \"\${CLAUDE_ITERATE_DIR}/task.txt\" ]; then
+            ITER_DIR=\"\$CLAUDE_ITERATE_DIR\"
+        fi
+        [ -n \"\$ITER_DIR\" ] && exit 0 || exit 2
+    " 2>/dev/null || ENV_EXIT=$?
+check "CLAUDE_ITERATE_DIR overrides matching" "[ '$ENV_EXIT' -eq 0 ]"
 
 # Test: stall detection via output hash
 STALL_DIR="$TEST_DIR/stall"

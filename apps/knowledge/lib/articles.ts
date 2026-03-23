@@ -198,6 +198,7 @@ export function getAllLessons(): Lesson[] {
   const files = fs.readdirSync(CONTENT_DIR).filter((f) => f.endsWith(".md"));
 
   _lessons = files
+    .filter((file) => file.replace(/\.md$/, "") in LESSON_NUMBER)
     .map((file) => {
       const slug = file.replace(/\.md$/, "");
       const number = LESSON_NUMBER[slug] ?? 0;

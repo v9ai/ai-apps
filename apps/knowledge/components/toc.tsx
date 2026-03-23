@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 
 interface TocEntry {
   level: number;
@@ -73,7 +73,7 @@ function TocNav({
 }
 
 export function TableOfContents({ markdown }: { markdown: string }) {
-  const headings = extractHeadings(markdown);
+  const headings = useMemo(() => extractHeadings(markdown), [markdown]);
   const [activeId, setActiveId] = useState<string>("");
   const [drawerOpen, setDrawerOpen] = useState(false);
   const observerRef = useRef<IntersectionObserver | null>(null);
