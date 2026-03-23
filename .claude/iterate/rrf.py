@@ -1,5 +1,6 @@
 #!/usr/bin/env python3
 """Reciprocal Rank Fusion (RRF) for combining multiple ranked result lists."""
+from __future__ import annotations
 
 
 def reciprocal_rank_fusion(

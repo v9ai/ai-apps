@@ -98,9 +98,13 @@ class TestRRF:
 
     def test_many_lists(self):
         """Fusion with 3+ lists should work."""
-        list1 = self._make_list(["A", "B"])
-        list2 = self._make_list(["B", "C"])
-        list3 = self._make_list(["C", "A"])
+        # Each doc needs a unique (iteration, chunk_index) key for RRF dedup
+        A = ("A", {"iteration": 0, "chunk_index": 0}, 0.1)
+        B = ("B", {"iteration": 1, "chunk_index": 0}, 0.2)
+        C = ("C", {"iteration": 2, "chunk_index": 0}, 0.3)
+        list1 = [A, B]
+        list2 = [B, C]
+        list3 = [C, A]
         fused = reciprocal_rank_fusion([list1, list2, list3], k=60)
         # All three docs should appear
         labels = {doc for doc, _, _ in fused}

@@ -122,16 +122,21 @@ class TestPersistence:
     def test_save_and_load(self, tmp_path):
         path = str(tmp_path / "bm25_index.json")
         idx = BM25Index(path)
+        # Need 3+ docs for BM25 IDF to produce non-zero scores
         idx.add_documents(
-            ["alpha bravo", "charlie delta"],
-            [{"iteration": 0, "chunk_index": 0}, {"iteration": 0, "chunk_index": 1}],
-            ["id-0", "id-1"],
+            ["alpha bravo text", "charlie delta text", "echo foxtrot text"],
+            [
+                {"iteration": 0, "chunk_index": 0},
+                {"iteration": 0, "chunk_index": 1},
+                {"iteration": 0, "chunk_index": 2},
+            ],
+            ["id-0", "id-1", "id-2"],
         )
         idx.save()
 
         idx2 = BM25Index(path)
         assert idx2.load() is True
-        assert idx2.size == 2
+        assert idx2.size == 3
         results = idx2.query("alpha")
         assert len(results) >= 1
         assert "alpha" in results[0][0]

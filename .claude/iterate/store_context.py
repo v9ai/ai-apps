@@ -1,5 +1,6 @@
 #!/usr/bin/env python3
 """Store iteration output in ChromaDB for semantic retrieval across iterations."""
+from __future__ import annotations
 
 import argparse
 import json

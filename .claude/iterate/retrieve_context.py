@@ -1,5 +1,6 @@
 #!/usr/bin/env python3
 """Retrieve relevant context from ChromaDB for the next iteration."""
+from __future__ import annotations
 
 import argparse
 import json

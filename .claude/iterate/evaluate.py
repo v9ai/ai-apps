@@ -1,4 +1,5 @@
 #!/usr/bin/env python3
+from __future__ import annotations
 """
 Evaluate iteration output using local heuristics (FastEmbed + Chroma).
 No external LLM required — scoring uses cosine similarity, error extraction,
