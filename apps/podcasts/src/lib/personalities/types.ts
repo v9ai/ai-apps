@@ -71,6 +71,7 @@ export type PersonResearch = {
   technical_philosophy?: Record<string, unknown>;
   podcast_appearances?: Record<string, unknown>[];
   news?: Record<string, string>[];
+  questions?: { category: string; question: string }[];
 };
 
 export type Personality = {

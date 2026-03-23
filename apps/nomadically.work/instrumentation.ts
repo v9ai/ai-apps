@@ -63,10 +63,7 @@ class ClassificationSpanProcessor implements SpanProcessor {
 }
 
 export async function register() {
-  // ── Chrome extension dev-reload WebSocket server ──
-  await startExtensionReloadServer();
-
-  // Guard: skip Langfuse if not configured
+  // Guard: skip if Langfuse is not configured
   if (
     !process.env.LANGFUSE_PUBLIC_KEY ||
     !process.env.LANGFUSE_SECRET_KEY ||
@@ -95,36 +92,5 @@ export async function register() {
   // Flush pending spans on shutdown
   process.on("SIGTERM", async () => {
     await provider.shutdown();
-  });
-}
-
-async function startExtensionReloadServer() {
-  if (process.env.NODE_ENV !== "development") return;
-
-  const key = "__ext_reload_wss" as keyof typeof globalThis;
-  if ((globalThis as Record<string, unknown>)[key]) return;
-
-  const { WebSocketServer } = await import("ws");
-  const { watch } = await import("fs");
-  const { resolve } = await import("path");
-
-  const PORT = 35729;
-  const DIST_DIR = resolve(process.cwd(), "chrome-extension/dist_chrome");
-
-  const wss = new WebSocketServer({ port: PORT });
-  (globalThis as Record<string, unknown>)[key] = wss;
-
-  wss.on("listening", () => {
-    console.log(`[ext-reload] ws://localhost:${PORT} — watching ${DIST_DIR}`);
-  });
-
-  let debounce: ReturnType<typeof setTimeout> | null = null;
-  watch(DIST_DIR, { recursive: true }, (_event, filename) => {
-    if (!filename || filename.startsWith(".")) return;
-    if (debounce) clearTimeout(debounce);
-    debounce = setTimeout(() => {
-      console.log(`[ext-reload] ${filename} changed — reloading extension`);
-      wss.clients.forEach((client) => client.send("reload"));
-    }, 300);
   });
 }
