@@ -1,6 +1,9 @@
 #!/usr/bin/env python3
 """
-Evaluate iteration output using DeepEval GEval metrics + local DeepSeek proxy.
+Evaluate iteration output using local heuristics (FastEmbed + Chroma).
+No external LLM required — scoring uses cosine similarity, error extraction,
+and git diff stats.
+
 Exit 0  = continue
 Exit 10 = stop (task complete, plateau, regression, or no progress)
 """
@@ -8,176 +11,11 @@ Exit 10 = stop (task complete, plateau, regression, or no progress)
 import argparse
 import json
 import os
+import re
 import subprocess
 import sys
-import urllib.request
 
-EVAL_URL = os.environ.get(
-    "EVAL_LLM_URL", "http://127.0.0.1:19836/v1/chat/completions"
-)
-EVAL_MODEL = os.environ.get("EVAL_LLM_MODEL", "deepseek-chat")
-
-# ---------------------------------------------------------------------------
-# Custom DeepEval LLM that uses the local proxy
-# ---------------------------------------------------------------------------
-_deepeval_available = False
-try:
-    from deepeval.models import DeepEvalBaseLLM
-    from deepeval.metrics import GEval, AnswerRelevancyMetric, FaithfulnessMetric, ContextualRelevancyMetric
-    from deepeval.test_case import LLMTestCase, LLMTestCaseParams
-    _deepeval_available = True
-except ImportError:
-    pass
-
-
-if _deepeval_available:
-    class LocalDeepSeekLLM(DeepEvalBaseLLM):
-        """DeepEval-compatible wrapper around the local DeepSeek proxy."""
-
-        def __init__(self, url: str = EVAL_URL, model: str = EVAL_MODEL):
-            self.url = url
-            self.model_name = model
-
-        def load_model(self):
-            return self.model_name
-
-        def get_model_name(self) -> str:
-            return self.model_name
-
-        def generate(self, prompt: str, **kwargs) -> str:
-            payload = json.dumps({
-                "model": self.model_name,
-                "messages": [{"role": "user", "content": prompt}],
-                "temperature": 0.1,
-                "max_tokens": 2048,
-            }).encode()
-            req = urllib.request.Request(
-                self.url, data=payload,
-                headers={"Content-Type": "application/json"},
-            )
-            with urllib.request.urlopen(req, timeout=60) as resp:
-                data = json.loads(resp.read())
-                return data["choices"][0]["message"]["content"]
-
-        async def a_generate(self, prompt: str, **kwargs) -> str:
-            return self.generate(prompt, **kwargs)
-
-
-def _proxy_available() -> bool:
-    """Check if the local DeepSeek proxy is reachable."""
-    try:
-        base = EVAL_URL.rsplit("/v1/", 1)[0]
-        urllib.request.urlopen(f"{base}/v1/models", timeout=2)
-        return True
-    except Exception:
-        return False
-
-
-# ---------------------------------------------------------------------------
-# DeepEval-based evaluation
-# ---------------------------------------------------------------------------
-def run_deepeval(iteration: int, actual_output: str, task: str, context: str, diff: str) -> dict:
-    """Run GEval metrics via DeepEval with local LLM."""
-    llm = LocalDeepSeekLLM()
-
-    geval_metrics = [
-        GEval(
-            name="Task Completion",
-            criteria=f"Evaluate progress toward completing: {task}. 1.0 = fully complete.",
-            evaluation_params=[LLMTestCaseParams.ACTUAL_OUTPUT, LLMTestCaseParams.EXPECTED_OUTPUT],
-            threshold=0.5,
-            model=llm,
-        ),
-        GEval(
-            name="Incremental Progress",
-            criteria="Did this iteration add NEW work vs prior? 0.0 = pure repetition, 1.0 = substantial new work.",
-            evaluation_params=[LLMTestCaseParams.ACTUAL_OUTPUT, LLMTestCaseParams.CONTEXT],
-            threshold=0.4,
-            model=llm,
-        ),
-        GEval(
-            name="Coherence",
-            criteria="Does the output logically build on prior work? Penalize going in circles.",
-            evaluation_params=[LLMTestCaseParams.ACTUAL_OUTPUT, LLMTestCaseParams.CONTEXT],
-            threshold=0.5,
-            model=llm,
-        ),
-        GEval(
-            name="Code Quality",
-            criteria="Are code changes correct, secure, following patterns? 0.5 if no code changes.",
-            evaluation_params=[LLMTestCaseParams.ACTUAL_OUTPUT, LLMTestCaseParams.EXPECTED_OUTPUT],
-            threshold=0.5,
-            model=llm,
-        ),
-        GEval(
-            name="Focus",
-            criteria=f"Did work stay on-task for: {task}? Penalize scope creep.",
-            evaluation_params=[LLMTestCaseParams.ACTUAL_OUTPUT, LLMTestCaseParams.EXPECTED_OUTPUT],
-            threshold=0.5,
-            model=llm,
-        ),
-    ]
-
-    # DeepEval built-in metrics for richer evaluation coverage.
-    # Built-in metrics don't expose .name — set it explicitly so the
-    # score-collection loop below can key results by name consistently.
-    builtin_metrics = [
-        AnswerRelevancyMetric(threshold=0.5, model=llm),
-        FaithfulnessMetric(threshold=0.5, model=llm),
-        ContextualRelevancyMetric(threshold=0.5, model=llm),
-    ]
-    for m, n in zip(builtin_metrics, ["Answer Relevancy", "Faithfulness", "Contextual Relevancy"]):
-        m.name = n
-    metrics = geval_metrics + builtin_metrics
-
-    test_case = LLMTestCase(
-        input=f"Iteration {iteration}: {task}",
-        actual_output=f"{actual_output}\n\n## Files changed\n{diff}",
-        expected_output=f"Complete the task: {task}",
-        context=[context] if context else [],
-        retrieval_context=[context] if context else [],
-    )
-
-    from deepeval import evaluate as de_evaluate
-    from deepeval.evaluate.configs import AsyncConfig, DisplayConfig
-    de_evaluate(
-        test_cases=[test_case],
-        metrics=metrics,
-        async_config=AsyncConfig(run_async=False),
-        display_config=DisplayConfig(print_results=False, show_indicator=False),
-    )
-
-    scores = {}
-    for m in metrics:
-        scores[m.name] = {
-            "score": m.score if m.score is not None else 0.5,
-            "reason": m.reason or "",
-            "passed": (m.score or 0) >= m.threshold,
-        }
-    return scores
-
-
-# ---------------------------------------------------------------------------
-# Fallback: direct LLM call (no deepeval dependency)
-# ---------------------------------------------------------------------------
-EVAL_PROMPT = """\
-You are an iteration evaluator for a multi-step AI coding task. Score iteration {iteration}.
-
-## Task
-{task}
-
-## Previous context
-{context}
-
-## Files changed
-{diff}
-
-## Output
-{output}
-
-Score each metric 0.0–1.0 with a one-sentence reason. Respond ONLY with JSON:
-{{"Task Completion": {{"score": 0.0, "reason": "..."}}, "Incremental Progress": {{"score": 0.0, "reason": "..."}}, "Coherence": {{"score": 0.0, "reason": "..."}}, "Code Quality": {{"score": 0.0, "reason": "..."}}, "Focus": {{"score": 0.0, "reason": "..."}}, "Answer Relevancy": {{"score": 0.0, "reason": "..."}}, "Faithfulness": {{"score": 0.0, "reason": "..."}}, "Contextual Relevancy": {{"score": 0.0, "reason": "..."}}}}
-"""
+from embeddings import get_embedding_function
 
 ALL_METRIC_NAMES = [
     "Task Completion",
@@ -191,50 +29,185 @@ ALL_METRIC_NAMES = [
 ]
 
 
-def run_direct_llm(iteration: int, actual_output: str, task: str, context: str, diff: str) -> dict:
-    """Fallback: single LLM call for all scores."""
-    payload = json.dumps({
-        "model": EVAL_MODEL,
-        "messages": [{"role": "user", "content": EVAL_PROMPT.format(
-            iteration=iteration, task=task, context=context[:4000],
-            diff=diff, output=actual_output[:4000],
-        )}],
-        "temperature": 0.1,
-        "max_tokens": 1024,
-    }).encode()
-    req = urllib.request.Request(
-        EVAL_URL, data=payload,
-        headers={"Content-Type": "application/json"},
-    )
-    with urllib.request.urlopen(req, timeout=60) as resp:
-        data = json.loads(resp.read())
-        raw = data["choices"][0]["message"]["content"]
+# ---------------------------------------------------------------------------
+# Cosine similarity helper
+# ---------------------------------------------------------------------------
 
-    # Parse JSON from response
-    text = raw.strip()
-    for fence in ("```json", "```"):
-        if text.startswith(fence):
-            text = "\n".join(text.split("\n")[1:])
-    if text.endswith("```"):
-        text = "\n".join(text.split("\n")[:-1])
+def _cosine_similarity(a: list[float], b: list[float]) -> float:
+    dot = sum(x * y for x, y in zip(a, b))
+    norm_a = sum(x * x for x in a) ** 0.5
+    norm_b = sum(x * x for x in b) ** 0.5
+    if norm_a == 0.0 or norm_b == 0.0:
+        return 0.0
+    return dot / (norm_a * norm_b)
+
+
+def _embed_text(ef, text: str, max_chars: int = 2000) -> list[float] | None:
+    """Embed a single text string, returning the vector or None."""
+    if ef is None:
+        return None
     try:
-        scores = json.loads(text)
-    except json.JSONDecodeError:
-        start, end = text.find("{"), text.rfind("}") + 1
-        scores = json.loads(text[start:end]) if start >= 0 and end > start else {}
+        vectors = ef([text[:max_chars]])
+        return vectors[0] if vectors else None
+    except Exception:
+        return None
 
-    for key in ALL_METRIC_NAMES:
-        if key not in scores:
-            scores[key] = {"score": 0.5, "reason": "not evaluated"}
-        e = scores[key]
-        e["score"] = float(e.get("score", 0.5) or 0.5)
-        e["passed"] = e["score"] >= 0.5
+
+# ---------------------------------------------------------------------------
+# Error extraction (duplicated from store_context for self-containment)
+# ---------------------------------------------------------------------------
+
+def _extract_errors(content: str) -> list[str]:
+    patterns = [
+        r'^(?:error|Error|ERROR):[ \t]+\S.*',
+        r'^(?:TypeError|SyntaxError|ReferenceError|ImportError|KeyError|ValueError|AttributeError|ModuleNotFoundError)[:( ].*',
+        r'^(?:FAIL|FAILED)[ \t]+\S.*',
+        r'^panic:.*',
+        r'exit code [1-9]\d*',
+    ]
+    errors = []
+    for pattern in patterns:
+        errors.extend(re.findall(pattern, content, re.MULTILINE)[:5])
+    return errors[:10]
+
+
+# ---------------------------------------------------------------------------
+# Heuristic evaluation
+# ---------------------------------------------------------------------------
+
+def run_heuristic(
+    iteration: int,
+    actual_output: str,
+    task: str,
+    context: str,
+    diff: str,
+) -> dict:
+    """Compute all 8 metric scores using local embeddings and heuristics."""
+    ef = get_embedding_function()
+
+    # Embed key texts
+    task_emb = _embed_text(ef, task)
+    output_emb = _embed_text(ef, actual_output)
+    context_emb = _embed_text(ef, context) if context else None
+    diff_emb = _embed_text(ef, diff) if diff and diff != "No diff available." else None
+
+    # --- Similarity computations ---
+    # Output ↔ Task: how relevant is the output to the task?
+    output_task_sim = (
+        _cosine_similarity(output_emb, task_emb)
+        if output_emb and task_emb else 0.5
+    )
+
+    # Output ↔ Context: how similar is current output to previous work?
+    # High similarity = repetition (bad for progress)
+    output_context_sim = (
+        _cosine_similarity(output_emb, context_emb)
+        if output_emb and context_emb else 0.0
+    )
+
+    # Output ↔ Diff: does the output relate to actual code changes?
+    output_diff_sim = (
+        _cosine_similarity(output_emb, diff_emb)
+        if output_emb and diff_emb else 0.5
+    )
+
+    # Context ↔ Task: is the retrieved context relevant?
+    context_task_sim = (
+        _cosine_similarity(context_emb, task_emb)
+        if context_emb and task_emb else 0.5
+    )
+
+    # --- Error analysis ---
+    errors = _extract_errors(actual_output)
+    error_count = len(errors)
+
+    # --- Diff analysis ---
+    has_diff = diff != "No diff available." and len(diff.strip()) > 20
+    # Count files changed from diff stat lines
+    diff_files = len(re.findall(r'^\s*.+?\s+\|', diff, re.MULTILINE)) if has_diff else 0
+
+    # --- Compute metrics ---
+
+    # Task Completion: relevance to task + code changes + low errors
+    tc_base = output_task_sim * 0.6
+    tc_change_bonus = min(0.25, diff_files * 0.05) if has_diff else 0.0
+    tc_error_penalty = min(0.2, error_count * 0.05)
+    task_completion = max(0.0, min(1.0, tc_base + tc_change_bonus - tc_error_penalty))
+
+    # Incremental Progress: inversely related to similarity with prior context
+    if not context or not context.strip():
+        incremental_progress = 0.6
+    else:
+        incremental_progress = max(0.0, min(1.0, 1.0 - output_context_sim * 0.8))
+
+    # Coherence: output relevance to task
+    coherence = max(0.0, min(1.0, output_task_sim))
+
+    # Code Quality: based on error count
+    code_quality = max(0.0, min(1.0, 1.0 - error_count * 0.15))
+
+    # Focus: combination of task relevance and diff relevance
+    focus = max(0.0, min(1.0, output_task_sim * 0.6 + output_diff_sim * 0.4))
+
+    # Answer Relevancy: output ↔ task similarity
+    answer_relevancy = max(0.0, min(1.0, output_task_sim))
+
+    # Faithfulness: does output relate to actual code changes?
+    faithfulness = output_diff_sim if has_diff else 0.5
+
+    # Contextual Relevancy: is the retrieved context relevant to the task?
+    contextual_relevancy = context_task_sim
+
+    scores = {
+        "Task Completion": {
+            "score": round(task_completion, 3),
+            "reason": f"relevance={output_task_sim:.2f}, files={diff_files}, errors={error_count}",
+            "passed": task_completion >= 0.5,
+        },
+        "Incremental Progress": {
+            "score": round(incremental_progress, 3),
+            "reason": f"context_similarity={output_context_sim:.2f}" if context else "first iteration",
+            "passed": incremental_progress >= 0.4,
+        },
+        "Coherence": {
+            "score": round(coherence, 3),
+            "reason": f"task_relevance={output_task_sim:.2f}",
+            "passed": coherence >= 0.5,
+        },
+        "Code Quality": {
+            "score": round(code_quality, 3),
+            "reason": f"errors={error_count}",
+            "passed": code_quality >= 0.5,
+        },
+        "Focus": {
+            "score": round(focus, 3),
+            "reason": f"task_sim={output_task_sim:.2f}, diff_sim={output_diff_sim:.2f}",
+            "passed": focus >= 0.5,
+        },
+        "Answer Relevancy": {
+            "score": round(answer_relevancy, 3),
+            "reason": f"output_task_sim={output_task_sim:.2f}",
+            "passed": answer_relevancy >= 0.5,
+        },
+        "Faithfulness": {
+            "score": round(faithfulness, 3),
+            "reason": f"output_diff_sim={output_diff_sim:.2f}" if has_diff else "no diff",
+            "passed": faithfulness >= 0.5,
+        },
+        "Contextual Relevancy": {
+            "score": round(contextual_relevancy, 3),
+            "reason": f"context_task_sim={context_task_sim:.2f}",
+            "passed": contextual_relevancy >= 0.5,
+        },
+    }
+
     return scores
 
 
 # ---------------------------------------------------------------------------
 # Trend analysis
 # ---------------------------------------------------------------------------
+
 def compute_trend(prev_scores: list[dict], metric_name: str, window: int = 3) -> dict:
     values = [float(s.get(metric_name, {}).get("score", 0))
               for s in prev_scores if s.get(metric_name, {}).get("score") is not None]
@@ -252,6 +225,7 @@ def compute_trend(prev_scores: list[dict], metric_name: str, window: int = 3) ->
 # ---------------------------------------------------------------------------
 # Main evaluation
 # ---------------------------------------------------------------------------
+
 def run_evaluation(iteration, output_file, task, context_file=None, prev_scores_file=None):
     with open(output_file) as f:
         actual_output = f.read()
@@ -283,27 +257,8 @@ def run_evaluation(iteration, output_file, task, context_file=None, prev_scores_
     if len(context) > max_len:
         context = context[:max_len] + "\n... (truncated)"
 
-    # Choose eval strategy
-    scores = None
-    eval_method = "fallback"
-
-    if _proxy_available():
-        if _deepeval_available:
-            try:
-                scores = run_deepeval(iteration, actual_output, task, context, diff)
-                eval_method = "deepeval"
-            except Exception as e:
-                sys.stderr.write(f"[eval] deepeval failed: {e}, falling back to direct LLM\n")
-        if scores is None:
-            try:
-                scores = run_direct_llm(iteration, actual_output, task, context, diff)
-                eval_method = "direct_llm"
-            except Exception as e:
-                sys.stderr.write(f"[eval] direct LLM failed: {e}\n")
-
-    if scores is None:
-        scores = {k: {"score": 0.5, "reason": "fallback", "passed": True}
-                  for k in ALL_METRIC_NAMES}
+    scores = run_heuristic(iteration, actual_output, task, context, diff)
+    eval_method = "heuristic"
 
     # Trends + stop logic
     all_scores = prev_scores + [scores]

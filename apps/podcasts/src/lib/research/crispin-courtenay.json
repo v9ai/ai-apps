@@ -60,7 +60,10 @@
     }
   ],
   "quotes": [],
-  "social": {},
+  "social": {
+    "linkedin": "https://www.linkedin.com/in/crispincourtenay",
+    "website": "https://www.verticgraph.com"
+  },
   "podcast_appearances": [],
   "news": [],
   "videos": [],
@@ -169,6 +172,18 @@
     "revenue_signals": "Consulting revenue from AI Strategy, subscription-based SaaS model for VerticGraph, enterprise contracts with law firms and corporate legal departments, Clio Developer Partnership providing integration revenue"
   },
   "conferences": {},
-  "technical_philosophy": {},
+  "technical_philosophy": {
+    "core_thesis": "Enterprise AI must be governed by explicit rules and audit trails before deployment — safety, compliance, and determinism take precedence over raw capability.",
+    "positions": [
+      {
+        "claim": "Graph-based RAG outperforms vector search for structured legal document retrieval",
+        "source_url": "https://www.verticgraph.com"
+      }
+    ],
+    "predictions": [],
+    "contrarian_takes": [
+      "LLMs should not make autonomous decisions in legal workflows without human-in-the-loop review"
+    ]
+  },
   "sources": []
 }

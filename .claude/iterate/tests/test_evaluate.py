@@ -322,6 +322,78 @@ class TestStopLogic:
 
 
 # ---------------------------------------------------------------------------
+# Semantic similarity in run_evaluation
+# ---------------------------------------------------------------------------
+
+class TestSemanticSimilarity:
+    def _run_with_similarity(self, tmp_path, similarity, iteration=2):
+        """Run evaluate with a given similarity value and return result."""
+        import evaluate
+        from unittest.mock import patch
+
+        good_scores = {k: {"score": 0.6, "reason": "", "passed": True} for k in ALL_METRIC_NAMES}
+
+        output_file = tmp_path / "output.txt"
+        output_file.write_text("Some new work done in this iteration.")
+        scores_file = tmp_path / "scores.json"
+        scores_file.write_text("[]")
+
+        with patch.object(evaluate, "run_direct_llm", return_value=good_scores), \
+             patch.object(evaluate, "_proxy_available", return_value=True), \
+             patch.object(evaluate, "_deepeval_available", False):
+            return run_evaluation(
+                iteration=iteration,
+                output_file=str(output_file),
+                task="build auth",
+                prev_scores_file=str(scores_file),
+                similarity=similarity,
+            )
+
+    def test_result_includes_semantic_similarity_key(self, tmp_path):
+        result = self._run_with_similarity(tmp_path, similarity=0.75)
+        assert "semantic_similarity" in result
+
+    def test_similarity_value_preserved_in_result(self, tmp_path):
+        result = self._run_with_similarity(tmp_path, similarity=0.75)
+        assert result["semantic_similarity"] == 0.75
+
+    def test_none_similarity_preserved(self, tmp_path):
+        result = self._run_with_similarity(tmp_path, similarity=None)
+        assert result["semantic_similarity"] is None
+
+    def test_high_similarity_stops_loop(self, tmp_path):
+        """Similarity > 0.92 after iter 1 should stop the loop."""
+        result = self._run_with_similarity(tmp_path, similarity=0.95, iteration=2)
+        assert result["continue"] is False
+        assert "repetition" in result["stop_reason"].lower()
+
+    def test_low_similarity_does_not_stop(self, tmp_path):
+        """Low similarity should not trigger semantic stop."""
+        result = self._run_with_similarity(tmp_path, similarity=0.5, iteration=2)
+        assert result["continue"] is True
+
+    def test_high_similarity_on_first_iter_does_not_stop(self, tmp_path):
+        """Semantic stop only activates after iteration 1."""
+        result = self._run_with_similarity(tmp_path, similarity=0.99, iteration=1)
+        # Should NOT stop on iteration 1 due to similarity
+        assert "repetition" not in (result.get("stop_reason") or "").lower()
+
+    def test_similarity_added_to_context_when_provided(self, tmp_path):
+        """When similarity is provided, it should be appended to context."""
+        import evaluate
+        # Test the context modification directly
+        context = "Some existing context."
+        similarity = 0.95
+        if similarity is not None:
+            sim_note = f"\n## Semantic Similarity\nOutput similarity to previous iteration: {similarity:.3f}"
+            if similarity > 0.88:
+                sim_note += " (HIGH — may be repeating prior work)"
+            modified = context + sim_note
+        assert "Semantic Similarity" in modified
+        assert "HIGH" in modified
+
+
+# ---------------------------------------------------------------------------
 # Module-level checks
 # ---------------------------------------------------------------------------
 

@@ -90,7 +90,7 @@
     },
     {
       "title": "Titanium",
-      "description": "Full-stack AI application framework. 47 stars on GitHub.",
+      "description": "Full-stack AI application framework built with Next.js, TypeScript, and LangChain. 47 stars on GitHub.",
       "url": "https://github.com/athrael-soju/Titanium"
     },
     {
@@ -105,7 +105,7 @@
     },
     {
       "title": "CopperAI",
-      "description": "Hands-free voice-to-voice interaction system with LLMs. 29 stars.",
+      "description": "Hands-free voice-to-voice interaction system with LLMs, enabling real-time spoken dialogue. 29 stars on GitHub.",
       "url": "https://github.com/athrael-soju/CopperAI"
     }
   ],

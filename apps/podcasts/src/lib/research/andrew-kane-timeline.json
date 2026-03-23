@@ -30,25 +30,25 @@
       "date": "2023-05",
       "event": "Announced pgvector availability on Amazon RDS and support for 11 programming language libraries",
       "url": "https://aguea.net/andrewkane",
-      "source": "web"
+      "source": "research"
     },
     {
       "date": "2023-05",
       "event": "pgvector made available on Amazon RDS — Amazon RDS support for pgvector announced",
       "url": "https://aws.amazon.com/about-aws/whats-new/2023/05/amazon-rds-postgresql-pgvector-open-source-extension/",
-      "source": "web"
+      "source": "research"
     },
     {
       "date": "2021-01",
       "event": "Released pgvector: open-source PostgreSQL extension for vector similarity search",
       "url": "https://github.com/pgvector/pgvector",
-      "source": "web"
+      "source": "research"
     },
     {
       "date": "2017-09-08",
       "event": "Gave talk \"How Postgres Could Index Itself\" at PostgresOpen (presenting Dexter, the automatic PostgreSQL indexer)",
       "url": "https://speakerdeck.com/ankane/how-postgres-could-index-itself",
-      "source": "web"
+      "source": "research"
     }
   ]
 }

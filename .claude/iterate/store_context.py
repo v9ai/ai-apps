@@ -191,6 +191,18 @@ def store(iteration: int, content: str, task: str):
         })
 
     collection.upsert(ids=ids, documents=documents, metadatas=metadatas)
+
+    # Semantic similarity with the previous iteration (0.0 = new, 1.0 = repetitive).
+    # Computed post-upsert so both iterations' embeddings are available in ChromaDB.
+    semantic_similarity: float | None = None
+    if iteration >= 1:
+        try:
+            from retrieve_context import compute_iter_similarity, get_collection as _rc_get_collection
+            _col = _rc_get_collection()
+            semantic_similarity = compute_iter_similarity(_col, iteration, iteration - 1)
+        except Exception:
+            pass
+
     result = {
         "stored": len(ids),
         "iteration": iteration,
@@ -198,6 +210,7 @@ def store(iteration: int, content: str, task: str):
         "files_changed": len(changed_files),
         "has_diff": diff_content is not None,
         "collection_count": collection.count(),
+        "semantic_similarity": semantic_similarity,
     }
     print(json.dumps(result))
     return result

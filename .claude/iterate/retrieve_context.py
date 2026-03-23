@@ -21,6 +21,126 @@ def get_collection():
     return client.get_or_create_collection(**kwargs)
 
 
+# ---------------------------------------------------------------------------
+# Cosine similarity helper
+# ---------------------------------------------------------------------------
+
+def _cosine_similarity(a: list[float], b: list[float]) -> float:
+    """Compute cosine similarity between two embedding vectors."""
+    dot = sum(x * y for x, y in zip(a, b))
+    norm_a = sum(x * x for x in a) ** 0.5
+    norm_b = sum(x * x for x in b) ** 0.5
+    if norm_a == 0.0 or norm_b == 0.0:
+        return 0.0
+    return dot / (norm_a * norm_b)
+
+
+def _mean_embedding(embeddings: list[list[float]]) -> list[float] | None:
+    """Return element-wise mean of a list of embedding vectors."""
+    if not embeddings:
+        return None
+    dim = len(embeddings[0])
+    mean = [0.0] * dim
+    for emb in embeddings:
+        for i, v in enumerate(emb):
+            mean[i] += v
+    n = len(embeddings)
+    return [v / n for v in mean]
+
+
+# ---------------------------------------------------------------------------
+# Semantic repetition detection
+# ---------------------------------------------------------------------------
+
+def compute_iter_similarity(collection, iter_a: int, iter_b: int) -> float | None:
+    """Compute cosine similarity between two iterations' output embeddings.
+
+    Uses the stored embeddings in ChromaDB — no additional LLM/embedding call.
+    Returns None if embeddings are unavailable (e.g. chroma default ef).
+    """
+    results = {}
+    for it in (iter_a, iter_b):
+        try:
+            r = collection.get(
+                where={"$and": [{"iteration": it}, {"doc_type": "output"}]},
+                include=["embeddings"],
+            )
+            if r["embeddings"]:
+                results[it] = r["embeddings"]
+        except Exception:
+            return None
+
+    if iter_a not in results or iter_b not in results:
+        return None
+
+    emb_a = _mean_embedding(results[iter_a])
+    emb_b = _mean_embedding(results[iter_b])
+    if emb_a is None or emb_b is None:
+        return None
+
+    sim = _cosine_similarity(emb_a, emb_b)
+    return round(sim, 4)
+
+
+# ---------------------------------------------------------------------------
+# MMR (Maximal Marginal Relevance)
+# ---------------------------------------------------------------------------
+
+def _mmr_select(
+    docs: list[tuple[str, dict, float]],
+    k: int,
+    lambda_mult: float = 0.6,
+    ef=None,
+) -> list[tuple[str, dict, float]]:
+    """Greedy MMR selection for diversity in retrieved docs.
+
+    lambda_mult controls relevance vs. diversity:
+      - 1.0 = pure relevance (no MMR)
+      - 0.0 = pure diversity
+      - 0.6 = default: prefer relevance but penalise redundancy
+
+    Falls back to top-k by score if embedding function is unavailable.
+    """
+    if ef is None or len(docs) <= k:
+        return docs[:k]
+
+    # Embed all candidate documents
+    texts = [d for d, _, _ in docs]
+    try:
+        embeddings = ef.embed_documents(texts)
+    except Exception:
+        return docs[:k]
+
+    selected_indices: list[int] = []
+    remaining = list(range(len(docs)))
+
+    # Seed: pick the most relevant doc (lowest distance = index 0 after sort)
+    best = min(remaining, key=lambda i: docs[i][2])
+    selected_indices.append(best)
+    remaining.remove(best)
+
+    while len(selected_indices) < k and remaining:
+        best_score = float("-inf")
+        best_idx = remaining[0]
+
+        sel_embs = [embeddings[i] for i in selected_indices]
+
+        for idx in remaining:
+            relevance = 1.0 - docs[idx][2]  # convert distance to similarity
+            redundancy = max(
+                _cosine_similarity(embeddings[idx], sel_emb) for sel_emb in sel_embs
+            )
+            score = lambda_mult * relevance - (1 - lambda_mult) * redundancy
+            if score > best_score:
+                best_score = score
+                best_idx = idx
+
+        selected_indices.append(best_idx)
+        remaining.remove(best_idx)
+
+    return [docs[i] for i in selected_indices]
+
+
 def _get_latest_eval(collection, current_iteration: int) -> str | None:
     """Directly fetch the most recent eval doc by ID (deterministic, not similarity-based).
 
@@ -50,8 +170,10 @@ def retrieve(
     current_iteration: int,
     n_results: int = 8,
     include_errors: bool = True,
+    use_mmr: bool = True,
 ) -> str:
     collection = get_collection()
+    ef = get_embedding_function()
     total = collection.count()
 
     if total == 0:
@@ -107,7 +229,14 @@ def retrieve(
                 all_docs[doc_id] = (doc, meta, boosted)
 
     # Sort: recency-boosted distance (ascending = best match)
-    sorted_docs = sorted(all_docs.values(), key=lambda x: (x[1]["iteration"], x[2]))
+    candidate_docs = sorted(all_docs.values(), key=lambda x: (x[1]["iteration"], x[2]))
+
+    # Apply MMR to select a diverse subset from the candidates
+    if use_mmr and ef is not None and len(candidate_docs) > n_results:
+        sorted_docs = _mmr_select(candidate_docs, k=n_results, lambda_mult=0.6, ef=ef)
+        sorted_docs = sorted(sorted_docs, key=lambda x: (x[1]["iteration"], x[2]))
+    else:
+        sorted_docs = candidate_docs
 
     # Group by iteration
     iter_chunks: dict[int, list[tuple[str, dict, float]]] = {}
@@ -152,6 +281,18 @@ def retrieve(
     if error_iters:
         header += f"**Iterations with errors:** {error_iters}\n"
 
+    # Semantic repetition detection: compare the last two completed iterations.
+    # High similarity means Claude is producing semantically identical work.
+    if current_iteration >= 2:
+        sim = compute_iter_similarity(collection, current_iteration - 1, current_iteration - 2)
+        if sim is not None:
+            header += f"**Output similarity (iter {current_iteration - 1} vs {current_iteration - 2}):** {sim:.2f}\n"
+            if sim > 0.88:
+                header += (
+                    "**WARNING: Outputs are highly similar — you may be repeating prior work. "
+                    "Focus on something NEW that is not yet done.**\n"
+                )
+
     # Pin latest eval scores so Claude always sees them, even if not top-ranked by similarity
     latest_eval = _get_latest_eval(collection, current_iteration)
     if latest_eval:
@@ -168,6 +309,7 @@ if __name__ == "__main__":
     parser.add_argument("--iteration", type=int, required=True)
     parser.add_argument("--n-results", type=int, default=8)
     parser.add_argument("--no-errors", action="store_true")
+    parser.add_argument("--no-mmr", action="store_true")
     args = parser.parse_args()
 
     print(retrieve(
@@ -175,4 +317,5 @@ if __name__ == "__main__":
         args.iteration,
         args.n_results,
         include_errors=not args.no_errors,
+        use_mmr=not args.no_mmr,
     ))

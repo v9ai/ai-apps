@@ -5,9 +5,10 @@ set -uo pipefail
 cat > /dev/null  # drain stdin
 
 # Skip during iterate — kick-session.sh handles the Stop hook
-if [ -f "/tmp/claude-iterate/task.txt" ]; then
-    exit 0
-fi
+# Check all iterate dirs (they have hash/session suffixes)
+for _d in /tmp/claude-iterate-*/; do
+    [ -f "${_d}task.txt" ] && exit 0
+done
 
 git rev-parse --is-inside-work-tree > /dev/null 2>&1 || exit 0
 

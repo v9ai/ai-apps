@@ -264,3 +264,43 @@ class TestStoreEval:
         col = client.get_or_create_collection("iterate_context")
         doc = col.get(ids=["iter-3-eval"])
         assert "0.85" in doc["documents"][0]
+
+
+# ---------------------------------------------------------------------------
+# Semantic similarity in store() result
+# ---------------------------------------------------------------------------
+
+class TestStoreSimilarity:
+    def test_first_iteration_similarity_is_none(self):
+        """Iteration 0 has no previous iteration to compare against."""
+        result = store(0, "Initial work done.", "task")
+        assert result["semantic_similarity"] is None
+
+    def test_second_iteration_has_similarity_or_none(self):
+        """Iteration 1 may have a similarity score or None (depends on embedding availability)."""
+        store(0, "Added auth middleware.", "task")
+        result = store(1, "Added logout endpoint.", "task")
+        assert result["semantic_similarity"] is None or isinstance(result["semantic_similarity"], float)
+
+    def test_identical_iterations_high_similarity(self):
+        """Storing the same content twice should yield high similarity (if embeddings available)."""
+        from embeddings import fastembed_available
+        if not fastembed_available():
+            pytest.skip("fastembed required")
+        text = "Implemented authentication system with JWT middleware and session management."
+        store(0, text, "task")
+        result = store(1, text, "task")
+        if result["semantic_similarity"] is not None:
+            assert result["semantic_similarity"] > 0.85
+
+    def test_semantic_similarity_key_always_present(self):
+        """The semantic_similarity key must always be in the result dict."""
+        result = store(0, "Some content.", "task")
+        assert "semantic_similarity" in result
+
+    def test_similarity_is_float_or_none(self):
+        """semantic_similarity is either None or a float in [0, 1]."""
+        store(0, "First iteration content.", "task")
+        result = store(1, "Second iteration content.", "task")
+        sim = result["semantic_similarity"]
+        assert sim is None or (isinstance(sim, float) and 0.0 <= sim <= 1.0)

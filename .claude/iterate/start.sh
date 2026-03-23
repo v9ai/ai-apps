@@ -91,6 +91,21 @@ python3.12 -c "import fastembed" 2>/dev/null || {
     python3.12 -m pip install fastembed -q || true
 }
 
+# Pre-warm fastembed model so the first Stop hook doesn't timeout downloading it.
+# The model (~23MB ONNX) is cached at /tmp/claude-iterate/fastembed-cache.
+echo "Pre-warming embedding model…"
+python3.12 -c "
+import sys
+sys.path.insert(0, '${SCRIPTS_DIR}')
+from embeddings import get_embedding_function
+ef = get_embedding_function()
+if ef:
+    ef.embed_documents(['warmup'])
+    print('Embedding model ready')
+else:
+    print('Using ChromaDB default embeddings')
+" 2>/dev/null || true
+
 rm -rf "$ITER_DIR" 2>/dev/null || true
 mkdir -p "$ITER_DIR"
 

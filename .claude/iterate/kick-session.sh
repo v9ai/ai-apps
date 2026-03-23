@@ -153,17 +153,49 @@ if [ -n "$SESSION_ID" ]; then
         # Save current line count so next iteration extracts only new messages
         echo "$CURRENT_LINES" > "$ITER_DIR/transcript-offset.txt"
         _output_size=$(wc -c < "$ITER_OUTPUT" 2>/dev/null | tr -d '[:space:]' || echo "0")
-        echo "[kick-session] transcript window: lines $PREV_OFFSET→$CURRENT_LINES, output_size=$_output_size" >> "$ITER_DIR/debug.log" 2>/dev/null || true
+        echo "[kick-session] transcript window: lines ${PREV_OFFSET}->${CURRENT_LINES}, output_size=${_output_size}" >> "$ITER_DIR/debug.log" 2>/dev/null || true
     fi
 fi
 
+# --- Increment counter EARLY so timeout can't lose progress ---
+# Save old COUNT for Python scripts, write NEXT to disk now.
+# If the hook gets killed during slow Python ops below, counter is already advanced.
+NEXT=$((COUNT + 1))
+echo "$NEXT" > "$COUNTER_FILE"
+echo "[kick-session] counter: $COUNT -> $NEXT (early)" >> "$ITER_DIR/debug.log" 2>/dev/null || true
+
 # --- Step 1: Store in Chroma ---
+STORE_RESULT=""
 if [ -f "$ITER_OUTPUT" ] && [ -s "$ITER_OUTPUT" ]; then
-    python3.12 "$SCRIPTS_DIR/store_context.py" \
+    STORE_RESULT=$(python3.12 "$SCRIPTS_DIR/store_context.py" \
         --iteration "$COUNT" \
         --task "$TASK" \
         --file "$ITER_OUTPUT" \
-        >> "$ITER_DIR/debug.log" 2>&1 || true
+        2>> "$ITER_DIR/debug.log") || true
+    echo "$STORE_RESULT" >> "$ITER_DIR/debug.log" 2>/dev/null || true
+
+    # Semantic repetition check: if output is very similar to previous iteration, stop early
+    if [ -n "$STORE_RESULT" ] && [ "$COUNT" -ge 2 ]; then
+        SEM_SIM=$(echo "$STORE_RESULT" | jq -r '.semantic_similarity // empty' 2>/dev/null || echo "")
+        if [ -n "$SEM_SIM" ] && [ "$SEM_SIM" != "null" ]; then
+            # Use python for float comparison (bash can't do it natively)
+            SEM_HIGH=$(python3.12 -c "print('1' if float('${SEM_SIM}') > 0.92 else '0')" 2>/dev/null || echo "0")
+            if [ "$SEM_HIGH" = "1" ]; then
+                SEM_STALL=$(cat "$ITER_DIR/sem-stall-count.txt" 2>/dev/null || echo "0")
+                SEM_STALL=$((SEM_STALL + 1))
+                echo "$SEM_STALL" > "$ITER_DIR/sem-stall-count.txt"
+                echo "[kick-session] semantic stall=$SEM_STALL sim=$SEM_SIM" >> "$ITER_DIR/debug.log" 2>/dev/null || true
+                if [ "$SEM_STALL" -ge 2 ]; then
+                    _record_end "semantic repetition" "$SEM_SIM"
+                    echo "Iterate: stopped — semantic repetition (similarity=$SEM_SIM for $SEM_STALL iterations)" >&2
+                    rm -f "$COUNTER_FILE" "$TASK_FILE" "$ITER_DIR/session.txt"
+                    exit 0
+                fi
+            else
+                echo "0" > "$ITER_DIR/sem-stall-count.txt"
+            fi
+        fi
+    fi
 fi
 
 # --- Stall detection: if no new code changes for 2+ iterations, stop ---
@@ -201,12 +233,20 @@ if [ "$COUNT" -gt 0 ] && [ -f "$ITER_OUTPUT" ] && [ -s "$ITER_OUTPUT" ]; then
         --iteration "$COUNT" \
         > "$CONTEXT_FILE" 2>> "$ITER_DIR/debug.log" || true
 
+    # Extract semantic similarity from store result (may be null)
+    EVAL_SIM_ARG=""
+    if [ -n "$STORE_RESULT" ]; then
+        _sim=$(echo "$STORE_RESULT" | jq -r '.semantic_similarity // empty' 2>/dev/null || echo "")
+        [ -n "$_sim" ] && [ "$_sim" != "null" ] && EVAL_SIM_ARG="--similarity $_sim"
+    fi
+
     EVAL_RESULT=$(python3.12 "$SCRIPTS_DIR/evaluate.py" \
         --iteration "$COUNT" \
         --output-file "$ITER_OUTPUT" \
         --task "$TASK" \
         --context-file "$CONTEXT_FILE" \
         --scores-file "$SCORES_FILE" \
+        $EVAL_SIM_ARG \
         2>> "$ITER_DIR/debug.log") && EVAL_EXIT=0 || EVAL_EXIT=$?
 
     echo "$EVAL_RESULT" > "$ITER_DIR/eval-iter-${COUNT}.json" 2>> "$ITER_DIR/debug.log" || true
@@ -263,8 +303,7 @@ if [ "$SHOULD_CONTINUE" = false ]; then
 fi
 
 # --- Step 3: Retrieve relevant context for next iteration ---
-NEXT=$((COUNT + 1))
-echo "$NEXT" > "$COUNTER_FILE"
+# NEXT and COUNTER_FILE already updated in the early-increment block above.
 
 RETRIEVED_CONTEXT=$(python3.12 "$SCRIPTS_DIR/retrieve_context.py" \
     --query "$TASK — what should iteration $NEXT focus on next?" \

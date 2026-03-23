@@ -97,7 +97,9 @@
       "url": "https://medium.com/@jeffreyip54/the-definitive-llm-as-a-judge-guide-for-scalable-llm-evaluation-a4aad7b455b9"
     }
   ],
-  "social": {},
+  "social": {
+    "github": "https://github.com/penguine-ip"
+  },
   "podcast_appearances": [],
   "news": [],
   "competitive_landscape": {

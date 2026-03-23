@@ -40,20 +40,8 @@
     },
     {
       "date": "2025-03-05",
-      "event": "Created DeepTeam \u2014 open-source framework to red team LLMs with 50+ vulnerability tests and 20+ automated attack methods",
+      "event": "Created DeepTeam — open-source framework to red team LLMs with 50+ vulnerability tests and 20+ automated attack methods",
       "url": "https://github.com/confident-ai/deepteam",
-      "source": "research"
-    },
-    {
-      "date": "2025-02-18",
-      "event": "Launch HN: Confident AI (YC W25) \u2014 presented the platform with Dataset Editor, Regression Catcher, and Iteration Insights",
-      "url": "https://news.ycombinator.com/item?id=43116633",
-      "source": "research"
-    },
-    {
-      "date": "2025-02-06",
-      "event": "Introduced the DAG Metric \u2014 a deterministic, decision-tree-based evaluation method for structured LLM evaluation",
-      "url": "https://www.confident-ai.com/blog/how-i-built-deterministic-llm-evaluation-metrics-for-deepeval",
       "source": "research"
     },
     {
@@ -63,9 +51,27 @@
       "source": "research"
     },
     {
+      "date": "2025-02-18",
+      "event": "Launch HN: Confident AI (YC W25) — presented the platform with Dataset Editor, Regression Catcher, and Iteration Insights",
+      "url": "https://news.ycombinator.com/item?id=43116633",
+      "source": "research"
+    },
+    {
+      "date": "2025-02-06",
+      "event": "Introduced the DAG Metric — a deterministic, decision-tree-based evaluation method for structured LLM evaluation",
+      "url": "https://www.confident-ai.com/blog/how-i-built-deterministic-llm-evaluation-metrics-for-deepeval",
+      "source": "research"
+    },
+    {
       "date": "2024-12",
-      "event": "Launched JudgementalGPT \u2014 an LLM agent purpose-built for evaluation tasks",
+      "event": "Launched JudgementalGPT — an LLM agent purpose-built for evaluation tasks",
       "url": "https://www.linkedin.com/posts/jeffrey-ip-2295ab224_metrics-deepeval-activity-7130115516504932352-lN7z",
+      "source": "research"
+    },
+    {
+      "date": "2024",
+      "event": "Co-founded Confident AI with Kritin Vongthongsri to build a cloud platform around DeepEval for enterprise LLM evaluation",
+      "url": "https://www.ycombinator.com/companies/confident-ai",
       "source": "research"
     },
     {
@@ -81,12 +87,6 @@
       "source": "research"
     },
     {
-      "date": "2024",
-      "event": "Co-founded Confident AI with Kritin Vongthongsri to build a cloud platform around DeepEval for enterprise LLM evaluation",
-      "url": "https://www.ycombinator.com/companies/confident-ai",
-      "source": "research"
-    },
-    {
       "date": "2023-10",
       "event": "Published first technical articles on LLM evaluation metrics and strategies on Medium and DEV Community",
       "url": "https://medium.com/@jeffreyip54",
@@ -94,7 +94,7 @@
     },
     {
       "date": "2023-08-10",
-      "event": "Created the DeepEval repository on GitHub \u2014 an open-source LLM evaluation framework ('Pytest for LLMs')",
+      "event": "Created the DeepEval repository on GitHub — an open-source LLM evaluation framework ('Pytest for LLMs')",
       "url": "https://github.com/confident-ai/deepeval",
       "source": "research"
     },

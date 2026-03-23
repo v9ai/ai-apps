@@ -3,6 +3,12 @@
   "generated_at": "2026-03-18T21:26:59.364322Z",
   "events": [
     {
+      "date": "2026-03",
+      "event": "Published ColQwen3.5-4.5B v1/v2/v3 visual document retrieval models on Hugging Face",
+      "url": "https://huggingface.co/athrael-soju/colqwen3.5-4.5B-v3",
+      "source": "research"
+    },
+    {
       "date": "2026-03-15",
       "event": "Published blog post 'Diminishing Returns and the Art of Knowing When to Stop' on ColQwen3.5 optimization plateaus",
       "url": "https://athrael.net/posts/diminishing-returns-benchmark-optimization",
@@ -25,12 +31,6 @@
       "event": "Published model colqwen3.5-4.5B-v1 on Hugging Face",
       "url": "https://huggingface.co/athrael-soju/colqwen3.5-4.5B-v1",
       "source": "huggingface"
-    },
-    {
-      "date": "2026-03",
-      "event": "Published ColQwen3.5-4.5B v1/v2/v3 visual document retrieval models on Hugging Face",
-      "url": "https://huggingface.co/athrael-soju/colqwen3.5-4.5B-v3",
-      "source": "research"
     },
     {
       "date": "2026-02-27",
@@ -70,7 +70,7 @@
     },
     {
       "date": "2025-09",
-      "event": "Published 'The Most Beautiful RAG' \u2014 end-to-end vision RAG with ColPali, Qdrant, and MinIO",
+      "event": "Published 'The Most Beautiful RAG' — end-to-end vision RAG with ColPali, Qdrant, and MinIO",
       "url": "https://athrael.net/posts/the-most-beautiful-vision-rag",
       "source": "research"
     },

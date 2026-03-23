@@ -93,7 +93,9 @@
       "url": "https://evilmartians.com/events/podcast-jeff-huber-chroma"
     }
   ],
-  "social": {},
+  "social": {
+    "github": "https://github.com/jeffchuber"
+  },
   "podcast_appearances": [],
   "news": [],
   "videos": [

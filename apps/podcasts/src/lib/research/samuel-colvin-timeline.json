@@ -63,15 +63,15 @@
       "source": "github"
     },
     {
-      "date": "2024-10-01",
-      "event": "Raised $12.5M Series A led by Sequoia; launched Pydantic Logfire",
-      "url": "https://pydantic.dev/articles/logfire-announcement",
-      "source": "research"
-    },
-    {
       "date": "2024-10",
       "event": "Launched Pydantic Open Source Fund ($30k/year across 14 developers)",
       "url": "https://pydantic.dev/articles/pydantic-oss-fund-2024",
+      "source": "research"
+    },
+    {
+      "date": "2024-10-01",
+      "event": "Raised $12.5M Series A led by Sequoia; launched Pydantic Logfire",
+      "url": "https://pydantic.dev/articles/logfire-announcement",
       "source": "research"
     },
     {

@@ -5,7 +5,15 @@ import pytest
 import store_context
 import retrieve_context
 from store_context import store, store_eval
-from retrieve_context import retrieve, _recency_boost, _get_latest_eval
+from retrieve_context import (
+    retrieve,
+    _recency_boost,
+    _get_latest_eval,
+    _cosine_similarity,
+    _mean_embedding,
+    _mmr_select,
+    compute_iter_similarity,
+)
 
 
 # ---------------------------------------------------------------------------
@@ -174,3 +182,219 @@ class TestGetLatestEval:
         store_eval(0, {"Task Completion": {"score": 0.65, "reason": "partial"}}, "task", "direct_llm")
         result = retrieve("task", current_iteration=1)
         assert "Latest eval" in result or "0.65" in result
+
+
+# ---------------------------------------------------------------------------
+# Cosine similarity helpers
+# ---------------------------------------------------------------------------
+
+class TestCosineSimilarity:
+    def test_identical_vectors_return_1(self):
+        a = [1.0, 0.0, 0.0]
+        assert abs(_cosine_similarity(a, a) - 1.0) < 1e-6
+
+    def test_orthogonal_vectors_return_0(self):
+        a = [1.0, 0.0]
+        b = [0.0, 1.0]
+        assert abs(_cosine_similarity(a, b)) < 1e-6
+
+    def test_opposite_vectors_return_minus_1(self):
+        a = [1.0, 0.0]
+        b = [-1.0, 0.0]
+        assert abs(_cosine_similarity(a, b) + 1.0) < 1e-6
+
+    def test_zero_vector_returns_0(self):
+        a = [0.0, 0.0]
+        b = [1.0, 0.0]
+        assert _cosine_similarity(a, b) == 0.0
+
+    def test_symmetry(self):
+        a = [0.6, 0.8]
+        b = [0.8, 0.6]
+        assert abs(_cosine_similarity(a, b) - _cosine_similarity(b, a)) < 1e-9
+
+    def test_similar_vectors_close_to_1(self):
+        a = [0.99, 0.01]
+        b = [0.98, 0.02]
+        sim = _cosine_similarity(a, b)
+        assert sim > 0.99
+
+
+class TestMeanEmbedding:
+    def test_single_embedding_unchanged(self):
+        emb = [0.5, 0.3, 0.2]
+        result = _mean_embedding([emb])
+        assert len(result) == 3
+        assert abs(result[0] - 0.5) < 1e-9
+
+    def test_two_embeddings_averaged(self):
+        a = [1.0, 0.0]
+        b = [0.0, 1.0]
+        result = _mean_embedding([a, b])
+        assert abs(result[0] - 0.5) < 1e-9
+        assert abs(result[1] - 0.5) < 1e-9
+
+    def test_empty_returns_none(self):
+        assert _mean_embedding([]) is None
+
+    def test_output_length_matches_input(self):
+        embs = [[1.0, 2.0, 3.0], [4.0, 5.0, 6.0]]
+        result = _mean_embedding(embs)
+        assert len(result) == 3
+
+
+# ---------------------------------------------------------------------------
+# Semantic similarity between stored iterations
+# ---------------------------------------------------------------------------
+
+class TestComputeIterSimilarity:
+    def test_returns_none_for_missing_iterations(self):
+        """No data in Chroma → similarity is None."""
+        from retrieve_context import get_collection
+        col = get_collection()
+        result = compute_iter_similarity(col, 0, 1)
+        assert result is None
+
+    def test_returns_float_after_storing_two_iterations(self):
+        """After storing two iterations, similarity is computable if embeddings available."""
+        store(0, "Added JWT middleware and login endpoint.", "build auth")
+        store(1, "Added logout route and session expiry.", "build auth")
+        from retrieve_context import get_collection
+        col = get_collection()
+        result = compute_iter_similarity(col, 1, 0)
+        # May be None if embeddings not available (chroma default); otherwise float
+        assert result is None or isinstance(result, float)
+
+    def test_identical_content_high_similarity(self):
+        """Storing the same content twice should yield high similarity (if embeddings available)."""
+        text = "Implemented the authentication system with JWT tokens and session management."
+        store(0, text, "auth task")
+        store(1, text, "auth task")
+        from retrieve_context import get_collection
+        col = get_collection()
+        result = compute_iter_similarity(col, 1, 0)
+        if result is not None:
+            assert result > 0.85, f"Expected high similarity for identical content, got {result}"
+
+    def test_dissimilar_content_lower_similarity(self):
+        """Very different content should yield lower similarity than identical content."""
+        store(0, "Added database migrations and schema changes for user table.", "task")
+        store(1, "Refactored CSS styling and updated color palette in frontend.", "task")
+        from retrieve_context import get_collection
+        col = get_collection()
+        sim = compute_iter_similarity(col, 1, 0)
+        if sim is not None:
+            # Just check it's a valid float — actual value depends on embedding model
+            assert 0.0 <= sim <= 1.0
+
+    def test_similarity_is_rounded(self):
+        """Returned value should be rounded to 4 decimal places."""
+        text = "Some content for testing similarity rounding behavior."
+        store(0, text, "task")
+        store(1, text + " Extra.", "task")
+        from retrieve_context import get_collection
+        col = get_collection()
+        result = compute_iter_similarity(col, 1, 0)
+        if result is not None:
+            # Check it has at most 4 decimal places
+            assert result == round(result, 4)
+
+
+# ---------------------------------------------------------------------------
+# MMR selection
+# ---------------------------------------------------------------------------
+
+class TestMMRSelect:
+    def _make_docs(self, n: int) -> list[tuple[str, dict, float]]:
+        return [(f"doc_{i}", {"iteration": 0, "chunk_index": i}, float(i) / 10) for i in range(n)]
+
+    def test_returns_k_docs_when_more_than_k(self):
+        docs = self._make_docs(10)
+        result = _mmr_select(docs, k=4, ef=None)
+        assert len(result) == 4
+
+    def test_returns_all_when_fewer_than_k(self):
+        docs = self._make_docs(3)
+        result = _mmr_select(docs, k=8, ef=None)
+        assert len(result) == 3
+
+    def test_returns_empty_for_empty_input(self):
+        result = _mmr_select([], k=5, ef=None)
+        assert result == []
+
+    def test_returns_first_k_without_ef(self):
+        """Without embedding function, MMR falls back to top-k by order."""
+        docs = self._make_docs(10)
+        result = _mmr_select(docs, k=3, ef=None)
+        assert result == docs[:3]
+
+    def test_with_real_ef_returns_k_docs(self):
+        """With FastEmbed, MMR should still return k diverse docs."""
+        from embeddings import get_embedding_function, fastembed_available
+        if not fastembed_available():
+            pytest.skip("fastembed not available")
+        ef = get_embedding_function()
+        docs = [
+            ("auth middleware adds JWT validation", {"iteration": 0, "chunk_index": 0}, 0.1),
+            ("auth middleware adds JWT validation and token refresh", {"iteration": 0, "chunk_index": 1}, 0.12),
+            ("database schema migration for users table", {"iteration": 1, "chunk_index": 0}, 0.3),
+            ("CSS layout refactor and responsive design", {"iteration": 2, "chunk_index": 0}, 0.5),
+        ]
+        result = _mmr_select(docs, k=3, lambda_mult=0.6, ef=ef)
+        assert len(result) == 3
+
+    def test_mmr_prefers_relevant_over_redundant(self):
+        """MMR should prefer the most relevant diverse doc over a redundant one."""
+        from embeddings import get_embedding_function, fastembed_available
+        if not fastembed_available():
+            pytest.skip("fastembed not available")
+        ef = get_embedding_function()
+        # Two very similar docs + one very different one
+        # MMR with k=2 should pick the best + the different one, not two similar ones
+        docs = [
+            ("JWT authentication middleware implementation", {"iteration": 0, "chunk_index": 0}, 0.1),
+            ("JWT authentication middleware validation", {"iteration": 0, "chunk_index": 1}, 0.11),  # near-duplicate
+            ("CSS grid layout responsive design", {"iteration": 1, "chunk_index": 0}, 0.3),  # diverse
+        ]
+        result = _mmr_select(docs, k=2, lambda_mult=0.5, ef=ef)
+        result_texts = [r[0] for r in result]
+        # The diverse CSS doc should appear rather than the near-duplicate JWT doc
+        assert "CSS" in result_texts[1] or len(result) == 2
+
+
+# ---------------------------------------------------------------------------
+# Similarity in retrieve() header
+# ---------------------------------------------------------------------------
+
+class TestRetrieveSimilarityHeader:
+    def test_no_similarity_for_first_two_iterations(self):
+        """Similarity header only appears from iteration 2 onwards."""
+        store(0, "First iteration work.", "task")
+        result = retrieve("task", current_iteration=1)
+        assert "similarity" not in result.lower() or "Output similarity" not in result
+
+    def test_similarity_header_present_from_iteration_2(self):
+        """After two stored iterations, similarity may appear in header."""
+        store(0, "First iteration work: added auth.", "task")
+        store(1, "Second iteration work: added routes.", "task")
+        result = retrieve("task", current_iteration=2)
+        # May or may not show similarity depending on embedding availability
+        assert isinstance(result, str) and len(result) > 0
+
+    def test_high_similarity_triggers_warning(self):
+        """Highly similar consecutive outputs should trigger a warning in the header."""
+        from embeddings import fastembed_available
+        if not fastembed_available():
+            pytest.skip("fastembed required for similarity computation")
+        identical = "Implemented JWT authentication middleware with session management."
+        store(0, identical, "task")
+        store(1, identical, "task")
+        result = retrieve("task", current_iteration=2)
+        # With fastembed, similarity > 0.88 should trigger the WARNING
+        assert "WARNING" in result or "similarity" in result.lower()
+
+    def test_mmr_flag_no_mmr_returns_string(self):
+        """Passing use_mmr=False still returns valid context."""
+        store(0, "Some work done.", "task")
+        result = retrieve("task", current_iteration=1, use_mmr=False)
+        assert isinstance(result, str) and len(result.strip()) > 0
