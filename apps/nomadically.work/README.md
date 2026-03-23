@@ -14,7 +14,7 @@ Remote EU job board aggregator with AI classification, CRM, email campaigns, and
 | Email | Resend |
 | Workers | Cloudflare Workers — TypeScript, Rust/WASM, Python |
 | Background jobs | Trigger.dev, Cloudflare Cron + Queues |
-| Evaluation | Langfuse |
+| Observability | LangSmith |
 | Deployment | Vercel (app), Cloudflare Workers (workers) |
 
 ## Quick Start
@@ -47,7 +47,7 @@ Classification Unprocessed jobs → DeepSeek / LangGraph → is_remote_eu → D1
 Skill Extract  Job descriptions → LLM pipeline → Skills → D1
 Resume Match   Resumes → Python Worker / Vectorize → Vector search
 Serving        Browser → Apollo Client → /api/graphql → D1 Gateway → D1
-Evaluation     Langfuse datasets → LLM calls → Accuracy scores
+Evaluation     Local evals → LLM calls → Accuracy scores
 ```
 
 ### Workers
@@ -67,7 +67,7 @@ Evaluation     Langfuse datasets → LLM calls → Accuracy scores
 Ingests from Greenhouse, Lever, and Ashby ATS platforms. Automatic board discovery via Common Crawl (Rust crawler). Enhancement pipeline enriches jobs with full ATS metadata.
 
 ### AI Classification
-Detects remote-EU-eligible jobs using DeepSeek with LangGraph orchestration. Evaluated against Langfuse datasets with an 80%+ accuracy bar.
+Detects remote-EU-eligible jobs using DeepSeek with LangGraph orchestration. Evaluated against local test datasets with an 80%+ accuracy bar.
 
 ### Skill Extraction
 LLM-powered skill tagging validated against a managed taxonomy. Vector-based skill search and filtering.
@@ -82,7 +82,7 @@ RAG-based vector search using Cloudflare Vectorize and Workers AI (Python worker
 Apollo Server 5 with typed resolvers, DataLoaders, batched D1 queries, and full codegen pipeline.
 
 ### Evaluation
-Langfuse dataset-driven accuracy testing for classification and email generation pipelines.
+Dataset-driven accuracy testing for classification and email generation pipelines.
 
 ## Commands
 
@@ -104,9 +104,6 @@ pnpm jobs:enhance                 # Enhance jobs with ATS data
 pnpm skills:extract               # Extract skills from jobs
 pnpm skills:seed                  # Seed skill taxonomy
 
-# Evaluation
-pnpm eval:langfuse                # Run classification eval
-
 # Workers
 wrangler deploy --config wrangler.d1-gateway.toml         # D1 Gateway
 wrangler deploy --config workers/ashby-crawler/wrangler.toml  # Ashby crawler
@@ -127,7 +124,7 @@ src/
   app/                  Next.js App Router pages + API routes
   components/           React components (Radix UI)
   db/                   Drizzle schema, D1 HTTP client
-  evals/                Langfuse evaluation datasets
+  evals/                Evaluation datasets and scorers
   graphql/              Query/mutation/fragment documents
   ingestion/            ATS fetchers (Greenhouse, Lever, Ashby)
   lib/skills/           Skill taxonomy, extraction, filtering

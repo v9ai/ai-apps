@@ -22,9 +22,6 @@ pnpm db:generate                  # Generate Drizzle migration files
 pnpm db:migrate                   # Apply migrations via Drizzle Kit
 pnpm db:studio                    # Drizzle Studio
 
-# Evaluation
-pnpm eval:langfuse                # Run LLM classification eval with Langfuse Datasets
-
 # Strategy enforcement
 pnpm strategy:check               # Validate staged changes against optimization strategy
 pnpm strategy:check:all           # Validate all tracked files
@@ -60,7 +57,7 @@ Import `db` from `@/db` for all queries. Schema in `src/db/schema.ts`, migration
 5. Skill Extract:  Job descriptions --[LLM pipeline]--> Skills → Neon
 6. Resume Match:   Resumes --[resume-rag (Python) / Vectorize]--> Vector search
 7. Serving:        Browser --[Apollo Client]--> /api/graphql --[Drizzle ORM]--> Neon
-8. Evaluation:     Langfuse --[LLM calls]--> Accuracy scores
+8. Evaluation:     Local evals --[LLM calls]--> Accuracy scores
 ```
 
 ### GraphQL codegen
@@ -99,8 +96,7 @@ GraphQL Playground: `http://localhost:3000/api/graphql`. Vercel routes have 60s 
 | Auth | Better Auth (`@ai-apps/auth`) |
 | AI/ML | Vercel AI SDK, Anthropic Claude (+ Agent SDK), DeepSeek, OpenRouter |
 | Background jobs | Trigger.dev |
-| Observability | Langfuse, LangSmith, OpenTelemetry (partially active) |
-| Evaluation | Langfuse |
+| Observability | LangSmith |
 | Deployment | Vercel |
 | Package manager | pnpm 10.10 |
 | UI | Radix UI (Themes + Icons) |
@@ -128,7 +124,7 @@ See **[OPTIMIZATION-STRATEGY.md](./OPTIMIZATION-STRATEGY.md)** for the full stra
 | **Grounding-First** | PRIMARY | LLM outputs schema-constrained; skills validated against taxonomy |
 | **Multi-Model Routing** | SECONDARY | Cheap model first (Workers AI), escalate on low confidence only |
 | **Spec-Driven** | CROSS-CUTTING | GraphQL + Drizzle + Zod schemas as formal contracts |
-| **Observability** | EMERGING | Langfuse scoring active; production tracing partial |
+| **Observability** | EMERGING | Production tracing partial |
 
 The strategy enforcer (`src/agents/strategy-enforcer.ts`) is available as a plain async function.
 
@@ -150,7 +146,7 @@ The strategy enforcer (`src/agents/strategy-enforcer.ts`) is available as a plai
 
 ## Environment variables
 
-Copy `.env.example` to `.env.local`. Key groups: `NEON_DATABASE_URL`, Better Auth (`BETTER_AUTH_SECRET`, `NEXT_PUBLIC_BETTER_AUTH_URL`), AI provider keys (Anthropic, DeepSeek, OpenAI, Gemini), Langfuse/LangSmith observability, admin email, app URL. See `.env.example` for full list.
+Copy `.env.example` to `.env.local`. Key groups: `NEON_DATABASE_URL`, Better Auth (`BETTER_AUTH_SECRET`, `NEXT_PUBLIC_BETTER_AUTH_URL`), AI provider keys (Anthropic, DeepSeek, OpenAI, Gemini), LangSmith observability, admin email, app URL. See `.env.example` for full list.
 
 ---
 
@@ -263,7 +259,6 @@ Goal-driven team of 5 specialists focused on helping find a fully remote EU AI e
 ### Integration
 
 - **stop_hook.py** + **improvement_agent.py** → session scoring and learning
-- **Langfuse** → observability and score trends
 - **Strategy Enforcer** → validates changes align with optimization strategy
 - State files in `~/.claude/state/` → continuity across sessions
 

@@ -48,10 +48,10 @@ This document curates relevant skills and subagents from [awesome-agent-skills](
 
 ### Claude Code Subagents
 - **llm-architect** (voltagent-data-ai) — Design multi-LLM pipelines (Claude, DeepSeek, Google) for job classification
-- **prompt-engineer** (voltagent-data-ai) — Refine classification and extraction prompts; manage Langfuse prompt versions
+- **prompt-engineer** (voltagent-data-ai) — Refine classification and extraction prompts; manage prompt versions
 - **nlp-engineer** (voltagent-data-ai) — Skill extraction, entity recognition for remote work indicators (flexible hours, timezone-agnostic, etc.)
 - **machine-learning-engineer** (voltagent-data-ai) — Train classifiers for EU remote job signals; handle regional variations
-- **ai-engineer** (voltagent-data-ai) — End-to-end ML pipeline management, model evaluation with Promptfoo/Langfuse
+- **ai-engineer** (voltagent-data-ai) — End-to-end ML pipeline management, model evaluation
 
 ---
 
@@ -77,7 +77,7 @@ This document curates relevant skills and subagents from [awesome-agent-skills](
 ### Claude Code Subagents
 - **devops-engineer** (voltagent-infra) — CI/CD for Next.js + Workers, deployment orchestration
 - **deployment-engineer** (voltagent-infra) — Vercel + Cloudflare multi-environment setup, secrets management
-- **platform-engineer** (voltagent-infra) — Observability (Langfuse/LangSmith), error tracking, log aggregation
+- **platform-engineer** (voltagent-infra) — Observability (LangSmith), error tracking, log aggregation
 - **docker-expert** (voltagent-infra) — Containerize Python Workers if moving to non-CF platforms
 - **sre-engineer** (voltagent-infra) — Incident response, job classification failures, database connectivity issues
 
@@ -154,7 +154,7 @@ This document curates relevant skills and subagents from [awesome-agent-skills](
 
 ### Phase 3: ML Evaluation
 - [ ] **nlp-engineer**: Extract remote work signals (keywords, timezone mentions, salary bands)
-- [ ] **ai-engineer**: Build evaluation suite with Promptfoo/Langfuse for classifier accuracy
+- [ ] **ai-engineer**: Build evaluation suite for classifier accuracy
 - [ ] **performance-engineer**: Profile skill extraction, resume RAG latency
 
 ### Phase 4: Deployment & Scale

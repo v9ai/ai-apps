@@ -203,7 +203,7 @@ export const pipelineAgents: PipelineAgent[] = [
   },
   {
     name: "Monitoring & Evaluation",
-    description: "Langfuse traces LLM calls for observability, while evaluation scripts like eval-prompt-ab.ts and job-reporter-llm worker analyze job reports with confidence scoring for quality control.",
+    description: "Evaluation scripts and job-reporter-llm worker analyze job reports with confidence scoring for quality control.",
     researchBasis: "LLM observability frameworks and A/B testing methodologies",
   },
 ];
@@ -230,11 +230,11 @@ export const extraSections: { heading: string; content: string }[] = [
   },
   {
     heading: "Deployment & Infrastructure",
-    content: "The app is hosted on Vercel for Next.js frontend, with Cloudflare Workers deployed via Wrangler for edge functions. Neon provides serverless PostgreSQL, and Resend handles email delivery. Monitoring includes Langfuse for LLM observability and custom dashboards for worker status, with evaluation scripts like eval-remote-eu-langfuse.ts for continuous improvement.",
+    content: "The app is hosted on Vercel for Next.js frontend, with Cloudflare Workers deployed via Wrangler for edge functions. Neon provides serverless PostgreSQL, and Resend handles email delivery. Monitoring includes custom dashboards for worker status, with evaluation scripts for continuous improvement.",
   },
   {
     heading: "AI Integration",
-    content: "DeepSeek LLM classifies jobs for EU compatibility in nomadically-work-process-jobs worker, while OpenAI powers general tasks. Workers AI generates vector embeddings for resumes, stored in D1. LangGraph orchestrates agentic workflows, and Langfuse traces all LLM calls. AI-assisted email drafting uses the ComposeFromLinkedIn component, and job reports are analyzed by job-reporter-llm worker with confidence scoring.",
+    content: "DeepSeek LLM classifies jobs for EU compatibility in nomadically-work-process-jobs worker, while OpenAI powers general tasks. Workers AI generates vector embeddings for resumes, stored in D1. LangGraph orchestrates agentic workflows. AI-assisted email drafting uses the ComposeFromLinkedIn component, and job reports are analyzed by job-reporter-llm worker with confidence scoring.",
   },
   {
     heading: "Job Processing Pipeline",

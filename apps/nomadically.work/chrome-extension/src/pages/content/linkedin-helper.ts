@@ -36,13 +36,41 @@ function createBlockButton(companyName: string): HTMLButtonElement {
   btn.addEventListener("click", (e) => {
     e.preventDefault();
     e.stopPropagation();
-    // TODO: wire to GraphQL mutation
-    console.log(`[Nomad] Block company: "${companyName}"`);
-    btn.textContent = "Blocked";
-    btn.style.backgroundColor = "#6b7280";
+    btn.textContent = "Blocking...";
     btn.disabled = true;
+
+    chrome.runtime.sendMessage(
+      { action: "blockCompany", companyName },
+      (response) => {
+        if (response?.success) {
+          btn.textContent = "Blocked";
+          btn.style.backgroundColor = "#6b7280";
+          dismissJobCard(btn);
+        } else {
+          console.error("[Nomad] Block failed:", response?.error);
+          btn.textContent = "Failed";
+          btn.style.backgroundColor = "#ef4444";
+          btn.disabled = false;
+          setTimeout(() => {
+            btn.textContent = "Block Company";
+            btn.style.backgroundColor = "#dc2626";
+          }, 2000);
+        }
+      },
+    );
   });
   return btn;
+}
+
+function dismissJobCard(btn: HTMLElement) {
+  const card = btn.closest(".job-card-container, .base-card");
+  if (!card) return;
+  const dismissBtn = card.querySelector(
+    'button[aria-label*="Dismiss"], button.job-card-container__action',
+  ) as HTMLButtonElement | null;
+  if (dismissBtn) {
+    setTimeout(() => dismissBtn.click(), 500);
+  }
 }
 
 function injectBlockButtons() {

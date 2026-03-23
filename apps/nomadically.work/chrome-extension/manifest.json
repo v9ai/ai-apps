@@ -32,6 +32,7 @@
   ],
   "host_permissions": [
     "http://localhost:3000/*",
+    "http://localhost:3004/*",
     "https://*.google.com/*",
     "https://*.wellfound.com/*",
     "https://*.linkedin.com/*"

@@ -415,7 +415,7 @@ export const FALLBACK: StackGroup[] = [
         ],
         interview_points: [
           "We use DeepSeek for job classification because it's ~10x cheaper than GPT-4 with comparable accuracy for our task — when you're classifying thousands of jobs per week, cost per token matters enormously",
-          "Every prompt or model change goes through our eval pipeline first — we have a Langfuse dataset of labeled jobs and require ≥80% accuracy before any change ships to production",
+          "Every prompt or model change goes through our eval pipeline first — we have a LangSmith dataset of labeled jobs and require ≥80% accuracy before any change ships to production",
           "The classifier determines if a job is genuinely remote-EU-eligible, which is surprisingly nuanced: 'remote' often means 'remote within the US' or 'remote but must be in Pacific timezone' — the model needs to parse these subtleties from unstructured job descriptions",
           "Classification runs in a Python Worker using LangGraph for the state machine — this lets us add retry logic, confidence scoring, and escalation paths without spaghetti code",
           "We considered Workers AI (free Llama models on Cloudflare) but they fell below our 80% accuracy bar on nuanced cases like timezone requirements and visa sponsorship analysis",
@@ -566,16 +566,16 @@ export const FALLBACK: StackGroup[] = [
     color: "green",
     entries: [
       {
-        name: "Langfuse",
+        name: "LangSmith",
         role: "LLM tracing, prompt versioning, scoring",
-        url: "https://langfuse.com",
+        url: "https://langsmith.com",
         details:
           "Central observability layer for all LLM calls. Prompt versions managed and fetched at runtime. Session scoring from stop_hook.py writes accuracy scores back for trend tracking.",
         why_chosen:
-          "Langfuse was chosen because it's purpose-built for LLM observability — it provides tracing, prompt versioning, and evaluation scoring in one platform, which is essential for our eval-first development approach.",
+          "LangSmith was chosen because it's purpose-built for LLM observability — it provides tracing, prompt versioning, and evaluation scoring in one platform, which is essential for our eval-first development approach.",
         pros: [
           "Purpose-built for LLM observability — traces show full prompt/completion/token usage",
-          "Prompt versioning — prompts are managed in Langfuse, fetched at runtime, enabling A/B testing without deploys",
+          "Prompt versioning — prompts are managed in LangSmith, fetched at runtime, enabling A/B testing without deploys",
           "Scoring API — eval scripts write accuracy scores back, enabling trend tracking over time",
           "Dataset management — labeled examples for classification eval are stored and versioned",
           "Open source — can self-host if needed",
@@ -586,25 +586,25 @@ export const FALLBACK: StackGroup[] = [
           "Cloud pricing scales with trace volume",
         ],
         alternatives_considered: [
-          { name: "LangSmith", reason_not_chosen: "Used alongside Langfuse for LangChain-specific pipelines, but Langfuse is the primary because it's provider-agnostic and its scoring API is more flexible" },
-          { name: "Weights & Biases", reason_not_chosen: "More ML-experiment-focused than LLM-observability-focused — Langfuse's trace/prompt/score model maps better to our eval-first workflow" },
+          { name: "LangSmith", reason_not_chosen: "Used alongside LangSmith for LangChain-specific pipelines, but LangSmith is the primary because it's provider-agnostic and its scoring API is more flexible" },
+          { name: "Weights & Biases", reason_not_chosen: "More ML-experiment-focused than LLM-observability-focused — LangSmith's trace/prompt/score model maps better to our eval-first workflow" },
           { name: "Helicone", reason_not_chosen: "Good proxy-based approach but less mature prompt versioning and scoring capabilities" },
         ],
         trade_offs: [
-          "Using both Langfuse (primary) and LangSmith (LangChain pipelines) adds tool sprawl but each excels at its niche",
+          "Using both LangSmith (primary) and LangSmith (LangChain pipelines) adds tool sprawl but each excels at its niche",
           "Runtime prompt fetching adds a network call but enables prompt changes without code deploys",
         ],
         patterns_used: [
           "Observability-driven development — every LLM call is traced, scored, and trackable",
-          "Runtime prompt versioning — prompts fetched from Langfuse at call time, not hardcoded",
-          "Session scoring pipeline — stop_hook.py scores sessions and reports to Langfuse",
-          "Eval datasets — labeled examples stored in Langfuse for automated accuracy testing",
+          "Runtime prompt versioning — prompts fetched from LangSmith at call time, not hardcoded",
+          "Session scoring pipeline — stop_hook.py scores sessions and reports to LangSmith",
+          "Eval datasets — labeled examples stored in LangSmith for automated accuracy testing",
         ],
         interview_points: [
-          "Langfuse is central to our eval-first approach — every classification prompt change is tested against a labeled dataset in Langfuse, and we require ≥80% accuracy before shipping",
-          "Prompts are versioned in Langfuse and fetched at runtime — this means we can update classification prompts without code deploys, and A/B test prompt variants by routing traffic between versions",
-          "Our stop_hook.py scores each Claude Code session and reports to Langfuse — over time this builds a trend of session quality that helps us identify when our prompts or workflows are degrading",
-          "We use both Langfuse (primary, provider-agnostic) and LangSmith (LangChain pipelines) — Langfuse for our custom AI SDK calls, LangSmith for the Python LangGraph workers. It's tool sprawl we'd like to consolidate, but each tool excels in its niche",
+          "LangSmith is central to our eval-first approach — every classification prompt change is tested against a labeled dataset in LangSmith, and we require ≥80% accuracy before shipping",
+          "Prompts are versioned in LangSmith and fetched at runtime — this means we can update classification prompts without code deploys, and A/B test prompt variants by routing traffic between versions",
+          "Our stop_hook.py scores each Claude Code session and reports to LangSmith — over time this builds a trend of session quality that helps us identify when our prompts or workflows are degrading",
+          "We use both LangSmith (primary, provider-agnostic) and LangSmith (LangChain pipelines) — LangSmith for our custom AI SDK calls, LangSmith for the Python LangGraph workers. It's tool sprawl we'd like to consolidate, but each tool excels in its niche",
         ],
       },
       {
@@ -612,7 +612,7 @@ export const FALLBACK: StackGroup[] = [
         role: "Trace logging for LangChain-based pipelines",
         url: "https://smith.langchain.com",
         details:
-          "Used alongside Langfuse for pipelines that use LangChain/LangGraph primitives (resume-rag, process-jobs). Provides dataset management for running evals against captured production traces.",
+          "Used alongside LangSmith for pipelines that use LangChain/LangGraph primitives (resume-rag, process-jobs). Provides dataset management for running evals against captured production traces.",
         why_chosen:
           "LangSmith is the native observability tool for LangChain/LangGraph — our Python workers use LangGraph, making LangSmith the path of least resistance for tracing those pipelines.",
         pros: [
@@ -622,20 +622,20 @@ export const FALLBACK: StackGroup[] = [
         ],
         cons: [
           "LangChain-ecosystem-specific — doesn't trace non-LangChain calls",
-          "Adds a second observability tool alongside Langfuse",
+          "Adds a second observability tool alongside LangSmith",
         ],
         alternatives_considered: [
-          { name: "Langfuse only", reason_not_chosen: "Langfuse can trace LangChain via its integration, but LangSmith's native support captures more granular LangGraph state transitions and node-level traces" },
+          { name: "LangSmith only", reason_not_chosen: "LangSmith can trace LangChain via its integration, but LangSmith's native support captures more granular LangGraph state transitions and node-level traces" },
         ],
         trade_offs: [
-          "Two observability tools (Langfuse + LangSmith) vs one — accepted for better coverage of both TypeScript and Python pipelines",
+          "Two observability tools (LangSmith + LangSmith) vs one — accepted for better coverage of both TypeScript and Python pipelines",
         ],
         patterns_used: [
           "Auto-instrumentation — LangSmith traces LangGraph pipelines with zero code changes",
         ],
         interview_points: [
           "LangSmith traces our Python LangGraph workers natively — we get node-level visibility into the classification state machine without adding tracing code",
-          "We'd like to consolidate to one observability tool eventually, but LangSmith's LangGraph integration captures state transitions that Langfuse's LangChain integration misses",
+          "We'd like to consolidate to one observability tool eventually, but LangSmith's LangGraph integration captures state transitions that LangSmith's LangChain integration misses",
         ],
       },
     ],
@@ -867,29 +867,29 @@ export const FALLBACK: StackGroup[] = [
     color: "crimson",
     entries: [
       {
-        name: "Langfuse Evals",
+        name: "LangSmith Evals",
         role: "LLM evaluation with tracing and scoring",
-        url: "https://langfuse.com",
+        url: "https://langsmith.com",
         details:
-          "Langfuse-native evaluation script (scripts/eval-remote-eu-langfuse.ts) runs classification evals with full tracing, prompt versioning, and accuracy scoring. The optimization strategy requires >= 80% accuracy before any prompt or model change ships.",
+          "LangSmith-native evaluation script (scripts/eval-remote-eu-langsmith.ts) runs classification evals with full tracing, prompt versioning, and accuracy scoring. The optimization strategy requires >= 80% accuracy before any prompt or model change ships.",
         why_chosen:
-          "Langfuse evals integrate tracing, prompt versioning, and scoring into one workflow — every eval run produces a traceable, scored result that we can compare across prompt versions and models.",
+          "LangSmith evals integrate tracing, prompt versioning, and scoring into one workflow — every eval run produces a traceable, scored result that we can compare across prompt versions and models.",
         pros: [
           "Eval results are traced — every classification decision is auditable",
           "Prompt version comparison — run the same dataset against different prompt versions",
-          "Accuracy scores feed back into Langfuse for trend tracking",
-          "Dataset management — labeled examples are versioned and managed in Langfuse",
+          "Accuracy scores feed back into LangSmith for trend tracking",
+          "Dataset management — labeled examples are versioned and managed in LangSmith",
         ],
         cons: [
           "Eval runs cost real API calls — running against large datasets is expensive",
           "Manual dataset curation — no automated label generation",
         ],
         alternatives_considered: [
-          { name: "Promptfoo", reason_not_chosen: "Excellent standalone eval tool but doesn't integrate with our Langfuse tracing/scoring pipeline — we'd lose the traceability connection between evals and production" },
-          { name: "Custom eval harness", reason_not_chosen: "Would require building dataset management, scoring, and comparison from scratch — Langfuse provides all three" },
+          { name: "Promptfoo", reason_not_chosen: "Excellent standalone eval tool but doesn't integrate with our LangSmith tracing/scoring pipeline — we'd lose the traceability connection between evals and production" },
+          { name: "Custom eval harness", reason_not_chosen: "Would require building dataset management, scoring, and comparison from scratch — LangSmith provides all three" },
         ],
         trade_offs: [
-          "Using Langfuse for both observability and evaluation consolidates tooling but means eval quality depends on Langfuse's scoring API",
+          "Using LangSmith for both observability and evaluation consolidates tooling but means eval quality depends on LangSmith's scoring API",
         ],
         patterns_used: [
           "Eval-first development — no prompt or model change ships without passing the accuracy bar",
@@ -899,7 +899,7 @@ export const FALLBACK: StackGroup[] = [
         interview_points: [
           "Our eval-first policy is enforced technically, not just culturally — the strategy enforcer agent blocks prompt changes that haven't been tested against the eval dataset. No eval run, no merge",
           "Eval scripts run classification against a curated dataset of labeled jobs — some are 'obvious remote EU' and some are tricky edge cases like 'remote but Pacific timezone only'. The accuracy bar is ≥80% across the full dataset",
-          "Every eval run produces a Langfuse trace — we can see exactly which jobs were misclassified, what the model's reasoning was, and compare across prompt versions. This traceability is key for improving the classifier iteratively",
+          "Every eval run produces a LangSmith trace — we can see exactly which jobs were misclassified, what the model's reasoning was, and compare across prompt versions. This traceability is key for improving the classifier iteratively",
         ],
       },
       {
