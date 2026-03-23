@@ -112,7 +112,7 @@ function checkEvalFirst(
       )!,
       message:
         "Prompt or model-related file changed. Run `pnpm test:eval` and verify >= 80% accuracy before merging.",
-      fix: "Run: pnpm test:eval && pnpm eval:langfuse",
+      fix: "Run: pnpm test:evals",
     });
   }
 

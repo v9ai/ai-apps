@@ -3,7 +3,7 @@
 /**
  * Local eval tests for email generation.
  *
- * Runs offline (no LLM calls, no Langfuse) — validates scorers,
+ * Runs offline (no LLM calls) — validates scorers,
  * prompt builder structure, and test data integrity.
  *
  * Usage: pnpm test:email-evals

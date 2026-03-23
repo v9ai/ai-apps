@@ -53,6 +53,6 @@ extend type Mutation {
     filename: String!
   ): ResumeIngestResult
 
-  # Submit helpfulness feedback for a resume answer (scores the Langfuse trace)
+  # Submit helpfulness feedback for a resume answer
   rateResumeAnswer(traceId: ID!, helpful: Boolean!): Boolean
 }

@@ -164,7 +164,7 @@ export const jobs = pgTable("jobs", {
   report_reasoning: text("report_reasoning"),
   report_tags: text("report_tags"), // JSON array
   report_action: text("report_action"), // pending|auto_restored|escalated|confirmed
-  report_trace_id: text("report_trace_id"), // Langfuse trace ID for score updates
+  report_trace_id: text("report_trace_id"), // Trace ID for score updates
   report_reviewed_at: text("report_reviewed_at"),
 
   created_at: text("created_at")

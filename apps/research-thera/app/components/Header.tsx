@@ -8,6 +8,7 @@ import UserMenu from "./UserMenu";
 
 const NAV_LINKS = [
   { href: "/goals", label: "Goals" },
+  { href: "/habits", label: "Habits" },
   { href: "/notes", label: "Notes" },
   { href: "/stories", label: "Stories" },
   { href: "/family", label: "Family" },

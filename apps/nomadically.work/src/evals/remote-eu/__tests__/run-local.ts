@@ -3,7 +3,7 @@
 /**
  * Local eval tests for Remote EU classification.
  *
- * Runs offline (no LLM calls, no Langfuse) — validates scorers,
+ * Runs offline (no LLM calls) — validates scorers,
  * heuristic classifier, and test data integrity.
  *
  * Usage: pnpm test:evals
