@@ -63,7 +63,10 @@ class ClassificationSpanProcessor implements SpanProcessor {
 }
 
 export async function register() {
-  // Guard: skip if Langfuse is not configured
+  // ── Chrome extension dev-reload WebSocket server ──
+  await startExtensionReloadServer();
+
+  // Guard: skip Langfuse if not configured
   if (
     !process.env.LANGFUSE_PUBLIC_KEY ||
     !process.env.LANGFUSE_SECRET_KEY ||
@@ -93,9 +96,6 @@ export async function register() {
   process.on("SIGTERM", async () => {
     await provider.shutdown();
   });
-
-  // ── Chrome extension dev-reload WebSocket server ──
-  await startExtensionReloadServer();
 }
 
 async function startExtensionReloadServer() {
