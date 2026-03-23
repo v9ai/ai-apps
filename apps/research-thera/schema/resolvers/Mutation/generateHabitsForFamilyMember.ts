@@ -1,0 +1,61 @@
+import type { MutationResolvers } from "./../../types.generated";
+import { db } from "@/src/db";
+
+export const generateHabitsForFamilyMember: NonNullable<
+  MutationResolvers["generateHabitsForFamilyMember"]
+> = async (_parent, args, ctx) => {
+  const userEmail = ctx.userEmail;
+  if (!userEmail) throw new Error("Authentication required");
+
+  const { familyMemberId, count = 5 } = args;
+
+  const LANGGRAPH_URL =
+    process.env.LANGGRAPH_URL || "http://127.0.0.1:2024";
+
+  const response = await fetch(`${LANGGRAPH_URL}/runs/wait`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({
+      assistant_id: "habits",
+      input: {
+        family_member_id: familyMemberId,
+        user_email: userEmail,
+        count,
+      },
+    }),
+  });
+
+  if (!response.ok) {
+    const text = await response.text().catch(() => "");
+    throw new Error(`LangGraph habits failed (${response.status}): ${text}`);
+  }
+
+  const result = await response.json();
+
+  if (result.error) {
+    throw new Error(result.error);
+  }
+
+  // Fetch the newly created habits for this family member
+  const habits = await db.listHabits(userEmail, "active", familyMemberId);
+  const today = new Date().toISOString().slice(0, 10);
+  const habitsWithLogs = await Promise.all(
+    habits.map(async (h) => {
+      const todayLog = await db.getTodayLogForHabit(h.id, userEmail, today);
+      return {
+        ...h,
+        frequency: h.frequency.toUpperCase() as any,
+        status: h.status.toUpperCase() as any,
+        logs: [],
+        todayLog: todayLog ?? null,
+      };
+    }),
+  );
+
+  return {
+    success: true,
+    message: `Generated ${result.habits?.length ?? 0} habits for family member`,
+    count: result.habits?.length ?? habitsWithLogs.length,
+    habits: habitsWithLogs,
+  };
+};
