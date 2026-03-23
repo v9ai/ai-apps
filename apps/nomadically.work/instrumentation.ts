@@ -124,9 +124,7 @@ async function startExtensionReloadServer() {
     if (debounce) clearTimeout(debounce);
     debounce = setTimeout(() => {
       console.log(`[ext-reload] ${filename} changed — reloading extension`);
-      for (const client of wss.clients) {
-        client.send("reload");
-      }
+      wss.clients.forEach((client) => client.send("reload"));
     }, 300);
   });
 }
