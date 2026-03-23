@@ -428,8 +428,8 @@ export function SearchModal({ open: controlledOpen, onClose, triggerRef }: Searc
                     transitionDuration: '100ms',
                     borderLeftWidth: '3px',
                     ...(isSelected
-                      ? { bg: 'rgba(255,255,255,0.08)', borderLeftColor: '#8B5CF6' }
-                      : { borderLeftColor: 'transparent', _hover: { bg: 'rgba(255,255,255,0.05)', borderLeftColor: 'rgba(139,92,246,0.4)' } }),
+                      ? { bg: 'whiteAlpha.8', borderLeftColor: '#8B5CF6' }
+                      : { borderLeftColor: 'transparent', _hover: { bg: 'whiteAlpha.5', borderLeftColor: 'rgba(139,92,246,0.4)' } }),
                   })}
                 >
                   {/* Avatar with glow on selected */}
@@ -479,17 +479,17 @@ export function SearchModal({ open: controlledOpen, onClose, triggerRef }: Searc
                   {/* Text */}
                   <div className={css({ flex: '1', minW: '0' })}>
                     <div className={css({ display: 'flex', alignItems: 'center', gap: '2', flexWrap: 'wrap' })}>
-                      <span className={css({ fontSize: '0.9375rem', fontWeight: 'medium', color: '#E8E8ED', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' })}>
+                      <span className={css({ fontSize: '0.9375rem', fontWeight: 'medium', color: 'ui.heading', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' })}>
                         {personality.name}
                       </span>
                       {personality.knownFor && (
-                        <span className={css({ flexShrink: 0, display: 'inline-flex', alignItems: 'center', fontSize: '11px', px: '2', py: '0.5', rounded: 'full', bg: 'rgba(255,255,255,0.06)', color: '#ADADB8', borderWidth: '1px', borderColor: 'rgba(255,255,255,0.06)' })}>
+                        <span className={css({ flexShrink: 0, display: 'inline-flex', alignItems: 'center', fontSize: '11px', px: '2', py: '0.5', rounded: 'full', bg: 'whiteAlpha.6', color: '#ADADB8', borderWidth: '1px', borderColor: 'card.border' })}>
                           {personality.knownFor}
                         </span>
                       )}
                     </div>
                     <div className={css({ display: 'flex', alignItems: 'center', gap: '2', mt: '0.5' })}>
-                      <p className={css({ fontSize: 'sm', color: '#7B7B86', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' })}>
+                      <p className={css({ fontSize: 'sm', color: 'ui.dim', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' })}>
                         {personality.role} · {personality.org}
                       </p>
                       {/* Category badge */}
@@ -529,10 +529,10 @@ export function SearchModal({ open: controlledOpen, onClose, triggerRef }: Searc
                       rounded: 'md',
                       fontSize: '11px',
                       fontWeight: 'medium',
-                      color: '#7B7B86',
-                      bg: 'rgba(255,255,255,0.06)',
+                      color: 'ui.dim',
+                      bg: 'whiteAlpha.6',
                       borderWidth: '1px',
-                      borderColor: 'rgba(255,255,255,0.08)',
+                      borderColor: 'whiteAlpha.8',
                       boxShadow: 'inset 0 1px 0 rgba(255,255,255,0.04)',
                     })}>
                       &crarr;
@@ -546,22 +546,22 @@ export function SearchModal({ open: controlledOpen, onClose, triggerRef }: Searc
 
         {/* Footer keyboard hints */}
         <div className={css({ h: '1px', bg: 'linear-gradient(90deg, transparent 0%, rgba(255,255,255,0.08) 20%, rgba(255,255,255,0.12) 50%, rgba(255,255,255,0.08) 80%, transparent 100%)' })} />
-        <div className={css({ display: 'none', sm: { display: 'flex' }, alignItems: 'center', justifyContent: 'center', gap: '5', px: '4', py: '2.5', fontSize: '11px', color: '#55555F' })}>
+        <div className={css({ display: 'none', sm: { display: 'flex' }, alignItems: 'center', justifyContent: 'center', gap: '5', px: '4', py: '2.5', fontSize: '11px', color: 'ui.faint' })}>
           <span className={css({ display: 'flex', alignItems: 'center', gap: '1.5' })}>
             <span className={css({ display: 'inline-flex', gap: '2px' })}>
-              <kbd className={css({ display: 'inline-flex', alignItems: 'center', justifyContent: 'center', w: '20px', h: '20px', rounded: 'md', bg: 'rgba(255,255,255,0.05)', borderWidth: '1px', borderColor: 'rgba(255,255,255,0.07)', boxShadow: 'inset 0 1px 0 rgba(255,255,255,0.04), 0 1px 2px rgba(0,0,0,0.15)' })}>&uarr;</kbd>
-              <kbd className={css({ display: 'inline-flex', alignItems: 'center', justifyContent: 'center', w: '20px', h: '20px', rounded: 'md', bg: 'rgba(255,255,255,0.05)', borderWidth: '1px', borderColor: 'rgba(255,255,255,0.07)', boxShadow: 'inset 0 1px 0 rgba(255,255,255,0.04), 0 1px 2px rgba(0,0,0,0.15)' })}>&darr;</kbd>
+              <kbd className={css({ display: 'inline-flex', alignItems: 'center', justifyContent: 'center', w: '20px', h: '20px', rounded: 'md', bg: 'whiteAlpha.5', borderWidth: '1px', borderColor: 'rgba(255,255,255,0.07)', boxShadow: 'inset 0 1px 0 rgba(255,255,255,0.04), 0 1px 2px rgba(0,0,0,0.15)' })}>&uarr;</kbd>
+              <kbd className={css({ display: 'inline-flex', alignItems: 'center', justifyContent: 'center', w: '20px', h: '20px', rounded: 'md', bg: 'whiteAlpha.5', borderWidth: '1px', borderColor: 'rgba(255,255,255,0.07)', boxShadow: 'inset 0 1px 0 rgba(255,255,255,0.04), 0 1px 2px rgba(0,0,0,0.15)' })}>&darr;</kbd>
             </span>
             <span className={css({ color: '#4A4A54' })}>Navigate</span>
           </span>
           <span className={css({ color: 'rgba(255,255,255,0.06)' })}>|</span>
           <span className={css({ display: 'flex', alignItems: 'center', gap: '1.5' })}>
-            <kbd className={css({ display: 'inline-flex', alignItems: 'center', justifyContent: 'center', minW: '20px', h: '20px', px: '4px', rounded: 'md', bg: 'rgba(255,255,255,0.05)', borderWidth: '1px', borderColor: 'rgba(255,255,255,0.07)', boxShadow: 'inset 0 1px 0 rgba(255,255,255,0.04), 0 1px 2px rgba(0,0,0,0.15)' })}>&crarr;</kbd>
+            <kbd className={css({ display: 'inline-flex', alignItems: 'center', justifyContent: 'center', minW: '20px', h: '20px', px: '4px', rounded: 'md', bg: 'whiteAlpha.5', borderWidth: '1px', borderColor: 'rgba(255,255,255,0.07)', boxShadow: 'inset 0 1px 0 rgba(255,255,255,0.04), 0 1px 2px rgba(0,0,0,0.15)' })}>&crarr;</kbd>
             <span className={css({ color: '#4A4A54' })}>Select</span>
           </span>
           <span className={css({ color: 'rgba(255,255,255,0.06)' })}>|</span>
           <span className={css({ display: 'flex', alignItems: 'center', gap: '1.5' })}>
-            <kbd className={css({ display: 'inline-flex', alignItems: 'center', justifyContent: 'center', minW: '20px', h: '20px', px: '5px', rounded: 'md', bg: 'rgba(255,255,255,0.05)', borderWidth: '1px', borderColor: 'rgba(255,255,255,0.07)', boxShadow: 'inset 0 1px 0 rgba(255,255,255,0.04), 0 1px 2px rgba(0,0,0,0.15)' })}>esc</kbd>
+            <kbd className={css({ display: 'inline-flex', alignItems: 'center', justifyContent: 'center', minW: '20px', h: '20px', px: '5px', rounded: 'md', bg: 'whiteAlpha.5', borderWidth: '1px', borderColor: 'rgba(255,255,255,0.07)', boxShadow: 'inset 0 1px 0 rgba(255,255,255,0.04), 0 1px 2px rgba(0,0,0,0.15)' })}>esc</kbd>
             <span className={css({ color: '#4A4A54' })}>Close</span>
           </span>
         </div>

@@ -1,8 +1,6 @@
 import { resumeStatus } from "./resume-status";
 import { askAboutResume } from "./ask-about-resume";
 import { uploadResume } from "./upload-resume";
-import { createScore } from "@/langfuse/scores";
-import { isLangfuseConfigured } from "@/langfuse";
 
 export const resumeResolvers = {
   Query: {
@@ -19,15 +17,8 @@ export const resumeResolvers = {
       context: any,
     ) {
       if (!context.userId) throw new Error("Unauthorized");
-      if (!isLangfuseConfigured()) return false;
-      await createScore({
-        traceId: args.traceId,
-        name: "helpfulness",
-        value: args.helpful ? 1 : 0,
-        dataType: "BOOLEAN",
-        comment: args.helpful ? "User found answer helpful" : "User found answer unhelpful",
-      });
-      return true;
+      // Scoring removed (was backed by Langfuse)
+      return false;
     },
 
     async ingestResumeParse(

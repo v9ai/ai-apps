@@ -4,7 +4,6 @@ import { eq } from "drizzle-orm";
 import { resumes } from "@/db/schema";
 import type { GraphQLContext } from "../../context";
 import { getLlamaClient, getResumePipelineId } from "@/lib/llama-cloud";
-import { aiTelemetry } from "@/lib/telemetry";
 
 export async function askAboutResume(
   _parent: any,
@@ -16,7 +15,6 @@ export async function askAboutResume(
   }
 
   const { email, question } = args;
-  const traceId = crypto.randomUUID();
 
   const RESUME_SYSTEM_PROMPT = `You are a helpful assistant answering questions about a candidate's resume.
 Answer concisely and accurately based only on the resume content provided.
@@ -48,14 +46,9 @@ If the resume doesn't contain enough information to answer, say so clearly.`;
         model: deepseek("deepseek-chat"),
         system: RESUME_SYSTEM_PROMPT,
         prompt: `Resume sections:\n\n${contextText}\n\n---\n\nQuestion: ${question}`,
-        experimental_telemetry: aiTelemetry("ask-about-resume", {
-          source: "llamacloud",
-          userId: context.userId,
-          langfuseTraceId: traceId,
-        }),
       });
 
-      return { answer: text, context_count: nodes.length, trace_id: traceId };
+      return { answer: text, context_count: nodes.length, trace_id: null };
     }
   } catch (e) {
     console.warn("[askAboutResume] LlamaCloud retrieval failed:", e);
@@ -78,12 +71,7 @@ If the resume doesn't contain enough information to answer, say so clearly.`;
     model: deepseek("deepseek-chat"),
     system: RESUME_SYSTEM_PROMPT,
     prompt: `Resume content:\n\n${rawText}\n\n---\n\nQuestion: ${question}`,
-    experimental_telemetry: aiTelemetry("ask-about-resume", {
-      source: "d1-fallback",
-      userId: context.userId,
-      langfuseTraceId: traceId,
-    }),
   });
 
-  return { answer: text, context_count: 1, trace_id: traceId };
+  return { answer: text, context_count: 1, trace_id: null };
 }
