@@ -19,7 +19,7 @@ from deepeval.test_case import LLMTestCase, LLMTestCaseParams
 
 from conftest_rag import load_rag_goldens, rag_golden_params
 from deepseek_model import DeepSeekModel
-from rag_pipeline import invoke_rag
+from rag_pipeline import invoke_rag, invoke_rag_batch
 
 model = DeepSeekModel()
 THRESHOLD = 0.6
@@ -190,8 +190,18 @@ def test_custom_metrics_batch():
     metric_pass_counts = {m.name: 0 for m in metrics}
     total = 0
 
-    for golden in GOLDENS:
-        tc = _run_rag(golden)
+    # Pre-fetch all RAG results in parallel, then score sequentially.
+    rag_results = invoke_rag_batch([g["input"] for g in GOLDENS])
+
+    for golden, rag_result in zip(GOLDENS, rag_results):
+        if rag_result is None:
+            continue
+        tc = LLMTestCase(
+            input=golden["input"],
+            actual_output=rag_result["actual_output"],
+            retrieval_context=rag_result["retrieval_context"],
+            expected_output=golden.get("expected_output"),
+        )
         if not tc.retrieval_context:
             continue
         total += 1

@@ -17,12 +17,12 @@
   ],
   "timeline": [
     {
-      "date": "2014",
+      "date": "2014-01",
       "event": "Completed PhD at MIT EECS under Michael Collins on Lagrangian relaxation for natural language decoding",
       "url": "https://dspace.mit.edu/handle/1721.1/89999"
     },
     {
-      "date": "2015",
+      "date": "2015-01",
       "event": "Joined Harvard SEAS as Assistant Professor of Computer Science",
       "url": "https://www.harvardmagazine.com/2015/08/seas-hires-five-computers-scientists"
     },
@@ -47,7 +47,7 @@
       "url": "https://arxiv.org/abs/2002.00876"
     },
     {
-      "date": "2021",
+      "date": "2021-01",
       "event": "Launched MiniTorch — educational deep learning library for Cornell Tech ML Engineering course",
       "url": "https://minitorch.github.io/"
     },
@@ -72,17 +72,17 @@
       "url": "https://tech.cornell.edu/news/award-winning-paper-unravels-challenges-of-scaling-language-models/"
     },
     {
-      "date": "2024",
+      "date": "2024-01",
       "event": "Released Annotated S4 and Annotated Mamba — literate implementations of state-space models",
       "url": "https://github.com/srush/annotated-s4"
     },
     {
-      "date": "2025-03-20",
+      "date": "2025-03",
       "event": "Announced joining Cursor to build frontier RL models at scale in real-world coding environments",
       "url": "https://x.com/srush_nlp/status/1902736199636205914"
     },
     {
-      "date": "2025-10-29",
+      "date": "2025-10",
       "event": "Announced Composer — a frontier MoE model trained with RL for real-world coding, co-designed with Cursor",
       "url": "https://x.com/srush_nlp/status/1983572683355725869"
     }

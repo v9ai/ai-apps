@@ -27,17 +27,17 @@
       "url": "https://github.com/Lightning-AI/pytorch-lightning"
     },
     {
-      "date": "2021",
+      "date": "2021-01",
       "event": "Released HuggingPics: fine-tune Vision Transformers for anything using web images (314 stars)",
       "url": "https://github.com/nateraw/huggingpics"
     },
     {
-      "date": "2021",
+      "date": "2021-01",
       "event": "Created hf-hub-lightning: PyTorch Lightning callback for pushing models to Hugging Face Hub",
       "url": "https://github.com/nateraw/hf-hub-lightning"
     },
     {
-      "date": "2021",
+      "date": "2021-01",
       "event": "Built huggingface-sync-action: GitHub Action to sync repos with the HF Hub (79 stars)",
       "url": "https://github.com/nateraw/huggingface-sync-action"
     },
@@ -52,32 +52,32 @@
       "url": "https://github.com/nateraw/stable-diffusion-videos"
     },
     {
+      "date": "2023-01",
+      "event": "Contributed to Hugging Face Zapier integration (ASR, zero-shot classification)",
+      "url": "https://github.com/huggingface/zapier"
+    },
+    {
+      "date": "2023-01",
+      "event": "Released MusicGen Songstarter v0.1: fine-tuned MusicGen on Splice melody loops for music producers",
+      "url": "https://huggingface.co/nateraw/musicgen-songstarter-v0.1"
+    },
+    {
       "date": "2023-04",
       "event": "Co-authored 'Generative Disco: Text-to-Video Generation for Music Visualization' (arXiv:2304.08551)",
       "url": "https://arxiv.org/abs/2304.08551"
     },
     {
-      "date": "2023",
-      "event": "Contributed to Hugging Face Zapier integration (ASR, zero-shot classification)",
-      "url": "https://github.com/huggingface/zapier"
-    },
-    {
-      "date": "2023",
-      "event": "Released MusicGen Songstarter v0.1: fine-tuned MusicGen on Splice melody loops for music producers",
-      "url": "https://huggingface.co/nateraw/musicgen-songstarter-v0.1"
-    },
-    {
-      "date": "2024",
+      "date": "2024-01",
       "event": "Released MusicGen Songstarter v0.2: 3x more data, large transformer LM, trained on ~1,800 curated Splice samples",
       "url": "https://huggingface.co/nateraw/musicgen-songstarter-v0.2"
     },
     {
-      "date": "2024",
+      "date": "2024-01",
       "event": "Released singing-songstarter: sing an idea and get an AI music sample (123 stars)",
       "url": "https://github.com/nateraw/singing-songstarter"
     },
     {
-      "date": "2024",
+      "date": "2024-01",
       "event": "Published openai-vision-api-for-videos: extract info from videos using GPT-4V (62 stars)",
       "url": "https://github.com/nateraw/openai-vision-api-for-videos"
     }

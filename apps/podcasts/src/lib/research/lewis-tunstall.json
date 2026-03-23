@@ -17,7 +17,7 @@
   ],
   "timeline": [
     {
-      "date": "2010",
+      "date": "2010-01",
       "event": "Awarded inaugural Fulbright South Australia Scholarship; PhD candidate at University of Adelaide in Theoretical Physics (particle physics)",
       "url": "https://www.adelaide.edu.au/alumni/recognised/fulbright-scholars"
     },
@@ -27,17 +27,17 @@
       "url": "https://higgs.ph.ed.ac.uk/people/tunstall-lewis/"
     },
     {
-      "date": "2019",
+      "date": "2019-01",
       "event": "Conceived idea for NLP with Transformers book; partnered with Leandro von Werra and sent cold email to Thomas Wolf at Hugging Face",
       "url": "https://huggingface.co/blog/lewis-tunstall-interview"
     },
     {
-      "date": "2020",
+      "date": "2020-01",
       "event": "Co-created TRL (Transformer Reinforcement Learning) library for fine-tuning LLMs with RLHF",
       "url": "https://github.com/huggingface/trl"
     },
     {
-      "date": "2021",
+      "date": "2021-01",
       "event": "Joined Hugging Face as Machine Learning Engineer; co-developed Hugging Face Course with Sylvain Gugger and Lysandre Jik",
       "url": "https://huggingface.co/blog/lewis-tunstall-interview"
     },
@@ -72,12 +72,12 @@
       "url": "https://github.com/huggingface/alignment-handbook"
     },
     {
-      "date": "2025",
+      "date": "2025-01",
       "event": "Co-authored SmolLM3-3B: small multilingual long-context reasoner with Anchored Preference Optimization post-training",
       "url": "https://huggingface.co/blog/smollm3"
     },
     {
-      "date": "2025",
+      "date": "2025-01",
       "event": "Co-launched Open-R1 initiative to reproduce DeepSeek R1 distillation pipeline; released OlympicCoder for competitive programming",
       "url": "https://huggingface.co/HuggingFaceTB"
     }

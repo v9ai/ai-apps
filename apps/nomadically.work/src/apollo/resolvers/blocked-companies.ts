@@ -26,25 +26,29 @@ export const blockedCompanyResolvers = {
         throw new Error("Forbidden");
       }
 
-      // Upsert — if already blocked, return existing row
+      // Normalize to prevent case-duplicate entries (e.g. "Google" vs "google")
+      const normalizedName = args.name.trim();
+
+      // Check if already blocked (case-insensitive)
+      const existing = await context.db
+        .select()
+        .from(blockedCompanies)
+        .where(sql`lower(${blockedCompanies.name}) = ${normalizedName.toLowerCase()}`)
+        .limit(1);
+
+      if (existing[0]) return existing[0];
+
+      // Insert new blocked company
       const rows = await context.db
         .insert(blockedCompanies)
         .values({
-          name: args.name,
+          name: normalizedName,
           reason: args.reason ?? null,
         })
         .onConflictDoNothing({ target: blockedCompanies.name })
         .returning();
 
-      if (rows.length > 0) return rows[0];
-
-      // Already existed — fetch and return it
-      const existing = await context.db
-        .select()
-        .from(blockedCompanies)
-        .where(sql`lower(${blockedCompanies.name}) = ${args.name.toLowerCase()}`)
-        .limit(1);
-      return existing[0];
+      return rows[0] ?? existing[0];
     },
 
     async unblockCompany(

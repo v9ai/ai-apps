@@ -60,41 +60,15 @@ export interface InsertJobsResponse {
  * Get API secret from Chrome storage or build-time env
  */
 async function getApiSecret(): Promise<string | null> {
-  // Debug: Log all environment variables
-  console.log(
-    "[Job Inserter] Build-time secret exists:",
-    !!BUILD_TIME_API_SECRET,
-  );
-  console.log(
-    "[Job Inserter] Build-time secret value:",
-    BUILD_TIME_API_SECRET
-      ? BUILD_TIME_API_SECRET.substring(0, 10) + "..."
-      : "null",
-  );
-  console.log(
-    "[Job Inserter] import.meta.env.VITE_API_SECRET:",
-    import.meta.env.VITE_API_SECRET ? "exists" : "undefined",
-  );
-
   // First, try build-time secret (from .env.local)
   if (BUILD_TIME_API_SECRET) {
-    console.log("[Job Inserter] ✅ Using build-time API secret");
     return BUILD_TIME_API_SECRET;
   }
 
   // Fall back to runtime secret (from chrome.storage)
   try {
     const result = await chrome.storage.sync.get(["apiSecret"]);
-    if (result.apiSecret) {
-      console.log(
-        "[Job Inserter] ✅ Using runtime API secret from chrome.storage",
-      );
-    } else {
-      console.warn(
-        "[Job Inserter] ❌ No API secret configured (build-time or runtime)",
-      );
-    }
-    return result.apiSecret || null;
+    return (result.apiSecret as string) || null;
   } catch (error) {
     console.warn("[Job Inserter] Could not get API secret:", error);
     return null;
@@ -362,20 +336,10 @@ export async function insertJobsBatch(
     };
   }
 
-  // Debug: Log raw job before normalization
-  console.log(
-    "[Job Inserter] Raw job before normalization:",
-    JSON.stringify(validJobs[0], null, 2),
-  );
-
   // Normalize to worker API format
   const jobInputs = validJobs.map((job) => normalizeJobInput(job));
 
   console.log(`[Job Inserter] Prepared ${jobInputs.length} jobs for insertion`);
-  console.log(
-    "[Job Inserter] Sample job after normalization:",
-    JSON.stringify(jobInputs[0], null, 2),
-  );
 
   // Insert via worker
   const result = await insertJobs(jobInputs);

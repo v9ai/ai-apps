@@ -7,6 +7,9 @@ import os
 from collections.abc import AsyncIterator
 
 import httpx
+from dotenv import find_dotenv, load_dotenv
+
+load_dotenv(find_dotenv(".env.local"))
 
 from .constants import DEEPSEEK_API_BASE_URL, DEEPSEEK_API_BETA_URL, DEEPSEEK_MODELS, DEFAULT_CONFIG
 from .types import (

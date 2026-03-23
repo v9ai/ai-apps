@@ -3,8 +3,6 @@ export const quotes: Record<string, string> = {
     "The thing I lose the most sleep over is the hypothetical that we already have done something really bad by releasing these systems.",
   "dario-amodei":
     "I think the most important thing about AI safety is that it should be thought of as an engineering discipline, not a philosophical one.",
-  "jensen-huang":
-    "Software is eating the world, but AI is going to eat software.",
   "yann-lecun":
     "Our intelligence is what makes us human, and AI is an extension of that quality.",
   "geoffrey-hinton":

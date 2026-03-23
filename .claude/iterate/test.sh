@@ -63,13 +63,13 @@ assert 'eval_method' in r['metadatas'][0]
 # --- retrieve_context ---
 echo ""
 echo "retrieve_context.py:"
-RETRIEVE_OUT=$(python3.12 "$SCRIPTS_DIR/retrieve_context.py" \
+python3.12 "$SCRIPTS_DIR/retrieve_context.py" \
     --query "build auth system" \
-    --iteration 1 2>&1)
+    --iteration 1 > "$TEST_DIR/retrieve_out.txt" 2>&1
 
-check "returns non-empty" "[ -n '$RETRIEVE_OUT' ]"
-check "contains iteration 0" "echo '$RETRIEVE_OUT' | grep -q 'Iteration 0'"
-check "no 'first iteration' msg" "! echo '$RETRIEVE_OUT' | grep -q 'first iteration'"
+check "returns non-empty" "[ -s '$TEST_DIR/retrieve_out.txt' ]"
+check "contains iteration 0" "grep -q 'Iteration 0' '$TEST_DIR/retrieve_out.txt'"
+check "no 'first iteration' msg" "! grep -q 'first iteration' '$TEST_DIR/retrieve_out.txt'"
 
 # --- evaluate (fallback mode, no proxy) ---
 echo ""
@@ -231,6 +231,52 @@ echo '{"cwd":"/tmp","session_id":"any"}' | \
     " 2>/dev/null || KICK_EXIT=$?
 check "no task file exits 0" "[ '$KICK_EXIT' -eq 0 ]"
 
+# Test: CWD-based session matching (empty session.txt, matching cwd.txt)
+CWD_MATCH_DIR="$TEST_DIR/cwd-match"
+mkdir -p "$CWD_MATCH_DIR"
+echo "0" > "$CWD_MATCH_DIR/counter"
+echo "test task" > "$CWD_MATCH_DIR/task.txt"
+echo "[]" > "$CWD_MATCH_DIR/scores.json"
+echo "" > "$CWD_MATCH_DIR/session.txt"        # empty: CLAUDE_CODE_SESSION_ID was unset
+echo "/my/project" > "$CWD_MATCH_DIR/cwd.txt"
+
+CWD_MATCH_EXIT=0
+echo '{"cwd":"/my/project","session_id":"abc123"}' | \
+    bash -c "
+        INPUT=\$(cat)
+        SESSION_ID=\$(echo \"\$INPUT\" | jq -r '.session_id // empty')
+        HOOK_CWD=\$(echo \"\$INPUT\" | jq -r '.cwd // empty')
+        ITER_DIR=''
+        for _d in '$CWD_MATCH_DIR'; do
+            _owner=\$(cat \"\${_d}/session.txt\" 2>/dev/null || echo '')
+            if [ -z \"\$_owner\" ] && [ -n \"\$HOOK_CWD\" ]; then
+                _stored_cwd=\$(cat \"\${_d}/cwd.txt\" 2>/dev/null || echo '')
+                if [ \"\$_stored_cwd\" = \"\$HOOK_CWD\" ]; then
+                    ITER_DIR=\${_d}
+                    break
+                fi
+            fi
+        done
+        [ -n \"\$ITER_DIR\" ] && exit 0 || exit 2
+    " 2>/dev/null || CWD_MATCH_EXIT=$?
+check "CWD match finds empty-session dir" "[ '$CWD_MATCH_EXIT' -eq 0 ]"
+
+# Test: CWD mismatch does NOT match
+CWD_NOMATCH_EXIT=0
+echo '{"cwd":"/different/project","session_id":"abc123"}' | \
+    bash -c "
+        INPUT=\$(cat)
+        HOOK_CWD=\$(echo \"\$INPUT\" | jq -r '.cwd // empty')
+        ITER_DIR=''
+        _owner=\$(cat '$CWD_MATCH_DIR/session.txt' 2>/dev/null || echo '')
+        if [ -z \"\$_owner\" ] && [ -n \"\$HOOK_CWD\" ]; then
+            _stored_cwd=\$(cat '$CWD_MATCH_DIR/cwd.txt' 2>/dev/null || echo '')
+            [ \"\$_stored_cwd\" = \"\$HOOK_CWD\" ] && ITER_DIR='$CWD_MATCH_DIR'
+        fi
+        [ -z \"\$ITER_DIR\" ] && exit 0 || exit 2
+    " 2>/dev/null || CWD_NOMATCH_EXIT=$?
+check "CWD mismatch does not match" "[ '$CWD_NOMATCH_EXIT' -eq 0 ]"
+
 # Test: stall detection via output hash
 STALL_DIR="$TEST_DIR/stall"
 mkdir -p "$STALL_DIR"
@@ -261,4 +307,23 @@ rm -r "$TEST_DIR" 2>/dev/null || true
 
 echo ""
 echo "=== Results: $PASS passed, $FAIL failed ==="
+
+# --- pytest ---
+echo ""
+echo "=== pytest ==="
+if python3.12 -m pytest --version > /dev/null 2>&1; then
+    python3.12 -m pytest "$SCRIPTS_DIR/tests/" -v --tb=short 2>&1
+    PYTEST_EXIT=$?
+    if [ $PYTEST_EXIT -ne 0 ]; then
+        echo "pytest: FAILED (exit $PYTEST_EXIT)"
+        FAIL=$((FAIL + 1))
+    else
+        echo "pytest: all passed"
+    fi
+else
+    echo "pytest not installed — skipping (run: pip install pytest)"
+fi
+
+echo ""
+echo "=== Final: $PASS bash checks passed, $FAIL failed ==="
 [ "$FAIL" -eq 0 ] && exit 0 || exit 1

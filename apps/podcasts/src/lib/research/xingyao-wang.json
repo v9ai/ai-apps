@@ -17,12 +17,12 @@
   ],
   "timeline": [
     {
-      "date": "2021",
+      "date": "2021-01",
       "event": "Graduated from University of Michigan with B.S. in Computer Science and Data Science; received University Honors and Honorable Mention for CRA Outstanding Undergraduate Researcher Award",
       "url": "https://xwang.dev/"
     },
     {
-      "date": "2021",
+      "date": "2021-01",
       "event": "Started PhD in Computer Science at UIUC, advised by Prof. Heng Ji",
       "url": "https://xwang.dev/"
     },
@@ -47,7 +47,7 @@
       "url": "https://arxiv.org/abs/2402.01030"
     },
     {
-      "date": "2024-03-13",
+      "date": "2024-03",
       "event": "OpenDevin (later renamed OpenHands) launched on GitHub as open-source AI software development agent",
       "url": "https://github.com/All-Hands-AI/OpenHands"
     },
@@ -62,7 +62,7 @@
       "url": "https://arxiv.org/abs/2407.16741"
     },
     {
-      "date": "2024-09-05",
+      "date": "2024-09",
       "event": "All Hands AI raised $5M seed round led by Menlo Ventures / Anthology Fund (Anthropic); co-founded with Robert Brennan and Graham Neubig",
       "url": "https://openhands.dev/blog/press-release-all-hands-announces-5m-to-scale-ai-agent-for-software-development"
     },

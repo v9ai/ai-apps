@@ -11,25 +11,13 @@ import {
   Alert,
   Code,
   Divider,
-  Center,
-  TextInput,
 } from "@mantine/core";
 import logo from "@assets/img/logo.svg";
 import { deepseekService } from "../../services/deepseek";
 import { insertJobsBatch } from "../../services/job-inserter";
 import { scrapeLinkedInJobsWithPagination } from "./linkedin-scraper";
-import {
-  scrapeAshbyJobsWithPagination,
-  scrapeAshbyJobsSinglePage,
-  navigateToNextPage,
-} from "./ashby-scraper";
-import {
-  scrapeWellfoundJobs,
-  analyzeJobsWithDeepSeek,
-  autoApplyToRecommendedJobs,
-  generateCoverLetter,
-  fillCoverLetterAndApply,
-} from "./wellfound-scraper";
+import { scrapeAshbyJobsWithPagination } from "./ashby-scraper";
+import { detectSourceFromUrl, isGoogleSearchUrl } from "../../lib/source-detector";
 
 export default function Popup() {
   const [prompt, setPrompt] = useState("");
@@ -39,13 +27,6 @@ export default function Popup() {
   const [jobClickStatus, setJobClickStatus] = useState("");
   const [fetchJobsStatus, setFetchJobsStatus] = useState("");
   const [fetchJobsLoading, setFetchJobsLoading] = useState(false);
-
-  // Wellfound-specific state
-  const [wellfoundCriteria, setWellfoundCriteria] = useState(
-    "software engineer, full stack, remote",
-  );
-  const [wellfoundStatus, setWellfoundStatus] = useState("");
-  const [wellfoundLoading, setWellfoundLoading] = useState(false);
 
   const handleGenerate = async () => {
     if (!prompt.trim()) return;
@@ -97,7 +78,7 @@ export default function Popup() {
       // Inject and execute the click sequence
       setJobClickStatus("Clicking first job...");
 
-      const results = await (chrome as any).scripting.executeScript({
+      const results = await chrome.scripting.executeScript({
         target: { tabId: tab.id },
         func: () => {
           // Find first non-dismissed job
@@ -107,7 +88,7 @@ export default function Popup() {
           for (let i = 0; i < jobCards.length; i++) {
             const jobCard = jobCards[i];
             // Skip if job is dismissed
-            if (!jobCard.classList.contains("job-card-list--is-dismissed")) {
+            if (!jobCard.getAttribute("data-nomad-dismissed")) {
               firstNonDismissedJob = jobCard;
               break;
             }
@@ -196,32 +177,6 @@ export default function Popup() {
     }
   };
 
-  const extractJobs = async () => {
-    try {
-      const [tab] = await chrome.tabs.query({
-        active: true,
-        currentWindow: true,
-      });
-
-      if (!tab.id) {
-        setError("No active tab found");
-        return;
-      }
-
-      const response = await chrome.tabs.sendMessage(tab.id, {
-        action: "extractJobs",
-      });
-
-      if (response && response.jobs) {
-        setResponse(JSON.stringify(response.jobs, null, 2));
-      } else {
-        setError("No jobs found on this page.");
-      }
-    } catch (err) {
-      setError(err instanceof Error ? err.message : "Failed to extract jobs");
-    }
-  };
-
   const handleFetchJobs = async () => {
     setFetchJobsLoading(true);
     setFetchJobsStatus("Extracting jobs...");
@@ -240,22 +195,7 @@ export default function Popup() {
       }
 
       const url = tab.url || "";
-
-      // Detect if we're on Google search results (for any job board)
-      let isGoogleSearch = false;
-      try {
-        const urlObj = new URL(url);
-        const isGoogleDomain =
-          urlObj.hostname === "google.com" ||
-          urlObj.hostname.endsWith(".google.com") ||
-          urlObj.hostname.startsWith("google.") ||
-          urlObj.hostname.includes(".google.");
-        const isSearchPage = urlObj.pathname === "/search";
-
-        isGoogleSearch = isGoogleDomain && isSearchPage;
-      } catch (e) {
-        console.error("Error parsing URL for Google search detection:", e);
-      }
+      const isGoogleSearch = isGoogleSearchUrl(url);
 
       // Google search scraping with automatic pagination
       if (isGoogleSearch) {
@@ -263,11 +203,7 @@ export default function Popup() {
           setFetchJobsStatus(status),
         );
 
-        if (result.success) {
-          setFetchJobsStatus(result.message);
-        } else {
-          setFetchJobsStatus(result.message);
-        }
+        setFetchJobsStatus(result.message);
         setFetchJobsLoading(false);
         return;
       }
@@ -313,45 +249,7 @@ export default function Popup() {
       }
 
       // Detect source from URL
-      let sourceType = "other";
-      const tags: string[] = [];
-
-      if (url.includes("linkedin.com")) {
-        sourceType = "linkedin";
-        tags.push("linkedin");
-      } else if (
-        url.includes("ashbyhq.com") ||
-        url.includes("site%3Aashbyhq")
-      ) {
-        sourceType = "ashby";
-        tags.push("ashby");
-      } else if (url.includes("indeed.com")) {
-        sourceType = "indeed";
-        tags.push("indeed");
-      } else if (url.includes("glassdoor.com")) {
-        sourceType = "glassdoor";
-        tags.push("glassdoor");
-      } else if (url.includes("wellfound.com") || url.includes("angel.co")) {
-        sourceType = "wellfound";
-        tags.push("wellfound");
-      } else if (url.includes("greenhouse.io")) {
-        sourceType = "greenhouse";
-        tags.push("greenhouse");
-      } else if (
-        url.includes("workable.com") ||
-        url.includes("site%3Aworkable")
-      ) {
-        sourceType = "workable";
-        tags.push("workable");
-      } else if (url.includes("google.com/search")) {
-        sourceType = "google_search";
-        tags.push("google_search");
-        // Add tags based on search query
-        if (url.includes("workable")) tags.push("workable");
-        if (url.includes("ashby")) tags.push("ashby");
-        if (url.includes("greenhouse")) tags.push("greenhouse");
-        if (url.includes("lever")) tags.push("lever");
-      }
+      const { sourceType, tags } = detectSourceFromUrl(url);
 
       // Deduplicate jobs by URL before processing
       const uniqueJobsMap = new Map();
@@ -396,105 +294,6 @@ export default function Popup() {
       );
     } finally {
       setFetchJobsLoading(false);
-    }
-  };
-
-  const handleWellfoundAutoApply = async () => {
-    setWellfoundLoading(true);
-    setWellfoundStatus("🔍 Starting job analysis...");
-    setError("");
-    setResponse("");
-
-    try {
-      const [tab] = await chrome.tabs.query({
-        active: true,
-        currentWindow: true,
-      });
-
-      if (!tab.id) {
-        setWellfoundStatus("Error: No active tab found");
-        setWellfoundLoading(false);
-        return;
-      }
-
-      if (!tab.url?.includes("wellfound.com")) {
-        setWellfoundStatus("Please navigate to Wellfound.com jobs page");
-        setWellfoundLoading(false);
-        return;
-      }
-
-      const result = await autoApplyToRecommendedJobs(
-        wellfoundCriteria,
-        5,
-        (message) => {
-          // Update status with progress messages
-          setWellfoundStatus(message);
-        },
-      );
-
-      if (result.recommendations.length === 0) {
-        setWellfoundStatus(
-          `No matching jobs found out of ${result.totalJobs} jobs`,
-        );
-      } else {
-        setWellfoundStatus(
-          `✓ Opened ${result.opened}/${result.recommendations.length} recommended jobs (found ${result.totalJobs} total)`,
-        );
-
-        // Show recommendations in response
-        const recommendationsText = result.recommendations
-          .map(
-            (rec, idx) => `${idx + 1}. Job #${rec.jobIndex}: ${rec.reasoning}`,
-          )
-          .join("\n\n");
-        setResponse(`Recommendations:\n\n${recommendationsText}`);
-      }
-    } catch (err) {
-      setWellfoundStatus(
-        err instanceof Error
-          ? `Error: ${err.message}`
-          : "Failed to analyze jobs",
-      );
-    } finally {
-      setWellfoundLoading(false);
-    }
-  };
-
-  const handleWellfoundScrape = async () => {
-    setWellfoundLoading(true);
-    setWellfoundStatus("📋 Scraping jobs...");
-    setError("");
-
-    try {
-      const [tab] = await chrome.tabs.query({
-        active: true,
-        currentWindow: true,
-      });
-
-      if (!tab.id) {
-        setWellfoundStatus("Error: No active tab found");
-        setWellfoundLoading(false);
-        return;
-      }
-
-      if (!tab.url?.includes("wellfound.com")) {
-        setWellfoundStatus("Please navigate to Wellfound.com jobs page");
-        setWellfoundLoading(false);
-        return;
-      }
-
-      const jobs = await scrapeWellfoundJobs();
-
-      setWellfoundStatus(`✓ Scraped ${jobs.length} jobs`);
-      setResponse(JSON.stringify(jobs, null, 2));
-    } catch (err) {
-      setWellfoundStatus(
-        err instanceof Error
-          ? `Error: ${err.message}`
-          : "Failed to scrape jobs",
-      );
-    } finally {
-      setWellfoundLoading(false);
     }
   };
 
@@ -590,36 +389,6 @@ export default function Popup() {
               )}
             </Stack>
 
-            <Divider
-              color="dark.4"
-              label="Wellfound.com"
-              labelPosition="center"
-            />
-
-            <Stack gap="xs">
-              <Button
-                onClick={handleWellfoundAutoApply}
-                fullWidth
-                color="violet"
-                disabled={wellfoundLoading}
-                size="sm"
-              >
-                {wellfoundLoading ? "🤖 Analyzing..." : "🤖 AI Auto-Apply"}
-              </Button>
-              {wellfoundStatus && (
-                <Alert color="dark" radius="sm" p="xs">
-                  <Text
-                    size="xs"
-                    ta="center"
-                    c="white"
-                    style={{ whiteSpace: "pre-wrap" }}
-                  >
-                    {wellfoundStatus}
-                  </Text>
-                </Alert>
-              )}
-            </Stack>
-
             {error && (
               <Alert color="red" radius="sm">
                 <Text size="sm" c="white">
@@ -657,7 +426,7 @@ export default function Popup() {
           style={{ borderTop: "1px solid var(--mantine-color-dark-4)" }}
         >
           <Text size="xs" c="gray.3" ta="center">
-            Connected to localhost:3000
+            {import.meta.env.VITE_API_BASE_URL || "localhost:3004"}
           </Text>
         </AppShell.Footer>
       </AppShell>

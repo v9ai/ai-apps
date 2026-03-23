@@ -256,15 +256,7 @@ export default async function PersonPage({ params }: Props) {
           className={cx("animate-fade-in-up", css({ mt: { base: '8', md: '10' }, display: 'flex', flexWrap: 'wrap', alignItems: 'center', gap: { base: '3', md: '4' } }))}
           style={{ animationDelay: "0.2s" }}
         >
-          {person.podcasts.length > 0 && (
-            <div role="listitem" className={css({ display: 'flex', alignItems: 'center', gap: '2.5', px: '5', py: '2.5', rounded: 'xl', bg: '#141418', borderWidth: '1px', borderColor: 'rgba(255,255,255,0.06)', transition: 'all', transitionDuration: '200ms', _hover: { borderColor: 'rgba(255,255,255,0.10)', bg: '#1C1C22' } })}>
-              <MicrophoneIcon className={css({ w: '4', h: '4', color: 'purple.400/70' })} />
-              <span className={css({ fontSize: 'sm', fontWeight: 'medium', color: '#E8E8ED' })}>{person.podcasts.length}</span>
-              <span className={css({ fontSize: 'xs', color: '#8B8B96' })}>podcasts</span>
-            </div>
-          )}
-
-          {episodes.length > 0 && (
+{episodes.length > 0 && (
             <div role="listitem" className={css({ display: 'flex', alignItems: 'center', gap: '2.5', px: '5', py: '2.5', rounded: 'xl', bg: '#141418', borderWidth: '1px', borderColor: 'rgba(255,255,255,0.06)', transition: 'all', transitionDuration: '200ms', _hover: { borderColor: 'rgba(255,255,255,0.10)', bg: '#1C1C22' } })}>
               <svg viewBox="0 0 16 16" className={css({ w: '4', h: '4', color: '#1DB954' })} fill="currentColor">
                 <path d="M8 0a8 8 0 1 0 0 16A8 8 0 0 0 8 0zm3.669 11.538a.498.498 0 0 1-.686.166c-1.879-1.148-4.243-1.408-7.028-.771a.499.499 0 0 1-.222-.973c3.048-.696 5.662-.397 7.77.892a.5.5 0 0 1 .166.686zm.979-2.178a.624.624 0 0 1-.858.205c-2.15-1.321-5.428-1.704-7.972-.932a.625.625 0 0 1-.362-1.194c2.905-.881 6.517-.454 8.986 1.063a.624.624 0 0 1 .206.858zm.084-2.268C10.154 5.56 5.9 5.419 3.438 6.166a.748.748 0 1 1-.434-1.432c2.825-.857 7.523-.692 10.492 1.07a.747.747 0 1 1-.764 1.288z" />

@@ -21,18 +21,18 @@ def test_build_graph_returns_compiled_graph(graph):
     assert graph is not None
 
 
-# ── 2. Graph has exactly 6 nodes ────────────────────────────────────────
+# ── 2. Graph has exactly 7 nodes ────────────────────────────────────────
 
-def test_graph_has_6_nodes(graph):
+def test_graph_has_7_nodes(graph):
     node_names = set(graph.get_graph().nodes.keys()) - {"__start__", "__end__"}
-    assert len(node_names) == 6, f"Expected 6 nodes, got {node_names}"
+    assert len(node_names) == 7, f"Expected 7 nodes, got {node_names}"
 
 
 # ── 3. Graph nodes are named correctly ──────────────────────────────────
 
 def test_graph_node_names(graph):
     node_names = set(graph.get_graph().nodes.keys()) - {"__start__", "__end__"}
-    expected = {"phase1", "phase1_5", "phase2", "phase3_eval", "reresearch", "phase3_exec"}
+    expected = {"phase1", "phase1_5", "phase2", "phase3_eval", "reresearch", "phase3_exec", "question_generator"}
     assert node_names == expected, f"Expected {expected}, got {node_names}"
 
 
@@ -48,14 +48,15 @@ def test_graph_edges_sequential(graph):
     assert ("phase3_eval", "phase3_exec") in edges
     assert ("phase3_eval", "reresearch") in edges
     assert ("reresearch", "phase3_eval") in edges
-    assert ("phase3_exec", "__end__") in edges
+    assert ("phase3_exec", "question_generator") in edges
+    assert ("question_generator", "__end__") in edges
 
 
-# ── 5. Graph has exactly 8 edges ────────────────────────────────────────
+# ── 5. Graph has exactly 9 edges ────────────────────────────────────────
 
 def test_graph_edge_count(graph):
     g = graph.get_graph()
-    assert len(g.edges) == 8, f"Expected 8 edges, got {len(g.edges)}"
+    assert len(g.edges) == 9, f"Expected 9 edges, got {len(g.edges)}"
 
 
 # ── 6. ResearchState has all expected keys ──────────────────────────────
@@ -73,7 +74,7 @@ def test_research_state_schema():
         "topics", "competitive", "collaboration", "funding",
         "conference", "philosophy",
         # Phase 3
-        "eval_data", "executive",
+        "eval_data", "executive", "questions",
         # Re-research
         "reresearch_count",
     }
@@ -146,4 +147,4 @@ def test_build_graph_no_side_effects():
     graphs = [build_graph() for _ in range(3)]
     for g in graphs:
         node_names = set(g.get_graph().nodes.keys()) - {"__start__", "__end__"}
-        assert len(node_names) == 6
+        assert len(node_names) == 7

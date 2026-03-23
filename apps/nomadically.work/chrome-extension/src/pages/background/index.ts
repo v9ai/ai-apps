@@ -4,16 +4,26 @@
 if (import.meta.env.DEV) {
   const connect = () => {
     const ws = new WebSocket("ws://localhost:35729");
-    ws.onmessage = (event) => {
+    ws.onmessage = async (event) => {
       if (event.data === "reload") {
-        console.log("[dev-reload] Reloading extension…");
+        // Refresh tabs running content scripts before reloading extension
+        const tabs = await chrome.tabs.query({ url: [
+          "https://*.linkedin.com/jobs/*",
+          "https://*.linkedin.com/feed/*",
+          "https://*.google.com/search*",
+          "https://*.ashbyhq.com/*",
+          "https://*.greenhouse.io/*",
+          "https://*.lever.co/*",
+          "https://www.founderio.com/*",
+          "https://*.workable.com/*",
+        ]});
+        for (const tab of tabs) {
+          if (tab.id) chrome.tabs.reload(tab.id);
+        }
         chrome.runtime.reload();
       }
     };
-    ws.onclose = () => {
-      // Reconnect after 2s if server restarts
-      setTimeout(connect, 5000);
-    };
+    ws.onclose = () => setTimeout(connect, 5000);
     ws.onerror = () => ws.close();
   };
   connect();
@@ -75,6 +85,90 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
       .catch((err) => {
         sendResponse({ success: false, error: String(err) });
       });
+    return true;
+  }
+
+  // ── Send Email from LinkedIn Post (via LangGraph pipeline) ──
+  if (message.action === "sendEmailFromPost") {
+    const { postData } = message;
+    const { authorName, authorSubtitle, postText, postUrl, emails } = postData as {
+      authorName: string;
+      authorSubtitle: string;
+      postText: string;
+      postUrl: string;
+      emails: string[];
+    };
+
+    if (!emails.length) {
+      sendResponse({ success: false, error: "No email found in post" });
+      return true;
+    }
+
+    (async () => {
+      try {
+        const sessionToken = await getSessionCookie();
+        const headers: Record<string, string> = {
+          "Content-Type": "application/json",
+        };
+        if (sessionToken) {
+          headers["Authorization"] = `Bearer ${sessionToken}`;
+        }
+
+        // Step 1: Generate email via LangGraph pipeline (REST)
+        const API_BASE = GRAPHQL_URL.replace("/api/graphql", "");
+        const genRes = await fetch(`${API_BASE}/api/email-outreach/generate`, {
+          method: "POST",
+          headers,
+          body: JSON.stringify({
+            recipientName: authorName || "there",
+            recipientRole: authorSubtitle || undefined,
+            postText: postText.slice(0, 2000),
+            postUrl,
+            recipientEmail: emails[0],
+            tone: "professional and friendly",
+          }),
+        });
+
+        if (!genRes.ok) {
+          const err = await genRes.json().catch(() => ({ error: "Generation failed" }));
+          sendResponse({ success: false, error: err.error || `HTTP ${genRes.status}` });
+          return;
+        }
+
+        const { subject, html, text } = await genRes.json();
+
+        // Step 2: Send the email via GraphQL
+        const sendResult = await gqlRequest(
+          `mutation SendEmail($input: SendEmailInput!) {
+            sendEmail(input: $input) { success id error }
+          }`,
+          {
+            input: {
+              to: emails[0],
+              subject,
+              html,
+              text,
+            },
+          },
+        );
+
+        if (sendResult.errors) {
+          sendResponse({ success: false, error: sendResult.errors[0].message });
+          return;
+        }
+
+        const { success, error: sendError } = sendResult.data.sendEmail;
+        if (success) {
+          console.log(`[sendEmail] Sent to ${emails[0]} re: ${subject}`);
+          sendResponse({ success: true });
+        } else {
+          sendResponse({ success: false, error: sendError || "Send failed" });
+        }
+      } catch (err) {
+        console.error("[sendEmail] Error:", err);
+        sendResponse({ success: false, error: String(err) });
+      }
+    })();
     return true;
   }
 

@@ -1,8 +1,8 @@
 "use server";
 
+import { sql } from "drizzle-orm";
 import { db } from "@/src/db";
-import { analyticsEvents, lessons } from "@/src/db/schema";
-import { eq } from "drizzle-orm";
+import { analyticsEvents } from "@/src/db/schema";
 
 export async function trackAnalyticsEvent(
   eventName: string,
@@ -11,15 +11,11 @@ export async function trackAnalyticsEvent(
   properties?: Record<string, unknown>,
 ) {
   try {
-    const lesson = await db.query.lessons.findFirst({
-      where: eq(lessons.slug, lessonSlug),
-      columns: { id: true },
-    });
-
+    // Resolve lesson ID inline to avoid a separate round-trip.
     await db.insert(analyticsEvents).values({
       eventCategory: "reading",
       eventName,
-      lessonId: lesson?.id ?? null,
+      lessonId: sql`(SELECT id FROM lessons WHERE slug = ${lessonSlug})`,
       sessionId,
       userId: null,
       properties: properties ?? {},

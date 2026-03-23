@@ -31,7 +31,7 @@ SENTINEL = "(no HuggingFace username provided)"
 
 @needs_network
 def test_known_org_returns_data():
-    result = fetch_hf_author.invoke({"username": "meta-llama"})
+    result = fetch_hf_author("meta-llama")
     assert isinstance(result, str)
     assert len(result) > 50
     assert result != SENTINEL
@@ -41,7 +41,7 @@ def test_known_org_returns_data():
 
 @needs_network
 def test_result_contains_model_listings():
-    result = fetch_hf_author.invoke({"username": "meta-llama"})
+    result = fetch_hf_author("meta-llama")
     assert "meta-llama" in result.lower()
 
 
@@ -49,28 +49,28 @@ def test_result_contains_model_listings():
 
 @needs_network
 def test_result_contains_download_counts():
-    result = fetch_hf_author.invoke({"username": "meta-llama"})
+    result = fetch_hf_author("meta-llama")
     assert "download" in result.lower()
 
 
 # ── 4. Handles empty username ────────────────────────────────────────────
 
 def test_empty_username_returns_sentinel():
-    result = fetch_hf_author.invoke({"username": ""})
+    result = fetch_hf_author("")
     assert result == SENTINEL
 
 
 # ── 5. Handles "unknown" ────────────────────────────────────────────────
 
 def test_unknown_username_returns_sentinel():
-    result = fetch_hf_author.invoke({"username": "unknown"})
+    result = fetch_hf_author("unknown")
     assert result == SENTINEL
 
 
 # ── 6. Handles "none" ──────────────────────────────────────────────────
 
 def test_none_username_returns_sentinel():
-    result = fetch_hf_author.invoke({"username": "none"})
+    result = fetch_hf_author("none")
     assert result == SENTINEL
 
 
@@ -78,7 +78,7 @@ def test_none_username_returns_sentinel():
 
 @needs_network
 def test_return_type_is_str():
-    result = fetch_hf_author.invoke({"username": "meta-llama"})
+    result = fetch_hf_author("meta-llama")
     assert type(result) is str
 
 
@@ -86,5 +86,5 @@ def test_return_type_is_str():
 
 @needs_network
 def test_result_mentions_models():
-    result = fetch_hf_author.invoke({"username": "meta-llama"})
+    result = fetch_hf_author("meta-llama")
     assert "models" in result.lower()

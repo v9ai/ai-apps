@@ -4,6 +4,7 @@ Uses DeepSeek as the LLM. Stateless (no checkpointer) — each eval invocation s
 """
 
 import os
+import threading
 from pathlib import Path
 
 from dotenv import load_dotenv
@@ -19,13 +20,22 @@ SYSTEM_PROMPT = (
     "Be concise, factual, and cite specific papers or results when possible."
 )
 
+# Compiled graph is stateless — build once and reuse across eval invocations.
+_agent = None
+_agent_lock = threading.Lock()
+
 
 def build_agent():
-    """Create a LangGraph ReAct agent backed by DeepSeek."""
-    llm = ChatOpenAI(
-        model="deepseek-chat",
-        base_url="https://api.deepseek.com",
-        api_key=os.environ["DEEPSEEK_API_KEY"],
-        temperature=0,
-    )
-    return create_react_agent(model=llm, tools=[], prompt=SYSTEM_PROMPT)
+    """Return the cached LangGraph ReAct agent, creating it on first call."""
+    global _agent
+    if _agent is None:
+        with _agent_lock:
+            if _agent is None:
+                llm = ChatOpenAI(
+                    model="deepseek-chat",
+                    base_url="https://api.deepseek.com",
+                    api_key=os.environ["DEEPSEEK_API_KEY"],
+                    temperature=0,
+                )
+                _agent = create_react_agent(model=llm, tools=[], prompt=SYSTEM_PROMPT)
+    return _agent

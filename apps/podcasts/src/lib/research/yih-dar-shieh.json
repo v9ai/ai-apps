@@ -19,47 +19,47 @@
   ],
   "timeline": [
     {
-      "date": "2015",
+      "date": "2015-01",
       "event": "Completed Ph.D. in Mathematics (number theory) at Aix-Marseille University, dissertation on point counting and Frobenius distributions",
       "url": "https://www.mathgenealogy.org/id.php?id=236016"
     },
     {
-      "date": "2018",
+      "date": "2018-01",
       "event": "Completed engineering degree in Computer Science from Polytech Marseille; joined Biggerpan as AI Engineer building NLP models",
       "url": "https://www.linkedin.com/in/yih-dar-shieh/"
     },
     {
-      "date": "2020-09-02",
+      "date": "2020-09",
       "event": "First merged PR in huggingface/transformers: Fix mixed precision issue in TF DistilBert",
       "url": "https://github.com/huggingface/transformers/pulls?q=author%3Aydshieh+sort%3Acreated-asc+is%3Amerged"
     },
     {
-      "date": "2021-08-23",
+      "date": "2021-08",
       "event": "Added TFEncoderDecoderModel with cross-attention support to Transformers",
       "url": "https://github.com/huggingface/transformers/pulls?q=author%3Aydshieh+TFEncoderDecoderModel+is%3Amerged"
     },
     {
-      "date": "2021-08-31",
+      "date": "2021-08",
       "event": "Added FlaxVisionEncoderDecoderModel to Transformers, enabling Flax-based image captioning",
       "url": "https://github.com/huggingface/transformers/pulls?q=author%3Aydshieh+FlaxVisionEncoderDecoderModel+is%3Amerged"
     },
     {
-      "date": "2021-09-28",
+      "date": "2021-09",
       "event": "Added TFViTModel (TensorFlow Vision Transformer) to Transformers",
       "url": "https://github.com/huggingface/transformers/pulls?q=author%3Aydshieh+TFViTModel+is%3Amerged"
     },
     {
-      "date": "2021-10-11",
+      "date": "2021-10",
       "event": "Added TFCLIPModel (TensorFlow CLIP) to Transformers",
       "url": "https://github.com/huggingface/transformers/pulls?q=author%3Aydshieh+TFCLIPModel+is%3Amerged"
     },
     {
-      "date": "2021-10-25",
+      "date": "2021-10",
       "event": "Added TFVisionEncoderDecoderModel to Transformers",
       "url": "https://github.com/huggingface/transformers/pulls?q=author%3Aydshieh+TFVisionEncoderDecoderModel+is%3Amerged"
     },
     {
-      "date": "2022-02-28",
+      "date": "2022-02",
       "event": "Joined Hugging Face open source team as Machine Learning Engineer, focusing on CI reliability and testing infrastructure",
       "url": "https://ke.linkedin.com/posts/yih-dar-shieh_today-is-my-1st-day-at-hugging-face-open-activity-6903952286150643712-9Xfr"
     },
@@ -69,22 +69,22 @@
       "url": "https://github.com/huggingface/diffusers/pulls?q=author%3Aydshieh+is%3Amerged"
     },
     {
-      "date": "2023-02-08",
+      "date": "2023-02",
       "event": "Major rework of Transformers pipeline testing by removing PipelineTestCaseMeta",
       "url": "https://github.com/huggingface/transformers/pull/21956"
     },
     {
-      "date": "2023-10-30",
+      "date": "2023-10",
       "event": "Merged Kosmos-2 (Microsoft's grounding multimodal LLM) into Transformers, released in v4.35",
       "url": "https://github.com/huggingface/transformers/pull/24709"
     },
     {
-      "date": "2024",
+      "date": "2024-01",
       "event": "Co-authored 'Fixing Gradient Accumulation' blog post on Hugging Face, addressing mathematical equivalence issues with full batch training",
       "url": "https://huggingface.co/blog/gradient_accumulation"
     },
     {
-      "date": "2025-10-15",
+      "date": "2025-10",
       "event": "Removed head masking block in vision models, continuing vision model maintenance",
       "url": "https://github.com/huggingface/transformers/pulls?q=author%3Aydshieh+vision+head+masking+is%3Amerged"
     },

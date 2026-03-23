@@ -20,6 +20,7 @@ import {
   useGetUserSettingsQuery,
   useUpdateUserSettingsMutation,
   useReportJobMutation,
+  useArchiveJobMutation,
 } from "@/__generated__/hooks";
 import type { GetJobsQuery } from "@/__generated__/graphql";
 import { sortBy } from "lodash";
@@ -36,7 +37,7 @@ import {
   IconButton,
   Skeleton,
 } from "@radix-ui/themes";
-import { TrashIcon, ExclamationTriangleIcon, EyeNoneIcon } from "@radix-ui/react-icons";
+import { TrashIcon, ExclamationTriangleIcon, EyeNoneIcon, Cross2Icon } from "@radix-ui/react-icons";
 import { ADMIN_EMAIL } from "@/lib/constants";
 import { getSkillLabel } from "@/lib/skills/taxonomy";
 
@@ -70,6 +71,7 @@ export function JobsList({ searchFilter = "", sourceTypes, showAll }: JobsListPr
   const { user } = useAuth();
   const [deleteJobMutation] = useDeleteJobMutation();
   const [reportJobMutation] = useReportJobMutation();
+  const [archiveJobMutation] = useArchiveJobMutation();
 
   const isAdmin = user?.email === ADMIN_EMAIL;
 
@@ -155,6 +157,20 @@ export function JobsList({ searchFilter = "", sourceTypes, showAll }: JobsListPr
       });
     } catch (error) {
       console.error("Error reporting job:", error);
+    }
+  };
+
+  const handleDismissJob = async (jobId: number, e: React.MouseEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    try {
+      await archiveJobMutation({
+        variables: { id: jobId },
+        refetchQueries: ["GetJobs"],
+        awaitRefetchQueries: true,
+      });
+    } catch (error) {
+      console.error("Error dismissing job:", error);
     }
   };
 
@@ -365,6 +381,17 @@ export function JobsList({ searchFilter = "", sourceTypes, showAll }: JobsListPr
                   </Badge>
                 )}
 
+                {user && (
+                  <IconButton
+                    size="3"
+                    color="gray"
+                    variant="soft"
+                    onClick={(e) => handleDismissJob(job.id, e)}
+                    title="Dismiss job"
+                  >
+                    <Cross2Icon width={16} height={16} />
+                  </IconButton>
+                )}
                 {user && job.company_key && (
                   <IconButton
                     size="3"

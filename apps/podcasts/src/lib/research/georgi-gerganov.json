@@ -27,12 +27,17 @@
       "url": "https://github.com/ggml-org/whisper.cpp"
     },
     {
-      "date": "2023-03-10",
+      "date": "2023-01",
+      "event": "Founded ggml.ai with pre-seed funding from Nat Friedman and Daniel Gross to advance GGML development",
+      "url": "https://ggml.ai/"
+    },
+    {
+      "date": "2023-03",
       "event": "Released llama.cpp, implementing Meta's LLaMA inference in pure C/C++ with no dependencies",
       "url": "https://github.com/ggml-org/llama.cpp"
     },
     {
-      "date": "2023-03-22",
+      "date": "2023-03",
       "event": "Appeared on Changelog Interviews #532: 'Bringing Whisper and LLaMA to the masses'",
       "url": "https://changelog.com/podcast/532"
     },
@@ -47,22 +52,17 @@
       "url": "https://github.com/ggml-org/llama.cpp"
     },
     {
-      "date": "2023",
-      "event": "Founded ggml.ai with pre-seed funding from Nat Friedman and Daniel Gross to advance GGML development",
-      "url": "https://ggml.ai/"
-    },
-    {
-      "date": "2024-04-30",
-      "event": "Merged FlashAttention support into llama.cpp, significantly improving inference performance",
-      "url": "https://github.com/ggml-org/llama.cpp"
-    },
-    {
-      "date": "2024",
+      "date": "2024-01",
       "event": "Added Vulkan, SYCL, and expanded Metal/CUDA backend support for broader hardware compatibility",
       "url": "https://github.com/ggml-org/llama.cpp"
     },
     {
-      "date": "2026-02-20",
+      "date": "2024-04",
+      "event": "Merged FlashAttention support into llama.cpp, significantly improving inference performance",
+      "url": "https://github.com/ggml-org/llama.cpp"
+    },
+    {
+      "date": "2026-02",
       "event": "GGML and llama.cpp team joined Hugging Face, maintaining full autonomy and 100% open-source commitment",
       "url": "https://huggingface.co/blog/ggml-joins-hf"
     }

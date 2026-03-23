@@ -1,0 +1,315 @@
+"""Nodes for the email outreach pipeline.
+
+Flow:
+    START ──→ research_contact ──┐
+         ├──→ research_company ──┼──→ draft_email ──→ refine_email ──→ END
+         └──→ analyze_post ──────┘
+"""
+
+import json
+import os
+import sys
+
+from langchain_core.messages import HumanMessage, SystemMessage
+from langchain_openai import ChatOpenAI
+
+from .prompts import ANALYZE_POST_SYSTEM, DRAFT_EMAIL_SYSTEM, REFINE_EMAIL_SYSTEM
+from .state import EmailOutreachState
+
+# ---------------------------------------------------------------------------
+# LLM factories (same pattern as application_prep/nodes.py)
+# ---------------------------------------------------------------------------
+
+_llm_json = None
+_llm_json_fallback = None
+
+
+def _get_llm_json() -> ChatOpenAI:
+    global _llm_json
+    if _llm_json is None:
+        _llm_json = ChatOpenAI(
+            model=os.getenv("DEEPSEEK_MODEL", "deepseek-chat"),
+            api_key=os.environ["DEEPSEEK_API_KEY"],
+            base_url=os.getenv("DEEPSEEK_BASE_URL", "https://api.deepseek.com"),
+            temperature=0.3,
+            model_kwargs={"response_format": {"type": "json_object"}},
+        )
+    return _llm_json
+
+
+def _get_fallback_json() -> ChatOpenAI | None:
+    global _llm_json_fallback
+    key = os.getenv("DASHSCOPE_API_KEY")
+    if not key:
+        return None
+    if _llm_json_fallback is None:
+        _llm_json_fallback = ChatOpenAI(
+            model="qwen-plus",
+            api_key=key,
+            base_url="https://dashscope-intl.aliyuncs.com/compatible-mode/v1",
+            temperature=0.3,
+            model_kwargs={"response_format": {"type": "json_object"}},
+        )
+    return _llm_json_fallback
+
+
+def _invoke_with_fallback(llm: ChatOpenAI, messages):
+    """Invoke LLM with Qwen fallback on failure."""
+    try:
+        return llm.invoke(messages)
+    except Exception as e:
+        fallback = _get_fallback_json()
+        if fallback is None:
+            raise
+        print(f"  [fallback] DeepSeek failed ({type(e).__name__}), retrying with Qwen...", file=sys.stderr)
+        return fallback.invoke(messages)
+
+
+# ---------------------------------------------------------------------------
+# Node 1: research_contact — look up contact in DB
+# ---------------------------------------------------------------------------
+
+def research_contact_node(state: EmailOutreachState) -> dict:
+    email = state.get("recipient_email", "")
+    name = state.get("recipient_name", "")
+    print(f"  [research_contact] Looking up {name} / {email}", file=sys.stderr)
+
+    context_parts = []
+
+    try:
+        from src.db.connection import get_connection
+        conn = get_connection()
+        with conn.cursor() as cur:
+            # Try email match first, then name match
+            if email:
+                cur.execute(
+                    """SELECT first_name, last_name, position, company,
+                              linkedin_url, tags, notes
+                       FROM contacts WHERE %s = ANY(emails) LIMIT 1""",
+                    [email],
+                )
+            else:
+                cur.execute(
+                    """SELECT first_name, last_name, position, company,
+                              linkedin_url, tags, notes
+                       FROM contacts
+                       WHERE first_name || ' ' || last_name ILIKE %s
+                       LIMIT 1""",
+                    [f"%{name}%"],
+                )
+            row = cur.fetchone()
+        conn.close()
+
+        if row:
+            context_parts.append(f"Known contact: {row['first_name']} {row['last_name']}")
+            if row.get("position"):
+                context_parts.append(f"Role: {row['position']}")
+            if row.get("company"):
+                context_parts.append(f"Company: {row['company']}")
+            if row.get("notes"):
+                context_parts.append(f"Notes: {row['notes']}")
+            if row.get("tags"):
+                context_parts.append(f"Tags: {', '.join(row['tags']) if isinstance(row['tags'], list) else row['tags']}")
+        else:
+            context_parts.append(f"No existing contact found for {name} ({email})")
+    except Exception as e:
+        print(f"  [research_contact] DB lookup failed: {e}", file=sys.stderr)
+        context_parts.append(f"Contact: {name} ({email}) — no DB data available")
+
+    # Add role info from LinkedIn post
+    role = state.get("recipient_role", "")
+    if role:
+        context_parts.append(f"LinkedIn subtitle: {role}")
+
+    return {"contact_context": "\n".join(context_parts)}
+
+
+# ---------------------------------------------------------------------------
+# Node 2: research_company — look up company in DB
+# ---------------------------------------------------------------------------
+
+def research_company_node(state: EmailOutreachState) -> dict:
+    role = state.get("recipient_role", "")
+    name = state.get("recipient_name", "")
+
+    # Extract company name from role string (e.g. "CTO at Acme Inc")
+    company_name = ""
+    for sep in [" at ", " @ ", " - ", ", "]:
+        if sep in role:
+            company_name = role.split(sep, 1)[1].strip()
+            break
+
+    print(f"  [research_company] Looking up company: {company_name or '(unknown)'}", file=sys.stderr)
+
+    context_parts = []
+
+    if company_name:
+        try:
+            from src.db.connection import get_connection
+            conn = get_connection()
+            with conn.cursor() as cur:
+                cur.execute(
+                    """SELECT name, description, industry, size, location,
+                              website, category, ai_tier, ai_classification_reason
+                       FROM companies
+                       WHERE name ILIKE %s
+                       LIMIT 1""",
+                    [f"%{company_name}%"],
+                )
+                row = cur.fetchone()
+            conn.close()
+
+            if row:
+                context_parts.append(f"Company: {row['name']}")
+                if row.get("description"):
+                    context_parts.append(f"Description: {row['description'][:300]}")
+                if row.get("industry"):
+                    context_parts.append(f"Industry: {row['industry']}")
+                if row.get("size"):
+                    context_parts.append(f"Size: {row['size']}")
+                if row.get("ai_tier"):
+                    context_parts.append(f"AI Tier: {row['ai_tier']}")
+            else:
+                context_parts.append(f"Company '{company_name}' not found in DB")
+        except Exception as e:
+            print(f"  [research_company] DB lookup failed: {e}", file=sys.stderr)
+            context_parts.append(f"Company: {company_name} — no DB data available")
+    else:
+        context_parts.append("Could not extract company name from recipient role")
+
+    return {"company_context": "\n".join(context_parts)}
+
+
+# ---------------------------------------------------------------------------
+# Node 3: analyze_post — extract structured info from LinkedIn post
+# ---------------------------------------------------------------------------
+
+def analyze_post_node(state: EmailOutreachState) -> dict:
+    post_text = state.get("post_text", "")
+    print(f"  [analyze_post] Analyzing post ({len(post_text)} chars)", file=sys.stderr)
+
+    if not post_text.strip():
+        return {"post_analysis": {
+            "topics": [],
+            "intent": "other",
+            "engagement_hooks": [],
+            "key_quotes": [],
+        }}
+
+    messages = [
+        SystemMessage(content=ANALYZE_POST_SYSTEM),
+        HumanMessage(content=f"LinkedIn post:\n\n{post_text[:2000]}"),
+    ]
+
+    response = _invoke_with_fallback(_get_llm_json(), messages)
+
+    try:
+        analysis = json.loads(response.content)
+    except (json.JSONDecodeError, TypeError):
+        analysis = {
+            "topics": [],
+            "intent": "other",
+            "engagement_hooks": [post_text[:100]],
+            "key_quotes": [],
+        }
+
+    return {"post_analysis": analysis}
+
+
+# ---------------------------------------------------------------------------
+# Node 4: draft_email — generate email using all context
+# ---------------------------------------------------------------------------
+
+def draft_email_node(state: EmailOutreachState) -> dict:
+    print("  [draft_email] Generating email draft", file=sys.stderr)
+
+    contact = state.get("contact_context", "No contact info")
+    company = state.get("company_context", "No company info")
+    analysis = state.get("post_analysis") or {}
+    post_text = state.get("post_text", "")
+    post_url = state.get("post_url", "")
+    tone = state.get("tone", "professional and friendly")
+    recipient_name = state.get("recipient_name", "there")
+
+    user_prompt = f"""Write an outreach email to {recipient_name} based on their LinkedIn post.
+
+--- Contact Research ---
+{contact}
+
+--- Company Research ---
+{company}
+
+--- Post Analysis ---
+Topics: {', '.join(analysis.get('topics', []))}
+Intent: {analysis.get('intent', 'unknown')}
+Engagement hooks: {', '.join(analysis.get('engagement_hooks', []))}
+Key quotes: {', '.join(analysis.get('key_quotes', []))}
+
+--- Original Post (excerpt) ---
+{post_text[:1000]}
+
+--- Post URL ---
+{post_url}
+
+--- Tone ---
+{tone}"""
+
+    messages = [
+        SystemMessage(content=DRAFT_EMAIL_SYSTEM),
+        HumanMessage(content=user_prompt),
+    ]
+
+    response = _invoke_with_fallback(_get_llm_json(), messages)
+
+    try:
+        draft = json.loads(response.content)
+    except (json.JSONDecodeError, TypeError):
+        text = response.content.strip()
+        draft = {
+            "subject": f"Re: your LinkedIn post",
+            "text": text,
+            "html": "".join(f"<p>{p}</p>" for p in text.split("\n\n") if p.strip()),
+        }
+
+    return {"draft": draft}
+
+
+# ---------------------------------------------------------------------------
+# Node 5: refine_email — self-critique and improve
+# ---------------------------------------------------------------------------
+
+def refine_email_node(state: EmailOutreachState) -> dict:
+    draft = state.get("draft")
+    if not draft:
+        return {"final": {"subject": "", "text": "", "html": ""}}
+
+    print("  [refine_email] Refining draft", file=sys.stderr)
+
+    post_text = state.get("post_text", "")
+
+    user_prompt = f"""Review and improve this outreach email draft.
+
+--- Draft ---
+Subject: {draft['subject']}
+
+Body:
+{draft['text']}
+
+--- LinkedIn Post (for reference) ---
+{post_text[:500]}
+
+Return the improved (or unchanged) email as JSON."""
+
+    messages = [
+        SystemMessage(content=REFINE_EMAIL_SYSTEM),
+        HumanMessage(content=user_prompt),
+    ]
+
+    response = _invoke_with_fallback(_get_llm_json(), messages)
+
+    try:
+        refined = json.loads(response.content)
+    except (json.JSONDecodeError, TypeError):
+        refined = draft
+
+    return {"final": refined}

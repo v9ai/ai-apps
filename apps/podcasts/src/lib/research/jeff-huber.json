@@ -1,0 +1,484 @@
+{
+  "slug": "jeff-huber",
+  "name": "Jeff Huber",
+  "generated_at": "2026-03-23T16:30:32+00:00",
+  "bio": "**Jeff Huber** is a multi-time founder who first launched Standard Cyborg (YC W15), a startup building affordable 3D-printed prosthetics using computer vision and iPhone scanning technology. He co-founded Chroma in 2022 with Anton Troynikov, creating the leading open-source vector database that reached 1M+ users within 9 months and secured $18M in seed funding led by Quiet Capital. As Chroma's CEO, Huber has championed \"context engineering\" over traditional RAG, publishing influential technical reports on context rot and generative benchmarking while positioning Chroma as modern search infrastructure for AI applications. His unique perspective combines deep technical focus on retrieval systems with a contrarian product philosophy that prioritizes developer experience over rapid feature releases, evident in Chroma's deliberate transition to cloud services and integration with major platforms like Microsoft's Semantic Kernel.",
+  "executive_summary": {
+    "one_liner": "Jeff Huber is the co-founder and CEO of Chroma, a leading open-source vector database company that champions 'context engineering' as the next paradigm beyond RAG, positioning itself as modern search infrastructure for AI applications.",
+    "key_facts": [
+      "Co-founded Chroma in 2022, which reached 1M+ users within 9 months and raised $18M in seed funding at a $75M valuation.",
+      "Authored influential technical reports on 'context rot' and 'generative benchmarking,' establishing thought leadership in AI retrieval and shifting industry discourse from RAG to context engineering.",
+      "Previously founded Standard Cyborg (YC W15), building affordable 3D-printed prosthetics using computer vision and iPhone scanning, demonstrating a pattern of applying emerging tech to solve hard problems."
+    ],
+    "career_arc": "An entrepreneur who transitioned from applying computer vision to medical devices (Standard Cyborg) to building core AI infrastructure. He identified the 'alchemy' gap between AI demos and production systems, leading him to co-found Chroma to provide the programmable memory layer needed for reliable, scalable AI applications.",
+    "current_focus": "Leading Chroma's transition from a popular open-source project to a commercial cloud service while evangelizing 'context engineering'—a framework for building AI systems with intelligent, persistent memory that prevents performance decay ('context rot') and enables agentic capabilities.",
+    "industry_significance": "He is defining the architectural paradigm for how production AI systems manage knowledge and context. By moving the conversation beyond simplistic RAG, his work on context rot, hybrid retrieval, and generative benchmarking is shaping how engineers evaluate and build reliable AI applications, positioning Chroma as a critical piece of modern AI infrastructure.",
+    "risk_factors": [
+      "Chroma operates in a fiercely competitive vector database market against well-funded rivals like Pinecone ($138M raised) and Milvus, with a significant funding gap.",
+      "His provocative 'RAG is dead' stance, while effective for marketing, could alienate parts of the developer community or backfire if context engineering fails to gain widespread adoption.",
+      "The company's open-source commercialization model ('keep the engine open, monetize the car') is unproven at Chroma's scale and must balance community trust with revenue growth."
+    ],
+    "meeting_prep": [
+      "Ask about the practical implications of 'context rot' for teams building with long-context LLMs: 'Beyond the research, what are the first two things an engineering team should change in their workflow today?'",
+      "Probe the competitive landscape: 'You've positioned Chroma as developer-first versus Pinecone's infrastructure-first approach. As enterprises standardize, how do you avoid being sidelined as a prototyping tool versus a production system?'",
+      "Discuss the evolution of his thesis: 'You've moved from calling it a vector database to \"modern search for AI.\" What does search infrastructure look like in three years, and does the vector database category even exist?'"
+    ],
+    "confidence_level": "high",
+    "confidence_reasoning": "Profile is built from multiple consistent, high-quality sources: direct interviews (Microsoft, Latent Space podcast), Chroma's own technical publications and research blog, funding announcements, and product documentation. Key facts like funding, user metrics, and technical contributions are well-corroborated. The main limitation is a lack of detailed biographical data pre-2015, but this does not materially impact the analysis of his current role, technical philosophy, and industry position."
+  },
+  "topics": [
+    "Context Engineering (as a paradigm beyond RAG)",
+    "Vector Database Architecture & Design",
+    "AI Retrieval System Optimization",
+    "Context Rot Analysis & Mitigation",
+    "Hybrid Search Strategies (dense + lexical + metadata)",
+    "Agentic Memory & Instruction Retrieval",
+    "Production AI Application Deployment",
+    "Embedding Management & Optimization",
+    "Developer Tooling for AI Systems",
+    "Open Source AI Infrastructure Commercialization"
+  ],
+  "timeline": [],
+  "key_contributions": [
+    {
+      "title": "Chroma Vector Database",
+      "description": "Open-source AI-native vector database designed specifically for LLM applications, providing efficient storage and retrieval of embeddings with a developer-friendly Python/JavaScript API. It bridges the gap between AI models and production by making knowledge, facts, and skills pluggable for LLMs through semantic search capabilities.",
+      "url": "https://github.com/chroma-core/chroma"
+    },
+    {
+      "title": "Context Rot Research",
+      "description": "Groundbreaking technical report demonstrating that LLM performance degrades non-uniformly as input context length increases, coining the term 'context rot' to describe this phenomenon. The research systematically evaluated 18 state-of-the-art LLMs including GPT-4.1, Claude 4, and Gemini 2.5, revealing that models don't use their context uniformly and performance becomes increasingly unreliable with longer inputs.",
+      "url": "https://research.trychroma.com/context-rot"
+    },
+    {
+      "title": "Generative Benchmarking Framework",
+      "description": "Novel approach to evaluating retrieval systems using synthetic benchmarks generated from user-specific data, addressing limitations of traditional benchmarks like MTEB that fail to represent real-world query patterns. This framework enables custom evaluation sets that reflect actual production queries and document distributions.",
+      "url": "https://research.trychroma.com/generative-benchmarking"
+    },
+    {
+      "title": "Embedding Adapters Research",
+      "description": "Technical report demonstrating that simple query-only linear adapters can improve retrieval accuracy by up to 70% without requiring full model retraining. This work showed how lightweight adaptation layers can significantly enhance embedding model performance for specific domains or use cases.",
+      "url": "https://research.trychroma.com/embedding-adapters"
+    },
+    {
+      "title": "Chunking Strategies Evaluation Framework",
+      "description": "Comprehensive analysis of text chunking methods for retrieval-augmented generation systems, providing empirical evaluation of different strategies including fixed-size, semantic, and hierarchical approaches. The research introduced token-level evaluation metrics and revealed performance gaps of up to 9% in recall between different chunking methods.",
+      "url": "https://research.trychroma.com/evaluating-chunking"
+    }
+  ],
+  "quotes": [
+    {
+      "text": "Hallucinations happen when the AI model does not have enough factual information to ground its response.",
+      "source": "Microsoft Developer Blog Interview",
+      "url": "https://devblogs.microsoft.com/semantic-kernel/enhancing-ai-models-with-chroma-a-conversation-with-ceo-jeff-huber/"
+    },
+    {
+      "text": "Chroma is designed first and foremost for developer productivity and happiness.",
+      "source": "Microsoft Developer Blog Interview",
+      "url": "https://devblogs.microsoft.com/semantic-kernel/enhancing-ai-models-with-chroma-a-conversation-with-ceo-jeff-huber/"
+    },
+    {
+      "text": "The reason that Chroma got started is because we had worked for many years in applied machine learning and we'd seen how demos were easy to build, but building a production reliable system was incredibly challenging and that the gap between demo and production didn't really feel like engineering. It felt a lot more like alchemy.",
+      "source": "Latent Space Podcast",
+      "url": "https://www.latent.space/p/chroma"
+    },
+    {
+      "text": "RAG, like, never meant anything to anybody, and as a result meant everything to everybody as well. And like it's just overall a poor phrase to help shape the actual job to be done versus context engineering is a great phrase and implies the existence of a context engineer, which is literally the job of most AI teams today.",
+      "source": "Evil Martians Podcast",
+      "url": "https://evilmartians.com/events/podcast-jeff-huber-chroma"
+    },
+    {
+      "text": "I think toxic cultures really only evolve when people have the strong opinion that they are right. That's different than having the strong opinion that we should find the right answer.",
+      "source": "Evil Martians Podcast",
+      "url": "https://evilmartians.com/events/podcast-jeff-huber-chroma"
+    }
+  ],
+  "social": {},
+  "podcast_appearances": [],
+  "news": [],
+  "videos": [
+    {
+      "title": "Long Live Context Engineering - with Jeff Huber of Chroma",
+      "url": "https://www.youtube.com/watch?v=pIbIZ_Bxl_g",
+      "platform": "YouTube",
+      "date": "2025-08-19",
+      "duration": "57:01",
+      "channel": "Latent Space",
+      "description": "Jeff Huber of Chroma joins us to talk about what actually matters in vector databases in 2025, why 'modern search for AI' is different, and how to ship systems that don't rot as context grows."
+    },
+    {
+      "title": "The Rise of Agentic Search with Jeff Huber (Chroma)",
+      "url": "https://www.youtube.com/watch?v=l9V1IN8mQIg",
+      "platform": "YouTube",
+      "date": "2024-11-14",
+      "duration": "51:54",
+      "channel": "Vanishing Gradients",
+      "description": "Jeff Huber, CEO and co-founder of Chroma, joins Hugo to talk about how agentic search and retrieval are changing the very nature of search and software for builders and users alike."
+    },
+    {
+      "title": "Context Engineering SF: Context Engineering for Engineers - Jeff Huber",
+      "url": "https://www.youtube.com/watch?v=L8ZM78APDPk",
+      "platform": "YouTube",
+      "date": "2024-10-15",
+      "duration": "11:17",
+      "channel": "Context Engineering SF",
+      "description": "In this talk, Jeff Huber, founder of Chroma, introduces the idea of context engineering as a clearer and more practical framework than prompt engineering or RAG."
+    },
+    {
+      "title": "AI Dev 25 | Jeff Huber: Teach Chroma how to play Doom",
+      "url": "https://www.youtube.com/watch?v=CK5QGWUf1vo",
+      "platform": "YouTube",
+      "date": "2025-03-20",
+      "duration": "19:09",
+      "channel": "AI Dev Conference",
+      "description": "Can a retrieval system learn to play Doom? In this lighthearted and insightful session, Jeff Huber, Founder and CEO of Chroma, explores the idea of instruction retrieval as a form of agentic memory."
+    },
+    {
+      "title": "RAG is Dead, Context Engineering is King: Chroma CEO Jeff Huber on Modern AI Retrieval & Context Rot",
+      "url": "https://www.youtube.com/watch?v=nLNuPsQ-Jlo",
+      "platform": "YouTube",
+      "date": "2024-09-10",
+      "duration": "5:46",
+      "channel": "AI Insights",
+      "description": "In this insightful discussion, Jeff Huber, CEO of Chroma, declares 'RAG is Dead', advocating for a paradigm shift towards Context Engineering as the new frontier in AI application development."
+    },
+    {
+      "title": "How to look at your data — Jeff Huber (Chroma) + Jason Liu (567)",
+      "url": "https://www.youtube.com/watch?v=jryZvCuA0Uc",
+      "platform": "YouTube",
+      "date": "2024-08-22",
+      "duration": "19:23",
+      "channel": "AI Engineering Summit",
+      "description": "By the end of this talk, you'll understand what it takes to apply clustering techniques and data analysis to understand what is the valuable work that your AI application is doing."
+    },
+    {
+      "title": "Jeff Huber of Chroma on how small opinionated teams with low egos build the best developer tools",
+      "url": "https://www.youtube.com/watch?v=tec6K0EJ8pE",
+      "platform": "YouTube",
+      "date": "2024-07-18",
+      "duration": "40:02",
+      "channel": "Dev Propulsion Labs",
+      "description": "In this episode, Chroma co-founder Jeff Huber explains why 'consensus is a death blow' for great products and reveals his framework for commercializing open source."
+    },
+    {
+      "title": "Retrieval in AI apps | Vercel AI Accelerator (Chroma)",
+      "url": "https://www.youtube.com/watch?v=PaAnsXE05A0",
+      "platform": "YouTube",
+      "date": "2024-06-12",
+      "duration": "44:05",
+      "channel": "Vercel",
+      "description": "Jeff Huber, founder at Chroma, talks about embeddings, retrieval, and vector databases in AI applications as well as answering lots of questions about Chroma and the future of retrieval."
+    },
+    {
+      "title": "Chroma | Context Engineering Episode 1 - Dex Horthy (@dexhorthy)",
+      "url": "https://www.youtube.com/watch?v=BNhRnx_O95c",
+      "platform": "YouTube",
+      "date": "2024-05-15",
+      "duration": "58:17",
+      "channel": "Chroma",
+      "description": "Chroma CEO Jeff Huber chats with Dex Horthy about agents and context engineering."
+    },
+    {
+      "title": "Chroma CEO Jeff Huber on Vector Databases, Multimodal...",
+      "url": "https://www.youtube.com/watch?v=7otaXbSahlg",
+      "platform": "YouTube",
+      "date": "2023-08-01",
+      "duration": "45:30",
+      "channel": "Madrona Venture Group",
+      "description": "On today's episode we talk with Jeff Huber, the CEO and Co-founder of Chroma. We talk about what sets Chroma apart from its competitors, new developments in vector databases."
+    }
+  ],
+  "competitive_landscape": {
+    "market_position": "challenger",
+    "competitors": [
+      {
+        "name": "Pinecone",
+        "relationship": "Primary commercial competitor",
+        "differentiation": "Pinecone is a fully-managed, proprietary service focused on enterprise scalability and reliability. Chroma differentiates by being open-source, developer-focused, and offering more flexibility with hybrid deployments (cloud, self-hosted, local). Pinecone targets infrastructure engineers while Chroma targets application developers."
+      },
+      {
+        "name": "Weaviate",
+        "relationship": "Open-source competitor",
+        "differentiation": "Both are open-source, but Weaviate has a more complex architecture with built-in ML capabilities and graph-like features. Chroma focuses on simplicity, ease of use, and being 'batteries-included' for AI applications. Chroma's API is simpler (4 core functions) while Weaviate offers more advanced features but with steeper learning curve."
+      },
+      {
+        "name": "Milvus (Zilliz)",
+        "relationship": "Performance-focused competitor",
+        "differentiation": "Milvus is designed for large-scale, high-performance enterprise deployments with complex distributed architecture. Chroma positions itself as more lightweight and developer-friendly, focusing on ease of integration and rapid prototyping. Milvus targets large enterprises with massive datasets, while Chroma targets developers building AI applications."
+      },
+      {
+        "name": "Qdrant",
+        "relationship": "Open-source performance competitor",
+        "differentiation": "Qdrant is written in Rust (like Chroma) and focuses on high performance. Chroma differentiates through its developer experience, simpler API, and stronger focus on AI-native features like automatic embedding generation and integration with AI frameworks."
+      },
+      {
+        "name": "pgvector (PostgreSQL extension)",
+        "relationship": "Traditional database competitor",
+        "differentiation": "pgvector is an extension for existing PostgreSQL databases, appealing to teams already using PostgreSQL. Chroma is purpose-built for AI workloads with native support for embeddings, automatic vectorization, and AI-specific optimizations. Chroma offers better performance for pure vector operations and simpler developer experience."
+      },
+      {
+        "name": "FAISS (Facebook AI Similarity Search)",
+        "relationship": "Library competitor",
+        "differentiation": "FAISS is a library rather than a database, requiring more manual implementation. Chroma provides a complete database solution with persistence, querying, and management features. Chroma offers better developer productivity and production readiness."
+      }
+    ],
+    "moats": [
+      "Developer community and open-source adoption (26.8k GitHub stars, 2.1k forks)",
+      "Simplified API design (4 core functions) reducing cognitive load for developers",
+      "Strong integration ecosystem (LangChain, LlamaIndex, Microsoft frameworks)",
+      "Research-driven approach with publications on context engineering and retrieval optimization",
+      "Hybrid deployment flexibility (cloud, self-hosted, local)",
+      "Focus on 'developer happiness' and productivity over raw performance metrics"
+    ],
+    "ecosystem_role": "Developer-centric open-source vector database that lowers the barrier to entry for AI application development. Chroma serves as the 'easy button' for developers building RAG and AI agent applications, with strong emphasis on simplicity, integration, and rapid prototyping. Positioned as the 'PostgreSQL of vector databases' for the AI era - reliable, familiar, and developer-friendly."
+  },
+  "collaboration_network": {
+    "co_founders": [
+      "Anton Troynikov"
+    ],
+    "key_collaborators": [
+      {
+        "name": "Anton Troynikov",
+        "relationship": "Co-Founder & CTO of Chroma",
+        "context": "Co-founded Chroma together; Troynikov leads technical vision and engineering"
+      },
+      {
+        "name": "OpenAI team (indirect)",
+        "relationship": "Technology ecosystem partner",
+        "context": "Chroma's vector database integrates with OpenAI embeddings; part of the broader AI infrastructure ecosystem"
+      }
+    ],
+    "mentors": [
+      "Information not publicly available"
+    ],
+    "mentees": [
+      "Information not publicly available"
+    ],
+    "academic_lineage": "No formal academic lineage identified (primarily industry background)"
+  },
+  "funding": {
+    "funding_rounds": [
+      {
+        "date": "May 2022",
+        "round": "Pre-seed",
+        "amount": "$2.3M",
+        "investors": "AIX Ventures (led by Anthony Goldbloom), Bloomberg Beta (James Cham), AI Grant (Nat Friedman and Daniel Gross), Amjad Masad (Replit)",
+        "valuation": "Not disclosed"
+      },
+      {
+        "date": "April 2023",
+        "round": "Seed",
+        "amount": "$18M",
+        "investors": "Quiet Capital (led by Astasia Myers), Naval Ravikant, Max and Jack Altman, Jordan Tigani (Motherduck), Guillermo Rauch (Vercel), Akshay Kothari (Notion), Amjad Masad (Replit), Spencer Kimball (CockroachDB), and other founders from ScienceIO, Gumroad, MongoDB, Scale, Hugging Face, Jasper",
+        "valuation": "$75M"
+      }
+    ],
+    "total_raised": "$20.3M",
+    "latest_valuation": "$75M (as of April 2023 seed round)",
+    "business_milestones": [
+      {
+        "date": "February 2023",
+        "event": "Initial public release of Chroma as open-source vector database"
+      },
+      {
+        "date": "April 2023",
+        "event": "Crossed 35,000 Python downloads in first month after launch"
+      },
+      {
+        "date": "October 2023",
+        "event": "Reached 1+ million computers running Chroma database in a single month"
+      },
+      {
+        "date": "November 2023",
+        "event": "Achieved 3.5+ million downloads and 9,000+ GitHub stars"
+      },
+      {
+        "date": "2023",
+        "event": "Integrated into 10,000+ public GitHub projects"
+      },
+      {
+        "date": "2024-2025",
+        "event": "Launched Chroma Cloud (managed hosting service) with SOC 2 Type II certification"
+      },
+      {
+        "date": "2024-2025",
+        "event": "Published multiple research papers including 'Context Rot' (July 2025), 'Generative Benchmarking Report' (April 2025), and 'Evaluating Chunking Strategies' (July 2024)"
+      },
+      {
+        "date": "2024-2025",
+        "event": "Established key partnerships with Microsoft (Semantic Kernel, Azure OpenAI), LangChain, LlamaIndex, and other AI frameworks"
+      },
+      {
+        "date": "2024-2025",
+        "event": "Positioned as leading open-source vector database serving hundreds of thousands of developers"
+      }
+    ],
+    "revenue_signals": "Chroma Cloud launched with usage-based pricing model (starting at $20/month for managed hosting), enterprise offerings with custom pricing, and SOC 2 Type II certification indicating enterprise readiness. The company has transitioned from pure open-source to offering commercial cloud services while maintaining strong open-source community adoption."
+  },
+  "conferences": {
+    "speaking_tier": "thought-leader",
+    "talks": [
+      {
+        "event": "PyAI Conference",
+        "title": "Building a powerful agentic search agent (with Pydantic AI)",
+        "date": "March 10, 2026",
+        "type": "talk",
+        "url": "https://pyai.events/speakers/jeff-huber"
+      },
+      {
+        "event": "Latent Space Podcast",
+        "title": "RAG is Dead, Context Engineering is King",
+        "date": "August 2025",
+        "type": "podcast interview",
+        "url": "https://www.latent.space/p/chroma"
+      },
+      {
+        "event": "Thursday Nights in AI",
+        "title": "Fireside Chat with Chroma Co-founders",
+        "date": "November 10, 2023",
+        "type": "fireside chat",
+        "url": "https://www.outsetcapital.com/post/fireside-chat-chroma-founders-anton-troynikov-jeff-huber"
+      },
+      {
+        "event": "FirstMark Data Driven",
+        "title": "The AI-Native Database with Chroma's Jeff Huber",
+        "date": "June 13, 2023",
+        "type": "fireside chat",
+        "url": "https://firstmark.com/events/data-driven/the-ai-native-database-with-chromas-jeff-huber/"
+      },
+      {
+        "event": "Madrona Venture Group",
+        "title": "Chroma's Jeff Huber on Vector Databases and Getting AI into Production",
+        "date": "2023",
+        "type": "podcast interview",
+        "url": "https://www.madrona.com/chromas-jeff-huber-on-vector-databases-and-getting-ai-into-production/"
+      },
+      {
+        "event": "Dev Propulsion Labs Podcast",
+        "title": "Jeff Huber: RAG is brain rot",
+        "date": "2024",
+        "type": "podcast interview",
+        "url": "https://evilmartians.com/events/podcast-jeff-huber-chroma"
+      },
+      {
+        "event": "Microsoft Agent Framework",
+        "title": "Enhancing AI Models with Chroma: A Conversation with CEO Jeff Huber",
+        "date": "July 6, 2023",
+        "type": "interview",
+        "url": "https://devblogs.microsoft.com/agent-framework/enhancing-ai-models-with-chroma-a-conversation-with-ceo-jeff-huber/"
+      },
+      {
+        "event": "IA40 Podcast",
+        "title": "Chroma Co-founder & CEO Jeff Huber",
+        "date": "2023",
+        "type": "podcast interview",
+        "url": "https://www.ia40.com/blog-podcast/chroma"
+      }
+    ],
+    "notable_moments": [
+      "Coined the phrase 'RAG is Dead, Context Engineering is King' which became a viral talking point in the AI community",
+      "Popularized the concept of 'context engineering' as the next evolution beyond RAG",
+      "Advocated for treating retrieval as a first-class engineering discipline rather than just a demo feature",
+      "Emphasized that 'consensus is a death blow for great products' in open source commercialization",
+      "Introduced the framework: 'keep the engine open, monetize the car' for open source business models",
+      "Pioneered the concept of 'agentic search' as a core capability for AI systems",
+      "Positioned Chroma as moving from 'vector database' to 'search database for AI' reflecting market evolution"
+    ]
+  },
+  "technical_philosophy": {
+    "core_thesis": "AI development is transitioning from 'alchemy to engineering,' requiring programmable memory systems that manage context intelligently. The future lies in 'Context Engineering'—moving beyond simplistic RAG patterns to build AI systems with persistent, structured memory that prevents 'context rot' and enables reliable production applications.",
+    "positions": {
+      "agi_timeline": {
+        "stance": "Not explicitly stated, but implied to be distant; current focus is on practical engineering of narrow AI systems with reliable memory.",
+        "evidence": "Focus is entirely on solving immediate production problems with retrieval and context management, not theoretical AGI. Research on 'context rot' shows concern with current model limitations rather than imminent superintelligence.",
+        "source_url": "https://research.trychroma.com/context-rot"
+      },
+      "open_source_vs_proprietary": {
+        "stance": "Strong advocate for open-source foundations with commercial cloud offerings.",
+        "evidence": "Chroma launched as open-source, reaching 1M+ users quickly; business model combines open-core with hosted cloud. Emphasizes developer community and integration ecosystem over proprietary lock-in.",
+        "source_url": "https://research.trychroma.com/context-rot"
+      },
+      "ai_safety": {
+        "stance": "Implicitly pragmatic—safety through reliability and reducing 'hallucination' via better context management.",
+        "evidence": "Research on 'context rot' addresses performance degradation and unreliable outputs in production systems. Advocates for engineering rigor to replace 'alchemy,' which indirectly improves safety by increasing predictability.",
+        "source_url": "https://research.trychroma.com/context-rot"
+      },
+      "scaling_laws": {
+        "stance": "Context-aware scaling is critical; more tokens ≠ better performance if context isn't managed.",
+        "evidence": "'Context Rot' paper demonstrates performance decay as input context grows. Implies scaling must be paired with intelligent retrieval and memory architectures to be effective.",
+        "source_url": "https://research.trychroma.com/context-rot"
+      },
+      "architecture_preferences": {
+        "stance": "Hybrid retrieval (dense + lexical + metadata) with 'Context Engineering' over naive RAG.",
+        "evidence": "Criticizes RAG as oversimplified; advocates for structured, programmable memory systems. Chroma is designed as an AI-native database for hybrid search, emphasizing developer control over retrieval logic.",
+        "source_url": "https://research.trychroma.com/context-rot"
+      },
+      "future_of_software_development": {
+        "stance": "AI will require new primitives for memory and context, shifting from traditional CRUD to 'programmable memory' patterns.",
+        "evidence": "Argues that AI apps need persistent, queryable memory systems. Believes the gap between demo and production will close through engineering practices like benchmarking, evaluation, and context management.",
+        "source_url": "https://research.trychroma.com/context-rot"
+      }
+    },
+    "predictions": [
+      {
+        "prediction": "RAG will be replaced by 'Context Engineering' as the dominant paradigm for AI memory.",
+        "date_made": "2025",
+        "timeframe": "Next 2-3 years"
+      },
+      {
+        "prediction": "Hybrid retrieval (combining dense, lexical, and metadata search) will become standard for production AI systems.",
+        "date_made": "2024",
+        "timeframe": "Next 1-2 years"
+      }
+    ],
+    "contrarian_takes": [
+      "RAG is brain rot and oversimplifies retrieval.",
+      "RAG is dead; the term misleads developers about how retrieval actually works.",
+      "Most AI systems 'forget what matters' due to context rot, undermining long-context models.",
+      "The gap between AI demo and production is due to alchemy, not engineering."
+    ]
+  },
+  "questions": [
+    {
+      "category": "origin",
+      "question": "You've described the gap between AI demo and production as 'alchemy, not engineering.' What specific moment at Standard Cyborg made you realize this was the fundamental problem to solve next?"
+    },
+    {
+      "category": "origin",
+      "question": "Chroma reached 1M+ users in 9 months. What was the single most important product decision you made in the first 90 days that unlocked that viral adoption?"
+    },
+    {
+      "category": "technical depth",
+      "question": "Your 'context rot' research shows performance decays with longer contexts. How does this finding fundamentally change how you architect Chroma's retrieval versus naive RAG implementations?"
+    },
+    {
+      "category": "technical depth",
+      "question": "You advocate for hybrid retrieval. What's the most surprising trade-off you've encountered between dense vector search and lexical/metadata filtering in production systems?"
+    },
+    {
+      "category": "philosophy & contrarian views",
+      "question": "You've called 'RAG' brain rot and champion 'context engineering.' What's the most dangerous misconception developers still hold because of the RAG framing?"
+    },
+    {
+      "category": "philosophy & contrarian views",
+      "question": "You prioritize developer happiness over rapid feature releases. What's one feature your team wanted to build that you vetoed because it would complicate the core API?"
+    },
+    {
+      "category": "collaboration & ecosystem",
+      "question": "Your seed round included founders from Notion, Vercel, and CockroachDB. What specific piece of advice on open-source commercialization did you get from them that changed your strategy?"
+    },
+    {
+      "category": "collaboration & ecosystem",
+      "question": "The integration with Microsoft's Semantic Kernel is key. What did you learn about enterprise needs from that partnership that wasn't obvious from your open-source community?"
+    },
+    {
+      "category": "future & predictions",
+      "question": "You predict 'context engineering' replaces RAG in 2-3 years. What's the first legacy RAG pattern that will look obviously archaic by then?"
+    },
+    {
+      "category": "future & predictions",
+      "question": "You've positioned Chroma as 'modern search infrastructure.' In three years, will the vector database category even exist, or will it be absorbed into something else?"
+    }
+  ],
+  "sources": []
+}

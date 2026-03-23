@@ -43,12 +43,14 @@ def test_langgraph_importable():
     assert callable(StateGraph)
 
 
-def test_langchain_importable():
-    """Can import langchain_openai and langchain_core — the LLM library is installed."""
-    from langchain_openai import ChatOpenAI  # noqa: F401
-    from langchain_core.tools import tool  # noqa: F401
+def test_deepseek_client_importable():
+    """Can import DeepSeekClient — the shared LLM client is installed."""
+    import sys
+    from pathlib import Path
+    sys.path.insert(0, str(Path(__file__).resolve().parent.parent.parent.parent.parent / "pypackages" / "deepseek" / "src"))
+    from deepseek_client import DeepSeekClient, DeepSeekConfig  # noqa: F401
 
-    assert callable(ChatOpenAI)
+    assert callable(DeepSeekClient)
 
 
 def test_test_directory_has_files():

@@ -17,17 +17,17 @@
   ],
   "timeline": [
     {
-      "date": "2012",
+      "date": "2012-01",
       "event": "Built Algobit, an algorithmic trading system, while studying at Lund University",
       "url": "https://github.com/ErikBjare"
     },
     {
-      "date": "2012-02-03",
+      "date": "2012-02",
       "event": "Created GitHub account (ErikBjare), beginning a prolific open-source career",
       "url": "https://github.com/ErikBjare"
     },
     {
-      "date": "2014",
+      "date": "2014-01",
       "event": "Started building the first version of ActivityWatch, frustrated with RescueTime",
       "url": "https://activitywatch.net/blog/activitywatch-vs-rescuetime/"
     },
@@ -37,22 +37,22 @@
       "url": "https://github.com/ActivityWatch/activitywatch"
     },
     {
-      "date": "2017",
+      "date": "2017-01",
       "event": "Founded Superuser Labs (formally incorporated as Superuser Labs Lund AB in 2022)",
       "url": "https://superuserlabs.org/"
     },
     {
-      "date": "2017",
+      "date": "2017-01",
       "event": "Received Leapfrogs grant to support ActivityWatch development",
       "url": "https://erik.bjareholt.com"
     },
     {
-      "date": "2021",
+      "date": "2021-01",
       "event": "Completed MSc thesis at Lund University: Classifying brain activity using EEG and ActivityWatch",
       "url": "https://www.researchgate.net/profile/Erik-Bjaereholt"
     },
     {
-      "date": "2021",
+      "date": "2021-01",
       "event": "Received Uniswap grant for uniswap-python, a Python wrapper for Uniswap smart contracts",
       "url": "https://github.com/ErikBjare/uniswap-python"
     },
@@ -67,7 +67,7 @@
       "url": "https://github.com/ErikBjare/are-copilots-local-yet"
     },
     {
-      "date": "2024",
+      "date": "2024-01",
       "event": "Joined Lovable (formerly GPT Engineer) as first hire; later departed to focus on Superuser Labs",
       "url": "https://lovable.dev/"
     },

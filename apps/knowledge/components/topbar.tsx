@@ -19,6 +19,9 @@ export function Topbar({ lessonCount }: { lessonCount: number }) {
       </span>
       {session?.user ? (
         <div className="yc-topbar-user">
+          <Link href="/applications" className="yc-topbar-signin">
+            Applications
+          </Link>
           <span className="yc-topbar-username">{session.user.name}</span>
           <button
             className="yc-topbar-signin"

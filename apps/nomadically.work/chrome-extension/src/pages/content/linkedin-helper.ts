@@ -1,11 +1,14 @@
 // LinkedIn job helper — salary extraction + Block Company button
 
 function isGoogleAshbySearch(): boolean {
+  if (
+    !window.location.hostname.includes("google.com") ||
+    !window.location.pathname.includes("/search")
+  ) return false;
+  // Check URL first (cheap), fall back to page content (expensive) only if needed
   return (
-    window.location.hostname.includes("google.com") &&
-    window.location.pathname.includes("/search") &&
-    (window.location.search.includes("ashbyhq.com") ||
-      !!document.body.textContent?.includes("jobs.ashbyhq.com"))
+    window.location.search.includes("ashbyhq.com") ||
+    !!document.body.textContent?.includes("jobs.ashbyhq.com")
   );
 }
 
@@ -100,55 +103,144 @@ function markAllButtonsBlocked(companyName: string) {
   });
 }
 
+function clickDismiss(el: HTMLElement) {
+  el.click();
+}
+
+function findDismissButton(card: Element): HTMLButtonElement | null {
+  // Primary: aria-label based (most reliable)
+  const byLabel = card.querySelector(
+    'button[aria-label*="Dismiss"]',
+  ) as HTMLButtonElement | null;
+  if (byLabel) return byLabel;
+
+  // Fallback: the X icon button in the actions container
+  const actionsContainer = card.querySelector(".job-card-list__actions-container");
+  if (actionsContainer) {
+    const btn = actionsContainer.querySelector("button") as HTMLButtonElement | null;
+    if (btn) return btn;
+  }
+
+  return null;
+}
+
 function dismissJobCard(btn: HTMLElement) {
   const card = btn.closest(".job-card-container, .base-card");
-  if (!card) return;
-  const dismissBtn = card.querySelector(
-    'button[aria-label*="Dismiss"], button.job-card-container__action',
-  ) as HTMLButtonElement | null;
+  if (!card || card.getAttribute("data-nomad-dismissed")) return;
+  card.setAttribute("data-nomad-dismissed", "true");
+  const dismissBtn = findDismissButton(card);
   if (dismissBtn) {
-    setTimeout(() => dismissBtn.click(), 500);
+    setTimeout(() => {
+      if (dismissBtn.isConnected) clickDismiss(dismissBtn);
+    }, 500);
   }
 }
 
-// ── Auto-Dismiss India-Related Jobs ─────────────────────────────────
+// ── Auto-Dismiss Non-EU Location Jobs ───────────────────────────────
 
-const INDIA_LOCATION_PATTERNS = /\b(india|bengaluru|bangalore|mumbai|hyderabad|delhi|chennai|pune|gurugram|gurgaon|noida|kolkata|ahmedabad|jaipur|lucknow|thiruvananthapuram|kochi|coimbatore|indore|nagpur|chandigarh|bhubaneswar|visakhapatnam|mysore|mangalore)\b/i;
+const DISMISS_LOCATION_PATTERNS = /\b(india|bengaluru|bangalore|mumbai|navi mumbai|hyderabad|new delhi|delhi|ncr|chennai|pune|gurugram|gurgaon|noida|greater noida|kolkata|ahmedabad|jaipur|lucknow|thiruvananthapuram|kochi|coimbatore|indore|nagpur|chandigarh|bhubaneswar|visakhapatnam|vizag|mysore|mysuru|mangalore|mangaluru|trivandrum|secunderabad|thane|vadodara|surat|rajkot|tiruchirappalli|trichy|madurai|vijayawada|warangal|guntur|nellore|kurnool|rajahmundry|kakinada|tirupati|anantapur|karimnagar|nizamabad|khammam|sri\s*lanka|colombo|kandy|galle|negombo|jaffna|pakistan|karachi|lahore|islamabad|rawalpindi|faisalabad|multan|peshawar|quetta|sialkot|gujranwala)\b/i;
 
-function autoDismissIndiaCards() {
+function isDismissLocation(text: string): boolean {
+  return DISMISS_LOCATION_PATTERNS.test(text);
+}
 
-  let dismissed = 0;
-  document.querySelectorAll(".job-card-container").forEach((card) => {
-    if (card.getAttribute("data-nomad-dismissed")) return;
+function getCardLocationText(card: Element): string {
+  const parts: string[] = [];
 
-    // Check location in first metadata UL
-    const metadataUls = card.querySelectorAll("ul.job-card-container__metadata-wrapper");
-    const locationText = metadataUls[0]?.textContent?.trim() || "";
+  // Logged-in view: metadata ULs (first is location)
+  const metadataUls = card.querySelectorAll("ul.job-card-container__metadata-wrapper");
+  if (metadataUls[0]) parts.push(metadataUls[0].textContent?.trim() || "");
 
-    // Also check the caption element
-    const captionEl = card.querySelector(".artdeco-entity-lockup__caption");
-    const captionText = captionEl?.textContent?.trim() || "";
+  // Logged-in view: caption element
+  const caption = card.querySelector(".artdeco-entity-lockup__caption");
+  if (caption) parts.push(caption.textContent?.trim() || "");
 
-    const combined = `${locationText} ${captionText}`;
-    if (!INDIA_LOCATION_PATTERNS.test(combined)) return;
-
-    card.setAttribute("data-nomad-dismissed", "true");
-    const dismissBtn = card.querySelector(
-      'button[aria-label*="Dismiss"], button.job-card-container__action',
-    ) as HTMLButtonElement | null;
-    if (dismissBtn) {
-      dismissBtn.click();
-      dismissed++;
-    }
+  // Logged-in view: metadata items (individual li)
+  card.querySelectorAll(".job-card-container__metadata-item").forEach((el) => {
+    parts.push(el.textContent?.trim() || "");
   });
 
-  if (dismissed > 0) {
-    console.log(`[Nomad] Auto-dismissed ${dismissed} India-related job(s)`);
+  // Public/logged-out view: location span
+  const publicLoc = card.querySelector(".job-search-card__location");
+  if (publicLoc) parts.push(publicLoc.textContent?.trim() || "");
+
+  // Job title — some titles include "(India)" or "- Mumbai"
+  const titleEl = card.querySelector(
+    ".job-card-list__title--link, .base-search-card__title",
+  );
+  if (titleEl) parts.push(titleEl.textContent?.trim() || "");
+
+  return parts.join(" ");
+}
+
+// Stagger dismiss clicks to avoid automation detection
+const MAX_DISMISS_QUEUE = 20;
+let dismissQueue: HTMLButtonElement[] = [];
+let dismissTimer: ReturnType<typeof setTimeout> | null = null;
+const queuedButtons = new WeakSet<HTMLButtonElement>();
+
+function queueDismiss(card: Element, btn: HTMLButtonElement) {
+  if (queuedButtons.has(btn)) return;
+  if (dismissQueue.length >= MAX_DISMISS_QUEUE) return;
+  card.setAttribute("data-nomad-dismissed", "true");
+  queuedButtons.add(btn);
+  dismissQueue.push(btn);
+  if (!dismissTimer) {
+    processQueue();
+  }
+}
+
+function processQueue() {
+  if (dismissQueue.length === 0) {
+    dismissTimer = null;
+    return;
+  }
+  const btn = dismissQueue.shift()!;
+  if (btn.isConnected) {
+    clickDismiss(btn);
+  }
+  dismissTimer = setTimeout(processQueue, 300 + Math.random() * 200);
+}
+
+window.addEventListener("beforeunload", () => {
+  if (dismissTimer) clearTimeout(dismissTimer);
+  dismissQueue = [];
+});
+
+function autoDismissLocationCards() {
+  let queued = 0;
+
+  // Logged-in view cards
+  document.querySelectorAll(".job-card-container").forEach((card) => {
+    if (card.getAttribute("data-nomad-dismissed")) return;
+    const locText = getCardLocationText(card);
+    if (!locText.trim() || !isDismissLocation(locText)) return;
+    const dismissBtn = findDismissButton(card);
+    if (!dismissBtn) return;
+    queueDismiss(card, dismissBtn);
+    queued++;
+  });
+
+  // Public/logged-out view cards
+  document.querySelectorAll(".base-card.job-search-card").forEach((card) => {
+    if (card.getAttribute("data-nomad-dismissed")) return;
+    const locText = getCardLocationText(card);
+    if (!locText.trim() || !isDismissLocation(locText)) return;
+    card.setAttribute("data-nomad-dismissed", "true");
+    (card as HTMLElement).style.display = "none";
+    queued++;
+  });
+
+  if (queued > 0) {
+    console.log(`[Nomad] Dismissing ${queued} excluded-location job(s)`);
   }
 }
 
 function autoDismissBlockedCards() {
-  let dismissed = 0;
+  // Skip if blocked companies haven't loaded yet — will retry via MutationObserver
+  if (!blockedCompaniesLoaded) return;
+
+  let queued = 0;
   document.querySelectorAll(".job-card-container").forEach((card) => {
     if (card.getAttribute("data-nomad-dismissed")) return;
     const companyEl = card.querySelector(
@@ -157,24 +249,20 @@ function autoDismissBlockedCards() {
     if (!companyEl) return;
     const companyName = companyEl.textContent?.trim() || "";
     if (!isCompanyBlocked(companyName)) return;
-    card.setAttribute("data-nomad-dismissed", "true");
-    const dismissBtn = card.querySelector(
-      'button[aria-label*="Dismiss"], button.job-card-container__action',
-    ) as HTMLButtonElement | null;
-    if (dismissBtn) {
-      dismissBtn.click();
-      dismissed++;
-    }
+    const dismissBtn = findDismissButton(card);
+    if (!dismissBtn) return;
+    queueDismiss(card, dismissBtn);
+    queued++;
   });
-  if (dismissed > 0) {
-    console.log(`[Nomad] Auto-dismissed ${dismissed} blocked company job(s)`);
+  if (queued > 0) {
+    console.log(`[Nomad] Dismissing ${queued} blocked company job(s)`);
   }
 }
 
 function injectBlockButtons() {
-  // Auto-dismiss blocked company cards and India-related jobs
+  // Auto-dismiss blocked company cards and South Asia location jobs
   autoDismissBlockedCards();
-  autoDismissIndiaCards();
+  autoDismissLocationCards();
   clickSalaryMetadata();
 
   // ── Logged-in view: job cards ──
@@ -221,12 +309,174 @@ function observeBlockButtons() {
   let debounceTimer: ReturnType<typeof setTimeout> | null = null;
   const obs = new MutationObserver(() => {
     if (debounceTimer) clearTimeout(debounceTimer);
-    debounceTimer = setTimeout(injectBlockButtons, 300);
+    debounceTimer = setTimeout(injectBlockButtons, 500);
   });
   obs.observe(document.body, { childList: true, subtree: true });
 }
 
 observeBlockButtons();
+
+// ── Send Email Button (LinkedIn Post/Activity Pages) ─────────────────
+
+const SEND_EMAIL_BTN_ATTR = "data-nomad-send-email-btn";
+
+function extractEmailsFromText(text: string): string[] {
+  const emailRegex = /[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}/g;
+  return [...new Set(text.match(emailRegex) || [])];
+}
+
+function extractPostData() {
+  // Post text content
+  const postTextEl = document.querySelector(
+    ".feed-shared-update-v2__description, .update-components-text, .feed-shared-text__text-view",
+  );
+  const postText = postTextEl?.textContent?.trim() || "";
+
+  // Author name
+  const authorEl = document.querySelector(
+    ".update-components-actor__name .visually-hidden, .update-components-actor__title .visually-hidden",
+  );
+  let authorName = authorEl?.textContent?.trim() || "";
+  // Clean up LinkedIn's "Name • 1st" format
+  if (authorName.includes("•")) authorName = authorName.split("•")[0].trim();
+
+  // Author subtitle (role/company)
+  const subtitleEl = document.querySelector(
+    ".update-components-actor__description .visually-hidden, .update-components-actor__subtitle .visually-hidden",
+  );
+  const authorSubtitle = subtitleEl?.textContent?.trim() || "";
+
+  // Extract emails from post text
+  const emails = extractEmailsFromText(postText);
+
+  return {
+    authorName,
+    authorSubtitle,
+    postText,
+    postUrl: window.location.href,
+    emails,
+  };
+}
+
+function createSendEmailButton(): HTMLButtonElement {
+  const btn = document.createElement("button");
+  btn.setAttribute(SEND_EMAIL_BTN_ATTR, "true");
+  btn.textContent = "Send Email";
+  btn.title = "Send email via Nomad CRM";
+  btn.style.cssText = `
+    background-color: #0a66c2;
+    color: white;
+    border: none;
+    border-radius: 16px;
+    padding: 6px 16px;
+    font-size: 14px;
+    font-weight: 600;
+    cursor: pointer;
+    margin-left: 8px;
+  `;
+
+  btn.addEventListener("mouseenter", () => {
+    btn.style.backgroundColor = "#004182";
+  });
+  btn.addEventListener("mouseleave", () => {
+    btn.style.backgroundColor = "#0a66c2";
+  });
+
+  btn.addEventListener("click", (e) => {
+    e.preventDefault();
+    e.stopPropagation();
+
+    const postData = extractPostData();
+
+    if (postData.emails.length === 0) {
+      btn.textContent = "No email found";
+      btn.style.backgroundColor = "#ef4444";
+      setTimeout(() => {
+        btn.textContent = "Send Email";
+        btn.style.backgroundColor = "#0a66c2";
+      }, 2000);
+      return;
+    }
+
+    btn.textContent = "Sending...";
+    btn.disabled = true;
+
+    chrome.runtime.sendMessage(
+      { action: "sendEmailFromPost", postData },
+      (response) => {
+        if (chrome.runtime.lastError) {
+          console.error("[Nomad] Send email error:", chrome.runtime.lastError.message);
+          btn.textContent = "Error";
+          btn.style.backgroundColor = "#ef4444";
+          btn.disabled = false;
+          setTimeout(() => {
+            btn.textContent = "Send Email";
+            btn.style.backgroundColor = "#0a66c2";
+          }, 2000);
+          return;
+        }
+        if (response?.success) {
+          btn.textContent = "Sent!";
+          btn.style.backgroundColor = "#16a34a";
+          setTimeout(() => {
+            btn.textContent = "Send Email";
+            btn.style.backgroundColor = "#0a66c2";
+            btn.disabled = false;
+          }, 3000);
+        } else {
+          console.error("[Nomad] Send email failed:", response?.error);
+          btn.textContent = response?.error || "Failed";
+          btn.style.backgroundColor = "#ef4444";
+          btn.disabled = false;
+          setTimeout(() => {
+            btn.textContent = "Send Email";
+            btn.style.backgroundColor = "#0a66c2";
+          }, 2000);
+        }
+      },
+    );
+  });
+
+  return btn;
+}
+
+function injectSendEmailButton() {
+  if (!window.location.pathname.startsWith("/feed/update/")) return;
+  if (document.querySelector(`[${SEND_EMAIL_BTN_ATTR}]`)) return;
+
+  // Find the action bar on the post (like/comment/repost/send row)
+  const actionBar = document.querySelector(
+    ".social-details-social-actions, .feed-shared-social-actions",
+  );
+  if (actionBar) {
+    actionBar.appendChild(createSendEmailButton());
+    return;
+  }
+
+  // Fallback: inject near the post author area
+  const actorContainer = document.querySelector(
+    ".update-components-actor__container, .feed-shared-actor__container",
+  );
+  if (actorContainer) {
+    actorContainer.appendChild(createSendEmailButton());
+  }
+}
+
+function observeSendEmailButton() {
+  if (!window.location.hostname.includes("linkedin.com")) return;
+  if (!window.location.pathname.startsWith("/feed/update/")) return;
+
+  injectSendEmailButton();
+
+  let debounceTimer: ReturnType<typeof setTimeout> | null = null;
+  const obs = new MutationObserver(() => {
+    if (debounceTimer) clearTimeout(debounceTimer);
+    debounceTimer = setTimeout(injectSendEmailButton, 500);
+  });
+  obs.observe(document.body, { childList: true, subtree: true });
+}
+
+observeSendEmailButton();
 
 function clickSalaryMetadata() {
   document.querySelectorAll(".job-card-container").forEach((jobCard) => {
@@ -287,7 +537,7 @@ function extractLinkedInJobData() {
   const jobCards = document.querySelectorAll(".job-card-container");
   const jobs: any[] = [];
 
-  jobCards.forEach((jobCard, index) => {
+  jobCards.forEach((jobCard) => {
     const titleElement = jobCard.querySelector(".job-card-list__title--link");
     const companyElement = jobCard.querySelector(
       ".artdeco-entity-lockup__subtitle",
@@ -377,11 +627,6 @@ async function clickLinkedInPageNumber(pageNumber: number): Promise<boolean> {
     targetButton = nextButton;
   }
 
-  // Get current job count to detect when new jobs load
-  const currentJobCount = document.querySelectorAll(
-    ".job-card-container",
-  ).length;
-
   targetButton.click();
 
   // Wait for new jobs to load (check for changes in job cards)
@@ -390,9 +635,6 @@ async function clickLinkedInPageNumber(pageNumber: number): Promise<boolean> {
 
   while (attempts < maxAttempts) {
     await new Promise((resolve) => setTimeout(resolve, 1000));
-    const newJobCount = document.querySelectorAll(".job-card-container").length;
-
-    // Check if page changed by looking at pagination state or job count change
     const paginationInfo = getLinkedInPaginationInfo();
     if (paginationInfo && paginationInfo.currentPage === pageNumber) {
       // Wait a bit more for all content to load
@@ -411,7 +653,7 @@ function extractGenericJobData() {
   const jobCards = document.querySelectorAll('[data-provides="search-result"]');
   const jobs: any[] = [];
 
-  jobCards.forEach((jobCard, index) => {
+  jobCards.forEach((jobCard) => {
     const titleElement = jobCard.querySelector(".section-title");
     const companyElement = jobCard.querySelector(".company-logo + .flex .body");
     const locationTags = jobCard.querySelectorAll(".tag-text");
@@ -479,7 +721,6 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
     hostname.includes("ashbyhq.com") ||
     hostname.includes("greenhouse.io") ||
     hostname.includes("lever.co") ||
-    hostname.includes("wellfound.com") ||
     hostname.includes("founderio.com") ||
     hostname.includes("workable.com");
 

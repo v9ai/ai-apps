@@ -22,17 +22,17 @@
       "url": "https://github.com/danielhanchen"
     },
     {
-      "date": "2019",
+      "date": "2019-01",
       "event": "Released HyperLearn, an open-source ML acceleration package adopted by NASA, Microsoft, NVIDIA, Facebook, and Intel",
       "url": "https://github.com/danielhanchen/hyperlearn"
     },
     {
-      "date": "2023",
+      "date": "2023-01",
       "event": "Co-founded Unsloth AI with brother Michael Han, targeting LLM fine-tuning acceleration",
       "url": "https://unsloth.ai/about"
     },
     {
-      "date": "2023-11-29",
+      "date": "2023-11",
       "event": "Unsloth repository created on GitHub, open-sourcing the fine-tuning framework",
       "url": "https://github.com/unslothai/unsloth"
     },
@@ -87,7 +87,7 @@
       "url": "https://unsloth.ai/docs/get-started/reinforcement-learning-rl-guide/fp8-reinforcement-learning"
     },
     {
-      "date": "2026-01-15",
+      "date": "2026-01",
       "event": "Launched ultra long context RL training, enabling gpt-oss models with 380K context windows, plus faster MoE training and embedding model support",
       "url": "https://github.com/unslothai/unsloth/releases"
     }

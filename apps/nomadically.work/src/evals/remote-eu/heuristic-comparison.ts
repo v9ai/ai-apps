@@ -40,6 +40,7 @@ const NON_EU_EXCLUSION_SIGNALS = [
   "americas only", "us citizens", "401(k)", "401k",
   "swiss work permit", "switzerland only",
   "latin america", "latam",
+  "pakistan",
   "cannot accept applications from eu",
 ];
 

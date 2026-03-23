@@ -15,7 +15,7 @@
   ],
   "timeline": [
     {
-      "date": "2019",
+      "date": "2019-01",
       "event": "DeepWisdom founded in Shenzhen by Wu Chenglin. Sirui Hong joins as co-founder and technical lead for NLP/AIGC algorithms.",
       "url": "https://www.deepwisdom.ai/"
     },
@@ -25,12 +25,12 @@
       "url": "https://arxiv.org/abs/2201.03801"
     },
     {
-      "date": "2023-06-30",
+      "date": "2023-06",
       "event": "MetaGPT repository created on GitHub under geekan/MetaGPT. The multi-agent framework models an AI software company with product managers, architects, project managers, and engineers.",
       "url": "https://github.com/FoundationAgents/MetaGPT"
     },
     {
-      "date": "2023-08-01",
+      "date": "2023-08",
       "event": "Published 'MetaGPT: Meta Programming for A Multi-Agent Collaborative Framework' on arXiv (2308.00352). Introduces SOP-based prompt sequences for multi-agent collaboration.",
       "url": "https://arxiv.org/abs/2308.00352"
     },
@@ -65,11 +65,6 @@
       "url": "https://github.com/FoundationAgents/OpenManus"
     },
     {
-      "date": "2025-H1",
-      "event": "DeepWisdom completes two funding rounds totaling ~RMB 220M ($30.8M USD), backed by Ant Group, Cathay Capital, Jinqiu Capital, MindWorks Capital, Baidu Ventures, and Concept Capital.",
-      "url": "https://eu.36kr.com/en/p/3640426144812417"
-    },
-    {
       "date": "2025-09",
       "event": "MGX reaches ~1.2 million monthly visits and generates 10,000+ applications per day. DeepWisdom grows to 80+ employees and plans first Silicon Valley office.",
       "url": "https://kr-asia.com/from-metagpt-to-atoms-deepwisdom-leads-chinas-push-into-vibe-coding"
@@ -80,7 +75,12 @@
       "url": "https://paris2025.gosim.org/speakers/sirui-hong/"
     },
     {
-      "date": "2026-01-13",
+      "date": "2025-H1",
+      "event": "DeepWisdom completes two funding rounds totaling ~RMB 220M ($30.8M USD), backed by Ant Group, Cathay Capital, Jinqiu Capital, MindWorks Capital, Baidu Ventures, and Concept Capital.",
+      "url": "https://eu.36kr.com/en/p/3640426144812417"
+    },
+    {
+      "date": "2026-01",
       "event": "DeepWisdom rebrands MGX as Atoms — a production-ready AI development platform with built-in login, databases, authentication, deployment, and payments. Specialized agents include Iris (research) and Sarah (SEO).",
       "url": "https://atoms.dev/"
     }

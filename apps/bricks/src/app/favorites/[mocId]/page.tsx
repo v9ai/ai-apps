@@ -59,6 +59,7 @@ export default function FavoriteDetailPage() {
   const [fav, setFav] = useState<Favorite | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [extracting, setExtracting] = useState(false);
 
   // PDF URL input state
   const [pdfInput, setPdfInput] = useState("");
@@ -126,6 +127,20 @@ export default function FavoriteDetailPage() {
       .then((data) => {
         setFav(data.item);
         setPdfInput(data.item.pdfUrl || "");
+        // Auto-extract parts via LangGraph when none are stored yet.
+        // Run async without blocking the page render.
+        if (!data.item.parts || data.item.parts.length === 0) {
+          setExtracting(true);
+          fetch(`/api/favorites/${data.item.mocId}/extract-parts`, { method: "POST" })
+            .then(async (res) => {
+              if (res.ok) {
+                const extractData = await res.json();
+                setFav(extractData.item);
+              }
+            })
+            .catch(() => { /* non-fatal */ })
+            .finally(() => setExtracting(false));
+        }
       })
       .catch((err) => setError(err.message))
       .finally(() => setLoading(false));
@@ -226,8 +241,7 @@ export default function FavoriteDetailPage() {
           alt={fav.name}
           className={css({
             w: "100%",
-            maxH: "400px",
-            objectFit: "cover",
+            objectFit: "contain",
             borderBottom: "2px solid",
             borderColor: "plate.border",
             bg: "#1a1a1a",
@@ -560,7 +574,7 @@ export default function FavoriteDetailPage() {
       </div>
 
       {/* Parts list */}
-      <PartsEditor mocId={fav.mocId} initialParts={fav.parts ?? []} />
+      <PartsEditor mocId={fav.mocId} initialParts={fav.parts ?? []} autoExtracting={extracting} />
 
       {/* Discover Related MOCs */}
       <div

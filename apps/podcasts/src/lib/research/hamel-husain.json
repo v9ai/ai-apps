@@ -17,44 +17,39 @@
   ],
   "timeline": [
     {
-      "date": "2026-03-02",
-      "event": "Published blog post 'Evals Skills for Coding Agents' on hamel.dev",
-      "url": "https://hamel.dev/blog/posts/evals-skills/"
+      "date": "2003-01",
+      "event": "Started career building credit risk models at a bank, entering ML before the term was common",
+      "url": "https://applyingml.com/mentors/hamel-husain/"
     },
     {
-      "date": "2026-01-18",
-      "event": "Published 'Why I Stopped Using nbdev', explaining how AI coding tools changed literate programming trade-offs",
-      "url": "https://hamel.dev/blog/posts/ai-stack/"
+      "date": "2016-01",
+      "event": "Joined Airbnb as Data Scientist, discovered critical data-leakage bug in growth marketing model, created blueprints that informed BigHead ML platform",
+      "url": "https://applyingml.com/mentors/hamel-husain/"
     },
     {
-      "date": "2026-01-15",
-      "event": "Published 'LLM Evals: Everything You Need to Know' comprehensive FAQ on hamel.dev",
-      "url": "https://hamel.dev/blog/posts/evals-faq/"
+      "date": "2017-01",
+      "event": "Joined GitHub as Staff Machine Learning Engineer, began work on code representation learning",
+      "url": "https://github.com/hamelsmu"
     },
     {
-      "date": "2025-10-01",
-      "event": "Published 'Selecting The Right AI Evals Tool' on hamel.dev",
-      "url": "https://hamel.dev/blog/posts/eval-tools/"
+      "date": "2018-01",
+      "event": "Gave talks on 'Semantic Search at GitHub' and 'Natural Language Code Search With Kubeflow' at KubeCon 2018",
+      "url": "https://github.blog/author/hamelsmu/"
     },
     {
-      "date": "2025-09-25",
-      "event": "Appeared on Lenny's Podcast with Shreya Shankar discussing why AI evals are the hottest new skill for product builders",
-      "url": "https://www.lennysnewsletter.com/p/why-ai-evals-are-the-hottest-new-skill"
+      "date": "2019-01",
+      "event": "Led launch of CodeSearchNet, a large-scale benchmark and dataset for semantic code search at GitHub",
+      "url": "https://github.com/github/CodeSearchNet"
     },
     {
-      "date": "2025-07-11",
-      "event": "Published 'Stop Saying RAG Is Dead' blog post",
-      "url": "https://hamel.dev/blog/posts/rag/"
+      "date": "2020-01",
+      "event": "Presented fastpages at JupyterCon 2020 and released the notebook blogging system",
+      "url": "https://github.com/fastai/fastpages"
     },
     {
-      "date": "2025-06-23",
-      "event": "Published blog post on Inspect AI, an OSS Python library for LLM evals",
-      "url": "https://hamel.dev/blog/posts/inspect/"
-    },
-    {
-      "date": "2024-07-23",
-      "event": "Appeared on TWIML AI Podcast #694: 'Building Real-World LLM Products with Fine-Tuning and More'",
-      "url": "https://twimlai.com/podcast/twimlai/guest/hamel-husain/"
+      "date": "2022-01",
+      "event": "Helped lead a complete rewrite of nbdev (v2) with fast.ai",
+      "url": "https://github.com/fastai/nbdev"
     },
     {
       "date": "2024-04",
@@ -62,39 +57,44 @@
       "url": "https://hamel.dev/blog/posts/evals/"
     },
     {
-      "date": "2022",
-      "event": "Helped lead a complete rewrite of nbdev (v2) with fast.ai",
-      "url": "https://github.com/fastai/nbdev"
+      "date": "2024-07",
+      "event": "Appeared on TWIML AI Podcast #694: 'Building Real-World LLM Products with Fine-Tuning and More'",
+      "url": "https://twimlai.com/podcast/twimlai/guest/hamel-husain/"
     },
     {
-      "date": "2020",
-      "event": "Presented fastpages at JupyterCon 2020 and released the notebook blogging system",
-      "url": "https://github.com/fastai/fastpages"
+      "date": "2025-06",
+      "event": "Published blog post on Inspect AI, an OSS Python library for LLM evals",
+      "url": "https://hamel.dev/blog/posts/inspect/"
     },
     {
-      "date": "2019",
-      "event": "Led launch of CodeSearchNet, a large-scale benchmark and dataset for semantic code search at GitHub",
-      "url": "https://github.com/github/CodeSearchNet"
+      "date": "2025-07",
+      "event": "Published 'Stop Saying RAG Is Dead' blog post",
+      "url": "https://hamel.dev/blog/posts/rag/"
     },
     {
-      "date": "2018",
-      "event": "Gave talks on 'Semantic Search at GitHub' and 'Natural Language Code Search With Kubeflow' at KubeCon 2018",
-      "url": "https://github.blog/author/hamelsmu/"
+      "date": "2025-09",
+      "event": "Appeared on Lenny's Podcast with Shreya Shankar discussing why AI evals are the hottest new skill for product builders",
+      "url": "https://www.lennysnewsletter.com/p/why-ai-evals-are-the-hottest-new-skill"
     },
     {
-      "date": "2017",
-      "event": "Joined GitHub as Staff Machine Learning Engineer, began work on code representation learning",
-      "url": "https://github.com/hamelsmu"
+      "date": "2025-10",
+      "event": "Published 'Selecting The Right AI Evals Tool' on hamel.dev",
+      "url": "https://hamel.dev/blog/posts/eval-tools/"
     },
     {
-      "date": "2016",
-      "event": "Joined Airbnb as Data Scientist, discovered critical data-leakage bug in growth marketing model, created blueprints that informed BigHead ML platform",
-      "url": "https://applyingml.com/mentors/hamel-husain/"
+      "date": "2026-01",
+      "event": "Published 'Why I Stopped Using nbdev', explaining how AI coding tools changed literate programming trade-offs",
+      "url": "https://hamel.dev/blog/posts/ai-stack/"
     },
     {
-      "date": "2003",
-      "event": "Started career building credit risk models at a bank, entering ML before the term was common",
-      "url": "https://applyingml.com/mentors/hamel-husain/"
+      "date": "2026-01",
+      "event": "Published 'LLM Evals: Everything You Need to Know' comprehensive FAQ on hamel.dev",
+      "url": "https://hamel.dev/blog/posts/evals-faq/"
+    },
+    {
+      "date": "2026-03",
+      "event": "Published blog post 'Evals Skills for Coding Agents' on hamel.dev",
+      "url": "https://hamel.dev/blog/posts/evals-skills/"
     }
   ],
   "key_contributions": [

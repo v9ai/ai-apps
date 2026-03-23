@@ -32,10 +32,13 @@ def _load_env_key(key: str):
     # Search up from project root, plus sibling directories that may have the key
     mono_root = PROJECT_ROOT.parent.parent  # ai-apps/
     search_dirs = [
-        PROJECT_ROOT,                         # apps/podcasts/
-        PROJECT_ROOT.parent,                  # apps/
-        mono_root,                            # ai-apps/
-        mono_root / "langgraph",              # ai-apps/langgraph/
+        PROJECT_ROOT,                              # apps/podcasts/
+        PROJECT_ROOT.parent,                       # apps/
+        mono_root,                                 # ai-apps/
+        mono_root / "langgraph",                   # ai-apps/langgraph/
+        mono_root / "apps" / "bricks" / "backend", # apps/bricks/backend/
+        mono_root / "pypackages" / "how_it_works", # pypackages/how_it_works/
+        mono_root / "apps" / "nomadically.work",   # apps/nomadically.work/
     ]
     for d in search_dirs:
         for name in (".env", ".env.local"):

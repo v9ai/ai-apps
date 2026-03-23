@@ -1,7 +1,7 @@
 [
   {
-    "topic": "DeepSeek-V3 Benchmarking Reveals 'Data Contamination Mirage'",
-    "angle": "Common LLM benchmarks are misleading due to inconsistent prompt formatting; the alleged data contamination is often a mirage caused by evaluation methodology, not actual training data issues.",
-    "why_viral": "This will resonate because it challenges the foundation of model comparison, forcing engineers to rethink how they trust and use benchmark results in production decisions."
+    "topic": "Surprising Benchmark: GPT-4o Underperforms on LEGO-Specific Reference Accuracy vs. Fine-Tuned Smaller Models",
+    "angle": "Correct the widespread assumption that larger, generalist models (GPT-4o, Claude 3.5) are inherently superior for all domain-specific tasks by presenting primary benchmark evidence that fine-tuned, smaller models outperform them on the concrete, critical metric of reference accuracy against a canonical source (the LEGO Element Catalog).",
+    "why_viral": "It directly challenges a core belief in AI tool selection with hard, niche benchmark data, offering senior engineers a defensible, performance-based reason to choose simpler, specialized models over expensive giants."
   }
 ]

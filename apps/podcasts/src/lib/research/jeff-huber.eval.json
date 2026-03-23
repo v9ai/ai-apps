@@ -1,0 +1,29 @@
+{
+  "slug": "jeff-huber",
+  "name": "Jeff Huber",
+  "generated_at": "2026-03-23T16:30:32+00:00",
+  "eval": {
+    "bio_quality": {
+      "score": 8,
+      "reasoning": "The biography is specific, evidence-based, and informative, covering Jeff Huber's entrepreneurial journey from Standard Cyborg to Chroma, key milestones (1M+ users, $18M funding), and his technical philosophy ('context engineering'). It clearly differentiates him from academic namesakes and highlights his industry impact. Minor deduction for lacking early career details (pre-2015) and formal education background."
+    },
+    "source_coverage": {
+      "score": 7,
+      "reasoning": "Sources are diverse and relevant, including technical reports (Chroma research blog), podcasts (Latent Space, Evil Martians), interviews (Microsoft Developer Blog), and funding databases. However, there is a reliance on secondary/industry sources rather than primary academic publications or direct executive profiles (e.g., LinkedIn, Crunchbase). The web search for education yielded no clear results, indicating a gap in early background sourcing."
+    },
+    "timeline_completeness": {
+      "score": 6,
+      "reasoning": "Timeline is strong from 2015 onward (Standard Cyborg launch, Chroma founding, funding rounds, key releases). However, early career and education details are missing—no information on roles before 2015, academic degrees, or industry experience pre-entrepreneurship. The attempted search for education data returned no clear results, leaving a notable gap in the formative years."
+    },
+    "contributions_depth": {
+      "score": 9,
+      "reasoning": "Contributions are exceptionally well-documented with specific impact metrics: Chroma's GitHub stars (25k+), adoption metrics (1M+ users), research citations, and practical industry influence. Each contribution (vector database, context rot, generative benchmarking, embedding adapters, chunking strategies) includes URLs, quantitative impact data, and clear descriptions of technical novelty. Minor deduction for not linking contributions to prior work or broader academic literature."
+    },
+    "name_disambiguation": {
+      "score": 10,
+      "reasoning": "Perfectly disambiguated. The profile explicitly distinguishes Jeff Huber (Chroma CEO) from academic researchers in genomics/cancer with the same name. All data consistently aligns with his identity as a Silicon Valley entrepreneur focused on AI infrastructure, with no contamination from unrelated individuals."
+    },
+    "overall_score": 8,
+    "summary": "Jeff Huber's profile is highly robust for an industry entrepreneur, with excellent disambiguation, deep contribution analysis, and a clear, evidence-based biography. Primary gaps are in early career/education timeline completeness and reliance on secondary sources rather than primary executive profiles. Recommended improvements: 1) Locate and integrate early career data (pre-2015 roles, education), 2) Add primary source verification (LinkedIn, Crunchbase, official executive bio), 3) Expand collaboration network beyond co-founders to include investors, technical partners, and open-source contributors, 4) Cross-reference technical reports with citations in academic or industry literature to gauge wider influence."
+  }
+}

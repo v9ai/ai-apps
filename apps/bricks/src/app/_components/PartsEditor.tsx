@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useCallback } from "react";
+import { useState, useCallback, useEffect, useRef } from "react";
 import Link from "next/link";
 import { css } from "styled-system/css";
 
@@ -15,11 +15,13 @@ export interface Part {
 interface PartsEditorProps {
   mocId: string;
   initialParts: Part[];
+  /** True while the parent page is auto-extracting parts via LangGraph */
+  autoExtracting?: boolean;
 }
 
 const LEGO_COLORS = ["#E3000B", "#FFD500", "#006CB7", "#00852B", "#FE8A18"];
 
-export function PartsEditor({ mocId, initialParts }: PartsEditorProps) {
+export function PartsEditor({ mocId, initialParts, autoExtracting = false }: PartsEditorProps) {
   const [parts, setParts] = useState<Part[]>(initialParts);
   const [partNum, setPartNum] = useState("");
   const [color, setColor] = useState("");
@@ -28,6 +30,16 @@ export function PartsEditor({ mocId, initialParts }: PartsEditorProps) {
   const [saving, setSaving] = useState(false);
   const [saved, setSaved] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [importing, setImporting] = useState(false);
+  const [importSource, setImportSource] = useState<string | null>(null);
+
+  // Sync when the parent injects auto-extracted parts (empty → populated)
+  useEffect(() => {
+    if (initialParts.length > 0 && parts.length === 0) {
+      setParts(initialParts);
+      setSaved(true);
+    }
+  }, [initialParts]); // eslint-disable-line react-hooks/exhaustive-deps
 
   const saveParts = useCallback(
     async (newParts: Part[]) => {
@@ -45,6 +57,39 @@ export function PartsEditor({ mocId, initialParts }: PartsEditorProps) {
     },
     [mocId]
   );
+
+  // Lazy-enrich parts that are missing imageUrl from Rebrickable
+  const enrichedRef = useRef(new Set<string>());
+  useEffect(() => {
+    const toEnrich = parts.filter((p) => !p.imageUrl && !enrichedRef.current.has(p.partNum));
+    if (toEnrich.length === 0) return;
+    toEnrich.forEach((p) => enrichedRef.current.add(p.partNum));
+
+    Promise.all(
+      toEnrich.map(async (p) => {
+        try {
+          const res = await fetch(`/api/parts/${encodeURIComponent(p.partNum)}`);
+          if (res.ok) {
+            const data = await res.json();
+            return { partNum: p.partNum, imageUrl: data.imageUrl as string | undefined };
+          }
+        } catch {}
+        return { partNum: p.partNum, imageUrl: undefined };
+      })
+    ).then((results) => {
+      const imageMap = new Map(
+        results.filter((r) => r.imageUrl).map((r) => [r.partNum, r.imageUrl!])
+      );
+      if (imageMap.size === 0) return;
+      setParts((prev) => {
+        const updated = prev.map((p) =>
+          imageMap.has(p.partNum) ? { ...p, imageUrl: imageMap.get(p.partNum)! } : p
+        );
+        saveParts(updated);
+        return updated;
+      });
+    });
+  }, [parts, saveParts]);
 
   async function handleAdd() {
     const trimmed = partNum.trim();
@@ -87,6 +132,26 @@ export function PartsEditor({ mocId, initialParts }: PartsEditorProps) {
     }
   }
 
+  async function handleImportFromRebrickable() {
+    setImporting(true);
+    setError(null);
+    try {
+      const res = await fetch(`/api/favorites/${mocId}/extract-parts`, { method: "POST" });
+      const data = await res.json();
+      if (!res.ok) {
+        setError(data.error || "Import failed");
+        return;
+      }
+      setParts(data.item.parts ?? []);
+      setSaved(true);
+      setImportSource(data.source ?? null);
+    } catch {
+      setError("Network error during import");
+    } finally {
+      setImporting(false);
+    }
+  }
+
   async function handleRemove(index: number) {
     const newParts = parts.filter((_, i) => i !== index);
     setParts(newParts);
@@ -126,13 +191,45 @@ export function PartsEditor({ mocId, initialParts }: PartsEditorProps) {
         >
           Parts List
         </h2>
-        {parts.length > 0 && (
-          <span className={css({ fontSize: "xs", color: "ink.faint", fontWeight: "700", fontFamily: "display" })}>
-            {parts.reduce((sum, p) => sum + p.qty, 0)} pieces
-            {saving ? " — saving..." : saved ? "" : " — unsaved"}
-          </span>
-        )}
+        <div className={css({ display: "flex", alignItems: "center", gap: "3" })}>
+          {parts.length > 0 && (
+            <span className={css({ fontSize: "xs", color: "ink.faint", fontWeight: "700", fontFamily: "display" })}>
+              {parts.reduce((sum, p) => sum + p.qty, 0)} pieces
+              {saving ? " — saving..." : saved ? "" : " — unsaved"}
+            </span>
+          )}
+          <button
+            onClick={handleImportFromRebrickable}
+            disabled={importing}
+            className={css({
+              rounded: "lg",
+              bg: "plate.raised",
+              border: "1px solid",
+              borderColor: "plate.border",
+              px: "3",
+              py: "1.5",
+              fontSize: "xs",
+              fontWeight: "800",
+              fontFamily: "display",
+              color: "ink.secondary",
+              cursor: "pointer",
+              transition: "all 0.15s ease",
+              _hover: { borderColor: "lego.orange", color: "lego.orange" },
+              _disabled: { opacity: 0.5, cursor: "not-allowed" },
+            })}
+          >
+            {importing ? "Extracting..." : "Extract Parts with AI"}
+          </button>
+        </div>
       </div>
+
+      {importSource && (
+        <p className={css({ mb: "3", fontSize: "xs", color: "ink.faint", fontWeight: "700", fontFamily: "display" })}>
+          {importSource === "rebrickable"
+            ? "Imported from Rebrickable"
+            : "Generated by AI (approximate — Rebrickable API key lacks MOC access)"}
+        </p>
+      )}
 
       {/* Add part form */}
       <div
@@ -234,9 +331,30 @@ export function PartsEditor({ mocId, initialParts }: PartsEditorProps) {
 
       {/* Parts table */}
       {parts.length === 0 ? (
-        <p className={css({ fontSize: "sm", color: "ink.faint" })}>
-          No parts yet. Enter a Rebrickable part number above to add one.
-        </p>
+        <div>
+          {autoExtracting ? (
+            <div className={css({ display: "flex", alignItems: "center", gap: "3", py: "4" })}>
+              <div
+                className={css({
+                  w: "5",
+                  h: "5",
+                  rounded: "stud",
+                  bg: "lego.orange",
+                  boxShadow: "stud",
+                  flexShrink: 0,
+                  animation: "spin 1s linear infinite",
+                })}
+              />
+              <p className={css({ fontSize: "sm", color: "ink.muted", fontWeight: "700", fontFamily: "display" })}>
+                Extracting parts with AI…
+              </p>
+            </div>
+          ) : (
+            <p className={css({ fontSize: "sm", color: "ink.faint" })}>
+              No parts yet. Click <strong>Extract Parts with AI</strong> above or enter a part number manually.
+            </p>
+          )}
+        </div>
       ) : (
         <div className={css({ display: "flex", flexDir: "column", gap: "2" })}>
           {parts.map((part, i) => (

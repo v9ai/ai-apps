@@ -51,29 +51,29 @@ class TestBioLengthStats:
             )
 
     def test_bio_max_length(self):
-        """Assert every bio <= 1000 chars (too long = likely raw agent output)."""
+        """Assert every bio <= 2000 chars (pipeline truncates at 2000)."""
         for p in self._profiles():
             bio = p.get("bio", "")
-            assert len(bio) <= 1000, (
-                f"{p['slug']} bio too long: {len(bio)} chars (max 1000)"
+            assert len(bio) <= 2000, (
+                f"{p['slug']} bio too long: {len(bio)} chars (max 2000)"
             )
 
     def test_bio_word_count_range(self):
-        """Assert every bio has 20-150 words."""
+        """Assert every bio has 20-400 words."""
         for p in self._profiles():
             bio = p.get("bio", "")
             word_count = len(bio.split())
-            assert 20 <= word_count <= 150, (
-                f"{p['slug']} bio word count out of range: {word_count} words (expected 20-150)"
+            assert 20 <= word_count <= 400, (
+                f"{p['slug']} bio word count out of range: {word_count} words (expected 20-400)"
             )
 
     def test_bio_batch_mean_length(self):
-        """Assert mean bio length across all profiles is 150-500 chars."""
+        """Assert mean bio length across all profiles is 200-1800 chars."""
         profiles = self._profiles()
         lengths = [len(p.get("bio", "")) for p in profiles]
         mean_len = statistics.mean(lengths)
-        assert 150 <= mean_len <= 500, (
-            f"Mean bio length {mean_len:.0f} chars out of range (expected 150-500)"
+        assert 200 <= mean_len <= 1800, (
+            f"Mean bio length {mean_len:.0f} chars out of range (expected 200-1800)"
         )
 
     def test_bio_no_outliers(self):

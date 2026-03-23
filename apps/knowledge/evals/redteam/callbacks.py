@@ -56,6 +56,11 @@ def eval_agent_callback(input: str, turns=None) -> RTTurn:
 def editorial_callback(input: str, turns=None) -> RTTurn:
     """Invoke the editorial pipeline with adversarial topic."""
     graph = _get_editorial()
-    result = graph.invoke({"topic": input, "slug": "redteam-test"})
+    result = graph.invoke({
+        "topic": input,
+        "slug": "redteam-test",
+        "revision_rounds": 0,
+        "approved": False,
+    })
     draft = result.get("draft", "")
     return RTTurn(role="assistant", content=draft)

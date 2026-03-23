@@ -17,42 +17,42 @@
   ],
   "timeline": [
     {
-      "date": "2025-06",
-      "event": "Forked verl (Volcano Engine Reinforcement Learning for LLMs) on GitHub, signaling active work on RL-based LLM post-training at ByteDance",
-      "url": "https://github.com/hongyi-zhang/verl"
+      "date": "2012-01",
+      "event": "Research internship at Toyota Technological Institute at Chicago (TTIC)",
+      "url": "https://openreview.net/profile?id=~Hongyi_Zhang1"
     },
     {
-      "date": "2025",
-      "event": "ChatTS, a time-series multimodal LLM co-developed with Tsinghua University, accepted to VLDB 2025",
-      "url": "https://scholar.google.com/citations?user=6Wg-hF4AAAAJ&hl=en"
+      "date": "2013-01",
+      "event": "Graduated from Peking University with BS in Machine Intelligence",
+      "url": "https://openreview.net/profile?id=~Hongyi_Zhang1"
     },
     {
-      "date": "2019-03",
-      "event": "Released Fixup (Fixed-update Initialization) on GitHub, enabling deep ResNet training without normalization (156 stars)",
-      "url": "https://github.com/hongyi-zhang/Fixup"
+      "date": "2013-09",
+      "event": "Began PhD in Brain and Cognitive Sciences at MIT, Laboratory for Information and Decision Systems (LIDS)",
+      "url": "https://bcs.mit.edu/users/zhangxymitedu"
     },
     {
-      "date": "2019-01",
-      "event": "Completed PhD thesis 'Topics in non-convex optimization and learning' at MIT under Suvrit Sra",
-      "url": "https://dspace.mit.edu/handle/1721.1/121830"
+      "date": "2016-01",
+      "event": "Published 'First-order Methods for Geodesically Convex Optimization' at COLT 2016",
+      "url": "http://proceedings.mlr.press/v49/zhang16b.pdf"
     },
     {
-      "date": "2019",
-      "event": "Joined ByteDance as Research Scientist in Monetization GenAI",
-      "url": "https://www.linkedin.com/in/hongyizhang/"
+      "date": "2016-12",
+      "event": "Published 'Riemannian SVRG: Fast Stochastic Optimization on Riemannian Manifolds' at NIPS 2016",
+      "url": "https://www.semanticscholar.org/paper/Riemannian-SVRG%3A-Fast-Stochastic-Optimization-on-Zhang-Reddi/a8f9a55a04f274cbc67fc9705a4a242dcd6c89bf"
     },
     {
-      "date": "2019-01",
-      "event": "Published 'Fixup Initialization: Residual Learning Without Normalization' at ICLR 2019 with Yann N. Dauphin and Tengyu Ma",
-      "url": "https://arxiv.org/abs/1901.09321"
+      "date": "2017-01",
+      "event": "Research intern at Facebook AI Research (FAIR)",
+      "url": "https://openreview.net/profile?id=~Hongyi_Zhang1"
     },
     {
-      "date": "2018-06",
-      "event": "Published 'An Estimate Sequence for Geodesically Convex Optimization' at COLT 2018 with Suvrit Sra",
-      "url": "https://arxiv.org/abs/1806.02812"
+      "date": "2017-10",
+      "event": "Submitted 'mixup: Beyond Empirical Risk Minimization' to arXiv with Moustapha Cisse, Yann N. Dauphin, and David Lopez-Paz",
+      "url": "https://arxiv.org/abs/1710.09412"
     },
     {
-      "date": "2018",
+      "date": "2018-01",
       "event": "Research intern at Facebook AI Research (FAIR), second stint",
       "url": "https://openreview.net/profile?id=~Hongyi_Zhang1"
     },
@@ -62,39 +62,39 @@
       "url": "https://openreview.net/forum?id=r1Ddp1-Rb"
     },
     {
-      "date": "2017-10",
-      "event": "Submitted 'mixup: Beyond Empirical Risk Minimization' to arXiv with Moustapha Cisse, Yann N. Dauphin, and David Lopez-Paz",
-      "url": "https://arxiv.org/abs/1710.09412"
+      "date": "2018-06",
+      "event": "Published 'An Estimate Sequence for Geodesically Convex Optimization' at COLT 2018 with Suvrit Sra",
+      "url": "https://arxiv.org/abs/1806.02812"
     },
     {
-      "date": "2017",
-      "event": "Research intern at Facebook AI Research (FAIR)",
-      "url": "https://openreview.net/profile?id=~Hongyi_Zhang1"
+      "date": "2019-01",
+      "event": "Completed PhD thesis 'Topics in non-convex optimization and learning' at MIT under Suvrit Sra",
+      "url": "https://dspace.mit.edu/handle/1721.1/121830"
     },
     {
-      "date": "2016-12",
-      "event": "Published 'Riemannian SVRG: Fast Stochastic Optimization on Riemannian Manifolds' at NIPS 2016",
-      "url": "https://www.semanticscholar.org/paper/Riemannian-SVRG%3A-Fast-Stochastic-Optimization-on-Zhang-Reddi/a8f9a55a04f274cbc67fc9705a4a242dcd6c89bf"
+      "date": "2019-01",
+      "event": "Joined ByteDance as Research Scientist in Monetization GenAI",
+      "url": "https://www.linkedin.com/in/hongyizhang/"
     },
     {
-      "date": "2016",
-      "event": "Published 'First-order Methods for Geodesically Convex Optimization' at COLT 2016",
-      "url": "http://proceedings.mlr.press/v49/zhang16b.pdf"
+      "date": "2019-01",
+      "event": "Published 'Fixup Initialization: Residual Learning Without Normalization' at ICLR 2019 with Yann N. Dauphin and Tengyu Ma",
+      "url": "https://arxiv.org/abs/1901.09321"
     },
     {
-      "date": "2013-09",
-      "event": "Began PhD in Brain and Cognitive Sciences at MIT, Laboratory for Information and Decision Systems (LIDS)",
-      "url": "https://bcs.mit.edu/users/zhangxymitedu"
+      "date": "2019-03",
+      "event": "Released Fixup (Fixed-update Initialization) on GitHub, enabling deep ResNet training without normalization (156 stars)",
+      "url": "https://github.com/hongyi-zhang/Fixup"
     },
     {
-      "date": "2013",
-      "event": "Graduated from Peking University with BS in Machine Intelligence",
-      "url": "https://openreview.net/profile?id=~Hongyi_Zhang1"
+      "date": "2025-01",
+      "event": "ChatTS, a time-series multimodal LLM co-developed with Tsinghua University, accepted to VLDB 2025",
+      "url": "https://scholar.google.com/citations?user=6Wg-hF4AAAAJ&hl=en"
     },
     {
-      "date": "2012",
-      "event": "Research internship at Toyota Technological Institute at Chicago (TTIC)",
-      "url": "https://openreview.net/profile?id=~Hongyi_Zhang1"
+      "date": "2025-06",
+      "event": "Forked verl (Volcano Engine Reinforcement Learning for LLMs) on GitHub, signaling active work on RL-based LLM post-training at ByteDance",
+      "url": "https://github.com/hongyi-zhang/verl"
     }
   ],
   "key_contributions": [

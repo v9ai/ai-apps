@@ -73,6 +73,8 @@ TAG_TO_CATEGORY: dict[str, str] = {
     "pinecone": "Databases & Storage",
     "weaviate": "Databases & Storage",
     "chromadb": "Databases & Storage",
+    "qdrant": "Databases & Storage",
+    "pgvector": "Databases & Storage",
     "cloudflare-d1": "Databases & Storage",
 
     # Backend Frameworks
@@ -90,6 +92,42 @@ TAG_TO_CATEGORY: dict[str, str] = {
     "langchain": "LLM Frameworks",
     "langgraph": "LLM Frameworks",
     "llamaindex": "LLM Frameworks",
+
+    # ML & AI (LLM Frameworks category)
+    "pytorch": "LLM Frameworks",
+    "tensorflow": "LLM Frameworks",
+    "huggingface": "LLM Frameworks",
+    "openai": "LLM Frameworks",
+    "anthropic": "LLM Frameworks",
+    "vercel-ai-sdk": "LLM Frameworks",
+    "mastra": "LLM Frameworks",
+    "machine-learning": "LLM Frameworks",
+    "deep-learning": "LLM Frameworks",
+    "llm": "LLM Frameworks",
+    "rag": "LLM Frameworks",
+    "prompt-engineering": "LLM Frameworks",
+    "fine-tuning": "LLM Frameworks",
+    "embeddings": "LLM Frameworks",
+    "transformers": "LLM Frameworks",
+    "agents": "LLM Frameworks",
+    "agentic-ai": "LLM Frameworks",
+    "mlops": "LLM Frameworks",
+    "model-evaluation": "LLM Frameworks",
+    "structured-output": "LLM Frameworks",
+    "function-calling": "LLM Frameworks",
+    "nlp": "LLM Frameworks",
+    "computer-vision": "LLM Frameworks",
+    "langsmith": "LLM Frameworks",
+    "langfuse": "LLM Frameworks",
+    "deepeval": "Testing & Quality",
+    "sagemaker": "Cloud & DevOps",
+    "vertex-ai": "Cloud & DevOps",
+    "bedrock": "Cloud & DevOps",
+
+    # ML data tools (Backend Frameworks — computation libraries)
+    "pandas": "Backend Frameworks",
+    "numpy": "Backend Frameworks",
+    "scikit": "Backend Frameworks",
 
     # Frontend Frameworks
     "react": "Frontend Frameworks",
@@ -227,6 +265,24 @@ def normalize_tag(raw: str) -> str | None:
         "restful": "rest-api",
         "llama-index": "llamaindex",
         "llama_index": "llamaindex",
+        # ML / AI aliases
+        "hugging-face": "huggingface",
+        "hugging_face": "huggingface",
+        "pg-vector": "pgvector",
+        "pg_vector": "pgvector",
+        "lang-smith": "langsmith",
+        "lang-fuse": "langfuse",
+        "vertexai": "vertex-ai",
+        "vertex_ai": "vertex-ai",
+        "google-vertex-ai": "vertex-ai",
+        "google-vertex": "vertex-ai",
+        "aws-sagemaker": "sagemaker",
+        "amazon-sagemaker": "sagemaker",
+        "aws-bedrock": "bedrock",
+        "amazon-bedrock": "bedrock",
+        "open-ai": "openai",
+        "claude": "anthropic",
+        "gemini": "gcp",
     }
     if lowered in aliases:
         return aliases[lowered]

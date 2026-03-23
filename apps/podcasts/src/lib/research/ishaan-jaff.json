@@ -19,37 +19,22 @@
   ],
   "timeline": [
     {
-      "date": "2026-03",
-      "event": "LiteLLM v1.82 released with MCP OAuth2 support, Anthropic Files API integration, and performance improvements (2.9x lower median latency at 1K concurrent users)",
-      "url": "https://github.com/BerriAI/litellm/releases"
+      "date": "2023-01",
+      "event": "BerriAI participates in Y Combinator W23 batch; raises $1.6M seed from YC, Gravity Fund, and Pioneer Fund",
+      "url": "https://www.ycombinator.com/companies/litellm"
     },
     {
-      "date": "2026-02",
-      "event": "LiteLLM introduces Agent Hub: register, publish, and share agents via the AI Gateway (v1.80.0-stable)",
-      "url": "https://docs.litellm.ai/release_notes/v1-80-0"
+      "date": "2023-01",
+      "event": "Co-founded BerriAI with Krrish Dholakia to solve LLM API fragmentation across providers",
+      "url": "https://grokipedia.com/page/LiteLLM"
     },
     {
-      "date": "2026-01",
-      "event": "LiteLLM adds BYOM (Bring Your Own MCP) with non-admin MCP server submission and admin review workflow",
-      "url": "https://docs.litellm.ai/docs/mcp"
+      "date": "2023-08",
+      "event": "Initial release of LiteLLM open-source SDK for unified LLM API calls",
+      "url": "https://github.com/BerriAI/litellm"
     },
     {
-      "date": "2025-12",
-      "event": "LiteLLM MCP protocol support launched (v1.80.18), cutting p99 latency by 70% on AI Gateway",
-      "url": "https://docs.litellm.ai/docs/mcp"
-    },
-    {
-      "date": "2025-07",
-      "event": "LiteLLM v1.74.10 introduces per-tool consumption tracking and daily active users metrics",
-      "url": "https://x.com/ishaan_jaff/status/1950801293490147799"
-    },
-    {
-      "date": "2025-06",
-      "event": "LiteLLM v1.41.5 adds guardrail configuration UI for the Proxy, enabling per-call guardrail control",
-      "url": "https://x.com/ishaan_jaff/status/1808707930730213585"
-    },
-    {
-      "date": "2024",
+      "date": "2024-01",
       "event": "BerriAI reaches $2.5M annual recurring revenue; launches Enterprise tiers (Basic at $250/mo, Premium at $30K/yr)",
       "url": "https://www.litellm.ai/enterprise"
     },
@@ -59,19 +44,34 @@
       "url": "https://x.com/ishaan_jaff/status/1745140375143264465"
     },
     {
-      "date": "2023",
-      "event": "BerriAI participates in Y Combinator W23 batch; raises $1.6M seed from YC, Gravity Fund, and Pioneer Fund",
-      "url": "https://www.ycombinator.com/companies/litellm"
+      "date": "2025-06",
+      "event": "LiteLLM v1.41.5 adds guardrail configuration UI for the Proxy, enabling per-call guardrail control",
+      "url": "https://x.com/ishaan_jaff/status/1808707930730213585"
     },
     {
-      "date": "2023-08-09",
-      "event": "Initial release of LiteLLM open-source SDK for unified LLM API calls",
-      "url": "https://github.com/BerriAI/litellm"
+      "date": "2025-07",
+      "event": "LiteLLM v1.74.10 introduces per-tool consumption tracking and daily active users metrics",
+      "url": "https://x.com/ishaan_jaff/status/1950801293490147799"
     },
     {
-      "date": "2023",
-      "event": "Co-founded BerriAI with Krrish Dholakia to solve LLM API fragmentation across providers",
-      "url": "https://grokipedia.com/page/LiteLLM"
+      "date": "2025-12",
+      "event": "LiteLLM MCP protocol support launched (v1.80.18), cutting p99 latency by 70% on AI Gateway",
+      "url": "https://docs.litellm.ai/docs/mcp"
+    },
+    {
+      "date": "2026-01",
+      "event": "LiteLLM adds BYOM (Bring Your Own MCP) with non-admin MCP server submission and admin review workflow",
+      "url": "https://docs.litellm.ai/docs/mcp"
+    },
+    {
+      "date": "2026-02",
+      "event": "LiteLLM introduces Agent Hub: register, publish, and share agents via the AI Gateway (v1.80.0-stable)",
+      "url": "https://docs.litellm.ai/release_notes/v1-80-0"
+    },
+    {
+      "date": "2026-03",
+      "event": "LiteLLM v1.82 released with MCP OAuth2 support, Anthropic Files API integration, and performance improvements (2.9x lower median latency at 1K concurrent users)",
+      "url": "https://github.com/BerriAI/litellm/releases"
     }
   ],
   "key_contributions": [

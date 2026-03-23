@@ -17,17 +17,17 @@
   ],
   "timeline": [
     {
-      "date": "1999",
+      "date": "1999-01",
       "event": "Founded FastMail (email service) and Optimal Decisions Group (insurance analytics, later acquired by LexisNexis)",
       "url": "https://www.fast.ai/about.html"
     },
     {
-      "date": "2010",
+      "date": "2010-01",
       "event": "Became the top-ranked participant in international machine learning competitions on Kaggle",
       "url": "https://en.wikipedia.org/wiki/Jeremy_Howard_(entrepreneur)"
     },
     {
-      "date": "2012",
+      "date": "2012-01",
       "event": "Became President and Chief Scientist of Kaggle",
       "url": "https://en.wikipedia.org/wiki/Jeremy_Howard_(entrepreneur)"
     },
@@ -37,7 +37,7 @@
       "url": "https://en.wikipedia.org/wiki/Jeremy_Howard_(entrepreneur)"
     },
     {
-      "date": "2016",
+      "date": "2016-01",
       "event": "Co-founded fast.ai with Rachel Thomas to democratize deep learning education",
       "url": "https://www.fast.ai/about.html"
     },
@@ -47,9 +47,14 @@
       "url": "https://arxiv.org/abs/1801.06146"
     },
     {
-      "date": "2019-08-27",
+      "date": "2019-08",
       "event": "Appeared on Lex Fridman Podcast: fast.ai Deep Learning Courses and Research",
       "url": "https://lexfridman.com/jeremy-howard/"
+    },
+    {
+      "date": "2020-01",
+      "event": "Co-authored 'Deep Learning for Coders with Fastai and PyTorch' (O'Reilly)",
+      "url": "https://www.oreilly.com/people/jeremy-howard/"
     },
     {
       "date": "2020-02",
@@ -62,42 +67,37 @@
       "url": "https://en.wikipedia.org/wiki/Jeremy_Howard_(entrepreneur)"
     },
     {
-      "date": "2020",
-      "event": "Co-authored 'Deep Learning for Coders with Fastai and PyTorch' (O'Reilly)",
-      "url": "https://www.oreilly.com/people/jeremy-howard/"
-    },
-    {
-      "date": "2023-10-19",
+      "date": "2023-10",
       "event": "Appeared on Latent Space podcast: The End of Finetuning",
       "url": "https://www.latent.space/p/fastai"
     },
     {
-      "date": "2023-12-12",
+      "date": "2023-12",
       "event": "Launched Answer.AI with Eric Ries, backed by $10M from Decibel VC",
       "url": "https://www.answer.ai/posts/2023-12-12-launch.html"
     },
     {
-      "date": "2024-03-06",
-      "event": "Released FSDP + QLoRA: training 70B models on consumer GPUs (with Tim Dettmers & Hugging Face)",
-      "url": "https://www.answer.ai/posts/2024-03-06-fsdp-qlora.html"
-    },
-    {
-      "date": "2024-04-26",
-      "event": "Released QDoRA: efficient fine-tuning of Llama 3 matching full-weight training accuracy",
-      "url": "https://www.answer.ai/posts/2024-04-26-fsdp-qdora-llama3.html"
-    },
-    {
-      "date": "2024-08-16",
-      "event": "Appeared on Latent Space podcast: AI Magic — Shipping 1000s of products with no managers and a team of 12",
-      "url": "https://www.latent.space/p/answerai"
-    },
-    {
-      "date": "2024",
+      "date": "2024-01",
       "event": "Released FastHTML web framework and Claudette (Anthropic API SDK) from Answer.AI",
       "url": "https://github.com/AnswerDotAI/fasthtml"
     },
     {
-      "date": "2025-05-15",
+      "date": "2024-03",
+      "event": "Released FSDP + QLoRA: training 70B models on consumer GPUs (with Tim Dettmers & Hugging Face)",
+      "url": "https://www.answer.ai/posts/2024-03-06-fsdp-qlora.html"
+    },
+    {
+      "date": "2024-04",
+      "event": "Released QDoRA: efficient fine-tuning of Llama 3 matching full-weight training accuracy",
+      "url": "https://www.answer.ai/posts/2024-04-26-fsdp-qdora-llama3.html"
+    },
+    {
+      "date": "2024-08",
+      "event": "Appeared on Latent Space podcast: AI Magic — Shipping 1000s of products with no managers and a team of 12",
+      "url": "https://www.latent.space/p/answerai"
+    },
+    {
+      "date": "2025-05",
       "event": "Appeared on The MAD Podcast with Matt Turck: Building 5,000 AI Products with 14 People",
       "url": "https://podcasts.apple.com/us/podcast/jeremy-howard-on-building-5-000-ai-products-with-14/id1686238724?i=1000708580767"
     }

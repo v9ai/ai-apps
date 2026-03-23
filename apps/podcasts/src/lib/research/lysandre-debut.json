@@ -17,22 +17,22 @@
   ],
   "timeline": [
     {
-      "date": "2017-08-05",
+      "date": "2017-08",
       "event": "Created GitHub account (LysandreJik)",
       "url": "https://github.com/LysandreJik"
     },
     {
-      "date": "2019-07-09",
+      "date": "2019-07",
       "event": "First merged PR to huggingface/transformers (documentation)",
       "url": "https://github.com/huggingface/transformers/pull/767"
     },
     {
-      "date": "2019-10-09",
+      "date": "2019-10",
       "event": "Co-authored \"HuggingFace's Transformers: State-of-the-art Natural Language Processing\" (arXiv preprint)",
       "url": "https://arxiv.org/abs/1910.03771"
     },
     {
-      "date": "2020-11-19",
+      "date": "2020-11",
       "event": "Paper presented at EMNLP 2020 System Demonstrations; Transformers v4.0.0-rc-1 released",
       "url": "https://aclanthology.org/2020.emnlp-demos.6/"
     },
@@ -42,27 +42,27 @@
       "url": "https://pytorch2023.sched.com/event/1QBUQ/lightning-talk-diffusers-bringing-cutting-edge-diffusion-models-to-the-masses-lysandre-debut-hugging-face"
     },
     {
-      "date": "2025-09-15",
+      "date": "2025-09",
       "event": "Announced kick-off of Transformers v5 development with ArthurZ and cyrilvallez",
       "url": "https://huggingface.co/posts/lysandre/194539610907979"
     },
     {
-      "date": "2025-12-01",
+      "date": "2025-12",
       "event": "Published Transformers v5 blog post and released v5.0.0rc0 -- the first major release in five years",
       "url": "https://huggingface.co/blog/transformers-v5"
     },
     {
-      "date": "2026-01-26",
+      "date": "2026-01",
       "event": "Released Transformers v5.0.0 stable -- 400+ architectures, 3M daily installs, PyTorch-first, unified tokenizers",
       "url": "https://github.com/huggingface/transformers/releases/tag/v5.0.0"
     },
     {
-      "date": "2026-03-04",
+      "date": "2026-03",
       "event": "Released Transformers v5.3.0 (EuroBERT, VibeVoice ASR, TimesFM2.5, and more)",
       "url": "https://github.com/huggingface/transformers/releases/tag/v5.3.0"
     },
     {
-      "date": "2026-03-05",
+      "date": "2026-03",
       "event": "Contributed project governance and security contribution guide to huggingface/safetensors",
       "url": "https://github.com/huggingface/safetensors"
     }

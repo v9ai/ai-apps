@@ -17,44 +17,14 @@
   ],
   "timeline": [
     {
-      "date": "2023-03-21",
-      "event": "Co-authored 'Learning Ray: Flexible Distributed Python for Machine Learning' published by O'Reilly Media (with Max Pumperla and Edward Oakes)",
-      "url": "https://www.oreilly.com/library/view/learning-ray/9781098117214/"
+      "date": "2017-12",
+      "event": "Co-authored 'RLlib: Abstractions for Distributed Reinforcement Learning' at ICML (1,006 citations)",
+      "url": "https://www.semanticscholar.org/paper/RLlib:-Abstractions-for-Distributed-Reinforcement/3393220"
     },
     {
-      "date": "2022-02-15",
-      "event": "Co-authored Anyscale blog post 'How to Distribute Hyperparameter Tuning Using Ray Tune'",
-      "url": "https://www.anyscale.com/blog/how-to-distribute-hyperparameter-tuning-using-ray-tune"
-    },
-    {
-      "date": "2021-04-21",
-      "event": "Published 'RubberBand: Cloud-based Hyperparameter Tuning' at EuroSys 2021 (28 citations)",
-      "url": "https://www.semanticscholar.org/paper/RubberBand:-Cloud-based-Hyperparameter-Tuning/4afa7896ad35c5fc65112dc586c7a3e90f0404f3"
-    },
-    {
-      "date": "2020-12-16",
-      "event": "Joined Anyscale full-time as software engineer, transitioning from UC Berkeley PhD program",
-      "url": "https://www.linkedin.com/posts/richardliaw_why-im-joining-anyscale-activity-6755555403351908352-322H"
-    },
-    {
-      "date": "2020-07-24",
-      "event": "Interviewed on Software Engineering Daily about Ray applications, RLlib, and Tune",
-      "url": "https://softwareengineeringdaily.com/2020/07/24/ray-applications-with-richard-liaw/"
-    },
-    {
-      "date": "2020-06-17",
-      "event": "Presented 'The Road to AutoML: Hyperparameter Tuning and Neural Architecture Search' at Anyscale event",
-      "url": "https://www.anyscale.com/events/2020/06/17/the-challenges-of-hyperparameter-tuning"
-    },
-    {
-      "date": "2019-11-20",
-      "event": "Published 'HyperSched: Dynamic Resource Reallocation for Model Development on a Deadline' at ACM SoCC 2019 (49 citations)",
-      "url": "https://github.com/ucbrise/hypersched"
-    },
-    {
-      "date": "2019-10",
-      "event": "Presented at PyData Los Angeles 2019 on distributed hyperparameter tuning with Ray Tune",
-      "url": "https://pydata.org/la2019/speaker/profile/49/richard-liaw/"
+      "date": "2018-07",
+      "event": "Published 'Tune: A Research Platform for Distributed Model Selection and Training' (1,079 citations), presented at ICML AutoML Workshop 2018",
+      "url": "https://arxiv.org/abs/1807.05118"
     },
     {
       "date": "2018-10",
@@ -62,14 +32,44 @@
       "url": "https://www.usenix.org/conference/osdi18/presentation/moritz"
     },
     {
-      "date": "2018-07-13",
-      "event": "Published 'Tune: A Research Platform for Distributed Model Selection and Training' (1,079 citations), presented at ICML AutoML Workshop 2018",
-      "url": "https://arxiv.org/abs/1807.05118"
+      "date": "2019-10",
+      "event": "Presented at PyData Los Angeles 2019 on distributed hyperparameter tuning with Ray Tune",
+      "url": "https://pydata.org/la2019/speaker/profile/49/richard-liaw/"
     },
     {
-      "date": "2017-12-26",
-      "event": "Co-authored 'RLlib: Abstractions for Distributed Reinforcement Learning' at ICML (1,006 citations)",
-      "url": "https://www.semanticscholar.org/paper/RLlib:-Abstractions-for-Distributed-Reinforcement/3393220"
+      "date": "2019-11",
+      "event": "Published 'HyperSched: Dynamic Resource Reallocation for Model Development on a Deadline' at ACM SoCC 2019 (49 citations)",
+      "url": "https://github.com/ucbrise/hypersched"
+    },
+    {
+      "date": "2020-06",
+      "event": "Presented 'The Road to AutoML: Hyperparameter Tuning and Neural Architecture Search' at Anyscale event",
+      "url": "https://www.anyscale.com/events/2020/06/17/the-challenges-of-hyperparameter-tuning"
+    },
+    {
+      "date": "2020-07",
+      "event": "Interviewed on Software Engineering Daily about Ray applications, RLlib, and Tune",
+      "url": "https://softwareengineeringdaily.com/2020/07/24/ray-applications-with-richard-liaw/"
+    },
+    {
+      "date": "2020-12",
+      "event": "Joined Anyscale full-time as software engineer, transitioning from UC Berkeley PhD program",
+      "url": "https://www.linkedin.com/posts/richardliaw_why-im-joining-anyscale-activity-6755555403351908352-322H"
+    },
+    {
+      "date": "2021-04",
+      "event": "Published 'RubberBand: Cloud-based Hyperparameter Tuning' at EuroSys 2021 (28 citations)",
+      "url": "https://www.semanticscholar.org/paper/RubberBand:-Cloud-based-Hyperparameter-Tuning/4afa7896ad35c5fc65112dc586c7a3e90f0404f3"
+    },
+    {
+      "date": "2022-02",
+      "event": "Co-authored Anyscale blog post 'How to Distribute Hyperparameter Tuning Using Ray Tune'",
+      "url": "https://www.anyscale.com/blog/how-to-distribute-hyperparameter-tuning-using-ray-tune"
+    },
+    {
+      "date": "2023-03",
+      "event": "Co-authored 'Learning Ray: Flexible Distributed Python for Machine Learning' published by O'Reilly Media (with Max Pumperla and Edward Oakes)",
+      "url": "https://www.oreilly.com/library/view/learning-ray/9781098117214/"
     }
   ],
   "key_contributions": [

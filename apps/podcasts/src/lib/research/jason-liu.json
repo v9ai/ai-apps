@@ -17,44 +17,49 @@
   ],
   "timeline": [
     {
-      "date": "2012",
+      "date": "2012-01",
       "event": "Enrolled at University of Waterloo, Computational Mathematics & Statistics",
       "url": "https://jxnl.co/resume/"
     },
     {
-      "date": "2017",
+      "date": "2017-01",
       "event": "Data Scientist at Meta (Facebook), building content detection algorithms at 2B+ user scale",
       "url": "https://jxnl.co/resume/"
     },
     {
-      "date": "2018",
+      "date": "2018-01",
       "event": "Joined Stitch Fix as Staff ML Engineer; led multimodal AI and search team (6-7 engineers)",
       "url": "https://jxnl.co/resume/"
     },
     {
-      "date": "2023-06-14",
-      "event": "Open-sourced Instructor (originally 'OpenAI Function Call and Pydantic Integration Module') on GitHub",
-      "url": "https://github.com/567-labs/instructor"
-    },
-    {
-      "date": "2023",
+      "date": "2023-01",
       "event": "Left Stitch Fix; founded 567 Studios as an independent AI consultant",
       "url": "https://jxnl.co/"
     },
     {
-      "date": "2024-04-19",
+      "date": "2023-06",
+      "event": "Open-sourced Instructor (originally 'OpenAI Function Call and Pydantic Integration Module') on GitHub",
+      "url": "https://github.com/567-labs/instructor"
+    },
+    {
+      "date": "2024-01",
+      "event": "Appeared on Weaviate Podcast #88 discussing Instructor and AI consulting",
+      "url": "https://videohighlight.com/v/higlHgYDc5E"
+    },
+    {
+      "date": "2024-01",
+      "event": "Launched Maven course 'Systematically Improving RAG Applications' (6-week cohort-based)",
+      "url": "https://maven.com/applied-llms/rag-playbook"
+    },
+    {
+      "date": "2024-04",
       "event": "Appeared on Latent Space podcast: 'High Agency Pydantic > VC Backed Frameworks'",
       "url": "https://www.latent.space/p/instructor"
     },
     {
-      "date": "2024-06-10",
+      "date": "2024-06",
       "event": "Appeared on devtools.fm podcast: 'Instructor, Shipping LLMs to Production'",
       "url": "https://www.devtools.fm/episode/102"
-    },
-    {
-      "date": "2024",
-      "event": "Appeared on Weaviate Podcast #88 discussing Instructor and AI consulting",
-      "url": "https://videohighlight.com/v/higlHgYDc5E"
     },
     {
       "date": "2024-08",
@@ -62,17 +67,12 @@
       "url": "https://openai.com/index/introducing-structured-outputs-in-the-api/"
     },
     {
-      "date": "2024",
-      "event": "Launched Maven course 'Systematically Improving RAG Applications' (6-week cohort-based)",
-      "url": "https://maven.com/applied-llms/rag-playbook"
-    },
-    {
-      "date": "2025",
+      "date": "2025-01",
       "event": "Instructor surpassed 6M+ monthly PyPI downloads and 12,000+ GitHub stars",
       "url": "https://pypi.org/project/instructor/"
     },
     {
-      "date": "2026-02-02",
+      "date": "2026-02",
       "event": "Sunset 567 Labs; open-sourced all course content (RAG Playbook + Consulting Archive)",
       "url": "https://jxnl.co/writing/2026/02/02/sunsetting-567-labs/"
     }

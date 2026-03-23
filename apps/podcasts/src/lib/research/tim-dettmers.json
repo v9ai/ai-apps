@@ -17,42 +17,27 @@
   ],
   "timeline": [
     {
-      "date": "2026-01-27",
-      "event": "Published SERA (Soft-Verified Efficient Repository Agents) with Ai2 -- first open coding agent series, 32B model solving 54.2% of SWE-Bench Verified at $400 reproduction cost",
-      "url": "https://timdettmers.com/2026/01/27/building-open-coding-agent-sera/"
+      "date": "2013-08",
+      "event": "Created GitHub account (TimDettmers), later growing to 59 public repos and 1,395 followers",
+      "url": "https://github.com/TimDettmers"
     },
     {
-      "date": "2026-01-13",
-      "event": "Published blog post 'Use Agents or Be Left Behind? A Personal Guide to Automating Your Own Work'",
-      "url": "https://timdettmers.com/2026/01/13/use-agents-or-be-left-behind/"
+      "date": "2018-01",
+      "event": "Published ConvE: Convolutional 2D Knowledge Graph Embeddings (692 stars), a widely-cited approach for link prediction in knowledge graphs",
+      "url": "https://github.com/TimDettmers/ConvE"
     },
     {
-      "date": "2025-12",
-      "event": "Interviewed by The Register, argued AGI and superintelligence thinking is 'fundamentally flawed' and GPU scaling has 1-2 years left",
-      "url": "https://www.theregister.com/2025/12/11/ai_superintelligence_fantasy/"
+      "date": "2021-01",
+      "event": "Received NeurIPS 2021 Best Reviewer Award",
+      "url": "https://timdettmers.com/about/"
     },
     {
-      "date": "2025",
-      "event": "Received Google ML and Systems Junior Faculty Award ($100K unrestricted funding) as one of 50+ assistant professors selected across 27 U.S. universities",
-      "url": "https://csd.cmu.edu/news/dettmers-receives-google-ml-and-systems-junior-faculty-award"
+      "date": "2022-01",
+      "event": "Published LLM.int8(): 8-bit Matrix Multiplication for Transformers at Scale, enabling efficient inference for large language models",
+      "url": "https://arxiv.org/abs/2208.07339"
     },
     {
-      "date": "2025",
-      "event": "Joined Carnegie Mellon University as Assistant Professor in MLD and CSD",
-      "url": "https://csd.cmu.edu/people/faculty/tim-dettmers"
-    },
-    {
-      "date": "2024",
-      "event": "Named AI2050 Early Career Fellow by Schmidt Sciences (2-year research grant)",
-      "url": "https://www.csd.cmu.edu/news/tim-dettmers-aviral-kumar-named-ai2050-early-career-fellows"
-    },
-    {
-      "date": "2023-12",
-      "event": "QLoRA paper presented at NeurIPS 2023, receiving Outstanding Paper designation",
-      "url": "https://proceedings.neurips.cc/paper_files/paper/2023/file/1feb87871436031bdc0f2beaa62a049b-Paper-Conference.pdf"
-    },
-    {
-      "date": "2023",
+      "date": "2023-01",
       "event": "Received Madrona Prize, Google Open Source Award, and PyTorch Foundation Award for bitsandbytes",
       "url": "https://timdettmers.com/about/"
     },
@@ -62,24 +47,39 @@
       "url": "https://arxiv.org/abs/2305.14314"
     },
     {
-      "date": "2022",
-      "event": "Published LLM.int8(): 8-bit Matrix Multiplication for Transformers at Scale, enabling efficient inference for large language models",
-      "url": "https://arxiv.org/abs/2208.07339"
+      "date": "2023-12",
+      "event": "QLoRA paper presented at NeurIPS 2023, receiving Outstanding Paper designation",
+      "url": "https://proceedings.neurips.cc/paper_files/paper/2023/file/1feb87871436031bdc0f2beaa62a049b-Paper-Conference.pdf"
     },
     {
-      "date": "2021",
-      "event": "Received NeurIPS 2021 Best Reviewer Award",
-      "url": "https://timdettmers.com/about/"
+      "date": "2024-01",
+      "event": "Named AI2050 Early Career Fellow by Schmidt Sciences (2-year research grant)",
+      "url": "https://www.csd.cmu.edu/news/tim-dettmers-aviral-kumar-named-ai2050-early-career-fellows"
     },
     {
-      "date": "2018",
-      "event": "Published ConvE: Convolutional 2D Knowledge Graph Embeddings (692 stars), a widely-cited approach for link prediction in knowledge graphs",
-      "url": "https://github.com/TimDettmers/ConvE"
+      "date": "2025-01",
+      "event": "Received Google ML and Systems Junior Faculty Award ($100K unrestricted funding) as one of 50+ assistant professors selected across 27 U.S. universities",
+      "url": "https://csd.cmu.edu/news/dettmers-receives-google-ml-and-systems-junior-faculty-award"
     },
     {
-      "date": "2013-08",
-      "event": "Created GitHub account (TimDettmers), later growing to 59 public repos and 1,395 followers",
-      "url": "https://github.com/TimDettmers"
+      "date": "2025-01",
+      "event": "Joined Carnegie Mellon University as Assistant Professor in MLD and CSD",
+      "url": "https://csd.cmu.edu/people/faculty/tim-dettmers"
+    },
+    {
+      "date": "2025-12",
+      "event": "Interviewed by The Register, argued AGI and superintelligence thinking is 'fundamentally flawed' and GPU scaling has 1-2 years left",
+      "url": "https://www.theregister.com/2025/12/11/ai_superintelligence_fantasy/"
+    },
+    {
+      "date": "2026-01",
+      "event": "Published SERA (Soft-Verified Efficient Repository Agents) with Ai2 -- first open coding agent series, 32B model solving 54.2% of SWE-Bench Verified at $400 reproduction cost",
+      "url": "https://timdettmers.com/2026/01/27/building-open-coding-agent-sera/"
+    },
+    {
+      "date": "2026-01",
+      "event": "Published blog post 'Use Agents or Be Left Behind? A Personal Guide to Automating Your Own Work'",
+      "url": "https://timdettmers.com/2026/01/13/use-agents-or-be-left-behind/"
     }
   ],
   "key_contributions": [

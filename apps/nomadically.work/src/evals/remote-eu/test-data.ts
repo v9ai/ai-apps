@@ -596,6 +596,22 @@ export const remoteEUTestCases: RemoteEUTestCase[] = [
   // --- Production-derived false positive cases ---
 
   {
+    id: "pakistan-company-remote-1",
+    description: "Pakistan-based company posting generic 'Remote' (false positive)",
+    jobPosting: {
+      title: "Senior Software Engineer",
+      location: "Remote",
+      description:
+        "Join our team at a leading software house in Pakistan. We are looking for talented engineers based in Pakistan or willing to work in Pakistan timezone. Competitive salary in PKR.",
+      is_remote: true,
+    },
+    expectedClassification: {
+      isRemoteEU: false,
+      confidence: "high",
+      reason: "Pakistan-based company — not EU remote",
+    },
+  },
+  {
     id: "latam-staffing-remote-1",
     description: "LatAm staffing company posting generic 'Remote' (Scale Army pattern)",
     jobPosting: {

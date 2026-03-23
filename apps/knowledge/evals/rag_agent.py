@@ -6,8 +6,11 @@ decides WHEN to retrieve and can make multiple retrieval calls.
 Usage:
     from rag_agent import build_rag_agent
 
-    agent = build_rag_agent()
-    result = agent.invoke({"messages": [("user", "What is LoRA?")]})
+    agent, retriever = build_rag_agent()
+    try:
+        result = agent.invoke({"messages": [("user", "What is LoRA?")]})
+    finally:
+        retriever.close()
 """
 
 import os
@@ -89,15 +92,21 @@ def _format_fts(results: list[dict]) -> str:
     return "\n\n---\n\n".join(parts) if parts else "No results found."
 
 
+# Shared LLM — ChatOpenAI is stateless and thread-safe; build once.
+_llm = ChatOpenAI(
+    model="deepseek-chat",
+    base_url="https://api.deepseek.com",
+    api_key=os.environ.get("DEEPSEEK_API_KEY", ""),
+    temperature=0,
+)
+
+
 def build_rag_agent(retrieval_method: str = "fts"):
-    """Create a LangGraph ReAct agent with knowledge retrieval."""
-    search_tool, _retriever = _build_search_tool(retrieval_method)
+    """Create a LangGraph ReAct agent with knowledge retrieval.
 
-    llm = ChatOpenAI(
-        model="deepseek-chat",
-        base_url="https://api.deepseek.com",
-        api_key=os.environ.get("DEEPSEEK_API_KEY", ""),
-        temperature=0,
-    )
-
-    return create_react_agent(model=llm, tools=[search_tool], prompt=RAG_SYSTEM_PROMPT)
+    Returns (agent, retriever). Call retriever.close() when done to release
+    the DB connection held by the search tool.
+    """
+    search_tool, retriever = _build_search_tool(retrieval_method)
+    agent = create_react_agent(model=_llm, tools=[search_tool], prompt=RAG_SYSTEM_PROMPT)
+    return agent, retriever

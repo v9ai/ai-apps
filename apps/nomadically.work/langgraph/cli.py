@@ -639,5 +639,64 @@ def chat(user_id: str, message: str, resume_id: str):
     print(result.get("chat_response", "No response generated."))
 
 
+@main.command("email-outreach")
+@click.option("--json-input", is_flag=True, default=False, help="Read JSON from stdin, output JSON to stdout")
+@click.option("--recipient-name", default="", help="Recipient name")
+@click.option("--recipient-role", default="", help="Recipient role (e.g. 'CTO at Acme')")
+@click.option("--post-text", default="", help="LinkedIn post text content")
+@click.option("--post-url", default="", help="LinkedIn post URL")
+@click.option("--recipient-email", default="", help="Recipient email address")
+@click.option("--tone", default="professional and friendly", help="Email tone")
+def email_outreach(json_input, recipient_name, recipient_role, post_text, post_url, recipient_email, tone):
+    """Generate AI-powered outreach email from a LinkedIn post.
+
+    Interactive:
+        python -m cli email-outreach --recipient-name "John" --post-text "We're hiring!" --recipient-email "john@acme.com"
+
+    JSON mode (for subprocess invocation):
+        echo '{"recipient_name":"John","post_text":"Hiring!","recipient_email":"john@acme.com"}' | python -m cli email-outreach --json-input
+    """
+    import json as _json
+    import sys as _sys
+
+    if json_input:
+        input_data = _json.loads(_sys.stdin.read())
+    else:
+        input_data = {
+            "recipient_name": recipient_name,
+            "recipient_role": recipient_role,
+            "post_text": post_text,
+            "post_url": post_url,
+            "recipient_email": recipient_email,
+            "tone": tone,
+        }
+
+    from src.graphs.email_outreach import build_email_outreach_graph
+
+    graph = build_email_outreach_graph()
+    result = graph.invoke({
+        "recipient_name": input_data.get("recipient_name", ""),
+        "recipient_role": input_data.get("recipient_role", ""),
+        "post_text": input_data.get("post_text", ""),
+        "post_url": input_data.get("post_url", ""),
+        "recipient_email": input_data.get("recipient_email", ""),
+        "tone": input_data.get("tone", "professional and friendly"),
+        "contact_context": "",
+        "company_context": "",
+        "post_analysis": None,
+        "draft": None,
+        "final": None,
+    })
+
+    final = result.get("final") or result.get("draft") or {"subject": "", "text": "", "html": ""}
+
+    if json_input:
+        # Clean JSON to stdout — all diagnostic output went to stderr via nodes
+        print(_json.dumps(final))
+    else:
+        print(f"\nSubject: {final.get('subject', '')}")
+        print(f"\n{final.get('text', '')}")
+
+
 if __name__ == "__main__":
     main()

@@ -5,9 +5,11 @@ using vector similarity, full-text search, or hybrid search.
 """
 
 import os
+import threading
 from pathlib import Path
 
 import psycopg2
+from psycopg2.pool import ThreadedConnectionPool
 from dotenv import load_dotenv
 from pgvector.psycopg2 import register_vector
 
@@ -20,13 +22,45 @@ load_dotenv(_env_path)
 class PgVectorRetriever:
     """Retrieves context from Neon pgvector for RAG evaluation."""
 
+    # Shared FastEmbedEmbedder — model load is expensive (~2 s, ~500 MB).
+    # FastEmbedEmbedder is stateless so sharing across threads is safe.
+    _shared_embedder: FastEmbedEmbedder | None = None
+    _embedder_lock: threading.Lock = threading.Lock()
+
+    # Shared connection pool — avoids a new TCP handshake per retriever instance.
+    _pool: ThreadedConnectionPool | None = None
+    _pool_lock: threading.Lock = threading.Lock()
+
+    @classmethod
+    def _get_embedder(cls) -> FastEmbedEmbedder:
+        if cls._shared_embedder is None:
+            with cls._embedder_lock:
+                if cls._shared_embedder is None:  # double-checked locking
+                    cls._shared_embedder = FastEmbedEmbedder()
+        return cls._shared_embedder
+
+    @classmethod
+    def _get_pool(cls) -> ThreadedConnectionPool:
+        if cls._pool is None:
+            with cls._pool_lock:
+                if cls._pool is None:
+                    dsn = os.getenv("DATABASE_URL", "")
+                    if not dsn:
+                        raise ValueError("DATABASE_URL not set in .env.local")
+                    cls._pool = ThreadedConnectionPool(1, 10, dsn)
+        return cls._pool
+
     def __init__(self, connection_string: str | None = None):
-        dsn = connection_string or os.getenv("DATABASE_URL", "")
-        if not dsn:
-            raise ValueError("DATABASE_URL not set in .env.local")
-        self._conn = psycopg2.connect(dsn)
+        if connection_string:
+            # Explicit DSN — use a standalone connection (bypasses pool).
+            self._conn = psycopg2.connect(connection_string)
+            self._from_pool = False
+        else:
+            pool = self._get_pool()
+            self._conn = pool.getconn()
+            self._from_pool = True
         register_vector(self._conn)
-        self._embedder = FastEmbedEmbedder()
+        self._embedder = self._get_embedder()
 
     def _embed(self, text: str) -> list[float]:
         return self._embedder.embed_text(text)
@@ -169,5 +203,10 @@ class PgVectorRetriever:
             return cur.fetchone()[0]
 
     def close(self):
-        if self._conn and not self._conn.closed:
+        if not self._conn or self._conn.closed:
+            return
+        if self._from_pool:
+            self._get_pool().putconn(self._conn)
+        else:
             self._conn.close()
+        self._conn = None

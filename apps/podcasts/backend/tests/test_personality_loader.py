@@ -6,7 +6,7 @@ import pytest
 
 from research_pipeline import _parse_ts, load_personalities
 
-PERSONALITIES_DIR = Path(__file__).resolve().parent.parent / "personalities"
+PERSONALITIES_DIR = Path(__file__).resolve().parent.parent.parent / "personalities"
 
 
 # ── _parse_ts unit tests ─────────────────────────────────────────────────

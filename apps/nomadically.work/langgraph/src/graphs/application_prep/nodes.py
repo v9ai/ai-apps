@@ -239,7 +239,16 @@ def parse_jd_node(state: ApplicationPrepState) -> dict:
             "- tech_stack: list of technology/tool names mentioned (max 15, strings)\n"
             "- requirements: list of key hard requirements as short phrases (max 10, strings)\n"
             "- role_type: one of 'frontend', 'backend', 'fullstack', 'ml', 'devops', 'data', 'other'\n"
-            "- seniority: one of 'junior', 'mid', 'senior', 'lead', 'staff'\n"
+            "- seniority: one of 'junior', 'mid', 'senior', 'lead', 'staff'\n\n"
+            "role_type classification guide (IMPORTANT — choose the PRIMARY focus):\n"
+            "- 'ml': LLMs, AI models, RAG, embeddings, model training/inference, ML evaluation, "
+            "vector search, prompt engineering, AI agents, fine-tuning, MLOps — ANY AI/ML engineering focus\n"
+            "- 'data': data pipelines, ETL, data warehouse, analytics, BI, Spark, dbt\n"
+            "- 'backend': REST/GraphQL APIs, databases, server infrastructure with NO ML focus\n"
+            "- 'frontend': UI/UX, React/Vue/Angular, CSS, browser — client-side focus\n"
+            "- 'fullstack': both backend and frontend without ML focus\n"
+            "- 'devops': CI/CD, infrastructure, SRE, Kubernetes, deployment, monitoring\n"
+            "- 'other': management, product, design, non-engineering\n\n"
             "Return ONLY valid JSON, no markdown fences."
         )),
         HumanMessage(content=(
@@ -473,6 +482,9 @@ def research_company_node(state: ApplicationPrepState) -> dict:
             "- talking_points: Specific facts a candidate should reference to show they researched the company, max 5\n"
             "- red_flags: Potential concerns worth probing (not deal-breakers, just things to ask about), max 3\n"
             "- If data is truly insufficient for a field, return an empty list [] or empty string \"\"\n"
+            "- For AI/ML companies or roles involving LLMs/RAG/ML: include in tech_investment_signals: "
+            "model deployment infrastructure, evaluation culture (do they use LangSmith/DeepEval?), "
+            "data strategy, research-to-production pipeline speed, and ML team structure\n"
             "- Return ONLY valid JSON, no markdown fences."
         )),
         HumanMessage(content=(
@@ -527,6 +539,10 @@ def extract_technologies_node(state: ApplicationPrepState) -> dict:
             "  - 'complex data-heavy UIs' implies data visualization tools, state management\n"
             "  - 'real-time applications' implies WebSocket, Server-Sent Events, Redis\n"
             "  - 'AI products' implies machine learning, LLMs, embeddings\n"
+            "  - 'RAG pipeline' implies vector database, embeddings, LangChain/LlamaIndex\n"
+            "  - 'LLM evaluation' implies DeepEval, LangSmith, Langfuse, model-evaluation\n"
+            "  - 'ML inference at scale' implies FastAPI, Docker, Kubernetes, MLOps\n"
+            "  - 'vector search' implies pgvector, Qdrant, Weaviate, or Pinecone\n"
             "  - 'microservices' implies Docker, Kubernetes, message queues\n"
             "- Extract both the explicitly named AND the reasonably implied technologies\n"
             "- Max 20 technologies\n"
@@ -637,6 +653,8 @@ def route_all_work(state: ApplicationPrepState) -> list[Send]:
 
     # Tech content — one per organized technology
     organized = state.get("organized", [])
+    company_research = state.get("company_research") or {}
+    role_depth = state.get("role_depth") or {}
     for tech in organized:
         sends.append(Send("generate_content", {
             "tech": tech,
@@ -645,9 +663,11 @@ def route_all_work(state: ApplicationPrepState) -> list[Send]:
             "job_description": state["job_description"],
             "all_techs": [t["label"] for t in organized],
             "application_id": state["application_id"],
+            "company_research": company_research,
+            "role_depth": role_depth,
         }))
 
-    return sends or [Send("finalize", {})]
+    return sends or [Send("compile_report", {})]
 
 
 # ---------------------------------------------------------------------------
@@ -768,6 +788,35 @@ def generate_questions_node(state: dict) -> dict:
         if research_parts:
             research_block = "\n\nCOMPANY INTELLIGENCE (use this to make questions company-specific):\n" + "\n".join(research_parts)
 
+    # Role-type-specific guidance for ML/AI and data roles
+    role_type_block = ""
+    if role_type in ("ml", "data"):
+        if category == "technical":
+            role_type_block = (
+                "\n\nML/AI ROLE GUIDANCE: This is an ML/AI engineering role. "
+                "Technical questions must probe: model evaluation & metrics, training pipeline design, "
+                "inference optimization (latency/throughput trade-offs), RAG architecture & retrieval quality, "
+                "embedding models & vector search, prompt engineering & structured outputs, "
+                "LLM fine-tuning vs few-shot, data quality & preprocessing, experiment tracking, "
+                "and production deployment (serving infrastructure, monitoring, drift detection). "
+                "Avoid generic software engineering questions that don't require ML expertise."
+            )
+        elif category == "system_design":
+            role_type_block = (
+                "\n\nML SYSTEM DESIGN GUIDANCE: Focus on ML system design scenarios, NOT generic distributed systems. "
+                "Ask about: building a production RAG pipeline end-to-end, designing a model evaluation framework, "
+                "designing an online feature store, building LLM-powered product features at scale, "
+                "CI/CD for ML models (retraining triggers, A/B testing, shadow deployment), "
+                "handling model versioning and rollback, and cost optimization for LLM inference."
+            )
+        elif category == "behavioral":
+            role_type_block = (
+                "\n\nML BEHAVIORAL GUIDANCE: Behavioral questions for ML roles should probe: "
+                "improving model performance under constraints, communicating ML trade-offs to stakeholders, "
+                "handling data quality issues that broke model behavior, shipping ML features iteratively, "
+                "balancing research curiosity with production pragmatism, and failed experiments with learnings."
+            )
+
     messages = [
         SystemMessage(content=(
             "You are an expert interview coach. Return ONLY valid JSON with this structure:\n"
@@ -782,7 +831,8 @@ def generate_questions_node(state: dict) -> dict:
             f"Job description (excerpt):\n{state['job_description'][:2000]}"
             f"{context_block}"
             f"{depth_block}"
-            f"{research_block}\n\n"
+            f"{research_block}"
+            f"{role_type_block}\n\n"
             f"QUESTIONS: {question_instr}\n\n"
             f"ANSWERS: {answer_instr}\n\n"
             f"Return exactly {spec['count']} Q&A pairs as JSON."
@@ -954,6 +1004,25 @@ def generate_content_node(state: dict) -> dict:
     all_techs = state.get("all_techs", [])
     related_str = ", ".join(t for t in all_techs if t != tech["label"])
 
+    # Build company context block from research
+    company_research = state.get("company_research") or {}
+    role_depth = state.get("role_depth") or {}
+    company_context_parts = []
+    if company_research.get("company_overview"):
+        company_context_parts.append(f"Company overview: {company_research['company_overview']}")
+    if company_research.get("tech_investment_signals"):
+        company_context_parts.append(f"Tech signals: {'; '.join(company_research['tech_investment_signals'])}")
+    if company_research.get("engineering_culture"):
+        company_context_parts.append(f"Engineering culture: {'; '.join(company_research['engineering_culture'])}")
+    if role_depth.get("technical_maturity"):
+        company_context_parts.append(f"Technical maturity: {role_depth['technical_maturity']}")
+    if role_depth.get("key_challenges"):
+        company_context_parts.append(f"Key challenges: {'; '.join(role_depth['key_challenges'][:3])}")
+    company_context_block = (
+        "\n\nCOMPANY CONTEXT (tailor examples to this company's scale and challenges):\n"
+        + "\n".join(company_context_parts)
+    ) if company_context_parts else ""
+
     messages = [
         SystemMessage(content=(
             "You are a senior engineer coaching another engineer for a technical interview. "
@@ -981,6 +1050,7 @@ def generate_content_node(state: dict) -> dict:
             "Format each as **Q:** / **A:** pairs. Answers should be 2-4 sentences — concise but specific.\n\n"
             "## How It Connects to This Role's Stack\n"
             "Explain how this technology integrates with the other tools in the job. "
+            "Reference the company's specific challenges and scale where relevant. "
             "Show you understand the full picture, not just one piece.\n\n"
             "## Red Flags to Avoid\n"
             "Common mistakes or misconceptions that make candidates look junior. "
@@ -991,12 +1061,14 @@ def generate_content_node(state: dict) -> dict:
             "- Code examples should be production-quality snippets, not toy demos\n"
             "- Name specific versions, APIs, and config options where relevant\n"
             "- If something is controversial or has changed recently, mention it\n"
+            "- Tailor examples to the company's industry, scale, and technical maturity\n"
         )),
         HumanMessage(content=(
             f"Technology: {tech['label']}\n"
             f"Category: {tech['category']}\n"
             f"Interview for: {job_title} at {company_name}\n"
-            f"Other technologies in this role's stack: {related_str}\n\n"
+            f"Other technologies in this role's stack: {related_str}"
+            f"{company_context_block}\n\n"
             f"Job description:\n{job_desc}"
         )),
     ]
@@ -1094,6 +1166,33 @@ def _compile_report(state: ApplicationPrepState) -> str:
                 lines.append(f"- {h}")
             lines.append("")
 
+    # Tech Study Guide — generated deep-dive lessons
+    generated = state.get("generated", [])
+    if generated:
+        lines += ["## Tech Study Guide", ""]
+        lines += [
+            f"Deep-dive lessons generated for {len(generated)} "
+            f"{'technology' if len(generated) == 1 else 'technologies'}:",
+            "",
+        ]
+        for g in generated:
+            cat_label = g.get("category", "")
+            label_str = f"{g['label']} ({cat_label})" if cat_label else g["label"]
+            lines.append(f"### {label_str}")
+            subtopics = g.get("subtopics", [])
+            if subtopics:
+                lines.append(" · ".join(subtopics))
+            # Include the 30-second pitch if present in content
+            content = g.get("content", "")
+            pitch_start = content.find("## The 30-Second Pitch")
+            if pitch_start >= 0:
+                after_header = content[pitch_start + len("## The 30-Second Pitch"):].lstrip("\n")
+                next_section = after_header.find("\n## ")
+                pitch_text = after_header[:next_section].strip() if next_section >= 0 else after_header[:400].strip()
+                if pitch_text:
+                    lines += ["", pitch_text[:350].rstrip() + ("..." if len(pitch_text) > 350 else "")]
+            lines.append("")
+
     for cat in CATEGORIES:
         label = _CATEGORY_LABELS[cat]
         pairs = sets_by_category.get(cat, [])
@@ -1112,11 +1211,17 @@ def _compile_report(state: ApplicationPrepState) -> str:
                 "",
             ]
 
-    # Quality summary
+    # Quality summary with per-category breakdown
     qa_scores = state.get("qa_scores", [])
     refined_count = state.get("refined_count", 0)
     if qa_scores:
         avg_overall = sum(s.get("overall", 0) for s in qa_scores) / len(qa_scores)
+        cat_avgs = {}
+        for cat in CATEGORIES:
+            cat_scores = [s for s in qa_scores if s.get("category") == cat]
+            if cat_scores:
+                cat_avgs[cat] = sum(s.get("overall", 0) for s in cat_scores) / len(cat_scores)
+        score_parts = [f"{_CATEGORY_LABELS.get(c, c)}: {v:.0%}" for c, v in cat_avgs.items()]
         lines += [
             "---",
             "",
@@ -1124,6 +1229,8 @@ def _compile_report(state: ApplicationPrepState) -> str:
             + (f" ({refined_count} answers refined by self-evaluation)*" if refined_count else "*"),
             "",
         ]
+        if score_parts:
+            lines += [f"*Per-category: {' | '.join(score_parts)}*", ""]
 
     return "\n".join(lines)
 

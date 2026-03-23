@@ -17,7 +17,7 @@
   ],
   "timeline": [
     {
-      "date": "2021",
+      "date": "2021-01",
       "event": "Presented 'A Tale of Two Long Tails' at ICML UDL Workshop",
       "url": "https://zanussbaum.github.io/"
     },
@@ -42,12 +42,12 @@
       "url": "https://arxiv.org/abs/2402.01613"
     },
     {
-      "date": "2024-02-01",
+      "date": "2024-02",
       "event": "Appeared on MAD Podcast with Matt Turck: 'How Nomic AI Is Driving The Open Source Revolution'",
       "url": "https://zanussbaum.github.io/blog/2024/mad-podcast/"
     },
     {
-      "date": "2024-02-20",
+      "date": "2024-02",
       "event": "Appeared on Weaviate Podcast: 'Matryoshka Embeddings' with Aditya Kusupati and Zain Hasan",
       "url": "https://zanussbaum.github.io/blog/2024/matryoshka/"
     },
@@ -57,24 +57,24 @@
       "url": "https://arxiv.org/abs/2406.18587"
     },
     {
-      "date": "2024-07-10",
+      "date": "2024-07",
       "event": "Published blog post on multimodal embedding observability",
       "url": "https://zanussbaum.github.io/blog/2024/multimodal/"
     },
     {
-      "date": "2024-11-11",
+      "date": "2024-11",
       "event": "Published blog post: 'Optimizing a WebGPU Matmul Kernel for 1TFLOP+ Performance'",
       "url": "https://zanussbaum.github.io/blog/2024/webgpu/"
+    },
+    {
+      "date": "2025-01",
+      "event": "CoRNStack paper accepted at ICLR 2025 — large-scale dataset for code retrieval powering nomic-embed-code",
+      "url": "https://huggingface.co/nomic-ai/nomic-embed-code"
     },
     {
       "date": "2025-02",
       "event": "Co-authored Nomic Embed Text v2 (MoE) — first general-purpose Mixture-of-Experts text embedding model supporting ~100 languages with 475M total / 305M active parameters",
       "url": "https://arxiv.org/abs/2502.07972"
-    },
-    {
-      "date": "2025",
-      "event": "CoRNStack paper accepted at ICLR 2025 — large-scale dataset for code retrieval powering nomic-embed-code",
-      "url": "https://huggingface.co/nomic-ai/nomic-embed-code"
     }
   ],
   "key_contributions": [

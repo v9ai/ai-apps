@@ -17,79 +17,24 @@
   ],
   "timeline": [
     {
-      "date": "2026-03-16",
-      "event": "Published 'Developer Guide: Nano Banana 2 with the Gemini Interactions API' on philschmid.de",
-      "url": "https://www.philschmid.de/"
+      "date": "2021-01",
+      "event": "Became the first German AWS Machine Learning Hero",
+      "url": "https://aws.amazon.com/developer/community/heroes/philipp-schmid/"
     },
     {
-      "date": "2026-03-04",
-      "event": "Published 'Practical Guide to Evaluating and Testing Agent Skills' blog post",
-      "url": "https://www.philschmid.de/"
+      "date": "2021-01",
+      "event": "Joined Hugging Face as Technical Lead, leading cloud provider partnerships",
+      "url": "https://www.philschmid.de/philipp-schmid"
     },
     {
-      "date": "2026-02-24",
-      "event": "Published 'Writing a Good AGENTS.md' guide for AI agent configuration",
-      "url": "https://www.philschmid.de/"
+      "date": "2022-01",
+      "event": "Created Hugging Face Inference Endpoints — secure production solution for deploying ML models on dedicated infrastructure",
+      "url": "https://www.linkedin.com/posts/philipp-schmid-a6a2bb196_hugging-face-inference-endpoints-announcement-activity-6976218664303771648-AOXw"
     },
     {
-      "date": "2026-02-20",
-      "event": "Published 'Agents: Inner Loop vs Outer Loop' blog post on agent architectures",
-      "url": "https://www.philschmid.de/"
-    },
-    {
-      "date": "2026-02-10",
-      "event": "Created ia-agents repository on GitHub (25 stars)",
-      "url": "https://github.com/philschmid/ia-agents"
-    },
-    {
-      "date": "2026-02-06",
-      "event": "Created self-learning-skill repository on GitHub (58 stars)",
-      "url": "https://github.com/philschmid/self-learning-skill"
-    },
-    {
-      "date": "2026-01-22",
-      "event": "Published 'Gemini Interactions API Quick Start' guide",
-      "url": "https://www.philschmid.de/"
-    },
-    {
-      "date": "2026-01-09",
-      "event": "Published 'Introducing MCP CLI' blog post; mcp-cli reaches 1,028 GitHub stars",
-      "url": "https://github.com/philschmid/mcp-cli"
-    },
-    {
-      "date": "2025-10-15",
-      "event": "Created AI Agent Benchmark Compendium — catalog of 50+ agent benchmarks (112 stars)",
-      "url": "https://github.com/philschmid/ai-agent-benchmark-compendium"
-    },
-    {
-      "date": "2025-07-27",
-      "event": "Released gemini-cli-extension — collection of Gemini CLI extensions and commands (148 stars)",
-      "url": "https://github.com/philschmid/gemini-cli-extension"
-    },
-    {
-      "date": "2025-07-23",
-      "event": "Spoke at 'Agents in Production 2025' on building agentic AI systems with Google Gemini",
-      "url": "https://home.mlops.community/public/videos/beyond-chatbots-how-to-build-agentic-ai-systems-with-google-gemini-philipp-schmid-agents-in-production-2025-2025-07-23"
-    },
-    {
-      "date": "2025-07-07",
-      "event": "Created code-sandbox-mcp for secure MCP-based code execution (197 stars)",
-      "url": "https://github.com/philschmid/code-sandbox-mcp"
-    },
-    {
-      "date": "2025-05-30",
-      "event": "Released Gemini 2.5 AI Engineering Workshop materials (212 stars)",
-      "url": "https://github.com/philschmid/gemini-2.5-ai-engineering-workshop"
-    },
-    {
-      "date": "2025-03",
-      "event": "Joined Google DeepMind as Staff Engineer for Developer Experience and Developer Relations",
-      "url": "https://www.linkedin.com/posts/philipp-schmid-a6a2bb196_life-update-i-joined-google-deepmind-to-activity-7293285134290567169-dzMY"
-    },
-    {
-      "date": "2025-02-05",
-      "event": "Created gemini-samples repository — personal samples and guides for Gemini models (1,357 stars)",
-      "url": "https://github.com/philschmid/gemini-samples"
+      "date": "2023-01",
+      "event": "Created IGEL — the first German instruction-tuned Large Language Model",
+      "url": "https://www.linkedin.com/posts/philipp-schmid-a6a2bb196_igel-first-german-instruction-tuned-large-activity-7051581258534903809-w2us"
     },
     {
       "date": "2025-01",
@@ -97,29 +42,84 @@
       "url": "https://x.com/_philschmid/status/1882788739875012663"
     },
     {
-      "date": "2025-01-17",
+      "date": "2025-01",
       "event": "Published 'How to use Anthropic MCP Server with open LLMs, OpenAI or Google Gemini' tutorial",
       "url": "https://www.philschmid.de/mcp-example-llama"
     },
     {
-      "date": "2023",
-      "event": "Created IGEL — the first German instruction-tuned Large Language Model",
-      "url": "https://www.linkedin.com/posts/philipp-schmid-a6a2bb196_igel-first-german-instruction-tuned-large-activity-7051581258534903809-w2us"
+      "date": "2025-02",
+      "event": "Created gemini-samples repository — personal samples and guides for Gemini models (1,357 stars)",
+      "url": "https://github.com/philschmid/gemini-samples"
     },
     {
-      "date": "2022",
-      "event": "Created Hugging Face Inference Endpoints — secure production solution for deploying ML models on dedicated infrastructure",
-      "url": "https://www.linkedin.com/posts/philipp-schmid-a6a2bb196_hugging-face-inference-endpoints-announcement-activity-6976218664303771648-AOXw"
+      "date": "2025-03",
+      "event": "Joined Google DeepMind as Staff Engineer for Developer Experience and Developer Relations",
+      "url": "https://www.linkedin.com/posts/philipp-schmid-a6a2bb196_life-update-i-joined-google-deepmind-to-activity-7293285134290567169-dzMY"
     },
     {
-      "date": "2021",
-      "event": "Became the first German AWS Machine Learning Hero",
-      "url": "https://aws.amazon.com/developer/community/heroes/philipp-schmid/"
+      "date": "2025-05",
+      "event": "Released Gemini 2.5 AI Engineering Workshop materials (212 stars)",
+      "url": "https://github.com/philschmid/gemini-2.5-ai-engineering-workshop"
     },
     {
-      "date": "2021",
-      "event": "Joined Hugging Face as Technical Lead, leading cloud provider partnerships",
-      "url": "https://www.philschmid.de/philipp-schmid"
+      "date": "2025-07",
+      "event": "Released gemini-cli-extension — collection of Gemini CLI extensions and commands (148 stars)",
+      "url": "https://github.com/philschmid/gemini-cli-extension"
+    },
+    {
+      "date": "2025-07",
+      "event": "Spoke at 'Agents in Production 2025' on building agentic AI systems with Google Gemini",
+      "url": "https://home.mlops.community/public/videos/beyond-chatbots-how-to-build-agentic-ai-systems-with-google-gemini-philipp-schmid-agents-in-production-2025-2025-07-23"
+    },
+    {
+      "date": "2025-07",
+      "event": "Created code-sandbox-mcp for secure MCP-based code execution (197 stars)",
+      "url": "https://github.com/philschmid/code-sandbox-mcp"
+    },
+    {
+      "date": "2025-10",
+      "event": "Created AI Agent Benchmark Compendium — catalog of 50+ agent benchmarks (112 stars)",
+      "url": "https://github.com/philschmid/ai-agent-benchmark-compendium"
+    },
+    {
+      "date": "2026-01",
+      "event": "Published 'Gemini Interactions API Quick Start' guide",
+      "url": "https://www.philschmid.de/"
+    },
+    {
+      "date": "2026-01",
+      "event": "Published 'Introducing MCP CLI' blog post; mcp-cli reaches 1,028 GitHub stars",
+      "url": "https://github.com/philschmid/mcp-cli"
+    },
+    {
+      "date": "2026-02",
+      "event": "Published 'Writing a Good AGENTS.md' guide for AI agent configuration",
+      "url": "https://www.philschmid.de/"
+    },
+    {
+      "date": "2026-02",
+      "event": "Published 'Agents: Inner Loop vs Outer Loop' blog post on agent architectures",
+      "url": "https://www.philschmid.de/"
+    },
+    {
+      "date": "2026-02",
+      "event": "Created ia-agents repository on GitHub (25 stars)",
+      "url": "https://github.com/philschmid/ia-agents"
+    },
+    {
+      "date": "2026-02",
+      "event": "Created self-learning-skill repository on GitHub (58 stars)",
+      "url": "https://github.com/philschmid/self-learning-skill"
+    },
+    {
+      "date": "2026-03",
+      "event": "Published 'Developer Guide: Nano Banana 2 with the Gemini Interactions API' on philschmid.de",
+      "url": "https://www.philschmid.de/"
+    },
+    {
+      "date": "2026-03",
+      "event": "Published 'Practical Guide to Evaluating and Testing Agent Skills' blog post",
+      "url": "https://www.philschmid.de/"
     }
   ],
   "key_contributions": [

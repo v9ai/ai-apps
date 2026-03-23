@@ -17,44 +17,9 @@
   ],
   "timeline": [
     {
-      "date": "2026-03-15",
-      "event": "Published blog post 'Diminishing Returns and the Art of Knowing When to Stop' on ColQwen3.5 optimization plateaus",
-      "url": "https://athrael.net/posts/diminishing-returns-benchmark-optimization"
-    },
-    {
-      "date": "2026-03",
-      "event": "Published ColQwen3.5-4.5B v1/v2/v3 visual document retrieval models on Hugging Face",
-      "url": "https://huggingface.co/athrael-soju/colqwen3.5-4.5B-v3"
-    },
-    {
-      "date": "2026-02-27",
-      "event": "Published arXiv paper 'Architecture-Aware LLM Inference Optimization on AMD Instinct GPUs'",
-      "url": "https://arxiv.org/abs/2603.10031"
-    },
-    {
-      "date": "2026-02-04",
-      "event": "Participated in the launch event for the Greek AI Startup Accelerator by OpenAI, the Hellenic Government, and Endeavor Greece",
-      "url": "https://luma.com/ooh81f9h"
-    },
-    {
-      "date": "2026-01",
-      "event": "Published blog post 'Closing the AI Value Gap: Insights from Research' on enterprise AI adoption",
-      "url": "https://athrael.net/posts/closing-the-ai-value-gap"
-    },
-    {
-      "date": "2025-12-02",
-      "event": "Published arXiv paper 'Spatially-Grounded Document Retrieval via Patch-to-Region Relevance Propagation'",
-      "url": "https://arxiv.org/abs/2512.02660"
-    },
-    {
-      "date": "2025-10",
-      "event": "Released Snappy, a vision-language retrieval system unifying ColPali with structured OCR (83 stars)",
-      "url": "https://github.com/athrael-soju/Snappy"
-    },
-    {
-      "date": "2025-09",
-      "event": "Published 'The Most Beautiful RAG' — end-to-end vision RAG with ColPali, Qdrant, and MinIO",
-      "url": "https://athrael.net/posts/the-most-beautiful-vision-rag"
+      "date": "2024-01",
+      "event": "Incorporated NCA LTD as a private limited company in the UK",
+      "url": "https://www.companiesintheuk.co.uk/ltd/nca-2"
     },
     {
       "date": "2024-04",
@@ -62,9 +27,44 @@
       "url": "https://ai.plainenglish.io/raising-artificial-intelligence-62fe9ae40e90"
     },
     {
-      "date": "2024-01",
-      "event": "Incorporated NCA LTD as a private limited company in the UK",
-      "url": "https://www.companiesintheuk.co.uk/ltd/nca-2"
+      "date": "2025-09",
+      "event": "Published 'The Most Beautiful RAG' — end-to-end vision RAG with ColPali, Qdrant, and MinIO",
+      "url": "https://athrael.net/posts/the-most-beautiful-vision-rag"
+    },
+    {
+      "date": "2025-10",
+      "event": "Released Snappy, a vision-language retrieval system unifying ColPali with structured OCR (83 stars)",
+      "url": "https://github.com/athrael-soju/Snappy"
+    },
+    {
+      "date": "2025-12",
+      "event": "Published arXiv paper 'Spatially-Grounded Document Retrieval via Patch-to-Region Relevance Propagation'",
+      "url": "https://arxiv.org/abs/2512.02660"
+    },
+    {
+      "date": "2026-01",
+      "event": "Published blog post 'Closing the AI Value Gap: Insights from Research' on enterprise AI adoption",
+      "url": "https://athrael.net/posts/closing-the-ai-value-gap"
+    },
+    {
+      "date": "2026-02",
+      "event": "Published arXiv paper 'Architecture-Aware LLM Inference Optimization on AMD Instinct GPUs'",
+      "url": "https://arxiv.org/abs/2603.10031"
+    },
+    {
+      "date": "2026-02",
+      "event": "Participated in the launch event for the Greek AI Startup Accelerator by OpenAI, the Hellenic Government, and Endeavor Greece",
+      "url": "https://luma.com/ooh81f9h"
+    },
+    {
+      "date": "2026-03",
+      "event": "Published blog post 'Diminishing Returns and the Art of Knowing When to Stop' on ColQwen3.5 optimization plateaus",
+      "url": "https://athrael.net/posts/diminishing-returns-benchmark-optimization"
+    },
+    {
+      "date": "2026-03",
+      "event": "Published ColQwen3.5-4.5B v1/v2/v3 visual document retrieval models on Hugging Face",
+      "url": "https://huggingface.co/athrael-soju/colqwen3.5-4.5B-v3"
     }
   ],
   "key_contributions": [

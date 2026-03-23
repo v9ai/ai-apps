@@ -16,7 +16,7 @@ from deepeval.metrics import (
 from deepeval.test_case import LLMTestCase
 
 from deepseek_model import DeepSeekModel
-from rag_pipeline import invoke_rag
+from rag_pipeline import invoke_rag_batch
 
 model = DeepSeekModel()
 THRESHOLD = 0.6
@@ -85,17 +85,16 @@ CONVERSATIONS = [
 
 
 def _run_conversation_turns(turns: list[str]) -> list[LLMTestCase]:
-    """Run each turn through the RAG pipeline independently, return test cases."""
-    test_cases = []
-    for user_msg in turns:
-        result = invoke_rag(user_msg)
-        tc = LLMTestCase(
+    """Run each turn through the RAG pipeline in parallel, return test cases in order."""
+    results = invoke_rag_batch(turns)
+    return [
+        LLMTestCase(
             input=user_msg,
-            actual_output=result["actual_output"],
-            retrieval_context=result["retrieval_context"],
+            actual_output=(result["actual_output"] if result else ""),
+            retrieval_context=(result["retrieval_context"] if result else []),
         )
-        test_cases.append(tc)
-    return test_cases
+        for user_msg, result in zip(turns, results)
+    ]
 
 
 # -- Per-conversation tests ----------------------------------------------------

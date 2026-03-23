@@ -17,39 +17,29 @@
   ],
   "timeline": [
     {
-      "date": "2026-01",
-      "event": "Co-authored 'Learnable Multipliers: Freeing the Scale of Language Model Matrix Layers' on optimizing weight scaling during LLM pretraining",
-      "url": "https://www.catalyzex.com/paper/learnable-multipliers-freeing-the-scale-of"
+      "date": "2021-01",
+      "event": "Joined Hugging Face Open Source team as Machine Learning Engineer; began core contributions to transformers, PEFT, and TRL",
+      "url": "https://huggingface.co/ybelkada"
     },
     {
-      "date": "2025-07",
-      "event": "Co-authored 'Falcon-H1: A Family of Hybrid-Head Language Models Redefining Efficiency and Performance' — hybrid Transformer-SSM architecture at TII",
-      "url": "https://arxiv.org/abs/2507.22448"
+      "date": "2022-08",
+      "event": "Co-authored 'LLM.int8(): 8-bit Matrix Multiplication for Transformers at Scale' (NeurIPS 2022) with Tim Dettmers, Mike Lewis, Luke Zettlemoyer",
+      "url": "https://arxiv.org/abs/2208.07339"
     },
     {
-      "date": "2025-06",
-      "event": "Co-authored NeurIPS 2025 E2LM Competition paper on Early Training Evaluation of Language Models; served as platform administrator and evaluator",
-      "url": "https://arxiv.org/abs/2506.07731"
+      "date": "2022-09",
+      "event": "Co-authored 'Petals: Collaborative Inference and Fine-tuning of Large Models' with Tim Dettmers and collaborators",
+      "url": "https://www.catalyzex.com/paper/petals-collaborative-inference-and-fine"
     },
     {
-      "date": "2024-10",
-      "event": "Co-authored 'Falcon Mamba: The First Competitive Attention-free 7B Language Model' at TII",
-      "url": "https://www.catalyzex.com/paper/falcon-mamba-the-first-competitive-attention"
+      "date": "2022-11",
+      "event": "Co-authored BLOOM: A 176B-Parameter Open-Access Multilingual Language Model with the BigScience Workshop",
+      "url": "https://www.catalyzex.com/paper/bloom-a-176b-parameter-open-access"
     },
     {
-      "date": "2024-07",
-      "event": "Joined Technology Innovation Institute (TII) as Senior AI Engineer working on Falcon LLM pre-training and evaluation",
-      "url": "https://www.tii.ae/"
-    },
-    {
-      "date": "2024-02",
-      "event": "Co-authored 'StarCoder 2 and The Stack v2: The Next Generation' — code LLMs trained on 619 programming languages",
-      "url": "https://www.catalyzex.com/paper/starcoder-2-and-the-stack-v2-the-next"
-    },
-    {
-      "date": "2023-10",
-      "event": "Co-authored 'Zephyr: Direct Distillation of LM Alignment' — distilled alignment technique for smaller LMs",
-      "url": "https://www.catalyzex.com/paper/zephyr-direct-distillation-of-lm-alignment"
+      "date": "2023-05",
+      "event": "Co-authored HF blog post 'Making LLMs even more accessible with bitsandbytes, 4-bit quantization and QLoRA' (176 upvotes)",
+      "url": "https://huggingface.co/blog/4bit-transformers-bitsandbytes"
     },
     {
       "date": "2023-09",
@@ -62,9 +52,9 @@
       "url": "https://www.linkedin.com/posts/younes-belkada-b1a903145_very-excited-for-the-talk-i-will-be-giving-activity-7095769182838935552-fGg8"
     },
     {
-      "date": "2023-05",
-      "event": "Co-authored HF blog post 'Making LLMs even more accessible with bitsandbytes, 4-bit quantization and QLoRA' (176 upvotes)",
-      "url": "https://huggingface.co/blog/4bit-transformers-bitsandbytes"
+      "date": "2023-10",
+      "event": "Co-authored 'Zephyr: Direct Distillation of LM Alignment' — distilled alignment technique for smaller LMs",
+      "url": "https://www.catalyzex.com/paper/zephyr-direct-distillation-of-lm-alignment"
     },
     {
       "date": "2023-12",
@@ -72,24 +62,34 @@
       "url": "https://www.catalyzex.com/paper/distributed-inference-and-fine-tuning-of"
     },
     {
-      "date": "2022-11",
-      "event": "Co-authored BLOOM: A 176B-Parameter Open-Access Multilingual Language Model with the BigScience Workshop",
-      "url": "https://www.catalyzex.com/paper/bloom-a-176b-parameter-open-access"
+      "date": "2024-02",
+      "event": "Co-authored 'StarCoder 2 and The Stack v2: The Next Generation' — code LLMs trained on 619 programming languages",
+      "url": "https://www.catalyzex.com/paper/starcoder-2-and-the-stack-v2-the-next"
     },
     {
-      "date": "2022-09",
-      "event": "Co-authored 'Petals: Collaborative Inference and Fine-tuning of Large Models' with Tim Dettmers and collaborators",
-      "url": "https://www.catalyzex.com/paper/petals-collaborative-inference-and-fine"
+      "date": "2024-07",
+      "event": "Joined Technology Innovation Institute (TII) as Senior AI Engineer working on Falcon LLM pre-training and evaluation",
+      "url": "https://www.tii.ae/"
     },
     {
-      "date": "2022-08",
-      "event": "Co-authored 'LLM.int8(): 8-bit Matrix Multiplication for Transformers at Scale' (NeurIPS 2022) with Tim Dettmers, Mike Lewis, Luke Zettlemoyer",
-      "url": "https://arxiv.org/abs/2208.07339"
+      "date": "2024-10",
+      "event": "Co-authored 'Falcon Mamba: The First Competitive Attention-free 7B Language Model' at TII",
+      "url": "https://www.catalyzex.com/paper/falcon-mamba-the-first-competitive-attention"
     },
     {
-      "date": "2021",
-      "event": "Joined Hugging Face Open Source team as Machine Learning Engineer; began core contributions to transformers, PEFT, and TRL",
-      "url": "https://huggingface.co/ybelkada"
+      "date": "2025-06",
+      "event": "Co-authored NeurIPS 2025 E2LM Competition paper on Early Training Evaluation of Language Models; served as platform administrator and evaluator",
+      "url": "https://arxiv.org/abs/2506.07731"
+    },
+    {
+      "date": "2025-07",
+      "event": "Co-authored 'Falcon-H1: A Family of Hybrid-Head Language Models Redefining Efficiency and Performance' — hybrid Transformer-SSM architecture at TII",
+      "url": "https://arxiv.org/abs/2507.22448"
+    },
+    {
+      "date": "2026-01",
+      "event": "Co-authored 'Learnable Multipliers: Freeing the Scale of Language Model Matrix Layers' on optimizing weight scaling during LLM pretraining",
+      "url": "https://www.catalyzex.com/paper/learnable-multipliers-freeing-the-scale-of"
     }
   ],
   "key_contributions": [

@@ -19,13 +19,38 @@
   ],
   "timeline": [
     {
-      "date": "2026-01",
-      "event": "Appointed CTO of Thinking Machines Lab, co-founded by Mira Murati, replacing Barret Zoph",
-      "url": "https://americanbazaaronline.com/2026/01/16/soumith-chintala-joins-thinking-machine-labs-as-cto-473408/"
+      "date": "2010-01",
+      "event": "Enrolled at New York University for MS in Computer Science after moving to the US on a J-1 visa",
+      "url": "https://www.indianewsnetwork.com/en/soumith-chintala-tier-2-college-ai-leader-meta-20251115"
     },
     {
-      "date": "2025-11",
-      "event": "Left Meta and stepped down from PyTorch leadership after 11 years",
+      "date": "2012-01",
+      "event": "Began doctoral studies in Computer Science at NYU under Yann LeCun's mentorship",
+      "url": "https://scholar.google.com/citations?user=36ofBJgAAAAJ&hl=en"
+    },
+    {
+      "date": "2014-05",
+      "event": "Joined Facebook AI Research (FAIR) as a founding member of the small early team",
+      "url": "https://soumith.ch/"
+    },
+    {
+      "date": "2015-11",
+      "event": "Co-authored DCGAN paper with Alec Radford and Luke Metz, advancing generative image models",
+      "url": "https://arxiv.org/abs/1511.06434"
+    },
+    {
+      "date": "2016-01",
+      "event": "Public release of PyTorch, which grew to dominate AI research and production",
+      "url": "https://pytorch.org/"
+    },
+    {
+      "date": "2017-01",
+      "event": "Co-authored Wasserstein GAN paper with Martin Arjovsky and Leon Bottou (ICML 2017)",
+      "url": "https://arxiv.org/abs/1701.07875"
+    },
+    {
+      "date": "2020-01",
+      "event": "Took hiatus from PyTorch to pursue robotics research at Meta before returning",
       "url": "https://soumith.ch/blog/2025-11-06-leaving-meta-and-pytorch.md.html"
     },
     {
@@ -34,39 +59,14 @@
       "url": "https://soumith.ch/blog/2025-11-06-leaving-meta-and-pytorch.md.html"
     },
     {
-      "date": "2020",
-      "event": "Took hiatus from PyTorch to pursue robotics research at Meta before returning",
+      "date": "2025-11",
+      "event": "Left Meta and stepped down from PyTorch leadership after 11 years",
       "url": "https://soumith.ch/blog/2025-11-06-leaving-meta-and-pytorch.md.html"
     },
     {
-      "date": "2017-01",
-      "event": "Co-authored Wasserstein GAN paper with Martin Arjovsky and Leon Bottou (ICML 2017)",
-      "url": "https://arxiv.org/abs/1701.07875"
-    },
-    {
-      "date": "2016",
-      "event": "Public release of PyTorch, which grew to dominate AI research and production",
-      "url": "https://pytorch.org/"
-    },
-    {
-      "date": "2015-11",
-      "event": "Co-authored DCGAN paper with Alec Radford and Luke Metz, advancing generative image models",
-      "url": "https://arxiv.org/abs/1511.06434"
-    },
-    {
-      "date": "2014-05",
-      "event": "Joined Facebook AI Research (FAIR) as a founding member of the small early team",
-      "url": "https://soumith.ch/"
-    },
-    {
-      "date": "2012",
-      "event": "Began doctoral studies in Computer Science at NYU under Yann LeCun's mentorship",
-      "url": "https://scholar.google.com/citations?user=36ofBJgAAAAJ&hl=en"
-    },
-    {
-      "date": "2010",
-      "event": "Enrolled at New York University for MS in Computer Science after moving to the US on a J-1 visa",
-      "url": "https://www.indianewsnetwork.com/en/soumith-chintala-tier-2-college-ai-leader-meta-20251115"
+      "date": "2026-01",
+      "event": "Appointed CTO of Thinking Machines Lab, co-founded by Mira Murati, replacing Barret Zoph",
+      "url": "https://americanbazaaronline.com/2026/01/16/soumith-chintala-joins-thinking-machine-labs-as-cto-473408/"
     }
   ],
   "key_contributions": [

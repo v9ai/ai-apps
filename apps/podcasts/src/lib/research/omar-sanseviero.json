@@ -17,27 +17,27 @@
   ],
   "timeline": [
     {
-      "date": "2014",
+      "date": "2014-01",
       "event": "Enrolled at Tecnologico de Monterrey for a BS in Computer Science and Technology (graduated 2018). Completed a semester exchange at UC Berkeley in 2017.",
       "url": "https://osanseviero.github.io/hackerllama/"
     },
     {
-      "date": "2018",
+      "date": "2018-01",
       "event": "Joined Google as a Software Engineer, working on Google Assistant (building ML models and infrastructure) and serving as a 20% Product Manager on TensorFlow Graphics.",
       "url": "https://osanseviero.github.io/hackerllama/"
     },
     {
-      "date": "2019",
+      "date": "2019-01",
       "event": "Started MS in Computer Science at Georgia Institute of Technology (completed 2021).",
       "url": "https://osanseviero.github.io/hackerllama/"
     },
     {
-      "date": "2021",
+      "date": "2021-01",
       "event": "Joined Hugging Face as a Machine Learning Engineer on the Open Source team, working to democratize ML and grow the Hub ecosystem.",
       "url": "https://huggingface.co/osanseviero"
     },
     {
-      "date": "2021",
+      "date": "2021-01",
       "event": "Launched Hugging Face Spaces with the infra and product teams, enabling community members to create and share ML app demos. Scaled from 500 to over 400,000 Spaces.",
       "url": "https://huggingface.co/spaces"
     },
@@ -57,7 +57,7 @@
       "url": "https://programme.europython.eu/europython-2022/speaker/BGUJLS/"
     },
     {
-      "date": "2023",
+      "date": "2023-01",
       "event": "Promoted to Chief Llama Officer and Head of Platform and Community at Hugging Face, leading developer advocacy engineering, on-device ML, and moonshot teams (25 people).",
       "url": "https://osanseviero.github.io/hackerllama/"
     },
@@ -82,14 +82,14 @@
       "url": "https://x.com/osanseviero/status/1868270360560369884"
     },
     {
+      "date": "2025-01",
+      "event": "Speaking at Abracadata Summit 2025 on 'Open Models: Use cases, fine-tuning and tooling ecosystem' and at Chatbot Summit Berlin.",
+      "url": "https://abracadata.space/speakers/omar-sanseviero/"
+    },
+    {
       "date": "2025-06",
       "event": "At Google I/O Connect 2025, announced Gemma surpassed 180 million downloads and 80,000+ developer-built variants. Published developer guide for Gemma 3n.",
       "url": "https://developers.googleblog.com/en/introducing-gemma-3n-developer-guide/"
-    },
-    {
-      "date": "2025",
-      "event": "Speaking at Abracadata Summit 2025 on 'Open Models: Use cases, fine-tuning and tooling ecosystem' and at Chatbot Summit Berlin.",
-      "url": "https://abracadata.space/speakers/omar-sanseviero/"
     }
   ],
   "key_contributions": [

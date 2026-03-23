@@ -17,22 +17,27 @@
   ],
   "timeline": [
     {
-      "date": "2003",
+      "date": "2003-01",
       "event": "Began Masters in Mathematics and Computer Science at Ecole normale superieure",
       "url": "https://sgugger.github.io/pages/about-me.html"
     },
     {
-      "date": "2007",
+      "date": "2007-01",
       "event": "Started teaching mathematics and computer science at CPGE in France; authored 10 textbooks for Dunod editions",
       "url": "https://sgugger.github.io/pages/about-me.html"
     },
     {
-      "date": "2015",
+      "date": "2015-01",
       "event": "Relocated to New York City; discovered deep learning through fast.ai MOOC",
       "url": "https://sgugger.github.io/pages/about-me.html"
     },
     {
-      "date": "2018-04-07",
+      "date": "2018-01",
+      "event": "Joined fast.ai as a research scientist, co-developing the fastai library and deep learning courses with Jeremy Howard",
+      "url": "https://github.com/fastai/fastai"
+    },
+    {
+      "date": "2018-04",
       "event": "Published influential blog post on the 1-cycle learning rate policy, popularizing super-convergence techniques",
       "url": "https://sgugger.github.io/the-1cycle-policy.html"
     },
@@ -42,9 +47,9 @@
       "url": "https://www.fast.ai/posts/2018-04-30-dawnbench-fastai.html"
     },
     {
-      "date": "2018",
-      "event": "Joined fast.ai as a research scientist, co-developing the fastai library and deep learning courses with Jeremy Howard",
-      "url": "https://github.com/fastai/fastai"
+      "date": "2020-01",
+      "event": "Joined Hugging Face; became core maintainer of the Transformers library and developed the Trainer API",
+      "url": "https://github.com/huggingface/transformers"
     },
     {
       "date": "2020-06",
@@ -52,24 +57,19 @@
       "url": "https://www.amazon.com/Deep-Learning-Coders-fastai-PyTorch/dp/1492045527"
     },
     {
-      "date": "2020",
-      "event": "Joined Hugging Face; became core maintainer of the Transformers library and developed the Trainer API",
-      "url": "https://github.com/huggingface/transformers"
-    },
-    {
-      "date": "2021-04-16",
+      "date": "2021-04",
       "event": "Launched Hugging Face Accelerate library for simplified distributed PyTorch training",
       "url": "https://huggingface.co/blog/accelerate-library"
+    },
+    {
+      "date": "2023-01",
+      "event": "Joined Jane Street as Machine Learning Engineer on the ML-infra team",
+      "url": "https://signalsandthreads.com/the-uncertain-art-of-accelerating-ml-models/"
     },
     {
       "date": "2023-08",
       "event": "Left Hugging Face after three years; announced continued open-source contributions to Transformers and Accelerate",
       "url": "https://x.com/GuggerSylvain/status/1695478037121294405"
-    },
-    {
-      "date": "2023",
-      "event": "Joined Jane Street as Machine Learning Engineer on the ML-infra team",
-      "url": "https://signalsandthreads.com/the-uncertain-art-of-accelerating-ml-models/"
     },
     {
       "date": "2024-10",

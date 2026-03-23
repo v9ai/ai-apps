@@ -15,12 +15,12 @@
   ],
   "timeline": [
     {
-      "date": "2014",
+      "date": "2014-01",
       "event": "Completed PhD in Computer Science at UIUC under Jiawei Han, researching mining latent entity structures from unstructured data. Published ~30 papers during doctoral studies.",
       "url": "https://siebelschool.illinois.edu/news/wang-wins-2015-sigkdd-dissertation-award-0"
     },
     {
-      "date": "2014",
+      "date": "2014-01",
       "event": "Joined Microsoft Research in Redmond as a Researcher, developing algorithms to discover knowledge from unstructured data for enterprise applications.",
       "url": "https://www.microsoft.com/en-us/research/people/chiw/selected-publications/"
     },
@@ -30,12 +30,12 @@
       "url": "https://siebelschool.illinois.edu/news/wang-wins-2015-sigkdd-dissertation-award-0"
     },
     {
-      "date": "2019",
+      "date": "2019-01",
       "event": "Began AutoML research at Microsoft Research, leading to the development of FLAML (Fast and Lightweight AutoML Library).",
       "url": "https://microsoft.github.io/FLAML/docs/Research/"
     },
     {
-      "date": "2021",
+      "date": "2021-01",
       "event": "Published the FLAML paper at MLSys 2021 with Qingyun Wu, Markus Weimer, and Erkang Zhu. FLAML adopted by Microsoft, Google, and Amazon for AutoML and hyperparameter optimization.",
       "url": "https://arxiv.org/abs/1911.04706"
     },

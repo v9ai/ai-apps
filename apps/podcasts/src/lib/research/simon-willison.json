@@ -17,7 +17,7 @@
   ],
   "timeline": [
     {
-      "date": "2003",
+      "date": "2003-01",
       "event": "Joined the Lawrence Journal-World; co-created Django web framework with Adrian Holovaty",
       "url": "https://en.wikipedia.org/wiki/Django_(web_framework)"
     },
@@ -27,22 +27,22 @@
       "url": "https://www.djangoproject.com/"
     },
     {
-      "date": "2008",
+      "date": "2008-01",
       "event": "Joined The Guardian as software architect, applying data journalism techniques",
       "url": "https://simonwillison.net/about/"
     },
     {
-      "date": "2010",
+      "date": "2010-01",
       "event": "Co-founded Lanyrd, a social conference directory, with Natalie Downe",
       "url": "https://simonwillison.net/about/"
     },
     {
-      "date": "2011",
+      "date": "2011-01",
       "event": "Lanyrd accepted into Y Combinator",
       "url": "https://simonwillison.net/about/"
     },
     {
-      "date": "2013",
+      "date": "2013-01",
       "event": "Lanyrd acquired by Eventbrite; joined as engineering team member, later Engineering Director",
       "url": "https://simonwillison.net/about/"
     },
@@ -52,22 +52,22 @@
       "url": "https://github.com/simonw/datasette"
     },
     {
+      "date": "2022-01",
+      "event": "Elected to the Python Software Foundation board",
+      "url": "https://simonwillison.net/about/"
+    },
+    {
       "date": "2022-09",
       "event": "Coined the term 'prompt injection' to describe a fundamental class of LLM security vulnerabilities",
       "url": "https://simonwillison.net/tags/prompt-injection/"
     },
     {
-      "date": "2022",
-      "event": "Elected to the Python Software Foundation board",
-      "url": "https://simonwillison.net/about/"
-    },
-    {
-      "date": "2023",
+      "date": "2023-01",
       "event": "Launched LLM, a CLI tool and Python library for accessing large language models via plugins",
       "url": "https://github.com/simonw/llm"
     },
     {
-      "date": "2023",
+      "date": "2023-01",
       "event": "Participated in GitHub Accelerator program for Datasette",
       "url": "https://simonwillison.net/about/"
     },

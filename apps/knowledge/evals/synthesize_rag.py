@@ -17,6 +17,7 @@ Usage:
 import argparse
 import json
 import os
+from concurrent.futures import ThreadPoolExecutor, as_completed
 from datetime import datetime, timezone
 from pathlib import Path
 
@@ -32,7 +33,7 @@ from deepeval.synthesizer.types import Evolution
 from deepseek_model import DeepSeekModel
 from local_embedder import LocalEmbedder
 from pgvector_retriever import PgVectorRetriever
-from rag_pipeline import RAGConfig, invoke_rag
+from rag_pipeline import RAGConfig, invoke_rag, invoke_rag_batch
 
 DATASETS_DIR = Path(__file__).resolve().parent / "datasets"
 
@@ -113,7 +114,10 @@ def generate_from_db_sections(
     all_contexts = []
     context_sources = []
 
+    target_contexts = len(slugs) * goldens_per_lesson
     for slug in slugs:
+        if len(all_contexts) >= target_contexts:
+            break
         sections = retriever.get_all_sections_for_lesson(slug)
         if not sections:
             continue
@@ -129,7 +133,7 @@ def generate_from_db_sections(
             ]
             all_contexts.append(context)
             context_sources.append(slug)
-            if len(all_contexts) >= len(slugs) * goldens_per_lesson:
+            if len(all_contexts) >= target_contexts:
                 break
 
     print(f"Prepared {len(all_contexts)} context groups from {len(slugs)} lessons")
@@ -196,23 +200,24 @@ def generate_from_retrieval(
                 "How should I set up observability for LLM applications?",
             ]
 
-    goldens = []
-    for query in queries[:num_queries]:
-        try:
-            result = invoke_rag(query, config)
-            if result["retrieval_context"]:
-                goldens.append({
-                    "input": query,
-                    "actual_output": result["actual_output"],
-                    "retrieval_context": result["retrieval_context"],
-                    "retrieval_scores": result["retrieval_scores"],
-                    "source": f"retrieval-{result['retrieval_method']}",
-                })
-        except Exception as e:
-            print(f"  Skipping query (error: {e}): {query[:60]}")
+    batch_queries = queries[:num_queries]
+    batch_results = invoke_rag_batch(batch_queries, config)
 
-    # Generate expected_output for each golden using the context
-    for g in goldens:
+    goldens = []
+    for query, result in zip(batch_queries, batch_results):
+        if result is None:
+            continue
+        if result["retrieval_context"]:
+            goldens.append({
+                "input": query,
+                "actual_output": result["actual_output"],
+                "retrieval_context": result["retrieval_context"],
+                "retrieval_scores": result["retrieval_scores"],
+                "source": f"retrieval-{result['retrieval_method']}",
+            })
+
+    # Generate expected_output for each golden in parallel — independent LLM calls.
+    def _gen_expected(g: dict) -> dict:
         try:
             expected_prompt = (
                 f"Based on the following context, provide a comprehensive answer "
@@ -220,10 +225,17 @@ def generate_from_retrieval(
                 + "\n---\n".join(g.get("retrieval_context", [])[:3])
             )
             g["expected_output"] = model.generate(expected_prompt)
-            g["context"] = g.pop("retrieval_context", [])
         except Exception:
             g["expected_output"] = None
-            g["context"] = g.pop("retrieval_context", [])
+        g["context"] = g.pop("retrieval_context", [])
+        return g
+
+    with ThreadPoolExecutor(max_workers=min(4, len(goldens) or 1)) as pool:
+        futures = {pool.submit(_gen_expected, g): i for i, g in enumerate(goldens)}
+        ordered: list[dict | None] = [None] * len(goldens)
+        for future in as_completed(futures):
+            ordered[futures[future]] = future.result()
+    goldens = [g for g in ordered if g is not None]
 
     return goldens
 

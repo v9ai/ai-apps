@@ -21,7 +21,7 @@ from conftest_rag import (
     load_rag_goldens,
     rag_golden_params,
 )
-from rag_pipeline import invoke_rag
+from rag_pipeline import invoke_rag, invoke_rag_batch
 
 GOLDENS = [g for g in load_rag_goldens() if g.get("expected_output")]
 PARAMS = rag_golden_params(GOLDENS)
@@ -69,9 +69,19 @@ def test_contextual_recall(golden: dict):
 
 def test_retrieval_quality_batch():
     """Aggregate retrieval quality across all goldens. 60% must pass both."""
+    # Pre-fetch all RAG results in parallel, then score metrics sequentially.
+    rag_results = invoke_rag_batch([g["input"] for g in GOLDENS])
+
     results = []
-    for golden in GOLDENS:
-        tc = _run_rag(golden)
+    for golden, rag_result in zip(GOLDENS, rag_results):
+        if rag_result is None:
+            continue
+        tc = LLMTestCase(
+            input=golden["input"],
+            actual_output=rag_result["actual_output"],
+            expected_output=golden["expected_output"],
+            retrieval_context=rag_result["retrieval_context"],
+        )
         if not tc.retrieval_context:
             continue
 

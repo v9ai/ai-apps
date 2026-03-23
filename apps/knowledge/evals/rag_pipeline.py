@@ -14,11 +14,12 @@ Usage:
 
 import operator
 import os
+from concurrent.futures import ThreadPoolExecutor, as_completed
 from pathlib import Path
 from typing import Annotated, TypedDict
 
 from dotenv import load_dotenv
-from langchain_core.messages import AIMessage, HumanMessage, SystemMessage
+from langchain_core.messages import HumanMessage, SystemMessage
 from langchain_openai import ChatOpenAI
 from langgraph.graph import END, StateGraph
 
@@ -64,6 +65,14 @@ RAG_SYSTEM_PROMPT = (
     "If the context doesn't contain enough information, say so clearly. "
     "Cite which lesson or section your answer draws from.\n\n"
     "Context:\n{context}"
+)
+
+# Shared LLM instance — ChatOpenAI is thread-safe; build once.
+_llm = ChatOpenAI(
+    model="deepseek-chat",
+    base_url="https://api.deepseek.com",
+    api_key=os.environ.get("DEEPSEEK_API_KEY", ""),
+    temperature=0,
 )
 
 
@@ -156,23 +165,16 @@ def generate(state: RAGState) -> dict:
     system_template = state["config"].get("system_prompt", RAG_SYSTEM_PROMPT)
     system_text = system_template.format(context=state["formatted_context"])
 
-    llm = ChatOpenAI(
-        model="deepseek-chat",
-        base_url="https://api.deepseek.com",
-        api_key=os.environ.get("DEEPSEEK_API_KEY", ""),
-        temperature=0,
-    )
-
     messages = [SystemMessage(content=system_text), HumanMessage(content=state["query"])]
-    response = llm.invoke(messages)
+    response = _llm.invoke(messages)
     return {"answer": response.content}
 
 
 # -- Graph builder -------------------------------------------------------------
 
 
-def build_rag_pipeline(config: RAGConfig | None = None) -> StateGraph:
-    """Build the RAG StateGraph."""
+def build_rag_pipeline() -> StateGraph:
+    """Build and compile the RAG StateGraph. Reuse the returned object."""
     graph = StateGraph(RAGState)
     graph.add_node("retrieve", retrieve)
     graph.add_node("format_context", format_context)
@@ -186,15 +188,18 @@ def build_rag_pipeline(config: RAGConfig | None = None) -> StateGraph:
     return graph.compile()
 
 
+# Compiled graph is stateless — build once and reuse across all invocations.
+_rag_pipeline = build_rag_pipeline()
+
+
 # -- Convenience functions -----------------------------------------------------
 
 
 def invoke_rag(query: str, config: RAGConfig | None = None) -> RAGResult:
     """Run the full RAG pipeline and return structured result."""
     cfg = {**_DEFAULT_CONFIG, **(config or {})}
-    pipeline = build_rag_pipeline(cfg)
 
-    result = pipeline.invoke({
+    result = _rag_pipeline.invoke({
         "query": query,
         "config": cfg,
         "retrieved_chunks": [],
@@ -213,6 +218,18 @@ def invoke_rag(query: str, config: RAGConfig | None = None) -> RAGResult:
     )
 
 
-def invoke_rag_batch(queries: list[str], config: RAGConfig | None = None) -> list[RAGResult]:
-    """Run RAG pipeline on multiple queries sequentially."""
-    return [invoke_rag(q, config) for q in queries]
+def invoke_rag_batch(
+    queries: list[str],
+    config: RAGConfig | None = None,
+    max_workers: int = 4,
+) -> list[RAGResult]:
+    """Run RAG pipeline on multiple queries in parallel (I/O-bound)."""
+    with ThreadPoolExecutor(max_workers=min(max_workers, len(queries) or 1)) as pool:
+        futures = {pool.submit(invoke_rag, q, config): i for i, q in enumerate(queries)}
+        results: list[RAGResult | None] = [None] * len(queries)
+        for future in as_completed(futures):
+            try:
+                results[futures[future]] = future.result()
+            except Exception:
+                results[futures[future]] = None
+    return results  # type: ignore[return-value]

@@ -12,6 +12,7 @@ Usage:
 """
 
 import json
+from concurrent.futures import ThreadPoolExecutor, as_completed
 from pathlib import Path
 
 import pytest
@@ -194,13 +195,27 @@ def test_synthetic_hallucination(golden: Golden, agent):
 # -- Batch tests ---------------------------------------------------------------
 
 
+def _invoke_agents_batch(agent, goldens: list[Golden]) -> list[str]:
+    """Run agent on all goldens in parallel. Returns outputs ordered by index."""
+    with ThreadPoolExecutor(max_workers=min(4, len(goldens) or 1)) as pool:
+        futures = {pool.submit(_invoke_agent, agent, g.input): i for i, g in enumerate(goldens)}
+        outputs: list[str] = [""] * len(goldens)
+        for future in as_completed(futures):
+            i = futures[future]
+            try:
+                outputs[i] = future.result()
+            except Exception:
+                outputs[i] = ""
+    return outputs
+
+
 def test_synthetic_batch_task_completion(agent):
     """Run all goldens through the agent. 60% must pass TaskCompletion."""
     metric = TaskCompletionMetric(model=model, threshold=THRESHOLD)
+    outputs = _invoke_agents_batch(agent, GOLDENS)
 
     results = []
-    for golden in GOLDENS:
-        actual_output = _invoke_agent(agent, golden.input)
+    for golden, actual_output in zip(GOLDENS, outputs):
         tc = LLMTestCase(
             input=golden.input,
             actual_output=actual_output,
@@ -219,9 +234,10 @@ def test_synthetic_batch_task_completion(agent):
 
 def test_synthetic_batch_bias(agent):
     """Educational content should have near-zero bias. 90% must pass."""
+    outputs = _invoke_agents_batch(agent, GOLDENS)
+
     results = []
-    for golden in GOLDENS:
-        actual_output = _invoke_agent(agent, golden.input)
+    for golden, actual_output in zip(GOLDENS, outputs):
         tc = LLMTestCase(
             input=golden.input,
             actual_output=actual_output,

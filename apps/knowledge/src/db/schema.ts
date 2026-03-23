@@ -15,6 +15,7 @@ import {
   customType,
 } from "drizzle-orm/pg-core";
 import { relations } from "drizzle-orm";
+import { user as authUser } from "@ai-apps/auth/schema";
 
 // ── Better Auth tables ──────────────────────────────────────────────
 
@@ -405,6 +406,40 @@ export const analyticsEvents = pgTable(
     ),
     index("analytics_events_lesson_time_idx").on(table.lessonId, table.createdAt),
     index("analytics_events_session_idx").on(table.sessionId, table.createdAt),
+  ],
+);
+
+// ── Job Applications ───────────────────────────────────────────────
+
+export const applicationStatusEnum = pgEnum("application_status", [
+  "saved",
+  "applied",
+  "interviewing",
+  "offer",
+  "rejected",
+]);
+
+export const applications = pgTable(
+  "applications",
+  {
+    id: uuid("id").primaryKey().defaultRandom(),
+    userId: text("user_id").notNull(),
+    company: text("company").notNull(),
+    position: text("position").notNull(),
+    url: text("url"),
+    status: applicationStatusEnum("status").notNull().default("saved"),
+    notes: text("notes"),
+    appliedAt: timestamp("applied_at", { withTimezone: true }),
+    createdAt: timestamp("created_at", { withTimezone: true })
+      .notNull()
+      .defaultNow(),
+    updatedAt: timestamp("updated_at", { withTimezone: true })
+      .notNull()
+      .defaultNow(),
+  },
+  (table) => [
+    index("applications_user_idx").on(table.userId),
+    index("applications_status_idx").on(table.userId, table.status),
   ],
 );
 

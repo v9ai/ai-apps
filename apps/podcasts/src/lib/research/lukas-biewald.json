@@ -17,32 +17,32 @@
   ],
   "timeline": [
     {
-      "date": "2003",
+      "date": "2003-01",
       "event": "Earned BS and MS in Computer Science from Stanford University, studying under Daphne Koller in the Stanford AI Lab",
       "url": "https://lukasbiewald.com/"
     },
     {
-      "date": "2004",
+      "date": "2004-01",
       "event": "Joined Yahoo as an engineer working on machine translations and search relevance; eventually led the Search Relevance Team for Yahoo Japan",
       "url": "https://en.wikipedia.org/wiki/Lukas_Biewald"
     },
     {
-      "date": "2006",
+      "date": "2006-01",
       "event": "Joined Powerset as Senior Scientist, a natural language search technology company later acquired by Microsoft in 2008",
       "url": "https://en.wikipedia.org/wiki/Lukas_Biewald"
     },
     {
-      "date": "2007",
+      "date": "2007-01",
       "event": "Co-founded CrowdFlower, a crowdsourcing and human-in-the-loop data labeling platform for training machine learning models",
       "url": "https://en.wikipedia.org/wiki/Figure_Eight_Inc."
     },
     {
-      "date": "2017",
+      "date": "2017-01",
       "event": "Co-founded Weights & Biases with Chris Van Pelt and Shawn Lewis to build developer tools for ML experiment tracking",
       "url": "https://wandb.ai/site/company/about-us/"
     },
     {
-      "date": "2018-05-31",
+      "date": "2018-05",
       "event": "Weights & Biases raised $5M Series A from Bloomberg Beta and Trinity Ventures",
       "url": "https://www.crunchbase.com/organization/weights-biases"
     },
@@ -52,7 +52,7 @@
       "url": "https://en.wikipedia.org/wiki/Figure_Eight_Inc."
     },
     {
-      "date": "2020",
+      "date": "2020-01",
       "event": "Launched Gradient Dissent podcast, hosting bi-weekly conversations with leaders in AI and machine learning",
       "url": "https://wandb.ai/site/resources/podcast/"
     },
@@ -62,12 +62,12 @@
       "url": "https://aibusiness.com/verticals/experiment-tracking-platform-weights-biases-raises-45m-in-funding"
     },
     {
-      "date": "2021-10-13",
+      "date": "2021-10",
       "event": "Raised $135M Series C at over $1B valuation with Felicis Ventures and Bond Capital, the largest W&B round at the time",
       "url": "https://www.prnewswire.com/news-releases/weights--biases-raises-its-series-c-at-a-billion-dollar-valuation-301399022.html"
     },
     {
-      "date": "2023-08-09",
+      "date": "2023-08",
       "event": "Raised additional $50M round led by Daniel Gross and Nat Friedman; announced W&B Prompts for LLM development",
       "url": "https://www.prnewswire.com/news-releases/weights--biases-raises-50-million-round-led-by-daniel-gross-and-nat-friedman-announces-wb-prompts-301896349.html"
     },
@@ -77,12 +77,12 @@
       "url": "https://www.businesswire.com/news/home/20241202944496/en/Weights-Biases-Announces-General-Availability-of-WB-Weave-for-Enterprises-to-Deliver-Generative-AI-Applications-with-Confidence"
     },
     {
-      "date": "2025-03-04",
+      "date": "2025-03",
       "event": "CoreWeave announced acquisition of Weights & Biases for approximately $1.7B",
       "url": "https://techcrunch.com/2025/03/04/coreweave-acquires-ai-developer-platform-weights-biases/"
     },
     {
-      "date": "2025-05-05",
+      "date": "2025-05",
       "event": "CoreWeave completed acquisition of Weights & Biases; Biewald joined CoreWeave leadership",
       "url": "https://www.coreweave.com/blog/coreweave-completes-acquisition-of-weights-biases"
     }

@@ -17,12 +17,12 @@
   ],
   "timeline": [
     {
-      "date": "2007",
+      "date": "2007-01",
       "event": "Became the first person to publicly jailbreak an iPhone at age 17, enabling carrier-unlocked use and third-party apps",
       "url": "https://en.wikipedia.org/wiki/George_Hotz"
     },
     {
-      "date": "2010-01-22",
+      "date": "2010-01",
       "event": "Announced read/write access to PS3 system memory and hypervisor-level CPU access; published the exploit publicly on January 26",
       "url": "https://en.wikipedia.org/wiki/George_Hotz"
     },
@@ -52,12 +52,12 @@
       "url": "https://en.wikipedia.org/wiki/Openpilot"
     },
     {
-      "date": "2020",
+      "date": "2020-01",
       "event": "Launched comma two hardware device for running openpilot; started tinygrad as a side project (repo created October 2020)",
       "url": "https://github.com/tinygrad/tinygrad"
     },
     {
-      "date": "2021",
+      "date": "2021-01",
       "event": "Launched comma three hardware device with improved compute for openpilot",
       "url": "https://en.wikipedia.org/wiki/George_Hotz"
     },
@@ -67,37 +67,37 @@
       "url": "https://www.autoevolution.com/news/comma-ai-founder-george-hotz-is-stepping-down-they-are-still-in-business-202663.html"
     },
     {
-      "date": "2022-11-05",
+      "date": "2022-11",
       "event": "Founded tiny corp to build AI compute infrastructure and develop the tinygrad deep learning framework",
       "url": "https://techcrunch.com/2022/11/02/george-hotz-aka-geohot-is-leaving-comma-ai-for-a-lofty-ai-project/"
     },
     {
-      "date": "2022-11-18",
+      "date": "2022-11",
       "event": "Joined Twitter as an intern under Elon Musk; resigned four weeks later on December 20, citing inability to make 'any real impact'",
       "url": "https://www.techmeme.com/221221/p9"
     },
     {
-      "date": "2023-05-24",
+      "date": "2023-05",
       "event": "Tiny corp raised $5.1M to build computers for machine learning and develop tinygrad",
       "url": "https://geohot.github.io/blog/jekyll/update/2023/05/24/the-tiny-corp-raised-5M.html"
     },
     {
-      "date": "2023-06-20",
+      "date": "2023-06",
       "event": "Appeared on Latent Space podcast: 'Commoditizing the Petaflop' discussing tinygrad, tinybox, and challenging NVIDIA",
       "url": "https://www.latent.space/p/geohot"
     },
     {
-      "date": "2023-06-29",
+      "date": "2023-06",
       "event": "Appeared on Lex Fridman Podcast #387: Tiny Corp, Twitter, AI Safety, Self-Driving, GPT, AGI & God",
       "url": "https://lexfridman.com/george-hotz-3/"
     },
     {
-      "date": "2023-08-17",
+      "date": "2023-08",
       "event": "Debated Eliezer Yudkowsky on AI safety on the Dwarkesh Patel podcast",
       "url": "https://www.dwarkeshpatel.com"
     },
     {
-      "date": "2025-03-08",
+      "date": "2025-03",
       "event": "Published 'AMD YOLO' blog post: AMD sent two MI300X systems; announced fully sovereign AMD stack in tinygrad; bought $250K in AMD stock",
       "url": "https://geohot.github.io/blog/jekyll/update/2025/03/08/AMD-YOLO.html"
     },
@@ -107,7 +107,7 @@
       "url": "https://en.wikipedia.org/wiki/George_Hotz"
     },
     {
-      "date": "2026-01-12",
+      "date": "2026-01",
       "event": "Released tinygrad v0.12.0 on PyPI",
       "url": "https://pypi.org/project/tinygrad/"
     }

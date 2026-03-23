@@ -17,22 +17,22 @@
   ],
   "timeline": [
     {
-      "date": "1994",
+      "date": "1994-01",
       "event": "Graduated from Dalhousie University with BSc in Computer Science",
       "url": "https://www.dal.ca/faculty/computerscience/news-events/news/2021/12/14/paul_gauthier__bsc_94__nurtures_ideas_into_ways_to_simplify_everyday_life_.html"
     },
     {
-      "date": "1996",
+      "date": "1996-01",
       "event": "Co-founded Inktomi with Eric Brewer at UC Berkeley, building the first commercial distributed-memory search engine",
       "url": "https://en.wikipedia.org/wiki/Inktomi"
     },
     {
-      "date": "2002",
+      "date": "2002-01",
       "event": "Inktomi acquired by Yahoo for $235 million",
       "url": "https://en.wikipedia.org/wiki/Inktomi"
     },
     {
-      "date": "2012",
+      "date": "2012-01",
       "event": "Served as CTO at Groupon after Ludic Labs acquisition",
       "url": "https://www.crunchbase.com/person/paul-gauthier"
     },
@@ -47,32 +47,32 @@
       "url": "https://github.com/Aider-AI/aider"
     },
     {
-      "date": "2023-07-02",
+      "date": "2023-07",
       "event": "Published initial GPT code editing benchmarks for Aider",
       "url": "https://aider.chat/blog/"
     },
     {
-      "date": "2023-10-22",
+      "date": "2023-10",
       "event": "Introduced tree-sitter-based repository mapping for better codebase understanding",
       "url": "https://aider.chat/blog/"
     },
     {
-      "date": "2024-05-02",
+      "date": "2024-05",
       "event": "Launched Aider browser UI for web-based AI pair programming",
       "url": "https://aider.chat/blog/"
     },
     {
-      "date": "2024-06-02",
+      "date": "2024-06",
       "event": "Aider achieved state-of-the-art on both SWE-Bench and SWE-Bench Lite",
       "url": "https://aider.chat/blog/"
     },
     {
-      "date": "2024-09-26",
+      "date": "2024-09",
       "event": "Introduced Architect/Editor dual-model approach separating code reasoning from editing",
       "url": "https://aider.chat/blog/"
     },
     {
-      "date": "2024-12-21",
+      "date": "2024-12",
       "event": "Launched polyglot leaderboard benchmarking 225 Exercism exercises across 6 languages",
       "url": "https://aider.chat/docs/leaderboards/"
     },
@@ -82,12 +82,12 @@
       "url": "https://aider.chat/blog/"
     },
     {
-      "date": "2025-06-18",
+      "date": "2025-06",
       "event": "Awarded honorary degree from Dalhousie University for contributions to technology and society",
       "url": "https://www.dal.ca/alumni/news-and-spotlights/alumni-news/paul-gauthier-entrepreneur-digital-thought-leader-environmental-champion-honorary-degree.html"
     },
     {
-      "date": "2025-08-09",
+      "date": "2025-08",
       "event": "Released Aider v0.86.0; Aider had written 92% of its own code",
       "url": "https://github.com/Aider-AI/aider/releases"
     },

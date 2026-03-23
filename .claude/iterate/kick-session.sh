@@ -8,19 +8,76 @@ set -uo pipefail
 # Exit 2  = send feedback to Claude via stderr, keep going
 # ==============================================================
 
-ITER_DIR="/tmp/claude-iterate"
-COUNTER_FILE="$ITER_DIR/counter"
-TASK_FILE="$ITER_DIR/task.txt"
-SCORES_FILE="$ITER_DIR/scores.json"
 SCRIPTS_DIR="$(cd "$(dirname "$0")" && pwd)"
 
 # --- Read hook input (must drain stdin before any exit) ---
 INPUT=$(cat)
 
-# --- No task file = not iterating ---
-if [ ! -f "$TASK_FILE" ]; then
+SESSION_ID=$(echo "$INPUT" | jq -r '.session_id // empty')
+HOOK_CWD=$(echo "$INPUT" | jq -r '.cwd // empty')
+
+# Locate the iterate dir for this session.
+# 1. Try the canonical per-session path (session_id prefix).
+# 2. Fall back to scanning:
+#    a. session.txt matches session_id
+#    b. cwd.txt matches hook CWD (handles start.sh run without CLAUDE_CODE_SESSION_ID)
+#    c. both sides have empty session ID
+ITER_DIR=""
+if [ -n "$SESSION_ID" ]; then
+    CANDIDATE="/tmp/claude-iterate-${SESSION_ID:0:12}"
+    if [ -f "$CANDIDATE/task.txt" ]; then
+        ITER_DIR="$CANDIDATE"
+    fi
+fi
+
+if [ -z "$ITER_DIR" ]; then
+    for _d in /tmp/claude-iterate-*/; do
+        [ -f "${_d}task.txt" ] || continue
+        _owner=$(cat "${_d}session.txt" 2>/dev/null || echo "")
+        if [ -n "$SESSION_ID" ] && [ "$_owner" = "$SESSION_ID" ]; then
+            ITER_DIR="${_d%/}"
+            break
+        fi
+        # start.sh ran without CLAUDE_CODE_SESSION_ID (Bash tool env) → session.txt is empty.
+        # Match by stored CWD instead.
+        if [ -z "$_owner" ] && [ -n "$HOOK_CWD" ]; then
+            _stored_cwd=$(cat "${_d}cwd.txt" 2>/dev/null || echo "")
+            if [ "$_stored_cwd" = "$HOOK_CWD" ]; then
+                ITER_DIR="${_d%/}"
+                break
+            fi
+        fi
+        # Last resort: both sides have no session ID
+        if [ -z "$SESSION_ID" ] && [ -z "$_owner" ]; then
+            ITER_DIR="${_d%/}"
+            break
+        fi
+    done
+fi
+
+# --- No matching iterate session ---
+if [ -z "$ITER_DIR" ] || [ ! -f "$ITER_DIR/task.txt" ]; then
     exit 0
 fi
+
+# Backfill session.txt so subsequent stop events use the fast path
+if [ -n "$SESSION_ID" ] && [ -z "$(cat "$ITER_DIR/session.txt" 2>/dev/null)" ]; then
+    echo "$SESSION_ID" > "$ITER_DIR/session.txt"
+fi
+
+COUNTER_FILE="$ITER_DIR/counter"
+TASK_FILE="$ITER_DIR/task.txt"
+SCORES_FILE="$ITER_DIR/scores.json"
+
+_record_end() {
+    local reason="$1" score="${2:-0.0}"
+    python3.12 "${SCRIPTS_DIR}/task_history.py" end \
+        --task "$TASK" \
+        --session "${SESSION_ID:-none}" \
+        --iterations "$COUNT" \
+        --score "$score" \
+        --reason "$reason" 2>/dev/null || true
+}
 
 mkdir -p "$ITER_DIR"
 TASK=$(cat "$TASK_FILE")
@@ -39,26 +96,25 @@ fi
 
 COUNT=$(cat "$COUNTER_FILE")
 CWD=$(echo "$INPUT" | jq -r '.cwd')
-SESSION_ID=$(echo "$INPUT" | jq -r '.session_id // empty')
 
 # Debug log
-echo "[kick-session] iter=$COUNT session=$SESSION_ID cwd=$CWD" >> "$ITER_DIR/debug.log" 2>/dev/null || true
+echo "[kick-session] iter=$COUNT session=${SESSION_ID:0:8} dir=$ITER_DIR cwd=$CWD" >> "$ITER_DIR/debug.log" 2>/dev/null || true
 
 # --- Hard limit ---
 if [ "$COUNT" -ge "$MAX_ITERATIONS" ]; then
+    _last_score=$(python3.12 -c "
+import sys, json, os
+f = '${SCORES_FILE}'
+if os.path.exists(f):
+    data = json.load(open(f))
+    if data:
+        print(data[-1].get('Task Completion', {}).get('score', 0.0))
+        sys.exit(0)
+print(0.0)
+" 2>/dev/null || echo "0.0")
+    _record_end "max iterations reached" "$_last_score"
     rm -f "$COUNTER_FILE" "$TASK_FILE" "$ITER_DIR/session.txt"
     echo "Iterate: complete — reached $MAX_ITERATIONS iterations." >&2
-    exit 0
-fi
-
-# --- Session isolation ---
-OWNER_SESSION=$(cat "$ITER_DIR/session.txt" 2>/dev/null || echo "")
-# If session.txt is empty (env var wasn't available at start), claim it on first run
-if [ -z "$OWNER_SESSION" ] && [ -n "$SESSION_ID" ]; then
-    echo "$SESSION_ID" > "$ITER_DIR/session.txt"
-    OWNER_SESSION="$SESSION_ID"
-fi
-if [ -n "$OWNER_SESSION" ] && [ -n "$SESSION_ID" ] && [ "$OWNER_SESSION" != "$SESSION_ID" ]; then
     exit 0
 fi
 
@@ -105,6 +161,7 @@ if [ "$COUNT" -ge 1 ]; then
         echo "$STALL_COUNT" > "$ITER_DIR/stall-count.txt"
         echo "[kick-session] stall=$STALL_COUNT" >> "$ITER_DIR/debug.log" 2>/dev/null || true
         if [ "$STALL_COUNT" -ge 2 ]; then
+            _record_end "stall — no code changes" "0.0"
             echo "Iterate: stopped — no new code changes for $STALL_COUNT iterations" >&2
             rm -f "$COUNTER_FILE" "$TASK_FILE" "$ITER_DIR/session.txt"
             exit 0
@@ -178,6 +235,8 @@ fi
 # --- Stop ---
 if [ "$SHOULD_CONTINUE" = false ]; then
     STOP_REASON=$(echo "$EVAL_RESULT" | jq -r '.stop_reason // "evaluation threshold"' 2>/dev/null) || STOP_REASON="evaluation threshold"
+    _final_score=$(echo "$EVAL_RESULT" | jq -r '.scores["Task Completion"].score // 0' 2>/dev/null || echo "0.0")
+    _record_end "$STOP_REASON" "$_final_score"
     echo "Iterate: stopped — ${STOP_REASON}" >&2
     rm -f "$COUNTER_FILE" "$TASK_FILE" "$ITER_DIR/session.txt"
     exit 0

@@ -17,7 +17,7 @@ pytestmark = pytest.mark.benchmark
 def test_web_search_latency():
     """web_search completes under 15 seconds."""
     start = time.perf_counter()
-    result = web_search.invoke("Harrison Chase LangChain CEO")
+    result = web_search("Harrison Chase LangChain CEO")
     elapsed = time.perf_counter() - start
     assert isinstance(result, str) and len(result) > 0
     assert elapsed < 15, f"web_search took {elapsed:.2f}s (threshold: 15s)"
@@ -27,7 +27,7 @@ def test_web_search_latency():
 def test_github_fetch_latency():
     """fetch_github_profile completes under 10 seconds."""
     start = time.perf_counter()
-    result = fetch_github_profile.invoke({"username": "hwchase17"})
+    result = fetch_github_profile("hwchase17")
     elapsed = time.perf_counter() - start
     assert isinstance(result, str) and len(result) > 0
     assert elapsed < 10, f"fetch_github_profile took {elapsed:.2f}s (threshold: 10s)"
@@ -37,7 +37,7 @@ def test_github_fetch_latency():
 def test_arxiv_search_latency():
     """search_arxiv completes under 15 seconds."""
     start = time.perf_counter()
-    result = search_arxiv.invoke("transformer attention mechanism")
+    result = search_arxiv("transformer attention mechanism")
     elapsed = time.perf_counter() - start
     assert isinstance(result, str) and len(result) > 0
     assert elapsed < 15, f"search_arxiv took {elapsed:.2f}s (threshold: 15s)"
@@ -47,7 +47,7 @@ def test_arxiv_search_latency():
 def test_hf_fetch_latency():
     """fetch_hf_author completes under 10 seconds."""
     start = time.perf_counter()
-    result = fetch_hf_author.invoke({"username": "deepseek-ai"})
+    result = fetch_hf_author("deepseek-ai")
     elapsed = time.perf_counter() - start
     assert isinstance(result, str) and len(result) > 0
     assert elapsed < 10, f"fetch_hf_author took {elapsed:.2f}s (threshold: 10s)"
@@ -57,7 +57,7 @@ def test_hf_fetch_latency():
 def test_fetch_url_latency():
     """fetch_url_content completes under 10 seconds."""
     start = time.perf_counter()
-    result = fetch_url_content.invoke({"url": "https://github.com/langchain-ai/langchain"})
+    result = fetch_url_content("https://github.com/langchain-ai/langchain")
     elapsed = time.perf_counter() - start
     assert isinstance(result, str) and len(result) > 0
     assert elapsed < 10, f"fetch_url_content took {elapsed:.2f}s (threshold: 10s)"
@@ -74,7 +74,7 @@ def test_blocked_domain_instant():
     ]
     for url in blocked_urls:
         start = time.perf_counter()
-        result = fetch_url_content.invoke({"url": url})
+        result = fetch_url_content(url)
         elapsed = time.perf_counter() - start
         assert elapsed < 0.1, f"Blocked domain {url} took {elapsed:.2f}s (threshold: 0.1s)"
         assert "Skipped" in result or "blocked" in result.lower(), (

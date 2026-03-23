@@ -1,6 +1,9 @@
 import { eq, sql } from "drizzle-orm";
 import { db } from "@/src/db";
-import { lessons, categories } from "@/src/db/schema";
+import { lessons, categories, applications } from "@/src/db/schema";
+import type { InferSelectModel } from "drizzle-orm";
+
+export type JobApplication = InferSelectModel<typeof applications>;
 import type { Lesson, LessonWithContent, GroupedLessons } from "../articles";
 
 export async function getAllLessonsFromDb(): Promise<Lesson[]> {
@@ -121,17 +124,18 @@ export async function getCategoryCountFromDb(): Promise<number> {
   return result.count;
 }
 
+export async function getJobApplicationsFromDb(userId: string): Promise<JobApplication[]> {
+  return db
+    .select()
+    .from(applications)
+    .where(eq(applications.userId, userId))
+    .orderBy(applications.createdAt);
+}
+
 export async function getRelatedLessonsFromDb(
   slug: string,
   limit = 4,
 ): Promise<Lesson[]> {
-  const current = await db.query.lessons.findFirst({
-    where: eq(lessons.slug, slug),
-    columns: { id: true, categoryId: true },
-  });
-
-  if (!current) return [];
-
   const rows = await db
     .select({
       slug: lessons.slug,
@@ -144,7 +148,8 @@ export async function getRelatedLessonsFromDb(
     .from(lessons)
     .innerJoin(categories, eq(lessons.categoryId, categories.id))
     .where(
-      sql`${lessons.categoryId} = ${current.categoryId} AND ${lessons.id} != ${current.id}`,
+      sql`${lessons.categoryId} = (SELECT category_id FROM lessons WHERE slug = ${slug})
+          AND ${lessons.slug} != ${slug}`,
     )
     .orderBy(lessons.number)
     .limit(limit);

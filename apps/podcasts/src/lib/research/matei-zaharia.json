@@ -19,79 +19,14 @@
   ],
   "timeline": [
     {
-      "date": "2025-12",
-      "event": "Databricks raises $4B+ at $134B valuation (Series L), surpassing $4.8B revenue run-rate with 55% YoY growth",
-      "url": "https://www.databricks.com/company/newsroom/press-releases/databricks-surpasses-4-8b-revenue-run-rate-growing-55-year-over-year"
+      "date": "2007-01",
+      "event": "Graduated from University of Waterloo with BMath (CS + Combinatorics & Optimization); ICPC gold medalist (4th worldwide, 1st North America in 2005)",
+      "url": "https://uwaterloo.ca/math/profiles/matei-zaharia"
     },
     {
-      "date": "2024-06",
-      "event": "Announced Mosaic AI platform expansion and compound AI systems tooling at Data+AI Summit 2024",
-      "url": "https://techcrunch.com/2024/06/12/databricks-expands-mosaic-ai-to-help-enterprises-build-with-llms/"
-    },
-    {
-      "date": "2024-03",
-      "event": "Released DBRX, Databricks' open-source LLM with 132B parameters (mixture-of-experts), exceeding GPT-3.5 on benchmarks",
-      "url": "https://x.com/matei_zaharia/status/1772972271721763199"
-    },
-    {
-      "date": "2024-02",
-      "event": "Published 'The Shift from Models to Compound AI Systems' on the BAIR blog, defining a major AI architecture trend",
-      "url": "https://bair.berkeley.edu/blog/2024/02/18/compound-ai-systems/"
-    },
-    {
-      "date": "2024-01",
-      "event": "DSPy accepted at ICLR 2024: 'Compiling Declarative Language Model Calls into Self-Improving Pipelines'",
-      "url": "https://github.com/stanfordnlp/dspy"
-    },
-    {
-      "date": "2023-07",
-      "event": "Databricks completed acquisition of MosaicML for $1.3B, strengthening generative AI capabilities",
-      "url": "https://www.databricks.com/company/newsroom/press-releases/databricks-completes-acquisition-mosaicml"
-    },
-    {
-      "date": "2023",
-      "event": "Joined UC Berkeley as Associate Professor of EECS, moving from Stanford; received the Mark Weiser Award",
-      "url": "https://people.eecs.berkeley.edu/~matei/"
-    },
-    {
-      "date": "2022",
-      "event": "Received SIGMOD Systems Award for Apache Spark and Sloan Research Fellowship; promoted to Associate Professor at Stanford",
-      "url": "https://people.eecs.berkeley.edu/~matei/"
-    },
-    {
-      "date": "2019",
-      "event": "Received US Presidential Early Career Award for Scientists and Engineers (PECASE)",
-      "url": "https://people.eecs.berkeley.edu/~matei/"
-    },
-    {
-      "date": "2018",
-      "event": "Launched MLflow, open-source platform for the machine learning lifecycle; published foundational paper in IEEE Data Engineering Bulletin",
-      "url": "https://people.eecs.berkeley.edu/~matei/papers/2018/ieee_mlflow.pdf"
-    },
-    {
-      "date": "2017",
-      "event": "Received NSF CAREER Award for research on large-scale data systems",
-      "url": "https://people.eecs.berkeley.edu/~matei/"
-    },
-    {
-      "date": "2016",
-      "event": "Joined Stanford University as Assistant Professor of Computer Science",
-      "url": "https://online.stanford.edu/instructors/matei-zaharia"
-    },
-    {
-      "date": "2015",
-      "event": "Joined MIT as faculty member before moving to Stanford the following year",
-      "url": "https://people.eecs.berkeley.edu/~matei/"
-    },
-    {
-      "date": "2014",
-      "event": "Received the 2014 ACM Doctoral Dissertation Award for PhD thesis on large-scale data processing",
-      "url": "https://awards.acm.org/award-recipients/zaharia_7692208"
-    },
-    {
-      "date": "2013",
-      "event": "Co-founded Databricks with Ali Ghodsi, Ion Stoica, and four other UC Berkeley researchers; completed PhD",
-      "url": "https://www.databricks.com/company/newsroom/press-releases/databricks-raising-10b-series-j-investment-62b-valuation"
+      "date": "2009-01",
+      "event": "Created Apache Spark at UC Berkeley's AMPLab as a faster alternative to MapReduce",
+      "url": "https://spark.apache.org/research.html"
     },
     {
       "date": "2012-04",
@@ -99,14 +34,79 @@
       "url": "https://www.usenix.org/conference/nsdi12/technical-sessions/presentation/zaharia"
     },
     {
-      "date": "2009",
-      "event": "Created Apache Spark at UC Berkeley's AMPLab as a faster alternative to MapReduce",
-      "url": "https://spark.apache.org/research.html"
+      "date": "2013-01",
+      "event": "Co-founded Databricks with Ali Ghodsi, Ion Stoica, and four other UC Berkeley researchers; completed PhD",
+      "url": "https://www.databricks.com/company/newsroom/press-releases/databricks-raising-10b-series-j-investment-62b-valuation"
     },
     {
-      "date": "2007",
-      "event": "Graduated from University of Waterloo with BMath (CS + Combinatorics & Optimization); ICPC gold medalist (4th worldwide, 1st North America in 2005)",
-      "url": "https://uwaterloo.ca/math/profiles/matei-zaharia"
+      "date": "2014-01",
+      "event": "Received the 2014 ACM Doctoral Dissertation Award for PhD thesis on large-scale data processing",
+      "url": "https://awards.acm.org/award-recipients/zaharia_7692208"
+    },
+    {
+      "date": "2015-01",
+      "event": "Joined MIT as faculty member before moving to Stanford the following year",
+      "url": "https://people.eecs.berkeley.edu/~matei/"
+    },
+    {
+      "date": "2016-01",
+      "event": "Joined Stanford University as Assistant Professor of Computer Science",
+      "url": "https://online.stanford.edu/instructors/matei-zaharia"
+    },
+    {
+      "date": "2017-01",
+      "event": "Received NSF CAREER Award for research on large-scale data systems",
+      "url": "https://people.eecs.berkeley.edu/~matei/"
+    },
+    {
+      "date": "2018-01",
+      "event": "Launched MLflow, open-source platform for the machine learning lifecycle; published foundational paper in IEEE Data Engineering Bulletin",
+      "url": "https://people.eecs.berkeley.edu/~matei/papers/2018/ieee_mlflow.pdf"
+    },
+    {
+      "date": "2019-01",
+      "event": "Received US Presidential Early Career Award for Scientists and Engineers (PECASE)",
+      "url": "https://people.eecs.berkeley.edu/~matei/"
+    },
+    {
+      "date": "2022-01",
+      "event": "Received SIGMOD Systems Award for Apache Spark and Sloan Research Fellowship; promoted to Associate Professor at Stanford",
+      "url": "https://people.eecs.berkeley.edu/~matei/"
+    },
+    {
+      "date": "2023-01",
+      "event": "Joined UC Berkeley as Associate Professor of EECS, moving from Stanford; received the Mark Weiser Award",
+      "url": "https://people.eecs.berkeley.edu/~matei/"
+    },
+    {
+      "date": "2023-07",
+      "event": "Databricks completed acquisition of MosaicML for $1.3B, strengthening generative AI capabilities",
+      "url": "https://www.databricks.com/company/newsroom/press-releases/databricks-completes-acquisition-mosaicml"
+    },
+    {
+      "date": "2024-01",
+      "event": "DSPy accepted at ICLR 2024: 'Compiling Declarative Language Model Calls into Self-Improving Pipelines'",
+      "url": "https://github.com/stanfordnlp/dspy"
+    },
+    {
+      "date": "2024-02",
+      "event": "Published 'The Shift from Models to Compound AI Systems' on the BAIR blog, defining a major AI architecture trend",
+      "url": "https://bair.berkeley.edu/blog/2024/02/18/compound-ai-systems/"
+    },
+    {
+      "date": "2024-03",
+      "event": "Released DBRX, Databricks' open-source LLM with 132B parameters (mixture-of-experts), exceeding GPT-3.5 on benchmarks",
+      "url": "https://x.com/matei_zaharia/status/1772972271721763199"
+    },
+    {
+      "date": "2024-06",
+      "event": "Announced Mosaic AI platform expansion and compound AI systems tooling at Data+AI Summit 2024",
+      "url": "https://techcrunch.com/2024/06/12/databricks-expands-mosaic-ai-to-help-enterprises-build-with-llms/"
+    },
+    {
+      "date": "2025-12",
+      "event": "Databricks raises $4B+ at $134B valuation (Series L), surpassing $4.8B revenue run-rate with 55% YoY growth",
+      "url": "https://www.databricks.com/company/newsroom/press-releases/databricks-surpasses-4-8b-revenue-run-rate-growing-55-year-over-year"
     }
   ],
   "key_contributions": [

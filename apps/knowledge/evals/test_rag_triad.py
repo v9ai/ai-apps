@@ -22,7 +22,7 @@ from conftest_rag import (
     load_rag_goldens,
     rag_golden_params,
 )
-from rag_pipeline import invoke_rag
+from rag_pipeline import invoke_rag, invoke_rag_batch
 
 GOLDENS = load_rag_goldens()
 PARAMS = rag_golden_params(GOLDENS)
@@ -78,9 +78,19 @@ def test_rag_contextual_relevancy(golden: dict):
 
 def test_rag_triad_batch():
     """Run all goldens through the full RAG triad. 70% must pass all three."""
+    # Pre-fetch all RAG results in parallel, then measure metrics sequentially.
+    rag_results = invoke_rag_batch([g["input"] for g in GOLDENS])
+
     results = []
-    for golden in GOLDENS:
-        tc = _run_rag(golden)
+    for golden, rag_result in zip(GOLDENS, rag_results):
+        if rag_result is None:
+            continue
+        tc = LLMTestCase(
+            input=golden["input"],
+            actual_output=rag_result["actual_output"],
+            retrieval_context=rag_result["retrieval_context"],
+            expected_output=golden.get("expected_output"),
+        )
         if not tc.retrieval_context:
             continue
 

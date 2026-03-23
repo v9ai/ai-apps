@@ -1,4 +1,5 @@
 import { insertJobsBatch } from "../../services/job-inserter";
+import { isExcludedLocation } from "../../lib/location-filter";
 
 interface LinkedInScraperResult {
   success: boolean;
@@ -123,10 +124,17 @@ async function saveJobsToDatabase(
   jobs: any[],
   sourceType: string,
 ): Promise<{ success: boolean; message: string; jobsCollected: number }> {
-  console.log(`[LinkedIn Scraper] Saving ${jobs.length} jobs via worker...`);
+  // Filter out excluded locations (India, Pakistan, etc.) before saving
+  const filtered = jobs.filter((job) => !isExcludedLocation(job));
+  const excluded = jobs.length - filtered.length;
+  if (excluded > 0) {
+    console.log(`[LinkedIn Scraper] Filtered out ${excluded} excluded-location jobs`);
+  }
+
+  console.log(`[LinkedIn Scraper] Saving ${filtered.length} jobs via worker...`);
 
   // Prepare jobs with LinkedIn-specific metadata
-  const jobsWithMeta = jobs.map((job: any) => ({
+  const jobsWithMeta = filtered.map((job: any) => ({
     ...job,
     sourceType: sourceType,
     sourceCategory: "job_board",

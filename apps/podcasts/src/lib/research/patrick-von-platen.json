@@ -17,64 +17,14 @@
   ],
   "timeline": [
     {
-      "date": "2024-10-09",
-      "event": "Co-authored Pixtral 12B paper at Mistral AI -- a 12B-parameter multimodal language model for natural images and documents",
-      "url": "https://arxiv.org/abs/2410.07073"
+      "date": "2019-01",
+      "event": "Completed PhD in Computer Engineering at the University of Cambridge",
+      "url": "https://scholar.google.com/citations?hl=en&user=dC9i0-0AAAAJ"
     },
     {
-      "date": "2024-01",
-      "event": "Co-authored aMUSEd paper -- an open MUSE reproduction for efficient text-to-image generation",
-      "url": "https://arxiv.org/abs/2401.01808"
-    },
-    {
-      "date": "2023-11",
-      "event": "Co-authored Distil-Whisper paper on robust knowledge distillation via large-scale pseudo labelling for speech recognition",
-      "url": "https://arxiv.org/abs/2311.05556"
-    },
-    {
-      "date": "2023-10",
-      "event": "Co-authored LCM-LoRA paper -- a universal Stable Diffusion acceleration module achieving significant inference speedups",
-      "url": "https://arxiv.org/abs/2311.05556"
-    },
-    {
-      "date": "2023",
-      "event": "Co-authored AfroDigits -- a community-driven spoken digit dataset covering 38 African languages, presented at AfricaNLP 2023",
-      "url": "https://huggingface.co/papers/2303.12582"
-    },
-    {
-      "date": "2023-07",
-      "event": "Announced Diffusers 0.19.0 with full SDXL (Stable Diffusion XL 1.0) support",
-      "url": "https://www.linkedin.com/posts/patrick-von-platen-343401123_sd-xl-10-is-out-and-with-it-diffusers-activity-7090061101614133248-VG-n"
-    },
-    {
-      "date": "2023-04",
-      "event": "Released Diffusers v0.15.0 'Beyond Image Generation' expanding the library to audio and 3D generation",
-      "url": "https://www.linkedin.com/posts/patrick-von-platen-343401123_release-v0150-beyond-image-generation-activity-7051959841677811712-qUlQ"
-    },
-    {
-      "date": "2022-11-10",
-      "event": "Delivered colloquium 'Generating Images and Audio With the Hugging Face Diffusers Library' at Cross-Modal Learning, Hamburg",
-      "url": "https://www.crossmodal-learning.org/news/2022-11-von-platen-talk.html"
-    },
-    {
-      "date": "2022-08-22",
-      "event": "Co-authored 'Stable Diffusion with Diffusers' blog post -- the first public guide to using Stable Diffusion via the Diffusers library",
-      "url": "https://huggingface.co/blog/stable_diffusion"
-    },
-    {
-      "date": "2022-05-30",
-      "event": "Created the Hugging Face Diffusers repository on GitHub, initiating the open-source diffusion model library",
-      "url": "https://github.com/huggingface/diffusers"
-    },
-    {
-      "date": "2022",
-      "event": "Co-authored XLS-R paper on self-supervised cross-lingual speech representation learning at scale (128 languages, 500K hours), published at INTERSPEECH 2022",
-      "url": "https://arxiv.org/abs/2111.09296"
-    },
-    {
-      "date": "2022",
-      "event": "Co-authored XTREME-S benchmark for evaluating cross-lingual speech representations across 102 languages, published at INTERSPEECH 2022",
-      "url": "https://arxiv.org/abs/2203.10752"
+      "date": "2021-03",
+      "event": "Published 'Fine-Tune Wav2Vec2 for English ASR' blog post on Hugging Face, making speech recognition accessible to the community",
+      "url": "https://huggingface.co/blog/fine-tune-wav2vec2-english"
     },
     {
       "date": "2021-11",
@@ -82,14 +32,64 @@
       "url": "https://arxiv.org/abs/2109.02846"
     },
     {
-      "date": "2021-03-12",
-      "event": "Published 'Fine-Tune Wav2Vec2 for English ASR' blog post on Hugging Face, making speech recognition accessible to the community",
-      "url": "https://huggingface.co/blog/fine-tune-wav2vec2-english"
+      "date": "2022-01",
+      "event": "Co-authored XLS-R paper on self-supervised cross-lingual speech representation learning at scale (128 languages, 500K hours), published at INTERSPEECH 2022",
+      "url": "https://arxiv.org/abs/2111.09296"
     },
     {
-      "date": "2019",
-      "event": "Completed PhD in Computer Engineering at the University of Cambridge",
-      "url": "https://scholar.google.com/citations?hl=en&user=dC9i0-0AAAAJ"
+      "date": "2022-01",
+      "event": "Co-authored XTREME-S benchmark for evaluating cross-lingual speech representations across 102 languages, published at INTERSPEECH 2022",
+      "url": "https://arxiv.org/abs/2203.10752"
+    },
+    {
+      "date": "2022-05",
+      "event": "Created the Hugging Face Diffusers repository on GitHub, initiating the open-source diffusion model library",
+      "url": "https://github.com/huggingface/diffusers"
+    },
+    {
+      "date": "2022-08",
+      "event": "Co-authored 'Stable Diffusion with Diffusers' blog post -- the first public guide to using Stable Diffusion via the Diffusers library",
+      "url": "https://huggingface.co/blog/stable_diffusion"
+    },
+    {
+      "date": "2022-11",
+      "event": "Delivered colloquium 'Generating Images and Audio With the Hugging Face Diffusers Library' at Cross-Modal Learning, Hamburg",
+      "url": "https://www.crossmodal-learning.org/news/2022-11-von-platen-talk.html"
+    },
+    {
+      "date": "2023-01",
+      "event": "Co-authored AfroDigits -- a community-driven spoken digit dataset covering 38 African languages, presented at AfricaNLP 2023",
+      "url": "https://huggingface.co/papers/2303.12582"
+    },
+    {
+      "date": "2023-04",
+      "event": "Released Diffusers v0.15.0 'Beyond Image Generation' expanding the library to audio and 3D generation",
+      "url": "https://www.linkedin.com/posts/patrick-von-platen-343401123_release-v0150-beyond-image-generation-activity-7051959841677811712-qUlQ"
+    },
+    {
+      "date": "2023-07",
+      "event": "Announced Diffusers 0.19.0 with full SDXL (Stable Diffusion XL 1.0) support",
+      "url": "https://www.linkedin.com/posts/patrick-von-platen-343401123_sd-xl-10-is-out-and-with-it-diffusers-activity-7090061101614133248-VG-n"
+    },
+    {
+      "date": "2023-10",
+      "event": "Co-authored LCM-LoRA paper -- a universal Stable Diffusion acceleration module achieving significant inference speedups",
+      "url": "https://arxiv.org/abs/2311.05556"
+    },
+    {
+      "date": "2023-11",
+      "event": "Co-authored Distil-Whisper paper on robust knowledge distillation via large-scale pseudo labelling for speech recognition",
+      "url": "https://arxiv.org/abs/2311.05556"
+    },
+    {
+      "date": "2024-01",
+      "event": "Co-authored aMUSEd paper -- an open MUSE reproduction for efficient text-to-image generation",
+      "url": "https://arxiv.org/abs/2401.01808"
+    },
+    {
+      "date": "2024-10",
+      "event": "Co-authored Pixtral 12B paper at Mistral AI -- a 12B-parameter multimodal language model for natural images and documents",
+      "url": "https://arxiv.org/abs/2410.07073"
     }
   ],
   "key_contributions": [

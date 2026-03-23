@@ -1,4 +1,10 @@
 import { insertJobsBatch } from "../../services/job-inserter";
+import { isExcludedLocation } from "../../lib/location-filter";
+import {
+  sleep,
+  waitForTabComplete,
+  ensureContentScriptInjected,
+} from "../../lib/scraper-utils";
 
 interface AshbyScraperResult {
   success: boolean;
@@ -17,92 +23,15 @@ type PaginationInfoResponse = {
   } | null;
 };
 
-function sleep(ms: number) {
-  return new Promise((r) => setTimeout(r, ms));
-}
-
-async function waitForTabComplete(tabId: number, timeoutMs = 25000) {
-  const start = Date.now();
-
-  // quick check
-  const t = await chrome.tabs.get(tabId);
-  if (t.status === "complete") return;
-
-  await new Promise<void>((resolve, reject) => {
-    const onUpdated = (
-      updatedTabId: number,
-      info: chrome.tabs.TabChangeInfo,
-    ) => {
-      if (updatedTabId !== tabId) return;
-      if (info.status === "complete") {
-        cleanup();
-        resolve();
-      }
-    };
-
-    const timer = setInterval(async () => {
-      if (Date.now() - start > timeoutMs) {
-        cleanup();
-        reject(new Error("Timeout waiting for tab to finish loading"));
-        return;
-      }
-
-      try {
-        const tab = await chrome.tabs.get(tabId);
-        if (tab.status === "complete") {
-          cleanup();
-          resolve();
-        }
-      } catch {
-        // ignore
-      }
-    }, 250);
-
-    function cleanup() {
-      chrome.tabs.onUpdated.removeListener(onUpdated);
-      clearInterval(timer);
-    }
-
-    chrome.tabs.onUpdated.addListener(onUpdated);
-  });
-}
-
-async function ensureContentScriptInjected(tabId: number): Promise<void> {
-  try {
-    // Try to ping the content script
-    await chrome.tabs.sendMessage(tabId, { action: "ping" });
-  } catch (err) {
-    // Content script not loaded, inject it programmatically
-    console.log("[Ashby Scraper] Content script not found, injecting...");
-    try {
-      await chrome.scripting.executeScript({
-        target: { tabId },
-        files: ["src/pages/content/index.tsx"],
-      });
-      // Wait for it to initialize
-      await sleep(1000);
-    } catch (injectErr) {
-      console.error(
-        "[Ashby Scraper] Failed to inject content script:",
-        injectErr,
-      );
-      throw new Error(
-        "Failed to inject content script. Please refresh the page.",
-      );
-    }
-  }
-}
-
 async function sendMessageWithRetry<T>(
   tabId: number,
-  message: any,
+  message: Record<string, unknown>,
   attempts = 30,
   delayMs = 250,
 ): Promise<T> {
-  // Ensure content script is loaded first
   await ensureContentScriptInjected(tabId);
 
-  let lastErr: any = null;
+  let lastErr: unknown = null;
 
   for (let i = 0; i < attempts; i++) {
     try {
@@ -167,44 +96,6 @@ export async function scrapeAshbyJobsSinglePage(
       success: false,
       message:
         err instanceof Error ? err.message : "Failed to scrape current page",
-    };
-  }
-}
-
-// Navigate to the next page of Google search results
-export async function navigateToNextPage(
-  tabId: number,
-): Promise<{ success: boolean; message: string }> {
-  try {
-    console.log("[Ashby Scraper] Getting pagination info for navigation");
-
-    await waitForTabComplete(tabId);
-
-    const pagination = await sendMessageWithRetry<PaginationInfoResponse>(
-      tabId,
-      { action: "getPaginationInfo" },
-    );
-
-    const info = pagination?.paginationInfo;
-
-    if (!info?.hasNext || !info.nextUrl) {
-      return {
-        success: false,
-        message: "No next page available",
-      };
-    }
-
-    console.log(`[Ashby Scraper] Navigating to page ${info.currentPage + 1}`);
-    await chrome.tabs.update(tabId, { url: info.nextUrl });
-
-    return {
-      success: true,
-      message: `Navigating to page ${info.currentPage + 1}...`,
-    };
-  } catch (err) {
-    return {
-      success: false,
-      message: err instanceof Error ? err.message : "Failed to navigate",
     };
   }
 }
@@ -363,10 +254,17 @@ export async function scrapeAshbyJobsWithPagination(
 async function saveJobsToDatabase(
   jobs: any[],
 ): Promise<{ success: boolean; message: string; jobsCollected: number }> {
-  console.log(`[Ashby Scraper] Saving ${jobs.length} jobs via worker...`);
+  // Filter out excluded locations (India, Pakistan, etc.) before saving
+  const filtered = jobs.filter((job) => !isExcludedLocation(job));
+  const excluded = jobs.length - filtered.length;
+  if (excluded > 0) {
+    console.log(`[Ashby Scraper] Filtered out ${excluded} excluded-location jobs`);
+  }
+
+  console.log(`[Ashby Scraper] Saving ${filtered.length} jobs via worker...`);
 
   // Prepare jobs with Ashby-specific fields
-  const jobsWithMeta = jobs.map((job) => ({
+  const jobsWithMeta = filtered.map((job) => ({
     ...job,
     // company will be extracted from URL by backend if missing
     sourceType: "ashby",

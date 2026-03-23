@@ -1,16 +1,21 @@
-An 85% per-step accuracy gives you only a 20% chance of completing a 10-step task. This is the compound probability of failure that silently kills production RAG systems. Manual testing with a few "golden" questions is mathematically broken—it tests less than 0.5% of your knowledge base and misses the complex queries that cause real failures.
+Your RAG pipeline has 20 hand-written test questions for a 55-document knowledge base. That's 0.4% coverage. The other 99.6% is untested surface area where retrieval gaps, hallucinated citations, and truncated context windows hide undetected.
 
-The only scalable bridge to reliability is synthetic evaluation: using LLMs to generate hundreds of adversarial test cases that probe your system's actual limits.
+I built a production evaluation framework using DeepEval that generates 330+ synthetic test cases from 55 AI engineering lessons and evaluates a LangGraph RAG pipeline across 10+ metrics. Here's what I learned:
 
-Here’s how to implement it with the DeepEval framework:
-1.  Automate test generation with a configured `Synthesizer`, weighting for reasoning, multi-context, and hypothetical questions.
-2.  Evaluate with the RAG Triad (Faithfulness, Answer Relevancy, Contextual Relevancy) but use probabilistic thresholds—aim for a 70% pass rate, not 100%.
-3.  Add custom `GEval` metrics for your domain, like citation accuracy or cross-document synthesis, to catch silent failures.
-4.  Run hyperparameter sweeps on your synthetic suite to replace guesswork with data; empirically find the optimal `top_k` and similarity thresholds.
-5.  Integrate the test suite into CI/CD. Use it as a gatekeeper for every deployment to catch regressions in retrieval or generation.
+1. Automate test generation with DeepEval's Synthesizer. Weight evolution types toward reasoning (25%) and multi-context (20%) questions — these expose the failures simple factual lookups miss.
 
-Stop hoping your RAG works. Start knowing its quantified performance.
+2. Use probabilistic thresholds, not absolutism. Requiring 100% pass rate across 330 diverse questions is unrealistic. A 70% pass rate on the RAG Triad (Faithfulness + Answer Relevancy + Contextual Relevancy) is a meaningful quality gate.
 
-Dive into the full implementation guide and code: [Link to your blog post]
+3. Build custom GEval metrics for YOUR domain. Standard RAG metrics miss citation fabrication, context underutilization, and cross-document synthesis failures. These silent failures erode user trust without triggering obvious errors.
 
-#RAGEvaluation #SyntheticTesting #LLMOps #DeepEval #RetrievalAugmentedGeneration #AITesting
+4. Run hyperparameter sweeps on your synthetic suite. Testing 11 retrieval configurations across 18 queries replaced guesswork with data — FTS top-5 scored 0.82 on faithfulness while vector top-10 scored 0.71 but had higher answer relevancy.
+
+5. Multi-turn evaluation catches what single-turn misses. Later conversational turns show lower faithfulness as questions get more specific than what retrieved context covers.
+
+Total cost: ~$5-10 per full evaluation run with DeepSeek as judge. Less than one hour of manual testing.
+
+These are the failure modes that erode user trust without triggering obvious errors — and they only become visible at scale.
+
+Full implementation guide with code examples from the actual codebase: [link]
+
+#RAGEvaluation #SyntheticTesting #LLMOps #DeepEval #AIEngineering #ProductionAI

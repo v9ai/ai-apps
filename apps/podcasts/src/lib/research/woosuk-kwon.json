@@ -22,12 +22,12 @@
       "url": "https://woosuk.me/"
     },
     {
-      "date": "2020",
+      "date": "2020-01",
       "event": "Published 'Nimble: Lightweight and Parallel GPU Task Scheduling for Deep Learning' at NeurIPS 2020",
       "url": "https://dblp.org/pid/177/2702.html"
     },
     {
-      "date": "2020",
+      "date": "2020-01",
       "event": "Published 'Graphene: Strong yet Lightweight Row Hammer Protection' at MICRO 2020",
       "url": "https://dblp.org/pid/177/2702.html"
     },
@@ -37,9 +37,14 @@
       "url": "https://woosuk.me/"
     },
     {
-      "date": "2022",
+      "date": "2022-01",
       "event": "Published 'Learned Token Pruning for Transformers' at KDD 2022 and post-training pruning framework at NeurIPS 2022",
       "url": "https://dblp.org/pid/177/2702.html"
+    },
+    {
+      "date": "2023-01",
+      "event": "Received a16z Open Source AI Grant for vLLM",
+      "url": "https://woosuk.me/"
     },
     {
       "date": "2023-04",
@@ -47,7 +52,7 @@
       "url": "https://vllm.ai/blog/vllm"
     },
     {
-      "date": "2023-06-20",
+      "date": "2023-06",
       "event": "Publicly announced vLLM with PagedAttention, achieving 24x throughput over HuggingFace Transformers",
       "url": "https://vllm.ai/blog/vllm"
     },
@@ -57,13 +62,13 @@
       "url": "https://www.usenix.org/conference/nsdi23/presentation/yang-zongheng"
     },
     {
-      "date": "2023-09-12",
+      "date": "2023-09",
       "event": "Published 'Efficient Memory Management for Large Language Model Serving with PagedAttention' at SOSP 2023",
       "url": "https://arxiv.org/abs/2309.06180"
     },
     {
-      "date": "2023",
-      "event": "Received a16z Open Source AI Grant for vLLM",
+      "date": "2024-01",
+      "event": "Selected as Sequoia Open Source Fellow",
       "url": "https://woosuk.me/"
     },
     {
@@ -72,14 +77,14 @@
       "url": "https://woosuk.me/"
     },
     {
-      "date": "2024",
-      "event": "Selected as Sequoia Open Source Fellow",
-      "url": "https://woosuk.me/"
-    },
-    {
-      "date": "2024-09-19",
+      "date": "2024-09",
       "event": "Presented 'vLLM: Easy, Fast, and Cheap LLM Serving for Everyone' at PyTorch Conference 2024",
       "url": "https://pytorch2024.sched.com/event/1fHmx/vllm-easy-fast-and-cheap-llm-serving-for-everyone-woosuk-kwon-uc-berkeley-xiaoxuan-liu-ucb"
+    },
+    {
+      "date": "2025-01",
+      "event": "Published 'Jenga: Effective Memory Management for Serving LLM with Heterogeneity' at SOSP 2025",
+      "url": "https://dblp.org/pid/177/2702.html"
     },
     {
       "date": "2025-05",
@@ -87,22 +92,17 @@
       "url": "https://woosuk.me/"
     },
     {
-      "date": "2025-12",
-      "event": "Completed Ph.D. at UC Berkeley; dissertation: 'vLLM: An Efficient Inference Engine for Large Language Models'",
-      "url": "https://www2.eecs.berkeley.edu/Pubs/TechRpts/2025/EECS-2025-192.html"
-    },
-    {
       "date": "2025-11",
       "event": "Co-founded Inferact with Ion Stoica and other vLLM core maintainers",
       "url": "https://siliconangle.com/2026/01/22/inferact-launches-150m-funding-commercialize-vllm/"
     },
     {
-      "date": "2025",
-      "event": "Published 'Jenga: Effective Memory Management for Serving LLM with Heterogeneity' at SOSP 2025",
-      "url": "https://dblp.org/pid/177/2702.html"
+      "date": "2025-12",
+      "event": "Completed Ph.D. at UC Berkeley; dissertation: 'vLLM: An Efficient Inference Engine for Large Language Models'",
+      "url": "https://www2.eecs.berkeley.edu/Pubs/TechRpts/2025/EECS-2025-192.html"
     },
     {
-      "date": "2026-01-22",
+      "date": "2026-01",
       "event": "Inferact launched publicly with $150M seed funding at $800M valuation, led by a16z and Lightspeed",
       "url": "https://siliconangle.com/2026/01/22/inferact-launches-150m-funding-commercialize-vllm/"
     }

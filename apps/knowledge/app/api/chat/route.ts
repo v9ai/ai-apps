@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { db } from "@/src/db";
 import { chatMessages } from "@/src/db/schema";
-import { eq, asc } from "drizzle-orm";
+import { eq, asc, sql } from "drizzle-orm";
 
 export async function POST(req: NextRequest) {
   const apiKey = process.env.DEEPSEEK_API_KEY;
@@ -23,15 +23,45 @@ export async function POST(req: NextRequest) {
     );
   }
 
-  // Load conversation history (last 50 messages)
-  const history = await db
-    .select({ role: chatMessages.role, content: chatMessages.content })
-    .from(chatMessages)
-    .where(eq(chatMessages.threadId, threadId))
-    .orderBy(asc(chatMessages.createdAt))
-    .limit(50);
+  // Load history and retrieve FTS context in parallel — they're independent.
+  type SearchRow = { title: string; snippet: string; paper_title: string | null };
+  const [history, searchResult] = await Promise.all([
+    db
+      .select({ role: chatMessages.role, content: chatMessages.content })
+      .from(chatMessages)
+      .where(eq(chatMessages.threadId, threadId))
+      .orderBy(asc(chatMessages.createdAt))
+      .limit(50),
+    db
+      .execute<SearchRow>(
+        sql`SELECT title, snippet, paper_title FROM search_content(${message}, ${4})`,
+      )
+      .catch(() => null),
+  ]);
+
+  let context = "";
+  if (searchResult && searchResult.rows.length > 0) {
+    const parts = searchResult.rows.map((r) => {
+      const label = r.paper_title && r.paper_title !== r.title
+        ? `[${r.paper_title} > ${r.title}]`
+        : `[${r.title}]`;
+      return `${label}\n${r.snippet}`;
+    });
+    context = "\n\nRelevant knowledge base excerpts:\n" + parts.join("\n\n---\n\n");
+  }
+
+  const systemPrompt = {
+    role: "system",
+    content:
+      "You are an AI engineering tutor for a knowledge base covering transformers, RAG, agents, fine-tuning, evaluations, infrastructure, safety, and multimodal AI. " +
+      "Answer questions concisely and accurately. Cite specific papers, architectures, or lesson topics when relevant. " +
+      "When context excerpts are provided, base your answer on them and cite the lesson title. " +
+      "If a question is outside AI/ML engineering, politely redirect the conversation back to the subject matter." +
+      context,
+  };
 
   const messages = [
+    systemPrompt,
     ...history.map((m) => ({ role: m.role, content: m.content })),
     { role: "user", content: message },
   ];

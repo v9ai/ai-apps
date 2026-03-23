@@ -20,7 +20,7 @@ _SKIP_REASON = "SKIP_NETWORK_TESTS is set"
 @pytest.mark.skipif(SKIP_NETWORK, reason=_SKIP_REASON)
 def test_fetches_content_from_valid_url():
     """fetch_url_content returns non-empty content from a valid URL."""
-    result = fetch_url_content.invoke({"url": "https://httpbin.org/html"})
+    result = fetch_url_content("https://httpbin.org/html")
     assert result
     assert "Herman Melville" in result
 
@@ -28,14 +28,14 @@ def test_fetches_content_from_valid_url():
 @pytest.mark.skipif(SKIP_NETWORK, reason=_SKIP_REASON)
 def test_returns_string_type():
     """fetch_url_content always returns a string."""
-    result = fetch_url_content.invoke({"url": "https://httpbin.org/html"})
+    result = fetch_url_content("https://httpbin.org/html")
     assert isinstance(result, str)
 
 
 @pytest.mark.skipif(SKIP_NETWORK, reason=_SKIP_REASON)
 def test_strips_html_tags():
     """HTML tags are removed from the fetched content."""
-    result = fetch_url_content.invoke({"url": "https://httpbin.org/html"})
+    result = fetch_url_content("https://httpbin.org/html")
     assert "<" not in result
     assert ">" not in result
 
@@ -43,7 +43,7 @@ def test_strips_html_tags():
 @pytest.mark.skipif(SKIP_NETWORK, reason=_SKIP_REASON)
 def test_content_truncated_to_reasonable_length():
     """Returned content is truncated to at most 5000 characters."""
-    result = fetch_url_content.invoke({"url": "https://httpbin.org/html"})
+    result = fetch_url_content("https://httpbin.org/html")
     assert len(result) <= 5000
 
 
@@ -52,19 +52,19 @@ def test_content_truncated_to_reasonable_length():
 
 def test_blocks_twitter():
     """twitter.com is a blocked domain and returns a Skipped message."""
-    result = fetch_url_content.invoke({"url": "https://twitter.com/someuser"})
+    result = fetch_url_content("https://twitter.com/someuser")
     assert "Skipped" in result
 
 
 def test_blocks_linkedin():
     """linkedin.com is a blocked domain and returns a Skipped message."""
-    result = fetch_url_content.invoke({"url": "https://www.linkedin.com/in/someone"})
+    result = fetch_url_content("https://www.linkedin.com/in/someone")
     assert "Skipped" in result
 
 
 def test_blocks_youtube():
     """youtube.com is a blocked domain and returns a Skipped message."""
-    result = fetch_url_content.invoke({"url": "https://www.youtube.com/watch?v=abc"})
+    result = fetch_url_content("https://www.youtube.com/watch?v=abc")
     assert "Skipped" in result
 
 
@@ -73,5 +73,5 @@ def test_blocks_youtube():
 
 def test_handles_invalid_url_gracefully():
     """An unreachable URL returns a failure message rather than raising."""
-    result = fetch_url_content.invoke({"url": "https://this-domain-does-not-exist.invalid/page"})
+    result = fetch_url_content("https://this-domain-does-not-exist.invalid/page")
     assert "Fetch failed" in result or "HTTP" in result

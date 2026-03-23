@@ -17,27 +17,62 @@
   ],
   "timeline": [
     {
-      "date": "2026-02-05",
-      "event": "Published Anthropic engineering blog post: 16 Claude agents built a 100K-line Rust-based C compiler that compiles Linux 6.9 on x86/ARM/RISC-V, costing ~$20K over ~2,000 sessions",
-      "url": "https://www.anthropic.com/engineering/building-c-compiler"
+      "date": "2017-01",
+      "event": "Best Student Paper at IEEE S&P 2017 for 'Towards Evaluating the Robustness of Neural Networks' -- foundational C&W attack methodology",
+      "url": "https://arxiv.org/abs/1608.04644"
     },
     {
-      "date": "2026",
-      "event": "Published blog post 'How to win a best paper award' -- reflections on a decade of impactful research",
-      "url": "https://nicholas.carlini.com/writing"
+      "date": "2018-01",
+      "event": "Best Paper at ICML 2018 for 'Obfuscated Gradients Give a False Sense of Security' -- landmark work identifying gradient masking pitfalls in adversarial defenses",
+      "url": "https://arxiv.org/abs/1802.00420"
     },
     {
-      "date": "2025-03",
-      "event": "Career update: left Google DeepMind after seven years, joined Anthropic to work on safety and security research",
-      "url": "https://nicholas.carlini.com/writing/2025/career-update.html"
+      "date": "2020-01",
+      "event": "Published 'Cryptanalytic Extraction of Neural Network Models' at CRYPTO 2020 -- novel cryptanalytic approach requiring 100x fewer queries",
+      "url": "https://arxiv.org/abs/2003.04884"
     },
     {
-      "date": "2025",
+      "date": "2021-01",
+      "event": "Published 'Extracting Training Data from Large Language Models' at USENIX Security 2021 -- landmark paper extracting verbatim PII from GPT-2",
+      "url": "https://arxiv.org/abs/2012.07805"
+    },
+    {
+      "date": "2021-01",
+      "event": "Distinguished Paper at USENIX Security 2021 for 'Poisoning the Unlabeled Dataset of Semi-Supervised Learning'",
+      "url": "https://arxiv.org/abs/2105.01622"
+    },
+    {
+      "date": "2022-01",
+      "event": "Published 'Deduplicating Training Data Makes Language Models Better' at ACL 2022 showing near-duplicate removal reduces verbatim memorization by 10x",
+      "url": "https://arxiv.org/abs/2107.06499"
+    },
+    {
+      "date": "2022-01",
+      "event": "Published 'Membership Inference Attacks From First Principles' at IEEE S&P 2022 introducing the LiRA attack (10x more powerful at low FPR)",
+      "url": "https://arxiv.org/abs/2112.03570"
+    },
+    {
+      "date": "2023-01",
+      "event": "Published 'Scalable Extraction of Training Data from (Production) Language Models' showing adversaries can extract gigabytes of training data from open and closed models",
+      "url": "https://arxiv.org/abs/2311.17035"
+    },
+    {
+      "date": "2023-01",
+      "event": "Published 'Quantifying Memorization Across Neural Language Models' at ICLR 2023 establishing log-linear memorization relationships",
+      "url": "https://arxiv.org/abs/2202.07646"
+    },
+    {
+      "date": "2024-01",
+      "event": "Best Paper at ICML 2024 for 'Stealing Part of a Production Language Model' -- extracted embedding layers from ChatGPT for under $20",
+      "url": "https://arxiv.org/abs/2403.06634"
+    },
+    {
+      "date": "2025-01",
       "event": "Keynote at CoLM: 'Are Large Language Models Worth It?' -- comprehensive cost-benefit analysis of LLM risks and benefits",
       "url": "https://nicholas.carlini.com/writing/2025/are-llms-worth-it.html"
     },
     {
-      "date": "2025",
+      "date": "2025-01",
       "event": "Published 'Machines of Ruthless Efficiency' -- essay on near-term AI harms including surveillance, phishing, and job displacement",
       "url": "https://nicholas.carlini.com/writing/2025/machines-of-ruthless-efficiency.html"
     },
@@ -52,54 +87,19 @@
       "url": "https://securitycryptographywhatever.com/2025/01/28/cryptanalyzing-llms-with-nicholas-carlini/"
     },
     {
-      "date": "2024",
-      "event": "Best Paper at ICML 2024 for 'Stealing Part of a Production Language Model' -- extracted embedding layers from ChatGPT for under $20",
-      "url": "https://arxiv.org/abs/2403.06634"
+      "date": "2025-03",
+      "event": "Career update: left Google DeepMind after seven years, joined Anthropic to work on safety and security research",
+      "url": "https://nicholas.carlini.com/writing/2025/career-update.html"
     },
     {
-      "date": "2023",
-      "event": "Published 'Scalable Extraction of Training Data from (Production) Language Models' showing adversaries can extract gigabytes of training data from open and closed models",
-      "url": "https://arxiv.org/abs/2311.17035"
+      "date": "2026-01",
+      "event": "Published blog post 'How to win a best paper award' -- reflections on a decade of impactful research",
+      "url": "https://nicholas.carlini.com/writing"
     },
     {
-      "date": "2023",
-      "event": "Published 'Quantifying Memorization Across Neural Language Models' at ICLR 2023 establishing log-linear memorization relationships",
-      "url": "https://arxiv.org/abs/2202.07646"
-    },
-    {
-      "date": "2022",
-      "event": "Published 'Deduplicating Training Data Makes Language Models Better' at ACL 2022 showing near-duplicate removal reduces verbatim memorization by 10x",
-      "url": "https://arxiv.org/abs/2107.06499"
-    },
-    {
-      "date": "2022",
-      "event": "Published 'Membership Inference Attacks From First Principles' at IEEE S&P 2022 introducing the LiRA attack (10x more powerful at low FPR)",
-      "url": "https://arxiv.org/abs/2112.03570"
-    },
-    {
-      "date": "2021",
-      "event": "Published 'Extracting Training Data from Large Language Models' at USENIX Security 2021 -- landmark paper extracting verbatim PII from GPT-2",
-      "url": "https://arxiv.org/abs/2012.07805"
-    },
-    {
-      "date": "2021",
-      "event": "Distinguished Paper at USENIX Security 2021 for 'Poisoning the Unlabeled Dataset of Semi-Supervised Learning'",
-      "url": "https://arxiv.org/abs/2105.01622"
-    },
-    {
-      "date": "2020",
-      "event": "Published 'Cryptanalytic Extraction of Neural Network Models' at CRYPTO 2020 -- novel cryptanalytic approach requiring 100x fewer queries",
-      "url": "https://arxiv.org/abs/2003.04884"
-    },
-    {
-      "date": "2018",
-      "event": "Best Paper at ICML 2018 for 'Obfuscated Gradients Give a False Sense of Security' -- landmark work identifying gradient masking pitfalls in adversarial defenses",
-      "url": "https://arxiv.org/abs/1802.00420"
-    },
-    {
-      "date": "2017",
-      "event": "Best Student Paper at IEEE S&P 2017 for 'Towards Evaluating the Robustness of Neural Networks' -- foundational C&W attack methodology",
-      "url": "https://arxiv.org/abs/1608.04644"
+      "date": "2026-02",
+      "event": "Published Anthropic engineering blog post: 16 Claude agents built a 100K-line Rust-based C compiler that compiles Linux 6.9 on x86/ARM/RISC-V, costing ~$20K over ~2,000 sessions",
+      "url": "https://www.anthropic.com/engineering/building-c-compiler"
     }
   ],
   "key_contributions": [

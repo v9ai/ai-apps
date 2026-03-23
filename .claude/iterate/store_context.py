@@ -10,16 +10,19 @@ import subprocess
 import chromadb
 from datetime import datetime
 
+from embeddings import get_embedding_function
+
 CHROMA_PATH = os.environ.get("CLAUDE_ITERATE_CHROMA_PATH", "/tmp/claude-iterate/chroma")
 COLLECTION_NAME = "iterate_context"
 
 
 def get_collection():
     client = chromadb.PersistentClient(path=CHROMA_PATH)
-    return client.get_or_create_collection(
-        name=COLLECTION_NAME,
-        metadata={"hnsw:space": "cosine"},
-    )
+    ef = get_embedding_function()
+    kwargs: dict = {"name": COLLECTION_NAME, "metadata": {"hnsw:space": "cosine"}}
+    if ef is not None:
+        kwargs["embedding_function"] = ef
+    return client.get_or_create_collection(**kwargs)
 
 
 def chunk_content(content: str, max_chars: int = 1200) -> list[str]:
@@ -58,22 +61,36 @@ def dedup_chunks(chunks: list[str]) -> list[str]:
     return deduped
 
 
-def get_git_diff() -> tuple[str | None, list[str]]:
-    """Capture git diff stat and extract changed file paths."""
+def get_git_diff() -> tuple[str | None, list[str], str | None]:
+    """Capture git diff stat, changed file paths, and full diff content."""
+    stat: str | None = None
+    files: list[str] = []
+    diff_content: str | None = None
+
     try:
-        result = subprocess.run(
+        r = subprocess.run(
             ["git", "diff", "HEAD~1", "--stat", "--no-color"],
             capture_output=True, text=True, timeout=5,
             cwd=os.environ.get("CLAUDE_ITERATE_CWD", "."),
         )
-        if result.returncode == 0 and result.stdout.strip():
-            stat = result.stdout.strip()
-            # Extract file paths from stat lines (e.g. " path/to/file | 5 ++-")
+        if r.returncode == 0 and r.stdout.strip():
+            stat = r.stdout.strip()
             files = [m.group(1) for m in re.finditer(r'^\s*(.+?)\s+\|', stat, re.MULTILINE)]
-            return stat, files
     except Exception:
         pass
-    return None, []
+
+    try:
+        r = subprocess.run(
+            ["git", "diff", "HEAD~1", "--no-color", "-U2"],
+            capture_output=True, text=True, timeout=10,
+            cwd=os.environ.get("CLAUDE_ITERATE_CWD", "."),
+        )
+        if r.returncode == 0 and r.stdout.strip():
+            diff_content = r.stdout.strip()[:6000]  # cap at 6 KB
+    except Exception:
+        pass
+
+    return stat, files, diff_content
 
 
 def extract_errors(content: str) -> list[str]:
@@ -105,7 +122,7 @@ def store(iteration: int, content: str, task: str):
     metadatas = []
 
     errors = extract_errors(content)
-    git_diff, changed_files = get_git_diff()
+    git_diff, changed_files, diff_content = get_git_diff()
     now = datetime.now().isoformat()
 
     for i, chunk in enumerate(chunks):
@@ -148,12 +165,29 @@ def store(iteration: int, content: str, task: str):
         "timestamp": now,
     })
 
+    # Store the full git diff as a searchable document so Claude can retrieve
+    # "what code changed" semantically across iterations.
+    if diff_content:
+        ids.append(f"iter-{iteration}-diff")
+        documents.append(f"Git diff for iteration {iteration}:\n{diff_content}")
+        metadatas.append({
+            "iteration": iteration,
+            "chunk_index": -2,
+            "total_chunks": 0,
+            "task": task,
+            "doc_type": "diff",
+            "has_errors": len(errors) > 0,
+            "files_changed": len(changed_files),
+            "timestamp": now,
+        })
+
     collection.upsert(ids=ids, documents=documents, metadatas=metadatas)
     result = {
         "stored": len(ids),
         "iteration": iteration,
         "errors": len(errors),
         "files_changed": len(changed_files),
+        "has_diff": diff_content is not None,
         "collection_count": collection.count(),
     }
     print(json.dumps(result))

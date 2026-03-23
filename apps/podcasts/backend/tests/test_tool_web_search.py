@@ -21,7 +21,7 @@ from research_pipeline import web_news_search, web_search
 @network
 @pytest.mark.network
 def test_web_search_returns_nonempty_string():
-    result = web_search.invoke("Harrison Chase LangChain")
+    result = web_search("Harrison Chase LangChain")
     assert isinstance(result, str)
     assert len(result) > 0
     assert result != "(no results)"
@@ -33,7 +33,7 @@ def test_web_search_returns_nonempty_string():
 @network
 @pytest.mark.network
 def test_web_search_contains_urls():
-    result = web_search.invoke("Harrison Chase LangChain")
+    result = web_search("Harrison Chase LangChain")
     # The tool formats results as markdown links: [title](url)
     assert re.search(r"\[.+?\]\(https?://.+?\)", result), (
         "Expected at least one markdown link in search results"
@@ -46,7 +46,7 @@ def test_web_search_contains_urls():
 @network
 @pytest.mark.network
 def test_web_search_empty_query():
-    result = web_search.invoke("")
+    result = web_search("")
     assert isinstance(result, str)
     # Should not raise; may return "(no results)" or a failure message
     assert len(result) > 0
@@ -58,7 +58,7 @@ def test_web_search_empty_query():
 @network
 @pytest.mark.network
 def test_web_news_search_returns_nonempty_string():
-    result = web_news_search.invoke("artificial intelligence")
+    result = web_news_search("artificial intelligence")
     assert isinstance(result, str)
     assert len(result) > 0
     assert result != "(no news results)"
@@ -70,7 +70,7 @@ def test_web_news_search_returns_nonempty_string():
 @network
 @pytest.mark.network
 def test_web_news_search_contains_dates():
-    result = web_news_search.invoke("artificial intelligence")
+    result = web_news_search("artificial intelligence")
     # The tool formats each item with a date field on its own line:
     #   <date> | <source>
     # Dates from DuckDuckGo news typically look like "YYYY-MM-DD..." or similar.
@@ -88,8 +88,8 @@ def test_web_news_search_contains_dates():
 @network
 @pytest.mark.network
 def test_both_tools_return_string_type():
-    search_result = web_search.invoke("OpenAI GPT")
-    news_result = web_news_search.invoke("OpenAI GPT")
+    search_result = web_search("OpenAI GPT")
+    news_result = web_news_search("OpenAI GPT")
     assert type(search_result) is str, (
         f"web_search returned {type(search_result).__name__}, expected str"
     )
@@ -104,7 +104,7 @@ def test_both_tools_return_string_type():
 @network
 @pytest.mark.network
 def test_search_results_reasonable_length():
-    result = web_search.invoke("Anthropic Claude AI")
+    result = web_search("Anthropic Claude AI")
     # Each result snippet is capped at 300 chars, with 10 results max.
     # Title + URL + snippet per result: ~400 chars each, so ~4000 chars total
     # is a generous upper bound. Allow 50_000 to be safe with formatting.
@@ -113,7 +113,7 @@ def test_search_results_reasonable_length():
         f"Search result unexpectedly large: {len(result)} chars"
     )
 
-    news_result = web_news_search.invoke("Anthropic Claude AI")
+    news_result = web_news_search("Anthropic Claude AI")
     assert len(news_result) <= max_reasonable_length, (
         f"News search result unexpectedly large: {len(news_result)} chars"
     )
@@ -126,7 +126,7 @@ def test_search_results_reasonable_length():
 @pytest.mark.network
 def test_web_search_specific_query_relevance():
     query = "Dario Amodei Anthropic CEO"
-    result = web_search.invoke(query)
+    result = web_search(query)
     result_lower = result.lower()
     # At least one of the key terms should appear in the results
     assert "amodei" in result_lower or "anthropic" in result_lower, (

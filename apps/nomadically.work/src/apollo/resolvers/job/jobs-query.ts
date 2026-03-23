@@ -57,6 +57,11 @@ export async function jobsQuery(
       conditions.push(eq(jobs.is_remote_eu, true));
     }
 
+    // Exclude archived (dismissed) jobs from the main list
+    if (!args.showAll) {
+      conditions.push(eq(jobs.archived, false));
+    }
+
     // Filter out non-tech roles (SDR, Account Executive, etc.) while keeping unclassified jobs visible
     conditions.push(
       or(isNull(jobs.role_ai_engineer), eq(jobs.role_ai_engineer, true))!

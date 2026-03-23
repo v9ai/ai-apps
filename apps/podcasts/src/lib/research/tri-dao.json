@@ -27,12 +27,12 @@
       "url": "https://proceedings.mlr.press/v162/dao22a.html"
     },
     {
-      "date": "2023-07-17",
+      "date": "2023-07",
       "event": "Joined Together AI as Chief Scientist; released FlashAttention-2 (2x faster, ICLR 2024)",
       "url": "https://www.together.ai/blog/tri-dao-flash-attention"
     },
     {
-      "date": "2023-07-26",
+      "date": "2023-07",
       "event": "Appeared on Latent Space podcast: FlashAttention 2 — making Transformers 800% faster",
       "url": "https://www.latent.space/p/flashattention"
     },
@@ -42,7 +42,7 @@
       "url": "https://arxiv.org/abs/2312.00752"
     },
     {
-      "date": "2024-02-08",
+      "date": "2024-02",
       "event": "Appeared on Generally Intelligent podcast: FlashAttention, sparsity, quantization & efficient inference",
       "url": "https://imbue.com/podcast/2024-02-08-podcast-episode-33-tri-dao/"
     },
@@ -62,19 +62,19 @@
       "url": "https://www.cs.princeton.edu/people/profile/td8762"
     },
     {
-      "date": "2025-03-27",
-      "event": "Delivered TED Talk: How AI is Transforming Work and Everyday Life (TEDAI San Francisco)",
-      "url": "https://www.ted.com/talks/tri_dao_how_ai_is_transforming_work_and_everyday_life"
-    },
-    {
-      "date": "2025",
+      "date": "2025-01",
       "event": "Received Schmidt Sciences AI2050 Early Career Fellowship, Google ML & Systems Junior Faculty Award, and Google Research Scholar award",
       "url": "https://ai2050.schmidtsciences.org/fellow/tri-dao/"
     },
     {
-      "date": "2025",
+      "date": "2025-01",
       "event": "Published Marconi: Prefix Caching for Hybrid LLMs (MLSys 2025 Outstanding Paper Honorable Mention)",
       "url": "https://tridao.me"
+    },
+    {
+      "date": "2025-03",
+      "event": "Delivered TED Talk: How AI is Transforming Work and Everyday Life (TEDAI San Francisco)",
+      "url": "https://www.ted.com/talks/tri_dao_how_ai_is_transforming_work_and_everyday_life"
     }
   ],
   "key_contributions": [

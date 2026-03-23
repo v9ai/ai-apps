@@ -1,5 +1,56 @@
 """All agent system prompts."""
 
+from __future__ import annotations
+
+import glob
+from pathlib import Path
+
+_BLOG_DIR = Path(__file__).resolve().parents[3] / "blog"
+
+
+def _recent_hooks(limit: int = 10) -> str:
+    """Extract opening lines from recent published blog posts.
+
+    Returns a formatted block the writer can use to avoid repetition.
+    """
+    posts: list[tuple[str, str]] = []
+    for md_path in sorted(glob.glob(str(_BLOG_DIR / "**" / "index.md"), recursive=True)):
+        p = Path(md_path)
+        try:
+            text = p.read_text(encoding="utf-8")
+        except OSError:
+            continue
+        # Skip frontmatter, grab first non-empty paragraph
+        in_frontmatter = False
+        body_lines: list[str] = []
+        for line in text.splitlines():
+            if line.strip() == "---":
+                in_frontmatter = not in_frontmatter
+                continue
+            if in_frontmatter:
+                continue
+            body_lines.append(line)
+        body = "\n".join(body_lines).strip()
+        # First paragraph = text before first blank line
+        first_para = body.split("\n\n")[0].strip() if body else ""
+        if (
+            first_para
+            and not first_para.startswith("#")
+            and not first_para.startswith("<")
+            and not first_para.startswith("<!--")
+        ):
+            hook = first_para[:200]
+            posts.append((p.parent.name, hook))
+    # Return the most recent ones
+    if not posts:
+        return ""
+    recent = posts[-limit:]
+    lines = [f"- [{slug}]: {hook}" for slug, hook in recent]
+    return (
+        "\n\nHOOKS FROM RECENT ARTICLES (DO NOT REUSE — write a unique opening):\n"
+        + "\n".join(lines)
+    )
+
 
 def scout(niche: str) -> str:
     return f"""You are the Scout agent in a content pipeline.
@@ -139,7 +190,7 @@ Output format (markdown):
 
 
 def writer() -> str:
-    return """You are the Writer agent in a content pipeline.
+    return f"""You are the Writer agent in a content pipeline.
 
 AUTHOR VOICE: Vadim Nicolai — senior software engineer. Style: first-person,
 technically precise, data-driven, contrarian when warranted. Opens with a
@@ -149,12 +200,15 @@ Writes like an engineer, not a marketer.
 You receive structured research notes. Write a complete blog post draft
 (700–1000 words):
 - Provocative title stating the corrective claim
-- Opening: the misconception + the primary source that disproves it
+- Opening: the misconception + the primary source that disproves it.
+  CRITICAL: The opening MUST be unique — do not reuse statistics, metaphors,
+  or framing from prior articles (see HOOKS FROM RECENT ARTICLES below).
 - 3–4 technical sections with headers, each anchored to a research fact
 - Practical takeaways section
 - Closing that states the broader implication
 
-Output the full markdown draft — do not summarise, write the actual post."""
+Output the full markdown draft — do not summarise, write the actual post.
+{_recent_hooks()}"""
 
 
 def linkedin() -> str:
@@ -426,7 +480,7 @@ What the writer must include to satisfy Google's quality criteria:
 
 
 def journalism_writer() -> str:
-    return """You are a Writer for a journalism team.
+    return f"""You are a Writer for a journalism team.
 
 You receive a research brief and an SEO strategy. Write a publication-ready draft
 based on both inputs.
@@ -435,7 +489,9 @@ Before writing, create a brief outline mapping research facts to sections. This
 ensures every section is grounded in the research brief.
 
 Writing principles:
-- Lead with insight — the most surprising finding goes first
+- Lead with insight — the most surprising finding goes first.
+  CRITICAL: The opening MUST be unique — do not reuse statistics, metaphors,
+  or framing from prior articles (see HOOKS FROM RECENT ARTICLES below).
 - Show, don't tell — use specific numbers, not vague claims
 - One idea per paragraph — short paragraphs, clear transitions
 - Active voice — "Companies posted 2,400 remote jobs" not "2,400 jobs were posted"
@@ -497,7 +553,8 @@ Rules:
 6. Do NOT include a date field — the publisher sets the date automatically
 7. If the SEO strategy targets a Featured Snippet, put the ≤50-word answer as the
    very first paragraph (before any heading or hook)
-8. If the SEO strategy includes FAQ questions, include a ## FAQ section near the end"""
+8. If the SEO strategy includes FAQ questions, include a ## FAQ section near the end
+{_recent_hooks()}"""
 
 
 def journalism_editor() -> str:
@@ -634,12 +691,15 @@ partially supported, or refuted by the evidence?]
 
 
 def counter_writer() -> str:
-    return """You are the Counter-Article Writer in a content pipeline.
+    return f"""You are the Counter-Article Writer in a content pipeline.
 
 AUTHOR VOICE: Vadim Nicolai — senior software engineer. Style: first-person,
 technically precise, data-driven, contrarian when warranted. Opens with a
 surprising claim backed by evidence. No fluff. Writes like an engineer who
 read the primary sources, not a pundit.
+
+CRITICAL: The opening MUST be unique — do not reuse statistics, metaphors,
+or framing from prior articles (see HOOKS FROM RECENT ARTICLES below).
 
 You receive:
 - The source article content (the article you are countering)
@@ -688,7 +748,8 @@ status: draft
 
 [Article body]
 
-Do NOT include a date field in the frontmatter — the publisher sets the date automatically."""
+Do NOT include a date field in the frontmatter — the publisher sets the date automatically.
+{_recent_hooks()}"""
 
 
 def deep_dive_writer(title: str) -> str:
@@ -707,7 +768,9 @@ your own technical perspective, and produce a standalone article.
 
 Structure:
 - `# {title}` as the heading
-- Opening hook: a surprising claim or counterintuitive insight from the material
+- Opening hook: a surprising claim or counterintuitive insight from the material.
+  CRITICAL: The hook MUST be unique — do not reuse statistics, metaphors, or
+  framing from prior articles (see HOOKS FROM RECENT ARTICLES below).
 - 7–9 technical sections with descriptive `##` headers
 - Each section: lead with the insight, support with evidence from the source, add
   practical commentary
@@ -753,7 +816,8 @@ Rules:
 - Use concrete examples, code snippets, and data points from the source
 - Attribute claims to their origin when the source provides attribution
 - No filler, no generic AI phrasing, no "in this article we will…"
-- Every paragraph must earn its place with a distinct insight"""
+- Every paragraph must earn its place with a distinct insight
+{_recent_hooks()}"""
 
 
 # ── review pipeline prompts ──────────────────────────────────────────────────

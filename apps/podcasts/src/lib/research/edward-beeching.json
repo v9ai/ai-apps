@@ -17,47 +17,17 @@
   ],
   "timeline": [
     {
-      "date": "2026-03-10",
-      "event": "Co-authored 'Keep the Tokens Flowing: Lessons from 16 Open-Source RL Libraries', a comprehensive survey of async RL training infrastructure",
-      "url": "https://huggingface.co/blog/async-rl-training-landscape"
+      "date": "2020-07",
+      "event": "Published 'Learning to Plan with Uncertain Topological Maps' at ECCV 2020 (spotlight)",
+      "url": "https://arxiv.org/abs/2007.05270"
     },
     {
-      "date": "2025-07-08",
-      "event": "Co-authored SmolLM3, a 3B parameter dual-mode reasoning model with multilingual and 128k context support",
-      "url": "https://huggingface.co/blog/smollm3"
+      "date": "2021-12",
+      "event": "Published 'Godot Reinforcement Learning Agents' paper (arXiv 2112.03636)",
+      "url": "https://arxiv.org/abs/2112.03636"
     },
     {
-      "date": "2025-03",
-      "event": "Co-authored 'Optimizing Test-Time Compute via Meta Reinforcement Fine-Tuning' (ICML 2025)",
-      "url": "https://arxiv.org/abs/2503.07572"
-    },
-    {
-      "date": "2024-02",
-      "event": "Co-authored 'Jack of All Trades, Master of Some, a Multi-Purpose Transformer Agent' (JAT) — first fully open-sourced multi-task RL agent",
-      "url": "https://arxiv.org/abs/2402.09844"
-    },
-    {
-      "date": "2023-10",
-      "event": "Co-authored 'Zephyr: Direct Distillation of LM Alignment' — 7B chat model surpassing Llama2-Chat-70B on MT-Bench without human annotation",
-      "url": "https://arxiv.org/abs/2310.16944"
-    },
-    {
-      "date": "2023-05",
-      "event": "Co-created the Open LLM Leaderboard on Hugging Face to track open-source LLM progress",
-      "url": "https://huggingface.co/spaces/open-llm-leaderboard/open_llm_leaderboard"
-    },
-    {
-      "date": "2023-04-05",
-      "event": "Co-authored 'StackLLaMA: A hands-on guide to train LLaMA with RLHF' blog post on Hugging Face",
-      "url": "https://huggingface.co/blog/stackllama"
-    },
-    {
-      "date": "2022-05",
-      "event": "Defended PhD thesis 'Large-scale automatic learning of autonomous agent behavior with structured deep reinforcement learning' at INSA Lyon",
-      "url": "https://edbeeching.github.io/"
-    },
-    {
-      "date": "2022-03-28",
+      "date": "2022-03",
       "event": "Published Decision Transformer integration in Hugging Face Transformers library",
       "url": "https://huggingface.co/blog/decision-transformers"
     },
@@ -67,14 +37,44 @@
       "url": "https://x.com/edwardbeeching/status/1508456712348524559"
     },
     {
-      "date": "2021-12",
-      "event": "Published 'Godot Reinforcement Learning Agents' paper (arXiv 2112.03636)",
-      "url": "https://arxiv.org/abs/2112.03636"
+      "date": "2022-05",
+      "event": "Defended PhD thesis 'Large-scale automatic learning of autonomous agent behavior with structured deep reinforcement learning' at INSA Lyon",
+      "url": "https://edbeeching.github.io/"
     },
     {
-      "date": "2020-07",
-      "event": "Published 'Learning to Plan with Uncertain Topological Maps' at ECCV 2020 (spotlight)",
-      "url": "https://arxiv.org/abs/2007.05270"
+      "date": "2023-04",
+      "event": "Co-authored 'StackLLaMA: A hands-on guide to train LLaMA with RLHF' blog post on Hugging Face",
+      "url": "https://huggingface.co/blog/stackllama"
+    },
+    {
+      "date": "2023-05",
+      "event": "Co-created the Open LLM Leaderboard on Hugging Face to track open-source LLM progress",
+      "url": "https://huggingface.co/spaces/open-llm-leaderboard/open_llm_leaderboard"
+    },
+    {
+      "date": "2023-10",
+      "event": "Co-authored 'Zephyr: Direct Distillation of LM Alignment' — 7B chat model surpassing Llama2-Chat-70B on MT-Bench without human annotation",
+      "url": "https://arxiv.org/abs/2310.16944"
+    },
+    {
+      "date": "2024-02",
+      "event": "Co-authored 'Jack of All Trades, Master of Some, a Multi-Purpose Transformer Agent' (JAT) — first fully open-sourced multi-task RL agent",
+      "url": "https://arxiv.org/abs/2402.09844"
+    },
+    {
+      "date": "2025-03",
+      "event": "Co-authored 'Optimizing Test-Time Compute via Meta Reinforcement Fine-Tuning' (ICML 2025)",
+      "url": "https://arxiv.org/abs/2503.07572"
+    },
+    {
+      "date": "2025-07",
+      "event": "Co-authored SmolLM3, a 3B parameter dual-mode reasoning model with multilingual and 128k context support",
+      "url": "https://huggingface.co/blog/smollm3"
+    },
+    {
+      "date": "2026-03",
+      "event": "Co-authored 'Keep the Tokens Flowing: Lessons from 16 Open-Source RL Libraries', a comprehensive survey of async RL training infrastructure",
+      "url": "https://huggingface.co/blog/async-rl-training-landscape"
     }
   ],
   "key_contributions": [

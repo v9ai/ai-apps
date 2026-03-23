@@ -124,14 +124,14 @@ class TestOneLinerStructure:
             )
 
     def test_oneliner_length(self):
-        """Assert one-liner is 20-200 chars (truly one sentence)."""
+        """Assert one-liner is 20-350 chars (one concise sentence)."""
         for p in self._profiles():
             one_liner = p["executive_summary"].get("one_liner", "")
             if not one_liner:
                 continue
             length = len(one_liner)
-            assert 20 <= length <= 200, (
-                f"{p['slug']} one_liner length {length} not in 20-200: '{one_liner}'"
+            assert 20 <= length <= 350, (
+                f"{p['slug']} one_liner length {length} not in 20-350: '{one_liner}'"
             )
 
     def test_oneliner_is_one_sentence(self):

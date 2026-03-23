@@ -132,7 +132,7 @@ def _save_tech_stack_to_app(application_id: int, technologies: list) -> None:
         conn = get_connection()
         with conn.cursor() as cur:
             cur.execute(
-                "UPDATE applications SET ai_tech_stack = %s, updated_at = now()::text WHERE id = %s",
+                "UPDATE applications SET ai_tech_stack = %s, updated_at = now() WHERE id = %s",
                 [json.dumps(technologies), application_id],
             )
         conn.commit()

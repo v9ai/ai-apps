@@ -4,6 +4,15 @@ const API_KEY = process.env.REBRICKABLE_API_KEY;
 const PARTS_BASE = "https://rebrickable.com/api/v3/lego/parts";
 const SETS_BASE = "https://rebrickable.com/api/v3/lego/sets";
 
+/** Common Rebrickable variant suffixes — many parts like 3040 exist only as 3040a/3040b. */
+const VARIANT_SUFFIXES = ["b", "a", "c", "d"];
+
+async function fetchPart(partNum: string, headers: Record<string, string>) {
+  const res = await fetch(`${PARTS_BASE}/${partNum}/`, { headers });
+  if (res.ok) return res.json();
+  return null;
+}
+
 export async function GET(
   _req: NextRequest,
   { params }: { params: Promise<{ partNum: string }> }
@@ -15,16 +24,22 @@ export async function GET(
   const { partNum } = await params;
   const headers = { Authorization: `key ${API_KEY}` };
 
-  // Try as a part first
-  const res = await fetch(`${PARTS_BASE}/${partNum}/`, { headers });
+  // Try exact part number, then common variant suffixes (3040 → 3040b, 3040a…)
+  let data = await fetchPart(partNum, headers);
+  if (!data && /^\d+$/.test(partNum)) {
+    for (const suffix of VARIANT_SUFFIXES) {
+      data = await fetchPart(`${partNum}${suffix}`, headers);
+      if (data) break;
+    }
+  }
 
-  if (res.ok) {
-    const data = await res.json();
+  if (data) {
+    const resolvedNum = data.part_num as string;
 
     // Fetch available colors for this part
-    let colors: { id: number; name: string; rgb: string; imageUrl: string | null }[] = [];
+    let colors: { id: number; name: string; imageUrl: string | null; numSets: number }[] = [];
     try {
-      const colorsRes = await fetch(`${PARTS_BASE}/${partNum}/colors/`, { headers });
+      const colorsRes = await fetch(`${PARTS_BASE}/${resolvedNum}/colors/`, { headers });
       if (colorsRes.ok) {
         const colorsData = await colorsRes.json();
         colors = (colorsData.results ?? []).map(
@@ -41,7 +56,7 @@ export async function GET(
     }
 
     return NextResponse.json({
-      partNum: data.part_num,
+      partNum: resolvedNum,
       name: data.name,
       imageUrl: data.part_img_url,
       categoryId: data.part_cat_id,

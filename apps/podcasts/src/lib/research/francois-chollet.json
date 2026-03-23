@@ -17,9 +17,14 @@
   ],
   "timeline": [
     {
-      "date": "2012",
+      "date": "2012-01",
       "event": "Graduated with Diplome d'Ingenieur (Master of Engineering) from ENSTA Paris, Polytechnic Institute of Paris.",
       "url": "https://fchollet.com/"
+    },
+    {
+      "date": "2015-01",
+      "event": "Joined Google shortly after releasing Keras; contributed to TensorFlow and rose to Senior Staff Engineer.",
+      "url": "https://en.wikipedia.org/wiki/Fran%C3%A7ois_Chollet"
     },
     {
       "date": "2015-03",
@@ -27,29 +32,19 @@
       "url": "https://github.com/keras-team/keras"
     },
     {
-      "date": "2015",
-      "event": "Joined Google shortly after releasing Keras; contributed to TensorFlow and rose to Senior Staff Engineer.",
-      "url": "https://en.wikipedia.org/wiki/Fran%C3%A7ois_Chollet"
-    },
-    {
-      "date": "2016",
+      "date": "2016-01",
       "event": "Published 'Xception: Deep Learning with Depthwise Separable Convolutions' (CVPR 2017) — introduced the Xception architecture, a milestone in efficient neural network design.",
       "url": "https://arxiv.org/abs/1610.02357"
     },
     {
-      "date": "2016",
+      "date": "2016-01",
       "event": "Co-authored 'DeepMath: Deep Sequence Models for Premise Selection' at NeurIPS 2016.",
       "url": "https://arxiv.org/abs/1606.04442"
     },
     {
-      "date": "2017",
+      "date": "2017-01",
       "event": "Published 'Deep Learning with Python' (Manning Publications), which became a bestseller (100k+ copies sold, translated into 10+ languages).",
       "url": "https://www.manning.com/books/deep-learning-with-python"
-    },
-    {
-      "date": "2019-11",
-      "event": "Published 'On the Measure of Intelligence' (arXiv:1911.01547), proposing a formal framework for measuring intelligence via skill-acquisition efficiency and introducing the ARC benchmark.",
-      "url": "https://arxiv.org/abs/1911.01547"
     },
     {
       "date": "2019-09",
@@ -57,19 +52,24 @@
       "url": "https://lexfridman.com/francois-chollet/"
     },
     {
+      "date": "2019-11",
+      "event": "Published 'On the Measure of Intelligence' (arXiv:1911.01547), proposing a formal framework for measuring intelligence via skill-acquisition efficiency and introducing the ARC benchmark.",
+      "url": "https://arxiv.org/abs/1911.01547"
+    },
+    {
       "date": "2020-08",
       "event": "Appeared on Lex Fridman Podcast #120: 'Measures of Intelligence'.",
       "url": "https://lexfridman.com/francois-chollet-2/"
     },
     {
-      "date": "2021-12-01",
-      "event": "Won the Global Swiss AI Award for breakthroughs in artificial intelligence.",
-      "url": "https://en.wikipedia.org/wiki/Fran%C3%A7ois_Chollet"
-    },
-    {
-      "date": "2021",
+      "date": "2021-01",
       "event": "Published 'Deep Learning with Python, Second Edition' (Manning), fully updated with Keras 2 and generative AI coverage.",
       "url": "https://www.manning.com/books/deep-learning-with-python-second-edition"
+    },
+    {
+      "date": "2021-12",
+      "event": "Won the Global Swiss AI Award for breakthroughs in artificial intelligence.",
+      "url": "https://en.wikipedia.org/wiki/Fran%C3%A7ois_Chollet"
     },
     {
       "date": "2023-11",
@@ -77,7 +77,7 @@
       "url": "https://github.com/keras-team/keras"
     },
     {
-      "date": "2024-06-11",
+      "date": "2024-06",
       "event": "Appeared on Dwarkesh Podcast with Mike Knoop: 'LLMs won't lead to AGI — $1,000,000 Prize to find true solution'. Announced ARC Prize.",
       "url": "https://www.dwarkesh.com/p/francois-chollet"
     },
@@ -102,7 +102,7 @@
       "url": "https://arxiv.org/abs/2412.04604"
     },
     {
-      "date": "2025-01-15",
+      "date": "2025-01",
       "event": "Co-founded Ndea with Mike Knoop (Zapier co-founder) — an AI lab pursuing AGI through deep learning-guided program synthesis.",
       "url": "https://techcrunch.com/2025/01/15/ai-researcher-francois-chollet-founds-a-new-ai-lab-focused-on-agi/"
     },
@@ -112,17 +112,17 @@
       "url": "https://open.spotify.com/episode/087N01jW5MUNdoH9AKEXYB"
     },
     {
+      "date": "2025-01",
+      "event": "ARC Prize Foundation expanded into a full-fledged non-profit. ARC Prize 2025 competition concluded: 1,455 teams, 15,154 entries, top Kaggle score of 24% on ARC-AGI-2.",
+      "url": "https://arcprize.org/blog/arc-prize-2025-results-analysis"
+    },
+    {
       "date": "2025-03",
       "event": "Released ARC-AGI-2, a harder benchmark resisting brute-force approaches and stressing efficiency and reasoning capabilities.",
       "url": "https://x.com/fchollet/status/1904265979192086882"
     },
     {
-      "date": "2025",
-      "event": "ARC Prize Foundation expanded into a full-fledged non-profit. ARC Prize 2025 competition concluded: 1,455 teams, 15,154 entries, top Kaggle score of 24% on ARC-AGI-2.",
-      "url": "https://arcprize.org/blog/arc-prize-2025-results-analysis"
-    },
-    {
-      "date": "2026-03-25",
+      "date": "2026-03",
       "event": "ARC-AGI-3 launching — an interactive reasoning benchmark where AI agents navigate novel game environments to evaluate exploration, goal-directedness, and memory.",
       "url": "https://arcprize.org/"
     }

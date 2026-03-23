@@ -9,6 +9,7 @@ Usage:
 """
 
 import pytest
+from concurrent.futures import ThreadPoolExecutor, as_completed
 from deepeval import assert_test
 from deepeval.dataset import EvaluationDataset, Golden
 from deepeval.metrics import TaskCompletionMetric
@@ -104,12 +105,21 @@ def test_agent_batch(agent):
         Golden(input=case.values[0], expected_output=case.values[1])
         for case in AGENT_CASES
     ]
-    dataset = EvaluationDataset(goldens=goldens)
     metric = TaskCompletionMetric(model=model, threshold=THRESHOLD)
 
+    # Parallelize agent invocations — compiled graph is stateless and thread-safe.
+    with ThreadPoolExecutor(max_workers=min(4, len(goldens))) as pool:
+        futures = {pool.submit(_invoke_agent, agent, g.input): i for i, g in enumerate(goldens)}
+        outputs: list[str] = [""] * len(goldens)
+        for future in as_completed(futures):
+            i = futures[future]
+            try:
+                outputs[i] = future.result()
+            except Exception:
+                outputs[i] = ""
+
     results = []
-    for golden in dataset.evals_iterator():
-        actual_output = _invoke_agent(agent, golden.input)
+    for golden, actual_output in zip(goldens, outputs):
         metric.measure(
             LLMTestCase(
                 input=golden.input,

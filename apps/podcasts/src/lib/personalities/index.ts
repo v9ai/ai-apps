@@ -13,14 +13,9 @@ export type {
 import type { Category, Personality, PersonResearch, EnrichedTimelineEvent } from "./types";
 
 // Lab Leaders & Founders
-import samAltman from "../../../personalities/sam-altman";
 import darioAmodei from "../../../personalities/dario-amodei";
-import jensenHuang from "../../../personalities/jensen-huang";
 import liangWenfeng from "../../../personalities/liang-wenfeng";
 import yangZhilin from "../../../personalities/yang-zhilin";
-import markZuckerberg from "../../../personalities/mark-zuckerberg";
-import sundarPichai from "../../../personalities/sundar-pichai";
-import satyaNadella from "../../../personalities/satya-nadella";
 import clementDelangue from "../../../personalities/clement-delangue";
 import julienChaumond from "../../../personalities/julien-chaumond";
 import thomasWolf from "../../../personalities/thomas-wolf";
@@ -138,7 +133,7 @@ export const categories: Category[] = [
   {
     title: "Lab Leaders & Founders",
     slug: "lab-leaders",
-    personalities: [samAltman, darioAmodei, jensenHuang, liangWenfeng, yangZhilin, markZuckerberg, sundarPichai, satyaNadella, clementDelangue, julienChaumond, thomasWolf, arthurMensch, aidanGomez, danielaAmodei],
+    personalities: [darioAmodei, liangWenfeng, yangZhilin, clementDelangue, julienChaumond, thomasWolf, arthurMensch, aidanGomez, danielaAmodei],
   },
   {
     title: "Builders & Technical Leaders",

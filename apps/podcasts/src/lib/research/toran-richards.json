@@ -22,12 +22,12 @@
       "url": "https://uk.linkedin.com/in/toran-richards"
     },
     {
-      "date": "2020",
+      "date": "2020-01",
       "event": "Graduated from Edinburgh Napier University with a BSc in Game Development",
       "url": "https://uk.linkedin.com/in/toran-richards"
     },
     {
-      "date": "2023-03-30",
+      "date": "2023-03",
       "event": "Released AutoGPT as an open-source project, one of the first autonomous AI agents leveraging GPT-4 for goal-directed task execution",
       "url": "https://github.com/Significant-Gravitas/AutoGPT"
     },
@@ -57,7 +57,7 @@
       "url": "https://agpt.co/blog/introducing-the-autogpt-platform"
     },
     {
-      "date": "2025",
+      "date": "2025-01",
       "event": "AutoGPT Platform evolved to include an Agent Marketplace, enhanced workflow management, and deployment controls for production agents",
       "url": "https://platform.agpt.co/"
     },

@@ -17,82 +17,82 @@
   ],
   "timeline": [
     {
-      "date": "2008",
+      "date": "2008-01",
       "event": "Enrolled in Bachelor of Software Engineering at University of Waterloo",
       "url": "https://uwaterloo.ca/software-engineering/"
     },
     {
-      "date": "2013",
+      "date": "2013-01",
       "event": "Co-founded Kitematic, a Mac GUI for managing Docker containers, while at University of Waterloo",
       "url": "https://uwaterloo.ca/engineering/news/software-startup-waterloo-engineering-roots-acquired-docker"
     },
     {
-      "date": "2015-03-12",
-      "event": "Kitematic acquired by Docker Inc.; the tool had garnered 2,600+ GitHub stars in six months",
-      "url": "https://techcrunch.com/2015/03/12/kitematic-founders-barely-two-years-out-of-college-sell-to-docker/"
-    },
-    {
-      "date": "2015",
+      "date": "2015-01",
       "event": "Joined Docker Inc. as Senior Engineer and Product Manager following Kitematic acquisition",
       "url": "https://www.linkedin.com/in/jmorganca/"
     },
     {
-      "date": "2019",
+      "date": "2015-03",
+      "event": "Kitematic acquired by Docker Inc.; the tool had garnered 2,600+ GitHub stars in six months",
+      "url": "https://techcrunch.com/2015/03/12/kitematic-founders-barely-two-years-out-of-college-sell-to-docker/"
+    },
+    {
+      "date": "2019-01",
       "event": "Left Docker after five years; contributed to Docker Toolbox and container developer experience",
       "url": "https://www.linkedin.com/in/jmorganca/"
     },
     {
-      "date": "2021",
+      "date": "2021-01",
       "event": "Co-founded Infra, an infrastructure access management startup focused on safe, automated provisioning",
       "url": "https://www.crunchbase.com/person/jeffrey-morgan"
     },
     {
-      "date": "2023-08-01",
+      "date": "2023-08",
       "event": "Launched Ollama publicly with initial support for Llama 2; first blog post 'Run Llama 2 uncensored locally'",
       "url": "https://ollama.com/blog"
     },
     {
-      "date": "2023-08-24",
+      "date": "2023-08",
       "event": "Added Code Llama support to Ollama, expanding local coding assistant capabilities",
       "url": "https://ollama.com/blog"
     },
     {
-      "date": "2023-10-05",
+      "date": "2023-10",
       "event": "Ollama released as an official Docker image, bridging containerization and local LLM inference",
       "url": "https://ollama.com/blog"
     },
     {
-      "date": "2024-01-23",
+      "date": "2024-01",
       "event": "Released official Ollama Python and JavaScript client libraries",
       "url": "https://ollama.com/blog"
     },
     {
-      "date": "2024-02-08",
+      "date": "2024-02",
       "event": "Shipped OpenAI API compatibility layer, enabling drop-in replacement for OpenAI-based applications",
       "url": "https://ollama.com/blog"
     },
     {
-      "date": "2024-02-15",
+      "date": "2024-02",
       "event": "Launched Windows preview, bringing Ollama to the Windows ecosystem",
       "url": "https://ollama.com/blog"
     },
     {
-      "date": "2024-03-14",
+      "date": "2024-03",
       "event": "Added AMD GPU support, expanding beyond NVIDIA-only hardware",
       "url": "https://ollama.com/blog"
     },
     {
-      "date": "2024-04-08",
+      "date": "2024-04",
       "event": "Introduced embedding model support for search and RAG applications",
       "url": "https://ollama.com/blog"
     },
     {
-      "date": "2024-07-25",
+      "date": "2024-07",
       "event": "Shipped tool/function calling support for Ollama models",
       "url": "https://x.com/jmorgan/status/1816635634502586480"
     },
     {
-      "date": "2024-12-06",
+      "date": "2024-12",
       "event": "Released structured outputs support, enabling JSON schema-constrained generation",
       "url": "https://ollama.com/blog"
     },
@@ -102,22 +102,22 @@
       "url": "https://github.blog/news-insights/company-news/celebrating-the-github-awards-2024-recipients/"
     },
     {
-      "date": "2025-02-25",
+      "date": "2025-02",
       "event": "Published 'Minions: where local and cloud LLMs meet' -- hybrid local-cloud inference paradigm",
       "url": "https://ollama.com/blog"
     },
     {
-      "date": "2025-05-15",
+      "date": "2025-05",
       "event": "Launched new engine for multimodal models, expanding beyond text to vision capabilities",
       "url": "https://ollama.com/blog"
     },
     {
-      "date": "2025-09-19",
+      "date": "2025-09",
       "event": "Introduced cloud models alongside local models, enabling seamless local-cloud switching",
       "url": "https://ollama.com/blog"
     },
     {
-      "date": "2026-01-23",
+      "date": "2026-01",
       "event": "Launched 'ollama launch' -- integrated agent runner for Claude Code and OpenClaw",
       "url": "https://ollama.com/blog"
     },

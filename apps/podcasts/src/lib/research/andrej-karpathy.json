@@ -20,107 +20,17 @@
   ],
   "timeline": [
     {
-      "date": "2026-03-07",
-      "event": "Released autoresearch: AI agents running ML experiments autonomously on a single GPU in 630 lines of Python, built on nanochat training core",
-      "url": "https://github.com/karpathy/autoresearch"
+      "date": "2014-12",
+      "event": "Published 'Deep Visual-Semantic Alignments for Generating Image Descriptions' (CVPR 2015 oral) — pioneered image captioning with CNNs + RNNs",
+      "url": "https://arxiv.org/abs/1412.2306"
     },
     {
-      "date": "2026-01",
-      "event": "Published '2025 LLM Year in Review' blog post surveying the state of LLMs, coining 'ghost intelligence' and 'ambient programming' concepts",
-      "url": "https://karpathy.bearblog.dev/year-in-review-2025/"
-    },
-    {
-      "date": "2025-11-22",
-      "event": "Released llm-council: an ensemble system where multiple LLMs debate and collaborate to answer hard questions",
-      "url": "https://github.com/karpathy/llm-council"
-    },
-    {
-      "date": "2025-11-18",
-      "event": "Released reader3: a lightweight EPUB reader for reading books with LLMs, '90% vibe coded'",
-      "url": "https://github.com/karpathy/reader3"
-    },
-    {
-      "date": "2025-10-17",
-      "event": "Appeared on Dwarkesh Podcast: 'AGI is still a decade away' — argued AI companies are exaggerating agentic capabilities and called this the 'decade of agents' not 'year of agents'",
-      "url": "https://podcasts.apple.com/us/podcast/andrej-karpathy-agi-is-still-a-decade-away/id1516093381?i=1000732326311"
-    },
-    {
-      "date": "2025-10-13",
-      "event": "Released nanochat: full-stack ChatGPT clone training/inference pipeline in ~8,000 lines of PyTorch, trainable for under $100",
-      "url": "https://github.com/karpathy/nanochat"
-    },
-    {
-      "date": "2025-06-25",
-      "event": "Popularized 'context engineering' over 'prompt engineering' on X, stating it is 'the delicate art and science of filling the context window with just the right information for the next step'",
-      "url": "https://x.com/karpathy/status/1937902205765607626"
-    },
-    {
-      "date": "2025-06-19",
-      "event": "Delivered keynote 'Software Is Changing (Again)' at YC AI Startup School, introducing Software 3.0 where natural language is the programming interface",
-      "url": "https://www.ycombinator.com/library/MW-andrej-karpathy-software-is-changing-again"
-    },
-    {
-      "date": "2025-02",
-      "event": "Coined 'vibe coding' — 'a new kind of coding where you fully give in to the vibes, embrace exponentials, and forget that the code even exists'",
-      "url": "https://x.com/karpathy"
-    },
-    {
-      "date": "2024-07-16",
-      "event": "Announced founding of Eureka Labs, an AI-native education company, with LLM101n as its first course",
-      "url": "https://eurekalabs.ai/"
-    },
-    {
-      "date": "2024-04-08",
-      "event": "Released llm.c: GPT-2 training in simple, raw C/CUDA — no PyTorch, no Python. Achieved 7% faster than PyTorch nightly within weeks",
-      "url": "https://github.com/karpathy/llm.c"
-    },
-    {
-      "date": "2024-02-20",
-      "event": "Released minbpe: minimal, clean code for the Byte Pair Encoding (BPE) algorithm used in LLM tokenization",
-      "url": "https://github.com/karpathy/minbpe"
-    },
-    {
-      "date": "2023-07",
-      "event": "Released llama2.c: inference of Llama 2 in a single file of pure C (~700 lines), ran on devices as small as a Samsung Galaxy Watch",
-      "url": "https://github.com/karpathy/llama2.c"
-    },
-    {
-      "date": "2023-01",
-      "event": "Launched 'Neural Networks: Zero to Hero' YouTube series covering backpropagation, tokenization, attention, and transformer training from scratch",
-      "url": "https://github.com/karpathy/nn-zero-to-hero"
-    },
-    {
-      "date": "2022-12",
-      "event": "Released nanoGPT: minimal, hackable GPT-2/GPT-3 training codebase — became one of the most starred ML repos on GitHub (55k+ stars)",
-      "url": "https://github.com/karpathy/nanoGPT"
-    },
-    {
-      "date": "2022-07",
-      "event": "Left Tesla after 5 years as Director of AI leading the Autopilot computer vision team",
-      "url": "https://x.com/karpathy"
-    },
-    {
-      "date": "2020",
-      "event": "Released minGPT: a minimal PyTorch re-implementation of GPT training (24k stars), foundational educational resource",
-      "url": "https://github.com/karpathy/minGPT"
-    },
-    {
-      "date": "2017",
-      "event": "Joined Tesla as Senior Director of AI, leading the Autopilot Vision team and briefly Tesla Optimus",
-      "url": "https://karpathy.ai/"
-    },
-    {
-      "date": "2015-11",
-      "event": "Co-founded OpenAI as a founding member and research scientist, working on deep learning, generative models, and reinforcement learning",
-      "url": "https://karpathy.ai/"
-    },
-    {
-      "date": "2015",
+      "date": "2015-01",
       "event": "Co-designed and became primary instructor of Stanford CS231n (Convolutional Neural Networks for Visual Recognition), growing from 150 to 750 students",
       "url": "https://cs.stanford.edu/people/karpathy/"
     },
     {
-      "date": "2015",
+      "date": "2015-01",
       "event": "Completed PhD at Stanford under Fei-Fei Li with thesis 'Connecting Images and Natural Language'",
       "url": "https://cs.stanford.edu/people/karpathy/"
     },
@@ -130,9 +40,99 @@
       "url": "https://karpathy.github.io/2015/05/21/rnn-effectiveness/"
     },
     {
-      "date": "2014-12",
-      "event": "Published 'Deep Visual-Semantic Alignments for Generating Image Descriptions' (CVPR 2015 oral) — pioneered image captioning with CNNs + RNNs",
-      "url": "https://arxiv.org/abs/1412.2306"
+      "date": "2015-11",
+      "event": "Co-founded OpenAI as a founding member and research scientist, working on deep learning, generative models, and reinforcement learning",
+      "url": "https://karpathy.ai/"
+    },
+    {
+      "date": "2017-01",
+      "event": "Joined Tesla as Senior Director of AI, leading the Autopilot Vision team and briefly Tesla Optimus",
+      "url": "https://karpathy.ai/"
+    },
+    {
+      "date": "2020-01",
+      "event": "Released minGPT: a minimal PyTorch re-implementation of GPT training (24k stars), foundational educational resource",
+      "url": "https://github.com/karpathy/minGPT"
+    },
+    {
+      "date": "2022-07",
+      "event": "Left Tesla after 5 years as Director of AI leading the Autopilot computer vision team",
+      "url": "https://x.com/karpathy"
+    },
+    {
+      "date": "2022-12",
+      "event": "Released nanoGPT: minimal, hackable GPT-2/GPT-3 training codebase — became one of the most starred ML repos on GitHub (55k+ stars)",
+      "url": "https://github.com/karpathy/nanoGPT"
+    },
+    {
+      "date": "2023-01",
+      "event": "Launched 'Neural Networks: Zero to Hero' YouTube series covering backpropagation, tokenization, attention, and transformer training from scratch",
+      "url": "https://github.com/karpathy/nn-zero-to-hero"
+    },
+    {
+      "date": "2023-07",
+      "event": "Released llama2.c: inference of Llama 2 in a single file of pure C (~700 lines), ran on devices as small as a Samsung Galaxy Watch",
+      "url": "https://github.com/karpathy/llama2.c"
+    },
+    {
+      "date": "2024-02",
+      "event": "Released minbpe: minimal, clean code for the Byte Pair Encoding (BPE) algorithm used in LLM tokenization",
+      "url": "https://github.com/karpathy/minbpe"
+    },
+    {
+      "date": "2024-04",
+      "event": "Released llm.c: GPT-2 training in simple, raw C/CUDA — no PyTorch, no Python. Achieved 7% faster than PyTorch nightly within weeks",
+      "url": "https://github.com/karpathy/llm.c"
+    },
+    {
+      "date": "2024-07",
+      "event": "Announced founding of Eureka Labs, an AI-native education company, with LLM101n as its first course",
+      "url": "https://eurekalabs.ai/"
+    },
+    {
+      "date": "2025-02",
+      "event": "Coined 'vibe coding' — 'a new kind of coding where you fully give in to the vibes, embrace exponentials, and forget that the code even exists'",
+      "url": "https://x.com/karpathy"
+    },
+    {
+      "date": "2025-06",
+      "event": "Popularized 'context engineering' over 'prompt engineering' on X, stating it is 'the delicate art and science of filling the context window with just the right information for the next step'",
+      "url": "https://x.com/karpathy/status/1937902205765607626"
+    },
+    {
+      "date": "2025-06",
+      "event": "Delivered keynote 'Software Is Changing (Again)' at YC AI Startup School, introducing Software 3.0 where natural language is the programming interface",
+      "url": "https://www.ycombinator.com/library/MW-andrej-karpathy-software-is-changing-again"
+    },
+    {
+      "date": "2025-10",
+      "event": "Appeared on Dwarkesh Podcast: 'AGI is still a decade away' — argued AI companies are exaggerating agentic capabilities and called this the 'decade of agents' not 'year of agents'",
+      "url": "https://podcasts.apple.com/us/podcast/andrej-karpathy-agi-is-still-a-decade-away/id1516093381?i=1000732326311"
+    },
+    {
+      "date": "2025-10",
+      "event": "Released nanochat: full-stack ChatGPT clone training/inference pipeline in ~8,000 lines of PyTorch, trainable for under $100",
+      "url": "https://github.com/karpathy/nanochat"
+    },
+    {
+      "date": "2025-11",
+      "event": "Released llm-council: an ensemble system where multiple LLMs debate and collaborate to answer hard questions",
+      "url": "https://github.com/karpathy/llm-council"
+    },
+    {
+      "date": "2025-11",
+      "event": "Released reader3: a lightweight EPUB reader for reading books with LLMs, '90% vibe coded'",
+      "url": "https://github.com/karpathy/reader3"
+    },
+    {
+      "date": "2026-01",
+      "event": "Published '2025 LLM Year in Review' blog post surveying the state of LLMs, coining 'ghost intelligence' and 'ambient programming' concepts",
+      "url": "https://karpathy.bearblog.dev/year-in-review-2025/"
+    },
+    {
+      "date": "2026-03",
+      "event": "Released autoresearch: AI agents running ML experiments autonomously on a single GPU in 630 lines of Python, built on nanochat training core",
+      "url": "https://github.com/karpathy/autoresearch"
     }
   ],
   "key_contributions": [

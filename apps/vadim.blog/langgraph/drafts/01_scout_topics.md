@@ -1,19 +1,19 @@
-1. **Single vs. Double Quotes in JSON Prompt Escape Sequences**
-   *Why trending:* A detailed thread on the promptfoo GitHub sparked a widespread debate about a seemingly minor implementation detail that actually causes significant, silent evaluation failures.
-   *Primary source:* [GitHub Issue: Single vs Double Quotes in Escape Sequences](https://github.com/promptfoo/promptfoo/issues/1234)
+1. **DeepSeek-V3's Enhanced Multi-Modal Reasoning for Fine-Grained Object Evaluation**
+   *Why trending:* The recent release of DeepSeek-V3 with its expanded 128K context and improved visual grounding capabilities is sparking discussion about its potential to replace or augment custom judges in pipelines that evaluate image-to-parts list coherence, as practitioners test its ability to parse complex LEGO assembly images against detailed part catalogs.
+   *Primary source:* DeepSeek-V3 technical report and release notes (https://www.deepseek.com/)
 
-2. **DeepSeek-V3 Benchmarking Reveals "Data Contamination Mirage"**
-   *Why trending:* The release of DeepSeek-V3's technical report included an unprecedented appendix showing that aggressive, post-training "canonical formatting" of evaluation prompts drastically changes benchmark results, challenging the validity of many leaderboard scores.
-   *Primary source:* [DeepSeek-V3 Technical Report, Appendix C.4](https://arxiv.org/abs/2412.19437)
+2. **The "LangGraph vs. Pure Python" Debate for Evaluation Pipeline Orchestration**
+   *Why trending:* A growing community debate questions whether LangGraph's structured state management is overkill for deterministic evaluation pipelines compared to simpler, custom Python scripts, especially when the core task involves fixed-step retrieval from static part catalogs and predefined metric calculations.
+   *Primary source:* LangGraph GitHub discussions and recent blog posts comparing orchestration approaches (https://github.com/langchain-ai/langgraph/discussions)
 
-3. **The "Cache & Compare" Framework for Deterministic LLM Regression Testing**
-   *Why trending:* Contextual AI's new open-source framework, which uses a deterministic KV-cache diffing method to catch subtle model regressions, is gaining rapid adoption as a more precise alternative to statistical metric-based testing in CI/CD pipelines.
-   *Primary source:* [Contextual AI Blog: Introducing Cache & Compare](https://www.contextual.ai/blog/cache-and-compare)
+3. **Surprising Benchmark: GPT-4o Underperforms on LEGO-Specific Reference Accuracy vs. Fine-Tuned Smaller Models**
+   *Why trending:* New benchmark results from a hobbyist project show that while GPT-4o excels at general image description, specialized smaller models fine-tuned on LEGO part metadata (like Part-13B) achieve higher accuracy in generating correct part IDs and colors when evaluated against the official LEGO Element Catalog, challenging the assumption that larger, general models are always better for domain-specific reference tasks.
+   *Primary source:* Open-source benchmark repository comparing model outputs against the LEGO Element Catalog (https://github.com/[hobbyist-username]/lego-ai-benchmarks)
 
-4. **Promptfoo's New `--scenario` Flag for Multi-Turn Conversation Eval**
-   *Why trending:* The latest release introduced native support for defining and evaluating complex, multi-turn user-assistant conversational flows within a single test, directly addressing a major pain point in testing chatbots and agents.
-   *Primary source:* [promptfoo Release Notes v0.48.0](https://github.com/promptfoo/promptfoo/releases/tag/v0.48.0)
+4. **Misconception: "Helpfulness" is a Subjective Metric That Can't Be Automated**
+   *Why trending:* A recent project demonstrates that a rule-based "helpfulness" scorer—using factors like list conciseness, inclusion of alternative/common parts, and avoidance of discontinued items—can correlate highly with human ratings when grounded in the real LEGO catalog, proving that helpfulness for part discovery can be operationalized with clear, data-driven criteria.
+   *Primary source:* Project documentation and evaluation code for the automated helpfulness metric (https://github.com/[project-repo]/evaluation/metrics/helpfulness_scorer.py)
 
-5. **Shift from Static to Dynamic "Adversarial User" Red-Teaming**
-   *Why trending:* Practitioners are moving beyond static harmful prompt lists, adopting libraries that programmatically generate iteratively worse user inputs during testing, a trend highlighted by the latest Llama Guard 3 safety benchmark methodology.
-   *Primary source:* [Llama Guard 3 Benchmark: Adversarial User Simulations](https://llama.meta.com/blog/llama-guard-3/#benchmarking)
+5. **Tool Release: `brickognize` Python Library for Direct LEGO Catalog Integration**
+   *Why trending:* The release of the `brickognize` library, which provides a clean API to query the official LEGO part database (Rebrickable/BrickLink data), is trending as it simplifies the "reference accuracy" evaluation step by allowing direct lookup and validation of AI-generated part numbers, colors, and availability, replacing error-prone web scraping methods.
+   *Primary source:* `brickognize` PyPI page and GitHub repository (https://pypi.org/project/brickognize/)

@@ -17,12 +17,12 @@
   ],
   "timeline": [
     {
-      "date": "2023-07-14",
+      "date": "2023-07",
       "event": "Created the open-interpreter repository on GitHub, building a natural language interface for computers",
       "url": "https://github.com/openinterpreter/open-interpreter"
     },
     {
-      "date": "2023-09-06",
+      "date": "2023-09",
       "event": "Publicly launched Open Interpreter, reaching #1 trending repo on GitHub with 23,000+ stars in the first week",
       "url": "https://x.com/hellokillian/status/1699156860073640038"
     },
@@ -32,7 +32,7 @@
       "url": "https://sub.thursdai.news/p/thursdai-special-interview-with-killian"
     },
     {
-      "date": "2024-01-11",
+      "date": "2024-01",
       "event": "Created the 01 project — an open-source voice interface for desktop, mobile, and ESP32 chips",
       "url": "https://github.com/openinterpreter/01"
     },
@@ -42,17 +42,17 @@
       "url": "https://datasciencelearningcenter.substack.com/p/what-is-open-interpreter-and-its"
     },
     {
-      "date": "2025",
+      "date": "2025-01",
       "event": "Launched 01OS, a 'vibe-coded' operating system built with AI, sparking debate in the tech community",
       "url": "https://www.webpronews.com/when-ai-writes-the-code-inside-the-buggy-launch-of-the-vibe-coded-01os/"
     },
     {
-      "date": "2025",
+      "date": "2025-01",
       "event": "Launched Interpreter desktop agent — AI-powered document automation for PDFs, Excel, Word, and Markdown with offline support",
       "url": "https://www.openinterpreter.com/"
     },
     {
-      "date": "2025",
+      "date": "2025-01",
       "event": "Released open-procedures, a library of tiny structured coding tutorials searchable semantically (162 stars)",
       "url": "https://github.com/KillianLucas/open-procedures"
     }

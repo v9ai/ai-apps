@@ -257,9 +257,9 @@ def search_arxiv(query: str) -> str:
     """Search arXiv for papers matching a query. Returns titles, authors, dates, and abstracts."""
     lines = []
     try:
-        with httpx.Client(timeout=_HTTP_TIMEOUT) as client:
+        with httpx.Client(timeout=_HTTP_TIMEOUT, follow_redirects=True) as client:
             resp = client.get(
-                "http://export.arxiv.org/api/query",
+                "https://export.arxiv.org/api/query",
                 params={
                     "search_query": f"all:{query}",
                     "start": 0,
@@ -963,10 +963,14 @@ async def phase1(state: ResearchState) -> dict:
     ]
 
     keys = [s[0] for s in specs]
-    results = await asyncio.gather(*[
+    raw = await asyncio.gather(*[
         _run_agent(client, sys, task, tools)
         for _, sys, task, tools in specs
-    ])
+    ], return_exceptions=True)
+    results = [
+        r if isinstance(r, str) else f"(agent error: {r})"
+        for r in raw
+    ]
 
     for key, result in zip(keys, results):
         console.print(f"  [green]✓[/] {key} ({len(result)} chars)")
@@ -1298,10 +1302,14 @@ async def phase2(state: ResearchState) -> dict:
     ]
 
     keys = [s[0] for s in specs]
-    results = await asyncio.gather(*[
+    raw = await asyncio.gather(*[
         _run_agent(client, sys, task, tools)
         for _, sys, task, tools in specs
-    ])
+    ], return_exceptions=True)
+    results = [
+        r if isinstance(r, str) else f"(agent error: {r})"
+        for r in raw
+    ]
 
     for key, result in zip(keys, results):
         console.print(f"  [green]✓[/] {key} ({len(result)} chars)")
@@ -1621,7 +1629,14 @@ async def reresearch(state: ResearchState) -> dict:
 # Graph builder
 # ═══════════════════════════════════════════════════════════════════════════
 
-def build_graph():
+def build_graph(checkpointer=None):
+    """Build the research graph.
+
+    Args:
+        checkpointer: Optional LangGraph checkpointer (e.g. MemorySaver) for
+            resumable runs.  When provided, pass ``config={"configurable":
+            {"thread_id": "<slug>"}}`` to ``ainvoke`` / ``astream``.
+    """
     builder = StateGraph(ResearchState)
     builder.add_node("phase1", phase1)
     builder.add_node("phase1_5", phase1_5)
@@ -1641,7 +1656,7 @@ def build_graph():
     builder.add_edge("phase3_exec", "question_generator")
     builder.add_edge("question_generator", END)
 
-    return builder.compile()
+    return builder.compile(checkpointer=checkpointer)
 
 
 # ═══════════════════════════════════════════════════════════════════════════
@@ -1662,6 +1677,23 @@ def export_results(state: ResearchState) -> None:
     timeline = _extract_json(state.get("timeline", "")) or []
     if not isinstance(timeline, list):
         timeline = []
+    # Normalize and sort timeline dates to YYYY-MM format
+    def _norm_date(d: str) -> str:
+        """Normalize date to YYYY-MM: '2020' → '2020-01', '2020-06-15' → '2020-06'."""
+        d = d.strip()
+        if re.match(r"^\d{4}$", d):
+            return d + "-01"
+        if re.match(r"^\d{4}-\d{2}-\d{2}$", d):
+            return d[:7]
+        return d  # already YYYY-MM or unknown format
+
+    for e in timeline:
+        if isinstance(e, dict) and e.get("date"):
+            e["date"] = _norm_date(e["date"])
+    timeline = sorted(
+        [e for e in timeline if isinstance(e, dict) and e.get("date")],
+        key=lambda e: e["date"],
+    )
 
     contributions = _extract_json(state.get("contributions", "")) or []
     if not isinstance(contributions, list):

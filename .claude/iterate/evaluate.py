@@ -23,7 +23,7 @@ EVAL_MODEL = os.environ.get("EVAL_LLM_MODEL", "deepseek-chat")
 _deepeval_available = False
 try:
     from deepeval.models import DeepEvalBaseLLM
-    from deepeval.metrics import GEval
+    from deepeval.metrics import GEval, AnswerRelevancyMetric, FaithfulnessMetric, ContextualRelevancyMetric
     from deepeval.test_case import LLMTestCase, LLMTestCaseParams
     _deepeval_available = True
 except ImportError:
@@ -80,7 +80,7 @@ def run_deepeval(iteration: int, actual_output: str, task: str, context: str, di
     """Run GEval metrics via DeepEval with local LLM."""
     llm = LocalDeepSeekLLM()
 
-    metrics = [
+    geval_metrics = [
         GEval(
             name="Task Completion",
             criteria=f"Evaluate progress toward completing: {task}. 1.0 = fully complete.",
@@ -117,6 +117,14 @@ def run_deepeval(iteration: int, actual_output: str, task: str, context: str, di
             model=llm,
         ),
     ]
+
+    # DeepEval built-in metrics for richer evaluation coverage
+    builtin_metrics = [
+        AnswerRelevancyMetric(threshold=0.5, model=llm),
+        FaithfulnessMetric(threshold=0.5, model=llm),
+        ContextualRelevancyMetric(threshold=0.5, model=llm),
+    ]
+    metrics = geval_metrics + builtin_metrics
 
     test_case = LLMTestCase(
         input=f"Iteration {iteration}: {task}",
@@ -157,9 +165,20 @@ You are an iteration evaluator for a multi-step AI coding task. Score iteration 
 ## Output
 {output}
 
-Score 0.0–1.0 with one-sentence reason. Respond ONLY with JSON:
-{{"Task Completion": {{"score": 0.0, "reason": "..."}}, "Incremental Progress": {{"score": 0.0, "reason": "..."}}, "Coherence": {{"score": 0.0, "reason": "..."}}, "Code Quality": {{"score": 0.0, "reason": "..."}}, "Focus": {{"score": 0.0, "reason": "..."}}}}
+Score each metric 0.0–1.0 with a one-sentence reason. Respond ONLY with JSON:
+{{"Task Completion": {{"score": 0.0, "reason": "..."}}, "Incremental Progress": {{"score": 0.0, "reason": "..."}}, "Coherence": {{"score": 0.0, "reason": "..."}}, "Code Quality": {{"score": 0.0, "reason": "..."}}, "Focus": {{"score": 0.0, "reason": "..."}}, "Answer Relevancy": {{"score": 0.0, "reason": "..."}}, "Faithfulness": {{"score": 0.0, "reason": "..."}}, "Contextual Relevancy": {{"score": 0.0, "reason": "..."}}}}
 """
+
+ALL_METRIC_NAMES = [
+    "Task Completion",
+    "Incremental Progress",
+    "Coherence",
+    "Code Quality",
+    "Focus",
+    "Answer Relevancy",
+    "Faithfulness",
+    "Contextual Relevancy",
+]
 
 
 def run_direct_llm(iteration: int, actual_output: str, task: str, context: str, diff: str) -> dict:
@@ -194,7 +213,7 @@ def run_direct_llm(iteration: int, actual_output: str, task: str, context: str, 
         start, end = text.find("{"), text.rfind("}") + 1
         scores = json.loads(text[start:end]) if start >= 0 and end > start else {}
 
-    for key in ["Task Completion", "Incremental Progress", "Coherence", "Code Quality", "Focus"]:
+    for key in ALL_METRIC_NAMES:
         if key not in scores:
             scores[key] = {"score": 0.5, "reason": "not evaluated"}
         e = scores[key]
@@ -274,12 +293,11 @@ def run_evaluation(iteration, output_file, task, context_file=None, prev_scores_
 
     if scores is None:
         scores = {k: {"score": 0.5, "reason": "fallback", "passed": True}
-                  for k in ["Task Completion", "Incremental Progress", "Coherence", "Code Quality", "Focus"]}
+                  for k in ALL_METRIC_NAMES}
 
     # Trends + stop logic
     all_scores = prev_scores + [scores]
-    trends = {name: compute_trend(all_scores, name)
-              for name in ["Task Completion", "Incremental Progress", "Coherence", "Code Quality", "Focus"]}
+    trends = {name: compute_trend(all_scores, name) for name in ALL_METRIC_NAMES}
 
     tc = scores["Task Completion"]["score"]
     pr = scores["Incremental Progress"]["score"]

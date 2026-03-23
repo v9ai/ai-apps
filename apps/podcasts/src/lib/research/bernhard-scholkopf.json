@@ -17,32 +17,47 @@
   ],
   "timeline": [
     {
-      "date": "2026-02",
-      "event": "Contributed to the International AI Safety Report 2026 as Senior Adviser, commissioned by the UK Government and authored by 100+ leading experts",
-      "url": "https://institute-tue.ellis.eu/de/news/ellis-institute-pis-contribute-to-the-international-ai-safety-report-2026"
+      "date": "1997-01",
+      "event": "Completed PhD in Computer Science at TU Berlin under Vladimir Vapnik (Bell Labs); thesis won the annual award of the German Informatics Society (GI)",
+      "url": "https://en.wikipedia.org/wiki/Bernhard_Sch%C3%B6lkopf"
     },
     {
-      "date": "2025",
-      "event": "Elected to the UN Independent International Scientific Panel on AI; first annual report expected at the Global Dialogue on AI Governance, Geneva, July 2026",
-      "url": "https://is.mpg.de/news/bernhard-scholkopf-elected-for-un-ai-scientific-panel"
+      "date": "1998-01",
+      "event": "Introduced kernel PCA, showing that all dot-product algorithms can be generalized to nonlinear settings via reproducing kernels, co-founding the field of kernel methods",
+      "url": "https://link.springer.com/chapter/10.1007/BFb0020217"
     },
     {
-      "date": "2022",
-      "event": "Received the ACM - AAAI Allen Newell Award for foundational contributions to machine learning including kernel methods and causal inference",
-      "url": "https://imprs.is.mpg.de/news/imprs-is-faculty-bernhard-scholkopf-receives-the-2022-acm-aaai-allen-newell-award"
+      "date": "2001-01",
+      "event": "Founded the Department for Empirical Inference at the Max Planck Institute for Biological Cybernetics in Tubingen",
+      "url": "https://is.mpg.de/ei/~bs"
     },
     {
-      "date": "2021",
-      "event": "Won the German AI Prize (100,000 EUR) from WELT for groundbreaking achievements in artificial intelligence",
-      "url": "https://www.amazon.science/latest-news/bernhard-scholkopf-wins-german-ai-innovation-award"
+      "date": "2002-01",
+      "event": "Co-authored 'Learning with Kernels: Support Vector Machines, Regularization, Optimization, and Beyond' with Alexander Smola (MIT Press), a foundational textbook for the kernel methods field",
+      "url": "https://mitpress.mit.edu/9780262536578/learning-with-kernels/"
     },
     {
-      "date": "2021-02",
-      "event": "Published 'Towards Causal Representation Learning' (arXiv:2102.11107), laying out research agenda for discovering high-level causal variables from low-level observations",
-      "url": "https://arxiv.org/abs/2102.11107"
+      "date": "2011-01",
+      "event": "Became founding director of the Max Planck Institute for Intelligent Systems in Tubingen",
+      "url": "https://is.mpg.de/~bs"
     },
     {
-      "date": "2019",
+      "date": "2014-01",
+      "event": "Received the Royal Society Milner Award for outstanding achievement in computer science",
+      "url": "https://en.wikipedia.org/wiki/Bernhard_Sch%C3%B6lkopf"
+    },
+    {
+      "date": "2017-01",
+      "event": "Co-authored 'Elements of Causal Inference: Foundations and Learning Algorithms' with Jonas Peters and Dominik Janzing (MIT Press, open access)",
+      "url": "https://mitpress.mit.edu/9780262037310/elements-of-causal-inference/"
+    },
+    {
+      "date": "2018-01",
+      "event": "Awarded the Gottfried Wilhelm Leibniz Prize, the most important research award in Germany",
+      "url": "https://www.mpg.de/Leibniz-Prize"
+    },
+    {
+      "date": "2019-01",
       "event": "Received the Korber European Science Prize, the Hector Science Award, and the BBVA Frontiers of Knowledge Award in ICT (shared with Vapnik and Guyon)",
       "url": "https://www.frontiersofknowledgeawards-fbbva.es/galardonados/bernhard-scholkopf-2/"
     },
@@ -52,44 +67,29 @@
       "url": "https://arxiv.org/abs/1911.10500"
     },
     {
-      "date": "2018",
-      "event": "Awarded the Gottfried Wilhelm Leibniz Prize, the most important research award in Germany",
-      "url": "https://www.mpg.de/Leibniz-Prize"
+      "date": "2021-01",
+      "event": "Won the German AI Prize (100,000 EUR) from WELT for groundbreaking achievements in artificial intelligence",
+      "url": "https://www.amazon.science/latest-news/bernhard-scholkopf-wins-german-ai-innovation-award"
     },
     {
-      "date": "2017",
-      "event": "Co-authored 'Elements of Causal Inference: Foundations and Learning Algorithms' with Jonas Peters and Dominik Janzing (MIT Press, open access)",
-      "url": "https://mitpress.mit.edu/9780262037310/elements-of-causal-inference/"
+      "date": "2021-02",
+      "event": "Published 'Towards Causal Representation Learning' (arXiv:2102.11107), laying out research agenda for discovering high-level causal variables from low-level observations",
+      "url": "https://arxiv.org/abs/2102.11107"
     },
     {
-      "date": "2014",
-      "event": "Received the Royal Society Milner Award for outstanding achievement in computer science",
-      "url": "https://en.wikipedia.org/wiki/Bernhard_Sch%C3%B6lkopf"
+      "date": "2022-01",
+      "event": "Received the ACM - AAAI Allen Newell Award for foundational contributions to machine learning including kernel methods and causal inference",
+      "url": "https://imprs.is.mpg.de/news/imprs-is-faculty-bernhard-scholkopf-receives-the-2022-acm-aaai-allen-newell-award"
     },
     {
-      "date": "2011",
-      "event": "Became founding director of the Max Planck Institute for Intelligent Systems in Tubingen",
-      "url": "https://is.mpg.de/~bs"
+      "date": "2025-01",
+      "event": "Elected to the UN Independent International Scientific Panel on AI; first annual report expected at the Global Dialogue on AI Governance, Geneva, July 2026",
+      "url": "https://is.mpg.de/news/bernhard-scholkopf-elected-for-un-ai-scientific-panel"
     },
     {
-      "date": "2002",
-      "event": "Co-authored 'Learning with Kernels: Support Vector Machines, Regularization, Optimization, and Beyond' with Alexander Smola (MIT Press), a foundational textbook for the kernel methods field",
-      "url": "https://mitpress.mit.edu/9780262536578/learning-with-kernels/"
-    },
-    {
-      "date": "2001",
-      "event": "Founded the Department for Empirical Inference at the Max Planck Institute for Biological Cybernetics in Tubingen",
-      "url": "https://is.mpg.de/ei/~bs"
-    },
-    {
-      "date": "1998",
-      "event": "Introduced kernel PCA, showing that all dot-product algorithms can be generalized to nonlinear settings via reproducing kernels, co-founding the field of kernel methods",
-      "url": "https://link.springer.com/chapter/10.1007/BFb0020217"
-    },
-    {
-      "date": "1997",
-      "event": "Completed PhD in Computer Science at TU Berlin under Vladimir Vapnik (Bell Labs); thesis won the annual award of the German Informatics Society (GI)",
-      "url": "https://en.wikipedia.org/wiki/Bernhard_Sch%C3%B6lkopf"
+      "date": "2026-02",
+      "event": "Contributed to the International AI Safety Report 2026 as Senior Adviser, commissioned by the UK Government and authored by 100+ leading experts",
+      "url": "https://institute-tue.ellis.eu/de/news/ellis-institute-pis-contribute-to-the-international-ai-safety-report-2026"
     }
   ],
   "key_contributions": [

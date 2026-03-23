@@ -17,9 +17,59 @@
   ],
   "timeline": [
     {
-      "date": "2026-03",
-      "event": "Announced Ray rack-aware scheduling for NVIDIA GB300 NVL72 clusters and cuDF support on Ray Data for distributed AI workloads",
-      "url": "https://radicaldatascience.wordpress.com/2026/03/16/anyscale-cuts-multimodal-ai-data-processing-costs-by-80-with-nvidia-rtx-pro-4500-blackwell/"
+      "date": "2013-01",
+      "event": "Began PhD at UC Berkeley in the RISELab / BAIR under Ion Stoica and Michael I. Jordan",
+      "url": "https://www.robertnishihara.com/"
+    },
+    {
+      "date": "2013-01",
+      "event": "Graduated from Harvard University with BA in Mathematics",
+      "url": "https://www.robertnishihara.com/"
+    },
+    {
+      "date": "2017-12",
+      "event": "Submitted Ray paper to arXiv (1712.05889), presenting the unified task-parallel and actor-based distributed execution engine",
+      "url": "https://arxiv.org/abs/1712.05889"
+    },
+    {
+      "date": "2018-10",
+      "event": "Published 'Ray: A Distributed Framework for Emerging AI Applications' at OSDI 2018",
+      "url": "https://www.usenix.org/conference/osdi18/presentation/moritz"
+    },
+    {
+      "date": "2019-01",
+      "event": "Completed PhD in Computer Science at UC Berkeley with dissertation 'On Systems and Algorithms for Distributed Machine Learning'",
+      "url": "https://www2.eecs.berkeley.edu/Pubs/TechRpts/2019/EECS-2019-30.pdf"
+    },
+    {
+      "date": "2019-12",
+      "event": "Co-founded Anyscale with $20.6M Series A led by Andreessen Horowitz to commercialize Ray",
+      "url": "https://techcrunch.com/2019/12/17/anyscale-ray-project-distributed-computing-a16z/"
+    },
+    {
+      "date": "2021-12",
+      "event": "Anyscale reached $1B+ valuation after Series C funding led by Addition",
+      "url": "https://www.crunchbase.com/organization/anyscale"
+    },
+    {
+      "date": "2022-08",
+      "event": "Anyscale raised $99M Series C-II, bringing total funding to over $250M",
+      "url": "https://www.crunchbase.com/organization/anyscale/company_financials"
+    },
+    {
+      "date": "2024-10",
+      "event": "Keynoted Ray Summit 2024 in San Francisco; announced Anyscale usage surged 44x and Ray orchestrates 1M+ clusters/month",
+      "url": "https://www.anyscale.com/press/anyscale-unveils-new-products-and-enhances-its-leading-unified-ai-platform"
+    },
+    {
+      "date": "2024-10",
+      "event": "Unveiled RayTurbo, GPU-native Ray architecture, and Ray Data GA at Ray Summit 2024",
+      "url": "https://www.globenewswire.com/news-release/2024/10/01/2956334/0/en/Anyscale-Unveils-New-Products-and-Enhances-its-Leading-Unified-AI-Platform-at-Ray-Summit-2024.html"
+    },
+    {
+      "date": "2024-12",
+      "event": "Named to Fast Company's Most Creative People list for smoothing AI infrastructure complexities",
+      "url": "https://www.fastcompany.com/91244222/how-anyscale-cofounder-robert-nishihara-is-fixing-ai-infrastructure"
     },
     {
       "date": "2025-11",
@@ -32,59 +82,9 @@
       "url": "https://dynamicbusiness.com/ai-tools/anyscale-unseen-engine-of-ai-scale.html"
     },
     {
-      "date": "2024-10-01",
-      "event": "Keynoted Ray Summit 2024 in San Francisco; announced Anyscale usage surged 44x and Ray orchestrates 1M+ clusters/month",
-      "url": "https://www.anyscale.com/press/anyscale-unveils-new-products-and-enhances-its-leading-unified-ai-platform"
-    },
-    {
-      "date": "2024-10-01",
-      "event": "Unveiled RayTurbo, GPU-native Ray architecture, and Ray Data GA at Ray Summit 2024",
-      "url": "https://www.globenewswire.com/news-release/2024/10/01/2956334/0/en/Anyscale-Unveils-New-Products-and-Enhances-its-Leading-Unified-AI-Platform-at-Ray-Summit-2024.html"
-    },
-    {
-      "date": "2024-12",
-      "event": "Named to Fast Company's Most Creative People list for smoothing AI infrastructure complexities",
-      "url": "https://www.fastcompany.com/91244222/how-anyscale-cofounder-robert-nishihara-is-fixing-ai-infrastructure"
-    },
-    {
-      "date": "2022-08-23",
-      "event": "Anyscale raised $99M Series C-II, bringing total funding to over $250M",
-      "url": "https://www.crunchbase.com/organization/anyscale/company_financials"
-    },
-    {
-      "date": "2021-12",
-      "event": "Anyscale reached $1B+ valuation after Series C funding led by Addition",
-      "url": "https://www.crunchbase.com/organization/anyscale"
-    },
-    {
-      "date": "2019-12-17",
-      "event": "Co-founded Anyscale with $20.6M Series A led by Andreessen Horowitz to commercialize Ray",
-      "url": "https://techcrunch.com/2019/12/17/anyscale-ray-project-distributed-computing-a16z/"
-    },
-    {
-      "date": "2019",
-      "event": "Completed PhD in Computer Science at UC Berkeley with dissertation 'On Systems and Algorithms for Distributed Machine Learning'",
-      "url": "https://www2.eecs.berkeley.edu/Pubs/TechRpts/2019/EECS-2019-30.pdf"
-    },
-    {
-      "date": "2018-10",
-      "event": "Published 'Ray: A Distributed Framework for Emerging AI Applications' at OSDI 2018",
-      "url": "https://www.usenix.org/conference/osdi18/presentation/moritz"
-    },
-    {
-      "date": "2017-12-16",
-      "event": "Submitted Ray paper to arXiv (1712.05889), presenting the unified task-parallel and actor-based distributed execution engine",
-      "url": "https://arxiv.org/abs/1712.05889"
-    },
-    {
-      "date": "2013",
-      "event": "Began PhD at UC Berkeley in the RISELab / BAIR under Ion Stoica and Michael I. Jordan",
-      "url": "https://www.robertnishihara.com/"
-    },
-    {
-      "date": "2013",
-      "event": "Graduated from Harvard University with BA in Mathematics",
-      "url": "https://www.robertnishihara.com/"
+      "date": "2026-03",
+      "event": "Announced Ray rack-aware scheduling for NVIDIA GB300 NVL72 clusters and cuDF support on Ray Data for distributed AI workloads",
+      "url": "https://radicaldatascience.wordpress.com/2026/03/16/anyscale-cuts-multimodal-ai-data-processing-costs-by-80-with-nvidia-rtx-pro-4500-blackwell/"
     }
   ],
   "key_contributions": [

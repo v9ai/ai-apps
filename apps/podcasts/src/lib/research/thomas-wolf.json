@@ -19,22 +19,22 @@
   ],
   "timeline": [
     {
-      "date": "2014",
+      "date": "2014-01",
       "event": "Completed Ph.D. in Statistical/Quantum Physics at Sorbonne University and ESPCI, Paris",
       "url": "https://thomwolf.io/"
     },
     {
-      "date": "2016",
+      "date": "2016-01",
       "event": "Co-founded Hugging Face with Clement Delangue and Julien Chaumond in New York City",
       "url": "https://en.wikipedia.org/wiki/Hugging_Face"
     },
     {
-      "date": "2018",
+      "date": "2018-01",
       "event": "Open-sourced PyTorch pretrained BERT, sparking what became the Transformers library",
       "url": "https://github.com/huggingface/transformers"
     },
     {
-      "date": "2019",
+      "date": "2019-01",
       "event": "Co-authored DistilBERT paper (NeurIPS 2019) — smaller, faster, cheaper BERT distillation",
       "url": "https://arxiv.org/abs/1910.01108"
     },
@@ -44,19 +44,19 @@
       "url": "https://techcrunch.com/2019/12/17/hugging-face-raises-15-million-to-build-the-definitive-natural-language-processing-library/"
     },
     {
-      "date": "2020",
+      "date": "2020-01",
       "event": "Published 'Transformers: State-of-the-art NLP' — won EMNLP 2020 Best Demo Paper",
       "url": "https://aclanthology.org/2020.emnlp-demos.6/"
+    },
+    {
+      "date": "2021-01",
+      "event": "Published 'Datasets: A Community Library for NLP' — won EMNLP 2021 Best Demo Paper",
+      "url": "https://aclanthology.org/2021.emnlp-demo.21/"
     },
     {
       "date": "2021-05",
       "event": "Launched BigScience research workshop — largest open collaboration in AI with 1,000+ researchers",
       "url": "https://bigscience.huggingface.co/"
-    },
-    {
-      "date": "2021",
-      "event": "Published 'Datasets: A Community Library for NLP' — won EMNLP 2021 Best Demo Paper",
-      "url": "https://aclanthology.org/2021.emnlp-demo.21/"
     },
     {
       "date": "2022-02",
@@ -99,7 +99,7 @@
       "url": "https://home.mlops.community/public/videos/llm-agents-and-opensource-thomas-wolf-agents-in-production-2024-11-15"
     },
     {
-      "date": "2025",
+      "date": "2025-01",
       "event": "Released FineWeb2 — multilingual web dataset spanning 3 trillion words across many languages",
       "url": "https://huggingface.co/datasets/HuggingFaceFW/fineweb-2"
     },

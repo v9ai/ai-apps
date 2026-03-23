@@ -22,7 +22,7 @@ from deepeval.metrics import (
 from deepeval.test_case import LLMTestCase
 
 from deepseek_model import DeepSeekModel
-from rag_pipeline import RAGConfig, invoke_rag
+from rag_pipeline import RAGConfig, invoke_rag_batch
 
 model = DeepSeekModel()
 THRESHOLD = 0.6
@@ -83,12 +83,13 @@ def _evaluate_config(config_name: str, config: RAGConfig) -> dict:
     answer_rel_m = AnswerRelevancyMetric(model=model, threshold=THRESHOLD)
     context_rel_m = ContextualRelevancyMetric(model=model, threshold=THRESHOLD)
 
+    # Run all queries in parallel, then measure metrics sequentially.
+    rag_results = invoke_rag_batch(EVAL_QUERIES, config)
+
     results = []
-    for query in EVAL_QUERIES:
-        try:
-            rag_result = invoke_rag(query, config)
-        except Exception as e:
-            results.append({"query": query[:60], "error": str(e)})
+    for query, rag_result in zip(EVAL_QUERIES, rag_results):
+        if rag_result is None:
+            results.append({"query": query[:60], "error": "invoke_rag failed"})
             continue
 
         tc = LLMTestCase(

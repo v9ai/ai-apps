@@ -1,11 +1,12 @@
-"""Tests that all 20 agents are defined with proper prompts and tool assignments.
+"""Tests that all agents are defined with proper prompts and tool assignments.
 
-Validates agent specs inside each phase function by inspecting the spec
-tuples without running the LLM.
+Validates agent callables, graph structure, and state key coverage without
+running the LLM.  The pipeline uses plain Python functions (not LangChain
+@tool decorators) wired via DeepSeek's FunctionTool system.
 """
 
 import asyncio
-from unittest.mock import AsyncMock, patch
+import inspect
 
 import pytest
 
@@ -13,9 +14,12 @@ from research_pipeline import (
     ResearchState,
     build_graph,
     phase1,
+    phase1_5,
     phase2,
     phase3_eval,
     phase3_exec,
+    question_generator,
+    reresearch,
     web_search,
     web_news_search,
     fetch_url_content,
@@ -24,6 +28,10 @@ from research_pipeline import (
     search_arxiv,
     search_semantic_scholar,
     fetch_hf_author,
+    TOOLS_SEARCH,
+    TOOLS_NEWS,
+    TOOLS_ACADEMIC,
+    TOOLS_VIDEO,
 )
 
 
@@ -37,109 +45,127 @@ SAMPLE_PERSON = {
 }
 
 
-# ── 1. All 10 tools are importable from research_pipeline ────────────────────────────
+# ── 1. All tool functions are importable and callable ────────────────────
 
-def test_all_tools_importable():
+
+def test_all_tool_functions_importable():
     tools = [
         web_search, web_news_search, fetch_url_content,
         fetch_github_profile, fetch_orcid_profile,
         search_arxiv, search_semantic_scholar, fetch_hf_author,
     ]
-    for tool in tools:
-        assert tool is not None
-        assert hasattr(tool, "invoke"), f"{tool.name} missing invoke method"
+    for fn in tools:
+        assert fn is not None
+        assert callable(fn), f"{fn.__name__} is not callable"
 
 
-# ── 2. All tools have non-empty descriptions ────────────────────────────
-
-def test_all_tools_have_descriptions():
+def test_all_tool_functions_have_docstrings():
     tools = [
         web_search, web_news_search, fetch_url_content,
         fetch_github_profile, fetch_orcid_profile,
         search_arxiv, search_semantic_scholar, fetch_hf_author,
     ]
-    for tool in tools:
-        assert tool.description and tool.description.strip(), (
-            f"Tool '{tool.name}' has empty description"
+    for fn in tools:
+        assert fn.__doc__ and fn.__doc__.strip(), (
+            f"Function '{fn.__name__}' has empty docstring"
         )
 
 
-# ── 3. Phase functions are async callables ───────────────────────────────
-
-def test_phase_functions_async():
-    assert asyncio.iscoroutinefunction(phase1)
-    assert asyncio.iscoroutinefunction(phase2)
-    assert asyncio.iscoroutinefunction(phase3_eval)
-    assert asyncio.iscoroutinefunction(phase3_exec)
+# ── 2. Phase functions are async callables ──────────────────────────────
 
 
-# ── 4. Graph has the correct 4-node structure ───────────────────────────
+def test_all_phase_functions_async():
+    phase_fns = [phase1, phase1_5, phase2, phase3_eval, phase3_exec,
+                 question_generator, reresearch]
+    for fn in phase_fns:
+        assert asyncio.iscoroutinefunction(fn), f"{fn.__name__} is not async"
 
-def test_graph_4_nodes():
+
+# ── 3. Graph has the correct 7-node structure ────────────────────────────
+
+
+def test_graph_7_nodes():
     graph = build_graph()
     nodes = set(graph.get_graph().nodes.keys()) - {"__start__", "__end__"}
-    assert nodes == {"phase1", "phase2", "phase3_eval", "phase3_exec"}
+    expected = {"phase1", "phase1_5", "phase2", "phase3_eval",
+                "reresearch", "phase3_exec", "question_generator"}
+    assert nodes == expected, f"Expected {expected}, got {nodes}"
 
 
-# ── 5. ResearchState covers all 20 agent output keys ────────────────────
-
-def test_state_covers_all_agents():
-    # 7 Phase 1 + 11 Phase 2 + 2 Phase 3 = 20 output keys + 1 input
-    assert len(ResearchState.__annotations__) == 21
+# ── 4. ResearchState covers all output keys ──────────────────────────────
 
 
-# ── 6. Phase 1 output keys match expected agent roles ───────────────────
+def test_state_covers_all_agent_outputs():
+    # p1(8) + p1.5(2) + p2(11) + p3(3) + person(1) + reresearch_count(1) = 26
+    assert len(ResearchState.__annotations__) == 26
+
+
+# ── 5. Phase 1 output keys ──────────────────────────────────────────────
+
 
 def test_phase1_key_names():
     expected = {"web_research", "github_data", "orcid_data", "arxiv_data",
-                "podcast_data", "news_data", "hf_data"}
-    p1_keys = {k for k in ResearchState.__annotations__
-                if k.endswith("_data") or k == "web_research"}
-    assert expected == p1_keys
+                "podcast_data", "news_data", "hf_data", "video_data"}
+    assert expected.issubset(set(ResearchState.__annotations__.keys()))
+    assert len(expected) == 8
 
 
-# ── 7. Phase 2 output keys match expected agent roles ───────────────────
+# ── 6. Phase 1.5 output keys ────────────────────────────────────────────
+
+
+def test_phase1_5_key_names():
+    expected = {"wikipedia_data", "deep_fetched_urls"}
+    assert expected.issubset(set(ResearchState.__annotations__.keys()))
+
+
+# ── 7. Phase 2 output keys ──────────────────────────────────────────────
+
 
 def test_phase2_key_names():
     expected = {"bio", "timeline", "contributions", "quotes", "social",
                 "topics", "competitive", "collaboration", "funding",
                 "conference", "philosophy"}
-    # Phase 2 keys are the ones that aren't Phase 1, Phase 3, or input
-    all_keys = set(ResearchState.__annotations__.keys())
-    p1_keys = {"web_research", "github_data", "orcid_data", "arxiv_data",
-               "podcast_data", "news_data", "hf_data"}
-    p3_keys = {"eval_data", "executive"}
-    input_keys = {"person"}
-    p2_keys = all_keys - p1_keys - p3_keys - input_keys
-    assert expected == p2_keys
+    assert expected.issubset(set(ResearchState.__annotations__.keys()))
+    assert len(expected) == 11
 
 
-# ── 8. Phase 3 output keys match expected agent roles ───────────────────
+# ── 8. Phase 3 output keys ──────────────────────────────────────────────
+
 
 def test_phase3_key_names():
-    expected = {"eval_data", "executive"}
+    expected = {"eval_data", "executive", "questions"}
     assert expected.issubset(set(ResearchState.__annotations__.keys()))
 
 
-# ── 9. web_search tool has correct name ─────────────────────────────────
-
-def test_web_search_tool_name():
-    assert web_search.name == "web_search"
+# ── 9. Tool groups are non-empty lists ──────────────────────────────────
 
 
-# ── 10. fetch_github_profile tool has correct name ──────────────────────
-
-def test_github_tool_name():
-    assert fetch_github_profile.name == "fetch_github_profile"
-
-
-# ── 11. search_arxiv tool has correct name ──────────────────────────────
-
-def test_arxiv_tool_name():
-    assert search_arxiv.name == "search_arxiv"
+def test_tools_search_is_list():
+    assert isinstance(TOOLS_SEARCH, list)
+    assert len(TOOLS_SEARCH) >= 2
 
 
-# ── 12. fetch_hf_author tool has correct name ──────────────────────────
+def test_tools_news_is_list():
+    assert isinstance(TOOLS_NEWS, list)
+    assert len(TOOLS_NEWS) >= 2
 
-def test_hf_tool_name():
-    assert fetch_hf_author.name == "fetch_hf_author"
+
+def test_tools_academic_is_list():
+    assert isinstance(TOOLS_ACADEMIC, list)
+    assert len(TOOLS_ACADEMIC) >= 2
+
+
+def test_tools_video_is_list():
+    assert isinstance(TOOLS_VIDEO, list)
+    assert len(TOOLS_VIDEO) >= 2
+
+
+# ── 10. Phase functions accept state dict as first argument ──────────────
+
+
+def test_phase_function_signatures():
+    for fn in [phase1, phase1_5, phase2, phase3_eval, phase3_exec,
+               question_generator, reresearch]:
+        sig = inspect.signature(fn)
+        params = list(sig.parameters.keys())
+        assert "state" in params, f"{fn.__name__} missing 'state' parameter"

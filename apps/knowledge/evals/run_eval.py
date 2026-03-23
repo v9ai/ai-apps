@@ -11,6 +11,7 @@ import argparse
 import glob
 import json
 import sys
+from concurrent.futures import ThreadPoolExecutor, as_completed
 from datetime import datetime, timezone
 from pathlib import Path
 
@@ -95,51 +96,69 @@ def load_articles(ids: list[int] | None = None) -> list[tuple[str, str]]:
     return articles
 
 
+def _eval_article(
+    article_id: str,
+    content: str,
+    metric_filter: str | None,
+    model: DeepSeekModel,
+) -> dict:
+    """Evaluate one article with fresh metric instances (thread-safe)."""
+    metrics = build_metrics(model)
+    if metric_filter:
+        metrics = {metric_filter: metrics[metric_filter]}
+    test_case = LLMTestCase(input="Evaluate article quality", actual_output=content)
+    article_result: dict = {"article_id": article_id, "metrics": {}}
+    for metric_name, metric in metrics.items():
+        metric.measure(test_case)
+        score = metric.score
+        passed = score >= THRESHOLD if score is not None else False
+        article_result["metrics"][metric_name] = {
+            "score": score,
+            "passed": passed,
+            "reason": metric.reason or "",
+        }
+    return article_result
+
+
 def run(articles_filter: list[int] | None, metric_filter: str | None):
     model = DeepSeekModel()
-    all_metrics = build_metrics(model)
+    all_metric_names = list(build_metrics(model).keys())
 
-    if metric_filter:
-        if metric_filter not in all_metrics:
-            print(f"Unknown metric: {metric_filter}")
-            print(f"Available: {', '.join(all_metrics.keys())}")
-            sys.exit(1)
-        metrics_to_run = {metric_filter: all_metrics[metric_filter]}
-    else:
-        metrics_to_run = all_metrics
+    if metric_filter and metric_filter not in all_metric_names:
+        print(f"Unknown metric: {metric_filter}")
+        print(f"Available: {', '.join(all_metric_names)}")
+        sys.exit(1)
 
     articles = load_articles(articles_filter)
     if not articles:
         print("No articles found matching the filter.")
         sys.exit(1)
 
-    print(f"Evaluating {len(articles)} article(s) x {len(metrics_to_run)} metric(s)")
-    print(f"Total evaluations: {len(articles) * len(metrics_to_run)}\n")
+    num_metrics = 1 if metric_filter else len(all_metric_names)
+    print(f"Evaluating {len(articles)} article(s) x {num_metrics} metric(s)")
+    print(f"Total evaluations: {len(articles) * num_metrics}\n")
 
-    results = []
-    for article_id, content in articles:
-        test_case = LLMTestCase(
-            input="Evaluate article quality",
-            actual_output=content,
-        )
-        article_result = {"article_id": article_id, "metrics": {}}
+    # Articles are independent — run in parallel with fresh metric instances per thread.
+    results_map: dict[str, dict] = {}
+    with ThreadPoolExecutor(max_workers=min(4, len(articles))) as pool:
+        futures = {
+            pool.submit(_eval_article, aid, content, metric_filter, model): aid
+            for aid, content in articles
+        }
+        for future in as_completed(futures):
+            aid = futures[future]
+            try:
+                result = future.result()
+                results_map[aid] = result
+                scores = " ".join(
+                    f"{m}={v['score']:.2f}({'PASS' if v['passed'] else 'FAIL'})"
+                    for m, v in result["metrics"].items()
+                )
+                print(f"  {aid}: {scores}")
+            except Exception as exc:
+                print(f"  {aid}: ERROR — {exc}")
 
-        for metric_name, metric in metrics_to_run.items():
-            print(f"  {article_id} / {metric_name} ... ", end="", flush=True)
-            metric.measure(test_case)
-            score = metric.score
-            passed = score >= THRESHOLD if score is not None else False
-            reason = metric.reason or ""
-            status = "PASS" if passed else "FAIL"
-            print(f"{score:.2f} [{status}]")
-
-            article_result["metrics"][metric_name] = {
-                "score": score,
-                "passed": passed,
-                "reason": reason,
-            }
-
-        results.append(article_result)
+    results = [results_map[aid] for aid, _ in articles if aid in results_map]
 
     # Summary
     total = sum(

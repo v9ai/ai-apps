@@ -22,27 +22,27 @@
       "url": "https://patents.google.com/patent/US9940367B1"
     },
     {
-      "date": "2017",
+      "date": "2017-01",
       "event": "Co-founded DataFire.io, an open-source platform for building APIs and integrations",
       "url": "https://github.com/DataFire/DataFire"
     },
     {
-      "date": "2020",
+      "date": "2020-01",
       "event": "Joined Fairwinds as VP of Product Development; conceptualized and built Fairwinds Insights (Kubernetes auditing platform)",
       "url": "https://www.fairwinds.com/insights"
     },
     {
-      "date": "2024-03-13",
+      "date": "2024-03",
       "event": "Co-founded All Hands AI; launched OpenDevin (later renamed OpenHands) as an open-source coding agent platform",
       "url": "https://github.com/All-Hands-AI/OpenHands"
     },
     {
-      "date": "2024-07-23",
+      "date": "2024-07",
       "event": "Published OpenHands paper on arXiv (2407.16741) describing the open platform for AI software developers",
       "url": "https://arxiv.org/abs/2407.16741"
     },
     {
-      "date": "2024-09-05",
+      "date": "2024-09",
       "event": "All Hands AI raised $5M seed round led by Menlo Ventures, with Pillar VC, Betaworks, and Rebellion",
       "url": "https://techcrunch.com/2024/09/05/all-hands-ai-raises-5m-to-build-open-source-agents-for-developers/"
     },
@@ -52,17 +52,22 @@
       "url": "https://practicalai.fm/310/transcript"
     },
     {
+      "date": "2025-01",
+      "event": "OpenHands paper published as a conference paper at ICLR 2025",
+      "url": "https://openreview.net/forum?id=OJd3ayDDoF"
+    },
+    {
       "date": "2025-06",
       "event": "Speaker at QCon AI New York 2025",
       "url": "https://ai.qconferences.com/speakers/robertopenhandsdev"
     },
     {
-      "date": "2025-11-12",
+      "date": "2025-11",
       "event": "OpenHands achieved #1 on SWE-bench Verified leaderboard with inference-time scaling and critic model, solving 53% of Verified set",
       "url": "https://openhands.dev/blog/sota-on-swe-bench-verified-with-inference-time-scaling-and-critic-model"
     },
     {
-      "date": "2025-11-12",
+      "date": "2025-11",
       "event": "Published 'One Year of OpenHands' retrospective: 50K+ GitHub stars, 250+ contributors, 3,500+ commits",
       "url": "https://openhands.dev/blog/one-year-of-openhands-a-journey-of-open-source-ai-development"
     },
@@ -72,12 +77,7 @@
       "url": "https://arxiv.org/abs/2511.03690"
     },
     {
-      "date": "2025",
-      "event": "OpenHands paper published as a conference paper at ICLR 2025",
-      "url": "https://openreview.net/forum?id=OJd3ayDDoF"
-    },
-    {
-      "date": "2026-01-20",
+      "date": "2026-01",
       "event": "Appeared on Open Source Startup Podcast (Episode 190): Open Sourcing AI Coding Platform Devin to Create OpenHands",
       "url": "https://ossstartuppodcast.substack.com/p/episode-190-open-sourcing-ai-coding"
     }

@@ -5,11 +5,13 @@ import { Search } from "@/components/search";
 import { Footer } from "@/components/footer";
 
 export default async function HomePage() {
-  const groups = await getGroupedLessons();
-  const allLessons = await getAllLessons();
+  const [groups, allLessons, catCount, wordCount] = await Promise.all([
+    getGroupedLessons(),
+    getAllLessons(),
+    getCategoryCount(),
+    getTotalWordCount(),
+  ]);
   const total = allLessons.length;
-  const catCount = await getCategoryCount();
-  const wordCount = await getTotalWordCount();
   return (
     <div>
       <Topbar lessonCount={total} />

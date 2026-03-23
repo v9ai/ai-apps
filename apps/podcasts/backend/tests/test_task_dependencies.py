@@ -2,6 +2,10 @@
 
 Validates that the LangGraph StateGraph enforces sequential phase execution
 and that each phase reads/writes the correct state keys.
+
+Graph topology (actual):
+  START → phase1 → phase1_5 → phase2 → phase3_eval ─┬→ reresearch → phase3_eval
+                                                      └→ phase3_exec → question_generator → END
 """
 
 import pytest
@@ -27,23 +31,33 @@ def test_phase1_starts_from_start(graph):
     assert incoming == ["__start__"], f"phase1 should only come from __start__, got {incoming}"
 
 
-# ── 2. Phase 2 depends only on Phase 1 ──────────────────────────────────
+# ── 2. Phase 2 depends only on phase1_5 ─────────────────────────────────
 
-def test_phase2_depends_on_phase1(graph):
+def test_phase2_depends_on_phase1_5(graph):
     edges = _get_edges(graph)
     incoming = [src for src, tgt in edges if tgt == "phase2"]
-    assert incoming == ["phase1"], f"phase2 should come from phase1, got {incoming}"
+    assert incoming == ["phase1_5"], f"phase2 should come from phase1_5, got {incoming}"
 
 
-# ── 3. Phase 3 eval depends only on Phase 2 ─────────────────────────────
+# ── 3. phase1 feeds into phase1_5 ────────────────────────────────────────
 
-def test_phase3_eval_depends_on_phase2(graph):
+def test_phase1_5_depends_on_phase1(graph):
     edges = _get_edges(graph)
-    incoming = [src for src, tgt in edges if tgt == "phase3_eval"]
-    assert incoming == ["phase2"], f"phase3_eval should come from phase2, got {incoming}"
+    incoming = [src for src, tgt in edges if tgt == "phase1_5"]
+    assert incoming == ["phase1"], f"phase1_5 should come from phase1, got {incoming}"
 
 
-# ── 4. Phase 3 exec depends only on Phase 3 eval ────────────────────────
+# ── 4. Phase 3 eval depends on Phase 2 AND reresearch (fan-in) ───────────
+
+def test_phase3_eval_depends_on_phase2_and_reresearch(graph):
+    edges = _get_edges(graph)
+    incoming = sorted(src for src, tgt in edges if tgt == "phase3_eval")
+    assert incoming == ["phase2", "reresearch"], (
+        f"phase3_eval should come from phase2 and reresearch, got {incoming}"
+    )
+
+
+# ── 5. phase3_exec depends only on phase3_eval ──────────────────────────
 
 def test_phase3_exec_depends_on_eval(graph):
     edges = _get_edges(graph)
@@ -51,57 +65,52 @@ def test_phase3_exec_depends_on_eval(graph):
     assert incoming == ["phase3_eval"], f"phase3_exec should come from phase3_eval, got {incoming}"
 
 
-# ── 5. Only phase3_exec leads to END ────────────────────────────────────
+# ── 6. question_generator depends only on phase3_exec ────────────────────
 
-def test_only_phase3_exec_leads_to_end(graph):
+def test_question_generator_depends_on_phase3_exec(graph):
+    edges = _get_edges(graph)
+    incoming = [src for src, tgt in edges if tgt == "question_generator"]
+    assert incoming == ["phase3_exec"], (
+        f"question_generator should come from phase3_exec, got {incoming}"
+    )
+
+
+# ── 7. Only question_generator leads to END ──────────────────────────────
+
+def test_only_question_generator_leads_to_end(graph):
     edges = _get_edges(graph)
     to_end = [src for src, tgt in edges if tgt == "__end__"]
-    assert to_end == ["phase3_exec"], f"Only phase3_exec should lead to END, got {to_end}"
+    assert to_end == ["question_generator"], (
+        f"Only question_generator should lead to END, got {to_end}"
+    )
 
 
-# ── 6. No node has multiple incoming edges (strictly sequential) ────────
+# ── 8. phase3_eval has two outgoing edges (conditional fan-out) ──────────
 
-def test_no_fan_in(graph):
+def test_phase3_eval_has_conditional_fan_out(graph):
     edges = _get_edges(graph)
-    targets = [tgt for _, tgt in edges]
-    for node in set(targets):
-        count = targets.count(node)
-        assert count == 1, f"Node '{node}' has {count} incoming edges (expected 1)"
+    outgoing = sorted(tgt for src, tgt in edges if src == "phase3_eval")
+    assert outgoing == ["phase3_exec", "reresearch"], (
+        f"phase3_eval should fan out to reresearch and phase3_exec, got {outgoing}"
+    )
 
 
-# ── 7. No node has multiple outgoing edges (no branching) ───────────────
+# ── 9. Phase 1 writes 8 state keys ──────────────────────────────────────
 
-def test_no_fan_out(graph):
-    edges = _get_edges(graph)
-    sources = [src for src, _ in edges]
-    for node in set(sources):
-        count = sources.count(node)
-        assert count == 1, f"Node '{node}' has {count} outgoing edges (expected 1)"
-
-
-# ── 8. Graph forms a linear chain of exactly 6 nodes ────────────────────
-
-def test_linear_chain(graph):
-    edges = _get_edges(graph)
-    expected_chain = [
-        ("__start__", "phase1"),
-        ("phase1", "phase2"),
-        ("phase2", "phase3_eval"),
-        ("phase3_eval", "phase3_exec"),
-        ("phase3_exec", "__end__"),
-    ]
-    assert edges == expected_chain, f"Expected linear chain, got {edges}"
-
-
-# ── 9. Phase 1 writes 7 state keys ──────────────────────────────────────
-
-def test_phase1_writes_7_keys():
+def test_phase1_writes_8_keys():
     p1_keys = {"web_research", "github_data", "orcid_data", "arxiv_data",
-               "podcast_data", "news_data", "hf_data"}
-    assert len(p1_keys) == 7
+               "podcast_data", "news_data", "hf_data", "video_data"}
+    assert len(p1_keys) == 8
 
 
-# ── 10. Phase 2 writes 11 state keys ────────────────────────────────────
+# ── 10. Phase 1.5 writes 2 state keys ───────────────────────────────────
+
+def test_phase1_5_writes_2_keys():
+    p15_keys = {"wikipedia_data", "deep_fetched_urls"}
+    assert len(p15_keys) == 2
+
+
+# ── 11. Phase 2 writes 11 state keys ────────────────────────────────────
 
 def test_phase2_writes_11_keys():
     p2_keys = {"bio", "timeline", "contributions", "quotes", "social",
@@ -110,15 +119,16 @@ def test_phase2_writes_11_keys():
     assert len(p2_keys) == 11
 
 
-# ── 11. Phase 3 writes 2 state keys ─────────────────────────────────────
+# ── 12. Phase 3 writes 3 state keys ─────────────────────────────────────
 
-def test_phase3_writes_2_keys():
-    p3_keys = {"eval_data", "executive"}
-    assert len(p3_keys) == 2
+def test_phase3_writes_3_keys():
+    p3_keys = {"eval_data", "executive", "questions"}
+    assert len(p3_keys) == 3
 
 
-# ── 12. Total state keys = 1 input + 7 + 11 + 2 = 21 ───────────────────
+# ── 13. Total state keys: 1 + 8 + 2 + 11 + 3 + 1 = 26 ──────────────────
 
 def test_total_state_keys():
     total = len(ResearchState.__annotations__)
-    assert total == 21, f"Expected 21 state keys (person + 7 + 11 + 2), got {total}"
+    # person(1) + p1(8) + p1.5(2) + p2(11) + p3(3) + reresearch_count(1) = 26
+    assert total == 26, f"Expected 26 state keys, got {total}"

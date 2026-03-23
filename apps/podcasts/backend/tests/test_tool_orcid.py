@@ -42,14 +42,14 @@ INVALID_ORCID = "0000-0000-0000-0000"
 # ── 1. Empty ORCID returns sentinel message ──────────────────────────────
 
 def test_empty_orcid_returns_no_orcid_message():
-    result = fetch_orcid_profile.invoke({"orcid_id": ""})
+    result = fetch_orcid_profile("")
     assert result == "(no ORCID iD provided)"
 
 
 # ── 2. "none" ORCID returns sentinel message ────────────────────────────
 
 def test_none_string_returns_no_orcid_message():
-    result = fetch_orcid_profile.invoke({"orcid_id": "none"})
+    result = fetch_orcid_profile("none")
     assert result == "(no ORCID iD provided)"
 
 
@@ -57,7 +57,7 @@ def test_none_string_returns_no_orcid_message():
 
 @pytest.mark.parametrize("orcid_input", ["", "none", INVALID_ORCID, VALID_ORCID])
 def test_return_type_is_string(orcid_input):
-    result = fetch_orcid_profile.invoke({"orcid_id": orcid_input})
+    result = fetch_orcid_profile(orcid_input)
     assert isinstance(result, str), f"Expected str, got {type(result)}"
 
 
@@ -65,7 +65,7 @@ def test_return_type_is_string(orcid_input):
 
 @requires_network
 def test_valid_orcid_returns_name():
-    result = fetch_orcid_profile.invoke({"orcid_id": VALID_ORCID})
+    result = fetch_orcid_profile(VALID_ORCID)
     assert "Georgiou" in result, (
         f"Expected 'Georgiou' in ORCID result for {VALID_ORCID}, got: {result[:200]}"
     )
@@ -75,7 +75,7 @@ def test_valid_orcid_returns_name():
 
 @requires_network
 def test_valid_orcid_contains_publications():
-    result = fetch_orcid_profile.invoke({"orcid_id": VALID_ORCID})
+    result = fetch_orcid_profile(VALID_ORCID)
     assert "Publications" in result, (
         f"Expected 'Publications' section in result, got: {result[:300]}"
     )
@@ -85,7 +85,7 @@ def test_valid_orcid_contains_publications():
 
 @requires_network
 def test_valid_orcid_contains_doi():
-    result = fetch_orcid_profile.invoke({"orcid_id": VALID_ORCID})
+    result = fetch_orcid_profile(VALID_ORCID)
     assert "DOI:" in result or "doi" in result.lower(), (
         f"Expected DOI references in result for a prolific academic, got: {result[:300]}"
     )
@@ -95,7 +95,7 @@ def test_valid_orcid_contains_doi():
 
 @requires_network
 def test_invalid_orcid_handles_error_gracefully():
-    result = fetch_orcid_profile.invoke({"orcid_id": INVALID_ORCID})
+    result = fetch_orcid_profile(INVALID_ORCID)
     # Should not raise; should return a string (possibly empty data or error)
     assert isinstance(result, str)
     # Should not contain a Python traceback

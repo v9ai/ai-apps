@@ -29,11 +29,13 @@ export default async function LessonPage({ params }: { params: Promise<{ slug: s
   const lesson = await getLessonBySlug(slug);
   if (!lesson) notFound();
 
-  const allLessons = await getAllLessons();
+  const [allLessons, meta, related, audioMeta] = await Promise.all([
+    getAllLessons(),
+    getCategoryMeta(lesson.category),
+    getRelatedLessons(slug),
+    getAudioMeta(lesson.fileSlug),
+  ]);
   const total = allLessons.length;
-  const meta = await getCategoryMeta(lesson.category);
-  const related = await getRelatedLessons(slug);
-  const audioMeta = await getAudioMeta(lesson.fileSlug);
 
   // Same-category lessons for progress indicator
   const categoryLessons = allLessons.filter((l) => l.category === lesson.category);
@@ -43,8 +45,10 @@ export default async function LessonPage({ params }: { params: Promise<{ slug: s
   const prev = idx > 0 ? allLessons[idx - 1] : null;
   const next = idx < allLessons.length - 1 ? allLessons[idx + 1] : null;
 
-  const prevMeta = prev ? await getCategoryMeta(prev.category) : null;
-  const nextMeta = next ? await getCategoryMeta(next.category) : null;
+  const [prevMeta, nextMeta] = await Promise.all([
+    prev ? getCategoryMeta(prev.category) : Promise.resolve(null),
+    next ? getCategoryMeta(next.category) : Promise.resolve(null),
+  ]);
 
   return (
     <div className={`cat-${meta.slug}${audioMeta ? " has-audio-player" : ""}`}>

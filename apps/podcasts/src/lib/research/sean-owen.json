@@ -17,74 +17,74 @@
   ],
   "timeline": [
     {
-      "date": "1996",
+      "date": "1996-01",
       "event": "Enrolled at Harvard University to study Computer Science (BA)",
       "url": "https://datasciencefestival.com/speaker/sean-owen/"
     },
     {
-      "date": "2000",
+      "date": "2000-01",
       "event": "Joined Google as a software engineer; helped build and launch Mobile Web search",
       "url": "https://www.oreilly.com/people/sean-owen/"
     },
     {
-      "date": "2008",
+      "date": "2008-01",
       "event": "Created ZXing ('Zebra Crossing'), an open-source barcode scanning library for Java and Android that now has 33.9k GitHub stars",
       "url": "https://github.com/zxing/zxing"
     },
     {
-      "date": "2008",
+      "date": "2008-01",
       "event": "Started MBA at London Business School (graduated 2010); selected as a Kauffman Fellow",
       "url": "https://www.london.edu/news/sean-owen-and-christian-carrillo-offered-prestigious-kauffman-fellowship"
     },
     {
-      "date": "2009",
+      "date": "2009-01",
       "event": "Became a primary committer and VP of Apache Mahout; authored the Taste recommender framework",
       "url": "https://www.oreilly.com/people/sean-owen/"
     },
     {
-      "date": "2012",
+      "date": "2012-01",
       "event": "Published 'Mahout in Action' (Manning) with Robin Anil, Ted Dunning, and Ellen Friedman",
       "url": "https://www.amazon.com/Mahout-Action-Sean-Owen/dp/1935182684"
     },
     {
-      "date": "2012",
+      "date": "2012-01",
       "event": "Founded Myrrix Ltd to commercialize real-time recommender systems on Apache Hadoop",
       "url": "https://www.bigdatawire.com/2013/07/17/cloudera_snaps_up_mahout_distro_myrrix/"
     },
     {
-      "date": "2013",
+      "date": "2013-01",
       "event": "Myrrix acqui-hired by Cloudera; became Director of Data Science (EMEA), based in London",
       "url": "https://www.bigdatawire.com/2013/07/17/cloudera_snaps_up_mahout_distro_myrrix/"
     },
     {
-      "date": "2014",
+      "date": "2014-01",
       "event": "Launched Oryx project -- lambda architecture on Apache Spark and Kafka for real-time large-scale machine learning (1.8k stars, now archived)",
       "url": "https://github.com/OryxProject/oryx"
     },
     {
-      "date": "2015-05-26",
-      "event": "Co-authored 'MLlib: Machine Learning in Apache Spark' paper (JMLR) with Xiangrui Meng, Matei Zaharia et al.",
-      "url": "https://arxiv.org/abs/1505.06807"
-    },
-    {
-      "date": "2015",
+      "date": "2015-01",
       "event": "Published 'Advanced Analytics with Spark' (O'Reilly) with Sandy Ryza, Uri Laserson, and Josh Wills",
       "url": "https://www.amazon.com/Advanced-Analytics-Spark-Patterns-Learning/dp/1491912766"
     },
     {
-      "date": "2018",
+      "date": "2015-05",
+      "event": "Co-authored 'MLlib: Machine Learning in Apache Spark' paper (JMLR) with Xiangrui Meng, Matei Zaharia et al.",
+      "url": "https://arxiv.org/abs/1505.06807"
+    },
+    {
+      "date": "2018-01",
       "event": "Joined Databricks as Principal Product Specialist for Data Science and Machine Learning",
       "url": "https://github.com/srowen"
+    },
+    {
+      "date": "2022-01",
+      "event": "Published 'Advanced Analytics with PySpark' (O'Reilly, 2nd edition) adding Akash Tandon as co-author",
+      "url": "https://www.amazon.com/Advanced-Analytics-PySpark-Patterns-Learning/dp/1098103653"
     },
     {
       "date": "2022-06",
       "event": "Received the 2022 ACM SIGMOD Systems Award as part of the Apache Spark community",
       "url": "https://sigmod.org/2022-sigmod-systems-award/"
-    },
-    {
-      "date": "2022",
-      "event": "Published 'Advanced Analytics with PySpark' (O'Reilly, 2nd edition) adding Akash Tandon as co-author",
-      "url": "https://www.amazon.com/Advanced-Analytics-PySpark-Patterns-Learning/dp/1098103653"
     },
     {
       "date": "2024-01",
@@ -97,7 +97,7 @@
       "url": "https://www.databricks.com/dataaisummit/speaker/sean-owen/"
     },
     {
-      "date": "2025",
+      "date": "2025-01",
       "event": "Transitioned to Applied Research at Mosaic (Databricks), focusing on foundation model research",
       "url": "https://github.com/srowen"
     }
