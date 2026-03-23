@@ -410,7 +410,7 @@ export default function NavHeader({
               pt: '5',
               mt: '3',
               borderTopWidth: '1px',
-              borderColor: 'rgba(255,255,255,0.06)',
+              borderColor: 'card.border',
               sm: { display: 'none' },
             })}
           >
