@@ -6,11 +6,11 @@ import { css } from "styled-system/css";
 const GITHUB_URL = "https://github.com/nicolad/ai-apps";
 
 const navLinkStyle = css({
-  color: '#9B9BA6',
+  color: 'ui.secondary',
   fontSize: 'xs',
   pos: 'relative',
   transition: 'color 0.2s ease',
-  _hover: { color: '#E8E8ED' },
+  _hover: { color: 'ui.heading' },
   _after: {
     content: '""',
     pos: 'absolute',
@@ -30,7 +30,7 @@ const navLinkHoverUnderline = css({
 });
 
 const sectionLabelStyle = css({
-  color: '#5A5A66',
+  color: 'ui.faint',
   fontSize: '2xs',
   fontWeight: 'semibold',
   letterSpacing: 'wider',
@@ -47,11 +47,11 @@ export default function Footer() {
     <footer
       className={css({
         pos: 'relative',
-        bg: '#0B0B0F',
+        bg: 'ui.base',
         borderTopWidth: '1px',
-        borderColor: 'rgba(255,255,255,0.06)',
-        pt: { base: '16', md: '20' },
-        pb: { base: '12', md: '14' },
+        borderColor: 'card.border',
+        pt: { base: '16', sm: '18', md: '20' },
+        pb: { base: '12', sm: '13', md: '14' },
         overflow: 'hidden',
       })}
     >
@@ -128,19 +128,19 @@ export default function Footer() {
             <Link
               href="/"
               className={css({
-                color: '#E8E8ED',
+                color: 'ui.heading',
                 fontSize: 'sm',
                 fontWeight: 'semibold',
                 letterSpacing: 'wide',
                 transition: 'color 0.2s ease',
-                _hover: { color: '#fff' },
+                _hover: { color: 'white' },
               })}
             >
               Humans of AI
             </Link>
             <p
               className={css({
-                color: '#5A5A66',
+                color: 'ui.faint',
                 fontSize: 'xs',
                 letterSpacing: '0.01em',
                 maxW: '52',
@@ -276,7 +276,7 @@ export default function Footer() {
         >
           <p
             className={css({
-              color: '#5A5A66',
+              color: 'ui.faint',
               fontSize: 'xs',
             })}
           >

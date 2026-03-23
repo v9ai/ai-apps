@@ -137,7 +137,7 @@ export default function RootLayout({
           }}
         />
       </head>
-      <body className={`${inter.variable} ${css({ bg: '#0B0B0F', color: '#E8E8ED', fontFamily: 'sans' })}`}>
+      <body className={`${inter.variable} ${css({ bg: 'ui.base', color: 'ui.heading', fontFamily: 'sans' })}`}>
         <a
           href="#main-content"
           className={css({
