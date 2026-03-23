@@ -103,6 +103,7 @@ export function Header() {
                 { label: "My Parts", href: "/my-parts" },
                 { label: "Scripts", href: "/scripts" },
                 { label: "Favorites", href: "/favorites" },
+                { label: "How It Works", href: "/how-it-works" },
                 { label: "Settings", href: "/settings" },
               ].map(({ label, href }) => (
                 <a

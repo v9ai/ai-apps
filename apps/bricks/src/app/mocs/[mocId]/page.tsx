@@ -27,6 +27,7 @@ interface MocDetail {
   designer: string | null;
   parts: MocPart[];
   partsCount: number;
+  pdfUrl: string | null;
 }
 
 export default function MocPage() {
@@ -382,6 +383,70 @@ export default function MocPage() {
           </div>
         </div>
       </div>
+
+      {/* PDF Instructions */}
+      {moc.pdfUrl && (
+        <div
+          className={css({
+            mt: "6",
+            bg: "plate.surface",
+            rounded: "brick",
+            border: "2px solid",
+            borderColor: "plate.border",
+            boxShadow: "brick",
+            overflow: "hidden",
+          })}
+        >
+          <div
+            className={css({
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "space-between",
+              px: "4",
+              py: "2",
+              bg: "#323639",
+              borderBottom: "1px solid rgba(255,255,255,0.08)",
+            })}
+          >
+            <span
+              className={css({
+                fontSize: "xs",
+                fontWeight: "700",
+                fontFamily: "display",
+                color: "#ccc",
+              })}
+            >
+              {moc.name} — Instructions
+            </span>
+            <a
+              href={moc.pdfUrl}
+              target="_blank"
+              rel="noopener noreferrer"
+              className={css({
+                fontSize: "xs",
+                fontWeight: "700",
+                fontFamily: "display",
+                color: "lego.orange",
+                textDecoration: "none",
+                _hover: { textDecoration: "underline" },
+              })}
+            >
+              Open in new tab
+            </a>
+          </div>
+          <iframe
+            src={moc.pdfUrl}
+            title={`${moc.name} instructions`}
+            className={css({
+              w: "100%",
+              h: "85vh",
+              display: "block",
+              border: "none",
+              bg: "#525659",
+            })}
+          />
+        </div>
+      )}
 
       {/* Parts list */}
       {moc.parts.length > 0 && (

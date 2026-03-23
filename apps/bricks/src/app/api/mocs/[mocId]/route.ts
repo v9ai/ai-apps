@@ -1,7 +1,23 @@
 import { NextRequest, NextResponse } from "next/server";
+import { readdir } from "fs/promises";
+import { join } from "path";
 
 const API_KEY = process.env.REBRICKABLE_API_KEY;
 const BASE = "https://rebrickable.com/api/v3/lego";
+
+const INSTRUCTIONS_DIR = join(process.cwd(), "public/data/instructions");
+
+async function findLocalPdf(mocId: string): Promise<string | null> {
+  try {
+    const files = await readdir(INSTRUCTIONS_DIR);
+    const match = files.find(
+      (f) => f.startsWith(mocId) && f.toLowerCase().endsWith(".pdf")
+    );
+    return match ? `/data/instructions/${match}` : null;
+  } catch {
+    return null;
+  }
+}
 
 export async function GET(
   req: NextRequest,
@@ -56,6 +72,8 @@ export async function GET(
       );
     }
 
+    const pdfUrl = await findLocalPdf(mocId);
+
     return NextResponse.json({
       mocId,
       name,
@@ -66,12 +84,15 @@ export async function GET(
       designer,
       parts,
       partsCount,
+      pdfUrl,
     });
   }
 
   // Fallback: no metadata passed — try to find MOC via search
   // Unfortunately, Rebrickable has no direct MOC detail endpoint.
   // We can only get MOCs via set alternates. Return basic info from the CDN.
+  const pdfUrl = await findLocalPdf(mocId);
+
   return NextResponse.json({
     mocId,
     name: mocId,
@@ -82,5 +103,6 @@ export async function GET(
     designer: null,
     parts: [],
     partsCount: 0,
+    pdfUrl,
   });
 }
