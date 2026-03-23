@@ -22,7 +22,7 @@ fi
 mkdir -p "$ITER_DIR"
 TASK=$(cat "$TASK_FILE")
 ITER_CWD=$(cat "$ITER_DIR/cwd.txt" 2>/dev/null || echo "")
-MAX_ITERATIONS=${CLAUDE_ITERATE_MAX:-10}
+MAX_ITERATIONS=$(cat "$ITER_DIR/max.txt" 2>/dev/null || echo "10")
 
 export CLAUDE_ITERATE_CHROMA_PATH="$ITER_DIR/chroma"
 export CLAUDE_ITERATE_CWD="$ITER_CWD"

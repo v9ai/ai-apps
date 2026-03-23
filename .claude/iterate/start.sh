@@ -29,14 +29,14 @@ fi
 
 python3.12 -c "import chromadb" 2>/dev/null || python3.12 -m pip install chromadb -q
 
-rm -rf "$ITER_DIR"
+rm -r "$ITER_DIR" 2>/dev/null || true
 mkdir -p "$ITER_DIR"
 
 echo "0" > "$ITER_DIR/counter"
+echo "$MAX_ITERATIONS" > "$ITER_DIR/max.txt"
 echo "$TASK" > "$ITER_DIR/task.txt"
 echo "[]" > "$ITER_DIR/scores.json"
 pwd > "$ITER_DIR/cwd.txt"
-export CLAUDE_ITERATE_MAX="$MAX_ITERATIONS"
 
 echo "Iterate: initialized — $TASK (max $MAX_ITERATIONS iterations)"
 echo "Now run your first Claude Code prompt. The Stop hook handles the rest."
