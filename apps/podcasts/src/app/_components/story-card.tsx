@@ -39,7 +39,7 @@ export function StoryCard({
           rounded: "2xl",
           borderWidth: "1px",
           borderColor: "whiteAlpha.8",
-          p: isCompact ? "3.5" : { base: "3.5", sm: "4", md: "4.5", lg: "5" },
+          p: isCompact ? "3" : { base: "3", sm: "3.5", md: "3.5", lg: "4" },
           overflow: "hidden",
         })
       )}
@@ -49,8 +49,8 @@ export function StoryCard({
         className={css({
           display: "flex",
           alignItems: "center",
-          gap: "3",
-          mb: isCompact ? "3" : "4",
+          gap: "2.5",
+          mb: isCompact ? "2" : "3",
         })}
       >
         {/* Portrait */}
@@ -72,8 +72,8 @@ export function StoryCard({
               className={css({
                 rounded: "full",
                 objectFit: "cover",
-                w: { base: "40px", sm: "48px" },
-                h: { base: "40px", sm: "48px" },
+                w: { base: "36px", sm: "40px" },
+                h: { base: "36px", sm: "40px" },
               })}
             />
           ) : (
@@ -87,8 +87,8 @@ export function StoryCard({
                 color: "rgba(255,255,255,0.75)",
                 fontWeight: "semibold",
                 fontSize: "sm",
-                w: { base: "40px", sm: "48px" },
-                h: { base: "40px", sm: "48px" },
+                w: { base: "36px", sm: "40px" },
+                h: { base: "36px", sm: "40px" },
               })}
               role="img"
               aria-label={`${personality.name}`}
@@ -102,7 +102,7 @@ export function StoryCard({
         <div className={css({ minW: "0", flex: "1" })}>
           <h3
             className={css({
-              fontSize: "0.9375rem",
+              fontSize: "0.875rem",
               fontWeight: "semibold",
               color: "ui.heading",
               lineHeight: "tight",
@@ -135,8 +135,8 @@ export function StoryCard({
           color: "ui.body",
           lineHeight: "1.7",
           letterSpacing: "0.01em",
-          fontSize: isCompact ? "0.8125rem" : { base: "0.8125rem", sm: "0.875rem" },
-          lineClamp: 3,
+          fontSize: "0.8125rem",
+          lineClamp: 2,
         })}
       >
         {displayText}
@@ -148,8 +148,8 @@ export function StoryCard({
           display: "flex",
           alignItems: "center",
           justifyContent: "space-between",
-          mt: { base: "3", sm: "4" },
-          pt: { base: "2.5", sm: "3" },
+          mt: { base: "2.5", sm: "3" },
+          pt: { base: "2", sm: "2.5" },
           borderTopWidth: "1px",
           borderTopColor: "card.border",
         })}

@@ -56,12 +56,13 @@ export function StoryGrid({ personalities, quotes }: StoryGridProps) {
           className={css({
             display: "grid",
             gridTemplateColumns: {
-              base: "repeat(auto-fill, minmax(min(100%, 280px), 1fr))",
+              base: "repeat(auto-fill, minmax(min(100%, 240px), 1fr))",
               sm: "repeat(2, 1fr)",
-              lg: "repeat(3, 1fr)",
+              md: "repeat(3, 1fr)",
+              lg: "repeat(4, 1fr)",
               xl: "repeat(4, 1fr)",
             },
-            gap: { base: "3", sm: "4", md: "4", lg: "5" },
+            gap: { base: "2.5", sm: "3", md: "3", lg: "4" },
             alignItems: "start",
           })}
           role="list"
