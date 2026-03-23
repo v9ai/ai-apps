@@ -248,7 +248,7 @@ kbd {
 .story-card-3d:focus-visible {
   outline: none;
   border-color: rgba(139, 92, 246, 0.5);
-  background-color: #1C1C22;
+  background-color: var(--color-surface-hover);
   transform: translateY(-2px);
   box-shadow:
     0 0 0 3px rgba(139,92,246,0.18),
@@ -438,9 +438,9 @@ kbd {
 }
 
 .skip-link { position: absolute; left: -9999px; top: auto; width: 1px; height: 1px; overflow: hidden; z-index: 9999; }
-.skip-link:focus { position: fixed; top: 0.5rem; left: 50%; transform: translateX(-50%); width: auto; height: auto; padding: 0.75rem 1.5rem; background: #15141A; color: #E8E8ED; border: 1px solid rgba(255,255,255,0.12); border-radius: 0.5rem; font-size: 0.875rem; text-decoration: none; }
+.skip-link:focus { position: fixed; top: 0.5rem; left: 50%; transform: translateX(-50%); width: auto; height: auto; padding: 0.75rem 1.5rem; background: var(--color-surface); color: var(--color-ink-primary); border: 1px solid var(--color-rim-strong); border-radius: 0.5rem; font-size: 0.875rem; text-decoration: none; }
 
-header nav a[aria-current="page"] { color: #C4C4CC; background: rgba(255,255,255,0.06); position: relative; }
+header nav a[aria-current="page"] { color: var(--color-ink-secondary); background: var(--color-rim-subtle); position: relative; }
 header nav a[aria-current="page"]::after { content: ''; position: absolute; bottom: 2px; left: 50%; transform: translateX(-50%); width: 16px; height: 1.5px; border-radius: 9999px; background: rgba(139,92,246,0.7); }
 
 /* ── Search animations ─────────────────────────────────────────── */

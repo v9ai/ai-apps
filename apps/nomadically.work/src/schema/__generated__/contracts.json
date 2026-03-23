@@ -493,10 +493,6 @@
           "type": "string",
           "const": "Mastra"
         },
-        "langfuse": {
-          "type": "string",
-          "const": "Langfuse"
-        },
         "cloudflare-workers": {
           "type": "string",
           "const": "Cloudflare Workers"
