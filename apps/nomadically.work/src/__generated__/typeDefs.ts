@@ -1140,6 +1140,7 @@ type Mutation {
   scheduleBatchEmails(input: ScheduleBatchEmailsInput!): ScheduleBatchResult!
   scheduleFollowUpBatch(input: FollowUpBatchInput!): FollowUpBatchResult!
   sendEmail(input: SendEmailInput!): SendEmailResult!
+  sendOutreachEmail(input: SendOutreachEmailInput!): SendOutreachEmailResult!
   sendScheduledEmailNow(resendId: String!): SendNowResult!
   syncResendEmails(companyId: Int): SyncResendResult!
   unarchiveEmail(id: Int!): ArchiveEmailResult!
@@ -1445,6 +1446,22 @@ type SendEmailResult {
 type SendNowResult {
   error: String
   resendId: String
+  success: Boolean!
+}
+
+input SendOutreachEmailInput {
+  postText: String!
+  postUrl: String
+  recipientEmail: String!
+  recipientName: String!
+  recipientRole: String
+  tone: String
+}
+
+type SendOutreachEmailResult {
+  emailId: String
+  error: String
+  subject: String
   success: Boolean!
 }
 

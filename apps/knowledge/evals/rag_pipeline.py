@@ -13,20 +13,29 @@ Usage:
 """
 
 import operator
-import os
+import threading
 from concurrent.futures import ThreadPoolExecutor, as_completed
-from pathlib import Path
 from typing import Annotated, TypedDict
 
-from dotenv import load_dotenv
 from langchain_core.messages import HumanMessage, SystemMessage
-from langchain_openai import ChatOpenAI
 from langgraph.graph import END, StateGraph
 
+from models import build_reasoner
 from pgvector_retriever import PgVectorRetriever
 
-_env_path = Path(__file__).resolve().parent.parent / ".env.local"
-load_dotenv(_env_path)
+# Shared retriever — uses PgVectorRetriever's internal connection pool.
+# Built lazily on first use to avoid connecting at import time.
+_retriever: PgVectorRetriever | None = None
+_retriever_lock = threading.Lock()
+
+
+def _get_retriever() -> PgVectorRetriever:
+    global _retriever
+    if _retriever is None:
+        with _retriever_lock:
+            if _retriever is None:
+                _retriever = PgVectorRetriever()
+    return _retriever
 
 
 # -- Config & Result types ----------------------------------------------------
@@ -53,7 +62,7 @@ class RAGResult(TypedDict):
 _DEFAULT_CONFIG: RAGConfig = {
     "top_k": 5,
     "threshold": 0.3,
-    "retrieval_method": "fts",
+    "retrieval_method": "auto",
     "fts_weight": 0.3,
     "vector_weight": 0.7,
     "max_context_tokens": 4000,
@@ -65,14 +74,6 @@ RAG_SYSTEM_PROMPT = (
     "If the context doesn't contain enough information, say so clearly. "
     "Cite which lesson or section your answer draws from.\n\n"
     "Context:\n{context}"
-)
-
-# Shared LLM instance — ChatOpenAI is thread-safe; build once.
-_llm = ChatOpenAI(
-    model="deepseek-chat",
-    base_url="https://api.deepseek.com",
-    api_key=os.environ.get("DEEPSEEK_API_KEY", ""),
-    temperature=0,
 )
 
 
@@ -89,51 +90,90 @@ class RAGState(TypedDict):
     answer: str
 
 
+# -- Query router --------------------------------------------------------------
+
+# Heuristic keywords that signal a need for semantic (vector) search
+_CONCEPTUAL_SIGNALS = {
+    "how", "why", "explain", "compare", "difference", "relationship",
+    "tradeoff", "trade-off", "intuition", "overview", "concept",
+}
+
+
+def route_query(state: RAGState) -> dict:
+    """Classify the query and select the best retrieval method.
+
+    Rules:
+    - If the config already specifies a method other than "auto", respect it.
+    - Short keyword queries (<=4 words, no question words) → FTS
+    - Conceptual/explanatory queries → vector (semantic similarity)
+    - Everything else → hybrid
+    """
+    config = state["config"]
+    method = config.get("retrieval_method", "auto")
+
+    if method != "auto":
+        return {"retrieval_method": method}
+
+    query = state["query"].lower().strip()
+    words = query.split()
+
+    # Short keyword lookup → FTS is fastest and most precise
+    if len(words) <= 4 and not any(w in _CONCEPTUAL_SIGNALS for w in words):
+        return {"retrieval_method": "fts"}
+
+    # Conceptual / explanatory queries benefit from semantic search
+    if any(w in _CONCEPTUAL_SIGNALS for w in words) or query.endswith("?"):
+        return {"retrieval_method": "hybrid"}
+
+    return {"retrieval_method": "hybrid"}
+
+
 # -- Graph nodes ---------------------------------------------------------------
 
 
 def retrieve(state: RAGState) -> dict:
-    """Retrieve relevant context from pgvector or FTS."""
+    """Retrieve relevant context from pgvector or FTS.
+
+    Uses the shared connection pool via PgVectorRetriever — the connection is
+    returned to the pool after each call, not closed outright.
+    """
     config = state["config"]
     query = state["query"]
-    method = config.get("retrieval_method", "fts")
+    method = state.get("retrieval_method") or config.get("retrieval_method", "fts")
     top_k = config.get("top_k", 5)
     threshold = config.get("threshold", 0.3)
 
-    retriever = PgVectorRetriever()
+    retriever = _get_retriever()
     chunks: list[str] = []
     scores: list[float] = []
 
-    try:
-        if method == "vector":
-            results = retriever.find_similar_sections(query, top_k=top_k, threshold=threshold)
-            for r in results:
-                chunks.append(f"[{r.get('lesson_title', '')} > {r.get('heading', '')}]\n{r['content']}")
-                scores.append(r.get("similarity", 0.0))
+    if method == "vector":
+        results = retriever.find_similar_sections(query, top_k=top_k, threshold=threshold)
+        for r in results:
+            chunks.append(f"[{r.get('lesson_title', '')} > {r.get('heading', '')}]\n{r['content']}")
+            scores.append(r.get("similarity", 0.0))
 
-        elif method == "hybrid":
-            results = retriever.hybrid_search(
-                query,
-                top_k=top_k,
-                fts_weight=config.get("fts_weight", 0.3),
-                vector_weight=config.get("vector_weight", 0.7),
-                threshold=threshold,
-            )
-            for r in results:
-                chunks.append(f"[{r.get('title', '')} ({r.get('category_name', '')})]")
-                scores.append(r.get("combined_score", 0.0))
+    elif method == "hybrid":
+        results = retriever.hybrid_search(
+            query,
+            top_k=top_k,
+            fts_weight=config.get("fts_weight", 0.3),
+            vector_weight=config.get("vector_weight", 0.7),
+            threshold=threshold,
+        )
+        for r in results:
+            chunks.append(f"[{r.get('title', '')} ({r.get('category_name', '')})]")
+            scores.append(r.get("combined_score", 0.0))
 
-        else:  # "fts" — default, works without embeddings
-            results = retriever.fts_search(query, limit=top_k)
-            for r in results:
-                title = r.get("title", "")
-                snippet = r.get("snippet", "")
-                lesson_title = r.get("lesson_title", "")
-                label = f"[{lesson_title} > {title}]" if lesson_title and lesson_title != title else f"[{title}]"
-                chunks.append(f"{label}\n{snippet}")
-                scores.append(r.get("rank", 0.0))
-    finally:
-        retriever.close()
+    else:  # "fts" — default, works without embeddings
+        results = retriever.fts_search(query, limit=top_k)
+        for r in results:
+            title = r.get("title", "")
+            snippet = r.get("snippet", "")
+            lesson_title = r.get("lesson_title", "")
+            label = f"[{lesson_title} > {title}]" if lesson_title and lesson_title != title else f"[{title}]"
+            chunks.append(f"{label}\n{snippet}")
+            scores.append(r.get("rank", 0.0))
 
     return {
         "retrieved_chunks": chunks,
@@ -166,7 +206,7 @@ def generate(state: RAGState) -> dict:
     system_text = system_template.format(context=state["formatted_context"])
 
     messages = [SystemMessage(content=system_text), HumanMessage(content=state["query"])]
-    response = _llm.invoke(messages)
+    response = build_reasoner().invoke(messages)
     return {"answer": response.content}
 
 
@@ -176,11 +216,13 @@ def generate(state: RAGState) -> dict:
 def build_rag_pipeline() -> StateGraph:
     """Build and compile the RAG StateGraph. Reuse the returned object."""
     graph = StateGraph(RAGState)
+    graph.add_node("route_query", route_query)
     graph.add_node("retrieve", retrieve)
     graph.add_node("format_context", format_context)
     graph.add_node("generate", generate)
 
-    graph.set_entry_point("retrieve")
+    graph.set_entry_point("route_query")
+    graph.add_edge("route_query", "retrieve")
     graph.add_edge("retrieve", "format_context")
     graph.add_edge("format_context", "generate")
     graph.add_edge("generate", END)

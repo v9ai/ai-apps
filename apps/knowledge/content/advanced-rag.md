@@ -702,7 +702,7 @@ Building advanced RAG pipelines requires orchestrating multiple components: retr
 
 ### LangGraph
 
-LangGraph models RAG pipelines as stateful graphs where nodes are processing steps and edges define the control flow. Its key strength is explicit support for cycles and conditional branching, making it natural to implement patterns like CRAG (evaluate, then conditionally re-retrieve) and agentic RAG (loop until sufficient context).
+LangGraph models RAG pipelines as stateful graphs where nodes are processing steps and edges define the control flow. Its key strength is explicit support for cycles and conditional branching, making it natural to implement patterns like CRAG (evaluate, then conditionally re-retrieve) and agentic RAG (loop until sufficient context). For LangGraph fundamentals and the full API, see the dedicated [LangGraph](/langgraph) article.
 
 LangGraph works well for pipelines with complex control flow -- multi-hop retrieval with conditional termination, parallel retrieval from multiple sources with result merging, or human-in-the-loop approval steps. Its graph-based model makes the pipeline's structure inspectable and debuggable. The trade-off is verbosity: simple pipelines require more boilerplate than a linear chain, and the abstraction can feel heavy for straightforward retrieve-then-generate workflows.
 

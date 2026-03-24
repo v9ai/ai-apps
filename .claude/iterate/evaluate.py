@@ -5,8 +5,8 @@ Evaluate iteration output using local heuristics (FastEmbed + Chroma).
 No external LLM required — scoring uses cosine similarity, error extraction,
 and git diff stats.
 
-Exit 0  = continue
-Exit 10 = stop (task complete, plateau, regression, or no progress)
+Scoring is advisory only — iterations always run to exact count.
+Warnings are included in the result for feedback but never stop the loop.
 """
 
 import argparse
@@ -17,30 +17,7 @@ import subprocess
 import sys
 
 from embeddings import get_embedding_function
-
-ALL_METRIC_NAMES = [
-    "Task Completion",
-    "Incremental Progress",
-    "Coherence",
-    "Code Quality",
-    "Focus",
-    "Answer Relevancy",
-    "Faithfulness",
-    "Contextual Relevancy",
-]
-
-
-# ---------------------------------------------------------------------------
-# Cosine similarity helper
-# ---------------------------------------------------------------------------
-
-def _cosine_similarity(a: list[float], b: list[float]) -> float:
-    dot = sum(x * y for x, y in zip(a, b))
-    norm_a = sum(x * x for x in a) ** 0.5
-    norm_b = sum(x * x for x in b) ** 0.5
-    if norm_a == 0.0 or norm_b == 0.0:
-        return 0.0
-    return dot / (norm_a * norm_b)
+from shared import ALL_METRIC_NAMES, cosine_similarity as _cosine_similarity, extract_errors as _extract_errors
 
 
 def _embed_text(ef, text: str, max_chars: int = 2000) -> list[float] | None:
@@ -52,24 +29,6 @@ def _embed_text(ef, text: str, max_chars: int = 2000) -> list[float] | None:
         return vectors[0] if vectors else None
     except Exception:
         return None
-
-
-# ---------------------------------------------------------------------------
-# Error extraction (duplicated from store_context for self-containment)
-# ---------------------------------------------------------------------------
-
-def _extract_errors(content: str) -> list[str]:
-    patterns = [
-        r'^(?:error|Error|ERROR):[ \t]+\S.*',
-        r'^(?:TypeError|SyntaxError|ReferenceError|ImportError|KeyError|ValueError|AttributeError|ModuleNotFoundError)[:( ].*',
-        r'^(?:FAIL|FAILED)[ \t]+\S.*',
-        r'^panic:.*',
-        r'^.*exit(?:ed with)? code [1-9]\d*',
-    ]
-    errors = []
-    for pattern in patterns:
-        errors.extend(re.findall(pattern, content, re.MULTILINE)[:5])
-    return errors[:10]
 
 
 # ---------------------------------------------------------------------------
@@ -141,8 +100,11 @@ def run_heuristic(
     else:
         incremental_progress = max(0.0, min(1.0, 1.0 - output_context_sim * 0.8))
 
-    # Coherence: output relevance to task
-    coherence = max(0.0, min(1.0, output_task_sim))
+    # Coherence: weighted blend of task relevance, diff alignment, and error-free execution
+    # Unlike Answer Relevancy (pure semantic sim), this rewards structured progress
+    coherence_base = output_task_sim * 0.5 + output_diff_sim * 0.3
+    coherence_error_penalty = min(0.2, error_count * 0.1)
+    coherence = max(0.0, min(1.0, coherence_base + (0.2 if has_diff else 0.0) - coherence_error_penalty))
 
     # Code Quality: based on error count
     code_quality = max(0.0, min(1.0, 1.0 - error_count * 0.15))
@@ -150,7 +112,7 @@ def run_heuristic(
     # Focus: combination of task relevance and diff relevance
     focus = max(0.0, min(1.0, output_task_sim * 0.6 + output_diff_sim * 0.4))
 
-    # Answer Relevancy: output ↔ task similarity
+    # Answer Relevancy: pure output ↔ task semantic similarity
     answer_relevancy = max(0.0, min(1.0, output_task_sim))
 
     # Faithfulness: does output relate to actual code changes?
@@ -172,7 +134,7 @@ def run_heuristic(
         },
         "Coherence": {
             "score": round(coherence, 3),
-            "reason": f"task_relevance={output_task_sim:.2f}",
+            "reason": f"task={output_task_sim:.2f}, diff={output_diff_sim:.2f}, errors={error_count}",
             "passed": coherence >= 0.5,
         },
         "Code Quality": {
@@ -247,16 +209,20 @@ def run_evaluation(
         with open(prev_scores_file) as f:
             prev_scores = json.load(f)
 
-    # Git diff
+    # Git diff — prefer uncommitted changes (typical during iterate), fall back to last commit
     diff = "No diff available."
-    try:
-        r = subprocess.run(["git", "diff", "HEAD~1", "HEAD", "--stat", "--no-color"],
-                           capture_output=True, text=True, timeout=5,
-                           cwd=os.environ.get("CLAUDE_ITERATE_CWD", "."))
-        if r.returncode == 0 and r.stdout.strip():
-            diff = r.stdout.strip()
-    except Exception:
-        pass
+    cwd = os.environ.get("CLAUDE_ITERATE_CWD", ".")
+    for diff_base in (["HEAD"], ["HEAD~1", "HEAD"]):
+        try:
+            r = subprocess.run(
+                ["git", "diff"] + diff_base + ["--stat", "--no-color"],
+                capture_output=True, text=True, timeout=5, cwd=cwd,
+            )
+            if r.returncode == 0 and r.stdout.strip():
+                diff = r.stdout.strip()
+                break
+        except Exception:
+            pass
 
     # Truncate
     max_len = 8000
@@ -275,7 +241,7 @@ def run_evaluation(
     scores = run_heuristic(iteration, actual_output, task, context, diff)
     eval_method = "heuristic"
 
-    # Trends + stop logic
+    # Trends (advisory only — iterations always run to completion)
     all_scores = prev_scores + [scores]
     trends = {name: compute_trend(all_scores, name) for name in ALL_METRIC_NAMES}
 
@@ -284,38 +250,33 @@ def run_evaluation(
     co = scores["Coherence"]["score"]
     qu = scores["Code Quality"]["score"]
 
-    should_continue, stop_reason = True, None
-
+    # Advisory warnings — never stop the loop, only inform Claude
+    warnings: list[str] = []
     if tc >= 0.9:
-        should_continue, stop_reason = False, f"Task complete ({tc:.2f})"
-    elif pr < 0.2:
-        should_continue, stop_reason = False, f"No progress ({pr:.2f})"
-    elif co < 0.3:
-        should_continue, stop_reason = False, f"Coherence degraded ({co:.2f})"
-    elif len(all_scores) >= 4:
-        recent = [s.get("Task Completion", {}).get("score", 0) for s in all_scores[-4:]]
-        if all(r is not None for r in recent) and max(recent) - min(recent) < 0.05 and tc > 0:
-            should_continue, stop_reason = False, f"Score plateau (spread: {max(recent)-min(recent):.3f})"
-
-    if should_continue and len(prev_scores) >= 3:
+        warnings.append(f"Task appears complete (tc={tc:.2f})")
+    if pr < 0.2:
+        warnings.append(f"Low progress detected (pr={pr:.2f})")
+    if co < 0.3:
+        warnings.append(f"Coherence degraded (co={co:.2f})")
+    if qu < 0.2 and iteration > 1:
+        warnings.append(f"Code quality low (qu={qu:.2f})")
+    if similarity is not None and similarity > 0.92 and iteration > 1:
+        warnings.append(f"Semantic repetition (sim={similarity:.3f})")
+    if len(all_scores) >= 5:
+        recent = [s.get("Task Completion", {}).get("score", 0) for s in all_scores[-5:]]
+        if all(r is not None for r in recent) and max(recent) - min(recent) < 0.08 and tc > 0:
+            warnings.append(f"Score plateau (spread={max(recent)-min(recent):.3f})")
+    if len(prev_scores) >= 3:
         t = trends.get("Task Completion", {})
         if t.get("direction") == "declining" and t.get("avg_delta", 0) < -0.1:
-            should_continue, stop_reason = False, f"Regressing (Δ{t['avg_delta']})"
-
-    if should_continue and qu < 0.2 and iteration > 1:
-        should_continue, stop_reason = False, f"Quality too low ({qu:.2f})"
-
-    # Semantic repetition stop (belt-and-suspenders alongside kick-session.sh)
-    if should_continue and similarity is not None and similarity > 0.92 and iteration > 1:
-        should_continue, stop_reason = False, f"Semantic repetition ({similarity:.3f})"
+            warnings.append(f"Regression (Δ{t['avg_delta']})")
 
     result = {
         "iteration": iteration,
         "scores": scores,
         "trends": trends,
         "eval_method": eval_method,
-        "continue": should_continue,
-        "stop_reason": stop_reason,
+        "warnings": warnings,
         "semantic_similarity": similarity,
     }
 
@@ -347,5 +308,3 @@ if __name__ == "__main__":
         similarity=args.similarity,
     )
     print(json.dumps(result, indent=2))
-    if not result["continue"]:
-        sys.exit(10)

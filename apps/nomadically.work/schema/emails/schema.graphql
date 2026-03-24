@@ -53,6 +53,7 @@ extend type Mutation {
   archiveEmail(id: Int!): ArchiveEmailResult!
   unarchiveEmail(id: Int!): ArchiveEmailResult!
   previewEmail(input: PreviewEmailInput!): EmailPreview!
+  sendOutreachEmail(input: SendOutreachEmailInput!): SendOutreachEmailResult!
 }
 
 type EmailCampaign {
@@ -369,4 +370,22 @@ type EmailPreview {
   htmlContent: String!
   subject: String!
   drySendResult: String
+}
+
+# --- Outreach Email (LangGraph pipeline + send) ---
+
+input SendOutreachEmailInput {
+  recipientName: String!
+  recipientRole: String
+  recipientEmail: String!
+  postText: String!
+  postUrl: String
+  tone: String
+}
+
+type SendOutreachEmailResult {
+  success: Boolean!
+  emailId: String
+  subject: String
+  error: String
 }

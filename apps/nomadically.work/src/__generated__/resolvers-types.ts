@@ -1225,6 +1225,7 @@ export type Mutation = {
   scheduleBatchEmails: ScheduleBatchResult;
   scheduleFollowUpBatch: FollowUpBatchResult;
   sendEmail: SendEmailResult;
+  sendOutreachEmail: SendOutreachEmailResult;
   sendScheduledEmailNow: SendNowResult;
   syncResendEmails: SyncResendResult;
   unarchiveEmail: ArchiveEmailResult;
@@ -1547,6 +1548,11 @@ export type MutationScheduleFollowUpBatchArgs = {
 
 export type MutationSendEmailArgs = {
   input: SendEmailInput;
+};
+
+
+export type MutationSendOutreachEmailArgs = {
+  input: SendOutreachEmailInput;
 };
 
 
@@ -2184,6 +2190,23 @@ export type SendNowResult = {
   success: Scalars['Boolean']['output'];
 };
 
+export type SendOutreachEmailInput = {
+  postText: Scalars['String']['input'];
+  postUrl?: InputMaybe<Scalars['String']['input']>;
+  recipientEmail: Scalars['String']['input'];
+  recipientName: Scalars['String']['input'];
+  recipientRole?: InputMaybe<Scalars['String']['input']>;
+  tone?: InputMaybe<Scalars['String']['input']>;
+};
+
+export type SendOutreachEmailResult = {
+  __typename?: 'SendOutreachEmailResult';
+  emailId: Maybe<Scalars['String']['output']>;
+  error: Maybe<Scalars['String']['output']>;
+  subject: Maybe<Scalars['String']['output']>;
+  success: Scalars['Boolean']['output'];
+};
+
 export type SkillMatch = {
   __typename?: 'SkillMatch';
   details: Array<SkillMatchDetail>;
@@ -2636,6 +2659,8 @@ export type ResolversTypes = {
   SendEmailInput: ResolverTypeWrapper<Partial<SendEmailInput>>;
   SendEmailResult: ResolverTypeWrapper<Partial<SendEmailResult>>;
   SendNowResult: ResolverTypeWrapper<Partial<SendNowResult>>;
+  SendOutreachEmailInput: ResolverTypeWrapper<Partial<SendOutreachEmailInput>>;
+  SendOutreachEmailResult: ResolverTypeWrapper<Partial<SendOutreachEmailResult>>;
   SkillMatch: ResolverTypeWrapper<Partial<SkillMatch>>;
   SkillMatchDetail: ResolverTypeWrapper<Partial<SkillMatchDetail>>;
   SourceType: ResolverTypeWrapper<Partial<SourceType>>;
@@ -2792,6 +2817,8 @@ export type ResolversParentTypes = {
   SendEmailInput: Partial<SendEmailInput>;
   SendEmailResult: Partial<SendEmailResult>;
   SendNowResult: Partial<SendNowResult>;
+  SendOutreachEmailInput: Partial<SendOutreachEmailInput>;
+  SendOutreachEmailResult: Partial<SendOutreachEmailResult>;
   SkillMatch: Partial<SkillMatch>;
   SkillMatchDetail: Partial<SkillMatchDetail>;
   StackMutationResponse: Partial<StackMutationResponse>;
@@ -3602,6 +3629,7 @@ export type MutationResolvers<ContextType = GraphQLContext, ParentType extends R
   scheduleBatchEmails?: Resolver<ResolversTypes['ScheduleBatchResult'], ParentType, ContextType, RequireFields<MutationScheduleBatchEmailsArgs, 'input'>>;
   scheduleFollowUpBatch?: Resolver<ResolversTypes['FollowUpBatchResult'], ParentType, ContextType, RequireFields<MutationScheduleFollowUpBatchArgs, 'input'>>;
   sendEmail?: Resolver<ResolversTypes['SendEmailResult'], ParentType, ContextType, RequireFields<MutationSendEmailArgs, 'input'>>;
+  sendOutreachEmail?: Resolver<ResolversTypes['SendOutreachEmailResult'], ParentType, ContextType, RequireFields<MutationSendOutreachEmailArgs, 'input'>>;
   sendScheduledEmailNow?: Resolver<ResolversTypes['SendNowResult'], ParentType, ContextType, RequireFields<MutationSendScheduledEmailNowArgs, 'resendId'>>;
   syncResendEmails?: Resolver<ResolversTypes['SyncResendResult'], ParentType, ContextType, Partial<MutationSyncResendEmailsArgs>>;
   unarchiveEmail?: Resolver<ResolversTypes['ArchiveEmailResult'], ParentType, ContextType, RequireFields<MutationUnarchiveEmailArgs, 'id'>>;
@@ -3850,6 +3878,13 @@ export type SendNowResultResolvers<ContextType = GraphQLContext, ParentType exte
   success?: Resolver<ResolversTypes['Boolean'], ParentType, ContextType>;
 };
 
+export type SendOutreachEmailResultResolvers<ContextType = GraphQLContext, ParentType extends ResolversParentTypes['SendOutreachEmailResult'] = ResolversParentTypes['SendOutreachEmailResult']> = {
+  emailId?: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType>;
+  error?: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType>;
+  subject?: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType>;
+  success?: Resolver<ResolversTypes['Boolean'], ParentType, ContextType>;
+};
+
 export type SkillMatchResolvers<ContextType = GraphQLContext, ParentType extends ResolversParentTypes['SkillMatch'] = ResolversParentTypes['SkillMatch']> = {
   details?: Resolver<Array<ResolversTypes['SkillMatchDetail']>, ParentType, ContextType>;
   jobCoverage?: Resolver<ResolversTypes['Float'], ParentType, ContextType>;
@@ -4047,6 +4082,7 @@ export type Resolvers<ContextType = GraphQLContext> = {
   ScheduleBatchResult?: ScheduleBatchResultResolvers<ContextType>;
   SendEmailResult?: SendEmailResultResolvers<ContextType>;
   SendNowResult?: SendNowResultResolvers<ContextType>;
+  SendOutreachEmailResult?: SendOutreachEmailResultResolvers<ContextType>;
   SkillMatch?: SkillMatchResolvers<ContextType>;
   SkillMatchDetail?: SkillMatchDetailResolvers<ContextType>;
   StackMutationResponse?: StackMutationResponseResolvers<ContextType>;

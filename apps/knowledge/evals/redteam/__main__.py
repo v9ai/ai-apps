@@ -5,6 +5,7 @@ Usage:
     uv run python -m redteam safety        # full safety scan, eval agent (~2min)
     uv run python -m redteam editorial     # editorial pipeline attacks (~2min)
     uv run python -m redteam full          # all targets, all attacks (~5min)
+    uv run python -m redteam crescendo     # multi-turn escalation attacks (~3min)
     uv run python -m redteam deepteam      # use deepteam's built-in scanner
 """
 
@@ -75,9 +76,25 @@ def run_deepteam_scan():
     assessment.save(str(results_dir))
 
 
+def run_crescendo():
+    """Run multi-turn escalation attacks via the crescendo graph."""
+    from redteam.graph import run_crescendo_campaign
+
+    results = run_crescendo_campaign()
+    total = len(results)
+    defended = sum(1 for r in results if not r["achieved"])
+
+    print(f"Crescendo Report — {total} scenarios")
+    print(f"Defended: {defended}/{total} | Breached: {total - defended}/{total}\n")
+    for r in results:
+        status = "BREACH" if r["achieved"] else "DEFENDED"
+        print(f"  [{status}] {r['goal']}")
+        print(f"           Turns: {r['turns_used']} | {r['reason']}")
+
+
 def main():
     profile = sys.argv[1] if len(sys.argv) > 1 else "quick"
-    valid = ["quick", "safety", "editorial", "full", "deepteam"]
+    valid = ["quick", "safety", "editorial", "full", "crescendo", "deepteam"]
 
     if profile not in valid:
         print(f"Usage: python -m redteam [{' | '.join(valid)}]")
@@ -85,6 +102,8 @@ def main():
 
     if profile == "deepteam":
         run_deepteam_scan()
+    elif profile == "crescendo":
+        run_crescendo()
     else:
         run_langgraph_profile(profile)
 

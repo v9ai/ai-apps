@@ -677,7 +677,7 @@ Models also exhibit training-data biases in tool selection. A model trained prim
 - **Strict mode / constrained decoding** eliminates schema validation errors at the cost of slight latency and schema feature restrictions. Use it in production.
 - **Parallel function calling** reduces latency by allowing concurrent execution of independent tools. Design your tool set with independence in mind.
 - **Error handling must be bidirectional**: catch execution errors, but also feed error information back to the model to enable self-correction.
-- **Context management** becomes critical in long-running tool pipelines. Summarize large results, prune old tool interactions, and monitor context window usage.
+- **Context management** becomes critical in long-running tool pipelines. Summarize large results, prune old tool interactions, and monitor context window usage. See [Context Engineering](/context-engineering) for systematic approaches to budgeting and assembling context across tools, retrieval, and conversation history.
 - **Production tool systems** need middleware for logging, rate limiting, cost tracking, and security. The tool registry pattern provides a clean abstraction for these cross-cutting concerns.
 - **MCP standardizes tool integration** across providers and applications. By separating tool implementation from tool invocation through an open protocol, MCP enables portable, composable tool ecosystems.
 - **Tool selection must scale** beyond naive inclusion of all tools. Retrieval-augmented selection, hierarchical organization, and dynamic filtering keep tool sets manageable as agent capabilities grow.

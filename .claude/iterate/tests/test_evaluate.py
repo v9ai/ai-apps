@@ -1,4 +1,4 @@
-"""Tests for evaluate.py — heuristic scoring, trend analysis, and stop logic."""
+"""Tests for evaluate.py — heuristic scoring, trend analysis, and advisory warnings."""
 
 import json
 import os
@@ -10,9 +10,8 @@ from evaluate import (
     compute_trend,
     run_evaluation,
     run_heuristic,
-    _cosine_similarity,
-    _extract_errors,
 )
+from shared import cosine_similarity as _cosine_similarity, extract_errors as _extract_errors
 
 
 # ---------------------------------------------------------------------------
@@ -196,7 +195,7 @@ class TestRunEvaluation:
         assert "scores" in result
         assert "trends" in result
         assert "eval_method" in result
-        assert "continue" in result
+        assert "warnings" in result
         assert "iteration" in result
 
     def test_eval_method_is_heuristic(self, tmp_path):
@@ -257,11 +256,11 @@ class TestRunEvaluation:
 
 
 # ---------------------------------------------------------------------------
-# Stop logic
+# Advisory warnings (iterations never stop early — warnings are informational)
 # ---------------------------------------------------------------------------
 
-class TestStopLogic:
-    def _run_with_injected_scores(self, tmp_path, prev_scores, current_scores, iteration=4):
+class TestAdvisoryWarnings:
+    def _run_with_injected_scores(self, tmp_path, prev_scores, current_scores, iteration=4, similarity=None):
         output_file = tmp_path / "output.txt"
         output_file.write_text("Some output.")
         scores_file = tmp_path / "scores.json"
@@ -275,6 +274,7 @@ class TestStopLogic:
                 output_file=str(output_file),
                 task="task",
                 prev_scores_file=str(scores_file),
+                similarity=similarity,
             )
 
     def _full_scores(self, **overrides) -> dict:
@@ -282,49 +282,58 @@ class TestStopLogic:
         base.update(overrides)
         return base
 
-    def test_high_task_completion_stops(self, tmp_path):
+    def test_high_task_completion_warns(self, tmp_path):
         scores = self._full_scores(**{
             "Task Completion": {"score": 0.95, "reason": "done", "passed": True},
         })
         result = self._run_with_injected_scores(tmp_path, [], scores)
-        assert result["continue"] is False
-        assert "complete" in result["stop_reason"].lower()
+        assert any("complete" in w.lower() for w in result["warnings"])
 
-    def test_no_progress_stops(self, tmp_path):
+    def test_no_progress_warns(self, tmp_path):
         scores = self._full_scores(**{
             "Incremental Progress": {"score": 0.1, "reason": "no progress", "passed": False},
         })
         result = self._run_with_injected_scores(tmp_path, [], scores)
-        assert result["continue"] is False
-        assert "progress" in result["stop_reason"].lower()
+        assert any("progress" in w.lower() for w in result["warnings"])
 
-    def test_low_coherence_stops(self, tmp_path):
+    def test_low_coherence_warns(self, tmp_path):
         scores = self._full_scores(**{
             "Coherence": {"score": 0.2, "reason": "off topic", "passed": False},
         })
         result = self._run_with_injected_scores(tmp_path, [], scores)
-        assert result["continue"] is False
-        assert "coherence" in result["stop_reason"].lower()
+        assert any("coherence" in w.lower() for w in result["warnings"])
 
-    def test_plateau_stops(self, tmp_path):
+    def test_plateau_warns(self, tmp_path):
         flat_score = 0.6
         prev = [
             {k: {"score": flat_score, "reason": "", "passed": True} for k in ALL_METRIC_NAMES}
-            for _ in range(3)
+            for _ in range(4)
         ]
         current = self._full_scores()
-        result = self._run_with_injected_scores(tmp_path, prev, current, iteration=4)
-        assert result["continue"] is False
-        assert "plateau" in result["stop_reason"].lower()
+        result = self._run_with_injected_scores(tmp_path, prev, current, iteration=5)
+        assert any("plateau" in w.lower() for w in result["warnings"])
 
-    def test_low_quality_stops_after_iter_1(self, tmp_path):
+    def test_low_quality_warns_after_iter_1(self, tmp_path):
         scores = self._full_scores(**{
             "Code Quality": {"score": 0.1, "reason": "poor", "passed": False},
-            "Incremental Progress": {"score": 0.5, "reason": "", "passed": True},
         })
         result = self._run_with_injected_scores(tmp_path, [], scores, iteration=2)
-        assert result["continue"] is False
-        assert "quality" in result["stop_reason"].lower()
+        assert any("quality" in w.lower() for w in result["warnings"])
+
+    def test_semantic_repetition_warns(self, tmp_path):
+        scores = self._full_scores()
+        result = self._run_with_injected_scores(tmp_path, [], scores, iteration=2, similarity=0.95)
+        assert any("repetition" in w.lower() for w in result["warnings"])
+
+    def test_no_warnings_on_good_scores(self, tmp_path):
+        scores = self._full_scores()
+        result = self._run_with_injected_scores(tmp_path, [], scores, iteration=1)
+        assert result["warnings"] == []
+
+    def test_warnings_is_always_a_list(self, tmp_path):
+        scores = self._full_scores()
+        result = self._run_with_injected_scores(tmp_path, [], scores)
+        assert isinstance(result["warnings"], list)
 
 
 # ---------------------------------------------------------------------------
@@ -341,3 +350,117 @@ class TestAllMetricNames:
     def test_all_names_are_strings(self):
         for name in ALL_METRIC_NAMES:
             assert isinstance(name, str) and len(name) > 0
+
+
+# ---------------------------------------------------------------------------
+# Edge cases
+# ---------------------------------------------------------------------------
+
+class TestRunHeuristicEdgeCases:
+    def test_empty_output(self):
+        scores = run_heuristic(1, "", "task", "", "No diff available.")
+        for key, val in scores.items():
+            assert 0.0 <= val["score"] <= 1.0
+
+    def test_very_long_output(self):
+        output = "x" * 20000
+        scores = run_heuristic(1, output, "task", "", "No diff available.")
+        assert set(scores.keys()) == set(ALL_METRIC_NAMES)
+
+    def test_diff_with_many_files(self):
+        diff_lines = [f" file{i}.py | {i} ++++" for i in range(30)]
+        diff = "\n".join(diff_lines)
+        scores = run_heuristic(1, "Added features.", "build features", "", diff)
+        # tc_change_bonus capped at 0.25
+        assert scores["Task Completion"]["score"] <= 1.0
+
+    def test_multiple_error_types(self):
+        errors = (
+            "Error: module not found\n"
+            "TypeError: x is not a function\n"
+            "SyntaxError: unexpected token\n"
+            "FAIL tests/test_main.py\n"
+            "exit code 1\n"
+            "panic: runtime error\n"
+        )
+        scores = run_heuristic(1, errors, "task", "", "No diff available.")
+        assert scores["Code Quality"]["score"] < 0.5
+
+
+class TestRunEvaluationEdgeCases:
+    def _write_output(self, tmp_path, content="Some work done."):
+        f = tmp_path / "output.txt"
+        f.write_text(content)
+        return str(f)
+
+    def _scores_file(self, tmp_path):
+        return str(tmp_path / "scores.json")
+
+    def test_with_context_file(self, tmp_path):
+        ctx = tmp_path / "context.txt"
+        ctx.write_text("Previous iteration built the auth middleware.")
+        result = run_evaluation(
+            iteration=2,
+            output_file=self._write_output(tmp_path),
+            task="build auth",
+            context_file=str(ctx),
+            prev_scores_file=self._scores_file(tmp_path),
+        )
+        assert "scores" in result
+
+    def test_with_similarity_parameter(self, tmp_path):
+        result = run_evaluation(
+            iteration=2,
+            output_file=self._write_output(tmp_path),
+            task="task",
+            prev_scores_file=self._scores_file(tmp_path),
+            similarity=0.95,
+        )
+        assert result["semantic_similarity"] == 0.95
+        assert any("repetition" in w.lower() for w in result["warnings"])
+
+    def test_large_output_truncated(self, tmp_path):
+        large = "x" * 20000
+        result = run_evaluation(
+            iteration=1,
+            output_file=self._write_output(tmp_path, large),
+            task="task",
+            prev_scores_file=self._scores_file(tmp_path),
+        )
+        assert "scores" in result
+
+    def test_missing_context_file_handled(self, tmp_path):
+        result = run_evaluation(
+            iteration=1,
+            output_file=self._write_output(tmp_path),
+            task="task",
+            context_file="/nonexistent/path.txt",
+            prev_scores_file=self._scores_file(tmp_path),
+        )
+        assert "scores" in result
+
+    def test_regression_warning(self, tmp_path):
+        """Declining trend with steep avg_delta triggers regression warning."""
+        from unittest.mock import patch as _patch
+        import evaluate
+
+        # Build prev_scores with declining Task Completion
+        prev = [
+            {k: {"score": 0.9 - i * 0.15, "reason": "", "passed": True} for k in ALL_METRIC_NAMES}
+            for i in range(4)
+        ]
+        current = {k: {"score": 0.2, "reason": "", "passed": False} for k in ALL_METRIC_NAMES}
+
+        output_file = tmp_path / "output.txt"
+        output_file.write_text("Some output.")
+        scores_file = tmp_path / "scores.json"
+        scores_file.write_text(json.dumps(prev))
+
+        with _patch.object(evaluate, "run_heuristic", return_value=current):
+            result = run_evaluation(
+                iteration=5,
+                output_file=str(output_file),
+                task="task",
+                prev_scores_file=str(scores_file),
+            )
+        assert any("regression" in w.lower() for w in result["warnings"])

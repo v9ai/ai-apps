@@ -305,7 +305,7 @@ Production AI workflows need orchestration beyond simple function calls:
 |-----------|-----------|----------|
 | Temporal | Durable execution, fault tolerance | Long-running, mission-critical workflows |
 | Prefect | Python-native, easy monitoring | Data-oriented AI pipelines |
-| LangGraph | LLM-native, built-in agent loops | Complex agent workflows |
+| [LangGraph](/langgraph) | LLM-native, built-in agent loops | Complex agent workflows |
 | Inngest | Event-driven, serverless-friendly | Event-triggered AI processing |
 | Custom (Redis + workers) | Full control, minimal overhead | Simple, high-volume pipelines |
 

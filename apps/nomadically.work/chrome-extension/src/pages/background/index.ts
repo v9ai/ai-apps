@@ -104,71 +104,38 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
       return true;
     }
 
-    (async () => {
-      try {
-        const sessionToken = await getSessionCookie();
-        const headers: Record<string, string> = {
-          "Content-Type": "application/json",
-        };
-        if (sessionToken) {
-          headers["Authorization"] = `Bearer ${sessionToken}`;
-        }
-
-        // Step 1: Generate email via LangGraph pipeline (REST)
-        const API_BASE = GRAPHQL_URL.replace("/api/graphql", "");
-        const genRes = await fetch(`${API_BASE}/api/email-outreach/generate`, {
-          method: "POST",
-          headers,
-          body: JSON.stringify({
-            recipientName: authorName || "there",
-            recipientRole: authorSubtitle || undefined,
-            postText: postText.slice(0, 2000),
-            postUrl,
-            recipientEmail: emails[0],
-            tone: "professional and friendly",
-          }),
-        });
-
-        if (!genRes.ok) {
-          const err = await genRes.json().catch(() => ({ error: "Generation failed" }));
-          sendResponse({ success: false, error: err.error || `HTTP ${genRes.status}` });
+    gqlRequest(
+      `mutation SendOutreachEmail($input: SendOutreachEmailInput!) {
+        sendOutreachEmail(input: $input) { success emailId subject error }
+      }`,
+      {
+        input: {
+          recipientName: authorName || "there",
+          recipientRole: authorSubtitle || undefined,
+          recipientEmail: emails[0],
+          postText: postText.slice(0, 2000),
+          postUrl,
+          tone: "professional and friendly",
+        },
+      },
+    )
+      .then((result) => {
+        if (result.errors) {
+          sendResponse({ success: false, error: result.errors[0].message });
           return;
         }
-
-        const { subject, html, text } = await genRes.json();
-
-        // Step 2: Send the email via GraphQL
-        const sendResult = await gqlRequest(
-          `mutation SendEmail($input: SendEmailInput!) {
-            sendEmail(input: $input) { success id error }
-          }`,
-          {
-            input: {
-              to: emails[0],
-              subject,
-              html,
-              text,
-            },
-          },
-        );
-
-        if (sendResult.errors) {
-          sendResponse({ success: false, error: sendResult.errors[0].message });
-          return;
-        }
-
-        const { success, error: sendError } = sendResult.data.sendEmail;
+        const { success, subject, error: sendError } = result.data.sendOutreachEmail;
         if (success) {
-          console.log(`[sendEmail] Sent to ${emails[0]} re: ${subject}`);
+          console.log(`[sendEmail] Outreach sent to ${emails[0]} re: ${subject}`);
           sendResponse({ success: true });
         } else {
           sendResponse({ success: false, error: sendError || "Send failed" });
         }
-      } catch (err) {
+      })
+      .catch((err) => {
         console.error("[sendEmail] Error:", err);
         sendResponse({ success: false, error: String(err) });
-      }
-    })();
+      });
     return true;
   }
 

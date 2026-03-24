@@ -63,6 +63,7 @@ fi
 
 if [ "$STATUS" = true ]; then
     found=0
+    _now=$(date +%s)
     for d in /tmp/claude-iterate-*/; do
         [ -f "$d/task.txt" ] || continue
         found=1
@@ -70,7 +71,9 @@ if [ "$STATUS" = true ]; then
         TOTAL=$(cat "${d}iterations.txt" 2>/dev/null || echo "?")
         TASK_NAME=$(cat "${d}task.txt" 2>/dev/null || echo "?")
         SESSION_OWNER=$(cat "${d}session.txt" 2>/dev/null || echo "unknown")
-        echo "[${d%/}]  ${CURRENT}/${TOTAL} — ${TASK_NAME}  (session ${SESSION_OWNER:0:8}…)"
+        _mtime=$(stat -f %m "${d}counter" 2>/dev/null || stat -f %m "${d}task.txt" 2>/dev/null || echo "$_now")
+        _age_min=$(( (_now - _mtime) / 60 ))
+        echo "[${d%/}]  ${CURRENT}/${TOTAL} — ${TASK_NAME}  (session ${SESSION_OWNER:0:8}…, ${_age_min}m ago)"
         if [ -f "${d}scores.json" ]; then
             python3.12 - "${d}scores.json" 2>/dev/null <<'PYEOF' || true
 import json, sys
@@ -93,6 +96,33 @@ if [ -z "$TASK" ]; then
     exit 1
 fi
 
+# --- Garbage-collect stale iterate sessions ---
+# Remove dirs that are clearly dead: no task.txt, or no activity for 4+ hours,
+# or counter=0 with no activity for 30+ minutes (never kicked in).
+_now=$(date +%s)
+for _gc_d in /tmp/claude-iterate-*/; do
+    [ -d "$_gc_d" ] || continue
+    # Already cleaned up (no task.txt) — remove leftover dir
+    if [ ! -f "${_gc_d}task.txt" ]; then
+        rm -rf "$_gc_d" 2>/dev/null
+        continue
+    fi
+    # Find the most recently modified file in the dir
+    _latest=$(stat -f %m "${_gc_d}counter" 2>/dev/null || stat -f %m "${_gc_d}task.txt" 2>/dev/null || echo "0")
+    _age=$(( _now - _latest ))
+    # 4+ hours with no activity → stale
+    if [ "$_age" -gt 14400 ]; then
+        rm -rf "$_gc_d" 2>/dev/null
+        continue
+    fi
+    # counter=0 and 30+ minutes old → never kicked in
+    _gc_counter=$(cat "${_gc_d}counter" 2>/dev/null || echo "")
+    if [ "$_gc_counter" = "0" ] && [ "$_age" -gt 1800 ]; then
+        rm -rf "$_gc_d" 2>/dev/null
+        continue
+    fi
+done
+
 python3.12 -c "import chromadb" 2>/dev/null || {
     echo "Installing chromadb…"
     python3.12 -m pip install chromadb -q || true
@@ -106,7 +136,7 @@ python3.12 -c "import fastembed" 2>/dev/null || {
 echo "Pre-warming embedding model…"
 python3.12 -c "
 import sys
-sys.path.insert(0, '${SCRIPTS_DIR}')
+sys.path.insert(0, sys.argv[1])
 from embeddings import get_embedding_function
 ef = get_embedding_function()
 if ef:
@@ -114,7 +144,7 @@ if ef:
     print('Embedding model ready')
 else:
     print('Using ChromaDB default embeddings')
-" 2>/dev/null || true
+" "$SCRIPTS_DIR" 2>/dev/null || true
 
 rm -rf "$ITER_DIR" 2>/dev/null || true
 mkdir -p "$ITER_DIR"
@@ -130,12 +160,12 @@ echo "${CLAUDE_CODE_SESSION_ID:-}" > "$ITER_DIR/session.txt"
 # --- Show similar past tasks ---
 python3.12 -c "
 import sys
-sys.path.insert(0, '${SCRIPTS_DIR}')
+sys.path.insert(0, sys.argv[1])
 from task_history import find_similar, format_similar
-fmt = format_similar(find_similar(sys.argv[1], n=3))
+fmt = format_similar(find_similar(sys.argv[2], n=3))
 if fmt:
     print(fmt)
-" "$TASK" 2>/dev/null || true
+" "$SCRIPTS_DIR" "$TASK" 2>/dev/null || true
 
 # --- Record task start in history ---
 python3.12 "${SCRIPTS_DIR}/task_history.py" start \
@@ -143,6 +173,6 @@ python3.12 "${SCRIPTS_DIR}/task_history.py" start \
     --session "${CLAUDE_CODE_SESSION_ID:-none}" \
     --cwd "$(pwd)" 2>/dev/null || true
 
-echo "Iterate: starting iteration 1/$ITERATIONS — $TASK"
+echo "Iterate: running $ITERATIONS iterations — $TASK"
 echo "Monitor: cat ${ITER_DIR}/eval-iter-*.json | jq '.scores'"
 echo "Abort:   /iterate reset"

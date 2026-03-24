@@ -11,6 +11,7 @@ from embeddings import get_embedding_function
 from reranker import rerank, reranker_available
 from bm25_index import build_or_load as bm25_build_or_load, bm25_available
 from rrf import reciprocal_rank_fusion
+from shared import cosine_similarity as _cosine_similarity
 
 CHROMA_PATH = os.environ.get("CLAUDE_ITERATE_CHROMA_PATH", "/tmp/claude-iterate/chroma")
 COLLECTION_NAME = "iterate_context"
@@ -23,20 +24,6 @@ def get_collection():
     if ef is not None:
         kwargs["embedding_function"] = ef
     return client.get_or_create_collection(**kwargs)
-
-
-# ---------------------------------------------------------------------------
-# Cosine similarity helper
-# ---------------------------------------------------------------------------
-
-def _cosine_similarity(a: list[float], b: list[float]) -> float:
-    """Compute cosine similarity between two embedding vectors."""
-    dot = sum(x * y for x, y in zip(a, b))
-    norm_a = sum(x * x for x in a) ** 0.5
-    norm_b = sum(x * x for x in b) ** 0.5
-    if norm_a == 0.0 or norm_b == 0.0:
-        return 0.0
-    return dot / (norm_a * norm_b)
 
 
 def _mean_embedding(embeddings) -> list[float] | None:
@@ -191,6 +178,10 @@ def retrieve(
     if total == 0:
         return "No previous context available. This is the first iteration."
 
+    # For tiny collections (≤5 docs), a single unfiltered query is sufficient —
+    # multi-query with filters adds latency for no benefit since all docs are returned anyway.
+    use_multi_query = total > 5
+
     # Multi-query strategy:
     # 1. General query — no filter, broad semantic match
     # 2. Error-focused — filter to docs that recorded errors (where has_errors=True)
@@ -198,10 +189,17 @@ def retrieve(
     # 4. Diff-focused  — filter to diff doc_type for code change context
     queries_with_filters: list[tuple[str, dict | None]] = [
         (query, None),
-        (f"eval scores completion progress quality for: {query}", {"doc_type": "eval"}),
-        (f"code changes git diff files modified for: {query}", {"doc_type": "diff"}),
     ]
-    if include_errors:
+    if use_multi_query:
+        queries_with_filters.extend([
+            (f"eval scores completion progress quality for: {query}", {"doc_type": "eval"}),
+            (f"code changes git diff files modified for: {query}", {"doc_type": "diff"}),
+        ])
+        if include_errors:
+            queries_with_filters.append(
+                (f"errors failures bugs in: {query}", {"has_errors": True})
+            )
+    elif include_errors:
         queries_with_filters.append(
             (f"errors failures bugs in: {query}", {"has_errors": True})
         )

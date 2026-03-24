@@ -173,32 +173,249 @@ results = client.search(
 
 ### Chroma
 
-**Architecture**: Open-source, Python-native. Designed for simplicity and rapid prototyping. Embeds SQLite and HNSW (via hnswlib) in-process. The project has matured considerably since its early releases, adding a client-server mode for multi-process access, persistent storage by default, authentication support, and observability hooks.
+**Architecture**: Open-source, Python-native vector database designed for simplicity and rapid prototyping. Internally, Chroma uses a layered storage architecture: SQLite stores document metadata and the mapping between IDs and vectors, while HNSW (via hnswlib) handles the vector index. Both run in-process by default, making Chroma feel like an embedded database (similar to SQLite for relational data). The project has matured considerably since its early releases, adding a client-server mode (Chroma Server) for multi-process access, persistent storage by default, token-based authentication, role-based access control, multi-tenancy with database-level isolation, and observability hooks via OpenTelemetry.
 
-**Strengths**: Dead-simple API, runs in-process (no server needed for development), built-in embedding function support, easy to get started. The client-server architecture now supports production deployments at moderate scale, with a hosted cloud offering in development.
+Chroma's deployment modes reflect different stages of an application's lifecycle:
 
-**Limitations**: Single-node architecture limits horizontal scalability. Performance is best suited for datasets in the low millions of vectors. For larger workloads, consider purpose-built distributed systems.
+```
+Development           Staging/Production         Hosted
+┌──────────────┐     ┌───────────────────┐     ┌──────────────┐
+│  In-process  │     │   Chroma Server   │     │  Chroma Cloud│
+│  (embedded)  │ ──► │   (client/server) │ ──► │  (managed)   │
+│  PersistentClient  │   chroma run      │     │              │
+│              │     │   --host --port    │     │              │
+└──────────────┘     └───────────────────┘     └──────────────┘
+```
+
+**Strengths**: Dead-simple API with near-zero boilerplate, runs in-process with no server needed for development, built-in embedding function support (Sentence Transformers by default, with adapters for OpenAI, Cohere, Google, HuggingFace, and custom functions), automatic embedding generation from raw documents, rich metadata filtering with `where` and `where_document` clauses, and a clean migration path from local development to production. The client-server architecture now supports moderate-scale production deployments, and the hosted Chroma Cloud offering provides managed infrastructure.
+
+**Limitations**: Single-node architecture limits horizontal scalability -- there is no built-in sharding or replication. Performance is best suited for datasets in the low millions of vectors. For larger workloads, consider purpose-built distributed systems like Qdrant, Weaviate, or Milvus. The HNSW index is held in memory, so memory requirements grow linearly with collection size.
+
+**Best for**: Prototyping and development, small-to-medium production workloads, educational projects, and applications where simplicity and fast iteration matter more than horizontal scale.
+
+#### Chroma Core API
+
+The collections API is the primary interface. Collections are namespaced containers that each hold vectors, documents, metadata, and an HNSW index:
 
 ```python
 import chromadb
 
-client = chromadb.Client()
-collection = client.create_collection("docs")
+# Embedded mode -- data persists to ./chroma by default
+client = chromadb.PersistentClient(path="./chroma_data")
 
-# Add documents -- Chroma can auto-embed
-collection.add(
-    documents=["RAG combines retrieval with generation"],
-    metadatas=[{"source": "article"}],
-    ids=["doc1"]
+# Or connect to a running Chroma server
+# client = chromadb.HttpClient(host="localhost", port=8000)
+
+# Create or get a collection with a specific embedding function
+from chromadb.utils.embedding_functions import SentenceTransformerEmbeddingFunction
+ef = SentenceTransformerEmbeddingFunction(model_name="all-MiniLM-L6-v2")
+collection = client.get_or_create_collection(
+    name="technical_docs",
+    embedding_function=ef,
+    metadata={"hnsw:space": "cosine"}  # distance metric: cosine, l2, or ip
 )
 
-# Query
-results = collection.query(
-    query_texts=["How does RAG work?"],
-    n_results=5,
-    where={"source": "article"}
+# Add documents -- Chroma embeds them automatically via the embedding function
+collection.add(
+    documents=[
+        "RAG combines retrieval with generation to ground LLM responses in facts.",
+        "Vector databases index high-dimensional embeddings for fast similarity search.",
+        "HNSW builds a multi-layer navigable small world graph for ANN search.",
+    ],
+    metadatas=[
+        {"source": "article", "topic": "rag", "year": 2024},
+        {"source": "article", "topic": "vector-db", "year": 2024},
+        {"source": "paper", "topic": "algorithms", "year": 2018},
+    ],
+    ids=["doc1", "doc2", "doc3"]
+)
+
+# Or add pre-computed embeddings directly (skip the embedding function)
+collection.add(
+    embeddings=[[0.1, 0.2, ...], [0.3, 0.4, ...]],
+    metadatas=[{"source": "precomputed"}],
+    ids=["vec1", "vec2"]
 )
 ```
+
+#### Querying with Metadata Filters
+
+Chroma's query API supports combining vector similarity with metadata and document content filters, enabling hybrid retrieval patterns:
+
+```python
+# Basic semantic search
+results = collection.query(
+    query_texts=["How does retrieval-augmented generation work?"],
+    n_results=5
+)
+# results keys: ids, documents, metadatas, distances, embeddings
+
+# Filtered search -- combine vector similarity with metadata constraints
+results = collection.query(
+    query_texts=["ANN algorithm performance"],
+    n_results=10,
+    where={"topic": "algorithms"},                    # metadata filter
+    where_document={"$contains": "graph"},            # document content filter
+)
+
+# Complex metadata filters with logical operators
+results = collection.query(
+    query_texts=["embedding models for search"],
+    n_results=5,
+    where={
+        "$and": [
+            {"year": {"$gte": 2023}},
+            {"$or": [
+                {"source": "article"},
+                {"source": "paper"}
+            ]}
+        ]
+    }
+)
+```
+
+Supported filter operators: `$eq`, `$ne`, `$gt`, `$gte`, `$lt`, `$lte`, `$in`, `$nin` for metadata; `$contains`, `$not_contains` for document content; `$and`, `$or` for logical composition.
+
+#### Updating and Deleting
+
+```python
+# Update documents (re-embeds automatically)
+collection.update(
+    ids=["doc1"],
+    documents=["Updated: RAG pipelines retrieve relevant context before generation."],
+    metadatas=[{"source": "article", "topic": "rag", "year": 2025}]
+)
+
+# Upsert -- insert or update
+collection.upsert(
+    ids=["doc1", "doc4"],
+    documents=["Updated doc", "Brand new doc"],
+    metadatas=[{"source": "article"}, {"source": "blog"}]
+)
+
+# Delete by ID or by filter
+collection.delete(ids=["doc3"])
+collection.delete(where={"source": "blog"})
+```
+
+#### Custom Embedding Functions
+
+Chroma's embedding function interface makes it straightforward to swap embedding providers or use custom models:
+
+```python
+from chromadb import Documents, EmbeddingFunction, Embeddings
+
+class OpenAIEmbeddingFunction(EmbeddingFunction):
+    def __init__(self, api_key: str, model: str = "text-embedding-3-small"):
+        from openai import OpenAI
+        self.client = OpenAI(api_key=api_key)
+        self.model = model
+
+    def __call__(self, input: Documents) -> Embeddings:
+        response = self.client.embeddings.create(input=input, model=self.model)
+        return [r.embedding for r in response.data]
+
+# Use the custom function with a collection
+collection = client.get_or_create_collection(
+    name="openai_docs",
+    embedding_function=OpenAIEmbeddingFunction(api_key="sk-...")
+)
+```
+
+Chroma ships built-in adapters for OpenAI, Cohere, HuggingFace, Google Generative AI, and Sentence Transformers. See [Article 13: Embedding Models](/embedding-models) for guidance on choosing the right embedding model for your use case.
+
+#### HNSW Tuning
+
+Chroma exposes HNSW parameters through collection metadata, allowing you to trade off recall, latency, and memory for your specific workload:
+
+```python
+collection = client.get_or_create_collection(
+    name="tuned_collection",
+    metadata={
+        "hnsw:space": "cosine",          # distance function
+        "hnsw:construction_ef": 200,     # beam width during index build (higher = better graph, slower build)
+        "hnsw:search_ef": 100,           # beam width during search (higher = better recall, slower query)
+        "hnsw:M": 32,                    # max connections per node (higher = better recall, more memory)
+        "hnsw:num_threads": 4,           # parallelism for index operations
+    }
+)
+```
+
+For most workloads under 1M vectors, the defaults (`M=16`, `construction_ef=100`, `search_ef=10`) provide a good balance. Increase `search_ef` to 50-150 for higher recall requirements; increase `M` to 32-64 for datasets where recall is critical. See the HNSW section earlier in this article for the theory behind these parameters.
+
+#### Multi-Tenancy and Authentication
+
+For production deployments, Chroma supports tenant and database isolation:
+
+```python
+from chromadb.config import Settings
+
+# Server-side: run with authentication
+# chroma run --host 0.0.0.0 --port 8000
+
+# Client-side: connect with auth
+client = chromadb.HttpClient(
+    host="chroma-server",
+    port=8000,
+    tenant="acme_corp",
+    database="production",
+    headers={"Authorization": "Bearer token-..."}
+)
+
+# Each tenant/database combination is fully isolated
+collection = client.get_or_create_collection("user_documents")
+```
+
+#### Chroma in a RAG Pipeline
+
+A complete example showing Chroma as the retrieval backend in a basic RAG pattern:
+
+```python
+import chromadb
+from openai import OpenAI
+
+# Setup
+chroma = chromadb.PersistentClient(path="./rag_store")
+openai_client = OpenAI()
+
+collection = chroma.get_or_create_collection(
+    name="knowledge_base",
+    metadata={"hnsw:space": "cosine"}
+)
+
+def ingest_documents(docs: list[dict]):
+    """Add documents to the knowledge base."""
+    collection.upsert(
+        ids=[d["id"] for d in docs],
+        documents=[d["text"] for d in docs],
+        metadatas=[d.get("metadata", {}) for d in docs]
+    )
+
+def retrieve_and_generate(question: str, n_results: int = 5) -> str:
+    """RAG: retrieve relevant context, then generate an answer."""
+    results = collection.query(
+        query_texts=[question],
+        n_results=n_results
+    )
+
+    context = "\n\n---\n\n".join(results["documents"][0])
+
+    response = openai_client.chat.completions.create(
+        model="gpt-4o",
+        messages=[
+            {"role": "system", "content": (
+                "Answer questions using ONLY the provided context. "
+                "If the context doesn't contain the answer, say so."
+            )},
+            {"role": "user", "content": (
+                f"Context:\n{context}\n\nQuestion: {question}"
+            )}
+        ]
+    )
+    return response.choices[0].message.content
+```
+
+For more sophisticated retrieval patterns including query routing, self-correction, and multi-hop retrieval, see [Article 17: Advanced RAG](/advanced-rag). For evaluation of retrieval quality, see [Article 18: RAG Evaluation](/rag-evaluation).
 
 ### Turbopuffer
 

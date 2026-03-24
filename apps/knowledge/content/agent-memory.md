@@ -20,7 +20,7 @@ These problems have driven the development of explicit memory architectures that
 
 The most immediate form of agent memory is the context window itself. Like working memory in cognitive science (Baddeley, 1992) or RAM in a computer, the context window holds currently relevant information that the model can directly attend to.
 
-Modern context windows range from 8K to 2M tokens, but effective use of this space requires careful management. Research consistently shows that models perform best when relevant information is positioned at the beginning or end of the context (Liu et al., 2023, "Lost in the Middle"), and that performance degrades as the context fills with irrelevant content.
+Modern context windows range from 8K to 2M tokens, but effective use of this space requires careful management. Research consistently shows that models perform best when relevant information is positioned at the beginning or end of the context (Liu et al., 2023, "Lost in the Middle"), and that performance degrades as the context fills with irrelevant content. For a systematic treatment of context budgeting, information ordering, and assembly patterns, see [Context Engineering](/context-engineering).
 
 ### Context Window Management Strategies
 

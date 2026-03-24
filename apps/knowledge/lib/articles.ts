@@ -87,6 +87,10 @@ const LESSON_SLUGS = [
   "search-recommendations",
   "production-patterns",
   "ai-engineer-roadmap",
+  "context-engineering",
+  "langgraph",
+  "langgraph-red-teaming",
+  "eval-frameworks-comparison",
 ];
 
 export const LESSON_NUMBER: Record<string, number> = Object.fromEntries(
@@ -102,7 +106,7 @@ export const CATEGORIES: [number, number, string][] = [
   [31, 36, "Evals & Testing"],
   [37, 42, "Infrastructure & Deployment"],
   [43, 48, "Safety & Alignment"],
-  [49, 55, "Multimodal & Applied"],
+  [49, 59, "Multimodal & Applied"],
 ];
 
 export const CATEGORY_META: Record<string, CategoryMeta> = {

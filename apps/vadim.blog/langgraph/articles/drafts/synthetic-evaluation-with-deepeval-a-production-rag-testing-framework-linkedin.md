@@ -1,21 +1,20 @@
-Your RAG pipeline has 20 hand-written test questions for a 55-document knowledge base. That's 0.4% coverage. The other 99.6% is untested surface area where retrieval gaps, hallucinated citations, and truncated context windows hide undetected.
+Your RAG pipeline passes 20 hand-written tests. It still has a 99.6% chance of failing in production.
 
-I built a production evaluation framework using DeepEval that generates 330+ synthetic test cases from 55 AI engineering lessons and evaluates a LangGraph RAG pipeline across 10+ metrics. Here's what I learned:
+Manual testing is a statistical mirage. You're validating less than 0.5% of your knowledge base's surface area. The other 99.5% is where users find hallucinations, retrieval gaps, and silent truncations.
 
-1. Automate test generation with DeepEval's Synthesizer. Weight evolution types toward reasoning (25%) and multi-context (20%) questions — these expose the failures simple factual lookups miss.
+Synthetic evaluation inverts the problem: use an LLM to generate hundreds of adversarial tests that probe every corner of your system. Here’s the automated framework:
 
-2. Use probabilistic thresholds, not absolutism. Requiring 100% pass rate across 330 diverse questions is unrealistic. A 70% pass rate on the RAG Triad (Faithfulness + Answer Relevancy + Contextual Relevancy) is a meaningful quality gate.
+1.  **Generate 330+ tests from 55 documents** using DeepEval's Synthesizer. Weight evolution toward reasoning (25%) and multi-context (20%) to stress the chain.
+2.  **Evaluate with the RAG Triad**: Faithfulness, Answer Relevancy, Contextual Relevancy. Set a 70% pass-rate threshold—not absolutism.
+3.  **Add custom GEval metrics** for domain failures: citation accuracy, cross-lesson synthesis, and context utilization.
+4.  **Run hyperparameter sweeps** across 11 retrieval configs. Let data decide your `top_k` and hybrid weighting.
+5.  **Test multi-turn conversations** with a 75% faithfulness requirement across 24 turns to catch context bloat.
+6.  **Integrate into CI/CD** as an automated gatekeeper. Run evaluations for $5-10 using cost-effective judge models like DeepSeek.
 
-3. Build custom GEval metrics for YOUR domain. Standard RAG metrics miss citation fabrication, context underutilization, and cross-document synthesis failures. These silent failures erode user trust without triggering obvious errors.
+This replaces hope with data. It catches citation fabrication, retrieval thrash, and faithfulness decay—failures that erode trust without triggering errors.
 
-4. Run hyperparameter sweeps on your synthetic suite. Testing 11 retrieval configurations across 18 queries replaced guesswork with data — FTS top-5 scored 0.82 on faithfulness while vector top-10 scored 0.71 but had higher answer relevancy.
+Stop testing 0.4% of your system. Build a production-grade evaluation suite that scales.
 
-5. Multi-turn evaluation catches what single-turn misses. Later conversational turns show lower faithfulness as questions get more specific than what retrieved context covers.
+**Read the full implementation guide:** [Link to your blog post]
 
-Total cost: ~$5-10 per full evaluation run with DeepSeek as judge. Less than one hour of manual testing.
-
-These are the failure modes that erode user trust without triggering obvious errors — and they only become visible at scale.
-
-Full implementation guide with code examples from the actual codebase: [link]
-
-#RAGEvaluation #SyntheticTesting #LLMOps #DeepEval #AIEngineering #ProductionAI
+#RAGEvaluation #SyntheticTesting #LLMOps #DeepEval #RetrievalAugmentedGeneration #MLTesting

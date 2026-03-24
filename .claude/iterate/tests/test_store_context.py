@@ -6,7 +6,8 @@ import os
 import pytest
 
 import store_context
-from store_context import chunk_content, dedup_chunks, extract_errors, store, store_eval
+from store_context import chunk_content, dedup_chunks, store, store_eval
+from shared import extract_errors
 
 
 # ---------------------------------------------------------------------------
@@ -211,23 +212,43 @@ class TestGetGitDiff:
         if content is not None:
             assert len(content) <= 6000 + 10  # allow tiny slack
 
-    def test_falls_back_to_head_when_no_head_minus_one(self, monkeypatch):
-        """When HEAD~1 has no diff, falls back to HEAD (uncommitted changes)."""
+    def test_prefers_uncommitted_over_committed(self, monkeypatch):
+        """Uncommitted changes (HEAD) are preferred over committed diff (HEAD~1..HEAD)."""
+        from store_context import get_git_diff
+        import subprocess
+
+        uncommitted_stat = subprocess.CompletedProcess([], 0, stdout="new.py | 5 +++\n", stderr="")
+        uncommitted_diff = subprocess.CompletedProcess([], 0, stdout="+uncommitted\n", stderr="")
+        committed_stat = subprocess.CompletedProcess([], 0, stdout="old.py | 2 ++\n", stderr="")
+
+        def mock_run(cmd, **kwargs):
+            if "HEAD~1" in cmd:
+                return committed_stat if "--stat" in cmd else committed_stat
+            if "--stat" in cmd:
+                return uncommitted_stat
+            return uncommitted_diff
+
+        monkeypatch.setattr("store_context.subprocess.run", mock_run)
+        stat, files, content = get_git_diff()
+        assert stat is not None
+        assert "new.py" in stat  # uncommitted, not "old.py" from committed
+        assert content is not None
+
+    def test_falls_back_to_committed_when_no_uncommitted(self, monkeypatch):
+        """When no uncommitted changes, falls back to HEAD~1..HEAD."""
         from store_context import get_git_diff
         import subprocess
 
         empty = subprocess.CompletedProcess([], 0, stdout="", stderr="")
-        head_stat = subprocess.CompletedProcess([], 0, stdout="app.py | 3 +++\n", stderr="")
-        head_diff = subprocess.CompletedProcess([], 0, stdout="+new line\n", stderr="")
+        committed_stat = subprocess.CompletedProcess([], 0, stdout="app.py | 3 +++\n", stderr="")
+        committed_diff = subprocess.CompletedProcess([], 0, stdout="+committed line\n", stderr="")
 
         def mock_run(cmd, **kwargs):
-            if "HEAD~1" in cmd and "--stat" in cmd:
-                return empty
             if "HEAD~1" in cmd:
-                return empty
+                return committed_stat if "--stat" in cmd else committed_diff
             if "--stat" in cmd:
-                return head_stat
-            return head_diff
+                return empty  # no uncommitted changes
+            return empty
 
         monkeypatch.setattr("store_context.subprocess.run", mock_run)
         stat, files, content = get_git_diff()
@@ -304,3 +325,100 @@ class TestStoreSimilarity:
         result = store(1, "Second iteration content.", "task")
         sim = result["semantic_similarity"]
         assert sim is None or (isinstance(sim, float) and 0.0 <= sim <= 1.0)
+
+
+# ---------------------------------------------------------------------------
+# Edge cases
+# ---------------------------------------------------------------------------
+
+class TestChunkContentEdgeCases:
+    def test_only_code_fences(self):
+        content = "```python\nprint('hello')\n```\n\n```js\nconsole.log('hi')\n```"
+        chunks = chunk_content(content, max_chars=500)
+        assert len(chunks) >= 1
+        assert any("```" in c for c in chunks)
+
+    def test_very_long_single_line(self):
+        content = "x" * 5000
+        chunks = chunk_content(content, max_chars=1200)
+        # Should return at least the truncated content
+        assert len(chunks) >= 1
+        assert all(len(c) <= 5000 for c in chunks)
+
+    def test_unicode_content(self):
+        content = "Привет мир\n\n日本語テスト\n\nEmoji: 🎉"
+        chunks = chunk_content(content, max_chars=500)
+        assert len(chunks) >= 1
+
+    def test_nested_code_fences(self):
+        content = "Before\n\n```python\ndef foo():\n    pass\n```\n\nMiddle\n\n```rust\nfn main() {}\n```\n\nAfter"
+        chunks = chunk_content(content, max_chars=30)
+        assert len(chunks) >= 2
+
+    def test_max_chars_1_returns_something(self):
+        chunks = chunk_content("Hello World", max_chars=1)
+        assert len(chunks) >= 1
+
+
+class TestExtractErrorsEdgeCases:
+    def test_panic_captured(self):
+        assert len(extract_errors("panic: runtime error: index out of range")) > 0
+
+    def test_multiple_error_types_in_one(self):
+        content = (
+            "Error: build failed\n"
+            "TypeError: cannot read property\n"
+            "FAIL tests/auth.test.js\n"
+            "panic: nil pointer\n"
+            "exit code 2\n"
+        )
+        errors = extract_errors(content)
+        assert len(errors) >= 4
+
+    def test_exit_code_0_not_captured(self):
+        assert len(extract_errors("exit code 0")) == 0
+
+    def test_multiline_with_clean_lines(self):
+        content = "All tests passed\nNo errors found\nBuild successful"
+        assert extract_errors(content) == []
+
+
+class TestStoreEdgeCases:
+    def test_store_with_errors_in_content(self):
+        result = store(0, "TypeError: x is not defined\nError: build failed", "task")
+        assert result["errors"] >= 2
+
+    def test_store_empty_content(self):
+        result = store(0, "", "task")
+        assert result["stored"] >= 1  # at least summary doc
+        assert result["errors"] == 0
+
+    def test_store_very_large_content(self):
+        large = "Important work. " * 1000
+        result = store(0, large, "task")
+        assert result["stored"] >= 1
+
+    def test_store_with_diff_mock(self, monkeypatch):
+        import subprocess
+        stat = subprocess.CompletedProcess([], 0, stdout=" auth.py | 10 ++++\n", stderr="")
+        diff = subprocess.CompletedProcess([], 0, stdout="+new line\n", stderr="")
+
+        def mock_run(cmd, **kwargs):
+            if "--stat" in cmd:
+                return stat
+            return diff
+
+        monkeypatch.setattr("store_context.subprocess.run", mock_run)
+        result = store(0, "Added auth.", "build auth")
+        assert result["has_diff"] is True
+        assert result["files_changed"] >= 1
+
+    def test_bm25_update_on_store(self):
+        """BM25 index should be updated when storing."""
+        from bm25_index import build_or_load, bm25_available
+        if not bm25_available():
+            pytest.skip("rank-bm25 not installed")
+        store(0, "JWT authentication middleware implementation.", "build auth")
+        idx = build_or_load(store_context.CHROMA_PATH)
+        assert idx is not None
+        assert idx.size >= 1

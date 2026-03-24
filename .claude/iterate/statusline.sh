@@ -17,23 +17,29 @@ if [ -n "$SESSION_ID" ]; then
     fi
 fi
 
-# Fallback: scan by session.txt or CWD match
+# Fallback: scan by session.txt or CWD match (prefer most recent)
 if [ -z "$ITER_DIR" ]; then
+    _best_dir=""
+    _best_mtime=0
     for d in /tmp/claude-iterate-*/; do
         [ -f "${d}task.txt" ] && [ -f "${d}counter" ] || continue
         _owner=$(cat "${d}session.txt" 2>/dev/null || echo "")
         if [ -n "$SESSION_ID" ] && [ "$_owner" = "$SESSION_ID" ]; then
-            ITER_DIR="${d%/}"
+            _best_dir="${d%/}"
             break
         fi
         if [ -z "$_owner" ] && [ -n "$HOOK_CWD" ]; then
             _stored_cwd=$(cat "${d}cwd.txt" 2>/dev/null || echo "")
             if [ "$_stored_cwd" = "$HOOK_CWD" ]; then
-                ITER_DIR="${d%/}"
-                break
+                _mtime=$(stat -f %m "${d}task.txt" 2>/dev/null || stat -c %Y "${d}task.txt" 2>/dev/null || echo "0")
+                if [ "$_mtime" -gt "$_best_mtime" ] 2>/dev/null; then
+                    _best_mtime="$_mtime"
+                    _best_dir="${d%/}"
+                fi
             fi
         fi
     done
+    [ -n "$_best_dir" ] && ITER_DIR="$_best_dir"
 fi
 
 # CLAUDE_ITERATE_DIR env var override
@@ -55,14 +61,14 @@ if [ -f "$SCORES_FILE" ]; then
     LAST_SCORE=$(python3.12 -c "
 import json, sys
 try:
-    data = json.load(open('${SCORES_FILE}'))
+    data = json.load(open(sys.argv[1]))
     if data:
         s = data[-1].get('Task Completion', {}).get('score')
         if s is not None:
             print(f'{float(s):.2f}')
 except Exception:
     pass
-" 2>/dev/null || echo "")
+" "$SCORES_FILE" 2>/dev/null || echo "")
     [ -n "$LAST_SCORE" ] && STATUS="${STATUS} tc=${LAST_SCORE}"
 fi
 

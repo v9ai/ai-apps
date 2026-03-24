@@ -13,6 +13,7 @@ from datetime import datetime
 
 from embeddings import get_embedding_function
 from bm25_index import build_or_load as bm25_build_or_load, bm25_available
+from shared import extract_errors
 
 CHROMA_PATH = os.environ.get("CLAUDE_ITERATE_CHROMA_PATH", "/tmp/claude-iterate/chroma")
 COLLECTION_NAME = "iterate_context"
@@ -67,8 +68,10 @@ def get_git_diff() -> tuple[str | None, list[str], str | None]:
     """Capture git diff stat, changed file paths, and full diff content.
 
     Tries in order:
-      1. HEAD~1 (last committed diff) — accurate after auto-commit
-      2. HEAD   (uncommitted changes vs last commit) — fallback for mid-session work
+      1. HEAD   (uncommitted changes) — preferred during iterate sessions
+      2. HEAD~1 (last committed diff) — fallback after auto-commit
+    Uncommitted changes first because iterate sessions don't commit between
+    iterations, so HEAD~1..HEAD is stale after the first iteration.
     """
     stat: str | None = None
     files: list[str] = []
@@ -76,7 +79,7 @@ def get_git_diff() -> tuple[str | None, list[str], str | None]:
     cwd = os.environ.get("CLAUDE_ITERATE_CWD", ".")
     used_base: list[str] | None = None
 
-    for diff_base in (["HEAD~1", "HEAD"], ["HEAD"]):
+    for diff_base in (["HEAD"], ["HEAD~1", "HEAD"]):
         try:
             r = subprocess.run(
                 ["git", "diff"] + diff_base + ["--stat", "--no-color"],
@@ -102,26 +105,6 @@ def get_git_diff() -> tuple[str | None, list[str], str | None]:
             pass
 
     return stat, files, diff_content
-
-
-def extract_errors(content: str) -> list[str]:
-    """Extract error-like lines from actual error output (not prose)."""
-    patterns = [
-        # Stack traces and compiler errors — must be at line start
-        r'^(?:error|Error|ERROR):[ \t]+\S.*',
-        # Common JS/Python exceptions — class name at line start
-        r'^(?:TypeError|SyntaxError|ReferenceError|ImportError|KeyError|ValueError|AttributeError|ModuleNotFoundError)[:( ].*',
-        # Build/test failures at line start
-        r'^(?:FAIL|FAILED)[ \t]+\S.*',
-        # Rust panics
-        r'^panic:.*',
-        # Exit codes — anchored to line start
-        r'^.*exit(?:ed with)? code [1-9]\d*',
-    ]
-    errors = []
-    for pattern in patterns:
-        errors.extend(re.findall(pattern, content, re.MULTILINE)[:5])
-    return errors[:10]
 
 
 def store(iteration: int, content: str, task: str):

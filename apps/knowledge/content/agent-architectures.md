@@ -219,7 +219,7 @@ This approach is computationally expensive (many LLM calls per decision) but exc
 
 ### Graphs as Agent Control Flow
 
-LangGraph (part of the LangChain ecosystem) represents agent logic as a directed graph where nodes are computation steps and edges are transitions. This addresses a fundamental limitation of linear agent loops: real-world agent workflows often involve branching, parallel execution, cycles, and conditional logic that don't fit neatly into a sequential framework.
+LangGraph (part of the LangChain ecosystem) represents agent logic as a directed graph where nodes are computation steps and edges are transitions. This addresses a fundamental limitation of linear agent loops: real-world agent workflows often involve branching, parallel execution, cycles, and conditional logic that don't fit neatly into a sequential framework. For a comprehensive treatment of LangGraph's primitives, patterns, and deployment options, see the dedicated [LangGraph](/langgraph) article.
 
 LangGraph has matured significantly since its introduction, with built-in support for persistence, human-in-the-loop approval gates, and the LangGraph Platform for deployment. The core abstraction remains the `StateGraph`, but the ecosystem now includes prebuilt components for common patterns like tool-calling agents and ReAct loops:
 

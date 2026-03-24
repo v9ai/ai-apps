@@ -1,6 +1,6 @@
 # Knowledge
 
-AI engineering educational platform — 55 lessons across 7 categories with search, audio, knowledge graphs, and learning analytics.
+AI engineering educational platform — 59 lessons across 7 categories with search, audio, knowledge graphs, and learning analytics.
 
 ## Stack
 
@@ -220,6 +220,83 @@ graph LR
     F & G & H --> I[eval-results.json]
 ```
 
+## LangGraph Pipelines
+
+Three LangGraph StateGraphs power the eval and content generation layer.
+
+### Editorial Pipeline
+
+Fan-out research to three specialists in parallel, fan-in to writer, then editor revision loop (max 2 rounds). Supports optional MemorySaver checkpointing for resumable runs.
+
+```mermaid
+graph TD
+    START((Start)) --> research_entry
+    research_entry --> researcher
+    research_entry --> seo
+    research_entry --> intro_strategist
+    researcher --> writer
+    seo --> writer
+    intro_strategist --> writer
+    writer --> editor
+    editor -->|APPROVE or max rounds| END((End))
+    editor -->|REVISE| writer
+
+    style research_entry fill:#f9f,stroke:#333
+    style writer fill:#bbf,stroke:#333
+    style editor fill:#fbb,stroke:#333
+```
+
+### Red-Team Orchestrator
+
+Plans attacks from a profile, fans out via `Send()` to parallel workers with retry, collects results via `operator.add` reducer, and generates a report.
+
+```mermaid
+graph TD
+    START((Start)) --> plan_attacks
+    plan_attacks -->|"Send() per attack"| attack_worker_1[attack_worker]
+    plan_attacks -->|"Send() per attack"| attack_worker_2[attack_worker]
+    plan_attacks -->|"Send() per attack"| attack_worker_n[attack_worker ...]
+    attack_worker_1 --> report
+    attack_worker_2 --> report
+    attack_worker_n --> report
+    report --> END((End))
+
+    style plan_attacks fill:#f9f,stroke:#333
+    style report fill:#bfb,stroke:#333
+```
+
+### Crescendo Multi-Turn Attack
+
+Cyclic graph for escalating multi-turn attacks. Sends progressively adversarial prompts and evaluates after each turn.
+
+```mermaid
+graph TD
+    START((Start)) --> send_turn
+    send_turn --> evaluate
+    evaluate -->|"goal achieved or max turns"| END((End))
+    evaluate -->|"continue escalation"| send_turn
+
+    style send_turn fill:#fbb,stroke:#333
+    style evaluate fill:#ff9,stroke:#333
+```
+
+### RAG Pipeline
+
+Query routing classifies intent (keyword vs conceptual), then retrieves via the best method (FTS/vector/hybrid), formats context, and generates an answer.
+
+```mermaid
+graph TD
+    START((Start)) --> route_query
+    route_query -->|"classify intent"| retrieve
+    retrieve -->|"FTS / vector / hybrid"| format_context
+    format_context --> generate
+    generate --> END((End))
+
+    style route_query fill:#ff9,stroke:#333
+    style retrieve fill:#9cf,stroke:#333
+    style generate fill:#bbf,stroke:#333
+```
+
 ## Directory Structure
 
 ```
@@ -233,7 +310,7 @@ apps/knowledge/
 │   ├── audio-player.tsx    # TTS audio playback
 │   ├── toc.tsx             # Auto-generated ToC
 │   └── ...
-├── content/                # 55 markdown lesson files
+├── content/                # 59 markdown lesson files
 ├── src/db/
 │   ├── index.ts            # Neon serverless client
 │   └── schema.ts           # Drizzle schema (17 tables)

@@ -1222,6 +1222,7 @@ export type Mutation = {
   scheduleBatchEmails: ScheduleBatchResult;
   scheduleFollowUpBatch: FollowUpBatchResult;
   sendEmail: SendEmailResult;
+  sendOutreachEmail: SendOutreachEmailResult;
   sendScheduledEmailNow: SendNowResult;
   syncResendEmails: SyncResendResult;
   unarchiveEmail: ArchiveEmailResult;
@@ -1544,6 +1545,11 @@ export type MutationScheduleFollowUpBatchArgs = {
 
 export type MutationSendEmailArgs = {
   input: SendEmailInput;
+};
+
+
+export type MutationSendOutreachEmailArgs = {
+  input: SendOutreachEmailInput;
 };
 
 
@@ -2178,6 +2184,23 @@ export type SendNowResult = {
   __typename: 'SendNowResult';
   error: Maybe<Scalars['String']['output']>;
   resendId: Maybe<Scalars['String']['output']>;
+  success: Scalars['Boolean']['output'];
+};
+
+export type SendOutreachEmailInput = {
+  postText: Scalars['String']['input'];
+  postUrl?: InputMaybe<Scalars['String']['input']>;
+  recipientEmail: Scalars['String']['input'];
+  recipientName: Scalars['String']['input'];
+  recipientRole?: InputMaybe<Scalars['String']['input']>;
+  tone?: InputMaybe<Scalars['String']['input']>;
+};
+
+export type SendOutreachEmailResult = {
+  __typename: 'SendOutreachEmailResult';
+  emailId: Maybe<Scalars['String']['output']>;
+  error: Maybe<Scalars['String']['output']>;
+  subject: Maybe<Scalars['String']['output']>;
   success: Scalars['Boolean']['output'];
 };
 

@@ -9,11 +9,11 @@ from retrieve_context import (
     retrieve,
     _recency_boost,
     _get_latest_eval,
-    _cosine_similarity,
     _mean_embedding,
     _mmr_select,
     compute_iter_similarity,
 )
+from shared import cosine_similarity as _cosine_similarity
 
 
 # ---------------------------------------------------------------------------
@@ -403,3 +403,68 @@ class TestRetrieveSimilarityHeader:
         store(0, "Some work done.", "task")
         result = retrieve("task", current_iteration=1, use_mmr=False)
         assert isinstance(result, str) and len(result.strip()) > 0
+
+
+# ---------------------------------------------------------------------------
+# Edge cases — BM25, reranker, and retrieval paths
+# ---------------------------------------------------------------------------
+
+class TestRetrieveEdgeCases:
+    def test_large_n_results_with_few_docs(self):
+        """Requesting more results than available should not crash."""
+        store(0, "Only one iteration stored.", "task")
+        result = retrieve("task", current_iteration=1, n_results=100)
+        assert isinstance(result, str) and len(result) > 0
+
+    def test_bm25_disabled_via_env(self, monkeypatch):
+        """Setting ITERATE_BM25=0 disables BM25 retrieval."""
+        monkeypatch.setenv("ITERATE_BM25", "0")
+        store(0, "Auth middleware added.", "build auth")
+        result = retrieve("auth", current_iteration=1)
+        assert isinstance(result, str) and "Iteration 0" in result
+
+    def test_rerank_disabled_via_env(self, monkeypatch):
+        """Setting ITERATE_RERANK=0 disables reranking."""
+        monkeypatch.setenv("ITERATE_RERANK", "0")
+        store(0, "Auth middleware added.", "build auth")
+        result = retrieve("auth", current_iteration=1)
+        assert isinstance(result, str) and "Iteration 0" in result
+
+    def test_both_bm25_and_rerank_disabled(self, monkeypatch):
+        monkeypatch.setenv("ITERATE_BM25", "0")
+        monkeypatch.setenv("ITERATE_RERANK", "0")
+        store(0, "Some work.", "task")
+        result = retrieve("task", current_iteration=1, use_mmr=False)
+        assert isinstance(result, str) and "Iteration 0" in result
+
+    def test_include_errors_false(self):
+        store(0, "Error: build failed", "task")
+        result = retrieve("task", current_iteration=1, include_errors=False)
+        assert isinstance(result, str) and len(result) > 0
+
+    def test_retrieve_with_diff_docs(self, monkeypatch):
+        """Diff docs should be retrievable when stored."""
+        import subprocess
+        stat = subprocess.CompletedProcess([], 0, stdout=" auth.py | 5 +++\n", stderr="")
+        diff = subprocess.CompletedProcess([], 0, stdout="+new auth code\n", stderr="")
+        def mock_run(cmd, **kwargs):
+            if "--stat" in cmd:
+                return stat
+            return diff
+        monkeypatch.setattr("store_context.subprocess.run", mock_run)
+        store(0, "Added authentication.", "build auth")
+        result = retrieve("auth code changes", current_iteration=1)
+        assert isinstance(result, str)
+
+    def test_retrieve_multiple_doc_types(self):
+        """Storing output + eval should make both retrievable."""
+        store(0, "Built JWT auth middleware.", "build auth")
+        store_eval(0, {"Task Completion": {"score": 0.7, "reason": "partial"}}, "build auth", "heuristic")
+        result = retrieve("build auth", current_iteration=1)
+        assert "Iteration 0" in result
+
+    def test_similarity_override_parameter(self):
+        """similarity_override doesn't crash (currently unused in retrieve)."""
+        store(0, "Work.", "task")
+        result = retrieve("task", current_iteration=1, similarity_override=0.5)
+        assert isinstance(result, str)

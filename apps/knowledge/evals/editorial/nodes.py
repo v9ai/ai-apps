@@ -11,6 +11,7 @@ from editorial.prompts import (
     journalism_writer,
 )
 from editorial.state import JournalismState
+from retry import with_retry
 
 
 def research_entry_node(state: JournalismState) -> dict:
@@ -18,6 +19,7 @@ def research_entry_node(state: JournalismState) -> dict:
     return {}
 
 
+@with_retry()
 def researcher_node(state: JournalismState) -> dict:
     """Research the topic using the reasoner model."""
     llm = build_reasoner()
@@ -29,6 +31,7 @@ def researcher_node(state: JournalismState) -> dict:
     return {"research": response.content}
 
 
+@with_retry()
 def seo_node(state: JournalismState) -> dict:
     """Produce SEO strategy using the fast model."""
     llm = build_fast()
@@ -40,6 +43,7 @@ def seo_node(state: JournalismState) -> dict:
     return {"seo": response.content}
 
 
+@with_retry()
 def intro_strategist_node(state: JournalismState) -> dict:
     """Design intro hook strategies using the fast model."""
     llm = build_fast()
@@ -51,6 +55,7 @@ def intro_strategist_node(state: JournalismState) -> dict:
     return {"intro_strategy": response.content}
 
 
+@with_retry()
 def writer_node(state: JournalismState) -> dict:
     """Write or revise a draft based on research + SEO + editor feedback."""
     llm = build_reasoner()
@@ -80,6 +85,7 @@ def writer_node(state: JournalismState) -> dict:
     return {"draft": response.content}
 
 
+@with_retry()
 def editor_node(state: JournalismState) -> dict:
     """Review the draft and decide APPROVE or REVISE."""
     llm = build_reasoner()

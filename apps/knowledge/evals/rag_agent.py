@@ -13,18 +13,11 @@ Usage:
         retriever.close()
 """
 
-import os
-from pathlib import Path
-
-from dotenv import load_dotenv
 from langchain_core.tools import tool
-from langchain_openai import ChatOpenAI
 from langgraph.prebuilt import create_react_agent
 
+from models import build_reasoner
 from pgvector_retriever import PgVectorRetriever
-
-_env_path = Path(__file__).resolve().parent.parent / ".env.local"
-load_dotenv(_env_path)
 
 RAG_SYSTEM_PROMPT = (
     "You are a knowledgeable AI engineering tutor with access to a knowledge base "
@@ -92,15 +85,6 @@ def _format_fts(results: list[dict]) -> str:
     return "\n\n---\n\n".join(parts) if parts else "No results found."
 
 
-# Shared LLM — ChatOpenAI is stateless and thread-safe; build once.
-_llm = ChatOpenAI(
-    model="deepseek-chat",
-    base_url="https://api.deepseek.com",
-    api_key=os.environ.get("DEEPSEEK_API_KEY", ""),
-    temperature=0,
-)
-
-
 def build_rag_agent(retrieval_method: str = "fts"):
     """Create a LangGraph ReAct agent with knowledge retrieval.
 
@@ -108,5 +92,5 @@ def build_rag_agent(retrieval_method: str = "fts"):
     the DB connection held by the search tool.
     """
     search_tool, retriever = _build_search_tool(retrieval_method)
-    agent = create_react_agent(model=_llm, tools=[search_tool], prompt=RAG_SYSTEM_PROMPT)
+    agent = create_react_agent(model=build_reasoner(), tools=[search_tool], prompt=RAG_SYSTEM_PROMPT)
     return agent, retriever

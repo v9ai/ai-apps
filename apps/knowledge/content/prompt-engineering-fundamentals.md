@@ -1,6 +1,6 @@
 # Prompt Engineering Fundamentals: Principles & Patterns
 
-Prompt engineering has emerged as the primary interface between human intent and large language model capabilities, yet it remains poorly understood as a discipline. This article examines the foundational principles that govern effective prompting, the recurring patterns that practitioners rely on, and the tension between treating prompts as natural language instructions versus structured programs. We draw on empirical findings from recent research to move beyond folklore and toward a principled understanding of how prompts shape model behavior.
+Prompt engineering has emerged as the primary interface between human intent and large language model capabilities, yet it remains poorly understood as a discipline. This article examines the foundational principles that govern effective prompting, the recurring patterns that practitioners rely on, and the tension between treating prompts as natural language instructions versus structured programs. We draw on empirical findings from recent research to move beyond folklore and toward a principled understanding of how prompts shape model behavior. For the broader discipline of managing everything that goes into a model's context window -- retrieved documents, conversation history, tool outputs, and more -- see [Context Engineering](/context-engineering).
 
 ## The Prompt as a Programming Paradigm
 

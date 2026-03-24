@@ -87,7 +87,6 @@ check "has trends" "echo '$EVAL_OUT' | python3.12 -c 'import json,sys; d=json.lo
 check "scores.json written" "[ -f '$TEST_DIR/scores.json' ]"
 check "eval_method is heuristic" "echo '$EVAL_OUT' | python3.12 -c 'import json,sys; d=json.load(sys.stdin); assert d[\"eval_method\"] == \"heuristic\", d[\"eval_method\"]'"
 check "scores are numeric" "echo '$EVAL_OUT' | python3.12 -c 'import json,sys; d=json.load(sys.stdin); assert all(isinstance(v[\"score\"], (int,float)) for v in d[\"scores\"].values())'"
-check "continue is true" "echo '$EVAL_OUT' | python3.12 -c 'import json,sys; d=json.load(sys.stdin); assert d[\"continue\"] == True'"
 
 # --- evaluate internals ---
 echo ""
@@ -176,8 +175,10 @@ echo ""
 echo "start.sh:"
 check "script exists" "[ -x '$SCRIPTS_DIR/start.sh' ] || [ -f '$SCRIPTS_DIR/start.sh' ]"
 check "usage on no args" "bash '$SCRIPTS_DIR/start.sh' 2>&1; [ \$? -eq 1 ]"
-bash "$SCRIPTS_DIR/start.sh" --iterations 3 'test' > "$TEST_DIR/startsh-out.txt" 2>&1 || true
-check "--iterations accepted" "grep -q '1/3' '$TEST_DIR/startsh-out.txt'"
+# Use a deterministic session ID so we can clean up the iterate dir created by start.sh
+CLAUDE_CODE_SESSION_ID="test-cleanup0" bash "$SCRIPTS_DIR/start.sh" --iterations 3 'test' > "$TEST_DIR/startsh-out.txt" 2>&1 || true
+check "--iterations accepted" "grep -q '3 iterations' '$TEST_DIR/startsh-out.txt'"
+rm -rf "/tmp/claude-iterate-test-cleanup" 2>/dev/null || true
 
 # --- kick-session.sh (simulated) ---
 echo ""

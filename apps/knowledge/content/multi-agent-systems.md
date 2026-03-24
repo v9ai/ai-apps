@@ -328,7 +328,7 @@ The handoff pattern works well for customer service routing, multi-step workflow
 
 ### LangGraph for Multi-Agent Systems
 
-LangGraph models multi-agent systems as state machines with explicit control flow:
+LangGraph models multi-agent systems as state machines with explicit control flow. For LangGraph fundamentals (StateGraph, reducers, conditional edges, Send, persistence, and platform deployment), see the dedicated [LangGraph](/langgraph) article. This section focuses specifically on multi-agent patterns:
 
 ```python
 from langgraph.graph import StateGraph, END

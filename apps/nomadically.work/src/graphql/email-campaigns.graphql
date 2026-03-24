@@ -178,6 +178,15 @@ mutation PreviewEmail($input: PreviewEmailInput!) {
   }
 }
 
+mutation SendOutreachEmail($input: SendOutreachEmailInput!) {
+  sendOutreachEmail(input: $input) {
+    success
+    emailId
+    subject
+    error
+  }
+}
+
 query GetEmailsNeedingFollowUp($limit: Int, $offset: Int) {
   emailsNeedingFollowUp(limit: $limit, offset: $offset) {
     emails {

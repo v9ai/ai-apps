@@ -1,8 +1,11 @@
+---
+`status: published`
+
 # Synthetic Evaluation with DeepEval: A Production RAG Testing Framework
 
 Your RAG pipeline passes all 20 of your hand-written test questions. It retrieves the right context, generates grounded answers, and the demo looks great. Then it goes to production, and users start asking the 21st question — the one that exposes a retrieval gap, a hallucinated citation, or a context window that silently truncated the most relevant chunk. You had 20 tests for a knowledge base with 55 documents. That's **0.4% coverage**. The other 99.6% was untested surface area.
 
-This isn't a hypothetical. It's the mathematical certainty of manual testing. This guide shows how to close that gap with synthetic evaluation: generating 330+ adversarial test cases from 55 documents, evaluating them across 10+ metrics, and running hyperparameter sweeps to find optimal configurations — all automated. It’s a production testing framework that replaces hope with data.
+This isn't a hypothetical. It's the mathematical certainty of manual testing. This guide shows how to close that gap with synthetic evaluation. We walk through generating 330+ adversarial test cases from 55 documents, evaluating them across 10+ metrics, and running hyperparameter sweeps to find optimal configurations — all automated with [DeepEval](https://github.com/confident-ai/deepeval) and pytest. It’s a production testing framework that replaces hope with data.
 
 ## The Production RAG Testing Challenge: Why Manual Evaluation Is a Statistical Mirage
 
@@ -33,7 +36,7 @@ class DeepSeekModel(DeepEvalBaseLLM):
     def __init__(self, model: str = "deepseek-chat"):
         self._client = OpenAI(
             api_key=os.getenv("DEEPSEEK_API_KEY"),
-            base_url="https://api.deepseek.com"
+            base_url="[https://api.deepseek.com](https://api.deepseek.com)"
         )
 
     def generate(self, prompt: str, schema=None, **kwargs):
@@ -121,7 +124,7 @@ answer_relevancy = AnswerRelevancyMetric(model=model, threshold=0.6)
 contextual_relevancy = ContextualRelevancyMetric(model=model, threshold=0.6)
 ```
 
-The critical production insight: **use probabilistic thresholds, not absolutism.** Demanding 100% pass rate on hundreds of diverse questions is unrealistic. A robust batch test asserts that **70% of Goldens must pass all three triad metrics**. This sets a high but achievable quality bar.
+The critical production insight: **use probabilistic thresholds, not absolutism.** Demanding 100% pass rate on hundreds of diverse questions is unrealistic. A robust batch test asserts that [**70% of Goldens must pass all three triad metrics**](https://github.com/confident-ai/deepeval). This sets a high but achievable quality bar.
 
 ### Custom Domain Metrics with GEval: Catching What Standard Metrics Miss
 Standard RAG metrics evaluate generic quality. For domain-specific failures, DeepEval's [`GEval`](https://docs.confident-ai.com/docs/metrics-llm-evals) lets you define custom criteria evaluated by an LLM judge. For an educational knowledge base, these five custom metrics bridge the gap:
@@ -149,7 +152,7 @@ CONFIGS = {
 }
 ```
 
-The data reveals concrete trade-offs: FTS with `top_5` might score 0.82 on faithfulness while vector `top_10` scores 0.71 but achieves higher answer relevancy. The sweep exposes that high `top_k` often retrieves more but less relevant context, dragging down scores. You choose the configuration that maximizes the combined triad score, replacing intuition with evidence.
+The data reveals concrete trade-offs: FTS with `top_5` might score 0.82 on faithfulness while vector `top_10` scores 0.71 but achieves higher answer relevancy. The sweep exposes that high `top_k` often retrieves more but less relevant context, dragging down scores. You choose the configuration that [maximizes the combined triad score](https://github.com/confident-ai/deepeval), replacing intuition with evidence.
 
 ## Multi-Turn Conversation Evaluation: Testing the Memory of Your System
 
@@ -178,7 +181,7 @@ No framework is perfect. You must understand the trade-offs.
 
 **The Same-Model Judge Problem.** Using DeepSeek as both the RAG generator *and* evaluation judge introduces bias. The mitigation is diversity in metric types — structural failures like citation fabrication are detectable even with a biased judge. The cost-benefit is compelling: comprehensive testing for $10.
 
-**Database Dependency for Fidelity.** RAG evaluation tests require a live database with populated embeddings. This is a deliberate trade-off for fidelity over portability — you're testing the real system, not a mock. Document-based synthesis (`synthesize.py`) works offline for initial coverage.
+**Database Dependency for Fidelity.** RAG evaluation tests require a live database with populated embeddings, such as [Neon PostgreSQL](https://neon.tech/). This is a deliberate trade-off for fidelity over portability — you're testing the real system, not a mock. Document-based synthesis (`synthesize.py`) works offline for initial coverage.
 
 **Nondeterminism.** No seed control means regeneration produces different goldens each time. The trade-off: fresh diversity on each run, but less reproducibility. Version your golden datasets for critical benchmarks.
 

@@ -1225,6 +1225,7 @@ export type Mutation = {
   scheduleBatchEmails: ScheduleBatchResult;
   scheduleFollowUpBatch: FollowUpBatchResult;
   sendEmail: SendEmailResult;
+  sendOutreachEmail: SendOutreachEmailResult;
   sendScheduledEmailNow: SendNowResult;
   syncResendEmails: SyncResendResult;
   unarchiveEmail: ArchiveEmailResult;
@@ -1547,6 +1548,11 @@ export type MutationScheduleFollowUpBatchArgs = {
 
 export type MutationSendEmailArgs = {
   input: SendEmailInput;
+};
+
+
+export type MutationSendOutreachEmailArgs = {
+  input: SendOutreachEmailInput;
 };
 
 
@@ -2181,6 +2187,23 @@ export type SendNowResult = {
   __typename?: 'SendNowResult';
   error: Maybe<Scalars['String']['output']>;
   resendId: Maybe<Scalars['String']['output']>;
+  success: Scalars['Boolean']['output'];
+};
+
+export type SendOutreachEmailInput = {
+  postText: Scalars['String']['input'];
+  postUrl?: InputMaybe<Scalars['String']['input']>;
+  recipientEmail: Scalars['String']['input'];
+  recipientName: Scalars['String']['input'];
+  recipientRole?: InputMaybe<Scalars['String']['input']>;
+  tone?: InputMaybe<Scalars['String']['input']>;
+};
+
+export type SendOutreachEmailResult = {
+  __typename?: 'SendOutreachEmailResult';
+  emailId: Maybe<Scalars['String']['output']>;
+  error: Maybe<Scalars['String']['output']>;
+  subject: Maybe<Scalars['String']['output']>;
   success: Scalars['Boolean']['output'];
 };
 
@@ -3013,6 +3036,13 @@ export type PreviewEmailMutationVariables = Exact<{
 
 
 export type PreviewEmailMutation = { __typename?: 'Mutation', previewEmail: { __typename?: 'EmailPreview', htmlContent: string, subject: string, drySendResult: string | null } };
+
+export type SendOutreachEmailMutationVariables = Exact<{
+  input: SendOutreachEmailInput;
+}>;
+
+
+export type SendOutreachEmailMutation = { __typename?: 'Mutation', sendOutreachEmail: { __typename?: 'SendOutreachEmailResult', success: boolean, emailId: string | null, subject: string | null, error: string | null } };
 
 export type GetEmailsNeedingFollowUpQueryVariables = Exact<{
   limit?: InputMaybe<Scalars['Int']['input']>;
@@ -6835,6 +6865,42 @@ export function usePreviewEmailMutation(baseOptions?: Apollo.MutationHookOptions
 export type PreviewEmailMutationHookResult = ReturnType<typeof usePreviewEmailMutation>;
 export type PreviewEmailMutationResult = Apollo.MutationResult<PreviewEmailMutation>;
 export type PreviewEmailMutationOptions = Apollo.BaseMutationOptions<PreviewEmailMutation, PreviewEmailMutationVariables>;
+export const SendOutreachEmailDocument = gql`
+    mutation SendOutreachEmail($input: SendOutreachEmailInput!) {
+  sendOutreachEmail(input: $input) {
+    success
+    emailId
+    subject
+    error
+  }
+}
+    `;
+export type SendOutreachEmailMutationFn = Apollo.MutationFunction<SendOutreachEmailMutation, SendOutreachEmailMutationVariables>;
+
+/**
+ * __useSendOutreachEmailMutation__
+ *
+ * To run a mutation, you first call `useSendOutreachEmailMutation` within a React component and pass it any options that fit your needs.
+ * When your component renders, `useSendOutreachEmailMutation` returns a tuple that includes:
+ * - A mutate function that you can call at any time to execute the mutation
+ * - An object with fields that represent the current status of the mutation's execution
+ *
+ * @param baseOptions options that will be passed into the mutation, supported options are listed on: https://www.apollographql.com/docs/react/api/react-hooks/#options-2;
+ *
+ * @example
+ * const [sendOutreachEmailMutation, { data, loading, error }] = useSendOutreachEmailMutation({
+ *   variables: {
+ *      input: // value for 'input'
+ *   },
+ * });
+ */
+export function useSendOutreachEmailMutation(baseOptions?: Apollo.MutationHookOptions<SendOutreachEmailMutation, SendOutreachEmailMutationVariables>) {
+        const options = {...defaultOptions, ...baseOptions}
+        return Apollo.useMutation<SendOutreachEmailMutation, SendOutreachEmailMutationVariables>(SendOutreachEmailDocument, options);
+      }
+export type SendOutreachEmailMutationHookResult = ReturnType<typeof useSendOutreachEmailMutation>;
+export type SendOutreachEmailMutationResult = Apollo.MutationResult<SendOutreachEmailMutation>;
+export type SendOutreachEmailMutationOptions = Apollo.BaseMutationOptions<SendOutreachEmailMutation, SendOutreachEmailMutationVariables>;
 export const GetEmailsNeedingFollowUpDocument = gql`
     query GetEmailsNeedingFollowUp($limit: Int, $offset: Int) {
   emailsNeedingFollowUp(limit: $limit, offset: $offset) {

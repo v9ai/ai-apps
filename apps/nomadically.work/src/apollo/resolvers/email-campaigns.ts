@@ -4,6 +4,7 @@ import { addMinutes, startOfDay, startOfWeek, startOfMonth } from "date-fns";
 import type { GraphQLContext } from "../context";
 import { isAdminEmail } from "@/lib/admin";
 import { resend } from "@/lib/resend";
+import { spawnEmailOutreach } from "@/lib/langgraph/spawn-email-outreach";
 import { generateText } from "ai";
 import { anthropic } from "@ai-sdk/anthropic";
 import {
@@ -1066,6 +1067,61 @@ Do not include any text before or after the JSON.`;
         subject: result.subject,
         body: result.body,
       };
+    },
+
+    async sendOutreachEmail(
+      _parent: unknown,
+      args: {
+        input: {
+          recipientName: string;
+          recipientRole?: string;
+          recipientEmail: string;
+          postText: string;
+          postUrl?: string;
+          tone?: string;
+        };
+      },
+      context: GraphQLContext,
+    ) {
+      if (!context.userId || !isAdminEmail(context.userEmail)) {
+        throw new Error("Forbidden");
+      }
+
+      const { recipientName, recipientRole, recipientEmail, postText, postUrl, tone } =
+        args.input;
+
+      try {
+        const generated = await spawnEmailOutreach({
+          recipientName,
+          recipientRole: recipientRole ?? undefined,
+          postText,
+          postUrl: postUrl ?? undefined,
+          recipientEmail,
+          tone: tone ?? undefined,
+        });
+
+        const result = await resend.instance.send({
+          to: recipientEmail,
+          subject: generated.subject,
+          html: generated.html,
+          text: generated.text,
+        });
+
+        return {
+          success: !result.error,
+          emailId: result.id || null,
+          subject: generated.subject,
+          error: result.error || null,
+        };
+      } catch (err) {
+        const message = err instanceof Error ? err.message : String(err);
+        return {
+          success: false,
+          emailId: null,
+          subject: null,
+          error: message,
+        };
+      }
     },
   },
 };

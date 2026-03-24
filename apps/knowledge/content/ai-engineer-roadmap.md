@@ -86,6 +86,7 @@ response = await client.chat.completions.create(
 - **Chain-of-thought**: Eliciting reasoning before answers for complex tasks (see [Few-Shot & Chain-of-Thought](/few-shot-chain-of-thought))
 - **Structured output**: Getting reliable JSON, XML, or other structured formats (see [Structured Output](/structured-output))
 - **Prompt debugging**: Systematically diagnosing why prompts fail on specific inputs (see [Prompt Optimization](/prompt-optimization) and [Adversarial Prompting](/adversarial-prompting))
+- **Context engineering**: Designing the full context window -- retrieval, history, tools, and instructions -- not just the prompt (see [Context Engineering](/context-engineering))
 
 **Embedding and retrieval fundamentals**: Understanding how vector search works and when to use it:
 
@@ -173,7 +174,7 @@ LLM Providers:
   - Open-source (Llama, Mistral, Qwen, DeepSeek)
 
 LLM Frameworks:
-  - LangChain / LangGraph (orchestration, agents)
+  - LangChain / [LangGraph](/langgraph) (orchestration, agents)
   - LlamaIndex (data ingestion, RAG)
   - Vercel AI SDK (streaming UI, multi-provider)
   - Instructor (structured output extraction)

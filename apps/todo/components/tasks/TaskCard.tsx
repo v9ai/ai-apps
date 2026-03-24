@@ -49,17 +49,19 @@ export function TaskCard({
   task,
   index,
   onOpen,
+  isOverlay,
 }: {
   task: Task;
   index: number;
   onOpen: () => void;
+  isOverlay?: boolean;
 }) {
   const router = useRouter();
   const [completing, setCompleting] = useState(false);
   const [isPending, startTransition] = useTransition();
 
   const { attributes, listeners, setNodeRef, setActivatorNodeRef, transform, transition, isDragging } =
-    useSortable({ id: task.id });
+    useSortable({ id: task.id, disabled: isOverlay });
 
   const wasDragging = useRef(false);
   useEffect(() => {
@@ -78,7 +80,7 @@ export function TaskCard({
 
   return (
     <div
-      ref={setNodeRef}
+      ref={isOverlay ? undefined : setNodeRef}
       style={{
         transform: CSS.Transform.toString(transform),
         transition: transition ?? undefined,
@@ -87,11 +89,16 @@ export function TaskCard({
       }}
     >
     <Card
-      className={`task-card ${completing ? "task-completing" : "fade-in"}`}
+      className={`task-card ${isOverlay ? "drag-overlay" : ""} ${completing ? "task-completing" : isDragging ? "" : "fade-in"}`}
       style={{
-        opacity: isDragging ? 0.4 : isPending && !completing ? 0.6 : 1,
+        opacity: isDragging ? 0.3 : isPending && !completing ? 0.6 : 1,
         transition: "opacity 150ms",
-        cursor: "pointer",
+        cursor: isOverlay ? "grabbing" : "pointer",
+        ...(index <= 2 && !isOverlay ? {
+          background: "var(--red-a2)",
+          outline: "1px solid var(--red-a6)",
+          outlineOffset: "-1px",
+        } : {}),
       }}
       onClick={() => {
         if (wasDragging.current) { wasDragging.current = false; return; }
@@ -100,16 +107,17 @@ export function TaskCard({
     >
       <Flex align="center" gap="3">
         <div
-          ref={setActivatorNodeRef}
-          {...attributes}
-          {...listeners}
+          ref={isOverlay ? undefined : setActivatorNodeRef}
+          {...(isOverlay ? {} : { ...attributes, ...listeners })}
           className="drag-handle"
           style={{
-            cursor: isDragging ? "grabbing" : "grab",
+            cursor: isDragging || isOverlay ? "grabbing" : "grab",
             color: "var(--gray-6)",
             display: "flex",
             alignItems: "center",
-            padding: "2px",
+            justifyContent: "center",
+            padding: "8px 4px",
+            margin: "-8px -4px",
             flexShrink: 0,
             touchAction: "none",
           }}

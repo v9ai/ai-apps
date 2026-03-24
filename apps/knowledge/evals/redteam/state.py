@@ -23,3 +23,19 @@ class RedTeamState(TypedDict):
     pending_attacks: list[AttackCase]
     results: Annotated[list[AttackCase], operator.add]
     summary: str
+
+
+class CrescendoState(TypedDict):
+    """State for multi-turn escalation attacks (crescendo pattern).
+
+    The attacker starts with a benign prompt and escalates over turns,
+    tracking conversation history and checking for goal achievement.
+    """
+    target: str
+    goal: str               # the adversarial objective
+    turns: list[dict]       # conversation history: [{role, content}, ...]
+    max_turns: int
+    current_turn: int
+    achieved: bool          # did the attack succeed?
+    final_output: str
+    reason: str

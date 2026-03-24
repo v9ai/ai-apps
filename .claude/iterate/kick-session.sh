@@ -4,7 +4,11 @@ set -uo pipefail
 # ==============================================================
 # Claude Code Stop Hook — Iterate with Chroma + Eval
 #
-# Exit 0  = done, stop iterating
+# Iterations are EXACT: runs exactly N iterations.
+# Only stops early on: iteration limit reached, or --done-when match.
+# Eval scores and stall/repetition are advisory warnings only.
+#
+# Exit 0  = done (iteration limit or completion promise)
 # Exit 2  = send feedback to Claude via stderr, keep going
 # ==============================================================
 
@@ -31,28 +35,38 @@ if [ -n "$SESSION_ID" ]; then
 fi
 
 if [ -z "$ITER_DIR" ]; then
+    _best_dir=""
+    _best_mtime=0
     for _d in /tmp/claude-iterate-*/; do
         [ -f "${_d}task.txt" ] || continue
         _owner=$(cat "${_d}session.txt" 2>/dev/null || echo "")
+        # Exact session match — definitive, use immediately
         if [ -n "$SESSION_ID" ] && [ "$_owner" = "$SESSION_ID" ]; then
-            ITER_DIR="${_d%/}"
+            _best_dir="${_d%/}"
             break
         fi
         # start.sh ran without CLAUDE_CODE_SESSION_ID (Bash tool env) → session.txt is empty.
-        # Match by stored CWD instead.
+        # Match by stored CWD — prefer the most recently modified directory.
         if [ -z "$_owner" ] && [ -n "$HOOK_CWD" ]; then
             _stored_cwd=$(cat "${_d}cwd.txt" 2>/dev/null || echo "")
             if [ "$_stored_cwd" = "$HOOK_CWD" ]; then
-                ITER_DIR="${_d%/}"
-                break
+                _mtime=$(stat -f %m "${_d}task.txt" 2>/dev/null || stat -c %Y "${_d}task.txt" 2>/dev/null || echo "0")
+                if [ "$_mtime" -gt "$_best_mtime" ] 2>/dev/null; then
+                    _best_mtime="$_mtime"
+                    _best_dir="${_d%/}"
+                fi
             fi
         fi
-        # Last resort: both sides have no session ID
+        # Last resort: both sides have no session ID — also prefer most recent
         if [ -z "$SESSION_ID" ] && [ -z "$_owner" ]; then
-            ITER_DIR="${_d%/}"
-            break
+            _mtime=$(stat -f %m "${_d}task.txt" 2>/dev/null || stat -c %Y "${_d}task.txt" 2>/dev/null || echo "0")
+            if [ "$_mtime" -gt "$_best_mtime" ] 2>/dev/null; then
+                _best_mtime="$_mtime"
+                _best_dir="${_d%/}"
+            fi
         fi
     done
+    [ -n "$_best_dir" ] && ITER_DIR="$_best_dir"
 fi
 
 # --- Check explicit env var (set by run-loop.sh for worktree sessions) ---
@@ -112,15 +126,16 @@ if [ "$COUNT" -ge "$ITERATIONS" ]; then
 import sys, json, os
 f = sys.argv[1]
 if os.path.exists(f):
-    data = json.load(open(f))
+    with open(f) as fh:
+        data = json.load(fh)
     if data:
         print(data[-1].get('Task Completion', {}).get('score', 0.0))
         sys.exit(0)
 print(0.0)
 " "$SCORES_FILE" 2>/dev/null || echo "0.0")
     _record_end "iterations complete" "$_last_score"
-    rm -f "$COUNTER_FILE" "$TASK_FILE" "$ITER_DIR/session.txt"
     echo "Iterate: complete — finished $ITERATIONS iterations." >&2
+    rm -rf "$ITER_DIR"
     exit 0
 fi
 
@@ -169,7 +184,7 @@ if [ -n "$DONE_WHEN" ] && [ -f "$ITER_OUTPUT" ] && [ -s "$ITER_OUTPUT" ]; then
     if grep -qF "$DONE_WHEN" "$ITER_OUTPUT" 2>/dev/null; then
         _record_end "completion promise matched: $DONE_WHEN" "1.0"
         echo "Iterate: complete — output contained '$DONE_WHEN'" >&2
-        rm -f "$COUNTER_FILE" "$TASK_FILE" "$ITER_DIR/session.txt"
+        rm -rf "$ITER_DIR"
         exit 0
     fi
 fi
@@ -183,6 +198,7 @@ echo "[kick-session] counter: $COUNT -> $NEXT (early)" >> "$ITER_DIR/debug.log" 
 
 # --- Step 1: Store in Chroma ---
 STORE_RESULT=""
+SEM_WARNING=""
 if [ -f "$ITER_OUTPUT" ] && [ -s "$ITER_OUTPUT" ]; then
     STORE_RESULT=$(python3.12 "$SCRIPTS_DIR/store_context.py" \
         --iteration "$COUNT" \
@@ -191,23 +207,17 @@ if [ -f "$ITER_OUTPUT" ] && [ -s "$ITER_OUTPUT" ]; then
         2>> "$ITER_DIR/debug.log") || true
     echo "$STORE_RESULT" >> "$ITER_DIR/debug.log" 2>/dev/null || true
 
-    # Semantic repetition check: if output is very similar to previous iteration, stop early
+    # Semantic repetition: advisory warning only (iterations are exact)
     if [ -n "$STORE_RESULT" ] && [ "$COUNT" -ge 2 ]; then
         SEM_SIM=$(echo "$STORE_RESULT" | jq -r '.semantic_similarity // empty' 2>/dev/null || echo "")
         if [ -n "$SEM_SIM" ] && [ "$SEM_SIM" != "null" ]; then
-            # Use python for float comparison (bash can't do it natively)
             SEM_HIGH=$(python3.12 -c "import sys; print('1' if float(sys.argv[1]) > 0.92 else '0')" "$SEM_SIM" 2>/dev/null || echo "0")
             if [ "$SEM_HIGH" = "1" ]; then
                 SEM_STALL=$(cat "$ITER_DIR/sem-stall-count.txt" 2>/dev/null || echo "0")
                 SEM_STALL=$((SEM_STALL + 1))
                 echo "$SEM_STALL" > "$ITER_DIR/sem-stall-count.txt"
-                echo "[kick-session] semantic stall=$SEM_STALL sim=$SEM_SIM" >> "$ITER_DIR/debug.log" 2>/dev/null || true
-                if [ "$SEM_STALL" -ge 2 ]; then
-                    _record_end "semantic repetition" "$SEM_SIM"
-                    echo "Iterate: stopped — semantic repetition (similarity=$SEM_SIM for $SEM_STALL iterations)" >&2
-                    rm -f "$COUNTER_FILE" "$TASK_FILE" "$ITER_DIR/session.txt"
-                    exit 0
-                fi
+                echo "[kick-session] semantic stall=$SEM_STALL sim=$SEM_SIM (advisory)" >> "$ITER_DIR/debug.log" 2>/dev/null || true
+                SEM_WARNING="WARNING: Semantic repetition (sim=$SEM_SIM, stall=$SEM_STALL). Change your approach."
             else
                 echo "0" > "$ITER_DIR/sem-stall-count.txt"
             fi
@@ -215,10 +225,14 @@ if [ -f "$ITER_OUTPUT" ] && [ -s "$ITER_OUTPUT" ]; then
     fi
 fi
 
-# --- Stall detection: if no new code changes for 2+ iterations, stop ---
+# --- Stall detection: advisory warning only (iterations are exact) ---
+STALL_WARNING=""
 if [ "$COUNT" -ge 1 ] && [ -n "$ITER_CWD" ] && [ -d "$ITER_CWD" ]; then
-    # Use committed file list (excludes iterate state files) as the change fingerprint
-    CURRENT_DIFF=$(cd "$ITER_CWD" 2>/dev/null && git diff HEAD~1 HEAD --name-only --no-color 2>/dev/null | grep -v '^\.claude/' | sort || echo "")
+    # Prefer uncommitted changes (iterate sessions don't commit between iterations).
+    # Can't use || fallback because git exits 0 even with empty output.
+    _ud=$(cd "$ITER_CWD" 2>/dev/null && git diff HEAD --name-only --no-color 2>/dev/null || echo "")
+    [ -z "$_ud" ] && _ud=$(cd "$ITER_CWD" 2>/dev/null && git diff HEAD~1 HEAD --name-only --no-color 2>/dev/null || echo "")
+    CURRENT_DIFF=$(echo "$_ud" | grep -v '^\.claude/' | sort)
     PREV_DIFF=$(cat "$ITER_DIR/prev-diff-names.txt" 2>/dev/null || echo "")
     echo "$CURRENT_DIFF" > "$ITER_DIR/prev-diff-names.txt"
 
@@ -226,22 +240,17 @@ if [ "$COUNT" -ge 1 ] && [ -n "$ITER_CWD" ] && [ -d "$ITER_CWD" ]; then
         STALL_COUNT=$(cat "$ITER_DIR/stall-count.txt" 2>/dev/null || echo "0")
         STALL_COUNT=$((STALL_COUNT + 1))
         echo "$STALL_COUNT" > "$ITER_DIR/stall-count.txt"
-        echo "[kick-session] stall=$STALL_COUNT" >> "$ITER_DIR/debug.log" 2>/dev/null || true
-        if [ "$STALL_COUNT" -ge 2 ]; then
-            _record_end "stall — no code changes" "0.0"
-            echo "Iterate: stopped — no new code changes for $STALL_COUNT iterations" >&2
-            rm -f "$COUNTER_FILE" "$TASK_FILE" "$ITER_DIR/session.txt"
-            exit 0
-        fi
+        echo "[kick-session] stall=$STALL_COUNT (advisory)" >> "$ITER_DIR/debug.log" 2>/dev/null || true
+        STALL_WARNING="WARNING: No new code changes for $STALL_COUNT iterations. Try a different approach."
     else
         echo "0" > "$ITER_DIR/stall-count.txt"
     fi
 fi
 
-# --- Step 2: Evaluate ---
-SHOULD_CONTINUE=true
+# --- Step 2: Evaluate (advisory — never stops the loop) ---
 EVAL_FEEDBACK=""
 TREND_FEEDBACK=""
+EVAL_WARNINGS=""
 
 if [ "$COUNT" -ge 0 ] && [ -f "$ITER_OUTPUT" ] && [ -s "$ITER_OUTPUT" ]; then
     CONTEXT_FILE="$ITER_DIR/context-eval-${COUNT}.txt"
@@ -279,10 +288,6 @@ with open(sys.argv[4]) as f:
 store_eval(int(sys.argv[2]), data.get("scores", {}), sys.argv[3], data.get("eval_method", "unknown"))
 PYEOF
 
-    if [ "$EVAL_EXIT" -eq 10 ]; then
-        SHOULD_CONTINUE=false
-    fi
-
     # Skip eval/trend feedback if fallback
     IS_FALLBACK=$(echo "$EVAL_RESULT" | jq -r '
         .eval_method == "fallback"
@@ -306,17 +311,13 @@ PYEOF
                       else "" end)
             else "" end
         ' 2>/dev/null) || TREND_FEEDBACK=""
-    fi
-fi
 
-# --- Stop ---
-if [ "$SHOULD_CONTINUE" = false ]; then
-    STOP_REASON=$(echo "$EVAL_RESULT" | jq -r '.stop_reason // "evaluation threshold"' 2>/dev/null) || STOP_REASON="evaluation threshold"
-    _final_score=$(echo "$EVAL_RESULT" | jq -r '.scores["Task Completion"].score // 0' 2>/dev/null || echo "0.0")
-    _record_end "$STOP_REASON" "$_final_score"
-    echo "Iterate: stopped — ${STOP_REASON}" >&2
-    rm -f "$COUNTER_FILE" "$TASK_FILE" "$ITER_DIR/session.txt"
-    exit 0
+        EVAL_WARNINGS=$(echo "$EVAL_RESULT" | jq -r '
+            if .warnings and (.warnings | length) > 0 then
+                "\n## Eval Warnings\n" + (.warnings | map("- " + .) | join("\n"))
+            else "" end
+        ' 2>/dev/null) || EVAL_WARNINGS=""
+    fi
 fi
 
 # --- Step 3: Retrieve relevant context for next iteration ---
@@ -328,16 +329,31 @@ RETRIEVED_CONTEXT=$(python3.12 "$SCRIPTS_DIR/retrieve_context.py" \
     --n-results 8 \
     2>> "$ITER_DIR/debug.log") || RETRIEVED_CONTEXT="No previous context available."
 
+# --- Collect advisory warnings ---
+ALL_WARNINGS=""
+[ -n "$SEM_WARNING" ] && ALL_WARNINGS="${ALL_WARNINGS}${SEM_WARNING}\n"
+[ -n "$STALL_WARNING" ] && ALL_WARNINGS="${ALL_WARNINGS}${STALL_WARNING}\n"
+[ -n "$EVAL_WARNINGS" ] && ALL_WARNINGS="${ALL_WARNINGS}${EVAL_WARNINGS}\n"
+
+# --- Git diff summary for last iteration (so Claude sees what changed) ---
+DIFF_SUMMARY=""
+if [ -n "$ITER_CWD" ] && [ -d "$ITER_CWD" ]; then
+    # Prefer uncommitted changes (iterate sessions don't commit between iterations)
+    _ds=$(cd "$ITER_CWD" 2>/dev/null && { _u=$(git diff HEAD --stat --no-color 2>/dev/null | tail -1); [ -n "$_u" ] && echo "$_u" || git diff HEAD~1 HEAD --stat --no-color 2>/dev/null | tail -1; } || echo "")
+    [ -n "$_ds" ] && DIFF_SUMMARY="**Last iteration diff:** $_ds"
+fi
+
 # --- Step 4: Return inline via stderr → Claude sees it and keeps working ---
 cat >&2 <<EOF
 ITERATION ${NEXT}/${ITERATIONS} — ${TASK}
 Working directory: ${ITER_CWD}
-
+$([ -n "$DIFF_SUMMARY" ] && echo "$DIFF_SUMMARY")
+$([ -n "$ALL_WARNINGS" ] && echo -e "\n${ALL_WARNINGS}")
 ${RETRIEVED_CONTEXT}
 ${EVAL_FEEDBACK}
 ${TREND_FEEDBACK}
 
-Do NOT repeat prior work. Focus on what's missing or broken. State clearly if complete.
+Do NOT repeat prior work. Focus on what's missing or broken.
 EOF
 
 exit 2

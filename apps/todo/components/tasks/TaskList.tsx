@@ -4,17 +4,23 @@ import { useState, useRef, useEffect, useTransition } from "react";
 import { Button, Flex } from "@radix-ui/themes";
 import {
   DndContext,
+  DragOverlay,
   closestCenter,
+  KeyboardSensor,
   PointerSensor,
+  TouchSensor,
   useSensor,
   useSensors,
   type DragEndEvent,
+  type DragStartEvent,
 } from "@dnd-kit/core";
 import {
   SortableContext,
+  sortableKeyboardCoordinates,
   verticalListSortingStrategy,
   arrayMove,
 } from "@dnd-kit/sortable";
+import { restrictToVerticalAxis } from "@dnd-kit/modifiers";
 import { TaskCard } from "./TaskCard";
 import { TaskDetailModal } from "./TaskDetailModal";
 import { loadMoreTasks, reorderTasksAction } from "@/lib/actions/tasks";
@@ -48,13 +54,25 @@ export function TaskList({
   const [isPending, startTransition] = useTransition();
   const knownIds = useRef(new Set(initialTasks.map((t) => t.id)));
   const [openTaskId, setOpenTaskId] = useState<string | null>(null);
+  const [activeId, setActiveId] = useState<string | null>(null);
   const hasMore = tasks.length < totalCount;
 
   const sensors = useSensors(
-    useSensor(PointerSensor, { activationConstraint: { distance: 5 } })
+    useSensor(PointerSensor, { activationConstraint: { distance: 5 } }),
+    useSensor(TouchSensor, {
+      activationConstraint: { delay: 200, tolerance: 5 },
+    }),
+    useSensor(KeyboardSensor, {
+      coordinateGetter: sortableKeyboardCoordinates,
+    })
   );
 
+  function handleDragStart(event: DragStartEvent) {
+    setActiveId(event.active.id as string);
+  }
+
   function handleDragEnd(event: DragEndEvent) {
+    setActiveId(null);
     const { active, over } = event;
     if (!over || active.id === over.id) return;
 
@@ -63,7 +81,11 @@ export function TaskList({
     const reordered = arrayMove(tasks, oldIndex, newIndex);
     setTasks(reordered);
 
-    const updates = reordered.map((t, i) => ({ id: t.id, position: i + 1 }));
+    const lo = Math.min(oldIndex, newIndex);
+    const hi = Math.max(oldIndex, newIndex);
+    const updates = reordered
+      .slice(lo, hi + 1)
+      .map((t, i) => ({ id: t.id, position: lo + i + 1 }));
     startTransition(async () => {
       await reorderTasksAction(updates);
     });
@@ -118,6 +140,8 @@ export function TaskList({
       <DndContext
         sensors={sensors}
         collisionDetection={closestCenter}
+        modifiers={[restrictToVerticalAxis]}
+        onDragStart={handleDragStart}
         onDragEnd={handleDragEnd}
       >
         <SortableContext
@@ -133,6 +157,15 @@ export function TaskList({
             />
           ))}
         </SortableContext>
+        <DragOverlay dropAnimation={null}>
+          {activeId ? (() => {
+            const idx = tasks.findIndex((t) => t.id === activeId);
+            const task = tasks[idx];
+            return task ? (
+              <TaskCard task={task} index={idx + 1} onOpen={() => {}} isOverlay />
+            ) : null;
+          })() : null}
+        </DragOverlay>
       </DndContext>
       {hasMore && (
         <Button
