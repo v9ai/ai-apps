@@ -1,0 +1,26 @@
+{
+  "name": "travel",
+  "private": true,
+  "scripts": {
+    "dev": "next dev --turbopack -p 3010",
+    "generate": "cd backend && uv run generate",
+    "build": "next build",
+    "prepare": "panda codegen",
+    "start": "next start"
+  },
+  "dependencies": {
+    "@vis.gl/react-google-maps": "^1.5.0",
+    "next": "latest",
+    "react": "^19",
+    "react-dom": "^19"
+  },
+  "devDependencies": {
+    "@pandacss/dev": "^1.9.0",
+    "@types/node": "^20",
+    "@types/react": "^19",
+    "@types/react-dom": "^19",
+    "autoprefixer": "^10.4.19",
+    "postcss": "^8",
+    "typescript": "^5"
+  }
+}

@@ -321,8 +321,8 @@ observeBlockButtons();
 const SEND_EMAIL_BTN_ATTR = "data-nomad-send-email-btn";
 
 function extractEmailsFromText(text: string): string[] {
-  const emailRegex = /[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}/g;
-  return [...new Set(text.match(emailRegex) || [])];
+  const emailRegex = /(?<=\s|^|[(<,;])([a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,})/g;
+  return [...new Set([...text.matchAll(emailRegex)].map((m) => m[1]))];
 }
 
 function extractPostData() {

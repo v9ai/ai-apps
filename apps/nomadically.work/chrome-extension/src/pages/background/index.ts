@@ -99,6 +99,13 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
       emails: string[];
     };
 
+    console.log("[sendEmail] ── Post data from Chrome ──");
+    console.log("[sendEmail]   authorName:", authorName);
+    console.log("[sendEmail]   authorSubtitle:", authorSubtitle);
+    console.log("[sendEmail]   emails:", emails);
+    console.log("[sendEmail]   postUrl:", postUrl);
+    console.log("[sendEmail]   postText:", postText.slice(0, 300));
+
     if (!emails.length) {
       sendResponse({ success: false, error: "No email found in post" });
       return true;

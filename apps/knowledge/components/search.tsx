@@ -1,8 +1,8 @@
 "use client";
 
-import { useState, useRef, useEffect, useCallback } from "react";
+import { useState, useMemo, useRef, useEffect, useCallback } from "react";
 import Link from "next/link";
-import type { GroupedLessons } from "@/lib/articles";
+import type { GroupedLessons, DifficultyLevel } from "@/lib/articles";
 import type { SearchResult } from "@/lib/data";
 import { searchContent } from "@/lib/actions/search";
 import { CategoryGrid } from "./category-grid";
@@ -27,12 +27,40 @@ interface Props {
   groups: GroupedLessons[];
 }
 
+const DIFFICULTY_FILTERS: { value: DifficultyLevel | "all"; label: string }[] = [
+  { value: "all", label: "All Levels" },
+  { value: "beginner", label: "Beginner" },
+  { value: "intermediate", label: "Intermediate" },
+  { value: "advanced", label: "Advanced" },
+];
+
 export function Search({ groups }: Props) {
   const [query, setQuery] = useState("");
   const [results, setResults] = useState<SearchResult[]>([]);
   const [searching, setSearching] = useState(false);
+  const [diffFilter, setDiffFilter] = useState<DifficultyLevel | "all">("all");
   const inputRef = useRef<HTMLInputElement>(null);
   const timerRef = useRef<ReturnType<typeof setTimeout>>(undefined);
+
+  const lessonLookup = useMemo(() => {
+    const map = new Map<string, { category: string; icon: string; catSlug: string; difficulty: string }>();
+    for (const g of groups) {
+      for (const a of g.articles) {
+        map.set(a.slug, { category: g.category, icon: g.meta.icon, catSlug: g.meta.slug, difficulty: a.difficulty });
+      }
+    }
+    return map;
+  }, [groups]);
+
+  const filteredGroups = useMemo(() => {
+    if (diffFilter === "all") return groups;
+    return groups
+      .map((g) => ({
+        ...g,
+        articles: g.articles.filter((a) => a.difficulty === diffFilter),
+      }))
+      .filter((g) => g.articles.length > 0);
+  }, [groups, diffFilter]);
 
   // Cmd+K / Ctrl+K to focus
   useEffect(() => {
@@ -95,6 +123,25 @@ export function Search({ groups }: Props) {
         )}
       </div>
 
+      {!hasQuery && (
+        <div className="difficulty-filter">
+          {DIFFICULTY_FILTERS.map((f) => (
+            <button
+              key={f.value}
+              className={`difficulty-filter-btn${f.value !== "all" ? ` difficulty-filter-btn--${f.value}` : ""}${diffFilter === f.value ? " difficulty-filter-btn--active" : ""}`}
+              onClick={() => setDiffFilter(f.value)}
+            >
+              {f.label}
+              {f.value !== "all" && (
+                <span className="difficulty-filter-count">
+                  {groups.reduce((sum, g) => sum + g.articles.filter((a) => a.difficulty === f.value).length, 0)}
+                </span>
+              )}
+            </button>
+          ))}
+        </div>
+      )}
+
       {hasQuery ? (
         <div className="search-results">
           {searching && results.length === 0 && (
@@ -116,29 +163,42 @@ export function Search({ groups }: Props) {
               </button>
             </div>
           )}
-          {results.map((r, i) => (
-            <Link
-              key={`${r.resultType}-${r.title}-${i}`}
-              href={`/${r.lessonSlug}`}
-              className="search-result-card"
-            >
-              <div className="search-result-header">
-                <span className="badge-pill badge-pill--glass search-result-type">
-                  {typeBadgeLabel(r.resultType)}
-                </span>
-                <span className="search-result-title">{r.title}</span>
-              </div>
-              <div className="search-result-snippet">
-                {highlightSnippet(r.snippet)}
-              </div>
-              {r.resultType !== "lesson" && r.lessonTitle && (
-                <div className="search-result-lesson">{r.lessonTitle}</div>
-              )}
-            </Link>
-          ))}
+          {results.map((r, i) => {
+            const meta = r.lessonSlug ? lessonLookup.get(r.lessonSlug) : undefined;
+            return (
+              <Link
+                key={`${r.resultType}-${r.title}-${i}`}
+                href={`/${r.lessonSlug}`}
+                className={`search-result-card${meta ? ` cat-${meta.catSlug}` : ""}`}
+              >
+                <div className="search-result-header">
+                  <span className="badge-pill badge-pill--glass search-result-type">
+                    {typeBadgeLabel(r.resultType)}
+                  </span>
+                  {meta && (
+                    <span className="badge-pill badge-pill--category search-result-cat">
+                      {meta.icon} {meta.category}
+                    </span>
+                  )}
+                  {meta && (
+                    <span className={`article-card-level article-card-level--${meta.difficulty}`}>
+                      {meta.difficulty === "beginner" ? "Beginner" : meta.difficulty === "intermediate" ? "Mid" : "Adv"}
+                    </span>
+                  )}
+                  <span className="search-result-title">{r.title}</span>
+                </div>
+                <div className="search-result-snippet">
+                  {highlightSnippet(r.snippet)}
+                </div>
+                {r.resultType !== "lesson" && r.lessonTitle && (
+                  <div className="search-result-lesson">{r.lessonTitle}</div>
+                )}
+              </Link>
+            );
+          })}
         </div>
       ) : (
-        <CategoryGrid groups={groups} />
+        <CategoryGrid groups={filteredGroups} />
       )}
     </>
   );

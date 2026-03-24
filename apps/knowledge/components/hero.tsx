@@ -2,10 +2,12 @@ export function Hero({
   lessonCount,
   domainCount,
   wordCount,
+  readingHours,
 }: {
   lessonCount: number;
   domainCount: number;
   wordCount: number;
+  readingHours: number;
 }) {
   const wordLabel =
     wordCount >= 1000 ? `${Math.round(wordCount / 1000)}K+` : String(wordCount);
@@ -36,8 +38,12 @@ export function Hero({
             <span className="hero-stat-label">Skill Areas</span>
           </div>
           <div className="hero-stat">
+            <span className="hero-stat-number">{readingHours}h</span>
+            <span className="hero-stat-label">Reading Time</span>
+          </div>
+          <div className="hero-stat">
             <span className="hero-stat-number">{wordLabel}</span>
-            <span className="hero-stat-label">Words of Explanation</span>
+            <span className="hero-stat-label">Words</span>
           </div>
         </div>
         <a href="#lessons" className="hero-cta">

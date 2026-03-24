@@ -9,12 +9,53 @@ Flow:
 import json
 import os
 import sys
+from pathlib import Path
 
 from langchain_core.messages import HumanMessage, SystemMessage
 from langchain_openai import ChatOpenAI
 
 from .prompts import ANALYZE_POST_SYSTEM, DRAFT_EMAIL_SYSTEM, REFINE_EMAIL_SYSTEM
 from .state import EmailOutreachState
+
+# ---------------------------------------------------------------------------
+# Resume background — loaded once from resume-data.json
+# ---------------------------------------------------------------------------
+
+_RESUME_PATH = (
+    Path(__file__).resolve().parents[4]
+    / "src" / "apollo" / "resolvers" / "resume" / "resume-data.json"
+)
+
+
+_CRYPTO_KEYWORDS = {"crypto", "defi", "blockchain", "dydx", "hyperliquid", "trading"}
+
+
+def _has_crypto(text: str) -> bool:
+    lower = text.lower()
+    return any(kw in lower for kw in _CRYPTO_KEYWORDS)
+
+
+def _load_resume_background() -> str:
+    data = json.loads(_RESUME_PATH.read_text())
+    basics = data["basics"]
+    lines = [
+        f"Background on {basics['name']}:",
+        f"- {basics['summary']}",
+        f"- Key skills: {basics['keySkills']}",
+    ]
+    for job in data["work"][:2]:
+        if not _has_crypto(job.get("summary", "")):
+            lines.append(f"- {job['position']} at {job['name']} ({job['years']})")
+    for proj in data.get("activities", {}).get("aiProjects", []):
+        if not _has_crypto(proj.get("description", "")):
+            lines.append(f"- AI Project: {proj['name']} — {proj['description']}")
+    for vol in data.get("volunteer", []):
+        if not _has_crypto(vol.get("summary", "")):
+            lines.append(f"- Open Source: {vol['organization']} — {vol['position']}")
+    return "\n".join(lines)
+
+
+RESUME_BACKGROUND = _load_resume_background()
 
 # ---------------------------------------------------------------------------
 # LLM factories (same pattern as application_prep/nodes.py)
@@ -254,8 +295,10 @@ Key quotes: {', '.join(analysis.get('key_quotes', []))}
 --- Tone ---
 {tone}"""
 
+    system_prompt = DRAFT_EMAIL_SYSTEM.format(resume_background=RESUME_BACKGROUND)
+
     messages = [
-        SystemMessage(content=DRAFT_EMAIL_SYSTEM),
+        SystemMessage(content=system_prompt),
         HumanMessage(content=user_prompt),
     ]
 
@@ -266,7 +309,7 @@ Key quotes: {', '.join(analysis.get('key_quotes', []))}
     except (json.JSONDecodeError, TypeError):
         text = response.content.strip()
         draft = {
-            "subject": f"Re: your LinkedIn post",
+            "subject": "Re: your LinkedIn post",
             "text": text,
             "html": "".join(f"<p>{p}</p>" for p in text.split("\n\n") if p.strip()),
         }

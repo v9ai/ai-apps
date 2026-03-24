@@ -69,12 +69,13 @@ if [ "$RESET" = true ]; then
         rm -rf "$ITER_DIR" 2>/dev/null || true
         _cleaned=1
     fi
-    # Also scan for sessions matching this CWD (handles missing session ID)
+    # Also scan for sessions matching this CWD or git root (handles missing session ID)
     _my_cwd=$(pwd)
+    _my_git_root=$(git rev-parse --show-toplevel 2>/dev/null || echo "$_my_cwd")
     for _rd in /tmp/claude-iterate-*/; do
         [ -f "${_rd}task.txt" ] || continue
         _rd_cwd=$(cat "${_rd}cwd.txt" 2>/dev/null || echo "")
-        if [ "$_rd_cwd" = "$_my_cwd" ]; then
+        if [ "$_rd_cwd" = "$_my_cwd" ] || [ "$_rd_cwd" = "$_my_git_root" ]; then
             rm -rf "$_rd" 2>/dev/null || true
             _cleaned=1
         fi
@@ -220,6 +221,18 @@ else:
 " "$SCRIPTS_DIR" 2>/dev/null || true
 fi
 
+# Clean up any prior iterate sessions for the same CWD to avoid
+# the stop hook matching the wrong session when multiple exist.
+_git_root=$(git rev-parse --show-toplevel 2>/dev/null || pwd)
+for _old_d in /tmp/claude-iterate-*/; do
+    [ -f "${_old_d}task.txt" ] || continue
+    [ "${_old_d%/}" = "$ITER_DIR" ] && continue
+    _old_cwd=$(cat "${_old_d}cwd.txt" 2>/dev/null || echo "")
+    if [ "$_old_cwd" = "$_git_root" ] || [ "$_old_cwd" = "$(pwd)" ]; then
+        rm -rf "$_old_d" 2>/dev/null || true
+    fi
+done
+
 rm -rf "$ITER_DIR" 2>/dev/null || true
 mkdir -p "$ITER_DIR"
 
@@ -227,7 +240,9 @@ echo "1" > "$ITER_DIR/counter"  # 1-based — kick-session.sh uses COUNT > ITERA
 echo "$ITERATIONS" > "$ITER_DIR/iterations.txt"
 echo "$TASK" > "$ITER_DIR/task.txt"
 echo "[]" > "$ITER_DIR/scores.json"
-pwd > "$ITER_DIR/cwd.txt"
+# Use git root so the hook CWD always matches regardless of which subdir
+# the Bash tool happens to be in when start.sh runs.
+echo "$_git_root" > "$ITER_DIR/cwd.txt"
 echo "${CLAUDE_CODE_SESSION_ID:-}" > "$ITER_DIR/session.txt"
 [ -n "$DONE_WHEN" ] && echo "$DONE_WHEN" > "$ITER_DIR/done-when.txt"
 

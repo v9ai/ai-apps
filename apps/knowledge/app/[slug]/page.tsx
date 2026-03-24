@@ -40,6 +40,8 @@ export default async function LessonPage({ params }: { params: Promise<{ slug: s
   const next = idx < allLessons.length - 1 ? allLessons[idx + 1] : null;
   const total = allLessons.length;
   const categoryLessons = allLessons.filter((l) => l.category === lesson.category);
+  const catIdx = categoryLessons.findIndex((l) => l.slug === slug);
+  const prerequisite = catIdx > 0 ? categoryLessons[catIdx - 1] : null;
 
   const [meta, related, audioMeta, prevMeta, nextMeta] = await Promise.all([
     getCategoryMeta(lesson.category),
@@ -60,7 +62,7 @@ export default async function LessonPage({ params }: { params: Promise<{ slug: s
           <div className="article-banner-breadcrumb">
             <Link href="/">&larr; all lessons</Link>
             <span className="sep">/</span>
-            <span>{meta.icon} {lesson.category}</span>
+            <Link href={`/#cat-${meta.slug}`}>{meta.icon} {lesson.category}</Link>
             <span className="sep">/</span>
             <span>#{String(lesson.number).padStart(2, "0")}</span>
           </div>
@@ -70,9 +72,15 @@ export default async function LessonPage({ params }: { params: Promise<{ slug: s
             categoryName={lesson.category}
           />
           <h1 className="article-banner-title">{lesson.title}</h1>
+          {lesson.excerpt && (
+            <p className="article-banner-excerpt">{lesson.excerpt}</p>
+          )}
           <div className="article-banner-badges">
             <span className="badge-pill badge-pill--category">
               {meta.icon} {lesson.category}
+            </span>
+            <span className={`badge-pill badge-pill--difficulty badge-pill--${lesson.difficulty}`}>
+              {lesson.difficulty === "beginner" ? "Beginner" : lesson.difficulty === "intermediate" ? "Intermediate" : "Advanced"}
             </span>
             <span className="badge-pill badge-pill--glass">
               ~{lesson.readingTimeMin} min read
@@ -83,6 +91,14 @@ export default async function LessonPage({ params }: { params: Promise<{ slug: s
               </span>
             )}
           </div>
+          {prerequisite && (
+            <div className="article-prereq">
+              <span className="article-prereq-label">Recommended prerequisite:</span>
+              <Link href={`/${prerequisite.slug}`} className="article-prereq-link">
+                #{String(prerequisite.number).padStart(2, "0")} {prerequisite.title}
+              </Link>
+            </div>
+          )}
         </div>
       </div>
 

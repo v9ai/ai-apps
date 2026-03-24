@@ -55,6 +55,19 @@ export function MarkdownProse({ content }: { content: string }) {
               </a>
             );
           },
+          blockquote: ({ children }) => {
+            const text = extractText(children);
+            let calloutType = "";
+            if (/^(Key Takeaway|Takeaway)/i.test(text)) calloutType = "takeaway";
+            else if (/^(Note|Info)/i.test(text)) calloutType = "note";
+            else if (/^(Warning|Caution)/i.test(text)) calloutType = "warning";
+            else if (/^(Tip|Pro tip|Best practice)/i.test(text)) calloutType = "tip";
+            return (
+              <blockquote className={calloutType ? `callout callout--${calloutType}` : undefined}>
+                {children}
+              </blockquote>
+            );
+          },
           pre: ({ children, ...props }) => {
             // Extract language from the code child
             let lang = "";

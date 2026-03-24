@@ -1,8 +1,22 @@
+import Link from "next/link";
+import { CATEGORIES, CATEGORY_META } from "@/lib/articles";
+
 export function Footer() {
   const year = new Date().getFullYear();
 
   return (
     <footer className="site-footer">
+      <div className="footer-cats">
+        {CATEGORIES.map(([, , name]) => {
+          const meta = CATEGORY_META[name];
+          if (!meta) return null;
+          return (
+            <Link key={name} href={`/#cat-${meta.slug}`} className="footer-cat-link">
+              <span>{meta.icon}</span> {name}
+            </Link>
+          );
+        })}
+      </div>
       <div className="footer-brand">
         <span className="footer-brand-dot" />
         <span className="footer-brand-title">AI Engineering</span>

@@ -4,8 +4,6 @@ import { addMinutes, startOfDay, startOfWeek, startOfMonth } from "date-fns";
 import type { GraphQLContext } from "../context";
 import { isAdminEmail } from "@/lib/admin";
 import { resend } from "@/lib/resend";
-import { spawn } from "node:child_process";
-import * as path from "node:path";
 import { generateText } from "ai";
 import { deepseek } from "@ai-sdk/deepseek";
 import {
@@ -1092,52 +1090,32 @@ Do not include any text before or after the JSON.`;
         args.input;
 
       try {
-        const langgraphDir = path.resolve(process.cwd(), "langgraph");
-        const pythonBin = path.join(langgraphDir, ".venv", "bin", "python");
-
-        const generated = await new Promise<{ subject: string; html: string; text: string }>(
-          (resolve, reject) => {
-            const child = spawn(
-              pythonBin,
-              ["-m", "cli", "email-outreach", "--json-input"],
-              { cwd: langgraphDir, stdio: ["pipe", "pipe", "pipe"], timeout: 55_000 },
-            );
-
-            let stdout = "";
-            let stderr = "";
-            child.stdout.on("data", (chunk: Buffer) => { stdout += chunk.toString(); });
-            child.stderr.on("data", (chunk: Buffer) => { stderr += chunk.toString(); });
-
-            child.stdin.write(JSON.stringify({
+        const res = await fetch(
+          `${process.env.LANGGRAPH_API_URL || "http://localhost:8002"}/email-outreach`,
+          {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({
               recipient_name: recipientName || "",
               recipient_role: recipientRole || "",
+              recipient_email: recipientEmail,
               post_text: (postText || "").slice(0, 2000),
               post_url: postUrl || "",
-              recipient_email: recipientEmail,
               tone: tone || "professional and friendly",
-            }));
-            child.stdin.end();
-
-            child.on("close", (code) => {
-              if (code !== 0) {
-                console.error("[email-outreach] stderr:", stderr.slice(-500));
-                reject(new Error(`Pipeline failed (exit ${code})`));
-                return;
-              }
-              try {
-                resolve(JSON.parse(stdout.trim()));
-              } catch {
-                console.error("[email-outreach] Invalid JSON:", stdout.slice(0, 500));
-                reject(new Error("Failed to parse pipeline output"));
-              }
-            });
-
-            child.on("error", (err) => reject(new Error(`Spawn error: ${err.message}`)));
+            }),
           },
         );
 
+        if (!res.ok) {
+          const err = await res.json().catch(() => ({ detail: `HTTP ${res.status}` }));
+          throw new Error(err.detail || `Pipeline failed (${res.status})`);
+        }
+
+        const generated = (await res.json()) as { subject: string; html: string; text: string };
+
         const result = await resend.instance.send({
           to: recipientEmail,
+          from: "Vadim Nicolai <contact@vadim.blog>",
           subject: generated.subject,
           html: generated.html,
           text: generated.text,

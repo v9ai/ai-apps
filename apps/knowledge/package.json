@@ -29,7 +29,12 @@
     "eval:rag:multiturn": "cd evals && DEEPEVAL_TELEMETRY_OPT_OUT=YES uv run deepeval test run test_rag_multiturn.py",
     "eval:rag:custom": "cd evals && DEEPEVAL_TELEMETRY_OPT_OUT=YES uv run deepeval test run test_rag_custom.py",
     "eval:rag:hyperparams": "cd evals && DEEPEVAL_TELEMETRY_OPT_OUT=YES uv run python test_rag_hyperparams.py",
-    "eval:rag:all": "cd evals && DEEPEVAL_TELEMETRY_OPT_OUT=YES uv run deepeval test run test_rag_triad.py test_rag_extended.py test_rag_multiturn.py test_rag_custom.py"
+    "eval:rag:all": "cd evals && DEEPEVAL_TELEMETRY_OPT_OUT=YES uv run deepeval test run test_rag_triad.py test_rag_extended.py test_rag_multiturn.py test_rag_custom.py",
+    "generate": "cd backend && uv run python -m graph.cli",
+    "generate:dry": "cd backend && uv run python -m graph.cli --dry-run",
+    "generate:missing": "cd backend && uv run python -m graph.cli --list-missing",
+    "generate:batch": "cd backend && uv run python -m graph.cli --batch",
+    "generate:test": "cd backend && uv run pytest tests/ -v"
   },
   "dependencies": {
     "@ai-apps/auth": "workspace:*",

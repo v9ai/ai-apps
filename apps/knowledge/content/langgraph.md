@@ -101,6 +101,52 @@ Conditional edges are the mechanism for implementing:
 - **Error recovery**: Route to fallback logic on failure
 - **Human-in-the-loop**: Route to a wait state for human approval
 
+### Command: Combined Routing and State Updates
+
+`Command` is a return type that combines a state update with an explicit routing directive in a single value. Instead of a node returning a plain dict (state update only) or a routing function returning a string (route only), `Command` lets a node do both atomically:
+
+```python
+from langgraph.types import Command
+
+def triage_agent(state: AgentState) -> Command:
+    """Classify the request and route to the appropriate specialist."""
+    classification = classifier_llm.invoke(state["messages"])
+
+    if classification == "billing":
+        return Command(
+            update={"messages": [classification_msg], "route": "billing"},
+            goto="billing_agent",
+        )
+    elif classification == "technical":
+        return Command(
+            update={"messages": [classification_msg], "route": "technical"},
+            goto="technical_agent",
+        )
+    else:
+        return Command(
+            update={"messages": [classification_msg]},
+            goto=END,
+        )
+
+# No need for a separate conditional_edges call — the node controls routing
+graph.add_node("triage", triage_agent)
+graph.add_node("billing_agent", billing_node)
+graph.add_node("technical_agent", technical_node)
+graph.add_edge(START, "triage")
+# billing_agent and technical_agent edges are determined by Command at runtime
+```
+
+`Command` is also the mechanism for resuming a graph after an `interrupt()` (see Human-in-the-Loop section):
+
+```python
+# Resume a paused graph with human input
+agent.invoke(Command(resume={"approved": True}), config=config)
+```
+
+When to use `Command` vs `add_conditional_edges`:
+- **`Command`**: When the routing decision is best made inside the node, alongside the state update that motivated the decision. Preferred for multi-agent handoffs where the current agent decides who handles next.
+- **`add_conditional_edges`**: When routing is a pure function of state, separate from computation. Preferred when multiple nodes share the same routing logic.
+
 ### The Send() Primitive for Parallel Fan-Out
 
 `Send()` dispatches work to a node with a specific state payload, enabling the map-reduce pattern within a graph:
@@ -220,6 +266,57 @@ old_config = history[3].config  # go back to step 3
 agent.invoke({"messages": [("user", "Try a different approach")]}, config=old_config)
 ```
 
+## Cross-Thread Memory with BaseStore
+
+Checkpoints are *per-thread* — each `thread_id` gets its own isolated state history. For knowledge that should persist *across* threads (user preferences, learned facts, long-term summaries), LangGraph provides the `BaseStore` abstraction:
+
+```python
+from langgraph.store.memory import InMemoryStore
+from langgraph.store.postgres import AsyncPostgresStore
+from langgraph.types import RunnableConfig
+from langgraph.graph import StateGraph, START, END
+
+# Development: in-memory store
+store = InMemoryStore()
+
+# Production: PostgreSQL-backed store
+# store = AsyncPostgresStore.from_conn_string("postgresql://...")
+
+agent = graph.compile(checkpointer=memory, store=store)
+
+# In a node, access the store via the RunnableConfig
+def personalized_agent(state: AgentState, config: RunnableConfig) -> dict:
+    # store is injected via the config's get_store() accessor
+    store = config["configurable"].get("__store")
+    user_id = config["configurable"]["user_id"]
+
+    # Read user preferences from the cross-thread store
+    namespace = ("user_preferences", user_id)
+    prefs = store.get(namespace, "preferences")
+    user_prefs = prefs.value if prefs else {}
+
+    response = llm.invoke(build_prompt(state["messages"], user_prefs))
+
+    # Write a new preference learned during this conversation
+    if learned_preference := extract_preference(response):
+        store.put(namespace, "preferences", {**user_prefs, **learned_preference})
+
+    return {"messages": [response]}
+```
+
+Store namespaces are tuples of strings — they act like a hierarchical key space. Common patterns:
+- `("user_preferences", user_id)` — per-user settings
+- `("memories", user_id)` — episodic memory summaries
+- `("knowledge", "global")` — shared facts across all users
+
+The distinction between checkpoints and store:
+| | Checkpoint | Store |
+|---|---|---|
+| Scope | Single thread | Cross-thread |
+| Content | Full graph state at each step | Arbitrary key-value data |
+| Use case | Pause/resume, time-travel | Long-term memory, user profiles |
+| Lifecycle | Tied to thread_id | Independent of execution |
+
 ## Human-in-the-Loop Patterns
 
 LangGraph supports interrupting graph execution at specific nodes, waiting for human input, and then resuming:
@@ -257,6 +354,34 @@ agent.invoke(Command(resume={"approved": True}), config=config)
 ```
 
 This pattern is essential for production agent systems where certain actions (database writes, API calls, financial transactions) require human approval. The graph state is persisted at the interrupt point, so the human can take arbitrary time to respond.
+
+### Updating State Externally with `update_state()`
+
+Beyond `interrupt()` + `Command(resume=...)`, LangGraph lets you inject state changes into a paused or completed thread without resuming execution:
+
+```python
+# Inspect current state of a paused thread
+current_state = agent.get_state(config)
+print(current_state.values["messages"])
+print(current_state.next)  # which nodes will run next
+
+# Inject an external message into the state (e.g., webhook result)
+agent.update_state(
+    config,
+    {"messages": [{"role": "tool", "content": "Payment confirmed: $47.50", "tool_call_id": "tc_123"}]},
+    as_node="tools",  # attribute this update to the "tools" node
+)
+
+# Now resume — the graph sees the injected tool result as if the tools node ran
+agent.invoke(None, config=config)
+```
+
+`update_state()` is used when:
+- A human reviewer edits the agent's draft before continuing
+- An external system (webhook, queue) delivers an async result the graph was waiting on
+- You want to correct a mistake in state without replaying the full history
+
+The `as_node` parameter controls which node's reducers are applied to the update, and determines which node LangGraph considers "next" after the injection.
 
 ## Subgraph Composition
 
@@ -302,6 +427,119 @@ Subgraphs run with their own internal state, but LangGraph handles state mapping
 - **Reuse**: A research subgraph can be embedded in multiple parent workflows
 - **Encapsulation**: Internal implementation can change without affecting the parent graph
 
+## Runtime Configuration
+
+Graphs can be parameterized at runtime using the `configurable` dict in the config. This avoids hardcoding values like model names, system prompts, or feature flags into nodes:
+
+```python
+from langchain_core.runnables import RunnableConfig
+
+def call_model(state: AgentState, config: RunnableConfig) -> dict:
+    """A node that uses configurable parameters."""
+    configurable = config.get("configurable", {})
+
+    # Read runtime parameters with defaults
+    model_name = configurable.get("model", "claude-sonnet-4-6")
+    system_prompt = configurable.get("system_prompt", "You are a helpful assistant.")
+    temperature = configurable.get("temperature", 0.0)
+
+    model = ChatAnthropic(model=model_name, temperature=temperature)
+    response = model.invoke([SystemMessage(system_prompt)] + state["messages"])
+    return {"messages": [response]}
+
+# Pass configuration at invocation time
+result = agent.invoke(
+    {"messages": [("user", "Hello")]},
+    config={
+        "configurable": {
+            "thread_id": "user-123",           # checkpointer thread
+            "model": "claude-opus-4-6",        # override model
+            "system_prompt": "You are a concise assistant.",
+        }
+    }
+)
+```
+
+For structured configuration with validation, use `TypedDict` or Pydantic to define the configurable schema and annotate the graph with it:
+
+```python
+from typing import TypedDict, Optional
+
+class GraphConfig(TypedDict, total=False):
+    model: str
+    system_prompt: str
+    max_tokens: int
+    user_id: str
+
+# The graph's config_schema documents the expected configurable keys
+graph = StateGraph(AgentState, config_schema=GraphConfig)
+```
+
+## Error Handling in Nodes
+
+LangGraph does not automatically retry failed nodes. If a node raises an exception, the graph execution stops and the exception propagates to the caller. For resilient production graphs, handle errors explicitly:
+
+```python
+import traceback
+
+def robust_tool_node(state: AgentState) -> dict:
+    """A tool node with error handling."""
+    tool_call = state["messages"][-1].tool_calls[0]
+
+    try:
+        result = execute_tool(tool_call)
+        return {"messages": [ToolMessage(content=str(result), tool_call_id=tool_call["id"])]}
+    except TimeoutError:
+        return {"messages": [ToolMessage(
+            content="Tool timed out. Try with a simpler query.",
+            tool_call_id=tool_call["id"],
+        )]}
+    except Exception as e:
+        # Return the error as a tool message so the agent can recover
+        return {"messages": [ToolMessage(
+            content=f"Tool error: {type(e).__name__}: {str(e)}",
+            tool_call_id=tool_call["id"],
+        )]}
+
+def agent_node(state: AgentState) -> dict:
+    """An agent node that handles LLM errors."""
+    try:
+        response = llm.invoke(state["messages"])
+        return {"messages": [response]}
+    except RateLimitError:
+        # Back off and signal a retry
+        time.sleep(5)
+        response = llm.invoke(state["messages"])
+        return {"messages": [response]}
+```
+
+For transient errors (rate limits, network failures), LangGraph integrates with LangChain's retry logic:
+
+```python
+from langchain_anthropic import ChatAnthropic
+
+# Built-in retry with exponential backoff
+model = ChatAnthropic(
+    model="claude-sonnet-4-6",
+    max_retries=3,  # automatic retry on transient errors
+)
+```
+
+A common pattern for graceful degradation is a fallback node — if the primary node fails, a conditional edge routes to a simpler fallback:
+
+```python
+def should_fallback(state: AgentState) -> str:
+    last_msg = state["messages"][-1]
+    if getattr(last_msg, "error", None):
+        return "fallback"
+    return "continue"
+
+graph.add_conditional_edges("primary_agent", should_fallback, {
+    "fallback": "simple_agent",
+    "continue": END,
+})
+```
+
 ## Streaming
 
 LangGraph supports fine-grained streaming for real-time user experiences:
@@ -336,6 +574,46 @@ Stream modes:
 - `"updates"`: Stream only the state updates (deltas) from each node
 - `"messages"`: Stream LLM messages token-by-token
 - Event-level streaming via `astream_events` for the most granular control
+
+### Async Nodes
+
+For I/O-heavy graphs (LLM calls, tool invocations, database reads), define nodes as async functions to run them concurrently:
+
+```python
+import asyncio
+
+async def async_search_node(state: AgentState) -> dict:
+    """Async node — doesn't block the event loop during I/O."""
+    results = await search_client.asearch(state["query"])
+    return {"context": "\n".join(results)}
+
+async def async_llm_node(state: AgentState) -> dict:
+    response = await model.ainvoke(state["messages"])
+    return {"messages": [response]}
+
+# For parallel I/O within a single node:
+async def parallel_fetch_node(state: AgentState) -> dict:
+    """Fetch from multiple sources concurrently."""
+    results = await asyncio.gather(
+        web_search.ainvoke(state["query"]),
+        vector_store.asearch(state["query"]),
+        knowledge_base.alookup(state["query"]),
+    )
+    return {"context": "\n\n".join(str(r) for r in results)}
+
+# Use .ainvoke() and .astream() when nodes are async
+async def main():
+    result = await agent.ainvoke({"messages": [("user", "...")]}, config=config)
+
+    async for chunk in agent.astream(
+        {"messages": [("user", "...")]},
+        config=config,
+        stream_mode="updates",
+    ):
+        print(chunk)
+```
+
+Async and sync nodes can coexist in the same graph — LangGraph handles the execution model internally.
 
 ## Common Graph Patterns
 

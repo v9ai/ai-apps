@@ -28,6 +28,8 @@ export async function getAllLessonsFromDb(): Promise<Lesson[]> {
     category: p.categoryName,
     wordCount: p.wordCount,
     readingTimeMin: p.readingTimeMin,
+    excerpt: "",
+    difficulty: "intermediate" as const,
   }));
 }
 
@@ -47,6 +49,8 @@ export async function getLessonBySlugFromDb(
     number: row.number,
     title: row.title,
     category: row.category.name,
+    excerpt: "",
+    difficulty: "intermediate" as const,
     wordCount: row.wordCount,
     readingTimeMin: row.readingTimeMin,
     content: row.content,
@@ -78,6 +82,8 @@ export async function getGroupedLessonsFromDb(): Promise<GroupedLessons[]> {
         number: p.number,
         title: p.title,
         category: cat.name,
+        excerpt: "",
+    difficulty: "intermediate" as const,
         wordCount: p.wordCount,
         readingTimeMin: p.readingTimeMin,
       })),
@@ -162,5 +168,7 @@ export async function getRelatedLessonsFromDb(
     category: p.categoryName,
     wordCount: p.wordCount,
     readingTimeMin: p.readingTimeMin,
+    excerpt: "",
+    difficulty: "intermediate" as const,
   }));
 }

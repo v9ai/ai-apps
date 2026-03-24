@@ -27,6 +27,7 @@
     "deploy:p": "vercel deploy --prod --cwd apps/podcasts",
     "dev:p": "turbo run dev --filter=humans-of-ai",
     "dev:br": "turbo run dev --filter=bricks",
+    "dev:tr": "turbo run dev --filter=travel",
     "deploy:all": "pnpm deploy:n && pnpm deploy:l && pnpm deploy:h && pnpm deploy:r && pnpm deploy:re && pnpm deploy:blog && pnpm deploy:p"
   },
   "devDependencies": {

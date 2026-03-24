@@ -3,12 +3,16 @@ import path from "path";
 
 const CONTENT_DIR = path.join(process.cwd(), "content");
 
+export type DifficultyLevel = "beginner" | "intermediate" | "advanced";
+
 export interface Lesson {
   slug: string;
   fileSlug: string;
   number: number;
   title: string;
   category: string;
+  excerpt: string;
+  difficulty: DifficultyLevel;
   wordCount: number;
   readingTimeMin: number;
 }
@@ -22,6 +26,7 @@ export interface CategoryMeta {
   icon: string;
   description: string;
   gradient: [string, string]; // [from, to] CSS colors
+  outcomes?: string[];
 }
 
 export interface GroupedLessons {
@@ -32,65 +37,87 @@ export interface GroupedLessons {
 
 // Ordered list of slugs — position (1-indexed) defines the lesson number
 const LESSON_SLUGS = [
+  // Foundations & Architecture (1-7)
   "transformer-architecture",
   "scaling-laws",
   "tokenization",
   "model-architectures",
   "inference-optimization",
   "pretraining-data",
+  "embeddings",
+  // Prompting & In-Context Learning (8-13)
   "prompt-engineering-fundamentals",
   "few-shot-chain-of-thought",
   "system-prompts",
   "structured-output",
   "prompt-optimization",
   "adversarial-prompting",
+  // RAG & Retrieval (14-19)
   "embedding-models",
   "vector-databases",
   "chunking-strategies",
   "retrieval-strategies",
   "advanced-rag",
   "rag-evaluation",
+  // Fine-tuning & Training (20-25)
   "fine-tuning-fundamentals",
   "lora-adapters",
   "rlhf-preference",
   "dataset-curation",
   "continual-learning",
   "distillation-compression",
+  // Agents & Tool Use (26-31)
   "function-calling",
   "agent-architectures",
   "multi-agent-systems",
   "agent-memory",
   "code-agents",
   "agent-evaluation",
+  // Evals & Testing (32-38)
   "eval-fundamentals",
   "benchmark-design",
   "llm-as-judge",
   "human-evaluation",
   "red-teaming",
-  "ci-cd-ai",
+  "eval-frameworks-comparison",
+  "deepeval-synthesizer",
+  // Infrastructure & Deployment (39-44)
   "llm-serving",
   "scaling-load-balancing",
   "cost-optimization",
   "observability",
   "edge-deployment",
   "ai-gateway",
+  // Safety & Alignment (45-51)
   "constitutional-ai",
   "guardrails-filtering",
   "hallucination-mitigation",
   "bias-fairness",
   "ai-governance",
   "interpretability",
+  "ci-cd-ai",
+  // Multimodal AI (52-55)
   "vision-language-models",
   "audio-speech-ai",
   "ai-for-code",
   "conversational-ai",
+  // Applied AI & Production (56-62)
+  "context-engineering",
   "search-recommendations",
   "production-patterns",
-  "ai-engineer-roadmap",
-  "context-engineering",
   "langgraph",
   "langgraph-red-teaming",
-  "eval-frameworks-comparison",
+  "llamaindex",
+  "ai-engineer-roadmap",
+  // Cloud & DevOps (63-70)
+  "aws",
+  "azure",
+  "gcp",
+  "docker",
+  "kubernetes",
+  "microservices",
+  "ci-cd",
+  "nodejs",
 ];
 
 export const LESSON_NUMBER: Record<string, number> = Object.fromEntries(
@@ -98,15 +125,17 @@ export const LESSON_NUMBER: Record<string, number> = Object.fromEntries(
 );
 
 export const CATEGORIES: [number, number, string][] = [
-  [1, 6, "Foundations & Architecture"],
-  [7, 12, "Prompting & In-Context Learning"],
-  [13, 18, "RAG & Retrieval"],
-  [19, 24, "Fine-tuning & Training"],
-  [25, 30, "Agents & Tool Use"],
-  [31, 36, "Evals & Testing"],
-  [37, 42, "Infrastructure & Deployment"],
-  [43, 48, "Safety & Alignment"],
-  [49, 59, "Multimodal & Applied"],
+  [1, 7, "Foundations & Architecture"],
+  [8, 13, "Prompting & In-Context Learning"],
+  [14, 19, "RAG & Retrieval"],
+  [20, 25, "Fine-tuning & Training"],
+  [26, 31, "Agents & Tool Use"],
+  [32, 38, "Evals & Testing"],
+  [39, 44, "Infrastructure & Deployment"],
+  [45, 51, "Safety & Alignment"],
+  [52, 55, "Multimodal AI"],
+  [56, 62, "Applied AI & Production"],
+  [63, 70, "Cloud & DevOps"],
 ];
 
 export const CATEGORY_META: Record<string, CategoryMeta> = {
@@ -115,54 +144,77 @@ export const CATEGORY_META: Record<string, CategoryMeta> = {
     icon: "🧱",
     description: "Start here — learn how transformers & LLMs actually work under the hood",
     gradient: ["#7c3aed", "#a78bfa"],
+    outcomes: ["Understand self-attention and transformer internals", "Grasp scaling laws and tokenization", "Compare model architectures (GPT, Llama, Mistral)"],
   },
   "Prompting & In-Context Learning": {
     slug: "prompting-icl",
     icon: "💡",
     description: "Master the art of talking to LLMs — from basic prompts to advanced techniques",
     gradient: ["#2563eb", "#60a5fa"],
+    outcomes: ["Write effective system prompts and few-shot examples", "Use chain-of-thought and structured output", "Defend against prompt injection attacks"],
   },
   "RAG & Retrieval": {
     slug: "rag-retrieval",
     icon: "🔍",
     description: "Learn to connect LLMs to your own data with retrieval-augmented generation",
     gradient: ["#0891b2", "#22d3ee"],
+    outcomes: ["Build embedding and vector search pipelines", "Choose chunking and retrieval strategies", "Evaluate RAG system quality end-to-end"],
   },
   "Fine-tuning & Training": {
     slug: "fine-tuning",
     icon: "🔧",
     description: "Customize models for your use case with LoRA, RLHF & hands-on training",
     gradient: ["#059669", "#34d399"],
+    outcomes: ["Fine-tune with LoRA and QLoRA adapters", "Curate high-quality training datasets", "Apply RLHF and preference optimization"],
   },
   "Agents & Tool Use": {
     slug: "agents-tools",
     icon: "🤖",
     description: "Build AI agents that can reason, use tools, and take actions autonomously",
     gradient: ["#d97706", "#fbbf24"],
+    outcomes: ["Implement function calling and tool use", "Design multi-agent architectures", "Build code agents with memory systems"],
   },
   "Evals & Testing": {
     slug: "evals-testing",
     icon: "📊",
     description: "Learn to measure what matters — testing and evaluating AI systems properly",
     gradient: ["#e11d48", "#fb7185"],
+    outcomes: ["Design benchmarks and evaluation suites", "Use LLM-as-judge and human evaluation", "Red-team models for safety and reliability"],
   },
   "Infrastructure & Deployment": {
     slug: "infra-deployment",
     icon: "⚡",
     description: "Ship AI to production — serving, scaling, and keeping costs under control",
     gradient: ["#6366f1", "#818cf8"],
+    outcomes: ["Serve LLMs with vLLM, TGI, and Triton", "Optimize inference costs at scale", "Set up observability and API gateways"],
   },
   "Safety & Alignment": {
     slug: "safety-alignment",
     icon: "🛡",
     description: "Build AI you can trust — guardrails, bias mitigation, and responsible practices",
     gradient: ["#ea580c", "#fb923c"],
+    outcomes: ["Implement content filtering and guardrails", "Mitigate hallucinations and bias", "Apply governance and interpretability practices"],
   },
-  "Multimodal & Applied": {
-    slug: "multimodal-applied",
+  "Multimodal AI": {
+    slug: "multimodal-ai",
+    icon: "👁",
+    description: "Go beyond text — vision, audio, code generation, and conversational AI systems",
+    gradient: ["#8b5cf6", "#c4b5fd"],
+    outcomes: ["Work with vision-language models", "Build speech and audio AI pipelines", "Design conversational and code AI systems"],
+  },
+  "Applied AI & Production": {
+    slug: "applied-production",
     icon: "🚀",
-    description: "Go beyond text — vision, audio, code AI, and your roadmap to becoming an AI engineer",
+    description: "Real-world patterns, frameworks, and your roadmap to becoming an AI engineer",
     gradient: ["#64748b", "#94a3b8"],
+    outcomes: ["Apply context engineering patterns", "Build with LangGraph and LlamaIndex", "Plan your AI engineer career path"],
+  },
+  "Cloud & DevOps": {
+    slug: "cloud-devops",
+    icon: "☁",
+    description: "Cloud platforms, containers, CI/CD, and the infrastructure backbone for AI systems",
+    gradient: ["#0284c7", "#38bdf8"],
+    outcomes: ["Deploy on AWS, Azure, and GCP", "Containerize with Docker and Kubernetes", "Set up CI/CD and microservice architectures"],
   },
 };
 
@@ -195,6 +247,39 @@ function extractTitle(content: string): string {
   return "Untitled";
 }
 
+function extractExcerpt(content: string, maxLen = 120): string {
+  const lines = content.split("\n");
+  let pastTitle = false;
+  for (const line of lines) {
+    if (!pastTitle) {
+      if (line.match(/^#\s+/)) pastTitle = true;
+      continue;
+    }
+    const trimmed = line.trim();
+    if (!trimmed || trimmed.startsWith("#") || trimmed.startsWith("```") || trimmed.startsWith("|") || trimmed.startsWith("-")) continue;
+    // Strip markdown bold/italic/links
+    const plain = trimmed
+      .replace(/\*\*(.+?)\*\*/g, "$1")
+      .replace(/\*(.+?)\*/g, "$1")
+      .replace(/\[(.+?)\]\(.+?\)/g, "$1")
+      .replace(/`(.+?)`/g, "$1");
+    if (plain.length < 30) continue;
+    return plain.length > maxLen ? plain.slice(0, maxLen - 1).replace(/\s\S*$/, "") + "..." : plain;
+  }
+  return "";
+}
+
+function getDifficulty(number: number): DifficultyLevel {
+  const cat = CATEGORIES.find(([lo, hi]) => number >= lo && number <= hi);
+  if (!cat) return "intermediate";
+  const [lo, hi] = cat;
+  const range = hi - lo;
+  const pos = (number - lo) / (range || 1);
+  if (pos <= 0.4) return "beginner";
+  if (pos <= 0.7) return "intermediate";
+  return "advanced";
+}
+
 let _lessons: Lesson[] | null = null;
 
 export function getAllLessons(): Lesson[] {
@@ -211,7 +296,9 @@ export function getAllLessons(): Lesson[] {
       const category = getCategory(number);
       const wordCount = raw.split(/\s+/).filter(Boolean).length;
       const readingTimeMin = Math.max(1, Math.round(wordCount / 200));
-      return { slug, fileSlug: slug, number, title, category, wordCount, readingTimeMin };
+      const excerpt = extractExcerpt(raw);
+      const difficulty = getDifficulty(number);
+      return { slug, fileSlug: slug, number, title, category, excerpt, difficulty, wordCount, readingTimeMin };
     })
     .sort((a, b) => a.number - b.number);
   return _lessons;
@@ -226,7 +313,9 @@ export function getLessonBySlug(slug: string): LessonWithContent | null {
   const category = getCategory(number);
   const wordCount = raw.split(/\s+/).filter(Boolean).length;
   const readingTimeMin = Math.max(1, Math.round(wordCount / 200));
-  return { slug, fileSlug: slug, number, title, category, wordCount, readingTimeMin, content: raw };
+  const excerpt = extractExcerpt(raw);
+  const difficulty = getDifficulty(number);
+  return { slug, fileSlug: slug, number, title, category, excerpt, difficulty, wordCount, readingTimeMin, content: raw };
 }
 
 export function getTotalWordCount(): number {

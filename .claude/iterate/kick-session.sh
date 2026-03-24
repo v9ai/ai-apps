@@ -19,6 +19,8 @@ INPUT=$(cat)
 
 SESSION_ID=$(echo "$INPUT" | jq -r '.session_id // empty')
 HOOK_CWD=$(echo "$INPUT" | jq -r '.cwd // empty')
+# Resolve to git root so we match start.sh which stores git root in cwd.txt
+HOOK_GIT_ROOT=$(cd "$HOOK_CWD" 2>/dev/null && git rev-parse --show-toplevel 2>/dev/null || echo "$HOOK_CWD")
 
 # Locate the iterate dir for this session.
 # 1. Try the canonical per-session path (session_id prefix).
@@ -46,10 +48,10 @@ if [ -z "$ITER_DIR" ]; then
             break
         fi
         # start.sh ran without CLAUDE_CODE_SESSION_ID (Bash tool env) → session.txt is empty.
-        # Match by stored CWD — prefer the most recently modified directory.
-        if [ -z "$_owner" ] && [ -n "$HOOK_CWD" ]; then
+        # Match by stored CWD (git root) — prefer the most recently modified directory.
+        if [ -z "$_owner" ] && [ -n "$HOOK_GIT_ROOT" ]; then
             _stored_cwd=$(cat "${_d}cwd.txt" 2>/dev/null || echo "")
-            if [ "$_stored_cwd" = "$HOOK_CWD" ]; then
+            if [ "$_stored_cwd" = "$HOOK_GIT_ROOT" ] || [ "$_stored_cwd" = "$HOOK_CWD" ]; then
                 _mtime=$(stat -f %m "${_d}task.txt" 2>/dev/null || stat -c %Y "${_d}task.txt" 2>/dev/null || echo "0")
                 if [ "$_mtime" -gt "$_best_mtime" ] 2>/dev/null; then
                     _best_mtime="$_mtime"

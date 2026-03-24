@@ -1,6 +1,6 @@
 # Knowledge
 
-AI engineering educational platform — 59 lessons across 7 categories with search, audio, knowledge graphs, and learning analytics.
+AI engineering educational platform — 70 lessons across 11 categories with search, audio, knowledge graphs, and learning analytics.
 
 ## Stack
 
@@ -9,6 +9,7 @@ AI engineering educational platform — 59 lessons across 7 categories with sear
 - **ORM**: Drizzle ORM
 - **UI**: Radix UI Themes
 - **AI**: OpenAI, DeepSeek
+- **Content Generation**: LangGraph (Python backend)
 - **Deployment**: Vercel
 
 ## Architecture
@@ -280,6 +281,26 @@ graph TD
     style evaluate fill:#ff9,stroke:#333
 ```
 
+### Content Generation Pipeline
+
+Sequential graph that generates knowledge base articles from a topic slug. Uses DeepSeek Reasoner (local or remote) through four LLM passes.
+
+```mermaid
+graph TD
+    START((Start)) --> research
+    research --> outline
+    outline --> draft
+    draft --> review
+    review --> save
+    save --> END((End))
+
+    style research fill:#9cf,stroke:#333
+    style outline fill:#ff9,stroke:#333
+    style draft fill:#bbf,stroke:#333
+    style review fill:#fbb,stroke:#333
+    style save fill:#bfb,stroke:#333
+```
+
 ### RAG Pipeline
 
 Query routing classifies intent (keyword vs conceptual), then retrieves via the best method (FTS/vector/hybrid), formats context, and generates an answer.
@@ -310,7 +331,7 @@ apps/knowledge/
 │   ├── audio-player.tsx    # TTS audio playback
 │   ├── toc.tsx             # Auto-generated ToC
 │   └── ...
-├── content/                # 59 markdown lesson files
+├── content/                # 70 markdown lesson files
 ├── src/db/
 │   ├── index.ts            # Neon serverless client
 │   └── schema.ts           # Drizzle schema (17 tables)
@@ -318,6 +339,9 @@ apps/knowledge/
 │   ├── data.ts             # DB/filesystem adapter
 │   ├── db/queries.ts       # DB query layer
 │   └── actions/            # Server actions
+├── backend/                # LangGraph content generation (Python)
+│   ├── graph/              # research → outline → draft → review → quality_check [→ revise] → save
+│   └── tests/              # 33 pytest tests
 ├── evals/                  # Python eval suite (DeepEval)
 ├── scripts/seed.ts         # DB seeder
 └── sql/setup.sql           # Neon setup (FTS, RPCs, mat views)
@@ -330,6 +354,12 @@ pnpm dev          # start on :3006
 pnpm db:push      # sync schema to Neon
 pnpm db:studio    # open Drizzle Studio
 pnpm seed         # seed DB from markdown files
+pnpm generate -- prompt-caching            # generate article via LangGraph
+pnpm generate:dry -- prompt-caching        # preview without saving
+pnpm generate -- prompt-caching --model deepseek-reasoner  # use specific model
+pnpm generate:missing                      # list articles without content files
+pnpm generate:batch                        # generate all missing articles
+pnpm generate:test                         # run backend pytest suite (33 tests)
 pnpm eval         # run all evals
 pnpm eval:agent   # test agent behavior only
 ```

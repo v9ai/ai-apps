@@ -1,12 +1,14 @@
 "use client";
 
-import { useCallback, useRef } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import Link from "next/link";
 import type { Lesson, GroupedLessons } from "@/lib/articles";
 
-/** First category gets span-2 (wide), last gets span-3 (full) */
+/** Fill incomplete last row: if 1 leftover → full-width, if 2 → last spans 2 */
 function cardClass(index: number, total: number): string {
-  if (index === total - 1) return "cat-card cat-card--full";
+  const remainder = total % 3;
+  if (remainder === 1 && index === total - 1) return "cat-card cat-card--full";
+  if (remainder === 2 && index === total - 1) return "cat-card cat-card--wide";
   return "cat-card";
 }
 
@@ -32,6 +34,7 @@ function LessonCard({ lesson, isFirst }: { lesson: Lesson; isFirst?: boolean }) 
       ref={ref}
       href={`/${lesson.slug}`}
       className="article-card"
+      title={lesson.excerpt || undefined}
       onMouseMove={onMove}
       onMouseLeave={onLeave}
     >
@@ -40,6 +43,9 @@ function LessonCard({ lesson, isFirst }: { lesson: Lesson; isFirst?: boolean }) 
       </span>
       {isFirst && <span className="article-card-start">Start here</span>}
       <span className="article-card-title">{lesson.title}</span>
+      <span className={`article-card-level article-card-level--${lesson.difficulty}`}>
+        {lesson.difficulty === "beginner" ? "Beginner" : lesson.difficulty === "intermediate" ? "Mid" : "Adv"}
+      </span>
       <span className="article-card-time">{lesson.readingTimeMin}m</span>
       <span className="article-card-arrow">&rarr;</span>
     </Link>
@@ -51,22 +57,46 @@ interface Props {
 }
 
 export function CategoryGrid({ groups }: Props) {
+  const [activeSlug, setActiveSlug] = useState<string>("");
+
+  useEffect(() => {
+    const ids = groups.map((g) => `cat-${g.meta.slug}`);
+    const observer = new IntersectionObserver(
+      (entries) => {
+        for (const entry of entries) {
+          if (entry.isIntersecting) {
+            setActiveSlug(entry.target.id);
+          }
+        }
+      },
+      { rootMargin: "-20% 0px -60% 0px", threshold: 0 },
+    );
+    for (const id of ids) {
+      const el = document.getElementById(id);
+      if (el) observer.observe(el);
+    }
+    return () => observer.disconnect();
+  }, [groups]);
+
   return (
     <>
       <div className="cat-nav">
-        {groups.map((g) => (
-          <button
-            key={g.category}
-            className={`cat-nav-pill cat-${g.meta.slug}`}
-            onClick={() => {
-              document.getElementById(`cat-${g.meta.slug}`)?.scrollIntoView({ behavior: 'smooth', block: 'start' });
-            }}
-          >
-            <span className="cat-nav-icon">{g.meta.icon}</span>
-            {g.category}
-            <span className="cat-nav-count">{g.articles.length}</span>
-          </button>
-        ))}
+        {groups.map((g) => {
+          const isActive = activeSlug === `cat-${g.meta.slug}`;
+          return (
+            <button
+              key={g.category}
+              className={`cat-nav-pill cat-${g.meta.slug}${isActive ? " cat-nav-pill--active" : ""}`}
+              onClick={() => {
+                document.getElementById(`cat-${g.meta.slug}`)?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+              }}
+            >
+              <span className="cat-nav-icon">{g.meta.icon}</span>
+              {g.category}
+              <span className="cat-nav-count">{g.articles.length}</span>
+            </button>
+          );
+        })}
       </div>
 
       <div className="bento-grid">
@@ -84,6 +114,13 @@ export function CategoryGrid({ groups }: Props) {
               </span>
             </div>
             <div className="cat-card-desc">{group.meta.description}</div>
+            {group.meta.outcomes && group.meta.outcomes.length > 0 && (
+              <ul className="cat-card-outcomes">
+                {group.meta.outcomes.map((o, k) => (
+                  <li key={k}>{o}</li>
+                ))}
+              </ul>
+            )}
             {group.articles.map((lesson, j) => (
               <LessonCard key={lesson.slug} lesson={lesson} isFirst={j === 0} />
             ))}
