@@ -4,7 +4,8 @@ import { addMinutes, startOfDay, startOfWeek, startOfMonth } from "date-fns";
 import type { GraphQLContext } from "../context";
 import { isAdminEmail } from "@/lib/admin";
 import { resend } from "@/lib/resend";
-import { spawnEmailOutreach } from "@/lib/langgraph/spawn-email-outreach";
+import { spawn } from "node:child_process";
+import * as path from "node:path";
 import { generateText } from "ai";
 import { anthropic } from "@ai-sdk/anthropic";
 import {
@@ -1091,14 +1092,49 @@ Do not include any text before or after the JSON.`;
         args.input;
 
       try {
-        const generated = await spawnEmailOutreach({
-          recipientName,
-          recipientRole: recipientRole ?? undefined,
-          postText,
-          postUrl: postUrl ?? undefined,
-          recipientEmail,
-          tone: tone ?? undefined,
-        });
+        const langgraphDir = path.resolve(process.cwd(), "langgraph");
+        const pythonBin = path.join(langgraphDir, ".venv", "bin", "python");
+
+        const generated = await new Promise<{ subject: string; html: string; text: string }>(
+          (resolve, reject) => {
+            const child = spawn(
+              pythonBin,
+              ["-m", "cli", "email-outreach", "--json-input"],
+              { cwd: langgraphDir, stdio: ["pipe", "pipe", "pipe"], timeout: 55_000 },
+            );
+
+            let stdout = "";
+            let stderr = "";
+            child.stdout.on("data", (chunk: Buffer) => { stdout += chunk.toString(); });
+            child.stderr.on("data", (chunk: Buffer) => { stderr += chunk.toString(); });
+
+            child.stdin.write(JSON.stringify({
+              recipient_name: recipientName || "",
+              recipient_role: recipientRole || "",
+              post_text: (postText || "").slice(0, 2000),
+              post_url: postUrl || "",
+              recipient_email: recipientEmail,
+              tone: tone || "professional and friendly",
+            }));
+            child.stdin.end();
+
+            child.on("close", (code) => {
+              if (code !== 0) {
+                console.error("[email-outreach] stderr:", stderr.slice(-500));
+                reject(new Error(`Pipeline failed (exit ${code})`));
+                return;
+              }
+              try {
+                resolve(JSON.parse(stdout.trim()));
+              } catch {
+                console.error("[email-outreach] Invalid JSON:", stdout.slice(0, 500));
+                reject(new Error("Failed to parse pipeline output"));
+              }
+            });
+
+            child.on("error", (err) => reject(new Error(`Spawn error: ${err.message}`)));
+          },
+        );
 
         const result = await resend.instance.send({
           to: recipientEmail,

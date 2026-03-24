@@ -153,9 +153,9 @@ if [ -n "$SESSION_ID" ]; then
         # This lets us extract only the messages from the CURRENT iteration window
         # rather than just the last message in the entire transcript.
         PREV_OFFSET=$(cat "$ITER_DIR/transcript-offset.txt" 2>/dev/null | tr -d '[:space:]' || echo "0")
-        PREV_OFFSET="${PREV_OFFSET:-0}"
+        : "${PREV_OFFSET:=0}"
         CURRENT_LINES=$(wc -l < "$TRANSCRIPT_FILE" 2>/dev/null | tr -d '[:space:]' || echo "0")
-        CURRENT_LINES="${CURRENT_LINES:-0}"
+        : "${CURRENT_LINES:=0}"
 
         echo "[kick-session] step: jq extraction skip=$PREV_OFFSET" >> "$ITER_DIR/debug.log" 2>/dev/null || true
 
