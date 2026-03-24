@@ -3,25 +3,32 @@
 from __future__ import annotations
 
 import json
-import os
 from pathlib import Path
 
 from dotenv import load_dotenv
-from langchain_openai import ChatOpenAI
 from langgraph.graph import END, START, StateGraph
+
+from deepseek_client import DeepSeekClient, ChatMessage
 
 from .state import TravelState
 
 load_dotenv(Path(__file__).resolve().parent.parent / ".env")
 
+_client: DeepSeekClient | None = None
 
-def _get_llm() -> ChatOpenAI:
-    return ChatOpenAI(
-        model="deepseek-chat",
-        api_key=os.environ.get("DEEPSEEK_API_KEY", ""),
-        base_url="https://api.deepseek.com/v1",
-        temperature=0.3,
-    )
+
+def _get_client() -> DeepSeekClient:
+    global _client
+    if _client is None:
+        _client = DeepSeekClient()
+    return _client
+
+
+async def close_client() -> None:
+    global _client
+    if _client is not None:
+        await _client.close()
+        _client = None
 
 
 def _parse_json(text: str) -> dict | list:
@@ -41,28 +48,19 @@ def _parse_json(text: str) -> dict | list:
 
 async def research_city(state: TravelState) -> dict:
     city = state.get("city", "Katowice")
-    llm = _get_llm()
-    resp = await llm.ainvoke(
-        [
-            {
-                "role": "system",
-                "content": (
-                    "You are a travel expert and cultural guide specializing in Polish cities. "
-                    "Write an engaging, concise overview of the given city for travelers."
-                ),
-            },
-            {
-                "role": "user",
-                "content": (
-                    f"Write a 3-4 paragraph overview of {city}, Poland for travelers. "
-                    "Cover its history, culture, what makes it unique, and the vibe of the city. "
-                    "Mention its transformation from an industrial city to a cultural hub. "
-                    "Keep it informative but exciting."
-                ),
-            },
-        ]
+    client = _get_client()
+    content = await client.chat_simple(
+        f"Write a 3-4 paragraph overview of {city}, Poland for travelers. "
+        "Cover its history, culture, what makes it unique, and the vibe of the city. "
+        "Mention its transformation from an industrial city to a cultural hub. "
+        "Keep it informative but exciting.",
+        system_prompt=(
+            "You are a travel expert and cultural guide specializing in Polish cities. "
+            "Write an engaging, concise overview of the given city for travelers."
+        ),
+        temperature=0.3,
     )
-    return {"city_overview": resp.content}
+    return {"city_overview": content}
 
 
 # ── Node 2: Discover top places ──────────────────────────────────────────
@@ -71,21 +69,21 @@ async def research_city(state: TravelState) -> dict:
 async def discover_places(state: TravelState) -> dict:
     city = state.get("city", "Katowice")
     num = state.get("num_places", 10)
-    llm = _get_llm()
-    resp = await llm.ainvoke(
+    client = _get_client()
+    resp = await client.chat(
         [
-            {
-                "role": "system",
-                "content": (
+            ChatMessage(
+                role="system",
+                content=(
                     "You are a travel expert with deep knowledge of Polish cities. "
                     "Return detailed information about the best places to visit. "
                     "Include real coordinates (lat/lng) for each place. "
                     "Return valid JSON only."
                 ),
-            },
-            {
-                "role": "user",
-                "content": (
+            ),
+            ChatMessage(
+                role="user",
+                content=(
                     f"List the top {num} must-visit places in {city}, Poland. "
                     "Include a mix of categories: culture, architecture, nature, food, nightlife. "
                     "For each place provide:\n"
@@ -101,11 +99,12 @@ async def discover_places(state: TravelState) -> dict:
                     "- image_query: a search term to find photos of this place\n\n"
                     'Return JSON: {"places": [...]}'
                 ),
-            },
+            ),
         ],
+        temperature=0.3,
         response_format={"type": "json_object"},
     )
-    data = _parse_json(resp.content)
+    data = _parse_json(resp.choices[0].message.content)
     return {"places": data.get("places", [])}
 
 

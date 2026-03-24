@@ -12,7 +12,7 @@ load_dotenv(env_path)
 # Also try the app-root .env.local
 load_dotenv(Path(__file__).resolve().parent.parent.parent / ".env.local")
 
-from travel_agent.graph import graph
+from travel_agent.graph import graph, close_client
 
 OUTPUT_DIR = Path(__file__).resolve().parent.parent.parent / "src" / "data"
 
@@ -22,26 +22,29 @@ async def run():
     print("Pipeline: research_city + discover_places -> enrich_with_maps -> save")
     print()
 
-    t0 = time.time()
-    result = await graph.ainvoke({
-        "city": "Katowice",
-        "num_places": 10,
-    })
-    elapsed = time.time() - t0
+    try:
+        t0 = time.time()
+        result = await graph.ainvoke({
+            "city": "Katowice",
+            "num_places": 10,
+        })
+        elapsed = time.time() - t0
 
-    output = {
-        "city": "Katowice",
-        "city_overview": result.get("city_overview", ""),
-        "places": result.get("places_with_maps", []),
-    }
+        output = {
+            "city": "Katowice",
+            "city_overview": result.get("city_overview", ""),
+            "places": result.get("places_with_maps", []),
+        }
 
-    OUTPUT_DIR.mkdir(parents=True, exist_ok=True)
-    out_path = OUTPUT_DIR / "places.json"
-    out_path.write_text(json.dumps(output, indent=2, ensure_ascii=False))
+        OUTPUT_DIR.mkdir(parents=True, exist_ok=True)
+        out_path = OUTPUT_DIR / "places.json"
+        out_path.write_text(json.dumps(output, indent=2, ensure_ascii=False))
 
-    num_places = len(output["places"])
-    print(f"Done! {num_places} places generated in {elapsed:.0f}s")
-    print(f"Written to {out_path}")
+        num_places = len(output["places"])
+        print(f"Done! {num_places} places generated in {elapsed:.0f}s")
+        print(f"Written to {out_path}")
+    finally:
+        await close_client()
 
 
 def main():

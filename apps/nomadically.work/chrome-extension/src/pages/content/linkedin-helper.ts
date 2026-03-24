@@ -320,9 +320,27 @@ observeBlockButtons();
 
 const SEND_EMAIL_BTN_ATTR = "data-nomad-send-email-btn";
 
-function extractEmailsFromText(text: string): string[] {
-  const emailRegex = /(?<=\s|^|[(<,;])([a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,})/g;
-  return [...new Set([...text.matchAll(emailRegex)].map((m) => m[1]))];
+function extractEmailsFromPost(): string[] {
+  // Prefer mailto links (immune to textContent stripping whitespace)
+  const mailtoLinks = document.querySelectorAll(
+    ".update-components-text a[href^='mailto:'], .feed-shared-text__text-view a[href^='mailto:']",
+  );
+  if (mailtoLinks.length) {
+    const emails = new Set<string>();
+    mailtoLinks.forEach((a) => {
+      const href = (a as HTMLAnchorElement).href.replace("mailto:", "").trim();
+      if (href) emails.add(href);
+    });
+    if (emails.size) return [...emails];
+  }
+
+  // Fallback: regex on textContent
+  const postTextEl = document.querySelector(
+    ".feed-shared-update-v2__description, .update-components-text, .feed-shared-text__text-view",
+  );
+  const text = postTextEl?.textContent || "";
+  const emailRegex = /[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}/g;
+  return [...new Set(text.match(emailRegex) || [])];
 }
 
 function extractPostData() {
@@ -346,8 +364,8 @@ function extractPostData() {
   );
   const authorSubtitle = subtitleEl?.textContent?.trim() || "";
 
-  // Extract emails from post text
-  const emails = extractEmailsFromText(postText);
+  // Extract emails from mailto links first, then fallback to regex
+  const emails = extractEmailsFromPost();
 
   return {
     authorName,
