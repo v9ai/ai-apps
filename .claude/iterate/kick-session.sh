@@ -111,17 +111,17 @@ export CLAUDE_ITERATE_CWD="$ITER_CWD"
 
 # --- Counter ---
 if [ ! -f "$COUNTER_FILE" ]; then
-    echo "0" > "$COUNTER_FILE"
+    echo "1" > "$COUNTER_FILE"
 fi
 
 COUNT=$(cat "$COUNTER_FILE")
-[[ "$COUNT" =~ ^[0-9]+$ ]] || COUNT=0
+[[ "$COUNT" =~ ^[0-9]+$ ]] || COUNT=1
 
 # Debug log
 echo "[kick-session] iter=$COUNT session=${SESSION_ID:0:8} dir=$ITER_DIR cwd=$HOOK_CWD" >> "$ITER_DIR/debug.log" 2>/dev/null || true
 
 # --- Iteration limit ---
-if [ "$COUNT" -ge "$ITERATIONS" ]; then
+if [ "$COUNT" -gt "$ITERATIONS" ]; then
     _last_score=$(python3.12 -c "
 import sys, json, os
 f = sys.argv[1]
@@ -385,7 +385,7 @@ fi
 
 # --- Step 4: Return inline via stderr → Claude sees it and keeps working ---
 cat >&2 <<EOF
-ITERATION ${NEXT}/${ITERATIONS} — ${TASK}
+ITERATION ${COUNT}/${ITERATIONS} — ${TASK}
 Working directory: ${ITER_CWD}
 $([ -n "$DIFF_SUMMARY" ] && echo "$DIFF_SUMMARY")
 $([ -n "$ALL_WARNINGS" ] && echo -e "\n${ALL_WARNINGS}")

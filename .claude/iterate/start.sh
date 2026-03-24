@@ -5,6 +5,7 @@ SCRIPTS_DIR="$(cd "$(dirname "$0")" && pwd)"
 ITERATIONS=10
 RESET=false
 STATUS=false
+CLEAN=false
 DONE_WHEN=""
 TASK=""
 
@@ -34,6 +35,7 @@ while [[ $# -gt 0 ]]; do
             shift 2 ;;
         --reset) RESET=true; shift ;;
         --status) STATUS=true; shift ;;
+        --clean) CLEAN=true; shift ;;
         *) TASK="${TASK:+$TASK }$1"; shift ;;
     esac
 done
@@ -111,10 +113,33 @@ PYEOF
     exit 0
 fi
 
+if [ "$CLEAN" = true ]; then
+    _now=$(date +%s)
+    _removed=0
+    for _gc_d in /tmp/claude-iterate-*/; do
+        [ -d "$_gc_d" ] || continue
+        if [ ! -f "${_gc_d}task.txt" ]; then
+            rm -rf "$_gc_d" 2>/dev/null; _removed=$((_removed + 1)); continue
+        fi
+        _latest=$(stat -f %m "${_gc_d}counter" 2>/dev/null || stat -f %m "${_gc_d}task.txt" 2>/dev/null || echo "0")
+        _age=$(( _now - _latest ))
+        _gc_counter=$(cat "${_gc_d}counter" 2>/dev/null || echo "")
+        if [ "$_age" -gt 14400 ]; then
+            rm -rf "$_gc_d" 2>/dev/null; _removed=$((_removed + 1)); continue
+        fi
+        if [ "$_gc_counter" = "1" ] && [ "$_age" -gt 1800 ]; then
+            rm -rf "$_gc_d" 2>/dev/null; _removed=$((_removed + 1)); continue
+        fi
+    done
+    echo "Iterate: cleaned ${_removed} stale session(s)."
+    exit 0
+fi
+
 if [ -z "$TASK" ]; then
     echo "Usage: /iterate 5 Your task description"
     echo "       /iterate status"
     echo "       /iterate reset"
+    echo "       /iterate clean   — remove stale sessions"
     exit 1
 fi
 
@@ -137,9 +162,9 @@ for _gc_d in /tmp/claude-iterate-*/; do
         rm -rf "$_gc_d" 2>/dev/null
         continue
     fi
-    # counter=0 and 30+ minutes old → never kicked in
+    # counter=1 and 30+ minutes old → never kicked in
     _gc_counter=$(cat "${_gc_d}counter" 2>/dev/null || echo "")
-    if [ "$_gc_counter" = "0" ] && [ "$_age" -gt 1800 ]; then
+    if [ "$_gc_counter" = "1" ] && [ "$_age" -gt 1800 ]; then
         rm -rf "$_gc_d" 2>/dev/null
         continue
     fi
@@ -155,8 +180,13 @@ python3.12 -c "import fastembed" 2>/dev/null || {
 }
 
 # Pre-warm fastembed model so the first Stop hook doesn't timeout downloading it.
-echo "Pre-warming embedding model…"
-python3.12 -c "
+# Skip if cache dir already has model files (saves ~1s on repeat starts).
+_EMBED_CACHE="${ITERATE_EMBED_CACHE:-/tmp/claude-iterate/fastembed-cache}"
+if [ -d "$_EMBED_CACHE" ] && [ "$(ls -A "$_EMBED_CACHE" 2>/dev/null)" ]; then
+    echo "Embedding model cached."
+else
+    echo "Pre-warming embedding model…"
+    python3.12 -c "
 import sys
 sys.path.insert(0, sys.argv[1])
 from embeddings import get_embedding_function
@@ -167,11 +197,12 @@ if ef:
 else:
     print('Using ChromaDB default embeddings')
 " "$SCRIPTS_DIR" 2>/dev/null || true
+fi
 
 rm -rf "$ITER_DIR" 2>/dev/null || true
 mkdir -p "$ITER_DIR"
 
-echo "0" > "$ITER_DIR/counter"
+echo "0" > "$ITER_DIR/counter"  # Must start at 0 — kick-session.sh reads then increments
 echo "$ITERATIONS" > "$ITER_DIR/iterations.txt"
 echo "$TASK" > "$ITER_DIR/task.txt"
 echo "[]" > "$ITER_DIR/scores.json"
