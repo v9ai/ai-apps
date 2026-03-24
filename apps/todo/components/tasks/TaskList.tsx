@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useRef, useEffect, useTransition } from "react";
+import { useState, useRef, useEffect, useTransition, useCallback } from "react";
 import { Button, Flex } from "@radix-ui/themes";
 import {
   DndContext,
@@ -24,20 +24,7 @@ import { restrictToVerticalAxis } from "@dnd-kit/modifiers";
 import { TaskCard } from "./TaskCard";
 import { TaskDetailModal } from "./TaskDetailModal";
 import { loadMoreTasks, reorderTasksAction } from "@/lib/actions/tasks";
-
-type Task = {
-  id: string;
-  title: string;
-  description: string | null;
-  status: string;
-  priorityScore: number | null;
-  priorityManual: number | null;
-  dueDate: Date | null;
-  estimatedMinutes: number | null;
-  energyPreference: string | null;
-  parentTaskId: string | null;
-  completedAt: Date | null;
-};
+import type { Task } from "./types";
 
 export function TaskList({
   initialTasks,
@@ -67,11 +54,11 @@ export function TaskList({
     })
   );
 
-  function handleDragStart(event: DragStartEvent) {
+  const handleDragStart = useCallback((event: DragStartEvent) => {
     setActiveId(event.active.id as string);
-  }
+  }, []);
 
-  function handleDragEnd(event: DragEndEvent) {
+  const handleDragEnd = useCallback((event: DragEndEvent) => {
     setActiveId(null);
     const { active, over } = event;
     if (!over || active.id === over.id) return;
@@ -89,7 +76,7 @@ export function TaskList({
     startTransition(async () => {
       await reorderTasksAction(updates);
     });
-  }
+  }, [tasks, startTransition]);
 
   useEffect(() => {
     const incoming = new Set(initialTasks.map((t) => t.id));
@@ -122,18 +109,20 @@ export function TaskList({
     return () => document.removeEventListener("keydown", onKeyDown);
   }, [tasks]);
 
-  function handleLoadMore() {
+  const handleLoadMore = useCallback(() => {
     startTransition(async () => {
       const moreTasks = await loadMoreTasks(status, tasks.length, chunkSize);
       const loaded = moreTasks as Task[];
       for (const t of loaded) knownIds.current.add(t.id);
       setTasks((prev) => [...prev, ...loaded]);
     });
-  }
+  }, [status, tasks.length, chunkSize, startTransition]);
 
   const openTask = openTaskId
     ? tasks.find((t) => t.id === openTaskId) ?? null
     : null;
+  const activeTask = activeId ? (tasks.find((t) => t.id === activeId) ?? null) : null;
+  const activeIndex = activeTask ? tasks.indexOf(activeTask) : -1;
 
   return (
     <Flex direction="column" gap="2">
@@ -158,13 +147,9 @@ export function TaskList({
           ))}
         </SortableContext>
         <DragOverlay dropAnimation={null}>
-          {activeId ? (() => {
-            const idx = tasks.findIndex((t) => t.id === activeId);
-            const task = tasks[idx];
-            return task ? (
-              <TaskCard task={task} index={idx + 1} onOpen={() => {}} isOverlay />
-            ) : null;
-          })() : null}
+          {activeTask ? (
+            <TaskCard task={activeTask} index={activeIndex + 1} onOpen={() => {}} isOverlay />
+          ) : null}
         </DragOverlay>
       </DndContext>
       {hasMore && (

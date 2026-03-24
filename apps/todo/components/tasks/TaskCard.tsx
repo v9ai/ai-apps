@@ -9,6 +9,7 @@ import { PriorityBadge } from "./PriorityBadge";
 import { Linkify } from "./Linkify";
 import { updateTaskAction } from "@/lib/actions/tasks";
 import { format } from "date-fns";
+import type { Task } from "./types";
 
 const PRIORITY_COLORS = {
   1: "red",
@@ -30,20 +31,6 @@ function GripIcon() {
     </svg>
   );
 }
-
-type Task = {
-  id: string;
-  title: string;
-  description: string | null;
-  status: string;
-  priorityScore: number | null;
-  priorityManual: number | null;
-  dueDate: Date | null;
-  estimatedMinutes: number | null;
-  energyPreference: string | null;
-  parentTaskId: string | null;
-  completedAt: Date | null;
-};
 
 export function TaskCard({
   task,

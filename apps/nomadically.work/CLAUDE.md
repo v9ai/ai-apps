@@ -94,7 +94,7 @@ GraphQL Playground: `http://localhost:3000/api/graphql`. Vercel routes have 60s 
 | ORM | Drizzle ORM |
 | API | Apollo Server 5 (GraphQL) |
 | Auth | Better Auth (`@ai-apps/auth`) |
-| AI/ML | Vercel AI SDK, Anthropic Claude (+ Agent SDK), DeepSeek, OpenRouter |
+| AI/ML | Vercel AI SDK, DeepSeek, OpenRouter |
 | Background jobs | Trigger.dev |
 | Observability | LangSmith |
 | Deployment | Vercel |
@@ -169,7 +169,6 @@ Copy `.env.example` to `.env.local`. Key groups: `NEON_DATABASE_URL`, Better Aut
 - `@libsql/client` and `drizzle-orm/d1` are likely unused and can be removed from `package.json`.
 
 ### Dependencies
-- `@ai-sdk/anthropic` pinned to `"latest"` — should use specific version.
 - `@libsql/client` and `drizzle-orm/d1` are likely unused — remove from `package.json`.
 
 ---

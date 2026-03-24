@@ -506,7 +506,7 @@ Return ONLY a JSON object with exactly these fields:
 Do not include any text before or after the JSON.`;
 
       const result = await generateText({
-        model: anthropic("claude-haiku-4-5-20251001"),
+        model: deepseek("deepseek-chat"),
         prompt,
         maxTokens: 1500,
       });

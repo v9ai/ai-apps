@@ -422,46 +422,6 @@ export const FALLBACK: StackGroup[] = [
         ],
       },
       {
-        name: "Anthropic Claude",
-        role: "AI model via Vercel AI SDK (@ai-sdk/anthropic)",
-        url: "https://www.anthropic.com",
-        details:
-          "Powers the SQL agent (src/agents/) and strategy enforcer (src/agents/strategy-enforcer.ts). Accessed via the Vercel AI SDK (@ai-sdk/anthropic).",
-        why_chosen:
-          "Claude is used for agent-style tasks that require complex reasoning, tool use, and multi-step planning.",
-        pros: [
-          "MCP support — agents can use typed tools (DB introspection, SQL execution) with schema validation",
-          "Agent SDK enables multi-step workflows with planning, execution, and self-correction",
-          "Strong instruction following for strategy enforcement and code review tasks",
-          "Long context window handles full file contents for architecture analysis",
-        ],
-        cons: [
-          "More expensive than DeepSeek for high-volume tasks",
-          "Agent SDK is newer — fewer community examples and patterns",
-          "MCP tool ecosystem is still emerging",
-        ],
-        alternatives_considered: [
-          { name: "OpenAI Assistants API", reason_not_chosen: "Assistants API is stateful and opaque — we wanted transparent, code-defined agent workflows. Claude's MCP tools give us typed tool definitions in code" },
-          { name: "LangChain agents", reason_not_chosen: "LangChain's agent abstraction adds a heavy framework layer; Claude's Agent SDK is lighter and gives direct control over the planning-execution loop" },
-        ],
-        trade_offs: [
-          "Claude for agents, DeepSeek for classification — multi-model routing adds complexity but optimizes cost vs capability",
-          "MCP tools require schema definitions for each tool — upfront work that pays off in type safety and validation",
-        ],
-        patterns_used: [
-          "MCP tool pattern — typed tool definitions with JSON Schema for parameters and return types",
-          "Sub-agent delegation — architect agent spawns specialized sub-agents for focused tasks",
-          "Strategy enforcement — agent validates code changes against optimization strategy rules",
-          "Database introspection tools — agents can query schema metadata to understand table structures",
-        ],
-        interview_points: [
-          "We use Claude for agent-style tasks (SQL generation, strategy enforcement, architecture analysis) because these need complex reasoning and tool use — DeepSeek handles the high-volume classification where cost matters more",
-          "MCP tools let our agents introspect the database schema and execute queries with typed tool definitions — the agent knows what tables exist, what columns they have, and can compose valid SQL",
-          "The strategy enforcer is an agent that reviews code changes against our optimization strategy — it catches things like missing eval coverage or schema constraint violations before they reach production",
-          "Multi-model routing is a deliberate architecture: Claude for agents (reasoning-heavy), DeepSeek for classification (cost-sensitive), Workers AI for embeddings (free on CF)",
-        ],
-      },
-      {
         name: "Vercel AI SDK",
         role: "Streaming, tool use, multi-model routing",
         url: "https://sdk.vercel.ai",

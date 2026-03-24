@@ -39,7 +39,6 @@
   },
   "dependencies": {
     "@ai-apps/auth": "workspace:*",
-    "@ai-sdk/anthropic": "^3.0.35",
     "@ai-sdk/deepseek": "^2.0.17",
     "@ai-sdk/openai": "^3.0.26",
     "@apollo/client": "^3.14.0",

@@ -1,5 +1,5 @@
 import { generateText } from "ai";
-import { anthropic } from "@ai-sdk/anthropic";
+import { deepseek } from "@ai-sdk/deepseek";
 import { REPLY_TYPE_INSTRUCTIONS, type ReplyType } from "./reply-types";
 
 export interface GenerateReplyRequest {
@@ -111,7 +111,7 @@ export async function generateReplyContent(
   const userPrompt = buildReplyUserPrompt(input);
 
   const { text } = await generateText({
-    model: anthropic("claude-sonnet-4-20250514"),
+    model: deepseek("deepseek-chat"),
     system: systemPrompt,
     prompt: userPrompt,
   });
