@@ -377,7 +377,7 @@ type EmailPreview {
 input SendOutreachEmailInput {
   recipientName: String!
   recipientRole: String
-  recipientEmail: String!
+  recipientEmail: String
   postText: String!
   postUrl: String
   tone: String

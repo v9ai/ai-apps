@@ -1086,8 +1086,16 @@ Do not include any text before or after the JSON.`;
         throw new Error("Forbidden");
       }
 
-      const { recipientName, recipientRole, recipientEmail, postText, postUrl, tone } =
-        args.input;
+      const { recipientName, recipientRole, postText, postUrl, tone } = args.input;
+
+      // Extract email: prefer explicit input, then extract from postText
+      const recipientEmail =
+        args.input.recipientEmail ||
+        (postText.match(/[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}/)?.[0] ?? "");
+
+      if (!recipientEmail) {
+        return { success: false, emailId: null, subject: null, error: "No email found in post" };
+      }
 
       try {
         const res = await fetch(
