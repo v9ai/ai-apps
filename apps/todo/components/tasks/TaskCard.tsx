@@ -95,10 +95,10 @@ export function TaskCard({
         transition: "opacity 150ms",
         cursor: isOverlay ? "grabbing" : "pointer",
         ...(index <= 2 && !isOverlay ? {
-          background: "var(--red-a2)",
+          "--card-background-color": "var(--red-a2)",
           outline: "1px solid var(--red-a6)",
           outlineOffset: "-1px",
-        } : {}),
+        } : {}) as React.CSSProperties,
       }}
       onClick={() => {
         if (wasDragging.current) { wasDragging.current = false; return; }

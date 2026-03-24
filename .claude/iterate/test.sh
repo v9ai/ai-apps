@@ -5,7 +5,7 @@ set -euo pipefail
 # Run: bash .claude/iterate/test.sh
 
 SCRIPTS_DIR="$(cd "$(dirname "$0")" && pwd)"
-TEST_DIR="/tmp/claude-iterate-test"
+TEST_DIR="/tmp/claude-iter-test"
 rm -r "$TEST_DIR" 2>/dev/null || true
 mkdir -p "$TEST_DIR"
 
