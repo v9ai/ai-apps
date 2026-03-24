@@ -108,6 +108,13 @@ class TestRunHeuristic:
         scores = run_heuristic(1, "output", "task", "", "No diff available.")
         assert scores["Incremental Progress"]["score"] == 0.6
 
+    def test_similarity_used_for_progress_when_available(self):
+        """When inter-iteration similarity is provided, it overrides context-based progress."""
+        scores_low_sim = run_heuristic(1, "output", "task", "context", "No diff available.", similarity=0.3)
+        scores_high_sim = run_heuristic(1, "output", "task", "context", "No diff available.", similarity=0.9)
+        assert scores_low_sim["Incremental Progress"]["score"] > scores_high_sim["Incremental Progress"]["score"]
+        assert "iter_similarity" in scores_low_sim["Incremental Progress"]["reason"]
+
     def test_errors_reduce_quality(self):
         clean = run_heuristic(1, "All good.", "task", "", "No diff available.")
         errored = run_heuristic(

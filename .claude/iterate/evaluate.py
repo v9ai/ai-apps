@@ -41,6 +41,7 @@ def run_heuristic(
     task: str,
     context: str,
     diff: str,
+    similarity: float | None = None,
 ) -> dict:
     """Compute all 8 metric scores using local embeddings and heuristics."""
     ef = get_embedding_function()
@@ -94,11 +95,15 @@ def run_heuristic(
     tc_error_penalty = min(0.2, error_count * 0.05)
     task_completion = max(0.0, min(1.0, tc_base + tc_change_bonus - tc_error_penalty))
 
-    # Incremental Progress: inversely related to similarity with prior context
-    if not context or not context.strip():
+    # Incremental Progress: how much new work vs. repetition
+    # Prefer direct inter-iteration similarity (from store_context) over context similarity.
+    # Context similarity is inflated because retrieved context always shares task vocabulary.
+    if similarity is not None:
+        incremental_progress = max(0.0, min(1.0, 1.0 - similarity))
+    elif not context or not context.strip():
         incremental_progress = 0.6
     else:
-        incremental_progress = max(0.0, min(1.0, 1.0 - output_context_sim * 0.8))
+        incremental_progress = max(0.0, min(1.0, 1.0 - output_context_sim * 0.7))
 
     # Coherence: weighted blend of task relevance, diff alignment, and error-free execution
     # Unlike Answer Relevancy (pure semantic sim), this rewards structured progress
@@ -129,7 +134,11 @@ def run_heuristic(
         },
         "Incremental Progress": {
             "score": round(incremental_progress, 3),
-            "reason": f"context_similarity={output_context_sim:.2f}" if context else "first iteration",
+            "reason": (
+                f"iter_similarity={similarity:.2f}" if similarity is not None
+                else f"context_similarity={output_context_sim:.2f}" if context
+                else "first iteration"
+            ),
             "passed": incremental_progress >= 0.4,
         },
         "Coherence": {
@@ -238,7 +247,7 @@ def run_evaluation(
             sim_note += " (HIGH — may be repeating prior work)"
         context = context + sim_note if context else sim_note.lstrip()
 
-    scores = run_heuristic(iteration, actual_output, task, context, diff)
+    scores = run_heuristic(iteration, actual_output, task, context, diff, similarity=similarity)
     eval_method = "heuristic"
 
     # Trends (advisory only — iterations always run to completion)
