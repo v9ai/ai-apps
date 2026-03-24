@@ -77,6 +77,30 @@ class TestRecordEnd:
         doc = col.get(ids=["session-sess-bbb-end"])
         assert doc["metadatas"][0]["iterations"] == 7
 
+    def test_stores_files_changed(self):
+        import chromadb
+        record_end("task", "sess-fc1", iterations=3, final_score=0.6, files_changed=12)
+        client = chromadb.PersistentClient(path=task_history.HISTORY_PATH)
+        col = client.get_or_create_collection("task_history")
+        doc = col.get(ids=["session-sess-fc1-end"])
+        assert doc["metadatas"][0]["files_changed"] == 12
+
+    def test_files_changed_defaults_to_zero(self):
+        import chromadb
+        record_end("task", "sess-fc2", iterations=1, final_score=0.5)
+        client = chromadb.PersistentClient(path=task_history.HISTORY_PATH)
+        col = client.get_or_create_collection("task_history")
+        doc = col.get(ids=["session-sess-fc2-end"])
+        assert doc["metadatas"][0]["files_changed"] == 0
+
+    def test_files_changed_in_document_text(self):
+        record_end("task", "sess-fc3", iterations=2, final_score=0.7, files_changed=5)
+        import chromadb
+        client = chromadb.PersistentClient(path=task_history.HISTORY_PATH)
+        col = client.get_or_create_collection("task_history")
+        doc = col.get(ids=["session-sess-fc3-end"])
+        assert "Files changed: 5" in doc["documents"][0]
+
 
 # ---------------------------------------------------------------------------
 # find_similar
@@ -97,17 +121,20 @@ class TestFindSimilar:
         results = find_similar("user auth")
         assert len(results) >= 1
         r = results[0]
-        assert "task" in r
-        assert "status" in r
-        assert "iterations" in r
-        assert "final_score" in r
-        assert "similarity" in r
+        for key in ("task", "status", "iterations", "final_score", "files_changed", "similarity"):
+            assert key in r, f"missing key: {key}"
 
     def test_similarity_is_between_0_and_1(self):
         record_end("build payment system", "sess-3", 4, 0.8)
         results = find_similar("payment processing")
         for r in results:
             assert 0.0 <= r["similarity"] <= 1.0
+
+    def test_files_changed_returned_in_results(self):
+        record_end("build API endpoints", "sess-fc4", 4, 0.75, files_changed=8)
+        results = find_similar("build API")
+        assert len(results) >= 1
+        assert results[0]["files_changed"] == 8
 
     def test_n_limits_results(self):
         for i in range(5):
