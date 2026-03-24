@@ -58,17 +58,21 @@ def record_end(
     iterations: int,
     final_score: float,
     stop_reason: str = "",
+    files_changed: int = 0,
 ) -> None:
     """Update task record when a session ends (complete or plateau)."""
     col = _get_collection()
     doc_id = f"session-{session[:12]}-end"
     status = "completed" if final_score >= 0.8 else "stopped"
+    doc_text = (
+        f"Task: {task}\nStatus: {status}\nIterations: {iterations}\n"
+        f"Score: {final_score:.2f}\nStop reason: {stop_reason}"
+    )
+    if files_changed > 0:
+        doc_text += f"\nFiles changed: {files_changed}"
     col.upsert(
         ids=[doc_id],
-        documents=[
-            f"Task: {task}\nStatus: {status}\nIterations: {iterations}\n"
-            f"Score: {final_score:.2f}\nStop reason: {stop_reason}"
-        ],
+        documents=[doc_text],
         metadatas=[{
             "task": task,
             "session": session[:12],
@@ -76,6 +80,7 @@ def record_end(
             "iterations": iterations,
             "final_score": final_score,
             "stop_reason": stop_reason,
+            "files_changed": files_changed,
             "timestamp": datetime.now().isoformat(),
         }],
     )
@@ -117,6 +122,7 @@ def find_similar(task: str, n: int = 3) -> list[dict]:
             "status": meta.get("status", "?"),
             "iterations": meta.get("iterations", 0),
             "final_score": meta.get("final_score", -1.0),
+            "files_changed": meta.get("files_changed", 0),
             "similarity": round(max(0.0, 1.0 - dist), 3),
             "timestamp": meta.get("timestamp", ""),
         })
@@ -155,6 +161,7 @@ if __name__ == "__main__":
     p_end.add_argument("--iterations", type=int, default=0)
     p_end.add_argument("--score", type=float, default=0.0)
     p_end.add_argument("--reason", default="")
+    p_end.add_argument("--files-changed", type=int, default=0)
 
     p_find = sub.add_parser("find")
     p_find.add_argument("--task", required=True)
@@ -166,7 +173,7 @@ if __name__ == "__main__":
         record_start(args.task, args.session, args.cwd)
         print(json.dumps({"ok": True, "cmd": "start"}))
     elif args.cmd == "end":
-        record_end(args.task, args.session, args.iterations, args.score, args.reason)
+        record_end(args.task, args.session, args.iterations, args.score, args.reason, args.files_changed)
         print(json.dumps({"ok": True, "cmd": "end", "status": "completed" if args.score >= 0.8 else "stopped"}))
     elif args.cmd == "find":
         results = find_similar(args.task, args.n)

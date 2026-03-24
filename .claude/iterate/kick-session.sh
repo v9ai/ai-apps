@@ -91,12 +91,17 @@ DONE_WHEN=$(cat "$ITER_DIR/done-when.txt" 2>/dev/null || echo "")
 
 _record_end() {
     local reason="$1" score="${2:-0.0}"
+    local _fc=0
+    if [ -n "$ITER_CWD" ] && [ -d "$ITER_CWD" ]; then
+        _fc=$(cd "$ITER_CWD" 2>/dev/null && git diff HEAD~"${COUNT:-1}" HEAD --name-only 2>/dev/null | wc -l | tr -d ' ' || echo "0")
+    fi
     python3.12 "${SCRIPTS_DIR}/task_history.py" end \
         --task "$TASK" \
         --session "${SESSION_ID:-none}" \
         --iterations "$COUNT" \
         --score "$score" \
-        --reason "$reason" 2>/dev/null || true
+        --reason "$reason" \
+        --files-changed "${_fc:-0}" 2>/dev/null || true
 }
 
 mkdir -p "$ITER_DIR"
