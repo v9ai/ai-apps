@@ -15,8 +15,11 @@ while [[ $# -gt 0 ]]; do
                 echo "Error: --iterations requires a value" >&2
                 exit 1
             fi
-            if [[ "$2" =~ ^[1-9][0-9]*$ ]]; then
+            if [[ "$2" =~ ^[1-9][0-9]*$ ]] && [[ "$2" -le 1000 ]]; then
                 ITERATIONS="$2"
+            elif [[ "$2" =~ ^[1-9][0-9]*$ ]]; then
+                echo "Error: --iterations max is 1000, got '$2'" >&2
+                exit 1
             else
                 echo "Error: --iterations requires a positive number, got '$2'" >&2
                 exit 1
@@ -56,8 +59,27 @@ _iter_dir() {
 ITER_DIR=$(_iter_dir)
 
 if [ "$RESET" = true ]; then
-    rm -rf "$ITER_DIR" 2>/dev/null || true
-    echo "Iterate: state cleared ($ITER_DIR)."
+    _cleaned=0
+    # If session ID is known, remove the canonical dir
+    if [ -n "${CLAUDE_CODE_SESSION_ID:-}" ]; then
+        rm -rf "$ITER_DIR" 2>/dev/null || true
+        _cleaned=1
+    fi
+    # Also scan for sessions matching this CWD (handles missing session ID)
+    _my_cwd=$(pwd)
+    for _rd in /tmp/claude-iterate-*/; do
+        [ -f "${_rd}task.txt" ] || continue
+        _rd_cwd=$(cat "${_rd}cwd.txt" 2>/dev/null || echo "")
+        if [ "$_rd_cwd" = "$_my_cwd" ]; then
+            rm -rf "$_rd" 2>/dev/null || true
+            _cleaned=1
+        fi
+    done
+    if [ "$_cleaned" -eq 1 ]; then
+        echo "Iterate: state cleared for $(pwd)."
+    else
+        echo "Iterate: no active sessions found for $(pwd)."
+    fi
     exit 0
 fi
 
