@@ -37,7 +37,7 @@ def reciprocal_rank_fusion(
 
     for weight, ranked in zip(weights, ranked_lists):
         for rank_idx, (doc, meta, _score) in enumerate(ranked):
-            doc_key = (meta.get("iteration"), meta.get("chunk_index"))
+            doc_key = (meta.get("iteration"), meta.get("chunk_index", rank_idx))
             rrf_scores[doc_key] = rrf_scores.get(doc_key, 0.0) + weight / (k + rank_idx + 1)
             # Keep the first occurrence of the doc content
             if doc_key not in doc_store:
