@@ -232,8 +232,9 @@ STALL_WARNING=""
 if [ "$COUNT" -ge 1 ] && [ -n "$ITER_CWD" ] && [ -d "$ITER_CWD" ]; then
     _diff_content=$(cd "$ITER_CWD" 2>/dev/null && git diff HEAD --no-color 2>/dev/null || echo "")
     [ -z "$_diff_content" ] && _diff_content=$(cd "$ITER_CWD" 2>/dev/null && git diff HEAD~1 HEAD --no-color 2>/dev/null || echo "")
-    # Filter out .claude/ changes and hash the remaining diff
-    CURRENT_HASH=$(echo "$_diff_content" | grep -v '^diff --git a/\.claude/' | grep -v '^--- a/\.claude/' | grep -v '^+++ b/\.claude/' | md5 2>/dev/null || echo "$_diff_content" | md5sum 2>/dev/null | cut -d' ' -f1 || echo "none")
+    # Filter out entire .claude/ diff sections (headers + hunks), then hash
+    _filtered=$(echo "$_diff_content" | awk '/^diff --git a\/\.claude\//{skip=1;next} /^diff --git /{skip=0} !skip')
+    CURRENT_HASH=$(echo "$_filtered" | md5 2>/dev/null || echo "$_filtered" | md5sum 2>/dev/null | cut -d' ' -f1 || echo "none")
     PREV_HASH=$(cat "$ITER_DIR/prev-diff-hash.txt" 2>/dev/null || echo "")
     echo "$CURRENT_HASH" > "$ITER_DIR/prev-diff-hash.txt"
 
@@ -367,7 +368,7 @@ fi
 RETRIEVED_CONTEXT=$(python3.12 "$SCRIPTS_DIR/retrieve_context.py" \
     --query "$TASK — what should iteration $NEXT focus on next?" \
     --iteration "$NEXT" \
-    --n-results 8 \
+    --n-results 5 \
     2>> "$ITER_DIR/debug.log") || RETRIEVED_CONTEXT="No previous context available."
 
 # --- Collect advisory warnings ---

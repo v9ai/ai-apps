@@ -138,7 +138,7 @@ if [ "$CLEAN" = true ]; then
 fi
 
 if [ "$HISTORY" = true ]; then
-    python3.12 "${SCRIPTS_DIR}/task_history.py" find --task "task" --n 10 2>/dev/null | python3.12 -c "
+    python3.12 "${SCRIPTS_DIR}/task_history.py" find --task "iterate build fix improve test deploy" --n 10 2>/dev/null | python3.12 -c "
 import sys, json
 try:
     data = json.load(sys.stdin)
