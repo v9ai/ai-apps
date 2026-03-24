@@ -254,6 +254,68 @@ SAMPLE_RESEARCH: dict[str, Any] = {
         "predictions": [{"prediction": "Agents will replace most SaaS workflows", "date_made": "2024-06", "timeframe": "2-3 years"}],
         "contrarian_takes": ["Context engineering matters more than model improvements"],
     },
+    "questions": [
+        {
+            "category": "origin",
+            "question": "You left Kensho and Robust Intelligence for a side project that became LangChain in weeks. What signal told you this was worth burning your career safety net?",
+            "why_this_question": "Reveals the founder's risk calculus at the critical inflection point.",
+            "expected_insight": "A concrete anecdote about the moment of commitment, not a retrospective rationalization.",
+        },
+        {
+            "category": "origin",
+            "question": "LangChain went from zero to 100k GitHub stars faster than almost any dev tool. What was the single most important design decision in the first 30 days?",
+            "why_this_question": "Identifies the architectural bet that unlocked viral adoption.",
+            "expected_insight": "A specific technical or product choice, e.g., chain composability or the agent abstraction.",
+        },
+        {
+            "category": "technical_depth",
+            "question": "LangGraph introduces cyclic computation graphs for agents — a sharp departure from LangChain's DAG model. What production failure pattern forced that architectural shift?",
+            "why_this_question": "Exposes the real-world limitations that drove the new abstraction.",
+            "expected_insight": "A concrete use case where DAG-based chains failed, leading to the stateful graph model.",
+        },
+        {
+            "category": "technical_depth",
+            "question": "Your SPADE paper argues for automated data quality assertions in LLM pipelines. What's the most counterintuitive assertion type that catches bugs traditional tests miss?",
+            "why_this_question": "Connects his academic work to practical engineering value.",
+            "expected_insight": "A specific assertion category from SPADE with a real example of a caught bug.",
+        },
+        {
+            "category": "philosophy",
+            "question": "You coined 'context engineering' to replace 'prompt engineering.' What's the most dangerous misconception developers still hold because of the old framing?",
+            "why_this_question": "Forces articulation of the intellectual gap between the two paradigms.",
+            "expected_insight": "A concrete anti-pattern that context engineering solves but prompt engineering ignores.",
+        },
+        {
+            "category": "philosophy",
+            "question": "You've said agents will replace most SaaS workflows in 2-3 years. Which SaaS category do you think disappears first, and why can't the incumbents adapt?",
+            "why_this_question": "Tests whether the prediction has specific supporting logic, not just hype.",
+            "expected_insight": "A named SaaS category with a structural reason why agents outcompete it.",
+        },
+        {
+            "category": "collaboration",
+            "question": "Sequoia led your $25M Series A when LangChain was months old. What did they see in the open-source metrics that convinced them before you had revenue?",
+            "why_this_question": "Reveals the VC signal-reading that validated the project early.",
+            "expected_insight": "Specific metrics or community signals that translated into investor conviction.",
+        },
+        {
+            "category": "collaboration",
+            "question": "You and Ankush Gola co-founded LangChain. How do you divide the technical-vs-commercial decision space, and where has that boundary been tested?",
+            "why_this_question": "Probes co-founder dynamics that shape product direction.",
+            "expected_insight": "A concrete example of a disagreement or division-of-labor challenge.",
+        },
+        {
+            "category": "future",
+            "question": "LangSmith is your observability play. Do you see a future where LLM observability is a standalone category or does it get absorbed into existing APM tools like Datadog?",
+            "why_this_question": "Tests his market thesis for the commercial product.",
+            "expected_insight": "A structural argument for why LLM observability is or isn't a durable standalone market.",
+        },
+        {
+            "category": "future",
+            "question": "If context windows keep doubling yearly, does RAG become obsolete — or does retrieval get more important, not less? Where does LangChain bet?",
+            "why_this_question": "Creates productive tension between two plausible futures for his core product.",
+            "expected_insight": "A nuanced position on how retrieval evolves rather than a binary yes/no.",
+        },
+    ],
     "sources": [],
 }
 
@@ -337,6 +399,11 @@ def sample_news() -> list[dict]:
 @pytest.fixture
 def sample_videos() -> list[dict]:
     return list(SAMPLE_RESEARCH["videos"])
+
+
+@pytest.fixture
+def sample_questions() -> list[dict]:
+    return [dict(q) for q in SAMPLE_RESEARCH["questions"]]
 
 
 # ── load real research files from disk ──────────────────────────────────

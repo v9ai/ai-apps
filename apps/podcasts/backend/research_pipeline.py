@@ -1452,6 +1452,8 @@ async def question_generator(state: ResearchState) -> dict:
         + _ctx_block("Funding", state.get("funding", ""))
         + _ctx_block("Executive Summary", state.get("executive", ""))
         + _ctx_block("Podcast & Media", state.get("podcast_data", ""))
+        + _ctx_block("News", state.get("news_data", ""))
+        + _ctx_block("Conferences", state.get("conference", ""))
     )
 
     result = await _run_agent(
@@ -1461,20 +1463,38 @@ async def question_generator(state: ResearchState) -> dict:
             "conversations with AI/tech leaders. You craft questions that reveal genuine insight — "
             "referencing the person's specific work, intellectual tensions in their field, and "
             "decisions they've made. You never ask generic or Wikipedia-level questions. Each "
-            "question opens a thread the guest hasn't been asked before."
+            "question opens a thread the guest hasn't been asked before.\n\n"
+            "Anti-patterns to avoid:\n"
+            "- 'Tell me about X' or 'What is X' — these are lazy prompts, not questions\n"
+            "- Questions answerable with a single fact (yes/no, a date, a name)\n"
+            "- Questions that could apply to any tech CEO without modification\n"
+            "- Duplicating topics the guest has already been asked on prior podcasts\n\n"
+            "Quality markers:\n"
+            "- References a specific project, paper, decision, or quote from the research\n"
+            "- Creates productive tension (e.g., contrasting two positions the guest holds)\n"
+            "- Invites a story or concrete example, not an abstract answer\n"
+            "- Under 40 words — concise enough to deliver naturally on air"
         ),
         (
             f"Generate 10 high-quality interview questions for a podcast episode featuring {ctx}.\n"
             f"Use the following research to make questions specific and probing:\n{all_context}\n\n"
-            f"Question categories (2 per category):\n"
-            f"1. Origin & turning point — decisions that shaped their career path\n"
-            f"2. Technical depth — architectural trade-offs or design choices in their core work\n"
-            f"3. Philosophy & contrarian views — where they disagree with the mainstream\n"
-            f"4. Collaboration & ecosystem — relationships that shaped key projects\n"
-            f"5. Future & predictions — specific bets they're making on where the field goes\n\n"
-            f"Rules: reference actual project names, papers, or events from the research. "
-            f"Each question must be standalone (no follow-ups). Keep each under 40 words.\n\n"
-            f'Output JSON array: [{{"category": "origin", "question": "..."}}, ...]'
+            f"Question categories (exactly 2 per category):\n"
+            f"1. origin — pivotal decisions or turning points that shaped their career path\n"
+            f"2. technical_depth — architectural trade-offs, design choices, or engineering bets in their core work\n"
+            f"3. philosophy — contrarian views, intellectual tensions, or where they disagree with mainstream\n"
+            f"4. collaboration — relationships, partnerships, or ecosystem dynamics that shaped key projects\n"
+            f"5. future — specific predictions, bets, or visions for where the field is heading\n\n"
+            f"Rules:\n"
+            f"- Reference actual project names, papers, quotes, or events from the research\n"
+            f"- Each question must be standalone (no follow-ups or 'building on the previous...')\n"
+            f"- Keep each question under 40 words\n"
+            f"- For each question, explain WHY this question matters and what INSIGHT you expect it to reveal\n"
+            f"- Check the person's prior podcast appearances and do NOT repeat questions they've likely been asked\n\n"
+            f"Output a JSON array of exactly 10 objects:\n"
+            f'{{"category": "origin|technical_depth|philosophy|collaboration|future", '
+            f'"question": "the question text", '
+            f'"why_this_question": "1-sentence reason this question is worth asking", '
+            f'"expected_insight": "what kind of answer this should draw out"}}'
         ),
     )
 
@@ -1805,8 +1825,13 @@ def export_results(state: ResearchState) -> None:
         "conferences": conference,
         "technical_philosophy": philosophy,
         "questions": [
-            {"category": q.get("category", ""), "question": q.get("question", "")}
-            for q in questions if isinstance(q, dict)
+            {
+                "category": q.get("category", ""),
+                "question": q.get("question", ""),
+                "why_this_question": q.get("why_this_question", ""),
+                "expected_insight": q.get("expected_insight", ""),
+            }
+            for q in questions if isinstance(q, dict) and q.get("question")
         ],
         "sources": [],
     }

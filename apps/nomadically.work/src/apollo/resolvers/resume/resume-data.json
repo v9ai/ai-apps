@@ -182,58 +182,58 @@
       {
         "id": "1",
         "name": "Agentic Healthcare",
-        "description": "AI health trajectory — biomarker analysis, risk classification, Braintrust evals. Next.js 16, Supabase.",
+        "description": "Clinical biomarker trajectory analysis, AI-driven risk classification with embedding similarity, pgvector search, automated accuracy evals with Braintrust.",
         "githubUrl": "https://github.com/nicolad/agentic-healthcare",
         "websiteUrl": "https://agentic-healthcare.vercel.app",
         "highlights": [
-          "Longitudinal biomarker trajectory analysis across 7 derived clinical metrics (HDL/LDL ratio, TyG Index, NLR, De Ritis ratio), abnormal flag detection, metric velocity computation with evidence-based thresholds from 6+ peer-reviewed papers.",
-          "Risk classification (\"optimal\", \"borderline\", \"elevated\", \"low\") with cosine similarity scoring (threshold 0.3) against 1024-dim Qwen embeddings across 7 embedding tables.",
-          "7 protected server actions (blood tests, conditions, medications, symptoms, appointments, trajectory, search) with 15 trajectory test cases covering diverse metabolic profiles.",
-          "Braintrust autoevals: Factuality and Relevance scorers validating clinical accuracy, experiment tracking for model version comparison.",
-          "Supabase + pgvector backend with Row Level Security, Drizzle ORM, medication tracking, appointment scheduling, diagnosis management."
+          "Longitudinal biomarker trajectory analysis across 7 derived clinical metrics, abnormal flag detection, metric velocity computation with evidence-based thresholds.",
+          "Risk classification with cosine similarity scoring against 1024-dim Qwen embeddings across 7 embedding tables.",
+          "7 protected server actions with 15 trajectory test cases covering diverse metabolic profiles.",
+          "Braintrust autoevals: Factuality and Relevance scorers, experiment tracking for model version comparison.",
+          "pgvector backend with Row Level Security, Drizzle ORM, medication tracking, diagnosis management."
         ]
       },
       {
         "id": "2",
         "name": "Knowledge",
-        "description": "AI engineering learning platform — 55 lessons, knowledge graph, Bayesian tracing, DeepEval evals, LangGraph pipeline. Next.js 15, Neon.",
+        "description": "Knowledge graph with pgvector similarity search, Bayesian mastery tracing per user, automated quality evals with DeepEval, LangGraph multi-agent editorial pipeline.",
         "githubUrl": "https://github.com/nicolad/knowledge",
         "websiteUrl": "https://agentic-knowledge.vercel.app/",
         "highlights": [
-          "Knowledge graph with 6 relationship types (prerequisite, related, builds_on, part_of, contrasts_with, applies_to), pgvector cosine similarity search at 1024 dimensions for lesson recommendations across 55 embedded lessons.",
-          "Bayesian knowledge tracing (p_mastery, p_transit, p_slip, p_guess per concept per user), mastery classification (novice → expert), 9 interaction event types with time-on-page and completion analytics.",
-          "DeepEval framework: parametrized tests across 55 articles (Coherence, Factual Grounding, Completeness, Readability at 0.7 threshold), RAG triad evaluation (Faithfulness, Answer Relevancy, Contextual Relevancy), LLM-as-judge consistency, agent task completion, red-team adversarial harness.",
-          "LangGraph editorial pipeline: 6-agent fan-out/fan-in workflow (researcher, SEO, intro-strategist, writer, editor) with multi-round revision loops, DeepSeek R1 reasoning + OpenAI fast models.",
-          "Streaming DeepSeek chat with thread-scoped message persistence, context injection from lesson data, 17-table Drizzle ORM schema with pgvector embeddings, Cloudflare R2 audio storage."
+          "Knowledge graph with 6 relationship types, pgvector cosine similarity search at 1024 dimensions for lesson recommendations.",
+          "Bayesian knowledge tracing (p_mastery, p_transit, p_slip, p_guess per concept), mastery classification (novice → expert), interaction analytics.",
+          "DeepEval framework: Coherence, Factual Grounding, Completeness, Readability tests; RAG triad evaluation; LLM-as-judge consistency; red-team harness.",
+          "LangGraph editorial pipeline: 6-agent fan-out/fan-in workflow with multi-round revision loops, DeepSeek R1 + OpenAI models.",
+          "Streaming chat with thread-scoped persistence, 17-table Drizzle ORM schema with pgvector embeddings, Cloudflare R2 audio storage."
         ]
       },
       {
         "id": "3",
         "name": "ResearchThera.com",
-        "description": "AI therapeutic journaling — agentic orchestration, 7-source research pipeline, RAG, Harbor evals. Next.js 16, Cloudflare D1/R2.",
+        "description": "Multi-agent orchestration with LLM quality gating, clinical research ingestion pipeline, RAG-powered search, runtime prompt versioning, automated quality evals with Harbor.",
         "githubUrl": "https://github.com/nicolad/research-thera",
         "websiteUrl": "https://researchthera.com",
         "highlights": [
-          "Multi-stage agentic workflow (6-20 agents per session): clinical NLP normalization → parallel 7-source ingestion → OpenAlex enrichment (300 candidates) → LLM quality gate → top-20 persistence to D1 + vector store for RAG.",
-          "DeepSeek-as-judge evaluation scorer; 3-threshold gating (relevance 0.75, confidence 0.55, blended 0.72) filtering unsupported clinical claims.",
-          "Prompt versioning with runtime registry, no-deploy updates, distributed tracing, per-model cost tracking, A/B evaluation across LangChain/LangGraph Python workers.",
-          "Serverless TTS microservice: RAG-based content chunking, streaming audio to R2 via Trigger.dev v4 durable tasks.",
-          "Harbor eval harness: containerized trials-at-scale across 6-20 non-deterministic agents, standardized task/grader format mapped to ResearchTask definitions."
+          "Multi-stage agentic workflow (6-20 agents): NLP normalization → 7-source ingestion → OpenAlex enrichment → LLM quality gate → vector store for RAG.",
+          "DeepSeek-as-judge evaluation scorer; 3-threshold gating filtering unsupported clinical claims.",
+          "Prompt versioning with runtime registry, distributed tracing, per-model cost tracking, A/B evaluation across LangGraph workers.",
+          "Serverless TTS microservice: RAG-based content chunking, streaming audio to R2 via Trigger.dev durable tasks.",
+          "Harbor eval harness: containerized trials-at-scale across non-deterministic agents, standardized task/grader format."
         ]
       },
       {
         "id": "4",
         "name": "Law Adversarial",
-        "description": "Adversarial brief stress-tester — Attacker/Defender/Judge debate, Promptfoo + DeepTeam red-teaming. Next.js 16, DeepSeek + Qwen.",
+        "description": "Multi-agent adversarial debate pipeline with citation verification, jurisdiction analysis, red-teaming and safety evals with Promptfoo and DeepTeam.",
         "githubUrl": "https://github.com/nicolad/law-adversarial",
         "websiteUrl": "https://law-adversarial.vercel.app",
         "highlights": [
-          "6-agent adversarial debate pipeline: DeepSeek R1 Attacker surfaces weaknesses, Qwen Plus Defender rebuts, DeepSeek Chat Judge scores with severity ratings, plus citation-verifier, jurisdiction-expert, and brief-rewriter agents.",
-          "Citation verification and fabrication detection via DeepSeek R1 extended reasoning with chain-of-thought audit trails.",
-          "Jurisdiction-specific precedent hierarchy mapping with specialized expert agent, multi-jurisdiction comparison.",
-          "Real-time SSE streaming of round progress with per-agent audit logging and structured action metadata.",
-          "Promptfoo: 8 declarative YAML suites (attacker, defender, judge, citations, jurisdiction, rewriter, red-team, consistency), custom JS assertions, LLM-as-judge rubrics validating structured JSON across all 6 agents.",
-          "DeepTeam red-teaming: 5 custom legal vulnerabilities (citation hallucination, prompt injection resistance, legal misinformation, analysis completeness, judge bias) tested via 7 attack methods (PromptInjection, ContextPoisoning, CrescendoJailbreaking, GoalRedirection) across the full multi-agent pipeline."
+          "6-agent adversarial debate pipeline: Attacker surfaces weaknesses, Defender rebuts, Judge scores with severity ratings, plus citation-verifier, jurisdiction-expert, and brief-rewriter.",
+          "Citation verification and fabrication detection via extended reasoning with chain-of-thought audit trails.",
+          "Jurisdiction-specific precedent hierarchy mapping, multi-jurisdiction comparison.",
+          "Real-time SSE streaming of round progress with per-agent audit logging.",
+          "Promptfoo: 8 YAML eval suites, custom JS assertions, LLM-as-judge rubrics across all 6 agents.",
+          "DeepTeam red-teaming: 5 legal vulnerabilities tested via 7 attack methods across the full multi-agent pipeline."
         ]
       }
     ]

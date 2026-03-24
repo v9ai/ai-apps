@@ -44,7 +44,7 @@ function buildSenderBackground(): string {
   lines.push(`  ${recentSummary.slice(0, 400)}`);
 
   if (aiProjects.length > 0) {
-    lines.push("", "AI PROJECTS — NCA IT Ltd (use selectively to demonstrate practical AI experience):");
+    lines.push("", "AI PROJECTS — NCA IT Ltd:");
     for (const proj of aiProjects) {
       lines.push(`- ${proj.name}: ${proj.description}`);
     }

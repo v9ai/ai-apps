@@ -233,6 +233,121 @@ async def test_question_generator_returns_questions_key():
 
 
 @pytest.mark.asyncio
+async def test_question_generator_enriched_output():
+    """question_generator should pass through enriched fields from the agent."""
+    enriched = json.dumps([
+        {
+            "category": "origin",
+            "question": "What moment at Kensho made you leave for LangChain?",
+            "why_this_question": "Reveals the founder's risk calculus.",
+            "expected_insight": "A concrete anecdote about commitment.",
+        },
+        {
+            "category": "technical_depth",
+            "question": "Why did LangGraph introduce cyclic graphs?",
+            "why_this_question": "Exposes DAG limitations in production.",
+            "expected_insight": "A specific failure pattern.",
+        },
+    ])
+
+    async def mock_run(client, sys, task, tools=None):
+        return enriched
+
+    state: ResearchState = {
+        "person": SAMPLE_PERSON,
+        "bio": "Test bio",
+        "timeline": "[]",
+        "contributions": "[]",
+        "quotes": "[]",
+        "philosophy": "{}",
+        "competitive": "{}",
+        "collaboration": "{}",
+        "funding": "{}",
+        "executive": "{}",
+        "podcast_data": "[]",
+    }
+
+    with patch("research_pipeline._run_agent", side_effect=mock_run), \
+         patch("research_pipeline._make_client", return_value=MagicMock()):
+        result = await question_generator(state)
+
+    assert "questions" in result
+    # Verify the raw output contains the enriched JSON
+    parsed = json.loads(result["questions"])
+    assert len(parsed) == 2
+    assert parsed[0]["why_this_question"] == "Reveals the founder's risk calculus."
+    assert parsed[1]["expected_insight"] == "A specific failure pattern."
+
+
+@pytest.mark.asyncio
+async def test_question_generator_prompt_includes_new_context():
+    """question_generator should include news and conference data in its prompt."""
+    captured_tasks = []
+
+    async def mock_run(client, sys, task, tools=None):
+        captured_tasks.append(task)
+        return '[{"category": "origin", "question": "Test?"}]'
+
+    state: ResearchState = {
+        "person": SAMPLE_PERSON,
+        "bio": "Test bio",
+        "timeline": "[]",
+        "contributions": "[]",
+        "quotes": "[]",
+        "philosophy": "{}",
+        "competitive": "{}",
+        "collaboration": "{}",
+        "funding": "{}",
+        "executive": "{}",
+        "podcast_data": "[]",
+        "news_data": '[{"headline": "Test News"}]',
+        "conference": '{"talks": [{"title": "Keynote"}]}',
+    }
+
+    with patch("research_pipeline._run_agent", side_effect=mock_run), \
+         patch("research_pipeline._make_client", return_value=MagicMock()):
+        await question_generator(state)
+
+    assert len(captured_tasks) == 1
+    task_text = captured_tasks[0]
+    assert "News" in task_text
+    assert "Conferences" in task_text
+
+
+@pytest.mark.asyncio
+async def test_question_generator_prompt_has_anti_patterns():
+    """The system prompt should include anti-pattern guidance."""
+    captured_sys = []
+
+    async def mock_run(client, sys_prompt, task, tools=None):
+        captured_sys.append(sys_prompt)
+        return '[{"category": "origin", "question": "Test?"}]'
+
+    state: ResearchState = {
+        "person": SAMPLE_PERSON,
+        "bio": "Test bio",
+        "timeline": "[]",
+        "contributions": "[]",
+        "quotes": "[]",
+        "philosophy": "{}",
+        "competitive": "{}",
+        "collaboration": "{}",
+        "funding": "{}",
+        "executive": "{}",
+        "podcast_data": "[]",
+    }
+
+    with patch("research_pipeline._run_agent", side_effect=mock_run), \
+         patch("research_pipeline._make_client", return_value=MagicMock()):
+        await question_generator(state)
+
+    assert len(captured_sys) == 1
+    sys_text = captured_sys[0]
+    assert "Anti-patterns" in sys_text
+    assert "Tell me about" in sys_text
+
+
+@pytest.mark.asyncio
 async def test_question_generator_handles_agent_error():
     """question_generator should not raise even if agent errors."""
     async def mock_run(client, sys, task, tools=None):

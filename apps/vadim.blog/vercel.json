@@ -4,5 +4,5 @@
   "devCommand": "pnpm run dev",
   "installCommand": "pnpm install --no-frozen-lockfile",
   "framework": "docusaurus-2",
-  "ignoreCommand": "npx turbo-ignore"
+  "ignoreCommand": "exit 0"
 }
