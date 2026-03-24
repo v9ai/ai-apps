@@ -31,4 +31,5 @@ PYEOF
   fi
 fi
 
+mkdir -p .claude 2>/dev/null
 echo "$(date -Iseconds) | terminal=$TERMINAL | iter=$ITERATION" >> .claude/iteration-log.txt 2>/dev/null

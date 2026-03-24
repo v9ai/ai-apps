@@ -7,7 +7,7 @@ import { resend } from "@/lib/resend";
 import { spawn } from "node:child_process";
 import * as path from "node:path";
 import { generateText } from "ai";
-import { anthropic } from "@ai-sdk/anthropic";
+import { deepseek } from "@ai-sdk/deepseek";
 import {
   buildSchedule,
   getSchedulePreview,
