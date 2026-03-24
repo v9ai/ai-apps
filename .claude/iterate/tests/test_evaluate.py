@@ -31,6 +31,17 @@ class TestCosineSimilarity:
     def test_opposite_vectors(self):
         assert _cosine_similarity([1, 0], [-1, 0]) == pytest.approx(-1.0)
 
+    def test_near_zero_vector_returns_zero(self):
+        """Vectors with near-zero norm should return 0.0, not inf/NaN."""
+        tiny = [1e-12, 1e-12]
+        result = _cosine_similarity(tiny, [1, 1])
+        assert result == 0.0
+
+    def test_both_near_zero_returns_zero(self):
+        tiny_a = [1e-15, 0]
+        tiny_b = [0, 1e-15]
+        assert _cosine_similarity(tiny_a, tiny_b) == 0.0
+
 
 # ---------------------------------------------------------------------------
 # _extract_errors

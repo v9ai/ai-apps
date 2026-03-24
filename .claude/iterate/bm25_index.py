@@ -23,8 +23,8 @@ def bm25_available() -> bool:
 
 
 def _tokenize(text: str) -> list[str]:
-    """Simple whitespace + lowercasing tokenizer."""
-    return re.findall(r"[a-z0-9_]+", text.lower())
+    """Whitespace + lowercasing tokenizer that preserves hyphenated terms."""
+    return re.findall(r"[a-z0-9_](?:[a-z0-9_-]*[a-z0-9_])?", text.lower())
 
 
 class BM25Index:

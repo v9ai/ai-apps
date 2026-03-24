@@ -228,7 +228,7 @@ fi
 # --- Stall detection: advisory warning only (iterations are exact) ---
 STALL_WARNING=""
 if [ "$COUNT" -ge 1 ] && [ -n "$ITER_CWD" ] && [ -d "$ITER_CWD" ]; then
-    # Prefer uncommitted changes (iterate sessions don't commit between iterations).
+    # Check uncommitted changes first, then fall back to last commit diff.
     # Can't use || fallback because git exits 0 even with empty output.
     _ud=$(cd "$ITER_CWD" 2>/dev/null && git diff HEAD --name-only --no-color 2>/dev/null || echo "")
     [ -z "$_ud" ] && _ud=$(cd "$ITER_CWD" 2>/dev/null && git diff HEAD~1 HEAD --name-only --no-color 2>/dev/null || echo "")
@@ -245,6 +245,46 @@ if [ "$COUNT" -ge 1 ] && [ -n "$ITER_CWD" ] && [ -d "$ITER_CWD" ]; then
     else
         echo "0" > "$ITER_DIR/stall-count.txt"
     fi
+fi
+
+# --- Auto-commit & push between iterations ---
+if [ -n "$ITER_CWD" ] && [ -d "$ITER_CWD" ]; then
+    (
+        cd "$ITER_CWD" 2>/dev/null || exit 0
+        git rev-parse --is-inside-work-tree > /dev/null 2>&1 || exit 0
+        # Nothing to commit?
+        if git diff --quiet HEAD 2>/dev/null && [ -z "$(git ls-files --others --exclude-standard)" ]; then
+            exit 0
+        fi
+        git add -A -- . ':!.env*' ':!*.local'
+        FILES=$(git diff --cached --name-only)
+        SCOPE=$(echo "$FILES" | sed -n 's|^apps/\([^/]*\)/.*|\1|p' | sort -u)
+        N_SCOPE=$(echo "$SCOPE" | grep -c . 2>/dev/null || echo 0)
+        if [ "$N_SCOPE" -eq 1 ] && [ -n "$SCOPE" ]; then
+            TAG="($SCOPE)"
+        elif [ "$N_SCOPE" -gt 1 ]; then
+            TAG="($(echo "$SCOPE" | paste -sd ',' -))"
+        elif echo "$FILES" | grep -q '^crates/'; then
+            TAG="(crates)"
+        elif echo "$FILES" | grep -q '^packages/'; then
+            TAG="(packages)"
+        elif echo "$FILES" | grep -q '\.claude/'; then
+            TAG="(hooks)"
+        else
+            TAG=""
+        fi
+        NAMES=$(echo "$FILES" | xargs -n1 basename | sed 's/\.[^.]*$//' | sort -u)
+        FCOUNT=$(echo "$NAMES" | wc -l | tr -d ' ')
+        if [ "$FCOUNT" -le 5 ]; then
+            SUMMARY="chore${TAG}: $(echo "$NAMES" | paste -sd ', ' -)"
+        else
+            TOP=$(echo "$NAMES" | head -3 | paste -sd ', ' -)
+            SUMMARY="chore${TAG}: ${TOP} (+$((FCOUNT - 3)) more)"
+        fi
+        git commit -m "${SUMMARY}" --no-verify > /dev/null 2>&1 || exit 0
+        git push --no-verify > /dev/null 2>&1 || true
+    ) >> "$ITER_DIR/debug.log" 2>&1
+    echo "[kick-session] auto-commit+push done" >> "$ITER_DIR/debug.log" 2>/dev/null || true
 fi
 
 # --- Step 2: Evaluate (advisory — never stops the loop) ---
@@ -338,7 +378,7 @@ ALL_WARNINGS=""
 # --- Git diff summary for last iteration (so Claude sees what changed) ---
 DIFF_SUMMARY=""
 if [ -n "$ITER_CWD" ] && [ -d "$ITER_CWD" ]; then
-    # Prefer uncommitted changes (iterate sessions don't commit between iterations)
+    # Show uncommitted changes or last commit diff
     _ds=$(cd "$ITER_CWD" 2>/dev/null && { _u=$(git diff HEAD --stat --no-color 2>/dev/null | tail -1); [ -n "$_u" ] && echo "$_u" || git diff HEAD~1 HEAD --stat --no-color 2>/dev/null | tail -1; } || echo "")
     [ -n "$_ds" ] && DIFF_SUMMARY="**Last iteration diff:** $_ds"
 fi

@@ -468,3 +468,31 @@ class TestRetrieveEdgeCases:
         store(0, "Work.", "task")
         result = retrieve("task", current_iteration=1, similarity_override=0.5)
         assert isinstance(result, str)
+
+
+# ---------------------------------------------------------------------------
+# RRF doc_key robustness
+# ---------------------------------------------------------------------------
+
+class TestRRFDocKey:
+    def test_missing_chunk_index_no_collision(self):
+        """Docs missing chunk_index should not collide in RRF fusion."""
+        from rrf import reciprocal_rank_fusion
+        list_a = [
+            ("doc A", {"iteration": 0}, 0.9),
+            ("doc B", {"iteration": 1}, 0.8),
+        ]
+        list_b = [
+            ("doc C", {"iteration": 2}, 0.7),
+        ]
+        result = reciprocal_rank_fusion([list_a, list_b])
+        assert len(result) == 3
+
+    def test_same_iteration_different_chunks_stay_separate(self):
+        from rrf import reciprocal_rank_fusion
+        list_a = [
+            ("chunk 0", {"iteration": 0, "chunk_index": 0}, 0.9),
+            ("chunk 1", {"iteration": 0, "chunk_index": 1}, 0.8),
+        ]
+        result = reciprocal_rank_fusion([list_a])
+        assert len(result) == 2
