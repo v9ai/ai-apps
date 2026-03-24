@@ -202,7 +202,7 @@ fi
 rm -rf "$ITER_DIR" 2>/dev/null || true
 mkdir -p "$ITER_DIR"
 
-echo "0" > "$ITER_DIR/counter"  # Must start at 0 — kick-session.sh reads then increments
+echo "1" > "$ITER_DIR/counter"  # 1-based — kick-session.sh uses COUNT > ITERATIONS for limit
 echo "$ITERATIONS" > "$ITER_DIR/iterations.txt"
 echo "$TASK" > "$ITER_DIR/task.txt"
 echo "[]" > "$ITER_DIR/scores.json"
