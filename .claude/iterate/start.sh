@@ -6,6 +6,7 @@ ITERATIONS=10
 RESET=false
 STATUS=false
 CLEAN=false
+HISTORY=false
 DONE_WHEN=""
 TASK=""
 
@@ -36,6 +37,7 @@ while [[ $# -gt 0 ]]; do
         --reset) RESET=true; shift ;;
         --status) STATUS=true; shift ;;
         --clean) CLEAN=true; shift ;;
+        --history) HISTORY=true; shift ;;
         *) TASK="${TASK:+$TASK }$1"; shift ;;
     esac
 done
@@ -135,11 +137,30 @@ if [ "$CLEAN" = true ]; then
     exit 0
 fi
 
+if [ "$HISTORY" = true ]; then
+    python3.12 "${SCRIPTS_DIR}/task_history.py" find --task "task" --n 10 2>/dev/null | python3.12 -c "
+import sys, json
+try:
+    data = json.load(sys.stdin)
+    if not data:
+        print('No task history found.')
+    else:
+        for t in data:
+            score = f\"{t['final_score']:.2f}\" if t['final_score'] >= 0 else 'n/a'
+            ts = t.get('timestamp', '')[:16]
+            print(f\"  {t['status']:9s}  {t['iterations']:2d} iters  score={score}  {ts}  {t['task']}\")
+except Exception:
+    print('No task history found.')
+" || echo "No task history found."
+    exit 0
+fi
+
 if [ -z "$TASK" ]; then
     echo "Usage: /iterate 5 Your task description"
     echo "       /iterate status"
     echo "       /iterate reset"
     echo "       /iterate clean   — remove stale sessions"
+    echo "       /iterate history — show past tasks"
     exit 1
 fi
 

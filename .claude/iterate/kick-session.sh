@@ -226,21 +226,22 @@ if [ -f "$ITER_OUTPUT" ] && [ -s "$ITER_OUTPUT" ]; then
 fi
 
 # --- Stall detection: advisory warning only (iterations are exact) ---
+# Compares a hash of the diff content (not just file names) so that editing
+# the same files with different changes does NOT trigger a false stall.
 STALL_WARNING=""
 if [ "$COUNT" -ge 1 ] && [ -n "$ITER_CWD" ] && [ -d "$ITER_CWD" ]; then
-    # Check uncommitted changes first, then fall back to last commit diff.
-    # Can't use || fallback because git exits 0 even with empty output.
-    _ud=$(cd "$ITER_CWD" 2>/dev/null && git diff HEAD --name-only --no-color 2>/dev/null || echo "")
-    [ -z "$_ud" ] && _ud=$(cd "$ITER_CWD" 2>/dev/null && git diff HEAD~1 HEAD --name-only --no-color 2>/dev/null || echo "")
-    CURRENT_DIFF=$(echo "$_ud" | grep -v '^\.claude/' | sort)
-    PREV_DIFF=$(cat "$ITER_DIR/prev-diff-names.txt" 2>/dev/null || echo "")
-    echo "$CURRENT_DIFF" > "$ITER_DIR/prev-diff-names.txt"
+    _diff_content=$(cd "$ITER_CWD" 2>/dev/null && git diff HEAD --no-color 2>/dev/null || echo "")
+    [ -z "$_diff_content" ] && _diff_content=$(cd "$ITER_CWD" 2>/dev/null && git diff HEAD~1 HEAD --no-color 2>/dev/null || echo "")
+    # Filter out .claude/ changes and hash the remaining diff
+    CURRENT_HASH=$(echo "$_diff_content" | grep -v '^diff --git a/\.claude/' | grep -v '^--- a/\.claude/' | grep -v '^+++ b/\.claude/' | md5 2>/dev/null || echo "$_diff_content" | md5sum 2>/dev/null | cut -d' ' -f1 || echo "none")
+    PREV_HASH=$(cat "$ITER_DIR/prev-diff-hash.txt" 2>/dev/null || echo "")
+    echo "$CURRENT_HASH" > "$ITER_DIR/prev-diff-hash.txt"
 
-    if [ -n "$CURRENT_DIFF" ] && [ "$CURRENT_DIFF" = "$PREV_DIFF" ]; then
+    if [ -n "$CURRENT_HASH" ] && [ "$CURRENT_HASH" != "none" ] && [ "$CURRENT_HASH" = "$PREV_HASH" ]; then
         STALL_COUNT=$(cat "$ITER_DIR/stall-count.txt" 2>/dev/null || echo "0")
         STALL_COUNT=$((STALL_COUNT + 1))
         echo "$STALL_COUNT" > "$ITER_DIR/stall-count.txt"
-        echo "[kick-session] stall=$STALL_COUNT (advisory)" >> "$ITER_DIR/debug.log" 2>/dev/null || true
+        echo "[kick-session] stall=$STALL_COUNT hash=$CURRENT_HASH (advisory)" >> "$ITER_DIR/debug.log" 2>/dev/null || true
         STALL_WARNING="WARNING: No new code changes for $STALL_COUNT iterations. Try a different approach."
     else
         echo "0" > "$ITER_DIR/stall-count.txt"
