@@ -175,6 +175,79 @@ _STALE_COLUMNS = [
 ]
 
 
+# ---------------------------------------------------------------------------
+# Contacts — upsert from email outreach pipeline
+# ---------------------------------------------------------------------------
+
+def upsert_contact(
+    conn: psycopg.Connection,
+    *,
+    first_name: str,
+    last_name: str,
+    email: str | None = None,
+    position: str | None = None,
+    company: str | None = None,
+    linkedin_url: str | None = None,
+    tags: str | None = None,
+) -> int | None:
+    """Insert a contact or return existing ID if email/name already exists."""
+    with conn.cursor(row_factory=dict_row) as cur:
+        # Check for existing contact by email first, then by name
+        if email:
+            cur.execute(
+                "SELECT id FROM contacts WHERE email = %s LIMIT 1",
+                [email],
+            )
+            row = cur.fetchone()
+            if row:
+                # Update position/company if they were empty
+                cur.execute(
+                    """UPDATE contacts
+                       SET position = COALESCE(NULLIF(position, ''), %s),
+                           company = COALESCE(NULLIF(company, ''), %s),
+                           linkedin_url = COALESCE(NULLIF(linkedin_url, ''), %s),
+                           updated_at = now()::text
+                       WHERE id = %s""",
+                    [position, company, linkedin_url, row["id"]],
+                )
+                conn.commit()
+                return row["id"]
+
+        # Check by name
+        cur.execute(
+            """SELECT id FROM contacts
+               WHERE first_name ILIKE %s AND last_name ILIKE %s
+               LIMIT 1""",
+            [first_name, last_name],
+        )
+        row = cur.fetchone()
+        if row:
+            cur.execute(
+                """UPDATE contacts
+                   SET email = COALESCE(NULLIF(email, ''), %s),
+                       position = COALESCE(NULLIF(position, ''), %s),
+                       company = COALESCE(NULLIF(company, ''), %s),
+                       linkedin_url = COALESCE(NULLIF(linkedin_url, ''), %s),
+                       updated_at = now()::text
+                   WHERE id = %s""",
+                [email, position, company, linkedin_url, row["id"]],
+            )
+            conn.commit()
+            return row["id"]
+
+        # Insert new contact
+        cur.execute(
+            """INSERT INTO contacts
+               (first_name, last_name, email, position, company, linkedin_url, tags)
+               VALUES (%s, %s, %s, %s, %s, %s, %s)
+               RETURNING id""",
+            [first_name, last_name, email, position, company, linkedin_url, tags],
+        )
+        new_row = cur.fetchone()
+        conn.commit()
+        return new_row["id"] if new_row else None
+
+
 def mark_jobs_stale(conn: psycopg.Connection, job_ids: list[int]) -> int:
     """Mark a batch of jobs as stale: null data columns, delete skill tags."""
     if not job_ids:

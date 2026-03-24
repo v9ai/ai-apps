@@ -44,3 +44,12 @@
 [aria-hidden="true"] {
   display: none;
 }
+
+/* Article titles: sans-serif font */
+.blog-wrapper article h1,
+.blog-wrapper article h2:first-child,
+.blog-list-page article h2 {
+  font-family: ui-sans-serif, system-ui, sans-serif, "Apple Color Emoji",
+    "Segoe UI Emoji", "Segoe UI Symbol", "Noto Color Emoji";
+  font-weight: 300;
+}

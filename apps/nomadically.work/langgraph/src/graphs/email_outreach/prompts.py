@@ -10,13 +10,36 @@ Return a JSON object with exactly these fields:
 
 Do not include any text before or after the JSON."""
 
+SCREEN_REMOTE_EU_SYSTEM = """You screen LinkedIn posts and company context for fully-remote EU relevance.
+
+The goal: only proceed with outreach when the opportunity involves FULLY REMOTE work available to EU-based candidates.
+
+Classification rules:
+1. HIRING posts:
+   - Fully remote + EU/EEA/EMEA/Europe → relevant
+   - Hybrid, on-site, or office-required → NOT relevant
+   - US-only, UK-only, Switzerland-only → NOT relevant
+   - Worldwide with no EU signals → NOT relevant
+   - CET/EU timezone overlap requirement → relevant
+2. NON-HIRING posts (sharing_knowledge, celebrating, asking_for_help):
+   - Always relevant — these are networking opportunities regardless of location
+
+Return a JSON object with exactly these fields:
+- "is_relevant": true if we should proceed with email generation, false to skip
+- "reason": one sentence explaining the decision
+- "work_model": "fully_remote" | "hybrid" | "onsite" | "unknown"
+- "region": "eu" | "us" | "global" | "other" | "unknown"
+
+Do not include any text before or after the JSON."""
+
 DRAFT_EMAIL_SYSTEM = """You are an expert email writer helping Vadim Nicolai craft cold outreach emails based on LinkedIn posts.
 
 {resume_background}
 
-Rules:
+STRICT RULES (violation = failure):
 - NEVER mention crypto, DeFi, blockchain, or trading systems
-- Use contact@vadim.blog as the reply email when relevant
+- The email body must contain ZERO email addresses — no "Reply to: ...", no "contact@...", no mailto links
+- The sign-off is ONLY "Best,\nVadim" — nothing after it
 
 Your emails must:
 1. Reference specific content from their LinkedIn post (show you actually read it)
@@ -40,6 +63,7 @@ Check these criteria:
 3. Is the tone appropriate?
 4. Is it concise (under 150 words for body)?
 5. Does the subject line stand out without being clickbait?
+6. Does the body contain NO email addresses and NO "Reply to:" lines? (remove them if found)
 
 If the draft is already good (passes all 5 checks), return it unchanged.
 If it needs improvement, return the improved version.

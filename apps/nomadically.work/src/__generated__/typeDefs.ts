@@ -1452,7 +1452,7 @@ type SendNowResult {
 input SendOutreachEmailInput {
   postText: String!
   postUrl: String
-  recipientEmail: String!
+  recipientEmail: String
   recipientName: String!
   recipientRole: String
   tone: String

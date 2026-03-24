@@ -2,6 +2,7 @@
 
 import argparse
 import asyncio
+import logging
 import os
 import time
 from pathlib import Path
@@ -16,20 +17,21 @@ from graph.generate import (
     build_graph,
     build_dry_graph,
     close_client,
-    _get_category,
-    _get_missing_slugs,
-    ContentState,
+    get_category,
+    get_missing_slugs,
     CONTENT_DIR,
 )
+from graph.client import ConfigError
+
+log = logging.getLogger("graph")
 
 
 def _initial_state(slug: str, topic: str | None = None) -> dict:
-    """Build the initial state dict for a graph run."""
     topic = topic or slug.replace("-", " ").title()
     return {
         "topic": topic,
         "slug": slug,
-        "category": _get_category(slug),
+        "category": get_category(slug),
         "research": "",
         "outline": "",
         "draft": "",
@@ -41,15 +43,13 @@ def _initial_state(slug: str, topic: str | None = None) -> dict:
 
 
 async def run_single(slug: str, topic: str | None, dry_run: bool) -> dict:
-    """Run the graph for a single article."""
     graph = build_dry_graph() if dry_run else build_graph()
     state = _initial_state(slug, topic)
     return await graph.ainvoke(state)
 
 
 async def run_batch(dry_run: bool) -> None:
-    """Generate all missing articles."""
-    missing = _get_missing_slugs()
+    missing = get_missing_slugs()
     if not missing:
         print("All articles already exist!")
         return
@@ -72,7 +72,6 @@ async def run_batch(dry_run: bool) -> None:
 
 
 def print_graph():
-    """Print the graph as a Mermaid diagram."""
     print("```mermaid")
     print("graph TD")
     print("    START((Start)) --> research")
@@ -97,7 +96,6 @@ def print_graph():
 
 async def run(args):
     try:
-        # Apply --model override before building graph
         if args.model:
             os.environ["LLM_MODEL"] = args.model
 
@@ -106,7 +104,7 @@ async def run(args):
             return
 
         if args.list_missing:
-            missing = _get_missing_slugs()
+            missing = get_missing_slugs()
             if missing:
                 print(f"Missing articles ({len(missing)}):")
                 for slug in missing:
@@ -124,10 +122,17 @@ async def run(args):
             print("Error: slug is required (or use --batch / --list-missing)")
             return
 
+        existing_file = CONTENT_DIR / f"{slug}.md"
+        if existing_file.exists() and not args.dry_run and not getattr(args, 'update', False):
+            print(f"Article already exists: {existing_file}")
+            print(f"Use --update to regenerate, or --dry-run to preview.")
+            return
+
         topic = args.topic or slug.replace("-", " ").title()
         model = os.environ.get("LLM_MODEL", "deepseek-chat")
-        print(f"Generating: {topic} ({slug})")
-        print(f"Category:   {_get_category(slug)}")
+        action = "Updating" if existing_file.exists() else "Generating"
+        print(f"{action}: {topic} ({slug})")
+        print(f"Category:   {get_category(slug)}")
         print(f"Model:      {model}")
         print(f"Pipeline:   research -> outline -> draft -> review -> quality_check [-> revise] -> save")
         print()
@@ -143,6 +148,8 @@ async def run(args):
             revisions = result.get("revision_count", 0)
             total_tokens = result.get("total_tokens", 0)
             print(f"\nDone! {word_count} words, {revisions} revisions, {total_tokens:,} tokens, {elapsed:.0f}s")
+    except ConfigError as e:
+        print(f"Config error: {e}")
     finally:
         await close_client()
 
@@ -155,8 +162,17 @@ def main():
     parser.add_argument("--dry-run", action="store_true", help="Print the final article to stdout instead of saving")
     parser.add_argument("--batch", action="store_true", help="Generate all missing articles")
     parser.add_argument("--list-missing", action="store_true", help="List articles that don't have content files yet")
+    parser.add_argument("--update", action="store_true", help="Regenerate an existing article (overwrites content/)")
     parser.add_argument("--graph", action="store_true", help="Print the graph as a Mermaid diagram")
+    parser.add_argument("-v", "--verbose", action="store_true", help="Enable verbose logging")
     args = parser.parse_args()
+
+    level = logging.DEBUG if args.verbose else logging.INFO
+    logging.basicConfig(
+        level=level,
+        format="  %(message)s",
+    )
+
     asyncio.run(run(args))
 
 

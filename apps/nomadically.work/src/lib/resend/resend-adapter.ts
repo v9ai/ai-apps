@@ -4,7 +4,6 @@ import _ from "lodash";
 import type { ReceivedEmail, ListReceivedEmailsResponse } from "./types";
 
 const DEFAULT_FROM = "Nomadically <noreply@nomadically.work>";
-const DEFAULT_REPLY_TO = "contact@nomadically.work";
 
 /**
  * Email sending parameters
@@ -48,12 +47,10 @@ export interface CancelEmailResult {
 export class ResendEmailAdapter {
   private resend: Resend;
   private defaultFrom: string;
-  private defaultReplyTo: string;
 
-  constructor(apiKey?: string, defaultFrom?: string, defaultReplyTo?: string) {
+  constructor(apiKey?: string, defaultFrom?: string) {
     this.resend = new Resend(apiKey || process.env.RESEND_API_KEY);
     this.defaultFrom = defaultFrom || DEFAULT_FROM;
-    this.defaultReplyTo = defaultReplyTo || DEFAULT_REPLY_TO;
   }
 
   /**
@@ -85,7 +82,7 @@ export class ResendEmailAdapter {
         subject,
         html,
         text,
-        replyTo: replyTo || this.defaultReplyTo,
+        ...(replyTo && { replyTo }),
         ...(scheduledAt && { scheduledAt }),
         ...(attachments && { attachments }),
       };
@@ -308,14 +305,6 @@ export class ResendEmailAdapter {
     this.defaultFrom = from;
   }
 
-  getDefaultReplyTo(): string {
-    return this.defaultReplyTo;
-  }
-
-  setDefaultReplyTo(replyTo: string): void {
-    this.defaultReplyTo = replyTo;
-  }
-
   /**
    * Send batch emails (up to 100 at once)
    * Note: attachments and scheduledAt are NOT supported in batch endpoint
@@ -349,7 +338,7 @@ export class ResendEmailAdapter {
           from: email.from || this.defaultFrom,
           to: Array.isArray(email.to) ? email.to : [email.to],
           subject: email.subject,
-          replyTo: email.replyTo || this.defaultReplyTo,
+          ...(email.replyTo && { replyTo: email.replyTo }),
         };
 
         if (email.html) payload.html = email.html;
@@ -402,7 +391,6 @@ export const resend: {
 export function createResendAdapter(
   apiKey?: string,
   defaultFrom?: string,
-  defaultReplyTo?: string,
 ): ResendEmailAdapter {
-  return new ResendEmailAdapter(apiKey, defaultFrom, defaultReplyTo);
+  return new ResendEmailAdapter(apiKey, defaultFrom);
 }

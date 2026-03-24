@@ -320,29 +320,6 @@ observeBlockButtons();
 
 const SEND_EMAIL_BTN_ATTR = "data-nomad-send-email-btn";
 
-function extractEmailsFromPost(): string[] {
-  // Prefer mailto links (immune to textContent stripping whitespace)
-  const mailtoLinks = document.querySelectorAll(
-    ".update-components-text a[href^='mailto:'], .feed-shared-text__text-view a[href^='mailto:']",
-  );
-  if (mailtoLinks.length) {
-    const emails = new Set<string>();
-    mailtoLinks.forEach((a) => {
-      const href = (a as HTMLAnchorElement).href.replace("mailto:", "").trim();
-      if (href) emails.add(href);
-    });
-    if (emails.size) return [...emails];
-  }
-
-  // Fallback: regex on textContent
-  const postTextEl = document.querySelector(
-    ".feed-shared-update-v2__description, .update-components-text, .feed-shared-text__text-view",
-  );
-  const text = postTextEl?.textContent || "";
-  const emailRegex = /[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}/g;
-  return [...new Set(text.match(emailRegex) || [])];
-}
-
 function extractPostData() {
   // Post text content
   const postTextEl = document.querySelector(
@@ -350,12 +327,21 @@ function extractPostData() {
   );
   const postText = postTextEl?.textContent?.trim() || "";
 
+  // Extract emails from mailto links (immune to textContent whitespace stripping)
+  const mailtoLinks = document.querySelectorAll(
+    ".update-components-text a[href^='mailto:'], .feed-shared-text__text-view a[href^='mailto:']",
+  );
+  const emails: string[] = [];
+  mailtoLinks.forEach((a) => {
+    const href = (a as HTMLAnchorElement).href.replace("mailto:", "").trim();
+    if (href && !emails.includes(href)) emails.push(href);
+  });
+
   // Author name
   const authorEl = document.querySelector(
     ".update-components-actor__name .visually-hidden, .update-components-actor__title .visually-hidden",
   );
   let authorName = authorEl?.textContent?.trim() || "";
-  // Clean up LinkedIn's "Name • 1st" format
   if (authorName.includes("•")) authorName = authorName.split("•")[0].trim();
 
   // Author subtitle (role/company)
@@ -363,9 +349,6 @@ function extractPostData() {
     ".update-components-actor__description .visually-hidden, .update-components-actor__subtitle .visually-hidden",
   );
   const authorSubtitle = subtitleEl?.textContent?.trim() || "";
-
-  // Extract emails from mailto links first, then fallback to regex
-  const emails = extractEmailsFromPost();
 
   return {
     authorName,
@@ -405,16 +388,6 @@ function createSendEmailButton(): HTMLButtonElement {
     e.stopPropagation();
 
     const postData = extractPostData();
-
-    if (postData.emails.length === 0) {
-      btn.textContent = "No email found";
-      btn.style.backgroundColor = "#ef4444";
-      setTimeout(() => {
-        btn.textContent = "Send Email";
-        btn.style.backgroundColor = "#0a66c2";
-      }, 2000);
-      return;
-    }
 
     btn.textContent = "Sending...";
     btn.disabled = true;
@@ -495,6 +468,342 @@ function observeSendEmailButton() {
 }
 
 observeSendEmailButton();
+
+// ── Connect All Button (LinkedIn People Search) ─────────────────────
+
+const CONNECT_ALL_BTN_ATTR = "data-nomad-connect-all-btn";
+
+// Click element in page's main world via background script (bypasses CSP + content script isolation)
+function mainWorldClick(selector: string): Promise<boolean> {
+  return new Promise((resolve) => {
+    chrome.runtime.sendMessage(
+      { action: "clickInMainWorld", selector },
+      (response) => {
+        if (chrome.runtime.lastError) {
+          console.log("[ConnectAll] mainWorldClick error:", chrome.runtime.lastError.message);
+          resolve(false);
+          return;
+        }
+        console.log("[ConnectAll] mainWorldClick result:", selector, response);
+        resolve(response?.clicked ?? false);
+      },
+    );
+  });
+}
+
+function getConnectButtons(): HTMLButtonElement[] {
+  return Array.from(
+    document.querySelectorAll<HTMLButtonElement>(
+      'button[aria-label^="Invite "][aria-label$=" to connect"]',
+    ),
+  ).filter((b) => b.isConnected && b.getAttribute("aria-disabled") !== "true");
+}
+
+function createConnectAllButton(): HTMLButtonElement {
+  const btn = document.createElement("button");
+  btn.setAttribute(CONNECT_ALL_BTN_ATTR, "true");
+  btn.textContent = "Connect All";
+  btn.title = "Send connect request to all people on this page";
+  btn.style.cssText = `
+    position: fixed;
+    bottom: 24px;
+    right: 24px;
+    z-index: 9999;
+    background-color: #0a66c2;
+    color: white;
+    border: none;
+    border-radius: 24px;
+    padding: 12px 24px;
+    font-size: 15px;
+    font-weight: 600;
+    cursor: pointer;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.25);
+    transition: background-color 0.2s;
+  `;
+
+  btn.addEventListener("mouseenter", () => {
+    if (!btn.disabled) btn.style.backgroundColor = "#004182";
+  });
+  btn.addEventListener("mouseleave", () => {
+    if (!btn.disabled) btn.style.backgroundColor = "#0a66c2";
+  });
+
+  btn.addEventListener("click", async (e) => {
+    e.preventDefault();
+    e.stopPropagation();
+
+    const connectBtns = getConnectButtons();
+    if (connectBtns.length === 0) {
+      btn.textContent = "No connects found";
+      setTimeout(() => { btn.textContent = "Connect All"; }, 2000);
+      return;
+    }
+
+    btn.disabled = true;
+    let sent = 0;
+    const total = connectBtns.length;
+
+    for (const connectBtn of connectBtns) {
+      if (!connectBtn.isConnected) continue;
+
+      const name = connectBtn.getAttribute("aria-label") || "unknown";
+      console.log(`[ConnectAll] Clicking connect: ${name}`);
+      btn.textContent = `${sent + 1}/${total} connecting...`;
+
+      // Tag + click via main world
+      connectBtn.setAttribute('data-nomad-connect-target', 'true');
+      await mainWorldClick('[data-nomad-connect-target="true"]');
+      connectBtn.removeAttribute('data-nomad-connect-target');
+
+      // Wait for modal to render
+      await new Promise((r) => setTimeout(r, 1500));
+
+      // Poll for the send/modal buttons (up to 5s)
+      let sendClicked = false;
+      for (let i = 0; i < 20; i++) {
+        // Try multiple modal selectors — LinkedIn changes these periodically
+        const modal =
+          document.querySelector('[role="dialog"]') ||
+          document.querySelector('.artdeco-modal') ||
+          document.querySelector('.send-invite') ||
+          document.querySelector('.artdeco-modal-overlay [role="dialog"]') ||
+          document.querySelector('.ip-fuse-limit-alert') ||
+          document.querySelector('[data-test-modal]');
+
+        // Log what we find on first and every 5th attempt
+        if (i === 0 || i % 5 === 0) {
+          const allBtns = modal ? Array.from(modal.querySelectorAll('button, a[role="button"]')).map(
+            (b) => `[aria-label="${b.getAttribute('aria-label') || ''}" text="${b.textContent?.trim().slice(0, 40)}"]`,
+          ) : [];
+          console.log(`[ConnectAll] Poll #${i}: modal=${!!modal} class="${(modal as HTMLElement)?.className?.slice(0,60)}", buttons=${JSON.stringify(allBtns)}`);
+        }
+
+        // Strategy: find the send button by aria-label first, then by text content (includes for resilience)
+        const findSendBtn = (root: Element | Document) =>
+          root.querySelector<HTMLButtonElement>('button[aria-label="Send without a note"]') ||
+          root.querySelector<HTMLButtonElement>('button[aria-label="Send now"]') ||
+          root.querySelector<HTMLButtonElement>('button[aria-label="Send invitation"]') ||
+          Array.from(root.querySelectorAll<HTMLButtonElement>('button')).find((b) => {
+            const text = b.textContent?.trim().toLowerCase() || '';
+            return (
+              text.includes('send without a note') ||
+              text.includes('send now') ||
+              text === 'send' ||
+              text.includes('send invitation')
+            );
+          });
+
+        const sendBtn = modal ? findSendBtn(modal) : findSendBtn(document);
+
+        if (sendBtn) {
+          const label = sendBtn.getAttribute('aria-label') || sendBtn.textContent?.trim() || '?';
+          console.log(`[ConnectAll] Found send button: "${label}", clicking via main world`);
+          btn.textContent = `${sent + 1}/${total} sending...`;
+          // Tag the button so mainWorldClick can find it reliably
+          sendBtn.setAttribute('data-nomad-send-target', 'true');
+          const clickResult = await mainWorldClick('[data-nomad-send-target="true"]');
+          sendBtn.removeAttribute('data-nomad-send-target');
+          console.log(`[ConnectAll] mainWorldClick result for "${label}":`, clickResult);
+          // Check if modal disappeared
+          await new Promise((r) => setTimeout(r, 500));
+          const modalStillOpen = !!document.querySelector('[role="dialog"], .artdeco-modal');
+          console.log("[ConnectAll] Modal still open after click:", modalStillOpen);
+          sendClicked = true;
+          await new Promise((r) => setTimeout(r, 500));
+          break;
+        }
+        await new Promise((r) => setTimeout(r, 250));
+      }
+
+      if (!sendClicked) {
+        console.log("[ConnectAll] No send button found after polling, trying dismiss");
+        await new Promise((r) => setTimeout(r, 500));
+      }
+
+      // Dismiss any remaining modal
+      const dismissEl = document.querySelector('button[aria-label="Dismiss"]') ||
+        document.querySelector('.artdeco-modal__dismiss') ||
+        document.querySelector('[role="dialog"] button[aria-label="Close"]');
+      if (dismissEl) {
+        console.log("[ConnectAll] Dismissing modal");
+        dismissEl.setAttribute('data-nomad-dismiss-target', 'true');
+        await mainWorldClick('[data-nomad-dismiss-target="true"]');
+        dismissEl.removeAttribute('data-nomad-dismiss-target');
+        await new Promise((r) => setTimeout(r, 300));
+      }
+
+      sent++;
+      btn.textContent = `Connecting ${sent}/${total}...`;
+
+      // Random delay between requests (2-4s) to avoid rate limiting
+      await new Promise((r) => setTimeout(r, 2000 + Math.random() * 2000));
+    }
+
+    btn.textContent = `Done! ${sent} sent`;
+    btn.style.backgroundColor = "#16a34a";
+    setTimeout(() => {
+      btn.textContent = "Connect All";
+      btn.style.backgroundColor = "#0a66c2";
+      btn.disabled = false;
+    }, 3000);
+  });
+
+  return btn;
+}
+
+function injectConnectAllButton() {
+  if (!window.location.hostname.includes("linkedin.com")) return;
+  if (!window.location.pathname.startsWith("/search/results/people")) return;
+  if (document.querySelector(`[${CONNECT_ALL_BTN_ATTR}]`)) return;
+
+  document.body.appendChild(createConnectAllButton());
+}
+
+function observeConnectAllButton() {
+  if (!window.location.hostname.includes("linkedin.com")) return;
+  if (!window.location.pathname.startsWith("/search/results/people")) return;
+
+  // Wait for page to load then inject
+  setTimeout(injectConnectAllButton, 1500);
+
+  let debounceTimer: ReturnType<typeof setTimeout> | null = null;
+  const obs = new MutationObserver(() => {
+    if (debounceTimer) clearTimeout(debounceTimer);
+    debounceTimer = setTimeout(injectConnectAllButton, 1000);
+  });
+  obs.observe(document.body, { childList: true, subtree: true });
+}
+
+observeConnectAllButton();
+
+// ── Browse Profiles Button (LinkedIn People Search) ─────────────────
+
+const BROWSE_PROFILES_BTN_ATTR = "data-nomad-browse-profiles-btn";
+let browseProfilesBtn: HTMLButtonElement | null = null;
+
+function getProfileLinks(): string[] {
+  const seen = new Set<string>();
+  const links: string[] = [];
+  document.querySelectorAll<HTMLAnchorElement>('a[href*="/in/"]').forEach((a) => {
+    const href = a.href;
+    try {
+      const url = new URL(href);
+      // Normalize to /in/username path only
+      const match = url.pathname.match(/^\/in\/([^/]+)/);
+      if (!match) return;
+      const profilePath = `/in/${match[1]}`;
+      if (seen.has(profilePath)) return;
+      seen.add(profilePath);
+      links.push(`https://www.linkedin.com${profilePath}/`);
+    } catch { /* skip malformed */ }
+  });
+  return links;
+}
+
+function createBrowseProfilesButton(): HTMLButtonElement {
+  const btn = document.createElement("button");
+  btn.setAttribute(BROWSE_PROFILES_BTN_ATTR, "true");
+  btn.textContent = "Browse Profiles";
+  btn.title = "Open each profile sequentially, extract & save contact info";
+  btn.style.cssText = `
+    position: fixed;
+    bottom: 80px;
+    right: 24px;
+    z-index: 9999;
+    background-color: #7c3aed;
+    color: white;
+    border: none;
+    border-radius: 24px;
+    padding: 12px 24px;
+    font-size: 15px;
+    font-weight: 600;
+    cursor: pointer;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.25);
+    transition: background-color 0.2s;
+  `;
+
+  btn.addEventListener("mouseenter", () => {
+    if (!btn.disabled) btn.style.backgroundColor = "#5b21b6";
+  });
+  btn.addEventListener("mouseleave", () => {
+    if (!btn.disabled) btn.style.backgroundColor = "#7c3aed";
+  });
+
+  btn.addEventListener("click", (e) => {
+    e.preventDefault();
+    e.stopPropagation();
+
+    const profiles = getProfileLinks();
+    if (profiles.length === 0) {
+      btn.textContent = "No profiles found";
+      setTimeout(() => { btn.textContent = "Browse Profiles"; }, 2000);
+      return;
+    }
+
+    btn.disabled = true;
+    btn.textContent = `Starting (${profiles.length})...`;
+    btn.style.backgroundColor = "#5b21b6";
+
+    chrome.runtime.sendMessage({
+      action: "startProfileBrowsing",
+      profiles,
+      returnUrl: window.location.href,
+    }, (response) => {
+      if (chrome.runtime.lastError || !response?.success) {
+        btn.textContent = "Error";
+        btn.style.backgroundColor = "#dc2626";
+        setTimeout(() => {
+          btn.textContent = "Browse Profiles";
+          btn.style.backgroundColor = "#7c3aed";
+          btn.disabled = false;
+        }, 2000);
+      }
+    });
+  });
+
+  browseProfilesBtn = btn;
+  return btn;
+}
+
+function injectBrowseProfilesButton() {
+  if (!window.location.hostname.includes("linkedin.com")) return;
+  if (!window.location.pathname.startsWith("/search/results/people")) return;
+  if (document.querySelector(`[${BROWSE_PROFILES_BTN_ATTR}]`)) return;
+
+  document.body.appendChild(createBrowseProfilesButton());
+}
+
+function observeBrowseProfilesButton() {
+  if (!window.location.hostname.includes("linkedin.com")) return;
+  if (!window.location.pathname.startsWith("/search/results/people")) return;
+
+  setTimeout(injectBrowseProfilesButton, 1500);
+
+  let debounceTimer: ReturnType<typeof setTimeout> | null = null;
+  const obs = new MutationObserver(() => {
+    if (debounceTimer) clearTimeout(debounceTimer);
+    debounceTimer = setTimeout(injectBrowseProfilesButton, 1000);
+  });
+  obs.observe(document.body, { childList: true, subtree: true });
+}
+
+observeBrowseProfilesButton();
+
+// Listen for progress updates from background script
+chrome.runtime.onMessage.addListener((message) => {
+  if (message.action === "browseProgress" && browseProfilesBtn) {
+    browseProfilesBtn.textContent = `${message.current}/${message.total} ${message.name || ""}`.trim();
+  }
+  if (message.action === "browseDone" && browseProfilesBtn) {
+    browseProfilesBtn.textContent = `Done! ${message.saved} saved`;
+    browseProfilesBtn.style.backgroundColor = "#16a34a";
+    setTimeout(() => {
+      browseProfilesBtn!.textContent = "Browse Profiles";
+      browseProfilesBtn!.style.backgroundColor = "#7c3aed";
+      browseProfilesBtn!.disabled = false;
+    }, 3000);
+  }
+});
 
 function clickSalaryMetadata() {
   document.querySelectorAll(".job-card-container").forEach((jobCard) => {

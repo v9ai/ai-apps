@@ -2,7 +2,6 @@ import { generateObject } from "ai";
 import { deepseek } from "@ai-sdk/deepseek";
 import { z } from "zod";
 import { GOAL_CONTEXT_LINE } from "@/constants/goal";
-import { aiTelemetry } from "@/lib/telemetry";
 
 function createSchemaDescription(databaseSchema: any): string {
   let description = "";
@@ -121,7 +120,6 @@ export const sqlGenerationAgent = {
       system: systemPrompt,
       prompt: question,
       schema: sqlOutputSchema,
-      experimental_telemetry: aiTelemetry("sql-generation-agent"),
     });
 
     return { object: result.object };

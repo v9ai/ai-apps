@@ -647,7 +647,9 @@ def chat(user_id: str, message: str, resume_id: str):
 @click.option("--post-url", default="", help="LinkedIn post URL")
 @click.option("--recipient-email", default="", help="Recipient email address")
 @click.option("--tone", default="professional and friendly", help="Email tone")
-def email_outreach(json_input, recipient_name, recipient_role, post_text, post_url, recipient_email, tone):
+@click.option("--eval", "run_eval", is_flag=True, default=False, help="Run eval suite (no DB needed)")
+@click.option("--unit-only", is_flag=True, default=False, help="With --eval: run only keyword screen unit tests")
+def email_outreach(json_input, recipient_name, recipient_role, post_text, post_url, recipient_email, tone, run_eval, unit_only):
     """Generate AI-powered outreach email from a LinkedIn post.
 
     Interactive:
@@ -655,7 +657,18 @@ def email_outreach(json_input, recipient_name, recipient_role, post_text, post_u
 
     JSON mode (for subprocess invocation):
         echo '{"recipient_name":"John","post_text":"Hiring!","recipient_email":"john@acme.com"}' | python -m cli email-outreach --json-input
+
+    Run evals:
+        python -m cli email-outreach --eval
+        python -m cli email-outreach --eval --unit-only
     """
+    if run_eval:
+        from src.graphs.email_outreach.evals import run_screen_unit_tests, main as run_all
+        if unit_only:
+            run_screen_unit_tests()
+        else:
+            run_all()
+        return
     import json as _json
     import sys as _sys
 
@@ -684,6 +697,7 @@ def email_outreach(json_input, recipient_name, recipient_role, post_text, post_u
         "contact_context": "",
         "company_context": "",
         "post_analysis": None,
+        "remote_eu_screen": None,
         "draft": None,
         "final": None,
     })
@@ -696,6 +710,91 @@ def email_outreach(json_input, recipient_name, recipient_role, post_text, post_u
     else:
         print(f"\nSubject: {final.get('subject', '')}")
         print(f"\n{final.get('text', '')}")
+
+
+@main.command("linkedin-contact")
+@click.option("--url", required=False, default="", help="LinkedIn profile URL")
+@click.option("--name", required=False, default="", help="Contact name")
+@click.option("--headline", default="", help="LinkedIn headline")
+@click.option("--about", default="", help="About/summary text")
+@click.option("--location", default="", help="Location")
+@click.option("--eval", "run_eval", is_flag=True, default=False, help="Run eval suite (no DB needed)")
+def linkedin_contact(url, name, headline, about, location, run_eval):
+    """Analyze a LinkedIn profile and save as contact if relevant.
+
+    Interactive:
+        python -m cli linkedin-contact --url "https://linkedin.com/in/someone" --name "Jane Doe" --headline "AI Recruiter"
+
+    Run evals:
+        python -m cli linkedin-contact --eval
+    """
+    if run_eval:
+        from src.graphs.linkedin_contact.evals import main as run_all
+        run_all()
+        return
+
+    if not name and not url:
+        raise click.UsageError("--name or --url is required (or use --eval to run evals)")
+
+    from src.graphs.linkedin_contact import build_linkedin_contact_graph
+
+    graph = build_linkedin_contact_graph()
+    result = graph.invoke({
+        "linkedin_url": url,
+        "name": name,
+        "headline": headline,
+        "about": about,
+        "location": location,
+        "profile_analysis": None,
+        "contact_id": None,
+        "skipped": False,
+    })
+
+    analysis = result.get("profile_analysis") or {}
+    print(f"\nProfile: {name}")
+    print(f"  Relevant: {analysis.get('is_relevant')}")
+    print(f"  Type: {analysis.get('contact_type')}")
+    print(f"  Focus: {', '.join(analysis.get('focus_areas', []))}")
+    print(f"  Regions: {', '.join(analysis.get('regions', []))}")
+    print(f"  Score: {analysis.get('relevance_score')}")
+    print(f"  Reason: {analysis.get('reason')}")
+    print(f"\n  Skipped: {result.get('skipped')}")
+    print(f"  Contact ID: {result.get('contact_id')}")
+
+
+@main.command("discover-contacts")
+@click.option(
+    "--topics", "-t", multiple=True, required=True,
+    help="Seed topics for contact discovery (can pass multiple)",
+)
+@click.option("--max-results", "-n", default=15, show_default=True, help="Max search results per query")
+@click.option("--dry-run", is_flag=True, default=False, help="Analyze profiles without saving to DB")
+def discover_contacts(topics: tuple[str, ...], max_results: int, dry_run: bool):
+    """Discover AI/ML recruiters and hiring contacts on LinkedIn en masse.
+
+    Examples:
+        python -m cli discover-contacts -t "AI ML recruiter EU"
+        python -m cli discover-contacts -t "AI recruiter UK" -t "ML hiring manager EMEA" --dry-run
+        python -m cli discover-contacts -t "talent acquisition AI Europe" -n 20
+    """
+    from src.graphs.linkedin_contact.discover import build_discover_contacts_graph
+
+    graph = build_discover_contacts_graph()
+
+    print(f"Starting contact discovery pipeline")
+    print(f"  Topics: {', '.join(topics)}")
+    print(f"  Max results per query: {max_results}")
+    print(f"  Dry run: {dry_run}\n")
+
+    graph.invoke({
+        "seed_topics": list(topics),
+        "search_queries": [],
+        "search_results": [],
+        "candidates": [],
+        "results": [],
+        "dry_run": dry_run,
+        "max_results": max_results,
+    })
 
 
 if __name__ == "__main__":

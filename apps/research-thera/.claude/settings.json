@@ -8,7 +8,7 @@
         "hooks": [
           {
             "type": "command",
-            "command": "$CLAUDE_PROJECT_DIR/.claude/hooks/teammate-idle.sh",
+            "command": "bash -c 'exec bash \"$(git rev-parse --show-toplevel)/apps/research-thera/.claude/hooks/teammate-idle.sh\"'",
             "timeout": 30
           }
         ]
@@ -19,7 +19,7 @@
         "hooks": [
           {
             "type": "command",
-            "command": "$CLAUDE_PROJECT_DIR/.claude/hooks/task-completed.sh",
+            "command": "bash -c 'exec bash \"$(git rev-parse --show-toplevel)/apps/research-thera/.claude/hooks/task-completed.sh\"'",
             "timeout": 60
           }
         ]

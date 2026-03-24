@@ -42,6 +42,7 @@
       "matches": [
         "https://*.linkedin.com/jobs/*",
         "https://*.linkedin.com/feed/*",
+        "https://*.linkedin.com/search/*",
         "https://*.google.com/search*",
         "https://*.ashbyhq.com/*",
         "https://*.greenhouse.io/*",

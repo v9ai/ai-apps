@@ -1,78 +1,96 @@
 """Tests for the content generation graph."""
 
-from unittest.mock import AsyncMock, patch
+from unittest.mock import AsyncMock, MagicMock, patch
 
 import pytest
 
-from graph.generate import (
+from graph.state import (
     CONTENT_DIR,
-    LESSON_SLUGS,
-    CATEGORIES,
     ContentState,
-    _get_category,
-    _get_related_topics,
-    _get_existing_articles,
-    _get_missing_slugs,
-    _get_style_sample,
+    get_lesson_slugs,
+    get_categories,
+    get_category,
+    get_related_topics,
+    get_existing_articles,
+    get_missing_slugs,
+    get_style_sample,
     check_article_quality,
-    build_graph,
-    route_after_quality,
     MAX_REVISIONS,
 )
+from graph.nodes import route_after_quality
+from graph.generate import build_graph, build_dry_graph
+from graph.client import ConfigError, GenerationError
 
 
 # ── Helpers ───────────────────────────────────────────────────────────
 
+class TestDynamicParsing:
+    def test_slugs_loaded_from_ts(self):
+        slugs = get_lesson_slugs()
+        assert len(slugs) > 50
+        assert "transformer-architecture" in slugs
+        assert "langgraph" in slugs
+
+    def test_categories_loaded_from_ts(self):
+        cats = get_categories()
+        assert len(cats) >= 10
+        assert cats[0][2] == "Foundations & Architecture"
+
+    def test_slugs_are_unique(self):
+        slugs = get_lesson_slugs()
+        assert len(slugs) == len(set(slugs))
+
+
 class TestGetCategory:
     def test_known_slug(self):
-        assert _get_category("transformer-architecture") == "Foundations & Architecture"
-        assert _get_category("langgraph") == "Applied AI & Production"
-        assert _get_category("aws") == "Cloud & DevOps"
+        assert get_category("transformer-architecture") == "Foundations & Architecture"
+        assert get_category("langgraph") == "Applied AI & Production"
+        assert get_category("aws") == "Cloud & DevOps"
 
     def test_unknown_slug_returns_default(self):
-        assert _get_category("nonexistent-slug") == "Applied AI & Production"
+        assert get_category("nonexistent-slug") == "Applied AI & Production"
 
     def test_all_categories_covered(self):
-        for slug in LESSON_SLUGS:
-            cat = _get_category(slug)
+        for slug in get_lesson_slugs():
+            cat = get_category(slug)
             assert cat != "Other", f"Slug {slug} has no category"
 
 
 class TestGetRelatedTopics:
     def test_known_slug_returns_nearby(self):
-        related = _get_related_topics("tokenization")
+        related = get_related_topics("tokenization")
         assert "transformer-architecture" in related
         assert "scaling-laws" in related
 
     def test_unknown_slug_returns_first_ten(self):
-        related = _get_related_topics("nonexistent")
+        related = get_related_topics("nonexistent")
         parts = related.split(", ")
         assert len(parts) == 10
 
     def test_first_slug_has_no_predecessors(self):
-        related = _get_related_topics("transformer-architecture")
+        related = get_related_topics("transformer-architecture")
         parts = related.split(", ")
         assert "scaling-laws" in parts
 
     def test_last_slug_has_no_successors_beyond(self):
-        related = _get_related_topics("nodejs")
+        related = get_related_topics("nodejs")
         parts = related.split(", ")
         assert len(parts) >= 1
 
 
 class TestGetExistingArticles:
     def test_returns_markdown_links(self):
-        articles = _get_existing_articles()
+        articles = get_existing_articles()
         assert "](/" in articles
 
     def test_contains_known_articles(self):
-        articles = _get_existing_articles()
+        articles = get_existing_articles()
         assert "/transformer-architecture" in articles
 
 
 class TestGetMissingSlugs:
     def test_returns_list(self):
-        missing = _get_missing_slugs()
+        missing = get_missing_slugs()
         assert isinstance(missing, list)
         for slug in missing:
             assert not (CONTENT_DIR / f"{slug}.md").exists()
@@ -80,11 +98,11 @@ class TestGetMissingSlugs:
 
 class TestGetStyleSample:
     def test_returns_non_empty(self):
-        sample = _get_style_sample()
+        sample = get_style_sample()
         assert len(sample) > 0
 
     def test_starts_with_heading(self):
-        sample = _get_style_sample()
+        sample = get_style_sample()
         assert sample.startswith("#")
 
 
@@ -98,8 +116,9 @@ class TestCheckArticleQuality:
             parts.append("word " * (word_count // sections) + "\n\n")
         for _ in range(code_blocks):
             parts.append("```python\nprint('hello')\n```\n\n")
+        real_slugs = ["transformer-architecture", "scaling-laws", "tokenization", "embeddings"]
         for i in range(cross_refs):
-            parts.append(f"See [Related](/slug-{i})\n")
+            parts.append(f"See [Related](/{real_slugs[i % len(real_slugs)]})\n")
         return "".join(parts)
 
     def test_good_article_passes(self):
@@ -125,6 +144,17 @@ class TestCheckArticleQuality:
         passed, issues = check_article_quality(article)
         assert not passed
         assert any("cross-references" in i for i in issues)
+
+    def test_broken_link_detected(self):
+        article = self._make_article(cross_refs=0)
+        article += "\nSee [Fake](/nonexistent-article-slug)\n"
+        passed, issues = check_article_quality(article)
+        assert any("Broken link" in i for i in issues)
+
+    def test_valid_links_pass(self):
+        article = self._make_article()
+        passed, issues = check_article_quality(article)
+        assert not any("Broken link" in i for i in issues)
 
     def test_no_title_fails(self):
         passed, issues = check_article_quality("No title here\n\n## Section\nwords " * 500)
@@ -183,6 +213,28 @@ class TestGraphStructure:
         graph = build_graph(checkpointer=MemorySaver())
         assert graph is not None
 
+    def test_dry_graph_has_no_save(self):
+        graph = build_dry_graph()
+        node_names = set(graph.nodes.keys()) - {"__start__"}
+        assert "save" not in node_names
+        assert "research" in node_names
+        assert "quality_check" in node_names
+        assert "revise" in node_names
+
+
+# ── Error types ──────────────────────────────────────────────────────
+
+class TestErrorTypes:
+    def test_config_error_is_exception(self):
+        assert issubclass(ConfigError, Exception)
+
+    def test_generation_error_is_exception(self):
+        assert issubclass(GenerationError, Exception)
+
+    def test_config_error_message(self):
+        err = ConfigError("missing key")
+        assert str(err) == "missing key"
+
 
 # ── End-to-end (mocked) ─────────────────────────────────────────────
 
@@ -202,8 +254,6 @@ def _mock_article():
 
 
 def _mock_chat_response(content: str, tokens: int = 100):
-    """Create a mock ChatCompletionResponse."""
-    from unittest.mock import MagicMock
     resp = MagicMock()
     resp.choices = [MagicMock()]
     resp.choices[0].message.content = content
@@ -245,12 +295,12 @@ class TestGraphEndToEnd:
             call_count[0] += 1
             return responses[min(idx, len(responses) - 1)]
 
-        with patch("graph.generate.get_client") as mock_get_client:
+        with patch("graph.client.get_client") as mock_get_client:
             mock_client = AsyncMock()
             mock_client.chat = mock_chat
             mock_get_client.return_value = mock_client
 
-            with patch("graph.generate.CONTENT_DIR", tmp_path):
+            with patch("graph.nodes.CONTENT_DIR", tmp_path):
                 graph = build_graph()
                 result = await graph.ainvoke(_make_initial_state())
 
@@ -281,12 +331,12 @@ class TestGraphEndToEnd:
             call_count[0] += 1
             return responses[min(idx, len(responses) - 1)]
 
-        with patch("graph.generate.get_client") as mock_get_client:
+        with patch("graph.client.get_client") as mock_get_client:
             mock_client = AsyncMock()
             mock_client.chat = mock_chat
             mock_get_client.return_value = mock_client
 
-            with patch("graph.generate.CONTENT_DIR", tmp_path):
+            with patch("graph.nodes.CONTENT_DIR", tmp_path):
                 graph = build_graph()
                 result = await graph.ainvoke(_make_initial_state())
 

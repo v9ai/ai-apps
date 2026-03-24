@@ -10,6 +10,13 @@ class PostAnalysis(TypedDict):
     key_quotes: list[str]
 
 
+class RemoteEUScreen(TypedDict):
+    is_relevant: bool  # True = proceed with email, False = skip
+    reason: str
+    work_model: str  # "fully_remote" | "hybrid" | "onsite" | "unknown"
+    region: str  # "eu" | "us" | "global" | "other" | "unknown"
+
+
 class EmailDraft(TypedDict):
     subject: str
     text: str
@@ -33,6 +40,9 @@ class EmailOutreachState(TypedDict):
 
     # After analyze_post
     post_analysis: PostAnalysis | None
+
+    # After screen_remote_eu
+    remote_eu_screen: RemoteEUScreen | None
 
     # After draft_email
     draft: EmailDraft | None

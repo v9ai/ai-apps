@@ -1,4 +1,4 @@
-import { jobs, jobSkillTags } from "@/db/schema";
+import { jobs, jobSkillTags, blockedCompanies } from "@/db/schema";
 import {
   eq,
   and,
@@ -97,9 +97,16 @@ export async function jobsQuery(
       );
     }
 
-    // Exclude companies at SQL level
-    if (args.excludedCompanies && args.excludedCompanies.length > 0) {
-      conditions.push(notInArray(jobs.company_key, args.excludedCompanies));
+    // Exclude companies: merge user preferences with server-side blocklist
+    const blockedRows = await context.db
+      .select({ name: blockedCompanies.name })
+      .from(blockedCompanies);
+    const allExcludedCompanies = [
+      ...(args.excludedCompanies ?? []),
+      ...blockedRows.map((r) => r.name),
+    ];
+    if (allExcludedCompanies.length > 0) {
+      conditions.push(notInArray(jobs.company_key, allExcludedCompanies));
     }
 
     // Exclude locations — single combined condition instead of N separate ones

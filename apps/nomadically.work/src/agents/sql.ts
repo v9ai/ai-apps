@@ -2,7 +2,6 @@ import { deepseek } from "@ai-sdk/deepseek";
 import { generateObject } from "ai";
 import { z } from "zod";
 import { GOAL_PROMPT_FRAGMENT } from "@/constants/goal";
-import { aiTelemetry } from "@/lib/telemetry";
 
 // TODO: Re-implement with D1 database access
 
@@ -33,7 +32,6 @@ export const sqlAgent = {
       system: SQL_INSTRUCTIONS,
       prompt: question,
       schema: textToSqlOutputSchema,
-      experimental_telemetry: aiTelemetry("text-to-sql"),
     });
 
     return { object: result.object };

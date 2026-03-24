@@ -27,6 +27,8 @@ export default function Popup() {
   const [jobClickStatus, setJobClickStatus] = useState("");
   const [fetchJobsStatus, setFetchJobsStatus] = useState("");
   const [fetchJobsLoading, setFetchJobsLoading] = useState(false);
+  const [analyzeStatus, setAnalyzeStatus] = useState("");
+  const [analyzeLoading, setAnalyzeLoading] = useState(false);
 
   const handleGenerate = async () => {
     if (!prompt.trim()) return;
@@ -297,6 +299,63 @@ export default function Popup() {
     }
   };
 
+  const handleAnalyzeCompanies = async () => {
+    setAnalyzeLoading(true);
+    setAnalyzeStatus("Detecting company...");
+
+    try {
+      const [tab] = await chrome.tabs.query({ active: true, currentWindow: true });
+      if (!tab.id || !tab.url) {
+        setAnalyzeStatus("Error: No active tab");
+        setAnalyzeLoading(false);
+        return;
+      }
+
+      // Extract company name from the page
+      const results = await chrome.scripting.executeScript({
+        target: { tabId: tab.id },
+        func: () => {
+          // LinkedIn company page
+          const linkedinName = document.querySelector("h1.org-top-card-summary__title, h1.top-card-layout__title");
+          if (linkedinName) return { name: linkedinName.textContent?.trim() || "", website: "" };
+
+          // Try meta tags
+          const ogSiteName = document.querySelector('meta[property="og:site_name"]');
+          if (ogSiteName) return { name: ogSiteName.getAttribute("content") || "", website: window.location.origin };
+
+          // Fallback: page title cleaned up
+          const title = document.title.replace(/ [-|–].*/g, "").trim();
+          return { name: title, website: window.location.origin };
+        },
+      });
+
+      const detected = results?.[0]?.result;
+      if (!detected?.name) {
+        setAnalyzeStatus("Could not detect company from this page");
+        setAnalyzeLoading(false);
+        return;
+      }
+
+      setAnalyzeStatus(`Analyzing "${detected.name}"...`);
+
+      const response = await chrome.runtime.sendMessage({
+        action: "analyzeCompany",
+        companyName: detected.name,
+        website: detected.website || undefined,
+      });
+
+      if (response.success) {
+        setAnalyzeStatus(`Analyzed: ${response.company?.name || detected.name}`);
+      } else {
+        setAnalyzeStatus(response.error || response.message || "Analysis failed");
+      }
+    } catch (err) {
+      setAnalyzeStatus(err instanceof Error ? err.message : "Error analyzing company");
+    } finally {
+      setAnalyzeLoading(false);
+    }
+  };
+
   return (
     <MantineProvider>
       <AppShell
@@ -384,6 +443,31 @@ export default function Popup() {
                 <Alert color="dark" radius="sm" p="xs">
                   <Text size="xs" ta="center" c="white">
                     {fetchJobsStatus}
+                  </Text>
+                </Alert>
+              )}
+            </Stack>
+
+            <Divider
+              color="dark.4"
+              label="Companies"
+              labelPosition="center"
+            />
+
+            <Stack gap="xs">
+              <Button
+                onClick={handleAnalyzeCompanies}
+                disabled={analyzeLoading}
+                color="violet"
+                size="sm"
+                fullWidth
+              >
+                {analyzeLoading ? "Analyzing..." : "Analyze Companies"}
+              </Button>
+              {analyzeStatus && (
+                <Alert color="dark" radius="sm" p="xs">
+                  <Text size="xs" ta="center" c="white">
+                    {analyzeStatus}
                   </Text>
                 </Alert>
               )}

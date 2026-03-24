@@ -1,4 +1,4 @@
-import { style } from "@vanilla-extract/css";
+import { style, keyframes } from "@vanilla-extract/css";
 
 export const jobListCard = style({
   background: "var(--gray-2)",
@@ -105,4 +105,24 @@ export const jobRowActions = style({
       gap: 4,
     },
   },
+});
+
+const dismissSlide = keyframes({
+  "0%": {
+    opacity: 1,
+    maxHeight: "200px",
+  },
+  "100%": {
+    opacity: 0,
+    maxHeight: "0px",
+    paddingTop: "0px",
+    paddingBottom: "0px",
+    borderBottomWidth: "0px",
+  },
+});
+
+export const jobRowDismissed = style({
+  animation: `${dismissSlide} 0.3s ease-out forwards`,
+  overflow: "hidden",
+  pointerEvents: "none",
 });

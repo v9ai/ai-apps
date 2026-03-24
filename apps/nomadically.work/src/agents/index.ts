@@ -2,7 +2,6 @@ import { deepseek } from "@ai-sdk/deepseek";
 import { generateObject } from "ai";
 import { z } from "zod";
 import { getPrompt, PROMPTS } from "@/observability";
-import { aiTelemetry } from "@/lib/telemetry";
 
 /**
  * Classify a job for Remote EU eligibility using DeepSeek via Vercel AI SDK.
@@ -28,10 +27,6 @@ Classify this job posting.`,
       isRemoteEU: z.boolean(),
       confidence: z.enum(["high", "medium", "low"]),
       reason: z.string(),
-    }),
-    experimental_telemetry: aiTelemetry("classify-remote-eu", {
-      ...(input.userId && { userId: input.userId }),
-      ...(input.sessionId && { sessionId: input.sessionId }),
     }),
   });
 

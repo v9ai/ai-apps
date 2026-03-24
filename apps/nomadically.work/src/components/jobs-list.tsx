@@ -12,6 +12,7 @@ import {
   jobRowMetaLine,
   jobRowMetaItem,
   jobRowActions,
+  jobRowDismissed,
 } from "./jobs-list.css";
 import { useRouter } from "next/navigation";
 import {
@@ -72,6 +73,7 @@ export function JobsList({ searchFilter = "", sourceTypes, showAll }: JobsListPr
   const [deleteJobMutation] = useDeleteJobMutation();
   const [reportJobMutation] = useReportJobMutation();
   const [archiveJobMutation] = useArchiveJobMutation();
+  const [dismissedIds, setDismissedIds] = useState<Set<number>>(new Set());
 
   const isAdmin = user?.email === ADMIN_EMAIL;
 
@@ -160,19 +162,25 @@ export function JobsList({ searchFilter = "", sourceTypes, showAll }: JobsListPr
     }
   };
 
-  const handleDismissJob = async (jobId: number, e: React.MouseEvent) => {
-    e.preventDefault();
-    e.stopPropagation();
-    try {
-      await archiveJobMutation({
+  const handleDismissJob = useCallback(
+    (jobId: number, e: React.MouseEvent) => {
+      e.preventDefault();
+      e.stopPropagation();
+      setDismissedIds((prev) => new Set(prev).add(jobId));
+      archiveJobMutation({
         variables: { id: jobId },
         refetchQueries: ["GetJobs"],
-        awaitRefetchQueries: true,
+      }).catch((error) => {
+        console.error("Error dismissing job:", error);
+        setDismissedIds((prev) => {
+          const next = new Set(prev);
+          next.delete(jobId);
+          return next;
+        });
       });
-    } catch (error) {
-      console.error("Error dismissing job:", error);
-    }
-  };
+    },
+    [archiveJobMutation],
+  );
 
   const queryVariables = useMemo(
     () => ({
@@ -196,6 +204,19 @@ export function JobsList({ searchFilter = "", sourceTypes, showAll }: JobsListPr
   const jobs = data?.jobs.jobs || [];
   const totalCount = data?.jobs.totalCount || 0;
   const hasMore = jobs.length < totalCount;
+
+  // Clean up dismissed IDs that are no longer in the data after refetch
+  useEffect(() => {
+    if (dismissedIds.size === 0) return;
+    const currentIds = new Set(jobs.map((j) => j.id));
+    setDismissedIds((prev) => {
+      const next = new Set<number>();
+      for (const id of prev) {
+        if (currentIds.has(id)) next.add(id);
+      }
+      return next.size === prev.size ? prev : next;
+    });
+  }, [jobs]); // eslint-disable-line react-hooks/exhaustive-deps
 
   // Restore scroll position after first data load (admin only)
   useEffect(() => {
@@ -291,7 +312,7 @@ export function JobsList({ searchFilter = "", sourceTypes, showAll }: JobsListPr
               key={job.id}
               href={`/jobs/${jobId}?company=${job.company_key}&source=${job.source_kind}`}
               target="_blank"
-              className={jobRow}
+              className={`${jobRow} ${dismissedIds.has(job.id) ? jobRowDismissed : ""}`}
             >
               {/* content — stacked: title, company, meta */}
               <div className={jobRowContent}>

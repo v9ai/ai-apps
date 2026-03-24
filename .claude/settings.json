@@ -1,7 +1,7 @@
 {
   "statusLine": {
     "type": "command",
-    "command": "bash $CLAUDE_PROJECT_DIR/.claude/iterate/statusline.sh"
+    "command": "bash -c 'exec bash \"$(git rev-parse --show-toplevel)/.claude/iterate/statusline.sh\"'"
   },
   "hooks": {
     "SessionStart": [
@@ -10,7 +10,7 @@
         "hooks": [
           {
             "type": "command",
-            "command": "bash $CLAUDE_PROJECT_DIR/.claude/hooks/session-start.sh",
+            "command": "bash -c 'exec bash \"$(git rev-parse --show-toplevel)/.claude/hooks/session-start.sh\"'",
             "timeout": 30
           }
         ]
@@ -22,12 +22,12 @@
         "hooks": [
           {
             "type": "command",
-            "command": "bash $CLAUDE_PROJECT_DIR/.claude/iterate/kick-session.sh",
+            "command": "bash -c 'exec bash \"$(git rev-parse --show-toplevel)/.claude/iterate/kick-session.sh\"'",
             "timeout": 300
           },
           {
             "type": "command",
-            "command": "bash $CLAUDE_PROJECT_DIR/.claude/hooks/stop-save.sh",
+            "command": "bash -c 'exec bash \"$(git rev-parse --show-toplevel)/.claude/hooks/stop-save.sh\"'",
             "timeout": 60
           }
         ]
@@ -39,7 +39,7 @@
         "hooks": [
           {
             "type": "command",
-            "command": "bash $CLAUDE_PROJECT_DIR/.claude/hooks/pre-compact-save.sh",
+            "command": "bash -c 'exec bash \"$(git rev-parse --show-toplevel)/.claude/hooks/pre-compact-save.sh\"'",
             "timeout": 120
           }
         ]
@@ -51,7 +51,7 @@
         "hooks": [
           {
             "type": "command",
-            "command": "bash -c '(python3 -c \"import sys; sys.path.insert(0,\\\"$CLAUDE_PROJECT_DIR/.claude/hooks\\\"); import iteration_memory as mem; mem.store(\\\"Session ended\\\", \\\"progress\\\", \\\"${CLAUDE_WORKTREE:-default}\\\", ${CLAUDE_ITERATION:-0})\" &) 2>/dev/null'",
+            "command": "bash -c '(python3 -c \"import sys; sys.path.insert(0,\\\"'\"$(git rev-parse --show-toplevel 2>/dev/null || echo .)\"'/.claude/hooks\\\"); import iteration_memory as mem; mem.store(\\\"Session ended\\\", \\\"progress\\\", \\\"${CLAUDE_WORKTREE:-default}\\\", ${CLAUDE_ITERATION:-0})\" &) 2>/dev/null'",
             "timeout": 5
           }
         ]

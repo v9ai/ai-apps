@@ -1,136 +1,606 @@
 {
   "city": "Katowice",
-  "city_overview": "Katowice, the capital of Upper Silesia, is a city that has reinvented itself. Once the beating heart of Poland's coal and steel industry, it has transformed into one of Europe's most exciting cultural destinations. The iconic Spodek arena, brutalist architecture, and the stunning new Silesian Museum tell the story of a city that honors its industrial past while racing toward a creative future.\n\nThe city pulses with an energy that's unmistakably its own. From the award-winning concert hall of NOSPR to the street art that adorns former factory walls, Katowice blends grit with sophistication. The Nikiszowiec district — a perfectly preserved workers' settlement from 1908 — is now an open-air gallery and architectural gem that draws visitors from around the world.\n\nFor travelers, Katowice offers something rare: authenticity without pretension. The food scene is anchored in hearty Silesian cuisine but increasingly global. The nightlife spills out of converted industrial spaces. And the surrounding Silesian Park — one of the largest urban parks in Europe — offers nature just minutes from the center. This is a city that rewards the curious.",
+  "city_overview": "Katowice is the beating heart of Silesia, a city that has masterfully rewritten its own story. For over a century, its identity was forged from coal and steel, a powerhouse of Poland's industrial revolution. The legacy of that era is still visible in its unique post-industrial architecture, like the monumental former coal mine shafts and distinctive familok workers' housing estates. But don't let that gritty past fool you—this is a city that has embraced a remarkable transformation, repurposing its industrial bones into vibrant spaces for art, music, and modern life.\n\nToday, Katowice thrums with the energy of a cultural hub. The most striking symbol of its rebirth is the Silesian Museum, ingeniously located deep underground in the restored workings of the former \"Warszawa\" coal mine. The city's cultural district, built on the site of the old \"Katowice\" mine, is a stunning landscape of modern glass and steel, home to the iconic Spodek flying saucer arena and the impressive Polish National Radio Symphony Orchestra hall. This is a city that celebrates contrasts, where you can attend a world-class philharmonic performance and then dive into the underground club scene in a converted industrial space.\n\nWhat makes Katowice truly unique is its authentic, unpretentious vibe. It's a city of passionate locals who take immense pride in their Silesian heritage, a distinct culture with its own dialect, traditions, and cuisine—be sure to try the hearty kluski śląskie (Silesian dumplings). The atmosphere is laid-back and creative, fueled by a thriving student population and a calendar packed with major music festivals spanning from metal and rock to experimental electronic sounds. Katowice doesn't just display culture in museums; it lives it in its repurposed factories, bustling market squares, and green spaces that have reclaimed former industrial land. It offers a raw, genuine, and exciting look at a European city that has confidently carved out a dynamic new future while proudly honoring its formidable past.",
+  "city_overview_ro": "Katowice este inima pulsantă a Sileziei, un oraș care și-a rescris cu măiestrie propria poveste. Timp de peste un secol, identitatea sa a fost modelată din cărbune și oțel, fiind o forță motrice a revoluției industriale a Poloniei. Amețitorul acestei ere este încă vizibil în arhitectura sa post-industrială unică, precum vechile puțuri de cărbune monumentale sau caracteristicele cartiere de locuințe pentru muncitori, numite familok. Dar nu lăsați trecutul acesta aspru să vă păcălească — acesta este un oraș care a îmbrățișat o transformare remarcabilă, reconvertind structurile sale industriale în spații vibrante pentru artă, muzică și viața modernă.\n\nAstăzi, Katowice vibrează cu energia unui hub cultural. Cel mai izbitor simbol al renașterii sale este Muzeul Silezian, aflat genial adânc sub pământ, în galeriile restaurate ale fostei mine de cărbune \"Warszawa\". Districtul cultural al orașului, construit pe amplasamentul vechii mine \"Katowice\", este un peisaj uimitor de sticlă și oțel contemporan, găzduind iconică arenă în formă de farfurie zburătoare Spodek și impresionanta sală a Orchestrei Naționale Radio Poloneză. Acesta este un oraș care sărbătorește contrastul, unde poți asista la o reprezentație filarmonică de clasă mondială și apoi să te avânți în scena cluburilor subterane dintr-un spațiu industrial reconvertit.\n\nCeea ce face Katowice cu adevărat unic este atmosfera sa autentică și pretențioasă. Este un oraș al localnicilor pasionați, care sunt mândri de moștenirea sileziană, o cultură distinctă cu propriul dialect, tradiții și bucătărie — nu uitați să încercați sătuitoarele kluski śląskie (găluștele sileziene). Atmosfera este relaxată și creativă, alimentată de o populație studențească vibrantă și de un calendar plin de festivaluri muzicale majore, de la metal și rock până la sunete electronice experimentale. Katowice nu doar expune cultura în muzee; trăiește cultura în fabricile sale reconvertite, în piețele aglomerate și în spațiile verzi care au revendicat foste zone industriale. Oferă o imagine directă, autentică și captivantă a unui oraș europeu care și-a croit cu încredere un viitor dinamic nou, respectând cu mândrie un trecut formidabil.",
   "places": [
     {
-      "name": "Spodek Arena",
-      "description": "The flying saucer-shaped Spodek is Katowice's most iconic landmark. Built in 1971, this brutalist masterpiece hosts concerts, sporting events, and cultural festivals. Its distinctive silhouette has become the unofficial symbol of the city.",
+      "name": "Muzeum Śląskie",
+      "description": "This modern museum showcases Silesian history, art, and culture in a former coal mine site. Its underground galleries and iconic glass tower offer a unique perspective on industrial heritage.",
+      "category": "culture",
+      "address": "ul. T. Dobrowolskiego 1, 40-205 Katowice",
+      "lat": 50.2644,
+      "lng": 19.0236,
+      "rating": 4.7,
+      "visit_duration": "2-3 hours",
+      "tips": "Book tickets online in advance to avoid queues, especially on weekends.",
+      "image_query": "Muzeum Śląskie Katowice glass tower",
+      "price_level": "moderate",
+      "price_display": "€€",
+      "maps_url": "https://www.google.com/maps/search/?api=1&query=Muzeum+Śląskie,+Katowice,+Poland",
+      "maps_embed_query": "Muzeum+Śląskie,+Katowice,+Poland",
+      "description_ro": "Acest muzeu modern prezintă istoria, arta și cultura Sileziei într-o fostă mină de cărbune. Galeriile sale subterane și turnul iconic din sticlă oferă o perspectivă unică asupra patrimoniului industrial.",
+      "tips_ro": "Rezervă biletele online în avans pentru a evita cozile, în special în weekend.",
+      "visit_duration_ro": "2-3 ore",
+      "booking": {
+        "type": "ticket",
+        "needs_reservation": false,
+        "best_time_to_visit": "morning or weekday afternoon",
+        "estimated_cost": {
+          "pln": 25,
+          "eur": 6
+        },
+        "nearby_hotel_area": "Śródmieście",
+        "combined_with": [
+          "Strefa Kultury",
+          "Rondo Sztuki"
+        ],
+        "advance_booking_days": 0,
+        "platform_urls": {
+          "google_maps": "https://www.google.com/maps/search/?api=1&query=Muzeum+%C5%9Al%C4%85skie+Katowice+Poland",
+          "tripadvisor": "https://www.tripadvisor.com/Search?q=Muzeum+%C5%9Al%C4%85skie+Katowice+Poland",
+          "getyourguide": "https://www.getyourguide.com/s/?q=Muzeum+%C5%9Al%C4%85skie+Katowice+Poland",
+          "booking_hotels": "https://www.booking.com/searchresults.html?ss=Katowice+Poland",
+          "google_hotels": "https://www.google.com/travel/hotels/Katowice+Poland"
+        }
+      }
+    },
+    {
+      "name": "Spodek",
+      "description": "An iconic flying saucer-shaped arena that hosts concerts, sports events, and exhibitions. It's a symbol of Katowice's modernist architecture and cultural vibrancy.",
       "category": "architecture",
-      "address": "aleja Korfantego 35, 40-005 Katowice",
-      "lat": 50.2649,
-      "lng": 19.0238,
+      "address": "al. Wojciecha Korfantego 35, 40-005 Katowice",
+      "lat": 50.2667,
+      "lng": 19.0278,
       "rating": 4.5,
       "visit_duration": "1-2 hours",
-      "tips": "Visit during a concert or event for the full experience — the acoustics inside are surprisingly excellent.",
-      "maps_url": "https://www.google.com/maps/search/?api=1&query=Spodek+Arena,+Katowice,+Poland",
-      "maps_embed_query": "Spodek+Arena,+Katowice,+Poland"
+      "tips": "Check the event schedule online to catch a show or tour the interior.",
+      "image_query": "Spodek Katowice arena",
+      "price_level": "moderate",
+      "price_display": "€€",
+      "maps_url": "https://www.google.com/maps/search/?api=1&query=Spodek,+Katowice,+Poland",
+      "maps_embed_query": "Spodek,+Katowice,+Poland",
+      "description_ro": "O arenă iconică în formă de farfurie zburătoare care găzduiește concerte, evenimente sportive și expoziții. Este un simbol al arhitecturii moderniste și al vitalității culturale a Katowice.",
+      "tips_ro": "Verifică programul de evenimente online pentru a prinde un spectacol sau pentru a vizita interiorul.",
+      "visit_duration_ro": "1-2 ore",
+      "booking": {
+        "type": "ticket",
+        "needs_reservation": true,
+        "best_time_to_visit": "evening for events",
+        "estimated_cost": {
+          "pln": 50,
+          "eur": 12
+        },
+        "nearby_hotel_area": "Śródmieście",
+        "combined_with": [
+          "Strefa Kultury",
+          "Narodowa Orkiestra Symfoniczna Polskiego Radia"
+        ],
+        "advance_booking_days": 7,
+        "platform_urls": {
+          "google_maps": "https://www.google.com/maps/search/?api=1&query=Spodek+Katowice+Poland",
+          "tripadvisor": "https://www.tripadvisor.com/Search?q=Spodek+Katowice+Poland",
+          "getyourguide": "https://www.getyourguide.com/s/?q=Spodek+Katowice+Poland",
+          "booking_hotels": "https://www.booking.com/searchresults.html?ss=Katowice+Poland",
+          "google_hotels": "https://www.google.com/travel/hotels/Katowice+Poland"
+        }
+      }
+    },
+    {
+      "name": "Park Kościuszki",
+      "description": "A large, peaceful park with walking paths, ponds, and historical monuments. It's perfect for a relaxing stroll or picnic away from the city bustle.",
+      "category": "nature",
+      "address": "ul. T. Kościuszki, 40-048 Katowice",
+      "lat": 50.2589,
+      "lng": 19.0167,
+      "rating": 4.4,
+      "visit_duration": "1-2 hours",
+      "tips": "Visit in spring or summer to enjoy the blooming flowers and greenery.",
+      "image_query": "Park Kościuszki Katowice",
+      "price_level": "budget",
+      "price_display": "€",
+      "maps_url": "https://www.google.com/maps/search/?api=1&query=Park+Kościuszki,+Katowice,+Poland",
+      "maps_embed_query": "Park+Kościuszki,+Katowice,+Poland",
+      "description_ro": "Un parc mare și liniștit cu alei de plimbare, iazuri și monumente istorice. Este perfect pentru o plimbare relaxantă sau un picnic departe de agitația orașului.",
+      "tips_ro": "Vizitează primăvara sau vara pentru a te bucura de florile înflorite și vegetația verde.",
+      "visit_duration_ro": "1-2 ore",
+      "booking": {
+        "type": "free_entry",
+        "needs_reservation": false,
+        "best_time_to_visit": "spring or summer afternoon",
+        "estimated_cost": {
+          "pln": 0,
+          "eur": 0
+        },
+        "nearby_hotel_area": "Śródmieście",
+        "combined_with": [
+          "Muzeum Śląskie",
+          "Nikiszowiec"
+        ],
+        "advance_booking_days": 0,
+        "platform_urls": {
+          "google_maps": "https://www.google.com/maps/search/?api=1&query=Park+Ko%C5%9Bciuszki+Katowice+Poland",
+          "tripadvisor": "https://www.tripadvisor.com/Search?q=Park+Ko%C5%9Bciuszki+Katowice+Poland",
+          "getyourguide": "https://www.getyourguide.com/s/?q=Park+Ko%C5%9Bciuszki+Katowice+Poland",
+          "booking_hotels": "https://www.booking.com/searchresults.html?ss=Katowice+Poland",
+          "google_hotels": "https://www.google.com/travel/hotels/Katowice+Poland"
+        }
+      }
     },
     {
       "name": "Nikiszowiec",
-      "description": "A stunning early 20th-century workers' district built entirely from red brick. This remarkably preserved housing estate is now considered one of Poland's most beautiful neighborhoods, featuring inner courtyards, a neo-Romanesque church, and an authentic Silesian atmosphere.",
+      "description": "A historic miners' settlement with distinctive red-brick buildings and charming courtyards. It offers a glimpse into Silesian industrial life and community spirit.",
       "category": "history",
-      "address": "Nikiszowiec, 40-611 Katowice",
-      "lat": 50.2456,
-      "lng": 19.0778,
-      "rating": 4.7,
-      "visit_duration": "2-3 hours",
-      "tips": "Visit the Wilson Shaft Gallery inside the estate for contemporary art exhibitions set against industrial heritage.",
-      "maps_url": "https://www.google.com/maps/search/?api=1&query=Nikiszowiec,+Katowice,+Poland",
-      "maps_embed_query": "Nikiszowiec,+Katowice,+Poland"
-    },
-    {
-      "name": "Silesian Museum",
-      "description": "One of Poland's most innovative museums, built underground in the former Katowice Coal Mine. The subterranean galleries house Polish art, history of Silesia, and temporary exhibitions. The architecture alone — descending into converted mine shafts — is breathtaking.",
-      "category": "culture",
-      "address": "Tadeusza Dobrowolskiego 1, 40-205 Katowice",
-      "lat": 50.2618,
-      "lng": 19.0270,
-      "rating": 4.8,
-      "visit_duration": "2-4 hours",
-      "tips": "Buy a combined ticket for all exhibitions — the underground architecture tour is worth every zloty.",
-      "maps_url": "https://www.google.com/maps/search/?api=1&query=Silesian+Museum,+Katowice,+Poland",
-      "maps_embed_query": "Silesian+Museum,+Katowice,+Poland"
-    },
-    {
-      "name": "NOSPR (Polish National Radio Symphony Orchestra)",
-      "description": "The stunning copper-clad concert hall of NOSPR is an architectural marvel and one of Europe's finest concert venues. Designed by Tomasz Konior, it won the prestigious EU Mies Award. The acoustics are world-class, hosting classical, jazz, and contemporary performances.",
-      "category": "culture",
-      "address": "plac Wojciecha Kilara 1, 40-202 Katowice",
-      "lat": 50.2634,
-      "lng": 19.0256,
-      "rating": 4.9,
-      "visit_duration": "2-3 hours",
-      "tips": "Check the schedule for free lunchtime concerts — a perfect way to experience the hall without a full evening commitment.",
-      "maps_url": "https://www.google.com/maps/search/?api=1&query=NOSPR,+Katowice,+Poland",
-      "maps_embed_query": "NOSPR,+Katowice,+Poland"
-    },
-    {
-      "name": "Silesian Park (Park Slaski)",
-      "description": "One of Europe's largest urban parks at over 600 hectares. Originally created on former coal mine grounds, it features a planetarium, zoo, amusement park, Japanese garden, and miles of walking trails. A green oasis born from industrial transformation.",
-      "category": "nature",
-      "address": "aleja Rozana 2, 41-501 Chorzow (adjacent to Katowice)",
-      "lat": 50.2876,
-      "lng": 18.9978,
+      "address": "ul. Rymarska, 40-425 Katowice",
+      "lat": 50.24,
+      "lng": 19.0833,
       "rating": 4.6,
-      "visit_duration": "3-5 hours",
-      "tips": "Rent a bike at the entrance — the park is huge and cycling lets you cover the planetarium, zoo, and Japanese garden in one visit.",
-      "maps_url": "https://www.google.com/maps/search/?api=1&query=Park+Slaski,+Chorzow,+Poland",
-      "maps_embed_query": "Park+Slaski,+Chorzow,+Poland"
-    },
-    {
-      "name": "Katowice Market Square (Rynek)",
-      "description": "The revitalized heart of Katowice, surrounded by a mix of historic and modern architecture. The square features the iconic glass-and-steel market hall, fountains, and is the gateway to the city's shopping and dining scene.",
-      "category": "architecture",
-      "address": "Rynek, 40-003 Katowice",
-      "lat": 50.2599,
-      "lng": 19.0216,
-      "rating": 4.2,
       "visit_duration": "1-2 hours",
-      "tips": "Start your city exploration here — the tourist information center on the square has free maps and event listings.",
-      "maps_url": "https://www.google.com/maps/search/?api=1&query=Rynek,+Katowice,+Poland",
-      "maps_embed_query": "Rynek,+Katowice,+Poland"
+      "tips": "Join a guided tour to learn about the history and stories of this unique neighborhood.",
+      "image_query": "Nikiszowiec Katowice red brick",
+      "price_level": "budget",
+      "price_display": "€",
+      "maps_url": "https://www.google.com/maps/search/?api=1&query=Nikiszowiec,+Katowice,+Poland",
+      "maps_embed_query": "Nikiszowiec,+Katowice,+Poland",
+      "description_ro": "O așezare istorică a minerilor cu clădiri distinctive din cărămidă roșie și curți fermecătoare. Oferă o privire asupra vieții industriale și a spiritului comunitar din Silezia.",
+      "tips_ro": "Alătură-te unui tur ghidat pentru a afla despre istoria și poveștile acestui cartier unic.",
+      "visit_duration_ro": "1-2 ore",
+      "booking": {
+        "type": "guided_tour",
+        "needs_reservation": true,
+        "best_time_to_visit": "daytime",
+        "estimated_cost": {
+          "pln": 30,
+          "eur": 7
+        },
+        "nearby_hotel_area": "Nikiszowiec district",
+        "combined_with": [
+          "Park Kościuszki",
+          "Muzeum Śląskie"
+        ],
+        "advance_booking_days": 3,
+        "platform_urls": {
+          "google_maps": "https://www.google.com/maps/search/?api=1&query=Nikiszowiec+Katowice+Poland",
+          "tripadvisor": "https://www.tripadvisor.com/Search?q=Nikiszowiec+Katowice+Poland",
+          "getyourguide": "https://www.getyourguide.com/s/?q=Nikiszowiec+Katowice+Poland",
+          "booking_hotels": "https://www.booking.com/searchresults.html?ss=Katowice+Poland",
+          "google_hotels": "https://www.google.com/travel/hotels/Katowice+Poland"
+        }
+      }
     },
     {
-      "name": "Valley of Three Ponds (Dolina Trzech Stawow)",
-      "description": "A beloved urban nature reserve with three interconnected ponds surrounded by parkland. Popular with joggers, families, and anyone seeking a peaceful escape from the city center. The autumn colors reflected in the water are particularly stunning.",
-      "category": "nature",
-      "address": "Dolina Trzech Stawow, 40-001 Katowice",
-      "lat": 50.2490,
-      "lng": 19.0280,
-      "rating": 4.4,
-      "visit_duration": "1-2 hours",
-      "tips": "Bring bread for the ducks but arrive early on weekends — it's a favorite spot for local families.",
-      "maps_url": "https://www.google.com/maps/search/?api=1&query=Dolina+Trzech+Stawow,+Katowice,+Poland",
-      "maps_embed_query": "Dolina+Trzech+Stawow,+Katowice,+Poland"
-    },
-    {
-      "name": "Koszutka Street Art District",
-      "description": "The Koszutka neighborhood has become an open-air gallery featuring massive murals by Polish and international artists. The street art tells stories of Silesian identity, industrial heritage, and modern creativity on the walls of socialist-era apartment blocks.",
-      "category": "culture",
-      "address": "Koszutka, 40-168 Katowice",
-      "lat": 50.2720,
-      "lng": 19.0180,
-      "rating": 4.3,
-      "visit_duration": "1-2 hours",
-      "tips": "Join a guided street art walking tour — local guides explain the stories behind each mural and the artists' connections to Silesia.",
-      "maps_url": "https://www.google.com/maps/search/?api=1&query=Koszutka,+Katowice,+Poland",
-      "maps_embed_query": "Koszutka,+Katowice,+Poland"
-    },
-    {
-      "name": "Browary Slaskie (Silesian Breweries District)",
-      "description": "A revitalized brewery complex turned dining and entertainment quarter. The red-brick industrial buildings now house craft beer bars, restaurants, and event spaces. It perfectly embodies Katowice's talent for transforming industrial heritage into vibrant social hubs.",
+      "name": "Restauracja Śląska Prohibicja",
+      "description": "A popular restaurant serving traditional Silesian dishes in a cozy, rustic setting. It's known for its hearty meals like kluski śląskie and rolada.",
       "category": "food",
-      "address": "Jozefowska 42, 40-145 Katowice",
-      "lat": 50.2580,
-      "lng": 19.0130,
-      "rating": 4.4,
-      "visit_duration": "2-3 hours",
-      "tips": "Try the local Silesian craft beers — several microbreweries have taprooms here with tasting flights.",
-      "maps_url": "https://www.google.com/maps/search/?api=1&query=Browary+Slaskie,+Katowice,+Poland",
-      "maps_embed_query": "Browary+Slaskie,+Katowice,+Poland"
+      "address": "ul. Mariacka 13, 40-014 Katowice",
+      "lat": 50.2592,
+      "lng": 19.0214,
+      "rating": 4.5,
+      "visit_duration": "1-2 hours",
+      "tips": "Try the regional beer or schnapps to complement your meal.",
+      "image_query": "Prohibicja Katowice restaurant interior",
+      "price_level": "moderate",
+      "price_display": "€€",
+      "maps_url": "https://www.google.com/maps/search/?api=1&query=Restauracja+Śląska+Prohibicja,+Katowice,+Poland",
+      "maps_embed_query": "Restauracja+Śląska+Prohibicja,+Katowice,+Poland",
+      "description_ro": "Un restaurant popular care servește preparate tradiționale sileziene într-un cadru rustic și confortabil. Este cunoscut pentru mâncăruri consistente precum kluski śląskie și rolada.",
+      "tips_ro": "Încearcă berea regională sau țuica pentru a completa masa.",
+      "visit_duration_ro": "1-2 ore",
+      "booking": {
+        "type": "reservation",
+        "needs_reservation": true,
+        "best_time_to_visit": "evening",
+        "estimated_cost": {
+          "pln": 80,
+          "eur": 19
+        },
+        "nearby_hotel_area": "Mariacka Street area",
+        "combined_with": [
+          "Klub Królestwo",
+          "Bar Mleczny Familijny"
+        ],
+        "advance_booking_days": 2,
+        "platform_urls": {
+          "google_maps": "https://www.google.com/maps/search/?api=1&query=Restauracja+%C5%9Al%C4%85ska+Prohibicja+Katowice+Poland",
+          "tripadvisor": "https://www.tripadvisor.com/Search?q=Restauracja+%C5%9Al%C4%85ska+Prohibicja+Katowice+Poland",
+          "getyourguide": "https://www.getyourguide.com/s/?q=Restauracja+%C5%9Al%C4%85ska+Prohibicja+Katowice+Poland",
+          "booking_hotels": "https://www.booking.com/searchresults.html?ss=Katowice+Poland",
+          "google_hotels": "https://www.google.com/travel/hotels/Katowice+Poland"
+        }
+      }
     },
     {
-      "name": "Mariacka Street",
-      "description": "Katowice's liveliest nightlife and bar street. This pedestrian stretch is packed with pubs, cocktail bars, and live music venues. On summer evenings, the entire street transforms into an outdoor party with tables spilling onto the cobblestones.",
-      "category": "nightlife",
-      "address": "ulica Mariacka, 40-014 Katowice",
-      "lat": 50.2590,
-      "lng": 19.0200,
+      "name": "Narodowa Orkiestra Symfoniczna Polskiego Radia",
+      "description": "A world-class concert hall hosting classical music performances by renowned orchestras. Its excellent acoustics make it a top venue for music lovers.",
+      "category": "entertainment",
+      "address": "plac Wojciecha Kilara 1, 40-202 Katowice",
+      "lat": 50.265,
+      "lng": 19.025,
+      "rating": 4.8,
+      "visit_duration": "2-3 hours",
+      "tips": "Dress smart-casual for evening concerts to match the elegant atmosphere.",
+      "image_query": "NOSPR Katowice concert hall",
+      "price_level": "premium",
+      "price_display": "€€€",
+      "maps_url": "https://www.google.com/maps/search/?api=1&query=Narodowa+Orkiestra+Symfoniczna+Polskiego+Radia,+Katowice,+Poland",
+      "maps_embed_query": "Narodowa+Orkiestra+Symfoniczna+Polskiego+Radia,+Katowice,+Poland",
+      "description_ro": "O sală de concerte de clasă mondială care găzduiește spectacole de muzică clasică ale orchestrelor renumite. Acustica sa excelentă o face un loc de top pentru iubitorii de muzică.",
+      "tips_ro": "Îmbracă-te smart-casual pentru concertele de seară pentru a te potrivi atmosferei elegante.",
+      "visit_duration_ro": "2-3 ore",
+      "booking": {
+        "type": "ticket",
+        "needs_reservation": true,
+        "best_time_to_visit": "evening for concerts",
+        "estimated_cost": {
+          "pln": 100,
+          "eur": 24
+        },
+        "nearby_hotel_area": "Śródmieście",
+        "combined_with": [
+          "Spodek",
+          "Strefa Kultury"
+        ],
+        "advance_booking_days": 14,
+        "platform_urls": {
+          "google_maps": "https://www.google.com/maps/search/?api=1&query=Narodowa+Orkiestra+Symfoniczna+Polskiego+Radia+Katowice+Poland",
+          "tripadvisor": "https://www.tripadvisor.com/Search?q=Narodowa+Orkiestra+Symfoniczna+Polskiego+Radia+Katowice+Poland",
+          "getyourguide": "https://www.getyourguide.com/s/?q=Narodowa+Orkiestra+Symfoniczna+Polskiego+Radia+Katowice+Poland",
+          "booking_hotels": "https://www.booking.com/searchresults.html?ss=Katowice+Poland",
+          "google_hotels": "https://www.google.com/travel/hotels/Katowice+Poland"
+        }
+      }
+    },
+    {
+      "name": "Strefa Kultury",
+      "description": "A cultural district featuring modern institutions like the International Congress Centre and Silesian Museum. It's a hub for events, exhibitions, and urban revitalization.",
+      "category": "culture",
+      "address": "plac Sławika i Antalla 1, 40-163 Katowice",
+      "lat": 50.2639,
+      "lng": 19.0261,
       "rating": 4.5,
+      "visit_duration": "2-3 hours",
+      "tips": "Walk around the area to see the blend of old industrial sites and new architecture.",
+      "image_query": "Strefa Kultury Katowice ICC",
+      "price_level": "budget",
+      "price_display": "€",
+      "maps_url": "https://www.google.com/maps/search/?api=1&query=Strefa+Kultury,+Katowice,+Poland",
+      "maps_embed_query": "Strefa+Kultury,+Katowice,+Poland",
+      "description_ro": "Un district cultural care include instituții moderne precum Centrul Internațional de Congrese și Muzeul Silezian. Este un hub pentru evenimente, expoziții și revitalizare urbană.",
+      "tips_ro": "Plimbă-te prin zonă pentru a vedea amestecul dintre vechile situri industriale și noua arhitectură.",
+      "visit_duration_ro": "2-3 ore",
+      "booking": {
+        "type": "free_entry",
+        "needs_reservation": false,
+        "best_time_to_visit": "daytime",
+        "estimated_cost": {
+          "pln": 0,
+          "eur": 0
+        },
+        "nearby_hotel_area": "Śródmieście",
+        "combined_with": [
+          "Muzeum Śląskie",
+          "Spodek"
+        ],
+        "advance_booking_days": 0,
+        "platform_urls": {
+          "google_maps": "https://www.google.com/maps/search/?api=1&query=Strefa+Kultury+Katowice+Poland",
+          "tripadvisor": "https://www.tripadvisor.com/Search?q=Strefa+Kultury+Katowice+Poland",
+          "getyourguide": "https://www.getyourguide.com/s/?q=Strefa+Kultury+Katowice+Poland",
+          "booking_hotels": "https://www.booking.com/searchresults.html?ss=Katowice+Poland",
+          "google_hotels": "https://www.google.com/travel/hotels/Katowice+Poland"
+        }
+      }
+    },
+    {
+      "name": "Klub Królestwo",
+      "description": "A lively nightclub with multiple dance floors, DJ sets, and themed parties. It's a favorite spot for locals and visitors looking to enjoy Katowice's nightlife.",
+      "category": "nightlife",
+      "address": "ul. Mariacka 15, 40-014 Katowice",
+      "lat": 50.259,
+      "lng": 19.0216,
+      "rating": 4.3,
       "visit_duration": "2-4 hours",
-      "tips": "Start at the Rynek end and work your way down — each bar has its own character, from craft cocktails to punk rock dives.",
-      "maps_url": "https://www.google.com/maps/search/?api=1&query=Mariacka+Street,+Katowice,+Poland",
-      "maps_embed_query": "Mariacka+Street,+Katowice,+Poland"
+      "tips": "Arrive after midnight for the peak party atmosphere and live music.",
+      "image_query": "Klub Królestwo Katowice nightclub",
+      "price_level": "moderate",
+      "price_display": "€€",
+      "maps_url": "https://www.google.com/maps/search/?api=1&query=Klub+Królestwo,+Katowice,+Poland",
+      "maps_embed_query": "Klub+Królestwo,+Katowice,+Poland",
+      "description_ro": "Un club de noapte animat cu mai multe ringuri de dans, seturi DJ și petreceri tematice. Este un loc preferat pentru localnici și vizitatori care doresc să se bucure de viața de noapte din Katowice.",
+      "tips_ro": "Ajunge după miezul nopții pentru atmosfera de vârf a petrecerii și muzica live.",
+      "visit_duration_ro": "2-4 ore",
+      "booking": {
+        "type": "reservation",
+        "needs_reservation": true,
+        "best_time_to_visit": "late evening",
+        "estimated_cost": {
+          "pln": 50,
+          "eur": 12
+        },
+        "nearby_hotel_area": "Mariacka Street area",
+        "combined_with": [
+          "Restauracja Śląska Prohibicja",
+          "Bar Mleczny Familijny"
+        ],
+        "advance_booking_days": 1,
+        "platform_urls": {
+          "google_maps": "https://www.google.com/maps/search/?api=1&query=Klub+Kr%C3%B3lestwo+Katowice+Poland",
+          "tripadvisor": "https://www.tripadvisor.com/Search?q=Klub+Kr%C3%B3lestwo+Katowice+Poland",
+          "getyourguide": "https://www.getyourguide.com/s/?q=Klub+Kr%C3%B3lestwo+Katowice+Poland",
+          "booking_hotels": "https://www.booking.com/searchresults.html?ss=Katowice+Poland",
+          "google_hotels": "https://www.google.com/travel/hotels/Katowice+Poland"
+        }
+      }
+    },
+    {
+      "name": "Rondo Sztuki",
+      "description": "A contemporary art gallery and cultural center hosting exhibitions, workshops, and performances. It promotes local and international artists in a modern space.",
+      "category": "culture",
+      "address": "rondo im. Gen. Jerzego Ziętka 1, 40-001 Katowice",
+      "lat": 50.2678,
+      "lng": 19.0289,
+      "rating": 4.4,
+      "visit_duration": "1-2 hours",
+      "tips": "Check their website for current exhibitions and free entry days.",
+      "image_query": "Rondo Sztuki Katowice gallery",
+      "price_level": "budget",
+      "price_display": "€",
+      "maps_url": "https://www.google.com/maps/search/?api=1&query=Rondo+Sztuki,+Katowice,+Poland",
+      "maps_embed_query": "Rondo+Sztuki,+Katowice,+Poland",
+      "description_ro": "O galerie de artă contemporană și centru cultural care găzduiește expoziții, ateliere și spectacole. Promovează artiști locali și internaționali într-un spațiu modern.",
+      "tips_ro": "Verifică site-ul lor pentru expozițiile curente și zilele cu intrare gratuită.",
+      "visit_duration_ro": "1-2 ore",
+      "booking": {
+        "type": "free_entry",
+        "needs_reservation": false,
+        "best_time_to_visit": "afternoon",
+        "estimated_cost": {
+          "pln": 0,
+          "eur": 0
+        },
+        "nearby_hotel_area": "Śródmieście",
+        "combined_with": [
+          "Muzeum Śląskie",
+          "Strefa Kultury"
+        ],
+        "advance_booking_days": 0,
+        "platform_urls": {
+          "google_maps": "https://www.google.com/maps/search/?api=1&query=Rondo+Sztuki+Katowice+Poland",
+          "tripadvisor": "https://www.tripadvisor.com/Search?q=Rondo+Sztuki+Katowice+Poland",
+          "getyourguide": "https://www.getyourguide.com/s/?q=Rondo+Sztuki+Katowice+Poland",
+          "booking_hotels": "https://www.booking.com/searchresults.html?ss=Katowice+Poland",
+          "google_hotels": "https://www.google.com/travel/hotels/Katowice+Poland"
+        }
+      }
+    },
+    {
+      "name": "Bar Mleczny Familijny",
+      "description": "A classic Polish milk bar offering affordable, homemade meals in a no-frills setting. It's ideal for trying traditional dishes like pierogi and bigos on a budget.",
+      "category": "food",
+      "address": "ul. 3 Maja 11, 40-096 Katowice",
+      "lat": 50.26,
+      "lng": 19.0194,
+      "rating": 4.2,
+      "visit_duration": "30-60 minutes",
+      "tips": "Cash is preferred, and be prepared for simple, cafeteria-style service.",
+      "image_query": "Bar Mleczny Familijny Katowice",
+      "price_level": "budget",
+      "price_display": "€",
+      "maps_url": "https://www.google.com/maps/search/?api=1&query=Bar+Mleczny+Familijny,+Katowice,+Poland",
+      "maps_embed_query": "Bar+Mleczny+Familijny,+Katowice,+Poland",
+      "description_ro": "Un bar de lapte polonez clasic care oferă mese accesibile, preparate în casă, într-un cadru simplu. Este ideal pentru a încerca preparate tradiționale precum pierogi și bigos cu un buget redus.",
+      "tips_ro": "Se preferă plata în numerar și fii pregătit pentru un serviciu simplu, în stilul cantinelor.",
+      "visit_duration_ro": "30-60 minute",
+      "booking": {
+        "type": "free_entry",
+        "needs_reservation": false,
+        "best_time_to_visit": "lunchtime",
+        "estimated_cost": {
+          "pln": 20,
+          "eur": 5
+        },
+        "nearby_hotel_area": "Śródmieście",
+        "combined_with": [
+          "Restauracja Śląska Prohibicja",
+          "Klub Królestwo"
+        ],
+        "advance_booking_days": 0,
+        "platform_urls": {
+          "google_maps": "https://www.google.com/maps/search/?api=1&query=Bar+Mleczny+Familijny+Katowice+Poland",
+          "tripadvisor": "https://www.tripadvisor.com/Search?q=Bar+Mleczny+Familijny+Katowice+Poland",
+          "getyourguide": "https://www.getyourguide.com/s/?q=Bar+Mleczny+Familijny+Katowice+Poland",
+          "booking_hotels": "https://www.booking.com/searchresults.html?ss=Katowice+Poland",
+          "google_hotels": "https://www.google.com/travel/hotels/Katowice+Poland"
+        }
+      }
     }
-  ]
+  ],
+  "rankings": {
+    "best": [
+      "Muzeum Śląskie",
+      "Narodowa Orkiestra Symfoniczna Polskiego Radia",
+      "Nikiszowiec",
+      "Spodek",
+      "Restauracja Śląska Prohibicja",
+      "Strefa Kultury",
+      "Rondo Sztuki",
+      "Park Kościuszki",
+      "Klub Królestwo",
+      "Bar Mleczny Familijny"
+    ],
+    "cheapest": [
+      "Bar Mleczny Familijny",
+      "Park Kościuszki",
+      "Nikiszowiec",
+      "Strefa Kultury",
+      "Rondo Sztuki",
+      "Muzeum Śląskie",
+      "Spodek",
+      "Restauracja Śląska Prohibicja",
+      "Klub Królestwo",
+      "Narodowa Orkiestra Symfoniczna Polskiego Radia"
+    ]
+  },
+  "seo": {
+    "title": "Katowice Travel Guide: Discover Silesia's Industrial Heritage",
+    "description": "Explore Katowice, Poland's industrial heart transformed into a cultural hub. Visit Muzeum Śląskie, Spodek arena, Nikiszowiec district, and enjoy Silesian cuisine. Your complete travel guide.",
+    "keywords": [
+      "Katowice travel guide",
+      "Silesia Poland tourism",
+      "industrial architecture Katowice",
+      "Katowice cultural attractions",
+      "Polish coal mining history",
+      "Katowice nightlife",
+      "Silesian cuisine restaurants",
+      "Katowice museums",
+      "post-industrial tourism Poland",
+      "Katowice weekend getaway",
+      "Spodek arena events",
+      "Nikiszowiec district"
+    ],
+    "og_title": "Katowice: Poland's Industrial City Reborn",
+    "og_description": "Discover how Katowice transformed from coal mining center to cultural destination. Explore unique architecture, museums, and Silesian culture.",
+    "canonical_slug": "katowice-poland-travel-guide",
+    "h1": "Katowice Travel Guide: Exploring Silesia's Industrial Heritage & Culture",
+    "breadcrumb": [
+      {
+        "name": "Home",
+        "slug": "home"
+      },
+      {
+        "name": "Poland Travel Guides",
+        "slug": "poland-travel-guides"
+      },
+      {
+        "name": "Silesia Region",
+        "slug": "silesia-region-poland"
+      },
+      {
+        "name": "Katowice",
+        "slug": "katowice-poland-travel-guide"
+      }
+    ],
+    "place_slugs": {
+      "Muzeum Śląskie": "muzeum-slaskie-katowice",
+      "Spodek": "spodek-arena-katowice",
+      "Park Kościuszki": "park-kosciuszki-katowice",
+      "Nikiszowiec": "nikiszowiec-district-katowice",
+      "Restauracja Śląska Prohibicja": "restauracja-slaska-prohibicja-katowice",
+      "Narodowa Orkiestra Symfoniczna Polskiego Radia": "narodowa-orkiestra-symfoniczna-polskiego-radia-katowice",
+      "Strefa Kultury": "strefa-kultury-katowice",
+      "Klub Królestwo": "klub-krolestwo-katowice",
+      "Rondo Sztuki": "rondo-sztuki-katowice",
+      "Bar Mleczny Familijny": "bar-mleczny-familijny-katowice"
+    },
+    "json_ld": [
+      {
+        "@context": "https://schema.org",
+        "@type": "TouristDestination",
+        "name": "Katowice",
+        "description": "Explore Katowice, Poland's industrial heart transformed into a cultural hub. Visit Muzeum Śląskie, Spodek arena, Nikiszowiec district, and enjoy Silesian cuisine. Your complete travel guide.",
+        "url": "https://travel.example.com/katowice-poland-travel-guide"
+      },
+      {
+        "@context": "https://schema.org",
+        "@type": "ItemList",
+        "name": "Top places to visit in Katowice",
+        "numberOfItems": 10,
+        "itemListElement": [
+          {
+            "@type": "ListItem",
+            "position": 1,
+            "name": "Muzeum Śląskie",
+            "url": "https://travel.example.com/katowice-poland-travel-guide/muzeum-slaskie-katowice"
+          },
+          {
+            "@type": "ListItem",
+            "position": 2,
+            "name": "Spodek",
+            "url": "https://travel.example.com/katowice-poland-travel-guide/spodek-arena-katowice"
+          },
+          {
+            "@type": "ListItem",
+            "position": 3,
+            "name": "Park Kościuszki",
+            "url": "https://travel.example.com/katowice-poland-travel-guide/park-kosciuszki-katowice"
+          },
+          {
+            "@type": "ListItem",
+            "position": 4,
+            "name": "Nikiszowiec",
+            "url": "https://travel.example.com/katowice-poland-travel-guide/nikiszowiec-district-katowice"
+          },
+          {
+            "@type": "ListItem",
+            "position": 5,
+            "name": "Restauracja Śląska Prohibicja",
+            "url": "https://travel.example.com/katowice-poland-travel-guide/restauracja-slaska-prohibicja-katowice"
+          },
+          {
+            "@type": "ListItem",
+            "position": 6,
+            "name": "Narodowa Orkiestra Symfoniczna Polskiego Radia",
+            "url": "https://travel.example.com/katowice-poland-travel-guide/narodowa-orkiestra-symfoniczna-polskiego-radia-katowice"
+          },
+          {
+            "@type": "ListItem",
+            "position": 7,
+            "name": "Strefa Kultury",
+            "url": "https://travel.example.com/katowice-poland-travel-guide/strefa-kultury-katowice"
+          },
+          {
+            "@type": "ListItem",
+            "position": 8,
+            "name": "Klub Królestwo",
+            "url": "https://travel.example.com/katowice-poland-travel-guide/klub-krolestwo-katowice"
+          },
+          {
+            "@type": "ListItem",
+            "position": 9,
+            "name": "Rondo Sztuki",
+            "url": "https://travel.example.com/katowice-poland-travel-guide/rondo-sztuki-katowice"
+          },
+          {
+            "@type": "ListItem",
+            "position": 10,
+            "name": "Bar Mleczny Familijny",
+            "url": "https://travel.example.com/katowice-poland-travel-guide/bar-mleczny-familijny-katowice"
+          }
+        ]
+      }
+    ]
+  },
+  "booking_summary": {
+    "total_estimated_cost": {
+      "pln": 355,
+      "eur": 85
+    },
+    "places_needing_reservation": [
+      "Spodek",
+      "Nikiszowiec",
+      "Restauracja Śląska Prohibicja",
+      "Narodowa Orkiestra Symfoniczna Polskiego Radia",
+      "Klub Królestwo"
+    ],
+    "hotel_search_url": "https://www.booking.com/searchresults.html?ss=Katowice+Poland",
+    "curated_hotels": [
+      {
+        "name": "Flow Świętego Pawła 10",
+        "property_id": "13562120",
+        "address": "ul. Świętego Pawła 10, Katowice",
+        "url": "https://www.booking.com/hotel/pl/flow-swietego-pawla-10.ro.html?aid=2428369&checkin=2026-04-04&checkout=2026-04-07&group_adults=2&group_children=1&age=7&no_rooms=1"
+      },
+      {
+        "name": "Flow Apartments - przy Mariackiej",
+        "property_id": "13562397",
+        "address": "ul. Mariacka, Katowice",
+        "url": "https://www.booking.com/hotel/pl/flow-stanislawa-7.ro.html?aid=2428369&checkin=2026-04-04&checkout=2026-04-07&group_adults=2&group_children=1&age=7&no_rooms=1"
+      },
+      {
+        "name": "Parkcity Centrum",
+        "property_id": "9573635",
+        "address": "Katowice Centrum",
+        "url": "https://www.booking.com/hotel/pl/parkcity-centrum.ro.html?aid=2428369&checkin=2026-04-04&checkout=2026-04-07&group_adults=2&group_children=1&age=7&no_rooms=1"
+      }
+    ]
+  }
 }

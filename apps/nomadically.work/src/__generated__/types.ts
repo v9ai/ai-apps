@@ -2190,7 +2190,7 @@ export type SendNowResult = {
 export type SendOutreachEmailInput = {
   postText: Scalars['String']['input'];
   postUrl?: InputMaybe<Scalars['String']['input']>;
-  recipientEmail: Scalars['String']['input'];
+  recipientEmail?: InputMaybe<Scalars['String']['input']>;
   recipientName: Scalars['String']['input'];
   recipientRole?: InputMaybe<Scalars['String']['input']>;
   tone?: InputMaybe<Scalars['String']['input']>;

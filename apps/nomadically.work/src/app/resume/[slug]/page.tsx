@@ -81,10 +81,10 @@ export default async function ResumePdfPage({ params }: Props) {
             ))}
           </section>
 
-          {/* AI / Side Projects */}
+          {/* AI Projects — NCA IT Ltd */}
           {activities.aiProjects && activities.aiProjects.length > 0 && (
             <section className="resume-section">
-              <h2>AI &amp; Side Projects</h2>
+              <h2>AI Projects — NCA IT Ltd</h2>
               {activities.aiProjects.map((proj) => (
                 <div key={proj.id} className="resume-project">
                   <h3>

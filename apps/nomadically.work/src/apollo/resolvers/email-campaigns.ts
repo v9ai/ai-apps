@@ -580,7 +580,6 @@ Do not include any text before or after the JSON.`;
             subject: entry.subject,
             html: entry.htmlBody,
             from: EmailConfig.SENDER,
-            replyTo: EmailConfig.SENDER_EMAIL,
             scheduledAt: entry.scheduledAt.toISOString(),
           });
 
@@ -638,7 +637,6 @@ Do not include any text before or after the JSON.`;
           subject: e.subject,
           html: e.htmlBody,
           from: EmailConfig.SENDER,
-          replyTo: EmailConfig.SENDER_EMAIL,
           scheduledAt,
         });
 

@@ -136,7 +136,6 @@ export async function sendAndSaveEmail(
       text: params.textContent,
       scheduledAt: params.scheduledAt,
       from: EmailConfig.SENDER,
-      replyTo: EmailConfig.SENDER_EMAIL,
     });
 
     if (result.error) {

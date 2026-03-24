@@ -1,14 +1,9 @@
 """Tests for CLI argument parsing."""
 
 import argparse
-from unittest.mock import AsyncMock, patch
-
-import pytest
 
 
 def _parse(args: list[str]) -> argparse.Namespace:
-    """Parse CLI args without running the command."""
-    from graph.cli import main
     parser = argparse.ArgumentParser()
     parser.add_argument("slug", nargs="?")
     parser.add_argument("--topic")
@@ -16,6 +11,7 @@ def _parse(args: list[str]) -> argparse.Namespace:
     parser.add_argument("--dry-run", action="store_true")
     parser.add_argument("--batch", action="store_true")
     parser.add_argument("--list-missing", action="store_true")
+    parser.add_argument("-v", "--verbose", action="store_true")
     return parser.parse_args(args)
 
 
@@ -50,12 +46,17 @@ class TestCliArgParsing:
         args = _parse(["--list-missing"])
         assert args.list_missing
 
+    def test_verbose_flag(self):
+        args = _parse(["prompt-caching", "-v"])
+        assert args.verbose
+
     def test_all_flags(self):
-        args = _parse(["my-slug", "--topic", "My Topic", "--model", "deepseek-chat", "--dry-run"])
+        args = _parse(["my-slug", "--topic", "My Topic", "--model", "deepseek-chat", "--dry-run", "-v"])
         assert args.slug == "my-slug"
         assert args.topic == "My Topic"
         assert args.model == "deepseek-chat"
         assert args.dry_run
+        assert args.verbose
 
 
 class TestDryGraphStructure:

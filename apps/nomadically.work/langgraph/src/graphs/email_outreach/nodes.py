@@ -2,19 +2,21 @@
 
 Flow:
     START ──→ research_contact ──┐
-         ├──→ research_company ──┼──→ draft_email ──→ refine_email ──→ END
-         └──→ analyze_post ──────┘
+         ├──→ research_company ──┼──→ screen_remote_eu ──→ [gate]
+         └──→ analyze_post ──────┘                          ├─ relevant → draft_email → refine_email → END
+                                                            └─ skip → END
 """
 
 import json
 import os
+import re
 import sys
 from pathlib import Path
 
 from langchain_core.messages import HumanMessage, SystemMessage
 from langchain_openai import ChatOpenAI
 
-from .prompts import ANALYZE_POST_SYSTEM, DRAFT_EMAIL_SYSTEM, REFINE_EMAIL_SYSTEM
+from .prompts import ANALYZE_POST_SYSTEM, DRAFT_EMAIL_SYSTEM, REFINE_EMAIL_SYSTEM, SCREEN_REMOTE_EU_SYSTEM
 from .state import EmailOutreachState
 
 # ---------------------------------------------------------------------------
@@ -56,6 +58,22 @@ def _load_resume_background() -> str:
 
 
 RESUME_BACKGROUND = _load_resume_background()
+
+_EMAIL_RE = re.compile(r"[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}")
+_REPLY_LINE_RE = re.compile(r"(?m)^.*Reply to:.*$\n?", re.IGNORECASE)
+_MAILTO_RE = re.compile(r'<a\s+href="mailto:[^"]*">[^<]*</a>', re.IGNORECASE)
+
+
+def _strip_email_footer(draft: dict) -> dict:
+    """Hard-strip any email addresses and 'Reply to:' lines from the email body."""
+    for key in ("text", "html"):
+        val = draft.get(key, "")
+        val = _REPLY_LINE_RE.sub("", val)
+        val = _MAILTO_RE.sub("", val)
+        val = _EMAIL_RE.sub("", val)
+        draft[key] = val.rstrip()
+    return draft
+
 
 # ---------------------------------------------------------------------------
 # LLM factories (same pattern as application_prep/nodes.py)
@@ -125,14 +143,14 @@ def research_contact_node(state: EmailOutreachState) -> dict:
             if email:
                 cur.execute(
                     """SELECT first_name, last_name, position, company,
-                              linkedin_url, tags, notes
+                              linkedin_url, tags
                        FROM contacts WHERE %s = ANY(emails) LIMIT 1""",
                     [email],
                 )
             else:
                 cur.execute(
                     """SELECT first_name, last_name, position, company,
-                              linkedin_url, tags, notes
+                              linkedin_url, tags
                        FROM contacts
                        WHERE first_name || ' ' || last_name ILIKE %s
                        LIMIT 1""",
@@ -147,8 +165,6 @@ def research_contact_node(state: EmailOutreachState) -> dict:
                 context_parts.append(f"Role: {row['position']}")
             if row.get("company"):
                 context_parts.append(f"Company: {row['company']}")
-            if row.get("notes"):
-                context_parts.append(f"Notes: {row['notes']}")
             if row.get("tags"):
                 context_parts.append(f"Tags: {', '.join(row['tags']) if isinstance(row['tags'], list) else row['tags']}")
         else:
@@ -258,7 +274,123 @@ def analyze_post_node(state: EmailOutreachState) -> dict:
 
 
 # ---------------------------------------------------------------------------
-# Node 4: draft_email — generate email using all context
+# Node 4: screen_remote_eu — gate on fully-remote EU relevance
+# ---------------------------------------------------------------------------
+
+_HIRING_INTENTS = {"hiring"}
+
+# Fast keyword reject — avoids LLM call for obvious non-EU posts
+_US_ONLY_KEYWORDS = frozenset({
+    "us only", "us-only", "united states only", "must be based in the us",
+    "us work authorization", "401(k)", "401k",
+})
+_HYBRID_KEYWORDS = frozenset({
+    "hybrid", "on-site", "onsite", "in-office", "in office",
+    "days in the office", "days per week in office",
+})
+_EU_POSITIVE_KEYWORDS = frozenset({
+    "remote eu", "remote - eu", "remote-eu", "emea", "europe",
+    "eu work authorization", "eu timezone", "cet timezone",
+    "european business hours", "eu member", "eea",
+})
+
+
+def _keyword_screen(post_text: str, intent: str) -> dict | None:
+    """Fast keyword pre-screen. Returns a screen dict or None to escalate to LLM."""
+    if intent not in _HIRING_INTENTS:
+        return {
+            "is_relevant": True,
+            "reason": f"Non-hiring post (intent={intent}) — networking opportunity",
+            "work_model": "unknown",
+            "region": "unknown",
+        }
+
+    lower = post_text.lower()
+
+    # Check EU-positive first (stronger signal)
+    has_eu = any(kw in lower for kw in _EU_POSITIVE_KEYWORDS)
+
+    # Hard reject: US-only
+    if any(kw in lower for kw in _US_ONLY_KEYWORDS) and not has_eu:
+        return {
+            "is_relevant": False,
+            "reason": "US-only signals detected in hiring post",
+            "work_model": "fully_remote",
+            "region": "us",
+        }
+
+    # Fast accept: clear EU remote signals
+    remote_kw = any(kw in lower for kw in {"remote", "fully remote", "work from anywhere"})
+    if has_eu and remote_kw:
+        return {
+            "is_relevant": True,
+            "reason": "EU remote signals + remote keyword in hiring post",
+            "work_model": "fully_remote",
+            "region": "eu",
+        }
+
+    return None  # ambiguous — escalate to LLM
+
+
+def screen_remote_eu_node(state: EmailOutreachState) -> dict:
+    """Gate node: check if post is about a fully-remote EU opportunity.
+
+    Non-hiring posts always pass (networking opportunity).
+    Hiring posts must be fully remote + EU-eligible to proceed.
+    """
+    post_text = state.get("post_text", "")
+    analysis = state.get("post_analysis") or {}
+    intent = analysis.get("intent", "other")
+    company_ctx = state.get("company_context", "")
+
+    print(f"  [screen_remote_eu] Screening (intent={intent})", file=sys.stderr)
+
+    # Try keyword pre-screen first
+    screen = _keyword_screen(post_text, intent)
+    if screen is not None:
+        print(f"  [screen_remote_eu] Keyword: is_relevant={screen['is_relevant']} — {screen['reason']}", file=sys.stderr)
+        return {"remote_eu_screen": screen}
+
+    # LLM fallback for ambiguous hiring posts
+    user_prompt = (
+        f"LinkedIn post:\n{post_text[:2000]}\n\n"
+        f"Post intent: {intent}\n"
+        f"Topics: {', '.join(analysis.get('topics', []))}\n\n"
+        f"Company context:\n{company_ctx[:500]}"
+    )
+
+    messages = [
+        SystemMessage(content=SCREEN_REMOTE_EU_SYSTEM),
+        HumanMessage(content=user_prompt),
+    ]
+
+    response = _invoke_with_fallback(_get_llm_json(), messages)
+
+    try:
+        screen = json.loads(response.content)
+    except (json.JSONDecodeError, TypeError):
+        # On parse failure, default to relevant (don't block outreach)
+        screen = {
+            "is_relevant": True,
+            "reason": "LLM parse error — defaulting to relevant",
+            "work_model": "unknown",
+            "region": "unknown",
+        }
+
+    print(f"  [screen_remote_eu] LLM: is_relevant={screen.get('is_relevant')} — {screen.get('reason', '?')}", file=sys.stderr)
+    return {"remote_eu_screen": screen}
+
+
+def route_after_screen(state: EmailOutreachState) -> str:
+    """Route based on remote-EU screen result."""
+    screen = state.get("remote_eu_screen") or {}
+    if screen.get("is_relevant", True):
+        return "draft_email"
+    return "skip"
+
+
+# ---------------------------------------------------------------------------
+# Node 5: draft_email — generate email using all context
 # ---------------------------------------------------------------------------
 
 def draft_email_node(state: EmailOutreachState) -> dict:
@@ -354,5 +486,8 @@ Return the improved (or unchanged) email as JSON."""
         refined = json.loads(response.content)
     except (json.JSONDecodeError, TypeError):
         refined = draft
+
+    # Hard strip: remove "Reply to: ..." lines and any email addresses from body
+    refined = _strip_email_footer(refined)
 
     return {"final": refined}
