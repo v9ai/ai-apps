@@ -4,13 +4,13 @@ version = "0.1.0"
 description = "Katowice travel guide — AI-powered top places to visit with Google Maps integration"
 requires-python = ">=3.12"
 dependencies = [
-    "httpx>=0.27.0",
-    "langchain>=0.3",
-    "langchain-openai>=0.2",
     "langgraph>=0.2",
-    "pydantic>=2.0",
+    "deepseek-client",
     "python-dotenv>=1.0.0",
 ]
+
+[tool.uv.sources]
+deepseek-client = { path = "../../../pypackages/deepseek", editable = true }
 
 [build-system]
 requires = ["setuptools>=73.0.0", "wheel"]
