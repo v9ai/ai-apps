@@ -93,7 +93,7 @@ def rerank(
 
         scored_docs = []
         for i, (doc_text, meta, original_dist) in enumerate(docs):
-            if score_range > 0:
+            if score_range > 1e-9:
                 normalized = (scores_list[i] - min_score) / score_range
             else:
                 normalized = 1.0
