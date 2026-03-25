@@ -1,8 +1,9 @@
-"""Sync contacts and posts from Neon/Rust LanceDB into the vectordb."""
+"""Sync contacts, posts, and jobs from Neon/Rust LanceDB into the vectordb."""
 
 from __future__ import annotations
 
 import json
+import re
 import time
 
 import lancedb

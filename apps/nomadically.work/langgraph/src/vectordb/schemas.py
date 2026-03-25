@@ -86,6 +86,50 @@ class SyncResult:
 
 
 @dataclass
+class ScoredJob:
+    job_id: int
+    title: str
+    company_name: str
+    company_key: str
+    remote_policy: str  # full_remote, hybrid, onsite, unknown
+    salary_min: int
+    salary_max: int
+    skills: str
+    source_url: str
+    posted_at: str
+    distance: float
+
+    @property
+    def similarity(self) -> float:
+        return max(0.0, 1.0 - self.distance)
+
+    @classmethod
+    def from_row(cls, row: dict) -> ScoredJob:
+        return cls(
+            job_id=int(row.get("neon_id", 0)),
+            title=row.get("title", ""),
+            company_name=row.get("company_name", ""),
+            company_key=row.get("company_key", ""),
+            remote_policy=row.get("remote_policy", "unknown"),
+            salary_min=int(row.get("salary_min", 0)),
+            salary_max=int(row.get("salary_max", 0)),
+            skills=row.get("skills", ""),
+            source_url=row.get("source_url", ""),
+            posted_at=row.get("posted_at", ""),
+            distance=float(row.get("_distance", 0)),
+        )
+
+
+@dataclass
+class LabeledPair:
+    job_id: int
+    job_text: str
+    profile_text: str
+    label: int  # 1 = match, 0 = no match
+    similarity_score: float
+
+
+@dataclass
 class AuditResult:
     neon_id: int
     name: str

@@ -25,6 +25,7 @@
     "@xyflow/react": "^12.10.1",
     "date-fns": "^4.1.0",
     "drizzle-orm": "^0.45.1",
+    "lucide-react": "^0.511.0",
     "next": "latest",
     "react": "^19.0.0",
     "react-dom": "^19.0.0",
