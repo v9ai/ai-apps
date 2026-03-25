@@ -1,1 +1,23 @@
 .vercel
+
+# .gitignore
+
+# GGUF model files
+*.gguf
+*.bin
+
+# Large model files
+*.safetensors
+*.pth
+*.pt
+*.onnx
+
+# Checkpoints
+*.ckpt
+*.checkpoint
+
+# Cache directories
+__pycache__/
+*.pyc
+.cache/
+.huggingface/

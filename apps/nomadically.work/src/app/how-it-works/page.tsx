@@ -1,11 +1,12 @@
 import type { Metadata } from "next";
-import { HowItWorksClient } from "./how-it-works-client";
+import { PipelineClient } from "./pipeline-client";
 
 export const metadata: Metadata = {
   title: "How It Works | Nomadically Work",
-  description: "A Next.js and Cloudflare Workers-powered job platform with AI-driven classification and PostgreSQL/D1 hybrid database",
+  description:
+    "Interactive pipeline diagram showing how jobs flow from discovery to your screen — AI classification, skill extraction, and resume matching.",
 };
 
 export default function HowItWorksPage() {
-  return <HowItWorksClient />;
+  return <PipelineClient />;
 }
