@@ -217,6 +217,62 @@ def compute_trend(prev_scores: list[dict], metric_name: str, window: int = 3) ->
 
 
 # ---------------------------------------------------------------------------
+# Directive generation — actionable next-step advice from heuristic signals
+# ---------------------------------------------------------------------------
+
+def _generate_directive(
+    tc: float, pr: float, qu: float, co: float,
+    error_cats: dict, diff_stats: dict,
+    warnings: list[str], similarity: float | None,
+) -> str:
+    """Generate a focused, actionable directive for the next iteration.
+
+    Returns a short string that tells Claude what to focus on next,
+    based on the eval signals — no LLM needed.
+    """
+    parts: list[str] = []
+
+    # Priority 1: compilation/build errors block everything
+    if error_cats.get("compile", 0) > 0 or error_cats.get("build", 0) > 0:
+        parts.append("FIX COMPILE/BUILD ERRORS before doing anything else.")
+    # Priority 2: test failures
+    elif error_cats.get("test", 0) > 0:
+        parts.append("Fix failing tests.")
+    # Priority 3: runtime errors
+    elif error_cats.get("runtime", 0) > 0:
+        parts.append("Debug and fix runtime errors.")
+
+    # Repetition detection
+    if similarity is not None and similarity > 0.92:
+        parts.append("You are REPEATING prior work. Take a completely different approach or move to the next subtask.")
+    elif similarity is not None and similarity > 0.85:
+        parts.append("Output is very similar to the last iteration. Shift focus to a different aspect of the task.")
+
+    # Progress stall
+    if pr < 0.2 and not error_cats:
+        parts.append("Make concrete code changes — avoid planning or re-reading without acting.")
+
+    # Low coherence
+    if co < 0.3:
+        parts.append("Stay focused on the original task. Avoid tangents.")
+
+    # High completion
+    if tc >= 0.85 and qu >= 0.7:
+        parts.append("Task looks nearly done. Verify, test, and clean up.")
+    elif tc >= 0.7 and qu >= 0.5:
+        parts.append("Good progress. Focus on remaining gaps and edge cases.")
+
+    # No code changes
+    if diff_stats.get("files", 0) == 0 and not error_cats:
+        parts.append("No files changed this iteration. Write code, don't just plan.")
+
+    if not parts:
+        parts.append("Continue making progress on the task.")
+
+    return " ".join(parts)
+
+
+# ---------------------------------------------------------------------------
 # Main evaluation
 # ---------------------------------------------------------------------------
 

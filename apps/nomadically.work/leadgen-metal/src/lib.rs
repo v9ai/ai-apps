@@ -14,7 +14,7 @@ use std::path::Path;
 use dedup::blocking;
 use index::posting::InvertedIndex;
 use similarity::embeddings::EmbeddingStore;
-use storage::{btree::BTreeIndex, page::PageFile, record, wal::WriteAheadLog};
+use storage::{btree::{BTreeIndex, BTreeOps}, page::PageFile, record, wal::WriteAheadLog};
 
 /// Connects all subsystems into a single lead-generation pipeline.
 ///
