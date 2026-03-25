@@ -503,6 +503,65 @@ async def pipeline_callback(input: str) -> str:
             attacks_json=attacks, rebuttals_json=rebuttals))`,
   },
   {
+    id: "local-inference",
+    icon: HardDrive,
+    color: "var(--indigo-9)",
+    badge: "Local Inference",
+    toc: "Candle Local",
+    title: "Local Candle Server: Embeddings + Chat via Rust",
+    insight: "Zero-latency embeddings and offline-capable judging — one Rust binary, no Python, no GPU required.",
+    dependsOn: ["llm-selection", "knowledge-base"],
+    chosen:
+      "A local Candle server (Rust) at CANDLE_BASE_URL exposes an OpenAI-compatible /v1 API serving phi-3.5-mini for chat completions and an embedding endpoint. The Judge agent conditionally routes to local when CANDLE_BASE_URL is set. Embeddings (embedText, embedBatch) call the same server for vector operations.",
+    why:
+      "Three motivations: (1) The Judge evaluates two existing arguments — it doesn't generate new ones, so a smaller local model (phi-3.5-mini) is sufficient. Routing Judge calls locally saves ~$0.02 per analysis and eliminates a network round-trip. (2) Embeddings for semantic search need sub-millisecond latency at batch scale — a local Candle server processes ~4,600 embeddings/sec on M1, vs. ~50/sec through an API. (3) Candle compiles to a single Rust binary with no Python runtime, no CUDA dependency, and no GPU requirement — it runs on any machine with a CPU. The OpenAI-compatible API means zero code changes: DeepSeekClient works identically against localhost or a remote endpoint.",
+    alternatives: [
+      {
+        name: "Ollama",
+        verdict: "partial",
+        reason:
+          "Simpler setup (brew install ollama). But Ollama bundles a Go runtime + llama.cpp backend, adding ~500MB. Candle compiles to a ~15MB binary. Ollama also doesn't expose a batch embedding endpoint natively — you'd need to loop single embeddings, losing the throughput advantage. Reconsider when: the team needs to swap models frequently (Ollama's model registry is more convenient than Candle's manual model loading).",
+      },
+      {
+        name: "OpenAI Embeddings API",
+        verdict: "rejected",
+        reason:
+          "~$0.13 per 1M tokens for text-embedding-3-small. At batch scale (thousands of brief chunks), this adds up. More critically, every embedding call adds ~200ms network latency. Local Candle serves embeddings in <1ms per call. For a real-time search feature, that latency difference is the entire UX.",
+      },
+      {
+        name: "Python + sentence-transformers",
+        verdict: "rejected",
+        reason:
+          "Requires a Python runtime, PyTorch (~2GB), and often a virtual environment. Candle's Rust binary has zero runtime dependencies. In a TypeScript monorepo, adding a Python service for embeddings alone creates a deployment and dependency mismatch. The Candle server is started with one command and speaks the same OpenAI-compatible protocol.",
+      },
+    ],
+    code: `// providers.ts -- Local Candle client, same interface as cloud
+const getLocalClient = lazy(() => new DeepSeekClient({
+  apiKey: "local",
+  baseURL: process.env.CANDLE_BASE_URL ?? "http://localhost:9877/v1",
+  defaultModel: "phi-3.5-mini",
+}));
+
+// runner.ts -- Judge conditionally routes to local
+export async function runJudge(ctx, attacks, rebuttals) {
+  const client = process.env.CANDLE_BASE_URL
+    ? getLocalClient()    // Local phi-3.5-mini — fast, free
+    : getDeepseekClient(); // Cloud DeepSeek Chat — fallback
+  return generateObject(client, buildJudgePrompt(ctx, ...), JudgeOutputSchema);
+}
+
+// lib/embeddings/local-embed.ts -- Batch embeddings via Candle
+export async function embedBatch(texts: string[]): Promise<number[][]> {
+  const res = await fetch(\`\${BASE_URL}/embeddings\`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ input: texts }),
+  });
+  return (await res.json()).data.map(d => d.embedding);
+}`,
+    dataFlow: "CANDLE_BASE_URL set? -> Local phi-3.5-mini (Judge) + Local embeddings || Cloud DeepSeek Chat (Judge) + No embeddings",
+  },
+  {
     id: "scoring",
     icon: Gauge,
     color: "var(--green-9)",
