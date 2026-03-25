@@ -512,52 +512,81 @@ async def pipeline_callback(input: str) -> str:
     insight: "Zero-latency embeddings and offline-capable judging — one Rust binary, no Python, no GPU required.",
     dependsOn: ["llm-selection", "knowledge-base"],
     chosen:
-      "A local Candle server (Rust) at CANDLE_BASE_URL exposes an OpenAI-compatible /v1 API serving phi-3.5-mini for chat completions and an embedding endpoint. The Judge agent conditionally routes to local when CANDLE_BASE_URL is set. Embeddings (embedText, embedBatch) call the same server for vector operations.",
+      "A local Candle server — a small program written in Rust that runs on your own machine — sits at CANDLE_BASE_URL (default: http://localhost:9877/v1) and speaks the exact same API language as OpenAI, DeepSeek, and Qwen. It does two jobs: (1) Run a small language model called phi-3.5-mini for the Judge agent's chat completions — the Judge doesn't need a giant cloud model because it only reads two existing arguments and picks a winner, it never generates new legal analysis from scratch. (2) Convert text into 'embeddings' — arrays of numbers that capture meaning, so you can compare how similar two pieces of text are without reading them word by word. The system checks one environment variable (CANDLE_BASE_URL): if it's set, the Judge talks to the local server instead of the cloud. If it's not set, everything falls back to the cloud DeepSeek Chat API exactly as before. No code changes, no if-else in business logic — the same DeepSeekClient class works against both endpoints because they speak the same protocol.",
     why:
-      "Three motivations: (1) The Judge evaluates two existing arguments — it doesn't generate new ones, so a smaller local model (phi-3.5-mini) is sufficient. Routing Judge calls locally saves ~$0.02 per analysis and eliminates a network round-trip. (2) Embeddings for semantic search need sub-millisecond latency at batch scale — a local Candle server processes ~4,600 embeddings/sec on M1, vs. ~50/sec through an API. (3) Candle compiles to a single Rust binary with no Python runtime, no CUDA dependency, and no GPU requirement — it runs on any machine with a CPU. The OpenAI-compatible API means zero code changes: DeepSeekClient works identically against localhost or a remote endpoint.",
+      "This decision solves three separate problems with one piece of infrastructure:\n\n" +
+      "Problem 1 — The Judge doesn't need a powerful model. The Attacker (DeepSeek Reasoner) does the hard work: reading a legal brief, finding weaknesses, constructing attack arguments. The Defender (Qwen-Plus) does similarly hard work: rebutting those attacks. But the Judge? It reads both sides and decides who's right — like a teacher grading two essays rather than writing one. A smaller model (phi-3.5-mini, 3.8 billion parameters vs. DeepSeek Reasoner's hundreds of billions) handles this well. Running the Judge locally saves ~$0.02 per analysis (sounds small, but at 1,000 analyses/month that's $20 saved on just one agent) and eliminates the ~200ms network round-trip to DeepSeek's servers. Over 3 debate rounds, that's 600ms of latency removed.\n\n" +
+      "Problem 2 — Embeddings need to be fast, not smart. An 'embedding' turns a sentence like 'The defendant failed to establish standing' into an array of 384 numbers (like [0.12, -0.45, 0.78, ...]). Two sentences with similar meaning produce arrays that point in similar mathematical directions. This is how semantic search works — instead of matching keywords, you compare meaning. The catch: embedding is a simple mathematical operation, not a reasoning task. Sending text to an API server, waiting 200ms for a response, and paying per token is wasteful when the computation itself takes <1ms on local hardware. The Candle server processes ~4,600 embeddings per second on an M1 MacBook — about 92x faster than calling an API. When a user searches across hundreds of brief sections, this difference is the entire UX: instant results vs. a loading spinner.\n\n" +
+      "Problem 3 — Deployment simplicity. Candle compiles to a single Rust binary (~15MB). No Python runtime (saves ~500MB). No PyTorch dependency (saves ~2GB). No CUDA/GPU driver requirement — it runs on CPU. No virtual environment, no pip install, no version conflicts. In a TypeScript monorepo where everything else is JavaScript, adding a Python microservice just for embeddings would mean maintaining two package managers, two deployment pipelines, and two sets of dependencies. The Candle binary starts with one command and stops with Ctrl+C.\n\n" +
+      "The key architectural insight is the 'OpenAI-compatible API' pattern. OpenAI defined a REST API format (POST /v1/chat/completions, POST /v1/embeddings) that became a de facto standard. DeepSeek, Qwen, Ollama, vLLM, and now our Candle server all speak this same format. Our DeepSeekClient class doesn't know or care whether it's talking to a cloud server in China or a Rust binary on localhost — it sends the same JSON request and gets the same JSON response. This is why the code change in runner.ts is exactly one line: choose which client based on an environment variable. The rest of the pipeline (prompt construction, Zod validation, audit logging) is completely unchanged.",
     alternatives: [
       {
         name: "Ollama",
         verdict: "partial",
         reason:
-          "Simpler setup (brew install ollama). But Ollama bundles a Go runtime + llama.cpp backend, adding ~500MB. Candle compiles to a ~15MB binary. Ollama also doesn't expose a batch embedding endpoint natively — you'd need to loop single embeddings, losing the throughput advantage. Reconsider when: the team needs to swap models frequently (Ollama's model registry is more convenient than Candle's manual model loading).",
+          "Ollama is the most popular way to run AI models locally. You install it with 'brew install ollama' and run 'ollama pull phi3.5' — much simpler than compiling Candle from source. So why not use it? Three reasons: (1) Size — Ollama bundles a Go runtime and the llama.cpp inference engine, totaling ~500MB installed vs. Candle's ~15MB binary. (2) Batch embeddings — Ollama's API processes one text at a time for embeddings. To embed 500 brief sections, you'd make 500 sequential HTTP calls. Candle accepts all 500 in one request and processes them in parallel, which is 10-50x faster for batch operations. (3) Protocol — Ollama uses its own API format by default (though it added OpenAI-compatible mode recently). Candle was built to speak OpenAI's format natively, so there's zero adapter code. Reconsider Ollama when: the team needs to frequently experiment with different models (Ollama's model registry lets you swap models with one command, while Candle requires recompiling or reconfiguring for each model).",
       },
       {
         name: "OpenAI Embeddings API",
         verdict: "rejected",
         reason:
-          "~$0.13 per 1M tokens for text-embedding-3-small. At batch scale (thousands of brief chunks), this adds up. More critically, every embedding call adds ~200ms network latency. Local Candle serves embeddings in <1ms per call. For a real-time search feature, that latency difference is the entire UX.",
+          "OpenAI's text-embedding-3-small costs ~$0.13 per million tokens. That sounds cheap until you do the math: a 30-page legal brief is ~15,000 tokens. Chunking it into 500-token sections for search produces ~30 chunks. Embedding all chunks costs ~$0.002 per brief. At 1,000 briefs/month, that's $2/month — still cheap in dollars, but expensive in latency. Every API call adds ~200ms of network round-trip time (your machine -> OpenAI's server -> response back). For real-time search where a user types a query and expects instant results, those 200ms per embedding call make the UI feel sluggish. The local Candle server serves the same embedding in <1ms — the user sees results before they finish typing. Cost matters at scale; latency matters at every scale.",
       },
       {
         name: "Python + sentence-transformers",
         verdict: "rejected",
         reason:
-          "Requires a Python runtime, PyTorch (~2GB), and often a virtual environment. Candle's Rust binary has zero runtime dependencies. In a TypeScript monorepo, adding a Python service for embeddings alone creates a deployment and dependency mismatch. The Candle server is started with one command and speaks the same OpenAI-compatible protocol.",
+          "sentence-transformers is the gold standard for embeddings in Python — mature, well-documented, supports hundreds of models. The problem isn't quality, it's ecosystem friction. This project is a TypeScript monorepo (Next.js, pnpm, Vercel). Adding a Python embedding service means: (1) installing Python 3.10+, (2) creating a virtual environment, (3) pip install sentence-transformers (which pulls in PyTorch at ~2GB), (4) writing a Flask/FastAPI wrapper to expose an HTTP API, (5) running it as a separate process alongside the Next.js dev server, (6) deploying it separately from the Vercel frontend. That's six steps and two languages for what is fundamentally 'turn text into numbers.' The Candle binary does the same thing in one step, speaks the same API protocol, and fits in the same deployment model. Reconsider when: you need a model that Candle doesn't support, or when Python is already part of your deployment pipeline (the eval/redteam module is Python, but it runs offline, not in the production request path).",
       },
     ],
-    code: `// providers.ts -- Local Candle client, same interface as cloud
+    code: `// ── STEP 1: providers.ts ──────────────────────────────────────
+// Create a client that talks to the local Candle server.
+// Notice: it's the SAME DeepSeekClient class used for cloud APIs.
+// The only differences are: apiKey is "local" (the server doesn't
+// check it), baseURL points to localhost, and the model is phi-3.5-mini.
+
 const getLocalClient = lazy(() => new DeepSeekClient({
-  apiKey: "local",
+  apiKey: "local",                                         // No auth needed locally
   baseURL: process.env.CANDLE_BASE_URL ?? "http://localhost:9877/v1",
-  defaultModel: "phi-3.5-mini",
+  defaultModel: "phi-3.5-mini",                            // Small but sufficient for judging
 }));
 
-// runner.ts -- Judge conditionally routes to local
+// ── STEP 2: runner.ts ─────────────────────────────────────────
+// The Judge function checks ONE environment variable to decide
+// where to send its request. This is the entire code change —
+// the prompt, the Zod schema, and the audit logging are identical.
+
 export async function runJudge(ctx, attacks, rebuttals) {
+  // If CANDLE_BASE_URL is set → use local phi-3.5-mini (free, fast)
+  // If not set → fall back to cloud DeepSeek Chat (paid, reliable)
   const client = process.env.CANDLE_BASE_URL
-    ? getLocalClient()    // Local phi-3.5-mini — fast, free
-    : getDeepseekClient(); // Cloud DeepSeek Chat — fallback
+    ? getLocalClient()
+    : getDeepseekClient();
+
+  // Everything below this line is unchanged from the cloud-only version
   return generateObject(client, buildJudgePrompt(ctx, ...), JudgeOutputSchema);
 }
 
-// lib/embeddings/local-embed.ts -- Batch embeddings via Candle
+// ── STEP 3: lib/embeddings/local-embed.ts ─────────────────────
+// Embeddings convert text → arrays of numbers (vectors).
+// "The defendant lacked standing" → [0.12, -0.45, 0.78, ...]
+// Similar sentences produce similar vectors → semantic search.
+//
+// embedText()  — one string in, one vector out
+// embedBatch() — many strings in, many vectors out (one HTTP call)
+
+const BASE_URL = process.env.CANDLE_BASE_URL ?? "http://localhost:9877/v1";
+
 export async function embedBatch(texts: string[]): Promise<number[][]> {
+  // Send ALL texts in one request (not one request per text)
   const res = await fetch(\`\${BASE_URL}/embeddings\`, {
     method: "POST",
     headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ input: texts }),
+    body: JSON.stringify({ input: texts }),  // e.g. ["sentence 1", "sentence 2", ...]
   });
-  return (await res.json()).data.map(d => d.embedding);
+  const data = await res.json();
+  // Response: { data: [{ embedding: [0.12, ...] }, { embedding: [-0.3, ...] }] }
+  return data.data.map(d => d.embedding);
 }`,
     dataFlow: "CANDLE_BASE_URL set? -> Local phi-3.5-mini (Judge) + Local embeddings || Cloud DeepSeek Chat (Judge) + No embeddings",
   },
