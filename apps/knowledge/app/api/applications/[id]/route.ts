@@ -9,6 +9,19 @@ async function getSession() {
   return auth.api.getSession({ headers: await headers() });
 }
 
+export async function GET(_req: Request, { params }: { params: Promise<{ id: string }> }) {
+  const [session, { id }] = await Promise.all([getSession(), params]);
+  if (!session) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+
+  const [row] = await db
+    .select()
+    .from(applications)
+    .where(and(eq(applications.id, id), eq(applications.userId, session.user.id)));
+
+  if (!row) return NextResponse.json({ error: "Not found" }, { status: 404 });
+  return NextResponse.json(row);
+}
+
 export async function PATCH(req: Request, { params }: { params: Promise<{ id: string }> }) {
   const [session, { id }] = await Promise.all([getSession(), params]);
   if (!session) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
