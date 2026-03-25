@@ -1,6 +1,15 @@
 "use client";
 
+import { Box, Flex, Heading, Text, Badge, Separator } from "@radix-ui/themes";
 import { papers, researchStats, pipelineAgents, story, extraSections } from "./data";
+import {
+  OverviewFlow,
+  IngestionFlow,
+  ClassificationFlow,
+  MatchingFlow,
+  DatabaseFlow,
+  AdminFlow,
+} from "./architecture-flow";
 
 const prose: React.CSSProperties = {
   maxWidth: 860,
@@ -8,6 +17,15 @@ const prose: React.CSSProperties = {
   padding: "0 1rem 3rem",
   lineHeight: 1.75,
   fontSize: "1.05rem",
+};
+
+/** Maps extraSections heading to a flow diagram component */
+const sectionFlows: Record<string, React.ComponentType | undefined> = {
+  "System Architecture": OverviewFlow,
+  "Database Design": DatabaseFlow,
+  "Security & Auth": AdminFlow,
+  "AI Integration": ClassificationFlow,
+  "Job Processing Pipeline": IngestionFlow,
 };
 
 export function HowItWorksClient() {
@@ -26,6 +44,21 @@ export function HowItWorksClient() {
         </p>
       )}
 
+      {/* ── Interactive Diagrams Hint ──────────────────────────── */}
+      <Box mt="6" mb="4">
+        <Separator size="4" />
+      </Box>
+      <Flex align="center" gap="2" mb="2">
+        <Badge color="blue" variant="soft" size="1">Interactive</Badge>
+        <Text size="2" color="gray">Drag nodes to rearrange. Scroll to zoom.</Text>
+      </Flex>
+
+      {/* ── System Overview Diagram ───────────────────────────── */}
+      <Box mb="5">
+        <Heading as="h3" size="4" weight="bold" mb="3">System Overview</Heading>
+        <OverviewFlow />
+      </Box>
+
       <h3 style={{ fontSize: "1.25rem", fontWeight: 600, margin: "2.5rem 0 0.75rem" }}>Technical Foundations</h3>
       <ol style={{ margin: 0, paddingLeft: "1.25rem" }}>
         {papers.map((paper) => (
@@ -42,21 +75,46 @@ export function HowItWorksClient() {
 
       <h3 style={{ fontSize: "1.25rem", fontWeight: 600, margin: "2.5rem 0 0.75rem" }}>Pipeline</h3>
       <ol style={{ margin: 0, paddingLeft: "1.25rem" }}>
-        {pipelineAgents.map((agent) => (
+        {pipelineAgents.map((agent, idx) => (
           <li key={agent.name} style={{ marginBottom: "1.25rem" }}>
             <strong>{agent.name}</strong> — {agent.description}
             {agent.researchBasis && <> <em>Research basis: {agent.researchBasis}.</em></>}
+
+            {/* Inline diagrams after specific pipeline stages */}
+            {idx === 0 && (
+              <Box mt="3" mb="2">
+                <IngestionFlow />
+              </Box>
+            )}
+            {idx === 1 && (
+              <Box mt="3" mb="2">
+                <ClassificationFlow />
+              </Box>
+            )}
+            {idx === 2 && (
+              <Box mt="3" mb="2">
+                <MatchingFlow />
+              </Box>
+            )}
           </li>
         ))}
       </ol>
 
-      {extraSections.map((section, i) => (
-        <div key={i}>
-          <hr style={{ border: "none", borderTop: "1px solid var(--gray-a3, rgba(0,0,0,0.08))", margin: "2.5rem 0" }} />
-          <h3 style={{ fontSize: "1.25rem", fontWeight: 600, margin: "0 0 0.75rem" }}>{section.heading}</h3>
-          <p>{section.content}</p>
-        </div>
-      ))}
+      {extraSections.map((section, i) => {
+        const FlowComponent = sectionFlows[section.heading];
+        return (
+          <div key={i}>
+            <hr style={{ border: "none", borderTop: "1px solid var(--gray-a3, rgba(0,0,0,0.08))", margin: "2.5rem 0" }} />
+            <h3 style={{ fontSize: "1.25rem", fontWeight: 600, margin: "0 0 0.75rem" }}>{section.heading}</h3>
+            <p>{section.content}</p>
+            {FlowComponent && (
+              <Box mt="4">
+                <FlowComponent />
+              </Box>
+            )}
+          </div>
+        );
+      })}
     </div>
   );
 }
