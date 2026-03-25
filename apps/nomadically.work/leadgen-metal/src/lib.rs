@@ -3,6 +3,7 @@ pub mod dedup;
 pub mod dns;
 pub mod email_metal;
 pub mod index;
+pub mod kernel;
 pub mod queue;
 pub mod similarity;
 pub mod storage;

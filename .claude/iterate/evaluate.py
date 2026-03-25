@@ -280,6 +280,9 @@ def run_evaluation(
     pr = scores["Incremental Progress"]["score"]
     co = scores["Coherence"]["score"]
     qu = scores["Code Quality"]["score"]
+    composite = scores.get("_composite", 0.0)
+    error_cats = scores.get("_error_categories", {})
+    diff_stats = scores.get("_diff_stats", {})
 
     # Advisory warnings — never stop the loop, only inform Claude
     warnings: list[str] = []
@@ -302,12 +305,17 @@ def run_evaluation(
         if t.get("direction") == "declining" and t.get("avg_delta", 0) < -0.1:
             warnings.append(f"Regression (Δ{t['avg_delta']})")
 
+    # Generate a focused directive for the next iteration
+    directive = _generate_directive(tc, pr, qu, co, error_cats, diff_stats, warnings, similarity)
+
     result = {
         "iteration": iteration,
         "scores": scores,
+        "composite": composite,
         "trends": trends,
         "eval_method": eval_method,
         "warnings": warnings,
+        "directive": directive,
         "semantic_similarity": similarity,
     }
 
