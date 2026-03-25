@@ -85,3 +85,62 @@ def search_posts(
 
     results = search.to_pandas()
     return [ScoredPost.from_row(row) for _, row in results.iterrows()]
+
+
+# ---------------------------------------------------------------------------
+# Profile text for job matching
+# ---------------------------------------------------------------------------
+
+DEFAULT_PROFILE = """\
+Senior software engineer with 5+ years in Rust, TypeScript, and AI engineering. \
+Experience with agentic systems, LLM production patterns, Cloudflare Workers, \
+WASM, GraphQL, and developer tooling. Looking for fully remote roles in EU \
+in AI infrastructure, developer tools, or edge computing.\
+"""
+
+
+def search_jobs(
+    query: str | None = None,
+    *,
+    profile: str | None = None,
+    top_k: int = 20,
+    remote_only: bool = False,
+    eu_remote_only: bool = False,
+    min_salary: int | None = None,
+    ai_tier_min: int | None = None,
+    role_ai_only: bool = False,
+) -> list[ScoredJob]:
+    """Semantic search over jobs using profile or query vector.
+
+    If neither query nor profile is provided, uses DEFAULT_PROFILE.
+
+    Examples:
+        search_jobs()  # match against your default profile
+        search_jobs(query="Rust AI infrastructure remote EU")
+        search_jobs(profile="ML engineer with PyTorch experience", remote_only=True)
+        search_jobs(eu_remote_only=True, min_salary=80000)
+    """
+    db = lancedb.connect(LANCE_DB_PATH)
+    tbl = db.open_table("jobs")
+
+    text = query or profile or DEFAULT_PROFILE
+    q_vec = embed_query(text)
+    search = tbl.search(q_vec).limit(top_k)
+
+    where_clauses: list[str] = []
+    if remote_only:
+        where_clauses.append("remote_policy = 'full_remote'")
+    if eu_remote_only:
+        where_clauses.append("is_remote_eu = true")
+    if min_salary is not None:
+        where_clauses.append(f"salary_min >= {min_salary}")
+    if ai_tier_min is not None:
+        where_clauses.append(f"ai_tier >= {ai_tier_min}")
+    if role_ai_only:
+        where_clauses.append("role_ai_engineer = true")
+
+    if where_clauses:
+        search = search.where(" AND ".join(where_clauses))
+
+    results = search.to_pandas()
+    return [ScoredJob.from_row(row) for _, row in results.iterrows()]
