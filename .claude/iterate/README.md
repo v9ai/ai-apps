@@ -127,7 +127,6 @@ Configured in `.claude/settings.json`:
 | `bm25_index.py` | BM25Okapi keyword index, JSON-persisted |
 | `rrf.py` | Reciprocal Rank Fusion for combining ranked lists |
 | `shared.py` | Constants (metric names) and helpers (cosine similarity, error extraction) |
-| `llm_eval.py` | LLM-based evaluation (optional, not used in default pipeline) |
 | `task_history.py` | Persistent task history in ~/.claude/iterate-history/ |
 | `statusline.sh` | Statusline output for Claude Code UI |
 | `test.sh` | Integration test for the store/retrieve/evaluate pipeline |

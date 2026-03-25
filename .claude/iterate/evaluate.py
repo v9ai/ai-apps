@@ -17,7 +17,13 @@ import subprocess
 import sys
 
 from embeddings import get_embedding_function
-from shared import ALL_METRIC_NAMES, cosine_similarity as _cosine_similarity, extract_errors as _extract_errors
+from shared import (
+    ALL_METRIC_NAMES,
+    cosine_similarity as _cosine_similarity,
+    extract_errors as _extract_errors,
+    classify_errors,
+    parse_diff_stats,
+)
 
 
 def _embed_text(ef, text: str, max_chars: int = 2000) -> list[float] | None:
@@ -81,11 +87,12 @@ def run_heuristic(
     # --- Error analysis ---
     errors = _extract_errors(actual_output)
     error_count = len(errors)
+    error_cats = classify_errors(errors)
 
     # --- Diff analysis ---
     has_diff = diff != "No diff available." and len(diff.strip()) > 20
-    # Count files changed from diff stat lines
-    diff_files = len(re.findall(r'^\s*.+?\s+\|', diff, re.MULTILINE)) if has_diff else 0
+    diff_stats = parse_diff_stats(diff) if has_diff else {"files": 0, "insertions": 0, "deletions": 0, "net": 0}
+    diff_files = diff_stats["files"]
 
     # --- Compute metrics ---
 
