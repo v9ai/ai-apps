@@ -262,6 +262,22 @@ python3.12 "${SCRIPTS_DIR}/task_history.py" start \
     --session "${CLAUDE_CODE_SESSION_ID:-none}" \
     --cwd "$(pwd)" 2>/dev/null || true
 
+# --- Generate plan template ---
+cat > "$ITER_DIR/plan.md" <<PLANEOF
+# Plan: $TASK
+
+## Subtasks
+- [ ] 1. (fill in your first subtask)
+- [ ] 2. (fill in your second subtask)
+- [ ] 3. (fill in your third subtask)
+
+## Current Focus
+Starting iteration 1.
+PLANEOF
+
 echo "Iterate: running $ITERATIONS iterations — $TASK"
-echo "Monitor: cat ${ITER_DIR}/eval-iter-*.json | jq '.scores'"
+echo "Monitor: cat ${ITER_DIR}/eval-iter-*.json | jq '.composite'"
 echo "Abort:   /iterate reset"
+echo ""
+echo "IMPORTANT: In your FIRST iteration, update the plan file at ${ITER_DIR}/plan.md"
+echo "with concrete subtasks. Mark items [x] as you complete them across iterations."

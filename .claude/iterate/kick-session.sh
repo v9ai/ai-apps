@@ -384,6 +384,16 @@ ALL_WARNINGS=""
 [ -n "$STALL_WARNING" ] && ALL_WARNINGS="${ALL_WARNINGS}${STALL_WARNING}\n"
 [ -n "$EVAL_WARNINGS" ] && ALL_WARNINGS="${ALL_WARNINGS}${EVAL_WARNINGS}\n"
 
+# --- Read plan status ---
+PLAN_STATUS=""
+if [ -f "$ITER_DIR/plan.md" ]; then
+    _total=$(grep -c '^\- \[' "$ITER_DIR/plan.md" 2>/dev/null || echo "0")
+    _done=$(grep -c '^\- \[x\]' "$ITER_DIR/plan.md" 2>/dev/null || echo "0")
+    if [ "$_total" -gt 0 ]; then
+        PLAN_STATUS="**Plan:** ${_done}/${_total} subtasks done"
+    fi
+fi
+
 # --- Git diff summary for last iteration (so Claude sees what changed) ---
 DIFF_SUMMARY=""
 if [ -n "$ITER_CWD" ] && [ -d "$ITER_CWD" ]; then
