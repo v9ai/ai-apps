@@ -208,7 +208,8 @@ export default function ApplicationsPage() {
       ) : (
         <div className="apps-grid">
           {apps.map((app) => (
-            <Card key={app.id} className="apps-card">
+            <Card key={app.id} className="apps-card" asChild>
+              <Link href={`/applications/${app.id}`} style={{ textDecoration: "none", color: "inherit" }}>
               <Flex direction="column" gap="2">
                 <Flex justify="between" align="start">
                   <Flex direction="column" gap="1">
