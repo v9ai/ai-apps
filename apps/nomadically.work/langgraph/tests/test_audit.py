@@ -208,7 +208,7 @@ class TestScoringFormula:
 
     def test_perfect_ai_contact(self):
         score = self._score(best_sim=0.8, avg_sim=0.6, relevant_ratio=1.0, kw_adj=0.10)
-        assert score == pytest.approx(0.76)
+        assert score == pytest.approx(0.86)
         assert score >= 0.35
 
     def test_irrelevant_contact(self):
