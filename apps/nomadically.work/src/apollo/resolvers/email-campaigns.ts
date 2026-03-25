@@ -4,8 +4,7 @@ import { addMinutes, startOfDay, startOfWeek, startOfMonth } from "date-fns";
 import type { GraphQLContext } from "../context";
 import { isAdminEmail } from "@/lib/admin";
 import { resend } from "@/lib/resend";
-import { generateText } from "ai";
-import { deepseek } from "@ai-sdk/deepseek";
+import { composeEmail } from "@/lib/langgraph-client";
 import {
   buildSchedule,
   getSchedulePreview,

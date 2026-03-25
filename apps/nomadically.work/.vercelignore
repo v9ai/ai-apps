@@ -5,7 +5,16 @@ crates/
 workers/
 
 # Rust hooks (local dev only)
-/hooks/
+hooks/
+
+# Python projects (not part of Next.js app)
+langgraph/
+llamaindex/
+consultancies/
+leadgen-metal/
+
+# Chrome extension (deployed separately)
+chrome-extension/
 
 # Python virtualenvs
 .venv/
@@ -17,8 +26,22 @@ workers/
 .trigger
 .next/
 
-# Dev files
+# Dependencies (Vercel installs its own)
+node_modules/
+
+# Dev/config files
 .env*
 .dev.vars
 *.pem
 .DS_Store
+*.tsbuildinfo
+_memory/
+openspec/
+*.png
+*.log
+workspace/
+results/
+.claude/
+.mastra/
+.vercel/
+.playwright-mcp/

@@ -1,38 +1,13 @@
-import { deepseek } from "@ai-sdk/deepseek";
-import { generateObject } from "ai";
-import { z } from "zod";
-import { GOAL_PROMPT_FRAGMENT } from "@/constants/goal";
+import { textToSql } from "@/lib/langgraph-client";
 
-const SQL_INSTRUCTIONS = `${GOAL_PROMPT_FRAGMENT}
-
-You are a PostgreSQL expert for the nomadically.work database (Neon PostgreSQL). Generate queries that answer user questions about jobs, companies, and related data. When the user asks general questions, prioritise queries that surface fully-remote AI/React engineering roles in the EU or worldwide.
-
-QUERY GUIDELINES (PostgreSQL):
-- Only retrieval queries are allowed (SELECT, WITH, EXPLAIN)
-- Booleans are stored as BOOLEAN
-- JSON fields are stored as JSONB — use ->, ->>, jsonb_array_elements() to query
-- Date fields are TIMESTAMP or TEXT in ISO 8601 format
-- Use ILIKE for case-insensitive text matching
-
-Provide a SQL query and an explanation.`;
-
-const textToSqlOutputSchema = z.object({
-  sql: z.string().describe("The generated SQL query"),
-  explanation: z.string().describe("Explanation of what the query does and why"),
-});
+const SQL_INSTRUCTIONS = `You are a PostgreSQL expert for the nomadically.work database (Neon PostgreSQL). Generate queries that answer user questions about jobs, companies, and related data. When the user asks general questions, prioritise queries that surface fully-remote AI/React engineering roles in the EU or worldwide.`;
 
 export const sqlAgent = {
   async generate(
     question: string,
-    _opts?: { maxSteps?: number; structuredOutput?: { schema: z.ZodType } },
+    _opts?: { maxSteps?: number; structuredOutput?: { schema: unknown } },
   ) {
-    const result = await generateObject({
-      model: deepseek("deepseek-chat"),
-      system: SQL_INSTRUCTIONS,
-      prompt: question,
-      schema: textToSqlOutputSchema,
-    });
-
-    return { object: result.object };
+    const result = await textToSql(question);
+    return { object: { sql: result.sql, explanation: result.explanation } };
   },
 };

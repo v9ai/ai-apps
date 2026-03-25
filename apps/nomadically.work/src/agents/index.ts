@@ -1,10 +1,7 @@
-import { deepseek } from "@ai-sdk/deepseek";
-import { generateObject } from "ai";
-import { z } from "zod";
-import { getPrompt, PROMPTS } from "@/observability";
+import { classifyJob } from "@/lib/langgraph-client";
 
 /**
- * Classify a job for Remote EU eligibility using DeepSeek via Vercel AI SDK.
+ * Classify a job for Remote EU eligibility via LangGraph server.
  */
 export async function classifyJobForRemoteEU(input: {
   title: string;
@@ -13,24 +10,17 @@ export async function classifyJobForRemoteEU(input: {
   userId?: string;
   sessionId?: string;
 }) {
-  const { text: promptText } = await getPrompt(PROMPTS.JOB_CLASSIFIER);
-
-  const result = await generateObject({
-    model: deepseek("deepseek-chat"),
-    system: promptText,
-    prompt: `Job Title: ${input.title}
-Location: ${input.location || "Not specified"}
-Description: ${input.description || "No description available"}
-
-Classify this job posting.`,
-    schema: z.object({
-      isRemoteEU: z.boolean(),
-      confidence: z.enum(["high", "medium", "low"]),
-      reason: z.string(),
-    }),
+  const result = await classifyJob({
+    title: input.title,
+    location: input.location,
+    description: input.description,
   });
 
-  return result.object;
+  return {
+    isRemoteEU: result.is_remote_eu,
+    confidence: result.confidence as "high" | "medium" | "low",
+    reason: result.reason,
+  };
 }
 
 // Export SQL agent for database queries

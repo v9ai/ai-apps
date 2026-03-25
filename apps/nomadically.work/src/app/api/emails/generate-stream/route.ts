@@ -1,16 +1,9 @@
 import { NextRequest } from "next/server";
-import OpenAI from "openai";
-import { emailSchema } from "@/lib/email-schema";
-import { buildComposePrompt } from "@/prompts/compose-email";
+import { composeEmail } from "@/lib/langgraph-client";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
 export const maxDuration = 60;
-
-const openai = new OpenAI({
-  apiKey: process.env.DEEPSEEK_API_KEY,
-  baseURL: "https://api.deepseek.com/v1",
-});
 
 interface EmailGenerationRequest {
   recipientName: string;
@@ -29,74 +22,27 @@ export async function POST(request: NextRequest) {
     const stream = new ReadableStream({
       async start(controller) {
         try {
-          const prompt = buildComposePrompt(input);
-
-          const messages: OpenAI.Chat.ChatCompletionMessageParam[] = [
-            {
-              role: "system",
-              content:
-                "You are an expert email writer. Always respond with valid JSON matching the requested structure.",
-            },
-            {
-              role: "user",
-              content: prompt,
-            },
-          ];
-
-          const completion = await openai.chat.completions.create({
-            model: "deepseek-chat",
-            messages,
-            temperature: 1.3,
-            stream: true,
-            response_format: { type: "json_object" },
+          const result = await composeEmail({
+            recipientName: input.recipientName,
+            companyName: input.companyName,
+            instructions: input.instructions,
+            recipientContext: input.recipientContext,
+            linkedinPostContent: input.linkedinPostContent,
           });
 
-          let fullText = "";
+          // Send the complete result as SSE chunks to maintain API compatibility
+          const jsonStr = JSON.stringify(result);
+          controller.enqueue(
+            encoder.encode(
+              `data: ${JSON.stringify({ type: "chunk", content: jsonStr, accumulated: jsonStr })}\n\n`,
+            ),
+          );
 
-          for await (const chunk of completion) {
-            const content = chunk.choices[0]?.delta?.content || "";
-            if (content) {
-              fullText += content;
-
-              const message = {
-                type: "chunk",
-                content: content,
-                accumulated: fullText,
-              };
-
-              controller.enqueue(
-                encoder.encode(`data: ${JSON.stringify(message)}\n\n`),
-              );
-            }
-          }
-
-          try {
-            const parsed = JSON.parse(fullText);
-            const validated = emailSchema.parse(parsed);
-
-            controller.enqueue(
-              encoder.encode(
-                `data: ${JSON.stringify({ type: "complete", data: validated })}\n\n`,
-              ),
-            );
-          } catch {
-            const subjectMatch = fullText.match(/"subject":\s*"([^"]+)"/);
-            const bodyMatch = fullText.match(/"body":\s*"([^"]+)"/);
-
-            const fallback = {
-              subject: subjectMatch?.[1] || "Follow up",
-              body: bodyMatch?.[1] || fullText,
-            };
-
-            controller.enqueue(
-              encoder.encode(
-                `data: ${JSON.stringify({
-                  type: "complete",
-                  data: fallback,
-                })}\n\n`,
-              ),
-            );
-          }
+          controller.enqueue(
+            encoder.encode(
+              `data: ${JSON.stringify({ type: "complete", data: result })}\n\n`,
+            ),
+          );
 
           controller.close();
         } catch (error) {

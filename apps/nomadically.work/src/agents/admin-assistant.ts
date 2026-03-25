@@ -2,23 +2,14 @@
  * Admin Assistant Agent
  *
  * Ops-grade agent for internal debugging, evidence inspection, and batch reprocessing.
+ * Delegates to LangGraph Python server.
  */
 
-import { deepseek } from "@ai-sdk/deepseek";
-import { generateText } from "ai";
-import { GOAL_PROMPT_FRAGMENT } from "@/constants/goal";
-
-const ADMIN_INSTRUCTIONS = `${GOAL_PROMPT_FRAGMENT}
-
-You are an admin assistant for the Nomadically.work job platform. Your role is to help debug classification decisions, inspect evidence, and coordinate reprocessing runs.`;
+import { adminChat } from "@/lib/langgraph-client";
 
 export const adminAssistantAgent = {
   async generate(prompt: string) {
-    const result = await generateText({
-      model: deepseek("deepseek-chat"),
-      system: ADMIN_INSTRUCTIONS,
-      prompt,
-    });
-    return { text: result.text };
+    const result = await adminChat(prompt);
+    return { text: result.response };
   },
 };
