@@ -1,6 +1,7 @@
 "use client";
 import { useState, useEffect, useRef, useCallback } from "react";
 import { papers, researchStats, pipelineNodes, story, extraSections, type PipelineNode } from "./data";
+import { PipelineFlow, SearchFlow, ExtractPersistFlow, RagAgentFlow, DataFlowDiagram } from "./architecture-flow";
 
 // ── Shared styles ────────────────────────────────────────────────────────────
 

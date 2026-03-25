@@ -2,6 +2,13 @@
 
 import { useState } from "react";
 import { css } from "styled-system/css";
+import {
+  ArchitectureFlow,
+  VideoAnalyzerFlow,
+  TopicResearchFlow,
+  PartDiscoveryFlow,
+  MocPartsFlow,
+} from "./architecture-flow";
 
 const LEGO_COLORS = ["#E3000B", "#FFD500", "#006CB7", "#00852B", "#FE8A18"];
 
