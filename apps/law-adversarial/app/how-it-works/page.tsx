@@ -23,7 +23,13 @@ import {
   Minus,
   HardDrive,
 } from "lucide-react";
-import { ArchitectureFlow } from "./architecture-flow";
+import {
+  IngestionFlow,
+  DebateFlow,
+  SpecialistFlow,
+  StreamingFlow,
+  CandleFlow,
+} from "./architecture-flow";
 
 export const metadata: Metadata = {
   title: "System Design | Brief Stress-Tester",
@@ -682,17 +688,95 @@ export default function HowItWorksPage() {
 
       <Separator size="4" />
 
-      {/* Architecture Overview — Interactive React Flow Diagram */}
-      <Box py="5">
-        <Flex direction="column" gap="3">
+      {/* Architecture Overview — 5 Interactive Diagrams */}
+      <Flex direction="column" gap="6" py="5">
+        <Flex direction="column" gap="2">
           <Heading size="4">Architecture at a Glance</Heading>
           <Text size="2" color="gray" style={{ lineHeight: 1.6 }}>
-            Drag nodes to rearrange. Scroll to zoom. Click + drag empty
-            space to pan. Use the minimap (bottom-right) to navigate.
+            Five interactive diagrams, one per pipeline stage. Drag nodes
+            to rearrange. Scroll to zoom. Click + drag empty space to pan.
           </Text>
-          <ArchitectureFlow />
         </Flex>
-      </Box>
+
+        {/* 1. Ingestion */}
+        <Flex direction="column" gap="2">
+          <Flex align="center" gap="2">
+            <Badge color="orange" variant="soft" size="1">Stage 1</Badge>
+            <Heading size="3">Document Ingestion</Heading>
+          </Flex>
+          <Text size="2" color="gray" style={{ lineHeight: 1.6, maxWidth: 640 }}>
+            The user uploads a PDF or DOCX file. <code>parseBrief()</code> extracts
+            plain text using pdf-parse or mammoth (pure JavaScript, no external
+            services). The text and session metadata are stored in Supabase.
+          </Text>
+          <IngestionFlow />
+        </Flex>
+
+        {/* 2. Debate Loop */}
+        <Flex direction="column" gap="2">
+          <Flex align="center" gap="2">
+            <Badge color="crimson" variant="soft" size="1">Stage 2</Badge>
+            <Heading size="3">Adversarial Debate Loop</Heading>
+          </Flex>
+          <Text size="2" color="gray" style={{ lineHeight: 1.6, maxWidth: 640 }}>
+            Three agents argue in structured rounds. The <strong>Attacker</strong> (DeepSeek
+            Reasoner) finds weaknesses. The <strong>Defender</strong> (Qwen-Plus) rebuts or
+            concedes. The <strong>Judge</strong> (DeepSeek Chat or local phi-3.5) issues a
+            verdict. Each round&apos;s findings feed into the next — by round 3, only genuine
+            structural weaknesses survive. Three different models = three different
+            blind spots, maximizing coverage.
+          </Text>
+          <DebateFlow />
+        </Flex>
+
+        {/* 3. Specialists */}
+        <Flex direction="column" gap="2">
+          <Flex align="center" gap="2">
+            <Badge color="purple" variant="soft" size="1">Stage 3</Badge>
+            <Heading size="3">Specialist Agents</Heading>
+          </Flex>
+          <Text size="2" color="gray" style={{ lineHeight: 1.6, maxWidth: 640 }}>
+            After the debate, three specialists enrich the findings. <strong>Citation
+            Verifier</strong> and <strong>Jurisdiction Expert</strong> run in
+            parallel (<code>Promise.all()</code>) because they don&apos;t depend on each
+            other — this saves ~15-30 seconds. The <strong>Brief Rewriter</strong> runs last
+            because it needs the combined output of everything before it.
+          </Text>
+          <SpecialistFlow />
+        </Flex>
+
+        {/* 4. Streaming */}
+        <Flex direction="column" gap="2">
+          <Flex align="center" gap="2">
+            <Badge color="blue" variant="soft" size="1">Stage 4</Badge>
+            <Heading size="3">Real-Time Streaming</Heading>
+          </Flex>
+          <Text size="2" color="gray" style={{ lineHeight: 1.6, maxWidth: 640 }}>
+            The analysis takes 90-150 seconds. Instead of a spinner, the user sees
+            live progress. The orchestrator writes to the <code>audit_trail</code> table.
+            A separate SSE endpoint polls it every 2 seconds. The browser connects
+            via <code>EventSource</code> — a built-in browser API for one-way streaming.
+            If the user closes the tab, the orchestrator finishes anyway.
+          </Text>
+          <StreamingFlow />
+        </Flex>
+
+        {/* 5. Local Candle */}
+        <Flex direction="column" gap="2">
+          <Flex align="center" gap="2">
+            <Badge color="indigo" variant="soft" size="1">Optional</Badge>
+            <Heading size="3">Local Candle Server</Heading>
+          </Flex>
+          <Text size="2" color="gray" style={{ lineHeight: 1.6, maxWidth: 640 }}>
+            Set <code>CANDLE_BASE_URL</code> to route the Judge to a local Rust
+            binary running phi-3.5-mini — free, fast, no GPU. The same server provides
+            local embeddings at ~4,600/sec for semantic search. If the variable isn&apos;t
+            set, everything falls back to cloud APIs. Same <code>DeepSeekClient</code>,
+            same Zod schema, same output — just a different <code>baseURL</code>.
+          </Text>
+          <CandleFlow />
+        </Flex>
+      </Flex>
 
       {/* Table of Contents */}
       <Box py="5">

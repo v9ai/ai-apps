@@ -1,11 +1,9 @@
 "use client";
 
-import { useCallback, useMemo } from "react";
 import {
   ReactFlow,
   Background,
   Controls,
-  MiniMap,
   useNodesState,
   useEdgesState,
   type Node,
@@ -30,22 +28,21 @@ import {
   FileText,
   RefreshCw,
   Cpu,
+  GitFork,
 } from "lucide-react";
 
-/* ─── Custom Node Components ──────────────────────────────────── */
-
-/**
- * Every node in React Flow is a React component. We define several
- * "node types" here — each one controls how a particular kind of
- * box looks on the diagram. React Flow renders them automatically
- * when a node's `type` field matches the key in the `nodeTypes` map.
+/* ─── Custom Node Components ──────────────────────────────────── *
  *
- * Each node gets:
- *  - `data` — whatever you put in the node definition (label, icon, etc.)
- *  - <Handle> components — the connection points where edges attach.
- *    Position.Top / Position.Bottom / etc. controls which side the
- *    dot appears on. `type="target"` = incoming edge, `type="source"` = outgoing.
- */
+ * React Flow renders every node as a React component. We define
+ * four "shapes" here — AgentNode (boxes for AI agents and steps),
+ * GroupNode (dashed containers), DataStoreNode (smaller infra boxes),
+ * and LoopNode (pill badges like "x3 rounds").
+ *
+ * <Handle> = the invisible dot where an edge (arrow) attaches.
+ *   type="target" = arrow comes IN       type="source" = arrow goes OUT
+ *   Position.Top / Bottom / Left / Right = which side the dot sits on
+ *
+ * ────────────────────────────────────────────────────────────────── */
 
 function AgentNode({ data }: { data: Record<string, unknown> }) {
   const Icon = data.icon as React.ComponentType<{ size?: number }>;
@@ -60,96 +57,35 @@ function AgentNode({ data }: { data: Record<string, unknown> }) {
         borderRadius: 12,
         background: `color-mix(in srgb, ${color} 8%, var(--color-background))`,
         border: `1.5px solid color-mix(in srgb, ${color} 35%, transparent)`,
-        minWidth: 180,
+        minWidth: 170,
         textAlign: "center",
         fontFamily: "var(--default-font-family, system-ui)",
       }}
     >
       <Handle type="target" position={Position.Top} style={{ opacity: 0 }} />
-      <div
-        style={{
-          display: "flex",
-          alignItems: "center",
-          justifyContent: "center",
-          gap: 8,
-        }}
-      >
+      <Handle type="target" position={Position.Left} id="left" style={{ opacity: 0 }} />
+      <div style={{ display: "flex", alignItems: "center", justifyContent: "center", gap: 8 }}>
         <div
           style={{
-            width: 32,
-            height: 32,
-            borderRadius: 8,
-            display: "flex",
-            alignItems: "center",
-            justifyContent: "center",
+            width: 32, height: 32, borderRadius: 8,
+            display: "flex", alignItems: "center", justifyContent: "center",
             background: `color-mix(in srgb, ${color} 15%, transparent)`,
-            color,
-            flexShrink: 0,
+            color, flexShrink: 0,
           }}
         >
           <Icon size={16} />
         </div>
         <div style={{ textAlign: "left" }}>
-          <div
-            style={{
-              fontSize: 13,
-              fontWeight: 600,
-              color: "var(--gray-12)",
-              lineHeight: 1.3,
-            }}
-          >
+          <div style={{ fontSize: 13, fontWeight: 600, color: "var(--gray-12)", lineHeight: 1.3 }}>
             {label}
           </div>
           {sublabel && (
-            <div
-              style={{
-                fontSize: 10,
-                color: "var(--gray-9)",
-                marginTop: 1,
-              }}
-            >
-              {sublabel}
-            </div>
+            <div style={{ fontSize: 10, color: "var(--gray-9)", marginTop: 1 }}>{sublabel}</div>
           )}
         </div>
       </div>
       <Handle type="source" position={Position.Bottom} style={{ opacity: 0 }} />
-    </div>
-  );
-}
-
-function GroupNode({ data }: { data: Record<string, unknown> }) {
-  const color = data.color as string;
-  const label = data.label as string;
-  const sublabel = data.sublabel as string | undefined;
-
-  return (
-    <div
-      style={{
-        width: "100%",
-        height: "100%",
-        borderRadius: 16,
-        border: `1.5px dashed color-mix(in srgb, ${color} 40%, transparent)`,
-        background: `color-mix(in srgb, ${color} 4%, transparent)`,
-        padding: "12px 16px",
-        fontFamily: "var(--default-font-family, system-ui)",
-      }}
-    >
-      <div
-        style={{
-          fontSize: 11,
-          fontWeight: 700,
-          textTransform: "uppercase",
-          letterSpacing: "0.06em",
-          color,
-          marginBottom: 2,
-        }}
-      >
-        {label}
-      </div>
-      {sublabel && (
-        <div style={{ fontSize: 10, color: "var(--gray-9)" }}>{sublabel}</div>
-      )}
+      <Handle type="source" position={Position.Right} id="right" style={{ opacity: 0 }} />
     </div>
   );
 }
@@ -163,35 +99,22 @@ function DataStoreNode({ data }: { data: Record<string, unknown> }) {
   return (
     <div
       style={{
-        padding: "8px 14px",
-        borderRadius: 8,
+        padding: "8px 14px", borderRadius: 8,
         background: `color-mix(in srgb, ${color} 6%, var(--color-background))`,
         border: `1.5px solid color-mix(in srgb, ${color} 25%, transparent)`,
-        minWidth: 140,
-        textAlign: "center",
+        minWidth: 140, textAlign: "center",
         fontFamily: "var(--default-font-family, system-ui)",
       }}
     >
       <Handle type="target" position={Position.Top} style={{ opacity: 0 }} />
       <Handle type="target" position={Position.Left} id="left" style={{ opacity: 0 }} />
-      <div
-        style={{
-          display: "flex",
-          alignItems: "center",
-          justifyContent: "center",
-          gap: 6,
-        }}
-      >
+      <div style={{ display: "flex", alignItems: "center", justifyContent: "center", gap: 6 }}>
         <div style={{ color, flexShrink: 0, display: "flex" }}>
           <Icon size={14} />
         </div>
         <div>
-          <div style={{ fontSize: 11, fontWeight: 600, color: "var(--gray-12)" }}>
-            {label}
-          </div>
-          {sublabel && (
-            <div style={{ fontSize: 9, color: "var(--gray-9)" }}>{sublabel}</div>
-          )}
+          <div style={{ fontSize: 11, fontWeight: 600, color: "var(--gray-12)" }}>{label}</div>
+          {sublabel && <div style={{ fontSize: 9, color: "var(--gray-9)" }}>{sublabel}</div>}
         </div>
       </div>
       <Handle type="source" position={Position.Bottom} style={{ opacity: 0 }} />
@@ -207,307 +130,62 @@ function LoopNode({ data }: { data: Record<string, unknown> }) {
   return (
     <div
       style={{
-        padding: "5px 12px",
-        borderRadius: 20,
+        padding: "5px 12px", borderRadius: 20,
         background: `color-mix(in srgb, ${color} 10%, var(--color-background))`,
         border: `1.5px solid color-mix(in srgb, ${color} 30%, transparent)`,
-        display: "flex",
-        alignItems: "center",
-        gap: 5,
+        display: "flex", alignItems: "center", gap: 5,
         fontFamily: "var(--default-font-family, system-ui)",
       }}
     >
       <Handle type="target" position={Position.Top} style={{ opacity: 0 }} />
+      <Handle type="target" position={Position.Left} id="left" style={{ opacity: 0 }} />
       <RefreshCw size={12} style={{ color }} />
       <span style={{ fontSize: 10, fontWeight: 600, color }}>{label}</span>
       <Handle type="source" position={Position.Bottom} style={{ opacity: 0 }} />
+      <Handle type="source" position={Position.Right} id="right" style={{ opacity: 0 }} />
     </div>
   );
 }
 
-/* ─── Node Types Registry ─────────────────────────────────────── */
+function ParallelNode({ data }: { data: Record<string, unknown> }) {
+  const color = data.color as string;
+  const label = data.label as string;
 
-/**
- * This map tells React Flow: "when a node has type: 'agent', render
- * it using the AgentNode component." Without this, React Flow would
- * render a plain default rectangle for every node.
- */
+  return (
+    <div
+      style={{
+        padding: "5px 12px", borderRadius: 20,
+        background: `color-mix(in srgb, ${color} 10%, var(--color-background))`,
+        border: `1.5px solid color-mix(in srgb, ${color} 30%, transparent)`,
+        display: "flex", alignItems: "center", gap: 5,
+        fontFamily: "var(--default-font-family, system-ui)",
+      }}
+    >
+      <Handle type="target" position={Position.Top} style={{ opacity: 0 }} />
+      <Handle type="target" position={Position.Left} id="left" style={{ opacity: 0 }} />
+      <GitFork size={12} style={{ color }} />
+      <span style={{ fontSize: 10, fontWeight: 600, color }}>{label}</span>
+      <Handle type="source" position={Position.Bottom} style={{ opacity: 0 }} />
+      <Handle type="source" position={Position.Right} id="right" style={{ opacity: 0 }} />
+    </div>
+  );
+}
+
+/* ─── Node Types Registry ─────────────────────────────────────── *
+ * This map tells React Flow which React component to render for
+ * each node `type` string. It must be defined OUTSIDE the component
+ * (or memoized) — otherwise React Flow creates new instances every
+ * render, which breaks drag state and causes flickering.
+ * ────────────────────────────────────────────────────────────────── */
+
 const nodeTypes: NodeTypes = {
   agent: AgentNode,
-  group: GroupNode,
   dataStore: DataStoreNode,
   loop: LoopNode,
+  parallel: ParallelNode,
 };
 
-/* ─── Layout Constants ────────────────────────────────────────── */
-
-const COL_LEFT = 80;
-const COL_CENTER = 320;
-const COL_RIGHT = 560;
-
-/* ─── Node & Edge Definitions ─────────────────────────────────── */
-
-/**
- * NODES — each object is one box on the diagram.
- *
- * - `id`: unique string, used by edges to say "connect THIS to THAT"
- * - `type`: which custom component to render (see nodeTypes above)
- * - `position`: { x, y } pixel coordinates on the canvas
- * - `data`: passed to the component as props.data
- * - `parentId` + `extent: "parent"`: makes this node live inside
- *    a group node (it can't be dragged outside the group's bounds)
- *
- * The layout is roughly:
- *
- *   [Upload] → [parseBrief] → [Supabase]
- *                                 │
- *              ┌── DEBATE LOOP ───┤
- *              │  Attacker        │
- *              │  Defender        │
- *              │  Judge           │
- *              │  ↺ x3 rounds    │
- *              └──────────────────┘
- *                     │
- *              ┌── SPECIALISTS ───┐
- *              │  Citation  Juris │ ← parallel
- *              │  Rewriter        │ ← sequential
- *              └──────────────────┘
- *                     │
- *              [SSE / audit_trail] → [Browser]
- *                     │
- *              ┌── LOCAL CANDLE ──┐
- *              │  phi-3.5  Embed  │ ← optional
- *              └──────────────────┘
- */
-
-const initialNodes: Node[] = [
-  // ── INGESTION ROW ──────────────────────────────────────────
-  {
-    id: "upload",
-    type: "agent",
-    position: { x: COL_LEFT - 40, y: 0 },
-    data: {
-      label: "Upload Brief",
-      sublabel: "PDF or DOCX",
-      icon: Upload,
-      color: "var(--gray-11)",
-    },
-  },
-  {
-    id: "parse",
-    type: "agent",
-    position: { x: COL_CENTER - 20, y: 0 },
-    data: {
-      label: "parseBrief()",
-      sublabel: "pdf-parse + mammoth",
-      icon: FileText,
-      color: "var(--orange-9)",
-    },
-  },
-  {
-    id: "supabase",
-    type: "dataStore",
-    position: { x: COL_RIGHT, y: 5 },
-    data: {
-      label: "Supabase PostgreSQL",
-      sublabel: "sessions · findings · audit",
-      icon: Database,
-      color: "var(--amber-9)",
-    },
-  },
-
-  // ── DEBATE LOOP GROUP ──────────────────────────────────────
-  {
-    id: "debate-group",
-    type: "group",
-    position: { x: COL_LEFT + 30, y: 90 },
-    data: {
-      label: "Adversarial Debate Loop",
-      sublabel: "3 rounds, sequential — each round builds on the last",
-      color: "var(--crimson-9)",
-    },
-    style: { width: 380, height: 260 },
-  },
-  {
-    id: "attacker",
-    type: "agent",
-    position: { x: 70, y: 50 },
-    parentId: "debate-group",
-    extent: "parent",
-    data: {
-      label: "Attacker",
-      sublabel: "DeepSeek Reasoner",
-      icon: Swords,
-      color: "var(--crimson-9)",
-    },
-  },
-  {
-    id: "defender",
-    type: "agent",
-    position: { x: 70, y: 120 },
-    parentId: "debate-group",
-    extent: "parent",
-    data: {
-      label: "Defender",
-      sublabel: "Qwen-Plus (DashScope)",
-      icon: Shield,
-      color: "var(--blue-9)",
-    },
-  },
-  {
-    id: "judge",
-    type: "agent",
-    position: { x: 70, y: 190 },
-    parentId: "debate-group",
-    extent: "parent",
-    data: {
-      label: "Judge",
-      sublabel: "DeepSeek Chat or local phi-3.5",
-      icon: Gavel,
-      color: "var(--amber-9)",
-    },
-  },
-  {
-    id: "loop-badge",
-    type: "loop",
-    position: { x: 280, y: 125 },
-    parentId: "debate-group",
-    extent: "parent",
-    data: {
-      label: "x3 rounds",
-      color: "var(--crimson-9)",
-    },
-  },
-
-  // ── SPECIALIST GROUP ───────────────────────────────────────
-  {
-    id: "specialist-group",
-    type: "group",
-    position: { x: COL_LEFT + 30, y: 380 },
-    data: {
-      label: "Specialist Agents",
-      sublabel: "Post-debate — enriches findings with verification",
-      color: "var(--purple-9)",
-    },
-    style: { width: 380, height: 200 },
-  },
-  {
-    id: "citation",
-    type: "agent",
-    position: { x: 15, y: 50 },
-    parentId: "specialist-group",
-    extent: "parent",
-    data: {
-      label: "Citation Verifier",
-      sublabel: "DeepSeek Reasoner",
-      icon: BookOpen,
-      color: "var(--green-9)",
-    },
-  },
-  {
-    id: "jurisdiction",
-    type: "agent",
-    position: { x: 195, y: 50 },
-    parentId: "specialist-group",
-    extent: "parent",
-    data: {
-      label: "Jurisdiction Expert",
-      sublabel: "DeepSeek Reasoner",
-      icon: Scale,
-      color: "var(--purple-9)",
-    },
-  },
-  {
-    id: "rewriter",
-    type: "agent",
-    position: { x: 90, y: 130 },
-    parentId: "specialist-group",
-    extent: "parent",
-    data: {
-      label: "Brief Rewriter",
-      sublabel: "Qwen-Plus — runs last",
-      icon: Brain,
-      color: "var(--orange-9)",
-    },
-  },
-
-  // ── REALTIME ROW ───────────────────────────────────────────
-  {
-    id: "sse",
-    type: "dataStore",
-    position: { x: COL_CENTER - 20, y: 610 },
-    data: {
-      label: "SSE Polling",
-      sublabel: "2s interval · audit_trail table",
-      icon: Radio,
-      color: "var(--purple-9)",
-    },
-  },
-  {
-    id: "browser",
-    type: "agent",
-    position: { x: COL_RIGHT, y: 605 },
-    data: {
-      label: "Browser Client",
-      sublabel: "EventSource → live updates",
-      icon: Cpu,
-      color: "var(--gray-11)",
-    },
-  },
-
-  // ── LOCAL CANDLE GROUP ─────────────────────────────────────
-  {
-    id: "candle-group",
-    type: "group",
-    position: { x: COL_LEFT + 30, y: 680 },
-    data: {
-      label: "Local Candle Server",
-      sublabel: "Optional — set CANDLE_BASE_URL to enable",
-      color: "var(--indigo-9)",
-    },
-    style: { width: 380, height: 120 },
-  },
-  {
-    id: "phi",
-    type: "agent",
-    position: { x: 15, y: 45 },
-    parentId: "candle-group",
-    extent: "parent",
-    data: {
-      label: "phi-3.5-mini",
-      sublabel: "Judge completions (local)",
-      icon: HardDrive,
-      color: "var(--indigo-9)",
-    },
-  },
-  {
-    id: "embeddings",
-    type: "agent",
-    position: { x: 200, y: 45 },
-    parentId: "candle-group",
-    extent: "parent",
-    data: {
-      label: "Embeddings",
-      sublabel: "embedText() · embedBatch()",
-      icon: HardDrive,
-      color: "var(--indigo-9)",
-    },
-  },
-];
-
-/**
- * EDGES — each object is one arrow connecting two nodes.
- *
- * - `source` / `target`: the `id` of the node the arrow starts/ends at
- * - `animated`: makes the line animate (dashed flow effect)
- * - `style.stroke`: the arrow color
- * - `label`: text shown along the edge
- * - `markerEnd`: the arrowhead at the end
- * - `type: "smoothstep"`: curved corners instead of straight lines
- *
- * React Flow figures out the path automatically based on
- * Handle positions (Top/Bottom/Left/Right) defined in the node components.
- */
+/* ─── Shared Edge Defaults ────────────────────────────────────── */
 
 const edgeDefaults = {
   type: "smoothstep" as const,
@@ -515,162 +193,28 @@ const edgeDefaults = {
   style: { strokeWidth: 1.5 },
 };
 
-const initialEdges: Edge[] = [
-  // Ingestion flow
-  {
-    id: "e-upload-parse",
-    source: "upload",
-    target: "parse",
-    ...edgeDefaults,
-    label: "file bytes",
-    style: { ...edgeDefaults.style, stroke: "var(--gray-8)" },
-  },
-  {
-    id: "e-parse-supabase",
-    source: "parse",
-    target: "supabase",
-    ...edgeDefaults,
-    label: "plain text",
-    style: { ...edgeDefaults.style, stroke: "var(--amber-8)" },
-  },
-
-  // Supabase → Debate
-  {
-    id: "e-supabase-debate",
-    source: "supabase",
-    target: "debate-group",
-    ...edgeDefaults,
-    label: "brief_text + config",
-    animated: true,
-    style: { ...edgeDefaults.style, stroke: "var(--crimson-8)" },
-  },
-
-  // Debate internal: Attacker → Defender → Judge
-  {
-    id: "e-attacker-defender",
-    source: "attacker",
-    target: "defender",
-    ...edgeDefaults,
-    label: "attacks",
-    style: { ...edgeDefaults.style, stroke: "var(--crimson-8)" },
-  },
-  {
-    id: "e-defender-judge",
-    source: "defender",
-    target: "judge",
-    ...edgeDefaults,
-    label: "rebuttals",
-    style: { ...edgeDefaults.style, stroke: "var(--blue-8)" },
-  },
-
-  // Judge → loop badge (feedback loop)
-  {
-    id: "e-judge-loop",
-    source: "judge",
-    target: "loop-badge",
-    type: "smoothstep",
-    style: { strokeWidth: 1.5, stroke: "var(--amber-8)", strokeDasharray: "5 3" },
-    markerEnd: { type: MarkerType.ArrowClosed, width: 12, height: 12 },
-    label: "previousFindings[]",
-  },
-
-  // Debate → Specialists
-  {
-    id: "e-debate-specialists",
-    source: "debate-group",
-    target: "specialist-group",
-    ...edgeDefaults,
-    label: "final findings",
-    animated: true,
-    style: { ...edgeDefaults.style, stroke: "var(--purple-8)" },
-  },
-
-  // Parallel badge between citation + jurisdiction
-  {
-    id: "e-citation-rewriter",
-    source: "citation",
-    target: "rewriter",
-    ...edgeDefaults,
-    style: { ...edgeDefaults.style, stroke: "var(--green-8)" },
-  },
-  {
-    id: "e-jurisdiction-rewriter",
-    source: "jurisdiction",
-    target: "rewriter",
-    ...edgeDefaults,
-    style: { ...edgeDefaults.style, stroke: "var(--purple-8)" },
-  },
-
-  // Specialists → SSE
-  {
-    id: "e-specialists-sse",
-    source: "specialist-group",
-    target: "sse",
-    ...edgeDefaults,
-    label: "audit_trail writes",
-    style: { ...edgeDefaults.style, stroke: "var(--purple-8)" },
-  },
-
-  // SSE → Browser
-  {
-    id: "e-sse-browser",
-    source: "sse",
-    target: "browser",
-    ...edgeDefaults,
-    animated: true,
-    label: "EventSource stream",
-    style: { ...edgeDefaults.style, stroke: "var(--gray-8)" },
-  },
-
-  // SSE → Candle
-  {
-    id: "e-sse-candle",
-    source: "sse",
-    target: "candle-group",
-    ...edgeDefaults,
-    style: { ...edgeDefaults.style, stroke: "var(--indigo-8)", strokeDasharray: "5 3" },
-    label: "optional",
-  },
-
-  // Judge → Candle phi (conditional routing)
-  {
-    id: "e-judge-phi",
-    source: "judge",
-    target: "phi",
-    type: "smoothstep",
-    style: { strokeWidth: 1.5, stroke: "var(--indigo-8)", strokeDasharray: "4 4" },
-    markerEnd: { type: MarkerType.ArrowClosed, width: 12, height: 12 },
-    label: "if CANDLE_BASE_URL",
-  },
-];
-
-/* ─── Main Component ──────────────────────────────────────────── */
-
-/**
- * ArchitectureFlow — the interactive pipeline diagram.
+/* ─── Reusable Mini-Flow Wrapper ──────────────────────────────── *
  *
- * React Flow renders all nodes + edges onto an infinite canvas.
- * Built-in interactions:
- *   - Pan: click + drag on empty space
- *   - Zoom: scroll wheel or pinch
- *   - Select: click a node, drag to reposition it
- *   - Multi-select: Shift+click or drag a selection box
- *   - Minimap: bottom-right overview (click to navigate)
- *   - Controls: bottom-left zoom buttons + fit-view
+ * Every sub-diagram uses this same wrapper. It creates a React Flow
+ * canvas with a fixed height, dot-grid background, and zoom controls.
  *
- * The `fitView` prop auto-zooms to show all nodes on mount.
- * `proOptions={{ hideAttribution: false }}` shows the React Flow
- * watermark (required for MIT license compliance in open-source).
- */
-export function ArchitectureFlow() {
-  const [nodes, , onNodesChange] = useNodesState(initialNodes);
-  const [edges, , onEdgesChange] = useEdgesState(initialEdges);
+ * `fitView` tells React Flow to automatically zoom and pan so that
+ * all nodes are visible when the diagram first appears. The
+ * `padding` option adds breathing room around the edges.
+ *
+ * We disable `panOnScroll` so the page scrolls normally — users
+ * zoom with pinch or the +/- buttons instead.
+ * ────────────────────────────────────────────────────────────────── */
+
+function MiniFlow({ nodes, edges, height = 280 }: { nodes: Node[]; edges: Edge[]; height?: number }) {
+  const [n, , onNodesChange] = useNodesState(nodes);
+  const [e, , onEdgesChange] = useEdgesState(edges);
 
   return (
     <div
       style={{
         width: "100%",
-        height: 540,
+        height,
         borderRadius: 12,
         overflow: "hidden",
         border: "1px solid var(--gray-a4)",
@@ -678,37 +222,459 @@ export function ArchitectureFlow() {
       }}
     >
       <ReactFlow
-        nodes={nodes}
-        edges={edges}
+        nodes={n}
+        edges={e}
         onNodesChange={onNodesChange}
         onEdgesChange={onEdgesChange}
         nodeTypes={nodeTypes}
         fitView
-        fitViewOptions={{ padding: 0.15 }}
-        minZoom={0.3}
-        maxZoom={1.5}
+        fitViewOptions={{ padding: 0.25 }}
+        minZoom={0.4}
+        maxZoom={1.8}
+        panOnScroll={false}
         proOptions={{ hideAttribution: false }}
         defaultEdgeOptions={{ type: "smoothstep" }}
       >
-        <Background gap={20} size={1} color="var(--gray-a3)" />
+        <Background gap={16} size={1} color="var(--gray-a3)" />
         <Controls
           showInteractive={false}
-          style={{
-            borderRadius: 8,
-            border: "1px solid var(--gray-a4)",
-            overflow: "hidden",
-          }}
-        />
-        <MiniMap
-          nodeStrokeWidth={2}
-          maskColor="color-mix(in srgb, var(--color-background) 85%, transparent)"
-          style={{
-            borderRadius: 8,
-            border: "1px solid var(--gray-a4)",
-            overflow: "hidden",
-          }}
+          position="bottom-left"
+          style={{ borderRadius: 8, border: "1px solid var(--gray-a4)", overflow: "hidden" }}
         />
       </ReactFlow>
     </div>
   );
+}
+
+/* ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+ *  1. INGESTION FLOW
+ *
+ *  What happens when a user uploads a PDF or DOCX file.
+ *
+ *  The user's file is received as raw bytes by the Upload handler.
+ *  parseBrief() detects the file type (PDF → pdf-parse, DOCX →
+ *  mammoth) and extracts plain text. That text, along with session
+ *  metadata (jurisdiction, config), is written to the Supabase
+ *  stress_test_sessions table. From there, the orchestrator picks
+ *  it up and starts the debate loop.
+ *
+ *  This is a simple left-to-right pipeline — no branching, no
+ *  parallelism. Each step must finish before the next starts.
+ * ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ */
+
+const ingestionNodes: Node[] = [
+  {
+    id: "upload",
+    type: "agent",
+    position: { x: 0, y: 40 },
+    data: { label: "Upload Brief", sublabel: "PDF or DOCX file", icon: Upload, color: "var(--gray-11)" },
+  },
+  {
+    id: "parse",
+    type: "agent",
+    position: { x: 260, y: 40 },
+    data: { label: "parseBrief()", sublabel: "pdf-parse + mammoth", icon: FileText, color: "var(--orange-9)" },
+  },
+  {
+    id: "supabase",
+    type: "dataStore",
+    position: { x: 530, y: 45 },
+    data: { label: "Supabase PostgreSQL", sublabel: "stress_test_sessions table", icon: Database, color: "var(--amber-9)" },
+  },
+];
+
+const ingestionEdges: Edge[] = [
+  {
+    id: "e1", source: "upload", target: "parse",
+    ...edgeDefaults, label: "raw bytes",
+    style: { ...edgeDefaults.style, stroke: "var(--gray-8)" },
+  },
+  {
+    id: "e2", source: "parse", target: "supabase",
+    ...edgeDefaults, label: "plain text + metadata",
+    style: { ...edgeDefaults.style, stroke: "var(--amber-8)" },
+  },
+];
+
+export function IngestionFlow() {
+  return <MiniFlow nodes={ingestionNodes} edges={ingestionEdges} height={160} />;
+}
+
+/* ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+ *  2. ADVERSARIAL DEBATE LOOP
+ *
+ *  The core of the system. Three agents argue about your brief
+ *  in structured rounds — like a courtroom trial inside the AI.
+ *
+ *  Round 1:
+ *    Attacker reads the brief and finds every weakness it can.
+ *    Defender reads the brief AND the attacks, then rebuts each one
+ *      (or concedes if the attack is genuinely valid).
+ *    Judge reads both sides and issues a verdict — which attacks
+ *      survived, scored by severity (critical/high/medium/low)
+ *      and confidence (0.0–1.0).
+ *
+ *  Round 2:
+ *    The Attacker receives previousFindings[] (everything the Judge
+ *    decided in Round 1). It's told: "Don't repeat yourself. Go
+ *    deeper." It now looks for second-order implications, structural
+ *    issues, and subtle inconsistencies it missed the first time.
+ *    The same cycle repeats.
+ *
+ *  Round 3:
+ *    Same again, but even deeper. By now, only genuine structural
+ *    weaknesses survive — surface issues were already found in
+ *    rounds 1-2.
+ *
+ *  WHY 3 MODELS, NOT 1?
+ *  If the same model argues both sides, it has the same blind spots
+ *  on both sides (like asking the same person to debate themselves).
+ *  Using DeepSeek Reasoner (attack) + Qwen-Plus (defense) + DeepSeek
+ *  Chat (judge) means three different training distributions, so
+ *  weaknesses one model misses are more likely caught by another.
+ * ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ */
+
+const debateNodes: Node[] = [
+  {
+    id: "brief-in",
+    type: "dataStore",
+    position: { x: 0, y: 80 },
+    data: { label: "Brief Text", sublabel: "from Supabase", icon: Database, color: "var(--amber-9)" },
+  },
+  {
+    id: "attacker",
+    type: "agent",
+    position: { x: 200, y: 0 },
+    data: { label: "Attacker", sublabel: "DeepSeek Reasoner — finds weaknesses", icon: Swords, color: "var(--crimson-9)" },
+  },
+  {
+    id: "defender",
+    type: "agent",
+    position: { x: 200, y: 80 },
+    data: { label: "Defender", sublabel: "Qwen-Plus — rebuts or concedes", icon: Shield, color: "var(--blue-9)" },
+  },
+  {
+    id: "judge",
+    type: "agent",
+    position: { x: 200, y: 160 },
+    data: { label: "Judge", sublabel: "DeepSeek Chat / local phi-3.5", icon: Gavel, color: "var(--amber-9)" },
+  },
+  {
+    id: "loop",
+    type: "loop",
+    position: { x: 470, y: 10 },
+    data: { label: "x3 rounds", color: "var(--crimson-9)" },
+  },
+  {
+    id: "findings",
+    type: "dataStore",
+    position: { x: 460, y: 165 },
+    data: { label: "previousFindings[]", sublabel: "accumulates across rounds", icon: Database, color: "var(--green-9)" },
+  },
+];
+
+const debateEdges: Edge[] = [
+  {
+    id: "e-in-atk", source: "brief-in", target: "attacker",
+    ...edgeDefaults, label: "brief_text",
+    style: { ...edgeDefaults.style, stroke: "var(--amber-8)" },
+  },
+  {
+    id: "e-atk-def", source: "attacker", target: "defender",
+    ...edgeDefaults, label: "attacks JSON",
+    style: { ...edgeDefaults.style, stroke: "var(--crimson-8)" },
+  },
+  {
+    id: "e-def-jdg", source: "defender", target: "judge",
+    ...edgeDefaults, label: "rebuttals JSON",
+    style: { ...edgeDefaults.style, stroke: "var(--blue-8)" },
+  },
+  {
+    id: "e-jdg-findings", source: "judge", target: "findings",
+    ...edgeDefaults, label: "verdict",
+    style: { ...edgeDefaults.style, stroke: "var(--amber-8)" },
+  },
+  {
+    id: "e-findings-loop", source: "findings", target: "loop",
+    type: "smoothstep",
+    style: { strokeWidth: 1.5, stroke: "var(--green-8)", strokeDasharray: "5 3" },
+    markerEnd: { type: MarkerType.ArrowClosed, width: 12, height: 12 },
+    label: "feeds next round",
+  },
+  {
+    id: "e-loop-atk", source: "loop", target: "attacker",
+    type: "smoothstep",
+    style: { strokeWidth: 1.5, stroke: "var(--crimson-8)", strokeDasharray: "5 3" },
+    markerEnd: { type: MarkerType.ArrowClosed, width: 12, height: 12 },
+    animated: true,
+    label: "go deeper",
+  },
+];
+
+export function DebateFlow() {
+  return <MiniFlow nodes={debateNodes} edges={debateEdges} height={300} />;
+}
+
+/* ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+ *  3. SPECIALIST AGENTS
+ *
+ *  After the 3 debate rounds finish, the brief has been torn apart
+ *  and defended from every angle. Now three specialist agents run
+ *  to handle tasks that don't benefit from debate:
+ *
+ *  Citation Verifier — checks every legal citation in the brief.
+ *    Does the case actually say what the brief claims? Is the
+ *    citation format correct? Are there cases cited that don't
+ *    exist (hallucinated citations are a real problem)?
+ *
+ *  Jurisdiction Expert — checks jurisdiction-specific rules.
+ *    Different courts have different standards of review, burden
+ *    of proof requirements, and procedural rules. This agent
+ *    verifies the brief complies with the specified jurisdiction.
+ *
+ *  These two run IN PARALLEL (Promise.all) because they don't
+ *  depend on each other — Citation Verifier doesn't need
+ *  jurisdiction info, and vice versa. Running them simultaneously
+ *  saves ~15-30 seconds.
+ *
+ *  Brief Rewriter — runs LAST because it needs the Judge's final
+ *  verdict plus citation/jurisdiction findings. It rewrites the
+ *  weakest sections of the brief with concrete improvements.
+ * ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ */
+
+const specialistNodes: Node[] = [
+  {
+    id: "debate-out",
+    type: "dataStore",
+    position: { x: 200, y: 0 },
+    data: { label: "Final Findings", sublabel: "from 3 debate rounds", icon: Database, color: "var(--crimson-9)" },
+  },
+  {
+    id: "parallel-badge",
+    type: "parallel",
+    position: { x: 220, y: 70 },
+    data: { label: "Promise.all()", color: "var(--purple-9)" },
+  },
+  {
+    id: "citation",
+    type: "agent",
+    position: { x: 40, y: 120 },
+    data: { label: "Citation Verifier", sublabel: "DeepSeek Reasoner", icon: BookOpen, color: "var(--green-9)" },
+  },
+  {
+    id: "jurisdiction",
+    type: "agent",
+    position: { x: 320, y: 120 },
+    data: { label: "Jurisdiction Expert", sublabel: "DeepSeek Reasoner", icon: Scale, color: "var(--purple-9)" },
+  },
+  {
+    id: "rewriter",
+    type: "agent",
+    position: { x: 180, y: 220 },
+    data: { label: "Brief Rewriter", sublabel: "Qwen-Plus — runs last, needs all findings", icon: Brain, color: "var(--orange-9)" },
+  },
+];
+
+const specialistEdges: Edge[] = [
+  {
+    id: "e-out-par", source: "debate-out", target: "parallel-badge",
+    ...edgeDefaults,
+    style: { ...edgeDefaults.style, stroke: "var(--crimson-8)" },
+  },
+  {
+    id: "e-par-cite", source: "parallel-badge", target: "citation",
+    ...edgeDefaults, animated: true,
+    style: { ...edgeDefaults.style, stroke: "var(--green-8)" },
+  },
+  {
+    id: "e-par-juris", source: "parallel-badge", target: "jurisdiction",
+    ...edgeDefaults, animated: true,
+    style: { ...edgeDefaults.style, stroke: "var(--purple-8)" },
+  },
+  {
+    id: "e-cite-rw", source: "citation", target: "rewriter",
+    ...edgeDefaults, label: "citation results",
+    style: { ...edgeDefaults.style, stroke: "var(--green-8)" },
+  },
+  {
+    id: "e-juris-rw", source: "jurisdiction", target: "rewriter",
+    ...edgeDefaults, label: "jurisdiction results",
+    style: { ...edgeDefaults.style, stroke: "var(--purple-8)" },
+  },
+];
+
+export function SpecialistFlow() {
+  return <MiniFlow nodes={specialistNodes} edges={specialistEdges} height={340} />;
+}
+
+/* ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+ *  4. REAL-TIME STREAMING
+ *
+ *  The analysis takes 90-150 seconds. Users need to see progress
+ *  live — not stare at a spinner for two minutes.
+ *
+ *  The problem: the orchestrator runs in a Vercel serverless
+ *  function. Serverless functions can't hold open WebSocket
+ *  connections long enough (they timeout at 10-60s). So we use
+ *  a polling pattern:
+ *
+ *  1. The orchestrator writes to the audit_trail table every time
+ *     an agent starts, finishes, or produces output.
+ *
+ *  2. A separate SSE (Server-Sent Events) endpoint polls that
+ *     table every 2 seconds.
+ *
+ *  3. The browser connects via EventSource (a built-in browser
+ *     API for one-way server-to-client streaming).
+ *
+ *  If the user closes their browser mid-analysis, the orchestrator
+ *  keeps running and finishes the job. When the user comes back,
+ *  the SSE endpoint catches up from the audit_trail table.
+ * ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ */
+
+const streamingNodes: Node[] = [
+  {
+    id: "orchestrator",
+    type: "agent",
+    position: { x: 0, y: 40 },
+    data: { label: "Orchestrator", sublabel: "Vercel serverless function", icon: Cpu, color: "var(--gray-11)" },
+  },
+  {
+    id: "audit",
+    type: "dataStore",
+    position: { x: 260, y: 0 },
+    data: { label: "audit_trail table", sublabel: "Supabase PostgreSQL", icon: Database, color: "var(--amber-9)" },
+  },
+  {
+    id: "sse",
+    type: "agent",
+    position: { x: 260, y: 90 },
+    data: { label: "SSE Endpoint", sublabel: "polls every 2 seconds", icon: Radio, color: "var(--purple-9)" },
+  },
+  {
+    id: "browser",
+    type: "agent",
+    position: { x: 530, y: 40 },
+    data: { label: "Browser", sublabel: "EventSource API", icon: Cpu, color: "var(--blue-9)" },
+  },
+];
+
+const streamingEdges: Edge[] = [
+  {
+    id: "e-orch-audit", source: "orchestrator", target: "audit",
+    ...edgeDefaults, label: "writes progress",
+    style: { ...edgeDefaults.style, stroke: "var(--amber-8)" },
+  },
+  {
+    id: "e-audit-sse", source: "audit", target: "sse",
+    ...edgeDefaults, label: "SELECT new rows",
+    style: { ...edgeDefaults.style, stroke: "var(--purple-8)" },
+  },
+  {
+    id: "e-sse-browser", source: "sse", target: "browser",
+    ...edgeDefaults, animated: true, label: "stream events",
+    style: { ...edgeDefaults.style, stroke: "var(--blue-8)" },
+  },
+];
+
+export function StreamingFlow() {
+  return <MiniFlow nodes={streamingNodes} edges={streamingEdges} height={200} />;
+}
+
+/* ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+ *  5. LOCAL CANDLE SERVER
+ *
+ *  An optional local inference layer that replaces cloud API calls
+ *  with a Rust binary running on your own machine.
+ *
+ *  Candle is a machine learning framework written in Rust (by
+ *  Hugging Face). It compiles to a ~15MB binary that can run AI
+ *  models on CPU — no Python, no GPU, no Docker.
+ *
+ *  It exposes the same /v1/chat/completions and /v1/embeddings
+ *  endpoints as OpenAI. This means our DeepSeekClient class
+ *  works against it without any code changes — just point the
+ *  baseURL to localhost instead of a cloud server.
+ *
+ *  Two capabilities:
+ *
+ *  Chat completions — runs phi-3.5-mini (a 3.8B parameter model)
+ *  for the Judge agent. The Judge only evaluates two existing
+ *  arguments, it doesn't generate new legal analysis, so a
+ *  smaller model is sufficient.
+ *
+ *  Embeddings — converts text into arrays of numbers (vectors)
+ *  for semantic search. "The defendant lacked standing" becomes
+ *  [0.12, -0.45, 0.78, ...]. Similar sentences produce similar
+ *  vectors, enabling "find me cases about X" without keyword
+ *  matching. Local embeddings run at ~4,600/sec on M1, vs ~50/sec
+ *  through a cloud API.
+ *
+ *  Toggle: set CANDLE_BASE_URL=http://localhost:9877/v1 in .env.
+ *  If not set, everything falls back to cloud APIs as before.
+ * ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ */
+
+const candleNodes: Node[] = [
+  {
+    id: "env-check",
+    type: "loop",
+    position: { x: 0, y: 75 },
+    data: { label: "CANDLE_BASE_URL set?", color: "var(--indigo-9)" },
+  },
+  {
+    id: "phi",
+    type: "agent",
+    position: { x: 220, y: 0 },
+    data: { label: "phi-3.5-mini", sublabel: "Chat completions for Judge", icon: HardDrive, color: "var(--indigo-9)" },
+  },
+  {
+    id: "embed",
+    type: "agent",
+    position: { x: 220, y: 90 },
+    data: { label: "Embeddings", sublabel: "embedText() · embedBatch()", icon: HardDrive, color: "var(--indigo-9)" },
+  },
+  {
+    id: "cloud-judge",
+    type: "agent",
+    position: { x: 500, y: 0 },
+    data: { label: "Cloud DeepSeek Chat", sublabel: "fallback when no local", icon: Cpu, color: "var(--gray-9)" },
+  },
+  {
+    id: "judge-out",
+    type: "dataStore",
+    position: { x: 500, y: 95 },
+    data: { label: "JudgeOutput", sublabel: "same Zod schema either way", icon: Database, color: "var(--amber-9)" },
+  },
+];
+
+const candleEdges: Edge[] = [
+  {
+    id: "e-env-phi", source: "env-check", target: "phi",
+    ...edgeDefaults, animated: true, label: "yes → local",
+    style: { ...edgeDefaults.style, stroke: "var(--indigo-8)" },
+  },
+  {
+    id: "e-env-embed", source: "env-check", target: "embed",
+    ...edgeDefaults, animated: true,
+    style: { ...edgeDefaults.style, stroke: "var(--indigo-8)" },
+  },
+  {
+    id: "e-env-cloud", source: "env-check", target: "cloud-judge",
+    ...edgeDefaults, label: "no → cloud",
+    style: { ...edgeDefaults.style, stroke: "var(--gray-7)", strokeDasharray: "5 3" },
+  },
+  {
+    id: "e-phi-out", source: "phi", target: "judge-out",
+    ...edgeDefaults,
+    style: { ...edgeDefaults.style, stroke: "var(--indigo-8)" },
+  },
+  {
+    id: "e-cloud-out", source: "cloud-judge", target: "judge-out",
+    ...edgeDefaults,
+    style: { ...edgeDefaults.style, stroke: "var(--gray-7)" },
+  },
+];
+
+export function CandleFlow() {
+  return <MiniFlow nodes={candleNodes} edges={candleEdges} height={230} />;
 }

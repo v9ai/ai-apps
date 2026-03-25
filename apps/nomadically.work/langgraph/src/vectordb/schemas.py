@@ -83,3 +83,20 @@ class SyncResult:
     synced: int
     mode: str  # "full" or "incremental"
     errors: list[str] = field(default_factory=list)
+
+
+@dataclass
+class AuditResult:
+    neon_id: int
+    name: str
+    position: str
+    company: str
+    num_posts: int
+    best_post_sim: float
+    avg_post_sim: float
+    num_relevant_posts: int
+    keyword_adjustment: float
+    final_score: float
+    decision: str  # "keep" or "remove"
+    reason: str
+    sample_posts: list[str] = field(default_factory=list)

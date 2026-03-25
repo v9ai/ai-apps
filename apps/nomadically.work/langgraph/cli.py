@@ -939,5 +939,64 @@ def post_search(query, top, min_reactions, no_reposts):
         print()
 
 
+@main.command("contact-audit")
+@click.option("--threshold", "-t", default=0.35, show_default=True, help="Score threshold for keep/remove decision")
+@click.option("--apply", is_flag=True, default=False, help="Write do_not_contact=true to Neon for removed contacts")
+def contact_audit(threshold: float, apply: bool):
+    """Audit contacts by their LinkedIn post content — keep or remove.
+
+    Scores each contact's posts for AI/ML relevance using embeddings + keyword signals.
+    Contacts below threshold are marked for removal.
+
+    Examples:
+        python -m cli contact-audit
+        python -m cli contact-audit --threshold 0.05
+        python -m cli contact-audit --apply
+    """
+    from src.vectordb.audit import audit_contacts
+
+    results = audit_contacts(threshold=threshold, apply=apply)
+
+    if not results:
+        return
+
+    remove = [r for r in results if r.decision == "remove"]
+    keep = [r for r in results if r.decision == "keep"]
+    total_posts = sum(r.num_posts for r in results)
+
+    print(f"{'='*80}")
+    print(f"  Contact Audit: {len(results)} contacts with {total_posts} posts")
+    print(f"  Threshold: {threshold}")
+    print(f"{'='*80}")
+
+    if remove:
+        print(f"\n  REMOVE ({len(remove)} contacts, score < {threshold}):\n")
+        for i, r in enumerate(remove, 1):
+            print(f"  {i:3d}. {r.name} (score={r.final_score:.4f})")
+            pos = r.position[:70] if r.position else ""
+            print(f"       {pos} | {r.company} | {r.num_posts} posts")
+            print(f"       {r.reason}")
+            if r.sample_posts:
+                print(f"       Best post: \"{r.sample_posts[0][:100]}...\"")
+            print()
+
+    if keep:
+        print(f"\n  KEEP ({len(keep)} contacts, score >= {threshold}):\n")
+        for i, r in enumerate(keep, 1):
+            print(f"  {i:3d}. {r.name} (score={r.final_score:.4f})")
+            pos = r.position[:70] if r.position else ""
+            print(f"       {pos} | {r.company} | {r.num_posts} posts")
+            print(f"       {r.reason}")
+            if r.sample_posts:
+                print(f"       Best post: \"{r.sample_posts[0][:100]}...\"")
+            print()
+
+    print(f"{'─'*80}")
+    print(f"  Summary: Remove {len(remove)}, Keep {len(keep)}")
+    if not apply and remove:
+        print(f"  Run with --apply to mark {len(remove)} contacts as do_not_contact")
+    print()
+
+
 if __name__ == "__main__":
     main()
