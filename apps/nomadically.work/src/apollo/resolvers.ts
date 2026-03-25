@@ -9,7 +9,6 @@ import { langsmithResolvers } from "./resolvers/langsmith";
 import { resumeResolvers } from "./resolvers/resume";
 import { contactResolvers } from "./resolvers/contacts";
 import { opportunityResolvers } from "./resolvers/opportunities";
-import { stackResolvers } from "./resolvers/stack";
 import { taskResolvers } from "./resolvers/tasks";
 import { emailCampaignResolvers } from "./resolvers/email-campaigns";
 import { emailTemplateResolvers } from "./resolvers/email-templates";
@@ -30,7 +29,6 @@ export const resolvers = merge(
   resumeResolvers,
   contactResolvers,
   opportunityResolvers,
-  stackResolvers,
   taskResolvers,
   emailCampaignResolvers,
   emailTemplateResolvers,

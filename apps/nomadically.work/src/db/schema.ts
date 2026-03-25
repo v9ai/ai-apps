@@ -583,37 +583,6 @@ export const contacts = pgTable(
 export type Contact = typeof contacts.$inferSelect;
 export type NewContact = typeof contacts.$inferInsert;
 
-// LinkedIn Posts (scraped from contacts' LinkedIn profiles)
-export const linkedinPosts = pgTable(
-  "linkedin_posts",
-  {
-    id: serial("id").primaryKey(),
-    contact_id: integer("contact_id")
-      .notNull()
-      .references(() => contacts.id, { onDelete: "cascade" }),
-    post_url: text("post_url"),
-    post_text: text("post_text"),
-    posted_date: text("posted_date"),
-    reactions_count: integer("reactions_count").notNull().default(0),
-    comments_count: integer("comments_count").notNull().default(0),
-    reposts_count: integer("reposts_count").notNull().default(0),
-    media_type: text("media_type").notNull().default("none"),
-    is_repost: boolean("is_repost").notNull().default(false),
-    original_author: text("original_author"),
-    scraped_at: text("scraped_at")
-      .notNull()
-      .default(sql`now()::text`),
-  },
-  (table) => ({
-    contactIdIdx: index("idx_linkedin_posts_contact_id").on(table.contact_id),
-    postUrlIdx: uniqueIndex("idx_linkedin_posts_post_url").on(table.post_url),
-    postedDateIdx: index("idx_linkedin_posts_posted_date").on(table.posted_date),
-  }),
-);
-
-export type LinkedinPost = typeof linkedinPosts.$inferSelect;
-export type NewLinkedinPost = typeof linkedinPosts.$inferInsert;
-
 // Contact Emails (outbound emails sent to a contact)
 export const contactEmails = pgTable(
   "contact_emails",
