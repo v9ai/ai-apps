@@ -14,7 +14,13 @@ use std::path::Path;
 use dedup::blocking;
 use index::posting::InvertedIndex;
 use similarity::embeddings::EmbeddingStore;
-use storage::{btree::{BTreeIndex, BTreeOps}, page::PageFile, record, wal::WriteAheadLog};
+use storage::{btree::{BTreeOps, RecordPtr}, page::PageFile, record, wal::WriteAheadLog};
+
+#[cfg(not(feature = "kernel-btree"))]
+use storage::btree::MemoryBTreeIndex;
+
+#[cfg(feature = "kernel-btree")]
+use kernel::bplus::BPlusTreeIndex;
 
 /// Connects all subsystems into a single lead-generation pipeline.
 ///
@@ -27,8 +33,8 @@ use storage::{btree::{BTreeIndex, BTreeOps}, page::PageFile, record, wal::WriteA
 pub struct Pipeline {
     pub wal: WriteAheadLog,
     pub pages: PageFile,
-    pub companies: BTreeIndex,
-    pub contacts: BTreeIndex,
+    pub companies: Box<dyn BTreeOps>,
+    pub contacts: Box<dyn BTreeOps>,
     pub postings: InvertedIndex,
     pub frontier: queue::frontier::UrlFrontier,
     pub embeddings: EmbeddingStore,
@@ -47,28 +53,49 @@ impl Pipeline {
             1024,
         )?;
 
-        let companies = BTreeIndex::new();
-        let contacts = BTreeIndex::new();
+        // Feature-flagged index construction:
+        // kernel-btree: disk-resident B+ tree (persistent, no WAL rebuild)
+        // safe: in-memory BTreeMap (rebuilt from WAL on startup)
+        #[cfg(feature = "kernel-btree")]
+        let (companies, contacts): (Box<dyn BTreeOps>, Box<dyn BTreeOps>) = {
+            let c = BPlusTreeIndex::open(
+                dir.join("companies.bpt").to_str().unwrap(),
+                256,
+            )?;
+            let t = BPlusTreeIndex::open(
+                dir.join("contacts.bpt").to_str().unwrap(),
+                256,
+            )?;
+            (Box::new(c), Box::new(t))
+        };
 
-        // Rebuild B-tree indexes from WAL replay
-        companies.rebuild_from_wal(&wal, |data| {
-            let reader = record::RecordReader::from_bytes(data)?;
-            if reader.record_type() == record::RecordType::Company {
-                reader.field_str(record::company_fields::DOMAIN)
-                    .map(|s| s.as_bytes().to_vec())
-            } else {
-                None
-            }
-        });
-        contacts.rebuild_from_wal(&wal, |data| {
-            let reader = record::RecordReader::from_bytes(data)?;
-            if reader.record_type() == record::RecordType::Contact {
-                reader.field_str(record::contact_fields::EMAIL)
-                    .map(|s| s.as_bytes().to_vec())
-            } else {
-                None
-            }
-        });
+        #[cfg(not(feature = "kernel-btree"))]
+        let (companies, contacts): (Box<dyn BTreeOps>, Box<dyn BTreeOps>) = {
+            let c = MemoryBTreeIndex::new();
+            let t = MemoryBTreeIndex::new();
+
+            // Rebuild indexes from WAL replay
+            c.rebuild_from_wal(&wal, |data| {
+                let reader = record::RecordReader::from_bytes(data)?;
+                if reader.record_type() == record::RecordType::Company {
+                    reader.field_str(record::company_fields::DOMAIN)
+                        .map(|s| s.as_bytes().to_vec())
+                } else {
+                    None
+                }
+            });
+            t.rebuild_from_wal(&wal, |data| {
+                let reader = record::RecordReader::from_bytes(data)?;
+                if reader.record_type() == record::RecordType::Contact {
+                    reader.field_str(record::contact_fields::EMAIL)
+                        .map(|s| s.as_bytes().to_vec())
+                } else {
+                    None
+                }
+            });
+
+            (Box::new(c), Box::new(t))
+        };
 
         // Ensure page 0 is allocated for data storage
         if pages.alloc_page().is_err() {
@@ -88,7 +115,6 @@ impl Pipeline {
         id: &str, name: &str, domain: &str, industry: &str,
         employee_count: u32, tech_stack: &str, location: &str, description: &str,
     ) -> io::Result<()> {
-        // Skip if domain already indexed
         if self.companies.get(domain.as_bytes()).is_some() {
             return Ok(());
         }
@@ -97,25 +123,19 @@ impl Pipeline {
             id, name, domain, industry, employee_count, tech_stack, location, description,
         );
 
-        // Durable: WAL first
         self.wal.append(storage::wal::EntryType::CompanyInsert, &data)?;
 
-        // Page store
         let page_id = 0;
         if let Some(slot) = self.pages.insert_into_page(page_id, &data) {
-            let ptr = storage::btree::RecordPtr { page_id, slot_idx: slot };
-
-            // B-tree: lookup by domain
+            let ptr = RecordPtr { page_id, slot_idx: slot };
             self.companies.insert(domain.as_bytes(), ptr);
 
-            // Posting index: full-text search on name, industry, tech stack
             let doc_id = crc32fast::hash(id.as_bytes());
             self.postings.index_with_id(doc_id, name);
             self.postings.index_with_id(doc_id, industry);
             self.postings.index_with_id(doc_id, tech_stack);
         }
 
-        // Add to frontier for email discovery
         self.frontier.push_domain_pages(domain, &["/", "/about", "/team", "/careers"]);
 
         Ok(())
@@ -139,7 +159,7 @@ impl Pipeline {
 
         let page_id = 0;
         if let Some(slot) = self.pages.insert_into_page(page_id, &data) {
-            let ptr = storage::btree::RecordPtr { page_id, slot_idx: slot };
+            let ptr = RecordPtr { page_id, slot_idx: slot };
             self.contacts.insert(email.as_bytes(), ptr);
 
             let doc_id = crc32fast::hash(id.as_bytes());
@@ -160,17 +180,39 @@ impl Pipeline {
         self.embeddings.top_k(query, top_k)
     }
 
+    /// Score a batch of contacts against an ICP profile.
+    /// Returns top-k (index, score) pairs sorted descending.
+    #[cfg(feature = "kernel-scoring")]
+    pub fn score_batch(
+        &self,
+        batch: &mut kernel::scoring::ContactBatch,
+        top_k: usize,
+    ) -> Vec<(usize, f32)> {
+        batch.compute_scores();
+        batch.top_k_scored(top_k)
+    }
+
+    /// Score a batch with a custom ICP profile.
+    #[cfg(feature = "kernel-scoring")]
+    pub fn score_batch_with(
+        &self,
+        batch: &mut kernel::scoring::ContactBatch,
+        icp: &kernel::scoring::IcpProfile,
+        top_k: usize,
+    ) -> Vec<(usize, f32)> {
+        batch.compute_scores_with(icp);
+        batch.top_k_scored(top_k)
+    }
+
     /// Discover email patterns for a domain using DNS + pattern generation + SMTP.
     pub async fn discover_emails(
         &self, domain: &str, first: &str, last: &str,
     ) -> Result<Vec<(String, email_metal::smtp_fsm::VerifyResult)>, String> {
-        // 1. Resolve MX to verify the domain accepts mail
         let mx_records = dns::raw::resolve_mx_async(domain).await?;
         if mx_records.is_empty() {
             return Err(format!("no MX records for {}", domain));
         }
 
-        // 2. Generate email candidates from name patterns
         let patterns = email_metal::pattern_fsm::all_patterns();
         let mut buf = [0u8; 256];
         let mut candidates = Vec::new();
@@ -180,7 +222,6 @@ impl Pipeline {
             }
         }
 
-        // 3. Verify each candidate via SMTP
         let mx_host = &mx_records[0].exchange;
         let mut results = Vec::new();
         for candidate in &candidates {
@@ -196,7 +237,7 @@ impl Pipeline {
     /// Deduplicate contacts using blocking keys + string similarity.
     pub fn find_duplicates(
         &self,
-        contacts: &[(String, String, String)], // (first, last, email)
+        contacts: &[(String, String, String)],
         similarity_threshold: f64,
     ) -> Vec<(usize, usize, f64)> {
         let blocks = blocking::build_blocks(contacts);
@@ -217,10 +258,7 @@ impl Pipeline {
             }
         }
 
-        // Deduplicate pairs
-        duplicates.sort_by(|a, b| {
-            a.0.cmp(&b.0).then(a.1.cmp(&b.1))
-        });
+        duplicates.sort_by(|a, b| a.0.cmp(&b.0).then(a.1.cmp(&b.1)));
         duplicates.dedup_by(|a, b| a.0 == b.0 && a.1 == b.1);
 
         duplicates

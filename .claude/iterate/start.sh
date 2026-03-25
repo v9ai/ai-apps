@@ -8,6 +8,7 @@ STATUS=false
 CLEAN=false
 HISTORY=false
 DONE_WHEN=""
+NO_COMMIT=false
 TASK=""
 
 while [[ $# -gt 0 ]]; do
@@ -38,6 +39,7 @@ while [[ $# -gt 0 ]]; do
         --status) STATUS=true; shift ;;
         --clean) CLEAN=true; shift ;;
         --history) HISTORY=true; shift ;;
+        --no-commit) NO_COMMIT=true; shift ;;
         *) TASK="${TASK:+$TASK }$1"; shift ;;
     esac
 done
@@ -245,6 +247,7 @@ echo "[]" > "$ITER_DIR/scores.json"
 echo "$_git_root" > "$ITER_DIR/cwd.txt"
 echo "${CLAUDE_CODE_SESSION_ID:-}" > "$ITER_DIR/session.txt"
 [ -n "$DONE_WHEN" ] && echo "$DONE_WHEN" > "$ITER_DIR/done-when.txt"
+[ "$NO_COMMIT" = true ] && touch "$ITER_DIR/no-commit.txt"
 
 # --- Show similar past tasks ---
 python3.12 -c "
