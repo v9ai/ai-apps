@@ -98,8 +98,11 @@ def run_heuristic(
 
     # Task Completion: relevance to task + code changes + low errors
     tc_base = output_task_sim * 0.6
-    tc_change_bonus = min(0.25, diff_files * 0.05) if has_diff else 0.0
-    tc_error_penalty = min(0.2, error_count * 0.05)
+    tc_change_bonus = min(0.25, diff_files * 0.04 + min(0.1, diff_stats["insertions"] * 0.001)) if has_diff else 0.0
+    tc_error_penalty = min(0.3, error_count * 0.06)
+    # Compile errors are worse than test failures
+    if error_cats.get("compile", 0) > 0:
+        tc_error_penalty = min(0.4, tc_error_penalty + 0.1)
     task_completion = max(0.0, min(1.0, tc_base + tc_change_bonus - tc_error_penalty))
 
     # Incremental Progress: how much new work vs. repetition
@@ -136,7 +139,7 @@ def run_heuristic(
     scores = {
         "Task Completion": {
             "score": round(task_completion, 3),
-            "reason": f"relevance={output_task_sim:.2f}, files={diff_files}, errors={error_count}",
+            "reason": f"relevance={output_task_sim:.2f}, files={diff_files}, +{diff_stats['insertions']}/-{diff_stats['deletions']}, errors={error_count}",
             "passed": task_completion >= 0.5,
         },
         "Incremental Progress": {
@@ -155,7 +158,7 @@ def run_heuristic(
         },
         "Code Quality": {
             "score": round(code_quality, 3),
-            "reason": f"errors={error_count}",
+            "reason": f"errors={error_count}" + (f" ({', '.join(f'{k}={v}' for k, v in error_cats.items())})" if error_cats else ""),
             "passed": code_quality >= 0.5,
         },
         "Focus": {
@@ -179,6 +182,18 @@ def run_heuristic(
             "passed": contextual_relevancy >= 0.5,
         },
     }
+
+    # Composite score: weighted average of key metrics for quick summary
+    composite = (
+        task_completion * 0.30
+        + incremental_progress * 0.25
+        + code_quality * 0.20
+        + coherence * 0.15
+        + focus * 0.10
+    )
+    scores["_composite"] = round(composite, 3)
+    scores["_diff_stats"] = diff_stats
+    scores["_error_categories"] = error_cats
 
     return scores
 
