@@ -18,6 +18,12 @@ motor = None
 sensor = ColorSensor(Port.B)
 sensor.detectable_colors([Color.GREEN, Color.RED, Color.NONE])
 
+# Battery monitoring
+BATTERY_LOW_MV = 7200
+CHECK_INTERVAL_MS = 5000
+
+last_check = 0
+
 while True:
     # Try to detect motor if not yet connected
     if motor is None:
@@ -36,5 +42,15 @@ while True:
         if motor:
             motor.stop()
         hub.light.on(Color.RED)
+
+    # Battery check
+    last_check += 50
+    if last_check >= CHECK_INTERVAL_MS:
+        last_check = 0
+        voltage = hub.battery.voltage()
+        if voltage < BATTERY_LOW_MV:
+            hub.light.on(Color.YELLOW)
+            if motor:
+                motor.stop()
 
     wait(50)

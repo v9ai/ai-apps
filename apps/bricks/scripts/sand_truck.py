@@ -20,6 +20,15 @@ wait(500)
 SPEED = 1000        # degrees per second
 SLOW_SPEED = 100    # slowest speed for port D
 
+# Battery monitoring
+BATTERY_LOW_MV = 7200
+CHECK_INTERVAL_MS = 5000
+LOW_BATTERY_WARN_MS = 60000
+
+low_battery_timer = 0
+last_check = 0
+battery_warning = False
+
 while True:
     pressed = remote.buttons.pressed()
 
@@ -63,8 +72,22 @@ while True:
     else:
         motor_d.stop()
 
-    # Hub light mirrors state
-    if Button.LEFT_PLUS in pressed or Button.RIGHT_PLUS in pressed:
+    # Battery check
+    last_check += 50
+    if last_check >= CHECK_INTERVAL_MS:
+        last_check = 0
+        voltage = hub.battery.voltage()
+        if voltage >= BATTERY_LOW_MV:
+            low_battery_timer = 0
+            battery_warning = False
+        else:
+            low_battery_timer += CHECK_INTERVAL_MS
+            battery_warning = low_battery_timer <= LOW_BATTERY_WARN_MS
+
+    # Hub light mirrors state (battery warning overrides)
+    if battery_warning:
+        hub.light.on(Color.YELLOW)
+    elif Button.LEFT_PLUS in pressed or Button.RIGHT_PLUS in pressed:
         hub.light.on(Color.GREEN)
     elif Button.LEFT_MINUS in pressed or Button.RIGHT_MINUS in pressed:
         hub.light.on(Color.ORANGE)

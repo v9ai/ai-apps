@@ -33,8 +33,7 @@ const NAV_ITEMS = [
   { href: "/resume", label: "resume", icon: <ResumeIcon width={15} height={15} /> },
   { href: "/prompts", label: "prompts", icon: <MagicWandIcon width={15} height={15} /> },
   { href: "/chats", label: "query", icon: <ChatBubbleIcon width={15} height={15} /> },
-  // discovery.json is generated locally and committed — page works in production
-  { href: "/stack", label: "stack", icon: <LayersIcon width={15} height={15} /> },
+  { href: "/how-it-works", label: "how it works", icon: <LayersIcon width={15} height={15} /> },
 ];
 
 export function Sidebar() {

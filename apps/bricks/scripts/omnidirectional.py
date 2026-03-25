@@ -21,6 +21,15 @@ hub.light.on(Color.GREEN)
 
 SPEED = 100   # max power for all movements
 
+# Battery monitoring
+BATTERY_LOW_MV = 7200
+CHECK_INTERVAL_MS = 5000
+LOW_BATTERY_WARN_MS = 60000
+
+low_battery_timer = 0
+last_check = 0
+battery_warning = False
+
 # --- Main loop ---
 # Button map:
 #   RIGHT_PLUS  → all 4 wheels forward, max speed
@@ -31,6 +40,17 @@ SPEED = 100   # max power for all movements
 #   LEFT_MINUS  → only B (right_front) and D (right_rear) run forward
 while True:
     pressed = remote.buttons.pressed()
+
+    # CENTER button → emergency stop
+    if Button.CENTER in pressed:
+        left_front.dc(0)
+        left_rear.dc(0)
+        right_front.dc(0)
+        right_rear.dc(0)
+        hub.light.on(Color.RED)
+        remote.light.on(Color.RED)
+        wait(50)
+        continue
 
     if Button.RIGHT in pressed:
         # Tank turn right: left side forward, right side backward.
@@ -86,5 +106,20 @@ while True:
         right_front.dc(0)
         right_rear.dc(0)
         remote.light.on(Color.WHITE)
+
+    # Battery check
+    last_check += 20
+    if last_check >= CHECK_INTERVAL_MS:
+        last_check = 0
+        voltage = hub.battery.voltage()
+        if voltage >= BATTERY_LOW_MV:
+            low_battery_timer = 0
+            battery_warning = False
+        else:
+            low_battery_timer += CHECK_INTERVAL_MS
+            battery_warning = low_battery_timer <= LOW_BATTERY_WARN_MS
+
+    if battery_warning:
+        hub.light.on(Color.YELLOW)
 
     wait(20)

@@ -25,6 +25,15 @@ STEER_ANGLE = 45     # fixed 45° left/right
 
 was_steering = False
 
+# Battery monitoring
+BATTERY_LOW_MV = 7200
+CHECK_INTERVAL_MS = 5000
+LOW_BATTERY_WARN_MS = 60000
+
+low_battery_timer = 0
+last_check = 0
+battery_warning = False
+
 while True:
     pressed = remote.buttons.pressed()
 
@@ -59,8 +68,22 @@ while True:
             steering.run_target(STEER_SPEED, 0, then=Stop.HOLD, wait=False)
     was_steering = is_steering
 
-    # Hub light feedback
-    if Button.RIGHT_PLUS in pressed:
+    # Battery check
+    last_check += 50
+    if last_check >= CHECK_INTERVAL_MS:
+        last_check = 0
+        voltage = hub.battery.voltage()
+        if voltage >= BATTERY_LOW_MV:
+            low_battery_timer = 0
+            battery_warning = False
+        else:
+            low_battery_timer += CHECK_INTERVAL_MS
+            battery_warning = low_battery_timer <= LOW_BATTERY_WARN_MS
+
+    # Hub light feedback (battery warning overrides)
+    if battery_warning:
+        hub.light.on(Color.YELLOW)
+    elif Button.RIGHT_PLUS in pressed:
         hub.light.on(Color.GREEN)
     elif Button.RIGHT_MINUS in pressed:
         hub.light.on(Color.ORANGE)

@@ -20,8 +20,26 @@ wait(500)
 
 SPEED = 1000  # degrees per second (max)
 
+# Battery monitoring
+BATTERY_LOW_MV = 7200
+CHECK_INTERVAL_MS = 5000
+LOW_BATTERY_WARN_MS = 60000
+
+low_battery_timer = 0
+last_check = 0
+battery_warning = False
+
 while True:
     pressed = remote.buttons.pressed()
+
+    # CENTER button → emergency stop
+    if Button.CENTER in pressed:
+        left_motor.stop()
+        right_motor.stop()
+        hub.light.on(Color.RED)
+        remote.light.on(Color.RED)
+        wait(10)
+        continue
 
     # --- Left side buttons → left motor ---
     if Button.LEFT_PLUS in pressed:
@@ -43,5 +61,20 @@ while True:
         right_motor.run(-SPEED)     # backward
     else:
         right_motor.stop()
+
+    # Battery check
+    last_check += 10
+    if last_check >= CHECK_INTERVAL_MS:
+        last_check = 0
+        voltage = hub.battery.voltage()
+        if voltage >= BATTERY_LOW_MV:
+            low_battery_timer = 0
+            battery_warning = False
+        else:
+            low_battery_timer += CHECK_INTERVAL_MS
+            battery_warning = low_battery_timer <= LOW_BATTERY_WARN_MS
+
+    if battery_warning:
+        hub.light.on(Color.YELLOW)
 
     wait(10)
