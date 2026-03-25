@@ -941,8 +941,7 @@ def post_search(query, top, min_reactions, no_reposts):
 
 @main.command("contact-audit")
 @click.option("--threshold", "-t", default=0.35, show_default=True, help="Score threshold for keep/remove decision")
-@click.option("--dry-run", is_flag=True, default=False, help="Report only, don't update Neon")
-def contact_audit(threshold: float, dry_run: bool):
+def contact_audit(threshold: float):
     """Audit contacts by their LinkedIn post content — keep or remove.
 
     Scores each contact's posts for AI/ML relevance using embeddings + keyword signals.
@@ -951,11 +950,10 @@ def contact_audit(threshold: float, dry_run: bool):
     Examples:
         python -m cli contact-audit
         python -m cli contact-audit --threshold 0.40
-        python -m cli contact-audit --dry-run
     """
     from src.vectordb.audit import audit_contacts
 
-    results = audit_contacts(threshold=threshold, apply=not dry_run)
+    results = audit_contacts(threshold=threshold)
 
     if not results:
         return
@@ -970,7 +968,7 @@ def contact_audit(threshold: float, dry_run: bool):
     print(f"{'='*80}")
 
     if remove:
-        print(f"\n  REMOVE ({len(remove)} contacts, score < {threshold}):\n")
+        print(f"\n  REMOVED ({len(remove)} contacts, score < {threshold}):\n")
         for i, r in enumerate(remove, 1):
             print(f"  {i:3d}. {r.name} (score={r.final_score:.4f})")
             pos = r.position[:70] if r.position else ""
@@ -992,9 +990,7 @@ def contact_audit(threshold: float, dry_run: bool):
             print()
 
     print(f"{'─'*80}")
-    print(f"  Summary: Remove {len(remove)}, Keep {len(keep)}")
-    if dry_run and remove:
-        print(f"  Dry run — no changes made. Remove --dry-run to apply.")
+    print(f"  Summary: Removed {len(remove)}, Kept {len(keep)}")
     print()
 
 

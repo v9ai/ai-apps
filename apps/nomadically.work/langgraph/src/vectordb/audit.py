@@ -127,14 +127,14 @@ def _build_reason(signals: list[str], best_sim: float, num_relevant: int, num_po
 
 
 def audit_contacts(
-    threshold: float = 0.08,
-    apply: bool = False,
+    threshold: float = 0.35,
 ) -> list[AuditResult]:
     """Score contacts by their LinkedIn post content and decide keep/remove.
 
+    Contacts below threshold are automatically marked do_not_contact in Neon.
+
     Args:
-        threshold: Contacts scoring below this are marked for removal.
-        apply: If True, set do_not_contact=true in Neon for removed contacts.
+        threshold: Contacts scoring below this are removed.
 
     Returns:
         List of AuditResult, sorted by final_score ascending (worst first).
@@ -223,13 +223,10 @@ def audit_contacts(
     # Sort by score ascending (worst first)
     results.sort(key=lambda r: r.final_score)
 
-    # Apply changes to Neon if requested
-    if apply:
-        remove_ids = [r.neon_id for r in results if r.decision == "remove"]
-        if remove_ids:
-            _mark_do_not_contact(remove_ids)
-        else:
-            print("No contacts to remove.")
+    # Apply removals to Neon
+    remove_ids = [r.neon_id for r in results if r.decision == "remove"]
+    if remove_ids:
+        _mark_do_not_contact(remove_ids)
 
     return results
 

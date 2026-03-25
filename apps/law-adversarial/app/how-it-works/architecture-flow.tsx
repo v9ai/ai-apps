@@ -56,8 +56,9 @@ function AgentNode({ data }: { data: Record<string, unknown> }) {
       style={{
         padding: "10px 16px",
         borderRadius: 12,
-        background: `color-mix(in srgb, ${color} 8%, var(--color-background))`,
-        border: `1.5px solid color-mix(in srgb, ${color} 35%, transparent)`,
+        background: `color-mix(in srgb, ${color} 14%, var(--color-background))`,
+        border: `1.5px solid color-mix(in srgb, ${color} 45%, transparent)`,
+        boxShadow: `0 0 12px color-mix(in srgb, ${color} 15%, transparent), 0 1px 3px rgba(0,0,0,0.3)`,
         minWidth: 170,
         textAlign: "center",
         fontFamily: "var(--default-font-family, system-ui)",
@@ -70,7 +71,7 @@ function AgentNode({ data }: { data: Record<string, unknown> }) {
           style={{
             width: 32, height: 32, borderRadius: 8,
             display: "flex", alignItems: "center", justifyContent: "center",
-            background: `color-mix(in srgb, ${color} 15%, transparent)`,
+            background: `color-mix(in srgb, ${color} 22%, transparent)`,
             color, flexShrink: 0,
           }}
         >
@@ -81,7 +82,7 @@ function AgentNode({ data }: { data: Record<string, unknown> }) {
             {label}
           </div>
           {sublabel && (
-            <div style={{ fontSize: 10, color: "var(--gray-9)", marginTop: 1 }}>{sublabel}</div>
+            <div style={{ fontSize: 10, color: "var(--gray-10)", marginTop: 1 }}>{sublabel}</div>
           )}
         </div>
       </div>
@@ -101,8 +102,9 @@ function DataStoreNode({ data }: { data: Record<string, unknown> }) {
     <div
       style={{
         padding: "8px 14px", borderRadius: 8,
-        background: `color-mix(in srgb, ${color} 6%, var(--color-background))`,
-        border: `1.5px solid color-mix(in srgb, ${color} 25%, transparent)`,
+        background: `color-mix(in srgb, ${color} 10%, var(--color-background))`,
+        border: `1.5px solid color-mix(in srgb, ${color} 35%, transparent)`,
+        boxShadow: `0 0 8px color-mix(in srgb, ${color} 10%, transparent), 0 1px 2px rgba(0,0,0,0.25)`,
         minWidth: 140, textAlign: "center",
         fontFamily: "var(--default-font-family, system-ui)",
       }}
@@ -115,7 +117,7 @@ function DataStoreNode({ data }: { data: Record<string, unknown> }) {
         </div>
         <div>
           <div style={{ fontSize: 11, fontWeight: 600, color: "var(--gray-12)" }}>{label}</div>
-          {sublabel && <div style={{ fontSize: 9, color: "var(--gray-9)" }}>{sublabel}</div>}
+          {sublabel && <div style={{ fontSize: 9, color: "var(--gray-10)" }}>{sublabel}</div>}
         </div>
       </div>
       <Handle type="source" position={Position.Bottom} style={{ opacity: 0 }} />
@@ -132,8 +134,9 @@ function LoopNode({ data }: { data: Record<string, unknown> }) {
     <div
       style={{
         padding: "5px 12px", borderRadius: 20,
-        background: `color-mix(in srgb, ${color} 10%, var(--color-background))`,
-        border: `1.5px solid color-mix(in srgb, ${color} 30%, transparent)`,
+        background: `color-mix(in srgb, ${color} 16%, var(--color-background))`,
+        border: `1.5px solid color-mix(in srgb, ${color} 40%, transparent)`,
+        boxShadow: `0 0 10px color-mix(in srgb, ${color} 12%, transparent)`,
         display: "flex", alignItems: "center", gap: 5,
         fontFamily: "var(--default-font-family, system-ui)",
       }}
