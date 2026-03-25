@@ -216,19 +216,21 @@ export default function ApplicationsPage() {
                     <Text size="3" weight="bold">{app.position}</Text>
                     <Text size="2" color="gray">{app.company}</Text>
                   </Flex>
-                  <Select.Root
-                    value={app.status}
-                    onValueChange={(v) => handleStatusChange(app.id, v)}
-                  >
-                    <Select.Trigger variant="ghost" />
-                    <Select.Content>
-                      {STATUS_OPTIONS.map((s) => (
-                        <Select.Item key={s} value={s}>
-                          {s.charAt(0).toUpperCase() + s.slice(1)}
-                        </Select.Item>
-                      ))}
-                    </Select.Content>
-                  </Select.Root>
+                  <div onClick={(e) => e.preventDefault()}>
+                    <Select.Root
+                      value={app.status}
+                      onValueChange={(v) => handleStatusChange(app.id, v)}
+                    >
+                      <Select.Trigger variant="ghost" />
+                      <Select.Content>
+                        {STATUS_OPTIONS.map((s) => (
+                          <Select.Item key={s} value={s}>
+                            {s.charAt(0).toUpperCase() + s.slice(1)}
+                          </Select.Item>
+                        ))}
+                      </Select.Content>
+                    </Select.Root>
+                  </div>
                 </Flex>
                 <Flex gap="2" align="center" wrap="wrap">
                   <Badge color={STATUS_COLORS[app.status] || "gray"} variant="soft">
@@ -241,7 +243,7 @@ export default function ApplicationsPage() {
                   )}
                 </Flex>
                 {app.url && (
-                  <a href={app.url} target="_blank" rel="noopener noreferrer" className="apps-link">
+                  <a href={app.url} target="_blank" rel="noopener noreferrer" className="apps-link" onClick={(e) => e.stopPropagation()}>
                     View posting &rarr;
                   </a>
                 )}
@@ -255,12 +257,13 @@ export default function ApplicationsPage() {
                     size="1"
                     variant="ghost"
                     color="red"
-                    onClick={() => handleDelete(app.id)}
+                    onClick={(e) => { e.preventDefault(); handleDelete(app.id); }}
                   >
                     Delete
                   </Button>
                 </Flex>
               </Flex>
+              </Link>
             </Card>
           ))}
         </div>
