@@ -941,21 +941,21 @@ def post_search(query, top, min_reactions, no_reposts):
 
 @main.command("contact-audit")
 @click.option("--threshold", "-t", default=0.35, show_default=True, help="Score threshold for keep/remove decision")
-@click.option("--apply", is_flag=True, default=False, help="Write do_not_contact=true to Neon for removed contacts")
-def contact_audit(threshold: float, apply: bool):
+@click.option("--dry-run", is_flag=True, default=False, help="Report only, don't update Neon")
+def contact_audit(threshold: float, dry_run: bool):
     """Audit contacts by their LinkedIn post content — keep or remove.
 
     Scores each contact's posts for AI/ML relevance using embeddings + keyword signals.
-    Contacts below threshold are marked for removal.
+    Contacts below threshold are marked do_not_contact in Neon.
 
     Examples:
         python -m cli contact-audit
-        python -m cli contact-audit --threshold 0.05
-        python -m cli contact-audit --apply
+        python -m cli contact-audit --threshold 0.40
+        python -m cli contact-audit --dry-run
     """
     from src.vectordb.audit import audit_contacts
 
-    results = audit_contacts(threshold=threshold, apply=apply)
+    results = audit_contacts(threshold=threshold, apply=not dry_run)
 
     if not results:
         return
@@ -993,8 +993,8 @@ def contact_audit(threshold: float, apply: bool):
 
     print(f"{'─'*80}")
     print(f"  Summary: Remove {len(remove)}, Keep {len(keep)}")
-    if not apply and remove:
-        print(f"  Run with --apply to mark {len(remove)} contacts as do_not_contact")
+    if dry_run and remove:
+        print(f"  Dry run — no changes made. Remove --dry-run to apply.")
     print()
 
 

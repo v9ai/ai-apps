@@ -109,15 +109,18 @@ const LESSON_SLUGS = [
   "langgraph-red-teaming",
   "llamaindex",
   "ai-engineer-roadmap",
-  // Cloud & DevOps (63-70)
+  // Cloud Platforms (63-67)
   "aws",
   "azure",
   "gcp",
   "docker",
   "kubernetes",
+  // Software Engineering (68-72)
   "microservices",
   "ci-cd",
   "nodejs",
+  "solid-principles",
+  "acid-properties",
 ];
 
 export const LESSON_NUMBER: Record<string, number> = Object.fromEntries(
@@ -135,7 +138,8 @@ export const CATEGORIES: [number, number, string][] = [
   [45, 51, "Safety & Alignment"],
   [52, 55, "Multimodal AI"],
   [56, 62, "Applied AI & Production"],
-  [63, 70, "Cloud & DevOps"],
+  [63, 67, "Cloud Platforms"],
+  [68, 72, "Software Engineering"],
 ];
 
 export const CATEGORY_META: Record<string, CategoryMeta> = {
@@ -209,12 +213,19 @@ export const CATEGORY_META: Record<string, CategoryMeta> = {
     gradient: ["#64748b", "#94a3b8"],
     outcomes: ["Apply context engineering patterns", "Build with LangGraph and LlamaIndex", "Plan your AI engineer career path"],
   },
-  "Cloud & DevOps": {
-    slug: "cloud-devops",
+  "Cloud Platforms": {
+    slug: "cloud-platforms",
     icon: "☁",
-    description: "Cloud platforms, containers, CI/CD, and the infrastructure backbone for AI systems",
+    description: "Cloud providers, containers, and orchestration — the infrastructure backbone for AI systems",
     gradient: ["#0284c7", "#38bdf8"],
-    outcomes: ["Deploy on AWS, Azure, and GCP", "Containerize with Docker and Kubernetes", "Set up CI/CD and microservice architectures"],
+    outcomes: ["Deploy on AWS, Azure, and GCP", "Containerize with Docker", "Orchestrate with Kubernetes"],
+  },
+  "Software Engineering": {
+    slug: "software-engineering",
+    icon: "🏗",
+    description: "Timeless engineering principles — SOLID design, ACID guarantees, and production architecture",
+    gradient: ["#475569", "#94a3b8"],
+    outcomes: ["Apply SOLID principles to real codebases", "Understand ACID transaction guarantees", "Design microservices and CI/CD pipelines"],
   },
 };
 

@@ -1,6 +1,6 @@
 # Knowledge
 
-AI engineering educational platform — 70 lessons across 11 categories with search, audio, knowledge graphs, and learning analytics.
+AI engineering educational platform — 72 lessons across 12 categories with search, audio, knowledge graphs, and learning analytics.
 
 ## Stack
 
@@ -331,7 +331,7 @@ apps/knowledge/
 │   ├── audio-player.tsx    # TTS audio playback
 │   ├── toc.tsx             # Auto-generated ToC
 │   └── ...
-├── content/                # 70 markdown lesson files
+├── content/                # 72 markdown lesson files
 ├── src/db/
 │   ├── index.ts            # Neon serverless client
 │   └── schema.ts           # Drizzle schema (17 tables)
