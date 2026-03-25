@@ -1,50 +1,14 @@
 import { CLOUDFLARE_ACCOUNT_ID, CLOUDFLARE_WORKERS_AI_KEY } from "@/config/env";
 
-export const SKILLS_VECTOR_STORE_NAME = "skills";
-export const SKILLS_VECTOR_INDEX = "skills_taxonomy";
-
 export type EmbeddingVector = number[];
 
-// Re-export Cloudflare config for use in other skill modules
 export { CLOUDFLARE_ACCOUNT_ID, CLOUDFLARE_WORKERS_AI_KEY };
-
-export type VectorQueryResult = {
-  id: string;
-  score: number;
-  metadata?: Record<string, unknown>;
-};
-
-interface VectorStore {
-  query(params: {
-    indexName: string;
-    queryVector: number[];
-    topK: number;
-  }): Promise<VectorQueryResult[]>;
-}
-
-// Vector storage now managed via D1 Vectorize
-// This is a placeholder for the vector store interface
-let skillsVector: VectorStore | null = null;
-
-/**
- * Get the skills vector store instance
- * @deprecated Vector storage moved to D1 Vectorize
- */
-export function getSkillsVector(): VectorStore {
-  if (!skillsVector) {
-    throw new Error(
-      "Skills vector store not initialized. Vector storage has been moved to D1 Vectorize.",
-    );
-  }
-  return skillsVector;
-}
 
 /**
  * Embeds text using Cloudflare Workers AI:
- *   cloudflare-workers-ai/@cf/baai/bge-small-en-v1.5
+ *   @cf/baai/bge-small-en-v1.5
  *
- * Notes:
- * - The underlying model outputs 384-dim vectors and has a 512 token input limit. (Chunk long inputs.)
+ * Outputs 384-dim vectors, 512 token input limit.
  */
 export async function embedWithCloudflareBgeSmall(
   values: string[],
@@ -59,7 +23,6 @@ export async function embedWithCloudflareBgeSmall(
     );
   }
 
-  // Call Cloudflare Workers AI API directly to avoid AI SDK compatibility issues
   const response = await fetch(
     `https://api.cloudflare.com/client/v4/accounts/${CLOUDFLARE_ACCOUNT_ID}/ai/run/@cf/baai/bge-small-en-v1.5`,
     {
@@ -82,7 +45,6 @@ export async function embedWithCloudflareBgeSmall(
     result?: { shape: number[]; data: number[][] };
   };
 
-  // Cloudflare returns { result: { shape: [n, 384], data: [[...], [...]] } }
   if (!result.success || !result.result?.data) {
     throw new Error(
       `Unexpected Cloudflare API response: ${JSON.stringify(result)}`,
@@ -90,12 +52,4 @@ export async function embedWithCloudflareBgeSmall(
   }
 
   return result.result.data;
-}
-
-// Note: Vector index management is now handled externally via D1 Vectorize
-// This function is deprecated
-export async function ensureSkillsVectorIndex(): Promise<void> {
-  console.warn(
-    "ensureSkillsVectorIndex is deprecated - vector storage moved to D1 Vectorize",
-  );
 }

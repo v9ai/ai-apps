@@ -2,7 +2,7 @@
   "name": "bricks",
   "private": true,
   "scripts": {
-    "dev": "concurrently \"pnpm run next-dev\" \"pnpm run backend-dev\" \"pnpm run deploy-dev\"",
+    "dev": "concurrently \"pnpm run next-dev\" \"pnpm run backend-dev\" \"pnpm run deploy-dev\" \"pnpm run codegen-dev\"",
     "next-dev": "next dev --turbopack -p 3008",
     "backend-dev": "cd backend && uv run langgraph dev --no-browser --port 2025",
     "deploy-dev": "cd backend && uv run python deploy_server.py",

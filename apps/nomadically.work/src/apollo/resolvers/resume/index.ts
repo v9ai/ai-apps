@@ -29,7 +29,7 @@ export const resumeResolvers = {
       if (!context.userId) {
         throw new Error("Unauthorized");
       }
-      // No longer needed — Trigger.dev task handles full pipeline
+      // Stub — pipeline not connected
       return {
         success: true,
         status: "COMPLETE",

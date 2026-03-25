@@ -1,7 +1,5 @@
 import type { GraphQLContext } from "../../context";
 import { isAdminEmail } from "@/lib/admin";
-import { tasks } from "@trigger.dev/sdk/v3";
-import type { enhanceJobsOnDemand } from "@/trigger/enhance-all";
 
 const EMPTY_STATS = {
   enhanced: null,
@@ -15,11 +13,8 @@ const EMPTY_STATS = {
 /**
  * GraphQL mutation resolver: one-click enhancement + classification.
  *
- * 1. Fires off Trigger.dev enhancement (fan-out to individual ATS jobs) — fire-and-forget
- * 2. Calls the EU classifier Cloudflare Worker (waits for response)
- *
- * Both pipelines run concurrently. Enhancement enriches jobs from Greenhouse/Ashby APIs;
- * classification runs the centralized EU remote pipeline (workers/eu-classifier/).
+ * Calls the EU classifier Cloudflare Worker (waits for response).
+ * Classification runs the centralized EU remote pipeline (workers/eu-classifier/).
  */
 export async function processAllJobs(
   _parent: any,
@@ -54,21 +49,7 @@ export async function processAllJobs(
   const cronSecret = process.env.CRON_SECRET;
   const messages: string[] = [];
 
-  // --- Step 1: Trigger.dev enhancement (fire-and-forget) ---
-  try {
-    const handle = await tasks.trigger<typeof enhanceJobsOnDemand>(
-      "enhance-jobs-on-demand",
-      {},
-    );
-    console.log(`[ProcessAllJobs] Enhancement triggered: ${handle.id}`);
-    messages.push(`Enhancement triggered (run ${handle.id})`);
-  } catch (err) {
-    const msg = err instanceof Error ? err.message : String(err);
-    console.error(`[ProcessAllJobs] Enhancement trigger failed: ${msg}`);
-    messages.push(`Enhancement skipped: ${msg}`);
-  }
-
-  // --- Step 2: EU classifier worker ---
+  // --- EU classifier worker ---
   try {
     console.log(`[ProcessAllJobs] Triggering eu-classifier worker at ${workerUrl}`);
 
