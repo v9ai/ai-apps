@@ -1,11 +1,18 @@
 import type { Metadata } from "next";
 import { Suspense } from "react";
-import { Box, Container, Flex, Heading, Text } from "@radix-ui/themes";
+import { Box, Container, Flex, Heading, Text, Separator } from "@radix-ui/themes";
 import { Github } from "lucide-react";
 import { Logo } from "@/components/logo";
 import Link from "next/link";
 import { AuthButton } from "@/components/auth-button";
 import { HowItWorksClient } from "./how-it-works-client";
+import {
+  IngestionFlow,
+  PipelineFlow,
+  RetrievalFlow,
+  GuardFlow,
+  EmbeddingFlow,
+} from "./architecture-flow";
 
 export const metadata: Metadata = {
   title: "How It Works | Agentic Healthcare",
