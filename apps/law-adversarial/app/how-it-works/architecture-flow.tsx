@@ -159,8 +159,9 @@ function ParallelNode({ data }: { data: Record<string, unknown> }) {
     <div
       style={{
         padding: "5px 12px", borderRadius: 20,
-        background: `color-mix(in srgb, ${color} 10%, var(--color-background))`,
-        border: `1.5px solid color-mix(in srgb, ${color} 30%, transparent)`,
+        background: `color-mix(in srgb, ${color} 16%, var(--color-background))`,
+        border: `1.5px solid color-mix(in srgb, ${color} 40%, transparent)`,
+        boxShadow: `0 0 10px color-mix(in srgb, ${color} 12%, transparent)`,
         display: "flex", alignItems: "center", gap: 5,
         fontFamily: "var(--default-font-family, system-ui)",
       }}
@@ -194,7 +195,7 @@ const nodeTypes: NodeTypes = {
 const edgeDefaults = {
   type: "smoothstep" as const,
   markerEnd: { type: MarkerType.ArrowClosed, width: 14, height: 14 },
-  style: { strokeWidth: 1.5 },
+  style: { strokeWidth: 2 },
 };
 
 /* ─── Reusable Mini-Flow Wrapper ──────────────────────────────── *
@@ -222,7 +223,8 @@ function MiniFlow({ nodes, edges, height = 280 }: { nodes: Node[]; edges: Edge[]
         borderRadius: 12,
         overflow: "hidden",
         border: "1px solid var(--gray-a4)",
-        background: "var(--color-background)",
+        background: "color-mix(in srgb, var(--color-background) 95%, var(--gray-3))",
+        boxShadow: "inset 0 1px 2px rgba(0,0,0,0.2), 0 1px 3px rgba(0,0,0,0.15)",
       }}
     >
       <ReactFlow
@@ -231,6 +233,7 @@ function MiniFlow({ nodes, edges, height = 280 }: { nodes: Node[]; edges: Edge[]
         onNodesChange={onNodesChange}
         onEdgesChange={onEdgesChange}
         nodeTypes={nodeTypes}
+        colorMode="dark"
         fitView
         fitViewOptions={{ padding: 0.25 }}
         minZoom={0.4}
@@ -239,11 +242,10 @@ function MiniFlow({ nodes, edges, height = 280 }: { nodes: Node[]; edges: Edge[]
         proOptions={{ hideAttribution: false }}
         defaultEdgeOptions={{ type: "smoothstep" }}
       >
-        <Background gap={16} size={1} color="var(--gray-a3)" />
+        <Background gap={20} size={1} color="var(--gray-a3)" />
         <Controls
           showInteractive={false}
           position="bottom-left"
-          style={{ borderRadius: 8, border: "1px solid var(--gray-a4)", overflow: "hidden" }}
         />
       </ReactFlow>
     </div>
