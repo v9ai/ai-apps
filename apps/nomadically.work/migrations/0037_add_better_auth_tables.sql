@@ -5,7 +5,7 @@ CREATE TABLE IF NOT EXISTS "user" (
   "id" text PRIMARY KEY NOT NULL,
   "name" text NOT NULL,
   "email" text NOT NULL UNIQUE,
-  "email_verified" timestamp with time zone,
+  "email_verified" boolean NOT NULL DEFAULT false,
   "image" text,
   "created_at" timestamp with time zone NOT NULL DEFAULT now(),
   "updated_at" timestamp with time zone NOT NULL DEFAULT now()
