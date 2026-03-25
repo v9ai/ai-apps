@@ -1019,6 +1019,23 @@ export default function HowItWorksPage() {
       {/* Architecture */}
       <ArchitectureSection />
 
+      {/* Interactive architecture diagram */}
+      <div className={css({ mb: "12", maxW: "4xl", mx: "auto" })}>
+        <p
+          className={css({
+            fontSize: "xs",
+            color: "ink.faint",
+            textAlign: "center",
+            mb: "3",
+            fontFamily: "display",
+            fontWeight: "600",
+          })}
+        >
+          Drag nodes to rearrange. Scroll to zoom.
+        </p>
+        <ArchitectureFlow />
+      </div>
+
       {/* Pipelines */}
       <h2
         className={css({
@@ -1043,6 +1060,103 @@ export default function HowItWorksPage() {
         {PIPELINES.map((p) => (
           <PipelineCard key={p.id} pipeline={p} />
         ))}
+      </div>
+
+      {/* Interactive pipeline diagrams */}
+      <div className={css({ mt: "12", display: "flex", flexDir: "column", gap: "10" })}>
+        <h2
+          className={css({
+            fontSize: "2xl",
+            fontWeight: "900",
+            fontFamily: "display",
+            letterSpacing: "-0.02em",
+            color: "ink.primary",
+            textAlign: "center",
+          })}
+        >
+          Pipeline Flows
+        </h2>
+
+        {/* Video Analyzer */}
+        <section>
+          <h3
+            className={css({
+              fontSize: "lg",
+              fontWeight: "800",
+              fontFamily: "display",
+              color: "ink.primary",
+              mb: "1",
+            })}
+          >
+            <span style={{ color: "#E3000B" }}>1.</span> Video Analyzer
+          </h3>
+          <p className={css({ fontSize: "sm", color: "ink.muted", mb: "3", lineHeight: "1.5" })}>
+            Five sequential nodes: fetch YouTube data, classify the model, extract
+            parts, structure instructions, and generate build phases.
+          </p>
+          <VideoAnalyzerFlow />
+        </section>
+
+        {/* Topic Research */}
+        <section>
+          <h3
+            className={css({
+              fontSize: "lg",
+              fontWeight: "800",
+              fontFamily: "display",
+              color: "ink.primary",
+              mb: "1",
+            })}
+          >
+            <span style={{ color: "#006CB7" }}>2.</span> Topic Research
+          </h3>
+          <p className={css({ fontSize: "sm", color: "ink.muted", mb: "3", lineHeight: "1.5" })}>
+            Three nodes: parse Rebrickable MOC URLs, analyze shared techniques
+            across builds, and synthesize a builder-friendly summary.
+          </p>
+          <TopicResearchFlow />
+        </section>
+
+        {/* Part Discovery */}
+        <section>
+          <h3
+            className={css({
+              fontSize: "lg",
+              fontWeight: "800",
+              fontFamily: "display",
+              color: "ink.primary",
+              mb: "1",
+            })}
+          >
+            <span style={{ color: "#00852B" }}>3.</span> Part Discovery
+          </h3>
+          <p className={css({ fontSize: "sm", color: "ink.muted", mb: "3", lineHeight: "1.5" })}>
+            Classify a part number, generate 15 MOC builds that feature it,
+            rank by creativity, and cache results in Neon DB.
+          </p>
+          <PartDiscoveryFlow />
+        </section>
+
+        {/* MOC Parts List */}
+        <section>
+          <h3
+            className={css({
+              fontSize: "lg",
+              fontWeight: "800",
+              fontFamily: "display",
+              color: "ink.primary",
+              mb: "1",
+            })}
+          >
+            <span style={{ color: "#FE8A18" }}>4.</span> MOC Parts List
+          </h3>
+          <p className={css({ fontSize: "sm", color: "ink.muted", mb: "3", lineHeight: "1.5" })}>
+            Infer the build category, generate a bill of materials from a
+            curated catalog, validate and deduplicate, then enrich with
+            Rebrickable images.
+          </p>
+          <MocPartsFlow />
+        </section>
       </div>
 
       {/* Tech stack footer */}

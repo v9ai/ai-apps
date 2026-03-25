@@ -744,13 +744,33 @@ export function HowItWorksClient() {
       {/* Research pipeline graph */}
       <hr style={divider} />
       <h3 style={sectionHead}>Research Generation Pipeline</h3>
-      <p style={{ margin: "0 0 1.25rem", fontSize: "0.9rem", color: "var(--gray-a9, rgba(255,255,255,0.5))" }}>
-        Click any node — or use ← → keys — to inspect its implementation. Progress values are real numbers written to{" "}
+      <p style={{ margin: "0 0 0.75rem", fontSize: "0.82rem", color: "var(--gray-a7, rgba(255,255,255,0.35))" }}>
+        Drag nodes to rearrange. Scroll to zoom.
+      </p>
+      <PipelineFlow />
+      <p style={{ margin: "1.25rem 0 1.25rem", fontSize: "0.9rem", color: "var(--gray-a9, rgba(255,255,255,0.5))" }}>
+        Click any node below — or use ← → keys — to inspect its implementation. Progress values are real numbers written to{" "}
         <code>generation_jobs</code> and polled by the client every second.
       </p>
 
       {/* Enhancements 1, 2, 3, 5, 6, 7, 9 */}
       <ResearchPipelineGraph />
+
+      {/* Multi-source search diagram */}
+      <hr style={divider} />
+      <h3 style={sectionHead}>Multi-Source Search</h3>
+      <p style={{ margin: "0 0 1rem", fontSize: "0.9rem", color: "var(--gray-a9, rgba(255,255,255,0.5))" }}>
+        The <code>search</code> node fans out to three academic APIs with rate-limit delays, then merges and deduplicates ~2,350 candidates.
+      </p>
+      <SearchFlow />
+
+      {/* Extract & persist diagram */}
+      <hr style={divider} />
+      <h3 style={sectionHead}>Extract, Gate & Persist</h3>
+      <p style={{ margin: "0 0 1rem", fontSize: "0.9rem", color: "var(--gray-a9, rgba(255,255,255,0.5))" }}>
+        DeepSeek classifies each paper into 12 therapeutic domains. A three-gate filter (relevance, confidence, keyFindings) and blended score select the top 20 papers for storage.
+      </p>
+      <ExtractPersistFlow />
 
       {/* ReAct agent */}
       <hr style={divider} />
@@ -758,12 +778,22 @@ export function HowItWorksClient() {
       <p style={{ margin: "0 0 1.25rem", fontSize: "0.9rem", color: "var(--gray-a9, rgba(255,255,255,0.5))" }}>
         A separate Python LangGraph service answers user questions by reasoning over the research stored in pgvector.
       </p>
+      <RagAgentFlow />
+      <div style={{ height: "1rem" }} />
       <ReactAgentDiagram />
 
       {/* Technical stack — Enhancement 10: category filter */}
       <hr style={divider} />
       <h3 style={sectionHead}>Technical Foundations</h3>
       <TechFoundations />
+
+      {/* Data flow overview */}
+      <hr style={divider} />
+      <h3 style={sectionHead}>Data Flow</h3>
+      <p style={{ margin: "0 0 1rem", fontSize: "0.9rem", color: "var(--gray-a9, rgba(255,255,255,0.5))" }}>
+        How user actions propagate through the system: Neon Auth validates the session, Apollo GraphQL triggers the pipeline, and <code>generation_jobs</code> is polled every second for real-time progress.
+      </p>
+      <DataFlowDiagram />
 
       {/* Extra sections */}
       {extraSections.map((section, i) => (
