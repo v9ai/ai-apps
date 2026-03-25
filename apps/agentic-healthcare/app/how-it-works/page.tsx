@@ -156,6 +156,93 @@ export default function HowItWorksPage() {
         </Container>
       </Box>
 
+      {/* ── Interactive Architecture Diagrams ── */}
+      <Box py="6">
+        <Container size="3" px="4">
+          <Text size="2" color="gray" style={{ fontStyle: "italic" }}>
+            Drag nodes to rearrange. Scroll to zoom.
+          </Text>
+
+          <Separator size="4" my="5" />
+
+          {/* 1. Ingestion */}
+          <Flex direction="column" gap="3" mb="6">
+            <Heading size="5" style={{ letterSpacing: "-0.02em" }}>
+              PDF Ingestion Pipeline
+            </Heading>
+            <Text size="2" color="gray" style={{ maxWidth: 640, lineHeight: 1.65 }}>
+              Blood test PDFs are uploaded to R2, converted to markdown by LlamaParse,
+              parsed through a 3-tier cascade (HTML table, FormKeysValues, free-text),
+              then embedded with BGE 1024-dim and stored in Neon PostgreSQL.
+            </Text>
+            <IngestionFlow />
+          </Flex>
+
+          <Separator size="4" my="5" />
+
+          {/* 2. LangGraph Pipeline */}
+          <Flex direction="column" gap="3" mb="6">
+            <Heading size="5" style={{ letterSpacing: "-0.02em" }}>
+              LangGraph StateGraph Pipeline
+            </Heading>
+            <Text size="2" color="gray" style={{ maxWidth: 640, lineHeight: 1.65 }}>
+              Every chat query flows through 4 typed nodes: triage classifies intent
+              into 8 categories, retrieve routes to the right pgvector tables,
+              synthesize generates a clinical answer, and guard audits for safety.
+            </Text>
+            <PipelineFlow />
+          </Flex>
+
+          <Separator size="4" my="5" />
+
+          {/* 3. Retrieval Routing */}
+          <Flex direction="column" gap="3" mb="6">
+            <Heading size="5" style={{ letterSpacing: "-0.02em" }}>
+              Intent-Based Retrieval Routing
+            </Heading>
+            <Text size="2" color="gray" style={{ maxWidth: 640, lineHeight: 1.65 }}>
+              The triage intent fans out to different search strategies: marker queries
+              use hybrid search (0.7 cosine + 0.3 FTS), trajectory adds trend data,
+              general health fans out to all 6 entity tables, and safety refusals
+              skip retrieval entirely.
+            </Text>
+            <RetrievalFlow />
+          </Flex>
+
+          <Separator size="4" my="5" />
+
+          {/* 4. Safety Guard */}
+          <Flex direction="column" gap="3" mb="6">
+            <Heading size="5" style={{ letterSpacing: "-0.02em" }}>
+              Safety Guard Audit
+            </Heading>
+            <Text size="2" color="gray" style={{ maxWidth: 640, lineHeight: 1.65 }}>
+              Every synthesised response passes through a DeepSeek auditor checking
+              5 rules: no diagnosis, no prescription, physician referral required,
+              no PII leakage, no hallucination. Failed responses get disclaimers appended.
+            </Text>
+            <GuardFlow />
+          </Flex>
+
+          <Separator size="4" my="5" />
+
+          {/* 5. Embedding Strategy */}
+          <Flex direction="column" gap="3" mb="6">
+            <Heading size="5" style={{ letterSpacing: "-0.02em" }}>
+              Multi-Entity Embedding Strategy
+            </Heading>
+            <Text size="2" color="gray" style={{ maxWidth: 640, lineHeight: 1.65 }}>
+              Six entity types (tests, markers, health state, conditions, medications,
+              symptoms) each have dedicated formatters. All are embedded with BGE-large-en-v1.5
+              at 1024 dimensions and stored in paired pgvector tables with HNSW indexes.
+            </Text>
+            <EmbeddingFlow />
+          </Flex>
+
+          <Separator size="4" my="5" />
+        </Container>
+      </Box>
+
       <HowItWorksClient />
     </Box>
   );
