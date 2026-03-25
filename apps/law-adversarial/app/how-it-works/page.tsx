@@ -23,6 +23,7 @@ import {
   Minus,
   HardDrive,
 } from "lucide-react";
+import { ArchitectureFlow } from "./architecture-flow";
 
 export const metadata: Metadata = {
   title: "System Design | Brief Stress-Tester",
@@ -681,69 +682,16 @@ export default function HowItWorksPage() {
 
       <Separator size="4" />
 
-      {/* Architecture Overview */}
+      {/* Architecture Overview — Interactive React Flow Diagram */}
       <Box py="5">
-        <Card
-          style={{
-            background: "linear-gradient(135deg, var(--crimson-a2) 0%, var(--gray-a2) 100%)",
-            border: "1px solid var(--crimson-a3)",
-          }}
-        >
-          <Flex direction="column" gap="3">
-            <Heading size="4">Architecture at a Glance</Heading>
-            <pre
-              style={{
-                margin: 0,
-                padding: "14px 16px",
-                backgroundColor: "var(--gray-a2)",
-                borderRadius: 8,
-                fontSize: "0.7rem",
-                lineHeight: 1.8,
-                overflow: "auto",
-                border: "1px solid var(--gray-a3)",
-                fontFamily: "'SF Mono', 'Fira Code', monospace",
-                color: "var(--gray-12)",
-              }}
-            >
-              <code>{`Upload (PDF/DOCX) ──> parseBrief() ──> Supabase stress_test_sessions
-                                              │
-┌─────────────────────────────────────────────────────────────────────┐
-│  ADVERSARIAL DEBATE LOOP  (default: 3 rounds, sequential)          │
-│                                                                     │
-│    Attacker  (DeepSeek Reasoner)  ── finds weaknesses               │
-│        │                                                            │
-│        ▼                                                            │
-│    Defender  (Qwen-Plus)          ── rebuts or concedes             │
-│        │                                                            │
-│        ▼                                                            │
-│    Judge     (DeepSeek Chat)      ── verdict ──> findings table     │
-│        │                                         audit_trail table  │
-│        └── previousFindings[] accumulates across rounds             │
-└─────────────────────────────────────────────────────────────────────┘
-                                              │
-┌─────────────────────────────────────────────────────────────────────┐
-│  SPECIALIST AGENTS  (post-debate)                                   │
-│                                                                     │
-│    Citation Verifier  (Reasoner) ─┐                                 │
-│                                   ├── Promise.all()  (parallel)     │
-│    Jurisdiction Expert (Reasoner) ┘                                 │
-│                                                                     │
-│    Brief Rewriter     (Qwen)     ── runs last, needs Judge output   │
-└─────────────────────────────────────────────────────────────────────┘
-                                              │
-            SSE Polling (2 s) ◄── audit_trail ──► EventSource client
-                                              │
-┌─────────────────────────────────────────────────────────────────────┐
-│  LOCAL CANDLE SERVER  (optional, CANDLE_BASE_URL)                   │
-│                                                                     │
-│    phi-3.5-mini  ── Judge chat completions (when local)             │
-│    Embeddings    ── embedText() / embedBatch() for semantic search  │
-│                                                                     │
-│    Rust binary, OpenAI-compatible /v1 API, no GPU required          │
-└─────────────────────────────────────────────────────────────────────┘`}</code>
-            </pre>
-          </Flex>
-        </Card>
+        <Flex direction="column" gap="3">
+          <Heading size="4">Architecture at a Glance</Heading>
+          <Text size="2" color="gray" style={{ lineHeight: 1.6 }}>
+            Drag nodes to rearrange. Scroll to zoom. Click + drag empty
+            space to pan. Use the minimap (bottom-right) to navigate.
+          </Text>
+          <ArchitectureFlow />
+        </Flex>
       </Box>
 
       {/* Table of Contents */}
