@@ -1,6 +1,6 @@
 # Knowledge
 
-AI engineering educational platform — 72 lessons across 12 categories with search, audio, knowledge graphs, and learning analytics.
+AI engineering educational platform — 81 lessons across 13 categories with search, audio, knowledge graphs, and learning analytics.
 
 ## Stack
 
@@ -178,10 +178,23 @@ graph LR
         R3[Embeddings]
     end
 
-    subgraph Agents
+    subgraph Context["Context Engineering"]
+        C1[Context Engineering]
+        C2[Window Management]
+        C3[Memory Architectures]
+        C4[Prompt Caching]
+        C5[Dynamic Assembly]
+        C6[Compression]
+    end
+
+    subgraph Agents["Agents & Harnesses"]
         A1[Agent Architectures]
         A2[Tool Use]
         A3[Memory Systems]
+        A4[Agent Harnesses]
+        A5[Orchestration]
+        A6[Agent SDKs]
+        A7[Agent Debugging]
     end
 
     T1 -->|prerequisite| T3
@@ -190,9 +203,19 @@ graph LR
     T3 -->|builds_on| R1
     R3 -->|prerequisite| R1
     R1 -->|prerequisite| R2
-    T1 -->|prerequisite| A1
+    T1 -->|prerequisite| C1
+    C1 -->|prerequisite| C2
+    C1 -->|prerequisite| C3
+    C2 -->|related| C4
+    C3 -->|related| C5
+    C5 -->|related| C6
+    C1 -->|prerequisite| A1
     A1 -->|related| A2
     A1 -->|related| A3
+    A1 -->|prerequisite| A4
+    A4 -->|related| A5
+    A4 -->|related| A6
+    A5 -->|related| A7
 ```
 
 ## Eval Pipeline
@@ -331,7 +354,7 @@ apps/knowledge/
 │   ├── audio-player.tsx    # TTS audio playback
 │   ├── toc.tsx             # Auto-generated ToC
 │   └── ...
-├── content/                # 72 markdown lesson files
+├── content/                # 81 markdown lesson files
 ├── src/db/
 │   ├── index.ts            # Neon serverless client
 │   └── schema.ts           # Drizzle schema (17 tables)

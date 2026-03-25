@@ -66,14 +66,25 @@ const LESSON_SLUGS = [
   "dataset-curation",
   "continual-learning",
   "distillation-compression",
-  // Agents & Tool Use (26-31)
+  // Context Engineering (26-31)
+  "context-engineering",
+  "context-window-management",
+  "memory-architectures",
+  "prompt-caching",
+  "dynamic-context-assembly",
+  "context-compression",
+  // Agents & Harnesses (32-41)
   "function-calling",
   "agent-architectures",
   "multi-agent-systems",
   "agent-memory",
   "code-agents",
   "agent-evaluation",
-  // Evals & Testing (32-38)
+  "agent-harnesses",
+  "agent-orchestration",
+  "agent-sdks",
+  "agent-debugging",
+  // Evals & Testing (42-48)
   "eval-fundamentals",
   "benchmark-design",
   "llm-as-judge",
@@ -81,14 +92,14 @@ const LESSON_SLUGS = [
   "red-teaming",
   "eval-frameworks-comparison",
   "deepeval-synthesizer",
-  // Infrastructure & Deployment (39-44)
+  // Infrastructure & Deployment (49-54)
   "llm-serving",
   "scaling-load-balancing",
   "cost-optimization",
   "observability",
   "edge-deployment",
   "ai-gateway",
-  // Safety & Alignment (45-51)
+  // Safety & Alignment (55-61)
   "constitutional-ai",
   "guardrails-filtering",
   "hallucination-mitigation",
@@ -96,26 +107,25 @@ const LESSON_SLUGS = [
   "ai-governance",
   "interpretability",
   "ci-cd-ai",
-  // Multimodal AI (52-55)
+  // Multimodal AI (62-65)
   "vision-language-models",
   "audio-speech-ai",
   "ai-for-code",
   "conversational-ai",
-  // Applied AI & Production (56-62)
-  "context-engineering",
+  // Applied AI & Production (66-71)
   "search-recommendations",
   "production-patterns",
   "langgraph",
   "langgraph-red-teaming",
   "llamaindex",
   "ai-engineer-roadmap",
-  // Cloud Platforms (63-67)
+  // Cloud Platforms (72-76)
   "aws",
   "azure",
   "gcp",
   "docker",
   "kubernetes",
-  // Software Engineering (68-72)
+  // Software Engineering (77-81)
   "microservices",
   "ci-cd",
   "nodejs",
@@ -132,14 +142,15 @@ export const CATEGORIES: [number, number, string][] = [
   [8, 13, "Prompting & In-Context Learning"],
   [14, 19, "RAG & Retrieval"],
   [20, 25, "Fine-tuning & Training"],
-  [26, 31, "Agents & Tool Use"],
-  [32, 38, "Evals & Testing"],
-  [39, 44, "Infrastructure & Deployment"],
-  [45, 51, "Safety & Alignment"],
-  [52, 55, "Multimodal AI"],
-  [56, 62, "Applied AI & Production"],
-  [63, 67, "Cloud Platforms"],
-  [68, 72, "Software Engineering"],
+  [26, 31, "Context Engineering"],
+  [32, 41, "Agents & Harnesses"],
+  [42, 48, "Evals & Testing"],
+  [49, 54, "Infrastructure & Deployment"],
+  [55, 61, "Safety & Alignment"],
+  [62, 65, "Multimodal AI"],
+  [66, 71, "Applied AI & Production"],
+  [72, 76, "Cloud Platforms"],
+  [77, 81, "Software Engineering"],
 ];
 
 export const CATEGORY_META: Record<string, CategoryMeta> = {
@@ -171,12 +182,19 @@ export const CATEGORY_META: Record<string, CategoryMeta> = {
     gradient: ["#059669", "#34d399"],
     outcomes: ["Fine-tune with LoRA and QLoRA adapters", "Curate high-quality training datasets", "Apply RLHF and preference optimization"],
   },
-  "Agents & Tool Use": {
-    slug: "agents-tools",
+  "Context Engineering": {
+    slug: "context-engineering",
+    icon: "🧩",
+    description: "Master the discipline of designing what LLMs see — context windows, memory, caching, and dynamic assembly",
+    gradient: ["#0d9488", "#5eead4"],
+    outcomes: ["Design context window strategies and token budgets", "Implement memory architectures and prompt caching", "Build dynamic context assembly pipelines"],
+  },
+  "Agents & Harnesses": {
+    slug: "agents-harnesses",
     icon: "🤖",
-    description: "Build AI agents that can reason, use tools, and take actions autonomously",
+    description: "Build AI agents, harnesses, and orchestration systems that reason, act, and scale in production",
     gradient: ["#d97706", "#fbbf24"],
-    outcomes: ["Implement function calling and tool use", "Design multi-agent architectures", "Build code agents with memory systems"],
+    outcomes: ["Implement function calling and agent architectures", "Design harnesses with event loops and permission models", "Build orchestration, debugging, and SDK integration patterns"],
   },
   "Evals & Testing": {
     slug: "evals-testing",
