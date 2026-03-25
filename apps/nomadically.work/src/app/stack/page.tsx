@@ -1,68 +1,215 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useCallback } from "react";
+import {
+  ReactFlow,
+  Background,
+  Controls,
+  useNodesState,
+  useEdgesState,
+  type Node,
+  type Edge,
+  type NodeTypes,
+  type NodeMouseHandler,
+  Handle,
+  Position,
+  MarkerType,
+} from "@xyflow/react";
+import "@xyflow/react/dist/style.css";
+import "../how-it-works/flow-dark.css";
+import {
+  Globe,
+  Database,
+  Brain,
+  Search,
+  FileText,
+  Cpu,
+  Layers,
+  Workflow,
+  Zap,
+  Filter,
+  GitFork,
+  RefreshCw,
+} from "lucide-react";
 import { Badge, Container, Flex, Heading, Text, Card } from "@radix-ui/themes";
 import { LayersIcon, GitHubLogoIcon } from "@radix-ui/react-icons";
 
-// ── Types ────────────────────────────────────────────────────────────────────
+// ── Custom Node Components ───────────────────────────────────────────────────
+// Reused pattern from how-it-works/architecture-flow.tsx
 
-type NodeType = "start" | "end" | "process" | "ai";
+function AgentNode({ data }: { data: Record<string, unknown> }) {
+  const Icon = data.icon as React.ComponentType<{ size?: number }>;
+  const color = data.color as string;
+  const label = data.label as string;
+  const sublabel = data.sublabel as string | undefined;
 
-type PipelineNode = {
-  id: string;
-  label: string;
-  sublabel: string;
-  type: NodeType;
-  x: number;
-  y: number;
-  w: number;
-  color: string;
+  return (
+    <div
+      style={{
+        padding: "10px 16px",
+        borderRadius: 12,
+        background: `color-mix(in srgb, ${color} 14%, var(--color-background))`,
+        border: `1.5px solid color-mix(in srgb, ${color} 45%, transparent)`,
+        boxShadow: `0 0 12px color-mix(in srgb, ${color} 15%, transparent), 0 1px 3px rgba(0,0,0,0.3)`,
+        minWidth: 180,
+        textAlign: "center" as const,
+        fontFamily: "var(--default-font-family, system-ui)",
+      }}
+    >
+      <Handle type="target" position={Position.Top} style={{ opacity: 0 }} />
+      <Handle type="target" position={Position.Left} id="left" style={{ opacity: 0 }} />
+      <div style={{ display: "flex", alignItems: "center", justifyContent: "center", gap: 8 }}>
+        <div
+          style={{
+            width: 32,
+            height: 32,
+            borderRadius: 8,
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "center",
+            background: `color-mix(in srgb, ${color} 22%, transparent)`,
+            color,
+            flexShrink: 0,
+          }}
+        >
+          <Icon size={16} />
+        </div>
+        <div style={{ textAlign: "left" }}>
+          <div style={{ fontSize: 13, fontWeight: 600, color: "var(--gray-12)", lineHeight: 1.3 }}>
+            {label}
+          </div>
+          {sublabel && (
+            <div style={{ fontSize: 10, color: "var(--gray-10)", marginTop: 1 }}>{sublabel}</div>
+          )}
+        </div>
+      </div>
+      <Handle type="source" position={Position.Bottom} style={{ opacity: 0 }} />
+      <Handle type="source" position={Position.Right} id="right" style={{ opacity: 0 }} />
+    </div>
+  );
+}
+
+function DataStoreNode({ data }: { data: Record<string, unknown> }) {
+  const Icon = data.icon as React.ComponentType<{ size?: number }>;
+  const color = data.color as string;
+  const label = data.label as string;
+  const sublabel = data.sublabel as string | undefined;
+
+  return (
+    <div
+      style={{
+        padding: "8px 14px",
+        borderRadius: 8,
+        background: `color-mix(in srgb, ${color} 10%, var(--color-background))`,
+        border: `1.5px solid color-mix(in srgb, ${color} 35%, transparent)`,
+        boxShadow: `0 0 8px color-mix(in srgb, ${color} 10%, transparent), 0 1px 2px rgba(0,0,0,0.25)`,
+        minWidth: 140,
+        textAlign: "center" as const,
+        fontFamily: "var(--default-font-family, system-ui)",
+      }}
+    >
+      <Handle type="target" position={Position.Top} style={{ opacity: 0 }} />
+      <Handle type="target" position={Position.Left} id="left" style={{ opacity: 0 }} />
+      <div style={{ display: "flex", alignItems: "center", justifyContent: "center", gap: 6 }}>
+        <div style={{ color, flexShrink: 0, display: "flex" }}>
+          <Icon size={14} />
+        </div>
+        <div>
+          <div style={{ fontSize: 11, fontWeight: 600, color: "var(--gray-12)" }}>{label}</div>
+          {sublabel && <div style={{ fontSize: 9, color: "var(--gray-10)" }}>{sublabel}</div>}
+        </div>
+      </div>
+      <Handle type="source" position={Position.Bottom} style={{ opacity: 0 }} />
+      <Handle type="source" position={Position.Right} id="right" style={{ opacity: 0 }} />
+    </div>
+  );
+}
+
+function ConditionNode({ data }: { data: Record<string, unknown> }) {
+  const color = data.color as string;
+  const label = data.label as string;
+
+  return (
+    <div
+      style={{
+        padding: "5px 12px",
+        borderRadius: 20,
+        background: `color-mix(in srgb, ${color} 16%, var(--color-background))`,
+        border: `1.5px solid color-mix(in srgb, ${color} 40%, transparent)`,
+        boxShadow: `0 0 10px color-mix(in srgb, ${color} 12%, transparent)`,
+        display: "flex",
+        alignItems: "center",
+        gap: 5,
+        fontFamily: "var(--default-font-family, system-ui)",
+      }}
+    >
+      <Handle type="target" position={Position.Top} style={{ opacity: 0 }} />
+      <Handle type="target" position={Position.Left} id="left" style={{ opacity: 0 }} />
+      <Filter size={12} style={{ color }} />
+      <span style={{ fontSize: 10, fontWeight: 600, color }}>{label}</span>
+      <Handle type="source" position={Position.Bottom} style={{ opacity: 0 }} />
+      <Handle type="source" position={Position.Right} id="right" style={{ opacity: 0 }} />
+    </div>
+  );
+}
+
+function ParallelNode({ data }: { data: Record<string, unknown> }) {
+  const color = data.color as string;
+  const label = data.label as string;
+
+  return (
+    <div
+      style={{
+        padding: "5px 12px",
+        borderRadius: 20,
+        background: `color-mix(in srgb, ${color} 16%, var(--color-background))`,
+        border: `1.5px solid color-mix(in srgb, ${color} 40%, transparent)`,
+        boxShadow: `0 0 10px color-mix(in srgb, ${color} 12%, transparent)`,
+        display: "flex",
+        alignItems: "center",
+        gap: 5,
+        fontFamily: "var(--default-font-family, system-ui)",
+      }}
+    >
+      <Handle type="target" position={Position.Top} style={{ opacity: 0 }} />
+      <GitFork size={12} style={{ color }} />
+      <span style={{ fontSize: 10, fontWeight: 600, color }}>{label}</span>
+      <Handle type="source" position={Position.Bottom} style={{ opacity: 0 }} />
+      <Handle type="source" position={Position.Right} id="right" style={{ opacity: 0 }} />
+    </div>
+  );
+}
+
+// ── Node Types ───────────────────────────────────────────────────────────────
+
+const nodeTypes: NodeTypes = {
+  agent: AgentNode,
+  dataStore: DataStoreNode,
+  condition: ConditionNode,
+  parallel: ParallelNode,
+};
+
+// ── Shared Edge Defaults ─────────────────────────────────────────────────────
+
+const edgeDefaults = {
+  type: "smoothstep" as const,
+  markerEnd: { type: MarkerType.ArrowClosed, width: 14, height: 14 },
+  style: { strokeWidth: 2 },
+};
+
+// ── Node Detail Data ─────────────────────────────────────────────────────────
+
+type NodeDetail = {
   description: string;
   tech: { name: string; version?: string }[];
   dataIn: string;
   dataOut: string;
   insight: string;
+  color: string;
 };
 
-type PipelineEdge = {
-  from: string;
-  to: string;
-  path: string;
-  label?: string;
-  labelX?: number;
-  labelY?: number;
-  dashed?: boolean;
-};
-
-// ── Node Data ────────────────────────────────────────────────────────────────
-
-const NODE_H = 52;
-
-const NODES: PipelineNode[] = [
-  {
-    id: "__start__",
-    label: "START",
-    sublabel: "",
-    type: "start",
-    x: 360,
-    y: 30,
-    w: 0,
-    color: "green",
-    description: "",
-    tech: [],
-    dataIn: "",
-    dataOut: "",
-    insight: "",
-  },
-  {
-    id: "discover",
-    label: "Discover",
-    sublabel: "Board Crawl",
-    type: "process",
-    x: 360,
-    y: 130,
-    w: 200,
-    color: "green",
+const nodeDetails: Record<string, NodeDetail> = {
+  discover: {
     description:
       "Crawl Common Crawl CDX index to discover Ashby job boards. Greenhouse and Lever boards are registered via API discovery or manual entry.",
     tech: [
@@ -72,18 +219,10 @@ const NODES: PipelineNode[] = [
     ],
     dataIn: "Common Crawl web archives",
     dataOut: "Discovered ATS board URLs",
-    insight:
-      "Automated board discovery via web archive analysis reduces manual registration to near-zero",
+    insight: "Automated board discovery via web archive analysis reduces manual registration to near-zero",
+    color: "red",
   },
-  {
-    id: "ingest",
-    label: "Ingest",
-    sublabel: "ATS APIs",
-    type: "process",
-    x: 360,
-    y: 240,
-    w: 200,
-    color: "blue",
+  ingest: {
     description:
       "Pull job listings from ATS platforms (Greenhouse, Lever, Ashby) into Neon PostgreSQL. A unified ingestion layer normalizes data from 3 different API formats into one schema.",
     tech: [
@@ -95,18 +234,23 @@ const NODES: PipelineNode[] = [
     ],
     dataIn: "ATS board URLs",
     dataOut: "Raw job records in Neon",
-    insight:
-      "Unified ingestion normalizes 3 different ATS API formats into a single Drizzle schema",
+    insight: "Unified ingestion normalizes 3 different ATS API formats into a single Drizzle schema",
+    color: "orange",
   },
-  {
-    id: "enhance",
-    label: "Enhance",
-    sublabel: "Job Details",
-    type: "process",
-    x: 360,
-    y: 350,
-    w: 200,
-    color: "blue",
+  "neon-jobs": {
+    description:
+      "Neon PostgreSQL stores all job data — raw listings, classifications, skill tags, and company info. Accessed via Drizzle ORM with type-safe schema.",
+    tech: [
+      { name: "Neon PostgreSQL" },
+      { name: "Drizzle ORM" },
+      { name: "@neondatabase/serverless" },
+    ],
+    dataIn: "Structured job data from ingestion",
+    dataOut: "Queryable job records for all downstream steps",
+    insight: "Serverless PostgreSQL with branching — zero cold starts, auto-scaling",
+    color: "green",
+  },
+  enhance: {
     description:
       "Fetch full job details — descriptions, requirements, benefits, locations — from ATS APIs for each discovered job. Runs as background tasks with concurrency limits and retry logic.",
     tech: [
@@ -116,41 +260,57 @@ const NODES: PipelineNode[] = [
     ],
     dataIn: "Job IDs from ingestion",
     dataOut: "Enriched records with full descriptions",
-    insight:
-      "Batch processing with configurable concurrency and exponential backoff retry",
+    insight: "Batch processing with configurable concurrency and exponential backoff retry",
+    color: "orange",
   },
-  {
-    id: "classify",
-    label: "Classify",
-    sublabel: "Remote EU Detection",
-    type: "ai",
-    x: 360,
-    y: 460,
-    w: 200,
-    color: "violet",
+  "par-classify": {
     description:
-      "Use DeepSeek LLM to determine if a job is genuinely remote-friendly for EU-based workers. Schema-constrained output with Zod validation ensures structured, reliable classification.",
+      "Classification and EU validation run in parallel via Promise.all() for throughput. Both write results back to the same job record in PostgreSQL.",
+    tech: [{ name: "Promise.all()" }, { name: "Parallel workers" }],
+    dataIn: "Unclassified jobs from queue",
+    dataOut: "Parallel classification + EU validation",
+    insight: "Parallel execution doubles throughput for the classification bottleneck",
+    color: "purple",
+  },
+  classify: {
+    description:
+      "Use DeepSeek LLM to classify job category, extract skills, and determine seniority. Schema-constrained output with Zod validation ensures structured results.",
     tech: [
       { name: "DeepSeek AI", version: "2.0" },
       { name: "Vercel AI SDK" },
       { name: "Zod" },
+      { name: "LangGraph" },
     ],
     dataIn: "Job description text",
-    dataOut: "is_remote_eu boolean + confidence score",
-    insight:
-      "Schema-constrained LLM output prevents hallucination; eval-first approach with 80%+ accuracy bar",
+    dataOut: "Category + skills + confidence score",
+    insight: "Schema-constrained LLM output prevents hallucination; eval-first approach with 80%+ accuracy bar",
+    color: "amber",
   },
-  {
-    id: "extract",
-    label: "Extract Skills",
-    sublabel: "LLM Pipeline",
-    type: "ai",
-    x: 360,
-    y: 580,
-    w: 200,
-    color: "violet",
+  "eu-validate": {
     description:
-      "Extract technical skills and requirements from job descriptions using an LLM pipeline. All extracted skills are validated against a curated taxonomy to prevent drift.",
+      "Validate whether a job is genuinely remote-friendly for EU-based workers. Checks location requirements, visa needs, timezone constraints, and legal entity presence.",
+    tech: [
+      { name: "EU classifier" },
+      { name: "Rule engine" },
+      { name: "LLM validation" },
+    ],
+    dataIn: "Job location + requirements",
+    dataOut: "is_remote_eu boolean + reasoning",
+    insight: "Combines rule-based checks with LLM reasoning for higher accuracy than either alone",
+    color: "blue",
+  },
+  "is-remote-eu": {
+    description:
+      "Conditional filter: only jobs classified as genuinely remote-friendly for EU workers proceed to skill extraction and serving. Non-qualifying jobs are stored but not surfaced.",
+    tech: [{ name: "Boolean filter" }],
+    dataIn: "Classification result",
+    dataOut: "Qualified jobs → next step, others → filtered",
+    insight: "This filter is the core value proposition — surfacing only truly EU-remote jobs",
+    color: "crimson",
+  },
+  extract: {
+    description:
+      "Extract technical skills from job descriptions using an LLM pipeline. All extracted skills are validated against a curated taxonomy to prevent drift and ensure consistency.",
     tech: [
       { name: "LLM pipeline" },
       { name: "Skill taxonomy" },
@@ -158,18 +318,19 @@ const NODES: PipelineNode[] = [
     ],
     dataIn: "Job description text",
     dataOut: "Structured skill tags in Neon",
-    insight:
-      "Grounding-first: skills validated against curated taxonomy prevents semantic drift",
+    insight: "Grounding-first: skills validated against curated taxonomy prevents semantic drift",
+    color: "amber",
   },
-  {
-    id: "serve",
-    label: "Serve",
-    sublabel: "GraphQL + UI",
-    type: "process",
-    x: 220,
-    y: 710,
-    w: 180,
-    color: "indigo",
+  "fan-out": {
+    description:
+      "After skill extraction, enriched jobs fan out to two parallel consumers: the GraphQL API for serving and the vector store for resume matching.",
+    tech: [{ name: "Fan-out pattern" }],
+    dataIn: "Enriched + classified + skill-tagged jobs",
+    dataOut: "Parallel paths: serve + match",
+    insight: "Decoupled consumers allow serving and matching to scale independently",
+    color: "purple",
+  },
+  serve: {
     description:
       "Apollo Server 5 GraphQL API serves classified, skill-tagged jobs to the Next.js frontend. DataLoaders prevent N+1 queries. Typed resolvers from codegen ensure end-to-end type safety.",
     tech: [
@@ -178,22 +339,13 @@ const NODES: PipelineNode[] = [
       { name: "DataLoader" },
       { name: "Next.js", version: "16" },
       { name: "React", version: "19" },
-      { name: "Radix UI" },
     ],
     dataIn: "User queries (filters, search, pagination)",
     dataOut: "Paginated job listings + skill data",
-    insight:
-      "DataLoaders batch and cache DB queries; typed resolvers prevent runtime mismatches",
+    insight: "DataLoaders batch and cache DB queries; typed resolvers prevent runtime mismatches",
+    color: "blue",
   },
-  {
-    id: "match",
-    label: "Match",
-    sublabel: "Resume RAG",
-    type: "ai",
-    x: 500,
-    y: 710,
-    w: 180,
-    color: "violet",
+  match: {
     description:
       "Vector similarity search matches user resumes against job requirements and extracted skills. Semantic matching goes beyond keyword overlap to surface truly relevant positions.",
     tech: [
@@ -203,406 +355,269 @@ const NODES: PipelineNode[] = [
     ],
     dataIn: "Resume text + job skill vectors",
     dataOut: "Ranked job matches by similarity",
-    insight:
-      "Semantic vector matching finds relevant jobs that keyword search would miss",
+    insight: "Semantic vector matching finds relevant jobs that keyword search would miss",
+    color: "indigo",
+  },
+};
+
+// ── Pipeline Graph Nodes ─────────────────────────────────────────────────────
+
+const pipelineNodes: Node[] = [
+  {
+    id: "discover",
+    type: "agent",
+    position: { x: 0, y: 0 },
+    data: {
+      label: "Discover",
+      sublabel: "Common Crawl + ATS APIs",
+      icon: Globe,
+      color: "var(--red-9)",
+    },
   },
   {
-    id: "__end__",
-    label: "END",
-    sublabel: "",
-    type: "end",
-    x: 360,
-    y: 840,
-    w: 0,
-    color: "gray",
-    description: "",
-    tech: [],
-    dataIn: "",
-    dataOut: "",
-    insight: "",
+    id: "ingest",
+    type: "agent",
+    position: { x: 0, y: 120 },
+    data: {
+      label: "Ingest",
+      sublabel: "Greenhouse / Lever / Ashby",
+      icon: Layers,
+      color: "var(--orange-9)",
+    },
+  },
+  {
+    id: "neon-jobs",
+    type: "dataStore",
+    position: { x: 20, y: 240 },
+    data: {
+      label: "Neon PostgreSQL",
+      sublabel: "jobs + companies",
+      icon: Database,
+      color: "var(--green-9)",
+    },
+  },
+  {
+    id: "enhance",
+    type: "agent",
+    position: { x: 0, y: 340 },
+    data: {
+      label: "Enhance",
+      sublabel: "Full job details from ATS",
+      icon: Zap,
+      color: "var(--orange-9)",
+    },
+  },
+  {
+    id: "par-classify",
+    type: "parallel",
+    position: { x: 40, y: 460 },
+    data: { label: "Promise.all()", color: "var(--purple-9)" },
+  },
+  {
+    id: "classify",
+    type: "agent",
+    position: { x: -120, y: 520 },
+    data: {
+      label: "Classify",
+      sublabel: "DeepSeek + LangGraph",
+      icon: Brain,
+      color: "var(--amber-9)",
+    },
+  },
+  {
+    id: "eu-validate",
+    type: "agent",
+    position: { x: 150, y: 520 },
+    data: {
+      label: "EU Validator",
+      sublabel: "Remote EU compatibility",
+      icon: Globe,
+      color: "var(--blue-9)",
+    },
+  },
+  {
+    id: "is-remote-eu",
+    type: "condition",
+    position: { x: 30, y: 650 },
+    data: { label: "is_remote_eu?", color: "var(--crimson-9)" },
+  },
+  {
+    id: "extract",
+    type: "agent",
+    position: { x: 0, y: 740 },
+    data: {
+      label: "Extract Skills",
+      sublabel: "LLM + taxonomy validation",
+      icon: FileText,
+      color: "var(--amber-9)",
+    },
+  },
+  {
+    id: "fan-out",
+    type: "parallel",
+    position: { x: 40, y: 860 },
+    data: { label: "fan-out", color: "var(--purple-9)" },
+  },
+  {
+    id: "serve",
+    type: "agent",
+    position: { x: -120, y: 940 },
+    data: {
+      label: "GraphQL API",
+      sublabel: "Apollo + Next.js frontend",
+      icon: Workflow,
+      color: "var(--blue-9)",
+    },
+  },
+  {
+    id: "match",
+    type: "agent",
+    position: { x: 150, y: 940 },
+    data: {
+      label: "Resume Match",
+      sublabel: "Vector similarity search",
+      icon: Search,
+      color: "var(--indigo-9)",
+    },
   },
 ];
 
-// ── Edge Data ────────────────────────────────────────────────────────────────
+// ── Pipeline Graph Edges ─────────────────────────────────────────────────────
 
-const EDGES: PipelineEdge[] = [
-  { from: "__start__", to: "discover", path: "M 360,44 L 360,104" },
-  { from: "discover", to: "ingest", path: "M 360,156 L 360,214" },
-  { from: "ingest", to: "enhance", path: "M 360,266 L 360,324" },
-  { from: "enhance", to: "classify", path: "M 360,376 L 360,434" },
+const pipelineEdges: Edge[] = [
   {
-    from: "classify",
-    to: "extract",
-    path: "M 360,486 L 360,554",
-    label: "is_remote_eu",
-    labelX: 268,
-    labelY: 524,
+    id: "e-discover-ingest",
+    source: "discover",
+    target: "ingest",
+    ...edgeDefaults,
+    label: "board URLs",
+    style: { ...edgeDefaults.style, stroke: "var(--red-8)" },
   },
   {
-    from: "classify",
-    to: "__end__",
-    path: "M 460,460 L 630,460 Q 650,460 650,480 L 650,820 Q 650,840 630,840 L 374,840",
-    label: "filtered",
-    labelX: 662,
-    labelY: 650,
-    dashed: true,
+    id: "e-ingest-neon",
+    source: "ingest",
+    target: "neon-jobs",
+    ...edgeDefaults,
+    label: "raw jobs",
+    style: { ...edgeDefaults.style, stroke: "var(--orange-8)" },
   },
   {
-    from: "extract",
-    to: "serve",
-    path: "M 360,606 C 360,650 220,650 220,684",
+    id: "e-neon-enhance",
+    source: "neon-jobs",
+    target: "enhance",
+    ...edgeDefaults,
+    label: "job IDs",
+    style: { ...edgeDefaults.style, stroke: "var(--green-8)" },
   },
   {
-    from: "extract",
-    to: "match",
-    path: "M 360,606 C 360,650 500,650 500,684",
+    id: "e-enhance-par",
+    source: "enhance",
+    target: "par-classify",
+    ...edgeDefaults,
+    label: "enriched jobs",
+    style: { ...edgeDefaults.style, stroke: "var(--orange-8)" },
   },
   {
-    from: "serve",
-    to: "__end__",
-    path: "M 220,736 C 220,790 360,790 360,826",
+    id: "e-par-classify",
+    source: "par-classify",
+    target: "classify",
+    ...edgeDefaults,
+    animated: true,
+    style: { ...edgeDefaults.style, stroke: "var(--amber-8)" },
   },
   {
-    from: "match",
-    to: "__end__",
-    path: "M 500,736 C 500,790 360,790 360,826",
+    id: "e-par-eu",
+    source: "par-classify",
+    target: "eu-validate",
+    ...edgeDefaults,
+    animated: true,
+    style: { ...edgeDefaults.style, stroke: "var(--blue-8)" },
+  },
+  {
+    id: "e-classify-filter",
+    source: "classify",
+    target: "is-remote-eu",
+    ...edgeDefaults,
+    label: "skills + category",
+    style: { ...edgeDefaults.style, stroke: "var(--amber-8)" },
+  },
+  {
+    id: "e-eu-filter",
+    source: "eu-validate",
+    target: "is-remote-eu",
+    ...edgeDefaults,
+    label: "EU compatibility",
+    style: { ...edgeDefaults.style, stroke: "var(--blue-8)" },
+  },
+  {
+    id: "e-filter-extract",
+    source: "is-remote-eu",
+    target: "extract",
+    ...edgeDefaults,
+    animated: true,
+    label: "qualified jobs",
+    style: { ...edgeDefaults.style, stroke: "var(--crimson-8)" },
+  },
+  {
+    id: "e-extract-fan",
+    source: "extract",
+    target: "fan-out",
+    ...edgeDefaults,
+    label: "skill-tagged",
+    style: { ...edgeDefaults.style, stroke: "var(--amber-8)" },
+  },
+  {
+    id: "e-fan-serve",
+    source: "fan-out",
+    target: "serve",
+    ...edgeDefaults,
+    animated: true,
+    style: { ...edgeDefaults.style, stroke: "var(--blue-8)" },
+  },
+  {
+    id: "e-fan-match",
+    source: "fan-out",
+    target: "match",
+    ...edgeDefaults,
+    animated: true,
+    style: { ...edgeDefaults.style, stroke: "var(--indigo-8)" },
   },
 ];
-
-// ── Helpers ──────────────────────────────────────────────────────────────────
-
-const nodeMap = new Map(NODES.map((n) => [n.id, n]));
-
-function isClickable(node: PipelineNode) {
-  return node.type !== "start" && node.type !== "end";
-}
-
-// ── SVG Components ───────────────────────────────────────────────────────────
-
-function StartEndNode({
-  node,
-  isSelected,
-  onClick,
-}: {
-  node: PipelineNode;
-  isSelected: boolean;
-  onClick: () => void;
-}) {
-  const isStart = node.type === "start";
-  const r = 16;
-  return (
-    <g
-      onClick={onClick}
-      style={{ cursor: isClickable(node) ? "pointer" : "default" }}
-    >
-      {/* outer circle */}
-      <circle
-        cx={node.x}
-        cy={node.y}
-        r={r}
-        fill={isStart ? "var(--green-9)" : "none"}
-        stroke={isStart ? "none" : "var(--gray-9)"}
-        strokeWidth={isStart ? 0 : 2.5}
-      />
-      {/* inner filled circle for END */}
-      {!isStart && (
-        <circle cx={node.x} cy={node.y} r={r - 5} fill="var(--gray-9)" />
-      )}
-      {/* label */}
-      <text
-        x={node.x}
-        y={isStart ? node.y + r + 16 : node.y - r - 8}
-        textAnchor="middle"
-        fill="var(--gray-9)"
-        fontSize={10}
-        fontFamily="monospace"
-        fontWeight={600}
-        letterSpacing="0.08em"
-      >
-        {isStart ? "__start__" : "__end__"}
-      </text>
-    </g>
-  );
-}
-
-function ProcessNode({
-  node,
-  isSelected,
-  onClick,
-}: {
-  node: PipelineNode;
-  isSelected: boolean;
-  onClick: () => void;
-}) {
-  const h = NODE_H;
-  const w = node.w;
-  const rx = node.x - w / 2;
-  const ry = node.y - h / 2;
-  const isAi = node.type === "ai";
-  const strokeColor = isSelected
-    ? `var(--${node.color}-9)`
-    : "var(--gray-6)";
-  const fillColor = isSelected
-    ? `var(--${node.color}-2)`
-    : "var(--gray-2)";
-
-  return (
-    <g onClick={onClick} style={{ cursor: "pointer" }}>
-      <rect
-        x={rx}
-        y={ry}
-        width={w}
-        height={h}
-        rx={6}
-        fill={fillColor}
-        stroke={strokeColor}
-        strokeWidth={isSelected ? 2 : 1}
-      />
-      {/* AI indicator dot */}
-      {isAi && (
-        <circle
-          cx={rx + 14}
-          cy={node.y}
-          r={3}
-          fill={`var(--${node.color}-9)`}
-        />
-      )}
-      {/* main label */}
-      <text
-        x={node.x + (isAi ? 4 : 0)}
-        y={node.y - 4}
-        textAnchor="middle"
-        fill="var(--gray-12)"
-        fontSize={13}
-        fontWeight={600}
-      >
-        {node.label}
-      </text>
-      {/* sublabel */}
-      <text
-        x={node.x + (isAi ? 4 : 0)}
-        y={node.y + 14}
-        textAnchor="middle"
-        fill="var(--gray-9)"
-        fontSize={10}
-      >
-        {node.sublabel}
-      </text>
-    </g>
-  );
-}
-
-function PipelineGraph({
-  selectedId,
-  onSelect,
-}: {
-  selectedId: string | null;
-  onSelect: (id: string | null) => void;
-}) {
-  return (
-    <svg
-      viewBox="0 0 720 880"
-      style={{ width: "100%", maxWidth: 720 }}
-      role="img"
-      aria-label="Pipeline diagram showing how jobs flow from discovery to serving"
-    >
-      <style>{`
-        @keyframes flow {
-          to { stroke-dashoffset: -12; }
-        }
-        .edge-line {
-          stroke-dasharray: 6 3;
-          animation: flow 1.2s linear infinite;
-        }
-        .edge-line-dashed {
-          stroke-dasharray: 4 4;
-          opacity: 0.4;
-        }
-        .edge-line-selected {
-          stroke-dasharray: 6 3;
-          animation: flow 0.8s linear infinite;
-          opacity: 1;
-        }
-      `}</style>
-
-      <defs>
-        <marker
-          id="arrow"
-          viewBox="0 0 10 8"
-          refX="10"
-          refY="4"
-          markerWidth="8"
-          markerHeight="6"
-          orient="auto-start-reverse"
-        >
-          <path d="M0,0 L10,4 L0,8 Z" fill="var(--gray-7)" />
-        </marker>
-        <marker
-          id="arrow-dim"
-          viewBox="0 0 10 8"
-          refX="10"
-          refY="4"
-          markerWidth="8"
-          markerHeight="6"
-          orient="auto-start-reverse"
-        >
-          <path d="M0,0 L10,4 L0,8 Z" fill="var(--gray-6)" opacity={0.4} />
-        </marker>
-        <marker
-          id="arrow-selected"
-          viewBox="0 0 10 8"
-          refX="10"
-          refY="4"
-          markerWidth="8"
-          markerHeight="6"
-          orient="auto-start-reverse"
-        >
-          <path d="M0,0 L10,4 L0,8 Z" fill="var(--accent-9)" />
-        </marker>
-      </defs>
-
-      {/* Edges */}
-      {EDGES.map((edge, i) => {
-        const isConnected =
-          selectedId && (edge.from === selectedId || edge.to === selectedId);
-        const className = edge.dashed
-          ? "edge-line-dashed"
-          : isConnected
-            ? "edge-line-selected"
-            : "edge-line";
-        const markerEnd = edge.dashed
-          ? "url(#arrow-dim)"
-          : isConnected
-            ? "url(#arrow-selected)"
-            : "url(#arrow)";
-
-        return (
-          <g key={i}>
-            <path
-              d={edge.path}
-              fill="none"
-              stroke={
-                isConnected ? "var(--accent-9)" : edge.dashed ? "var(--gray-6)" : "var(--gray-7)"
-              }
-              strokeWidth={isConnected ? 2 : 1.5}
-              className={className}
-              markerEnd={markerEnd}
-            />
-            {edge.label && edge.labelX != null && edge.labelY != null && (
-              <>
-                <rect
-                  x={edge.labelX - 2}
-                  y={edge.labelY - 10}
-                  width={
-                    edge.label.length * 6.5 + 8
-                  }
-                  height={16}
-                  rx={2}
-                  fill="var(--color-background)"
-                  opacity={0.9}
-                />
-                <text
-                  x={edge.labelX + 2}
-                  y={edge.labelY + 1}
-                  fill={edge.dashed ? "var(--gray-8)" : "var(--green-9)"}
-                  fontSize={10}
-                  fontFamily="monospace"
-                >
-                  {edge.label}
-                </text>
-              </>
-            )}
-          </g>
-        );
-      })}
-
-      {/* Nodes */}
-      {NODES.map((node) => {
-        const selected = selectedId === node.id;
-        const handleClick = () => {
-          if (!isClickable(node)) return;
-          onSelect(selected ? null : node.id);
-        };
-
-        if (node.type === "start" || node.type === "end") {
-          return (
-            <StartEndNode
-              key={node.id}
-              node={node}
-              isSelected={selected}
-              onClick={handleClick}
-            />
-          );
-        }
-        return (
-          <ProcessNode
-            key={node.id}
-            node={node}
-            isSelected={selected}
-            onClick={handleClick}
-          />
-        );
-      })}
-
-      {/* Neon DB indicator (central store) */}
-      <g opacity={0.6}>
-        <text
-          x={660}
-          y={350}
-          textAnchor="middle"
-          fill="var(--cyan-9)"
-          fontSize={9}
-          fontFamily="monospace"
-          transform="rotate(90, 660, 350)"
-        >
-          Neon PostgreSQL
-        </text>
-        <line
-          x1={672}
-          y1={140}
-          x2={672}
-          y2={580}
-          stroke="var(--cyan-6)"
-          strokeWidth={1}
-          strokeDasharray="2 4"
-        />
-      </g>
-    </svg>
-  );
-}
 
 // ── Detail Panel ─────────────────────────────────────────────────────────────
 
-function NodeDetail({ node }: { node: PipelineNode }) {
+function NodeDetailPanel({ nodeId }: { nodeId: string }) {
+  const detail = nodeDetails[nodeId];
+  if (!detail) return null;
+
+  const node = pipelineNodes.find((n) => n.id === nodeId);
+  const label = (node?.data?.label as string) ?? nodeId;
+  const sublabel = node?.data?.sublabel as string | undefined;
+
   return (
     <Card
       mt="5"
       style={{
-        borderLeft: `3px solid var(--${node.color}-9)`,
+        borderLeft: `3px solid var(--${detail.color}-9)`,
         background: "var(--gray-2)",
       }}
     >
       <Flex direction="column" gap="3">
         <Flex align="center" gap="2" wrap="wrap">
-          <Heading size="4">{node.label}</Heading>
-          <Badge
-            size="1"
-            variant="soft"
-            color={node.color as "violet" | "blue" | "green" | "indigo"}
-          >
-            {node.type === "ai" ? "AI/ML" : "pipeline"}
-          </Badge>
-          <Text size="1" color="gray">
-            {node.sublabel}
-          </Text>
+          <Heading size="4">{label}</Heading>
+          {sublabel && (
+            <Text size="1" color="gray">
+              {sublabel}
+            </Text>
+          )}
         </Flex>
 
         <Text size="2" style={{ lineHeight: 1.65, color: "var(--gray-11)" }}>
-          {node.description}
+          {detail.description}
         </Text>
 
         <Flex gap="2" wrap="wrap">
-          {node.tech.map((t) => (
+          {detail.tech.map((t) => (
             <Badge key={t.name} variant="outline" size="1">
               {t.name}
               {t.version ? ` ${t.version}` : ""}
@@ -620,7 +635,7 @@ function NodeDetail({ node }: { node: PipelineNode }) {
             >
               Input
             </Text>
-            <Text size="2">{node.dataIn}</Text>
+            <Text size="2">{detail.dataIn}</Text>
           </Flex>
           <Flex direction="column" gap="1">
             <Text
@@ -631,14 +646,14 @@ function NodeDetail({ node }: { node: PipelineNode }) {
             >
               Output
             </Text>
-            <Text size="2">{node.dataOut}</Text>
+            <Text size="2">{detail.dataOut}</Text>
           </Flex>
         </div>
 
         <Card
           style={{
-            background: `var(--${node.color}-2)`,
-            border: `1px solid var(--${node.color}-6)`,
+            background: `var(--${detail.color}-2)`,
+            border: `1px solid var(--${detail.color}-6)`,
           }}
         >
           <Text
@@ -650,7 +665,7 @@ function NodeDetail({ node }: { node: PipelineNode }) {
             Key Insight
           </Text>
           <Text as="p" size="2" mt="1" style={{ lineHeight: 1.6 }}>
-            {node.insight}
+            {detail.insight}
           </Text>
         </Card>
       </Flex>
@@ -661,8 +676,13 @@ function NodeDetail({ node }: { node: PipelineNode }) {
 // ── Page ─────────────────────────────────────────────────────────────────────
 
 export default function StackPage() {
-  const [selectedId, setSelectedId] = useState<string | null>(null);
-  const selectedNode = selectedId ? nodeMap.get(selectedId) : null;
+  const [nodes, , onNodesChange] = useNodesState(pipelineNodes);
+  const [edges, , onEdgesChange] = useEdgesState(pipelineEdges);
+  const [selectedNode, setSelectedNode] = useState<string | null>(null);
+
+  const onNodeClick: NodeMouseHandler = useCallback((_event, node) => {
+    setSelectedNode((prev) => (prev === node.id ? null : node.id));
+  }, []);
 
   return (
     <Container size="3" p={{ initial: "4", md: "6" }}>
@@ -671,10 +691,10 @@ export default function StackPage() {
         <Heading size="7">How It Works</Heading>
       </Flex>
 
-      <Flex align="center" gap="3" mb="6">
+      <Flex align="center" gap="3" mb="4">
         <Text color="gray" size="2">
           The data pipeline that powers nomadically.work — from job discovery to
-          your screen. Click any node for details.
+          your screen.
         </Text>
         <a
           href="https://github.com/nicolad/nomadically.work"
@@ -686,13 +706,50 @@ export default function StackPage() {
         </a>
       </Flex>
 
-      <Flex justify="center">
-        <PipelineGraph selectedId={selectedId} onSelect={setSelectedId} />
+      <Flex align="center" gap="2" mb="4">
+        <Badge color="blue" variant="soft" size="1">
+          Interactive
+        </Badge>
+        <Text size="1" color="gray">
+          Drag nodes to rearrange. Scroll to zoom. Click a node for details.
+        </Text>
       </Flex>
 
-      {selectedNode && isClickable(selectedNode) && (
-        <NodeDetail node={selectedNode} />
-      )}
+      <div
+        style={{
+          width: "100%",
+          height: 700,
+          borderRadius: 12,
+          overflow: "hidden",
+          border: "1px solid var(--gray-a4)",
+          background:
+            "color-mix(in srgb, var(--color-background) 95%, var(--gray-3))",
+          boxShadow:
+            "inset 0 1px 2px rgba(0,0,0,0.2), 0 1px 3px rgba(0,0,0,0.15)",
+        }}
+      >
+        <ReactFlow
+          nodes={nodes}
+          edges={edges}
+          onNodesChange={onNodesChange}
+          onEdgesChange={onEdgesChange}
+          onNodeClick={onNodeClick}
+          nodeTypes={nodeTypes}
+          colorMode="dark"
+          fitView
+          fitViewOptions={{ padding: 0.3 }}
+          minZoom={0.3}
+          maxZoom={2}
+          panOnScroll={false}
+          proOptions={{ hideAttribution: false }}
+          defaultEdgeOptions={{ type: "smoothstep" }}
+        >
+          <Background gap={20} size={1} color="var(--gray-a3)" />
+          <Controls showInteractive={false} position="bottom-left" />
+        </ReactFlow>
+      </div>
+
+      {selectedNode && <NodeDetailPanel nodeId={selectedNode} />}
     </Container>
   );
 }
