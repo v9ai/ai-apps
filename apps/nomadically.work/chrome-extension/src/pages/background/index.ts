@@ -1,4 +1,5 @@
 // Background service worker
+import { browseContactPosts, cancelPostScraping } from "../../services/post-scraper";
 
 // ── Dev hot-reload via WebSocket ──────────────────────────────────────
 if (import.meta.env.DEV) {
@@ -218,49 +219,57 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
     return true;
   }
 
-  // ── Analyze Company ──
-  if (message.action === "analyzeCompany") {
-    const { companyName, website } = message as { companyName?: string; website?: string };
+  // ── Start Company Browsing ──
+  if (message.action === "startCompanyBrowsing") {
+    // Message comes from popup, so sender.tab is undefined — find active tab
+    chrome.tabs.query({ active: true, currentWindow: true }).then((tabs) => {
+      const tabId = tabs[0]?.id;
+      if (!tabId) {
+        sendResponse({ success: false, error: "No active tab" });
+        return;
+      }
+      sendResponse({ success: true });
+      browseCompanies(tabId);
+    });
+    return true;
+  }
 
-    // First, find the company
-    gqlRequest(
-      `query FindCompany($name: String, $website: String) {
-        findCompany(name: $name, website: $website) { found company { id key name } }
-      }`,
-      { name: companyName || undefined, website: website || undefined },
-    )
-      .then(async (findResult) => {
-        if (findResult.errors) {
-          sendResponse({ success: false, error: findResult.errors[0].message });
-          return;
-        }
-        const { found, company } = findResult.data.findCompany;
-        if (!found || !company) {
-          sendResponse({ success: false, error: `Company not found: ${companyName || website}` });
-          return;
-        }
+  // ── Stop Company Browsing ──
+  if (message.action === "stopCompanyBrowsing") {
+    companyCancelled = true;
+    sendResponse({ success: true });
+    return true;
+  }
 
-        // Trigger analysis
-        const analyzeResult = await gqlRequest(
-          `mutation AnalyzeCompany($id: Int) {
-            analyzeCompany(id: $id) { success message companyId companyKey }
-          }`,
-          { id: company.id },
-        );
-
-        if (analyzeResult.errors) {
-          sendResponse({ success: false, error: analyzeResult.errors[0].message });
-        } else {
-          sendResponse({
-            success: analyzeResult.data.analyzeCompany.success,
-            message: analyzeResult.data.analyzeCompany.message,
-            company,
+  // ── Start Post Scraping ──
+  if (message.action === "startPostScraping") {
+    chrome.tabs.query({ active: true, currentWindow: true }).then(async (tabs) => {
+      const tabId = tabs[0]?.id;
+      if (!tabId) {
+        sendResponse({ success: false, error: "No active tab" });
+        return;
+      }
+      sendResponse({ success: true });
+      try {
+        console.log("[PostScraping] Starting browseContactPosts for tab", tabId);
+        await browseContactPosts(tabId);
+      } catch (err) {
+        console.error("[PostScraping] Error:", err);
+        try {
+          chrome.runtime.sendMessage({
+            action: "postScrapingProgress",
+            error: err instanceof Error ? err.message : String(err),
           });
-        }
-      })
-      .catch((err) => {
-        sendResponse({ success: false, error: String(err) });
-      });
+        } catch { /* popup may be closed */ }
+      }
+    });
+    return true;
+  }
+
+  // ── Stop Post Scraping ──
+  if (message.action === "stopPostScraping") {
+    cancelPostScraping();
+    sendResponse({ success: true });
     return true;
   }
 
@@ -483,4 +492,289 @@ async function browseProfiles(
   console.log(
     `[BrowseProfiles] Complete. Saved ${saved}/${profiles.length} contacts.`,
   );
+}
+
+// ── Company Browsing Engine ──────────────────────────────────────────
+
+let companyCancelled = false;
+
+interface CompanyData {
+  name: string;
+  website: string;
+  description: string;
+  industry: string;
+  size: string;
+  location: string;
+  linkedinUrl: string;
+}
+
+function extractCompanyUrls(tabId: number): Promise<string[]> {
+  return chrome.scripting
+    .executeScript({
+      target: { tabId },
+      world: "MAIN",
+      func: () => {
+        const links: string[] = [];
+        // LinkedIn company search result links
+        document.querySelectorAll<HTMLAnchorElement>(
+          'a[href*="/company/"]'
+        ).forEach((a) => {
+          const href = a.href.split("?")[0].replace(/\/$/, "");
+          // Only company profile links, not /company/xxx/jobs etc.
+          if (/\/company\/[^/]+$/.test(new URL(href).pathname) && !links.includes(href)) {
+            links.push(href);
+          }
+        });
+        return links;
+      },
+    })
+    .then((results) => results?.[0]?.result ?? [])
+    .catch(() => []);
+}
+
+function extractCompanyData(tabId: number): Promise<CompanyData | null> {
+  return chrome.scripting
+    .executeScript({
+      target: { tabId },
+      world: "MAIN",
+      func: () => {
+        const getText = (sel: string) =>
+          document.querySelector(sel)?.textContent?.trim() || "";
+
+        // Company name
+        const name =
+          getText("h1.org-top-card-summary__title") ||
+          getText("h1.top-card-layout__title") ||
+          getText("h1");
+
+        // Description — "About" section
+        const description =
+          getText("p.org-top-card-summary__tagline") ||
+          getText("section.org-about-module p") ||
+          getText('[data-test-id="about-us__description"]') ||
+          "";
+
+        // Details from the info strip
+        const dtDds: Record<string, string> = {};
+        document.querySelectorAll("dl.org-page-details__definition-list dt, dl.org-page-details__definition-list dd").forEach((el) => {
+          if (el.tagName === "DT") {
+            const key = el.textContent?.trim().toLowerCase() || "";
+            const dd = el.nextElementSibling;
+            if (dd && dd.tagName === "DD") {
+              dtDds[key] = dd.textContent?.trim() || "";
+            }
+          }
+        });
+
+        // Fallback: scan all definition terms on the page
+        if (Object.keys(dtDds).length === 0) {
+          document.querySelectorAll("dt").forEach((dt) => {
+            const key = dt.textContent?.trim().toLowerCase() || "";
+            const dd = dt.nextElementSibling;
+            if (dd?.tagName === "DD") {
+              dtDds[key] = dd.textContent?.trim() || "";
+            }
+          });
+        }
+
+        // Also try the top card info items
+        const infoItems: string[] = [];
+        document.querySelectorAll(".org-top-card-summary-info-list__info-item").forEach((el) => {
+          infoItems.push(el.textContent?.trim() || "");
+        });
+
+        const industry = dtDds["industry"] || dtDds["industries"] || infoItems[0] || "";
+        const size =
+          dtDds["company size"] ||
+          dtDds["size"] ||
+          infoItems.find((s) => /employees/i.test(s)) ||
+          "";
+        const location =
+          dtDds["headquarters"] ||
+          dtDds["location"] ||
+          infoItems.find((s) => /,/.test(s) && !/employees/i.test(s)) ||
+          "";
+
+        // Website link
+        const websiteLink = document.querySelector<HTMLAnchorElement>(
+          'a[data-test-id="about-us__website"] , a.org-top-card-primary-actions__action--website, a.link-without-visited-state[href*="://"]'
+        );
+        const website = websiteLink?.href || "";
+
+        return {
+          name,
+          website,
+          description,
+          industry,
+          size,
+          location,
+          linkedinUrl: window.location.href.split("?")[0],
+        };
+      },
+    })
+    .then((results) => results?.[0]?.result ?? null)
+    .catch(() => null);
+}
+
+function extractNextPageUrl(tabId: number): Promise<string | null> {
+  return chrome.scripting
+    .executeScript({
+      target: { tabId },
+      world: "MAIN",
+      func: () => {
+        const nextBtn = document.querySelector<HTMLButtonElement>(
+          'button[aria-label="Next"]'
+        );
+        if (nextBtn && !nextBtn.disabled) {
+          nextBtn.click();
+          return window.location.href;
+        }
+        return null;
+      },
+    })
+    .then((results) => results?.[0]?.result ?? null)
+    .catch(() => null);
+}
+
+async function browseCompanies(tabId: number) {
+  companyCancelled = false;
+  let saved = 0;
+  let totalProcessed = 0;
+  let page = 1;
+  const allCompanyUrls: string[] = [];
+  const returnUrl = (await chrome.tabs.get(tabId)).url || "";
+
+  // ── Phase 1: Collect company URLs from search results (all pages) ──
+  console.log("[BrowseCompanies] Phase 1: Collecting company URLs...");
+
+  while (!companyCancelled) {
+    // Wait for page content to render
+    await new Promise((r) => setTimeout(r, 2000));
+
+    // Scroll to bottom to load all results
+    await chrome.scripting.executeScript({
+      target: { tabId },
+      world: "MAIN",
+      func: () => window.scrollTo(0, document.body.scrollHeight),
+    });
+    await new Promise((r) => setTimeout(r, 1500));
+
+    const urls = await extractCompanyUrls(tabId);
+    const newUrls = urls.filter((u) => !allCompanyUrls.includes(u));
+    allCompanyUrls.push(...newUrls);
+
+    console.log(`[BrowseCompanies] Page ${page}: found ${newUrls.length} new companies (total: ${allCompanyUrls.length})`);
+
+    // Try next page
+    const hasNext = await extractNextPageUrl(tabId);
+    if (!hasNext) break;
+
+    page++;
+    await waitForTabLoad(tabId);
+    await new Promise((r) => setTimeout(r, 2000));
+  }
+
+  console.log(`[BrowseCompanies] Phase 2: Visiting ${allCompanyUrls.length} companies...`);
+
+  // ── Phase 2: Visit each company and extract data ──
+  const batch: Array<{
+    name: string;
+    website?: string;
+    linkedin_url?: string;
+    description?: string;
+    location?: string;
+  }> = [];
+
+  for (let i = 0; i < allCompanyUrls.length; i++) {
+    if (companyCancelled) break;
+
+    const companyUrl = allCompanyUrls[i];
+    console.log(`[BrowseCompanies] ${i + 1}/${allCompanyUrls.length}: ${companyUrl}`);
+
+    // Navigate to company "about" page for richer data
+    const aboutUrl = companyUrl.replace(/\/$/, "") + "/about/";
+    await chrome.tabs.update(tabId, { url: aboutUrl });
+    await waitForTabLoad(tabId);
+    await new Promise((r) => setTimeout(r, 2500));
+
+    // Click "See more" if present
+    await clickSeeMore(tabId);
+    await new Promise((r) => setTimeout(r, 500));
+
+    const data = await extractCompanyData(tabId);
+    totalProcessed++;
+
+    if (data && data.name) {
+      batch.push({
+        name: data.name,
+        website: data.website || undefined,
+        linkedin_url: data.linkedinUrl || undefined,
+        description: [data.description, data.industry ? `Industry: ${data.industry}` : "", data.size ? `Size: ${data.size}` : ""]
+          .filter(Boolean)
+          .join("\n") || undefined,
+        location: data.location || undefined,
+      });
+
+      console.log(
+        `[BrowseCompanies] Extracted: ${data.name} | ${data.industry} | ${data.size} | ${data.location}`,
+      );
+    }
+
+    // Save in batches of 10
+    if (batch.length >= 10) {
+      const result = await saveCompanyBatch(batch.splice(0));
+      saved += result;
+    }
+
+    // Dwell
+    await new Promise((r) => setTimeout(r, 1500));
+  }
+
+  // Save remaining
+  if (batch.length > 0) {
+    const result = await saveCompanyBatch(batch.splice(0));
+    saved += result;
+  }
+
+  // Navigate back to search results
+  await chrome.tabs.update(tabId, { url: returnUrl });
+  await waitForTabLoad(tabId);
+
+  console.log(
+    `[BrowseCompanies] Complete. Saved ${saved}/${totalProcessed} companies from ${page} page(s).`,
+  );
+}
+
+async function saveCompanyBatch(
+  batch: Array<{
+    name: string;
+    website?: string;
+    linkedin_url?: string;
+    description?: string;
+    location?: string;
+  }>,
+): Promise<number> {
+  try {
+    const result = await gqlRequest(
+      `mutation ImportCompanies($companies: [CompanyImportInput!]!) {
+        importCompanies(companies: $companies) { success imported failed errors }
+      }`,
+      { companies: batch },
+    );
+
+    if (result.data?.importCompanies) {
+      const { imported, failed, errors } = result.data.importCompanies;
+      if (failed > 0) {
+        console.warn(`[BrowseCompanies] ${failed} failed:`, errors);
+      }
+      return imported;
+    }
+    if (result.errors) {
+      console.error("[BrowseCompanies] GQL error:", result.errors[0].message);
+    }
+    return 0;
+  } catch (err) {
+    console.error("[BrowseCompanies] Save batch error:", err);
+    return 0;
+  }
 }

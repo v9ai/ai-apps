@@ -103,6 +103,7 @@ export function Header() {
                 { label: "My Parts", href: "/my-parts" },
                 { label: "Scripts", href: "/scripts" },
                 { label: "Favorites", href: "/favorites" },
+                { label: "Firmware", href: "/firmware" },
                 { label: "How It Works", href: "/how-it-works" },
                 { label: "Settings", href: "/settings" },
               ].map(({ label, href }) => (
@@ -189,32 +190,6 @@ export function Header() {
               </>
             ) : (
               <>
-                <a
-                  href="/login"
-                  className={css({
-                    fontSize: "sm",
-                    fontWeight: "700",
-                    fontFamily: "display",
-                    color: "ink.secondary",
-                    textDecoration: "none",
-                    px: "4",
-                    py: "1.5",
-                    rounded: "brick",
-                    border: "1.5px solid",
-                    borderColor: "plate.border",
-                    transition: "all 0.15s ease",
-                    boxShadow:
-                      "0 2px 0 rgba(0,0,0,0.2), inset 0 1px 0 rgba(255,255,255,0.05)",
-                    _hover: {
-                      color: "ink.primary",
-                      borderColor: "plate.borderHover",
-                      bg: "plate.raised",
-                      transform: "translateY(-1px)",
-                    },
-                  })}
-                >
-                  Sign In
-                </a>
                 <a
                   href="/signup"
                   className={css({

@@ -181,11 +181,10 @@ function ResumeDocument({ data }: { data: typeof resumeData }) {
           ))}
         </Text>
 
-        {/* AI Projects — NCA IT Ltd */}
+        {/* AI Projects */}
         {activities.aiProjects?.length > 0 && (
           <>
-            <Text style={[s.sectionTitle, { fontSize: 10 }]}>AI Projects — <Link src="https://nca-it.com/">NCA IT Ltd</Link></Text>
-            <Text style={{ fontSize: 7, color: "#555", marginBottom: 3 }}>AI consulting and research firm specializing in enterprise AI solutions.</Text>
+            <Text style={[s.sectionTitle, { fontSize: 10 }]}>AI Projects</Text>
             {activities.aiProjects.map((proj) => (
               <View key={proj.id} style={s.entry} wrap={false}>
                 {proj.websiteUrl ? (

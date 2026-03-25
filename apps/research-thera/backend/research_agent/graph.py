@@ -31,6 +31,7 @@ from .neon import (
     fetch_issues_for_feedback,
     upsert_research_paper,
 )
+from .reranker import rerank
 from .research_sources import (
     get_paper_detail_semantic_scholar,
     search_papers_with_fallback,
@@ -76,18 +77,25 @@ def _make_tools(semantic_scholar_api_key: Optional[str] = None) -> list:
     @tool
     async def search_papers(query: str, limit: int = 10) -> str:
         """Search 214M+ academic papers on OpenAlex, Crossref, and Semantic Scholar for therapeutic,
-        psychological, and clinical research. Returns titles, authors, citation counts, abstracts,
+        psychological, and clinical research. Results are reranked by a cross-encoder model for
+        semantic relevance. Returns titles, authors, citation counts, abstracts, relevance scores,
         and PDF links. Call multiple times with different query terms to cover the topic from
         different angles (e.g., 'CBT anxiety children', 'exposure therapy meta-analysis')."""
-        results = await search_papers_with_fallback(query, limit, semantic_scholar_api_key)
+        results = await search_papers_with_fallback(query, limit * 3, semantic_scholar_api_key)
         if not results:
             return f"No results found for query: {query}"
-        lines = [f"Search results for: {query}\n"]
-        for i, p in enumerate(results):
+
+        # Cross-encoder rerank: fetch 3x, rerank, return top limit
+        ranked = await rerank(query, results, top_k=limit)
+
+        lines = [f"Search results for: {query} (reranked by semantic relevance)\n"]
+        for i, r in enumerate(ranked):
+            p = r.paper
             authors_str = ", ".join(p.get("authors") or [])
             abstract = (p.get("abstract") or "")[:150]
             lines.append(
-                f"[{i + 1}] {p.get('title', 'Unknown')} ({p.get('year', 'n.d.')})\n"
+                f"[{i + 1}] {p.get('title', 'Unknown')} ({p.get('year', 'n.d.')}) "
+                f"[relevance: {r.score:.3f}]\n"
                 f"  Authors: {authors_str}\n"
                 f"  Abstract: {abstract}...\n"
                 f"  DOI: {p.get('doi', '')}\n"

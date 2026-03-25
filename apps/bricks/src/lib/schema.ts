@@ -38,6 +38,29 @@ export const userParts = pgTable("user_parts", {
   unique().on(t.userId, t.partNum, t.color),
 ]);
 
+export const scripts = pgTable("scripts", {
+  id: serial("id").primaryKey(),
+  userId: text("user_id").notNull(),
+  hub: text("hub").notNull(),
+  template: text("template").notNull(),
+  devices: jsonb("devices").notNull().default([]),
+  hasRemote: integer("has_remote").notNull().default(0),
+  instructions: text("instructions").notNull().default(""),
+  code: text("code").notNull(),
+  createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
+});
+
+export const userHubs = pgTable("user_hubs", {
+  id: serial("id").primaryKey(),
+  userId: text("user_id").notNull(),
+  name: text("name").notNull(),
+  hubType: text("hub_type").notNull(),
+  bleName: text("ble_name").notNull().default(""),
+  createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
+}, (t) => [
+  unique().on(t.userId, t.name),
+]);
+
 export const partMocsCache = pgTable("part_mocs_cache", {
   id: serial("id").primaryKey(),
   partNum: text("part_num").notNull().unique(),

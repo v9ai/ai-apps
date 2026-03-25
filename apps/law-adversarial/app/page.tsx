@@ -24,6 +24,12 @@ import {
   AlertTriangle,
   BarChart3,
   FileSearch,
+  Network,
+  Timer,
+  ClipboardCheck,
+  MapPin,
+  Wrench,
+  SearchCheck,
 } from "lucide-react";
 import Link from "next/link";
 import { WhyThisWorks } from "./why-this-works";
@@ -39,17 +45,37 @@ const agents = [
 ];
 
 const stats = [
-  { number: "58%", label: "GPT-4 legal hallucination rate", source: "Stanford HAI" },
-  { number: "+15pp", label: "Accuracy boost from multi-agent debate", source: "ICML 2024" },
-  { number: "300+", label: "Judges require AI citation verification", source: "Post Mata v. Avianca" },
-  { number: "$31K", label: "Sanctions for AI-fabricated citations", source: "U.S. Courts 2023-2025" },
+  {
+    number: "36%",
+    label: "Summary judgment motions denied",
+    detail: "Many on arguments a stress-test would have caught",
+    source: "Federal Judicial Center, 2023",
+  },
+  {
+    number: "$91K",
+    label: "Median contract dispute cost",
+    detail: "One weak argument can double that number",
+    source: "National Center for State Courts",
+  },
+  {
+    number: "73%",
+    label: "Motions to dismiss succeed on factual insufficiency",
+    detail: "The facts were there -- the brief didn't connect them",
+    source: "Westlaw Analytics",
+  },
+  {
+    number: "<2 min",
+    label: "Time to stress-test your brief",
+    detail: "A senior associate takes hours for the same review",
+    source: "Internal benchmarking",
+  },
 ];
 
 const steps = [
   {
     icon: Upload,
     title: "Upload Your Brief",
-    description: "Paste or upload your legal brief. Our system accepts any jurisdiction, any practice area.",
+    description: "Paste or upload your legal brief. Set the jurisdiction. That's it -- no formatting, no templates.",
   },
   {
     icon: Zap,
@@ -59,7 +85,52 @@ const steps = [
   {
     icon: FileCheck,
     title: "Get Your Report",
-    description: "Receive a scored report with every weakness found, every citation verified, and a rewritten brief.",
+    description: "Receive a scored report with every weakness found, every citation verified, and specific fixes for each.",
+  },
+];
+
+const features = [
+  {
+    icon: Network,
+    title: "See Your Argument's Attack Surface",
+    description: "A visual map of every claim, every piece of evidence, and every connection. Spot structural weaknesses you'd never catch reading linearly.",
+    badge: "Argument Graph",
+  },
+  {
+    icon: Zap,
+    title: "Deeper Than a Single Pass",
+    description: "Each round builds on the last. The Attacker gets smarter. The Defender gets sharper. By round three, only real vulnerabilities survive.",
+    badge: "Multi-Round Debate",
+  },
+  {
+    icon: AlertTriangle,
+    title: "Know What to Fix First",
+    description: "Every finding ranked critical to low with confidence percentages. Stop wasting time on nitpicks when a fatal flaw is on page twelve.",
+    badge: "Severity Scoring",
+  },
+  {
+    icon: ClipboardCheck,
+    title: "Show Your Work",
+    description: "Every agent action logged, every argument traced. Hand the report to a partner and they can verify every finding in minutes.",
+    badge: "Full Audit Trail",
+  },
+  {
+    icon: MapPin,
+    title: "Your Jurisdiction, Your Rules",
+    description: "Set your jurisdiction once. The agents adapt standards of review, burden analysis, and procedural requirements automatically.",
+    badge: "Jurisdiction-Aware",
+  },
+  {
+    icon: Wrench,
+    title: "Don't Just Find Problems",
+    description: "Each vulnerability comes with a concrete recommendation. Specific language, missing evidence, alternative framings -- not just 'strengthen this argument.'",
+    badge: "Suggested Fixes",
+  },
+  {
+    icon: SearchCheck,
+    title: "No More Citation Bluffs",
+    description: "Flags unsupported assertions, misapplied precedents, and citation gaps before opposing counsel turns them into ammunition.",
+    badge: "Citation Verification",
   },
 ];
 
@@ -214,7 +285,7 @@ export default function LandingPage() {
         <Separator size="4" style={{ maxWidth: 1100, margin: "0 auto" }} />
       </Box>
 
-      {/* Stats Row */}
+      {/* Stats Row -- Horror-framed from marketing brief */}
       <Box py="8" px="4" style={{ maxWidth: 1100, margin: "0 auto" }}>
         <Grid columns={{ initial: "2", sm: "4" }} gap="4">
           {stats.map((stat) => (
@@ -229,7 +300,7 @@ export default function LandingPage() {
                 <Text size="2" weight="medium" align="center">
                   {stat.label}
                 </Text>
-                <Text size="1" color="gray" align="center">
+                <Text size="1" color="gray" align="center" style={{ maxWidth: 200 }}>
                   {stat.source}
                 </Text>
               </Flex>
@@ -298,6 +369,55 @@ export default function LandingPage() {
         <Separator size="4" style={{ maxWidth: 1100, margin: "0 auto" }} />
       </Box>
 
+      {/* Features Section */}
+      <Box py="8" px="4" style={{ maxWidth: 1100, margin: "0 auto" }}>
+        <Flex direction="column" gap="6">
+          <Flex direction="column" gap="2" align="center">
+            <Badge color="crimson" variant="soft" size="2">
+              Capabilities
+            </Badge>
+            <Heading size="7" align="center">
+              What You Get
+            </Heading>
+          </Flex>
+
+          <Grid columns={{ initial: "1", sm: "2", md: "3" }} gap="4">
+            {features.map((feature) => {
+              const Icon = feature.icon;
+              return (
+                <Card key={feature.title} variant="surface" className="feature-card">
+                  <Flex direction="column" gap="3">
+                    <Flex align="center" gap="3">
+                      <Box
+                        className="pipeline-icon"
+                        style={
+                          {
+                            "--pipe-color": "var(--crimson-9)",
+                          } as React.CSSProperties
+                        }
+                      >
+                        <Icon size={18} />
+                      </Box>
+                      <Badge color="gray" variant="soft" size="1">
+                        {feature.badge}
+                      </Badge>
+                    </Flex>
+                    <Heading size="3">{feature.title}</Heading>
+                    <Text size="2" color="gray" style={{ lineHeight: 1.6 }}>
+                      {feature.description}
+                    </Text>
+                  </Flex>
+                </Card>
+              );
+            })}
+          </Grid>
+        </Flex>
+      </Box>
+
+      <Box px="4">
+        <Separator size="4" style={{ maxWidth: 1100, margin: "0 auto" }} />
+      </Box>
+
       {/* Research Section */}
       <Box id="research" py="8" px="4" style={{ maxWidth: 1100, margin: "0 auto" }}>
         <WhyThisWorks />
@@ -319,7 +439,7 @@ export default function LandingPage() {
               Find the weaknesses in your brief before opposing counsel does.
             </Text>
             <Text size="2" color="gray">
-              Upload a brief and get an instant adversarial tear-down — weak arguments, shaky citations, and jurisdiction-specific risks scored and ranked.
+              Upload a brief and get an instant adversarial tear-down -- weak arguments, shaky citations, and jurisdiction-specific risks scored and ranked.
             </Text>
           </Flex>
 
@@ -530,6 +650,40 @@ export default function LandingPage() {
               })}
             </Flex>
           </Flex>
+        </Flex>
+      </Box>
+
+      <Box px="4">
+        <Separator size="4" style={{ maxWidth: 1100, margin: "0 auto" }} />
+      </Box>
+
+      {/* Final CTA */}
+      <Box py="9" px="4" style={{ maxWidth: 1100, margin: "0 auto" }}>
+        <Flex direction="column" gap="5" align="center">
+          <Heading
+            size="7"
+            align="center"
+            style={{ maxWidth: 600 }}
+          >
+            Stop filing briefs you haven&apos;t stress-tested.
+          </Heading>
+          <Text
+            size="3"
+            color="gray"
+            align="center"
+            style={{ maxWidth: 500 }}
+          >
+            Every lawyer reviews their own brief. Almost none subject it to
+            systematic adversarial pressure before filing. The cost of finding
+            a vulnerability in court is months and six figures. The cost of
+            finding it here is two minutes.
+          </Text>
+          <Link href="/sessions">
+            <Button size="4" variant="solid" color="crimson" style={{ cursor: "pointer" }}>
+              Stress-Test Your Brief Now
+              <ArrowRight size={18} />
+            </Button>
+          </Link>
         </Flex>
       </Box>
     </Box>

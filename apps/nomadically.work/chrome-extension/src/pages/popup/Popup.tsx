@@ -18,6 +18,7 @@ import { insertJobsBatch } from "../../services/job-inserter";
 import { scrapeLinkedInJobsWithPagination } from "./linkedin-scraper";
 import { scrapeAshbyJobsWithPagination } from "./ashby-scraper";
 import { detectSourceFromUrl, isGoogleSearchUrl } from "../../lib/source-detector";
+import PostsSection from "./posts-section";
 
 export default function Popup() {
   const [prompt, setPrompt] = useState("");
@@ -301,7 +302,7 @@ export default function Popup() {
 
   const handleAnalyzeCompanies = async () => {
     setAnalyzeLoading(true);
-    setAnalyzeStatus("Detecting company...");
+    setAnalyzeStatus("Starting company analysis...");
 
     try {
       const [tab] = await chrome.tabs.query({ active: true, currentWindow: true });
@@ -311,49 +312,34 @@ export default function Popup() {
         return;
       }
 
-      // Extract company name from the page
-      const results = await chrome.scripting.executeScript({
-        target: { tabId: tab.id },
-        func: () => {
-          // LinkedIn company page
-          const linkedinName = document.querySelector("h1.org-top-card-summary__title, h1.top-card-layout__title");
-          if (linkedinName) return { name: linkedinName.textContent?.trim() || "", website: "" };
-
-          // Try meta tags
-          const ogSiteName = document.querySelector('meta[property="og:site_name"]');
-          if (ogSiteName) return { name: ogSiteName.getAttribute("content") || "", website: window.location.origin };
-
-          // Fallback: page title cleaned up
-          const title = document.title.replace(/ [-|–].*/g, "").trim();
-          return { name: title, website: window.location.origin };
-        },
-      });
-
-      const detected = results?.[0]?.result;
-      if (!detected?.name) {
-        setAnalyzeStatus("Could not detect company from this page");
+      if (!tab.url.includes("linkedin.com/search/results/companies")) {
+        setAnalyzeStatus("Navigate to a LinkedIn company search page first");
         setAnalyzeLoading(false);
         return;
       }
 
-      setAnalyzeStatus(`Analyzing "${detected.name}"...`);
+      setAnalyzeStatus("Browsing companies... check console for progress");
 
+      // Send message to background script (not content script)
       const response = await chrome.runtime.sendMessage({
-        action: "analyzeCompany",
-        companyName: detected.name,
-        website: detected.website || undefined,
+        action: "startCompanyBrowsing",
       });
 
-      if (response.success) {
-        setAnalyzeStatus(`Analyzed: ${response.company?.name || detected.name}`);
-      } else {
-        setAnalyzeStatus(response.error || response.message || "Analysis failed");
+      if (!response.success) {
+        setAnalyzeStatus(response.error || "Failed to start");
+        setAnalyzeLoading(false);
       }
+      // Loading state stays on — background will navigate pages autonomously
     } catch (err) {
-      setAnalyzeStatus(err instanceof Error ? err.message : "Error analyzing company");
-    } finally {
+      setAnalyzeStatus(err instanceof Error ? err.message : "Error analyzing companies");
       setAnalyzeLoading(false);
     }
+  };
+
+  const handleStopAnalyze = async () => {
+    await chrome.runtime.sendMessage({ action: "stopCompanyBrowsing" });
+    setAnalyzeStatus("Stopped");
+    setAnalyzeLoading(false);
   };
 
   return (
@@ -455,15 +441,21 @@ export default function Popup() {
             />
 
             <Stack gap="xs">
-              <Button
-                onClick={handleAnalyzeCompanies}
-                disabled={analyzeLoading}
-                color="violet"
-                size="sm"
-                fullWidth
-              >
-                {analyzeLoading ? "Analyzing..." : "Analyze Companies"}
-              </Button>
+              <Group grow gap="xs">
+                <Button
+                  onClick={handleAnalyzeCompanies}
+                  disabled={analyzeLoading}
+                  color="violet"
+                  size="sm"
+                >
+                  {analyzeLoading ? "Analyzing..." : "Analyze Companies"}
+                </Button>
+                {analyzeLoading && (
+                  <Button onClick={handleStopAnalyze} color="red" size="sm">
+                    Stop
+                  </Button>
+                )}
+              </Group>
               {analyzeStatus && (
                 <Alert color="dark" radius="sm" p="xs">
                   <Text size="xs" ta="center" c="white">
@@ -472,6 +464,14 @@ export default function Popup() {
                 </Alert>
               )}
             </Stack>
+
+            <Divider
+              color="dark.4"
+              label="LinkedIn Posts"
+              labelPosition="center"
+            />
+
+            <PostsSection />
 
             {error && (
               <Alert color="red" radius="sm">

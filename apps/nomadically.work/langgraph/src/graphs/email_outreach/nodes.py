@@ -86,13 +86,20 @@ _llm_json_fallback = None
 def _get_llm_json() -> ChatOpenAI:
     global _llm_json
     if _llm_json is None:
-        _llm_json = ChatOpenAI(
-            model=os.getenv("DEEPSEEK_MODEL", "deepseek-chat"),
-            api_key=os.environ["DEEPSEEK_API_KEY"],
-            base_url=os.getenv("DEEPSEEK_BASE_URL", "https://api.deepseek.com"),
-            temperature=0.3,
-            model_kwargs={"response_format": {"type": "json_object"}},
-        )
+        base_url = os.getenv("DEEPSEEK_BASE_URL", "https://api.deepseek.com")
+        is_local = "localhost" in base_url or "127.0.0.1" in base_url
+
+        kwargs: dict = {
+            "model": os.getenv("DEEPSEEK_MODEL", "deepseek-chat"),
+            "api_key": os.getenv("DEEPSEEK_API_KEY", "local"),
+            "base_url": base_url,
+            "temperature": 0.3,
+        }
+        # mlx_lm.server doesn't support response_format — rely on prompt engineering
+        if not is_local:
+            kwargs["model_kwargs"] = {"response_format": {"type": "json_object"}}
+
+        _llm_json = ChatOpenAI(**kwargs)
     return _llm_json
 
 

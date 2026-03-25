@@ -25,7 +25,9 @@ export default mergeConfig(
     ],
     build: {
       ...baseBuildOptions,
-      outDir
+      outDir,
+      // Disable modulepreload polyfill — it uses window/document which don't exist in service workers
+      modulePreload: false,
     },
   })
 )

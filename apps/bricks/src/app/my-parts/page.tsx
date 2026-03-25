@@ -4,6 +4,22 @@ import { useState, useEffect, useCallback } from "react";
 import Link from "next/link";
 import { css } from "styled-system/css";
 import { useSession } from "@/lib/auth-client";
+import { HubType, hubDisplayName, hubColor } from "@/lib/parser";
+
+interface UserHub {
+  id: number;
+  name: string;
+  hubType: string;
+  bleName: string;
+}
+
+const HUB_OPTIONS: { type: HubType; img: string }[] = [
+  { type: "CityHub", img: "/hubs/hub-city.png" },
+  { type: "TechnicHub", img: "/hubs/hub-technic.png" },
+  { type: "MoveHub", img: "/hubs/hub-move.png" },
+  { type: "PrimeHub", img: "/hubs/hub-prime.png" },
+  { type: "EssentialHub", img: "/hubs/hub-essential.png" },
+];
 
 interface UserPart {
   id: number;
@@ -26,6 +42,14 @@ export default function MyPartsPage() {
   const [adding, setAdding] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
+  // Hubs state
+  const [hubs, setHubs] = useState<UserHub[]>([]);
+  const [hubName, setHubName] = useState("");
+  const [hubType, setHubType] = useState<HubType>("EssentialHub");
+  const [hubBleName, setHubBleName] = useState("");
+  const [addingHub, setAddingHub] = useState(false);
+  const [hubError, setHubError] = useState<string | null>(null);
+
   const fetchParts = useCallback(async () => {
     const res = await fetch("/api/user-parts");
     if (res.ok) {
@@ -35,10 +59,19 @@ export default function MyPartsPage() {
     setLoading(false);
   }, []);
 
+  const fetchHubs = useCallback(async () => {
+    const res = await fetch("/api/hubs");
+    if (res.ok) setHubs(await res.json());
+  }, []);
+
   useEffect(() => {
-    if (session) fetchParts();
-    else setLoading(false);
-  }, [session, fetchParts]);
+    if (session) {
+      fetchParts();
+      fetchHubs();
+    } else {
+      setLoading(false);
+    }
+  }, [session, fetchParts, fetchHubs]);
 
   async function handleAdd() {
     const trimmed = partNum.trim();
@@ -103,6 +136,41 @@ export default function MyPartsPage() {
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ id, qty: newQty }),
     });
+  }
+
+  async function handleAddHub() {
+    const trimmed = hubName.trim();
+    if (!trimmed) return;
+    setAddingHub(true);
+    setHubError(null);
+    try {
+      const res = await fetch("/api/hubs", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          name: trimmed,
+          hubType,
+          bleName: hubBleName.trim(),
+        }),
+      });
+      if (!res.ok) {
+        const data = await res.json();
+        setHubError(data.error || "Failed to add hub");
+      } else {
+        setHubName("");
+        setHubBleName("");
+        await fetchHubs();
+      }
+    } catch {
+      setHubError("Failed to add hub");
+    } finally {
+      setAddingHub(false);
+    }
+  }
+
+  async function handleRemoveHub(id: number) {
+    await fetch(`/api/hubs/${id}`, { method: "DELETE" });
+    setHubs((prev) => prev.filter((h) => h.id !== id));
   }
 
   if (isPending || loading) {
@@ -470,6 +538,281 @@ export default function MyPartsPage() {
               </button>
             </div>
           ))}
+        </div>
+      )}
+
+      {/* ── My Hubs ─────────────────────────────────────────────── */}
+      <div className={css({ mt: "12", mb: "8" })}>
+        <h2
+          className={css({
+            fontSize: "2xl",
+            fontWeight: "900",
+            fontFamily: "display",
+            letterSpacing: "-0.03em",
+            color: "ink.primary",
+          })}
+        >
+          My Hubs
+        </h2>
+        <p className={css({ mt: "1", fontSize: "sm", color: "ink.muted" })}>
+          Powered Up hubs you own
+          {hubs.length > 0 && ` — ${hubs.length} hub${hubs.length > 1 ? "s" : ""}`}
+        </p>
+      </div>
+
+      {/* Add hub form */}
+      <div
+        className={css({
+          display: "flex",
+          gap: "2",
+          flexWrap: "wrap",
+          alignItems: "center",
+          bg: "plate.surface",
+          rounded: "brick",
+          border: "2px solid",
+          borderColor: "plate.border",
+          boxShadow: "brick",
+          p: "3",
+          mb: "6",
+          _focusWithin: { borderColor: "lego.orange" },
+        })}
+      >
+        <input
+          value={hubName}
+          onChange={(e) => setHubName(e.target.value)}
+          onKeyDown={(e) => e.key === "Enter" && handleAddHub()}
+          placeholder="Hub name (e.g. My Train Hub)"
+          className={css({
+            flex: "2",
+            minW: "140px",
+            bg: "transparent",
+            px: "3",
+            py: "2",
+            fontSize: "sm",
+            color: "ink.primary",
+            outline: "none",
+            border: "none",
+            _placeholder: { color: "ink.faint" },
+          })}
+        />
+        <select
+          value={hubType}
+          onChange={(e) => setHubType(e.target.value as HubType)}
+          className={css({
+            flex: "1",
+            minW: "130px",
+            bg: "transparent",
+            px: "3",
+            py: "2",
+            fontSize: "sm",
+            color: "ink.primary",
+            outline: "none",
+            border: "none",
+            cursor: "pointer",
+          })}
+        >
+          {HUB_OPTIONS.map((h) => (
+            <option key={h.type} value={h.type}>
+              {hubDisplayName(h.type)}
+            </option>
+          ))}
+        </select>
+        <input
+          value={hubBleName}
+          onChange={(e) => setHubBleName(e.target.value)}
+          placeholder="BLE name (optional)"
+          className={css({
+            flex: "1",
+            minW: "120px",
+            bg: "transparent",
+            px: "3",
+            py: "2",
+            fontSize: "sm",
+            color: "ink.primary",
+            outline: "none",
+            border: "none",
+            _placeholder: { color: "ink.faint" },
+          })}
+        />
+        <button
+          onClick={handleAddHub}
+          disabled={addingHub || !hubName.trim()}
+          className={css({
+            rounded: "lg",
+            bg: "lego.green",
+            px: "5",
+            py: "2",
+            fontSize: "sm",
+            fontWeight: "800",
+            fontFamily: "display",
+            color: "white",
+            cursor: "pointer",
+            transition: "all 0.15s ease",
+            flexShrink: 0,
+            boxShadow:
+              "inset 0 1px 0 rgba(255,255,255,0.2), 0 2px 0 #005A1B, 0 3px 6px rgba(0,0,0,0.3)",
+            _hover: { bg: "#00A333", transform: "translateY(-1px)" },
+            _disabled: { opacity: 0.5, cursor: "not-allowed" },
+          })}
+        >
+          {addingHub ? "..." : "Add Hub"}
+        </button>
+      </div>
+
+      {hubError && (
+        <div
+          className={css({
+            mb: "4",
+            rounded: "brick",
+            border: "2px solid",
+            borderColor: "rgba(227, 0, 11, 0.3)",
+            bg: "rgba(227, 0, 11, 0.08)",
+            px: "4",
+            py: "3",
+            fontSize: "sm",
+            fontWeight: "500",
+            color: "#FF6B6B",
+          })}
+        >
+          {hubError}
+        </div>
+      )}
+
+      {/* Hub list */}
+      {hubs.length === 0 ? (
+        <div
+          className={css({
+            textAlign: "center",
+            py: "16",
+            bg: "plate.surface",
+            rounded: "brick",
+            border: "2px solid",
+            borderColor: "plate.border",
+            boxShadow: "brick",
+          })}
+        >
+          <div
+            className={css({
+              mx: "auto",
+              w: "14",
+              h: "14",
+              rounded: "stud",
+              bg: "lego.blue",
+              boxShadow: "stud",
+              mb: "4",
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "center",
+              fontSize: "xl",
+              color: "white",
+            })}
+          >
+            ?
+          </div>
+          <p className={css({ fontSize: "sm", color: "ink.muted" })}>
+            No hubs yet. Add your Powered Up hubs above.
+          </p>
+        </div>
+      ) : (
+        <div className={css({ display: "flex", flexDir: "column", gap: "2" })}>
+          {hubs.map((hub) => {
+            const opt = HUB_OPTIONS.find((h) => h.type === hub.hubType);
+            const color = hubColor(hub.hubType as HubType);
+            return (
+              <div
+                key={hub.id}
+                className={css({
+                  display: "flex",
+                  alignItems: "center",
+                  gap: "3",
+                  bg: "plate.surface",
+                  rounded: "brick",
+                  border: "1px solid",
+                  borderColor: "plate.border",
+                  boxShadow: "plate",
+                  px: "3",
+                  py: "2.5",
+                })}
+              >
+                {opt ? (
+                  <img
+                    src={opt.img}
+                    alt={hub.hubType}
+                    className={css({
+                      w: "10",
+                      h: "10",
+                      objectFit: "contain",
+                      flexShrink: 0,
+                    })}
+                  />
+                ) : (
+                  <div
+                    className={css({
+                      w: "10",
+                      h: "10",
+                      rounded: "stud",
+                      bg: "lego.blue",
+                      boxShadow: "stud",
+                      flexShrink: 0,
+                    })}
+                  />
+                )}
+                <div className={css({ flex: 1, minW: 0 })}>
+                  <span
+                    className={css({
+                      fontSize: "sm",
+                      fontWeight: "700",
+                      fontFamily: "display",
+                      color: "ink.primary",
+                      display: "block",
+                      overflow: "hidden",
+                      textOverflow: "ellipsis",
+                      whiteSpace: "nowrap",
+                    })}
+                  >
+                    {hub.name}
+                  </span>
+                  <span className={css({ fontSize: "xs", color: "ink.muted" })}>
+                    <span
+                      className={css({
+                        display: "inline-block",
+                        px: "1.5",
+                        py: "0.5",
+                        rounded: "md",
+                        fontSize: "10px",
+                        fontWeight: "700",
+                        mr: "1",
+                      })}
+                      style={{ backgroundColor: color + "20", color }}
+                    >
+                      {hubDisplayName(hub.hubType as HubType)}
+                    </span>
+                    {hub.bleName && `BLE: ${hub.bleName}`}
+                  </span>
+                </div>
+                <button
+                  onClick={() => handleRemoveHub(hub.id)}
+                  className={css({
+                    fontSize: "xs",
+                    fontWeight: "700",
+                    fontFamily: "display",
+                    color: "ink.faint",
+                    bg: "transparent",
+                    border: "none",
+                    cursor: "pointer",
+                    px: "2",
+                    py: "1",
+                    rounded: "md",
+                    transition: "color 0.15s",
+                    flexShrink: 0,
+                    _hover: { color: "lego.red" },
+                  })}
+                >
+                  x
+                </button>
+              </div>
+            );
+          })}
         </div>
       )}
     </main>

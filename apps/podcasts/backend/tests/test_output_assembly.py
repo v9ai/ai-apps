@@ -188,3 +188,101 @@ def test_invalid_types_handled():
     if not isinstance(competitive, dict):
         competitive = {}
     assert competitive == {}
+
+
+# ── 11. test_questions_extraction ────────────────────────────────────────
+def test_questions_extraction():
+    """JSON array of enriched question objects extracted from agent output."""
+    raw = json.dumps([
+        {
+            "category": "origin",
+            "question": "What moment made you leave Kensho?",
+            "why_this_question": "Reveals risk calculus.",
+            "expected_insight": "A concrete anecdote.",
+        },
+        {
+            "category": "technical_depth",
+            "question": "Why did LangGraph introduce cyclic graphs?",
+            "why_this_question": "Exposes DAG limitations.",
+            "expected_insight": "A specific failure pattern.",
+        },
+    ])
+    questions = _extract_json(raw) or []
+    if not isinstance(questions, list):
+        questions = []
+    assert len(questions) == 2
+    assert questions[0]["category"] == "origin"
+    assert questions[1]["why_this_question"] == "Exposes DAG limitations."
+
+
+# ── 12. test_questions_extraction_with_markdown ──────────────────────────
+def test_questions_extraction_with_markdown():
+    """Questions wrapped in markdown code fence are extracted correctly."""
+    raw = '''Here are the interview questions:
+```json
+[
+  {"category": "philosophy", "question": "What's the most dangerous misconception?",
+   "why_this_question": "Tests paradigm gap.", "expected_insight": "A concrete anti-pattern."}
+]
+```'''
+    questions = _extract_json(raw) or []
+    if not isinstance(questions, list):
+        questions = []
+    assert len(questions) == 1
+    assert questions[0]["category"] == "philosophy"
+    assert "why_this_question" in questions[0]
+
+
+# ── 13. test_questions_empty_text_filtered ───────────────────────────────
+def test_questions_empty_text_filtered():
+    """Questions with empty question text should be filtered out in export."""
+    raw_questions = [
+        {"category": "origin", "question": "Valid question?", "why_this_question": "reason", "expected_insight": "insight"},
+        {"category": "origin", "question": "", "why_this_question": "reason", "expected_insight": "insight"},
+        {"category": "future", "question": "Another valid?", "why_this_question": "reason", "expected_insight": "insight"},
+    ]
+    # Replicate the export_results filtering logic
+    exported = [
+        {
+            "category": q.get("category", ""),
+            "question": q.get("question", ""),
+            "why_this_question": q.get("why_this_question", ""),
+            "expected_insight": q.get("expected_insight", ""),
+        }
+        for q in raw_questions if isinstance(q, dict) and q.get("question")
+    ]
+    assert len(exported) == 2
+    assert exported[0]["question"] == "Valid question?"
+    assert exported[1]["question"] == "Another valid?"
+
+
+# ── 14. test_questions_fallback_to_empty_list ────────────────────────────
+def test_questions_fallback_to_empty_list():
+    """Non-JSON question output falls back to empty list."""
+    raw = "(agent error: timeout occurred while generating questions)"
+    questions = _extract_json(raw) or []
+    if not isinstance(questions, list):
+        questions = []
+    assert questions == []
+
+
+# ── 15. test_questions_enrichment_fields_optional ────────────────────────
+def test_questions_enrichment_fields_optional():
+    """Old-style questions without enrichment fields should still export."""
+    raw_questions = [
+        {"category": "origin", "question": "How did you start?"},
+    ]
+    # Replicate export logic with .get defaults
+    exported = [
+        {
+            "category": q.get("category", ""),
+            "question": q.get("question", ""),
+            "why_this_question": q.get("why_this_question", ""),
+            "expected_insight": q.get("expected_insight", ""),
+        }
+        for q in raw_questions if isinstance(q, dict) and q.get("question")
+    ]
+    assert len(exported) == 1
+    assert exported[0]["question"] == "How did you start?"
+    assert exported[0]["why_this_question"] == ""
+    assert exported[0]["expected_insight"] == ""

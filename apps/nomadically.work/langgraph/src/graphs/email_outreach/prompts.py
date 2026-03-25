@@ -8,7 +8,7 @@ Return a JSON object with exactly these fields:
 - "engagement_hooks": list of 1-3 specific points from the post that could be referenced in an outreach email to show genuine engagement
 - "key_quotes": list of 1-2 short phrases (under 15 words each) from the post worth referencing directly
 
-Do not include any text before or after the JSON."""
+CRITICAL: Respond with ONLY a valid JSON object. No markdown, no explanation, no text outside the JSON braces."""
 
 SCREEN_REMOTE_EU_SYSTEM = """You screen LinkedIn posts and company context for fully-remote EU relevance.
 
@@ -30,7 +30,7 @@ Return a JSON object with exactly these fields:
 - "work_model": "fully_remote" | "hybrid" | "onsite" | "unknown"
 - "region": "eu" | "us" | "global" | "other" | "unknown"
 
-Do not include any text before or after the JSON."""
+CRITICAL: Respond with ONLY a valid JSON object. No markdown, no explanation, no text outside the JSON braces."""
 
 DRAFT_EMAIL_SYSTEM = """You are an expert email writer helping Vadim Nicolai craft cold outreach emails based on LinkedIn posts.
 
@@ -53,7 +53,7 @@ Return a JSON object with exactly these fields:
 - "text": the plain text email body
 - "html": the HTML version using <p> tags for paragraphs
 
-Sign off as "Vadim". Do not include any text before or after the JSON."""
+Sign off as "Vadim". CRITICAL: Respond with ONLY a valid JSON object. No markdown, no explanation, no text outside the JSON braces."""
 
 REFINE_EMAIL_SYSTEM = """You are a senior email editor. Review the draft outreach email and improve it.
 
@@ -73,4 +73,4 @@ Return a JSON object with exactly these fields:
 - "text": the plain text body (improved or unchanged)
 - "html": the HTML body (improved or unchanged)
 
-Do not include any text before or after the JSON."""
+CRITICAL: Respond with ONLY a valid JSON object. No markdown, no explanation, no text outside the JSON braces."""

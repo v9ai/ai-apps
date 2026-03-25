@@ -1,4 +1,5 @@
 #!/usr/bin/env python3
+from __future__ import annotations
 """Person research pipeline — LangGraph/LangChain implementation with 20 expert agents.
 
 Spawns 20 specialized expert agents organized in 3 phases that collaboratively
@@ -42,7 +43,6 @@ import asyncio
 import json
 import os
 import re
-import sys
 from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any, TypedDict
@@ -53,15 +53,13 @@ from langgraph.graph import END, START, StateGraph
 from rich.console import Console
 from rich.table import Table
 
-# ── deepseek_client from shared pypackages ────────────────────────────────
-sys.path.insert(0, str(Path(__file__).resolve().parent.parent.parent.parent / "pypackages" / "deepseek" / "src"))
-from deepseek_client import (  # noqa: E402
-    DeepSeekClient,
-    DeepSeekConfig,
+from mlx_client import (  # noqa: E402
+    MLXClient,
+    MLXConfig,
     ChatMessage,
     FunctionTool,
+    FunctionToolDef,
 )
-from deepseek_client.types import FunctionToolDef  # noqa: E402
 
 console = Console()
 
@@ -75,14 +73,13 @@ _MAX_REACT_ITERS = 12
 
 
 # ═══════════════════════════════════════════════════════════════════════════
-# LLM — DeepSeek via shared client
+# LLM — Local MLX inference
 # ═══════════════════════════════════════════════════════════════════════════
 
-def _make_client() -> DeepSeekClient:
-    return DeepSeekClient(DeepSeekConfig(
+def _make_client() -> MLXClient:
+    return MLXClient(MLXConfig(
         default_temperature=0.2,
         default_max_tokens=8192,
-        timeout=120.0,
     ))
 
 
@@ -695,10 +692,10 @@ class ResearchState(TypedDict, total=False):
 # ═══════════════════════════════════════════════════════════════════════════
 
 async def _run_agent(
-    client: DeepSeekClient,
+    client,
     system_prompt: str,
     task: str,
-    tools: list[FunctionTool] | None = None,
+    tools=None,
 ) -> str:
     """Run a single ReAct agent with the given system prompt, task, and tools."""
     try:
@@ -966,20 +963,17 @@ async def phase1(state: ResearchState) -> dict:
         ),
     ]
 
-    keys = [s[0] for s in specs]
-    raw = await asyncio.gather(*[
-        _run_agent(client, sys, task, tools)
-        for _, sys, task, tools in specs
-    ], return_exceptions=True)
-    results = [
-        r if isinstance(r, str) else f"(agent error: {r})"
-        for r in raw
-    ]
-
-    for key, result in zip(keys, results):
+    # Sequential execution — local model handles one agent at a time
+    results: dict[str, str] = {}
+    for key, sys_prompt, task_prompt, agent_tools in specs:
+        try:
+            result = await _run_agent(client, sys_prompt, task_prompt, agent_tools)
+        except Exception as e:
+            result = f"(agent error: {e})"
+        results[key] = result
         console.print(f"  [green]✓[/] {key} ({len(result)} chars)")
 
-    return dict(zip(keys, results))
+    return results
 
 
 # ═══════════════════════════════════════════════════════════════════════════
@@ -1305,20 +1299,17 @@ async def phase2(state: ResearchState) -> dict:
         ),
     ]
 
-    keys = [s[0] for s in specs]
-    raw = await asyncio.gather(*[
-        _run_agent(client, sys, task, tools)
-        for _, sys, task, tools in specs
-    ], return_exceptions=True)
-    results = [
-        r if isinstance(r, str) else f"(agent error: {r})"
-        for r in raw
-    ]
-
-    for key, result in zip(keys, results):
+    # Sequential execution — local model handles one agent at a time
+    results: dict[str, str] = {}
+    for key, sys_prompt, task_prompt, agent_tools in specs:
+        try:
+            result = await _run_agent(client, sys_prompt, task_prompt, agent_tools)
+        except Exception as e:
+            result = f"(agent error: {e})"
+        results[key] = result
         console.print(f"  [green]✓[/] {key} ({len(result)} chars)")
 
-    return dict(zip(keys, results))
+    return results
 
 
 # ═══════════════════════════════════════════════════════════════════════════
@@ -1639,8 +1630,8 @@ async def reresearch(state: ResearchState) -> dict:
         )))
 
     if tasks:
-        results = await asyncio.gather(*[t[1] for t in tasks])
-        for (key, _), result in zip(tasks, results):
+        for key, coro in tasks:
+            result = await coro
             updates[key] = result
             console.print(f"  [green]✓[/] {key} re-researched ({len(result)} chars)")
     else:
@@ -1914,7 +1905,12 @@ async def main():
     parser.add_argument("--org", help="Organization")
     parser.add_argument("--github", help="GitHub username")
     parser.add_argument("--orcid", help="ORCID iD")
+    parser.add_argument("--model", help="MLX model ID (default: env MLX_MODEL or Qwen2.5-7B-Instruct-4bit)")
     args = parser.parse_args()
+
+    if args.model:
+        import os
+        os.environ["MLX_MODEL"] = args.model
 
     if args.slug:
         ts_path = PERSONALITIES_DIR / f"{args.slug}.ts"

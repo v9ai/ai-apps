@@ -25,10 +25,7 @@ from typing import Any, TypedDict
 
 import httpx
 
-# ─── DeepSeek client from shared pypackages ─────────────────
-
-sys.path.insert(0, str(Path(__file__).resolve().parent.parent.parent.parent / "pypackages" / "deepseek" / "src"))
-from deepseek_client import DeepSeekClient, DeepSeekConfig, ChatMessage  # noqa: E402
+from mlx_client import MLXClient, MLXConfig, ChatMessage  # noqa: E402
 
 # ─── Paths ──────────────────────────────────────────────────
 
@@ -281,14 +278,13 @@ def merge_and_sort(gathered: GatheredEvents) -> list[TimelineEvent]:
     return deduped
 
 
-# ─── DeepSeek helpers ─────────────────────────────────────
+# ─── MLX local LLM ───────────────────────────────────────
 
 
-def _make_deepseek_client() -> DeepSeekClient:
-    return DeepSeekClient(DeepSeekConfig(
+def _make_client() -> MLXClient:
+    return MLXClient(MLXConfig(
         default_temperature=0.1,
         default_max_tokens=2048,
-        timeout=60.0,
     ))
 
 
@@ -314,7 +310,7 @@ def _extract_json(text: str) -> Any:
 
 
 async def _search_web_timeline_events(inp: PipelineInput) -> list[TimelineEvent]:
-    """Use DuckDuckGo + DeepSeek to find career timeline events from the web."""
+    """Use DuckDuckGo + local LLM to find career timeline events from the web."""
     name = inp.get("name", "")
     org = inp.get("org", "")
     if not name:
@@ -339,7 +335,7 @@ async def _search_web_timeline_events(inp: PipelineInput) -> list[TimelineEvent]
     if not snippets:
         return []
 
-    client = _make_deepseek_client()
+    client = _make_client()
     prompt = (
         f"Extract chronological career timeline events for {name} ({org}) from these search results:\n\n"
         + "\n".join(snippets[:20])

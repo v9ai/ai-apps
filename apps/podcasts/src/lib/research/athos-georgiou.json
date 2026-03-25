@@ -183,5 +183,67 @@
       "title": "ORCID 0009-0004-3081-2883",
       "url": "https://orcid.org/0009-0004-3081-2883"
     }
+  ],
+  "questions": [
+    {
+      "category": "origin",
+      "question": "You incorporated NCA in January 2024, but your first major public release was 'The Most Beautiful RAG' in September 2025. What specific, unglamorous problem did you solve in those quiet months that made that launch possible?",
+      "why_this_question": "It probes the foundational, often unseen work that precedes a polished public release.",
+      "expected_insight": "A concrete story about a technical or business hurdle (e.g., data pipeline, client validation, internal tooling) that defined NCA's early focus and operational philosophy."
+    },
+    {
+      "category": "origin",
+      "question": "Your 'Raising Artificial Intelligence' framework uses a parent-child metaphor for AI responsibility. What personal experience or observation made this metaphor feel like the right lens, rather than a purely technical or regulatory one?",
+      "why_this_question": "It connects a philosophical stance to a personal or professional turning point.",
+      "expected_insight": "An anecdote revealing the human-centric motivation behind his responsible AI work, showing the origin of his creator-responsibility mindset."
+    },
+    {
+      "category": "technical_depth",
+      "question": "In Snappy, you unified ColPali's late-interaction with structured OCR. What was the single most frustrating failure mode when these two systems initially talked to each other, and how did patch-to-region propagation fix it?",
+      "why_this_question": "It forces a specific, technical war story about system integration, not just a high-level description.",
+      "expected_insight": "A detailed example of a misalignment (e.g., token vs. pixel space, confidence scoring clash) and the precise architectural tweak that resolved it."
+    },
+    {
+      "category": "technical_depth",
+      "question": "Your AMD GPU inference paper spans 235B to 1T parameters. For a model like ColQwen3.5-4.5B, what optimization from the trillion-parameter regime felt most counterintuitively effective or wasteful when applied down at your scale?",
+      "why_this_question": "It reveals cross-scale insights and challenges the assumption that big-model optimizations trickle down neatly.",
+      "expected_insight": "A specific technical trade-off (e.g., attention slicing, memory offloading strategy) that behaved unexpectedly at lower parameter counts, highlighting scale-aware engineering."
+    },
+    {
+      "category": "philosophy",
+      "question": "You've written that LLMs 'lack intelligence, creativity, and consciousness,' and AGI needs more than GenAI. Given your work on multimodal RAG, what does a system with Snappy + ColQwen + an LLM possess that a pure LLM fundamentally lacks?",
+      "why_this_question": "It pressures him to define a positive capability of his integrated systems, moving beyond criticism of LLMs.",
+      "expected_insight": "A crisp definition of a composite cognitive capability (e.g., grounded reference, verifiable provenance) that his architecture enables, outlining his alternative path."
+    },
+    {
+      "category": "philosophy",
+      "question": "In your 'Diminishing Returns' post, you hit optimization plateaus with ColQwen3.5. Was there a moment you considered a radically different architecture instead of iterative v1/v2/v3 releases, and what held you to the ColQwen path?",
+      "why_this_question": "It uncovers a strategic technical commitment in the face of diminishing returns.",
+      "expected_insight": "The core belief in ColQwen's latent potential or a practical constraint (data, compute) that made iteration the preferred bet over a paradigm shift."
+    },
+    {
+      "category": "collaboration",
+      "question": "You contribute to the Claude Code ecosystem with kimchi-cult. What's one workflow or debugging task you saw in the NCA team that felt impossible until a plugin from that community changed the process?",
+      "why_this_question": "It grounds ecosystem collaboration in a tangible, internal productivity gain.",
+      "expected_insight": "A specific, previously cumbersome development or ops task that was transformed by a community tool, showing the practical value of open ecosystem participation."
+    },
+    {
+      "category": "collaboration",
+      "question": "At the Greek AI Startup Accelerator launch, you were among founders meeting OpenAI and government reps. What was one piece of blunt, non-obvious advice exchanged between founders there that you've since applied at NCA?",
+      "why_this_question": "It extracts actionable insight from a high-profile networking event, moving beyond ceremonial details.",
+      "expected_insight": "A concrete tactical or strategic adjustment (e.g., hiring, GTM, infra spending) inspired by peer founder wisdom in a nascent ecosystem."
+    },
+    {
+      "category": "future",
+      "question": "Your 'AI Value Gap' post identifies adoption friction. Looking 18 months out, what single, boring standard — like a file format or API spec — needs to emerge for vision-language RAG to become as plug-and-play as text embedding is today?",
+      "why_this_question": "It pushes for a specific, infrastructural prediction that would accelerate his entire field.",
+      "expected_insight": "Identification of a key interoperability pain point (e.g., spatial annotation schema, model output normalization) and a prediction on how it will be solved."
+    },
+    {
+      "category": "future",
+      "question": "You benchmarked AMD's MI325X. For the next-gen chip you're anticipating, what's the first, somewhat reckless experiment you'd run — pushing a parameter count or batch size — that current hardware simply says 'no' to?",
+      "why_this_question": "It reveals his hardware-limited ambitions and what scale of problem he's eager to attack next.",
+      "expected_insight": "A specific, scale-bound experiment (e.g., 10-trillion parameter inference, real-time video corpus search) that defines the next frontier for his optimization work."
+    }
   ]
 }

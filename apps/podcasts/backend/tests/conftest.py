@@ -7,15 +7,21 @@ Provides:
 - LangGraph graph builder fixture
 """
 
+import asyncio
 import json
 import os
 import sys
 from pathlib import Path
 from typing import Any
 
-import httpx
 import pytest
-from deepeval.models import DeepEvalBaseLLM
+
+try:
+    from deepeval.models import DeepEvalBaseLLM
+    _HAS_DEEPEVAL = True
+except (ImportError, TypeError):
+    _HAS_DEEPEVAL = False
+    DeepEvalBaseLLM = object  # type: ignore[misc,assignment]
 
 # Ensure backend modules are importable
 BACKEND_DIR = Path(__file__).resolve().parent.parent
@@ -26,50 +32,25 @@ RESEARCH_DIR = PROJECT_ROOT / "src" / "lib" / "research"
 PERSONALITIES_DIR = PROJECT_ROOT / "personalities"
 
 
-# ── Load DEEPSEEK_API_KEY from .env files if not already set ────────────
+# ── Shared MLX eval model (used by fixtures below) ──────────────────────
 
-def _load_env_key(key: str):
-    if os.getenv(key):
-        return
-    # Search up from project root, plus sibling directories that may have the key
-    mono_root = PROJECT_ROOT.parent.parent  # ai-apps/
-    search_dirs = [
-        PROJECT_ROOT,                              # apps/podcasts/
-        PROJECT_ROOT.parent,                       # apps/
-        mono_root,                                 # ai-apps/
-        mono_root / "langgraph",                   # ai-apps/langgraph/
-        mono_root / "apps" / "bricks" / "backend", # apps/bricks/backend/
-        mono_root / "pypackages" / "how_it_works", # pypackages/how_it_works/
-        mono_root / "apps" / "nomadically.work",   # apps/nomadically.work/
-    ]
-    for d in search_dirs:
-        for name in (".env", ".env.local"):
-            env_file = d / name
-            if not env_file.exists():
-                continue
-            for line in env_file.read_text().splitlines():
-                line = line.strip()
-                if not line or line.startswith("#") or "=" not in line:
-                    continue
-                k, _, v = line.partition("=")
-                if k.strip() == key and v.strip().strip("\"'"):
-                    os.environ[key] = v.strip().strip("\"'")
-                    return
-
-
-_load_env_key("DEEPSEEK_API_KEY")
-
-
-# ── Shared DeepSeek eval model (used by fixtures below) ─────────────────
-
-class _DeepSeekEvalModel(DeepEvalBaseLLM):
-    """Shared DeepSeek model for all GEval tests — avoids OpenAI dependency."""
+class _MLXEvalModel(DeepEvalBaseLLM):  # type: ignore[misc]
+    """Local MLX model for all GEval tests — fully offline, no API keys."""
 
     def __init__(self):
-        self._api_key = os.getenv("DEEPSEEK_API_KEY", "")
-        self._base_url = "https://api.deepseek.com/v1"
-        self._model_name = "deepseek-chat"
-        super().__init__(model=self._model_name)
+        self._model_name = os.environ.get("MLX_MODEL", "mlx-community/Qwen2.5-7B-Instruct-4bit")
+        if _HAS_DEEPEVAL:
+            super().__init__(model=self._model_name)
+        self._client = None
+
+    def _get_client(self):
+        if self._client is None:
+            from mlx_client import MLXClient, MLXConfig
+            self._client = MLXClient(MLXConfig(
+                default_temperature=0.0,
+                default_max_tokens=2048,
+            ))
+        return self._client
 
     def load_model(self):
         return self
@@ -77,34 +58,31 @@ class _DeepSeekEvalModel(DeepEvalBaseLLM):
     def get_model_name(self) -> str:
         return self._model_name
 
-    def _call_api(self, prompt: str) -> str:
-        if not self._api_key:
-            raise RuntimeError("DEEPSEEK_API_KEY not set")
-        with httpx.Client(timeout=60) as client:
-            resp = client.post(
-                f"{self._base_url}/chat/completions",
-                headers={"Authorization": f"Bearer {self._api_key}", "Content-Type": "application/json"},
-                json={"model": self._model_name, "messages": [{"role": "user", "content": prompt}],
-                      "temperature": 0.0, "max_tokens": 2048},
-            )
-            resp.raise_for_status()
-            return resp.json()["choices"][0]["message"]["content"]
+    def _call_sync(self, prompt: str) -> str:
+        from mlx_client import ChatMessage
+        client = self._get_client()
+        resp = asyncio.get_event_loop().run_until_complete(
+            client.chat([ChatMessage(role="user", content=prompt)])
+        )
+        return resp.choices[0].message.content
 
     def generate(self, prompt: str, **kwargs) -> str:
-        return self._call_api(prompt)
+        return self._call_sync(prompt)
 
     async def a_generate(self, prompt: str, **kwargs) -> str:
-        import asyncio
-        return await asyncio.to_thread(self._call_api, prompt)
+        from mlx_client import ChatMessage
+        client = self._get_client()
+        resp = await client.chat([ChatMessage(role="user", content=prompt)])
+        return resp.choices[0].message.content
 
 
-_shared_eval_model: "_DeepSeekEvalModel | None" = None
+_shared_eval_model = None
 
 
-def _get_shared_eval_model() -> "_DeepSeekEvalModel":
+def _get_shared_eval_model():
     global _shared_eval_model
     if _shared_eval_model is None:
-        _shared_eval_model = _DeepSeekEvalModel()
+        _shared_eval_model = _MLXEvalModel()
     return _shared_eval_model
 
 
@@ -457,6 +435,6 @@ def sample_person() -> dict[str, str]:
 # ── deepeval metric helpers ─────────────────────────────────────────────
 
 @pytest.fixture
-def deepeval_model() -> "_DeepSeekEvalModel":
-    """Return a shared DeepSeekEvalModel instance for GEval metrics."""
+def deepeval_model():
+    """Return a shared MLX eval model instance for GEval metrics."""
     return _get_shared_eval_model()

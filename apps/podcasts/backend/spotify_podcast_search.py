@@ -1,10 +1,10 @@
 """
 spotify_podcast_search.py
 ─────────────────────────
-Local-first pipeline: Spotify → Chroma → Semantic Search → DeepEval
+Local-first pipeline: Spotify → LanceDB → Semantic Search → DeepEval
 
-Chroma is the central local store. The JSON export is a projection of
-what's in Chroma for the Next.js frontend to consume. Run this script
+LanceDB is the central local store. The JSON export is a projection of
+what's in LanceDB for the Next.js frontend to consume. Run this script
 manually to refresh data.
 
 Setup:
@@ -12,13 +12,13 @@ Setup:
 
 Commands:
     python spotify_podcast_search.py fetch                    # Spotify → local JSON
-    python spotify_podcast_search.py ingest                   # JSON → Chroma (embed + index)
+    python spotify_podcast_search.py ingest                   # JSON → LanceDB (embed + index)
     python spotify_podcast_search.py refresh                  # fetch + ingest + export in one go
-    python spotify_podcast_search.py export                   # Chroma → enriched JSON for Next.js
+    python spotify_podcast_search.py export                   # LanceDB → enriched JSON for Next.js
     python spotify_podcast_search.py search "AGI timelines"
     python spotify_podcast_search.py search "future of coding" --guest "Boris Cherny" --latest-first
-    python spotify_podcast_search.py similar <spotify_id>     # find similar episodes via Chroma
-    python spotify_podcast_search.py stats                    # Chroma collection statistics
+    python spotify_podcast_search.py similar <spotify_id>     # find similar episodes via LanceDB
+    python spotify_podcast_search.py stats                    # LanceDB table statistics
     python spotify_podcast_search.py timeline --person "Dario Amodei"
     python spotify_podcast_search.py eval                     # full DeepEval suite (all categories)
     python spotify_podcast_search.py eval --category builders # category-specific eval
@@ -35,7 +35,8 @@ from http.server import HTTPServer, BaseHTTPRequestHandler
 from pathlib import Path
 from urllib.parse import urlparse, parse_qs
 
-import chromadb
+import lancedb
+import pyarrow as pa
 import spotipy
 from sentence_transformers import SentenceTransformer
 from spotipy.oauth2 import SpotifyClientCredentials
@@ -68,9 +69,9 @@ SPOTIFY_CLIENT_SECRET = os.environ.get("SPOTIFY_CLIENT_SECRET", "")
 SPOTIFY_MARKET = "US"
 
 PROJECT_ROOT = Path(__file__).resolve().parent.parent
-CHROMA_DIR = str(PROJECT_ROOT / "chroma_podcasts")
-EPISODES_COLLECTION = "episodes"         # full episode metadata
-CHUNKS_COLLECTION = "episode_chunks"     # embedded chunks for search
+LANCE_DIR = str(PROJECT_ROOT / "lance_podcasts")
+EPISODES_TABLE = "episodes"              # full episode metadata
+CHUNKS_TABLE = "episode_chunks"          # embedded chunks for search
 EMBEDDING_MODEL = "all-MiniLM-L6-v2"
 CHUNK_SIZE = 500
 CHUNK_OVERLAP = 80
@@ -99,6 +100,7 @@ AI_PEOPLE = [
     # Vector Database Founders
     "Jeff Huber", "Bob van Luijt", "Andre Zayarni",
     "Vasilije Markovic", "Shay Banon", "Andrew Kane",
+    "Chang She",
 ]
 
 PERSON_SLUGS = {
@@ -122,6 +124,7 @@ PERSON_SLUGS = {
     "Jeff Huber": "jeff-huber", "Bob van Luijt": "bob-van-luijt",
     "Andre Zayarni": "andre-zayarni", "Vasilije Markovic": "vasilije-markovic",
     "Shay Banon": "shay-banon", "Andrew Kane": "andrew-kane",
+    "Chang She": "chang-she",
 }
 
 PERSON_CATEGORIES = {
@@ -145,6 +148,7 @@ PERSON_CATEGORIES = {
     "Jeff Huber": "vector-dbs", "Bob van Luijt": "vector-dbs",
     "Andre Zayarni": "vector-dbs", "Vasilije Markovic": "vector-dbs",
     "Shay Banon": "vector-dbs", "Andrew Kane": "vector-dbs",
+    "Chang She": "vector-dbs",
 }
 
 # Extra search queries per person to widen episode coverage.
@@ -165,6 +169,7 @@ PERSON_ALT_QUERIES: dict[str, list[str]] = {
     "Andrew Kane": ["Andrew Kane pgvector"],
     "Andre Zayarni": ["Andre Zayarni Qdrant", "Qdrant CEO"],
     "Yang Zhilin": ["Yang Zhilin Moonshot", "Kimi Moonshot AI", "Zhilin Yang Kimi"],
+    "Chang She": ["Chang She LanceDB", "LanceDB CEO", "LanceDB multimodal"],
 }
 
 # Alternate name forms for filtering (person's name may appear differently)
@@ -202,29 +207,40 @@ ALL_CATEGORIES = [
 
 
 # ═══════════════════════════════════════════════════════════════════════════
-# CHROMA HELPERS — Chroma as central local store
+# LANCEDB HELPERS — LanceDB as central local store
 # ═══════════════════════════════════════════════════════════════════════════
 
-def get_chroma():
-    return chromadb.PersistentClient(path=CHROMA_DIR)
+EPISODES_SCHEMA = pa.schema([
+    pa.field("spotify_id", pa.utf8()),
+    pa.field("name", pa.utf8()),
+    pa.field("document", pa.utf8()),
+    pa.field("show_name", pa.utf8()),
+    pa.field("show_id", pa.utf8()),
+    pa.field("publisher", pa.utf8()),
+    pa.field("release_date", pa.utf8()),
+    pa.field("duration_min", pa.float64()),
+    pa.field("guest_query", pa.utf8()),
+    pa.field("guest_slug", pa.utf8()),
+    pa.field("category", pa.utf8()),
+    pa.field("url", pa.utf8()),
+    pa.field("image", pa.utf8()),
+])
 
 
-def get_episodes_collection(client=None):
-    """Document store — one doc per episode, metadata-rich, no embeddings needed."""
-    c = client or get_chroma()
-    return c.get_or_create_collection(
-        name=EPISODES_COLLECTION,
-        metadata={"hnsw:space": "cosine"},
-    )
+def get_db():
+    return lancedb.connect(LANCE_DIR)
 
 
-def get_chunks_collection(client=None):
+def get_episodes_table(db=None):
+    """Document store — one row per episode, metadata-rich, no embeddings."""
+    d = db or get_db()
+    return d.open_table(EPISODES_TABLE)
+
+
+def get_chunks_table(db=None):
     """Vector store — chunked + embedded episode text for semantic search."""
-    c = client or get_chroma()
-    return c.get_or_create_collection(
-        name=CHUNKS_COLLECTION,
-        metadata={"hnsw:space": "cosine"},
-    )
+    d = db or get_db()
+    return d.open_table(CHUNKS_TABLE)
 
 
 def episode_metadata(ep):
@@ -434,7 +450,7 @@ def cmd_fetch(args):
 
 
 # ═══════════════════════════════════════════════════════════════════════════
-# 2. INGEST — JSON → Chroma (two collections: episodes + chunks)
+# 2. INGEST — JSON → LanceDB (two tables: episodes + chunks)
 # ═══════════════════════════════════════════════════════════════════════════
 
 def cmd_ingest(args):
@@ -445,43 +461,34 @@ def cmd_ingest(args):
     with open(EPISODES_FILE) as f:
         episodes = json.load(f)
 
-    client = get_chroma()
+    db = get_db()
 
     if args.reset:
-        for name in [EPISODES_COLLECTION, CHUNKS_COLLECTION]:
+        for name in [EPISODES_TABLE, CHUNKS_TABLE]:
             try:
-                client.delete_collection(name)
-                console.print(f"[yellow]Deleted collection: {name}[/]")
+                db.drop_table(name)
+                console.print(f"[yellow]Deleted table: {name}[/]")
             except Exception:
                 pass
 
-    # ── Episodes collection (metadata store, no embedding needed) ──
-    ep_col = get_episodes_collection(client)
-    console.print(f"\n[bold cyan]Indexing {len(episodes)} episodes into Chroma '{EPISODES_COLLECTION}'...[/]")
+    # ── Episodes table (metadata store, no embedding needed) ──
+    console.print(f"\n[bold cyan]Indexing {len(episodes)} episodes into LanceDB '{EPISODES_TABLE}'...[/]")
 
-    BATCH = 5000
-    ep_ids, ep_docs, ep_metas = [], [], []
+    ep_rows = []
     for ep in episodes:
-        ep_ids.append(ep["spotify_id"])
-        ep_docs.append(f"{ep['name']}\n\n{ep['description']}")
-        ep_metas.append(episode_metadata(ep))
+        meta = episode_metadata(ep)
+        meta["document"] = f"{ep['name']}\n\n{ep['description']}"
+        ep_rows.append(meta)
 
-    for start in range(0, len(ep_ids), BATCH):
-        end = min(start + BATCH, len(ep_ids))
-        ep_col.upsert(
-            ids=ep_ids[start:end],
-            documents=ep_docs[start:end],
-            metadatas=ep_metas[start:end],
-        )
-    console.print(f"  [green]Episodes collection: {ep_col.count()} docs[/]")
+    db.create_table(EPISODES_TABLE, ep_rows, schema=EPISODES_SCHEMA, mode="overwrite")
+    ep_table = get_episodes_table(db)
+    console.print(f"  [green]Episodes table: {ep_table.count_rows()} rows[/]")
 
-    # ── Chunks collection (embedded for semantic search) ──
+    # ── Chunks table (embedded for semantic search) ──
     console.print(f"\n[bold cyan]Loading embedding model:[/] {EMBEDDING_MODEL}")
     model = SentenceTransformer(EMBEDDING_MODEL)
 
-    chunk_col = get_chunks_collection(client)
-
-    ids, documents, embeddings, metadatas = [], [], [], []
+    chunk_rows = []
 
     for ep in track(episodes, description="Chunking + embedding..."):
         text = f"{ep['name']}\n\n{ep['description']}"
@@ -490,67 +497,61 @@ def cmd_ingest(args):
 
         chunks = _split_text(text, args.chunk_size, CHUNK_OVERLAP)
         for i, chunk in enumerate(chunks):
-            ids.append(f"{ep['spotify_id']}_{i}")
-            documents.append(chunk)
-            embeddings.append(model.encode(chunk).tolist())
             meta = episode_metadata(ep)
+            meta["id"] = f"{ep['spotify_id']}_{i}"
+            meta["text"] = chunk
+            meta["vector"] = model.encode(chunk).tolist()
             meta["chunk_index"] = i
             meta["total_chunks"] = len(chunks)
-            metadatas.append(meta)
+            chunk_rows.append(meta)
 
-    for start in range(0, len(ids), BATCH):
-        end = min(start + BATCH, len(ids))
-        chunk_col.upsert(
-            ids=ids[start:end],
-            documents=documents[start:end],
-            embeddings=embeddings[start:end],
-            metadatas=metadatas[start:end],
-        )
-
-    console.print(f"  [green]Chunks collection: {chunk_col.count()} docs[/]")
+    db.create_table(CHUNKS_TABLE, chunk_rows, mode="overwrite")
+    chunk_table = get_chunks_table(db)
+    console.print(f"  [green]Chunks table: {chunk_table.count_rows()} rows[/]")
     console.print(f"\n[bold green]Ingest complete.[/]\n")
 
 
 # ═══════════════════════════════════════════════════════════════════════════
-# 3. EXPORT — Chroma → enriched JSON for Next.js frontend
+# 3. EXPORT — LanceDB → enriched JSON for Next.js frontend
 # ═══════════════════════════════════════════════════════════════════════════
 
 def cmd_export(args):
-    ep_col = get_episodes_collection()
-    count = ep_col.count()
-    if count == 0:
-        console.print("[red]Episodes collection empty — run 'ingest' first.[/]")
+    try:
+        ep_table = get_episodes_table()
+    except Exception:
+        console.print("[red]Episodes table not found — run 'ingest' first.[/]")
         return
 
-    console.print(f"\n[bold cyan]Exporting {count} episodes from Chroma...[/]")
+    count = ep_table.count_rows()
+    if count == 0:
+        console.print("[red]Episodes table empty — run 'ingest' first.[/]")
+        return
 
-    # Pull everything from the episodes collection
-    result = ep_col.get(include=["documents", "metadatas"])
+    console.print(f"\n[bold cyan]Exporting {count} episodes from LanceDB...[/]")
+
+    rows = ep_table.to_pandas().to_dict("records")
 
     episodes = []
-    for i in range(len(result["ids"])):
-        meta = result["metadatas"][i]
-        doc = result["documents"][i]
-        # Split doc back into name + description
+    for row in rows:
+        doc = row.get("document", "")
         parts = doc.split("\n\n", 1)
         episodes.append({
-            "spotify_id": meta["spotify_id"],
-            "name": parts[0] if parts else meta.get("name", ""),
+            "spotify_id": row["spotify_id"],
+            "name": parts[0] if parts else row.get("name", ""),
             "description": parts[1] if len(parts) > 1 else "",
-            "show_name": meta.get("show_name", ""),
-            "show_id": meta.get("show_id", ""),
-            "publisher": meta.get("publisher", ""),
-            "release_date": meta.get("release_date", ""),
+            "show_name": row.get("show_name", ""),
+            "show_id": row.get("show_id", ""),
+            "publisher": row.get("publisher", ""),
+            "release_date": row.get("release_date", ""),
             "duration_ms": 0,
-            "duration_min": meta.get("duration_min", 0),
-            "url": meta.get("url", ""),
-            "image": meta.get("image", ""),
-            "guest_query": meta.get("guest_query", ""),
-            "guest_slug": meta.get("guest_slug", ""),
-            "category": meta.get("category", ""),
+            "duration_min": row.get("duration_min", 0),
+            "url": row.get("url", ""),
+            "image": row.get("image", ""),
+            "guest_query": row.get("guest_query", ""),
+            "guest_slug": row.get("guest_slug", ""),
+            "category": row.get("category", ""),
         })
 
-    # Chronological order
     episodes.sort(key=lambda e: e["release_date"], reverse=True)
 
     with open(EPISODES_FILE, "w") as f:
@@ -574,53 +575,48 @@ def cmd_refresh(args):
 
 
 # ═══════════════════════════════════════════════════════════════════════════
-# 5. SEARCH — semantic search via Chroma with filters
+# 5. SEARCH — semantic search via LanceDB with filters
 # ═══════════════════════════════════════════════════════════════════════════
 
 class PodcastSearch:
     def __init__(self, embedding_model=EMBEDDING_MODEL):
         self.model = SentenceTransformer(embedding_model)
-        client = get_chroma()
-        self.chunks = get_chunks_collection(client)
-        self.episodes = get_episodes_collection(client)
+        db = get_db()
+        self.chunks = get_chunks_table(db)
+        self.episodes = get_episodes_table(db)
 
     def search(self, query, top_k=TOP_K, guest=None, show=None,
                date_from=None, category=None, latest_first=False,
                min_score=0.0):
         where = self._build_where(guest, show, date_from, category)
         fetch_k = top_k * 3 if latest_first else top_k
-        count = self.chunks.count()
-        if count == 0:
+        if self.chunks.count_rows() == 0:
             return []
 
-        params = {
-            "query_embeddings": [self.model.encode(query).tolist()],
-            "n_results": min(fetch_k, count),
-            "include": ["documents", "metadatas", "distances"],
-        }
+        q = self.chunks.search(self.model.encode(query).tolist()).metric("cosine").limit(fetch_k)
         if where:
-            params["where"] = where
+            q = q.where(where, prefilter=True)
 
-        raw = self.chunks.query(**params)
+        raw = q.to_list()
         results = []
         seen_episodes = set()
 
-        for i in range(len(raw["ids"][0])):
-            score = round(1 - raw["distances"][0][i], 3)
+        for row in raw:
+            score = round(1 - row["_distance"], 3)
             if score < min_score:
                 continue
 
-            meta = raw["metadatas"][0][i]
-            sid = meta["spotify_id"]
-
-            # Deduplicate by episode (keep highest-scoring chunk)
+            sid = row["spotify_id"]
             if sid in seen_episodes:
                 continue
             seen_episodes.add(sid)
 
             results.append({
-                "text": raw["documents"][0][i],
-                "metadata": meta,
+                "text": row["text"],
+                "metadata": {k: row[k] for k in
+                             ["spotify_id", "name", "show_name", "show_id",
+                              "publisher", "release_date", "duration_min",
+                              "guest_query", "guest_slug", "category", "url", "image"]},
                 "score": score,
             })
 
@@ -630,78 +626,69 @@ class PodcastSearch:
         return results[:top_k]
 
     def find_similar(self, spotify_id, top_k=TOP_K):
-        """Find episodes similar to a given episode using Chroma."""
-        # Get the episode's chunks
-        chunk_results = self.chunks.get(
-            where={"spotify_id": {"$eq": spotify_id}},
-            include=["embeddings"],
-        )
-        if not chunk_results["ids"]:
+        """Find episodes similar to a given episode using LanceDB."""
+        rows = self.chunks.search().where(
+            f"spotify_id = '{_sql_escape(spotify_id)}'", prefilter=True
+        ).limit(1).to_list()
+        if not rows:
             return []
 
-        # Use the first chunk's embedding as the query
-        embedding = chunk_results["embeddings"][0]
-        raw = self.chunks.query(
-            query_embeddings=[embedding],
-            n_results=top_k * 3,
-            include=["documents", "metadatas", "distances"],
-        )
+        embedding = rows[0]["vector"]
+        raw = self.chunks.search(embedding).metric("cosine").limit(top_k * 3).to_list()
 
         results = []
-        seen = {spotify_id}  # exclude the source episode
-        for i in range(len(raw["ids"][0])):
-            meta = raw["metadatas"][0][i]
-            sid = meta["spotify_id"]
+        seen = {spotify_id}
+        for row in raw:
+            sid = row["spotify_id"]
             if sid in seen:
                 continue
             seen.add(sid)
             results.append({
-                "text": raw["documents"][0][i],
-                "metadata": meta,
-                "score": round(1 - raw["distances"][0][i], 3),
+                "text": row["text"],
+                "metadata": {k: row[k] for k in
+                             ["spotify_id", "name", "show_name", "show_id",
+                              "publisher", "release_date", "duration_min",
+                              "guest_query", "guest_slug", "category", "url", "image"]},
+                "score": round(1 - row["_distance"], 3),
             })
 
         return results[:top_k]
 
     def get_by_person(self, guest_slug, limit=50):
-        """Get all episodes for a person from Chroma, chronological."""
-        result = self.episodes.get(
-            where={"guest_slug": {"$eq": guest_slug}},
-            include=["metadatas"],
-            limit=limit,
-        )
-        episodes = []
-        for meta in result["metadatas"]:
-            episodes.append(meta)
+        """Get all episodes for a person from LanceDB, chronological."""
+        df = self.episodes.to_pandas()
+        filtered = df[df["guest_slug"] == guest_slug].head(limit)
+        episodes = filtered.to_dict("records")
         episodes.sort(key=lambda m: m.get("release_date", ""), reverse=True)
-        return episodes
+        return [{k: v for k, v in ep.items() if k != "document"} for ep in episodes]
 
     def get_by_category(self, category, limit=100):
-        """Get all episodes for a category from Chroma, chronological."""
-        result = self.episodes.get(
-            where={"category": {"$eq": category}},
-            include=["metadatas"],
-            limit=limit,
-        )
-        episodes = []
-        for meta in result["metadatas"]:
-            episodes.append(meta)
+        """Get all episodes for a category from LanceDB, chronological."""
+        df = self.episodes.to_pandas()
+        filtered = df[df["category"] == category].head(limit)
+        episodes = filtered.to_dict("records")
         episodes.sort(key=lambda m: m.get("release_date", ""), reverse=True)
-        return episodes
+        return [{k: v for k, v in ep.items() if k != "document"} for ep in episodes]
 
-    def _build_where(self, guest, show, date_from, category):
+    @staticmethod
+    def _build_where(guest, show, date_from, category):
         conds = []
         if guest:
-            conds.append({"guest_query": {"$eq": guest}})
+            conds.append(f"guest_query = '{_sql_escape(guest)}'")
         if show:
-            conds.append({"show_name": {"$eq": show}})
+            conds.append(f"show_name = '{_sql_escape(show)}'")
         if date_from:
-            conds.append({"release_date": {"$gte": date_from}})
+            conds.append(f"release_date >= '{_sql_escape(date_from)}'")
         if category:
-            conds.append({"category": {"$eq": category}})
+            conds.append(f"category = '{_sql_escape(category)}'")
         if not conds:
             return None
-        return conds[0] if len(conds) == 1 else {"$and": conds}
+        return " AND ".join(conds)
+
+
+def _sql_escape(val: str) -> str:
+    """Escape single quotes for LanceDB SQL filter expressions."""
+    return val.replace("'", "''")
 
 
 def cmd_search(args):
@@ -711,8 +698,8 @@ def cmd_search(args):
         return
 
     searcher = PodcastSearch()
-    if searcher.chunks.count() == 0:
-        console.print("[red]Chunks collection empty — run 'ingest' first.[/]")
+    if searcher.chunks.count_rows() == 0:
+        console.print("[red]Chunks table empty — run 'ingest' first.[/]")
         return
 
     results = searcher.search(
@@ -764,7 +751,7 @@ def cmd_search(args):
 
 
 # ═══════════════════════════════════════════════════════════════════════════
-# 6. SIMILAR — find similar episodes via Chroma embeddings
+# 6. SIMILAR — find similar episodes via LanceDB embeddings
 # ═══════════════════════════════════════════════════════════════════════════
 
 def cmd_similar(args):
@@ -788,32 +775,40 @@ def cmd_similar(args):
 
 
 # ═══════════════════════════════════════════════════════════════════════════
-# 7. STATS — Chroma collection statistics
+# 7. STATS — LanceDB table statistics
 # ═══════════════════════════════════════════════════════════════════════════
 
 def cmd_stats(args):
-    client = get_chroma()
-    ep_col = get_episodes_collection(client)
-    chunk_col = get_chunks_collection(client)
+    db = get_db()
+    try:
+        ep_table = get_episodes_table(db)
+        ep_count = ep_table.count_rows()
+    except Exception:
+        ep_count = 0
+        ep_table = None
+    try:
+        chunk_table = get_chunks_table(db)
+        chunk_count = chunk_table.count_rows()
+    except Exception:
+        chunk_count = 0
 
-    ep_count = ep_col.count()
-    chunk_count = chunk_col.count()
+    console.print(f"\n[bold cyan]LanceDB Store: {LANCE_DIR}[/]\n")
 
-    console.print(f"\n[bold cyan]Chroma Store: {CHROMA_DIR}[/]\n")
-
-    table = Table(title="Collections")
-    table.add_column("Collection", style="white")
-    table.add_column("Documents", style="cyan", justify="right")
-    table.add_row(EPISODES_COLLECTION, str(ep_count))
-    table.add_row(CHUNKS_COLLECTION, str(chunk_count))
+    table = Table(title="Tables")
+    table.add_column("Table", style="white")
+    table.add_column("Rows", style="cyan", justify="right")
+    table.add_row(EPISODES_TABLE, str(ep_count))
+    table.add_row(CHUNKS_TABLE, str(chunk_count))
     console.print(table)
 
     if ep_count == 0:
-        console.print("\n[dim]Run 'ingest' to populate collections.[/]\n")
+        console.print("\n[dim]Run 'ingest' to populate tables.[/]\n")
         return
 
-    # Per-person stats from Chroma
-    person_table = Table(title="\nEpisodes per Person (from Chroma)")
+    ep_df = ep_table.to_pandas()
+
+    # Per-person stats
+    person_table = Table(title="\nEpisodes per Person (from LanceDB)")
     person_table.add_column("Person", style="white", width=25)
     person_table.add_column("Category", style="dim", width=18)
     person_table.add_column("Episodes", style="cyan", justify="right", width=10)
@@ -822,67 +817,59 @@ def cmd_stats(args):
         slug = PERSON_SLUGS.get(person, "")
         if not slug:
             continue
-        result = ep_col.get(
-            where={"guest_slug": {"$eq": slug}},
-            include=[],
-        )
-        count = len(result["ids"])
+        count = int((ep_df["guest_slug"] == slug).sum())
         style = "green" if count > 0 else "red"
         person_table.add_row(person, PERSON_CATEGORIES.get(person, ""),
                              f"[{style}]{count}[/{style}]")
     console.print(person_table)
 
     # Per-category stats
-    cat_table = Table(title="\nEpisodes per Category (from Chroma)")
+    chunk_df = get_chunks_table(db).to_pandas() if chunk_count > 0 else None
+    cat_table = Table(title="\nEpisodes per Category (from LanceDB)")
     cat_table.add_column("Category", style="white", width=20)
     cat_table.add_column("Episodes", style="cyan", justify="right", width=10)
     cat_table.add_column("Chunks", style="yellow", justify="right", width=10)
 
     for cat in ALL_CATEGORIES:
-        ep_result = ep_col.get(where={"category": {"$eq": cat}}, include=[])
-        ch_result = chunk_col.get(where={"category": {"$eq": cat}}, include=[])
-        cat_table.add_row(cat, str(len(ep_result["ids"])), str(len(ch_result["ids"])))
+        ep_n = int((ep_df["category"] == cat).sum())
+        ch_n = int((chunk_df["category"] == cat).sum()) if chunk_df is not None else 0
+        cat_table.add_row(cat, str(ep_n), str(ch_n))
     console.print(cat_table)
 
     # Show distribution
-    show_counts = {}
-    all_meta = ep_col.get(include=["metadatas"])
-    for meta in all_meta["metadatas"]:
-        show = meta.get("show_name", "unknown")
-        show_counts[show] = show_counts.get(show, 0) + 1
-
-    show_table = Table(title="\nTop Shows (from Chroma)")
+    show_counts = ep_df["show_name"].value_counts()
+    show_table = Table(title="\nTop Shows (from LanceDB)")
     show_table.add_column("Show", style="white", width=35)
     show_table.add_column("Episodes", style="cyan", justify="right", width=10)
-    for show, count in sorted(show_counts.items(), key=lambda x: -x[1])[:15]:
+    for show, count in show_counts.head(15).items():
         show_table.add_row(show, str(count))
     console.print(show_table)
     console.print()
 
 
 # ═══════════════════════════════════════════════════════════════════════════
-# 8. TIMELINE — chronological view from Chroma
+# 8. TIMELINE — chronological view from LanceDB
 # ═══════════════════════════════════════════════════════════════════════════
 
 def cmd_timeline(args):
-    ep_col = get_episodes_collection()
-    if ep_col.count() == 0:
-        console.print("[red]Episodes collection empty — run 'ingest' first.[/]")
+    try:
+        ep_table = get_episodes_table()
+    except Exception:
+        console.print("[red]Episodes table not found — run 'ingest' first.[/]")
         return
 
-    where = None
+    if ep_table.count_rows() == 0:
+        console.print("[red]Episodes table empty — run 'ingest' first.[/]")
+        return
+
+    ep_df = ep_table.to_pandas()
     if args.person:
         slug = PERSON_SLUGS.get(args.person, args.person)
-        where = {"guest_slug": {"$eq": slug}}
+        ep_df = ep_df[ep_df["guest_slug"] == slug]
     elif args.category:
-        where = {"category": {"$eq": args.category}}
+        ep_df = ep_df[ep_df["category"] == args.category]
 
-    params = {"include": ["metadatas"]}
-    if where:
-        params["where"] = where
-
-    result = ep_col.get(**params)
-    episodes = result["metadatas"]
+    episodes = ep_df.drop(columns=["document"], errors="ignore").to_dict("records")
 
     if not episodes:
         console.print("[yellow]No episodes found.[/]")
@@ -923,7 +910,7 @@ def cmd_timeline(args):
 
 
 # ═══════════════════════════════════════════════════════════════════════════
-# 9a. VALIDATE — fast data-quality checks (no LLM, no Chroma)
+# 9a. VALIDATE — fast data-quality checks (no LLM, no LanceDB)
 # ═══════════════════════════════════════════════════════════════════════════
 
 def cmd_validate(args):
@@ -1116,7 +1103,7 @@ def cmd_validate(args):
 
 
 # ═══════════════════════════════════════════════════════════════════════════
-# 9b. EVAL-FILTER — unit tests for the relevance filter (no LLM, no Chroma)
+# 9b. EVAL-FILTER — unit tests for the relevance filter (no LLM, no LanceDB)
 # ═══════════════════════════════════════════════════════════════════════════
 
 # (name_variants, title, desc, expected_accept, label)
@@ -1189,7 +1176,7 @@ FILTER_EVAL_CASES = [
 
 
 def cmd_eval_filter(args):
-    """Run unit tests on the relevance filter. No LLM or Chroma required."""
+    """Run unit tests on the relevance filter. No LLM or LanceDB required."""
     console.print("\n[bold cyan]Running relevance-filter eval...[/]\n")
 
     passed, failed = 0, 0
@@ -1391,8 +1378,8 @@ def cmd_eval(args):
     )
 
     searcher = PodcastSearch()
-    if searcher.chunks.count() == 0:
-        console.print("[red]Chunks collection empty — run 'ingest' first.[/]")
+    if searcher.chunks.count_rows() == 0:
+        console.print("[red]Chunks table empty — run 'ingest' first.[/]")
         return
 
     tests = GOLDEN_TESTS
@@ -1408,7 +1395,7 @@ def cmd_eval(args):
         return
 
     cases = []
-    for tc in track(tests, description="Building test cases from Chroma..."):
+    for tc in track(tests, description="Building test cases from LanceDB..."):
         results = searcher.search(
             tc["input"], top_k=args.top_k, guest=tc.get("guest"),
         )
@@ -1452,7 +1439,7 @@ def cmd_tune(args):
     from deepeval.test_case import LLMTestCase
     from deepeval.metrics import ContextualRelevancyMetric, ContextualPrecisionMetric
 
-    client = get_chroma()
+    db = get_db()
     model = SentenceTransformer(EMBEDDING_MODEL)
 
     if not Path(EPISODES_FILE).exists():
@@ -1471,34 +1458,27 @@ def cmd_tune(args):
         table.add_column(f"k={k}", justify="center", width=18)
 
     for cs in chunk_sizes:
-        # Create a temporary collection for this chunk_size
         temp_name = f"tune_cs{cs}"
         try:
-            client.delete_collection(temp_name)
+            db.drop_table(temp_name)
         except Exception:
             pass
 
-        temp_col = client.get_or_create_collection(
-            name=temp_name, metadata={"hnsw:space": "cosine"},
-        )
-
-        ids, docs, embs, metas = [], [], [], []
+        rows = []
         for ep in episodes:
             text = f"{ep['name']}\n\n{ep['description']}"
             if len(text.strip()) < 30:
                 continue
             for i, chunk in enumerate(_split_text(text, cs, 80)):
-                ids.append(f"{ep['spotify_id']}_{i}")
-                docs.append(chunk)
-                embs.append(model.encode(chunk).tolist())
-                metas.append(episode_metadata(ep))
+                meta = episode_metadata(ep)
+                meta["id"] = f"{ep['spotify_id']}_{i}"
+                meta["text"] = chunk
+                meta["vector"] = model.encode(chunk).tolist()
+                rows.append(meta)
 
-        for start in range(0, len(ids), 5000):
-            end = min(start + 5000, len(ids))
-            temp_col.upsert(ids=ids[start:end], documents=docs[start:end],
-                            embeddings=embs[start:end], metadatas=metas[start:end])
+        temp_table = db.create_table(temp_name, rows, mode="overwrite")
 
-        row = [str(cs)]
+        row_data = [str(cs)]
         for k in top_ks:
             rel_scores, prec_scores = [], []
             rel_metric = ContextualRelevancyMetric(threshold=0.7)
@@ -1507,20 +1487,12 @@ def cmd_tune(args):
             for tc in GOLDEN_TESTS[:5]:  # use first 5 for speed
                 query_emb = model.encode(tc["input"]).tolist()
 
-                where = None
+                q = temp_table.search(query_emb).metric("cosine").limit(k)
                 if tc.get("guest"):
-                    where = {"guest_query": {"$eq": tc["guest"]}}
+                    q = q.where(f"guest_query = '{_sql_escape(tc['guest'])}'", prefilter=True)
 
-                params = {
-                    "query_embeddings": [query_emb],
-                    "n_results": min(k, temp_col.count()),
-                    "include": ["documents", "metadatas", "distances"],
-                }
-                if where:
-                    params["where"] = where
-
-                raw = temp_col.query(**params)
-                ctx = [raw["documents"][0][i] for i in range(len(raw["ids"][0]))]
+                raw = q.to_list()
+                ctx = [r["text"] for r in raw]
                 if not ctx:
                     continue
 
@@ -1541,13 +1513,12 @@ def cmd_tune(args):
 
             rel_avg = f"{sum(rel_scores)/len(rel_scores):.2f}" if rel_scores else "—"
             prec_avg = f"{sum(prec_scores)/len(prec_scores):.2f}" if prec_scores else "—"
-            row.append(f"[yellow]{rel_avg}[/] | [cyan]{prec_avg}[/]")
+            row_data.append(f"[yellow]{rel_avg}[/] | [cyan]{prec_avg}[/]")
 
-        table.add_row(*row)
+        table.add_row(*row_data)
 
-        # Cleanup temp collection
         try:
-            client.delete_collection(temp_name)
+            db.drop_table(temp_name)
         except Exception:
             pass
 
@@ -1555,7 +1526,7 @@ def cmd_tune(args):
 
 
 # ═══════════════════════════════════════════════════════════════════════════
-# 11. SERVE — local HTTP API wrapping Chroma for the Next.js frontend
+# 11. SERVE — local HTTP API wrapping LanceDB for the Next.js frontend
 # ═══════════════════════════════════════════════════════════════════════════
 
 class PodcastAPIHandler(BaseHTTPRequestHandler):
@@ -1625,8 +1596,8 @@ class PodcastAPIHandler(BaseHTTPRequestHandler):
         self._json_response({"results": results, "count": len(results)})
 
     def _handle_stats(self):
-        ep_count = self.searcher.episodes.count()
-        chunk_count = self.searcher.chunks.count()
+        ep_count = self.searcher.episodes.count_rows()
+        chunk_count = self.searcher.chunks.count_rows()
         self._json_response({
             "episodes": ep_count,
             "chunks": chunk_count,
@@ -1663,19 +1634,19 @@ def cmd_serve(args):
 
 def main():
     parser = argparse.ArgumentParser(
-        description="AI Podcast Search — local-first Chroma + DeepEval pipeline")
+        description="AI Podcast Search — local-first LanceDB + DeepEval pipeline")
     sub = parser.add_subparsers(dest="command")
 
     sub.add_parser("fetch", help="Spotify API → local JSON")
 
-    p_ingest = sub.add_parser("ingest", help="JSON → Chroma (episodes + chunks)")
+    p_ingest = sub.add_parser("ingest", help="JSON → LanceDB (episodes + chunks)")
     p_ingest.add_argument("--reset", action="store_true", help="Delete existing collections first")
     p_ingest.add_argument("--chunk-size", type=int, default=CHUNK_SIZE)
 
-    sub.add_parser("export", help="Chroma → enriched JSON for Next.js")
+    sub.add_parser("export", help="LanceDB → enriched JSON for Next.js")
     sub.add_parser("refresh", help="fetch + ingest + export in one go")
 
-    p_search = sub.add_parser("search", help="Semantic search via Chroma")
+    p_search = sub.add_parser("search", help="Semantic search via LanceDB")
     p_search.add_argument("query", nargs="+")
     p_search.add_argument("--top-k", type=int, default=TOP_K)
     p_search.add_argument("--guest", help="Filter by person name")
@@ -1686,13 +1657,13 @@ def main():
     p_search.add_argument("--min-score", type=float, default=0.0,
                           help="Minimum similarity score (0-1)")
 
-    p_similar = sub.add_parser("similar", help="Find similar episodes via Chroma embeddings")
+    p_similar = sub.add_parser("similar", help="Find similar episodes via LanceDB embeddings")
     p_similar.add_argument("spotify_id", help="Source episode Spotify ID")
     p_similar.add_argument("--top-k", type=int, default=TOP_K)
 
-    sub.add_parser("stats", help="Chroma collection statistics")
+    sub.add_parser("stats", help="LanceDB table statistics")
 
-    p_timeline = sub.add_parser("timeline", help="Chronological view from Chroma")
+    p_timeline = sub.add_parser("timeline", help="Chronological view from LanceDB")
     p_timeline.add_argument("--person", help="Filter by person name")
     p_timeline.add_argument("--category", help="Filter by category slug")
     p_timeline.add_argument("--limit", type=int, help="Max episodes")
@@ -1709,7 +1680,7 @@ def main():
 
     sub.add_parser("tune", help="Sweep chunk_size x top_k with DeepEval")
 
-    p_serve = sub.add_parser("serve", help="Local HTTP API wrapping Chroma")
+    p_serve = sub.add_parser("serve", help="Local HTTP API wrapping LanceDB")
     p_serve.add_argument("--port", type=int, default=3939)
 
     args = parser.parse_args()

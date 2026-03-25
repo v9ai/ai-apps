@@ -15,7 +15,9 @@
     "redteam:pipeline": "python -m redteam pipeline",
     "redteam:owasp": "python -m redteam owasp",
     "redteam:nist": "python -m redteam nist",
-    "redteam:install": "pip install -e redteam/"
+    "redteam:install": "pip install -e redteam/",
+    "candle": "cd ../../crates/legal-inference && cargo run --release",
+    "candle:build": "cd ../../crates/legal-inference && cargo build --release"
   },
   "dependencies": {
     "@supabase/ssr": "^0.6.1",

@@ -81,11 +81,10 @@ export default async function ResumePdfPage({ params }: Props) {
             ))}
           </section>
 
-          {/* AI Projects — NCA IT Ltd */}
+          {/* AI Projects */}
           {activities.aiProjects && activities.aiProjects.length > 0 && (
             <section className="resume-section">
-              <h3>AI Projects — <a href="https://nca-it.com/" target="_blank" rel="noopener noreferrer">NCA IT Ltd</a></h3>
-              <p style={{ fontSize: 10, color: "#555", marginTop: 1 }}>AI consulting and research firm specializing in enterprise AI solutions.</p>
+              <h3>AI Projects</h3>
               {activities.aiProjects.map((proj) => (
                 <div key={proj.id} className="resume-project">
                   <h3>

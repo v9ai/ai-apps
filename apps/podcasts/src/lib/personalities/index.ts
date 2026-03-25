@@ -126,6 +126,7 @@ import andreZayarni from "../../../personalities/andre-zayarni";
 import vasilijeMarkovic from "../../../personalities/vasilije-markovic";
 import shayBanon from "../../../personalities/shay-banon";
 import andrewKane from "../../../personalities/andrew-kane";
+import changShe from "../../../personalities/chang-she";
 
 import crispinCourtenay from "../../../personalities/crispin-courtenay";
 
@@ -163,7 +164,7 @@ export const categories: Category[] = [
   {
     title: "Vector Database Founders",
     slug: "vector-dbs",
-    personalities: [jeffHuber, bobVanLuijt, andreZayarni, vasilijeMarkovic, shayBanon, andrewKane],
+    personalities: [jeffHuber, bobVanLuijt, andreZayarni, vasilijeMarkovic, shayBanon, andrewKane, changShe],
   },
 ];
 

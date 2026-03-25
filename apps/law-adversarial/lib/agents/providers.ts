@@ -21,4 +21,10 @@ const getQwenClient = lazy(() => new DeepSeekClient({
   defaultModel: "qwen-plus",
 }));
 
-export { getDeepseekClient, getDeepseekReasoner, getQwenClient };
+const getLocalClient = lazy(() => new DeepSeekClient({
+  apiKey: "local",
+  baseURL: process.env.CANDLE_BASE_URL ?? "http://localhost:9877/v1",
+  defaultModel: "phi-3.5-mini",
+}));
+
+export { getDeepseekClient, getDeepseekReasoner, getQwenClient, getLocalClient };

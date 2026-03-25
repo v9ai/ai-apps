@@ -1,25 +1,42 @@
 """Test helpers — mock data generators, output validators, and metric factories."""
 
+import asyncio
 import json
 import os
 import re
 from typing import Any
 
-import httpx
-from deepeval.models import DeepEvalBaseLLM
+try:
+    from deepeval.models import DeepEvalBaseLLM
+    _HAS_DEEPEVAL = True
+except (ImportError, TypeError):
+    _HAS_DEEPEVAL = False
+    DeepEvalBaseLLM = object  # type: ignore[misc,assignment]
 
 
-class DeepSeekEvalModel(DeepEvalBaseLLM):
-    """Shared DeepSeek model for deepeval metrics.
+class MLXEvalModel(DeepEvalBaseLLM):  # type: ignore[misc]
+    """Local MLX model for deepeval metrics — fully offline.
 
     Import via: ``from helpers import get_eval_model``
     """
 
     def __init__(self):
-        self._api_key = os.getenv("DEEPSEEK_API_KEY", "")
-        self._base_url = "https://api.deepseek.com/v1"
-        self._model_name = "deepseek-chat"
-        super().__init__(model=self._model_name)
+        self._model_name = os.environ.get("MLX_MODEL", "mlx-community/Qwen2.5-7B-Instruct-4bit")
+        if _HAS_DEEPEVAL:
+            super().__init__(model=self._model_name)
+        self._client = None
+
+    def _get_client(self):
+        if self._client is None:
+            import sys
+            from pathlib import Path
+            sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
+            from mlx_client import MLXClient, MLXConfig
+            self._client = MLXClient(MLXConfig(
+                default_temperature=0.0,
+                default_max_tokens=2048,
+            ))
+        return self._client
 
     def load_model(self):
         return self
@@ -27,35 +44,38 @@ class DeepSeekEvalModel(DeepEvalBaseLLM):
     def get_model_name(self) -> str:
         return self._model_name
 
-    def _call_api(self, prompt: str) -> str:
-        if not self._api_key:
-            raise RuntimeError("DEEPSEEK_API_KEY not set")
-        with httpx.Client(timeout=60) as client:
-            resp = client.post(
-                f"{self._base_url}/chat/completions",
-                headers={"Authorization": f"Bearer {self._api_key}", "Content-Type": "application/json"},
-                json={"model": self._model_name, "messages": [{"role": "user", "content": prompt}],
-                      "temperature": 0.0, "max_tokens": 2048},
-            )
-            resp.raise_for_status()
-            return resp.json()["choices"][0]["message"]["content"]
+    def _call_sync(self, prompt: str) -> str:
+        import sys
+        from pathlib import Path
+        sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
+        from mlx_client import ChatMessage
+        client = self._get_client()
+        resp = asyncio.get_event_loop().run_until_complete(
+            client.chat([ChatMessage(role="user", content=prompt)])
+        )
+        return resp.choices[0].message.content
 
     def generate(self, prompt: str, **kwargs) -> str:
-        return self._call_api(prompt)
+        return self._call_sync(prompt)
 
     async def a_generate(self, prompt: str, **kwargs) -> str:
-        import asyncio
-        return await asyncio.to_thread(self._call_api, prompt)
+        import sys
+        from pathlib import Path
+        sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
+        from mlx_client import ChatMessage
+        client = self._get_client()
+        resp = await client.chat([ChatMessage(role="user", content=prompt)])
+        return resp.choices[0].message.content
 
 
-_shared_model: "DeepSeekEvalModel | None" = None
+_shared_model: "MLXEvalModel | None" = None
 
 
-def get_eval_model() -> DeepSeekEvalModel:
-    """Return the shared singleton DeepSeekEvalModel instance."""
+def get_eval_model() -> MLXEvalModel:
+    """Return the shared singleton MLXEvalModel instance."""
     global _shared_model
     if _shared_model is None:
-        _shared_model = DeepSeekEvalModel()
+        _shared_model = MLXEvalModel()
     return _shared_model
 
 

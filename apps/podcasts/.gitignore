@@ -51,5 +51,6 @@ venv/
 
 # podcast search pipeline (local-first)
 chroma_podcasts/
+lance_podcasts/
 spotify_episodes.json
 backend/github-reports/

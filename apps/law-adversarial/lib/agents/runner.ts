@@ -1,4 +1,4 @@
-import { getDeepseekClient, getDeepseekReasoner, getQwenClient } from "./providers";
+import { getDeepseekClient, getDeepseekReasoner, getQwenClient, getLocalClient } from "./providers";
 import { AttackerOutputSchema, DefenderOutputSchema, JudgeOutputSchema, CitationVerifierOutputSchema, JurisdictionExpertOutputSchema, BriefRewriterOutputSchema } from "./schemas";
 import { buildAttackerPrompt, buildDefenderPrompt, buildJudgePrompt, buildCitationVerifierPrompt, buildJurisdictionExpertPrompt, buildBriefRewriterPrompt } from "./prompts";
 import type { AttackerOutput, BriefRewriterOutput, CitationVerifierOutput, DefenderOutput, JudgeOutput, JurisdictionExpertOutput, RoundContext } from "./types";
@@ -37,8 +37,9 @@ export async function runJudge(
   attacks: AttackerOutput,
   rebuttals: DefenderOutput,
 ): Promise<JudgeOutput> {
+  const client = process.env.CANDLE_BASE_URL ? getLocalClient() : getDeepseekClient();
   return generateObject(
-    getDeepseekClient(),
+    client,
     buildJudgePrompt(ctx, JSON.stringify(attacks, null, 2), JSON.stringify(rebuttals, null, 2)),
     JudgeOutputSchema,
   );

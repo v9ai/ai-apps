@@ -234,3 +234,69 @@ def test_questions_diversity(sample_questions, sample_research):
         f"Question diversity {metric.score:.2f} < {THRESHOLD}. "
         f"Reason: {metric.reason}"
     )
+
+
+# ── Test 7: questions align with biography content ────────────────────────
+
+
+@skip_no_key
+def test_questions_bio_alignment(sample_questions, sample_bio, sample_research):
+    """Questions should probe topics, projects, and claims mentioned in the bio."""
+    metric = GEval(
+        name="Question-Bio Alignment",
+        criteria=(
+            "The interview questions should be well-aligned with the person's biography. "
+            "Questions should probe, challenge, or deepen topics mentioned in the bio — "
+            "specific projects, career transitions, or claims. Questions that have no "
+            "connection to the bio content score poorly. The best questions take a fact "
+            "from the bio and turn it into a thought-provoking inquiry."
+        ),
+        evaluation_params=[LLMTestCaseParams.INPUT, LLMTestCaseParams.ACTUAL_OUTPUT],
+        threshold=THRESHOLD,
+        model=get_eval_model(),
+    )
+    test_case = LLMTestCase(
+        input=f"Biography of {sample_research['name']}:\n{sample_bio}",
+        actual_output=json.dumps([q["question"] for q in sample_questions]),
+    )
+    metric.measure(test_case)
+    assert metric.score >= THRESHOLD, (
+        f"Question-bio alignment {metric.score:.2f} < {THRESHOLD}. "
+        f"Reason: {metric.reason}"
+    )
+
+
+# ── Test 8: questions form a coherent interview arc ───────────────────────
+
+
+@skip_no_key
+def test_questions_interview_arc(sample_questions, sample_research):
+    """The 10 questions should form a natural interview progression when read in order."""
+    metric = GEval(
+        name="Interview Arc Coherence",
+        criteria=(
+            "When read in sequence by category (origin, technical_depth, philosophy, "
+            "collaboration, future), the questions should form a natural interview arc "
+            "that a podcast host could follow. The progression should feel logical — "
+            "starting with the person's journey, diving into technical work, exploring "
+            "their worldview, examining their network, and ending with forward-looking "
+            "vision. Questions within the same category should not feel redundant."
+        ),
+        evaluation_params=[LLMTestCaseParams.ACTUAL_OUTPUT],
+        threshold=THRESHOLD,
+        model=get_eval_model(),
+    )
+    # Order by category to match the intended interview flow
+    cat_order = {"origin": 0, "technical_depth": 1, "philosophy": 2, "collaboration": 3, "future": 4}
+    ordered = sorted(sample_questions, key=lambda q: cat_order.get(q["category"], 99))
+    test_case = LLMTestCase(
+        input=f"Evaluate the interview arc for a podcast with {sample_research['name']}",
+        actual_output="\n".join(
+            f"[{q['category']}] {q['question']}" for q in ordered
+        ),
+    )
+    metric.measure(test_case)
+    assert metric.score >= THRESHOLD, (
+        f"Interview arc coherence {metric.score:.2f} < {THRESHOLD}. "
+        f"Reason: {metric.reason}"
+    )
