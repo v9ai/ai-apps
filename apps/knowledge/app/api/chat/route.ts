@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { db } from "@/src/db";
 import { chatMessages } from "@/src/db/schema";
 import { eq, asc, sql } from "drizzle-orm";
+import { embed } from "@/lib/embeddings";
 
 export async function POST(req: NextRequest) {
   const apiKey = process.env.DEEPSEEK_API_KEY;
@@ -23,9 +24,14 @@ export async function POST(req: NextRequest) {
     );
   }
 
-  // Load history and retrieve FTS context in parallel — they're independent.
+  // Load history, FTS context, and (optionally) vector context in parallel.
   type SearchRow = { title: string; snippet: string; lesson_title: string | null };
-  const [history, searchResult] = await Promise.all([
+  type VectorRow = { slug: string; title: string; category_name: string; combined_score: number };
+
+  // Try to embed for hybrid search — falls back to FTS-only if no OPENAI_API_KEY
+  const embeddingPromise = embed(message).catch(() => null);
+
+  const [history, searchResult, queryEmbedding] = await Promise.all([
     db
       .select({ role: chatMessages.role, content: chatMessages.content })
       .from(chatMessages)
@@ -37,7 +43,24 @@ export async function POST(req: NextRequest) {
         sql`SELECT title, snippet, lesson_title FROM search_content(${message}, ${4})`,
       )
       .catch(() => null),
+    embeddingPromise,
   ]);
+
+  // If we have an embedding, also run hybrid search for better semantic results
+  let hybridResult: { rows: VectorRow[] } | null = null;
+  if (queryEmbedding) {
+    const vecLiteral = `[${queryEmbedding.join(",")}]`;
+    hybridResult = await db
+      .execute<VectorRow>(
+        sql`SELECT slug, title, category_name, combined_score
+            FROM hybrid_search_lessons(
+              ${message},
+              ${sql.raw(`'${vecLiteral}'::vector(1024)`)},
+              4, 0.3, 0.7, 0.2
+            )`,
+      )
+      .catch(() => null);
+  }
 
   let context = "";
   if (searchResult && searchResult.rows.length > 0) {
@@ -48,6 +71,16 @@ export async function POST(req: NextRequest) {
       return `${label}\n${r.snippet}`;
     });
     context = "\n\nRelevant knowledge base excerpts:\n" + parts.join("\n\n---\n\n");
+  }
+
+  // Append vector-matched lessons for broader semantic context
+  if (hybridResult && hybridResult.rows.length > 0) {
+    const vectorParts = hybridResult.rows
+      .filter((r) => !context.includes(r.title)) // avoid duplicates with FTS
+      .map((r) => `[${r.title}] (${r.category_name}, relevance: ${(r.combined_score * 100).toFixed(0)}%)`);
+    if (vectorParts.length > 0) {
+      context += "\n\nSemantically related lessons:\n" + vectorParts.join("\n");
+    }
   }
 
   const systemPrompt = {

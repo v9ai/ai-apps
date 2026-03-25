@@ -5,6 +5,7 @@ import Link from "next/link";
 import type { GroupedLessons, DifficultyLevel } from "@/lib/articles";
 import type { SearchResult } from "@/lib/data";
 import { searchContent } from "@/lib/actions/search";
+import { deepSearch, type DeepSearchResult } from "@/lib/actions/deep-search";
 import { CategoryGrid } from "./category-grid";
 
 function highlightSnippet(snippet: string) {
@@ -39,6 +40,7 @@ export function Search({ groups }: Props) {
   const [results, setResults] = useState<SearchResult[]>([]);
   const [searching, setSearching] = useState(false);
   const [diffFilter, setDiffFilter] = useState<DifficultyLevel | "all">("all");
+  const [isDeepSearch, setIsDeepSearch] = useState(false);
   const inputRef = useRef<HTMLInputElement>(null);
   const timerRef = useRef<ReturnType<typeof setTimeout>>(undefined);
 
@@ -82,10 +84,12 @@ export function Search({ groups }: Props) {
       return;
     }
     setSearching(true);
-    const res = await searchContent(trimmed);
+    const res = isDeepSearch
+      ? await deepSearch(trimmed)
+      : await searchContent(trimmed);
     setResults(res);
     setSearching(false);
-  }, []);
+  }, [isDeepSearch]);
 
   function handleChange(e: React.ChangeEvent<HTMLInputElement>) {
     const val = e.target.value;
@@ -108,10 +112,23 @@ export function Search({ groups }: Props) {
         <input
           ref={inputRef}
           type="text"
-          placeholder="Search lessons, topics, concepts..."
+          placeholder={isDeepSearch ? "Deep search with AI embeddings..." : "Search lessons, topics, concepts..."}
           value={query}
           onChange={handleChange}
         />
+        <button
+          className={`yc-search-mode${isDeepSearch ? " yc-search-mode--active" : ""}`}
+          onClick={() => {
+            setIsDeepSearch((v) => !v);
+            if (query.trim().length >= 2) {
+              clearTimeout(timerRef.current);
+              timerRef.current = setTimeout(() => doSearch(query), 100);
+            }
+          }}
+          title={isDeepSearch ? "Deep search (pgvector + FTS)" : "Keyword search (FTS only)"}
+        >
+          {isDeepSearch ? "Deep" : "FTS"}
+        </button>
         {!hasQuery && <span className="yc-search-hint">⌘K</span>}
         {hasQuery && results.length > 0 && (
           <span className="yc-search-count">{results.length}</span>
@@ -189,6 +206,11 @@ export function Search({ groups }: Props) {
                 </div>
                 <div className="search-result-snippet">
                   {highlightSnippet(r.snippet)}
+                  {isDeepSearch && "similarity" in r && (r as DeepSearchResult).similarity > 0 && (
+                    <span className="search-result-similarity">
+                      {((r as DeepSearchResult).similarity * 100).toFixed(0)}% match
+                    </span>
+                  )}
                 </div>
                 {r.resultType !== "lesson" && r.lessonTitle && (
                   <div className="search-result-lesson">{r.lessonTitle}</div>

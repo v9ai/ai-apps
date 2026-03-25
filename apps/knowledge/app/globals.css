@@ -598,6 +598,48 @@ body {
   background: rgba(255, 255, 255, 0.06);
 }
 
+.yc-search-mode {
+  position: absolute;
+  right: 100px;
+  top: 50%;
+  transform: translateY(calc(-50% - 12px));
+  font-size: 10px;
+  font-weight: 600;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+  color: var(--gray-8);
+  background: var(--gray-3);
+  border: 1px solid var(--gray-5);
+  padding: 3px 8px;
+  border-radius: 4px;
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+.yc-search-mode:hover {
+  color: var(--gray-11);
+  border-color: var(--gray-7);
+}
+.yc-search-mode--active {
+  color: var(--accent-11);
+  background: var(--accent-3);
+  border-color: var(--accent-7);
+}
+.yc-search-mode--active:hover {
+  background: var(--accent-4);
+}
+
+.search-result-similarity {
+  display: inline-block;
+  margin-left: 8px;
+  font-size: 11px;
+  font-weight: 600;
+  color: var(--accent-11);
+  background: var(--accent-3);
+  padding: 1px 6px;
+  border-radius: 3px;
+  vertical-align: middle;
+}
+
 /* ================================================================
    DIFFICULTY FILTER
    ================================================================ */
@@ -2298,4 +2340,14 @@ body {
 }
 .apps-link:hover {
   text-decoration: underline;
+}
+.apps-keyword-link {
+  color: var(--accent-11);
+  text-decoration: none;
+  border-bottom: 1px dashed var(--accent-8);
+  transition: border-color 0.15s;
+}
+.apps-keyword-link:hover {
+  border-bottom-style: solid;
+  border-color: var(--accent-11);
 }

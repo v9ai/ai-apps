@@ -142,6 +142,44 @@ export async function getRelatedLessonsFromDb(
   slug: string,
   limit = 4,
 ): Promise<Lesson[]> {
+  // Try vector similarity first — falls back to same-category if no embeddings
+  try {
+    const vectorRows = await db.execute<{
+      slug: string;
+      number: number;
+      title: string;
+      category_name: string;
+      word_count: number;
+      reading_time_min: number;
+    }>(
+      sql`SELECT l.slug, l.number, l.title, cat.name AS category_name,
+                 l.word_count, l.reading_time_min
+          FROM lesson_embeddings le
+          JOIN lesson_embeddings target_le ON target_le.lesson_id = (SELECT id FROM lessons WHERE slug = ${slug})
+          JOIN lessons l ON l.id = le.lesson_id
+          JOIN categories cat ON cat.id = l.category_id
+          WHERE l.slug != ${slug}
+          ORDER BY le.embedding <=> target_le.embedding
+          LIMIT ${limit}`,
+    );
+
+    if (vectorRows.rows && vectorRows.rows.length > 0) {
+      return vectorRows.rows.map((p) => ({
+        slug: p.slug,
+        fileSlug: p.slug,
+        number: p.number,
+        title: p.title,
+        category: p.category_name,
+        wordCount: p.word_count,
+        readingTimeMin: p.reading_time_min,
+        excerpt: "",
+        difficulty: "intermediate" as const,
+      }));
+    }
+  } catch {
+    // No embeddings available — fall through to category-based
+  }
+
   const rows = await db
     .select({
       slug: lessons.slug,

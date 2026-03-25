@@ -16,6 +16,55 @@ import {
 } from "@radix-ui/themes";
 import { useSession } from "@/lib/auth-client";
 
+const KEYWORD_LINKS: { pattern: RegExp; href: string; title: string }[] = [
+  { pattern: /\bcontext engineering\b/gi, href: "/system-prompts", title: "System Prompt Design: Instructions, Personas & Guardrails" },
+  { pattern: /\bagent harnesses\b/gi, href: "/agent-architectures", title: "Agent Architectures: ReAct, Plan-and-Execute & Cognitive Frameworks" },
+  { pattern: /\bevals\b/gi, href: "/eval-fundamentals", title: "LLM Evaluation Fundamentals: Metrics, Datasets & Methodology" },
+  { pattern: /\bAI agents\b/gi, href: "/agent-architectures", title: "Agent Architectures: ReAct, Plan-and-Execute & Cognitive Frameworks" },
+];
+
+function linkifyNotes(text: string): React.ReactNode[] {
+  type Segment = { start: number; end: number; href: string; title: string };
+  const segments: Segment[] = [];
+
+  for (const { pattern, href, title } of KEYWORD_LINKS) {
+    const re = new RegExp(pattern.source, pattern.flags);
+    let match;
+    while ((match = re.exec(text)) !== null) {
+      const start = match.index;
+      const end = start + match[0].length;
+      if (!segments.some((s) => start < s.end && end > s.start)) {
+        segments.push({ start, end, href, title });
+      }
+    }
+  }
+
+  segments.sort((a, b) => a.start - b.start);
+
+  if (segments.length === 0) return [text];
+
+  const parts: React.ReactNode[] = [];
+  let cursor = 0;
+  for (const seg of segments) {
+    if (cursor < seg.start) parts.push(text.slice(cursor, seg.start));
+    parts.push(
+      <a
+        key={seg.start}
+        href={seg.href}
+        target="_blank"
+        rel="noopener noreferrer"
+        title={seg.title}
+        className="apps-keyword-link"
+      >
+        {text.slice(seg.start, seg.end)}
+      </a>,
+    );
+    cursor = seg.end;
+  }
+  if (cursor < text.length) parts.push(text.slice(cursor));
+  return parts;
+}
+
 type Application = {
   id: string;
   company: string;
@@ -276,7 +325,7 @@ export default function ApplicationDetailPage() {
             <Card>
               <Flex direction="column" gap="2" p="2">
                 <Text size="2" color="gray" weight="medium">Notes</Text>
-                <Text size="2" style={{ whiteSpace: "pre-wrap" }}>{app.notes}</Text>
+                <Text size="2" style={{ whiteSpace: "pre-wrap" }}>{linkifyNotes(app.notes)}</Text>
               </Flex>
             </Card>
           )}
