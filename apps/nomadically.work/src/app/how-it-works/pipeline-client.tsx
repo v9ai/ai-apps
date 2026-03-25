@@ -29,7 +29,7 @@ import {
   Filter,
   GitFork,
 } from "lucide-react";
-import { Badge, Container, Flex, Heading, Text, Card } from "@radix-ui/themes";
+import { Badge, Flex, Heading, Text, Card } from "@radix-ui/themes";
 import { LayersIcon, GitHubLogoIcon } from "@radix-ui/react-icons";
 
 // ── Custom Node Components ───────────────────────────────────────────────────
@@ -263,36 +263,76 @@ const nodeDetails: Record<string, NodeDetail> = {
   },
 };
 
-// ── Pipeline Graph ───────────────────────────────────────────────────────────
+// ── Stage 1: Discovery & Ingestion ───────────────────────────────────────────
 
-const pipelineNodes: Node[] = [
-  { id: "discover", type: "agent", position: { x: 0, y: 0 }, data: { label: "Discover", sublabel: "Common Crawl + ATS APIs", icon: Globe, color: "var(--red-9)" } },
-  { id: "ingest", type: "agent", position: { x: 0, y: 120 }, data: { label: "Ingest", sublabel: "Greenhouse / Lever / Ashby", icon: Layers, color: "var(--orange-9)" } },
-  { id: "neon-jobs", type: "dataStore", position: { x: 20, y: 240 }, data: { label: "Neon PostgreSQL", sublabel: "jobs + companies", icon: Database, color: "var(--green-9)" } },
-  { id: "enhance", type: "agent", position: { x: 0, y: 340 }, data: { label: "Enhance", sublabel: "Full job details from ATS", icon: Zap, color: "var(--orange-9)" } },
-  { id: "par-classify", type: "parallel", position: { x: 40, y: 460 }, data: { label: "Promise.all()", color: "var(--purple-9)" } },
-  { id: "classify", type: "agent", position: { x: -120, y: 520 }, data: { label: "Classify", sublabel: "DeepSeek + LangGraph", icon: Brain, color: "var(--amber-9)" } },
-  { id: "eu-validate", type: "agent", position: { x: 150, y: 520 }, data: { label: "EU Validator", sublabel: "Remote EU compatibility", icon: Globe, color: "var(--blue-9)" } },
-  { id: "is-remote-eu", type: "condition", position: { x: 30, y: 650 }, data: { label: "is_remote_eu?", color: "var(--crimson-9)" } },
-  { id: "extract", type: "agent", position: { x: 0, y: 740 }, data: { label: "Extract Skills", sublabel: "LLM + taxonomy validation", icon: FileText, color: "var(--amber-9)" } },
-  { id: "fan-out", type: "parallel", position: { x: 40, y: 860 }, data: { label: "fan-out", color: "var(--purple-9)" } },
-  { id: "serve", type: "agent", position: { x: -120, y: 940 }, data: { label: "GraphQL API", sublabel: "Apollo + Next.js frontend", icon: Workflow, color: "var(--blue-9)" } },
-  { id: "match", type: "agent", position: { x: 150, y: 940 }, data: { label: "Resume Match", sublabel: "Vector similarity search", icon: Search, color: "var(--indigo-9)" } },
+const ingestionNodes: Node[] = [
+  { id: "discover", type: "agent", position: { x: 0, y: 40 }, data: { label: "Discover", sublabel: "Common Crawl + ATS APIs", icon: Globe, color: "var(--red-9)" } },
+  { id: "ingest", type: "agent", position: { x: 280, y: 40 }, data: { label: "Ingest", sublabel: "Greenhouse / Lever / Ashby", icon: Layers, color: "var(--orange-9)" } },
+  { id: "neon-jobs", type: "dataStore", position: { x: 560, y: 45 }, data: { label: "Neon PostgreSQL", sublabel: "jobs + companies", icon: Database, color: "var(--green-9)" } },
+  { id: "enhance", type: "agent", position: { x: 800, y: 40 }, data: { label: "Enhance", sublabel: "Full job details from ATS", icon: Zap, color: "var(--orange-9)" } },
 ];
 
-const pipelineEdges: Edge[] = [
+const ingestionEdges: Edge[] = [
   { id: "e-discover-ingest", source: "discover", target: "ingest", ...edgeDefaults, label: "board URLs", style: { ...edgeDefaults.style, stroke: "var(--red-8)" } },
   { id: "e-ingest-neon", source: "ingest", target: "neon-jobs", ...edgeDefaults, label: "raw jobs", style: { ...edgeDefaults.style, stroke: "var(--orange-8)" } },
   { id: "e-neon-enhance", source: "neon-jobs", target: "enhance", ...edgeDefaults, label: "job IDs", style: { ...edgeDefaults.style, stroke: "var(--green-8)" } },
-  { id: "e-enhance-par", source: "enhance", target: "par-classify", ...edgeDefaults, label: "enriched jobs", style: { ...edgeDefaults.style, stroke: "var(--orange-8)" } },
+];
+
+// ── Stage 2: AI Classification ───────────────────────────────────────────────
+
+const classificationNodes: Node[] = [
+  { id: "par-classify", type: "parallel", position: { x: 0, y: 70 }, data: { label: "Promise.all()", color: "var(--purple-9)" } },
+  { id: "classify", type: "agent", position: { x: 200, y: 0 }, data: { label: "Classify", sublabel: "DeepSeek + LangGraph", icon: Brain, color: "var(--amber-9)" } },
+  { id: "eu-validate", type: "agent", position: { x: 200, y: 120 }, data: { label: "EU Validator", sublabel: "Remote EU compatibility", icon: Globe, color: "var(--blue-9)" } },
+  { id: "is-remote-eu", type: "condition", position: { x: 500, y: 70 }, data: { label: "is_remote_eu?", color: "var(--crimson-9)" } },
+];
+
+const classificationEdges: Edge[] = [
   { id: "e-par-classify", source: "par-classify", target: "classify", ...edgeDefaults, animated: true, style: { ...edgeDefaults.style, stroke: "var(--amber-8)" } },
   { id: "e-par-eu", source: "par-classify", target: "eu-validate", ...edgeDefaults, animated: true, style: { ...edgeDefaults.style, stroke: "var(--blue-8)" } },
   { id: "e-classify-filter", source: "classify", target: "is-remote-eu", ...edgeDefaults, label: "skills + category", style: { ...edgeDefaults.style, stroke: "var(--amber-8)" } },
   { id: "e-eu-filter", source: "eu-validate", target: "is-remote-eu", ...edgeDefaults, label: "EU compatibility", style: { ...edgeDefaults.style, stroke: "var(--blue-8)" } },
-  { id: "e-filter-extract", source: "is-remote-eu", target: "extract", ...edgeDefaults, animated: true, label: "qualified jobs", style: { ...edgeDefaults.style, stroke: "var(--crimson-8)" } },
+];
+
+// ── Stage 3: Skill Extraction & Delivery ─────────────────────────────────────
+
+const deliveryNodes: Node[] = [
+  { id: "extract", type: "agent", position: { x: 0, y: 50 }, data: { label: "Extract Skills", sublabel: "LLM + taxonomy validation", icon: FileText, color: "var(--amber-9)" } },
+  { id: "fan-out", type: "parallel", position: { x: 280, y: 60 }, data: { label: "fan-out", color: "var(--purple-9)" } },
+  { id: "serve", type: "agent", position: { x: 460, y: 0 }, data: { label: "GraphQL API", sublabel: "Apollo + Next.js frontend", icon: Workflow, color: "var(--blue-9)" } },
+  { id: "match", type: "agent", position: { x: 460, y: 110 }, data: { label: "Resume Match", sublabel: "Vector similarity search", icon: Search, color: "var(--indigo-9)" } },
+];
+
+const deliveryEdges: Edge[] = [
   { id: "e-extract-fan", source: "extract", target: "fan-out", ...edgeDefaults, label: "skill-tagged", style: { ...edgeDefaults.style, stroke: "var(--amber-8)" } },
   { id: "e-fan-serve", source: "fan-out", target: "serve", ...edgeDefaults, animated: true, style: { ...edgeDefaults.style, stroke: "var(--blue-8)" } },
   { id: "e-fan-match", source: "fan-out", target: "match", ...edgeDefaults, animated: true, style: { ...edgeDefaults.style, stroke: "var(--indigo-8)" } },
+];
+
+// ── Stage definitions ────────────────────────────────────────────────────────
+
+const stages = [
+  {
+    title: "Discovery & Ingestion",
+    description: "Rust crawlers discover job boards via Common Crawl, then ingest and enrich listings from ATS APIs.",
+    nodes: ingestionNodes,
+    edges: ingestionEdges,
+    height: 160,
+  },
+  {
+    title: "AI Classification",
+    description: "DeepSeek LLM classifies jobs while EU validator checks remote compatibility — in parallel.",
+    nodes: classificationNodes,
+    edges: classificationEdges,
+    height: 240,
+  },
+  {
+    title: "Skill Extraction & Delivery",
+    description: "Skills are extracted against a curated taxonomy, then jobs fan out to the GraphQL API and vector matching.",
+    nodes: deliveryNodes,
+    edges: deliveryEdges,
+    height: 220,
+  },
 ];
 
 // ── Detail Panel ─────────────────────────────────────────────────────────────
@@ -300,12 +340,13 @@ const pipelineEdges: Edge[] = [
 function NodeDetailPanel({ nodeId }: { nodeId: string }) {
   const detail = nodeDetails[nodeId];
   if (!detail) return null;
-  const node = pipelineNodes.find((n) => n.id === nodeId);
+  const allNodes = [...ingestionNodes, ...classificationNodes, ...deliveryNodes];
+  const node = allNodes.find((n) => n.id === nodeId);
   const label = (node?.data?.label as string) ?? nodeId;
   const sublabel = node?.data?.sublabel as string | undefined;
 
   return (
-    <Card mt="5" style={{ borderLeft: `3px solid var(--${detail.color}-9)`, background: "var(--gray-2)" }}>
+    <Card mt="4" style={{ borderLeft: `3px solid var(--${detail.color}-9)`, background: "var(--gray-2)" }}>
       <Flex direction="column" gap="3">
         <Flex align="center" gap="2" wrap="wrap">
           <Heading size="4">{label}</Heading>
@@ -336,11 +377,60 @@ function NodeDetailPanel({ nodeId }: { nodeId: string }) {
   );
 }
 
+// ── Stage Flow Component ─────────────────────────────────────────────────────
+
+function StageFlow({
+  nodes,
+  edges,
+  height,
+  onNodeClick,
+}: {
+  nodes: Node[];
+  edges: Edge[];
+  height: number;
+  onNodeClick: NodeMouseHandler;
+}) {
+  const [n, , onNodesChange] = useNodesState(nodes);
+  const [e, , onEdgesChange] = useEdgesState(edges);
+
+  return (
+    <div
+      style={{
+        width: "100%",
+        height,
+        borderRadius: 12,
+        overflow: "hidden",
+        border: "1px solid var(--gray-a4)",
+        background: "color-mix(in srgb, var(--color-background) 95%, var(--gray-3))",
+        boxShadow: "inset 0 1px 2px rgba(0,0,0,0.2), 0 1px 3px rgba(0,0,0,0.15)",
+      }}
+    >
+      <ReactFlow
+        nodes={n}
+        edges={e}
+        onNodesChange={onNodesChange}
+        onEdgesChange={onEdgesChange}
+        onNodeClick={onNodeClick}
+        nodeTypes={nodeTypes}
+        colorMode="dark"
+        fitView
+        fitViewOptions={{ padding: 0.3 }}
+        minZoom={0.4}
+        maxZoom={2}
+        panOnScroll={false}
+        proOptions={{ hideAttribution: false }}
+        defaultEdgeOptions={{ type: "smoothstep" }}
+      >
+        <Background gap={20} size={1} color="var(--gray-a3)" />
+        <Controls showInteractive={false} position="bottom-left" />
+      </ReactFlow>
+    </div>
+  );
+}
+
 // ── Export ────────────────────────────────────────────────────────────────────
 
 export function PipelineClient() {
-  const [nodes, , onNodesChange] = useNodesState(pipelineNodes);
-  const [edges, , onEdgesChange] = useEdgesState(pipelineEdges);
   const [selectedNode, setSelectedNode] = useState<string | null>(null);
 
   const onNodeClick: NodeMouseHandler = useCallback((_event, node) => {
@@ -348,7 +438,7 @@ export function PipelineClient() {
   }, []);
 
   return (
-    <Container size="3" p={{ initial: "4", md: "6" }}>
+    <div style={{ width: "100%", padding: "var(--space-4) var(--space-5)" }}>
       <Flex align="center" gap="2" mb="2">
         <LayersIcon width={22} height={22} style={{ color: "var(--violet-9)" }} />
         <Heading size="7">How It Works</Heading>
@@ -362,30 +452,32 @@ export function PipelineClient() {
           <GitHubLogoIcon width={16} height={16} />
         </a>
       </Flex>
-      <Flex align="center" gap="2" mb="4">
+      <Flex align="center" gap="2" mb="5">
         <Badge color="blue" variant="soft" size="1">Interactive</Badge>
         <Text size="1" color="gray">Drag nodes to rearrange. Scroll to zoom. Click a node for details.</Text>
       </Flex>
-      <div style={{
-        width: "100%", height: 700, borderRadius: 12, overflow: "hidden",
-        border: "1px solid var(--gray-a4)",
-        background: "color-mix(in srgb, var(--color-background) 95%, var(--gray-3))",
-        boxShadow: "inset 0 1px 2px rgba(0,0,0,0.2), 0 1px 3px rgba(0,0,0,0.15)",
-      }}>
-        <ReactFlow
-          nodes={nodes} edges={edges}
-          onNodesChange={onNodesChange} onEdgesChange={onEdgesChange}
-          onNodeClick={onNodeClick} nodeTypes={nodeTypes}
-          colorMode="dark" fitView fitViewOptions={{ padding: 0.3 }}
-          minZoom={0.3} maxZoom={2} panOnScroll={false}
-          proOptions={{ hideAttribution: false }}
-          defaultEdgeOptions={{ type: "smoothstep" }}
-        >
-          <Background gap={20} size={1} color="var(--gray-a3)" />
-          <Controls showInteractive={false} position="bottom-left" />
-        </ReactFlow>
-      </div>
+
+      <Flex direction="column" gap="6">
+        {stages.map((stage, i) => (
+          <div key={stage.title}>
+            <Flex align="baseline" gap="3" mb="2">
+              <Badge variant="solid" color="gray" size="1" style={{ fontVariantNumeric: "tabular-nums" }}>
+                {i + 1}
+              </Badge>
+              <Heading size="4">{stage.title}</Heading>
+            </Flex>
+            <Text size="2" color="gray" mb="3" as="p">{stage.description}</Text>
+            <StageFlow
+              nodes={stage.nodes}
+              edges={stage.edges}
+              height={stage.height}
+              onNodeClick={onNodeClick}
+            />
+          </div>
+        ))}
+      </Flex>
+
       {selectedNode && <NodeDetailPanel nodeId={selectedNode} />}
-    </Container>
+    </div>
   );
 }
