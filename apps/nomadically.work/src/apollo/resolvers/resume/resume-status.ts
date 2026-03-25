@@ -49,7 +49,7 @@ export async function resumeStatus(
     console.warn("[resumeStatus] LlamaCloud check failed:", err instanceof Error ? err.message : String(err));
   }
 
-  // Fall back: check D1 skill profile (uploaded via Job Matching section)
+  // Fall back: check skill profile (uploaded via Job Matching section)
   const rows = await context.db
     .select({
       id: resumes.id,

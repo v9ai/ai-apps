@@ -2,7 +2,6 @@
  * Admin Assistant Agent
  *
  * Ops-grade agent for internal debugging, evidence inspection, and batch reprocessing.
- * TODO: Re-implement with Vercel AI SDK when D1 tooling is ready.
  */
 
 import { deepseek } from "@ai-sdk/deepseek";

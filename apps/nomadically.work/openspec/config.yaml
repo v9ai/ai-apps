@@ -2,7 +2,7 @@ schema: spec-driven
 
 context: |
   Tech stack: Next.js 16, React 19, TypeScript 5.9, Apollo Server 5 (GraphQL), Drizzle ORM, Cloudflare D1
-  Architecture: App Router, GraphQL API (/api/graphql), D1 Gateway Worker, Trigger.dev background jobs
+  Architecture: App Router, GraphQL API (/api/graphql), Cloudflare Workers
   Workers: Rust/WASM (ashby-crawler), Python (process-jobs, resume-rag), TypeScript (janitor, d1-gateway)
   AI/ML: Vercel AI SDK, Anthropic Claude, DeepSeek, skill extraction + resume matching pipelines
   Testing: Vitest (evals), Promptfoo (LLM evaluation)
@@ -28,7 +28,7 @@ rules:
     - Use hierarchical numbering (1.1, 1.2, etc.)
     - Keep tasks small enough to complete in one session
   apply:
-    - Follow existing code patterns from CLAUDE.md (Drizzle ORM, Apollo resolvers, Trigger.dev tasks)
+    - Follow existing code patterns from CLAUDE.md (Drizzle ORM, Apollo resolvers)
     - Run pnpm codegen after any schema/**/*.graphql change
     - Use generated types from src/__generated__/, never hand-write
     - Admin mutations must include isAdminEmail() guard

@@ -1166,7 +1166,6 @@ export type Mutation = {
   deleteJob: DeleteJobResponse;
   deleteLangSmithPrompt: Scalars['Boolean']['output'];
   deleteOpportunity: DeleteOpportunityResult;
-  deleteStackEntry: StackMutationResponse;
   deleteTask: DeleteTaskResult;
   enhanceAllContacts: EnhanceAllContactsResult;
   enhanceCompany: EnhanceCompanyResponse;
@@ -1389,11 +1388,6 @@ export type MutationDeleteLangSmithPromptArgs = {
 
 export type MutationDeleteOpportunityArgs = {
   id: Scalars['String']['input'];
-};
-
-
-export type MutationDeleteStackEntryArgs = {
-  name: Scalars['String']['input'];
 };
 
 
@@ -2231,12 +2225,6 @@ export type SourceType =
   | 'MANUAL'
   | 'PARTNER';
 
-export type StackMutationResponse = {
-  __typename?: 'StackMutationResponse';
-  message: Maybe<Scalars['String']['output']>;
-  success: Scalars['Boolean']['output'];
-};
-
 export type SyncResendResult = {
   __typename?: 'SyncResendResult';
   error: Maybe<Scalars['String']['output']>;
@@ -2461,13 +2449,6 @@ export type DeleteJobMutationVariables = Exact<{
 
 
 export type DeleteJobMutation = { __typename?: 'Mutation', deleteJob: { __typename?: 'DeleteJobResponse', success: boolean, message: string | null } };
-
-export type DeleteStackEntryMutationVariables = Exact<{
-  name: Scalars['String']['input'];
-}>;
-
-
-export type DeleteStackEntryMutation = { __typename?: 'Mutation', deleteStackEntry: { __typename?: 'StackMutationResponse', success: boolean, message: string | null } };
 
 export type ExecuteSqlQueryVariables = Exact<{
   sql: Scalars['String']['input'];
@@ -3528,40 +3509,6 @@ export function useDeleteJobMutation(baseOptions?: Apollo.MutationHookOptions<De
 export type DeleteJobMutationHookResult = ReturnType<typeof useDeleteJobMutation>;
 export type DeleteJobMutationResult = Apollo.MutationResult<DeleteJobMutation>;
 export type DeleteJobMutationOptions = Apollo.BaseMutationOptions<DeleteJobMutation, DeleteJobMutationVariables>;
-export const DeleteStackEntryDocument = gql`
-    mutation DeleteStackEntry($name: String!) {
-  deleteStackEntry(name: $name) {
-    success
-    message
-  }
-}
-    `;
-export type DeleteStackEntryMutationFn = Apollo.MutationFunction<DeleteStackEntryMutation, DeleteStackEntryMutationVariables>;
-
-/**
- * __useDeleteStackEntryMutation__
- *
- * To run a mutation, you first call `useDeleteStackEntryMutation` within a React component and pass it any options that fit your needs.
- * When your component renders, `useDeleteStackEntryMutation` returns a tuple that includes:
- * - A mutate function that you can call at any time to execute the mutation
- * - An object with fields that represent the current status of the mutation's execution
- *
- * @param baseOptions options that will be passed into the mutation, supported options are listed on: https://www.apollographql.com/docs/react/api/react-hooks/#options-2;
- *
- * @example
- * const [deleteStackEntryMutation, { data, loading, error }] = useDeleteStackEntryMutation({
- *   variables: {
- *      name: // value for 'name'
- *   },
- * });
- */
-export function useDeleteStackEntryMutation(baseOptions?: Apollo.MutationHookOptions<DeleteStackEntryMutation, DeleteStackEntryMutationVariables>) {
-        const options = {...defaultOptions, ...baseOptions}
-        return Apollo.useMutation<DeleteStackEntryMutation, DeleteStackEntryMutationVariables>(DeleteStackEntryDocument, options);
-      }
-export type DeleteStackEntryMutationHookResult = ReturnType<typeof useDeleteStackEntryMutation>;
-export type DeleteStackEntryMutationResult = Apollo.MutationResult<DeleteStackEntryMutation>;
-export type DeleteStackEntryMutationOptions = Apollo.BaseMutationOptions<DeleteStackEntryMutation, DeleteStackEntryMutationVariables>;
 export const ExecuteSqlDocument = gql`
     query ExecuteSql($sql: String!) {
   executeSql(sql: $sql) {

@@ -8,7 +8,7 @@ import { contactEmails, contacts, receivedEmails } from "@/db/schema";
  * Resend Webhook Handler
  *
  * Handles webhook events from Resend to track email delivery status and persist
- * state changes to the D1 database.
+ * state changes to the database.
  *
  * Supported events:
  * - email.sent            → update status + sent_at
@@ -218,7 +218,7 @@ async function handleBounced(event: ResendWebhookEvent): Promise<void> {
         return;
       }
 
-      // Parse existing bounced_emails JSON array (D1 stores as text)
+      // Parse existing bounced_emails JSON array
       let bouncedList: string[] = [];
       if (contact.bounced_emails) {
         try {
@@ -323,12 +323,12 @@ async function handleOpened(emailId: string): Promise<void> {
 }
 
 /**
- * Persist an inbound received email to D1 and forward to personal inbox.
+ * Persist an inbound received email and forward to personal inbox.
  */
 async function handleReceived(event: ResendWebhookEvent): Promise<void> {
   const { email_id: emailId, from, to, subject, html, text } = event.data;
 
-  // 1. Persist to D1
+  // 1. Persist to database
   await withRetry(`handleReceived/persist(${emailId})`, async () => {
     await db
       .insert(receivedEmails)

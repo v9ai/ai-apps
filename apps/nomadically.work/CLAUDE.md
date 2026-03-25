@@ -51,8 +51,8 @@ Import `db` from `@/db` for all queries. Schema in `src/db/schema.ts`, migration
 
 ```
 1. Board Crawl:    Common Crawl CDX --[ashby-crawler (Rust)]--> Ashby boards → Neon
-2. Ingestion:      ATS APIs (Greenhouse/Lever/Ashby) --[scripts / Trigger.dev]--> Neon
-3. Enhancement:    Job IDs --[Trigger.dev / GraphQL Mutation]--> ATS API --> Neon
+2. Ingestion:      ATS APIs (Greenhouse/Lever/Ashby) --[scripts]--> Neon
+3. Enhancement:    Job IDs --[GraphQL Mutation]--> ATS API --> Neon
 4. Classification: Unprocessed jobs --[process-jobs (Python) / DeepSeek]--> is_remote_eu --> Neon
 5. Skill Extract:  Job descriptions --[LLM pipeline]--> Skills → Neon
 6. Resume Match:   Resumes --[resume-rag (Python) / Vectorize]--> Vector search
@@ -95,7 +95,7 @@ GraphQL Playground: `http://localhost:3000/api/graphql`. Vercel routes have 60s 
 | API | Apollo Server 5 (GraphQL) |
 | Auth | Better Auth (`@ai-apps/auth`) |
 | AI/ML | Vercel AI SDK, DeepSeek, OpenRouter |
-| Background jobs | Trigger.dev |
+| Background jobs | Cloudflare Cron + Queues |
 | Observability | LangSmith |
 | Deployment | Vercel |
 | Package manager | pnpm 10.10 |
@@ -304,7 +304,7 @@ Safety: Max 3 code changes + 2 skill evolutions per cycle. Phase detection (IMPR
 
 ## Domain-specific patterns
 
-> An MCPDoc MCP server is configured in `.claude/settings.json` with docs for Drizzle, Next.js, Vercel AI SDK, Trigger.dev, Cloudflare Workers. Call `list_doc_sources` to see available sources, then `fetch_docs` on specific URLs when you need deeper detail on any API.
+> An MCPDoc MCP server is configured in `.claude/settings.json` with docs for Drizzle, Next.js, Vercel AI SDK, Cloudflare Workers. Call `list_doc_sources` to see available sources, then `fetch_docs` on specific URLs when you need deeper detail on any API.
 
 ---
 
@@ -423,54 +423,6 @@ Custom scalar mappings (in `codegen.ts`): `DateTime`/`URL`/`EmailAddress` → `s
 **Anti-patterns:**
 - Never skip codegen after schema changes — stale types cause silent runtime mismatches.
 - Never manually edit `src/__generated__/` files.
-
----
-
-### Trigger.dev tasks
-
-Tasks live in `src/trigger/` and must be registered. Pattern:
-
-```ts
-import { task, logger } from "@trigger.dev/sdk/v3";
-import { db } from "../db";
-
-export const myTask = task({
-  id: "my-task",           // unique kebab-case, matches trigger.config.ts registration
-  maxDuration: 120,        // seconds
-  retry: {
-    maxAttempts: 3,
-    minTimeoutInMs: 2000,
-    maxTimeoutInMs: 30000,
-    factor: 2,
-  },
-  queue: { concurrencyLimit: 5 },
-
-  run: async (payload: MyPayload) => {
-    logger.info("Starting task", { ...payload });  // use logger, not console
-    const db = getDb();
-    // ... do work
-    return { success: true };
-  },
-
-  handleError: async (payload, error) => {
-    const msg = error instanceof Error ? error.message : String(error);
-    if (msg.includes("404")) {
-      logger.info("Resource not found, skipping retry");
-      return { skipRetrying: true };  // prevents retry for known terminal errors
-    }
-    logger.error("Task failed", { error: msg });
-    // return nothing = allow retry
-  },
-});
-```
-
-**Anti-patterns:**
-- Never import from `@trigger.dev/sdk` — use `@trigger.dev/sdk/v3`.
-- Never create the DB client at module level — always lazy-init inside `run` or a factory function.
-- Never use `console.log` inside tasks — use `logger.*` so logs appear in the Trigger.dev dashboard.
-- Never forget to export the task — unregistered tasks silently fail to trigger.
-
-> Docs: fetch_docs on `https://trigger.dev/docs/tasks-overview`
 
 ---
 

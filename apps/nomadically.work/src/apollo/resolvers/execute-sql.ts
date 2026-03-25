@@ -1,65 +1,52 @@
+import { sql } from "drizzle-orm";
 import type { GraphQLContext } from "../context";
-
-// TODO: Re-implement with D1 database access
-// This resolver is currently disabled pending D1 integration
+import { isAdminEmail } from "@/lib/admin";
 
 export const executeSqlResolvers = {
   Query: {
     async executeSql(
       _parent: any,
       args: { sql: string },
-      _context: GraphQLContext,
+      context: GraphQLContext,
     ) {
-      // Temporarily return empty results until D1 integration is complete
-      return {
-        sql: args.sql,
-        explanation:
-          "SQL execution temporarily disabled - D1 migration in progress",
-        columns: [],
-        rows: [],
-        drilldownSearchQuery: null,
-      };
+      if (!context.userId || !isAdminEmail(context.userEmail)) {
+        throw new Error("Forbidden — admin access required");
+      }
 
-      /* D1 Implementation needed:
-      try {
-        const { sql } = args;
+      const query = args.sql?.trim();
+      if (!query) {
+        throw new Error("Missing or empty SQL query");
+      }
 
-        if (!sql || typeof sql !== "string") {
-          throw new Error("Missing or invalid 'sql' field");
-        }
-
-        // Validate that it's a read-only query (basic check)
-        const upperSql = sql.trim().toUpperCase();
-        if (
-          !upperSql.startsWith("SELECT") &&
-          !upperSql.startsWith("PRAGMA") &&
-          !upperSql.startsWith("WITH")
-        ) {
-          throw new Error(
-            "Only SELECT queries are allowed for safety. No INSERT, UPDATE, DELETE, or DROP.",
-          );
-        }
-
-        // Execute the raw SQL query using D1
-        // const db = getDb(getRequestContext().env.DB);
-        // const result = await db.execute(sql);
-
-        return {
-          sql,
-          explanation: null,
-          columns: [],
-          rows: [],
-          drilldownSearchQuery: null,
-        };
-      } catch (error) {
-        console.error("Execute SQL error:", error);
+      const upper = query.toUpperCase();
+      if (
+        !upper.startsWith("SELECT") &&
+        !upper.startsWith("WITH") &&
+        !upper.startsWith("EXPLAIN")
+      ) {
         throw new Error(
-          error instanceof Error
-            ? error.message
-            : "Failed to execute SQL query",
+          "Only SELECT, WITH, and EXPLAIN queries are allowed",
         );
       }
-      */
+
+      const result = await context.db.execute(sql.raw(query));
+
+      const rows = Array.isArray(result) ? result : result.rows ?? [];
+      const columns = rows.length > 0 ? Object.keys(rows[0] as Record<string, unknown>) : [];
+      const formattedRows = rows.map((row: any) =>
+        columns.map((col) => {
+          const val = row[col];
+          return val === null || val === undefined ? null : String(val);
+        }),
+      );
+
+      return {
+        sql: query,
+        explanation: null,
+        columns,
+        rows: formattedRows,
+        drilldownSearchQuery: null,
+      };
     },
   },
 };

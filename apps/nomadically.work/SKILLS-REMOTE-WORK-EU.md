@@ -150,7 +150,7 @@ This document curates relevant skills and subagents from [awesome-agent-skills](
 ### Phase 2: AI Pipeline
 - [ ] **prompt-engineer**: Refine job classification prompts for "remote EU" signal detection
 - [ ] **nlm-architect**: Set up multi-LLM routing (Claude for classification, DeepSeek for cost, etc.)
-- [ ] **data-engineer**: Ingest jobs from ATS platforms using Trigger.dev/Inngest
+- [ ] **data-engineer**: Ingest jobs from ATS platforms using Cloudflare Cron + Queues
 
 ### Phase 3: ML Evaluation
 - [ ] **nlp-engineer**: Extract remote work signals (keywords, timezone mentions, salary bands)

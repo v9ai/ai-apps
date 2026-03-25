@@ -197,7 +197,7 @@ const nodeDetails: Record<string, NodeDetail> = {
   },
   ingest: {
     description: "Pull job listings from ATS platforms (Greenhouse, Lever, Ashby) into Neon PostgreSQL. A unified ingestion layer normalizes data from 3 different API formats into one schema.",
-    tech: [{ name: "Trigger.dev", version: "v3" }, { name: "Greenhouse API" }, { name: "Lever API" }, { name: "Ashby API" }, { name: "Drizzle ORM" }],
+    tech: [{ name: "Greenhouse API" }, { name: "Lever API" }, { name: "Ashby API" }, { name: "Drizzle ORM" }],
     dataIn: "ATS board URLs", dataOut: "Raw job records in Neon",
     insight: "Unified ingestion normalizes 3 different ATS API formats into a single Drizzle schema", color: "orange",
   },
@@ -209,7 +209,7 @@ const nodeDetails: Record<string, NodeDetail> = {
   },
   enhance: {
     description: "Fetch full job details — descriptions, requirements, benefits, locations — from ATS APIs for each discovered job. Runs as background tasks with concurrency limits and retry logic.",
-    tech: [{ name: "Trigger.dev", version: "v3" }, { name: "ATS API clients" }, { name: "GraphQL mutations" }],
+    tech: [{ name: "ATS API clients" }, { name: "GraphQL mutations" }],
     dataIn: "Job IDs from ingestion", dataOut: "Enriched records with full descriptions",
     insight: "Batch processing with configurable concurrency and exponential backoff retry", color: "orange",
   },

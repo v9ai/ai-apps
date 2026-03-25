@@ -1081,7 +1081,6 @@ type Mutation {
   deleteJob(id: Int!): DeleteJobResponse!
   deleteLangSmithPrompt(promptIdentifier: String!): Boolean!
   deleteOpportunity(id: String!): DeleteOpportunityResult!
-  deleteStackEntry(name: String!): StackMutationResponse!
   deleteTask(id: Int!): DeleteTaskResult!
   enhanceAllContacts: EnhanceAllContactsResult!
   enhanceCompany(id: Int, key: String): EnhanceCompanyResponse!
@@ -1486,11 +1485,6 @@ enum SourceType {
   LIVE_FETCH
   MANUAL
   PARTNER
-}
-
-type StackMutationResponse {
-  message: String
-  success: Boolean!
 }
 
 type SyncResendResult {

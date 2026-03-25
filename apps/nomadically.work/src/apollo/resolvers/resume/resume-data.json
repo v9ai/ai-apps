@@ -220,7 +220,7 @@
 "Multi-stage agentic workflow (6-20 agents): NLP normalization → 7-source ingestion → OpenAlex enrichment → LLM quality gate → RAG.",
           "DeepSeek-as-judge evaluation scorer; 3-threshold gating (relevance 0.75, confidence 0.55, blended 0.72) filtering unsupported clinical claims.",
           "Prompt versioning with runtime registry, no-deploy updates, distributed tracing, per-model cost tracking, A/B evaluation across LangChain/LangGraph Python workers.",
-          "Serverless TTS microservice: RAG-based content chunking, streaming audio to Cloudflare R2 via Trigger.dev v4 durable tasks.",
+          "Serverless TTS microservice: RAG-based content chunking, streaming audio to Cloudflare R2 via durable background tasks.",
           "Harbor eval harness: containerized trials-at-scale across 6-20 non-deterministic agents, standardized task/grader format mapped to ResearchTask definitions."
         ]
       },

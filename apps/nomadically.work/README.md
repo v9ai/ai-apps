@@ -13,7 +13,7 @@ Remote EU job board aggregator with AI classification, CRM, email campaigns, and
 | AI/ML | Anthropic Claude, DeepSeek, Vercel AI SDK, OpenRouter |
 | Email | Resend |
 | Workers | Cloudflare Workers — TypeScript, Rust/WASM, Python |
-| Background jobs | Trigger.dev, Cloudflare Cron + Queues |
+| Background jobs | Cloudflare Cron + Queues |
 | Observability | LangSmith |
 | Deployment | Vercel (app), Cloudflare Workers (workers) |
 
@@ -129,7 +129,6 @@ src/
   ingestion/            ATS fetchers (Greenhouse, Lever, Ashby)
   lib/skills/           Skill taxonomy, extraction, filtering
   tools/database/       Agent database tools
-  trigger/              Trigger.dev tasks
 workers/
   ashby-crawler/        Rust/WASM — Common Crawl board discovery
   process-jobs/         Python — DeepSeek classification

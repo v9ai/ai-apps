@@ -153,8 +153,8 @@ export async function saveGreenhouseJobData(
   try {
     // Update the jobs table with Greenhouse data — only display/filter fields.
     // Heavy JSON blobs (questions, location_questions, compliance,
-    // demographic_questions, data_compliance) are omitted to stay within
-    // D1 size limits. They can be re-fetched from the Greenhouse API on demand.
+    // demographic_questions, data_compliance) are omitted from initial insert.
+    // They can be re-fetched from the Greenhouse API on demand.
     const updateData = {
       // Greenhouse-specific fields
       absolute_url: greenhouseData.absolute_url,

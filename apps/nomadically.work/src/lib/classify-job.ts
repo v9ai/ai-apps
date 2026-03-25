@@ -16,7 +16,7 @@ export type JobClassificationResponse = {
  * Classify a single job via the process-jobs Python worker (LangChain pipeline).
  *
  * The worker runs the full signal-extraction + keyword heuristic + Workers AI +
- * DeepSeek fallback pipeline and writes the result directly to D1 before
+ * DeepSeek fallback pipeline and writes the result directly to the database before
  * returning the classification.
  *
  * Env var: CLASSIFY_JOBS_WORKER_URL — base URL of the deployed process-jobs worker.

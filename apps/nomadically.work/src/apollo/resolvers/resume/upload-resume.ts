@@ -9,7 +9,7 @@ export async function uploadResume(
     throw new Error("Unauthorized");
   }
 
-  // Resume processing pipeline removed — was backed by Trigger.dev
+  // Resume processing pipeline not connected
   return {
     success: false,
     job_id: null,

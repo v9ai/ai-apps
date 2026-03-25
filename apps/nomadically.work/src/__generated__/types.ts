@@ -1163,7 +1163,6 @@ export type Mutation = {
   deleteJob: DeleteJobResponse;
   deleteLangSmithPrompt: Scalars['Boolean']['output'];
   deleteOpportunity: DeleteOpportunityResult;
-  deleteStackEntry: StackMutationResponse;
   deleteTask: DeleteTaskResult;
   enhanceAllContacts: EnhanceAllContactsResult;
   enhanceCompany: EnhanceCompanyResponse;
@@ -1386,11 +1385,6 @@ export type MutationDeleteLangSmithPromptArgs = {
 
 export type MutationDeleteOpportunityArgs = {
   id: Scalars['String']['input'];
-};
-
-
-export type MutationDeleteStackEntryArgs = {
-  name: Scalars['String']['input'];
 };
 
 
@@ -2227,12 +2221,6 @@ export type SourceType =
   | 'LIVE_FETCH'
   | 'MANUAL'
   | 'PARTNER';
-
-export type StackMutationResponse = {
-  __typename: 'StackMutationResponse';
-  message: Maybe<Scalars['String']['output']>;
-  success: Scalars['Boolean']['output'];
-};
 
 export type SyncResendResult = {
   __typename: 'SyncResendResult';

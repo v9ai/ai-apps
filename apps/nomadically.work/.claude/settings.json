@@ -133,7 +133,6 @@
         "drizzle:https://orm.drizzle.team/llms.txt",
         "nextjs:https://nextjs.org/docs/llms.txt",
         "vercel-ai:https://sdk.vercel.ai/llms.txt",
-        "trigger:https://trigger.dev/docs/llms.txt",
         "mastra:https://mastra.ai/llms.txt",
         "cloudflare:https://developers.cloudflare.com/llms.txt",
         "inngest:https://www.inngest.com/llms.txt",

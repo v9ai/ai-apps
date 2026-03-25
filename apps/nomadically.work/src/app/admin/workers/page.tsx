@@ -75,7 +75,7 @@ export default function WorkersPage() {
         <Box>
           <Heading size="7">Worker Status</Heading>
           <Text color="gray" size="2">
-            Cloudflare Workers and Trigger.dev task overview
+            Cloudflare Workers overview
           </Text>
         </Box>
         <Button asChild variant="soft">
@@ -94,7 +94,6 @@ export default function WorkersPage() {
         <Text weight="medium" color="gray">TypeScript</Text> workers handle ATS ingestion, queues, and cron scheduling;{" "}
         <Text weight="medium" color="gray">Python/LangGraph</Text> workers run DeepSeek-powered job classification, EU filtering, resume RAG (Vectorize + Workers AI), and job-to-resume matching;{" "}
         <Text weight="medium" color="gray">Rust/WASM</Text> powers the Ashby board crawler via Common Crawl.
-        Background tasks (enhancement, skill extraction) run on <Text weight="medium" color="gray">Trigger.dev</Text>.
         The Next.js app layer reads from <Text weight="medium" color="gray">Neon PostgreSQL</Text>; CF Workers (janitor, insert-jobs) are pending migration to Neon.
       </Text>
 
@@ -145,32 +144,6 @@ export default function WorkersPage() {
           </Card>
         ))}
       </Flex>
-
-      {/* Trigger.dev */}
-      <Heading size="4" mb="3">
-        Trigger.dev Tasks
-      </Heading>
-      <Card mb="6">
-        <Flex justify="between" align="center" gap="4">
-          <Box>
-            <Text size="3" weight="bold" as="div" mb="1">
-              Background tasks (src/trigger/)
-            </Text>
-            <Text size="1" color="gray">
-              Job enhancement, classification, skill extraction
-            </Text>
-          </Box>
-          <Button asChild size="1" variant="ghost">
-            <a
-              href="https://cloud.trigger.dev"
-              target="_blank"
-              rel="noopener noreferrer"
-            >
-              Open dashboard →
-            </a>
-          </Button>
-        </Flex>
-      </Card>
 
       {/* Known issues */}
       <Heading size="4" mb="3">

@@ -54,7 +54,7 @@ If the resume doesn't contain enough information to answer, say so clearly.`;
     console.warn("[askAboutResume] LlamaCloud retrieval failed:", e);
   }
 
-  // Fallback: answer using raw text stored in D1 from the skill-profile upload
+  // Fallback: answer using raw text from the skill-profile upload
   const rows = await context.db
     .select({ raw_text: resumes.raw_text, filename: resumes.filename })
     .from(resumes)

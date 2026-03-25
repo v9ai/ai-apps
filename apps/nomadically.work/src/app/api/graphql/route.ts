@@ -40,8 +40,7 @@ function depthLimitRule(context: ValidationContext) {
   };
 }
 
-// Use Node.js runtime - better performance for I/O operations like D1 gateway calls
-// See: https://vercel.com/docs/functions/runtimes/node-js
+// Node.js runtime for full module compatibility (AI agents, SQL execution)
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
 

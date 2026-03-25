@@ -1166,7 +1166,6 @@ export type Mutation = {
   deleteJob: DeleteJobResponse;
   deleteLangSmithPrompt: Scalars['Boolean']['output'];
   deleteOpportunity: DeleteOpportunityResult;
-  deleteStackEntry: StackMutationResponse;
   deleteTask: DeleteTaskResult;
   enhanceAllContacts: EnhanceAllContactsResult;
   enhanceCompany: EnhanceCompanyResponse;
@@ -1389,11 +1388,6 @@ export type MutationDeleteLangSmithPromptArgs = {
 
 export type MutationDeleteOpportunityArgs = {
   id: Scalars['String']['input'];
-};
-
-
-export type MutationDeleteStackEntryArgs = {
-  name: Scalars['String']['input'];
 };
 
 
@@ -2231,12 +2225,6 @@ export type SourceType =
   | 'MANUAL'
   | 'PARTNER';
 
-export type StackMutationResponse = {
-  __typename?: 'StackMutationResponse';
-  message: Maybe<Scalars['String']['output']>;
-  success: Scalars['Boolean']['output'];
-};
-
 export type SyncResendResult = {
   __typename?: 'SyncResendResult';
   error: Maybe<Scalars['String']['output']>;
@@ -2664,7 +2652,6 @@ export type ResolversTypes = {
   SkillMatch: ResolverTypeWrapper<Partial<SkillMatch>>;
   SkillMatchDetail: ResolverTypeWrapper<Partial<SkillMatchDetail>>;
   SourceType: ResolverTypeWrapper<Partial<SourceType>>;
-  StackMutationResponse: ResolverTypeWrapper<Partial<StackMutationResponse>>;
   String: ResolverTypeWrapper<Partial<Scalars['String']['output']>>;
   SyncResendResult: ResolverTypeWrapper<Partial<SyncResendResult>>;
   Task: ResolverTypeWrapper<Partial<Task>>;
@@ -2821,7 +2808,6 @@ export type ResolversParentTypes = {
   SendOutreachEmailResult: Partial<SendOutreachEmailResult>;
   SkillMatch: Partial<SkillMatch>;
   SkillMatchDetail: Partial<SkillMatchDetail>;
-  StackMutationResponse: Partial<StackMutationResponse>;
   String: Partial<Scalars['String']['output']>;
   SyncResendResult: Partial<SyncResendResult>;
   Task: Partial<Task>;
@@ -3600,7 +3586,6 @@ export type MutationResolvers<ContextType = GraphQLContext, ParentType extends R
   deleteJob?: Resolver<ResolversTypes['DeleteJobResponse'], ParentType, ContextType, RequireFields<MutationDeleteJobArgs, 'id'>>;
   deleteLangSmithPrompt?: Resolver<ResolversTypes['Boolean'], ParentType, ContextType, RequireFields<MutationDeleteLangSmithPromptArgs, 'promptIdentifier'>>;
   deleteOpportunity?: Resolver<ResolversTypes['DeleteOpportunityResult'], ParentType, ContextType, RequireFields<MutationDeleteOpportunityArgs, 'id'>>;
-  deleteStackEntry?: Resolver<ResolversTypes['StackMutationResponse'], ParentType, ContextType, RequireFields<MutationDeleteStackEntryArgs, 'name'>>;
   deleteTask?: Resolver<ResolversTypes['DeleteTaskResult'], ParentType, ContextType, RequireFields<MutationDeleteTaskArgs, 'id'>>;
   enhanceAllContacts?: Resolver<ResolversTypes['EnhanceAllContactsResult'], ParentType, ContextType>;
   enhanceCompany?: Resolver<ResolversTypes['EnhanceCompanyResponse'], ParentType, ContextType, Partial<MutationEnhanceCompanyArgs>>;
@@ -3901,11 +3886,6 @@ export type SkillMatchDetailResolvers<ContextType = GraphQLContext, ParentType e
   tag?: Resolver<ResolversTypes['String'], ParentType, ContextType>;
 };
 
-export type StackMutationResponseResolvers<ContextType = GraphQLContext, ParentType extends ResolversParentTypes['StackMutationResponse'] = ResolversParentTypes['StackMutationResponse']> = {
-  message?: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType>;
-  success?: Resolver<ResolversTypes['Boolean'], ParentType, ContextType>;
-};
-
 export type SyncResendResultResolvers<ContextType = GraphQLContext, ParentType extends ResolversParentTypes['SyncResendResult'] = ResolversParentTypes['SyncResendResult']> = {
   error?: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType>;
   skippedCount?: Resolver<ResolversTypes['Int'], ParentType, ContextType>;
@@ -4085,7 +4065,6 @@ export type Resolvers<ContextType = GraphQLContext> = {
   SendOutreachEmailResult?: SendOutreachEmailResultResolvers<ContextType>;
   SkillMatch?: SkillMatchResolvers<ContextType>;
   SkillMatchDetail?: SkillMatchDetailResolvers<ContextType>;
-  StackMutationResponse?: StackMutationResponseResolvers<ContextType>;
   SyncResendResult?: SyncResendResultResolvers<ContextType>;
   Task?: TaskResolvers<ContextType>;
   TasksResult?: TasksResultResolvers<ContextType>;

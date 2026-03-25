@@ -134,10 +134,10 @@ const TARGETS: &[Target] = &[
     Target {
         label: "Background Jobs",
         color: "indigo",
-        technologies: "Trigger.dev",
-        hints: "Read trigger.config.ts. Glob src/trigger/**/*.ts and count task files. \
-                Grep for 'task(' in src/trigger/ to find task definitions and their IDs. \
-                Check package.json for @trigger.dev version.",
+        technologies: "Cloudflare Cron + Queues",
+        hints: "Check wrangler.toml files for cron triggers and queue bindings. \
+                Grep for 'scheduled' in workers/ to find cron handlers. \
+                Check workers/ directory for background job implementations.",
     },
     Target {
         label: "Evaluation",

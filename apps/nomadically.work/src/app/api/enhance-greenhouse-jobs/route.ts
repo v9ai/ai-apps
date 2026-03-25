@@ -10,7 +10,7 @@ export async function POST(request: NextRequest) {
   try {
     // Validate authorization
     const authHeader = request.headers.get("authorization");
-    const expectedAuth = `Bearer ${process.env.TRIGGER_SECRET_KEY}`;
+    const expectedAuth = `Bearer ${process.env.CRON_SECRET}`;
 
     if (!authHeader || authHeader !== expectedAuth) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
