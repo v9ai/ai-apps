@@ -14,6 +14,7 @@ import {
   MarkerType,
 } from "@xyflow/react";
 import "@xyflow/react/dist/style.css";
+import "./flow-dark.css";
 import {
   Upload,
   Swords,
