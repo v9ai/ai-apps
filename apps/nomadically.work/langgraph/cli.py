@@ -797,5 +797,147 @@ def discover_contacts(topics: tuple[str, ...], max_results: int, dry_run: bool):
     })
 
 
+# ---------------------------------------------------------------------------
+# VectorDB commands — LanceDB semantic search over contacts & posts
+# ---------------------------------------------------------------------------
+
+@main.command("contact-sync")
+@click.option("--full", is_flag=True, default=False, help="Full re-embed (overwrite). Default: incremental.")
+def contact_sync(full: bool):
+    """Sync contacts from Neon to LanceDB with MLX embeddings.
+
+    First run:
+        python -m cli contact-sync --full
+
+    Subsequent runs (incremental):
+        python -m cli contact-sync
+    """
+    from src.vectordb.sync import sync_contacts
+
+    result = sync_contacts(full=full)
+    print(f"\n--- Sync Result ---")
+    print(f"  Mode: {result.mode}")
+    print(f"  Synced: {result.synced}")
+    print(f"  Total: {result.total_rows}")
+    if result.errors:
+        for e in result.errors:
+            print(f"  Error: {e}")
+
+
+@main.command("contact-search")
+@click.argument("query")
+@click.option("--top", "-n", default=20, show_default=True, help="Number of results")
+@click.option("--ai-tier-min", type=int, default=None, help="Min AI tier (0/1/2)")
+@click.option("--contact-type", default=None, help="Filter: recruiter, hiring_manager, founder, talent_partner")
+@click.option("--regions", default=None, help="Filter regions (e.g. 'eu', 'uk')")
+@click.option("--company-category", default=None, help="Filter: PRODUCT, CONSULTANCY, AGENCY, STAFFING")
+@click.option("--email-verified", is_flag=True, default=False, help="Only contacts with verified email")
+def contact_search(query, top, ai_tier_min, contact_type, regions, company_category, email_verified):
+    """Semantic search over contacts.
+
+    Examples:
+        python -m cli contact-search "AI recruiter hiring LLM engineers in EU"
+        python -m cli contact-search "ML hiring manager" --ai-tier-min 1 --email-verified
+        python -m cli contact-search "talent partner" --contact-type recruiter --regions eu
+    """
+    from src.vectordb.search import search_contacts
+
+    results = search_contacts(
+        query,
+        top_k=top,
+        ai_tier_min=ai_tier_min,
+        contact_type=contact_type,
+        regions=regions,
+        company_category=company_category,
+        email_verified_only=email_verified,
+    )
+
+    if not results:
+        print("No results found.")
+        return
+
+    print(f"\n{'='*80}")
+    print(f"  Top {len(results)} contacts for: \"{query}\"")
+    print(f"{'='*80}\n")
+
+    for i, c in enumerate(results, 1):
+        badges = ""
+        if c.ai_tier >= 1:
+            badges += f" [AI-T{c.ai_tier}]"
+        if c.email_verified and c.email:
+            badges += " [verified]"
+        if c.regions:
+            badges += f" [{c.regions}]"
+
+        print(f"  {i:3d}. {c.first_name} {c.last_name}{badges}")
+        print(f"       {c.position}")
+        print(f"       {c.company} | type={c.contact_type} | sim={c.similarity:.3f}")
+        if c.email:
+            print(f"       {c.email}")
+        if c.linkedin_url:
+            print(f"       {c.linkedin_url}")
+        if c.focus_areas:
+            print(f"       focus: {c.focus_areas}")
+        print()
+
+
+@main.command("post-sync")
+def post_sync():
+    """Sync LinkedIn posts from Rust LanceDB to vectordb with embeddings.
+
+        python -m cli post-sync
+    """
+    from src.vectordb.sync import sync_posts
+
+    result = sync_posts()
+    print(f"\n--- Sync Result ---")
+    print(f"  Mode: {result.mode}")
+    print(f"  Synced: {result.synced}")
+    print(f"  Total: {result.total_rows}")
+    if result.errors:
+        for e in result.errors:
+            print(f"  Error: {e}")
+
+
+@main.command("post-search")
+@click.argument("query")
+@click.option("--top", "-n", default=20, show_default=True, help="Number of results")
+@click.option("--min-reactions", type=int, default=None, help="Min reaction count")
+@click.option("--no-reposts", is_flag=True, default=False, help="Exclude reposts")
+def post_search(query, top, min_reactions, no_reposts):
+    """Semantic search over LinkedIn posts.
+
+    Examples:
+        python -m cli post-search "hiring AI engineer remote Europe"
+        python -m cli post-search "LLM infrastructure" --min-reactions 50
+    """
+    from src.vectordb.search import search_posts
+
+    results = search_posts(
+        query,
+        top_k=top,
+        min_reactions=min_reactions,
+        exclude_reposts=no_reposts,
+    )
+
+    if not results:
+        print("No results found.")
+        return
+
+    print(f"\n{'='*80}")
+    print(f"  Top {len(results)} posts for: \"{query}\"")
+    print(f"{'='*80}\n")
+
+    for i, p in enumerate(results, 1):
+        preview = (p.post_text or "")[:120].replace("\n", " ")
+        print(f"  {i:3d}. {p.author_name} | reactions={p.reactions_count} | sim={p.similarity:.3f}")
+        print(f"       {preview}...")
+        if p.post_url:
+            print(f"       {p.post_url}")
+        if p.posted_date:
+            print(f"       date: {p.posted_date}")
+        print()
+
+
 if __name__ == "__main__":
     main()
