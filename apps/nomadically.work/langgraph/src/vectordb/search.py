@@ -1,4 +1,4 @@
-"""Semantic search over contacts and LinkedIn posts in LanceDB."""
+"""Semantic search over contacts, LinkedIn posts, and jobs in LanceDB."""
 
 from __future__ import annotations
 
@@ -6,7 +6,7 @@ import lancedb
 
 from .config import LANCE_DB_PATH
 from .embedder import embed_query
-from .schemas import ScoredContact, ScoredPost
+from .schemas import ScoredContact, ScoredJob, ScoredPost
 
 
 def search_contacts(
