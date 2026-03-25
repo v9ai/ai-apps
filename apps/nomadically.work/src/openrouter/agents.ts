@@ -1,12 +1,10 @@
 /**
  * OpenRouter Agent Helpers
  *
- * Pre-configured agent templates using DeepSeek models through OpenRouter.
- * Uses Vercel AI SDK instead of Mastra.
+ * Agent templates that delegate to the LangGraph Python server.
  */
 
-import { generateText } from "ai";
-import { deepseekModels } from "./provider";
+import { adminChat } from "@/lib/langgraph-client";
 import type { OpenRouterOptions } from "./config";
 import { GOAL_CONTEXT_LINE } from "@/constants/goal";
 
@@ -22,58 +20,43 @@ export interface AgentConfig {
 }
 
 /**
- * Create a general-purpose agent using DeepSeek Chat through OpenRouter
+ * Create a general-purpose agent via LangGraph
  */
 export function createChatAgent(config: AgentConfig) {
-  const modelKey = config.model || "chat";
-  const model = deepseekModels[modelKey]();
-
   return {
     id: config.id || `chat-agent-${Date.now()}`,
     name: config.name,
     async generate(prompt: string) {
-      const result = await generateText({
-        model,
-        system: config.instructions,
-        prompt,
-      });
-      return { text: result.text };
+      const result = await adminChat(prompt, config.instructions);
+      return { text: result.response };
     },
   };
 }
 
 /**
- * Create a reasoning agent using DeepSeek R1 through OpenRouter
+ * Create a reasoning agent via LangGraph
  */
 export function createReasoningAgent(config: Omit<AgentConfig, "model">) {
   return {
     id: config.id || `reasoning-agent-${Date.now()}`,
     name: config.name,
     async generate(prompt: string) {
-      const result = await generateText({
-        model: deepseekModels.r1(),
-        system: config.instructions,
-        prompt,
-      });
-      return { text: result.text };
+      const result = await adminChat(prompt, config.instructions);
+      return { text: result.response };
     },
   };
 }
 
 /**
- * Create a coding agent using DeepSeek Coder through OpenRouter
+ * Create a coding agent via LangGraph
  */
 export function createCodingAgent(config: Omit<AgentConfig, "model">) {
   return {
     id: config.id || `coding-agent-${Date.now()}`,
     name: config.name,
     async generate(prompt: string) {
-      const result = await generateText({
-        model: deepseekModels.coder(),
-        system: config.instructions,
-        prompt,
-      });
-      return { text: result.text };
+      const result = await adminChat(prompt, config.instructions);
+      return { text: result.response };
     },
   };
 }
