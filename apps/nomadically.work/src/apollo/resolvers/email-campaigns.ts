@@ -490,40 +490,23 @@ export const emailCampaignResolvers = {
         }
       }
 
-      const prompt = `Write a professional email with the following details:
-- Recipient: ${recipientName}${recipientRole ? `, ${recipientRole}` : ""}${companyName ? ` at ${companyName}` : ""}
+      const instructions = `Write a professional email.
 - Purpose: ${purpose}
-- Tone: ${tone ?? "professional and friendly"}${templateContext}
+- Tone: ${tone ?? "professional and friendly"}${templateContext}`;
 
-Return ONLY a JSON object with exactly these fields:
-- "subject": the email subject line
-- "text": the plain text body
-- "html": the HTML version of the body (use <p> tags for paragraphs)
-
-Do not include any text before or after the JSON.`;
-
-      const result = await generateText({
-        model: deepseek("deepseek-chat"),
-        prompt,
-        maxTokens: 1500,
+      const composeResult = await composeEmail({
+        recipientName,
+        companyName: companyName ?? undefined,
+        instructions,
       });
 
-      let parsed: { subject: string; text: string; html: string };
-      try {
-        parsed = JSON.parse(result.text);
-      } catch {
-        const text = result.text.trim();
-        parsed = {
-          subject: `Email to ${recipientName}`,
-          text,
-          html: text.split("\n\n").map((p) => `<p>${p}</p>`).join("\n"),
-        };
-      }
+      const text = composeResult.body;
+      const html = text.split("\n\n").map((p) => `<p>${p}</p>`).join("\n");
 
       return {
-        subject: parsed.subject,
-        html: parsed.html,
-        text: parsed.text,
+        subject: composeResult.subject,
+        html,
+        text,
       };
     },
 
