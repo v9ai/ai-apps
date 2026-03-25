@@ -644,7 +644,7 @@ export default function HowItWorksPage() {
           align="center"
           style={{ maxWidth: 660, lineHeight: 1.7 }}
         >
-          Every system embeds trade-offs. This page documents ten architectural
+          Every system embeds trade-offs. This page documents eleven architectural
           decisions: what we chose, why it works, what we rejected, and what
           we&apos;d reconsider under different constraints.
         </Text>
@@ -702,7 +702,16 @@ export default function HowItWorksPage() {
 │    Brief Rewriter     (Qwen)     ── runs last, needs Judge output   │
 └─────────────────────────────────────────────────────────────────────┘
                                               │
-            SSE Polling (2 s) ◄── audit_trail ──► EventSource client`}</code>
+            SSE Polling (2 s) ◄── audit_trail ──► EventSource client
+                                              │
+┌─────────────────────────────────────────────────────────────────────┐
+│  LOCAL CANDLE SERVER  (optional, CANDLE_BASE_URL)                   │
+│                                                                     │
+│    phi-3.5-mini  ── Judge chat completions (when local)             │
+│    Embeddings    ── embedText() / embedBatch() for semantic search  │
+│                                                                     │
+│    Rust binary, OpenAI-compatible /v1 API, no GPU required          │
+└─────────────────────────────────────────────────────────────────────┘`}</code>
             </pre>
           </Flex>
         </Card>
@@ -720,7 +729,7 @@ export default function HowItWorksPage() {
               color: "var(--gray-9)",
             }}
           >
-            10 Decisions
+            11 Decisions
           </Text>
           <Flex gap="2" wrap="wrap">
             {decisions.map((d, i) => {
@@ -987,13 +996,14 @@ export default function HowItWorksPage() {
             <Flex direction="column" gap="2">
               {[
                 { layer: "Frontend", tech: "Next.js 16 App Router, Radix UI Themes, D3.js", decisions: ["agent-topology", "scoring"] },
-                { layer: "AI / LLM", tech: "DeepSeek Reasoner + Chat, Qwen-Plus (DashScope)", decisions: ["agent-topology", "llm-selection", "structured-output"] },
+                { layer: "AI / LLM", tech: "DeepSeek Reasoner + Chat, Qwen-Plus (DashScope), local phi-3.5-mini", decisions: ["agent-topology", "llm-selection", "structured-output", "local-inference"] },
                 { layer: "Pipeline", tech: "3-round sequential debate + parallel specialists", decisions: ["agent-topology", "round-structure"] },
                 { layer: "Output", tech: "JSON mode + Zod schemas, 0-100 scoring rubric", decisions: ["structured-output", "scoring"] },
                 { layer: "Database", tech: "Supabase PostgreSQL (3 tables, no ORM)", decisions: ["database"] },
                 { layer: "Real-time", tech: "SSE polling against audit_trail, EventSource client", decisions: ["streaming"] },
                 { layer: "Ingestion", tech: "pdf-parse + mammoth (zero external services)", decisions: ["document-parsing"] },
-                { layer: "Knowledge", tech: "NYC Open Data via Socrata SOQL (5-min cache)", decisions: ["knowledge-base"] },
+                { layer: "Knowledge", tech: "NYC Open Data via Socrata SOQL (5-min cache)", decisions: ["knowledge-base", "local-inference"] },
+                { layer: "Embeddings", tech: "Candle Rust server, local batch embeddings (~4.6K/sec)", decisions: ["local-inference"] },
                 { layer: "Evaluation", tech: "Python redteam module + deepteam + Vitest", decisions: ["eval-pipeline"] },
                 { layer: "Deploy", tech: "Vercel serverless, Turbopack monorepo, @ai-apps/* packages", decisions: [] },
               ].map((row) => (

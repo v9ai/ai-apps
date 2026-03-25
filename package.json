@@ -17,7 +17,7 @@
     "lint": "turbo run lint",
     "test": "turbo run test",
     "deploy:blog": "vercel deploy --prod --cwd apps/vadim.blog",
-    "deploy:l": "vercel deploy --prod --cwd apps/law-adversarial",
+    "deploy:l": "VERCEL_PROJECT_ID=prj_LOKs6EndDbg0ZfkP8Nm2n86j0nok VERCEL_ORG_ID=team_PWwGsn3xORVtRDLLoES2BYVV vercel deploy --prod",
     "deploy:n": "VERCEL_PROJECT_ID=prj_YK5twFzCLh0okpfWRptY0AXwJZEL VERCEL_ORG_ID=team_PWwGsn3xORVtRDLLoES2BYVV vercel deploy --prod",
     "deploy:h": "vercel deploy --prod",
     "deploy:r": "vercel deploy --prod --cwd apps/research-thera",
