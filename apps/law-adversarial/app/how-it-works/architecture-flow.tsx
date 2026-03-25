@@ -403,14 +403,14 @@ const debateEdges: Edge[] = [
   {
     id: "e-findings-loop", source: "findings", target: "loop",
     type: "smoothstep",
-    style: { strokeWidth: 1.5, stroke: "var(--green-8)", strokeDasharray: "5 3" },
+    style: { strokeWidth: 2, stroke: "var(--green-8)", strokeDasharray: "5 3" },
     markerEnd: { type: MarkerType.ArrowClosed, width: 12, height: 12 },
     label: "feeds next round",
   },
   {
     id: "e-loop-atk", source: "loop", target: "attacker",
     type: "smoothstep",
-    style: { strokeWidth: 1.5, stroke: "var(--crimson-8)", strokeDasharray: "5 3" },
+    style: { strokeWidth: 2, stroke: "var(--crimson-8)", strokeDasharray: "5 3" },
     markerEnd: { type: MarkerType.ArrowClosed, width: 12, height: 12 },
     animated: true,
     label: "go deeper",
