@@ -1,4 +1,4 @@
-import { task, logger } from "@trigger.dev/sdk/v3";
+import { task, schedules, logger } from "@trigger.dev/sdk/v3";
 import { sql } from "drizzle-orm";
 import { jobs } from "../db/schema";
 import { db } from "../db";
