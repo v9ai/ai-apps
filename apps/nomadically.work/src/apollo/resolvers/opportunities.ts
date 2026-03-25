@@ -167,14 +167,9 @@ export const opportunityResolvers = {
     },
   },
 
-  // Company.opportunities field resolver
   Company: {
     async opportunities(parent: any, _args: any, context: GraphQLContext) {
-      const rows = await context.db
-        .select()
-        .from(opportunities)
-        .where(eq(opportunities.company_id, parent.id))
-        .orderBy(desc(opportunities.created_at));
+      const rows = await context.loaders.opportunitiesByCompany.load(parent.id);
       return rows.map(mapOpp);
     },
   },

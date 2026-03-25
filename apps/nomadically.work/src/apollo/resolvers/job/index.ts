@@ -1,4 +1,4 @@
-import { jobs, contacts, jobReportEvents, jobSkillTags } from "@/db/schema";
+import { jobs, jobReportEvents, jobSkillTags } from "@/db/schema";
 import type { Job } from "@/db/schema";
 import { eq, and, like, ne, sql } from "drizzle-orm";
 import type { GraphQLContext } from "../../context";
@@ -228,12 +228,7 @@ const Job: JobResolvers<GraphQLContext, Job> = {
   },
   async recruiter(parent, _args, context): Promise<any> {
     if (!parent.recruiter_id) return null;
-    const rows = await context.db
-      .select()
-      .from(contacts)
-      .where(eq(contacts.id, parent.recruiter_id))
-      .limit(1);
-    return rows[0] ?? null;
+    return context.loaders.contact.load(parent.recruiter_id);
   },
 
   async skillMatch(parent, _args, context) {

@@ -9,6 +9,7 @@ import {
   companySnapshots,
   userSettings,
   contacts,
+  opportunities,
 } from "@/db/schema";
 import type {
   JobSkillTag,
@@ -18,9 +19,9 @@ import type {
   CompanySnapshot,
   UserSettings,
   Contact,
+  Opportunity,
 } from "@/db/schema";
 
-// D1/SQLite safe upper bound for IN (...) variable bindings
 const BATCH_SIZE = 100;
 
 export function createLoaders(db: DbInstance) {
@@ -132,6 +133,36 @@ export function createLoaders(db: DbInstance) {
           .from(contacts)
           .where(inArray(contacts.company_id, [...companyIds]));
         const byCompany = new Map<number, Contact[]>();
+        for (const row of rows) {
+          if (row.company_id == null) continue;
+          const arr = byCompany.get(row.company_id);
+          if (arr) arr.push(row);
+          else byCompany.set(row.company_id, [row]);
+        }
+        return companyIds.map((id) => byCompany.get(id) ?? []);
+      },
+      { maxBatchSize: BATCH_SIZE },
+    ),
+
+    contact: new DataLoader<number, Contact | null>(
+      async (contactIds) => {
+        const rows = await db
+          .select()
+          .from(contacts)
+          .where(inArray(contacts.id, [...contactIds]));
+        const byId = new Map(rows.map((r) => [r.id, r]));
+        return contactIds.map((id) => byId.get(id) ?? null);
+      },
+      { maxBatchSize: BATCH_SIZE },
+    ),
+
+    opportunitiesByCompany: new DataLoader<number, Opportunity[]>(
+      async (companyIds) => {
+        const rows = await db
+          .select()
+          .from(opportunities)
+          .where(inArray(opportunities.company_id, [...companyIds]));
+        const byCompany = new Map<number, Opportunity[]>();
         for (const row of rows) {
           if (row.company_id == null) continue;
           const arr = byCompany.get(row.company_id);
