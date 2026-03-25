@@ -12,7 +12,7 @@ import {
   hubColor,
   deviceIcon,
 } from "@/lib/parser";
-import { generateCode } from "@/lib/codegen";
+import { generateCode, generateAICode } from "@/lib/codegen";
 
 /* ── Hub metadata ──────────────────────────────────────────────── */
 
@@ -149,6 +149,8 @@ export default function WizardPage() {
   const [hasRemote, setHasRemote] = useState(false);
   const [instructions, setInstructions] = useState("");
   const [saving, setSaving] = useState(false);
+  const [generating, setGenerating] = useState(false);
+  const [genError, setGenError] = useState<string | null>(null);
   const { data: session } = useSession();
   const router = useRouter();
 
@@ -921,70 +923,157 @@ export default function WizardPage() {
             />
           </div>
 
-          {/* Next button */}
+          {/* Action buttons */}
           <div
             className={css({
               display: "flex",
-              justifyContent: "flex-end",
+              flexDir: "column",
+              gap: "3",
               mt: "4",
             })}
           >
-            <button
-              disabled={saving || !session?.user}
-              onClick={async () => {
-                if (!session?.user || !hub || !template) return;
-                setSaving(true);
-                try {
-                  const generatedCode = generateCode(hub, ports, hasRemote);
-                  const res = await fetch("/api/scripts", {
-                    method: "POST",
-                    headers: { "Content-Type": "application/json" },
-                    body: JSON.stringify({
-                      hub,
-                      template,
-                      devices: ports.filter((p) => p.device),
-                      hasRemote,
-                      instructions,
-                      code: generatedCode,
-                    }),
-                  });
-                  if (res.ok) {
-                    const data = await res.json();
-                    router.push(`/scripts/${data.id}`);
-                  }
-                } finally {
-                  setSaving(false);
-                }
-              }}
+            <div
               className={css({
-                fontSize: "sm",
-                fontWeight: "800",
-                fontFamily: "display",
-                color: "white",
-                bg: "lego.red",
-                rounded: "brick",
-                px: "6",
-                py: "2.5",
-                cursor: "pointer",
-                transition: "all 0.15s ease",
-                border: "none",
-                boxShadow:
-                  "inset 0 1px 0 rgba(255,255,255,0.2), 0 2px 0 #A30008, 0 3px 6px rgba(0,0,0,0.3)",
-                _hover: {
-                  bg: "#FF1A1A",
-                  transform: "translateY(-1px)",
-                  boxShadow:
-                    "inset 0 1px 0 rgba(255,255,255,0.25), 0 3px 0 #A30008, 0 5px 10px rgba(0,0,0,0.35)",
-                },
-                _active: {
-                  transform: "translateY(1px)",
-                  boxShadow:
-                    "inset 0 1px 0 rgba(255,255,255,0.1), 0 1px 0 #A30008",
-                },
+                display: "flex",
+                justifyContent: "flex-end",
+                gap: "3",
               })}
             >
-              Generate Code
-            </button>
+              <button
+                disabled={saving || generating || !session?.user}
+                onClick={async () => {
+                  if (!session?.user || !hub || !template) return;
+                  setSaving(true);
+                  try {
+                    const generatedCode = generateCode(hub, ports, hasRemote);
+                    const res = await fetch("/api/scripts", {
+                      method: "POST",
+                      headers: { "Content-Type": "application/json" },
+                      body: JSON.stringify({
+                        hub,
+                        template,
+                        devices: ports.filter((p) => p.device),
+                        hasRemote,
+                        instructions,
+                        code: generatedCode,
+                      }),
+                    });
+                    if (res.ok) {
+                      const data = await res.json();
+                      router.push(`/scripts/${data.id}`);
+                    }
+                  } finally {
+                    setSaving(false);
+                  }
+                }}
+                className={css({
+                  fontSize: "sm",
+                  fontWeight: "800",
+                  fontFamily: "display",
+                  color: "white",
+                  bg: "lego.red",
+                  rounded: "brick",
+                  px: "6",
+                  py: "2.5",
+                  cursor: "pointer",
+                  transition: "all 0.15s ease",
+                  border: "none",
+                  boxShadow:
+                    "inset 0 1px 0 rgba(255,255,255,0.2), 0 2px 0 #A30008, 0 3px 6px rgba(0,0,0,0.3)",
+                  _hover: {
+                    bg: "#FF1A1A",
+                    transform: "translateY(-1px)",
+                    boxShadow:
+                      "inset 0 1px 0 rgba(255,255,255,0.25), 0 3px 0 #A30008, 0 5px 10px rgba(0,0,0,0.35)",
+                  },
+                  _active: {
+                    transform: "translateY(1px)",
+                    boxShadow:
+                      "inset 0 1px 0 rgba(255,255,255,0.1), 0 1px 0 #A30008",
+                  },
+                  _disabled: {
+                    opacity: 0.5,
+                    cursor: "default",
+                  },
+                })}
+              >
+                Quick Template
+              </button>
+              <button
+                disabled={generating || saving || !session?.user || !instructions.trim()}
+                onClick={async () => {
+                  if (!session?.user || !hub || !template) return;
+                  setGenerating(true);
+                  setGenError(null);
+                  try {
+                    const aiCode = await generateAICode(hub, ports, hasRemote, instructions);
+                    const res = await fetch("/api/scripts", {
+                      method: "POST",
+                      headers: { "Content-Type": "application/json" },
+                      body: JSON.stringify({
+                        hub,
+                        template,
+                        devices: ports.filter((p) => p.device),
+                        hasRemote,
+                        instructions,
+                        code: aiCode,
+                      }),
+                    });
+                    if (res.ok) {
+                      const data = await res.json();
+                      router.push(`/scripts/${data.id}`);
+                    }
+                  } catch (e) {
+                    setGenError(e instanceof Error ? e.message : "AI generation failed");
+                  } finally {
+                    setGenerating(false);
+                  }
+                }}
+                className={css({
+                  fontSize: "sm",
+                  fontWeight: "800",
+                  fontFamily: "display",
+                  color: "white",
+                  bg: "#7c3aed",
+                  rounded: "brick",
+                  px: "6",
+                  py: "2.5",
+                  cursor: "pointer",
+                  transition: "all 0.15s ease",
+                  border: "none",
+                  boxShadow:
+                    "inset 0 1px 0 rgba(255,255,255,0.2), 0 2px 0 #5b21b6, 0 3px 6px rgba(0,0,0,0.3)",
+                  _hover: {
+                    bg: "#8b5cf6",
+                    transform: "translateY(-1px)",
+                    boxShadow:
+                      "inset 0 1px 0 rgba(255,255,255,0.25), 0 3px 0 #5b21b6, 0 5px 10px rgba(0,0,0,0.35)",
+                  },
+                  _active: {
+                    transform: "translateY(1px)",
+                    boxShadow:
+                      "inset 0 1px 0 rgba(255,255,255,0.1), 0 1px 0 #5b21b6",
+                  },
+                  _disabled: {
+                    opacity: 0.5,
+                    cursor: "default",
+                  },
+                })}
+              >
+                {generating ? "AI Generating..." : "AI Generate"}
+              </button>
+            </div>
+            {genError && (
+              <p
+                className={css({
+                  fontSize: "sm",
+                  color: "lego.red",
+                  textAlign: "right",
+                })}
+              >
+                {genError}
+              </p>
+            )}
           </div>
         </div>
       )}

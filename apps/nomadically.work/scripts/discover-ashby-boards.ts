@@ -41,7 +41,7 @@ async function main() {
           .onConflictDoUpdate({
             target: ashbyBoards.board_name,
             set: {
-              updated_at: sql`datetime('now')`,
+              updated_at: sql`now()`,
               is_active: true,
             },
           })

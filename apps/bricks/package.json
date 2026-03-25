@@ -6,6 +6,7 @@
     "next-dev": "next dev --turbopack -p 3008",
     "backend-dev": "cd backend && uv run langgraph dev --no-browser --port 2025",
     "deploy-dev": "cd backend && uv run python deploy_server.py",
+    "codegen-dev": "cd backend && bash start-codegen.sh",
     "build": "next build --webpack",
     "prepare": "panda codegen",
     "start": "next start"

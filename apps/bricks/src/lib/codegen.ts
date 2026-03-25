@@ -1,6 +1,6 @@
 import { HubType, DeviceType } from "./parser";
 
-interface PortDevice {
+export interface PortDevice {
   port: string;
   device: DeviceType | null;
   varName: string;
@@ -115,4 +115,29 @@ export function generateCode(
   lines.push(`    wait(10)`);
 
   return lines.join("\n");
+}
+
+export async function generateAICode(
+  hub: HubType,
+  ports: PortDevice[],
+  hasRemote: boolean,
+  instructions: string
+): Promise<string> {
+  const devices = ports
+    .filter((p) => p.device)
+    .map((p) => ({ port: p.port, device: p.device, varName: p.varName }));
+
+  const res = await fetch("/api/codegen", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ hub, devices, hasRemote, instructions }),
+  });
+
+  if (!res.ok) {
+    const err = await res.json().catch(() => ({ error: "Unknown error" }));
+    throw new Error(err.error || `Codegen failed: ${res.status}`);
+  }
+
+  const data = await res.json();
+  return data.code;
 }

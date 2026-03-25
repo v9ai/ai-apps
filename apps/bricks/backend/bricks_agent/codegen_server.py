@@ -13,24 +13,13 @@ import sys
 from http import HTTPStatus
 from pathlib import Path
 
+import httpx
 from dotenv import load_dotenv
 
 load_dotenv(Path(__file__).resolve().parent.parent / ".env")
 
-# Add pypackages/deepseek to sys.path so we can import deepseek_client
-_PYPACKAGES = Path(__file__).resolve().parent.parent.parent.parent.parent / "pypackages" / "deepseek"
-_VENV_SITE = _PYPACKAGES / ".venv" / "lib"
-for p in sorted(_VENV_SITE.glob("python*/site-packages")):
-    if str(p) not in sys.path:
-        sys.path.insert(0, str(p))
-# Also add the deepseek src dir directly
-_DEEPSEEK_SRC = _PYPACKAGES / "src"
-if str(_DEEPSEEK_SRC) not in sys.path:
-    sys.path.insert(0, str(_DEEPSEEK_SRC))
-
-from deepseek_client import DeepSeekClient, ChatMessage, DeepSeekConfig  # noqa: E402
-
 PORT = int(os.environ.get("CODEGEN_PORT", "2027"))
+LLAMA_URL = os.environ.get("LLAMA_URL", "http://127.0.0.1:2028")
 
 SYSTEM_PROMPT = """\
 You are a Pybricks MicroPython expert. Generate complete, working Pybricks scripts
@@ -184,15 +173,20 @@ def _build_user_prompt(hub: str, devices: list[dict], has_remote: bool, instruct
 
 
 async def generate_code(hub: str, devices: list[dict], has_remote: bool, instructions: str) -> str:
-    config = DeepSeekConfig(default_model="deepseek-chat", default_temperature=0.3, default_max_tokens=4096)
-    async with DeepSeekClient(config) as client:
-        resp = await client.chat(
-            [
-                ChatMessage(role="system", content=SYSTEM_PROMPT),
-                ChatMessage(role="user", content=_build_user_prompt(hub, devices, has_remote, instructions)),
-            ],
-        )
-        code = resp.choices[0].message.content
+    payload = {
+        "model": "qwen2.5-coder-3b-instruct",
+        "messages": [
+            {"role": "system", "content": SYSTEM_PROMPT},
+            {"role": "user", "content": _build_user_prompt(hub, devices, has_remote, instructions)},
+        ],
+        "temperature": 0.3,
+        "max_tokens": 2048,
+    }
+    async with httpx.AsyncClient(timeout=120.0) as client:
+        resp = await client.post(f"{LLAMA_URL}/v1/chat/completions", json=payload)
+        resp.raise_for_status()
+        data = resp.json()
+        code = data["choices"][0]["message"]["content"]
         # Strip markdown fences if the model includes them
         if code.startswith("```"):
             lines = code.split("\n")
@@ -250,7 +244,13 @@ async def _handle_request(reader: asyncio.StreamReader, writer: asyncio.StreamWr
             code = await generate_code(hub, devices, has_remote, instructions)
             _send_json(writer, {"code": code})
         elif method == "GET" and path == "/health":
-            _send_json(writer, {"ok": True})
+            try:
+                async with httpx.AsyncClient(timeout=5.0) as hc:
+                    r = await hc.get(f"{LLAMA_URL}/health")
+                    llama_ok = r.status_code == 200
+            except Exception:
+                llama_ok = False
+            _send_json(writer, {"ok": True, "llama_server": llama_ok})
         else:
             _send_json(writer, {"error": "Not found"}, 404)
     except Exception as e:

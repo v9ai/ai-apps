@@ -1,4 +1,4 @@
-import { jobs, contacts } from "@/db/schema";
+import { jobs, contacts, jobReportEvents, jobSkillTags } from "@/db/schema";
 import type { Job } from "@/db/schema";
 import { eq, and, like, ne, sql } from "drizzle-orm";
 import type { GraphQLContext } from "../../context";
@@ -384,11 +384,9 @@ const Mutation: MutationResolvers = {
     if (!isAdminEmail(context.userEmail)) {
       throw new Error("Forbidden - Admin access required");
     }
-    // Delete dependent rows first (job_report_events FK has no CASCADE),
-    // then jobs. Use raw sql.raw() via Drizzle's run to avoid D1 driver issues.
-    await context.db.run(sql`DELETE FROM job_report_events`);
-    await context.db.run(sql`DELETE FROM job_skill_tags`);
-    await context.db.run(sql`DELETE FROM jobs`);
+    await context.db.delete(jobReportEvents);
+    await context.db.delete(jobSkillTags);
+    await context.db.delete(jobs);
     return {
       success: true,
       message: "All jobs deleted successfully",
@@ -408,7 +406,7 @@ const Mutation: MutationResolvers = {
 
     const result = await context.db
       .update(jobs)
-      .set({ status: JOB_STATUS.REPORTED, updated_at: sql`datetime('now')` })
+      .set({ status: JOB_STATUS.REPORTED, updated_at: sql`now()` })
       .where(eq(jobs.id, args.id))
       .returning();
 
@@ -433,7 +431,7 @@ const Mutation: MutationResolvers = {
     const now = new Date().toISOString();
     const rows = await context.db
       .update(jobs)
-      .set({ applied: true, applied_at: now, updated_at: sql`datetime('now')` })
+      .set({ applied: true, applied_at: now, updated_at: sql`now()` })
       .where(eq(jobs.id, args.id))
       .returning();
     if (!rows[0]) throw new Error("Job not found");
@@ -446,7 +444,7 @@ const Mutation: MutationResolvers = {
     }
     const rows = await context.db
       .update(jobs)
-      .set({ archived: true, updated_at: sql`datetime('now')` })
+      .set({ archived: true, updated_at: sql`now()` })
       .where(eq(jobs.id, args.id))
       .returning();
     if (!rows[0]) throw new Error("Job not found");
@@ -459,7 +457,7 @@ const Mutation: MutationResolvers = {
     }
     const rows = await context.db
       .update(jobs)
-      .set({ archived: false, updated_at: sql`datetime('now')` })
+      .set({ archived: false, updated_at: sql`now()` })
       .where(eq(jobs.id, args.id))
       .returning();
     if (!rows[0]) throw new Error("Job not found");
