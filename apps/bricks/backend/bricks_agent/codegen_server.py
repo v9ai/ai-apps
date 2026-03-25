@@ -1,4 +1,4 @@
-"""Pybricks code generation server using deepseek-client.
+"""Pybricks code generation server using local Qwen via llama-server.
 
 Run:  python -m bricks_agent.codegen_server
 Listens on :2027 by default.
@@ -9,7 +9,6 @@ from __future__ import annotations
 import asyncio
 import json
 import os
-import sys
 from http import HTTPStatus
 from pathlib import Path
 

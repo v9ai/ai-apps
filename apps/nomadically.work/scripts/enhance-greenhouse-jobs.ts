@@ -14,7 +14,7 @@
 import { config } from "dotenv";
 import { tasks } from "@trigger.dev/sdk/v3";
 import type { enhanceJobTask } from "../src/trigger/enhance-job";
-import type { enhanceJobsScheduled } from "../src/trigger/enhance-greenhouse";
+import type { enhanceJobsScheduled } from "../src/trigger/enhance-all";
 
 // Load .env.local for environment variables
 config({ path: ".env.local" });
