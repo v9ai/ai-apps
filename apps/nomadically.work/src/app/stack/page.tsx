@@ -1,353 +1,680 @@
 "use client";
 
-// Local-only page. Run `pnpm stack:discover` to populate discovery.json.
-// Not linked from the sidebar in production (see sidebar.tsx IS_DEV guard).
+import { useState } from "react";
+import { Badge, Container, Flex, Heading, Text, Card } from "@radix-ui/themes";
+import { LayersIcon, GitHubLogoIcon } from "@radix-ui/react-icons";
 
-import { useMemo, useState } from "react";
-import { Badge, Card, Container, Dialog, Flex, Heading, Text } from "@radix-ui/themes";
-import { LayersIcon, ExternalLinkIcon, UpdateIcon, GitHubLogoIcon, TrashIcon } from "@radix-ui/react-icons";
-import discoveryRaw from "./discovery.json";
-import type { StackEntry, StackGroup, DiscoveryData } from "./types";
-import { FALLBACK } from "./fallback-data";
-import { useAuth } from "@/lib/auth-hooks";
-import { ADMIN_EMAIL } from "@/lib/constants";
-import { useDeleteStackEntryMutation } from "@/__generated__/hooks";
+// ── Types ────────────────────────────────────────────────────────────────────
 
-// ── Constants ────────────────────────────────────────────────────────────────
+type NodeType = "start" | "end" | "process" | "ai";
 
-const GITHUB_BASE = "https://github.com/nicolad/nomadically.work/blob/main";
+type PipelineNode = {
+  id: string;
+  label: string;
+  sublabel: string;
+  type: NodeType;
+  x: number;
+  y: number;
+  w: number;
+  color: string;
+  description: string;
+  tech: { name: string; version?: string }[];
+  dataIn: string;
+  dataOut: string;
+  insight: string;
+};
 
-// ── Resolve data source ───────────────────────────────────────────────────────
+type PipelineEdge = {
+  from: string;
+  to: string;
+  path: string;
+  label?: string;
+  labelX?: number;
+  labelY?: number;
+  dashed?: boolean;
+};
 
-const discovery = discoveryRaw as unknown as DiscoveryData;
-const isDiscovered = Array.isArray(discovery.groups) && discovery.groups.length > 0;
-const STACK: StackGroup[] = isDiscovered ? (discovery.groups as StackGroup[]) : FALLBACK;
+// ── Node Data ────────────────────────────────────────────────────────────────
 
-// ── Section ──────────────────────────────────────────────────────────────────
+const NODE_H = 52;
 
-function Section({ title, children }: { title: string; children: React.ReactNode }) {
+const NODES: PipelineNode[] = [
+  {
+    id: "__start__",
+    label: "START",
+    sublabel: "",
+    type: "start",
+    x: 360,
+    y: 30,
+    w: 0,
+    color: "green",
+    description: "",
+    tech: [],
+    dataIn: "",
+    dataOut: "",
+    insight: "",
+  },
+  {
+    id: "discover",
+    label: "Discover",
+    sublabel: "Board Crawl",
+    type: "process",
+    x: 360,
+    y: 130,
+    w: 200,
+    color: "green",
+    description:
+      "Crawl Common Crawl CDX index to discover Ashby job boards. Greenhouse and Lever boards are registered via API discovery or manual entry.",
+    tech: [
+      { name: "ashby-crawler", version: "Rust" },
+      { name: "Common Crawl CDX" },
+      { name: "Neon PostgreSQL" },
+    ],
+    dataIn: "Common Crawl web archives",
+    dataOut: "Discovered ATS board URLs",
+    insight:
+      "Automated board discovery via web archive analysis reduces manual registration to near-zero",
+  },
+  {
+    id: "ingest",
+    label: "Ingest",
+    sublabel: "ATS APIs",
+    type: "process",
+    x: 360,
+    y: 240,
+    w: 200,
+    color: "blue",
+    description:
+      "Pull job listings from ATS platforms (Greenhouse, Lever, Ashby) into Neon PostgreSQL. A unified ingestion layer normalizes data from 3 different API formats into one schema.",
+    tech: [
+      { name: "Trigger.dev", version: "v3" },
+      { name: "Greenhouse API" },
+      { name: "Lever API" },
+      { name: "Ashby API" },
+      { name: "Drizzle ORM" },
+    ],
+    dataIn: "ATS board URLs",
+    dataOut: "Raw job records in Neon",
+    insight:
+      "Unified ingestion normalizes 3 different ATS API formats into a single Drizzle schema",
+  },
+  {
+    id: "enhance",
+    label: "Enhance",
+    sublabel: "Job Details",
+    type: "process",
+    x: 360,
+    y: 350,
+    w: 200,
+    color: "blue",
+    description:
+      "Fetch full job details — descriptions, requirements, benefits, locations — from ATS APIs for each discovered job. Runs as background tasks with concurrency limits and retry logic.",
+    tech: [
+      { name: "Trigger.dev", version: "v3" },
+      { name: "ATS API clients" },
+      { name: "GraphQL mutations" },
+    ],
+    dataIn: "Job IDs from ingestion",
+    dataOut: "Enriched records with full descriptions",
+    insight:
+      "Batch processing with configurable concurrency and exponential backoff retry",
+  },
+  {
+    id: "classify",
+    label: "Classify",
+    sublabel: "Remote EU Detection",
+    type: "ai",
+    x: 360,
+    y: 460,
+    w: 200,
+    color: "violet",
+    description:
+      "Use DeepSeek LLM to determine if a job is genuinely remote-friendly for EU-based workers. Schema-constrained output with Zod validation ensures structured, reliable classification.",
+    tech: [
+      { name: "DeepSeek AI", version: "2.0" },
+      { name: "Vercel AI SDK" },
+      { name: "Zod" },
+    ],
+    dataIn: "Job description text",
+    dataOut: "is_remote_eu boolean + confidence score",
+    insight:
+      "Schema-constrained LLM output prevents hallucination; eval-first approach with 80%+ accuracy bar",
+  },
+  {
+    id: "extract",
+    label: "Extract Skills",
+    sublabel: "LLM Pipeline",
+    type: "ai",
+    x: 360,
+    y: 580,
+    w: 200,
+    color: "violet",
+    description:
+      "Extract technical skills and requirements from job descriptions using an LLM pipeline. All extracted skills are validated against a curated taxonomy to prevent drift.",
+    tech: [
+      { name: "LLM pipeline" },
+      { name: "Skill taxonomy" },
+      { name: "Vector operations" },
+    ],
+    dataIn: "Job description text",
+    dataOut: "Structured skill tags in Neon",
+    insight:
+      "Grounding-first: skills validated against curated taxonomy prevents semantic drift",
+  },
+  {
+    id: "serve",
+    label: "Serve",
+    sublabel: "GraphQL + UI",
+    type: "process",
+    x: 220,
+    y: 710,
+    w: 180,
+    color: "indigo",
+    description:
+      "Apollo Server 5 GraphQL API serves classified, skill-tagged jobs to the Next.js frontend. DataLoaders prevent N+1 queries. Typed resolvers from codegen ensure end-to-end type safety.",
+    tech: [
+      { name: "Apollo Server", version: "5" },
+      { name: "GraphQL" },
+      { name: "DataLoader" },
+      { name: "Next.js", version: "16" },
+      { name: "React", version: "19" },
+      { name: "Radix UI" },
+    ],
+    dataIn: "User queries (filters, search, pagination)",
+    dataOut: "Paginated job listings + skill data",
+    insight:
+      "DataLoaders batch and cache DB queries; typed resolvers prevent runtime mismatches",
+  },
+  {
+    id: "match",
+    label: "Match",
+    sublabel: "Resume RAG",
+    type: "ai",
+    x: 500,
+    y: 710,
+    w: 180,
+    color: "violet",
+    description:
+      "Vector similarity search matches user resumes against job requirements and extracted skills. Semantic matching goes beyond keyword overlap to surface truly relevant positions.",
+    tech: [
+      { name: "resume-rag", version: "Python" },
+      { name: "Cloudflare Vectorize" },
+      { name: "Embeddings" },
+    ],
+    dataIn: "Resume text + job skill vectors",
+    dataOut: "Ranked job matches by similarity",
+    insight:
+      "Semantic vector matching finds relevant jobs that keyword search would miss",
+  },
+  {
+    id: "__end__",
+    label: "END",
+    sublabel: "",
+    type: "end",
+    x: 360,
+    y: 840,
+    w: 0,
+    color: "gray",
+    description: "",
+    tech: [],
+    dataIn: "",
+    dataOut: "",
+    insight: "",
+  },
+];
+
+// ── Edge Data ────────────────────────────────────────────────────────────────
+
+const EDGES: PipelineEdge[] = [
+  { from: "__start__", to: "discover", path: "M 360,44 L 360,104" },
+  { from: "discover", to: "ingest", path: "M 360,156 L 360,214" },
+  { from: "ingest", to: "enhance", path: "M 360,266 L 360,324" },
+  { from: "enhance", to: "classify", path: "M 360,376 L 360,434" },
+  {
+    from: "classify",
+    to: "extract",
+    path: "M 360,486 L 360,554",
+    label: "is_remote_eu",
+    labelX: 268,
+    labelY: 524,
+  },
+  {
+    from: "classify",
+    to: "__end__",
+    path: "M 460,460 L 630,460 Q 650,460 650,480 L 650,820 Q 650,840 630,840 L 374,840",
+    label: "filtered",
+    labelX: 662,
+    labelY: 650,
+    dashed: true,
+  },
+  {
+    from: "extract",
+    to: "serve",
+    path: "M 360,606 C 360,650 220,650 220,684",
+  },
+  {
+    from: "extract",
+    to: "match",
+    path: "M 360,606 C 360,650 500,650 500,684",
+  },
+  {
+    from: "serve",
+    to: "__end__",
+    path: "M 220,736 C 220,790 360,790 360,826",
+  },
+  {
+    from: "match",
+    to: "__end__",
+    path: "M 500,736 C 500,790 360,790 360,826",
+  },
+];
+
+// ── Helpers ──────────────────────────────────────────────────────────────────
+
+const nodeMap = new Map(NODES.map((n) => [n.id, n]));
+
+function isClickable(node: PipelineNode) {
+  return node.type !== "start" && node.type !== "end";
+}
+
+// ── SVG Components ───────────────────────────────────────────────────────────
+
+function StartEndNode({
+  node,
+  isSelected,
+  onClick,
+}: {
+  node: PipelineNode;
+  isSelected: boolean;
+  onClick: () => void;
+}) {
+  const isStart = node.type === "start";
+  const r = 16;
   return (
-    <Flex direction="column" gap="1" mt="4">
-      <Text size="1" weight="medium" color="gray" style={{ textTransform: "uppercase", letterSpacing: "0.06em" }}>
-        {title}
-      </Text>
-      <div style={{ marginTop: 4 }}>{children}</div>
-    </Flex>
+    <g
+      onClick={onClick}
+      style={{ cursor: isClickable(node) ? "pointer" : "default" }}
+    >
+      {/* outer circle */}
+      <circle
+        cx={node.x}
+        cy={node.y}
+        r={r}
+        fill={isStart ? "var(--green-9)" : "none"}
+        stroke={isStart ? "none" : "var(--gray-9)"}
+        strokeWidth={isStart ? 0 : 2.5}
+      />
+      {/* inner filled circle for END */}
+      {!isStart && (
+        <circle cx={node.x} cy={node.y} r={r - 5} fill="var(--gray-9)" />
+      )}
+      {/* label */}
+      <text
+        x={node.x}
+        y={isStart ? node.y + r + 16 : node.y - r - 8}
+        textAnchor="middle"
+        fill="var(--gray-9)"
+        fontSize={10}
+        fontFamily="monospace"
+        fontWeight={600}
+        letterSpacing="0.08em"
+      >
+        {isStart ? "__start__" : "__end__"}
+      </text>
+    </g>
   );
 }
 
-// ── Components ────────────────────────────────────────────────────────────────
-
-function EntryModal({ entry, color, isAdmin, onDelete }: {
-  entry: StackEntry;
-  color: StackGroup["color"];
-  isAdmin: boolean;
-  onDelete: () => void;
+function ProcessNode({
+  node,
+  isSelected,
+  onClick,
+}: {
+  node: PipelineNode;
+  isSelected: boolean;
+  onClick: () => void;
 }) {
-  const hasFacts = Array.isArray(entry.facts) && entry.facts.length > 0;
-  const hasLocations = Array.isArray(entry.source_locations) && entry.source_locations.length > 0;
-  const hasWhyChosen = !!entry.why_chosen;
-  const hasInterviewPoints = Array.isArray(entry.interview_points) && entry.interview_points.length > 0;
-  const hasPros = Array.isArray(entry.pros) && entry.pros.length > 0;
-  const hasCons = Array.isArray(entry.cons) && entry.cons.length > 0;
-  const hasAlternatives = Array.isArray(entry.alternatives_considered) && entry.alternatives_considered.length > 0;
-  const hasTradeOffs = Array.isArray(entry.trade_offs) && entry.trade_offs.length > 0;
-  const hasPatterns = Array.isArray(entry.patterns_used) && entry.patterns_used.length > 0;
-  const hasGotchas = Array.isArray(entry.gotchas) && entry.gotchas.length > 0;
-  const hasSecurity = Array.isArray(entry.security_considerations) && entry.security_considerations.length > 0;
-  const hasPerf = Array.isArray(entry.performance_notes) && entry.performance_notes.length > 0;
-
-  const badgeText = hasInterviewPoints
-    ? `${entry.interview_points!.length} interview pts`
-    : hasFacts
-      ? `${entry.facts!.length} facts`
-      : "details";
+  const h = NODE_H;
+  const w = node.w;
+  const rx = node.x - w / 2;
+  const ry = node.y - h / 2;
+  const isAi = node.type === "ai";
+  const strokeColor = isSelected
+    ? `var(--${node.color}-9)`
+    : "var(--gray-6)";
+  const fillColor = isSelected
+    ? `var(--${node.color}-2)`
+    : "var(--gray-2)";
 
   return (
-    <Flex align="center" gap="2">
-      <Dialog.Root>
-        <Dialog.Trigger style={{ flex: 1, width: "100%" }}>
-          <Card style={{ cursor: "pointer" }}>
-            <Flex justify="between" align="center" gap="4">
-              <Flex direction="column" gap="1">
-                <Flex align="center" gap="2">
-                  <Text size="2" weight="medium">{entry.name}</Text>
-                  {entry.version && (
-                    <Badge size="1" variant="outline" color={color}>{entry.version}</Badge>
-                  )}
-                </Flex>
-                <Text size="1" color="gray">{entry.role}</Text>
-              </Flex>
-              <Badge color={color} variant="soft" size="1" style={{ flexShrink: 0 }}>
-                {badgeText}
-              </Badge>
-            </Flex>
-          </Card>
-        </Dialog.Trigger>
+    <g onClick={onClick} style={{ cursor: "pointer" }}>
+      <rect
+        x={rx}
+        y={ry}
+        width={w}
+        height={h}
+        rx={6}
+        fill={fillColor}
+        stroke={strokeColor}
+        strokeWidth={isSelected ? 2 : 1}
+      />
+      {/* AI indicator dot */}
+      {isAi && (
+        <circle
+          cx={rx + 14}
+          cy={node.y}
+          r={3}
+          fill={`var(--${node.color}-9)`}
+        />
+      )}
+      {/* main label */}
+      <text
+        x={node.x + (isAi ? 4 : 0)}
+        y={node.y - 4}
+        textAnchor="middle"
+        fill="var(--gray-12)"
+        fontSize={13}
+        fontWeight={600}
+      >
+        {node.label}
+      </text>
+      {/* sublabel */}
+      <text
+        x={node.x + (isAi ? 4 : 0)}
+        y={node.y + 14}
+        textAnchor="middle"
+        fill="var(--gray-9)"
+        fontSize={10}
+      >
+        {node.sublabel}
+      </text>
+    </g>
+  );
+}
 
-        <Dialog.Content maxWidth="900px">
-          <Dialog.Title>
-            <Flex align="center" gap="2" wrap="wrap">
-              {entry.name}
-              {entry.version && (
-                <Badge size="1" variant="soft" color={color}>{entry.version}</Badge>
-              )}
-              {entry.url && (
-                <a href={entry.url} target="_blank" rel="noopener noreferrer" style={{ color: "var(--gray-9)", display: "flex" }}>
-                  <ExternalLinkIcon width={14} height={14} />
-                </a>
-              )}
-            </Flex>
-          </Dialog.Title>
+function PipelineGraph({
+  selectedId,
+  onSelect,
+}: {
+  selectedId: string | null;
+  onSelect: (id: string | null) => void;
+}) {
+  return (
+    <svg
+      viewBox="0 0 720 880"
+      style={{ width: "100%", maxWidth: 720 }}
+      role="img"
+      aria-label="Pipeline diagram showing how jobs flow from discovery to serving"
+    >
+      <style>{`
+        @keyframes flow {
+          to { stroke-dashoffset: -12; }
+        }
+        .edge-line {
+          stroke-dasharray: 6 3;
+          animation: flow 1.2s linear infinite;
+        }
+        .edge-line-dashed {
+          stroke-dasharray: 4 4;
+          opacity: 0.4;
+        }
+        .edge-line-selected {
+          stroke-dasharray: 6 3;
+          animation: flow 0.8s linear infinite;
+          opacity: 1;
+        }
+      `}</style>
 
-          <Dialog.Description>
-            <Text size="2" color="gray">{entry.role}</Text>
-          </Dialog.Description>
+      <defs>
+        <marker
+          id="arrow"
+          viewBox="0 0 10 8"
+          refX="10"
+          refY="4"
+          markerWidth="8"
+          markerHeight="6"
+          orient="auto-start-reverse"
+        >
+          <path d="M0,0 L10,4 L0,8 Z" fill="var(--gray-7)" />
+        </marker>
+        <marker
+          id="arrow-dim"
+          viewBox="0 0 10 8"
+          refX="10"
+          refY="4"
+          markerWidth="8"
+          markerHeight="6"
+          orient="auto-start-reverse"
+        >
+          <path d="M0,0 L10,4 L0,8 Z" fill="var(--gray-6)" opacity={0.4} />
+        </marker>
+        <marker
+          id="arrow-selected"
+          viewBox="0 0 10 8"
+          refX="10"
+          refY="4"
+          markerWidth="8"
+          markerHeight="6"
+          orient="auto-start-reverse"
+        >
+          <path d="M0,0 L10,4 L0,8 Z" fill="var(--accent-9)" />
+        </marker>
+      </defs>
 
-          <Text as="p" size="2" mt="3" style={{ lineHeight: 1.65 }}>
-            {entry.details}
+      {/* Edges */}
+      {EDGES.map((edge, i) => {
+        const isConnected =
+          selectedId && (edge.from === selectedId || edge.to === selectedId);
+        const className = edge.dashed
+          ? "edge-line-dashed"
+          : isConnected
+            ? "edge-line-selected"
+            : "edge-line";
+        const markerEnd = edge.dashed
+          ? "url(#arrow-dim)"
+          : isConnected
+            ? "url(#arrow-selected)"
+            : "url(#arrow)";
+
+        return (
+          <g key={i}>
+            <path
+              d={edge.path}
+              fill="none"
+              stroke={
+                isConnected ? "var(--accent-9)" : edge.dashed ? "var(--gray-6)" : "var(--gray-7)"
+              }
+              strokeWidth={isConnected ? 2 : 1.5}
+              className={className}
+              markerEnd={markerEnd}
+            />
+            {edge.label && edge.labelX != null && edge.labelY != null && (
+              <>
+                <rect
+                  x={edge.labelX - 2}
+                  y={edge.labelY - 10}
+                  width={
+                    edge.label.length * 6.5 + 8
+                  }
+                  height={16}
+                  rx={2}
+                  fill="var(--color-background)"
+                  opacity={0.9}
+                />
+                <text
+                  x={edge.labelX + 2}
+                  y={edge.labelY + 1}
+                  fill={edge.dashed ? "var(--gray-8)" : "var(--green-9)"}
+                  fontSize={10}
+                  fontFamily="monospace"
+                >
+                  {edge.label}
+                </text>
+              </>
+            )}
+          </g>
+        );
+      })}
+
+      {/* Nodes */}
+      {NODES.map((node) => {
+        const selected = selectedId === node.id;
+        const handleClick = () => {
+          if (!isClickable(node)) return;
+          onSelect(selected ? null : node.id);
+        };
+
+        if (node.type === "start" || node.type === "end") {
+          return (
+            <StartEndNode
+              key={node.id}
+              node={node}
+              isSelected={selected}
+              onClick={handleClick}
+            />
+          );
+        }
+        return (
+          <ProcessNode
+            key={node.id}
+            node={node}
+            isSelected={selected}
+            onClick={handleClick}
+          />
+        );
+      })}
+
+      {/* Neon DB indicator (central store) */}
+      <g opacity={0.6}>
+        <text
+          x={660}
+          y={350}
+          textAnchor="middle"
+          fill="var(--cyan-9)"
+          fontSize={9}
+          fontFamily="monospace"
+          transform="rotate(90, 660, 350)"
+        >
+          Neon PostgreSQL
+        </text>
+        <line
+          x1={672}
+          y1={140}
+          x2={672}
+          y2={580}
+          stroke="var(--cyan-6)"
+          strokeWidth={1}
+          strokeDasharray="2 4"
+        />
+      </g>
+    </svg>
+  );
+}
+
+// ── Detail Panel ─────────────────────────────────────────────────────────────
+
+function NodeDetail({ node }: { node: PipelineNode }) {
+  return (
+    <Card
+      mt="5"
+      style={{
+        borderLeft: `3px solid var(--${node.color}-9)`,
+        background: "var(--gray-2)",
+      }}
+    >
+      <Flex direction="column" gap="3">
+        <Flex align="center" gap="2" wrap="wrap">
+          <Heading size="4">{node.label}</Heading>
+          <Badge
+            size="1"
+            variant="soft"
+            color={node.color as "violet" | "blue" | "green" | "indigo"}
+          >
+            {node.type === "ai" ? "AI/ML" : "pipeline"}
+          </Badge>
+          <Text size="1" color="gray">
+            {node.sublabel}
           </Text>
+        </Flex>
 
-          {hasWhyChosen && (
-            <Card mt="4" style={{ background: `var(--${color}-2)`, border: `1px solid var(--${color}-6)` }}>
-              <Text size="1" weight="medium" color="gray" style={{ textTransform: "uppercase", letterSpacing: "0.06em" }}>
-                Why chosen
-              </Text>
-              <Text as="p" size="2" mt="1" style={{ lineHeight: 1.6 }}>
-                {entry.why_chosen}
-              </Text>
-            </Card>
-          )}
+        <Text size="2" style={{ lineHeight: 1.65, color: "var(--gray-11)" }}>
+          {node.description}
+        </Text>
 
-          {hasInterviewPoints && (
-            <Section title="Interview Talking Points">
-              <Flex direction="column" gap="2">
-                {entry.interview_points!.map((point, i) => (
-                  <Flex key={i} align="start" gap="2">
-                    <Text size="1" weight="medium" color={color} style={{ flexShrink: 0, marginTop: 2, fontFamily: "monospace" }}>
-                      {i + 1}.
-                    </Text>
-                    <Text size="2" style={{ lineHeight: 1.55 }}>{point}</Text>
-                  </Flex>
-                ))}
-              </Flex>
-            </Section>
-          )}
+        <Flex gap="2" wrap="wrap">
+          {node.tech.map((t) => (
+            <Badge key={t.name} variant="outline" size="1">
+              {t.name}
+              {t.version ? ` ${t.version}` : ""}
+            </Badge>
+          ))}
+        </Flex>
 
-          {(hasPros || hasCons) && (
-            <Section title="Pros & Cons">
-              <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 16 }}>
-                {hasPros && (
-                  <Flex direction="column" gap="1">
-                    {entry.pros!.map((pro, i) => (
-                      <Flex key={i} align="start" gap="2">
-                        <Text size="1" style={{ flexShrink: 0, marginTop: 2, color: "var(--green-9)" }}>+</Text>
-                        <Text size="2">{pro}</Text>
-                      </Flex>
-                    ))}
-                  </Flex>
-                )}
-                {hasCons && (
-                  <Flex direction="column" gap="1">
-                    {entry.cons!.map((con, i) => (
-                      <Flex key={i} align="start" gap="2">
-                        <Text size="1" style={{ flexShrink: 0, marginTop: 2, color: "var(--red-9)" }}>-</Text>
-                        <Text size="2">{con}</Text>
-                      </Flex>
-                    ))}
-                  </Flex>
-                )}
-              </div>
-            </Section>
-          )}
-
-          {hasAlternatives && (
-            <Section title="Alternatives Considered">
-              <Flex direction="column" gap="2">
-                {entry.alternatives_considered!.map((alt, i) => (
-                  <Flex key={i} direction="column" gap="0">
-                    <Text size="2" weight="medium">{alt.name}</Text>
-                    <Text size="1" color="gray" style={{ lineHeight: 1.5 }}>{alt.reason_not_chosen}</Text>
-                  </Flex>
-                ))}
-              </Flex>
-            </Section>
-          )}
-
-          {hasTradeOffs && (
-            <Section title="Trade-offs">
-              <Flex direction="column" gap="1">
-                {entry.trade_offs!.map((t, i) => (
-                  <Flex key={i} align="start" gap="2">
-                    <Text size="1" color="gray" style={{ flexShrink: 0, marginTop: 2 }}>·</Text>
-                    <Text size="2">{t}</Text>
-                  </Flex>
-                ))}
-              </Flex>
-            </Section>
-          )}
-
-          {hasPatterns && (
-            <Section title="Design Patterns">
-              <Flex direction="column" gap="1">
-                {entry.patterns_used!.map((p, i) => (
-                  <Flex key={i} align="start" gap="2">
-                    <Text size="1" color={color} style={{ flexShrink: 0, marginTop: 2 }}>·</Text>
-                    <Text size="2">{p}</Text>
-                  </Flex>
-                ))}
-              </Flex>
-            </Section>
-          )}
-
-          {hasGotchas && (
-            <Section title="Gotchas">
-              <Flex direction="column" gap="1">
-                {entry.gotchas!.map((g, i) => (
-                  <Flex key={i} align="start" gap="2">
-                    <Text size="1" style={{ flexShrink: 0, marginTop: 2, color: "var(--amber-9)" }}>!</Text>
-                    <Text size="2">{g}</Text>
-                  </Flex>
-                ))}
-              </Flex>
-            </Section>
-          )}
-
-          {hasSecurity && (
-            <Section title="Security">
-              <Flex direction="column" gap="1">
-                {entry.security_considerations!.map((s, i) => (
-                  <Flex key={i} align="start" gap="2">
-                    <Text size="1" style={{ flexShrink: 0, marginTop: 2, color: "var(--red-9)" }}>·</Text>
-                    <Text size="2">{s}</Text>
-                  </Flex>
-                ))}
-              </Flex>
-            </Section>
-          )}
-
-          {hasPerf && (
-            <Section title="Performance">
-              <Flex direction="column" gap="1">
-                {entry.performance_notes!.map((p, i) => (
-                  <Flex key={i} align="start" gap="2">
-                    <Text size="1" style={{ flexShrink: 0, marginTop: 2, color: "var(--blue-9)" }}>·</Text>
-                    <Text size="2">{p}</Text>
-                  </Flex>
-                ))}
-              </Flex>
-            </Section>
-          )}
-
-          {hasFacts && (
-            <Section title="Discovered Facts">
-              <Flex direction="column" gap="1">
-                {entry.facts!.map((fact, i) => (
-                  <Flex key={i} align="start" gap="2">
-                    <Text size="1" color={color} style={{ flexShrink: 0, marginTop: 2 }}>·</Text>
-                    <Text size="2">{fact}</Text>
-                  </Flex>
-                ))}
-              </Flex>
-            </Section>
-          )}
-
-          {hasLocations && (
-            <Section title="Source Locations">
-              <Flex direction="column" gap="1">
-                {entry.source_locations!.map((loc, i) => {
-                  const href = `${GITHUB_BASE}/${loc.path}${loc.line ? `#L${loc.line}` : ""}`;
-                  return (
-                    <Flex key={i} align="start" gap="2">
-                      <GitHubLogoIcon width={12} height={12} style={{ flexShrink: 0, marginTop: 3, color: "var(--gray-9)" }} />
-                      <Flex direction="column" gap="0">
-                        <a
-                          href={href}
-                          target="_blank"
-                          rel="noopener noreferrer"
-                          style={{ color: "var(--accent-9)", fontFamily: "monospace", fontSize: 12 }}
-                        >
-                          {loc.path}{loc.line ? `:${loc.line}` : ""}
-                        </a>
-                        <Text size="1" color="gray">{loc.note}</Text>
-                      </Flex>
-                    </Flex>
-                  );
-                })}
-              </Flex>
-            </Section>
-          )}
-
-          <Flex justify="end" mt="4">
-            <Dialog.Close>
-              <Badge color={color} variant="soft" style={{ cursor: "pointer" }}>Close</Badge>
-            </Dialog.Close>
+        <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 16 }}>
+          <Flex direction="column" gap="1">
+            <Text
+              size="1"
+              weight="medium"
+              color="gray"
+              style={{ textTransform: "uppercase", letterSpacing: "0.06em" }}
+            >
+              Input
+            </Text>
+            <Text size="2">{node.dataIn}</Text>
           </Flex>
-        </Dialog.Content>
-      </Dialog.Root>
-      {isAdmin && (
-        <button
-          onClick={onDelete}
-          title="Delete entry"
+          <Flex direction="column" gap="1">
+            <Text
+              size="1"
+              weight="medium"
+              color="gray"
+              style={{ textTransform: "uppercase", letterSpacing: "0.06em" }}
+            >
+              Output
+            </Text>
+            <Text size="2">{node.dataOut}</Text>
+          </Flex>
+        </div>
+
+        <Card
           style={{
-            background: "none",
-            border: "none",
-            cursor: "pointer",
-            color: "var(--red-9)",
-            padding: "6px",
-            borderRadius: 4,
-            display: "flex",
-            alignItems: "center",
-            flexShrink: 0,
+            background: `var(--${node.color}-2)`,
+            border: `1px solid var(--${node.color}-6)`,
           }}
         >
-          <TrashIcon width={14} height={14} />
-        </button>
-      )}
-    </Flex>
+          <Text
+            size="1"
+            weight="medium"
+            color="gray"
+            style={{ textTransform: "uppercase", letterSpacing: "0.06em" }}
+          >
+            Key Insight
+          </Text>
+          <Text as="p" size="2" mt="1" style={{ lineHeight: 1.6 }}>
+            {node.insight}
+          </Text>
+        </Card>
+      </Flex>
+    </Card>
   );
 }
 
-// ── Page ──────────────────────────────────────────────────────────────────────
+// ── Page ─────────────────────────────────────────────────────────────────────
 
 export default function StackPage() {
-  const { user } = useAuth();
-  const isAdmin = user?.email === ADMIN_EMAIL;
-
-  const [deleted, setDeleted] = useState<Set<string>>(new Set());
-  const [deleteStackEntry] = useDeleteStackEntryMutation();
-
-  const stack = useMemo(
-    () =>
-      STACK.map((g) => ({ ...g, entries: g.entries.filter((e) => !deleted.has(e.name)) })).filter(
-        (g) => g.entries.length > 0
-      ),
-    [deleted]
-  );
-
-  async function handleDelete(name: string) {
-    setDeleted((prev) => new Set(prev).add(name));
-    await deleteStackEntry({ variables: { name } });
-  }
+  const [selectedId, setSelectedId] = useState<string | null>(null);
+  const selectedNode = selectedId ? nodeMap.get(selectedId) : null;
 
   return (
     <Container size="3" p={{ initial: "4", md: "6" }}>
       <Flex align="center" gap="2" mb="2">
         <LayersIcon width={22} height={22} style={{ color: "var(--violet-9)" }} />
-        <Heading size="7">Stack</Heading>
-        {isDiscovered && (
-          <Badge variant="soft" color="green" size="1" style={{ marginLeft: 4 }}>
-            <UpdateIcon width={10} height={10} style={{ marginRight: 3 }} />
-            auto-discovered
-          </Badge>
-        )}
+        <Heading size="7">How It Works</Heading>
       </Flex>
 
       <Flex align="center" gap="3" mb="6">
         <Text color="gray" size="2">
-          {isDiscovered
-            ? (discovery.generated_at ?? "")
-            : "Technologies and services powering this platform. Click any entry for usage details."}
+          The data pipeline that powers nomadically.work — from job discovery to
+          your screen. Click any node for details.
         </Text>
         <a
           href="https://github.com/nicolad/nomadically.work"
@@ -359,36 +686,12 @@ export default function StackPage() {
         </a>
       </Flex>
 
-      <Flex direction="column" gap="6">
-        {stack.map((group) => (
-          <div key={group.label}>
-            <Flex align="center" gap="2" mb="3">
-              <Heading size="4">{group.label}</Heading>
-              <Badge color={group.color} variant="soft" size="1">{group.entries.length}</Badge>
-            </Flex>
-            <Flex direction="column" gap="2">
-              {group.entries.map((entry) => (
-                <EntryModal
-                  key={entry.name}
-                  entry={entry}
-                  color={group.color}
-                  isAdmin={isAdmin}
-                  onDelete={() => handleDelete(entry.name)}
-                />
-              ))}
-            </Flex>
-          </div>
-        ))}
+      <Flex justify="center">
+        <PipelineGraph selectedId={selectedId} onSelect={setSelectedId} />
       </Flex>
 
-      {!isDiscovered && (
-        <Text size="1" color="gray" mt="6" as="p">
-          Run{" "}
-          <Text size="1" style={{ fontFamily: "monospace" }}>
-            cd crates/agentic-search && cargo run -- discover --root ../.. --output ../../src/app/stack/discovery.json
-          </Text>{" "}
-          to populate this page with live codebase data.
-        </Text>
+      {selectedNode && isClickable(selectedNode) && (
+        <NodeDetail node={selectedNode} />
       )}
     </Container>
   );
