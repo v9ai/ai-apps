@@ -3,8 +3,9 @@ apps/podcasts
 apps/real-estate
 apps/research-thera
 apps/vadim.blog
+apps/bricks
 
-# Exclude packages not needed by agentic-healthcare
+# Exclude packages not needed
 packages/qwen
 packages/llm-router
 packages/og
@@ -15,6 +16,21 @@ crates
 langgraph
 scripts
 target
+
+# Large binary files
+*.gguf
+*.wav
+*.dylib
+*.so
+*.wal
+
+# Python virtualenvs
+.venv
+.venv-workers
+
+# App-specific large dirs
+apps/nomadically.work/consultancies
+apps/nomadically.work/leadgen-metal
 
 # Common exclusions (use specific paths, not 'dist' to preserve packages/ui/dist)
 node_modules
