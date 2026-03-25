@@ -13,11 +13,18 @@ Usage:
     python -m cli company-jobs --hours 24 --limit 50
     python -m cli report-job --job-id 123
     python -m cli app-prep --app-id 18
-    python -m cli app-prep --app-id 18 --eval
-    python -m cli app-prep --eval --unit-only
     python -m cli resume upload --user-id u1 --pdf /path/to/resume.pdf
     python -m cli resume search --user-id u1 --query "python experience"
     python -m cli resume chat --user-id u1 --message "what are my skills?"
+
+    # Job search pipeline (local AI)
+    python -m cli job-sync                                  # Sync Neon jobs → LanceDB
+    python -m cli job-search                                # Match against your profile
+    python -m cli job-search --eu-remote --generate-briefs  # With Qwen briefs
+    python -m cli scrape-hn --limit 50                      # Ingest HN hiring
+    python -m cli job-label                                 # Label matches for training
+    python -m cli job-label-stats                           # Check labeling progress
+    python -m cli job-finetune                              # Fine-tune embeddings
 """
 
 import click
@@ -992,6 +999,198 @@ def contact_audit(threshold: float):
     print(f"{'─'*80}")
     print(f"  Summary: Removed {len(remove)}, Kept {len(keep)}")
     print()
+
+
+# ---------------------------------------------------------------------------
+# Job search pipeline — LanceDB sync, search, scrape, label, finetune
+# ---------------------------------------------------------------------------
+
+@main.command("job-sync")
+@click.option("--all-jobs", is_flag=True, default=False, help="Sync all jobs (default: EU remote only)")
+def job_sync(all_jobs: bool):
+    """Sync jobs from Neon to LanceDB with MLX embeddings.
+
+    First run:
+        python -m cli job-sync
+
+    All jobs (not just EU remote):
+        python -m cli job-sync --all-jobs
+    """
+    from src.vectordb.sync import sync_jobs
+
+    result = sync_jobs(eu_remote_only=not all_jobs)
+    print(f"\n--- Job Sync Result ---")
+    print(f"  Mode: {result.mode}")
+    print(f"  Synced: {result.synced}")
+    print(f"  Total: {result.total_rows}")
+    if result.errors:
+        for e in result.errors:
+            print(f"  Error: {e}")
+
+
+@main.command("job-search")
+@click.argument("query", required=False, default=None)
+@click.option("--top", "-n", default=20, show_default=True, help="Number of results")
+@click.option("--remote-only", is_flag=True, default=False, help="Only fully remote jobs")
+@click.option("--eu-remote", is_flag=True, default=False, help="Only EU remote jobs (is_remote_eu=true)")
+@click.option("--min-salary", type=int, default=None, help="Minimum salary")
+@click.option("--ai-tier-min", type=int, default=None, help="Min company AI tier (0/1/2)")
+@click.option("--ai-roles", is_flag=True, default=False, help="Only AI engineer roles")
+@click.option("--generate-briefs", is_flag=True, default=False, help="Generate AI briefs for top 3 matches")
+def job_search(query, top, remote_only, eu_remote, min_salary, ai_tier_min, ai_roles, generate_briefs):
+    """Semantic search over jobs matched against your profile.
+
+    Examples:
+        python -m cli job-search                           # default profile match
+        python -m cli job-search "Rust AI infrastructure"  # custom query
+        python -m cli job-search --eu-remote --min-salary 80000
+        python -m cli job-search --eu-remote --generate-briefs
+    """
+    from src.vectordb.search import search_jobs
+
+    results = search_jobs(
+        query=query,
+        top_k=top,
+        remote_only=remote_only,
+        eu_remote_only=eu_remote,
+        min_salary=min_salary,
+        ai_tier_min=ai_tier_min,
+        role_ai_only=ai_roles,
+    )
+
+    if not results:
+        print("No jobs found. Run 'python -m cli job-sync' first.")
+        return
+
+    filters = []
+    if remote_only:
+        filters.append("remote only")
+    if eu_remote:
+        filters.append("EU remote")
+    if min_salary:
+        filters.append(f"min ${min_salary:,}")
+    if ai_roles:
+        filters.append("AI roles")
+    filter_str = f" ({', '.join(filters)})" if filters else ""
+
+    print(f"\n{'=' * 80}")
+    print(f"  Top {len(results)} jobs{filter_str}")
+    print(f"{'=' * 80}\n")
+
+    for i, j in enumerate(results, 1):
+        salary = f"${j.salary_min:,}-${j.salary_max:,}" if j.salary_min > 0 else "not listed"
+        badges = ""
+        if j.remote_policy == "full_remote":
+            badges += " [remote]"
+
+        print(f"  {i:3d}. [{j.similarity:.3f}] {j.title}{badges}")
+        print(f"       {j.company_name} | {salary}")
+        if j.skills:
+            print(f"       skills: {j.skills[:80]}")
+        if j.source_url:
+            print(f"       {j.source_url}")
+        print()
+
+    if generate_briefs:
+        print(f"{'─' * 80}")
+        print("Generating briefs for top 3 matches...\n")
+        from src.vectordb.briefer import generate_briefs as gen_briefs
+
+        # Convert ScoredJob to dicts for briefer
+        job_dicts = []
+        for j in results[:3]:
+            job_dicts.append({
+                "title": j.title,
+                "company_name": j.company_name,
+                "embedding_text": f"{j.title} at {j.company_name}. {j.skills}",
+            })
+
+        briefs = gen_briefs(job_dicts)
+        for brief in briefs:
+            print(f"{'─' * 60}")
+            print(f"  {brief.job_title} @ {brief.company}")
+            print(f"  ({brief.tokens} tokens, {brief.tokens_per_sec:.0f} tok/s)")
+            print(f"{'─' * 60}")
+            print(f"  {brief.brief}\n")
+
+
+@main.command("scrape-hn")
+@click.option("--limit", "-l", default=50, show_default=True, help="Max job comments to fetch")
+def scrape_hn(limit: int):
+    """Scrape latest HN 'Who is hiring?' thread and ingest into LanceDB.
+
+    Examples:
+        python -m cli scrape-hn
+        python -m cli scrape-hn --limit 100
+    """
+    from src.scrapers.hn_hiring import ingest_hn_jobs
+
+    print("Scraping HN 'Who is hiring?'...\n")
+    stats = ingest_hn_jobs(limit=limit)
+
+    print(f"\n--- HN Scrape Summary ---")
+    print(f"  Scraped: {stats.get('scraped', 0)}")
+    print(f"  Ingested: {stats.get('ingested', 0)}")
+    print(f"  Total in DB: {stats.get('total_in_db', 0)}")
+    print(f"  Remote: {stats.get('remote', 0)}")
+    print(f"  With salary: {stats.get('with_salary', 0)}")
+
+
+@main.command("job-label")
+@click.option("--top", "-n", default=20, show_default=True, help="Jobs to review per session")
+@click.option("--all-jobs", is_flag=True, default=False, help="Include non-EU-remote jobs")
+def job_label(top: int, all_jobs: bool):
+    """Interactive labeling: review top job matches and label yes/no.
+
+    Labels stored in training_data/job_labels.jsonl for fine-tuning.
+
+    Examples:
+        python -m cli job-label
+        python -m cli job-label --top 30 --all-jobs
+    """
+    from src.vectordb.labeler import label_jobs
+
+    label_jobs(top_k=top, eu_remote_only=not all_jobs)
+
+
+@main.command("job-label-stats")
+def job_label_stats():
+    """Show labeling progress stats."""
+    from src.vectordb.labeler import get_label_stats
+
+    stats = get_label_stats()
+    print(f"\n--- Label Stats ---")
+    print(f"  Total: {stats['total']}")
+    print(f"  Matches: {stats['matches']}")
+    print(f"  Non-matches: {stats['non_matches']}")
+    print(f"  File: {stats['file']}")
+    if stats["total"] < 100:
+        print(f"\n  Need {100 - stats['total']} more for fine-tuning (min 100).")
+    else:
+        print(f"\n  Ready for fine-tuning! Run: python -m cli job-finetune")
+
+
+@main.command("job-finetune")
+@click.option("--epochs", default=5, show_default=True, help="Training epochs")
+@click.option("--batch-size", default=8, show_default=True, help="Batch size")
+@click.option("--min-labels", default=100, show_default=True, help="Min labels required")
+def job_finetune(epochs: int, batch_size: int, min_labels: int):
+    """Fine-tune embedding model on your labeled job pairs.
+
+    Requires 100+ labels (run 'job-label' first).
+    Output: langgraph/models/job-matcher/
+
+    Examples:
+        python -m cli job-finetune
+        python -m cli job-finetune --epochs 10 --min-labels 50
+    """
+    from src.vectordb.finetune import finetune_embeddings
+
+    result = finetune_embeddings(epochs=epochs, batch_size=batch_size, min_labels=min_labels)
+    if "error" not in result:
+        print(f"\nFine-tuning complete!")
+        print(f"  Output: {result['output_path']}")
+        print(f"  Train: {result['train_size']} | Eval: {result['eval_size']}")
 
 
 if __name__ == "__main__":
